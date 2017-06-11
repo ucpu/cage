@@ -27,7 +27,7 @@
 	url = https://github.com/g-truc/glm.git
 [submodule "ogg/ogg"]
 	path = ogg/ogg
-	url = https://github.com/xiph/ogg.git
+	url = https://github.com/ucpu/ogg.git
 [submodule "libsoundio/libsoundio"]
 	path = libsoundio/libsoundio
 	url = https://github.com/andrewrk/libsoundio.git
