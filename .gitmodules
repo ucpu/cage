@@ -1,0 +1,54 @@
+[submodule "enet/enet"]
+	path = enet/enet
+	url = https://github.com/lsalzman/enet.git
+[submodule "lodepng/lodepng"]
+	path = lodepng/lodepng
+	url = https://github.com/lvandeve/lodepng.git
+[submodule "simplefilewatcher/simplefilewatcher"]
+	path = simplefilewatcher/simplefilewatcher
+	url = https://github.com/jameswynn/simplefilewatcher.git
+[submodule "dr_libs/dr_libs"]
+	path = dr_libs/dr_libs
+	url = https://github.com/mackron/dr_libs.git
+[submodule "libpng/libpng"]
+	path = libpng/libpng
+	url = https://github.com/glennrp/libpng.git
+[submodule "libtiff/libtiff"]
+	path = libtiff/libtiff
+	url = https://github.com/vadz/libtiff.git
+[submodule "freetype/freetype"]
+	path = freetype/freetype
+	url = https://github.com/ucpu/freetype.git
+[submodule "glad/glad"]
+	path = glad/glad
+	url = https://github.com/ucpu/glad.git
+[submodule "glm/glm"]
+	path = glm/glm
+	url = https://github.com/g-truc/glm.git
+[submodule "ogg/ogg"]
+	path = ogg/ogg
+	url = https://github.com/xiph/ogg.git
+[submodule "libsoundio/libsoundio"]
+	path = libsoundio/libsoundio
+	url = https://github.com/andrewrk/libsoundio.git
+[submodule "vorbis/vorbis"]
+	path = vorbis/vorbis
+	url = https://github.com/xiph/vorbis.git
+[submodule "assimp/assimp"]
+	path = assimp/assimp
+	url = https://github.com/assimp/assimp.git
+[submodule "glfw/glfw"]
+	path = glfw/glfw
+	url = https://github.com/glfw/glfw.git
+[submodule "utfcpp/utfcpp"]
+	path = utfcpp/utfcpp
+	url = https://github.com/nemtrif/utfcpp.git
+[submodule "jpeg/jpeg"]
+	path = jpeg/jpeg
+	url = https://github.com/ucpu/jpeg.git
+[submodule "devil/devil"]
+	path = devil/devil
+	url = https://github.com/ucpu/devil.git
+[submodule "zlib/zlib"]
+	path = zlib/zlib
+	url = https://github.com/ucpu/zlib.git
