@@ -4,7 +4,7 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "assimp")
 message(STATUS "----------------------------------------------------------------")
 
-option(BUILD_SHARED_LIBS "Build package with shared libraries." OFF)
+set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "BUILD_SHARED_LIBS")
 option(ASSIMP_NO_EXPORT "Disable Assimp's export functionality." ON)
 option(ASSIMP_BUILD_ASSIMP_TOOLS "If the supplementary tools for Assimp are built in addition to the library." OFF)
 option(ASSIMP_BUILD_TESTS "If the test suite for Assimp is built in addition to the library." OFF)

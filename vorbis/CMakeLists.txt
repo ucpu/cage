@@ -4,6 +4,8 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "vorbis")
 message(STATUS "----------------------------------------------------------------")
 
+set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "BUILD_SHARED_LIBS")
+
 find_package(OGG)
 
 add_subdirectory(vorbis)
