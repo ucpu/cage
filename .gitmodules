@@ -1,0 +1,12 @@
+[submodule "client"]
+	path = client
+	url = ssh://ucpu.cz/var/git/ucpu/cage/client.git
+[submodule "core"]
+	path = core
+	url = ssh://ucpu.cz/var/git/ucpu/cage/core.git
+[submodule "data"]
+	path = data
+	url = ssh://ucpu.cz/var/git/ucpu/cage/data.git
+[submodule "externals"]
+	path = externals
+	url = ssh://ucpu.cz/var/git/ucpu/cage/externals.git
