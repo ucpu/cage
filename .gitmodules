@@ -15,7 +15,7 @@
 	url = https://github.com/glennrp/libpng.git
 [submodule "libtiff/libtiff"]
 	path = libtiff/libtiff
-	url = https://github.com/vadz/libtiff.git
+	url = https://github.com/ucpu/libtiff.git
 [submodule "freetype/freetype"]
 	path = freetype/freetype
 	url = https://github.com/ucpu/freetype.git

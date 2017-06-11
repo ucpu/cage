@@ -5,6 +5,10 @@ message(STATUS "libtiff")
 message(STATUS "----------------------------------------------------------------")
 
 set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "BUILD_SHARED_LIBS")
+set(SKIP_TOOLS 1)
+set(SKIP_TEST 1)
+set(SKIP_DOC 1)
+set(SKIP_CONTRIB 1)
 
 add_subdirectory(libtiff)
 
