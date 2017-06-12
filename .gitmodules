@@ -6,7 +6,7 @@
 	url = https://github.com/lvandeve/lodepng.git
 [submodule "simplefilewatcher/simplefilewatcher"]
 	path = simplefilewatcher/simplefilewatcher
-	url = https://github.com/jameswynn/simplefilewatcher.git
+	url = https://github.com/ucpu/simplefilewatcher.git
 [submodule "dr_libs/dr_libs"]
 	path = dr_libs/dr_libs
 	url = https://github.com/mackron/dr_libs.git
