@@ -10,6 +10,7 @@ set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_STANDARD 11)
 
-add_subdirectory(externals)
+add_subdirectory(externals EXCLUDE_FROM_ALL)
 add_subdirectory(core)
 add_subdirectory(client)
+
