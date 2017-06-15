@@ -22,4 +22,3 @@ endif(MSVC)
 
 target_include_directories(libsoundio_shared INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/libsoundio)
 
-add_library(libsoundio ALIAS libsoundio_shared)
