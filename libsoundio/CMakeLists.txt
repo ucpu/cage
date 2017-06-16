@@ -9,8 +9,8 @@ option(BUILD_DYNAMIC_LIBS "Build dynamic libraries" ON)
 option(BUILD_EXAMPLE_PROGRAMS "Build example programs" OFF)
 option(BUILD_TESTS "Build tests" OFF)
 
-if(NOT DEFINED(CMAKE_BUILD_TYPE))
-	set(CMAKE_BUILD_TYPE Release)
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "" FORCE)
 endif()
 
 add_subdirectory(libsoundio)

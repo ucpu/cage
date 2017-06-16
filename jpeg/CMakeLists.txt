@@ -16,3 +16,4 @@ file(APPEND ${filename} "set(JPEG_INCLUDE_DIR ${JPEG_INCLUDE_DIR})\n")
 file(APPEND ${filename} "set(JPEG_INCLUDE_DIRS ${JPEG_INCLUDE_DIR})\n")
 file(APPEND ${filename} "set(JPEG_LIBRARY ${JPEG_LIBRARY})\n")
 file(APPEND ${filename} "set(JPEG_LIBRARIES ${JPEG_LIBRARY})\n")
+

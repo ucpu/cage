@@ -18,3 +18,4 @@ set(filename ${CMAKE_BINARY_DIR}/cmake/FindIL.cmake)
 file(WRITE ${filename} "set(IL_FOUND 1)\n")
 file(APPEND ${filename} "set(IL_INCLUDE_DIR ${IL_INCLUDE_DIR})\n")
 file(APPEND ${filename} "set(IL_LIBRARY ${IL_LIBRARY})\n")
+
