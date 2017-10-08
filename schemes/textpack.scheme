@@ -1,0 +1,7 @@
+[scheme]
+processor = cage-asset-processor textpack
+index = 2
+
+[internationalized]
+name = internationalized
+type = string

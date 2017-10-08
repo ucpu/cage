@@ -1,0 +1,3 @@
+[scheme]
+processor = blender -b -P scripts/export_animation.py
+index = 14

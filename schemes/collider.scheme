@@ -1,0 +1,8 @@
+[scheme]
+processor = cage-asset-processor collider
+index = 3
+
+[scale]
+display = scale
+type = real
+default = 1

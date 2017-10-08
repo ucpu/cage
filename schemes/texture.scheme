@@ -1,0 +1,94 @@
+[scheme]
+processor = cage-asset-processor texture
+index = 11
+
+[target]
+display = texture type
+type = enum
+values = GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_2D_ARRAY, GL_TEXTURE_CUBE_MAP
+default = GL_TEXTURE_2D
+
+[downscale]
+display = downscale
+type = uint32
+min = 1
+default = 1
+
+[animation_duration]
+display = animation duration
+hint = microseconds
+type = uint32
+default = 1000000
+
+[animation_loop]
+display = animation loop
+type = bool
+default = true
+
+[premultiply_alpha]
+display = premultiply alpha
+type = bool
+default = false
+
+[degamma_on]
+display = allow degamma
+hint = allow offline preprocessing to linearize values
+type = bool
+default = false
+
+[degamma_coef]
+require = degamma_on
+display = degamma coeficient
+hint = gamma coeficient used during creation of this texture
+type = real
+min = 1.8
+max = 2.6
+default = 2.2
+
+[flip_v]
+display = vertical flip
+type = bool
+default = false
+
+[convert_normal]
+display = convert heightmap to normal map
+hint = 0 to disable
+type = real
+default = 0
+min = 0
+
+[filter_min]
+display = minification filter
+type = enum
+values = GL_NEAREST_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR, GL_NEAREST, GL_LINEAR
+default = GL_LINEAR_MIPMAP_LINEAR
+
+[filter_mag]
+display = magnification filter
+type = enum
+values = GL_NEAREST, GL_LINEAR
+default = GL_LINEAR
+
+[filter_aniso]
+display = anisotropic filter
+type = enum
+values = 0, 2, 4, 8, 16
+default = 4
+
+[wrap_x]
+display = wrap x
+type = enum
+values = GL_CLAMP_TO_EDGE, GL_CLAMP_TO_BORDER, GL_MIRRORED_REPEAT, GL_REPEAT
+default = GL_REPEAT
+
+[wrap_y]
+display = wrap y
+type = enum
+values = GL_CLAMP_TO_EDGE, GL_CLAMP_TO_BORDER, GL_MIRRORED_REPEAT, GL_REPEAT
+default = GL_REPEAT
+
+[wrap_z]
+display = wrap z
+type = enum
+values = GL_CLAMP_TO_EDGE, GL_CLAMP_TO_BORDER, GL_MIRRORED_REPEAT, GL_REPEAT
+default = GL_REPEAT

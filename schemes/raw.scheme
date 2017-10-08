@@ -1,0 +1,8 @@
+[scheme]
+processor = cage-asset-processor raw
+index = 1
+
+[compress_threshold]
+display = compress threshold
+type = uint32
+default = 4096

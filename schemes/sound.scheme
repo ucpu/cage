@@ -1,0 +1,34 @@
+[scheme]
+processor = cage-asset-processor sound
+index = 20
+
+[before]
+name = repeat before start
+type = enum
+values = repeat, discard
+
+[after]
+name = repeat after end
+type = enum
+values = repeat, discard
+
+[type]
+name = sound type
+hint = this determines run-time behavior
+type = enum
+values = raw, stream
+default = stream
+
+[quality]
+name = compression quality
+hint = only applies for the stream
+type = real
+min = -0.1
+max = 1.0
+default = 0.4
+
+[small]
+name = small file threshold
+hint = the threshold is in bytes; when the resulting sound is estimated to be smaller than this value, the processor will use raw instead of stream, independently of type configured
+type = uint32
+default = 5000000

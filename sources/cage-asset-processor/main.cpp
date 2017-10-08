@@ -1,0 +1,218 @@
+#include <exception>
+#include <map>
+
+#include "processor.h"
+#include <cage-core/utility/hashString.h>
+
+// passed names
+string inputDirectory; // c:/asset
+string inputName; // path/file?specifier;identifier
+string outputDirectory; // c:/data
+string outputName; // 123456789
+string assetPath;
+string schemePath;
+uint32 schemeIndex;
+
+// derived names
+string inputFileName; // c:/asset/path/file
+string outputFileName; // c:/data/123456789
+string inputFile; // path/file
+string inputSpec; // specifier
+string inputIdentifier; // identifier
+
+string logComponentName;
+
+assetHeaderStruct initializeAssetHeaderStruct()
+{
+	return initializeAssetHeader(inputName, numeric_cast<uint16>(schemeIndex));
+}
+
+namespace
+{
+	std::map<string, string> props;
+
+	string readLine()
+	{
+		char buf[string::MaxLength];
+		if (fgets(buf, string::MaxLength, stdin) == nullptr)
+			CAGE_THROW_ERROR(codeException, "fgets", ferror(stdin));
+		return string(buf, numeric_cast<uint32>(detail::strlen(buf) - 1));
+	}
+
+	void derivedProperties()
+	{
+		inputFile = inputName;
+		if (inputFile.find(';') != -1)
+		{
+			inputIdentifier = inputFile.split(";");
+			std::swap(inputIdentifier, inputFile);
+		}
+		if (inputFile.find('?') != -1)
+		{
+			inputSpec = inputFile.split("?");
+			std::swap(inputSpec, inputFile);
+		}
+
+		inputFileName = pathJoin(inputDirectory, inputFile);
+		outputFileName = pathJoin(outputDirectory, outputName);
+	}
+
+	void loadProperties()
+	{
+		inputDirectory = readLine();
+		inputName = readLine();
+		outputDirectory = readLine();
+		outputName = readLine();
+		assetPath = readLine();
+		schemePath = readLine();
+		schemeIndex = readLine().toUint32();
+
+		derivedProperties();
+
+		while (true)
+		{
+			string value = readLine();
+			if (value == "cage-end")
+				break;
+			if (value.find('=') == -1)
+			{
+				CAGE_LOG(severityEnum::Note, "exception", string("line: ") + value);
+				CAGE_THROW_ERROR(exception, "missing '=' in property line");
+			}
+			string name = value.split("=");
+			props[name] = value;
+		}
+	}
+
+	holder<logOutputPolicyFileClass> secondaryLogFile;
+	holder<loggerClass> secondaryLog;
+
+	void initializeSecondaryLog(const string &path)
+	{
+		secondaryLogFile = newLogOutputPolicyFile(path, false);
+		secondaryLog = newLogger();
+		secondaryLog->output.bind<logOutputPolicyFileClass, &logOutputPolicyFileClass::output>(secondaryLogFile.get());
+		secondaryLog->format.bind<&logFormatPolicyFile>();
+	}
+}
+
+void writeLine(const string &other)
+{
+	CAGE_LOG(severityEnum::Info, "asset-processor", string() + "writing: '" + other + "'");
+	{
+		string b = other;
+		if (b.split("=").trim() == "ref")
+			CAGE_LOG(severityEnum::Note, "asset-processor", string() + "reference hash: '" + (uint32)hashString(b.trim().c_str()) + "'");
+	}
+	if (fprintf(stdout, "%s\n", other.c_str()) < 0)
+		CAGE_THROW_ERROR(codeException, "fprintf", ferror(stdout));
+}
+
+string properties(const string &name)
+{
+	std::map <string, string>::iterator it = props.find(name);
+	if (it != props.end())
+		return it->second;
+	else
+	{
+		CAGE_LOG(severityEnum::Note, "exception", string() + "property name: '" + name + "'");
+		CAGE_THROW_ERROR(exception, "invalid property");
+	}
+}
+
+vec3 toVec3(const string &s)
+{
+	try
+	{
+		string tmp = s;
+		real a = tmp.split(",").trim().toFloat();
+		real b = tmp.split(",").trim().toFloat();
+		real c = tmp.trim().toFloat();
+		return vec3(a, b, c);
+	}
+	catch (...)
+	{
+		CAGE_LOG(severityEnum::Note, "exception", string() + "failed to parse string '" + s + "' as 3-component vector (comma separated)");
+		throw;
+	}
+}
+
+int main(int argc, const char *args[])
+{
+	try
+	{
+		if (newFilesystem()->exists("cage-asset-processor.ini"))
+			configLoadIni("cage-asset-processor.ini", "cage-asset-processor");
+
+		if (argc == 3 && string(args[1]) == "analyze")
+		{
+			logComponentName = "analyze";
+			inputDirectory = pathExtractPath(args[2]);
+			inputName = pathExtractFilename(args[2]);
+			derivedProperties();
+			initializeSecondaryLog(pathJoin(configGetString("cage-asset-processor.analyze-log.path", "analyze-log"), pathMakeValid(inputName) + ".log"));
+			return processAnalyze();
+		}
+
+		if (argc != 2)
+			CAGE_THROW_ERROR(exception, "missing asset type parameter");
+
+		loadProperties();
+		initializeSecondaryLog(pathJoin(configGetString("cage-asset-processor.process-log.path", "process-log"), pathMakeValid(inputName) + ".log"));
+
+#define GCHL_GENERATE(N) CAGE_LOG(severityEnum::Info, "asset-processor", string() + "input " CAGE_STRINGIZE(N) ": '" + N + "'");
+		CAGE_EVAL_MEDIUM(CAGE_EXPAND_ARGS(GCHL_GENERATE, inputDirectory, inputName, outputDirectory, outputName, assetPath, schemePath, schemeIndex, inputFileName, outputFileName, inputFile, inputSpec, inputIdentifier));
+#undef GCHL_GENERATE
+
+		for (std::map<string, string>::iterator it = props.begin(), et = props.end(); it != et; it++)
+			CAGE_LOG(severityEnum::Info, "asset-processor", string() + "property '" + it->first + "': '" + it->second + "'");
+
+		delegate<void()> func;
+		string component = string(args[1]);
+		if (component == "texture")
+			func.bind<&processTexture>();
+		else if (component == "shader")
+			func.bind<&processShader>();
+		else if (component == "pack")
+			func.bind<&processPack>();
+		else if (component == "object")
+			func.bind<&processObject>();
+		else if (component == "animation")
+			func.bind<&processSkeletalAnimation>();
+		else if (component == "mesh")
+			func.bind<&processMesh>();
+		else if (component == "skeleton")
+			func.bind<&processSkeleton>();
+		else if (component == "font")
+			func.bind<&processFont>();
+		else if (component == "textpack")
+			func.bind<&processTextpack>();
+		else if (component == "sound")
+			func.bind<&processSound>();
+		else if (component == "collider")
+			func.bind<&processCollider>();
+		else if (component == "raw")
+			func.bind<&processRaw>();
+		else
+			CAGE_THROW_ERROR(exception, "invalid asset type parameter");
+
+		logComponentName = component;
+		writeLine("cage-begin");
+		func();
+		writeLine("cage-end");
+		return 0;
+	}
+	catch (const cage::exception &)
+	{
+	}
+	catch (const std::exception &e)
+	{
+		CAGE_LOG(severityEnum::Error, "exception", string() + "std exception: " + e.what());
+	}
+	catch (...)
+	{
+		CAGE_LOG(severityEnum::Error, "exception", "unknown exception");
+	}
+	writeLine("cage-error");
+	return 1;
+}

@@ -1,0 +1,18 @@
+[scheme]
+processor = blender -b -P scripts/export_skeleton.py
+index = 13
+
+[export_names]
+display = export named bones
+type = bool
+default = true
+
+[export_animations]
+display = export animations
+type = bool
+default = true
+
+[scheme_animation]
+display = scheme animation
+type = uint32
+default = 5

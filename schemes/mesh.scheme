@@ -1,0 +1,33 @@
+[scheme]
+processor = cage-asset-processor mesh
+index = 12
+
+[export_uv]
+display = export uvs
+type = bool
+default = true
+
+[export_normal]
+display = export normals
+type = bool
+default = true
+
+[export_tangent]
+require = export_normal, export_uv
+display = generate tangents
+type = bool
+default = true
+
+[export_bones]
+display = export bones
+type = bool
+default = false
+
+[override_material]
+display = path to externally supplied material
+type = string
+
+[scale]
+display = scale
+type = real
+default = 1

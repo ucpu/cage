@@ -1,0 +1,6 @@
+include(disable_source_build)
+include(make_directory_link)
+include(print_all_variables)
+include(set_ide_groups)
+include(set_ide_working_dir)
+include(set_output_directories)

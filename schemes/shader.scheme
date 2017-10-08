@@ -1,0 +1,8 @@
+[scheme]
+processor = cage-asset-processor shader
+index = 10
+
+[version]
+display = shader version
+type = string
+default = 440 core

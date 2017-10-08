@@ -1,0 +1,14 @@
+namespace cage
+{
+#if defined (CAGE_DEBUG)
+#define GCHL_DEFAULT_MEMORY_BOUNDS_POLICY memoryBoundsPolicySimple
+#define GCHL_DEFAULT_MEMORY_TAG_POLICY memoryTagPolicySimple
+#define GCHL_DEFAULT_MEMORY_TRACK_POLICY memoryTrackPolicySimple
+#define GCHL_DEFAULT_MEMORY_STORE_SIZE true
+#else
+#define GCHL_DEFAULT_MEMORY_BOUNDS_POLICY memoryBoundsPolicyNone
+#define GCHL_DEFAULT_MEMORY_TAG_POLICY memoryTagPolicyNone
+#define GCHL_DEFAULT_MEMORY_TRACK_POLICY memoryTrackPolicyNone
+#define GCHL_DEFAULT_MEMORY_STORE_SIZE false
+#endif
+}
