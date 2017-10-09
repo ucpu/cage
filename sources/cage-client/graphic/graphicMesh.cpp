@@ -11,7 +11,6 @@
 #include <cage-client/graphic/shaderConventions.h>
 #include <cage-client/opengl.h>
 #include <cage-client/assets.h>
-#include <cage-client/assetStructures.h>
 #include "private.h"
 
 namespace cage

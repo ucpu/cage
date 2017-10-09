@@ -67,7 +67,7 @@ namespace cage
 		void listen(const string &address, uint16 port);
 
 		eventDispatcher<bool(uint32, memoryBuffer&)> findAssetBuffer; // this event is called from the loading thread
-		eventDispatcher<bool(uint32, string&)> findAssetPath; // thís event is called from the loading thread
+		eventDispatcher<bool(uint32, string&)> findAssetPath; // this event is called from the loading thread
 
 	private:
 		void zScheme(uint32 index, const assetSchemeStruct &value, uintPtr typeSize);
@@ -88,4 +88,6 @@ namespace cage
 	};
 
 	CAGE_API holder<assetManagerClass> newAssetManager(const assetManagerCreateConfig &config);
+
+	CAGE_API assetHeaderStruct initializeAssetHeader(const string &name, uint16 schemeIndex);
 }

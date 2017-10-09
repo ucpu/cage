@@ -1,15 +1,12 @@
 #include <map>
 
-#include <cage-core/core.h>
-
 #define CAGE_EXPORT
-#include <cage-core/core/macro/api.h>
-#include <cage-client/core.h>
-#include <cage-client/utility/textPack.h>
+#include <cage-core/core.h>
+#include <cage-core/utility/textPack.h>
 
 namespace cage
 {
-	string textPackClass::format(const string &format, uint32 paramCount, const string **paramValues)
+	string textPackClass::format(const string &format, uint32 paramCount, const string *const *paramValues)
 	{
 		string res = format;
 		while (true)
@@ -73,7 +70,7 @@ namespace cage
 		return it->second;
 	}
 
-	string textPackClass::format(uint32 name, uint32 paramCount, const string **paramValues) const
+	string textPackClass::format(uint32 name, uint32 paramCount, const string *const *paramValues) const
 	{
 		CAGE_ASSERT_RUNTIME(name != 0);
 		return format(get(name), paramCount, paramValues);

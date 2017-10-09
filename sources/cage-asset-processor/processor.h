@@ -4,9 +4,10 @@
 #include <cage-core/geometry.h>
 #include <cage-core/filesystem.h>
 #include <cage-core/config.h>
+#include <cage-core/assets.h>
 
 #include <cage-client/core.h>
-#include <cage-client/assetStructures.h>
+#include <cage-client/assets.h>
 
 using namespace cage;
 

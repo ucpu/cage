@@ -1,6 +1,7 @@
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
+#include <cage-core/assets.h>
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
 #include <cage-client/core.h>

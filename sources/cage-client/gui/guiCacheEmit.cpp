@@ -1,13 +1,16 @@
 #include <map>
 
 #include <cage-core/core.h>
+#include <cage-core/math.h>
+#include <cage-core/geometry.h>
+#include <cage-core/assets.h>
 #include <cage-core/utility/utf.h>
+#include <cage-core/utility/textPack.h>
 
 #include "controls/privateControls.h"
 #include "layouts/privateLayouts.h"
 
 #include <cage-client/assets.h>
-#include <cage-client/utility/textPack.h>
 
 namespace cage
 {

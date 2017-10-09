@@ -2,18 +2,20 @@
 
 #include <cage-core/core.h>
 #include <cage-core/math.h>
+#include <cage-core/geometry.h>
 #include <cage-core/log.h>
 #include <cage-core/entities.h>
 #include <cage-core/config.h>
+#include <cage-core/assets.h>
 #include <cage-core/utility/hashString.h>
 #include <cage-client/core.h>
 #include <cage-client/graphic.h>
 #include <cage-client/gui.h>
 #include <cage-client/engine.h>
 #include <cage-client/assets.h>
+#include <cage-client/opengl.h>
 #include <cage-client/utility/engineProfiling.h>
 #include <cage-client/utility/cameraController.h>
-#include <cage-client/opengl.h>
 
 using namespace cage;
 static const uint32 assetsName = hashString("cage/tests/lods/lods.pack");

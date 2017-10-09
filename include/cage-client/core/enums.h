@@ -2,14 +2,6 @@ namespace cage
 {
 	// assets
 
-	enum class assetStateEnum : uint32
-	{
-		Ready,
-		NotFound,
-		Error,
-		Unknown,
-	};
-
 	enum class meshFlags : uint32
 	{
 		None = 0,

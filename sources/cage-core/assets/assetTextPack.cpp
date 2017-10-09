@@ -1,9 +1,7 @@
-#include <cage-core/core.h>
 #define CAGE_EXPORT
-#include <cage-core/core/macro/api.h>
-#include <cage-client/core.h>
-#include <cage-client/assets.h>
-#include <cage-client/utility/textPack.h>
+#include <cage-core/core.h>
+#include <cage-core/assets.h>
+#include <cage-core/utility/textPack.h>
 
 namespace cage
 {

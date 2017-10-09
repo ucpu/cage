@@ -1,16 +1,18 @@
 #include <cage-core/core.h>
 #include <cage-core/log.h>
 #include <cage-core/math.h>
+#include <cage-core/geometry.h>
 #include <cage-core/entities.h>
 #include <cage-core/concurrent.h>
+#include <cage-core/assets.h>
 #include <cage-core/utility/hashString.h>
+#include <cage-core/utility/textPack.h>
 
 #include <cage-client/core.h>
 #include <cage-client/graphic.h>
 #include <cage-client/assets.h>
 #include <cage-client/gui.h>
 #include <cage-client/opengl.h>
-#include <cage-client/utility/textPack.h>
 
 using namespace cage;
 

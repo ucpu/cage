@@ -57,6 +57,19 @@ namespace cage
 	class udpConnectionClass;
 	class udpServerClass;
 
+	// assets
+	enum class assetStateEnum : uint32
+	{
+		Ready,
+		NotFound,
+		Error,
+		Unknown,
+	};
+	struct assetManagerCreateConfig;
+	struct assetContextStruct;
+	struct assetSchemeStruct;
+	class assetManagerClass;
+
 	// utilities
 	struct pointer;
 	struct randomGenerator;
@@ -77,4 +90,5 @@ namespace cage
 	class spatialQueryClass;
 	class collisionDataClass;
 	class collisionQueryClass;
+	class textPackClass;
 }

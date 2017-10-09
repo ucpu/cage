@@ -3,6 +3,7 @@
 #include <vector>
 #include <atomic>
 
+#define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/log.h>
 #include <cage-core/math.h>
@@ -10,15 +11,11 @@
 #include <cage-core/network.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/filesystem.h>
+#include <cage-core/assets.h>
 #include <cage-core/utility/hashTable.h>
 #include <cage-core/utility/hashString.h>
 #include <cage-core/utility/memoryBuffer.h>
 #include <cage-core/utility/threadSafeQueue.h>
-#define CAGE_EXPORT
-#include <cage-core/core/macro/api.h>
-#include <cage-client/core.h>
-#include <cage-client/assets.h>
-#include <cage-client/assetStructures.h>
 
 namespace cage
 {
@@ -136,7 +133,7 @@ namespace cage
 						if (buff.size() < sizeof(assetHeaderStruct))
 							CAGE_THROW_ERROR(exception, "asset is missing required header");
 						assetHeaderStruct *h = (assetHeaderStruct*)buff.data();
-						if (detail::memcmp(h->cageName, "cage", 5) != 0)
+						if (detail::memcmp(h->cageName, "cageAss", 8) != 0)
 							CAGE_THROW_ERROR(exception, "file is not a cage asset");
 						if (h->version != currentAssetVersion)
 							CAGE_THROW_ERROR(exception, "cage asset version mismatch");
@@ -683,7 +680,7 @@ namespace cage
 	{
 		assetHeaderStruct a;
 		detail::memset(&a, 0, sizeof(assetHeaderStruct));
-		detail::memcpy(a.cageName, "cage", 4);
+		detail::memcpy(a.cageName, "cageAss", 7);
 		a.version = currentAssetVersion;
 		string name = name_;
 		static const uint32 maxTexName = sizeof(a.textName);

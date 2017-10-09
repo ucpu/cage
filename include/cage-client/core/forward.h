@@ -1,10 +1,5 @@
 namespace cage
 {
-	struct assetManagerCreateConfig;
-	struct assetContextStruct;
-	struct assetSchemeStruct;
-	class assetManagerClass;
-
 	struct graphicException;
 	struct windowEventListeners;
 	struct stereoCameraStruct;
@@ -58,7 +53,6 @@ namespace cage
 	struct voiceComponent;
 	struct listenerComponent;
 
-	class textPackClass;
 	class engineProfilingClass;
 	class cameraControllerClass;
 }

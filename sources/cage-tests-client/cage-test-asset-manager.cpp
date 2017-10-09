@@ -1,7 +1,9 @@
 #include <cage-core/core.h>
 #include <cage-core/math.h>
+#include <cage-core/geometry.h>
 #include <cage-core/log.h>
 #include <cage-core/concurrent.h>
+#include <cage-core/assets.h>
 #include <cage-core/utility/timer.h>
 #include <cage-core/utility/hashString.h>
 #include <cage-client/core.h>

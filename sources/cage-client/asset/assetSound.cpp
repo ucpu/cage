@@ -1,13 +1,13 @@
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
+#include <cage-core/assets.h>
 #include "../sound/vorbisDecoder.h"
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
 #include <cage-client/core.h>
 #include <cage-client/sound.h>
 #include <cage-client/assets.h>
-#include <cage-client/assetStructures.h>
 
 namespace cage
 {
