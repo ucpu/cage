@@ -86,7 +86,7 @@ namespace cage
 
 		template<class T> inline constexpr T &&forward(typename remove_reference<T>::type  &v) noexcept { return static_cast<T&&>(v); }
 		template<class T> inline constexpr T &&forward(typename remove_reference<T>::type &&v) noexcept { return static_cast<T&&>(v); }
-		template<class T> inline constexpr typename remove_reference<T>::type &&move(T &&v) noexcept { return static_cast<remove_reference<T>::type&&>(v); }
+		template<class T> inline constexpr typename remove_reference<T>::type &&move(T &&v) noexcept { return static_cast<typename remove_reference<T>::type&&>(v); }
 	}
 
 	template<class T> struct enable_bitmask_operators { static const bool enable = false; };
