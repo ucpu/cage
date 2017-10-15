@@ -20,7 +20,6 @@ if(WIN32)
 endif()
 
 add_subdirectory(externals EXCLUDE_FROM_ALL)
-add_subdirectory(data)
 
 ########
 # OPTIONS

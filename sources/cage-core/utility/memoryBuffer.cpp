@@ -94,10 +94,7 @@ namespace cage
 	{
 		memoryBuffer compress(const memoryBuffer &input, uint32 quality)
 		{
-			memoryBuffer output;
-			uintPtr required = compressionBound(input.size());
-			if (output.size() < required)
-				output.reallocate(required);
+			memoryBuffer output(compressionBound(input.size()));
 			uintPtr res = compress(input.data(), input.size(), output.data(), output.size(), quality);
 			output.resize(res);
 			return output;

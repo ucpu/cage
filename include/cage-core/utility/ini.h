@@ -47,9 +47,9 @@ namespace cage
 		};
 		GCHL_GENERATE(bool, Bool, false, .toBool());
 		GCHL_GENERATE(sint32, Sint32, 0, .toSint32());
-		GCHL_GENERATE(sint32, Uint32, 0, .toUint32());
+		GCHL_GENERATE(uint32, Uint32, 0, .toUint32());
 		GCHL_GENERATE(sint64, Sint64, 0, .toSint64());
-		GCHL_GENERATE(sint64, Uint64, 0, .toUint64());
+		GCHL_GENERATE(uint64, Uint64, 0, .toUint64());
 		GCHL_GENERATE(float, Float, 0, .toFloat());
 		GCHL_GENERATE(double, Double, 0, .toDouble());
 		GCHL_GENERATE(string, String, "", );
