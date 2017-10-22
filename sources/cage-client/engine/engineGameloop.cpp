@@ -543,6 +543,7 @@ namespace cage
 					assets->remove(hashString("cage/cage.pack"));
 					while (assets->countTotal() > 0)
 					{
+						controlThread::assets.dispatch();
 						while (assets->processCustomThread(controlThread::threadIndex) || assets->processControlThread());
 						threadSleep(5000);
 					}
