@@ -38,7 +38,6 @@ void testHashTable();
 void testIni();
 void testColor();
 void testInterpolator();
-void testCommandBucket();
 void testProgram();
 void testMemoryBuffers();
 
@@ -81,7 +80,6 @@ int main()
 		testPng();
 		testNoise();
 		testInterpolator();
-		testCommandBucket();
 		testProgram();
 		testTcp();
 		testUdp();
