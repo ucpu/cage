@@ -8,10 +8,10 @@ using namespace cage;
 uint32 cageTestCaseStruct::counter = 0;
 
 void testMacros();
-void testCollisions();
 void testEnums();
 void testExceptions();
 void testNumericCast();
+void testTemplates();
 void testStrings();
 void testDelegates();
 void testHolder();
@@ -32,6 +32,7 @@ void testConfig();
 void testSceneEntities();
 void testSceneSerialize();
 void testSpatial();
+void testCollisions();
 void testPng();
 void testNoise();
 void testHashTable();
@@ -55,6 +56,7 @@ int main()
 		testEnums();
 		testExceptions();
 		testNumericCast();
+		testTemplates();
 		testStrings();
 		testDelegates();
 		testHolder();

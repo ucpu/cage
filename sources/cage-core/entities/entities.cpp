@@ -347,6 +347,11 @@ namespace cage
 		return &impl->entities[0];
 	}
 
+	templates::pointerRange<entityClass *const> groupClass::entities()
+	{
+		return { entitiesArray(), entitiesArray() + entitiesCount() };
+	}
+
 	void groupClass::entitiesCallback(const delegate<void(entityClass *)> &callback)
 	{
 		groupImpl *impl = (groupImpl*)this;

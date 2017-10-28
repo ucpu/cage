@@ -4,10 +4,13 @@ namespace cage
 	{
 		template<class T> struct pointerRange
 		{
-			T *const begin;
-			T *const end;
-			pointerRange(T *begin, T *end) : begin(begin), end(end)
-			{}
+		private:
+			T *const begin_;
+			T *const end_;
+		public:
+			pointerRange(T *begin, T *end) : begin_(begin), end_(end) {}
+			T *begin() { return begin_; }
+			T *end() { return end_; }
 		};
 
 		template<uint64 B, uint64 E> struct pow

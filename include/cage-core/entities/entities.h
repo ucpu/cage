@@ -3,6 +3,7 @@ namespace cage
 	template struct CAGE_API delegate<void(componentClass*, entityClass*)>;
 	template struct CAGE_API delegate<void(groupClass*, entityClass*)>;
 	template struct CAGE_API delegate<void(entityClass *)>;
+	template struct CAGE_API eventDispatcher<bool(entityClass*)>;
 
 	class CAGE_API entityManagerClass
 	{
@@ -63,8 +64,6 @@ namespace cage
 		void *zPrivateValue(componentClass *component);
 	};
 
-	template struct CAGE_API eventDispatcher<bool(entityClass*)>;
-
 	class CAGE_API groupClass
 	{
 	public:
@@ -73,6 +72,7 @@ namespace cage
 
 		uint32 entitiesCount() const;
 		entityClass *const *entitiesArray();
+		templates::pointerRange<entityClass *const> entities();
 		void entitiesCallback(const delegate<void(entityClass *)> &callback);
 
 		void addEntity(entityClass *entity) { entity->addGroup(this); }
