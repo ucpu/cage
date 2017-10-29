@@ -483,7 +483,7 @@ namespace cage
 		impl->listener = newTcpConnection(address, port);
 	}
 
-	uint32 assetManagerClass::countDependencies(uint32 assetName) const
+	uint32 assetManagerClass::dependenciesCount(uint32 assetName) const
 	{
 		CAGE_ASSERT_RUNTIME(ready(assetName), assetName);
 		assetManagerImpl *impl = (assetManagerImpl*)this;
@@ -499,6 +499,14 @@ namespace cage
 		CAGE_ASSERT_RUNTIME(ass);
 		CAGE_ASSERT_RUNTIME(index < ass->dependencies.size(), index, ass->dependencies.size(), assetName);
 		return ass->dependencies[index];
+	}
+
+	templates::pointerRange<const uint32> assetManagerClass::dependencies(uint32 assetName) const
+	{
+		assetManagerImpl *impl = (assetManagerImpl*)this;
+		assetContextPrivateStruct *ass = impl->index->get(assetName, false);
+		CAGE_ASSERT_RUNTIME(ass);
+		return { ass->dependencies.data(), ass->dependencies.data() + ass->dependencies.size() };
 	}
 
 	uint32 assetManagerClass::countTotal() const

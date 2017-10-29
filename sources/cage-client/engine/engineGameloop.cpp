@@ -436,10 +436,12 @@ namespace cage
 				}
 
 				{ // initialize asset schemes
+					// core assets
 					assets->defineScheme<void>(assetSchemeIndexPack, genAssetSchemePack(controlThread::threadIndex));
 					assets->defineScheme<memoryBuffer>(assetSchemeIndexRaw, genAssetSchemeRaw(controlThread::threadIndex));
 					assets->defineScheme<textPackClass>(assetSchemeIndexTextPackage, genAssetSchemeTextPackage(controlThread::threadIndex));
 					assets->defineScheme<colliderClass>(assetSchemeIndexCollider, genAssetSchemeCollider(controlThread::threadIndex));
+					// client assets
 					assets->defineScheme<shaderClass>(assetSchemeIndexShader, genAssetSchemeShader(graphicDispatchThread::threadIndex, window.get()));
 					assets->defineScheme<textureClass>(assetSchemeIndexTexture, genAssetSchemeTexture(graphicDispatchThread::threadIndex, window.get()));
 					assets->defineScheme<meshClass>(assetSchemeIndexMesh, genAssetSchemeMesh(graphicDispatchThread::threadIndex, window.get()));
@@ -448,6 +450,7 @@ namespace cage
 					assets->defineScheme<objectClass>(assetSchemeIndexObject, genAssetSchemeObject(graphicPrepareThread::threadIndex));
 					assets->defineScheme<fontClass>(assetSchemeIndexFont, genAssetSchemeFont(graphicDispatchThread::threadIndex, window.get()));
 					assets->defineScheme<sourceClass>(assetSchemeIndexSound, genAssetSchemeSound(soundThread::threadIndex, sound.get()));
+					// cage pack
 					assets->add(hashString("cage/cage.pack"));
 				}
 

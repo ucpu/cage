@@ -1,9 +1,6 @@
 namespace cage
 {
-	namespace detail
-	{
-		template struct CAGE_API stringBase<32>;
-	}
+	template struct CAGE_API detail::stringBase<32>;
 	template struct CAGE_API delegate<void(const assetContextStruct *, void *)>;
 	typedef delegate<void(const assetContextStruct *, void *)> assetDelegate;
 
@@ -49,9 +46,10 @@ namespace cage
 
 		// follows:
 		// array of dependency names, each uint32
-		// any other asset-specific headers
+		// any other asset-specific data
 	};
 
+	/*
 	struct CAGE_API textPackHeaderStruct
 	{
 		// follows:
@@ -68,4 +66,5 @@ namespace cage
 		// follows:
 		// serialized collider data (possibly compressed)
 	};
+	*/
 }

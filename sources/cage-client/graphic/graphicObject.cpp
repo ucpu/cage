@@ -85,6 +85,13 @@ namespace cage
 		return impl->lods[lod].meshes[index];
 	}
 
+	templates::pointerRange<const uint32> objectClass::meshes(uint32 lod) const
+	{
+		objectImpl *impl = (objectImpl*)this;
+		auto &r = impl->lods[lod].meshes;
+		return { r.data(), r.data() + r.size() };
+	}
+
 	holder<objectClass> newObject()
 	{
 		return detail::systemArena().createImpl<objectClass, objectImpl>();

@@ -123,6 +123,11 @@ namespace cage
 		return impl->resultPairs.data();
 	}
 
+	templates::pointerRange<const collisionPairStruct> collisionQueryClass::collisionPairs() const
+	{
+		return { collisionPairsData(), collisionPairsData() + collisionPairsCount() };
+	}
+
 	void collisionQueryClass::query(const colliderClass *collider, const transform &t)
 	{
 		return query(collider, t, t);

@@ -197,6 +197,11 @@ namespace cage
 		return impl->resultNames.data();
 	}
 
+	templates::pointerRange<const uint32> spatialQueryClass::result() const
+	{
+		return { resultArray(), resultArray() + resultCount() };
+	}
+
 	void spatialQueryClass::intersection(const line &shape)
 	{
 		spatialQueryImpl *impl = (spatialQueryImpl*)this;

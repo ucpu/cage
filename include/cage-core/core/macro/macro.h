@@ -1,6 +1,8 @@
+/*
 #ifdef NULL
 #undef NULL // encourage using nullptr
 #endif
+*/
 
 #if defined(_DEBUG) || defined(DEBUG) || defined(__DEBUG__)
 #define CAGE_DEBUG

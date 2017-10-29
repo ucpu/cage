@@ -1,4 +1,5 @@
 #include <vector>
+#include <atomic>
 
 #include <cage-core/core.h>
 #include <cage-core/math.h>
@@ -17,8 +18,21 @@ namespace cage
 {
 	namespace
 	{
-		holder<mutexClass> windowCreationMutex = newMutex();
-		holder<mutexClass> windowEventsMutex = newMutex();
+		class mutexInitClass
+		{
+		public:
+			mutexInitClass()
+			{
+				m = newMutex();
+			}
+			holder<mutexClass> m;
+		};
+
+		mutexClass *windowsMutex()
+		{
+			static mutexInitClass *m = new mutexInitClass(); // intentional leak
+			return m->m.get();
+		}
 
 		void handleGlfwError(int, const char *message)
 		{
@@ -99,14 +113,86 @@ namespace cage
 		class windowImpl : public windowClass
 		{
 		public:
+			windowClass *shareContext;
 			holder<mutexClass> eventsMutex;
 			std::vector<eventStruct> eventsQueueLocked;
 			std::vector<eventStruct> eventsQueueNoLock;
 			GLFWwindow *window;
+			bool focus;
 
-			windowImpl(windowClass *shareContext) : eventsMutex(newMutex())
+#ifdef CAGE_SYSTEM_WINDOWS
+			holder<threadClass> windowThread;
+			holder<semaphoreClass> windowSemaphore;
+			std::atomic<bool> stopping;
+
+			void treadEntry()
 			{
-				scopeLock<mutexClass> lock(windowCreationMutex);
+				try
+				{
+					initializeWindow();
+				}
+				catch (...)
+				{
+					stopping = true;
+				}
+				windowSemaphore->unlock();
+				while (!stopping)
+				{
+					{
+						scopeLock<mutexClass> l(windowsMutex());
+						try
+						{
+							glfwPollEvents();
+						}
+						catch (...)
+						{
+							CAGE_LOG(severityEnum::Warning, "glfw", "an exception occured in event processing");
+						}
+					}
+					threadSleep(5000);
+				}
+				finalizeWindow();
+			}
+#endif
+
+			windowImpl(windowClass *shareContext) : shareContext(shareContext), eventsMutex(newMutex()), focus(true)
+			{
+#ifdef CAGE_SYSTEM_WINDOWS
+				stopping = false;
+				windowSemaphore = newSemaphore(0, 1);
+				windowThread = newThread(delegate<void()>().bind<windowImpl, &windowImpl::treadEntry>(this), "window");
+				windowSemaphore->lock();
+				if (stopping)
+					CAGE_THROW_ERROR(exception, "failed to initialize window");
+#else
+				initializeWindow();
+#endif
+
+				// initialize opengl
+				makeCurrent();
+				{
+					// initialize opengl functions (gl loader)
+					if (!gladLoadGL())
+						CAGE_THROW_ERROR(graphicException, "gladLoadGl", 0);
+				}
+				openglContextInitializeGeneral(this);
+			}
+
+			~windowImpl()
+			{
+#ifdef CAGE_SYSTEM_WINDOWS
+				stopping = true;
+				if (windowThread)
+					windowThread->wait();
+#else
+				finalizeWindow();
+#endif
+			}
+
+			void initializeWindow()
+			{
+				scopeLock<mutexClass> lock(windowsMutex());
+				glfwDefaultWindowHints();
 				glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
 				glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
 				glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -118,24 +204,18 @@ namespace cage
 #else
 					GLFW_FALSE
 #endif // CAGE_DEBUG
-					);
+				);
 				glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 				window = glfwCreateWindow(1, 1, "Cage GLFW Window", NULL, shareContext ? ((windowImpl*)shareContext)->window : nullptr);
 				if (!window)
 					CAGE_THROW_ERROR(exception, "failed to create glfw window");
 				glfwSetWindowUserPointer(window, this);
 				initializeEvents();
-				makeCurrent();
-				{ // initialize opengl functions (gl loader)
-					if (!gladLoadGL())
-						CAGE_THROW_ERROR(graphicException, "gladLoadGl", 0);
-				}
-				openglContextInitializeGeneral(this);
 			}
 
-			~windowImpl()
+			void finalizeWindow()
 			{
-				scopeLock<mutexClass> lock(windowCreationMutex);
+				scopeLock<mutexClass> lock(windowsMutex());
 				glfwDestroyWindow(window);
 				window = nullptr;
 			}
@@ -356,7 +436,11 @@ namespace cage
 	bool windowClass::isFocused() const
 	{
 		windowImpl *impl = (windowImpl*)this;
+#ifdef CAGE_SYSTEM_WINDOWS
+		return impl->focus;
+#else
 		return glfwGetWindowAttrib(impl->window, GLFW_FOCUSED);
+#endif // CAGE_SYSTEM_WINDOWS
 	}
 
 	bool windowClass::isFullscreen() const
@@ -416,10 +500,12 @@ namespace cage
 	void windowClass::processEvents()
 	{
 		windowImpl *impl = (windowImpl*)this;
+#ifndef CAGE_SYSTEM_WINDOWS
 		{
-			scopeLock<mutexClass> l(windowEventsMutex);
+			scopeLock<mutexClass> l(windowsMutex());
 			glfwPollEvents();
 		}
+#endif // !CAGE_SYSTEM_WINDOWS
 		{
 			scopeLock<mutexClass> l(impl->eventsMutex);
 			impl->eventsQueueNoLock.insert(impl->eventsQueueNoLock.end(), impl->eventsQueueLocked.begin(), impl->eventsQueueLocked.end());
@@ -478,9 +564,11 @@ namespace cage
 				impl->events.windowPaint.dispatch(this);
 				break;
 			case eventStruct::eventType::FocusGain:
+				impl->focus = true;
 				impl->events.focusGain.dispatch(this);
 				break;
 			case eventStruct::eventType::FocusLose:
+				impl->focus = false;
 				impl->events.focusLose.dispatch(this);
 				break;
 			default:

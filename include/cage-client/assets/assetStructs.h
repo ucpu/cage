@@ -1,5 +1,6 @@
 namespace cage
 {
+	/*
 	struct CAGE_API shaderHeaderStruct
 	{
 		// follows:
@@ -10,6 +11,7 @@ namespace cage
 		// stage name, uint32
 		// ...
 	};
+	*/
 
 	struct CAGE_API textureHeaderStruct
 	{

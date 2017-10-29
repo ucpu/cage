@@ -89,6 +89,12 @@ namespace cage
 		return impl->modes[index];
 	}
 
+	templates::pointerRange<const screenMode> screenDeviceClass::modes() const
+	{
+		screenDeviceImpl *impl = (screenDeviceImpl*)this;
+		return { impl->modes.data(), impl->modes.data() + impl->modes.size() };
+	}
+
 	string screenDeviceClass::name() const
 	{
 		screenDeviceImpl *impl = (screenDeviceImpl*)this;
@@ -117,6 +123,12 @@ namespace cage
 	{
 		screenListImpl *impl = (screenListImpl*)this;
 		return impl->devices[index];
+	}
+
+	templates::pointerRange<const screenDeviceClass> screenListClass::devices() const
+	{
+		screenListImpl *impl = (screenListImpl*)this;
+		return { impl->devices.data(), impl->devices.data() + impl->devices.size() };
 	}
 
 	holder<screenListClass> newScreenList()

@@ -19,8 +19,10 @@ namespace cage
 	public:
 		void read(void *data, uint64 size);
 		bool readLine(string &line);
+		memoryBuffer readBuffer(uintPtr size);
 		void write(const void *data, uint64 size);
 		void writeLine(const string &line);
+		void writeBuffer(const memoryBuffer &buffer);
 		void seek(uint64 position);
 		void reopen(const fileMode &mode);
 		void flush();

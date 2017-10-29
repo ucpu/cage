@@ -17,6 +17,7 @@ namespace cage
 		real lodsThreshold(uint32 lod) const;
 		uint32 meshesCount(uint32 lod) const;
 		uint32 meshesName(uint32 lod, uint32 index) const;
+		templates::pointerRange<const uint32> meshes(uint32 lod) const;
 	};
 
 	CAGE_API holder<objectClass> newObject();

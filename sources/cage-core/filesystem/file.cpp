@@ -2,6 +2,7 @@
 #include <cage-core/core.h>
 #include <cage-core/log.h>
 #include <cage-core/filesystem.h>
+#include <cage-core/utility/memoryBuffer.h>
 #include "../system.h"
 
 #if defined (CAGE_SYSTEM_WINDOWS)
@@ -112,6 +113,13 @@ namespace cage
 		}
 	}
 
+	memoryBuffer fileClass::readBuffer(uintPtr size)
+	{
+		memoryBuffer r(size);
+		read(r.data(), r.size());
+		return r;
+	}
+
 	void fileClass::write(const void *data, uint64 size)
 	{
 		fileImpl *impl = (fileImpl *)this;
@@ -126,6 +134,11 @@ namespace cage
 	{
 		string d = data + "\n";
 		write(d.c_str(), d.length());
+	}
+
+	void fileClass::writeBuffer(const memoryBuffer &buffer)
+	{
+		write(buffer.data(), buffer.size());
 	}
 
 	void fileClass::seek(uint64 position)

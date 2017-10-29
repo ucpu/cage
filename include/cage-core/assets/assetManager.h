@@ -55,8 +55,9 @@ namespace cage
 			zSet(assetName, value);
 		}
 
-		uint32 countDependencies(uint32 assetName) const;
+		uint32 dependenciesCount(uint32 assetName) const;
 		uint32 dependencyName(uint32 assetName, uint32 index) const;
+		templates::pointerRange<const uint32> dependencies(uint32 assetName) const;
 
 		bool processCustomThread(uint32 threadIndex);
 		bool processControlThread();
