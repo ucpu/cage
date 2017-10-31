@@ -1,6 +1,3 @@
-[submodule "enet/enet"]
-	path = enet/enet
-	url = https://github.com/lsalzman/enet.git
 [submodule "lodepng/lodepng"]
 	path = lodepng/lodepng
 	url = https://github.com/lvandeve/lodepng.git
@@ -52,3 +49,6 @@
 [submodule "zlib/zlib"]
 	path = zlib/zlib
 	url = https://github.com/ucpu/zlib.git
+[submodule "enet/enet"]
+	path = enet/enet
+	url = https://github.com/ucpu/enet.git
