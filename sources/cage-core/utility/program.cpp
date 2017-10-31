@@ -136,7 +136,7 @@ namespace cage
 			int aStdinPipe[2];
 			int aStdoutPipe[2];
 			pid_t pid;
-			
+
 			class envAlt
 			{
 				string p;
@@ -145,9 +145,10 @@ namespace cage
 				envAlt()
 				{
 					p = getenv("PATH");
-					setenv("PATH", (string() + ".:" + p).c_str(), 1);
+					string n = string() + ".:" + pathToAbs(newFilesystem()->currentDir()) + ":" + p;
+					setenv("PATH", n.c_str(), 1);
 				}
-				
+
 				~envAlt()
 				{
 					setenv("PATH", p.c_str(), 1);
@@ -160,9 +161,7 @@ namespace cage
 				scopeLock<mutexClass> lock(mut);
 
 				CAGE_LOG(severityEnum::Info, "program", string() + "launching program '" + cmd + "' in directory '" + workingDir + "'");
-				
-				envAlt envalt;
-				
+
 				if (pipe(aStdinPipe) < 0)
 					CAGE_THROW_ERROR(exception, "failed to open pipe");
 				if (pipe(aStdoutPipe) < 0)
@@ -189,12 +188,15 @@ namespace cage
 					// redirect stderr
 					if (dup2(aStdoutPipe[PIPE_WRITE], STDERR_FILENO) == -1)
 						CAGE_THROW_ERROR(exception, "failed to duplicate stderr pipe");
-					
+
 					// close unused file descriptors
 					close(aStdinPipe[PIPE_READ]);
 					close(aStdinPipe[PIPE_WRITE]);
 					close(aStdoutPipe[PIPE_READ]);
 					close(aStdoutPipe[PIPE_WRITE]);
+
+					// alter environment
+					envAlt envalt;
 
 					// run child process image
 					string params = string() + "(cd '" + workingDir + "'; " + cmd + " )";
@@ -223,7 +225,7 @@ namespace cage
 
 				CAGE_LOG_CONTINUE(severityEnum::Info, "program", string() + "process id: " + pid);
 			}
-			
+
 			~programImpl()
 			{
 				wait();
