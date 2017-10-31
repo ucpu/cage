@@ -53,7 +53,12 @@ namespace cage
 			{
 				glfwTerminate();
 			}
-		} glfwInitializerInstance;
+		};
+
+		void glfwInitializeFunc()
+		{
+			static glfwInitializerClass *m = new glfwInitializerClass(); // intentional leak
+		}
 
 		struct eventStruct
 		{
@@ -157,6 +162,8 @@ namespace cage
 
 			windowImpl(windowClass *shareContext) : shareContext(shareContext), eventsMutex(newMutex()), focus(true)
 			{
+				glfwInitializeFunc();
+
 #ifdef CAGE_SYSTEM_WINDOWS
 				stopping = false;
 				windowSemaphore = newSemaphore(0, 1);
