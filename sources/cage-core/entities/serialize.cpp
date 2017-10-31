@@ -6,6 +6,7 @@
 #include <cage-core/math.h>
 #include <cage-core/memory.h>
 #include <cage-core/entities.h>
+#include <cage-core/utility/memoryBuffer.h>
 
 namespace cage
 {
@@ -50,7 +51,7 @@ namespace cage
 		uintPtr typeSize = component->getTypeSize();
 		pointer ptr = buffer;
 		write(ptr, bufferSize, component->getComponentIndex());
-		write(ptr, bufferSize, typeSize);
+		write(ptr, bufferSize, (uint64)typeSize);
 		uint32 &cnt = *ptr.asUint32;
 		write(ptr, bufferSize, uint32(0));
 		entityClass *const *ents = entities->entitiesArray();
@@ -69,16 +70,24 @@ namespace cage
 		return ptr - buffer;
 	}
 
+	memoryBuffer entitiesSerialize(groupClass *entities, componentClass *component)
+	{
+		memoryBuffer buff(100 + entities->entitiesCount()  * component->getTypeSize());
+		auto res = entitiesSerialize(buff.data(), buff.size(), entities, component);
+		buff.resize(res);
+		return buff;
+	}
+
 	void entitiesDeserialize(const void *buffer, uintPtr bufferSize, entityManagerClass *manager)
 	{
 		pointer ptr = const_cast<void*>(buffer);
 		uint32 componentIndex = read<uint32>(ptr, bufferSize);
 		if (componentIndex >= manager->getComponentsCount())
-			CAGE_THROW_ERROR(exception, "incompatible component");
+			CAGE_THROW_ERROR(exception, "incompatible component (different index)");
 		componentClass *component = manager->getComponentByIndex(componentIndex);
-		uintPtr typeSize = read<uintPtr>(ptr, bufferSize);
+		uint64 typeSize = read<uint64>(ptr, bufferSize);
 		if (component->getTypeSize() != typeSize)
-			CAGE_THROW_ERROR(exception, "incompatible component");
+			CAGE_THROW_ERROR(exception, "incompatible component (different size)");
 		uint32 cnt = read<uint32>(ptr, bufferSize);
 		while (cnt--)
 		{
@@ -90,5 +99,10 @@ namespace cage
 			entityClass *e = manager->getEntity(name);
 			read(ptr, bufferSize, e->unsafeValue(component), typeSize);
 		}
+	}
+
+	void entitiesDeserialize(const memoryBuffer &buffer, entityManagerClass *manager)
+	{
+		entitiesDeserialize(buffer.data(), buffer.size(), manager);
 	}
 }

@@ -75,7 +75,10 @@ namespace cage
 			void check()
 			{
 				if (!peer)
+				{
+					detail::overrideBreakpoint ob;
 					CAGE_THROW_ERROR(disconnectedException, "peer disconnected");
+				}
 				if (client)
 				{
 					ENetPeer *peer = nullptr;
