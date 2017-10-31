@@ -8,6 +8,7 @@
 #include <cage-client/core.h>
 #include <cage-client/graphic.h>
 #include <cage-client/opengl.h>
+#include <cage-client/utility/highPerformanceGpuHint.h>
 
 using namespace cage;
 
@@ -216,5 +217,3 @@ int main(int argc, char *args[])
 		return 1;
 	}
 }
-
-#include <cage-client/highPerformanceGpuHint.h>

@@ -1,4 +1,5 @@
 #include <map>
+#include <vector>
 
 #define CAGE_EXPORT
 #include <cage-core/core.h>
@@ -30,7 +31,8 @@ namespace cage
 			iniImpl(uintPtr memory) : pool(memory), arena(&pool), sections(arena) {}
 			memoryArenaGrowing<memoryAllocatorPolicyPool<sizeof(templates::allocatorSizeMap<string, string>)>, memoryConcurrentPolicyNone> pool;
 			memoryArena arena;
-			containerMap<string, holder<inisection> > sections;
+			containerMap<string, holder<inisection>> sections;
+			std::vector<string> tmpSections, tmpItems;
 		};
 	}
 
@@ -59,6 +61,15 @@ namespace cage
 	{
 		iniImpl *impl = (iniImpl*)this;
 		return impl->sections.cont.find(section) != impl->sections.cont.end();
+	}
+
+	templates::pointerRange<string> iniClass::sections() const
+	{
+		iniImpl *impl = (iniImpl*)this;
+		impl->tmpSections.clear();
+		for (auto it : impl->sections.cont)
+			impl->tmpSections.push_back(it.first);
+		return { impl->tmpSections.data(), impl->tmpSections.data() + impl->tmpSections.size() };
 	}
 
 	uint32 iniClass::itemCount(const string &section) const
@@ -93,6 +104,15 @@ namespace cage
 		iniImpl *impl = (iniImpl*)this;
 		containerMap<string, holder<inisection>>::citer i = impl->sections.cont.find(section);
 		return i->second->items.cont.find(item) != i->second->items.cont.end();
+	}
+
+	templates::pointerRange<string> iniClass::items(const string &section) const
+	{
+		iniImpl *impl = (iniImpl*)this;
+		impl->tmpItems.clear();
+		for (auto it : impl->sections.cont[section]->items.cont)
+			impl->tmpItems.push_back(it.first);
+		return { impl->tmpItems.data(), impl->tmpItems.data() + impl->tmpItems.size() };
 	}
 
 	string iniClass::get(const string &section, const string &item) const

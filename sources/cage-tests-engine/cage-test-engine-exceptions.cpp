@@ -8,6 +8,7 @@
 #include <cage-client/core.h>
 #include <cage-client/graphic.h>
 #include <cage-client/engine.h>
+#include <cage-client/utility/highPerformanceGpuHint.h>
 
 using namespace cage;
 volatile bool fullStop = false;
@@ -15,13 +16,6 @@ volatile bool fullStop = false;
 static const float probInit = 0.02f;
 static const float probFinish = 0.02f;
 static const float probLoop = 0.001f;
-
-bool applicationQuit()
-{
-	fullStop = true;
-	engineStop();
-	return false;
-}
 
 bool windowClose(windowClass *)
 {
@@ -165,11 +159,8 @@ int main(int argc, char *args[])
 			GCHL_GENERATE((), soundFinish, soundThread::finalize);
 			GCHL_GENERATE((), soundSound, soundThread::sound);
 #undef GCHL_GENERATE
-			eventListener<bool()> applicationQuitListener;
 			eventListener<bool(windowClass *)> windowCloseListener;
-			applicationQuitListener.bind<&applicationQuit>();
 			windowCloseListener.bind<&windowClose>();
-			applicationQuitListener.attach(window()->events.applicationQuit);
 			windowCloseListener.attach(window()->events.windowClose);
 
 			window()->modeSetWindowed((windowFlags)(windowFlags::Border | windowFlags::Resizeable));
@@ -201,5 +192,3 @@ int main(int argc, char *args[])
 		return 1;
 	}
 }
-
-#include <cage-client/highPerformanceGpuHint.h>

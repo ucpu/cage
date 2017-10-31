@@ -6,7 +6,7 @@
 
 namespace cage
 {
-	string textPackClass::format(const string &format, uint32 paramCount, const string *const *paramValues)
+	string textPackClass::format(const string &format, uint32 paramCount, const string *paramValues)
 	{
 		string res = format;
 		while (true)
@@ -19,14 +19,14 @@ namespace cage
 			{
 				uint32 idx = mid.toUint32();
 				if (idx < paramCount)
-					mid = *paramValues[idx];
+					mid = paramValues[idx];
 				else
 					mid = "";
 			}
 			else
 				mid = "";
-			if (prev.length() + mid.length() + res.length() >= string::MaxLength)
-				CAGE_THROW_ERROR(exception, "string too long");
+			//if (prev.length() + mid.length() + res.length() >= string::MaxLength)
+			//	CAGE_THROW_ERROR(exception, "string too long");
 			res = prev + mid + res;
 		}
 	}
@@ -70,7 +70,7 @@ namespace cage
 		return it->second;
 	}
 
-	string textPackClass::format(uint32 name, uint32 paramCount, const string *const *paramValues) const
+	string textPackClass::format(uint32 name, uint32 paramCount, const string *paramValues) const
 	{
 		CAGE_ASSERT_RUNTIME(name != 0);
 		return format(get(name), paramCount, paramValues);

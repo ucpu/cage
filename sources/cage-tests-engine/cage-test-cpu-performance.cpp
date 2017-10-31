@@ -1,3 +1,5 @@
+#include <atomic>
+
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/log.h>
@@ -12,6 +14,7 @@
 #include <cage-client/engine.h>
 #include <cage-client/utility/cameraController.h>
 #include <cage-client/utility/engineProfiling.h>
+#include <cage-client/utility/highPerformanceGpuHint.h>
 
 using namespace cage;
 
@@ -19,13 +22,7 @@ holder<cameraControllerClass> cameraController;
 real boxesCount;
 real cameraRange;
 bool shadowEnabled;
-volatile bool regenerate;
-
-bool applicationQuit()
-{
-	engineStop();
-	return false;
-}
+std::atomic<bool> regenerate;
 
 bool windowClose(windowClass *)
 {
@@ -284,13 +281,10 @@ int main(int argc, char *args[])
 		GCHL_GENERATE((), guiInit, controlThread::initialize);
 		GCHL_GENERATE((uint64), gui, controlThread::update);
 #undef GCHL_GENERATE
-		eventListener<bool()> applicationQuitListener;
 		eventListener<bool(windowClass *)> windowCloseListener;
 		eventListener<bool(windowClass *, uint32 key, uint32, modifiersFlags modifiers)> keyReleaseListener;
-		applicationQuitListener.bind<&applicationQuit>();
 		windowCloseListener.bind<&windowClose>();
 		keyReleaseListener.bind<&keyRelease>();
-		applicationQuitListener.attach(window()->events.applicationQuit);
 		windowCloseListener.attach(window()->events.windowClose);
 		keyReleaseListener.attach(window()->events.keyRelease);
 
@@ -318,5 +312,3 @@ int main(int argc, char *args[])
 		return 1;
 	}
 }
-
-#include <cage-client/highPerformanceGpuHint.h>

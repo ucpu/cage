@@ -13,6 +13,8 @@
 #include <cage-client/assets.h>
 #include <cage-client/gui.h>
 #include <cage-client/opengl.h>
+#include <cage-client/utility/highPerformanceGpuHint.h>
+
 
 using namespace cage;
 
@@ -726,12 +728,6 @@ void generateScreen(uint32 screen)
 	}
 }
 
-bool applicationQuit()
-{
-	closing = true;
-	return true;
-}
-
 bool windowClose(windowClass *)
 {
 	closing = true;
@@ -751,8 +747,6 @@ int main(int argc, char *args[])
 		// window
 		window = newWindow();
 		eventListener<bool()> applicationQuitListener;
-		applicationQuitListener.bind<&applicationQuit>();
-		window->events.applicationQuit.add(applicationQuitListener);
 		eventListener<bool(windowClass*)> windowCloseListener;
 		windowCloseListener.bind<&windowClose>();
 		window->events.windowClose.add(windowCloseListener);
@@ -846,5 +840,3 @@ int main(int argc, char *args[])
 		return 1;
 	}
 }
-
-#include <cage-client/highPerformanceGpuHint.h>

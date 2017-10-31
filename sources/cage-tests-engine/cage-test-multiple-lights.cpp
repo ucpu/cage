@@ -18,15 +18,10 @@
 #include <cage-client/opengl.h>
 #include <cage-client/utility/engineProfiling.h>
 #include <cage-client/utility/cameraController.h>
+#include <cage-client/utility/highPerformanceGpuHint.h>
 
 using namespace cage;
 static const uint32 assetsName = hashString("cage/tests/bottle/bottle.pack");
-
-bool applicationQuit()
-{
-	engineStop();
-	return false;
-}
 
 bool windowClose(windowClass *)
 {
@@ -214,7 +209,6 @@ int main(int argc, char *args[])
 
 		// events
 #define GCHL_GENERATE(TYPE, FUNC, EVENT) eventListener<bool TYPE> CAGE_JOIN(FUNC, Listener); CAGE_JOIN(FUNC, Listener).bind<&FUNC>(); CAGE_JOIN(FUNC, Listener).attach(EVENT);
-		GCHL_GENERATE((), applicationQuit, window()->events.applicationQuit);
 		GCHL_GENERATE((windowClass *), windowClose, window()->events.windowClose);
 		GCHL_GENERATE((uint64), update, controlThread::update);
 #undef GCHL_GENERATE
@@ -280,6 +274,3 @@ int main(int argc, char *args[])
 		return 1;
 	}
 }
-
-#include <cage-client/highPerformanceGpuHint.h>
-

@@ -8,17 +8,12 @@
 #include <cage-client/graphic.h>
 #include <cage-client/sound.h>
 #include <cage-client/engine.h>
+#include <cage-client/utility/highPerformanceGpuHint.h>
 
 using namespace cage;
 
 holder<sourceClass> toneSource;
 holder<busClass> toneBus;
-
-bool applicationQuit()
-{
-	engineStop();
-	return false;
-}
 
 bool windowClose(windowClass *)
 {
@@ -123,7 +118,6 @@ int main(int argc, char *args[])
 		GCHL_GENERATE((), soundInit, soundThread::initialize);
 		GCHL_GENERATE((), soundFinish, soundThread::finalize);
 		GCHL_GENERATE((uint64), update, controlThread::update);
-		GCHL_GENERATE((), applicationQuit, window()->events.applicationQuit);
 		GCHL_GENERATE((windowClass *), windowClose, window()->events.windowClose);
 #undef GCHL_GENERATE
 
@@ -143,5 +137,3 @@ int main(int argc, char *args[])
 		return 1;
 	}
 }
-
-#include <cage-client/highPerformanceGpuHint.h>

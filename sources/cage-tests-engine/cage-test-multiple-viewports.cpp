@@ -1,3 +1,4 @@
+#include <atomic>
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/log.h>
@@ -9,18 +10,13 @@
 #include <cage-client/gui.h>
 #include <cage-client/engine.h>
 #include <cage-client/utility/engineProfiling.h>
+#include <cage-client/utility/highPerformanceGpuHint.h>
 
 using namespace cage;
 
-volatile bool dirty;
-volatile uint32 camsLayout;
-volatile bool holes;
-
-bool applicationQuit()
-{
-	engineStop();
-	return false;
-}
+std::atomic<bool> dirty;
+std::atomic<uint32> camsLayout;
+std::atomic<bool> holes;
 
 bool windowClose(windowClass *)
 {
@@ -215,11 +211,9 @@ int main(int argc, char *args[])
 		eventListener<bool(windowClass *)> windowCloseListener;
 		eventListener<bool(windowClass *, uint32 key, uint32, modifiersFlags modifiers)> keyReleaseListener;
 		eventListener<bool(uint64)> updateListener;
-		applicationQuitListener.bind<&applicationQuit>();
 		windowCloseListener.bind<&windowClose>();
 		keyReleaseListener.bind<&keyRelease>();
 		updateListener.bind<&update>();
-		applicationQuitListener.attach(window()->events.applicationQuit);
 		windowCloseListener.attach(window()->events.windowClose);
 		keyReleaseListener.attach(window()->events.keyRelease);
 		updateListener.attach(controlThread::update);
@@ -241,5 +235,3 @@ int main(int argc, char *args[])
 		return 1;
 	}
 }
-
-#include <cage-client/highPerformanceGpuHint.h>

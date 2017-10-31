@@ -1,4 +1,5 @@
 #include <map>
+#include <vector>
 
 #include <cage-core/core.h>
 #include <cage-core/math.h>
@@ -66,8 +67,10 @@ namespace cage
 			auto a = context->assetManager->get<assetSchemeIndexTextPackage, textPackClass>(asset);
 			if (a)
 			{
-				// todo split parameters
-				return a->format(text, 0, nullptr);
+				std::vector<string> ps;
+				while (!params.empty())
+					ps.push_back(params.split("|"));
+				return a->format(text, numeric_cast<uint32>(ps.size()), ps.data());
 			}
 			else
 				return "";

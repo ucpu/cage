@@ -7,7 +7,6 @@ namespace cage
 	public:
 		struct
 		{
-			eventDispatcher<bool()> applicationQuit;
 			eventDispatcher<bool(windowClass *)> windowClose, windowShow, windowHide, windowPaint;
 			eventDispatcher<bool(windowClass *, const pointStruct &)> windowMove, windowResize;
 			eventDispatcher<bool(windowClass *, mouseButtonsFlags, modifiersFlags, const pointStruct &)> mousePress, mouseDouble, mouseRelease, mouseMove;
@@ -66,7 +65,6 @@ namespace cage
 
 	struct CAGE_API windowEventListeners
 	{
-		eventListener<bool()> applicationQuit;
 		eventListener<bool(windowClass *)> windowClose, windowShow, windowHide, windowPaint;
 		eventListener<bool(windowClass *, const pointStruct &)> windowMove, windowResize;
 		eventListener<bool(windowClass *, mouseButtonsFlags, modifiersFlags, const pointStruct &)> mousePress, mouseDouble, mouseRelease, mouseMove;

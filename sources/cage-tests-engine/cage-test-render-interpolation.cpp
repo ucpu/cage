@@ -10,6 +10,7 @@
 #include <cage-client/gui.h>
 #include <cage-client/engine.h>
 #include <cage-client/utility/engineProfiling.h>
+#include <cage-client/utility/highPerformanceGpuHint.h>
 
 using namespace cage;
 
@@ -17,12 +18,6 @@ uint64 updateDelay = 0;
 uint64 prepareDelay = 0;
 uint64 renderDelay = 0;
 uint64 soundDelay = 0;
-
-bool applicationQuit()
-{
-	engineStop();
-	return false;
-}
 
 bool windowClose(windowClass *)
 {
@@ -189,11 +184,8 @@ int main(int argc, char *args[])
 		GCHL_GENERATE((), guiInit, controlThread::initialize);
 		GCHL_GENERATE((uint64), gui, controlThread::update);
 #undef GCHL_GENERATE
-		eventListener<bool()> applicationQuitListener;
 		eventListener<bool(windowClass *)> windowCloseListener;
-		applicationQuitListener.bind<&applicationQuit>();
 		windowCloseListener.bind<&windowClose>();
-		applicationQuitListener.attach(window()->events.applicationQuit);
 		windowCloseListener.attach(window()->events.windowClose);
 
 		window()->modeSetWindowed((windowFlags)(windowFlags::Border | windowFlags::Resizeable));
@@ -213,5 +205,3 @@ int main(int argc, char *args[])
 		return 1;
 	}
 }
-
-#include <cage-client/highPerformanceGpuHint.h>

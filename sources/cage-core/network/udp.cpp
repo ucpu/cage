@@ -44,7 +44,8 @@ namespace cage
 				if (timeout > 0)
 				{
 					ENetEvent event;
-					if (enet_host_service(client, &event, numeric_cast<uint32>(timeout / 1000)) > 0 && event.type == ENET_EVENT_TYPE_CONNECT)
+					int ret = enet_host_service(client, &event, numeric_cast<uint32>(timeout / 1000));
+					if (ret > 0 && event.type == ENET_EVENT_TYPE_CONNECT)
 						return;
 					CAGE_THROW_ERROR(exception, "upd connection timed out");
 				}
@@ -84,7 +85,7 @@ namespace cage
 
 			ENetHost *client;
 			ENetPeer *peer;
-			std::list <std::pair<uint32, ENetPacket*> > packets;
+			std::list<std::pair<uint32, ENetPacket*>> packets;
 		};
 
 		class udpServerImpl : public udpServerClass
@@ -118,7 +119,7 @@ namespace cage
 				{
 				case ENET_EVENT_TYPE_RECEIVE:
 					if (event.packet->dataLength > 0)
-						((udpConnectionImpl*)event.peer->data)->packets.push_back(std::pair <uint32, ENetPacket*>(event.channelID, event.packet));
+						((udpConnectionImpl*)event.peer->data)->packets.push_back(std::pair<uint32, ENetPacket*>(event.channelID, event.packet));
 					break;
 				case ENET_EVENT_TYPE_DISCONNECT:
 					((udpConnectionImpl*)event.peer->data)->peer = nullptr;
@@ -200,7 +201,7 @@ namespace cage
 			switch (processHost(impl->server, peer))
 			{
 			case ENET_EVENT_TYPE_CONNECT:
-				return detail::systemArena().createImpl <udpConnectionClass, udpConnectionImpl>(peer);
+				return detail::systemArena().createImpl<udpConnectionClass, udpConnectionImpl>(peer);
 			case ENET_EVENT_TYPE_NONE:
 				return holder<udpConnectionClass>();
 			}
@@ -209,11 +210,11 @@ namespace cage
 
 	holder<udpConnectionClass> newUdpConnection(const string &address, uint16 port, uint32 channels, uint64 timeout)
 	{
-		return detail::systemArena().createImpl <udpConnectionClass, udpConnectionImpl>(address, port, channels, timeout);
+		return detail::systemArena().createImpl<udpConnectionClass, udpConnectionImpl>(address, port, channels, timeout);
 	}
 
 	holder<udpServerClass> newUdpServer(uint16 port, uint32 channels, uint32 maxClients)
 	{
-		return detail::systemArena().createImpl <udpServerClass, udpServerImpl>(port, channels, maxClients);
+		return detail::systemArena().createImpl<udpServerClass, udpServerImpl>(port, channels, maxClients);
 	}
 }

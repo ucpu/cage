@@ -640,7 +640,7 @@ namespace cage
 	void windowEventListeners::attachAll(windowClass *window)
 	{
 #define GCHL_GENERATE(T) if (window) T.attach(window->events.T); else T.detach();
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, applicationQuit, windowClose, windowShow, windowHide, windowPaint, windowMove, windowResize, mousePress, mouseDouble, mouseRelease, mouseMove, mouseWheel, focusGain, focusLose, keyPress, keyRepeat, keyRelease, keyChar));
+		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, windowClose, windowShow, windowHide, windowPaint, windowMove, windowResize, mousePress, mouseDouble, mouseRelease, mouseMove, mouseWheel, focusGain, focusLose, keyPress, keyRepeat, keyRelease, keyChar));
 #undef GCHL_GENERATE
 	}
 }

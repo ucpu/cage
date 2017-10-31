@@ -10,6 +10,7 @@
 #include <cage-client/graphic.h>
 #include <cage-client/sound.h>
 #include <cage-client/assets.h>
+#include <cage-client/utility/highPerformanceGpuHint.h>
 
 using namespace cage;
 
@@ -142,4 +143,3 @@ int main(int argc, char *args[])
 	}
 }
 
-#include <cage-client/highPerformanceGpuHint.h>

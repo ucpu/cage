@@ -11,17 +11,12 @@
 #include <cage-client/sound.h>
 #include <cage-client/assets.h>
 #include <cage-client/opengl.h>
+#include <cage-client/utility/highPerformanceGpuHint.h>
 
 using namespace cage;
 
 bool closing = false;
 const uint32 assetsName = hashString("cage/tests/logo/logo.pack");
-
-bool applicationQuit()
-{
-	closing = true;
-	return true;
-}
 
 bool windowClose(windowClass *)
 {
@@ -42,8 +37,6 @@ int main(int argc, char *args[])
 		// window
 		holder<windowClass> window = newWindow();
 		eventListener<bool()> applicationQuitListener;
-		applicationQuitListener.bind<&applicationQuit>();
-		window->events.applicationQuit.add(applicationQuitListener);
 		eventListener<bool(windowClass*)> windowCloseListener;
 		windowCloseListener.bind<&windowClose>();
 		window->events.windowClose.add(windowCloseListener);
@@ -127,5 +120,3 @@ int main(int argc, char *args[])
 		return 1;
 	}
 }
-
-#include <cage-client/highPerformanceGpuHint.h>

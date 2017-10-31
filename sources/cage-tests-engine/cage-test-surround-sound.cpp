@@ -10,16 +10,11 @@
 #include <cage-client/graphic.h>
 #include <cage-client/engine.h>
 #include <cage-client/assets.h>
+#include <cage-client/utility/highPerformanceGpuHint.h>
 
 using namespace cage;
 
 const uint32 assetsName = hashString("cage/tests/logo/logo.ogg");
-
-bool applicationQuit()
-{
-	engineStop();
-	return false;
-}
 
 bool windowClose(windowClass *)
 {
@@ -96,11 +91,8 @@ int main(int argc, char *args[])
 #define GCHL_GENERATE(TYPE, FUNC, EVENT) eventListener<bool TYPE> CAGE_JOIN(FUNC, Listener); CAGE_JOIN(FUNC, Listener).bind<&FUNC>(); CAGE_JOIN(FUNC, Listener).attach(EVENT);
 		GCHL_GENERATE((uint64), update, controlThread::update);
 #undef GCHL_GENERATE
-		eventListener<bool()> applicationQuitListener;
 		eventListener<bool(windowClass *)> windowCloseListener;
-		applicationQuitListener.bind<&applicationQuit>();
 		windowCloseListener.bind<&windowClose>();
-		applicationQuitListener.attach(window()->events.applicationQuit);
 		windowCloseListener.attach(window()->events.windowClose);
 
 		window()->modeSetWindowed((windowFlags)(windowFlags::Border | windowFlags::Resizeable));
@@ -121,5 +113,3 @@ int main(int argc, char *args[])
 		return 1;
 	}
 }
-
-#include <cage-client/highPerformanceGpuHint.h>
