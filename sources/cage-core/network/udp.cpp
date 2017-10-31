@@ -31,6 +31,7 @@ namespace cage
 			udpConnectionImpl(const string &address, uint16 port, uint32 channels, uint64 timeout) : client(nullptr), peer(nullptr)
 			{
 				ENetAddress addr;
+				detail::memset(&addr, 0, sizeof(addr));
 				if (enet_address_set_host(&addr, address.c_str()) != 0)
 					CAGE_THROW_ERROR(exception, "host address resolution failed");
 				addr.port = port;
@@ -97,7 +98,8 @@ namespace cage
 			udpServerImpl(uint16 port, uint32 channels, uint32 maxClients) : server(nullptr)
 			{
 				ENetAddress address;
-				address.host = ENET_HOST_ANY;
+				detail::memset(&address, 0, sizeof(address));
+				enet_address_set_host(&address, "::");
 				address.port = port;
 				server = enet_host_create(&address, maxClients, channels, 0, 0);
 				if (!server)
