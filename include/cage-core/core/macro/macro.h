@@ -5,7 +5,7 @@
 */
 
 #ifndef CAGE_DEBUG
-#if defined(_DEBUG) || defined(DEBUG) || defined(__DEBUG__)
+#ifndef NDEBUG
 #define CAGE_DEBUG
 #endif
 #endif

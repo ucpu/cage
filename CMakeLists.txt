@@ -19,6 +19,10 @@ if(WIN32)
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+	message(FATAL_ERROR "CMAKE_BUILD_TYPE needs to be set")
+endif()
+
 add_subdirectory(externals EXCLUDE_FROM_ALL)
 
 ########
