@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.2)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR}/cmake)
 
-set(CMAKE_BUILD_TYPE RELEASE)
-
 add_subdirectory(zlib)
 add_subdirectory(lodepng)
 add_subdirectory(libpng)
