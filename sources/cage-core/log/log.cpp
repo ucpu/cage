@@ -61,17 +61,21 @@ namespace cage
 				}
 			}
 		};
+
+		bool logFilterPolicyNoDebug(const detail::loggerInfo &info)
+		{
+			return !info.debug;
+		}
 		
 		class logInitializerClass
 		{
 		public:
 			logInitializerClass()
 			{
-#ifdef _MSC_VER
 				loggerDebug = newLogger();
+				loggerDebug->filter.bind<&logFilterPolicyNoDebug>();
+				loggerDebug->format.bind<&logFormatPolicyConsole>();
 				loggerDebug->output.bind<&logOutputPolicyDebug>();
-				loggerDebug->format.bind<&logFormatPolicyDebug>();
-#endif
 
 				loggerOutputCentralFile = newLogOutputPolicyFile(pathExtractFilenameNoExtension(detail::getExecutableName()) + ".log", false);
 				loggerCentralFile = newLogger();
@@ -142,19 +146,23 @@ namespace cage
 
 	namespace detail
 	{
+		loggerInfo::loggerInfo() : component(""), file(nullptr), function(nullptr), time(0), currentThread(0), createThread(0), severity(severityEnum::Critical), line(0), continuous(false), debug(false)
+		{}
+
 #ifdef CAGE_DEBUG
-		uint64 makeLog(const char *file, uint32 line, const char *function, severityEnum severity, const string &component, const string &message, bool continuous) noexcept
+		uint64 makeLog(const char *file, uint32 line, const char *function, severityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept
 #else
-		uint64 makeLog(severityEnum severity, const string &component, const string &message, bool continuous) noexcept
+		uint64 makeLog(severityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept
 #endif
 		{
 			try
 			{
 				loggerInfo info;
-				info.severity = severity;
-				info.component = component;
 				info.message = message;
+				info.component = component;
+				info.severity = severity;
 				info.continuous = continuous;
+				info.debug = debug;
 				info.currentThread = threadId();
 				info.time = getApplicationTime();
 #ifdef CAGE_DEBUG
@@ -167,9 +175,9 @@ namespace cage
 				loggerImpl *cur = loggerLast();
 				while (cur)
 				{
-					info.createThread = cur->thread;
 					if (cur->output)
 					{
+						info.createThread = cur->thread;
 						if (!cur->filter || cur->filter(info))
 						{
 							if (cur->format)

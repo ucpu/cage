@@ -72,7 +72,7 @@ namespace cage
 
 	memoryBuffer entitiesSerialize(groupClass *entities, componentClass *component)
 	{
-		memoryBuffer buff(100 + entities->entitiesCount()  * component->getTypeSize());
+		memoryBuffer buff(100 + entities->entitiesCount() * component->getTypeSize());
 		auto res = entitiesSerialize(buff.data(), buff.size(), entities, component);
 		buff.resize(res);
 		return buff;

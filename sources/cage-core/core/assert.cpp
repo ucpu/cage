@@ -36,8 +36,6 @@ namespace cage
 				OutputDebugString("\n");
 				return;
 			}
-#else
-            fprintf(stderr, "%s\n", value);
 #endif
 		}
 

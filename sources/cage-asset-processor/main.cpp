@@ -20,7 +20,7 @@ string inputFile; // path/file
 string inputSpec; // specifier
 string inputIdentifier; // identifier
 
-string logComponentName;
+const char *logComponentName;
 
 assetHeaderStruct initializeAssetHeaderStruct()
 {
@@ -196,7 +196,7 @@ int main(int argc, const char *args[])
 		else
 			CAGE_THROW_ERROR(exception, "invalid asset type parameter");
 
-		logComponentName = component;
+		logComponentName = args[1];
 		writeLine("cage-begin");
 		func();
 		writeLine("cage-end");

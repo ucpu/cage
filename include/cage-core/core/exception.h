@@ -11,11 +11,11 @@
 #ifdef CAGE_DEBUG
 #define GCHL_EXCEPTION_GENERATE_CTOR_PARAMS const char *file, uint32 line, const char *function, severityEnum severity, const char *message
 #define GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER file, line, function, severity, message
-#define GCHL_EXCEPTION_GENERATE_LOG(MESSAGE) { ::cage::detail::makeLog(file, line, function, severity, "exception", MESSAGE, false); ::cage::detail::debugBreakpoint(); }
+#define GCHL_EXCEPTION_GENERATE_LOG(MESSAGE) { ::cage::detail::makeLog(file, line, function, severity, "exception", (MESSAGE), false, false); ::cage::detail::debugBreakpoint(); }
 #else
 #define GCHL_EXCEPTION_GENERATE_CTOR_PARAMS severityEnum severity, const char *message
 #define GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER severity, message
-#define GCHL_EXCEPTION_GENERATE_LOG(MESSAGE) { ::cage::detail::makeLog(severity, "exception", MESSAGE, false); ::cage::detail::debugBreakpoint(); }
+#define GCHL_EXCEPTION_GENERATE_LOG(MESSAGE) { ::cage::detail::makeLog(severity, "exception", (MESSAGE), false, false); ::cage::detail::debugBreakpoint(); }
 #endif
 
 namespace cage

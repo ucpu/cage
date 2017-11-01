@@ -25,7 +25,7 @@ extern string inputFile;
 extern string inputSpec;
 extern string inputIdentifier;
 
-extern string logComponentName;
+extern const char *logComponentName;
 
 void writeLine(const string &other);
 vec3 toVec3(const string &s);

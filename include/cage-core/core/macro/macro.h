@@ -4,8 +4,10 @@
 #endif
 */
 
+#ifndef CAGE_DEBUG
 #if defined(_DEBUG) || defined(DEBUG) || defined(__DEBUG__)
 #define CAGE_DEBUG
+#endif
 #endif
 
 #if defined(CAGE_DEBUG) && defined(NDEBUG)

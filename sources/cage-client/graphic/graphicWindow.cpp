@@ -14,6 +14,8 @@
 #include "private.h"
 #include <GLFW/glfw3.h>
 
+//#define GCHL_WINDOWS_THREAD
+
 namespace cage
 {
 	namespace
@@ -125,7 +127,7 @@ namespace cage
 			GLFWwindow *window;
 			bool focus;
 
-#ifdef CAGE_SYSTEM_WINDOWS
+#ifdef GCHL_WINDOWS_THREAD
 			holder<threadClass> windowThread;
 			holder<semaphoreClass> windowSemaphore;
 			std::atomic<bool> stopping;
@@ -164,7 +166,7 @@ namespace cage
 			{
 				glfwInitializeFunc();
 
-#ifdef CAGE_SYSTEM_WINDOWS
+#ifdef GCHL_WINDOWS_THREAD
 				stopping = false;
 				windowSemaphore = newSemaphore(0, 1);
 				windowThread = newThread(delegate<void()>().bind<windowImpl, &windowImpl::treadEntry>(this), "window");
@@ -187,7 +189,7 @@ namespace cage
 
 			~windowImpl()
 			{
-#ifdef CAGE_SYSTEM_WINDOWS
+#ifdef GCHL_WINDOWS_THREAD
 				stopping = true;
 				if (windowThread)
 					windowThread->wait();
@@ -210,7 +212,7 @@ namespace cage
 					GLFW_TRUE
 #else
 					GLFW_FALSE
-#endif // CAGE_DEBUG
+#endif
 				);
 				glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 				window = glfwCreateWindow(1, 1, "Cage GLFW Window", NULL, shareContext ? ((windowImpl*)shareContext)->window : nullptr);
@@ -443,11 +445,11 @@ namespace cage
 	bool windowClass::isFocused() const
 	{
 		windowImpl *impl = (windowImpl*)this;
-#ifdef CAGE_SYSTEM_WINDOWS
+#ifdef GCHL_WINDOWS_THREAD
 		return impl->focus;
 #else
 		return glfwGetWindowAttrib(impl->window, GLFW_FOCUSED);
-#endif // CAGE_SYSTEM_WINDOWS
+#endif
 	}
 
 	bool windowClass::isFullscreen() const
@@ -507,12 +509,12 @@ namespace cage
 	void windowClass::processEvents()
 	{
 		windowImpl *impl = (windowImpl*)this;
-#ifndef CAGE_SYSTEM_WINDOWS
+#ifndef GCHL_WINDOWS_THREAD
 		{
 			scopeLock<mutexClass> l(windowsMutex());
 			glfwPollEvents();
 		}
-#endif // !CAGE_SYSTEM_WINDOWS
+#endif
 		{
 			scopeLock<mutexClass> l(impl->eventsMutex);
 			impl->eventsQueueNoLock.insert(impl->eventsQueueNoLock.end(), impl->eventsQueueLocked.begin(), impl->eventsQueueLocked.end());

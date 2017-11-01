@@ -18,19 +18,6 @@ namespace cage
 		}
 	}
 
-	void logFormatPolicyDebug(const detail::loggerInfo &info, delegate<void(const string &)> output)
-	{
-		if (!info.continuous)
-		{
-			output(severityToString(info.severity) + "\t" + info.component + "\t" + string(info.currentThread) + "\t" + string(info.time / 1000));
-#ifdef CAGE_DEBUG
-			output(string("\t") + string(info.file) + ":" + string(info.line) + " - " + string(info.function));
-#endif
-		}
-
-		output(string("\t") + info.message);
-	}
-
 	void logFormatPolicyConsole(const detail::loggerInfo &info, delegate<void(const string &)> output)
 	{
 		output(info.message);
@@ -45,19 +32,20 @@ namespace cage
 		else
 		{
 			string res;
-			res += string() + string(info.time).fill(12) + " ";
-			res += string() + string(info.currentThread).fill(10) + " ";
-			res += string() + severityToString(info.severity) + " ";
-			res += string() + info.component.fill(20) + " ";
-			res += string() + info.message;
-#ifdef CAGE_DEBUG
-			string flf = string(" ") + string(info.file) + ":" + string(info.line) + " (" + string(info.function) + ")";
-			if (res.length() + flf.length() < string::MaxLength - 10)
+			res += string(info.time).fill(12) + " ";
+			res += string(info.currentThread).fill(10) + " ";
+			res += severityToString(info.severity) + " ";
+			res += string(info.component).fill(20) + " ";
+			res += info.message;
+			if (info.file)
 			{
-				res += string().fill(string::MaxLength - flf.length() - res.length() - 5);
-				res += flf;
+				string flf = string(" ") + string(info.file) + ":" + string(info.line) + " (" + string(info.function) + ")";
+				if (res.length() + flf.length() < string::MaxLength - 10)
+				{
+					res += string().fill(string::MaxLength - flf.length() - res.length() - 5);
+					res += flf;
+				}
 			}
-#endif
 			output(res);
 		}
 	}
