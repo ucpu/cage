@@ -4,7 +4,7 @@
 #include "../system.h"
 
 #ifndef CAGE_SYSTEM_WINDOWS
-static const clockid_t clockid = CLOCK_PROCESS_CPUTIME_ID;
+static const clockid_t clockid = CLOCK_REALTIME;
 #endif
 
 namespace cage
