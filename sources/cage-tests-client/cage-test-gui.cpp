@@ -749,7 +749,7 @@ int main(int argc, char *args[])
 		eventListener<bool()> applicationQuitListener;
 		eventListener<bool(windowClass*)> windowCloseListener;
 		windowCloseListener.bind<&windowClose>();
-		window->events.windowClose.add(windowCloseListener);
+		window->events.windowClose.attach(windowCloseListener);
 		window->title("cage test gui");
 
 		// opengl context

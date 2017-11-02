@@ -86,7 +86,7 @@ void testSceneEntities()
 			}
 		} help(manager->getComponentByIndex(1));
 
-		manager->getComponentByIndex(1)->getComponentEntities()->entityRemoved.add(help.listener);
+		manager->getComponentByIndex(1)->getComponentEntities()->entityRemoved.attach(help.listener);
 
 		for (uint32 cycle = 0; cycle < 30; cycle++)
 		{

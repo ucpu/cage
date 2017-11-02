@@ -13,6 +13,9 @@ namespace cage
 	{
 		static const uint32 idSize = 64;
 
+		// AF_INET = ipv4 only, AF_INET6 = ipv6 only, AF_UNSPEC = both
+		static const int protocolFamily = AF_INET;
+
 		struct peerStruct
 		{
 			string message;
@@ -40,7 +43,7 @@ namespace cage
 
 			discoveryClientImpl(uint16 sendPort, uint32 gameId) : gameId(gameId), sendPort(sendPort)
 			{
-				addrList l(nullptr, 0, AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
+				addrList l(nullptr, 0, protocolFamily, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
 				while (l.valid())
 				{
 					int family = -1, type = -1, protocol = -1;
@@ -54,7 +57,7 @@ namespace cage
 					sockets.push_back(templates::move(s));
 					l.next();
 				}
-				addServer("255.255.255.255", sendPort);
+				addServer("255.255.255.255", sendPort); // ipv4 broadcast
 			}
 		};
 
@@ -68,7 +71,7 @@ namespace cage
 
 			discoveryServerImpl(uint16 listenPort, uint16 gamePort, uint32 gameId) : uniId(true), gameId(gameId), gamePort(gamePort)
 			{
-				addrList l(nullptr, listenPort, AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
+				addrList l(nullptr, listenPort, protocolFamily, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
 				while (l.valid())
 				{
 					int family = -1, type = -1, protocol = -1;
@@ -180,7 +183,7 @@ namespace cage
 	void discoveryClientClass::addServer(const string & address, uint16 port)
 	{
 		discoveryClientImpl *impl = (discoveryClientImpl*)this;
-		addrList l(address.c_str(), port, AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP, 0);
+		addrList l(address.c_str(), port, protocolFamily, SOCK_DGRAM, IPPROTO_UDP, 0);
 		while (l.valid())
 		{
 			for (std::vector<sockStruct>::iterator it = impl->sockets.begin(), et = impl->sockets.end(); it != et; it++)

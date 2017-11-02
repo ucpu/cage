@@ -36,7 +36,7 @@ namespace cage
 	{
 		typedef eventListener<bool(Ts...)> listenerType;
 
-		void add(listenerType &listener)
+		void attach(listenerType &listener)
 		{
 			listener.attach(*this);
 		}
@@ -47,7 +47,7 @@ namespace cage
 			{
 				if (!*l)
 					continue;
-				if ((*l)(vs...))
+				if ((*l)(templates::forward<Ts>(vs)...))
 					return true;
 			}
 			return false;

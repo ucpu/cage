@@ -18,19 +18,19 @@ namespace cage
 		static R functionStub(void *inst, Ts... vs)
 		{
 			(void)inst;
-			return F(vs...);
+			return F(templates::forward<Ts>(vs)...);
 		}
 
 		template<class C, R(C::*F)(Ts...)>
 		static R methodStub(void *inst, Ts... vs)
 		{
-			return (((C*)inst)->*F)(vs...);
+			return (((C*)inst)->*F)(templates::forward<Ts>(vs)...);
 		}
 
 		template<class C, R(C::*F)(Ts...) const>
 		static R constStub(void *inst, Ts... vs)
 		{
-			return (((const C*)inst)->*F)(vs...);
+			return (((const C*)inst)->*F)(templates::forward<Ts>(vs)...);
 		}
 
 		template<class C, R(C::*F)(Ts...)>
@@ -96,7 +96,7 @@ namespace cage
 		R operator ()(Ts... vs) const
 		{
 			CAGE_ASSERT_RUNTIME(!!*this, stub.inst, stub.fnc);
-			return stub.fnc(stub.inst, vs...);
+			return stub.fnc(stub.inst, templates::forward<Ts>(vs)...);
 		}
 	};
 

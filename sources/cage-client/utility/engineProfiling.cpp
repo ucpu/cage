@@ -44,8 +44,8 @@ namespace cage
 				keyReleaseListener.bind<engineProfilingImpl, &engineProfilingImpl::keyRelease>(this);
 				updateListener.bind<engineProfilingImpl, &engineProfilingImpl::update>(this);
 
-				window()->events.keyRelease.add(keyReleaseListener);
-				controlThread::update.add(updateListener);
+				window()->events.keyRelease.attach(keyReleaseListener);
+				controlThread::update.attach(updateListener);
 			}
 
 			void nullData()

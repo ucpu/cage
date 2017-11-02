@@ -47,11 +47,11 @@ namespace cage
 				keyReleaseListener.bind<cameraControllerImpl, &cameraControllerImpl::keyRelease>(this);
 				updateListener.bind<cameraControllerImpl, &cameraControllerImpl::update>(this);
 
-				window()->events.mouseMove.add(mouseMoveListener);
-				window()->events.mousePress.add(mousePressListener);
-				window()->events.keyPress.add(keyPressListener);
-				window()->events.keyRelease.add(keyReleaseListener);
-				controlThread::update.add(updateListener);
+				window()->events.mouseMove.attach(mouseMoveListener);
+				window()->events.mousePress.attach(mousePressListener);
+				window()->events.keyPress.attach(keyPressListener);
+				window()->events.keyRelease.attach(keyReleaseListener);
+				controlThread::update.attach(updateListener);
 			}
 
 			const pointStruct centerMouse(windowClass *w)

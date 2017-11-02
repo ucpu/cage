@@ -30,8 +30,8 @@ void testEvents()
 		l2.bind<&simpleCallback>();
 		d.dispatch();
 		CAGE_TEST(n == 0);
-		d.add(l1);
-		d.add(l2);
+		d.attach(l1);
+		d.attach(l2);
 		d.dispatch();
 		CAGE_TEST(n == 1);
 		l1.detach();
@@ -62,8 +62,8 @@ void testEvents()
 		l2.bind<&simpleCallback>();
 		d.dispatch(5, 3);
 		CAGE_TEST(n == 0);
-		d.add(l1);
-		d.add(l2);
+		d.attach(l1);
+		d.attach(l2);
 		d.dispatch(5, 3);
 		CAGE_TEST(n == 8);
 		l1.detach();

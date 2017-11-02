@@ -42,7 +42,7 @@ namespace cage
 	{
 		if (severity < detail::getExceptionSilenceSeverity())
 			return *this;
-		GCHL_EXCEPTION_GENERATE_LOG(string() + "not implemented: " + message);
+		GCHL_EXCEPTION_GENERATE_LOG(string() + "not implemented: '" + message + "'");
 		return *this;
 	};
 
@@ -55,7 +55,7 @@ namespace cage
 	{
 		if (severity < detail::getExceptionSilenceSeverity())
 			return *this;
-		GCHL_EXCEPTION_GENERATE_LOG(string() + "invalid utf8 string");
+		GCHL_EXCEPTION_GENERATE_LOG("invalid utf8 string");
 		return *this;
 	};
 
@@ -68,7 +68,7 @@ namespace cage
 	{
 		if (severity < detail::getExceptionSilenceSeverity())
 			return *this;
-		GCHL_EXCEPTION_GENERATE_LOG(string() + "disconnected :" + message);
+		GCHL_EXCEPTION_GENERATE_LOG(message);
 		return *this;
 	};
 

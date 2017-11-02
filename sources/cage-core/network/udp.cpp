@@ -99,7 +99,7 @@ namespace cage
 			{
 				ENetAddress address;
 				detail::memset(&address, 0, sizeof(address));
-				enet_address_set_host(&address, "::");
+				enet_address_set_host(&address, "0.0.0.0");
 				address.port = port;
 				server = enet_host_create(&address, maxClients, channels, 0, 0);
 				if (!server)
