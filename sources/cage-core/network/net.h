@@ -56,8 +56,8 @@ namespace cage
 		{
 			sock(SOCKET descriptor = -1);
 			sock(int family, int type, int protocol);
-			sock(sock &&other);
-			void operator = (sock &&other);
+			sock(sock &&other) noexcept;
+			void operator = (sock &&other) noexcept;
 			~sock();
 
 			sock(const sock &) = delete;

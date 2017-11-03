@@ -289,7 +289,12 @@ namespace cage
 
 #else
 
-		CAGE_THROW_CRITICAL(notImplementedException, "pathMove");
+		auto res = rename(from.c_str(), to.c_str());
+		if (res != 0)
+		{
+			CAGE_LOG(severityEnum::Note, "exception", string() + "path from: '" + from + "'" + ", to: '" + to + "'");
+			CAGE_THROW_ERROR(codeException, "pathMove", errno);
+		}
 
 #endif
 	}

@@ -28,12 +28,12 @@ namespace cage
 				CAGE_THROW_ERROR(codeException, "socket creation failed (socket)", WSAGetLastError());
 		}
 
-		sock::sock(sock &&other) : descriptor(other.descriptor)
+		sock::sock(sock &&other) noexcept : descriptor(other.descriptor)
 		{
 			other.descriptor = INVALID_SOCKET;
 		}
 
-		void sock::operator = (sock &&other)
+		void sock::operator = (sock &&other) noexcept
 		{
 			if (this == &other)
 				return;
