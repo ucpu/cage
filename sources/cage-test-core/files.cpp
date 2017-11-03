@@ -134,4 +134,29 @@ void testFiles()
 			CAGE_TEST(s == "");
 		}
 	}
+
+	{
+		CAGE_TESTCASE("move file");
+
+		{
+			CAGE_TESTCASE("simple move");
+			string source = "testdir/files/1";
+			string dest = "testdir/moved/1";
+			CAGE_TEST(pathExists(source));
+			CAGE_TEST(!pathExists(dest));
+			pathMove(source, dest);
+			CAGE_TEST(!pathExists(source));
+			CAGE_TEST(pathExists(dest));
+		}
+
+		{
+			CAGE_TESTCASE("move to non-existing directory");
+			pathMove("testdir/moved/1", "testdir/moved/non-exist/1");
+		}
+
+		{
+			CAGE_TESTCASE("move non-existing file");
+			CAGE_TEST_THROWN(pathMove("testdir/moved/non-existing-file", "testdir/moved/1"));
+		}
+	}
 }

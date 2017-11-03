@@ -11,8 +11,8 @@ namespace cage
 		memoryBuffer &operator = (memoryBuffer &&other) noexcept;
 		~memoryBuffer();
 
-		memoryBuffer(const memoryBuffer &) = delete;
-		void operator = (const memoryBuffer &) = delete;
+		memoryBuffer(const memoryBuffer &) = delete;  // the buffer is non-copyable
+		memoryBuffer &operator = (const memoryBuffer &) = delete;
 
 		memoryBuffer copy() const;
 
@@ -25,8 +25,7 @@ namespace cage
 		uintPtr size() const;
 		uintPtr allocated() const;
 
-	private: // the buffer is non-copyable
-
+	private:
 		void *data_;
 		uintPtr size_;
 		uintPtr allocated_;

@@ -41,6 +41,7 @@ void testColor();
 void testInterpolator();
 void testProgram();
 void testMemoryBuffers();
+void testCopyAndMove();
 
 int main()
 {
@@ -86,6 +87,7 @@ int main()
 		testTcp();
 		testUdp();
 		testUdpDiscovery();
+		testCopyAndMove();
 		newFilesystem()->remove("testdir");
 
 		{

@@ -18,9 +18,8 @@ namespace cage
 #endif
 			};
 
-			stringBase(const stringBase &other)
+			stringBase(const stringBase &other) noexcept : current(other.current)
 			{
-				current = other.current;
 				detail::memcpy(data, other.data, current);
 #ifdef CAGE_DEBUG
 				data[current] = 0;
@@ -96,7 +95,7 @@ namespace cage
 			};
 
 			// assignment operators
-			stringBase &operator = (const stringBase &other)
+			stringBase &operator = (const stringBase &other) noexcept
 			{
 				if (this == &other)
 					return *this;
@@ -154,7 +153,6 @@ namespace cage
 			// methods
 			const char *c_str() const
 			{
-				CAGE_ASSERT_RUNTIME(current < N, current, N);
 				const_cast<char*>(data)[current] = 0;
 				return data;
 			};
@@ -339,7 +337,7 @@ namespace cage
 				return -1;
 			};
 
-			uint32 find(const char &other, uint32 offset = 0) const
+			uint32 find(char other, uint32 offset = 0) const
 			{
 				for (uint32 i = offset; i < current; i++)
 					if (data[i] == other)
@@ -464,14 +462,14 @@ namespace cage
 			template<uint32 M> friend struct stringBase;
 		};
 
-		template<uint32 N> inline bool stringCompareFast(const stringBase <N> &a, const stringBase <N> &b)
+		template<uint32 N> inline bool stringCompareFast(const stringBase<N> &a, const stringBase<N> &b)
 		{
 			return a.compareFast(b);
 		}
 
 		template<uint32 N> struct stringComparatorFastBase
 		{
-			bool operator () (const stringBase <N> &a, const stringBase <N> &b) const
+			bool operator () (const stringBase<N> &a, const stringBase<N> &b) const
 			{
 				return stringCompareFast(a, b);
 			}

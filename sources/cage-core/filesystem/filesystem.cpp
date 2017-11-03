@@ -276,7 +276,22 @@ namespace cage
 
 	void pathMove(const string &from, const string &to)
 	{
+		pathCreateDirectories(pathExtractPath(to));
+
+#ifdef CAGE_SYSTEM_WINDOWS
+
+		auto res = MoveFile(from.c_str(), to.c_str());
+		if (res == 0)
+		{
+			CAGE_LOG(severityEnum::Note, "exception", string() + "path from: '" + from + "'" + ", to: '" + to + "'");
+			CAGE_THROW_ERROR(codeException, "pathMove", GetLastError());
+		}
+
+#else
+
 		CAGE_THROW_CRITICAL(notImplementedException, "pathMove");
+
+#endif
 	}
 
 	void pathRemove(const string &path)
