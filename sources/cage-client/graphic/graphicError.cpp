@@ -179,14 +179,16 @@ namespace cage
 
 		void contextSetCurrentObjectType(uint32 typeIndex, uint32 id)
 		{
+			auto cc = getCurrentContext();
 			scopeLock<mutexClass> lock(assertContextMutex);
-			assertContextCurrentObjects[getCurrentContext()][typeIndex] = id;
+			assertContextCurrentObjects[cc][typeIndex] = id;
 		}
 
 		uint32 contextGetCurrentObjectType(uint32 typeIndex)
 		{
+			auto cc = getCurrentContext();
 			scopeLock<mutexClass> lock(assertContextMutex);
-			std::map<uint32, uint32> &m = assertContextCurrentObjects[getCurrentContext()];
+			std::map<uint32, uint32> &m = assertContextCurrentObjects[cc];
 			std::map<uint32, uint32>::iterator it = m.find(typeIndex);
 			if (it == m.end())
 				return -1;
