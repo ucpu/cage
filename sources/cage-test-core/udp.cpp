@@ -78,7 +78,7 @@ namespace
 	class receiverClass
 	{
 	public:
-		receiverClass(holder<udpConnectionClass> peer) : peer(peer)
+		receiverClass(holder<udpConnectionClass> peer) : peer(templates::move(peer))
 		{}
 
 		const bool process()
@@ -125,6 +125,6 @@ void testUdp()
 			threadSleep(1000);
 			continue;
 		}
-		receivers[recsCount++] = detail::systemArena().createHolder<receiverClass>(r);
+		receivers[recsCount++] = detail::systemArena().createHolder<receiverClass>(templates::move(r));
 	}
 }

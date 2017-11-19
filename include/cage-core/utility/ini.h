@@ -22,11 +22,11 @@ namespace cage
 		uint32 sectionCount() const;
 		string section(uint32 section) const;
 		bool sectionExists(const string &section) const;
-		templates::pointerRange<string> sections() const;
+		pointerRange<string> sections() const;
 		uint32 itemCount(const string &section) const;
 		string item(const string &section, uint32 item) const;
 		bool itemExists(const string &section, const string &item) const;
-		templates::pointerRange<string> items(const string &section) const;
+		pointerRange<string> items(const string &section) const;
 
 		string get(const string &section, const string &item) const;
 		void set(const string &section, const string &item, const string &value);

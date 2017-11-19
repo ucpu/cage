@@ -12,7 +12,6 @@
 #include "core/delegate.h"
 #include "core/events.h"
 #include "core/holder.h"
-#include "core/pointer.h"
 #include "core/memoryArena.h"
 #include "core/string.h"
 

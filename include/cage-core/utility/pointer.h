@@ -1,3 +1,6 @@
+#ifndef pointer_h_dsg5fd64hg64fd
+#define pointer_h_dsg5fd64hg64fd
+
 namespace cage
 {
 	struct CAGE_API pointer
@@ -20,14 +23,9 @@ namespace cage
 			float  *asFloat;
 		};
 
-		pointer() : asVoid(nullptr)
-		{}
-
-		pointer(void *other) : asVoid(other)
-		{}
-
-		explicit pointer(uintPtr other) : decView(other)
-		{}
+		pointer() : asVoid(nullptr) {}
+		pointer(void *other) : asVoid(other) {}
+		explicit pointer(uintPtr other) : decView(other) {}
 
 		pointer &operator = (pointer other)
 		{
@@ -86,3 +84,5 @@ namespace cage
 		}
 	};
 }
+
+#endif

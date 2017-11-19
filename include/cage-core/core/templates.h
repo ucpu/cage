@@ -1,82 +1,22 @@
 namespace cage
 {
+	template<class T> struct pointerRange
+	{
+	private:
+		T *const begin_;
+		T *const end_;
+	public:
+		pointerRange() : begin_(nullptr), end_(nullptr) {}
+		pointerRange(T *begin, T *end) : begin_(begin), end_(end) {}
+		T *begin() { return begin_; }
+		T *end() { return end_; }
+	};
+
 	namespace templates
 	{
-		template<class T> struct pointerRange
-		{
-		private:
-			T *const begin_;
-			T *const end_;
-		public:
-			pointerRange(T *begin, T *end) : begin_(begin), end_(end) {}
-			T *begin() { return begin_; }
-			T *end() { return end_; }
-		};
-
-		template<uint64 B, uint64 E> struct pow
-		{
-			static const uint64 result = B * pow<B, E - 1>::result;
-		};
-
-		template<uint64 B> struct pow<B, 0>
-		{
-			static const uint64 result = 1;
-		};
-
-		template<class T> struct allocatorSizeList
-		{
-			void *a;
-			void *b;
-			T t;
-		};
-
-		template<class K, class V> struct allocatorSizeMap
-		{
-#ifdef CAGE_SYSTEM_WINDOWS
-			void *a;
-			void *b;
-			void *c;
-			char d;
-			char e;
-			struct
-			{
-				K k;
-				V v;
-			} pair;
-#else
-			char d;
-			void *a;
-			void *b;
-			void *c;
-			struct
-			{
-				K k;
-				V v;
-			} pair;
-#endif
-		};
-
-		template<class T> struct allocatorSizeSet
-		{
-#ifdef CAGE_SYSTEM_WINDOWS
-			void *a;
-			void *b;
-			void *c;
-			char d;
-			char e;
-			T t;
-#else
-			char d;
-			void *a;
-			void *b;
-			void *c;
-			T t;
-#endif
-		};
-
 		template<bool Cond, class T = void> struct enable_if {};
 		template<class T> struct enable_if<true, T> { typedef T type; };
-		template<uintPtr Size> struct base_unsigned_type { };
+		template<uintPtr Size> struct base_unsigned_type {};
 		template<> struct base_unsigned_type<1> { typedef uint8 type; };
 		template<> struct base_unsigned_type<2> { typedef uint16 type; };
 		template<> struct base_unsigned_type<4> { typedef uint32 type; };

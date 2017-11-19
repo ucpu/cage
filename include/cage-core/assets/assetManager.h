@@ -57,7 +57,7 @@ namespace cage
 
 		uint32 dependenciesCount(uint32 assetName) const;
 		uint32 dependencyName(uint32 assetName, uint32 index) const;
-		templates::pointerRange<const uint32> dependencies(uint32 assetName) const;
+		pointerRange<const uint32> dependencies(uint32 assetName) const;
 
 		bool processCustomThread(uint32 threadIndex);
 		bool processControlThread();

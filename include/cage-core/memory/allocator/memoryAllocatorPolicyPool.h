@@ -11,11 +11,11 @@ namespace cage
 			uintPtr res = AtomSize + BoundsPolicy::SizeFront + BoundsPolicy::SizeBack;
 			if (StoreSize || res < sizeof(uintPtr))
 				res += sizeof(uintPtr);
-			res += detail::addToAlign(pointer(res), Alignment);
+			res += detail::addToAlign(res, Alignment);
 			return res;
 		}
 
-		memoryAllocatorPolicyPool() : totalSize(0), objectSize(objectSizeInit())
+		memoryAllocatorPolicyPool() : origin(nullptr), current(nullptr), totalSize(0), objectSize(objectSizeInit())
 		{
 			CAGE_ASSERT_RUNTIME(objectSize < detail::memoryPageSize(), "objects too big", objectSize, detail::memoryPageSize());
 		}
@@ -23,11 +23,11 @@ namespace cage
 		void setOrigin(void *newOrigin)
 		{
 			CAGE_ASSERT_RUNTIME(!origin, "can only be set once", origin, newOrigin);
-			CAGE_ASSERT_RUNTIME(numeric_cast<uintPtr>(newOrigin) > objectSize, "origin too low", newOrigin, objectSize);
-			uintPtr addition = detail::addToAlign(numeric_cast<uintPtr>(newOrigin), objectSize);
+			CAGE_ASSERT_RUNTIME(newOrigin > (char*)objectSize, "origin too low", newOrigin, objectSize);
+			uintPtr addition = detail::addToAlign((uintPtr)newOrigin, objectSize);
 			if (addition < (StoreSize ? sizeof(uintPtr) : 0) + BoundsPolicy::SizeFront)
 				addition += objectSize;
-			current = origin = pointer(newOrigin) + addition;
+			current = origin = (char*)newOrigin + addition;
 		}
 
 		void setSize(uintPtr size)
@@ -35,34 +35,34 @@ namespace cage
 			if (size == 0 && totalSize == 0)
 				return;
 			CAGE_ASSERT_RUNTIME(size >= objectSize, "size must be at least the object size", size, objectSize);
-			uintPtr s = size - objectSize - detail::subtractToAlign(origin + size, objectSize);
+			uintPtr s = size - objectSize - detail::subtractToAlign((uintPtr)origin + size, objectSize);
 			if (s == totalSize)
 				return;
 			CAGE_ASSERT_RUNTIME(s > totalSize, "size can not shrink", s, totalSize); // can only grow
-			pointer tmp = origin + totalSize;
+			void *tmp = (char*)origin + totalSize;
 			totalSize = s;
-			while (tmp < origin + totalSize)
+			while (tmp < (char*)origin + totalSize)
 			{
-				*tmp.asPtr = tmp + objectSize;
-				tmp += objectSize;
+				*(void**)tmp = (char*)tmp + objectSize;
+				tmp = (char*)tmp + objectSize;
 			}
 		}
 
 		void *allocate(uintPtr size)
 		{
 			CAGE_ASSERT_RUNTIME(size <= AtomSize, "size can not exceed atom size", size, AtomSize);
-			CAGE_ASSERT_RUNTIME(current >= origin && current <= origin + totalSize, "current is corrupted", current, origin, totalSize);
+			CAGE_ASSERT_RUNTIME(current >= origin && current <= (char*)origin + totalSize, "current is corrupted", current, origin, totalSize);
 
-			if (current == origin + totalSize)
+			if (current == (char*)origin + totalSize)
 				CAGE_THROW_SILENT(outOfMemoryException, "out of memory", objectSize);
 
-			pointer next = *current.asPtr;
+			void *next = *(void**)current;
 
 			if (StoreSize)
-				*(current - BoundsPolicy::SizeFront - sizeof(uintPtr)).asUintPtr = size;
-			bound.setFront(current - BoundsPolicy::SizeFront);
+				*(uintPtr*)((char*)current - BoundsPolicy::SizeFront - sizeof(uintPtr)) = size;
+			bound.setFront((char*)current - BoundsPolicy::SizeFront);
 			tag.set(current, StoreSize ? size : AtomSize);
-			bound.setBack(current + (StoreSize ? size : AtomSize));
+			bound.setBack((char*)current + (StoreSize ? size : AtomSize));
 			track.set(current, size);
 
 			void *result = current;
@@ -70,30 +70,29 @@ namespace cage
 			return result;
 		}
 
-		void deallocate(pointer ptr)
+		void deallocate(void *ptr)
 		{
-			CAGE_ASSERT_RUNTIME(ptr >= origin && ptr < origin + totalSize, "ptr must be element", ptr, origin, totalSize);
-			CAGE_ASSERT_RUNTIME(ptr.decView % objectSize == 0, "ptr must be aligned", ptr, objectSize);
+			CAGE_ASSERT_RUNTIME(ptr >= origin && ptr < (char*)origin + totalSize, "ptr must be element", ptr, origin, totalSize);
+			CAGE_ASSERT_RUNTIME((uintPtr)ptr % objectSize == 0, "ptr must be aligned", ptr, objectSize);
 
 			track.check(ptr);
-			bound.checkFront(ptr - BoundsPolicy::SizeFront);
+			bound.checkFront((char*)ptr - BoundsPolicy::SizeFront);
 
 			uintPtr size;
 			if (StoreSize)
 			{
-				size = *(ptr - numeric_cast<uintPtr>(BoundsPolicy::SizeFront) - numeric_cast<uintPtr>(sizeof(uintPtr))).asUintPtr;
+				size = *(uintPtr*)((char*)ptr - BoundsPolicy::SizeFront - sizeof(uintPtr));
 				CAGE_ASSERT_RUNTIME(size <= AtomSize, "restored size is not within range", size, AtomSize);
-
 				tag.check(ptr, size);
-				bound.checkBack(ptr + size);
+				bound.checkBack((char*)ptr + size);
 			}
 			else
 			{
 				tag.check(ptr, AtomSize);
-				bound.checkBack(ptr + AtomSize);
+				bound.checkBack((char*)ptr + AtomSize);
 			}
 
-			*ptr.asPtr = current;
+			*(void**)ptr = current;
 			current = ptr;
 		}
 
@@ -111,7 +110,7 @@ namespace cage
 		BoundsPolicy bound;
 		TaggingPolicy tag;
 		TrackingPolicy track;
-		pointer origin, current;
+		void *origin, *current;
 		uintPtr totalSize;
 		const uintPtr objectSize;
 	};

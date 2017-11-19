@@ -14,7 +14,7 @@ namespace cage
 		uint32 modesCount() const;
 		uint32 currentMode() const;
 		const screenMode &mode(uint32 index) const;
-		templates::pointerRange<const screenMode> modes() const;
+		pointerRange<const screenMode> modes() const;
 		string name() const;
 		string id() const;
 	};
@@ -25,7 +25,7 @@ namespace cage
 		uint32 devicesCount() const;
 		uint32 primaryDevice() const;
 		const screenDeviceClass &device(uint32 index) const;
-		templates::pointerRange<const screenDeviceClass> devices() const;
+		pointerRange<const screenDeviceClass> devices() const;
 	};
 
 	CAGE_API holder<screenListClass> newScreenList();

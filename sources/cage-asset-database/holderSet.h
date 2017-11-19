@@ -1,7 +1,8 @@
 #ifndef guard_holderSet_h_ewkjbguewnjgoijerjigkjiekbgnkljewnglk
 #define guard_holderSet_h_ewkjbguewnjgoijerjigkjiekbgnkljewnglk
 
-template<class T> struct holderSet
+template<class T>
+struct holderSet
 {
 	struct comparatorStruct
 	{
@@ -27,12 +28,12 @@ template<class T> struct holderSet
 		iterator it = find(name);
 		if (it == end())
 			return nullptr;
-		return const_cast<T*> (it->get());
+		return const_cast<T*>(it->get());
 	}
 
-	T *insert(const T &value)
+	T *insert(T &&value)
 	{
-		return const_cast<T*> (data.insert(detail::systemArena().createHolder<T>(value)).first->get());
+		return const_cast<T*>(data.insert(detail::systemArena().createHolder<T>(templates::move(value))).first->get());
 	}
 
 	iterator erase(const iterator &what)
@@ -78,7 +79,7 @@ template<class T> struct holderSet
 		{
 			T tmp;
 			tmp.load(file);
-			insert(tmp);
+			insert(templates::move(tmp));
 		}
 	}
 

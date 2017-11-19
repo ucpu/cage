@@ -3,6 +3,7 @@
 #include <cage-core/geometry.h>
 #include <cage-core/assets.h>
 #include <cage-core/utility/color.h>
+#include <cage-core/utility/pointer.h>
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
 #include <cage-client/core.h>

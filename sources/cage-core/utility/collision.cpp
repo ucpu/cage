@@ -123,7 +123,7 @@ namespace cage
 		return impl->resultPairs.data();
 	}
 
-	templates::pointerRange<const collisionPairStruct> collisionQueryClass::collisionPairs() const
+	pointerRange<const collisionPairStruct> collisionQueryClass::collisionPairs() const
 	{
 		return { collisionPairsData(), collisionPairsData() + collisionPairsCount() };
 	}

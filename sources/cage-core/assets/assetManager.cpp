@@ -501,7 +501,7 @@ namespace cage
 		return ass->dependencies[index];
 	}
 
-	templates::pointerRange<const uint32> assetManagerClass::dependencies(uint32 assetName) const
+	pointerRange<const uint32> assetManagerClass::dependencies(uint32 assetName) const
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		assetContextPrivateStruct *ass = impl->index->get(assetName, false);

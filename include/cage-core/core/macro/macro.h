@@ -1,8 +1,3 @@
-/*
-#ifdef NULL
-#undef NULL // encourage using nullptr
-#endif
-*/
 
 #ifndef CAGE_DEBUG
 #ifndef NDEBUG

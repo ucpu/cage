@@ -24,7 +24,7 @@ namespace
 			scopeLock<mutexClass> lck(mut);
 			holder<tcpConnectionClass> tmp = server->accept();
 			if (tmp)
-				connections.push_back(tmp);
+				connections.push_back(templates::move(tmp));
 		}
 
 		void notify(const string &str)

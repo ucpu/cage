@@ -24,12 +24,12 @@ namespace
 		}
 	};
 
-	void takeByReference(holder <tester> &ts)
+	void takeByReference(holder<tester> &ts)
 	{
 		ts->test(1);
 	}
 
-	void takeByValue(holder <tester> ts)
+	void takeByValue(holder<tester> ts)
 	{
 		ts->test(1);
 	}
@@ -53,7 +53,7 @@ void testHolder()
 		CAGE_TEST(gCount == 1);
 		takeByReference(ts);
 		CAGE_TEST(gCount == 1);
-		takeByValue(ts);
+		takeByValue(templates::move(ts));
 		CAGE_TEST(gCount == 0);
 	}
 	{
@@ -63,7 +63,7 @@ void testHolder()
 		CAGE_TEST(gCount == 1);
 		holdev b = a.transfev();
 		CAGE_TEST(gCount == 1);
-		holdev c(b);
+		holdev c(templates::move(b));
 		CAGE_TEST(gCount == 1);
 		holder <tester> d = c.transfer <tester>();
 		CAGE_TEST(gCount == 1);
@@ -77,7 +77,7 @@ void testHolder()
 		CAGE_TEST(gCount == 1);
 		holdev b = a.transfev();
 		CAGE_TEST(gCount == 1);
-		functionTakingHolder(b);
+		functionTakingHolder(templates::move(b));
 		CAGE_TEST(gCount == 0);
 	}
 	{

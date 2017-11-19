@@ -2,7 +2,7 @@
 
 #include "main.h"
 
-templates::pointerRange<uint32> range(std::vector<uint32> &v)
+pointerRange<uint32> range(std::vector<uint32> &v)
 {
 	return { v.data(), v.data() + v.size() };
 }

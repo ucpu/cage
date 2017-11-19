@@ -47,7 +47,7 @@ void schemeStruct::parse(iniClass *ini)
 		GCHL_GENERATE(values);
 #undef GCHL_GENERATE
 		if (fld.valid())
-			schemeFields.insert(fld);
+			schemeFields.insert(templates::move(fld));
 		else
 		{
 			CAGE_LOG(severityEnum::Note, "exception", string() + "scheme: " + name);
@@ -73,7 +73,7 @@ void schemeStruct::load(fileClass *f)
 		read(f, c.max);
 		read(f, c.defaul);
 		read(f, c.values);
-		schemeFields.insert(c);
+		schemeFields.insert(templates::move(c));
 	}
 }
 

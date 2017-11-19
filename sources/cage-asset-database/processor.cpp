@@ -133,7 +133,7 @@ namespace
 						continue;
 					ass.fields[item] = ini->getString(section, item);
 				}
-				assets.insert(ass);
+				assets.insert(templates::move(ass));
 			}
 		}
 		return errors == 0;
@@ -358,7 +358,7 @@ namespace
 		return false;
 	}
 
-	typedef std::map <string, uint64, stringComparatorFast> filesMap;
+	typedef std::map<string, uint64, stringComparatorFast> filesMap;
 	filesMap files;
 
 	void findFiles(const string &path)
@@ -440,7 +440,8 @@ namespace
 	{
 		files.clear();
 		findFiles("");
-		holderSet <databankStruct> corruptedDbsCopy = corruptedDatabanks;
+		holderSet<databankStruct> corruptedDbsCopy;
+		std::swap(corruptedDbsCopy, corruptedDatabanks);
 		corruptedDatabanks.clear();
 		uint32 countBadDatabanks = 0;
 		uint32 countCorrupted = 0;
@@ -559,7 +560,7 @@ namespace
 			holder<iniClass> ini = newIni();
 			ini->load(pathJoin(configPathScheme, name));
 			s.parse(ini.get());
-			schemes.insert(s);
+			schemes.insert(templates::move(s));
 		}
 	}
 }

@@ -11,7 +11,7 @@ namespace cage
 		real fractionContact() const;
 		uint32 collisionPairsCount() const;
 		const collisionPairStruct *collisionPairsData() const;
-		templates::pointerRange<const collisionPairStruct> collisionPairs() const;
+		pointerRange<const collisionPairStruct> collisionPairs() const;
 
 		void query(const colliderClass *collider, const transform &t);
 		void query(const colliderClass *collider, const transform &t1, const transform &t2);

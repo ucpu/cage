@@ -3,7 +3,7 @@ namespace cage
 	template<uintPtr Alignment = sizeof(uintPtr), class BoundsPolicy = GCHL_DEFAULT_MEMORY_BOUNDS_POLICY, class TaggingPolicy = GCHL_DEFAULT_MEMORY_TAG_POLICY, class TrackingPolicy = GCHL_DEFAULT_MEMORY_TRACK_POLICY>
 	struct memoryAllocatorPolicyStack
 	{
-		memoryAllocatorPolicyStack() : totalSize(0)
+		memoryAllocatorPolicyStack() : origin(nullptr), current(nullptr), totalSize(0)
 		{}
 
 		void setOrigin(void *newOrigin)
@@ -14,51 +14,51 @@ namespace cage
 
 		void setSize(uintPtr size)
 		{
-			CAGE_ASSERT_RUNTIME(size >= current - origin, "size can not shrink", size, current, origin, totalSize);
+			CAGE_ASSERT_RUNTIME(size >= numeric_cast<uintPtr>((char*)current - (char*)origin), "size can not shrink", size, current, origin, totalSize);
 			totalSize = size;
 		}
 
 		void *allocate(uintPtr size)
 		{
-			uintPtr alig = detail::addToAlign(current + sizeof(uintPtr) + BoundsPolicy::SizeFront, Alignment);
+			uintPtr alig = detail::addToAlign((uintPtr)current + sizeof(uintPtr) + BoundsPolicy::SizeFront, Alignment);
 			uintPtr total = alig + sizeof(uintPtr) + BoundsPolicy::SizeFront + size + BoundsPolicy::SizeBack;
 
-			if (current + total > origin + totalSize)
+			if ((char*)current + total > (char*)origin + totalSize)
 				CAGE_THROW_SILENT(outOfMemoryException, "out of memory", total);
 
-			pointer result = current + alig + sizeof(uintPtr) + BoundsPolicy::SizeFront;
-			CAGE_ASSERT_RUNTIME(((uintPtr)result.asVoid) % Alignment == 0, "alignment failed", result, total, Alignment, current, alig, BoundsPolicy::SizeFront, size, BoundsPolicy::SizeBack);
+			void *result = (char*)current + alig + sizeof(uintPtr) + BoundsPolicy::SizeFront;
+			CAGE_ASSERT_RUNTIME((uintPtr)result % Alignment == 0, "alignment failed", result, total, Alignment, current, alig, BoundsPolicy::SizeFront, size, BoundsPolicy::SizeBack);
 
-			*(result - BoundsPolicy::SizeFront - sizeof(uintPtr)).asUintPtr = alig;
-			bound.setFront(result - BoundsPolicy::SizeFront);
+			*(uintPtr*)((char*)result - BoundsPolicy::SizeFront - sizeof(uintPtr)) = alig;
+			bound.setFront((char*)result - BoundsPolicy::SizeFront);
 			tag.set(result, size);
-			bound.setBack(result + size);
+			bound.setBack((char*)result + size);
 			track.set(result, size);
 
-			current += total;
+			current = (char*)current + total;
 			return result;
 		}
 
-		void deallocate(pointer ptr)
+		void deallocate(void *ptr)
 		{
-			CAGE_ASSERT_RUNTIME(ptr >= origin && ptr < origin + totalSize, "ptr must be element", ptr, origin, totalSize);
+			CAGE_ASSERT_RUNTIME(ptr >= origin && ptr < (char*)origin + totalSize, "ptr must be element", ptr, origin, totalSize);
 
 			track.check(ptr);
 
-			uintPtr size = current - ptr - BoundsPolicy::SizeBack;
+			uintPtr size = (char*)current - (char*)ptr - BoundsPolicy::SizeBack;
 
-			bound.checkFront(ptr - BoundsPolicy::SizeFront);
+			bound.checkFront((char*)ptr - BoundsPolicy::SizeFront);
 			tag.check(ptr, size);
-			bound.checkBack(ptr + size);
+			bound.checkBack((char*)ptr + size);
 
-			uintPtr alig = *(ptr - BoundsPolicy::SizeFront - sizeof(uintPtr)).asUintPtr;
-			current = ptr - alig - sizeof(uintPtr) - BoundsPolicy::SizeFront;
+			uintPtr alig = *(uintPtr*)((char*)ptr - BoundsPolicy::SizeFront - sizeof(uintPtr));
+			current = (char*)ptr - alig - sizeof(uintPtr) - BoundsPolicy::SizeFront;
 		}
 
 		void flush()
 		{
 			track.flush();
-			tag.check(origin, current - origin);
+			tag.check(origin, (char*)current - (char*)origin);
 			current = origin;
 		}
 
@@ -66,7 +66,7 @@ namespace cage
 		BoundsPolicy bound;
 		TaggingPolicy tag;
 		TrackingPolicy track;
-		pointer origin, current;
+		void *origin, *current;
 		uintPtr totalSize;
 	};
 }

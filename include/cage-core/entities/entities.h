@@ -72,7 +72,7 @@ namespace cage
 
 		uint32 entitiesCount() const;
 		entityClass *const *entitiesArray();
-		templates::pointerRange<entityClass *const> entities();
+		pointerRange<entityClass *const> entities();
 		void entitiesCallback(const delegate<void(entityClass *)> &callback);
 
 		void addEntity(entityClass *entity) { entity->addGroup(this); }

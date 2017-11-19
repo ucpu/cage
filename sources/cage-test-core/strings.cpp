@@ -69,7 +69,7 @@ namespace
 		}
 		{
 			CAGE_TESTCASE("operator []");
-			string a = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
+			const string a = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
 			CAGE_TEST(a[0] == 'r');
 			CAGE_TEST(a[6] == ':');
 			CAGE_TEST(a[a.length() - 1] == 'n');
@@ -77,7 +77,7 @@ namespace
 		{
 			CAGE_TESTCASE("c_str");
 			CAGE_TEST(string().c_str() != nullptr);
-			string a = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
+			const string a = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
 			const char *tmp = a.c_str();
 			CAGE_TEST(strlen(tmp) == a.length());
 			for (uint32 i = 0; i < a.length(); i++)
@@ -112,7 +112,7 @@ namespace
 		}
 		{
 			CAGE_TESTCASE("replace");
-			string c = "ahojnazdar";
+			const string c = "ahojnazdar";
 			string d = c.replace(2, 3, "");
 			CAGE_TEST(d == "ahazdar");
 			CAGE_TEST(d.length() == 7);
@@ -136,6 +136,13 @@ namespace
 			CAGE_TEST(f.split() == "a");
 			CAGE_TEST(f.split() == "");
 			CAGE_TEST(f.split() == "");
+			f = "kulomet";
+			CAGE_TEST(f.split("eu") == "k");
+			CAGE_TEST(f == "lomet");
+			f = "kulomet";
+			CAGE_TEST(f.split("") == "");
+			CAGE_TEST(f == "kulomet");
+			CAGE_TEST_ASSERTED(f.split("za"));
 		}
 		{
 			CAGE_TESTCASE("conversions");
@@ -212,7 +219,7 @@ namespace
 			CAGE_TESTCASE("find");
 			{
 				CAGE_TESTCASE("ratata://omega.alt.com/blah/keee/jojo.armagedon");
-				string s = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
+				const string s = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
 				CAGE_TEST(s.find('r', 0) == 0);
 				CAGE_TEST(s.find('a', 1) == 1);
 				CAGE_TEST(s.find('a', 2) == 3);
@@ -228,7 +235,7 @@ namespace
 			}
 			{
 				CAGE_TESTCASE("0123456789");
-				string s = "0123456789";
+				const string s = "0123456789";
 				CAGE_TEST(s.find("35", 0) == -1);
 				CAGE_TEST(s.find("45", 0) == 4);
 				CAGE_TEST(s.find("34", 0) == 3);
@@ -239,7 +246,7 @@ namespace
 			}
 			{
 				CAGE_TESTCASE("finding char only");
-				string s = "0123456789";
+				const string s = "0123456789";
 				CAGE_TEST(s.find('j', 0) == -1);
 				CAGE_TEST(s.find('4', 0) == 4);
 				CAGE_TEST(s.find('3', 0) == 3);
@@ -247,6 +254,14 @@ namespace
 				CAGE_TEST(s.find('8', 0) == 8);
 				CAGE_TEST(s.find('9', 0) == 9);
 				CAGE_TEST(s.find('k', 0) == -1);
+			}
+			{
+				CAGE_TESTCASE("corner cases");
+				const string s = "0123456789";
+				CAGE_TEST(s.find('a', 100) == -1);
+				CAGE_TEST(s.find("a", 100) == -1);
+				CAGE_TEST(s.find("abcdefghijklmnopq", 0) == -1);
+				CAGE_TEST(s.find("") == -1);
 			}
 		}
 		{
@@ -257,11 +272,14 @@ namespace
 			CAGE_TEST(string("   ori  ").trim(false, false) == "   ori  ");
 			CAGE_TEST(string("   ori  ").trim(true, true, string(" i").order()) == "or");
 			CAGE_TEST(string("magma").trim(true, true, string("am")) == "g");
+			CAGE_TEST_ASSERTED(string("magma").trim(true, true, "za"));
+			CAGE_TEST(string("magma").trim(true, true, "") == "magma");
 		}
 		{
 			CAGE_TESTCASE("contains");
 			CAGE_TEST(string("opice").order().contains('c'));
 			CAGE_TEST(!string("opice").order().contains('a'));
+			CAGE_TEST_ASSERTED(string("za").contains('a'));
 		}
 		{
 			CAGE_TESTCASE("pattern");

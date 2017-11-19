@@ -63,11 +63,11 @@ namespace cage
 		return impl->sections.cont.find(section) != impl->sections.cont.end();
 	}
 
-	templates::pointerRange<string> iniClass::sections() const
+	pointerRange<string> iniClass::sections() const
 	{
 		iniImpl *impl = (iniImpl*)this;
 		impl->tmpSections.clear();
-		for (auto it : impl->sections.cont)
+		for (auto &it : impl->sections.cont)
 			impl->tmpSections.push_back(it.first);
 		return { impl->tmpSections.data(), impl->tmpSections.data() + impl->tmpSections.size() };
 	}
@@ -106,7 +106,7 @@ namespace cage
 		return i->second->items.cont.find(item) != i->second->items.cont.end();
 	}
 
-	templates::pointerRange<string> iniClass::items(const string &section) const
+	pointerRange<string> iniClass::items(const string &section) const
 	{
 		iniImpl *impl = (iniImpl*)this;
 		impl->tmpItems.clear();

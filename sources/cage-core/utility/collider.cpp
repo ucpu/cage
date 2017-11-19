@@ -5,6 +5,7 @@
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
+#include <cage-core/utility/pointer.h>
 #include <cage-core/utility/collider.h>
 #include <cage-core/utility/memoryBuffer.h>
 

@@ -18,7 +18,7 @@ namespace cage
 
 		void *allocate(uintPtr size)
 		{
-			scopeLock <ConcurrentPolicy> g(&concurrent);
+			scopeLock<ConcurrentPolicy> g(&concurrent);
 			try
 			{
 				void *tmp = allocator.allocate(size);
@@ -38,13 +38,13 @@ namespace cage
 		{
 			if (ptr == nullptr)
 				return;
-			scopeLock <ConcurrentPolicy> g(&concurrent);
+			scopeLock<ConcurrentPolicy> g(&concurrent);
 			allocator.deallocate(ptr);
 		}
 
 		void flush()
 		{
-			scopeLock <ConcurrentPolicy> g(&concurrent);
+			scopeLock<ConcurrentPolicy> g(&concurrent);
 			allocator.flush();
 		}
 

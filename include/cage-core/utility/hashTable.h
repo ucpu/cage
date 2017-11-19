@@ -60,7 +60,7 @@ namespace cage
 	class hashTableClass
 	{
 	public:
-		hashTableClass(holder<privat::hashTablePriv> table) : table(table) {}
+		hashTableClass(holder<privat::hashTablePriv> table) : table(templates::move(table)) {}
 		void add(uint32 name, T *value) { return table->add(name, value); }
 		void remove(uint32 name) { return table->remove(name); }
 		T *get(uint32 name, bool allowNull) const { return (T*)table->get(name, allowNull); }

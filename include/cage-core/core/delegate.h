@@ -36,18 +36,14 @@ namespace cage
 		template<class C, R(C::*F)(Ts...)>
 		struct methodWrapper
 		{
-			methodWrapper(C *inst) : inst(inst)
-			{}
-
+			methodWrapper(C *inst) : inst(inst) {}
 			C *inst;
 		};
 
 		template<class C, R(C::*F)(Ts...) const>
 		struct constWrapper
 		{
-			constWrapper(const C *inst) : inst(inst)
-			{}
-
+			constWrapper(const C *inst) : inst(inst) {}
 			const C *inst;
 		};
 

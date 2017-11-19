@@ -347,7 +347,7 @@ namespace cage
 		return &impl->entities[0];
 	}
 
-	templates::pointerRange<entityClass *const> groupClass::entities()
+	pointerRange<entityClass *const> groupClass::entities()
 	{
 		return { entitiesArray(), entitiesArray() + entitiesCount() };
 	}

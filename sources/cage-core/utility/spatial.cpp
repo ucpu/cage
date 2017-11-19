@@ -197,7 +197,7 @@ namespace cage
 		return impl->resultNames.data();
 	}
 
-	templates::pointerRange<const uint32> spatialQueryClass::result() const
+	pointerRange<const uint32> spatialQueryClass::result() const
 	{
 		return { resultArray(), resultArray() + resultCount() };
 	}

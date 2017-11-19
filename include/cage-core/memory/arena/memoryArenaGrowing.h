@@ -25,8 +25,8 @@ namespace cage
 			try
 			{
 				void *tmp = allocator.allocate(size);
-				CAGE_ASSERT_RUNTIME(numeric_cast<uintPtr>(tmp) >= origin.decView, "allocator corrupted", tmp, origin, size);
-				CAGE_ASSERT_RUNTIME(numeric_cast<uintPtr>(tmp) + size <= origin.decView + currentSize, "allocator corrupted", tmp, origin, size, currentSize);
+				CAGE_ASSERT_RUNTIME(tmp >= origin, "allocator corrupted", tmp, origin, size);
+				CAGE_ASSERT_RUNTIME((char*)tmp + size <= (char*)origin + currentSize, "allocator corrupted", tmp, origin, size, currentSize);
 				return tmp;
 			}
 			catch (const outOfMemoryException &e)
@@ -39,8 +39,8 @@ namespace cage
 			try
 			{
 				void *tmp = allocator.allocate(size);
-				CAGE_ASSERT_RUNTIME(numeric_cast<uintPtr>(tmp) >= origin.decView, "allocator corrupted", tmp, origin, size);
-				CAGE_ASSERT_RUNTIME(numeric_cast<uintPtr>(tmp) + size <= origin.decView + currentSize, "allocator corrupted", tmp, origin, size, currentSize);
+				CAGE_ASSERT_RUNTIME(tmp >= origin, "allocator corrupted", tmp, origin, size);
+				CAGE_ASSERT_RUNTIME((char*)tmp + size <= (char*)origin + currentSize, "allocator corrupted", tmp, origin, size, currentSize);
 				return tmp;
 			}
 			catch (outOfMemoryException &e)
@@ -69,7 +69,7 @@ namespace cage
 		holder<virtualMemoryClass> memory;
 		AllocatorPolicy allocator;
 		ConcurrentPolicy concurrent;
-		pointer origin;
+		void *origin;
 		const uintPtr addressSize;
 		uintPtr currentSize;
 	};

@@ -3,6 +3,7 @@
 #include <cage-core/geometry.h>
 #include <cage-core/log.h>
 #include <cage-core/memory/memoryDetail.h> // addToAlign
+#include <cage-core/utility/pointer.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>

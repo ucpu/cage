@@ -6,6 +6,7 @@
 #include <cage-core/math.h>
 #include <cage-core/memory.h>
 #include <cage-core/entities.h>
+#include <cage-core/utility/pointer.h>
 #include <cage-core/utility/memoryBuffer.h>
 
 namespace cage

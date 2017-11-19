@@ -24,15 +24,16 @@ namespace cage
 	namespace privat
 	{
 		template<bool>
-		struct helper_is_char_signed
-		{};
+		struct helper_is_char_signed {};
 
-		template<> struct helper_is_char_signed<true>
+		template<>
+		struct helper_is_char_signed<true>
 		{
 			typedef signed char type;
 		};
 
-		template<> struct helper_is_char_signed<false>
+		template<>
+		struct helper_is_char_signed<false>
 		{
 			typedef unsigned char type;
 		};
@@ -46,7 +47,8 @@ namespace cage
 			static const bool is_specialized = false;
 		};
 
-		template<> struct numeric_limits<unsigned char>
+		template<>
+		struct numeric_limits<unsigned char>
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = false;
@@ -55,7 +57,8 @@ namespace cage
 			typedef uint8 make_unsigned;
 		};
 
-		template<> struct numeric_limits<unsigned short>
+		template<>
+		struct numeric_limits<unsigned short>
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = false;
@@ -64,7 +67,8 @@ namespace cage
 			typedef uint16 make_unsigned;
 		};
 
-		template<> struct numeric_limits<unsigned int>
+		template<>
+		struct numeric_limits<unsigned int>
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = false;
@@ -73,7 +77,8 @@ namespace cage
 			typedef uint32 make_unsigned;
 		};
 
-		template<> struct numeric_limits<unsigned long long>
+		template<>
+		struct numeric_limits<unsigned long long>
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = false;
@@ -83,14 +88,15 @@ namespace cage
 		};
 
 #ifdef CAGE_SYSTEM_WINDOWS
-		template<> struct numeric_limits<unsigned long> : public numeric_limits<unsigned int>
-		{};
+		template<>
+		struct numeric_limits<unsigned long> : public numeric_limits<unsigned int> {};
 #else
-		template<> struct numeric_limits<unsigned long> : public numeric_limits<unsigned long long>
-		{};
+		template<>
+		struct numeric_limits<unsigned long> : public numeric_limits<unsigned long long> {};
 #endif
 
-		template<> struct numeric_limits<signed char>
+		template<>
+		struct numeric_limits<signed char>
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = true;
@@ -99,7 +105,8 @@ namespace cage
 			typedef uint8 make_unsigned;
 		};
 
-		template<> struct numeric_limits<signed short>
+		template<>
+		struct numeric_limits<signed short>
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = true;
@@ -108,7 +115,8 @@ namespace cage
 			typedef uint16 make_unsigned;
 		};
 
-		template<> struct numeric_limits<signed int>
+		template<>
+		struct numeric_limits<signed int>
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = true;
@@ -117,7 +125,8 @@ namespace cage
 			typedef uint32 make_unsigned;
 		};
 
-		template<> struct numeric_limits<signed long long>
+		template<>
+		struct numeric_limits<signed long long>
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = true;
@@ -127,14 +136,15 @@ namespace cage
 		};
 
 #ifdef CAGE_SYSTEM_WINDOWS
-		template<> struct numeric_limits<signed long> : public numeric_limits<signed int>
-		{};
+		template<>
+		struct numeric_limits<signed long> : public numeric_limits<signed int> {};
 #else
-		template<> struct numeric_limits<signed long> : public numeric_limits<signed long long>
-		{};
+		template<>
+		struct numeric_limits<signed long> : public numeric_limits<signed long long> {};
 #endif
 
-		template<> struct numeric_limits<float>
+		template<>
+		struct numeric_limits<float>
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = true;
@@ -143,7 +153,8 @@ namespace cage
 			typedef float make_unsigned;
 		};
 
-		template<> struct numeric_limits<double>
+		template<>
+		struct numeric_limits<double>
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = true;
@@ -153,8 +164,8 @@ namespace cage
 		};
 
 		// char is distinct type from both unsigned char and signed char
-		template<> struct numeric_limits<char> : public numeric_limits<privat::helper_is_char_signed<((signed char)-1) != ((unsigned char)-1)>::type>
-		{};
+		template<>
+		struct numeric_limits<char> : public numeric_limits<privat::helper_is_char_signed<((signed char)-1) != ((unsigned char)-1)>::type> {};
 	}
 
 	namespace privat

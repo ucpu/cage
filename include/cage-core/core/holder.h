@@ -7,11 +7,8 @@ namespace cage
 	struct CAGE_API holdev
 	{
 		// constructor
-		holdev() : data(nullptr)
-		{}
-
-		holdev(void *const value, delegate<void(void*)> action) : action(action), data(value)
-		{}
+		holdev() : data(nullptr) {}
+		holdev(void *value, delegate<void(void*)> action) : action(action), data(value) {}
 
 		// destructor
 		~holdev()
@@ -20,17 +17,17 @@ namespace cage
 				action(data);
 		}
 
-		// copy constructor
-		holdev(const holdev &other)
+		// move constructor
+		holdev(holdev &&other)
 		{
 			data = other.data;
 			action = other.action;
-			const_cast<holdev&>(other).data = nullptr;
-			const_cast<holdev&>(other).action.clear();
+			other.data = nullptr;
+			other.action.clear();
 		}
 
-		// assignment operator
-		holdev &operator = (const holdev &other)
+		// move assignment operator
+		holdev &operator = (holdev &&other)
 		{
 			if (data == other.data)
 				return *this;
@@ -38,8 +35,8 @@ namespace cage
 				action(data);
 			data = other.data;
 			action = other.action;
-			const_cast<holdev&>(other).data = nullptr;
-			const_cast<holdev&>(other).action.clear();
+			other.data = nullptr;
+			other.action.clear();
 			return *this;
 		}
 
@@ -80,11 +77,8 @@ namespace cage
 	template<class T> struct holder
 	{
 		// constructor
-		holder() : data(nullptr)
-		{}
-
-		holder(T *const value, delegate<void(void*)> action) : action(action), data(value)
-		{}
+		holder() : data(nullptr) {}
+		holder(T *value, delegate<void(void*)> action) : action(action), data(value) {}
 
 		// destructor
 		~holder()
@@ -93,17 +87,17 @@ namespace cage
 				action(data);
 		}
 
-		// copy constructor
-		holder(const holder &other)
+		// move constructor
+		holder(holder &&other)
 		{
 			data = other.data;
 			action = other.action;
-			const_cast<holder&>(other).data = nullptr;
-			const_cast<holder&>(other).action.clear();
+			other.data = nullptr;
+			other.action.clear();
 		}
 
-		// assignment operator
-		holder &operator = (const holder &other)
+		// move assignment operator
+		holder &operator = (holder &&other)
 		{
 			if (data == other.data)
 				return *this;
@@ -111,8 +105,8 @@ namespace cage
 				action(data);
 			data = other.data;
 			action = other.action;
-			const_cast<holder&>(other).data = nullptr;
-			const_cast<holder&>(other).action.clear();
+			other.data = nullptr;
+			other.action.clear();
 			return *this;
 		}
 

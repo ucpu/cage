@@ -1,6 +1,7 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/assets.h>
+#include <cage-core/utility/pointer.h>
 #include <cage-core/utility/textPack.h>
 
 namespace cage

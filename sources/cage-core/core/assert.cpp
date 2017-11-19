@@ -2,6 +2,7 @@
 #include <cage-core/core.h>
 #include <cage-core/log.h>
 #include <cage-core/math.h>
+#include <cage-core/utility/pointer.h>
 #include "../system.h"
 #undef min
 #undef max
@@ -126,13 +127,13 @@ namespace cage
 				CAGE_THROW_CRITICAL(exception, "assert failure");
 		}
 
-		assertClass &assertClass::variable(const char *name, const pointer &var)
+		assertClass &assertClass::variable(const char *name, const pointer var)
 		{
 			return variable(name, var.asVoid);
 		}
 
 #define GCHL_GENERATE(TYPE) \
-		assertClass &assertClass::variable (const char *name, TYPE var)\
+		assertClass &assertClass::variable(const char *name, TYPE var)\
 		{\
 			if (!valid)\
 			{\
@@ -146,7 +147,7 @@ namespace cage
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(TYPE) \
-		assertClass &assertClass::variable (const char *name, TYPE var)\
+		assertClass &assertClass::variable(const char *name, TYPE var)\
 		{\
 			if (!valid)\
 			{\
@@ -154,7 +155,7 @@ namespace cage
 			}\
 			return *this;\
 		}
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, const real&, const rads&, const vec2&, const vec3&, const vec4&, const mat3&, const mat4&));
+		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, real, rads, degs, const vec2&, const vec3&, const vec4&, const mat3&, const mat4&));
 #undef GCHL_GENERATE
 
 		assertClass &assertClass::variable(const char *name, const string &var)

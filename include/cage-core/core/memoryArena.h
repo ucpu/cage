@@ -2,8 +2,7 @@ namespace cage
 {
 	namespace privat
 	{
-		struct cageNewSpecifier
-		{};
+		struct cageNewSpecifier {};
 	}
 }
 
@@ -17,11 +16,8 @@ inline void *operator new[](cage::uintPtr size, void *ptr, cage::privat::cageNew
 	return ptr;
 }
 
-inline void  operator delete(void *ptr, void *ptr2, cage::privat::cageNewSpecifier) noexcept
-{}
-
-inline void  operator delete[](void *ptr, void *ptr2, cage::privat::cageNewSpecifier) noexcept
-{}
+inline void operator delete(void *ptr, void *ptr2, cage::privat::cageNewSpecifier) noexcept {}
+inline void operator delete[](void *ptr, void *ptr2, cage::privat::cageNewSpecifier) noexcept {}
 
 namespace cage
 {
@@ -34,22 +30,26 @@ namespace cage
 			void(*dealloc)(void *, void *);
 			void(*fls)(void *);
 
-			template<class A> static void *allocate(void *inst, uintPtr size)
+			template<class A>
+			static void *allocate(void *inst, uintPtr size)
 			{
 				return((A*)inst)->allocate(size);
 			}
 
-			template<class A> static void deallocate(void *inst, void *ptr)
+			template<class A>
+			static void deallocate(void *inst, void *ptr)
 			{
 				((A*)inst)->deallocate(ptr);
 			}
 
-			template<class A> static void flush(void *inst)
+			template<class A>
+			static void flush(void *inst)
 			{
 				((A*)inst)->flush();
 			}
 
-			template<class A> static Stub init()
+			template<class A>
+			static Stub init()
 			{
 				Stub s;
 				s.alloc = &allocate<A>;
@@ -61,15 +61,15 @@ namespace cage
 		void *inst;
 
 	public:
-		memoryArena() : stub(nullptr), inst(nullptr)
-		{}
+		memoryArena() : stub(nullptr), inst(nullptr) {}
 
 		memoryArena(const memoryArena &a)
 		{
 			*this = a;
 		}
 
-		template<class A> memoryArena(A *a)
+		template<class A>
+		memoryArena(A *a)
 		{
 			static Stub stb = Stub::init<A>();
 			this->stub = &stb;
@@ -127,7 +127,8 @@ namespace cage
 			return createHolder<I>(templates::forward<Ts>(vs)...).template transfer<T>();
 		};
 
-		template<class T> void destroy(void *ptr)
+		template<class T>
+		void destroy(void *ptr)
 		{
 			if (!ptr)
 				return;
@@ -168,14 +169,11 @@ namespace cage
 			typedef memoryArenaStd<U> other;
 		};
 
-		memoryArenaStd(const memoryArena &other) : a(other)
-		{}
+		memoryArenaStd(const memoryArena &other) : a(other) {}
+		memoryArenaStd(const memoryArenaStd &other) : a(other.a) {}
 
-		memoryArenaStd(const memoryArenaStd &other) : a(other.a)
-		{}
-
-		template<class U> explicit memoryArenaStd(const memoryArenaStd<U> &other) : a(other.a)
-		{}
+		template<class U>
+		explicit memoryArenaStd(const memoryArenaStd<U> &other) : a(other.a) {}
 
 		pointer address(reference r) const
 		{

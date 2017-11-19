@@ -8,7 +8,7 @@ namespace cage
 	public:
 		uint32 resultCount() const;
 		const uint32 *resultArray() const;
-		templates::pointerRange<const uint32> result() const;
+		pointerRange<const uint32> result() const;
 
 		void intersection(const line &shape);
 		void intersection(const triangle &shape);

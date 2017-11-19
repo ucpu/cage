@@ -1,3 +1,6 @@
+#include <vector>
+#include <algorithm>
+
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 
@@ -113,6 +116,108 @@ namespace cage
 				CAGE_THROW_ERROR(exception, "string truncation");
 			detail::memcpy(dataOut, tmp, len);
 			currentOut = len;
+		}
+
+		namespace
+		{
+			bool isOrdered(const char *data, uint32 current)
+			{
+				std::vector<char> data2(data, data + current);
+				uint32 current2 = current;
+				stringOrder(data2.data(), current2);
+				if (current2 != current)
+					return false;
+				return detail::memcmp(data, data2.data(), current) == 0;
+			}
+		}
+
+		void stringReplace(char *data, uint32 &current, uint32 maxLength, const char *what, uint32 whatLen, const char *with, uint32 withLen)
+		{
+			if (whatLen == 0)
+				return;
+			uint32 pos = 0;
+			while (true)
+			{
+				pos = stringFind(data, current, what, whatLen, pos);
+				if (pos == -1)
+					break;
+				if (current + withLen - whatLen > maxLength)
+					CAGE_THROW_ERROR(exception, "string truncation");
+				detail::memmove(data + pos + withLen, data + pos + whatLen, current - pos - whatLen);
+				detail::memcpy(data + pos, with, withLen);
+				current += withLen - whatLen;
+				pos += withLen - whatLen + 1;
+			}
+		}
+
+		void stringTrim(char *data, uint32 &current, const char *what, uint32 whatLen, bool left, bool right)
+		{
+			CAGE_ASSERT_RUNTIME(isOrdered(what, whatLen));
+			if (whatLen == 0)
+				return;
+			if (!left && !right)
+				return;
+			if (right)
+			{
+				uint32 p = 0;
+				while (p < current && stringContains(what, whatLen, data[current - p - 1]))
+					p++;
+				current -= p;
+			}
+			if (left)
+			{
+				uint32 p = 0;
+				while (p < current && stringContains(what, whatLen, data[p]))
+					p++;
+				current -= p;
+				if (p > 0)
+					detail::memmove(data, data + p, current);
+			}
+		}
+
+		void stringSplit(char *data, uint32 &current, char *ret, uint32 &retLen, const char *what, uint32 whatLen)
+		{
+			CAGE_ASSERT_RUNTIME(retLen == 0);
+			CAGE_ASSERT_RUNTIME(isOrdered(what, whatLen));
+			if (whatLen == 0)
+				return;
+			for (uint32 i = 0; i < current; i++)
+			{
+				if (stringContains(what, whatLen, data[i]))
+				{
+					detail::memcpy(ret, data, i);
+					detail::memmove(data, data + i + 1, current - i - 1);
+					retLen = i;
+					current -= i + 1;
+					return;
+				}
+			}
+			detail::memcpy(ret, data, current);
+			std::swap(current, retLen);
+		}
+
+		uint32 stringFind(const char *data, uint32 current, const char *what, uint32 whatLen, uint32 offset)
+		{
+			if (whatLen == 0 || offset + whatLen >= current)
+				return -1;
+			uint32 end = current - whatLen + 1;
+			for (uint32 i = offset; i < end; i++)
+				if (detail::memcmp(data + i, what, whatLen) == 0)
+					return i;
+			return -1;
+		}
+
+		void stringOrder(char *data, uint32 &current)
+		{
+			std::sort(data, data + current);
+			auto it = std::unique(data, data + current);
+			current = numeric_cast<uint32>(it - data);
+		}
+
+		bool stringContains(const char *data, uint32 current, char what)
+		{
+			CAGE_ASSERT_RUNTIME(isOrdered(data, current));
+			return std::binary_search(data, data + current, what);
 		}
 	}
 }
