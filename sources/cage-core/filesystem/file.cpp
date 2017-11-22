@@ -5,15 +5,19 @@
 #include <cage-core/utility/memoryBuffer.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
+
 #include "../incWin.h"
+#include <cstdio>
 #define fseek _fseeki64
 #define ftell _ftelli64
-#else
-#define _FILE_OFFSET_BITS 64
-#endif
 
+#else
+
+#define _FILE_OFFSET_BITS 64
 #include <cstdio>
 #include <cerrno>
+
+#endif
 
 namespace cage
 {
