@@ -6,13 +6,16 @@
 #include <cage-core/network.h>
 #include <cage-core/log.h>
 #include <cage-core/utility/memoryBuffer.h>
-#include "../system.h"
 
 #ifdef CAGE_SYSTEM_WINDOWS
+
+#include "../incWin.h"
 #include <winsock2.h>         // For socket(), connect(), send(), and recv()
 #include <ws2tcpip.h>
 typedef char raw_type;       // Type used for raw data on this platform
+
 #else
+
 #include <sys/types.h>       // For data types
 #include <sys/socket.h>      // For socket(), connect(), send(), and recv()
 #include <sys/ioctl.h>       // For ioctl()
@@ -28,6 +31,7 @@ typedef int SOCKET;
 #define ioctlsocket ioctl
 #define WSAEWOULDBLOCK EWOULDBLOCK
 #define INVALID_SOCKET -1
+
 #endif
 
 namespace cage

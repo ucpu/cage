@@ -3,11 +3,16 @@
 #include <cage-core/log.h>
 #include <cage-core/math.h>
 #include <cage-core/utility/pointer.h>
-#include "../system.h"
+
+#ifdef CAGE_SYSTEM_WINDOWS
+#include "../incWin.h"
+#include <intrin.h> // __debugbreak
 #undef min
 #undef max
+#endif
 
 #include <limits>
+#include <exception>
 
 namespace cage
 {

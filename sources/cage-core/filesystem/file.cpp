@@ -3,12 +3,17 @@
 #include <cage-core/log.h>
 #include <cage-core/filesystem.h>
 #include <cage-core/utility/memoryBuffer.h>
-#include "../system.h"
 
-#if defined (CAGE_SYSTEM_WINDOWS)
+#ifdef CAGE_SYSTEM_WINDOWS
+#include "../incWin.h"
 #define fseek _fseeki64
 #define ftell _ftelli64
+#else
+#define _FILE_OFFSET_BITS 64
 #endif
+
+#include <cstdio>
+#include <cerrno>
 
 namespace cage
 {

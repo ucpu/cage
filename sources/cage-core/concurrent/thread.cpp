@@ -5,7 +5,18 @@
 #include <cage-core/core.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/log.h>
-#include "../system.h"
+
+#ifdef CAGE_SYSTEM_WINDOWS
+#include "../incWin.h"
+#else
+#include <pthread.h>
+#endif
+
+#ifdef CAGE_SYSTEM_LINUX
+#include <sys/prctl.h>
+#endif
+
+#include <cerrno>
 
 namespace cage
 {
@@ -96,7 +107,9 @@ namespace cage
 #pragma warning(pop)
 				}
 #else
+#ifdef CAGE_SYSTEM_LINUX
 				prctl(PR_SET_NAME, threadName.c_str(), 0, 0, 0);
+#endif
 #endif
 			}
 		};

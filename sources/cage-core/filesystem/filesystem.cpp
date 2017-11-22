@@ -4,7 +4,16 @@
 #include <cage-core/core.h>
 #include <cage-core/filesystem.h>
 #include <cage-core/log.h>
-#include "../system.h"
+
+#ifdef CAGE_SYSTEM_WINDOWS
+#include "../incWin.h"
+#else
+#include <unistd.h>
+#include <sys/stat.h>
+#endif
+
+#include <cerrno>
+#include <cstdio>
 
 namespace cage
 {

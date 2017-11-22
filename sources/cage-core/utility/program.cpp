@@ -4,7 +4,18 @@
 #include <cage-core/concurrent.h>
 #include <cage-core/filesystem.h>
 #include <cage-core/utility/program.h>
-#include "../system.h"
+
+#ifdef CAGE_SYSTEM_WINDOWS
+#include "../incWin.h"
+#else
+#include <unistd.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#endif
+
+#include <cstdlib>
+#include <cerrno>
 
 namespace cage
 {

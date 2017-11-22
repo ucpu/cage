@@ -1,7 +1,15 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/memory.h>
-#include "../system.h"
+
+#ifdef CAGE_SYSTEM_WINDOWS
+#include "../incWin.h"
+#else
+#include <unistd.h>
+#include <sys/mman.h>
+#endif
+
+#include <cerrno>
 
 namespace cage
 {

@@ -1,7 +1,13 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/concurrent.h>
-#include "../system.h"
+
+#ifdef CAGE_SYSTEM_WINDOWS
+#include "../incWin.h"
+#else
+#include <pthread.h>
+#include <semaphore.h>
+#endif
 
 namespace cage
 {

@@ -1,7 +1,12 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/utility/timer.h>
-#include "../system.h"
+
+#ifdef CAGE_SYSTEM_WINDOWS
+#include "../incWin.h"
+#else
+#include <time.h>
+#endif
 
 #ifndef CAGE_SYSTEM_WINDOWS
 static const clockid_t clockid = CLOCK_REALTIME;
