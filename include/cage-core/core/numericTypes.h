@@ -172,20 +172,16 @@ namespace cage
 	{
 		namespace endianness
 		{
-			union
-			{
-				uint16 s;
-				uint8 c[2];
-			} constexpr static d{ 1 };
+            constexpr uint32 one = 1;
 
 			constexpr bool little()
 			{
-				return d.c[0] == 1;
+                return ((const uint8&)(one) == 1);
 			}
 
 			constexpr bool big() // network
 			{
-				return d.c[0] != 1;
+			    return !little();
 			}
 
 			template<class T>

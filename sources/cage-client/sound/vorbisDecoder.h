@@ -1,8 +1,6 @@
 #include <vector>
 
-#define NULL 0
 #include <vorbis/vorbisfile.h>
-#undef NULL
 
 namespace cage
 {

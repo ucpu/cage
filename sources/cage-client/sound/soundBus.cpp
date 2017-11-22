@@ -37,11 +37,13 @@ namespace cage
 		class soundBusImpl : public busClass, public busInterfaceStruct
 		{
 		public:
-			std::set<const busInterfaceStruct*, std::less<const busInterfaceStruct*>, memoryArenaStd<> > inputs;
-			std::set<const busInterfaceStruct*, std::less<const busInterfaceStruct*>, memoryArenaStd<> > outputs;
-			std::set<soundFilterImpl*, std::less<soundFilterImpl*>, memoryArenaStd<> > filters;
+		    typedef std::set<const busInterfaceStruct*, std::less<const busInterfaceStruct*>, memoryArenaStd<const busInterfaceStruct *>> busInteerfaceSet;
+		    typedef std::set<soundFilterImpl*, std::less<soundFilterImpl*>, memoryArenaStd<soundFilterImpl *>> filterSet;
+			busInteerfaceSet inputs;
+			busInteerfaceSet outputs;
+			filterSet filters;
 			filterApiStruct filterApi;
-			std::set<soundFilterImpl*>::iterator currentFilter;
+			filterSet::iterator currentFilter;
 
 			soundBusImpl(soundContextClass *context) :
 				busInterfaceStruct(delegate<void(busClass*)>().bind<soundBusImpl, &soundBusImpl::busDestroyed>(this), delegate<void(const soundDataBufferStruct&)>().bind<soundBusImpl, &soundBusImpl::execute>(this)),

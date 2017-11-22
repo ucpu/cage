@@ -28,7 +28,7 @@ namespace cage
 		class soundSourceImpl : public sourceClass, public busInterfaceStruct
 		{
 		public:
-			std::set<busClass*, std::less<busClass*>, memoryArenaStd<> > outputs;
+			std::set<busClass*, std::less<busClass*>, memoryArenaStd<busClass*>> outputs;
 			std::vector<float> rawData;
 			std::vector<float> temporaryData1;
 			std::vector<float> temporaryData2;

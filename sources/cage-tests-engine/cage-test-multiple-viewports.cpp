@@ -111,7 +111,7 @@ void regenerate()
 		c.ambientLight = vec3(1, 1, 1) * 0.1;
 		c.renderMask = 1 << i;
 		c.cameraOrder = i;
-		switch (camsLayout)
+		switch ((uint32)camsLayout)
 		{
 		case 0:
 			c.viewportOrigin = vec2(i / 3.f, 0);

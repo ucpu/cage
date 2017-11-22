@@ -146,7 +146,7 @@ namespace cage
 		degs(rads other);
 
 		// conversion operators
-		operator string() const { return string() + value + " °"; }
+		operator string() const { return string() + value + " degs"; }
 
 		friend CAGE_API struct real;
 		friend CAGE_API struct rads;

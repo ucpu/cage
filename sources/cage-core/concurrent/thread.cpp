@@ -130,12 +130,21 @@ namespace cage
 #else
 		if (impl->handle == (pthread_t)nullptr)
 			return true;
+#ifdef CAGE_SYSTEM_MAC
+        // mac does not have pthread_tryjoin_np
+        switch (pthread_kill(impl->handle, 0))
+        {
+        case 0: return false;
+        default: const_cast<threadClass*>(this)->wait(); return true;
+        }
+#else
 		switch (int err = pthread_tryjoin_np(impl->handle, nullptr))
 		{
 		case 0: impl->handle = (pthread_t)nullptr; return true;
 		case EBUSY: return false;
 		default: CAGE_THROW_ERROR(codeException, "pthread_tryjoin_np", err);
 		}
+#endif
 #endif
 	}
 

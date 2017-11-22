@@ -98,6 +98,8 @@ namespace cage
 					version += "windows";
 #elif defined(CAGE_SYSTEM_LINUX)
 					version += "linux";
+#elif defined(CAGE_SYSTEM_MAC)
+					version += "mac";
 #else
 	#error unknown platform
 #endif // CAGE_SYSTEM_WINDOWS

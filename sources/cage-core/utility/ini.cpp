@@ -14,9 +14,10 @@ namespace cage
 		template<class Key, class Value> struct containerMap
 		{
 			containerMap(memoryArena arena) : cont(std::less<Key>(), arena) {}
-			std::map<Key, Value, std::less<Key>, memoryArenaStd<>> cont;
-			typedef typename std::map<Key, Value, std::less<Key>, memoryArenaStd<>>::iterator iter;
-			typedef typename std::map<Key, Value, std::less<Key>, memoryArenaStd<>>::const_iterator citer;
+			typedef std::map<Key, Value, std::less<Key>, memoryArenaStd<std::pair<const Key, Value>>> contType;
+			typedef typename contType::iterator iter;
+			typedef typename contType::const_iterator citer;
+			contType cont;
 		};
 
 		struct inisection
