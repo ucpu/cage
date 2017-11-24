@@ -36,14 +36,14 @@ void testDelegates()
 	delegate<void()> d1;
 	d1.bind<pokus, &pokus::fnc1>(&vp);
 	d1.bind<pokus, &pokus::fnc2>(&cp);
-	d1.bind<pokus, &pokus::fnc3>((const pokus*)&vp);
-	d1.bind<pokus, &pokus::fnc3>(&cp);
+	//d1.bind<pokus, static_cast<void(pokus::*)()>(&pokus::fnc3)>(&vp);
+	//d1.bind<pokus, static_cast<void(pokus::*)()const>(&pokus::fnc3)>(&cp);
 
 	delegate<int(int)> d2;
 	d2.bind<pokus, &pokus::fnci1>(&vp);
 	d2.bind<pokus, &pokus::fnci2>(&cp);
-	d2.bind<pokus, &pokus::fnci3>((const pokus*)&vp);
-	d2.bind<pokus, &pokus::fnci3>(&cp);
+	//d2.bind<pokus, static_cast<int(pokus::*)(int)>(&pokus::fnci3)>(&vp);
+	//d2.bind<pokus, static_cast<int(pokus::*)(int)const>(&pokus::fnci3)>(&cp);
 	CAGE_TEST(d2(5) == 5);
 
 	delegate <int()> d3;
@@ -51,3 +51,4 @@ void testDelegates()
 	d3.bind <pokus, &pokus::fncv>(&vp);
 	CAGE_TEST(d3() == 3);
 }
+

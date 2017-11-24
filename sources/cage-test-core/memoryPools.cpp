@@ -37,7 +37,7 @@ namespace
 
 		template<class U> struct rebind
 		{
-			typedef interceptMemoryArena <Limit, U> other;
+			typedef interceptMemoryArena<Limit, U> other;
 		};
 
 		interceptMemoryArena()
@@ -119,19 +119,19 @@ namespace
 			CAGE_TESTCASE(string() + "memoryArenaStd sizes, " + sizeof(ts));
 			{
 				CAGE_TESTCASE("list");
-				std::list<ts, interceptMemoryArena<sizeof(templates::allocatorSizeList<ts>)>> cont;
+				std::list<ts, interceptMemoryArena<sizeof(templates::allocatorSizeList<ts>), ts>> cont;
 				for (uint32 i = 0; i < 3; i++)
 					cont.push_back(ts(i));
 			}
 			{
 				CAGE_TESTCASE("map");
-				std::map<int, ts, std::less<int>, interceptMemoryArena<sizeof(templates::allocatorSizeMap<int, ts>)>> cont;
+				std::map<int, ts, std::less<int>, interceptMemoryArena<sizeof(templates::allocatorSizeMap<int, ts>), std::pair<const int, ts>>> cont;
 				for (uint32 i = 0; i < 3; i++)
 					cont[i] = ts(i);
 			}
 			{
 				CAGE_TESTCASE("set");
-				std::set<ts, std::less<ts>, interceptMemoryArena<sizeof(templates::allocatorSizeSet<ts>)>> cont;
+				std::set<ts, std::less<ts>, interceptMemoryArena<sizeof(templates::allocatorSizeSet<ts>), ts>> cont;
 				for (uint32 i = 0; i < 3; i++)
 					cont.insert(ts(i));
 			}
@@ -140,21 +140,21 @@ namespace
 			{
 				CAGE_TESTCASE("list");
 				memoryArenaFixed<memoryAllocatorPolicyPool<sizeof(templates::allocatorSizeList<ts>)>, memoryConcurrentPolicyNone> arena(1024 * 1024);
-				std::list<ts, memoryArenaStd<>> cont((memoryArena(&arena)));
+				std::list<ts, memoryArenaStd<ts>> cont((memoryArena(&arena)));
 				for (uint32 i = 0; i < 100; i++)
 					cont.push_back(ts(i));
 			}
 			{
 				CAGE_TESTCASE("map");
 				memoryArenaFixed<memoryAllocatorPolicyPool<sizeof(templates::allocatorSizeMap<int, ts>)>, memoryConcurrentPolicyNone> arena(1024 * 1024);
-				std::map<int, ts, std::less<int>, memoryArenaStd<>> cont((std::less<int>(), memoryArena(&arena)));
+				std::map<int, ts, std::less<int>, memoryArenaStd<std::pair<const int, ts>>> cont((std::less<int>(), memoryArena(&arena)));
 				for (uint32 i = 0; i < 100; i++)
 					cont[i] = ts(i);
 			}
 			{
 				CAGE_TESTCASE("set");
 				memoryArenaFixed<memoryAllocatorPolicyPool<sizeof(templates::allocatorSizeSet<ts>)>, memoryConcurrentPolicyNone> arena(1024 * 1024);
-				std::set<ts, std::less<ts>, memoryArenaStd<>> cont((std::less<ts>(), memoryArena(&arena)));
+				std::set<ts, std::less<ts>, memoryArenaStd<ts>> cont((std::less<ts>(), memoryArena(&arena)));
 				for (uint32 i = 0; i < 100; i++)
 					cont.insert(ts(i));
 			}

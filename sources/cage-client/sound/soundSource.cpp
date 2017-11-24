@@ -3,6 +3,7 @@
 
 #include <cage-core/core.h>
 #include <cage-core/math.h>
+#include <cage-core/memory.h>
 #include "vorbisDecoder.h"
 #include "private.h"
 #include "utilities.h"

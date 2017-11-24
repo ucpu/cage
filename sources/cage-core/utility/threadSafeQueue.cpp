@@ -19,7 +19,7 @@ namespace cage
 			}
 
 			memoryArenaGrowing<memoryAllocatorPolicyPool<sizeof(templates::allocatorSizeList<void*>)>, memoryConcurrentPolicyNone> pool;
-			std::list <void*, memoryArenaStd<> > queue;
+			std::list<void*, memoryArenaStd<void*>> queue;
 			holder<mutexClass> mutex;
 		};
 	}
@@ -27,14 +27,14 @@ namespace cage
 	void threadSafeQueueClass::push(void *value)
 	{
 		threadSafeQueueImpl *impl = (threadSafeQueueImpl *)this;
-		scopeLock <mutexClass> l(impl->mutex);
+		scopeLock<mutexClass> l(impl->mutex);
 		impl->queue.push_front(value);
 	}
 
 	void *threadSafeQueueClass::pull()
 	{
 		threadSafeQueueImpl *impl = (threadSafeQueueImpl *)this;
-		scopeLock <mutexClass> l(impl->mutex);
+		scopeLock<mutexClass> l(impl->mutex);
 		if (impl->queue.empty())
 			return nullptr;
 		void *res = impl->queue.back();
@@ -45,7 +45,7 @@ namespace cage
 	void *threadSafeQueueClass::check(delegate<bool(void *)> checker)
 	{
 		threadSafeQueueImpl *impl = (threadSafeQueueImpl *)this;
-		scopeLock <mutexClass> l(impl->mutex);
+		scopeLock<mutexClass> l(impl->mutex);
 		if (impl->queue.empty())
 			return nullptr;
 		void *res = impl->queue.back();
@@ -65,6 +65,7 @@ namespace cage
 
 	holder<threadSafeQueueClass> newThreadSafeQueue(uintPtr memory)
 	{
-		return detail::systemArena().createImpl <threadSafeQueueClass, threadSafeQueueImpl>(memory);
+		return detail::systemArena().createImpl<threadSafeQueueClass, threadSafeQueueImpl>(memory);
 	}
 }
+

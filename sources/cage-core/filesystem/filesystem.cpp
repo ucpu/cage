@@ -12,6 +12,10 @@
 #include <sys/stat.h>
 #endif
 
+#ifdef CAGE_SYSTEM_MAC
+#include <mach-o/dyld.h>
+#endif
+
 #include <cerrno>
 #include <cstdio>
 
@@ -566,13 +570,24 @@ namespace cage
 			if (len == 0)
 				CAGE_THROW_ERROR(codeException, "GetModuleFileName", GetLastError());
 
-#else
+#elif defined(CAGE_SYSTEM_LINUX)
 
 			char id[string::MaxLength];
 			sprintf(id, "/proc/%d/exe", getpid());
 			sint32 len = readlink(id, buffer, string::MaxLength);
 			if (len == -1)
 				CAGE_THROW_ERROR(codeException, "readlink", errno);
+
+#elif defined(CAGE_SYSTEM_MAC)
+
+            uint32 len = sizeof(buffer);
+            if (_NSGetExecutablePath(buffer, &len) != 0)
+				CAGE_THROW_ERROR(exception, "_NSGetExecutablePath");
+            len = detail::strlen(buffer);
+
+#else
+
+#error This operating system is not supported
 
 #endif
 

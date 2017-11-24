@@ -1,6 +1,7 @@
 #ifndef guard_memory_h_f1434537_bf7f_4eed_a603_7145ab2f0515_
 #define guard_memory_h_f1434537_bf7f_4eed_a603_7145ab2f0515_
 
+#include "memory/memoryArenaStd.h"
 #include "concurrent/scopeLock.h"
 #include "memory/memoryDetail.h"
 #include "memory/virtual.h"

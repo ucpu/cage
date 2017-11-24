@@ -12,7 +12,6 @@ void testProgram()
 	cmd = "echo hi there";
 #endif // CAGE_SYSTEM_WINDOWS
 	holder<programClass> prg = newProgram(cmd);
-	prg->writeLine("omg");
 	CAGE_TEST(prg->readLine() == "hi there");
 	CAGE_TEST(prg->wait() == 0);
 }
