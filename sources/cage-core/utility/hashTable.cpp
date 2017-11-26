@@ -99,7 +99,7 @@ namespace cage
 					continue;
 				if (allowNull)
 					return nullptr;
-				CAGE_THROW_ERROR(exception, "not found");
+				CAGE_THROW_ERROR(exception, "hash table item not found");
 			}
 			CAGE_THROW_CRITICAL(exception, "infinite cycle");
 		}

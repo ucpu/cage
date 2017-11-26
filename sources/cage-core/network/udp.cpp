@@ -1,6 +1,8 @@
 #include <list>
 
 #include "net.h"
+#include <cage-core/config.h>
+#include <cage-core/math.h>
 
 #include <enet/enet.h>
 
@@ -8,6 +10,8 @@ namespace cage
 {
 	namespace
 	{
+		configDouble simulatedPacketLoss("cage-core.udp.simulatedPacketLoss", 0);
+
 		class enetInitializerClass
 		{
 		public:
@@ -187,6 +191,8 @@ namespace cage
 		ENetPacket *packet = enet_packet_create(buffer, size, reliable ? ENET_PACKET_FLAG_RELIABLE : 0);
 		if (!packet)
 			CAGE_THROW_ERROR(exception, "packet creation failed");
+		if (!reliable && cage::random() < (double)simulatedPacketLoss)
+			return;
 		if (enet_peer_send(impl->peer, numeric_cast<uint8>(channel), packet) != 0)
 			CAGE_THROW_ERROR(exception, "packet send failed");
 	}

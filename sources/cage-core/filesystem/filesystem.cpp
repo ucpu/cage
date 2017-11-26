@@ -593,5 +593,14 @@ namespace cage
 
 			return pathExtractFilename(string(buffer, len));
 		}
+
+		string getExecutableNameNoExe()
+		{
+#ifdef CAGE_SYSTEM_WINDOWS
+			return pathExtractFilenameNoExtension(getExecutableName());
+#else
+			return getExecutableName();
+#endif
+		}
 	}
 }

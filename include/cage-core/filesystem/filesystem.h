@@ -45,5 +45,6 @@ namespace cage
 	namespace detail
 	{
 		CAGE_API string getExecutableName();
+		CAGE_API string getExecutableNameNoExe();
 	}
 }

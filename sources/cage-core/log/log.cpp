@@ -77,7 +77,7 @@ namespace cage
 				loggerDebug->format.bind<&logFormatPolicyConsole>();
 				loggerDebug->output.bind<&logOutputPolicyDebug>();
 
-				loggerOutputCentralFile = newLogOutputPolicyFile(pathExtractFilenameNoExtension(detail::getExecutableName()) + ".log", false);
+				loggerOutputCentralFile = newLogOutputPolicyFile(detail::getExecutableNameNoExe() + ".log", false);
 				loggerCentralFile = newLogger();
 				loggerCentralFile->output.bind<logOutputPolicyFileClass, &logOutputPolicyFileClass::output>(loggerOutputCentralFile.get());
 				loggerCentralFile->format.bind<&logFormatPolicyFile>();

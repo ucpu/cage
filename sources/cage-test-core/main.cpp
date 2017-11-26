@@ -45,60 +45,52 @@ void testCopyAndMove();
 
 int main()
 {
-	try
+	holder<loggerClass> log1 = newLogger();
+	log1->filter.bind<logFilterPolicyPass>();
+	log1->format.bind<logFormatPolicyConsole>();
+	log1->output.bind<logOutputPolicyStdOut>();
+
+	newFilesystem()->remove("testdir");
+	testMacros();
+	testEnums();
+	testExceptions();
+	testNumericCast();
+	testTemplates();
+	testStrings();
+	testDelegates();
+	testHolder();
+	testEvents();
+	testRandom();
+	testMath();
+	testMathGlm();
+	testGeometry();
+	testHashTable();
+	testSpatial();
+	testCollisions();
+	testSceneEntities();
+	testSceneSerialize();
+	testMemoryArenas();
+	testMemoryPools();
+	testMemoryPerformance();
+	testMemoryBuffers();
+	testConcurrent();
+	testFiles();
+	testIni();
+	testConfig();
+	testColor();
+	testPng();
+	testNoise();
+	testInterpolator();
+	testProgram();
+	testTcp();
+	testUdp();
+	testUdpDiscovery();
+	testCopyAndMove();
+	newFilesystem()->remove("testdir");
+
 	{
-		holder<loggerClass> log1 = newLogger();
-		log1->filter.bind<logFilterPolicyPass>();
-		log1->format.bind<logFormatPolicyConsole>();
-		log1->output.bind<logOutputPolicyStdOut>();
-
-		newFilesystem()->remove("testdir");
-		testMacros();
-		testEnums();
-		testExceptions();
-		testNumericCast();
-		testTemplates();
-		testStrings();
-		testDelegates();
-		testHolder();
-		testEvents();
-		testRandom();
-		testMath();
-		testMathGlm();
-		testGeometry();
-		testHashTable();
-		testSpatial();
-		testCollisions();
-		testSceneEntities();
-		testSceneSerialize();
-		testMemoryArenas();
-		testMemoryPools();
-		testMemoryPerformance();
-		testMemoryBuffers();
-		testConcurrent();
-		testFiles();
-		testIni();
-		testConfig();
-		testColor();
-		testPng();
-		testNoise();
-		testInterpolator();
-		testProgram();
-		testTcp();
-		testUdp();
-		testUdpDiscovery();
-		testCopyAndMove();
-		newFilesystem()->remove("testdir");
-
-		{
-			CAGE_TESTCASE("all tests done");
-		}
-
-		return 0;
+		CAGE_TESTCASE("all tests done");
 	}
-	catch (...)
-	{
-		CAGE_LOG(severityEnum::Error, "test", "caught exception");
-		return 1;
-	}
+
+	return 0;
 }

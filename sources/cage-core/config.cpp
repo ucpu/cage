@@ -32,13 +32,9 @@ namespace cage
 				float f;
 				double d;
 			};
-			holder<string> s;
+			string *s;
 
-			variable() : type(configTypeEnum::Undefined)
-			{}
-
-			~variable()
-			{}
+			variable() : type(configTypeEnum::Undefined), s(nullptr) {}
 
 			void clear()
 			{
@@ -53,38 +49,66 @@ namespace cage
 			void set(uint64 value) { type = configTypeEnum::Uint64; u64 = value; }
 			void set(float value) { type = configTypeEnum::Float; f = value; }
 			void set(double value) { type = configTypeEnum::Double; d = value; }
-			void set(const string &value) { if (!s) s = detail::systemArena().createHolder<string>(value); else *s = value; type = configTypeEnum::String; }
+			void set(const string &value) { if (!s) s = detail::systemArena().createObject<string>(value); else *s = value; type = configTypeEnum::String; }
+			void setDynamic(const string &value)
+			{
+				if (value.isInteger(false))
+					set(value.toUint64());
+				else if (value.isInteger(true))
+					set(value.toSint64());
+				else if (value.isReal(true))
+					set(value.toFloat());
+				else if (value.isBool())
+					set(value.toBool());
+				else
+					set(value);
+			}
 		};
 
-		typedef std::map<string, holder<variable>, stringComparatorFast> varsType;
+		typedef std::map<string, variable*, stringComparatorFast> varsType;
 
-		bool varsConfigLoader()
+		varsType &directVariables()
+		{
+			static varsType *v = new varsType(); // intentionally left to leak
+			return *v;
+		}
+
+		variable *directVariable(const string &name)
+		{
+			CAGE_ASSERT_RUNTIME(!name.empty(), "variable name cannot be empty");
+			variable *v = directVariables()[name];
+			if (!v)
+			{
+				directVariables()[name] = detail::systemArena().createObject<variable>();
+				v = directVariables()[name];
+			}
+			return v;
+		}
+
+		bool loadCageIni()
 		{
 			if (pathExists("cage.ini"))
 			{
-				configLoadIni("cage.ini", "");
+				// the logic of function configLoadIni is replicated here
+				holder<iniClass> ini = newIni();
+				ini->load("cage.ini");
+				for (string section : ini->sections())
+				{
+					for (string name : ini->items(section))
+					{
+						string value = ini->getString(section, name);
+						directVariable(section + "." + name)->setDynamic(value);
+					}
+				}
 				return true;
 			}
 			return false;
 		}
 
-		varsType &vars()
-		{
-			static varsType *v = new varsType(); // intentionally left to leak
-			static bool c = varsConfigLoader();
-			return *v;
-		}
-
 		variable *getVar(const string &name)
 		{
-			CAGE_ASSERT_RUNTIME(!name.empty(), "variable name cannot be empty");
-			variable *v = vars()[name].get();
-			if (!v)
-			{
-				vars()[name] = detail::systemArena().createHolder<variable>();
-				v = vars()[name].get();
-			}
-			return v;
+			static bool cageIni = loadCageIni();
+			return directVariable(name);
 		}
 
 		template<class C> const C cast(const variable *v) {}
@@ -219,8 +243,8 @@ namespace cage
 
 			configListImpl() : lock(mut())
 			{
-				it = vars().begin();
-				et = vars().end();
+				it = directVariables().begin();
+				et = directVariables().end();
 				valid = it != et;
 			}
 
@@ -282,11 +306,8 @@ namespace cage
 
 	void configSetDynamic(const string &name, const string &value)
 	{
-		if (value.isInteger(false)) return configSetUint64(name, value.toUint64());
-		if (value.isInteger(true)) return configSetSint64(name, value.toSint64());
-		if (value.isReal(true)) return configSetFloat(name, value.toFloat());
-		if (value.isBool()) return configSetBool(name, value.toBool());
-		configSetString(name, value);
+		scopeLock<mutexClass> lock(mut());
+		getVar(name)->setDynamic(value);
 	}
 
 	bool configGetBool(const string &name, bool value)
@@ -538,7 +559,7 @@ namespace cage
 	{
 		configListImpl *impl = (configListImpl*)this;
 		CAGE_ASSERT_RUNTIME(impl->valid, "config variables lister is at invalid location");
-		return impl->it->second.get()->type;
+		return impl->it->second->type;
 	}
 
 	string configListClass::typeName() const
@@ -561,56 +582,56 @@ namespace cage
 	{
 		configListImpl *impl = (configListImpl*)this;
 		CAGE_ASSERT_RUNTIME(impl->valid, "config variables lister is at invalid location");
-		return cast<bool>(impl->it->second.get());
+		return cast<bool>(impl->it->second);
 	}
 
 	sint32 configListClass::getSint32() const
 	{
 		configListImpl *impl = (configListImpl*)this;
 		CAGE_ASSERT_RUNTIME(impl->valid, "config variables lister is at invalid location");
-		return cast<sint32>(impl->it->second.get());
+		return cast<sint32>(impl->it->second);
 	}
 
 	uint32 configListClass::getUint32() const
 	{
 		configListImpl *impl = (configListImpl*)this;
 		CAGE_ASSERT_RUNTIME(impl->valid, "config variables lister is at invalid location");
-		return cast<uint32>(impl->it->second.get());
+		return cast<uint32>(impl->it->second);
 	}
 
 	sint64 configListClass::getSint64() const
 	{
 		configListImpl *impl = (configListImpl*)this;
 		CAGE_ASSERT_RUNTIME(impl->valid, "config variables lister is at invalid location");
-		return cast<sint64>(impl->it->second.get());
+		return cast<sint64>(impl->it->second);
 	}
 
 	uint64 configListClass::getUint64() const
 	{
 		configListImpl *impl = (configListImpl*)this;
 		CAGE_ASSERT_RUNTIME(impl->valid, "config variables lister is at invalid location");
-		return cast<uint64>(impl->it->second.get());
+		return cast<uint64>(impl->it->second);
 	}
 
 	float configListClass::getFloat() const
 	{
 		configListImpl *impl = (configListImpl*)this;
 		CAGE_ASSERT_RUNTIME(impl->valid, "config variables lister is at invalid location");
-		return cast<float>(impl->it->second.get());
+		return cast<float>(impl->it->second);
 	}
 
 	double configListClass::getDouble() const
 	{
 		configListImpl *impl = (configListImpl*)this;
 		CAGE_ASSERT_RUNTIME(impl->valid, "config variables lister is at invalid location");
-		return cast<double>(impl->it->second.get());
+		return cast<double>(impl->it->second);
 	}
 
 	string configListClass::getString() const
 	{
 		configListImpl *impl = (configListImpl*)this;
 		CAGE_ASSERT_RUNTIME(impl->valid, "config variables lister is at invalid location");
-		return cast<string>(impl->it->second.get());
+		return cast<string>(impl->it->second);
 	}
 
 	void configListClass::next()
@@ -626,19 +647,17 @@ namespace cage
 
 	void configLoadIni(const string &filename, const string &prefix)
 	{
-		if (prefix.pattern("", ".", "") || prefix.empty())
+		if (prefix.find('.') != -1 || prefix.empty())
 			CAGE_LOG(severityEnum::Warning, "config", string() + "dangerous config prefix '" + prefix + "'");
 		holder<iniClass> ini = newIni();
 		ini->load(filename);
-		for (uint32 sectionIndex = 0, sectionIndexEnd = ini->sectionCount(); sectionIndex != sectionIndexEnd; sectionIndex++)
+		for (string section : ini->sections())
 		{
-			string section = ini->section(sectionIndex);
-			if (section.pattern("", ".", ""))
+			if (section.find('.') != -1)
 				CAGE_LOG(severityEnum::Warning, "config", string() + "dangerous config section '" + section + "'");
-			for (uint32 index = 0, indexEnd = ini->itemCount(section); index != indexEnd; index++)
+			for (string name : ini->items(section))
 			{
-				string name = ini->item(section, index);
-				if (name.pattern("", ".", ""))
+				if (name.find('.') != -1)
 					CAGE_LOG(severityEnum::Warning, "config", string() + "dangerous config field '" + name + "'");
 				string value = ini->getString(section, name);
 				configSetDynamic(string() + (prefix.empty() ? "" : prefix + ".") + section + "." + name, value);
@@ -648,18 +667,43 @@ namespace cage
 
 	void configSaveIni(const string &filename, const string &prefix)
 	{
+		if (prefix.find('.') != -1 || prefix.empty())
+			CAGE_LOG(severityEnum::Warning, "config", string() + "dangerous config prefix '" + prefix + "'");
 		holder<iniClass> ini = newIni();
 		holder<configListClass> cnf = newConfigList();
 		while (cnf->valid())
 		{
-			string p, s;
-			string name = cnf->name();
-			p = name.split(".");
-			s = name.split(".");
-			if (p == prefix)
-				ini->setString(s, name, cnf->getString());
+			string p = cnf->name().reverse();
+			string n = p.split(".").reverse();
+			string s = p.split(".").reverse();
+			p = p.reverse();
+			if (prefix.empty())
+				ini->set(p + "." + s, n, cnf->getString());
+			else if (p == prefix)
+				ini->set(s, n, cnf->getString());
 			cnf->next();
 		}
 		ini->save(filename);
+	}
+
+	namespace
+	{
+		struct autoConfigBackupClass
+		{
+			~autoConfigBackupClass()
+			{
+				try
+				{
+					if (configGetBool("cage-core.config.autoBackup"))
+					{
+						configSaveIni(detail::getExecutableNameNoExe() + "-backup.ini", "");
+					}
+				}
+				catch (...)
+				{
+					// do nothing
+				}
+			}
+		} autoConfigBackupInstance;
 	}
 }

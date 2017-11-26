@@ -17,6 +17,7 @@ namespace cage
 
 		entityClass *newEntity(uint32 name = 0);
 		entityClass *getEntity(uint32 entityName);
+		entityClass *getOrNewEntity(uint32 entityName);
 		bool hasEntity(uint32 entityName) const;
 
 		groupClass *getAllEntities(); // do not use it to add/remove entities directly

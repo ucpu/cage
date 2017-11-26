@@ -165,6 +165,13 @@ namespace cage
 		return impl->namedEntities->get(entityName, false);
 	}
 
+	entityClass *entityManagerClass::getOrNewEntity(uint32 entityName)
+	{
+		if (hasEntity(entityName))
+			return getEntity(entityName);
+		return newEntity(entityName);
+	}
+
 	bool entityManagerClass::hasEntity(uint32 entityName) const
 	{
 		return ((entityManagerImpl *)this)->namedEntities->exists(entityName);

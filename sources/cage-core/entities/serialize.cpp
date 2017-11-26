@@ -95,9 +95,7 @@ namespace cage
 			uint32 name = read<uint32>(ptr, bufferSize);
 			if (name == 0)
 				CAGE_THROW_ERROR(exception, "invalid entity");
-			if (!manager->hasEntity(name))
-				manager->newEntity(name);
-			entityClass *e = manager->getEntity(name);
+			entityClass *e = manager->getOrNewEntity(name);
 			read(ptr, bufferSize, e->unsafeValue(component), typeSize);
 		}
 	}

@@ -13,6 +13,10 @@
 #include <winsock2.h>         // For socket(), connect(), send(), and recv()
 #include <ws2tcpip.h>
 typedef char raw_type;       // Type used for raw data on this platform
+#undef min
+#undef max
+#undef near
+#undef far
 
 #else
 
