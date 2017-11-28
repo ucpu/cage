@@ -9,6 +9,7 @@
 #else
 #include <pthread.h>
 #include <semaphore.h>
+#include <cerrno>
 #endif
 
 namespace cage
@@ -61,7 +62,7 @@ namespace cage
         int r;
         do
         {
-            r = sem_wait(&s->sem);
+            r = sem_wait(&impl->sem);
         } while (r != 0 && errno == EINTR);
 #endif
 	}
