@@ -28,6 +28,7 @@ void controlInit()
 	{ // camera
 		entityClass *e = ents->newEntity(1);
 		ENGINE_GET_COMPONENT(transform, t, e);
+        (void)t;
 		ENGINE_GET_COMPONENT(camera, c, e);
 		c.ambientLight = vec3(1, 1, 1);
 		c.cameraType = cameraTypeEnum::Orthographic;
@@ -48,6 +49,7 @@ void controlInit()
 	{ // moving voice
 		entityClass *e = ents->newEntity(3);
 		ENGINE_GET_COMPONENT(transform, t, e);
+        (void)t;
 		ENGINE_GET_COMPONENT(render, r, e);
 		r.object = 2;
 		ENGINE_GET_COMPONENT(voice, s, e);

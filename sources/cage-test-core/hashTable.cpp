@@ -117,7 +117,10 @@ void testHashTable()
 		tbl->add(42, &i);
 		uint32 c = 0;
 		for (auto it : *tbl)
+        {
 			c++;
+			(void)it;
+        }
 		CAGE_TEST(c == 2);
 	}
 

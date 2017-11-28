@@ -150,11 +150,16 @@ namespace cage
 		GCHL_GENERATE(sint8, %hhd);
 		GCHL_GENERATE(sint16, %hd);
 		GCHL_GENERATE(sint32, %d);
-		GCHL_GENERATE(sint64, %lld);
 		GCHL_GENERATE(uint8, %hhu);
 		GCHL_GENERATE(uint16, %hu);
 		GCHL_GENERATE(uint32, %u);
+#ifdef CAGE_SYSTEM_WINDOWS
+		GCHL_GENERATE(sint64, %lld);
 		GCHL_GENERATE(uint64, %llu);
+#else
+		GCHL_GENERATE(sint64, %ld);
+		GCHL_GENERATE(uint64, %lu);
+#endif
 		GCHL_GENERATE(float, %f);
 		GCHL_GENERATE(double, %lf);
 #undef GCHL_GENERATE

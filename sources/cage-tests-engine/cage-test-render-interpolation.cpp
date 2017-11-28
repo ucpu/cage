@@ -31,12 +31,14 @@ void controlInit()
 	{ // camera
 		entityClass *e = ents->newEntity(1);
 		ENGINE_GET_COMPONENT(transform, t, e);
+        (void)t;
 		ENGINE_GET_COMPONENT(camera, c, e);
 		c.ambientLight = vec3(1, 1, 1);
 	}
 	{ // box 1
 		entityClass *e = ents->newEntity(2);
 		ENGINE_GET_COMPONENT(transform, t, e);
+        (void)t;
 		ENGINE_GET_COMPONENT(render, r, e);
 		r.object = 1; // something non-existing
 	}

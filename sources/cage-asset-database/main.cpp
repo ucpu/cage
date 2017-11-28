@@ -11,7 +11,7 @@ using namespace cage;
 
 bool consoleLogFilter(const cage::detail::loggerInfo &info)
 {
-	return info.severity >= severityEnum::Error || info.component == "exception" || info.component == "asset" || info.component == "verdict";
+	return info.severity >= severityEnum::Error || string(info.component) == "exception" || string(info.component) == "asset" || string(info.component) == "verdict";
 }
 
 int main(int argc, const char *args[])

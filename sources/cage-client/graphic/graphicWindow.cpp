@@ -60,6 +60,7 @@ namespace cage
 		void glfwInitializeFunc()
 		{
 			static glfwInitializerClass *m = new glfwInitializerClass(); // intentional leak
+            (void)m;
 		}
 
 		struct eventStruct

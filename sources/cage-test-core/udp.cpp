@@ -9,7 +9,7 @@ namespace
 	class senderClass
 	{
 	public:
-		senderClass(uint32 idx) : idx(idx), snd(0), rec(0)
+		senderClass(uint32 idx) : snd(0), rec(0), idx(idx)
 		{
 			thread = newThread(delegate<void()>().bind<senderClass, &senderClass::process>(this), string() + "udp test sender " + idx);
 		}

@@ -19,7 +19,7 @@
 
 namespace cage
 {
-	assetContextStruct::assetContextStruct() : assetPointer(nullptr), returnData(nullptr), compressedData(nullptr), originalData(nullptr), realName(0), internationalizedName(0), compressedSize(0), originalSize(0), assetFlags(0) {}
+	assetContextStruct::assetContextStruct() : compressedSize(0), originalSize(0), assetPointer(nullptr), returnData(nullptr), compressedData(nullptr), originalData(nullptr), realName(0), internationalizedName(0), assetFlags(0) {}
 	assetSchemeStruct::assetSchemeStruct() : schemePointer(nullptr), threadIndex(0) {}
 
 	namespace

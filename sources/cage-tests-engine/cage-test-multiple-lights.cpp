@@ -226,12 +226,14 @@ int main(int argc, char *args[])
 			ENGINE_GET_COMPONENT(render, r, e);
 			r.object = hashString("cage/tests/bottle/other.obj?plane");
 			ENGINE_GET_COMPONENT(transform, t, e);
+            (void)t;
 		}
 		{ // bottle
 			entityClass *e = ents->newEntity(2);
 			ENGINE_GET_COMPONENT(render, r, e);
 			r.object = hashString("cage/tests/bottle/bottle.obj");
 			ENGINE_GET_COMPONENT(transform, t, e);
+            (void)t;
 		}
 		for (uint32 i = 0; i < 3; i++)
 		{ // spot lights

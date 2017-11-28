@@ -108,6 +108,7 @@ namespace cage
 		variable *getVar(const string &name)
 		{
 			static bool cageIni = loadCageIni();
+			(void)cageIni;
 			return directVariable(name);
 		}
 

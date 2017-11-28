@@ -88,6 +88,7 @@ int main(int argc, char *args[])
 			r.object = roomName;
 			r.renderMask = 3;
 			ENGINE_GET_COMPONENT(transform, t, e);
+            (void)t;
 		}
 		entityClass *eye = nullptr;
 		{ // eye

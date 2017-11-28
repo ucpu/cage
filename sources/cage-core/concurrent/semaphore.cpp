@@ -4,6 +4,8 @@
 
 #ifdef CAGE_SYSTEM_WINDOWS
 #include "../incWin.h"
+#elif defined(CAGE_SYSTEM_MAC)
+#include <dispatch/dispatch.h>
 #else
 #include <pthread.h>
 #include <semaphore.h>
@@ -18,6 +20,8 @@ namespace cage
 		public:
 #ifdef CAGE_SYSTEM_WINDOWS
 			HANDLE sem;
+#elif defined(CAGE_SYSTEM_MAC)
+            dispatch_semaphore_t sem;
 #else
 			sem_t sem;
 #endif
@@ -26,12 +30,10 @@ namespace cage
 			{
 #ifdef CAGE_SYSTEM_WINDOWS
 				sem = CreateSemaphore(nullptr, value, max, nullptr);
+#elif defined(CAGE_SYSTEM_MAC)
+				sem = dispatch_semaphore_create(value);
 #else
-
-				sem_init(&sem, 0, max);
-				for (uint32 i = 0; i < value; i++)
-					unlock();
-
+				sem_init(&sem, 0, value);
 #endif
 			}
 
@@ -39,6 +41,8 @@ namespace cage
 			{
 #ifdef CAGE_SYSTEM_WINDOWS
 				CloseHandle(sem);
+#elif defined(CAGE_SYSTEM_MAC)
+                dispatch_release(sem);
 #else
 				sem_destroy(&sem);
 #endif
@@ -51,8 +55,14 @@ namespace cage
 		semaphoreImpl *impl = (semaphoreImpl *)this;
 #ifdef CAGE_SYSTEM_WINDOWS
 		WaitForSingleObject(impl->sem, INFINITE);
+#elif defined(CAGE_SYSTEM_MAC)
+        dispatch_semaphore_wait(impl->sem, DISPATCH_TIME_FOREVER);
 #else
-		sem_wait(&impl->sem);
+        int r;
+        do
+        {
+            r = sem_wait(&s->sem);
+        } while (r != 0 && errno == EINTR);
 #endif
 	}
 
@@ -61,6 +71,8 @@ namespace cage
 		semaphoreImpl *impl = (semaphoreImpl *)this;
 #ifdef CAGE_SYSTEM_WINDOWS
 		ReleaseSemaphore(impl->sem, 1, nullptr);
+#elif defined(CAGE_SYSTEM_MAC)
+        dispatch_semaphore_signal(impl->sem);
 #else
 		sem_post(&impl->sem);
 #endif
@@ -71,3 +83,4 @@ namespace cage
 		return detail::systemArena().createImpl<semaphoreClass, semaphoreImpl>(value, max);
 	}
 }
+

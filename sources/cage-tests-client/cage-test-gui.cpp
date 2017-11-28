@@ -143,7 +143,6 @@ entityClass *prepareEntity(entityClass *column, uint32 index, const string &labe
 
 void generateEmpties(entityClass *layout, uint32 &index)
 {
-	entityManagerClass *ents = gui->entities();
 	{
 		entityClass *control = prepareEntity(layout, index++, "empty with default format text");
 		GUI_GET_COMPONENT(control, c, control);
@@ -259,7 +258,6 @@ void generateEmpties(entityClass *layout, uint32 &index)
 
 void generateButtons(entityClass *layout, uint32 &index)
 {
-	entityManagerClass *ents = gui->entities();
 	{
 		entityClass *control = prepareEntity(layout, index++, "button 1 (text only)");
 		GUI_GET_COMPONENT(control, c, control);
@@ -513,7 +511,6 @@ void generateLists(entityClass *layout, uint32 &index)
 
 void generateSliders(entityClass *layout, uint32 &index)
 {
-	entityManagerClass *ents = gui->entities();
 	{
 		entityClass *control = prepareEntity(layout, index++, "slider 1");
 		GUI_GET_COMPONENT(control, c, control);
@@ -540,7 +537,6 @@ void generateSliders(entityClass *layout, uint32 &index)
 
 void generateCheckboxes(entityClass *layout, uint32 &index)
 {
-	entityManagerClass *ents = gui->entities();
 	{
 		entityClass *control = prepareEntity(layout, index++, "checkbox 1");
 		GUI_GET_COMPONENT(control, c, control);
@@ -569,7 +565,6 @@ void generateCheckboxes(entityClass *layout, uint32 &index)
 
 void generateRadios(entityClass *layout, uint32 &index)
 {
-	entityManagerClass *ents = gui->entities();
 	{
 		entityClass *groupControl = prepareEntity(layout, index++, "radio group 1");
 		{
@@ -630,7 +625,6 @@ void generateRadios(entityClass *layout, uint32 &index)
 
 void generateOrdering(entityClass *layout, uint32 &index)
 {
-	entityManagerClass *ents = gui->entities();
 	sint32 order[] = { 5, 0, -1, 2, 6, -3, 4, 5, 3 };
 	for (uint32 i = 0; i < sizeof(order) / sizeof(order[0]); i++)
 	{
@@ -649,7 +643,6 @@ void generateOrdering(entityClass *layout, uint32 &index)
 
 void generateUtfTest(entityClass *layout, uint32 &index)
 {
-	entityManagerClass *ents = gui->entities();
 	for (uint32 i = 0; i < 50; i++)
 	{
 		entityClass *control = gui->entities()->newEntity(gui->entities()->generateUniqueName());

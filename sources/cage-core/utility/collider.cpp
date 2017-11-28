@@ -351,7 +351,7 @@ namespace cage
 			const mat4 m;
 			const T *const original;
 
-			lazyData(const T *original, uint32 count, const mat4 &m) : original(original), m(m)
+			lazyData(const T *original, uint32 count, const mat4 &m) : m(m), original(original)
 			{
 				data.resize(count);
 				flags.resize(count, false);

@@ -107,6 +107,7 @@ void regenerate()
 	{ // camera
 		entityClass *e = ents->newEntity(i + 1);
 		ENGINE_GET_COMPONENT(transform, t, e);
+        (void)t;
 		ENGINE_GET_COMPONENT(camera, c, e);
 		c.ambientLight = vec3(1, 1, 1) * 0.1;
 		c.renderMask = 1 << i;

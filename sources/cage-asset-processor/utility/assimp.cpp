@@ -2,13 +2,11 @@
 
 #include "assimp.h"
 
-#define NULL 0
 #include <assimp/Exporter.hpp>
 #include <assimp/IOStream.hpp>
 #include <assimp/IOSystem.hpp>
 #include <assimp/LogStream.hpp>
 #include <assimp/DefaultLogger.hpp>
-#undef NULL
 
 CAGE_ASSERT_COMPILE(sizeof(aiColor3D) == sizeof(cage::vec3), assimp_color3D_is_not_interchangeable_with_vec3);
 CAGE_ASSERT_COMPILE(sizeof(aiColor4D) == sizeof(cage::vec4), assimp_color4D_is_not_interchangeable_with_vec4);

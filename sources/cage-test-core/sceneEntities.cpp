@@ -26,6 +26,7 @@ void testSceneEntities()
 		groupClass *movement = manager->defineGroup();
 
 		entityClass *terrain = manager->newEntity();
+		(void)terrain;
 		entityClass *player = manager->newEntity();
 		player->addComponent(position);
 		player->addComponent(velocity);
@@ -335,3 +336,4 @@ void testSceneEntities()
 		CAGE_LOG(severityEnum::Info, "entities performance", string() + "avg time per cycle: " + (tmr->microsSinceStart() / totalCycles) + " us");
 	}
 }
+

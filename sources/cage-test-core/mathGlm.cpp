@@ -151,7 +151,6 @@ void testMathGlm()
 			for (uint32 round = 0; round < 10; round++)
 			{
 				quat q = randomDirectionQuat();
-				glm::quat g = c2g(q);
 				vec3 v = randomDirection3() * random(real(0), 100);
 				test(q * v, g2c(c2g(q) * c2g(v)));
 			}
