@@ -75,11 +75,13 @@ namespace cage
 						for (uint32 i = 0; i < planesCount + 1; i++)
 							counts[i] = 0;
 						real k1 = -b.a[ax];
-						real k2 = (planesCount + 1) * (1 - 1e-5f) / (b.b[ax] - b.a[ax]);
+						real k2 = (planesCount + 1) / (b.b[ax] - b.a[ax]);
 						for (uint32 i = 0; i < siz; i++)
 						{
 							real c = ts[i].center()[ax];
-							uint32 j = numeric_cast<uint32>((c + k1) * k2);
+							real d = (c + k1) * k2;
+							d = clamp(d, 0, planesCount);
+							uint32 j = numeric_cast<uint32>(d);
 							CAGE_ASSERT_RUNTIME(j < planesCount + 1);
 							boxes[j] += aabb(ts[i]);
 							counts[j]++;
