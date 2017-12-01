@@ -7,11 +7,24 @@ namespace
 	uint32 counterGlobal;
 	CAGE_THREAD_LOCAL_STORAGE uint32 counterLocal;
 	mutexClass *mutexGlobal;
+	semaphoreClass *semaphoreGlobal;
 	barrierClass *barrierGlobal;
+
+	void threadTest()
+	{
+		for (uint32 i = 0; i < 100; i++)
+			scopeLock<barrierClass> l(barrierGlobal);
+	}
 
 	void mutexTest(uint32 idx, uint32)
 	{
 		scopeLock<mutexClass> l(mutexGlobal);
+		counterGlobal += idx;
+	}
+
+	void semaphoreTest(uint32 idx, uint32)
+	{
+		scopeLock<semaphoreClass> l(semaphoreGlobal);
 		counterGlobal += idx;
 	}
 
@@ -29,10 +42,16 @@ namespace
 		}
 	}
 
-	void threadTest()
+	void longTimeTest(uint32 idx, uint32)
 	{
-		for (uint32 i = 0; i < 100; i++)
-			scopeLock<barrierClass> l(barrierGlobal);
+		for (uint32 i = 0; i < 10; i++)
+		{
+			threadSleep(2000);
+			{
+				scopeLock<mutexClass> l(mutexGlobal);
+				counterGlobal += 1;
+			}
+		}
 	}
 }
 
@@ -41,8 +60,10 @@ void testConcurrent()
 	CAGE_TESTCASE("concurrent");
 	holder<barrierClass> barrier = newBarrier(4);
 	holder<mutexClass> mutex = newMutex();
+	holder<semaphoreClass> semaphore = newSemaphore(1, 1);
 	barrierGlobal = barrier.get();
 	mutexGlobal = mutex.get();
+	semaphoreGlobal = semaphore.get();
 
 	{
 		CAGE_TESTCASE("barrier");
@@ -56,7 +77,7 @@ void testConcurrent()
 	{
 		CAGE_TESTCASE("thread-pool");
 		{
-			CAGE_TESTCASE("global variable");
+			CAGE_TESTCASE("global variable (mutex)");
 			counterGlobal = 0;
 			holder<threadPoolClass> thrs = newThreadPool("worker_", 4);
 			thrs->function.bind<&mutexTest>();
@@ -65,8 +86,18 @@ void testConcurrent()
 			CAGE_TEST(counterGlobal == 600);
 		}
 		{
+			CAGE_TESTCASE("global variable (semaphore)");
+			counterGlobal = 0;
+			holder<threadPoolClass> thrs = newThreadPool("worker_", 4);
+			thrs->function.bind<&semaphoreTest>();
+			for (uint32 i = 0; i < 100; i++)
+				thrs->run();
+			CAGE_TEST(counterGlobal == 600);
+		}
+		{
 			CAGE_TESTCASE("thread local variable");
 			counterGlobal = 0;
+			counterLocal = 0;
 			holder<threadPoolClass> thrs = newThreadPool("worker_", 4);
 			thrs->function.bind<&barrierTest>();
 			for (uint32 i = 0; i < 100; i++)
@@ -75,6 +106,14 @@ void testConcurrent()
 			thrs->run();
 			CAGE_TEST(counterLocal == 0);
 			CAGE_TEST(counterGlobal == 6);
+		}
+		{
+			CAGE_TESTCASE("thread-pool run must block");
+			counterGlobal = 0;
+			holder<threadPoolClass> thrs = newThreadPool("worker_", 4);
+			thrs->function.bind<&longTimeTest>();
+			thrs->run();
+			CAGE_TEST(counterGlobal == 40);
 		}
 	}
 }
