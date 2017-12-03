@@ -273,8 +273,9 @@ namespace cage
 		}
 	}
 
-	void colliderClass::serialize(memoryBuffer &buffer, bool includeAdditionalData) const
+	memoryBuffer colliderClass::serialize(bool includeAdditionalData) const
 	{
+		memoryBuffer buffer;
 		const collisionObjectImpl *impl = (collisionObjectImpl*)this;
 		collisionObjectHeader header;
 		detail::memset(&header, 0, sizeof(header));
@@ -291,6 +292,7 @@ namespace cage
 		writeVector(impl->boxes, p);
 		writeVector(impl->nodes, p);
 		CAGE_ASSERT_RUNTIME(p.asChar == (char*)buffer.data() + buffer.size());
+		return buffer;
 	}
 
 	void colliderClass::deserialize(const memoryBuffer &buffer)

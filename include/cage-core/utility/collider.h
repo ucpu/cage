@@ -19,7 +19,7 @@ namespace cage
 
 		const aabb &box() const;
 
-		void serialize(memoryBuffer &buffer, bool includeAdditionalData = true) const;
+		memoryBuffer serialize(bool includeAdditionalData = true) const;
 		void deserialize(const memoryBuffer &buffer);
 	};
 

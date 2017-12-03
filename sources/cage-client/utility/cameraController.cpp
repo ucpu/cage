@@ -22,10 +22,8 @@ namespace cage
 			eventListener<bool(windowClass *w, uint32 a, uint32 b, modifiersFlags m)> keyReleaseListener;
 			eventListener<bool(uint64)> updateListener;
 
-			vec2 mouseMoveCurrent;
-			vec2 mouseMoveLast;
 			entityClass *entity;
-			volatile bool keysPressedArrows[6]; // wsadeq
+			bool keysPressedArrows[6]; // wsadeq
 
 			cameraControllerImpl(entityClass *entity) : entity(entity)
 			{
@@ -77,13 +75,26 @@ namespace cage
 
 			bool mouseMove(windowClass *w, mouseButtonsFlags buttons, modifiersFlags, const pointStruct &pt)
 			{
-				if (mouseEnabled(w, buttons))
-				{
-					pointStruct pt2 = centerMouse(w);
-					sint32 dx = pt.x - pt2.x;
-					sint32 dy = pt.y - pt2.y;
-					if (abs(dx) + abs(dy) < 100)
-						mouseMoveCurrent += vec2(dx, dy);
+				if (!entity)
+					return false;
+				if (!mouseEnabled(w, buttons))
+					return false;
+				pointStruct pt2 = centerMouse(w);
+				sint32 dx = pt2.x - pt.x;
+				sint32 dy = pt2.y - pt.y;
+				if (abs(dx) + abs(dy) > 100)
+					return false;
+				vec2 r = vec2(dx, dy) * turningSpeed;
+				ENGINE_GET_COMPONENT(transform, t, entity);
+				t.orientation = t.orientation * quat(rads(r[1]), rads(r[0]), degs());
+				if (!freeMove)
+				{ // limit pitch
+					vec3 f = t.orientation * vec3(0, 0, -1);
+					rads pitch = aSin(f[1]);
+					f[1] = 0; f = f.normalize();
+					rads yaw = aTan2(-f[0], f[2]) + degs(90);
+					pitch = clamp(pitch, pitchLimitDown, pitchLimitUp);
+					t.orientation = quat(pitch, yaw, degs());
 				}
 				return false;
 			}
@@ -152,42 +163,25 @@ namespace cage
 				if (!entity)
 					return false;
 				ENGINE_GET_COMPONENT(transform, t, entity);
-				{ // turning
-					vec2 c = mouseMoveCurrent;
-					vec2 r = (c - mouseMoveLast) * -turningSpeed;
-					mouseMoveLast = c;
-					t.orientation = t.orientation * quat(rads(r[1]), rads(r[0]), degs());
-					if (!freeMove)
-					{ // limit pitch
-						vec3 f = t.orientation * vec3(0, 0, -1);
-						rads pitch = aSin(f[1]);
-						f[1] = 0; f = f.normalize();
-						rads yaw = aTan2(-f[0], f[2]) + degs(90);
-						pitch = clamp(pitch, pitchLimitDown, pitchLimitUp);
-						t.orientation = quat(pitch, yaw, degs());
-					}
+				vec3 f = t.orientation * vec3(0, 0, -1);
+				vec3 l = t.orientation * vec3(-1, 0, 0);
+				vec3 u = vec3(0, 1, 0);
+				if (freeMove)
+					u = t.orientation * u;
+				else
+				{
+					f[1] = 0; f = f.normalize();
+					l[1] = 0; l = l.normalize();
 				}
-				{ // movement
-					vec3 f = t.orientation * vec3(0, 0, -1);
-					vec3 l = t.orientation * vec3(-1, 0, 0);
-					vec3 u = vec3(0, 1, 0);
-					if (freeMove)
-						u = t.orientation * u;
-					else
-					{
-						f[1] = 0; f = f.normalize();
-						l[1] = 0; l = l.normalize();
-					}
-					vec3 movement = vec3();
-					if (keysPressedArrows[0]) movement += f;
-					if (keysPressedArrows[1]) movement -= f;
-					if (keysPressedArrows[2]) movement += l;
-					if (keysPressedArrows[3]) movement -= l;
-					if (keysPressedArrows[4]) movement += u;
-					if (keysPressedArrows[5]) movement -= u;
-					if (movement != vec3())
-						t.position += movement.normalize() * movementSpeed;
-				}
+				vec3 movement = vec3();
+				if (keysPressedArrows[0]) movement += f;
+				if (keysPressedArrows[1]) movement -= f;
+				if (keysPressedArrows[2]) movement += l;
+				if (keysPressedArrows[3]) movement -= l;
+				if (keysPressedArrows[4]) movement += u;
+				if (keysPressedArrows[5]) movement -= u;
+				if (movement != vec3())
+					t.position += movement.normalize() * movementSpeed;
 				return false;
 			}
 		};

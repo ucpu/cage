@@ -37,8 +37,7 @@ void processCollider()
 
 	CAGE_LOG(severityEnum::Info, logComponentName, string() + "aabb: " + collider->box());
 
-	memoryBuffer buff;
-	collider->serialize(buff);
+	memoryBuffer buff = collider->serialize();
 
 	CAGE_LOG(severityEnum::Info, logComponentName, string() + "buffer size (before compression): " + buff.size());
 	memoryBuffer comp = detail::compress(buff);
