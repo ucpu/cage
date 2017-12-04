@@ -72,25 +72,26 @@ namespace cage
 	struct CAGE_API plane
 	{
 		// data
-		vec3 point;
 		vec3 normal;
+		real d;
 
 		// constructors
-		plane() : point(real::Nan, real::Nan, real::Nan), normal(real::Nan, real::Nan, real::Nan) {};
-		plane(const vec3 &point, const vec3 &normal) : point(point), normal(normal) {};
-		plane(const vec3 &a, const vec3 &b, const vec3 &c) : point(a), normal(triangle(a, b, c).normal()) {};
-		explicit plane(const triangle &other) : point(other[0]), normal(other.normal()) {};
-		explicit plane(const line &a, const vec3 &b) : point(b), normal(triangle(a.a(), a.b(), b).normal()) {};
+		plane() : normal(real::Nan, real::Nan, real::Nan), d(real::Nan) {};
+		plane(const vec3 &normal, real d) : normal(normal), d(d) {};
+		plane(const vec3 &point, const vec3 &normal);
+		plane(const vec3 &a, const vec3 &b, const vec3 &c);
+		explicit plane(const triangle &other);
+		explicit plane(const line &a, const vec3 &b);
 
 		// comparison operators
-		bool operator == (const plane &other) const { return point == other.point && normal == other.normal; }
+		bool operator == (const plane &other) const { return d == other.d && normal == other.normal; }
 		bool operator != (const plane &other) const { return !(*this == other); }
 
 		// conversion operators
-		operator string() const { return string() + "(" + point + ", " + normal + ")"; }
+		operator string() const { return string() + "(" + normal + ", " + d + ")"; }
 
 		// methods
-		bool valid() const { return point.valid() && normal.valid(); };
+		bool valid() const { return d.valid() && normal.valid(); };
 		plane normalize() const;
 	};
 

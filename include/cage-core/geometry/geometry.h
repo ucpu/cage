@@ -2,6 +2,28 @@ namespace cage
 {
 	// point, line, triangle, plane, sphere, aabb
 
+	CAGE_API bool parallel(const vec3 &dir1, const vec3 &dir2);
+	CAGE_API bool parallel(const line &a, const line &b);
+	CAGE_API bool parallel(const line &a, const triangle &b);
+	CAGE_API bool parallel(const line &a, const plane &b);
+	inline bool parallel(const triangle &a, const line &b) { return parallel(b, a); }
+	inline bool parallel(const plane &a, const line &b) { return parallel(b, a); }
+	CAGE_API bool parallel(const triangle &a, const triangle &b);
+	CAGE_API bool parallel(const triangle &a, const plane &b);
+	inline bool parallel(const plane &a, const triangle &b) { return parallel(b, a); }
+	CAGE_API bool parallel(const plane &a, const plane &b);
+
+	CAGE_API bool perpendicular(const vec3 &dir1, const vec3 &dir2);
+	CAGE_API bool perpendicular(const line &a, const line &b);
+	CAGE_API bool perpendicular(const line &a, const triangle &b);
+	CAGE_API bool perpendicular(const line &a, const plane &b);
+	inline bool perpendicular(const triangle &a, const line &b) { return perpendicular(b, a); }
+	inline bool perpendicular(const plane &a, const line &b) { return perpendicular(b, a); }
+	CAGE_API bool perpendicular(const triangle &a, const triangle &b);
+	CAGE_API bool perpendicular(const triangle &a, const plane &b);
+	inline bool perpendicular(const plane &a, const triangle &b) { return perpendicular(b, a); }
+	CAGE_API bool perpendicular(const plane &a, const plane &b);
+
 	//CAGE_API real distance(const vec3 &a, const vec3 &b);
 	CAGE_API real distance(const vec3 &a, const line &b);
 	CAGE_API real distance(const vec3 &a, const triangle &b);

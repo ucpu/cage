@@ -117,8 +117,204 @@ namespace cage
 			vec3 dP = w + (sc * u) - (tc * v);
 			return length(dP);
 		}
+
+		vec3 closestPointOnTriangle(const triangle &trig, const vec3 &sourcePosition)
+		{
+			vec3 edge0 = trig[1] - trig[0];
+			vec3 edge1 = trig[2] - trig[0];
+			vec3 v0 = trig[0] - sourcePosition;
+			real a = edge0.dot( edge0 );
+			real b = edge0.dot( edge1 );
+			real c = edge1.dot( edge1 );
+			real d = edge0.dot( v0 );
+			real e = edge1.dot( v0 );
+			real det = a*c - b*b;
+			real s = b*e - c*d;
+			real t = b*d - a*e;
+			if ( s + t < det )
+			{
+				if ( s < 0.f )
+				{
+					if ( t < 0.f )
+					{
+						if ( d < 0.f )
+						{
+							s = clamp( -d/a, 0.f, 1.f );
+							t = 0.f;
+						}
+						else
+						{
+							s = 0.f;
+							t = clamp( -e/c, 0.f, 1.f );
+						}
+					}
+					else
+					{
+						s = 0.f;
+						t = clamp( -e/c, 0.f, 1.f );
+					}
+				}
+				else if ( t < 0.f )
+				{
+					s = clamp( -d/a, 0.f, 1.f );
+					t = 0.f;
+				}
+				else
+				{
+					real invDet = 1.f / det;
+					s *= invDet;
+					t *= invDet;
+				}
+			}
+			else
+			{
+				if ( s < 0.f )
+				{
+					real tmp0 = b+d;
+					real tmp1 = c+e;
+					if ( tmp1 > tmp0 )
+					{
+						real numer = tmp1 - tmp0;
+						real denom = a-2*b+c;
+						s = clamp( numer/denom, 0.f, 1.f );
+						t = 1-s;
+					}
+					else
+					{
+						t = clamp( -e/c, 0.f, 1.f );
+						s = 0.f;
+					}
+				}
+				else if ( t < 0.f )
+				{
+					if ( a+d > b+e )
+					{
+						real numer = c+e-b-d;
+						real denom = a-2*b+c;
+						s = clamp( numer/denom, 0.f, 1.f );
+						t = 1-s;
+					}
+					else
+					{
+						s = clamp( -e/c, 0.f, 1.f );
+						t = 0.f;
+					}
+				}
+				else
+				{
+					real numer = c+e-b-d;
+					real denom = a-2*b+c;
+					s = clamp( numer/denom, 0.f, 1.f );
+					t = 1.f - s;
+				}
+			}
+			return trig[0] + s * edge0 + t * edge1;
+		}
+
+		vec3 closestPointOnPlane(const plane &pl, const vec3 &pt)
+		{
+			return dot(pt, pl.normal) / dot(pl.normal, pl.normal) * pl.normal;
+		}
+
+		bool rayTriangle(triangle tri, const line &ray, real &t)
+		{
+			vec3 v0 = tri[0];
+			vec3 v1 = tri[1];
+			vec3 v2 = tri[2];
+			vec3 edge1 = v1 - v0;
+			vec3 edge2 = v2 - v0;
+			vec3 pvec = cross(ray.origin, edge2);
+			real det = dot(edge1, pvec);
+			real invDet = 1 / det;
+			vec3 tvec = ray.origin - v0;
+			real u = dot(tvec, pvec) * invDet;
+			if (u < 0 || u > 1)
+				return false;
+			vec3 qvec = cross(tvec, edge1);
+			real v = dot(ray.direction, qvec) * invDet;
+			if (v < 0 || u + v > 1)
+				return false;
+			t = dot(edge2, qvec) * invDet;
+			if (t < ray.minimum || t > ray.maximum)
+				return false;
+			return true;
+		}
 	}
 
+
+
+
+
+
+	bool parallel(const vec3 &dir1, const vec3 &dir2)
+	{
+		return abs(dot(dir1, dir2)) >= 1 - real::epsilon;
+	}
+
+	bool parallel(const line &a, const line &b)
+	{
+		return parallel(a.direction, b.direction);
+	}
+
+	bool parallel(const line &a, const triangle &b)
+	{
+		return perpendicular(b.normal(), a.direction);
+	}
+
+	bool parallel(const line &a, const plane &b)
+	{
+		return perpendicular(b.normal, a.direction);
+	}
+
+	bool parallel(const triangle &a, const triangle &b)
+	{
+		return parallel(a.normal(), b.normal());
+	}
+
+	bool parallel(const triangle &a, const plane &b)
+	{
+		return parallel(a.normal(), b.normal);
+	}
+
+	bool parallel(const plane &a, const plane &b)
+	{
+		return parallel(a.normal, b.normal);
+	}
+
+	bool perpendicular(const vec3 &dir1, const vec3 &dir2)
+	{
+		return abs(dot(dir1, dir2)) <= real::epsilon;
+	}
+
+	bool perpendicular(const line &a, const line &b)
+	{
+		return perpendicular(a.direction, b.direction);
+	}
+
+	bool perpendicular(const line &a, const triangle &b)
+	{
+		return parallel(a.direction, b.normal());
+	}
+
+	bool perpendicular(const line &a, const plane &b)
+	{
+		return parallel(a.direction, b.normal);
+	}
+
+	bool perpendicular(const triangle &a, const triangle &b)
+	{
+		return perpendicular(a.normal(), b.normal());
+	}
+
+	bool perpendicular(const triangle &a, const plane &b)
+	{
+		return perpendicular(a.normal(), b.normal);
+	}
+
+	bool perpendicular(const plane &a, const plane &b)
+	{
+		return perpendicular(a.normal, b.normal);
+	}
 
 
 
@@ -132,17 +328,17 @@ namespace cage
 
 	real distance(const vec3 &a, const triangle &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		return distance(closestPointOnTriangle(b, a), a);
 	}
 
 	real distance(const vec3 &a, const plane &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		return distance(closestPointOnPlane(b, a), a);
 	}
 
 	real distance(const vec3 &a, const sphere &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		return max(distance(a, b.center) - b.radius, real(0));
 	}
 
 	real distance(const vec3 &a, const aabb &b)
@@ -172,7 +368,7 @@ namespace cage
 
 	real distance(const line &a, const sphere &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		return max(distance(a, b.center) - b.radius, real(0));
 	}
 
 	real distance(const line &a, const aabb &b)
@@ -192,7 +388,7 @@ namespace cage
 
 	real distance(const triangle &a, const sphere &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		return max(distance(a, b.center) - b.radius, real(0));
 	}
 
 	real distance(const triangle &a, const aabb &b)
@@ -202,12 +398,14 @@ namespace cage
 
 	real distance(const plane &a, const plane &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		if (parallel(a, b))
+			return a.d / a.normal.length() - b.d / b.normal.length();
+		return 0;
 	}
 
 	real distance(const plane &a, const sphere &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		return max(distance(a, b.center) - b.radius, real(0));
 	}
 
 	real distance(const plane &a, const aabb &b)
@@ -217,12 +415,12 @@ namespace cage
 
 	real distance(const sphere &a, const sphere &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		return max(distance(a.center, b.center) - a.radius - b.radius, real(0));
 	}
 
 	real distance(const sphere &a, const aabb &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		return max(distance(a.center, b) - a.radius, real(0));
 	}
 
 	real distance(const aabb &a, const aabb &b)
@@ -230,39 +428,51 @@ namespace cage
 		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
 	}
 
+
+
+
+
+
+
 	bool intersects(const vec3 &point, const line &other)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		return distance(point, other) <= real::epsilon;
 	}
 
 	bool intersects(const vec3 &point, const triangle &other)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		return distance(point, other) <= real::epsilon;
 	}
 
 	bool intersects(const vec3 &point, const plane &other)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		return distance(point, other) <= real::epsilon;
 	}
 
 	bool intersects(const vec3 &point, const sphere &other)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		return squaredDistance(point, other.center) <= sqr(other.radius);
 	}
 
 	bool intersects(const vec3 &point, const aabb &other)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		for (uint32 i = 0; i < 3; i++)
+		{
+			if (point[i] < other.a[i] || point[i] > other.b[i])
+				return false;
+		}
+		return true;
 	}
 
 	bool intersects(const line &a, const line &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		return distance(a, b) <= real::epsilon;
 	}
 
 	bool intersects(const line &a, const triangle &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		real t;
+		return rayTriangle(b, a, t);
 	}
 
 	bool intersects(const line &a, const plane &b)
@@ -272,7 +482,7 @@ namespace cage
 
 	bool intersects(const line &a, const sphere &b)
 	{
-		return intersection(a, b).valid();
+		return distance(a, b.center) <= b.radius;
 	}
 
 	bool intersects(const line &a, const aabb &b)
@@ -282,12 +492,15 @@ namespace cage
 
 	bool intersects(const triangle &a, const plane &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		uint32 sigs[2] = { 0, 0 };
+		for (uint32 i = 0; i < 3; i++)
+			sigs[dot(a[i], b.normal) - b.d < 0]++;
+		return sigs[0] > 0 && sigs[1] > 0;
 	}
 
 	bool intersects(const triangle &a, const sphere &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		return distance(a, b.center) <= b.radius;
 	}
 
 	bool intersects(const triangle &a, const aabb &b)
@@ -297,12 +510,14 @@ namespace cage
 
 	bool intersects(const plane &a, const plane &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		if (parallel(a, b))
+			return abs(a.d - b.d) < real::epsilon;
+		return true;
 	}
 
 	bool intersects(const plane &a, const sphere &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		return distance(a, b.center) <= b.radius;
 	}
 
 	bool intersects(const plane &a, const aabb &b)
@@ -312,7 +527,7 @@ namespace cage
 
 	bool intersects(const sphere &a, const sphere &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		return distance(a.center, b.center) <= (a.radius + b.radius);
 	}
 
 	bool intersects(const sphere &a, const aabb &b)
@@ -331,6 +546,12 @@ namespace cage
 		}
 		return true;
 	}
+
+
+
+
+
+
 
 	line intersection(const line &a, const aabb &b)
 	{
@@ -377,6 +598,12 @@ namespace cage
 		else
 			return aabb();
 	}
+
+
+
+
+
+
 
 	bool frustumCulling(const vec3 &shape, const mat4 &mvp)
 	{

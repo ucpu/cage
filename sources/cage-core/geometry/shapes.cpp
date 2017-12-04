@@ -117,11 +117,24 @@ namespace cage
 		return r;
 	}
 
+	plane::plane(const vec3 &point, const vec3 &normal) : normal(normal), d(-dot(point, normal))
+	{}
+
+	plane::plane(const vec3 &a, const vec3 &b, const vec3 &c) : plane(triangle(a, b, c))
+	{}
+
+	plane::plane(const triangle &other) : plane(other[0], other.normal())
+	{}
+
+	plane::plane(const line &a, const vec3 &b)
+	{
+		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+	}
+
 	plane plane::normalize() const
 	{
-		real d = distance(vec3(), *this);
-		vec3 n = cage::normalize(normal);
-		return plane(n * d, n);
+		real l = normal.length();
+		return plane(normal / l, d / l);
 	}
 
 	sphere::sphere(const triangle &other)
