@@ -7,6 +7,15 @@
 
 namespace cage
 {
+	line line::operator * (const mat4 &other) const
+	{
+		vec4 tmp = vec4(origin, 1) * other;
+		vec3 o = vec3(tmp) / tmp[3];
+		tmp = vec4(direction, 0) * other;
+		vec3 d = vec3(tmp);
+		return line(o, d, minimum, maximum).normalize();
+	}
+
 	bool line::normalized() const
 	{
 		if (isPoint())
@@ -91,14 +100,6 @@ namespace cage
 		return line(a, b - a, real::NegativeInfinity, real::PositiveInfinity).normalize();
 	}
 
-	triangle triangle::operator + (const vec3 &other) const
-	{
-		triangle r(*this);
-		for (uint32 i = 0; i < 3; i++)
-			r[i] += other;
-		return r;
-	}
-
 	triangle triangle::operator * (const mat4 &other) const
 	{
 		triangle r(*this);
@@ -127,6 +128,11 @@ namespace cage
 	{}
 
 	plane::plane(const line &a, const vec3 &b)
+	{
+		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+	}
+
+	plane plane::operator * (const mat4 &other) const
 	{
 		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
 	}
@@ -182,6 +188,11 @@ namespace cage
 		}
 		else
 			*this = sphere(vec3(), real::PositiveInfinity);
+	}
+
+	sphere sphere::operator * (const mat4 &other) const
+	{
+		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
 	}
 
 	aabb::aabb(const line &other)

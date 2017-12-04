@@ -57,6 +57,13 @@ void testGeometry()
 			test(l.maximum, 10);
 			test(l.a(), vec3(-5, 0, 0));
 			test(l.b(), vec3(5, 0, 0));
+
+			l = makeSegment(vec3(0.1, 0, 16), vec3(0.1, 0, 12));
+			CAGE_TEST(l.normalized());
+			test(l.origin, vec3(0.1, 0, 16));
+			test(l.direction, vec3(0, 0, -1));
+			test(l.minimum, 0);
+			test(l.maximum, 4);
 		}
 
 		{
@@ -72,17 +79,39 @@ void testGeometry()
 
 	{
 		CAGE_TESTCASE("triangles");
-		triangle t1(vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 2, 0));
-		triangle t2(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1));
-		triangle t3(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0));
-		CAGE_TEST(!intersects(t1, t2));
-		CAGE_TEST(intersects(t1, t3));
-		CAGE_TEST(intersects(t2, t3));
-		t1.area();
-		t1.center();
-		t1.normal();
-		t1 += vec3(1, 2, 3);
-		t1 *= mat4(vec3(4, 5, 10), quat(degs(), degs(42), degs()), vec3(3, 2, 1));
+
+		{
+			CAGE_TESTCASE("basics");
+
+			triangle t1(vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 2, 0));
+			triangle t2(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1));
+			triangle t3(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0));
+			CAGE_TEST(parallel(t1, t2));
+			CAGE_TEST(!intersects(t1, t2));
+			CAGE_TEST(intersects(t1, t3));
+			CAGE_TEST(intersects(t2, t3));
+			t1.area();
+			t1.center();
+			t1.normal();
+			t1 *= mat4(vec3(1, 2, 3));
+			t1 *= mat4(vec3(4, 5, 10), quat(degs(), degs(42), degs()), vec3(3, 2, 1));
+		}
+
+		{
+			CAGE_TESTCASE("intersections with lines");
+
+			triangle t1(vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 2, 0));
+			triangle t2(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1));
+			triangle t3(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0));
+			test(intersection(makeSegment(vec3(0, 1, -1), vec3(0, 1, 1)), t1), vec3(0, 1, 0));
+			CAGE_TEST(intersects(makeSegment(vec3(0, 1, -1), vec3(0, 1, 1)), t1));
+			CAGE_TEST(!intersection(makeSegment(vec3(5, 1, -1), vec3(0, 1, 1)), t1).valid());
+			CAGE_TEST(!intersects(makeSegment(vec3(5, 1, -1), vec3(0, 1, 1)), t1));
+			test(intersection(makeSegment(vec3(2, 5, 0), vec3(2, -5, 0)), t3), vec3(2, 1, 0));
+			CAGE_TEST(intersects(makeSegment(vec3(2, 5, 0), vec3(2, -5, 0)), t3));
+			CAGE_TEST(!intersection(makeSegment(vec3(2, 0, 0), vec3(2, -5, 0)), t3).valid());
+			CAGE_TEST(!intersects(makeSegment(vec3(2, 0, 0), vec3(2, -5, 0)), t3));
+		}
 	}
 
 	{
@@ -169,7 +198,7 @@ void testGeometry()
 		}
 
 		{
-			CAGE_TESTCASE("intersects, intersections");
+			CAGE_TESTCASE("intersects, intersections (with aabb)");
 			aabb a(vec3(-5, -6, -3), vec3(-4, -4, -1));
 			aabb b(vec3(1, 3, 4), vec3(4, 7, 8));
 			aabb c(vec3(-10, -10, -10), vec3());
@@ -198,7 +227,11 @@ void testGeometry()
 
 		{
 			CAGE_TESTCASE("ray test");
-			// todo
+			aabb a(vec3(-5, -6, -3), vec3(-4, -4, -1));
+			CAGE_TEST(intersects(makeSegment(vec3(-4, -4, -10), vec3(-5, -5, 10)), a));
+			CAGE_TEST(intersects(makeSegment(vec3(-10, -12, -6), vec3(-5, -6, -2)), a));
+			CAGE_TEST(!intersects(makeSegment(vec3(-4, -4, -10), vec3(-5, -5, -5)), a));
+			CAGE_TEST(!intersects(makeSegment(vec3(-5, -5, -5), vec3(-4, -4, -5)), a));
 		}
 
 		{

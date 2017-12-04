@@ -6,7 +6,7 @@ namespace cage
 		real data[9];
 
 		// constructors
-		mat3();
+		mat3(); // identity
 		explicit mat3(const real other[9]);
 		explicit mat3(real a, real b, real c, real d, real e, real f, real g, real h, real i);
 		explicit mat3(const vec3 &forward, const vec3 &up, bool keepUp = false);
@@ -40,6 +40,10 @@ namespace cage
 		mat3 normalize() const;
 		real determinant() const;
 		bool valid() const;
+
+		// constants
+		static const mat3 Zero;
+		static const mat3 Nan;
 	};
 
 	struct CAGE_API mat4
@@ -48,7 +52,7 @@ namespace cage
 		real data[16];
 
 		// constructors
-		mat4();
+		mat4(); // identity
 		explicit mat4(const real other[16]);
 		explicit mat4(real a, real b, real c, real d, real e, real f, real g, real h, real i, real j, real k, real l, real m, real n, real o, real p);
 		explicit mat4(real other); // scale matrix
@@ -86,7 +90,8 @@ namespace cage
 		bool valid() const;
 
 		// constants
-		static const mat4 Identity;
+		static const mat4 Zero;
+		static const mat4 Nan;
 	};
 
 	inline mat3 inverse(const mat3 &th) { return th.inverse(); }

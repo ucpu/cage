@@ -1,6 +1,4 @@
 #include <cmath>
-#include <limits>
-#include <cstdlib>
 
 #define CAGE_EXPORT
 #include <cage-core/core.h>
@@ -49,7 +47,7 @@ namespace cage
 		}
 		if (y < 0) return rads(-real::HalfPi);
 		if (y > 0) return rads(real::HalfPi);
-		return rads(real::Nan);
+		return rads::Nan;
 	}
 
 	real random()
@@ -129,29 +127,4 @@ namespace cage
 	{
 		return ::ceil(value);
 	}
-
-	float real::epsilon = std::numeric_limits<float>::epsilon() * 10.0f;
-	const real real::Pi = 3.14159265358979323846264338327950288;
-	const real real::HalfPi = Pi / 2;
-	const real real::TwoPi = Pi * 2;
-	const real real::E = 2.718281828459045235360287471352;
-	const real real::Ln2 = 0.69314718055994530942;
-	const real real::Ln10 = 2.302585092994045684;
-	const real real::PositiveInfinity = +std::numeric_limits<float>::infinity();
-	const real real::NegativeInfinity = -std::numeric_limits<float>::infinity();
-
-#ifdef NAN
-	const real real::Nan = NAN;
-#else
-	namespace
-	{
-		static const uint32 nan[2] = { 0xffffffff, 0x7fffffff };
-	}
-	const real real::Nan = *(const double*)nan;
-#endif
-
-	const rads rads::Zero = rads(0);
-	const rads rads::Stright = rads(3.14159265358979323846264338327950288);
-	const rads rads::Right = rads::Stright / 2;
-	const rads rads::Full = rads::Stright * 2;
 }

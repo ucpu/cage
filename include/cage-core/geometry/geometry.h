@@ -98,11 +98,15 @@ namespace cage
 	inline bool intersects(const aabb &a, const sphere &b) { return intersects(b, a); };
 	CAGE_API bool intersects(const aabb &a, const aabb &b);
 
-	CAGE_API line intersection(const line &a, const aabb &b);
-	inline line intersection(const aabb &a, const line &b) { return intersection(b, a); };
+	CAGE_API vec3 intersection(const line &a, const triangle &b);
+	CAGE_API vec3 intersection(const line &a, const plane &b);
 	CAGE_API line intersection(const line &a, const sphere &b);
-	inline line intersection(const sphere &a, const line &b) { return intersection(b, a); };
+	CAGE_API line intersection(const line &a, const aabb &b);
 	CAGE_API aabb intersection(const aabb &a, const aabb &b);
+	inline vec3 intersection(const triangle &a, const line &b) { return intersection(b, a); }
+	inline vec3 intersection(const plane &a, const line &b) { return intersection(b, a); }
+	inline line intersection(const sphere &a, const line &b) { return intersection(b, a); };
+	inline line intersection(const aabb &a, const line &b) { return intersection(b, a); };
 
 	CAGE_API bool frustumCulling(const vec3 &shape, const mat4 &mvp);
 	CAGE_API bool frustumCulling(const line &shape, const mat4 &mvp);

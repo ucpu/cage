@@ -200,11 +200,11 @@ void testCollisions()
 			vec3 b(+0.86603, -0.7, -0.5);
 			vec3 c(-0.86603, -0.7, -0.5);
 			vec3 d(0, 0.7, 0);
-			vec3 off = vec3(10, 0, 0);
-			c1->addTriangle(triangle(c, b, a) + off);
-			c1->addTriangle(triangle(a, b, d) + off);
-			c1->addTriangle(triangle(b, c, d) + off);
-			c1->addTriangle(triangle(c, a, d) + off);
+			mat4 off = mat4(vec3(10, 0, 0));
+			c1->addTriangle(triangle(c, b, a) * off);
+			c1->addTriangle(triangle(a, b, d) * off);
+			c1->addTriangle(triangle(b, c, d) * off);
+			c1->addTriangle(triangle(c, a, d) * off);
 			c1->rebuild();
 		}
 		holder<colliderClass> c2 = newCollider();
@@ -213,11 +213,11 @@ void testCollisions()
 			vec3 b(+0.86603, -0.7, -0.5);
 			vec3 c(-0.86603, -0.7, -0.5);
 			vec3 d(0, 0.7, 0);
-			vec3 off = vec3(0, 10, 0);
-			c2->addTriangle(triangle(c, b, a) + off);
-			c2->addTriangle(triangle(a, b, d) + off);
-			c2->addTriangle(triangle(b, c, d) + off);
-			c2->addTriangle(triangle(c, a, d) + off);
+			mat4 off = mat4(vec3(0, 10, 0));
+			c2->addTriangle(triangle(c, b, a) * off);
+			c2->addTriangle(triangle(a, b, d) * off);
+			c2->addTriangle(triangle(b, c, d) * off);
+			c2->addTriangle(triangle(c, a, d) * off);
 			c2->rebuild();
 		}
 		{
@@ -255,11 +255,11 @@ void testCollisions()
 			vec3 b(+0.86603, -0.7, -0.5);
 			vec3 c(-0.86603, -0.7, -0.5);
 			vec3 d(0, 0.7, 0);
-			vec3 off = vec3(10, 0, 0);
-			c1->addTriangle(triangle(c, b, a) + off);
-			c1->addTriangle(triangle(a, b, d) + off);
-			c1->addTriangle(triangle(b, c, d) + off);
-			c1->addTriangle(triangle(c, a, d) + off);
+			mat4 off = mat4(vec3(10, 0, 0));
+			c1->addTriangle(triangle(c, b, a) * off);
+			c1->addTriangle(triangle(a, b, d) * off);
+			c1->addTriangle(triangle(b, c, d) * off);
+			c1->addTriangle(triangle(c, a, d) * off);
 			c1->rebuild();
 		}
 		holder<colliderClass> c2 = newCollider();
@@ -268,11 +268,11 @@ void testCollisions()
 			vec3 b(+0.86603, -0.7, -0.5);
 			vec3 c(-0.86603, -0.7, -0.5);
 			vec3 d(0, 0.7, 0);
-			vec3 off = vec3(0, 10, 0);
-			c2->addTriangle(triangle(c, b, a) + off);
-			c2->addTriangle(triangle(a, b, d) + off);
-			c2->addTriangle(triangle(b, c, d) + off);
-			c2->addTriangle(triangle(c, a, d) + off);
+			mat4 off = mat4(vec3(0, 10, 0));
+			c2->addTriangle(triangle(c, b, a) * off);
+			c2->addTriangle(triangle(a, b, d) * off);
+			c2->addTriangle(triangle(b, c, d) * off);
+			c2->addTriangle(triangle(c, a, d) * off);
 			c2->rebuild();
 		}
 		holder<colliderClass> c3 = newCollider();

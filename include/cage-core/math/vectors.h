@@ -23,19 +23,9 @@ namespace cage
 		vec3 operator * (const quat &other) const;
 		vec3 operator * (const mat3 &other) const;
 
-		vec3 primaryAxis() const
-		{
-			if (data[0].abs() > data[1].abs() && data[0].abs() > data[2].abs())
-				return vec3(data[0].sign(), 0, 0);
-			if (data[1].abs() > data[2].abs())
-				return vec3(0, data[1].sign(), 0);
-			return vec3(0, 0, data[2].sign());
-		}
+		vec3 primaryAxis() const;
 
-		vec3 cross(const vec3 &other) const
-		{
-			return vec3(data[1] * other.data[2] - data[2] * other.data[1], data[2] * other.data[0] - data[0] * other.data[2], data[0] * other.data[1] - data[1] * other.data[0]);
-		}
+		vec3 cross(const vec3 &other) const { return vec3(data[1] * other.data[2] - data[2] * other.data[1], data[2] * other.data[0] - data[0] * other.data[2], data[0] * other.data[1] - data[1] * other.data[0]); }
 	};
 
 	struct CAGE_API vec4

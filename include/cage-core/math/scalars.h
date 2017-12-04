@@ -130,6 +130,7 @@ namespace cage
 		static const rads Right;
 		static const rads Stright;
 		static const rads Full;
+		static const rads Nan;
 
 		friend struct real;
 		friend struct degs;

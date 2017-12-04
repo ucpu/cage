@@ -215,30 +215,6 @@ namespace cage
 		{
 			return dot(pt, pl.normal) / dot(pl.normal, pl.normal) * pl.normal;
 		}
-
-		bool rayTriangle(triangle tri, const line &ray, real &t)
-		{
-			vec3 v0 = tri[0];
-			vec3 v1 = tri[1];
-			vec3 v2 = tri[2];
-			vec3 edge1 = v1 - v0;
-			vec3 edge2 = v2 - v0;
-			vec3 pvec = cross(ray.origin, edge2);
-			real det = dot(edge1, pvec);
-			real invDet = 1 / det;
-			vec3 tvec = ray.origin - v0;
-			real u = dot(tvec, pvec) * invDet;
-			if (u < 0 || u > 1)
-				return false;
-			vec3 qvec = cross(tvec, edge1);
-			real v = dot(ray.direction, qvec) * invDet;
-			if (v < 0 || u + v > 1)
-				return false;
-			t = dot(edge2, qvec) * invDet;
-			if (t < ray.minimum || t > ray.maximum)
-				return false;
-			return true;
-		}
 	}
 
 
@@ -469,10 +445,30 @@ namespace cage
 		return distance(a, b) <= real::epsilon;
 	}
 
-	bool intersects(const line &a, const triangle &b)
+	bool intersects(const line &ray, const triangle &tri)
 	{
-		real t;
-		return rayTriangle(b, a, t);
+		vec3 v0 = tri[0];
+		vec3 v1 = tri[1];
+		vec3 v2 = tri[2];
+		vec3 edge1 = v1 - v0;
+		vec3 edge2 = v2 - v0;
+		vec3 pvec = cross(ray.direction, edge2);
+		real det = dot(edge1, pvec);
+		if (abs(det) < real::epsilon)
+			return false;
+		real invDet = 1 / det;
+		vec3 tvec = ray.origin - v0;
+		real u = dot(tvec, pvec) * invDet;
+		if (u < 0 || u > 1)
+			return false;
+		vec3 qvec = cross(tvec, edge1);
+		real v = dot(ray.direction, qvec) * invDet;
+		if (v < 0 || u + v > 1)
+			return false;
+		real t = dot(edge2, qvec) * invDet;
+		if (t < ray.minimum || t > ray.maximum)
+			return false;
+		return true;
 	}
 
 	bool intersects(const line &a, const plane &b)
@@ -553,22 +549,35 @@ namespace cage
 
 
 
-	line intersection(const line &a, const aabb &b)
+	vec3 intersection(const line &ray, const triangle &tri)
 	{
-		CAGE_ASSERT_RUNTIME(a.normalized());
-		real tmin = a.minimum;
-		real tmax = a.maximum;
-		for (uint32 i = 0; i < 3; i++)
-		{
-			real t1 = (b.a.data[i] - a.origin.data[i]) / a.direction.data[i];
-			real t2 = (b.b.data[i] - a.origin.data[i]) / a.direction.data[i];
-			tmin = max(tmin, min(t1, t2));
-			tmax = min(tmax, max(t1, t2));
-		}
-		if (tmin <= tmax)
-			return line(a.origin, a.direction, tmin, tmax);
-		else
-			return line();
+		vec3 v0 = tri[0];
+		vec3 v1 = tri[1];
+		vec3 v2 = tri[2];
+		vec3 edge1 = v1 - v0;
+		vec3 edge2 = v2 - v0;
+		vec3 pvec = cross(ray.direction, edge2);
+		real det = dot(edge1, pvec);
+		if (abs(det) < real::epsilon)
+			return vec3::Nan;
+		real invDet = 1 / det;
+		vec3 tvec = ray.origin - v0;
+		real u = dot(tvec, pvec) * invDet;
+		if (u < 0 || u > 1)
+			return vec3::Nan;
+		vec3 qvec = cross(tvec, edge1);
+		real v = dot(ray.direction, qvec) * invDet;
+		if (v < 0 || u + v > 1)
+			return vec3::Nan;
+		real t = dot(edge2, qvec) * invDet;
+		if (t < ray.minimum || t > ray.maximum)
+			return vec3::Nan;
+		return ray.origin + t * ray.direction;
+	}
+
+	vec3 intersection(const line &a, const plane &b)
+	{
+		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
 	}
 
 	line intersection(const line &a, const sphere &b)
@@ -589,6 +598,24 @@ namespace cage
 		if (t0 > a.maximum || t1 < a.minimum)
 			return line();
 		return line(a.origin, a.direction, max(a.minimum, t0), min(a.maximum, t1));
+	}
+
+	line intersection(const line &a, const aabb &b)
+	{
+		CAGE_ASSERT_RUNTIME(a.normalized());
+		real tmin = a.minimum;
+		real tmax = a.maximum;
+		for (uint32 i = 0; i < 3; i++)
+		{
+			real t1 = (b.a.data[i] - a.origin.data[i]) / a.direction.data[i];
+			real t2 = (b.b.data[i] - a.origin.data[i]) / a.direction.data[i];
+			tmin = max(tmin, min(t1, t2));
+			tmax = min(tmax, max(t1, t2));
+		}
+		if (tmin <= tmax)
+			return line(a.origin, a.direction, tmin, tmax);
+		else
+			return line();
 	}
 
 	aabb intersection(const aabb &a, const aabb &b)

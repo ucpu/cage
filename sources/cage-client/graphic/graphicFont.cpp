@@ -37,7 +37,7 @@ namespace cage
 			sint16 posX;
 			sint16 posY;
 			bool render;
-			processDataStruct() : mousePosition(real::Nan, real::Nan), format(nullptr), gls(nullptr),
+			processDataStruct() : mousePosition(vec2::Nan), format(nullptr), gls(nullptr),
 				outWidth(0), outHeight(0), outCursor(0), count(0), cursor(-1), posX(0), posY(0), render(false)
 			{}
 		};

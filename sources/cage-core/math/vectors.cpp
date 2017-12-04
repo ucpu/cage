@@ -153,4 +153,13 @@ namespace cage
 			axis[2] = data[2] * s;
 		}
 	}
+
+	vec3 vec3::primaryAxis() const
+	{
+		if (data[0].abs() > data[1].abs() && data[0].abs() > data[2].abs())
+			return vec3(data[0].sign(), 0, 0);
+		if (data[1].abs() > data[2].abs())
+			return vec3(0, data[1].sign(), 0);
+		return vec3(0, 0, data[2].sign());
+	}
 }

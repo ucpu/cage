@@ -495,6 +495,75 @@ namespace cage
 			vec3 s = o->box().size();
 			return min(min(s[0], s[1]), s[2]);
 		}
+
+		real dist(const line &l, const vec3 &p)
+		{
+			if (!l.isLine())
+				return distance(l.a(), p);
+			CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		}
+
+		class intersectionDetector
+		{
+		public:
+			const collisionObjectImpl *col;
+			mat4 m;
+
+			intersectionDetector(const collisionObjectImpl *collider, const mat4 &m) : col(collider), m(m)
+			{}
+
+			vec3 intersection(const line &l, uint32 nodeIdx)
+			{
+				aabb b = col->boxes[nodeIdx];
+				if (!intersects(l, b))
+					return vec3::Nan;
+				const auto &n = col->nodes[nodeIdx];
+				if (n.left == -1)
+				{ // node
+					vec3 c1 = intersection(l, nodeIdx + 1);
+					vec3 c2 = intersection(l, n.right);
+					if (c1.valid())
+					{
+						if (c2.valid())
+						{
+							if (dist(l, c1) < dist(l, c2))
+								return c1;
+							return c2;
+						}
+						return c1;
+					}
+					return c2;
+				}
+				else
+				{ // leaf
+					real d = real::PositiveInfinity;
+					vec3 r = vec3::Nan;
+					for (uint32 ti = n.left; ti != n.right; ti++)
+					{
+						const triangle &t = col->tris[ti];
+						vec3 p = cage::intersection(l, t);
+						if (p.valid())
+						{
+							real d1 = dist(l, p);
+							if (d1 < d)
+							{
+								r = p;
+								d = d1;
+							}
+						}
+					}
+					return r;
+				}
+			}
+
+			vec3 intersection(const line &l)
+			{
+				vec3 r = intersection(l * inverse(m), 0);
+				vec4 r4 = vec4(r, 1) * m;
+				r = vec3(r4) / r4[3];
+				return r;
+			}
+		};
 	}
 
 	uint32 collisionDetection(const colliderClass *ao, const colliderClass *bo, const transform &at, const transform &bt, collisionPairStruct *outputBuffer, uint32 bufferSize)
@@ -608,7 +677,7 @@ namespace cage
 
 	bool intersects(const line &shape, const colliderClass *collider, const transform &t)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		return intersection(shape, collider, t).valid();
 	}
 
 	bool intersects(const triangle &shape, const colliderClass *collider, const transform &t)
@@ -631,8 +700,9 @@ namespace cage
 		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
 	}
 
-	line intersection(const line &shape, const colliderClass *collider, const transform &t)
+	vec3 intersection(const line &shape, const colliderClass *collider, const transform &t)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		intersectionDetector d((const collisionObjectImpl*)collider, mat4(t));
+		return d.intersection(shape);
 	}
 }

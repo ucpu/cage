@@ -17,7 +17,6 @@ namespace cage
 		struct itemBase
 		{
 			virtual operator aabb () const = 0;
-			virtual line intersection(const line &other) = 0;
 			virtual bool intersects(const line &other) = 0;
 			virtual bool intersects(const triangle &other) = 0;
 			virtual bool intersects(const sphere &other) = 0;
@@ -28,7 +27,6 @@ namespace cage
 		{
 			itemShape(const T &other) : T(other) {}
 			virtual operator aabb () const { return *this; }
-			virtual line intersection(const line &other) { return cage::intersection(*this, other); };
 			virtual bool intersects(const line &other) { return cage::intersects(*this, other); };
 			virtual bool intersects(const triangle &other) { return cage::intersects(*this, other); };
 			virtual bool intersects(const sphere &other) { return cage::intersects(*this, other); };

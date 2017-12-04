@@ -51,7 +51,7 @@ namespace cage
 	CAGE_API bool intersects(const sphere &shape, const colliderClass *collider, const transform &t);
 	CAGE_API bool intersects(const aabb &shape, const colliderClass *collider, const transform &t);
 
-	CAGE_API line intersection(const line &shape, const colliderClass *collider, const transform &t);
+	CAGE_API vec3 intersection(const line &shape, const colliderClass *collider, const transform &t);
 }
 
 #endif // guard_collider_h_qeqwdrwuegfoixwoihediuzerw456

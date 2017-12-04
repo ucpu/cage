@@ -9,8 +9,14 @@ namespace cage
 		real maximum;
 
 		// constructors
-		line() : origin(real::Nan, real::Nan, real::Nan), direction(real::Nan, real::Nan, real::Nan), minimum(real::Nan), maximum(real::Nan) {};
+		line() : origin(vec3::Nan), direction(vec3::Nan), minimum(real::Nan), maximum(real::Nan) {};
 		line(vec3 origin, vec3 direction, real minimum, real maximum) : origin(origin), direction(direction), minimum(minimum), maximum(maximum) {};
+
+		// compound operators
+		line &operator *= (const mat4 &other) { return *this = *this * other; }
+
+		// binary operators
+		line operator * (const mat4 &other) const;
 
 		// comparison operators
 		bool operator == (const line &other) const { return origin == other.origin && direction == other.direction && minimum == other.minimum && maximum == other.maximum; }
@@ -37,17 +43,15 @@ namespace cage
 		vec3 vertices[3];
 
 		// constructors
-		triangle() : vertices{ vec3(real::Nan,real::Nan,real::Nan), vec3(real::Nan,real::Nan,real::Nan) , vec3(real::Nan,real::Nan,real::Nan) } {};
+		triangle() : vertices{ vec3::Nan, vec3::Nan , vec3::Nan } {};
 		triangle(const vec3 vertices[3]) : vertices{ vertices[0], vertices[1], vertices[2] } {};
 		triangle(const vec3 &a, const vec3 &b, const vec3 &c) : vertices{ a, b, c } {};
 		triangle(const real coords[9]) : vertices{ vec3(coords[0], coords[1], coords[2]), vec3(coords[3], coords[4], coords[5]), vec3(coords[6], coords[7], coords[8]) } {};
 
 		// compound operators
-		triangle &operator += (const vec3 &other) { return *this = *this + other; }
 		triangle &operator *= (const mat4 &other) { return *this = *this * other; }
 
 		// binary operators
-		triangle operator + (const vec3 &other) const;
 		triangle operator * (const mat4 &other) const;
 
 		vec3 operator [] (uint32 idx) const { CAGE_ASSERT_RUNTIME(idx < 3, "index out of range", idx); return vertices[idx]; }
@@ -76,12 +80,18 @@ namespace cage
 		real d;
 
 		// constructors
-		plane() : normal(real::Nan, real::Nan, real::Nan), d(real::Nan) {};
+		plane() : normal(vec3::Nan), d(real::Nan) {};
 		plane(const vec3 &normal, real d) : normal(normal), d(d) {};
 		plane(const vec3 &point, const vec3 &normal);
 		plane(const vec3 &a, const vec3 &b, const vec3 &c);
 		explicit plane(const triangle &other);
 		explicit plane(const line &a, const vec3 &b);
+
+		// compound operators
+		plane &operator *= (const mat4 &other) { return *this = *this * other; }
+
+		// binary operators
+		plane operator * (const mat4 &other) const;
 
 		// comparison operators
 		bool operator == (const plane &other) const { return d == other.d && normal == other.normal; }
@@ -102,11 +112,17 @@ namespace cage
 		real radius;
 
 		// constructors
-		sphere() : center(real::Nan, real::Nan, real::Nan), radius(real::Nan) {};
+		sphere() : center(vec3::Nan), radius(real::Nan) {};
 		sphere(const vec3 &center, real radius) : center(center), radius(radius) {};
 		explicit sphere(const triangle &other);
 		explicit sphere(const aabb &other);
 		explicit sphere(const line &other);
+
+		// compound operators
+		sphere &operator *= (const mat4 &other) { return *this = *this * other; }
+
+		// binary operators
+		sphere operator * (const mat4 &other) const;
 
 		// comparison operators
 		bool operator == (const sphere &other) const { return (empty() == other.empty()) || (center == other.center && radius == other.radius); }
@@ -128,7 +144,7 @@ namespace cage
 		vec3 a, b;
 
 		// constructor
-		aabb() : a(vec3(real::Nan, real::Nan, real::Nan)), b(vec3(real::Nan, real::Nan, real::Nan)) {}
+		aabb() : a(vec3::Nan), b(vec3::Nan) {}
 		aabb(const vec3 &a, const vec3 &b) : a(min(a, b)), b(max(a, b)) {}
 		explicit aabb(const vec3 &point) : a(point), b(point) {}
 		explicit aabb(const triangle &other) : a(min(min(other[0], other[1]), other[2])), b(max(max(other[0], other[1]), other[2])) {};

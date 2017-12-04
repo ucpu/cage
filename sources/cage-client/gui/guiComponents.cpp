@@ -27,6 +27,6 @@ namespace cage
 	controlComponent::controlComponent() : controlType(controlTypeEnum::Empty), ival(0), state(controlStateEnum::Normal) {}
 	layoutComponent::layoutComponent() : layoutMode(layoutModeEnum::Manual), hScrollbarMode(scrollbarModeEnum::Automatic), vScrollbarMode(scrollbarModeEnum::Automatic) {}
 	positionComponent::positionComponent() : xUnit(unitsModeEnum::Automatic), yUnit(unitsModeEnum::Automatic), wUnit(unitsModeEnum::Automatic), hUnit(unitsModeEnum::Automatic) {}
-	formatComponent::formatComponent() : color(real::Nan, real::Nan, real::Nan), fontName(0), align((textAlignEnum)-1), lineSpacing(-1) {}
+	formatComponent::formatComponent() : color(vec3::Nan), fontName(0), align((textAlignEnum)-1), lineSpacing(-1) {}
 	selectionComponent::selectionComponent() : selectionStart(0), selectionLength(0) {}
 }
