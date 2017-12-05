@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.2)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR}/cmake)
 
+# disable warnings for externals
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -w")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
+
 add_subdirectory(zlib)
 add_subdirectory(lodepng)
 add_subdirectory(libpng)
