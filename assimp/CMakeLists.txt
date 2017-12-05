@@ -10,7 +10,7 @@ option(ASSIMP_BUILD_ASSIMP_TOOLS "If the supplementary tools for Assimp are buil
 option(ASSIMP_BUILD_TESTS "If the test suite for Assimp is built in addition to the library." OFF)
 
 if(MSVC)
-	list(APPEND CMAKE_CXX_FLAGS "/bigobj")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
 endif()
 
 add_subdirectory(assimp)
