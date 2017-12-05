@@ -43,9 +43,10 @@ target_include_directories(cage-core PUBLIC include)
 target_link_libraries(cage-core zlib simplefilewatcher lodepng enet utfcpp)
 if(WIN32)
 	target_link_libraries(cage-core Ws2_32 Winmm)
-else(WIN32)
+else()
 	target_link_libraries(cage-core m pthread)
-endif(WIN32)
+endif()
+set_target_properties(cage-core PROPERTIES CXX_VISIBILITY_PRESET hidden)
 set_ide_groups(cage-core cage)
 
 ########
@@ -68,6 +69,7 @@ file(GLOB_RECURSE cage-client-sources "sources/cage-client/*" "include/cage-clie
 add_library(cage-client SHARED ${cage-client-sources})
 target_include_directories(cage-client PUBLIC include)
 target_link_libraries(cage-client cage-core glad libsoundio_shared ogg vorbis vorbisfile glfw)
+set_target_properties(cage-client PROPERTIES CXX_VISIBILITY_PRESET hidden)
 set_ide_groups(cage-client cage)
 
 ########
