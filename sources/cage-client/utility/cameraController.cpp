@@ -16,10 +16,12 @@ namespace cage
 		class cameraControllerImpl : public cameraControllerClass
 		{
 		public:
-			eventListener<bool(windowClass *w, mouseButtonsFlags, modifiersFlags, const pointStruct &pt)> mouseMoveListener;
-			eventListener<bool(windowClass *w, mouseButtonsFlags, modifiersFlags, const pointStruct &pt)> mousePressListener;
-			eventListener<bool(windowClass *w, uint32 a, uint32 b, modifiersFlags m)> keyPressListener;
-			eventListener<bool(windowClass *w, uint32 a, uint32 b, modifiersFlags m)> keyReleaseListener;
+			eventListener<bool(windowClass *, mouseButtonsFlags, modifiersFlags, const pointStruct &)> mouseMoveListener;
+			eventListener<bool(windowClass *, mouseButtonsFlags, modifiersFlags, const pointStruct &)> mousePressListener;
+			eventListener<bool(windowClass *, mouseButtonsFlags, modifiersFlags, const pointStruct &)> mouseReleaseListener;
+			eventListener<bool(windowClass *, sint8, modifiersFlags, const pointStruct &)> mouseWheelListener;
+			eventListener<bool(windowClass *, uint32, uint32, modifiersFlags)> keyPressListener;
+			eventListener<bool(windowClass *, uint32, uint32, modifiersFlags)> keyReleaseListener;
 			eventListener<bool(uint64)> updateListener;
 
 			entityClass *entity;
@@ -41,12 +43,15 @@ namespace cage
 
 				mouseMoveListener.bind<cameraControllerImpl, &cameraControllerImpl::mouseMove>(this);
 				mousePressListener.bind<cameraControllerImpl, &cameraControllerImpl::mousePress>(this);
+				mouseReleaseListener.bind<cameraControllerImpl, &cameraControllerImpl::mouseRelease>(this);
+				mouseWheelListener.bind<cameraControllerImpl, &cameraControllerImpl::mouseWheel>(this);
 				keyPressListener.bind<cameraControllerImpl, &cameraControllerImpl::keyPress>(this);
 				keyReleaseListener.bind<cameraControllerImpl, &cameraControllerImpl::keyRelease>(this);
 				updateListener.bind<cameraControllerImpl, &cameraControllerImpl::update>(this);
-
 				window()->events.mouseMove.attach(mouseMoveListener);
 				window()->events.mousePress.attach(mousePressListener);
+				window()->events.mouseRelease.attach(mouseReleaseListener);
+				window()->events.mouseWheel.attach(mouseWheelListener);
 				window()->events.keyPress.attach(keyPressListener);
 				window()->events.keyRelease.attach(keyReleaseListener);
 				controlThread::update.attach(updateListener);
@@ -66,10 +71,20 @@ namespace cage
 				return w->isFocused() && (mouseButton == mouseButtonsFlags::None || (buttons & mouseButton) == mouseButton);
 			}
 
-			bool mousePress(windowClass *w, mouseButtonsFlags buttons, modifiersFlags, const pointStruct &pt)
+			bool mousePress(windowClass *w, mouseButtonsFlags buttons, modifiersFlags, const pointStruct &)
 			{
 				if (mouseEnabled(w, buttons))
 					centerMouse(w);
+				return false;
+			}
+
+			bool mouseRelease(windowClass *, mouseButtonsFlags, modifiersFlags, const pointStruct &)
+			{
+				return false;
+			}
+
+			bool mouseWheel(windowClass *, sint8, modifiersFlags, const pointStruct &)
+			{
 				return false;
 			}
 
@@ -99,66 +114,65 @@ namespace cage
 				return false;
 			}
 
-			void setKey(uint32 k, bool v)
+			bool setKey(uint32 k, bool v)
 			{
 				switch (k)
 				{
 				case 87: // w
 					if (keysWsadEnabled)
 						keysPressedArrows[0] = v;
-					break;
+					return true;
 				case 265: // up
 					if (keysArrowsEnabled)
 						keysPressedArrows[0] = v;
-					break;
+					return true;
 				case 83: // s
 					if (keysWsadEnabled)
 						keysPressedArrows[1] = v;
-					break;
+					return true;
 				case 264: // down
 					if (keysArrowsEnabled)
 						keysPressedArrows[1] = v;
-					break;
+					return true;
 				case 65: // a
 					if (keysWsadEnabled)
 						keysPressedArrows[2] = v;
-					break;
+					return true;
 				case 263: // left
 					if (keysArrowsEnabled)
 						keysPressedArrows[2] = v;
-					break;
+					return true;
 				case 68: // d
 					if (keysWsadEnabled)
 						keysPressedArrows[3] = v;
-					break;
+					return true;
 				case 262: // right
 					if (keysArrowsEnabled)
 						keysPressedArrows[3] = v;
-					break;
+					return true;
 				case 69: // e
 					if (keysEqEnabled)
 						keysPressedArrows[4] = v;
-					break;
+					return true;
 				case 81: // q
 					if (keysEqEnabled)
 						keysPressedArrows[5] = v;
-					break;
+					return true;
 				}
-			}
-
-			bool keyPress(windowClass *w, uint32 a, uint32 b, modifiersFlags m)
-			{
-				setKey(a, true);
 				return false;
 			}
 
-			bool keyRelease(windowClass *w, uint32 a, uint32 b, modifiersFlags m)
+			bool keyPress(windowClass *, uint32 a, uint32, modifiersFlags)
 			{
-				setKey(a, false);
-				return false;
+				return setKey(a, true);
 			}
 
-			bool update(uint64 time)
+			bool keyRelease(windowClass *, uint32 a, uint32, modifiersFlags)
+			{
+				return setKey(a, false);
+			}
+
+			bool update(uint64)
 			{
 				if (!entity)
 					return false;
