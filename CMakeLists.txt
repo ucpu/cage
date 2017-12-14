@@ -11,7 +11,7 @@ message(STATUS "----------------------------------------------------------------
 ########
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-include(all)
+include(cage_all)
 disable_source_build()
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_STANDARD 11)

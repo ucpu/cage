@@ -352,7 +352,7 @@ namespace cage
 		{
 			CAGE_LOG(severityEnum::Note, "exception", string() + "first path: '" + a + "'");
 			CAGE_LOG(severityEnum::Note, "exception", string() + "second path: '" + b + "'");
-			CAGE_THROW_ERROR(exception, "cannot join two absolute paths");
+			CAGE_THROW_ERROR(exception, "cannot join with absolute path on right side");
 		}
 		string result = pathSimplify(a + "/" + b);
 		CAGE_ASSERT_RUNTIME(pathIsAbs(result) == pathIsAbs(a), a, b, result, pathIsAbs(result), pathIsAbs(a));
@@ -418,7 +418,7 @@ namespace cage
 	{
 		string drive, directory, file, extension;
 		pathDecompose(path, drive, directory, file, extension);
-		bool absolute = !drive.empty() || (!path.empty() && path[0] == '/');
+		bool absolute = !drive.empty() || (!directory.empty() && directory[0] == '/');
 		std::vector<string> parts;
 		while (true)
 		{
@@ -441,7 +441,7 @@ namespace cage
 		}
 		string result;
 		if (!drive.empty())
-			result += drive;
+			result += drive + ":/";
 		else if (absolute)
 			result += "/";
 		directory = "";
@@ -476,87 +476,101 @@ namespace cage
 
 	void pathDecompose(const string &input, string &drive, string &directory, string &file, string &extension)
 	{
+		// find drive
 		string p = normalize(input);
-		uint32 i = p.find(":/", 0);
-		if (i != -1)
-		{
-			drive = p.subString(0, i) + "://";
-			p = p.subString(i + 2, -1);
-			if (!p.empty() && p[0] == '/')
-				p = p.subString(1, -1);
-		}
-		else
+		uint32 i = p.find(':');
+		if (i == -1)
 			drive = "";
+		else
+		{
+			drive = p.subString(0, i);
+			p = p.subString(i + 1, -1);
+			if (p.empty() || p[0] != '/')
+				p = string("/") + p;
+		}
+		// find filename
 		p = p.reverse();
-		i = p.find('/', 0);
-		if (i != -1)
+		i = p.find('/');
+		if (i == -1)
 		{
-			directory = p.subString(i + 1, -1).reverse();
-			p = p.subString(0, i);
-		}
-		else
+			file = p;
 			directory = "";
-		if (p == "." || p == "..")
-		{
-			if (!directory.empty() && directory[directory.length() - 1] != '/')
-				directory += "/";
-			directory += p;
-			p = "";
-		}
-		i = p.find('.', 0);
-		if (i != -1)
-		{
-			extension = string() + "." + p.subString(0, i).reverse();
-			file = p.subString(i + 1, -1).reverse();
 		}
 		else
+		{
+			file = p.subString(0, i);
+			directory = p.subString(i, -1).reverse();
+			if (directory.length() > 1)
+				directory = directory.subString(0, directory.length() - 1);
+		}
+		if (file == "." || file == "..")
+		{
+			if (directory.empty())
+				directory = file;
+			else if (directory[directory.length() - 1] == '/')
+				directory += file;
+			else
+				directory += string("/") + file;
+			file = "";
+		}
+		// find extension
+		i = file.find('.');
+		if (i == -1)
 		{
 			extension = "";
-			file = p.reverse();
+			file = file.reverse();
 		}
-	};
+		else
+		{
+			extension = file.subString(0, i + 1).reverse();
+			file = file.subString(i + 1, -1).reverse();
+		}
+	}
 
 	string pathExtractDrive(const string &input)
 	{
 		string d, p, f, e;
 		pathDecompose(input, d, p, f, e);
 		return d;
-	};
+	}
 
 	string pathExtractPath(const string &input)
 	{
 		string d, p, f, e;
 		pathDecompose(input, d, p, f, e);
-		return d + p;
-	};
+		p = pathSimplify(p);
+		if (d.empty())
+			return p;
+		return d + ":/" + p;
+	}
 
 	string pathExtractPathNoDrive(const string &input)
 	{
 		string d, p, f, e;
 		pathDecompose(input, d, p, f, e);
-		return p;
-	};
+		return pathSimplify(p);
+	}
 
 	string pathExtractFilename(const string &input)
 	{
 		string d, p, f, e;
 		pathDecompose(input, d, p, f, e);
 		return f + e;
-	};
+	}
 
 	string pathExtractFilenameNoExtension(const string &input)
 	{
 		string d, p, f, e;
 		pathDecompose(input, d, p, f, e);
 		return f;
-	};
+	}
 
 	string pathExtractExtension(const string &input)
 	{
 		string d, p, f, e;
 		pathDecompose(input, d, p, f, e);
 		return e;
-	};
+	}
 
 	namespace detail
 	{
