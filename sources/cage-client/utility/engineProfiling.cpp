@@ -18,7 +18,7 @@ namespace cage
 		class engineProfilingImpl : public engineProfilingClass
 		{
 		public:
-			eventListener<bool(windowClass *w, uint32 a, uint32 b, modifiersFlags m)> keyReleaseListener;
+			eventListener<bool(windowClass *, uint32, uint32, modifiersFlags)> keyReleaseListener;
 			eventListener<bool(uint64)> updateListener;
 
 			uint32 panelIndex;
@@ -38,6 +38,7 @@ namespace cage
 				keyToggleRenderMissingMeshes = 293; // f4
 				keyToggleStereo = 294; // f5
 				keyToggleFullscreen = 300; // f11
+				keyModifiers = modifiersFlags::Ctrl;
 				profilingMode = profilingModeEnum::Full;
 				screenPosition = vec2(1, 0);
 
@@ -227,7 +228,7 @@ namespace cage
 				return false;
 			}
 
-			void setWindowMode(bool fullscreen)
+			void setWindowFullscreen(bool fullscreen)
 			{
 				if (fullscreen)
 				{
@@ -238,7 +239,7 @@ namespace cage
 					}
 					catch (...)
 					{
-						setWindowMode(false);
+						setWindowFullscreen(false);
 					}
 				}
 				else
@@ -248,44 +249,61 @@ namespace cage
 				}
 			}
 
-			bool keyRelease(windowClass *w, uint32 key, uint32 scanCode, modifiersFlags m)
+			bool keyRelease(windowClass *, uint32 key, uint32, modifiersFlags mods)
 			{
 				static configSint32 visualizeBuffer("cage-client.engine.debugVisualizeBuffer");
 				static configBool renderMeshes("cage-client.engine.debugRenderMissingMeshes");
 
-				if (key == keyToggleProfilingMode)
+				if (mods == keyModifiers)
 				{
-					switch (profilingMode)
+					if (key == keyToggleProfilingMode)
 					{
-					case profilingModeEnum::Full: profilingMode = profilingModeEnum::Short; break;
-					case profilingModeEnum::Short: profilingMode = profilingModeEnum::Fps; break;
-					case profilingModeEnum::Fps: profilingMode = profilingModeEnum::None; break;
-					case profilingModeEnum::None: profilingMode = profilingModeEnum::Full; break;
+						switch (profilingMode)
+						{
+						case profilingModeEnum::Full: profilingMode = profilingModeEnum::Short; break;
+						case profilingModeEnum::Short: profilingMode = profilingModeEnum::Fps; break;
+						case profilingModeEnum::Fps: profilingMode = profilingModeEnum::None; break;
+						case profilingModeEnum::None: profilingMode = profilingModeEnum::Full; break;
+						}
+						return true;
+					}
+					if (key == keyVisualizeBufferPrev)
+					{
+						visualizeBuffer = visualizeBuffer - 1;
+						return true;
+					}
+					if (key == keyVisualizeBufferNext)
+					{
+						visualizeBuffer = visualizeBuffer + 1;
+						return true;
+					}
+					if (key == keyToggleStereo)
+					{
+						switch (graphicPrepareThread::stereoMode)
+						{
+						case stereoModeEnum::Mono:
+							graphicPrepareThread::stereoMode = stereoModeEnum::LeftRight;
+							break;
+						case stereoModeEnum::LeftRight:
+							graphicPrepareThread::stereoMode = stereoModeEnum::TopBottom;
+							break;
+						case stereoModeEnum::TopBottom:
+							graphicPrepareThread::stereoMode = stereoModeEnum::Mono;
+							break;
+						}
+						return true;
+					}
+					if (key == keyToggleRenderMissingMeshes)
+					{
+						renderMeshes = !renderMeshes;
+						return true;
+					}
+					if (key == keyToggleFullscreen)
+					{
+						setWindowFullscreen(!window()->isFullscreen());
+						return true;
 					}
 				}
-				if (key == keyVisualizeBufferPrev)
-					visualizeBuffer = visualizeBuffer - 1;
-				if (key == keyVisualizeBufferNext)
-					visualizeBuffer = visualizeBuffer + 1;
-				if (key == keyToggleStereo)
-				{
-					switch (graphicPrepareThread::stereoMode)
-					{
-					case stereoModeEnum::Mono:
-						graphicPrepareThread::stereoMode = stereoModeEnum::LeftRight;
-						break;
-					case stereoModeEnum::LeftRight:
-						graphicPrepareThread::stereoMode = stereoModeEnum::TopBottom;
-						break;
-					case stereoModeEnum::TopBottom:
-						graphicPrepareThread::stereoMode = stereoModeEnum::Mono;
-						break;
-					}
-				}
-				if (key == keyToggleRenderMissingMeshes)
-					renderMeshes = !renderMeshes;
-				if (key == keyToggleFullscreen)
-					setWindowMode(!window()->isFullscreen());
 				return false;
 			}
 		};

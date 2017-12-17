@@ -121,6 +121,7 @@ namespace cage
 		class windowImpl : public windowClass
 		{
 		public:
+			uint64 lastMouseButtonPressTimes[5]; // unused, left, right, unused, middle
 			windowClass *shareContext;
 			holder<mutexClass> eventsMutex;
 			std::vector<eventStruct> eventsQueueLocked;
@@ -163,7 +164,7 @@ namespace cage
 			}
 #endif
 
-			windowImpl(windowClass *shareContext) : shareContext(shareContext), eventsMutex(newMutex()), focus(true)
+			windowImpl(windowClass *shareContext) : lastMouseButtonPressTimes{0,0,0,0,0}, shareContext(shareContext), eventsMutex(newMutex()), focus(true)
 			{
 				glfwInitializeFunc();
 
@@ -231,7 +232,46 @@ namespace cage
 			}
 
 			void initializeEvents();
+
+			bool determineMouseDoubleClick(const eventStruct &e)
+			{
+				if (e.type != eventStruct::eventType::MousePress)
+					return false;
+				CAGE_ASSERT_RUNTIME((uint32)e.mouse.buttons < sizeof(lastMouseButtonPressTimes) / sizeof(lastMouseButtonPressTimes[0]));
+				uint64 current = getApplicationTime();
+				uint64 &last = lastMouseButtonPressTimes[(uint32)e.mouse.buttons];
+				if (current - last < 500000)
+				{
+					last = 0;
+					return true;
+				}
+				else
+				{
+					last = current;
+					return false;
+				}
+			}
 		};
+
+		modifiersFlags getKeyModifiers(int mods)
+		{
+			return modifiersFlags::None
+				| ((mods & GLFW_MOD_SHIFT) == GLFW_MOD_SHIFT ? modifiersFlags::Shift : modifiersFlags::None)
+				| ((mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL ? modifiersFlags::Ctrl : modifiersFlags::None)
+				| ((mods & GLFW_MOD_ALT) == GLFW_MOD_ALT ? modifiersFlags::Alt : modifiersFlags::None);
+		}
+
+		modifiersFlags getKeyModifiers(GLFWwindow *w)
+		{
+			modifiersFlags r = modifiersFlags::None;
+			if (glfwGetKey(w, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(w, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS)
+				r |= modifiersFlags::Shift;
+			if (glfwGetKey(w, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS || glfwGetKey(w, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS)
+				r |= modifiersFlags::Ctrl;
+			if (glfwGetKey(w, GLFW_KEY_LEFT_ALT) == GLFW_PRESS || glfwGetKey(w, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS)
+				r |= modifiersFlags::Alt;
+			return r;
+		}
 
 		void windowCloseEvent(GLFWwindow *w)
 		{
@@ -262,10 +302,7 @@ namespace cage
 			}
 			e.key.key = key;
 			e.key.scancode = scancode;
-			e.key.modifiers = modifiersFlags::None
-				| ((mods & GLFW_MOD_SHIFT) == GLFW_MOD_SHIFT ? modifiersFlags::Shift : modifiersFlags::None)
-				| ((mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL ? modifiersFlags::Ctrl : modifiersFlags::None)
-				| ((mods & GLFW_MOD_ALT) == GLFW_MOD_ALT ? modifiersFlags::Alt : modifiersFlags::None);
+			e.key.modifiers = getKeyModifiers(mods);
 			scopeLock<mutexClass> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
@@ -278,18 +315,6 @@ namespace cage
 			e.codepoint = codepoint;
 			scopeLock<mutexClass> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
-		}
-
-		modifiersFlags getKeyModifiers(GLFWwindow *w)
-		{
-			modifiersFlags r = modifiersFlags::None;
-			if (glfwGetKey(w, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(w, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS)
-				r |= modifiersFlags::Shift;
-			if (glfwGetKey(w, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS || glfwGetKey(w, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS)
-				r |= modifiersFlags::Ctrl;
-			if (glfwGetKey(w, GLFW_KEY_LEFT_ALT) == GLFW_PRESS || glfwGetKey(w, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS)
-				r |= modifiersFlags::Alt;
-			return r;
 		}
 
 		void windowMouseMove(GLFWwindow *w, double xpos, double ypos)
@@ -343,12 +368,15 @@ namespace cage
 			glfwGetCursorPos(w, &xpos, &ypos);
 			e.mouse.x = numeric_cast<sint32>(floor(xpos));
 			e.mouse.y = numeric_cast<sint32>(floor(ypos));
-			e.mouse.modifiers = modifiersFlags::None
-				| ((mods & GLFW_MOD_SHIFT) == GLFW_MOD_SHIFT ? modifiersFlags::Shift : modifiersFlags::None)
-				| ((mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL ? modifiersFlags::Ctrl : modifiersFlags::None)
-				| ((mods & GLFW_MOD_ALT) == GLFW_MOD_ALT ? modifiersFlags::Alt : modifiersFlags::None);
+			e.mouse.modifiers = getKeyModifiers(mods);
+			bool doubleClick = impl->determineMouseDoubleClick(e);
 			scopeLock<mutexClass> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
+			if (doubleClick)
+			{
+				e.type = eventStruct::eventType::MouseDouble;
+				impl->eventsQueueLocked.push_back(e);
+			}
 		}
 
 		void windowMouseWheel(GLFWwindow *w, double, double yoffset)

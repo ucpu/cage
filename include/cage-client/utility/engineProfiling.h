@@ -21,6 +21,7 @@ namespace cage
 		uint32 keyToggleRenderMissingMeshes;
 		uint32 keyToggleStereo;
 		uint32 keyToggleFullscreen;
+		modifiersFlags keyModifiers;
 		profilingModeEnum profilingMode;
 	};
 

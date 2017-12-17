@@ -46,9 +46,9 @@ void testDelegates()
 	//d2.bind<pokus, static_cast<int(pokus::*)(int)const>(&pokus::fnci3)>(&cp);
 	CAGE_TEST(d2(5) == 5);
 
-	delegate <int()> d3;
+	delegate<int()> d3;
 	CAGE_TEST_ASSERTED(d3());
-	d3.bind <pokus, &pokus::fncv>(&vp);
+	d3.bind<pokus, &pokus::fncv>(&vp);
 	CAGE_TEST(d3() == 3);
 }
 

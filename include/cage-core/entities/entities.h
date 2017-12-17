@@ -81,8 +81,8 @@ namespace cage
 		void addEntity(uint32 entityName) { addEntity(getManager()->getEntity(entityName)); }
 		void removeEntity(uint32 entityName) { removeEntity(getManager()->getEntity(entityName)); }
 
-		void addGroup(groupClass *group);
-		void removeGroup(groupClass *group);
+		void addGroup(groupClass *group); // add all entities in this group into the right group
+		void removeGroup(groupClass *group); // remove all entities in this group from the right group
 
 		void clear();
 		void destroyAllEntities();
