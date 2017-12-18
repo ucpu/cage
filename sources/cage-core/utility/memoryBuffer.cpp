@@ -75,6 +75,18 @@ namespace cage
 		size_ = size;
 	}
 
+	void memoryBuffer::resizeGrow(uintPtr size)
+	{
+		if (size <= allocated_)
+		{
+			size_ = size;
+			return;
+		}
+		memoryBuffer c = copy();
+		reallocate(size);
+		detail::memcpy(data_, c.data(), c.size());
+	}
+
 	void *memoryBuffer::data() const
 	{
 		return data_;

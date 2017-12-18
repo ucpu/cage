@@ -1,4 +1,4 @@
-#include "lodepng/lodepng.h"
+#include <libpng/png.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core.h>
@@ -8,20 +8,168 @@
 #include <cage-core/utility/memoryBuffer.h>
 #include <cage-core/utility/png.h>
 
+#include <vector>
+
 namespace cage
 {
 	namespace
 	{
-		LodePNGColorType convertModeToLode(uint32 mode)
+		void pngErrFunc(png_structp, png_const_charp err)
 		{
-			switch (mode)
+			CAGE_THROW_ERROR(exception, err);
+		}
+
+		struct pngInfoCtx
+		{
+			png_structp png;
+			png_infop info;
+			pngInfoCtx() : png(nullptr), info(nullptr) {}
+			~pngInfoCtx()
 			{
-			case 1: return LCT_GREY;
-			case 2: return LCT_GREY_ALPHA;
-			case 3: return LCT_RGB;
-			case 4: return LCT_RGBA;
-			default: CAGE_THROW_ERROR(exception, "invalid png mode");
+				if (info)
+					png_destroy_info_struct(png, &info);
+				if (png)
+					png_destroy_read_struct(&png, nullptr, nullptr);
 			}
+		};
+
+		struct pngIoCtx
+		{
+			memoryBuffer &buf;
+			uintPtr off;
+			pngIoCtx(memoryBuffer &buf) : buf(buf), off(0) {}
+		};
+
+		void pngReadFunc(png_structp png, png_bytep buf, png_size_t siz)
+		{
+			pngIoCtx *io = (pngIoCtx*)png_get_io_ptr(png);
+			if (io->off + siz > io->buf.size())
+				png_error(png, "png reading outside memory buffer");
+			memcpy(buf, (char*)io->buf.data() + io->off, siz);
+			io->off += siz;
+		}
+
+		void pngWriteFunc(png_structp png, png_bytep buf, png_size_t siz)
+		{
+			pngIoCtx *io = (pngIoCtx*)png_get_io_ptr(png);
+			io->buf.resizeGrow(io->off + siz);
+			detail::memcpy((char*)io->buf.data() + io->off, buf, siz);
+			io->off += siz;
+		}
+
+		void pngFlushFunc(png_structp png)
+		{
+			// do nothing
+		}
+
+		void decodePng(const memoryBuffer &in, memoryBuffer &out, uint32 &width, uint32 &height, uint32 &components, uint32 &bpp)
+		{
+			pngInfoCtx ctx;
+			png_structp &png = ctx.png;
+			png_infop &info = ctx.info;
+			png = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, &pngErrFunc, nullptr);
+			if (!png)
+				CAGE_THROW_ERROR(exception, "png decoder failed (png_structp)");
+			pngIoCtx ioCtx(const_cast<memoryBuffer&>(in));
+			png_set_read_fn(png, &ioCtx, &pngReadFunc);
+			info = png_create_info_struct(png);
+			if (!info)
+				CAGE_THROW_ERROR(exception, "png decoder failed (png_infop)");
+			png_read_info(png, info);
+			width = png_get_image_width(png, info);
+			height = png_get_image_height(png, info);
+			png_byte colorType = png_get_color_type(png, info);
+			png_byte bitDepth  = png_get_bit_depth(png, info);
+
+			png_set_expand(png);
+			if (privat::endianness::little())
+				png_set_swap(png);
+
+			png_read_update_info(png, info);
+			colorType = png_get_color_type(png, info);
+			bitDepth  = png_get_bit_depth(png, info);
+			switch (bitDepth)
+			{
+			case 8:
+				bpp = 1;
+				break;
+			case 16:
+				bpp = 2;
+				break;
+			default:
+				CAGE_THROW_ERROR(exception, "png decoder failed (unsupported bit depth)");
+			}
+			switch (colorType)
+			{
+			case PNG_COLOR_TYPE_GRAY:
+				components = 1;
+				break;
+			case PNG_COLOR_TYPE_GA:
+				components = 2;
+				break;
+			case PNG_COLOR_TYPE_RGB:
+				components = 3;
+				break;
+			case PNG_COLOR_TYPE_RGBA:
+				components = 4;
+				break;
+			default:
+				CAGE_THROW_ERROR(exception, "png decoder failed (unsupported color type)");
+			}
+
+			std::vector<png_bytep> rows;
+			rows.resize(height);
+			uint32 cols = width * components * bpp;
+			CAGE_ASSERT_RUNTIME(cols == png_get_rowbytes(png, info), cols, png_get_rowbytes(png, info));
+			out.reallocate(height * cols);
+			for (uint32 y = 0; y < height; y++)
+				rows[y] = (png_bytep)out.data() + y * cols;
+			png_read_image(png, rows.data());
+		}
+
+		void encodePng(const memoryBuffer &in, memoryBuffer &out, uint32 width, uint32 height, uint32 components, uint32 bpp)
+		{
+			pngInfoCtx ctx;
+			png_structp &png = ctx.png;
+			png_infop &info = ctx.info;
+			png = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, &pngErrFunc, nullptr);
+			if (!png)
+				CAGE_THROW_ERROR(exception, "png encoder failed (png_structp)");
+			pngIoCtx ioCtx(out);
+			png_set_write_fn(png, &ioCtx, &pngWriteFunc, &pngFlushFunc);
+			info = png_create_info_struct(png);
+			if (!info)
+				CAGE_THROW_ERROR(exception, "png encoder failed (png_infop)");
+
+			int colorType;
+			switch (components)
+			{
+			case 1:
+				colorType = PNG_COLOR_TYPE_GRAY;
+				break;
+			case 2:
+				colorType = PNG_COLOR_TYPE_GA;
+				break;
+			case 3:
+				colorType = PNG_COLOR_TYPE_RGB;
+				break;
+			case 4:
+				colorType = PNG_COLOR_TYPE_RGBA;
+				break;
+			default:
+				CAGE_THROW_ERROR(exception, "png encoder failed (unsupported color type)");
+			}
+			png_set_IHDR(png, info, width, height, bpp * 8, colorType, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+			png_write_info(png, info);
+
+			std::vector<png_bytep> rows;
+			rows.resize(height);
+			uint32 cols = width * components * bpp;
+			CAGE_ASSERT_RUNTIME(cols == png_get_rowbytes(png, info), cols, png_get_rowbytes(png, info));
+			for (uint32 y = 0; y < height; y++)
+				rows[y] = (png_bytep)in.data() + y * cols;
+			png_write_image(png, rows.data());
+			png_write_end(png, info);
 		}
 
 		class pngBufferImpl : public pngImageClass
@@ -30,29 +178,7 @@ namespace cage
 			memoryBuffer mem;
 			uint32 width, height, channels, bytesPerChannel;
 
-			pngBufferImpl() : width(0), height(0), channels(0), bytesPerChannel(0)
-			{}
-
-			void endianity()
-			{
-				if (privat::endianness::little())
-				{
-					switch (bytesPerChannel)
-					{
-					case 1:
-						return;
-					case 2:
-					{
-						uint16 *m = (uint16*)mem.data();
-						CAGE_ASSERT_RUNTIME(mem.size() % 2 == 0, mem.size());
-						uint32 cnt = numeric_cast<uint32>(mem.size() / 2);
-						for (uint32 i = 0; i < cnt; i++, m++)
-							*m = privat::endianness::change(*m);
-					} break;
-					default: CAGE_THROW_ERROR(exception, "invalid png bpc");
-					}
-				}
-			}
+			pngBufferImpl() : width(0), height(0), channels(0), bytesPerChannel(0) {}
 		};
 	}
 
@@ -71,26 +197,8 @@ namespace cage
 	{
 		pngBufferImpl *impl = (pngBufferImpl*)this;
 		CAGE_ASSERT_RUNTIME(impl->mem.data(), "png image not initialized");
-		void *out = nullptr;
-		try
-		{
-			size_t size = 0;
-			unsigned res = lodepng_encode_memory((unsigned char **)&out, &size, (const unsigned char *)impl->mem.data(), impl->width, impl->height, convertModeToLode(impl->channels), impl->bytesPerChannel * 8);
-			if (res != 0)
-			{
-				CAGE_LOG(severityEnum::Note, "exception", lodepng_error_text(res));
-				CAGE_THROW_ERROR(exception, "decode png");
-			}
-			buffer.reallocate(size);
-			detail::memcpy(buffer.data(), out, size);
-			impl->endianity();
-		}
-		catch (...)
-		{
-			free(out);
-			throw;
-		}
-		free(out);
+		buffer.reallocate((uintPtr)impl->width * impl->height * impl->channels * impl->bytesPerChannel);
+		encodePng(impl->mem, buffer, impl->width, impl->height, impl->channels, impl->bytesPerChannel);
 	}
 
 	void pngImageClass::encodeFile(const string &filename)
@@ -101,65 +209,22 @@ namespace cage
 		f->write(buffer.data(), buffer.size());
 	}
 
-	void pngImageClass::decodeMemory(const void *buffer, uintPtr size)
-	{
-		unsigned w = 0, h = 0;
-		LodePNGState state;
-		lodepng_state_init(&state);
-		unsigned res = lodepng_inspect(&w, &h, &state, (const unsigned char *)buffer, size);
-		if (res != 0)
-		{
-			CAGE_LOG(severityEnum::Note, "exception", lodepng_error_text(res));
-			CAGE_THROW_ERROR(exception, "decode png");
-		}
-		decodeMemory(buffer, size, lodepng_get_channels(&state.info_png.color), state.info_png.color.bitdepth / 8);
-		lodepng_state_cleanup(&state);
-	}
-
 	void pngImageClass::decodeMemory(const void *buffer, uintPtr size, uint32 channels, uint32 bpc)
 	{
+		memoryBuffer buff(size);
+		detail::memcpy(buff.data(), buffer, size);
+		decodeBuffer(buff, channels, bpc);
+	}
+
+	void pngImageClass::decodeBuffer(const memoryBuffer &buffer, uint32 channels, uint32 bpc)
+	{
 		pngBufferImpl *impl = (pngBufferImpl*)this;
-		void *out = nullptr;
-		try
-		{
-			impl->mem.free();
-			impl->channels = channels;
-			impl->bytesPerChannel = bpc;
-			unsigned res = lodepng_decode_memory((unsigned char **)&out, &impl->width, &impl->height, (const unsigned char *)buffer, size, convertModeToLode(channels), bpc * 8);
-			if (res != 0)
-			{
-				CAGE_LOG(severityEnum::Note, "exception", lodepng_error_text(res));
-				CAGE_THROW_ERROR(exception, "decode png");
-			}
-			impl->mem.reallocate(impl->width * impl->height * channels * bpc);
-			detail::memcpy(impl->mem.data(), out, impl->mem.size());
-			impl->endianity();
-		}
-		catch (...)
-		{
-			free(out);
-			throw;
-		}
-		free(out);
-	}
-
-	void pngImageClass::decodeBuffer(const memoryBuffer &buffer)
-	{
-		decodeMemory(buffer.data(), buffer.size());
-	}
-
-	void pngImageClass::decodeBuffer(const struct memoryBuffer &buffer, uint32 channels, uint32 bpc)
-	{
-		decodeMemory(buffer.data(), buffer.size(), channels, bpc);
-	}
-
-	void pngImageClass::decodeFile(const string &filename)
-	{
-		holder<fileClass> f = newFile(filename, fileMode(true, false));
-		memoryBuffer buffer(numeric_cast<uintPtr>(f->size()));
-		f->read(buffer.data(), buffer.size());
-		f->close();
-		decodeBuffer(buffer);
+		decodePng(buffer, impl->mem, impl->width, impl->height, impl->channels, impl->bytesPerChannel);
+		if (channels == -1)
+			channels = impl->channels;
+		if (bpc == -1)
+			bpc = impl->bytesPerChannel;
+		convert(channels, bpc);
 	}
 
 	void pngImageClass::decodeFile(const string &filename, uint32 channels, uint32 bpc)
@@ -269,6 +334,14 @@ namespace cage
 			detail::memcpy((char*)impl->mem.data() + i * lineSize, (char*)impl->mem.data() + (impl->height - i - 1) * lineSize, lineSize);
 			detail::memcpy((char*)impl->mem.data() + (impl->height - i - 1) * lineSize, tmp.data(), lineSize);
 		}
+	}
+
+	void pngImageClass::convert(uint32 channels, uint32 bpc)
+	{
+		pngBufferImpl *impl = (pngBufferImpl*)this;
+		if (impl->channels == channels && impl->bytesPerChannel == bpc)
+			return;
+		CAGE_THROW_CRITICAL(notImplementedException, "png convert");
 	}
 
 	holder<pngImageClass> newPngImage()

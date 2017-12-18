@@ -10,12 +10,9 @@ namespace cage
 		void encodeBuffer(memoryBuffer &buffer);
 		void encodeFile(const string &filename);
 
-		void decodeBuffer(const memoryBuffer &buffer);
-		void decodeBuffer(const memoryBuffer &buffer, uint32 channels, uint32 bpc = 1);
-		void decodeMemory(const void *buffer, uintPtr size);
-		void decodeMemory(const void *buffer, uintPtr size, uint32 channels, uint32 bpc = 1);
-		void decodeFile(const string &filename);
-		void decodeFile(const string &filename, uint32 channels, uint32 bpc = 1);
+		void decodeBuffer(const memoryBuffer &buffer, uint32 channels = -1, uint32 bpc = 1);
+		void decodeMemory(const void *buffer, uintPtr size, uint32 channels = -1, uint32 bpc = 1);
+		void decodeFile(const string &filename, uint32 channels = -1, uint32 bpc = 1);
 
 		uint32 width() const;
 		uint32 height() const;
@@ -29,6 +26,7 @@ namespace cage
 		void value(uint32 x, uint32 y, uint32 c, float v);
 
 		void verticalFlip();
+		void convert(uint32 channels, uint32 bpc);
 	};
 
 	CAGE_API holder<pngImageClass> newPngImage();

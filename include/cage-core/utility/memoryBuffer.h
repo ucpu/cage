@@ -20,6 +20,7 @@ namespace cage
 		void free(); // deallocates the buffer
 		void clear(); // fills the buffer with zeros
 		void resize(uintPtr size); // allows to change the size without actual reallocation; does not initialize any new memory; throws outOfMemoryException when the allocated buffer is too small
+		void resizeGrow(uintPtr size); // allows to change the size, reallocates (and moves) the buffer when needed
 
 		void *data() const;
 		uintPtr size() const;
