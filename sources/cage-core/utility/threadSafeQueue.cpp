@@ -18,6 +18,11 @@ namespace cage
 				mutex = newMutex();
 			}
 
+			~threadSafeQueueImpl()
+			{
+
+			}
+
 			memoryArenaGrowing<memoryAllocatorPolicyPool<sizeof(templates::allocatorSizeList<void*>)>, memoryConcurrentPolicyNone> pool;
 			std::list<void*, memoryArenaStd<void*>> queue;
 			holder<mutexClass> mutex;
@@ -40,6 +45,17 @@ namespace cage
 		void *res = impl->queue.back();
 		impl->queue.pop_back();
 		return res;
+	}
+
+	void *threadSafeQueueClass::wait()
+	{
+		while (true)
+		{
+			void *r = pull();
+			if (r)
+				return r;
+			threadSleep(3000); // ugly hack
+		}
 	}
 
 	void *threadSafeQueueClass::check(delegate<bool(void *)> checker)
