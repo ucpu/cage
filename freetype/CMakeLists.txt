@@ -10,3 +10,4 @@ set(SKIP_INSTALL_ALL ON)
 add_subdirectory(freetype)
 
 target_include_directories(freetype INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/freetype/include)
+

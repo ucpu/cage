@@ -10,3 +10,4 @@ option(GLFW_BUILD_DOCS "Build the GLFW documentation" OFF)
 option(GLFW_INSTALL "Generate installation target" OFF)
 
 add_subdirectory(glfw)
+

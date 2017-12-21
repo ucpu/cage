@@ -7,3 +7,4 @@ message(STATUS "----------------------------------------------------------------
 file(GLOB sources simplefilewatcher/source/*)
 add_library(simplefilewatcher STATIC ${sources})
 target_include_directories(simplefilewatcher PUBLIC simplefilewatcher/include)
+

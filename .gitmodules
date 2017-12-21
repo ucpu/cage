@@ -1,6 +1,3 @@
-[submodule "lodepng/lodepng"]
-	path = lodepng/lodepng
-	url = https://github.com/lvandeve/lodepng.git
 [submodule "simplefilewatcher/simplefilewatcher"]
 	path = simplefilewatcher/simplefilewatcher
 	url = https://github.com/ucpu/simplefilewatcher.git
