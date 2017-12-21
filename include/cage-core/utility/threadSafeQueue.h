@@ -9,10 +9,17 @@ namespace cage
 	{
 	public:
 		void push(void *value);
+		void *wait();
 		void *pull();
 		void *check(delegate<bool(void *)> checker);
 
 		uint32 unsafeSize() const;
+
+		/*
+			WARNING:
+			this queue api and implementation do have same terrific issues
+			we highly discourage you from using it until it is reworked
+		*/
 	};
 
 	CAGE_API holder<threadSafeQueueClass> newThreadSafeQueue(uintPtr memory = 1024 * 1024);
