@@ -3,13 +3,13 @@ namespace cage
 	template<class T> struct pointerRange
 	{
 	private:
-		T *const begin_;
-		T *const end_;
+		T *begin_;
+		T *end_;
 	public:
 		pointerRange() : begin_(nullptr), end_(nullptr) {}
 		pointerRange(T *begin, T *end) : begin_(begin), end_(end) {}
-		T *begin() { return begin_; }
-		T *end() { return end_; }
+		T *begin() const { return begin_; }
+		T *end() const { return end_; }
 	};
 
 	namespace templates
