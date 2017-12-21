@@ -1,4 +1,4 @@
-#include <libpng/png.h>
+#include <png.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core.h>
@@ -45,7 +45,7 @@ namespace cage
 			pngIoCtx *io = (pngIoCtx*)png_get_io_ptr(png);
 			if (io->off + siz > io->buf.size())
 				png_error(png, "png reading outside memory buffer");
-			memcpy(buf, (char*)io->buf.data() + io->off, siz);
+			detail::memcpy(buf, (char*)io->buf.data() + io->off, siz);
 			io->off += siz;
 		}
 
