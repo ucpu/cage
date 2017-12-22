@@ -145,8 +145,10 @@ void regenerate()
 	}
 }
 
-bool update(uint64 time)
+bool update()
 {
+	uint64 time = currentControlTime();
+
 	if (dirty)
 	{
 		dirty = false;
@@ -211,7 +213,7 @@ int main(int argc, char *args[])
 		eventListener<bool()> applicationQuitListener;
 		eventListener<bool(windowClass *)> windowCloseListener;
 		eventListener<bool(windowClass *, uint32 key, uint32, modifiersFlags modifiers)> keyReleaseListener;
-		eventListener<bool(uint64)> updateListener;
+		eventListener<bool()> updateListener;
 		windowCloseListener.bind<&windowClose>();
 		keyReleaseListener.bind<&keyRelease>();
 		updateListener.bind<&update>();

@@ -61,9 +61,10 @@ namespace
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "opacity texture: " + ((dsm.flags & meshFlags::OpacityTexture) == meshFlags::OpacityTexture));
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "transparency: " + ((dsm.flags & meshFlags::Transparency) == meshFlags::Transparency));
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "translucency: " + ((dsm.flags & meshFlags::Translucency) == meshFlags::Translucency));
+		CAGE_LOG(severityEnum::Info, logComponentName, string() + "lighting: " + ((dsm.flags & meshFlags::Lighting) == meshFlags::Lighting));
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "two sides: " + ((dsm.flags & meshFlags::TwoSided) == meshFlags::TwoSided));
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "depth test: " + ((dsm.flags & meshFlags::DepthTest) == meshFlags::DepthTest));
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "lighting: " + ((dsm.flags & meshFlags::Lighting) == meshFlags::Lighting));
+		CAGE_LOG(severityEnum::Info, logComponentName, string() + "depth write: " + ((dsm.flags & meshFlags::DepthWrite) == meshFlags::DepthWrite));
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "shadow cast: " + ((dsm.flags & meshFlags::ShadowCast) == meshFlags::ShadowCast));
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		{
@@ -348,7 +349,7 @@ void processMesh()
 	printMaterial(dsm, mat);
 	validateFlags(dsm, mat);
 
-	float scale = properties("scale").toFloat();
+	real scale = properties("scale").toFloat();
 	const cage::uintPtr dataSize = dsm.vertexSize() * dsm.verticesCount + sizeof(uint32) * dsm.indicesCount;
 	cage::memoryBuffer dataBuffer(dataSize);
 	pointer ptr = dataBuffer.data();

@@ -22,7 +22,7 @@ namespace cage
 			eventListener<bool(windowClass *, sint8, modifiersFlags, const pointStruct &)> mouseWheelListener;
 			eventListener<bool(windowClass *, uint32, uint32, modifiersFlags)> keyPressListener;
 			eventListener<bool(windowClass *, uint32, uint32, modifiersFlags)> keyReleaseListener;
-			eventListener<bool(uint64)> updateListener;
+			eventListener<bool()> updateListener;
 
 			entityClass *entity;
 			bool keysPressedArrows[6]; // wsadeq
@@ -172,7 +172,7 @@ namespace cage
 				return setKey(a, false);
 			}
 
-			bool update(uint64)
+			bool update()
 			{
 				if (!entity)
 					return false;

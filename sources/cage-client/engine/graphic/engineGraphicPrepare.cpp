@@ -556,7 +556,7 @@ namespace cage
 				graphicDispatch->windowHeight = resolution.y;
 
 				{ // update model matrices
-					real interFactor = clamp(real(prepareTime - controlTime) / controlThread::tickTime, 0, 1);
+					real interFactor = clamp(real(prepareTime - controlTime) / controlThread::timePerTick, 0, 1);
 					for (auto it = emitLights.begin(), et = emitLights.end(); it != et; it++)
 						(*it)->updateModelMatrix(interFactor);
 					for (auto it = emitCameras.begin(), ite = emitCameras.end(); it != ite; it++)

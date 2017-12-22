@@ -35,8 +35,11 @@ bool keyRelease(windowClass *, uint32 a, uint32 b, modifiersFlags modifiers)
 	return false;
 }
 
-bool update(uint64 time)
+bool guiUpdate();
+
+bool update()
 {
+	uint64 time = currentControlTime();
 	entityManagerClass *ents = entities();
 
 	if (regenerate)
@@ -105,6 +108,8 @@ bool update(uint64 time)
 			t.position[1] = noiseClouds(1, vec3(vec2(t.position[0], t.position[2]) * 0.15, time * 5e-8)) * 2 - 3;
 		}
 	}
+
+	guiUpdate();
 
 	return false;
 }
@@ -231,7 +236,7 @@ bool guiInit()
 	return false;
 }
 
-bool gui(uint64)
+bool guiUpdate()
 {
 	{ // update boxes count
 		entityClass *e = cage::gui()->entities()->getEntity(1);
@@ -277,9 +282,8 @@ int main(int argc, char *args[])
 
 		// events
 #define GCHL_GENERATE(TYPE, FUNC, EVENT) eventListener<bool TYPE> CAGE_JOIN(FUNC, Listener); CAGE_JOIN(FUNC, Listener).bind<&FUNC>(); CAGE_JOIN(FUNC, Listener).attach(EVENT);
-		GCHL_GENERATE((uint64), update, controlThread::update);
+		GCHL_GENERATE((), update, controlThread::update);
 		GCHL_GENERATE((), guiInit, controlThread::initialize);
-		GCHL_GENERATE((uint64), gui, controlThread::update);
 #undef GCHL_GENERATE
 		eventListener<bool(windowClass *)> windowCloseListener;
 		eventListener<bool(windowClass *, uint32 key, uint32, modifiersFlags modifiers)> keyReleaseListener;

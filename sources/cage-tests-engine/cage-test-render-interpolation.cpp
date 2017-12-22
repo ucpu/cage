@@ -44,8 +44,11 @@ void controlInit()
 	}
 }
 
-bool update(uint64 time)
+bool guiUpdate();
+
+bool update()
 {
+	uint64 time = currentControlTime();
 	entityManagerClass *ents = entities();
 	{ // box 1
 		entityClass *e = ents->getEntity(2);
@@ -53,6 +56,7 @@ bool update(uint64 time)
 		t.position = vec3(sin(rads(time * 1e-6)) * 10, cos(rads(time * 1e-6)) * 10, -20);
 	}
 	threadSleep(updateDelay);
+	guiUpdate();
 	return false;
 }
 
@@ -153,10 +157,10 @@ namespace
 	}
 }
 
-bool gui(uint64)
+bool guiUpdate()
 {
-	setIntValue(0, controlThread::tickTime, false);
-	setIntValue(1, soundThread::tickTime, false);
+	setIntValue(0, controlThread::timePerTick, false);
+	setIntValue(1, soundThread::timePerTick, false);
 	setIntValue(2, updateDelay, true);
 	setIntValue(3, prepareDelay, true);
 	setIntValue(4, renderDelay, true);
@@ -179,12 +183,11 @@ int main(int argc, char *args[])
 
 		// events
 #define GCHL_GENERATE(TYPE, FUNC, EVENT) eventListener<bool TYPE> CAGE_JOIN(FUNC, Listener); CAGE_JOIN(FUNC, Listener).bind<&FUNC>(); CAGE_JOIN(FUNC, Listener).attach(EVENT);
-		GCHL_GENERATE((uint64), update, controlThread::update);
+		GCHL_GENERATE((), update, controlThread::update);
 		GCHL_GENERATE((), prepare, graphicPrepareThread::prepare);
 		GCHL_GENERATE((), render, graphicDispatchThread::render);
 		GCHL_GENERATE((), soundUpdate, soundThread::sound);
 		GCHL_GENERATE((), guiInit, controlThread::initialize);
-		GCHL_GENERATE((uint64), gui, controlThread::update);
 #undef GCHL_GENERATE
 		eventListener<bool(windowClass *)> windowCloseListener;
 		windowCloseListener.bind<&windowClose>();

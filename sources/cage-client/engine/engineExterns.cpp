@@ -43,9 +43,9 @@ namespace cage
 	{
 		eventDispatcher<bool()> initialize;
 		eventDispatcher<bool()> finalize;
-		eventDispatcher<bool(uint64 /*tick time*/)> update;
+		eventDispatcher<bool()> update;
 		eventDispatcher<bool()> assets;
-		uint64 tickTime = 1000000 / 20;
+		uint64 timePerTick = 1000000 / 20;
 	}
 
 	namespace graphicDispatchThread
@@ -69,6 +69,6 @@ namespace cage
 		eventDispatcher<bool()> initialize;
 		eventDispatcher<bool()> finalize;
 		eventDispatcher<bool()> sound;
-		uint64 tickTime = 1000000 / 40;
+		uint64 timePerTick = 1000000 / 40;
 	}
 }

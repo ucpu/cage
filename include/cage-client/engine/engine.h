@@ -4,9 +4,9 @@ namespace cage
 	{
 		CAGE_API extern eventDispatcher<bool()> initialize;
 		CAGE_API extern eventDispatcher<bool()> finalize;
-		CAGE_API extern eventDispatcher<bool(uint64 /*tick time*/)> update;
+		CAGE_API extern eventDispatcher<bool()> update;
 		CAGE_API extern eventDispatcher<bool()> assets;
-		CAGE_API extern uint64 tickTime;
+		CAGE_API extern uint64 timePerTick;
 		static const uint32 threadIndex = 0;
 	}
 
@@ -33,7 +33,7 @@ namespace cage
 		CAGE_API extern eventDispatcher<bool()> initialize;
 		CAGE_API extern eventDispatcher<bool()> finalize;
 		CAGE_API extern eventDispatcher<bool()> sound;
-		CAGE_API extern uint64 tickTime;
+		CAGE_API extern uint64 timePerTick;
 		static const uint32 threadIndex = 3;
 	}
 
@@ -64,6 +64,7 @@ namespace cage
 	CAGE_API busClass *masterMixer();
 	CAGE_API busClass *musicMixer();
 	CAGE_API busClass *effectsMixer();
+	CAGE_API uint64 currentControlTime();
 
 	namespace engineProfiling
 	{

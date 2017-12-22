@@ -69,6 +69,7 @@ namespace cage
 			std::atomic<uint32> engineStarted;
 			std::atomic<bool> emitIsReady;
 			std::atomic<bool> stopping;
+			uint64 currentControlTime;
 
 			engineDataStruct(const engineCreateConfig &config);
 
@@ -229,17 +230,17 @@ namespace cage
 						gui->soundRender();
 						uint64 time3 = getApplicationTime();
 						uint64 timeDelay = time3 > soundTickTime ? time3 - soundTickTime : 0;
-						if (timeDelay > soundThread::tickTime * 2)
+						if (timeDelay > soundThread::timePerTick * 2)
 						{
-							uint64 skip = timeDelay / soundThread::tickTime + 1;
+							uint64 skip = timeDelay / soundThread::timePerTick + 1;
 							CAGE_LOG(severityEnum::Warning, "engine", string() + "skipping " + skip + " sound ticks");
-							soundTickTime += skip * soundThread::tickTime;
+							soundTickTime += skip * soundThread::timePerTick;
 						}
 						else
 						{
-							if (timeDelay < soundThread::tickTime)
-								threadSleep(soundThread::tickTime - timeDelay);
-							soundTickTime += soundThread::tickTime;
+							if (timeDelay < soundThread::timePerTick)
+								threadSleep(soundThread::timePerTick - timeDelay);
+							soundTickTime += soundThread::timePerTick;
 						}
 						uint64 time4 = getApplicationTime();
 						timeBufferSoundEmit.add(time2 - time1);
@@ -276,7 +277,7 @@ namespace cage
 			{
 				try
 				{
-					uint64 tickTime = getApplicationTime();
+					currentControlTime = getApplicationTime();
 					while (!stopping)
 					{
 						uint64 time1 = getApplicationTime();
@@ -298,7 +299,7 @@ namespace cage
 							}
 						}
 						window->processEvents();
-						controlThread::update.dispatch(tickTime);
+						controlThread::update.dispatch();
 						uint64 time2 = getApplicationTime();
 						// emit
 						emitIsReady = true;
@@ -315,18 +316,18 @@ namespace cage
 						emitSoundEndSemaphore->lock();
 						uint64 time4 = getApplicationTime();
 						{ // timing
-							uint64 timeDelay = time3 > tickTime ? time3 - tickTime : 0;
-							if (timeDelay > controlThread::tickTime * 2)
+							uint64 timeDelay = time3 > currentControlTime ? time3 - currentControlTime : 0;
+							if (timeDelay > controlThread::timePerTick * 2)
 							{
-								uint64 skip = timeDelay / controlThread::tickTime + 1;
+								uint64 skip = timeDelay / controlThread::timePerTick + 1;
 								CAGE_LOG(severityEnum::Warning, "engine", string() + "skipping " + skip + " control update ticks");
-								tickTime += skip * controlThread::tickTime;
+								currentControlTime += skip * controlThread::timePerTick;
 							}
 							else
 							{
-								if (timeDelay < controlThread::tickTime)
-									threadSleep(controlThread::tickTime - timeDelay);
-								tickTime += controlThread::tickTime;
+								if (timeDelay < controlThread::timePerTick)
+									threadSleep(controlThread::timePerTick - timeDelay);
+								currentControlTime += controlThread::timePerTick;
 							}
 						}
 						uint64 time5 = getApplicationTime();
@@ -590,7 +591,7 @@ namespace cage
 
 		holder<engineDataStruct> engineData;
 
-		engineDataStruct::engineDataStruct(const engineCreateConfig &config) : engineStarted(0), emitIsReady(false), stopping(false)
+		engineDataStruct::engineDataStruct(const engineCreateConfig &config) : engineStarted(0), emitIsReady(false), stopping(false), currentControlTime(0)
 		{
 			CAGE_LOG(severityEnum::Info, "engine", "creating engine");
 			graphicDispatchCreate(config);
@@ -681,6 +682,11 @@ namespace cage
 	busClass *effectsMixer()
 	{
 		return engineData->effectsBus.get();
+	}
+
+	uint64 currentControlTime()
+	{
+		return engineData->currentControlTime;
 	}
 
 	namespace engineProfiling

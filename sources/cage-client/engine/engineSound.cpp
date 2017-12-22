@@ -202,7 +202,7 @@ namespace cage
 
 				this->controlTime = controlTime;
 				this->prepareTime = prepareTime;
-				interFactor = clamp(real(prepareTime - controlTime) / controlThread::tickTime, 0, 1);
+				interFactor = clamp(real(prepareTime - controlTime) / controlThread::timePerTick, 0, 1);
 
 				speaker()->update(prepareTime);
 			}
@@ -228,7 +228,7 @@ namespace cage
 			s.channels = 1;
 			if (listener->listener.dopplerEffect)
 			{
-				real scale = 1000000 / controlThread::tickTime;
+				real scale = 1000000 / controlThread::timePerTick;
 				vec3 velL = scale * (listener->transformHistory.position - listener->transform.position);
 				vec3 velV = scale * (voice->transformHistory.position - voice->transform.position);
 				real vl = velL.dot(dir);

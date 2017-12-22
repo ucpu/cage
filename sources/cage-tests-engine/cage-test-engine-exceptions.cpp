@@ -42,8 +42,9 @@ bool controlFinish()
 	return false;
 }
 
-bool controlUpdate(uint64 time)
+bool controlUpdate()
 {
+	uint64 time = currentControlTime();
 	entityManagerClass *ents = entities();
 	{
 		entityClass *e = ents->getEntity(2);
@@ -135,7 +136,7 @@ int main(int argc, char *args[])
 
 		// config
 		configSetBool("cage-client.engine.debugRenderMissingMeshes", true);
-		controlThread::tickTime = 1000000 / 60;
+		controlThread::timePerTick = 1000000 / 60;
 
 		// run
 		while (!fullStop)
@@ -144,7 +145,7 @@ int main(int argc, char *args[])
 
 			// events
 #define GCHL_GENERATE(TYPE, FUNC, EVENT) eventListener<bool TYPE> CAGE_JOIN(FUNC, Listener); CAGE_JOIN(FUNC, Listener).bind<&FUNC>(); CAGE_JOIN(FUNC, Listener).attach(EVENT);
-			GCHL_GENERATE((uint64), controlUpdate, controlThread::update);
+			GCHL_GENERATE((), controlUpdate, controlThread::update);
 			GCHL_GENERATE((), controlInit, controlThread::initialize);
 			GCHL_GENERATE((), controlFinish, controlThread::finalize);
 			GCHL_GENERATE((), controlAssets, controlThread::assets);

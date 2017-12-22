@@ -18,8 +18,8 @@ namespace cage
 		class engineProfilingImpl : public engineProfilingClass
 		{
 		public:
-			eventListener<bool(windowClass *, uint32, uint32, modifiersFlags)> keyReleaseListener;
-			eventListener<bool(uint64)> updateListener;
+			eventListener<bool(windowClass *, uint32, uint32, modifiersFlags)> keyPressListener;
+			eventListener<bool()> updateListener;
 
 			uint32 panelIndex;
 			uint32 layoutIndex;
@@ -42,10 +42,10 @@ namespace cage
 				profilingMode = profilingModeEnum::Full;
 				screenPosition = vec2(1, 0);
 
-				keyReleaseListener.bind<engineProfilingImpl, &engineProfilingImpl::keyRelease>(this);
+				keyPressListener.bind<engineProfilingImpl, &engineProfilingImpl::keyPress>(this);
 				updateListener.bind<engineProfilingImpl, &engineProfilingImpl::update>(this);
 
-				window()->events.keyRelease.attach(keyReleaseListener);
+				window()->events.keyPress.attach(keyPressListener);
 				controlThread::update.attach(updateListener);
 			}
 
@@ -218,7 +218,7 @@ namespace cage
 				setTextLabel(index, name + ": " + (value / 1000) + " ms");
 			}
 
-			bool update(uint64)
+			bool update()
 			{
 				checkEntities();
 				for (uint32 i = 0; i < labelsCount; i++)
@@ -249,7 +249,7 @@ namespace cage
 				}
 			}
 
-			bool keyRelease(windowClass *, uint32 key, uint32, modifiersFlags mods)
+			bool keyPress(windowClass *, uint32 key, uint32, modifiersFlags mods)
 			{
 				static configSint32 visualizeBuffer("cage-client.engine.debugVisualizeBuffer");
 				static configBool renderMeshes("cage-client.engine.debugRenderMissingMeshes");

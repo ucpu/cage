@@ -73,8 +73,9 @@ bool soundFinish()
 	return false;
 }
 
-bool update(uint64 time)
+bool update()
 {
+	uint64 time = currentControlTime();
 	entityManagerClass *ents = entities();
 	vec3 box;
 	{ // moving voice
@@ -107,10 +108,10 @@ int main(int argc, char *args[])
 	try
 	{
 		// log to console
-		holder <loggerClass> log1 = newLogger();
-		log1->filter.bind <logFilterPolicyPass>();
-		log1->format.bind <logFormatPolicyConsole>();
-		log1->output.bind <logOutputPolicyStdOut>();
+		holder<loggerClass> log1 = newLogger();
+		log1->filter.bind<logFilterPolicyPass>();
+		log1->format.bind<logFormatPolicyConsole>();
+		log1->output.bind<logOutputPolicyStdOut>();
 
 		configSetBool("cage-client.engine.debugRenderMissingMeshes", true);
 		engineInitialize(engineCreateConfig());
@@ -119,7 +120,7 @@ int main(int argc, char *args[])
 #define GCHL_GENERATE(TYPE, FUNC, EVENT) eventListener<bool TYPE> CAGE_JOIN(FUNC, Listener); CAGE_JOIN(FUNC, Listener).bind<&FUNC>(); CAGE_JOIN(FUNC, Listener).attach(EVENT);
 		GCHL_GENERATE((), soundInit, soundThread::initialize);
 		GCHL_GENERATE((), soundFinish, soundThread::finalize);
-		GCHL_GENERATE((uint64), update, controlThread::update);
+		GCHL_GENERATE((), update, controlThread::update);
 		GCHL_GENERATE((windowClass *), windowClose, window()->events.windowClose);
 #undef GCHL_GENERATE
 
