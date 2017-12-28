@@ -52,7 +52,7 @@ namespace cage
 
 #define GCHL_GENERATE(TYPE) assertClass &variable(const char *name, TYPE var);
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, bool, float, double, void*, const char*, \
-				pointer, const string&, real, rads, degs, const vec2&, const vec3&, const vec4&, const mat3&, const mat4&));
+				pointer, const string&, real, rads, degs, const vec2&, const vec3&, const vec4&, const quat&, const mat3&, const mat4&));
 #undef GCHL_GENERATE
 			template<class U> assertClass &variable(const char *name, const U &var)
 			{
