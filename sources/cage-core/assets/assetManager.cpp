@@ -103,7 +103,7 @@ namespace cage
 					pth = pathJoin(path, name);
 				holder<fileClass> f = newFile(pth, fileMode(true, false));
 				auto s = f->size();
-				buff.reallocate(s);
+				buff.reallocate(numeric_cast<uintPtr>(s));
 				f->read(buff.data(), s);
 				return buff;
 			}
@@ -154,8 +154,8 @@ namespace cage
 						ass->dependenciesNew.resize(h->dependenciesCount);
 						if (h->dependenciesCount)
 							detail::memcpy(ass->dependenciesNew.data(), (char*)buff.data() + sizeof(assetHeaderStruct), h->dependenciesCount * sizeof(uint32));
-						uintPtr allocSize = ass->compressedSize + ass->originalSize;
-						uintPtr readSize = h->compressedSize == 0 ? h->originalSize : h->compressedSize;
+						uintPtr allocSize = numeric_cast<uintPtr>(ass->compressedSize + ass->originalSize);
+						uintPtr readSize = numeric_cast<uintPtr>(h->compressedSize == 0 ? h->originalSize : h->compressedSize);
 						CAGE_ASSERT_RUNTIME(readSize <= allocSize, readSize, allocSize);
 						if (buff.size() < readSize + sizeof(assetHeaderStruct) + h->dependenciesCount * sizeof(uint32))
 							CAGE_THROW_ERROR(exception, "cage asset file content truncated");

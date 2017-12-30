@@ -27,7 +27,7 @@ namespace cage
 				CAGE_THROW_CRITICAL(exception, "invalid sound type");
 			}
 			soundPrivat::vorbisDataStruct vds;
-			vds.init((char*)context->compressedData + sizeof(soundHeaderStruct), context->compressedSize - sizeof(soundHeaderStruct));
+			vds.init((char*)context->compressedData + sizeof(soundHeaderStruct), numeric_cast<uintPtr>(context->compressedSize - sizeof(soundHeaderStruct)));
 			uint32 ch = 0, f = 0, r = 0;
 			vds.decode(ch, f, r, (float*)context->originalData);
 			CAGE_ASSERT_RUNTIME(snd->channels == ch, snd->channels, ch);
@@ -64,7 +64,7 @@ namespace cage
 				source->setDataRaw(snd->channels, snd->frames, snd->sampleRate, (float*)context->originalData);
 				break;
 			case soundTypeEnum::CompressedCompressed:
-				source->setDataVorbis(context->compressedSize - sizeof(soundHeaderStruct), ((char*)context->compressedData + sizeof(soundHeaderStruct)));
+				source->setDataVorbis(numeric_cast<uintPtr>(context->compressedSize - sizeof(soundHeaderStruct)), ((char*)context->compressedData + sizeof(soundHeaderStruct)));
 				break;
 			default:
 				CAGE_THROW_CRITICAL(exception, "invalid sound type");

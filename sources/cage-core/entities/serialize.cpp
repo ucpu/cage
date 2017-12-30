@@ -96,7 +96,7 @@ namespace cage
 			if (name == 0)
 				CAGE_THROW_ERROR(exception, "invalid entity");
 			entityClass *e = manager->getOrNewEntity(name);
-			read(ptr, bufferSize, e->unsafeValue(component), typeSize);
+			read(ptr, bufferSize, e->unsafeValue(component), numeric_cast<uintPtr>(typeSize));
 		}
 	}
 

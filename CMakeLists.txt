@@ -10,18 +10,15 @@ message(STATUS "----------------------------------------------------------------
 # INITIALIZATION
 ########
 
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+	message(FATAL_ERROR "CMAKE_BUILD_TYPE needs to be set")
+endif()
+
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 include(cage_all)
 disable_source_build()
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_STANDARD 11)
-if(WIN32)
-	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-endif()
-
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-	message(FATAL_ERROR "CMAKE_BUILD_TYPE needs to be set")
-endif()
 
 add_subdirectory(externals EXCLUDE_FROM_ALL)
 
@@ -48,6 +45,9 @@ else()
 endif()
 set_target_properties(cage-core PROPERTIES CXX_VISIBILITY_PRESET hidden)
 set_ide_groups(cage-core cage)
+if(WIN32)
+	target_compile_definitions(cage-core PRIVATE _CRT_SECURE_NO_WARNINGS)
+endif()
 
 ########
 # CAGE-TEST-CORE
@@ -82,6 +82,9 @@ if(CAGE-CLIENT_BUILD_TOOLS)
 	target_link_libraries(cage-asset-processor cage-client IL ILU assimp freetype dr_libs vorbisenc)
 	set_ide_groups(cage-asset-processor cage)
 	set_ide_working_dir_in_place(cage-asset-processor)
+	if(WIN32)
+		target_compile_definitions(cage-asset-processor PRIVATE _CRT_SECURE_NO_WARNINGS)
+	endif()
 endif(CAGE-CLIENT_BUILD_TOOLS)
 
 ########

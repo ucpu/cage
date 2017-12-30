@@ -368,9 +368,9 @@ namespace
 		assetHeaderStruct h = initializeAssetHeaderStruct();
 		h.originalSize = sizeof(data);
 		for (auto it = images.begin(), et = images.end(); it != et; it++)
-			h.originalSize += numeric_cast<uint32>(it->data.size());
+			h.originalSize += it->data.size();
 
-		memoryBuffer inputBuffer(h.originalSize - sizeof(data));
+		memoryBuffer inputBuffer(numeric_cast<uintPtr>(h.originalSize - sizeof(data)));
 		{
 			char *last = (char*)inputBuffer.data();
 			for (auto it = images.begin(), et = images.end(); it != et; it++)
@@ -380,7 +380,7 @@ namespace
 			}
 		}
 		memoryBuffer outputBuffer = detail::compress(inputBuffer);
-		h.compressedSize = numeric_cast<uint32>(sizeof(data) + outputBuffer.size());
+		h.compressedSize = sizeof(data) + outputBuffer.size();
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "final size: " + h.originalSize + ", compressed size: " + h.compressedSize + ", ratio: " + h.compressedSize / (float)h.originalSize);
 
 		holder<fileClass> f = newFile(outputFileName, fileMode(false, true));

@@ -21,7 +21,7 @@ namespace cage
 		{
 			static const uintPtr sth = sizeof(textureHeaderStruct);
 			detail::memcpy(context->originalData, context->compressedData, sth);
-			uintPtr res = detail::decompress((char*)context->compressedData + sth, context->compressedSize - sth, (char*)context->originalData + sth, context->originalSize - sth);
+			uintPtr res = detail::decompress((char*)context->compressedData + sth, numeric_cast<uintPtr>(context->compressedSize - sth), (char*)context->originalData + sth, numeric_cast<uintPtr>(context->originalSize - sth));
 			CAGE_ASSERT_RUNTIME(res == context->originalSize - sth, res, context->originalSize, sth);
 		}
 

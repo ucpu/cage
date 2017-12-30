@@ -11,7 +11,7 @@ namespace cage
 	{
 		void processDecompress(const assetContextStruct *context, void *schemePointer)
 		{
-			uintPtr res = detail::decompress((char*)context->compressedData, context->compressedSize, (char*)context->originalData, context->originalSize);
+			uintPtr res = detail::decompress((char*)context->compressedData, numeric_cast<uintPtr>(context->compressedSize), (char*)context->originalData, numeric_cast<uintPtr>(context->originalSize));
 			CAGE_ASSERT_RUNTIME(res == context->originalSize, res, context->originalSize);
 		}
 
@@ -22,8 +22,8 @@ namespace cage
 			colliderClass *col = static_cast<colliderClass*>(context->assetHolder.get());
 			context->returnData = col;
 
-			memoryBuffer buff(context->originalSize);
-			detail::memcpy(buff.data(), context->originalData, context->originalSize);
+			memoryBuffer buff(numeric_cast<uintPtr>(context->originalSize));
+			detail::memcpy(buff.data(), context->originalData, numeric_cast<uintPtr>(context->originalSize));
 			col->deserialize(buff);
 			col->rebuild();
 		}

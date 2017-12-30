@@ -12,7 +12,7 @@ namespace cage
 		{
 			if (context->compressedData == context->originalData)
 				return;
-			uintPtr res = detail::decompress((char*)context->compressedData, context->compressedSize, (char*)context->originalData, context->originalSize);
+			uintPtr res = detail::decompress((char*)context->compressedData, numeric_cast<uintPtr>(context->compressedSize), (char*)context->originalData, numeric_cast<uintPtr>(context->originalSize));
 			CAGE_ASSERT_RUNTIME(res == context->originalSize, res, context->originalSize);
 		}
 
@@ -27,7 +27,7 @@ namespace cage
 				context->assetHolder = newMemoryBuffer().transfev();
 			memoryBuffer *mem = static_cast<memoryBuffer*>(context->assetHolder.get());
 			context->returnData = mem;
-			mem->reallocate(context->originalSize);
+			mem->reallocate(numeric_cast<uintPtr>(context->originalSize));
 			detail::memcpy(mem->data(), context->originalData, mem->size());
 		}
 
