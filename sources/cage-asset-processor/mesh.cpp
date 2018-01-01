@@ -408,12 +408,15 @@ void processMesh()
 	CAGE_ASSERT_RUNTIME(ptr == pointer(dataBuffer.data()) + dataSize, ptr, dataBuffer.data(), dataSize);
 
 	assetHeaderStruct h = initializeAssetHeaderStruct();
-	h.originalSize = sizeof(dsm) + sizeof(mat) + numeric_cast<uint32>(dataSize);
+	h.originalSize = sizeof(dsm) + sizeof(mat) + dataSize;
 	if (dsm.skeletonName)
 		h.dependenciesCount++;
 	for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		if (dsm.textureNames[i])
 			h.dependenciesCount++;
+
+	cage::memoryBuffer compressed = detail::compress(dataBuffer);
+	h.compressedSize = sizeof(dsm) + sizeof(mat) + compressed.size();
 
 	holder<fileClass> f = newFile(outputFileName, fileMode(false, true));
 	f->write(&h, sizeof(h));
@@ -424,6 +427,6 @@ void processMesh()
 			f->write(&dsm.textureNames[i], sizeof(uint32));
 	f->write(&dsm, sizeof(dsm));
 	f->write(&mat, sizeof(mat));
-	f->write(dataBuffer.data(), dataSize);
+	f->write(compressed.data(), compressed.size());
 	f->close();
 }

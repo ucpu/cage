@@ -1,6 +1,7 @@
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
+#include <cage-core/memory.h>
 #include <cage-core/assets.h>
 #include <cage-core/utility/color.h>
 #include <cage-core/utility/pointer.h>
@@ -15,6 +16,15 @@ namespace cage
 {
 	namespace
 	{
+		void processDecompress(const assetContextStruct *context, void *schemePointer)
+		{
+			meshHeaderStruct *hdr = (meshHeaderStruct*)context->compressedData;
+			uintPtr sth = sizeof(meshHeaderStruct) + hdr->materialSize;
+			detail::memcpy(context->originalData, context->compressedData, sth);
+			uintPtr res = detail::decompress((char*)context->compressedData + sth, numeric_cast<uintPtr>(context->compressedSize - sth), (char*)context->originalData + sth, numeric_cast<uintPtr>(context->originalSize - sth));
+			CAGE_ASSERT_RUNTIME(res == context->originalSize - sth, res, context->originalSize, sth);
+		}
+
 		void processLoad(const assetContextStruct *context, void *schemePointer)
 		{
 			windowClass *gm = (windowClass *)schemePointer;
@@ -115,8 +125,9 @@ namespace cage
 		assetSchemeStruct s;
 		s.threadIndex = threadIndex;
 		s.schemePointer = memoryContext;
-		s.load.bind <&processLoad>();
-		s.done.bind <&processDone>();
+		s.load.bind<&processLoad>();
+		s.done.bind<&processDone>();
+		s.decompress.bind<&processDecompress>();
 		return s;
 	}
 

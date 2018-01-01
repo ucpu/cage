@@ -3,7 +3,7 @@ namespace cage
 	template<class AllocatorPolicy, class ConcurrentPolicy>
 	struct memoryArenaGrowing
 	{
-		memoryArenaGrowing(uintPtr addressSize, uintPtr initialSize = 0) : addressSize(detail::roundUpToMemoryPage(addressSize)), currentSize(0)
+		memoryArenaGrowing(uintPtr addressSize, uintPtr initialSize = 1) : addressSize(detail::roundUpToMemoryPage(addressSize)), currentSize(0)
 		{
 			memory = newVirtualMemory();
 			origin = memory->reserve(this->addressSize / detail::memoryPageSize());
