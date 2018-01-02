@@ -1,4 +1,4 @@
-#include <list>
+#include <deque>
 
 #define CAGE_EXPORT
 #include <cage-core/core.h>
@@ -8,80 +8,108 @@
 
 namespace cage
 {
+	threadSafeQueueCreateConfig::threadSafeQueueCreateConfig() : maxElements(1000) {}
+
 	namespace
 	{
-		class threadSafeQueueImpl : public threadSafeQueueClass
+		class threadSafeQueueImpl : public privat::threadSafeQueuePriv
 		{
 		public:
-			threadSafeQueueImpl(uintPtr memory) : pool(memory), queue(memoryArena(&pool))
+			threadSafeQueueImpl(const threadSafeQueueCreateConfig &config) : maxItems(config.maxElements)
 			{
 				mutex = newMutex();
+				//writers = newMutex();
+				//readers = newMutex();
+				arena = detail::systemArena();
 			}
 
 			~threadSafeQueueImpl()
 			{
-
+				scopeLock<mutexClass> sl(mutex);
+				CAGE_ASSERT_RUNTIME(items.empty(), "the thread safe queue may not be destroyed before all items are removed");
 			}
 
-			memoryArenaGrowing<memoryAllocatorPolicyPool<sizeof(templates::allocatorSizeList<void*>)>, memoryConcurrentPolicyNone> pool;
-			std::list<void*, memoryArenaStd<void*>> queue;
+			void push(void *value)
+			{
+				if (tryPush(value))
+					return;
+				//writers->lock();
+				threadSleep(1);
+				return push(value);
+			}
+
+			bool tryPush(void *value)
+			{
+				CAGE_ASSERT_RUNTIME(value);
+				scopeLock<mutexClass> sl(mutex);
+				if (items.size() < maxItems)
+				{
+					items.push_back(value);
+					//readers->unlock();
+					return true;
+				}
+				return false;
+			}
+
+			bool pop(void *&value)
+			{
+				if (tryPop(value))
+					return true;
+				//readers->lock();
+				threadSleep(1);
+				return pop(value);
+			}
+
+			bool tryPop(void *&value)
+			{
+				scopeLock<mutexClass> sl(mutex);
+				if (!items.empty())
+				{
+					value = items.front();
+					items.pop_front();
+					//writers->unlock();
+					return true;
+				}
+				return false;
+			}
+
 			holder<mutexClass> mutex;
+			// conditional variables writers, readers;
+			std::deque<void*> items;
+			uint32 maxItems;
 		};
 	}
 
-	void threadSafeQueueClass::push(void *value)
+	namespace privat
 	{
-		threadSafeQueueImpl *impl = (threadSafeQueueImpl *)this;
-		scopeLock<mutexClass> l(impl->mutex);
-		impl->queue.push_front(value);
-	}
-
-	void *threadSafeQueueClass::pull()
-	{
-		threadSafeQueueImpl *impl = (threadSafeQueueImpl *)this;
-		scopeLock<mutexClass> l(impl->mutex);
-		if (impl->queue.empty())
-			return nullptr;
-		void *res = impl->queue.back();
-		impl->queue.pop_back();
-		return res;
-	}
-
-	void *threadSafeQueueClass::wait()
-	{
-		while (true)
+		void threadSafeQueuePriv::push(void *value)
 		{
-			void *r = pull();
-			if (r)
-				return r;
-			threadSleep(3000); // ugly hack
+			threadSafeQueueImpl *impl = (threadSafeQueueImpl *)this;
+			return impl->push(value);
 		}
-	}
 
-	void *threadSafeQueueClass::check(delegate<bool(void *)> checker)
-	{
-		threadSafeQueueImpl *impl = (threadSafeQueueImpl *)this;
-		scopeLock<mutexClass> l(impl->mutex);
-		if (impl->queue.empty())
-			return nullptr;
-		void *res = impl->queue.back();
-		if (checker(res))
+		bool threadSafeQueuePriv::tryPush(void *value)
 		{
-			impl->queue.pop_back();
-			return res;
+			threadSafeQueueImpl *impl = (threadSafeQueueImpl *)this;
+			return impl->tryPush(value);
 		}
-		return nullptr;
-	}
 
-	uint32 threadSafeQueueClass::unsafeSize() const
-	{
-		threadSafeQueueImpl *impl = (threadSafeQueueImpl *)this;
-		return numeric_cast<uint32>(impl->queue.size());
-	}
+		bool threadSafeQueuePriv::pop(void *&value)
+		{
+			threadSafeQueueImpl *impl = (threadSafeQueueImpl *)this;
+			return impl->pop(value);
+		}
 
-	holder<threadSafeQueueClass> newThreadSafeQueue(uintPtr memory)
-	{
-		return detail::systemArena().createImpl<threadSafeQueueClass, threadSafeQueueImpl>(memory);
+		bool threadSafeQueuePriv::tryPop(void *&value)
+		{
+			threadSafeQueueImpl *impl = (threadSafeQueueImpl *)this;
+			return impl->tryPop(value);
+		}
+
+		holder<threadSafeQueuePriv> newThreadSafeQueue(const threadSafeQueueCreateConfig &config)
+		{
+			return detail::systemArena().createImpl<threadSafeQueuePriv, threadSafeQueueImpl>(config);
+		}
 	}
 }
 

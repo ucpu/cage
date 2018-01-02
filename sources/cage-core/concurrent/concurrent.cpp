@@ -40,8 +40,8 @@ namespace cage
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
 		micros /= 1000;
-		if (micros == 0)
-			micros = 1;
+		//if (micros == 0)
+		//	micros = 1;
 		Sleep((DWORD)micros);
 #else
 		usleep(micros);

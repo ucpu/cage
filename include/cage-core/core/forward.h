@@ -83,7 +83,7 @@ namespace cage
 	class pngImageClass;
 	class programClass;
 	class threadPoolClass;
-	class threadSafeQueueClass;
+	template<class T> class threadSafeQueueClass;
 	class timerClass;
 	class colliderClass;
 	class spatialDataClass;

@@ -24,6 +24,7 @@ void testMemoryArenas();
 void testMemoryPools();
 void testMemoryPerformance();
 void testConcurrent();
+void testThreadSafeQueue();
 void testFiles();
 void testTcp();
 void testUdp();
@@ -74,6 +75,7 @@ int main()
 	testMemoryPerformance();
 	testMemoryBuffers();
 	testConcurrent();
+	testThreadSafeQueue();
 	testFiles();
 	testIni();
 	testConfig();

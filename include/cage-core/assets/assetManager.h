@@ -82,7 +82,6 @@ namespace cage
 	struct CAGE_API assetManagerCreateConfig
 	{
 		string path;
-		uintPtr queuesMemory;
 		uint32 threadMaxCount;
 		uint32 schemeMaxCount;
 		assetManagerCreateConfig();
