@@ -27,13 +27,11 @@ namespace
 			while (true)
 			{
 				task tsk(-1);
-				if (queue->pop(tsk))
-				{
-					if (tsk.final)
-						break;
-					else
-						threadSleep(1); // simulate work
-				}
+				queue->pop(tsk);
+				if (tsk.final)
+					break;
+				else
+					threadSleep(1); // simulate work
 			}
 		}
 

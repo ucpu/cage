@@ -5,6 +5,7 @@ namespace cage
 {
 	struct CAGE_API threadSafeQueueCreateConfig
 	{
+		memoryArena arena;
 		uint32 maxElements;
 		threadSafeQueueCreateConfig();
 	};
@@ -16,7 +17,7 @@ namespace cage
 		public:
 			void push(void *value);
 			bool tryPush(void *value);
-			bool pop(void *&value);
+			void pop(void *&value);
 			bool tryPop(void *&value);
 			memoryArena arena;
 		};
@@ -35,24 +36,20 @@ namespace cage
 		bool tryPush(const T &value) { return queue->tryPush(queue->arena.createObject<T>(value)); }
 		bool tryPush(T &&value) { return queue->tryPush(queue->arena.createObject<T>(templates::move(value))); }
 
-		bool pop(T &value)
+		void pop(T &value)
 		{
 			void *tmp = nullptr;
-			if (queue->pop(tmp))
+			queue->pop(tmp);
+			try
 			{
-				try
-				{
-					value = *(T*)tmp;
-				}
-				catch(...)
-				{
-					queue->arena.deallocate(tmp);
-					throw;
-				}
-				queue->arena.deallocate(tmp);
-				return true;
+				value = *(T*)tmp;
 			}
-			return false;
+			catch(...)
+			{
+				queue->arena.deallocate(tmp);
+				throw;
+			}
+			queue->arena.deallocate(tmp);
 		}
 
 		bool tryPop(T &value)
@@ -86,7 +83,7 @@ namespace cage
 		threadSafeQueueClass(holder<privat::threadSafeQueuePriv> queue) : queue(templates::move(queue)) {}
 		void push(T *value) { queue->push(value); }
 		bool tryPush(T *value) { return queue->tryPush(value); }
-		bool pop(T *&value) { void *tmp; if (queue->pop(tmp)) { value = (T*)tmp; return true; } return false; }
+		void pop(T *&value) { void *tmp; queue->pop(tmp); value = (T*)tmp; }
 		bool tryPop(T *&value) { void *tmp; if (queue->tryPop(tmp)) { value = (T*)tmp; return true; } return false; }
 
 	private:

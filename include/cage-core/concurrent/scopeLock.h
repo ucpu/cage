@@ -22,6 +22,8 @@ namespace cage
 
 	private:
 		T *ptr;
+
+		friend class conditionalBaseClass;
 	};
 }
 

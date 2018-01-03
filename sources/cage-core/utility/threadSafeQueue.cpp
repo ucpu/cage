@@ -8,7 +8,7 @@
 
 namespace cage
 {
-	threadSafeQueueCreateConfig::threadSafeQueueCreateConfig() : maxElements(1000) {}
+	threadSafeQueueCreateConfig::threadSafeQueueCreateConfig() : arena(detail::systemArena()), maxElements(1000) {}
 
 	namespace
 	{
@@ -18,9 +18,9 @@ namespace cage
 			threadSafeQueueImpl(const threadSafeQueueCreateConfig &config) : maxItems(config.maxElements)
 			{
 				mutex = newMutex();
-				//writers = newMutex();
-				//readers = newMutex();
-				arena = detail::systemArena();
+				writer = newConditionalBase();
+				reader = newConditionalBase();
+				arena = config.arena;
 			}
 
 			~threadSafeQueueImpl()
@@ -31,11 +31,19 @@ namespace cage
 
 			void push(void *value)
 			{
-				if (tryPush(value))
-					return;
-				//writers->lock();
-				threadSleep(1);
-				return push(value);
+				CAGE_ASSERT_RUNTIME(value);
+				scopeLock<mutexClass> sl(mutex);
+				while (true)
+				{
+					if (items.size() >= maxItems)
+						writer->wait(sl);
+					else
+					{
+						items.push_back(value);
+						reader->signal();
+						return;
+					}
+				}
 			}
 
 			bool tryPush(void *value)
@@ -45,19 +53,27 @@ namespace cage
 				if (items.size() < maxItems)
 				{
 					items.push_back(value);
-					//readers->unlock();
+					reader->signal();
 					return true;
 				}
 				return false;
 			}
 
-			bool pop(void *&value)
+			void pop(void *&value)
 			{
-				if (tryPop(value))
-					return true;
-				//readers->lock();
-				threadSleep(1);
-				return pop(value);
+				scopeLock<mutexClass> sl(mutex);
+				while (true)
+				{
+					if (items.empty())
+						reader->wait(sl);
+					else
+					{
+						value = items.front();
+						items.pop_front();
+						writer->signal();
+						return;
+					}
+				}
 			}
 
 			bool tryPop(void *&value)
@@ -67,14 +83,14 @@ namespace cage
 				{
 					value = items.front();
 					items.pop_front();
-					//writers->unlock();
+					writer->signal();
 					return true;
 				}
 				return false;
 			}
 
 			holder<mutexClass> mutex;
-			// conditional variables writers, readers;
+			holder<conditionalBaseClass> writer, reader;
 			std::deque<void*> items;
 			uint32 maxItems;
 		};
@@ -94,7 +110,7 @@ namespace cage
 			return impl->tryPush(value);
 		}
 
-		bool threadSafeQueuePriv::pop(void *&value)
+		void threadSafeQueuePriv::pop(void *&value)
 		{
 			threadSafeQueueImpl *impl = (threadSafeQueueImpl *)this;
 			return impl->pop(value);
