@@ -18,7 +18,7 @@ namespace cage
 		{
 		public:
 #ifdef CAGE_SYSTEM_WINDOWS
-			// todo
+			CONDITION_VARIABLE cond;
 #else
 			pthread_cond_t cond;
 #endif
@@ -26,8 +26,7 @@ namespace cage
 			conditionalBaseImpl()
 			{
 #ifdef CAGE_SYSTEM_WINDOWS
-				// todo
-				CAGE_THROW_CRITICAL(notImplementedException, "conditional variable");
+				InitializeConditionVariable(&cond);
 #else
 				pthread_cond_init(&cond, nullptr);
 #endif
@@ -36,7 +35,7 @@ namespace cage
 			~conditionalBaseImpl()
 			{
 #ifdef CAGE_SYSTEM_WINDOWS
-				// todo
+				// do nothing
 #else
 				pthread_cond_destroy(&cond);
 #endif
@@ -63,7 +62,7 @@ namespace cage
 		conditionalBaseImpl *impl = (conditionalBaseImpl *)this;
 		mutexImpl *m = (mutexImpl*)mut;
 #ifdef CAGE_SYSTEM_WINDOWS
-		// todo
+		SleepConditionVariableCS(&impl->cond, &m->cs, INFINITE);
 #else
 		pthread_cond_wait(&impl->cond, &m->mut);
 #endif
@@ -73,7 +72,7 @@ namespace cage
 	{
 		conditionalBaseImpl *impl = (conditionalBaseImpl *)this;
 #ifdef CAGE_SYSTEM_WINDOWS
-		// todo
+		WakeConditionVariable(&impl->cond);
 #else
 		pthread_cond_signal(&impl->cond);
 #endif
@@ -83,7 +82,7 @@ namespace cage
 	{
 		conditionalBaseImpl *impl = (conditionalBaseImpl *)this;
 #ifdef CAGE_SYSTEM_WINDOWS
-		// todo
+		WakeAllConditionVariable(&impl->cond);
 #else
 		pthread_cond_broadcast(&impl->cond);
 #endif
