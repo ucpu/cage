@@ -202,7 +202,7 @@ int main(int argc, char *args[])
 		log1->format.bind<logFormatPolicyConsole>();
 		log1->output.bind<logOutputPolicyStdOut>();
 
-		CAGE_LOG(severityEnum::Warning, "compatibility", "be warned, that this example depends on undocumented behavior and may not work on some platforms");
+		CAGE_LOG(severityEnum::Warning, "compatibility", "be warned, this example depends on undocumented behavior and may not work on some platforms");
 		CAGE_LOG(severityEnum::Info, "compatibility", "it is recommended that all window-related tasks are made in the main thread");
 
 		holder<threadClass> thrs[3];

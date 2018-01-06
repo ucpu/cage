@@ -293,12 +293,13 @@ namespace
 			holder<pngImageClass> png = newPngImage();
 			png->empty(data.texWidth, data.texHeight, 1);
 			detail::memcpy(png->bufferData(), &texPixels[0], data.texWidth * data.texHeight);
-			png->encodeFile(pathJoin(configGetString("cage-asset-processor.font.path", "secondary-log"), pathMakeValid(inputName) + ".png"));
+			png->verticalFlip();
+			png->encodeFile(pathJoin(configGetString("cage-asset-processor.font.path", "asset-preview"), pathMakeValid(inputName) + ".png"));
 		}
 
 		if (configGetBool("cage-asset-processor.font.glyphs"))
 		{ // glyphs
-			holder<fileClass> f = newFile(pathJoin(configGetString("cage-asset-processor.font.path", "secondary-log"), pathMakeValid(inputName) + ".glyphs.txt"), fileMode(false, true, true));
+			holder<fileClass> f = newFile(pathJoin(configGetString("cage-asset-processor.font.path", "asset-preview"), pathMakeValid(inputName) + ".glyphs.txt"), fileMode(false, true, true));
 			f->writeLine(
 				string("glyph").fill(10) +
 				string("size").fill(10) +
@@ -321,7 +322,7 @@ namespace
 
 		if (configGetBool("cage-asset-processor.font.characters"))
 		{ // characters
-			holder<fileClass> f = newFile(pathJoin(configGetString("cage-asset-processor.font.path", "secondary-log"), pathMakeValid(inputName) + ".characters.txt"), fileMode(false, true, true));
+			holder<fileClass> f = newFile(pathJoin(configGetString("cage-asset-processor.font.path", "asset-preview"), pathMakeValid(inputName) + ".characters.txt"), fileMode(false, true, true));
 			f->writeLine(
 				string("code").fill(10) +
 				string("char").fill(5) +

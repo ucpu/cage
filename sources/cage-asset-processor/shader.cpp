@@ -14,7 +14,7 @@ namespace
 	std::map<string, string> defines;
 	std::set<string, stringComparatorFast> onces;
 
-	configBool configShaderPrint("cage-asset-processor.shader.print");
+	configBool configShaderPrint("cage-asset-processor.shader.preview");
 
 	const bool validDefineChar(const char c)
 	{
@@ -497,7 +497,7 @@ void processShader()
 	{
 		for (std::map <string, std::string>::iterator it = codes.begin(), et = codes.end(); it != et; it++)
 		{
-			string name = pathJoin(configGetString("cage-asset-processor.shader.path", "secondary-log"), pathMakeValid(inputName) + "_" + it->first + ".glsl");
+			string name = pathJoin(configGetString("cage-asset-processor.shader.path", "asset-preview"), pathMakeValid(inputName) + "_" + it->first + ".glsl");
 			holder<fileClass> f = newFile(name, fileMode(false, true, true));
 			f->write(it->second.c_str(), numeric_cast<uint32>(it->second.length()));
 		}

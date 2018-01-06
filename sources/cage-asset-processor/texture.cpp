@@ -488,10 +488,11 @@ void processTexture()
 	{ // preview images
 		for (std::vector<imageLayerStruct>::iterator it = images.begin(), et = images.end(); it != et; it++)
 		{
-			string dbgName = pathJoin(configGetString("cage-asset-processor.texture.path", "secondary-log"), pathMakeValid(inputName) + "_" + (it - images.begin()) + ".png");
+			string dbgName = pathJoin(configGetString("cage-asset-processor.texture.path", "asset-preview"), pathMakeValid(inputName) + "_" + (it - images.begin()) + ".png");
 			holder<pngImageClass> png = newPngImage();
 			png->empty(it->width, it->height, it->bpp);
 			detail::memcpy(png->bufferData(), it->data.data(), png->bufferSize());
+			png->verticalFlip();
 			png->encodeFile(dbgName);
 		}
 	}

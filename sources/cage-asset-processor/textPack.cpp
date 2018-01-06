@@ -53,7 +53,7 @@ void processTextpack()
 
 	if (configGetBool("cage-asset-processor.textpack.preview"))
 	{
-		string dbgName = pathJoin(configGetString("cage-asset-processor.textpack.path", "secondary-log"), pathMakeValid(inputName) + ".txt");
+		string dbgName = pathJoin(configGetString("cage-asset-processor.textpack.path", "asset-preview"), pathMakeValid(inputName) + ".txt");
 		holder<fileClass> f = newFile(dbgName, fileMode(false, true, true));
 		for (std::map <string, string>::iterator ass = texts.begin(), asse = texts.end(); ass != asse; ass++)
 			f->writeLine(string(hashString(ass->first.c_str())).fill(10) + " " + ass->first + " = " + ass->second);

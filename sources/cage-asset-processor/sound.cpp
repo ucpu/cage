@@ -294,7 +294,7 @@ void processSound()
 
 		if (configGetBool("cage-asset-processor.sound.preview"))
 		{ // preview ogg
-			string dbgName = pathJoin(configGetString("cage-asset-processor.sound.path", "secondary-log"), pathMakeValid(inputName) + ".ogg");
+			string dbgName = pathJoin(configGetString("cage-asset-processor.sound.path", "asset-preview"), pathMakeValid(inputName) + ".ogg");
 			holder<fileClass> df = newFile(dbgName, fileMode(false, true));
 			void *buf = detail::systemArena().allocate(oggSize);
 			f->flush();

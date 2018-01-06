@@ -227,6 +227,8 @@ namespace cage
 	{
 		const vec4 evalSamplesForTextureAnimation(textureClass *texture, uint64 emitTime, uint64 animationStart, real animationSpeed, real animationOffset)
 		{
+			if (!texture)
+				return vec4();
 			uint32 dummy, frames;
 			texture->getResolution(dummy, dummy, frames);
 			if (frames <= 1)
