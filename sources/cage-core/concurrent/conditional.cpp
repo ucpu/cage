@@ -102,11 +102,11 @@ namespace cage
 	void conditionalClass::unlock()
 	{
 		conditionalImpl *impl = (conditionalImpl *)this;
+		impl->mut->unlock();
 		if (impl->broadcasting)
 			impl->cond->broadcast();
 		else
 			impl->cond->signal();
-		impl->mut->unlock();
 	}
 
 	void conditionalClass::wait()

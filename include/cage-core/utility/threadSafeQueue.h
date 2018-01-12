@@ -19,6 +19,7 @@ namespace cage
 			bool tryPush(void *value);
 			void pop(void *&value);
 			bool tryPop(void *&value);
+			uint32 estimatedSize() const;
 			memoryArena arena;
 		};
 
@@ -40,6 +41,7 @@ namespace cage
 		{
 			void *tmp = nullptr;
 			queue->pop(tmp);
+			CAGE_ASSERT_RUNTIME(tmp);
 			try
 			{
 				value = *(T*)tmp;
@@ -57,6 +59,7 @@ namespace cage
 			void *tmp = nullptr;
 			if (queue->tryPop(tmp))
 			{
+				CAGE_ASSERT_RUNTIME(tmp);
 				try
 				{
 					value = *(T*)tmp;
@@ -72,6 +75,8 @@ namespace cage
 			return false;
 		}
 
+		uint32 estimatedSize() const { return queue->estimatedSize(); }
+
 	private:
 		holder<privat::threadSafeQueuePriv> queue;
 	};
@@ -85,6 +90,7 @@ namespace cage
 		bool tryPush(T *value) { return queue->tryPush(value); }
 		void pop(T *&value) { void *tmp; queue->pop(tmp); value = (T*)tmp; }
 		bool tryPop(T *&value) { void *tmp; if (queue->tryPop(tmp)) { value = (T*)tmp; return true; } return false; }
+		uint32 estimatedSize() const { return queue->estimatedSize(); }
 
 	private:
 		holder<privat::threadSafeQueuePriv> queue;

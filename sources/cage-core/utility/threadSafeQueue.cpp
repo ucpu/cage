@@ -31,7 +31,6 @@ namespace cage
 
 			void push(void *value)
 			{
-				CAGE_ASSERT_RUNTIME(value);
 				scopeLock<mutexClass> sl(mutex);
 				while (true)
 				{
@@ -48,7 +47,6 @@ namespace cage
 
 			bool tryPush(void *value)
 			{
-				CAGE_ASSERT_RUNTIME(value);
 				scopeLock<mutexClass> sl(mutex);
 				if (items.size() < maxItems)
 				{
@@ -120,6 +118,12 @@ namespace cage
 		{
 			threadSafeQueueImpl *impl = (threadSafeQueueImpl *)this;
 			return impl->tryPop(value);
+		}
+
+		uint32 threadSafeQueuePriv::estimatedSize() const
+		{
+			threadSafeQueueImpl *impl = (threadSafeQueueImpl *)this;
+			return impl->items.size();
 		}
 
 		holder<threadSafeQueuePriv> newThreadSafeQueue(const threadSafeQueueCreateConfig &config)

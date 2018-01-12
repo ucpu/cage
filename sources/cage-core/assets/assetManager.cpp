@@ -59,9 +59,10 @@ namespace cage
 
 			string path;
 			uint32 countTotal, countProcessing;
-			volatile bool destroying;
+			uint32 hackQueueWaitCounter; // it is desirable to process as much items from the queue in single tick, however, since the items are beeing pushed back to the same queue, some form of termination mechanism must be provided
+			std::atomic<bool> destroying;
 
-			assetManagerImpl(const assetManagerCreateConfig &config) : countTotal(0), countProcessing(0), destroying(false)
+			assetManagerImpl(const assetManagerCreateConfig &config) : countTotal(0), countProcessing(0), hackQueueWaitCounter(0), destroying(false)
 			{
 				path = pathFind(config.path);
 				CAGE_LOG(severityEnum::Info, "assetManager", string() + "using asset path: '" + path + "'");
@@ -69,16 +70,18 @@ namespace cage
 				schemes.resize(config.schemeMaxCount);
 				queueCustomLoad.reserve(config.threadMaxCount);
 				queueCustomDone.reserve(config.threadMaxCount);
+				threadSafeQueueCreateConfig tsqc;
+				tsqc.maxElements = -1;
 				for (uint32 i = 0; i < config.threadMaxCount; i++)
 				{
-					queueCustomLoad.push_back(newThreadSafeQueue<assetContextPrivateStruct*>({}));
-					queueCustomDone.push_back(newThreadSafeQueue<assetContextPrivateStruct*>({}));
+					queueCustomLoad.push_back(newThreadSafeQueue<assetContextPrivateStruct*>(tsqc));
+					queueCustomDone.push_back(newThreadSafeQueue<assetContextPrivateStruct*>(tsqc));
 				}
-				queueLoadFile = newThreadSafeQueue<assetContextPrivateStruct*>({});
-				queueDecompression = newThreadSafeQueue<assetContextPrivateStruct*>({});
-				queueAddDependencies = newThreadSafeQueue<assetContextPrivateStruct*>({});
-				queueWaitDependencies = newThreadSafeQueue<assetContextPrivateStruct*>({});
-				queueRemoveDependencies = newThreadSafeQueue<assetContextPrivateStruct*>({});
+				queueLoadFile = newThreadSafeQueue<assetContextPrivateStruct*>(tsqc);
+				queueDecompression = newThreadSafeQueue<assetContextPrivateStruct*>(tsqc);
+				queueAddDependencies = newThreadSafeQueue<assetContextPrivateStruct*>(tsqc);
+				queueWaitDependencies = newThreadSafeQueue<assetContextPrivateStruct*>(tsqc);
+				queueRemoveDependencies = newThreadSafeQueue<assetContextPrivateStruct*>(tsqc);
 				loadingThread = newThread(delegate<void()>().bind<assetManagerImpl, &assetManagerImpl::loadingThreadEntry>(this), "asset disk io");
 				decompressionThread = newThread(delegate<void()>().bind<assetManagerImpl, &assetManagerImpl::decompressionThreadEntry>(this), "asset decompression");
 			}
@@ -90,7 +93,10 @@ namespace cage
 				CAGE_ASSERT_RUNTIME(index->count() == 0, index->count());
 				CAGE_ASSERT_RUNTIME(interNames.size() == 0, interNames.size());
 				destroying = true;
+				queueLoadFile->push(nullptr);
+				queueDecompression->push(nullptr);
 				loadingThread->wait();
+				decompressionThread->wait();
 			}
 
 			memoryBuffer findAsset(uint32 name)
@@ -108,10 +114,10 @@ namespace cage
 				return buff;
 			}
 
-			const bool processLoadingThread()
+			bool processLoadingThread()
 			{
 				assetContextPrivateStruct *ass = nullptr;
-				queueLoadFile->tryPop(ass);
+				queueLoadFile->pop(ass);
 				if (ass)
 				{
 					CAGE_ASSERT_RUNTIME(ass->processing);
@@ -190,20 +196,20 @@ namespace cage
 				return false;
 			}
 
-			const bool processDecompressionThread()
+			bool processDecompressionThread()
 			{
 				assetContextPrivateStruct *ass = nullptr;
-				queueDecompression->tryPop(ass);
+				queueDecompression->pop(ass);
 				if (ass)
 				{
 					CAGE_ASSERT_RUNTIME(ass->processing);
 					CAGE_ASSERT_RUNTIME(!ass->fabricated);
 					if (!ass->error)
 					{
+						CAGE_ASSERT_RUNTIME(ass->compressedData);
+						CAGE_ASSERT_RUNTIME(ass->scheme < schemes.size(), ass->scheme, schemes.size());
 						try
 						{
-							CAGE_ASSERT_RUNTIME(ass->compressedData);
-							CAGE_ASSERT_RUNTIME(ass->scheme < schemes.size(), ass->scheme, schemes.size());
 							if (schemes[ass->scheme].decompress)
 								schemes[ass->scheme].decompress(ass, schemes[ass->scheme].schemePointer);
 						}
@@ -220,7 +226,7 @@ namespace cage
 				return false;
 			}
 
-			const bool processCustomThread(uint32 threadIndex)
+			bool processCustomThread(uint32 threadIndex)
 			{
 				CAGE_ASSERT_RUNTIME(threadIndex < queueCustomDone.size(), threadIndex, queueCustomDone.size());
 
@@ -231,9 +237,9 @@ namespace cage
 					{
 						CAGE_ASSERT_RUNTIME(ass->processing);
 						CAGE_ASSERT_RUNTIME(!ass->fabricated);
+						CAGE_ASSERT_RUNTIME(ass->scheme < schemes.size(), ass->scheme, schemes.size());
 						try
 						{
-							CAGE_ASSERT_RUNTIME(ass->scheme < schemes.size(), ass->scheme, schemes.size());
 							if (schemes[ass->scheme].done)
 								schemes[ass->scheme].done(ass, schemes[ass->scheme].schemePointer);
 						}
@@ -255,10 +261,10 @@ namespace cage
 						CAGE_ASSERT_RUNTIME(!ass->fabricated);
 						if (!ass->error)
 						{
+							CAGE_ASSERT_RUNTIME(ass->originalData);
+							CAGE_ASSERT_RUNTIME(ass->scheme < schemes.size(), ass->scheme, schemes.size());
 							try
 							{
-								CAGE_ASSERT_RUNTIME(ass->originalData);
-								CAGE_ASSERT_RUNTIME(ass->scheme < schemes.size(), ass->scheme, schemes.size());
 								if (schemes[ass->scheme].load)
 									schemes[ass->scheme].load(ass, schemes[ass->scheme].schemePointer);
 							}
@@ -275,7 +281,7 @@ namespace cage
 				return false;
 			}
 
-			const bool processControlThread()
+			bool processControlThread()
 			{
 				{ // remove
 					assetContextPrivateStruct *ass = nullptr;
@@ -351,7 +357,7 @@ namespace cage
 						if (wait)
 						{
 							queueWaitDependencies->push(ass);
-							return false;
+							return (hackQueueWaitCounter++ % queueWaitDependencies->estimatedSize()) != 0;
 						}
 						if (ass->internationalizedName != ass->internationalizedPrevious)
 						{
@@ -411,20 +417,12 @@ namespace cage
 
 			void loadingThreadEntry()
 			{
-				while (!destroying)
-				{
-					while (processLoadingThread());
-					threadSleep(5000);
-				}
+				while (processLoadingThread());
 			}
 
 			void decompressionThreadEntry()
 			{
-				while (!destroying)
-				{
-					while (processDecompressionThread());
-					threadSleep(5000);
-				}
+				while (processDecompressionThread());
 			}
 
 			void assetStartLoading(assetContextPrivateStruct *ass)

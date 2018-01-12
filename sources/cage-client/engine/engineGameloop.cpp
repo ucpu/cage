@@ -100,7 +100,7 @@ namespace cage
 						gui->setCursorPosition(window->mousePosition());
 						gui->graphicPrepare(time2);
 						graphicDispatchSemaphore->unlock();
-						assets->processCustomThread(graphicPrepareThread::threadIndex);
+						while(assets->processCustomThread(graphicPrepareThread::threadIndex));
 						uint64 time3 = getApplicationTime();
 						if (emitIsReady)
 						{
