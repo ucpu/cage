@@ -23,13 +23,20 @@ namespace cage
 		{
 			png_structp png;
 			png_infop info;
-			pngInfoCtx() : png(nullptr), info(nullptr) {}
+			bool writing;
+
+			pngInfoCtx() : png(nullptr), info(nullptr), writing(false) {}
 			~pngInfoCtx()
 			{
 				if (info)
 					png_destroy_info_struct(png, &info);
 				if (png)
-					png_destroy_read_struct(&png, nullptr, nullptr);
+				{
+					if (writing)
+						png_destroy_write_struct(&png, nullptr);
+					else
+						png_destroy_read_struct(&png, nullptr, nullptr);
+				}
 			}
 		};
 
@@ -130,6 +137,7 @@ namespace cage
 		void encodePng(const memoryBuffer &in, memoryBuffer &out, uint32 width, uint32 height, uint32 components, uint32 bpp)
 		{
 			pngInfoCtx ctx;
+			ctx.writing = true;
 			png_structp &png = ctx.png;
 			png_infop &info = ctx.info;
 			png = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, &pngErrFunc, nullptr);
