@@ -12,6 +12,8 @@
 
 namespace cage
 {
+	void cageGlfwInitializeFunc();
+
 	namespace
 	{
 		bool operator == (const GLFWvidmode &a, const GLFWvidmode &b)
@@ -51,6 +53,7 @@ namespace cage
 		public:
 			screenListImpl() : primary(-1)
 			{
+				cageGlfwInitializeFunc();
 				int cnt = 0;
 				GLFWmonitor **ms = glfwGetMonitors(&cnt);
 				devices.reserve(cnt);
@@ -133,6 +136,6 @@ namespace cage
 
 	holder<screenListClass> newScreenList()
 	{
-		return detail::systemArena().createImpl <screenListClass, screenListImpl>();
+		return detail::systemArena().createImpl<screenListClass, screenListImpl>();
 	}
 }

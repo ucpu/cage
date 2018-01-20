@@ -35,7 +35,7 @@ namespace
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "texture '" + n + "' (" + dsm.textureNames[usage] + ") of type " + type + ", usage " + usage);
 	}
 
-	const bool loadTextureAssimp(aiMaterial *m, meshHeaderStruct &dsm, aiTextureType tt, uint32 usage)
+	bool loadTextureAssimp(aiMaterial *m, meshHeaderStruct &dsm, aiTextureType tt, uint32 usage)
 	{
 		CAGE_ASSERT_RUNTIME(usage < MaxTexturesCountPerMaterial, usage, MaxTexturesCountPerMaterial, tt);
 		uint32 texCount = m->GetTextureCount(tt);

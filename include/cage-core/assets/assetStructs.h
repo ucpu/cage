@@ -1,13 +1,13 @@
 namespace cage
 {
-	template struct CAGE_API detail::stringBase<32>;
+	template struct CAGE_API detail::stringBase<64>;
 	template struct CAGE_API delegate<void(const assetContextStruct *, void *)>;
 	typedef delegate<void(const assetContextStruct *, void *)> assetDelegate;
 
 	struct CAGE_API assetContextStruct
 	{
 		assetContextStruct();
-		detail::stringBase<32> textName;
+		detail::stringBase<64> textName;
 		mutable holdev assetHolder;
 		uint64 compressedSize;
 		uint64 originalSize;
@@ -37,7 +37,7 @@ namespace cage
 		char cageName[8]; // cageAss\0
 		uint32 version;
 		uint32 flags;
-		char textName[32];
+		char textName[64];
 		uint64 compressedSize;
 		uint64 originalSize;
 		uint32 internationalizedName;

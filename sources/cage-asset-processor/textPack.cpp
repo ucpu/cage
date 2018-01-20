@@ -31,6 +31,7 @@ void processTextpack()
 	string intr = properties("internationalized");
 	if (!intr.empty())
 	{
+		intr = pathJoin(pathExtractPath(inputName), intr);
 		writeLine(string() + "internationalized = " + intr);
 		h.internationalizedName = hashString(intr.c_str());
 	}

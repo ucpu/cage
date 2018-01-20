@@ -20,6 +20,36 @@ namespace cage
 {
 	namespace
 	{
+		void handleGlfwError(int, const char *message)
+		{
+			CAGE_LOG(severityEnum::Error, "glfw", message);
+		}
+
+		class cageGlfwInitializerClass
+		{
+		public:
+			cageGlfwInitializerClass()
+			{
+				glfwSetErrorCallback(&handleGlfwError);
+				if (!glfwInit())
+					CAGE_THROW_CRITICAL(exception, "failed to initialize glfw");
+			}
+
+			~cageGlfwInitializerClass()
+			{
+				glfwTerminate();
+			}
+		};
+	}
+
+	void cageGlfwInitializeFunc()
+	{
+		static cageGlfwInitializerClass *m = new cageGlfwInitializerClass(); // intentional leak
+		(void)m;
+	}
+
+	namespace
+	{
 		class mutexInitClass
 		{
 		public:
@@ -34,33 +64,6 @@ namespace cage
 		{
 			static mutexInitClass *m = new mutexInitClass(); // intentional leak
 			return m->m.get();
-		}
-
-		void handleGlfwError(int, const char *message)
-		{
-			CAGE_LOG(severityEnum::Error, "glfw", message);
-		}
-
-		class glfwInitializerClass
-		{
-		public:
-			glfwInitializerClass()
-			{
-				glfwSetErrorCallback(&handleGlfwError);
-				if (!glfwInit())
-					CAGE_THROW_CRITICAL(exception, "failed to initialize glfw");
-			}
-
-			~glfwInitializerClass()
-			{
-				glfwTerminate();
-			}
-		};
-
-		void glfwInitializeFunc()
-		{
-			static glfwInitializerClass *m = new glfwInitializerClass(); // intentional leak
-            (void)m;
 		}
 
 		struct eventStruct
@@ -166,7 +169,7 @@ namespace cage
 
 			windowImpl(windowClass *shareContext) : lastMouseButtonPressTimes{0,0,0,0,0}, shareContext(shareContext), eventsMutex(newMutex()), focus(true)
 			{
-				glfwInitializeFunc();
+				cageGlfwInitializeFunc();
 
 #ifdef GCHL_WINDOWS_THREAD
 				stopping = false;

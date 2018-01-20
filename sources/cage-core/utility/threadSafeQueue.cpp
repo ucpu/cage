@@ -123,7 +123,7 @@ namespace cage
 		uint32 threadSafeQueuePriv::estimatedSize() const
 		{
 			threadSafeQueueImpl *impl = (threadSafeQueueImpl *)this;
-			return impl->items.size();
+			return numeric_cast<uint32>(impl->items.size());
 		}
 
 		holder<threadSafeQueuePriv> newThreadSafeQueue(const threadSafeQueueCreateConfig &config)
