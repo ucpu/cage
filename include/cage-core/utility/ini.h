@@ -33,6 +33,7 @@ namespace cage
 
 		void clear();
 		void load(const string &filename);
+		void merge(const iniClass *source);
 		void save(const string &filename) const;
 
 #define GCHL_GENERATE(TYPE, NAME, DEF, TO) \

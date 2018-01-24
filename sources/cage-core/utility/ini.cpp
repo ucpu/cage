@@ -198,6 +198,15 @@ namespace cage
 		}
 	}
 
+	void iniClass::merge(const iniClass *source)
+	{
+		for (string s : source->sections())
+		{
+			for (string i : source->items(s))
+				set(s, i, source->get(s, i));
+		}
+	}
+
 	void iniClass::save(const string &filename) const
 	{
 		iniImpl *impl = (iniImpl*)this;

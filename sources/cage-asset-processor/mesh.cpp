@@ -285,6 +285,58 @@ namespace
 		if ((dsm.flags & meshFlags::ShadowCast) == meshFlags::ShadowCast && ((dsm.flags & meshFlags::DepthWrite) == meshFlags::None))
 			CAGE_THROW_ERROR(exception, "shadow cast is enabled, but depth write is disabled");
 	}
+
+	mat3 transformationMatrix()
+	{
+		string axes = properties("axes").toLower();
+		if (axes.empty() || axes == "+x+y+z")
+			return mat3();
+		if (axes.length() != 6)
+			CAGE_THROW_ERROR(exception, "wrong axes definition: length (must be in format +x+y+z)");
+		mat3 result(0,0,0,0,00,0,0,0,0);
+		int sign = 0;
+		uint32 axesUsedCounts[3] = { 0, 0, 0 };
+		for (uint32 i = 0; i < 6; i++)
+		{
+			char c = axes[i];
+			if (i % 2 == 0)
+			{ // signs
+				if (c != '+' && c != '-')
+					CAGE_THROW_ERROR(exception, "wrong axes definition: signs (must be in format +x+y+z)");
+				if (c == '+')
+					sign = 1;
+				else
+					sign = -1;
+			}
+			else
+			{ // axes
+				uint32 out = i / 2;
+				uint32 in = -1;
+				switch (c)
+				{
+				case 'x':
+					axesUsedCounts[0]++;
+					in = 0;
+					break;
+				case 'y':
+					axesUsedCounts[1]++;
+					in = 1;
+					break;
+				case 'z':
+					axesUsedCounts[2]++;
+					in = 2;
+					break;
+				default:
+					CAGE_THROW_ERROR(exception, "wrong axes definition: invalid axis (must be in format +x+y+z)");
+				}
+				result[in * 3 + out] = real(sign);
+			}
+		}
+		if (axesUsedCounts[0] != 1 || axesUsedCounts[1] != 1 || axesUsedCounts[2] != 1)
+			CAGE_THROW_ERROR(exception, "wrong axes definition: axes counts (must be in format +x+y+z)");
+		CAGE_LOG(severityEnum::Info, logComponentName, string() + "using axes conversion matrix: " + result);
+		return result;
+	}
 }
 
 extern const uint32 assimpDefaultLoadFlags;
@@ -349,15 +401,16 @@ void processMesh()
 	printMaterial(dsm, mat);
 	validateFlags(dsm, mat);
 
-	real scale = properties("scale").toFloat();
+	mat3 axes = transformationMatrix();
 	const cage::uintPtr dataSize = dsm.vertexSize() * dsm.verticesCount + sizeof(uint32) * dsm.indicesCount;
 	cage::memoryBuffer dataBuffer(dataSize);
 	pointer ptr = dataBuffer.data();
 
 	dsm.box = aabb();
+	mat3 axes2 = axes * properties("scale").toFloat();
 	for (uint32 i = 0; i < dsm.verticesCount; i++)
 	{
-		vec3 p = (*(cage::vec3*)&(am->mVertices[i])) * scale;
+		vec3 p = axes2 * (*(cage::vec3*)&(am->mVertices[i]));
 		*(cage::vec3*)ptr.asVoid = p;
 		ptr += sizeof(cage::vec3);
 		dsm.box += aabb(p);
@@ -377,7 +430,7 @@ void processMesh()
 	{
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
 		{
-			*(cage::vec3*)ptr.asVoid = *(cage::vec3*)&(am->mNormals[i]);
+			*(cage::vec3*)ptr.asVoid = axes * *(cage::vec3*)&(am->mNormals[i]);
 			ptr += sizeof(cage::vec3);
 		}
 	}
@@ -386,12 +439,12 @@ void processMesh()
 	{
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
 		{
-			*(cage::vec3*)ptr.asVoid = *(cage::vec3*)&(am->mTangents[i]);
+			*(cage::vec3*)ptr.asVoid = axes * *(cage::vec3*)&(am->mTangents[i]);
 			ptr += sizeof(cage::vec3);
 		}
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
 		{
-			*(cage::vec3*)ptr.asVoid = *(cage::vec3*)&(am->mBitangents[i]);
+			*(cage::vec3*)ptr.asVoid = axes * *(cage::vec3*)&(am->mBitangents[i]);
 			ptr += sizeof(cage::vec3);
 		}
 	}
