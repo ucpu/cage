@@ -52,7 +52,7 @@ namespace cage
 			windowClass *ctx = (windowClass*)userParam;
 			CAGE_ASSERT_RUNTIME(ctx, "missing context");
 			if (ctx->debugOpenglErrorCallback)
-				return ctx->debugOpenglErrorCallback(source, type, id, severity, message, ctx);
+				return ctx->debugOpenglErrorCallback(source, type, id, severity, message);
 
 			const char *src = nullptr;
 			switch (source)

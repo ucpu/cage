@@ -39,6 +39,7 @@ namespace cage
 			holder<busClass> masterBus;
 			holder<busClass> musicBus;
 			holder<busClass> effectsBus;
+			holder<busClass> guiBus;
 			holder<guiClass> gui;
 			holder<entityManagerClass> entities;
 			holder<barrierClass> threadsStateBarier;
@@ -81,7 +82,6 @@ namespace cage
 
 			void graphicPrepareInitializeStage()
 			{
-				gui->handleWindowEvents(window.get());
 				graphicPrepareInitialize();
 			}
 
@@ -97,8 +97,6 @@ namespace cage
 						uint64 time2 = getApplicationTime();
 						graphicPrepareThread::prepare.dispatch();
 						graphicPrepareTick(lastEmit, time2);
-						gui->setCursorPosition(window->mousePosition());
-						gui->graphicPrepare(time2);
 						graphicDispatchSemaphore->unlock();
 						while(assets->processCustomThread(graphicPrepareThread::threadIndex));
 						uint64 time3 = getApplicationTime();
@@ -163,7 +161,7 @@ namespace cage
 						graphicDispatchTick();
 						if (graphicPrepareThread::stereoMode == stereoModeEnum::Mono)
 						{
-							gui->graphicDispatch();
+							gui->graphicRender();
 							CAGE_CHECK_GL_ERROR_DEBUG();
 						}
 						graphicPrepareSemaphore->unlock();
@@ -204,6 +202,7 @@ namespace cage
 			void soundInitializeStage()
 			{
 				soundInitialize();
+				gui->soundInitialize(sound.get());
 			}
 
 			void soundGameloopStage()
@@ -261,6 +260,7 @@ namespace cage
 
 			void soundFinalizeStage()
 			{
+				gui->soundFinalize();
 				soundFinalize();
 				while (assets->countTotal() > 0)
 				{
@@ -298,8 +298,10 @@ namespace cage
 								}
 							}
 						}
-						window->processEvents();
 						controlThread::update.dispatch();
+						gui->setOutputResolution(window->resolution());
+						gui->controlUpdate();
+						window->processEvents();
 						uint64 time2 = getApplicationTime();
 						// emit
 						emitIsReady = true;
@@ -401,9 +403,11 @@ namespace cage
 					masterBus = newBus(sound.get());
 					musicBus = newBus(sound.get());
 					effectsBus = newBus(sound.get());
+					guiBus = newBus(sound.get());
 					speaker->setInput(masterBus.get());
 					masterBus->addInput(musicBus.get());
 					masterBus->addInput(effectsBus.get());
+					masterBus->addInput(guiBus.get());
 				}
 
 				{ // create gui
@@ -412,6 +416,8 @@ namespace cage
 						c = *config.gui;
 					c.assetManager = assets.get();
 					gui = newGui(c);
+					gui->handleWindowEvents(window.get());
+					gui->setOutputSoundBus(guiBus.get());
 				}
 
 				{ // create entities
@@ -570,6 +576,7 @@ namespace cage
 				{ // destroy sound
 					effectsBus.clear();
 					musicBus.clear();
+					guiBus.clear();
 					masterBus.clear();
 					speaker.clear();
 					sound.clear();
@@ -682,6 +689,11 @@ namespace cage
 	busClass *effectsMixer()
 	{
 		return engineData->effectsBus.get();
+	}
+
+	busClass *guiMixer()
+	{
+		return engineData->guiBus.get();
 	}
 
 	uint64 currentControlTime()

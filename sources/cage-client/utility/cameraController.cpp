@@ -16,12 +16,7 @@ namespace cage
 		class cameraControllerImpl : public cameraControllerClass
 		{
 		public:
-			eventListener<bool(windowClass *, mouseButtonsFlags, modifiersFlags, const pointStruct &)> mouseMoveListener;
-			eventListener<bool(windowClass *, mouseButtonsFlags, modifiersFlags, const pointStruct &)> mousePressListener;
-			eventListener<bool(windowClass *, mouseButtonsFlags, modifiersFlags, const pointStruct &)> mouseReleaseListener;
-			eventListener<bool(windowClass *, sint8, modifiersFlags, const pointStruct &)> mouseWheelListener;
-			eventListener<bool(windowClass *, uint32, uint32, modifiersFlags)> keyPressListener;
-			eventListener<bool(windowClass *, uint32, uint32, modifiersFlags)> keyReleaseListener;
+			windowEventListeners listeners;
 			eventListener<bool()> updateListener;
 
 			entityClass *entity;
@@ -41,24 +36,18 @@ namespace cage
 				keysArrowsEnabled = true;
 				freeMove = false;
 
-				mouseMoveListener.bind<cameraControllerImpl, &cameraControllerImpl::mouseMove>(this);
-				mousePressListener.bind<cameraControllerImpl, &cameraControllerImpl::mousePress>(this);
-				mouseReleaseListener.bind<cameraControllerImpl, &cameraControllerImpl::mouseRelease>(this);
-				mouseWheelListener.bind<cameraControllerImpl, &cameraControllerImpl::mouseWheel>(this);
-				keyPressListener.bind<cameraControllerImpl, &cameraControllerImpl::keyPress>(this);
-				keyReleaseListener.bind<cameraControllerImpl, &cameraControllerImpl::keyRelease>(this);
+				listeners.mousePress.bind<cameraControllerImpl, &cameraControllerImpl::mousePress>(this);
+				listeners.mouseMove.bind<cameraControllerImpl, &cameraControllerImpl::mouseMove>(this);
+				listeners.keyPress.bind<cameraControllerImpl, &cameraControllerImpl::keyPress>(this);
+				listeners.keyRelease.bind<cameraControllerImpl, &cameraControllerImpl::keyRelease>(this);
+				listeners.attachAll(window());
 				updateListener.bind<cameraControllerImpl, &cameraControllerImpl::update>(this);
-				window()->events.mouseMove.attach(mouseMoveListener);
-				window()->events.mousePress.attach(mousePressListener);
-				window()->events.mouseRelease.attach(mouseReleaseListener);
-				window()->events.mouseWheel.attach(mouseWheelListener);
-				window()->events.keyPress.attach(keyPressListener);
-				window()->events.keyRelease.attach(keyReleaseListener);
 				controlThread::update.attach(updateListener);
 			}
 
-			const pointStruct centerMouse(windowClass *w)
+			const pointStruct centerMouse()
 			{
+				auto w = window();
 				pointStruct pt2 = w->resolution();
 				pt2.x /= 2;
 				pt2.y /= 2;
@@ -66,35 +55,25 @@ namespace cage
 				return pt2;
 			}
 
-			bool mouseEnabled(windowClass *w, mouseButtonsFlags buttons)
+			bool mouseEnabled(mouseButtonsFlags buttons)
 			{
-				return w->isFocused() && (mouseButton == mouseButtonsFlags::None || (buttons & mouseButton) == mouseButton);
+				return window()->isFocused() && (mouseButton == mouseButtonsFlags::None || (buttons & mouseButton) == mouseButton);
 			}
 
-			bool mousePress(windowClass *w, mouseButtonsFlags buttons, modifiersFlags, const pointStruct &)
+			bool mousePress(mouseButtonsFlags buttons, modifiersFlags, const pointStruct &)
 			{
-				if (mouseEnabled(w, buttons))
-					centerMouse(w);
+				if (mouseEnabled(buttons))
+					centerMouse();
 				return false;
 			}
 
-			bool mouseRelease(windowClass *, mouseButtonsFlags, modifiersFlags, const pointStruct &)
-			{
-				return false;
-			}
-
-			bool mouseWheel(windowClass *, sint8, modifiersFlags, const pointStruct &)
-			{
-				return false;
-			}
-
-			bool mouseMove(windowClass *w, mouseButtonsFlags buttons, modifiersFlags, const pointStruct &pt)
+			bool mouseMove(mouseButtonsFlags buttons, modifiersFlags, const pointStruct &pt)
 			{
 				if (!entity)
 					return false;
-				if (!mouseEnabled(w, buttons))
+				if (!mouseEnabled(buttons))
 					return false;
-				pointStruct pt2 = centerMouse(w);
+				pointStruct pt2 = centerMouse();
 				sint32 dx = pt2.x - pt.x;
 				sint32 dy = pt2.y - pt.y;
 				if (abs(dx) + abs(dy) > 100)
@@ -162,12 +141,12 @@ namespace cage
 				return false;
 			}
 
-			bool keyPress(windowClass *, uint32 a, uint32, modifiersFlags)
+			bool keyPress(uint32 a, uint32, modifiersFlags)
 			{
 				return setKey(a, true);
 			}
 
-			bool keyRelease(windowClass *, uint32 a, uint32, modifiersFlags)
+			bool keyRelease(uint32 a, uint32, modifiersFlags)
 			{
 				return setKey(a, false);
 			}

@@ -1,80 +1,76 @@
 namespace cage
 {
-	struct CAGE_API elementLayoutStruct
+	struct CAGE_API skinConfigStruct
 	{
-		struct CAGE_API textureUvStruct
-		{
-			struct CAGE_API textureUvOiStruct
-			{
-				vec4 outer;
-				vec4 inner;
-			} defal, focus, hover, disab;
-		} textureUv;
-		vec4 margin; // left, top, right, bottom
-		vec4 border;
-		vec4 padding;
-		vec2 defaultSize;
-		unitsModeEnum marginUnits;
-		unitsModeEnum borderUnits;
-		unitsModeEnum paddingUnits;
-		unitsModeEnum defaultSizeUnits;
+		skinElementLayoutStruct layouts[(uint32)elementTypeEnum::TotalElements];
+		skinWidgetDefaultsStruct defaults;
+		uint32 textureName;
+		skinConfigStruct();
+	};
+
+	struct CAGE_API componentsStruct : public generalComponentsStruct, public widgetsComponentsStruct, public layoutsComponentsStruct
+	{
+		componentsStruct(entityManagerClass *ents);
 	};
 
 	template struct CAGE_API eventDispatcher<bool(uint32)>;
+	template struct CAGE_API delegate<bool(const pointStruct&, vec2&)>;
 
 	class CAGE_API guiClass
 	{
 	public:
-		entityManagerClass *entities();
-		assetManagerClass *assets();
-
 		void graphicInitialize(windowClass *graphicContext);
 		void graphicFinalize();
+		void graphicRender();
+
 		void soundInitialize(soundContextClass *soundContext);
 		void soundFinalize();
-
-		void controlEmit();
-		void graphicPrepare(uint64 time);
-		void graphicDispatch();
 		void soundRender();
-		void setCursorPosition(const pointStruct &point);
 
-		/*
-		void loadScreen(const void *buffer, uintPtr size);
-		void loadScreen(const memoryBuffer &buffer);
-		void saveScreen(void *buffer, uintPtr &size) const;
-		void saveScreen(memoryBuffer &buffer) const;
-		*/
-
-		void setFocus(uint32 control);
+		void setOutputResolution(const pointStruct &resolution, real retina = 1); // resolution: pixels; retina: how many pixels per point (1D)
+		void setZoom(real zoom); // pixels per point (1D)
+		pointStruct getOutputResolution() const;
+		real getOutputRetina() const;
+		real getZoom() const;
+		void setOutputSoundBus(busClass *bus);
+		busClass *getOutputSoundBus() const;
+		void setFocus(uint32 widget);
 		uint32 getFocus() const;
+		void controlUpdate(); // must be called before processing events
+		void controlEmit(); // must be called exclusively when no other threads are interacting with this gui
 
-		bool windowResize(windowClass *win, const pointStruct &);
-		bool mousePress(windowClass *win, mouseButtonsFlags buttons, modifiersFlags modifiers, const pointStruct &point);
-		bool mouseRelease(windowClass *win, mouseButtonsFlags buttons, modifiersFlags modifiers, const pointStruct &point);
-		bool mouseMove(windowClass *win, mouseButtonsFlags buttons, modifiersFlags modifiers, const pointStruct &point);
-		bool mouseWheel(windowClass *win, sint8 wheel, modifiersFlags modifiers, const pointStruct &point);
-		bool keyPress(windowClass *win, uint32 key, uint32 scanCode, modifiersFlags modifiers);
-		bool keyRepeat(windowClass *win, uint32 key, uint32 scanCode, modifiersFlags modifiers);
-		bool keyRelease(windowClass *win, uint32 key, uint32 scanCode, modifiersFlags modifiers);
-		bool keyChar(windowClass *win, uint32 key);
-		void handleWindowEvents(windowClass *window) const;
+		bool windowResize(const pointStruct &);
+		bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, const pointStruct &point);
+		bool mouseDouble(mouseButtonsFlags buttons, modifiersFlags modifiers, const pointStruct &point);
+		bool mouseRelease(mouseButtonsFlags buttons, modifiersFlags modifiers, const pointStruct &point);
+		bool mouseMove(mouseButtonsFlags buttons, modifiersFlags modifiers, const pointStruct &point);
+		bool mouseWheel(sint8 wheel, modifiersFlags modifiers, const pointStruct &point);
+		bool keyPress(uint32 key, uint32 scanCode, modifiersFlags modifiers);
+		bool keyRepeat(uint32 key, uint32 scanCode, modifiersFlags modifiers);
+		bool keyRelease(uint32 key, uint32 scanCode, modifiersFlags modifiers);
+		bool keyChar(uint32 key);
 
-		eventDispatcher<bool(uint32)> genericEvent;
+		void handleWindowEvents(windowClass *window);
+		void skipAllEventsUntilNextUpdate();
+		pointStruct getInputResolution() const;
+		delegate<bool(const pointStruct&, vec2&)> eventCoordinatesTransformer; // called from controlProcess or from any window events, it should return false to signal that the point is outside the gui, otherwise the point should be converted from window coordinate system to the gui output resolution coordinate system
+		eventDispatcher<bool(uint32)> widgetEvent; // called from controlProcess or window events
 
-		elementLayoutStruct elements[(uint32)elementTypeEnum::TotalElements];
-		componentsStruct components;
-		vec3 defaultFontColor;
-		uint32 defaultFontName;
-		uint32 skinName;
+		skinConfigStruct &skin(uint32 index = 0);
+		const skinConfigStruct &skin(uint32 index = 0) const;
+
+		componentsStruct &components();
+		entityManagerClass *entities();
+		assetManagerClass *assets();
 	};
 
 	struct CAGE_API guiCreateConfig
 	{
 		assetManagerClass *assetManager;
 		entityManagerCreateConfig *entitiesConfig;
-		uintPtr memoryLimitCache;
-		uintPtr memoryLimitPrepare;
+		uintPtr itemsArenaSize;
+		uintPtr emitArenaSize;
+		uint32 skinsCount;
 		guiCreateConfig();
 	};
 
@@ -82,6 +78,6 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_API void guiElementsLayoutTemplateExport(elementLayoutStruct elements[(uint32)elementTypeEnum::TotalElements], uint32 resolution, const string &path);
+		CAGE_API holder<pngImageClass> guiSkinTemplateExport(const skinConfigStruct &skin, uint32 width, uint32 height);
 	}
 }

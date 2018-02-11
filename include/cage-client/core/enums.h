@@ -94,91 +94,13 @@ namespace cage
 	};
 	GCHL_ENUM_BITS(windowFlags);
 
-	// gui
-
-	enum class elementTypeEnum : uint32
-	{
-		Empty,
-		Panel,
-		ButtonNormal,
-		ButtonPressed,
-		Textbox,
-		Textarea,
-		ComboboxBase,
-		ComboboxList,
-		ComboboxItem,
-		ListboxList,
-		ListboxItem,
-		CheckboxUnchecked,
-		CheckboxChecked,
-		CheckboxUndetermined,
-		RadioUnchecked,
-		RadioChecked,
-		SliderHorizontalPanel,
-		SliderHorizontalDot,
-		SliderVerticalPanel,
-		SliderVerticalDot,
-		ScrollbarHorizontalPanel,
-		ScrollbarHorizontalDot,
-		ScrollbarHorizontalArrowLeft,
-		ScrollbarHorizontalArrowRight,
-		ScrollbarVerticalPanel,
-		ScrollbarVerticalDot,
-		ScrollbarVerticalArrowUp,
-		ScrollbarVerticalArrowDown,
-		TotalElements,
-		InvalidElement = (uint32)-1,
-	};
-
-	enum class controlTypeEnum : uint32
-	{
-		Empty,
-		Panel,
-		Button,
-		RadioButton,
-		RadioGroup,
-		Checkbox,
-		Textbox,
-		Textarea,
-		Combobox,
-		Listbox,
-		Slider,
-	};
-
-	enum class controlStateEnum : uint32
-	{
-		Normal,
-		Disabled,
-		Hidden,
-	};
-
-	enum class layoutModeEnum : uint32
-	{
-		Manual,
-		Row,
-		Column,
-	};
-
-	enum class scrollbarModeEnum : uint32
-	{
-		Automatic,
-		Always,
-		Never,
-	};
+	// font
 
 	enum class textAlignEnum : uint32
 	{
 		Left,
 		Right,
 		Center,
-	};
-
-	enum class unitsModeEnum : uint32
-	{
-		Automatic,
-		Pixels,
-		ScreenWidth,
-		ScreenHeight,
 	};
 
 	// engine components

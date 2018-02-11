@@ -31,14 +31,6 @@ namespace cage
 	class speakerListClass;
 
 	struct guiCreateConfig;
-	struct parentComponent;
-	struct textComponent;
-	struct imageComponent;
-	struct controlComponent;
-	struct layoutComponent;
-	struct positionComponent;
-	struct formatComponent;
-	struct componentsStruct;
 	class guiClass;
 
 	struct engineCreateConfig;

@@ -59,7 +59,7 @@ namespace cage
 		void pngWriteFunc(png_structp png, png_bytep buf, png_size_t siz)
 		{
 			pngIoCtx *io = (pngIoCtx*)png_get_io_ptr(png);
-			io->buf.resizeGrow(io->off + siz);
+			io->buf.resizeGrowSmart(io->off + siz);
 			detail::memcpy((char*)io->buf.data() + io->off, buf, siz);
 			io->off += siz;
 		}

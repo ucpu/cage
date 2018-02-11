@@ -1,0 +1,98 @@
+#include <cage-core/core.h>
+#include <cage-core/math.h>
+#include <cage-core/memory.h>
+#include <cage-core/entities.h>
+
+#define CAGE_EXPORT
+#include <cage-core/core/macro/api.h>
+#include <cage-client/core.h>
+#include <cage-client/gui.h>
+#include <cage-client/graphic.h>
+#include "../private.h"
+
+namespace cage
+{
+	componentsStruct::componentsStruct(entityManagerClass *ents) : generalComponentsStruct(ents), layoutsComponentsStruct(ents), widgetsComponentsStruct(ents)
+	{}
+
+	guiImpl::graphicDataStruct::graphicDataStruct() :
+		guiShader(nullptr), fontShader(nullptr), imageAnimatedShader(nullptr), imageStaticShader(nullptr),
+		guiMesh(nullptr), fontMesh(nullptr), imageMesh(nullptr)
+	{}
+
+	guiImpl::emitDataStruct::emitDataStruct(const guiCreateConfig &config) :
+		arena(config.emitArenaSize), memory(&arena), first(nullptr), last(nullptr)
+	{}
+
+	guiImpl::emitDataStruct::~emitDataStruct()
+	{
+		flush();
+	}
+
+	void guiImpl::emitDataStruct::flush()
+	{
+		first = last = nullptr;
+		memory.flush();
+	}
+
+	guiImpl::guiImpl(const guiCreateConfig &config) :
+		entityManager(newEntityManager(config.entitiesConfig ? *config.entitiesConfig : entityManagerCreateConfig())), components(entityManager.get()),
+		itemsArena(config.itemsArenaSize), itemsMemory(&itemsArena), root(nullptr),
+		emitData{config, config, config}, emitControl(nullptr), emitIndexControl(0), emitIndexDispatch(0),
+		openglContext(nullptr), assetManager(config.assetManager),
+		focusName(0), hoverName(0), eventsEnabled(false),
+		zoom(1)
+	{
+		listeners.windowResize.bind<guiClass, &guiClass::windowResize>(this);
+		listeners.mousePress.bind<guiClass, &guiClass::mousePress>(this);
+		listeners.mouseDouble.bind<guiClass, &guiClass::mouseDouble>(this);
+		listeners.mouseRelease.bind<guiClass, &guiClass::mouseRelease>(this);
+		listeners.mouseMove.bind<guiClass, &guiClass::mouseMove>(this);
+		listeners.mouseWheel.bind<guiClass, &guiClass::mouseWheel>(this);
+		listeners.keyPress.bind<guiClass, &guiClass::keyPress>(this);
+		listeners.keyRepeat.bind<guiClass, &guiClass::keyRepeat>(this);
+		listeners.keyRelease.bind<guiClass, &guiClass::keyRelease>(this);
+		listeners.keyChar.bind<guiClass, &guiClass::keyChar>(this);
+
+		skins.resize(config.skinsCount);
+	};
+
+	guiImpl::~guiImpl()
+	{
+		CAGE_ASSERT_RUNTIME(openglContext == nullptr);
+		focusName = hoverName = 0;
+		itemsMemory.flush();
+	}
+
+	void guiImpl::scaling()
+	{
+		pointsScale = zoom * retina;
+		outputSize = vec2(outputResolution.x, outputResolution.y) / pointsScale;
+		outputMouse = vec2(inputMouse.x, inputMouse.y) / pointsScale;
+	}
+
+	vec4 guiImpl::pixelsToNdc(vec2 pixelPosition, vec2 pixelSize)
+	{
+		vec2 invScreenSize = 2 / outputSize;
+		vec2 resPos = (pixelPosition - outputSize * 0.5) * invScreenSize;
+		vec2 resSiz = pixelSize * invScreenSize;
+		resPos[1] = -resPos[1] - resSiz[1];
+		return vec4(resPos, resPos + resSiz);
+	}
+
+	real guiImpl::eval(real val, unitEnum unit, real defaul)
+	{
+		switch (unit)
+		{
+		case unitEnum::None: return defaul;
+		case unitEnum::Points: return val;
+		case unitEnum::Pixels: return val / pointsScale;
+		case unitEnum::ScreenWidth: return val * outputSize[0];
+		case unitEnum::ScreenHeight: return val * outputSize[1];
+		case unitEnum::ScreenShorter: return val * min(outputSize[0], outputSize[1]);
+		case unitEnum::ScreenLonger: return val * max(outputSize[0], outputSize[1]);
+		default:
+			CAGE_THROW_CRITICAL(exception, "invalid unit enum");
+		}
+	}
+}

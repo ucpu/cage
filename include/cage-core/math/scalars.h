@@ -33,6 +33,10 @@ namespace cage
 		rads operator * (rads other) const;
 		degs operator * (degs other) const;
 
+		// allow to treat it as a one-dimensional vector
+		real &operator [] (uint32 idx) { CAGE_ASSERT_RUNTIME(idx == 0, "index out of range", idx); return *this; }
+		real operator [] (uint32 idx) const { CAGE_ASSERT_RUNTIME(idx == 0, "index out of range", idx); return *this; }
+
 		// comparison operators
 		//bool operator == (real other) const { return (*this - other).abs() <= (abs() < other.abs() ? other.abs() : abs()) * epsilon; }
 
@@ -78,6 +82,7 @@ namespace cage
 		static const real PositiveInfinity;
 		static const real NegativeInfinity;
 		static const real Nan;
+		static const uint32 Dimension = 1;
 	};
 
 	struct CAGE_API rads

@@ -559,58 +559,58 @@ namespace cage
 			switch (e.type)
 			{
 			case eventStruct::eventType::Close:
-				impl->events.windowClose.dispatch(this);
+				impl->events.windowClose.dispatch();
 				break;
 			case eventStruct::eventType::KeyPress:
-				impl->events.keyPress.dispatch(this, e.key.key, e.key.scancode, e.key.modifiers);
-				impl->events.keyRepeat.dispatch(this, e.key.key, e.key.scancode, e.key.modifiers);
+				impl->events.keyPress.dispatch(e.key.key, e.key.scancode, e.key.modifiers);
+				impl->events.keyRepeat.dispatch(e.key.key, e.key.scancode, e.key.modifiers);
 				break;
 			case eventStruct::eventType::KeyRepeat:
-				impl->events.keyRepeat.dispatch(this, e.key.key, e.key.scancode, e.key.modifiers);
+				impl->events.keyRepeat.dispatch(e.key.key, e.key.scancode, e.key.modifiers);
 				break;
 			case eventStruct::eventType::KeyRelease:
-				impl->events.keyRelease.dispatch(this, e.key.key, e.key.scancode, e.key.modifiers);
+				impl->events.keyRelease.dispatch(e.key.key, e.key.scancode, e.key.modifiers);
 				break;
 			case eventStruct::eventType::KeyChar:
-				impl->events.keyChar.dispatch(this, e.codepoint);
+				impl->events.keyChar.dispatch(e.codepoint);
 				break;
 			case eventStruct::eventType::MouseMove:
-				impl->events.mouseMove.dispatch(this, e.mouse.buttons, e.mouse.modifiers, pointStruct(e.mouse.x, e.mouse.y));
+				impl->events.mouseMove.dispatch(e.mouse.buttons, e.mouse.modifiers, pointStruct(e.mouse.x, e.mouse.y));
 				break;
 			case eventStruct::eventType::MousePress:
-				impl->events.mousePress.dispatch(this, e.mouse.buttons, e.mouse.modifiers, pointStruct(e.mouse.x, e.mouse.y));
+				impl->events.mousePress.dispatch(e.mouse.buttons, e.mouse.modifiers, pointStruct(e.mouse.x, e.mouse.y));
 				break;
 			case eventStruct::eventType::MouseDouble:
-				impl->events.mouseDouble.dispatch(this, e.mouse.buttons, e.mouse.modifiers, pointStruct(e.mouse.x, e.mouse.y));
+				impl->events.mouseDouble.dispatch(e.mouse.buttons, e.mouse.modifiers, pointStruct(e.mouse.x, e.mouse.y));
 				break;
 			case eventStruct::eventType::MouseRelease:
-				impl->events.mouseRelease.dispatch(this, e.mouse.buttons, e.mouse.modifiers, pointStruct(e.mouse.x, e.mouse.y));
+				impl->events.mouseRelease.dispatch(e.mouse.buttons, e.mouse.modifiers, pointStruct(e.mouse.x, e.mouse.y));
 				break;
 			case eventStruct::eventType::MouseWheel:
-				impl->events.mouseWheel.dispatch(this, e.mouse.wheel, e.mouse.modifiers, pointStruct(e.mouse.x, e.mouse.y));
+				impl->events.mouseWheel.dispatch(e.mouse.wheel, e.mouse.modifiers, pointStruct(e.mouse.x, e.mouse.y));
 				break;
 			case eventStruct::eventType::Resize:
-				impl->events.windowResize.dispatch(this, pointStruct(e.point.x, e.point.y));
+				impl->events.windowResize.dispatch(pointStruct(e.point.x, e.point.y));
 				break;
 			case eventStruct::eventType::Move:
-				impl->events.windowMove.dispatch(this, pointStruct(e.point.x, e.point.y));
+				impl->events.windowMove.dispatch(pointStruct(e.point.x, e.point.y));
 				break;
 			case eventStruct::eventType::Show:
-				impl->events.windowShow.dispatch(this);
+				impl->events.windowShow.dispatch();
 				break;
 			case eventStruct::eventType::Hide:
-				impl->events.windowHide.dispatch(this);
+				impl->events.windowHide.dispatch();
 				break;
 			case eventStruct::eventType::Paint:
-				impl->events.windowPaint.dispatch(this);
+				impl->events.windowPaint.dispatch();
 				break;
 			case eventStruct::eventType::FocusGain:
 				impl->focus = true;
-				impl->events.focusGain.dispatch(this);
+				impl->events.focusGain.dispatch();
 				break;
 			case eventStruct::eventType::FocusLose:
 				impl->focus = false;
-				impl->events.focusLose.dispatch(this);
+				impl->events.focusLose.dispatch();
 				break;
 			default:
 				CAGE_THROW_CRITICAL(exception, "invalid event type");
@@ -680,8 +680,8 @@ namespace cage
 
 	void windowEventListeners::attachAll(windowClass *window)
 	{
-#define GCHL_GENERATE(T) if (window) T.attach(window->events.T); else T.detach();
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, windowClose, windowShow, windowHide, windowPaint, windowMove, windowResize, mousePress, mouseDouble, mouseRelease, mouseMove, mouseWheel, focusGain, focusLose, keyPress, keyRepeat, keyRelease, keyChar));
+#define GCHL_GENERATE(T) if(window) T.attach(window->events.T); else T.detach();
+		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, windowClose, windowShow, windowHide, windowPaint, windowMove, windowResize, mouseMove, mousePress, mouseDouble, mouseRelease, mouseWheel, focusGain, focusLose, keyPress, keyRelease, keyRepeat, keyChar));
 #undef GCHL_GENERATE
 	}
 }

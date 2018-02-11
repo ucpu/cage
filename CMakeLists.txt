@@ -57,7 +57,7 @@ if(CAGE-CORE_BUILD_TESTS)
 	file(GLOB_RECURSE cage-test-core-sources "sources/cage-test-core/*")
 	add_executable(cage-test-core ${cage-test-core-sources})
 	target_link_libraries(cage-test-core cage-core glm)
-	set_ide_groups(cage-test-core cage/tests)
+	set_ide_groups(cage-test-core cage/tests/core)
 	set_ide_working_dir_in_place(cage-test-core)
 endif(CAGE-CORE_BUILD_TESTS)
 
@@ -117,16 +117,22 @@ endif(CAGE-CLIENT_BUILD_TOOLS)
 # CAGE-TESTS-CLIENT
 ########
 
-if(CAGE-CLIENT_BUILD_TESTS)
-	file(GLOB cage-tests-client-list "sources/cage-tests-client/*" "sources/cage-tests-engine/*")
+macro(cage_tests_client category folder)
+	file(GLOB cage-tests-client-list ${folder})
 	foreach(test ${cage-tests-client-list})
 		string(REPLACE ".cpp" "" name ${test})
 		get_filename_component(name ${name} NAME)
 		add_executable(${name} ${test})
 		target_link_libraries(${name} cage-client)
-		set_ide_groups(${name} cage/tests)
+		set_ide_groups(${name} ${category})
 		set_ide_working_dir_in_place(${name})
 	endforeach()
+endmacro()
+
+if(CAGE-CLIENT_BUILD_TESTS)
+	cage_tests_client(cage/tests/client "sources/cage-tests-client/*")
+	cage_tests_client(cage/tests/gui "sources/cage-tests-client-gui/*")
+	cage_tests_client(cage/tests/engine "sources/cage-tests-client-engine/*")
 endif(CAGE-CLIENT_BUILD_TESTS)
 
 ########

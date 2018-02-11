@@ -87,6 +87,19 @@ namespace cage
 		detail::memcpy(data_, c.data(), c.size());
 	}
 
+	void memoryBuffer::resizeGrowSmart(uintPtr size)
+	{
+		if (size <= allocated_)
+		{
+			size_ = size;
+			return;
+		}
+		memoryBuffer c = copy();
+		reallocate(numeric_cast<uintPtr>(size * 1.5) + 100);
+		detail::memcpy(data_, c.data(), c.size());
+		size_ = size;
+	}
+
 	void *memoryBuffer::data() const
 	{
 		return data_;

@@ -114,4 +114,8 @@ namespace cage
 
 	inline vec3 vec3::operator * (const mat3 &other) const { return other * *this; }
 	inline vec4 vec4::operator * (const mat4 &other) const { return other * *this; }
+
+	template<uint32 N> struct matN {};
+	template<> struct matN<3> { typedef mat3 type; };
+	template<> struct matN<4> { typedef mat4 type; };
 }

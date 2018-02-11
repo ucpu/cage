@@ -64,6 +64,7 @@ namespace cage
 	CAGE_API busClass *masterMixer();
 	CAGE_API busClass *musicMixer();
 	CAGE_API busClass *effectsMixer();
+	CAGE_API busClass *guiMixer();
 	CAGE_API uint64 currentControlTime();
 
 	namespace engineProfiling
@@ -93,4 +94,4 @@ namespace cage
 }
 
 #define ENGINE_GET_COMPONENT(T,C,E) ::cage::CAGE_JOIN(T, Component) &C = (E)->value<::cage::CAGE_JOIN(T, Component)>(::cage::CAGE_JOIN(T, Component)::component);
-#define GUI_GET_COMPONENT(T,C,E) ::cage::CAGE_JOIN(T, Component) &C = (E)->value<::cage::CAGE_JOIN(T, Component)>(::cage::gui()->components.T);
+#define GUI_GET_COMPONENT(T,C,E) ::cage::CAGE_JOIN(T, Component) &C = (E)->value<::cage::CAGE_JOIN(T, Component)>(::cage::gui()->components().T);

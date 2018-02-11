@@ -18,12 +18,12 @@ namespace cage
 		class engineProfilingImpl : public engineProfilingClass
 		{
 		public:
-			eventListener<bool(windowClass *, uint32, uint32, modifiersFlags)> keyPressListener;
+			eventListener<bool(uint32, uint32, modifiersFlags)> keyPressListener;
 			eventListener<bool()> updateListener;
 
 			uint32 panelIndex;
 			uint32 layoutIndex;
-			uint32 labelIndices[20];
+			uint32 labelIndices[40];
 			const engineProfiling::profilingTimeFlags *labelFlags;
 			const char **labelNames;
 			uint32 labelsCount;
@@ -67,34 +67,36 @@ namespace cage
 				entityManagerClass *g = gui()->entities();
 				entityClass *panel = g->newEntity(panelIndex = g->generateUniqueName());
 				{
-					GUI_GET_COMPONENT(control, c, panel);
-					c.controlType = controlTypeEnum::Panel;
-					GUI_GET_COMPONENT(position, p, panel);
-					p.anchorX = screenPosition[0];
-					p.anchorY = screenPosition[1];
-					p.x = screenPosition[0];
-					p.y = screenPosition[1];
-					p.xUnit = unitsModeEnum::ScreenWidth;
-					p.yUnit = unitsModeEnum::ScreenHeight;
+					GUI_GET_COMPONENT(groupBox, c, panel);
+					GUI_GET_COMPONENT(explicitPosition, p, panel);
+					p.anchor = screenPosition;
+					p.position.values[0] = screenPosition[0];
+					p.position.values[1] = screenPosition[1];
+					p.position.units[0] = unitEnum::ScreenWidth;
+					p.position.units[1] = unitEnum::ScreenHeight;
 				}
 				entityClass *layout = g->newEntity(layoutIndex = g->generateUniqueName());
 				{
-					GUI_GET_COMPONENT(layout, l, layout);
-					l.layoutMode = layoutModeEnum::Column;
+					GUI_GET_COMPONENT(layoutTable, l, layout);
 					GUI_GET_COMPONENT(parent, child, layout);
 					child.parent = panel->getName();
 				}
 
 				static const uint32 labelsPerMode[] = { 14, 4, 1, 0 };
 				labelsCount = labelsPerMode[(uint32)profilingMode];
-				for (uint32 i = 0; i < labelsCount + (profilingMode == profilingModeEnum::Full ? 1 : 0); i++)
+				uint32 labelsCountExt = labelsCount + (profilingMode == profilingModeEnum::Full ? 1 : 0);
+				for (uint32 i = 0; i < labelsCountExt * 2; i++)
 				{
 					entityClass *timing = g->newEntity(labelIndices[i] = g->generateUniqueName());
-					GUI_GET_COMPONENT(control, c, timing);
-					c.controlType = controlTypeEnum::Empty;
+					GUI_GET_COMPONENT(label, c, timing);
 					GUI_GET_COMPONENT(parent, child, timing);
 					child.parent = layout->getName();
-					child.ordering = i;
+					child.order = i;
+					if (i % 2 == 1)
+					{
+						GUI_GET_COMPONENT(textFormat, tf, timing);
+						tf.align = textAlignEnum::Right;
+					}
 				}
 
 				static const engineProfiling::profilingTimeFlags flagsFull[] = {
@@ -213,18 +215,19 @@ namespace cage
 				t.value = value;
 			}
 
-			void setTimingLabel(uint32 index, const string &name, uint64 value)
-			{
-				setTextLabel(index, name + ": " + (value / 1000) + " ms");
-			}
-
 			bool update()
 			{
 				checkEntities();
 				for (uint32 i = 0; i < labelsCount; i++)
-					setTimingLabel(i, labelNames[i], engineProfiling::getTime(labelFlags[i], true));
+				{
+					setTextLabel(i * 2 + 0, labelNames[i]);
+					setTextLabel(i * 2 + 1, string() + (engineProfiling::getTime(labelFlags[i], true) / 1000) + " ms");
+				}
 				if (profilingModeOld == profilingModeEnum::Full)
-					setTextLabel(labelsCount, string() + "entities: " + entities()->getAllEntities()->entitiesCount());
+				{
+					setTextLabel(labelsCount * 2 + 0, "Entities");
+					setTextLabel(labelsCount * 2 + 1, entities()->getAllEntities()->entitiesCount());
+				}
 				return false;
 			}
 
@@ -249,7 +252,7 @@ namespace cage
 				}
 			}
 
-			bool keyPress(windowClass *, uint32 key, uint32, modifiersFlags mods)
+			bool keyPress(uint32 key, uint32, modifiersFlags mods)
 			{
 				static configSint32 visualizeBuffer("cage-client.engine.debugVisualizeBuffer");
 				static configBool renderMeshes("cage-client.engine.debugRenderMissingMeshes");

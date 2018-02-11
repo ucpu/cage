@@ -183,6 +183,7 @@ namespace cage
 
 			void processText(const processDataStruct &data)
 			{
+				CAGE_ASSERT_RUNTIME(data.format->align <= textAlignEnum::Center, data.format->align);
 				CAGE_ASSERT_RUNTIME(data.format->wrapWidth > 0, data.format->wrapWidth);
 				const uint32 *totalEnd = data.gls + data.count;
 				const uint32 *lineStart = data.gls;

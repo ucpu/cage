@@ -16,30 +16,32 @@ namespace cage
 		bool ready(uint32 assetName) const;
 		uint32 scheme(uint32 assetName) const;
 
-		template<uint32 Scheme, class T> bool get(uint32 assetName, T *value) const
+		template<uint32 Scheme, class T> T *tryGet(uint32 assetName) const
 		{
-			value = get<Scheme, T>(assetName);
-			return !!value;
+			if (!ready(assetName))
+				return nullptr;
+			return get<Scheme, T>(assetName);
 		}
+		template<uint32 Scheme> void *tryGet(uint32 assetName) const
+		{
+			if (!ready(assetName))
+				return nullptr;
+			return get<Scheme>(assetName);
+		}
+
 		template<uint32 Scheme, class T> T *get(uint32 assetName) const
 		{
-			T *res = (T*)zGet(assetName);
-			if (res)
-			{
-				CAGE_ASSERT_RUNTIME(scheme(assetName) == Scheme, assetName, scheme(assetName), Scheme);
-				CAGE_ASSERT_RUNTIME(zGetTypeSize(Scheme) == sizeof(T), zGetTypeSize(Scheme), sizeof(T), assetName);
-			}
-			return res;
+			CAGE_ASSERT_RUNTIME(ready(assetName));
+			CAGE_ASSERT_RUNTIME(scheme(assetName) == Scheme, assetName, scheme(assetName), Scheme);
+			CAGE_ASSERT_RUNTIME(zGetTypeSize(Scheme) == sizeof(T), zGetTypeSize(Scheme), sizeof(T), assetName);
+			return (T*)zGet(assetName);
 		}
 		template<uint32 Scheme> void *get(uint32 assetName) const
 		{
-			void *res = zGet(assetName);
-			if (res)
-			{
-				CAGE_ASSERT_RUNTIME(scheme(assetName) == Scheme, assetName, scheme(assetName), Scheme);
-				CAGE_ASSERT_RUNTIME(zGetTypeSize(Scheme) == -1, zGetTypeSize(Scheme), assetName);
-			}
-			return res;
+			CAGE_ASSERT_RUNTIME(ready(assetName));
+			CAGE_ASSERT_RUNTIME(scheme(assetName) == Scheme, assetName, scheme(assetName), Scheme);
+			CAGE_ASSERT_RUNTIME(zGetTypeSize(Scheme) == -1, zGetTypeSize(Scheme), assetName);
+			return zGet(assetName);
 		}
 
 		template<uint32 Scheme, class T> void set(uint32 assetName, T *value)
