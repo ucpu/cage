@@ -64,10 +64,8 @@ namespace cage
 
 		void copyTextureUv(const skinElementLayoutStruct::textureUvStruct &source, skinElementLayoutStruct::textureUvStruct &target)
 		{
-			copyTextureUv(source.normal, target.normal);
-			copyTextureUv(source.disab, target.disab);
-			copyTextureUv(source.focus, target.focus);
-			copyTextureUv(source.hover, target.hover);
+			for (int i = 0; i < 4; i++)
+				copyTextureUv(source.data[i], target.data[i]);
 		}
 	}
 

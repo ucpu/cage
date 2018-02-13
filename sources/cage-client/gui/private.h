@@ -232,6 +232,7 @@ namespace cage
 			memoryArena memory;
 			renderableBaseStruct *first, *last;
 			emitDataStruct(const guiCreateConfig &config);
+			emitDataStruct(emitDataStruct &&other); // this is not defined, is it? but it is required, is it not?
 			~emitDataStruct();
 			void flush();
 		} emitData[3], *emitControl;

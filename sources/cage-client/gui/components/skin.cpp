@@ -92,7 +92,7 @@ namespace cage
 					})
 				{
 					auto &a = layouts[(uint32)t].textureUv;
-					a.hover = a.normal;
+					a.data[1] = a.data[0];
 				}
 			}
 			{ // things without focus
@@ -106,7 +106,7 @@ namespace cage
 					})
 				{
 					auto &a = layouts[(uint32)t].textureUv;
-					a.focus = a.normal;
+					a.data[2] = a.data[0];
 				}
 			}
 			{ // things without disabled
@@ -117,7 +117,7 @@ namespace cage
 					})
 				{
 					auto &a = layouts[(uint32)t].textureUv;
-					a.disab = a.normal;
+					a.data[3] = a.data[0];
 				}
 			}
 			// todo color picker, graphs, task bar

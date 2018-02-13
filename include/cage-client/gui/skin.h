@@ -149,17 +149,7 @@ namespace cage
 		};
 		struct CAGE_API textureUvStruct
 		{
-			union
-			{
-				struct
-				{
-					textureUvOiStruct normal, focus, hover, disab;
-				};
-				struct
-				{
-					textureUvOiStruct data[4];
-				};
-			};
+			textureUvOiStruct data[4]; // normal, focus, hover, disabled
 			textureUvStruct();
 		} textureUv;
 		vec4 border; // left, top, right, bottom; all in points

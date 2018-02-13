@@ -44,7 +44,7 @@ namespace cage
 
 		widgetBaseStruct *focused(guiImpl *impl)
 		{
-			return false;
+			return nullptr;
 			// todo
 		}
 

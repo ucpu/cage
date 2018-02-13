@@ -20,7 +20,7 @@ namespace cage
 		};
 		unitEnum units[N];
 		static const uint32 Dimension = N;
-		valuesStruct() : value(vecN<N>::type()) { for (uint32 i = 0; i < N; i++) { units[i] = unitEnum::None; } }
+		valuesStruct() : value(typename vecN<N>::type()) { for (uint32 i = 0; i < N; i++) { units[i] = unitEnum::None; } }
 	};
 
 	template<> struct valuesStruct<1>

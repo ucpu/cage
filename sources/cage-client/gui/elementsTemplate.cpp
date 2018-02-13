@@ -61,10 +61,10 @@ namespace cage
 			for (uint32 type = 0; type < (uint32)elementTypeEnum::TotalElements; type++)
 			{
 				const skinElementLayoutStruct::textureUvStruct &element = skin.layouts[type].textureUv;
-				renderRectangle(png.get(), element.disab, vec3(.4, .4, .4), vec3(.5, .5, .5), vec3(.6, .6, .6));
-				renderRectangle(png.get(), element.hover, vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 1));
-				renderRectangle(png.get(), element.focus, vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 0.66));
-				renderRectangle(png.get(), element.normal, vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 0.33));
+				renderRectangle(png.get(), element.data[3], vec3(.4, .4, .4), vec3(.5, .5, .5), vec3(.6, .6, .6));
+				renderRectangle(png.get(), element.data[2], vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 1));
+				renderRectangle(png.get(), element.data[1], vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 0.66));
+				renderRectangle(png.get(), element.data[0], vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 0.33));
 			}
 			return png;
 		}
