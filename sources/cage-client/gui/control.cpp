@@ -187,9 +187,6 @@ namespace cage
 		{ // layouting
 			impl->root->updateRequestedSize();
 			updatePositionStruct u;
-			u.scissor.x = u.scissor.y = 0;
-			u.scissor.w = impl->outputResolution.x;
-			u.scissor.h = impl->outputResolution.y;
 			u.position = vec2();
 			impl->root->updateFinalPosition(u);
 		}
@@ -201,6 +198,12 @@ namespace cage
 		guiImpl *impl = (guiImpl*)this;
 		if (!impl->assetManager->ready(hashString("cage/cage.pack")))
 			return;
+		for (auto &s : impl->skins)
+		{
+			s.texture = impl->assetManager->get<assetSchemeIndexTexture, textureClass>(s.textureName);
+			if (!s.texture)
+				return;
+		}
 		if ((impl->emitIndexControl + 1) % 3 == impl->emitIndexDispatch)
 		{
 			CAGE_LOG(severityEnum::Warning, "gui", "gui is skipping emit because dispatching is late");

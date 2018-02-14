@@ -49,25 +49,29 @@ namespace cage
 	skinConfigStruct::skinConfigStruct() : textureName(hashString("cage/texture/gui.psd"))
 	{
 		{ // automatically prepare all elements
-			for (uint32 y = 0; y < (uint32)elementTypeEnum::TotalElements; y++)
+			for (uint32 yy = 0; yy < (uint32)elementTypeEnum::TotalElements; yy++)
 			{
-				skinElementLayoutStruct &el = layouts[y];
-				for (uint32 x = 0; x < 4; x++)
+				skinElementLayoutStruct &el = layouts[yy];
+				for (uint32 xx = 0; xx < 4; xx++)
 				{
-					skinElementLayoutStruct::textureUvOiStruct &oi = el.textureUv.data[x];
+					skinElementLayoutStruct::textureUvOiStruct &oi = el.textureUv.data[xx];
 					vec4 &o = oi.outer;
 					vec4 &i = oi.inner;
 					// horizontal
-					o[0] = 0.1 * x + 0.02 * (x + 1) + (y % 2 == 1 ? 0.5 : 0);
-					o[2] = o[0] + 0.1;
-					i[0] = o[0] + 0.025;
-					i[2] = o[0] + 0.075;
+					uint32 x = xx + (yy % 8) * 4;
+					o[0] = 4 + x * 32;
+					o[2] = o[0] + 24;
+					i[0] = o[0] + 4;
+					i[2] = o[0] + 20;
 					// vertical
-					uint32 yy = y / 2;
-					o[1] = (0.1 * yy + 0.02 * (yy + 1)) / 8;
-					o[3] = o[1] + 0.1 / 8;
-					i[1] = o[1] + 0.025 / 8;
-					i[3] = o[1] + 0.075 / 8;
+					uint32 y = yy / 8;
+					o[1] = 4 + y * 32;
+					o[3] = o[1] + 24;
+					i[1] = o[1] + 4;
+					i[3] = o[1] + 20;
+					// divide
+					o /= 1024;
+					i /= 1024;
 				}
 			}
 		}

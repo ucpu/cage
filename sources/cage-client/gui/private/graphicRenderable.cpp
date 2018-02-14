@@ -11,9 +11,6 @@
 
 namespace cage
 {
-	scissorStruct::scissorStruct() : x(-1), y(-1), w(0), h(0)
-	{}
-
 	renderableBaseStruct::renderableBaseStruct() : next(nullptr)
 	{}
 
@@ -23,7 +20,7 @@ namespace cage
 	renderableElementStruct::elementStruct::elementStruct() : element(-1), mode(-1)
 	{}
 
-	renderableElementStruct::renderableElementStruct() : skinBuffer(nullptr)
+	renderableElementStruct::renderableElementStruct() : skinBuffer(nullptr), skinTexture(nullptr)
 	{}
 
 	renderableTextStruct::textStruct::textStruct() : glyphs(nullptr), font(nullptr), color(vec3::Nan), cursor(-1), count(0), posX(0), posY(0)

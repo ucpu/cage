@@ -44,11 +44,10 @@ namespace cage
 				scrollableUpdateFinalPosition(update);
 			}
 
-			virtual void emit() override
+			virtual void emit() const override
 			{
 				scrollableEmit();
 				// todo emit spoiler icon
-				base->childrenEmit();
 			}
 		};
 	}

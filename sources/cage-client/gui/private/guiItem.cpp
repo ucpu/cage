@@ -58,7 +58,7 @@ namespace cage
 		}
 	}
 
-	void guiItemStruct::childrenEmit()
+	void guiItemStruct::childrenEmit() const
 	{
 		guiItemStruct *a = firstChild;
 		while (a)
@@ -71,7 +71,7 @@ namespace cage
 		}
 	}
 
-	void guiItemStruct::explicitPosition(vec2 &position, vec2 &size)
+	void guiItemStruct::explicitPosition(vec2 &position, vec2 &size) const
 	{
 		if (GUI_HAS_COMPONENT(explicitPosition, entity))
 		{
@@ -82,7 +82,7 @@ namespace cage
 		CAGE_ASSERT_RUNTIME(size.valid(), "this item must have explicit size", entity->getName());
 	}
 
-	void guiItemStruct::explicitPosition(vec2 &size)
+	void guiItemStruct::explicitPosition(vec2 &size) const
 	{
 		vec2 pos = vec2::Nan;
 		explicitPosition(pos, size);
@@ -128,15 +128,5 @@ namespace cage
 	{
 		size += vec2(offset) + vec2(offset[2], offset[3]);
 		size = max(size, vec2());
-	}
-
-	void rectOffset(vec4 &rect, const vec4 &offset)
-	{
-		rect[0] -= offset[0];
-		rect[1] -= offset[1];
-		rect[2] += offset[0] + offset[2];
-		rect[3] += offset[1] + offset[3];
-		rect[2] = max(rect[0], rect[2]);
-		rect[3] = max(rect[1], rect[3]);
 	}
 }

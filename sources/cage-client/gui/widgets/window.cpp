@@ -37,11 +37,10 @@ namespace cage
 				scrollableUpdateFinalPosition(update);
 			}
 
-			virtual void emit() override
+			virtual void emit() const override
 			{
 				scrollableEmit();
 				// todo emit window buttons and resizer
-				base->childrenEmit();
 			}
 		};
 	}

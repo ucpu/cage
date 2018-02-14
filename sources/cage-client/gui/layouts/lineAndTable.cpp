@@ -36,7 +36,7 @@ namespace cage
 				if (justLine)
 				{
 					GUI_GET_COMPONENT(layoutLine, l, base->entity);
-					(layoutLineComponent)data = l;
+					(layoutLineComponent&)data = l;
 					data.sections = 1;
 				}
 				else

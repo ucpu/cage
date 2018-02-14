@@ -12,19 +12,15 @@ namespace cage
 {
 	class guiImpl;
 
-	struct scissorStruct
+	struct skinDataStruct : public skinConfigStruct
 	{
-		sint32 x, y;
-		uint32 w, h;
-
-		scissorStruct();
+		holder<uniformBufferClass> elementsGpuBuffer;
+		textureClass *texture;
 	};
 
 	struct renderableBaseStruct
 	{
-		scissorStruct scissor;
 		renderableBaseStruct *next;
-
 		renderableBaseStruct();
 		virtual void render(guiImpl *impl);
 	};
@@ -39,7 +35,8 @@ namespace cage
 			uint32 mode;
 			elementStruct();
 		} data;
-		uniformBufferClass *skinBuffer;
+		const uniformBufferClass *skinBuffer;
+		const textureClass *skinTexture;
 
 		renderableElementStruct();
 
@@ -79,7 +76,6 @@ namespace cage
 
 	struct updatePositionStruct
 	{
-		scissorStruct scissor;
 		vec2 position, size;
 		updatePositionStruct();
 	};
@@ -118,10 +114,10 @@ namespace cage
 		void updateRequestedSize();
 		void updateFinalPosition(const updatePositionStruct &update);
 
-		void childrenEmit();
+		void childrenEmit() const;
 
-		void explicitPosition(vec2 &position, vec2 &size);
-		void explicitPosition(vec2 &size);
+		void explicitPosition(vec2 &position, vec2 &size) const;
+		void explicitPosition(vec2 &size) const;
 
 		void detachParent();
 		void attachParent(guiItemStruct *newParent);
@@ -135,7 +131,15 @@ namespace cage
 
 		widgetBaseStruct(guiItemStruct *base);
 
-		const skinConfigStruct &skin() const;
+		const skinDataStruct &skin() const;
+
+		virtual void initialize() = 0;
+		virtual void updateRequestedSize() = 0;
+		virtual void updateFinalPosition(const updatePositionStruct &update) = 0;
+		virtual void emit() const = 0;
+
+		renderableElementStruct *emitElement(elementTypeEnum element, uint32 mode, const vec4 &margin) const;
+		renderableElementStruct *emitElement(elementTypeEnum element, uint32 mode, vec2 pos, vec2 size) const;
 
 		virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point);
 		virtual bool mouseDouble(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point);
@@ -146,11 +150,6 @@ namespace cage
 		virtual bool keyRepeat(uint32 key, uint32 scanCode, modifiersFlags modifiers);
 		virtual bool keyRelease(uint32 key, uint32 scanCode, modifiersFlags modifiers);
 		virtual bool keyChar(uint32 key);
-
-		virtual void initialize() = 0;
-		virtual void updateRequestedSize() = 0;
-		virtual void updateFinalPosition(const updatePositionStruct &update) = 0;
-		virtual void emit() = 0;
 	};
 
 	struct layoutBaseStruct
@@ -185,12 +184,6 @@ namespace cage
 		void initialize();
 		void updateRequestedSize();
 		renderableImageStruct *emit() const;
-	};
-
-	struct skinDataStruct : public skinConfigStruct
-	{
-		holder<uniformBufferClass> elementsGpuBuffer;
-		textureClass *texture;
 	};
 
 	class guiImpl : public guiClass
@@ -251,7 +244,7 @@ namespace cage
 		void scaling();
 
 		bool eventPoint(const pointStruct &ptIn, vec2 &ptOut);
-		vec4 pixelsToNdc(vec2 pixelPosition, vec2 pixelSize);
+		vec4 pointsToNdc(vec2 position, vec2 size);
 		real eval(real val, unitEnum unit, real defaul = real::Nan);
 		template<uint32 N> typename vecN<N>::type eval(const valuesStruct<N> &v, real defaul = real::Nan)
 		{
@@ -273,7 +266,6 @@ namespace cage
 
 	void positionOffset(vec2 &position, const vec4 &offset);
 	void sizeOffset(vec2 &size, const vec4 &offset);
-	void rectOffset(vec4 &rect, const vec4 &offset);
 }
 
 #endif // guard_private_h_BEDE53C63BB74919B9BD171B995FD1A1

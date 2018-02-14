@@ -43,13 +43,13 @@ namespace cage
 		updatePositionStruct u(update);
 		u.position = base->contentPosition;
 		u.size = base->contentSize;
-		positionOffset(u.position, -frame);
-		sizeOffset(u.size, -frame);
 		base->layout->updateFinalPosition(u);
 	}
 
-	void scrollableBaseStruct::scrollableEmit()
+	void scrollableBaseStruct::scrollableEmit() const
 	{
-
+		if (elementBase != elementTypeEnum::InvalidElement)
+			emitElement(elementBase, 0, defaults->baseMargin);
+		base->childrenEmit();
 	}
 }

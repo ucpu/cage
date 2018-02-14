@@ -26,6 +26,6 @@ namespace cage
 		void scrollableInitialize();
 		void scrollableUpdateRequestedSize();
 		void scrollableUpdateFinalPosition(const updatePositionStruct &update);
-		void scrollableEmit();
+		void scrollableEmit() const;
 	};
 }

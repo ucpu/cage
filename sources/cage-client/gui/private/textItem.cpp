@@ -82,7 +82,7 @@ namespace cage
 		{
 			uint32 w, h;
 			text.font->size(text.glyphs, text.count, text.format, w, h);
-			base->requestedSize = vec2(w, h);
+			base->requestedSize = vec2(w, h) / base->impl->pointsScale;
 		}
 		else
 			base->requestedSize = vec2();

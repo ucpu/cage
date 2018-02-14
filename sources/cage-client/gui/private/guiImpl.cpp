@@ -71,11 +71,15 @@ namespace cage
 		outputMouse = vec2(inputMouse.x, inputMouse.y) / pointsScale;
 	}
 
-	vec4 guiImpl::pixelsToNdc(vec2 pixelPosition, vec2 pixelSize)
+	vec4 guiImpl::pointsToNdc(vec2 position, vec2 size)
 	{
-		vec2 invScreenSize = 2 / outputSize;
-		vec2 resPos = (pixelPosition - outputSize * 0.5) * invScreenSize;
-		vec2 resSiz = pixelSize * invScreenSize;
+		CAGE_ASSERT_RUNTIME(size[0] >= 0 && size[1] >= 0);
+		position *= pointsScale;
+		size *= pointsScale;
+		vec2 os = outputSize * pointsScale;
+		vec2 invScreenSize = 2 / os;
+		vec2 resPos = (position - os * 0.5) * invScreenSize;
+		vec2 resSiz = size * invScreenSize;
 		resPos[1] = -resPos[1] - resSiz[1];
 		return vec4(resPos, resPos + resSiz);
 	}

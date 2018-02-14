@@ -62,7 +62,7 @@ namespace cage
 				sizeOffset(base->contentSize, -skin().defaults.label.margin);
 			}
 
-			virtual void emit() override
+			virtual void emit() const override
 			{
 				if (base->image)
 					base->image->emit();

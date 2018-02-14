@@ -33,7 +33,7 @@ namespace cage
 
 			}
 
-			virtual void emit() override
+			virtual void emit() const override
 			{
 
 			}

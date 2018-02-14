@@ -54,10 +54,10 @@ namespace cage
 			}
 		}
 
-		holder<pngImageClass> guiSkinTemplateExport(const skinConfigStruct &skin, uint32 width, uint32 height)
+		holder<pngImageClass> guiSkinTemplateExport(const skinConfigStruct &skin, uint32 resolution)
 		{
 			holder<pngImageClass> png = newPngImage();
-			png->empty(width, height, 4);
+			png->empty(resolution, resolution, 4);
 			for (uint32 type = 0; type < (uint32)elementTypeEnum::TotalElements; type++)
 			{
 				const skinElementLayoutStruct::textureUvStruct &element = skin.layouts[type].textureUv;

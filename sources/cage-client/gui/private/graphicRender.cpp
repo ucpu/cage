@@ -16,6 +16,7 @@ namespace cage
 	{
 		guiImpl::graphicDataStruct &context = impl->graphicData;
 		skinBuffer->bind(0);
+		skinTexture->bind();
 		context.guiShader->bind();
 		context.guiShader->uniform(0, data.outer);
 		context.guiShader->uniform(1, data.inner);
@@ -77,13 +78,16 @@ namespace cage
 			emitIndexDispatch = (emitIndexDispatch + 1) % 3;
 
 		// check skins textures
-		// todo
+		for (auto &s : skins)
+		{
+			if (!s.texture)
+				return;
+		}
 
 		// write skins uv coordinates
-		for (uint32 si = 0; si < numeric_cast<uint32>(skins.size()); si++)
+		for (auto &s : skins)
 		{
 			skinElementLayoutStruct::textureUvStruct textureUvs[(uint32)elementTypeEnum::TotalElements];
-			auto &s = skins[si];
 			for (uint32 i = 0; i < (uint32)elementTypeEnum::TotalElements; i++)
 				copyTextureUv(s.layouts[i].textureUv, textureUvs[i]);
 			s.elementsGpuBuffer->bind();
@@ -94,6 +98,8 @@ namespace cage
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glDisable(GL_DEPTH_TEST);
+		glActiveTexture(GL_TEXTURE1);
+		glViewport(0, 0, outputResolution.x, outputResolution.y);
 
 		renderableBaseStruct *r = emitData[emitIndexDispatch].first;
 		while (r)

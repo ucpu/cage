@@ -25,7 +25,7 @@ namespace cage
 
 			virtual void updateRequestedSize() override
 			{
-				base->requestedSize = vec2(); // todo this is a temporary hack
+				base->requestedSize = vec2(150, 30); // todo this is a temporary hack
 			}
 
 			virtual void updateFinalPosition(const updatePositionStruct &update) override
@@ -33,9 +33,9 @@ namespace cage
 
 			}
 
-			virtual void emit() override
+			virtual void emit() const override
 			{
-
+				emitElement(elementTypeEnum::SliderHorizontalPanel, 0, vec4()); // todo this is a temporary hack
 			}
 		};
 	}

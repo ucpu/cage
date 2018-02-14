@@ -15,7 +15,7 @@ namespace cage
 	explicitPositionComponent::explicitPositionComponent()
 	{}
 
-	layoutLineComponent::layoutLineComponent() : cellsAnchor(0.5, 0.5), vertical(false), expandToSameWidth(false), expandToSameHeight(false), addSpacingToFillArea(false)
+	layoutLineComponent::layoutLineComponent() : cellsAnchor(0, 0), vertical(false), expandToSameWidth(false), expandToSameHeight(false), addSpacingToFillArea(false)
 	{}
 
 	layoutTableComponent::layoutTableComponent() : sections(2), grid(false)
@@ -23,6 +23,7 @@ namespace cage
 		vertical = true;
 		expandToSameWidth = true;
 		expandToSameHeight = true;
+		cellsAnchor = vec2(0.5, 0.5);
 	}
 
 	layoutRadialComponent::layoutRadialComponent()
