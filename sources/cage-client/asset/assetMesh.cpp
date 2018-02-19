@@ -10,7 +10,7 @@
 #include <cage-client/core.h>
 #include <cage-client/graphic.h>
 #include <cage-client/opengl.h>
-#include <cage-client/assets.h>
+#include <cage-client/assetStructs.h>
 
 namespace cage
 {

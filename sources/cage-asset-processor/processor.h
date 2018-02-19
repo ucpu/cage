@@ -7,7 +7,7 @@
 #include <cage-core/assets.h>
 
 #include <cage-client/core.h>
-#include <cage-client/assets.h>
+#include <cage-client/assetStructs.h>
 
 using namespace cage;
 

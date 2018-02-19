@@ -14,7 +14,4 @@ namespace cage
 	static const uint32 assetSchemeIndexAnimation = 14;
 	static const uint32 assetSchemeIndexObject = 15;
 	static const uint32 assetSchemeIndexFont = 16;
-
-	CAGE_API assetSchemeStruct genAssetSchemeSound(uint32 threadIndex, soundContextClass *memoryContext);
-	static const uint32 assetSchemeIndexSound = 20;
 }

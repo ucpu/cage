@@ -14,5 +14,6 @@
 #include "graphic/graphicWindow.h"
 #include "graphic/graphicStereoscopy.h"
 #include "graphic/graphicScreenList.h"
+#include "graphic/graphicAssetSchemes.h"
 
 #endif // guard_graphic_h_d776d3a2_43c7_464d_b721_291294b5b1ef_
