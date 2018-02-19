@@ -1,15 +1,18 @@
+#ifndef guard_asset_structs_h_5aade310_996b_42c7_8684_2100f6625d36_
+#define guard_asset_structs_h_5aade310_996b_42c7_8684_2100f6625d36_
+
 namespace cage
 {
 	/*
 	struct CAGE_API shaderHeaderStruct
 	{
-		// follows:
-		// number of stages, uint32
-		// stage name, uint32
-		// length, uint32
-		// stage code, array of chars
-		// stage name, uint32
-		// ...
+	// follows:
+	// number of stages, uint32
+	// stage name, uint32
+	// length, uint32
+	// stage code, array of chars
+	// stage name, uint32
+	// ...
 	};
 	*/
 
@@ -153,3 +156,5 @@ namespace cage
 		// ogg/vorbis compressed stream
 	};
 }
+
+#endif // guard_assets_h_5aade310_996b_42c7_8684_2100f6625d36_

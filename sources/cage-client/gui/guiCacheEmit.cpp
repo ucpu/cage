@@ -11,8 +11,6 @@
 #include "controls/privateControls.h"
 #include "layouts/privateLayouts.h"
 
-#include <cage-client/assets.h>
-
 namespace cage
 {
 	namespace

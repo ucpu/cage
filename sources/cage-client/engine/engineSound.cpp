@@ -3,7 +3,6 @@
 #include <cage-core/core.h>
 #include <cage-core/log.h>
 #include <cage-core/math.h>
-#include <cage-core/geometry.h>
 #include <cage-core/memory.h>
 #include <cage-core/entities.h>
 #include <cage-core/assets.h>
@@ -13,7 +12,6 @@
 #include <cage-core/core/macro/api.h>
 #include <cage-client/core.h>
 #include <cage-client/sound.h>
-#include <cage-client/assets.h>
 #include <cage-client/engine.h>
 
 #include "engine.h"
