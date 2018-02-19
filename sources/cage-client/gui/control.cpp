@@ -167,6 +167,16 @@ namespace cage
 			if (item->nextSibling)
 				callInitialize(item->nextSibling);
 		}
+
+		void generateEventReceivers(guiItemStruct *item)
+		{
+			if (item->firstChild)
+				generateEventReceivers(item->firstChild);
+			if (item->widget)
+				item->impl->mouseEventReceivers.push_back(item->widget);
+			if (item->nextSibling)
+				generateEventReceivers(item->nextSibling);
+		}
 	}
 
 	void guiClass::controlUpdate()
@@ -188,6 +198,8 @@ namespace cage
 			u.position = vec2();
 			impl->root->updateFinalPosition(u);
 		}
+		impl->mouseEventReceivers.clear();
+		generateEventReceivers(impl->root);
 		// todo
 	}
 

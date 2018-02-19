@@ -61,46 +61,46 @@ namespace cage
 
 	bool widgetBaseStruct::mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point)
 	{
-		return false;
+		return true;
 	}
 
 	bool widgetBaseStruct::mouseDouble(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point)
 	{
-		return false;
+		return true;
 	}
 
 	bool widgetBaseStruct::mouseRelease(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point)
 	{
-		return false;
+		return true;
 	}
 
 	bool widgetBaseStruct::mouseMove(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point)
 	{
-		return false;
+		return true;
 	}
 
 	bool widgetBaseStruct::mouseWheel(sint8 wheel, modifiersFlags modifiers, vec2 point)
 	{
-		return false;
+		return true;
 	}
 
 	bool widgetBaseStruct::keyPress(uint32 key, uint32 scanCode, modifiersFlags modifiers)
 	{
-		return false;
+		return true;
 	}
 
 	bool widgetBaseStruct::keyRepeat(uint32 key, uint32 scanCode, modifiersFlags modifiers)
 	{
-		return false;
+		return true;
 	}
 
 	bool widgetBaseStruct::keyRelease(uint32 key, uint32 scanCode, modifiersFlags modifiers)
 	{
-		return false;
+		return true;
 	}
 
 	bool widgetBaseStruct::keyChar(uint32 key)
 	{
-		return false;
+		return true;
 	}
 }

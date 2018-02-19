@@ -128,8 +128,6 @@ namespace cage
 		real value;
 		real min, max;
 		bool vertical;
-		bool showValue; // overrides the text with the value (may use internationalization for formatting)
-		// textComponent defines label shown next to the check box
 		sliderBarComponent();
 	};
 

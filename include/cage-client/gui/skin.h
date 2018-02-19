@@ -84,7 +84,6 @@ namespace cage
 		} progressBar;
 		struct CAGE_API sliderBarStruct
 		{
-			textFormatComponent textFormat;
 			struct directionStruct
 			{
 				vec4 padding, margin;

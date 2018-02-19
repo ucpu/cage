@@ -1,7 +1,6 @@
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/memory.h>
-#include <cage-core/assets.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
@@ -25,15 +24,7 @@ namespace cage
 				CAGE_ASSERT_RUNTIME(!base->layout, "label may not have layout");
 				CAGE_ASSERT_RUNTIME(!!base->text != !!base->image, "label must have text xor image");
 				if (base->text)
-				{
-					const auto &d = skin().defaults.label.textFormat;
-					auto &t = base->text->text;
-					t.font = base->impl->assetManager->tryGet<assetSchemeIndexFont, fontClass>(d.fontName);
-					t.color = d.color;
-					auto &f = t.format;
-					f.align = d.align;
-					f.lineSpacing = d.lineSpacing;
-				}
+					base->text->text.apply(skin().defaults.label.textFormat, base->impl);
 				if (base->image)
 				{
 					const auto &d = skin().defaults.label.imageFormat;

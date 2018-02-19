@@ -42,7 +42,7 @@ namespace cage
 	progressBarComponent::progressBarComponent() : progress(0), showValue(false)
 	{}
 
-	sliderBarComponent::sliderBarComponent() : max(1), vertical(false), showValue(false)
+	sliderBarComponent::sliderBarComponent() : max(1), vertical(false)
 	{}
 
 	colorPickerComponent::colorPickerComponent() : space(colorPickerSpaceEnum::HsvSliders), collapsible(false), collapsed(true)

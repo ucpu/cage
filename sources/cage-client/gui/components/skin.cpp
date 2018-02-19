@@ -159,14 +159,14 @@ namespace cage
 		fillingImage.textureUvSize = vec2(1, 1);
 	}
 
-	skinWidgetDefaultsStruct::sliderBarStruct::sliderBarStruct() : textFormat(text)
+	skinWidgetDefaultsStruct::sliderBarStruct::sliderBarStruct()
 	{
 		horizontal.padding = vec4(1, 1, 1, 1);
 		horizontal.margin = vec4(1, 1, 1, 1);
-		horizontal.size = vec2(200, 28);
+		horizontal.size = vec2(150, 28);
 		vertical.padding = vec4(1, 1, 1, 1);
 		vertical.margin = vec4(1, 1, 1, 1);
-		vertical.size = vec2(28, 200);
+		vertical.size = vec2(28, 150);
 	}
 
 	skinWidgetDefaultsStruct::colorPickerStruct::colorPickerStruct() : collapsedSize(40, 32), fullSize(250, 180)

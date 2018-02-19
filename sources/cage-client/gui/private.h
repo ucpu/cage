@@ -55,6 +55,7 @@ namespace cage
 			uint32 count;
 			sint16 posX, posY;
 			textStruct();
+			void apply(const textFormatComponent &f, guiImpl *impl);
 		} data;
 
 		virtual void render(guiImpl *impl) override;

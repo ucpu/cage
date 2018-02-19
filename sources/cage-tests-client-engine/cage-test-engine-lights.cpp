@@ -66,7 +66,7 @@ bool update()
 		r.color = l.color = getGuiColor(37 + i * 10);
 		ENGINE_GET_COMPONENT(transform, t, e);
 		vec3 o = getGuiOrientation(33 + i * 10);
-		t.orientation = quat(degs(o[0] * -90), degs(o[1] * 360), degs());
+		t.orientation = quat(degs(o[0] - 90), degs(o[1]), degs());
 		t.position = vec3(0, 3, 0) + t.orientation * vec3(0, 0, 10);
 	}
 
@@ -96,6 +96,7 @@ void initializeGui()
 	{ // layout
 		GUI_GET_COMPONENT(layoutLine, l, layout);
 		l.vertical = true;
+		l.expandToSameWidth = true;
 	}
 
 	{ // ambient
@@ -119,8 +120,8 @@ void initializeGui()
 		vec3(0.33, 1, 0.4),
 		vec3(0.66, 1, 0.4)
 	};
-	real pitches[3] = { 0.25, 0.3, 0.55 };
-	real yaws[3] = { 0.1, 0.2, 0.6 };
+	real pitches[3] = { 0.25 * 90, 0.3 * 90, 0.55 * 90 };
+	real yaws[3] = { 0.1 * 360, 0.2 * 360, 0.6 * 360 };
 	for (uint32 i = 0; i < 3; i++)
 	{ // spot lights
 		entityClass *panel = ents->newEntity(30 + i * 10);
@@ -142,6 +143,8 @@ void initializeGui()
 			p.order = 2;
 			GUI_GET_COMPONENT(sliderBar, c, e);
 			c.value = pitches[i].value;
+			c.min = 0;
+			c.max = 90;
 		}
 		{
 			entityClass *e = ents->newEntity(34 + i * 10);
@@ -150,6 +153,8 @@ void initializeGui()
 			p.order = 3;
 			GUI_GET_COMPONENT(sliderBar, c, e);
 			c.value = yaws[i].value;
+			c.min = 0;
+			c.max = 360;
 		}
 		initializeGuiColors(panel->getName(), 37 + i * 10, colors[i]);
 	}
@@ -177,8 +182,10 @@ int main(int argc, char *args[])
 		// window
 		window()->modeSetWindowed((windowFlags)(windowFlags::Border | windowFlags::Resizeable));
 		window()->windowedSize(pointStruct(800, 600));
-		window()->title("cage test multiple lights (pbr bottle)");
+		window()->title("cage test engine lights (bottle)");
 		initializeGui();
+		//gui()->setZoom(10);
+		//detail::guiSkinTemplateExport(skinConfigStruct(), 1024)->encodeFile("guiSkinLayout.png");
 
 		// entities
 		entityManagerClass *ents = entities();

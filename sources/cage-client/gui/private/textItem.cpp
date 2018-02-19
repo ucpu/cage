@@ -56,14 +56,7 @@ namespace cage
 			if (GUI_HAS_COMPONENT(textFormat, base->entity))
 			{
 				GUI_GET_COMPONENT(textFormat, f, base->entity);
-				if (f.align != (textAlignEnum)-1)
-					text.format.align = f.align;
-				if (f.color.valid())
-					text.color = f.color;
-				if (f.lineSpacing != detail::numeric_limits<sint16>::min())
-					text.format.lineSpacing = f.lineSpacing;
-				if (f.fontName)
-					text.font = impl->assetManager->tryGet<assetSchemeIndexFont, fontClass>(f.fontName);
+				text.apply(f, base->impl);
 			}
 		}
 		if (text.font)
