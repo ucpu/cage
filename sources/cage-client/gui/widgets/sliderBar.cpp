@@ -85,12 +85,15 @@ namespace cage
 				if (modifiers != modifiersFlags::None)
 					return true;
 				update(point);
+				makeFocused();
 				return true;
 			}
 
 			virtual bool mouseMove(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
 			{
-				return mousePress(buttons, modifiers, point);
+				if (hasFocus())
+					return mousePress(buttons, modifiers, point);
+				return false;
 			}
 		};
 	}

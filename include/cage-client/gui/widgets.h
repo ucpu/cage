@@ -131,19 +131,10 @@ namespace cage
 		sliderBarComponent();
 	};
 
-	enum class colorPickerSpaceEnum : uint32
-	{
-		HueRect,
-		HsvSliders,
-		RgbSliders,
-	};
-
 	struct CAGE_API colorPickerComponent
 	{
 		vec3 color;
-		colorPickerSpaceEnum space;
 		bool collapsible;
-		bool collapsed;
 		colorPickerComponent();
 	};
 

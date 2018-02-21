@@ -20,6 +20,7 @@ namespace cage
 #define GCHL_GENERATE(T) void CAGE_JOIN(T, Create)(guiItemStruct *item);
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS, GCHL_GUI_LAYOUT_COMPONENTS));
 #undef GCHL_GENERATE
+	void layoutZeroCreate(guiItemStruct *item);
 	void layoutDefaultCreate(guiItemStruct *item);
 	void textCreate(guiItemStruct *item);
 	void imageCreate(guiItemStruct *item);
@@ -74,8 +75,6 @@ namespace cage
 
 		void generateHierarchy(guiImpl *impl)
 		{
-			impl->root = nullptr;
-			impl->itemsMemory.flush();
 			guiItemStruct *root = impl->itemsMemory.createObject<guiItemStruct>(impl, nullptr);
 			std::unordered_map<uint32, guiItemStruct*> map;
 			// create all items
@@ -102,7 +101,10 @@ namespace cage
 				else
 					attachHierarchy(item, root);
 			}
-			impl->root = root;
+			// create overlays pre-root
+			guiItemStruct *preroot = impl->itemsMemory.createObject<guiItemStruct>(impl, nullptr);
+			root->attachParent(preroot);
+			impl->root = preroot;
 		}
 
 		void generateWidgetsAndLayouts(guiItemStruct *item)
@@ -170,22 +172,28 @@ namespace cage
 
 		void generateEventReceivers(guiItemStruct *item)
 		{
+			if (item->nextSibling)
+				generateEventReceivers(item->nextSibling);
 			if (item->firstChild)
 				generateEventReceivers(item->firstChild);
 			if (item->widget)
 				item->impl->mouseEventReceivers.push_back(item->widget);
-			if (item->nextSibling)
-				generateEventReceivers(item->nextSibling);
 		}
 	}
 
 	void guiClass::controlUpdate()
 	{
 		guiImpl *impl = (guiImpl*)this;
+		{ // clearing
+			impl->mouseEventReceivers.clear();
+			impl->root = nullptr;
+			impl->itemsMemory.flush();
+		}
 		impl->eventsEnabled = true;
 		generateHierarchy(impl);
 		generateWidgetsAndLayouts(impl->root);
-		layoutDefaultCreate(impl->root);
+		layoutZeroCreate(impl->root);
+		layoutDefaultCreate(impl->root->firstChild);
 		{ // propagate widget state
 			widgetStateComponent ws;
 			ws.skinIndex = 0;
@@ -198,7 +206,6 @@ namespace cage
 			u.position = vec2();
 			impl->root->updateFinalPosition(u);
 		}
-		impl->mouseEventReceivers.clear();
 		generateEventReceivers(impl->root);
 		// todo
 	}

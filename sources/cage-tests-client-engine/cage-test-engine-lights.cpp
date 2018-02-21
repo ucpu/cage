@@ -85,8 +85,8 @@ void initializeGuiColors(uint32 parentId, uint32 id, const vec3 &hsv)
 	p.parent = parentId;
 	p.order = 5;
 	GUI_GET_COMPONENT(colorPicker, c, e);
-	c.space = colorPickerSpaceEnum::HsvSliders;
 	c.color = convertHsvToRgb(hsv);
+	c.collapsible = true;
 }
 
 void initializeGui()

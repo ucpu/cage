@@ -1,6 +1,7 @@
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/memory.h>
+#include <cage-core/entities.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
@@ -42,10 +43,30 @@ namespace cage
 			return false;
 		}
 
+		guiItemStruct *findItem(guiItemStruct *item, uint32 name)
+		{
+			if (item->entity->getName() == name)
+				return item;
+			guiItemStruct *c = item->firstChild;
+			while (c)
+			{
+				guiItemStruct *r = findItem(c, name);
+				if (r)
+					return r;
+				c = c->nextSibling;
+			}
+			return nullptr;
+		}
+
 		widgetBaseStruct *focused(guiImpl *impl)
 		{
+			if (impl->focusName)
+			{
+				guiItemStruct *item = findItem(impl->root, impl->focusName);
+				if (item->widget)
+					return item->widget;
+			}
 			return nullptr;
-			// todo
 		}
 
 		template<bool (widgetBaseStruct::*F)(uint32, uint32, modifiersFlags)>
@@ -87,7 +108,11 @@ namespace cage
 	bool guiClass::mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, const pointStruct &point)
 	{
 		guiImpl *impl = (guiImpl*)this;
-		return passMouseEvent<mouseButtonsFlags, &widgetBaseStruct::mousePress>(impl, buttons, modifiers, point);
+		if (passMouseEvent<mouseButtonsFlags, &widgetBaseStruct::mousePress>(impl, buttons, modifiers, point))
+			return true;
+		if ((buttons & mouseButtonsFlags::Left) == mouseButtonsFlags::Left)
+			impl->focusName = 0;
+		return false;
 	}
 
 	bool guiClass::mouseDouble(mouseButtonsFlags buttons, modifiersFlags modifiers, const pointStruct &point)

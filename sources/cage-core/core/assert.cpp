@@ -148,7 +148,7 @@ namespace cage
 			}\
 			return *this;\
 		}
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, bool, float, double, void*));
+		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, bool, float, double));
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(TYPE) \
@@ -166,20 +166,14 @@ namespace cage
 		assertClass &assertClass::variable(const char *name, const string &var)
 		{
 			if (!valid)
-			{
 				format(name, var.c_str());
-			}
 			return *this;
 		}
 
 		assertClass &assertClass::variable(const char *name, const char *var)
 		{
 			if (!valid)
-			{
-				char buffer[2048];
-				privat::sprint1(buffer, var);
-				format(name, buffer);
-			}
+				format(name, var);
 			return *this;
 		}
 

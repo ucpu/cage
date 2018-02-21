@@ -28,6 +28,17 @@ namespace cage
 		return base->impl->skins[widgetState.skinIndex];
 	}
 
+	bool widgetBaseStruct::hasFocus() const
+	{
+		return base->entity && base->impl->focusName && base->impl->focusName == base->entity->getName();
+	}
+
+	void widgetBaseStruct::makeFocused()
+	{
+		CAGE_ASSERT_RUNTIME(base->entity);
+		base->impl->focusName = base->entity->getName();
+	}
+
 	renderableElementStruct *widgetBaseStruct::emitElement(elementTypeEnum element, uint32 mode, const vec4 &margin) const
 	{
 		vec2 pos = base->position;
@@ -61,6 +72,7 @@ namespace cage
 
 	bool widgetBaseStruct::mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point)
 	{
+		base->impl->focusName = 0;
 		return true;
 	}
 

@@ -45,7 +45,7 @@ namespace cage
 	sliderBarComponent::sliderBarComponent() : max(1), vertical(false)
 	{}
 
-	colorPickerComponent::colorPickerComponent() : space(colorPickerSpaceEnum::HsvSliders), collapsible(false), collapsed(true)
+	colorPickerComponent::colorPickerComponent() : collapsible(false)
 	{}
 
 	graphCanvasComponent::graphCanvasComponent() : max{1, 1}

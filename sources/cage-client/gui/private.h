@@ -114,6 +114,7 @@ namespace cage
 		void initialize();
 		void updateRequestedSize();
 		void updateFinalPosition(const updatePositionStruct &update);
+		void moveToWindow(bool horizontal, bool vertical);
 
 		void childrenEmit() const;
 
@@ -133,6 +134,9 @@ namespace cage
 		widgetBaseStruct(guiItemStruct *base);
 
 		const skinDataStruct &skin() const;
+
+		bool hasFocus() const;
+		void makeFocused();
 
 		virtual void initialize() = 0;
 		virtual void updateRequestedSize() = 0;

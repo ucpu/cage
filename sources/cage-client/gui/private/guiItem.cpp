@@ -58,6 +58,23 @@ namespace cage
 		}
 	}
 
+	void guiItemStruct::moveToWindow(bool horizontal, bool vertical)
+	{
+		bool enabled[2] = { horizontal, vertical };
+		for (uint32 i = 0; i < 2; i++)
+		{
+			if (!enabled[i])
+				continue;
+			real offset = 0;
+			if (position[i] + size[i] > impl->outputSize[i])
+				offset = (impl->outputSize[i] - size[i]) - position[i];
+			else if (position[i] < 0)
+				offset = -position[i];
+			position[i] += offset;
+			contentPosition += offset;
+		}
+	}
+
 	void guiItemStruct::childrenEmit() const
 	{
 		guiItemStruct *a = firstChild;
