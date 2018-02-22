@@ -218,6 +218,7 @@ namespace cage
 			shaderClass *fontShader;
 			shaderClass *imageAnimatedShader;
 			shaderClass *imageStaticShader;
+			shaderClass *colorPickerShader[3];
 			meshClass *guiMesh;
 			meshClass *fontMesh;
 			meshClass *imageMesh;

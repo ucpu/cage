@@ -227,11 +227,14 @@ namespace cage
 			return;
 		}
 
-		impl->graphicData.guiShader = impl->assetManager->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/gui.glsl"));
-		impl->graphicData.fontShader = impl->assetManager->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/font.glsl"));
-		impl->graphicData.imageAnimatedShader = impl->assetManager->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/image.glsl?A"));
-		impl->graphicData.imageStaticShader = impl->assetManager->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/image.glsl?a"));
-		impl->graphicData.guiMesh = impl->assetManager->get<assetSchemeIndexMesh, meshClass>(hashString("cage/mesh/gui.obj"));
+		impl->graphicData.guiShader = impl->assetManager->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/gui/element.glsl"));
+		impl->graphicData.fontShader = impl->assetManager->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/gui/font.glsl"));
+		impl->graphicData.imageAnimatedShader = impl->assetManager->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/gui/image.glsl?A"));
+		impl->graphicData.imageStaticShader = impl->assetManager->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/gui/image.glsl?a"));
+		impl->graphicData.colorPickerShader[0] = impl->assetManager->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/gui/colorPicker.glsl?F"));
+		impl->graphicData.colorPickerShader[1] = impl->assetManager->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/gui/colorPicker.glsl?H"));
+		impl->graphicData.colorPickerShader[2] = impl->assetManager->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/gui/colorPicker.glsl?S"));
+		impl->graphicData.guiMesh = impl->assetManager->get<assetSchemeIndexMesh, meshClass>(hashString("cage/mesh/guiElement.obj"));
 		impl->graphicData.fontMesh = impl->assetManager->get<assetSchemeIndexMesh, meshClass>(hashString("cage/mesh/square.obj"));
 		impl->graphicData.imageMesh = impl->graphicData.fontMesh;
 

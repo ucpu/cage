@@ -71,7 +71,7 @@ namespace cage
 			else if (position[i] < 0)
 				offset = -position[i];
 			position[i] += offset;
-			contentPosition += offset;
+			contentPosition[i] += offset;
 		}
 	}
 

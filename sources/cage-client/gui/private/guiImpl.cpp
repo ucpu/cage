@@ -17,6 +17,7 @@ namespace cage
 
 	guiImpl::graphicDataStruct::graphicDataStruct() :
 		guiShader(nullptr), fontShader(nullptr), imageAnimatedShader(nullptr), imageStaticShader(nullptr),
+		colorPickerShader{nullptr, nullptr, nullptr},
 		guiMesh(nullptr), fontMesh(nullptr), imageMesh(nullptr)
 	{}
 

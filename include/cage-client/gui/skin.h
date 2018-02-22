@@ -95,7 +95,8 @@ namespace cage
 		{
 			vec2 collapsedSize;
 			vec2 fullSize;
-			// todo
+			real hueBarPortion;
+			real resultBarPortion;
 			colorPickerStruct();
 		} colorPicker;
 		struct CAGE_API graphCanvasStruct
@@ -200,10 +201,10 @@ namespace cage
 		ListBoxCheckedItem,
 		ToolTip,
 		ColorPickerCompact,
-		ColorPickerBase,
-		ColorPickerRect,
-		ColorPickerSlider,
-		ColorPickerSliderCursor,
+		ColorPickerFull,
+		ColorPickerHSliderPanel,
+		ColorPickerSVRect,
+		ColorPickerResult,
 		GroupCell,
 		GroupPanel,
 		GroupCaption,

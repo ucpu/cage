@@ -169,7 +169,7 @@ namespace cage
 		vertical.size = vec2(28, 150);
 	}
 
-	skinWidgetDefaultsStruct::colorPickerStruct::colorPickerStruct() : collapsedSize(40, 32), fullSize(250, 180)
+	skinWidgetDefaultsStruct::colorPickerStruct::colorPickerStruct() : collapsedSize(40, 32), fullSize(250, 180), hueBarPortion(0.18), resultBarPortion(0.35)
 	{}
 
 	skinWidgetDefaultsStruct::graphCanvasStruct::graphCanvasStruct() : size(200, 120)

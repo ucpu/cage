@@ -184,7 +184,7 @@ int main(int argc, char *args[])
 		window()->windowedSize(pointStruct(800, 600));
 		window()->title("cage test engine lights (bottle)");
 		initializeGui();
-		//gui()->setZoom(10);
+		//gui()->setZoom(5);
 		//detail::guiSkinTemplateExport(skinConfigStruct(), 1024)->encodeFile("guiSkinLayout.png");
 
 		// entities
