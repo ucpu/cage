@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 3.2)
+
+message(STATUS "----------------------------------------------------------------")
+message(STATUS "msdfgen")
+message(STATUS "----------------------------------------------------------------")
+
+add_subdirectory(msdfgen)
+
+target_compile_definitions(lib_msdfgen PUBLIC MSDFGEN_USE_CPP11)
+target_include_directories(lib_msdfgen INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/msdfgen)
+
