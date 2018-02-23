@@ -48,10 +48,9 @@ namespace cage
 			ptr += sizeof(uint32) * data->charCount;
 			CAGE_ASSERT_RUNTIME(ptr == pointer(context->originalData) + (uintPtr)context->originalSize, ptr, context->originalData, context->originalSize);
 
-			font->lineHeight = data->lineHeight;
-			font->firstLineOffset = -data->glyphMaxBearingY;
+			font->setline(data->lineHeight, data->firstLineOffset);
 			font->setImage(data->texWidth, data->texHeight, data->texSize, image);
-			font->setGlyphs(data->glyphCount, glyphs, (sint8*)kerning);
+			font->setGlyphs(data->glyphCount, glyphs, (real*)kerning);
 			font->setCharmap(data->charCount, (uint32*)charmapChars, (uint32*)charmapGlyphs);
 		}
 

@@ -356,4 +356,27 @@ namespace cage
 	{
 		return detail::systemArena().createImpl<pngImageClass, pngBufferImpl>();
 	}
+
+	void pngBlit(pngImageClass *sourcePng, pngImageClass *targetPng, uint32 sourceX, uint32 sourceY, uint32 targetX, uint32 targetY, uint32 width, uint32 height)
+	{
+		CAGE_ASSERT_RUNTIME(sourcePng->channels() == targetPng->channels(), "images are incompatible", sourcePng->channels(), targetPng->channels());
+		CAGE_ASSERT_RUNTIME(sourcePng->bytesPerChannel() == targetPng->bytesPerChannel(), "images are incompatible", sourcePng->bytesPerChannel(), targetPng->bytesPerChannel());
+		uint32 sw = sourcePng->width();
+		uint32 sh = sourcePng->height();
+		uint32 tw = targetPng->width();
+		uint32 th = targetPng->height();
+		CAGE_ASSERT_RUNTIME(sourceX + width <= sw);
+		CAGE_ASSERT_RUNTIME(sourceY + height <= sh);
+		CAGE_ASSERT_RUNTIME(targetX + width <= tw);
+		CAGE_ASSERT_RUNTIME(targetY + height <= th);
+		uint32 bpc = sourcePng->bytesPerChannel();
+		uint32 cpp = sourcePng->channels();
+		uint32 ps = bpc * cpp;
+		uint32 sl = sw * ps;
+		uint32 tl = tw * ps;
+		char *s = (char*)sourcePng->bufferData();
+		char *t = (char*)targetPng->bufferData();
+		for (uint32 y = 0; y < height; y++)
+			detail::memcpy(t + (targetY + y) * tl + targetX * ps, s + (sourceY + y) * sl + sourceX * ps, width * ps);
+	}
 }

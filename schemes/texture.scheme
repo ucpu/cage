@@ -92,3 +92,4 @@ display = wrap z
 type = enum
 values = GL_CLAMP_TO_EDGE, GL_CLAMP_TO_BORDER, GL_MIRRORED_REPEAT, GL_REPEAT
 default = GL_REPEAT
+

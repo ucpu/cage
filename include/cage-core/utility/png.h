@@ -30,6 +30,8 @@ namespace cage
 	};
 
 	CAGE_API holder<pngImageClass> newPngImage();
+
+	CAGE_API void pngBlit(pngImageClass *sourcePng, pngImageClass *targetPng, uint32 sourceX, uint32 sourceY, uint32 targetX, uint32 targetY, uint32 width, uint32 height);
 }
 
 #endif // guard_png_h_681DF37FA76B4FA48C656E96AF90EE69

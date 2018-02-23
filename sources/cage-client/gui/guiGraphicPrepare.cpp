@@ -63,7 +63,7 @@ namespace cage
 			virtual void dispatch(guiImpl *context)
 			{
 				data.font->bind(context->fontMesh, context->fontShader, numeric_cast<uint32>(context->windowSize[0]), numeric_cast<uint32>(context->windowSize[1]));
-				data.font->render(data.glyphs, data.count, data.format, data.posX, data.posY, data.color, data.cursor);
+				data.font->render(data.glyphs, data.count, data.format, vec2(data.posX, data.posY), data.color, data.cursor);
 			}
 		};
 

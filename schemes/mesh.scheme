@@ -37,4 +37,3 @@ display = axes
 type = string
 default = +x+y+z
 
-

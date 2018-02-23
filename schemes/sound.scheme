@@ -32,3 +32,4 @@ name = small file threshold
 hint = the threshold is in bytes; when the resulting sound is estimated to be smaller than this value, the processor will use raw instead of stream, independently of type configured
 type = uint32
 default = 5000000
+

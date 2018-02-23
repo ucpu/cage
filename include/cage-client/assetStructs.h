@@ -114,28 +114,32 @@ namespace cage
 	struct CAGE_API fontHeaderStruct
 	{
 		fontFlags flags;
+		vec2 glyphMaxSize; // linear units
+		real lineHeight; // linear units
+		real firstLineOffset; // linear units
+		uint32 texSize; // bytes
+		uint32 texWidth, texHeight; // pixels
 		uint32 glyphCount;
 		uint32 charCount;
-		uint32 texSize;
-		uint16 texWidth, texHeight;
-		uint16 lineHeight;
-		uint16 glyphMaxWidth, glyphMaxHeight;
-		sint16 glyphMaxBearingX, glyphMaxBearingY;
 
 		struct glyphDataStruct
 		{
-			uint16 advance;
-			uint16 width, height;
-			uint16 texX, texY;
-			sint16 bearX, bearY;
+			vec4 texUv;
+			vec2 size; // linear units
+			vec2 bearing; // linear units
+			real advance; // linear units
 		};
 
 		// follows:
 		// texture data
 		// array of glyphDataStruct
-		// array of kerning, each sint8
-		// array of characters, each uint32
-		// array of glyphs, each uint32
+		// array of kerning, each 1 real
+		// array of charset characters, each uint32
+		// array of charset glyphs, each uint32
+
+		// notes:
+		// linear units are pixels for 1px-font
+		// linear units must be multiplied by font size before rendering
 	};
 
 	struct CAGE_API soundHeaderStruct
@@ -147,9 +151,7 @@ namespace cage
 		uint32 sampleRate;
 
 		// follows (for raw file):
-		// <strike> array of samples, each 1 float, for first channel
-		// array of samples, each 1 float, for second channel </strike>
-		// array of frames, each channels count of floats
+		// array of frames, each channels count of reals
 		// ...
 
 		// follows (for compressed file):

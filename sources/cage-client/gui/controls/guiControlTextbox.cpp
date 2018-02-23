@@ -50,8 +50,8 @@ namespace cage
 			f.lineSpacing = firstItem->lineSpacing;
 			f.wrapWidth = numeric_cast<uint16>(pixelsContentSize[0]);
 			GUI_GET_COMPONENT(control, control, context->entityManager->getEntity(entity));
-			uint32 dummy;
-			firstItem->font->size(firstItem->translatedText, firstItem->translatedLength, f, dummy, dummy, context->mousePosition - pixelsContentPosition, control.ival);
+			vec2 dummy;
+			firstItem->font->size(firstItem->translatedText, firstItem->translatedLength, f, dummy, context->mousePosition - pixelsContentPosition, control.ival);
 		}
 		return true;
 	}

@@ -6,10 +6,13 @@
 #include <cage-core/utility/png.h>
 #include "utility/binPacking.h"
 
+#include <msdfgen.h>
+#include <msdfgen-ext.h>
+
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include FT_GLYPH_H
-#include FT_BITMAP_H
+#include FT_OUTLINE_H
 
 #define CALL(FNC, ...) { int err = FNC(__VA_ARGS__); if (err) { CAGE_LOG(severityEnum::Note, "exception", translateErrorCode(err)); CAGE_THROW_ERROR(codeException, "FreeType " CAGE_STRINGIZE(FNC) " error", err); } }
 
@@ -30,60 +33,80 @@ namespace
 
 	struct glyphStruct
 	{
-		union
-		{
-			FT_Glyph glyph;
-			FT_BitmapGlyph bitmap;
-		};
-		FT_BBox box;
 		fontHeaderStruct::glyphDataStruct data;
-
-		glyphStruct() : glyph(nullptr)
+		holder<pngImageClass> png;
+		uint32 texX, texY;
+		glyphStruct() : texX(0), texY(0)
 		{}
-
-		~glyphStruct()
-		{
-			if (glyph)
-				FT_Done_Glyph(glyph);
-			glyph = nullptr;
-		}
 	};
 
 	fontHeaderStruct data;
 
 	std::vector<glyphStruct> glyphs;
-	std::vector<sint8> kerning;
+	std::vector<real> kerning;
 	std::vector<uint32> charsetChars;
 	std::vector<uint32> charsetGlyphs;
-	std::vector<uint8> texPixels;
+	holder<pngImageClass> texels;
+
+	real emScale; // font units -> linear units
+
+	vec3 to(const msdfgen::FloatRGB &rgb)
+	{
+		return *(vec3*)&rgb;
+	}
+
+	msdfgen::Vector2 from(const vec2 &v)
+	{
+		return *(msdfgen::Vector2*)&v;
+	}
 
 	void loadGlyphs()
 	{
-		CAGE_LOG(severityEnum::Info, logComponentName, "load glyphs");
+		CAGE_LOG(severityEnum::Info, logComponentName, "load glyph metrics");
+		emScale = 1.f / face->units_per_EM;
 		data.glyphCount = numeric_cast<uint32>(face->num_glyphs);
-		data.lineHeight = numeric_cast<uint16>(face->size->metrics.height >> 6);
-		data.glyphMaxBearingX = data.glyphMaxBearingY = -30000;
+		data.lineHeight = face->size->metrics.height * emScale;
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "font has " + data.glyphCount + " glyphs");
 		glyphs.reserve(data.glyphCount + 10);
 		glyphs.resize(data.glyphCount);
 		for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
 		{
 			glyphStruct &g = glyphs[glyphIndex];
-			CALL(FT_Load_Glyph, face, glyphIndex, FT_LOAD_RENDER);
-			CALL(FT_Get_Glyph, face->glyph, &g.glyph);
-			g.data.advance = numeric_cast<uint16>(g.glyph->advance.x >> 16);
-			FT_Glyph_Get_CBox(g.glyph, FT_GLYPH_BBOX_PIXELS, &g.box);
-			g.data.width = numeric_cast<uint16>(g.box.xMax - g.box.xMin);
-			g.data.height = numeric_cast<uint16>(g.box.yMax - g.box.yMin);
-			CALL(FT_Glyph_To_Bitmap, &g.glyph, FT_RENDER_MODE_NORMAL, nullptr, 1);
-			CALL(FT_Bitmap_Convert, library, &g.bitmap->bitmap, &g.bitmap->bitmap, 1);
-			g.data.bearX = numeric_cast<sint16>(g.bitmap->left);
-			g.data.bearY = numeric_cast<sint16>(g.bitmap->top);
-			data.glyphMaxWidth = max(data.glyphMaxWidth, g.data.width);
-			data.glyphMaxHeight = max(data.glyphMaxHeight, g.data.height);
-			data.glyphMaxBearingX = max(data.glyphMaxBearingX, g.data.bearX);
-			data.glyphMaxBearingY = max(data.glyphMaxBearingY, g.data.bearY);
+			CALL(FT_Load_Glyph, face, glyphIndex, FT_LOAD_NO_SCALE);
+
+			// load glyph metrics
+			const FT_Glyph_Metrics &glm = face->glyph->metrics;
+			g.data.size[0] = glm.width;
+			g.data.size[1] = glm.height;
+			g.data.bearing[0] = glm.horiBearingX;
+			g.data.bearing[1] = glm.horiBearingY;
+			g.data.advance = glm.horiAdvance;
+			g.data.size *= emScale;
+			g.data.bearing *= emScale;
+			g.data.advance *= emScale;
+			data.glyphMaxSize = max(data.glyphMaxSize, g.data.size);
+			data.firstLineOffset = max(data.firstLineOffset, g.data.bearing[1]);
+
+			// load glyph image
+			g.png = newPngImage();
+			static const real texScale = 32;
+			static const uint32 texBorder = 0;
+			g.png->empty(numeric_cast<uint32>(g.data.size[0] * texScale) + 2 * texBorder, numeric_cast<uint32>(g.data.size[1] * texScale) + 2 * texBorder, 3);
+
+			msdfgen::Shape shape;
+			msdfgen::loadGlyphGlyph(shape, face->glyph);
+			shape.normalize();
+			msdfgen::edgeColoringSimple(shape, 3.0);
+			if (!shape.validate())
+				CAGE_THROW_ERROR(exception, "shape validation failed");
+			msdfgen::Bitmap<msdfgen::FloatRGB> msdf(g.png->width(), g.png->height());
+			msdfgen::generateMSDF(msdf, shape, 0.0, 1.0, from(g.data.bearing));
+			for (uint32 y = 0; y < g.png->height(); y++)
+				for (uint32 x = 0; x < g.png->width(); x++)
+					for (uint32 c = 0; c < 3; c++)
+						g.png->value(x, y, c, to(msdf(x, y))[c].value);
 		}
+		// todo first line offset
 	}
 
 	void loadCharset()
@@ -160,18 +183,18 @@ namespace
 			glyphs.resize(glyphs.size() + 1);
 			glyphStruct &g = glyphs[glyphs.size() - 1];
 			g.data.advance = 0;
-			g.data.bearX = -1;
-			g.data.bearY = data.lineHeight * 4 / 5;
-			g.data.width = 1;
-			g.data.height = data.lineHeight;
+			g.data.bearing[0] = -0.1;
+			g.data.bearing[1] = data.lineHeight * 4 / 5;
+			g.data.size[0] = 0.1;
+			g.data.size[1] = data.lineHeight;
 
 			if (kerning.size())
 			{ // compensate kerning
-				std::vector<sint8> k;
-				k.resize(data.glyphCount * data.glyphCount, 0);
+				std::vector<real> k;
+				k.resize(data.glyphCount * data.glyphCount);
 				uint32 dgcm1 = data.glyphCount - 1;
 				for (uint32 i = 0; i < dgcm1; i++)
-					detail::memcpy(&k[i * data.glyphCount], &kerning[i * dgcm1], dgcm1);
+					detail::memcpy(&k[i * data.glyphCount], &kerning[i * dgcm1], dgcm1 * sizeof(real));
 				std::swap(k, kerning);
 			}
 		}
@@ -184,15 +207,14 @@ namespace
 		holder<binPackingClass> packer = newBinPacking();
 		for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
 		{
-			fontHeaderStruct::glyphDataStruct &g = glyphs[glyphIndex].data;
-			area += g.width * g.height;
-			packer->add(glyphIndex, g.width, g.height);
+			glyphStruct &g = glyphs[glyphIndex];
+			area += g.png->width() * g.png->height();
+			packer->add(glyphIndex, g.png->width(), g.png->height());
 		}
-		uint32 res[2];
-		res[0] = res[1] = 64;
+		uint32 res[2] = { 64, 64 };
 		uint32 tryIndex = 0;
-		while (res[0] < data.glyphMaxWidth) res[0] *= 2;
-		while (res[1] < data.glyphMaxHeight) res[1] *= 2;
+		while (res[0] < data.glyphMaxSize[0]) res[0] *= 2;
+		while (res[1] < data.glyphMaxSize[1]) res[1] *= 2;
 		while (res[0] * res[1] < area) res[(tryIndex++) % 2] *= 2;
 		while (true)
 		{
@@ -201,54 +223,39 @@ namespace
 				break;
 			res[(tryIndex++) % 2] *= 2;
 		}
+		vec2 resInv =  1 / vec2(res[0], res[1]);
 		for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
 		{
 			uint32 id = 0, x = 0, y = 0;
 			packer->get(glyphIndex, id, x, y);
 			CAGE_ASSERT_RUNTIME(id < glyphs.size(), id, glyphs.size());
-			fontHeaderStruct::glyphDataStruct &g = glyphs[id].data;
-			CAGE_ASSERT_RUNTIME(x < res[0], "texture x coordinate out of range", x, res[0], glyphIndex, id, g.width, g.height);
-			CAGE_ASSERT_RUNTIME(y < res[1], "texture y coordinate out of range", y, res[1], glyphIndex, id, g.width, g.height);
-			g.texX = numeric_cast<uint16>(x);
-			g.texY = numeric_cast<uint16>(y);
+			glyphStruct &g = glyphs[id];
+			CAGE_ASSERT_RUNTIME(x < res[0], "texture x coordinate out of range", x, res[0], glyphIndex, id);
+			CAGE_ASSERT_RUNTIME(y < res[1], "texture y coordinate out of range", y, res[1], glyphIndex, id);
+			g.texX = x;
+			g.texY = y;
+			vec2 to = vec2(g.texX, g.texY) * resInv;
+			vec2 ts = vec2(g.png->width(), g.png->height()) * resInv;
+			g.data.texUv = vec4(to, ts);
 		}
-		data.texWidth = numeric_cast<uint16>(res[0]);
-		data.texHeight = numeric_cast<uint16>(res[1]);
+		data.texWidth = res[0];
+		data.texHeight = res[1];
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "texture atlas resolution " + data.texWidth + "*" + data.texHeight);
 	}
 
 	void createAtlasPixels()
 	{
 		CAGE_LOG(severityEnum::Info, logComponentName, "create atlas pixels");
-		texPixels.resize(data.texWidth * data.texHeight, 0);
+		texels = newPngImage();
+		texels->empty(data.texWidth, data.texHeight, 3);
 		for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
 		{
 			glyphStruct &g = glyphs[glyphIndex];
-			if (g.data.width == 0 || g.data.height == 0)
+			if (g.data.size[0] <= 0 || g.data.size[1] <= 0)
 				continue;
-			if (g.bitmap)
-			{
-				if (g.bitmap->bitmap.pixel_mode != FT_PIXEL_MODE_GRAY)
-				{
-					CAGE_LOG(severityEnum::Note, "exception", string() + "glyph index: " + glyphIndex + " width: " + g.data.width + " height: " + g.data.height + " pixel mode: " + g.bitmap->bitmap.pixel_mode);
-					CAGE_THROW_ERROR(exception, "wrong pixel format");
-				}
-				for (uint32 y = 0; y < g.data.height; y++)
-				{
-					for (uint32 x = 0; x < g.data.width; x++)
-						texPixels[(g.data.texY + y) * data.texWidth + (g.data.texX + x)] = g.bitmap->bitmap.buffer[(g.bitmap->bitmap.rows - y - 1) * g.bitmap->bitmap.pitch + x];
-				}
-			}
-			else
-			{
-				for (uint32 y = 0; y < g.data.height; y++)
-				{
-					for (uint32 x = 0; x < g.data.width; x++)
-						texPixels[(g.data.texY + y) * data.texWidth + (g.data.texX + x)] = 255;
-				}
-			}
+			pngBlit(g.png.get(), texels.get(), 0, 0, g.texX, g.texY, g.png->width(), g.png->height());
 		}
-		data.texSize = data.texWidth * data.texHeight; // no line paddings, 1 byte per texel
+		data.texSize = texels->bufferSize();
 	}
 
 	void exportData()
@@ -263,14 +270,14 @@ namespace
 		assetHeaderStruct h = initializeAssetHeaderStruct();
 		h.originalSize = sizeof(data) + data.texSize +
 			data.glyphCount * sizeof(fontHeaderStruct::glyphDataStruct) +
-			sizeof(uint8) * numeric_cast<uint32>(kerning.size()) +
+			sizeof(real) * numeric_cast<uint32>(kerning.size()) +
 			sizeof(uint32) * numeric_cast<uint32>(charsetChars.size()) +
 			sizeof(uint32) * numeric_cast<uint32>(charsetGlyphs.size());
 
 		holder<fileClass> f = newFile(outputFileName, fileMode(false, true));
 		f->write(&h, sizeof(h));
 		f->write(&data, sizeof(data));
-		f->write(&texPixels[0], data.texSize);
+		f->write(texels->bufferData(), texels->bufferSize());
 		for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
 		{
 			glyphStruct &g = glyphs[glyphIndex];
@@ -288,13 +295,12 @@ namespace
 
 	void printDebugData()
 	{
+		CAGE_LOG(severityEnum::Info, logComponentName, "print debug data");
+
 		if (configGetBool("cage-asset-processor.font.preview"))
 		{
-			holder<pngImageClass> png = newPngImage();
-			png->empty(data.texWidth, data.texHeight, 1);
-			detail::memcpy(png->bufferData(), &texPixels[0], data.texWidth * data.texHeight);
-			png->verticalFlip();
-			png->encodeFile(pathJoin(configGetString("cage-asset-processor.font.path", "asset-preview"), pathMakeValid(inputName) + ".png"));
+			texels->verticalFlip();
+			texels->encodeFile(pathJoin(configGetString("cage-asset-processor.font.path", "asset-preview"), pathMakeValid(inputName) + ".png"));
 		}
 
 		if (configGetBool("cage-asset-processor.font.glyphs"))
@@ -302,9 +308,9 @@ namespace
 			holder<fileClass> f = newFile(pathJoin(configGetString("cage-asset-processor.font.path", "asset-preview"), pathMakeValid(inputName) + ".glyphs.txt"), fileMode(false, true, true));
 			f->writeLine(
 				string("glyph").fill(10) +
-				string("size").fill(10) +
-				string("tex coord").fill(10) +
-				string("bearing").fill(10) +
+				string("tex coord").fill(60) +
+				string("size").fill(30) +
+				string("bearing").fill(30) +
 				string("advance")
 			);
 			for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
@@ -312,9 +318,9 @@ namespace
 				glyphStruct &g = glyphs[glyphIndex];
 				f->writeLine(
 					string(glyphIndex).fill(10) +
-					(string() + g.data.width + "*" + g.data.height).fill(10) +
-					(string() + g.data.texX + "*" + g.data.texY).fill(10) +
-					(string() + g.data.bearX + "*" + g.data.bearY).fill(10) +
+					(string() + g.data.texUv).fill(60) +
+					(string() + g.data.size).fill(30) +
+					(string() + g.data.bearing).fill(30) +
 					string(g.data.advance)
 				);
 			}
@@ -340,26 +346,36 @@ namespace
 			}
 		}
 	}
+
+	void clearAll()
+	{
+		glyphs.clear();
+		kerning.clear();
+		charsetChars.clear();
+		charsetGlyphs.clear();
+		texels.clear();
+	}
 }
 
 void processFont()
 {
 	writeLine(string("use=") + inputFile);
-	if (!inputSpec.isDigitsOnly())
-		CAGE_THROW_ERROR(exception, "input specification must be font size (an integer)");
+	if (!inputSpec.empty())
+		CAGE_THROW_ERROR(exception, "input specification must be empty");
 	CALL(FT_Init_FreeType, &library);
 	CALL(FT_New_Face, library, inputFileName.c_str(), 0, &face);
 	CALL(FT_Select_Charmap, face, FT_ENCODING_UNICODE);
-	CALL(FT_Set_Pixel_Sizes, face, 0, inputSpec.toUint32());
+	if (!FT_IS_SCALABLE(face))
+		CAGE_THROW_ERROR(exception, "font is not scalable");
 	loadGlyphs();
 	loadCharset();
 	loadKerning();
-	addArtificialData();
+	//addArtificialData();
 	createAtlasCoordinates();
 	createAtlasPixels();
 	exportData();
 	printDebugData();
-	glyphs.clear();
+	clearAll();
 	CALL(FT_Done_FreeType, library);
 }
 
@@ -369,6 +385,7 @@ void analyzeFont()
 	{
 		CALL(FT_Init_FreeType, &library);
 		CALL(FT_New_Face, library, inputFileName.c_str(), 0, &face);
+		CALL(FT_Select_Charmap, face, FT_ENCODING_UNICODE);
 		writeLine("cage-begin");
 		writeLine("scheme=font");
 		writeLine(string() + "asset=" + inputFile);
