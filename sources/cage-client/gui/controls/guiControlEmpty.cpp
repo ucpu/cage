@@ -12,7 +12,7 @@ namespace cage
 		if (firstItem && firstItem->type == itemCacheStruct::itText && firstItem->font)
 		{
 			fontClass::formatStruct f;
-			f.wrapWidth = -1;
+			f.wrapWidth = real::PositiveInfinity;
 			firstItem->font->size(firstItem->translatedText, firstItem->translatedLength, f, pixelsRequestedSize);
 			vec2 dummy;
 			context->contentToEnvelope(dummy, pixelsRequestedSize, elementType);

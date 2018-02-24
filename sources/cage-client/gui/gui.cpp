@@ -25,7 +25,7 @@ namespace cage
 		skinTexture(nullptr), guiShader(nullptr), fontShader(nullptr), imageAnimatedShader(nullptr), imageStaticShader(nullptr), guiMesh(nullptr), fontMesh(nullptr), imageMesh(nullptr)
 	{
 		skinName = hashString("cage/texture/gui.psd");
-		defaultFontName = hashString("cage/font/roboto.ttf?14");
+		defaultFontName = hashString("cage/font/roboto.ttf");
 		memoryCache = memoryArena(&arenaCache);
 		memoryPrepare = memoryArena(&arenaPrepare);
 		entityManager = newEntityManager(config.entitiesConfig ? *config.entitiesConfig : entityManagerCreateConfig());

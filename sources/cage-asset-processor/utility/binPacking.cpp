@@ -85,7 +85,7 @@ namespace cage
 		return ((binPackingImpl*)this)->solve(width, height);
 	}
 
-	void binPackingClass::get(uint32 index, uint32 &id, uint32 & x, uint32 & y)
+	void binPackingClass::get(uint32 index, uint32 &id, uint32 & x, uint32 & y) const
 	{
 		binPackingImpl *impl = (binPackingImpl*)this;
 		CAGE_ASSERT_RUNTIME(index < impl->rects.size(), index, impl->rects.size());
@@ -93,6 +93,12 @@ namespace cage
 		id = r.id;
 		x = r.x;
 		y = r.y;
+	}
+
+	uint32 binPackingClass::count() const
+	{
+		binPackingImpl *impl = (binPackingImpl*)this;
+		return numeric_cast<uint32>(impl->rects.size());
 	}
 
 	holder<binPackingClass> newBinPacking()

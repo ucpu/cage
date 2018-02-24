@@ -20,12 +20,12 @@ namespace cage
 			fontClass *font = nullptr;
 			if (context->assetHolder)
 			{
-				font = static_cast<fontClass*> (context->assetHolder.get());
+				font = static_cast<fontClass*>(context->assetHolder.get());
 			}
 			else
 			{
 				context->assetHolder = newFont(gm).transfev();
-				font = static_cast<fontClass*> (context->assetHolder.get());
+				font = static_cast<fontClass*>(context->assetHolder.get());
 			}
 			context->returnData = font;
 
@@ -40,7 +40,7 @@ namespace cage
 			if ((data->flags & fontFlags::Kerning) == fontFlags::Kerning)
 			{
 				kerning = ptr;
-				ptr += data->glyphCount * data->glyphCount;
+				ptr += data->glyphCount * data->glyphCount * sizeof(real);
 			}
 			void *charmapChars = ptr;
 			ptr += sizeof(uint32) * data->charCount;
@@ -48,7 +48,7 @@ namespace cage
 			ptr += sizeof(uint32) * data->charCount;
 			CAGE_ASSERT_RUNTIME(ptr == pointer(context->originalData) + (uintPtr)context->originalSize, ptr, context->originalData, context->originalSize);
 
-			font->setline(data->lineHeight, data->firstLineOffset);
+			font->setLine(data->lineHeight, data->firstLineOffset);
 			font->setImage(data->texWidth, data->texHeight, data->texSize, image);
 			font->setGlyphs(data->glyphCount, glyphs, (real*)kerning);
 			font->setCharmap(data->charCount, (uint32*)charmapChars, (uint32*)charmapGlyphs);

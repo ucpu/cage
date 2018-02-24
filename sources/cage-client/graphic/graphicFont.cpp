@@ -18,7 +18,7 @@
 namespace cage
 {
 	fontClass::formatStruct::formatStruct() :
-		align(textAlignEnum::Left), size(12), wrapWidth(-1), lineSpacing(0)
+		align(textAlignEnum::Left), size(14), wrapWidth(real::PositiveInfinity), lineSpacing(0)
 	{}
 
 	namespace
@@ -56,10 +56,19 @@ namespace cage
 			real lineHeight;
 			real firstLineOffset;
 
-			std::vector<fontHeaderStruct::glyphDataStruct> glyphs;
+			std::vector<fontHeaderStruct::glyphDataStruct> glyphsArray;
 			std::vector<real> kerning;
 			std::vector<uint32> charmapChars;
 			std::vector<uint32> charmapGlyphs;
+
+			fontHeaderStruct::glyphDataStruct getGlyph(uint32 glyphIndex, real size)
+			{
+				fontHeaderStruct::glyphDataStruct r(glyphsArray[glyphIndex]);
+				r.advance *= size;
+				r.bearing *= size;
+				r.size *= size;
+				return r;
+			}
 
 			struct InstanceStruct
 			{
@@ -82,18 +91,18 @@ namespace cage
 				uni = newUniformBuffer(gl);
 				uni->writeWhole(nullptr, sizeof(InstanceStruct) * charsPerBatch, GL_DYNAMIC_DRAW);
 				tex = newTexture(gl);
-				tex->filters(GL_NEAREST, GL_NEAREST, 0);
+				tex->filters(GL_LINEAR, GL_LINEAR, 0);
 				tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 				instances.reserve(1000);
 			}
 
-			const real findKerning(uint32 L, uint32 R) const
+			const real findKerning(uint32 L, uint32 R, real size) const
 			{
-				CAGE_ASSERT_RUNTIME(L < glyphs.size() && R < glyphs.size(), L, R, glyphs.size());
-				if (kerning.empty() || glyphs.empty())
+				CAGE_ASSERT_RUNTIME(L < glyphsArray.size() && R < glyphsArray.size(), L, R, glyphsArray.size());
+				if (kerning.empty() || glyphsArray.empty())
 					return 0;
-				uint32 s = numeric_cast<uint32>(glyphs.size());
-				return kerning[L * s + R];
+				uint32 s = numeric_cast<uint32>(glyphsArray.size());
+				return kerning[L * s + R] * size;
 			}
 
 			const uint32 findGlyphIndex(uint32 character) const
@@ -145,12 +154,12 @@ namespace cage
 				{
 					if (data.render && begin == data.gls + data.cursor)
 					{
-						const fontHeaderStruct::glyphDataStruct &g = glyphs[cursorGlyph];
+						fontHeaderStruct::glyphDataStruct g = getGlyph(cursorGlyph, data.format->size);
 						instances.emplace_back(x, lineY, g);
 					}
-					x += findKerning(prev, *begin);
+					x += findKerning(prev, *begin, data.format->size);
 					prev = *begin++;
-					const fontHeaderStruct::glyphDataStruct &g = glyphs[prev];
+					fontHeaderStruct::glyphDataStruct g = getGlyph(prev, data.format->size);
 					if (data.render)
 						instances.emplace_back(x, lineY, g);
 					if (mouseInLine && data.mousePosition[0] >= x && data.mousePosition[0] <= x + g.advance)
@@ -159,7 +168,7 @@ namespace cage
 				}
 				if (data.render && begin == data.gls + data.cursor)
 				{
-					const fontHeaderStruct::glyphDataStruct &g = glyphs[cursorGlyph];
+					fontHeaderStruct::glyphDataStruct g = getGlyph(cursorGlyph, data.format->size);
 					instances.emplace_back(x, lineY, g);
 				}
 			}
@@ -167,10 +176,11 @@ namespace cage
 			void processText(const processDataStruct &data)
 			{
 				CAGE_ASSERT_RUNTIME(data.format->wrapWidth > 0, data.format->wrapWidth);
+				CAGE_ASSERT_RUNTIME(data.format->size > 0, data.format->size);
 				const uint32 *totalEnd = data.gls + data.count;
 				const uint32 *lineStart = data.gls;
-				real lineY = -data.pos[1] + firstLineOffset;
-				data.outSize[1] = data.count > 0 ? lineHeight : 0;
+				real lineY = -data.pos[1] + firstLineOffset * data.format->size;
+				data.outSize[1] = data.count > 0 ? lineHeight * data.format->size : 0;
 				while (true)
 				{
 					const uint32 *lineEnd = lineStart;
@@ -180,8 +190,8 @@ namespace cage
 
 					while (lineEnd != totalEnd && *lineEnd != returnGlyph)
 					{
-						real k = findKerning(lineEnd != lineStart ? lineEnd[-1] : 0, *lineEnd);
-						real a = glyphs[*lineEnd].advance;
+						real k = findKerning(lineEnd != lineStart ? lineEnd[-1] : 0, *lineEnd, data.format->size);
+						real a = getGlyph(*lineEnd, data.format->size).advance;
 						if (lineWidth + k + a > data.format->wrapWidth && lineWidth > 0)
 						{
 							if (wrap != lineStart)
@@ -250,28 +260,45 @@ namespace cage
 		impl->shr->uniform(1, vec2(1.0 / impl->texWidth, 1.0 / impl->texHeight));
 	}
 
-	void fontClass::setline(real lineHeight, real firstLineOffset)
+	void fontClass::setLine(real lineHeight, real firstLineOffset)
 	{
 		fontImpl *impl = (fontImpl*)this;
 		impl->lineHeight = lineHeight;
-		impl->firstLineOffset = firstLineOffset;
+		impl->firstLineOffset = -firstLineOffset;
 	}
 
 	void fontClass::setImage(uint32 width, uint32 height, uint32 size, void *data)
 	{
-		CAGE_ASSERT_RUNTIME(size == width * height * 3, width, height, size);
 		fontImpl *impl = (fontImpl*)this;
 		impl->texWidth = width;
 		impl->texHeight = height;
 		impl->tex->bind();
-		impl->tex->image2d(width, height, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, data);
+		uint32 bpp = size / (width * height);
+		CAGE_ASSERT_RUNTIME(width * height * bpp == size, "rounding error", width, height, bpp, size);
+		switch (bpp)
+		{
+		case 1:
+			impl->tex->image2d(width, height, GL_R8, GL_RED, GL_UNSIGNED_BYTE, data);
+			break;
+		case 2:
+			impl->tex->image2d(width, height, GL_R16, GL_RED, GL_UNSIGNED_SHORT, data);
+			break;
+		case 3:
+			impl->tex->image2d(width, height, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, data);
+			break;
+		case 6:
+			impl->tex->image2d(width, height, GL_RGB10, GL_RGB, GL_UNSIGNED_SHORT, data);
+			break;
+		default:
+			CAGE_THROW_ERROR(exception, "unsupported bpp");
+		}
 	}
 
 	void fontClass::setGlyphs(uint32 count, void *data, real *kerning)
 	{
 		fontImpl *impl = (fontImpl*)this;
-		impl->glyphs.resize(count);
-		detail::memcpy(&impl->glyphs[0], data, sizeof(fontHeaderStruct::glyphDataStruct) * count);
+		impl->glyphsArray.resize(count);
+		detail::memcpy(&impl->glyphsArray[0], data, sizeof(fontHeaderStruct::glyphDataStruct) * count);
 		if (kerning)
 		{
 			impl->kerning.resize(count * count);
@@ -353,6 +380,6 @@ namespace cage
 	holder<fontClass> newFont(windowClass *context)
 	{
 		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentContext() == context);
-		return detail::systemArena().createImpl <fontClass, fontImpl>(context);
+		return detail::systemArena().createImpl<fontClass, fontImpl>(context);
 	}
 }
