@@ -6,6 +6,6 @@ message(STATUS "----------------------------------------------------------------
 
 add_subdirectory(msdfgen)
 
-target_compile_definitions(lib_msdfgen PUBLIC MSDFGEN_USE_CPP11)
+target_compile_definitions(lib_msdfgen PUBLIC MSDFGEN_NO_PRAGMA_LIB)
 target_include_directories(lib_msdfgen INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/msdfgen)
 

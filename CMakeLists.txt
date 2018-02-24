@@ -64,4 +64,5 @@ set_target_properties(vorbisenc PROPERTIES FOLDER cage/externals)
 set_target_properties(vorbisfile PROPERTIES FOLDER cage/externals)
 set_target_properties(enet PROPERTIES FOLDER cage/externals)
 set_target_properties(simplefilewatcher PROPERTIES FOLDER cage/externals)
+set_target_properties(lib_msdfgen PROPERTIES FOLDER cage/externals)
 
