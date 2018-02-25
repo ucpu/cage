@@ -295,9 +295,9 @@ namespace cage
 		default:
 			CAGE_THROW_ERROR(exception, "unsupported bpp");
 		}
-		impl->tex->filters(GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, 0);
+		impl->tex->filters(GL_LINEAR, GL_LINEAR, 0);
 		impl->tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-		impl->tex->generateMipmaps();
+		//impl->tex->generateMipmaps();
 	}
 
 	void fontClass::setGlyphs(uint32 count, void *data, real *kerning)

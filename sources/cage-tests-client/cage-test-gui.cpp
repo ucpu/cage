@@ -657,7 +657,7 @@ void generateUtfTest(entityClass *layout, uint32 &index)
 		uint32 line = (getApplicationTime() / 1000000 + i) % 291;
 		t.textName = hashString((string() + "utf8test/" + line).c_str());
 		GUI_GET_COMPONENT(format, f, control);
-		f.fontName = hashString("cage/tests/gui/DroidSansMono.ttf?12");
+		f.fontName = hashString("cage/tests/gui/DroidSansMono.ttf");
 	}
 }
 
