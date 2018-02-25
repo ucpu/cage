@@ -13,8 +13,10 @@ namespace cage
 		{
 			fontClass::formatStruct f;
 			f.wrapWidth = real::PositiveInfinity;
+			f.size = firstItem->size;
 			firstItem->font->size(firstItem->translatedText, firstItem->translatedLength, f, pixelsRequestedSize);
 			vec2 dummy;
+			pixelsRequestedSize[0] += 1; // to prevent unintended font wraps
 			context->contentToEnvelope(dummy, pixelsRequestedSize, elementType);
 		}
 		else

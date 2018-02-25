@@ -91,8 +91,6 @@ namespace cage
 				uni = newUniformBuffer(gl);
 				uni->writeWhole(nullptr, sizeof(InstanceStruct) * charsPerBatch, GL_DYNAMIC_DRAW);
 				tex = newTexture(gl);
-				tex->filters(GL_LINEAR, GL_LINEAR, 0);
-				tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 				instances.reserve(1000);
 			}
 
@@ -137,8 +135,8 @@ namespace cage
 				default: CAGE_THROW_CRITICAL(exception, "invalid align enum value");
 				}
 
-				vec2 mousePos = data.mousePosition + vec2(-x, lineY + lineHeight);
-				bool mouseInLine = mousePos[1] >= 0 && mousePos[1] <= lineHeight + data.format->lineSpacing;
+				vec2 mousePos = data.mousePosition + vec2(-x, lineY + lineHeight * data.format->size);
+				bool mouseInLine = mousePos[1] >= 0 && mousePos[1] <= lineHeight * data.format->size + data.format->lineSpacing;
 				if (!data.render && !mouseInLine)
 					return;
 				if (mouseInLine)
@@ -217,13 +215,13 @@ namespace cage
 						break;
 					if (*lineStart == returnGlyph || *lineStart == spaceGlyph)
 						lineStart++;
-					data.outSize[1] += lineHeight + data.format->lineSpacing;
-					lineY -= lineHeight + data.format->lineSpacing;
+					data.outSize[1] += lineHeight * data.format->size + data.format->lineSpacing;
+					lineY -= lineHeight * data.format->size + data.format->lineSpacing;
 				}
 
 				if (data.render)
 				{
-					shr->uniform(2, data.color);
+					shr->uniform(1, data.color);
 					uint32 s = numeric_cast<uint32>(instances.size());
 					uint32 a = s / charsPerBatch;
 					uint32 b = s - a * charsPerBatch;
@@ -257,7 +255,6 @@ namespace cage
 		impl->shr = shader;
 		impl->shr->bind();
 		impl->shr->uniform(0, vec2(2.0 / screenWidth, 2.0 / screenHeight));
-		impl->shr->uniform(1, vec2(1.0 / impl->texWidth, 1.0 / impl->texHeight));
 	}
 
 	void fontClass::setLine(real lineHeight, real firstLineOffset)
@@ -286,23 +283,32 @@ namespace cage
 		case 3:
 			impl->tex->image2d(width, height, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, data);
 			break;
+		case 4:
+			impl->tex->image2d(width, height, GL_R32F, GL_RED, GL_FLOAT, data);
+			break;
 		case 6:
-			impl->tex->image2d(width, height, GL_RGB10, GL_RGB, GL_UNSIGNED_SHORT, data);
+			impl->tex->image2d(width, height, GL_RGB16, GL_RGB, GL_UNSIGNED_SHORT, data);
+			break;
+		case 12:
+			impl->tex->image2d(width, height, GL_RGB32F, GL_RGB, GL_FLOAT, data);
 			break;
 		default:
 			CAGE_THROW_ERROR(exception, "unsupported bpp");
 		}
+		impl->tex->filters(GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, 0);
+		impl->tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+		impl->tex->generateMipmaps();
 	}
 
 	void fontClass::setGlyphs(uint32 count, void *data, real *kerning)
 	{
 		fontImpl *impl = (fontImpl*)this;
 		impl->glyphsArray.resize(count);
-		detail::memcpy(&impl->glyphsArray[0], data, sizeof(fontHeaderStruct::glyphDataStruct) * count);
+		detail::memcpy(impl->glyphsArray.data(), data, sizeof(fontHeaderStruct::glyphDataStruct) * count);
 		if (kerning)
 		{
 			impl->kerning.resize(count * count);
-			detail::memcpy(&impl->kerning[0], kerning, count * count * sizeof(real));
+			detail::memcpy(impl->kerning.data(), kerning, count * count * sizeof(real));
 		}
 		else
 			impl->kerning.clear();
@@ -316,8 +322,8 @@ namespace cage
 		impl->charmapGlyphs.resize(count);
 		if (count > 0)
 		{
-			detail::memcpy(&impl->charmapChars[0], chars, sizeof(uint32) * count);
-			detail::memcpy(&impl->charmapGlyphs[0], glyphs, sizeof(uint32) * count);
+			detail::memcpy(impl->charmapChars.data(), chars, sizeof(uint32) * count);
+			detail::memcpy(impl->charmapGlyphs.data(), glyphs, sizeof(uint32) * count);
 		}
 		impl->returnGlyph = impl->findGlyphIndex('\n');
 		impl->spaceGlyph = impl->findGlyphIndex(' ');

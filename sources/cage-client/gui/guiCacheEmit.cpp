@@ -57,6 +57,7 @@ namespace cage
 				item->color[i] = f.color[i].valid() ? f.color[i].value : item->color[i];
 			item->font = f.fontName && context->assetManager->ready(f.fontName) ? context->assetManager->get<assetSchemeIndexFont, fontClass>(f.fontName) : item->font;
 			item->align = f.align != (textAlignEnum)-1 ? f.align : item->align;
+			item->size = f.size.valid() ? f.size.value : item->size;
 		}
 
 		const string loadInternationalizedText(guiImpl *context, uint32 asset, uint32 text, string params)

@@ -200,6 +200,7 @@ namespace cage
 		t->data.font = text->font;
 		t->data.format.align = text->align;
 		t->data.format.lineSpacing = text->lineSpacing;
+		t->data.format.size = text->size;
 		t->data.format.wrapWidth = pixelsWidth;
 		t->data.count = text->translatedLength;
 		t->data.cursor = cursor;

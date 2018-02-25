@@ -62,6 +62,27 @@ namespace
 	real emScale;
 	static const uint32 border = 4;
 
+	void glyphImage(glyphStruct &g, msdfgen::Shape &shape)
+	{
+		shape.normalize();
+		msdfgen::edgeColoringSimple(shape, 3.0);
+		if (!shape.validate())
+			CAGE_THROW_ERROR(exception, "shape validation failed");
+		double l = real::PositiveInfinity.value, b = real::PositiveInfinity.value, r = real::NegativeInfinity.value, t = real::NegativeInfinity.value;
+		shape.bounds(l, b, r, t);
+		g.pngOffset = vec2(l, b);
+
+		// generate glyph image
+		g.png = newPngImage();
+		g.png->empty(numeric_cast<uint32>(r - l) + border * 2, numeric_cast<uint32>(t - b) + border * 2, 3);
+		msdfgen::Bitmap<msdfgen::FloatRGB> msdf(g.png->width(), g.png->height());
+		msdfgen::generateMSDF(msdf, shape, 4.0, 1.0, from(-g.pngOffset + border));
+		for (uint32 y = 0; y < g.png->height(); y++)
+			for (uint32 x = 0; x < g.png->width(); x++)
+				for (uint32 c = 0; c < 3; c++)
+					g.png->value(x, y, c, to(msdf(x, y))[c].value);
+	}
+
 	void loadGlyphs()
 	{
 		CAGE_LOG(severityEnum::Info, logComponentName, "load glyphs");
@@ -91,31 +112,17 @@ namespace
 			// load glyph shape
 			msdfgen::Shape shape;
 			msdfgen::loadGlyphGlyph(shape, face->glyph);
-			if (shape.contours.empty())
-				continue;
-			shape.normalize();
-			msdfgen::edgeColoringSimple(shape, 3.0);
-			if (!shape.validate())
-				CAGE_THROW_ERROR(exception, "shape validation failed");
-			double l = real::PositiveInfinity.value, b = real::PositiveInfinity.value, r = real::NegativeInfinity.value, t = real::NegativeInfinity.value;
-			shape.bounds(l, b, r, t);
-			g.pngOffset = vec2(l, b);
-
-			// generate glyph image
-			g.png = newPngImage();
-			g.png->empty(numeric_cast<uint32>(r - l) + border * 2, numeric_cast<uint32>(t - b) + border * 2, 3, 2);
-			msdfgen::Bitmap<msdfgen::FloatRGB> msdf(g.png->width(), g.png->height());
-			msdfgen::generateMSDF(msdf, shape, 4.0, 1.0, from(-g.pngOffset + border));
-			for (uint32 y = 0; y < g.png->height(); y++)
-				for (uint32 x = 0; x < g.png->width(); x++)
-					for (uint32 c = 0; c < 3; c++)
-						g.png->value(x, y, c, to(msdf(x, y))[c].value);
+			if (!shape.contours.empty())
+				glyphImage(g, shape);
 
 			// update global data
 			data.glyphMaxSize = max(data.glyphMaxSize, g.data.size);
 			data.firstLineOffset = max(data.firstLineOffset, g.data.bearing[1]);
-			maxPngW = max(maxPngW, g.png->width());
-			maxPngH = max(maxPngH, g.png->height());
+			if (g.png)
+			{
+				maxPngW = max(maxPngW, g.png->width());
+				maxPngH = max(maxPngH, g.png->height());
+			}
 		}
 		CAGE_LOG(severityEnum::Note, logComponentName, string() + "units per EM: " + face->units_per_EM);
 		CAGE_LOG(severityEnum::Note, logComponentName, string() + "line height: " + data.lineHeight);
@@ -163,6 +170,20 @@ namespace
 			CAGE_LOG(severityEnum::Info, logComponentName, "font has no kerning");
 	}
 
+	msdfgen::Shape cursorShape()
+	{
+		msdfgen::Shape shape;
+		msdfgen::Contour &c = shape.addContour();
+		msdfgen::Point2 points[4] = {
+			{0, 0}, {0, 1}, {1, 1}, {1, 0}
+		};
+		c.addEdge(msdfgen::EdgeHolder(points[0], points[1]));
+		c.addEdge(msdfgen::EdgeHolder(points[1], points[2]));
+		c.addEdge(msdfgen::EdgeHolder(points[2], points[3]));
+		c.addEdge(msdfgen::EdgeHolder(points[3], points[0]));
+		return shape;
+	}
+
 	void addArtificialData()
 	{
 		CAGE_LOG(severityEnum::Info, logComponentName, "adding artificial data");
@@ -192,13 +213,15 @@ namespace
 			data.glyphCount++;
 			glyphs.resize(glyphs.size() + 1);
 			glyphStruct &g = glyphs[glyphs.size() - 1];
+			msdfgen::Shape shape = cursorShape();
+			glyphImage(g, shape);
 			g.data.advance = 0;
-			g.data.bearing[0] = -0.1;
+			g.data.bearing[0] = -0.05;
 			g.data.bearing[1] = data.lineHeight * 4 / 5;
 			g.data.size[0] = 0.1;
 			g.data.size[1] = data.lineHeight;
 
-			if (kerning.size())
+			if (!kerning.empty())
 			{ // compensate kerning
 				std::vector<real> k;
 				k.resize(data.glyphCount * data.glyphCount);
@@ -259,7 +282,7 @@ namespace
 	{
 		CAGE_LOG(severityEnum::Info, logComponentName, "create atlas pixels");
 		texels = newPngImage();
-		texels->empty(data.texWidth, data.texHeight, 3, 2);
+		texels->empty(data.texWidth, data.texHeight, 3);
 		for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
 		{
 			glyphStruct &g = glyphs[glyphIndex];
@@ -413,7 +436,7 @@ void processFont()
 	loadGlyphs();
 	loadCharset();
 	loadKerning();
-	//addArtificialData();
+	addArtificialData();
 	createAtlasCoordinates();
 	createAtlasPixels();
 	exportData();

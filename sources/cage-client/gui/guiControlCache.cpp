@@ -24,6 +24,7 @@ namespace cage
 			color[1] = context->defaultFontColor[1].value;
 			color[2] = context->defaultFontColor[2].value;
 			font = context->defaultFontName && context->assetManager->ready(context->defaultFontName) ? context->assetManager->get<assetSchemeIndexFont, fontClass>(context->defaultFontName) : nullptr;
+			size = 14;
 			align = textAlignEnum::Left;
 			lineSpacing = 0;
 			translatedText = nullptr;

@@ -13,6 +13,7 @@
 #include <cage-client/opengl.h>
 #include <cage-client/utility/highPerformanceGpuHint.h>
 
+#include <initializer_list>
 
 using namespace cage;
 
@@ -181,14 +182,16 @@ void generateEmpties(entityClass *layout, uint32 &index)
 		p.w = 500;
 		p.wUnit = unitsModeEnum::Pixels;
 	}
+	for (auto size : {10, 12, 14, 16, 20})
 	{
-		entityClass *control = prepareEntity(layout, index++, "empty with large font text");
+		entityClass *control = prepareEntity(layout, index++, "font sizes");
 		GUI_GET_COMPONENT(control, c, control);
 		c.controlType = controlTypeEnum::Empty;
 		GUI_GET_COMPONENT(text, t, control);
-		t.value = "large font text";
+		t.value = string() + "font <$> _:{}% @ text " + size;
 		GUI_GET_COMPONENT(format, f, control);
-		f.fontName = hashString("cage/font/roboto.ttf?20");
+		f.fontName = hashString("cage/font/roboto.ttf");
+		f.size = size;
 	}
 	{
 		entityClass *control = prepareEntity(layout, index++, "empty with different font");
@@ -197,7 +200,7 @@ void generateEmpties(entityClass *layout, uint32 &index)
 		GUI_GET_COMPONENT(text, t, control);
 		t.value = "different font with more decorations";
 		GUI_GET_COMPONENT(format, f, control);
-		f.fontName = hashString("cage/tests/gui/immortal.ttf?14");
+		f.fontName = hashString("cage/tests/gui/immortal.ttf");
 	}
 	{
 		entityClass *control = prepareEntity(layout, index++, "empty with multiline text");

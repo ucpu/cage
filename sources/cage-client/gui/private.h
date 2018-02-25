@@ -18,7 +18,8 @@ namespace cage
 				uint32 *translatedText;
 				uint32 translatedLength;
 				textAlignEnum align;
-				uint8 lineSpacing;
+				float lineSpacing;
+				float size;
 			};
 			struct
 			{

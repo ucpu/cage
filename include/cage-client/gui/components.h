@@ -60,6 +60,7 @@ namespace cage
 		vec3 color;
 		uint32 fontName;
 		textAlignEnum align;
+		real size;
 		formatComponent();
 	};
 
