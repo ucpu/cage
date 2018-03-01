@@ -51,4 +51,4 @@
 	url = https://github.com/lsalzman/enet.git
 [submodule "msdfgen/msdfgen"]
 	path = msdfgen/msdfgen
-	url = https://github.com/ucpu/msdfgen.git
+	url = https://github.com/ckohnert/msdfgen.git
