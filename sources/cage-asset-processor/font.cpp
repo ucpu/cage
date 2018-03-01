@@ -114,7 +114,7 @@ namespace
 
 			// load glyph shape
 			msdfgen::Shape shape;
-			msdfgen::loadGlyphGlyph(shape, face->glyph);
+			msdfgen::loadGlyphSlot(shape, face->glyph);
 			if (!shape.contours.empty())
 				glyphImage(g, shape);
 
