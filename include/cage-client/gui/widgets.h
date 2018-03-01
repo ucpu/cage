@@ -33,15 +33,9 @@ namespace cage
 		ReadOnly = 1 << 0,
 		SelectAllOnFocusGain = 1 << 1,
 		GoToEndOnFocusGain = 1 << 2,
-		EventOnAnyChange = 1 << 3,
-		EventOnKeyEnter = 1 << 4,
-		EventOnFocusLost = 1 << 5,
-		// input box only
-		ShowArrowButtons = 1 << 6,
-		AlwaysRoundValueToStep = 1 << 7,
-		// text area only
-		CtrlEnterNewLine = 1 << 8, // supresses event from EventOnKeyEnter
-		WriteTabs = 1 << 9, // tab key will write tab rather than skip to next widget
+		ShowArrowButtons = 1 << 3,
+		AlwaysRoundValueToStep = 1 << 4,
+		//WriteTabs = 1 << 5, // tab key will write tab rather than skip to next widget
 	};
 	GCHL_ENUM_BITS(inputStyleFlags);
 
@@ -54,12 +48,12 @@ namespace cage
 			sint32 i;
 			Union();
 		} min, max, step;
-		uint32 cursor; // utf-32 characters
+		uint32 cursor; // (utf-32) characters (not bytes)
 		inputTypeEnum type;
 		inputStyleFlags style;
 		bool valid;
 		// textComponent defines placeholder
-		// textFormatComponent defines format for the (valid) value (not the placeholder)
+		// textFormatComponent defines format
 		// selectionComponent defines selected text
 		inputBoxComponent();
 	};
@@ -67,7 +61,7 @@ namespace cage
 	struct CAGE_API textAreaComponent
 	{
 		memoryBuffer *buffer; // utf-8 encoded string
-		uint32 cursor; // utf-32 characters
+		uint32 cursor; // (utf-32) characters (not bytes)
 		uint32 maxLength; // bytes
 		inputStyleFlags style;
 		// selectionComponent defines selected text

@@ -35,8 +35,9 @@ namespace cage
 			color = f.color;
 		if (f.align != (textAlignEnum)-1)
 			format.align = f.align;
-		if (f.lineSpacing != detail::numeric_limits<sint16>::min())
-			format.lineSpacing = f.lineSpacing;
+		// todo temporarily disabled
+		//if (f.lineSpacing.valid())
+		//	format.lineSpacing = f.lineSpacing;
 	}
 
 	renderableImageStruct::imageStruct::imageStruct() : texture(nullptr)

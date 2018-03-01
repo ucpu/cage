@@ -88,7 +88,7 @@ namespace cage
 		vec3 color;
 		uint32 fontName;
 		textAlignEnum align;
-		sint16 lineSpacing;
+		real lineSpacing;
 		textFormatComponent();
 	};
 

@@ -13,7 +13,6 @@
 #include <cage-client/graphic.h>
 #include <cage-client/gui.h>
 #include <cage-client/engine.h>
-#include <cage-client/gui.h>
 #include <cage-client/opengl.h>
 #include <cage-client/utility/engineProfiling.h>
 #include <cage-client/utility/cameraController.h>
@@ -184,8 +183,6 @@ int main(int argc, char *args[])
 		window()->windowedSize(pointStruct(800, 600));
 		window()->title("cage test engine lights (bottle)");
 		initializeGui();
-		//gui()->setZoom(5);
-		//detail::guiSkinTemplateExport(skinConfigStruct(), 1024)->encodeFile("guiSkinLayout.png");
 
 		// entities
 		entityManagerClass *ents = entities();

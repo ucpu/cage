@@ -2,12 +2,9 @@ namespace cage
 {
 	enum class inputButtonsPlacementModeEnum : uint32
 	{
-		InsideRight,
-		InsideLeft,
-		InsideSides,
-		OutsideRight,
-		OutsideLeft,
-		OutsideSides,
+		Left,
+		Right,
+		Sides,
 	};
 
 	struct CAGE_API skinWidgetDefaultsStruct // all sizes are in points
@@ -29,12 +26,14 @@ namespace cage
 		} button;
 		struct CAGE_API inputBoxStruct
 		{
-			textFormatComponent textFormat;
-			vec3 invalidValueTextColor;
-			vec4 basePadding, buttonsPadding;
+			textFormatComponent textValidFormat;
+			textFormatComponent textInvalidFormat;
+			textFormatComponent placeholderFormat;
+			vec4 basePadding;
 			vec4 margin;
 			vec2 size;
-			real buttonsOffset, buttonsSpacing;
+			real buttonsSize;
+			real buttonsOffset;
 			inputButtonsPlacementModeEnum buttonsMode;
 			inputBoxStruct();
 		} inputBox;
@@ -158,34 +157,25 @@ namespace cage
 
 	enum class elementTypeEnum : uint32
 	{
-		ButtonNormal,
-		ButtonPressed,
-		ButtonNormalTop,
-		ButtonPressedTop,
-		ButtonNormalBottom,
-		ButtonPressedBottom,
-		ButtonNormalLeft,
-		ButtonPressedLeft,
-		ButtonNormalRight,
-		ButtonPressedRight,
-		ButtonNormalHorizontal,
-		ButtonPressedHorizontal,
-		ButtonNormalVertical,
-		ButtonPressedVertical,
-		TextArea,
-		InputBox,
-		InputButtonNormalIncrement,
-		InputButtonPressedIncrement,
-		InputButtonNormalDecrement,
-		InputButtonPressedDecrement,
-		SliderHorizontalPanel,
-		SliderVerticalPanel,
-		SliderHorizontalDot,
-		SliderVerticalDot,
 		ScrollbarHorizontalPanel,
 		ScrollbarVerticalPanel,
 		ScrollbarHorizontalDot,
 		ScrollbarVerticalDot,
+		SliderHorizontalPanel,
+		SliderVerticalPanel,
+		SliderHorizontalDot,
+		SliderVerticalDot,
+		InputBox,
+		InputButtonIncrement,
+		InputButtonDecrement,
+		TextArea,
+		Button,
+		ButtonTop,
+		ButtonBottom,
+		ButtonLeft,
+		ButtonRight,
+		ButtonHorizontal,
+		ButtonVertical,
 		RadioBoxUnchecked,
 		RadioBoxChecked,
 		CheckBoxUnchecked,

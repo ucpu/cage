@@ -24,10 +24,10 @@ namespace cage
 	inputBoxComponent::Union::Union() : i(0)
 	{}
 
-	inputBoxComponent::inputBoxComponent() : cursor(-1), type(inputTypeEnum::Text), style(inputStyleFlags::EventOnAnyChange | inputStyleFlags::ShowArrowButtons), valid(false)
+	inputBoxComponent::inputBoxComponent() : cursor(-1), type(inputTypeEnum::Text), style(inputStyleFlags::ShowArrowButtons), valid(false)
 	{}
 
-	textAreaComponent::textAreaComponent() : buffer(nullptr), cursor(-1), maxLength(1024 * 1024), style(inputStyleFlags::EventOnAnyChange | inputStyleFlags::CtrlEnterNewLine | inputStyleFlags::WriteTabs)
+	textAreaComponent::textAreaComponent() : buffer(nullptr), cursor(-1), maxLength(1024 * 1024), style(inputStyleFlags::None)
 	{}
 
 	checkBoxComponent::checkBoxComponent() : type(checkBoxTypeEnum::CheckBox), state(checkBoxStateEnum::Unchecked)

@@ -137,6 +137,7 @@ bool guiInit()
 			c.type = inputTypeEnum::Integer;
 			c.min.i = 100;
 			c.max.i = 100000;
+			c.step.i = 100;
 			c.value = "5000";
 		}
 	}

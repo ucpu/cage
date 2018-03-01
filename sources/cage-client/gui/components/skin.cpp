@@ -102,7 +102,7 @@ namespace cage
 			{ // things without focus
 				for (auto t : { elementTypeEnum::GroupCell, elementTypeEnum::GroupPanel, elementTypeEnum::GroupSpoilerCollapsed, elementTypeEnum::GroupSpoilerShown, elementTypeEnum::GroupCaption,
 					elementTypeEnum::WindowBaseModal, elementTypeEnum::WindowBaseNormal, elementTypeEnum::WindowCaption, elementTypeEnum::WindowResizer,
-					elementTypeEnum::InputButtonNormalDecrement, elementTypeEnum::InputButtonNormalIncrement, elementTypeEnum::InputButtonPressedDecrement, elementTypeEnum::InputButtonPressedIncrement,
+					elementTypeEnum::InputButtonDecrement, elementTypeEnum::InputButtonIncrement,
 					elementTypeEnum::ComboBoxList, elementTypeEnum::ComboBoxItem, elementTypeEnum::ComboBoxSelectedItem, elementTypeEnum::ListBoxItem, elementTypeEnum::ListBoxCheckedItem,
 					elementTypeEnum::ProgressBar, elementTypeEnum::SliderHorizontalDot, elementTypeEnum::SliderVerticalDot,
 					elementTypeEnum::ScrollbarHorizontalDot, elementTypeEnum::ScrollbarHorizontalPanel, elementTypeEnum::ScrollbarVerticalDot, elementTypeEnum::ScrollbarVerticalPanel,
@@ -136,8 +136,11 @@ namespace cage
 		textFormat.align = textAlignEnum::Center;
 	}
 
-	skinWidgetDefaultsStruct::inputBoxStruct::inputBoxStruct() : textFormat(text), invalidValueTextColor(1, 0, 0), basePadding(1, 1, 1, 1), buttonsPadding(1, 1, 1, 1), margin(1, 1, 1, 1), size(300, 32), buttonsOffset(), buttonsSpacing(), buttonsMode(inputButtonsPlacementModeEnum::InsideRight)
-	{}
+	skinWidgetDefaultsStruct::inputBoxStruct::inputBoxStruct() : textValidFormat(text), textInvalidFormat(text), placeholderFormat(text), basePadding(5, 5, 5, 5), margin(1, 1, 1, 1), size(300, 32), buttonsSize(32), buttonsOffset(2), buttonsMode(inputButtonsPlacementModeEnum::Sides)
+	{
+		textInvalidFormat.color = vec3(1,0,0);
+		placeholderFormat.color = vec3(0.5,0.5,0.5);
+	}
 
 	skinWidgetDefaultsStruct::textAreaStruct::textAreaStruct() : textFormat(text), padding(3, 3, 3, 3), margin(1, 1, 1, 1), size(450, 200)
 	{}

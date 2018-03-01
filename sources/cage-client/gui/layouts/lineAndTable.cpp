@@ -80,7 +80,7 @@ namespace cage
 				while (c)
 				{
 					c->updateRequestedSize();
-					base->explicitPosition(c->requestedSize);
+					//base->explicitPosition(c->requestedSize);
 					m = max(m, c->requestedSize);
 					uint32 wi = data.vertical ? (idx % data.sections) : (idx / data.sections);
 					uint32 hi = data.vertical ? (idx / data.sections) : (idx % data.sections);

@@ -172,12 +172,22 @@ namespace cage
 	{
 		guiItemStruct *const base;
 		renderableTextStruct::textStruct text;
+		bool skipInitialize;
 
 		textItemStruct(guiItemStruct *base);
 
 		void initialize();
-		void updateRequestedSize();
+
+		void transcript();
+		void transcript(const string &value);
+		void transcript(const char *value);
+
+		void updateRequestedSize(vec2 &size);
+
 		renderableTextStruct *emit() const;
+		renderableTextStruct *emit(vec2 position, vec2 size) const;
+
+		void updateCursorPosition(vec2 position, vec2 size, vec2 point, uint32 &cursor);
 	};
 
 	struct imageItemStruct
@@ -187,8 +197,9 @@ namespace cage
 		imageItemStruct(guiItemStruct *base);
 
 		void initialize();
-		void updateRequestedSize();
+		void updateRequestedSize(vec2 &size);
 		renderableImageStruct *emit() const;
+		renderableImageStruct *emit(vec2 position, vec2 size) const;
 	};
 
 	class guiImpl : public guiClass

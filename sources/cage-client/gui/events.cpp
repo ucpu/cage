@@ -45,7 +45,7 @@ namespace cage
 
 		guiItemStruct *findItem(guiItemStruct *item, uint32 name)
 		{
-			if (item->entity->getName() == name)
+			if (item->entity && item->entity->getName() == name)
 				return item;
 			guiItemStruct *c = item->firstChild;
 			while (c)
@@ -63,7 +63,7 @@ namespace cage
 			if (impl->focusName)
 			{
 				guiItemStruct *item = findItem(impl->root, impl->focusName);
-				if (item->widget)
+				if (item && item->widget)
 					return item->widget;
 			}
 			return nullptr;

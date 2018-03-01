@@ -40,9 +40,9 @@ namespace cage
 		else if (layout)
 			layout->updateRequestedSize();
 		else if (text)
-			text->updateRequestedSize();
+			text->updateRequestedSize(requestedSize);
 		else if (image)
-			image->updateRequestedSize();
+			image->updateRequestedSize(requestedSize);
 	}
 
 	void guiItemStruct::updateFinalPosition(const updatePositionStruct &update)

@@ -12,6 +12,7 @@ namespace cage
 
 	struct CAGE_API layoutTableComponent : public layoutLineComponent
 	{
+		// set sections to 0 to make it square-ish
 		uint32 sections;
 		bool grid; // false -> each column and row sizes are independent; true -> all columns and rows have same sizes
 		layoutTableComponent();
@@ -24,7 +25,6 @@ namespace cage
 
 	struct CAGE_API layoutSplitterComponent // splits the given area into two parts in a way that it is fully used
 	{
-		// set sections to 0 to make it square-ish
 		bool vertical; // false -> left sub-area, right sub-area; true -> top, bottom
 		bool inverse; // false -> first item is fixed size, second item fills the remaining space; true -> second item is fixed size, first item fills the remaining space
 		layoutSplitterComponent();

@@ -72,7 +72,7 @@ namespace cage
 
 	bool widgetBaseStruct::mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point)
 	{
-		base->impl->focusName = 0;
+		makeFocused();
 		return true;
 	}
 

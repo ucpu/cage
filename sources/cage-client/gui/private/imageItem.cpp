@@ -27,7 +27,7 @@ namespace cage
 
 	}
 
-	void imageItemStruct::updateRequestedSize()
+	void imageItemStruct::updateRequestedSize(vec2 &size)
 	{
 
 	}

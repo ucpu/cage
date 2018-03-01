@@ -116,8 +116,7 @@ bool guiInit()
 			c.min.i = 1;
 			c.max.i = 1000;
 			c.step.i = 1;
-			GUI_GET_COMPONENT(text, t, con);
-			t.value = values[i];
+			c.value = values[i];
 		}
 	}
 
@@ -129,9 +128,12 @@ namespace
 	void setIntValue(uint32 index, uint64 &value, bool allowZero)
 	{
 		entityClass *control = cage::gui()->entities()->getEntity(20 + index);
-		GUI_GET_COMPONENT(text, t, control);
-		if (t.value.isDigitsOnly() && !t.value.empty() && (t.value.toUint32() > 0 || allowZero))
+		GUI_GET_COMPONENT(inputBox, t, control);
+		if (t.valid)
+		{
+			CAGE_ASSERT_RUNTIME(t.value.isDigitsOnly() && !t.value.empty());
 			value = t.value.toUint32() * 1000;
+		}
 	}
 }
 
@@ -151,10 +153,10 @@ int main(int argc, char *args[])
 	try
 	{
 		// log to console
-		holder <loggerClass> log1 = newLogger();
-		log1->filter.bind <logFilterPolicyPass>();
-		log1->format.bind <logFormatPolicyConsole>();
-		log1->output.bind <logOutputPolicyStdOut>();
+		holder<loggerClass> log1 = newLogger();
+		log1->filter.bind<logFilterPolicyPass>();
+		log1->format.bind<logFormatPolicyConsole>();
+		log1->output.bind<logOutputPolicyStdOut>();
 
 		configSetBool("cage-client.engine.debugRenderMissingMeshes", true);
 		engineInitialize(engineCreateConfig());
