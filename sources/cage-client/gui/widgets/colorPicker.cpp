@@ -104,48 +104,39 @@ namespace cage
 
 			virtual void updateFinalPosition(const updatePositionStruct &update) override
 			{
-				vec4 border;
 				if (this == large && small)
 				{ // this is a popup
 					base->size = base->requestedSize;
 					base->position = small->base->position + small->base->size * 0.5 - base->size * 0.5;
-					base->contentSize = base->size;
-					base->contentPosition = base->position;
-					border = skin().layouts[(uint32)elementTypeEnum::ColorPickerFull].border;
 				}
-				else
-				{
-					border = skin().layouts[(uint32)elementTypeEnum::ColorPickerCompact].border;
-				}
-				base->contentSize = base->size;
-				base->contentPosition = base->position;
-				positionOffset(base->contentPosition, -border);
-				sizeOffset(base->contentSize, -border);
+				base->updateContentPosition(vec4()); // margin?
 				if (this == large && small)
 					base->moveToWindow(true, true);
 				if (this == large)
 				{
-					sliderPos = base->contentPosition;
-					sliderSize = base->contentSize;
+					vec2 p = base->contentPosition;
+					vec2 s = base->contentSize;
+					offset(p, s, -skin().layouts[(uint32)elementTypeEnum::ColorPickerFull].border);
+					sliderPos = p;
+					sliderSize = s;
 					sliderSize[1] *= skin().defaults.colorPicker.hueBarPortion;
-					resultPos = base->contentPosition;
+					resultPos = p;
 					resultPos[1] += sliderSize[1];
-					resultSize = base->contentSize;
+					resultSize = s;
 					resultSize[0] *= skin().defaults.colorPicker.resultBarPortion;
 					resultSize[1] *= 1 - skin().defaults.colorPicker.hueBarPortion;
 					rectPos = resultPos;
 					rectPos[0] += resultSize[0];
-					rectSize[0] = base->contentSize[0] * (1 - skin().defaults.colorPicker.resultBarPortion);
+					rectSize[0] = s[0] * (1 - skin().defaults.colorPicker.resultBarPortion);
 					rectSize[1] = resultSize[1];
 				}
 			}
 
-			void emitColor(vec2 pos, vec2 size, uint32 mode, const vec4 &margin = vec4()) const
+			void emitColor(vec2 pos, vec2 size, uint32 mode, const vec4 &margin) const
 			{
 				auto *e = base->impl->emitControl;
 				auto *t = e->memory.createObject<colorPickerRenderableStruct>();
-				positionOffset(pos, -margin);
-				sizeOffset(size, -margin);
+				offset(pos, size, -margin);
 				t->pos = base->impl->pointsToNdc(pos, size);
 				t->mode = mode;
 				t->rgb = data.color;
@@ -157,7 +148,7 @@ namespace cage
 			{
 				if (this == large)
 				{ // large
-					emitElement(elementTypeEnum::ColorPickerFull, 0, vec4());
+					emitElement(elementTypeEnum::ColorPickerFull, 0);
 					emitElement(elementTypeEnum::ColorPickerHSliderPanel, 0, sliderPos, sliderSize);
 					emitElement(elementTypeEnum::ColorPickerResult, 0, resultPos, resultSize);
 					emitElement(elementTypeEnum::ColorPickerSVRect, 0, rectPos, rectSize);
@@ -167,8 +158,8 @@ namespace cage
 				}
 				else
 				{ // small
-					emitElement(elementTypeEnum::ColorPickerCompact, 0, vec4());
-					emitColor(base->contentPosition, base->contentSize, 0);
+					emitElement(elementTypeEnum::ColorPickerCompact, 0);
+					emitColor(base->contentPosition, base->contentSize, 0, skin().layouts[(uint32)elementTypeEnum::ColorPickerCompact].border);
 				}
 			}
 

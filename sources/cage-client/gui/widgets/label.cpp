@@ -40,15 +40,12 @@ namespace cage
 					base->image->updateRequestedSize(base->requestedSize);
 				else
 					CAGE_ASSERT_RUNTIME(false);
-				sizeOffset(base->requestedSize, skin().defaults.label.margin);
+				offsetSize(base->requestedSize, skin().defaults.label.margin);
 			}
 
 			virtual void updateFinalPosition(const updatePositionStruct &update) override
 			{
-				base->contentPosition = base->position;
-				base->contentSize = base->size;
-				positionOffset(base->contentPosition, -skin().defaults.label.margin);
-				sizeOffset(base->contentSize, -skin().defaults.label.margin);
+				base->updateContentPosition(skin().defaults.label.margin);
 			}
 
 			virtual void emit() const override

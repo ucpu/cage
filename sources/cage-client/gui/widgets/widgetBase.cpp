@@ -39,13 +39,9 @@ namespace cage
 		base->impl->focusName = base->entity->getName();
 	}
 
-	renderableElementStruct *widgetBaseStruct::emitElement(elementTypeEnum element, uint32 mode, const vec4 &margin) const
+	renderableElementStruct *widgetBaseStruct::emitElement(elementTypeEnum element, uint32 mode) const
 	{
-		vec2 pos = base->position;
-		vec2 size = base->size;
-		positionOffset(pos, -margin);
-		sizeOffset(size, -margin);
-		return emitElement(element, mode, pos, size);
+		return emitElement(element, mode, base->contentPosition, base->contentSize);
 	}
 
 	renderableElementStruct *widgetBaseStruct::emitElement(elementTypeEnum element, uint32 mode, vec2 pos, vec2 size) const
@@ -59,9 +55,8 @@ namespace cage
 		t->data.element = (uint32)element;
 		t->data.mode = mode;
 		t->data.outer = base->impl->pointsToNdc(pos, size);
-		vec4 border = -skin().layouts[(uint32)element].border;
-		positionOffset(pos, border);
-		sizeOffset(size, border);
+		vec4 border = skin().layouts[(uint32)element].border;
+		offset(pos, size, -border);
 		t->data.inner = base->impl->pointsToNdc(pos, size);
 		t->skinBuffer = skin().elementsGpuBuffer.get();
 		t->skinTexture = skin().texture;

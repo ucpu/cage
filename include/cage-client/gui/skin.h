@@ -20,7 +20,7 @@ namespace cage
 		{
 			textFormatComponent textFormat;
 			imageFormatComponent imageFormat;
-			vec4 normalPadding, pressedPadding, margin;
+			vec4 padding, margin;
 			vec2 size;
 			buttonStruct();
 		} button;
@@ -109,6 +109,7 @@ namespace cage
 			textFormatComponent textFormat;
 			vec4 baseMargin;
 			vec4 contentPadding;
+			vec4 captionPadding;
 			vec2 scrollbarsSizes;
 			real captionHeight;
 			scrollableBaseStruct();

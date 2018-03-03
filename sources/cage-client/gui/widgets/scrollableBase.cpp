@@ -11,6 +11,8 @@ namespace cage
 	{
 		CAGE_ASSERT_RUNTIME(scrollable);
 		CAGE_ASSERT_RUNTIME(defaults);
+		if (base->text)
+			base->text->text.apply(defaults->textFormat, base->impl);
 		if (!base->layout)
 			layoutDefaultCreate(base);
 	}
@@ -18,6 +20,12 @@ namespace cage
 	void scrollableBaseStruct::scrollableUpdateRequestedSize()
 	{
 		base->layout->updateRequestedSize();
+		if (base->text)
+		{
+			vec2 cs;
+			base->text->updateRequestedSize(cs);
+			base->requestedSize[0] = max(base->requestedSize[0], cs[0]);
+		}
 		frame = vec4();
 		if (elementBase != elementTypeEnum::InvalidElement)
 		{
@@ -25,21 +33,17 @@ namespace cage
 		}
 		if (elementCaption != elementTypeEnum::InvalidElement)
 		{
-			vec4 b = skin().layouts[(uint32)elementCaption].border;
-			frame[1] += b[1] + b[3] + defaults->captionHeight;
+			frame[1] += defaults->captionHeight;
 		}
 		frame += defaults->baseMargin;
 		frame += defaults->contentPadding;
 		// todo scrollbars
-		sizeOffset(base->requestedSize, frame);
+		offsetSize(base->requestedSize, frame);
 	}
 
 	void scrollableBaseStruct::scrollableUpdateFinalPosition(const updatePositionStruct &update)
 	{
-		base->contentPosition = update.position;
-		base->contentSize = update.size;
-		positionOffset(base->contentPosition, -frame);
-		sizeOffset(base->contentSize, -frame);
+		base->updateContentPosition(frame);
 		updatePositionStruct u(update);
 		u.position = base->contentPosition;
 		u.size = base->contentSize;
@@ -49,7 +53,24 @@ namespace cage
 	void scrollableBaseStruct::scrollableEmit() const
 	{
 		if (elementBase != elementTypeEnum::InvalidElement)
-			emitElement(elementBase, 0, defaults->baseMargin);
+		{
+			vec2 p = base->position;
+			vec2 s = base->size;
+			offset(p, s, -defaults->baseMargin);
+			emitElement(elementBase, 0, p, s);
+		}
+		if (elementCaption != elementTypeEnum::InvalidElement)
+		{
+			vec2 p = base->position;
+			vec2 s = vec2(base->size[0], defaults->captionHeight);
+			offset(p, s, -defaults->baseMargin * vec4(1,1,1,0));
+			emitElement(elementCaption, 0, p, s);
+			if (base->text)
+			{
+				offset(p, s, -defaults->captionPadding - skin().layouts[(uint32)elementCaption].border);
+				base->text->emit(p, s);
+			}
+		}
 		base->childrenEmit();
 	}
 }

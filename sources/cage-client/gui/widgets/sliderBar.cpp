@@ -18,7 +18,6 @@ namespace cage
 		{
 			sliderBarComponent &data;
 			skinWidgetDefaultsStruct::sliderBarStruct::directionStruct defaults;
-			vec4 frame;
 			elementTypeEnum baseElement;
 			elementTypeEnum dotElement;
 
@@ -41,22 +40,17 @@ namespace cage
 				baseElement = data.vertical ? elementTypeEnum::SliderVerticalPanel : elementTypeEnum::SliderHorizontalPanel;
 				dotElement = data.vertical ? elementTypeEnum::SliderVerticalDot : elementTypeEnum::SliderHorizontalDot;
 				vec4 border = skin().layouts[(uint32)baseElement].border;
-				frame = border + defaults.margin + defaults.padding;
 				base->requestedSize = defaults.size;
-				sizeOffset(base->requestedSize, frame);
 			}
 
 			virtual void updateFinalPosition(const updatePositionStruct &update) override
 			{
-				base->contentPosition = base->position;
-				base->contentSize = base->size;
-				positionOffset(base->contentPosition, -frame);
-				sizeOffset(base->contentSize, -frame);
+				base->updateContentPosition(defaults.margin);
 			}
 
 			virtual void emit() const override
 			{
-				emitElement(baseElement, 0, defaults.margin);
+				emitElement(baseElement, 0);
 				real ds = min(base->contentSize[0], base->contentSize[1]);
 				vec2 size = vec2(ds, ds);
 				vec2 p = base->contentSize - size;

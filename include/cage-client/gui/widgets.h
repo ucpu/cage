@@ -10,7 +10,6 @@ namespace cage
 	struct CAGE_API buttonComponent
 	{
 		bool allowMerging;
-		bool skipMarginWhereMerging;
 		// textComponent defines foreground
 		// imageComponent defines background
 		buttonComponent();

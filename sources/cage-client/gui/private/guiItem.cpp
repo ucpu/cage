@@ -53,7 +53,8 @@ namespace cage
 			widget->updateFinalPosition(update);
 		else
 		{
-			CAGE_ASSERT_RUNTIME(layout, "trying to layout an entity without layouting specified");
+			uint32 name = entity ? entity->getName() : 0;
+			CAGE_ASSERT_RUNTIME(layout, "trying to layout an entity without layouting specified", name);
 			layout->updateFinalPosition(update);
 		}
 	}
@@ -107,6 +108,20 @@ namespace cage
 		CAGE_ASSERT_RUNTIME(size.valid(), "this item must have explicit size", entity->getName());
 	}
 
+	void guiItemStruct::updateContentPosition(const vec4 &subtractMargin)
+	{
+		contentPosition = position;
+		contentSize = size;
+		offsetPosition(contentPosition, -subtractMargin);
+		offsetSize(contentSize, -subtractMargin);
+	}
+
+	void guiItemStruct::detachChildren()
+	{
+		while (firstChild)
+			firstChild->detachParent();
+	}
+
 	void guiItemStruct::detachParent()
 	{
 		CAGE_ASSERT_RUNTIME(parent);
@@ -136,14 +151,30 @@ namespace cage
 		parent->lastChild = this;
 	}
 
-	void positionOffset(vec2 &position, const vec4 &offset)
+	void offsetPosition(vec2 &position, const vec4 &offset)
 	{
 		position -= vec2(offset);
 	}
 
-	void sizeOffset(vec2 &size, const vec4 &offset)
+	void offsetSize(vec2 &size, const vec4 &offset)
 	{
 		size += vec2(offset) + vec2(offset[2], offset[3]);
 		size = max(size, vec2());
+	}
+
+	void offset(vec2 &position, vec2 &size, const vec4 &offset)
+	{
+		offsetPosition(position, offset);
+		offsetSize(size, offset);
+	}
+
+	bool pointInside(vec2 pos, vec2 size, vec2 point)
+	{
+		if (point[0] < pos[0] || point[1] < pos[1])
+			return false;
+		pos += size;
+		if (point[0] > pos[0] || point[1] > pos[1])
+			return false;
+		return true;
 	}
 }

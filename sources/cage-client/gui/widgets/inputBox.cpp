@@ -168,22 +168,17 @@ namespace cage
 
 			virtual void updateRequestedSize() override
 			{
-				const auto &s = skin().defaults.inputBox;
-				base->requestedSize = s.size;
-				mainSize = base->requestedSize;
-				if (data.type == inputTypeEnum::Real || data.type == inputTypeEnum::Integer)
-					mainSize[0] -= (s.buttonsSize + s.buttonsOffset) * 2;
-				sizeOffset(base->requestedSize, s.margin);
+				base->requestedSize = skin().defaults.inputBox.size;
 			}
 
 			virtual void updateFinalPosition(const updatePositionStruct &update) override
 			{
 				const auto &s = skin().defaults.inputBox;
-				base->contentPosition = base->position;
-				base->contentSize = base->size;
-				positionOffset(base->contentPosition, -s.margin);
-				sizeOffset(base->contentSize, -s.margin);
+				base->updateContentPosition(s.margin);
 				leftPos = mainPos = rightPos = base->contentPosition;
+				mainSize = base->contentSize;
+				if (data.type == inputTypeEnum::Real || data.type == inputTypeEnum::Integer)
+					mainSize[0] -= (s.buttonsSize + s.buttonsOffset) * 2;
 				if (data.type == inputTypeEnum::Real || data.type == inputTypeEnum::Integer)
 				{
 					real mw = mainSize[0];
@@ -210,8 +205,7 @@ namespace cage
 				}
 				base->contentPosition = mainPos;
 				base->contentSize = mainSize;
-				positionOffset(base->contentPosition, -s.basePadding);
-				sizeOffset(base->contentSize, -s.basePadding);
+				offset(base->contentPosition, base->contentSize, -s.basePadding);
 			}
 
 			virtual void emit() const override
@@ -229,12 +223,7 @@ namespace cage
 
 			bool insideButton(vec2 pos, vec2 point)
 			{
-				if (point[0] < pos[0] || point[1] < pos[1])
-					return false;
-				pos += vec2(skin().defaults.inputBox.buttonsSize, mainSize[1]);
-				if (point[0] > pos[0] || point[1] > pos[1])
-					return false;
-				return true;
+				return pointInside(pos, vec2(skin().defaults.inputBox.buttonsSize, mainSize[1]), point);
 			}
 
 			void increment(int sign)

@@ -40,7 +40,7 @@ namespace cage
 		detail::memset(this, 0, sizeof(*this));
 	}
 
-	skinElementLayoutStruct::skinElementLayoutStruct() : border(2,2,2,2)
+	skinElementLayoutStruct::skinElementLayoutStruct() : border(5,5,5,5)
 	{}
 
 	skinWidgetDefaultsStruct::skinWidgetDefaultsStruct()
@@ -131,12 +131,12 @@ namespace cage
 	skinWidgetDefaultsStruct::labelStruct::labelStruct() : textFormat(text), imageFormat(image), margin(1, 2, 1, 2)
 	{}
 
-	skinWidgetDefaultsStruct::buttonStruct::buttonStruct() : textFormat(text), imageFormat(image), normalPadding(1, 1, 2, 2), pressedPadding(2, 2, 1, 1), margin(1, 1, 1, 1), size(150, 32)
+	skinWidgetDefaultsStruct::buttonStruct::buttonStruct() : textFormat(text), imageFormat(image), padding(1, 1, 1, 1), margin(1, 1, 1, 1), size(150, 32)
 	{
 		textFormat.align = textAlignEnum::Center;
 	}
 
-	skinWidgetDefaultsStruct::inputBoxStruct::inputBoxStruct() : textValidFormat(text), textInvalidFormat(text), placeholderFormat(text), basePadding(5, 5, 5, 5), margin(1, 1, 1, 1), size(300, 32), buttonsSize(32), buttonsOffset(2), buttonsMode(inputButtonsPlacementModeEnum::Sides)
+	skinWidgetDefaultsStruct::inputBoxStruct::inputBoxStruct() : textValidFormat(text), textInvalidFormat(text), placeholderFormat(text), basePadding(2, 2, 2, 2), margin(1, 1, 1, 1), size(300, 32), buttonsSize(32), buttonsOffset(2), buttonsMode(inputButtonsPlacementModeEnum::Sides)
 	{
 		textInvalidFormat.color = vec3(1,0,0);
 		placeholderFormat.color = vec3(0.5,0.5,0.5);
@@ -178,8 +178,10 @@ namespace cage
 	skinWidgetDefaultsStruct::graphCanvasStruct::graphCanvasStruct() : size(200, 120)
 	{}
 
-	skinWidgetDefaultsStruct::scrollableBaseStruct::scrollableBaseStruct() : textFormat(text), contentPadding(2, 2, 2, 2), baseMargin(0, 0, 0, 0), scrollbarsSizes(16, 16), captionHeight(28)
-	{}
+	skinWidgetDefaultsStruct::scrollableBaseStruct::scrollableBaseStruct() : textFormat(text), contentPadding(2, 2, 2, 2), baseMargin(1, 1, 1, 1), captionPadding(3, 1, 3, 1), scrollbarsSizes(16, 16), captionHeight(28)
+	{
+		textFormat.align = textAlignEnum::Center;
+	}
 
 	skinWidgetDefaultsStruct::groupBoxStruct::groupBoxStruct() :  imageFormat(image)
 	{

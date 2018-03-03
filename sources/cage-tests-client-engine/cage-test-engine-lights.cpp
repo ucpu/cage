@@ -8,7 +8,6 @@
 #include <cage-core/assets.h>
 #include <cage-core/utility/hashString.h>
 #include <cage-core/utility/color.h>
-#include <cage-core/utility/png.h>
 #include <cage-client/core.h>
 #include <cage-client/graphic.h>
 #include <cage-client/gui.h>

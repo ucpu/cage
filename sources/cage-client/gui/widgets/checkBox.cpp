@@ -40,16 +40,11 @@ namespace cage
 					base->requestedSize[0] += skin().defaults.checkBox.labelOffset + txtSize[0];
 					base->requestedSize[1] = max(base->requestedSize[1], txtSize[1]);
 				}
-				sizeOffset(base->requestedSize, skin().defaults.checkBox.margin);
 			}
 
 			virtual void updateFinalPosition(const updatePositionStruct &update) override
 			{
-				base->contentPosition = base->position;
-				base->contentSize = base->size;
-				vec4 margin = skin().defaults.checkBox.margin;
-				positionOffset(base->contentPosition, -margin);
-				sizeOffset(base->contentSize, -margin);
+				base->updateContentPosition(skin().defaults.checkBox.margin);
 			}
 
 			virtual void emit() const override

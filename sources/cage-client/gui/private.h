@@ -120,7 +120,9 @@ namespace cage
 
 		void explicitPosition(vec2 &position, vec2 &size) const;
 		void explicitPosition(vec2 &size) const;
+		void updateContentPosition(const vec4 &subtractMargin);
 
+		void detachChildren();
 		void detachParent();
 		void attachParent(guiItemStruct *newParent);
 	};
@@ -143,7 +145,7 @@ namespace cage
 		virtual void updateFinalPosition(const updatePositionStruct &update) = 0;
 		virtual void emit() const = 0;
 
-		renderableElementStruct *emitElement(elementTypeEnum element, uint32 mode, const vec4 &margin) const;
+		renderableElementStruct *emitElement(elementTypeEnum element, uint32 mode) const;
 		renderableElementStruct *emitElement(elementTypeEnum element, uint32 mode, vec2 pos, vec2 size) const;
 
 		virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point);
@@ -281,8 +283,10 @@ namespace cage
 		void graphicDispatch();
 	};
 
-	void positionOffset(vec2 &position, const vec4 &offset);
-	void sizeOffset(vec2 &size, const vec4 &offset);
+	void offsetPosition(vec2 &position, const vec4 &offset);
+	void offsetSize(vec2 &size, const vec4 &offset);
+	void offset(vec2 &position, vec2 &size, const vec4 &offset);
+	bool pointInside(vec2 pos, vec2 size, vec2 point);
 }
 
 #endif // guard_private_h_BEDE53C63BB74919B9BD171B995FD1A1

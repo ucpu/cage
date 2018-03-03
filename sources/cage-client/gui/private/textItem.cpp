@@ -115,7 +115,7 @@ namespace cage
 		detail::memcpy(t->data.glyphs, text.glyphs, t->data.count * sizeof(uint32));
 		t->data.posX = numeric_cast<sint16>(position[0] * base->impl->pointsScale);
 		t->data.posY = numeric_cast<sint16>(position[1] * base->impl->pointsScale);
-		t->data.format.wrapWidth = numeric_cast<uint16>(size[0] * base->impl->pointsScale);
+		t->data.format.wrapWidth = numeric_cast<uint16>(size[0] * base->impl->pointsScale + 1);
 		e->last->next = t;
 		e->last = t;
 		return t;
