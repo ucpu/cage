@@ -205,7 +205,7 @@ namespace cage
 				}
 				base->contentPosition = mainPos;
 				base->contentSize = mainSize;
-				offset(base->contentPosition, base->contentSize, -s.basePadding);
+				offset(base->contentPosition, base->contentSize, -skin().layouts[(uint32)elementTypeEnum::InputBox].border - s.basePadding);
 			}
 
 			virtual void emit() const override

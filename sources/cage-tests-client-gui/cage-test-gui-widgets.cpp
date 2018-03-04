@@ -288,6 +288,62 @@ void guiCheckBoxes(uint32 parentName)
 	}
 }
 
+void guiCombos(uint32 parentName)
+{
+	entityManagerClass *ents = gui()->entities();
+	uint32 index = 1;
+
+	{ // empty
+		guiLabel(parentName, index, "empty");
+		entityClass *e = ents->newEntity(ents->generateUniqueName());
+		GUI_GET_COMPONENT(parent, p, e);
+		p.parent = parentName;
+		p.order = index++;
+		GUI_GET_COMPONENT(comboBox, cb, e);
+		GUI_GET_COMPONENT(text, t, e);
+		t.value = "placeholder";
+	}
+	{ // items
+		guiLabel(parentName, index, "items");
+		entityClass *e = ents->newEntity(ents->generateUniqueName());
+		GUI_GET_COMPONENT(parent, p, e);
+		p.parent = parentName;
+		p.order = index++;
+		GUI_GET_COMPONENT(comboBox, cb, e);
+		GUI_GET_COMPONENT(text, t, e);
+		t.value = "select one:";
+		for (uint32 i = 0; i < 4; i++)
+		{
+			entityClass *o = ents->newEntity(ents->generateUniqueName());
+			GUI_GET_COMPONENT(parent, p, o);
+			p.parent = e->getName();
+			p.order = index++;
+			GUI_GET_COMPONENT(text, t, o);
+			t.value = string("option ") + i;
+		}
+	}
+	{ // items
+		guiLabel(parentName, index, "preselected");
+		entityClass *e = ents->newEntity(ents->generateUniqueName());
+		GUI_GET_COMPONENT(parent, p, e);
+		p.parent = parentName;
+		p.order = index++;
+		GUI_GET_COMPONENT(comboBox, cb, e);
+		cb.selected = 2;
+		GUI_GET_COMPONENT(text, t, e);
+		t.value = "select one:";
+		for (uint32 i = 0; i < 4; i++)
+		{
+			entityClass *o = ents->newEntity(ents->generateUniqueName());
+			GUI_GET_COMPONENT(parent, p, o);
+			p.parent = e->getName();
+			p.order = index++;
+			GUI_GET_COMPONENT(text, t, o);
+			t.value = string("option ") + i;
+		}
+	}
+}
+
 void guiSliders(uint32 parentName)
 {
 	entityManagerClass *ents = gui()->entities();
@@ -419,7 +475,6 @@ void guiInitialize()
 		p.order = 2;
 		GUI_GET_COMPONENT(layoutLine, ll, panel);
 		ll.vertical = true;
-		//ll.expandToSameWidth = true;
 		GUI_GET_COMPONENT(widgetState, ws, panel);
 	}
 
@@ -427,6 +482,7 @@ void guiInitialize()
 	guiButtons(guiPanel(3, index, "buttons"));
 	guiInputBoxes(guiPanel(3, index, "input boxes"));
 	guiCheckBoxes(guiPanel(3, index, "check boxes"));
+	guiCombos(guiPanel(3, index, "combo boxes"));
 	guiSliders(guiPanel(3, index, "sliders"));
 	guiColorPickers(guiPanel(3, index, "color pickers"));
 }

@@ -27,9 +27,9 @@ namespace cage
 
 	}
 
-	void imageItemStruct::updateRequestedSize(vec2 &size)
+	vec2 imageItemStruct::updateRequestedSize()
 	{
-
+		return vec2(); // todo
 	}
 
 	renderableImageStruct *imageItemStruct::emit() const

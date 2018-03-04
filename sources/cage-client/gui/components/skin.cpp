@@ -148,8 +148,13 @@ namespace cage
 	skinWidgetDefaultsStruct::checkBoxStruct::checkBoxStruct() : textFormat(text), margin(1, 1, 1, 1), size(28, 28), labelOffset(3)
 	{}
 
-	skinWidgetDefaultsStruct::comboBoxStruct::comboBoxStruct() : textFormat(text), basePadding(1, 1, 1, 1), baseMargin(1, 1, 1, 1), listPadding(0, 0, 0, 0), itemPadding(1, 1, 1, 1), size(250, 32), listOffset(-5), itemSpacing(0)
-	{}
+	skinWidgetDefaultsStruct::comboBoxStruct::comboBoxStruct() : placeholderFormat(text), itemsFormat(text), selectedFormat(text), basePadding(1, 1, 1, 1), baseMargin(1, 1, 1, 1), listPadding(0, 0, 0, 0), itemPadding(1, 1, 1, 1), size(250, 32), listOffset(-6), itemSpacing(0)
+	{
+		placeholderFormat.color = vec3(0.5, 0.5, 0.5);
+		placeholderFormat.align = textAlignEnum::Center;
+		itemsFormat.align = textAlignEnum::Center;
+		selectedFormat.align = textAlignEnum::Center;
+	}
 
 	skinWidgetDefaultsStruct::listBoxStruct::listBoxStruct() : textFormat(text), basePadding(0, 0, 0, 0), baseMargin(1, 1, 1, 1), itemPadding(1, 1, 1, 1), size(250, 32), itemSpacing(0)
 	{}

@@ -22,8 +22,7 @@ namespace cage
 		base->layout->updateRequestedSize();
 		if (base->text)
 		{
-			vec2 cs;
-			base->text->updateRequestedSize(cs);
+			vec2 cs = base->text->updateRequestedSize();
 			base->requestedSize[0] = max(base->requestedSize[0], cs[0]);
 		}
 		frame = vec4();

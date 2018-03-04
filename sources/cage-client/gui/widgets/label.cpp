@@ -35,9 +35,9 @@ namespace cage
 			virtual void updateRequestedSize() override
 			{
 				if (base->text)
-					base->text->updateRequestedSize(base->requestedSize);
+					base->requestedSize = base->text->updateRequestedSize();
 				else if (base->image)
-					base->image->updateRequestedSize(base->requestedSize);
+					base->requestedSize = base->image->updateRequestedSize();
 				else
 					CAGE_ASSERT_RUNTIME(false);
 				offsetSize(base->requestedSize, skin().defaults.label.margin);

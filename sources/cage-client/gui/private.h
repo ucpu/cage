@@ -184,7 +184,7 @@ namespace cage
 		void transcript(const string &value);
 		void transcript(const char *value);
 
-		void updateRequestedSize(vec2 &size);
+		vec2 updateRequestedSize();
 
 		renderableTextStruct *emit() const;
 		renderableTextStruct *emit(vec2 position, vec2 size) const;
@@ -199,7 +199,7 @@ namespace cage
 		imageItemStruct(guiItemStruct *base);
 
 		void initialize();
-		void updateRequestedSize(vec2 &size);
+		vec2 updateRequestedSize();
 		renderableImageStruct *emit() const;
 		renderableImageStruct *emit(vec2 position, vec2 size) const;
 	};

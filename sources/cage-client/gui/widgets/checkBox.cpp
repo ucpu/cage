@@ -35,8 +35,7 @@ namespace cage
 				base->requestedSize = skin().defaults.checkBox.size;
 				if (base->text)
 				{
-					vec2 txtSize;
-					base->text->updateRequestedSize(txtSize);
+					vec2 txtSize = base->text->updateRequestedSize();
 					base->requestedSize[0] += skin().defaults.checkBox.labelOffset + txtSize[0];
 					base->requestedSize[1] = max(base->requestedSize[1], txtSize[1]);
 				}

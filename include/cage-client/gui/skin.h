@@ -54,7 +54,9 @@ namespace cage
 		} checkBox;
 		struct CAGE_API comboBoxStruct
 		{
-			textFormatComponent textFormat;
+			textFormatComponent placeholderFormat;
+			textFormatComponent itemsFormat;
+			textFormatComponent selectedFormat;
 			vec4 basePadding, baseMargin;
 			vec4 listPadding, itemPadding;
 			vec2 size;

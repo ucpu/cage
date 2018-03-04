@@ -84,16 +84,15 @@ namespace cage
 		}
 	}
 
-	void textItemStruct::updateRequestedSize(vec2 &size)
+	vec2 textItemStruct::updateRequestedSize()
 	{
 		if (text.font)
 		{
 			uint32 w, h;
 			text.font->size(text.glyphs, text.count, text.format, w, h);
-			size = vec2(w, h) / base->impl->pointsScale;
+			return vec2(w, h) / base->impl->pointsScale;
 		}
-		else
-			size = vec2();
+		return vec2();
 	}
 
 	renderableTextStruct *textItemStruct::emit() const

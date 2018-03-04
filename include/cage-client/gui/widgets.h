@@ -94,17 +94,16 @@ namespace cage
 		uint32 selected; // -1 = nothing selected
 		// textComponent defines placeholder
 		// children with textComponent defines individual lines
-		// textFormatComponent applies to all lines (not the placeholder), may be overriden by individual childs
-		// selectedItemComponent defines which line is selected (same as the selected property)
+		// textFormatComponent applies to all lines, may be overriden by individual childs
+		// selectedItemComponent on childs defines which line is selected (the selected property has priority)
 		comboBoxComponent();
 	};
 
 	struct CAGE_API listBoxComponent
 	{
-		// textComponent defines placeholder
 		// children with textComponent defines individual lines
-		// textFormatComponent applies to all lines (not the placeholder), may be overriden by individual childs
-		// selectedItemComponent defines which lines are selected
+		// textFormatComponent applies to all lines, may be overriden by individual childs
+		// selectedItemComponent on childs defines which lines are selected
 		listBoxComponent();
 	};
 
