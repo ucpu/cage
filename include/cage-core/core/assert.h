@@ -57,7 +57,12 @@ namespace cage
 			template<class U> assertClass &variable(const char *name, U *var)
 			{
 				if (!valid)
-					format(name, (string() + (uintPtr)var + " <pointer>").c_str());
+				{
+					char buff[100] = "";
+					privat::sprint1(buff, (void*)var);
+					detail::strcat(buff, " <pointer>");
+					format(name, buff);
+				}
 				return *this;
 			}
 			template<class U> assertClass &variable(const char *name, const U &var)

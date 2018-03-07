@@ -66,11 +66,11 @@ namespace cage
 	To numeric_cast(From from)
 	{
 		return privat::numeric_cast_helper_specialized<detail::numeric_limits<To>::is_specialized && detail::numeric_limits<From>::is_specialized>::template cast<To>(from);
-	};
+	}
 
 	template<class To, class From>
 	To numeric_cast(From *from)
 	{
 		return numeric_cast<To>((uintPtr)from);
-	};
+	}
 }

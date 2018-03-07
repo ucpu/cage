@@ -19,10 +19,6 @@ namespace cage
 		};
 	}
 
-	template struct CAGE_API delegate<bool(const detail::loggerInfo &)>;
-	template struct CAGE_API delegate<void(const detail::loggerInfo &, delegate<void(const string &)>)>;
-	template struct CAGE_API delegate<void(const string &)>;
-
 	class CAGE_API loggerClass
 	{
 	public:

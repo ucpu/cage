@@ -40,11 +40,6 @@ namespace cage
 
 	typedef valuesStruct<1> valueStruct;
 
-	template struct CAGE_API valuesStruct<1>;
-	template struct CAGE_API valuesStruct<2>;
-	template struct CAGE_API valuesStruct<3>;
-	template struct CAGE_API valuesStruct<4>;
-
 	struct CAGE_API parentComponent
 	{
 		uint32 parent;

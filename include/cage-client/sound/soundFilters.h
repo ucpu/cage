@@ -1,14 +1,10 @@
 namespace cage
 {
-	template struct CAGE_API delegate<void(const soundDataBufferStruct&)>;
-
 	struct CAGE_API filterApiStruct
 	{
 		soundDataBufferStruct output;
 		delegate<void(const soundDataBufferStruct&)> input;
 	};
-
-	template struct CAGE_API delegate<void(const filterApiStruct&)>;
 
 	class CAGE_API filterClass
 	{
@@ -16,8 +12,6 @@ namespace cage
 		void setBus(busClass *bus);
 		delegate<void(const filterApiStruct&)> execute;
 	};
-
-	template struct CAGE_API holder<filterClass>;
 
 	class CAGE_API volumeFilterClass
 	{

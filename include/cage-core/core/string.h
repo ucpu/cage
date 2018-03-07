@@ -424,9 +424,6 @@ namespace cage
 				return stringCompareFast(a, b);
 			}
 		};
-
-		template struct CAGE_API stringBase<1000>;
-		template struct CAGE_API stringComparatorFastBase<1000>;
 	}
 
 	typedef detail::stringBase<1000> string;

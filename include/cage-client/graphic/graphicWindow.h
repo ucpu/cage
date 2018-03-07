@@ -1,19 +1,5 @@
 namespace cage
 {
-	template struct CAGE_API delegate<void(uint32, uint32, uint32, uint32, const char*)>; // debugOpenglErrorCallback
-
-	template struct CAGE_API eventDispatcher<bool(const pointStruct &)>;
-	template struct CAGE_API eventDispatcher<bool(mouseButtonsFlags, modifiersFlags, const pointStruct &)>;
-	template struct CAGE_API eventDispatcher<bool(sint8, modifiersFlags, const pointStruct &)>;
-	template struct CAGE_API eventDispatcher<bool(uint32, uint32, modifiersFlags)>;
-	template struct CAGE_API eventDispatcher<bool(uint32)>;
-
-	template struct CAGE_API eventListener<bool(const pointStruct &)>;
-	template struct CAGE_API eventListener<bool(mouseButtonsFlags, modifiersFlags, const pointStruct &)>;
-	template struct CAGE_API eventListener<bool(sint8, modifiersFlags, const pointStruct &)>;
-	template struct CAGE_API eventListener<bool(uint32, uint32, modifiersFlags)>;
-	template struct CAGE_API eventListener<bool(uint32)>;
-
 	class CAGE_API windowClass
 	{
 	public:

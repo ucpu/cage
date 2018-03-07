@@ -55,7 +55,4 @@ namespace cage
 		
 		using privat::eventPrivate::detach;
 	};
-
-	template struct CAGE_API eventListener<bool()>;
-	template struct CAGE_API eventDispatcher<bool()>;
 }

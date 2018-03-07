@@ -3,8 +3,6 @@
 
 namespace cage
 {
-	template struct CAGE_API delegate<void(uint32, uint32)>;
-
 	class CAGE_API threadPoolClass
 	{
 	public:

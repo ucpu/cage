@@ -13,9 +13,6 @@ namespace cage
 		componentsStruct(entityManagerClass *ents);
 	};
 
-	template struct CAGE_API eventDispatcher<bool(uint32)>;
-	template struct CAGE_API delegate<bool(const pointStruct&, vec2&)>;
-
 	class CAGE_API guiClass
 	{
 	public:

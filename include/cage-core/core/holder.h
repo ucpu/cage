@@ -1,7 +1,5 @@
 namespace cage
 {
-	template struct CAGE_API delegate<void(void*)>;
-
 	template<class T> struct holder;
 
 	struct CAGE_API holdev

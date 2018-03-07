@@ -1,10 +1,5 @@
 namespace cage
 {
-	template struct CAGE_API delegate<void(componentClass*, entityClass*)>;
-	template struct CAGE_API delegate<void(groupClass*, entityClass*)>;
-	template struct CAGE_API delegate<void(entityClass *)>;
-	template struct CAGE_API eventDispatcher<bool(entityClass*)>;
-
 	class CAGE_API entityManagerClass
 	{
 	public:

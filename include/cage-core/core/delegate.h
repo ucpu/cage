@@ -95,7 +95,4 @@ namespace cage
 			return stub.fnc(stub.inst, templates::forward<Ts>(vs)...);
 		}
 	};
-
-	template struct CAGE_API delegate<void()>;
-	template struct CAGE_API delegate<bool()>;
 }

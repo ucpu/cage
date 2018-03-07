@@ -1,8 +1,5 @@
 namespace cage
 {
-	template struct CAGE_API eventDispatcher<bool(uint32, memoryBuffer&)>;
-	template struct CAGE_API eventDispatcher<bool(uint32, string&)>;
-
 	class CAGE_API assetManagerClass
 	{
 	public:
