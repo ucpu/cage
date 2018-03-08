@@ -47,6 +47,7 @@ set_target_properties(cage-core PROPERTIES CXX_VISIBILITY_PRESET hidden)
 set_ide_groups(cage-core cage)
 if(WIN32)
 	target_compile_definitions(cage-core PRIVATE _CRT_SECURE_NO_WARNINGS)
+	target_compile_options(cage-core PUBLIC /wd4251)
 endif()
 
 ########

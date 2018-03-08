@@ -14,16 +14,9 @@ namespace cage
 {
 	namespace
 	{
-		bool pointIsInside(guiItemStruct *b, vec2 p)
+		bool pointIsInside(guiItemStruct *b, const vec2 &p)
 		{
-			for (int a = 0; a < 2; a++)
-			{
-				if (p[a] < b->position[a])
-					return false;
-				if (p[a] > b->position[a] + b->size[a])
-					return false;
-			}
-			return true;
+			return pointInside(b->position, b->size, p);
 		}
 
 		template<class A, bool (widgetBaseStruct::*F)(A, modifiersFlags, vec2)>

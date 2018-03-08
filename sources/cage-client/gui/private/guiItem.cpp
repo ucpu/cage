@@ -97,23 +97,22 @@ namespace cage
 			size = impl->eval<2>(p.size, size);
 			position = impl->eval<2>(p.position, position) - p.anchor * size;
 		}
-		CAGE_ASSERT_RUNTIME(size.valid(), "this item must have explicit size", entity->getName());
+		CAGE_ASSERT_RUNTIME(size.valid(), "this item must have explicit size", entity ? entity->getName() : 0);
 	}
 
 	void guiItemStruct::explicitPosition(vec2 &size) const
 	{
 		vec2 pos = vec2::Nan;
 		explicitPosition(pos, size);
-		CAGE_ASSERT_RUNTIME(!pos.valid(), "this item may not have explicit position", entity->getName());
-		CAGE_ASSERT_RUNTIME(size.valid(), "this item must have explicit size", entity->getName());
+		CAGE_ASSERT_RUNTIME(!pos.valid(), "this item may not have explicit position", entity ? entity->getName() : 0);
+		CAGE_ASSERT_RUNTIME(size.valid(), "this item must have explicit size", entity ? entity->getName() : 0);
 	}
 
 	void guiItemStruct::updateContentPosition(const vec4 &subtractMargin)
 	{
 		contentPosition = position;
 		contentSize = size;
-		offsetPosition(contentPosition, -subtractMargin);
-		offsetSize(contentSize, -subtractMargin);
+		offset(contentPosition, contentSize, -subtractMargin);
 	}
 
 	void guiItemStruct::detachChildren()
@@ -153,11 +152,13 @@ namespace cage
 
 	void offsetPosition(vec2 &position, const vec4 &offset)
 	{
+		CAGE_ASSERT_RUNTIME(position.valid() && offset.valid(), position, offset);
 		position -= vec2(offset);
 	}
 
 	void offsetSize(vec2 &size, const vec4 &offset)
 	{
+		CAGE_ASSERT_RUNTIME(size.valid() && offset.valid(), size, offset);
 		size += vec2(offset) + vec2(offset[2], offset[3]);
 		size = max(size, vec2());
 	}
@@ -170,6 +171,7 @@ namespace cage
 
 	bool pointInside(vec2 pos, vec2 size, vec2 point)
 	{
+		CAGE_ASSERT_RUNTIME(pos.valid() && size.valid() && point.valid(), pos, size, point);
 		if (point[0] < pos[0] || point[1] < pos[1])
 			return false;
 		pos += size;

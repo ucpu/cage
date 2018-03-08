@@ -215,6 +215,7 @@ namespace cage
 				idx++;
 				c = c->nextSibling;
 			}
+			combo->consolidateSelection();
 			return true;
 		}
 	}
