@@ -56,14 +56,14 @@ namespace cage
 			vec2 p = base->position;
 			vec2 s = base->size;
 			offset(p, s, -defaults->baseMargin);
-			emitElement(elementBase, 0, p, s);
+			emitElement(elementBase, mode(false), p, s);
 		}
 		if (elementCaption != elementTypeEnum::InvalidElement)
 		{
 			vec2 p = base->position;
 			vec2 s = vec2(base->size[0], defaults->captionHeight);
 			offset(p, s, -defaults->baseMargin * vec4(1,1,1,0));
-			emitElement(elementCaption, 0, p, s);
+			emitElement(elementCaption, mode(p, s), p, s);
 			if (base->text)
 			{
 				offset(p, s, -defaults->captionPadding - skin().layouts[(uint32)elementCaption].border);

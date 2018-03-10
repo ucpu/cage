@@ -50,13 +50,14 @@ namespace cage
 
 			virtual void emit() const override
 			{
-				emitElement(baseElement, 0);
+				emitElement(baseElement, mode(false));
 				real ds = min(base->contentSize[0], base->contentSize[1]);
 				vec2 size = vec2(ds, ds);
 				vec2 p = base->contentSize - size;
 				real f = (data.value - data.min) / (data.max - data.min);
 				vec2 pos = vec2(interpolate(0, p[0], f), interpolate(p[1], 0, f)) + base->contentPosition;
-				emitElement(dotElement, 0, pos, size);
+				offset(pos, size, -skin().layouts[(uint32)baseElement].border);
+				emitElement(dotElement, mode(), pos, size);
 			}
 
 			void update(vec2 point)

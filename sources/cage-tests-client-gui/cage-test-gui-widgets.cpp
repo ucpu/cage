@@ -490,7 +490,10 @@ void guiInitialize()
 					p.order = 1;
 					GUI_GET_COMPONENT(button, b, e);
 					GUI_GET_COMPONENT(text, t, e);
-					t.value = "smaller";
+					t.value = "S";
+					GUI_GET_COMPONENT(explicitPosition, ep, e);
+					ep.size.units[0] = ep.size.units[1] = unitEnum::Points;
+					ep.size.value = vec2(32, 32);
 				}
 				{ // larger
 					entityClass *e = ents->newEntity(111);
@@ -499,7 +502,10 @@ void guiInitialize()
 					p.order = 2;
 					GUI_GET_COMPONENT(button, b, e);
 					GUI_GET_COMPONENT(text, t, e);
-					t.value = "larger";
+					t.value = "L";
+					GUI_GET_COMPONENT(explicitPosition, ep, e);
+					ep.size.units[0] = ep.size.units[1] = unitEnum::Points;
+					ep.size.value = vec2(32, 32);
 				}
 			}
 		}

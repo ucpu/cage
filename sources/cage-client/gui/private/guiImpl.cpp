@@ -41,7 +41,7 @@ namespace cage
 		itemsArena(config.itemsArenaSize), itemsMemory(&itemsArena), root(nullptr),
 		emitData{config, config, config}, emitControl(nullptr), emitIndexControl(0), emitIndexDispatch(0),
 		openglContext(nullptr), assetManager(config.assetManager),
-		focusName(0), hoverName(0), eventsEnabled(false),
+		focusName(0), hover(nullptr), eventsEnabled(false),
 		zoom(1)
 	{
 		listeners.windowResize.bind<guiClass, &guiClass::windowResize>(this);
@@ -61,7 +61,8 @@ namespace cage
 	guiImpl::~guiImpl()
 	{
 		CAGE_ASSERT_RUNTIME(openglContext == nullptr);
-		focusName = hoverName = 0;
+		focusName = 0;
+		hover = nullptr;
 		itemsMemory.flush();
 	}
 

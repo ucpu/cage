@@ -211,12 +211,12 @@ namespace cage
 			virtual void emit() const override
 			{
 				const auto &s = skin().defaults.inputBox;
-				emitElement(elementTypeEnum::InputBox, 0, mainPos, mainSize);
+				emitElement(elementTypeEnum::InputBox, mode(mainPos, mainSize), mainPos, mainSize);
 				if (data.type == inputTypeEnum::Real || data.type == inputTypeEnum::Integer)
 				{
 					vec2 ss = vec2(s.buttonsSize, mainSize[1]);
-					emitElement(elementTypeEnum::InputButtonDecrement, 0, leftPos, ss);
-					emitElement(elementTypeEnum::InputButtonIncrement, 0, rightPos, ss);
+					emitElement(elementTypeEnum::InputButtonDecrement, mode(leftPos, ss), leftPos, ss);
+					emitElement(elementTypeEnum::InputButtonIncrement, mode(rightPos, ss), rightPos, ss);
 				}
 				base->text->emit();
 			}
@@ -325,7 +325,7 @@ namespace cage
 						break;
 					cursor--;
 					utf32.erase(utf32.begin() + cursor);
-					data.value = convert32to8(utf32.data(), utf32.size());
+					data.value = convert32to8(utf32.data(), numeric_cast<uint32>(utf32.size()));
 					validate();
 					base->impl->widgetEvent.dispatch(base->entity->getName());
 				} break;
@@ -334,7 +334,7 @@ namespace cage
 					if (cursor == len)
 						break;
 					utf32.erase(utf32.begin() + cursor);
-					data.value = convert32to8(utf32.data(), utf32.size());
+					data.value = convert32to8(utf32.data(), numeric_cast<uint32>(utf32.size()));
 					validate();
 					base->impl->widgetEvent.dispatch(base->entity->getName());
 				} break;
@@ -355,7 +355,7 @@ namespace cage
 				CAGE_ASSERT_RUNTIME(len == utf32.size(), len, utf32.size());
 				CAGE_ASSERT_RUNTIME(cursor <= len, cursor, len, data.value);
 				utf32.insert(utf32.begin() + cursor, key);
-				data.value = convert32to8(utf32.data(), utf32.size());
+				data.value = convert32to8(utf32.data(), numeric_cast<uint32>(utf32.size()));
 				cursor++;
 				validate();
 				base->impl->widgetEvent.dispatch(base->entity->getName());

@@ -44,6 +44,7 @@ namespace cage
 				while (c)
 				{
 					c->updateRequestedSize();
+					c->explicitPosition(c->requestedSize);
 					c = c->nextSibling;
 				}
 				base->requestedSize = master->requestedSize;

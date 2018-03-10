@@ -83,7 +83,7 @@ namespace cage
 
 			virtual void emit() const override
 			{
-				emitElement(elementTypeEnum::ComboBoxBase, 0);
+				emitElement(elementTypeEnum::ComboBoxBase, mode());
 				vec2 p = base->contentPosition;
 				vec2 s = base->contentSize;
 				offset(p, s, -skin().layouts[(uint32)elementTypeEnum::ComboBoxBase].border - skin().defaults.comboBox.basePadding);
@@ -189,9 +189,11 @@ namespace cage
 			uint32 idx = 0;
 			while (c)
 			{
-				emitElement(idx++ == combo->data.selected ? elementTypeEnum::ComboBoxSelectedItem : elementTypeEnum::ComboBoxItem, 0, c->position, c->size);
+				uint32 m = pointInside(c->position, c->size, base->impl->outputMouse) ? 2 : idx == combo->data.selected ? 1 : 0;
+				emitElement(elementTypeEnum::ComboBoxItem, m, c->position, c->size);
 				c->text->emit();
 				c = c->nextSibling;
+				idx++;
 			}
 		}
 

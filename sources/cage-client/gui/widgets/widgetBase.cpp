@@ -28,6 +28,27 @@ namespace cage
 		return base->impl->skins[widgetState.skinIndex];
 	}
 
+	uint32 widgetBaseStruct::mode() const
+	{
+		return mode(true);
+	}
+
+	uint32 widgetBaseStruct::mode(bool hover) const
+	{
+		if (widgetState.disabled)
+			return 3;
+		if (base->impl->hover == this && hover)
+			return 2;
+		if (hasFocus())
+			return 1;
+		return 0;
+	}
+
+	uint32 widgetBaseStruct::mode(const vec2 &pos, const vec2 &size) const
+	{
+		return mode(pointInside(pos, size, base->impl->outputMouse));
+	}
+
 	bool widgetBaseStruct::hasFocus() const
 	{
 		return base->entity && base->impl->focusName && base->impl->focusName == base->entity->getName();

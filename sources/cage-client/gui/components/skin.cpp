@@ -87,11 +87,13 @@ namespace cage
 					}
 				}
 			}
-			{ // things without hover
-				for (auto t : { elementTypeEnum::GroupCell, elementTypeEnum::GroupPanel, elementTypeEnum::GroupSpoilerCollapsed, elementTypeEnum::GroupSpoilerShown,
-					elementTypeEnum::WindowBaseModal, elementTypeEnum::WindowBaseNormal,
-					elementTypeEnum::ComboBoxList, elementTypeEnum::ListBoxList,
-					elementTypeEnum::ProgressBar,
+			{ // things without focus
+				for (auto t : { elementTypeEnum::GroupCell, elementTypeEnum::GroupPanel, elementTypeEnum::GroupSpoilerCollapsed, elementTypeEnum::GroupSpoilerShown, elementTypeEnum::GroupCaption,
+					elementTypeEnum::WindowBaseModal, elementTypeEnum::WindowBaseNormal, elementTypeEnum::WindowCaption, elementTypeEnum::WindowResizer,
+					elementTypeEnum::InputButtonDecrement, elementTypeEnum::InputButtonIncrement,
+					elementTypeEnum::ComboBoxList,
+					elementTypeEnum::ProgressBar, elementTypeEnum::SliderHorizontalDot, elementTypeEnum::SliderVerticalDot,
+					elementTypeEnum::ScrollbarHorizontalDot, elementTypeEnum::ScrollbarHorizontalPanel, elementTypeEnum::ScrollbarVerticalDot, elementTypeEnum::ScrollbarVerticalPanel,
 					elementTypeEnum::ToolTip,
 					})
 				{
@@ -99,13 +101,11 @@ namespace cage
 					a.data[1] = a.data[0];
 				}
 			}
-			{ // things without focus
-				for (auto t : { elementTypeEnum::GroupCell, elementTypeEnum::GroupPanel, elementTypeEnum::GroupSpoilerCollapsed, elementTypeEnum::GroupSpoilerShown, elementTypeEnum::GroupCaption,
-					elementTypeEnum::WindowBaseModal, elementTypeEnum::WindowBaseNormal, elementTypeEnum::WindowCaption, elementTypeEnum::WindowResizer,
-					elementTypeEnum::InputButtonDecrement, elementTypeEnum::InputButtonIncrement,
-					elementTypeEnum::ComboBoxList, elementTypeEnum::ComboBoxItem, elementTypeEnum::ComboBoxSelectedItem, elementTypeEnum::ListBoxItem, elementTypeEnum::ListBoxCheckedItem,
-					elementTypeEnum::ProgressBar, elementTypeEnum::SliderHorizontalDot, elementTypeEnum::SliderVerticalDot,
-					elementTypeEnum::ScrollbarHorizontalDot, elementTypeEnum::ScrollbarHorizontalPanel, elementTypeEnum::ScrollbarVerticalDot, elementTypeEnum::ScrollbarVerticalPanel,
+			{ // things without hover
+				for (auto t : { elementTypeEnum::GroupCell, elementTypeEnum::GroupPanel,
+					elementTypeEnum::WindowBaseModal, elementTypeEnum::WindowBaseNormal,
+					elementTypeEnum::ComboBoxList, elementTypeEnum::ListBoxList,
+					elementTypeEnum::ProgressBar,
 					elementTypeEnum::ToolTip,
 					})
 				{
@@ -114,11 +114,7 @@ namespace cage
 				}
 			}
 			{ // things without disabled
-				for (auto t : { elementTypeEnum::WindowBaseModal, elementTypeEnum::WindowBaseNormal, elementTypeEnum::WindowCaption, elementTypeEnum::WindowResizer,
-					elementTypeEnum::WindowButtonClose, elementTypeEnum::WindowButtonMaximize, elementTypeEnum::WindowButtonMinimize, elementTypeEnum::WindowButtonRestore,
-					elementTypeEnum::ScrollbarHorizontalDot, elementTypeEnum::ScrollbarHorizontalPanel, elementTypeEnum::ScrollbarVerticalDot, elementTypeEnum::ScrollbarVerticalPanel,
-					elementTypeEnum::ToolTip,
-					})
+				for (auto t : { elementTypeEnum::WindowBaseModal, elementTypeEnum::WindowBaseNormal, elementTypeEnum::ToolTip, })
 				{
 					auto &a = layouts[(uint32)t].textureUv;
 					a.data[3] = a.data[0];

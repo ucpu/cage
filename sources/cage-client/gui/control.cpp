@@ -183,6 +183,19 @@ namespace cage
 			if (item->widget)
 				item->impl->mouseEventReceivers.push_back(item->widget);
 		}
+
+		void findHover(guiImpl *impl)
+		{
+			impl->hover = nullptr;
+			for (auto it : impl->mouseEventReceivers)
+			{
+				if (pointInside(it->base->position, it->base->size, impl->outputMouse))
+				{
+					impl->hover = it;
+					return;
+				}
+			}
+		}
 	}
 
 	void guiClass::controlUpdate()
@@ -211,7 +224,7 @@ namespace cage
 			impl->root->updateFinalPosition(u);
 		}
 		generateEventReceivers(impl->root);
-		// todo
+		findHover(impl);
 	}
 
 	void guiClass::controlEmit()

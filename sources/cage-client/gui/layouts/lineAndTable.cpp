@@ -16,16 +16,36 @@ namespace cage
 	{
 		struct layoutTableImpl : public layoutBaseStruct
 		{
-			layoutTableComponent data; // must not be reference
+			layoutTableComponent data; // may not be reference
 			real *widths;
 			real *heights;
 			uint32 mws, mhs;
 			uint32 childs;
+			bool justLine;
 
-			layoutTableImpl(guiItemStruct *base, bool justLine) : layoutBaseStruct(base), widths(nullptr), heights(nullptr), mws(0), mhs(0), childs(0)
+			layoutTableImpl(guiItemStruct *base, bool justLine) : layoutBaseStruct(base), widths(nullptr), heights(nullptr), mws(0), mhs(0), childs(0), justLine(justLine)
 			{
 				auto impl = base->impl;
+				if (justLine)
 				{
+					GUI_GET_COMPONENT(layoutLine, l, base->entity);
+					(layoutLineComponent&)data = l;
+				}
+				else
+				{
+					GUI_GET_COMPONENT(layoutTable, t, base->entity);
+					data = t;
+				}
+			}
+
+			virtual void initialize() override
+			{}
+
+			virtual void updateRequestedSize() override
+			{
+				auto impl = base->impl;
+				{ // count childs
+					childs = 0;
 					guiItemStruct *c = base->firstChild;
 					while (c)
 					{
@@ -33,22 +53,15 @@ namespace cage
 						c = c->nextSibling;
 					}
 				}
+				// update sections
 				if (justLine)
-				{
-					GUI_GET_COMPONENT(layoutLine, l, base->entity);
-					(layoutLineComponent&)data = l;
 					data.sections = 1;
-				}
-				else
+				else if (data.sections == 0)
 				{
-					GUI_GET_COMPONENT(layoutTable, t, base->entity);
-					data = t;
-					if (data.sections == 0)
-					{
-						uint32 cnt = numeric_cast<uint32>(round(sqrt(childs)));
-						data.sections = max(cnt, 1u);
-					}
+					uint32 cnt = numeric_cast<uint32>(round(sqrt(childs)));
+					data.sections = max(cnt, 1u);
 				}
+				// mws & mhs
 				if (data.vertical)
 				{
 					mws = data.sections;
@@ -63,24 +76,19 @@ namespace cage
 					if (childs > mws * mhs)
 						mws++;
 				}
+				// allocate widths & heights
 				widths = (real*)impl->itemsMemory.allocate(mws * sizeof(real));
 				heights = (real*)impl->itemsMemory.allocate(mhs * sizeof(real));
 				detail::memset(widths, 0, mws * sizeof(real));
 				detail::memset(heights, 0, mhs * sizeof(real));
-			}
-
-			virtual void initialize() override
-			{}
-
-			virtual void updateRequestedSize() override
-			{
+				// populate widths & heights
 				guiItemStruct *c = base->firstChild;
 				uint32 idx = 0;
 				vec2 m;
 				while (c)
 				{
 					c->updateRequestedSize();
-					//base->explicitPosition(c->requestedSize);
+					c->explicitPosition(c->requestedSize);
 					m = max(m, c->requestedSize);
 					uint32 wi = data.vertical ? (idx % data.sections) : (idx / data.sections);
 					uint32 hi = data.vertical ? (idx / data.sections) : (idx % data.sections);
@@ -92,6 +100,7 @@ namespace cage
 					c = c->nextSibling;
 					idx++;
 				}
+				// grid fitting
 				if (data.grid)
 				{
 					for (uint32 x = 0; x < mws; x++)

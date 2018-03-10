@@ -136,7 +136,9 @@ namespace cage
 		widgetBaseStruct(guiItemStruct *base);
 
 		const skinDataStruct &skin() const;
-
+		uint32 mode() const;
+		uint32 mode(bool hover) const;
+		uint32 mode(const vec2 &pos, const vec2 &size) const;
 		bool hasFocus() const;
 		void makeFocused();
 
@@ -219,7 +221,8 @@ namespace cage
 		vec2 outputSize; // (points)
 		vec2 outputMouse; // (points)
 		real zoom, retina, pointsScale; // how many pixels per point (1D)
-		uint32 focusName, hoverName;
+		uint32 focusName;
+		widgetBaseStruct *hover;
 
 		memoryArenaGrowing<memoryAllocatorPolicyLinear<>, memoryConcurrentPolicyNone> itemsArena;
 		memoryArena itemsMemory;

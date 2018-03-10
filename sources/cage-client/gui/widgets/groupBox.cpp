@@ -69,7 +69,7 @@ namespace cage
 
 			virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
 			{
-				makeFocused();
+				base->impl->focusName = 0;
 				if (buttons != mouseButtonsFlags::Left)
 					return true;
 				if (modifiers != modifiersFlags::None)
