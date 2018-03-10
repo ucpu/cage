@@ -19,23 +19,6 @@ namespace cage
 			return pointInside(b->position, b->size, p);
 		}
 
-		template<class A, bool (widgetBaseStruct::*F)(A, modifiersFlags, vec2)>
-		bool passMouseEvent(guiImpl *impl, A a, modifiersFlags m, const pointStruct &point)
-		{
-			vec2 pt;
-			if (!impl->eventPoint(point, pt))
-				return false;
-			for (auto it : impl->mouseEventReceivers)
-			{
-				if (pointIsInside(it->base, pt))
-				{
-					if ((it->*F)(a, m, pt))
-						return true;
-				}
-			}
-			return false;
-		}
-
 		guiItemStruct *findItem(guiItemStruct *item, uint32 name)
 		{
 			if (item->entity && item->entity->getName() == name)
@@ -62,6 +45,22 @@ namespace cage
 			return nullptr;
 		}
 
+		template<class A, bool (widgetBaseStruct::*F)(A, modifiersFlags, vec2)>
+		bool passMouseEvent(guiImpl *impl, A a, modifiersFlags m, const pointStruct &point)
+		{
+			vec2 pt;
+			if (!impl->eventPoint(point, pt))
+				return false;
+			widgetBaseStruct *f = focused(impl);
+			if (f)
+			{
+				if (f->widgetState.disabled)
+					return true;
+				return (f->*F)(a, m, pt);
+			}
+			return false;
+		}
+
 		template<bool (widgetBaseStruct::*F)(uint32, uint32, modifiersFlags)>
 		bool passKeyEvent(guiImpl *impl, uint32 a, uint32 b, modifiersFlags m)
 		{
@@ -70,7 +69,11 @@ namespace cage
 				return false;
 			widgetBaseStruct *f = focused(impl);
 			if (f)
+			{
+				if (f->widgetState.disabled)
+					return true;
 				return (f->*F)(a, b, m);
+			}
 			return false;
 		}
 	}
@@ -101,8 +104,19 @@ namespace cage
 	bool guiClass::mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, const pointStruct &point)
 	{
 		guiImpl *impl = (guiImpl*)this;
-		if (passMouseEvent<mouseButtonsFlags, &widgetBaseStruct::mousePress>(impl, buttons, modifiers, point))
-			return true;
+		vec2 pt;
+		if (!impl->eventPoint(point, pt))
+			return false;
+		for (auto it : impl->mouseEventReceivers)
+		{
+			if (pointIsInside(it->base, pt))
+			{
+				if (it->widgetState.disabled)
+					return true;
+				if (it->mousePress(buttons, modifiers, pt))
+					return true;
+			}
+		}
 		if ((buttons & mouseButtonsFlags::Left) == mouseButtonsFlags::Left)
 			impl->focusName = 0;
 		return false;
@@ -129,7 +143,20 @@ namespace cage
 	bool guiClass::mouseWheel(sint8 wheel, modifiersFlags modifiers, const pointStruct &point)
 	{
 		guiImpl *impl = (guiImpl*)this;
-		return passMouseEvent<sint8, &widgetBaseStruct::mouseWheel>(impl, wheel, modifiers, point);
+		vec2 pt;
+		if (!impl->eventPoint(point, pt))
+			return false;
+		for (auto it : impl->mouseEventReceivers)
+		{
+			if (pointIsInside(it->base, pt))
+			{
+				if (it->widgetState.disabled)
+					return true;
+				if (it->mouseWheel(wheel, modifiers, pt))
+					return true;
+			}
+		}
+		return false;
 	}
 
 	bool guiClass::keyPress(uint32 key, uint32 scanCode, modifiersFlags modifiers)
@@ -158,7 +185,11 @@ namespace cage
 			return false;
 		widgetBaseStruct *f = focused(impl);
 		if (f)
+		{
+			if (f->widgetState.disabled)
+				return true;
 			return f->keyChar(key);
+		}
 		return false;
 	}
 }

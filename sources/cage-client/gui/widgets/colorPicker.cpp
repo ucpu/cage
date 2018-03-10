@@ -181,6 +181,7 @@ namespace cage
 					vec3 hsv = convertRgbToHsv(data.color);
 					hsv[0] = point[0];
 					data.color = convertHsvToRgb(hsv);
+					base->impl->widgetEvent.dispatch(base->entity->getName());
 				}
 				else if (check(rectPos, rectSize, point))
 				{
@@ -188,6 +189,7 @@ namespace cage
 					hsv[1] = point[0];
 					hsv[2] = 1 - point[1];
 					data.color = convertHsvToRgb(hsv);
+					base->impl->widgetEvent.dispatch(base->entity->getName());
 				}
 			}
 

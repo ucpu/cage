@@ -135,24 +135,28 @@ namespace cage
 				generateWidgetsAndLayouts(item->nextSibling);
 		}
 
+		void propagate(const widgetStateComponent &from, widgetStateComponent &to)
+		{
+			to.disabled = to.disabled || from.disabled;
+			if (from.skinIndex != -1)
+				to.skinIndex = from.skinIndex;
+		}
+
 		void propagateWidgetState(guiItemStruct *item, const widgetStateComponent &wsp)
 		{
+			guiImpl *impl = item->impl;
 			{
 				widgetStateComponent ws(wsp);
 				if (item->widget)
 				{
 					widgetStateComponent &w = item->widget->widgetState;
-					if (w.skinIndex == -1)
-						w.skinIndex = ws.skinIndex;
-					else
-					{
-						CAGE_ASSERT_RUNTIME(w.skinIndex < item->impl->skins.size());
-						ws.skinIndex = w.skinIndex;
-					}
-					if (ws.disabled)
-						w.disabled = true;
-					else if (w.disabled)
-						ws.disabled = true;
+					propagate(w, ws);
+					propagate(ws, w);
+				}
+				else if (item->entity && GUI_HAS_COMPONENT(widgetState, item->entity))
+				{
+					GUI_GET_COMPONENT(widgetState, w, item->entity);
+					propagate(w, ws);
 				}
 				if (item->firstChild)
 					propagateWidgetState(item->firstChild, ws);

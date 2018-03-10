@@ -55,7 +55,7 @@ namespace cage
 				vec2 size = vec2(ds, ds);
 				vec2 p = base->contentSize - size;
 				real f = (data.value - data.min) / (data.max - data.min);
-				vec2 pos = interpolate(vec2(), p, f) + base->contentPosition;
+				vec2 pos = vec2(interpolate(0, p[0], f), interpolate(p[1], 0, f)) + base->contentPosition;
 				emitElement(dotElement, 0, pos, size);
 			}
 
@@ -69,7 +69,10 @@ namespace cage
 				cs -= ds;
 				real f = (mp - cp) / cs;
 				f = clamp(f, 0, 1);
+				if (data.vertical)
+					f = 1 - f;
 				data.value = f * (data.max - data.min) + data.min;
+				base->impl->widgetEvent.dispatch(base->entity->getName());
 			}
 
 			virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override

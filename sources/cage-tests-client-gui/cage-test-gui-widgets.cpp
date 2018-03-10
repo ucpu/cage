@@ -38,6 +38,42 @@ bool guiEvent(uint32 name)
 {
 	CAGE_LOG(severityEnum::Info, "gui event", string() + "gui event on entity: " + name);
 
+	entityManagerClass *ents = gui()->entities();
+
+	{
+		entityClass *e = ents->getEntity(name);
+
+		if (e->hasComponent(gui()->components().checkBox))
+		{
+			GUI_GET_COMPONENT(checkBox, c, e);
+			CAGE_LOG(severityEnum::Info, "gui event", string() + "check box state: " + (uint32)c.state);
+		}
+
+		if (e->hasComponent(gui()->components().colorPicker))
+		{
+			GUI_GET_COMPONENT(colorPicker, c, e);
+			CAGE_LOG(severityEnum::Info, "gui event", string() + "color picker: " + c.color);
+		}
+
+		if (e->hasComponent(gui()->components().comboBox))
+		{
+			GUI_GET_COMPONENT(comboBox, c, e);
+			CAGE_LOG(severityEnum::Info, "gui event", string() + "combo box selected: " + c.selected);
+		}
+
+		if (e->hasComponent(gui()->components().inputBox))
+		{
+			GUI_GET_COMPONENT(inputBox, c, e);
+			CAGE_LOG(severityEnum::Info, "gui event", string() + "input box valid: " + c.valid + ", value: " + c.value);
+		}
+
+		if (e->hasComponent(gui()->components().sliderBar))
+		{
+			GUI_GET_COMPONENT(sliderBar, c, e);
+			CAGE_LOG(severityEnum::Info, "gui event", string() + "slider bar value: " + c.value);
+		}
+	}
+
 	switch (name)
 	{
 	case 110: // smaller

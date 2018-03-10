@@ -216,6 +216,7 @@ namespace cage
 				c = c->nextSibling;
 			}
 			combo->consolidateSelection();
+			base->impl->widgetEvent.dispatch(base->entity->getName());
 			return true;
 		}
 	}
