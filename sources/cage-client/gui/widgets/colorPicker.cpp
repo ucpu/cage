@@ -146,10 +146,10 @@ namespace cage
 
 			virtual void emit() const override
 			{
-				uint32 m = mode();
 				if (this == large)
 				{ // large
-					emitElement(elementTypeEnum::ColorPickerFull, m);
+					emitElement(elementTypeEnum::ColorPickerFull, mode());
+					uint32 m = widgetState.disabled ? 3 : 0;
 					emitElement(elementTypeEnum::ColorPickerHSliderPanel, m, sliderPos, sliderSize);
 					emitElement(elementTypeEnum::ColorPickerResult, m, resultPos, resultSize);
 					emitElement(elementTypeEnum::ColorPickerSVRect, m, rectPos, rectSize);
@@ -159,7 +159,7 @@ namespace cage
 				}
 				else
 				{ // small
-					emitElement(elementTypeEnum::ColorPickerCompact, m);
+					emitElement(elementTypeEnum::ColorPickerCompact, mode());
 					emitColor(base->contentPosition, base->contentSize, 0, skin().layouts[(uint32)elementTypeEnum::ColorPickerCompact].border);
 				}
 			}

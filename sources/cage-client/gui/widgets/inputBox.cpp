@@ -215,8 +215,10 @@ namespace cage
 				if (data.type == inputTypeEnum::Real || data.type == inputTypeEnum::Integer)
 				{
 					vec2 ss = vec2(s.buttonsSize, mainSize[1]);
-					emitElement(elementTypeEnum::InputButtonDecrement, mode(leftPos, ss), leftPos, ss);
-					emitElement(elementTypeEnum::InputButtonIncrement, mode(rightPos, ss), rightPos, ss);
+					uint32 m = mode(leftPos, ss);
+					emitElement(elementTypeEnum::InputButtonDecrement, m == 1 ? 0 : m, leftPos, ss);
+					m = mode(rightPos, ss);
+					emitElement(elementTypeEnum::InputButtonIncrement, m == 1 ? 0 : m, rightPos, ss);
 				}
 				base->text->emit();
 			}

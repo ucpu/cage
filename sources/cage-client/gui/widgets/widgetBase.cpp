@@ -28,11 +28,6 @@ namespace cage
 		return base->impl->skins[widgetState.skinIndex];
 	}
 
-	uint32 widgetBaseStruct::mode() const
-	{
-		return mode(true);
-	}
-
 	uint32 widgetBaseStruct::mode(bool hover) const
 	{
 		if (widgetState.disabled)

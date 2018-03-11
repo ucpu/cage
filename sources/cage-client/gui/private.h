@@ -136,8 +136,7 @@ namespace cage
 		widgetBaseStruct(guiItemStruct *base);
 
 		const skinDataStruct &skin() const;
-		uint32 mode() const;
-		uint32 mode(bool hover) const;
+		uint32 mode(bool hover = true) const;
 		uint32 mode(const vec2 &pos, const vec2 &size) const;
 		bool hasFocus() const;
 		void makeFocused();

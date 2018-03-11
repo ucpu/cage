@@ -289,6 +289,16 @@ void guiCheckBoxes(uint32 parentName)
 		t.value = "label";
 	}
 
+	{ // checked
+		guiLabel(parentName, index, "checked");
+		entityClass *e = ents->newEntity(ents->generateUniqueName());
+		GUI_GET_COMPONENT(parent, p, e);
+		p.parent = parentName;
+		p.order = index++;
+		GUI_GET_COMPONENT(checkBox, cb, e);
+		cb.state = checkBoxStateEnum::Checked;
+	}
+
 	{ // indeterminate
 		guiLabel(parentName, index, "indeterminate");
 		entityClass *e = ents->newEntity(ents->generateUniqueName());
@@ -298,8 +308,6 @@ void guiCheckBoxes(uint32 parentName)
 		GUI_GET_COMPONENT(checkBox, cb, e);
 		cb.state = checkBoxStateEnum::Indeterminate;
 		cb.type = checkBoxTypeEnum::TriStateBox;
-		GUI_GET_COMPONENT(text, t, e);
-		t.value = "label";
 	}
 
 	{ // radios
@@ -540,7 +548,7 @@ int main(int argc, char *args[])
 		log1->output.bind<logOutputPolicyStdOut>();
 
 		engineInitialize(engineCreateConfig());
-		detail::guiSkinTemplateExport(gui()->skin(), 1024)->encodeFile("guiSkinLayout.png");
+		detail::guiSkinTemplateExport(gui()->skin(), 2048)->encodeFile("guiSkinLayout.png");
 
 		// events
 #define GCHL_GENERATE(TYPE, FUNC, EVENT) eventListener<bool TYPE> CAGE_JOIN(FUNC, Listener); CAGE_JOIN(FUNC, Listener).bind<&FUNC>(); CAGE_JOIN(FUNC, Listener).attach(EVENT);

@@ -49,7 +49,8 @@ namespace cage
 			virtual void emit() const override
 			{
 				vec2 sd = skin().defaults.checkBox.size;
-				emitElement(elementTypeEnum((uint32)elementTypeEnum::CheckBoxUnchecked + (uint32)data.state), mode(base->contentPosition, sd), base->contentPosition, sd);
+				elementTypeEnum el = data.type == checkBoxTypeEnum::RadioButton ? elementTypeEnum::RadioBoxUnchecked : elementTypeEnum::CheckBoxUnchecked;
+				emitElement(elementTypeEnum((uint32)el + (uint32)data.state), mode(base->contentPosition, sd), base->contentPosition, sd);
 				if (base->text)
 				{
 					real o = sd[0] + skin().defaults.checkBox.labelOffset;

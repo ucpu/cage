@@ -1,3 +1,5 @@
+#include <set>
+
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/memory.h>
@@ -24,7 +26,7 @@ namespace cage
 			skinInitializerStruct()
 			{
 				font = hashString("cage/font/roboto.ttf?12");
-				text.color = vec3(1, 1, 1);
+				text.color = vec3();
 				text.fontName = font;
 				text.align = textAlignEnum::Left;
 				text.lineSpacing = 0;
@@ -40,87 +42,201 @@ namespace cage
 		detail::memset(this, 0, sizeof(*this));
 	}
 
-	skinElementLayoutStruct::skinElementLayoutStruct() : border(5,5,5,5)
+	skinElementLayoutStruct::skinElementLayoutStruct() : border(5, 5, 5, 5)
 	{}
 
 	skinWidgetDefaultsStruct::skinWidgetDefaultsStruct()
 	{}
 
+	namespace
+	{
+		struct packerStruct
+		{
+			vec2 size; // including border
+			real frame; // spacing around element
+			real border; // border inside element
+
+			skinElementLayoutStruct::textureUvOiStruct next(bool allowBorder)
+			{
+				vec2 s = size + frame * 2;
+				CAGE_ASSERT_RUNTIME(s[0] < 1, s, frame, border, size);
+				if (p[0] + s[0] > 1)
+					newLine();
+				skinElementLayoutStruct::textureUvOiStruct r;
+				r.outer[0] = p[0] + frame;
+				r.outer[1] = p[1] + frame;
+				r.outer[2] = r.outer[0] + size[0];
+				r.outer[3] = r.outer[1] + size[1];
+				r.inner = r.outer;
+				if (allowBorder)
+				{
+					CAGE_ASSERT_RUNTIME(size[0] >= 2 * border && size[1] >= 2 * border, frame, border, size);
+					r.inner[0] += border;
+					r.inner[1] += border;
+					r.inner[2] -= border;
+					r.inner[3] -= border;
+				}
+				my = max(my, p[1] + s[1]);
+				p[0] += s[0];
+				return r;
+			}
+
+			void newLine()
+			{
+				p[0] = 0;
+				p[1] = my;
+			}
+
+		private:
+			vec2 p;
+			real my;
+		};
+	}
+
 	skinConfigStruct::skinConfigStruct() : textureName(hashString("cage/texture/gui.psd"))
 	{
-		{ // automatically prepare all elements
-			for (uint32 yy = 0; yy < (uint32)elementTypeEnum::TotalElements; yy++)
+		std::vector<elementTypeEnum> largeElements = {
+			elementTypeEnum::WindowBaseNormal,
+			elementTypeEnum::GroupPanel,
+			elementTypeEnum::TextArea,
+			elementTypeEnum::ComboBoxList,
+			elementTypeEnum::ListBoxList,
+		};
+
+		std::vector<elementTypeEnum> wideElements = {
+			elementTypeEnum::Button,
+			elementTypeEnum::ButtonTop,
+			elementTypeEnum::ButtonBottom,
+			elementTypeEnum::ButtonLeft,
+			elementTypeEnum::ButtonRight,
+			elementTypeEnum::ButtonHorizontal,
+			elementTypeEnum::ButtonVertical,
+			elementTypeEnum::InputBox,
+			elementTypeEnum::ComboBoxBase,
+			elementTypeEnum::ComboBoxItem,
+			elementTypeEnum::ListBoxItem,
+			elementTypeEnum::ProgressBar,
+			elementTypeEnum::WindowBaseModal,
+			elementTypeEnum::WindowCaption,
+			elementTypeEnum::GroupCaption,
+			elementTypeEnum::TaskBarBase,
+			elementTypeEnum::ToolTip,
+		};
+
+		std::vector<elementTypeEnum> smallElements = {
+			elementTypeEnum::ScrollbarHorizontalPanel,
+			elementTypeEnum::ScrollbarVerticalPanel,
+			elementTypeEnum::ScrollbarHorizontalDot,
+			elementTypeEnum::ScrollbarVerticalDot,
+			elementTypeEnum::SliderHorizontalPanel,
+			elementTypeEnum::SliderVerticalPanel,
+			elementTypeEnum::SliderHorizontalDot,
+			elementTypeEnum::SliderVerticalDot,
+			elementTypeEnum::GroupCell,
+			elementTypeEnum::GroupSpoilerCollapsed,
+			elementTypeEnum::GroupSpoilerShown,
+			elementTypeEnum::InputButtonDecrement,
+			elementTypeEnum::InputButtonIncrement,
+			elementTypeEnum::CheckBoxUnchecked,
+			elementTypeEnum::CheckBoxChecked,
+			elementTypeEnum::CheckBoxIndetermined,
+			elementTypeEnum::RadioBoxUnchecked,
+			elementTypeEnum::RadioBoxChecked,
+			elementTypeEnum::ColorPickerCompact,
+			elementTypeEnum::ColorPickerResult,
+			elementTypeEnum::WindowButtonMinimize,
+			elementTypeEnum::WindowButtonMaximize,
+			elementTypeEnum::WindowButtonRestore,
+			elementTypeEnum::WindowButtonClose,
+			elementTypeEnum::WindowResizer,
+			elementTypeEnum::TaskBarItem,
+		};
+
+		std::set<elementTypeEnum> noBorder = {
+			elementTypeEnum::RadioBoxChecked,
+			elementTypeEnum::RadioBoxUnchecked,
+			elementTypeEnum::SliderHorizontalDot,
+			elementTypeEnum::SliderVerticalDot,
+			elementTypeEnum::WindowResizer,
+		};
+
+		std::set<elementTypeEnum> noFocus = {
+			elementTypeEnum::GroupCell, elementTypeEnum::GroupPanel, elementTypeEnum::GroupSpoilerCollapsed, elementTypeEnum::GroupSpoilerShown, elementTypeEnum::GroupCaption,
+			elementTypeEnum::WindowBaseModal, elementTypeEnum::WindowBaseNormal, elementTypeEnum::WindowCaption, elementTypeEnum::WindowResizer,
+			elementTypeEnum::InputButtonDecrement, elementTypeEnum::InputButtonIncrement,
+			elementTypeEnum::ComboBoxList,
+			elementTypeEnum::ProgressBar,
+			elementTypeEnum::ScrollbarHorizontalDot, elementTypeEnum::ScrollbarHorizontalPanel, elementTypeEnum::ScrollbarVerticalDot, elementTypeEnum::ScrollbarVerticalPanel,
+			elementTypeEnum::ColorPickerHSliderPanel, elementTypeEnum::ColorPickerResult, elementTypeEnum::ColorPickerSVRect,
+			elementTypeEnum::ToolTip,
+		};
+
+		std::set<elementTypeEnum> noHover = {
+			elementTypeEnum::GroupCell, elementTypeEnum::GroupPanel,
+			elementTypeEnum::WindowBaseModal, elementTypeEnum::WindowBaseNormal,
+			elementTypeEnum::ComboBoxList, elementTypeEnum::ListBoxList,
+			elementTypeEnum::ProgressBar,
+			elementTypeEnum::ColorPickerHSliderPanel, elementTypeEnum::ColorPickerResult, elementTypeEnum::ColorPickerSVRect,
+			elementTypeEnum::ToolTip,
+		};
+
+		{ // automatic uv construction
+			packerStruct packer;
+			packer.frame = 4.f / 1024;
+			packer.border = 4.f / 1024;
+
+			// large
+			packer.size = vec2(5, 5) * 24.f / 1024;
+			for (auto it : largeElements)
 			{
-				skinElementLayoutStruct &el = layouts[yy];
-				for (uint32 xx = 0; xx < 4; xx++)
-				{
-					skinElementLayoutStruct::textureUvOiStruct &oi = el.textureUv.data[xx];
-					vec4 &o = oi.outer;
-					vec4 &i = oi.inner;
-					// horizontal
-					uint32 x = xx + (yy % 8) * 4;
-					o[0] = 4 + x * 32;
-					o[2] = o[0] + 24;
-					i[0] = o[0] + 4;
-					i[2] = o[0] + 20;
-					// vertical
-					uint32 y = yy / 8;
-					o[1] = 4 + y * 32;
-					o[3] = o[1] + 24;
-					i[1] = o[1] + 4;
-					i[3] = o[1] + 20;
-					// divide
-					o /= 1024;
-					i /= 1024;
-				}
+				bool border = noBorder.count(it) == 0;
+				layouts[(uint32)it].textureUv.data[0] = packer.next(border);
+				if (noFocus.count(it) == 0)
+					layouts[(uint32)it].textureUv.data[1] = packer.next(border);
+				if (noHover.count(it) == 0)
+					layouts[(uint32)it].textureUv.data[2] = packer.next(border);
+				layouts[(uint32)it].textureUv.data[3] = packer.next(border);
 			}
+			packer.newLine();
+
+			// wide
+			packer.size = vec2(5, 1) * 24.f / 1024;
+			for (auto it : wideElements)
+			{
+				bool border = noBorder.count(it) == 0;
+				layouts[(uint32)it].textureUv.data[0] = packer.next(border);
+				if (noFocus.count(it) == 0)
+					layouts[(uint32)it].textureUv.data[1] = packer.next(border);
+				if (noHover.count(it) == 0)
+					layouts[(uint32)it].textureUv.data[2] = packer.next(border);
+				layouts[(uint32)it].textureUv.data[3] = packer.next(border);
+			}
+			packer.newLine();
+
+			// small
+			packer.size = vec2(1, 1) * 24.f / 1024;
+			for (auto it : smallElements)
+			{
+				bool border = noBorder.count(it) == 0;
+				layouts[(uint32)it].textureUv.data[0] = packer.next(border);
+				if (noFocus.count(it) == 0)
+					layouts[(uint32)it].textureUv.data[1] = packer.next(border);
+				if (noHover.count(it) == 0)
+					layouts[(uint32)it].textureUv.data[2] = packer.next(border);
+				layouts[(uint32)it].textureUv.data[3] = packer.next(border);
+			}
+			packer.newLine();
 		}
-		{ // manual overrides for some elements
-			{ // things without border
-				for (auto t : { elementTypeEnum::RadioBoxChecked, elementTypeEnum::RadioBoxUnchecked, elementTypeEnum::SliderHorizontalDot, elementTypeEnum::SliderVerticalDot, elementTypeEnum::WindowResizer })
-				{
-					auto &a = layouts[(uint32)t].textureUv;
-					for (uint32 i = 0; i < 4; i++)
-					{
-						auto &b = a.data[i];
-						b.inner = b.outer;
-					}
-				}
-			}
-			{ // things without focus
-				for (auto t : { elementTypeEnum::GroupCell, elementTypeEnum::GroupPanel, elementTypeEnum::GroupSpoilerCollapsed, elementTypeEnum::GroupSpoilerShown, elementTypeEnum::GroupCaption,
-					elementTypeEnum::WindowBaseModal, elementTypeEnum::WindowBaseNormal, elementTypeEnum::WindowCaption, elementTypeEnum::WindowResizer,
-					elementTypeEnum::InputButtonDecrement, elementTypeEnum::InputButtonIncrement,
-					elementTypeEnum::ComboBoxList,
-					elementTypeEnum::ProgressBar, elementTypeEnum::SliderHorizontalDot, elementTypeEnum::SliderVerticalDot,
-					elementTypeEnum::ScrollbarHorizontalDot, elementTypeEnum::ScrollbarHorizontalPanel, elementTypeEnum::ScrollbarVerticalDot, elementTypeEnum::ScrollbarVerticalPanel,
-					elementTypeEnum::ToolTip,
-					})
-				{
-					auto &a = layouts[(uint32)t].textureUv;
-					a.data[1] = a.data[0];
-				}
-			}
-			{ // things without hover
-				for (auto t : { elementTypeEnum::GroupCell, elementTypeEnum::GroupPanel,
-					elementTypeEnum::WindowBaseModal, elementTypeEnum::WindowBaseNormal,
-					elementTypeEnum::ComboBoxList, elementTypeEnum::ListBoxList,
-					elementTypeEnum::ProgressBar,
-					elementTypeEnum::ToolTip,
-					})
-				{
-					auto &a = layouts[(uint32)t].textureUv;
-					a.data[2] = a.data[0];
-				}
-			}
-			{ // things without disabled
-				for (auto t : { elementTypeEnum::WindowBaseModal, elementTypeEnum::WindowBaseNormal, elementTypeEnum::ToolTip, })
-				{
-					auto &a = layouts[(uint32)t].textureUv;
-					a.data[3] = a.data[0];
-				}
-			}
-			// todo color picker, graphs, task bar
+
+		{ // no border
+			for (auto it : noBorder)
+				layouts[(uint32)it].border = vec4();
+		}
+
+		{ // color picker
+			layouts[(uint32)elementTypeEnum::ColorPickerFull].textureUv = layouts[(uint32)elementTypeEnum::ColorPickerCompact].textureUv;
+			layouts[(uint32)elementTypeEnum::ColorPickerHSliderPanel].textureUv = layouts[(uint32)elementTypeEnum::ColorPickerResult].textureUv;
+			layouts[(uint32)elementTypeEnum::ColorPickerSVRect].textureUv = layouts[(uint32)elementTypeEnum::ColorPickerResult].textureUv;
 		}
 	}
 
