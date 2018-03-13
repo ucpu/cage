@@ -89,13 +89,13 @@ namespace cage
 		}
 	}
 
-	void guiItemStruct::explicitPosition(vec2 &position, vec2 &size) const
+	void guiItemStruct::explicitPosition(vec2 &pos, vec2 &size) const
 	{
-		if (GUI_HAS_COMPONENT(explicitPosition, entity))
+		if (GUI_HAS_COMPONENT(position, entity))
 		{
-			GUI_GET_COMPONENT(explicitPosition, p, entity);
+			GUI_GET_COMPONENT(position, p, entity);
 			size = impl->eval<2>(p.size, size);
-			position = impl->eval<2>(p.position, position) - p.anchor * size;
+			pos = impl->eval<2>(p.position, pos) - p.anchor * size;
 		}
 		CAGE_ASSERT_RUNTIME(size.valid(), "this item must have explicit size", entity ? entity->getName() : 0);
 	}

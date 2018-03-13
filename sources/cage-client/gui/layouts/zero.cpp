@@ -28,7 +28,7 @@ namespace cage
 				while (c)
 				{
 					c->updateRequestedSize();
-					//c->explicitPosition(c->requestedSize);
+					//c->position(c->requestedSize);
 					c = c->nextSibling;
 				}
 			}

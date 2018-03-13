@@ -449,7 +449,7 @@ void guiInitialize()
 		entityClass *split = ents->newEntity(1);
 		GUI_GET_COMPONENT(layoutSplitter, ls, split);
 		ls.vertical = true;
-		GUI_GET_COMPONENT(explicitPosition, ep, split);
+		GUI_GET_COMPONENT(position, ep, split);
 		ep.size.value = vec2(1, 1);
 		ep.size.units[0] = unitEnum::ScreenWidth;
 		ep.size.units[1] = unitEnum::ScreenHeight;
@@ -499,7 +499,7 @@ void guiInitialize()
 					GUI_GET_COMPONENT(button, b, e);
 					GUI_GET_COMPONENT(text, t, e);
 					t.value = "S";
-					GUI_GET_COMPONENT(explicitPosition, ep, e);
+					GUI_GET_COMPONENT(position, ep, e);
 					ep.size.units[0] = ep.size.units[1] = unitEnum::Points;
 					ep.size.value = vec2(32, 32);
 				}
@@ -511,7 +511,7 @@ void guiInitialize()
 					GUI_GET_COMPONENT(button, b, e);
 					GUI_GET_COMPONENT(text, t, e);
 					t.value = "L";
-					GUI_GET_COMPONENT(explicitPosition, ep, e);
+					GUI_GET_COMPONENT(position, ep, e);
 					ep.size.units[0] = ep.size.units[1] = unitEnum::Points;
 					ep.size.value = vec2(32, 32);
 				}

@@ -68,7 +68,7 @@ namespace cage
 				entityClass *panel = g->newEntity(panelIndex = g->generateUniqueName());
 				{
 					GUI_GET_COMPONENT(groupBox, c, panel);
-					GUI_GET_COMPONENT(explicitPosition, p, panel);
+					GUI_GET_COMPONENT(position, p, panel);
 					p.anchor = screenPosition;
 					p.position.values[0] = screenPosition[0];
 					p.position.values[1] = screenPosition[1];

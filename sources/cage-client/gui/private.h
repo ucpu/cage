@@ -118,7 +118,7 @@ namespace cage
 
 		void childrenEmit() const;
 
-		void explicitPosition(vec2 &position, vec2 &size) const;
+		void explicitPosition(vec2 &pos, vec2 &size) const;
 		void explicitPosition(vec2 &size) const;
 		void updateContentPosition(const vec4 &subtractMargin);
 

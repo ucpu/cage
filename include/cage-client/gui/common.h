@@ -106,12 +106,12 @@ namespace cage
 	struct CAGE_API selectedItemComponent
 	{};
 
-	struct CAGE_API explicitPositionComponent
+	struct CAGE_API positionComponent
 	{
 		vec2 anchor; // center is at 0.5
 		valuesStruct<2> position;
 		valuesStruct<2> size;
-		explicitPositionComponent();
+		positionComponent();
 	};
 
 	struct CAGE_API graphPointComponent
@@ -122,7 +122,7 @@ namespace cage
 		graphPointComponent();
 	};
 
-#define GCHL_GUI_COMMON_COMPONENTS parent, image, imageFormat, text, textFormat, selection, tooltip, widgetState, selectedItem, explicitPosition, graphPoint
+#define GCHL_GUI_COMMON_COMPONENTS parent, image, imageFormat, text, textFormat, selection, tooltip, widgetState, selectedItem, position, graphPoint
 
 	struct CAGE_API generalComponentsStruct
 	{

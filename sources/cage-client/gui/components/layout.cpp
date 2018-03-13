@@ -12,7 +12,7 @@
 
 namespace cage
 {
-	explicitPositionComponent::explicitPositionComponent()
+	positionComponent::positionComponent()
 	{}
 
 	layoutLineComponent::layoutLineComponent() : cellsAnchor(0, 0), vertical(false), expandToSameWidth(false), expandToSameHeight(false), addSpacingToFillArea(false)
