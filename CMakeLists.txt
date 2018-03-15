@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.2)
 
-project(cage LANGUAGES CXX)
+project(cage LANGUAGES CXX C)
 
 message(STATUS "----------------------------------------------------------------")
 message(STATUS "cage start")
