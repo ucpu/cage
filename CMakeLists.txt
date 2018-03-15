@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.2)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR}/cmake)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_CXX_STANDARD 11)
+
 # disable compilation warnings
 if(MSVC)
 	string(REPLACE "/W3" "/W0" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
