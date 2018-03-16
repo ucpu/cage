@@ -36,8 +36,6 @@ namespace cage
 	void renderableImageStruct::render(guiImpl *impl)
 	{
 		guiImpl::graphicDataStruct &context = impl->graphicData;
-		if (!data.texture)
-			return;
 		data.texture->bind();
 		shaderClass *shr = data.texture->getTarget() == GL_TEXTURE_2D_ARRAY ? context.imageAnimatedShader : context.imageStaticShader;
 		shr->bind();

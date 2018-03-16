@@ -50,9 +50,9 @@ namespace cage
 	struct CAGE_API imageComponent
 	{
 		uint64 animationStart; // -1 will be replaced by current time
-		uint32 textureName;
 		vec2 textureUvOffset;
 		vec2 textureUvSize;
+		uint32 textureName;
 		imageComponent();
 	};
 

@@ -49,7 +49,7 @@ namespace cage
 		if (GUI_HAS_COMPONENT(textFormat, base->entity))
 		{
 			GUI_GET_COMPONENT(textFormat, f, base->entity);
-			text.apply(f, base->impl);
+			text.apply(f, impl);
 		}
 		transcript();
 	}
@@ -64,7 +64,6 @@ namespace cage
 				value = loadInternationalizedText(impl, t.assetName, t.textName, t.value);
 			else
 				value = t.value;
-			text.count = value.length();
 		}
 		transcript(value);
 	}
@@ -90,7 +89,7 @@ namespace cage
 		{
 			uint32 w, h;
 			text.font->size(text.glyphs, text.count, text.format, w, h);
-			return vec2(w, h) / base->impl->pointsScale;
+			return vec2(w + 1, h + 1) / base->impl->pointsScale;
 		}
 		return vec2();
 	}

@@ -29,30 +29,25 @@ namespace cage
 	{
 		void sortHierarchy(guiItemStruct *item)
 		{
-			if (item->prevSibling)
-			{
-				guiItemStruct *a = item->prevSibling->prevSibling;
-				guiItemStruct *b = item->prevSibling;
-				guiItemStruct *c = item;
-				guiItemStruct *d = item->nextSibling;
-				sint32 bo = b->order;
-				sint32 co = c->order;
-				if (co > bo)
-					return;
-#ifdef CAGE_DEBUG
-				if (co != bo || cage::random() < 0.5)
-					return;
-#endif // CAGE_DEBUG
-				if (a)
-					a->nextSibling = c;
-				if (d)
-					d->prevSibling = b;
-				c->prevSibling = a;
-				c->nextSibling = b;
-				b->prevSibling = c;
-				b->nextSibling = d;
-				sortHierarchy(item);
-			}
+			if (!item->prevSibling)
+				return;
+			guiItemStruct *a = item->prevSibling->prevSibling;
+			guiItemStruct *b = item->prevSibling;
+			guiItemStruct *c = item;
+			guiItemStruct *d = item->nextSibling;
+			sint32 bo = b->order;
+			sint32 co = c->order;
+			if (co > bo)
+				return;
+			if (a)
+				a->nextSibling = c;
+			if (d)
+				d->prevSibling = b;
+			c->prevSibling = a;
+			c->nextSibling = b;
+			b->prevSibling = c;
+			b->nextSibling = d;
+			sortHierarchy(item);
 		}
 
 		void attachHierarchy(guiItemStruct *item, guiItemStruct *parent)
@@ -60,9 +55,14 @@ namespace cage
 			CAGE_ASSERT_RUNTIME(item && parent && !item->parent && !item->prevSibling && !item->nextSibling);
 			item->parent = parent;
 			if (!parent->lastChild)
+			{
+				CAGE_ASSERT_RUNTIME(!parent->firstChild);
 				parent->firstChild = parent->lastChild = item;
+			}
 			else
 			{
+				CAGE_ASSERT_RUNTIME(parent->firstChild && parent->lastChild);
+				CAGE_ASSERT_RUNTIME(!parent->lastChild->nextSibling);
 				parent->lastChild->nextSibling = item;
 				item->prevSibling = parent->lastChild;
 				sortHierarchy(item);

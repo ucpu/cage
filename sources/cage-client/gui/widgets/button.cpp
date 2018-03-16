@@ -21,8 +21,8 @@ namespace cage
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT_RUNTIME(!base->firstChild, "input box may not have children");
-				CAGE_ASSERT_RUNTIME(!base->layout, "input box may not have layout");
+				CAGE_ASSERT_RUNTIME(!base->firstChild, "button may not have children");
+				CAGE_ASSERT_RUNTIME(!base->layout, "button may not have layout");
 				if (base->text)
 					base->text->text.apply(skin().defaults.button.textFormat, base->impl);
 			}
@@ -43,7 +43,8 @@ namespace cage
 				vec2 p = base->contentPosition;
 				vec2 s = base->contentSize;
 				offset(p, s, -skin().defaults.button.padding - skin().layouts[(uint32)elementTypeEnum::Button].border);
-				// todo image
+				if (base->image)
+					base->image->emit(p, s);
 				if (base->text)
 					base->text->emit(p, s);
 			}

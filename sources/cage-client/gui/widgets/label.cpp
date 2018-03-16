@@ -26,18 +26,16 @@ namespace cage
 				if (base->text)
 					base->text->text.apply(skin().defaults.label.textFormat, base->impl);
 				if (base->image)
-				{
-					const auto &d = skin().defaults.label.imageFormat;
-					// todo
-				}
+					base->image->image.apply(skin().defaults.label.imageFormat, base->impl);
 			}
 
 			virtual void updateRequestedSize() override
 			{
+				base->requestedSize = vec2();
 				if (base->text)
-					base->requestedSize = base->text->updateRequestedSize();
+					base->requestedSize = max(base->requestedSize, base->text->updateRequestedSize());
 				else if (base->image)
-					base->requestedSize = base->image->updateRequestedSize();
+					base->requestedSize = max(base->requestedSize, base->image->updateRequestedSize());
 				else
 					CAGE_ASSERT_RUNTIME(false);
 				offsetSize(base->requestedSize, skin().defaults.label.margin);
