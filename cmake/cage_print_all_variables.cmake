@@ -1,5 +1,5 @@
 
-macro(print_all_variables)
+macro(cage_print_all_variables)
 	message(STATUS "----------------------------------------------------------------")
 	message(STATUS "print all variables begin")
 	message(STATUS "----------------------------------------------------------------")
