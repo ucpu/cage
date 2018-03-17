@@ -26,7 +26,7 @@ namespace cage
 				if (base->text)
 					base->text->text.apply(skin().defaults.label.textFormat, base->impl);
 				if (base->image)
-					base->image->image.apply(skin().defaults.label.imageFormat, base->impl);
+					base->image->apply(skin().defaults.label.imageFormat);
 			}
 
 			virtual void updateRequestedSize() override

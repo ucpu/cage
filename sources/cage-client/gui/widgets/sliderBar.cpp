@@ -50,6 +50,8 @@ namespace cage
 
 			virtual void emit() const override
 			{
+				CAGE_ASSERT_RUNTIME(data.value.valid() && data.min.valid() && data.max.valid());
+				CAGE_ASSERT_RUNTIME(data.max > data.min);
 				emitElement(baseElement, mode(false));
 				real ds = min(base->contentSize[0], base->contentSize[1]);
 				vec2 size = vec2(ds, ds);

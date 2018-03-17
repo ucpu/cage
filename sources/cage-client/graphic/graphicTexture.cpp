@@ -62,9 +62,9 @@ namespace cage
 		class textureImpl : public textureClass
 		{
 		public:
+			const uint32 target;
 			uint32 id;
-			uint32 target;
-			uint16 width, height, depth;
+			uint32 width, height, depth;
 
 			textureImpl(uint32 target) : id(0), target(target), width(0), height(0), depth(0)
 			{
@@ -195,6 +195,7 @@ namespace cage
 	void textureClass::multiBind(uint32 count, const uint32 tius[], const textureClass *const texs[])
 	{
 		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentContext());
+		CAGE_ASSERT_RUNTIME(count <= 32);
 		uint32 textures[32];
 		detail::memset(textures, 0, sizeof(textures));
 		for (uint32 i = 0; i < count; i++)

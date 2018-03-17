@@ -432,9 +432,9 @@ void processTexture()
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "loading done");
 	}
 
-	checkConsistency(target);
 	CAGE_LOG(severityEnum::Info, logComponentName, string() + "resolution: " + images[0].width + "*" + images[0].height + "*" + numeric_cast<uint32>(images.size()));
 	CAGE_LOG(severityEnum::Info, logComponentName, string() + "channels: " + images[0].bpp);
+	checkConsistency(target);
 
 	{ // convert height map to normal map
 		float strength = properties("convert_normal").toFloat();

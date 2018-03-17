@@ -31,7 +31,7 @@ namespace cage
 		if (GUI_HAS_COMPONENT(imageFormat, base->entity))
 		{
 			GUI_GET_COMPONENT(imageFormat, f, base->entity);
-			image.apply(f, impl);
+			apply(f);
 		}
 		assign();
 	}
@@ -45,17 +45,22 @@ namespace cage
 
 	void imageItemStruct::assign(const imageComponent &value)
 	{
-		image.texture = base->impl->assetManager->tryGet<assetSchemeIndexTexture, textureClass>(value.textureName);
-		image.uvClip = vec4(value.textureUvOffset, value.textureUvOffset + value.textureUvSize);
-		image.aniTexFrames = detail::evalSamplesForTextureAnimation(image.texture, 0, 0, 0, 0); // todo
+		image = value;
+		texture = base->impl->assetManager->tryGet<assetSchemeIndexTexture, textureClass>(value.textureName);
+	}
+
+	void imageItemStruct::apply(const imageFormatComponent &f)
+	{
+		format = f;
+		// todo inherit only
 	}
 
 	vec2 imageItemStruct::updateRequestedSize()
 	{
-		if (image.texture)
+		if (texture)
 		{
 			uint32 w, h;
-			image.texture->getResolution(w, h);
+			texture->getResolution(w, h);
 			return vec2(w, h);
 		}
 		return vec2();
@@ -68,12 +73,13 @@ namespace cage
 
 	renderableImageStruct *imageItemStruct::emit(vec2 position, vec2 size) const
 	{
-		if (!image.texture)
-			return nullptr;
 		auto *e = base->impl->emitControl;
 		auto *t = e->memory.createObject<renderableImageStruct>();
-		t->data = image;
+		t->data.texture = texture;
 		t->data.ndcPos = base->impl->pointsToNdc(position, size);
+		t->data.uvClip = vec4(image.textureUvOffset, image.textureUvOffset + image.textureUvSize);
+		// todo format mode
+		t->data.aniTexFrames = detail::evalSamplesForTextureAnimation(texture, getApplicationTime(), image.animationStart, format.animationSpeed, format.animationOffset);
 		e->last->next = t;
 		e->last = t;
 		return t;

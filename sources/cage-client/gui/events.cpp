@@ -117,8 +117,7 @@ namespace cage
 					return true;
 			}
 		}
-		if ((buttons & mouseButtonsFlags::Left) == mouseButtonsFlags::Left)
-			impl->focusName = 0;
+		impl->focusName = 0;
 		return false;
 	}
 

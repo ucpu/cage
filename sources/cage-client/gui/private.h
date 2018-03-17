@@ -70,7 +70,6 @@ namespace cage
 			vec4 aniTexFrames;
 			textureClass *texture;
 			imageStruct();
-			void apply(const imageFormatComponent &f, guiImpl *impl);
 		} data;
 
 		virtual void render(guiImpl *impl) override;
@@ -197,7 +196,9 @@ namespace cage
 	struct imageItemStruct
 	{
 		guiItemStruct *const base;
-		renderableImageStruct::imageStruct image;
+		imageComponent image;
+		imageFormatComponent format;
+		textureClass *texture;
 		bool skipInitialize;
 
 		imageItemStruct(guiItemStruct *base);
@@ -206,6 +207,7 @@ namespace cage
 
 		void assign();
 		void assign(const imageComponent &value);
+		void apply(const imageFormatComponent &f);
 
 		vec2 updateRequestedSize();
 

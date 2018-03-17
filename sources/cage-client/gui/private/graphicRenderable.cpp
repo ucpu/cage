@@ -42,9 +42,4 @@ namespace cage
 
 	renderableImageStruct::imageStruct::imageStruct() : texture(nullptr)
 	{}
-
-	void renderableImageStruct::imageStruct::apply(const imageFormatComponent &f, guiImpl *impl)
-	{
-		// todo
-	}
 }
