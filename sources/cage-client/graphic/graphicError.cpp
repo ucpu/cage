@@ -32,7 +32,7 @@ namespace cage
 	}
 
 	graphicException::graphicException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uint32 code) noexcept : codeException(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER, code)
-	{};
+	{}
 
 	graphicException &graphicException::log()
 	{
@@ -110,7 +110,8 @@ namespace cage
 		void openglContextInitializeGeneral(windowClass *w)
 		{
 			// initialize debug messages
-			glDebugMessageCallback(&openglErrorCallbackImpl, w);
+			if (GLAD_GL_KHR_debug)
+				glDebugMessageCallback(&openglErrorCallbackImpl, w);
 
 			{ // query context info
 				GLint major = 0, minor = 0;
