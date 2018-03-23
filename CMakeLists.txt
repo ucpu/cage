@@ -22,14 +22,6 @@ cage_build_configuration()
 add_subdirectory(externals EXCLUDE_FROM_ALL)
 
 ########
-# OPTIONS
-########
-
-option(CAGE-CORE_BUILD_TESTS "Enable building tests for cage-core." ON)
-option(CAGE-CLIENT_BUILD_TESTS "Enable building tests for cage-client." ON)
-option(CAGE-CLIENT_BUILD_TOOLS "Enable building tools for cage-client." ON)
-
-########
 # CAGE-CORE
 ########
 
@@ -53,13 +45,11 @@ endif()
 # CAGE-TEST-CORE
 ########
 
-if(CAGE-CORE_BUILD_TESTS)
-	file(GLOB_RECURSE cage-test-core-sources "sources/cage-test-core/*")
-	add_executable(cage-test-core ${cage-test-core-sources})
-	target_link_libraries(cage-test-core cage-core glm)
-	cage_ide_groups(cage-test-core cage/tests/core)
-	cage_ide_working_dir_in_place(cage-test-core)
-endif(CAGE-CORE_BUILD_TESTS)
+file(GLOB_RECURSE cage-test-core-sources "sources/cage-test-core/*")
+add_executable(cage-test-core ${cage-test-core-sources})
+target_link_libraries(cage-test-core cage-core glm)
+cage_ide_groups(cage-test-core cage/tests/core)
+cage_ide_working_dir_in_place(cage-test-core)
 
 ########
 # CAGE-CLIENT
@@ -76,42 +66,36 @@ cage_ide_groups(cage-client cage)
 # CAGE-ASSET-PROCESSOR
 ########
 
-if(CAGE-CLIENT_BUILD_TOOLS)
-	file(GLOB_RECURSE cage-asset-processor-sources "sources/cage-asset-processor/*")
-	add_executable(cage-asset-processor ${cage-asset-processor-sources})
-	target_link_libraries(cage-asset-processor cage-client IL ILU assimp freetype dr_libs vorbisenc)
-	cage_ide_groups(cage-asset-processor cage)
-	cage_ide_working_dir_in_place(cage-asset-processor)
-	if(WIN32)
-		target_compile_definitions(cage-asset-processor PRIVATE _CRT_SECURE_NO_WARNINGS)
-	endif()
-endif(CAGE-CLIENT_BUILD_TOOLS)
+file(GLOB_RECURSE cage-asset-processor-sources "sources/cage-asset-processor/*")
+add_executable(cage-asset-processor ${cage-asset-processor-sources})
+target_link_libraries(cage-asset-processor cage-client IL ILU assimp freetype dr_libs vorbisenc)
+cage_ide_groups(cage-asset-processor cage)
+cage_ide_working_dir_in_place(cage-asset-processor)
+if(WIN32)
+	target_compile_definitions(cage-asset-processor PRIVATE _CRT_SECURE_NO_WARNINGS)
+endif()
 
 ########
 # CAGE-ASSET-DATABASE
 ########
 
-if(CAGE-CLIENT_BUILD_TOOLS)
-	file(GLOB_RECURSE cage-asset-database-sources "sources/cage-asset-database/*")
-	add_executable(cage-asset-database ${cage-asset-database-sources})
-	target_link_libraries(cage-asset-database cage-core)
-	add_dependencies(cage-asset-database cage-asset-processor)
-	cage_ide_groups(cage-asset-database cage)
-	cage_ide_working_dir_in_place(cage-asset-database)
-endif(CAGE-CLIENT_BUILD_TOOLS)
+file(GLOB_RECURSE cage-asset-database-sources "sources/cage-asset-database/*")
+add_executable(cage-asset-database ${cage-asset-database-sources})
+target_link_libraries(cage-asset-database cage-core)
+add_dependencies(cage-asset-database cage-asset-processor)
+cage_ide_groups(cage-asset-database cage)
+cage_ide_working_dir_in_place(cage-asset-database)
 
 ########
 # CAGE-ASSET-GENERATOR
 ########
 
-if(CAGE-CLIENT_BUILD_TOOLS)
-	file(GLOB_RECURSE cage-asset-generator-sources "sources/cage-asset-generator/*")
-	add_executable(cage-asset-generator ${cage-asset-generator-sources})
-	target_link_libraries(cage-asset-generator cage-client)
-	add_dependencies(cage-asset-generator cage-asset-processor)
-	cage_ide_groups(cage-asset-generator cage)
-	cage_ide_working_dir_in_place(cage-asset-generator)
-endif(CAGE-CLIENT_BUILD_TOOLS)
+file(GLOB_RECURSE cage-asset-generator-sources "sources/cage-asset-generator/*")
+add_executable(cage-asset-generator ${cage-asset-generator-sources})
+target_link_libraries(cage-asset-generator cage-client)
+add_dependencies(cage-asset-generator cage-asset-processor)
+cage_ide_groups(cage-asset-generator cage)
+cage_ide_working_dir_in_place(cage-asset-generator)
 
 ########
 # FINALIZATION
