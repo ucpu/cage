@@ -114,28 +114,6 @@ if(CAGE-CLIENT_BUILD_TOOLS)
 endif(CAGE-CLIENT_BUILD_TOOLS)
 
 ########
-# CAGE-TESTS-CLIENT
-########
-
-macro(cage_tests_client category folder)
-	file(GLOB cage-tests-client-list ${folder})
-	foreach(test ${cage-tests-client-list})
-		string(REPLACE ".cpp" "" name ${test})
-		get_filename_component(name ${name} NAME)
-		add_executable(${name} ${test})
-		target_link_libraries(${name} cage-client)
-		cage_ide_groups(${name} ${category})
-		cage_ide_working_dir_in_place(${name})
-	endforeach()
-endmacro()
-
-if(CAGE-CLIENT_BUILD_TESTS)
-	cage_tests_client(cage/tests/client "sources/cage-tests-client/*")
-	cage_tests_client(cage/tests/gui "sources/cage-tests-client-gui/*")
-	cage_tests_client(cage/tests/engine "sources/cage-tests-client-engine/*")
-endif(CAGE-CLIENT_BUILD_TESTS)
-
-########
 # FINALIZATION
 ########
 

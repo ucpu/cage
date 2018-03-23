@@ -1,6 +1,3 @@
-[submodule "data"]
-	path = data
-	url = https://github.com/ucpu/cage-data.git
 [submodule "externals"]
 	path = externals
 	url = https://github.com/ucpu/cage-externals.git

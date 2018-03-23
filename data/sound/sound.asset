@@ -1,0 +1,10 @@
+
+[]
+scheme = pack
+sound.pack
+
+[]
+scheme = sound
+type = stream
+before = repeat
+after = repeat

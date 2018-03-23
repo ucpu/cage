@@ -1,0 +1,12 @@
+
+[base]
+roughness = 0.5
+metalness = 0.0
+
+[mult]
+
+[textures]
+albedo = ../texture/helper.jpg
+
+[flags]
+
