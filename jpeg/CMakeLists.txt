@@ -4,12 +4,18 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "jpeg")
 message(STATUS "----------------------------------------------------------------")
 
-set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "BUILD_SHARED_LIBS")
+#set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "BUILD_SHARED_LIBS")
+option(ENABLE_SHARED "Build shared libraries" FALSE)
+option(WITH_SIMD "Include SIMD extensions, if available for this platform" false)
+
+if(NOT CMAKE_INSTALL_DOCDIR)
+	set(CMAKE_INSTALL_DOCDIR ${CMAKE_INSTALL_BINDIR})
+endif()
 
 add_subdirectory(jpeg)
 
 set(JPEG_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/jpeg ${CMAKE_CURRENT_BINARY_DIR}/jpeg)
-set(JPEG_LIBRARY $<TARGET_LINKER_FILE:jpeg>)
+set(JPEG_LIBRARY $<TARGET_LINKER_FILE:jpeg-static>)
 set(filename ${CMAKE_BINARY_DIR}/cmake/FindJPEG.cmake)
 file(WRITE ${filename} "set(JPEG_FOUND 1)\n")
 file(APPEND ${filename} "set(JPEG_INCLUDE_DIR ${JPEG_INCLUDE_DIR})\n")

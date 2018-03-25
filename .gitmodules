@@ -39,7 +39,7 @@
 	url = https://github.com/nemtrif/utfcpp.git
 [submodule "jpeg/jpeg"]
 	path = jpeg/jpeg
-	url = https://github.com/ucpu/jpeg.git
+	url = https://github.com/libjpeg-turbo/libjpeg-turbo.git
 [submodule "devil/devil"]
 	path = devil/devil
 	url = https://github.com/ucpu/devil.git
