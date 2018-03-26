@@ -48,7 +48,7 @@ endif()
 file(GLOB_RECURSE cage-test-core-sources "sources/cage-test-core/*")
 add_executable(cage-test-core ${cage-test-core-sources})
 target_link_libraries(cage-test-core cage-core glm)
-cage_ide_groups(cage-test-core cage/tests/core)
+cage_ide_groups(cage-test-core cage)
 cage_ide_working_dir_in_place(cage-test-core)
 
 ########
