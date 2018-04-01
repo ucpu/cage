@@ -93,7 +93,7 @@ A long-term hobby project that turned out to be quite BIG.
  - runs on Windows and Linux
  - MacOS does not have required OpenGL version, but is otherwise supported
  - mostly self-contained
-   - linux: requires system libraries that will provide OpenGL access, see https://github.com/glfw/glfw
+   - linux: requires system libraries that will provide OpenGL access, see [GLFW](https://github.com/glfw/glfw)
  - the Core library has no dependencies on graphics or sound and is therefore eligible to run on a server
 
 ## Friendly Licensing
@@ -101,5 +101,9 @@ A long-term hobby project that turned out to be quite BIG.
  - commercial or not, closed source or open source, ... whatever :D
 
 # Examples
- - https://github.com/ucpu/grid - simple but complete game
- - https://github.com/ucpu/cage-examples - a collection of test scenes and applications
+ - [Grid](https://github.com/ucpu/grid) - simple but complete game
+ - [Cage-examples](https://github.com/ucpu/cage-examples) - a collection of test scenes and applications
+
+# Building
+
+See [BUILDING](BUILDING.md).
