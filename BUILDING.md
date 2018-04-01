@@ -1,8 +1,18 @@
 
-Cage build configuration is defined in CMake.
+# Git Submodules
+
+First of all, make sure that git submodules were loaded too.
+```bash
+git pull
+git submodule update --init --recursive
+```
+
+# Building
+
+Cage build configuration is defined in [CMake](https://cmake.org/).
 It can be used with Graphical User Interface, if available, or from command line.
 
-# CMake Gui
+## CMake Gui
 
 Set "Where is the source code" to this directory.
 
@@ -12,7 +22,7 @@ Click "Configure", a dialog will appear that allows you to choose build tool.
 
 Then click "Generate", "Open Project" and build the application as you normally would.
 
-# CMake on Command Line
+## CMake on Command Line
 
 Navigate to the folder with the sources and prepare build directory.
 ```bash
@@ -26,7 +36,7 @@ cmake --help
 
 Some generators are multi-configuration (eg. Visual Studio, XCode) and some are single-configuration (eg. make).
 
-## Multi-configuration
+### Multi-configuration
 
 Configure the project.
 ```bash
@@ -38,7 +48,7 @@ You can now open your build tool project and continue with it as you are used to
 cmake --build . --config RELWITHDEBINFO
 ```
 
-## Single-configuration
+### Single-configuration
 
 Configure the project.
 ```bash
