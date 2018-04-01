@@ -1,4 +1,5 @@
 include(cage_build_configuration)
+include(cage_default_init)
 include(cage_directory_link)
 include(cage_disable_source_build)
 include(cage_ide_groups)

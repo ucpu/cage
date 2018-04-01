@@ -10,10 +10,6 @@ message(STATUS "----------------------------------------------------------------
 # INITIALIZATION
 ########
 
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-	message(FATAL_ERROR "CMAKE_BUILD_TYPE needs to be set")
-endif()
-
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 include(cage_all)
 cage_disable_source_build()
@@ -38,7 +34,7 @@ set_target_properties(cage-core PROPERTIES CXX_VISIBILITY_PRESET hidden)
 cage_ide_groups(cage-core cage)
 if(WIN32)
 	target_compile_definitions(cage-core PRIVATE _CRT_SECURE_NO_WARNINGS)
-	target_compile_options(cage-core PUBLIC /wd4251)
+	target_compile_options(cage-core PUBLIC /wd4251) # 'identifier' : class 'type' needs to have dll-interface to be used by clients of class 'type2'
 endif()
 
 ########
