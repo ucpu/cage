@@ -235,6 +235,7 @@ namespace
 	{
 		if (!pathExists(configPathDatabase))
 			return;
+		CAGE_LOG(severityEnum::Info, "database", string() + "loading database cache: '" + configPathDatabase + "'");
 		holder<fileClass> f = newFile(configPathDatabase, fileMode(true, false));
 		string b;
 		if (!f->readLine(b) || b != databaseBegin)
@@ -250,6 +251,7 @@ namespace
 		if (!f->readLine(b) || b != databaseEnd)
 			CAGE_THROW_ERROR(exception, "wrong file end");
 		f->close();
+		CAGE_LOG(severityEnum::Info, "database", string() + "loaded " + assets.size() + " asset entries");
 	}
 
 	void write(holder<fileClass> &f, const string &s)
@@ -263,6 +265,7 @@ namespace
 		// save database
 		if (!((string)configPathDatabase).empty())
 		{
+			CAGE_LOG(severityEnum::Info, "database", string() + "saving database cache: '" + configPathDatabase + "'");
 			holder<fileClass> f = newFile(configPathDatabase, fileMode(false, true));
 			f->writeLine(databaseBegin);
 			f->writeLine(databaseVersion);
@@ -271,6 +274,7 @@ namespace
 			assets.save(f.get());
 			f->writeLine(databaseEnd);
 			f->close();
+			CAGE_LOG(severityEnum::Info, "database", string() + "saved " + assets.size() + " asset entries");
 		}
 
 		// save reverse
@@ -363,7 +367,9 @@ namespace
 
 	void findFiles(const string &path)
 	{
-		holder<directoryListClass> d = newDirectoryList(pathJoin(configPathInput, path));
+		string pth = pathJoin(configPathInput, path);
+		CAGE_LOG(severityEnum::Info, "database", string() + "checking path '" + pth + "'");
+		holder<directoryListClass> d = newDirectoryList(pth);
 		while (d->valid())
 		{
 			string p = pathJoin(path, d->name());
@@ -572,7 +578,9 @@ void start()
 
 	// load
 	timestamp = 0;
-	if (!configFromScratch)
+	if (configFromScratch)
+		CAGE_LOG(severityEnum::Info, "database", "'from scratch' was defined. Previous cache is ignored.");
+	else
 		load();
 
 	// find changes
@@ -581,6 +589,7 @@ void start()
 
 void listen()
 {
+	CAGE_LOG(severityEnum::Info, "database", "initializing listening for changes");
 	notifierInitialize(configNotifierPort);
 	holder<changeWatcherClass> changes = newChangeWatcher();
 	changes->registerPath(configPathInput);
