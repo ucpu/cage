@@ -5,18 +5,21 @@ It can be used with Graphical User Interface, if available, or from command line
 # CMake Gui
 
 Set "Where is the source code" to this directory.
+
 Set "Where to build the directories" to some different directory, eg. "build".
+
 Click "Configure", a dialog will appear that allows you to choose build tool.
+
 Then click "Generate", "Open Project" and build the application as you normally would.
 
 # CMake on Command Line
 
 Navigate to the folder with the sources and prepare build directory.
 ```bash
-mkdir build && cd build
+mkdir build ; cd build
 ```
 
-Choose a generator from those available for your platform:
+Choose a generator from those available for your platform.
 ```bash
 cmake --help
 ```
