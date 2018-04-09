@@ -1,7 +1,16 @@
 
+# Dependencies
+
+## Linux
+
+Install package xorg-dev (debian or ubuntu).
+```bash
+sudo apt install xorg-dev
+```
+
 # Git Submodules
 
-First of all, make sure that git submodules were loaded too.
+Make sure that git submodules are loaded too.
 ```bash
 git pull
 git submodule update --init --recursive
@@ -9,7 +18,7 @@ git submodule update --init --recursive
 
 # Building
 
-Cage build configuration is defined in [CMake](https://cmake.org/).
+Cage build configuration is written in [CMake](https://cmake.org/).
 It can be used with Graphical User Interface, if available, or from command line.
 
 ## CMake Gui
@@ -20,11 +29,11 @@ Set "Where to build the directories" to some different directory, eg. "build".
 
 Click "Configure", a dialog will appear that allows you to choose build tool.
 
-Then click "Generate", "Open Project" and build the application as you normally would.
+Then click "Generate", "Open Project" and build the application as you usually would.
 
 ## CMake on Command Line
 
-Navigate to the folder with the sources and prepare build directory.
+Prepare build directory.
 ```bash
 mkdir build ; cd build
 ```
