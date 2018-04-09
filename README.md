@@ -1,28 +1,56 @@
-C++ 3D game engine designed for strategy games.
+C++ 3D game engine designed primarily for strategy games.
 A long-term hobby project that turned out to be quite BIG.
+
+# Examples
+ - [Grid](https://github.com/ucpu/grid) - simple but complete game
+ - [Cage-examples](https://github.com/ucpu/cage-examples) - a collection of test scenes and applications
+
+# Features
+
+## Ease of use
+ - ease of use here refers to single, easy to understand programming API
+ - even that the engine depends on several libraries, they are all hidden behind the scene
+ - the API consists of both functions and classes, whichever is more convenient
+ - the API is not polluted by any unnecessary includes (not even the standard libraries)
+
+## Portable
+ - runs on Windows and Linux
+   - MacOS does not have required OpenGL version, but is otherwise supported
+ - self-contained (as much as possible)
+   - all dependencies are accessed as git submodules and compiled in
+ - the Core library has no dependencies on graphics or sound and is therefore suitable to run on a server
+
+## Friendly Licensing
+ - MIT license is short and easy to understand
+ - commercial or not, closed source or open source, ... whatever :D
+ - (be sure to also check out the licenses for all dependencies)
+
+## Notes
+ - Cage is NOT an IDE or editor
+   - when developing with Cage, you use your preferred editor
+   - all interaction with Cage is in c++ code, ini configuration files and the CLI tools
 
 # Components
 
  - Core Library
    - Operating system abstraction
      - memory management
-     - threading & synchronization
+     - threads & synchronization
      - filesystem
      - networking (via Enet)
-   - Math
+   - Math & geometry
      - glsl like: real, vec3, quat, mat4, degs, rads, ...
-     - no templates
-   - Geometry
      - shapes: line (ray, segment), triangle, plane, aabb, sphere, ...
+     - no templates, all is float
      - intersections & collisions
    - Entities
-     - this is the heart of all higher-level APIs
+     - this is the heart of all Cage's higher-level APIs
      - entities are identified by pointer and, optionally, by a number
+     - entities may be aggregated into groups for easier processing
      - entities may have any number of predefined components
        - single entity may not have multiple instances of the same component
-       - components are treated as byte-buffers - no destructors etc.
-     - entities may be aggregated into groups for easier processing
-     - easy serialization
+     - simple serialization
+       - components are treated as byte-buffers (no destructors etc.)
    - Assets
      - thread-aware loading
      - transparent on-demand hot-reloading
@@ -71,39 +99,10 @@ A long-term hobby project that turned out to be quite BIG.
      - can be set to listen to changes and act immediately
        - notifies all connected games whenever an asset has changed so that the engine can reload it
      - assets are configured in simple ini-like files (good for version-control-systems)
-     - easily extendable to any custom files
+     - easily extensible to any custom formats
    - asset-generator
      - given a path to a folder, it will analyze all files in it and generate basic asset configuration
 
- - Notes
-   - Cage is NOT an IDE or editor
-   - when developing with Cage, you use your preferred IDE
-   - all interaction with Cage is in c++ code, ini configuration files and with the tools
-
-# Features
-
-## Ease of use
- - as surprising as it is, Cage's first design goal is to be super easy to use
- - ease of use here refers to single, easy to understand programming API
- - even that the engine is composed of several libraries, they are all hidden behind the scene
- - the API consists of both functions and classes, whichever is more convenient
- - the API is not polluted by any unnecessary includes (not even the standard libraries)
-
-## Portable
- - runs on Windows and Linux
- - MacOS does not have required OpenGL version, but is otherwise supported
- - mostly self-contained
-   - linux: requires system libraries that will provide OpenGL access, see [GLFW](https://github.com/glfw/glfw)
- - the Core library has no dependencies on graphics or sound and is therefore eligible to run on a server
-
-## Friendly Licensing
- - MIT license is very straightforward and easy to understand
- - commercial or not, closed source or open source, ... whatever :D
-
-# Examples
- - [Grid](https://github.com/ucpu/grid) - simple but complete game
- - [Cage-examples](https://github.com/ucpu/cage-examples) - a collection of test scenes and applications
-
 # Building
 
-See [BUILDING](BUILDING.md).
+ - see [BUILDING](BUILDING.md).
