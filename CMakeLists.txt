@@ -21,7 +21,7 @@ add_subdirectory(externals EXCLUDE_FROM_ALL)
 # CAGE-CORE
 ########
 
-file(GLOB_RECURSE cage-core-sources "sources/cage-core/*" "include/cage-core/*")
+file(GLOB_RECURSE cage-core-sources "sources/libcore/*" "include/cage-core/*")
 add_library(cage-core SHARED ${cage-core-sources})
 target_include_directories(cage-core PUBLIC include)
 target_link_libraries(cage-core zlib simplefilewatcher png_static enet utfcpp)
@@ -41,7 +41,7 @@ endif()
 # CAGE-TEST-CORE
 ########
 
-file(GLOB_RECURSE cage-test-core-sources "sources/cage-test-core/*")
+file(GLOB_RECURSE cage-test-core-sources "sources/test-core/*")
 add_executable(cage-test-core ${cage-test-core-sources})
 target_link_libraries(cage-test-core cage-core glm)
 cage_ide_groups(cage-test-core cage)
@@ -51,7 +51,7 @@ cage_ide_working_dir_in_place(cage-test-core)
 # CAGE-CLIENT
 ########
 
-file(GLOB_RECURSE cage-client-sources "sources/cage-client/*" "include/cage-client/*")
+file(GLOB_RECURSE cage-client-sources "sources/libclient/*" "include/cage-client/*")
 add_library(cage-client SHARED ${cage-client-sources})
 target_include_directories(cage-client PUBLIC include)
 target_link_libraries(cage-client cage-core glad libsoundio_shared ogg vorbis vorbisfile glfw)
@@ -62,7 +62,7 @@ cage_ide_groups(cage-client cage)
 # CAGE-ASSET-PROCESSOR
 ########
 
-file(GLOB_RECURSE cage-asset-processor-sources "sources/cage-asset-processor/*")
+file(GLOB_RECURSE cage-asset-processor-sources "sources/asset-processor/*")
 add_executable(cage-asset-processor ${cage-asset-processor-sources})
 target_link_libraries(cage-asset-processor cage-client IL ILU assimp freetype dr_libs vorbisenc)
 cage_ide_groups(cage-asset-processor cage)
@@ -75,7 +75,7 @@ endif()
 # CAGE-ASSET-DATABASE
 ########
 
-file(GLOB_RECURSE cage-asset-database-sources "sources/cage-asset-database/*")
+file(GLOB_RECURSE cage-asset-database-sources "sources/asset-database/*")
 add_executable(cage-asset-database ${cage-asset-database-sources})
 target_link_libraries(cage-asset-database cage-core)
 add_dependencies(cage-asset-database cage-asset-processor)
@@ -86,7 +86,7 @@ cage_ide_working_dir_in_place(cage-asset-database)
 # CAGE-ASSET-GENERATOR
 ########
 
-file(GLOB_RECURSE cage-asset-generator-sources "sources/cage-asset-generator/*")
+file(GLOB_RECURSE cage-asset-generator-sources "sources/asset-generator/*")
 add_executable(cage-asset-generator ${cage-asset-generator-sources})
 target_link_libraries(cage-asset-generator cage-client)
 add_dependencies(cage-asset-generator cage-asset-processor)
