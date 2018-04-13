@@ -95,7 +95,7 @@ namespace cage
 	pointerRange<const screenMode> screenDeviceClass::modes() const
 	{
 		screenDeviceImpl *impl = (screenDeviceImpl*)this;
-		return { impl->modes.data(), impl->modes.data() + impl->modes.size() };
+		return impl->modes;
 	}
 
 	string screenDeviceClass::name() const
@@ -131,7 +131,7 @@ namespace cage
 	pointerRange<const screenDeviceClass> screenListClass::devices() const
 	{
 		screenListImpl *impl = (screenListImpl*)this;
-		return { impl->devices.data(), impl->devices.data() + impl->devices.size() };
+		return impl->devices;
 	}
 
 	holder<screenListClass> newScreenList()

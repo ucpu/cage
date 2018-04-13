@@ -511,7 +511,7 @@ namespace cage
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		assetContextPrivateStruct *ass = impl->index->get(assetName, false);
 		CAGE_ASSERT_RUNTIME(ass);
-		return { ass->dependencies.data(), ass->dependencies.data() + ass->dependencies.size() };
+		return ass->dependencies;
 	}
 
 	uint32 assetManagerClass::countTotal() const

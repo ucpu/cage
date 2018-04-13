@@ -88,8 +88,7 @@ namespace cage
 	pointerRange<const uint32> objectClass::meshes(uint32 lod) const
 	{
 		objectImpl *impl = (objectImpl*)this;
-		auto &r = impl->lods[lod].meshes;
-		return { r.data(), r.data() + r.size() };
+		return impl->lods[lod].meshes;
 	}
 
 	holder<objectClass> newObject()

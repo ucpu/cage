@@ -125,7 +125,8 @@ namespace cage
 
 	pointerRange<const collisionPairStruct> collisionQueryClass::collisionPairs() const
 	{
-		return { collisionPairsData(), collisionPairsData() + collisionPairsCount() };
+		collisionQueryImpl *impl = (collisionQueryImpl*)this;
+		return impl->resultPairs;
 	}
 
 	void collisionQueryClass::query(const colliderClass *collider, const transform &t)

@@ -356,7 +356,8 @@ namespace cage
 
 	pointerRange<entityClass *const> groupClass::entities()
 	{
-		return { entitiesArray(), entitiesArray() + entitiesCount() };
+		groupImpl *impl = (groupImpl*)this;
+		return impl->entities;
 	}
 
 	void groupClass::entitiesCallback(const delegate<void(entityClass *)> &callback)

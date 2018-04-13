@@ -70,7 +70,7 @@ namespace cage
 		impl->tmpSections.clear();
 		for (auto &it : impl->sections.cont)
 			impl->tmpSections.push_back(it.first);
-		return { impl->tmpSections.data(), impl->tmpSections.data() + impl->tmpSections.size() };
+		return impl->tmpSections;
 	}
 
 	uint32 iniClass::itemCount(const string &section) const
@@ -113,7 +113,7 @@ namespace cage
 		impl->tmpItems.clear();
 		for (auto it : impl->sections.cont[section]->items.cont)
 			impl->tmpItems.push_back(it.first);
-		return { impl->tmpItems.data(), impl->tmpItems.data() + impl->tmpItems.size() };
+		return impl->tmpItems;
 	}
 
 	string iniClass::get(const string &section, const string &item) const
