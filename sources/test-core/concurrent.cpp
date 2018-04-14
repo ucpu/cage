@@ -5,7 +5,7 @@
 namespace
 {
 	uint32 counterGlobal;
-	CAGE_THREAD_LOCAL_STORAGE uint32 counterLocal;
+	thread_local uint32 counterLocal;
 	mutexClass *mutexGlobal;
 	semaphoreClass *semaphoreGlobal;
 	barrierClass *barrierGlobal;

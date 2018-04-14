@@ -8,7 +8,6 @@
 #else
 #define CAGE_ARCHITECTURE_32
 #endif
-#define CAGE_THREAD_LOCAL_STORAGE __declspec(thread)
 
 #elif defined(linux) || defined(__linux) || defined(__linux__)
 
@@ -35,7 +34,6 @@
 #else
 #define CAGE_ARCHITECTURE_32
 #endif
-#define CAGE_THREAD_LOCAL_STORAGE __thread
 
 #endif
 

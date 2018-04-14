@@ -20,8 +20,8 @@ namespace cage
 	{
 		namespace
 		{
-			CAGE_THREAD_LOCAL_STORAGE bool isLocalBreakpointEnabled = true;
-			CAGE_THREAD_LOCAL_STORAGE bool isLocalAssertDeadly = true;
+			thread_local bool isLocalBreakpointEnabled = true;
+			thread_local bool isLocalAssertDeadly = true;
 			bool isGlobalBreakpointEnabled = true;
 			bool isGlobalAssertDeadly = true;
 		}

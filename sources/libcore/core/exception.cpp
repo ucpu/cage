@@ -8,7 +8,7 @@ namespace cage
 	{
 		namespace
 		{
-			CAGE_THREAD_LOCAL_STORAGE severityEnum localExceptionSilenceSeverity = (severityEnum)0;
+			thread_local severityEnum localExceptionSilenceSeverity = (severityEnum)0;
 			severityEnum globalExceptionSilenceSeverity = (severityEnum)0;
 		}
 	}
