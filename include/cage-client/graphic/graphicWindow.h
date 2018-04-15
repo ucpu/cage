@@ -24,11 +24,16 @@ namespace cage
 		void modeSetFullscreen(const pointStruct &resolution, uint32 frequency = 0, const string &deviceId = "");
 		void modeSetWindowed(windowFlags flags = windowFlags::Border);
 
-		pointStruct mousePosition() const;
-		void mousePosition(const pointStruct &);
-
 		bool mouseVisible() const;
 		void mouseVisible(bool value);
+
+		pointStruct mousePosition() const;
+		void mousePosition(const pointStruct &);
+		mouseButtonsFlags mouseButtons() const;
+
+		modifiersFlags keyboardModifiers() const;
+		bool keyboardKey(uint32 key) const;
+		bool keyboardScanCode(uint32 code) const;
 
 		pointStruct resolution() const;
 

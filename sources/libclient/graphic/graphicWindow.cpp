@@ -1,5 +1,6 @@
-#include <vector>
 #include <atomic>
+#include <vector>
+#include <set>
 
 #include <cage-core/core.h>
 #include <cage-core/math.h>
@@ -94,12 +95,14 @@ namespace cage
 				MouseMove,
 				MouseWheel,
 			} type;
+
+			modifiersFlags modifiers;
+
 			union
 			{
 				struct
 				{
 					sint32 x, y;
-					modifiersFlags modifiers;
 					union
 					{
 						mouseButtonsFlags buttons;
@@ -110,7 +113,6 @@ namespace cage
 				{
 					uint32 key;
 					uint32 scancode;
-					modifiersFlags modifiers;
 				} key;
 				struct
 				{
@@ -129,6 +131,9 @@ namespace cage
 			holder<mutexClass> eventsMutex;
 			std::vector<eventStruct> eventsQueueLocked;
 			std::vector<eventStruct> eventsQueueNoLock;
+			std::set<uint32> stateKeys, stateCodes;
+			modifiersFlags stateMods;
+			mouseButtonsFlags stateButtons;
 			GLFWwindow *window;
 			bool focus;
 
@@ -167,7 +172,7 @@ namespace cage
 			}
 #endif
 
-			windowImpl(windowClass *shareContext) : lastMouseButtonPressTimes{0,0,0,0,0}, shareContext(shareContext), eventsMutex(newMutex()), focus(true)
+			windowImpl(windowClass *shareContext) : lastMouseButtonPressTimes{0,0,0,0,0}, shareContext(shareContext), eventsMutex(newMutex()), stateMods(modifiersFlags::None), stateButtons(mouseButtonsFlags::None), window(nullptr), focus(true)
 			{
 				cageGlfwInitializeFunc();
 
@@ -261,7 +266,8 @@ namespace cage
 			return modifiersFlags::None
 				| ((mods & GLFW_MOD_SHIFT) == GLFW_MOD_SHIFT ? modifiersFlags::Shift : modifiersFlags::None)
 				| ((mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL ? modifiersFlags::Ctrl : modifiersFlags::None)
-				| ((mods & GLFW_MOD_ALT) == GLFW_MOD_ALT ? modifiersFlags::Alt : modifiersFlags::None);
+				| ((mods & GLFW_MOD_ALT) == GLFW_MOD_ALT ? modifiersFlags::Alt : modifiersFlags::None)
+				| ((mods & GLFW_MOD_SUPER) == GLFW_MOD_SUPER ? modifiersFlags::Super : modifiersFlags::None);
 		}
 
 		modifiersFlags getKeyModifiers(GLFWwindow *w)
@@ -273,6 +279,8 @@ namespace cage
 				r |= modifiersFlags::Ctrl;
 			if (glfwGetKey(w, GLFW_KEY_LEFT_ALT) == GLFW_PRESS || glfwGetKey(w, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS)
 				r |= modifiersFlags::Alt;
+			if (glfwGetKey(w, GLFW_KEY_LEFT_SUPER) == GLFW_PRESS || glfwGetKey(w, GLFW_KEY_RIGHT_SUPER) == GLFW_PRESS)
+				r |= modifiersFlags::Super;
 			return r;
 		}
 
@@ -281,6 +289,7 @@ namespace cage
 			windowImpl *impl = (windowImpl*)glfwGetWindowUserPointer(w);
 			eventStruct e;
 			e.type = eventStruct::eventType::Close;
+			e.modifiers = getKeyModifiers(w);
 			scopeLock<mutexClass> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
@@ -303,9 +312,9 @@ namespace cage
 			default:
 				CAGE_THROW_CRITICAL(exception, "invalid key action");
 			}
+			e.modifiers = getKeyModifiers(mods);
 			e.key.key = key;
 			e.key.scancode = scancode;
-			e.key.modifiers = getKeyModifiers(mods);
 			scopeLock<mutexClass> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
@@ -315,6 +324,7 @@ namespace cage
 			windowImpl *impl = (windowImpl*)glfwGetWindowUserPointer(w);
 			eventStruct e;
 			e.type = eventStruct::eventType::KeyChar;
+			e.modifiers = getKeyModifiers(w);
 			e.codepoint = codepoint;
 			scopeLock<mutexClass> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
@@ -325,6 +335,7 @@ namespace cage
 			windowImpl *impl = (windowImpl*)glfwGetWindowUserPointer(w);
 			eventStruct e;
 			e.type = eventStruct::eventType::MouseMove;
+			e.modifiers = getKeyModifiers(w);
 			e.mouse.x = numeric_cast<sint32>(floor(xpos));
 			e.mouse.y = numeric_cast<sint32>(floor(ypos));
 			if (glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_LEFT))
@@ -333,7 +344,6 @@ namespace cage
 				e.mouse.buttons |= mouseButtonsFlags::Right;
 			if (glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_MIDDLE))
 				e.mouse.buttons |= mouseButtonsFlags::Middle;
-			e.mouse.modifiers = getKeyModifiers(w);
 			scopeLock<mutexClass> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
@@ -353,6 +363,7 @@ namespace cage
 			default:
 				CAGE_THROW_CRITICAL(exception, "invalid mouse action");
 			}
+			e.modifiers = getKeyModifiers(mods);
 			switch (button)
 			{
 			case GLFW_MOUSE_BUTTON_LEFT:
@@ -371,7 +382,6 @@ namespace cage
 			glfwGetCursorPos(w, &xpos, &ypos);
 			e.mouse.x = numeric_cast<sint32>(floor(xpos));
 			e.mouse.y = numeric_cast<sint32>(floor(ypos));
-			e.mouse.modifiers = getKeyModifiers(mods);
 			bool doubleClick = impl->determineMouseDoubleClick(e);
 			scopeLock<mutexClass> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
@@ -387,11 +397,11 @@ namespace cage
 			windowImpl *impl = (windowImpl*)glfwGetWindowUserPointer(w);
 			eventStruct e;
 			e.type = eventStruct::eventType::MouseWheel;
+			e.modifiers = getKeyModifiers(w);
 			double xpos, ypos;
 			glfwGetCursorPos(w, &xpos, &ypos);
 			e.mouse.x = numeric_cast<sint32>(floor(xpos));
 			e.mouse.y = numeric_cast<sint32>(floor(ypos));
-			e.mouse.modifiers = getKeyModifiers(w);
 			e.mouse.wheel = numeric_cast<sint8>(yoffset);
 			scopeLock<mutexClass> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
@@ -402,6 +412,7 @@ namespace cage
 			windowImpl *impl = (windowImpl*)glfwGetWindowUserPointer(w);
 			eventStruct e;
 			e.type = eventStruct::eventType::Resize;
+			e.modifiers = getKeyModifiers(w);
 			e.point.x = width;
 			e.point.y = height;
 			scopeLock<mutexClass> l(impl->eventsMutex);
@@ -413,6 +424,7 @@ namespace cage
 			windowImpl *impl = (windowImpl*)glfwGetWindowUserPointer(w);
 			eventStruct e;
 			e.type = eventStruct::eventType::Move;
+			e.modifiers = getKeyModifiers(w);
 			e.point.x = xpos;
 			e.point.y = ypos;
 			scopeLock<mutexClass> l(impl->eventsMutex);
@@ -427,6 +439,7 @@ namespace cage
 				e.type = eventStruct::eventType::Hide;
 			else
 				e.type = eventStruct::eventType::Show;
+			e.modifiers = getKeyModifiers(w);
 			scopeLock<mutexClass> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
@@ -439,6 +452,7 @@ namespace cage
 				e.type = eventStruct::eventType::FocusGain;
 			else
 				e.type = eventStruct::eventType::FocusLose;
+			e.modifiers = getKeyModifiers(w);
 			scopeLock<mutexClass> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
@@ -448,6 +462,7 @@ namespace cage
 			windowImpl *impl = (windowImpl*)glfwGetWindowUserPointer(w);
 			eventStruct e;
 			e.type = eventStruct::eventType::Paint;
+			e.modifiers = getKeyModifiers(w);
 			scopeLock<mutexClass> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
@@ -509,6 +524,21 @@ namespace cage
 		glfwSetWindowAttrib(impl->window, GLFW_RESIZABLE, (flags & windowFlags::Resizeable) == windowFlags::Resizeable);
 	}
 
+	bool windowClass::mouseVisible() const
+	{
+		windowImpl *impl = (windowImpl*)this;
+		return glfwGetInputMode(impl->window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL;
+	}
+
+	void windowClass::mouseVisible(bool value)
+	{
+		windowImpl *impl = (windowImpl*)this;
+		if (value)
+			glfwSetInputMode(impl->window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		else
+			glfwSetInputMode(impl->window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+	}
+
 	pointStruct windowClass::mousePosition() const
 	{
 		windowImpl *impl = (windowImpl*)this;
@@ -523,19 +553,28 @@ namespace cage
 		glfwSetCursorPos(impl->window, tmp.x, tmp.y);
 	}
 
-	bool windowClass::mouseVisible() const
+	mouseButtonsFlags windowClass::mouseButtons() const
 	{
 		windowImpl *impl = (windowImpl*)this;
-		return glfwGetInputMode(impl->window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL;
+		return impl->stateButtons;
 	}
 
-	void windowClass::mouseVisible(bool value)
+	modifiersFlags windowClass::keyboardModifiers() const
 	{
 		windowImpl *impl = (windowImpl*)this;
-		if (value)
-			glfwSetInputMode(impl->window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-		else
-			glfwSetInputMode(impl->window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+		return impl->stateMods;
+	}
+
+	bool windowClass::keyboardKey(uint32 key) const
+	{
+		windowImpl *impl = (windowImpl*)this;
+		return impl->stateKeys.count(key);
+	}
+
+	bool windowClass::keyboardScanCode(uint32 code) const
+	{
+		windowImpl *impl = (windowImpl*)this;
+		return impl->stateCodes.count(code);
 	}
 
 	void windowClass::processEvents()
@@ -556,38 +595,45 @@ namespace cage
 		{
 			eventStruct e = *impl->eventsQueueNoLock.begin();
 			impl->eventsQueueNoLock.erase(impl->eventsQueueNoLock.begin());
+			impl->stateMods = e.modifiers;
 			switch (e.type)
 			{
 			case eventStruct::eventType::Close:
 				impl->events.windowClose.dispatch();
 				break;
 			case eventStruct::eventType::KeyPress:
-				impl->events.keyPress.dispatch(e.key.key, e.key.scancode, e.key.modifiers);
-				impl->events.keyRepeat.dispatch(e.key.key, e.key.scancode, e.key.modifiers);
+				impl->stateKeys.insert(e.key.key);
+				impl->stateCodes.insert(e.key.scancode);
+				impl->events.keyPress.dispatch(e.key.key, e.key.scancode, e.modifiers);
+				impl->events.keyRepeat.dispatch(e.key.key, e.key.scancode, e.modifiers);
 				break;
 			case eventStruct::eventType::KeyRepeat:
-				impl->events.keyRepeat.dispatch(e.key.key, e.key.scancode, e.key.modifiers);
+				impl->events.keyRepeat.dispatch(e.key.key, e.key.scancode, e.modifiers);
 				break;
 			case eventStruct::eventType::KeyRelease:
-				impl->events.keyRelease.dispatch(e.key.key, e.key.scancode, e.key.modifiers);
+				impl->events.keyRelease.dispatch(e.key.key, e.key.scancode, e.modifiers);
+				impl->stateKeys.erase(e.key.key);
+				impl->stateCodes.erase(e.key.scancode);
 				break;
 			case eventStruct::eventType::KeyChar:
 				impl->events.keyChar.dispatch(e.codepoint);
 				break;
 			case eventStruct::eventType::MouseMove:
-				impl->events.mouseMove.dispatch(e.mouse.buttons, e.mouse.modifiers, pointStruct(e.mouse.x, e.mouse.y));
+				impl->events.mouseMove.dispatch(e.mouse.buttons, e.modifiers, pointStruct(e.mouse.x, e.mouse.y));
 				break;
 			case eventStruct::eventType::MousePress:
-				impl->events.mousePress.dispatch(e.mouse.buttons, e.mouse.modifiers, pointStruct(e.mouse.x, e.mouse.y));
+				impl->stateButtons |= e.mouse.buttons;
+				impl->events.mousePress.dispatch(e.mouse.buttons, e.modifiers, pointStruct(e.mouse.x, e.mouse.y));
 				break;
 			case eventStruct::eventType::MouseDouble:
-				impl->events.mouseDouble.dispatch(e.mouse.buttons, e.mouse.modifiers, pointStruct(e.mouse.x, e.mouse.y));
+				impl->events.mouseDouble.dispatch(e.mouse.buttons, e.modifiers, pointStruct(e.mouse.x, e.mouse.y));
 				break;
 			case eventStruct::eventType::MouseRelease:
-				impl->events.mouseRelease.dispatch(e.mouse.buttons, e.mouse.modifiers, pointStruct(e.mouse.x, e.mouse.y));
+				impl->events.mouseRelease.dispatch(e.mouse.buttons, e.modifiers, pointStruct(e.mouse.x, e.mouse.y));
+				impl->stateButtons &= ~e.mouse.buttons;
 				break;
 			case eventStruct::eventType::MouseWheel:
-				impl->events.mouseWheel.dispatch(e.mouse.wheel, e.mouse.modifiers, pointStruct(e.mouse.x, e.mouse.y));
+				impl->events.mouseWheel.dispatch(e.mouse.wheel, e.modifiers, pointStruct(e.mouse.x, e.mouse.y));
 				break;
 			case eventStruct::eventType::Resize:
 				impl->events.windowResize.dispatch(pointStruct(e.point.x, e.point.y));
