@@ -7,7 +7,7 @@
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
 #include <cage-client/core.h>
-#include <cage-client/graphic.h>
+#include <cage-client/graphics.h>
 #include <cage-client/opengl.h>
 #include <cage-client/assetStructs.h>
 

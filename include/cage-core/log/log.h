@@ -31,23 +31,18 @@ namespace cage
 
 	namespace detail
 	{
-#ifdef CAGE_DEBUG
-		CAGE_API uint64 makeLog(const char *file, uint32 line, const char *function, severityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept;
-#else
-		CAGE_API uint64 makeLog(severityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept;
-#endif
 		CAGE_API loggerClass *getCentralLog();
+		CAGE_API uint64 makeLog(const char *file, uint32 line, const char *function, severityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept;
+		inline uint64 makeLog(severityEnum severity, const char *component, const string &message, bool continuous, bool debug) { return makeLog(nullptr, 0, nullptr, severity, component, message, continuous, debug); }
 	}
 }
 
-#ifdef CAGE_DEBUG
 #define CAGE_LOG(SEVERITY, COMPONENT, MESSAGE) ::cage::detail::makeLog(__FILE__, __LINE__, __FUNCTION__, SEVERITY, COMPONENT, MESSAGE, false, false)
 #define CAGE_LOG_CONTINUE(SEVERITY, COMPONENT, MESSAGE) ::cage::detail::makeLog(__FILE__, __LINE__, __FUNCTION__, SEVERITY, COMPONENT, MESSAGE, true, false)
+#ifdef CAGE_DEBUG
 #define CAGE_LOG_DEBUG(SEVERITY, COMPONENT, MESSAGE) ::cage::detail::makeLog(__FILE__, __LINE__, __FUNCTION__, SEVERITY, COMPONENT, MESSAGE, false, true)
 #define CAGE_LOG_CONTINUE_DEBUG(SEVERITY, COMPONENT, MESSAGE) ::cage::detail::makeLog(__FILE__, __LINE__, __FUNCTION__, SEVERITY, COMPONENT, MESSAGE, true, true)
 #else
-#define CAGE_LOG(SEVERITY, COMPONENT, MESSAGE) ::cage::detail::makeLog(SEVERITY, COMPONENT, MESSAGE, false, false)
-#define CAGE_LOG_CONTINUE(SEVERITY, COMPONENT, MESSAGE) ::cage::detail::makeLog(SEVERITY, COMPONENT, MESSAGE, true, false)
 #define CAGE_LOG_DEBUG(SEVERITY, COMPONENT, MESSAGE)
 #define CAGE_LOG_CONTINUE_DEBUG(SEVERITY, COMPONENT, MESSAGE)
 #endif

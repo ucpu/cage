@@ -11,7 +11,7 @@
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
 #include <cage-client/core.h>
-#include <cage-client/graphic.h>
+#include <cage-client/graphics.h>
 #include <cage-client/opengl.h>
 #include "private.h"
 
@@ -62,7 +62,7 @@ namespace cage
 	void shaderClass::uniform(uint32 name, const sint32 &u)
 	{
 		shaderImpl *impl = (shaderImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentObject<shaderClass>() == impl->id);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<shaderClass>() == impl->id);
 		glUniform1i(name, u);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
@@ -70,7 +70,7 @@ namespace cage
 	void shaderClass::uniform(uint32 name, const uint32 &u)
 	{
 		shaderImpl *impl = (shaderImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentObject<shaderClass>() == impl->id);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<shaderClass>() == impl->id);
 		glUniform1ui(name, u);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
@@ -78,7 +78,7 @@ namespace cage
 	void shaderClass::uniform(uint32 name, const real &u)
 	{
 		shaderImpl *impl = (shaderImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentObject<shaderClass>() == impl->id);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<shaderClass>() == impl->id);
 		glUniform1f(name, u.value);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
@@ -86,7 +86,7 @@ namespace cage
 	void shaderClass::uniform(uint32 name, const vec2 &u)
 	{
 		shaderImpl *impl = (shaderImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentObject<shaderClass>() == impl->id);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<shaderClass>() == impl->id);
 		glUniform2fv(name, 1, &const_cast<vec2&>(u)[0].value);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
@@ -94,7 +94,7 @@ namespace cage
 	void shaderClass::uniform(uint32 name, const vec3 &u)
 	{
 		shaderImpl *impl = (shaderImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentObject<shaderClass>() == impl->id);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<shaderClass>() == impl->id);
 		glUniform3fv(name, 1, &const_cast<vec3&>(u)[0].value);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
@@ -102,7 +102,7 @@ namespace cage
 	void shaderClass::uniform(uint32 name, const vec4 &u)
 	{
 		shaderImpl *impl = (shaderImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentObject<shaderClass>() == impl->id);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<shaderClass>() == impl->id);
 		glUniform4fv(name, 1, &const_cast<vec4&>(u)[0].value);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
@@ -115,7 +115,7 @@ namespace cage
 	void shaderClass::uniform(uint32 name, const mat3 &u)
 	{
 		shaderImpl *impl = (shaderImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentObject<shaderClass>() == impl->id);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<shaderClass>() == impl->id);
 		glUniformMatrix3fv(name, 1, GL_FALSE, &const_cast<mat3&>(u)[0].value);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
@@ -123,7 +123,7 @@ namespace cage
 	void shaderClass::uniform(uint32 name, const mat4 &u)
 	{
 		shaderImpl *impl = (shaderImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentObject<shaderClass>() == impl->id);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<shaderClass>() == impl->id);
 		glUniformMatrix4fv(name, 1, GL_FALSE, &const_cast<mat4&>(u)[0].value);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
@@ -131,7 +131,7 @@ namespace cage
 	void shaderClass::uniform(uint32 name, const sint32 *u, uint32 count)
 	{
 		shaderImpl *impl = (shaderImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentObject<shaderClass>() == impl->id);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<shaderClass>() == impl->id);
 		glUniform1iv(name, count, u);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
@@ -139,7 +139,7 @@ namespace cage
 	void shaderClass::uniform(uint32 name, const uint32 *u, uint32 count)
 	{
 		shaderImpl *impl = (shaderImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentObject<shaderClass>() == impl->id);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<shaderClass>() == impl->id);
 		glUniform1uiv(name, count, u);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
@@ -147,7 +147,7 @@ namespace cage
 	void shaderClass::uniform(uint32 name, const real *u, uint32 count)
 	{
 		shaderImpl *impl = (shaderImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentObject<shaderClass>() == impl->id);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<shaderClass>() == impl->id);
 		glUniform1fv(name, count, (float*)u);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
@@ -155,7 +155,7 @@ namespace cage
 	void shaderClass::uniform(uint32 name, const vec2 *u, uint32 count)
 	{
 		shaderImpl *impl = (shaderImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentObject<shaderClass>() == impl->id);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<shaderClass>() == impl->id);
 		glUniform2fv(name, count, (float*)const_cast<vec2*>(u));
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
@@ -163,7 +163,7 @@ namespace cage
 	void shaderClass::uniform(uint32 name, const vec3 *u, uint32 count)
 	{
 		shaderImpl *impl = (shaderImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentObject<shaderClass>() == impl->id);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<shaderClass>() == impl->id);
 		glUniform3fv(name, count, (float*)const_cast<vec3*>(u));
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
@@ -171,7 +171,7 @@ namespace cage
 	void shaderClass::uniform(uint32 name, const vec4 *u, uint32 count)
 	{
 		shaderImpl *impl = (shaderImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentObject<shaderClass>() == impl->id);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<shaderClass>() == impl->id);
 		glUniform4fv(name, count, (float*)const_cast<vec4*>(u));
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
@@ -184,7 +184,7 @@ namespace cage
 	void shaderClass::uniform(uint32 name, const mat3 *u, uint32 count)
 	{
 		shaderImpl *impl = (shaderImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentObject<shaderClass>() == impl->id);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<shaderClass>() == impl->id);
 		glUniformMatrix3fv(name, count, GL_FALSE, (float*)const_cast<mat3*>(u));
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
@@ -192,7 +192,7 @@ namespace cage
 	void shaderClass::uniform(uint32 name, const mat4 *u, uint32 count)
 	{
 		shaderImpl *impl = (shaderImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentObject<shaderClass>() == impl->id);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<shaderClass>() == impl->id);
 		glUniformMatrix4fv(name, count, GL_FALSE, (float*)const_cast<mat4*>(u));
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
@@ -215,7 +215,7 @@ namespace cage
 	void shaderClass::applySubroutines() const
 	{
 		shaderImpl *impl = (shaderImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentObject<shaderClass>() == impl->id);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<shaderClass>() == impl->id);
 		if (!impl->subroutinesVertex.empty())
 			glUniformSubroutinesuiv(GL_VERTEX_SHADER, numeric_cast<uint32>(impl->subroutinesVertex.size()), &impl->subroutinesVertex[0]);
 		if (!impl->subroutinesTessControl.empty())
@@ -546,7 +546,7 @@ namespace cage
 	void shaderClass::validate()
 	{
 		shaderImpl *impl = (shaderImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentObject<shaderClass>() == impl->id);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<shaderClass>() == impl->id);
 
 		glValidateProgram(impl->id);
 		CAGE_CHECK_GL_ERROR_DEBUG();
@@ -573,7 +573,7 @@ namespace cage
 
 	holder<shaderClass> newShader(windowClass *context)
 	{
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentContext() == context);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentContext() == context);
 		return detail::systemArena().createImpl <shaderClass, shaderImpl>();
 	}
 }

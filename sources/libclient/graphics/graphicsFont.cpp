@@ -9,8 +9,8 @@
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
 #include <cage-client/core.h>
-#include <cage-client/graphic.h>
-#include <cage-client/graphic/shaderConventions.h>
+#include <cage-client/graphics.h>
+#include <cage-client/graphics/shaderConventions.h>
 #include <cage-client/opengl.h>
 #include <cage-client/assetStructs.h>
 #include "private.h"
@@ -365,7 +365,7 @@ namespace cage
 
 	holder<fontClass> newFont(windowClass *context)
 	{
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentContext() == context);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentContext() == context);
 		return detail::systemArena().createImpl <fontClass, fontImpl>(context);
 	}
 }

@@ -10,9 +10,10 @@
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
 #include <cage-client/core.h>
-#include <cage-client/graphic.h>
+#include <cage-client/window.h>
+#include <cage-client/graphics.h>
 #include <cage-client/opengl.h>
-#include "private.h"
+#include "graphics/private.h"
 #include <GLFW/glfw3.h>
 
 //#define GCHL_WINDOWS_THREAD

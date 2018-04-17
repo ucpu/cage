@@ -8,8 +8,8 @@
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
 #include <cage-client/core.h>
-#include <cage-client/graphic.h>
-#include <cage-client/graphic/shaderConventions.h>
+#include <cage-client/graphics.h>
+#include <cage-client/graphics/shaderConventions.h>
 #include <cage-client/opengl.h>
 #include "private.h"
 
@@ -98,7 +98,7 @@ namespace cage
 	void meshClass::setBuffers(uint32 verticesCount, uint32 vertexSize, void *vertexData, uint32 indicesCount, const uint32 *indexData, uint32 materialSize, void *materialData)
 	{
 		meshImpl *impl = (meshImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentObject<meshClass>() == impl->id);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<meshClass>() == impl->id);
 		{
 			if (impl->vbo)
 			{
@@ -153,7 +153,7 @@ namespace cage
 	void meshClass::setAttribute(uint32 index, uint32 size, uint32 type, uint32 stride, void *data)
 	{
 		meshImpl *impl = (meshImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentObject<meshClass>() == impl->id);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<meshClass>() == impl->id);
 		if (type == 0)
 			glDisableVertexAttribArray(index);
 		else
@@ -201,7 +201,7 @@ namespace cage
 	void meshClass::dispatch() const
 	{
 		meshImpl *impl = (meshImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentObject<meshClass>() == impl->id);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<meshClass>() == impl->id);
 		if (impl->indicesCount)
 			glDrawElements(impl->primitiveType, impl->indicesCount, GL_UNSIGNED_INT, (void*)(uintPtr)impl->indicesOffset);
 		else
@@ -212,7 +212,7 @@ namespace cage
 	void meshClass::dispatch(uint32 instances) const
 	{
 		meshImpl *impl = (meshImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentObject<meshClass>() == impl->id);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<meshClass>() == impl->id);
 		if (impl->indicesCount)
 			glDrawElementsInstanced(impl->primitiveType, impl->indicesCount, GL_UNSIGNED_INT, (void*)(uintPtr)impl->indicesOffset, instances);
 		else
@@ -222,7 +222,7 @@ namespace cage
 
 	holder<meshClass> newMesh(windowClass *context)
 	{
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentContext() == context);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentContext() == context);
 		return detail::systemArena().createImpl <meshClass, meshImpl>();
 	}
 }

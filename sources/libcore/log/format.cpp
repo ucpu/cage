@@ -23,30 +23,43 @@ namespace cage
 		output(info.message);
 	}
 
-	void logFormatPolicyFile(const detail::loggerInfo &info, delegate<void(const string &)> output)
+	namespace
 	{
-		if (info.continuous)
+		void logFormatPolicyFileImpl(const detail::loggerInfo &info, delegate<void(const string &)> output, bool longer)
 		{
-			output(string("\t") + info.message);
-		}
-		else
-		{
-			string res;
-			res += string(info.time).fill(12) + " ";
-			res += string(info.currentThread).fill(10) + " ";
-			res += severityToString(info.severity) + " ";
-			res += string(info.component).fill(20) + " ";
-			res += info.message;
-			if (info.file)
+			if (info.continuous)
 			{
-				string flf = string(" ") + string(info.file) + ":" + string(info.line) + " (" + string(info.function) + ")";
-				if (res.length() + flf.length() < string::MaxLength - 10)
-				{
-					res += string().fill(string::MaxLength - flf.length() - res.length() - 5);
-					res += flf;
-				}
+				output(string("\t") + info.message);
 			}
-			output(res);
+			else
+			{
+				string res;
+				res += string(info.time).fill(12) + " ";
+				res += string(info.currentThread).fill(10) + " ";
+				res += severityToString(info.severity) + " ";
+				res += string(info.component).fill(20) + " ";
+				res += info.message;
+				if (longer && info.file)
+				{
+					string flf = string(" ") + string(info.file) + ":" + string(info.line) + " (" + string(info.function) + ")";
+					if (res.length() + flf.length() + 10 < string::MaxLength)
+					{
+						res += string().fill(string::MaxLength - flf.length() - res.length() - 5);
+						res += flf;
+					}
+				}
+				output(res);
+			}
 		}
+	}
+
+	void logFormatPolicyFileShort(const detail::loggerInfo &info, delegate<void(const string &)> output)
+	{
+		logFormatPolicyFileImpl(info, output, false);
+	}
+
+	void logFormatPolicyFileLong(const detail::loggerInfo &info, delegate<void(const string &)> output)
+	{
+		logFormatPolicyFileImpl(info, output, true);
 	}
 }

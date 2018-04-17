@@ -11,7 +11,7 @@
 
 namespace cage
 {
-	namespace graphicPrivat
+	namespace graphicsPrivat
 	{
 		string getMonitorId(GLFWmonitor *monitor)
 		{

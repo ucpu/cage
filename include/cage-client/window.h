@@ -1,3 +1,6 @@
+#ifndef guard_window_h_9D2B2359EB7C4009961D1CAFA13BE5FC
+#define guard_window_h_9D2B2359EB7C4009961D1CAFA13BE5FC
+
 namespace cage
 {
 	class CAGE_API windowClass
@@ -64,9 +67,6 @@ namespace cage
 
 		void attachAll(windowClass *window);
 	};
-
-	namespace detail
-	{
-		CAGE_API void purgeGlShaderCache();
-	}
 }
+
+#endif

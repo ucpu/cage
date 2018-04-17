@@ -92,7 +92,7 @@ namespace
 		secondaryLogFile = newLogOutputPolicyFile(path, false);
 		secondaryLog = newLogger();
 		secondaryLog->output.bind<logOutputPolicyFileClass, &logOutputPolicyFileClass::output>(secondaryLogFile.get());
-		secondaryLog->format.bind<&logFormatPolicyFile>();
+		secondaryLog->format.bind<&logFormatPolicyFileShort>();
 	}
 }
 

@@ -8,7 +8,8 @@
 #include <cage-client/core.h>
 #include <cage-client/gui.h>
 #include <cage-client/engine.h>
-#include <cage-client/graphic.h>
+#include <cage-client/graphics.h>
+#include <cage-client/window.h>
 #include <cage-client/utility/engineProfiling.h>
 
 namespace cage

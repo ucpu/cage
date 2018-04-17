@@ -10,8 +10,9 @@
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
 #include <cage-client/core.h>
-#include <cage-client/graphic.h>
+#include <cage-client/graphics.h>
 #include <cage-client/opengl.h>
+#include <cage-client/window.h>
 #include "private.h"
 
 namespace cage
@@ -105,7 +106,7 @@ namespace cage
 		}
 	}
 
-	namespace graphicPrivat
+	namespace graphicsPrivat
 	{
 		void openglContextInitializeGeneral(windowClass *w)
 		{

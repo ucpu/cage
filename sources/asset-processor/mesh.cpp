@@ -3,7 +3,7 @@
 #include <cage-core/utility/ini.h>
 #include <cage-core/utility/memoryBuffer.h>
 #include <cage-core/utility/pointer.h>
-#include <cage-client/graphic/shaderConventions.h>
+#include <cage-client/graphics/shaderConventions.h>
 #include <cage-client/opengl.h>
 
 namespace

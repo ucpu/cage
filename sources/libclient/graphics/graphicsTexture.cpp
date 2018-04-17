@@ -5,7 +5,7 @@
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
 #include <cage-client/core.h>
-#include <cage-client/graphic.h>
+#include <cage-client/graphics.h>
 #include <cage-client/opengl.h>
 #include "private.h"
 
@@ -109,7 +109,7 @@ namespace cage
 
 	void textureClass::bind() const
 	{
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentContext());
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentContext());
 		textureImpl *impl = (textureImpl*)this;
 		glBindTexture(impl->target, impl->id);
 		CAGE_CHECK_GL_ERROR_DEBUG();
@@ -194,7 +194,7 @@ namespace cage
 
 	void textureClass::multiBind(uint32 count, const uint32 tius[], const textureClass *const texs[])
 	{
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentContext());
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentContext());
 		CAGE_ASSERT_RUNTIME(count <= 32);
 		uint32 textures[32];
 		detail::memset(textures, 0, sizeof(textures));
@@ -219,7 +219,7 @@ namespace cage
 
 	holder<textureClass> newTexture(windowClass *context, uint32 target)
 	{
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentContext() == context);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentContext() == context);
 		CAGE_ASSERT_RUNTIME(target == GL_TEXTURE_2D || target == GL_TEXTURE_2D_ARRAY || target == GL_TEXTURE_RECTANGLE || target == GL_TEXTURE_3D || target == GL_TEXTURE_CUBE_MAP);
 		return detail::systemArena().createImpl <textureClass, textureImpl>(target);
 	}

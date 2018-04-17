@@ -6,8 +6,9 @@
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
 #include <cage-client/core.h>
-#include <cage-client/graphic.h>
-#include "private.h"
+#include <cage-client/graphics.h>
+#include "../graphics/private.h"
+#include <cage-client/utility/screenList.h>
 #include <GLFW/glfw3.h>
 
 namespace cage

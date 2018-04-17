@@ -5,7 +5,7 @@
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
 #include <cage-client/core.h>
-#include <cage-client/graphic.h>
+#include <cage-client/graphics.h>
 #include <cage-client/opengl.h>
 #include "private.h"
 
@@ -66,7 +66,7 @@ namespace cage
 		if (usage == 0)
 			usage = GL_STATIC_DRAW;
 		uniformBufferImpl *impl = (uniformBufferImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentObject<uniformBufferClass>() == impl->id);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<uniformBufferClass>() == impl->id);
 		glBufferData(GL_UNIFORM_BUFFER, size, data, usage);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 		impl->size = size;
@@ -75,7 +75,7 @@ namespace cage
 	void uniformBufferClass::writeRange(void *data, uint32 offset, uint32 size)
 	{
 		uniformBufferImpl *impl = (uniformBufferImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentObject<uniformBufferClass>() == impl->id);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<uniformBufferClass>() == impl->id);
 		CAGE_ASSERT_RUNTIME(offset + size <= impl->size, "insufficient buffer size", offset, size, impl->size);
 		glBufferSubData(GL_UNIFORM_BUFFER, offset, size, data);
 		CAGE_CHECK_GL_ERROR_DEBUG();
@@ -83,7 +83,7 @@ namespace cage
 
 	holder<uniformBufferClass> newUniformBuffer(windowClass *context)
 	{
-		CAGE_ASSERT_RUNTIME(graphicPrivat::getCurrentContext() == context);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentContext() == context);
 		return detail::systemArena().createImpl <uniformBufferClass, uniformBufferImpl>();
 	}
 }

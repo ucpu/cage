@@ -13,4 +13,9 @@ namespace cage
 		graphicException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uint32 code) noexcept;
 		virtual graphicException &log();
 	};
+
+	namespace detail
+	{
+		CAGE_API void purgeGlShaderCache();
+	}
 }

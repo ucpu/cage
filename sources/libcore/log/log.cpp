@@ -80,7 +80,7 @@ namespace cage
 				loggerOutputCentralFile = newLogOutputPolicyFile(detail::getExecutableNameNoExe() + ".log", false);
 				loggerCentralFile = newLogger();
 				loggerCentralFile->output.bind<logOutputPolicyFileClass, &logOutputPolicyFileClass::output>(loggerOutputCentralFile.get());
-				loggerCentralFile->format.bind<&logFormatPolicyFile>();
+				loggerCentralFile->format.bind<&logFormatPolicyFileShort>();
 
 				CAGE_LOG(severityEnum::Info, "log", "application log initialized");
 
@@ -151,11 +151,7 @@ namespace cage
 		loggerInfo::loggerInfo() : component(""), file(nullptr), function(nullptr), time(0), currentThread(0), createThread(0), severity(severityEnum::Critical), line(0), continuous(false), debug(false)
 		{}
 
-#ifdef CAGE_DEBUG
 		uint64 makeLog(const char *file, uint32 line, const char *function, severityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept
-#else
-		uint64 makeLog(severityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept
-#endif
 		{
 			try
 			{
@@ -167,11 +163,9 @@ namespace cage
 				info.debug = debug;
 				info.currentThread = threadId();
 				info.time = getApplicationTime();
-#ifdef CAGE_DEBUG
 				info.file = file;
 				info.line = line;
 				info.function = function;
-#endif
 
 				scopeLock<mutexClass> l(loggerMutex());
 				loggerImpl *cur = loggerLast();
@@ -208,10 +202,7 @@ namespace cage
 
 	uint64 getApplicationTime()
 	{
-		if (loggerTimer())
-			return loggerTimer()->microsSinceStart();
-		else
-			return 0;
+		return loggerTimer()->microsSinceStart();
 	}
 }
 

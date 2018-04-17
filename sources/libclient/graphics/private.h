@@ -6,7 +6,7 @@ struct GLFWmonitor;
 
 namespace cage
 {
-	namespace graphicPrivat
+	namespace graphicsPrivat
 	{
 		void openglContextInitializeGeneral(windowClass *w);
 
@@ -49,5 +49,5 @@ namespace cage
 		GLFWmonitor *getMonitorById(const string &id);
 	}
 
-	using namespace graphicPrivat;
+	using namespace graphicsPrivat;
 }
