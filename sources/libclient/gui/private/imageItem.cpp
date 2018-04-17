@@ -76,6 +76,8 @@ namespace cage
 	{
 		auto *e = base->impl->emitControl;
 		auto *t = e->memory.createObject<renderableImageStruct>();
+		if (!texture)
+			return nullptr;
 		t->data.texture = texture;
 		t->data.ndcPos = base->impl->pointsToNdc(position, size);
 		t->data.uvClip = vec4(image.textureUvOffset, image.textureUvOffset + image.textureUvSize);
