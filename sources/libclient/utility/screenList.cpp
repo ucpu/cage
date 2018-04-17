@@ -129,12 +129,6 @@ namespace cage
 		return impl->devices[index];
 	}
 
-	pointerRange<const screenDeviceClass> screenListClass::devices() const
-	{
-		screenListImpl *impl = (screenListImpl*)this;
-		return impl->devices;
-	}
-
 	holder<screenListClass> newScreenList()
 	{
 		return detail::systemArena().createImpl<screenListClass, screenListImpl>();

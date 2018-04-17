@@ -25,7 +25,6 @@ namespace cage
 		uint32 devicesCount() const;
 		uint32 primaryDevice() const;
 		const screenDeviceClass &device(uint32 index) const;
-		pointerRange<const screenDeviceClass> devices() const;
 	};
 
 	CAGE_API holder<screenListClass> newScreenList();
