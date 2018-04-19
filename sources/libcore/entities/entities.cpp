@@ -360,32 +360,35 @@ namespace cage
 		return impl->entities;
 	}
 
-	void groupClass::entitiesCallback(const delegate<void(entityClass *)> &callback)
+	void groupClass::mergeGroup(groupClass *other)
 	{
-		groupImpl *impl = (groupImpl*)this;
-		for (auto it = impl->entities.begin(), et = impl->entities.end(); it != et; it++)
-			callback(*it);
-	}
-
-	void groupClass::addGroup(groupClass *group)
-	{
-		if (group == this)
+		if (other == this)
 			return;
-		groupImpl *impl = (groupImpl*)this;
-		for (auto it = impl->entities.begin(), et = impl->entities.end(); it != et; it++)
-			(*it)->addGroup(group);
+		for (auto it : other->entities())
+			it->addGroup(this);
 	}
 
-	void groupClass::removeGroup(groupClass *group)
+	void groupClass::subtractGroup(groupClass *other)
 	{
-		if (group == this)
+		if (other == this)
 		{
 			clear();
 			return;
 		}
-		groupImpl *impl = (groupImpl*)this;
-		for (auto it = impl->entities.begin(), et = impl->entities.end(); it != et; it++)
-			(*it)->removeGroup(group);
+		for (auto it : other->entities())
+			it->removeGroup(this);
+	}
+
+	void groupClass::intersectGroup(groupClass *other)
+	{
+		if (other == this)
+			return;
+		std::vector<entityClass*> r;
+		for (auto it : entities())
+			if (!it->hasGroup(other))
+				r.push_back(it);
+		for (auto it : r)
+			it->removeGroup(this);
 	}
 
 	void groupClass::clear()

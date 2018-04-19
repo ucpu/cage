@@ -69,15 +69,17 @@ namespace cage
 		uint32 entitiesCount() const;
 		entityClass *const *entitiesArray();
 		pointerRange<entityClass *const> entities();
-		void entitiesCallback(const delegate<void(entityClass *)> &callback);
+
+		void entitiesCallback(const delegate<void(entityClass *)> &callback) { for (auto it : entities()) callback(it); }
 
 		void addEntity(entityClass *entity) { entity->addGroup(this); }
 		void removeEntity(entityClass *entity) { entity->removeGroup(this); }
 		void addEntity(uint32 entityName) { addEntity(getManager()->getEntity(entityName)); }
 		void removeEntity(uint32 entityName) { removeEntity(getManager()->getEntity(entityName)); }
 
-		void addGroup(groupClass *group); // add all entities in this group into the right group
-		void removeGroup(groupClass *group); // remove all entities in this group from the right group
+		void mergeGroup(groupClass *other); // add all entities from the other group into this group
+		void subtractGroup(groupClass *other); // remove all entities, which are present in the other group, from this group
+		void intersectGroup(groupClass *other); // remove all entities, which are NOT present in the other group, from this group
 
 		void clear();
 		void destroyAllEntities();
