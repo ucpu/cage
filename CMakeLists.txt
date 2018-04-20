@@ -1,7 +1,14 @@
 cmake_minimum_required(VERSION 3.2)
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR}/cmake)
+# make cmake find our own provided libraries
+# the libraries provided here should have higher priority than system libraries
+list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_BINARY_DIR}/cmake")
 
+# make cmake search for additional programs etc. in the extra folder
+# the programs provided here should have higher priority than system programs
+list(INSERT CMAKE_PREFIX_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/extra")
+
+# some config
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_STANDARD 11)
 

@@ -4,9 +4,8 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "jpeg")
 message(STATUS "----------------------------------------------------------------")
 
-#set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "BUILD_SHARED_LIBS")
 option(ENABLE_SHARED "Build shared libraries" FALSE)
-option(WITH_SIMD "Include SIMD extensions, if available for this platform" false)
+#option(WITH_SIMD "Include SIMD extensions, if available for this platform" false)
 
 if(NOT CMAKE_INSTALL_DOCDIR)
 	set(CMAKE_INSTALL_DOCDIR ${CMAKE_INSTALL_BINDIR})
