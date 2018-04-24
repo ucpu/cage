@@ -11,19 +11,17 @@ namespace cage
 {
 	namespace
 	{
-		template<class Key, class Value> struct containerMap
+		template<class Value> struct containerMap
 		{
-			containerMap(memoryArena arena) : cont(std::less<Key>(), arena) {}
-			typedef std::map<Key, Value, std::less<Key>, memoryArenaStd<std::pair<const Key, Value>>> contType;
-			typedef typename contType::iterator iter;
-			typedef typename contType::const_iterator citer;
+			containerMap(memoryArena &arena) : cont(stringComparatorFast(), arena) {}
+			typedef std::map<string, Value, stringComparatorFast, memoryArenaStd<std::pair<const string, Value>>> contType;
 			contType cont;
 		};
 
 		struct inisection
 		{
-			inisection(memoryArena arena) : items(arena) {}
-			containerMap<string, string> items;
+			inisection(memoryArena &arena) : items(arena) {}
+			containerMap<string> items;
 		};
 
 		class iniImpl : public iniClass
@@ -32,7 +30,7 @@ namespace cage
 			iniImpl(uintPtr memory) : pool(memory), arena(&pool), sections(arena) {}
 			memoryArenaGrowing<memoryAllocatorPolicyPool<sizeof(templates::allocatorSizeMap<string, string>)>, memoryConcurrentPolicyNone> pool;
 			memoryArena arena;
-			containerMap<string, holder<inisection>> sections;
+			containerMap<holder<inisection>> sections;
 			std::vector<string> tmpSections, tmpItems;
 		};
 	}
@@ -46,7 +44,7 @@ namespace cage
 	string iniClass::section(uint32 section) const
 	{
 		iniImpl *impl = (iniImpl*)this;
-		containerMap<string, holder<inisection>>::citer i = impl->sections.cont.cbegin();
+		auto i = impl->sections.cont.cbegin();
 		try
 		{
 			std::advance(i, section);
@@ -61,7 +59,7 @@ namespace cage
 	bool iniClass::sectionExists(const string &section) const
 	{
 		iniImpl *impl = (iniImpl*)this;
-		return impl->sections.cont.find(section) != impl->sections.cont.end();
+		return impl->sections.cont.count(section);
 	}
 
 	pointerRange<string> iniClass::sections() const
@@ -71,6 +69,12 @@ namespace cage
 		for (auto &it : impl->sections.cont)
 			impl->tmpSections.push_back(it.first);
 		return impl->tmpSections;
+	}
+
+	void iniClass::sectionRemove(const string &section)
+	{
+		iniImpl *impl = (iniImpl*)this;
+		impl->sections.cont.erase(section);
 	}
 
 	uint32 iniClass::itemCount(const string &section) const
@@ -86,7 +90,7 @@ namespace cage
 		if (!sectionExists(section))
 			return "";
 		iniImpl *impl = (iniImpl*)this;
-		containerMap<string, string>::citer i = impl->sections.cont[section]->items.cont.cbegin();
+		auto i = impl->sections.cont[section]->items.cont.cbegin();
 		try
 		{
 			std::advance(i, item);
@@ -103,17 +107,24 @@ namespace cage
 		if (!sectionExists(section))
 			return false;
 		iniImpl *impl = (iniImpl*)this;
-		containerMap<string, holder<inisection>>::citer i = impl->sections.cont.find(section);
-		return i->second->items.cont.find(item) != i->second->items.cont.end();
+		return impl->sections.cont[section]->items.cont.count(item);
 	}
 
 	pointerRange<string> iniClass::items(const string &section) const
 	{
 		iniImpl *impl = (iniImpl*)this;
 		impl->tmpItems.clear();
-		for (auto it : impl->sections.cont[section]->items.cont)
-			impl->tmpItems.push_back(it.first);
+		if (sectionExists(section))
+			for (auto it : impl->sections.cont[section]->items.cont)
+				impl->tmpItems.push_back(it.first);
 		return impl->tmpItems;
+	}
+
+	void iniClass::itemRemove(const string &section, const string &item)
+	{
+		iniImpl *impl = (iniImpl*)this;
+		if (sectionExists(section))
+			impl->sections.cont[section]->items.cont.erase(item);
 	}
 
 	string iniClass::get(const string &section, const string &item) const
@@ -155,7 +166,7 @@ namespace cage
 	{
 		iniImpl *impl = (iniImpl*)this;
 		holder<fileClass> file = newFile(filename, fileMode(true, false, true));
-		impl->clear();
+		clear();
 		string sec = "";
 		uint32 secIndex = 0;
 		uint32 itemIndex = 0;
@@ -211,13 +222,11 @@ namespace cage
 	{
 		iniImpl *impl = (iniImpl*)this;
 		holder<fileClass> file = newFile(filename, fileMode(false, true, true));
-		containerMap <string, holder<inisection> >::citer i, e;
-		for (i = impl->sections.cont.cbegin(), e = impl->sections.cont.cend(); i != e; i++)
+		for (const auto &i : impl->sections.cont)
 		{
-			file->writeLine(string() + "[" + i->first + "]");
-			containerMap<string, string>::citer j, ee;
-			for (j = i->second->items.cont.cbegin(), ee = i->second->items.cont.cend(); j != ee; j++)
-				file->writeLine(string() + j->first + "=" + j->second);
+			file->writeLine(string() + "[" + i.first + "]");
+			for (const auto &j : i.second->items.cont)
+				file->writeLine(string() + j.first + "=" + j.second);
 		}
 	}
 

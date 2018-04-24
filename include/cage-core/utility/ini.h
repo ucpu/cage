@@ -23,10 +23,12 @@ namespace cage
 		string section(uint32 section) const;
 		bool sectionExists(const string &section) const;
 		pointerRange<string> sections() const;
+		void sectionRemove(const string &section);
 		uint32 itemCount(const string &section) const;
 		string item(const string &section, uint32 item) const;
 		bool itemExists(const string &section, const string &item) const;
 		pointerRange<string> items(const string &section) const;
+		void itemRemove(const string &section, const string &item);
 
 		string get(const string &section, const string &item) const;
 		void set(const string &section, const string &item, const string &value);
