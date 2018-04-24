@@ -10,7 +10,7 @@ message(STATUS "----------------------------------------------------------------
 # INITIALIZATION
 ########
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(cage_all)
 cage_disable_source_build()
 cage_build_configuration()
