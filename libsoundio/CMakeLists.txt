@@ -20,5 +20,5 @@ if(MSVC)
     target_compile_options(libsoundio_shared PRIVATE "/W0")
 endif(MSVC)
 
-target_include_directories(libsoundio_shared INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/libsoundio)
+target_include_directories(libsoundio_shared INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/libsoundio")
 

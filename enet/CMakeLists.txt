@@ -8,5 +8,5 @@ set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "BUILD_SHARED_LIBS")
 
 add_subdirectory(enet)
 
-target_include_directories(enet INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/enet/include)
+target_include_directories(enet INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/enet/include")
 

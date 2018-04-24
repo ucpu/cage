@@ -11,5 +11,5 @@ set(WITH_HarfBuzz OFF)
 
 add_subdirectory(freetype)
 
-target_include_directories(freetype INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/freetype/include)
+target_include_directories(freetype INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/freetype/include")
 

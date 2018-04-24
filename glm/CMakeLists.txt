@@ -5,5 +5,5 @@ message(STATUS "glm")
 message(STATUS "----------------------------------------------------------------")
 
 add_library(glm INTERFACE)
-target_include_directories(glm INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/glm)
+target_include_directories(glm INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/glm")
 

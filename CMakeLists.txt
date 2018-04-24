@@ -26,6 +26,9 @@ if(MSVC)
 	set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} -ignore:4221")
 endif()
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+include(cage_gen_module)
+
 add_subdirectory(zlib)
 add_subdirectory(libpng)
 add_subdirectory(jpeg)
