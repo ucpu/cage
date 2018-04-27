@@ -46,7 +46,7 @@ namespace cage
 	sliderBarComponent::sliderBarComponent() : max(1), vertical(false)
 	{}
 
-	colorPickerComponent::colorPickerComponent() : collapsible(false)
+	colorPickerComponent::colorPickerComponent() : collapsible(false), color(vec3(1,0,0))
 	{}
 
 	graphCanvasComponent::graphCanvasComponent() : max{1, 1}

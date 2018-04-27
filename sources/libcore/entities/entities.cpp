@@ -187,10 +187,12 @@ namespace cage
 	{
 		entityManagerImpl *impl = (entityManagerImpl *)this;
 		uint32 &index = impl->generateName;
-		if (index >= (uint32)-2 || index < (1u << 30))
-			index = 1u << 30;
+		static const uint32 a = ((uint32)1) << 30;
+		static const uint32 b = (uint32)-1024;
+		if (index < a || index > b)
+			index = a;
 		while (hasEntity(index))
-			index = index == (uint32)-2 ? (1u << 30) : index + 1;
+			index = index == b ? a : index + 1;
 		return index++;
 	}
 

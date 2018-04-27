@@ -52,12 +52,25 @@ namespace cage
 			vec2 pt;
 			if (!impl->eventPoint(point, pt))
 				return false;
-			widgetBaseStruct *f = focused(impl);
-			if (f)
+			{ // first, pass the event to focused widget
+				widgetBaseStruct *f = focused(impl);
+				if (f)
+				{
+					if (f->widgetState.disabled)
+						return true;
+					return (f->*F)(a, m, pt);
+				}
+			}
+			// if nothing has focus, pass the event to anything under the cursor
+			for (auto it : impl->mouseEventReceivers)
 			{
-				if (f->widgetState.disabled)
-					return true;
-				return (f->*F)(a, m, pt);
+				if (pointIsInside(it->base, pt))
+				{
+					if (it->widgetState.disabled)
+						return true;
+					if ((it->*F)(a, m, pt))
+						return true;
+				}
 			}
 			return false;
 		}
