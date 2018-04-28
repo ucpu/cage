@@ -2,7 +2,9 @@ cmake_minimum_required(VERSION 3.2)
 
 # make cmake find our own provided libraries
 # the libraries provided here should have higher priority than system libraries
-list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_BINARY_DIR}/cmake")
+set(CAGE_EXTERNALS_MODULE_PATH "${CMAKE_CURRENT_BINARY_DIR}/cmake-modules")
+list(INSERT CMAKE_MODULE_PATH 0 "${CAGE_EXTERNALS_MODULE_PATH}")
+include(cage_gen_module.cmake)
 
 # make cmake search for additional programs etc. in the extra folder
 # the programs provided here should have higher priority than system programs
@@ -25,9 +27,6 @@ if(MSVC)
 	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -ignore:4221")
 	set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} -ignore:4221")
 endif()
-
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR})
-include(cage_gen_module)
 
 add_subdirectory(zlib)
 add_subdirectory(libpng)
