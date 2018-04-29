@@ -42,14 +42,22 @@ namespace cage
 			virtual void updateRequestedSize() override
 			{
 				guiItemStruct *c = base->firstChild;
+				base->requestedSize = vec2();
 				while (c)
 				{
 					c->updateRequestedSize();
 					c->explicitPosition(c->requestedSize);
+					{ // primary axis
+						base->requestedSize[data.vertical] = base->requestedSize[data.vertical] + c->requestedSize[data.vertical];
+					}
+					{ // secondary axis
+						if (data.allowSlaveResize)
+							base->requestedSize[!data.vertical] = max(base->requestedSize[!data.vertical], c->requestedSize[!data.vertical]);
+					}
 					c = c->nextSibling;
 				}
-				base->requestedSize = master->requestedSize;
-				base->requestedSize[!data.vertical] = max(master->requestedSize[!data.vertical], slave->requestedSize[!data.vertical]);
+				if (!data.allowSlaveResize)
+					base->requestedSize[!data.vertical] = master->requestedSize[!data.vertical];
 				CAGE_ASSERT_RUNTIME(base->requestedSize.valid());
 			}
 
@@ -58,7 +66,10 @@ namespace cage
 				uint32 axis = data.vertical ? 0 : 1;
 				real r = item->requestedSize[axis]; // requested
 				real g = u.size[axis]; // given
+				if (!(item == master ? data.allowMasterResize : data.allowSlaveResize))
+					return;
 				u.position[axis] += (g - r) * data.anchor;
+				u.size[axis] = r;
 			}
 
 			virtual void updateFinalPosition(const updatePositionStruct &update) override

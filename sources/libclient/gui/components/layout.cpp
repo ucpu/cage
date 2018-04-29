@@ -30,7 +30,7 @@ namespace cage
 	layoutRadialComponent::layoutRadialComponent()
 	{}
 
-	layoutSplitterComponent::layoutSplitterComponent() : vertical(false), inverse(false)
+	layoutSplitterComponent::layoutSplitterComponent() : allowMasterResize(false), allowSlaveResize(false), vertical(false), inverse(false)
 	{}
 
 	layoutsComponentsStruct::layoutsComponentsStruct(entityManagerClass *ents)
