@@ -49,6 +49,7 @@ namespace cage
 					c = c->nextSibling;
 				}
 				base->requestedSize = master->requestedSize;
+				//base->requestedSize[!data.vertical] = max(master->requestedSize[!data.vertical], slave->requestedSize[!data.vertical]);
 				CAGE_ASSERT_RUNTIME(base->requestedSize.valid());
 			}
 
@@ -65,7 +66,7 @@ namespace cage
 					}
 					{ // master
 						updatePositionStruct u(update);
-						u.position[axis] += base->size[axis] - m;
+						u.position[axis] += u.size[axis] - m;
 						u.size[axis] = m;
 						master->updateFinalPosition(u);
 					}

@@ -57,6 +57,17 @@ namespace cage
 				for (auto it = components.begin(), et = components.end(); it != et; it++)
 					detail::systemArena().destroy<componentImpl>(*it);
 			}
+
+			uint32 generateUniqueName()
+			{
+				static const uint32 a = ((uint32)1) << 30;
+				static const uint32 b = (uint32)-1024;
+				if (generateName < a || generateName > b)
+					generateName = a;
+				while (hasEntity(generateName))
+					generateName = generateName == b ? a : generateName + 1;
+				return generateName++;
+			}
 		};
 
 		groupImpl::groupImpl(entityManagerImpl *manager) : manager(manager), vectorIndex(numeric_cast<uint32>(manager->groups.size()))
@@ -151,6 +162,12 @@ namespace cage
 		return b;
 	}
 
+	entityClass *entityManagerClass::newUniqueEntity()
+	{
+		entityManagerImpl *impl = (entityManagerImpl *)this;
+		return newEntity(impl->generateUniqueName());
+	}
+
 	entityClass *entityManagerClass::newEntity(uint32 name)
 	{
 		entityManagerImpl *impl = (entityManagerImpl *)this;
@@ -174,6 +191,7 @@ namespace cage
 
 	bool entityManagerClass::hasEntity(uint32 entityName) const
 	{
+		CAGE_ASSERT_RUNTIME(entityName != 0);
 		return ((entityManagerImpl *)this)->namedEntities->exists(entityName);
 	}
 
@@ -181,19 +199,6 @@ namespace cage
 	{
 		entityManagerImpl *impl = (entityManagerImpl *)this;
 		return &impl->allEntities;
-	}
-
-	uint32 entityManagerClass::generateUniqueName()
-	{
-		entityManagerImpl *impl = (entityManagerImpl *)this;
-		uint32 &index = impl->generateName;
-		static const uint32 a = ((uint32)1) << 30;
-		static const uint32 b = (uint32)-1024;
-		if (index < a || index > b)
-			index = a;
-		while (hasEntity(index))
-			index = index == b ? a : index + 1;
-		return index++;
 	}
 
 	componentClass *entityManagerClass::zPrivateDefineComponent(uintPtr typeSize, void *prototype, bool enumerableEntities)

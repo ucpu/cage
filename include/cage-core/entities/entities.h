@@ -10,14 +10,13 @@ namespace cage
 		groupClass *getGroupByIndex(uint32 index);
 		uint32 getGroupsCount() const;
 
-		entityClass *newEntity(uint32 name = 0);
-		entityClass *getEntity(uint32 entityName);
+		entityClass *newUniqueEntity(); // new entity with unique name
+		entityClass *newEntity(uint32 name = 0); // zero for anonymous entity
+		entityClass *getEntity(uint32 entityName); // throw if it does not exist
 		entityClass *getOrNewEntity(uint32 entityName);
 		bool hasEntity(uint32 entityName) const;
 
 		groupClass *getAllEntities(); // do not use it to add/remove entities directly
-
-		uint32 generateUniqueName();
 
 	private:
 		componentClass *zPrivateDefineComponent(uintPtr typeSize, void *prototype, bool enumerableEntities);

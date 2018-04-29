@@ -66,8 +66,9 @@ namespace cage
 				clearEntities();
 				profilingModeOld = profilingMode;
 				entityManagerClass *g = gui()->entities();
-				entityClass *panel = g->newEntity(panelIndex = g->generateUniqueName());
+				entityClass *panel = g->newUniqueEntity();
 				{
+					panelIndex = panel->getName();
 					GUI_GET_COMPONENT(groupBox, c, panel);
 					GUI_GET_COMPONENT(position, p, panel);
 					p.anchor = screenPosition;
@@ -76,8 +77,9 @@ namespace cage
 					p.position.units[0] = unitEnum::ScreenWidth;
 					p.position.units[1] = unitEnum::ScreenHeight;
 				}
-				entityClass *layout = g->newEntity(layoutIndex = g->generateUniqueName());
+				entityClass *layout = g->newUniqueEntity();
 				{
+					layoutIndex = layout->getName();
 					GUI_GET_COMPONENT(layoutTable, l, layout);
 					GUI_GET_COMPONENT(parent, child, layout);
 					child.parent = panel->getName();
@@ -88,7 +90,8 @@ namespace cage
 				uint32 labelsCountExt = labelsCount + (profilingMode == profilingModeEnum::Full ? 1 : 0);
 				for (uint32 i = 0; i < labelsCountExt * 2; i++)
 				{
-					entityClass *timing = g->newEntity(labelIndices[i] = g->generateUniqueName());
+					entityClass *timing = g->newUniqueEntity();
+					labelIndices[i] = timing->getName();
 					GUI_GET_COMPONENT(label, c, timing);
 					GUI_GET_COMPONENT(parent, child, timing);
 					child.parent = layout->getName();

@@ -93,7 +93,7 @@ void testSceneEntities()
 		{
 			for (uint32 i = 0; i < 100; i++)
 			{
-				entityClass *e = manager->newEntity(manager->generateUniqueName());
+				entityClass *e = manager->newUniqueEntity();
 				for (uint32 j = 0; j < 3; j++)
 				{
 					if (cage::random() < 0.5)
