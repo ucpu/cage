@@ -38,7 +38,7 @@ void changeEntities(entityManagerClass *man)
 	}
 	for (uint32 round = 0; round < 5; round++)
 	{
-		entityClass *e = man->newEntity();
+		entityClass *e = man->newAnonymousEntity();
 		generateEntity(e);
 	}
 }

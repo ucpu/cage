@@ -11,7 +11,8 @@ namespace cage
 		uint32 getGroupsCount() const;
 
 		entityClass *newUniqueEntity(); // new entity with unique name
-		entityClass *newEntity(uint32 name = 0); // zero for anonymous entity
+		entityClass *newAnonymousEntity(); // new entity with name = 0, accessible only with the pointer
+		entityClass *newEntity(uint32 name); // must be non-zero
 		entityClass *getEntity(uint32 entityName); // throw if it does not exist
 		entityClass *getOrNewEntity(uint32 entityName);
 		bool hasEntity(uint32 entityName) const;

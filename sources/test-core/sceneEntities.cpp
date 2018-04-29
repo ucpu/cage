@@ -25,14 +25,14 @@ void testSceneEntities()
 
 		groupClass *movement = manager->defineGroup();
 
-		entityClass *terrain = manager->newEntity();
+		entityClass *terrain = manager->newAnonymousEntity();
 		(void)terrain;
-		entityClass *player = manager->newEntity();
+		entityClass *player = manager->newAnonymousEntity();
 		player->addComponent(position);
 		player->addComponent(velocity);
 		player->addComponent(orientation);
 		player->addGroup(movement);
-		entityClass *tank = manager->newEntity();
+		entityClass *tank = manager->newAnonymousEntity();
 		tank->addComponent(position, vec3(100, 0, 50));
 		tank->addComponent(orientation);
 

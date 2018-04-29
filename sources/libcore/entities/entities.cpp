@@ -168,12 +168,18 @@ namespace cage
 		return newEntity(impl->generateUniqueName());
 	}
 
+	entityClass *entityManagerClass::newAnonymousEntity()
+	{
+		entityManagerImpl *impl = (entityManagerImpl *)this;
+		return detail::systemArena().createObject<entityImpl>(impl, 0);
+	}
+
 	entityClass *entityManagerClass::newEntity(uint32 name)
 	{
 		entityManagerImpl *impl = (entityManagerImpl *)this;
-		CAGE_ASSERT_RUNTIME(name == 0 || !impl->namedEntities->exists(name), "entity name must be unique", name);
-		entityImpl *e = detail::systemArena().createObject<entityImpl>(impl, name);
-		return e;
+		CAGE_ASSERT_RUNTIME(name != 0);
+		CAGE_ASSERT_RUNTIME(!impl->namedEntities->exists(name), "entity name must be unique", name);
+		return detail::systemArena().createObject<entityImpl>(impl, name);
 	}
 
 	entityClass *entityManagerClass::getEntity(uint32 entityName)
