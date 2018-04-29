@@ -49,8 +49,16 @@ namespace cage
 					c = c->nextSibling;
 				}
 				base->requestedSize = master->requestedSize;
-				//base->requestedSize[!data.vertical] = max(master->requestedSize[!data.vertical], slave->requestedSize[!data.vertical]);
+				base->requestedSize[!data.vertical] = max(master->requestedSize[!data.vertical], slave->requestedSize[!data.vertical]);
 				CAGE_ASSERT_RUNTIME(base->requestedSize.valid());
+			}
+
+			void updateSecondary(updatePositionStruct &u, guiItemStruct *item)
+			{
+				uint32 axis = data.vertical ? 0 : 1;
+				real r = item->requestedSize[axis]; // requested
+				real g = u.size[axis]; // given
+				u.position[axis] += (g - r) * data.anchor;
 			}
 
 			virtual void updateFinalPosition(const updatePositionStruct &update) override
@@ -62,12 +70,14 @@ namespace cage
 					{ // slave
 						updatePositionStruct u(update);
 						u.size[axis] -= m;
+						updateSecondary(u, slave);
 						slave->updateFinalPosition(u);
 					}
 					{ // master
 						updatePositionStruct u(update);
 						u.position[axis] += u.size[axis] - m;
 						u.size[axis] = m;
+						updateSecondary(u, master);
 						master->updateFinalPosition(u);
 					}
 				}
@@ -76,12 +86,14 @@ namespace cage
 					{ // master
 						updatePositionStruct u(update);
 						u.size[axis] = m;
+						updateSecondary(u, master);
 						master->updateFinalPosition(u);
 					}
 					{ // slave
 						updatePositionStruct u(update);
 						u.position[axis] += m;
 						u.size[axis] -= m;
+						updateSecondary(u, slave);
 						slave->updateFinalPosition(u);
 					}
 				}

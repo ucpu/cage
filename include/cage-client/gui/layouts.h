@@ -25,6 +25,7 @@ namespace cage
 
 	struct CAGE_API layoutSplitterComponent // splits the given area into two parts in a way that it is fully used
 	{
+		real anchor; // secondary axis alignment
 		bool vertical; // false -> left sub-area, right sub-area; true -> top, bottom
 		bool inverse; // false -> first item is fixed size, second item fills the remaining space; true -> second item is fixed size, first item fills the remaining space
 		layoutSplitterComponent();
