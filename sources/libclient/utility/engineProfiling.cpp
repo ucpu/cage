@@ -25,7 +25,7 @@ namespace cage
 			uint32 panelIndex;
 			uint32 layoutIndex;
 			uint32 labelIndices[40];
-			const engineProfiling::profilingTimeFlags *labelFlags;
+			const engineProfiling::profilingFlags *labelFlags;
 			const char **labelNames;
 			uint32 labelsCount;
 			profilingModeEnum profilingModeOld;
@@ -87,7 +87,7 @@ namespace cage
 
 				static const uint32 labelsPerMode[] = { 14, 4, 1, 0 };
 				labelsCount = labelsPerMode[(uint32)profilingMode];
-				uint32 labelsCountExt = labelsCount + (profilingMode == profilingModeEnum::Full ? 1 : 0);
+				uint32 labelsCountExt = labelsCount + (profilingMode == profilingModeEnum::Full ? 2 : 0);
 				for (uint32 i = 0; i < labelsCountExt * 2; i++)
 				{
 					entityClass *timing = g->newUniqueEntity();
@@ -103,44 +103,45 @@ namespace cage
 					}
 				}
 
-				static const engineProfiling::profilingTimeFlags flagsFull[] = {
-					engineProfiling::profilingTimeFlags::ControlTick,
-					engineProfiling::profilingTimeFlags::ControlWait,
-					engineProfiling::profilingTimeFlags::ControlEmit,
-					engineProfiling::profilingTimeFlags::ControlSleep,
-					engineProfiling::profilingTimeFlags::GraphicPrepareWait,
-					engineProfiling::profilingTimeFlags::GraphicPrepareEmit,
-					engineProfiling::profilingTimeFlags::GraphicPrepareTick,
-					engineProfiling::profilingTimeFlags::GraphicDispatchWait,
-					engineProfiling::profilingTimeFlags::GraphicDispatchTick,
-					engineProfiling::profilingTimeFlags::GraphicDispatchSwap,
-					engineProfiling::profilingTimeFlags::SoundEmit,
-					engineProfiling::profilingTimeFlags::SoundTick,
-					engineProfiling::profilingTimeFlags::SoundSleep,
-					engineProfiling::profilingTimeFlags::FrameTime
+				static const engineProfiling::profilingFlags flagsFull[] = {
+					engineProfiling::profilingFlags::ControlTick,
+					engineProfiling::profilingFlags::ControlWait,
+					engineProfiling::profilingFlags::ControlEmit,
+					engineProfiling::profilingFlags::ControlSleep,
+					engineProfiling::profilingFlags::GraphicsPrepareWait,
+					engineProfiling::profilingFlags::GraphicsPrepareEmit,
+					engineProfiling::profilingFlags::GraphicsPrepareTick,
+					engineProfiling::profilingFlags::GraphicsDispatchWait,
+					engineProfiling::profilingFlags::GraphicsDispatchTick,
+					engineProfiling::profilingFlags::GraphicsDispatchSwap,
+					engineProfiling::profilingFlags::GraphicsDrawCalls,
+					engineProfiling::profilingFlags::SoundEmit,
+					engineProfiling::profilingFlags::SoundTick,
+					engineProfiling::profilingFlags::SoundSleep,
+					engineProfiling::profilingFlags::FrameTime
 				};
 				static const char* namesFull[] = {
 					"Control Tick",
 					"Control Wait",
 					"Control Emit",
 					"Control Sleep",
-					"Graphic Prepare Wait",
-					"Graphic Prepare Emit",
-					"Graphic Prepare Tick",
-					"Graphic Dispatch Wait",
-					"Graphic Dispatch Tick",
-					"Graphic Dispatch Swap",
+					"Graphics Prepare Wait",
+					"Graphics Prepare Emit",
+					"Graphics Prepare Tick",
+					"Graphics Dispatch Wait",
+					"Graphics Dispatch Tick",
+					"Graphics Dispatch Swap",
 					"Sound Emit",
 					"Sound Tick",
 					"Sound Sleep",
 					"Frame Time"
 				};
 
-				static const engineProfiling::profilingTimeFlags flagsShort[] = {
-					(engineProfiling::profilingTimeFlags)(engineProfiling::profilingTimeFlags::ControlTick),
-					(engineProfiling::profilingTimeFlags)(engineProfiling::profilingTimeFlags::GraphicPrepareTick | engineProfiling::profilingTimeFlags::GraphicPrepareEmit),
-					(engineProfiling::profilingTimeFlags)(engineProfiling::profilingTimeFlags::GraphicDispatchTick | engineProfiling::profilingTimeFlags::GraphicDispatchSwap),
-					(engineProfiling::profilingTimeFlags)(engineProfiling::profilingTimeFlags::SoundTick | engineProfiling::profilingTimeFlags::SoundEmit),
+				static const engineProfiling::profilingFlags flagsShort[] = {
+					(engineProfiling::profilingFlags)(engineProfiling::profilingFlags::ControlTick),
+					(engineProfiling::profilingFlags)(engineProfiling::profilingFlags::GraphicsPrepareTick | engineProfiling::profilingFlags::GraphicsPrepareEmit),
+					(engineProfiling::profilingFlags)(engineProfiling::profilingFlags::GraphicsDispatchTick | engineProfiling::profilingFlags::GraphicsDispatchSwap),
+					(engineProfiling::profilingFlags)(engineProfiling::profilingFlags::SoundTick | engineProfiling::profilingFlags::SoundEmit),
 				};
 				static const char* namesShort[] = {
 					"Control",
@@ -149,8 +150,8 @@ namespace cage
 					"Sound",
 				};
 
-				static const engineProfiling::profilingTimeFlags flagsFps[] = {
-					engineProfiling::profilingTimeFlags::FrameTime,
+				static const engineProfiling::profilingFlags flagsFps[] = {
+					engineProfiling::profilingFlags::FrameTime,
 				};
 				static const char* namesFps[] = {
 					"Frame Time",
@@ -225,12 +226,14 @@ namespace cage
 				for (uint32 i = 0; i < labelsCount; i++)
 				{
 					setTextLabel(i * 2 + 0, labelNames[i]);
-					setTextLabel(i * 2 + 1, string() + (engineProfiling::getTime(labelFlags[i], true) / 1000) + " ms");
+					setTextLabel(i * 2 + 1, string() + (engineProfiling::getProfilingValue(labelFlags[i], true) / 1000) + " ms");
 				}
 				if (profilingModeOld == profilingModeEnum::Full)
 				{
 					setTextLabel(labelsCount * 2 + 0, "Entities");
 					setTextLabel(labelsCount * 2 + 1, entities()->getAllEntities()->entitiesCount());
+					setTextLabel(labelsCount * 2 + 2, "Draw Calls");
+					setTextLabel(labelsCount * 2 + 3, engineProfiling::getProfilingValue(engineProfiling::profilingFlags::GraphicsDrawCalls, false));
 				}
 				return false;
 			}

@@ -70,6 +70,9 @@ namespace cage
 
 		struct graphicDispatchImpl : public graphicDispatchStruct
 		{
+		public:
+			uint32 drawCalls;
+
 		private:
 			uint32 gBufferWidth;
 			uint32 gBufferHeight;
@@ -179,6 +182,7 @@ namespace cage
 				}
 				CAGE_CHECK_GL_ERROR_DEBUG();
 				obj->mesh->dispatch(obj->count);
+				drawCalls++;
 			}
 
 			void renderOpaque(renderPassStruct *pass)
@@ -371,11 +375,9 @@ namespace cage
 			}
 
 		public:
-			graphicDispatchImpl(const engineCreateConfig &config)
+			graphicDispatchImpl(const engineCreateConfig &config) : drawCalls(0), gBufferWidth(0), gBufferHeight(0), lastTwoSided(false), lastDepthTest(false)
 			{
 				detail::memset(static_cast<graphicDispatchStruct*>(this), 0, sizeof(graphicDispatchStruct));
-				gBufferWidth = gBufferHeight = 0;
-				lastTwoSided = lastDepthTest = false;
 			}
 
 			void initialize()
@@ -432,6 +434,7 @@ namespace cage
 
 			void tick()
 			{
+				drawCalls = 0;
 				if (windowWidth == 0 || windowHeight == 0)
 					return;
 
@@ -573,9 +576,11 @@ namespace cage
 		((graphicDispatchImpl*)graphicDispatch)->finalize();
 	}
 
-	void graphicDispatchTick()
+	void graphicDispatchTick(uint32 &drawCalls)
 	{
-		((graphicDispatchImpl*)graphicDispatch)->tick();
+		graphicDispatchImpl *impl = (graphicDispatchImpl*)graphicDispatch;
+		impl->tick();
+		drawCalls = impl->drawCalls;
 	}
 
 	void graphicDispatchSwap()

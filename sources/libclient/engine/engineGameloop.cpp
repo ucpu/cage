@@ -53,19 +53,20 @@ namespace cage
 			holder<threadClass> graphicDispatchThread;
 			holder<threadClass> graphicPrepareThread;
 			holder<threadClass> soundThread;
-			variableSmoothingBufferStruct<uint64, 64> timeBufferControlTick;
-			variableSmoothingBufferStruct<uint64, 64> timeBufferControlWait;
-			variableSmoothingBufferStruct<uint64, 64> timeBufferControlEmit;
-			variableSmoothingBufferStruct<uint64, 64> timeBufferControlSleep;
-			variableSmoothingBufferStruct<uint64, 64> timeBufferGraphicPrepareWait;
-			variableSmoothingBufferStruct<uint64, 64> timeBufferGraphicPrepareEmit;
-			variableSmoothingBufferStruct<uint64, 64> timeBufferGraphicPrepareTick;
-			variableSmoothingBufferStruct<uint64, 64> timeBufferGraphicDispatchWait;
-			variableSmoothingBufferStruct<uint64, 64> timeBufferGraphicDispatchTick;
-			variableSmoothingBufferStruct<uint64, 64> timeBufferGraphicDispatchSwap;
-			variableSmoothingBufferStruct<uint64, 64> timeBufferSoundEmit;
-			variableSmoothingBufferStruct<uint64, 64> timeBufferSoundTick;
-			variableSmoothingBufferStruct<uint64, 64> timeBufferSoundSleep;
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferControlTick;
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferControlWait;
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferControlEmit;
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferControlSleep;
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsPrepareWait;
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsPrepareEmit;
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsPrepareTick;
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsDispatchWait;
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsDispatchTick;
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsDispatchSwap;
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsDrawCalls;
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferSoundEmit;
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferSoundTick;
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferSoundSleep;
 			std::atomic<uint32> engineStarted;
 			std::atomic<bool> emitIsReady;
 			std::atomic<bool> stopping;
@@ -108,9 +109,9 @@ namespace cage
 							emitGraphicAssetsSemaphore->lock();
 						}
 						uint64 time4 = getApplicationTime();
-						timeBufferGraphicPrepareWait.add(time2 - time1);
-						timeBufferGraphicPrepareTick.add(time3 - time2);
-						timeBufferGraphicPrepareEmit.add(time4 - time3);
+						profilingBufferGraphicsPrepareWait.add(time2 - time1);
+						profilingBufferGraphicsPrepareTick.add(time3 - time2);
+						profilingBufferGraphicsPrepareEmit.add(time4 - time3);
 					}
 				}
 				catch (...)
@@ -157,7 +158,9 @@ namespace cage
 						graphicDispatchSemaphore->lock();
 						uint64 time2 = getApplicationTime();
 						graphicDispatchThread::render.dispatch();
-						graphicDispatchTick();
+						uint32 drawCalls = 0;
+						graphicDispatchTick(drawCalls);
+						profilingBufferGraphicsDrawCalls.add(drawCalls);
 						if (graphicPrepareThread::stereoMode == stereoModeEnum::Mono)
 						{
 							gui->graphicRender();
@@ -169,9 +172,9 @@ namespace cage
 						graphicDispatchThread::swap.dispatch();
 						graphicDispatchSwap();
 						uint64 time4 = getApplicationTime();
-						timeBufferGraphicDispatchWait.add(time2 - time1);
-						timeBufferGraphicDispatchTick.add(time3 - time2);
-						timeBufferGraphicDispatchSwap.add(time4 - time3);
+						profilingBufferGraphicsDispatchWait.add(time2 - time1);
+						profilingBufferGraphicsDispatchTick.add(time3 - time2);
+						profilingBufferGraphicsDispatchSwap.add(time4 - time3);
 					}
 				}
 				catch (...)
@@ -241,9 +244,9 @@ namespace cage
 							soundTickTime += soundThread::timePerTick;
 						}
 						uint64 time4 = getApplicationTime();
-						timeBufferSoundEmit.add(time2 - time1);
-						timeBufferSoundTick.add(time3 - time2);
-						timeBufferSoundSleep.add(time4 - time3);
+						profilingBufferSoundEmit.add(time2 - time1);
+						profilingBufferSoundTick.add(time3 - time2);
+						profilingBufferSoundSleep.add(time4 - time3);
 					}
 				}
 				catch (...)
@@ -332,10 +335,10 @@ namespace cage
 							}
 						}
 						uint64 time5 = getApplicationTime();
-						timeBufferControlTick.add(time2 - time1);
-						timeBufferControlWait.add(time3 - time2);
-						timeBufferControlEmit.add(time4 - time3);
-						timeBufferControlSleep.add(time5 - time4);
+						profilingBufferControlTick.add(time2 - time1);
+						profilingBufferControlWait.add(time3 - time2);
+						profilingBufferControlEmit.add(time4 - time3);
+						profilingBufferControlSleep.add(time5 - time4);
 					}
 				}
 				catch (...)
@@ -702,13 +705,13 @@ namespace cage
 
 	namespace engineProfiling
 	{
-		uint64 getTime(profilingTimeFlags flags, bool smooth)
+		uint64 getProfilingValue(profilingFlags flags, bool smooth)
 		{
 			uint64 result = 0;
 #define GCHL_GENERATE(NAME) \
-			if ((flags & profilingTimeFlags::NAME) == profilingTimeFlags::NAME) \
+			if ((flags & profilingFlags::NAME) == profilingFlags::NAME) \
 			{ \
-				auto &buffer = CAGE_JOIN(engineData->timeBuffer, NAME); \
+				auto &buffer = CAGE_JOIN(engineData->profilingBuffer, NAME); \
 				if (smooth) \
 					result += buffer.smooth(); \
 				else \
@@ -719,12 +722,13 @@ namespace cage
 				ControlWait,
 				ControlEmit,
 				ControlSleep,
-				GraphicPrepareWait,
-				GraphicPrepareEmit,
-				GraphicPrepareTick,
-				GraphicDispatchWait,
-				GraphicDispatchTick,
-				GraphicDispatchSwap,
+				GraphicsPrepareWait,
+				GraphicsPrepareEmit,
+				GraphicsPrepareTick,
+				GraphicsDispatchWait,
+				GraphicsDispatchTick,
+				GraphicsDispatchSwap,
+				GraphicsDrawCalls,
 				SoundEmit,
 				SoundTick,
 				SoundSleep

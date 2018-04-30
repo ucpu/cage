@@ -69,28 +69,29 @@ namespace cage
 
 	namespace engineProfiling
 	{
-		enum class profilingTimeFlags
+		enum class profilingFlags
 		{
 			None = 0,
 			ControlTick = 1 << 0,
 			ControlWait = 1 << 1,
 			ControlEmit = 1 << 2,
 			ControlSleep = 1 << 3,
-			GraphicPrepareWait = 1 << 4,
-			GraphicPrepareEmit = 1 << 5,
-			GraphicPrepareTick = 1 << 6,
-			GraphicDispatchWait = 1 << 7,
-			GraphicDispatchTick = 1 << 8,
-			GraphicDispatchSwap = 1 << 9,
-			SoundEmit = 1 << 10,
-			SoundTick = 1 << 11,
-			SoundSleep = 1 << 12,
-			FrameTime = profilingTimeFlags::GraphicDispatchWait | profilingTimeFlags::GraphicDispatchTick | profilingTimeFlags::GraphicDispatchSwap,
+			GraphicsPrepareWait = 1 << 4,
+			GraphicsPrepareEmit = 1 << 5,
+			GraphicsPrepareTick = 1 << 6,
+			GraphicsDispatchWait = 1 << 7,
+			GraphicsDispatchTick = 1 << 8,
+			GraphicsDispatchSwap = 1 << 9,
+			GraphicsDrawCalls = 1 << 10,
+			SoundEmit = 1 << 11,
+			SoundTick = 1 << 12,
+			SoundSleep = 1 << 13,
+			FrameTime = profilingFlags::GraphicsDispatchWait | profilingFlags::GraphicsDispatchTick | profilingFlags::GraphicsDispatchSwap,
 		};
 
-		CAGE_API uint64 getTime(profilingTimeFlags flags, bool smooth);
+		CAGE_API uint64 getProfilingValue(profilingFlags flags, bool smooth);
 	}
-	GCHL_ENUM_BITS(engineProfiling::profilingTimeFlags);
+	GCHL_ENUM_BITS(engineProfiling::profilingFlags);
 }
 
 #define ENGINE_GET_COMPONENT(T,C,E) ::cage::CAGE_JOIN(T, Component) &C = (E)->value<::cage::CAGE_JOIN(T, Component)>(::cage::CAGE_JOIN(T, Component)::component);

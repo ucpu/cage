@@ -11,7 +11,7 @@ namespace cage
 	void graphicDispatchDestroy();
 	void graphicDispatchInitialize();
 	void graphicDispatchFinalize();
-	void graphicDispatchTick();
+	void graphicDispatchTick(uint32 &drawCalls);
 	void graphicDispatchSwap();
 
 	void soundCreate(const engineCreateConfig &config);
