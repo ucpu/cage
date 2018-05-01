@@ -41,5 +41,5 @@ int main(int argc, const char *args[])
 
 	CAGE_LOG(severityEnum::Info, "database", "end");
 
-	return 0;
+	return verdict() ? 0 : -1;
 }

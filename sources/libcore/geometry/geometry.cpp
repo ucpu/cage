@@ -523,7 +523,7 @@ namespace cage
 
 	bool intersects(const sphere &a, const sphere &b)
 	{
-		return distance(a.center, b.center) <= (a.radius + b.radius);
+		return squaredDistance(a.center, b.center) <= sqr(a.radius + b.radius);
 	}
 
 	bool intersects(const sphere &a, const aabb &b)

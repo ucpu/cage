@@ -28,6 +28,8 @@ namespace
 	const string databaseVersion = "8";
 	const string databaseEnd = "cage-asset-database-end";
 
+	bool verdictValue = false;
+
 	struct databankStruct
 	{
 		string name;
@@ -444,6 +446,7 @@ namespace
 
 	void checkAssets()
 	{
+		verdictValue = false;
 		files.clear();
 		findFiles("");
 		holderSet<databankStruct> corruptedDbsCopy;
@@ -538,12 +541,17 @@ namespace
 		timestamp = newestFile;
 		save();
 		if (countBadDatabanks || countCorrupted || countMissingReferences)
+		{
 			CAGE_LOG(severityEnum::Warning, "verdict", string() +
 				countBadDatabanks + " corrupted databanks, " +
 				countCorrupted + " corrupted assets, " +
 				countMissingReferences + " missing references");
+		}
 		else
+		{
 			CAGE_LOG(severityEnum::Info, "verdict", "ok");
+			verdictValue = true;
+		}
 	}
 
 	void loadSchemesDirectory(const string &dir)
@@ -620,4 +628,9 @@ void listen()
 		else
 			cycles++;
 	}
+}
+
+bool verdict()
+{
+	return verdictValue;
 }
