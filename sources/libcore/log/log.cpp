@@ -119,6 +119,8 @@ namespace cage
 				uint32 y, M, d, h, m, s;
 				getSystemDateTime(y, M, d, h, m, s);
 				CAGE_LOG(severityEnum::Info, "log", string() + "current time: " + formatDateTime(y, M, d, h, m, s));
+
+				setCurrentThreadName(detail::getExecutableNameNoExe());
 			}
 
 			~logInitializerClass()
@@ -148,7 +150,7 @@ namespace cage
 
 	namespace detail
 	{
-		loggerInfo::loggerInfo() : component(""), file(nullptr), function(nullptr), time(0), currentThread(0), createThread(0), severity(severityEnum::Critical), line(0), continuous(false), debug(false)
+		loggerInfo::loggerInfo() : component(""), file(nullptr), function(nullptr), time(0), createThreadId(0), currentThreadId(0), severity(severityEnum::Critical), line(0), continuous(false), debug(false)
 		{}
 
 		uint64 makeLog(const char *file, uint32 line, const char *function, severityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept
@@ -161,7 +163,8 @@ namespace cage
 				info.severity = severity;
 				info.continuous = continuous;
 				info.debug = debug;
-				info.currentThread = threadId();
+				info.currentThreadId = threadId();
+				info.currentThreadName = getCurrentThreadName();
 				info.time = getApplicationTime();
 				info.file = file;
 				info.line = line;
@@ -173,7 +176,7 @@ namespace cage
 				{
 					if (cur->output)
 					{
-						info.createThread = cur->thread;
+						info.createThreadId = cur->thread;
 						if (!cur->filter || cur->filter(info))
 						{
 							if (cur->format)

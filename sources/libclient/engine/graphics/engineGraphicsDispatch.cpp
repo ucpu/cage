@@ -22,7 +22,7 @@ namespace cage
 {
 	namespace
 	{
-		configSint32 visualizeBuffer("cage-client.engine.debugVisualizeBuffer", 0);
+		configSint32 visualizeBuffer("cage-client.engine.visualizeBuffer", 0);
 
 		struct shadowmapBufferStruct
 		{
@@ -68,7 +68,7 @@ namespace cage
 			visualizableTextureStruct(textureClass *tex, visualizableTextureModeEnum vtm) : tex(tex), visualizableTextureMode(vtm) {};
 		};
 
-		struct graphicDispatchImpl : public graphicDispatchStruct
+		struct graphicsDispatchImpl : public graphicsDispatchStruct
 		{
 		public:
 			uint32 drawCalls;
@@ -375,9 +375,9 @@ namespace cage
 			}
 
 		public:
-			graphicDispatchImpl(const engineCreateConfig &config) : drawCalls(0), gBufferWidth(0), gBufferHeight(0), lastTwoSided(false), lastDepthTest(false)
+			graphicsDispatchImpl(const engineCreateConfig &config) : drawCalls(0), gBufferWidth(0), gBufferHeight(0), lastTwoSided(false), lastDepthTest(false)
 			{
-				detail::memset(static_cast<graphicDispatchStruct*>(this), 0, sizeof(graphicDispatchStruct));
+				detail::memset(static_cast<graphicsDispatchStruct*>(this), 0, sizeof(graphicsDispatchStruct));
 			}
 
 			void initialize()
@@ -553,38 +553,38 @@ namespace cage
 		};
 	}
 
-	graphicDispatchStruct *graphicDispatch;
+	graphicsDispatchStruct *graphicsDispatch;
 
-	void graphicDispatchCreate(const engineCreateConfig &config)
+	void graphicsDispatchCreate(const engineCreateConfig &config)
 	{
-		graphicDispatch = detail::systemArena().createObject<graphicDispatchImpl>(config);
+		graphicsDispatch = detail::systemArena().createObject<graphicsDispatchImpl>(config);
 	}
 
-	void graphicDispatchDestroy()
+	void graphicsDispatchDestroy()
 	{
-		detail::systemArena().destroy<graphicDispatchImpl>(graphicDispatch);
-		graphicDispatch = nullptr;
+		detail::systemArena().destroy<graphicsDispatchImpl>(graphicsDispatch);
+		graphicsDispatch = nullptr;
 	}
 
-	void graphicDispatchInitialize()
+	void graphicsDispatchInitialize()
 	{
-		((graphicDispatchImpl*)graphicDispatch)->initialize();
+		((graphicsDispatchImpl*)graphicsDispatch)->initialize();
 	}
 
-	void graphicDispatchFinalize()
+	void graphicsDispatchFinalize()
 	{
-		((graphicDispatchImpl*)graphicDispatch)->finalize();
+		((graphicsDispatchImpl*)graphicsDispatch)->finalize();
 	}
 
-	void graphicDispatchTick(uint32 &drawCalls)
+	void graphicsDispatchTick(uint32 &drawCalls)
 	{
-		graphicDispatchImpl *impl = (graphicDispatchImpl*)graphicDispatch;
+		graphicsDispatchImpl *impl = (graphicsDispatchImpl*)graphicsDispatch;
 		impl->tick();
 		drawCalls = impl->drawCalls;
 	}
 
-	void graphicDispatchSwap()
+	void graphicsDispatchSwap()
 	{
-		((graphicDispatchImpl*)graphicDispatch)->swap();
+		((graphicsDispatchImpl*)graphicsDispatch)->swap();
 	}
 }

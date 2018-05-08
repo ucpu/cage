@@ -10,7 +10,7 @@ namespace cage
 		static const uint32 threadIndex = 0;
 	}
 
-	namespace graphicDispatchThread
+	namespace graphicsDispatchThread
 	{
 		CAGE_API extern eventDispatcher<bool()> initialize;
 		CAGE_API extern eventDispatcher<bool()> finalize;
@@ -19,7 +19,7 @@ namespace cage
 		static const uint32 threadIndex = 1;
 	}
 
-	namespace graphicPrepareThread
+	namespace graphicsPrepareThread
 	{
 		CAGE_API extern eventDispatcher<bool()> initialize;
 		CAGE_API extern eventDispatcher<bool()> finalize;

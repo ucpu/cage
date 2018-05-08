@@ -39,6 +39,6 @@ namespace cage
 	void guiClass::graphicRender()
 	{
 		guiImpl *impl = (guiImpl*)this;
-		impl->graphicDispatch();
+		impl->graphicsDispatch();
 	}
 }

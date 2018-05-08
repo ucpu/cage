@@ -76,42 +76,6 @@ namespace cage
 				CloseHandle(handle);
 #endif
 			}
-
-			void enforceTheName()
-			{
-#ifdef CAGE_SYSTEM_WINDOWS
-				if (!threadName.empty())
-				{
-					static const DWORD MS_VC_EXCEPTION = 0x406D1388;
-#pragma pack(push,8)
-					struct THREADNAME_INFO
-					{
-						DWORD dwType; // Must be 0x1000.
-						LPCSTR szName; // Pointer to name (in user addr space).
-						DWORD dwThreadID; // Thread ID (-1=caller thread).
-						DWORD dwFlags; // Reserved for future use, must be zero.
-					};
-#pragma pack(pop)
-					THREADNAME_INFO info;
-					info.dwType = 0x1000;
-					info.szName = threadName.c_str();
-					info.dwThreadID = -1;
-					info.dwFlags = 0;
-#pragma warning(push)
-#pragma warning(disable: 6320 6322)
-					__try {
-						RaiseException(MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR*)&info);
-					}
-					__except (EXCEPTION_EXECUTE_HANDLER) {
-					}
-#pragma warning(pop)
-				}
-#else
-#ifdef CAGE_SYSTEM_LINUX
-				prctl(PR_SET_NAME, threadName.c_str(), 0, 0, 0);
-#endif
-#endif
-			}
 		};
 	}
 
@@ -173,15 +137,67 @@ namespace cage
 		}
 	}
 
-	string threadClass::getThreadName() const
-	{
-		threadImpl *impl = (threadImpl*)this;
-		return impl->threadName;
-	}
-
 	holder<threadClass> newThread(delegate<void()> func, const string &threadName)
 	{
 		return detail::systemArena().createImpl<threadClass, threadImpl>(func, threadName);
+	}
+
+	namespace
+	{
+		string &currentThreadName()
+		{
+			static thread_local string name;
+			return name;
+		}
+	}
+
+	void setCurrentThreadName(const string &name)
+	{
+		string oldName = currentThreadName();
+		currentThreadName() = name;
+		CAGE_LOG(severityEnum::Info, "thread", string() + "renaming thread id '" + threadId() + "' from '" + oldName + "' to '" + name + "'");
+
+#ifdef CAGE_SYSTEM_WINDOWS
+		if (!name.empty())
+		{
+			static const DWORD MS_VC_EXCEPTION = 0x406D1388;
+#pragma pack(push,8)
+			struct THREADNAME_INFO
+			{
+				DWORD dwType; // Must be 0x1000.
+				LPCSTR szName; // Pointer to name (in user addr space).
+				DWORD dwThreadID; // Thread ID (-1=caller thread).
+				DWORD dwFlags; // Reserved for future use, must be zero.
+			};
+#pragma pack(pop)
+			THREADNAME_INFO info;
+			info.dwType = 0x1000;
+			info.szName = name.c_str();
+			info.dwThreadID = -1;
+			info.dwFlags = 0;
+#pragma warning(push)
+#pragma warning(disable: 6320 6322)
+			__try {
+				RaiseException(MS_VC_EXCEPTION, 0, sizeof(info) / sizeof(ULONG_PTR), (ULONG_PTR*)&info);
+			}
+			__except (EXCEPTION_EXECUTE_HANDLER) {
+			}
+#pragma warning(pop)
+		}
+#endif
+
+#ifdef CAGE_SYSTEM_LINUX
+		prctl(PR_SET_NAME, threadName.c_str(), 0, 0, 0);
+#endif
+	}
+
+	string getCurrentThreadName()
+	{
+		string n = currentThreadName();
+		if (n.empty())
+			return threadId();
+		else
+			return n;
 	}
 
 	namespace
@@ -193,8 +209,8 @@ namespace cage
 #endif
 		{
 			threadImpl *impl = (threadImpl*)params;
-			impl->enforceTheName();
-			CAGE_LOG(severityEnum::Info, "thread", string() + "thread launched, id: " + impl->myid + ", name: '" + impl->threadName + "'");
+			setCurrentThreadName(impl->threadName);
+			//CAGE_LOG(severityEnum::Info, "thread", string() + "thread '" + getCurrentThreadName() + "' started");
 			try
 			{
 				impl->function();
@@ -202,9 +218,9 @@ namespace cage
 			catch (...)
 			{
 				impl->exptr = std::current_exception();
-				CAGE_LOG(severityEnum::Error, "thread", string() + "unhandled exception in thread id: " + impl->myid + ", name: '" + impl->threadName + "'");
+				CAGE_LOG(severityEnum::Error, "thread", string() + "unhandled exception in thread '" + getCurrentThreadName() + "'");
 			}
-			CAGE_LOG(severityEnum::Info, "thread", string() + "thread ended, id: " + impl->myid + ", name: '" + impl->threadName + "'");
+			CAGE_LOG(severityEnum::Info, "thread", string() + "thread '" + getCurrentThreadName() + "' ended");
 #ifdef CAGE_SYSTEM_WINDOWS
 			return 0;
 #else

@@ -292,7 +292,7 @@ namespace cage
 			return result;
 		}
 
-		void graphicDispatch();
+		void graphicsDispatch();
 	};
 
 	void offsetPosition(vec2 &position, const vec4 &offset);

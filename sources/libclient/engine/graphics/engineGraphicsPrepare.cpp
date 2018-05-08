@@ -30,7 +30,7 @@ namespace cage
 	{
 		CAGE_ASSERT_COMPILE(CAGE_SHADER_MAX_ARMATURE_MATRICES == MaxBonesCount, incompatible_shader_definition_with_code);
 
-		configBool renderMissingMeshes("cage-client.engine.debugRenderMissingMeshes", false);
+		configBool renderMissingMeshes("cage-client.engine.renderMissingMeshes", false);
 
 		struct shadowmapImpl : public shadowmapComponent
 		{
@@ -102,7 +102,7 @@ namespace cage
 			uint32 renderMask;
 		};
 
-		struct graphicPrepareImpl
+		struct graphicsPrepareImpl
 		{
 			memoryArenaGrowing<memoryAllocatorPolicyLinear<>, memoryConcurrentPolicyNone> emitMemory;
 			memoryArena emitArena;
@@ -156,11 +156,11 @@ namespace cage
 			renderPassImpl *newRenderPass()
 			{
 				renderPassImpl *t = dispatchArena.createObject<renderPassImpl>();
-				if (graphicDispatch->firstRenderPass)
-					graphicDispatch->lastRenderPass->next = t;
+				if (graphicsDispatch->firstRenderPass)
+					graphicsDispatch->lastRenderPass->next = t;
 				else
-					graphicDispatch->firstRenderPass = t;
-				graphicDispatch->lastRenderPass = t;
+					graphicsDispatch->firstRenderPass = t;
+				graphicsDispatch->lastRenderPass = t;
 				return t;
 			}
 
@@ -204,13 +204,13 @@ namespace cage
 					cam.zeroParallaxDistance = camera->camera.zeroParallaxDistance;
 					cam.eyeSeparation = camera->camera.eyeSeparation;
 					cam.ortographic = camera->camera.cameraType == cameraTypeEnum::Orthographic;
-					stereoscopy(eye, cam, real(graphicDispatch->windowWidth) / real(graphicDispatch->windowHeight), (stereoModeEnum)graphicPrepareThread::stereoMode, pass->view, pass->proj, x, y, w, h);
+					stereoscopy(eye, cam, real(graphicsDispatch->windowWidth) / real(graphicsDispatch->windowHeight), (stereoModeEnum)graphicsPrepareThread::stereoMode, pass->view, pass->proj, x, y, w, h);
 					if (camera->camera.cameraType == cameraTypeEnum::Orthographic)
 						pass->proj = orthographicProjection(-camera->camera.orthographicSize[0], camera->camera.orthographicSize[0], -camera->camera.orthographicSize[1], camera->camera.orthographicSize[1], camera->camera.near, camera->camera.far);
-					pass->vpX = numeric_cast<uint32>(x * real(graphicDispatch->windowWidth));
-					pass->vpY = numeric_cast<uint32>(y * real(graphicDispatch->windowHeight));
-					pass->vpW = numeric_cast<uint32>(w * real(graphicDispatch->windowWidth));
-					pass->vpH = numeric_cast<uint32>(h * real(graphicDispatch->windowHeight));
+					pass->vpX = numeric_cast<uint32>(x * real(graphicsDispatch->windowWidth));
+					pass->vpY = numeric_cast<uint32>(y * real(graphicsDispatch->windowHeight));
+					pass->vpW = numeric_cast<uint32>(w * real(graphicsDispatch->windowWidth));
+					pass->vpH = numeric_cast<uint32>(h * real(graphicsDispatch->windowHeight));
 				}
 				pass->viewProj = pass->proj * pass->view;
 				pass->shaderViewport.vpInv = pass->viewProj.inverse();
@@ -268,7 +268,7 @@ namespace cage
 					if (!assets()->ready(e->render.object))
 					{
 						if (renderMissingMeshes)
-							addRenderableMesh(pass, e, graphicDispatch->meshFake, e->model, mvp);
+							addRenderableMesh(pass, e, graphicsDispatch->meshFake, e->model, mvp);
 						continue;
 					}
 					switch (assets()->scheme(e->render.object))
@@ -386,12 +386,12 @@ namespace cage
 					break;
 				case lightTypeEnum::Spot:
 					mvpMat = pass->viewProj * e->model * lightSpotCone(lightRange(e->light.color, e->light.attenuation), e->light.spotAngle);
-					if (!frustumCulling(graphicDispatch->meshCone->getBoundingBox(), mvpMat))
+					if (!frustumCulling(graphicsDispatch->meshCone->getBoundingBox(), mvpMat))
 						return; // this light's volume is outside view frustum
 					break;
 				case lightTypeEnum::Point:
 					mvpMat = pass->viewProj * e->model * mat4(lightRange(e->light.color, e->light.attenuation));
-					if (!frustumCulling(graphicDispatch->meshSphere->getBoundingBox(), mvpMat))
+					if (!frustumCulling(graphicsDispatch->meshSphere->getBoundingBox(), mvpMat))
 						return; // this light's volume is outside view frustum
 					break;
 				}
@@ -439,7 +439,7 @@ namespace cage
 				lig->count++;
 			}
 
-			graphicPrepareImpl(const engineCreateConfig &config) : emitMemory(config.graphicEmitMemory), dispatchMemory(config.graphicDispatchMemory)
+			graphicsPrepareImpl(const engineCreateConfig &config) : emitMemory(config.graphicEmitMemory), dispatchMemory(config.graphicDispatchMemory)
 			{
 				emitRenderables.reserve(256);
 				emitLights.reserve(32);
@@ -535,26 +535,26 @@ namespace cage
 				this->prepareTime = prepareTime;
 				shm2d = shmCube = 0;
 
-				if (!graphicDispatch->shaderBlitColor)
+				if (!graphicsDispatch->shaderBlitColor)
 				{
-					graphicDispatch->meshSquare = ass->get<assetSchemeIndexMesh, meshClass>(hashString("cage/mesh/square.obj"));
-					graphicDispatch->meshSphere = ass->get<assetSchemeIndexMesh, meshClass>(hashString("cage/mesh/sphere.obj"));
-					graphicDispatch->meshCone = ass->get<assetSchemeIndexMesh, meshClass>(hashString("cage/mesh/cone.obj"));
-					graphicDispatch->meshFake = ass->get<assetSchemeIndexMesh, meshClass>(hashString("cage/mesh/fake.obj"));
-					graphicDispatch->shaderBlitColor = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/blitColor.glsl"));
-					graphicDispatch->shaderBlitDepth = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/blitDepth.glsl"));
-					graphicDispatch->shaderDepth = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/depth.glsl"));
-					graphicDispatch->shaderGBuffer = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/gBuffer.glsl"));
-					graphicDispatch->shaderLighting = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/lighting.glsl"));
-					graphicDispatch->shaderTranslucent = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/translucent.glsl"));
+					graphicsDispatch->meshSquare = ass->get<assetSchemeIndexMesh, meshClass>(hashString("cage/mesh/square.obj"));
+					graphicsDispatch->meshSphere = ass->get<assetSchemeIndexMesh, meshClass>(hashString("cage/mesh/sphere.obj"));
+					graphicsDispatch->meshCone = ass->get<assetSchemeIndexMesh, meshClass>(hashString("cage/mesh/cone.obj"));
+					graphicsDispatch->meshFake = ass->get<assetSchemeIndexMesh, meshClass>(hashString("cage/mesh/fake.obj"));
+					graphicsDispatch->shaderBlitColor = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/blitColor.glsl"));
+					graphicsDispatch->shaderBlitDepth = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/blitDepth.glsl"));
+					graphicsDispatch->shaderDepth = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/depth.glsl"));
+					graphicsDispatch->shaderGBuffer = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/gBuffer.glsl"));
+					graphicsDispatch->shaderLighting = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/lighting.glsl"));
+					graphicsDispatch->shaderTranslucent = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/translucent.glsl"));
 				}
 
-				graphicDispatch->firstRenderPass = graphicDispatch->lastRenderPass = nullptr;
+				graphicsDispatch->firstRenderPass = graphicsDispatch->lastRenderPass = nullptr;
 				dispatchArena.flush();
 
 				pointStruct resolution = window()->resolution();
-				graphicDispatch->windowWidth = resolution.x;
-				graphicDispatch->windowHeight = resolution.y;
+				graphicsDispatch->windowWidth = resolution.x;
+				graphicsDispatch->windowHeight = resolution.y;
 
 				{ // update model matrices
 					real interFactor = clamp(real(prepareTime - controlTime) / controlThread::timePerTick, 0, 1);
@@ -587,7 +587,7 @@ namespace cage
 					std::sort(emitCameras.begin(), emitCameras.end(), cameraComparatorStruct());
 					for (auto it = emitCameras.begin(), ite = emitCameras.end(); it != ite; it++)
 					{
-						if (graphicPrepareThread::stereoMode == stereoModeEnum::Mono || (*it)->camera.target)
+						if (graphicsPrepareThread::stereoMode == stereoModeEnum::Mono || (*it)->camera.target)
 						{ // mono
 							initializeRenderPassForCamera(newRenderPass(), *it, eyeEnum::Mono);
 						}
@@ -601,7 +601,7 @@ namespace cage
 			}
 		};
 
-		graphicPrepareImpl *graphicPrepare;
+		graphicsPrepareImpl *graphicsPrepare;
 	}
 
 	shaderConfigStruct::shaderConfigStruct()
@@ -611,9 +611,9 @@ namespace cage
 
 	objectsStruct::objectsStruct(meshClass *mesh, uint32 max) : shaderMeshes(nullptr), shaderArmatures(nullptr), mesh(mesh), next(nullptr), count(0), max(max)
 	{
-		shaderMeshes = (shaderMeshStruct*)graphicPrepare->dispatchArena.allocate(sizeof(shaderMeshStruct) * max);
+		shaderMeshes = (shaderMeshStruct*)graphicsPrepare->dispatchArena.allocate(sizeof(shaderMeshStruct) * max);
 		if ((mesh->getFlags() & meshFlags::Bones) == meshFlags::Bones)
-			shaderArmatures = (shaderArmatureStruct*)graphicPrepare->dispatchArena.allocate(sizeof(shaderArmatureStruct) * max);
+			shaderArmatures = (shaderArmatureStruct*)graphicsPrepare->dispatchArena.allocate(sizeof(shaderArmatureStruct) * max);
 		else
 			shaderArmatures = nullptr;
 		assetManagerClass *ass = assets();
@@ -622,49 +622,49 @@ namespace cage
 			uint32 n = mesh->textureName(i);
 			textures[i] = n ? ass->get<assetSchemeIndexTexture, textureClass>(n) : nullptr;
 		}
-		graphicPrepareImpl::setShaderRoutine(&shaderConfig, GL_VERTEX_SHADER, CAGE_SHADER_ROUTINEUNIF_SKELETON, (mesh->getFlags() & meshFlags::Bones) == meshFlags::Bones ? CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION : CAGE_SHADER_ROUTINEPROC_SKELETONNOTHING);
+		graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_VERTEX_SHADER, CAGE_SHADER_ROUTINEUNIF_SKELETON, (mesh->getFlags() & meshFlags::Bones) == meshFlags::Bones ? CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION : CAGE_SHADER_ROUTINEPROC_SKELETONNOTHING);
 		if (textures[CAGE_SHADER_TEXTURE_ALBEDO])
 		{
 			if (textures[CAGE_SHADER_TEXTURE_ALBEDO]->getTarget() == GL_TEXTURE_2D_ARRAY)
-				graphicPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPALBEDO, CAGE_SHADER_ROUTINEPROC_MAPALBEDOARRAY);
+				graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPALBEDO, CAGE_SHADER_ROUTINEPROC_MAPALBEDOARRAY);
 			else
-				graphicPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPALBEDO, CAGE_SHADER_ROUTINEPROC_MAPALBEDO2D);
+				graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPALBEDO, CAGE_SHADER_ROUTINEPROC_MAPALBEDO2D);
 		}
 		else
-			graphicPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPALBEDO, CAGE_SHADER_ROUTINEPROC_MATERIALNOTHING);
+			graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPALBEDO, CAGE_SHADER_ROUTINEPROC_MATERIALNOTHING);
 		if (textures[CAGE_SHADER_TEXTURE_SPECIAL])
 		{
 			if (textures[CAGE_SHADER_TEXTURE_SPECIAL]->getTarget() == GL_TEXTURE_2D_ARRAY)
-				graphicPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL, CAGE_SHADER_ROUTINEPROC_MAPSPECIALARRAY);
+				graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL, CAGE_SHADER_ROUTINEPROC_MAPSPECIALARRAY);
 			else
-				graphicPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL, CAGE_SHADER_ROUTINEPROC_MAPSPECIAL2D);
+				graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL, CAGE_SHADER_ROUTINEPROC_MAPSPECIAL2D);
 		}
 		else
-			graphicPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL, CAGE_SHADER_ROUTINEPROC_MATERIALNOTHING);
+			graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL, CAGE_SHADER_ROUTINEPROC_MATERIALNOTHING);
 		if (textures[CAGE_SHADER_TEXTURE_NORMAL])
 		{
 			if (textures[CAGE_SHADER_TEXTURE_NORMAL]->getTarget() == GL_TEXTURE_2D_ARRAY)
-				graphicPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPNORMAL, CAGE_SHADER_ROUTINEPROC_MAPNORMALARRAY);
+				graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPNORMAL, CAGE_SHADER_ROUTINEPROC_MAPNORMALARRAY);
 			else
-				graphicPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPNORMAL, CAGE_SHADER_ROUTINEPROC_MAPNORMAL2D);
+				graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPNORMAL, CAGE_SHADER_ROUTINEPROC_MAPNORMAL2D);
 		}
 		else
-			graphicPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPNORMAL, CAGE_SHADER_ROUTINEPROC_MATERIALNOTHING);
+			graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPNORMAL, CAGE_SHADER_ROUTINEPROC_MATERIALNOTHING);
 	}
 
 	lightsStruct::lightsStruct(lightTypeEnum lightType, sint32 shadowmap, uint32 max) : shaderLights(nullptr), next(nullptr), count(0), max(max), shadowmap(shadowmap), lightType(lightType)
 	{
-		shaderLights = (shaderLightStruct*)graphicPrepare->dispatchArena.allocate(sizeof(shaderLightStruct) * max);
+		shaderLights = (shaderLightStruct*)graphicsPrepare->dispatchArena.allocate(sizeof(shaderLightStruct) * max);
 		switch (lightType)
 		{
 		case lightTypeEnum::Directional:
-			graphicPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE, shadowmap == 0 ? CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONAL : CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONALSHADOW);
+			graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE, shadowmap == 0 ? CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONAL : CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONALSHADOW);
 			break;
 		case lightTypeEnum::Spot:
-			graphicPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE, shadowmap == 0 ? CAGE_SHADER_ROUTINEPROC_LIGHTSPOT : CAGE_SHADER_ROUTINEPROC_LIGHTSPOTSHADOW);
+			graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE, shadowmap == 0 ? CAGE_SHADER_ROUTINEPROC_LIGHTSPOT : CAGE_SHADER_ROUTINEPROC_LIGHTSPOTSHADOW);
 			break;
 		case lightTypeEnum::Point:
-			graphicPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE, shadowmap == 0 ? CAGE_SHADER_ROUTINEPROC_LIGHTPOINT : CAGE_SHADER_ROUTINEPROC_LIGHTPOINTSHADOW);
+			graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE, shadowmap == 0 ? CAGE_SHADER_ROUTINEPROC_LIGHTPOINT : CAGE_SHADER_ROUTINEPROC_LIGHTPOINTSHADOW);
 			break;
 		default:
 			CAGE_THROW_CRITICAL(exception, "invalid light type");
@@ -679,34 +679,34 @@ namespace cage
 		detail::memset(this, 0, sizeof(renderPassStruct));
 	}
 
-	void graphicPrepareCreate(const engineCreateConfig &config)
+	void graphicsPrepareCreate(const engineCreateConfig &config)
 	{
-		graphicPrepare = detail::systemArena().createObject<graphicPrepareImpl>(config);
+		graphicsPrepare = detail::systemArena().createObject<graphicsPrepareImpl>(config);
 	}
 
-	void graphicPrepareDestroy()
+	void graphicsPrepareDestroy()
 	{
-		detail::systemArena().destroy<graphicPrepareImpl>(graphicPrepare);
-		graphicPrepare = nullptr;
+		detail::systemArena().destroy<graphicsPrepareImpl>(graphicsPrepare);
+		graphicsPrepare = nullptr;
 	}
 
-	void graphicPrepareInitialize()
+	void graphicsPrepareInitialize()
 	{
-		graphicPrepare->initialize();
+		graphicsPrepare->initialize();
 	}
 
-	void graphicPrepareFinalize()
+	void graphicsPrepareFinalize()
 	{
-		graphicPrepare->finalize();
+		graphicsPrepare->finalize();
 	}
 
-	void graphicPrepareEmit()
+	void graphicsPrepareEmit()
 	{
-		graphicPrepare->emit();
+		graphicsPrepare->emit();
 	}
 
-	void graphicPrepareTick(uint64 controlTime, uint64 prepareTime)
+	void graphicsPrepareTick(uint64 controlTime, uint64 prepareTime)
 	{
-		graphicPrepare->tick(controlTime, prepareTime);
+		graphicsPrepare->tick(controlTime, prepareTime);
 	}
 }

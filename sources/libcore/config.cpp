@@ -689,16 +689,16 @@ namespace cage
 
 	namespace
 	{
+		configBool autoBackup("cage-core.config.autoBackup");
+
 		struct autoConfigBackupClass
 		{
 			~autoConfigBackupClass()
 			{
 				try
 				{
-					if (configGetBool("cage-core.config.autoBackup"))
-					{
+					if (autoBackup)
 						configSaveIni(detail::getExecutableNameNoExe() + "-backup.ini", "");
-					}
 				}
 				catch (...)
 				{

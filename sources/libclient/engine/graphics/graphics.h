@@ -80,7 +80,7 @@ namespace cage
 		renderPassStruct();
 	};
 
-	struct graphicDispatchStruct
+	struct graphicsDispatchStruct
 	{
 		meshClass *meshSquare, *meshSphere, *meshCone, *meshFake;
 		shaderClass *shaderBlitColor, *shaderBlitDepth;
@@ -89,5 +89,5 @@ namespace cage
 		renderPassStruct *firstRenderPass, *lastRenderPass;
 	};
 
-	extern graphicDispatchStruct *graphicDispatch;
+	extern graphicsDispatchStruct *graphicsDispatch;
 }

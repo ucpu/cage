@@ -9,8 +9,9 @@ namespace cage
 			const char *file;
 			const char *function;
 			uint64 time;
-			uint64 currentThread;
-			uint64 createThread;
+			uint64 createThreadId;
+			uint64 currentThreadId;
+			string currentThreadName;
 			severityEnum severity;
 			uint32 line;
 			bool continuous;

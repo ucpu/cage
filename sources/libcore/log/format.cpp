@@ -35,7 +35,7 @@ namespace cage
 			{
 				string res;
 				res += string(info.time).fill(12) + " ";
-				res += string(info.currentThread).fill(10) + " ";
+				res += string(info.currentThreadName).fill(26) + " ";
 				res += severityToString(info.severity) + " ";
 				res += string(info.component).fill(20) + " ";
 				res += info.message;

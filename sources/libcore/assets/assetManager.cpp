@@ -12,6 +12,7 @@
 #include <cage-core/concurrent.h>
 #include <cage-core/filesystem.h>
 #include <cage-core/assets.h>
+#include <cage-core/config.h>
 #include <cage-core/utility/hashTable.h>
 #include <cage-core/utility/hashString.h>
 #include <cage-core/utility/memoryBuffer.h>
@@ -21,6 +22,9 @@ namespace cage
 {
 	assetContextStruct::assetContextStruct() : compressedSize(0), originalSize(0), assetPointer(nullptr), returnData(nullptr), compressedData(nullptr), originalData(nullptr), realName(0), internationalizedName(0), assetFlags(0) {}
 	assetSchemeStruct::assetSchemeStruct() : schemePointer(nullptr), threadIndex(0) {}
+
+	configUint32 logLevel("cage-core.assetManager.logLevel", 0);
+#define ASS_LOG(LEVEL, ASS, MSG) { if (logLevel >= (LEVEL)) { CAGE_LOG(severityEnum::Info, "assetManager", string() + "asset '" + (ASS)->textName + "' (" + (ASS)->realName + " / " + (ASS)->internationalizedName + "): " + MSG); } }
 
 	namespace
 	{
@@ -120,6 +124,7 @@ namespace cage
 				queueLoadFile->pop(ass);
 				if (ass)
 				{
+					ASS_LOG(2, ass, "disk load");
 					CAGE_ASSERT_RUNTIME(ass->processing);
 					CAGE_ASSERT_RUNTIME(!ass->fabricated);
 					CAGE_ASSERT_RUNTIME(ass->originalData == nullptr);
@@ -202,6 +207,7 @@ namespace cage
 				queueDecompression->pop(ass);
 				if (ass)
 				{
+					ASS_LOG(2, ass, "decompression");
 					CAGE_ASSERT_RUNTIME(ass->processing);
 					CAGE_ASSERT_RUNTIME(!ass->fabricated);
 					if (!ass->error)
@@ -235,6 +241,7 @@ namespace cage
 					queueCustomDone[threadIndex]->tryPop(ass);
 					if (ass)
 					{
+						ASS_LOG(1, ass, "custom finish");
 						CAGE_ASSERT_RUNTIME(ass->processing);
 						CAGE_ASSERT_RUNTIME(!ass->fabricated);
 						CAGE_ASSERT_RUNTIME(ass->scheme < schemes.size(), ass->scheme, schemes.size());
@@ -257,6 +264,7 @@ namespace cage
 					queueCustomLoad[threadIndex]->tryPop(ass);
 					if (ass)
 					{
+						ASS_LOG(1, ass, "custom load");
 						CAGE_ASSERT_RUNTIME(ass->processing);
 						CAGE_ASSERT_RUNTIME(!ass->fabricated);
 						if (!ass->error)
@@ -288,9 +296,10 @@ namespace cage
 					queueRemoveDependencies->tryPop(ass);
 					if (ass)
 					{
+						ASS_LOG(2, ass, "remove dependencies");
 						CAGE_ASSERT_RUNTIME(ass->processing);
-						for (auto it = ass->dependencies.begin(), et = ass->dependencies.end(); it != et; it++)
-							remove(*it);
+						for (auto it : ass->dependencies)
+							remove(it);
 						ass->dependencies.clear();
 						ass->processing = false;
 						CAGE_ASSERT_RUNTIME(countProcessing > 0);
@@ -299,6 +308,7 @@ namespace cage
 							assetStartLoading(ass);
 						else
 						{
+							ASS_LOG(2, ass, "destroy");
 							interNameClear(ass->internationalizedName, ass);
 							index->remove(ass->realName);
 							detail::systemArena().destroy<assetContextPrivateStruct>(ass);
@@ -314,12 +324,13 @@ namespace cage
 					queueAddDependencies->tryPop(ass);
 					if (ass)
 					{
+						ASS_LOG(2, ass, "add dependencies");
 						CAGE_ASSERT_RUNTIME(ass->processing);
 						CAGE_ASSERT_RUNTIME(!ass->fabricated);
-						for (auto it = ass->dependenciesNew.begin(), et = ass->dependenciesNew.end(); it != et; it++)
-							add(*it);
-						for (auto it = ass->dependencies.begin(), et = ass->dependencies.end(); it != et; it++)
-							remove(*it);
+						for (auto it : ass->dependenciesNew)
+							add(it);
+						for (auto it : ass->dependencies)
+							remove(it);
 						std::vector<uint32>().swap(ass->dependencies);
 						std::swap(ass->dependenciesNew, ass->dependencies);
 						ass->dependenciesDoneFlag = true;
@@ -332,14 +343,15 @@ namespace cage
 					queueWaitDependencies->tryPop(ass);
 					if (ass)
 					{
+						ASS_LOG(3, ass, "check dependencies");
 						CAGE_ASSERT_RUNTIME(ass->processing);
 						CAGE_ASSERT_RUNTIME(!ass->fabricated);
 						bool wait = !ass->dependenciesDoneFlag;
 						if (!wait)
 						{
-							for (auto it = ass->dependencies.begin(), et = ass->dependencies.end(); it != et; it++)
+							for (auto it : ass->dependencies)
 							{
-								switch (state(*it))
+								switch (state(it))
 								{
 								case assetStateEnum::Ready:
 									break;
@@ -397,12 +409,9 @@ namespace cage
 							assetContextPrivateStruct *ass = index->get(name, true);
 							if (ass && ass->references > 0)
 							{
-								CAGE_LOG(severityEnum::Info, "asset", string() + "asset '" + line + "' hot-reloading");
 								reload(name);
 								cnt++;
 							}
-							else
-								CAGE_LOG(severityEnum::Warning, "asset", string() + "asset '" + line + "' will not be hot-reloaded");
 						}
 						return cnt > 0;
 					}
@@ -429,6 +438,7 @@ namespace cage
 			{
 				if (ass->processing || ass->fabricated)
 					return;
+				ASS_LOG(2, ass, "start loading");
 				countProcessing++;
 				ass->processing = true;
 				ass->error = false;
@@ -439,6 +449,7 @@ namespace cage
 			{
 				if (ass->processing)
 					return;
+				ASS_LOG(2, ass, "start removing");
 				countProcessing++;
 				ass->processing = true;
 				ass->ready = false;
@@ -595,11 +606,12 @@ namespace cage
 			ass = detail::systemArena().createObject<assetContextPrivateStruct>();
 			ass->realName = assetName;
 			ass->textName = string() + "<" + assetName + ">";
+			ASS_LOG(2, ass, "created");
 			impl->index->add(ass->realName, ass);
 			impl->countTotal++;
 			impl->assetStartLoading(ass);
 		}
-		CAGE_ASSERT_RUNTIME(ass->references < -1);
+		CAGE_ASSERT_RUNTIME(ass->references < (uint32)-1);
 		ass->references++;
 	}
 
@@ -615,6 +627,7 @@ namespace cage
 		ass->textName = textName.subString(0, ass->textName.MaxLength - 1);
 		ass->scheme = scheme;
 		ass->error = false;
+		ASS_LOG(2, ass, "fabricated");
 		impl->index->add(ass->realName, ass);
 		impl->countTotal++;
 		impl->assetStartLoading(ass);
@@ -638,6 +651,7 @@ namespace cage
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		assetContextPrivateStruct *ass = impl->index->get(assetName, false);
 		CAGE_ASSERT_RUNTIME(ass);
+		ASS_LOG(2, ass, "reload");
 		impl->assetStartLoading(ass);
 		if (recursive)
 		{

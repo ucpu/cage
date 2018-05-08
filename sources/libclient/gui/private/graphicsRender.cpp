@@ -71,7 +71,7 @@ namespace cage
 		}
 	}
 
-	void guiImpl::graphicDispatch()
+	void guiImpl::graphicsDispatch()
 	{
 		CAGE_ASSERT_RUNTIME(openglContext);
 

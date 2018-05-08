@@ -261,8 +261,8 @@ namespace cage
 
 			bool keyPress(uint32 key, uint32, modifiersFlags mods)
 			{
-				static configSint32 visualizeBuffer("cage-client.engine.debugVisualizeBuffer");
-				static configBool renderMeshes("cage-client.engine.debugRenderMissingMeshes");
+				static configSint32 visualizeBuffer("cage-client.engine.visualizeBuffer");
+				static configBool renderMeshes("cage-client.engine.renderMissingMeshes");
 
 				if (mods == keyModifiers)
 				{
@@ -289,16 +289,16 @@ namespace cage
 					}
 					if (key == keyToggleStereo)
 					{
-						switch (graphicPrepareThread::stereoMode)
+						switch (graphicsPrepareThread::stereoMode)
 						{
 						case stereoModeEnum::Mono:
-							graphicPrepareThread::stereoMode = stereoModeEnum::LeftRight;
+							graphicsPrepareThread::stereoMode = stereoModeEnum::LeftRight;
 							break;
 						case stereoModeEnum::LeftRight:
-							graphicPrepareThread::stereoMode = stereoModeEnum::TopBottom;
+							graphicsPrepareThread::stereoMode = stereoModeEnum::TopBottom;
 							break;
 						case stereoModeEnum::TopBottom:
-							graphicPrepareThread::stereoMode = stereoModeEnum::Mono;
+							graphicsPrepareThread::stereoMode = stereoModeEnum::Mono;
 							break;
 						}
 						return true;

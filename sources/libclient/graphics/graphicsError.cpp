@@ -89,14 +89,14 @@ namespace cage
 			default: sevr = "unknown severity";
 			}
 
-			CAGE_LOG(cageSevr, "graphic", "debug message:");
+			CAGE_LOG(cageSevr, "graphics", "debug message:");
 			lineReaderBuffer lrb((char*)message, detail::strlen(message));
 			for (string line; lrb.readLine(line);)
-				CAGE_LOG_CONTINUE(cageSevr, "graphic", line);
-			CAGE_LOG_CONTINUE(cageSevr, "graphic", string("source: ") + string(src));
-			CAGE_LOG_CONTINUE(cageSevr, "graphic", string("type: ") + string(tp));
-			CAGE_LOG_CONTINUE(cageSevr, "graphic", string("severity: ") + string(sevr));
-			CAGE_LOG_CONTINUE(cageSevr, "graphic", string("id: ") + string(id));
+				CAGE_LOG_CONTINUE(cageSevr, "graphics", line);
+			CAGE_LOG_CONTINUE(cageSevr, "graphics", string("source: ") + string(src));
+			CAGE_LOG_CONTINUE(cageSevr, "graphics", string("type: ") + string(tp));
+			CAGE_LOG_CONTINUE(cageSevr, "graphics", string("severity: ") + string(sevr));
+			CAGE_LOG_CONTINUE(cageSevr, "graphics", string("id: ") + string(id));
 
 			if (id == 131218 && severity == GL_DEBUG_SEVERITY_MEDIUM && type == GL_DEBUG_TYPE_PERFORMANCE)
 				return; // do not break on messages that shader is beeing recompiled based on opengl state
@@ -123,9 +123,9 @@ namespace cage
 				vendor = glGetString(GL_VENDOR);
 				renderer = glGetString(GL_RENDERER);
 				CAGE_CHECK_GL_ERROR_DEBUG();
-				CAGE_LOG_CONTINUE(severityEnum::Note, "graphic", string() + "opengl version: " + major + "." + minor);
-				CAGE_LOG_CONTINUE(severityEnum::Note, "graphic", string() + "device vendor: '" + (char*)vendor + "'");
-				CAGE_LOG_CONTINUE(severityEnum::Note, "graphic", string() + "device renderer: '" + (char*)renderer + "'");
+				CAGE_LOG_CONTINUE(severityEnum::Note, "graphics", string() + "opengl version: " + major + "." + minor);
+				CAGE_LOG_CONTINUE(severityEnum::Note, "graphics", string() + "device vendor: '" + (char*)vendor + "'");
+				CAGE_LOG_CONTINUE(severityEnum::Note, "graphics", string() + "device renderer: '" + (char*)renderer + "'");
 			}
 
 			{ // pack alignment

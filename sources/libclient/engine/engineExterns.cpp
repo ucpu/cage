@@ -48,7 +48,7 @@ namespace cage
 		uint64 timePerTick = 1000000 / 20;
 	}
 
-	namespace graphicDispatchThread
+	namespace graphicsDispatchThread
 	{
 		eventDispatcher<bool()> initialize;
 		eventDispatcher<bool()> finalize;
@@ -56,7 +56,7 @@ namespace cage
 		eventDispatcher<bool()> swap;
 	}
 
-	namespace graphicPrepareThread
+	namespace graphicsPrepareThread
 	{
 		eventDispatcher<bool()> initialize;
 		eventDispatcher<bool()> finalize;
