@@ -13,14 +13,14 @@ namespace cage
 	{
 		template<class Value> struct containerMap
 		{
-			containerMap(memoryArena &arena) : cont(stringComparatorFast(), arena) {}
+			containerMap(memoryArena arena) : cont(stringComparatorFast(), arena) {}
 			typedef std::map<string, Value, stringComparatorFast, memoryArenaStd<std::pair<const string, Value>>> contType;
 			contType cont;
 		};
 
 		struct inisection
 		{
-			inisection(memoryArena &arena) : items(arena) {}
+			inisection(memoryArena arena) : items(arena) {}
 			containerMap<string> items;
 		};
 
@@ -28,6 +28,7 @@ namespace cage
 		{
 		public:
 			iniImpl(uintPtr memory) : pool(memory), arena(&pool), sections(arena) {}
+			iniImpl(memoryArena arena) : pool(1), arena(arena), sections(arena) {}
 			memoryArenaGrowing<memoryAllocatorPolicyPool<sizeof(templates::allocatorSizeMap<string, string>)>, memoryConcurrentPolicyNone> pool;
 			memoryArena arena;
 			containerMap<holder<inisection>> sections;
@@ -233,5 +234,15 @@ namespace cage
 	holder<iniClass> newIni(uintPtr memory)
 	{
 		return detail::systemArena().createImpl<iniClass, iniImpl>(memory);
+	}
+
+	holder<iniClass> newIni(memoryArena arena)
+	{
+		return detail::systemArena().createImpl<iniClass, iniImpl>(arena);
+	}
+
+	holder<iniClass> newIni()
+	{
+		return detail::systemArena().createImpl<iniClass, iniImpl>(detail::systemArena());
 	}
 }

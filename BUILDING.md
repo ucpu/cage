@@ -5,7 +5,7 @@
 
 Install package xorg-dev (debian or ubuntu).
 ```bash
-sudo apt install xorg-dev
+sudo apt install xorg-dev nasm
 ```
 
 # Git Submodules

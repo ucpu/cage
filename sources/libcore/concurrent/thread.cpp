@@ -157,9 +157,9 @@ namespace cage
 		currentThreadName() = name;
 		CAGE_LOG(severityEnum::Info, "thread", string() + "renaming thread id '" + threadId() + "' from '" + oldName + "' to '" + name + "'");
 
-#ifdef CAGE_SYSTEM_WINDOWS
 		if (!name.empty())
 		{
+#ifdef CAGE_SYSTEM_WINDOWS
 			static const DWORD MS_VC_EXCEPTION = 0x406D1388;
 #pragma pack(push,8)
 			struct THREADNAME_INFO
@@ -183,12 +183,12 @@ namespace cage
 			__except (EXCEPTION_EXECUTE_HANDLER) {
 			}
 #pragma warning(pop)
-		}
 #endif
 
 #ifdef CAGE_SYSTEM_LINUX
-		prctl(PR_SET_NAME, threadName.c_str(), 0, 0, 0);
+			prctl(PR_SET_NAME, name.c_str(), 0, 0, 0);
 #endif
+		}
 	}
 
 	string getCurrentThreadName()
