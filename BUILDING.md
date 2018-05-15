@@ -3,7 +3,7 @@
 
 ## Linux
 
-Install package xorg-dev (debian or ubuntu).
+Install some packages (debian or ubuntu).
 ```bash
 sudo apt install xorg-dev nasm
 ```
