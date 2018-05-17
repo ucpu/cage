@@ -83,9 +83,10 @@ namespace cage
 			GraphicsDispatchTick = 1 << 8,
 			GraphicsDispatchSwap = 1 << 9,
 			GraphicsDrawCalls = 1 << 10,
-			SoundEmit = 1 << 11,
-			SoundTick = 1 << 12,
-			SoundSleep = 1 << 13,
+			GraphicsDrawPrimitives = 1 << 11,
+			SoundEmit = 1 << 12,
+			SoundTick = 1 << 13,
+			SoundSleep = 1 << 14,
 			FrameTime = profilingFlags::GraphicsDispatchWait | profilingFlags::GraphicsDispatchTick | profilingFlags::GraphicsDispatchSwap,
 		};
 

@@ -72,6 +72,7 @@ namespace cage
 		{
 		public:
 			uint32 drawCalls;
+			uint32 drawPrimitives;
 
 		private:
 			uint32 gBufferWidth;
@@ -183,6 +184,7 @@ namespace cage
 				CAGE_CHECK_GL_ERROR_DEBUG();
 				obj->mesh->dispatch(obj->count);
 				drawCalls++;
+				drawPrimitives += obj->count * obj->mesh->getPrimitivesCount();
 			}
 
 			void renderOpaque(renderPassStruct *pass)
@@ -375,7 +377,7 @@ namespace cage
 			}
 
 		public:
-			graphicsDispatchImpl(const engineCreateConfig &config) : drawCalls(0), gBufferWidth(0), gBufferHeight(0), lastTwoSided(false), lastDepthTest(false)
+			graphicsDispatchImpl(const engineCreateConfig &config) : drawCalls(0), drawPrimitives(0), gBufferWidth(0), gBufferHeight(0), lastTwoSided(false), lastDepthTest(false)
 			{
 				detail::memset(static_cast<graphicsDispatchStruct*>(this), 0, sizeof(graphicsDispatchStruct));
 			}
@@ -435,6 +437,8 @@ namespace cage
 			void tick()
 			{
 				drawCalls = 0;
+				drawPrimitives = 0;
+
 				if (windowWidth == 0 || windowHeight == 0)
 					return;
 
@@ -576,11 +580,12 @@ namespace cage
 		((graphicsDispatchImpl*)graphicsDispatch)->finalize();
 	}
 
-	void graphicsDispatchTick(uint32 &drawCalls)
+	void graphicsDispatchTick(uint32 &drawCalls, uint32 &drawPrimitives)
 	{
 		graphicsDispatchImpl *impl = (graphicsDispatchImpl*)graphicsDispatch;
 		impl->tick();
 		drawCalls = impl->drawCalls;
+		drawPrimitives = impl->drawPrimitives;
 	}
 
 	void graphicsDispatchSwap()

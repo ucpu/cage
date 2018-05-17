@@ -64,6 +64,7 @@ namespace cage
 			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsDispatchTick;
 			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsDispatchSwap;
 			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsDrawCalls;
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsDrawPrimitives;
 			variableSmoothingBufferStruct<uint64, 60> profilingBufferSoundEmit;
 			variableSmoothingBufferStruct<uint64, 60> profilingBufferSoundTick;
 			variableSmoothingBufferStruct<uint64, 60> profilingBufferSoundSleep;
@@ -159,8 +160,10 @@ namespace cage
 						uint64 time2 = getApplicationTime();
 						graphicsDispatchThread::render.dispatch();
 						uint32 drawCalls = 0;
-						graphicsDispatchTick(drawCalls);
+						uint32 drawPrimitives = 0;
+						graphicsDispatchTick(drawCalls, drawPrimitives);
 						profilingBufferGraphicsDrawCalls.add(drawCalls);
+						profilingBufferGraphicsDrawPrimitives.add(drawPrimitives);
 						if (graphicsPrepareThread::stereoMode == stereoModeEnum::Mono)
 						{
 							gui->graphicRender();
@@ -729,6 +732,7 @@ namespace cage
 				GraphicsDispatchTick,
 				GraphicsDispatchSwap,
 				GraphicsDrawCalls,
+				GraphicsDrawPrimitives,
 				SoundEmit,
 				SoundTick,
 				SoundSleep

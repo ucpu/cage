@@ -13,6 +13,9 @@ namespace cage
 		void setBuffers(uint32 verticesCount, uint32 vertexSize, void *vertexData, uint32 indicesCount, const uint32 *indexData, uint32 materialSize, void *materialData);
 		void setAttribute(uint32 index, uint32 size, uint32 type, uint32 stride, void *data);
 
+		uint32 getVerticesCount() const;
+		uint32 getIndicesCount() const;
+		uint32 getPrimitivesCount() const;
 		meshFlags getFlags() const;
 		aabb getBoundingBox() const;
 		uint32 textureName(uint32 texIdx) const;

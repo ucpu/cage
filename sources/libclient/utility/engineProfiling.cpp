@@ -63,46 +63,6 @@ namespace cage
 
 			void generateEntities()
 			{
-				clearEntities();
-				profilingModeOld = profilingMode;
-				entityManagerClass *g = gui()->entities();
-				entityClass *panel = g->newUniqueEntity();
-				{
-					panelIndex = panel->getName();
-					GUI_GET_COMPONENT(groupBox, c, panel);
-					GUI_GET_COMPONENT(position, p, panel);
-					p.anchor = screenPosition;
-					p.position.values[0] = screenPosition[0];
-					p.position.values[1] = screenPosition[1];
-					p.position.units[0] = unitEnum::ScreenWidth;
-					p.position.units[1] = unitEnum::ScreenHeight;
-				}
-				entityClass *layout = g->newUniqueEntity();
-				{
-					layoutIndex = layout->getName();
-					GUI_GET_COMPONENT(layoutTable, l, layout);
-					GUI_GET_COMPONENT(parent, child, layout);
-					child.parent = panel->getName();
-				}
-
-				static const uint32 labelsPerMode[] = { 14, 4, 1, 0 };
-				labelsCount = labelsPerMode[(uint32)profilingMode];
-				uint32 labelsCountExt = labelsCount + (profilingMode == profilingModeEnum::Full ? 2 : 0);
-				for (uint32 i = 0; i < labelsCountExt * 2; i++)
-				{
-					entityClass *timing = g->newUniqueEntity();
-					labelIndices[i] = timing->getName();
-					GUI_GET_COMPONENT(label, c, timing);
-					GUI_GET_COMPONENT(parent, child, timing);
-					child.parent = layout->getName();
-					child.order = i;
-					if (i % 2 == 1)
-					{
-						GUI_GET_COMPONENT(textFormat, tf, timing);
-						tf.align = textAlignEnum::Right;
-					}
-				}
-
 				static const engineProfiling::profilingFlags flagsFull[] = {
 					engineProfiling::profilingFlags::ControlTick,
 					engineProfiling::profilingFlags::ControlWait,
@@ -114,13 +74,12 @@ namespace cage
 					engineProfiling::profilingFlags::GraphicsDispatchWait,
 					engineProfiling::profilingFlags::GraphicsDispatchTick,
 					engineProfiling::profilingFlags::GraphicsDispatchSwap,
-					engineProfiling::profilingFlags::GraphicsDrawCalls,
 					engineProfiling::profilingFlags::SoundEmit,
 					engineProfiling::profilingFlags::SoundTick,
 					engineProfiling::profilingFlags::SoundSleep,
 					engineProfiling::profilingFlags::FrameTime
 				};
-				static const char* namesFull[] = {
+				static const char* namesFull[sizeof(flagsFull) / sizeof(flagsFull[0])] = {
 					"Control Tick",
 					"Control Wait",
 					"Control Emit",
@@ -143,7 +102,7 @@ namespace cage
 					(engineProfiling::profilingFlags)(engineProfiling::profilingFlags::GraphicsDispatchTick | engineProfiling::profilingFlags::GraphicsDispatchSwap),
 					(engineProfiling::profilingFlags)(engineProfiling::profilingFlags::SoundTick | engineProfiling::profilingFlags::SoundEmit),
 				};
-				static const char* namesShort[] = {
+				static const char* namesShort[sizeof(flagsShort) / sizeof(flagsShort[0])] = {
 					"Control",
 					"Prepare",
 					"Dispatch",
@@ -153,9 +112,53 @@ namespace cage
 				static const engineProfiling::profilingFlags flagsFps[] = {
 					engineProfiling::profilingFlags::FrameTime,
 				};
-				static const char* namesFps[] = {
+				static const char* namesFps[sizeof(flagsFps) / sizeof(flagsFps[0])] = {
 					"Frame Time",
 				};
+
+				clearEntities();
+				profilingModeOld = profilingMode;
+				entityManagerClass *g = gui()->entities();
+				entityClass *panel = g->newUniqueEntity();
+				{
+					panelIndex = panel->getName();
+					GUI_GET_COMPONENT(groupBox, c, panel);
+					GUI_GET_COMPONENT(position, p, panel);
+					p.anchor = screenPosition;
+					p.position.values[0] = screenPosition[0];
+					p.position.values[1] = screenPosition[1];
+					p.position.units[0] = unitEnum::ScreenWidth;
+					p.position.units[1] = unitEnum::ScreenHeight;
+				}
+				entityClass *layout = g->newUniqueEntity();
+				{
+					layoutIndex = layout->getName();
+					GUI_GET_COMPONENT(layoutTable, l, layout);
+					GUI_GET_COMPONENT(parent, child, layout);
+					child.parent = panel->getName();
+				}
+
+				static const uint32 labelsPerMode[] = {
+					sizeof(flagsFull) / sizeof(flagsFull[0]),
+					sizeof(flagsShort) / sizeof(flagsShort[0]),
+					sizeof(flagsFps) / sizeof(flagsFps[0]),
+					0 };
+				labelsCount = labelsPerMode[(uint32)profilingMode];
+				uint32 labelsCountExt = labelsCount + (profilingMode == profilingModeEnum::Full ? 3 : 0);
+				for (uint32 i = 0; i < labelsCountExt * 2; i++)
+				{
+					entityClass *timing = g->newUniqueEntity();
+					labelIndices[i] = timing->getName();
+					GUI_GET_COMPONENT(label, c, timing);
+					GUI_GET_COMPONENT(parent, child, timing);
+					child.parent = layout->getName();
+					child.order = i;
+					if (i % 2 == 1)
+					{
+						GUI_GET_COMPONENT(textFormat, tf, timing);
+						tf.align = textAlignEnum::Right;
+					}
+				}
 
 				switch (profilingMode)
 				{
@@ -234,6 +237,8 @@ namespace cage
 					setTextLabel(labelsCount * 2 + 1, entities()->getAllEntities()->entitiesCount());
 					setTextLabel(labelsCount * 2 + 2, "Draw Calls");
 					setTextLabel(labelsCount * 2 + 3, engineProfiling::getProfilingValue(engineProfiling::profilingFlags::GraphicsDrawCalls, false));
+					setTextLabel(labelsCount * 2 + 4, "Draw Primitives");
+					setTextLabel(labelsCount * 2 + 5, engineProfiling::getProfilingValue(engineProfiling::profilingFlags::GraphicsDrawPrimitives, false));
 				}
 				return false;
 			}

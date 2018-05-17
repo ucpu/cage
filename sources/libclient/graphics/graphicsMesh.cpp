@@ -32,8 +32,9 @@ namespace cage
 			uint32 primitiveType;
 			aabb box;
 			uint32 textures[MaxTexturesCountPerMaterial];
+			uint32 primitivesCount;
 
-			meshImpl() : id(0), vbo(0), verticesCount(0), verticesOffset(0), indicesCount(0), indicesOffset(0), materialSize(0), materialOffset(0), flags(meshFlags::None), primitiveType(GL_TRIANGLES)
+			meshImpl() : id(0), vbo(0), verticesCount(0), verticesOffset(0), indicesCount(0), indicesOffset(0), materialSize(0), materialOffset(0), flags(meshFlags::None), primitiveType(GL_TRIANGLES), primitivesCount(0)
 			{
 				for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 					textures[i] = 0;
@@ -47,6 +48,38 @@ namespace cage
 				glDeleteVertexArrays(1, &id);
 				if (vbo)
 					glDeleteBuffers(1, &vbo);
+			}
+
+			void updatePrimitivesCount()
+			{
+				uint32 cnt = indicesCount ? indicesCount : verticesCount;
+				switch (primitiveType)
+				{
+				case GL_POINTS:
+					primitivesCount = cnt;
+					break;
+				case GL_LINE_STRIP:
+					primitivesCount = cnt - 1;
+					break;
+				case GL_LINE_LOOP:
+					primitivesCount = cnt;
+					break;
+				case GL_LINES:
+					primitivesCount = cnt / 2;
+					break;
+				case GL_TRIANGLE_STRIP:
+					primitivesCount = cnt - 2;
+					break;
+				case GL_TRIANGLE_FAN:
+					primitivesCount = cnt - 2;
+					break;
+				case GL_TRIANGLES:
+					primitivesCount = cnt / 3;
+					break;
+				default:
+					primitivesCount = cnt / 4; // we do not want to fail, so just return an estimate
+					break;
+				}
 			}
 		};
 	}
@@ -80,6 +113,7 @@ namespace cage
 	{
 		meshImpl *impl = (meshImpl*)this;
 		impl->primitiveType = type;
+		impl->updatePrimitivesCount();
 	}
 
 	void meshClass::setBoundingBox(const aabb &box)
@@ -148,6 +182,8 @@ namespace cage
 			CAGE_CHECK_GL_ERROR_DEBUG();
 			offset += materialSize + numeric_cast<uint32>(detail::addToAlign(materialSize, BufferAlignment));
 		}
+
+		impl->updatePrimitivesCount();
 	}
 
 	void meshClass::setAttribute(uint32 index, uint32 size, uint32 type, uint32 stride, void *data)
@@ -177,6 +213,24 @@ namespace cage
 				glVertexAttribPointer(index, size, type, GL_FALSE, stride, data);
 			}
 		}
+	}
+
+	uint32 meshClass::getVerticesCount() const
+	{
+		meshImpl *impl = (meshImpl*)this;
+		return impl->verticesCount;
+	}
+
+	uint32 meshClass::getIndicesCount() const
+	{
+		meshImpl *impl = (meshImpl*)this;
+		return impl->indicesCount;
+	}
+
+	uint32 meshClass::getPrimitivesCount() const
+	{
+		meshImpl *impl = (meshImpl*)this;
+		return impl->primitivesCount;
 	}
 
 	meshFlags meshClass::getFlags() const
