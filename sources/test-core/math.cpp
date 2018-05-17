@@ -661,7 +661,7 @@ void testMath()
 			CAGE_TESTCASE("random");
 			for (uint32 i = 0; i < 1000; i++)
 			{
-				real r = random();
+				real r = cage::random();
 				CAGE_TEST(r >= 0 && r < 1, r);
 			}
 			for (uint32 i = 0; i < 1000; i++)
@@ -690,7 +690,7 @@ void testMath()
 		for (uint32 i = 0; i < matricesCount; i++)
 		{
 			for (uint8 j = 0; j < 16; j++)
-				matrices[i][j] = random() * 100 - 50;
+				matrices[i][j] = cage::random() * 100 - 50;
 		}
 
 		{
@@ -703,3 +703,4 @@ void testMath()
 		}
 	}
 }
+

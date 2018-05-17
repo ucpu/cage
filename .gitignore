@@ -1,1 +1,7 @@
-build
+/build*
+/Win32
+/x64
+/.vs
+CMakeLists.txt.user
+*~
+
