@@ -87,7 +87,7 @@ namespace
 				f1->writeLine(string() + "scheme = " + a.first);
 				for (auto b : a.second)
 				{
-					if (b.contains('='))
+					if (b.find('=') != -1)
 						b = string() + "=" + b;
 					f1->writeLine(b);
 					f2->writeLine(b);
