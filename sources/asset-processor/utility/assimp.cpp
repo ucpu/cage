@@ -1,4 +1,6 @@
 #include <set>
+#include <map>
+#include <vector>
 
 #include "assimp.h"
 
@@ -14,6 +16,18 @@ CAGE_ASSERT_COMPILE(sizeof(aiVector3D) == sizeof(cage::vec3), assimp_vector3D_is
 
 namespace
 {
+	struct cmpAiStr
+	{
+		bool operator ()(const aiString &a, const aiString &b) const
+		{
+			if (a.length == b.length)
+				return cage::detail::memcmp(a.data, b.data, a.length) < 0;
+			return a.length < b.length;
+		}
+	};
+
+	typedef std::map<aiString, std::pair<uint16, uint16>, cmpAiStr> skeletonBonesCacheType; // name -> index, parent
+
 	class cageIoStream : public Assimp::IOStream
 	{
 	public:
@@ -210,6 +224,11 @@ namespace
 		cageIoSystem ioSystem;
 		cageLogStream logDebug, logInfo, logWarn, logError;
 		Assimp::Importer imp;
+
+	public:
+		skeletonBonesCacheType skeletonBonesCache;
+		std::vector<uint16> skeletonBoneParents;
+		std::vector<aiNode *> skeletonBoneNodes;
 	};
 }
 
@@ -293,9 +312,80 @@ uint32 assimpContextClass::selectMesh() const
 	}
 }
 
+namespace
+{
+	void addSkeletonBones(assimpContextImpl *impl, aiNode *n, uint16 p)
+	{
+		auto &cs = impl->skeletonBonesCache;
+		auto &ps = impl->skeletonBoneParents;
+		auto &ns = impl->skeletonBoneNodes;
+		if (n->mName.length)
+		{
+			if (cs.count(n->mName))
+				CAGE_THROW_ERROR(exception, "multiple bones with same name");
+			uint32 i = numeric_cast<uint16>(ps.size());
+			ps.push_back(p);
+			ns.push_back(n);
+			cs[n->mName] = { i , p };
+			p = i;
+		}
+		for (uint32 i = 0; i < n->mNumChildren; i++)
+			addSkeletonBones(impl, n->mChildren[i], p);
+	}
+}
+
+uint16 assimpContextClass::skeletonBonesCacheSize()
+{
+	assimpContextImpl *impl = (assimpContextImpl*)this;
+	auto &c = impl->skeletonBonesCache;
+	if (!c.empty())
+		return numeric_cast<uint16>(c.size());
+	auto *scene = getScene();
+	addSkeletonBones(impl, scene->mRootNode, -1);
+	CAGE_ASSERT_RUNTIME(impl->skeletonBoneNodes.size() == impl->skeletonBoneParents.size());
+	CAGE_ASSERT_RUNTIME(impl->skeletonBonesCache.size() == impl->skeletonBoneParents.size());
+	CAGE_LOG(severityEnum::Info, logComponentName, string() + "skeleton bone names cache has " + c.size() + " elements");
+	return numeric_cast<uint16>(c.size());
+}
+
+const uint16 *assimpContextClass::skeletonBonesCacheParents() const
+{
+	const assimpContextImpl *impl = (const assimpContextImpl*)this;
+	return impl->skeletonBoneParents.data();
+}
+
+aiNode *assimpContextClass::skeletonBonesCacheNode(uint32 index) const
+{
+	const assimpContextImpl *impl = (const assimpContextImpl*)this;
+	return impl->skeletonBoneNodes[index];
+}
+
+uint16 assimpContextClass::skeletonBonesCacheIndex(const aiString &name) const
+{
+	const assimpContextImpl *impl = (const assimpContextImpl*)this;
+	const auto &c = impl->skeletonBonesCache;
+	if (c.count(name) == 0)
+		CAGE_THROW_ERROR(exception, "skeleton bone name not found");
+	return c.at(name).first;
+}
+
 holder<assimpContextClass> newAssimpContext(uint32 flags)
 {
-	return detail::systemArena().createImpl <assimpContextClass, assimpContextImpl>(flags);
+	return detail::systemArena().createImpl<assimpContextClass, assimpContextImpl>(flags);
+}
+
+namespace
+{
+	void analyzeAssimpMesh(const aiScene *scene, const aiMesh *mesh, const string &name)
+	{
+		writeLine("scheme=mesh");
+		writeLine(string() + "asset=" + name);
+		if (scene->mMeshes[0]->HasBones())
+		{
+			writeLine("scheme=skeleton");
+			writeLine(string() + "asset=" + name + ";skeleton");
+		}
+	}
 }
 
 void analyzeAssimp()
@@ -307,15 +397,29 @@ void analyzeAssimp()
 		writeLine("cage-begin");
 		try
 		{
-			writeLine("scheme=mesh");
+			// meshes & skeletons
 			if (scene->mNumMeshes == 1)
-				writeLine(string() + "asset=" + inputFile);
+			{
+				analyzeAssimpMesh(scene, scene->mMeshes[0], inputFile);
+			}
 			else for (uint32 i = 0; i < scene->mNumMeshes; i++)
 			{
 				aiMaterial *m = scene->mMaterials[scene->mMeshes[i]->mMaterialIndex];
 				aiString matName;
 				m->Get(AI_MATKEY_NAME, matName);
-				writeLine(string() + "asset=" + inputFile + "?" + scene->mMeshes[i]->mName.C_Str() + "_" + matName.C_Str());
+				analyzeAssimpMesh(scene, scene->mMeshes[i], inputFile + "?" + scene->mMeshes[i]->mName.C_Str() + "_" + matName.C_Str());
+			}
+			// animations
+			for (uint32 i = 0; i < scene->mNumAnimations; i++)
+			{
+				aiAnimation *a = scene->mAnimations[i];
+				if (a->mNumChannels == 0)
+					continue; // only support skeletal animations
+				writeLine("scheme=animation");
+				string n = a->mName.C_Str();
+				if (n.empty())
+					n = i;
+				writeLine(string() + "asset=" + inputFile + "?" + n);
 			}
 		}
 		catch (...)

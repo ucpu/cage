@@ -39,7 +39,7 @@ void processPack();
 void processObject();
 void processMesh();
 void processSkeleton();
-void processSkeletalAnimation();
+void processAnimation();
 void processFont();
 void processTextpack();
 void processSound();

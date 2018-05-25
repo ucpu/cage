@@ -2,5 +2,14 @@
 
 void processSkeleton()
 {
-	CAGE_THROW_CRITICAL(notImplementedException, "assimp skeleton loading not yet implemented");
+	holder<assimpContextClass> context;
+	const aiScene *scene = nullptr;
+
+	{
+		uint32 flags = assimpDefaultLoadFlags;
+		context = newAssimpContext(flags);
+		scene = context->getScene();
+	}
+
+	// todo
 }

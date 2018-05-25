@@ -178,7 +178,7 @@ int main(int argc, const char *args[])
 		else if (component == "object")
 			func.bind<&processObject>();
 		else if (component == "animation")
-			func.bind<&processSkeletalAnimation>();
+			func.bind<&processAnimation>();
 		else if (component == "mesh")
 			func.bind<&processMesh>();
 		else if (component == "skeleton")

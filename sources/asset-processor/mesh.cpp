@@ -337,9 +337,27 @@ namespace
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "using axes conversion matrix: " + result);
 		return result;
 	}
-}
 
-extern const uint32 assimpDefaultLoadFlags;
+	void loadSkeletonName(meshHeaderStruct &dsm)
+	{
+		string n = properties("override_skeleton");
+		if (!dsm.bones())
+		{
+			if (!n.empty())
+				CAGE_THROW_ERROR(exception, "cannot override skeleton for a mesh that has no bones");
+			return;
+		}
+		if (n.empty())
+		{
+			n = inputName + ";skeleton";
+			CAGE_LOG(severityEnum::Info, logComponentName, string() + "generated skeleton name: '" + n + "'");
+		}
+		else
+			n = pathJoin(pathExtractPath(inputName), n);
+		dsm.skeletonName = hashString(n.c_str());
+		writeLine(string("ref = ") + n);
+	}
+}
 
 void processMesh()
 {
@@ -381,14 +399,12 @@ void processMesh()
 	CAGE_LOG(severityEnum::Info, logComponentName, cage::string() + "vertices count: " + dsm.verticesCount);
 	CAGE_LOG(severityEnum::Info, logComponentName, cage::string() + "indices count: " + dsm.indicesCount);
 
-	if (properties("export_bones").toBool()) // todo
-		CAGE_THROW_CRITICAL(notImplementedException, "exporting bones is not yet implemented");
-	// note: when exporting with bones, the bounding box must encapsulate the mesh in all possible poses
-
 	setFlags(dsm.flags, meshFlags::Uvs, am->GetNumUVChannels() > 0, "export_uv");
 	setFlags(dsm.flags, meshFlags::Normals, am->HasNormals(), "export_normal");
 	setFlags(dsm.flags, meshFlags::Tangents, am->HasTangentsAndBitangents(), "export_tangent");
 	setFlags(dsm.flags, meshFlags::Bones, am->HasBones(), "export_bones");
+
+	loadSkeletonName(dsm);
 
 	meshHeaderStruct::materialDataStruct mat;
 	memset(&mat, 0, sizeof(mat));
@@ -416,6 +432,7 @@ void processMesh()
 		dsm.box += aabb(p);
 	}
 	CAGE_LOG(severityEnum::Info, logComponentName, string() + "bounding box: " + dsm.box);
+	// note: when exporting with bones, the bounding box must encapsulate the mesh in all possible poses
 
 	if (dsm.uvs())
 	{
@@ -447,6 +464,65 @@ void processMesh()
 			*(cage::vec3*)ptr.asVoid = axes * *(cage::vec3*)&(am->mBitangents[i]);
 			ptr += sizeof(cage::vec3);
 		}
+	}
+
+	if (dsm.bones())
+	{
+		dsm.skeletonBones = context->skeletonBonesCacheSize();
+		uint16 *boneIndices = ptr.asUint16;
+		ptr += sizeof(uint16) * 4 * dsm.verticesCount;
+		float *boneWeights = ptr.asFloat;
+		ptr += sizeof(float) * 4 * dsm.verticesCount;
+		// initialize with empty values
+		for (uint32 i = 0; i < dsm.verticesCount; i++)
+		{
+			for (uint32 j = 0; j < 4; j++)
+			{
+				boneIndices[i * 4 + j] = (uint16)-1;
+				boneWeights[i * 4 + j] = 0;
+			}
+		}
+		// copy the values from assimp
+		for (uint32 boneIndex = 0; boneIndex < am->mNumBones; boneIndex++)
+		{
+			aiBone *bone = am->mBones[boneIndex];
+			uint32 boneId = context->skeletonBonesCacheIndex(bone->mName);
+			for (uint32 weightIndex = 0; weightIndex < bone->mNumWeights; weightIndex++)
+			{
+				aiVertexWeight *w = bone->mWeights + weightIndex;
+				bool ok = false;
+				for (uint32 i = 0; i < 4; i++)
+				{
+					if (boneIndices[w->mVertexId * 4 + i] == (uint16)-1)
+					{
+						boneIndices[w->mVertexId * 4 + i] = boneId;
+						boneWeights[w->mVertexId * 4 + i] = w->mWeight;
+						ok = true;
+						break;
+					}
+				}
+				CAGE_ASSERT_RUNTIME(ok, "single vertex may not be affected by more than four bones");
+			}
+		}
+		// validate
+		uint32 maxBoneId = 0;
+		for (uint32 i = 0; i < dsm.verticesCount; i++)
+		{
+			float sum = 0;
+			for (uint32 j = 0; j < 4; j++)
+			{
+				if (boneIndices[i * 4 + j] == (uint16)-1)
+				{
+					CAGE_ASSERT_RUNTIME(boneWeights[i * 4 + j] == 0, i, j);
+					boneIndices[i * 4 + j] = 0; // prevent shader from accessing invalid memory
+				}
+				sum += boneWeights[i * 4 + j];
+				maxBoneId = max(maxBoneId, boneIndices[i * 4 + j] + 1u);
+			}
+			CAGE_ASSERT_RUNTIME(sum >= 0 && sum < 1.1, sum, i, boneWeights[i * 4 + 0], boneWeights[i * 4 + 1], boneWeights[i * 4 + 2], boneWeights[i * 4 + 3]);
+		}
+		CAGE_ASSERT_RUNTIME(maxBoneId <= dsm.skeletonBones, maxBoneId, dsm.skeletonBones);
+		CAGE_LOG(severityEnum::Info, logComponentName, cage::string() + "bones count: " + dsm.skeletonBones);
 	}
 
 	for (uint32 i = 0; i < am->mNumFaces; i++)

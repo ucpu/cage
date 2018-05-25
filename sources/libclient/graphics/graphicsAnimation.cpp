@@ -37,23 +37,21 @@ namespace cage
 
 			void deallocate()
 			{
-				memoryArena &delar = mem;
-
 				for (uint16 b = 0; b < bones; b++)
 				{
-					delar.deallocate(positionTimes[b]);
-					delar.deallocate(positionValues[b]);
-					delar.deallocate(rotationTimes[b]);
-					delar.deallocate(rotationValues[b]);
+					mem.deallocate(positionTimes[b]);
+					mem.deallocate(positionValues[b]);
+					mem.deallocate(rotationTimes[b]);
+					mem.deallocate(rotationValues[b]);
 				}
 
-				delar.deallocate(indexes);
-				delar.deallocate(positionFrames);
-				delar.deallocate(rotationFrames);
-				delar.deallocate(positionTimes);
-				delar.deallocate(rotationTimes);
-				delar.deallocate(positionValues);
-				delar.deallocate(rotationValues);
+				mem.deallocate(indexes);
+				mem.deallocate(positionFrames);
+				mem.deallocate(rotationFrames);
+				mem.deallocate(positionTimes);
+				mem.deallocate(rotationTimes);
+				mem.deallocate(positionValues);
+				mem.deallocate(rotationValues);
 
 				indexes = nullptr;
 				positionFrames = nullptr;
@@ -81,28 +79,13 @@ namespace cage
 			real **rotationTimes;
 			quat **rotationValues;
 
-			const uint16 framesBoneIndex(uint16 boneIndex) const
+			uint16 framesBoneIndex(uint16 boneIndex) const
 			{
 				// todo rewrite as binary search
 				for (uint32 i = 0; i < bones; i++)
 					if (indexes[i] == boneIndex)
 						return i;
 				CAGE_THROW_CRITICAL(exception, "impossible bone index");
-			}
-
-			const uint16 frameIndex(real coef, const real *times, uint16 length) const
-			{
-				CAGE_ASSERT_RUNTIME(coef >= 0 && coef <= 1, coef);
-				CAGE_ASSERT_RUNTIME(length > 0, length);
-				// todo rewrite as binary search
-				if (coef <= times[0])
-					return 0;
-				if (coef >= times[length - 1])
-					return length - 1;
-				for (uint32 i = 0; i + 1 < length; i++)
-					if (times[i + 1] > coef)
-						return i;
-				CAGE_THROW_CRITICAL(exception, "impossible frame index");
 			}
 		};
 	}
@@ -111,17 +94,15 @@ namespace cage
 	{
 		animationImpl *impl = (animationImpl*)this;
 		impl->deallocate();
-		memoryArena &delar = impl->mem;
-
 		impl->duration = duration;
 		impl->bones = bones;
-		impl->indexes = (uint16*)delar.allocate(sizeof(uint16) * bones);
-		impl->positionFrames = (uint16*)delar.allocate(sizeof(uint16) * bones);
-		impl->rotationFrames = (uint16*)delar.allocate(sizeof(uint16) * bones);
-		impl->positionTimes = (real**)delar.allocate(sizeof(real*) * bones);
-		impl->positionValues = (vec3**)delar.allocate(sizeof(vec3*) * bones);
-		impl->rotationTimes = (real**)delar.allocate(sizeof(real*) * bones);
-		impl->rotationValues = (quat**)delar.allocate(sizeof(quat*) * bones);
+		impl->indexes = (uint16*)impl->mem.allocate(sizeof(uint16) * bones);
+		impl->positionFrames = (uint16*)impl->mem.allocate(sizeof(uint16) * bones);
+		impl->positionTimes = (real**)impl->mem.allocate(sizeof(real*) * bones);
+		impl->positionValues = (vec3**)impl->mem.allocate(sizeof(vec3*) * bones);
+		impl->rotationFrames = (uint16*)impl->mem.allocate(sizeof(uint16) * bones);
+		impl->rotationTimes = (real**)impl->mem.allocate(sizeof(real*) * bones);
+		impl->rotationValues = (quat**)impl->mem.allocate(sizeof(quat*) * bones);
 
 		detail::memcpy(impl->indexes, indexes, sizeof(uint16) * bones);
 		detail::memcpy(impl->positionFrames, positionFrames, sizeof(uint16) * bones);
@@ -131,10 +112,10 @@ namespace cage
 		{
 			if (impl->positionFrames[b])
 			{
-				impl->positionTimes[b] = (real*)delar.allocate(sizeof(real) * impl->positionFrames[b]);
+				impl->positionTimes[b] = (real*)impl->mem.allocate(sizeof(real) * impl->positionFrames[b]);
 				detail::memcpy(impl->positionTimes[b], ptr, positionFrames[b] * sizeof(float));
 				ptr += positionFrames[b] * sizeof(float);
-				impl->positionValues[b] = (vec3*)delar.allocate(sizeof(vec3) * impl->positionFrames[b]);
+				impl->positionValues[b] = (vec3*)impl->mem.allocate(sizeof(vec3) * impl->positionFrames[b]);
 				detail::memcpy(impl->positionValues[b], ptr, positionFrames[b] * sizeof(vec3));
 				ptr += positionFrames[b] * sizeof(vec3);
 			}
@@ -146,10 +127,10 @@ namespace cage
 
 			if (impl->rotationFrames[b])
 			{
-				impl->rotationTimes[b] = (real*)delar.allocate(sizeof(real) * impl->rotationFrames[b]);
+				impl->rotationTimes[b] = (real*)impl->mem.allocate(sizeof(real) * impl->rotationFrames[b]);
 				detail::memcpy(impl->rotationTimes[b], ptr, rotationFrames[b] * sizeof(float));
 				ptr += rotationFrames[b] * sizeof(float);
-				impl->rotationValues[b] = (quat*)delar.allocate(sizeof(quat) * impl->rotationFrames[b]);
+				impl->rotationValues[b] = (quat*)impl->mem.allocate(sizeof(quat) * impl->rotationFrames[b]);
 				detail::memcpy(impl->rotationValues[b], ptr, rotationFrames[b] * sizeof(quat));
 				ptr += rotationFrames[b] * sizeof(quat);
 			}
@@ -163,7 +144,6 @@ namespace cage
 
 	namespace
 	{
-
 		const real amount(real a, real b, real c)
 		{
 			CAGE_ASSERT_RUNTIME(a <= b, a, b, c);
@@ -176,7 +156,22 @@ namespace cage
 			return res;
 		}
 
-		template<class Type> inline const mat4 evaluateMatrix(animationImpl *impl, real coef, uint16 frames, const real *times, const Type *values)
+		uint16 findFrameIndex(real coef, const real *times, uint16 length)
+		{
+			CAGE_ASSERT_RUNTIME(coef >= 0 && coef <= 1, coef);
+			CAGE_ASSERT_RUNTIME(length > 0, length);
+			// todo rewrite as binary search
+			if (coef <= times[0])
+				return 0;
+			if (coef >= times[length - 1])
+				return length - 1;
+			for (uint32 i = 0; i + 1 < length; i++)
+				if (times[i + 1] > coef)
+					return i;
+			CAGE_THROW_CRITICAL(exception, "impossible frame index");
+		}
+
+		template<class Type> inline const mat4 evaluateMatrix(real coef, uint16 frames, const real *times, const Type *values)
 		{
 			switch (frames)
 			{
@@ -184,7 +179,7 @@ namespace cage
 			case 1: return mat4(values[0]);
 			default:
 			{
-				uint16 frameIndex = impl->frameIndex(coef, times, frames);
+				uint16 frameIndex = findFrameIndex(coef, times, frames);
 				if (frameIndex + 1 == frames)
 					return mat4(values[frameIndex]);
 				else
@@ -206,8 +201,8 @@ namespace cage
 		if (b == (uint16)-1)
 			return mat4(); // that bone is not animated
 
-		return evaluateMatrix(impl, coef, impl->positionFrames[b], impl->positionTimes[b], impl->positionValues[b])
-			* evaluateMatrix(impl, coef, impl->rotationFrames[b], impl->rotationTimes[b], impl->rotationValues[b]);
+		return evaluateMatrix(coef, impl->positionFrames[b], impl->positionTimes[b], impl->positionValues[b])
+			* evaluateMatrix(coef, impl->rotationFrames[b], impl->rotationTimes[b], impl->rotationValues[b]);
 	}
 
 	uint64 animationClass::duration() const
