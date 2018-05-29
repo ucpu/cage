@@ -117,6 +117,8 @@ namespace cage
 			uint64 controlTime;
 			uint64 prepareTime;
 
+			mat4 tmpArmature[MaxBonesCount];
+
 			static real lightRange(const vec3 &color, const vec3 &attenuation)
 			{
 				real c = max(color[0], max(color[1], color[2]));
@@ -367,11 +369,30 @@ namespace cage
 				sm->normalMat = mat4(modelToNormal(model));
 				sm->normalMat[15] = ((m->getFlags() & meshFlags::Lighting) == meshFlags::Lighting) ? 1 : 0; // is ligting enabled
 				if (e->animatedTexture)
-					sm->aniTexFrames = detail::evalSamplesForTextureAnimation(obj->textures[CAGE_SHADER_TEXTURE_ALBEDO], prepareTime, e->animatedTexture->animationStart, e->animatedTexture->animationSpeed, e->animatedTexture->animationOffset);
+					sm->aniTexFrames = detail::evalSamplesForTextureAnimation(obj->textures[CAGE_SHADER_TEXTURE_ALBEDO], prepareTime, e->animatedTexture->startTime, e->animatedTexture->speed, e->animatedTexture->offset);
 				if (obj->shaderArmatures)
 				{
-					//objectsStruct::shaderArmatureStruct *sa = obj->shaderArmatures + obj->count;
-					// todo
+					objectsStruct::shaderArmatureStruct *sa = obj->shaderArmatures + obj->count;
+					uint32 bonesCount = m->getSkeletonBones();
+					if (e->configuredSkeleton)
+					{
+						for (uint32 i = 0; i < bonesCount; i++)
+							sa->armature[i] = e->configuredSkeleton->current.configuration[i];
+					}
+					else if (e->animatedSkeleton && m->getSkeletonName() != 0 && assets()->ready(e->animatedSkeleton->name))
+					{
+						skeletonClass *skel = assets()->get<assetSchemeIndexSkeleton, skeletonClass>(m->getSkeletonName());
+						CAGE_ASSERT_RUNTIME(skel->bonesCount() == bonesCount, skel->bonesCount(), bonesCount);
+						const auto &ba = *e->animatedSkeleton;
+						animationClass *an = assets()->get<assetSchemeIndexAnimation, animationClass>(ba.name);
+						real c = detail::evalCoefficientForSkeletalAnimation(an, prepareTime, ba.startTime, ba.speed, ba.offset);
+						skel->evaluatePose(an, c, tmpArmature, sa->armature);
+					}
+					else
+					{
+						for (uint32 i = 0; i < bonesCount; i++)
+							sa->armature[i] = mat4();
+					}
 				}
 				obj->count++;
 			}
@@ -611,12 +632,13 @@ namespace cage
 
 	objectsStruct::objectsStruct(meshClass *mesh, uint32 max) : shaderMeshes(nullptr), shaderArmatures(nullptr), mesh(mesh), next(nullptr), count(0), max(max)
 	{
+		assetManagerClass *ass = assets();
 		shaderMeshes = (shaderMeshStruct*)graphicsPrepare->dispatchArena.allocate(sizeof(shaderMeshStruct) * max);
 		if ((mesh->getFlags() & meshFlags::Bones) == meshFlags::Bones)
+		{
+			CAGE_ASSERT_RUNTIME(mesh->getSkeletonName() == 0 || ass->ready(mesh->getSkeletonName()));
 			shaderArmatures = (shaderArmatureStruct*)graphicsPrepare->dispatchArena.allocate(sizeof(shaderArmatureStruct) * max);
-		else
-			shaderArmatures = nullptr;
-		assetManagerClass *ass = assets();
+		}
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		{
 			uint32 n = mesh->textureName(i);

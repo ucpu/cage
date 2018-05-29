@@ -30,12 +30,14 @@ namespace cage
 			animationHeaderStruct *data = (animationHeaderStruct*)context->originalData;
 			pointer ptr = pointer(context->originalData) + sizeof(animationHeaderStruct);
 			const uint16 *indexes = (uint16*)ptr.asVoid;
-			ptr += data->bonesCount * sizeof(uint16);
+			ptr += data->animationBonesCount * sizeof(uint16);
 			const uint16 *positionFrames = ptr.asUint16;
-			ptr += data->bonesCount * sizeof(uint16);
+			ptr += data->animationBonesCount * sizeof(uint16);
 			const uint16 *rotationFrames = ptr.asUint16;
-			ptr += data->bonesCount * sizeof(uint16);
-			ani->allocate(data->duration, data->bonesCount, indexes, positionFrames, rotationFrames, ptr);
+			ptr += data->animationBonesCount * sizeof(uint16);
+			const uint16 *scaleFrames = ptr.asUint16;
+			ptr += data->animationBonesCount * sizeof(uint16);
+			ani->allocate(data->duration, data->animationBonesCount, indexes, positionFrames, rotationFrames, scaleFrames, ptr);
 		}
 
 		void processDone(const assetContextStruct *context, void *schemePointer)

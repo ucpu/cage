@@ -70,7 +70,7 @@ namespace cage
 				this->listener = listener;
 				if (!voice)
 					return;
-				CAGE_ASSERT_RUNTIME(voice->voice.input == nullptr || voice->voice.sound == 0, voice->voice.input, voice->voice.sound, "voice may only have one source");
+				CAGE_ASSERT_RUNTIME(voice->voice.input == nullptr || voice->voice.name == 0, voice->voice.input, voice->voice.name, "voice may only have one source");
 				if (voice->voice.input)
 				{ // direct bus input
 					voice->voice.input->addOutput(bus.get());
@@ -78,9 +78,9 @@ namespace cage
 				else
 				{ // asset input
 					assetManagerClass *ass = assets();
-					if (!ass->ready(voice->voice.sound))
+					if (!ass->ready(voice->voice.name))
 						return;
-					ass->get<assetSchemeIndexSound, sourceClass>(voice->voice.sound)->addOutput(bus.get());
+					ass->get<assetSchemeIndexSound, sourceClass>(voice->voice.name)->addOutput(bus.get());
 				}
 				if (listener->listener.output)
 					bus->addOutput(listener->listener.output);
@@ -222,7 +222,7 @@ namespace cage
 			if (data->soundMixBuffer.size() < s.frames)
 				data->soundMixBuffer.resize(s.frames);
 			s.buffer = data->soundMixBuffer.data();
-			s.time -= voice->voice.soundStart;
+			s.time -= voice->voice.startTime;
 			s.channels = 1;
 			if (listener->listener.dopplerEffect)
 			{

@@ -197,7 +197,7 @@ namespace
 		{
 			aiColor3D color = aiColor3D(1, 1, 1);
 			m->Get(AI_MATKEY_COLOR_DIFFUSE, color);
-			mat.albedoBase = vec4(vec3(color.r, color.g, color.b), mat.albedoBase[3]);
+			mat.albedoBase = vec4(conv(color), mat.albedoBase[3]);
 
 			if (mat.albedoBase[3] < 1e-7)
 				dsm.flags |= meshFlags::Transparency;
@@ -348,12 +348,10 @@ namespace
 			return;
 		}
 		if (n.empty())
-		{
-			n = inputName + ";skeleton";
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "generated skeleton name: '" + n + "'");
-		}
+			n = inputFile + ";skeleton";
 		else
 			n = pathJoin(pathExtractPath(inputName), n);
+		CAGE_LOG(severityEnum::Info, logComponentName, string() + "using skeleton name: '" + n + "'");
 		dsm.skeletonName = hashString(n.c_str());
 		writeLine(string("ref = ") + n);
 	}
@@ -426,7 +424,7 @@ void processMesh()
 	mat3 axes2 = axes * properties("scale").toFloat();
 	for (uint32 i = 0; i < dsm.verticesCount; i++)
 	{
-		vec3 p = axes2 * (*(cage::vec3*)&(am->mVertices[i]));
+		vec3 p = axes2 * conv(am->mVertices[i]);
 		*(cage::vec3*)ptr.asVoid = p;
 		ptr += sizeof(cage::vec3);
 		dsm.box += aabb(p);
@@ -438,7 +436,7 @@ void processMesh()
 	{
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
 		{
-			*(cage::vec2*)ptr.asVoid = cage::vec2(*(cage::vec3*)&(am->mTextureCoords[0][i]));
+			*(cage::vec2*)ptr.asVoid = cage::vec2(conv(am->mTextureCoords[0][i]));
 			ptr += sizeof(cage::vec2);
 		}
 	}
@@ -447,7 +445,7 @@ void processMesh()
 	{
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
 		{
-			*(cage::vec3*)ptr.asVoid = axes * *(cage::vec3*)&(am->mNormals[i]);
+			*(cage::vec3*)ptr.asVoid = axes * conv(am->mNormals[i]);
 			ptr += sizeof(cage::vec3);
 		}
 	}
@@ -456,19 +454,20 @@ void processMesh()
 	{
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
 		{
-			*(cage::vec3*)ptr.asVoid = axes * *(cage::vec3*)&(am->mTangents[i]);
+			*(cage::vec3*)ptr.asVoid = axes * conv(am->mTangents[i]);
 			ptr += sizeof(cage::vec3);
 		}
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
 		{
-			*(cage::vec3*)ptr.asVoid = axes * *(cage::vec3*)&(am->mBitangents[i]);
+			*(cage::vec3*)ptr.asVoid = axes * conv(am->mBitangents[i]);
 			ptr += sizeof(cage::vec3);
 		}
 	}
 
 	if (dsm.bones())
 	{
-		dsm.skeletonBones = context->skeletonBonesCacheSize();
+		holder<assimpSkeletonClass> skeleton = context->skeleton();
+		dsm.skeletonBones = skeleton->bonesCount();
 		uint16 *boneIndices = ptr.asUint16;
 		ptr += sizeof(uint16) * 4 * dsm.verticesCount;
 		float *boneWeights = ptr.asFloat;
@@ -486,7 +485,7 @@ void processMesh()
 		for (uint32 boneIndex = 0; boneIndex < am->mNumBones; boneIndex++)
 		{
 			aiBone *bone = am->mBones[boneIndex];
-			uint32 boneId = context->skeletonBonesCacheIndex(bone->mName);
+			uint32 boneId = skeleton->index(bone->mName);
 			for (uint32 weightIndex = 0; weightIndex < bone->mNumWeights; weightIndex++)
 			{
 				aiVertexWeight *w = bone->mWeights + weightIndex;
@@ -519,10 +518,16 @@ void processMesh()
 				sum += boneWeights[i * 4 + j];
 				maxBoneId = max(maxBoneId, boneIndices[i * 4 + j] + 1u);
 			}
-			CAGE_ASSERT_RUNTIME(sum >= 0 && sum < 1.1, sum, i, boneWeights[i * 4 + 0], boneWeights[i * 4 + 1], boneWeights[i * 4 + 2], boneWeights[i * 4 + 3]);
+			// renormalize weights
+			if (abs(sum - 1) > 1e-3 && sum > 1e-3)
+			{
+				float f = 1 / sum;
+				CAGE_LOG(severityEnum::Warning, logComponentName, string() + "renormalizing vertex weights for " + i + ", by " + f);
+				for (uint32 j = 0; j < 4; j++)
+					boneWeights[i * 4 + j] *= f;
+			}
 		}
 		CAGE_ASSERT_RUNTIME(maxBoneId <= dsm.skeletonBones, maxBoneId, dsm.skeletonBones);
-		CAGE_LOG(severityEnum::Info, logComponentName, cage::string() + "bones count: " + dsm.skeletonBones);
 	}
 
 	for (uint32 i = 0; i < am->mNumFaces; i++)

@@ -88,25 +88,28 @@ namespace cage
 
 		// follows:
 		// array of parent bone indices, each uint16, (uint16)-1 for the root
-		// array of base matrices, each mat4
+		// array of base transformation matrices, each mat4
 		// array of inverted rest matrices, each mat4
 	};
 
 	struct CAGE_API animationHeaderStruct
 	{
 		uint64 duration; // in microseconds
-		uint32 bonesCount;
-		uint32 size; // in bytes
+		uint32 skeletonBonesCount;
+		uint32 animationBonesCount;
 
 		// follows:
 		// array of indices, each uint16
-		// array of position frame offsets, each uint16
-		// array of rotation frame offsets, each uint16
+		// array of position frames counts, each uint16
+		// array of rotation frames counts, each uint16
+		// array of scale frames counts, each uint16
 		// array of bones, each:
 		//   array of position times, each float
 		//   array of position values, each vec3
 		//   array of rotation times, each float
 		//   array of rotation values, each quat
+		//   array of scale times, each float
+		//   array of scale values, each vec3
 	};
 
 	struct CAGE_API objectHeaderStruct

@@ -341,6 +341,8 @@ namespace
 			string c = a + b;
 			uint32 run_time = hashString(c.c_str());
 			CAGE_TEST(compile_time == run_time);
+			uint32 different = hashString("different");
+			CAGE_TEST(compile_time != different);
 		}
 	}
 

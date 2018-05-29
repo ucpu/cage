@@ -64,25 +64,28 @@ namespace cage
 		return impl->totalBones;
 	}
 
-	void skeletonClass::calculatePose(const animationClass *animation, real coef, mat4 *temporary, mat4 *output)
+	void skeletonClass::evaluatePose(const animationClass *animation, real coef, mat4 *temporary, mat4 *output) const
 	{
 		CAGE_ASSERT_RUNTIME(coef >= 0 && coef <= 1, coef);
 		skeletonImpl *impl = (skeletonImpl*)this;
 
 		for (uint32 i = 0; i < impl->totalBones; i++)
 		{
-			temporary[i] = impl->baseMatrices[i] * animation->evaluate(i, coef);
-			if (impl->boneParents[i] != (uint16)-1)
+			uint16 p = impl->boneParents[i];
+			if (p == (uint16)-1)
+				temporary[i] = mat4();
+			else
 			{
-				CAGE_ASSERT_RUNTIME(impl->boneParents[i] < i, impl->boneParents[i], i);
-				temporary[i] = temporary[impl->boneParents[i]] * temporary[i];
+				CAGE_ASSERT_RUNTIME(p < i, p, i);
+				temporary[i] = temporary[p];
 			}
+			temporary[i] = temporary[i] * impl->baseMatrices[i] * animation->evaluate(i, coef);
 			output[i] = temporary[i] * impl->invRestMatrices[i];
 		}
 	}
 
 	holder<skeletonClass> newSkeleton()
 	{
-		return detail::systemArena().createImpl <skeletonClass, skeletonImpl>();
+		return detail::systemArena().createImpl<skeletonClass, skeletonImpl>();
 	}
 }
