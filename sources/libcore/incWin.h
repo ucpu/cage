@@ -4,5 +4,8 @@
 #ifndef VC_EXTRALEAN
 #define VC_EXTRALEAN
 #endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <windows.h>
 
