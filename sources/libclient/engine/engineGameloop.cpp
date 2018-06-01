@@ -99,7 +99,7 @@ namespace cage
 						graphicsPrepareThread::prepare.dispatch();
 						graphicsPrepareTick(lastEmit, time2);
 						graphicsDispatchSemaphore->unlock();
-						while(assets->processCustomThread(graphicsPrepareThread::threadIndex));
+						assets->processCustomThread(graphicsPrepareThread::threadIndex);
 						uint64 time3 = getApplicationTime();
 						if (emitIsReady)
 						{
@@ -170,7 +170,7 @@ namespace cage
 							CAGE_CHECK_GL_ERROR_DEBUG();
 						}
 						graphicsPrepareSemaphore->unlock();
-						while(assets->processCustomThread(graphicsDispatchThread::threadIndex));
+						assets->processCustomThread(graphicsDispatchThread::threadIndex);
 						uint64 time3 = getApplicationTime();
 						graphicsDispatchThread::swap.dispatch();
 						graphicsDispatchSwap();
@@ -228,7 +228,7 @@ namespace cage
 							emitSoundAssetsSemaphore->lock();
 						}
 						uint64 time2 = getApplicationTime();
-						while(assets->processCustomThread(soundThread::threadIndex));
+						assets->processCustomThread(soundThread::threadIndex);
 						soundThread::sound.dispatch();
 						soundTick(lastEmit, soundTickTime);
 						gui->soundRender();
