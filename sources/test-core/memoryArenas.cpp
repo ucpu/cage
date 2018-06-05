@@ -65,7 +65,7 @@ namespace
 			{
 				if (alokace.size() == Traits::ObjectsCount || (alokace.size() > 0 && random(0, 100) < 40))
 				{
-					uint32 index = random(0, numeric_cast<uint32>(alokace.size()));
+					uint32 index = random((uint32)0, numeric_cast<uint32>(alokace.size()));
 					CAGE_ASSERT_RUNTIME(index < alokace.size(), index, alokace.size());
 					void *tmp = alokace[index];
 					uint16 sz = *(uint16*)tmp;

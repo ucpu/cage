@@ -1,4 +1,3 @@
-//#include <random>
 
 #define CAGE_EXPORT
 #include <cage-core/core.h>
@@ -11,11 +10,6 @@ namespace cage
 	randomGenerator::randomGenerator()
 	{
 		privat::generateRandomData((uint8*)s, sizeof(s));
-		/*
-		std::random_device rd;
-		this->s[0] = (((uint64)rd()) << 32) + rd();
-		this->s[1] = (((uint64)rd()) << 32) + rd();
-		*/
 	}
 
 	randomGenerator::randomGenerator(uint64 s[2])
@@ -40,34 +34,43 @@ namespace cage
 		return s[1] + y;
 	}
 
+#define GCHL_GENERATE(TYPE) TYPE randomGenerator::random(TYPE min, TYPE max) \
+	{ \
+		if (min == max) \
+			return min; \
+		CAGE_ASSERT_RUNTIME(min < max, min, max); \
+		uint64 range = max - min; \
+		uint64 mod = next() % range; \
+		TYPE res = (TYPE)(mod + min); \
+		CAGE_ASSERT_RUNTIME(res >= min && res < max, res, min, max); \
+		return res; \
+	}
+	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64));
+#undef GCHL_GENERATE
+
+#define GCHL_GENERATE(TYPE) TYPE randomGenerator::random(TYPE min, TYPE max) { TYPE res = interpolate(min, max, this->random()); CAGE_ASSERT_RUNTIME(res >= min && res < max, res, min, max); return res; }
+	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, real, rads, float));
+#undef GCHL_GENERATE
+
+	double randomGenerator::random(double min, double max)
+	{
+		uint64 r = next();
+		if (r == detail::numeric_limits<uint64>::max())
+			return 0;
+		double f = (double)r / (double)detail::numeric_limits<uint64>::max();
+		double res = (max - min) * f + min;
+		CAGE_ASSERT_RUNTIME(res >= min && res < max, res, min, max);
+		return res;
+	}
+
 	real randomGenerator::random()
 	{
 		uint64 r = next();
 		if (r == detail::numeric_limits<uint64>::max())
 			return 0;
-		return (real)r / (real)detail::numeric_limits<uint64>::max();
-	}
-
-	sint32 randomGenerator::random(sint32 min, sint32 max)
-	{
-		if (min == max)
-			return min;
-		CAGE_ASSERT_RUNTIME(min < max, min, max);
-		uint64 range = max - min;
-		sint64 mod = next() % range;
-		sint32 res = numeric_cast<sint32>(mod + min);
-		CAGE_ASSERT_RUNTIME(res >= min && res < max, res, min, max);
+		real res = (real)r / (real)detail::numeric_limits<uint64>::max();
+		CAGE_ASSERT_RUNTIME(res >= 0.f && res < 1.f, res);
 		return res;
-	}
-
-	real randomGenerator::random(real min, real max)
-	{
-		return interpolate(min, max, random());
-	}
-
-	rads randomGenerator::random(rads min, rads max)
-	{
-		return interpolate(min, max, random());
 	}
 
 	rads randomGenerator::randomAngle()
@@ -94,4 +97,39 @@ namespace cage
 	{
 		return normalize(quat(randomDirection3(), randomAngle()));
 	}
+
+	randomGenerator &currentRandomGenerator()
+	{
+		static randomGenerator rnd;
+		return rnd;
+	}
+
+	real random()
+	{
+		return currentRandomGenerator().random();
+	}
+
+	rads randomAngle()
+	{
+		return currentRandomGenerator().randomAngle();
+	}
+
+	vec2 randomDirection2()
+	{
+		return currentRandomGenerator().randomDirection2();
+	}
+
+	vec3 randomDirection3()
+	{
+		return currentRandomGenerator().randomDirection3();
+	}
+
+	quat randomDirectionQuat()
+	{
+		return currentRandomGenerator().randomDirectionQuat();
+	}
+
+#define GCHL_GENERATE(TYPE) TYPE random(TYPE min, TYPE max) { return currentRandomGenerator().random(min, max); }
+	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, real, rads, float, double));
+#undef GCHL_GENERATE
 }

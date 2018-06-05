@@ -144,7 +144,7 @@ void testSceneEntities()
 					if (reference.empty())
 						break;
 					referenceType::iterator it = reference.begin();
-					std::advance(it, random(0, numeric_cast<uint32>(reference.size())));
+					std::advance(it, random((uint32)0, numeric_cast<uint32>(reference.size())));
 					manager->getEntity(it->first)->destroy();
 					reference.erase(it);
 				} break;
@@ -169,7 +169,7 @@ void testSceneEntities()
 					if (reference.empty())
 						break;
 					referenceType::iterator it = reference.begin();
-					std::advance(it, random(0, numeric_cast<uint32>(reference.size())));
+					std::advance(it, random((uint32)0, numeric_cast<uint32>(reference.size())));
 					entityClass *e = manager->getEntity(it->first);
 					for (uint32 i = 0; i < totalComponents; i++)
 					{
@@ -185,7 +185,7 @@ void testSceneEntities()
 					if (reference.empty())
 						break;
 					referenceType::iterator it = reference.begin();
-					std::advance(it, random(0, numeric_cast<uint32>(reference.size())));
+					std::advance(it, random((uint32)0, numeric_cast<uint32>(reference.size())));
 					entityClass *e = manager->getEntity(it->first);
 					for (uint32 i = 0; i < totalComponents; i++)
 					{
@@ -289,7 +289,7 @@ void testSceneEntities()
 				// remove some entities
 				for (uint32 i = 0, et = random(1, 20); i < et; i++)
 				{
-					uint32 n = random(random(1, entityNameIndex), entityNameIndex);
+					uint32 n = random(random((uint32)1, entityNameIndex), entityNameIndex);
 					if (exists[n])
 					{
 						exists[n] = false;

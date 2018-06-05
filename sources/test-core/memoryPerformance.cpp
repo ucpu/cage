@@ -49,7 +49,7 @@ namespace
 		{
 			if (allocations == INPUT_SIZE || (allocations > 0 && random(0, 100) < 40))
 			{
-				uint32 index = random(0, allocations--);
+				uint32 index = random((uint32)0, allocations--);
 				Deallocate(allocated[index]);
 				allocated[index] = allocated[allocations];
 			}

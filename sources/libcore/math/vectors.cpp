@@ -1,9 +1,46 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/math.h>
+#include "math.h"
 
 namespace cage
 {
+	vec2::vec2(const string &str)
+	{
+		string s = detail::tryRemoveParentheses(str);
+		for (uint32 i = 0; i < Dimension; i++)
+			data[i] = detail::mathSplit(s).toFloat();
+		if (!s.empty())
+			CAGE_THROW_ERROR(exception, "error parsing vec2");
+	}
+
+	vec3::vec3(const string &str)
+	{
+		string s = detail::tryRemoveParentheses(str);
+		for (uint32 i = 0; i < Dimension; i++)
+			data[i] = detail::mathSplit(s).toFloat();
+		if (!s.empty())
+			CAGE_THROW_ERROR(exception, "error parsing vec3");
+	}
+
+	vec4::vec4(const string &str)
+	{
+		string s = detail::tryRemoveParentheses(str);
+		for (uint32 i = 0; i < Dimension; i++)
+			data[i] = detail::mathSplit(s).toFloat();
+		if (!s.empty())
+			CAGE_THROW_ERROR(exception, "error parsing vec4");
+	}
+
+	quat::quat(const string &str)
+	{
+		string s = detail::tryRemoveParentheses(str);
+		for (uint32 i = 0; i < 4; i++)
+			data[i] = detail::mathSplit(s).toFloat();
+		if (!s.empty())
+			CAGE_THROW_ERROR(exception, "error parsing quat");
+	}
+
 	quat::quat()
 	{
 		data[3] = 1;

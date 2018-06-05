@@ -85,7 +85,7 @@ namespace cage
 					if (*s == '-' || v < detail::numeric_limits<T>::min() || v > detail::numeric_limits<T>::max())
 						e = nullptr;
 				}
-				if (!e || *e != 0 || isspace(*s) || errno != 0)
+				if (!*s || !e || *e != 0 || isspace(*s) || errno != 0)
 				{
 					CAGE_LOG(severityEnum::Note, "exception", string() + "input string: '" + s + "'");
 					CAGE_THROW_ERROR(exception, "sscan1 failed");
@@ -97,7 +97,7 @@ namespace cage
 				errno = 0;
 				char *e = nullptr;
 				value = strtoll(s, &e, 10);
-				if (!e || *e != 0 || isspace(*s) || errno != 0)
+				if (!*s || !e || *e != 0 || isspace(*s) || errno != 0)
 				{
 					CAGE_LOG(severityEnum::Note, "exception", string() + "input string: '" + s + "'");
 					CAGE_THROW_ERROR(exception, "sscan1 failed");
@@ -109,7 +109,7 @@ namespace cage
 				errno = 0;
 				char *e = nullptr;
 				value = strtoull(s, &e, 10);
-				if (!e || *s == '-' || *e != 0 || isspace(*s) || errno != 0)
+				if (!*s || !e || *s == '-' || *e != 0 || isspace(*s) || errno != 0)
 				{
 					CAGE_LOG(severityEnum::Note, "exception", string() + "input string: '" + s + "'");
 					CAGE_THROW_ERROR(exception, "sscan1 failed");
@@ -121,7 +121,7 @@ namespace cage
 				errno = 0;
 				char *e = nullptr;
 				double v = strtod(s, &e);
-				if (!e || *e != 0 || isspace(*s) || errno != 0)
+				if (!*s || !e || *e != 0 || isspace(*s) || errno != 0)
 				{
 					CAGE_LOG(severityEnum::Note, "exception", string() + "input string: '" + s + "'");
 					CAGE_THROW_ERROR(exception, "sscan1 failed");

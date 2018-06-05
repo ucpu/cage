@@ -3,10 +3,13 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/math.h>
-#include <cage-core/utility/random.h>
+#include "math.h"
 
 namespace cage
 {
+	real::real(const string &str) : value(detail::tryRemoveParentheses(str).toFloat())
+	{}
+
 	real sin(rads value)
 	{
 		return ::sin(real(value).value);
@@ -48,52 +51,6 @@ namespace cage
 		if (y < 0) return rads(-real::HalfPi);
 		if (y > 0) return rads(real::HalfPi);
 		return rads::Nan;
-	}
-
-	real random()
-	{
-		return currentRandomGenerator().random();
-	}
-
-	sint32 random(sint32 min, sint32 max)
-	{
-		return currentRandomGenerator().random(min, max);
-	}
-
-	real random(real min, real max)
-	{
-		return currentRandomGenerator().random(min, max);
-	}
-
-	rads random(rads min, rads max)
-	{
-		return currentRandomGenerator().random(min, max);
-	}
-
-	rads randomAngle()
-	{
-		return currentRandomGenerator().randomAngle();
-	}
-
-	vec2 randomDirection2()
-	{
-		return currentRandomGenerator().randomDirection2();
-	}
-
-	vec3 randomDirection3()
-	{
-		return currentRandomGenerator().randomDirection3();
-	}
-
-	quat randomDirectionQuat()
-	{
-		return currentRandomGenerator().randomDirectionQuat();
-	}
-
-	randomGenerator &currentRandomGenerator()
-	{
-		static randomGenerator rnd;
-		return rnd;
 	}
 
 	real real::sqrt() const
