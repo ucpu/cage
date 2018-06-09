@@ -74,9 +74,9 @@ namespace
 		}
 	}
 
-	void loadMaterialExternal(meshHeaderStruct &dsm, meshHeaderStruct::materialDataStruct &mat, string path)
+	void loadMaterialCage(meshHeaderStruct &dsm, meshHeaderStruct::materialDataStruct &mat, string path)
 	{
-		CAGE_LOG(severityEnum::Info, logComponentName, "using external (.cpm) material");
+		CAGE_LOG(severityEnum::Info, logComponentName, "using cage (.cpm) material");
 
 		writeLine(string("use = ") + path);
 		path = pathJoin(inputDirectory, path);
@@ -232,7 +232,7 @@ namespace
 			path = pathJoin(pathExtractPath(inputFile), path);
 			if (!pathExists(pathJoin(inputDirectory, path)))
 				CAGE_THROW_ERROR(exception, "overriden material path does not exist");
-			loadMaterialExternal(dsm, mat, path);
+			loadMaterialCage(dsm, mat, path);
 			return;
 		}
 
@@ -254,11 +254,11 @@ namespace
 		}
 		path += ".cpm";
 
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "implicitly looking for external material at '" + path + "'");
+		CAGE_LOG(severityEnum::Info, logComponentName, string() + "looking for implicit cage material at '" + path + "'");
 
 		if (pathExists(pathJoin(inputDirectory, path)))
 		{
-			loadMaterialExternal(dsm, mat, path);
+			loadMaterialCage(dsm, mat, path);
 			return;
 		}
 

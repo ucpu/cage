@@ -49,7 +49,7 @@ void processSkeleton()
 	skeletonHeaderStruct s;
 	s.bonesCount = skeleton->bonesCount();
 
-	std::vector<uint32> ps;
+	std::vector<uint16> ps;
 	std::vector<mat4> bs;
 	std::vector<mat4> is;
 	ps.reserve(s.bonesCount);
