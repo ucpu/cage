@@ -165,6 +165,12 @@ namespace
 			CAGE_TEST(string().isDigitsOnly());
 			CAGE_TEST(string("157").isDigitsOnly());
 			CAGE_TEST(!string("hola").isDigitsOnly());
+			CAGE_TEST_THROWN(string("").toBool());
+			CAGE_TEST_THROWN(string("").toFloat());
+			CAGE_TEST_THROWN(string("").toSint32());
+			CAGE_TEST_THROWN(string("").toSint64());
+			CAGE_TEST_THROWN(string("").toUint32());
+			CAGE_TEST_THROWN(string("").toUint64());
 			CAGE_TEST_THROWN(string("hola").toBool());
 			CAGE_TEST_THROWN(string("hola").toFloat());
 			CAGE_TEST_THROWN(string("hola").toSint32());

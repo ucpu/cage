@@ -1,11 +1,25 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/math.h>
+#include "math.h"
 
 namespace cage
 {
 	transform::transform() : scale(1)
 	{}
+
+	/*
+	transform::transform(const string &str)
+	{
+		string s = detail::tryRemoveParentheses(str);
+		string t = detail::mathSplit(s); // this will separate in the middle of the translation
+		string r = detail::mathSplit(s);
+		string sc = detail::mathSplit(s);
+		if (!s.empty())
+			CAGE_THROW_ERROR(exception, "error parsing transform");
+		*this = transform(vec3(t), quat(r), real(sc));
+	}
+	*/
 
 	transform::transform(const vec3 &position, const quat &orientation, real scale) : orientation(orientation), position(position), scale(scale)
 	{}

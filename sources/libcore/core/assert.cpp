@@ -7,8 +7,6 @@
 #ifdef CAGE_SYSTEM_WINDOWS
 #include "../incWin.h"
 #include <intrin.h> // __debugbreak
-#undef min
-#undef max
 #endif
 
 #include <limits>
@@ -20,8 +18,13 @@ namespace cage
 	{
 		namespace
 		{
-			thread_local bool isLocalBreakpointEnabled = true;
-			thread_local bool isLocalAssertDeadly = true;
+			thread_local struct IsLocal
+			{
+				bool breakpointEnabled;
+				bool assertDeadly;
+				IsLocal() : breakpointEnabled(true), assertDeadly(true)
+				{}
+			} isLocal;
 			bool isGlobalBreakpointEnabled = true;
 			bool isGlobalAssertDeadly = true;
 		}
@@ -47,7 +50,7 @@ namespace cage
 
 		void debugBreakpoint()
 		{
-			if (!isLocalBreakpointEnabled || !isGlobalBreakpointEnabled)
+			if (!isLocal.breakpointEnabled || !isGlobalBreakpointEnabled)
 				return;
 #ifdef CAGE_SYSTEM_WINDOWS
 			if (IsDebuggerPresent())
@@ -57,24 +60,24 @@ namespace cage
 #endif
 		}
 
-		overrideBreakpoint::overrideBreakpoint(bool enable) : original(isLocalBreakpointEnabled)
+		overrideBreakpoint::overrideBreakpoint(bool enable) : original(isLocal.breakpointEnabled)
 		{
-			isLocalBreakpointEnabled = enable;
+			isLocal.breakpointEnabled = enable;
 		}
 
 		overrideBreakpoint::~overrideBreakpoint()
 		{
-			isLocalBreakpointEnabled = original;
+			isLocal.breakpointEnabled = original;
 		}
 
-		overrideAssert::overrideAssert(bool deadly) : original(isLocalAssertDeadly)
+		overrideAssert::overrideAssert(bool deadly) : original(isLocal.assertDeadly)
 		{
-			isLocalAssertDeadly = deadly;
+			isLocal.assertDeadly = deadly;
 		}
 
 		overrideAssert::~overrideAssert()
 		{
-			isLocalAssertDeadly = original;
+			isLocal.assertDeadly = original;
 		}
 
 		void setGlobalBreakpointOverride(bool enable)
@@ -95,9 +98,9 @@ namespace cage
 			void assertOutputLine(const char *msg, bool continuous = true)
 			{
 				if (continuous)
-					CAGE_LOG_CONTINUE(severityEnum::Critical, "assert", string(msg));
+					CAGE_LOG_CONTINUE(severityEnum::Critical, "assert", msg);
 				else
-					CAGE_LOG(severityEnum::Critical, "assert", string(msg));
+					CAGE_LOG(severityEnum::Critical, "assert", msg);
 			}
 		}
 
@@ -126,7 +129,7 @@ namespace cage
 			if (valid)
 				return;
 
-			if (detail::isLocalAssertDeadly && detail::isGlobalAssertDeadly)
+			if (detail::isLocal.assertDeadly && detail::isGlobalAssertDeadly)
 				detail::terminate();
 			else
 				CAGE_THROW_CRITICAL(exception, "assert failure");

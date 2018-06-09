@@ -76,14 +76,15 @@ namespace
 			r = a OPERATOR 5.f;
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +=, -=, *=, /=));
 #undef GCHL_GENERATE
-			- b;
+			-b;
 			+b;
 			for (uint32 i = 0; i < N; i++)
 				r[i] = b[i];
 			CAGE_TEST(b == b);
 			CAGE_TEST(!(b != b));
 			string s(b);
-			CAGE_TEST(s == s);
+			T c = T(s);
+			CAGE_TEST(b == c);
 		}
 
 		{
@@ -673,6 +674,129 @@ void testMath()
 			{
 				sint32 r = random(-10, 10);
 				CAGE_TEST(r >= -10 && r < 10, r);
+			}
+		}
+	}
+
+	{
+		CAGE_TESTCASE("math to string and back");
+		{
+			{
+				CAGE_TESTCASE("real");
+				for (uint32 i = 0; i < 10; i++)
+				{
+					real v = random(-1e5, 1e5);
+					string s = v;
+					real r = real(s);
+					test(v, r);
+				}
+			}
+			{
+				CAGE_TESTCASE("vec2");
+				for (uint32 i = 0; i < 10; i++)
+				{
+					vec2 v = vec2(random(-1e5, 1e5), random(-1e5, 1e5));
+					string s = v;
+					vec2 r = vec2(s);
+					test(v, r);
+				}
+			}
+			{
+				CAGE_TESTCASE("vec3");
+				for (uint32 i = 0; i < 10; i++)
+				{
+					vec3 v = vec3(random(-1e5, 1e5), random(-1e5, 1e5), random(-1e5, 1e5));
+					string s = v;
+					vec3 r = vec3(s);
+					test(v, r);
+				}
+			}
+			{
+				CAGE_TESTCASE("vec4");
+				for (uint32 i = 0; i < 10; i++)
+				{
+					vec4 v = vec4(random(-1e5, 1e5), random(-1e5, 1e5), random(-1e5, 1e5), random(-1e5, 1e5));
+					string s = v;
+					vec4 r = vec4(s);
+					test(v, r);
+				}
+			}
+			{
+				CAGE_TESTCASE("quat");
+				for (uint32 i = 0; i < 10; i++)
+				{
+					quat v = randomDirectionQuat();
+					string s = v;
+					quat r = quat(s);
+					test(v, r);
+				}
+			}
+			{
+				CAGE_TESTCASE("mat3");
+				for (uint32 i = 0; i < 10; i++)
+				{
+					mat3 v = mat3(randomDirectionQuat());
+					string s = v;
+					mat3 r = mat3(s);
+					test(v, r);
+				}
+			}
+			{
+				CAGE_TESTCASE("mat4");
+				for (uint32 i = 0; i < 10; i++)
+				{
+					mat4 v = mat4(randomDirection3() * 100, randomDirectionQuat(), randomDirection3() * 2);
+					string s = v;
+					mat4 r = mat4(s);
+					test(v, r);
+				}
+			}
+			/*
+			{
+				CAGE_TESTCASE("transform");
+				for (uint32 i = 0; i < 10; i++)
+				{
+					transform v = transform(randomDirection3() * 100, randomDirectionQuat(), random() + 0.5);
+					string s = v;
+					transform r = transform(s);
+					test(v.position, r.position);
+					test(v.orientation, r.orientation);
+					test(v.scale, r.scale);
+				}
+			}
+			*/
+			{
+				CAGE_TESTCASE("negative tests");
+				CAGE_TEST_THROWN(real("bla"));
+				CAGE_TEST_THROWN(real("(bla)"));
+				CAGE_TEST_THROWN(real(""));
+				CAGE_TEST_THROWN(real("  "));
+				CAGE_TEST_THROWN(real("()"));
+				CAGE_TEST_THROWN(real("-"));
+				CAGE_TEST_THROWN(real("+"));
+				CAGE_TEST_THROWN(real("(3"));
+				CAGE_TEST_THROWN(real("3)"));
+				CAGE_TEST_THROWN(real("1.0,"));
+				CAGE_TEST_THROWN(real(",5"));
+				CAGE_TEST_THROWN(vec3("bla"));
+				CAGE_TEST_THROWN(vec3("(bla)"));
+				CAGE_TEST_THROWN(vec3(""));
+				CAGE_TEST_THROWN(vec3("()"));
+				CAGE_TEST_THROWN(vec3("-"));
+				CAGE_TEST_THROWN(vec3("+"));
+				CAGE_TEST_THROWN(vec3("(3"));
+				CAGE_TEST_THROWN(vec3("3)"));
+				CAGE_TEST_THROWN(vec3("3,5"));
+				CAGE_TEST_THROWN(vec3("3,"));
+				CAGE_TEST_THROWN(vec3(",3"));
+				CAGE_TEST_THROWN(vec3(",3,3"));
+				CAGE_TEST_THROWN(vec3("3,3,"));
+				CAGE_TEST_THROWN(vec3("3,3, "));
+				CAGE_TEST_THROWN(vec3(" ,3, 4"));
+				CAGE_TEST_THROWN(vec3("4 ,, 4"));
+				CAGE_TEST_THROWN(vec3("4 , , 4"));
+				CAGE_TEST_THROWN(vec3("4, ,5"));
+				CAGE_TEST_THROWN(vec3("(4, ,5)"));
 			}
 		}
 	}

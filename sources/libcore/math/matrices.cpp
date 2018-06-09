@@ -1,6 +1,7 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/math.h>
+#include "math.h"
 
 namespace cage
 {
@@ -15,6 +16,15 @@ namespace cage
 		data[6] = 0;
 		data[7] = 0;
 		data[8] = 1;
+	}
+
+	mat3::mat3(const string &str)
+	{
+		string s = detail::tryRemoveParentheses(str);
+		for (uint32 i = 0; i < 9; i++)
+			data[i] = detail::mathSplit(s).toFloat();
+		if (!s.empty())
+			CAGE_THROW_ERROR(exception, "error parsing mat3");
 	}
 
 	mat3::mat3(const real other[9])
@@ -200,6 +210,15 @@ namespace cage
 		data[13] = 0;
 		data[14] = 0;
 		data[15] = 1;
+	}
+
+	mat4::mat4(const string &str)
+	{
+		string s = detail::tryRemoveParentheses(str);
+		for (uint32 i = 0; i < 16; i++)
+			data[i] = detail::mathSplit(s).toFloat();
+		if (!s.empty())
+			CAGE_THROW_ERROR(exception, "error parsing mat4");
 	}
 
 	mat4::mat4(const real other[16])

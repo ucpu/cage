@@ -137,7 +137,7 @@ void testSpatial()
 		// updates
 		for (uint32 i = 0; i < limit / 5; i++)
 		{
-			uint32 k = random(1, numeric_cast<uint32>(elements.size()));
+			uint32 k = random((uint32)1, numeric_cast<uint32>(elements.size()));
 			aabb b = generateRandomBox();
 			elements[k] = b;
 			data->update(k, b);
@@ -148,7 +148,7 @@ void testSpatial()
 		// removes
 		for (uint32 i = 0; i < limit / 5; i++)
 		{
-			uint32 k = random(1, numeric_cast<uint32>(elements.size()));
+			uint32 k = random((uint32)1, numeric_cast<uint32>(elements.size()));
 			elements[k] = aabb();
 			data->remove(k);
 		}
@@ -163,7 +163,7 @@ void testSpatial()
 
 		for (uint32 i = 0; i < limit; i++)
 		{
-			uint32 k = random(1, limit / 100);
+			uint32 k = random((uint32)1, limit / 100);
 			if (i > limit / 3 && cage::random() < 0.3)
 				data->remove(k);
 			else
