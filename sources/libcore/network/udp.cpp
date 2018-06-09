@@ -1,4 +1,4 @@
-#include <list>
+#include <deque>
 
 #include "net.h"
 #include <cage-core/config.h>
@@ -10,7 +10,7 @@ namespace cage
 {
 	namespace
 	{
-		configDouble simulatedPacketLoss("cage-core.udp.simulatedPacketLoss", 0);
+		configFloat simulatedPacketLoss("cage-core.udp.simulatedPacketLoss", 0);
 
 		class enetInitializerClass
 		{
@@ -93,7 +93,7 @@ namespace cage
 
 			ENetHost *client;
 			ENetPeer *peer;
-			std::list<std::pair<uint32, ENetPacket*>> packets;
+			std::deque<std::pair<uint32, ENetPacket*>> packets;
 		};
 
 		class udpServerImpl : public udpServerClass
@@ -188,11 +188,11 @@ namespace cage
 		udpConnectionImpl *impl = (udpConnectionImpl*)this;
 		if (!impl->peer)
 			CAGE_THROW_ERROR(disconnectedException, "peer disconnected");
+		if (!reliable && cage::random() < (float)simulatedPacketLoss)
+			return;
 		ENetPacket *packet = enet_packet_create(buffer, size, reliable ? ENET_PACKET_FLAG_RELIABLE : 0);
 		if (!packet)
 			CAGE_THROW_ERROR(exception, "packet creation failed");
-		if (!reliable && cage::random() < (double)simulatedPacketLoss)
-			return;
 		if (enet_peer_send(impl->peer, numeric_cast<uint8>(channel), packet) != 0)
 			CAGE_THROW_ERROR(exception, "packet send failed");
 	}

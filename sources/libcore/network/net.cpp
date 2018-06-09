@@ -180,6 +180,9 @@ namespace cage
 			return rtn;
 		}
 
+		addrList::addrList(const string &address, uint16 port, int family, int type, int protocol, int flags) : addrList(address.c_str(), port, family, type, protocol, flags)
+		{}
+
 		addrList::addrList(const char *address, uint16 port, int family, int type, int protocol, int flags) : start(nullptr), current(nullptr)
 		{
 			addrinfo hints;
@@ -220,7 +223,7 @@ namespace cage
 			return current->ai_family;
 		}
 
-		int addrList::tyoe() const
+		int addrList::type() const
 		{
 			CAGE_ASSERT_RUNTIME(valid());
 			return current->ai_socktype;

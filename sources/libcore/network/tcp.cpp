@@ -15,7 +15,7 @@ namespace cage
 
 			tcpConnectionImpl(const string &address, uint16 port)
 			{
-				addrList l(address.c_str(), port, AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, 0);
+				addrList l(address, port, AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, 0);
 				while (l.valid())
 				{
 					detail::overrideBreakpoint overrideBreakpoint;
@@ -48,11 +48,9 @@ namespace cage
 		class tcpServerImpl : public tcpServerClass
 		{
 		public:
-			static const uint32 maxSocksCount = 32;
-			sock socks[maxSocksCount];
-			uint32 socksCount;
+			std::vector<sock> socks;
 
-			tcpServerImpl(uint16 port) : socksCount(0)
+			tcpServerImpl(uint16 port)
 			{
 				addrList l(nullptr, port, AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, AI_PASSIVE);
 				while (l.valid())
@@ -67,7 +65,7 @@ namespace cage
 						s.setReuseaddr(true);
 						s.bind(address);
 						s.listen();
-						socks[socksCount++] = templates::move(s);
+						socks.push_back(templates::move(s));
 					}
 					catch (const exception &)
 					{
@@ -76,7 +74,7 @@ namespace cage
 					l.next();
 				}
 
-				if (socksCount == 0)
+				if (socks.empty())
 					CAGE_THROW_ERROR(exception, "no interface");
 			}
 		};
@@ -200,11 +198,11 @@ namespace cage
 	{
 		tcpServerImpl *impl = (tcpServerImpl*)this;
 
-		for (uint32 i = 0; i < impl->socksCount; i++)
+		for (sock &ss : impl->socks)
 		{
 			try
 			{
-				sock s = impl->socks[i].accept();
+				sock s = ss.accept();
 				if (s.isValid())
 					return detail::systemArena().createImpl<tcpConnectionClass, tcpConnectionImpl>(templates::move(s));
 			}
@@ -219,11 +217,11 @@ namespace cage
 
 	holder<tcpConnectionClass> newTcpConnection(const string &address, uint16 port)
 	{
-		return detail::systemArena().createImpl <tcpConnectionClass, tcpConnectionImpl>(address, port);
+		return detail::systemArena().createImpl<tcpConnectionClass, tcpConnectionImpl>(address, port);
 	}
 
 	holder<tcpServerClass> newTcpServer(uint16 port)
 	{
-		return detail::systemArena().createImpl <tcpServerClass, tcpServerImpl>(port);
+		return detail::systemArena().createImpl<tcpServerClass, tcpServerImpl>(port);
 	}
 }

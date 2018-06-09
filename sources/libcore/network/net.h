@@ -62,7 +62,7 @@ namespace cage
 
 		struct sock
 		{
-			sock(SOCKET descriptor = -1);
+			sock(SOCKET descriptor = INVALID_SOCKET);
 			sock(int family, int type, int protocol);
 			sock(sock &&other) noexcept;
 			void operator = (sock &&other) noexcept;
@@ -101,13 +101,14 @@ namespace cage
 
 		struct addrList
 		{
+			addrList(const string &address, uint16 port, int family, int type, int protocol, int flags);
 			addrList(const char *address, uint16 port, int family, int type, int protocol, int flags);
 			~addrList();
 
 			bool valid() const;
 			addr address() const;
 			int family() const;
-			int tyoe() const;
+			int type() const;
 			int protocol() const;
 			void getAll(addr &address, int &family, int &type, int &protocol) const;
 			void next();

@@ -180,15 +180,15 @@ namespace cage
 		}
 	}
 
-	void discoveryClientClass::addServer(const string & address, uint16 port)
+	void discoveryClientClass::addServer(const string &address, uint16 port)
 	{
 		discoveryClientImpl *impl = (discoveryClientImpl*)this;
 		addrList l(address.c_str(), port, protocolFamily, SOCK_DGRAM, IPPROTO_UDP, 0);
 		while (l.valid())
 		{
-			for (std::vector<sockStruct>::iterator it = impl->sockets.begin(), et = impl->sockets.end(); it != et; it++)
-				if (it->family == l.family())
-					it->addresses.insert(l.address());
+			for (auto &it : impl->sockets)
+				if (it.family == l.family())
+					it.addresses.insert(l.address());
 			l.next();
 		}
 	}
@@ -199,7 +199,7 @@ namespace cage
 		return numeric_cast<uint32>(impl->peers.size());
 	}
 
-	void discoveryClientClass::peerData(uint32 index, string & message, string & address, uint16 & port) const
+	void discoveryClientClass::peerData(uint32 index, string &message, string &address, uint16 &port) const
 	{
 		discoveryClientImpl *impl = (discoveryClientImpl*)this;
 		std::map<identifier<idSize>, peerStruct>::iterator it = impl->peers.begin();
@@ -247,11 +247,11 @@ namespace cage
 
 	holder<discoveryClientClass> newDiscoveryClient(uint16 sendPort, uint32 gameId)
 	{
-		return detail::systemArena().createImpl <discoveryClientClass, discoveryClientImpl>(sendPort, gameId);
+		return detail::systemArena().createImpl<discoveryClientClass, discoveryClientImpl>(sendPort, gameId);
 	}
 
 	holder<discoveryServerClass> newDiscoveryServer(uint16 listenPort, uint16 gamePort, uint32 gameId)
 	{
-		return detail::systemArena().createImpl <discoveryServerClass, discoveryServerImpl>(listenPort, gamePort, gameId);
+		return detail::systemArena().createImpl<discoveryServerClass, discoveryServerImpl>(listenPort, gamePort, gameId);
 	}
 }

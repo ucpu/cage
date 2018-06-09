@@ -7,8 +7,8 @@ namespace cage
 		uint16 port() const;
 
 		uintPtr available() const;
-		void read(void *buffer, uintPtr size);
-		memoryBuffer read();
+		void read(void *buffer, uintPtr size); // may block
+		memoryBuffer read(); // never blocks
 		void write(void *buffer, uintPtr size);
 		void write(const memoryBuffer &buffer);
 
