@@ -28,9 +28,8 @@ namespace cage
 		{
 			std::set<addr> addresses;
 			sock s;
-			int family;
 
-			sockStruct(int family, int type, int protocol) : s(family, type, protocol), family(family) {}
+			sockStruct(int family, int type, int protocol) : s(family, type, protocol) {}
 		};
 
 		class discoveryClientImpl : public discoveryClientClass
@@ -43,7 +42,7 @@ namespace cage
 
 			discoveryClientImpl(uint16 sendPort, uint32 gameId) : gameId(gameId), sendPort(sendPort)
 			{
-				addrList l(nullptr, 0, protocolFamily, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
+				addrList l(nullptr, 0, protocolFamily, SOCK_DGRAM, IPPROTO_UDP, 0);
 				while (l.valid())
 				{
 					int family = -1, type = -1, protocol = -1;
@@ -187,7 +186,7 @@ namespace cage
 		while (l.valid())
 		{
 			for (auto &it : impl->sockets)
-				if (it.family == l.family())
+				if (it.s.getFamily() == l.family())
 					it.addresses.insert(l.address());
 			l.next();
 		}

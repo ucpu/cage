@@ -125,6 +125,13 @@ namespace cage
 		impl->buffer.resize(impl->buffer.size() - size);
 	}
 
+	memoryBuffer tcpConnectionClass::read(uintPtr size)
+	{
+		memoryBuffer b(size);
+		read(b.data(), b.size());
+		return b;
+	}
+
 	memoryBuffer tcpConnectionClass::read()
 	{
 		memoryBuffer b(available());
@@ -132,7 +139,7 @@ namespace cage
 		return b;
 	}
 
-	void tcpConnectionClass::write(void *buffer, uintPtr size)
+	void tcpConnectionClass::write(const void *buffer, uintPtr size)
 	{
 		tcpConnectionImpl *impl = (tcpConnectionImpl*)this;
 		impl->s.send(buffer, size);
@@ -141,19 +148,6 @@ namespace cage
 	void tcpConnectionClass::write(const memoryBuffer &buffer)
 	{
 		write(buffer.data(), buffer.size());
-	}
-
-	bool tcpConnectionClass::availableLine() const
-	{
-		available();
-		tcpConnectionImpl *impl = (tcpConnectionImpl*)this;
-		if (impl->buffer.empty())
-			return false;
-		char *ptr = &impl->buffer[0], *e = ptr + impl->buffer.size();
-		while (ptr != e)
-			if (*ptr++ == '\n')
-				return true;
-		return false;
 	}
 
 	bool tcpConnectionClass::readLine(string &line)

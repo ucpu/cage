@@ -18,17 +18,20 @@ namespace cage
 			port = numeric_cast<uint16>(string(portBuf).toUint32());
 		}
 
-		sock::sock(SOCKET descriptor) : descriptor(descriptor)
+		sock::sock() : descriptor(INVALID_SOCKET), family(-1), type(-1), protocol(-1)
 		{}
 
-		sock::sock(int family, int type, int protocol)
+		sock::sock(int family, int type, int protocol) : descriptor(INVALID_SOCKET), family(family), type(type), protocol(protocol)
 		{
 			descriptor = socket(family, type, protocol);
 			if (descriptor == INVALID_SOCKET)
 				CAGE_THROW_ERROR(codeException, "socket creation failed (socket)", WSAGetLastError());
 		}
 
-		sock::sock(sock &&other) noexcept : descriptor(other.descriptor)
+		sock::sock(int family, int type, int protocol, SOCKET desc) : descriptor(desc), family(family), type(type), protocol(protocol)
+		{}
+
+		sock::sock(sock &&other) noexcept : descriptor(other.descriptor), family(other.family), type(other.type), protocol(other.protocol)
 		{
 			other.descriptor = INVALID_SOCKET;
 		}
@@ -40,14 +43,15 @@ namespace cage
 			if (isValid())
 				::closesocket(descriptor);
 			descriptor = other.descriptor;
+			family = other.family;
+			type = other.type;
+			protocol = other.protocol;
 			other.descriptor = INVALID_SOCKET;
 		}
 
 		sock::~sock()
 		{
-			if (isValid())
-				::closesocket(descriptor);
-			descriptor = -1;
+			close();
 		}
 
 		void sock::setBlocking(bool blocking)
@@ -73,6 +77,21 @@ namespace cage
 			int broadcastPermission = broadcast ? 1 : 0;
 			if (setsockopt(descriptor, SOL_SOCKET, SO_BROADCAST, (raw_type*)&broadcastPermission, sizeof(broadcastPermission)) != 0)
 				CAGE_THROW_ERROR(codeException, "setting broadcast mode (setsockopt)", WSAGetLastError());
+		}
+
+		void sock::setBufferSize(uint32 sending, uint32 receiving)
+		{
+			sint32 val = numeric_cast<sint32>(sending);
+			if (setsockopt(descriptor, SOL_SOCKET, SO_SNDBUF, (raw_type*)&val, sizeof(val)) != 0)
+				CAGE_THROW_ERROR(codeException, "setting sending buffer size (setsockopt)", WSAGetLastError());
+			val = numeric_cast<sint32>(receiving);
+			if (setsockopt(descriptor, SOL_SOCKET, SO_RCVBUF, (raw_type*)&val, sizeof(val)) != 0)
+				CAGE_THROW_ERROR(codeException, "setting receiving buffer size (setsockopt)", WSAGetLastError());
+		}
+
+		void sock::setBufferSize(uint32 size)
+		{
+			setBufferSize(size, size);
 		}
 
 		void sock::bind(const addr &localAddress)
@@ -101,14 +120,21 @@ namespace cage
 				int err = WSAGetLastError();
 				if (err != WSAEWOULDBLOCK)
 					CAGE_THROW_ERROR(codeException, "accept failed (accept)", err);
-				rtn = -1;
+				rtn = INVALID_SOCKET;
 			}
-			return sock(rtn);
+			return sock(family, type, protocol, rtn);
+		}
+
+		void sock::close()
+		{
+			if (isValid())
+				::closesocket(descriptor);
+			descriptor = INVALID_SOCKET;
 		}
 
 		bool sock::isValid() const
 		{
-			return descriptor != (SOCKET)-1;
+			return descriptor != INVALID_SOCKET;
 		}
 
 		addr sock::getLocalAddress() const
@@ -141,39 +167,39 @@ namespace cage
 			return res;
 		}
 
-		void sock::send(void *buffer, uintPtr bufferSize)
+		void sock::send(const void *buffer, uintPtr bufferSize)
 		{
 			if (::send(descriptor, (raw_type*)buffer, numeric_cast<int>(bufferSize), 0) != bufferSize)
 				CAGE_THROW_ERROR(codeException, "send failed (send)", WSAGetLastError());
 		}
 
-		void sock::sendTo(void *buffer, uintPtr bufferSize, const addr &remoteAddress)
+		void sock::sendTo(const void *buffer, uintPtr bufferSize, const addr &remoteAddress)
 		{
 			if (::sendto(descriptor, (raw_type*)buffer, numeric_cast<int>(bufferSize), 0, (sockaddr*)&remoteAddress.storage, remoteAddress.addrlen) != bufferSize)
 				CAGE_THROW_ERROR(codeException, "send failed (sendto)", WSAGetLastError());
 		}
 
-		uintPtr sock::recv(void *buffer, uintPtr bufferSize, int flags)
+		uintPtr sock::recv(void *buffer, uintPtr bufferSize, int flags, bool ignoreReset)
 		{
 			int rtn;
 			if ((rtn = ::recv(descriptor, (raw_type*)buffer, numeric_cast<int>(bufferSize), flags)) < 0)
 			{
 				int err = WSAGetLastError();
-				if (err != WSAEWOULDBLOCK)
+				if (err != WSAEWOULDBLOCK && (err != WSAECONNRESET || !ignoreReset))
 					CAGE_THROW_ERROR(codeException, "received failed (recv)", err);
 				rtn = 0;
 			}
 			return rtn;
 		}
 
-		uintPtr sock::recvFrom(void *buffer, uintPtr bufferSize, addr &remoteAddress, int flags)
+		uintPtr sock::recvFrom(void *buffer, uintPtr bufferSize, addr &remoteAddress, int flags, bool ignoreReset)
 		{
 			remoteAddress.addrlen = sizeof(remoteAddress.storage);
 			int rtn;
 			if ((rtn = ::recvfrom(descriptor, (raw_type*)buffer, numeric_cast<int>(bufferSize), flags, (sockaddr*)&remoteAddress.storage, &remoteAddress.addrlen)) < 0)
 			{
 				int err = WSAGetLastError();
-				if (err != WSAEWOULDBLOCK)
+				if (err != WSAEWOULDBLOCK && (err != WSAECONNRESET || !ignoreReset))
 					CAGE_THROW_ERROR(codeException, "received failed (recvfrom)", err);
 				rtn = 0;
 			}

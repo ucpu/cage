@@ -11,7 +11,7 @@
 #define CAGE_ASSERT_RUNTIME(EXP, ...)
 #endif
 
-#define CAGE_ASSERT_COMPILE(COND, MESS) enum { CAGE_JOIN(CAGE_JOIN(cage_assert_, MESS), CAGE_JOIN(_, __LINE__)) = 1/((int)!!(COND)) }
+#define CAGE_ASSERT_COMPILE(COND, MESS) enum { CAGE_JOIN(CAGE_JOIN(gchl_assert_, MESS), CAGE_JOIN(_, __LINE__)) = 1/((int)!!(COND)) }
 
 namespace cage
 {
