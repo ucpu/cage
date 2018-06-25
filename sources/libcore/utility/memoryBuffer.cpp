@@ -71,7 +71,7 @@ namespace cage
 		capacity_ = size_ = 0;
 	}
 
-	void memoryBuffer::clear()
+	void memoryBuffer::zero()
 	{
 		detail::memset(data_, 0, size_);
 	}

@@ -77,7 +77,6 @@ namespace
 		clientImpl() : si(0), ri(0)
 		{
 			connectionsLeft++;
-			udp = newUdpConnection("localhost", serverPort, random() < 0.5 ? 3000000 : 0);
 			uint32 cnt = random(100, 150);
 			for (uint32 i = 0; i < cnt; i++)
 			{
@@ -85,6 +84,7 @@ namespace
 				privat::generateRandomData((uint8*)b.data(), numeric_cast<uint32>(b.size()));
 				sends.push_back(templates::move(b));
 			}
+			udp = newUdpConnection("localhost", serverPort, random() < 0.5 ? 3000000 : 0);
 		}
 
 		~clientImpl()
@@ -100,6 +100,8 @@ namespace
 				memoryBuffer &b = sends[ri++];
 				CAGE_TEST(r.size() == b.size());
 				CAGE_TEST(detail::memcmp(r.data(), b.data(), b.size()) == 0);
+				if (ri % 1000 == 0)
+					CAGE_LOG(severityEnum::Info, "udp-test", string() + "progress: " + ri + " / " + sends.size());
 			}
 			if (si < ri + 5 && si < sends.size())
 			{
@@ -123,13 +125,13 @@ void testUdp()
 {
 	CAGE_TESTCASE("udp");
 
-	//configSetUint32("cage-core.udp.logLevel", 100);
+	configSetUint32("cage-core.udp.logLevel", 2);
 	configFloat simulatedPacketLoss("cage-core.udp.simulatedPacketLoss");
 
 	static const uint32 connections = 5;
 
 	serverPort = 3210;
-	for (auto packetLossChance : { 0.0, 0.01, 0.2 })
+	for (auto packetLossChance : { 0.01, 0.2 })
 	{
 		simulatedPacketLoss = (float)packetLossChance;
 		string testName = string() + "test with packet loss chance: " + packetLossChance;

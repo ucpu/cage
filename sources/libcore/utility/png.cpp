@@ -198,7 +198,7 @@ namespace cage
 		impl->channels = c;
 		impl->bytesPerChannel = bpc;
 		impl->mem.reallocate(w * h * c * bpc);
-		impl->mem.clear();
+		impl->mem.zero();
 	}
 
 	void pngImageClass::encodeBuffer(memoryBuffer &buffer)

@@ -19,27 +19,27 @@ namespace cage
 		void reserve(uintPtr cap); // allocates new buffer and resets the size to zero, the data is not preserved nor initialized
 		void reallocate(uintPtr size); // allocates new buffer and changes the size, the data is not preserved nor initialized
 		void free(); // deallocates the buffer
-		void clear(); // fills the buffer with zeros
+		void zero(); // fills the buffer with zeros
 		void resize(uintPtr size); // sets the size without any allocations; does not initialize any new memory; throws outOfMemoryException when the allocated buffer is too small
 		void resizeGrow(uintPtr size); // allows to change the size, reallocates (and moves) the buffer when needed
 		void resizeGrowSmart(uintPtr size); // same as resizeGrow, but allocates more than is actually needed to hopefully save some memory reallocations in the future
 
-		char *memoryBuffer::data()
+		char *data()
 		{
 			return data_;
 		}
 
-		const char *memoryBuffer::data() const
+		const char *data() const
 		{
 			return data_;
 		}
 
-		uintPtr memoryBuffer::size() const
+		uintPtr size() const
 		{
 			return size_;
 		}
 
-		uintPtr memoryBuffer::capacity() const
+		uintPtr capacity() const
 		{
 			return capacity_;
 		}

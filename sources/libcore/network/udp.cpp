@@ -9,6 +9,7 @@
 #include "net.h"
 #include <cage-core/math.h> // random
 #include <cage-core/config.h>
+#include <cage-core/memory.h> // decompress
 #include <cage-core/concurrent.h>
 #include <cage-core/utility/serialization.h>
 
@@ -63,8 +64,8 @@ namespace cage
 							break;
 						memoryBuffer b(a);
 						addr adr;
-						auto rs = s.recvFrom(b.data(), a, adr, 0, true);
-						if (rs >= 8)
+						b.resize(s.recvFrom(b.data(), a, adr, 0, true));
+						if (b.size() >= 8)
 						{
 							uint32 connId = ((uint32*)b.data())[1];
 							auto r = receivers[connId].lock();
@@ -94,7 +95,7 @@ namespace cage
 						}
 						else
 						{
-							UDP_LOG(7, "received invalid packet of " + rs + " bytes, available " + a + " bytes");
+							UDP_LOG(7, "received invalid packet of " + b.size() + " bytes, available " + a + " bytes");
 						}
 					}
 					sockIndex++;
@@ -126,6 +127,55 @@ namespace cage
 		CAGE_ASSERT_COMPILE(!comp(5, 60000), compare_sequence_numbers);
 		CAGE_ASSERT_COMPILE(!comp(5, 5), compare_sequence_numbers);
 		CAGE_ASSERT_COMPILE(!comp(60000, 60000), compare_sequence_numbers);
+
+		std::set<uint16> decodeAck(uint16 seqn, uint32 bits)
+		{
+			std::set<uint16> result;
+			for (uint16 i = 0; i < 32; i++)
+			{
+				uint32 m = 1 << i;
+				if ((bits & m) == m)
+				{
+					uint16 s = seqn - i - 1;
+					result.insert(s);
+				}
+			}
+			return result;
+		}
+
+		uint32 encodeAck(uint16 seqn, const std::set<uint16> &set)
+		{
+			uint32 result = 0;
+			for (uint16 i = 0; i < 32; i++)
+			{
+				uint16 s = seqn - i - 1;
+				if (set.count(s))
+				{
+					uint32 m = 1 << i;
+					result |= m;
+				}
+			}
+			return result;
+		}
+
+		/*
+		class ackTesterClass
+		{
+		public:
+			ackTesterClass()
+			{
+				CAGE_ASSERT_RUNTIME(encodeAck(1000, { 999, 998, 996 }) == 11);
+				CAGE_ASSERT_RUNTIME(encodeAck(1000, decodeAck(1000, 0)) == 0);
+				CAGE_ASSERT_RUNTIME(encodeAck(1000, decodeAck(1000, 11)) == 11);
+				CAGE_ASSERT_RUNTIME(encodeAck(1000, decodeAck(1000, 42)) == 42);
+				CAGE_ASSERT_RUNTIME(encodeAck(1000, decodeAck(1000, 123456)) == 123456);
+				CAGE_ASSERT_RUNTIME(encodeAck(5, decodeAck(5, 123456)) == 123456);
+				CAGE_ASSERT_RUNTIME(encodeAck(1000, { 999, 998, 996, 1342 }) == 11);
+				CAGE_ASSERT_RUNTIME(encodeAck(1000, {}) == 0);
+				CAGE_ASSERT_RUNTIME(encodeAck(1, { 0 }) == 1);
+			}
+		} ackTesterInstance;
+		*/
 
 		class udpConnectionImpl : public udpConnectionClass
 		{
@@ -189,10 +239,10 @@ namespace cage
 			{
 				invalid = 0,
 				connectionInit, // uint16 index, 256 bytes connection identifier
-				shortMessage, // uint16 msgSeqn, uint8 channel, uint16 size, data
-				longMessageHead, // uint16 longSeqn, uint32 totalSize, uint16 msgSeqn, uint8 channel, 256 bytes data
-				longMessageBody, // uint16 longSeqn, uint16 index, 256 bytes data
-				longMessageTail, // uint16 longSeqn, uint16 size, data
+				shortMessage, // uint8 channel, uint16 msgSeqn, uint16 size, data
+				longMessageHead, // uint8 channel, uint16 msgSeqn, uint32 totalSize, 256 bytes data
+				longMessageBody, // uint8 channel, uint16 msgSeqn, uint16 index, 256 bytes data
+				longMessageTail, // uint8 channel, uint16 msgSeqn, uint16 size, data
 			};
 
 			struct commandStruct
@@ -201,7 +251,6 @@ namespace cage
 				uint32 totalSize;
 				uint16 size; // valid: 1 .. 256 inclusive
 				uint16 msgSeqn;
-				uint16 longSeqn;
 				uint16 index;
 				cmdType type;
 				uint8 channel;
@@ -223,19 +272,19 @@ namespace cage
 						s << index;
 						break;
 					case cmdType::shortMessage:
-						s << msgSeqn << channel << size;
+						s << channel << msgSeqn << size;
 						s.write(data.data(), size);
 						break;
 					case cmdType::longMessageHead:
-						s << longSeqn << totalSize << msgSeqn << channel;
+						s << channel << msgSeqn << totalSize;
 						s.write(data.data(), 256);
 						break;
 					case cmdType::longMessageBody:
-						s << longSeqn << index;
+						s << channel << msgSeqn << index;
 						s.write(data.data(), 256);
 						break;
 					case cmdType::longMessageTail:
-						s << longSeqn << size;
+						s << channel << msgSeqn << size;
 						s.write(data.data(), size);
 						break;
 					default:
@@ -255,21 +304,21 @@ namespace cage
 						d >> index;
 						break;
 					case cmdType::shortMessage:
-						d >> msgSeqn >> channel >> size;
+						d >> channel >> msgSeqn >> size;
 						d.read(data.data(), size);
 						break;
 					case cmdType::longMessageHead:
-						d >> longSeqn >> totalSize >> msgSeqn >> channel;
+						d >> channel >> msgSeqn >> totalSize;
 						d.read(data.data(), 256);
 						size = 256;
 						break;
 					case cmdType::longMessageBody:
-						d >> longSeqn >> index;
+						d >> channel >> msgSeqn >> index;
 						d.read(data.data(), 256);
 						size = 256;
 						break;
 					case cmdType::longMessageTail:
-						d >> longSeqn >> size;
+						d >> channel >> msgSeqn >> size;
 						d.read(data.data(), size);
 						index = (uint16)-1;
 						break;
@@ -295,12 +344,11 @@ namespace cage
 
 				std::array<uint16, 256> seqnPerChannel; // next seqn to be used
 				uint16 packetSeqn; // next seqn to be used
-				uint16 longSeqn; // next seqn to be used
 				std::deque<std::shared_ptr<sendingCommandStruct>> cmds;
 				std::set<std::shared_ptr<sendingCommandStruct>> resendCmds;
 				std::map<uint16, std::vector<std::weak_ptr<sendingCommandStruct>>> resendsInPackets;
 
-				sendingStruct() : packetSeqn(0), longSeqn(0)
+				sendingStruct() : packetSeqn(0)
 				{
 					detail::memset(seqnPerChannel.data(), 0, 256 * 2);
 				}
@@ -310,21 +358,35 @@ namespace cage
 					auto cmdp = std::make_shared<sendingCommandStruct>(cmd);
 					if (cmdp->channel >= 128)
 						resendCmds.insert(cmdp);
-					else
-						cmds.push_back(cmdp);
+					cmds.push_back(cmdp);
 				}
 
-				void ack(uint16 packetSeqn) // packet seqn
+				void ack(uint16 ackSeqn, uint32 ackBits)
 				{
-					for (auto &w : resendsInPackets[packetSeqn])
+					for (uint16 s : decodeAck(ackSeqn, ackBits))
 					{
-						auto c = w.lock();
-						if (!c)
-							continue;
-						c->type = cmdType::invalid;
-						resendCmds.erase(c);
+						for (auto &w : resendsInPackets[s])
+						{
+							auto c = w.lock();
+							if (!c)
+								continue;
+							c->type = cmdType::invalid;
+							resendCmds.erase(c);
+						}
+						resendsInPackets.erase(ackSeqn);
 					}
-					resendsInPackets.erase(packetSeqn);
+					for (auto it = resendsInPackets.begin(); it != resendsInPackets.end(); )
+					{
+						if (comp(it->first + 32, ackSeqn))
+							it = resendsInPackets.erase(it); // that packet seqn cannot be acked anymore
+						else
+							it++;
+					}
+					/*
+					cmds.erase(std::remove_if(cmds.begin(), cmds.end(), [](std::shared_ptr<sendingCommandStruct> &cmd) {
+						return cmd->type == cmdType::invalid;
+					}), cmds.end());
+					*/
 				}
 			} sending;
 
@@ -333,41 +395,39 @@ namespace cage
 				if (sending.cmds.empty())
 					return {};
 				uint64 current = getApplicationTime();
+				uintPtr precompressedSize = 0;
 				memoryBuffer compressed;
 				memoryBuffer working;
 				serializer s(working);
-				uint32 ackBits = receiving.makeAckBits();
-				s << sending.packetSeqn << receiving.packetSeqn << ackBits;
-				UDP_LOG(3, "preparing packet seqn " + sending.packetSeqn + ", ack-seqn " + receiving.packetSeqn + ", ack-bits: " + ackBits);
+				{
+					uint32 ackBits = encodeAck(receiving.packetSeqn, receiving.receivedPacketsSeqns);
+					s << sending.packetSeqn << receiving.packetSeqn << ackBits;
+					UDP_LOG(3, "preparing packet seqn " + sending.packetSeqn + ", ack-seqn " + receiving.packetSeqn + ", ack-bits: " + ackBits);
+				}
 				uint32 m = mtu;
 				while (!sending.cmds.empty())
 				{
-					auto cmdp = sending.cmds.front();
-					if (cmdp->type == cmdType::invalid)
-					{
-						sending.cmds.pop_front();
-						continue;
-					}
-					memoryBuffer cmd = cmdp->serialize();
-					s.write(cmd.data(), cmd.size());
+					auto cmd = sending.cmds.front();
+					memoryBuffer cmdb = cmd->serialize();
+					s.write(cmdb.data(), cmdb.size());
 					memoryBuffer tmp = detail::compress(working);
-					//memoryBuffer tmp = working.copy();
 					if (tmp.size() > m)
 						break;
+					precompressedSize = working.size();
 					compressed = templates::move(tmp);
 					sending.cmds.pop_front();
-					cmdp->lastTimeSend = current;
-					cmdp->sendCount++;
-					if (cmdp->channel >= 128)
-						sending.resendsInPackets[sending.packetSeqn].push_back(cmdp);
-					UDP_LOG(5, "added command of type " + (uint32)cmdp->type + ", msg-seqn: " + cmdp->msgSeqn + ", channel: " + cmdp->channel + ", long-seqn: " + cmdp->longSeqn + ", long-index: " + cmdp->index + ", size: " + cmdp->size);
+					cmd->lastTimeSend = current;
+					cmd->sendCount++;
+					if (cmd->channel >= 128)
+						sending.resendsInPackets[sending.packetSeqn].push_back(cmd);
+					UDP_LOG(5, "added command of type " + (uint32)cmd->type + ", channel: " + cmd->channel + ", msg-seqn: " + cmd->msgSeqn + ", index: " + cmd->index + ", size: " + cmd->size);
 				}
 				sending.packetSeqn++;
 				memoryBuffer result(compressed.size() + 8);
 				detail::memcpy(result.data(), "cage", 4);
 				detail::memcpy(result.data() + 4, &connId, 4);
 				detail::memcpy(result.data() + 8, compressed.data(), compressed.size());
-				UDP_LOG(4, "prepared packet with original size: " + working.size() + ", compressed size: " + compressed.size());
+				UDP_LOG(4, "prepared packet with original size: " + precompressedSize + ", compressed size: " + compressed.size());
 				return result;
 			}
 
@@ -390,8 +450,14 @@ namespace cage
 							it = sending.resendCmds.erase(it);
 							continue;
 						}
-						if ((cmd->lastTimeSend + (1u << cmd->sendCount) * 10000) < current)
+						// todo the resend should happen after round-trip-time + some variance
+						if (cmd->sendCount && (cmd->lastTimeSend + (1u << cmd->sendCount) * 30000) < current)
+						{
+							if (cmd->sendCount >= 10)
+								CAGE_THROW_ERROR(disconnectedException, "too many failed attempts for reliable message");
 							sending.cmds.push_back(cmd);
+							UDP_LOG(5, "resending command of type " + (uint32)cmd->type + ", channel: " + cmd->channel + ", msg-seqn: " + cmd->msgSeqn + ", index: " + cmd->index + ", size: " + cmd->size);
+						}
 						it++;
 					}
 				}
@@ -403,9 +469,10 @@ namespace cage
 					if (b.size() == 0)
 						break;
 
+					// simulated packet loss for testing purposes
 					if (random() < real(simulatedPacketLoss))
 					{
-						UDP_LOG(4, "droppping prepared packet due to simulated packet loss");
+						UDP_LOG(4, "dropping prepared packet due to simulated packet loss");
 						continue;
 					}
 
@@ -460,10 +527,8 @@ namespace cage
 					};
 					std::map<uint16, partStruct> parts;
 					uint32 totalSize;
-					uint16 msgSeqn;
-					uint8 channel;
 					
-					longStruct() : totalSize(0), msgSeqn(0), channel(0)
+					longStruct() : totalSize(0)
 					{}
 
 					bool isComplete() const
@@ -474,7 +539,7 @@ namespace cage
 						return parts.size() == cnt;
 					}
 				};
-				std::map<uint16, longStruct> longs;
+				std::array<std::map<uint16, longStruct>, 256> longs;
 
 				struct finalStruct
 				{
@@ -499,39 +564,55 @@ namespace cage
 
 				void consolidate()
 				{
-					{ // check for completed long messages
-						std::vector<uint16> completedLongs;
-						for (auto &p : longs)
+					{ // check long messages
+						// check completed messages
+						for (uint32 ch = 0; ch < 256; ch++)
 						{
-							if (!p.second.isComplete())
-								continue;
-							completedLongs.push_back(p.first);
-							finalStruct f;
-							f.channel = p.second.channel;
-							f.msgSeqn = p.second.msgSeqn;
-							f.data.reallocate(p.second.totalSize);
-							uint32 maxIndex = p.second.totalSize / 256;
-							for (auto &d : p.second.parts)
+							auto &lngs = longs[ch];
+							for (auto it = lngs.begin(); it != lngs.end(); )
 							{
-								if (d.first == (uint16)-1)
-								{ // tail
-									uint32 off = (p.second.totalSize / 256) * 256;
-									detail::memcpy(f.data.data() + off, d.second.data.data(), p.second.totalSize - off);
+								if (it->second.isComplete())
+								{
+									finalStruct f;
+									f.channel = ch;
+									f.msgSeqn = it->first;
+									f.data.reallocate(it->second.totalSize);
+									uint32 maxIndex = it->second.totalSize / 256;
+									for (auto &d : it->second.parts)
+									{
+										if (d.first == (uint16)-1)
+										{ // tail
+											uint32 off = (it->second.totalSize / 256) * 256;
+											detail::memcpy(f.data.data() + off, d.second.data.data(), it->second.totalSize - off);
+										}
+										else
+										{ // body (or head)
+											if (d.first > maxIndex)
+												CAGE_THROW_ERROR(exception, "long-message body-part-index out of range");
+											detail::memcpy(f.data.data() + d.first * 256, d.second.data.data(), 256);
+										}
+									}
+									handleReceivedMessage(templates::move(f));
+									it = lngs.erase(it);
 								}
 								else
-								{ // body (or head)
-									if (d.first > maxIndex)
-										CAGE_THROW_ERROR(exception, "long-message body-part-index out of range");
-									detail::memcpy(f.data.data() + d.first * 256, d.second.data.data(), 256);
-								}
+									it++;
 							}
-							handleReceivedMessage(templates::move(f));
 						}
-						for (uint16 it : completedLongs)
-							longs.erase(it);
-					}
 
-					// todo delete too old (non-reliable) long messages
+						// check old messages
+						for (uint32 ch = 0; ch < 256; ch++)
+						{
+							auto &lngs = longs[ch];
+							for (auto it = lngs.begin(); it != lngs.end(); )
+							{
+								if (comp(it->first, seqnPerChannel[ch]))
+									it = lngs.erase(it); // that message cannot be used anymore
+								else
+									it++;
+							}
+						}
+					}
 
 					{ // check messages on hold
 						// sort all messages (per channel)
@@ -572,26 +653,22 @@ namespace cage
 							}), holds[ch].end());
 						}
 					}
-				}
 
-				uint32 makeAckBits()
-				{
-					uint32 result = 0;
-					for (uint32 i = 0; i < 32; i++)
-					{
-						uint16 s = packetSeqn - i;
-						if (receivedPacketsSeqns.count(s))
+					{ // erase old receivedPacketsSeqns
+						for (auto it = receivedPacketsSeqns.begin(); it != receivedPacketsSeqns.end(); )
 						{
-							uint32 m = 1 << i;
-							result |= m;
+							if (comp(*it, packetSeqn) && !comp(*it + 32, packetSeqn))
+								it++;
+							else
+								it = receivedPacketsSeqns.erase(it);
 						}
 					}
-					return result;
 				}
 			} receiving;
 
 			void handleReceivedCommand(const commandStruct &cmd)
 			{
+				UDP_LOG(4, "received command of type " + (uint32)cmd.type + ", channel: " + cmd.channel + ", msg-seqn: " + cmd.msgSeqn + ", index: " + cmd.index + ", size: " + cmd.size);
 				switch (cmd.type)
 				{
 				case cmdType::connectionInit:
@@ -617,7 +694,6 @@ namespace cage
 				} break;
 				case cmdType::shortMessage:
 				{
-					UDP_LOG(4, "received short message on channel " + cmd.channel + ", seqn " + cmd.msgSeqn + " and " + cmd.size + " bytes of data");
 					receivingStruct::finalStruct msg;
 					msg.data.reallocate(cmd.size);
 					detail::memcpy(msg.data.data(), cmd.data.data(), cmd.size);
@@ -626,20 +702,13 @@ namespace cage
 					receiving.handleReceivedMessage(std::move(msg));
 				} break;
 				case cmdType::longMessageHead:
-				{
-					UDP_LOG(4, "received long message head with id " + cmd.longSeqn + ", channel " + cmd.channel + ", seqn " + cmd.msgSeqn + " and " + cmd.totalSize + " bytes of data");
-					receivingStruct::longStruct &l = receiving.longs[cmd.longSeqn];
-					l.parts[0].data = cmd.data;
-					l.totalSize = cmd.totalSize;
-					l.channel = cmd.channel;
-					l.msgSeqn = cmd.msgSeqn;
-				} break;
 				case cmdType::longMessageBody:
 				case cmdType::longMessageTail:
 				{
-					UDP_LOG(5, "received long message body with id " + cmd.longSeqn + ", index " + cmd.index);
-					receivingStruct::longStruct &l = receiving.longs[cmd.longSeqn];
+					receivingStruct::longStruct &l = receiving.longs[cmd.channel][cmd.msgSeqn];
 					l.parts[cmd.index].data = cmd.data;
+					if (cmd.totalSize)
+						l.totalSize = cmd.totalSize;
 				} break;
 				default:
 					// critical - the type was already checked during deserialization
@@ -649,10 +718,9 @@ namespace cage
 
 			void handleReceivedPacket(const memoryBuffer &wholePacket)
 			{
-				UDP_LOG(5, "received packet of " + wholePacket.size() + " bytes");
+				UDP_LOG(5, "received packet with " + wholePacket.size() + " bytes");
 				memoryBuffer b;
 				{
-					// decompress packet
 					deserializer d(wholePacket);
 					{
 						// read signature
@@ -664,19 +732,17 @@ namespace cage
 						uint32 id;
 						d >> id;
 					}
-					memoryBuffer tmp(wholePacket.size() - 8);
-					detail::memcpy(tmp.data(), wholePacket.data() + 8, tmp.size());
-					b = detail::decompress(tmp, wholePacket.size() * 10);
-					//b = templates::move(tmp);
+					// decompress packet
+					b.reallocate(wholePacket.size() * 10);
+					b.resize(detail::decompress(wholePacket.data() + 8, wholePacket.size() - 8, b.data(), b.size()));
 				}
 				deserializer d(b);
 				{
 					// read packet header
-					uint16 packetSeqn;
-					uint16 ackSeqn;
+					uint16 packetSeqn, ackSeqn;
 					uint32 ackBits;
 					d >> packetSeqn >> ackSeqn >> ackBits;
-					UDP_LOG(3, "received packet seqn " + packetSeqn + ", ack-seqn " + ackSeqn + ", ack-bits " + ackBits + ", decompressed size " + b.size() + " bytes");
+					UDP_LOG(3, "received packet seqn " + packetSeqn + ", ack-seqn " + ackSeqn + ", ack-bits " + ackBits + ", size " + b.size() + " bytes");
 					// check if the packet is in order
 					if (comp(packetSeqn, receiving.packetSeqn))
 					{
@@ -689,15 +755,7 @@ namespace cage
 					receiving.packetSeqn = packetSeqn + (uint16)1;
 					receiving.receivedPacketsSeqns.insert(packetSeqn);
 					// process acks
-					for (uint32 i = 0; i < 32; i++)
-					{
-						uint32 m = 1 << i;
-						if ((ackBits & m) == m)
-						{
-							uint16 s = ackSeqn - i;
-							sending.ack(s);
-						}
-					}
+					sending.ack(ackSeqn, ackBits);
 				}
 				// read packet commands
 				while (d.current < d.end)
@@ -717,7 +775,16 @@ namespace cage
 					sockReceiver->packets.swap(packets);
 				}
 				for (memoryBuffer &b : packets)
-					handleReceivedPacket(b);
+				{
+					try
+					{
+						handleReceivedPacket(b);
+					}
+					catch (...)
+					{
+						// do nothing
+					}
+				}
 				receiving.consolidate();
 			}
 
@@ -765,7 +832,6 @@ namespace cage
 
 				if (buffer.size() > 256)
 				{ // long message
-					cmd.longSeqn = sending.longSeqn++;
 					cmd.size = 256;
 					// head
 					cmd.type = cmdType::longMessageHead;
@@ -806,18 +872,29 @@ namespace cage
 				serviceReceiving();
 				serviceSending();
 
+				/*
 				if (logLevel >= 6)
 				{
-					if (sending.resendCmds.size())
-						CAGE_LOG(severityEnum::Info, "udp", string() + "unacknowledged commands count: " + sending.resendCmds.size());
-					if (receiving.longs.size())
-						CAGE_LOG(severityEnum::Info, "udp", string() + "incomplete long messages count: " + receiving.longs.size());
-					uint32 onhold = 0;
-					for (auto &i : receiving.holds)
-						onhold += numeric_cast<uint32>(i.size());
-					if (onhold)
-						CAGE_LOG(severityEnum::Info, "udp", string() + "on hold messages count: " + onhold);
+					{
+						if (sending.resendCmds.size())
+							CAGE_LOG(severityEnum::Info, "udp", string() + "unacknowledged commands count: " + sending.resendCmds.size());
+					}
+					{
+						uint32 longs = 0;
+						for (auto &i : receiving.longs)
+							longs += numeric_cast<uint32>(i.size());
+						if (longs)
+							CAGE_LOG(severityEnum::Info, "udp", string() + "incomplete long messages count: " + longs);
+					}
+					{
+						uint32 onhold = 0;
+						for (auto &i : receiving.holds)
+							onhold += numeric_cast<uint32>(i.size());
+						if (onhold)
+							CAGE_LOG(severityEnum::Info, "udp", string() + "on hold messages count: " + onhold);
+					}
 				}
+				*/
 			}
 		};
 
