@@ -185,7 +185,7 @@ namespace cage
 			{
 				UDP_LOG(1, "creating new connection to address: '" + address + "', port: " + port + ", timeout: " + timeout);
 				sockGroup = std::make_shared<sockGroupStruct>();
-				addrList lst(address, port, AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP, 0);
+				addrList lst(address, port, AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
 				while (lst.valid())
 				{
 					addr adr;
@@ -906,7 +906,7 @@ namespace cage
 			{
 				UDP_LOG(1, "creating new server on port " + port);
 				sockGroup = std::make_shared<sockGroupStruct>();
-				addrList lst(nullptr, port, AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP, 0);
+				addrList lst(nullptr, port, AF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
 				while (lst.valid())
 				{
 					addr adr;

@@ -42,7 +42,7 @@ namespace cage
 
 			discoveryClientImpl(uint16 sendPort, uint32 gameId) : gameId(gameId), sendPort(sendPort)
 			{
-				addrList l(nullptr, 0, protocolFamily, SOCK_DGRAM, IPPROTO_UDP, 0);
+				addrList l(nullptr, 0, protocolFamily, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
 				while (l.valid())
 				{
 					int family = -1, type = -1, protocol = -1;
