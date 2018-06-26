@@ -34,6 +34,7 @@ typedef int SOCKET;
 #define closesocket close
 #define ioctlsocket ioctl
 #define WSAEWOULDBLOCK EWOULDBLOCK
+#define WSAECONNRESET ECONNRESET
 #define INVALID_SOCKET -1
 
 #endif

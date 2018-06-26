@@ -84,7 +84,7 @@ namespace
 				privat::generateRandomData((uint8*)b.data(), numeric_cast<uint32>(b.size()));
 				sends.push_back(templates::move(b));
 			}
-			udp = newUdpConnection("localhost", serverPort, random() < 0.5 ? 3000000 : 0);
+			udp = newUdpConnection("localhost", serverPort, cage::random() < 0.5 ? 3000000 : 0);
 		}
 
 		~clientImpl()

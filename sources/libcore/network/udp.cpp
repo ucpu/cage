@@ -5,6 +5,7 @@
 #include <map>
 #include <memory>
 #include <unordered_map>
+#include <algorithm>
 
 #include "net.h"
 #include <cage-core/math.h> // random
