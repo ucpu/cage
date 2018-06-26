@@ -165,14 +165,14 @@ namespace cage
 						ass->textName = detail::stringBase<sizeof(h->textName)>(h->textName);
 						ass->dependenciesNew.resize(h->dependenciesCount);
 						if (h->dependenciesCount)
-							detail::memcpy(ass->dependenciesNew.data(), (char*)buff.data() + sizeof(assetHeaderStruct), h->dependenciesCount * sizeof(uint32));
+							detail::memcpy(ass->dependenciesNew.data(), buff.data() + sizeof(assetHeaderStruct), h->dependenciesCount * sizeof(uint32));
 						uintPtr allocSize = numeric_cast<uintPtr>(ass->compressedSize + ass->originalSize);
 						uintPtr readSize = numeric_cast<uintPtr>(h->compressedSize == 0 ? h->originalSize : h->compressedSize);
 						CAGE_ASSERT_RUNTIME(readSize <= allocSize, readSize, allocSize);
 						if (buff.size() < readSize + sizeof(assetHeaderStruct) + h->dependenciesCount * sizeof(uint32))
 							CAGE_THROW_ERROR(exception, "cage asset file content truncated");
 						ass->compressedData = detail::systemArena().allocate(allocSize);
-						detail::memcpy(ass->compressedData, (char*)buff.data() + sizeof(assetHeaderStruct) + h->dependenciesCount * sizeof(uint32), readSize);
+						detail::memcpy(ass->compressedData, buff.data() + sizeof(assetHeaderStruct) + h->dependenciesCount * sizeof(uint32), readSize);
 						ass->originalData = (char*)ass->compressedData + ass->compressedSize;
 					}
 					catch (...)
@@ -402,7 +402,7 @@ namespace cage
 					{
 						uint32 cnt = 0;
 						string line;
-						while (listener->availableLine() && listener->readLine(line))
+						while (listener->readLine(line))
 						{
 							uint32 name = hashString(line.c_str());
 							CAGE_ASSERT_RUNTIME(name != 0);

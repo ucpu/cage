@@ -291,7 +291,7 @@ namespace cage
 		writeVector(impl->tris, p);
 		writeVector(impl->boxes, p);
 		writeVector(impl->nodes, p);
-		CAGE_ASSERT_RUNTIME(p.asChar == (char*)buffer.data() + buffer.size());
+		CAGE_ASSERT_RUNTIME(p.asChar == buffer.data() + buffer.size());
 		return buffer;
 	}
 
@@ -309,11 +309,11 @@ namespace cage
 		if (buffer.size() < bufferSize(header))
 			CAGE_THROW_ERROR(exception, "Cannot deserialize collision object: data truncated");
 		impl->dirty = header.dirty;
-		pointer p = pointer(buffer.data()) + sizeof(header);
+		pointer p = pointer(const_cast<char*>(buffer.data())) + sizeof(header); // todo replace pointer with deserializer
 		readVector(impl->tris, p, header.trisCount);
 		readVector(impl->boxes, p, header.nodesCount);
 		readVector(impl->nodes, p, header.nodesCount);
-		CAGE_ASSERT_RUNTIME(p.asChar == (char*)buffer.data() + buffer.size());
+		CAGE_ASSERT_RUNTIME(p.asChar == buffer.data() + buffer.size());
 	}
 
 	holder<colliderClass> newCollider()

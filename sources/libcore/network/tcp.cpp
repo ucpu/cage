@@ -15,7 +15,7 @@ namespace cage
 
 			tcpConnectionImpl(const string &address, uint16 port)
 			{
-				addrList l(address.c_str(), port, AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, 0);
+				addrList l(address, port, AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, 0);
 				while (l.valid())
 				{
 					detail::overrideBreakpoint overrideBreakpoint;
@@ -48,11 +48,9 @@ namespace cage
 		class tcpServerImpl : public tcpServerClass
 		{
 		public:
-			static const uint32 maxSocksCount = 32;
-			sock socks[maxSocksCount];
-			uint32 socksCount;
+			std::vector<sock> socks;
 
-			tcpServerImpl(uint16 port) : socksCount(0)
+			tcpServerImpl(uint16 port)
 			{
 				addrList l(nullptr, port, AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, AI_PASSIVE);
 				while (l.valid())
@@ -67,7 +65,7 @@ namespace cage
 						s.setReuseaddr(true);
 						s.bind(address);
 						s.listen();
-						socks[socksCount++] = templates::move(s);
+						socks.push_back(templates::move(s));
 					}
 					catch (const exception &)
 					{
@@ -76,7 +74,7 @@ namespace cage
 					l.next();
 				}
 
-				if (socksCount == 0)
+				if (socks.empty())
 					CAGE_THROW_ERROR(exception, "no interface");
 			}
 		};
@@ -127,6 +125,13 @@ namespace cage
 		impl->buffer.resize(impl->buffer.size() - size);
 	}
 
+	memoryBuffer tcpConnectionClass::read(uintPtr size)
+	{
+		memoryBuffer b(size);
+		read(b.data(), b.size());
+		return b;
+	}
+
 	memoryBuffer tcpConnectionClass::read()
 	{
 		memoryBuffer b(available());
@@ -134,7 +139,7 @@ namespace cage
 		return b;
 	}
 
-	void tcpConnectionClass::write(void *buffer, uintPtr size)
+	void tcpConnectionClass::write(const void *buffer, uintPtr size)
 	{
 		tcpConnectionImpl *impl = (tcpConnectionImpl*)this;
 		impl->s.send(buffer, size);
@@ -143,19 +148,6 @@ namespace cage
 	void tcpConnectionClass::write(const memoryBuffer &buffer)
 	{
 		write(buffer.data(), buffer.size());
-	}
-
-	bool tcpConnectionClass::availableLine() const
-	{
-		available();
-		tcpConnectionImpl *impl = (tcpConnectionImpl*)this;
-		if (impl->buffer.empty())
-			return false;
-		char *ptr = &impl->buffer[0], *e = ptr + impl->buffer.size();
-		while (ptr != e)
-			if (*ptr++ == '\n')
-				return true;
-		return false;
 	}
 
 	bool tcpConnectionClass::readLine(string &line)
@@ -200,11 +192,11 @@ namespace cage
 	{
 		tcpServerImpl *impl = (tcpServerImpl*)this;
 
-		for (uint32 i = 0; i < impl->socksCount; i++)
+		for (sock &ss : impl->socks)
 		{
 			try
 			{
-				sock s = impl->socks[i].accept();
+				sock s = ss.accept();
 				if (s.isValid())
 					return detail::systemArena().createImpl<tcpConnectionClass, tcpConnectionImpl>(templates::move(s));
 			}
@@ -219,11 +211,11 @@ namespace cage
 
 	holder<tcpConnectionClass> newTcpConnection(const string &address, uint16 port)
 	{
-		return detail::systemArena().createImpl <tcpConnectionClass, tcpConnectionImpl>(address, port);
+		return detail::systemArena().createImpl<tcpConnectionClass, tcpConnectionImpl>(address, port);
 	}
 
 	holder<tcpServerClass> newTcpServer(uint16 port)
 	{
-		return detail::systemArena().createImpl <tcpServerClass, tcpServerImpl>(port);
+		return detail::systemArena().createImpl<tcpServerClass, tcpServerImpl>(port);
 	}
 }

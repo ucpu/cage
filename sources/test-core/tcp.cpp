@@ -23,16 +23,13 @@ void testTcp()
 		receiver = server->accept();
 	}
 	string line;
-	while (!receiver->availableLine())
+	while (!receiver->readLine(line))
 		threadSleep(1000);
-	CAGE_TEST(receiver->readLine(line));
 	CAGE_TEST(line == "ahoj");
-	while (!receiver->availableLine())
+	while (!receiver->readLine(line))
 		threadSleep(1000);
-	CAGE_TEST(receiver->readLine(line));
 	CAGE_TEST(line == "nazdar");
-	while (!receiver->availableLine())
+	while (!receiver->readLine(line))
 		threadSleep(1000);
-	CAGE_TEST(receiver->readLine(line));
 	CAGE_TEST(line == "cau");
 }

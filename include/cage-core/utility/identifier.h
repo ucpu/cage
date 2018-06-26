@@ -10,7 +10,7 @@ namespace cage
 
 	template<uint32 N> struct identifier
 	{
-		identifier(bool randomize = false)
+		explicit identifier(bool randomize = false)
 		{
 			if (randomize)
 				privat::generateRandomData(data, N);

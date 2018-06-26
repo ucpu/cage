@@ -52,7 +52,7 @@ namespace cage
 			pngIoCtx *io = (pngIoCtx*)png_get_io_ptr(png);
 			if (io->off + siz > io->buf.size())
 				png_error(png, "png reading outside memory buffer");
-			detail::memcpy(buf, (char*)io->buf.data() + io->off, siz);
+			detail::memcpy(buf, io->buf.data() + io->off, siz);
 			io->off += siz;
 		}
 
@@ -60,7 +60,7 @@ namespace cage
 		{
 			pngIoCtx *io = (pngIoCtx*)png_get_io_ptr(png);
 			io->buf.resizeGrowSmart(io->off + siz);
-			detail::memcpy((char*)io->buf.data() + io->off, buf, siz);
+			detail::memcpy(io->buf.data() + io->off, buf, siz);
 			io->off += siz;
 		}
 
@@ -198,7 +198,7 @@ namespace cage
 		impl->channels = c;
 		impl->bytesPerChannel = bpc;
 		impl->mem.reallocate(w * h * c * bpc);
-		impl->mem.clear();
+		impl->mem.zero();
 	}
 
 	void pngImageClass::encodeBuffer(memoryBuffer &buffer)
@@ -338,9 +338,9 @@ namespace cage
 		tmp.reallocate(lineSize);
 		for (uint32 i = 0; i < swapsCount; i++)
 		{
-			detail::memcpy(tmp.data(), (char*)impl->mem.data() + i * lineSize, lineSize);
-			detail::memcpy((char*)impl->mem.data() + i * lineSize, (char*)impl->mem.data() + (impl->height - i - 1) * lineSize, lineSize);
-			detail::memcpy((char*)impl->mem.data() + (impl->height - i - 1) * lineSize, tmp.data(), lineSize);
+			detail::memcpy(tmp.data(), impl->mem.data() + i * lineSize, lineSize);
+			detail::memcpy(impl->mem.data() + i * lineSize, impl->mem.data() + (impl->height - i - 1) * lineSize, lineSize);
+			detail::memcpy(impl->mem.data() + (impl->height - i - 1) * lineSize, tmp.data(), lineSize);
 		}
 	}
 

@@ -372,7 +372,7 @@ namespace
 
 		memoryBuffer inputBuffer(numeric_cast<uintPtr>(h.originalSize - sizeof(data)));
 		{
-			char *last = (char*)inputBuffer.data();
+			char *last = inputBuffer.data();
 			for (auto it = images.begin(), et = images.end(); it != et; it++)
 			{
 				detail::memcpy(last, it->data.data(), it->data.size());

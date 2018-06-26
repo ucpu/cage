@@ -62,8 +62,9 @@ namespace cage
 
 		struct sock
 		{
-			sock(SOCKET descriptor = -1);
-			sock(int family, int type, int protocol);
+			sock(); // invalid socket
+			sock(int family, int type, int protocol); // create new socket
+			sock(int family, int type, int protocol, SOCKET descriptor); // copy socket
 			sock(sock &&other) noexcept;
 			void operator = (sock &&other) noexcept;
 			~sock();
@@ -74,40 +75,49 @@ namespace cage
 			void setBlocking(bool blocking);
 			void setReuseaddr(bool reuse);
 			void setBroadcast(bool broadcast);
+			void setBufferSize(uint32 sending, uint32 receiving);
+			void setBufferSize(uint32 size);
 
 			void bind(const addr &localAddress);
 			void connect(const addr &remoteAddress);
 			void listen(int backlog = 5);
 			sock accept();
 
+			void close();
 			bool isValid() const;
 			addr getLocalAddress() const;
 			addr getRemoteAddress() const;
 
 			uintPtr available() const;
-			void send(void *buffer, uintPtr bufferSize);
-			void sendTo(void *buffer, uintPtr bufferSize, const addr &remoteAddress);
-			uintPtr recv(void *buffer, uintPtr bufferSize, int flags = 0);
-			uintPtr recvFrom(void *buffer, uintPtr bufferSize, addr &remoteAddress, int flags = 0);
+			void send(const void *buffer, uintPtr bufferSize);
+			void sendTo(const void *buffer, uintPtr bufferSize, const addr &remoteAddress);
+			uintPtr recv(void *buffer, uintPtr bufferSize, int flags = 0, bool ignoreReset = false);
+			uintPtr recvFrom(void *buffer, uintPtr bufferSize, addr &remoteAddress, int flags = 0, bool ignoreReset = false);
 
-			bool operator < (const sock &other) const // fast (binary) comparison
+			bool operator < (const sock &other) const // fast comparison
 			{
 				return descriptor < other.descriptor;
 			}
 
+			int getFamily() const { return family; };
+			int getType() const { return type; };
+			int getProtocol() const { return protocol; };
+
 		private:
 			SOCKET descriptor;
+			int family, type, protocol;
 		};
 
 		struct addrList
 		{
+			addrList(const string &address, uint16 port, int family, int type, int protocol, int flags);
 			addrList(const char *address, uint16 port, int family, int type, int protocol, int flags);
 			~addrList();
 
 			bool valid() const;
 			addr address() const;
 			int family() const;
-			int tyoe() const;
+			int type() const;
 			int protocol() const;
 			void getAll(addr &address, int &family, int &type, int &protocol) const;
 			void next();

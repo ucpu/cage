@@ -1,101 +1,123 @@
+#include <vector>
 #include <algorithm>
+#include <atomic>
 
 #include "main.h"
+#include <cage-core/config.h>
 #include <cage-core/network.h>
 #include <cage-core/concurrent.h>
+#include <cage-core/math.h> // random
+#include <cage-core/utility/memoryBuffer.h>
+#include <cage-core/utility/identifier.h> // generateRandomData
 
 namespace
 {
-	class senderClass
+	std::atomic<uint32> connectionsLeft;
+	std::atomic<uint16> serverPort;
+
+	class serverImpl
 	{
 	public:
-		senderClass(uint32 idx) : snd(0), rec(0), idx(idx)
+		holder<udpServerClass> udp;
+		std::vector<holder<udpConnectionClass>> conns;
+		uint64 lastTime;
+		bool hadConnection;
+
+		serverImpl() : lastTime(getApplicationTime()), hadConnection(false)
 		{
-			thread = newThread(delegate<void()>().bind<senderClass, &senderClass::process>(this), string() + "udp test sender " + idx);
+			udp = newUdpServer(serverPort);
 		}
 
-		void process()
+		bool service()
 		{
-			peer = newUdpConnection("localhost", 4242, 1);
-
-			while (rec < 1000)
+			while (true)
 			{
-				if (read())
-					continue;
-
-				if (snd - rec < 10)
+				auto c = udp->accept();
+				if (c)
 				{
-					uint32 m = rand() % 5 + 1;
-					for (uint32 i = 0; i < m; i++)
-					{
-						uint32 l = generate(snd++);
-						peer->write(buf1, l, 0, true);
-					}
+					conns.push_back(templates::move(c));
+					hadConnection = true;
 				}
-
-				threadSleep(500 + idx * 500);
+				else
+					break;
 			}
 
-			buf1[0] = 0;
-			detail::memcpy(buf1, "done", 4);
-			peer->write(buf1, 4, 0, true);
-
-			while (read());
-		}
-
-		bool read()
-		{
-			uintPtr a = peer->available();
-			CAGE_ASSERT_RUNTIME(a < 1000);
-			if (a > 0)
+			for (auto &c : conns)
 			{
-				uint32 l = generate(rec++);
-				CAGE_TEST(l == a);
-				peer->read(buf2, a);
-				for (uint32 i = 0; i < a; i++)
-					CAGE_TEST(buf1[i] == buf2[a - i - 1]);
-				return true;
+				while (c->available())
+				{
+					uint32 ch;
+					bool r;
+					memoryBuffer b = c->read(ch, r);
+					c->write(b, ch, r); // just repeat back the same message
+					lastTime = getApplicationTime();
+				}
+				c->update();
 			}
-			return false;
+
+			return connectionsLeft > 0 || !hadConnection;
 		}
 
-		uint32 generate(uint32 n)
+		static void entry()
 		{
-			uint32 len = n % 10 + idx + 5;
-			for (uint32 i = 0; i < len; i++)
-				buf1[i] = (i + n + idx) % 20;
-			return len;
+			serverImpl srv;
+			while (srv.service())
+				threadSleep(1000);
 		}
-
-		uint32 snd;
-		uint32 rec;
-		uint32 idx;
-		char buf1[1000], buf2[1000];
-		holder<threadClass> thread;
-		holder<udpConnectionClass> peer;
 	};
 
-	class receiverClass
+	class clientImpl
 	{
 	public:
-		receiverClass(holder<udpConnectionClass> peer) : peer(templates::move(peer))
-		{}
+		holder<udpConnectionClass> udp;
 
-		const bool process()
+		std::vector<memoryBuffer> sends;
+		uint32 si, ri;
+
+		clientImpl() : si(0), ri(0)
 		{
-			uintPtr a = peer->available();
-			CAGE_ASSERT_RUNTIME(a < 1000);
-			if (a == 0)
-				return false;
-			peer->read(buf, a);
-			for (uint32 i = 0; i < a / 2; i++)
-				std::swap(buf[i], buf[a - i - 1]);
-			peer->write(buf, a, 0, true);
-			return a == 4 && string(buf, numeric_cast<uint32>(a)) == "enod";
+			connectionsLeft++;
+			uint32 cnt = random(100, 150);
+			for (uint32 i = 0; i < cnt; i++)
+			{
+				memoryBuffer b(random(10, 10000));
+				privat::generateRandomData((uint8*)b.data(), numeric_cast<uint32>(b.size()));
+				sends.push_back(templates::move(b));
+			}
+			udp = newUdpConnection("localhost", serverPort, random() < 0.5 ? 3000000 : 0);
 		}
 
-		char buf[1000];
-		holder<udpConnectionClass> peer;
+		~clientImpl()
+		{
+			connectionsLeft--;
+		}
+
+		bool service()
+		{
+			while (udp->available())
+			{
+				memoryBuffer r = udp->read();
+				memoryBuffer &b = sends[ri++];
+				CAGE_TEST(r.size() == b.size());
+				CAGE_TEST(detail::memcmp(r.data(), b.data(), b.size()) == 0);
+				if (ri % 1000 == 0)
+					CAGE_LOG(severityEnum::Info, "udp-test", string() + "progress: " + ri + " / " + sends.size());
+			}
+			if (si < ri + 5 && si < sends.size())
+			{
+				memoryBuffer &b = sends[si++];
+				udp->write(b, 13, true);
+			}
+			udp->update();
+			return ri < sends.size();
+		}
+
+		static void entry()
+		{
+			clientImpl cl;
+			while (cl.service())
+				threadSleep(1000);
+		}
 	};
 }
 
@@ -103,28 +125,26 @@ void testUdp()
 {
 	CAGE_TESTCASE("udp");
 
+	configSetUint32("cage-core.udp.logLevel", 2);
+	configFloat simulatedPacketLoss("cage-core.udp.simulatedPacketLoss");
+
 	static const uint32 connections = 5;
 
-	holder<udpServerClass> server = newUdpServer(4242, 1, connections);
-
-	holder<senderClass> senders[connections];
-	for (uint32 i = 0; i < connections; i++)
-		senders[i] = detail::systemArena().createHolder<senderClass>(i);
-
-	holder<receiverClass> receivers[connections];
-	uint32 recsCount = 0;
-	uint32 done = 0;
-	while (done < connections)
+	serverPort = 3210;
+	for (auto packetLossChance : { 0.01, 0.2 })
 	{
-		for (uint32 i = 0; i < recsCount; i++)
-			done += receivers[i]->process();
-
-		holder<udpConnectionClass> r = server->accept();
-		if (!r)
-		{
-			threadSleep(1000);
-			continue;
-		}
-		receivers[recsCount++] = detail::systemArena().createHolder<receiverClass>(templates::move(r));
+		simulatedPacketLoss = (float)packetLossChance;
+		string testName = string() + "test with packet loss chance: " + packetLossChance;
+		CAGE_TESTCASE(testName);
+		holder<threadClass> server = newThread(delegate<void()>().bind<&serverImpl::entry>(), "server");
+		std::vector<holder<threadClass>> clients;
+		clients.resize(connections);
+		uint32 index = 0;
+		for (auto &c : clients)
+			c = newThread(delegate<void()>().bind<&clientImpl::entry>(), string() + "client " + (index++));
+		server->wait();
+		for (auto &c : clients)
+			c->wait();
+		serverPort++;
 	}
 }

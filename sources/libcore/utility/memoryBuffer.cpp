@@ -5,10 +5,10 @@
 
 namespace cage
 {
-	memoryBuffer::memoryBuffer() : data_(nullptr), size_(0), allocated_(0)
+	memoryBuffer::memoryBuffer() : data_(nullptr), size_(0), capacity_(0)
 	{}
 
-	memoryBuffer::memoryBuffer(uintPtr size) : data_(nullptr), size_(0), allocated_(0)
+	memoryBuffer::memoryBuffer(uintPtr size) : data_(nullptr), size_(0), capacity_(0)
 	{
 		reallocate(size);
 	}
@@ -17,10 +17,10 @@ namespace cage
 	{
 		data_ = other.data_;
 		size_ = other.size_;
-		allocated_ = other.allocated_;
+		capacity_ = other.capacity_;
 		other.data_ = nullptr;
 		other.size_ = 0;
-		other.allocated_ = 0;
+		other.capacity_ = 0;
 	}
 
 	memoryBuffer &memoryBuffer::operator = (memoryBuffer &&other) noexcept
@@ -30,10 +30,10 @@ namespace cage
 		free();
 		data_ = other.data_;
 		size_ = other.size_;
-		allocated_ = other.allocated_;
+		capacity_ = other.capacity_;
 		other.data_ = nullptr;
 		other.size_ = 0;
-		other.allocated_ = 0;
+		other.capacity_ = 0;
 		return *this;
 	}
 
@@ -49,35 +49,43 @@ namespace cage
 		return r;
 	}
 
+	void memoryBuffer::reserve(uintPtr cap)
+	{
+		free();
+		data_ = (char*)detail::systemArena().allocate(cap);
+		capacity_ = cap;
+		size_ = 0;
+	}
+
 	void memoryBuffer::reallocate(uintPtr size)
 	{
 		free();
-		data_ = detail::systemArena().allocate(size);
-		allocated_ = size_ = size;
+		data_ = (char*)detail::systemArena().allocate(size);
+		capacity_ = size_ = size;
 	}
 
 	void memoryBuffer::free()
 	{
 		detail::systemArena().deallocate(data_);
 		data_ = nullptr;
-		allocated_ = size_ = 0;
+		capacity_ = size_ = 0;
 	}
 
-	void memoryBuffer::clear()
+	void memoryBuffer::zero()
 	{
 		detail::memset(data_, 0, size_);
 	}
 
 	void memoryBuffer::resize(uintPtr size)
 	{
-		if (size > allocated_)
+		if (size > capacity_)
 			CAGE_THROW_ERROR(outOfMemoryException, "size exceeds preallocated buffer", size);
 		size_ = size;
 	}
 
 	void memoryBuffer::resizeGrow(uintPtr size)
 	{
-		if (size <= allocated_)
+		if (size <= capacity_)
 		{
 			size_ = size;
 			return;
@@ -89,7 +97,7 @@ namespace cage
 
 	void memoryBuffer::resizeGrowSmart(uintPtr size)
 	{
-		if (size <= allocated_)
+		if (size <= capacity_)
 		{
 			size_ = size;
 			return;
@@ -98,21 +106,6 @@ namespace cage
 		reallocate(numeric_cast<uintPtr>(size * 1.5) + 100);
 		detail::memcpy(data_, c.data(), c.size());
 		size_ = size;
-	}
-
-	void *memoryBuffer::data() const
-	{
-		return data_;
-	}
-
-	uintPtr memoryBuffer::size() const
-	{
-		return size_;
-	}
-
-	uintPtr memoryBuffer::allocated() const
-	{
-		return allocated_;
 	}
 
 	namespace detail
