@@ -46,6 +46,3 @@
 [submodule "zlib/zlib"]
 	path = zlib/zlib
 	url = https://github.com/ucpu/zlib.git
-[submodule "enet/enet"]
-	path = enet/enet
-	url = https://github.com/lsalzman/enet.git
