@@ -22,6 +22,7 @@ namespace cage
 
 		configFloat simulatedPacketLoss("cage-core.udp.simulatedPacketLoss", 0);
 		configUint32 mtu("cage-core.udp.mtu", 1100);
+		configUint32 packetsPerService("cage-core.udp.packetsPerService", 20);
 		configUint32 logLevel("cage-core.udp.logLevel", 0);
 #define UDP_LOG(LEVEL, MSG) { if (logLevel >= (LEVEL)) { CAGE_LOG(severityEnum::Info, "udp", string() + MSG); } }
 
@@ -324,7 +325,8 @@ namespace cage
 						index = (uint16)-1;
 						break;
 					default:
-						// error - the packet could get corrupted on the network
+						// exception (not fatal) - the packet could get corrupted on the network
+						CAGE_LOG(severityEnum::Note, "exception", string() + "command type: " + (uint32)type);
 						CAGE_THROW_ERROR(exception, "invalid command type");
 					}
 				}
@@ -348,8 +350,9 @@ namespace cage
 				std::deque<std::shared_ptr<sendingCommandStruct>> cmds;
 				std::set<std::shared_ptr<sendingCommandStruct>> resendCmds;
 				std::map<uint16, std::vector<std::weak_ptr<sendingCommandStruct>>> resendsInPackets;
+				bool needToSendAnAck;
 
-				sendingStruct() : packetSeqn(0)
+				sendingStruct() : packetSeqn(0), needToSendAnAck(false)
 				{
 					detail::memset(seqnPerChannel.data(), 0, 256 * 2);
 				}
@@ -383,18 +386,14 @@ namespace cage
 						else
 							it++;
 					}
-					/*
-					cmds.erase(std::remove_if(cmds.begin(), cmds.end(), [](std::shared_ptr<sendingCommandStruct> &cmd) {
+					cmds.erase(std::remove_if(cmds.begin(), cmds.end(), [](const std::shared_ptr<sendingCommandStruct> &cmd) {
 						return cmd->type == cmdType::invalid;
 					}), cmds.end());
-					*/
 				}
 			} sending;
 
-			memoryBuffer makePacket()
+			memoryBuffer preparePacket()
 			{
-				if (sending.cmds.empty())
-					return {};
 				uint64 current = getApplicationTime();
 				uintPtr precompressedSize = 0;
 				memoryBuffer compressed;
@@ -405,6 +404,8 @@ namespace cage
 					s << sending.packetSeqn << receiving.packetSeqn << ackBits;
 					UDP_LOG(3, "preparing packet seqn " + sending.packetSeqn + ", ack-seqn " + receiving.packetSeqn + ", ack-bits: " + ackBits);
 				}
+				precompressedSize = working.size();
+				compressed = detail::compress(working);
 				uint32 m = mtu;
 				while (!sending.cmds.empty())
 				{
@@ -452,7 +453,7 @@ namespace cage
 							continue;
 						}
 						// todo the resend should happen after round-trip-time + some variance
-						if (cmd->sendCount && (cmd->lastTimeSend + (1u << cmd->sendCount) * 30000) < current)
+						if (cmd->sendCount && cmd.use_count() == 1 && (cmd->lastTimeSend + (1u << cmd->sendCount) * 30000) < current)
 						{
 							if (cmd->sendCount >= 10)
 								CAGE_THROW_ERROR(disconnectedException, "too many failed attempts for reliable message");
@@ -464,11 +465,14 @@ namespace cage
 				}
 
 				// make packets and send them
-				while (true)
+				uint32 packetsLimit = packetsPerService;
+				for (uint32 packetCount = 0; packetCount < packetsLimit; packetCount++)
 				{
-					memoryBuffer b = makePacket();
-					if (b.size() == 0)
+					if (sending.cmds.empty() && !sending.needToSendAnAck)
 						break;
+					sending.needToSendAnAck = false;
+
+					memoryBuffer b = preparePacket();
 
 					// simulated packet loss for testing purposes
 					if (random() < real(simulatedPacketLoss))
@@ -757,6 +761,8 @@ namespace cage
 					receiving.receivedPacketsSeqns.insert(packetSeqn);
 					// process acks
 					sending.ack(ackSeqn, ackBits);
+					if (d.current < d.end)
+						sending.needToSendAnAck = true;
 				}
 				// read packet commands
 				while (d.current < d.end)
