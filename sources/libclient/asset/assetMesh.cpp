@@ -56,6 +56,7 @@ namespace cage
 			msh->setPrimitiveType(data->primitiveType);
 			msh->setBoundingBox(data->box);
 			msh->setTextures(data->textureNames);
+			msh->setSkeleton(data->skeletonName, data->skeletonBones);
 
 			msh->setBuffers(
 				data->verticesCount, data->vertexSize(), verticesData,

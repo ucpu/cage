@@ -74,9 +74,9 @@ namespace
 		}
 	}
 
-	void loadMaterialExternal(meshHeaderStruct &dsm, meshHeaderStruct::materialDataStruct &mat, string path)
+	void loadMaterialCage(meshHeaderStruct &dsm, meshHeaderStruct::materialDataStruct &mat, string path)
 	{
-		CAGE_LOG(severityEnum::Info, logComponentName, "using external (.cpm) material");
+		CAGE_LOG(severityEnum::Info, logComponentName, "using cage (.cpm) material");
 
 		writeLine(string("use = ") + path);
 		path = pathJoin(inputDirectory, path);
@@ -197,7 +197,7 @@ namespace
 		{
 			aiColor3D color = aiColor3D(1, 1, 1);
 			m->Get(AI_MATKEY_COLOR_DIFFUSE, color);
-			mat.albedoBase = vec4(vec3(color.r, color.g, color.b), mat.albedoBase[3]);
+			mat.albedoBase = vec4(conv(color), mat.albedoBase[3]);
 
 			if (mat.albedoBase[3] < 1e-7)
 				dsm.flags |= meshFlags::Transparency;
@@ -232,7 +232,7 @@ namespace
 			path = pathJoin(pathExtractPath(inputFile), path);
 			if (!pathExists(pathJoin(inputDirectory, path)))
 				CAGE_THROW_ERROR(exception, "overriden material path does not exist");
-			loadMaterialExternal(dsm, mat, path);
+			loadMaterialCage(dsm, mat, path);
 			return;
 		}
 
@@ -254,11 +254,11 @@ namespace
 		}
 		path += ".cpm";
 
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "implicitly looking for external material at '" + path + "'");
+		CAGE_LOG(severityEnum::Info, logComponentName, string() + "looking for implicit cage material at '" + path + "'");
 
 		if (pathExists(pathJoin(inputDirectory, path)))
 		{
-			loadMaterialExternal(dsm, mat, path);
+			loadMaterialCage(dsm, mat, path);
 			return;
 		}
 
@@ -337,9 +337,25 @@ namespace
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "using axes conversion matrix: " + result);
 		return result;
 	}
-}
 
-extern const uint32 assimpDefaultLoadFlags;
+	void loadSkeletonName(meshHeaderStruct &dsm)
+	{
+		string n = properties("override_skeleton");
+		if (!dsm.bones())
+		{
+			if (!n.empty())
+				CAGE_THROW_ERROR(exception, "cannot override skeleton for a mesh that has no bones");
+			return;
+		}
+		if (n.empty())
+			n = inputFile + ";skeleton";
+		else
+			n = pathJoin(pathExtractPath(inputName), n);
+		CAGE_LOG(severityEnum::Info, logComponentName, string() + "using skeleton name: '" + n + "'");
+		dsm.skeletonName = hashString(n.c_str());
+		writeLine(string("ref = ") + n);
+	}
+}
 
 void processMesh()
 {
@@ -381,14 +397,12 @@ void processMesh()
 	CAGE_LOG(severityEnum::Info, logComponentName, cage::string() + "vertices count: " + dsm.verticesCount);
 	CAGE_LOG(severityEnum::Info, logComponentName, cage::string() + "indices count: " + dsm.indicesCount);
 
-	if (properties("export_bones").toBool()) // todo
-		CAGE_THROW_CRITICAL(notImplementedException, "exporting bones is not yet implemented");
-	// note: when exporting with bones, the bounding box must encapsulate the mesh in all possible poses
-
 	setFlags(dsm.flags, meshFlags::Uvs, am->GetNumUVChannels() > 0, "export_uv");
 	setFlags(dsm.flags, meshFlags::Normals, am->HasNormals(), "export_normal");
 	setFlags(dsm.flags, meshFlags::Tangents, am->HasTangentsAndBitangents(), "export_tangent");
 	setFlags(dsm.flags, meshFlags::Bones, am->HasBones(), "export_bones");
+
+	loadSkeletonName(dsm);
 
 	meshHeaderStruct::materialDataStruct mat;
 	memset(&mat, 0, sizeof(mat));
@@ -410,18 +424,19 @@ void processMesh()
 	mat3 axes2 = axes * properties("scale").toFloat();
 	for (uint32 i = 0; i < dsm.verticesCount; i++)
 	{
-		vec3 p = axes2 * (*(cage::vec3*)&(am->mVertices[i]));
+		vec3 p = axes2 * conv(am->mVertices[i]);
 		*(cage::vec3*)ptr.asVoid = p;
 		ptr += sizeof(cage::vec3);
 		dsm.box += aabb(p);
 	}
 	CAGE_LOG(severityEnum::Info, logComponentName, string() + "bounding box: " + dsm.box);
+	// note: when exporting with bones, the bounding box must encapsulate the mesh in all possible poses
 
 	if (dsm.uvs())
 	{
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
 		{
-			*(cage::vec2*)ptr.asVoid = cage::vec2(*(cage::vec3*)&(am->mTextureCoords[0][i]));
+			*(cage::vec2*)ptr.asVoid = cage::vec2(conv(am->mTextureCoords[0][i]));
 			ptr += sizeof(cage::vec2);
 		}
 	}
@@ -430,7 +445,7 @@ void processMesh()
 	{
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
 		{
-			*(cage::vec3*)ptr.asVoid = axes * *(cage::vec3*)&(am->mNormals[i]);
+			*(cage::vec3*)ptr.asVoid = axes * conv(am->mNormals[i]);
 			ptr += sizeof(cage::vec3);
 		}
 	}
@@ -439,14 +454,80 @@ void processMesh()
 	{
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
 		{
-			*(cage::vec3*)ptr.asVoid = axes * *(cage::vec3*)&(am->mTangents[i]);
+			*(cage::vec3*)ptr.asVoid = axes * conv(am->mTangents[i]);
 			ptr += sizeof(cage::vec3);
 		}
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
 		{
-			*(cage::vec3*)ptr.asVoid = axes * *(cage::vec3*)&(am->mBitangents[i]);
+			*(cage::vec3*)ptr.asVoid = axes * conv(am->mBitangents[i]);
 			ptr += sizeof(cage::vec3);
 		}
+	}
+
+	if (dsm.bones())
+	{
+		holder<assimpSkeletonClass> skeleton = context->skeleton();
+		dsm.skeletonBones = skeleton->bonesCount();
+		uint16 *boneIndices = ptr.asUint16;
+		ptr += sizeof(uint16) * 4 * dsm.verticesCount;
+		float *boneWeights = ptr.asFloat;
+		ptr += sizeof(float) * 4 * dsm.verticesCount;
+		// initialize with empty values
+		for (uint32 i = 0; i < dsm.verticesCount; i++)
+		{
+			for (uint32 j = 0; j < 4; j++)
+			{
+				boneIndices[i * 4 + j] = (uint16)-1;
+				boneWeights[i * 4 + j] = 0;
+			}
+		}
+		// copy the values from assimp
+		for (uint32 boneIndex = 0; boneIndex < am->mNumBones; boneIndex++)
+		{
+			aiBone *bone = am->mBones[boneIndex];
+			uint32 boneId = skeleton->index(bone->mName);
+			for (uint32 weightIndex = 0; weightIndex < bone->mNumWeights; weightIndex++)
+			{
+				aiVertexWeight *w = bone->mWeights + weightIndex;
+				bool ok = false;
+				for (uint32 i = 0; i < 4; i++)
+				{
+					if (boneIndices[w->mVertexId * 4 + i] == (uint16)-1)
+					{
+						boneIndices[w->mVertexId * 4 + i] = boneId;
+						boneWeights[w->mVertexId * 4 + i] = w->mWeight;
+						ok = true;
+						break;
+					}
+				}
+				CAGE_ASSERT_RUNTIME(ok, "single vertex may not be affected by more than four bones");
+			}
+		}
+		// validate
+		uint32 maxBoneId = 0;
+		for (uint32 i = 0; i < dsm.verticesCount; i++)
+		{
+			float sum = 0;
+			for (uint32 j = 0; j < 4; j++)
+			{
+				if (boneIndices[i * 4 + j] == (uint16)-1)
+				{
+					CAGE_ASSERT_RUNTIME(boneWeights[i * 4 + j] == 0, i, j);
+					boneIndices[i * 4 + j] = 0; // prevent shader from accessing invalid memory
+				}
+				sum += boneWeights[i * 4 + j];
+				maxBoneId = max(maxBoneId, boneIndices[i * 4 + j] + 1u);
+			}
+			// renormalize weights
+			if (abs(sum - 1) > 1e-3 && sum > 1e-3)
+			{
+				float f = 1 / sum;
+				CAGE_LOG(severityEnum::Warning, logComponentName, string() + "renormalizing vertex weights for " + i + ", by " + f);
+				for (uint32 j = 0; j < 4; j++)
+					boneWeights[i * 4 + j] *= f;
+			}
+		}
+		CAGE_ASSERT_RUNTIME(maxBoneId <= dsm.skeletonBones, maxBoneId, dsm.skeletonBones);
 	}
 
 	for (uint32 i = 0; i < am->mNumFaces; i++)

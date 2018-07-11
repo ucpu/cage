@@ -18,7 +18,7 @@ namespace cage
 	namespace detail
 	{
 		CAGE_API void terminate();
-		CAGE_API void debugOutput(const char *value);
+		CAGE_API void debugOutput(const string &msg);
 		CAGE_API void debugBreakpoint();
 
 		struct CAGE_API overrideBreakpoint

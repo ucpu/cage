@@ -19,18 +19,19 @@ namespace cage
 	struct CAGE_API animatedTextureComponent
 	{
 		static componentClass *component;
-		uint64 animationStart;
-		real animationSpeed;
-		real animationOffset;
+		uint64 startTime;
+		real speed;
+		real offset;
 		animatedTextureComponent();
 	};
 
 	struct CAGE_API animatedSkeletonComponent
 	{
 		static componentClass *component;
-		uint64 animationStart[MaxBlendAnimations];
-		uint32 animationName[MaxBlendAnimations];
-		real animationWeight[MaxBlendAnimations];
+		uint64 startTime;
+		uint32 name;
+		real speed;
+		real offset;
 		animatedSkeletonComponent();
 	};
 
@@ -84,8 +85,8 @@ namespace cage
 	{
 		static componentClass *component;
 		busClass *input;
-		uint64 soundStart;
-		uint32 sound;
+		uint64 startTime;
+		uint32 name;
 		uint32 renderMask;
 		voiceComponent();
 	};

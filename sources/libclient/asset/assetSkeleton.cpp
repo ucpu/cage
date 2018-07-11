@@ -35,11 +35,8 @@ namespace cage
 			ptr += sizeof(mat4) * data->bonesCount;
 			const mat4 *invRestMatrices = (mat4*)ptr.asVoid;
 			ptr += sizeof(mat4) * data->bonesCount;
-			const uint32 *namedBoneNames = (uint32*)ptr.asVoid;
-			ptr += sizeof(uint32) * data->namesCount;
-			const uint16 *namedBoneIndexes = (uint16*)ptr.asVoid;
-			ptr += sizeof(mat4) * data->namesCount;
-			skl->allocate(data->bonesCount, boneParents, baseMatrices, invRestMatrices, data->namesCount, namedBoneNames, namedBoneIndexes);
+			CAGE_ASSERT_RUNTIME(ptr == pointer(context->originalData) + context->originalSize);
+			skl->allocate(data->bonesCount, boneParents, baseMatrices, invRestMatrices);
 		}
 
 		void processDone(const assetContextStruct *context, void *schemePointer)
@@ -53,8 +50,8 @@ namespace cage
 	{
 		assetSchemeStruct s;
 		s.threadIndex = threadIndex;
-		s.load.bind <&processLoad>();
-		s.done.bind <&processDone>();
+		s.load.bind<&processLoad>();
+		s.done.bind<&processDone>();
 		return s;
 	}
 }

@@ -1,0 +1,13 @@
+[scheme]
+processor = cage-asset-processor skeleton
+index = 13
+
+[bone_names]
+display = export bone names
+type = bool
+default = true
+
+[animation_names]
+display = animation dependencies based on this asset's name
+type = bool
+default = true

@@ -36,13 +36,13 @@ namespace cage
 			std::terminate();
 		}
 
-		void debugOutput(const char *value)
+		void debugOutput(const string &msg)
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
 			if (IsDebuggerPresent())
 			{
-				OutputDebugString(value);
-				OutputDebugString("\n");
+				string value = msg + "\n";
+				OutputDebugString(value.c_str());
 				return;
 			}
 #endif

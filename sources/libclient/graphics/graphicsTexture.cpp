@@ -226,7 +226,7 @@ namespace cage
 
 	namespace detail
 	{
-		const vec4 evalSamplesForTextureAnimation(textureClass *texture, uint64 emitTime, uint64 animationStart, real animationSpeed, real animationOffset)
+		vec4 evalSamplesForTextureAnimation(textureClass *texture, uint64 emitTime, uint64 animationStart, real animationSpeed, real animationOffset)
 		{
 			if (!texture)
 				return vec4();

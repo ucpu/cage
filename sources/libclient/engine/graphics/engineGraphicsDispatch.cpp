@@ -160,6 +160,11 @@ namespace cage
 				applyShaderRoutines(&obj->shaderConfig, shr);
 				meshDataBuffer->bind();
 				meshDataBuffer->writeRange(obj->shaderMeshes, 0, sizeof(objectsStruct::shaderMeshStruct) * obj->count);
+				if (obj->shaderArmatures)
+				{
+					armatureDataBuffer->bind();
+					armatureDataBuffer->writeRange(obj->shaderArmatures, 0, sizeof(objectsStruct::shaderArmatureStruct) * obj->count);
+				}
 				obj->mesh->bind();
 				setTwoSided((obj->mesh->getFlags() & meshFlags::TwoSided) == meshFlags::TwoSided);
 				setDepthTest((obj->mesh->getFlags() & meshFlags::DepthTest) == meshFlags::DepthTest, (obj->mesh->getFlags() & meshFlags::DepthWrite) == meshFlags::DepthWrite);
@@ -262,6 +267,8 @@ namespace cage
 					lightsDataBuffer->writeRange(l->shaderLights, 0, sizeof(lightsStruct::shaderLightStruct) * l->count);
 					mesh->bind();
 					mesh->dispatch(l->count);
+					drawCalls++;
+					drawPrimitives += l->count * mesh->getPrimitivesCount();
 				}
 
 				glCullFace(GL_BACK);

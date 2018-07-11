@@ -28,6 +28,6 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_API const vec4 evalSamplesForTextureAnimation(textureClass *texture, uint64 emitTime, uint64 animationStart, real animationSpeed, real animationOffset);
+		CAGE_API vec4 evalSamplesForTextureAnimation(textureClass *texture, uint64 emitTime, uint64 animationStart, real animationSpeed, real animationOffset);
 	}
 }

@@ -101,8 +101,6 @@ namespace
 				ass.databank = path;
 				ass.name = ini->getString(section, string(index));
 				ass.name = pathJoin(pathExtractPath(ass.databank), ass.name);
-				if (ass.name.length() >= 50)
-					CAGE_LOG(severityEnum::Warning, "database", string() + "asset name '" + ass.name + "' in databank '" + path + "' in section '" + section + "' is very long and may cause problems");
 				bool ok = true;
 				if (assets.exists(ass.name))
 				{

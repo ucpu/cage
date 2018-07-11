@@ -131,10 +131,10 @@ void testHashTable()
 #else
 #define Lookups 1000000
 #endif
-		performance < 100, Lookups>();
-		performance < 500, Lookups>();
-		performance <1000, Lookups>();
-		performance <5000, Lookups>();
+		performance< 100, Lookups>();
+		performance< 500, Lookups>();
+		performance<1000, Lookups>();
+		performance<5000, Lookups>();
 	}
 
 	{

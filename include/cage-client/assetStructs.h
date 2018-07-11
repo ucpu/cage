@@ -48,6 +48,7 @@ namespace cage
 		uint32 verticesCount;
 		uint32 indicesCount; // zero for non-indexed draws
 		uint32 skeletonName;
+		uint32 skeletonBones;
 		uint32 textureNames[MaxTexturesCountPerMaterial];
 		uint32 materialSize;
 
@@ -84,15 +85,31 @@ namespace cage
 	struct CAGE_API skeletonHeaderStruct
 	{
 		uint32 bonesCount;
-		uint32 namesCount;
-		uint32 animationsCount;
+
+		// follows:
+		// array of parent bone indices, each uint16, (uint16)-1 for the root
+		// array of base transformation matrices, each mat4
+		// array of inverted rest matrices, each mat4
 	};
 
 	struct CAGE_API animationHeaderStruct
 	{
 		uint64 duration; // in microseconds
-		uint32 bonesCount;
-		uint32 size; // in bytes
+		uint32 skeletonBonesCount;
+		uint32 animationBonesCount;
+
+		// follows:
+		// array of indices, each uint16
+		// array of position frames counts, each uint16
+		// array of rotation frames counts, each uint16
+		// array of scale frames counts, each uint16
+		// array of bones, each:
+		//   array of position times, each float
+		//   array of position values, each vec3
+		//   array of rotation times, each float
+		//   array of rotation values, each quat
+		//   array of scale times, each float
+		//   array of scale values, each vec3
 	};
 
 	struct CAGE_API objectHeaderStruct
@@ -147,9 +164,7 @@ namespace cage
 		uint32 sampleRate;
 
 		// follows (for raw file):
-		// <strike> array of samples, each 1 float, for first channel
-		// array of samples, each 1 float, for second channel </strike>
-		// array of frames, each channels count of floats
+		// array of frames, each channels * float
 		// ...
 
 		// follows (for compressed file):

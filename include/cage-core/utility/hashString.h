@@ -1,112 +1,8 @@
 #ifndef guard_hashString_h_b051260b_de9f_4127_a5c7_1c6a0d0b6798_
 #define guard_hashString_h_b051260b_de9f_4127_a5c7_1c6a0d0b6798_
 
-#define GCHL_HSSTR_1 GCHL_HASH_OFFSET
-#define GCHL_HSSTR_2 ((GCHL_HSSTR_1 ^ str[0]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_3 ((GCHL_HSSTR_2 ^ str[1]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_4 ((GCHL_HSSTR_3 ^ str[2]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_5 ((GCHL_HSSTR_4 ^ str[3]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_6 ((GCHL_HSSTR_5 ^ str[4]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_7 ((GCHL_HSSTR_6 ^ str[5]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_8 ((GCHL_HSSTR_7 ^ str[6]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_9 ((GCHL_HSSTR_8 ^ str[7]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_10 ((GCHL_HSSTR_9 ^ str[8]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_11 ((GCHL_HSSTR_10 ^ str[9]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_12 ((GCHL_HSSTR_11 ^ str[10]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_13 ((GCHL_HSSTR_12 ^ str[11]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_14 ((GCHL_HSSTR_13 ^ str[12]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_15 ((GCHL_HSSTR_14 ^ str[13]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_16 ((GCHL_HSSTR_15 ^ str[14]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_17 ((GCHL_HSSTR_16 ^ str[15]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_18 ((GCHL_HSSTR_17 ^ str[16]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_19 ((GCHL_HSSTR_18 ^ str[17]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_20 ((GCHL_HSSTR_19 ^ str[18]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_21 ((GCHL_HSSTR_20 ^ str[19]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_22 ((GCHL_HSSTR_21 ^ str[20]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_23 ((GCHL_HSSTR_22 ^ str[21]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_24 ((GCHL_HSSTR_23 ^ str[22]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_25 ((GCHL_HSSTR_24 ^ str[23]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_26 ((GCHL_HSSTR_25 ^ str[24]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_27 ((GCHL_HSSTR_26 ^ str[25]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_28 ((GCHL_HSSTR_27 ^ str[26]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_29 ((GCHL_HSSTR_28 ^ str[27]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_30 ((GCHL_HSSTR_29 ^ str[28]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_31 ((GCHL_HSSTR_30 ^ str[29]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_32 ((GCHL_HSSTR_31 ^ str[30]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_33 ((GCHL_HSSTR_32 ^ str[31]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_34 ((GCHL_HSSTR_33 ^ str[32]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_35 ((GCHL_HSSTR_34 ^ str[33]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_36 ((GCHL_HSSTR_35 ^ str[34]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_37 ((GCHL_HSSTR_36 ^ str[35]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_38 ((GCHL_HSSTR_37 ^ str[36]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_39 ((GCHL_HSSTR_38 ^ str[37]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_40 ((GCHL_HSSTR_39 ^ str[38]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_41 ((GCHL_HSSTR_40 ^ str[39]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_42 ((GCHL_HSSTR_41 ^ str[40]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_43 ((GCHL_HSSTR_42 ^ str[41]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_44 ((GCHL_HSSTR_43 ^ str[42]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_45 ((GCHL_HSSTR_44 ^ str[43]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_46 ((GCHL_HSSTR_45 ^ str[44]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_47 ((GCHL_HSSTR_46 ^ str[45]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_48 ((GCHL_HSSTR_47 ^ str[46]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_49 ((GCHL_HSSTR_48 ^ str[47]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_50 ((GCHL_HSSTR_49 ^ str[48]) * GCHL_HASH_PRIME)
-/*
-#define GCHL_HSSTR_51 ((GCHL_HSSTR_50 ^ str[49]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_52 ((GCHL_HSSTR_51 ^ str[50]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_53 ((GCHL_HSSTR_52 ^ str[51]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_54 ((GCHL_HSSTR_53 ^ str[52]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_55 ((GCHL_HSSTR_54 ^ str[53]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_56 ((GCHL_HSSTR_55 ^ str[54]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_57 ((GCHL_HSSTR_56 ^ str[55]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_58 ((GCHL_HSSTR_57 ^ str[56]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_59 ((GCHL_HSSTR_58 ^ str[57]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_60 ((GCHL_HSSTR_59 ^ str[58]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_61 ((GCHL_HSSTR_60 ^ str[59]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_62 ((GCHL_HSSTR_61 ^ str[60]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_63 ((GCHL_HSSTR_62 ^ str[61]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_64 ((GCHL_HSSTR_63 ^ str[62]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_65 ((GCHL_HSSTR_64 ^ str[63]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_66 ((GCHL_HSSTR_65 ^ str[64]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_67 ((GCHL_HSSTR_66 ^ str[65]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_68 ((GCHL_HSSTR_67 ^ str[66]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_69 ((GCHL_HSSTR_68 ^ str[67]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_70 ((GCHL_HSSTR_69 ^ str[68]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_71 ((GCHL_HSSTR_70 ^ str[69]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_72 ((GCHL_HSSTR_71 ^ str[70]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_73 ((GCHL_HSSTR_72 ^ str[71]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_74 ((GCHL_HSSTR_73 ^ str[72]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_75 ((GCHL_HSSTR_74 ^ str[73]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_76 ((GCHL_HSSTR_75 ^ str[74]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_77 ((GCHL_HSSTR_76 ^ str[75]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_78 ((GCHL_HSSTR_77 ^ str[76]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_79 ((GCHL_HSSTR_78 ^ str[77]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_80 ((GCHL_HSSTR_79 ^ str[78]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_81 ((GCHL_HSSTR_80 ^ str[79]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_82 ((GCHL_HSSTR_81 ^ str[80]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_83 ((GCHL_HSSTR_82 ^ str[81]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_84 ((GCHL_HSSTR_83 ^ str[82]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_85 ((GCHL_HSSTR_84 ^ str[83]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_86 ((GCHL_HSSTR_85 ^ str[84]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_87 ((GCHL_HSSTR_86 ^ str[85]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_88 ((GCHL_HSSTR_87 ^ str[86]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_89 ((GCHL_HSSTR_88 ^ str[87]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_90 ((GCHL_HSSTR_89 ^ str[88]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_91 ((GCHL_HSSTR_90 ^ str[89]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_92 ((GCHL_HSSTR_91 ^ str[90]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_93 ((GCHL_HSSTR_92 ^ str[91]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_94 ((GCHL_HSSTR_93 ^ str[92]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_95 ((GCHL_HSSTR_94 ^ str[93]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_96 ((GCHL_HSSTR_95 ^ str[94]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_97 ((GCHL_HSSTR_96 ^ str[95]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_98 ((GCHL_HSSTR_97 ^ str[96]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_99 ((GCHL_HSSTR_98 ^ str[97]) * GCHL_HASH_PRIME)
-#define GCHL_HSSTR_100 ((GCHL_HSSTR_99 ^ str[98]) * GCHL_HASH_PRIME)
-*/
-
 #define GCHL_HASH_OFFSET 2166136261u
 #define GCHL_HASH_PRIME 16777619u
-#define GCHL_HASH_MAXLEN 50
 
 namespace cage
 {
@@ -126,24 +22,34 @@ namespace cage
 			const char *str;
 		};
 
+		template<uint32 N, uint32 I> struct hash
+		{
+			constexpr uint32 operator ()(const char(&str)[N])
+			{
+				return (hash<N, I - 1>()(str) ^ str[I - 2]) * GCHL_HASH_PRIME;
+			}
+		};
+
+		template<uint32 N> struct hash<N, 1>
+		{
+			constexpr uint32 operator ()(const char(&str)[N])
+			{
+				return GCHL_HASH_OFFSET;
+			}
+		};
+
 	public:
 		explicit hashString(const constCharWrapper &str) : value(privat::hashStringFunction(str.str))
 		{};
 
-		template<uint32 N> explicit hashString(const char(&str)[N]) : value(0)
-		{
-			CAGE_ASSERT_COMPILE(false, string_too_long);
-		};
+		template<uint32 N> explicit hashString(const char(&str)[N]) : value(hash<N, N>()(str))
+		{};
 
 		operator uint32() const
 		{
 			return value;
 		}
 	};
-
-#define GCHL_GENERATE(N) template<> inline hashString::hashString(const char (&str)[N]): value (CAGE_JOIN(GCHL_HSSTR_, N)) {}
-	CAGE_EVAL_MEDIUM(CAGE_REPEAT(GCHL_HASH_MAXLEN, GCHL_GENERATE));
-#undef GCHL_GENERATE
 }
 
 #endif // guard_hashString_h_b051260b_de9f_4127_a5c7_1c6a0d0b6798_

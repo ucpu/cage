@@ -83,15 +83,15 @@ cage_ide_groups(cage-asset-database cage)
 cage_ide_working_dir_in_place(cage-asset-database)
 
 ########
-# CAGE-ASSET-GENERATOR
+# CAGE-ASSET-ANALYZE
 ########
 
-file(GLOB_RECURSE cage-asset-generator-sources "sources/asset-generator/*")
-add_executable(cage-asset-generator ${cage-asset-generator-sources})
-target_link_libraries(cage-asset-generator cage-client)
-add_dependencies(cage-asset-generator cage-asset-processor)
-cage_ide_groups(cage-asset-generator cage)
-cage_ide_working_dir_in_place(cage-asset-generator)
+file(GLOB_RECURSE cage-asset-analyze-sources "sources/asset-analyze/*")
+add_executable(cage-asset-analyze ${cage-asset-analyze-sources})
+target_link_libraries(cage-asset-analyze cage-client)
+add_dependencies(cage-asset-analyze cage-asset-processor)
+cage_ide_groups(cage-asset-analyze cage)
+cage_ide_working_dir_in_place(cage-asset-analyze)
 
 ########
 # FINALIZATION

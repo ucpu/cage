@@ -1,4 +1,6 @@
 #include <set>
+#include <map>
+#include <vector>
 
 #include "assimp.h"
 
@@ -8,12 +10,79 @@
 #include <assimp/LogStream.hpp>
 #include <assimp/DefaultLogger.hpp>
 
-CAGE_ASSERT_COMPILE(sizeof(aiColor3D) == sizeof(cage::vec3), assimp_color3D_is_not_interchangeable_with_vec3);
-CAGE_ASSERT_COMPILE(sizeof(aiColor4D) == sizeof(cage::vec4), assimp_color4D_is_not_interchangeable_with_vec4);
-CAGE_ASSERT_COMPILE(sizeof(aiVector3D) == sizeof(cage::vec3), assimp_vector3D_is_not_interchangeable_with_vec3);
-
 namespace
 {
+	struct cmpAiStr
+	{
+		bool operator ()(const aiString &a, const aiString &b) const
+		{
+			if (a.length == b.length)
+				return cage::detail::memcmp(a.data, b.data, a.length) < 0;
+			return a.length < b.length;
+		}
+	};
+
+	class assimpSkeletonImpl : public assimpSkeletonClass
+	{
+	public:
+		assimpSkeletonImpl(const aiScene *scene)
+		{
+			// find all names that correspond to bones
+			for (uint32 mi = 0; mi < scene->mNumMeshes; mi++)
+			{
+				aiMesh *m = scene->mMeshes[mi];
+				for (uint32 bi = 0; bi < m->mNumBones; bi++)
+				{
+					aiBone *b = m->mBones[bi];
+					indices[b->mName] = (uint16)-1;
+				}
+			}
+			// find nodes and parents
+			traverseNodes(scene->mRootNode, -1);
+			// update indices
+			{
+				uint16 i = 0;
+				for (auto n : nodes)
+					indices[n->mName] = i++;
+			}
+			// update bones
+			bones.resize(nodes.size(), nullptr);
+			for (uint32 mi = 0; mi < scene->mNumMeshes; mi++)
+			{
+				aiMesh *m = scene->mMeshes[mi];
+				for (uint32 bi = 0; bi < m->mNumBones; bi++)
+				{
+					aiBone *b = m->mBones[bi];
+					CAGE_ASSERT_RUNTIME(indices.count(b->mName));
+					uint16 idx = indices[b->mName];
+					if (bones[idx])
+					{
+						CAGE_ASSERT_RUNTIME(conv(bones[idx]->mOffsetMatrix) == conv(b->mOffsetMatrix));
+					}
+					else
+						bones[idx] = b;
+				}
+			}
+		}
+
+		void traverseNodes(aiNode *n, uint16 pi)
+		{
+			if (n->mName.length && indices.count(n->mName))
+			{
+				nodes.push_back(n);
+				parents.push_back(pi);
+				pi = numeric_cast<uint16>(parents.size() - 1);
+			}
+			for (uint32 i = 0; i < n->mNumChildren; i++)
+				traverseNodes(n->mChildren[i], pi);
+		}
+
+		std::vector<aiBone*> bones;
+		std::vector<aiNode*> nodes;
+		std::vector<uint16> parents;
+		std::map<aiString, uint16, cmpAiStr> indices;
+	};
+
 	class cageIoStream : public Assimp::IOStream
 	{
 	public:
@@ -168,8 +237,9 @@ namespace
 			if ((scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) == AI_SCENE_FLAGS_INCOMPLETE)
 				CAGE_THROW_ERROR(exception, "the scene is incomplete");
 
+			// print meshes
 			CAGE_LOG(severityEnum::Info, logComponentName, string() + "found " + scene->mNumMeshes + " meshes");
-			for (unsigned i = 0; i < scene->mNumMeshes; i++)
+			for (uint32 i = 0; i < scene->mNumMeshes; i++)
 			{
 				const aiMesh *am = scene->mMeshes[i];
 				string objname = am->mName.C_Str();
@@ -186,7 +256,25 @@ namespace
 					contains += "triangles ";
 				if (am->mPrimitiveTypes & aiPrimitiveType_POLYGON)
 					contains += "polygons ";
+				if (am->HasBones())
+					contains += "bones ";
+				if (am->HasNormals())
+					contains += "normals ";
+				if (am->HasTextureCoords(0))
+					contains += "uv ";
+				if (am->HasTangentsAndBitangents())
+					contains += "tangents ";
+				if (am->HasVertexColors(0))
+					contains += "colors ";
 				CAGE_LOG_CONTINUE(severityEnum::Note, logComponentName, string() + "index: " + i + ", object: '" + objname + "', material: '" + matname + "', contains: " + contains);
+			}
+
+			// print animations
+			CAGE_LOG(severityEnum::Info, logComponentName, string() + "found " + scene->mNumAnimations + " animations");
+			for (uint32 i = 0; i < scene->mNumAnimations; i++)
+			{
+				const aiAnimation *ani = scene->mAnimations[i];
+				CAGE_LOG_CONTINUE(severityEnum::Info, logComponentName, string() + "index: " + i + ", animation: '" + ani->mName.data + "', channels: " + ani->mNumChannels);
 			}
 		};
 
@@ -231,6 +319,82 @@ aiProcess_OptimizeGraph |
 aiProcess_Debone |
 //aiProcess_SplitLargeMeshes |
 0;
+
+uint16 assimpSkeletonClass::bonesCount() const
+{
+	const assimpSkeletonImpl *impl = (const assimpSkeletonImpl*)this;
+	CAGE_ASSERT_RUNTIME(impl->bones.size() == impl->nodes.size());
+	CAGE_ASSERT_RUNTIME(impl->parents.size() == impl->nodes.size());
+	return numeric_cast<uint16>(impl->bones.size());
+}
+
+aiNode *assimpSkeletonClass::node(aiBone *bone) const
+{
+	return node(index(bone));
+}
+
+aiNode *assimpSkeletonClass::node(uint16 index) const
+{
+	const assimpSkeletonImpl *impl = (const assimpSkeletonImpl*)this;
+	if (index == (uint16)-1)
+		return nullptr;
+	return impl->nodes[index];
+}
+
+aiBone *assimpSkeletonClass::bone(aiNode *node) const
+{
+	return bone(index(node));
+}
+
+aiBone *assimpSkeletonClass::bone(uint16 index) const
+{
+	const assimpSkeletonImpl *impl = (const assimpSkeletonImpl*)this;
+	if (index == (uint16)-1)
+		return nullptr;
+	return impl->bones[index];
+}
+
+uint16 assimpSkeletonClass::index(const aiString &name) const
+{
+	const assimpSkeletonImpl *impl = (const assimpSkeletonImpl*)this;
+	if (!name.length)
+		return (uint16)-1;
+	if (!impl->indices.count(name))
+		return (uint16)-1;
+	return impl->indices.at(name);
+}
+
+uint16 assimpSkeletonClass::index(aiNode *node) const
+{
+	if (!node)
+		return (uint16)-1;
+	return index(node->mName);
+}
+
+uint16 assimpSkeletonClass::index(aiBone *bone) const
+{
+	if (!bone)
+		return (uint16)-1;
+	return index(bone->mName);
+}
+
+uint16 assimpSkeletonClass::parent(uint16 index) const
+{
+	const assimpSkeletonImpl *impl = (const assimpSkeletonImpl*)this;
+	if (index == (uint16)-1)
+		return (uint16)-1;
+	return impl->parents[index];
+}
+
+aiBone *assimpSkeletonClass::parent(aiBone *bone) const
+{
+	return this->bone(parent(index(bone)));
+}
+
+aiNode *assimpSkeletonClass::parent(aiNode *node) const
+{
+	return this->node(parent(index(node)));
+}
 
 const aiScene *assimpContextClass::getScene() const
 {
@@ -293,9 +457,14 @@ uint32 assimpContextClass::selectMesh() const
 	}
 }
 
+holder<assimpSkeletonClass> assimpContextClass::skeleton() const
+{
+	return detail::systemArena().createImpl<assimpSkeletonClass, assimpSkeletonImpl>(getScene());
+}
+
 holder<assimpContextClass> newAssimpContext(uint32 flags)
 {
-	return detail::systemArena().createImpl <assimpContextClass, assimpContextImpl>(flags);
+	return detail::systemArena().createImpl<assimpContextClass, assimpContextImpl>(flags);
 }
 
 void analyzeAssimp()
@@ -307,15 +476,48 @@ void analyzeAssimp()
 		writeLine("cage-begin");
 		try
 		{
-			writeLine("scheme=mesh");
+			// meshes
 			if (scene->mNumMeshes == 1)
+			{
+				writeLine("scheme=mesh");
 				writeLine(string() + "asset=" + inputFile);
+			}
 			else for (uint32 i = 0; i < scene->mNumMeshes; i++)
 			{
 				aiMaterial *m = scene->mMaterials[scene->mMeshes[i]->mMaterialIndex];
 				aiString matName;
 				m->Get(AI_MATKEY_NAME, matName);
+				writeLine("scheme=mesh");
 				writeLine(string() + "asset=" + inputFile + "?" + scene->mMeshes[i]->mName.C_Str() + "_" + matName.C_Str());
+			}
+			// skeletons
+			{
+				bool found = false;
+				for (uint32 i = 0; i < scene->mNumMeshes; i++)
+				{
+					if (scene->mMeshes[i]->HasBones())
+					{
+						found = true;
+						break;
+					}
+				}
+				if (found)
+				{
+					writeLine("scheme=skeleton");
+					writeLine(string() + "asset=" + inputFile + ";skeleton");
+				}
+			}
+			// animations
+			for (uint32 i = 0; i < scene->mNumAnimations; i++)
+			{
+				aiAnimation *a = scene->mAnimations[i];
+				if (a->mNumChannels == 0)
+					continue; // only support skeletal animations
+				writeLine("scheme=animation");
+				string n = a->mName.C_Str();
+				if (n.empty())
+					n = i;
+				writeLine(string() + "asset=" + inputFile + "?" + n);
 			}
 		}
 		catch (...)
@@ -328,4 +530,41 @@ void analyzeAssimp()
 	{
 		// do nothing
 	}
+}
+
+vec3 conv(const aiVector3D &v)
+{
+	CAGE_ASSERT_COMPILE(sizeof(aiVector3D) == sizeof(cage::vec3), assimp_vector3D_is_not_interchangeable_with_vec3);
+	return *(vec3*)&v;
+}
+
+vec3 conv(const aiColor3D &v)
+{
+	CAGE_ASSERT_COMPILE(sizeof(aiColor3D) == sizeof(cage::vec3), assimp_color3D_is_not_interchangeable_with_vec3);
+	return *(vec3*)&v;
+}
+
+vec4 conv(const aiColor4D &v)
+{
+	CAGE_ASSERT_COMPILE(sizeof(aiColor4D) == sizeof(cage::vec4), assimp_color4D_is_not_interchangeable_with_vec4);
+	return *(vec4*)&v;
+}
+
+mat4 conv(const aiMatrix4x4 &m)
+{
+	CAGE_ASSERT_COMPILE(sizeof(aiMatrix4x4) == sizeof(cage::mat4), assimp_matrix4x4_is_not_interchangeable_with_mat4);
+	mat4 r;
+	detail::memcpy(&r, &m, sizeof(mat4));
+	//r[15] = 1;
+	return r.transpose();
+}
+
+quat conv(const aiQuaternion &q)
+{
+	quat r;
+	r.data[0] = q.x;
+	r.data[1] = q.y;
+	r.data[2] = q.z;
+	r.data[3] = q.w;
+	return r;
 }
