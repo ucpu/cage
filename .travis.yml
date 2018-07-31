@@ -1,0 +1,42 @@
+language: cpp
+
+os:
+  - linux
+  - osx
+
+compiler:
+  - gcc
+  - clang
+
+addons:
+  apt:
+    packages:
+      - xorg-dev
+      - nasm
+
+matrix:
+  exclude:
+    - compiler: gcc
+  include:
+    - compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-5
+      env: CXX=g++-5 CC=gcc-5
+    - compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+      env: CXX=g++-6 CC=gcc-6
+
+script:
+  - mkdir build && cd build
+  - cmake -DCMAKE_BUILD_TYPE=RELWITHDEBINFO ..
+  - cmake --build .
+  - result/relwithdebinfo/cage-test-core

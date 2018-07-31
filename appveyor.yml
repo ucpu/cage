@@ -1,0 +1,26 @@
+
+clone_depth: 5
+
+image: Visual Studio 2017
+
+platform: x64
+
+configuration:
+  - Debug
+  - RelWithDebInfo
+
+clone_folder: c:\project
+
+before_build:
+  - git submodule update --init --recursive
+  - mkdir build
+  - cd build
+  - cmake --version
+  - cmake -G"Visual Studio 15 2017 Win64" ..
+
+build:
+  project: c:\project\build\cage.sln
+
+before_test:
+  - dir c:\project c:\project\build c:\project\build\result\ c:\project\build\result\%CONFIGURATION%\
+  - c:\project\build\result\%CONFIGURATION%\cage-test-core.exe
