@@ -5,7 +5,10 @@ message(STATUS "jpeg")
 message(STATUS "----------------------------------------------------------------")
 
 option(ENABLE_SHARED "Build shared libraries" FALSE)
-#option(WITH_SIMD "Include SIMD extensions, if available for this platform" false)
+
+if(APPLE)
+	option(WITH_SIMD "Include SIMD extensions, if available for this platform" false)
+endif()
 
 if(NOT CMAKE_INSTALL_DOCDIR)
 	set(CMAKE_INSTALL_DOCDIR ${CMAKE_INSTALL_BINDIR})
