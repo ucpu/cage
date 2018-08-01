@@ -24,8 +24,8 @@ matrix:
     - os: osx
       compiler: clang
     - allow_failures:
-      - compiler: clang
-        os: osx
+      - os: osx
+        compiler: clang
 
 script:
   - export CXX=$COMPILER && export CC=$COMPILERC
