@@ -2,8 +2,6 @@
 git:
   depth: 5
 
-language: c++
-
 addons:
   apt:
     sources:
