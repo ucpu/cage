@@ -13,7 +13,6 @@
 namespace
 {
 	std::atomic<uint32> connectionsLeft;
-	std::atomic<uint16> serverPort;
 
 	class serverImpl
 	{
@@ -25,7 +24,7 @@ namespace
 
 		serverImpl() : lastTime(getApplicationTime()), hadConnection(false)
 		{
-			udp = newUdpServer(serverPort);
+			udp = newUdpServer(3210);
 		}
 
 		bool service()
@@ -77,14 +76,13 @@ namespace
 		clientImpl() : si(0), ri(0)
 		{
 			connectionsLeft++;
-			uint32 cnt = random(3, 5);
-			for (uint32 i = 0; i < cnt; i++)
+			for (uint32 i = 0; i < 3; i++)
 			{
-				memoryBuffer b(random(1000000, 2000000));
+				memoryBuffer b(random(500000, 1000000));
 				privat::generateRandomData((uint8*)b.data(), numeric_cast<uint32>(b.size()));
 				sends.push_back(templates::move(b));
 			}
-			udp = newUdpConnection("localhost", serverPort, cage::random() < 0.5 ? 3000000 : 0);
+			udp = newUdpConnection("localhost", 3210, cage::random() < 0.5 ? 3000000 : 0);
 		}
 
 		~clientImpl()
@@ -126,25 +124,15 @@ void testUdp()
 
 	configSetUint32("cage-core.udp.logLevel", 2);
 	configSetUint32("cage-core.udp.packetsPerService", 1);
-	configFloat simulatedPacketLoss("cage-core.udp.simulatedPacketLoss");
+	configSetFloat("cage-core.udp.simulatedPacketLoss", 0.1);
 
-	static const uint32 connections = 3;
-
-	serverPort = 3210;
-	for (auto packetLossChance : { 0.01, 0.2 })
-	{
-		simulatedPacketLoss = (float)packetLossChance;
-		string testName = string() + "test with packet loss chance: " + packetLossChance;
-		CAGE_TESTCASE(testName);
-		holder<threadClass> server = newThread(delegate<void()>().bind<&serverImpl::entry>(), "server");
-		std::vector<holder<threadClass>> clients;
-		clients.resize(connections);
-		uint32 index = 0;
-		for (auto &c : clients)
-			c = newThread(delegate<void()>().bind<&clientImpl::entry>(), string() + "client " + (index++));
-		server->wait();
-		for (auto &c : clients)
-			c->wait();
-		serverPort++;
-	}
+	holder<threadClass> server = newThread(delegate<void()>().bind<&serverImpl::entry>(), "server");
+	std::vector<holder<threadClass>> clients;
+	clients.resize(2);
+	uint32 index = 0;
+	for (auto &c : clients)
+		c = newThread(delegate<void()>().bind<&clientImpl::entry>(), string() + "client " + (index++));
+	server->wait();
+	for (auto &c : clients)
+		c->wait();
 }
