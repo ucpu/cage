@@ -12,8 +12,13 @@ message(STATUS "----------------------------------------------------------------
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(cage_all)
-cage_disable_source_build()
-cage_build_configuration()
+
+if(CMAKE_CURRENT_BINARY_DIR STREQUAL CMAKE_BINARY_DIR)
+	cage_default_init() # standalone build
+else()
+	cage_disable_source_build()
+	cage_build_configuration()
+endif()
 
 add_subdirectory(externals EXCLUDE_FROM_ALL)
 
