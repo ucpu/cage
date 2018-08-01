@@ -25,7 +25,7 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-5
-      env: CXX=g++-5 CC=gcc-5
+      env: COMPILER=g++-5 COMPILERC=gcc-5
     - compiler: gcc
       addons:
         apt:
@@ -33,9 +33,11 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-6
-      env: CXX=g++-6 CC=gcc-6
+      env: COMPILER=g++-6 COMPILERC=gcc-6
 
 script:
+  - export CXX=$COMPILER
+  - export CC=$COMPILERC
   - mkdir build && cd build
   - cmake -DCMAKE_BUILD_TYPE=RELWITHDEBINFO ..
   - cmake --build .
