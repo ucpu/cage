@@ -22,9 +22,4 @@ build:
   project: c:\project\build\cage.sln
 
 before_test:
-  - dir c:\project
-  - dir c:\project\build
-  - dir c:\project\build\result\
-  - echo "c:\project\build\result\%CONFIGURATION%\"
-  - dir c:\project\build\result\%CONFIGURATION%\
   - c:\project\build\result\%CONFIGURATION%\cage-test-core.exe
