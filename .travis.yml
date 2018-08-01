@@ -3,6 +3,7 @@ git:
 
 language: c++
 compiler: gcc
+os: linux
 
 addons:
   apt:
@@ -17,16 +18,12 @@ addons:
 matrix:
   fast_finish: true
   exclude:
-    - compiler: gcc
+    - os: linux
   include:
-    - compiler: gcc
-      os: linux
-      env: COMPILER=g++-5 COMPILERC=gcc-5
-    - compiler: gcc
-      os: linux
-      env: COMPILER=g++-6 COMPILERC=gcc-6
-    - compiler: clang
-      os: osx
+    - env: COMPILER=g++-5 COMPILERC=gcc-5
+    - env: COMPILER=g++-6 COMPILERC=gcc-6
+    - os: osx
+      compiler: clang
     - allow_failures:
       - compiler: clang
         os: osx
