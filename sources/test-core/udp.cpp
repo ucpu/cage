@@ -76,9 +76,9 @@ namespace
 		clientImpl() : si(0), ri(0)
 		{
 			connectionsLeft++;
-			for (uint32 i = 0; i < 3; i++)
+			for (uint32 i = 0; i < 20; i++)
 			{
-				memoryBuffer b(random(500000, 1000000));
+				memoryBuffer b(random(100, 10000));
 				privat::generateRandomData((uint8*)b.data(), numeric_cast<uint32>(b.size()));
 				sends.push_back(templates::move(b));
 			}
@@ -124,11 +124,11 @@ void testUdp()
 
 	configSetUint32("cage-core.udp.logLevel", 2);
 	configSetUint32("cage-core.udp.packetsPerService", 1);
-	configSetFloat("cage-core.udp.simulatedPacketLoss", 0.1);
+	configSetFloat("cage-core.udp.simulatedPacketLoss", 0.1f);
 
 	holder<threadClass> server = newThread(delegate<void()>().bind<&serverImpl::entry>(), "server");
 	std::vector<holder<threadClass>> clients;
-	clients.resize(2);
+	clients.resize(3);
 	uint32 index = 0;
 	for (auto &c : clients)
 		c = newThread(delegate<void()>().bind<&clientImpl::entry>(), string() + "client " + (index++));

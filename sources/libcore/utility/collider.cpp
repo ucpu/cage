@@ -5,9 +5,9 @@
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
-#include <cage-core/utility/pointer.h>
 #include <cage-core/utility/collider.h>
 #include <cage-core/utility/memoryBuffer.h>
+#include <cage-core/utility/serialization.h>
 
 namespace cage
 {
@@ -251,31 +251,20 @@ namespace cage
 			bool dirty;
 		};
 
-		uint32 bufferSize(const collisionObjectHeader &h)
+		template<class T> void writeVector(serializer &ser, const std::vector<T> &v)
 		{
-			return sizeof(collisionObjectHeader)
-				+ sizeof(triangle) * h.trisCount
-				+ sizeof(aabb) * h.nodesCount
-				+ sizeof(collisionObjectImpl::nodeStruct) * h.nodesCount;
+			ser.write(v.data(), sizeof(T) * v.size());
 		}
 
-		template<class T> void writeVector(const std::vector<T> &v, pointer &p)
-		{
-			detail::memcpy(p, v.data(), sizeof(T) * v.size());
-			p += sizeof(T) * v.size();
-		}
-
-		template<class T> void readVector(std::vector<T> &v, pointer &p, uint32 count)
+		template<class T> void readVector(deserializer &des, std::vector<T> &v, uint32 count)
 		{
 			v.resize(count);
-			detail::memcpy(v.data(), p, sizeof(T) * count);
-			p += sizeof(T) * count;
+			des.read(v.data(), sizeof(T) * count);
 		}
 	}
 
 	memoryBuffer colliderClass::serialize(bool includeAdditionalData) const
 	{
-		memoryBuffer buffer;
 		const collisionObjectImpl *impl = (collisionObjectImpl*)this;
 		collisionObjectHeader header;
 		detail::memset(&header, 0, sizeof(header));
@@ -284,36 +273,29 @@ namespace cage
 		header.trisCount = numeric_cast<uint32>(impl->tris.size());
 		header.nodesCount = numeric_cast<uint32>(impl->nodes.size());
 		header.dirty = impl->dirty;
-		buffer.reallocate(bufferSize(header));
-		pointer p = buffer.data();
-		detail::memcpy(p, &header, sizeof(header));
-		p += sizeof(header);
-		writeVector(impl->tris, p);
-		writeVector(impl->boxes, p);
-		writeVector(impl->nodes, p);
-		CAGE_ASSERT_RUNTIME(p.asChar == buffer.data() + buffer.size());
+		memoryBuffer buffer;
+		serializer ser(buffer);
+		ser << header;
+		writeVector(ser, impl->tris);
+		writeVector(ser, impl->boxes);
+		writeVector(ser, impl->nodes);
 		return buffer;
 	}
 
 	void colliderClass::deserialize(const memoryBuffer &buffer)
 	{
 		collisionObjectImpl *impl = (collisionObjectImpl*)this;
+		deserializer des(buffer);
 		collisionObjectHeader header;
-		if (buffer.size() < sizeof(header))
-			CAGE_THROW_ERROR(exception, "Cannot deserialize collision object: buffer too small");
-		detail::memcpy(&header, buffer.data(), sizeof(header));
+		des >> header;
 		if (detail::memcmp(header.magic, currentMagic, detail::strlen(currentMagic)) != 0)
 			CAGE_THROW_ERROR(exception, "Cannot deserialize collision object: wrong magic");
 		if (header.version != currentVersion)
 			CAGE_THROW_ERROR(exception, "Cannot deserialize collision object: wrong version");
-		if (buffer.size() < bufferSize(header))
-			CAGE_THROW_ERROR(exception, "Cannot deserialize collision object: data truncated");
 		impl->dirty = header.dirty;
-		pointer p = pointer(const_cast<char*>(buffer.data())) + sizeof(header); // todo replace pointer with deserializer
-		readVector(impl->tris, p, header.trisCount);
-		readVector(impl->boxes, p, header.nodesCount);
-		readVector(impl->nodes, p, header.nodesCount);
-		CAGE_ASSERT_RUNTIME(p.asChar == buffer.data() + buffer.size());
+		readVector(des, impl->tris, header.trisCount);
+		readVector(des, impl->boxes, header.nodesCount);
+		readVector(des, impl->nodes, header.nodesCount);
 	}
 
 	holder<colliderClass> newCollider()

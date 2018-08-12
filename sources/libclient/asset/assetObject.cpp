@@ -2,7 +2,7 @@
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
 #include <cage-core/assets.h>
-#include <cage-core/utility/pointer.h>
+#include <cage-core/utility/serialization.h>
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
 #include <cage-client/core.h>
@@ -20,32 +20,30 @@ namespace cage
 			objectClass *obj = static_cast<objectClass*>(context->assetHolder.get());
 			context->returnData = obj;
 
+			deserializer des(context->originalData, context->originalSize);
 			objectHeaderStruct h;
-			detail::memcpy(&h, context->originalData, sizeof(h));
+			des >> h;
 			obj->collider = h.collider;
 			obj->shadower = h.shadower;
 			obj->worldSize = h.worldSize;
 			obj->pixelsSize = h.pixelsSize;
-
-			pointer p = context->originalData;
-			p += sizeof(h);
 			obj->setLodLevels(h.lodsCount);
+
 			for (uint32 l = 0; l < h.lodsCount; l++)
 			{
-				float thr = *(float*)p.asVoid;
-				p += sizeof(float); // threshold
+				float thr;
+				des >> thr;
 				obj->setLodThreshold(l, thr);
-				uint32 cnt = *(uint32*)p.asVoid;
-				p += sizeof(uint32); // cnt
+				uint32 cnt;
+				des >> cnt;
 				obj->setLodMeshes(l, cnt);
 				for (uint32 m = 0; m < cnt; m++)
 				{
-					uint32 nam = *(uint32*)p.asVoid;
-					p += sizeof(uint32); // mesh name
+					uint32 nam;
+					des >> nam;
 					obj->setMeshName(l, m, nam);
 				}
 			}
-			CAGE_ASSERT_RUNTIME(p == pointer(context->originalData) + (uintPtr)context->originalSize);
 		}
 
 		void processDone(const assetContextStruct *context, void *schemePointer)

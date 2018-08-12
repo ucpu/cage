@@ -3,7 +3,6 @@
 #include <cage-core/geometry.h>
 #include <cage-core/log.h>
 #include <cage-core/memory/memoryDetail.h> // addToAlign
-#include <cage-core/utility/pointer.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
@@ -131,7 +130,7 @@ namespace cage
 			impl->textures[i] = textureNames[i];
 	}
 
-	void meshClass::setBuffers(uint32 verticesCount, uint32 vertexSize, void *vertexData, uint32 indicesCount, const uint32 *indexData, uint32 materialSize, void *materialData)
+	void meshClass::setBuffers(uint32 verticesCount, uint32 vertexSize, const void *vertexData, uint32 indicesCount, const uint32 *indexData, uint32 materialSize, const void *materialData)
 	{
 		meshImpl *impl = (meshImpl*)this;
 		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<meshClass>() == impl->id);
@@ -188,7 +187,7 @@ namespace cage
 		impl->updatePrimitivesCount();
 	}
 
-	void meshClass::setAttribute(uint32 index, uint32 size, uint32 type, uint32 stride, void *data)
+	void meshClass::setAttribute(uint32 index, uint32 size, uint32 type, uint32 stride, const void *data)
 	{
 		meshImpl *impl = (meshImpl*)this;
 		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<meshClass>() == impl->id);
@@ -197,7 +196,7 @@ namespace cage
 		else
 		{
 			glEnableVertexAttribArray(index);
-			data = pointer(data) + numeric_cast<uintPtr>(impl->verticesOffset);
+			data = (char*)data + numeric_cast<uintPtr>(impl->verticesOffset);
 			switch (type)
 			{
 			case GL_BYTE:

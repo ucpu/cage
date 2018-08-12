@@ -464,8 +464,8 @@ void processShader()
 			prepend += string("#version ") + properties("version") + "\n";
 		prepend += string() + "// " + inputName + "\n";
 		uint32 y, M, d, h, m, s;
-		getSystemDateTime(y, M, d, h, m, s);
-		prepend += string() + "// " + formatDateTime(y, M, d, h, m, s) + "\n";
+		detail::getSystemDateTime(y, M, d, h, m, s);
+		prepend += string() + "// " + detail::formatDateTime(y, M, d, h, m, s) + "\n";
 		for (std::map <string, std::string>::iterator it = codes.begin(), et = codes.end(); it != et; it++)
 			codes[it->first] = std::string(prepend.c_str(), prepend.length()) + it->second;
 	}

@@ -2,7 +2,6 @@
 #include <cage-core/core.h>
 #include <cage-core/log.h>
 #include <cage-core/math.h>
-#include <cage-core/utility/pointer.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
 #include "../incWin.h"
@@ -133,11 +132,6 @@ namespace cage
 				detail::terminate();
 			else
 				CAGE_THROW_CRITICAL(exception, "assert failure");
-		}
-
-		assertClass &assertClass::variable(const char *name, const pointer var)
-		{
-			return variable(name, var.asVoid);
 		}
 
 #define GCHL_GENERATE(TYPE) \

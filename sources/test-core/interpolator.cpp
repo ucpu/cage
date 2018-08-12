@@ -1,30 +1,30 @@
 #include "main.h"
 
 #include <cage-core/math.h>
-#include <cage-core/utility/interpolator.h>
+#include <cage-core/utility/variableInterpolatingBuffer.h>
 
 void testInterpolator()
 {
-	CAGE_TESTCASE("interpolator");
+	CAGE_TESTCASE("variableInterpolatingBuffer");
 
 	{
 		CAGE_TESTCASE("compilations");
 
-		interpolator <real> iReal;
-		interpolator <degs> iDegs;
-		interpolator <rads> iRads;
-		interpolator <vec2> iVec2;
-		interpolator <vec3> iVec3;
-		interpolator <vec4> iVec4;
-		interpolator <quat> iQuat;
-		interpolator <mat3> iMat3;
-		interpolator <mat4> iMat4;
+		variableInterpolatingBufferStruct<real> iReal;
+		variableInterpolatingBufferStruct<degs> iDegs;
+		variableInterpolatingBufferStruct<rads> iRads;
+		variableInterpolatingBufferStruct<vec2> iVec2;
+		variableInterpolatingBufferStruct<vec3> iVec3;
+		variableInterpolatingBufferStruct<vec4> iVec4;
+		variableInterpolatingBufferStruct<quat> iQuat;
+		variableInterpolatingBufferStruct<mat3> iMat3;
+		variableInterpolatingBufferStruct<mat4> iMat4;
 	}
 
 	{
 		CAGE_TESTCASE("simple interpolations on real");
 
-		interpolator <real> v;
+		variableInterpolatingBufferStruct<real> v;
 		v.set(100, 100, 50);
 		CAGE_TEST(v(50) == 100);
 		CAGE_TEST(v(150) == 100);
@@ -57,7 +57,7 @@ void testInterpolator()
 	{
 		CAGE_TESTCASE("advanced interpolations on real");
 
-		interpolator <real> v;
+		variableInterpolatingBufferStruct<real> v;
 		v.set(100, 100, 100);
 		v.set(200, 200, 100);
 		v.set(300, 300, 100);

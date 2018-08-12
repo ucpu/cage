@@ -3,20 +3,16 @@
 
 namespace cage
 {
-	struct serializer
+	struct CAGE_API serializer
 	{
 		memoryBuffer &buffer;
 		
 		explicit serializer(memoryBuffer &buffer) : buffer(buffer)
 		{}
 
-		serializer &write(const void *data, uintPtr size)
-		{
-			uintPtr o = buffer.size();
-			buffer.resizeGrowSmart(buffer.size() + size);
-			detail::memcpy(buffer.data() + o, data, size);
-			return *this;
-		}
+		serializer &write(const void *data, uintPtr size);
+
+		char *access(uintPtr size);
 	};
 
 	template <class T>
@@ -38,7 +34,7 @@ namespace cage
 		CAGE_ASSERT_COMPILE(false, do_not_serialize_a_pointer);
 	}
 
-	struct deserializer
+	struct CAGE_API deserializer
 	{
 		const char *current;
 		const char *end;
@@ -46,8 +42,7 @@ namespace cage
 		deserializer(const void *data, uintPtr size) : current((char*)data), end(current + size)
 		{}
 
-		explicit deserializer(const memoryBuffer &buffer) : current(buffer.data()), end(current + buffer.size())
-		{}
+		explicit deserializer(const memoryBuffer &buffer);
 
 		deserializer &read(void *data, uintPtr size)
 		{
@@ -56,6 +51,15 @@ namespace cage
 			detail::memcpy(data, current, size);
 			current += size;
 			return *this;
+		}
+
+		const char *access(uintPtr size)
+		{
+			if (current + size > end)
+				CAGE_THROW_ERROR(exception, "deserialization beyond range");
+			const char *c = current;
+			current += size;
+			return c;
 		}
 	};
 

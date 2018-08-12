@@ -19,19 +19,22 @@ matrix:
   exclude:
     - compiler: gcc
   include:
-    - env: COMPILER=g++-5 COMPILERC=gcc-5
-    - env: COMPILER=g++-6 COMPILERC=gcc-6
+    - env: COMPILER=g++-5 COMPILERC=gcc-5 CONFIG=relwithdebinfo
+    - env: COMPILER=g++-6 COMPILERC=gcc-6 CONFIG=relwithdebinfo
+    - env: COMPILER=g++-6 COMPILERC=gcc-6 CONFIG=debug
     - os: osx
       compiler: clang
+      env: CONFIG=relwithdebinfo
   allow_failures:
     - os: osx
       compiler: clang
+      env: CONFIG=relwithdebinfo
 
 script:
   - export CXX=$COMPILER && export CC=$COMPILERC
   - mkdir build && cd build
-  - cmake -DCMAKE_BUILD_TYPE=RELWITHDEBINFO ..
+  - cmake -DCMAKE_BUILD_TYPE=$CONFIG ..
   - cmake --build .
-  - result/relwithdebinfo/cage-test-core
-  - result/relwithdebinfo/cage-asset-database
+  - result/$CONFIG/cage-test-core
+  - result/$CONFIG/cage-asset-database
 

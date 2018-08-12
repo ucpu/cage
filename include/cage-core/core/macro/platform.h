@@ -37,3 +37,10 @@
 
 #endif
 
+#if defined(__GNUC__) || defined(__clang__)
+#define CAGE_DEPRECATED __attribute__((deprecated))
+#elif defined(_MSC_VER)
+#define CAGE_DEPRECATED __declspec(deprecated)
+#else
+#define CAGE_DEPRECATED
+#endif

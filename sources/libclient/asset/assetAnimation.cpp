@@ -2,7 +2,7 @@
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
 #include <cage-core/assets.h>
-#include <cage-core/utility/pointer.h>
+#include <cage-core/utility/serialization.h>
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
 #include <cage-client/core.h>
@@ -27,17 +27,14 @@ namespace cage
 			}
 			context->returnData = ani;
 
-			animationHeaderStruct *data = (animationHeaderStruct*)context->originalData;
-			pointer ptr = pointer(context->originalData) + sizeof(animationHeaderStruct);
-			const uint16 *indexes = (uint16*)ptr.asVoid;
-			ptr += data->animationBonesCount * sizeof(uint16);
-			const uint16 *positionFrames = ptr.asUint16;
-			ptr += data->animationBonesCount * sizeof(uint16);
-			const uint16 *rotationFrames = ptr.asUint16;
-			ptr += data->animationBonesCount * sizeof(uint16);
-			const uint16 *scaleFrames = ptr.asUint16;
-			ptr += data->animationBonesCount * sizeof(uint16);
-			ani->allocate(data->duration, data->animationBonesCount, indexes, positionFrames, rotationFrames, scaleFrames, ptr);
+			deserializer des(context->originalData, context->originalSize);
+			animationHeaderStruct data;
+			des >> data;
+			uint16 *indexes = (uint16*)des.access(data.animationBonesCount * sizeof(uint16));
+			uint16 *positionFrames = (uint16*)des.access(data.animationBonesCount * sizeof(uint16));
+			uint16 *rotationFrames = (uint16*)des.access(data.animationBonesCount * sizeof(uint16));
+			uint16 *scaleFrames = (uint16*)des.access(data.animationBonesCount * sizeof(uint16));
+			ani->allocate(data.duration, data.animationBonesCount, indexes, positionFrames, rotationFrames, scaleFrames, des.current);
 		}
 
 		void processDone(const assetContextStruct *context, void *schemePointer)

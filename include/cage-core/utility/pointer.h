@@ -3,7 +3,7 @@
 
 namespace cage
 {
-	struct CAGE_API pointer
+	struct CAGE_DEPRECATED pointer
 	{
 		union
 		{

@@ -35,7 +35,7 @@ namespace cage
 		class discoveryClientImpl : public discoveryClientClass
 		{
 		public:
-			std::map<identifier<idSize>, peerStruct> peers;
+			std::map<identifierStruct<idSize>, peerStruct> peers;
 			std::vector<sockStruct> sockets;
 			uint32 gameId;
 			uint16 sendPort;
@@ -63,7 +63,7 @@ namespace cage
 		class discoveryServerImpl : public discoveryServerClass
 		{
 		public:
-			identifier<idSize> uniId;
+			identifierStruct<idSize> uniId;
 			uint32 gameId;
 			uint16 gamePort;
 			std::vector<sock> sockets;
@@ -95,7 +95,7 @@ namespace cage
 		discoveryClientImpl *impl = (discoveryClientImpl*)this;
 
 		{ // ttl
-			std::map<identifier<idSize>, peerStruct>::iterator it = impl->peers.begin();
+			std::map<identifierStruct<idSize>, peerStruct>::iterator it = impl->peers.begin();
 			while (it != impl->peers.end())
 			{
 				peerStruct &p = it->second;
@@ -127,8 +127,8 @@ namespace cage
 							continue; // ignore, message has wrong length
 						if (*(uint32*)(buffer + idSize) != impl->gameId)
 							continue; // ignore, wrong game id
-						identifier<idSize> id = *(identifier<idSize>*)buffer;
-						std::map<identifier<idSize>, peerStruct>::iterator pit = impl->peers.find(id);
+						identifierStruct<idSize> id = *(identifierStruct<idSize>*)buffer;
+						std::map<identifierStruct<idSize>, peerStruct>::iterator pit = impl->peers.find(id);
 						if (pit == impl->peers.end())
 						{
 							a.translate(p.address, prt);
@@ -201,7 +201,7 @@ namespace cage
 	void discoveryClientClass::peerData(uint32 index, string &message, string &address, uint16 &port) const
 	{
 		discoveryClientImpl *impl = (discoveryClientImpl*)this;
-		std::map<identifier<idSize>, peerStruct>::iterator it = impl->peers.begin();
+		std::map<identifierStruct<idSize>, peerStruct>::iterator it = impl->peers.begin();
 		std::advance(it, index);
 		const peerStruct &p = it->second;
 		message = p.message;

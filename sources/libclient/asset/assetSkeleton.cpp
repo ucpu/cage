@@ -2,7 +2,7 @@
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
 #include <cage-core/assets.h>
-#include <cage-core/utility/pointer.h>
+#include<cage-core/utility/serialization.h>
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
 #include <cage-client/core.h>
@@ -18,25 +18,22 @@ namespace cage
 			skeletonClass *skl = nullptr;
 			if (context->assetHolder)
 			{
-				skl = static_cast<skeletonClass*> (context->assetHolder.get());
+				skl = static_cast<skeletonClass*>(context->assetHolder.get());
 			}
 			else
 			{
 				context->assetHolder = newSkeleton().transfev();
-				skl = static_cast<skeletonClass*> (context->assetHolder.get());
+				skl = static_cast<skeletonClass*>(context->assetHolder.get());
 			}
 			context->returnData = skl;
 
-			skeletonHeaderStruct *data = (skeletonHeaderStruct*)context->originalData;
-			pointer ptr = pointer(context->originalData) + sizeof(skeletonHeaderStruct);
-			const uint16 *boneParents = (uint16*)ptr.asVoid;
-			ptr += sizeof(uint16) * data->bonesCount;
-			const mat4 *baseMatrices = (mat4*)ptr.asVoid;
-			ptr += sizeof(mat4) * data->bonesCount;
-			const mat4 *invRestMatrices = (mat4*)ptr.asVoid;
-			ptr += sizeof(mat4) * data->bonesCount;
-			CAGE_ASSERT_RUNTIME(ptr == pointer(context->originalData) + context->originalSize);
-			skl->allocate(data->bonesCount, boneParents, baseMatrices, invRestMatrices);
+			deserializer des(context->originalData, context->originalSize);
+			skeletonHeaderStruct data;
+			des >> data;
+			uint16 *boneParents = (uint16*)des.access(sizeof(uint16) * data.bonesCount);
+			mat4 *baseMatrices = (mat4*)des.access(sizeof(mat4) * data.bonesCount);
+			mat4 *invRestMatrices = (mat4*)des.access(sizeof(mat4) * data.bonesCount);
+			skl->allocate(data.bonesCount, boneParents, baseMatrices, invRestMatrices);
 		}
 
 		void processDone(const assetContextStruct *context, void *schemePointer)

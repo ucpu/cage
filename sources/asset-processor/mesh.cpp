@@ -2,7 +2,7 @@
 #include <cage-core/utility/hashString.h>
 #include <cage-core/utility/ini.h>
 #include <cage-core/utility/memoryBuffer.h>
-#include <cage-core/utility/pointer.h>
+#include <cage-core/utility/serialization.h>
 #include <cage-client/graphics/shaderConventions.h>
 #include <cage-client/opengl.h>
 
@@ -416,17 +416,16 @@ void processMesh()
 	validateFlags(dsm, mat);
 
 	mat3 axes = transformationMatrix();
-	const cage::uintPtr dataSize = dsm.vertexSize() * dsm.verticesCount + sizeof(uint32) * dsm.indicesCount;
-	cage::memoryBuffer dataBuffer(dataSize);
-	pointer ptr = dataBuffer.data();
+
+	cage::memoryBuffer dataBuffer;
+	cage::serializer ser(dataBuffer);
 
 	dsm.box = aabb();
 	mat3 axes2 = axes * properties("scale").toFloat();
 	for (uint32 i = 0; i < dsm.verticesCount; i++)
 	{
 		vec3 p = axes2 * conv(am->mVertices[i]);
-		*(cage::vec3*)ptr.asVoid = p;
-		ptr += sizeof(cage::vec3);
+		ser << p;
 		dsm.box += aabb(p);
 	}
 	CAGE_LOG(severityEnum::Info, logComponentName, string() + "bounding box: " + dsm.box);
@@ -435,43 +434,29 @@ void processMesh()
 	if (dsm.uvs())
 	{
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
-		{
-			*(cage::vec2*)ptr.asVoid = cage::vec2(conv(am->mTextureCoords[0][i]));
-			ptr += sizeof(cage::vec2);
-		}
+			ser << cage::vec2(conv(am->mTextureCoords[0][i]));
 	}
 
 	if (dsm.normals())
 	{
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
-		{
-			*(cage::vec3*)ptr.asVoid = axes * conv(am->mNormals[i]);
-			ptr += sizeof(cage::vec3);
-		}
+			ser << axes * conv(am->mNormals[i]);
 	}
 
 	if (dsm.tangents())
 	{
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
-		{
-			*(cage::vec3*)ptr.asVoid = axes * conv(am->mTangents[i]);
-			ptr += sizeof(cage::vec3);
-		}
+			ser << axes * conv(am->mTangents[i]);
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
-		{
-			*(cage::vec3*)ptr.asVoid = axes * conv(am->mBitangents[i]);
-			ptr += sizeof(cage::vec3);
-		}
+			ser << axes * conv(am->mBitangents[i]);
 	}
 
 	if (dsm.bones())
 	{
 		holder<assimpSkeletonClass> skeleton = context->skeleton();
 		dsm.skeletonBones = skeleton->bonesCount();
-		uint16 *boneIndices = ptr.asUint16;
-		ptr += sizeof(uint16) * 4 * dsm.verticesCount;
-		float *boneWeights = ptr.asFloat;
-		ptr += sizeof(float) * 4 * dsm.verticesCount;
+		uint16 *boneIndices = (uint16*)ser.access(sizeof(uint16) * 4 * dsm.verticesCount);
+		float *boneWeights = (float*)ser.access(sizeof(float) * 4 * dsm.verticesCount);
 		// initialize with empty values
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
 		{
@@ -533,16 +518,11 @@ void processMesh()
 	for (uint32 i = 0; i < am->mNumFaces; i++)
 	{
 		for (uint32 j = 0; j < indicesPerPrimitive; j++)
-		{
-			*(cage::uint32*)ptr.asVoid = numeric_cast<uint32>(am->mFaces[i].mIndices[j]);
-			ptr += sizeof(cage::uint32);
-		}
+			ser << numeric_cast<uint32>(am->mFaces[i].mIndices[j]);
 	}
 
-	CAGE_ASSERT_RUNTIME(ptr == pointer(dataBuffer.data()) + dataSize, ptr, dataBuffer.data(), dataSize);
-
 	assetHeaderStruct h = initializeAssetHeaderStruct();
-	h.originalSize = sizeof(dsm) + sizeof(mat) + dataSize;
+	h.originalSize = sizeof(dsm) + sizeof(mat) + dataBuffer.size();
 	if (dsm.skeletonName)
 		h.dependenciesCount++;
 	for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)

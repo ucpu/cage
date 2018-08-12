@@ -4,7 +4,7 @@
 #include <cage-core/memory.h>
 #include <cage-core/assets.h>
 #include <cage-core/utility/color.h>
-#include <cage-core/utility/pointer.h>
+#include <cage-core/utility/serialization.h>
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
 #include <cage-client/core.h>
@@ -42,55 +42,51 @@ namespace cage
 				context->returnData = msh;
 			}
 
-			pointer ptr(context->originalData);
-			meshHeaderStruct *data = (meshHeaderStruct*)context->originalData;
-			ptr += sizeof(meshHeaderStruct);
-			void *materialData = ptr;
-			ptr += data->materialSize;
-			void *verticesData = ptr;
-			ptr += numeric_cast<uintPtr>(data->verticesCount * data->vertexSize());
-			uint32 *indicesData = (uint32*)(void*)ptr;
-			ptr += numeric_cast<uintPtr>(data->indicesCount * sizeof(uint32));
+			deserializer des(context->originalData, context->originalSize);
+			meshHeaderStruct data;
+			des >> data;
+			const void *materialData = des.access(data.materialSize);
+			const void *verticesData = des.access(data.verticesCount * data.vertexSize());
+			uint32 *indicesData = (uint32*)des.access(data.indicesCount * sizeof(uint32));
 
-			msh->setFlags(data->flags);
-			msh->setPrimitiveType(data->primitiveType);
-			msh->setBoundingBox(data->box);
-			msh->setTextures(data->textureNames);
-			msh->setSkeleton(data->skeletonName, data->skeletonBones);
+			msh->setFlags(data.flags);
+			msh->setPrimitiveType(data.primitiveType);
+			msh->setBoundingBox(data.box);
+			msh->setTextures(data.textureNames);
+			msh->setSkeleton(data.skeletonName, data.skeletonBones);
 
 			msh->setBuffers(
-				data->verticesCount, data->vertexSize(), verticesData,
-				data->indicesCount, indicesData,
-				data->materialSize, materialData
+				data.verticesCount, data.vertexSize(), verticesData,
+				data.indicesCount, indicesData,
+				data.materialSize, materialData
 			);
 
-			ptr = pointer();
-
+			const char *ptr = nullptr;
 			msh->setAttribute(0, 3, GL_FLOAT, 0, ptr);
-			ptr += data->verticesCount * sizeof(vec3);
+			ptr += data.verticesCount * sizeof(vec3);
 
-			if (data->uvs())
+			if (data.uvs())
 			{
 				msh->setAttribute(1, 2, GL_FLOAT, 0, ptr);
-				ptr += data->verticesCount * sizeof(vec2);
+				ptr += data.verticesCount * sizeof(vec2);
 			}
 			else
 				msh->setAttribute(1, 0, 0, 0, 0);
 
-			if (data->normals())
+			if (data.normals())
 			{
 				msh->setAttribute(2, 3, GL_FLOAT, 0, ptr);
-				ptr += data->verticesCount * sizeof(vec3);
+				ptr += data.verticesCount * sizeof(vec3);
 			}
 			else
 				msh->setAttribute(2, 0, 0, 0, 0);
 
-			if (data->tangents())
+			if (data.tangents())
 			{
 				msh->setAttribute(3, 3, GL_FLOAT, 0, ptr);
-				ptr += data->verticesCount * sizeof(vec3);
+				ptr += data.verticesCount * sizeof(vec3);
 				msh->setAttribute(4, 3, GL_FLOAT, 0, ptr);
-				ptr += data->verticesCount * sizeof(vec3);
+				ptr += data.verticesCount * sizeof(vec3);
 			}
 			else
 			{
@@ -98,20 +94,18 @@ namespace cage
 				msh->setAttribute(4, 0, 0, 0, 0);
 			}
 
-			if (data->bones())
+			if (data.bones())
 			{
 				msh->setAttribute(5, 4, GL_UNSIGNED_SHORT, 0, ptr);
-				ptr += data->verticesCount * sizeof(uint16) * 4;
+				ptr += data.verticesCount * sizeof(uint16) * 4;
 				msh->setAttribute(6, 4, GL_FLOAT, 0, ptr);
-				ptr += data->verticesCount * sizeof(vec4);
+				ptr += data.verticesCount * sizeof(vec4);
 			}
 			else
 			{
 				msh->setAttribute(5, 0, 0, 0, 0);
 				msh->setAttribute(6, 0, 0, 0, 0);
 			}
-
-			CAGE_ASSERT_RUNTIME(ptr.decView == data->verticesCount * data->vertexSize(), ptr, data->verticesCount, data->vertexSize());
 		}
 
 		void processDone(const assetContextStruct *context, void *schemePointer)

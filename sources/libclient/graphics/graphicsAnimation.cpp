@@ -1,7 +1,7 @@
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/log.h>
-#include <cage-core/utility/pointer.h>
+#include <cage-core/utility/serialization.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
@@ -105,7 +105,7 @@ namespace cage
 		};
 	}
 
-	void animationClass::allocate(uint64 duration, uint32 bones, const uint16 *indexes, const uint16 *positionFrames, const uint16 *rotationFrames, const uint16 *scaleFrames, void *data)
+	void animationClass::allocate(uint64 duration, uint32 bones, const uint16 *indexes, const uint16 *positionFrames, const uint16 *rotationFrames, const uint16 *scaleFrames, const void *data)
 	{
 		animationImpl *impl = (animationImpl*)this;
 		impl->deallocate();
@@ -126,17 +126,16 @@ namespace cage
 		detail::memcpy(impl->positionFrames, positionFrames, sizeof(uint16) * bones);
 		detail::memcpy(impl->rotationFrames, rotationFrames, sizeof(uint16) * bones);
 		detail::memcpy(impl->scaleFrames, scaleFrames, sizeof(uint16) * bones);
-		pointer ptr = data;
+
+		deserializer des(data, (char*)-1 - (char*)data);
 		for (uint16 b = 0; b < bones; b++)
 		{
 			if (impl->positionFrames[b])
 			{
 				impl->positionTimes[b] = (real*)impl->mem.allocate(sizeof(real) * impl->positionFrames[b]);
-				detail::memcpy(impl->positionTimes[b], ptr, positionFrames[b] * sizeof(float));
-				ptr += positionFrames[b] * sizeof(float);
+				des.read(impl->positionTimes[b], positionFrames[b] * sizeof(float));
 				impl->positionValues[b] = (vec3*)impl->mem.allocate(sizeof(vec3) * impl->positionFrames[b]);
-				detail::memcpy(impl->positionValues[b], ptr, positionFrames[b] * sizeof(vec3));
-				ptr += positionFrames[b] * sizeof(vec3);
+				des.read(impl->positionValues[b], positionFrames[b] * sizeof(vec3));
 			}
 			else
 			{
@@ -147,11 +146,9 @@ namespace cage
 			if (impl->rotationFrames[b])
 			{
 				impl->rotationTimes[b] = (real*)impl->mem.allocate(sizeof(real) * impl->rotationFrames[b]);
-				detail::memcpy(impl->rotationTimes[b], ptr, rotationFrames[b] * sizeof(float));
-				ptr += rotationFrames[b] * sizeof(float);
+				des.read(impl->rotationTimes[b], rotationFrames[b] * sizeof(float));
 				impl->rotationValues[b] = (quat*)impl->mem.allocate(sizeof(quat) * impl->rotationFrames[b]);
-				detail::memcpy(impl->rotationValues[b], ptr, rotationFrames[b] * sizeof(quat));
-				ptr += rotationFrames[b] * sizeof(quat);
+				des.read(impl->rotationValues[b], rotationFrames[b] * sizeof(quat));
 			}
 			else
 			{
@@ -162,11 +159,9 @@ namespace cage
 			if (impl->scaleFrames[b])
 			{
 				impl->scaleTimes[b] = (real*)impl->mem.allocate(sizeof(real) * impl->scaleFrames[b]);
-				detail::memcpy(impl->scaleTimes[b], ptr, scaleFrames[b] * sizeof(float));
-				ptr += scaleFrames[b] * sizeof(float);
+				des.read(impl->scaleTimes[b], scaleFrames[b] * sizeof(float));
 				impl->scaleValues[b] = (vec3*)impl->mem.allocate(sizeof(vec3) * impl->scaleFrames[b]);
-				detail::memcpy(impl->scaleValues[b], ptr, scaleFrames[b] * sizeof(vec3));
-				ptr += scaleFrames[b] * sizeof(vec3);
+				des.read(impl->scaleValues[b], scaleFrames[b] * sizeof(vec3));
 			}
 			else
 			{

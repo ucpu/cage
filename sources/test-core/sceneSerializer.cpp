@@ -2,6 +2,7 @@
 
 #include <cage-core/math.h>
 #include <cage-core/entities.h>
+#include <cage-core/utility/memoryBuffer.h>
 
 void defineManager(entityManagerClass *man)
 {
@@ -45,13 +46,10 @@ void changeEntities(entityManagerClass *man)
 
 void sync(entityManagerClass *a, entityManagerClass *b)
 {
-	static const uintPtr bufSize = 1024 * 1024 * 32;
-	static char buffer[bufSize];
 	for (uint32 i = 0; i < 3; i++)
 	{
-		uintPtr siz = entitiesSerialize(buffer, bufSize, a->getAllEntities(), a->getComponentByIndex(i));
-		CAGE_TEST(siz <= bufSize);
-		entitiesDeserialize(buffer, siz, b);
+		memoryBuffer buf = entitiesSerialize(a->getAllEntities(), a->getComponentByIndex(i));
+		entitiesDeserialize(buf, b);
 	}
 }
 

@@ -1,8 +1,8 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/assets.h>
-#include <cage-core/utility/pointer.h>
 #include <cage-core/utility/textPack.h>
+#include <cage-core/utility/serialization.h>
 
 namespace cage
 {
@@ -17,17 +17,16 @@ namespace cage
 			texts->clear();
 			context->returnData = texts;
 
-			pointer ptr = context->originalData;
-			uint32 cnt = *(uint32*)context->originalData;
-			ptr += 4;
+			deserializer des(context->originalData, context->originalSize);
+			uint32 cnt;
+			des >> cnt;
 			for (uint32 i = 0; i < cnt; i++)
 			{
-				uint32 name = *ptr.asUint32++;
-				uint32 len = *ptr.asUint32++;
-				texts->set(name, string(ptr.asChar, len));
-				ptr += len;
+				uint32 name;
+				string val;
+				des >> name >> val;
+				texts->set(name, val);
 			}
-			CAGE_ASSERT_RUNTIME(ptr == pointer(context->originalData) + (uintPtr)context->originalSize);
 		}
 
 		void processDone(const assetContextStruct *context, void *schemePointer)

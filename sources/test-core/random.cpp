@@ -41,9 +41,9 @@ void testRandom()
 
 	{
 		CAGE_TESTCASE("identifier");
-		CAGE_LOG_CONTINUE(severityEnum::Info, "random identifier", identifier<32>(true));
-		CAGE_LOG_CONTINUE(severityEnum::Info, "random identifier", identifier<32>(true));
-		CAGE_LOG_CONTINUE(severityEnum::Info, "random identifier", identifier<32>(true));
-		CAGE_LOG_CONTINUE(severityEnum::Info, "random identifier", identifier<8>(true));
+		CAGE_LOG_CONTINUE(severityEnum::Info, "random identifier", identifierStruct<32>(true));
+		CAGE_LOG_CONTINUE(severityEnum::Info, "random identifier", identifierStruct<32>(true));
+		CAGE_LOG_CONTINUE(severityEnum::Info, "random identifier", identifierStruct<32>(true));
+		CAGE_LOG_CONTINUE(severityEnum::Info, "random identifier", identifierStruct<8>(true));
 	}
 }
