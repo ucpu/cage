@@ -16,6 +16,7 @@
 
 #include <cstdlib>
 #include <cerrno>
+#include <string>
 
 namespace cage
 {
@@ -150,13 +151,13 @@ namespace cage
 
 			class envAlt
 			{
-				string p;
+				std::string p; // std string has unlimited length
 
 			public:
 				envAlt()
 				{
 					p = getenv("PATH");
-					string n = string() + ".:" + pathToAbs(newFilesystem()->currentDir()) + ":" + p;
+					std::string n = p + ":" + pathWorkingDir().c_str() + ":" + pathExtractPath(detail::getExecutableFullPath()).c_str();
 					setenv("PATH", n.c_str(), 1);
 				}
 

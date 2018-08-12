@@ -444,6 +444,7 @@ namespace
 
 	void checkAssets()
 	{
+		CAGE_LOG(severityEnum::Info, "database", "looking for assets to process");
 		verdictValue = false;
 		files.clear();
 		findFiles("");
@@ -581,6 +582,7 @@ void start()
 {
 	// load schemes
 	loadSchemesDirectory("");
+	CAGE_LOG(severityEnum::Info, "database", string() + "Loaded " + schemes.size() + " schemes");
 
 	// load
 	timestamp = 0;
@@ -632,3 +634,4 @@ bool verdict()
 {
 	return verdictValue;
 }
+

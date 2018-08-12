@@ -80,7 +80,7 @@ namespace cage
 
 	struct CAGE_API assetManagerCreateConfig
 	{
-		string path;
+		string assetsFolderName;
 		uint32 threadMaxCount;
 		uint32 schemeMaxCount;
 		assetManagerCreateConfig();

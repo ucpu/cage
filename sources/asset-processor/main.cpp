@@ -141,9 +141,6 @@ int main(int argc, const char *args[])
 {
 	try
 	{
-		if (newFilesystem()->exists("cage-asset-processor.ini"))
-			configLoadIni("cage-asset-processor.ini", "cage-asset-processor");
-
 		if (argc == 3 && string(args[1]) == "analyze")
 		{
 			logComponentName = "analyze";

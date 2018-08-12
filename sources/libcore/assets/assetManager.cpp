@@ -68,7 +68,14 @@ namespace cage
 
 			assetManagerImpl(const assetManagerCreateConfig &config) : countTotal(0), countProcessing(0), hackQueueWaitCounter(0), destroying(false)
 			{
-				path = pathFind(config.path);
+				try
+				{
+					path = pathFind(config.assetsFolderName, pathWorkingDir());
+				}
+				catch(const exception &)
+				{
+					path = pathFind(config.assetsFolderName, pathExtractPath(detail::getExecutableFullPath()));
+				}
 				CAGE_LOG(severityEnum::Info, "assetManager", string() + "using asset path: '" + path + "'");
 				index = newHashTable<assetContextPrivateStruct>(1000, 1000000);
 				schemes.resize(config.schemeMaxCount);
@@ -695,7 +702,7 @@ namespace cage
 		ass->ready = !!value;
 	}
 
-	assetManagerCreateConfig::assetManagerCreateConfig() : path("assets"), threadMaxCount(5), schemeMaxCount(50)
+	assetManagerCreateConfig::assetManagerCreateConfig() : assetsFolderName("assets"), threadMaxCount(5), schemeMaxCount(50)
 	{}
 
 	holder<assetManagerClass> newAssetManager(const assetManagerCreateConfig &config)

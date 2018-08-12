@@ -24,9 +24,6 @@ stringSet configIgnorePaths;
 
 void configParseCmd(int argc, const char *args[])
 {
-	if (newFilesystem()->exists("cage-asset-database.ini"))
-		configLoadIni("cage-asset-database.ini", "cage-asset-database");
-
 	holder<cmdOptionsClass> cso = newCmdOptions(argc, args, "sl");
 	while (cso->next())
 	{
@@ -69,3 +66,4 @@ void configParseCmd(int argc, const char *args[])
 	configPathForward = pathSimplify(configPathForward);
 	configPathScheme = pathSimplify(configPathScheme);
 }
+

@@ -33,3 +33,5 @@ script:
   - cmake -DCMAKE_BUILD_TYPE=RELWITHDEBINFO ..
   - cmake --build .
   - result/relwithdebinfo/cage-test-core
+  - result/relwithdebinfo/cage-asset-database
+

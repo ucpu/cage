@@ -66,34 +66,43 @@ namespace cage
 		{
 			return !info.debug;
 		}
-		
-		class logInitializerClass
+
+		class centralLogClass
 		{
 		public:
-			logInitializerClass()
+			centralLogClass()
 			{
 				loggerDebug = newLogger();
 				loggerDebug->filter.bind<&logFilterPolicyNoDebug>();
 				loggerDebug->format.bind<&logFormatPolicyConsole>();
 				loggerDebug->output.bind<&logOutputPolicyDebug>();
 
-				loggerOutputCentralFile = newLogOutputPolicyFile(detail::getExecutableNameNoExe() + ".log", false);
+				loggerOutputCentralFile = newLogOutputPolicyFile(pathExtractFilename(detail::getExecutableFullPathNoExe()) + ".log", false);
 				loggerCentralFile = newLogger();
 				loggerCentralFile->output.bind<logOutputPolicyFileClass, &logOutputPolicyFileClass::output>(loggerOutputCentralFile.get());
 				loggerCentralFile->format.bind<&logFormatPolicyFileShort>();
+			}
 
-				CAGE_LOG(severityEnum::Info, "log", "application log initialized");
+			holder<loggerClass> loggerDebug;
+			holder<logOutputPolicyFileClass> loggerOutputCentralFile;
+			holder<loggerClass> loggerCentralFile;
+		};
 
+		class centralLogStaticInitializerClass
+		{
+		public:
+			centralLogStaticInitializerClass()
+			{
 				{
 					string version;
-	
+
 #ifdef CAGE_DEBUG
 					version += "debug";
 #else
 					version += "release";
 #endif // CAGE_DEBUG
 					version += ", ";
-	
+
 #ifdef CAGE_SYSTEM_WINDOWS
 					version += "windows";
 #elif defined(CAGE_SYSTEM_LINUX)
@@ -104,7 +113,7 @@ namespace cage
 	#error unknown platform
 #endif // CAGE_SYSTEM_WINDOWS
 					version += ", ";
-	
+
 #ifdef CAGE_ARCHITECTURE_64
 					version += "64";
 #else
@@ -120,12 +129,12 @@ namespace cage
 				getSystemDateTime(y, M, d, h, m, s);
 				CAGE_LOG(severityEnum::Info, "log", string() + "current time: " + formatDateTime(y, M, d, h, m, s));
 
-				setCurrentThreadName(detail::getExecutableNameNoExe());
+				setCurrentThreadName(pathExtractFilename(detail::getExecutableFullPathNoExe()));
 			}
 
-			~logInitializerClass()
+			~centralLogStaticInitializerClass()
 			{
-				uint64 duration = CAGE_LOG(severityEnum::Info, "log", "application log finalized");
+				uint64 duration = getApplicationTime();
 				uint32 micros = numeric_cast<uint32>(duration % 1000000);
 				duration /= 1000000;
 				uint32 secs = numeric_cast<uint32>(duration % 60);
@@ -136,11 +145,7 @@ namespace cage
 				duration /= 24;
 				CAGE_LOG(severityEnum::Info, "log", string() + "total duration: " + duration + " days, " + hours + " hours, " + mins + " minutes, " + secs + " seconds and " + micros + " microseconds");
 			}
-
-			holder<loggerClass> loggerDebug;
-			holder<logOutputPolicyFileClass> loggerOutputCentralFile;
-			holder<loggerClass> loggerCentralFile;
-		} logInitializerInstance;
+		} centralLogStaticInitializerInstance;
 	}
 
 	holder<loggerClass> newLogger()
@@ -157,6 +162,7 @@ namespace cage
 		{
 			try
 			{
+				getCentralLog();
 				loggerInfo info;
 				info.message = message;
 				info.component = component;
@@ -199,7 +205,8 @@ namespace cage
 
 		loggerClass *getCentralLog()
 		{
-			return logInitializerInstance.loggerCentralFile.get();
+			static centralLogClass *centralLogInstance = new centralLogClass(); // this leak is intentionall
+			return centralLogInstance->loggerCentralFile.get();
 		}
 	}
 

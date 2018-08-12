@@ -48,15 +48,22 @@ namespace cage
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64));
 #undef GCHL_GENERATE
 
-#define GCHL_GENERATE(TYPE) TYPE randomGenerator::random(TYPE min, TYPE max) { TYPE res = interpolate(min, max, this->random()); CAGE_ASSERT_RUNTIME(res >= min && res < max, res, min, max); return res; }
+#define GCHL_GENERATE(TYPE) TYPE randomGenerator::random(TYPE min, TYPE max) \
+	{ \
+		CAGE_ASSERT_RUNTIME(min <= max, min, max); \
+		TYPE res = interpolate(min, max, this->random()); \
+		/*CAGE_ASSERT_RUNTIME(res >= min && res < max, res, min, max);*/ \
+		return res; \
+	}
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, real, rads, float));
 #undef GCHL_GENERATE
 
 	double randomGenerator::random(double min, double max)
 	{
+		CAGE_ASSERT_RUNTIME(min <= max, min, max);
 		uint64 r = next();
 		if (r == detail::numeric_limits<uint64>::max())
-			return 0;
+			return min;
 		double f = (double)r / (double)detail::numeric_limits<uint64>::max();
 		double res = (max - min) * f + min;
 		CAGE_ASSERT_RUNTIME(res >= min && res < max, res, min, max);

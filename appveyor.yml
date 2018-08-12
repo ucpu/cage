@@ -23,3 +23,5 @@ build:
 
 before_test:
   - c:\project\build\result\%CONFIGURATION%\cage-test-core.exe
+  - c:\project\build\result\%CONFIGURATION%\cage-asset-database.exe
+

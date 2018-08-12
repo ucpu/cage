@@ -85,29 +85,53 @@ namespace cage
 			return v;
 		}
 
-		bool loadCageIni()
+		bool loadConfigFile(const string &filename, string prefix)
 		{
-			if (pathExists("cage.ini"))
+			CAGE_LOG_DEBUG(severityEnum::Info, "config", string() + "trying to load configuration file: '" + filename + "'");
+			if (pathExists(filename))
 			{
+				CAGE_LOG(severityEnum::Info, "config", string() + "loading configuration file: '" + filename + "'");
+				if (!prefix.empty())
+					prefix += ".";
 				// the logic of function configLoadIni is replicated here
-				holder<iniClass> ini = newIni();
-				ini->load("cage.ini");
-				for (string section : ini->sections())
+				try
 				{
-					for (string name : ini->items(section))
+					holder<iniClass> ini = newIni();
+					ini->load(filename);
+					for (string section : ini->sections())
 					{
-						string value = ini->getString(section, name);
-						directVariable(section + "." + name)->setDynamic(value);
+						for (string name : ini->items(section))
+						{
+							string value = ini->getString(section, name);
+							directVariable(prefix + section + "." + name)->setDynamic(value);
+						}
 					}
+				}
+				catch(...)
+				{
+					// do nothing
 				}
 				return true;
 			}
 			return false;
 		}
 
+		bool loadGlobalConfiguration()
+		{
+			string efp = detail::getExecutableFullPathNoExe();
+			string en = pathExtractFilename(efp);
+			string ep = pathExtractPath(efp);
+			string wp = pathWorkingDir();
+			if (!loadConfigFile(pathJoin(wp, "cage.ini"), ""))
+				loadConfigFile(pathJoin(ep, "cage.ini"), "");
+			if (!loadConfigFile(pathJoin(wp, en + ".ini"), en))
+				loadConfigFile(pathJoin(ep, en + ".ini"), en);
+			return false;
+		}
+
 		variable *getVar(const string &name)
 		{
-			static bool cageIni = loadCageIni();
+			static bool cageIni = loadGlobalConfiguration();
 			(void)cageIni;
 			return directVariable(name);
 		}
@@ -397,7 +421,7 @@ namespace cage
 		return cast<bool>((variable*)data);
 	}
 
-	configBool & configBool::operator=(bool value)
+	configBool &configBool::operator=(bool value)
 	{
 		((variable*)data)->set(value);
 		return *this;
@@ -417,7 +441,7 @@ namespace cage
 		return cast<sint32>((variable*)data);
 	}
 
-	configSint32 & configSint32::operator=(sint32 value)
+	configSint32 &configSint32::operator=(sint32 value)
 	{
 		((variable*)data)->set(value);
 		return *this;
@@ -437,7 +461,7 @@ namespace cage
 		return cast<uint32>((variable*)data);
 	}
 
-	configUint32 & configUint32::operator=(uint32 value)
+	configUint32 &configUint32::operator=(uint32 value)
 	{
 		((variable*)data)->set(value);
 		return *this;
@@ -457,7 +481,7 @@ namespace cage
 		return cast<sint64>((variable*)data);
 	}
 
-	configSint64 & configSint64::operator=(sint64 value)
+	configSint64 &configSint64::operator=(sint64 value)
 	{
 		((variable*)data)->set(value);
 		return *this;
@@ -477,7 +501,7 @@ namespace cage
 		return cast<uint64>((variable*)data);
 	}
 
-	configUint64 & configUint64::operator=(uint64 value)
+	configUint64 &configUint64::operator=(uint64 value)
 	{
 		((variable*)data)->set(value);
 		return *this;
@@ -497,7 +521,7 @@ namespace cage
 		return cast<float>((variable*)data);
 	}
 
-	configFloat & configFloat::operator=(float value)
+	configFloat &configFloat::operator=(float value)
 	{
 		((variable*)data)->set(value);
 		return *this;
@@ -517,7 +541,7 @@ namespace cage
 		return cast<double>((variable*)data);
 	}
 
-	configDouble & configDouble::operator=(double value)
+	configDouble &configDouble::operator=(double value)
 	{
 		((variable*)data)->set(value);
 		return *this;
@@ -537,7 +561,7 @@ namespace cage
 		return cast<string>((variable*)data);
 	}
 
-	configString & configString::operator=(const string &value)
+	configString &configString::operator=(const string &value)
 	{
 		((variable*)data)->set(value);
 		return *this;
@@ -643,7 +667,7 @@ namespace cage
 
 	holder<configListClass> newConfigList()
 	{
-		return detail::systemArena().createImpl <configListClass, configListImpl>();
+		return detail::systemArena().createImpl<configListClass, configListImpl>();
 	}
 
 	void configLoadIni(const string &filename, const string &prefix)
@@ -698,7 +722,7 @@ namespace cage
 				try
 				{
 					if (autoBackup)
-						configSaveIni(detail::getExecutableNameNoExe() + "-backup.ini", "");
+						configSaveIni(detail::getExecutableFullPathNoExe() + "-backup.ini", "");
 				}
 				catch (...)
 				{
@@ -708,3 +732,4 @@ namespace cage
 		} autoConfigBackupInstance;
 	}
 }
+

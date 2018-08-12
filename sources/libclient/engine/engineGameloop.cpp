@@ -402,7 +402,7 @@ namespace cage
 				}
 
 				{ // create sound
-					string name = pathExtractFilenameNoExtension(detail::getExecutableName());
+					string name = pathExtractFilename(detail::getExecutableFullPathNoExe());
 					sound = newSoundContext(config.soundContext ? *config.soundContext : soundContextCreateConfig(), name);
 					speaker = newSpeaker(sound.get(), config.speaker ? *config.speaker : speakerCreateConfig(), name);
 					masterBus = newBus(sound.get());

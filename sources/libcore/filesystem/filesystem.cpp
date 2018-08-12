@@ -394,15 +394,20 @@ namespace cage
 
 	string pathFind(const string &name)
 	{
-		if (name.empty() || pathIsAbs(name))
-			return name;
+		return pathFind(name, pathWorkingDir());
+	}
+
+	string pathFind(const string &name, const string &whereToStart)
+	{
+		if (name.empty())
+			CAGE_THROW_ERROR(exception, "name cannot be empty");
 		try
 		{
-			string p = pathWorkingDir();
+			string p = whereToStart;
 			while (true)
 			{
 				string s = pathJoin(p, name);
-				if (pathIsDirectory(s))
+				if (pathIsDirectory(s) || pathExists(s))
 					return s;
 				p = pathJoin(p, "..");
 			}
@@ -410,6 +415,7 @@ namespace cage
 		catch (const exception &)
 		{
 			CAGE_LOG(severityEnum::Note, "exception", string() + "name: '" + name + "'");
+			CAGE_LOG(severityEnum::Note, "exception", string() + "whereToStart: '" + whereToStart + "'");
 			CAGE_THROW_ERROR(exception, "failed to find the path");
 		}
 	}
@@ -574,7 +580,7 @@ namespace cage
 
 	namespace detail
 	{
-		string getExecutableName()
+		string getExecutableFullPath()
 		{
 			char buffer[string::MaxLength];
 
@@ -605,15 +611,16 @@ namespace cage
 
 #endif
 
-			return pathExtractFilename(string(buffer, len));
+			return string(buffer, len);
 		}
 
-		string getExecutableNameNoExe()
+		string getExecutableFullPathNoExe()
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
-			return pathExtractFilenameNoExtension(getExecutableName());
+			string p = getExecutableFullPath();
+			return p.substring(0, p.length() - 4);
 #else
-			return getExecutableName();
+			return getExecutableFullPath();
 #endif
 		}
 	}
