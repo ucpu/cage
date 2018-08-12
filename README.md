@@ -37,7 +37,7 @@ A long-term hobby project that turned out to be quite BIG.
      - memory management
      - threads & synchronization
      - filesystem
-     - networking (via Enet)
+     - networking
    - Math & geometry
      - glsl like: real, vec3, quat, mat4, degs, rads, ...
      - shapes: line (ray, segment), triangle, plane, aabb, sphere, ...
@@ -66,7 +66,7 @@ A long-term hobby project that turned out to be quite BIG.
        - actual objective abstraction of most OpenGL objects
          - semi-debugging layer that validates that the objects are correctly bound
      - Sound (via soundio)
-       - support for spatial sound
+       - support for spatial sound (multiple channels)
      - Gui
        - novel API through entities
        - flexible automatic layouting
@@ -77,7 +77,7 @@ A long-term hobby project that turned out to be quite BIG.
        - cameras, renderables, lights & shadows, listeners, voices, ...
      - pipeline-like processing using threads dedicated to specific tasks
        - *30 000 objects* at 30 fps (cpu-bound)
-       - all rendering is through automatic instancing
+       - all rendering is through automatic instancing to reduce draw call overhead
      - directional, spot and point lights
         - automatic shadow maps
      - roughness/metallic workflow (however the shaders could be improved a lot)
@@ -86,7 +86,7 @@ A long-term hobby project that turned out to be quite BIG.
    - asset-processor
      - texture loading (via DevIL)
        - DevIL has lgpl license, which may cause trouble, and is planned to be replaced
-     - meshes loading (via Assimp)
+     - mesh loading (via Assimp)
      - sound (via Ogg/Vorbis and dr_libs)
      - shader
        - custom $preprocessor with support for includes, conditional composition, token replacements etc...
@@ -100,7 +100,7 @@ A long-term hobby project that turned out to be quite BIG.
        - notifies all connected games whenever an asset has changed so that the engine can reload it
      - assets are configured in simple ini-like files (good for version-control-systems)
      - easily extensible to any custom formats
-   - asset-generator
+   - asset-analyze
      - given a path to a folder, it will analyze all files in it and generate basic asset configuration
 
 # Building
