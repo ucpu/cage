@@ -107,7 +107,7 @@ namespace cage
 			real interFactor;
 			bool wasEmit;
 
-			soundPrepareImpl(const engineCreateConfig &config) : emitMemory(config.soundEmitMemory)
+			soundPrepareImpl(const engineCreateConfig &config) : emitMemory(config.soundEmitMemory), controlTime(0), prepareTime(0), wasEmit(false)
 			{
 				mixers.reserve(256);
 				emitVoices.reserve(256);
