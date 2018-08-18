@@ -35,9 +35,9 @@ namespace cage
 		return buffer;
 	}
 
-	void entitiesDeserialize(const memoryBuffer &buffer, entityManagerClass *manager)
+	void entitiesDeserialize(const void *buffer, uintPtr size, entityManagerClass *manager)
 	{
-		deserializer des(buffer);
+		deserializer des(buffer, size);
 		uint32 componentIndex;
 		des >> componentIndex;
 		if (componentIndex >= manager->getComponentsCount())
@@ -58,5 +58,10 @@ namespace cage
 			entityClass *e = manager->getOrNewEntity(name);
 			des.read(e->unsafeValue(component), numeric_cast<uintPtr>(typeSize));
 		}
+	}
+
+	void entitiesDeserialize(const memoryBuffer &buffer, entityManagerClass *manager)
+	{
+		entitiesDeserialize(buffer.data(), buffer.size(), manager);
 	}
 }
