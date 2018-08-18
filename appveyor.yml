@@ -3,7 +3,9 @@ clone_depth: 5
 
 image: Visual Studio 2017
 
-platform: x64
+platform:
+  - Win32
+  - x64
 
 configuration:
   - Debug
@@ -11,17 +13,23 @@ configuration:
 
 clone_folder: c:\project
 
-before_build:
+init:
+  - cmake --version
+  - msbuild /version
+
+install:
   - git submodule update --init --recursive
+
+before_build:
   - mkdir build
   - cd build
-  - cmake --version
-  - cmake -G"Visual Studio 15 2017 Win64" ..
+  - if "%PLATFORM%"=="Win32" cmake -G"Visual Studio 15 2017" ..
+  - if "%PLATFORM%"=="x64" cmake -G"Visual Studio 15 2017 Win64" ..
 
 build:
   project: c:\project\build\cage.sln
 
-before_test:
+test_script:
   - c:\project\build\result\%CONFIGURATION%\cage-test-core.exe
   - c:\project\build\result\%CONFIGURATION%\cage-asset-database.exe
 
