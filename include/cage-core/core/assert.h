@@ -11,14 +11,14 @@
 #define CAGE_ASSERT_RUNTIME(EXP, ...)
 #endif
 
-#define CAGE_ASSERT_COMPILE(COND, MESS) enum { CAGE_JOIN(CAGE_JOIN(cage_assert_, MESS), CAGE_JOIN(_, __LINE__)) = 1/((int)!!(COND)) }
+#define CAGE_ASSERT_COMPILE(COND, MESS) enum { CAGE_JOIN(CAGE_JOIN(gchl_assert_, MESS), CAGE_JOIN(_, __LINE__)) = 1/((int)!!(COND)) }
 
 namespace cage
 {
 	namespace detail
 	{
 		CAGE_API void terminate();
-		CAGE_API void debugOutput(const char *value);
+		CAGE_API void debugOutput(const string &msg);
 		CAGE_API void debugBreakpoint();
 
 		struct CAGE_API overrideBreakpoint
@@ -51,9 +51,20 @@ namespace cage
 			void operator () () const;
 
 #define GCHL_GENERATE(TYPE) assertClass &variable(const char *name, TYPE var);
-			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, bool, float, double, void*, const char*, \
-				pointer, const string&, real, rads, degs, const vec2&, const vec3&, const vec4&, const quat&, const mat3&, const mat4&));
+			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, bool, float, double, const char*, \
+				const string&, real, rads, degs, const vec2&, const vec3&, const vec4&, const quat&, const mat3&, const mat4&));
 #undef GCHL_GENERATE
+			template<class U> assertClass &variable(const char *name, U *var)
+			{
+				if (!valid)
+				{
+					char buff[100] = "";
+					privat::sprint1(buff, (void*)var);
+					detail::strcat(buff, " <pointer>");
+					format(name, buff);
+				}
+				return *this;
+			}
 			template<class U> assertClass &variable(const char *name, const U &var)
 			{
 				if (!valid)

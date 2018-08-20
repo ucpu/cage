@@ -1,7 +1,5 @@
 namespace cage
 {
-	template struct CAGE_API detail::stringBase<64>;
-	template struct CAGE_API delegate<void(const assetContextStruct *, void *)>;
 	typedef delegate<void(const assetContextStruct *, void *)> assetDelegate;
 
 	struct CAGE_API assetContextStruct

@@ -23,10 +23,12 @@ namespace cage
 		string section(uint32 section) const;
 		bool sectionExists(const string &section) const;
 		pointerRange<string> sections() const;
+		void sectionRemove(const string &section);
 		uint32 itemCount(const string &section) const;
 		string item(const string &section, uint32 item) const;
 		bool itemExists(const string &section, const string &item) const;
 		pointerRange<string> items(const string &section) const;
+		void itemRemove(const string &section, const string &item);
 
 		string get(const string &section, const string &item) const;
 		void set(const string &section, const string &item, const string &value);
@@ -59,7 +61,9 @@ namespace cage
 #undef GCHL_GENERATE
 	};
 
-	CAGE_API holder<iniClass> newIni(uintPtr memory = 1024 * 1024 * 16);
+	CAGE_API holder<iniClass> newIni(uintPtr memory);
+	CAGE_API holder<iniClass> newIni(memoryArena arena);
+	CAGE_API holder<iniClass> newIni(); // uses system memory arena
 }
 
 #endif // guard_iniReader_h_c866b123_b27e_4758_ab8e_702ef8f315de_

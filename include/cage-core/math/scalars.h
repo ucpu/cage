@@ -7,6 +7,7 @@ namespace cage
 
 		// constructors
 		real() : value(0) {}
+		explicit real(const string &str);
 
 #define GCHL_GENERATE(TYPE) real (TYPE other): value ((float)other) {}
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, float, double));
@@ -32,6 +33,10 @@ namespace cage
 		real operator % (real other) const { CAGE_ASSERT_RUNTIME(other != 0); return value - (other.value * (int)(value / other.value)); }
 		rads operator * (rads other) const;
 		degs operator * (degs other) const;
+
+		// allow to treat it as a one-dimensional vector
+		real &operator [] (uint32 idx) { CAGE_ASSERT_RUNTIME(idx == 0, "index out of range", idx); return *this; }
+		real operator [] (uint32 idx) const { CAGE_ASSERT_RUNTIME(idx == 0, "index out of range", idx); return *this; }
 
 		// comparison operators
 		//bool operator == (real other) const { return (*this - other).abs() <= (abs() < other.abs() ? other.abs() : abs()) * epsilon; }
@@ -78,6 +83,7 @@ namespace cage
 		static const real PositiveInfinity;
 		static const real NegativeInfinity;
 		static const real Nan;
+		static const uint32 Dimension = 1;
 	};
 
 	struct CAGE_API rads
@@ -220,11 +226,10 @@ namespace cage
 #undef GCHL_GENERATE
 
 	CAGE_API real random(); // 0 to 1; including 0, excluding 1
-	CAGE_API sint32 random(sint32 min, sint32 max); // including min, excluding max
-	CAGE_API real random(real min, real max);
-	CAGE_API rads random(rads min, rads max);
 	CAGE_API rads randomAngle();
-	CAGE_API randomGenerator &currentRandomGenerator();
+#define GCHL_GENERATE(TYPE) CAGE_API TYPE random(TYPE min, TYPE max);
+	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, real, rads, float, double));
+#undef GCHL_GENERATE
 
 	namespace detail
 	{

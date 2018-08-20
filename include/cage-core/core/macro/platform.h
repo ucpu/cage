@@ -8,7 +8,6 @@
 #else
 #define CAGE_ARCHITECTURE_32
 #endif
-#define CAGE_THREAD_LOCAL_STORAGE __declspec(thread)
 
 #elif defined(linux) || defined(__linux) || defined(__linux__)
 
@@ -35,7 +34,13 @@
 #else
 #define CAGE_ARCHITECTURE_32
 #endif
-#define CAGE_THREAD_LOCAL_STORAGE __thread
 
 #endif
 
+#if defined(__GNUC__) || defined(__clang__)
+#define CAGE_DEPRECATED __attribute__((deprecated))
+#elif defined(_MSC_VER)
+#define CAGE_DEPRECATED __declspec(deprecated)
+#else
+#define CAGE_DEPRECATED
+#endif

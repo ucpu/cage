@@ -1,0 +1,40 @@
+
+git:
+  depth: 5
+
+language: cpp
+
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-5
+      - g++-6
+      - xorg-dev
+      - nasm
+
+matrix:
+  fast_finish: true
+  exclude:
+    - compiler: gcc
+  include:
+    - env: COMPILER=g++-5 COMPILERC=gcc-5 CONFIG=relwithdebinfo
+    - env: COMPILER=g++-6 COMPILERC=gcc-6 CONFIG=relwithdebinfo
+    - env: COMPILER=g++-6 COMPILERC=gcc-6 CONFIG=debug
+    - os: osx
+      compiler: clang
+      env: CONFIG=relwithdebinfo
+  allow_failures:
+    - os: osx
+      compiler: clang
+      env: CONFIG=relwithdebinfo
+
+script:
+  - export CXX=$COMPILER && export CC=$COMPILERC
+  - mkdir build && cd build
+  - cmake -DCMAKE_BUILD_TYPE=$CONFIG ..
+  - cmake --build .
+  - result/$CONFIG/cage-test-core
+  - result/$CONFIG/cage-asset-database
+

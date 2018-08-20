@@ -30,6 +30,7 @@ namespace cage
 	CAGE_API string pathJoin(const string &a, const string &b);
 	CAGE_API uint64 pathLastChange(const string &path);
 	CAGE_API string pathFind(const string &name);
+	CAGE_API string pathFind(const string &name, const string &whereToStart);
 
 	CAGE_API string pathSimplify(const string &path);
 	CAGE_API string pathMakeValid(const string &path, const string &replacement = "_", bool allowDirectories = false);
@@ -44,7 +45,7 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_API string getExecutableName();
-		CAGE_API string getExecutableNameNoExe();
+		CAGE_API string getExecutableFullPath();
+		CAGE_API string getExecutableFullPathNoExe();
 	}
 }

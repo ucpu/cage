@@ -71,7 +71,6 @@ namespace cage
 	class assetManagerClass;
 
 	// utilities
-	struct pointer;
 	struct randomGenerator;
 	struct lineReaderBuffer;
 	struct memoryBuffer;

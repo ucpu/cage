@@ -12,6 +12,7 @@ namespace cage
 		explicit mat3(const vec3 &forward, const vec3 &up, bool keepUp = false);
 		explicit mat3(const quat &other);
 		explicit mat3(const mat4 &other);
+		explicit mat3(const string &str);
 
 		// compound operators
 		mat3 &operator *= (real other) { return *this = *this * other; }
@@ -61,6 +62,7 @@ namespace cage
 		explicit mat4(const vec3 &position, const quat &orientation, const vec3 &scale = vec3(1, 1, 1));
 		explicit mat4(const quat &other) { *this = mat4(mat3(other)); }
 		explicit inline mat4(const transform &other);
+		explicit mat4(const string &str);
 
 		// compound operators
 		mat4 &operator *= (real other) { return *this = *this * other; }
@@ -114,4 +116,8 @@ namespace cage
 
 	inline vec3 vec3::operator * (const mat3 &other) const { return other * *this; }
 	inline vec4 vec4::operator * (const mat4 &other) const { return other * *this; }
+
+	template<uint32 N> struct matN {};
+	template<> struct matN<3> { typedef mat3 type; };
+	template<> struct matN<4> { typedef mat4 type; };
 }

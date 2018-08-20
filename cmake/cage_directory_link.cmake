@@ -1,0 +1,17 @@
+
+if(WIN32)
+	function(cage_directory_link target name)
+		if(NOT EXISTS ${name})
+			file(TO_NATIVE_PATH ${target} target)
+			file(TO_NATIVE_PATH ${name} name)
+			execute_process(COMMAND cmd /C mklink /J ${name} ${target})
+		endif()
+	endfunction(cage_directory_link)
+else()
+	function(cage_directory_link target name)
+		if(NOT EXISTS ${name})
+			execute_process(COMMAND sh -c "ln -s ${target} ${name}")
+		endif()
+	endfunction(cage_directory_link)
+endif()
+

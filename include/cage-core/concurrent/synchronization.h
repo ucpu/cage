@@ -8,7 +8,6 @@ namespace cage
 		void unlock();
 	};
 
-	template struct CAGE_API scopeLock<mutexClass>;
 	CAGE_API holder<mutexClass> newMutex();
 
 	class CAGE_API barrierClass
@@ -18,7 +17,6 @@ namespace cage
 		void unlock(); // does nothing
 	};
 
-	template struct CAGE_API scopeLock<barrierClass>;
 	CAGE_API holder<barrierClass> newBarrier(uint32 value);
 
 	class CAGE_API semaphoreClass
@@ -28,7 +26,6 @@ namespace cage
 		void unlock(); // increments value
 	};
 
-	template struct CAGE_API scopeLock<semaphoreClass>;
 	CAGE_API holder<semaphoreClass> newSemaphore(uint32 value, uint32 max);
 
 	class CAGE_API conditionalBaseClass
@@ -54,6 +51,5 @@ namespace cage
 		void broadcast(); // broadcast the conditional variable without touching the mutex
 	};
 
-	template struct CAGE_API scopeLock<conditionalClass>;
 	CAGE_API holder<conditionalClass> newConditional(bool broadcast = false);
 }

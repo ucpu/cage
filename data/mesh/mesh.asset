@@ -1,0 +1,23 @@
+
+[]
+scheme = mesh
+fake.obj
+
+[]
+scheme = mesh
+export_normal = false
+export_tangent = false
+square.obj
+
+[]
+scheme = mesh
+export_uv = false
+export_normal = false
+export_tangent = false
+sphere.obj
+cone.obj
+guiElement.obj
+
+[]
+scheme = pack
+mesh.pack

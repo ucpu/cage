@@ -1,6 +1,3 @@
-[submodule "data"]
-	path = data
-	url = ssh://ucpu.cz/var/git/ucpu/cage/data.git
 [submodule "externals"]
 	path = externals
-	url = ssh://ucpu.cz/var/git/ucpu/cage/externals.git
+	url = https://github.com/ucpu/cage-externals.git

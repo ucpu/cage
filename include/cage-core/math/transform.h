@@ -10,6 +10,7 @@ namespace cage
 		// constructors
 		transform();
 		explicit transform(const vec3 &position, const quat &orientation = quat(), real scale = 1);
+		//explicit transform(const string &str);
 
 		// compound operators
 		transform &operator *= (const transform &other) { return *this = *this * other; }

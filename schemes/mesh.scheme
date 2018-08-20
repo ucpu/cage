@@ -23,6 +23,10 @@ display = export bones
 type = bool
 default = false
 
+[override_skeleton]
+display = skeleton name
+type = string
+
 [override_material]
 display = path to cpm material
 type = string

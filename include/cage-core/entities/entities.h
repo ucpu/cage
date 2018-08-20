@@ -1,10 +1,5 @@
 namespace cage
 {
-	template struct CAGE_API delegate<void(componentClass*, entityClass*)>;
-	template struct CAGE_API delegate<void(groupClass*, entityClass*)>;
-	template struct CAGE_API delegate<void(entityClass *)>;
-	template struct CAGE_API eventDispatcher<bool(entityClass*)>;
-
 	class CAGE_API entityManagerClass
 	{
 	public:
@@ -15,14 +10,14 @@ namespace cage
 		groupClass *getGroupByIndex(uint32 index);
 		uint32 getGroupsCount() const;
 
-		entityClass *newEntity(uint32 name = 0);
-		entityClass *getEntity(uint32 entityName);
+		entityClass *newUniqueEntity(); // new entity with unique name
+		entityClass *newAnonymousEntity(); // new entity with name = 0, accessible only with the pointer
+		entityClass *newEntity(uint32 name); // must be non-zero
+		entityClass *getEntity(uint32 entityName); // throw if it does not exist
 		entityClass *getOrNewEntity(uint32 entityName);
 		bool hasEntity(uint32 entityName) const;
 
 		groupClass *getAllEntities(); // do not use it to add/remove entities directly
-
-		uint32 generateUniqueName();
 
 	private:
 		componentClass *zPrivateDefineComponent(uintPtr typeSize, void *prototype, bool enumerableEntities);
@@ -74,15 +69,17 @@ namespace cage
 		uint32 entitiesCount() const;
 		entityClass *const *entitiesArray();
 		pointerRange<entityClass *const> entities();
-		void entitiesCallback(const delegate<void(entityClass *)> &callback);
+
+		void entitiesCallback(const delegate<void(entityClass *)> &callback) { for (auto it : entities()) callback(it); }
 
 		void addEntity(entityClass *entity) { entity->addGroup(this); }
 		void removeEntity(entityClass *entity) { entity->removeGroup(this); }
 		void addEntity(uint32 entityName) { addEntity(getManager()->getEntity(entityName)); }
 		void removeEntity(uint32 entityName) { removeEntity(getManager()->getEntity(entityName)); }
 
-		void addGroup(groupClass *group); // add all entities in this group into the right group
-		void removeGroup(groupClass *group); // remove all entities in this group from the right group
+		void mergeGroup(groupClass *other); // add all entities from the other group into this group
+		void subtractGroup(groupClass *other); // remove all entities, which are present in the other group, from this group
+		void intersectGroup(groupClass *other); // remove all entities, which are NOT present in the other group, from this group
 
 		void clear();
 		void destroyAllEntities();

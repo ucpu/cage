@@ -7,7 +7,7 @@ namespace cage
 
 	inline bool logFilterPolicyThread(const detail::loggerInfo &info)
 	{
-		return info.createThread == info.currentThread;
+		return info.createThreadId == info.currentThreadId;
 	}
 
 	template<severityEnum Severity>
@@ -16,12 +16,12 @@ namespace cage
 		return info.severity >= Severity;
 	}
 
-	template<severityEnum Severity, const char *Components, bool Thread, bool Continuous>
+	template<severityEnum Severity, const char *Components, bool SameThread, bool Continuous>
 	inline bool logFilterPolicyCustom(const detail::loggerInfo &info)
 	{
 		if (info.severity < Severity)
 			return false;
-		if (Thread && (info.createThread != info.currentThread))
+		if (SameThread && (info.createThreadId != info.currentThreadId))
 			return false;
 		if (!Continuous && info.continuous)
 			return false;
