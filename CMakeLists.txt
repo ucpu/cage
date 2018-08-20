@@ -1,6 +1,18 @@
 cmake_minimum_required(VERSION 3.2)
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR}/cmake)
+# make cmake find our own provided libraries
+# the libraries provided here should have higher priority than system libraries
+set(CAGE_EXTERNALS_MODULE_PATH "${CMAKE_CURRENT_BINARY_DIR}/cmake-modules")
+list(INSERT CMAKE_MODULE_PATH 0 "${CAGE_EXTERNALS_MODULE_PATH}")
+include(cage_gen_module.cmake)
+
+# make cmake search for additional programs etc. in the extra folder
+# the programs provided here should have higher priority than system programs
+list(INSERT CMAKE_PREFIX_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/extra")
+
+# some config
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_CXX_STANDARD 11)
 
 # disable compilation warnings
 if(MSVC)
@@ -30,15 +42,14 @@ add_subdirectory(libsoundio)
 add_subdirectory(dr_libs)
 add_subdirectory(ogg)
 add_subdirectory(vorbis)
-add_subdirectory(enet)
 add_subdirectory(utfcpp)
 add_subdirectory(simplefilewatcher)
 add_subdirectory(msdfgen)
 
 add_dependencies(png_static zlib)
-add_dependencies(jpeg zlib)
-add_dependencies(tiff jpeg)
-add_dependencies(IL jpeg tiff png_static)
+add_dependencies(jpeg-static zlib)
+add_dependencies(tiff jpeg-static)
+add_dependencies(IL jpeg-static tiff png_static)
 add_dependencies(freetype png_static)
 add_dependencies(assimp IL)
 add_dependencies(vorbis ogg)
@@ -47,7 +58,11 @@ add_dependencies(lib_msdfgen freetype)
 set_target_properties(zlib PROPERTIES FOLDER cage/externals)
 set_target_properties(png_static PROPERTIES FOLDER cage/externals)
 set_target_properties(genfiles PROPERTIES FOLDER cage/externals)
-set_target_properties(jpeg PROPERTIES FOLDER cage/externals)
+set_target_properties(jpeg-static PROPERTIES FOLDER cage/externals)
+set_target_properties(simd PROPERTIES FOLDER cage/externals)
+if (TARGET simd-objs)
+	set_target_properties(simd-objs PROPERTIES FOLDER cage/externals)
+endif()
 set_target_properties(tiff PROPERTIES FOLDER cage/externals)
 set_target_properties(IL PROPERTIES FOLDER cage/externals)
 set_target_properties(ILU PROPERTIES FOLDER cage/externals)
@@ -62,7 +77,6 @@ set_target_properties(ogg PROPERTIES FOLDER cage/externals)
 set_target_properties(vorbis PROPERTIES FOLDER cage/externals)
 set_target_properties(vorbisenc PROPERTIES FOLDER cage/externals)
 set_target_properties(vorbisfile PROPERTIES FOLDER cage/externals)
-set_target_properties(enet PROPERTIES FOLDER cage/externals)
 set_target_properties(simplefilewatcher PROPERTIES FOLDER cage/externals)
 set_target_properties(lib_msdfgen PROPERTIES FOLDER cage/externals)
 

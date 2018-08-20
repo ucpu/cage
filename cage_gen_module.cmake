@@ -1,0 +1,18 @@
+
+macro(cage_gen_module_helper filename name lib inc)
+	file(APPEND ${filename} "set(${name}_FOUND 1)\n")
+	file(APPEND ${filename} "set(${name}_INCLUDE_DIR \"${inc}\")\n")
+	file(APPEND ${filename} "set(${name}_INCLUDE_DIRS \"${inc}\")\n")
+	file(APPEND ${filename} "set(${name}_LIBRARY \"${lib}\")\n")
+	file(APPEND ${filename} "set(${name}_LIBRARIES \"${lib}\")\n")
+endmacro()
+
+macro(cage_gen_module name lib inc)
+	string(TOUPPER ${name} name_upper)
+	string(TOLOWER ${name} name_lower)
+	set(filename "${CAGE_EXTERNALS_MODULE_PATH}/Find${name_upper}.cmake")
+	file(WRITE ${filename} "\n")
+	cage_gen_module_helper(${filename} ${name} "${lib}" "${inc}")
+	cage_gen_module_helper(${filename} ${name_upper} "${lib}" "${inc}")
+	cage_gen_module_helper(${filename} ${name_lower} "${lib}" "${inc}")
+endmacro()

@@ -11,9 +11,6 @@ set(IL_NO_JP2 ON CACHE INTERNAL "no jasper lib") # japser has include error on m
 add_subdirectory(devil/DevIL/src-IL)
 add_subdirectory(devil/DevIL/src-ILU)
 
-target_include_directories(IL INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/devil/DevIL/include)
+target_include_directories(IL INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/devil/DevIL/include")
 
-set(filename ${CMAKE_BINARY_DIR}/cmake/FindIL.cmake)
-file(WRITE ${filename} "set(IL_FOUND 1)\n")
-file(APPEND ${filename} "set(IL_LIBRARY IL)\n")
-
+cage_gen_module(IL IL "")

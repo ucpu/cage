@@ -12,7 +12,7 @@
 	url = https://gitlab.com/libtiff/libtiff.git
 [submodule "freetype/freetype"]
 	path = freetype/freetype
-	url = https://github.com/ucpu/freetype.git
+	url = https://github.com/aseprite/freetype2.git
 [submodule "glad/glad"]
 	path = glad/glad
 	url = https://github.com/ucpu/glad.git
@@ -39,16 +39,13 @@
 	url = https://github.com/nemtrif/utfcpp.git
 [submodule "jpeg/jpeg"]
 	path = jpeg/jpeg
-	url = https://github.com/ucpu/jpeg.git
+	url = https://github.com/libjpeg-turbo/libjpeg-turbo.git
 [submodule "devil/devil"]
 	path = devil/devil
 	url = https://github.com/ucpu/devil.git
 [submodule "zlib/zlib"]
 	path = zlib/zlib
 	url = https://github.com/ucpu/zlib.git
-[submodule "enet/enet"]
-	path = enet/enet
-	url = https://github.com/lsalzman/enet.git
 [submodule "msdfgen/msdfgen"]
 	path = msdfgen/msdfgen
 	url = https://github.com/ckohnert/msdfgen.git
