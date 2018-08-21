@@ -90,7 +90,7 @@ namespace cage
 		{
 			vec2 size;
 			text.font->size(text.glyphs, text.count, text.format, size);
-			return size / base->impl->pointsScale;
+			return size * 1.05;
 		}
 		return vec2();
 	}
@@ -112,8 +112,9 @@ namespace cage
 		t->data = text;
 		t->data.glyphs = (uint32*)e->memory.allocate(t->data.count * sizeof(uint32));
 		detail::memcpy(t->data.glyphs, text.glyphs, t->data.count * sizeof(uint32));
+		t->data.format.size *= base->impl->pointsScale;
 		t->data.pos = position * base->impl->pointsScale;
-		t->data.format.wrapWidth = numeric_cast<uint16>(size[0] * base->impl->pointsScale + 1);
+		t->data.format.wrapWidth = size[0] * base->impl->pointsScale;
 		e->last->next = t;
 		e->last = t;
 		return t;

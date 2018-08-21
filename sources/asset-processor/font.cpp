@@ -435,10 +435,10 @@ void processFont()
 	CALL(FT_Init_FreeType, &library);
 	CALL(FT_New_Face, library, inputFileName.c_str(), 0, &face);
 	CALL(FT_Select_Charmap, face, FT_ENCODING_UNICODE);
-	CALL(FT_Set_Pixel_Sizes, face, 32, 32);
+	CALL(FT_Set_Pixel_Sizes, face, 64, 64);
 	if (!FT_IS_SCALABLE(face))
 		CAGE_THROW_ERROR(exception, "font is not scalable");
-	fontScale = 1.0 / 32.0;
+	fontScale = 1.0 / 64.0;
 	loadGlyphs();
 	loadCharset();
 	loadKerning();
