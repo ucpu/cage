@@ -116,7 +116,7 @@ namespace cage
 		privat::setCurrentTexture(impl->id);
 	}
 
-	void textureClass::image2d(uint32 w, uint32 h, uint32 internalFormat, uint32 format, uint32 type, void *data)
+	void textureClass::image2d(uint32 w, uint32 h, uint32 internalFormat, uint32 format, uint32 type, const void *data)
 	{
 		textureImpl *impl = (textureImpl*)this;
 		CAGE_ASSERT_RUNTIME(privat::getCurrentTexture() == impl->id);
@@ -128,7 +128,7 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void textureClass::imageCube(uint32 w, uint32 h, uint32 internalFormat, uint32 format, uint32 type, void *data, uint32 stride)
+	void textureClass::imageCube(uint32 w, uint32 h, uint32 internalFormat, uint32 format, uint32 type, const void *data, uint32 stride)
 	{
 		textureImpl *impl = (textureImpl*)this;
 		CAGE_ASSERT_RUNTIME(privat::getCurrentTexture() == impl->id);
@@ -141,7 +141,7 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void textureClass::image3d(uint32 w, uint32 h, uint32 d, uint32 internalFormat, uint32 format, uint32 type, void *data)
+	void textureClass::image3d(uint32 w, uint32 h, uint32 d, uint32 internalFormat, uint32 format, uint32 type, const void *data)
 	{
 		textureImpl *impl = (textureImpl*)this;
 		CAGE_ASSERT_RUNTIME(privat::getCurrentTexture() == impl->id);
@@ -226,7 +226,7 @@ namespace cage
 
 	namespace detail
 	{
-		vec4 evalSamplesForTextureAnimation(textureClass *texture, uint64 emitTime, uint64 animationStart, real animationSpeed, real animationOffset)
+		vec4 evalSamplesForTextureAnimation(const textureClass *texture, uint64 emitTime, uint64 animationStart, real animationSpeed, real animationOffset)
 		{
 			if (!texture)
 				return vec4();

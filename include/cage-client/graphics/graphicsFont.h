@@ -4,9 +4,9 @@ namespace cage
 	{
 	public:
 		void setLine(real lineHeight, real firstLineOffset);
-		void setImage(uint32 width, uint32 height, uint32 size, void *data);
-		void setGlyphs(uint32 count, void *data, real *kerning);
-		void setCharmap(uint32 count, uint32 *chars, uint32 *glyphs);
+		void setImage(uint32 width, uint32 height, uint32 size, const void *data);
+		void setGlyphs(uint32 count, const void *data, const real *kerning);
+		void setCharmap(uint32 count, const uint32 *chars, const uint32 *glyphs);
 
 		void bind(meshClass *mesh, shaderClass *shader, uint32 screenWidth, uint32 screenHeight) const;
 

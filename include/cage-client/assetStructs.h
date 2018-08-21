@@ -58,7 +58,7 @@ namespace cage
 		bool bones() const;
 		uint32 vertexSize() const;
 
-		struct materialDataStruct
+		struct CAGE_API materialDataStruct
 		{
 			vec4 albedoBase;
 			vec4 specialBase;
@@ -135,11 +135,11 @@ namespace cage
 		real lineHeight; // linear units
 		real firstLineOffset; // linear units
 		uint32 texSize; // bytes
-		uint32 texWidth, texHeight; // pixels
+		uint32 texWidth, texHeight; // texels
 		uint32 glyphCount;
 		uint32 charCount;
 
-		struct glyphDataStruct
+		struct CAGE_API glyphDataStruct
 		{
 			vec4 texUv;
 			vec2 size; // linear units
@@ -155,7 +155,7 @@ namespace cage
 		// array of charset glyphs, each uint32
 
 		// notes:
-		// linear units are pixels for 1px-font
+		// linear units are pixels for 1pt-font
 		// linear units must be multiplied by font size before rendering
 	};
 

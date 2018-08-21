@@ -2,6 +2,7 @@
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
 #include <cage-core/assets.h>
+#include <cage-core/utility/serialization.h>
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
 #include <cage-client/core.h>
@@ -30,29 +31,22 @@ namespace cage
 			}
 			context->returnData = font;
 
-			fontHeaderStruct *data = (fontHeaderStruct*)context->originalData;
-			pointer ptr(context->originalData);
-			ptr += sizeof(fontHeaderStruct);
-			void *image = ptr;
-			ptr += data->texSize;
-			void *glyphs = ptr;
-			ptr += sizeof(fontHeaderStruct::glyphDataStruct) * data->glyphCount;
-			void *kerning = nullptr;
-			if ((data->flags & fontFlags::Kerning) == fontFlags::Kerning)
-			{
-				kerning = ptr;
-				ptr += data->glyphCount * data->glyphCount * sizeof(real);
-			}
-			void *charmapChars = ptr;
-			ptr += sizeof(uint32) * data->charCount;
-			void *charmapGlyphs = ptr;
-			ptr += sizeof(uint32) * data->charCount;
-			CAGE_ASSERT_RUNTIME(ptr == pointer(context->originalData) + (uintPtr)context->originalSize, ptr, context->originalData, context->originalSize);
+			deserializer des(context->originalData, context->originalSize);
+			fontHeaderStruct data;
+			des >> data;
+			const char *image = des.access(data.texSize);
+			const char *glyphs = des.access(sizeof(fontHeaderStruct::glyphDataStruct) * data.glyphCount);
+			const real *kerning = nullptr;
+			if ((data.flags & fontFlags::Kerning) == fontFlags::Kerning)
+				kerning = (const real*)des.access(data.glyphCount * data.glyphCount * sizeof(real));
+			const uint32 *charmapChars = (const uint32*)des.access(sizeof(uint32) * data.charCount);
+			const uint32 *charmapGlyphs = (const uint32*)des.access(sizeof(uint32) * data.charCount);
+			CAGE_ASSERT_RUNTIME(des.current == des.end, des.current - des.end);
 
-			font->setLine(data->lineHeight, data->firstLineOffset);
-			font->setImage(data->texWidth, data->texHeight, data->texSize, image);
-			font->setGlyphs(data->glyphCount, glyphs, (real*)kerning);
-			font->setCharmap(data->charCount, (uint32*)charmapChars, (uint32*)charmapGlyphs);
+			font->setLine(data.lineHeight, data.firstLineOffset);
+			font->setImage(data.texWidth, data.texHeight, data.texSize, image);
+			font->setGlyphs(data.glyphCount, glyphs, kerning);
+			font->setCharmap(data.charCount, charmapChars, charmapGlyphs);
 		}
 
 		void processDone(const assetContextStruct *context, void *schemePointer)
@@ -67,8 +61,8 @@ namespace cage
 		assetSchemeStruct s;
 		s.threadIndex = threadIndex;
 		s.schemePointer = memoryContext;
-		s.load.bind <&processLoad>();
-		s.done.bind <&processDone>();
+		s.load.bind<&processLoad>();
+		s.done.bind<&processDone>();
 		return s;
 	}
 }

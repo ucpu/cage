@@ -90,7 +90,7 @@ namespace cage
 		{
 			vec2 size;
 			text.font->size(text.glyphs, text.count, text.format, size);
-			return size * 1.05;
+			return size;
 		}
 		return vec2();
 	}

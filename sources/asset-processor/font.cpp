@@ -59,7 +59,8 @@ namespace
 	}
 
 	real fontScale;
-	static const uint32 border = 4;
+	real maxOffTop, maxOffBottom;
+	static const uint32 border = 6;
 
 	void glyphImage(glyphStruct &g, msdfgen::Shape &shape)
 	{
@@ -91,7 +92,6 @@ namespace
 	{
 		CAGE_LOG(severityEnum::Info, logComponentName, "load glyphs");
 		data.glyphCount = numeric_cast<uint32>(face->num_glyphs);
-		data.lineHeight = face->height * fontScale / 64.0;
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "font has " + data.glyphCount + " glyphs");
 		glyphs.reserve(data.glyphCount + 10);
 		glyphs.resize(data.glyphCount);
@@ -120,14 +120,19 @@ namespace
 
 			// update global data
 			data.glyphMaxSize = max(data.glyphMaxSize, g.data.size);
-			data.firstLineOffset = max(data.firstLineOffset, g.data.bearing[1]);
+			maxOffTop = max(maxOffTop, g.data.size[1] - g.data.bearing[1]);
+			maxOffBottom = max(maxOffBottom, g.data.bearing[1]);
 			if (g.png)
 			{
 				maxPngW = max(maxPngW, g.png->width());
 				maxPngH = max(maxPngH, g.png->height());
 			}
 		}
+		data.firstLineOffset = maxOffTop;
+		data.lineHeight = ((face->height * fontScale / 64.0) + (maxOffTop + maxOffBottom)) / 2;
 		CAGE_LOG(severityEnum::Note, logComponentName, string() + "units per EM: " + face->units_per_EM);
+		CAGE_LOG(severityEnum::Note, logComponentName, string() + "(unused) line height (top + bottom): " + (maxOffTop + maxOffBottom));
+		CAGE_LOG(severityEnum::Note, logComponentName, string() + "(unused) line height (from font): " + (face->height * fontScale / 64.0));
 		CAGE_LOG(severityEnum::Note, logComponentName, string() + "line height: " + data.lineHeight);
 		CAGE_LOG(severityEnum::Note, logComponentName, string() + "first line offset: " + data.firstLineOffset);
 		CAGE_LOG(severityEnum::Note, logComponentName, string() + "max glyph size: " + data.glyphMaxSize);
@@ -177,10 +182,11 @@ namespace
 	{
 		msdfgen::Shape shape;
 		msdfgen::Contour &c = shape.addContour();
-		float x = 0.3f / fontScale.value;
-		float y = 1 / fontScale.value;
+		float x = 0.1f / fontScale.value;
+		float y0 = (-maxOffBottom / fontScale).value;
+		float y1 = (maxOffTop / fontScale).value;
 		msdfgen::Point2 points[4] = {
-			{0, 0}, {0, y}, {x, y}, {x, 0}
+			{0, y0}, {0, y1}, {x, y1}, {x, y0}
 		};
 		c.addEdge(msdfgen::EdgeHolder(points[0], points[1]));
 		c.addEdge(msdfgen::EdgeHolder(points[1], points[2]));
@@ -434,10 +440,10 @@ void processFont()
 		CAGE_THROW_ERROR(exception, "input specification must be empty");
 	CALL(FT_Init_FreeType, &library);
 	CALL(FT_New_Face, library, inputFileName.c_str(), 0, &face);
-	CALL(FT_Select_Charmap, face, FT_ENCODING_UNICODE);
-	CALL(FT_Set_Pixel_Sizes, face, 64, 64);
 	if (!FT_IS_SCALABLE(face))
 		CAGE_THROW_ERROR(exception, "font is not scalable");
+	CALL(FT_Select_Charmap, face, FT_ENCODING_UNICODE);
+	CALL(FT_Set_Pixel_Sizes, face, 64, 64);
 	fontScale = 1.0 / 64.0;
 	loadGlyphs();
 	loadCharset();

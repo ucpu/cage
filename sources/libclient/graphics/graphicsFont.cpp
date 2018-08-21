@@ -17,8 +17,7 @@
 
 namespace cage
 {
-	fontClass::formatStruct::formatStruct() :
-		align(textAlignEnum::Left), size(14), wrapWidth(real::PositiveInfinity), lineSpacing(0)
+	fontClass::formatStruct::formatStruct() : align(textAlignEnum::Left), size(13), wrapWidth(real::PositiveInfinity), lineSpacing(0)
 	{}
 
 	namespace
@@ -94,7 +93,7 @@ namespace cage
 				instances.reserve(1000);
 			}
 
-			const real findKerning(uint32 L, uint32 R, real size) const
+			real findKerning(uint32 L, uint32 R, real size) const
 			{
 				CAGE_ASSERT_RUNTIME(L < glyphsArray.size() && R < glyphsArray.size(), L, R, glyphsArray.size());
 				if (kerning.empty() || glyphsArray.empty())
@@ -103,7 +102,7 @@ namespace cage
 				return kerning[L * s + R] * size;
 			}
 
-			const uint32 findGlyphIndex(uint32 character) const
+			uint32 findGlyphIndex(uint32 character) const
 			{
 				CAGE_ASSERT_RUNTIME(charmapChars.size());
 				if (charmapChars[0] > character)
@@ -179,7 +178,6 @@ namespace cage
 				const uint32 *totalEnd = data.gls + data.count;
 				const uint32 *lineStart = data.gls;
 				real lineY = -data.pos[1] + firstLineOffset * data.format->size;
-				data.outSize[1] = data.count > 0 ? lineHeight * data.format->size : 0;
 				while (true)
 				{
 					const uint32 *lineEnd = lineStart;
@@ -211,13 +209,13 @@ namespace cage
 
 					processLine(data, lineStart, lineEnd, lineWidth, lineY);
 					data.outSize[0] = max(data.outSize[0], lineWidth);
+					data.outSize[1] += (lineHeight + data.format->lineSpacing) * data.format->size;
 					lineStart = lineEnd;
 					if (lineStart == totalEnd)
 						break;
 					if (*lineStart == returnGlyph || *lineStart == spaceGlyph)
 						lineStart++;
-					data.outSize[1] += lineHeight * data.format->size + data.format->lineSpacing;
-					lineY -= lineHeight * data.format->size + data.format->lineSpacing;
+					lineY -= (lineHeight + data.format->lineSpacing) * data.format->size;
 				}
 
 				if (data.render)
@@ -266,7 +264,7 @@ namespace cage
 		impl->firstLineOffset = -firstLineOffset;
 	}
 
-	void fontClass::setImage(uint32 width, uint32 height, uint32 size, void *data)
+	void fontClass::setImage(uint32 width, uint32 height, uint32 size, const void *data)
 	{
 		fontImpl *impl = (fontImpl*)this;
 		impl->texWidth = width;
@@ -297,12 +295,12 @@ namespace cage
 		default:
 			CAGE_THROW_ERROR(exception, "unsupported bpp");
 		}
-		impl->tex->filters(GL_LINEAR, GL_LINEAR, 0);
+		impl->tex->filters(GL_LINEAR, GL_LINEAR, 100);
 		impl->tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 		//impl->tex->generateMipmaps();
 	}
 
-	void fontClass::setGlyphs(uint32 count, void *data, real *kerning)
+	void fontClass::setGlyphs(uint32 count, const void *data, const real *kerning)
 	{
 		fontImpl *impl = (fontImpl*)this;
 		impl->glyphsArray.resize(count);
@@ -317,7 +315,7 @@ namespace cage
 		impl->cursorGlyph = count - 1; // last glyph
 	}
 
-	void fontClass::setCharmap(uint32 count, uint32 *chars, uint32 *glyphs)
+	void fontClass::setCharmap(uint32 count, const uint32 *chars, const uint32 *glyphs)
 	{
 		fontImpl *impl = (fontImpl*)this;
 		impl->charmapChars.resize(count);
