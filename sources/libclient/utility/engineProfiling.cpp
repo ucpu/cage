@@ -47,7 +47,7 @@ namespace cage
 				updateListener.bind<engineProfilingImpl, &engineProfilingImpl::update>(this);
 
 				window()->events.keyPress.attach(keyPressListener);
-				controlThread::update.attach(updateListener);
+				controlThread().update.attach(updateListener);
 			}
 
 			void nullData()
@@ -294,16 +294,16 @@ namespace cage
 					}
 					if (key == keyToggleStereo)
 					{
-						switch (graphicsPrepareThread::stereoMode)
+						switch (graphicsPrepareThread().stereoMode)
 						{
 						case stereoModeEnum::Mono:
-							graphicsPrepareThread::stereoMode = stereoModeEnum::LeftRight;
+							graphicsPrepareThread().stereoMode = stereoModeEnum::LeftRight;
 							break;
 						case stereoModeEnum::LeftRight:
-							graphicsPrepareThread::stereoMode = stereoModeEnum::TopBottom;
+							graphicsPrepareThread().stereoMode = stereoModeEnum::TopBottom;
 							break;
 						case stereoModeEnum::TopBottom:
-							graphicsPrepareThread::stereoMode = stereoModeEnum::Mono;
+							graphicsPrepareThread().stereoMode = stereoModeEnum::Mono;
 							break;
 						}
 						return true;

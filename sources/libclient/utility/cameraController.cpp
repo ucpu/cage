@@ -43,7 +43,7 @@ namespace cage
 				listeners.keyRelease.bind<cameraControllerImpl, &cameraControllerImpl::keyRelease>(this);
 				listeners.attachAll(window());
 				updateListener.bind<cameraControllerImpl, &cameraControllerImpl::update>(this);
-				controlThread::update.attach(updateListener);
+				controlThread().update.attach(updateListener);
 			}
 
 			const pointStruct centerMouse()
