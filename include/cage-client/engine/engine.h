@@ -1,6 +1,6 @@
 namespace cage
 {
-	CAGE_API struct CAGE_API controlThreadClass
+	struct CAGE_API controlThreadClass
 	{
 		eventDispatcher<bool()> initialize;
 		eventDispatcher<bool()> finalize;
@@ -9,9 +9,10 @@ namespace cage
 		uint64 timePerTick;
 		static const uint32 threadIndex = 0;
 		controlThreadClass();
-	} &controlThread();
+	};
+	CAGE_API controlThreadClass &controlThread();
 
-	CAGE_API struct CAGE_API graphicsDispatchThreadClass
+	struct CAGE_API graphicsDispatchThreadClass
 	{
 		eventDispatcher<bool()> initialize;
 		eventDispatcher<bool()> finalize;
@@ -19,9 +20,10 @@ namespace cage
 		eventDispatcher<bool()> swap;
 		static const uint32 threadIndex = 1;
 		graphicsDispatchThreadClass();
-	} &graphicsDispatchThread();
+	};
+	CAGE_API graphicsDispatchThreadClass &graphicsDispatchThread();
 
-	CAGE_API struct CAGE_API graphicsPrepareThreadClass
+	struct CAGE_API graphicsPrepareThreadClass
 	{
 		eventDispatcher<bool()> initialize;
 		eventDispatcher<bool()> finalize;
@@ -29,9 +31,10 @@ namespace cage
 		stereoModeEnum stereoMode;
 		static const uint32 threadIndex = 2;
 		graphicsPrepareThreadClass();
-	} &graphicsPrepareThread();
+	};
+	CAGE_API graphicsPrepareThreadClass &graphicsPrepareThread();
 
-	CAGE_API struct CAGE_API soundThreadClass
+	struct CAGE_API soundThreadClass
 	{
 		eventDispatcher<bool()> initialize;
 		eventDispatcher<bool()> finalize;
@@ -39,7 +42,8 @@ namespace cage
 		uint64 timePerTick;
 		static const uint32 threadIndex = 3;
 		soundThreadClass();
-	} &soundThread();
+	};
+	CAGE_API soundThreadClass &soundThread();
 
 	struct CAGE_API engineCreateConfig
 	{
