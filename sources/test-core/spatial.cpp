@@ -157,6 +157,19 @@ void testSpatial()
 	}
 
 	{
+		CAGE_TESTCASE("test spheres");
+		holder<spatialDataClass> data = newSpatialData(spatialDataCreateConfig());
+		data->update(1, sphere(vec3(), 100));
+		data->rebuild();
+		holder<spatialQueryClass> query = newSpatialQuery(data.get());
+		query->intersection(sphere(vec3(50, 0, 0), 100));
+		CAGE_TEST(query->resultCount() == 1);
+
+		// test aabb-sphere intersection
+		query->intersection(generateRandomBox());
+	}
+
+	{
 		CAGE_TESTCASE("performance tests");
 		holder<spatialDataClass> data = newSpatialData(spatialDataCreateConfig());
 		holder<timerClass> tmr = newTimer();
