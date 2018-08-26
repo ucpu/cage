@@ -3,7 +3,7 @@
 #include <cage-core/math.h>
 #include <cage-core/utility/variableInterpolatingBuffer.h>
 
-void testInterpolator()
+void testVariableInterpolatingBuffer()
 {
 	CAGE_TESTCASE("variableInterpolatingBuffer");
 
