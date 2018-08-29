@@ -39,14 +39,14 @@ namespace cage
 					std::swap(master, slave);
 			}
 
-			virtual void updateRequestedSize() override
+			virtual void findRequestedSize() override
 			{
 				guiItemStruct *c = base->firstChild;
 				base->requestedSize = vec2();
 				while (c)
 				{
-					c->updateRequestedSize();
-					c->explicitPosition(c->requestedSize);
+					c->findRequestedSize();
+					c->checkExplicitPosition(c->requestedSize);
 					{ // primary axis
 						base->requestedSize[data.vertical] = base->requestedSize[data.vertical] + c->requestedSize[data.vertical];
 					}
@@ -61,7 +61,7 @@ namespace cage
 				CAGE_ASSERT_RUNTIME(base->requestedSize.valid());
 			}
 
-			void updateSecondary(updatePositionStruct &u, guiItemStruct *item)
+			void updateSecondary(finalPositionStruct &u, guiItemStruct *item)
 			{
 				uint32 axis = data.vertical ? 0 : 1;
 				real r = item->requestedSize[axis]; // requested
@@ -72,40 +72,40 @@ namespace cage
 				u.size[axis] = r;
 			}
 
-			virtual void updateFinalPosition(const updatePositionStruct &update) override
+			virtual void findFinalPosition(const finalPositionStruct &update) override
 			{
 				uint32 axis = data.vertical ? 1 : 0;
 				real m = master->requestedSize[axis];
 				if (data.inverse)
 				{ // bottom-up
 					{ // slave
-						updatePositionStruct u(update);
+						finalPositionStruct u(update);
 						u.size[axis] -= m;
 						updateSecondary(u, slave);
-						slave->updateFinalPosition(u);
+						slave->findFinalPosition(u);
 					}
 					{ // master
-						updatePositionStruct u(update);
+						finalPositionStruct u(update);
 						u.position[axis] += u.size[axis] - m;
 						u.size[axis] = m;
 						updateSecondary(u, master);
-						master->updateFinalPosition(u);
+						master->findFinalPosition(u);
 					}
 				}
 				else
 				{ // top-down
 					{ // master
-						updatePositionStruct u(update);
+						finalPositionStruct u(update);
 						u.size[axis] = m;
 						updateSecondary(u, master);
-						master->updateFinalPosition(u);
+						master->findFinalPosition(u);
 					}
 					{ // slave
-						updatePositionStruct u(update);
+						finalPositionStruct u(update);
 						u.position[axis] += m;
 						u.size[axis] -= m;
 						updateSecondary(u, slave);
-						slave->updateFinalPosition(u);
+						slave->findFinalPosition(u);
 					}
 				}
 			}

@@ -56,7 +56,7 @@ namespace cage
 		// todo inherit only
 	}
 
-	vec2 imageItemStruct::updateRequestedSize()
+	vec2 imageItemStruct::findRequestedSize()
 	{
 		if (texture)
 		{
@@ -65,11 +65,6 @@ namespace cage
 			return vec2(w, h);
 		}
 		return vec2();
-	}
-
-	renderableImageStruct *imageItemStruct::emit() const
-	{
-		return emit(base->contentPosition, base->contentSize);
 	}
 
 	renderableImageStruct *imageItemStruct::emit(vec2 position, vec2 size) const

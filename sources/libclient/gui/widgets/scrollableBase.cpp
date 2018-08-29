@@ -19,54 +19,52 @@ namespace cage
 
 	void scrollableBaseStruct::scrollableUpdateRequestedSize()
 	{
-		base->layout->updateRequestedSize();
-		if (base->text)
-		{
-			vec2 cs = base->text->updateRequestedSize();
-			base->requestedSize[0] = max(base->requestedSize[0], cs[0]);
-		}
-		frame = vec4();
-		if (elementBase != elementTypeEnum::InvalidElement)
-		{
-			frame += skin().layouts[(uint32)elementBase].border;
-		}
+		base->layout->findRequestedSize();
+		offsetSize(base->requestedSize, defaults->contentPadding);
 		if (elementCaption != elementTypeEnum::InvalidElement)
 		{
-			frame[1] += defaults->captionHeight;
+			base->requestedSize[1] += defaults->captionHeight;
+			if (base->text)
+			{
+				vec2 cs = base->text->findRequestedSize();
+				offsetSize(cs, defaults->captionPadding);
+				base->requestedSize[0] = max(base->requestedSize[0], cs[0]);
+				// it is important to compare (text size + text padding) with (children size + children padding)
+				// and only after that to add border and base margin
+			}
 		}
-		frame += defaults->baseMargin;
-		frame += defaults->contentPadding;
+		if (elementBase != elementTypeEnum::InvalidElement)
+			offsetSize(base->requestedSize, skin().layouts[(uint32)elementBase].border);
+		offsetSize(base->requestedSize, defaults->baseMargin);
 		// todo scrollbars
-		offsetSize(base->requestedSize, frame);
 	}
 
-	void scrollableBaseStruct::scrollableUpdateFinalPosition(const updatePositionStruct &update)
+	void scrollableBaseStruct::scrollableUpdateFinalPosition(const finalPositionStruct &update)
 	{
-		base->updateContentPosition(frame);
-		updatePositionStruct u(update);
-		u.position = base->contentPosition;
-		u.size = base->contentSize;
-		base->layout->updateFinalPosition(u);
+		finalPositionStruct u(update);
+		if (elementCaption != elementTypeEnum::InvalidElement)
+			u.position[1] += defaults->captionHeight;
+		if (elementBase != elementTypeEnum::InvalidElement)
+			offset(u.position, u.size, -skin().layouts[(uint32)elementBase].border);
+		offset(u.position, u.size, -defaults->baseMargin - defaults->contentPadding);
+		// todo scrollbars
+		base->layout->findFinalPosition(u);
 	}
 
 	void scrollableBaseStruct::scrollableEmit() const
 	{
+		vec2 p = base->position;
+		vec2 s = base->size;
+		offset(p, s, -defaults->baseMargin);
 		if (elementBase != elementTypeEnum::InvalidElement)
-		{
-			vec2 p = base->position;
-			vec2 s = base->size;
-			offset(p, s, -defaults->baseMargin);
 			emitElement(elementBase, mode(false), p, s);
-		}
 		if (elementCaption != elementTypeEnum::InvalidElement)
 		{
-			vec2 p = base->position;
-			vec2 s = vec2(base->size[0], defaults->captionHeight);
-			offset(p, s, -defaults->baseMargin * vec4(1,1,1,0));
+			s = vec2(s[0], defaults->captionHeight);
 			emitElement(elementCaption, mode(p, s), p, s);
 			if (base->text)
 			{
-				offset(p, s, -defaults->captionPadding - skin().layouts[(uint32)elementCaption].border);
+				offset(p, s, -skin().layouts[(uint32)elementCaption].border - defaults->captionPadding);
 				base->text->emit(p, s);
 			}
 		}

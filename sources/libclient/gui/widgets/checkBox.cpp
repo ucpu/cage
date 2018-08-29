@@ -31,34 +31,35 @@ namespace cage
 					base->text->text.apply(skin().defaults.checkBox.textFormat, base->impl);
 			}
 
-			virtual void updateRequestedSize() override
+			virtual void findRequestedSize() override
 			{
 				base->requestedSize = skin().defaults.checkBox.size;
 				if (base->text)
 				{
-					vec2 txtSize = base->text->updateRequestedSize();
-					base->requestedSize[0] += skin().defaults.checkBox.labelOffset + txtSize[0];
+					vec2 txtSize = base->text->findRequestedSize() + skin().defaults.checkBox.labelOffset;
+					base->requestedSize[0] += txtSize[0];
 					base->requestedSize[1] = max(base->requestedSize[1], txtSize[1]);
 				}
-			}
-
-			virtual void updateFinalPosition(const updatePositionStruct &update) override
-			{
-				base->updateContentPosition(skin().defaults.checkBox.margin);
+				offsetSize(base->requestedSize, skin().defaults.checkBox.margin);
 			}
 
 			virtual void emit() const override
 			{
 				vec2 sd = skin().defaults.checkBox.size;
-				elementTypeEnum el = data.type == checkBoxTypeEnum::RadioButton ? elementTypeEnum::RadioBoxUnchecked : elementTypeEnum::CheckBoxUnchecked;
-				emitElement(elementTypeEnum((uint32)el + (uint32)data.state), mode(base->contentPosition, sd), base->contentPosition, sd);
+				{
+					vec2 p = base->position;
+					offsetPosition(p, -skin().defaults.checkBox.margin);
+					elementTypeEnum el = data.type == checkBoxTypeEnum::RadioButton ? elementTypeEnum::RadioBoxUnchecked : elementTypeEnum::CheckBoxUnchecked;
+					emitElement(elementTypeEnum((uint32)el + (uint32)data.state), mode(p, sd), p, sd);
+				}
 				if (base->text)
 				{
-					real o = sd[0] + skin().defaults.checkBox.labelOffset;
-					vec2 s = base->contentSize;
-					s[0] -= o;
-					vec2 p = base->contentPosition;
-					p[0] += o;
+					vec2 p = base->position;
+					vec2 s = base->size;
+					offset(p, s, -skin().defaults.checkBox.margin);
+					vec2 o = sd * vec2(1, 0) + skin().defaults.checkBox.labelOffset;
+					p += o;
+					s -= o;
 					base->text->emit(p, s);
 				}
 			}

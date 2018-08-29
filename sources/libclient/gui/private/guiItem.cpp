@@ -13,13 +13,15 @@
 
 namespace cage
 {
-	updatePositionStruct::updatePositionStruct() : position(vec2::Nan), size(vec2::Nan)
+	finalPositionStruct::finalPositionStruct() : position(vec2::Nan), size(vec2::Nan)
 	{}
 
-	guiItemStruct::guiItemStruct(guiImpl *impl, entityClass *entity) : impl(impl), entity(entity),
-		requestedSize(vec2::Nan), position(vec2::Nan), size(vec2::Nan), contentPosition(vec2::Nan), contentSize(vec2::Nan),
-		parent(nullptr), prevSibling(nullptr), nextSibling(nullptr), firstChild(nullptr), lastChild(nullptr), order(0),
-		widget(nullptr), layout(nullptr), text(nullptr), image(nullptr)
+	guiItemStruct::guiItemStruct(guiImpl *impl, entityClass *entity) :
+		requestedSize(vec2::Nan), position(vec2::Nan), size(vec2::Nan),
+		impl(impl), entity(entity),
+		parent(nullptr), prevSibling(nullptr), nextSibling(nullptr), firstChild(nullptr), lastChild(nullptr),
+		widget(nullptr), layout(nullptr), text(nullptr), image(nullptr),
+		order(0)
 	{}
 
 	void guiItemStruct::initialize()
@@ -34,30 +36,49 @@ namespace cage
 			image->initialize();
 	}
 
-	void guiItemStruct::updateRequestedSize()
+	void guiItemStruct::findRequestedSize()
 	{
 		if (widget)
-			widget->updateRequestedSize();
+			widget->findRequestedSize();
 		else if (layout)
-			layout->updateRequestedSize();
+			layout->findRequestedSize();
 		else if (text)
-			requestedSize = text->updateRequestedSize();
+			requestedSize = text->findRequestedSize();
 		else if (image)
-			requestedSize = image->updateRequestedSize();
+			requestedSize = image->findRequestedSize();
 	}
 
-	void guiItemStruct::updateFinalPosition(const updatePositionStruct &update)
+	void guiItemStruct::findFinalPosition(const finalPositionStruct &update)
 	{
 		position = update.position;
 		size = update.size;
 		if (widget)
-			widget->updateFinalPosition(update);
+			widget->findFinalPosition(update);
 		else
 		{
 			uint32 name = entity ? entity->getName() : 0;
 			CAGE_ASSERT_RUNTIME(layout, "trying to layout an entity without layouting specified", name);
-			layout->updateFinalPosition(update);
+			layout->findFinalPosition(update);
 		}
+	}
+
+	void guiItemStruct::checkExplicitPosition(vec2 &pos, vec2 &size) const
+	{
+		if (GUI_HAS_COMPONENT(position, entity))
+		{
+			GUI_GET_COMPONENT(position, p, entity);
+			size = impl->eval<2>(p.size, size);
+			pos = impl->eval<2>(p.position, pos) - p.anchor * size;
+		}
+		CAGE_ASSERT_RUNTIME(size.valid(), "this item must have explicit size", entity ? entity->getName() : 0);
+	}
+
+	void guiItemStruct::checkExplicitPosition(vec2 &size) const
+	{
+		vec2 pos = vec2::Nan;
+		checkExplicitPosition(pos, size);
+		CAGE_ASSERT_RUNTIME(!pos.valid(), "this item may not have explicit position", entity ? entity->getName() : 0);
+		CAGE_ASSERT_RUNTIME(size.valid(), "this item must have explicit size", entity ? entity->getName() : 0);
 	}
 
 	void guiItemStruct::moveToWindow(bool horizontal, bool vertical)
@@ -73,47 +94,7 @@ namespace cage
 			else if (position[i] < 0)
 				offset = -position[i];
 			position[i] += offset;
-			contentPosition[i] += offset;
 		}
-	}
-
-	void guiItemStruct::childrenEmit() const
-	{
-		guiItemStruct *a = firstChild;
-		while (a)
-		{
-			if (a->widget)
-				a->widget->emit();
-			else
-				a->childrenEmit();
-			a = a->nextSibling;
-		}
-	}
-
-	void guiItemStruct::explicitPosition(vec2 &pos, vec2 &size) const
-	{
-		if (GUI_HAS_COMPONENT(position, entity))
-		{
-			GUI_GET_COMPONENT(position, p, entity);
-			size = impl->eval<2>(p.size, size);
-			pos = impl->eval<2>(p.position, pos) - p.anchor * size;
-		}
-		CAGE_ASSERT_RUNTIME(size.valid(), "this item must have explicit size", entity ? entity->getName() : 0);
-	}
-
-	void guiItemStruct::explicitPosition(vec2 &size) const
-	{
-		vec2 pos = vec2::Nan;
-		explicitPosition(pos, size);
-		CAGE_ASSERT_RUNTIME(!pos.valid(), "this item may not have explicit position", entity ? entity->getName() : 0);
-		CAGE_ASSERT_RUNTIME(size.valid(), "this item must have explicit size", entity ? entity->getName() : 0);
-	}
-
-	void guiItemStruct::updateContentPosition(const vec4 &subtractMargin)
-	{
-		contentPosition = position;
-		contentSize = size;
-		offset(contentPosition, contentSize, -subtractMargin);
 	}
 
 	void guiItemStruct::detachChildren()
@@ -149,6 +130,19 @@ namespace cage
 		prevSibling = parent->lastChild;
 		prevSibling->nextSibling = this;
 		parent->lastChild = this;
+	}
+
+	void guiItemStruct::childrenEmit() const
+	{
+		guiItemStruct *a = firstChild;
+		while (a)
+		{
+			if (a->widget)
+				a->widget->emit();
+			else
+				a->childrenEmit();
+			a = a->nextSibling;
+		}
 	}
 
 	void offsetPosition(vec2 &position, const vec4 &offset)

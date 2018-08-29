@@ -28,26 +28,29 @@ namespace cage
 					base->text->text.apply(skin().defaults.button.textFormat, base->impl);
 			}
 
-			virtual void updateRequestedSize() override
+			virtual void findRequestedSize() override
 			{
 				base->requestedSize = skin().defaults.button.size;
-			}
-
-			virtual void updateFinalPosition(const updatePositionStruct &update) override
-			{
-				base->updateContentPosition(skin().defaults.button.margin);
+				offsetSize(base->requestedSize, skin().defaults.button.margin);
 			}
 
 			virtual void emit() const override
 			{
-				emitElement(elementTypeEnum::Button, mode());
-				vec2 p = base->contentPosition;
-				vec2 s = base->contentSize;
-				offset(p, s, -skin().defaults.button.padding - skin().layouts[(uint32)elementTypeEnum::Button].border);
-				if (base->image)
-					base->image->emit(p, s);
-				if (base->text)
-					base->text->emit(p, s);
+				{
+					vec2 p = base->position;
+					vec2 s = base->size;
+					offset(p, s, -skin().defaults.button.margin);
+					emitElement(elementTypeEnum::Button, mode(), p, s);
+				}
+				{
+					vec2 p = base->position;
+					vec2 s = base->size;
+					offset(p, s, -skin().defaults.button.margin - skin().layouts[(uint32)elementTypeEnum::Button].border - skin().defaults.button.padding);
+					if (base->image)
+						base->image->emit(p, s);
+					if (base->text)
+						base->text->emit(p, s);
+				}
 			}
 
 			virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override

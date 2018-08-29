@@ -219,10 +219,10 @@ namespace cage
 		}
 		callInitialize(impl->root);
 		{ // layouting
-			impl->root->updateRequestedSize();
-			updatePositionStruct u;
+			impl->root->findRequestedSize();
+			finalPositionStruct u;
 			u.position = vec2();
-			impl->root->updateFinalPosition(u);
+			impl->root->findFinalPosition(u);
 		}
 		generateEventReceivers(impl->root);
 		findHover(impl);
@@ -235,9 +235,10 @@ namespace cage
 			return;
 		for (auto &s : impl->skins)
 		{
-			s.texture = impl->assetManager->get<assetSchemeIndexTexture, textureClass>(s.textureName);
-			if (!s.texture)
-				return;
+			if (impl->assetManager->ready(s.textureName))
+				s.texture = impl->assetManager->get<assetSchemeIndexTexture, textureClass>(s.textureName);
+			else
+				s.texture = nullptr;
 		}
 		if ((impl->emitIndexControl + 1) % 3 == impl->emitIndexDispatch)
 		{

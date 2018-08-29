@@ -27,12 +27,12 @@ namespace cage
 				scrollableInitialize();
 			}
 
-			virtual void updateRequestedSize() override
+			virtual void findRequestedSize() override
 			{
 				scrollableUpdateRequestedSize();
 			}
 
-			virtual void updateFinalPosition(const updatePositionStruct &update) override
+			virtual void findFinalPosition(const finalPositionStruct &update) override
 			{
 				scrollableUpdateFinalPosition(update);
 			}

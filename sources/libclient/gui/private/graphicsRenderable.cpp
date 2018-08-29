@@ -32,13 +32,14 @@ namespace cage
 	{
 		if (f.fontName)
 			font = impl->assetManager->tryGet<assetSchemeIndexFont, fontClass>(f.fontName);
+		if (f.size.valid())
+			format.size = f.size;
 		if (f.color.valid())
 			color = f.color;
 		if (f.align != (textAlignEnum)-1)
 			format.align = f.align;
-		// todo temporarily disabled
-		//if (f.lineSpacing.valid())
-		//	format.lineSpacing = f.lineSpacing;
+		if (f.lineSpacing.valid())
+			format.lineSpacing = f.lineSpacing;
 	}
 
 	renderableImageStruct::imageStruct::imageStruct() : texture(nullptr)

@@ -23,6 +23,7 @@ namespace cage
 		valuesStruct() : value(typename vecN<N>::type()) { for (uint32 i = 0; i < N; i++) { units[i] = unitEnum::None; } }
 	};
 
+	/*
 	template<> struct valuesStruct<1>
 	{
 		union
@@ -37,6 +38,7 @@ namespace cage
 		};
 		valuesStruct() : value(0), unit(unitEnum::None) {}
 	};
+	*/
 
 	typedef valuesStruct<1> valueStruct;
 
@@ -82,8 +84,9 @@ namespace cage
 	{
 		vec3 color;
 		uint32 fontName;
-		textAlignEnum align;
+		real size;
 		real lineSpacing;
+		textAlignEnum align;
 		textFormatComponent();
 	};
 

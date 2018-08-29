@@ -42,7 +42,7 @@ namespace cage
 			virtual void initialize() override
 			{}
 
-			virtual void updateRequestedSize() override
+			virtual void findRequestedSize() override
 			{
 				auto impl = base->impl;
 				{ // count childs
@@ -88,8 +88,8 @@ namespace cage
 				vec2 m;
 				while (c)
 				{
-					c->updateRequestedSize();
-					c->explicitPosition(c->requestedSize);
+					c->findRequestedSize();
+					c->checkExplicitPosition(c->requestedSize);
 					m = max(m, c->requestedSize);
 					uint32 wi = data.vertical ? (idx % data.sections) : (idx / data.sections);
 					uint32 hi = data.vertical ? (idx / data.sections) : (idx % data.sections);
@@ -121,7 +121,7 @@ namespace cage
 				CAGE_ASSERT_RUNTIME(base->requestedSize.valid());
 			}
 
-			virtual void updateFinalPosition(const updatePositionStruct &update) override
+			virtual void findFinalPosition(const finalPositionStruct &update) override
 			{
 				guiItemStruct *c = base->firstChild;
 				uint32 idx = 0;
@@ -138,7 +138,7 @@ namespace cage
 					real h = heights[hi];
 
 					{
-						updatePositionStruct u(update);
+						finalPositionStruct u(update);
 						u.position = pos;
 						u.size = c->requestedSize;
 						if (data.expandToSameWidth)
@@ -147,7 +147,7 @@ namespace cage
 							u.size[1] = h;
 						u.position += spacing * vec2(wi, hi);
 						u.position += max(vec2(w, h) - u.size, vec2()) * data.cellsAnchor;
-						c->updateFinalPosition(u);
+						c->findFinalPosition(u);
 					}
 
 					// advance position

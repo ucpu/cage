@@ -35,42 +35,45 @@ namespace cage
 				CAGE_ASSERT_RUNTIME(!base->image, "slider may not have image");
 			}
 
-			virtual void updateRequestedSize() override
+			virtual void findRequestedSize() override
 			{
 				defaults = data.vertical ? skin().defaults.sliderBar.vertical : skin().defaults.sliderBar.horizontal;
 				baseElement = data.vertical ? elementTypeEnum::SliderVerticalPanel : elementTypeEnum::SliderHorizontalPanel;
 				dotElement = data.vertical ? elementTypeEnum::SliderVerticalDot : elementTypeEnum::SliderHorizontalDot;
 				vec4 border = skin().layouts[(uint32)baseElement].border;
 				base->requestedSize = defaults.size;
-			}
-
-			virtual void updateFinalPosition(const updatePositionStruct &update) override
-			{
-				base->updateContentPosition(defaults.margin);
+				offsetSize(base->requestedSize, defaults.margin);
 			}
 
 			virtual void emit() const override
 			{
 				CAGE_ASSERT_RUNTIME(data.value.valid() && data.min.valid() && data.max.valid());
 				CAGE_ASSERT_RUNTIME(data.max > data.min);
-				emitElement(baseElement, mode(false));
-				real ds = min(base->contentSize[0], base->contentSize[1]);
-				vec2 size = vec2(ds, ds);
-				vec2 p = base->contentSize - size;
+				vec2 p = base->position;
+				vec2 s = base->size;
+				offset(p, s, -defaults.margin);
+				emitElement(baseElement, mode(false), p, s);
+				offset(p, s, -skin().layouts[(uint32)baseElement].border);
 				real f = (data.value - data.min) / (data.max - data.min);
-				vec2 pos = vec2(interpolate(0, p[0], f), interpolate(p[1], 0, f)) + base->contentPosition;
-				offset(pos, size, -skin().layouts[(uint32)baseElement].border);
-				emitElement(dotElement, mode(), pos, size);
+				real ds1 = min(s[0], s[1]);
+				vec2 ds = vec2(ds1, ds1);
+				vec2 inner = s - ds;
+				vec2 dp = vec2(interpolate(0, inner[0], f), interpolate(inner[1], 0, f)) + p;
+				emitElement(dotElement, mode(), dp, ds);
 			}
 
 			void update(vec2 point)
 			{
-				real ds = min(base->contentSize[0], base->contentSize[1]);
+				vec2 p = base->position;
+				vec2 s = base->size;
+				offset(p, s, -defaults.margin - skin().layouts[(uint32)baseElement].border);
+				real ds1 = min(s[0], s[1]);
 				real mp = point[data.vertical];
-				real cp = base->contentPosition[data.vertical];
-				real cs = base->contentSize[data.vertical];
-				mp -= ds * 0.5;
-				cs -= ds;
+				real cp = p[data.vertical];
+				real cs = s[data.vertical];
+				mp -= ds1 * 0.5;
+				cs -= ds1;
+				CAGE_ASSERT_RUNTIME(cs > 0, cs);
 				real f = (mp - cp) / cs;
 				f = clamp(f, 0, 1);
 				if (data.vertical)

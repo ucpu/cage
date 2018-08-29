@@ -20,13 +20,11 @@ namespace cage
 		elementTypeEnum elementBase;
 		elementTypeEnum elementCaption;
 
-		vec4 frame;
-
 		scrollableBaseStruct(guiItemStruct *base);
 
 		void scrollableInitialize();
 		void scrollableUpdateRequestedSize();
-		void scrollableUpdateFinalPosition(const updatePositionStruct &update);
+		void scrollableUpdateFinalPosition(const finalPositionStruct &update);
 		void scrollableEmit() const;
 	};
 }

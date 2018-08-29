@@ -258,7 +258,7 @@ namespace cage
 	skinWidgetDefaultsStruct::textAreaStruct::textAreaStruct() : textFormat(text), padding(3, 3, 3, 3), margin(1, 1, 1, 1), size(450, 200)
 	{}
 
-	skinWidgetDefaultsStruct::checkBoxStruct::checkBoxStruct() : textFormat(text), margin(1, 1, 1, 1), size(28, 28), labelOffset(3)
+	skinWidgetDefaultsStruct::checkBoxStruct::checkBoxStruct() : textFormat(text), margin(1, 1, 1, 1), size(28, 28), labelOffset(3, 5)
 	{}
 
 	skinWidgetDefaultsStruct::comboBoxStruct::comboBoxStruct() : placeholderFormat(text), itemsFormat(text), selectedFormat(text), basePadding(1, 1, 1, 1), baseMargin(1, 1, 1, 1), listPadding(0, 0, 0, 0), itemPadding(1, 1, 1, 1), size(250, 32), listOffset(-6), itemSpacing(0)
@@ -290,7 +290,7 @@ namespace cage
 		vertical.size = vec2(28, 150);
 	}
 
-	skinWidgetDefaultsStruct::colorPickerStruct::colorPickerStruct() : collapsedSize(40, 32), fullSize(250, 180), hueBarPortion(0.18), resultBarPortion(0.35)
+	skinWidgetDefaultsStruct::colorPickerStruct::colorPickerStruct() : margin(1, 1, 1, 1), collapsedSize(40, 32), fullSize(250, 180), hueBarPortion(0.18), resultBarPortion(0.35)
 	{}
 
 	skinWidgetDefaultsStruct::graphCanvasStruct::graphCanvasStruct() : size(200, 120)

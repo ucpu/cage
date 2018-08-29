@@ -23,32 +23,32 @@ namespace cage
 			virtual void initialize() override
 			{}
 
-			virtual void updateRequestedSize() override
+			virtual void findRequestedSize() override
 			{
 				base->requestedSize = vec2();
 				guiItemStruct *c = base->firstChild;
 				while (c)
 				{
-					c->updateRequestedSize();
+					c->findRequestedSize();
 					vec2 pos;
-					c->explicitPosition(pos, c->requestedSize);
+					c->checkExplicitPosition(pos, c->requestedSize);
 					base->requestedSize = max(base->requestedSize, pos + c->requestedSize);
 					c = c->nextSibling;
 				}
 				CAGE_ASSERT_RUNTIME(base->requestedSize.valid());
 			}
 
-			virtual void updateFinalPosition(const updatePositionStruct &update) override
+			virtual void findFinalPosition(const finalPositionStruct &update) override
 			{
 				guiItemStruct *c = base->firstChild;
 				while (c)
 				{
 					vec2 pos, size = c->requestedSize;
-					c->explicitPosition(pos, size);
-					updatePositionStruct u(update);
+					c->checkExplicitPosition(pos, size);
+					finalPositionStruct u(update);
 					u.position += pos;
 					u.size = size;
-					c->updateFinalPosition(u);
+					c->findFinalPosition(u);
 					c = c->nextSibling;
 				}
 			}

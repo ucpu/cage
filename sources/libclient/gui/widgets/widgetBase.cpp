@@ -25,7 +25,7 @@ namespace cage
 
 	const skinDataStruct &widgetBaseStruct::skin() const
 	{
-		CAGE_ASSERT_RUNTIME(widgetState.skinIndex < base->impl->skins.size(), widgetState.skinIndex, base->impl->skins.size(), base->entity->getName());
+		CAGE_ASSERT_RUNTIME(widgetState.skinIndex < base->impl->skins.size(), widgetState.skinIndex, base->impl->skins.size(), base->entity ? base->entity->getName() : 0);
 		return base->impl->skins[widgetState.skinIndex];
 	}
 
@@ -56,9 +56,9 @@ namespace cage
 		base->impl->focusName = base->entity->getName();
 	}
 
-	renderableElementStruct *widgetBaseStruct::emitElement(elementTypeEnum element, uint32 mode) const
+	void widgetBaseStruct::findFinalPosition(const finalPositionStruct &update)
 	{
-		return emitElement(element, mode, base->contentPosition, base->contentSize);
+		// do nothing
 	}
 
 	renderableElementStruct *widgetBaseStruct::emitElement(elementTypeEnum element, uint32 mode, vec2 pos, vec2 size) const

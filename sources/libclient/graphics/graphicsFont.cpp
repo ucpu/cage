@@ -44,7 +44,7 @@ namespace cage
 			static const uint32 charsPerBatch = 256;
 
 		public:
-			mutable holder<uniformBufferClass> uni;
+			holder<uniformBufferClass> uni;
 			holder<textureClass> tex;
 			uint32 texWidth, texHeight;
 			shaderClass *shr;
@@ -82,7 +82,7 @@ namespace cage
 					wrld[3] = g.size[1];
 				}
 			};
-			mutable std::vector<InstanceStruct> instances;
+			std::vector<InstanceStruct> instances;
 
 			fontImpl(windowClass *gl) : texWidth(0), texHeight(0),
 				shr(nullptr), msh(nullptr), spaceGlyph(0), returnGlyph(0), cursorGlyph(-1)
@@ -123,6 +123,15 @@ namespace cage
 				return 0;
 			}
 
+			void processCursor(const processDataStruct &data, const uint32 *begin, real x, real lineY)
+			{
+				if (data.render && begin == data.gls + data.cursor)
+				{
+					fontHeaderStruct::glyphDataStruct g = getGlyph(cursorGlyph, data.format->size);
+					instances.emplace_back(x, lineY, g);
+				}
+			}
+
 			void processLine(const processDataStruct &data, const uint32 *begin, const uint32 *end, real lineWidth, real lineY)
 			{
 				real x;
@@ -135,7 +144,7 @@ namespace cage
 				}
 
 				vec2 mousePos = data.mousePosition + vec2(-x, lineY + lineHeight * data.format->size);
-				bool mouseInLine = mousePos[1] >= 0 && mousePos[1] <= lineHeight * data.format->size + data.format->lineSpacing;
+				bool mouseInLine = mousePos[1] >= 0 && mousePos[1] <= (lineHeight + data.format->lineSpacing) * data.format->size;
 				if (!data.render && !mouseInLine)
 					return;
 				if (mouseInLine)
@@ -149,77 +158,91 @@ namespace cage
 				uint32 prev = 0;
 				while (begin != end)
 				{
-					if (data.render && begin == data.gls + data.cursor)
-					{
-						fontHeaderStruct::glyphDataStruct g = getGlyph(cursorGlyph, data.format->size);
-						instances.emplace_back(x, lineY, g);
-					}
-					x += findKerning(prev, *begin, data.format->size);
+					processCursor(data, begin, x, lineY);
+					fontHeaderStruct::glyphDataStruct g = getGlyph(*begin, data.format->size);
+					real k = findKerning(prev, *begin, data.format->size);
 					prev = *begin++;
-					fontHeaderStruct::glyphDataStruct g = getGlyph(prev, data.format->size);
 					if (data.render)
-						instances.emplace_back(x, lineY, g);
-					if (mouseInLine && data.mousePosition[0] >= x && data.mousePosition[0] <= x + g.advance)
+						instances.emplace_back(x + k, lineY, g);
+					if (mouseInLine && data.mousePosition[0] >= x && data.mousePosition[0] < x + k + g.advance)
 						data.outCursor = numeric_cast<uint32>(begin - data.gls);
-					x += g.advance;
+					x += k + g.advance;
 				}
-				if (data.render && begin == data.gls + data.cursor)
-				{
-					fontHeaderStruct::glyphDataStruct g = getGlyph(cursorGlyph, data.format->size);
-					instances.emplace_back(x, lineY, g);
-				}
+				processCursor(data, begin, x, lineY);
 			}
 
 			void processText(const processDataStruct &data)
 			{
+				CAGE_ASSERT_RUNTIME(!data.render || instances.empty());
 				CAGE_ASSERT_RUNTIME(data.format->align <= textAlignEnum::Center, data.format->align);
 				CAGE_ASSERT_RUNTIME(data.format->wrapWidth > 0, data.format->wrapWidth);
 				CAGE_ASSERT_RUNTIME(data.format->size > 0, data.format->size);
 				const uint32 *totalEnd = data.gls + data.count;
-				const uint32 *lineStart = data.gls;
-				real lineY = -data.pos[1] + firstLineOffset * data.format->size;
-				while (true)
-				{
-					const uint32 *lineEnd = lineStart;
-					const uint32 *wrap = lineStart;
-					real lineWidth = 0;
-					real wrapWidth = 0;
+				const uint32 *it = data.gls;
+				real actualLineHeight = (lineHeight + data.format->lineSpacing) * data.format->size;
+				real lineY = -data.pos[1] + (firstLineOffset - data.format->lineSpacing * 0.75) * data.format->size;
 
-					while (lineEnd != totalEnd && *lineEnd != returnGlyph)
+				if (data.count == 0)
+				{ // process cursor
+					processLine(data, it, totalEnd, 0, lineY);
+				}
+
+				while (it != totalEnd)
+				{
+					const uint32 *const lineStart = it;
+					const uint32 *lineEnd = it;
+					real lineWidth = 0;
+					real itWidth = 0;
+
+					while (true)
 					{
-						real k = findKerning(lineEnd != lineStart ? lineEnd[-1] : 0, *lineEnd, data.format->size);
-						real a = getGlyph(*lineEnd, data.format->size).advance;
-						if (lineWidth + k + a > data.format->wrapWidth && lineWidth > 0)
+						if (it == totalEnd)
 						{
-							if (wrap != lineStart)
-							{
-								lineEnd = wrap;
-								lineWidth = wrapWidth;
+							lineEnd = it;
+							lineWidth = itWidth;
+							break;
+						}
+						if (*it == returnGlyph)
+						{
+							lineEnd = it;
+							lineWidth = itWidth;
+							it++;
+							break;
+						}
+						real w = getGlyph(*it, data.format->size).advance;
+						w += findKerning(it == lineStart ? 0 : it[-1], *it, data.format->size);
+						if (it != lineStart && itWidth + w > data.format->wrapWidth + data.format->size * 1e-6)
+						{ // at this point, the line needs to be wrapped somewhere
+							if (*lineEnd == spaceGlyph)
+							{ // if the line has had a space already, use the space for the wrapping point
+								it = lineEnd + 1;
+							}
+							else
+							{ // otherwise wrap right now
+								lineEnd = it;
+								lineWidth = itWidth;
 							}
 							break;
 						}
-						else if (*lineEnd == spaceGlyph)
-						{
-							wrap = lineEnd;
-							wrapWidth = lineWidth;
+						if (*it == spaceGlyph)
+						{ // remember this position as potential wrapping point
+							lineEnd = it;
+							lineWidth = itWidth;
 						}
-						lineEnd++;
-						lineWidth += k + a;
+						it++;
+						itWidth += w;
 					}
 
 					processLine(data, lineStart, lineEnd, lineWidth, lineY);
 					data.outSize[0] = max(data.outSize[0], lineWidth);
-					data.outSize[1] += (lineHeight + data.format->lineSpacing) * data.format->size;
-					lineStart = lineEnd;
-					if (lineStart == totalEnd)
-						break;
-					if (*lineStart == returnGlyph || *lineStart == spaceGlyph)
-						lineStart++;
-					lineY -= (lineHeight + data.format->lineSpacing) * data.format->size;
+					data.outSize[1] += actualLineHeight;
+					lineY -= actualLineHeight;
 				}
 
 				if (data.render)
 				{
+					uni->bind();
+					uni->bind(1);
 					shr->uniform(2, data.color);
 
 					uint32 s = numeric_cast<uint32>(instances.size());
@@ -227,18 +250,15 @@ namespace cage
 					uint32 b = s - a * charsPerBatch;
 					for (uint32 i = 0; i < a; i++)
 					{
-						uni->bind();
 						uni->writeRange(&instances[i * charsPerBatch], 0, sizeof(InstanceStruct) * charsPerBatch);
-						uni->bind(1);
 						msh->dispatch(charsPerBatch);
 					}
 					if (b)
 					{
-						uni->bind();
 						uni->writeRange(&instances[a * charsPerBatch], 0, sizeof(InstanceStruct) * b);
-						uni->bind(1);
 						msh->dispatch(b);
 					}
+
 					instances.clear();
 				}
 			}
@@ -349,12 +369,9 @@ namespace cage
 
 	void fontClass::size(const uint32 *glyphs, uint32 count, const formatStruct &format, vec2 &size)
 	{
-		processDataStruct data;
-		data.format = &format;
-		data.gls = glyphs;
-		data.count = count;
-		((fontImpl*)this)->processText(data);
-		size = data.outSize;
+		vec2 mp;
+		uint32 c;
+		this->size(glyphs, count, format, size, mp, c);
 	}
 
 	void fontClass::size(const uint32 *glyphs, uint32 count, const formatStruct &format, vec2 &size, const vec2 &mousePosition, uint32 &cursor)

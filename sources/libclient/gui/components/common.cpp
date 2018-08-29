@@ -25,7 +25,7 @@ namespace cage
 	textComponent::textComponent() : assetName(0), textName(0)
 	{}
 
-	textFormatComponent::textFormatComponent() : color(vec3::Nan), fontName(0), align((textAlignEnum)-1), lineSpacing(detail::numeric_limits<sint16>::min())
+	textFormatComponent::textFormatComponent() : color(vec3::Nan), fontName(0), size(real::Nan), lineSpacing(real::Nan), align((textAlignEnum)-1)
 	{}
 
 	selectionComponent::selectionComponent() : start(-1), length(0)

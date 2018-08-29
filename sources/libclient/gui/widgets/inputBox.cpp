@@ -25,6 +25,7 @@ namespace cage
 
 			vec2 leftPos, rightPos;
 			vec2 mainPos, mainSize;
+			vec2 textPos, textSize;
 
 			inputBoxImpl(guiItemStruct *base) : widgetBaseStruct(base), data(GUI_REF_COMPONENT(inputBox)), selection(GUI_REF_COMPONENT(selection))
 			{}
@@ -167,21 +168,22 @@ namespace cage
 				}
 			}
 
-			virtual void updateRequestedSize() override
+			virtual void findRequestedSize() override
 			{
 				base->requestedSize = skin().defaults.inputBox.size;
+				offsetSize(base->requestedSize, skin().defaults.inputBox.margin);
 			}
 
-			virtual void updateFinalPosition(const updatePositionStruct &update) override
+			virtual void findFinalPosition(const finalPositionStruct &update) override
 			{
 				const auto &s = skin().defaults.inputBox;
-				base->updateContentPosition(s.margin);
-				leftPos = mainPos = rightPos = base->contentPosition;
-				mainSize = base->contentSize;
-				if (data.type == inputTypeEnum::Real || data.type == inputTypeEnum::Integer)
-					mainSize[0] -= (s.buttonsSize + s.buttonsOffset) * 2;
+				mainPos = base->position;
+				mainSize = base->size;
+				offset(mainPos, mainSize, -s.margin);
+				leftPos = rightPos = mainPos;
 				if (data.type == inputTypeEnum::Real || data.type == inputTypeEnum::Integer)
 				{
+					mainSize[0] -= (s.buttonsSize + s.buttonsOffset) * 2;
 					real mw = mainSize[0];
 					real bw = s.buttonsSize;
 					real off = s.buttonsOffset;
@@ -204,9 +206,9 @@ namespace cage
 						CAGE_THROW_CRITICAL(exception, "invalid input buttons placement enum");
 					}
 				}
-				base->contentPosition = mainPos;
-				base->contentSize = mainSize;
-				offset(base->contentPosition, base->contentSize, -skin().layouts[(uint32)elementTypeEnum::InputBox].border - s.basePadding);
+				textPos = mainPos;
+				textSize = mainSize;
+				offset(textPos, textSize, -skin().layouts[(uint32)elementTypeEnum::InputBox].border - s.basePadding);
 			}
 
 			virtual void emit() const override
@@ -221,7 +223,7 @@ namespace cage
 					m = mode(rightPos, ss);
 					emitElement(elementTypeEnum::InputButtonIncrement, m == 1 ? 0 : m, rightPos, ss);
 				}
-				base->text->emit();
+				base->text->emit(textPos, textSize);
 			}
 
 			bool insideButton(vec2 pos, vec2 point)
@@ -296,7 +298,7 @@ namespace cage
 				}
 
 				// update cursor
-				base->text->updateCursorPosition(base->contentPosition, base->contentSize, point, data.cursor);
+				base->text->updateCursorPosition(textPos, textSize, point, data.cursor);
 
 				return true;
 			}

@@ -24,12 +24,12 @@ namespace cage
 
 			}
 
-			virtual void updateRequestedSize() override
+			virtual void findRequestedSize() override
 			{
 				base->requestedSize = vec2(); // todo this is a temporary hack
 			}
 
-			virtual void updateFinalPosition(const updatePositionStruct &update) override
+			virtual void findFinalPosition(const finalPositionStruct &update) override
 			{
 
 			}

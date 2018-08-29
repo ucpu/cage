@@ -27,8 +27,8 @@ namespace cage
 			virtual void initialize() override
 			{}
 
-			virtual void updateRequestedSize() override;
-			virtual void updateFinalPosition(const updatePositionStruct &update) override;
+			virtual void findRequestedSize() override;
+			virtual void findFinalPosition(const finalPositionStruct &update) override;
 			virtual void emit() const override;
 			virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override;
 		};
@@ -72,21 +72,18 @@ namespace cage
 				}
 			}
 
-			virtual void updateRequestedSize() override
+			virtual void findRequestedSize() override
 			{
 				base->requestedSize = skin().defaults.comboBox.size;
-			}
-
-			virtual void updateFinalPosition(const updatePositionStruct &update) override
-			{
-				base->updateContentPosition(skin().defaults.comboBox.baseMargin);
+				offsetSize(base->requestedSize, skin().defaults.comboBox.baseMargin);
 			}
 
 			virtual void emit() const override
 			{
-				emitElement(elementTypeEnum::ComboBoxBase, mode());
-				vec2 p = base->contentPosition;
-				vec2 s = base->contentSize;
+				vec2 p = base->position;
+				vec2 s = base->size;
+				offset(p, s, -skin().defaults.comboBox.baseMargin);
+				emitElement(elementTypeEnum::ComboBoxBase, mode(), p, s);
 				offset(p, s, -skin().layouts[(uint32)elementTypeEnum::ComboBoxBase].border - skin().defaults.comboBox.basePadding);
 				if (data.selected == -1)
 				{ // emit placeholder
@@ -144,55 +141,60 @@ namespace cage
 			}
 		};
 
-		void comboListImpl::updateRequestedSize()
+		void comboListImpl::findRequestedSize()
 		{
-			base->requestedSize = vec2(combo->base->requestedSize[0], 0);
+			base->requestedSize = vec2();
+			offsetSize(base->requestedSize, skin().layouts[(uint32)elementTypeEnum::ComboBoxList].border + skin().defaults.comboBox.listPadding);
+			vec4 os = skin().layouts[(uint32)elementTypeEnum::ComboBoxItem].border + skin().defaults.comboBox.itemPadding;
 			guiItemStruct *c = combo->base->firstChild;
 			while (c)
 			{
-				c->requestedSize = c->text->updateRequestedSize();
+				// todo limit text wrap width to the combo box item
+				c->requestedSize = c->text->findRequestedSize();
+				offsetSize(c->requestedSize, os);
 				base->requestedSize[1] += c->requestedSize[1];
 				c = c->nextSibling;
 			}
-			vec4 os = skin().layouts[(uint32)elementTypeEnum::ComboBoxItem].border + skin().defaults.comboBox.itemPadding;
-			base->requestedSize[1] += (os[1] + os[3]) * combo->count;
 			base->requestedSize[1] += skin().defaults.comboBox.itemSpacing * (max(combo->count, 1u) - 1);
-			vec4 lp = skin().layouts[(uint32)elementTypeEnum::ComboBoxList].border + skin().defaults.comboBox.listPadding;
-			base->requestedSize[1] += lp[1] + lp[3];
+			vec4 m = skin().defaults.comboBox.baseMargin;
+			base->requestedSize[0] = combo->base->requestedSize[0] - m[0] - m[2];
 		}
 
-		void comboListImpl::updateFinalPosition(const updatePositionStruct &update)
+		void comboListImpl::findFinalPosition(const finalPositionStruct &update)
 		{
+			vec4 m = skin().defaults.comboBox.baseMargin;
 			base->size = base->requestedSize;
 			base->position = combo->base->position;
-			base->position[1] += combo->base->size[1] + skin().defaults.comboBox.listOffset;
-			base->updateContentPosition(skin().defaults.comboBox.baseMargin * vec4(1, 0, 1, 0));
-			vec2 p = base->contentPosition;
-			vec2 s = base->contentSize;
-			offset(p, s, -skin().layouts[(uint32)elementTypeEnum::ComboBoxList].border - skin().defaults.comboBox.listPadding);
+			base->position[0] += m[0];
+			base->position[1] += combo->base->size[1] + skin().defaults.comboBox.listOffset - m[3];
+			vec2 p = base->position;
+			vec2 s = base->size;
+			offset(p, s, -skin().defaults.comboBox.baseMargin * vec4(1, 0, 1, 0) - skin().layouts[(uint32)elementTypeEnum::ComboBoxList].border - skin().defaults.comboBox.listPadding);
+			real spacing = skin().defaults.comboBox.itemSpacing;
 			guiItemStruct *c = combo->base->firstChild;
-			vec4 os = skin().layouts[(uint32)elementTypeEnum::ComboBoxItem].border + skin().defaults.comboBox.itemPadding;
 			while (c)
 			{
 				c->position = p;
-				c->size = vec2(s[0], c->requestedSize[1] + os[1] + os[3]);
-				c->contentPosition = vec2(p[0] + os[0], p[1] + os[1]);
-				c->contentSize = vec2(s[0] - os[0] - os[2], c->requestedSize[1]);
-				p[1] += c->size[1] + skin().defaults.comboBox.itemSpacing;
+				c->size = vec2(s[0], c->requestedSize[1]);
+				p[1] += c->size[1] + spacing;
 				c = c->nextSibling;
 			}
 		}
 
 		void comboListImpl::emit() const
 		{
-			emitElement(elementTypeEnum::ComboBoxList, 0);
+			emitElement(elementTypeEnum::ComboBoxList, 0, base->position, base->size);
+			vec4 itemFrame = -skin().layouts[(uint32)elementTypeEnum::ComboBoxItem].border - skin().defaults.comboBox.itemPadding;
 			guiItemStruct *c = combo->base->firstChild;
 			uint32 idx = 0;
 			while (c)
 			{
 				uint32 m = pointInside(c->position, c->size, base->impl->outputMouse) ? 2 : idx == combo->data.selected ? 1 : 0;
 				emitElement(elementTypeEnum::ComboBoxItem, m, c->position, c->size);
-				c->text->emit();
+				vec2 p = c->position;
+				vec2 s = c->size;
+				offset(p, s, itemFrame);
+				c->text->emit(p, s);
 				c = c->nextSibling;
 				idx++;
 			}
@@ -212,7 +214,7 @@ namespace cage
 				if (pointInside(c->position, c->size, point))
 				{
 					combo->data.selected = idx;
-					base->impl->focusName = 0; // give up focus
+					base->impl->focusName = 0; // give up focus (this will close the popup)
 					break;
 				}
 				idx++;

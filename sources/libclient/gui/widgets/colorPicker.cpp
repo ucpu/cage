@@ -93,7 +93,7 @@ namespace cage
 				CAGE_ASSERT_RUNTIME(small != large);
 			}
 
-			virtual void updateRequestedSize() override
+			virtual void findRequestedSize() override
 			{
 				if (this == large)
 					base->requestedSize = skin().defaults.colorPicker.fullSize;
@@ -101,23 +101,22 @@ namespace cage
 					base->requestedSize = skin().defaults.colorPicker.collapsedSize;
 				else
 					CAGE_ASSERT_RUNTIME(false);
+				offsetSize(base->requestedSize, skin().defaults.colorPicker.margin);
 			}
 
-			virtual void updateFinalPosition(const updatePositionStruct &update) override
+			virtual void findFinalPosition(const finalPositionStruct &update) override
 			{
 				if (this == large && small)
 				{ // this is a popup
 					base->size = base->requestedSize;
 					base->position = small->base->position + small->base->size * 0.5 - base->size * 0.5;
-				}
-				base->updateContentPosition(vec4()); // margin?
-				if (this == large && small)
 					base->moveToWindow(true, true);
+				}
 				if (this == large)
 				{
-					vec2 p = base->contentPosition;
-					vec2 s = base->contentSize;
-					offset(p, s, -skin().layouts[(uint32)elementTypeEnum::ColorPickerFull].border);
+					vec2 p = base->position;
+					vec2 s = base->size;
+					offset(p, s, -skin().defaults.colorPicker.margin - skin().layouts[(uint32)elementTypeEnum::ColorPickerFull].border);
 					sliderPos = p;
 					sliderSize = s;
 					sliderSize[1] *= skin().defaults.colorPicker.hueBarPortion;
@@ -147,9 +146,12 @@ namespace cage
 
 			virtual void emit() const override
 			{
+				vec2 p = base->position;
+				vec2 s = base->size;
+				offset(p, s, -skin().defaults.colorPicker.margin);
 				if (this == large)
 				{ // large
-					emitElement(elementTypeEnum::ColorPickerFull, mode());
+					emitElement(elementTypeEnum::ColorPickerFull, mode(), p, s);
 					uint32 m = widgetState.disabled ? 3 : 0;
 					emitElement(elementTypeEnum::ColorPickerHSliderPanel, m, sliderPos, sliderSize);
 					emitElement(elementTypeEnum::ColorPickerResult, m, resultPos, resultSize);
@@ -160,8 +162,8 @@ namespace cage
 				}
 				else
 				{ // small
-					emitElement(elementTypeEnum::ColorPickerCompact, mode());
-					emitColor(base->contentPosition, base->contentSize, 0, skin().layouts[(uint32)elementTypeEnum::ColorPickerCompact].border);
+					emitElement(elementTypeEnum::ColorPickerCompact, mode(), p, s);
+					emitColor(p, s, 0, skin().layouts[(uint32)elementTypeEnum::ColorPickerCompact].border);
 				}
 			}
 

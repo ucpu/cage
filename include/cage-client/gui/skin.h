@@ -49,7 +49,7 @@ namespace cage
 			textFormatComponent textFormat;
 			vec4 margin;
 			vec2 size;
-			real labelOffset;
+			vec2 labelOffset;
 			checkBoxStruct();
 		} checkBox;
 		struct CAGE_API comboBoxStruct
@@ -94,6 +94,7 @@ namespace cage
 		} sliderBar;
 		struct CAGE_API colorPickerStruct
 		{
+			vec4 margin;
 			vec2 collapsedSize;
 			vec2 fullSize;
 			real hueBarPortion;

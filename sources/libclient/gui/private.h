@@ -75,56 +75,51 @@ namespace cage
 		virtual void render(guiImpl *impl) override;
 	};
 
-	struct updatePositionStruct
+	struct finalPositionStruct
 	{
 		vec2 position, size;
-		updatePositionStruct();
+		finalPositionStruct();
 	};
 
 	struct guiItemStruct
 	{
+		// size (points) as seen by parent (envelope)
+		vec2 requestedSize;
+		vec2 position, size;
+
 		guiImpl *const impl;
 		entityClass *const entity;
-
-		/*
-		_|-------------------------|_ envelope size
-		_|--|...................|--|_ margin
-		____|-------------------|____ outer size
-		____|--|.............|--|____ border
-		_______|-------------|_______ inner size
-		_______|--|.......|--|_______ padding
-		__________|-------|__________ content size
-		*/
-		vec2 requestedSize; // size (points) as seen by parent (envelope)
-		vec2 position, size; // size (points) as seen by parent (envelope)
-		vec2 contentPosition, contentSize; // size (points) as seen by children (content)
 
 		guiItemStruct *parent;
 		guiItemStruct *prevSibling, *nextSibling;
 		guiItemStruct *firstChild, *lastChild;
-		sint32 order;
 
 		struct widgetBaseStruct *widget;
 		struct layoutBaseStruct *layout;
 		struct textItemStruct *text;
 		struct imageItemStruct *image;
 
+		sint32 order; // relative ordering of items with same parent
+
 		guiItemStruct(guiImpl *impl, entityClass *entity);
 
-		void initialize();
-		void updateRequestedSize();
-		void updateFinalPosition(const updatePositionStruct &update);
+		// called top->down
+		void initialize(); // initialize and validate widget, layout, text and image, initialize children
+		void findRequestedSize(); // fills int the requestedSize
+		void findFinalPosition(const finalPositionStruct &update); // given position and available space in the finalPositionStruct, determine actual position, size, contentPosition and contentSize
+
+		// base helpers for derived classes
+		void checkExplicitPosition(vec2 &pos, vec2 &size) const;
+		void checkExplicitPosition(vec2 &size) const;
 		void moveToWindow(bool horizontal, bool vertical);
 
-		void childrenEmit() const;
-
-		void explicitPosition(vec2 &pos, vec2 &size) const;
-		void explicitPosition(vec2 &size) const;
-		void updateContentPosition(const vec4 &subtractMargin);
-
+		// parenting helpers
 		void detachChildren();
 		void detachParent();
 		void attachParent(guiItemStruct *newParent);
+
+		// called top->down
+		void childrenEmit() const;
 	};
 
 	struct widgetBaseStruct
@@ -142,11 +137,10 @@ namespace cage
 		void makeFocused();
 
 		virtual void initialize() = 0;
-		virtual void updateRequestedSize() = 0;
-		virtual void updateFinalPosition(const updatePositionStruct &update) = 0;
+		virtual void findRequestedSize() = 0;
+		virtual void findFinalPosition(const finalPositionStruct &update);
 		virtual void emit() const = 0;
 
-		renderableElementStruct *emitElement(elementTypeEnum element, uint32 mode) const;
 		renderableElementStruct *emitElement(elementTypeEnum element, uint32 mode, vec2 pos, vec2 size) const;
 
 		virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point);
@@ -167,8 +161,8 @@ namespace cage
 		layoutBaseStruct(guiItemStruct *base);
 
 		virtual void initialize() = 0;
-		virtual void updateRequestedSize() = 0;
-		virtual void updateFinalPosition(const updatePositionStruct &update) = 0;
+		virtual void findRequestedSize() = 0;
+		virtual void findFinalPosition(const finalPositionStruct &update) = 0;
 	};
 
 	struct textItemStruct
@@ -185,9 +179,8 @@ namespace cage
 		void transcript(const string &value);
 		void transcript(const char *value);
 
-		vec2 updateRequestedSize();
+		vec2 findRequestedSize();
 
-		renderableTextStruct *emit() const;
 		renderableTextStruct *emit(vec2 position, vec2 size) const;
 
 		void updateCursorPosition(vec2 position, vec2 size, vec2 point, uint32 &cursor);
@@ -209,9 +202,8 @@ namespace cage
 		void assign(const imageComponent &value);
 		void apply(const imageFormatComponent &f);
 
-		vec2 updateRequestedSize();
+		vec2 findRequestedSize();
 
-		renderableImageStruct *emit() const;
 		renderableImageStruct *emit(vec2 position, vec2 size) const;
 	};
 

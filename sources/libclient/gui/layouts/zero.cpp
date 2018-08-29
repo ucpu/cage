@@ -23,24 +23,24 @@ namespace cage
 			virtual void initialize() override
 			{}
 
-			virtual void updateRequestedSize() override
+			virtual void findRequestedSize() override
 			{
 				guiItemStruct *c = base->firstChild;
 				while (c)
 				{
-					c->updateRequestedSize();
+					c->findRequestedSize();
 					//c->position(c->requestedSize);
 					c = c->nextSibling;
 				}
 			}
 
-			virtual void updateFinalPosition(const updatePositionStruct &update) override
+			virtual void findFinalPosition(const finalPositionStruct &update) override
 			{
 				guiItemStruct *c = base->firstChild;
 				while (c)
 				{
-					updatePositionStruct u(update);
-					c->updateFinalPosition(u);
+					finalPositionStruct u(update);
+					c->findFinalPosition(u);
 					c = c->nextSibling;
 				}
 			}

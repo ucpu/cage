@@ -84,7 +84,7 @@ namespace cage
 		}
 	}
 
-	vec2 textItemStruct::updateRequestedSize()
+	vec2 textItemStruct::findRequestedSize()
 	{
 		if (text.font)
 		{
@@ -95,16 +95,11 @@ namespace cage
 		return vec2();
 	}
 
-	renderableTextStruct *textItemStruct::emit() const
-	{
-		return emit(base->contentPosition, base->contentSize);
-	}
-
 	renderableTextStruct *textItemStruct::emit(vec2 position, vec2 size) const
 	{
 		if (!text.font)
 			return nullptr;
-		if (text.count == 0 && text.cursor > 0)
+		if ((text.count == 0 || size[0] <= 0) && text.cursor > 0)
 			return nullptr; // early exit
 		CAGE_ASSERT_RUNTIME(text.color.valid());
 		auto *e = base->impl->emitControl;
@@ -125,7 +120,9 @@ namespace cage
 		if (!text.font)
 			return;
 		vec2 dummy;
-		text.font->size(text.glyphs, text.count, text.format, dummy, point - position, cursor);
+		fontClass::formatStruct f(text.format);
+		f.wrapWidth = size[0];
+		text.font->size(text.glyphs, text.count, f, dummy, point - position, cursor);
 		text.cursor = cursor;
 	}
 }
