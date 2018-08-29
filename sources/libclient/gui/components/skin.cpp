@@ -26,7 +26,7 @@ namespace cage
 		{
 			skinInitializerStruct()
 			{
-				font = hashString("cage/font/roboto.ttf");
+				font = hashString("cage/font/ubuntu/Ubuntu-R.ttf");
 				text.color = vec3();
 				text.fontName = font;
 				text.align = textAlignEnum::Left;
