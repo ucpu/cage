@@ -18,20 +18,20 @@ namespace cage
 			port = numeric_cast<uint16>(string(portBuf).toUint32());
 		}
 
-		sock::sock() : descriptor(INVALID_SOCKET), family(-1), type(-1), protocol(-1)
+		sock::sock() : descriptor(INVALID_SOCKET), family(-1), type(-1), protocol(-1), connected(false)
 		{}
 
-		sock::sock(int family, int type, int protocol) : descriptor(INVALID_SOCKET), family(family), type(type), protocol(protocol)
+		sock::sock(int family, int type, int protocol) : descriptor(INVALID_SOCKET), family(family), type(type), protocol(protocol), connected(false)
 		{
 			descriptor = socket(family, type, protocol);
 			if (descriptor == INVALID_SOCKET)
 				CAGE_THROW_ERROR(codeException, "socket creation failed (socket)", WSAGetLastError());
 		}
 
-		sock::sock(int family, int type, int protocol, SOCKET desc) : descriptor(desc), family(family), type(type), protocol(protocol)
+		sock::sock(int family, int type, int protocol, SOCKET desc, bool connected) : descriptor(desc), family(family), type(type), protocol(protocol), connected(connected)
 		{}
 
-		sock::sock(sock &&other) noexcept : descriptor(other.descriptor), family(other.family), type(other.type), protocol(other.protocol)
+		sock::sock(sock &&other) noexcept : descriptor(other.descriptor), family(other.family), type(other.type), protocol(other.protocol), connected(other.connected)
 		{
 			other.descriptor = INVALID_SOCKET;
 		}
@@ -46,6 +46,7 @@ namespace cage
 			family = other.family;
 			type = other.type;
 			protocol = other.protocol;
+			connected = other.connected;
 			other.descriptor = INVALID_SOCKET;
 		}
 
@@ -104,6 +105,7 @@ namespace cage
 		{
 			if (::connect(descriptor, (sockaddr*)&remoteAddress.storage, remoteAddress.addrlen) < 0)
 				CAGE_THROW_SILENT(codeException, "connect failed (connect)", WSAGetLastError());
+			connected = true;
 		}
 
 		void sock::listen(int backlog)
@@ -122,7 +124,7 @@ namespace cage
 					CAGE_THROW_ERROR(codeException, "accept failed (accept)", err);
 				rtn = INVALID_SOCKET;
 			}
-			return sock(family, type, protocol, rtn);
+			return sock(family, type, protocol, rtn, true);
 		}
 
 		void sock::close()
@@ -169,18 +171,21 @@ namespace cage
 
 		void sock::send(const void *buffer, uintPtr bufferSize)
 		{
+			CAGE_ASSERT_RUNTIME(connected);
 			if (::send(descriptor, (raw_type*)buffer, numeric_cast<int>(bufferSize), 0) != bufferSize)
 				CAGE_THROW_ERROR(codeException, "send failed (send)", WSAGetLastError());
 		}
 
 		void sock::sendTo(const void *buffer, uintPtr bufferSize, const addr &remoteAddress)
 		{
+			CAGE_ASSERT_RUNTIME(!connected);
 			if (::sendto(descriptor, (raw_type*)buffer, numeric_cast<int>(bufferSize), 0, (sockaddr*)&remoteAddress.storage, remoteAddress.addrlen) != bufferSize)
 				CAGE_THROW_ERROR(codeException, "send failed (sendto)", WSAGetLastError());
 		}
 
 		uintPtr sock::recv(void *buffer, uintPtr bufferSize, int flags, bool ignoreReset)
 		{
+			CAGE_ASSERT_RUNTIME(connected);
 			int rtn;
 			if ((rtn = ::recv(descriptor, (raw_type*)buffer, numeric_cast<int>(bufferSize), flags)) < 0)
 			{
@@ -194,6 +199,7 @@ namespace cage
 
 		uintPtr sock::recvFrom(void *buffer, uintPtr bufferSize, addr &remoteAddress, int flags, bool ignoreReset)
 		{
+			//CAGE_ASSERT_RUNTIME(!connected);
 			remoteAddress.addrlen = sizeof(remoteAddress.storage);
 			int rtn;
 			if ((rtn = ::recvfrom(descriptor, (raw_type*)buffer, numeric_cast<int>(bufferSize), flags, (sockaddr*)&remoteAddress.storage, &remoteAddress.addrlen)) < 0)

@@ -53,6 +53,11 @@ namespace cage
 				return detail::memcmp(&storage, &other.storage, sizeof(storage)) < 0;
 			}
 
+			bool operator == (const addr &other) const // fast (binary) comparison
+			{
+				return detail::memcmp(&storage, &other.storage, sizeof(storage)) == 0;
+			}
+
 		private:
 			sockaddr_storage storage;
 			socklen_t addrlen;
@@ -65,7 +70,7 @@ namespace cage
 		{
 			sock(); // invalid socket
 			sock(int family, int type, int protocol); // create new socket
-			sock(int family, int type, int protocol, SOCKET descriptor); // copy socket
+			sock(int family, int type, int protocol, SOCKET descriptor, bool connected); // copy socket
 			sock(sock &&other) noexcept;
 			void operator = (sock &&other) noexcept;
 			~sock();
@@ -103,10 +108,12 @@ namespace cage
 			int getFamily() const { return family; };
 			int getType() const { return type; };
 			int getProtocol() const { return protocol; };
+			bool getConnected() const { return connected; }
 
 		private:
 			SOCKET descriptor;
 			int family, type, protocol;
+			bool connected;
 		};
 
 		struct addrList

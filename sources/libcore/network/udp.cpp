@@ -505,7 +505,13 @@ namespace cage
 						{
 							try
 							{
-								s.sendTo(b.data(), b.size(), sockReceiver->address);
+								if (s.getConnected())
+								{
+									CAGE_ASSERT_RUNTIME(s.getRemoteAddress() == sockReceiver->address);
+									s.send(b.data(), b.size());
+								}
+								else
+									s.sendTo(b.data(), b.size(), sockReceiver->address);
 							}
 							catch (...)
 							{

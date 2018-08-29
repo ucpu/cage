@@ -16,7 +16,7 @@ namespace cage
 	{
 		struct itemBase
 		{
-			virtual operator aabb () const = 0;
+			virtual operator aabb() const = 0;
 			virtual bool intersects(const line &other) = 0;
 			virtual bool intersects(const triangle &other) = 0;
 			virtual bool intersects(const sphere &other) = 0;
@@ -26,7 +26,7 @@ namespace cage
 		template<class T> struct itemShape : public itemBase, public T
 		{
 			itemShape(const T &other) : T(other) {}
-			virtual operator aabb () const { return *this; }
+			virtual operator aabb() const { return aabb(*this); }
 			virtual bool intersects(const line &other) { return cage::intersects(*this, other); };
 			virtual bool intersects(const triangle &other) { return cage::intersects(*this, other); };
 			virtual bool intersects(const sphere &other) { return cage::intersects(*this, other); };

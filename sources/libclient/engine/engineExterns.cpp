@@ -35,40 +35,43 @@ namespace cage
 	engineCreateConfig engineConfig;
 
 	engineCreateConfig::engineCreateConfig() :
-		graphicEmitMemory(1024 * 1024 * 32), graphicDispatchMemory(1024 * 1024 * 32), soundEmitMemory(1024 * 1024 * 8),
+		graphicsEmitMemory(1024 * 1024 * 32), graphicsDispatchMemory(1024 * 1024 * 32), soundEmitMemory(1024 * 1024 * 8),
 		entities(nullptr), assets(nullptr), gui(nullptr), soundContext(nullptr), speaker(nullptr)
 	{}
 
-	namespace controlThread
+	controlThreadClass::controlThreadClass() : timePerTick(1000000 / 20)
+	{}
+
+	controlThreadClass &controlThread()
 	{
-		eventDispatcher<bool()> initialize;
-		eventDispatcher<bool()> finalize;
-		eventDispatcher<bool()> update;
-		eventDispatcher<bool()> assets;
-		uint64 timePerTick = 1000000 / 20;
+		static controlThreadClass instance;
+		return instance;
 	}
 
-	namespace graphicsDispatchThread
+	graphicsDispatchThreadClass::graphicsDispatchThreadClass()
+	{}
+
+	graphicsDispatchThreadClass &graphicsDispatchThread()
 	{
-		eventDispatcher<bool()> initialize;
-		eventDispatcher<bool()> finalize;
-		eventDispatcher<bool()> render;
-		eventDispatcher<bool()> swap;
+		static graphicsDispatchThreadClass instance;
+		return instance;
 	}
 
-	namespace graphicsPrepareThread
+	graphicsPrepareThreadClass::graphicsPrepareThreadClass() : stereoMode(stereoModeEnum::Mono)
+	{}
+
+	graphicsPrepareThreadClass &graphicsPrepareThread()
 	{
-		eventDispatcher<bool()> initialize;
-		eventDispatcher<bool()> finalize;
-		eventDispatcher<bool()> prepare;
-		stereoModeEnum stereoMode = stereoModeEnum::Mono;
+		static graphicsPrepareThreadClass instance;
+		return instance;
 	}
 
-	namespace soundThread
+	soundThreadClass::soundThreadClass() : timePerTick(1000000 / 40)
+	{}
+
+	soundThreadClass &soundThread()
 	{
-		eventDispatcher<bool()> initialize;
-		eventDispatcher<bool()> finalize;
-		eventDispatcher<bool()> sound;
-		uint64 timePerTick = 1000000 / 40;
+		static soundThreadClass instance;
+		return instance;
 	}
 }

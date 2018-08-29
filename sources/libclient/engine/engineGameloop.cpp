@@ -50,9 +50,9 @@ namespace cage
 			holder<semaphoreClass> emitSoundStartSemaphore;
 			holder<semaphoreClass> emitSoundAssetsSemaphore;
 			holder<semaphoreClass> emitSoundEndSemaphore;
-			holder<threadClass> graphicsDispatchThread;
-			holder<threadClass> graphicsPrepareThread;
-			holder<threadClass> soundThread;
+			holder<threadClass> graphicsDispatchThreadHolder;
+			holder<threadClass> graphicsPrepareThreadHolder;
+			holder<threadClass> soundThreadHolder;
 			variableSmoothingBufferStruct<uint64, 60> profilingBufferControlTick;
 			variableSmoothingBufferStruct<uint64, 60> profilingBufferControlWait;
 			variableSmoothingBufferStruct<uint64, 60> profilingBufferControlEmit;
@@ -96,10 +96,10 @@ namespace cage
 						uint64 time1 = getApplicationTime();
 						graphicsPrepareSemaphore->lock();
 						uint64 time2 = getApplicationTime();
-						graphicsPrepareThread::prepare.dispatch();
+						graphicsPrepareThread().prepare.dispatch();
 						graphicsPrepareTick(lastEmit, time2);
 						graphicsDispatchSemaphore->unlock();
-						assets->processCustomThread(graphicsPrepareThread::threadIndex);
+						assets->processCustomThread(graphicsPrepareThread().threadIndex);
 						uint64 time3 = getApplicationTime();
 						if (emitIsReady)
 						{
@@ -133,7 +133,7 @@ namespace cage
 				graphicsPrepareFinalize();
 				while (assets->countTotal() > 0)
 				{
-					while (assets->processCustomThread(graphicsPrepareThread::threadIndex));
+					while (assets->processCustomThread(graphicsPrepareThread().threadIndex));
 					threadSleep(5000);
 				}
 			}
@@ -158,21 +158,21 @@ namespace cage
 						uint64 time1 = getApplicationTime();
 						graphicsDispatchSemaphore->lock();
 						uint64 time2 = getApplicationTime();
-						graphicsDispatchThread::render.dispatch();
+						graphicsDispatchThread().render.dispatch();
 						uint32 drawCalls = 0;
 						uint32 drawPrimitives = 0;
 						graphicsDispatchTick(drawCalls, drawPrimitives);
 						profilingBufferGraphicsDrawCalls.add(drawCalls);
 						profilingBufferGraphicsDrawPrimitives.add(drawPrimitives);
-						if (graphicsPrepareThread::stereoMode == stereoModeEnum::Mono)
+						if (graphicsPrepareThread().stereoMode == stereoModeEnum::Mono)
 						{
 							gui->graphicRender();
 							CAGE_CHECK_GL_ERROR_DEBUG();
 						}
 						graphicsPrepareSemaphore->unlock();
-						assets->processCustomThread(graphicsDispatchThread::threadIndex);
+						assets->processCustomThread(graphicsDispatchThreadClass::threadIndex);
 						uint64 time3 = getApplicationTime();
-						graphicsDispatchThread::swap.dispatch();
+						graphicsDispatchThread().swap.dispatch();
 						graphicsDispatchSwap();
 						uint64 time4 = getApplicationTime();
 						profilingBufferGraphicsDispatchWait.add(time2 - time1);
@@ -195,7 +195,7 @@ namespace cage
 				graphicsDispatchFinalize();
 				while (assets->countTotal() > 0)
 				{
-					while (assets->processCustomThread(graphicsDispatchThread::threadIndex));
+					while (assets->processCustomThread(graphicsDispatchThread().threadIndex));
 					threadSleep(5000);
 				}
 			}
@@ -228,23 +228,23 @@ namespace cage
 							emitSoundAssetsSemaphore->lock();
 						}
 						uint64 time2 = getApplicationTime();
-						assets->processCustomThread(soundThread::threadIndex);
-						soundThread::sound.dispatch();
+						assets->processCustomThread(soundThreadClass::threadIndex);
+						soundThread().sound.dispatch();
 						soundTick(lastEmit, soundTickTime);
 						gui->soundRender();
 						uint64 time3 = getApplicationTime();
 						uint64 timeDelay = time3 > soundTickTime ? time3 - soundTickTime : 0;
-						if (timeDelay > soundThread::timePerTick * 2)
+						if (timeDelay > soundThread().timePerTick * 2)
 						{
-							uint64 skip = timeDelay / soundThread::timePerTick + 1;
+							uint64 skip = timeDelay / soundThread().timePerTick + 1;
 							CAGE_LOG(severityEnum::Warning, "engine", string() + "skipping " + skip + " sound ticks");
-							soundTickTime += skip * soundThread::timePerTick;
+							soundTickTime += skip * soundThread().timePerTick;
 						}
 						else
 						{
-							if (timeDelay < soundThread::timePerTick)
-								threadSleep(soundThread::timePerTick - timeDelay);
-							soundTickTime += soundThread::timePerTick;
+							if (timeDelay < soundThread().timePerTick)
+								threadSleep(soundThread().timePerTick - timeDelay);
+							soundTickTime += soundThread().timePerTick;
 						}
 						uint64 time4 = getApplicationTime();
 						profilingBufferSoundEmit.add(time2 - time1);
@@ -269,7 +269,7 @@ namespace cage
 				soundFinalize();
 				while (assets->countTotal() > 0)
 				{
-					while (assets->processCustomThread(soundThread::threadIndex));
+					while (assets->processCustomThread(soundThread().threadIndex));
 					threadSleep(5000);
 				}
 			}
@@ -303,7 +303,7 @@ namespace cage
 								}
 							}
 						}
-						controlThread::update.dispatch();
+						controlThread().update.dispatch();
 						gui->setOutputResolution(window->resolution());
 						gui->controlUpdate();
 						window->processEvents();
@@ -315,8 +315,8 @@ namespace cage
 						emitIsReady = false;
 						uint64 time3 = getApplicationTime();
 						gui->controlEmit();
-						controlThread::assets.dispatch();
-						while (assets->processControlThread() || assets->processCustomThread(controlThread::threadIndex));
+						controlThread().assets.dispatch();
+						while (assets->processControlThread() || assets->processCustomThread(controlThreadClass::threadIndex));
 						emitGraphicsAssetsSemaphore->unlock(); // let both other threads know, that assets are updated
 						emitSoundAssetsSemaphore->unlock();
 						emitGraphicsEndSemaphore->lock(); // wait for both other threads to leave the emit state
@@ -324,17 +324,17 @@ namespace cage
 						uint64 time4 = getApplicationTime();
 						{ // timing
 							uint64 timeDelay = time3 > currentControlTime ? time3 - currentControlTime : 0;
-							if (timeDelay > controlThread::timePerTick * 2)
+							if (timeDelay > controlThread().timePerTick * 2)
 							{
-								uint64 skip = timeDelay / controlThread::timePerTick + 1;
+								uint64 skip = timeDelay / controlThread().timePerTick + 1;
 								CAGE_LOG(severityEnum::Warning, "engine", string() + "skipping " + skip + " control update ticks");
-								currentControlTime += skip * controlThread::timePerTick;
+								currentControlTime += skip * controlThread().timePerTick;
 							}
 							else
 							{
-								if (timeDelay < controlThread::timePerTick)
-									threadSleep(controlThread::timePerTick - timeDelay);
-								currentControlTime += controlThread::timePerTick;
+								if (timeDelay < controlThread().timePerTick)
+									threadSleep(controlThread().timePerTick - timeDelay);
+								currentControlTime += controlThread().timePerTick;
 							}
 						}
 						uint64 time5 = getApplicationTime();
@@ -366,13 +366,13 @@ namespace cage
 				catch (...) { CAGE_LOG(severityEnum::Error, "engine", "exception caught in initialization (engine) in " CAGE_STRINGIZE(NAME)); engineStop(); } \
 				{ scopeLock<barrierClass> l(threadsStateBarier); } \
 				{ scopeLock<barrierClass> l(threadsStateBarier); } \
-				try { CAGE_JOIN(NAME, Thread)::initialize.dispatch(); } \
+				try { CAGE_JOIN(NAME, Thread)().initialize.dispatch(); } \
 				catch (...) { CAGE_LOG(severityEnum::Error, "engine", "exception caught in initialization (application) in " CAGE_STRINGIZE(NAME)); engineStop(); } \
 				{ scopeLock<barrierClass> l(threadsStateBarier); } \
 				try { CAGE_JOIN(NAME, GameloopStage)(); } \
 				catch (...) { CAGE_LOG(severityEnum::Error, "engine", "exception caught in gameloop in " CAGE_STRINGIZE(NAME)); engineStop(); } \
 				{ scopeLock<barrierClass> l(threadsStateBarier); } \
-				try { CAGE_JOIN(NAME, Thread)::finalize.dispatch(); } \
+				try { CAGE_JOIN(NAME, Thread)().finalize.dispatch(); } \
 				catch (...) { CAGE_LOG(severityEnum::Error, "engine", "exception caught in finalization (application) in " CAGE_STRINGIZE(NAME)); } \
 				try { CAGE_JOIN(NAME, FinalizeStage)(); } \
 				catch (...) { CAGE_LOG(severityEnum::Error, "engine", "exception caught in finalization (engine) in " CAGE_STRINGIZE(NAME)); } \
@@ -442,26 +442,26 @@ namespace cage
 				}
 
 				{ // create threads
-					graphicsDispatchThread = newThread(delegate<void()>().bind<engineDataStruct, &engineDataStruct::graphicsDispatchEntry>(this), "engine graphics dispatch");
-					graphicsPrepareThread = newThread(delegate<void()>().bind<engineDataStruct, &engineDataStruct::graphicsPrepareEntry>(this), "engine graphics prepare");
-					soundThread = newThread(delegate<void()>().bind<engineDataStruct, &engineDataStruct::soundEntry>(this), "engine sound");
+					graphicsDispatchThreadHolder = newThread(delegate<void()>().bind<engineDataStruct, &engineDataStruct::graphicsDispatchEntry>(this), "engine graphics dispatch");
+					graphicsPrepareThreadHolder = newThread(delegate<void()>().bind<engineDataStruct, &engineDataStruct::graphicsPrepareEntry>(this), "engine graphics prepare");
+					soundThreadHolder = newThread(delegate<void()>().bind<engineDataStruct, &engineDataStruct::soundEntry>(this), "engine sound");
 				}
 
 				{ // initialize asset schemes
 					// core assets
-					assets->defineScheme<void>(assetSchemeIndexPack, genAssetSchemePack(controlThread::threadIndex));
-					assets->defineScheme<memoryBuffer>(assetSchemeIndexRaw, genAssetSchemeRaw(controlThread::threadIndex));
-					assets->defineScheme<textPackClass>(assetSchemeIndexTextPackage, genAssetSchemeTextPackage(controlThread::threadIndex));
-					assets->defineScheme<colliderClass>(assetSchemeIndexCollider, genAssetSchemeCollider(controlThread::threadIndex));
+					assets->defineScheme<void>(assetSchemeIndexPack, genAssetSchemePack(controlThread().threadIndex));
+					assets->defineScheme<memoryBuffer>(assetSchemeIndexRaw, genAssetSchemeRaw(controlThread().threadIndex));
+					assets->defineScheme<textPackClass>(assetSchemeIndexTextPackage, genAssetSchemeTextPackage(controlThread().threadIndex));
+					assets->defineScheme<colliderClass>(assetSchemeIndexCollider, genAssetSchemeCollider(controlThread().threadIndex));
 					// client assets
-					assets->defineScheme<shaderClass>(assetSchemeIndexShader, genAssetSchemeShader(graphicsDispatchThread::threadIndex, window.get()));
-					assets->defineScheme<textureClass>(assetSchemeIndexTexture, genAssetSchemeTexture(graphicsDispatchThread::threadIndex, window.get()));
-					assets->defineScheme<meshClass>(assetSchemeIndexMesh, genAssetSchemeMesh(graphicsDispatchThread::threadIndex, window.get()));
-					assets->defineScheme<skeletonClass>(assetSchemeIndexSkeleton, genAssetSchemeSkeleton(graphicsPrepareThread::threadIndex));
-					assets->defineScheme<animationClass>(assetSchemeIndexAnimation, genAssetSchemeAnimation(graphicsPrepareThread::threadIndex));
-					assets->defineScheme<objectClass>(assetSchemeIndexObject, genAssetSchemeObject(graphicsPrepareThread::threadIndex));
-					assets->defineScheme<fontClass>(assetSchemeIndexFont, genAssetSchemeFont(graphicsDispatchThread::threadIndex, window.get()));
-					assets->defineScheme<sourceClass>(assetSchemeIndexSound, genAssetSchemeSound(soundThread::threadIndex, sound.get()));
+					assets->defineScheme<shaderClass>(assetSchemeIndexShader, genAssetSchemeShader(graphicsDispatchThread().threadIndex, window.get()));
+					assets->defineScheme<textureClass>(assetSchemeIndexTexture, genAssetSchemeTexture(graphicsDispatchThread().threadIndex, window.get()));
+					assets->defineScheme<meshClass>(assetSchemeIndexMesh, genAssetSchemeMesh(graphicsDispatchThread().threadIndex, window.get()));
+					assets->defineScheme<skeletonClass>(assetSchemeIndexSkeleton, genAssetSchemeSkeleton(graphicsPrepareThreadClass::threadIndex));
+					assets->defineScheme<animationClass>(assetSchemeIndexAnimation, genAssetSchemeAnimation(graphicsPrepareThreadClass::threadIndex));
+					assets->defineScheme<objectClass>(assetSchemeIndexObject, genAssetSchemeObject(graphicsPrepareThreadClass::threadIndex));
+					assets->defineScheme<fontClass>(assetSchemeIndexFont, genAssetSchemeFont(graphicsDispatchThreadClass::threadIndex, window.get()));
+					assets->defineScheme<sourceClass>(assetSchemeIndexSound, genAssetSchemeSound(soundThreadClass::threadIndex, sound.get()));
 					// cage pack
 					assets->add(hashString("cage/cage.pack"));
 				}
@@ -511,7 +511,7 @@ namespace cage
 
 				try
 				{
-					controlThread::initialize.dispatch();
+					controlThread().initialize.dispatch();
 				}
 				catch (...)
 				{
@@ -538,7 +538,7 @@ namespace cage
 
 				try
 				{
-					controlThread::finalize.dispatch();
+					controlThread().finalize.dispatch();
 				}
 				catch (...)
 				{
@@ -558,16 +558,16 @@ namespace cage
 					assets->remove(hashString("cage/cage.pack"));
 					while (assets->countTotal() > 0)
 					{
-						controlThread::assets.dispatch();
-						while (assets->processCustomThread(controlThread::threadIndex) || assets->processControlThread());
+						controlThread().assets.dispatch();
+						while (assets->processCustomThread(controlThread().threadIndex) || assets->processControlThread());
 						threadSleep(5000);
 					}
 				}
 
 				{ // wait for threads to finish
-					graphicsPrepareThread->wait();
-					graphicsDispatchThread->wait();
-					soundThread->wait();
+					graphicsPrepareThreadHolder->wait();
+					graphicsDispatchThreadHolder->wait();
+					soundThreadHolder->wait();
 				}
 
 				{ // destroy entities

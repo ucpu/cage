@@ -206,7 +206,7 @@ namespace cage
 					cam.zeroParallaxDistance = camera->camera.zeroParallaxDistance;
 					cam.eyeSeparation = camera->camera.eyeSeparation;
 					cam.ortographic = camera->camera.cameraType == cameraTypeEnum::Orthographic;
-					stereoscopy(eye, cam, real(graphicsDispatch->windowWidth) / real(graphicsDispatch->windowHeight), (stereoModeEnum)graphicsPrepareThread::stereoMode, pass->view, pass->proj, x, y, w, h);
+					stereoscopy(eye, cam, real(graphicsDispatch->windowWidth) / real(graphicsDispatch->windowHeight), (stereoModeEnum)graphicsPrepareThread().stereoMode, pass->view, pass->proj, x, y, w, h);
 					if (camera->camera.cameraType == cameraTypeEnum::Orthographic)
 						pass->proj = orthographicProjection(-camera->camera.orthographicSize[0], camera->camera.orthographicSize[0], -camera->camera.orthographicSize[1], camera->camera.orthographicSize[1], camera->camera.near, camera->camera.far);
 					pass->vpX = numeric_cast<uint32>(x * real(graphicsDispatch->windowWidth));
@@ -460,7 +460,7 @@ namespace cage
 				lig->count++;
 			}
 
-			graphicsPrepareImpl(const engineCreateConfig &config) : emitMemory(config.graphicEmitMemory), dispatchMemory(config.graphicDispatchMemory)
+			graphicsPrepareImpl(const engineCreateConfig &config) : emitMemory(config.graphicsEmitMemory), dispatchMemory(config.graphicsDispatchMemory)
 			{
 				emitRenderables.reserve(256);
 				emitLights.reserve(32);
@@ -578,7 +578,7 @@ namespace cage
 				graphicsDispatch->windowHeight = resolution.y;
 
 				{ // update model matrices
-					real interFactor = clamp(real(prepareTime - controlTime) / controlThread::timePerTick, 0, 1);
+					real interFactor = clamp(real(prepareTime - controlTime) / controlThread().timePerTick, 0, 1);
 					for (auto it = emitLights.begin(), et = emitLights.end(); it != et; it++)
 						(*it)->updateModelMatrix(interFactor);
 					for (auto it = emitCameras.begin(), ite = emitCameras.end(); it != ite; it++)
@@ -608,7 +608,7 @@ namespace cage
 					std::sort(emitCameras.begin(), emitCameras.end(), cameraComparatorStruct());
 					for (auto it = emitCameras.begin(), ite = emitCameras.end(); it != ite; it++)
 					{
-						if (graphicsPrepareThread::stereoMode == stereoModeEnum::Mono || (*it)->camera.target)
+						if (graphicsPrepareThread().stereoMode == stereoModeEnum::Mono || (*it)->camera.target)
 						{ // mono
 							initializeRenderPassForCamera(newRenderPass(), *it, eyeEnum::Mono);
 						}

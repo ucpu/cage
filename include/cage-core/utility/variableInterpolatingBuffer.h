@@ -1,5 +1,5 @@
-#ifndef interpolator_h__
-#define interpolator_h__
+#ifndef guard_variableInterpolatingBuffer_h_f4h56fr4h564rdf5h56ea4rz4jwa
+#define guard_variableInterpolatingBuffer_h_f4h56fr4h564rdf5h56ea4rz4jwa
 
 namespace cage
 {
@@ -120,4 +120,4 @@ namespace cage
 	};
 }
 
-#endif // interpolator_h__
+#endif // guard_variableInterpolatingBuffer_h_f4h56fr4h564rdf5h56ea4rz4jwa

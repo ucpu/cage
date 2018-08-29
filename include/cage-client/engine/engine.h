@@ -1,46 +1,54 @@
 namespace cage
 {
-	namespace controlThread
+	struct CAGE_API controlThreadClass
 	{
-		CAGE_API extern eventDispatcher<bool()> initialize;
-		CAGE_API extern eventDispatcher<bool()> finalize;
-		CAGE_API extern eventDispatcher<bool()> update;
-		CAGE_API extern eventDispatcher<bool()> assets;
-		CAGE_API extern uint64 timePerTick;
+		eventDispatcher<bool()> initialize;
+		eventDispatcher<bool()> finalize;
+		eventDispatcher<bool()> update;
+		eventDispatcher<bool()> assets;
+		uint64 timePerTick;
 		static const uint32 threadIndex = 0;
-	}
+		controlThreadClass();
+	};
+	CAGE_API controlThreadClass &controlThread();
 
-	namespace graphicsDispatchThread
+	struct CAGE_API graphicsDispatchThreadClass
 	{
-		CAGE_API extern eventDispatcher<bool()> initialize;
-		CAGE_API extern eventDispatcher<bool()> finalize;
-		CAGE_API extern eventDispatcher<bool()> render;
-		CAGE_API extern eventDispatcher<bool()> swap;
+		eventDispatcher<bool()> initialize;
+		eventDispatcher<bool()> finalize;
+		eventDispatcher<bool()> render;
+		eventDispatcher<bool()> swap;
 		static const uint32 threadIndex = 1;
-	}
+		graphicsDispatchThreadClass();
+	};
+	CAGE_API graphicsDispatchThreadClass &graphicsDispatchThread();
 
-	namespace graphicsPrepareThread
+	struct CAGE_API graphicsPrepareThreadClass
 	{
-		CAGE_API extern eventDispatcher<bool()> initialize;
-		CAGE_API extern eventDispatcher<bool()> finalize;
-		CAGE_API extern eventDispatcher<bool()> prepare;
-		CAGE_API extern stereoModeEnum stereoMode;
+		eventDispatcher<bool()> initialize;
+		eventDispatcher<bool()> finalize;
+		eventDispatcher<bool()> prepare;
+		stereoModeEnum stereoMode;
 		static const uint32 threadIndex = 2;
-	}
+		graphicsPrepareThreadClass();
+	};
+	CAGE_API graphicsPrepareThreadClass &graphicsPrepareThread();
 
-	namespace soundThread
+	struct CAGE_API soundThreadClass
 	{
-		CAGE_API extern eventDispatcher<bool()> initialize;
-		CAGE_API extern eventDispatcher<bool()> finalize;
-		CAGE_API extern eventDispatcher<bool()> sound;
-		CAGE_API extern uint64 timePerTick;
+		eventDispatcher<bool()> initialize;
+		eventDispatcher<bool()> finalize;
+		eventDispatcher<bool()> sound;
+		uint64 timePerTick;
 		static const uint32 threadIndex = 3;
-	}
+		soundThreadClass();
+	};
+	CAGE_API soundThreadClass &soundThread();
 
 	struct CAGE_API engineCreateConfig
 	{
-		uintPtr graphicEmitMemory;
-		uintPtr graphicDispatchMemory;
+		uintPtr graphicsEmitMemory;
+		uintPtr graphicsDispatchMemory;
 		uintPtr soundEmitMemory;
 		entityManagerCreateConfig *entities;
 		assetManagerCreateConfig *assets;
