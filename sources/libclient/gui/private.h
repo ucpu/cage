@@ -25,6 +25,17 @@ namespace cage
 		virtual void render(guiImpl *impl);
 	};
 
+	struct renderableDebugStruct : public renderableBaseStruct
+	{
+		struct elementStruct
+		{
+			vec4 position;
+			vec4 color;
+		} data;
+
+		virtual void render(guiImpl *impl) override;
+	};
+
 	struct renderableElementStruct : public renderableBaseStruct
 	{
 		struct elementStruct
@@ -120,6 +131,8 @@ namespace cage
 
 		// called top->down
 		void childrenEmit() const;
+		void emitDebug() const;
+		void emitDebug(vec2 pos, vec2 size, vec4 color) const;
 	};
 
 	struct widgetBaseStruct
@@ -231,12 +244,14 @@ namespace cage
 
 		struct graphicDataStruct
 		{
-			shaderClass *guiShader;
+			shaderClass *debugShader;
+			shaderClass *elementShader;
 			shaderClass *fontShader;
 			shaderClass *imageAnimatedShader;
 			shaderClass *imageStaticShader;
 			shaderClass *colorPickerShader[3];
-			meshClass *guiMesh;
+			meshClass *debugMesh;
+			meshClass *elementMesh;
 			meshClass *fontMesh;
 			meshClass *imageMesh;
 			graphicDataStruct();

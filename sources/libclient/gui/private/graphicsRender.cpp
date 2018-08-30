@@ -13,18 +13,28 @@
 
 namespace cage
 {
+	void renderableDebugStruct::render(guiImpl *impl)
+	{
+		guiImpl::graphicDataStruct &context = impl->graphicData;
+		context.debugShader->bind();
+		context.debugShader->uniform(0, data.position);
+		context.debugShader->uniform(1, data.color);
+		context.debugMesh->bind();
+		context.debugMesh->dispatch();
+	}
+
 	void renderableElementStruct::render(guiImpl *impl)
 	{
 		guiImpl::graphicDataStruct &context = impl->graphicData;
 		skinBuffer->bind(0);
 		skinTexture->bind();
-		context.guiShader->bind();
-		context.guiShader->uniform(0, data.outer);
-		context.guiShader->uniform(1, data.inner);
-		context.guiShader->uniform(2, data.element);
-		context.guiShader->uniform(3, data.mode);
-		context.guiMesh->bind();
-		context.guiMesh->dispatch();
+		context.elementShader->bind();
+		context.elementShader->uniform(0, data.outer);
+		context.elementShader->uniform(1, data.inner);
+		context.elementShader->uniform(2, data.element);
+		context.elementShader->uniform(3, data.mode);
+		context.elementMesh->bind();
+		context.elementMesh->dispatch();
 	}
 
 	void renderableTextStruct::render(guiImpl *impl)

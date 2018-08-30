@@ -18,7 +18,6 @@ namespace cage
 {
 	namespace
 	{
-		uint32 font;
 		textFormatComponent text;
 		imageFormatComponent image;
 
@@ -26,9 +25,8 @@ namespace cage
 		{
 			skinInitializerStruct()
 			{
-				font = hashString("cage/font/ubuntu/Ubuntu-R.ttf");
 				text.color = vec3();
-				text.fontName = font;
+				text.font = hashString("cage/font/ubuntu/Ubuntu-R.ttf");
 				text.align = textAlignEnum::Left;
 				text.lineSpacing = 0;
 				image.animationOffset = 0;

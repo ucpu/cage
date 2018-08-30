@@ -83,7 +83,7 @@ namespace cage
 	struct CAGE_API textFormatComponent
 	{
 		vec3 color;
-		uint32 fontName;
+		uint32 font;
 		real size;
 		real lineSpacing;
 		textAlignEnum align;

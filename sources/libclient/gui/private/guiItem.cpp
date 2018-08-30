@@ -2,6 +2,8 @@
 #include <cage-core/math.h>
 #include <cage-core/memory.h>
 #include <cage-core/entities.h>
+#include <cage-core/config.h>
+#include <cage-core/utility/color.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
@@ -13,6 +15,13 @@
 
 namespace cage
 {
+	configBool renderDebugConfig("cage-client.gui.renderDebug", false);
+
+	namespace detail
+	{
+		uint32 hash(uint32 key);
+	}
+
 	finalPositionStruct::finalPositionStruct() : position(vec2::Nan), size(vec2::Nan)
 	{}
 
@@ -134,6 +143,7 @@ namespace cage
 
 	void guiItemStruct::childrenEmit() const
 	{
+		bool renderDebugLocal = renderDebugConfig;
 		guiItemStruct *a = firstChild;
 		while (a)
 		{
@@ -141,8 +151,26 @@ namespace cage
 				a->widget->emit();
 			else
 				a->childrenEmit();
+			if (renderDebugLocal)
+				a->emitDebug();
 			a = a->nextSibling;
 		}
+	}
+
+	void guiItemStruct::emitDebug() const
+	{
+		real h = real(detail::hash(entity ? entity->getName() : 0)) / real(detail::numeric_limits<uint32>().max());
+		emitDebug(position, size, vec4(convertHsvToRgb(vec3(h, 1, 1)), 1));
+	}
+
+	void guiItemStruct::emitDebug(vec2 pos, vec2 size, vec4 color) const
+	{
+		auto *e = impl->emitControl;
+		auto *t = e->memory.createObject<renderableDebugStruct>();
+		t->data.position = impl->pointsToNdc(pos, size);
+		t->data.color = color;
+		e->last->next = t;
+		e->last = t;
 	}
 
 	void offsetPosition(vec2 &position, const vec4 &offset)

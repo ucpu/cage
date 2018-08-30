@@ -30,8 +30,8 @@ namespace cage
 
 	void renderableTextStruct::textStruct::apply(const textFormatComponent &f, guiImpl *impl)
 	{
-		if (f.fontName)
-			font = impl->assetManager->tryGet<assetSchemeIndexFont, fontClass>(f.fontName);
+		if (f.font)
+			font = impl->assetManager->tryGet<assetSchemeIndexFont, fontClass>(f.font);
 		if (f.size.valid())
 			format.size = f.size;
 		if (f.color.valid())
