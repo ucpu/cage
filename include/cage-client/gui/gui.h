@@ -16,9 +16,9 @@ namespace cage
 	class CAGE_API guiClass
 	{
 	public:
-		void graphicInitialize(windowClass *graphicContext);
-		void graphicFinalize();
-		void graphicRender();
+		void graphicsInitialize(windowClass *graphicContext);
+		void graphicsFinalize();
+		void graphicsRender();
 
 		void soundInitialize(soundContextClass *soundContext);
 		void soundFinalize();
@@ -33,8 +33,8 @@ namespace cage
 		busClass *getOutputSoundBus() const;
 		void setFocus(uint32 widget);
 		uint32 getFocus() const;
-		void controlUpdate(); // must be called before processing events
-		void controlEmit(); // must be called exclusively when no other threads are interacting with this gui
+		void controlUpdateStart(); // must be called before processing events
+		void controlUpdateDone(); // accesses asset manager
 
 		bool windowResize(const pointStruct &);
 		bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, const pointStruct &point);
@@ -50,8 +50,8 @@ namespace cage
 		void handleWindowEvents(windowClass *window);
 		void skipAllEventsUntilNextUpdate();
 		pointStruct getInputResolution() const;
-		delegate<bool(const pointStruct&, vec2&)> eventCoordinatesTransformer; // called from controlProcess or from any window events, it should return false to signal that the point is outside the gui, otherwise the point should be converted from window coordinate system to the gui output resolution coordinate system
-		eventDispatcher<bool(uint32)> widgetEvent; // called from controlProcess or window events
+		delegate<bool(const pointStruct&, vec2&)> eventCoordinatesTransformer; // called from controlUpdateStart or from any window events, it should return false to signal that the point is outside the gui, otherwise the point should be converted from window coordinate system to the gui output resolution coordinate system
+		eventDispatcher<bool(uint32)> widgetEvent; // called from controlUpdateStart or window events
 
 		skinConfigStruct &skin(uint32 index = 0);
 		const skinConfigStruct &skin(uint32 index = 0) const;

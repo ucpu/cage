@@ -255,7 +255,7 @@ namespace cage
 			meshClass *fontMesh;
 			meshClass *imageMesh;
 			graphicDataStruct();
-		} graphicData;
+		} graphicsData;
 
 		struct emitDataStruct
 		{

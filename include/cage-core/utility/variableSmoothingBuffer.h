@@ -29,6 +29,22 @@ namespace cage
 			return buffer[index];
 		}
 
+		T max() const
+		{
+			T res = buffer[0];
+			for (uint32 i = 1; i < N; i++)
+				res = cage::max(res, buffer[i]);
+			return res;
+		}
+
+		T min() const
+		{
+			T res = buffer[0];
+			for (uint32 i = 1; i < N; i++)
+				res = cage::min(res, buffer[i]);
+			return res;
+		}
+
 	private:
 		uint32 index;
 		T buffer[N];

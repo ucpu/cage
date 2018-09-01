@@ -12,7 +12,7 @@
 
 namespace cage
 {
-	void guiClass::graphicInitialize(windowClass *openglContext)
+	void guiClass::graphicsInitialize(windowClass *openglContext)
 	{
 		guiImpl *impl = (guiImpl*)this;
 		CAGE_ASSERT_RUNTIME(impl->openglContext == nullptr);
@@ -27,7 +27,7 @@ namespace cage
 		}
 	}
 
-	void guiClass::graphicFinalize()
+	void guiClass::graphicsFinalize()
 	{
 		guiImpl *impl = (guiImpl*)this;
 		CAGE_ASSERT_RUNTIME(impl->openglContext != nullptr);
@@ -36,7 +36,7 @@ namespace cage
 		impl->openglContext = nullptr;
 	}
 
-	void guiClass::graphicRender()
+	void guiClass::graphicsRender()
 	{
 		guiImpl *impl = (guiImpl*)this;
 		impl->graphicsDispatch();

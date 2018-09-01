@@ -6,6 +6,7 @@ namespace cage
 	namespace privat
 	{
 		CAGE_API void generateRandomData(uint8 *target, uint32 size);
+		CAGE_API string identifierToString(const uint8 *data, uint32 size);
 	}
 
 	template<uint32 N> struct identifierStruct
@@ -26,15 +27,7 @@ namespace cage
 
 		operator string() const
 		{
-			string res;
-			for (uint32 i = 0; i < N; i++)
-			{
-				char a = (char)(data[i] / 16) + (data[i] / 16 < 10 ? '0' : 'a' - 10);
-				res += string(&a, 1);
-				char b = (char)(data[i] % 16) + (data[i] % 16 < 10 ? '0' : 'a' - 10);
-				res += string(&b, 1);
-			}
-			return res;
+			return privat::identifierToString(data, N);
 		}
 	};
 }

@@ -40,7 +40,7 @@ namespace cage
 	guiImpl::guiImpl(const guiCreateConfig &config) :
 		entityManager(newEntityManager(config.entitiesConfig ? *config.entitiesConfig : entityManagerCreateConfig())), components(entityManager.get()),
 		itemsArena(config.itemsArenaSize), itemsMemory(&itemsArena), root(nullptr),
-		emitData{config, config, config}, emitControl(nullptr), emitIndexControl(0), emitIndexDispatch(0),
+		emitData{config, config, config}, emitControl(nullptr),
 		openglContext(nullptr), assetManager(config.assetManager),
 		focusName(0), hover(nullptr), eventsEnabled(false),
 		zoom(1)

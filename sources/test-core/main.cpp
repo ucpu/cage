@@ -25,6 +25,7 @@ void testMemoryPools();
 void testMemoryPerformance();
 void testConcurrent();
 void testThreadSafeQueue();
+void testThreadSafeDoubleBufferController();
 void testFiles();
 void testTcp();
 void testUdp();
@@ -77,6 +78,7 @@ int main()
 	testMemoryBuffers();
 	testConcurrent();
 	testThreadSafeQueue();
+	testThreadSafeDoubleBufferController();
 	testFiles();
 	testIni();
 	testConfig();

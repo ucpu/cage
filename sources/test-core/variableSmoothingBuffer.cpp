@@ -16,9 +16,6 @@ void testVariableSmoothingBufferStruct()
 		variableSmoothingBufferStruct<vec2> iVec2;
 		variableSmoothingBufferStruct<vec3> iVec3;
 		variableSmoothingBufferStruct<vec4> iVec4;
-		variableSmoothingBufferStruct<quat> iQuat;
-		variableSmoothingBufferStruct<mat3> iMat3;
-		variableSmoothingBufferStruct<mat4> iMat4;
 	}
 
 	{
@@ -28,10 +25,12 @@ void testVariableSmoothingBufferStruct()
 		CAGE_TEST(v.last() == 0);
 		v.add(10);
 		v.add(20);
-		v.add(40);
 		v.add(50);
-		CAGE_TEST(v.last() == 50);
+		v.add(40);
+		CAGE_TEST(v.last() == 40);
 		CAGE_TEST(v.smooth() == 30);
+		CAGE_TEST(v.max() == 50);
+		CAGE_TEST(v.min() == 10);
 	}
 
 	{
@@ -39,11 +38,13 @@ void testVariableSmoothingBufferStruct()
 
 		variableSmoothingBufferStruct<uint32, 4> v;
 		CAGE_TEST(v.last() == 0);
-		v.add(10);
 		v.add(20);
-		v.add(40);
+		v.add(10);
 		v.add(50);
-		CAGE_TEST(v.last() == 50);
+		v.add(40);
+		CAGE_TEST(v.last() == 40);
 		CAGE_TEST(v.smooth() == 30);
+		CAGE_TEST(v.max() == 50);
+		CAGE_TEST(v.min() == 10);
 	}
 }

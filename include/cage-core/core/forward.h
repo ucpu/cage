@@ -83,6 +83,7 @@ namespace cage
 	class programClass;
 	class threadPoolClass;
 	template<class T> class threadSafeQueueClass;
+	class threadSafeDoubleBufferControllerClass;
 	class timerClass;
 	class colliderClass;
 	class spatialDataClass;

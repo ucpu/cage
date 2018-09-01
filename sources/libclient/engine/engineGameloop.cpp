@@ -145,7 +145,7 @@ namespace cage
 			void graphicsDispatchInitializeStage()
 			{
 				window->makeCurrent();
-				gui->graphicInitialize(window.get());
+				gui->graphicsInitialize(window.get());
 				graphicsDispatchInitialize();
 			}
 
@@ -166,7 +166,7 @@ namespace cage
 						profilingBufferGraphicsDrawPrimitives.add(drawPrimitives);
 						if (graphicsPrepareThread().stereoMode == stereoModeEnum::Mono)
 						{
-							gui->graphicRender();
+							gui->graphicsRender();
 							CAGE_CHECK_GL_ERROR_DEBUG();
 						}
 						graphicsPrepareSemaphore->unlock();
@@ -191,7 +191,7 @@ namespace cage
 
 			void graphicsDispatchFinalizeStage()
 			{
-				gui->graphicFinalize();
+				gui->graphicsFinalize();
 				graphicsDispatchFinalize();
 				while (assets->countTotal() > 0)
 				{
@@ -278,6 +278,22 @@ namespace cage
 			// CONTROL
 			//////////////////////////////////////
 
+			void updateHistoryComponents()
+			{
+				for (entityClass *e : transformComponent::component->getComponentEntities()->entities())
+				{
+					ENGINE_GET_COMPONENT(transform, ts, e);
+					transformComponent &hs = e->value<transformComponent>(transformComponent::componentHistory);
+					hs = ts;
+					if (e->hasComponent(configuredSkeletonComponent::component))
+					{
+						ENGINE_GET_COMPONENT(configuredSkeleton, cs, e);
+						configuredSkeletonComponent &hs = e->value<configuredSkeletonComponent>(configuredSkeletonComponent::componentHistory);
+						hs = cs;
+					}
+				}
+			}
+
 			void controlGameloopStage()
 			{
 				try
@@ -286,26 +302,10 @@ namespace cage
 					while (!stopping)
 					{
 						uint64 time1 = getApplicationTime();
-						{ // update history components
-							uint32 cnt = transformComponent::component->getComponentEntities()->entitiesCount();
-							entityClass *const *ents = transformComponent::component->getComponentEntities()->entitiesArray();
-							for (entityClass *const *i = ents, *const *ie = ents + cnt; i != ie; i++)
-							{
-								entityClass *e = *i;
-								ENGINE_GET_COMPONENT(transform, ts, e);
-								transformComponent &hs = e->value<transformComponent>(transformComponent::componentHistory);
-								hs = ts;
-								if (e->hasComponent(configuredSkeletonComponent::component))
-								{
-									ENGINE_GET_COMPONENT(configuredSkeleton, cs, e);
-									configuredSkeletonComponent &hs = e->value<configuredSkeletonComponent>(configuredSkeletonComponent::componentHistory);
-									hs = cs;
-								}
-							}
-						}
+						updateHistoryComponents();
 						controlThread().update.dispatch();
 						gui->setOutputResolution(window->resolution());
-						gui->controlUpdate();
+						gui->controlUpdateStart();
 						window->processEvents();
 						uint64 time2 = getApplicationTime();
 						// emit
@@ -314,7 +314,7 @@ namespace cage
 						emitSoundStartSemaphore->lock();
 						emitIsReady = false;
 						uint64 time3 = getApplicationTime();
-						gui->controlEmit();
+						gui->controlUpdateDone();
 						controlThread().assets.dispatch();
 						while (assets->processControlThread() || assets->processCustomThread(controlThreadClass::threadIndex));
 						emitGraphicsAssetsSemaphore->unlock(); // let both other threads know, that assets are updated

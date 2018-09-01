@@ -22,7 +22,8 @@ namespace cage
 			const char *str;
 		};
 
-		template<uint32 N, uint32 I> struct hash
+		template<uint32 N, uint32 I>
+		struct hash
 		{
 			constexpr uint32 operator ()(const char(&str)[N])
 			{
@@ -30,7 +31,8 @@ namespace cage
 			}
 		};
 
-		template<uint32 N> struct hash<N, 1>
+		template<uint32 N>
+		struct hash<N, 1>
 		{
 			constexpr uint32 operator ()(const char(&str)[N])
 			{
@@ -42,7 +44,8 @@ namespace cage
 		explicit hashString(const constCharWrapper &str) : value(privat::hashStringFunction(str.str))
 		{};
 
-		template<uint32 N> explicit hashString(const char(&str)[N]) : value(hash<N, N>()(str))
+		template<uint32 N>
+		explicit hashString(const char(&str)[N]) : value(hash<N, N>()(str))
 		{};
 
 		operator uint32() const

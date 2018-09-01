@@ -15,7 +15,7 @@ namespace cage
 {
 	void renderableDebugStruct::render(guiImpl *impl)
 	{
-		guiImpl::graphicDataStruct &context = impl->graphicData;
+		guiImpl::graphicDataStruct &context = impl->graphicsData;
 		context.debugShader->bind();
 		context.debugShader->uniform(0, data.position);
 		context.debugShader->uniform(1, data.color);
@@ -25,7 +25,7 @@ namespace cage
 
 	void renderableElementStruct::render(guiImpl *impl)
 	{
-		guiImpl::graphicDataStruct &context = impl->graphicData;
+		guiImpl::graphicDataStruct &context = impl->graphicsData;
 		skinBuffer->bind(0);
 		skinTexture->bind();
 		context.elementShader->bind();
@@ -39,14 +39,14 @@ namespace cage
 
 	void renderableTextStruct::render(guiImpl *impl)
 	{
-		guiImpl::graphicDataStruct &context = impl->graphicData;
+		guiImpl::graphicDataStruct &context = impl->graphicsData;
 		data.font->bind(context.fontMesh, context.fontShader, impl->outputResolution[0], impl->outputResolution[1]);
 		data.font->render(data.glyphs, data.count, data.format, data.pos, data.color, data.cursor);
 	}
 
 	void renderableImageStruct::render(guiImpl *impl)
 	{
-		guiImpl::graphicDataStruct &context = impl->graphicData;
+		guiImpl::graphicDataStruct &context = impl->graphicsData;
 		data.texture->bind();
 		shaderClass *shr = data.texture->getTarget() == GL_TEXTURE_2D_ARRAY ? context.imageAnimatedShader : context.imageStaticShader;
 		shr->bind();
