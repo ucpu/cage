@@ -90,9 +90,8 @@ A long-term hobby project that turned out to be quite BIG.
      - sound (via Ogg/Vorbis and dr_libs)
      - shader
        - custom $preprocessor with support for includes, conditional composition, token replacements etc...
-     - font (via freetype)
-       - currently generates bitmaps
-       - the goal is to have flexible distance-field textures, which is a work-in-progress
+     - font (via freetype and msdfgen)
+       - multi-distance-field scalable font textures
    - asset-database
      - manages automatic asset processing
      - only processes assets that are out-of-date
