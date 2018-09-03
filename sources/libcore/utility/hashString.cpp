@@ -1,20 +1,31 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/utility/hashString.h>
+#include <cage-core/utility/memoryBuffer.h>
 
 namespace cage
 {
-	namespace privat
+	namespace detail
 	{
-		const uint32 hashStringFunction(const char *str)
+		uint32 hashBuffer(const char *buffer, uintPtr size)
 		{
 			uint32 hash = GCHL_HASH_OFFSET;
-			while (*str != 0)
+			while (size--)
 			{
-				hash ^= *str++;
+				hash ^= *buffer++;
 				hash *= GCHL_HASH_PRIME;
 			}
 			return hash;
+		}
+
+		uint32 hashBuffer(const memoryBuffer &buffer)
+		{
+			return hashBuffer(buffer.data(), buffer.size());
+		}
+
+		uint32 hashString(const char *str)
+		{
+			return hashBuffer(str, strlen(str));
 		}
 	}
 }

@@ -12,6 +12,7 @@ namespace cage
 		assetStateEnum state(uint32 assetName) const;
 		bool ready(uint32 assetName) const;
 		uint32 scheme(uint32 assetName) const;
+		uint32 generateUniqueName();
 
 		template<uint32 Scheme, class T> T *tryGet(uint32 assetName) const
 		{

@@ -60,8 +60,8 @@ namespace cage
 
 			uint32 generateUniqueName()
 			{
-				static const uint32 a = ((uint32)1) << 30;
-				static const uint32 b = (uint32)-1024;
+				static const uint32 a = (uint32)1 << 28;
+				static const uint32 b = (uint32)1 << 30;
 				if (generateName < a || generateName > b)
 					generateName = a;
 				while (hasEntity(generateName))

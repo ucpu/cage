@@ -61,7 +61,7 @@ namespace cage
 				data.materialSize, materialData
 			);
 
-			const char *ptr = nullptr;
+			uint32 ptr = 0;
 			msh->setAttribute(0, 3, GL_FLOAT, 0, ptr);
 			ptr += data.verticesCount * sizeof(vec3);
 

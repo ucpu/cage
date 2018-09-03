@@ -187,7 +187,7 @@ namespace cage
 		impl->updatePrimitivesCount();
 	}
 
-	void meshClass::setAttribute(uint32 index, uint32 size, uint32 type, uint32 stride, const void *data)
+	void meshClass::setAttribute(uint32 index, uint32 size, uint32 type, uint32 stride, uint32 startOffset)
 	{
 		meshImpl *impl = (meshImpl*)this;
 		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<meshClass>() == impl->id);
@@ -196,7 +196,7 @@ namespace cage
 		else
 		{
 			glEnableVertexAttribArray(index);
-			data = (char*)data + numeric_cast<uintPtr>(impl->verticesOffset);
+			void *data = (void*)(uintPtr)(startOffset + numeric_cast<uint32>(impl->verticesOffset));
 			switch (type)
 			{
 			case GL_BYTE:

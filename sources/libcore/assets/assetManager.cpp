@@ -64,9 +64,10 @@ namespace cage
 			string path;
 			uint32 countTotal, countProcessing;
 			uint32 hackQueueWaitCounter; // it is desirable to process as much items from the queue in single tick, however, since the items are beeing pushed back to the same queue, some form of termination mechanism must be provided
+			uint32 generateName;
 			std::atomic<bool> destroying;
 
-			assetManagerImpl(const assetManagerCreateConfig &config) : countTotal(0), countProcessing(0), hackQueueWaitCounter(0), destroying(false)
+			assetManagerImpl(const assetManagerCreateConfig &config) : countTotal(0), countProcessing(0), hackQueueWaitCounter(0), generateName(0), destroying(false)
 			{
 				try
 				{
@@ -497,6 +498,17 @@ namespace cage
 				else
 					index->add(interName, *s.begin());
 			}
+
+			uint32 generateUniqueName()
+			{
+				static const uint32 a = (uint32)1 << 28;
+				static const uint32 b = (uint32)1 << 30;
+				if (generateName < a || generateName > b)
+					generateName = a;
+				while (state(generateName) != assetStateEnum::NotFound)
+					generateName = generateName == b ? a : generateName + 1;
+				return generateName++;
+			}
 		};
 	}
 
@@ -601,6 +613,12 @@ namespace cage
 		if (ass)
 			return ass->scheme;
 		return -1;
+	}
+
+	uint32 assetManagerClass::generateUniqueName()
+	{
+		assetManagerImpl *impl = (assetManagerImpl*)this;
+		return impl->generateUniqueName();
 	}
 
 	void assetManagerClass::add(uint32 assetName)
