@@ -61,20 +61,21 @@ void testNoise()
 
 	{
 		CAGE_TESTCASE("cells");
-		for (uint32 dst : {1, 3})
+		for (uint32 dst : {0, 1, 2, 3})
 		{
-			for (uint32 nth : {1, 3})
+			holder<pngImageClass> png = newPngImage();
+			png->empty(resolution, resolution, 3, 1);
+			uint8 *buffer = (uint8*)png->bufferData();
+			for (sint32 y = 0; y < resolution; y++)
 			{
-				holder<pngImageClass> png = newPngImage();
-				png->empty(resolution, resolution, 1, 1);
-				uint8 *buffer = (uint8*)png->bufferData();
-				for (sint32 y = 0; y < resolution; y++)
+				for (sint32 x = 0; x < resolution; x++)
 				{
-					for (sint32 x = 0; x < resolution; x++)
-						*buffer++ = numeric_cast<uint8>(noiseCell(42, vec2(x - resolution / 2, y - resolution / 2) * 0.01, nth, (noiseDistanceEnum)dst) * 255);
+					vec4 n = noiseCell(42, vec2(x - resolution / 2, y - resolution / 2) * 0.005, (noiseDistanceEnum)dst) * 255;
+					for (uint32 i = 0; i < 3; i++)
+						*buffer++ = numeric_cast<uint8>(n[i] * 255);
 				}
-				png->encodeFile(string() + "cells_" + nth + "_" + dst + ".png");
 			}
+			png->encodeFile(string() + "cells_" + dst + ".png");
 		}
 	}
 
@@ -86,7 +87,7 @@ void testNoise()
 		for (sint32 y = 0; y < resolution; y++)
 		{
 			for (sint32 x = 0; x < resolution; x++)
-				*buffer++ += numeric_cast<uint8>(noiseCell(42, vec3(x - resolution / 2, y - resolution / 2, resolution / 2).normalize() * resolution / 2 * 0.05, 3) * 255);
+				*buffer++ += numeric_cast<uint8>(noiseCell(42, vec3(x - resolution / 2, y - resolution / 2, resolution / 2).normalize() * resolution / 2 * 0.05)[2] * 255);
 		}
 		png->encodeFile(string() + "cells_3D.png");
 	}

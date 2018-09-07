@@ -19,10 +19,10 @@ namespace cage
 	CAGE_API real noiseClouds(uint32 seed, const vec2 &coord, uint32 octaves = 3);
 	CAGE_API real noiseClouds(uint32 seed, const vec3 &coord, uint32 octaves = 3);
 	CAGE_API real noiseClouds(uint32 seed, const vec4 &coord, uint32 octaves = 3);
-	CAGE_API real noiseCell(uint32 seed,       real  coord, uint32 nth = 1, noiseDistanceEnum distance = noiseDistanceEnum::Euclidean);
-	CAGE_API real noiseCell(uint32 seed, const vec2 &coord, uint32 nth = 1, noiseDistanceEnum distance = noiseDistanceEnum::Euclidean);
-	CAGE_API real noiseCell(uint32 seed, const vec3 &coord, uint32 nth = 1, noiseDistanceEnum distance = noiseDistanceEnum::Euclidean);
-	CAGE_API real noiseCell(uint32 seed, const vec4 &coord, uint32 nth = 1, noiseDistanceEnum distance = noiseDistanceEnum::Euclidean);
+	CAGE_API vec4 noiseCell(uint32 seed,       real  coord, noiseDistanceEnum distance = noiseDistanceEnum::Euclidean);
+	CAGE_API vec4 noiseCell(uint32 seed, const vec2 &coord, noiseDistanceEnum distance = noiseDistanceEnum::Euclidean);
+	CAGE_API vec4 noiseCell(uint32 seed, const vec3 &coord, noiseDistanceEnum distance = noiseDistanceEnum::Euclidean);
+	CAGE_API vec4 noiseCell(uint32 seed, const vec4 &coord, noiseDistanceEnum distance = noiseDistanceEnum::Euclidean);
 }
 
 #endif // guard_noise_h_189F28C1827941F488646FA87D7913F4

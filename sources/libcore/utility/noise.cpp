@@ -19,10 +19,7 @@ namespace cage
 			key ^= key >> 16;
 			return key;
 		}
-	}
 
-	namespace
-	{
 		void decompose(real input, sint32 &whole, real &fraction)
 		{
 			whole = (sint32)(floor(input).value);
@@ -127,51 +124,21 @@ namespace cage
 		class metric
 		{};
 
-		template<>
-		class metric<real, noiseDistanceEnum::Euclidean>
-		{
-		public:
-			real operator () (real a, real b) const
-			{
-				return abs(b - a);
-			}
-		};
-
-		template<>
-		class metric<real, noiseDistanceEnum::EuclideanSquared>
-		{
-		public:
-			real operator () (real a, real b) const
-			{
-				return sqr(abs(b - a));
-			}
-		};
-
-		template<>
-		class metric<real, noiseDistanceEnum::Manhattan> : public metric<real, noiseDistanceEnum::Euclidean>
-		{};
-
-		template<>
-		class metric<real, noiseDistanceEnum::Chebychev> : public metric<real, noiseDistanceEnum::Euclidean>
-		{};
-
 		template<class T>
 		class metric<T, noiseDistanceEnum::Euclidean>
 		{
-			static_assert(!std::is_same<T, real>::value, "");
 		public:
-			real operator () (const T &a, const T &b) const
+			real operator ()(const T &a, const T &b) const
 			{
-				return ::cage::distance(a, b);
+				return sqrt(metric<T, noiseDistanceEnum::EuclideanSquared>()(a, b));
 			}
 		};
 
 		template<class T>
 		class metric<T, noiseDistanceEnum::EuclideanSquared>
 		{
-			static_assert(!std::is_same<T, real>::value, "");
 		public:
-			real operator () (const T &a, const T &b) const
+			real operator ()(const T &a, const T &b) const
 			{
 				real d = 0;
 				for (uint32 n = 0; n < T::Dimension; n++)
@@ -183,9 +150,8 @@ namespace cage
 		template<class T>
 		class metric<T, noiseDistanceEnum::Manhattan>
 		{
-			static_assert(!std::is_same<T, real>::value, "");
 		public:
-			real operator () (const T &a, const T &b) const
+			real operator ()(const T &a, const T &b) const
 			{
 				real d = 0;
 				for (uint32 n = 0; n < T::Dimension; n++)
@@ -197,9 +163,8 @@ namespace cage
 		template<class T>
 		class metric<T, noiseDistanceEnum::Chebychev>
 		{
-			static_assert(!std::is_same<T, real>::value, "");
 		public:
-			real operator () (const T &a, const T &b) const
+			real operator ()(const T &a, const T &b) const
 			{
 				real d = 0;
 				for (uint32 n = 0; n < T::Dimension; n++)
@@ -208,18 +173,17 @@ namespace cage
 			}
 		};
 
-		template<class T, uint32 Nth, noiseDistanceEnum Distance>
+		template<class T, noiseDistanceEnum Distance>
 		class sorter
 		{
 			const T &coord;
 			const metric<T, Distance> met;
-			static const uint32 S = Nth + 1;
-			real dists[S];
+			real dists[5];
 
 			void insertDistance(real dist)
 			{
 				dists[0] = dist;
-				for (uint32 i = 0; i < S - 1; i++)
+				for (uint32 i = 0; i < 4; i++)
 				{
 					if (dists[i + 1] > dists[i])
 						std::swap(dists[i + 1], dists[i]);
@@ -229,9 +193,9 @@ namespace cage
 			}
 
 		public:
-			sorter(const T &coord) : coord(coord), met()
+			sorter(const T &coord) : coord(coord)
 			{
-				for (uint32 i = 0; i < S; i++)
+				for (uint32 i = 0; i < 5; i++)
 					dists[i] = 1;
 			}
 
@@ -240,15 +204,11 @@ namespace cage
 				insertDistance(met(coord, point));
 			}
 
-			real result() const
+			vec4 result() const
 			{
-				return dists[1];
+				return vec4(dists[4], dists[3], dists[2], dists[1]);
 			}
 		};
-
-		template<class T, uint32 Nth, noiseDistanceEnum Distance>
-		class cells
-		{};
 
 		template<class T>
 		class generator
@@ -270,27 +230,14 @@ namespace cage
 			}
 		};
 
-		template<>
-		class generator<real>
+		template<class T, noiseDistanceEnum Distance>
+		class cells
+		{};
+
+		template<noiseDistanceEnum Distance>
+		class cells<real, Distance>
 		{
-			randomGenerator rnd;
-
-		public:
-			const uint32 points;
-
-			generator(uint32 seed) : rnd(seed, hash(seed)), points(hash(seed) % 3 + 4)
-			{}
-
-			real next()
-			{
-				return rnd.random();
-			}
-		};
-
-		template<uint32 Nth, noiseDistanceEnum Distance>
-		class cells<real, Nth, Distance>
-		{
-			sorter<real, Nth, Distance> srt;
+			sorter<real, Distance> srt;
 
 		public:
 			cells(uint32 seed, real coord) : srt(coord)
@@ -306,16 +253,16 @@ namespace cage
 				}
 			}
 
-			real operator () () const
+			vec4 operator ()() const
 			{
 				return srt.result();
 			}
 		};
 
-		template<uint32 Nth, noiseDistanceEnum Distance>
-		class cells<vec2, Nth, Distance>
+		template<noiseDistanceEnum Distance>
+		class cells<vec2, Distance>
 		{
-			sorter<vec2, Nth, Distance> srt;
+			sorter<vec2, Distance> srt;
 
 		public:
 			cells(uint32 seed, const vec2 &coord) : srt(coord)
@@ -335,16 +282,16 @@ namespace cage
 				}
 			}
 
-			real operator () () const
+			vec4 operator ()() const
 			{
 				return srt.result();
 			}
 		};
 
-		template<uint32 Nth, noiseDistanceEnum Distance>
-		class cells<vec3, Nth, Distance>
+		template<noiseDistanceEnum Distance>
+		class cells<vec3, Distance>
 		{
-			sorter<vec3, Nth, Distance> srt;
+			sorter<vec3, Distance> srt;
 
 		public:
 			cells(uint32 seed, const vec3 &coord) : srt(coord)
@@ -367,16 +314,16 @@ namespace cage
 				}
 			}
 
-			real operator () () const
+			vec4 operator ()() const
 			{
 				return srt.result();
 			}
 		};
 
-		template<uint32 Nth, noiseDistanceEnum Distance>
-		class cells<vec4, Nth, Distance>
+		template<noiseDistanceEnum Distance>
+		class cells<vec4, Distance>
 		{
-			sorter<vec4, Nth, Distance> srt;
+			sorter<vec4, Distance> srt;
 
 		public:
 			cells(uint32 seed, const vec4 &coord) : srt(coord)
@@ -402,63 +349,50 @@ namespace cage
 				}
 			}
 
-			real operator () () const
+			vec4 operator ()() const
 			{
 				return srt.result();
 			}
 		};
 
-		template<class T, uint32 Nth, noiseDistanceEnum Distance>
-		real noiseCellTemplate(uint32 seed, const T &coord)
+		template<class T, noiseDistanceEnum Distance>
+		vec4 noiseCellTemplate(uint32 seed, const T &coord)
 		{
-			cells<T, Nth, Distance> c(seed, coord);
+			cells<T, Distance> c(seed, coord);
 			return c();
 		}
 
-		template<class T, uint32 Nth>
-		real noiseCellTemplate(uint32 seed, const T &coord, noiseDistanceEnum distance)
+		template<class T>
+		vec4 noiseCellTemplate(uint32 seed, const T &coord, noiseDistanceEnum distance)
 		{
 			switch (distance)
 			{
-			case noiseDistanceEnum::Euclidean: return noiseCellTemplate<T, Nth, noiseDistanceEnum::Euclidean>(seed, coord);
-			case noiseDistanceEnum::EuclideanSquared: return noiseCellTemplate<T, Nth, noiseDistanceEnum::EuclideanSquared>(seed, coord);
-			case noiseDistanceEnum::Manhattan: return noiseCellTemplate<T, Nth, noiseDistanceEnum::Manhattan>(seed, coord);
-			case noiseDistanceEnum::Chebychev: return noiseCellTemplate<T, Nth, noiseDistanceEnum::Chebychev>(seed, coord);
+			case noiseDistanceEnum::Euclidean: return noiseCellTemplate<T, noiseDistanceEnum::Euclidean>(seed, coord);
+			case noiseDistanceEnum::EuclideanSquared: return noiseCellTemplate<T, noiseDistanceEnum::EuclideanSquared>(seed, coord);
+			case noiseDistanceEnum::Manhattan: return noiseCellTemplate<T, noiseDistanceEnum::Manhattan>(seed, coord);
+			case noiseDistanceEnum::Chebychev: return noiseCellTemplate<T, noiseDistanceEnum::Chebychev>(seed, coord);
 			}
 			CAGE_THROW_CRITICAL(notImplementedException, "unsupported noise distance");
 		}
-
-		template<class T>
-		real noiseCellTemplate(uint32 seed, const T &coord, uint32 nth, noiseDistanceEnum distance)
-		{
-			switch (nth)
-			{
-			case 1: return noiseCellTemplate<T, 1>(seed, coord, distance);
-			case 2: return noiseCellTemplate<T, 2>(seed, coord, distance);
-			case 3: return noiseCellTemplate<T, 3>(seed, coord, distance);
-			case 4: return noiseCellTemplate<T, 4>(seed, coord, distance);
-			}
-			CAGE_THROW_CRITICAL(notImplementedException, "noiseCell can only support 1st to 4th point");
-		}
 	}
 
-	real noiseCell(uint32 seed, real  coord, uint32 nth, noiseDistanceEnum distance)
+	vec4 noiseCell(uint32 seed, real  coord, noiseDistanceEnum distance)
 	{
-		return noiseCellTemplate(seed, coord, nth, distance);
+		return noiseCellTemplate(seed, coord, distance);
 	}
 
-	real noiseCell(uint32 seed, const vec2 &coord, uint32 nth, noiseDistanceEnum distance)
+	vec4 noiseCell(uint32 seed, const vec2 &coord, noiseDistanceEnum distance)
 	{
-		return noiseCellTemplate(seed, coord, nth, distance);
+		return noiseCellTemplate(seed, coord, distance);
 	}
 
-	real noiseCell(uint32 seed, const vec3 &coord, uint32 nth, noiseDistanceEnum distance)
+	vec4 noiseCell(uint32 seed, const vec3 &coord, noiseDistanceEnum distance)
 	{
-		return noiseCellTemplate(seed, coord, nth, distance);
+		return noiseCellTemplate(seed, coord, distance);
 	}
 
-	real noiseCell(uint32 seed, const vec4 &coord, uint32 nth, noiseDistanceEnum distance)
+	vec4 noiseCell(uint32 seed, const vec4 &coord, noiseDistanceEnum distance)
 	{
-		return noiseCellTemplate(seed, coord, nth, distance);
+		return noiseCellTemplate(seed, coord, distance);
 	}
 }
