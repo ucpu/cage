@@ -43,6 +43,7 @@ namespace cage
 
 	quat::quat()
 	{
+		data[0] = data[1] = data[2] = 0;
 		data[3] = 1;
 	}
 

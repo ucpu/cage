@@ -14,9 +14,11 @@ namespace cage
 
 		// compound operators
 		line &operator *= (const mat4 &other) { return *this = *this * other; }
+		line &operator *= (const transform &other) { return *this = *this * other; }
 
 		// binary operators
 		line operator * (const mat4 &other) const;
+		line operator * (const transform &other) const { return *this * mat4(other); };
 
 		// comparison operators
 		bool operator == (const line &other) const { return origin == other.origin && direction == other.direction && minimum == other.minimum && maximum == other.maximum; }
@@ -50,9 +52,11 @@ namespace cage
 
 		// compound operators
 		triangle &operator *= (const mat4 &other) { return *this = *this * other; }
+		triangle &operator *= (const transform &other) { return *this = *this * other; }
 
 		// binary operators
 		triangle operator * (const mat4 &other) const;
+		triangle operator * (const transform &other) const { return *this * mat4(other); };
 
 		vec3 operator [] (uint32 idx) const { CAGE_ASSERT_RUNTIME(idx < 3, "index out of range", idx); return vertices[idx]; }
 		vec3 &operator [] (uint32 idx) { CAGE_ASSERT_RUNTIME(idx < 3, "index out of range", idx); return vertices[idx]; }
@@ -89,9 +93,11 @@ namespace cage
 
 		// compound operators
 		plane &operator *= (const mat4 &other) { return *this = *this * other; }
+		plane &operator *= (const transform &other) { return *this = *this * other; }
 
 		// binary operators
 		plane operator * (const mat4 &other) const;
+		plane operator * (const transform &other) const { return *this * mat4(other); };
 
 		// comparison operators
 		bool operator == (const plane &other) const { return d == other.d && normal == other.normal; }
@@ -120,9 +126,11 @@ namespace cage
 
 		// compound operators
 		sphere &operator *= (const mat4 &other) { return *this = *this * other; }
+		sphere &operator *= (const transform &other) { return *this = *this * other; }
 
 		// binary operators
 		sphere operator * (const mat4 &other) const;
+		sphere operator * (const transform &other) const { return *this * mat4(other); };
 
 		// comparison operators
 		bool operator == (const sphere &other) const { return (empty() == other.empty()) || (center == other.center && radius == other.radius); }
@@ -154,10 +162,12 @@ namespace cage
 		// compound operators
 		aabb &operator += (const aabb &other) { return *this = *this + other; }
 		aabb &operator *= (const mat4 &other) { return *this = *this * other; }
+		aabb &operator *= (const transform &other) { return *this = *this * other; }
 
 		// binary operators
 		aabb operator + (const aabb &other) const;
 		aabb operator * (const mat4 &other) const;
+		aabb operator * (const transform &other) const { return *this * mat4(other); };
 
 		// comparison operators
 		bool operator == (const aabb &other) const { return (empty() == other.empty()) || (a == other.a && b == other.b); }

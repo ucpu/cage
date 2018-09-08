@@ -10,7 +10,6 @@ namespace cage
 		// constructors
 		transform();
 		explicit transform(const vec3 &position, const quat &orientation = quat(), real scale = 1);
-		//explicit transform(const string &str);
 
 		// compound operators
 		transform &operator *= (const transform &other) { return *this = *this * other; }
@@ -23,8 +22,8 @@ namespace cage
 		transform operator + (const vec3 &other) const;
 
 		// comparison operators
-		bool operator == (const mat3 &other) const { return orientation == orientation && position == position && scale == scale; }
-		bool operator != (const mat3 &other) const { return !(*this == other); }
+		bool operator == (const transform &other) const { return orientation == other.orientation && position == other.position && scale == other.scale; }
+		bool operator != (const transform &other) const { return !(*this == other); }
 
 		// conversion operators
 		operator string() const { return string() + "(" + position + ", " + orientation + ", " + scale + ")"; }

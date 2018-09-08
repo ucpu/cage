@@ -1,5 +1,4 @@
 #define GCHL_GEN_QUATERNION_BASE(NAME,N) \
-real data[N]; \
 explicit NAME(const string &str); \
 NAME operator - () const { return inverse(); } \
 NAME operator + () const { return *this; } \
@@ -30,7 +29,7 @@ static const NAME Nan;
 
 #define GCHL_GEN_VECTOR_BASE(NAME, N) \
 GCHL_GEN_QUATERNION_BASE(NAME, N) \
-NAME() {} \
+NAME() { for (uint32 i = 0; i < N; i++) data[i] = 0; } \
 NAME min(const NAME &other) const { NAME r; for (uint32 i = 0; i < N; i++) r.data[i] = data[i] < other.data[i] ? data[i] : other.data[i]; return r; } \
 NAME max(const NAME &other) const { NAME r; for (uint32 i = 0; i < N; i++) r.data[i] = data[i] > other.data[i] ? data[i] : other.data[i]; return r; } \
 NAME min(real other) const { NAME r; for (uint32 i = 0; i < N; i++) r.data[i] = data[i] < other ? data[i] : other; return r; } \
@@ -76,6 +75,16 @@ namespace cage
 {
 	struct CAGE_API vec2
 	{
+		union
+		{
+			struct
+			{
+				real x;
+				real y;
+			};
+			real data[2];
+		};
+
 		GCHL_GEN_VECTOR_BASE(vec2, 2);
 
 		explicit vec2(real x, real y) { data[0] = x; data[1] = y; }
@@ -87,6 +96,17 @@ namespace cage
 
 	struct CAGE_API vec3
 	{
+		union
+		{
+			struct
+			{
+				real x;
+				real y;
+				real z;
+			};
+			real data[3];
+		};
+
 		GCHL_GEN_VECTOR_BASE(vec3, 3);
 
 		explicit vec3(real x, real y, real z) { data[0] = x; data[1] = y; data[2] = z; }
@@ -104,6 +124,18 @@ namespace cage
 
 	struct CAGE_API vec4
 	{
+		union
+		{
+			struct
+			{
+				real x;
+				real y;
+				real z;
+				real w;
+			};
+			real data[4];
+		};
+
 		GCHL_GEN_VECTOR_BASE(vec4, 4);
 
 		explicit vec4(real x, real y, real z, real w) { data[0] = x; data[1] = y; data[2] = z; data[3] = w; }
@@ -117,6 +149,18 @@ namespace cage
 
 	struct CAGE_API quat
 	{
+		union
+		{
+			struct
+			{
+				real x;
+				real y;
+				real z;
+				real w;
+			};
+			real data[4];
+		};
+
 		GCHL_GEN_QUATERNION_BASE(quat, 4);
 
 		quat();

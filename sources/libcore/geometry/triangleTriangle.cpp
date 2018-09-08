@@ -8,7 +8,7 @@
 namespace
 {
 
-#define USE_EPSILON_TEST TRUE  
+#define USE_EPSILON_TEST TRUE
 #define EPSILON 0.000001
 
 	/* some macros */

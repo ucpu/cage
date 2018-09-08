@@ -12,9 +12,16 @@ namespace cage
 		uint32 collisionPairsCount() const;
 		const collisionPairStruct *collisionPairsData() const;
 		pointerRange<const collisionPairStruct> collisionPairs() const;
+		void collider(const colliderClass *&c, transform &t) const;
 
 		void query(const colliderClass *collider, const transform &t);
 		void query(const colliderClass *collider, const transform &t1, const transform &t2);
+
+		void query(const line &shape);
+		void query(const triangle &shape);
+		void query(const plane &shape);
+		void query(const sphere &shape);
+		void query(const aabb &shape);
 	};
 
 	class CAGE_API collisionDataClass
@@ -29,6 +36,7 @@ namespace cage
 	struct CAGE_API collisionDataCreateConfig
 	{
 		spatialDataCreateConfig *spatialConfig;
+		uint32 maxCollisionPairs;
 		collisionDataCreateConfig();
 	};
 

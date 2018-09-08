@@ -239,6 +239,8 @@ void testMath()
 	{
 		CAGE_TESTCASE("vec2");
 		vec2 a(3, 5);
+		test(a[0], 3);
+		test(a[1], 5);
 		vec2 b(2, 1);
 		vec2 c(5, 2);
 		test(a, vec2(3, 5));
@@ -261,6 +263,9 @@ void testMath()
 		CAGE_TESTCASE("vec3");
 		vec3 a(3, 5, 1);
 		vec3 b(1, 1, 4);
+		test(a[0], 3);
+		test(a[1], 5);
+		test(a[2], 1);
 		test(a, vec3(3, 5, 1));
 		test(vec3(1, 1, 4), b);
 		CAGE_TEST(a != b);
@@ -293,6 +298,10 @@ void testMath()
 	{
 		CAGE_TESTCASE("vec4");
 		vec4 a(1, 2, 3, 4);
+		test(a[0], 1);
+		test(a[1], 2);
+		test(a[2], 3);
+		test(a[3], 4);
 		vec4 b(3, 2, 4, 1);
 		test(a, vec4(1, 2, 3, 4));
 		test(vec4(3, 2, 4, 1), b);
@@ -305,6 +314,15 @@ void testMath()
 
 	{
 		CAGE_TESTCASE("quat");
+
+		{
+			CAGE_TESTCASE("basic constructor");
+			quat q(1, 2, 3, 4);
+			test(q[0], 1);
+			test(q[1], 2);
+			test(q[2], 3);
+			test(q[3], 4);
+		}
 
 		{
 			CAGE_TESTCASE("constructor from euler angles");

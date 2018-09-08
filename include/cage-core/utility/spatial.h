@@ -12,6 +12,7 @@ namespace cage
 
 		void intersection(const line &shape);
 		void intersection(const triangle &shape);
+		void intersection(const plane &shape);
 		void intersection(const sphere &shape);
 		void intersection(const aabb &shape);
 	};

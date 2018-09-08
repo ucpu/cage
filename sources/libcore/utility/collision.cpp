@@ -30,6 +30,7 @@ namespace cage
 			typedef holder<cage::hashTableClass<itemStruct>> itemsMapType;
 			itemsMapType allItems;
 			holder<spatialDataClass> spatial;
+			const uint32 maxCollisionPairs;
 
 			static spatialDataCreateConfig spatialConfig(const collisionDataCreateConfig &config)
 			{
@@ -39,7 +40,7 @@ namespace cage
 			}
 
 			collisionDataImpl(const collisionDataCreateConfig &config) :
-				pool(spatialConfig(config).memory), arena(&pool)
+				pool(spatialConfig(config).memory), arena(&pool), maxCollisionPairs(config.maxCollisionPairs)
 			{
 				uint32 maxItems = numeric_cast<uint32>(spatialConfig(config).memory / sizeof(itemStruct));
 				allItems = newHashTable<itemStruct>(min(maxItems, 100u), maxItems);
@@ -72,12 +73,13 @@ namespace cage
 			{
 				resultName = 0;
 				resultFractionBefore = resultFractionContact = real::Nan;
+				resultPairs.clear();
 				real best = real::PositiveInfinity;
-				spatial->intersection(collider->box() * mat4(t1) + collider->box() * mat4(t2));
-				for (const uint32 *nameIt = spatial->resultArray(), *nameEnd = spatial->resultArray() + spatial->resultCount(); nameIt != nameEnd; nameIt++)
+				spatial->intersection(collider->box() * t1 + collider->box() * t2);
+				for (uint32 nameIt : spatial->result())
 				{
-					tmpPairs.resize(100);
-					itemStruct *item = data->allItems->get(*nameIt, false);
+					tmpPairs.resize(data->maxCollisionPairs);
+					itemStruct *item = data->allItems->get(nameIt, false);
 					real fractBefore, fractContact;
 					uint32 res = collisionDetection(collider, item->collider, t1, *item, t2, *item, fractBefore, fractContact, tmpPairs.data(), numeric_cast<uint32>(tmpPairs.size()));
 					if (res > 0 && fractContact < best)
@@ -86,8 +88,55 @@ namespace cage
 						tmpPairs.swap(resultPairs);
 						resultFractionBefore = fractBefore;
 						resultFractionContact = best = fractContact;
-						resultName = *nameIt;
+						resultName = nameIt;
 					}
+				}
+			}
+
+			template<class T>
+			void spatialIntersection(const T &shape)
+			{
+				spatial->intersection(aabb(shape));
+			}
+
+			template<>
+			void spatialIntersection(const plane &shape)
+			{
+				spatial->intersection(aabb::Universe);
+			}
+
+			template<class T>
+			void query(const T &shape)
+			{
+				resultName = 0;
+				resultFractionBefore = resultFractionContact = real::Nan;
+				resultPairs.clear();
+				real best = real::PositiveInfinity;
+				spatialIntersection(shape);
+				for (uint32 nameIt : spatial->result())
+				{
+					itemStruct *item = data->allItems->get(nameIt, false);
+					if (intersects(shape, item->collider, *item))
+					{
+						real d = distance(shape, item->collider, *item);
+						if (d < best)
+						{
+							best = d;
+							resultName = nameIt;
+						}
+					}
+				}
+				if (resultName)
+				{
+					itemStruct *item = data->allItems->get(resultName, false);
+					uint32 i = 0;
+					for (const triangle &t : item->collider->triangles())
+					{
+						if (intersects(shape, t * *item))
+							resultPairs.emplace_back(-1, i);
+						i++;
+					}
+					CAGE_ASSERT_RUNTIME(!resultPairs.empty());
 				}
 			}
 		};
@@ -129,6 +178,15 @@ namespace cage
 		return impl->resultPairs;
 	}
 
+	void collisionQueryClass::collider(const colliderClass *&c, transform &t) const
+	{
+		collisionQueryImpl *impl = (collisionQueryImpl*)this;
+		CAGE_ASSERT_RUNTIME(impl->resultName);
+		auto r = impl->data->allItems->get(impl->resultName, false);
+		c = r->collider;
+		t = *r;
+	}
+
 	void collisionQueryClass::query(const colliderClass *collider, const transform &t)
 	{
 		return query(collider, t, t);
@@ -138,6 +196,36 @@ namespace cage
 	{
 		collisionQueryImpl *impl = (collisionQueryImpl*)this;
 		return impl->query(collider, t1, t2);
+	}
+
+	void collisionQueryClass::query(const line &shape)
+	{
+		collisionQueryImpl *impl = (collisionQueryImpl*)this;
+		return impl->query(shape);
+	}
+
+	void collisionQueryClass::query(const triangle &shape)
+	{
+		collisionQueryImpl *impl = (collisionQueryImpl*)this;
+		return impl->query(shape);
+	}
+
+	void collisionQueryClass::query(const plane &shape)
+	{
+		collisionQueryImpl *impl = (collisionQueryImpl*)this;
+		return impl->query(shape);
+	}
+
+	void collisionQueryClass::query(const sphere &shape)
+	{
+		collisionQueryImpl *impl = (collisionQueryImpl*)this;
+		return impl->query(shape);
+	}
+
+	void collisionQueryClass::query(const aabb &shape)
+	{
+		collisionQueryImpl *impl = (collisionQueryImpl*)this;
+		return impl->query(shape);
 	}
 
 	void collisionDataClass::update(uint32 name, const colliderClass *collider, const transform &t)
@@ -174,7 +262,7 @@ namespace cage
 		impl->spatial->rebuild();
 	}
 
-	collisionDataCreateConfig::collisionDataCreateConfig() : spatialConfig(nullptr)
+	collisionDataCreateConfig::collisionDataCreateConfig() : spatialConfig(nullptr), maxCollisionPairs(100)
 	{}
 
 	holder<collisionDataClass> newCollisionData(const collisionDataCreateConfig &config)

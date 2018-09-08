@@ -134,13 +134,16 @@ namespace cage
 
 	plane plane::operator * (const mat4 &other) const
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		vec3 p3 = normal * d;
+		vec4 p4 = vec4(p3, 1) * other;
+		p3 = vec3(p4) / p4[3];
+		return plane(p3, normal * mat3(other));
 	}
 
 	plane plane::normalize() const
 	{
 		real l = normal.length();
-		return plane(normal / l, d / l);
+		return plane(normal / l, d * l); // d times or divided by l ?
 	}
 
 	sphere::sphere(const triangle &other)
@@ -192,7 +195,12 @@ namespace cage
 
 	sphere sphere::operator * (const mat4 &other) const
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		real sx2 = vec3(other[0], other[1], other[2]).squaredLength();
+		real sy2 = vec3(other[4], other[5], other[6]).squaredLength();
+		real sz2 = vec3(other[8], other[9], other[10]).squaredLength();
+		real s = sqrt(max(max(sx2, sy2), sz2));
+		vec4 p4 = vec4(center, 1) * other;
+		return sphere(vec3(p4) / p4[3], radius * s);
 	}
 
 	aabb::aabb(const line &other)

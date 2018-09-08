@@ -70,9 +70,9 @@ void testNoise()
 			{
 				for (sint32 x = 0; x < resolution; x++)
 				{
-					vec4 n = noiseCell(42, vec2(x - resolution / 2, y - resolution / 2) * 0.005, (noiseDistanceEnum)dst) * 255;
+					vec4 n = noiseCell(42, vec2(x - resolution / 2, y - resolution / 2) * 0.05, (noiseDistanceEnum)dst) * 255;
 					for (uint32 i = 0; i < 3; i++)
-						*buffer++ = numeric_cast<uint8>(n[i] * 255);
+						*buffer++ = numeric_cast<uint8>(n[i]);
 				}
 			}
 			png->encodeFile(string() + "cells_" + dst + ".png");

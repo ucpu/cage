@@ -35,7 +35,8 @@ namespace cage
 					CAGE_ASSERT_RUNTIME(initItems <= maxItems);
 					CAGE_ASSERT_RUNTIME(maxFillRate > 0 && maxFillRate < 1, maxFillRate);
 					mem = newVirtualMemory();
-					lines = (hashTableLineStruct*)mem->reserve(maxPages = numeric_cast<uint32>(detail::roundUpToMemoryPage(maxItems * sizeof(hashTableLineStruct)) / detail::memoryPageSize()));
+					maxPages = numeric_cast<uint32>(detail::roundUpToMemoryPage(numeric_cast<uintPtr>(maxItems * sizeof(hashTableLineStruct) / maxFillRate)) / detail::memoryPageSize());
+					lines = (hashTableLineStruct*)mem->reserve(maxPages);
 					mem->increase(detail::roundUpToMemoryPage(initItems * sizeof(hashTableLineStruct)) / detail::memoryPageSize());
 					total = capacity();
 					clear();

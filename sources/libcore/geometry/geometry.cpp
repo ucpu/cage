@@ -117,107 +117,7 @@ namespace cage
 			vec3 dP = w + (sc * u) - (tc * v);
 			return length(dP);
 		}
-
-		vec3 closestPointOnTriangle(const triangle &trig, const vec3 &sourcePosition)
-		{
-			vec3 edge0 = trig[1] - trig[0];
-			vec3 edge1 = trig[2] - trig[0];
-			vec3 v0 = trig[0] - sourcePosition;
-			real a = edge0.dot( edge0 );
-			real b = edge0.dot( edge1 );
-			real c = edge1.dot( edge1 );
-			real d = edge0.dot( v0 );
-			real e = edge1.dot( v0 );
-			real det = a*c - b*b;
-			real s = b*e - c*d;
-			real t = b*d - a*e;
-			if ( s + t < det )
-			{
-				if ( s < 0.f )
-				{
-					if ( t < 0.f )
-					{
-						if ( d < 0.f )
-						{
-							s = clamp( -d/a, 0.f, 1.f );
-							t = 0.f;
-						}
-						else
-						{
-							s = 0.f;
-							t = clamp( -e/c, 0.f, 1.f );
-						}
-					}
-					else
-					{
-						s = 0.f;
-						t = clamp( -e/c, 0.f, 1.f );
-					}
-				}
-				else if ( t < 0.f )
-				{
-					s = clamp( -d/a, 0.f, 1.f );
-					t = 0.f;
-				}
-				else
-				{
-					real invDet = 1.f / det;
-					s *= invDet;
-					t *= invDet;
-				}
-			}
-			else
-			{
-				if ( s < 0.f )
-				{
-					real tmp0 = b+d;
-					real tmp1 = c+e;
-					if ( tmp1 > tmp0 )
-					{
-						real numer = tmp1 - tmp0;
-						real denom = a-2*b+c;
-						s = clamp( numer/denom, 0.f, 1.f );
-						t = 1-s;
-					}
-					else
-					{
-						t = clamp( -e/c, 0.f, 1.f );
-						s = 0.f;
-					}
-				}
-				else if ( t < 0.f )
-				{
-					if ( a+d > b+e )
-					{
-						real numer = c+e-b-d;
-						real denom = a-2*b+c;
-						s = clamp( numer/denom, 0.f, 1.f );
-						t = 1-s;
-					}
-					else
-					{
-						s = clamp( -e/c, 0.f, 1.f );
-						t = 0.f;
-					}
-				}
-				else
-				{
-					real numer = c+e-b-d;
-					real denom = a-2*b+c;
-					s = clamp( numer/denom, 0.f, 1.f );
-					t = 1.f - s;
-				}
-			}
-			return trig[0] + s * edge0 + t * edge1;
-		}
-
-		vec3 closestPointOnPlane(const plane &pl, const vec3 &pt)
-		{
-			return dot(pt, pl.normal) / dot(pl.normal, pl.normal) * pl.normal;
-		}
 	}
-
-
 
 
 
@@ -304,12 +204,12 @@ namespace cage
 
 	real distance(const vec3 &a, const triangle &b)
 	{
-		return distance(closestPointOnTriangle(b, a), a);
+		return distance(closestPoint(b, a), a);
 	}
 
 	real distance(const vec3 &a, const plane &b)
 	{
-		return distance(closestPointOnPlane(b, a), a);
+		return distance(closestPoint(b, a), a);
 	}
 
 	real distance(const vec3 &a, const sphere &b)
@@ -334,12 +234,18 @@ namespace cage
 
 	real distance(const line &a, const triangle &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		if (intersects(a, b))
+			return distance(a, plane(b));
+		return min(min(distance(a, makeSegment(b[0], b[1])),
+			distance(a, makeSegment(b[1], b[2]))),
+			distance(a, makeSegment(b[2], b[0])));
 	}
 
 	real distance(const line &a, const plane &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		if (parallel(a, b))
+			return distance(a.a(), b);
+		return min(distance(a.a(), b), distance(a.b(), b));
 	}
 
 	real distance(const line &a, const sphere &b)
@@ -354,12 +260,26 @@ namespace cage
 
 	real distance(const triangle &a, const triangle &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		if (intersects(a, b))
+			return 0;
+		real d = real::PositiveInfinity;
+		for (uint32 i = 0; i < 3; i++)
+		{
+			d = min(d, distance(a[i], b));
+			d = min(d, distance(a, b[i]));
+		}
+		return d;
 	}
 
 	real distance(const triangle &a, const plane &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		if (intersects(a, b))
+			return 0;
+		return min(min(
+			distance(a[0], b),
+			distance(a[1], b)),
+			distance(a[2], b)
+		);
 	}
 
 	real distance(const triangle &a, const sphere &b)
@@ -369,7 +289,43 @@ namespace cage
 
 	real distance(const triangle &a, const aabb &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		if (intersects(a, b))
+			return 0;
+		vec3 v[8] = {
+			vec3(b.a[0], b.a[1], b.a[2]),
+			vec3(b.b[0], b.a[1], b.a[2]),
+			vec3(b.a[0], b.b[1], b.a[2]),
+			vec3(b.b[0], b.b[1], b.a[2]),
+			vec3(b.a[0], b.a[1], b.b[2]),
+			vec3(b.b[0], b.a[1], b.b[2]),
+			vec3(b.a[0], b.b[1], b.b[2]),
+			vec3(b.b[0], b.b[1], b.b[2])
+		};
+		static const uint32 ids[12 * 3] =  {
+			0, 1, 2,
+			1, 2, 3,
+			4, 5, 6,
+			5, 6, 7,
+			0, 1, 4,
+			1, 4, 5,
+			2, 3, 6,
+			3, 6, 7,
+			0, 2, 4,
+			2, 4, 6,
+			1, 3, 5,
+			3, 5, 7
+		};
+		real d = real::PositiveInfinity;
+		for (uint32 i = 0; i < 12; i++)
+		{
+			triangle t(
+				v[ids[i * 3 + 0]],
+				v[ids[i * 3 + 1]],
+				v[ids[i * 3 + 2]]
+			);
+			d = min(d, distance(t, a));
+		}
+		return d;
 	}
 
 	real distance(const plane &a, const plane &b)
@@ -499,9 +455,246 @@ namespace cage
 		return distance(a, b.center) <= b.radius;
 	}
 
+	namespace
+	{
+		// https://gist.github.com/Philipp-M/e5747bd5a4e264ab143824059d21c120
+
+		void findMinMax(real x0, real x1, real x2, real &min, real &max)
+		{
+			min = max = x0;
+			if (x1 < min)
+				min = x1;
+			if (x1 > max)
+				max = x1;
+			if (x2 < min)
+				min = x2;
+			if (x2 > max)
+				max = x2;
+		}
+
+		bool planeBoxOverlap(vec3 normal, vec3 vert, vec3 maxbox)
+		{
+			vec3 vmin, vmax;
+			real v;
+			for (uint32 q = 0; q < 3; q++)
+			{
+				v = vert[q];
+				if (normal[q] > 0.0f) {
+					vmin[q] = -maxbox[q] - v;
+					vmax[q] = maxbox[q] - v;
+				}
+				else {
+					vmin[q] = maxbox[q] - v;
+					vmax[q] = -maxbox[q] - v;
+				}
+			}
+			if (dot(normal, vmin) > 0.0f)
+				return false;
+			if (dot(normal, vmax) >= 0.0f)
+				return true;
+			return false;
+		}
+
+		bool axisTestX01(real a, real b, real fa, real fb, const vec3 &v0, const vec3 &v2, const vec3 &boxhalfsize, real &rad, real &min, real &max, real &p0, real &p2)
+		{
+			p0 = a * v0.y - b * v0.z;
+			p2 = a * v2.y - b * v2.z;
+			if (p0 < p2)
+			{
+				min = p0;
+				max = p2;
+			}
+			else
+			{
+				min = p2;
+				max = p0;
+			}
+			rad = fa * boxhalfsize.y + fb * boxhalfsize.z;
+			if (min > rad || max < -rad)
+				return false;
+			return true;
+		}
+		
+		bool axisTestX2(real a, real b, real fa, real fb, const vec3 &v0, const vec3 &v1, const vec3 &boxhalfsize, real &rad, real &min, real &max, real &p0, real &p1)
+		{
+			p0 = a * v0.y - b * v0.z;
+			p1 = a * v1.y - b * v1.z;
+			if (p0 < p1)
+			{
+				min = p0;
+				max = p1;
+			}
+			else
+			{
+				min = p1;
+				max = p0;
+			}
+			rad = fa * boxhalfsize.y + fb * boxhalfsize.z;
+			if (min > rad || max < -rad)
+				return false;
+			return true;
+		}
+
+		bool axisTestY02(real a, real b, real fa, real fb, const vec3 &v0, const vec3 &v2, const vec3 &boxhalfsize, real &rad, real &min, real &max, real &p0, real &p2)
+		{
+			p0 = -a * v0.x + b * v0.z;
+			p2 = -a * v2.x + b * v2.z;
+			if (p0 < p2)
+			{
+				min = p0;
+				max = p2;
+			}
+			else
+			{
+				min = p2;
+				max = p0;
+			}
+			rad = fa * boxhalfsize.x + fb * boxhalfsize.z;
+			if (min > rad || max < -rad)
+				return false;
+			return true;
+		}
+
+		bool axisTestY1(real a, real b, real fa, real fb, const vec3 &v0, const vec3 &v1, const vec3 &boxhalfsize, real &rad, real &min, real &max, real &p0, real &p1)
+		{
+			p0 = -a * v0.x + b * v0.z;
+			p1 = -a * v1.x + b * v1.z;
+			if (p0 < p1)
+			{
+				min = p0;
+				max = p1;
+			}
+			else
+			{
+				min = p1;
+				max = p0;
+			}
+			rad = fa * boxhalfsize.x + fb * boxhalfsize.z;
+			if (min > rad || max < -rad)
+				return false;
+			return true;
+		}
+
+		bool axisTestZ12(real a, real b, real fa, real fb, const vec3 &v2, const vec3 &boxhalfsize, real &rad, real min, real max, real &p2)
+		{
+			p2 = a * v2.x - b * v2.y;
+			rad = fa * boxhalfsize.x + fb * boxhalfsize.y;
+			if (min > rad || max < -rad)
+				return false;
+			return true;
+		}
+
+		bool axisTestZ0(real a, real b, real fa, real fb, const vec3 &v0, const vec3 &v1, const vec3 &boxhalfsize, real &rad, real &min, real &max, real &p0, real &p1)
+		{
+			p0 = a * v0.x - b * v0.y;
+			p1 = a * v1.x - b * v1.y;
+			if (p0 < p1) {
+				min = p0;
+				max = p1;
+			}
+			else {
+				min = p1;
+				max = p0;
+			}
+			rad = fa * boxhalfsize.x + fb * boxhalfsize.y;
+			if (min > rad || max < -rad)
+				return false;
+			return true;
+		}
+
+		bool triBoxOverlap(vec3 boxcenter, vec3 boxhalfsize, vec3 tv0, vec3 tv1, vec3 tv2)
+		{
+			/*    use separating axis theorem to test overlap between triangle and box */
+			/*    need to test for overlap in these directions: */
+			/*    1) the {x,y,z}-directions (actually, since we use the AABB of the triangle */
+			/*       we do not even need to test these) */
+			/*    2) normal of the triangle */
+			/*    3) crossproduct(edge from tri, {x,y,z}-directin) */
+			/*       this gives 3x3=9 more tests */
+			vec3 v0, v1, v2;
+			real min, max, p0, p1, p2, rad, fex, fey, fez;
+			vec3 normal, e0, e1, e2;
+
+			/* This is the fastest branch on Sun */
+			/* move everything so that the boxcenter is in (0,0,0) */
+			v0 = tv0 - boxcenter;
+			v1 = tv1 - boxcenter;
+			v2 = tv2 - boxcenter;
+
+			/* compute triangle edges */
+			e0 = v1 - v0;
+			e1 = v2 - v1;
+			e2 = v0 - v2;
+
+			/* Bullet 3:  */
+			/*  test the 9 tests first (this was faster) */
+			fex = abs(e0.x);
+			fey = abs(e0.y);
+			fez = abs(e0.z);
+
+			if (!axisTestX01(e0.z, e0.y, fez, fey, v0, v2, boxhalfsize, rad, min, max, p0, p2))
+				return false;
+			if (!axisTestY02(e0.z, e0.x, fez, fex, v0, v2, boxhalfsize, rad, min, max, p0, p2))
+				return false;
+			if (!axisTestZ12(e0.y, e0.x, fey, fex, v2, boxhalfsize, rad, min, max, p2))
+				return false;
+
+			fex = abs(e1.x);
+			fey = abs(e1.y);
+			fez = abs(e1.z);
+
+			if (!axisTestX01(e1.z, e1.y, fez, fey, v0, v2, boxhalfsize, rad, min, max, p0, p2))
+				return false;
+			if (!axisTestY02(e1.z, e1.x, fez, fex, v0, v2, boxhalfsize, rad, min, max, p0, p2))
+				return false;
+			if (!axisTestZ0(e1.y, e1.x, fez, fex, v0, v1, boxhalfsize, rad, min, max, p0, p1))
+				return false;
+
+			fex = abs(e2.x);
+			fey = abs(e2.y);
+			fez = abs(e2.z);
+			if (!axisTestX2(e2.z, e2.y, fez, fey, v0, v1, boxhalfsize, rad, min, max, p0, p1))
+				return false;
+			if (!axisTestY02(e2.z, e2.x, fez, fex, v0, v2, boxhalfsize, rad, min, max, p0, p2))
+				return false;
+			if (!axisTestZ12(e2.y, e2.x, fey, fex, v2, boxhalfsize, rad, min, max, p2))
+				return false;
+
+			/* Bullet 1: */
+			/*  first test overlap in the {x,y,z}-directions */
+			/*  find min, max of the triangle each direction, and test for overlap in */
+			/*  that direction -- this is equivalent to testing a minimal AABB around */
+			/*  the triangle against the AABB */
+
+			/* test in X-direction */
+			findMinMax(v0.x, v1.x, v2.x, min, max);
+			if (min > boxhalfsize.x || max < -boxhalfsize.x)
+				return false;
+
+			/* test in Y-direction */
+			findMinMax(v0.y, v1.y, v2.y, min, max);
+			if (min > boxhalfsize.y || max < -boxhalfsize.y)
+				return false;
+
+			/* test in Z-direction */
+			findMinMax(v0.z, v1.z, v2.z, min, max);
+			if (min > boxhalfsize.z || max < -boxhalfsize.z)
+				return false;
+
+			/* Bullet 2: */
+			/*  test if the box intersects the plane of the triangle */
+			/*  compute plane equation of triangle: normal*x+d=0 */
+			normal = cross(e0, e1);
+			if (!planeBoxOverlap(normal, v0, boxhalfsize))
+				return false;
+
+			return true; /* box and triangle overlaps */
+		}
+	}
+
 	bool intersects(const triangle &a, const aabb &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		return triBoxOverlap(b.center(), b.size() * 0.5, a[0], a[1], a[2]);
 	}
 
 	bool intersects(const plane &a, const plane &b)
@@ -518,7 +711,11 @@ namespace cage
 
 	bool intersects(const plane &a, const aabb &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		vec3 c = b.center();
+		vec3 e = b.size() * 0.5;
+		real r = e[0] * abs(a.normal[0]) + e[1] * abs(a.normal[1]) + e[2] * abs(a.normal[2]);
+		real s = dot(a.normal, c) - a.d;
+		return abs(s) <= r;
 	}
 
 	bool intersects(const sphere &a, const sphere &b)
@@ -689,5 +886,107 @@ namespace cage
 				return false;
 		}
 		return true;
+	}
+
+
+
+
+
+	vec3 closestPoint(const triangle &trig, const vec3 &sourcePosition)
+	{
+		vec3 edge0 = trig[1] - trig[0];
+		vec3 edge1 = trig[2] - trig[0];
+		vec3 v0 = trig[0] - sourcePosition;
+		real a = edge0.dot(edge0);
+		real b = edge0.dot(edge1);
+		real c = edge1.dot(edge1);
+		real d = edge0.dot(v0);
+		real e = edge1.dot(v0);
+		real det = a * c - b * b;
+		real s = b * e - c * d;
+		real t = b * d - a * e;
+		if (s + t < det)
+		{
+			if (s < 0.f)
+			{
+				if (t < 0.f)
+				{
+					if (d < 0.f)
+					{
+						s = clamp(-d / a, 0.f, 1.f);
+						t = 0.f;
+					}
+					else
+					{
+						s = 0.f;
+						t = clamp(-e / c, 0.f, 1.f);
+					}
+				}
+				else
+				{
+					s = 0.f;
+					t = clamp(-e / c, 0.f, 1.f);
+				}
+			}
+			else if (t < 0.f)
+			{
+				s = clamp(-d / a, 0.f, 1.f);
+				t = 0.f;
+			}
+			else
+			{
+				real invDet = 1.f / det;
+				s *= invDet;
+				t *= invDet;
+			}
+		}
+		else
+		{
+			if (s < 0.f)
+			{
+				real tmp0 = b + d;
+				real tmp1 = c + e;
+				if (tmp1 > tmp0)
+				{
+					real numer = tmp1 - tmp0;
+					real denom = a - 2 * b + c;
+					s = clamp(numer / denom, 0.f, 1.f);
+					t = 1 - s;
+				}
+				else
+				{
+					t = clamp(-e / c, 0.f, 1.f);
+					s = 0.f;
+				}
+			}
+			else if (t < 0.f)
+			{
+				if (a + d > b + e)
+				{
+					real numer = c + e - b - d;
+					real denom = a - 2 * b + c;
+					s = clamp(numer / denom, 0.f, 1.f);
+					t = 1 - s;
+				}
+				else
+				{
+					s = clamp(-e / c, 0.f, 1.f);
+					t = 0.f;
+				}
+			}
+			else
+			{
+				real numer = c + e - b - d;
+				real denom = a - 2 * b + c;
+				s = clamp(numer / denom, 0.f, 1.f);
+				t = 1.f - s;
+			}
+		}
+		return trig[0] + s * edge0 + t * edge1;
+	}
+
+	vec3 closestPoint(const plane &pl, const vec3 &pt)
+	{
+		return dot(pt, pl.normal) / dot(pl.normal, pl.normal) * pl.normal;
 	}
 }

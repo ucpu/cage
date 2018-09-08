@@ -19,16 +19,19 @@ namespace cage
 			virtual operator aabb() const = 0;
 			virtual bool intersects(const line &other) = 0;
 			virtual bool intersects(const triangle &other) = 0;
+			virtual bool intersects(const plane &other) = 0;
 			virtual bool intersects(const sphere &other) = 0;
 			virtual bool intersects(const aabb &other) = 0;
 		};
 
-		template<class T> struct itemShape : public itemBase, public T
+		template<class T>
+		struct itemShape : public itemBase, public T
 		{
 			itemShape(const T &other) : T(other) {}
 			virtual operator aabb() const { return aabb(*this); }
 			virtual bool intersects(const line &other) { return cage::intersects(*this, other); };
 			virtual bool intersects(const triangle &other) { return cage::intersects(*this, other); };
+			virtual bool intersects(const plane &other) { return cage::intersects(*this, other); };
 			virtual bool intersects(const sphere &other) { return cage::intersects(*this, other); };
 			virtual bool intersects(const aabb &other) { return cage::intersects(*this, other); };
 		};
@@ -62,7 +65,7 @@ namespace cage
 				rx(0), ry(0), rz(0), gridResolutionCoefficient(config.gridResolutionCoefficient), dirty(false)
 			{
 				uint32 maxItems = numeric_cast<uint32>(config.memory / maxSize);
-				allItems = newHashTable<itemBase>(min(maxItems, 100u), maxItems);
+				allItems = newHashTable<itemBase>(min(maxItems, 100u), maxItems * 2); // times 2 to compensate for fill ratio
 			}
 
 			~spatialDataImpl()
@@ -89,6 +92,18 @@ namespace cage
 				xMax = gridRange(box.b[0], gridUniverse.a[0], gridUniverse.b[0], rx) + 1;
 				yMax = gridRange(box.b[1], gridUniverse.a[1], gridUniverse.b[1], ry) + 1;
 				zMax = gridRange(box.b[2], gridUniverse.a[2], gridUniverse.b[2], rz) + 1;
+			}
+
+			template<class T>
+			void gridRangeGeneric(const T &box, uint32 &xMin, uint32 &xMax, uint32 &yMin, uint32 &yMax, uint32 &zMin, uint32 &zMax) const
+			{
+				gridRange(aabb(box), xMin, xMax, yMin, yMax, zMin, zMax);
+			}
+
+			template<>
+			void gridRangeGeneric(const plane &box, uint32 &xMin, uint32 &xMax, uint32 &yMin, uint32 &yMax, uint32 &zMin, uint32 &zMax) const
+			{
+				gridRange(aabb::Universe, xMin, xMax, yMin, yMax, zMin, zMax);
 			}
 
 			void rebuild()
@@ -155,14 +170,15 @@ namespace cage
 				resultNames.clear();
 			}
 
-			template<class T> void intersection(const T &other)
+			template<class T>
+			void intersection(const T &other)
 			{
 				CAGE_ASSERT_RUNTIME(!data->dirty);
 				clear();
 				if (data->rx == 0)
 					return;
 				uint32 xMin, xMax, yMin, yMax, zMin, zMax;
-				data->gridRange(aabb(other), xMin, xMax, yMin, yMax, zMin, zMax);
+				data->gridRangeGeneric(other, xMin, xMax, yMin, yMax, zMin, zMax);
 				for (uint32 z = zMin; z < zMax; z++)
 				{
 					for (uint32 y = yMin; y < yMax; y++)
@@ -208,6 +224,12 @@ namespace cage
 	}
 
 	void spatialQueryClass::intersection(const triangle &shape)
+	{
+		spatialQueryImpl *impl = (spatialQueryImpl*)this;
+		impl->intersection(shape);
+	}
+
+	void spatialQueryClass::intersection(const plane &shape)
 	{
 		spatialQueryImpl *impl = (spatialQueryImpl*)this;
 		impl->intersection(shape);

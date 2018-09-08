@@ -193,7 +193,7 @@ namespace cage
 			}
 
 		public:
-			sorter(const T &coord) : coord(coord)
+			sorter(const T &coord) : coord(coord), met()
 			{
 				for (uint32 i = 0; i < 5; i++)
 					dists[i] = 1;

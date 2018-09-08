@@ -326,5 +326,44 @@ void testCollisions()
 				CAGE_TEST(query->fractionContact() == 0);
 			}
 		}
+		{
+			CAGE_TESTCASE("shape-to-collider collision");
+			holder<collisionDataClass> data = newCollisionData(collisionDataCreateConfig());
+			data->update(1, c1.get(), transform());
+			data->update(2, c2.get(), transform());
+			data->update(3, c3.get(), transform());
+			data->rebuild();
+			holder<collisionQueryClass> query = newCollisionQuery(data.get());
+			{
+				CAGE_TESTCASE("line 1");
+				query->query(makeSegment(vec3(-10, 0, 0), vec3(10, 0, 0)));
+				CAGE_TEST(query->name() == 1 || query->name() == 3);
+			}
+			{
+				CAGE_TESTCASE("triangle 1");
+				query->query(triangle(vec3(10, -1, 1), vec3(10, 1, 1), vec3(10, 0, -2)));
+				CAGE_TEST(query->name() == 1);
+			}
+			{
+				CAGE_TESTCASE("triangle 2");
+				query->query(triangle(vec3(0, -1, 1), vec3(0, 1, 1), vec3(0, 0, -2)));
+				CAGE_TEST(query->name() == 3);
+			}
+			{
+				CAGE_TESTCASE("plane");
+				query->query(plane(vec3(0,0,0), vec3(0, 1, 0)));
+				CAGE_TEST(query->name() == 1 || query->name() == 3);
+			}
+			{
+				CAGE_TESTCASE("sphere");
+				query->query(sphere(vec3(0, 10, 0), 2));
+				CAGE_TEST(query->name() == 2);
+			}
+			{
+				CAGE_TESTCASE("aabb");
+				query->query(aabb(vec3(-1, 9, -1), vec3(1, 11, 1)));
+				CAGE_TEST(query->name() == 2);
+			}
+		}
 	}
 }
