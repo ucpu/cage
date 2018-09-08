@@ -11,3 +11,5 @@ option(GLFW_INSTALL "Generate installation target" OFF)
 
 add_subdirectory(glfw)
 
+cage_gen_module(glfw3 $<TARGET_LINKER_FILE:glfw> "")
+

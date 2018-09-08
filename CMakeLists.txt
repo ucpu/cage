@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.2)
 # make cmake find our own provided libraries
 # the libraries provided here should have higher priority than system libraries
 set(CAGE_EXTERNALS_MODULE_PATH "${CMAKE_CURRENT_BINARY_DIR}/cmake-modules")
+set(CAGE_EXTERNALS_MODULE_PATH "${CMAKE_CURRENT_BINARY_DIR}/cmake-modules" PARENT_SCOPE)
 list(INSERT CMAKE_MODULE_PATH 0 "${CAGE_EXTERNALS_MODULE_PATH}")
 include(cage_gen_module.cmake)
 
