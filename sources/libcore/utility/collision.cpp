@@ -99,12 +99,6 @@ namespace cage
 				spatial->intersection(aabb(shape));
 			}
 
-			template<>
-			void spatialIntersection(const plane &shape)
-			{
-				spatial->intersection(aabb::Universe);
-			}
-
 			template<class T>
 			void query(const T &shape)
 			{
@@ -140,6 +134,12 @@ namespace cage
 				}
 			}
 		};
+
+		template<>
+		void collisionQueryImpl::spatialIntersection(const plane &shape)
+		{
+			spatial->intersection(aabb::Universe);
+		}
 	}
 
 	uint32 collisionQueryClass::name() const
@@ -189,43 +189,43 @@ namespace cage
 
 	void collisionQueryClass::query(const colliderClass *collider, const transform &t)
 	{
-		return query(collider, t, t);
+		query(collider, t, t);
 	}
 
 	void collisionQueryClass::query(const colliderClass *collider, const transform &t1, const transform &t2)
 	{
 		collisionQueryImpl *impl = (collisionQueryImpl*)this;
-		return impl->query(collider, t1, t2);
+		impl->query(collider, t1, t2);
 	}
 
 	void collisionQueryClass::query(const line &shape)
 	{
 		collisionQueryImpl *impl = (collisionQueryImpl*)this;
-		return impl->query(shape);
+		impl->query(shape);
 	}
 
 	void collisionQueryClass::query(const triangle &shape)
 	{
 		collisionQueryImpl *impl = (collisionQueryImpl*)this;
-		return impl->query(shape);
+		impl->query(shape);
 	}
 
 	void collisionQueryClass::query(const plane &shape)
 	{
 		collisionQueryImpl *impl = (collisionQueryImpl*)this;
-		return impl->query(shape);
+		impl->query(shape);
 	}
 
 	void collisionQueryClass::query(const sphere &shape)
 	{
 		collisionQueryImpl *impl = (collisionQueryImpl*)this;
-		return impl->query(shape);
+		impl->query(shape);
 	}
 
 	void collisionQueryClass::query(const aabb &shape)
 	{
 		collisionQueryImpl *impl = (collisionQueryImpl*)this;
-		return impl->query(shape);
+		impl->query(shape);
 	}
 
 	void collisionDataClass::update(uint32 name, const colliderClass *collider, const transform &t)
