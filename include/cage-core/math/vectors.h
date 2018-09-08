@@ -75,15 +75,7 @@ namespace cage
 {
 	struct CAGE_API vec2
 	{
-		union
-		{
-			struct
-			{
-				real x;
-				real y;
-			};
-			real data[2];
-		};
+		real data[2];
 
 		GCHL_GEN_VECTOR_BASE(vec2, 2);
 
@@ -96,16 +88,7 @@ namespace cage
 
 	struct CAGE_API vec3
 	{
-		union
-		{
-			struct
-			{
-				real x;
-				real y;
-				real z;
-			};
-			real data[3];
-		};
+		real data[3];
 
 		GCHL_GEN_VECTOR_BASE(vec3, 3);
 
@@ -124,17 +107,7 @@ namespace cage
 
 	struct CAGE_API vec4
 	{
-		union
-		{
-			struct
-			{
-				real x;
-				real y;
-				real z;
-				real w;
-			};
-			real data[4];
-		};
+		real data[4];
 
 		GCHL_GEN_VECTOR_BASE(vec4, 4);
 
@@ -149,17 +122,7 @@ namespace cage
 
 	struct CAGE_API quat
 	{
-		union
-		{
-			struct
-			{
-				real x;
-				real y;
-				real z;
-				real w;
-			};
-			real data[4];
-		};
+		real data[4];
 
 		GCHL_GEN_QUATERNION_BASE(quat, 4);
 
