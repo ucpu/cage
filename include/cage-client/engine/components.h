@@ -47,7 +47,7 @@ namespace cage
 	{
 		static componentClass *component;
 		vec3 color;
-		vec3 attenuation;
+		vec3 attenuation; // constant, linear, quadratic
 		rads spotAngle;
 		real spotExponent;
 		lightTypeEnum lightType;
@@ -84,8 +84,8 @@ namespace cage
 	struct CAGE_API voiceComponent
 	{
 		static componentClass *component;
-		busClass *input;
 		uint64 startTime;
+		busClass *input;
 		uint32 name;
 		uint32 renderMask;
 		voiceComponent();
@@ -94,8 +94,8 @@ namespace cage
 	struct CAGE_API listenerComponent
 	{
 		static componentClass *component;
+		vec3 attenuation; // constant, linear, quadratic
 		busClass *output;
-		vec3 volumeAttenuationByDistance;
 		uint32 renderMask;
 		real speedOfSound;
 		bool dopplerEffect;

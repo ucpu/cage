@@ -488,61 +488,51 @@ namespace cage
 				emitCameras.clear();
 				emitArena.flush();
 
-				{ // emit renderables
-					uint32 cnt = renderComponent::component->getComponentEntities()->entitiesCount();
-					entityClass *const *ents = renderComponent::component->getComponentEntities()->entitiesArray();
-					for (entityClass *const *i = ents, *const *ie = ents + cnt; i != ie; i++)
-					{
-						entityClass *e = *i;
-						emitRenderStruct *c = emitArena.createObject<emitRenderStruct>();
-						c->transform = e->value<transformComponent>(transformComponent::component);
-						if (e->hasComponent(transformComponent::componentHistory))
-							c->transformHistory = e->value<transformComponent>(transformComponent::componentHistory);
-						else
-							c->transformHistory = c->transform;
-						c->render = e->value<renderComponent>(renderComponent::component);
-						if (e->hasComponent(animatedTextureComponent::component))
-							c->animatedTexture = emitArena.createObject<animatedTextureComponent>(e->value<animatedTextureComponent>(animatedTextureComponent::component));
-						if (e->hasComponent(animatedSkeletonComponent::component))
-							c->animatedSkeleton = emitArena.createObject<animatedSkeletonComponent>(e->value<animatedSkeletonComponent>(animatedSkeletonComponent::component));
-						if (e->hasComponent(configuredSkeletonComponent::component))
-							c->configuredSkeleton = emitArena.createObject<configuredSkeletonImpl>(e);
-						emitRenderables.push_back(c);
-					}
+				// emit renderables
+				for (entityClass *e : renderComponent::component->getComponentEntities()->entities())
+				{
+					emitRenderStruct *c = emitArena.createObject<emitRenderStruct>();
+					c->transform = e->value<transformComponent>(transformComponent::component);
+					if (e->hasComponent(transformComponent::componentHistory))
+						c->transformHistory = e->value<transformComponent>(transformComponent::componentHistory);
+					else
+						c->transformHistory = c->transform;
+					c->render = e->value<renderComponent>(renderComponent::component);
+					if (e->hasComponent(animatedTextureComponent::component))
+						c->animatedTexture = emitArena.createObject<animatedTextureComponent>(e->value<animatedTextureComponent>(animatedTextureComponent::component));
+					if (e->hasComponent(animatedSkeletonComponent::component))
+						c->animatedSkeleton = emitArena.createObject<animatedSkeletonComponent>(e->value<animatedSkeletonComponent>(animatedSkeletonComponent::component));
+					if (e->hasComponent(configuredSkeletonComponent::component))
+						c->configuredSkeleton = emitArena.createObject<configuredSkeletonImpl>(e);
+					emitRenderables.push_back(c);
 				}
-				{ // emit lights
-					uint32 cnt = lightComponent::component->getComponentEntities()->entitiesCount();
-					entityClass *const *ents = lightComponent::component->getComponentEntities()->entitiesArray();
-					for (entityClass *const *i = ents, *const *ie = ents + cnt; i != ie; i++)
-					{
-						entityClass *e = *i;
-						emitLightStruct *c = emitArena.createObject<emitLightStruct>();
-						c->transform = e->value<transformComponent>(transformComponent::component);
-						if (e->hasComponent(transformComponent::componentHistory))
-							c->transformHistory = e->value<transformComponent>(transformComponent::componentHistory);
-						else
-							c->transformHistory = c->transform;
-						c->light = e->value<lightComponent>(lightComponent::component);
-						if (e->hasComponent(shadowmapComponent::component))
-							c->shadowmap = emitArena.createObject<shadowmapImpl>(e->value<shadowmapComponent>(shadowmapComponent::component));
-						emitLights.push_back(c);
-					}
+
+				// emit lights
+				for (entityClass *e : lightComponent::component->getComponentEntities()->entities())
+				{
+					emitLightStruct *c = emitArena.createObject<emitLightStruct>();
+					c->transform = e->value<transformComponent>(transformComponent::component);
+					if (e->hasComponent(transformComponent::componentHistory))
+						c->transformHistory = e->value<transformComponent>(transformComponent::componentHistory);
+					else
+						c->transformHistory = c->transform;
+					c->light = e->value<lightComponent>(lightComponent::component);
+					if (e->hasComponent(shadowmapComponent::component))
+						c->shadowmap = emitArena.createObject<shadowmapImpl>(e->value<shadowmapComponent>(shadowmapComponent::component));
+					emitLights.push_back(c);
 				}
-				{ // emit cameras
-					uint32 cnt = cameraComponent::component->getComponentEntities()->entitiesCount();
-					entityClass *const *ents = cameraComponent::component->getComponentEntities()->entitiesArray();
-					for (entityClass *const *i = ents, *const *ie = ents + cnt; i != ie; i++)
-					{
-						entityClass *e = *i;
-						emitCameraStruct *c = emitArena.createObject<emitCameraStruct>();
-						c->transform = e->value<transformComponent>(transformComponent::component);
-						if (e->hasComponent(transformComponent::componentHistory))
-							c->transformHistory = e->value<transformComponent>(transformComponent::componentHistory);
-						else
-							c->transformHistory = c->transform;
-						c->camera = e->value<cameraComponent>(cameraComponent::component);
-						emitCameras.push_back(c);
-					}
+
+				// emit cameras
+				for (entityClass *e : cameraComponent::component->getComponentEntities()->entities())
+				{
+					emitCameraStruct *c = emitArena.createObject<emitCameraStruct>();
+					c->transform = e->value<transformComponent>(transformComponent::component);
+					if (e->hasComponent(transformComponent::componentHistory))
+						c->transformHistory = e->value<transformComponent>(transformComponent::componentHistory);
+					else
+						c->transformHistory = c->transform;
+					c->camera = e->value<cameraComponent>(cameraComponent::component);
+					emitCameras.push_back(c);
 				}
 			}
 
@@ -551,10 +541,6 @@ namespace cage
 				assetManagerClass *ass = assets();
 				if (!ass->ready(hashString("cage/cage.pack")))
 					return;
-
-				this->controlTime = controlTime;
-				this->prepareTime = prepareTime;
-				shm2d = shmCube = 0;
 
 				if (!graphicsDispatch->shaderBlitColor)
 				{
@@ -569,6 +555,10 @@ namespace cage
 					graphicsDispatch->shaderLighting = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/lighting.glsl"));
 					graphicsDispatch->shaderTranslucent = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/translucent.glsl"));
 				}
+
+				this->controlTime = controlTime;
+				this->prepareTime = prepareTime;
+				shm2d = shmCube = 0;
 
 				graphicsDispatch->firstRenderPass = graphicsDispatch->lastRenderPass = nullptr;
 				dispatchArena.flush();

@@ -205,7 +205,7 @@ namespace cage
 
 		loggerClass *getCentralLog()
 		{
-			static centralLogClass *centralLogInstance = new centralLogClass(); // this leak is intentionall
+			static centralLogClass *centralLogInstance = new centralLogClass(); // this leak is intentional
 			return centralLogInstance->loggerCentralFile.get();
 		}
 	}

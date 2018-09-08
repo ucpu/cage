@@ -21,7 +21,7 @@ namespace cage
 		} *shaderMeshes;
 		struct shaderArmatureStruct
 		{
-			mat4 armature[CAGE_SHADER_MAX_ARMATURE_MATRICES];
+			mat4 armature[MaxBonesCount];
 		} *shaderArmatures;
 		textureClass *textures[MaxTexturesCountPerMaterial];
 		meshClass *mesh;

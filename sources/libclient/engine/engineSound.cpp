@@ -214,7 +214,7 @@ namespace cage
 			vec3 diff = posVoice - posListener;
 			real dist = diff.length();
 			vec3 dir = dist > 1e-7 ? diff.normalize() : vec3();
-			vec3 &a = listener->listener.volumeAttenuationByDistance;
+			vec3 &a = listener->listener.attenuation;
 			real vol = min(real(1) / (a[0] + a[1] * dist + a[2] * dist * dist), 1);
 			if (vol < 1e-5)
 				return;
