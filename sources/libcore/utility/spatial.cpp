@@ -100,12 +100,6 @@ namespace cage
 				gridRange(aabb(box), xMin, xMax, yMin, yMax, zMin, zMax);
 			}
 
-			template<>
-			void gridRangeGeneric(const plane &box, uint32 &xMin, uint32 &xMax, uint32 &yMin, uint32 &yMax, uint32 &zMin, uint32 &zMax) const
-			{
-				gridRange(aabb::Universe, xMin, xMax, yMin, yMax, zMin, zMax);
-			}
-
 			void rebuild()
 			{
 				rx = ry = rz = 0;
@@ -152,6 +146,12 @@ namespace cage
 				rz = d[2] > 0 ? max(numeric_cast<uint32>(d[2] * scale), 1u) : 1;
 			}
 		};
+
+		template<>
+		void spatialDataImpl::gridRangeGeneric(const plane &box, uint32 &xMin, uint32 &xMax, uint32 &yMin, uint32 &yMax, uint32 &zMin, uint32 &zMax) const
+		{
+			gridRange(aabb::Universe, xMin, xMax, yMin, yMax, zMin, zMax);
+		}
 
 		class spatialQueryImpl : public spatialQueryClass
 		{
