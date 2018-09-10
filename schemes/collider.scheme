@@ -2,6 +2,11 @@
 processor = cage-asset-processor collider
 index = 3
 
+[bake_model]
+display = bake model
+type = bool
+default = false
+
 [scale]
 display = scale
 type = real

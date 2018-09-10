@@ -2,6 +2,11 @@
 processor = cage-asset-processor skeleton
 index = 13
 
+[bake_model]
+display = bake model
+type = bool
+default = false
+
 [bone_names]
 display = export bone names
 type = bool

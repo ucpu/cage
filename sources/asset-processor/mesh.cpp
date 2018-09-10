@@ -360,18 +360,15 @@ namespace
 void processMesh()
 {
 	holder<assimpContextClass> context;
-	const aiScene *scene = nullptr;
-
 	{
-		uint32 flags = assimpDefaultLoadFlags;
+		uint32 addFlags = 0;
 		if (properties("export_normal").toBool())
-			flags |= aiProcess_GenSmoothNormals;
+			addFlags |= aiProcess_GenSmoothNormals;
 		if (properties("export_tangent").toBool())
-			flags |= aiProcess_CalcTangentSpace;
-		context = newAssimpContext(flags);
-		scene = context->getScene();
+			addFlags |= aiProcess_CalcTangentSpace;
+		context = newAssimpContext(addFlags, 0);
 	}
-
+	const aiScene *scene = context->getScene();
 	const aiMesh *am = scene->mMeshes[context->selectMesh()];
 
 	if (am->GetNumUVChannels() > 1)

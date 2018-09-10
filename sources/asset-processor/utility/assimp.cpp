@@ -200,7 +200,30 @@ namespace
 
 	struct assimpContextImpl : public assimpContextClass
 	{
-		assimpContextImpl(uint32 flags) : logDebug(severityEnum::Note), logInfo(severityEnum::Info), logWarn(severityEnum::Warning), logError(severityEnum::Error)
+		static const uint32 assimpDefaultLoadFlags =
+			aiProcess_JoinIdenticalVertices |
+			aiProcess_Triangulate |
+			aiProcess_LimitBoneWeights |
+			//aiProcess_ValidateDataStructure |
+			aiProcess_ImproveCacheLocality |
+			aiProcess_SortByPType |
+			//aiProcess_FindInvalidData |
+			aiProcess_GenUVCoords |
+			aiProcess_TransformUVCoords |
+			aiProcess_FindDegenerates |
+			aiProcess_OptimizeGraph |
+			aiProcess_Debone |
+			//aiProcess_SplitLargeMeshes |
+			0;
+
+		static const uint32 assimpBakeLoadFlags =
+			aiProcess_RemoveRedundantMaterials |
+			//aiProcess_FindInstances |
+			aiProcess_OptimizeMeshes |
+			aiProcess_OptimizeGraph |
+			0;
+
+		assimpContextImpl(uint32 addFlags, uint32 removeFlags) : logDebug(severityEnum::Note), logInfo(severityEnum::Info), logWarn(severityEnum::Warning), logError(severityEnum::Error)
 		{
 #ifdef CAGE_DEBUG
 			Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
@@ -215,6 +238,13 @@ namespace
 
 			try
 			{
+				uint32 flags = assimpDefaultLoadFlags;
+				if (properties("bake_model").toBool())
+					flags |= assimpBakeLoadFlags;
+				flags |= addFlags;
+				flags &= ~removeFlags;
+				CAGE_LOG(severityEnum::Info, logComponentName, cage::string() + "assimp loading flags: " + flags);
+
 				imp.SetIOHandler(&this->ioSystem);
 				if (!imp.ReadFile(pathExtractFilename(inputFile).c_str(), flags))
 				{
@@ -300,25 +330,6 @@ namespace
 		Assimp::Importer imp;
 	};
 }
-
-extern const uint32 assimpDefaultLoadFlags =
-aiProcess_JoinIdenticalVertices |
-aiProcess_Triangulate |
-aiProcess_LimitBoneWeights |
-//aiProcess_ValidateDataStructure |
-aiProcess_ImproveCacheLocality |
-//aiProcess_RemoveRedundantMaterials |
-aiProcess_SortByPType |
-//aiProcess_FindInvalidData |
-aiProcess_GenUVCoords |
-aiProcess_TransformUVCoords |
-//aiProcess_FindInstances |
-aiProcess_FindDegenerates |
-//aiProcess_OptimizeMeshes |
-aiProcess_OptimizeGraph |
-aiProcess_Debone |
-//aiProcess_SplitLargeMeshes |
-0;
 
 uint16 assimpSkeletonClass::bonesCount() const
 {
@@ -462,16 +473,16 @@ holder<assimpSkeletonClass> assimpContextClass::skeleton() const
 	return detail::systemArena().createImpl<assimpSkeletonClass, assimpSkeletonImpl>(getScene());
 }
 
-holder<assimpContextClass> newAssimpContext(uint32 flags)
+holder<assimpContextClass> newAssimpContext(uint32 addFlags, uint32 removeFlags)
 {
-	return detail::systemArena().createImpl<assimpContextClass, assimpContextImpl>(flags);
+	return detail::systemArena().createImpl<assimpContextClass, assimpContextImpl>(addFlags, removeFlags);
 }
 
 void analyzeAssimp()
 {
 	try
 	{
-		holder<assimpContextClass> context = newAssimpContext(assimpDefaultLoadFlags);
+		holder<assimpContextClass> context = newAssimpContext(0, 0);
 		const aiScene *scene = context->getScene();
 		writeLine("cage-begin");
 		try

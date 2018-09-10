@@ -30,7 +30,7 @@ public:
 	uint16 index(aiNode *node) const;
 	uint16 parent(uint16 index) const;
 	aiBone *parent(aiBone *bone) const;
-	aiNode *parent(aiNode *node) const; // this may skip some nodes in the original hierarchy - this function returns node that´corresponds to another bone
+	aiNode *parent(aiNode *node) const; // this may skip some nodes in the original hierarchy - this function returns node that corresponds to another bone
 };
 
 class assimpContextClass
@@ -41,9 +41,7 @@ public:
 	holder<assimpSkeletonClass> skeleton() const;
 };
 
-holder<assimpContextClass> newAssimpContext(uint32 flags);
-
-extern const uint32 assimpDefaultLoadFlags;
+holder<assimpContextClass> newAssimpContext(uint32 addFlags, uint32 removeFlags);
 
 vec3 conv(const aiVector3D &v);
 vec3 conv(const aiColor3D &v);

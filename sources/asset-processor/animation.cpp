@@ -17,14 +17,8 @@ namespace
 
 void processAnimation()
 {
-	holder<assimpContextClass> context;
-	const aiScene *scene = nullptr;
-
-	{
-		uint32 flags = assimpDefaultLoadFlags;
-		context = newAssimpContext(flags);
-		scene = context->getScene();
-	}
+	holder<assimpContextClass> context = newAssimpContext(0, 0);
+	const aiScene *scene = context->getScene();
 
 	if (scene->mNumAnimations == 0)
 		CAGE_THROW_ERROR(exception, "no animations available");
@@ -46,7 +40,7 @@ void processAnimation()
 		CAGE_THROW_ERROR(exception, "no animation name matches the specifier");
 	aiAnimation *ani = scene->mAnimations[chosenAnimationIndex];
 	if (ani->mNumChannels == 0 || ani->mNumMeshChannels != 0 || ani->mNumMorphMeshChannels != 0)
-		CAGE_THROW_ERROR(exception, "the animation is of wrong type");
+		CAGE_THROW_ERROR(exception, "the animation has unsupported type");
 
 	CAGE_LOG(severityEnum::Info, logComponentName, string() + "duration: " + ani->mDuration + " ticks");
 	CAGE_LOG(severityEnum::Info, logComponentName, string() + "ticks per second: " + ani->mTicksPerSecond);

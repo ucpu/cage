@@ -35,15 +35,8 @@ namespace
 
 void processSkeleton()
 {
-	holder<assimpContextClass> context;
-	const aiScene *scene = nullptr;
-
-	{
-		uint32 flags = assimpDefaultLoadFlags;
-		context = newAssimpContext(flags);
-		scene = context->getScene();
-	}
-
+	holder<assimpContextClass> context = newAssimpContext(0, 0);
+	const aiScene *scene = context->getScene();
 	holder<assimpSkeletonClass> skeleton = context->skeleton();
 
 	skeletonHeaderStruct s;

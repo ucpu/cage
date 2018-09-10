@@ -2,11 +2,9 @@
 #include <cage-core/utility/collider.h>
 #include <cage-core/utility/memoryBuffer.h>
 
-extern const uint32 assimpDefaultLoadFlags;
-
 void processCollider()
 {
-	holder<assimpContextClass> context = newAssimpContext(assimpDefaultLoadFlags);
+	holder<assimpContextClass> context = newAssimpContext(0, 0);
 	const aiScene *scene = context->getScene();
 	const aiMesh *am = scene->mMeshes[context->selectMesh()];
 
