@@ -549,7 +549,7 @@ namespace cage
 					{
 						checkGlError();
 					}
-					catch (const graphicException &)
+					catch (const graphicsException &)
 					{
 					}
 				}

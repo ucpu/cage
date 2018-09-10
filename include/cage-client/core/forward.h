@@ -1,6 +1,6 @@
 namespace cage
 {
-	struct graphicException;
+	struct graphicsException;
 	struct windowEventListeners;
 	struct stereoCameraStruct;
 	class windowClass;

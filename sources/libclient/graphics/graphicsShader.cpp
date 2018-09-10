@@ -239,7 +239,7 @@ namespace cage
 			{
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
-			catch (const graphicException &)
+			catch (const graphicsException &)
 			{
 				glDeleteShader(shader);
 				throw;
@@ -383,7 +383,7 @@ namespace cage
 		if (len != GL_TRUE)
 		{
 			glDeleteShader(shader);
-			CAGE_THROW_ERROR(graphicException, "shader compilation failed", len);
+			CAGE_THROW_ERROR(graphicsException, "shader compilation failed", len);
 		}
 
 		glAttachShader(impl->id, shader);
@@ -439,7 +439,7 @@ namespace cage
 		glGetProgramiv(impl->id, GL_LINK_STATUS, &len);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 		if (len != GL_TRUE)
-			CAGE_THROW_ERROR(graphicException, "shader linking failed", len);
+			CAGE_THROW_ERROR(graphicsException, "shader linking failed", len);
 
 		if (shaderIntrospection)
 		{
@@ -568,7 +568,7 @@ namespace cage
 		glGetProgramiv(impl->id, GL_VALIDATE_STATUS, &len);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 		if (len != GL_TRUE)
-			CAGE_THROW_ERROR(graphicException, "shader validation failed", len);
+			CAGE_THROW_ERROR(graphicsException, "shader validation failed", len);
 	}
 
 	holder<shaderClass> newShader(windowClass *context)

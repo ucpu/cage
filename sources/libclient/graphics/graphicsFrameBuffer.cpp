@@ -93,7 +93,7 @@ namespace cage
 		GLenum result = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 		if (result != GL_FRAMEBUFFER_COMPLETE)
-			CAGE_THROW_ERROR(graphicException, "frameBufferClass::checkStatus: frame buffer check failed", numeric_cast<uint32>(result));
+			CAGE_THROW_ERROR(graphicsException, "frameBufferClass::checkStatus: frame buffer check failed", numeric_cast<uint32>(result));
 	}
 
 	holder<frameBufferClass> newFrameBuffer(windowClass *context)

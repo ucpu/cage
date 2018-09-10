@@ -23,19 +23,19 @@ namespace cage
 		switch (err)
 		{
 		case GL_NO_ERROR: return;
-		case GL_INVALID_ENUM: CAGE_THROW_ERROR(graphicException, "gl_invalid_enum", err); break;
-		case GL_INVALID_VALUE: CAGE_THROW_ERROR(graphicException, "gl_invalid_value", err); break;
-		case GL_INVALID_OPERATION: CAGE_THROW_ERROR(graphicException, "gl_invalid_operation", err); break;
-		case GL_INVALID_FRAMEBUFFER_OPERATION: CAGE_THROW_ERROR(graphicException, "gl_invalid_framebuffer_operation", err); break;
-		case GL_OUT_OF_MEMORY: CAGE_THROW_ERROR(graphicException, "gl_out_of_memory", err); break;
-		default: CAGE_THROW_CRITICAL(graphicException, "gl_unknown_error", err); break;
+		case GL_INVALID_ENUM: CAGE_THROW_ERROR(graphicsException, "gl_invalid_enum", err); break;
+		case GL_INVALID_VALUE: CAGE_THROW_ERROR(graphicsException, "gl_invalid_value", err); break;
+		case GL_INVALID_OPERATION: CAGE_THROW_ERROR(graphicsException, "gl_invalid_operation", err); break;
+		case GL_INVALID_FRAMEBUFFER_OPERATION: CAGE_THROW_ERROR(graphicsException, "gl_invalid_framebuffer_operation", err); break;
+		case GL_OUT_OF_MEMORY: CAGE_THROW_ERROR(graphicsException, "gl_out_of_memory", err); break;
+		default: CAGE_THROW_CRITICAL(graphicsException, "gl_unknown_error", err); break;
 		}
 	}
 
-	graphicException::graphicException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uint32 code) noexcept : codeException(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER, code)
+	graphicsException::graphicsException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uint32 code) noexcept : codeException(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER, code)
 	{}
 
-	graphicException &graphicException::log()
+	graphicsException &graphicsException::log()
 	{
 		if (severity < detail::getExceptionSilenceSeverity())
 			return *this;

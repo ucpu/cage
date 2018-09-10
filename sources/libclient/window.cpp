@@ -193,7 +193,7 @@ namespace cage
 				{
 					// initialize opengl functions (gl loader)
 					if (!gladLoadGL())
-						CAGE_THROW_ERROR(graphicException, "gladLoadGl", 0);
+						CAGE_THROW_ERROR(graphicsException, "gladLoadGl", 0);
 				}
 				openglContextInitializeGeneral(this);
 			}
