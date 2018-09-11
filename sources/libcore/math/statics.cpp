@@ -3,6 +3,7 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/math.h>
+#include <cage-core/geometry.h>
 
 namespace cage
 {
@@ -15,16 +16,7 @@ namespace cage
 	const real real::Ln10 = 2.302585092994045684;
 	const real real::PositiveInfinity = +std::numeric_limits<float>::infinity();
 	const real real::NegativeInfinity = -std::numeric_limits<float>::infinity();
-
-#ifdef NAN
-	const real real::Nan = NAN;
-#else
-	namespace
-	{
-		static const uint32 nan[2] = { 0xffffffff, 0x7fffffff };
-	}
-	const real real::Nan = *(const double*)nan;
-#endif
+	const real real::Nan = std::numeric_limits<float>::quiet_NaN();
 
 	const rads rads::Zero = rads(0);
 	const rads rads::Stright = rads(3.14159265358979323846264338327950288);
@@ -41,4 +33,6 @@ namespace cage
 	const mat3 mat3::Zero = mat3(0, 0, 0, 0, 0, 0, 0, 0, 0);
 	const mat4 mat4::Nan = mat4(real::Nan, real::Nan, real::Nan, real::Nan, real::Nan, real::Nan, real::Nan, real::Nan, real::Nan, real::Nan, real::Nan, real::Nan, real::Nan, real::Nan, real::Nan, real::Nan);
 	const mat4 mat4::Zero = mat4(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+
+	const aabb aabb::Universe = aabb(vec3(real::NegativeInfinity, real::NegativeInfinity, real::NegativeInfinity), vec3(real::PositiveInfinity, real::PositiveInfinity, real::PositiveInfinity));
 }

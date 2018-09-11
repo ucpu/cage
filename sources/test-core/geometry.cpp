@@ -195,6 +195,8 @@ void testGeometry()
 			aabb h = c + b;
 			CAGE_TEST(!h.empty());
 			test(h.volume(), 48);
+			CAGE_TEST(aabb::Universe.diagonal() > 100);
+			CAGE_TEST(aabb::Universe.diagonal() == real::PositiveInfinity);
 		}
 
 		{

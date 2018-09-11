@@ -256,6 +256,4 @@ namespace cage
 		real wz = b[2] - a[2];
 		return (wx*wy + wx*wz + wy*wz) * 2;
 	}
-
-	const aabb aabb::Universe = aabb(vec3(real::NegativeInfinity, real::NegativeInfinity, real::NegativeInfinity), vec3(real::PositiveInfinity, real::PositiveInfinity, real::PositiveInfinity));
 }
