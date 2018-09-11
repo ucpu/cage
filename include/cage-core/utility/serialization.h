@@ -34,6 +34,12 @@ namespace cage
 		CAGE_ASSERT_COMPILE(false, do_not_serialize_a_pointer);
 	}
 
+	template <class T>
+	serializer &operator << (serializer &s, holder<T> v)
+	{
+		CAGE_ASSERT_COMPILE(false, do_not_serialize_holder);
+	}
+
 	struct CAGE_API deserializer
 	{
 		const char *current;

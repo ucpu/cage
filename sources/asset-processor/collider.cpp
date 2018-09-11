@@ -11,7 +11,7 @@ void processCollider()
 	switch (am->mPrimitiveTypes)
 	{
 	case aiPrimitiveType_TRIANGLE: break;
-	default: CAGE_THROW_ERROR(exception, "collider only works with triangles");
+	default: CAGE_THROW_ERROR(exception, "collider works with triangles only");
 	}
 
 	holder<colliderClass> collider = newCollider();

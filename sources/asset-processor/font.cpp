@@ -4,6 +4,8 @@
 
 #include <cage-core/utility/hashString.h>
 #include <cage-core/utility/png.h>
+#include <cage-core/utility/memoryBuffer.h>
+#include <cage-core/utility/serialization.h>
 #include "utility/binPacking.h"
 
 #include <msdfgen.h>
@@ -319,22 +321,31 @@ namespace
 			sizeof(uint32) * numeric_cast<uint32>(charsetChars.size()) +
 			sizeof(uint32) * numeric_cast<uint32>(charsetGlyphs.size());
 
-		holder<fileClass> f = newFile(outputFileName, fileMode(false, true));
-		f->write(&h, sizeof(h));
-		f->write(&data, sizeof(data));
-		f->write(texels->bufferData(), texels->bufferSize());
+		memoryBuffer buf;
+		serializer sr(buf);
+
+		sr << data;
+		CAGE_ASSERT_RUNTIME(texels->bufferSize() == data.texSize);
+		sr.write(texels->bufferData(), texels->bufferSize());
 		for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
-		{
-			glyphStruct &g = glyphs[glyphIndex];
-			f->write(&g.data, sizeof(g.data));
-		}
+			sr << glyphs[glyphIndex].data;
 		if (kerning.size() > 0)
-			f->write(&kerning[0], sizeof(kerning[0]) * kerning.size());
+			sr.write(&kerning[0], sizeof(kerning[0]) * kerning.size());
 		if (charsetChars.size() > 0)
 		{
-			f->write(&charsetChars[0], sizeof(charsetChars[0]) * charsetChars.size());
-			f->write(&charsetGlyphs[0], sizeof(charsetGlyphs[0]) * charsetGlyphs.size());
+			sr.write(&charsetChars[0], sizeof(charsetChars[0]) * charsetChars.size());
+			sr.write(&charsetGlyphs[0], sizeof(charsetGlyphs[0]) * charsetGlyphs.size());
 		}
+
+		CAGE_ASSERT_RUNTIME(h.originalSize == buf.size());
+		CAGE_LOG(severityEnum::Info, logComponentName, string() + "buffer size (before compression): " + buf.size());
+		buf = detail::compress(buf);
+		CAGE_LOG(severityEnum::Info, logComponentName, string() + "buffer size (after compression): " + buf.size());
+		h.compressedSize = buf.size();
+
+		holder<fileClass> f = newFile(outputFileName, fileMode(false, true));
+		f->write(&h, sizeof(h));
+		f->writeBuffer(buf);
 		f->close();
 	}
 
