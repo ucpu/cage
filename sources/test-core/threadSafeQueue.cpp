@@ -116,27 +116,27 @@ void testThreadSafeQueue()
 	cfg.maxElements = 10;
 
 	{
-		CAGE_TESTCASE("single producer single consummer (blocking)");
+		CAGE_TESTCASE("single producer single consumer (blocking)");
 		holder<threadSafeQueueClass<task>> q = newThreadSafeQueue<task>(cfg);
 		tester t(q.get());
-		holder<threadClass> t1 = newThread(delegate<void()>().bind<tester, &tester::consumeBlocking>(&t), "consummer");
+		holder<threadClass> t1 = newThread(delegate<void()>().bind<tester, &tester::consumeBlocking>(&t), "consumer");
 		holder<threadClass> t2 = newThread(delegate<void()>().bind<tester, &tester::produceBlocking>(&t), "producer");
 		t1->wait();
 		t2->wait();
 	}
 
 	{
-		CAGE_TESTCASE("single producer single consummer (polling)");
+		CAGE_TESTCASE("single producer single consumer (polling)");
 		holder<threadSafeQueueClass<task>> q = newThreadSafeQueue<task>(cfg);
 		tester t(q.get());
-		holder<threadClass> t1 = newThread(delegate<void()>().bind<tester, &tester::consumePolling>(&t), "consummer");
+		holder<threadClass> t1 = newThread(delegate<void()>().bind<tester, &tester::consumePolling>(&t), "consumer");
 		holder<threadClass> t2 = newThread(delegate<void()>().bind<tester, &tester::producePolling>(&t), "producer");
 		t1->wait();
 		t2->wait();
 	}
 
 	{
-		CAGE_TESTCASE("multiple producers multiple consummers (blocking)");
+		CAGE_TESTCASE("multiple producers multiple consumers (blocking)");
 		holder<threadSafeQueueClass<task>> q = newThreadSafeQueue<task>(cfg);
 		tester t(q.get());
 		holder<threadPoolClass> t1 = newThreadPool("pool_", 6);
@@ -145,7 +145,7 @@ void testThreadSafeQueue()
 	}
 
 	{
-		CAGE_TESTCASE("multiple producers multiple consummers (polling)");
+		CAGE_TESTCASE("multiple producers multiple consumers (polling)");
 		holder<threadSafeQueueClass<task>> q = newThreadSafeQueue<task>(cfg);
 		tester t(q.get());
 		holder<threadPoolClass> t1 = newThreadPool("pool_", 6);

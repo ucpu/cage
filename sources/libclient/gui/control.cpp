@@ -5,6 +5,7 @@
 #include <cage-core/log.h>
 #include <cage-core/assets.h>
 #include <cage-core/utility/hashString.h>
+#include <cage-core/utility/threadSafeSwapBufferController.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
@@ -240,31 +241,32 @@ namespace cage
 			else
 				s.texture = nullptr;
 		}
-		if ((impl->emitIndexControl + 1) % 3 == impl->emitIndexDispatch)
+
+		if (auto lock = impl->emitController->write())
 		{
-			CAGE_LOG(severityEnum::Warning, "gui", "gui is skipping emit because dispatching is late");
-			return;
+			impl->graphicsData.debugShader = impl->assetManager->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/gui/debug.glsl"));
+			impl->graphicsData.elementShader = impl->assetManager->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/gui/element.glsl"));
+			impl->graphicsData.fontShader = impl->assetManager->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/gui/font.glsl"));
+			impl->graphicsData.imageAnimatedShader = impl->assetManager->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/gui/image.glsl?A"));
+			impl->graphicsData.imageStaticShader = impl->assetManager->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/gui/image.glsl?a"));
+			impl->graphicsData.colorPickerShader[0] = impl->assetManager->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/gui/colorPicker.glsl?F"));
+			impl->graphicsData.colorPickerShader[1] = impl->assetManager->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/gui/colorPicker.glsl?H"));
+			impl->graphicsData.colorPickerShader[2] = impl->assetManager->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/gui/colorPicker.glsl?S"));
+			impl->graphicsData.debugMesh = impl->assetManager->get<assetSchemeIndexMesh, meshClass>(hashString("cage/mesh/guiWire.obj"));
+			impl->graphicsData.elementMesh = impl->assetManager->get<assetSchemeIndexMesh, meshClass>(hashString("cage/mesh/guiElement.obj"));
+			impl->graphicsData.fontMesh = impl->assetManager->get<assetSchemeIndexMesh, meshClass>(hashString("cage/mesh/square.obj"));
+			impl->graphicsData.imageMesh = impl->graphicsData.fontMesh;
+
+			impl->emitControl = &impl->emitData[lock.index()];
+			auto *e = impl->emitControl;
+			e->flush();
+			e->first = e->last = e->memory.createObject<renderableBaseStruct>(); // create first dummy object
+
+			impl->root->childrenEmit();
 		}
-
-		impl->graphicsData.debugShader = impl->assetManager->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/gui/debug.glsl"));
-		impl->graphicsData.elementShader = impl->assetManager->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/gui/element.glsl"));
-		impl->graphicsData.fontShader = impl->assetManager->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/gui/font.glsl"));
-		impl->graphicsData.imageAnimatedShader = impl->assetManager->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/gui/image.glsl?A"));
-		impl->graphicsData.imageStaticShader = impl->assetManager->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/gui/image.glsl?a"));
-		impl->graphicsData.colorPickerShader[0] = impl->assetManager->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/gui/colorPicker.glsl?F"));
-		impl->graphicsData.colorPickerShader[1] = impl->assetManager->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/gui/colorPicker.glsl?H"));
-		impl->graphicsData.colorPickerShader[2] = impl->assetManager->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/gui/colorPicker.glsl?S"));
-		impl->graphicsData.debugMesh = impl->assetManager->get<assetSchemeIndexMesh, meshClass>(hashString("cage/mesh/guiWire.obj"));
-		impl->graphicsData.elementMesh = impl->assetManager->get<assetSchemeIndexMesh, meshClass>(hashString("cage/mesh/guiElement.obj"));
-		impl->graphicsData.fontMesh = impl->assetManager->get<assetSchemeIndexMesh, meshClass>(hashString("cage/mesh/square.obj"));
-		impl->graphicsData.imageMesh = impl->graphicsData.fontMesh;
-
-		impl->emitIndexControl = (impl->emitIndexControl + 1) % 3;
-		impl->emitControl = &impl->emitData[impl->emitIndexControl];
-		auto *e = impl->emitControl;
-		e->flush();
-		e->first = e->last = e->memory.createObject<renderableBaseStruct>(); // create first dummy object
-
-		impl->root->childrenEmit();
+		else
+		{
+			CAGE_LOG_DEBUG(severityEnum::Warning, "gui", "gui is skipping emit because dispatching was late");
+		}
 	}
 }

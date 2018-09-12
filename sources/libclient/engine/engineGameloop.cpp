@@ -303,10 +303,10 @@ namespace cage
 					{
 						uint64 time1 = getApplicationTime();
 						updateHistoryComponents();
-						controlThread().update.dispatch();
 						gui->setOutputResolution(window->resolution());
 						gui->controlUpdateStart();
 						window->processEvents();
+						controlThread().update.dispatch();
 						uint64 time2 = getApplicationTime();
 						// emit
 						emitIsReady = true;

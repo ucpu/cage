@@ -2,6 +2,7 @@
 #include <cage-core/math.h>
 #include <cage-core/memory.h>
 #include <cage-core/entities.h>
+#include <cage-core/utility/threadSafeSwapBufferController.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
@@ -57,6 +58,12 @@ namespace cage
 		listeners.keyChar.bind<guiClass, &guiClass::keyChar>(this);
 
 		skins.resize(config.skinsCount);
+
+		{
+			threadSafeSwapBufferControllerCreateConfig cfg(3);
+			cfg.repeatedReads = true;
+			emitController = newThreadSafeSwapBufferController(cfg);
+		}
 	};
 
 	guiImpl::~guiImpl()

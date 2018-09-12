@@ -1,6 +1,8 @@
 #include <cage-core/core.h>
+#include <cage-core/log.h>
 #include <cage-core/math.h>
 #include <cage-core/memory.h>
+#include <cage-core/utility/threadSafeSwapBufferController.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
@@ -85,40 +87,44 @@ namespace cage
 	{
 		CAGE_ASSERT_RUNTIME(openglContext);
 
-		if ((emitIndexDispatch + 1) % 3 != emitIndexControl)
-			emitIndexDispatch = (emitIndexDispatch + 1) % 3;
-
-		// check skins textures
-		for (auto &s : skins)
+		if (auto lock = emitController->read())
 		{
-			if (!s.texture)
-				return;
-		}
+			// check skins textures
+			for (auto &s : skins)
+			{
+				if (!s.texture)
+					return;
+			}
 
-		// write skins uv coordinates
-		for (auto &s : skins)
+			// write skins uv coordinates
+			for (auto &s : skins)
+			{
+				skinElementLayoutStruct::textureUvStruct textureUvs[(uint32)elementTypeEnum::TotalElements];
+				for (uint32 i = 0; i < (uint32)elementTypeEnum::TotalElements; i++)
+					copyTextureUv(s.layouts[i].textureUv, textureUvs[i]);
+				s.elementsGpuBuffer->bind();
+				s.elementsGpuBuffer->writeRange(textureUvs, 0, sizeof(textureUvs));
+			}
+
+			// render all
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			glDisable(GL_DEPTH_TEST);
+			glActiveTexture(GL_TEXTURE0);
+			glViewport(0, 0, outputResolution.x, outputResolution.y);
+
+			renderableBaseStruct *r = emitData[lock.index()].first;
+			while (r)
+			{
+				r->render(this);
+				r = r->next;
+			}
+
+			glDisable(GL_BLEND);
+		}
+		else
 		{
-			skinElementLayoutStruct::textureUvStruct textureUvs[(uint32)elementTypeEnum::TotalElements];
-			for (uint32 i = 0; i < (uint32)elementTypeEnum::TotalElements; i++)
-				copyTextureUv(s.layouts[i].textureUv, textureUvs[i]);
-			s.elementsGpuBuffer->bind();
-			s.elementsGpuBuffer->writeRange(textureUvs, 0, sizeof(textureUvs));
+			CAGE_LOG_DEBUG(severityEnum::Warning, "gui", "gui is skipping render because control was late");
 		}
-
-		// render all
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glDisable(GL_DEPTH_TEST);
-		glActiveTexture(GL_TEXTURE0);
-		glViewport(0, 0, outputResolution.x, outputResolution.y);
-
-		renderableBaseStruct *r = emitData[emitIndexDispatch].first;
-		while (r)
-		{
-			r->render(this);
-			r = r->next;
-		}
-
-		glDisable(GL_BLEND);
 	}
 }

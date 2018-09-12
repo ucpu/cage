@@ -267,8 +267,7 @@ namespace cage
 			~emitDataStruct();
 			void flush();
 		} emitData[3], *emitControl;
-		std::atomic<uint32> emitIndexControl;
-		std::atomic<uint32> emitIndexDispatch;
+		holder<threadSafeSwapBufferControllerClass> emitController;
 
 		windowEventListeners listeners;
 		std::vector<widgetBaseStruct*> mouseEventReceivers;
