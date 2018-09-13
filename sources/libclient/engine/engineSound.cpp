@@ -134,59 +134,52 @@ namespace cage
 				emitListeners.clear();
 				emitArena.flush();
 
-				{ // emit voices
-					uint32 cnt = voiceComponent::component->getComponentEntities()->entitiesCount();
-					entityClass *const *ents = voiceComponent::component->getComponentEntities()->entitiesArray();
-					for (entityClass *const *i = ents, *const *ie = ents + cnt; i != ie; i++)
-					{
-						entityClass *e = *i;
-						emitVoiceStruct *c = emitArena.createObject<emitVoiceStruct>();
-						c->transform = e->value<transformComponent>(transformComponent::component);
-						if (e->hasComponent(transformComponent::componentHistory))
-							c->transformHistory = e->value<transformComponent>(transformComponent::componentHistory);
-						else
-							c->transformHistory = c->transform;
-						c->voice = e->value<voiceComponent>(voiceComponent::component);
-						emitVoices.push_back(c);
-					}
+				// emit voices
+				for (entityClass *e : voiceComponent::component->getComponentEntities()->entities())
+				{
+					emitVoiceStruct *c = emitArena.createObject<emitVoiceStruct>();
+					c->transform = e->value<transformComponent>(transformComponent::component);
+					if (e->hasComponent(transformComponent::componentHistory))
+						c->transformHistory = e->value<transformComponent>(transformComponent::componentHistory);
+					else
+						c->transformHistory = c->transform;
+					c->voice = e->value<voiceComponent>(voiceComponent::component);
+					emitVoices.push_back(c);
 				}
-				{ // emit listeners
-					uint32 cnt = listenerComponent::component->getComponentEntities()->entitiesCount();
-					entityClass *const *ents = listenerComponent::component->getComponentEntities()->entitiesArray();
-					for (entityClass *const *i = ents, *const *ie = ents + cnt; i != ie; i++)
-					{
-						entityClass *e = *i;
-						emitListenerStruct *c = emitArena.createObject<emitListenerStruct>();
-						c->transform = e->value<transformComponent>(transformComponent::component);
-						if (e->hasComponent(transformComponent::componentHistory))
-							c->transformHistory = e->value<transformComponent>(transformComponent::componentHistory);
-						else
-							c->transformHistory = c->transform;
-						c->listener = e->value<listenerComponent>(listenerComponent::component);
-						emitListeners.push_back(c);
-					}
+
+				// emit listeners
+				for (entityClass *e : listenerComponent::component->getComponentEntities()->entities())
+				{
+					emitListenerStruct *c = emitArena.createObject<emitListenerStruct>();
+					c->transform = e->value<transformComponent>(transformComponent::component);
+					if (e->hasComponent(transformComponent::componentHistory))
+						c->transformHistory = e->value<transformComponent>(transformComponent::componentHistory);
+					else
+						c->transformHistory = c->transform;
+					c->listener = e->value<listenerComponent>(listenerComponent::component);
+					emitListeners.push_back(c);
 				}
 			}
 
 			void postEmit()
 			{
-				uint32 index = 0;
-				for (auto itL = emitListeners.begin(), etL = emitListeners.end(); itL != etL; itL++)
+				uint32 used = 0;
+				for (auto itL : emitListeners)
 				{
-					for (auto itV = emitVoices.begin(), etV = emitVoices.end(); itV != etV; itV++)
+					for (auto itV : emitVoices)
 					{
-						if (((*itL)->listener.renderMask & (*itV)->voice.renderMask) == 0)
+						if ((itL->listener.renderMask & itV->voice.renderMask) == 0)
 							continue;
-						if (mixers.size() <= index)
+						if (mixers.size() <= used)
 						{
-							mixers.resize(index + 1);
-							mixers[index] = detail::systemArena().createHolder<mixStruct>(this);
+							mixers.resize(used + 1);
+							mixers[used] = detail::systemArena().createHolder<mixStruct>(this);
 						}
-						mixers[index]->prepare(*itV, *itL);
-						index++;
+						mixers[used]->prepare(itV, itL);
+						used++;
 					}
 				}
-				for (uint32 i = index, e = numeric_cast<uint32>(mixers.size()); i < e; i++)
+				for (uint32 i = used, e = numeric_cast<uint32>(mixers.size()); i < e; i++)
 					mixers[i]->prepare(nullptr, nullptr);
 			}
 

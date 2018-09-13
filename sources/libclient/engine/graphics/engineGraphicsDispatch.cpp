@@ -56,15 +56,17 @@ namespace cage
 			}
 		};
 
+		enum class visualizableTextureModeEnum
+		{
+			Color,
+			Depth2d,
+			DepthCube,
+		};
+
 		struct visualizableTextureStruct
 		{
 			textureClass *tex;
-			enum visualizableTextureModeEnum
-			{
-				vtmColor,
-				vtmDepth2d,
-				vtmDepthCube,
-			} visualizableTextureMode;
+			visualizableTextureModeEnum visualizableTextureMode;
 			visualizableTextureStruct(textureClass *tex, visualizableTextureModeEnum vtm) : tex(tex), visualizableTextureMode(vtm) {};
 		};
 
@@ -459,11 +461,11 @@ namespace cage
 				}
 
 				visualizableTextures.clear();
-				visualizableTextures.push_back(visualizableTextureStruct(colorTexture.get(), visualizableTextureStruct::vtmColor));
-				visualizableTextures.push_back(visualizableTextureStruct(albedoTexture.get(), visualizableTextureStruct::vtmColor));
-				visualizableTextures.push_back(visualizableTextureStruct(specialTexture.get(), visualizableTextureStruct::vtmColor));
-				visualizableTextures.push_back(visualizableTextureStruct(normalTexture.get(), visualizableTextureStruct::vtmColor));
-				visualizableTextures.push_back(visualizableTextureStruct(depthTexture.get(), visualizableTextureStruct::vtmDepth2d));
+				visualizableTextures.emplace_back(colorTexture.get(), visualizableTextureModeEnum::Color);
+				visualizableTextures.emplace_back(albedoTexture.get(), visualizableTextureModeEnum::Color);
+				visualizableTextures.emplace_back(specialTexture.get(), visualizableTextureModeEnum::Color);
+				visualizableTextures.emplace_back(normalTexture.get(), visualizableTextureModeEnum::Color);
+				visualizableTextures.emplace_back(depthTexture.get(), visualizableTextureModeEnum::Depth2d);
 
 				{ // prepare all render targets
 					uint32 maxW = windowWidth, maxH = windowHeight;
@@ -471,7 +473,7 @@ namespace cage
 					{
 						if (renderPass->targetTexture)
 						{ // render to texture
-							visualizableTextures.push_back(visualizableTextureStruct(renderPass->targetTexture, visualizableTextureStruct::vtmColor));
+							visualizableTextures.emplace_back(renderPass->targetTexture, visualizableTextureModeEnum::Color);
 							uint32 w, h;
 							renderPass->targetTexture->getResolution(w, h);
 							maxW = max(maxW, w);
@@ -490,7 +492,7 @@ namespace cage
 								shadowmaps2d.push_back(shadowmapBufferStruct(GL_TEXTURE_2D));
 							shadowmapBufferStruct &s = shadowmaps2d[idx];
 							s.resize(renderPass->shadowmapResolution, renderPass->shadowmapResolution);
-							visualizableTextures.push_back(visualizableTextureStruct(s.texture.get(), visualizableTextureStruct::vtmDepth2d));
+							visualizableTextures.emplace_back(s.texture.get(), visualizableTextureModeEnum::Depth2d);
 						}
 						if (renderPass->targetShadowmap < 0)
 						{ // cube shadowmap
@@ -499,7 +501,7 @@ namespace cage
 								shadowmapsCube.push_back(shadowmapBufferStruct(GL_TEXTURE_CUBE_MAP));
 							shadowmapBufferStruct &s = shadowmapsCube[idx];
 							s.resize(renderPass->shadowmapResolution, renderPass->shadowmapResolution);
-							visualizableTextures.push_back(visualizableTextureStruct(s.texture.get(), visualizableTextureStruct::vtmDepthCube));
+							visualizableTextures.emplace_back(s.texture.get(), visualizableTextureModeEnum::DepthCube);
 						}
 					}
 					gBufferResize(maxW, maxH);
@@ -529,7 +531,7 @@ namespace cage
 						visualizeIndex += numeric_cast<sint32>(visualizableTextures.size());
 					visualizableTextureStruct &v = visualizableTextures[visualizeIndex];
 					v.tex->bind();
-					if (v.visualizableTextureMode == visualizableTextureStruct::vtmColor)
+					if (v.visualizableTextureMode == visualizableTextureModeEnum::Color)
 					{
 						shaderBlitColor->bind();
 						shaderBlitColor->uniform(0, vec4(0, 0, 1, 1));

@@ -223,8 +223,8 @@ namespace cage
 				pass->clearFlags = ((camera->camera.clear & cameraClearFlags::Color) == cameraClearFlags::Color ? GL_COLOR_BUFFER_BIT : 0) | ((camera->camera.clear & cameraClearFlags::Depth) == cameraClearFlags::Depth ? GL_DEPTH_BUFFER_BIT : 0);
 				pass->renderMask = camera->camera.renderMask;
 				addRenderableObjects(pass, false);
-				for (auto it = emitLights.begin(), et = emitLights.end(); it != et; it++)
-					addLight(pass, *it);
+				for (auto it : emitLights)
+					addLight(pass, it);
 			}
 
 			void initializeRenderPassForShadowmap(renderPassImpl *pass, emitLightStruct *light)
@@ -261,9 +261,8 @@ namespace cage
 			void addRenderableObjects(renderPassImpl *pass, bool shadows)
 			{
 				const vec3 up = vec3(pass->view.inverse() * vec4(0, 1, 0, 0));
-				for (auto it = emitRenderables.begin(), et = emitRenderables.end(); it != et; it++)
+				for (emitRenderStruct *e : emitRenderables)
 				{
-					emitRenderStruct *e = *it;
 					if ((e->render.renderMask & pass->renderMask) == 0)
 						continue;
 					mat4 mvp = pass->viewProj * e->model;
@@ -569,20 +568,20 @@ namespace cage
 
 				{ // update model matrices
 					real interFactor = clamp(real(prepareTime - controlTime) / controlThread().timePerTick, 0, 1);
-					for (auto it = emitLights.begin(), et = emitLights.end(); it != et; it++)
-						(*it)->updateModelMatrix(interFactor);
-					for (auto it = emitCameras.begin(), ite = emitCameras.end(); it != ite; it++)
-						(*it)->updateModelMatrix(interFactor);
-					for (auto it = emitRenderables.begin(), et = emitRenderables.end(); it != et; it++)
-						(*it)->updateModelMatrix(interFactor);
+					for (auto it : emitLights)
+						it->updateModelMatrix(interFactor);
+					for (auto it : emitCameras)
+						it->updateModelMatrix(interFactor);
+					for (auto it : emitRenderables)
+						it->updateModelMatrix(interFactor);
 				}
 
 				// generate shadowmap render passes
-				for (auto it = emitLights.begin(), et = emitLights.end(); it != et; it++)
+				for (auto it : emitLights)
 				{
-					if (!(*it)->shadowmap)
+					if (!it->shadowmap)
 						continue;
-					initializeRenderPassForShadowmap(newRenderPass(), *it);
+					initializeRenderPassForShadowmap(newRenderPass(), it);
 				}
 
 				{ // generate camera render passes
@@ -596,16 +595,16 @@ namespace cage
 						}
 					};
 					std::sort(emitCameras.begin(), emitCameras.end(), cameraComparatorStruct());
-					for (auto it = emitCameras.begin(), ite = emitCameras.end(); it != ite; it++)
+					for (auto it : emitCameras)
 					{
-						if (graphicsPrepareThread().stereoMode == stereoModeEnum::Mono || (*it)->camera.target)
+						if (graphicsPrepareThread().stereoMode == stereoModeEnum::Mono || it->camera.target)
 						{ // mono
-							initializeRenderPassForCamera(newRenderPass(), *it, eyeEnum::Mono);
+							initializeRenderPassForCamera(newRenderPass(), it, eyeEnum::Mono);
 						}
 						else
 						{ // stereo
-							initializeRenderPassForCamera(newRenderPass(), *it, eyeEnum::Left);
-							initializeRenderPassForCamera(newRenderPass(), *it, eyeEnum::Right);
+							initializeRenderPassForCamera(newRenderPass(), it, eyeEnum::Left);
+							initializeRenderPassForCamera(newRenderPass(), it, eyeEnum::Right);
 						}
 					}
 				}
