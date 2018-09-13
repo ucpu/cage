@@ -3,6 +3,7 @@ A long-term hobby project that turned out to be quite BIG.
 
 # Examples
  - [Grid](https://github.com/ucpu/grid) - simple but complete game
+ - [Cragsman](https://github.com/ucpu/cragsman) - a game with procedurally generated terrain and simple physics
  - [Cage-examples](https://github.com/ucpu/cage-examples) - a collection of test scenes and applications
 
 # Features
@@ -32,7 +33,7 @@ A long-term hobby project that turned out to be quite BIG.
 
 # Components
 
- - Core Library
+## Core Library
    - Operating system abstraction
      - memory management
      - threads & synchronization
@@ -57,7 +58,7 @@ A long-term hobby project that turned out to be quite BIG.
      - automatic dependencies
    - Utilities
 
- - Client Library
+## Client Library
    - Low-level API
      - Window management & events (via GLFW)
      - Graphics
@@ -82,7 +83,7 @@ A long-term hobby project that turned out to be quite BIG.
         - automatic shadow maps
      - roughness/metallic workflow (however the shaders could be improved a lot)
 
- - Tools
+## Tools
    - asset-processor
      - texture loading (via DevIL)
        - DevIL has lgpl license, which may cause trouble, and is planned to be replaced
