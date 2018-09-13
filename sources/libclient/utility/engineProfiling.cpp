@@ -25,22 +25,24 @@ namespace cage
 			uint32 panelIndex;
 			uint32 layoutIndex;
 			uint32 labelIndices[40];
-			const engineProfiling::profilingFlags *labelFlags;
+			const engineProfilingStatsFlags *labelFlags;
 			const char **labelNames;
 			uint32 labelsCount;
-			profilingModeEnum profilingModeOld;
+			engineProfilingScopeEnum profilingModeOld;
 
-			engineProfilingImpl() : profilingModeOld(profilingModeEnum::Full)
+			engineProfilingImpl() : profilingModeOld(engineProfilingScopeEnum::Full)
 			{
 				nullData();
-				keyToggleProfilingMode = 290; // f1
-				keyVisualizeBufferPrev = 291; // f2
-				keyVisualizeBufferNext = 292; // f3
-				keyToggleRenderMissingMeshes = 293; // f4
-				keyToggleStereo = 294; // f5
+				keyToggleProfilingScope = 290; // f1
+				keyToggleProfilingMode = 291; // f2
+				keyVisualizeBufferPrev = 294; // f5
+				keyVisualizeBufferNext = 295; // f6
+				keyToggleRenderMissingMeshes = 297; // f8
+				keyToggleStereo = 298; // f9
 				keyToggleFullscreen = 300; // f11
 				keyModifiers = modifiersFlags::Ctrl;
-				profilingMode = profilingModeEnum::Full;
+				profilingScope = engineProfilingScopeEnum::Full;
+				profilingMode = engineProfilingModeEnum::Average;
 				screenPosition = vec2(1, 0);
 
 				keyPressListener.bind<engineProfilingImpl, &engineProfilingImpl::keyPress>(this);
@@ -63,61 +65,61 @@ namespace cage
 
 			void generateEntities()
 			{
-				static const engineProfiling::profilingFlags flagsFull[] = {
-					engineProfiling::profilingFlags::ControlTick,
-					engineProfiling::profilingFlags::ControlWait,
-					engineProfiling::profilingFlags::ControlEmit,
-					engineProfiling::profilingFlags::ControlSleep,
-					engineProfiling::profilingFlags::GraphicsPrepareWait,
-					engineProfiling::profilingFlags::GraphicsPrepareEmit,
-					engineProfiling::profilingFlags::GraphicsPrepareTick,
-					engineProfiling::profilingFlags::GraphicsDispatchWait,
-					engineProfiling::profilingFlags::GraphicsDispatchTick,
-					engineProfiling::profilingFlags::GraphicsDispatchSwap,
-					engineProfiling::profilingFlags::SoundEmit,
-					engineProfiling::profilingFlags::SoundTick,
-					engineProfiling::profilingFlags::SoundSleep,
-					engineProfiling::profilingFlags::FrameTime
+				static const engineProfilingStatsFlags flagsFull[] = {
+					engineProfilingStatsFlags::ControlTick,
+					engineProfilingStatsFlags::ControlWait,
+					engineProfilingStatsFlags::ControlEmit,
+					engineProfilingStatsFlags::ControlSleep,
+					engineProfilingStatsFlags::GraphicsPrepareWait,
+					engineProfilingStatsFlags::GraphicsPrepareEmit,
+					engineProfilingStatsFlags::GraphicsPrepareTick,
+					engineProfilingStatsFlags::GraphicsDispatchWait,
+					engineProfilingStatsFlags::GraphicsDispatchTick,
+					engineProfilingStatsFlags::GraphicsDispatchSwap,
+					engineProfilingStatsFlags::SoundEmit,
+					engineProfilingStatsFlags::SoundTick,
+					engineProfilingStatsFlags::SoundSleep,
+					engineProfilingStatsFlags::FrameTime
 				};
 				static const char* namesFull[sizeof(flagsFull) / sizeof(flagsFull[0])] = {
-					"Control Tick",
-					"Control Wait",
-					"Control Emit",
-					"Control Sleep",
-					"Graphics Prepare Wait",
-					"Graphics Prepare Emit",
-					"Graphics Prepare Tick",
-					"Graphics Dispatch Wait",
-					"Graphics Dispatch Tick",
-					"Graphics Dispatch Swap",
-					"Sound Emit",
-					"Sound Tick",
-					"Sound Sleep",
-					"Frame Time"
+					"Control Tick: ",
+					"Control Wait: ",
+					"Control Emit: ",
+					"Control Sleep: ",
+					"Graphics Prepare Wait: ",
+					"Graphics Prepare Emit: ",
+					"Graphics Prepare Tick: ",
+					"Graphics Dispatch Wait: ",
+					"Graphics Dispatch Tick: ",
+					"Graphics Dispatch Swap: ",
+					"Sound Emit: ",
+					"Sound Tick: ",
+					"Sound Sleep: ",
+					"Frame Time: "
 				};
 
-				static const engineProfiling::profilingFlags flagsShort[] = {
-					(engineProfiling::profilingFlags)(engineProfiling::profilingFlags::ControlTick),
-					(engineProfiling::profilingFlags)(engineProfiling::profilingFlags::GraphicsPrepareTick | engineProfiling::profilingFlags::GraphicsPrepareEmit),
-					(engineProfiling::profilingFlags)(engineProfiling::profilingFlags::GraphicsDispatchTick | engineProfiling::profilingFlags::GraphicsDispatchSwap),
-					(engineProfiling::profilingFlags)(engineProfiling::profilingFlags::SoundTick | engineProfiling::profilingFlags::SoundEmit),
+				static const engineProfilingStatsFlags flagsShort[] = {
+					engineProfilingStatsFlags::ControlTick | engineProfilingStatsFlags::ControlEmit,
+					engineProfilingStatsFlags::GraphicsPrepareTick | engineProfilingStatsFlags::GraphicsPrepareEmit,
+					engineProfilingStatsFlags::GraphicsDispatchTick | engineProfilingStatsFlags::GraphicsDispatchSwap,
+					engineProfilingStatsFlags::SoundTick | engineProfilingStatsFlags::SoundEmit,
 				};
 				static const char* namesShort[sizeof(flagsShort) / sizeof(flagsShort[0])] = {
-					"Control",
-					"Prepare",
-					"Dispatch",
-					"Sound",
+					"Control: ",
+					"Prepare: ",
+					"Dispatch: ",
+					"Sound: ",
 				};
 
-				static const engineProfiling::profilingFlags flagsFps[] = {
-					engineProfiling::profilingFlags::FrameTime,
+				static const engineProfilingStatsFlags flagsFps[] = {
+					engineProfilingStatsFlags::FrameTime,
 				};
 				static const char* namesFps[sizeof(flagsFps) / sizeof(flagsFps[0])] = {
-					"Frame Time",
+					"Frame Time: ",
 				};
 
 				clearEntities();
-				profilingModeOld = profilingMode;
+				profilingModeOld = profilingScope;
 				entityManagerClass *g = gui()->entities();
 				entityClass *panel = g->newUniqueEntity();
 				{
@@ -143,8 +145,8 @@ namespace cage
 					sizeof(flagsShort) / sizeof(flagsShort[0]),
 					sizeof(flagsFps) / sizeof(flagsFps[0]),
 					0 };
-				labelsCount = labelsPerMode[(uint32)profilingMode];
-				uint32 labelsCountExt = labelsCount + (profilingMode == profilingModeEnum::Full ? 3 : 0);
+				labelsCount = labelsPerMode[(uint32)profilingScope];
+				uint32 labelsCountExt = labelsCount + (profilingScope == engineProfilingScopeEnum::Full ? 3 : 0);
 				for (uint32 i = 0; i < labelsCountExt * 2; i++)
 				{
 					entityClass *timing = g->newUniqueEntity();
@@ -160,21 +162,21 @@ namespace cage
 					}
 				}
 
-				switch (profilingMode)
+				switch (profilingScope)
 				{
-				case profilingModeEnum::None:
+				case engineProfilingScopeEnum::None:
 					labelFlags = nullptr;
 					labelNames = nullptr;
 					break;
-				case profilingModeEnum::Fps:
+				case engineProfilingScopeEnum::Fps:
 					labelFlags = flagsFps;
 					labelNames = namesFps;
 					break;
-				case profilingModeEnum::Short:
+				case engineProfilingScopeEnum::Short:
 					labelFlags = flagsShort;
 					labelNames = namesShort;
 					break;
-				case profilingModeEnum::Full:
+				case engineProfilingScopeEnum::Full:
 					labelFlags = flagsFull;
 					labelNames = namesFull;
 					break;
@@ -204,8 +206,8 @@ namespace cage
 			{
 				entityManagerClass *g = gui()->entities();
 				bool panelPresent = panelIndex != 0 && g->hasEntity(panelIndex);
-				bool visible = profilingMode != profilingModeEnum::None;
-				if (panelPresent != visible || profilingModeOld != profilingMode)
+				bool visible = profilingScope != engineProfilingScopeEnum::None;
+				if (panelPresent != visible || profilingModeOld != profilingScope)
 				{ // change needed
 					clearEntities();
 					if (visible)
@@ -229,16 +231,16 @@ namespace cage
 				for (uint32 i = 0; i < labelsCount; i++)
 				{
 					setTextLabel(i * 2 + 0, labelNames[i]);
-					setTextLabel(i * 2 + 1, string() + (engineProfiling::getProfilingValue(labelFlags[i], true) / 1000) + " ms");
+					setTextLabel(i * 2 + 1, string() + (engineProfilingValues(labelFlags[i], profilingMode) / 1000) + " ms");
 				}
-				if (profilingModeOld == profilingModeEnum::Full)
+				if (profilingModeOld == engineProfilingScopeEnum::Full)
 				{
-					setTextLabel(labelsCount * 2 + 0, "Entities");
+					setTextLabel(labelsCount * 2 + 0, "Entities: ");
 					setTextLabel(labelsCount * 2 + 1, entities()->getAllEntities()->entitiesCount());
-					setTextLabel(labelsCount * 2 + 2, "Draw Calls");
-					setTextLabel(labelsCount * 2 + 3, engineProfiling::getProfilingValue(engineProfiling::profilingFlags::GraphicsDrawCalls, false));
-					setTextLabel(labelsCount * 2 + 4, "Draw Primitives");
-					setTextLabel(labelsCount * 2 + 5, engineProfiling::getProfilingValue(engineProfiling::profilingFlags::GraphicsDrawPrimitives, false));
+					setTextLabel(labelsCount * 2 + 2, "Draw Calls: ");
+					setTextLabel(labelsCount * 2 + 3, engineProfilingValues(engineProfilingStatsFlags::GraphicsDrawCalls, profilingMode));
+					setTextLabel(labelsCount * 2 + 4, "Draw Primitives: ");
+					setTextLabel(labelsCount * 2 + 5, engineProfilingValues(engineProfilingStatsFlags::GraphicsDrawPrimitives, profilingMode));
 				}
 				return false;
 			}
@@ -271,14 +273,26 @@ namespace cage
 
 				if (mods == keyModifiers)
 				{
+					if (key == keyToggleProfilingScope)
+					{
+						switch (profilingScope)
+						{
+						case engineProfilingScopeEnum::Full: profilingScope = engineProfilingScopeEnum::Short; break;
+						case engineProfilingScopeEnum::Short: profilingScope = engineProfilingScopeEnum::Fps; break;
+						case engineProfilingScopeEnum::Fps: profilingScope = engineProfilingScopeEnum::None; break;
+						case engineProfilingScopeEnum::None: profilingScope = engineProfilingScopeEnum::Full; break;
+						default: CAGE_THROW_CRITICAL(exception, "invalid engine profiling scope enum");
+						}
+						return true;
+					}
 					if (key == keyToggleProfilingMode)
 					{
 						switch (profilingMode)
 						{
-						case profilingModeEnum::Full: profilingMode = profilingModeEnum::Short; break;
-						case profilingModeEnum::Short: profilingMode = profilingModeEnum::Fps; break;
-						case profilingModeEnum::Fps: profilingMode = profilingModeEnum::None; break;
-						case profilingModeEnum::None: profilingMode = profilingModeEnum::Full; break;
+						case engineProfilingModeEnum::Average: profilingMode = engineProfilingModeEnum::Maximum; break;
+						case engineProfilingModeEnum::Maximum: profilingMode = engineProfilingModeEnum::Last; break;
+						case engineProfilingModeEnum::Last: profilingMode = engineProfilingModeEnum::Average; break;
+						default: CAGE_THROW_CRITICAL(exception, "invalid engine profiling mode enum");
 						}
 						return true;
 					}

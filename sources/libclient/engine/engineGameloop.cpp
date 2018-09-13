@@ -22,6 +22,7 @@
 #include <cage-client/sound.h>
 #include <cage-client/gui.h>
 #include <cage-client/engine.h>
+#include <cage-client/utility/engineProfiling.h>
 
 #include "engine.h"
 
@@ -706,39 +707,39 @@ namespace cage
 		return engineData->currentControlTime;
 	}
 
-	namespace engineProfiling
+	uint64 engineProfilingValues(engineProfilingStatsFlags flags, engineProfilingModeEnum mode)
 	{
-		uint64 getProfilingValue(profilingFlags flags, bool smooth)
-		{
-			uint64 result = 0;
+		uint64 result = 0;
 #define GCHL_GENERATE(NAME) \
-			if ((flags & profilingFlags::NAME) == profilingFlags::NAME) \
+		if ((flags & engineProfilingStatsFlags::NAME) == engineProfilingStatsFlags::NAME) \
+		{ \
+			auto &buffer = CAGE_JOIN(engineData->profilingBuffer, NAME); \
+			switch (mode) \
 			{ \
-				auto &buffer = CAGE_JOIN(engineData->profilingBuffer, NAME); \
-				if (smooth) \
-					result += buffer.smooth(); \
-				else \
-					result += buffer.last(); \
-			}
-			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE,
-				ControlTick,
-				ControlWait,
-				ControlEmit,
-				ControlSleep,
-				GraphicsPrepareWait,
-				GraphicsPrepareEmit,
-				GraphicsPrepareTick,
-				GraphicsDispatchWait,
-				GraphicsDispatchTick,
-				GraphicsDispatchSwap,
-				GraphicsDrawCalls,
-				GraphicsDrawPrimitives,
-				SoundEmit,
-				SoundTick,
-				SoundSleep
-			));
-#undef GCHL_GENERATE
-			return result;
+			case engineProfilingModeEnum::Average: result += buffer.smooth(); break; \
+			case engineProfilingModeEnum::Maximum: result += buffer.max(); break; \
+			case engineProfilingModeEnum::Last: result += buffer.last(); break; \
+			default: CAGE_THROW_CRITICAL(exception, "invalid profiling mode enum"); \
+			} \
 		}
+		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE,
+			ControlTick,
+			ControlWait,
+			ControlEmit,
+			ControlSleep,
+			GraphicsPrepareWait,
+			GraphicsPrepareEmit,
+			GraphicsPrepareTick,
+			GraphicsDispatchWait,
+			GraphicsDispatchTick,
+			GraphicsDispatchSwap,
+			GraphicsDrawCalls,
+			GraphicsDrawPrimitives,
+			SoundEmit,
+			SoundTick,
+			SoundSleep
+		));
+#undef GCHL_GENERATE
+		return result;
 	}
 }
