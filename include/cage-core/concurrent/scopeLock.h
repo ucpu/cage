@@ -6,13 +6,18 @@ namespace cage
 	template<class T>
 	struct scopeLock
 	{
-		scopeLock(holder<T> &ptr, int tryLock) : scopeLock(ptr.get(), tryLock)
+		scopeLock(holder<T> &ptr, bool tryLock) : scopeLock(ptr.get(), tryLock)
 		{}
 
-		scopeLock(T *ptr, int tryLock) : ptr(ptr)
+		scopeLock(T *ptr, bool tryLock) : ptr(ptr)
 		{
-			if (!ptr->tryLock())
-				this->ptr = nullptr;
+			if (tryLock)
+			{
+				if (!ptr->tryLock())
+					this->ptr = nullptr;
+			}
+			else
+				ptr->lock();
 		}
 
 		scopeLock(holder<T> &ptr) : scopeLock(ptr.get())

@@ -17,4 +17,24 @@ namespace cage
 	void soundFinalize();
 	void soundEmit(uint64 time);
 	void soundTick(uint64 time);
+
+	struct interpolationTimingCorrector
+	{
+		uint64 operator() (uint64 emit, uint64 dispatch, uint64 step)
+		{
+			CAGE_ASSERT_RUNTIME(step > 0);
+			CAGE_ASSERT_RUNTIME(dispatch > emit);
+			uint64 r = dispatch + correction;
+			if (r > emit + step)
+				correction += sint64(step) / -200;
+			else if (r < emit)
+				correction += sint64(step) / 200;
+			return max(emit, dispatch + correction);
+		}
+
+		interpolationTimingCorrector() : correction(0)
+		{}
+
+		sint64 correction;
+	};
 }

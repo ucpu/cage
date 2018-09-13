@@ -39,6 +39,9 @@ namespace cage
 				lock->lock();
 			}
 
+			scopedSemaphores(holder<semaphoreClass> &unlock) : sem(unlock.get())
+			{}
+
 			~scopedSemaphores()
 			{
 				sem->unlock();
@@ -89,6 +92,7 @@ namespace cage
 			std::atomic<bool> stopping;
 			uint64 currentControlTime;
 			uint64 currentSoundTime;
+			uint32 assetSyncAttempts;
 
 			engineDataStruct(const engineCreateConfig &config);
 
@@ -103,6 +107,7 @@ namespace cage
 
 			void graphicsPrepareGameloopStage()
 			{
+				scopedSemaphores leaveLock(graphicsSemaphore2);
 				uint64 time1, time2, time3;
 				while (!stopping)
 				{
@@ -119,7 +124,6 @@ namespace cage
 					profilingBufferGraphicsPrepareWait.add(time2 - time1);
 					profilingBufferGraphicsPrepareTick.add(time3 - time2);
 				}
-				graphicsSemaphore2->unlock();
 			}
 
 			void graphicsPrepareFinalizeStage()
@@ -144,6 +148,7 @@ namespace cage
 
 			void graphicsDispatchGameloopStage()
 			{
+				scopedSemaphores leaveLock(graphicsSemaphore1);
 				uint64 time1, time2, time3, time4;
 				while (!stopping)
 				{
@@ -172,7 +177,6 @@ namespace cage
 					profilingBufferGraphicsDispatchTick.add(time3 - time2);
 					profilingBufferGraphicsDispatchSwap.add(time4 - time3);
 				}
-				graphicsSemaphore1->unlock();
 			}
 
 			void graphicsDispatchFinalizeStage()
@@ -251,12 +255,14 @@ namespace cage
 
 			void controlAssets()
 			{
-				if (scopeLock<mutexClass> lockGraphics = scopeLock<mutexClass>(assetsGraphicsMutex, 1))
+				assetSyncAttempts++;
+				if (scopeLock<mutexClass> lockGraphics = scopeLock<mutexClass>(assetsGraphicsMutex, assetSyncAttempts < 30))
 				{
-					if (scopeLock<mutexClass> lockSound = scopeLock<mutexClass>(assetsSoundMutex, 1))
+					if (scopeLock<mutexClass> lockSound = scopeLock<mutexClass>(assetsSoundMutex, assetSyncAttempts < 15))
 					{
 						controlThread().assets.dispatch();
 						while (assets->processControlThread() || assets->processCustomThread(controlThreadClass::threadIndex));
+						assetSyncAttempts = 0;
 					}
 				}
 			}
@@ -589,7 +595,7 @@ namespace cage
 
 		holder<engineDataStruct> engineData;
 
-		engineDataStruct::engineDataStruct(const engineCreateConfig &config) : engineStarted(0), stopping(false), currentControlTime(0), currentSoundTime(0)
+		engineDataStruct::engineDataStruct(const engineCreateConfig &config) : engineStarted(0), stopping(false), currentControlTime(0), currentSoundTime(0), assetSyncAttempts(0)
 		{
 			CAGE_LOG(severityEnum::Info, "engine", "creating engine");
 			graphicsDispatchCreate(config);

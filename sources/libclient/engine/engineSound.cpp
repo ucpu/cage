@@ -125,11 +125,12 @@ namespace cage
 			std::vector<holder<mixStruct>> mixers;
 			std::vector<float> soundMixBuffer;
 
-			uint64 dispatchTime;
+			interpolationTimingCorrector itc;
 			uint64 emitTime;
+			uint64 dispatchTime;
 			real interFactor;
 
-			soundPrepareImpl(const engineCreateConfig &config) : emitBuffers{ config, config, config }, emitRead(nullptr), emitWrite(nullptr), dispatchTime(0), emitTime(0)
+			soundPrepareImpl(const engineCreateConfig &config) : emitBuffers{ config, config, config }, emitRead(nullptr), emitWrite(nullptr), emitTime(0), dispatchTime(0)
 			{
 				mixers.reserve(256);
 				soundMixBuffer.resize(10000);
@@ -222,16 +223,16 @@ namespace cage
 				}
 
 				emitRead = &emitBuffers[lock.index()];
-				dispatchTime = time;
 				emitTime = emitRead->time;
-				interFactor = clamp(real(emitTime - dispatchTime) / controlThread().timePerTick, 0, 1);
+				dispatchTime = itc(emitTime, time, soundThread().timePerTick);
+				interFactor = clamp(real(dispatchTime - emitTime) / soundThread().timePerTick, 0, 1);
 
 				if (emitRead->fresh)
 				{
 					postEmit();
 					emitRead->fresh = false;
 				}
-				speaker()->update(emitTime);
+				speaker()->update(dispatchTime);
 
 				emitRead = nullptr;
 			}

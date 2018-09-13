@@ -138,8 +138,9 @@ namespace cage
 			memoryArenaGrowing<memoryAllocatorPolicyLinear<>, memoryConcurrentPolicyNone> dispatchMemory;
 			memoryArena dispatchArena;
 
-			uint64 dispatchTime;
+			interpolationTimingCorrector itc;
 			uint64 emitTime;
+			uint64 dispatchTime;
 			sint32 shm2d, shmCube;
 
 			static real lightRange(const vec3 &color, const vec3 &attenuation)
@@ -391,7 +392,7 @@ namespace cage
 				sm->normalMat = mat4(modelToNormal(model));
 				sm->normalMat[15] = ((m->getFlags() & meshFlags::Lighting) == meshFlags::Lighting) ? 1 : 0; // is ligting enabled
 				if (e->animatedTexture)
-					sm->aniTexFrames = detail::evalSamplesForTextureAnimation(obj->textures[CAGE_SHADER_TEXTURE_ALBEDO], emitTime, e->animatedTexture->startTime, e->animatedTexture->speed, e->animatedTexture->offset);
+					sm->aniTexFrames = detail::evalSamplesForTextureAnimation(obj->textures[CAGE_SHADER_TEXTURE_ALBEDO], dispatchTime, e->animatedTexture->startTime, e->animatedTexture->speed, e->animatedTexture->offset);
 				if (obj->shaderArmatures)
 				{
 					objectsStruct::shaderArmatureStruct *sa = obj->shaderArmatures + obj->count;
@@ -407,7 +408,7 @@ namespace cage
 						CAGE_ASSERT_RUNTIME(skel->bonesCount() == bonesCount, skel->bonesCount(), bonesCount);
 						const auto &ba = *e->animatedSkeleton;
 						animationClass *an = assets()->get<assetSchemeIndexAnimation, animationClass>(ba.name);
-						real c = detail::evalCoefficientForSkeletalAnimation(an, emitTime, ba.startTime, ba.speed, ba.offset);
+						real c = detail::evalCoefficientForSkeletalAnimation(an, dispatchTime, ba.startTime, ba.speed, ba.offset);
 						skel->evaluatePose(an, c, tmpArmature, sa->armature);
 					}
 					else
@@ -482,7 +483,7 @@ namespace cage
 				lig->count++;
 			}
 
-			graphicsPrepareImpl(const engineCreateConfig &config) : emitBuffers{ config, config, config }, emitRead(nullptr), emitWrite(nullptr), dispatchMemory(config.graphicsDispatchMemory), dispatchArena(&dispatchMemory), dispatchTime(0), emitTime(0)
+			graphicsPrepareImpl(const engineCreateConfig &config) : emitBuffers{ config, config, config }, emitRead(nullptr), emitWrite(nullptr), dispatchMemory(config.graphicsDispatchMemory), dispatchArena(&dispatchMemory), emitTime(0), dispatchTime(0)
 			{
 				swapBufferControllerCreateConfig cfg(3);
 				cfg.repeatedReads = true;
@@ -589,8 +590,8 @@ namespace cage
 
 				emitRead = &emitBuffers[lock.index()];
 
-				dispatchTime = time;
 				emitTime = emitRead->time;
+				dispatchTime = itc(emitTime, time, controlThread().timePerTick);
 				shm2d = shmCube = 0;
 
 				graphicsDispatch->firstRenderPass = graphicsDispatch->lastRenderPass = nullptr;
@@ -602,13 +603,14 @@ namespace cage
 
 
 				{ // update model matrices
-					real interFactor = clamp(real(emitTime - dispatchTime) / controlThread().timePerTick, 0, 1);
+					real interFactor = clamp(real(dispatchTime - emitTime) / controlThread().timePerTick, 0, 1);
 					for (auto it : emitRead->lights)
 						it->updateModelMatrix(interFactor);
 					for (auto it : emitRead->cameras)
 						it->updateModelMatrix(interFactor);
 					for (auto it : emitRead->renderables)
 						it->updateModelMatrix(interFactor);
+					//CAGE_LOG_DEBUG(severityEnum::Info, "engine", string() + "emit: " + emitTime + "\t dispatch time: " + dispatchTime + "\t interpolation: " + interFactor + "\t correction: " + itc.correction);
 				}
 
 				// generate shadowmap render passes
