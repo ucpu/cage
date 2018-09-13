@@ -66,6 +66,16 @@ void testConcurrent()
 	semaphoreGlobal = semaphore.get();
 
 	{
+		CAGE_TESTCASE("try lock mutex");
+		if (scopeLock<mutexClass>(mutex, 1))
+		{}
+		else
+		{
+			CAGE_TEST(false);
+		}
+	}
+
+	{
 		CAGE_TESTCASE("barrier");
 		holder<threadClass> thrs[4];
 		for (uint32 i = 0; i < 4; i++)

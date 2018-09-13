@@ -4,6 +4,7 @@ namespace cage
 	{
 	public:
 		// locking the same mutex again in the same thread is undefined behavior
+		bool tryLock(); // return true on successfully acquiring the lock
 		void lock();
 		void unlock();
 	};

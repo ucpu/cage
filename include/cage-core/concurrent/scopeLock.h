@@ -3,12 +3,20 @@
 
 namespace cage
 {
-	template<class T> struct scopeLock
+	template<class T>
+	struct scopeLock
 	{
-		scopeLock(holder<T> &ptr) : ptr(ptr.get())
+		scopeLock(holder<T> &ptr, int tryLock) : scopeLock(ptr.get(), tryLock)
+		{}
+
+		scopeLock(T *ptr, int tryLock) : ptr(ptr)
 		{
-			ptr->lock();
+			if (!ptr->tryLock())
+				ptr = nullptr;
 		}
+
+		scopeLock(holder<T> &ptr) : scopeLock(ptr.get())
+		{}
 
 		scopeLock(T *ptr) : ptr(ptr)
 		{
@@ -18,6 +26,11 @@ namespace cage
 		~scopeLock()
 		{
 			ptr->unlock();
+		}
+
+		operator bool() const
+		{
+			return !!ptr;
 		}
 
 	private:
