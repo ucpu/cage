@@ -1,7 +1,7 @@
 #include "main.h"
 #include <cage-core/math.h>
 #include <cage-core/concurrent.h>
-#include <cage-core/utility/threadSafeSwapBufferController.h>
+#include <cage-core/utility/swapBufferController.h>
 #include <cage-core/utility/threadPool.h>
 
 namespace
@@ -11,7 +11,7 @@ namespace
 	{
 	public:
 		static const uint32 elementsCount = 100;
-		holder<threadSafeSwapBufferControllerClass> controller;
+		holder<swapBufferControllerClass> controller;
 		uint32 buffers[BuffersCount][elementsCount];
 		uint32 sums[BuffersCount];
 		uint32 indices[BuffersCount];
@@ -85,10 +85,10 @@ namespace
 		{
 			CAGE_TESTCASE(string() + "buffers count: " + BuffersCount + ", repeated reads: " + repeatedReads + ", repeated writes: " + repeatedWrites);
 			running = true;
-			threadSafeSwapBufferControllerCreateConfig cfg(BuffersCount);
+			swapBufferControllerCreateConfig cfg(BuffersCount);
 			cfg.repeatedReads = repeatedReads;
 			cfg.repeatedWrites = repeatedWrites;
-			controller = newThreadSafeSwapBufferController(cfg);
+			controller = newSwapBufferController(cfg);
 			holder<threadClass> t1 = newThread(delegate<void()>().bind<swapBufferTester, &swapBufferTester::consumer>(this), "consumer");
 			holder<threadClass> t2 = newThread(delegate<void()>().bind<swapBufferTester, &swapBufferTester::producer>(this), "producer");
 			while (read < 2000)
@@ -96,15 +96,15 @@ namespace
 			running = false;
 			t1->wait();
 			t2->wait();
-			CAGE_LOG(severityEnum::Info, "threadSafeSwapBufferController", string() + "generated: " + generated + ", written: " + written + ", skipped: " + skipped);
-			CAGE_LOG(severityEnum::Info, "threadSafeSwapBufferController", string() + "read: " + read + ", reused: " + reused + ", tested: " + tested);
+			CAGE_LOG(severityEnum::Info, "swapBufferController", string() + "generated: " + generated + ", written: " + written + ", skipped: " + skipped);
+			CAGE_LOG(severityEnum::Info, "swapBufferController", string() + "read: " + read + ", reused: " + reused + ", tested: " + tested);
 		}
 	};
 }
 
-void testThreadSafeSwapBufferController()
+void testSwapBufferController()
 {
-	CAGE_TESTCASE("threadSafeSwapBufferController");
+	CAGE_TESTCASE("swapBufferController");
 	swapBufferTester<2>().run(false, false);
 	swapBufferTester<3>().run(false, false);
 	swapBufferTester<3>().run(true, false);

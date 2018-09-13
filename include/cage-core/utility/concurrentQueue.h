@@ -1,18 +1,18 @@
-#ifndef guard_threadSafeQueue_h_F17509C840DB4228AF89C97FCD8EC1E5
-#define guard_threadSafeQueue_h_F17509C840DB4228AF89C97FCD8EC1E5
+#ifndef guard_concurrentQueue_h_F17509C840DB4228AF89C97FCD8EC1E5
+#define guard_concurrentQueue_h_F17509C840DB4228AF89C97FCD8EC1E5
 
 namespace cage
 {
-	struct CAGE_API threadSafeQueueCreateConfig
+	struct CAGE_API concurrentQueueCreateConfig
 	{
 		memoryArena arena;
 		uint32 maxElements;
-		threadSafeQueueCreateConfig();
+		concurrentQueueCreateConfig();
 	};
 
 	namespace privat
 	{
-		class CAGE_API threadSafeQueuePriv
+		class CAGE_API concurrentQueuePriv
 		{
 		public:
 			void push(void *value);
@@ -23,14 +23,14 @@ namespace cage
 			memoryArena arena;
 		};
 
-		CAGE_API holder<threadSafeQueuePriv> newThreadSafeQueue(const threadSafeQueueCreateConfig &config);
+		CAGE_API holder<concurrentQueuePriv> newConcurrentQueue(const concurrentQueueCreateConfig &config);
 	}
 
 	template<class T>
-	class threadSafeQueueClass
+	class concurrentQueueClass
 	{
 	public:
-		threadSafeQueueClass(holder<privat::threadSafeQueuePriv> queue) : queue(templates::move(queue)) {}
+		concurrentQueueClass(holder<privat::concurrentQueuePriv> queue) : queue(templates::move(queue)) {}
 
 		void push(const T &value) { queue->push(queue->arena.createObject<T>(value)); }
 		void push(T &&value) { queue->push(queue->arena.createObject<T>(templates::move(value))); }
@@ -78,14 +78,14 @@ namespace cage
 		uint32 estimatedSize() const { return queue->estimatedSize(); }
 
 	private:
-		holder<privat::threadSafeQueuePriv> queue;
+		holder<privat::concurrentQueuePriv> queue;
 	};
 
 	template<class T>
-	class threadSafeQueueClass<T*>
+	class concurrentQueueClass<T*>
 	{
 	public:
-		threadSafeQueueClass(holder<privat::threadSafeQueuePriv> queue) : queue(templates::move(queue)) {}
+		concurrentQueueClass(holder<privat::concurrentQueuePriv> queue) : queue(templates::move(queue)) {}
 		void push(T *value) { queue->push(value); }
 		bool tryPush(T *value) { return queue->tryPush(value); }
 		void pop(T *&value) { void *tmp; queue->pop(tmp); value = (T*)tmp; }
@@ -93,14 +93,14 @@ namespace cage
 		uint32 estimatedSize() const { return queue->estimatedSize(); }
 
 	private:
-		holder<privat::threadSafeQueuePriv> queue;
+		holder<privat::concurrentQueuePriv> queue;
 	};
 
 	template<class T>
-	holder<threadSafeQueueClass<T>> newThreadSafeQueue(const threadSafeQueueCreateConfig &config)
+	holder<concurrentQueueClass<T>> newConcurrentQueue(const concurrentQueueCreateConfig &config)
 	{
-		return detail::systemArena().createHolder<threadSafeQueueClass<T>>(privat::newThreadSafeQueue(config));
+		return detail::systemArena().createHolder<concurrentQueueClass<T>>(privat::newConcurrentQueue(config));
 	}
 }
 
-#endif // guard_threadSafeQueue_h_F17509C840DB4228AF89C97FCD8EC1E5
+#endif // guard_concurrentQueue_h_F17509C840DB4228AF89C97FCD8EC1E5

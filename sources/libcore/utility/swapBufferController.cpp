@@ -3,7 +3,7 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/concurrent.h>
-#include <cage-core/utility/threadSafeSwapBufferController.h>
+#include <cage-core/utility/swapBufferController.h>
 
 namespace cage
 {
@@ -18,10 +18,10 @@ namespace cage
 			Wrote,
 		};
 
-		class threadSafeSwapBufferControllerImpl : public threadSafeSwapBufferControllerClass
+		class swapBufferControllerImpl : public swapBufferControllerClass
 		{
 		public:
-			threadSafeSwapBufferControllerImpl(const threadSafeSwapBufferControllerCreateConfig &config) : states{ stateEnum::Nothing, stateEnum::Nothing, stateEnum::Nothing, stateEnum::Nothing }, ri(0), wi(0), buffersCount(config.buffersCount), repeatedReads(config.repeatedReads), repeatedWrites(config.repeatedWrites)
+			swapBufferControllerImpl(const swapBufferControllerCreateConfig &config) : states{ stateEnum::Nothing, stateEnum::Nothing, stateEnum::Nothing, stateEnum::Nothing }, ri(0), wi(0), buffersCount(config.buffersCount), repeatedReads(config.repeatedReads), repeatedWrites(config.repeatedWrites)
 			{
 				CAGE_ASSERT_RUNTIME(buffersCount > 1 && buffersCount < 5);
 				CAGE_ASSERT_RUNTIME(buffersCount > 1u + repeatedReads + repeatedWrites);
@@ -44,7 +44,7 @@ namespace cage
 				return true;
 			}
 
-			privat::threadSafeSwapBufferLock read()
+			privat::swapBufferLock read()
 			{
 				scopeLock<mutexClass> lock(mutex);
 				CAGE_ASSERT_RUNTIME(readable(), "one reading at a time only");
@@ -74,7 +74,7 @@ namespace cage
 				return {};
 			}
 
-			privat::threadSafeSwapBufferLock write()
+			privat::swapBufferLock write()
 			{
 				scopeLock<mutexClass> lock(mutex);
 				CAGE_ASSERT_RUNTIME(writeable(), "one writing at a time only");
@@ -140,34 +140,34 @@ namespace cage
 
 	namespace privat
 	{
-		threadSafeSwapBufferLock::threadSafeSwapBufferLock() : controller_(nullptr), index_(-1)
+		swapBufferLock::swapBufferLock() : controller_(nullptr), index_(-1)
 		{}
 
-		threadSafeSwapBufferLock::threadSafeSwapBufferLock(threadSafeSwapBufferControllerClass *controller, uint32 index) : controller_(controller), index_(index)
+		swapBufferLock::swapBufferLock(swapBufferControllerClass *controller, uint32 index) : controller_(controller), index_(index)
 		{
-			threadSafeSwapBufferControllerImpl *impl = (threadSafeSwapBufferControllerImpl*)controller_;
+			swapBufferControllerImpl *impl = (swapBufferControllerImpl*)controller_;
 			CAGE_ASSERT_RUNTIME(impl->states[index] == stateEnum::Reading || impl->states[index] == stateEnum::Writing);
 		}
 
-		threadSafeSwapBufferLock::threadSafeSwapBufferLock(threadSafeSwapBufferLock &&other) : controller_(nullptr), index_(-1)
+		swapBufferLock::swapBufferLock(swapBufferLock &&other) : controller_(nullptr), index_(-1)
 		{
 			std::swap(controller_, other.controller_);
 			std::swap(index_, other.index_);
 		}
 
-		threadSafeSwapBufferLock::~threadSafeSwapBufferLock()
+		swapBufferLock::~swapBufferLock()
 		{
 			if (!controller_)
 				return;
-			threadSafeSwapBufferControllerImpl *impl = (threadSafeSwapBufferControllerImpl*)controller_;
+			swapBufferControllerImpl *impl = (swapBufferControllerImpl*)controller_;
 			impl->finished(index_);
 		}
 
-		threadSafeSwapBufferLock &threadSafeSwapBufferLock::operator = (threadSafeSwapBufferLock &&other)
+		swapBufferLock &swapBufferLock::operator = (swapBufferLock &&other)
 		{
 			if (controller_)
 			{
-				threadSafeSwapBufferControllerImpl *impl = (threadSafeSwapBufferControllerImpl*)controller_;
+				swapBufferControllerImpl *impl = (swapBufferControllerImpl*)controller_;
 				impl->finished(index_);
 				controller_ = nullptr;
 				index_ = -1;
@@ -178,24 +178,24 @@ namespace cage
 		}
 	}
 
-	privat::threadSafeSwapBufferLock threadSafeSwapBufferControllerClass::read()
+	privat::swapBufferLock swapBufferControllerClass::read()
 	{
-		threadSafeSwapBufferControllerImpl *impl = (threadSafeSwapBufferControllerImpl*)this;
+		swapBufferControllerImpl *impl = (swapBufferControllerImpl*)this;
 		return impl->read();
 	}
 
-	privat::threadSafeSwapBufferLock threadSafeSwapBufferControllerClass::write()
+	privat::swapBufferLock swapBufferControllerClass::write()
 	{
-		threadSafeSwapBufferControllerImpl *impl = (threadSafeSwapBufferControllerImpl*)this;
+		swapBufferControllerImpl *impl = (swapBufferControllerImpl*)this;
 		return impl->write();
 	}
 
-	threadSafeSwapBufferControllerCreateConfig::threadSafeSwapBufferControllerCreateConfig(uint32 buffersCount) : buffersCount(buffersCount), repeatedReads(false), repeatedWrites(false)
+	swapBufferControllerCreateConfig::swapBufferControllerCreateConfig(uint32 buffersCount) : buffersCount(buffersCount), repeatedReads(false), repeatedWrites(false)
 	{}
 
-	holder<threadSafeSwapBufferControllerClass> newThreadSafeSwapBufferController(const threadSafeSwapBufferControllerCreateConfig &config)
+	holder<swapBufferControllerClass> newSwapBufferController(const swapBufferControllerCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<threadSafeSwapBufferControllerClass, threadSafeSwapBufferControllerImpl>(config);
+		return detail::systemArena().createImpl<swapBufferControllerClass, swapBufferControllerImpl>(config);
 	}
 }
 

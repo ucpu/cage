@@ -4,18 +4,18 @@
 #include <cage-core/core.h>
 #include <cage-core/memory.h>
 #include <cage-core/concurrent.h>
-#include <cage-core/utility/threadSafeQueue.h>
+#include <cage-core/utility/concurrentQueue.h>
 
 namespace cage
 {
-	threadSafeQueueCreateConfig::threadSafeQueueCreateConfig() : arena(detail::systemArena()), maxElements(1000) {}
+	concurrentQueueCreateConfig::concurrentQueueCreateConfig() : arena(detail::systemArena()), maxElements(1000) {}
 
 	namespace
 	{
-		class threadSafeQueueImpl : public privat::threadSafeQueuePriv
+		class concurrentQueueImpl : public privat::concurrentQueuePriv
 		{
 		public:
-			threadSafeQueueImpl(const threadSafeQueueCreateConfig &config) : maxItems(config.maxElements)
+			concurrentQueueImpl(const concurrentQueueCreateConfig &config) : maxItems(config.maxElements)
 			{
 				mutex = newMutex();
 				writer = newConditionalBase();
@@ -23,10 +23,10 @@ namespace cage
 				arena = config.arena;
 			}
 
-			~threadSafeQueueImpl()
+			~concurrentQueueImpl()
 			{
 				scopeLock<mutexClass> sl(mutex);
-				CAGE_ASSERT_RUNTIME(items.empty(), "the thread safe queue may not be destroyed before all items are removed");
+				CAGE_ASSERT_RUNTIME(items.empty(), "the concurrent queue may not be destroyed before all items are removed");
 			}
 
 			void push(void *value)
@@ -96,39 +96,39 @@ namespace cage
 
 	namespace privat
 	{
-		void threadSafeQueuePriv::push(void *value)
+		void concurrentQueuePriv::push(void *value)
 		{
-			threadSafeQueueImpl *impl = (threadSafeQueueImpl *)this;
+			concurrentQueueImpl *impl = (concurrentQueueImpl *)this;
 			return impl->push(value);
 		}
 
-		bool threadSafeQueuePriv::tryPush(void *value)
+		bool concurrentQueuePriv::tryPush(void *value)
 		{
-			threadSafeQueueImpl *impl = (threadSafeQueueImpl *)this;
+			concurrentQueueImpl *impl = (concurrentQueueImpl *)this;
 			return impl->tryPush(value);
 		}
 
-		void threadSafeQueuePriv::pop(void *&value)
+		void concurrentQueuePriv::pop(void *&value)
 		{
-			threadSafeQueueImpl *impl = (threadSafeQueueImpl *)this;
+			concurrentQueueImpl *impl = (concurrentQueueImpl *)this;
 			return impl->pop(value);
 		}
 
-		bool threadSafeQueuePriv::tryPop(void *&value)
+		bool concurrentQueuePriv::tryPop(void *&value)
 		{
-			threadSafeQueueImpl *impl = (threadSafeQueueImpl *)this;
+			concurrentQueueImpl *impl = (concurrentQueueImpl *)this;
 			return impl->tryPop(value);
 		}
 
-		uint32 threadSafeQueuePriv::estimatedSize() const
+		uint32 concurrentQueuePriv::estimatedSize() const
 		{
-			threadSafeQueueImpl *impl = (threadSafeQueueImpl *)this;
+			concurrentQueueImpl *impl = (concurrentQueueImpl *)this;
 			return numeric_cast<uint32>(impl->items.size());
 		}
 
-		holder<threadSafeQueuePriv> newThreadSafeQueue(const threadSafeQueueCreateConfig &config)
+		holder<concurrentQueuePriv> newConcurrentQueue(const concurrentQueueCreateConfig &config)
 		{
-			return detail::systemArena().createImpl<threadSafeQueuePriv, threadSafeQueueImpl>(config);
+			return detail::systemArena().createImpl<concurrentQueuePriv, concurrentQueueImpl>(config);
 		}
 	}
 }

@@ -2,7 +2,7 @@
 
 #include "main.h"
 #include <cage-core/concurrent.h>
-#include <cage-core/utility/threadSafeQueue.h>
+#include <cage-core/utility/concurrentQueue.h>
 #include <cage-core/utility/threadPool.h>
 
 namespace
@@ -15,7 +15,7 @@ namespace
 		bool final;
 	};
 
-	typedef threadSafeQueueClass<task> queueType;
+	typedef concurrentQueueClass<task> queueType;
 
 	class tester
 	{
@@ -108,16 +108,16 @@ namespace
 	};
 }
 
-void testThreadSafeQueue()
+void testConcurrentQueue()
 {
-	CAGE_TESTCASE("threadSafeQueue");
+	CAGE_TESTCASE("concurrentQueue");
 
-	threadSafeQueueCreateConfig cfg;
+	concurrentQueueCreateConfig cfg;
 	cfg.maxElements = 10;
 
 	{
 		CAGE_TESTCASE("single producer single consumer (blocking)");
-		holder<threadSafeQueueClass<task>> q = newThreadSafeQueue<task>(cfg);
+		holder<concurrentQueueClass<task>> q = newConcurrentQueue<task>(cfg);
 		tester t(q.get());
 		holder<threadClass> t1 = newThread(delegate<void()>().bind<tester, &tester::consumeBlocking>(&t), "consumer");
 		holder<threadClass> t2 = newThread(delegate<void()>().bind<tester, &tester::produceBlocking>(&t), "producer");
@@ -127,7 +127,7 @@ void testThreadSafeQueue()
 
 	{
 		CAGE_TESTCASE("single producer single consumer (polling)");
-		holder<threadSafeQueueClass<task>> q = newThreadSafeQueue<task>(cfg);
+		holder<concurrentQueueClass<task>> q = newConcurrentQueue<task>(cfg);
 		tester t(q.get());
 		holder<threadClass> t1 = newThread(delegate<void()>().bind<tester, &tester::consumePolling>(&t), "consumer");
 		holder<threadClass> t2 = newThread(delegate<void()>().bind<tester, &tester::producePolling>(&t), "producer");
@@ -137,7 +137,7 @@ void testThreadSafeQueue()
 
 	{
 		CAGE_TESTCASE("multiple producers multiple consumers (blocking)");
-		holder<threadSafeQueueClass<task>> q = newThreadSafeQueue<task>(cfg);
+		holder<concurrentQueueClass<task>> q = newConcurrentQueue<task>(cfg);
 		tester t(q.get());
 		holder<threadPoolClass> t1 = newThreadPool("pool_", 6);
 		t1->function = delegate<void(uint32,uint32)>().bind<tester, &tester::poolBlocking>(&t);
@@ -146,7 +146,7 @@ void testThreadSafeQueue()
 
 	{
 		CAGE_TESTCASE("multiple producers multiple consumers (polling)");
-		holder<threadSafeQueueClass<task>> q = newThreadSafeQueue<task>(cfg);
+		holder<concurrentQueueClass<task>> q = newConcurrentQueue<task>(cfg);
 		tester t(q.get());
 		holder<threadPoolClass> t1 = newThreadPool("pool_", 6);
 		t1->function = delegate<void(uint32,uint32)>().bind<tester, &tester::poolPolling>(&t);

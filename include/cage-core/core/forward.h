@@ -79,9 +79,9 @@ namespace cage
 	class pngImageClass;
 	class programClass;
 	class threadPoolClass;
-	template<class T> class threadSafeQueueClass;
-	struct threadSafeSwapBufferControllerCreateConfig;
-	class threadSafeSwapBufferControllerClass;
+	template<class T> class concurrentQueueClass;
+	struct swapBufferControllerCreateConfig;
+	class swapBufferControllerClass;
 	class timerClass;
 	class colliderClass;
 	struct spatialDataCreateConfig;

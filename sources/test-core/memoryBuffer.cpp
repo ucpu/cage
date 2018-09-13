@@ -1,6 +1,6 @@
 #include "main.h"
 #include <cage-core/utility/memoryBuffer.h>
-#include <cage-core/utility/bufferStream.h>
+#include <cage-core/utility/stdBufferStream.h>
 #include <cage-core/utility/serialization.h>
 
 void testMemoryBuffers()
@@ -31,7 +31,7 @@ void testMemoryBuffers()
 	}
 
 	{
-		CAGE_TESTCASE("buffer streams");
+		CAGE_TESTCASE("std buffer streams");
 		{
 			CAGE_TESTCASE("input stream reading uint8 array");
 			memoryBuffer b1(2000);

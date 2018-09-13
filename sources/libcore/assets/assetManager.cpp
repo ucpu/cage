@@ -16,7 +16,7 @@
 #include <cage-core/utility/hashTable.h>
 #include <cage-core/utility/hashString.h>
 #include <cage-core/utility/memoryBuffer.h>
-#include <cage-core/utility/threadSafeQueue.h>
+#include <cage-core/utility/concurrentQueue.h>
 
 namespace cage
 {
@@ -57,9 +57,9 @@ namespace cage
 			holder<threadClass> loadingThread;
 			holder<threadClass> decompressionThread;
 
-			std::vector<holder<threadSafeQueueClass<assetContextPrivateStruct*>>> queueCustomLoad, queueCustomDone;
-			holder<threadSafeQueueClass<assetContextPrivateStruct*>> queueLoadFile, queueDecompression;
-			holder<threadSafeQueueClass<assetContextPrivateStruct*>> queueAddDependencies, queueWaitDependencies, queueRemoveDependencies;
+			std::vector<holder<concurrentQueueClass<assetContextPrivateStruct*>>> queueCustomLoad, queueCustomDone;
+			holder<concurrentQueueClass<assetContextPrivateStruct*>> queueLoadFile, queueDecompression;
+			holder<concurrentQueueClass<assetContextPrivateStruct*>> queueAddDependencies, queueWaitDependencies, queueRemoveDependencies;
 
 			string path;
 			uint32 countTotal, countProcessing;
@@ -82,18 +82,18 @@ namespace cage
 				schemes.resize(config.schemeMaxCount);
 				queueCustomLoad.reserve(config.threadMaxCount);
 				queueCustomDone.reserve(config.threadMaxCount);
-				threadSafeQueueCreateConfig tsqc;
+				concurrentQueueCreateConfig tsqc;
 				tsqc.maxElements = -1;
 				for (uint32 i = 0; i < config.threadMaxCount; i++)
 				{
-					queueCustomLoad.push_back(newThreadSafeQueue<assetContextPrivateStruct*>(tsqc));
-					queueCustomDone.push_back(newThreadSafeQueue<assetContextPrivateStruct*>(tsqc));
+					queueCustomLoad.push_back(newConcurrentQueue<assetContextPrivateStruct*>(tsqc));
+					queueCustomDone.push_back(newConcurrentQueue<assetContextPrivateStruct*>(tsqc));
 				}
-				queueLoadFile = newThreadSafeQueue<assetContextPrivateStruct*>(tsqc);
-				queueDecompression = newThreadSafeQueue<assetContextPrivateStruct*>(tsqc);
-				queueAddDependencies = newThreadSafeQueue<assetContextPrivateStruct*>(tsqc);
-				queueWaitDependencies = newThreadSafeQueue<assetContextPrivateStruct*>(tsqc);
-				queueRemoveDependencies = newThreadSafeQueue<assetContextPrivateStruct*>(tsqc);
+				queueLoadFile = newConcurrentQueue<assetContextPrivateStruct*>(tsqc);
+				queueDecompression = newConcurrentQueue<assetContextPrivateStruct*>(tsqc);
+				queueAddDependencies = newConcurrentQueue<assetContextPrivateStruct*>(tsqc);
+				queueWaitDependencies = newConcurrentQueue<assetContextPrivateStruct*>(tsqc);
+				queueRemoveDependencies = newConcurrentQueue<assetContextPrivateStruct*>(tsqc);
 				loadingThread = newThread(delegate<void()>().bind<assetManagerImpl, &assetManagerImpl::loadingThreadEntry>(this), "asset disk io");
 				decompressionThread = newThread(delegate<void()>().bind<assetManagerImpl, &assetManagerImpl::decompressionThreadEntry>(this), "asset decompression");
 			}
