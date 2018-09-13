@@ -20,9 +20,9 @@ namespace cage
 		void graphicsFinalize();
 		void graphicsRender();
 
-		void soundInitialize(soundContextClass *soundContext);
-		void soundFinalize();
-		void soundRender();
+		//void soundInitialize(soundContextClass *soundContext);
+		//void soundFinalize();
+		//void soundRender();
 
 		void setOutputResolution(const pointStruct &resolution, real retina = 1); // resolution: pixels; retina: how many pixels per point (1D)
 		void setZoom(real zoom); // pixels per point (1D)

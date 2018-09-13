@@ -7,6 +7,7 @@
 #include <cage-core/entities.h>
 #include <cage-core/assets.h>
 #include <cage-core/utility/hashString.h>
+#include <cage-core/utility/swapBufferController.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
@@ -92,81 +93,109 @@ namespace cage
 			void exe(const filterApiStruct &api);
 		};
 
-		struct soundPrepareImpl
+		struct emitStruct
 		{
 			memoryArenaGrowing<memoryAllocatorPolicyLinear<>, memoryConcurrentPolicyNone> emitMemory;
 			memoryArena emitArena;
 
-			std::vector<emitVoiceStruct*> emitVoices;
-			std::vector<emitListenerStruct*> emitListeners;
-			std::vector<holder<mixStruct> > mixers;
-			std::vector<float> soundMixBuffer;
+			std::vector<emitVoiceStruct*> voices;
+			std::vector<emitListenerStruct*> listeners;
 
-			uint64 controlTime;
-			uint64 prepareTime;
-			real interFactor;
-			bool wasEmit;
+			uint64 time;
+			bool fresh;
 
-			soundPrepareImpl(const engineCreateConfig &config) : emitMemory(config.soundEmitMemory), controlTime(0), prepareTime(0), wasEmit(false)
+			emitStruct(const engineCreateConfig &config) : emitMemory(config.soundEmitMemory), emitArena(&emitMemory), time(0), fresh(false)
 			{
-				mixers.reserve(256);
-				emitVoices.reserve(256);
-				emitListeners.reserve(4);
-				soundMixBuffer.resize(10000);
+				voices.reserve(256);
+				listeners.reserve(4);
 			}
 
-			void initialize()
+			~emitStruct()
 			{
-				emitArena = memoryArena(&emitMemory);
+				emitArena.flush();
+			}
+		};
+
+		struct soundPrepareImpl
+		{
+			emitStruct emitBuffers[3];
+			emitStruct *emitRead, *emitWrite;
+			holder<swapBufferControllerClass> swapController;
+
+			std::vector<holder<mixStruct>> mixers;
+			std::vector<float> soundMixBuffer;
+
+			uint64 dispatchTime;
+			uint64 emitTime;
+			real interFactor;
+
+			soundPrepareImpl(const engineCreateConfig &config) : emitBuffers{ config, config, config }, emitRead(nullptr), emitWrite(nullptr), dispatchTime(0), emitTime(0)
+			{
+				mixers.reserve(256);
+				soundMixBuffer.resize(10000);
+				{
+					swapBufferControllerCreateConfig cfg(3);
+					cfg.repeatedReads = true;
+					swapController = newSwapBufferController(cfg);
+				}
 			}
 
 			void finalize()
 			{
-				emitArena.flush();
-				emitArena = memoryArena();
 				mixers.clear();
 			}
 
-			void emit()
+			void emit(uint64 time)
 			{
-				wasEmit = true;
-				emitVoices.clear();
-				emitListeners.clear();
-				emitArena.flush();
+				auto lock = swapController->write();
+				if (!lock)
+				{
+					CAGE_LOG_DEBUG(severityEnum::Warning, "engine", "skipping sound emit (write)");
+					return;
+				}
+
+				emitWrite = &emitBuffers[lock.index()];
+				emitWrite->fresh = true;
+				emitWrite->voices.clear();
+				emitWrite->listeners.clear();
+				emitWrite->emitArena.flush();
+				emitWrite->time = time;
 
 				// emit voices
 				for (entityClass *e : voiceComponent::component->getComponentEntities()->entities())
 				{
-					emitVoiceStruct *c = emitArena.createObject<emitVoiceStruct>();
+					emitVoiceStruct *c = emitWrite->emitArena.createObject<emitVoiceStruct>();
 					c->transform = e->value<transformComponent>(transformComponent::component);
 					if (e->hasComponent(transformComponent::componentHistory))
 						c->transformHistory = e->value<transformComponent>(transformComponent::componentHistory);
 					else
 						c->transformHistory = c->transform;
 					c->voice = e->value<voiceComponent>(voiceComponent::component);
-					emitVoices.push_back(c);
+					emitWrite->voices.push_back(c);
 				}
 
 				// emit listeners
 				for (entityClass *e : listenerComponent::component->getComponentEntities()->entities())
 				{
-					emitListenerStruct *c = emitArena.createObject<emitListenerStruct>();
+					emitListenerStruct *c = emitWrite->emitArena.createObject<emitListenerStruct>();
 					c->transform = e->value<transformComponent>(transformComponent::component);
 					if (e->hasComponent(transformComponent::componentHistory))
 						c->transformHistory = e->value<transformComponent>(transformComponent::componentHistory);
 					else
 						c->transformHistory = c->transform;
 					c->listener = e->value<listenerComponent>(listenerComponent::component);
-					emitListeners.push_back(c);
+					emitWrite->listeners.push_back(c);
 				}
+
+				emitWrite = nullptr;
 			}
 
 			void postEmit()
 			{
 				uint32 used = 0;
-				for (auto itL : emitListeners)
+				for (auto itL : emitRead->listeners)
 				{
-					for (auto itV : emitVoices)
+					for (auto itV : emitRead->voices)
 					{
 						if ((itL->listener.renderMask & itV->voice.renderMask) == 0)
 							continue;
@@ -183,19 +212,28 @@ namespace cage
 					mixers[i]->prepare(nullptr, nullptr);
 			}
 
-			void tick(uint64 controlTime, uint64 prepareTime)
+			void tick(uint64 time)
 			{
-				if (wasEmit)
+				auto lock = swapController->read();
+				if (!lock)
 				{
-					postEmit();
-					wasEmit = false;
+					CAGE_LOG_DEBUG(severityEnum::Warning, "engine", "skipping sound emit (read)");
+					return;
 				}
 
-				this->controlTime = controlTime;
-				this->prepareTime = prepareTime;
-				interFactor = clamp(real(prepareTime - controlTime) / controlThread().timePerTick, 0, 1);
+				emitRead = &emitBuffers[lock.index()];
+				dispatchTime = time;
+				emitTime = emitRead->time;
+				interFactor = clamp(real(emitTime - dispatchTime) / controlThread().timePerTick, 0, 1);
 
-				speaker()->update(prepareTime);
+				if (emitRead->fresh)
+				{
+					postEmit();
+					emitRead->fresh = false;
+				}
+				speaker()->update(emitTime);
+
+				emitRead = nullptr;
 			}
 		};
 
@@ -239,14 +277,19 @@ namespace cage
 		soundPrepareImpl *soundPrepare;
 	}
 
-	void soundEmit()
+	void soundEmit(uint64 time)
 	{
-		soundPrepare->emit();
+		soundPrepare->emit(time);
 	}
 
-	void soundTick(uint64 controlTime, uint64 prepareTime)
+	void soundTick(uint64 time)
 	{
-		soundPrepare->tick(controlTime, prepareTime);
+		soundPrepare->tick(time);
+	}
+
+	void soundFinalize()
+	{
+		soundPrepare->finalize();
 	}
 
 	void soundCreate(const engineCreateConfig &config)
@@ -258,15 +301,5 @@ namespace cage
 	{
 		detail::systemArena().destroy<soundPrepareImpl>(soundPrepare);
 		soundPrepare = nullptr;
-	}
-
-	void soundInitialize()
-	{
-		soundPrepare->initialize();
-	}
-
-	void soundFinalize()
-	{
-		soundPrepare->finalize();
 	}
 }

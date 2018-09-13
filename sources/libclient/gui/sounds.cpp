@@ -12,6 +12,7 @@
 
 namespace cage
 {
+	/*
 	void guiClass::soundInitialize(soundContextClass *soundContext)
 	{
 		guiImpl *impl = (guiImpl*)this;
@@ -29,5 +30,6 @@ namespace cage
 		guiImpl *impl = (guiImpl*)this;
 		// todo
 	}
+	*/
 }
 

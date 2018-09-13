@@ -67,32 +67,28 @@ namespace cage
 			{
 				static const engineProfilingStatsFlags flagsFull[] = {
 					engineProfilingStatsFlags::ControlTick,
-					engineProfilingStatsFlags::ControlWait,
 					engineProfilingStatsFlags::ControlEmit,
 					engineProfilingStatsFlags::ControlSleep,
 					engineProfilingStatsFlags::GraphicsPrepareWait,
-					engineProfilingStatsFlags::GraphicsPrepareEmit,
 					engineProfilingStatsFlags::GraphicsPrepareTick,
 					engineProfilingStatsFlags::GraphicsDispatchWait,
 					engineProfilingStatsFlags::GraphicsDispatchTick,
 					engineProfilingStatsFlags::GraphicsDispatchSwap,
-					engineProfilingStatsFlags::SoundEmit,
+					engineProfilingStatsFlags::SoundWait,
 					engineProfilingStatsFlags::SoundTick,
 					engineProfilingStatsFlags::SoundSleep,
 					engineProfilingStatsFlags::FrameTime
 				};
 				static const char* namesFull[sizeof(flagsFull) / sizeof(flagsFull[0])] = {
 					"Control Tick: ",
-					"Control Wait: ",
 					"Control Emit: ",
 					"Control Sleep: ",
 					"Graphics Prepare Wait: ",
-					"Graphics Prepare Emit: ",
 					"Graphics Prepare Tick: ",
 					"Graphics Dispatch Wait: ",
 					"Graphics Dispatch Tick: ",
 					"Graphics Dispatch Swap: ",
-					"Sound Emit: ",
+					"Sound Wait: ",
 					"Sound Tick: ",
 					"Sound Sleep: ",
 					"Frame Time: "
@@ -100,9 +96,9 @@ namespace cage
 
 				static const engineProfilingStatsFlags flagsShort[] = {
 					engineProfilingStatsFlags::ControlTick | engineProfilingStatsFlags::ControlEmit,
-					engineProfilingStatsFlags::GraphicsPrepareTick | engineProfilingStatsFlags::GraphicsPrepareEmit,
-					engineProfilingStatsFlags::GraphicsDispatchTick | engineProfilingStatsFlags::GraphicsDispatchSwap,
-					engineProfilingStatsFlags::SoundTick | engineProfilingStatsFlags::SoundEmit,
+					engineProfilingStatsFlags::GraphicsPrepareTick,
+					engineProfilingStatsFlags::GraphicsDispatchTick,
+					engineProfilingStatsFlags::SoundTick,
 				};
 				static const char* namesShort[sizeof(flagsShort) / sizeof(flagsShort[0])] = {
 					"Control: ",

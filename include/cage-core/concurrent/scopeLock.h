@@ -12,7 +12,7 @@ namespace cage
 		scopeLock(T *ptr, int tryLock) : ptr(ptr)
 		{
 			if (!ptr->tryLock())
-				ptr = nullptr;
+				this->ptr = nullptr;
 		}
 
 		scopeLock(holder<T> &ptr) : scopeLock(ptr.get())
@@ -25,7 +25,8 @@ namespace cage
 
 		~scopeLock()
 		{
-			ptr->unlock();
+			if (ptr)
+				ptr->unlock();
 		}
 
 		operator bool() const

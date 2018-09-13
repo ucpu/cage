@@ -10,6 +10,7 @@
 #include <cage-core/entities.h>
 #include <cage-core/assets.h>
 #include <cage-core/utility/hashString.h>
+#include <cage-core/utility/swapBufferController.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
@@ -102,22 +103,44 @@ namespace cage
 			uint32 renderMask;
 		};
 
-		struct graphicsPrepareImpl
+		struct emitStruct
 		{
 			memoryArenaGrowing<memoryAllocatorPolicyLinear<>, memoryConcurrentPolicyNone> emitMemory;
 			memoryArena emitArena;
+
+			std::vector<emitRenderStruct*> renderables;
+			std::vector<emitLightStruct*> lights;
+			std::vector<emitCameraStruct*> cameras;
+
+			uint64 time;
+
+			emitStruct(const engineCreateConfig &config) : emitMemory(config.graphicsEmitMemory), emitArena(&emitMemory), time(0)
+			{
+				renderables.reserve(256);
+				lights.reserve(32);
+				cameras.reserve(4);
+			}
+
+			~emitStruct()
+			{
+				emitArena.flush();
+			}
+		};
+
+		struct graphicsPrepareImpl
+		{
+			emitStruct emitBuffers[3];
+			emitStruct *emitRead, *emitWrite;
+			holder<swapBufferControllerClass> swapController;
+
+			mat4 tmpArmature[MaxBonesCount];
+
 			memoryArenaGrowing<memoryAllocatorPolicyLinear<>, memoryConcurrentPolicyNone> dispatchMemory;
 			memoryArena dispatchArena;
 
-			std::vector<emitRenderStruct*> emitRenderables;
-			std::vector<emitLightStruct*> emitLights;
-			std::vector<emitCameraStruct*> emitCameras;
-
+			uint64 dispatchTime;
+			uint64 emitTime;
 			sint32 shm2d, shmCube;
-			uint64 controlTime;
-			uint64 prepareTime;
-
-			mat4 tmpArmature[MaxBonesCount];
 
 			static real lightRange(const vec3 &color, const vec3 &attenuation)
 			{
@@ -223,7 +246,7 @@ namespace cage
 				pass->clearFlags = ((camera->camera.clear & cameraClearFlags::Color) == cameraClearFlags::Color ? GL_COLOR_BUFFER_BIT : 0) | ((camera->camera.clear & cameraClearFlags::Depth) == cameraClearFlags::Depth ? GL_DEPTH_BUFFER_BIT : 0);
 				pass->renderMask = camera->camera.renderMask;
 				addRenderableObjects(pass, false);
-				for (auto it : emitLights)
+				for (auto it : emitRead->lights)
 					addLight(pass, it);
 			}
 
@@ -261,7 +284,7 @@ namespace cage
 			void addRenderableObjects(renderPassImpl *pass, bool shadows)
 			{
 				const vec3 up = vec3(pass->view.inverse() * vec4(0, 1, 0, 0));
-				for (emitRenderStruct *e : emitRenderables)
+				for (emitRenderStruct *e : emitRead->renderables)
 				{
 					if ((e->render.renderMask & pass->renderMask) == 0)
 						continue;
@@ -368,7 +391,7 @@ namespace cage
 				sm->normalMat = mat4(modelToNormal(model));
 				sm->normalMat[15] = ((m->getFlags() & meshFlags::Lighting) == meshFlags::Lighting) ? 1 : 0; // is ligting enabled
 				if (e->animatedTexture)
-					sm->aniTexFrames = detail::evalSamplesForTextureAnimation(obj->textures[CAGE_SHADER_TEXTURE_ALBEDO], prepareTime, e->animatedTexture->startTime, e->animatedTexture->speed, e->animatedTexture->offset);
+					sm->aniTexFrames = detail::evalSamplesForTextureAnimation(obj->textures[CAGE_SHADER_TEXTURE_ALBEDO], emitTime, e->animatedTexture->startTime, e->animatedTexture->speed, e->animatedTexture->offset);
 				if (obj->shaderArmatures)
 				{
 					objectsStruct::shaderArmatureStruct *sa = obj->shaderArmatures + obj->count;
@@ -384,7 +407,7 @@ namespace cage
 						CAGE_ASSERT_RUNTIME(skel->bonesCount() == bonesCount, skel->bonesCount(), bonesCount);
 						const auto &ba = *e->animatedSkeleton;
 						animationClass *an = assets()->get<assetSchemeIndexAnimation, animationClass>(ba.name);
-						real c = detail::evalCoefficientForSkeletalAnimation(an, prepareTime, ba.startTime, ba.speed, ba.offset);
+						real c = detail::evalCoefficientForSkeletalAnimation(an, emitTime, ba.startTime, ba.speed, ba.offset);
 						skel->evaluatePose(an, c, tmpArmature, sa->armature);
 					}
 					else
@@ -459,38 +482,38 @@ namespace cage
 				lig->count++;
 			}
 
-			graphicsPrepareImpl(const engineCreateConfig &config) : emitMemory(config.graphicsEmitMemory), dispatchMemory(config.graphicsDispatchMemory)
+			graphicsPrepareImpl(const engineCreateConfig &config) : emitBuffers{ config, config, config }, emitRead(nullptr), emitWrite(nullptr), dispatchMemory(config.graphicsDispatchMemory), dispatchArena(&dispatchMemory), dispatchTime(0), emitTime(0)
 			{
-				emitRenderables.reserve(256);
-				emitLights.reserve(32);
-				emitCameras.reserve(4);
+				swapBufferControllerCreateConfig cfg(3);
+				cfg.repeatedReads = true;
+				swapController = newSwapBufferController(cfg);
 			}
 
-			void initialize()
+			~graphicsPrepareImpl()
 			{
-				emitArena = memoryArena(&emitMemory);
-				dispatchArena = memoryArena(&dispatchMemory);
-			}
-
-			void finalize()
-			{
-				emitArena.flush();
-				emitArena = memoryArena();
 				dispatchArena.flush();
-				dispatchArena = memoryArena();
 			}
 
-			void emit()
+			void emit(uint64 time)
 			{
-				emitRenderables.clear();
-				emitLights.clear();
-				emitCameras.clear();
-				emitArena.flush();
+				auto lock = swapController->write();
+				if (!lock)
+				{
+					CAGE_LOG_DEBUG(severityEnum::Warning, "engine", "skipping graphics emit (write)");
+					return;
+				}
+
+				emitWrite = &emitBuffers[lock.index()];
+				emitWrite->renderables.clear();
+				emitWrite->lights.clear();
+				emitWrite->cameras.clear();
+				emitWrite->emitArena.flush();
+				emitWrite->time = time;
 
 				// emit renderables
 				for (entityClass *e : renderComponent::component->getComponentEntities()->entities())
 				{
-					emitRenderStruct *c = emitArena.createObject<emitRenderStruct>();
+					emitRenderStruct *c = emitWrite->emitArena.createObject<emitRenderStruct>();
 					c->transform = e->value<transformComponent>(transformComponent::component);
 					if (e->hasComponent(transformComponent::componentHistory))
 						c->transformHistory = e->value<transformComponent>(transformComponent::componentHistory);
@@ -498,18 +521,18 @@ namespace cage
 						c->transformHistory = c->transform;
 					c->render = e->value<renderComponent>(renderComponent::component);
 					if (e->hasComponent(animatedTextureComponent::component))
-						c->animatedTexture = emitArena.createObject<animatedTextureComponent>(e->value<animatedTextureComponent>(animatedTextureComponent::component));
+						c->animatedTexture = emitWrite->emitArena.createObject<animatedTextureComponent>(e->value<animatedTextureComponent>(animatedTextureComponent::component));
 					if (e->hasComponent(animatedSkeletonComponent::component))
-						c->animatedSkeleton = emitArena.createObject<animatedSkeletonComponent>(e->value<animatedSkeletonComponent>(animatedSkeletonComponent::component));
+						c->animatedSkeleton = emitWrite->emitArena.createObject<animatedSkeletonComponent>(e->value<animatedSkeletonComponent>(animatedSkeletonComponent::component));
 					if (e->hasComponent(configuredSkeletonComponent::component))
-						c->configuredSkeleton = emitArena.createObject<configuredSkeletonImpl>(e);
-					emitRenderables.push_back(c);
+						c->configuredSkeleton = emitWrite->emitArena.createObject<configuredSkeletonImpl>(e);
+					emitWrite->renderables.push_back(c);
 				}
 
 				// emit lights
 				for (entityClass *e : lightComponent::component->getComponentEntities()->entities())
 				{
-					emitLightStruct *c = emitArena.createObject<emitLightStruct>();
+					emitLightStruct *c = emitWrite->emitArena.createObject<emitLightStruct>();
 					c->transform = e->value<transformComponent>(transformComponent::component);
 					if (e->hasComponent(transformComponent::componentHistory))
 						c->transformHistory = e->value<transformComponent>(transformComponent::componentHistory);
@@ -517,26 +540,35 @@ namespace cage
 						c->transformHistory = c->transform;
 					c->light = e->value<lightComponent>(lightComponent::component);
 					if (e->hasComponent(shadowmapComponent::component))
-						c->shadowmap = emitArena.createObject<shadowmapImpl>(e->value<shadowmapComponent>(shadowmapComponent::component));
-					emitLights.push_back(c);
+						c->shadowmap = emitWrite->emitArena.createObject<shadowmapImpl>(e->value<shadowmapComponent>(shadowmapComponent::component));
+					emitWrite->lights.push_back(c);
 				}
 
 				// emit cameras
 				for (entityClass *e : cameraComponent::component->getComponentEntities()->entities())
 				{
-					emitCameraStruct *c = emitArena.createObject<emitCameraStruct>();
+					emitCameraStruct *c = emitWrite->emitArena.createObject<emitCameraStruct>();
 					c->transform = e->value<transformComponent>(transformComponent::component);
 					if (e->hasComponent(transformComponent::componentHistory))
 						c->transformHistory = e->value<transformComponent>(transformComponent::componentHistory);
 					else
 						c->transformHistory = c->transform;
 					c->camera = e->value<cameraComponent>(cameraComponent::component);
-					emitCameras.push_back(c);
+					emitWrite->cameras.push_back(c);
 				}
+
+				emitWrite = nullptr;
 			}
 
-			void tick(uint64 controlTime, uint64 prepareTime)
+			void tick(uint64 time)
 			{
+				auto lock = swapController->read();
+				if (!lock)
+				{
+					CAGE_LOG_DEBUG(severityEnum::Warning, "engine", "skipping graphics emit (read)");
+					return;
+				}
+
 				assetManagerClass *ass = assets();
 				if (!ass->ready(hashString("cage/cage.pack")))
 					return;
@@ -555,8 +587,10 @@ namespace cage
 					graphicsDispatch->shaderTranslucent = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/translucent.glsl"));
 				}
 
-				this->controlTime = controlTime;
-				this->prepareTime = prepareTime;
+				emitRead = &emitBuffers[lock.index()];
+
+				dispatchTime = time;
+				emitTime = emitRead->time;
 				shm2d = shmCube = 0;
 
 				graphicsDispatch->firstRenderPass = graphicsDispatch->lastRenderPass = nullptr;
@@ -566,18 +600,19 @@ namespace cage
 				graphicsDispatch->windowWidth = resolution.x;
 				graphicsDispatch->windowHeight = resolution.y;
 
+
 				{ // update model matrices
-					real interFactor = clamp(real(prepareTime - controlTime) / controlThread().timePerTick, 0, 1);
-					for (auto it : emitLights)
+					real interFactor = clamp(real(emitTime - dispatchTime) / controlThread().timePerTick, 0, 1);
+					for (auto it : emitRead->lights)
 						it->updateModelMatrix(interFactor);
-					for (auto it : emitCameras)
+					for (auto it : emitRead->cameras)
 						it->updateModelMatrix(interFactor);
-					for (auto it : emitRenderables)
+					for (auto it : emitRead->renderables)
 						it->updateModelMatrix(interFactor);
 				}
 
 				// generate shadowmap render passes
-				for (auto it : emitLights)
+				for (auto it : emitRead->lights)
 				{
 					if (!it->shadowmap)
 						continue;
@@ -594,8 +629,8 @@ namespace cage
 							return a->camera.target > b->camera.target;
 						}
 					};
-					std::sort(emitCameras.begin(), emitCameras.end(), cameraComparatorStruct());
-					for (auto it : emitCameras)
+					std::sort(emitRead->cameras.begin(), emitRead->cameras.end(), cameraComparatorStruct());
+					for (auto it : emitRead->cameras)
 					{
 						if (graphicsPrepareThread().stereoMode == stereoModeEnum::Mono || it->camera.target)
 						{ // mono
@@ -608,6 +643,8 @@ namespace cage
 						}
 					}
 				}
+
+				emitRead = nullptr;
 			}
 		};
 
@@ -701,23 +738,13 @@ namespace cage
 		graphicsPrepare = nullptr;
 	}
 
-	void graphicsPrepareInitialize()
+	void graphicsPrepareEmit(uint64 time)
 	{
-		graphicsPrepare->initialize();
+		graphicsPrepare->emit(time);
 	}
 
-	void graphicsPrepareFinalize()
+	void graphicsPrepareTick(uint64 time)
 	{
-		graphicsPrepare->finalize();
-	}
-
-	void graphicsPrepareEmit()
-	{
-		graphicsPrepare->emit();
-	}
-
-	void graphicsPrepareTick(uint64 controlTime, uint64 prepareTime)
-	{
-		graphicsPrepare->tick(controlTime, prepareTime);
+		graphicsPrepare->tick(time);
 	}
 }

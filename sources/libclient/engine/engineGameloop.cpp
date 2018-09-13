@@ -8,11 +8,13 @@
 #include <cage-core/concurrent.h>
 #include <cage-core/filesystem.h> // getExecutableName
 #include <cage-core/assets.h>
-#include <cage-core/utility/collider.h>
 #include <cage-core/utility/hashString.h>
+#include <cage-core/utility/collider.h> // for sizeof in defineScheme
+#include <cage-core/utility/textPack.h> // for sizeof in defineScheme
+#include <cage-core/utility/memoryBuffer.h> // for sizeof in defineScheme
+#include <cage-core/utility/threadPool.h>
 #include <cage-core/utility/variableSmoothingBuffer.h>
-#include <cage-core/utility/memoryBuffer.h>
-#include <cage-core/utility/textPack.h>
+#include <cage-core/utility/swapBufferController.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
@@ -30,8 +32,38 @@ namespace cage
 {
 	namespace
 	{
+		struct scopedSemaphores
+		{
+			scopedSemaphores(holder<semaphoreClass> &lock, holder<semaphoreClass> &unlock) : sem(unlock.get())
+			{
+				lock->lock();
+			}
+
+			~scopedSemaphores()
+			{
+				sem->unlock();
+			}
+
+		private:
+			semaphoreClass *sem;
+		};
+
 		struct engineDataStruct
 		{
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferControlTick;
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferControlEmit;
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferControlSleep;
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsPrepareWait;
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsPrepareTick;
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsDispatchWait;
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsDispatchTick;
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsDispatchSwap;
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsDrawCalls;
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsDrawPrimitives;
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferSoundWait;
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferSoundTick;
+			variableSmoothingBufferStruct<uint64, 60> profilingBufferSoundSleep;
+
 			holder<assetManagerClass> assets;
 			holder<windowClass> window;
 			holder<soundContextClass> sound;
@@ -42,37 +74,21 @@ namespace cage
 			holder<busClass> guiBus;
 			holder<guiClass> gui;
 			holder<entityManagerClass> entities;
+
+			holder<mutexClass> assetsSoundMutex;
+			holder<mutexClass> assetsGraphicsMutex;
+			holder<semaphoreClass> graphicsSemaphore1;
+			holder<semaphoreClass> graphicsSemaphore2;
 			holder<barrierClass> threadsStateBarier;
-			holder<semaphoreClass> graphicsPrepareSemaphore;
-			holder<semaphoreClass> graphicsDispatchSemaphore;
-			holder<semaphoreClass> emitGraphicsStartSemaphore;
-			holder<semaphoreClass> emitGraphicsAssetsSemaphore;
-			holder<semaphoreClass> emitGraphicsEndSemaphore;
-			holder<semaphoreClass> emitSoundStartSemaphore;
-			holder<semaphoreClass> emitSoundAssetsSemaphore;
-			holder<semaphoreClass> emitSoundEndSemaphore;
 			holder<threadClass> graphicsDispatchThreadHolder;
 			holder<threadClass> graphicsPrepareThreadHolder;
 			holder<threadClass> soundThreadHolder;
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferControlTick;
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferControlWait;
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferControlEmit;
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferControlSleep;
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsPrepareWait;
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsPrepareEmit;
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsPrepareTick;
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsDispatchWait;
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsDispatchTick;
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsDispatchSwap;
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsDrawCalls;
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsDrawPrimitives;
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferSoundEmit;
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferSoundTick;
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferSoundSleep;
+			holder<threadPoolClass> emitThreadsHolder;
+
 			std::atomic<uint32> engineStarted;
-			std::atomic<bool> emitIsReady;
 			std::atomic<bool> stopping;
 			uint64 currentControlTime;
+			uint64 currentSoundTime;
 
 			engineDataStruct(const engineCreateConfig &config);
 
@@ -83,55 +99,31 @@ namespace cage
 			//////////////////////////////////////
 
 			void graphicsPrepareInitializeStage()
-			{
-				graphicsPrepareInitialize();
-			}
+			{}
 
 			void graphicsPrepareGameloopStage()
 			{
-				try
+				uint64 time1, time2, time3;
+				while (!stopping)
 				{
-					uint64 lastEmit = 0;
-					while (!stopping)
+					time1 = getApplicationTime();
 					{
-						uint64 time1 = getApplicationTime();
-						graphicsPrepareSemaphore->lock();
-						uint64 time2 = getApplicationTime();
-						graphicsPrepareThread().prepare.dispatch();
-						graphicsPrepareTick(lastEmit, time2);
-						graphicsDispatchSemaphore->unlock();
+						scopedSemaphores lockDispatch(graphicsSemaphore1, graphicsSemaphore2);
+						scopeLock<mutexClass> lockAssets(assetsGraphicsMutex);
+						time2 = getApplicationTime();
 						assets->processCustomThread(graphicsPrepareThread().threadIndex);
-						uint64 time3 = getApplicationTime();
-						if (emitIsReady)
-						{
-							lastEmit = time2;
-							emitGraphicsStartSemaphore->unlock();
-							graphicsPrepareEmit();
-							emitGraphicsEndSemaphore->unlock();
-							emitGraphicsAssetsSemaphore->lock();
-						}
-						uint64 time4 = getApplicationTime();
-						profilingBufferGraphicsPrepareWait.add(time2 - time1);
-						profilingBufferGraphicsPrepareTick.add(time3 - time2);
-						profilingBufferGraphicsPrepareEmit.add(time4 - time3);
+						graphicsPrepareThread().prepare.dispatch();
+						graphicsPrepareTick(time2);
 					}
+					time3 = getApplicationTime();
+					profilingBufferGraphicsPrepareWait.add(time2 - time1);
+					profilingBufferGraphicsPrepareTick.add(time3 - time2);
 				}
-				catch (...)
-				{
-					engineStop();
-					emitGraphicsStartSemaphore->unlock();
-					emitGraphicsEndSemaphore->unlock();
-					graphicsDispatchSemaphore->unlock();
-					throw;
-				}
-				emitGraphicsStartSemaphore->unlock();
-				emitGraphicsEndSemaphore->unlock();
-				graphicsDispatchSemaphore->unlock();
+				graphicsSemaphore2->unlock();
 			}
 
 			void graphicsPrepareFinalizeStage()
 			{
-				graphicsPrepareFinalize();
 				while (assets->countTotal() > 0)
 				{
 					while (assets->processCustomThread(graphicsPrepareThread().threadIndex));
@@ -152,13 +144,14 @@ namespace cage
 
 			void graphicsDispatchGameloopStage()
 			{
-				try
+				uint64 time1, time2, time3, time4;
+				while (!stopping)
 				{
-					while (!stopping)
+					time1 = getApplicationTime();
 					{
-						uint64 time1 = getApplicationTime();
-						graphicsDispatchSemaphore->lock();
-						uint64 time2 = getApplicationTime();
+						scopedSemaphores lockDispatch(graphicsSemaphore2, graphicsSemaphore1);
+						time2 = getApplicationTime();
+						assets->processCustomThread(graphicsDispatchThreadClass::threadIndex);
 						graphicsDispatchThread().render.dispatch();
 						uint32 drawCalls = 0;
 						uint32 drawPrimitives = 0;
@@ -170,24 +163,16 @@ namespace cage
 							gui->graphicsRender();
 							CAGE_CHECK_GL_ERROR_DEBUG();
 						}
-						graphicsPrepareSemaphore->unlock();
-						assets->processCustomThread(graphicsDispatchThreadClass::threadIndex);
-						uint64 time3 = getApplicationTime();
-						graphicsDispatchThread().swap.dispatch();
-						graphicsDispatchSwap();
-						uint64 time4 = getApplicationTime();
-						profilingBufferGraphicsDispatchWait.add(time2 - time1);
-						profilingBufferGraphicsDispatchTick.add(time3 - time2);
-						profilingBufferGraphicsDispatchSwap.add(time4 - time3);
 					}
+					time3 = getApplicationTime();
+					graphicsDispatchThread().swap.dispatch();
+					graphicsDispatchSwap();
+					time4 = getApplicationTime();
+					profilingBufferGraphicsDispatchWait.add(time2 - time1);
+					profilingBufferGraphicsDispatchTick.add(time3 - time2);
+					profilingBufferGraphicsDispatchSwap.add(time4 - time3);
 				}
-				catch (...)
-				{
-					engineStop();
-					graphicsPrepareSemaphore->unlock();
-					throw;
-				}
-				graphicsPrepareSemaphore->unlock();
+				graphicsSemaphore1->unlock();
 			}
 
 			void graphicsDispatchFinalizeStage()
@@ -207,67 +192,52 @@ namespace cage
 
 			void soundInitializeStage()
 			{
-				soundInitialize();
-				gui->soundInitialize(sound.get());
+				//gui->soundInitialize(sound.get());
+			}
+
+			void soundTiming(uint64 timeDelay)
+			{
+				if (timeDelay > soundThread().timePerTick * 2)
+				{
+					uint64 skip = timeDelay / soundThread().timePerTick + 1;
+					CAGE_LOG(severityEnum::Warning, "engine", string() + "skipping " + skip + " sound ticks");
+					currentSoundTime += skip * soundThread().timePerTick;
+				}
+				else
+				{
+					if (timeDelay < soundThread().timePerTick)
+						threadSleep(soundThread().timePerTick - timeDelay);
+					currentSoundTime += soundThread().timePerTick;
+				}
 			}
 
 			void soundGameloopStage()
 			{
-				try
+				currentSoundTime = getApplicationTime();
+				uint64 time1, time2, time3, time4;
+				while (!stopping)
 				{
-					uint64 soundTickTime = getApplicationTime();
-					uint64 lastEmit = 0;
-					while (!stopping)
+					time1 = getApplicationTime();
 					{
-						uint64 time1 = getApplicationTime();
-						if (emitIsReady)
-						{
-							lastEmit = soundTickTime;
-							emitSoundStartSemaphore->unlock();
-							soundEmit();
-							emitSoundEndSemaphore->unlock();
-							emitSoundAssetsSemaphore->lock();
-						}
-						uint64 time2 = getApplicationTime();
+						scopeLock<mutexClass> lockAssets(assetsSoundMutex);
+						time2 = getApplicationTime();
 						assets->processCustomThread(soundThreadClass::threadIndex);
 						soundThread().sound.dispatch();
-						soundTick(lastEmit, soundTickTime);
-						gui->soundRender();
-						uint64 time3 = getApplicationTime();
-						uint64 timeDelay = time3 > soundTickTime ? time3 - soundTickTime : 0;
-						if (timeDelay > soundThread().timePerTick * 2)
-						{
-							uint64 skip = timeDelay / soundThread().timePerTick + 1;
-							CAGE_LOG(severityEnum::Warning, "engine", string() + "skipping " + skip + " sound ticks");
-							soundTickTime += skip * soundThread().timePerTick;
-						}
-						else
-						{
-							if (timeDelay < soundThread().timePerTick)
-								threadSleep(soundThread().timePerTick - timeDelay);
-							soundTickTime += soundThread().timePerTick;
-						}
-						uint64 time4 = getApplicationTime();
-						profilingBufferSoundEmit.add(time2 - time1);
-						profilingBufferSoundTick.add(time3 - time2);
-						profilingBufferSoundSleep.add(time4 - time3);
+						soundTick(currentSoundTime);
 					}
+					time3 = getApplicationTime();
+					soundTiming(time3 > currentSoundTime ? time3 - currentSoundTime : 0);
+					time4 = getApplicationTime();
+					profilingBufferSoundWait.add(time2 - time1);
+					profilingBufferSoundTick.add(time3 - time2);
+					profilingBufferSoundSleep.add(time4 - time3);
 				}
-				catch (...)
-				{
-					engineStop();
-					emitSoundStartSemaphore->unlock();
-					emitSoundEndSemaphore->unlock();
-					throw;
-				}
-				emitSoundStartSemaphore->unlock();
-				emitSoundEndSemaphore->unlock();
 			}
 
 			void soundFinalizeStage()
 			{
-				gui->soundFinalize();
 				soundFinalize();
+				//gui->soundFinalize();
 				while (assets->countTotal() > 0)
 				{
 					while (assets->processCustomThread(soundThread().threadIndex));
@@ -278,6 +248,18 @@ namespace cage
 			//////////////////////////////////////
 			// CONTROL
 			//////////////////////////////////////
+
+			void controlAssets()
+			{
+				if (scopeLock<mutexClass> lockGraphics = scopeLock<mutexClass>(assetsGraphicsMutex, 1))
+				{
+					if (scopeLock<mutexClass> lockSound = scopeLock<mutexClass>(assetsSoundMutex, 1))
+					{
+						controlThread().assets.dispatch();
+						while (assets->processControlThread() || assets->processCustomThread(controlThreadClass::threadIndex));
+					}
+				}
+			}
 
 			void updateHistoryComponents()
 			{
@@ -295,65 +277,61 @@ namespace cage
 				}
 			}
 
+			void emitThreadsEntry(uint32 index, uint32)
+			{
+				switch (index)
+				{
+				case 0:
+					soundEmit(currentSoundTime);
+					break;
+				case 1:
+					gui->controlUpdateDone(); // guiEmit
+					break;
+				case 2:
+					graphicsPrepareEmit(currentControlTime);
+					break;
+				default:
+					CAGE_THROW_CRITICAL(exception, "invalid engine emit thread index");
+				}
+			}
+
+			void controlTiming(uint64 timeDelay)
+			{
+				if (timeDelay > controlThread().timePerTick * 2)
+				{
+					uint64 skip = timeDelay / controlThread().timePerTick + 1;
+					CAGE_LOG(severityEnum::Warning, "engine", string() + "skipping " + skip + " control update ticks");
+					currentControlTime += skip * controlThread().timePerTick;
+				}
+				else
+				{
+					if (timeDelay < controlThread().timePerTick)
+						threadSleep(controlThread().timePerTick - timeDelay);
+					currentControlTime += controlThread().timePerTick;
+				}
+			}
+
 			void controlGameloopStage()
 			{
-				try
+				currentControlTime = getApplicationTime();
+				while (!stopping)
 				{
-					currentControlTime = getApplicationTime();
-					while (!stopping)
-					{
-						uint64 time1 = getApplicationTime();
-						updateHistoryComponents();
-						gui->setOutputResolution(window->resolution());
-						gui->controlUpdateStart();
-						window->processEvents();
-						controlThread().update.dispatch();
-						uint64 time2 = getApplicationTime();
-						// emit
-						emitIsReady = true;
-						emitGraphicsStartSemaphore->lock(); // wait for both other threads to enter the emit state
-						emitSoundStartSemaphore->lock();
-						emitIsReady = false;
-						uint64 time3 = getApplicationTime();
-						gui->controlUpdateDone();
-						controlThread().assets.dispatch();
-						while (assets->processControlThread() || assets->processCustomThread(controlThreadClass::threadIndex));
-						emitGraphicsAssetsSemaphore->unlock(); // let both other threads know, that assets are updated
-						emitSoundAssetsSemaphore->unlock();
-						emitGraphicsEndSemaphore->lock(); // wait for both other threads to leave the emit state
-						emitSoundEndSemaphore->lock();
-						uint64 time4 = getApplicationTime();
-						{ // timing
-							uint64 timeDelay = time3 > currentControlTime ? time3 - currentControlTime : 0;
-							if (timeDelay > controlThread().timePerTick * 2)
-							{
-								uint64 skip = timeDelay / controlThread().timePerTick + 1;
-								CAGE_LOG(severityEnum::Warning, "engine", string() + "skipping " + skip + " control update ticks");
-								currentControlTime += skip * controlThread().timePerTick;
-							}
-							else
-							{
-								if (timeDelay < controlThread().timePerTick)
-									threadSleep(controlThread().timePerTick - timeDelay);
-								currentControlTime += controlThread().timePerTick;
-							}
-						}
-						uint64 time5 = getApplicationTime();
-						profilingBufferControlTick.add(time2 - time1);
-						profilingBufferControlWait.add(time3 - time2);
-						profilingBufferControlEmit.add(time4 - time3);
-						profilingBufferControlSleep.add(time5 - time4);
-					}
+					uint64 time1 = getApplicationTime();
+					controlAssets();
+					updateHistoryComponents();
+					gui->setOutputResolution(window->resolution());
+					gui->controlUpdateStart();
+					window->processEvents();
+					controlThread().update.dispatch();
+					uint64 time2 = getApplicationTime();
+					emitThreadsHolder->run();
+					uint64 time3 = getApplicationTime();
+					controlTiming(time3 > currentControlTime ? time3 - currentControlTime : 0);
+					uint64 time4 = getApplicationTime();
+					profilingBufferControlTick.add(time2 - time1);
+					profilingBufferControlEmit.add(time3 - time2);
+					profilingBufferControlSleep.add(time4 - time3);
 				}
-				catch (...)
-				{
-					engineStop();
-					emitGraphicsAssetsSemaphore->unlock();
-					emitSoundAssetsSemaphore->unlock();
-					throw;
-				}
-				emitGraphicsAssetsSemaphore->unlock();
-				emitSoundAssetsSemaphore->unlock();
 			}
 
 			//////////////////////////////////////
@@ -432,20 +410,18 @@ namespace cage
 
 				{ // create sync objects
 					threadsStateBarier = newBarrier(4);
-					graphicsPrepareSemaphore = newSemaphore(1, 1);
-					graphicsDispatchSemaphore = newSemaphore(0, 1);
-					emitGraphicsStartSemaphore = newSemaphore(0, 1);
-					emitGraphicsAssetsSemaphore = newSemaphore(0, 1);
-					emitGraphicsEndSemaphore = newSemaphore(0, 1);
-					emitSoundStartSemaphore = newSemaphore(0, 1);
-					emitSoundAssetsSemaphore = newSemaphore(0, 1);
-					emitSoundEndSemaphore = newSemaphore(0, 1);
+					assetsSoundMutex = newMutex();
+					assetsGraphicsMutex = newMutex();
+					graphicsSemaphore1 = newSemaphore(1, 1);
+					graphicsSemaphore2 = newSemaphore(0, 1);
 				}
 
 				{ // create threads
 					graphicsDispatchThreadHolder = newThread(delegate<void()>().bind<engineDataStruct, &engineDataStruct::graphicsDispatchEntry>(this), "engine graphics dispatch");
 					graphicsPrepareThreadHolder = newThread(delegate<void()>().bind<engineDataStruct, &engineDataStruct::graphicsPrepareEntry>(this), "engine graphics prepare");
 					soundThreadHolder = newThread(delegate<void()>().bind<engineDataStruct, &engineDataStruct::soundEntry>(this), "engine sound");
+					emitThreadsHolder = newThreadPool("engine emit threads ", 3);
+					emitThreadsHolder->function.bind<engineDataStruct, &engineDataStruct::emitThreadsEntry>(this);
 				}
 
 				{ // initialize asset schemes
@@ -503,12 +479,15 @@ namespace cage
 
 				{ scopeLock<barrierClass> l(threadsStateBarier); }
 				CAGE_LOG(severityEnum::Info, "engine", "engine initialized");
+
+				CAGE_ASSERT_RUNTIME(engineStarted == 1);
+				engineStarted = 2;
 			}
 
 			void start()
 			{
-				CAGE_ASSERT_RUNTIME(engineStarted == 1);
-				engineStarted = 2;
+				CAGE_ASSERT_RUNTIME(engineStarted == 2);
+				engineStarted = 3;
 
 				try
 				{
@@ -545,12 +524,15 @@ namespace cage
 				{
 					CAGE_LOG(severityEnum::Error, "engine", "exception caught in finalization (application) in control");
 				}
+
+				CAGE_ASSERT_RUNTIME(engineStarted == 3);
+				engineStarted = 4;
 			}
 
 			void finalize()
 			{
-				CAGE_ASSERT_RUNTIME(engineStarted == 2);
-				engineStarted = 3;
+				CAGE_ASSERT_RUNTIME(engineStarted == 4);
+				engineStarted = 5;
 
 				CAGE_LOG(severityEnum::Info, "engine", "finalizing engine");
 				{ scopeLock<barrierClass> l(threadsStateBarier); }
@@ -599,12 +581,15 @@ namespace cage
 				}
 
 				CAGE_LOG(severityEnum::Info, "engine", "engine finalized");
+
+				CAGE_ASSERT_RUNTIME(engineStarted == 5);
+				engineStarted = 6;
 			}
 		};
 
 		holder<engineDataStruct> engineData;
 
-		engineDataStruct::engineDataStruct(const engineCreateConfig &config) : engineStarted(0), emitIsReady(false), stopping(false), currentControlTime(0)
+		engineDataStruct::engineDataStruct(const engineCreateConfig &config) : engineStarted(0), stopping(false), currentControlTime(0), currentSoundTime(0)
 		{
 			CAGE_LOG(severityEnum::Info, "engine", "creating engine");
 			graphicsDispatchCreate(config);
@@ -724,18 +709,16 @@ namespace cage
 		}
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE,
 			ControlTick,
-			ControlWait,
 			ControlEmit,
 			ControlSleep,
 			GraphicsPrepareWait,
-			GraphicsPrepareEmit,
 			GraphicsPrepareTick,
 			GraphicsDispatchWait,
 			GraphicsDispatchTick,
 			GraphicsDispatchSwap,
 			GraphicsDrawCalls,
 			GraphicsDrawPrimitives,
-			SoundEmit,
+			SoundWait,
 			SoundTick,
 			SoundSleep
 		));

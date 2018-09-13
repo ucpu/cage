@@ -2,10 +2,8 @@ namespace cage
 {
 	void graphicsPrepareCreate(const engineCreateConfig &config);
 	void graphicsPrepareDestroy();
-	void graphicsPrepareInitialize();
-	void graphicsPrepareFinalize();
-	void graphicsPrepareEmit();
-	void graphicsPrepareTick(uint64 controlTime, uint64 prepareTime);
+	void graphicsPrepareEmit(uint64 time);
+	void graphicsPrepareTick(uint64 time);
 
 	void graphicsDispatchCreate(const engineCreateConfig &config);
 	void graphicsDispatchDestroy();
@@ -16,8 +14,7 @@ namespace cage
 
 	void soundCreate(const engineCreateConfig &config);
 	void soundDestroy();
-	void soundInitialize();
 	void soundFinalize();
-	void soundEmit();
-	void soundTick(uint64 controlTime, uint64 prepareTime);
+	void soundEmit(uint64 time);
+	void soundTick(uint64 time);
 }
