@@ -118,7 +118,8 @@ namespace cage
 
 		struct soundPrepareImpl
 		{
-			emitStruct emitBuffers[3];
+			emitStruct emitBufferA, emitBufferB, emitBufferC; // this is awfully stupid, damn you c++
+			emitStruct *emitBuffers[3];
 			emitStruct *emitRead, *emitWrite;
 			holder<swapBufferControllerClass> swapController;
 
@@ -130,7 +131,7 @@ namespace cage
 			uint64 dispatchTime;
 			real interFactor;
 
-			soundPrepareImpl(const engineCreateConfig &config) : emitBuffers{ config, config, config }, emitRead(nullptr), emitWrite(nullptr), emitTime(0), dispatchTime(0)
+			soundPrepareImpl(const engineCreateConfig &config) : emitBufferA(config), emitBufferB(config), emitBufferC(config), emitBuffers{ &emitBufferA, &emitBufferB, &emitBufferC }, emitRead(nullptr), emitWrite(nullptr), emitTime(0), dispatchTime(0)
 			{
 				mixers.reserve(256);
 				soundMixBuffer.resize(10000);
@@ -155,7 +156,7 @@ namespace cage
 					return;
 				}
 
-				emitWrite = &emitBuffers[lock.index()];
+				emitWrite = emitBuffers[lock.index()];
 				emitWrite->fresh = true;
 				emitWrite->voices.clear();
 				emitWrite->listeners.clear();
@@ -222,7 +223,7 @@ namespace cage
 					return;
 				}
 
-				emitRead = &emitBuffers[lock.index()];
+				emitRead = emitBuffers[lock.index()];
 				emitTime = emitRead->time;
 				dispatchTime = itc(emitTime, time, soundThread().timePerTick);
 				interFactor = clamp(real(dispatchTime - emitTime) / soundThread().timePerTick, 0, 1);

@@ -28,6 +28,10 @@ namespace cage
 			ptr->lock();
 		}
 
+		// non copyable
+		scopeLock(const scopeLock &) = delete;
+		scopeLock &operator = (const scopeLock &) = delete;
+
 		~scopeLock()
 		{
 			if (ptr)

@@ -129,7 +129,8 @@ namespace cage
 
 		struct graphicsPrepareImpl
 		{
-			emitStruct emitBuffers[3];
+			emitStruct emitBufferA, emitBufferB, emitBufferC; // this is awfully stupid, damn you c++
+			emitStruct *emitBuffers[3];
 			emitStruct *emitRead, *emitWrite;
 			holder<swapBufferControllerClass> swapController;
 
@@ -483,7 +484,7 @@ namespace cage
 				lig->count++;
 			}
 
-			graphicsPrepareImpl(const engineCreateConfig &config) : emitBuffers{ config, config, config }, emitRead(nullptr), emitWrite(nullptr), dispatchMemory(config.graphicsDispatchMemory), dispatchArena(&dispatchMemory), emitTime(0), dispatchTime(0)
+			graphicsPrepareImpl(const engineCreateConfig &config) : emitBufferA(config), emitBufferB(config), emitBufferC(config), emitBuffers{ &emitBufferA, &emitBufferB, &emitBufferC }, emitRead(nullptr), emitWrite(nullptr), dispatchMemory(config.graphicsDispatchMemory), dispatchArena(&dispatchMemory), emitTime(0), dispatchTime(0)
 			{
 				swapBufferControllerCreateConfig cfg(3);
 				cfg.repeatedReads = true;
@@ -504,7 +505,7 @@ namespace cage
 					return;
 				}
 
-				emitWrite = &emitBuffers[lock.index()];
+				emitWrite = emitBuffers[lock.index()];
 				emitWrite->renderables.clear();
 				emitWrite->lights.clear();
 				emitWrite->cameras.clear();
@@ -588,7 +589,7 @@ namespace cage
 					graphicsDispatch->shaderTranslucent = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/translucent.glsl"));
 				}
 
-				emitRead = &emitBuffers[lock.index()];
+				emitRead = emitBuffers[lock.index()];
 
 				emitTime = emitRead->time;
 				dispatchTime = itc(emitTime, time, controlThread().timePerTick);

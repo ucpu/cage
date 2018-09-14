@@ -22,7 +22,7 @@ namespace cage
 #ifdef CAGE_SYSTEM_WINDOWS
 			HANDLE sem;
 #elif defined(CAGE_SYSTEM_MAC)
-            dispatch_semaphore_t sem;
+			dispatch_semaphore_t sem;
 #else
 			sem_t sem;
 #endif
@@ -43,7 +43,7 @@ namespace cage
 #ifdef CAGE_SYSTEM_WINDOWS
 				CloseHandle(sem);
 #elif defined(CAGE_SYSTEM_MAC)
-                dispatch_release(sem);
+				dispatch_release(sem);
 #else
 				sem_destroy(&sem);
 #endif
@@ -57,13 +57,13 @@ namespace cage
 #ifdef CAGE_SYSTEM_WINDOWS
 		WaitForSingleObject(impl->sem, INFINITE);
 #elif defined(CAGE_SYSTEM_MAC)
-        dispatch_semaphore_wait(impl->sem, DISPATCH_TIME_FOREVER);
+		dispatch_semaphore_wait(impl->sem, DISPATCH_TIME_FOREVER);
 #else
-        int r;
-        do
-        {
-            r = sem_wait(&impl->sem);
-        } while (r != 0 && errno == EINTR);
+		int r;
+		do
+		{
+			r = sem_wait(&impl->sem);
+		} while (r == EINTR);
 #endif
 	}
 
@@ -73,7 +73,7 @@ namespace cage
 #ifdef CAGE_SYSTEM_WINDOWS
 		ReleaseSemaphore(impl->sem, 1, nullptr);
 #elif defined(CAGE_SYSTEM_MAC)
-        dispatch_semaphore_signal(impl->sem);
+	dispatch_semaphore_signal(impl->sem);
 #else
 		sem_post(&impl->sem);
 #endif

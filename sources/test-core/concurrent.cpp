@@ -53,6 +53,14 @@ namespace
 			}
 		}
 	}
+
+	void tryLockTest()
+	{
+		if (scopeLock<mutexClass>(mutexGlobal, true))
+		{
+			CAGE_TEST(false);
+		}
+	}
 }
 
 void testConcurrent()
@@ -67,11 +75,16 @@ void testConcurrent()
 
 	{
 		CAGE_TESTCASE("try lock mutex");
-		if (scopeLock<mutexClass>(mutex, 1))
-		{}
-		else
+		for (uint32 i = 0; i < 3; i++)
 		{
-			CAGE_TEST(false);
+			if (scopeLock<mutexClass>(mutex, true))
+			{
+				newThread(delegate<void()>().bind<&tryLockTest>(), string() + "try lock");
+			}
+			else
+			{
+				CAGE_TEST(false);
+			}
 		}
 	}
 

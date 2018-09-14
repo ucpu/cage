@@ -217,7 +217,6 @@ namespace cage
 
 			void soundGameloopStage()
 			{
-				currentSoundTime = getApplicationTime();
 				uint64 time1, time2, time3, time4;
 				while (!stopping)
 				{
@@ -253,12 +252,14 @@ namespace cage
 			// CONTROL
 			//////////////////////////////////////
 
-			void controlAssets()
+			void controlTryAssets()
 			{
 				assetSyncAttempts++;
-				if (scopeLock<mutexClass> lockGraphics = scopeLock<mutexClass>(assetsGraphicsMutex, assetSyncAttempts < 30))
+				scopeLock<mutexClass> lockGraphics(assetsGraphicsMutex, assetSyncAttempts < 30);
+				if (lockGraphics)
 				{
-					if (scopeLock<mutexClass> lockSound = scopeLock<mutexClass>(assetsSoundMutex, assetSyncAttempts < 15))
+					scopeLock<mutexClass> lockSound(assetsSoundMutex, assetSyncAttempts < 15);
+					if (lockSound)
 					{
 						controlThread().assets.dispatch();
 						while (assets->processControlThread() || assets->processCustomThread(controlThreadClass::threadIndex));
@@ -319,11 +320,10 @@ namespace cage
 
 			void controlGameloopStage()
 			{
-				currentControlTime = getApplicationTime();
 				while (!stopping)
 				{
 					uint64 time1 = getApplicationTime();
-					controlAssets();
+					controlTryAssets();
 					updateHistoryComponents();
 					gui->setOutputResolution(window->resolution());
 					gui->controlUpdateStart();
@@ -426,7 +426,7 @@ namespace cage
 					graphicsDispatchThreadHolder = newThread(delegate<void()>().bind<engineDataStruct, &engineDataStruct::graphicsDispatchEntry>(this), "engine graphics dispatch");
 					graphicsPrepareThreadHolder = newThread(delegate<void()>().bind<engineDataStruct, &engineDataStruct::graphicsPrepareEntry>(this), "engine graphics prepare");
 					soundThreadHolder = newThread(delegate<void()>().bind<engineDataStruct, &engineDataStruct::soundEntry>(this), "engine sound");
-					emitThreadsHolder = newThreadPool("engine emit threads ", 3);
+					emitThreadsHolder = newThreadPool("engine emit ", 3);
 					emitThreadsHolder->function.bind<engineDataStruct, &engineDataStruct::emitThreadsEntry>(this);
 				}
 
@@ -506,6 +506,8 @@ namespace cage
 				}
 
 				CAGE_LOG(severityEnum::Info, "engine", "starting engine");
+
+				currentControlTime = currentSoundTime = getApplicationTime();
 
 				{ scopeLock<barrierClass> l(threadsStateBarier); }
 				{ scopeLock<barrierClass> l(threadsStateBarier); }

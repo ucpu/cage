@@ -19,16 +19,12 @@ namespace cage
 #ifdef CAGE_SYSTEM_WINDOWS
 		return TryEnterCriticalSection(&impl->cs) != 0;
 #else
-		int r;
-		do
-		{
-			r = pthread_mutex_trylock(&impl->mut);
-			if (r != 0 && errno == EBUSY)
-				return false;
-		} while (r != 0 && errno == EINTR);
+		int r = pthread_mutex_trylock(&impl->mut);
+		if (r == EBUSY)
+			return false;
 		if (r == 0)
 			return true;
-		CAGE_THROW_ERROR(codeException, "mutex trylock error", errno);
+		CAGE_THROW_ERROR(codeException, "mutex trylock error", r);
 #endif
 	}
 
@@ -42,9 +38,9 @@ namespace cage
 		do
 		{
 			r = pthread_mutex_lock(&impl->mut);
-		} while (r != 0 && errno == EINTR);
+		} while (r == EINTR);
 		if (r != 0)
-			CAGE_THROW_ERROR(codeException, "mutex lock error", errno);
+			CAGE_THROW_ERROR(codeException, "mutex lock error", r);
 #endif
 	}
 
@@ -56,7 +52,7 @@ namespace cage
 #else
 		int r = pthread_mutex_unlock(&impl->mut);
 		if (r != 0)
-			CAGE_THROW_ERROR(codeException, "mutex unlock error", errno);
+			CAGE_THROW_CRITICAL(codeException, "mutex unlock error", r);
 #endif
 	}
 
