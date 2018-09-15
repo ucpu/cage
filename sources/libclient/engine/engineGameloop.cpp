@@ -39,9 +39,6 @@ namespace cage
 				lock->lock();
 			}
 
-			scopedSemaphores(holder<semaphoreClass> &unlock) : sem(unlock.get())
-			{}
-
 			~scopedSemaphores()
 			{
 				sem->unlock();
@@ -107,7 +104,6 @@ namespace cage
 
 			void graphicsPrepareGameloopStage()
 			{
-				scopedSemaphores leaveLock(graphicsSemaphore2);
 				uint64 time1, time2, time3;
 				while (!stopping)
 				{
@@ -124,6 +120,11 @@ namespace cage
 					profilingBufferGraphicsPrepareWait.add(time2 - time1);
 					profilingBufferGraphicsPrepareTick.add(time3 - time2);
 				}
+			}
+
+			void graphicsPrepareStopStage()
+			{
+				graphicsSemaphore2->unlock();
 			}
 
 			void graphicsPrepareFinalizeStage()
@@ -148,7 +149,6 @@ namespace cage
 
 			void graphicsDispatchGameloopStage()
 			{
-				scopedSemaphores leaveLock(graphicsSemaphore1);
 				uint64 time1, time2, time3, time4;
 				while (!stopping)
 				{
@@ -177,6 +177,11 @@ namespace cage
 					profilingBufferGraphicsDispatchTick.add(time3 - time2);
 					profilingBufferGraphicsDispatchSwap.add(time4 - time3);
 				}
+			}
+
+			void graphicsDispatchStopStage()
+			{
+				graphicsSemaphore1->unlock();
 			}
 
 			void graphicsDispatchFinalizeStage()
@@ -235,6 +240,11 @@ namespace cage
 					profilingBufferSoundTick.add(time3 - time2);
 					profilingBufferSoundSleep.add(time4 - time3);
 				}
+			}
+
+			void soundStopStage()
+			{
+				// nothing
 			}
 
 			void soundFinalizeStage()
@@ -356,6 +366,7 @@ namespace cage
 				{ scopeLock<barrierClass> l(threadsStateBarier); } \
 				try { CAGE_JOIN(NAME, GameloopStage)(); } \
 				catch (...) { CAGE_LOG(severityEnum::Error, "engine", "exception caught in gameloop in " CAGE_STRINGIZE(NAME)); engineStop(); } \
+				CAGE_JOIN(NAME, StopStage)(); \
 				{ scopeLock<barrierClass> l(threadsStateBarier); } \
 				try { CAGE_JOIN(NAME, Thread)().finalize.dispatch(); } \
 				catch (...) { CAGE_LOG(severityEnum::Error, "engine", "exception caught in finalization (application) in " CAGE_STRINGIZE(NAME)); } \
@@ -549,7 +560,14 @@ namespace cage
 					assets->remove(hashString("cage/cage.pack"));
 					while (assets->countTotal() > 0)
 					{
-						controlThread().assets.dispatch();
+						try
+						{
+							controlThread().assets.dispatch();
+						}
+						catch (...)
+						{
+							CAGE_LOG(severityEnum::Error, "engine", "exception caught in finalization (unloading assets) in control");
+						}
 						while (assets->processCustomThread(controlThread().threadIndex) || assets->processControlThread());
 						threadSleep(5000);
 					}
@@ -632,10 +650,10 @@ namespace cage
 	void engineStop()
 	{
 		CAGE_ASSERT_RUNTIME(engineData);
-		if (engineData->stopping)
-			return;
-		CAGE_LOG(severityEnum::Info, "engine", "stopping engine");
-		engineData->stopping = true;
+		if (!engineData->stopping.exchange(true))
+		{
+			CAGE_LOG(severityEnum::Info, "engine", "stopping engine");
+		}
 	}
 
 	void engineFinalize()
