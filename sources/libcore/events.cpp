@@ -8,51 +8,70 @@ namespace cage
 	{
 		mutexClass *eventsMutex()
 		{
-			static holder<mutexClass> *m = new holder<mutexClass>(newMutex()); // this leak is intentionall
+			static holder<mutexClass> *m = new holder<mutexClass>(newMutex()); // this leak is intentional
 			return m->get();
 		}
 	}
 
 	namespace privat
 	{
-		eventPrivate::eventPrivate() : p(nullptr), n(nullptr)
+		eventLinker::eventLinker() : p(nullptr), n(nullptr), order(0)
 		{}
 
-		eventPrivate::eventPrivate(eventPrivate &other)
+		eventLinker::eventLinker(eventLinker &other)
 		{
-			attach(&other);
+			attach(&other, other.order);
 		}
 
-		eventPrivate::~eventPrivate()
+		eventLinker::~eventLinker()
 		{
 			detach();
 		}
 
-		eventPrivate &eventPrivate::operator = (eventPrivate &other)
+		eventLinker &eventLinker::operator = (eventLinker &other)
 		{
 			if (&other == this)
 				return *this;
-			attach(&other);
+			attach(&other, other.order);
 			return *this;
 		}
 
-		void eventPrivate::attach(eventPrivate *d)
+		void eventLinker::attach(eventLinker *d, sint32 o)
 		{
 			scopeLock<mutexClass> lck(eventsMutex());
 			unlink();
+			order = o;
+			// find rightmost node
 			while (d->n)
 				d = d->n;
-			d->n = this;
-			p = d;
+			// find the node after which we belong
+			while (d->p && d->p->order > o)
+				d = d->p;
+			if (d->order > o)
+			{ // attach before d
+				p = d->p;
+				n = d;
+				if (p)
+					p->n = this;
+				n->p = this;
+			}
+			else
+			{ // attach after d
+				n = d->n;
+				p = d;
+				if (n)
+					n->p = this;
+				p->n = this;
+			}
 		}
 
-		void eventPrivate::detach()
+		void eventLinker::detach()
 		{
 			scopeLock<mutexClass> lck(eventsMutex());
 			unlink();
 		}
 
-		void eventPrivate::unlink()
+		void eventLinker::unlink()
 		{
 			if (p)
 				p->n = n;

@@ -1,58 +1,108 @@
 namespace cage
 {
-	namespace privat
-	{
-		struct CAGE_API eventPrivate
-		{
-			eventPrivate();
-			eventPrivate(eventPrivate &other);
-			~eventPrivate();
-			eventPrivate &operator = (eventPrivate &other);
-			void attach(eventPrivate *d);
-			void detach();
-			eventPrivate *p, *n;
-		private:
-			void unlink();
-		};
-	}
-
 	template<class> struct eventListener;
 	template<class> struct eventDispatcher;
 
-	template<class... Ts>
-	struct eventListener<bool(Ts...)> : private privat::eventPrivate, public delegate<bool(Ts...)>
+	namespace privat
 	{
-		void attach(eventDispatcher<bool(Ts...)> &dispatcher)
+		struct CAGE_API eventLinker
 		{
-			privat::eventPrivate::attach((privat::eventPrivate *) &dispatcher);
+			eventLinker();
+			eventLinker(eventLinker &other);
+			virtual ~eventLinker();
+			eventLinker &operator = (eventLinker &other);
+			void attach(eventLinker *d, sint32 order);
+			void detach();
+			eventLinker *p, *n;
+		private:
+			void unlink();
+			sint32 order;
+		};
+
+		template<class... Ts>
+		struct eventInvoker : public eventLinker
+		{
+			void attach(eventDispatcher<bool(Ts...)> &dispatcher, sint32 order = 0)
+			{
+				eventLinker::attach(&dispatcher, order);
+			}
+
+		protected:
+			virtual bool invoke(Ts... vs) const = 0;
+
+			friend struct eventDispatcher<bool(Ts...)>;
+		};
+	}
+
+	template<class... Ts>
+	struct eventListener<bool(Ts...)> : private privat::eventInvoker<Ts...>, public delegate<bool(Ts...)>
+	{
+		using privat::eventInvoker<Ts...>::attach;
+		using privat::eventInvoker<Ts...>::detach;
+
+	private:
+		virtual bool invoke(Ts... vs) const override
+		{
+			if (*this)
+				return (*this)(templates::forward<Ts>(vs)...);
+			return false;
 		}
 
-		using privat::eventPrivate::detach;
+		friend struct eventDispatcher<bool(Ts...)>;
+	};
+
+	template<class... Ts>
+	struct eventListener<void(Ts...)> : private privat::eventInvoker<Ts...>, public delegate<void(Ts...)>
+	{
+		using privat::eventInvoker<Ts...>::attach;
+		using privat::eventInvoker<Ts...>::detach;
+
+	private:
+		virtual bool invoke(Ts... vs) const override
+		{
+			if (*this)
+				(*this)(templates::forward<Ts>(vs)...);
+			return false;
+		}
+
 		friend struct eventDispatcher<bool(Ts...)>;
 	};
 	
 	template<class... Ts>
-	struct eventDispatcher<bool(Ts...)> : private privat::eventPrivate
+	struct eventDispatcher<bool(Ts...)> : private privat::eventInvoker<Ts...>
 	{
-		typedef eventListener<bool(Ts...)> listenerType;
-
-		void attach(listenerType &listener)
+		void attach(eventListener<bool(Ts...)> &listener, sint32 order = 0)
 		{
-			listener.attach(*this);
+			listener.attach(*this, order);
+		}
+
+		void attach(eventListener<void(Ts...)> &listener, sint32 order = 0)
+		{
+			listener.attach(*this, order);
 		}
 
 		bool dispatch(Ts... vs) const
 		{
-			for (listenerType *l = (listenerType *)n; l; l = (listenerType *)l->n)
+			const privat::eventInvoker<Ts...> *l = this;
+			while (l->p)
+				l = static_cast<const privat::eventInvoker<Ts...>*>(l->p);
+			while (l)
 			{
-				if (!*l)
-					continue;
-				if ((*l)(templates::forward<Ts>(vs)...))
+				if (l->invoke(templates::forward<Ts>(vs)...))
 					return true;
+				l = static_cast<const privat::eventInvoker<Ts...>*>(l->n);
 			}
 			return false;
 		}
 		
-		using privat::eventPrivate::detach;
+		using privat::eventInvoker<Ts...>::detach;
+
+	private:
+		virtual bool invoke(Ts... vs) const override
+		{
+			return false;
+		}
+
+		friend struct privat::eventInvoker<Ts...>;
 	};
 }
