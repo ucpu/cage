@@ -15,7 +15,7 @@ namespace cage
 	{
 		mutexClass *mut()
 		{
-			static holder<mutexClass> *m = new holder<mutexClass>(newMutex()); // this leak is intentionall
+			static holder<mutexClass> *m = new holder<mutexClass>(newMutex()); // this leak is intentional
 			return m->get();
 		}
 

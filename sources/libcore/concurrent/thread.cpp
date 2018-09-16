@@ -69,7 +69,11 @@ namespace cage
 				}
 				catch (...)
 				{
-					// do nothing
+#ifdef CAGE_SYSTEM_WINDOWS
+					CloseHandle(handle);
+#endif
+					CAGE_LOG(severityEnum::Critical, "thread", string() + "exception thrown in thread '" + threadName + "' cannot be propagated to the caller thread, terminating now");
+					std::terminate();
 				}
 
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -218,7 +222,7 @@ namespace cage
 			catch (...)
 			{
 				impl->exptr = std::current_exception();
-				CAGE_LOG(severityEnum::Error, "thread", string() + "unhandled exception in thread '" + getCurrentThreadName() + "'");
+				CAGE_LOG(severityEnum::Warning, "thread", string() + "unhandled exception in thread '" + getCurrentThreadName() + "'");
 			}
 			CAGE_LOG(severityEnum::Info, "thread", string() + "thread '" + getCurrentThreadName() + "' ended");
 #ifdef CAGE_SYSTEM_WINDOWS

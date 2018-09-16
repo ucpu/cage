@@ -32,6 +32,20 @@ namespace cage
 		scopeLock(const scopeLock &) = delete;
 		scopeLock &operator = (const scopeLock &) = delete;
 
+		// moveable
+		scopeLock(scopeLock &&other) : ptr(other.ptr)
+		{
+			other.ptr = nullptr;
+		}
+
+		scopeLock &operator = (scopeLock &&other)
+		{
+			if (ptr)
+				ptr->unlock();
+			ptr = other.ptr;
+			other.ptr = nullptr;
+		}
+
 		~scopeLock()
 		{
 			if (ptr)

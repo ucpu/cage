@@ -11,13 +11,13 @@ namespace cage
 	{
 		mutexClass *loggerMutex()
 		{
-			static holder<mutexClass> *m = new holder<mutexClass>(newMutex()); // this leak is intentionall
+			static holder<mutexClass> *m = new holder<mutexClass>(newMutex()); // this leak is intentional
 			return m->get();
 		}
 
 		timerClass *loggerTimer()
 		{
-			static holder<timerClass> *t = new holder<timerClass>(newTimer()); // this leak is intentionall
+			static holder<timerClass> *t = new holder<timerClass>(newTimer()); // this leak is intentional
 			return t->get();
 		}
 

@@ -77,7 +77,7 @@ void testConcurrent()
 		CAGE_TESTCASE("try lock mutex");
 		for (uint32 i = 0; i < 3; i++)
 		{
-			if (scopeLock<mutexClass>(mutex, true))
+			if (auto lock = scopeLock<mutexClass>(mutex, true))
 			{
 				newThread(delegate<void()>().bind<&tryLockTest>(), string() + "try lock");
 			}
