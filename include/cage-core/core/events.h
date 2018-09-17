@@ -83,14 +83,13 @@ namespace cage
 
 		bool dispatch(Ts... vs) const
 		{
-			const privat::eventInvoker<Ts...> *l = this;
-			while (l->p)
-				l = static_cast<const privat::eventInvoker<Ts...>*>(l->p);
+			CAGE_ASSERT_RUNTIME(!p);
+			const privat::eventLinker *l = n;
 			while (l)
 			{
-				if (l->invoke(templates::forward<Ts>(vs)...))
+				if (static_cast<const privat::eventInvoker<Ts...>*>(l)->invoke(templates::forward<Ts>(vs)...))
 					return true;
-				l = static_cast<const privat::eventInvoker<Ts...>*>(l->n);
+				l = l->n;
 			}
 			return false;
 		}

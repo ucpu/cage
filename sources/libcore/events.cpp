@@ -15,7 +15,7 @@ namespace cage
 
 	namespace privat
 	{
-		eventLinker::eventLinker() : p(nullptr), n(nullptr), order(0)
+		eventLinker::eventLinker() : p(nullptr), n(nullptr), order(detail::numeric_limits<sint32>::min())
 		{}
 
 		eventLinker::eventLinker(eventLinker &other)
