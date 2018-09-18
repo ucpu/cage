@@ -83,7 +83,7 @@ namespace cage
 
 		bool dispatch(Ts... vs) const
 		{
-			CAGE_ASSERT_RUNTIME(!p);
+			CAGE_ASSERT_RUNTIME(!this->p);
 			const privat::eventLinker *l = this->n;
 			while (l)
 			{
