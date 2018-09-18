@@ -84,7 +84,7 @@ namespace cage
 		bool dispatch(Ts... vs) const
 		{
 			CAGE_ASSERT_RUNTIME(!p);
-			const privat::eventLinker *l = n;
+			const privat::eventLinker *l = this->n;
 			while (l)
 			{
 				if (static_cast<const privat::eventInvoker<Ts...>*>(l)->invoke(templates::forward<Ts>(vs)...))

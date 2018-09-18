@@ -5,18 +5,26 @@ function(cage_build_configuration)
 	endif()
 
 	set(CMAKE_POSITION_INDEPENDENT_CODE ON PARENT_SCOPE)
-	set(CMAKE_CXX_STANDARD 11 PARENT_SCOPE)
+	set(CMAKE_CXX_STANDARD 14)
+	set(CMAKE_CXX_STANDARD ${CMAKE_CXX_STANDARD} PARENT_SCOPE)
 
 	if(CMAKE_COMPILER_IS_GNUCXX)
-		# gcc: disable warnings about attributes
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-attributes" PARENT_SCOPE)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes" PARENT_SCOPE)
+		# disable warnings about attributes
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-attributes")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes")
 	endif()
 
 	if(MSVC)
-		# msvc: multi-process compilation
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -MP" PARENT_SCOPE)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -MP" PARENT_SCOPE)
+		# multi-process compilation
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+		# conformance to standard
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive-")
+		# enforce specific c++ standard
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++${CMAKE_CXX_STANDARD}")
 	endif()
+
+	set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} PARENT_SCOPE)
+	set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} PARENT_SCOPE)
 endfunction(cage_build_configuration)
 
