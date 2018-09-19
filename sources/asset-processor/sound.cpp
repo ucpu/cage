@@ -1,6 +1,6 @@
 #include "processor.h"
 
-#include <cage-core/utility/memoryBuffer.h>
+#include <cage-core/memoryBuffer.h>
 
 #include <dr_libs/dr_flac.h>
 #include <dr_libs/dr_wav.h>

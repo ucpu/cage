@@ -8,7 +8,7 @@
 #include <cage-client/graphics.h>
 #include <cage-client/window.h>
 #include <cage-client/engine.h>
-#include <cage-client/utility/cameraController.h>
+#include <cage-client/cameraController.h>
 
 namespace cage
 {

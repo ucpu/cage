@@ -2,7 +2,7 @@
 
 #include "main.h"
 #include <cage-core/math.h>
-#include <cage-core/utility/timer.h>
+#include <cage-core/timer.h>
 
 void test(const mat4 &a, const mat4 &b)
 {

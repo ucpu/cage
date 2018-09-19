@@ -12,7 +12,7 @@
 #include <cage-core/config.h>
 #include <cage-core/memory.h> // decompress
 #include <cage-core/concurrent.h>
-#include <cage-core/utility/serialization.h>
+#include <cage-core/serialization.h>
 
 namespace cage
 {

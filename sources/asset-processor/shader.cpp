@@ -5,7 +5,7 @@
 
 #include "processor.h"
 
-#include <cage-core/utility/timer.h>
+#include <cage-core/timer.h>
 #include <cage-client/opengl.h>
 
 namespace

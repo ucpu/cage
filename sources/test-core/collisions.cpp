@@ -1,9 +1,9 @@
 #include "main.h"
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
-#include <cage-core/utility/collider.h>
-#include <cage-core/utility/collision.h>
-#include <cage-core/utility/memoryBuffer.h>
+#include <cage-core/collider.h>
+#include <cage-core/collision.h>
+#include <cage-core/memoryBuffer.h>
 
 void testCollisions()
 {

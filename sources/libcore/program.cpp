@@ -3,10 +3,10 @@
 #include <cage-core/log.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/filesystem.h>
-#include <cage-core/utility/program.h>
+#include <cage-core/program.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
-#include "../incWin.h"
+#include "incWin.h"
 #else
 #include <unistd.h>
 #include <signal.h>

@@ -3,8 +3,8 @@
 
 #include "processor.h"
 
-#include <cage-core/utility/memoryBuffer.h>
-#include <cage-core/utility/png.h>
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/png.h>
 
 #include <cage-client/opengl.h>
 

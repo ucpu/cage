@@ -5,8 +5,8 @@
 #include <cage-core/log.h>
 #include <cage-core/filesystem.h>
 #include <cage-core/config.h>
-#include <cage-core/utility/cmdOptions.h>
-#include <cage-core/utility/program.h>
+#include <cage-core/cmdOptions.h>
+#include <cage-core/program.h>
 
 using namespace cage;
 

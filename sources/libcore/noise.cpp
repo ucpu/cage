@@ -1,8 +1,8 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/math.h>
-#include <cage-core/utility/noise.h>
-#include <cage-core/utility/random.h>
+#include <cage-core/noise.h>
+#include <cage-core/random.h>
 
 #include <utility>
 

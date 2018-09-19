@@ -2,7 +2,7 @@
 
 #include "main.h"
 
-#include <cage-core/utility/memoryBuffer.h>
+#include <cage-core/memoryBuffer.h>
 
 void testCopyAndMove()
 {

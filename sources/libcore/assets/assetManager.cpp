@@ -13,10 +13,10 @@
 #include <cage-core/filesystem.h>
 #include <cage-core/assets.h>
 #include <cage-core/config.h>
-#include <cage-core/utility/hashTable.h>
-#include <cage-core/utility/hashString.h>
-#include <cage-core/utility/memoryBuffer.h>
-#include <cage-core/utility/concurrentQueue.h>
+#include <cage-core/hashTable.h>
+#include <cage-core/hashString.h>
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/concurrentQueue.h>
 
 namespace cage
 {

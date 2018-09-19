@@ -6,7 +6,7 @@
 #include <cage-core/log.h>
 #include <cage-core/config.h>
 #include <cage-core/filesystem.h>
-#include <cage-core/utility/lineReader.h>
+#include <cage-core/lineReader.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>

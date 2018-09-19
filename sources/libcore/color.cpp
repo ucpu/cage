@@ -3,7 +3,7 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/math.h>
-#include <cage-core/utility/color.h>
+#include <cage-core/color.h>
 
 namespace cage
 {

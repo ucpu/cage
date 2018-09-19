@@ -2,7 +2,7 @@
 
 #define CAGE_EXPORT
 #include <cage-core/core.h>
-#include <cage-core/utility/identifier.h>
+#include <cage-core/identifier.h>
 
 namespace cage
 {

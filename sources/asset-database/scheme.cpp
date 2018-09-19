@@ -3,7 +3,7 @@
 
 #include <cage-core/core.h>
 #include <cage-core/log.h>
-#include <cage-core/utility/ini.h>
+#include <cage-core/ini.h>
 
 using namespace cage;
 

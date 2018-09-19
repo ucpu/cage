@@ -1,7 +1,7 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
-#include <cage-core/utility/hashString.h>
-#include <cage-core/utility/memoryBuffer.h>
+#include <cage-core/hashString.h>
+#include <cage-core/memoryBuffer.h>
 
 namespace cage
 {

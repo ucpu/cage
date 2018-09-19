@@ -5,7 +5,7 @@
 #include <cage-core/math.h>
 #include <cage-core/log.h>
 #include <cage-core/concurrent.h>
-#include <cage-core/utility/lineReader.h>
+#include <cage-core/lineReader.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>

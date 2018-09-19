@@ -1,7 +1,7 @@
 #include "main.h"
 
 #include <cage-core/math.h>
-#include <cage-core/utility/variableInterpolatingBuffer.h>
+#include <cage-core/variableInterpolatingBuffer.h>
 
 void testVariableInterpolatingBuffer()
 {

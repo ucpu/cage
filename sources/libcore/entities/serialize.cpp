@@ -6,8 +6,8 @@
 #include <cage-core/math.h>
 #include <cage-core/memory.h>
 #include <cage-core/entities.h>
-#include <cage-core/utility/memoryBuffer.h>
-#include <cage-core/utility/serialization.h>
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/serialization.h>
 
 namespace cage
 {

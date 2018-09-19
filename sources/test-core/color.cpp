@@ -1,6 +1,6 @@
 #include "main.h"
 #include <cage-core/math.h>
-#include <cage-core/utility/color.h>
+#include <cage-core/color.h>
 
 void test(const vec3 &a, const vec3 &b);
 

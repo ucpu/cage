@@ -4,7 +4,7 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/concurrent.h>
-#include <cage-core/utility/threadPool.h>
+#include <cage-core/threadPool.h>
 
 namespace cage
 {

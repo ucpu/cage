@@ -1,8 +1,8 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/memory.h>
-#include <cage-core/utility/collider.h>
-#include <cage-core/utility/memoryBuffer.h>
+#include <cage-core/collider.h>
+#include <cage-core/memoryBuffer.h>
 #include <cage-core/assets.h>
 
 namespace cage

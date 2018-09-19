@@ -1,8 +1,8 @@
 #include "utility/assimp.h"
-#include <cage-core/utility/hashString.h>
-#include <cage-core/utility/ini.h>
-#include <cage-core/utility/memoryBuffer.h>
-#include <cage-core/utility/serialization.h>
+#include <cage-core/hashString.h>
+#include <cage-core/ini.h>
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/serialization.h>
 #include <cage-client/graphics/shaderConventions.h>
 #include <cage-client/opengl.h>
 

@@ -3,14 +3,14 @@
 #include <cage-core/geometry.h>
 #include <cage-core/assets.h>
 #include <cage-core/memory.h>
-#include <cage-core/utility/serialization.h>
+#include <cage-core/serialization.h>
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
 #include <cage-client/core.h>
 #include <cage-client/graphics.h>
 #include <cage-client/assetStructs.h>
 
-#include <cage-core/utility/pointer.h>
+#include <cage-core/pointer.h>
 
 namespace cage
 {

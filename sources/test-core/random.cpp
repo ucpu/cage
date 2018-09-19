@@ -1,8 +1,8 @@
 #include "main.h"
 
 #include <cage-core/math.h>
-#include <cage-core/utility/identifier.h>
-#include <cage-core/utility/random.h>
+#include <cage-core/identifier.h>
+#include <cage-core/random.h>
 
 void testRandom()
 {

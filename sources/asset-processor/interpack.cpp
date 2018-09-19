@@ -1,8 +1,8 @@
 #include <map>
 
 #include "processor.h"
-#include <cage-core/utility/ini.h>
-#include <cage-core/utility/hashString.h>
+#include <cage-core/ini.h>
+#include <cage-core/hashString.h>
 
 void processInterpack()
 {

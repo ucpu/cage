@@ -2,7 +2,7 @@
 
 #include <cage-core/math.h>
 #include <cage-core/entities.h>
-#include <cage-core/utility/memoryBuffer.h>
+#include <cage-core/memoryBuffer.h>
 
 void defineManager(entityManagerClass *man)
 {

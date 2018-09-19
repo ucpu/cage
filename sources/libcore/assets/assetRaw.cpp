@@ -2,7 +2,7 @@
 #include <cage-core/core.h>
 #include <cage-core/memory.h>
 #include <cage-core/assets.h>
-#include <cage-core/utility/memoryBuffer.h>
+#include <cage-core/memoryBuffer.h>
 
 namespace cage
 {

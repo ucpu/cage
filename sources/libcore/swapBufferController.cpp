@@ -3,7 +3,7 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/concurrent.h>
-#include <cage-core/utility/swapBufferController.h>
+#include <cage-core/swapBufferController.h>
 
 namespace cage
 {

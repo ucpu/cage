@@ -3,7 +3,7 @@
 #include <map>
 
 #include "net.h"
-#include <cage-core/utility/identifier.h>
+#include <cage-core/identifier.h>
 
 namespace cage
 {

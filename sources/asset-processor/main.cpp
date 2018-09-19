@@ -2,7 +2,7 @@
 #include <map>
 
 #include "processor.h"
-#include <cage-core/utility/hashString.h>
+#include <cage-core/hashString.h>
 
 // passed names
 string inputDirectory; // c:/asset

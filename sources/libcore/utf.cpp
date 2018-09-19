@@ -1,6 +1,6 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
-#include <cage-core/utility/utf.h>
+#include <cage-core/utf.h>
 
 #ifdef CAGE_DEBUG
 #include "utf8/checked.h"

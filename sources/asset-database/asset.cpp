@@ -3,7 +3,7 @@
 
 #include <cage-core/core.h>
 #include <cage-core/filesystem.h>
-#include <cage-core/utility/hashString.h>
+#include <cage-core/hashString.h>
 
 using namespace cage;
 

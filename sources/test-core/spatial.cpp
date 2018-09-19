@@ -7,8 +7,8 @@
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
 #include <cage-core/config.h>
-#include <cage-core/utility/timer.h>
-#include <cage-core/utility/spatial.h>
+#include <cage-core/timer.h>
+#include <cage-core/spatial.h>
 
 namespace
 {

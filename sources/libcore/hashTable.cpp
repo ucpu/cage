@@ -3,7 +3,7 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/memory.h>
-#include <cage-core/utility/hashTable.h>
+#include <cage-core/hashTable.h>
 #include <cage-core/math.h>
 
 namespace cage

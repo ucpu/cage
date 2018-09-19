@@ -7,8 +7,8 @@
 #include <cage-core/network.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/math.h> // random
-#include <cage-core/utility/memoryBuffer.h>
-#include <cage-core/utility/identifier.h> // generateRandomData
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/identifier.h> // generateRandomData
 
 namespace
 {

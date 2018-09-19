@@ -1,7 +1,7 @@
 #include "main.h"
-#include <cage-core/utility/memoryBuffer.h>
-#include <cage-core/utility/stdBufferStream.h>
-#include <cage-core/utility/serialization.h>
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/stdBufferStream.h>
+#include <cage-core/serialization.h>
 
 void testMemoryBuffers()
 {

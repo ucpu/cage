@@ -5,9 +5,9 @@
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
-#include <cage-core/utility/collider.h>
-#include <cage-core/utility/memoryBuffer.h>
-#include <cage-core/utility/serialization.h>
+#include <cage-core/collider.h>
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/serialization.h>
 
 namespace cage
 {

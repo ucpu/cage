@@ -1,8 +1,8 @@
 #include "main.h"
 #include <cage-core/math.h>
-#include <cage-core/utility/png.h>
-#include <cage-core/utility/color.h>
-#include <cage-core/utility/noise.h>
+#include <cage-core/png.h>
+#include <cage-core/color.h>
+#include <cage-core/noise.h>
 
 namespace
 {

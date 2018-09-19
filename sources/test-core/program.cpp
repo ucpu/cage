@@ -1,5 +1,5 @@
 #include "main.h"
-#include <cage-core/utility/program.h>
+#include <cage-core/program.h>
 
 void testProgram()
 {

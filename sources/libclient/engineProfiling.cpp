@@ -10,7 +10,7 @@
 #include <cage-client/engine.h>
 #include <cage-client/graphics.h>
 #include <cage-client/window.h>
-#include <cage-client/utility/engineProfiling.h>
+#include <cage-client/engineProfiling.h>
 
 namespace cage
 {

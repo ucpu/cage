@@ -1,8 +1,8 @@
 #include "main.h"
 #include <cage-core/math.h>
 #include <cage-core/concurrent.h>
-#include <cage-core/utility/swapBufferController.h>
-#include <cage-core/utility/threadPool.h>
+#include <cage-core/swapBufferController.h>
+#include <cage-core/threadPool.h>
 
 namespace
 {

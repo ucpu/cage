@@ -9,8 +9,8 @@
 #include <cage-core/memory.h>
 #include <cage-core/entities.h>
 #include <cage-core/assets.h>
-#include <cage-core/utility/hashString.h>
-#include <cage-core/utility/swapBufferController.h>
+#include <cage-core/hashString.h>
+#include <cage-core/swapBufferController.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
@@ -19,7 +19,7 @@
 #include <cage-client/engine.h>
 #include <cage-client/opengl.h>
 #include <cage-client/graphics/shaderConventions.h>
-#include <cage-client/utility/stereoscopy.h>
+#include <cage-client/stereoscopy.h>
 #include <cage-client/window.h>
 
 #include "../engine.h"

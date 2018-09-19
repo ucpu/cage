@@ -1,7 +1,7 @@
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/log.h>
-#include <cage-core/utility/serialization.h>
+#include <cage-core/serialization.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>

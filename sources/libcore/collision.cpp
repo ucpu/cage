@@ -6,10 +6,10 @@
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
 #include <cage-core/memory.h>
-#include <cage-core/utility/hashTable.h>
-#include <cage-core/utility/collision.h>
-#include <cage-core/utility/collider.h>
-#include <cage-core/utility/spatial.h>
+#include <cage-core/hashTable.h>
+#include <cage-core/collision.h>
+#include <cage-core/collider.h>
+#include <cage-core/spatial.h>
 
 namespace cage
 {

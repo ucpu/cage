@@ -4,7 +4,7 @@
 #include <cage-core/math.h>
 #include <cage-core/memory.h>
 #include <cage-core/entities.h>
-#include <cage-core/utility/hashString.h>
+#include <cage-core/hashString.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>

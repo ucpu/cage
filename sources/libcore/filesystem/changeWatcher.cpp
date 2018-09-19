@@ -4,7 +4,7 @@
 #include <cage-core/core.h>
 #include <cage-core/filesystem.h>
 #include <cage-core/concurrent.h>
-#include <cage-core/utility/timer.h>
+#include <cage-core/timer.h>
 
 #include <FileWatcher/FileWatcher.h>
 

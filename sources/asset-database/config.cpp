@@ -4,7 +4,7 @@
 #include <cage-core/log.h>
 #include <cage-core/config.h>
 #include <cage-core/filesystem.h>
-#include <cage-core/utility/cmdOptions.h>
+#include <cage-core/cmdOptions.h>
 
 using namespace cage;
 

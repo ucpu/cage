@@ -6,7 +6,7 @@
 #include <cage-core/log.h>
 #include <cage-core/memory.h>
 #include <cage-core/filesystem.h>
-#include <cage-core/utility/ini.h>
+#include <cage-core/ini.h>
 
 namespace cage
 {

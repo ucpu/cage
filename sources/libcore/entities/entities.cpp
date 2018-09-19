@@ -5,7 +5,7 @@
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/entities.h>
-#include <cage-core/utility/hashTable.h>
+#include <cage-core/hashTable.h>
 
 namespace cage
 {

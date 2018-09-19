@@ -1,6 +1,6 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
-#include <cage-core/utility/lineReader.h>
+#include <cage-core/lineReader.h>
 
 namespace cage
 {

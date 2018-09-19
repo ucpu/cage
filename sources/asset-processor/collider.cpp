@@ -1,6 +1,6 @@
 #include "utility/assimp.h"
-#include <cage-core/utility/collider.h>
-#include <cage-core/utility/memoryBuffer.h>
+#include <cage-core/collider.h>
+#include <cage-core/memoryBuffer.h>
 
 void processCollider()
 {

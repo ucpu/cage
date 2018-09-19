@@ -4,8 +4,8 @@
 #include <cage-core/entities.h>
 #include <cage-core/log.h>
 #include <cage-core/assets.h>
-#include <cage-core/utility/hashString.h>
-#include <cage-core/utility/swapBufferController.h>
+#include <cage-core/hashString.h>
+#include <cage-core/swapBufferController.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>

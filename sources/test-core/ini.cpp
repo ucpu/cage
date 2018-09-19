@@ -1,6 +1,6 @@
 #include "main.h"
 #include <cage-core/filesystem.h>
-#include <cage-core/utility/ini.h>
+#include <cage-core/ini.h>
 
 void testIni()
 {

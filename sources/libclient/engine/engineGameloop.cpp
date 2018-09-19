@@ -8,13 +8,13 @@
 #include <cage-core/concurrent.h>
 #include <cage-core/filesystem.h> // getExecutableName
 #include <cage-core/assets.h>
-#include <cage-core/utility/hashString.h>
-#include <cage-core/utility/collider.h> // for sizeof in defineScheme
-#include <cage-core/utility/textPack.h> // for sizeof in defineScheme
-#include <cage-core/utility/memoryBuffer.h> // for sizeof in defineScheme
-#include <cage-core/utility/threadPool.h>
-#include <cage-core/utility/variableSmoothingBuffer.h>
-#include <cage-core/utility/swapBufferController.h>
+#include <cage-core/hashString.h>
+#include <cage-core/collider.h> // for sizeof in defineScheme
+#include <cage-core/textPack.h> // for sizeof in defineScheme
+#include <cage-core/memoryBuffer.h> // for sizeof in defineScheme
+#include <cage-core/threadPool.h>
+#include <cage-core/variableSmoothingBuffer.h>
+#include <cage-core/swapBufferController.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
@@ -24,7 +24,7 @@
 #include <cage-client/sound.h>
 #include <cage-client/gui.h>
 #include <cage-client/engine.h>
-#include <cage-client/utility/engineProfiling.h>
+#include <cage-client/engineProfiling.h>
 
 #include "engine.h"
 

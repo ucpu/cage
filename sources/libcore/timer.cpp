@@ -1,9 +1,9 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
-#include <cage-core/utility/timer.h>
+#include <cage-core/timer.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
-#include "../incWin.h"
+#include "incWin.h"
 #else
 #include <time.h>
 #endif

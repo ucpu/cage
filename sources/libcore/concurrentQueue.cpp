@@ -4,7 +4,7 @@
 #include <cage-core/core.h>
 #include <cage-core/memory.h>
 #include <cage-core/concurrent.h>
-#include <cage-core/utility/concurrentQueue.h>
+#include <cage-core/concurrentQueue.h>
 
 namespace cage
 {

@@ -2,10 +2,10 @@
 
 #include "processor.h"
 
-#include <cage-core/utility/hashString.h>
-#include <cage-core/utility/png.h>
-#include <cage-core/utility/memoryBuffer.h>
-#include <cage-core/utility/serialization.h>
+#include <cage-core/hashString.h>
+#include <cage-core/png.h>
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/serialization.h>
 #include "utility/binPacking.h"
 
 #include <msdfgen.h>

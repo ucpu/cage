@@ -2,8 +2,8 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/math.h>
-#include <cage-core/utility/random.h>
-#include <cage-core/utility/identifier.h>
+#include <cage-core/random.h>
+#include <cage-core/identifier.h>
 
 namespace cage
 {

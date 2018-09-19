@@ -8,9 +8,9 @@
 #include <cage-core/config.h>
 #include <cage-core/filesystem.h>
 #include <cage-core/concurrent.h>
-#include <cage-core/utility/ini.h>
-#include <cage-core/utility/program.h>
-#include <cage-core/utility/threadPool.h>
+#include <cage-core/ini.h>
+#include <cage-core/program.h>
+#include <cage-core/threadPool.h>
 
 using namespace cage;
 

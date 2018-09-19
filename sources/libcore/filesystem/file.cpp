@@ -2,7 +2,7 @@
 #include <cage-core/core.h>
 #include <cage-core/log.h>
 #include <cage-core/filesystem.h>
-#include <cage-core/utility/memoryBuffer.h>
+#include <cage-core/memoryBuffer.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
 

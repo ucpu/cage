@@ -4,7 +4,7 @@
 #include "main.h"
 #include <cage-core/math.h>
 #include <cage-core/filesystem.h>
-#include <cage-core/utility/hashString.h>
+#include <cage-core/hashString.h>
 
 namespace
 {

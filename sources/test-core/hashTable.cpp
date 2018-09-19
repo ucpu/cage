@@ -3,8 +3,8 @@
 #include "main.h"
 #include <cage-core/math.h>
 #include <cage-core/memory.h>
-#include <cage-core/utility/hashTable.h>
-#include <cage-core/utility/timer.h>
+#include <cage-core/hashTable.h>
+#include <cage-core/timer.h>
 
 template<uint32 I, uint32 L> void performance()
 {
