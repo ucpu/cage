@@ -247,23 +247,17 @@ void testMathGlm()
 			CAGE_TESTCASE("inverse");
 			for (uint32 round = 0; round < 10; round++)
 			{
-				mat3 m;
-				for (uint32 i = 0; i < 9; i++)
-					m[i] = cage::random();
+				mat3 m = mat3(randomDirectionQuat());
 				mat3 mi = m.inverse();
 				mat3 gi = g2c(inverse(c2g(m)));
-				for (uint32 i = 0; i < 9; i++)
-					CAGE_TEST(abs(mi[i] - gi[i]) < abs(mi[i]) * 0.01);
+				test(mi, gi);
 			}
 			for (uint32 round = 0; round < 10; round++)
 			{
-				mat4 m;
-				for (uint32 i = 0; i < 16; i++)
-					m[i] = cage::random();
+				mat4 m = mat4(vec3(random(), random(), random()) * 2 - 1, randomDirectionQuat(), vec3(random(), random(), random()) + 0.5);
 				mat4 mi = m.inverse();
 				mat4 gi = g2c(inverse(c2g(m)));
-				for (uint32 i = 0; i < 16; i++)
-					CAGE_TEST(abs(mi[i] - gi[i]) < abs(mi[i]) * 0.01);
+				test(mi, gi);
 			}
 		}
 		{
@@ -273,6 +267,8 @@ void testMathGlm()
 				vec3 eye = randomDirection3() * random(real(1), 100);
 				vec3 dir = randomDirection3();
 				vec3 up = randomDirection3();
+				while (abs(dot(dir, up)) > 0.999)
+					up = randomDirection3(); // testing for correctness here, not for edge cases
 				mat4 c = lookAt(eye, eye + dir, up);
 				mat4 g = g2c(glm::lookAt(c2g(eye), c2g(eye + dir), c2g(up)));
 				test(c, g);
@@ -295,7 +291,7 @@ void testMathGlm()
 			for (uint32 round = 0; round < 10; round++)
 			{
 				rads fov = random(rads(degs(20)), degs(120));
-				real aspect = cage::random();
+				real aspect = cage::random() * 2 + 0.1;
 				real n = random(real(1), 100);
 				real f = n + random(real(1), 100);
 				mat4 c = perspectiveProjection(fov, aspect, n, f);

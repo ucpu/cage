@@ -4,37 +4,41 @@
 #include <cage-core/math.h>
 #include <cage-core/timer.h>
 
+void test(real a, real b)
+{
+	CAGE_TEST(abs(a - b) < 1e-4);
+}
 void test(const mat4 &a, const mat4 &b)
 {
 	for (uint32 i = 0; i < 16; i++)
-		CAGE_TEST(abs(a[i] - b[i]) < 1e-3);
+		test(a[i], b[i]);
 }
 void test(const mat3 &a, const mat3 &b)
 {
 	for (uint32 i = 0; i < 9; i++)
-		CAGE_TEST(abs(a[i] - b[i]) < 1e-3);
+		test(a[i], b[i]);
 }
 void test(const vec4 &a, const vec4 &b)
 {
 	for (uint32 i = 0; i < 4; i++)
-		CAGE_TEST(abs(a[i] - b[i]) < 1e-3);
+		test(a[i], b[i]);
 }
 void test(const vec3 &a, const vec3 &b)
 {
 	for (uint32 i = 0; i < 3; i++)
-		CAGE_TEST(abs(a[i] - b[i]) < 1e-3);
+		test(a[i], b[i]);
 }
 void test(const vec2 &a, const vec2 &b)
 {
 	for (uint32 i = 0; i < 2; i++)
-		CAGE_TEST(abs(a[i] - b[i]) < 1e-3);
+		test(a[i], b[i]);
 }
 void test(const quat &a, const quat &b)
 {
 	if (a.data[3] < 0) return test(inverse(a), b);
 	if (b.data[3] < 0) return test(a, inverse(b));
 	for (uint32 i = 0; i < 4; i++)
-		CAGE_TEST(abs(a[i] - b[i]) < 1e-3);
+		test(a[i], b[i]);
 }
 void test(rads a, rads b)
 {
@@ -42,11 +46,7 @@ void test(rads a, rads b)
 		a += rads::Full;
 	if (b < rads(0))
 		b += rads::Full;
-	CAGE_TEST(abs(a - b) < rads(degs(1)));
-}
-void test(real a, real b)
-{
-	CAGE_TEST(abs(a - b) < 1e-3);
+	test(real(a), real(b));
 }
 
 namespace

@@ -156,7 +156,7 @@ namespace cage
 		}
 		else
 			c = max;
-		if (dot < 0.95)
+		if (dot < 1 - 1e-7)
 		{
 			rads angle = aCos(dot);
 			return ((min * sin(angle * (1 - value)) + c * sin(angle * value)) * (1 / sin(angle))).normalize();
