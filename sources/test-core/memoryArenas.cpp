@@ -63,9 +63,9 @@ namespace
 			alokace.reserve(Traits::ObjectsCount);
 			for (uint32 i = 0; i < Traits::ObjectsCount * Traits::Rounds; i++)
 			{
-				if (alokace.size() == Traits::ObjectsCount || (alokace.size() > 0 && random(0, 100) < 40))
+				if (alokace.size() == Traits::ObjectsCount || (alokace.size() > 0 && randomRange(0, 100) < 40))
 				{
-					uint32 index = random((uint32)0, numeric_cast<uint32>(alokace.size()));
+					uint32 index = randomRange((uint32)0, numeric_cast<uint32>(alokace.size()));
 					CAGE_ASSERT_RUNTIME(index < alokace.size(), index, alokace.size());
 					void *tmp = alokace[index];
 					uint16 sz = *(uint16*)tmp;
@@ -75,7 +75,7 @@ namespace
 				}
 				else
 				{
-					uint32 sz = random((uint32)1, (uint32)(Traits::AtomSize - 1)) + (uint32)2;
+					uint32 sz = randomRange((uint32)1, (uint32)(Traits::AtomSize - 1)) + (uint32)2;
 					void *tmp = a.allocate(sz);
 					CAGE_TEST(numeric_cast<uintPtr>(tmp) % Alignment == 0, tmp, Alignment);
 					(*(uint16*)tmp) = sz;
@@ -167,7 +167,7 @@ namespace
 			uint32 allocations = 0;
 			for (uint32 i = 0; i < Traits::ObjectsCount * Traits::Rounds; i++)
 			{
-				if (allocations == Traits::ObjectsCount || (allocations > 0 && random(0, 100) < 40))
+				if (allocations == Traits::ObjectsCount || (allocations > 0 && randomRange(0, 100) < 40))
 				{
 					a.destroy<ts>(objects[0]);
 					allocations--;
@@ -204,7 +204,7 @@ namespace
 			uint32 allocations = 0;
 			for (uint32 i = 0; i < Traits::ObjectsCount * Traits::Rounds; i++)
 			{
-				if (allocations == Traits::ObjectsCount || (allocations > 0 && random(0, 100) < 40))
+				if (allocations == Traits::ObjectsCount || (allocations > 0 && randomRange(0, 100) < 40))
 					a.destroy<ts>(objects[--allocations]);
 				else
 				{

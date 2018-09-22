@@ -172,7 +172,7 @@ namespace cage
 				case dtNoise:
 					for (uint32 sampleIndex = 0; sampleIndex < buf.frames; sampleIndex++)
 					{
-						real sample = random() * 2 - 1;
+						real sample = randomChance() * 2 - 1;
 						for (uint32 ch = 0; ch < buf.channels; ch++)
 							buf.buffer[sampleIndex * buf.channels + ch] += sample.value;
 					}

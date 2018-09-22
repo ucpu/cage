@@ -76,7 +76,7 @@ void testMathGlm()
 		{
 			mat3 m;
 			for (uint32 i = 0; i < 9; i++)
-				m[i] = cage::random();
+				m[i] = randomChance();
 			glm::mat3 mg = c2g(m);
 			test(m, g2c(mg));
 			CAGE_TEST(detail::memcmp(&m, glm::value_ptr(mg), sizeof(m)) == 0);
@@ -85,7 +85,7 @@ void testMathGlm()
 		{
 			mat4 m;
 			for (uint32 i = 0; i < 16; i++)
-				m[i] = cage::random();
+				m[i] = randomChance();
 			glm::mat4 mg = c2g(m);
 			test(m, g2c(mg));
 			CAGE_TEST(detail::memcmp(&m, glm::value_ptr(mg), sizeof(m)) == 0);
@@ -151,7 +151,7 @@ void testMathGlm()
 			for (uint32 round = 0; round < 10; round++)
 			{
 				quat q = randomDirectionQuat();
-				vec3 v = randomDirection3() * random(real(0), 100);
+				vec3 v = randomDirection3() * randomRange(real(0), 100);
 				test(q * v, g2c(c2g(q) * c2g(v)));
 			}
 		}
@@ -161,7 +161,7 @@ void testMathGlm()
 			{
 				quat q1 = randomDirectionQuat();
 				quat q2 = randomDirectionQuat();
-				real f = cage::random();
+				real f = randomChance();
 				test(slerp(q1, q2, f), g2c(glm::slerp(c2g(q1), c2g(q2), f.value)));
 			}
 		}
@@ -199,7 +199,7 @@ void testMathGlm()
 				{
 					mat3 q2;
 					for (uint32 i = 0; i < 9; i++)
-						q2[i] = cage::random();
+						q2[i] = randomChance();
 					glm::mat3 g2 = c2g(q2);
 					q = q * q2;
 					g = g * g2;
@@ -214,7 +214,7 @@ void testMathGlm()
 				{
 					mat4 q2;
 					for (uint32 i = 0; i < 16; i++)
-						q2[i] = cage::random();
+						q2[i] = randomChance();
 					glm::mat4 g2 = c2g(q2);
 					q = q * q2;
 					g = g * g2;
@@ -228,7 +228,7 @@ void testMathGlm()
 			{
 				mat3 m;
 				for (uint32 i = 0; i < 9; i++)
-					m[i] = cage::random();
+					m[i] = randomChance();
 				real mi = m.determinant();
 				float gi = determinant(c2g(m));
 				test(mi, real(gi));
@@ -237,7 +237,7 @@ void testMathGlm()
 			{
 				mat4 m;
 				for (uint32 i = 0; i < 16; i++)
-					m[i] = cage::random();
+					m[i] = randomChance();
 				real mi = m.determinant();
 				float gi = determinant(c2g(m));
 				test(mi, real(gi));
@@ -254,7 +254,7 @@ void testMathGlm()
 			}
 			for (uint32 round = 0; round < 10; round++)
 			{
-				mat4 m = mat4(vec3(random(), random(), random()) * 2 - 1, randomDirectionQuat(), vec3(random(), random(), random()) + 0.5);
+				mat4 m = mat4(randomChance3() * 2 - 1, randomDirectionQuat(), randomChance3() + 0.5);
 				mat4 mi = m.inverse();
 				mat4 gi = g2c(inverse(c2g(m)));
 				test(mi, gi);
@@ -264,7 +264,7 @@ void testMathGlm()
 			CAGE_TESTCASE("look at");
 			for (uint32 round = 0; round < 10; round++)
 			{
-				vec3 eye = randomDirection3() * random(real(1), 100);
+				vec3 eye = randomDirection3() * randomRange(real(1), 100);
 				vec3 dir = randomDirection3();
 				vec3 up = randomDirection3();
 				while (abs(dot(dir, up)) > 0.999)
@@ -278,34 +278,34 @@ void testMathGlm()
 			CAGE_TESTCASE("projections");
 			for (uint32 round = 0; round < 10; round++)
 			{
-				real l = -random(real(1), 100);
-				real r = random(real(1), 100);
-				real b = -random(real(1), 100);
-				real t = random(real(1), 100);
-				real n = random(real(1), 100);
-				real f = n + random(real(1), 100);
+				real l = -randomRange(real(1), 100);
+				real r = randomRange(real(1), 100);
+				real b = -randomRange(real(1), 100);
+				real t = randomRange(real(1), 100);
+				real n = randomRange(real(1), 100);
+				real f = n + randomRange(real(1), 100);
 				mat4 c = perspectiveProjection(l, r, b, t, n, f);
 				mat4 g = g2c(glm::frustum(l.value, r.value, b.value, t.value, n.value, f.value));
 				test(c, g);
 			}
 			for (uint32 round = 0; round < 10; round++)
 			{
-				rads fov = random(rads(degs(20)), degs(120));
-				real aspect = cage::random() * 2 + 0.1;
-				real n = random(real(1), 100);
-				real f = n + random(real(1), 100);
+				rads fov = randomRange(rads(degs(20)), degs(120));
+				real aspect = randomChance() * 2 + 0.1;
+				real n = randomRange(real(1), 100);
+				real f = n + randomRange(real(1), 100);
 				mat4 c = perspectiveProjection(fov, aspect, n, f);
 				mat4 g = g2c(glm::perspective(real(fov).value, aspect.value, n.value, f.value));
 				test(c, g);
 			}
 			for (uint32 round = 0; round < 10; round++)
 			{
-				real l = -random(real(1), 100);
-				real r = random(real(1), 100);
-				real b = -random(real(1), 100);
-				real t = random(real(1), 100);
-				real n = random(real(1), 100);
-				real f = n + random(real(1), 100);
+				real l = -randomRange(real(1), 100);
+				real r = randomRange(real(1), 100);
+				real b = -randomRange(real(1), 100);
+				real t = randomRange(real(1), 100);
+				real n = randomRange(real(1), 100);
+				real f = n + randomRange(real(1), 100);
 				mat4 c = orthographicProjection(l, r, b, t, n, f);
 				mat4 g = g2c(glm::ortho(l.value, r.value, b.value, t.value, n.value, f.value));
 				test(c, g);
@@ -326,9 +326,9 @@ void testMathGlm()
 			CAGE_TESTCASE("compose matrix");
 			for (uint32 round = 0; round < 10; round++)
 			{
-				vec3 position = vec3(random(-50, 50), random(-50, 50), random(-50, 50));
+				vec3 position = randomRange3(-50, 50);
 				rads rot = randomAngle();
-				vec3 scale = vec3(random(real(0.1), 10), random(real(0.1), 10), random(real(0.1), 10));
+				vec3 scale = randomRange3(0.1, 10);
 				mat4 c = mat4(position, quat(rot, degs(), degs()), scale);
 				glm::mat4 m = c2g(mat4());
 				m = glm::translate(m, c2g(position));

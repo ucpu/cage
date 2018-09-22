@@ -14,12 +14,12 @@ namespace cage
 		randomGenerator(uint64 s1, uint64 s2);
 		uint64 next();
 
-		real random();
+		real randomChance();
 		rads randomAngle();
 		vec2 randomDirection2();
 		vec3 randomDirection3();
 		quat randomDirectionQuat();
-#define GCHL_GENERATE(TYPE) TYPE random(TYPE min, TYPE max);
+#define GCHL_GENERATE(TYPE) TYPE randomRange(TYPE min, TYPE max);
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, real, rads, float, double));
 #undef GCHL_GENERATE
 	};

@@ -71,7 +71,7 @@ void testHashTable()
 		std::map<uint32, uint32> mp;
 		for (uint32 i = 0; i < 100000; i++)
 		{
-			if (mp.size() == 5000 || (mp.size() > 0 && random(0, 100) < 30))
+			if (mp.size() == 5000 || (mp.size() > 0 && randomRange(0, 100) < 30))
 			{
 				uint32 name = mp.begin()->first;
 				CAGE_TEST(numeric_cast<uint32>(tbl->get(name, false)) == mp[name]);
@@ -80,13 +80,13 @@ void testHashTable()
 			}
 			else
 			{
-				uint32 name = random(1, 100000);
+				uint32 name = randomRange(1, 100000);
 				if (mp.find(name) != mp.end())
 				{
 					CAGE_TEST(numeric_cast<uint32>(tbl->get(name, false)) == mp[name]);
 					tbl->remove(name);
 				}
-				uint32 value = random(1, 100000);
+				uint32 value = randomRange(1, 100000);
 				mp[name] = value;
 				tbl->add(name, (void*)(uintPtr)value);
 			}

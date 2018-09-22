@@ -120,12 +120,8 @@ namespace
 			interpolate(a, b, 0.5);
 		}
 	}
-}
 
-void testMath()
-{
-	CAGE_TESTCASE("math");
-
+	void testMathCompiles()
 	{
 		CAGE_TESTCASE("compile tests");
 		checkVectors<vec2, 2>();
@@ -133,6 +129,7 @@ void testMath()
 		checkVectors<vec4, 4>();
 	}
 
+	void testMathReal()
 	{
 		CAGE_TESTCASE("real");
 		CAGE_TEST(real::Pi > 3.1 && real::Pi < 3.2);
@@ -208,6 +205,7 @@ void testMath()
 		}
 	}
 
+	void testMathAngles()
 	{
 		CAGE_TESTCASE("degs & rads");
 		test(rads(degs(0)), rads(0));
@@ -236,6 +234,7 @@ void testMath()
 		}
 	}
 
+	void testMathVec2()
 	{
 		CAGE_TESTCASE("vec2");
 		vec2 a(3, 5);
@@ -259,6 +258,7 @@ void testMath()
 		CAGE_TEST(vec2(3, 5) != vec2(1, 5));
 	}
 
+	void testMathVec3()
 	{
 		CAGE_TESTCASE("vec3");
 		vec3 a(3, 5, 1);
@@ -295,6 +295,7 @@ void testMath()
 		test(cross(vec3(0, 0, -1), vec3(0, 1, 0)), vec3(1, 0, 0));
 	}
 
+	void testMathVec4()
 	{
 		CAGE_TESTCASE("vec4");
 		vec4 a(1, 2, 3, 4);
@@ -312,6 +313,7 @@ void testMath()
 		test(a * b, vec4(3, 4, 12, 4));
 	}
 
+	void testMathQuat()
 	{
 		CAGE_TESTCASE("quat");
 
@@ -548,6 +550,7 @@ void testMath()
 		}
 	}
 
+	void testMathMat3()
 	{
 		CAGE_TESTCASE("mat3");
 
@@ -566,6 +569,7 @@ void testMath()
 		}
 	}
 
+	void testMathMat4()
 	{
 		CAGE_TESTCASE("mat4");
 
@@ -600,9 +604,9 @@ void testMath()
 
 			for (uint32 round = 0; round < 10; round++)
 			{
-				vec3 pos = randomDirection3() * random(real(0.1), 10);
+				vec3 pos = randomDirection3() * randomRange(real(0.1), 10);
 				quat rot = randomDirectionQuat();
-				real scl = random(real(0.1), 10);
+				real scl = randomRange(real(0.1), 10);
 				mat4 m1 = mat4(pos) * mat4(rot) * mat4(scl);
 				mat4 m2 = mat4(pos, rot, vec3(scl, scl, scl));
 				test(m1, m2);
@@ -610,6 +614,7 @@ void testMath()
 		}
 	}
 
+	void testMathTransform()
 	{
 		CAGE_TESTCASE("transform");
 
@@ -618,12 +623,12 @@ void testMath()
 
 			for (uint32 round = 0; round < 10; round++)
 			{
-				vec3 pa = randomDirection3() * random(-5, 20);
-				vec3 pb = randomDirection3() * random(-5, 20);
+				vec3 pa = randomDirection3() * randomRange(-5, 20);
+				vec3 pb = randomDirection3() * randomRange(-5, 20);
 				quat oa = randomDirectionQuat();
 				quat ob = randomDirectionQuat();
-				real sa = random(real(0.1), 10);
-				real sb = random(real(0.1), 10);
+				real sa = randomRange(real(0.1), 10);
+				real sb = randomRange(real(0.1), 10);
 				transform ta(pa, oa, sa), tb(pb, ob, sb);
 				mat4 ma(pa, oa, vec3(sa, sa, sa)), mb(pb, ob, vec3(sb, sb, sb));
 				test(mat4(ta), ma);
@@ -640,9 +645,9 @@ void testMath()
 
 			for (uint32 round = 0; round < 10; round++)
 			{
-				vec3 p = randomDirection3() * random(-5, 20);
+				vec3 p = randomDirection3() * randomRange(-5, 20);
 				quat o = randomDirectionQuat();
-				real s = random(real(0.1), 10);
+				real s = randomRange(real(0.1), 10);
 				transform t(p, o, s);
 				transform ti = t.inverse();
 				mat4 m1 = mat4(t).inverse();
@@ -652,6 +657,7 @@ void testMath()
 		}
 	}
 
+	void testMathFunctions()
 	{
 		CAGE_TESTCASE("functions");
 
@@ -680,22 +686,23 @@ void testMath()
 			CAGE_TESTCASE("random");
 			for (uint32 i = 0; i < 1000; i++)
 			{
-				real r = cage::random();
+				real r = randomChance();
 				CAGE_TEST(r >= 0 && r < 1, r);
 			}
 			for (uint32 i = 0; i < 1000; i++)
 			{
-				sint32 r = random(5, 10);
+				sint32 r = randomRange(5, 10);
 				CAGE_TEST(r >= 5 && r < 10, r);
 			}
 			for (uint32 i = 0; i < 1000; i++)
 			{
-				sint32 r = random(-10, 10);
+				sint32 r = randomRange(-10, 10);
 				CAGE_TEST(r >= -10 && r < 10, r);
 			}
 		}
 	}
 
+	void testMathStrings()
 	{
 		CAGE_TESTCASE("math to string and back");
 		{
@@ -703,7 +710,7 @@ void testMath()
 				CAGE_TESTCASE("real");
 				for (uint32 i = 0; i < 10; i++)
 				{
-					real v = random(-1e5, 1e5);
+					real v = randomRange(-1e5, 1e5);
 					string s = v;
 					real r = real(s);
 					test(v, r);
@@ -713,7 +720,7 @@ void testMath()
 				CAGE_TESTCASE("vec2");
 				for (uint32 i = 0; i < 10; i++)
 				{
-					vec2 v = vec2(random(-1e5, 1e5), random(-1e5, 1e5));
+					vec2 v = randomRange2(-1e5, 1e5);
 					string s = v;
 					vec2 r = vec2(s);
 					test(v, r);
@@ -723,7 +730,7 @@ void testMath()
 				CAGE_TESTCASE("vec3");
 				for (uint32 i = 0; i < 10; i++)
 				{
-					vec3 v = vec3(random(-1e5, 1e5), random(-1e5, 1e5), random(-1e5, 1e5));
+					vec3 v = randomRange3(-1e5, 1e5);
 					string s = v;
 					vec3 r = vec3(s);
 					test(v, r);
@@ -733,7 +740,7 @@ void testMath()
 				CAGE_TESTCASE("vec4");
 				for (uint32 i = 0; i < 10; i++)
 				{
-					vec4 v = vec4(random(-1e5, 1e5), random(-1e5, 1e5), random(-1e5, 1e5), random(-1e5, 1e5));
+					vec4 v = randomRange4(-1e5, 1e5);
 					string s = v;
 					vec4 r = vec4(s);
 					test(v, r);
@@ -774,7 +781,7 @@ void testMath()
 				CAGE_TESTCASE("transform");
 				for (uint32 i = 0; i < 10; i++)
 				{
-					transform v = transform(randomDirection3() * 100, randomDirectionQuat(), random() + 0.5);
+					transform v = transform(randomDirection3() * 100, randomDirectionQuat(), randomChance() + 0.5);
 					string s = v;
 					transform r = transform(s);
 					test(v.position, r.position);
@@ -819,6 +826,7 @@ void testMath()
 		}
 	}
 
+	void testMathMatrixMultiplication()
 	{
 		CAGE_TESTCASE("matrix multiplication - performace");
 
@@ -832,7 +840,7 @@ void testMath()
 		for (uint32 i = 0; i < matricesCount; i++)
 		{
 			for (uint8 j = 0; j < 16; j++)
-				matrices[i][j] = cage::random() * 100 - 50;
+				matrices[i][j] = randomChance() * 100 - 50;
 		}
 
 		{
@@ -844,5 +852,23 @@ void testMath()
 			CAGE_LOG(severityEnum::Note, "test", string("duration: ") + tmr->microsSinceStart());
 		}
 	}
+}
+
+void testMath()
+{
+	CAGE_TESTCASE("math");
+	testMathCompiles();
+	testMathReal();
+	testMathAngles();
+	testMathVec2();
+	testMathVec3();
+	testMathVec4();
+	testMathQuat();
+	testMathMat3();
+	testMathMat4();
+	testMathTransform();
+	testMathFunctions();
+	testMathStrings();
+	testMathMatrixMultiplication();
 }
 

@@ -225,9 +225,9 @@ namespace cage
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, real, rads, float, double));
 #undef GCHL_GENERATE
 
-	CAGE_API real random(); // 0 to 1; including 0, excluding 1
+	CAGE_API real randomChance(); // 0 to 1; including 0, excluding 1
 	CAGE_API rads randomAngle();
-#define GCHL_GENERATE(TYPE) CAGE_API TYPE random(TYPE min, TYPE max);
+#define GCHL_GENERATE(TYPE) CAGE_API TYPE randomRange(TYPE min, TYPE max);
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, real, rads, float, double));
 #undef GCHL_GENERATE
 

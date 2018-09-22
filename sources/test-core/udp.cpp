@@ -78,11 +78,11 @@ namespace
 			connectionsLeft++;
 			for (uint32 i = 0; i < 20; i++)
 			{
-				memoryBuffer b(random(100, 10000));
+				memoryBuffer b(randomRange(100, 10000));
 				privat::generateRandomData((uint8*)b.data(), numeric_cast<uint32>(b.size()));
 				sends.push_back(templates::move(b));
 			}
-			udp = newUdpConnection("localhost", 3210, cage::random() < 0.5 ? 3000000 : 0);
+			udp = newUdpConnection("localhost", 3210, randomChance() < 0.5 ? 3000000 : 0);
 		}
 
 		~clientImpl()

@@ -182,7 +182,7 @@ namespace cage
 		class udpConnectionImpl : public udpConnectionClass
 		{
 		public:
-			udpConnectionImpl(const string &address, uint16 port, uint64 timeout) : startTime(getApplicationTime()), connId(random(1u, detail::numeric_limits<uint32>::max())), established(false)
+			udpConnectionImpl(const string &address, uint16 port, uint64 timeout) : startTime(getApplicationTime()), connId(randomRange(1u, detail::numeric_limits<uint32>::max())), established(false)
 			{
 				UDP_LOG(1, "creating new connection to address: '" + address + "', port: " + port + ", timeout: " + timeout);
 				sockGroup = std::make_shared<sockGroupStruct>();
@@ -475,7 +475,7 @@ namespace cage
 					memoryBuffer b = preparePacket();
 
 					// simulated packet loss for testing purposes
-					if (random() < real(simulatedPacketLoss))
+					if (randomChance() < real(simulatedPacketLoss))
 					{
 						UDP_LOG(4, "dropping prepared packet due to simulated packet loss");
 						continue;

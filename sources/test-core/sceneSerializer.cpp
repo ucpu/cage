@@ -6,20 +6,20 @@
 
 void defineManager(entityManagerClass *man)
 {
-	man->defineComponent<float>(0, random() < 0.5);
-	man->defineComponent<int>(0, random() < 0.5);
-	man->defineComponent<vec3>(vec3(), random() < 0.5);
+	man->defineComponent<float>(0, randomChance() < 0.5);
+	man->defineComponent<int>(0, randomChance() < 0.5);
+	man->defineComponent<vec3>(vec3(), randomChance() < 0.5);
 }
 
 void generateEntity(entityClass *e)
 {
-	bool a = random() < 0.5;
-	bool b = random() < 0.5;
-	bool c = random() < 0.5 || (!a && !b);
+	bool a = randomChance() < 0.5;
+	bool b = randomChance() < 0.5;
+	bool c = randomChance() < 0.5 || (!a && !b);
 	if (a)
-		e->value<float>(e->getManager()->getComponentByIndex(0)) = random().value;
+		e->value<float>(e->getManager()->getComponentByIndex(0)) = randomChance().value;
 	if (b)
-		e->value<int>(e->getManager()->getComponentByIndex(1)) = random(-100, 100);
+		e->value<int>(e->getManager()->getComponentByIndex(1)) = randomRange(-100, 100);
 	if (c)
 		e->value<vec3>(e->getManager()->getComponentByIndex(2)) = randomDirection3();
 }
@@ -28,7 +28,7 @@ void changeEntities(entityManagerClass *man)
 {
 	for (uint32 round = 0; round < 100; round++)
 	{
-		uint32 a = random(1, 500);
+		uint32 a = randomRange(1, 500);
 		if (man->hasEntity(a))
 			man->getEntity(a)->destroy();
 		else

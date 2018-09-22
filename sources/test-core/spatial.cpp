@@ -20,7 +20,7 @@ namespace
 
 	const vec3 generateRandomPoint()
 	{
-		return vec3(random((real)-120, (real)120), random((real)-120, (real)120), random((real)-120, (real)120));
+		return randomRange3(-120, 120);
 	}
 
 	const aabb generateRandomBox()
@@ -30,8 +30,8 @@ namespace
 
 	const aabb generateNonuniformBox()
 	{
-		real x = random((real)-120, (real)120);
-		real z = random((real)-120, (real)120);
+		real x = randomRange(-120, 120);
+		real z = randomRange(-120, 120);
 		real y = 4 * sin(rads(x * sqrt(abs(z + 2) + 0.3))) + 2 * real::E.pow(1 + cos(rads(x / 20 + (z - 40) / 30)));
 		vec3 o = vec3(x, y, z);
 		vec3 s = generateRandomPoint() * 0.05;
@@ -73,7 +73,7 @@ namespace
 
 		void verifiableRange(const aabb elData[], const uint32 elCount)
 		{
-			sphere sph(generateRandomPoint(), random(10, 100));
+			sphere sph(generateRandomPoint(), cage::randomRange(10, 100));
 			query->intersection(sph);
 			std::set<uint32> b;
 			for (uint32 i = 0; i < elCount; i++)
@@ -91,7 +91,7 @@ namespace
 
 		void randomRange()
 		{
-			query->intersection(sphere(generateRandomPoint(), random(10, 100)));
+			query->intersection(sphere(generateRandomPoint(), cage::randomRange(10, 100)));
 		}
 	};
 
@@ -137,7 +137,7 @@ void testSpatial()
 		// updates
 		for (uint32 i = 0; i < limit / 5; i++)
 		{
-			uint32 k = random((uint32)1, numeric_cast<uint32>(elements.size()));
+			uint32 k = randomRange((uint32)1, numeric_cast<uint32>(elements.size()));
 			aabb b = generateRandomBox();
 			elements[k] = b;
 			data->update(k, b);
@@ -148,7 +148,7 @@ void testSpatial()
 		// removes
 		for (uint32 i = 0; i < limit / 5; i++)
 		{
-			uint32 k = random((uint32)1, numeric_cast<uint32>(elements.size()));
+			uint32 k = randomRange((uint32)1, numeric_cast<uint32>(elements.size()));
 			elements[k] = aabb();
 			data->remove(k);
 		}
@@ -176,8 +176,8 @@ void testSpatial()
 
 		for (uint32 i = 0; i < limit; i++)
 		{
-			uint32 k = random((uint32)1, limit / 100);
-			if (i > limit / 3 && cage::random() < 0.3)
+			uint32 k = randomRange((uint32)1, limit / 100);
+			if (i > limit / 3 && randomChance() < 0.3)
 				data->remove(k);
 			else
 				data->update(k, generateNonuniformBox());

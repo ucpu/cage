@@ -305,9 +305,9 @@ namespace
 			for (uint32 i = 0; i < 1000; i++)
 			{
 				string s;
-				for (uint32 j = 0, e = random(0, 100); j < e; j++)
+				for (uint32 j = 0, e = randomRange(0, 100); j < e; j++)
 				{
-					char c = random(0, 255);
+					char c = randomRange(0, 255);
 					s += string(&c, 1);
 				}
 				string sen = s.encodeUrl();

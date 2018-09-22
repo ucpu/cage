@@ -12,7 +12,7 @@ void testRandom()
 		CAGE_TESTCASE("random numbers");
 		for (uint32 i = 0; i < 5; i++)
 		{
-			real r = random();
+			real r = randomChance();
 			CAGE_TEST(r >= 0 && r < 1, r);
 		}
 	}

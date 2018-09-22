@@ -47,9 +47,9 @@ namespace
 		uint32 allocations = 0;
 		for (uint32 cycle = 0; cycle < CYCLES_COUNT; cycle++)
 		{
-			if (allocations == INPUT_SIZE || (allocations > 0 && random(0, 100) < 40))
+			if (allocations == INPUT_SIZE || (allocations > 0 && randomRange(0, 100) < 40))
 			{
-				uint32 index = random((uint32)0, allocations--);
+				uint32 index = randomRange((uint32)0, allocations--);
 				Deallocate(allocated[index]);
 				allocated[index] = allocated[allocations];
 			}

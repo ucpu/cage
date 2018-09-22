@@ -69,7 +69,9 @@ inline NAME abs(const NAME &th) { return th.abs(); } \
 inline NAME clamp(const NAME &th, const NAME &minimum, const NAME &maximum) { return th.clamp(minimum, maximum); } \
 inline NAME clamp(const NAME &th, real minimum, real maximum) { return th.clamp(minimum, maximum); } \
 inline real distance(const NAME &th, const NAME &other) { return th.distance(other); } \
-inline real squaredDistance(const NAME &th, const NAME &other) { return th.squaredDistance(other); }
+inline real squaredDistance(const NAME &th, const NAME &other) { return th.squaredDistance(other); } \
+inline NAME CAGE_JOIN(randomChance, N) () { NAME r; for (uint32 i = 0; i < N; i++) r.data[i] = randomChance(); return r; } \
+inline NAME CAGE_JOIN(randomRange, N) (real a, real b) { NAME r; for (uint32 i = 0; i < N; i++) r.data[i] = randomRange(a, b); return r; }
 
 namespace cage
 {

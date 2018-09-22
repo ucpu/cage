@@ -96,15 +96,15 @@ void testSceneEntities()
 				entityClass *e = manager->newUniqueEntity();
 				for (uint32 j = 0; j < 3; j++)
 				{
-					if (cage::random() < 0.5)
+					if (randomChance() < 0.5)
 						e->addComponent(manager->getComponentByIndex(j));
-					if (cage::random() < 0.5)
+					if (randomChance() < 0.5)
 						e->addGroup(manager->getGroupByIndex(j));
 				}
 			}
 			for (uint32 j = 0; j < 3; j++)
 			{
-				if (cage::random() < 0.2)
+				if (randomChance() < 0.2)
 					manager->getGroupByIndex(j)->destroyAllEntities();
 			}
 		}
@@ -137,14 +137,14 @@ void testSceneEntities()
 			// changes
 			for (uint32 change = 0; change < totalChanges; change++)
 			{
-				switch (random(0, 5))
+				switch (randomRange(0, 5))
 				{
 				case 0:
 				{ // remove random entity
 					if (reference.empty())
 						break;
 					referenceType::iterator it = reference.begin();
-					std::advance(it, random((uint32)0, numeric_cast<uint32>(reference.size())));
+					std::advance(it, randomRange((uint32)0, numeric_cast<uint32>(reference.size())));
 					manager->getEntity(it->first)->destroy();
 					reference.erase(it);
 				} break;
@@ -156,7 +156,7 @@ void testSceneEntities()
 					reference[entName];
 					for (uint32 i = 0; i < totalComponents; i++)
 					{
-						if (cage::random() < 0.5)
+						if (randomChance() < 0.5)
 						{
 							e->addComponent(manager->getComponentByIndex(i));
 							reference[entName].insert(i);
@@ -169,11 +169,11 @@ void testSceneEntities()
 					if (reference.empty())
 						break;
 					referenceType::iterator it = reference.begin();
-					std::advance(it, random((uint32)0, numeric_cast<uint32>(reference.size())));
+					std::advance(it, randomRange((uint32)0, numeric_cast<uint32>(reference.size())));
 					entityClass *e = manager->getEntity(it->first);
 					for (uint32 i = 0; i < totalComponents; i++)
 					{
-						if (cage::random() < 0.5)
+						if (randomChance() < 0.5)
 						{
 							e->addComponent(manager->getComponentByIndex(i));
 							reference[it->first].insert(i);
@@ -185,11 +185,11 @@ void testSceneEntities()
 					if (reference.empty())
 						break;
 					referenceType::iterator it = reference.begin();
-					std::advance(it, random((uint32)0, numeric_cast<uint32>(reference.size())));
+					std::advance(it, randomRange((uint32)0, numeric_cast<uint32>(reference.size())));
 					entityClass *e = manager->getEntity(it->first);
 					for (uint32 i = 0; i < totalComponents; i++)
 					{
-						if (cage::random() < 0.5)
+						if (randomChance() < 0.5)
 						{
 							e->removeComponent(manager->getComponentByIndex(i));
 							reference[it->first].erase(i);
@@ -284,12 +284,12 @@ void testSceneEntities()
 
 		for (uint32 cycle = 0; cycle < totalCycles; cycle++)
 		{
-			if (cage::random() < 0.2)
+			if (randomChance() < 0.2)
 			{ // simulate update
 				// remove some entities
-				for (uint32 i = 0, et = random(1, 20); i < et; i++)
+				for (uint32 i = 0, et = randomRange(1, 20); i < et; i++)
 				{
-					uint32 n = random(random((uint32)1, entityNameIndex), entityNameIndex);
+					uint32 n = randomRange(randomRange((uint32)1, entityNameIndex), entityNameIndex);
 					if (exists[n])
 					{
 						exists[n] = false;
@@ -297,7 +297,7 @@ void testSceneEntities()
 					}
 				}
 				// add some new entities
-				for (uint32 i = 0, et = random(1, 20); i < et; i++)
+				for (uint32 i = 0, et = randomRange(1, 20); i < et; i++)
 				{
 					uint32 n = entityNameIndex++;
 					entityClass *e = manager->newEntity(n);
@@ -313,11 +313,11 @@ void testSceneEntities()
 			{ // simulate draw
 				for (uint32 j = 0; j < totalGroups; j++)
 				{
-					if (cage::random() < 0.5)
+					if (randomChance() < 0.5)
 						continue;
 					uint32 cnt = groups[j]->entitiesCount();
 					entityClass *const *ents = groups[j]->entitiesArray();
-					bool w = cage::random() < 0.2;
+					bool w = randomChance() < 0.2;
 					for (uint32 k = 0; k < cnt; k++)
 					{
 						entityClass *e = ents[k];

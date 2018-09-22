@@ -225,7 +225,7 @@ namespace cage
 			{
 				T res;
 				for (uint32 i = 0; i < T::Dimension; i++)
-					res[i] = rnd.random();
+					res[i] = rnd.randomChance();
 				return res;
 			}
 		};

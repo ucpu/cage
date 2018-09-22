@@ -34,7 +34,7 @@ namespace cage
 		return s[1] + y;
 	}
 
-#define GCHL_GENERATE(TYPE) TYPE randomGenerator::random(TYPE min, TYPE max) \
+#define GCHL_GENERATE(TYPE) TYPE randomGenerator::randomRange(TYPE min, TYPE max) \
 	{ \
 		if (min == max) \
 			return min; \
@@ -48,17 +48,17 @@ namespace cage
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64));
 #undef GCHL_GENERATE
 
-#define GCHL_GENERATE(TYPE) TYPE randomGenerator::random(TYPE min, TYPE max) \
+#define GCHL_GENERATE(TYPE) TYPE randomGenerator::randomRange(TYPE min, TYPE max) \
 	{ \
 		CAGE_ASSERT_RUNTIME(min <= max, min, max); \
-		TYPE res = interpolate(min, max, this->random()); \
+		TYPE res = interpolate(min, max, this->randomChance()); \
 		/*CAGE_ASSERT_RUNTIME(res >= min && res < max, res, min, max);*/ \
 		return res; \
 	}
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, real, rads, float));
 #undef GCHL_GENERATE
 
-	double randomGenerator::random(double min, double max)
+	double randomGenerator::randomRange(double min, double max)
 	{
 		CAGE_ASSERT_RUNTIME(min <= max, min, max);
 		uint64 r = next();
@@ -70,7 +70,7 @@ namespace cage
 		return res;
 	}
 
-	real randomGenerator::random()
+	real randomGenerator::randomChance()
 	{
 		uint64 r = next();
 		if (r == detail::numeric_limits<uint64>::max())
@@ -82,7 +82,7 @@ namespace cage
 
 	rads randomGenerator::randomAngle()
 	{
-		return rads(random() * real::TwoPi);
+		return rads(randomChance() * real::TwoPi);
 	}
 
 	vec2 randomGenerator::randomDirection2()
@@ -93,8 +93,8 @@ namespace cage
 
 	vec3 randomGenerator::randomDirection3()
 	{
-		real u = random();
-		real v = random();
+		real u = randomChance();
+		real v = randomChance();
 		rads theta = rads(real::TwoPi * u);
 		rads phi = aCos(2 * v - 1);
 		return vec3(cos(theta) * sin(phi), sin(theta) * sin(phi), cos(phi)).normalize();
@@ -111,9 +111,9 @@ namespace cage
 		return rnd;
 	}
 
-	real random()
+	real randomChance()
 	{
-		return currentRandomGenerator().random();
+		return currentRandomGenerator().randomChance();
 	}
 
 	rads randomAngle()
@@ -136,7 +136,7 @@ namespace cage
 		return currentRandomGenerator().randomDirectionQuat();
 	}
 
-#define GCHL_GENERATE(TYPE) TYPE random(TYPE min, TYPE max) { return currentRandomGenerator().random(min, max); }
+#define GCHL_GENERATE(TYPE) TYPE randomRange(TYPE min, TYPE max) { return currentRandomGenerator().randomRange(min, max); }
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, real, rads, float, double));
 #undef GCHL_GENERATE
 }
