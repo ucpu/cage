@@ -259,7 +259,7 @@ namespace cage
 				{
 					// do nothing
 				}
-				base->impl->widgetEvent.dispatch(base->entity->getName());
+				base->impl->widgetEvent.dispatch(base->entity->name());
 			}
 
 			void gainFocus()
@@ -332,7 +332,7 @@ namespace cage
 					utf32.erase(utf32.begin() + cursor);
 					data.value = convert32to8(utf32.data(), numeric_cast<uint32>(utf32.size()));
 					validate();
-					base->impl->widgetEvent.dispatch(base->entity->getName());
+					base->impl->widgetEvent.dispatch(base->entity->name());
 				} break;
 				case 261: // delete
 				{
@@ -341,7 +341,7 @@ namespace cage
 					utf32.erase(utf32.begin() + cursor);
 					data.value = convert32to8(utf32.data(), numeric_cast<uint32>(utf32.size()));
 					validate();
-					base->impl->widgetEvent.dispatch(base->entity->getName());
+					base->impl->widgetEvent.dispatch(base->entity->name());
 				} break;
 				}
 				return true;
@@ -363,7 +363,7 @@ namespace cage
 				data.value = convert32to8(utf32.data(), numeric_cast<uint32>(utf32.size()));
 				cursor++;
 				validate();
-				base->impl->widgetEvent.dispatch(base->entity->getName());
+				base->impl->widgetEvent.dispatch(base->entity->name());
 				return true;
 			}
 		};

@@ -65,7 +65,7 @@ namespace cage
 			widget->findFinalPosition(update);
 		else
 		{
-			uint32 name = entity ? entity->getName() : 0;
+			uint32 name = entity ? entity->name() : 0;
 			CAGE_ASSERT_RUNTIME(layout, "trying to layout an entity without layouting specified", name);
 			layout->findFinalPosition(update);
 		}
@@ -79,15 +79,15 @@ namespace cage
 			size = impl->eval<2>(p.size, size);
 			pos = impl->eval<2>(p.position, pos) - p.anchor * size;
 		}
-		CAGE_ASSERT_RUNTIME(size.valid(), "this item must have explicit size", entity ? entity->getName() : 0);
+		CAGE_ASSERT_RUNTIME(size.valid(), "this item must have explicit size", entity ? entity->name() : 0);
 	}
 
 	void guiItemStruct::checkExplicitPosition(vec2 &size) const
 	{
 		vec2 pos = vec2::Nan;
 		checkExplicitPosition(pos, size);
-		CAGE_ASSERT_RUNTIME(!pos.valid(), "this item may not have explicit position", entity ? entity->getName() : 0);
-		CAGE_ASSERT_RUNTIME(size.valid(), "this item must have explicit size", entity ? entity->getName() : 0);
+		CAGE_ASSERT_RUNTIME(!pos.valid(), "this item may not have explicit position", entity ? entity->name() : 0);
+		CAGE_ASSERT_RUNTIME(size.valid(), "this item must have explicit size", entity ? entity->name() : 0);
 	}
 
 	void guiItemStruct::moveToWindow(bool horizontal, bool vertical)
@@ -159,7 +159,7 @@ namespace cage
 
 	void guiItemStruct::emitDebug() const
 	{
-		real h = real(detail::hash(entity ? entity->getName() : 0)) / real(detail::numeric_limits<uint32>().max());
+		real h = real(detail::hash(entity ? entity->name() : 0)) / real(detail::numeric_limits<uint32>().max());
 		emitDebug(position, size, vec4(convertHsvToRgb(vec3(h, 1, 1)), 1));
 	}
 

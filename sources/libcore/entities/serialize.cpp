@@ -11,27 +11,27 @@
 
 namespace cage
 {
-	memoryBuffer entitiesSerialize(groupClass *entities, componentClass *component)
+	memoryBuffer entitiesSerialize(const groupClass *entities, componentClass *component)
 	{
-		uintPtr typeSize = component->getTypeSize();
+		uintPtr typeSize = component->typeSize();
 		memoryBuffer buffer;
 		serializer ser(buffer);
-		ser << component->getComponentIndex();
+		ser << component->index();
 		ser << (uint64)typeSize;
 		ser << (uint32)0; // cnt placeholder
 		uint32 cnt = 0;
 		for (entityClass *e : entities->entities())
 		{
-			uint32 name = e->getName();
+			uint32 name = e->name();
 			if (name == 0)
 				continue;
-			if (!e->hasComponent(component))
+			if (!e->has(component))
 				continue;
 			cnt++;
 			ser << name;
 			ser.write(e->unsafeValue(component), typeSize);
 		}
-		*(uint32*)(buffer.data() + sizeof(component->getComponentIndex()) + sizeof(uint64)) = cnt;
+		*(uint32*)(buffer.data() + sizeof(component->index()) + sizeof(uint64)) = cnt;
 		return buffer;
 	}
 
@@ -40,12 +40,12 @@ namespace cage
 		deserializer des(buffer, size);
 		uint32 componentIndex;
 		des >> componentIndex;
-		if (componentIndex >= manager->getComponentsCount())
+		if (componentIndex >= manager->componentsCount())
 			CAGE_THROW_ERROR(exception, "incompatible component (different index)");
-		componentClass *component = manager->getComponentByIndex(componentIndex);
+		componentClass *component = manager->componentByIndex(componentIndex);
 		uint64 typeSize;
 		des >> typeSize;
-		if (component->getTypeSize() != typeSize)
+		if (component->typeSize() != typeSize)
 			CAGE_THROW_ERROR(exception, "incompatible component (different size)");
 		uint32 cnt;
 		des >> cnt;
@@ -55,7 +55,7 @@ namespace cage
 			des >> name;
 			if (name == 0)
 				CAGE_THROW_ERROR(exception, "invalid entity");
-			entityClass *e = manager->getOrNewEntity(name);
+			entityClass *e = manager->getOrCreate(name);
 			des.read(e->unsafeValue(component), numeric_cast<uintPtr>(typeSize));
 		}
 	}

@@ -60,7 +60,7 @@ namespace cage
 					return true;
 				if (modifiers != modifiersFlags::None)
 					return true;
-				base->impl->widgetEvent.dispatch(base->entity->getName());
+				base->impl->widgetEvent.dispatch(base->entity->name());
 				return true;
 			}
 		};

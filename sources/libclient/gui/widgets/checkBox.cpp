@@ -70,7 +70,7 @@ namespace cage
 					data.state = checkBoxStateEnum::Unchecked;
 				else
 					data.state = checkBoxStateEnum::Checked;
-				base->impl->widgetEvent.dispatch(base->entity->getName());
+				base->impl->widgetEvent.dispatch(base->entity->name());
 			}
 
 			virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override

@@ -117,9 +117,9 @@ namespace cage
 				clearEntities();
 				profilingModeOld = profilingScope;
 				entityManagerClass *g = gui()->entities();
-				entityClass *panel = g->newUniqueEntity();
+				entityClass *panel = g->createUnique();
 				{
-					panelIndex = panel->getName();
+					panelIndex = panel->name();
 					GUI_GET_COMPONENT(groupBox, c, panel);
 					GUI_GET_COMPONENT(position, p, panel);
 					p.anchor = screenPosition;
@@ -128,12 +128,12 @@ namespace cage
 					p.position.units[0] = unitEnum::ScreenWidth;
 					p.position.units[1] = unitEnum::ScreenHeight;
 				}
-				entityClass *layout = g->newUniqueEntity();
+				entityClass *layout = g->createUnique();
 				{
-					layoutIndex = layout->getName();
+					layoutIndex = layout->name();
 					GUI_GET_COMPONENT(layoutTable, l, layout);
 					GUI_GET_COMPONENT(parent, child, layout);
-					child.parent = panel->getName();
+					child.parent = panel->name();
 				}
 
 				static const uint32 labelsPerMode[] = {
@@ -145,11 +145,11 @@ namespace cage
 				uint32 labelsCountExt = labelsCount + (profilingScope == engineProfilingScopeEnum::Full ? 3 : 0);
 				for (uint32 i = 0; i < labelsCountExt * 2; i++)
 				{
-					entityClass *timing = g->newUniqueEntity();
-					labelIndices[i] = timing->getName();
+					entityClass *timing = g->createUnique();
+					labelIndices[i] = timing->name();
 					GUI_GET_COMPONENT(label, c, timing);
 					GUI_GET_COMPONENT(parent, child, timing);
-					child.parent = layout->getName();
+					child.parent = layout->name();
 					child.order = i;
 					if (i % 2 == 1)
 					{
@@ -184,9 +184,9 @@ namespace cage
 				if (name == 0)
 					return;
 				entityManagerClass *g = gui()->entities();
-				if (!g->hasEntity(name))
+				if (!g->has(name))
 					return;
-				g->getEntity(name)->destroy();
+				g->get(name)->destroy();
 			}
 
 			void clearEntities()
@@ -201,7 +201,7 @@ namespace cage
 			void checkEntities()
 			{
 				entityManagerClass *g = gui()->entities();
-				bool panelPresent = panelIndex != 0 && g->hasEntity(panelIndex);
+				bool panelPresent = panelIndex != 0 && g->has(panelIndex);
 				bool visible = profilingScope != engineProfilingScopeEnum::None;
 				if (panelPresent != visible || profilingModeOld != profilingScope)
 				{ // change needed
@@ -214,9 +214,9 @@ namespace cage
 			void setTextLabel(uint32 index, const string &value)
 			{
 				CAGE_ASSERT_RUNTIME(index < sizeof(labelIndices) / sizeof(labelIndices[0]), index);
-				if (labelIndices[index] == 0 || !gui()->entities()->hasEntity(labelIndices[index]))
+				if (labelIndices[index] == 0 || !gui()->entities()->has(labelIndices[index]))
 					return;
-				entityClass *timing = gui()->entities()->getEntity(labelIndices[index]);
+				entityClass *timing = gui()->entities()->get(labelIndices[index]);
 				GUI_GET_COMPONENT(text, t, timing);
 				t.value = value;
 			}
@@ -232,7 +232,7 @@ namespace cage
 				if (profilingModeOld == engineProfilingScopeEnum::Full)
 				{
 					setTextLabel(labelsCount * 2 + 0, "Entities: ");
-					setTextLabel(labelsCount * 2 + 1, entities()->getAllEntities()->entitiesCount());
+					setTextLabel(labelsCount * 2 + 1, entities()->group()->count());
 					setTextLabel(labelsCount * 2 + 2, "Draw Calls: ");
 					setTextLabel(labelsCount * 2 + 3, engineProfilingValues(engineProfilingStatsFlags::GraphicsDrawCalls, profilingMode));
 					setTextLabel(labelsCount * 2 + 4, "Draw Primitives: ");

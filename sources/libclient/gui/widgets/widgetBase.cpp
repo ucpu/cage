@@ -25,7 +25,7 @@ namespace cage
 
 	const skinDataStruct &widgetBaseStruct::skin() const
 	{
-		CAGE_ASSERT_RUNTIME(widgetState.skinIndex < base->impl->skins.size(), widgetState.skinIndex, base->impl->skins.size(), base->entity ? base->entity->getName() : 0);
+		CAGE_ASSERT_RUNTIME(widgetState.skinIndex < base->impl->skins.size(), widgetState.skinIndex, base->impl->skins.size(), base->entity ? base->entity->name() : 0);
 		return base->impl->skins[widgetState.skinIndex];
 	}
 
@@ -47,13 +47,13 @@ namespace cage
 
 	bool widgetBaseStruct::hasFocus() const
 	{
-		return base->entity && base->impl->focusName && base->impl->focusName == base->entity->getName();
+		return base->entity && base->impl->focusName && base->impl->focusName == base->entity->name();
 	}
 
 	void widgetBaseStruct::makeFocused()
 	{
 		CAGE_ASSERT_RUNTIME(base->entity);
-		base->impl->focusName = base->entity->getName();
+		base->impl->focusName = base->entity->name();
 	}
 
 	void widgetBaseStruct::findFinalPosition(const finalPositionStruct &update)

@@ -17,11 +17,11 @@ void generateEntity(entityClass *e)
 	bool b = randomChance() < 0.5;
 	bool c = randomChance() < 0.5 || (!a && !b);
 	if (a)
-		e->value<float>(e->getManager()->getComponentByIndex(0)) = randomChance().value;
+		e->value<float>(e->manager()->componentByIndex(0)) = randomChance().value;
 	if (b)
-		e->value<int>(e->getManager()->getComponentByIndex(1)) = randomRange(-100, 100);
+		e->value<int>(e->manager()->componentByIndex(1)) = randomRange(-100, 100);
 	if (c)
-		e->value<vec3>(e->getManager()->getComponentByIndex(2)) = randomDirection3();
+		e->value<vec3>(e->manager()->componentByIndex(2)) = randomDirection3();
 }
 
 void changeEntities(entityManagerClass *man)
@@ -29,17 +29,17 @@ void changeEntities(entityManagerClass *man)
 	for (uint32 round = 0; round < 100; round++)
 	{
 		uint32 a = randomRange(1, 500);
-		if (man->hasEntity(a))
-			man->getEntity(a)->destroy();
+		if (man->has(a))
+			man->get(a)->destroy();
 		else
 		{
-			entityClass *e = man->newEntity(a);
+			entityClass *e = man->create(a);
 			generateEntity(e);
 		}
 	}
 	for (uint32 round = 0; round < 5; round++)
 	{
-		entityClass *e = man->newAnonymousEntity();
+		entityClass *e = man->createAnonymous();
 		generateEntity(e);
 	}
 }
@@ -48,29 +48,29 @@ void sync(entityManagerClass *a, entityManagerClass *b)
 {
 	for (uint32 i = 0; i < 3; i++)
 	{
-		memoryBuffer buf = entitiesSerialize(a->getAllEntities(), a->getComponentByIndex(i));
+		memoryBuffer buf = entitiesSerialize(a->group(), a->componentByIndex(i));
 		entitiesDeserialize(buf, b);
 	}
 }
 
 void check(entityManagerClass *a, entityManagerClass *b)
 {
-	uint32 cnt = a->getAllEntities()->entitiesCount();
-	entityClass *const *ents = a->getAllEntities()->entitiesArray();
+	uint32 cnt = a->group()->count();
+	entityClass *const *ents = a->group()->array();
 	for (uint32 ei = 0; ei < cnt; ei++)
 	{
 		entityClass *ea = ents[ei];
-		uint32 aName = ea->getName();
+		uint32 aName = ea->name();
 		if (aName == 0)
 			continue;
-		CAGE_TEST(b->hasEntity(aName));
-		entityClass *eb = b->getEntity(aName);
+		CAGE_TEST(b->has(aName));
+		entityClass *eb = b->get(aName);
 		for (uint32 i = 0; i < 3; i++)
 		{
-			if (ea->hasComponent(a->getComponentByIndex(i)))
+			if (ea->has(a->componentByIndex(i)))
 			{
-				CAGE_TEST(eb->hasComponent(b->getComponentByIndex(i)));
-				CAGE_TEST(detail::memcmp(ea->unsafeValue(a->getComponentByIndex(i)), eb->unsafeValue(b->getComponentByIndex(i)), a->getComponentByIndex(i)->getTypeSize()) == 0);
+				CAGE_TEST(eb->has(b->componentByIndex(i)));
+				CAGE_TEST(detail::memcmp(ea->unsafeValue(a->componentByIndex(i)), eb->unsafeValue(b->componentByIndex(i)), a->componentByIndex(i)->typeSize()) == 0);
 			}
 		}
 	}

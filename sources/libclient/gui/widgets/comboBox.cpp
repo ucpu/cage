@@ -133,9 +133,9 @@ namespace cage
 				while (c)
 				{
 					if (data.selected == idx++)
-						c->entity->addComponent(base->impl->components.selectedItem);
+						c->entity->add(base->impl->components.selectedItem);
 					else
-						c->entity->removeComponent(base->impl->components.selectedItem);
+						c->entity->remove(base->impl->components.selectedItem);
 					c = c->nextSibling;
 				}
 			}
@@ -221,7 +221,7 @@ namespace cage
 				c = c->nextSibling;
 			}
 			combo->consolidateSelection();
-			base->impl->widgetEvent.dispatch(base->entity->getName());
+			base->impl->widgetEvent.dispatch(base->entity->name());
 			return true;
 		}
 	}

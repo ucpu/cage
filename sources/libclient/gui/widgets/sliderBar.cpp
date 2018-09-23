@@ -79,7 +79,7 @@ namespace cage
 				if (data.vertical)
 					f = 1 - f;
 				data.value = f * (data.max - data.min) + data.min;
-				base->impl->widgetEvent.dispatch(base->entity->getName());
+				base->impl->widgetEvent.dispatch(base->entity->name());
 			}
 
 			virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override

@@ -17,7 +17,7 @@ namespace cage
 	componentsStruct::componentsStruct(entityManagerClass *ents) : generalComponentsStruct(ents), layoutsComponentsStruct(ents), widgetsComponentsStruct(ents)
 	{}
 
-	guiImpl::graphicDataStruct::graphicDataStruct() :
+	guiImpl::graphicsDataStruct::graphicsDataStruct() :
 		debugShader(nullptr), elementShader(nullptr), fontShader(nullptr), imageAnimatedShader(nullptr), imageStaticShader(nullptr),
 		colorPickerShader{nullptr, nullptr, nullptr},
 		debugMesh(nullptr), elementMesh(nullptr), fontMesh(nullptr), imageMesh(nullptr)

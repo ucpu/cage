@@ -47,7 +47,7 @@ namespace cage
 			configuredSkeletonImpl(entityClass *e)
 			{
 				current = e->value<configuredSkeletonComponent>(configuredSkeletonComponent::component);
-				if (e->hasComponent(configuredSkeletonComponent::componentHistory))
+				if (e->has(configuredSkeletonComponent::componentHistory))
 					history = e->value<configuredSkeletonComponent>(configuredSkeletonComponent::componentHistory);
 				else
 					history = current;
@@ -513,45 +513,45 @@ namespace cage
 				emitWrite->time = time;
 
 				// emit renderables
-				for (entityClass *e : renderComponent::component->getComponentEntities()->entities())
+				for (entityClass *e : renderComponent::component->entities())
 				{
 					emitRenderStruct *c = emitWrite->emitArena.createObject<emitRenderStruct>();
 					c->transform = e->value<transformComponent>(transformComponent::component);
-					if (e->hasComponent(transformComponent::componentHistory))
+					if (e->has(transformComponent::componentHistory))
 						c->transformHistory = e->value<transformComponent>(transformComponent::componentHistory);
 					else
 						c->transformHistory = c->transform;
 					c->render = e->value<renderComponent>(renderComponent::component);
-					if (e->hasComponent(animatedTextureComponent::component))
+					if (e->has(animatedTextureComponent::component))
 						c->animatedTexture = emitWrite->emitArena.createObject<animatedTextureComponent>(e->value<animatedTextureComponent>(animatedTextureComponent::component));
-					if (e->hasComponent(animatedSkeletonComponent::component))
+					if (e->has(animatedSkeletonComponent::component))
 						c->animatedSkeleton = emitWrite->emitArena.createObject<animatedSkeletonComponent>(e->value<animatedSkeletonComponent>(animatedSkeletonComponent::component));
-					if (e->hasComponent(configuredSkeletonComponent::component))
+					if (e->has(configuredSkeletonComponent::component))
 						c->configuredSkeleton = emitWrite->emitArena.createObject<configuredSkeletonImpl>(e);
 					emitWrite->renderables.push_back(c);
 				}
 
 				// emit lights
-				for (entityClass *e : lightComponent::component->getComponentEntities()->entities())
+				for (entityClass *e : lightComponent::component->entities())
 				{
 					emitLightStruct *c = emitWrite->emitArena.createObject<emitLightStruct>();
 					c->transform = e->value<transformComponent>(transformComponent::component);
-					if (e->hasComponent(transformComponent::componentHistory))
+					if (e->has(transformComponent::componentHistory))
 						c->transformHistory = e->value<transformComponent>(transformComponent::componentHistory);
 					else
 						c->transformHistory = c->transform;
 					c->light = e->value<lightComponent>(lightComponent::component);
-					if (e->hasComponent(shadowmapComponent::component))
+					if (e->has(shadowmapComponent::component))
 						c->shadowmap = emitWrite->emitArena.createObject<shadowmapImpl>(e->value<shadowmapComponent>(shadowmapComponent::component));
 					emitWrite->lights.push_back(c);
 				}
 
 				// emit cameras
-				for (entityClass *e : cameraComponent::component->getComponentEntities()->entities())
+				for (entityClass *e : cameraComponent::component->entities())
 				{
 					emitCameraStruct *c = emitWrite->emitArena.createObject<emitCameraStruct>();
 					c->transform = e->value<transformComponent>(transformComponent::component);
-					if (e->hasComponent(transformComponent::componentHistory))
+					if (e->has(transformComponent::componentHistory))
 						c->transformHistory = e->value<transformComponent>(transformComponent::componentHistory);
 					else
 						c->transformHistory = c->transform;

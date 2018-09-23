@@ -11,7 +11,8 @@ namespace cage
 		ScreenLonger,
 	};
 
-	template<uint32 N> struct valuesStruct
+	template<uint32 N>
+	struct valuesStruct
 	{
 		union
 		{
@@ -22,23 +23,6 @@ namespace cage
 		static const uint32 Dimension = N;
 		valuesStruct() : value(typename vecN<N>::type()) { for (uint32 i = 0; i < N; i++) { units[i] = unitEnum::None; } }
 	};
-
-	/*
-	template<> struct valuesStruct<1>
-	{
-		union
-		{
-			real values[1];
-			real value;
-		};
-		union
-		{
-			unitEnum units[1];
-			unitEnum unit;
-		};
-		valuesStruct() : value(0), unit(unitEnum::None) {}
-	};
-	*/
 
 	typedef valuesStruct<1> valueStruct;
 

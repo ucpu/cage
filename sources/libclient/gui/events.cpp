@@ -22,7 +22,7 @@ namespace cage
 
 		guiItemStruct *findItem(guiItemStruct *item, uint32 name)
 		{
-			if (item->entity && item->entity->getName() == name)
+			if (item->entity && item->entity->name() == name)
 				return item;
 			guiItemStruct *c = item->firstChild;
 			while (c)

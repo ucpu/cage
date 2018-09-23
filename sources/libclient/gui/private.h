@@ -4,7 +4,7 @@
 #include <vector>
 #include <atomic>
 
-#define GUI_HAS_COMPONENT(T,E) (E)->hasComponent(impl->components.T)
+#define GUI_HAS_COMPONENT(T,E) (E)->has(impl->components.T)
 #define GUI_REF_COMPONENT(T) base->entity->value<CAGE_JOIN(T, Component)>(base->impl->components.T)
 #define GUI_GET_COMPONENT(T,N,E) CAGE_JOIN(T, Component) &N = (E)->value<CAGE_JOIN(T, Component)>(impl->components.T);
 
@@ -242,7 +242,7 @@ namespace cage
 		memoryArena itemsMemory;
 		guiItemStruct *root;
 
-		struct graphicDataStruct
+		struct graphicsDataStruct
 		{
 			shaderClass *debugShader;
 			shaderClass *elementShader;
@@ -254,7 +254,7 @@ namespace cage
 			meshClass *elementMesh;
 			meshClass *fontMesh;
 			meshClass *imageMesh;
-			graphicDataStruct();
+			graphicsDataStruct();
 		} graphicsData;
 
 		struct emitDataStruct

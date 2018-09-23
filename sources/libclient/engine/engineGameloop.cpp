@@ -280,12 +280,12 @@ namespace cage
 
 			void updateHistoryComponents()
 			{
-				for (entityClass *e : transformComponent::component->getComponentEntities()->entities())
+				for (entityClass *e : transformComponent::component->entities())
 				{
 					ENGINE_GET_COMPONENT(transform, ts, e);
 					transformComponent &hs = e->value<transformComponent>(transformComponent::componentHistory);
 					hs = ts;
-					if (e->hasComponent(configuredSkeletonComponent::component))
+					if (e->has(configuredSkeletonComponent::component))
 					{
 						ENGINE_GET_COMPONENT(configuredSkeleton, cs, e);
 						configuredSkeletonComponent &hs = e->value<configuredSkeletonComponent>(configuredSkeletonComponent::componentHistory);

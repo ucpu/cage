@@ -164,11 +164,11 @@ namespace cage
 				emitWrite->time = time;
 
 				// emit voices
-				for (entityClass *e : voiceComponent::component->getComponentEntities()->entities())
+				for (entityClass *e : voiceComponent::component->entities())
 				{
 					emitVoiceStruct *c = emitWrite->emitArena.createObject<emitVoiceStruct>();
 					c->transform = e->value<transformComponent>(transformComponent::component);
-					if (e->hasComponent(transformComponent::componentHistory))
+					if (e->has(transformComponent::componentHistory))
 						c->transformHistory = e->value<transformComponent>(transformComponent::componentHistory);
 					else
 						c->transformHistory = c->transform;
@@ -177,11 +177,11 @@ namespace cage
 				}
 
 				// emit listeners
-				for (entityClass *e : listenerComponent::component->getComponentEntities()->entities())
+				for (entityClass *e : listenerComponent::component->entities())
 				{
 					emitListenerStruct *c = emitWrite->emitArena.createObject<emitListenerStruct>();
 					c->transform = e->value<transformComponent>(transformComponent::component);
-					if (e->hasComponent(transformComponent::componentHistory))
+					if (e->has(transformComponent::componentHistory))
 						c->transformHistory = e->value<transformComponent>(transformComponent::componentHistory);
 					else
 						c->transformHistory = c->transform;

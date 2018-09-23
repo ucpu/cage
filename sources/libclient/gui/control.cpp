@@ -80,17 +80,17 @@ namespace cage
 			guiItemStruct *root = impl->itemsMemory.createObject<guiItemStruct>(impl, nullptr);
 			std::unordered_map<uint32, guiItemStruct*> map;
 			// create all items
-			for (auto e : impl->entityManager->getAllEntities()->entities())
+			for (auto e : impl->entityManager->group()->entities())
 			{
-				uint32 name = e->getName();
+				uint32 name = e->name();
 				CAGE_ASSERT_RUNTIME(name != 0 && name != -1, name);
 				guiItemStruct *item = impl->itemsMemory.createObject<guiItemStruct>(impl, e);
 				map[name] = item;
 			}
 			// attach all items into the hierarchy
-			for (auto e : impl->entityManager->getAllEntities()->entities())
+			for (auto e : impl->entityManager->group()->entities())
 			{
-				uint32 name = e->getName();
+				uint32 name = e->name();
 				guiItemStruct *item = map[name];
 				if (GUI_HAS_COMPONENT(parent, e))
 				{
@@ -114,10 +114,10 @@ namespace cage
 			guiImpl *impl = item->impl;
 			if (item->entity)
 			{
-#define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, item->entity)) { CAGE_ASSERT_RUNTIME(!item->widget, item->entity->getName()); CAGE_JOIN(T, Create)(item); }
+#define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, item->entity)) { CAGE_ASSERT_RUNTIME(!item->widget, item->entity->name()); CAGE_JOIN(T, Create)(item); }
 				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS));
 #undef GCHL_GENERATE
-#define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, item->entity)) { CAGE_ASSERT_RUNTIME(!item->layout, item->entity->getName()); CAGE_JOIN(T, Create)(item); }
+#define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, item->entity)) { CAGE_ASSERT_RUNTIME(!item->layout, item->entity->name()); CAGE_JOIN(T, Create)(item); }
 				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_LAYOUT_COMPONENTS));
 #undef GCHL_GENERATE
 				if (GUI_HAS_COMPONENT(text, item->entity))
