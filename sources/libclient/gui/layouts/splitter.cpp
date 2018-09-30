@@ -18,7 +18,6 @@ namespace cage
 		struct layoutSplitterImpl : public layoutBaseStruct
 		{
 			layoutSplitterComponent &data;
-			guiItemStruct *master, *slave;
 
 			layoutSplitterImpl(guiItemStruct *base) : layoutBaseStruct(base), data(GUI_REF_COMPONENT(layoutSplitter))
 			{}
@@ -33,10 +32,6 @@ namespace cage
 					c = c->nextSibling;
 				}
 				CAGE_ASSERT_RUNTIME(chc == 2, chc, "splitter layout must have exactly two children");
-				master = base->firstChild;
-				slave = master->nextSibling;
-				if (data.inverse)
-					std::swap(master, slave);
 			}
 
 			virtual void findRequestedSize() override
@@ -47,67 +42,25 @@ namespace cage
 				{
 					c->findRequestedSize();
 					c->checkExplicitPosition(c->requestedSize);
-					{ // primary axis
-						base->requestedSize[data.vertical] = base->requestedSize[data.vertical] + c->requestedSize[data.vertical];
-					}
-					{ // secondary axis
-						if (data.allowSlaveResize)
-							base->requestedSize[!data.vertical] = max(base->requestedSize[!data.vertical], c->requestedSize[!data.vertical]);
-					}
+					base->requestedSize[data.vertical] = base->requestedSize[data.vertical] + c->requestedSize[data.vertical];
+					base->requestedSize[!data.vertical] = max(base->requestedSize[!data.vertical], c->requestedSize[!data.vertical]);
 					c = c->nextSibling;
 				}
-				if (!data.allowSlaveResize)
-					base->requestedSize[!data.vertical] = master->requestedSize[!data.vertical];
 				CAGE_ASSERT_RUNTIME(base->requestedSize.valid());
-			}
-
-			void updateSecondary(finalPositionStruct &u, guiItemStruct *item)
-			{
-				uint32 axis = data.vertical ? 0 : 1;
-				real r = item->requestedSize[axis]; // requested
-				real g = u.size[axis]; // given
-				if (!(item == master ? data.allowMasterResize : data.allowSlaveResize))
-					return;
-				u.position[axis] += (g - r) * data.anchor;
-				u.size[axis] = r;
 			}
 
 			virtual void findFinalPosition(const finalPositionStruct &update) override
 			{
+				guiItemStruct *a = base->firstChild, *b = base->firstChild->nextSibling;
 				uint32 axis = data.vertical ? 1 : 0;
-				real m = master->requestedSize[axis];
-				if (data.inverse)
-				{ // bottom-up
-					{ // slave
-						finalPositionStruct u(update);
-						u.size[axis] -= m;
-						updateSecondary(u, slave);
-						slave->findFinalPosition(u);
-					}
-					{ // master
-						finalPositionStruct u(update);
-						u.position[axis] += u.size[axis] - m;
-						u.size[axis] = m;
-						updateSecondary(u, master);
-						master->findFinalPosition(u);
-					}
-				}
-				else
-				{ // top-down
-					{ // master
-						finalPositionStruct u(update);
-						u.size[axis] = m;
-						updateSecondary(u, master);
-						master->findFinalPosition(u);
-					}
-					{ // slave
-						finalPositionStruct u(update);
-						u.position[axis] += m;
-						u.size[axis] -= m;
-						updateSecondary(u, slave);
-						slave->findFinalPosition(u);
-					}
-				}
+				finalPositionStruct u(update);
+				real split = data.inverse ? update.size[axis] - b->requestedSize[axis] : a->requestedSize[axis];
+				u.position[axis] += 0;
+				u.size[axis] = split;
+				a->findFinalPosition(u);
+				u.position[axis] += split;
+				u.size[axis] = max(update.size[axis] - split, 0);
+				b->findFinalPosition(u);
 			}
 		};
 	}

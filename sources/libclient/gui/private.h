@@ -116,8 +116,8 @@ namespace cage
 
 		// called top->down
 		void initialize(); // initialize and validate widget, layout, text and image, initialize children
-		void findRequestedSize(); // fills int the requestedSize
-		void findFinalPosition(const finalPositionStruct &update); // given position and available space in the finalPositionStruct, determine actual position, size, contentPosition and contentSize
+		void findRequestedSize(); // fills in the requestedSize
+		void findFinalPosition(const finalPositionStruct &update); // given position and available space in the finalPositionStruct, determine actual position and size
 
 		// base helpers for derived classes
 		void checkExplicitPosition(vec2 &pos, vec2 &size) const;

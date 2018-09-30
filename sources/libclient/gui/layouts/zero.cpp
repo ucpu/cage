@@ -29,9 +29,9 @@ namespace cage
 				while (c)
 				{
 					c->findRequestedSize();
-					//c->position(c->requestedSize);
 					c = c->nextSibling;
 				}
+				base->requestedSize = vec2();
 			}
 
 			virtual void findFinalPosition(const finalPositionStruct &update) override

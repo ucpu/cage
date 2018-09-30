@@ -26,6 +26,7 @@ namespace cage
 	void layoutDefaultCreate(guiItemStruct *item);
 	void textCreate(guiItemStruct *item);
 	void imageCreate(guiItemStruct *item);
+	void scrollbarsCreate(guiItemStruct *item);
 
 	namespace
 	{
@@ -80,7 +81,7 @@ namespace cage
 			guiItemStruct *root = impl->itemsMemory.createObject<guiItemStruct>(impl, nullptr);
 			std::unordered_map<uint32, guiItemStruct*> map;
 			// create all items
-			for (auto e : impl->entityManager->group()->entities())
+			for (auto e : impl->entityManager->entities())
 			{
 				uint32 name = e->name();
 				CAGE_ASSERT_RUNTIME(name != 0 && name != -1, name);
@@ -88,7 +89,7 @@ namespace cage
 				map[name] = item;
 			}
 			// attach all items into the hierarchy
-			for (auto e : impl->entityManager->group()->entities())
+			for (auto e : impl->entityManager->entities())
 			{
 				uint32 name = e->name();
 				guiItemStruct *item = map[name];
@@ -130,6 +131,11 @@ namespace cage
 					CAGE_ASSERT_RUNTIME(!item->image);
 					imageCreate(item);
 				}
+				if (GUI_HAS_COMPONENT(scrollbars, item->entity))
+				{
+					// scrollbars are allowed together with some widgets
+					scrollbarsCreate(item);
+				}
 			}
 			if (item->firstChild)
 				generateWidgetsAndLayouts(item->firstChild);
@@ -137,7 +143,7 @@ namespace cage
 				generateWidgetsAndLayouts(item->nextSibling);
 		}
 
-		void propagate(const widgetStateComponent &from, widgetStateComponent &to)
+		void propagateWidgetState(const widgetStateComponent &from, widgetStateComponent &to)
 		{
 			to.disabled = to.disabled || from.disabled;
 			if (from.skinIndex != -1)
@@ -152,13 +158,13 @@ namespace cage
 				if (item->widget)
 				{
 					widgetStateComponent &w = item->widget->widgetState;
-					propagate(w, ws);
-					propagate(ws, w);
+					propagateWidgetState(w, ws);
+					propagateWidgetState(ws, w);
 				}
 				else if (item->entity && GUI_HAS_COMPONENT(widgetState, item->entity))
 				{
 					GUI_GET_COMPONENT(widgetState, w, item->entity);
-					propagate(w, ws);
+					propagateWidgetState(w, ws);
 				}
 				if (item->firstChild)
 					propagateWidgetState(item->firstChild, ws);
@@ -174,6 +180,39 @@ namespace cage
 				callInitialize(item->firstChild);
 			if (item->nextSibling)
 				callInitialize(item->nextSibling);
+		}
+
+		void validateHierarchy(guiItemStruct *item)
+		{
+			if (item->prevSibling)
+				CAGE_ASSERT_RUNTIME(item->prevSibling->nextSibling == item);
+			if (item->nextSibling)
+				CAGE_ASSERT_RUNTIME(item->nextSibling->prevSibling == item);
+			CAGE_ASSERT_RUNTIME(!!item->firstChild == !!item->lastChild);
+			if (item->firstChild)
+			{
+				CAGE_ASSERT_RUNTIME(item->firstChild->prevSibling == nullptr);
+				guiItemStruct *it = item->firstChild, *last = item->firstChild;
+				while (it)
+				{
+					CAGE_ASSERT_RUNTIME(it->parent == item);
+					validateHierarchy(it);
+					last = it;
+					it = it->nextSibling;
+				}
+				CAGE_ASSERT_RUNTIME(item->lastChild == last);
+			}
+			if (item->widget)
+				CAGE_ASSERT_RUNTIME(item->widget->base == item);
+			if (item->layout)
+				CAGE_ASSERT_RUNTIME(item->layout->base == item);
+		}
+
+		void validateHierarchy(guiImpl *impl)
+		{
+#ifdef CAGE_ASSERT_ENABLED
+			validateHierarchy(impl->root);
+#endif // CAGE_ASSERT_ENABLED
 		}
 
 		void generateEventReceivers(guiItemStruct *item)
@@ -211,6 +250,7 @@ namespace cage
 		impl->eventsEnabled = true;
 		generateHierarchy(impl);
 		generateWidgetsAndLayouts(impl->root);
+		validateHierarchy(impl);
 		layoutZeroCreate(impl->root);
 		layoutDefaultCreate(impl->root->firstChild);
 		{ // propagate widget state
@@ -219,10 +259,11 @@ namespace cage
 			propagateWidgetState(impl->root, ws);
 		}
 		callInitialize(impl->root);
+		validateHierarchy(impl);
 		{ // layouting
 			impl->root->findRequestedSize();
 			finalPositionStruct u;
-			u.position = vec2();
+			u.position = u.size = vec2();
 			impl->root->findFinalPosition(u);
 		}
 		generateEventReceivers(impl->root);
@@ -232,8 +273,13 @@ namespace cage
 	void guiClass::controlUpdateDone()
 	{
 		guiImpl *impl = (guiImpl*)this;
+
 		if (!impl->assetManager->ready(hashString("cage/cage.pack")))
 			return;
+
+		if (!impl->eventsEnabled)
+			return;
+
 		for (auto &s : impl->skins)
 		{
 			if (impl->assetManager->ready(s.textureName))

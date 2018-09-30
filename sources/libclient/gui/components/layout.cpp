@@ -13,24 +13,13 @@
 
 namespace cage
 {
-	positionComponent::positionComponent()
+	layoutLineComponent::layoutLineComponent() : vertical(false)
 	{}
 
-	layoutLineComponent::layoutLineComponent() : cellsAnchor(0, 0), vertical(false), expandToSameWidth(false), expandToSameHeight(false), addSpacingToFillArea(false)
+	layoutTableComponent::layoutTableComponent() : sections(2), grid(false), vertical(true)
 	{}
 
-	layoutTableComponent::layoutTableComponent() : sections(2), grid(false)
-	{
-		vertical = true;
-		expandToSameWidth = true;
-		expandToSameHeight = true;
-		cellsAnchor = vec2(0.5, 0.5);
-	}
-
-	layoutRadialComponent::layoutRadialComponent()
-	{}
-
-	layoutSplitterComponent::layoutSplitterComponent() : allowMasterResize(false), allowSlaveResize(false), vertical(false), inverse(false)
+	layoutSplitterComponent::layoutSplitterComponent() : vertical(false), inverse(false)
 	{}
 
 	layoutsComponentsStruct::layoutsComponentsStruct(entityManagerClass *ents)

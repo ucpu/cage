@@ -55,10 +55,14 @@ namespace cage
 			requestedSize = text->findRequestedSize();
 		else if (image)
 			requestedSize = image->findRequestedSize();
+		CAGE_ASSERT_RUNTIME(requestedSize.valid());
 	}
 
 	void guiItemStruct::findFinalPosition(const finalPositionStruct &update)
 	{
+		CAGE_ASSERT_RUNTIME(update.position.valid());
+		CAGE_ASSERT_RUNTIME(update.size.valid());
+		CAGE_ASSERT_RUNTIME(requestedSize.valid());
 		position = update.position;
 		size = update.size;
 		if (widget)
@@ -69,11 +73,13 @@ namespace cage
 			CAGE_ASSERT_RUNTIME(layout, "trying to layout an entity without layouting specified", name);
 			layout->findFinalPosition(update);
 		}
+		CAGE_ASSERT_RUNTIME(position.valid());
+		CAGE_ASSERT_RUNTIME(size.valid());
 	}
 
 	void guiItemStruct::checkExplicitPosition(vec2 &pos, vec2 &size) const
 	{
-		if (GUI_HAS_COMPONENT(position, entity))
+		if (entity && GUI_HAS_COMPONENT(position, entity))
 		{
 			GUI_GET_COMPONENT(position, p, entity);
 			size = impl->eval<2>(p.size, size);

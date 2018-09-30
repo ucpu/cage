@@ -18,16 +18,16 @@ namespace cage
 
 	namespace
 	{
-		struct inputBoxImpl : public widgetBaseStruct
+		struct inputImpl : public widgetBaseStruct
 		{
-			inputBoxComponent &data;
+			inputComponent &data;
 			selectionComponent &selection;
 
 			vec2 leftPos, rightPos;
 			vec2 mainPos, mainSize;
 			vec2 textPos, textSize;
 
-			inputBoxImpl(guiItemStruct *base) : widgetBaseStruct(base), data(GUI_REF_COMPONENT(inputBox)), selection(GUI_REF_COMPONENT(selection))
+			inputImpl(guiItemStruct *base) : widgetBaseStruct(base), data(GUI_REF_COMPONENT(input)), selection(GUI_REF_COMPONENT(selection))
 			{}
 
 			virtual void initialize() override
@@ -208,13 +208,13 @@ namespace cage
 				}
 				textPos = mainPos;
 				textSize = mainSize;
-				offset(textPos, textSize, -skin().layouts[(uint32)elementTypeEnum::InputBox].border - s.basePadding);
+				offset(textPos, textSize, -skin().layouts[(uint32)elementTypeEnum::Input].border - s.basePadding);
 			}
 
 			virtual void emit() const override
 			{
 				const auto &s = skin().defaults.inputBox;
-				emitElement(elementTypeEnum::InputBox, mode(mainPos, mainSize), mainPos, mainSize);
+				emitElement(elementTypeEnum::Input, mode(mainPos, mainSize), mainPos, mainSize);
 				if (data.type == inputTypeEnum::Real || data.type == inputTypeEnum::Integer)
 				{
 					vec2 ss = vec2(s.buttonsSize, mainSize[1]);
@@ -369,8 +369,8 @@ namespace cage
 		};
 	}
 
-	void inputBoxCreate(guiItemStruct *item)
+	void inputCreate(guiItemStruct *item)
 	{
-		item->widget = item->impl->itemsMemory.createObject<inputBoxImpl>(item);
+		item->widget = item->impl->itemsMemory.createObject<inputImpl>(item);
 	}
 }

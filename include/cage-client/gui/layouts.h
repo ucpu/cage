@@ -1,39 +1,28 @@
 namespace cage
 {
-	struct CAGE_API layoutLineComponent // items are placed in a single line
+	struct CAGE_API layoutLineComponent
 	{
-		vec2 cellsAnchor; // center is at 0.5
 		bool vertical; // false -> items are next to each other, true -> items are above/under each other
-		bool expandToSameWidth;
-		bool expandToSameHeight;
-		bool addSpacingToFillArea;
 		layoutLineComponent();
 	};
 
-	struct CAGE_API layoutTableComponent : public layoutLineComponent
+	struct CAGE_API layoutTableComponent
 	{
-		// set sections to 0 to make it square-ish
-		uint32 sections;
+		uint32 sections; // set sections to 0 to make it square-ish
 		bool grid; // false -> each column and row sizes are independent; true -> all columns and rows have same sizes
+		bool vertical; // false -> fills entire row; true -> fills entire column
 		layoutTableComponent();
 	};
 
-	struct CAGE_API layoutRadialComponent
+	// must have exactly two children
+	struct CAGE_API layoutSplitterComponent
 	{
-		layoutRadialComponent();
-	};
-
-	struct CAGE_API layoutSplitterComponent // splits the given area into two parts in a way that it is fully used
-	{
-		real anchor; // secondary axis alignment
-		bool allowMasterResize;
-		bool allowSlaveResize;
 		bool vertical; // false -> left sub-area, right sub-area; true -> top, bottom
 		bool inverse; // false -> first item is fixed size, second item fills the remaining space; true -> second item is fixed size, first item fills the remaining space
 		layoutSplitterComponent();
 	};
 
-#define GCHL_GUI_LAYOUT_COMPONENTS layoutLine, layoutTable, layoutRadial, layoutSplitter
+#define GCHL_GUI_LAYOUT_COMPONENTS layoutLine, layoutTable, layoutSplitter
 
 	struct CAGE_API layoutsComponentsStruct
 	{

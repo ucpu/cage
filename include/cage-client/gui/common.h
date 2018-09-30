@@ -26,6 +26,14 @@ namespace cage
 
 	typedef valuesStruct<1> valueStruct;
 
+	struct CAGE_API positionComponent
+	{
+		vec2 anchor; // center is at 0.5
+		valuesStruct<2> position;
+		valuesStruct<2> size;
+		positionComponent();
+	};
+
 	struct CAGE_API parentComponent
 	{
 		uint32 parent;
@@ -58,7 +66,7 @@ namespace cage
 
 	struct CAGE_API textComponent
 	{
-		string value; // list of parameters separated by '|' when internationalized, otherwise the string as is
+		string value; // list of parameters separated by '|' when formatted, otherwise the string as is
 		uint32 assetName;
 		uint32 textName;
 		textComponent();
@@ -76,8 +84,8 @@ namespace cage
 
 	struct CAGE_API selectionComponent
 	{
-		uint32 start; // utf-32 characters
-		uint32 length; // utf-32 characters
+		uint32 start; // unicode characters (not bytes)
+		uint32 length; // unicode characters (not bytes)
 		selectionComponent();
 	};
 
@@ -93,23 +101,23 @@ namespace cage
 	struct CAGE_API selectedItemComponent
 	{};
 
-	struct CAGE_API positionComponent
+	enum class overflowModeEnum : uint32
 	{
-		vec2 anchor; // center is at 0.5
-		valuesStruct<2> position;
-		valuesStruct<2> size;
-		positionComponent();
+		Auto, // show scrollbar when needed only
+		Always, // always show scrollbar
+		Never, // never show scrollbar
+		// overflowing content is hidden irrespective of this setting
 	};
 
-	struct CAGE_API graphPointComponent
+	struct CAGE_API scrollbarsComponent
 	{
-		vec3 color;
-		vec2 position;
-		bool separate; // makes this point first in a new sequance of lines
-		graphPointComponent();
+		vec2 alignment; // 0.5 is center
+		vec2 scroll;
+		overflowModeEnum overflow[2];
+		scrollbarsComponent();
 	};
 
-#define GCHL_GUI_COMMON_COMPONENTS parent, image, imageFormat, text, textFormat, selection, tooltip, widgetState, selectedItem, position, graphPoint
+#define GCHL_GUI_COMMON_COMPONENTS position, parent, image, imageFormat, text, textFormat, selection, tooltip, widgetState, selectedItem, scrollbars
 
 	struct CAGE_API generalComponentsStruct
 	{

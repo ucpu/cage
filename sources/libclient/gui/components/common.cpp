@@ -13,6 +13,9 @@
 
 namespace cage
 {
+	positionComponent::positionComponent()
+	{}
+
 	parentComponent::parentComponent() : parent(0), order(0)
 	{}
 
@@ -29,6 +32,9 @@ namespace cage
 	{}
 
 	selectionComponent::selectionComponent() : start(-1), length(0)
+	{}
+
+	scrollbarsComponent::scrollbarsComponent() : overflow{ overflowModeEnum::Auto, overflowModeEnum::Auto }
 	{}
 
 	generalComponentsStruct::generalComponentsStruct(entityManagerClass *ents)

@@ -35,7 +35,6 @@ namespace cage
 					base->requestedSize = max(base->requestedSize, pos + c->requestedSize);
 					c = c->nextSibling;
 				}
-				CAGE_ASSERT_RUNTIME(base->requestedSize.valid());
 			}
 
 			virtual void findFinalPosition(const finalPositionStruct &update) override

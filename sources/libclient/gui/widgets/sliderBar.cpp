@@ -40,7 +40,7 @@ namespace cage
 				defaults = data.vertical ? skin().defaults.sliderBar.vertical : skin().defaults.sliderBar.horizontal;
 				baseElement = data.vertical ? elementTypeEnum::SliderVerticalPanel : elementTypeEnum::SliderHorizontalPanel;
 				dotElement = data.vertical ? elementTypeEnum::SliderVerticalDot : elementTypeEnum::SliderHorizontalDot;
-				vec4 border = skin().layouts[(uint32)baseElement].border;
+				//vec4 border = skin().layouts[(uint32)baseElement].border;
 				base->requestedSize = defaults.size;
 				offsetSize(base->requestedSize, defaults.margin);
 			}
@@ -67,6 +67,8 @@ namespace cage
 				vec2 p = base->position;
 				vec2 s = base->size;
 				offset(p, s, -defaults.margin - skin().layouts[(uint32)baseElement].border);
+				if (s[0] == s[1])
+					return;
 				real ds1 = min(s[0], s[1]);
 				real mp = point[data.vertical];
 				real cp = p[data.vertical];

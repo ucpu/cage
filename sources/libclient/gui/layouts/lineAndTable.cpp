@@ -22,15 +22,15 @@ namespace cage
 			real *heights;
 			uint32 mws, mhs;
 			uint32 childs;
-			bool justLine;
 
-			layoutTableImpl(guiItemStruct *base, bool justLine) : layoutBaseStruct(base), widths(nullptr), heights(nullptr), mws(0), mhs(0), childs(0), justLine(justLine)
+			layoutTableImpl(guiItemStruct *base, bool justLine) : layoutBaseStruct(base), widths(nullptr), heights(nullptr), mws(0), mhs(0), childs(0)
 			{
 				auto impl = base->impl;
 				if (justLine)
 				{
 					GUI_GET_COMPONENT(layoutLine, l, base->entity);
-					(layoutLineComponent&)data = l;
+					data.vertical = l.vertical;
+					data.sections = 1;
 				}
 				else
 				{
@@ -55,9 +55,7 @@ namespace cage
 					}
 				}
 				// update sections
-				if (justLine)
-					data.sections = 1;
-				else if (data.sections == 0)
+				if (data.sections == 0)
 				{
 					uint32 cnt = numeric_cast<uint32>(round(sqrt(childs)));
 					data.sections = max(cnt, 1u);
@@ -77,29 +75,32 @@ namespace cage
 					if (childs > mws * mhs)
 						mws++;
 				}
+				CAGE_ASSERT_RUNTIME(mws * mhs >= childs, mws, mhs, childs);
 				// allocate widths & heights
 				widths = (real*)impl->itemsMemory.allocate(mws * sizeof(real));
 				heights = (real*)impl->itemsMemory.allocate(mhs * sizeof(real));
 				detail::memset(widths, 0, mws * sizeof(real));
 				detail::memset(heights, 0, mhs * sizeof(real));
 				// populate widths & heights
-				guiItemStruct *c = base->firstChild;
-				uint32 idx = 0;
 				vec2 m;
-				while (c)
 				{
-					c->findRequestedSize();
-					c->checkExplicitPosition(c->requestedSize);
-					m = max(m, c->requestedSize);
-					uint32 wi = data.vertical ? (idx % data.sections) : (idx / data.sections);
-					uint32 hi = data.vertical ? (idx / data.sections) : (idx % data.sections);
-					CAGE_ASSERT_RUNTIME(wi < mws && hi < mhs, wi, hi, mws, mhs, data.sections, data.vertical, idx);
-					real &w = widths[wi];
-					real &h = heights[hi];
-					w = max(w, c->requestedSize[0]);
-					h = max(h, c->requestedSize[1]);
-					c = c->nextSibling;
-					idx++;
+					guiItemStruct *c = base->firstChild;
+					uint32 idx = 0;
+					while (c)
+					{
+						c->findRequestedSize();
+						c->checkExplicitPosition(c->requestedSize);
+						m = max(m, c->requestedSize);
+						uint32 wi = data.vertical ? (idx % data.sections) : (idx / data.sections);
+						uint32 hi = data.vertical ? (idx / data.sections) : (idx % data.sections);
+						CAGE_ASSERT_RUNTIME(wi < mws && hi < mhs, wi, hi, mws, mhs, data.sections, data.vertical, idx);
+						real &w = widths[wi];
+						real &h = heights[hi];
+						w = max(w, c->requestedSize[0]);
+						h = max(h, c->requestedSize[1]);
+						c = c->nextSibling;
+						idx++;
+					}
 				}
 				// grid fitting
 				if (data.grid)
@@ -125,28 +126,20 @@ namespace cage
 			{
 				guiItemStruct *c = base->firstChild;
 				uint32 idx = 0;
+				vec2 spacing = (update.size - base->requestedSize) / vec2(mws, mhs);
+				//spacing = max(spacing, vec2());
 				vec2 pos = update.position;
-				vec2 spacing;
-				if (data.addSpacingToFillArea)
-					spacing = max(update.size - base->requestedSize, vec2()) / vec2(mws + 1, mhs + 1);
 				while (c)
 				{
 					uint32 wi = data.vertical ? (idx % data.sections) : (idx / data.sections);
 					uint32 hi = data.vertical ? (idx / data.sections) : (idx % data.sections);
 					CAGE_ASSERT_RUNTIME(wi < mws && hi < mhs, wi, hi, mws, mhs, data.sections, data.vertical, idx);
-					real w = widths[wi];
-					real h = heights[hi];
+					vec2 s = vec2(widths[wi], heights[hi]);
 
 					{
 						finalPositionStruct u(update);
-						u.position = pos;
-						u.size = c->requestedSize;
-						if (data.expandToSameWidth)
-							u.size[0] = w;
-						if (data.expandToSameHeight)
-							u.size[1] = h;
-						u.position += spacing * vec2(wi, hi);
-						u.position += max(vec2(w, h) - u.size, vec2()) * data.cellsAnchor;
+						u.position = pos + vec2(wi, hi) * spacing;
+						u.size = s + spacing;
 						c->findFinalPosition(u);
 					}
 
@@ -159,7 +152,7 @@ namespace cage
 							pos[1] += heights[hi];
 						}
 						else
-							pos[0] += w;
+							pos[0] += s[0];
 					}
 					else
 					{ // horizontal
@@ -169,7 +162,7 @@ namespace cage
 							pos[1] = update.position[1];
 						}
 						else
-							pos[1] += h;
+							pos[1] += s[1];
 					}
 					c = c->nextSibling;
 					idx++;

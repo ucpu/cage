@@ -18,22 +18,27 @@ namespace cage
 {
 	namespace
 	{
-		textFormatComponent text;
-		imageFormatComponent image;
-
-		struct skinInitializerStruct
+		textFormatComponent textFormatComponentInit()
 		{
-			skinInitializerStruct()
-			{
-				text.color = vec3();
-				text.font = hashString("cage/font/ubuntu/Ubuntu-R.ttf");
-				text.align = textAlignEnum::Left;
-				text.lineSpacing = 0;
-				image.animationOffset = 0;
-				image.animationSpeed = 1;
-				image.mode = imageModeEnum::Stretch;
-			}
-		} skinInitializer;
+			textFormatComponent text;
+			text.color = vec3();
+			text.font = hashString("cage/font/ubuntu/Ubuntu-R.ttf");
+			text.align = textAlignEnum::Left;
+			text.lineSpacing = 0;
+			return text;
+		}
+
+		imageFormatComponent imageFormatComponentInit()
+		{
+			imageFormatComponent image;
+			image.animationOffset = 0;
+			image.animationSpeed = 1;
+			image.mode = imageModeEnum::Stretch;
+			return image;
+		}
+
+		const textFormatComponent text = textFormatComponentInit();
+		const imageFormatComponent image = imageFormatComponentInit();
 	}
 
 	skinElementLayoutStruct::textureUvStruct::textureUvStruct()
@@ -110,7 +115,7 @@ namespace cage
 			elementTypeEnum::ButtonRight,
 			elementTypeEnum::ButtonHorizontal,
 			elementTypeEnum::ButtonVertical,
-			elementTypeEnum::InputBox,
+			elementTypeEnum::Input,
 			elementTypeEnum::ComboBoxBase,
 			elementTypeEnum::ComboBoxItem,
 			elementTypeEnum::ListBoxItem,
@@ -132,8 +137,8 @@ namespace cage
 			elementTypeEnum::SliderHorizontalDot,
 			elementTypeEnum::SliderVerticalDot,
 			elementTypeEnum::GroupCell,
-			elementTypeEnum::GroupSpoilerCollapsed,
-			elementTypeEnum::GroupSpoilerShown,
+			elementTypeEnum::SpoilerIconCollapsed,
+			elementTypeEnum::SpoilerIconShown,
 			elementTypeEnum::InputButtonDecrement,
 			elementTypeEnum::InputButtonIncrement,
 			elementTypeEnum::CheckBoxUnchecked,
@@ -160,7 +165,7 @@ namespace cage
 		};
 
 		std::set<elementTypeEnum> noFocus = {
-			elementTypeEnum::GroupCell, elementTypeEnum::GroupPanel, elementTypeEnum::GroupSpoilerCollapsed, elementTypeEnum::GroupSpoilerShown, elementTypeEnum::GroupCaption,
+			elementTypeEnum::GroupCell, elementTypeEnum::GroupPanel, elementTypeEnum::SpoilerIconCollapsed, elementTypeEnum::SpoilerIconShown, elementTypeEnum::GroupCaption,
 			elementTypeEnum::WindowBaseModal, elementTypeEnum::WindowBaseNormal, elementTypeEnum::WindowCaption, elementTypeEnum::WindowResizer,
 			elementTypeEnum::InputButtonDecrement, elementTypeEnum::InputButtonIncrement,
 			elementTypeEnum::ComboBoxList,
@@ -247,7 +252,7 @@ namespace cage
 		textFormat.align = textAlignEnum::Center;
 	}
 
-	skinWidgetDefaultsStruct::inputBoxStruct::inputBoxStruct() : textValidFormat(text), textInvalidFormat(text), placeholderFormat(text), basePadding(2, 2, 2, 2), margin(1, 1, 1, 1), size(300, 32), buttonsSize(32), buttonsOffset(2), buttonsMode(inputButtonsPlacementModeEnum::Sides)
+	skinWidgetDefaultsStruct::inputStruct::inputStruct() : textValidFormat(text), textInvalidFormat(text), placeholderFormat(text), basePadding(2, 2, 2, 2), margin(1, 1, 1, 1), size(300, 32), buttonsSize(32), buttonsOffset(2), buttonsMode(inputButtonsPlacementModeEnum::Sides)
 	{
 		textInvalidFormat.color = vec3(1,0,0);
 		placeholderFormat.color = vec3(0.5,0.5,0.5);
@@ -257,6 +262,9 @@ namespace cage
 	{}
 
 	skinWidgetDefaultsStruct::checkBoxStruct::checkBoxStruct() : textFormat(text), margin(1, 1, 1, 1), size(28, 28), labelOffset(3, 5)
+	{}
+
+	skinWidgetDefaultsStruct::radioBoxStruct::radioBoxStruct() : textFormat(text), margin(1, 1, 1, 1), size(28, 28), labelOffset(3, 5)
 	{}
 
 	skinWidgetDefaultsStruct::comboBoxStruct::comboBoxStruct() : placeholderFormat(text), itemsFormat(text), selectedFormat(text), basePadding(1, 1, 1, 1), baseMargin(1, 1, 1, 1), listPadding(0, 0, 0, 0), itemPadding(1, 1, 1, 1), size(250, 32), listOffset(-6), itemSpacing(0)
@@ -291,25 +299,17 @@ namespace cage
 	skinWidgetDefaultsStruct::colorPickerStruct::colorPickerStruct() : margin(1, 1, 1, 1), collapsedSize(40, 32), fullSize(250, 180), hueBarPortion(0.18), resultBarPortion(0.35)
 	{}
 
-	skinWidgetDefaultsStruct::graphCanvasStruct::graphCanvasStruct() : size(200, 120)
-	{}
-
-	skinWidgetDefaultsStruct::scrollableBaseStruct::scrollableBaseStruct() : textFormat(text), contentPadding(2, 2, 2, 2), baseMargin(1, 1, 1, 1), captionPadding(3, 1, 3, 1), scrollbarsSizes(16, 16), captionHeight(28)
+	skinWidgetDefaultsStruct::panelStruct::panelStruct() : textFormat(text), imageFormat(image), contentPadding(2, 2, 2, 2), baseMargin(1, 1, 1, 1), captionPadding(3, 1, 3, 1), captionHeight(28)
 	{
 		textFormat.align = textAlignEnum::Center;
 	}
 
-	skinWidgetDefaultsStruct::groupBoxStruct::groupBoxStruct() :  imageFormat(image)
-	{
-		text.align = textAlignEnum::Center;
-	}
-
-	skinWidgetDefaultsStruct::windowStruct::windowStruct() : imageFormat(image), buttonsSpacing(0)
+	skinWidgetDefaultsStruct::spoilerStruct::spoilerStruct() : textFormat(text), imageFormat(image), contentPadding(2, 2, 2, 2), baseMargin(1, 1, 1, 1), captionPadding(3, 1, 3, 1), captionHeight(28)
 	{
 		textFormat.align = textAlignEnum::Center;
 	}
 
-	skinWidgetDefaultsStruct::taskBarStruct::taskBarStruct() : textFormat(text), imageFormat(image), size(400, 32)
+	skinWidgetDefaultsStruct::scrollbarsStruct::scrollbarsStruct() : scrollbarSize(15), contentPadding(3)
 	{}
 
 	skinWidgetDefaultsStruct::tooltipStruct::tooltipStruct() : textFormat(text)

@@ -38,7 +38,7 @@ namespace cage
 	};
 	GCHL_ENUM_BITS(inputStyleFlags);
 
-	struct CAGE_API inputBoxComponent
+	struct CAGE_API inputComponent
 	{
 		string value; // utf-8 encoded string (size is in bytes)
 		union CAGE_API Union
@@ -47,31 +47,25 @@ namespace cage
 			sint32 i;
 			Union();
 		} min, max, step;
-		uint32 cursor; // (utf-32) characters (not bytes)
+		uint32 cursor; // unicode characters (not bytes)
 		inputTypeEnum type;
 		inputStyleFlags style;
 		bool valid;
 		// textComponent defines placeholder
 		// textFormatComponent defines format
 		// selectionComponent defines selected text
-		inputBoxComponent();
+		inputComponent();
 	};
 
 	struct CAGE_API textAreaComponent
 	{
+		// vec2 scrollbars;
 		memoryBuffer *buffer; // utf-8 encoded string
-		uint32 cursor; // (utf-32) characters (not bytes)
+		uint32 cursor; // unicode characters (not bytes)
 		uint32 maxLength; // bytes
 		inputStyleFlags style;
 		// selectionComponent defines selected text
 		textAreaComponent();
-	};
-
-	enum class checkBoxTypeEnum : uint32
-	{
-		CheckBox,
-		TriStateBox,
-		RadioButton,
 	};
 
 	enum class checkBoxStateEnum : uint32
@@ -83,24 +77,33 @@ namespace cage
 
 	struct CAGE_API checkBoxComponent
 	{
-		checkBoxTypeEnum type;
 		checkBoxStateEnum state;
 		// textComponent defines label shown next to the check box
 		checkBoxComponent();
 	};
 
+	struct CAGE_API radioBoxComponent
+	{
+		uint32 group; // defines what other radio buttons are unchecked when this becomes checked
+		checkBoxStateEnum state;
+		// textComponent defines label shown next to the radio box
+		radioBoxComponent();
+	};
+
 	struct CAGE_API comboBoxComponent
 	{
+		// real scrollbar;
 		uint32 selected; // -1 = nothing selected
 		// textComponent defines placeholder
 		// children with textComponent defines individual lines
 		// textFormatComponent applies to all lines, may be overriden by individual childs
-		// selectedItemComponent on childs defines which line is selected (the selected property has priority)
+		// selectedItemComponent on childs defines which line is selected (the selected property is authoritative)
 		comboBoxComponent();
 	};
 
 	struct CAGE_API listBoxComponent
 	{
+		// real scrollbar;
 		// children with textComponent defines individual lines
 		// textFormatComponent applies to all lines, may be overriden by individual childs
 		// selectedItemComponent on childs defines which lines are selected
@@ -130,94 +133,25 @@ namespace cage
 		colorPickerComponent();
 	};
 
-	struct CAGE_API graphCanvasComponent
+	struct CAGE_API panelComponent
 	{
-		vec2 min;
-		vec2 max;
-		graphCanvasComponent();
-	};
-
-	enum class groupBoxTypeEnum : uint32
-	{
-		Invisible,
-		Cell, // thin border without background
-		Panel, // thick border and background
-		Spoiler, // same as panel; plus a button inside caption area
-	};
-
-	enum class overflowModeEnum : uint32
-	{
-		Auto,
-		Scroll,
-		Hidden,
-		Visible,
-	};
-
-	struct CAGE_API scrollableBaseComponentStruct
-	{
-		valuesStruct<2> minSize;
-		vec2 scrollbars;
-		overflowModeEnum overflow;
-		scrollableBaseComponentStruct();
-	};
-
-	struct CAGE_API groupBoxComponent : public scrollableBaseComponentStruct
-	{
-		groupBoxTypeEnum type;
-		bool spoilerCollapsesSiblings;
-		bool spoilerCollapsed;
-		groupBoxComponent();
+		panelComponent();
 		// textComponent defines caption
 		// imageComponent defines background
+		// may be merged with scrollbarsComponent
 	};
 
-	enum class windowModeFlags : uint32
+	struct CAGE_API spoilerComponent
 	{
-		None = 0,
-		Modal = 1 << 0, // prevents interaction with any other (non-modal) window
-		Close = 1 << 1,
-		Maximize = 1 << 2,
-		Minimize = 1 << 3,
-		Move = 1 << 4,
-		Resize = 1 << 5,
-		ForceShowOnTaskBar = 1 << 6,
-	};
-	GCHL_ENUM_BITS(windowModeFlags);
-
-	enum class windowStateFlags : uint32
-	{
-		None = 0,
-		Maximized = (uint32)windowModeFlags::Maximize,
-		Minimized = (uint32)windowModeFlags::Minimize,
-	};
-	GCHL_ENUM_BITS(windowStateFlags);
-
-	struct CAGE_API windowComponent : public scrollableBaseComponentStruct
-	{
-		windowModeFlags mode;
-		windowStateFlags state;
+		bool collapsesSiblings;
+		bool collapsed;
+		spoilerComponent();
 		// textComponent defines caption
 		// imageComponent defines background
-		windowComponent();
+		// may be merged with scrollbarsComponent
 	};
 
-	enum class taskBarModeFlags : uint32
-	{
-		None = 0,
-		ShowActive = 1 << 0, // minimized windows are not active
-		ShowModal = 1 << 1,
-	};
-	GCHL_ENUM_BITS(taskBarModeFlags);
-
-	struct CAGE_API taskBarComponent
-	{
-		taskBarModeFlags mode;
-		// children with textComponent defines additional buttons
-		// imageComponent defines background
-		taskBarComponent();
-	};
-
-#define GCHL_GUI_WIDGET_COMPONENTS label, button, inputBox, textArea, checkBox, comboBox, listBox, progressBar, sliderBar, colorPicker, graphCanvas, groupBox, window, taskBar
+#define GCHL_GUI_WIDGET_COMPONENTS label, button, input, textArea, checkBox, radioBox, comboBox, listBox, progressBar, sliderBar, colorPicker, panel, spoiler
 
 	struct CAGE_API widgetsComponentsStruct
 	{

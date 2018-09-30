@@ -24,7 +24,7 @@ namespace cage
 			vec2 size;
 			buttonStruct();
 		} button;
-		struct CAGE_API inputBoxStruct
+		struct CAGE_API inputStruct
 		{
 			textFormatComponent textValidFormat;
 			textFormatComponent textInvalidFormat;
@@ -35,7 +35,7 @@ namespace cage
 			real buttonsSize;
 			real buttonsOffset;
 			inputButtonsPlacementModeEnum buttonsMode;
-			inputBoxStruct();
+			inputStruct();
 		} inputBox;
 		struct CAGE_API textAreaStruct
 		{
@@ -52,6 +52,14 @@ namespace cage
 			vec2 labelOffset;
 			checkBoxStruct();
 		} checkBox;
+		struct CAGE_API radioBoxStruct
+		{
+			textFormatComponent textFormat;
+			vec4 margin;
+			vec2 size;
+			vec2 labelOffset;
+			radioBoxStruct();
+		} radioBox;
 		struct CAGE_API comboBoxStruct
 		{
 			textFormatComponent placeholderFormat;
@@ -101,40 +109,32 @@ namespace cage
 			real resultBarPortion;
 			colorPickerStruct();
 		} colorPicker;
-		struct CAGE_API graphCanvasStruct
-		{
-			vec2 size;
-			// todo
-			graphCanvasStruct();
-		} graphCanvas;
-		struct CAGE_API scrollableBaseStruct
+		struct CAGE_API panelStruct
 		{
 			textFormatComponent textFormat;
+			imageFormatComponent imageFormat;
 			vec4 baseMargin;
 			vec4 contentPadding;
 			vec4 captionPadding;
-			vec2 scrollbarsSizes;
 			real captionHeight;
-			scrollableBaseStruct();
-		};
-		struct CAGE_API groupBoxStruct : public scrollableBaseStruct
-		{
-			imageFormatComponent imageFormat;
-			groupBoxStruct();
-		} groupBox;
-		struct CAGE_API windowStruct : public scrollableBaseStruct
-		{
-			imageFormatComponent imageFormat;
-			real buttonsSpacing;
-			windowStruct();
-		} window;
-		struct CAGE_API taskBarStruct
+			panelStruct();
+		} panel;
+		struct CAGE_API spoilerStruct
 		{
 			textFormatComponent textFormat;
 			imageFormatComponent imageFormat;
-			vec2 size;
-			taskBarStruct();
-		} taskBar;
+			vec4 baseMargin;
+			vec4 contentPadding;
+			vec4 captionPadding;
+			real captionHeight;
+			spoilerStruct();
+		} spoiler;
+		struct CAGE_API scrollbarsStruct
+		{
+			real scrollbarSize;
+			real contentPadding;
+			scrollbarsStruct();
+		} scrollbars;
 		struct CAGE_API tooltipStruct
 		{
 			textFormatComponent textFormat;
@@ -177,19 +177,24 @@ namespace cage
 		ButtonHorizontal,
 		ButtonVertical,
 		TextArea,
-		GroupCell,
-		GroupPanel,
-		GroupCaption,
-		GroupSpoilerCollapsed,
-		GroupSpoilerShown,
+		GroupCell,             // deprecated
+		GroupPanel,            // deprecated
+		GroupCaption,          // deprecated
+		PanelBase = GroupPanel,
+		PanelCaption = GroupCaption,
+		SpoilerBase = GroupPanel,
+		SpoilerCaption = GroupCaption,
+		SpoilerIconCollapsed,
+		SpoilerIconShown,
 		InputButtonIncrement,
 		InputButtonDecrement,
-		InputBox,
+		Input,
 		CheckBoxUnchecked,
 		CheckBoxChecked,
 		CheckBoxIndetermined,
 		RadioBoxUnchecked,
 		RadioBoxChecked,
+		RadioBoxIndetermined = RadioBoxChecked,
 		ComboBoxBase,
 		ComboBoxList,
 		ComboBoxItem,
@@ -201,16 +206,16 @@ namespace cage
 		ProgressBar,
 		ListBoxList,
 		ListBoxItem,
-		WindowBaseNormal,
-		WindowBaseModal,
-		WindowCaption,
-		WindowButtonMinimize,
-		WindowButtonMaximize,
-		WindowButtonRestore,
-		WindowButtonClose,
-		WindowResizer,
-		TaskBarBase,
-		TaskBarItem,
+		WindowBaseNormal,      // deprecated
+		WindowBaseModal,       // deprecated
+		WindowCaption,         // deprecated
+		WindowButtonMinimize,  // deprecated
+		WindowButtonMaximize,  // deprecated
+		WindowButtonRestore,   // deprecated
+		WindowButtonClose,     // deprecated
+		WindowResizer,         // deprecated
+		TaskBarBase,           // deprecated
+		TaskBarItem,           // deprecated
 		ToolTip,
 		TotalElements,
 		InvalidElement = (uint32)-1,

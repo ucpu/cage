@@ -22,16 +22,19 @@ namespace cage
 	buttonComponent::buttonComponent() : allowMerging(false)
 	{}
 
-	inputBoxComponent::Union::Union() : i(0)
+	inputComponent::Union::Union() : i(0)
 	{}
 
-	inputBoxComponent::inputBoxComponent() : cursor(-1), type(inputTypeEnum::Text), style(inputStyleFlags::ShowArrowButtons), valid(false)
+	inputComponent::inputComponent() : cursor(-1), type(inputTypeEnum::Text), style(inputStyleFlags::ShowArrowButtons), valid(false)
 	{}
 
 	textAreaComponent::textAreaComponent() : buffer(nullptr), cursor(-1), maxLength(1024 * 1024), style(inputStyleFlags::None)
 	{}
 
-	checkBoxComponent::checkBoxComponent() : type(checkBoxTypeEnum::CheckBox), state(checkBoxStateEnum::Unchecked)
+	checkBoxComponent::checkBoxComponent() : state(checkBoxStateEnum::Unchecked)
+	{}
+
+	radioBoxComponent::radioBoxComponent() : group(0), state(checkBoxStateEnum::Unchecked)
 	{}
 
 	comboBoxComponent::comboBoxComponent() : selected(-1)
@@ -49,22 +52,10 @@ namespace cage
 	colorPickerComponent::colorPickerComponent() : collapsible(false), color(vec3(1,0,0))
 	{}
 
-	graphCanvasComponent::graphCanvasComponent() : max{1, 1}
+	panelComponent::panelComponent()
 	{}
 
-	graphPointComponent::graphPointComponent() : separate(false)
-	{}
-
-	scrollableBaseComponentStruct::scrollableBaseComponentStruct() : overflow(overflowModeEnum::Auto)
-	{}
-
-	groupBoxComponent::groupBoxComponent() : type(groupBoxTypeEnum::Panel), spoilerCollapsesSiblings(true), spoilerCollapsed(true)
-	{}
-
-	windowComponent::windowComponent() : mode(windowModeFlags::Maximize | windowModeFlags::Move | windowModeFlags::Resize), state(windowStateFlags::None)
-	{}
-
-	taskBarComponent::taskBarComponent() : mode(taskBarModeFlags::ShowActive)
+	spoilerComponent::spoilerComponent() : collapsesSiblings(true), collapsed(true)
 	{}
 
 	widgetsComponentsStruct::widgetsComponentsStruct(entityManagerClass *ents)
