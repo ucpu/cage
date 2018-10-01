@@ -113,7 +113,7 @@ namespace cage
 		void generateWidgetsAndLayouts(guiItemStruct *item)
 		{
 			guiImpl *impl = item->impl;
-			if (item->entity)
+			if (item->entity && !item->subsidedItem)
 			{
 #define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, item->entity)) { CAGE_ASSERT_RUNTIME(!item->widget, item->entity->name()); CAGE_JOIN(T, Create)(item); }
 				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS));

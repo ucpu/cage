@@ -68,21 +68,15 @@ namespace cage
 				vec2 p = base->position;
 				vec2 s = base->size;
 				offset(p, s, -skin().defaults.panel.baseMargin);
-				emitElement(elementTypeEnum::PanelBase, mode(false), p, s);
+				emitElement(elementTypeEnum::PanelBase, mode(false, 0), p, s);
 				if (base->text)
 				{
 					s = vec2(s[0], skin().defaults.panel.captionHeight);
-					emitElement(elementTypeEnum::PanelCaption, mode(p, s), p, s);
+					emitElement(elementTypeEnum::PanelCaption, mode(p, s, 0), p, s);
 					offset(p, s, -skin().layouts[(uint32)elementTypeEnum::PanelCaption].border - skin().defaults.panel.captionPadding);
 					base->text->emit(p, s);
 				}
 				base->childrenEmit();
-			}
-
-			virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
-			{
-				base->impl->focusName = 0;
-				return true;
 			}
 		};
 	}

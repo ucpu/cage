@@ -62,6 +62,7 @@ namespace cage
 	{
 		guiImpl *impl = (guiImpl*)this;
 		impl->focusName = widget;
+		impl->focusParts = 1;
 	}
 
 	uint32 guiClass::getFocus() const

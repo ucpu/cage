@@ -20,30 +20,27 @@ namespace cage
 			return pointInside(b->position, b->size, p);
 		}
 
-		guiItemStruct *findItem(guiItemStruct *item, uint32 name)
+		void findWidgets(guiItemStruct *item, uint32 name, std::vector<widgetBaseStruct*> &result)
 		{
-			if (item->entity && item->entity->name() == name)
-				return item;
+			if (item->entity && item->entity->name() == name && item->widget)
+				result.push_back(item->widget);
 			guiItemStruct *c = item->firstChild;
 			while (c)
 			{
-				guiItemStruct *r = findItem(c, name);
-				if (r)
-					return r;
+				findWidgets(c, name, result);
 				c = c->nextSibling;
 			}
-			return nullptr;
 		}
 
-		widgetBaseStruct *focused(guiImpl *impl)
+		std::vector<widgetBaseStruct*> focused(guiImpl *impl)
 		{
+			std::vector<widgetBaseStruct*> result;
 			if (impl->focusName)
 			{
-				guiItemStruct *item = findItem(impl->root, impl->focusName);
-				if (item && item->widget)
-					return item->widget;
+				result.reserve(3);
+				findWidgets(impl->root, impl->focusName, result);
 			}
-			return nullptr;
+			return result;
 		}
 
 		template<class A, bool (widgetBaseStruct::*F)(A, modifiersFlags, vec2)>
@@ -53,13 +50,16 @@ namespace cage
 			if (!impl->eventPoint(point, pt))
 				return false;
 			{ // first, pass the event to focused widget
-				widgetBaseStruct *f = focused(impl);
-				if (f)
+				bool res = false;
+				for (auto f : focused(impl))
 				{
 					if (f->widgetState.disabled)
-						return true;
-					return (f->*F)(a, m, pt);
+						res = true;
+					if ((f->*F)(a, m, pt))
+						res = true;
 				}
+				if (res)
+					return true;
 			}
 			// if nothing has focus, pass the event to anything under the cursor
 			for (auto it : impl->mouseEventReceivers)
@@ -81,14 +81,15 @@ namespace cage
 			vec2 dummy;
 			if (!impl->eventPoint(impl->inputMouse, dummy))
 				return false;
-			widgetBaseStruct *f = focused(impl);
-			if (f)
+			bool res = false;
+			for (auto f : focused(impl))
 			{
 				if (f->widgetState.disabled)
-					return true;
-				return (f->*F)(a, b, m);
+					res = true;
+				if ((f->*F)(a, b, m))
+					res = true;
 			}
-			return false;
+			return res;
 		}
 	}
 
@@ -196,13 +197,14 @@ namespace cage
 		vec2 dummy;
 		if (!impl->eventPoint(impl->inputMouse, dummy))
 			return false;
-		widgetBaseStruct *f = focused(impl);
-		if (f)
+		bool res = false;
+		for (auto f : focused(impl))
 		{
 			if (f->widgetState.disabled)
-				return true;
-			return f->keyChar(key);
+				res = true;
+			if (f->keyChar(key))
+				res = true;
 		}
-		return false;
+		return res;
 	}
 }

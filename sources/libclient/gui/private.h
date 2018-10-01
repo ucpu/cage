@@ -111,6 +111,7 @@ namespace cage
 		struct imageItemStruct *image;
 
 		sint32 order; // relative ordering of items with same parent
+		bool subsidedItem; // prevent use of explicit position
 
 		guiItemStruct(guiImpl *impl, entityClass *entity);
 
@@ -144,10 +145,10 @@ namespace cage
 		widgetBaseStruct(guiItemStruct *base);
 
 		const skinDataStruct &skin() const;
-		uint32 mode(bool hover = true) const;
-		uint32 mode(const vec2 &pos, const vec2 &size) const;
-		bool hasFocus() const;
-		void makeFocused();
+		uint32 mode(bool hover = true, uint32 focusParts = 1) const;
+		uint32 mode(const vec2 &pos, const vec2 &size, uint32 focusParts = 1) const;
+		bool hasFocus(uint32 part = 1) const;
+		void makeFocused(uint32 part = 1);
 
 		virtual void initialize() = 0;
 		virtual void findRequestedSize() = 0;
@@ -235,7 +236,8 @@ namespace cage
 		vec2 outputSize; // (points)
 		vec2 outputMouse; // (points)
 		real zoom, retina, pointsScale; // how many pixels per point (1D)
-		uint32 focusName;
+		uint32 focusName; // focused entity name
+		uint32 focusParts; // bitmask of focused parts of the single widget (bits 30 and 31 are reserved for scrollbars)
 		widgetBaseStruct *hover;
 
 		memoryArenaGrowing<memoryAllocatorPolicyLinear<>, memoryConcurrentPolicyNone> itemsArena;

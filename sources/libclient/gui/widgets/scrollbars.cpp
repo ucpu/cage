@@ -2,6 +2,7 @@
 #include <cage-core/math.h>
 #include <cage-core/memory.h>
 #include <cage-core/entities.h>
+#include <cage-core/log.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
@@ -31,6 +32,8 @@ namespace cage
 				{}
 			} scrollbars[2];
 
+			real wheelFactor;
+
 			scrollbarsImpl(guiItemStruct *base) : widgetBaseStruct(base), data(GUI_REF_COMPONENT(scrollbars)), scrollbars{ data.scroll[0], data.scroll[1] }
 			{}
 
@@ -54,6 +57,7 @@ namespace cage
 
 			virtual void findFinalPosition(const finalPositionStruct &update) override
 			{
+				wheelFactor = 70 / (base->requestedSize[1] - update.size[1]);
 				finalPositionStruct u(update);
 				for (uint32 a = 0; a < 2; a++)
 				{
@@ -90,43 +94,64 @@ namespace cage
 					const scrollbarStruct &s = scrollbars[a];
 					if (s.position.valid())
 					{
-						emitElement(a == 0 ? elementTypeEnum::ScrollbarHorizontalPanel : elementTypeEnum::ScrollbarVerticalPanel, mode(s.position, s.size), s.position, s.size);
+						emitElement(a == 0 ? elementTypeEnum::ScrollbarHorizontalPanel : elementTypeEnum::ScrollbarVerticalPanel, mode(s.position, s.size, 1 << (30 + a)), s.position, s.size);
 						vec2 ds;
 						ds[a] = s.dotSize;
 						ds[1 - a] = s.size[1 - a];
 						vec2 dp = s.position;
 						dp[a] += (s.size[a] - ds[a]) * s.value;
-						emitElement(a == 0 ? elementTypeEnum::ScrollbarHorizontalDot : elementTypeEnum::ScrollbarVerticalDot, mode(dp, ds), dp, ds);
+						emitElement(a == 0 ? elementTypeEnum::ScrollbarHorizontalDot : elementTypeEnum::ScrollbarVerticalDot, mode(dp, ds, 1 << (30 + a)), dp, ds);
 					}
 				}
 			}
 
-			virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
+			bool handleMouse(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point, bool move)
 			{
-				base->impl->focusName = 0;
+				if (!move)
+					makeFocused();
+				if (buttons != mouseButtonsFlags::Left)
+					return true;
+				if (modifiers != modifiersFlags::None)
+					return true;
 				for (uint32 a = 0; a < 2; a++)
 				{
 					const scrollbarStruct &s = scrollbars[a];
 					if (s.position.valid())
 					{
-						if (pointInside(s.position, s.size, point))
+						if (!move && pointInside(s.position, s.size, point))
+							makeFocused(1 << (30 + a));
+						if (hasFocus(1 << (30 + a)))
 						{
-							if (buttons != mouseButtonsFlags::Left)
-								return true;
-							if (modifiers != modifiersFlags::None)
-								return true;
 							s.value = (point[a] - s.position[a] - s.dotSize * 0.5) / (s.size[a] - s.dotSize);
 							s.value = clamp(s.value, 0, 1);
 							return true;
 						}
 					}
 				}
-				return false;
+				return true;
+			}
+
+			virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
+			{
+				return handleMouse(buttons, modifiers, point, false);
 			}
 
 			virtual bool mouseMove(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
 			{
-				return mousePress(buttons, modifiers, point);
+				return handleMouse(buttons, modifiers, point, true);
+			}
+
+			virtual bool mouseWheel(sint8 wheel, modifiersFlags modifiers, vec2 point) override
+			{
+				if (modifiers != modifiersFlags::None)
+					return true;
+				const scrollbarStruct &s = scrollbars[1];
+				if (s.position.valid())
+				{
+					s.value -= wheel * wheelFactor;
+					s.value = clamp(s.value, 0, 1);
+				}
+				return true;
 			}
 		};
 
@@ -219,7 +244,7 @@ namespace cage
 				const_cast<guiItemStruct*&>(n->layout->base) = n;
 			item->layout = item->impl->itemsMemory.createObject<dummyLayoutImpl>(item);
 			n->widget = item->impl->itemsMemory.createObject<scrollbarsImpl>(n);
-			const_cast<entityClass*&>(n->entity) = nullptr;
+			n->subsidedItem = true;
 		}
 		else
 		{ // standalone scrollbars widget

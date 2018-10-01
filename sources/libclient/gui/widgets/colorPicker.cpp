@@ -70,7 +70,7 @@ namespace cage
 					}
 					else
 					{ // this is the small base
-						if (hasFocus())
+						if (hasFocus(1 | 2 | 4))
 						{ // create popup
 							guiItemStruct *item = base->impl->itemsMemory.createObject<guiItemStruct>(base->impl, base->entity);
 							item->attachParent(base->impl->root);
@@ -151,69 +151,68 @@ namespace cage
 				offset(p, s, -skin().defaults.colorPicker.margin);
 				if (this == large)
 				{ // large
-					emitElement(elementTypeEnum::ColorPickerFull, mode(), p, s);
-					uint32 m = widgetState.disabled ? 3 : 0;
+					emitElement(elementTypeEnum::ColorPickerFull, mode(true, 1 | 2 | 4), p, s);
+					uint32 m = mode(false, 0);
 					emitElement(elementTypeEnum::ColorPickerHSliderPanel, m, sliderPos, sliderSize);
-					emitElement(elementTypeEnum::ColorPickerResult, m, resultPos, resultSize);
 					emitElement(elementTypeEnum::ColorPickerSVRect, m, rectPos, rectSize);
+					emitElement(elementTypeEnum::ColorPickerResult, m, resultPos, resultSize);
 					emitColor(sliderPos, sliderSize, 1, skin().layouts[(uint32)elementTypeEnum::ColorPickerHSliderPanel].border);
-					emitColor(resultPos, resultSize, 0, skin().layouts[(uint32)elementTypeEnum::ColorPickerResult].border);
 					emitColor(rectPos, rectSize, 2, skin().layouts[(uint32)elementTypeEnum::ColorPickerSVRect].border);
+					emitColor(resultPos, resultSize, 0, skin().layouts[(uint32)elementTypeEnum::ColorPickerResult].border);
 				}
 				else
 				{ // small
-					emitElement(elementTypeEnum::ColorPickerCompact, mode(), p, s);
+					emitElement(elementTypeEnum::ColorPickerCompact, mode(true, 1 | 2 | 4), p, s);
 					emitColor(p, s, 0, skin().layouts[(uint32)elementTypeEnum::ColorPickerCompact].border);
 				}
 			}
 
-			bool check(vec2 pos, vec2 size, vec2 &point)
+			bool handleMouse(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point, bool move)
 			{
-				vec2 p = (point - pos) / size;
-				if (p[0] >= 0 && p[0] <= 1 && p[1] >= 0 && p[1] <= 1)
-				{
-					point = p;
-					return true;
-				}
-				return false;
-			}
-
-			void update(vec2 point)
-			{
-				if (check(sliderPos, sliderSize, point))
-				{
-					vec3 hsv = convertRgbToHsv(data.color);
-					hsv[0] = point[0];
-					data.color = convertHsvToRgb(hsv);
-					base->impl->widgetEvent.dispatch(base->entity->name());
-				}
-				else if (check(rectPos, rectSize, point))
-				{
-					vec3 hsv = convertRgbToHsv(data.color);
-					hsv[1] = point[0];
-					hsv[2] = 1 - point[1];
-					data.color = convertHsvToRgb(hsv);
-					base->impl->widgetEvent.dispatch(base->entity->name());
-				}
-			}
-
-			virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
-			{
-				makeFocused();
+				if (!move)
+					makeFocused();
 				if (buttons != mouseButtonsFlags::Left)
 					return true;
 				if (modifiers != modifiersFlags::None)
 					return true;
 				if (this == large)
-					update(point);
+				{
+					if (!move)
+					{
+						if (pointInside(sliderPos, sliderSize, point))
+							makeFocused(2);
+						else if (pointInside(rectPos, rectSize, point))
+							makeFocused(4);
+					}
+					if (hasFocus(2))
+					{
+						vec3 hsv = convertRgbToHsv(data.color);
+						vec2 p = clamp((point - sliderPos) / sliderSize, 0, 1);
+						hsv[0] = p[0];
+						data.color = convertHsvToRgb(hsv);
+						base->impl->widgetEvent.dispatch(base->entity->name());
+					}
+					else if (hasFocus(4))
+					{
+						vec3 hsv = convertRgbToHsv(data.color);
+						vec2 p = clamp((point - rectPos) / rectSize, 0, 1);
+						hsv[1] = p[0];
+						hsv[2] = 1 - p[1];
+						data.color = convertHsvToRgb(hsv);
+						base->impl->widgetEvent.dispatch(base->entity->name());
+					}
+				}
 				return true;
+			}
+
+			virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
+			{
+				return handleMouse(buttons, modifiers, point, false);
 			}
 
 			virtual bool mouseMove(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
 			{
-				if (hasFocus())
-					return mousePress(buttons, modifiers, point);
-				return false;
+				return handleMouse(buttons, modifiers, point, true);
 			}
 		};
 	}

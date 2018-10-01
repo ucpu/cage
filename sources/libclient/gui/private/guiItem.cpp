@@ -30,7 +30,7 @@ namespace cage
 		impl(impl), entity(entity),
 		parent(nullptr), prevSibling(nullptr), nextSibling(nullptr), firstChild(nullptr), lastChild(nullptr),
 		widget(nullptr), layout(nullptr), text(nullptr), image(nullptr),
-		order(0)
+		order(0), subsidedItem(false)
 	{}
 
 	void guiItemStruct::initialize()
@@ -79,7 +79,7 @@ namespace cage
 
 	void guiItemStruct::checkExplicitPosition(vec2 &pos, vec2 &size) const
 	{
-		if (entity && GUI_HAS_COMPONENT(position, entity))
+		if (!subsidedItem && GUI_HAS_COMPONENT(position, entity))
 		{
 			GUI_GET_COMPONENT(position, p, entity);
 			size = impl->eval<2>(p.size, size);

@@ -29,11 +29,6 @@ namespace cage
 				base->requestedSize = vec2(); // todo this is a temporary hack
 			}
 
-			virtual void findFinalPosition(const finalPositionStruct &update) override
-			{
-
-			}
-
 			virtual void emit() const override
 			{
 

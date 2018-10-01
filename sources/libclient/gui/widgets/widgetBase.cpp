@@ -29,31 +29,34 @@ namespace cage
 		return base->impl->skins[widgetState.skinIndex];
 	}
 
-	uint32 widgetBaseStruct::mode(bool hover) const
+	uint32 widgetBaseStruct::mode(bool hover, uint32 focusParts) const
 	{
 		if (widgetState.disabled)
 			return 3;
 		if (base->impl->hover == this && hover)
 			return 2;
-		if (hasFocus())
+		if (hasFocus(focusParts))
 			return 1;
 		return 0;
 	}
 
-	uint32 widgetBaseStruct::mode(const vec2 &pos, const vec2 &size) const
+	uint32 widgetBaseStruct::mode(const vec2 &pos, const vec2 &size, uint32 focusParts) const
 	{
-		return mode(pointInside(pos, size, base->impl->outputMouse));
+		return mode(pointInside(pos, size, base->impl->outputMouse), focusParts);
 	}
 
-	bool widgetBaseStruct::hasFocus() const
-	{
-		return base->entity && base->impl->focusName && base->impl->focusName == base->entity->name();
-	}
-
-	void widgetBaseStruct::makeFocused()
+	bool widgetBaseStruct::hasFocus(uint32 parts) const
 	{
 		CAGE_ASSERT_RUNTIME(base->entity);
+		return base->impl->focusName && base->impl->focusName == base->entity->name() && (base->impl->focusParts & parts) > 0;
+	}
+
+	void widgetBaseStruct::makeFocused(uint32 parts)
+	{
+		CAGE_ASSERT_RUNTIME(parts != 0);
+		CAGE_ASSERT_RUNTIME(base->entity);
 		base->impl->focusName = base->entity->name();
+		base->impl->focusParts = parts;
 	}
 
 	void widgetBaseStruct::findFinalPosition(const finalPositionStruct &update)

@@ -43,7 +43,7 @@ namespace cage
 		itemsArena(config.itemsArenaSize), itemsMemory(&itemsArena), root(nullptr),
 		emitData{config, config, config}, emitControl(nullptr),
 		openglContext(nullptr), assetManager(config.assetManager),
-		focusName(0), hover(nullptr), eventsEnabled(false),
+		focusName(0), focusParts(0), hover(nullptr), eventsEnabled(false),
 		zoom(1)
 	{
 		listeners.windowResize.bind<guiClass, &guiClass::windowResize>(this);
