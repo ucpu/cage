@@ -49,8 +49,8 @@ namespace cage
 			{
 				CAGE_ASSERT_RUNTIME(data.value.valid() && data.min.valid() && data.max.valid());
 				CAGE_ASSERT_RUNTIME(data.max > data.min);
-				vec2 p = base->position;
-				vec2 s = base->size;
+				vec2 p = base->renderPos;
+				vec2 s = base->renderSize;
 				offset(p, s, -defaults.margin);
 				emitElement(baseElement, mode(false), p, s);
 				offset(p, s, -skin().layouts[(uint32)baseElement].border);
@@ -64,8 +64,8 @@ namespace cage
 
 			void update(vec2 point)
 			{
-				vec2 p = base->position;
-				vec2 s = base->size;
+				vec2 p = base->renderPos;
+				vec2 s = base->renderSize;
 				offset(p, s, -defaults.margin - skin().layouts[(uint32)baseElement].border);
 				if (s[0] == s[1])
 					return;

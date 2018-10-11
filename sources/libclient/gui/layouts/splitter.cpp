@@ -42,7 +42,7 @@ namespace cage
 				{
 					c->findRequestedSize();
 					c->checkExplicitPosition(c->requestedSize);
-					base->requestedSize[data.vertical] = base->requestedSize[data.vertical] + c->requestedSize[data.vertical];
+					base->requestedSize[data.vertical] += c->requestedSize[data.vertical];
 					base->requestedSize[!data.vertical] = max(base->requestedSize[!data.vertical], c->requestedSize[!data.vertical]);
 					c = c->nextSibling;
 				}
@@ -54,12 +54,12 @@ namespace cage
 				guiItemStruct *a = base->firstChild, *b = base->firstChild->nextSibling;
 				uint32 axis = data.vertical ? 1 : 0;
 				finalPositionStruct u(update);
-				real split = data.inverse ? update.size[axis] - b->requestedSize[axis] : a->requestedSize[axis];
-				u.position[axis] += 0;
-				u.size[axis] = split;
+				real split = data.inverse ? update.renderSize[axis] - b->requestedSize[axis] : a->requestedSize[axis];
+				u.renderPos[axis] += 0;
+				u.renderSize[axis] = split;
 				a->findFinalPosition(u);
-				u.position[axis] += split;
-				u.size[axis] = max(update.size[axis] - split, 0);
+				u.renderPos[axis] += split;
+				u.renderSize[axis] = max(update.renderSize[axis] - split, 0);
 				b->findFinalPosition(u);
 			}
 		};

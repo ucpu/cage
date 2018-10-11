@@ -107,20 +107,24 @@ namespace cage
 			}
 
 			// render all
+			glEnable(GL_SCISSOR_TEST);
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			glDisable(GL_DEPTH_TEST);
 			glActiveTexture(GL_TEXTURE0);
 			glViewport(0, 0, outputResolution.x, outputResolution.y);
-
 			renderableBaseStruct *r = emitData[lock.index()].first;
 			while (r)
 			{
-				r->render(this);
+				if (r->clipSize[0] >= 1 && r->clipSize[1] >= 1)
+				{
+					glScissor(numeric_cast<sint32>(r->clipPos[0]), numeric_cast<sint32>(real(outputResolution.y) - r->clipPos[1] - r->clipSize[1]), numeric_cast<uint32>(r->clipSize[0]), numeric_cast<uint32>(r->clipSize[1]));
+					r->render(this);
+				}
 				r = r->next;
 			}
-
 			glDisable(GL_BLEND);
+			glDisable(GL_SCISSOR_TEST);
 		}
 		else
 		{

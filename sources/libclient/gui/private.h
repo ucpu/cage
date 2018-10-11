@@ -11,6 +11,7 @@
 namespace cage
 {
 	class guiImpl;
+	struct guiItemStruct;
 
 	struct skinDataStruct : public skinConfigStruct
 	{
@@ -21,7 +22,12 @@ namespace cage
 	struct renderableBaseStruct
 	{
 		renderableBaseStruct *next;
+		vec2 clipPos, clipSize;
+
 		renderableBaseStruct();
+
+		void setClip(guiItemStruct *item);
+
 		virtual void render(guiImpl *impl);
 	};
 
@@ -88,7 +94,11 @@ namespace cage
 
 	struct finalPositionStruct
 	{
-		vec2 position, size;
+		vec2 renderPos, renderSize;
+		vec2 clipPos, clipSize;
+
+		void clip(vec2 p, vec2 s);
+
 		finalPositionStruct();
 	};
 
@@ -96,7 +106,8 @@ namespace cage
 	{
 		// size (points) as seen by parent (envelope)
 		vec2 requestedSize;
-		vec2 position, size;
+		vec2 renderPos, renderSize;
+		vec2 clipPos, clipSize; // clip pos/size are in same coordinate system as render pos/size, they make a rectangle intersection of parents viewport and our render pos/size
 
 		guiImpl *const impl;
 		entityClass *const entity;
@@ -166,6 +177,8 @@ namespace cage
 		virtual bool keyRepeat(uint32 key, uint32 scanCode, modifiersFlags modifiers);
 		virtual bool keyRelease(uint32 key, uint32 scanCode, modifiersFlags modifiers);
 		virtual bool keyChar(uint32 key);
+
+		virtual bool canBeMergedWithScrollbars() const;
 	};
 
 	struct layoutBaseStruct

@@ -17,7 +17,7 @@ namespace cage
 	{
 		bool pointIsInside(guiItemStruct *b, const vec2 &p)
 		{
-			return pointInside(b->position, b->size, p);
+			return pointInside(b->renderPos, b->renderSize, p);
 		}
 
 		void findWidgets(guiItemStruct *item, uint32 name, std::vector<widgetBaseStruct*> &result)

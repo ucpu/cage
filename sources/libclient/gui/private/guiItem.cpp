@@ -22,11 +22,22 @@ namespace cage
 		uint32 hash(uint32 key);
 	}
 
-	finalPositionStruct::finalPositionStruct() : position(vec2::Nan), size(vec2::Nan)
+	void finalPositionStruct::clip(vec2 p, vec2 s)
+	{
+		CAGE_ASSERT_RUNTIME(p.valid());
+		CAGE_ASSERT_RUNTIME(s.valid() && s[0] >= 0 && s[1] >= 0, p, s);
+		CAGE_ASSERT_RUNTIME(clipPos.valid());
+		CAGE_ASSERT_RUNTIME(clipSize.valid() && clipSize[0] >= 0 && clipSize[1] >= 0, clipPos, clipSize);
+		vec2 e = min(clipPos + clipSize, p + s);
+		clipPos = max(clipPos, p);
+		clipSize = max(e - clipPos, vec2());
+	}
+
+	finalPositionStruct::finalPositionStruct() : renderPos(vec2::Nan), renderSize(vec2::Nan), clipPos(vec2::Nan), clipSize(vec2::Nan)
 	{}
 
 	guiItemStruct::guiItemStruct(guiImpl *impl, entityClass *entity) :
-		requestedSize(vec2::Nan), position(vec2::Nan), size(vec2::Nan),
+		requestedSize(vec2::Nan), renderPos(vec2::Nan), renderSize(vec2::Nan), clipPos(vec2::Nan), clipSize(vec2::Nan),
 		impl(impl), entity(entity),
 		parent(nullptr), prevSibling(nullptr), nextSibling(nullptr), firstChild(nullptr), lastChild(nullptr),
 		widget(nullptr), layout(nullptr), text(nullptr), image(nullptr),
@@ -60,21 +71,39 @@ namespace cage
 
 	void guiItemStruct::findFinalPosition(const finalPositionStruct &update)
 	{
-		CAGE_ASSERT_RUNTIME(update.position.valid());
-		CAGE_ASSERT_RUNTIME(update.size.valid());
 		CAGE_ASSERT_RUNTIME(requestedSize.valid());
-		position = update.position;
-		size = update.size;
+		CAGE_ASSERT_RUNTIME(update.renderPos.valid());
+		CAGE_ASSERT_RUNTIME(update.renderSize.valid());
+		CAGE_ASSERT_RUNTIME(update.clipPos.valid());
+		CAGE_ASSERT_RUNTIME(update.clipSize.valid());
+
+		renderPos = update.renderPos;
+		renderSize = update.renderSize;
+
+		finalPositionStruct u(update);
+		u.clip(u.renderPos, u.renderSize);
+		clipPos = u.clipPos;
+		clipSize = u.clipSize;
+
 		if (widget)
-			widget->findFinalPosition(update);
+			widget->findFinalPosition(u);
+		else if (layout)
+			layout->findFinalPosition(u);
 		else
 		{
 			uint32 name = entity ? entity->name() : 0;
 			CAGE_ASSERT_RUNTIME(layout, "trying to layout an entity without layouting specified", name);
-			layout->findFinalPosition(update);
 		}
-		CAGE_ASSERT_RUNTIME(position.valid());
-		CAGE_ASSERT_RUNTIME(size.valid());
+
+		CAGE_ASSERT_RUNTIME(renderPos.valid());
+		CAGE_ASSERT_RUNTIME(renderSize.valid());
+		CAGE_ASSERT_RUNTIME(clipPos.valid());
+		CAGE_ASSERT_RUNTIME(clipSize.valid());
+		for (uint32 a = 0; a < 2; a++)
+		{
+			CAGE_ASSERT_RUNTIME(clipPos[a] >= u.clipPos[a], clipPos, u.clipPos);
+			CAGE_ASSERT_RUNTIME(clipPos[a] + clipSize[a] <= u.clipPos[a] + u.clipSize[a], clipPos, clipSize, u.clipPos, u.clipSize);
+		}
 	}
 
 	void guiItemStruct::checkExplicitPosition(vec2 &pos, vec2 &size) const
@@ -104,11 +133,11 @@ namespace cage
 			if (!enabled[i])
 				continue;
 			real offset = 0;
-			if (position[i] + size[i] > impl->outputSize[i])
-				offset = (impl->outputSize[i] - size[i]) - position[i];
-			else if (position[i] < 0)
-				offset = -position[i];
-			position[i] += offset;
+			if (renderPos[i] + renderSize[i] > impl->outputSize[i])
+				offset = (impl->outputSize[i] - renderSize[i]) - renderPos[i];
+			else if (renderPos[i] < 0)
+				offset = -renderPos[i];
+			renderPos[i] += offset;
 		}
 	}
 
@@ -166,7 +195,7 @@ namespace cage
 	void guiItemStruct::emitDebug() const
 	{
 		real h = real(detail::hash(entity ? entity->name() : 0)) / real(detail::numeric_limits<uint32>().max());
-		emitDebug(position, size, vec4(convertHsvToRgb(vec3(h, 1, 1)), 1));
+		emitDebug(renderPos, renderSize, vec4(convertHsvToRgb(vec3(h, 1, 1)), 1));
 	}
 
 	void guiItemStruct::emitDebug(vec2 pos, vec2 size, vec4 color) const

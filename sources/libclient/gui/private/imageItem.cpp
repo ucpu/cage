@@ -69,10 +69,11 @@ namespace cage
 
 	renderableImageStruct *imageItemStruct::emit(vec2 position, vec2 size) const
 	{
-		auto *e = base->impl->emitControl;
-		auto *t = e->memory.createObject<renderableImageStruct>();
 		if (!texture)
 			return nullptr;
+		auto *e = base->impl->emitControl;
+		auto *t = e->memory.createObject<renderableImageStruct>();
+		t->setClip(base);
 		t->data.texture = texture;
 		t->data.ndcPos = base->impl->pointsToNdc(position, size);
 		t->data.uvClip = vec4(image.textureUvOffset, image.textureUvOffset + image.textureUvSize);

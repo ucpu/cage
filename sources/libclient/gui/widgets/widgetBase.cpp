@@ -72,6 +72,7 @@ namespace cage
 		CAGE_ASSERT_RUNTIME(size.valid());
 		auto *e = base->impl->emitControl;
 		auto *t = e->memory.createObject<renderableElementStruct>();
+		t->setClip(base);
 		t->data.element = (uint32)element;
 		t->data.mode = mode;
 		t->data.outer = base->impl->pointsToNdc(pos, size);
@@ -129,5 +130,10 @@ namespace cage
 	bool widgetBaseStruct::keyChar(uint32 key)
 	{
 		return true;
+	}
+
+	bool widgetBaseStruct::canBeMergedWithScrollbars() const
+	{
+		return false;
 	}
 }

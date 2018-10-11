@@ -56,27 +56,34 @@ namespace cage
 			virtual void findFinalPosition(const finalPositionStruct &update) override
 			{
 				finalPositionStruct u(update);
+				offset(u.renderPos, u.renderSize, -skin().defaults.panel.baseMargin);
+				offset(u.renderPos, u.renderSize, -skin().layouts[(uint32)elementTypeEnum::PanelBase].border);
 				if (base->text)
-					u.position[1] += skin().defaults.panel.captionHeight;
-				offset(u.position, u.size, -skin().layouts[(uint32)elementTypeEnum::PanelBase].border);
-				offset(u.position, u.size, -skin().defaults.panel.baseMargin - skin().defaults.panel.contentPadding);
+					u.renderPos[1] += skin().defaults.panel.captionHeight;
+				offset(u.renderPos, u.renderSize, -skin().defaults.panel.contentPadding);
 				base->layout->findFinalPosition(u);
 			}
 
 			virtual void emit() const override
 			{
-				vec2 p = base->position;
-				vec2 s = base->size;
+				vec2 p = base->renderPos;
+				vec2 s = base->renderSize;
 				offset(p, s, -skin().defaults.panel.baseMargin);
 				emitElement(elementTypeEnum::PanelBase, mode(false, 0), p, s);
 				if (base->text)
 				{
 					s = vec2(s[0], skin().defaults.panel.captionHeight);
-					emitElement(elementTypeEnum::PanelCaption, mode(p, s, 0), p, s);
-					offset(p, s, -skin().layouts[(uint32)elementTypeEnum::PanelCaption].border - skin().defaults.panel.captionPadding);
+					emitElement(elementTypeEnum::PanelCaption, mode(false, 0), p, s);
+					offset(p, s, -skin().layouts[(uint32)elementTypeEnum::PanelCaption].border);
+					offset(p, s, -skin().defaults.panel.captionPadding);
 					base->text->emit(p, s);
 				}
 				base->childrenEmit();
+			}
+
+			virtual bool canBeMergedWithScrollbars() const override
+			{
+				return true;
 			}
 		};
 	}

@@ -49,16 +49,16 @@ namespace cage
 			virtual void findFinalPosition(const finalPositionStruct &update) override
 			{
 				finalPositionStruct u(update);
-				u.position[1] += skin().defaults.spoiler.captionHeight;
-				offset(u.position, u.size, -skin().layouts[(uint32)elementTypeEnum::PanelBase].border);
-				offset(u.position, u.size, -skin().defaults.spoiler.baseMargin - skin().defaults.spoiler.contentPadding);
+				u.renderPos[1] += skin().defaults.spoiler.captionHeight;
+				offset(u.renderPos, u.renderSize, -skin().layouts[(uint32)elementTypeEnum::PanelBase].border);
+				offset(u.renderPos, u.renderSize, -skin().defaults.spoiler.baseMargin - skin().defaults.spoiler.contentPadding);
 				base->layout->findFinalPosition(u);
 			}
 
 			virtual void emit() const override
 			{
-				vec2 p = base->position;
-				vec2 s = base->size;
+				vec2 p = base->renderPos;
+				vec2 s = base->renderSize;
 				offset(p, s, -skin().defaults.spoiler.baseMargin);
 				emitElement(elementTypeEnum::PanelBase, mode(false), p, s);
 				s = vec2(s[0], skin().defaults.spoiler.captionHeight);
@@ -87,8 +87,8 @@ namespace cage
 					return true;
 				if (modifiers != modifiersFlags::None)
 					return true;
-				vec2 p = base->position;
-				vec2 s = vec2(base->size[0], skin().defaults.spoiler.captionHeight);
+				vec2 p = base->renderPos;
+				vec2 s = vec2(base->renderSize[0], skin().defaults.spoiler.captionHeight);
 				offset(p, s, -skin().defaults.spoiler.baseMargin * vec4(1, 1, 1, 0));
 				if (pointInside(p, s, point))
 				{
@@ -109,6 +109,11 @@ namespace cage
 						}
 					}
 				}
+				return true;
+			}
+
+			virtual bool canBeMergedWithScrollbars() const override
+			{
 				return true;
 			}
 		};

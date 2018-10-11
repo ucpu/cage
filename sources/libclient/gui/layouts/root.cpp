@@ -15,9 +15,9 @@ namespace cage
 {
 	namespace
 	{
-		struct layoutZeroImpl : public layoutBaseStruct
+		struct layoutRootImpl : public layoutBaseStruct
 		{
-			layoutZeroImpl(guiItemStruct *base) : layoutBaseStruct(base)
+			layoutRootImpl(guiItemStruct *base) : layoutBaseStruct(base)
 			{}
 
 			virtual void initialize() override
@@ -47,8 +47,8 @@ namespace cage
 		};
 	}
 
-	void layoutZeroCreate(guiItemStruct *item)
+	void layoutRootCreate(guiItemStruct *item)
 	{
-		item->layout = item->impl->itemsMemory.createObject<layoutZeroImpl>(item);
+		item->layout = item->impl->itemsMemory.createObject<layoutRootImpl>(item);
 	}
 }

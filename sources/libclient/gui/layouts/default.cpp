@@ -45,8 +45,8 @@ namespace cage
 					vec2 pos, size = c->requestedSize;
 					c->checkExplicitPosition(pos, size);
 					finalPositionStruct u(update);
-					u.position += pos;
-					u.size = size;
+					u.renderPos += pos;
+					u.renderSize = size;
 					c->findFinalPosition(u);
 					c = c->nextSibling;
 				}

@@ -44,8 +44,8 @@ namespace cage
 
 			virtual void emit() const override
 			{
-				vec2 p = base->position;
-				vec2 s = base->size;
+				vec2 p = base->renderPos;
+				vec2 s = base->renderSize;
 				offset(p, s, -skin().defaults.label.margin);
 				if (base->image)
 					base->image->emit(p, s);

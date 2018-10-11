@@ -177,8 +177,8 @@ namespace cage
 			virtual void findFinalPosition(const finalPositionStruct &update) override
 			{
 				const auto &s = skin().defaults.inputBox;
-				mainPos = base->position;
-				mainSize = base->size;
+				mainPos = base->renderPos;
+				mainSize = base->renderSize;
 				offset(mainPos, mainSize, -s.margin);
 				leftPos = rightPos = mainPos;
 				if (data.type == inputTypeEnum::Real || data.type == inputTypeEnum::Integer)

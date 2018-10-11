@@ -22,7 +22,7 @@ namespace cage
 #define GCHL_GENERATE(T) void CAGE_JOIN(T, Create)(guiItemStruct *item);
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS, GCHL_GUI_LAYOUT_COMPONENTS));
 #undef GCHL_GENERATE
-	void layoutZeroCreate(guiItemStruct *item);
+	void layoutRootCreate(guiItemStruct *item);
 	void layoutDefaultCreate(guiItemStruct *item);
 	void textCreate(guiItemStruct *item);
 	void imageCreate(guiItemStruct *item);
@@ -131,9 +131,11 @@ namespace cage
 					CAGE_ASSERT_RUNTIME(!item->image);
 					imageCreate(item);
 				}
+				// scrollbars are allowed together with some widgets
 				if (GUI_HAS_COMPONENT(scrollbars, item->entity))
 				{
-					// scrollbars are allowed together with some widgets
+					if (item->widget)
+						CAGE_ASSERT_RUNTIME(item->widget->canBeMergedWithScrollbars(), item->entity->name());
 					scrollbarsCreate(item);
 				}
 			}
@@ -230,7 +232,7 @@ namespace cage
 			impl->hover = nullptr;
 			for (auto it : impl->mouseEventReceivers)
 			{
-				if (pointInside(it->base->position, it->base->size, impl->outputMouse))
+				if (pointInside(it->base->renderPos, it->base->renderSize, impl->outputMouse))
 				{
 					impl->hover = it;
 					return;
@@ -251,7 +253,7 @@ namespace cage
 		generateHierarchy(impl);
 		generateWidgetsAndLayouts(impl->root);
 		validateHierarchy(impl);
-		layoutZeroCreate(impl->root);
+		layoutRootCreate(impl->root);
 		layoutDefaultCreate(impl->root->firstChild);
 		{ // propagate widget state
 			widgetStateComponent ws;
@@ -263,7 +265,8 @@ namespace cage
 		{ // layouting
 			impl->root->findRequestedSize();
 			finalPositionStruct u;
-			u.position = u.size = vec2();
+			u.renderPos = u.clipPos = vec2();
+			u.renderSize = u.clipSize = impl->outputSize;
 			impl->root->findFinalPosition(u);
 		}
 		generateEventReceivers(impl->root);
@@ -274,10 +277,10 @@ namespace cage
 	{
 		guiImpl *impl = (guiImpl*)this;
 
-		if (!impl->assetManager->ready(hashString("cage/cage.pack")))
+		if (!impl->eventsEnabled)
 			return;
 
-		if (!impl->eventsEnabled)
+		if (!impl->assetManager->ready(hashString("cage/cage.pack")))
 			return;
 
 		for (auto &s : impl->skins)
@@ -312,7 +315,7 @@ namespace cage
 		}
 		else
 		{
-			CAGE_LOG_DEBUG(severityEnum::Warning, "gui", "gui is skipping emit because dispatching was late");
+			CAGE_LOG_DEBUG(severityEnum::Warning, "gui", "gui is skipping emit because control update is late");
 		}
 	}
 }

@@ -126,9 +126,9 @@ namespace cage
 			{
 				guiItemStruct *c = base->firstChild;
 				uint32 idx = 0;
-				vec2 spacing = (update.size - base->requestedSize) / vec2(mws, mhs);
-				//spacing = max(spacing, vec2());
-				vec2 pos = update.position;
+				vec2 spacing = (update.renderSize - base->requestedSize) / vec2(mws, mhs);
+				spacing = max(spacing, vec2());
+				vec2 pos = update.renderPos;
 				while (c)
 				{
 					uint32 wi = data.vertical ? (idx % data.sections) : (idx / data.sections);
@@ -138,8 +138,8 @@ namespace cage
 
 					{
 						finalPositionStruct u(update);
-						u.position = pos + vec2(wi, hi) * spacing;
-						u.size = s + spacing;
+						u.renderPos = pos + vec2(wi, hi) * spacing;
+						u.renderSize = s + spacing;
 						c->findFinalPosition(u);
 					}
 
@@ -148,7 +148,7 @@ namespace cage
 					{ // vertical
 						if (wi == data.sections - 1)
 						{
-							pos[0] = update.position[0];
+							pos[0] = update.renderPos[0];
 							pos[1] += heights[hi];
 						}
 						else
@@ -159,7 +159,7 @@ namespace cage
 						if (hi == data.sections - 1)
 						{
 							pos[0] += widths[wi];
-							pos[1] = update.position[1];
+							pos[1] = update.renderPos[1];
 						}
 						else
 							pos[1] += s[1];

@@ -108,14 +108,14 @@ namespace cage
 			{
 				if (this == large && small)
 				{ // this is a popup
-					base->size = base->requestedSize;
-					base->position = small->base->position + small->base->size * 0.5 - base->size * 0.5;
+					base->renderSize = base->requestedSize;
+					base->renderPos = small->base->renderPos + small->base->renderSize * 0.5 - base->renderSize * 0.5;
 					base->moveToWindow(true, true);
 				}
 				if (this == large)
 				{
-					vec2 p = base->position;
-					vec2 s = base->size;
+					vec2 p = base->renderPos;
+					vec2 s = base->renderSize;
 					offset(p, s, -skin().defaults.colorPicker.margin - skin().layouts[(uint32)elementTypeEnum::ColorPickerFull].border);
 					sliderPos = p;
 					sliderSize = s;
@@ -137,6 +137,7 @@ namespace cage
 				auto *e = base->impl->emitControl;
 				auto *t = e->memory.createObject<colorPickerRenderableStruct>();
 				offset(pos, size, -margin);
+				t->setClip(base);
 				t->pos = base->impl->pointsToNdc(pos, size);
 				t->mode = mode;
 				t->rgb = data.color;
@@ -146,8 +147,8 @@ namespace cage
 
 			virtual void emit() const override
 			{
-				vec2 p = base->position;
-				vec2 s = base->size;
+				vec2 p = base->renderPos;
+				vec2 s = base->renderSize;
 				offset(p, s, -skin().defaults.colorPicker.margin);
 				if (this == large)
 				{ // large

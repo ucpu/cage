@@ -47,14 +47,14 @@ namespace cage
 			{
 				vec2 sd = skin().defaults.checkBox.size;
 				{
-					vec2 p = base->position;
+					vec2 p = base->renderPos;
 					offsetPosition(p, -skin().defaults.checkBox.margin);
 					emitElement(elementTypeEnum((uint32)elementTypeEnum::CheckBoxUnchecked + (uint32)data.state), mode(p, sd), p, sd);
 				}
 				if (base->text)
 				{
-					vec2 p = base->position;
-					vec2 s = base->size;
+					vec2 p = base->renderPos;
+					vec2 s = base->renderSize;
 					offset(p, s, -skin().defaults.checkBox.margin);
 					vec2 o = sd * vec2(1, 0) + skin().defaults.checkBox.labelOffset;
 					p += o;

@@ -37,14 +37,14 @@ namespace cage
 			virtual void emit() const override
 			{
 				{
-					vec2 p = base->position;
-					vec2 s = base->size;
+					vec2 p = base->renderPos;
+					vec2 s = base->renderSize;
 					offset(p, s, -skin().defaults.button.margin);
 					emitElement(elementTypeEnum::Button, mode(), p, s);
 				}
 				{
-					vec2 p = base->position;
-					vec2 s = base->size;
+					vec2 p = base->renderPos;
+					vec2 s = base->renderSize;
 					offset(p, s, -skin().defaults.button.margin - skin().layouts[(uint32)elementTypeEnum::Button].border - skin().defaults.button.padding);
 					if (base->image)
 						base->image->emit(p, s);

@@ -16,6 +16,12 @@ namespace cage
 	renderableBaseStruct::renderableBaseStruct() : next(nullptr)
 	{}
 
+	void renderableBaseStruct::setClip(guiItemStruct *item)
+	{
+		clipPos = item->clipPos * item->impl->pointsScale;
+		clipSize = item->clipSize * item->impl->pointsScale;
+	}
+
 	void renderableBaseStruct::render(guiImpl *context)
 	{}
 

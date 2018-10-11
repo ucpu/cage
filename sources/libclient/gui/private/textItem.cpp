@@ -104,6 +104,7 @@ namespace cage
 		CAGE_ASSERT_RUNTIME(text.color.valid());
 		auto *e = base->impl->emitControl;
 		auto *t = e->memory.createObject<renderableTextStruct>();
+		t->setClip(base);
 		t->data = text;
 		t->data.glyphs = (uint32*)e->memory.allocate(t->data.count * sizeof(uint32));
 		detail::memcpy(t->data.glyphs, text.glyphs, t->data.count * sizeof(uint32));

@@ -57,30 +57,30 @@ namespace cage
 
 			virtual void findFinalPosition(const finalPositionStruct &update) override
 			{
-				wheelFactor = 70 / (base->requestedSize[1] - update.size[1]);
+				wheelFactor = 70 / (base->requestedSize[1] - update.renderSize[1]);
 				finalPositionStruct u(update);
 				for (uint32 a = 0; a < 2; a++)
 				{
 					bool show = data.overflow[a] == overflowModeEnum::Always;
-					if (data.overflow[a] == overflowModeEnum::Auto && update.size[a] < base->requestedSize[a])
+					if (data.overflow[a] == overflowModeEnum::Auto && update.renderSize[a] + 1e-7 < base->requestedSize[a])
 						show = true;
 					if (show)
 					{ // the content is larger than the available area
 						scrollbarStruct &s = scrollbars[a];
-						s.size[a] = update.size[a];
+						s.size[a] = update.renderSize[a];
 						s.size[1 - a] = skin().defaults.scrollbars.scrollbarSize;
-						s.position[a] = update.position[a];
-						s.position[1 - a] = update.position[1 - a] + update.size[1 - a] - s.size[1 - a];
-						u.position[a] -= (base->requestedSize[a] - update.size[a]) * scrollbars[a].value;
-						u.size[a] = base->requestedSize[a];
-						u.size[1 - a] -= s.size[1 - a] + skin().defaults.scrollbars.contentPadding;
+						s.position[a] = update.renderPos[a];
+						s.position[1 - a] = update.renderPos[1 - a] + update.renderSize[1 - a] - s.size[1 - a];
+						u.renderPos[a] -= (base->requestedSize[a] - update.renderSize[a]) * scrollbars[a].value;
+						u.renderSize[a] = base->requestedSize[a];
+						u.renderSize[1 - a] -= s.size[1 - a] + skin().defaults.scrollbars.contentPadding;
 						real minSize = min(s.size[0], s.size[1]);
-						s.dotSize = max(minSize, sqr(update.size[a]) / base->requestedSize[a]);
+						s.dotSize = max(minSize, sqr(update.renderSize[a]) / base->requestedSize[a]);
 					}
 					else
 					{ // the content is smaller than the available area
-						u.position[a] += (update.size[a] - base->requestedSize[a]) * data.alignment[a];
-						u.size[a] = base->requestedSize[a];
+						u.renderPos[a] += (update.renderSize[a] - base->requestedSize[a]) * data.alignment[a];
+						u.renderSize[a] = base->requestedSize[a];
 					}
 				}
 				base->layout->findFinalPosition(u);
@@ -209,8 +209,8 @@ namespace cage
 				vec2 pos, size = base->requestedSize;
 				base->checkExplicitPosition(pos, size);
 				finalPositionStruct u(update);
-				u.position += pos;
-				u.size = size;
+				u.renderPos += pos;
+				u.renderSize = size;
 				base->firstChild->findFinalPosition(u);
 			}
 
