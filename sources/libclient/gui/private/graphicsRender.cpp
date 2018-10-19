@@ -15,16 +15,6 @@
 
 namespace cage
 {
-	void renderableDebugStruct::render(guiImpl *impl)
-	{
-		guiImpl::graphicsDataStruct &context = impl->graphicsData;
-		context.debugShader->bind();
-		context.debugShader->uniform(0, data.position);
-		context.debugShader->uniform(1, data.color);
-		context.debugMesh->bind();
-		context.debugMesh->dispatch();
-	}
-
 	void renderableElementStruct::render(guiImpl *impl)
 	{
 		guiImpl::graphicsDataStruct &context = impl->graphicsData;

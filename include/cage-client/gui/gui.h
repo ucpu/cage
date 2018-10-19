@@ -47,7 +47,7 @@ namespace cage
 		bool keyRelease(uint32 key, uint32 scanCode, modifiersFlags modifiers);
 		bool keyChar(uint32 key);
 
-		void handleWindowEvents(windowClass *window);
+		void handleWindowEvents(windowClass *window, sint32 order = 0);
 		void skipAllEventsUntilNextUpdate();
 		pointStruct getInputResolution() const;
 		delegate<bool(const pointStruct&, vec2&)> eventCoordinatesTransformer; // called from controlUpdateStart or from any window events, it should return false to signal that the point is outside the gui, otherwise the point should be converted from window coordinate system to the gui output resolution coordinate system

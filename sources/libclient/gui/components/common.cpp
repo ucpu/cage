@@ -13,9 +13,6 @@
 
 namespace cage
 {
-	positionComponent::positionComponent()
-	{}
-
 	parentComponent::parentComponent() : parent(0), order(0)
 	{}
 

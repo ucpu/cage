@@ -94,19 +94,23 @@ namespace cage
 		return vec4(resPos, resPos + resSiz);
 	}
 
-	real guiImpl::eval(real val, unitEnum unit, real defaul)
+	uint32 guiImpl::entityWidgetsCount(entityClass *e)
 	{
-		switch (unit)
-		{
-		case unitEnum::None: return defaul;
-		case unitEnum::Points: return val;
-		case unitEnum::Pixels: return val / pointsScale;
-		case unitEnum::ScreenWidth: return val * outputSize[0];
-		case unitEnum::ScreenHeight: return val * outputSize[1];
-		case unitEnum::ScreenShorter: return val * min(outputSize[0], outputSize[1]);
-		case unitEnum::ScreenLonger: return val * max(outputSize[0], outputSize[1]);
-		default:
-			CAGE_THROW_CRITICAL(exception, "invalid unit enum");
-		}
+		guiImpl *impl = this;
+		uint32 result = 0;
+#define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, e)) result++;
+		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS));
+#undef GCHL_GENERATE
+		return result;
+	}
+
+	uint32 guiImpl::entityLayoutsCount(entityClass *e)
+	{
+		guiImpl *impl = this;
+		uint32 result = 0;
+#define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, e)) result++;
+		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_LAYOUT_COMPONENTS));
+#undef GCHL_GENERATE
+		return result;
 	}
 }

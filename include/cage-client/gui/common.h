@@ -1,39 +1,5 @@
 namespace cage
 {
-	enum class unitEnum : uint32
-	{
-		None, // automatic, inherited, defaulted or otherwise defined
-		Points, // = pixels times scale
-		Pixels,
-		ScreenWidth,
-		ScreenHeight,
-		ScreenShorter,
-		ScreenLonger,
-	};
-
-	template<uint32 N>
-	struct valuesStruct
-	{
-		union
-		{
-			real values[N];
-			typename vecN<N>::type value;
-		};
-		unitEnum units[N];
-		static const uint32 Dimension = N;
-		valuesStruct() : value(typename vecN<N>::type()) { for (uint32 i = 0; i < N; i++) { units[i] = unitEnum::None; } }
-	};
-
-	typedef valuesStruct<1> valueStruct;
-
-	struct CAGE_API positionComponent
-	{
-		vec2 anchor; // center is at 0.5
-		valuesStruct<2> position;
-		valuesStruct<2> size;
-		positionComponent();
-	};
-
 	struct CAGE_API parentComponent
 	{
 		uint32 parent;
@@ -117,7 +83,7 @@ namespace cage
 		scrollbarsComponent();
 	};
 
-#define GCHL_GUI_COMMON_COMPONENTS position, parent, image, imageFormat, text, textFormat, selection, tooltip, widgetState, selectedItem, scrollbars
+#define GCHL_GUI_COMMON_COMPONENTS parent, image, imageFormat, text, textFormat, selection, tooltip, widgetState, selectedItem, scrollbars
 
 	struct CAGE_API generalComponentsStruct
 	{

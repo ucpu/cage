@@ -15,51 +15,50 @@ namespace cage
 {
 	namespace
 	{
-		struct checkBoxImpl : public widgetBaseStruct
+		struct checkBoxImpl : public widgetItemStruct
 		{
 			checkBoxComponent &data;
 
-			checkBoxImpl(guiItemStruct *base) : widgetBaseStruct(base), data(GUI_REF_COMPONENT(checkBox))
+			checkBoxImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(checkBox))
 			{}
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT_RUNTIME(!base->firstChild, "checkbox may not have children");
-				CAGE_ASSERT_RUNTIME(!base->layout, "checkbox may not have layout");
-				CAGE_ASSERT_RUNTIME(!base->image, "checkbox may not have image");
-				if (base->text)
-					base->text->text.apply(skin().defaults.checkBox.textFormat, base->impl);
+				CAGE_ASSERT_RUNTIME(!hierarchy->firstChild, "checkbox may not have children");
+				CAGE_ASSERT_RUNTIME(!hierarchy->image, "checkbox may not have image");
+				if (hierarchy->text)
+					hierarchy->text->text.apply(skin->defaults.checkBox.textFormat, hierarchy->impl);
 			}
 
 			virtual void findRequestedSize() override
 			{
-				base->requestedSize = skin().defaults.checkBox.size;
-				if (base->text)
+				hierarchy->requestedSize = skin->defaults.checkBox.size;
+				if (hierarchy->text)
 				{
-					vec2 txtSize = base->text->findRequestedSize() + skin().defaults.checkBox.labelOffset;
-					base->requestedSize[0] += txtSize[0];
-					base->requestedSize[1] = max(base->requestedSize[1], txtSize[1]);
+					vec2 txtSize = hierarchy->text->findRequestedSize() + skin->defaults.checkBox.labelOffset;
+					hierarchy->requestedSize[0] += txtSize[0];
+					hierarchy->requestedSize[1] = max(hierarchy->requestedSize[1], txtSize[1]);
 				}
-				offsetSize(base->requestedSize, skin().defaults.checkBox.margin);
+				offsetSize(hierarchy->requestedSize, skin->defaults.checkBox.margin);
 			}
 
 			virtual void emit() const override
 			{
-				vec2 sd = skin().defaults.checkBox.size;
+				vec2 sd = skin->defaults.checkBox.size;
 				{
-					vec2 p = base->renderPos;
-					offsetPosition(p, -skin().defaults.checkBox.margin);
+					vec2 p = hierarchy->renderPos;
+					offsetPosition(p, -skin->defaults.checkBox.margin);
 					emitElement(elementTypeEnum((uint32)elementTypeEnum::CheckBoxUnchecked + (uint32)data.state), mode(p, sd), p, sd);
 				}
-				if (base->text)
+				if (hierarchy->text)
 				{
-					vec2 p = base->renderPos;
-					vec2 s = base->renderSize;
-					offset(p, s, -skin().defaults.checkBox.margin);
-					vec2 o = sd * vec2(1, 0) + skin().defaults.checkBox.labelOffset;
+					vec2 p = hierarchy->renderPos;
+					vec2 s = hierarchy->renderSize;
+					offset(p, s, -skin->defaults.checkBox.margin);
+					vec2 o = sd * vec2(1, 0) + skin->defaults.checkBox.labelOffset;
 					p += o;
 					s -= o;
-					base->text->emit(p, s);
+					hierarchy->text->emit(p, s);
 				}
 			}
 
@@ -69,7 +68,7 @@ namespace cage
 					data.state = checkBoxStateEnum::Unchecked;
 				else
 					data.state = checkBoxStateEnum::Checked;
-				base->impl->widgetEvent.dispatch(base->entity->name());
+				hierarchy->impl->widgetEvent.dispatch(hierarchy->entity->name());
 			}
 
 			virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
@@ -85,8 +84,9 @@ namespace cage
 		};
 	}
 
-	void checkBoxCreate(guiItemStruct *item)
+	void checkBoxCreate(hierarchyItemStruct *item)
 	{
-		item->widget = item->impl->itemsMemory.createObject<checkBoxImpl>(item);
+		CAGE_ASSERT_RUNTIME(!item->item);
+		item->item = item->impl->itemsMemory.createObject<checkBoxImpl>(item);
 	}
 }

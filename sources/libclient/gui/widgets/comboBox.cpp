@@ -17,46 +17,43 @@ namespace cage
 	{
 		struct comboBoxImpl;
 
-		struct comboListImpl : public widgetBaseStruct
+		struct comboListImpl : public widgetItemStruct
 		{
 			comboBoxImpl *combo;
 
-			comboListImpl(guiItemStruct *base, comboBoxImpl *combo) : widgetBaseStruct(base), combo(combo)
+			comboListImpl(hierarchyItemStruct *hierarchy, comboBoxImpl *combo) : widgetItemStruct(hierarchy), combo(combo)
 			{}
 
-			virtual void initialize() override
-			{}
-
+			virtual void initialize() override;
 			virtual void findRequestedSize() override;
 			virtual void findFinalPosition(const finalPositionStruct &update) override;
 			virtual void emit() const override;
 			virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override;
 		};
 
-		struct comboBoxImpl : public widgetBaseStruct
+		struct comboBoxImpl : public widgetItemStruct
 		{
 			comboBoxComponent &data;
 			comboListImpl *list;
 			uint32 count;
 
-			comboBoxImpl(guiItemStruct *base) : widgetBaseStruct(base), data(GUI_REF_COMPONENT(comboBox)), list(nullptr), count(0)
+			comboBoxImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(comboBox)), list(nullptr), count(0)
 			{}
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT_RUNTIME(!base->layout, "combo box may not have layout");
-				CAGE_ASSERT_RUNTIME(!base->image, "combo box may not have image");
+				CAGE_ASSERT_RUNTIME(!hierarchy->image, "combo box may not have image");
 				CAGE_ASSERT_RUNTIME(areChildrenValid(), "combo box children may not have other children, layouts, witgets or images and must have text");
-				if (base->text)
-					base->text->text.apply(skin().defaults.comboBox.placeholderFormat, base->impl);
+				if (hierarchy->text)
+					hierarchy->text->text.apply(skin->defaults.comboBox.placeholderFormat, hierarchy->impl);
 				count = 0;
-				guiItemStruct *c = base->firstChild;
+				hierarchyItemStruct *c = hierarchy->firstChild;
 				while (c)
 				{
 					if (count == data.selected)
-						c->text->text.apply(skin().defaults.comboBox.selectedFormat, base->impl);
+						c->text->text.apply(skin->defaults.comboBox.selectedFormat, hierarchy->impl);
 					else
-						c->text->text.apply(skin().defaults.comboBox.itemsFormat, base->impl);
+						c->text->text.apply(skin->defaults.comboBox.itemsFormat, hierarchy->impl);
 					count++;
 					c = c->nextSibling;
 				}
@@ -65,40 +62,40 @@ namespace cage
 				consolidateSelection();
 				if (hasFocus())
 				{
-					guiItemStruct *item = base->impl->itemsMemory.createObject<guiItemStruct>(base->impl, base->entity);
-					item->attachParent(base->impl->root);
-					item->widget = list = base->impl->itemsMemory.createObject<comboListImpl>(item, this);
+					hierarchyItemStruct *item = hierarchy->impl->itemsMemory.createObject<hierarchyItemStruct>(hierarchy->impl, hierarchy->entity);
+					item->attachParent(hierarchy->impl->root);
+					item->item = list = hierarchy->impl->itemsMemory.createObject<comboListImpl>(item, this);
 					list->widgetState = widgetState;
 				}
 			}
 
 			virtual void findRequestedSize() override
 			{
-				base->requestedSize = skin().defaults.comboBox.size;
-				offsetSize(base->requestedSize, skin().defaults.comboBox.baseMargin);
+				hierarchy->requestedSize = skin->defaults.comboBox.size;
+				offsetSize(hierarchy->requestedSize, skin->defaults.comboBox.baseMargin);
 			}
 
 			virtual void emit() const override
 			{
-				vec2 p = base->renderPos;
-				vec2 s = base->renderSize;
-				offset(p, s, -skin().defaults.comboBox.baseMargin);
+				vec2 p = hierarchy->renderPos;
+				vec2 s = hierarchy->renderSize;
+				offset(p, s, -skin->defaults.comboBox.baseMargin);
 				emitElement(elementTypeEnum::ComboBoxBase, mode(), p, s);
-				offset(p, s, -skin().layouts[(uint32)elementTypeEnum::ComboBoxBase].border - skin().defaults.comboBox.basePadding);
+				offset(p, s, -skin->layouts[(uint32)elementTypeEnum::ComboBoxBase].border - skin->defaults.comboBox.basePadding);
 				if (data.selected == -1)
 				{ // emit placeholder
-					if (base->text)
-						base->text->emit(p, s);
+					if (hierarchy->text)
+						hierarchy->text->emit(p, s);
 				}
 				else
 				{ // emit selected item
-					guiItemStruct *c = base->firstChild;
+					hierarchyItemStruct *c = hierarchy->firstChild;
 					uint32 idx = 0;
 					while (c)
 					{
 						if (idx++ == data.selected)
 						{
-							c->text->emit(p, s)->setClip(base);
+							c->text->emit(p, s)->setClip(hierarchy);
 							break;
 						}
 						c = c->nextSibling;
@@ -108,18 +105,18 @@ namespace cage
 
 			bool areChildrenValid()
 			{
-				guiItemStruct *c = base->firstChild;
+				hierarchyItemStruct *c = hierarchy->firstChild;
 				while (c)
 				{
 					if (!c->entity)
 						return false;
+					if (c->item)
+						return false;
 					if (!c->text)
 						return false;
-					if (c->widget)
-						return false;
-					if (c->layout)
-						return false;
 					if (c->image)
+						return false;
+					if (c->firstChild)
 						return false;
 					c = c->nextSibling;
 				}
@@ -128,50 +125,55 @@ namespace cage
 
 			void consolidateSelection()
 			{
-				guiItemStruct *c = base->firstChild;
+				hierarchyItemStruct *c = hierarchy->firstChild;
 				uint32 idx = 0;
 				while (c)
 				{
 					if (data.selected == idx++)
-						c->entity->add(base->impl->components.selectedItem);
+						c->entity->add(hierarchy->impl->components.selectedItem);
 					else
-						c->entity->remove(base->impl->components.selectedItem);
+						c->entity->remove(hierarchy->impl->components.selectedItem);
 					c = c->nextSibling;
 				}
 			}
 		};
 
+		void comboListImpl::initialize()
+		{
+			skin = combo->skin;
+		}
+
 		void comboListImpl::findRequestedSize()
 		{
-			base->requestedSize = vec2();
-			offsetSize(base->requestedSize, skin().layouts[(uint32)elementTypeEnum::ComboBoxList].border + skin().defaults.comboBox.listPadding);
-			vec4 os = skin().layouts[(uint32)elementTypeEnum::ComboBoxItem].border + skin().defaults.comboBox.itemPadding;
-			guiItemStruct *c = combo->base->firstChild;
+			hierarchy->requestedSize = vec2();
+			offsetSize(hierarchy->requestedSize, skin->layouts[(uint32)elementTypeEnum::ComboBoxList].border + skin->defaults.comboBox.listPadding);
+			vec4 os = skin->layouts[(uint32)elementTypeEnum::ComboBoxItem].border + skin->defaults.comboBox.itemPadding;
+			hierarchyItemStruct *c = combo->hierarchy->firstChild;
 			while (c)
 			{
 				// todo limit text wrap width to the combo box item
 				c->requestedSize = c->text->findRequestedSize();
 				offsetSize(c->requestedSize, os);
-				base->requestedSize[1] += c->requestedSize[1];
+				hierarchy->requestedSize[1] += c->requestedSize[1];
 				c = c->nextSibling;
 			}
-			base->requestedSize[1] += skin().defaults.comboBox.itemSpacing * (max(combo->count, 1u) - 1);
-			vec4 m = skin().defaults.comboBox.baseMargin;
-			base->requestedSize[0] = combo->base->requestedSize[0] - m[0] - m[2];
+			hierarchy->requestedSize[1] += skin->defaults.comboBox.itemSpacing * (max(combo->count, 1u) - 1);
+			vec4 m = skin->defaults.comboBox.baseMargin;
+			hierarchy->requestedSize[0] = combo->hierarchy->requestedSize[0] - m[0] - m[2];
 		}
 
 		void comboListImpl::findFinalPosition(const finalPositionStruct &update)
 		{
-			vec4 m = skin().defaults.comboBox.baseMargin;
-			base->renderSize = base->requestedSize;
-			base->renderPos = combo->base->renderPos;
-			base->renderPos[0] += m[0];
-			base->renderPos[1] += combo->base->renderSize[1] + skin().defaults.comboBox.listOffset - m[3];
-			vec2 p = base->renderPos;
-			vec2 s = base->renderSize;
-			offset(p, s, -skin().defaults.comboBox.baseMargin * vec4(1, 0, 1, 0) - skin().layouts[(uint32)elementTypeEnum::ComboBoxList].border - skin().defaults.comboBox.listPadding);
-			real spacing = skin().defaults.comboBox.itemSpacing;
-			guiItemStruct *c = combo->base->firstChild;
+			vec4 m = skin->defaults.comboBox.baseMargin;
+			hierarchy->renderSize = hierarchy->requestedSize;
+			hierarchy->renderPos = combo->hierarchy->renderPos;
+			hierarchy->renderPos[0] += m[0];
+			hierarchy->renderPos[1] += combo->hierarchy->renderSize[1] + skin->defaults.comboBox.listOffset - m[3];
+			vec2 p = hierarchy->renderPos;
+			vec2 s = hierarchy->renderSize;
+			offset(p, s, -skin->defaults.comboBox.baseMargin * vec4(1, 0, 1, 0) - skin->layouts[(uint32)elementTypeEnum::ComboBoxList].border - skin->defaults.comboBox.listPadding);
+			real spacing = skin->defaults.comboBox.itemSpacing;
+			hierarchyItemStruct *c = combo->hierarchy->firstChild;
 			while (c)
 			{
 				c->renderPos = p;
@@ -183,18 +185,18 @@ namespace cage
 
 		void comboListImpl::emit() const
 		{
-			emitElement(elementTypeEnum::ComboBoxList, 0, base->renderPos, base->renderSize);
-			vec4 itemFrame = -skin().layouts[(uint32)elementTypeEnum::ComboBoxItem].border - skin().defaults.comboBox.itemPadding;
-			guiItemStruct *c = combo->base->firstChild;
+			emitElement(elementTypeEnum::ComboBoxList, 0, hierarchy->renderPos, hierarchy->renderSize);
+			vec4 itemFrame = -skin->layouts[(uint32)elementTypeEnum::ComboBoxItem].border - skin->defaults.comboBox.itemPadding;
+			hierarchyItemStruct *c = combo->hierarchy->firstChild;
 			uint32 idx = 0;
 			while (c)
 			{
-				uint32 m = pointInside(c->renderPos, c->renderSize, base->impl->outputMouse) ? 2 : idx == combo->data.selected ? 1 : 0;
+				uint32 m = pointInside(c->renderPos, c->renderSize, hierarchy->impl->outputMouse) ? 2 : idx == combo->data.selected ? 1 : 0;
 				emitElement(elementTypeEnum::ComboBoxItem, m, c->renderPos, c->renderSize);
 				vec2 p = c->renderPos;
 				vec2 s = c->renderSize;
 				offset(p, s, itemFrame);
-				c->text->emit(p, s)->setClip(base);
+				c->text->emit(p, s)->setClip(hierarchy);
 				c = c->nextSibling;
 				idx++;
 			}
@@ -208,26 +210,27 @@ namespace cage
 			if (modifiers != modifiersFlags::None)
 				return true;
 			uint32 idx = 0;
-			guiItemStruct *c = combo->base->firstChild;
+			hierarchyItemStruct *c = combo->hierarchy->firstChild;
 			while (c)
 			{
 				if (pointInside(c->renderPos, c->renderSize, point))
 				{
 					combo->data.selected = idx;
-					base->impl->focusName = 0; // give up focus (this will close the popup)
+					hierarchy->impl->focusName = 0; // give up focus (this will close the popup)
 					break;
 				}
 				idx++;
 				c = c->nextSibling;
 			}
 			combo->consolidateSelection();
-			base->impl->widgetEvent.dispatch(base->entity->name());
+			hierarchy->impl->widgetEvent.dispatch(hierarchy->entity->name());
 			return true;
 		}
 	}
 
-	void comboBoxCreate(guiItemStruct *item)
+	void comboBoxCreate(hierarchyItemStruct *item)
 	{
-		item->widget = item->impl->itemsMemory.createObject<comboBoxImpl>(item);
+		CAGE_ASSERT_RUNTIME(!item->item);
+		item->item = item->impl->itemsMemory.createObject<comboBoxImpl>(item);
 	}
 }

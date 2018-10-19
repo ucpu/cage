@@ -14,9 +14,9 @@ namespace cage
 {
 	namespace
 	{
-		struct progressBarImpl : public widgetBaseStruct
+		struct progressBarImpl : public widgetItemStruct
 		{
-			progressBarImpl(guiItemStruct *base) : widgetBaseStruct(base)
+			progressBarImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy)
 			{}
 
 			virtual void initialize() override
@@ -26,7 +26,7 @@ namespace cage
 
 			virtual void findRequestedSize() override
 			{
-				base->requestedSize = vec2(); // todo this is a temporary hack
+				hierarchy->requestedSize = vec2(); // todo this is a temporary hack
 			}
 
 			virtual void emit() const override
@@ -36,8 +36,9 @@ namespace cage
 		};
 	}
 
-	void progressBarCreate(guiItemStruct *item)
+	void progressBarCreate(hierarchyItemStruct *item)
 	{
-		item->widget = item->impl->itemsMemory.createObject<progressBarImpl>(item);
+		CAGE_ASSERT_RUNTIME(!item->item);
+		item->item = item->impl->itemsMemory.createObject<progressBarImpl>(item);
 	}
 }

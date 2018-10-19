@@ -14,11 +14,9 @@
 
 namespace cage
 {
-	void layoutDefaultCreate(guiItemStruct *item);
-
 	namespace
 	{
-		struct scrollbarsImpl : public widgetBaseStruct
+		struct scrollbarsImpl : public widgetItemStruct
 		{
 			scrollbarsComponent &data;
 
@@ -34,61 +32,63 @@ namespace cage
 
 			real wheelFactor;
 
-			scrollbarsImpl(guiItemStruct *base) : widgetBaseStruct(base), data(GUI_REF_COMPONENT(scrollbars)), scrollbars{ data.scroll[0], data.scroll[1] }
-			{}
+			scrollbarsImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(scrollbars)), scrollbars{ data.scroll[0], data.scroll[1] }
+			{
+				ensureItemHasLayout(hierarchy);
+			}
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT_RUNTIME(!base->text, "scrollbars may not have text");
-				CAGE_ASSERT_RUNTIME(!base->image, "scrollbars may not have image");
-				if (!base->layout)
-					layoutDefaultCreate(base);
+				CAGE_ASSERT_RUNTIME(!hierarchy->text, "scrollbars may not have text");
+				CAGE_ASSERT_RUNTIME(!hierarchy->image, "scrollbars may not have image");
 			}
 
 			virtual void findRequestedSize() override
 			{
-				base->layout->findRequestedSize();
+				hierarchy->firstChild->findRequestedSize();
+				hierarchy->requestedSize = hierarchy->firstChild->requestedSize;
 				for (uint32 a = 0; a < 2; a++)
 				{
 					if (data.overflow[a] == overflowModeEnum::Always)
-						base->requestedSize[a] += skin().defaults.scrollbars.scrollbarSize + skin().defaults.scrollbars.contentPadding;
+						hierarchy->requestedSize[a] += skin->defaults.scrollbars.scrollbarSize + skin->defaults.scrollbars.contentPadding;
 				}
 			}
 
 			virtual void findFinalPosition(const finalPositionStruct &update) override
 			{
-				wheelFactor = 70 / (base->requestedSize[1] - update.renderSize[1]);
+				wheelFactor = 70 / (hierarchy->requestedSize[1] - update.renderSize[1]);
 				finalPositionStruct u(update);
 				for (uint32 a = 0; a < 2; a++)
 				{
 					bool show = data.overflow[a] == overflowModeEnum::Always;
-					if (data.overflow[a] == overflowModeEnum::Auto && update.renderSize[a] + 1e-7 < base->requestedSize[a])
+					if (data.overflow[a] == overflowModeEnum::Auto && update.renderSize[a] + 1e-7 < hierarchy->requestedSize[a])
 						show = true;
 					if (show)
 					{ // the content is larger than the available area
 						scrollbarStruct &s = scrollbars[a];
 						s.size[a] = update.renderSize[a];
-						s.size[1 - a] = skin().defaults.scrollbars.scrollbarSize;
+						s.size[1 - a] = skin->defaults.scrollbars.scrollbarSize;
 						s.position[a] = update.renderPos[a];
 						s.position[1 - a] = update.renderPos[1 - a] + update.renderSize[1 - a] - s.size[1 - a];
-						u.renderPos[a] -= (base->requestedSize[a] - update.renderSize[a]) * scrollbars[a].value;
-						u.renderSize[a] = base->requestedSize[a];
-						u.renderSize[1 - a] -= s.size[1 - a] + skin().defaults.scrollbars.contentPadding;
+						u.renderPos[a] -= (hierarchy->requestedSize[a] - update.renderSize[a]) * scrollbars[a].value;
+						u.renderSize[a] = hierarchy->requestedSize[a];
+						u.renderSize[1 - a] -= s.size[1 - a] + skin->defaults.scrollbars.contentPadding;
+						u.renderSize[1 - a] = max(u.renderSize[1 - a], 0);
 						real minSize = min(s.size[0], s.size[1]);
-						s.dotSize = max(minSize, sqr(update.renderSize[a]) / base->requestedSize[a]);
+						s.dotSize = max(minSize, sqr(update.renderSize[a]) / hierarchy->requestedSize[a]);
 					}
 					else
 					{ // the content is smaller than the available area
-						u.renderPos[a] += (update.renderSize[a] - base->requestedSize[a]) * data.alignment[a];
-						u.renderSize[a] = base->requestedSize[a];
+						u.renderPos[a] += (update.renderSize[a] - hierarchy->requestedSize[a]) * data.alignment[a];
+						u.renderSize[a] = hierarchy->requestedSize[a];
 					}
 				}
-				base->layout->findFinalPosition(u);
+				hierarchy->firstChild->findFinalPosition(u);
 			}
 
 			virtual void emit() const override
 			{
-				base->childrenEmit();
+				hierarchy->childrenEmit();
 				for (uint32 a = 0; a < 2; a++)
 				{
 					const scrollbarStruct &s = scrollbars[a];
@@ -107,12 +107,10 @@ namespace cage
 
 			bool handleMouse(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point, bool move)
 			{
-				if (!move)
-					makeFocused();
 				if (buttons != mouseButtonsFlags::Left)
-					return true;
+					return false;
 				if (modifiers != modifiersFlags::None)
-					return true;
+					return false;
 				for (uint32 a = 0; a < 2; a++)
 				{
 					const scrollbarStruct &s = scrollbars[a];
@@ -128,11 +126,12 @@ namespace cage
 						}
 					}
 				}
-				return true;
+				return false;
 			}
 
 			virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
 			{
+				makeFocused();
 				return handleMouse(buttons, modifiers, point, false);
 			}
 
@@ -144,112 +143,52 @@ namespace cage
 			virtual bool mouseWheel(sint8 wheel, modifiersFlags modifiers, vec2 point) override
 			{
 				if (modifiers != modifiersFlags::None)
-					return true;
+					return false;
 				const scrollbarStruct &s = scrollbars[1];
 				if (s.position.valid())
 				{
 					s.value -= wheel * wheelFactor;
 					s.value = clamp(s.value, 0, 1);
+					return true;
 				}
-				return true;
-			}
-		};
-
-		struct dummyLayoutImpl : public layoutBaseStruct
-		{
-			dummyLayoutImpl(guiItemStruct *base) : layoutBaseStruct(base)
-			{}
-
-			virtual void initialize() override
-			{
-				CAGE_ASSERT_RUNTIME(base->firstChild == base->lastChild);
+				return false;
 			}
 
-			virtual void findRequestedSize() override
+			virtual bool mouseDouble(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
 			{
-				if (base->firstChild)
-				{
-					base->firstChild->findRequestedSize();
-					base->requestedSize = base->firstChild->requestedSize;
-				}
-				else
-					base->requestedSize = vec2();
-				CAGE_ASSERT_RUNTIME(base->requestedSize.valid());
+				return false;
 			}
 
-			virtual void findFinalPosition(const finalPositionStruct &update) override
+			virtual bool mouseRelease(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
 			{
-				if (base->firstChild)
-				{
-					finalPositionStruct u(update);
-					base->firstChild->findFinalPosition(u);
-				}
-			}
-		};
-
-		struct dummyWidgetImpl : public widgetBaseStruct
-		{
-			dummyWidgetImpl(guiItemStruct *base) : widgetBaseStruct(base)
-			{}
-
-			virtual void initialize() override
-			{
-				CAGE_ASSERT_RUNTIME(base->firstChild && base->firstChild == base->lastChild);
+				return false;
 			}
 
-			virtual void findRequestedSize() override
+			virtual bool keyPress(uint32 key, uint32 scanCode, modifiersFlags modifiers) override
 			{
-				base->layout->findRequestedSize();
-				vec2 pos;
-				base->checkExplicitPosition(pos, base->requestedSize);
+				return false;
 			}
 
-			virtual void findFinalPosition(const finalPositionStruct &update) override
+			virtual bool keyRepeat(uint32 key, uint32 scanCode, modifiersFlags modifiers) override
 			{
-				vec2 pos, size = base->requestedSize;
-				base->checkExplicitPosition(pos, size);
-				finalPositionStruct u(update);
-				u.renderPos += pos;
-				u.renderSize = size;
-				base->firstChild->findFinalPosition(u);
+				return false;
 			}
 
-			virtual void emit() const override
+			virtual bool keyRelease(uint32 key, uint32 scanCode, modifiersFlags modifiers) override
 			{
-				base->childrenEmit();
+				return false;
+			}
+
+			virtual bool keyChar(uint32 key) override
+			{
+				return false;
 			}
 		};
 	}
 
-	void scrollbarsCreate(guiItemStruct *item)
+	void scrollbarsCreate(hierarchyItemStruct *item)
 	{
-		if (item->widget)
-		{ // scrollbars merged with another widget
-			guiItemStruct *n = item->impl->itemsMemory.createObject<guiItemStruct>(item->impl, item->entity);
-			{
-				guiItemStruct *i = item->firstChild;
-				while (i)
-				{
-					CAGE_ASSERT_RUNTIME(i->parent == item);
-					i->parent = n;
-					i = i->nextSibling;
-				}
-			}
-			n->parent = item;
-			n->firstChild = item->firstChild;
-			n->lastChild = item->lastChild;
-			item->firstChild = item->lastChild = n;
-			n->layout = item->layout;
-			if (n->layout)
-				const_cast<guiItemStruct*&>(n->layout->base) = n;
-			item->layout = item->impl->itemsMemory.createObject<dummyLayoutImpl>(item);
-			n->widget = item->impl->itemsMemory.createObject<scrollbarsImpl>(n);
-			n->subsidedItem = true;
-		}
-		else
-		{ // standalone scrollbars widget
-			item->widget = item->impl->itemsMemory.createObject<dummyWidgetImpl>(item);
-			scrollbarsCreate(item);
-		}
+		CAGE_ASSERT_RUNTIME(!item->item);
+		item->item = item->impl->itemsMemory.createObject<scrollbarsImpl>(item);
 	}
 }

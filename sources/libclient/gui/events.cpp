@@ -15,16 +15,19 @@ namespace cage
 {
 	namespace
 	{
-		bool pointIsInside(guiItemStruct *b, const vec2 &p)
+		bool pointIsInside(hierarchyItemStruct *b, const vec2 &p)
 		{
 			return pointInside(b->renderPos, b->renderSize, p);
 		}
 
-		void findWidgets(guiItemStruct *item, uint32 name, std::vector<widgetBaseStruct*> &result)
+		void findWidgets(hierarchyItemStruct *item, uint32 name, std::vector<widgetItemStruct*> &result)
 		{
-			if (item->entity && item->entity->name() == name && item->widget)
-				result.push_back(item->widget);
-			guiItemStruct *c = item->firstChild;
+			{
+				widgetItemStruct *w = nullptr;
+				if (item->entity && item->entity->name() == name && (w = dynamic_cast<widgetItemStruct*>(item->item)))
+					result.push_back(w);
+			}
+			hierarchyItemStruct *c = item->firstChild;
 			while (c)
 			{
 				findWidgets(c, name, result);
@@ -32,9 +35,9 @@ namespace cage
 			}
 		}
 
-		std::vector<widgetBaseStruct*> focused(guiImpl *impl)
+		std::vector<widgetItemStruct*> focused(guiImpl *impl)
 		{
-			std::vector<widgetBaseStruct*> result;
+			std::vector<widgetItemStruct*> result;
 			if (impl->focusName)
 			{
 				result.reserve(3);
@@ -43,7 +46,7 @@ namespace cage
 			return result;
 		}
 
-		template<class A, bool (widgetBaseStruct::*F)(A, modifiersFlags, vec2)>
+		template<class A, bool (widgetItemStruct::*F)(A, modifiersFlags, vec2)>
 		bool passMouseEvent(guiImpl *impl, A a, modifiersFlags m, const pointStruct &point)
 		{
 			vec2 pt;
@@ -64,7 +67,7 @@ namespace cage
 			// if nothing has focus, pass the event to anything under the cursor
 			for (auto it : impl->mouseEventReceivers)
 			{
-				if (pointIsInside(it->base, pt))
+				if (pointIsInside(it->hierarchy, pt))
 				{
 					if (it->widgetState.disabled)
 						return true;
@@ -75,7 +78,7 @@ namespace cage
 			return false;
 		}
 
-		template<bool (widgetBaseStruct::*F)(uint32, uint32, modifiersFlags)>
+		template<bool (widgetItemStruct::*F)(uint32, uint32, modifiersFlags)>
 		bool passKeyEvent(guiImpl *impl, uint32 a, uint32 b, modifiersFlags m)
 		{
 			vec2 dummy;
@@ -124,7 +127,7 @@ namespace cage
 			return false;
 		for (auto it : impl->mouseEventReceivers)
 		{
-			if (pointIsInside(it->base, pt))
+			if (pointIsInside(it->hierarchy, pt))
 			{
 				if (it->widgetState.disabled)
 					return true;
@@ -139,19 +142,19 @@ namespace cage
 	bool guiClass::mouseDouble(mouseButtonsFlags buttons, modifiersFlags modifiers, const pointStruct &point)
 	{
 		guiImpl *impl = (guiImpl*)this;
-		return passMouseEvent<mouseButtonsFlags, &widgetBaseStruct::mouseDouble>(impl, buttons, modifiers, point);
+		return passMouseEvent<mouseButtonsFlags, &widgetItemStruct::mouseDouble>(impl, buttons, modifiers, point);
 	}
 
 	bool guiClass::mouseRelease(mouseButtonsFlags buttons, modifiersFlags modifiers, const pointStruct &point)
 	{
 		guiImpl *impl = (guiImpl*)this;
-		return passMouseEvent<mouseButtonsFlags, &widgetBaseStruct::mouseRelease>(impl, buttons, modifiers, point);
+		return passMouseEvent<mouseButtonsFlags, &widgetItemStruct::mouseRelease>(impl, buttons, modifiers, point);
 	}
 
 	bool guiClass::mouseMove(mouseButtonsFlags buttons, modifiersFlags modifiers, const pointStruct &point)
 	{
 		guiImpl *impl = (guiImpl*)this;
-		return passMouseEvent<mouseButtonsFlags, &widgetBaseStruct::mouseMove>(impl, buttons, modifiers, point);
+		return passMouseEvent<mouseButtonsFlags, &widgetItemStruct::mouseMove>(impl, buttons, modifiers, point);
 	}
 
 	bool guiClass::mouseWheel(sint8 wheel, modifiersFlags modifiers, const pointStruct &point)
@@ -162,7 +165,7 @@ namespace cage
 			return false;
 		for (auto it : impl->mouseEventReceivers)
 		{
-			if (pointIsInside(it->base, pt))
+			if (pointIsInside(it->hierarchy, pt))
 			{
 				if (it->widgetState.disabled)
 					return true;
@@ -176,19 +179,19 @@ namespace cage
 	bool guiClass::keyPress(uint32 key, uint32 scanCode, modifiersFlags modifiers)
 	{
 		guiImpl *impl = (guiImpl*)this;
-		return passKeyEvent<&widgetBaseStruct::keyPress>(impl, key, scanCode, modifiers);
+		return passKeyEvent<&widgetItemStruct::keyPress>(impl, key, scanCode, modifiers);
 	}
 
 	bool guiClass::keyRepeat(uint32 key, uint32 scanCode, modifiersFlags modifiers)
 	{
 		guiImpl *impl = (guiImpl*)this;
-		return passKeyEvent<&widgetBaseStruct::keyRepeat>(impl, key, scanCode, modifiers);
+		return passKeyEvent<&widgetItemStruct::keyRepeat>(impl, key, scanCode, modifiers);
 	}
 
 	bool guiClass::keyRelease(uint32 key, uint32 scanCode, modifiersFlags modifiers)
 	{
 		guiImpl *impl = (guiImpl*)this;
-		return passKeyEvent<&widgetBaseStruct::keyRelease>(impl, key, scanCode, modifiers);
+		return passKeyEvent<&widgetItemStruct::keyRelease>(impl, key, scanCode, modifiers);
 	}
 
 	bool guiClass::keyChar(uint32 key)

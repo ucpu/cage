@@ -14,11 +14,11 @@
 
 namespace cage
 {
-	void textCreate(guiItemStruct *item);
+	void textCreate(hierarchyItemStruct *item);
 
 	namespace
 	{
-		struct inputImpl : public widgetBaseStruct
+		struct inputImpl : public widgetItemStruct
 		{
 			inputComponent &data;
 			selectionComponent &selection;
@@ -27,14 +27,13 @@ namespace cage
 			vec2 mainPos, mainSize;
 			vec2 textPos, textSize;
 
-			inputImpl(guiItemStruct *base) : widgetBaseStruct(base), data(GUI_REF_COMPONENT(input)), selection(GUI_REF_COMPONENT(selection))
+			inputImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(input)), selection(GUI_REF_COMPONENT(selection))
 			{}
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT_RUNTIME(!base->firstChild, "input box may not have children");
-				CAGE_ASSERT_RUNTIME(!base->layout, "input box may not have layout");
-				CAGE_ASSERT_RUNTIME(!base->image, "input box may not have image");
+				CAGE_ASSERT_RUNTIME(!hierarchy->firstChild, "input box may not have children");
+				CAGE_ASSERT_RUNTIME(!hierarchy->image, "input box may not have image");
 
 				switch (data.type)
 				{
@@ -54,36 +53,36 @@ namespace cage
 				else
 					consolidate();
 
-				if (!base->text)
-					textCreate(base);
-				base->text->skipInitialize = true;
+				if (!hierarchy->text)
+					textCreate(hierarchy);
+				hierarchy->text->skipInitialize = true;
 				if (data.value.empty() && !hasFocus())
 				{ // placeholder
-					base->text->text.apply(skin().defaults.inputBox.placeholderFormat, base->impl);
-					base->text->transcript();
+					hierarchy->text->text.apply(skin->defaults.inputBox.placeholderFormat, hierarchy->impl);
+					hierarchy->text->transcript();
 				}
 				else
 				{ // actual value
 					if (data.valid)
-						base->text->text.apply(skin().defaults.inputBox.textValidFormat, base->impl);
+						hierarchy->text->text.apply(skin->defaults.inputBox.textValidFormat, hierarchy->impl);
 					else
-						base->text->text.apply(skin().defaults.inputBox.textInvalidFormat, base->impl);
+						hierarchy->text->text.apply(skin->defaults.inputBox.textInvalidFormat, hierarchy->impl);
 					if (data.type == inputTypeEnum::Password)
 					{
-						base->text->transcript("*");
-						uint32 g = base->text->text.glyphs[0];
-						base->text->transcript(data.value);
-						for (uint32 i = 0; i < base->text->text.count; i++)
-							base->text->text.glyphs[i] = g;
+						hierarchy->text->transcript("*");
+						uint32 g = hierarchy->text->text.glyphs[0];
+						hierarchy->text->transcript(data.value);
+						for (uint32 i = 0; i < hierarchy->text->text.count; i++)
+							hierarchy->text->text.glyphs[i] = g;
 					}
 					else
-						base->text->transcript(data.value);
+						hierarchy->text->transcript(data.value);
 				}
 
 				if (hasFocus())
 				{
 					data.cursor = min(data.cursor, countCharacters(data.value));
-					base->text->text.cursor = data.cursor;
+					hierarchy->text->text.cursor = data.cursor;
 				}
 			}
 
@@ -170,15 +169,15 @@ namespace cage
 
 			virtual void findRequestedSize() override
 			{
-				base->requestedSize = skin().defaults.inputBox.size;
-				offsetSize(base->requestedSize, skin().defaults.inputBox.margin);
+				hierarchy->requestedSize = skin->defaults.inputBox.size;
+				offsetSize(hierarchy->requestedSize, skin->defaults.inputBox.margin);
 			}
 
 			virtual void findFinalPosition(const finalPositionStruct &update) override
 			{
-				const auto &s = skin().defaults.inputBox;
-				mainPos = base->renderPos;
-				mainSize = base->renderSize;
+				const auto &s = skin->defaults.inputBox;
+				mainPos = hierarchy->renderPos;
+				mainSize = hierarchy->renderSize;
 				offset(mainPos, mainSize, -s.margin);
 				leftPos = rightPos = mainPos;
 				if (data.type == inputTypeEnum::Real || data.type == inputTypeEnum::Integer)
@@ -208,12 +207,12 @@ namespace cage
 				}
 				textPos = mainPos;
 				textSize = mainSize;
-				offset(textPos, textSize, -skin().layouts[(uint32)elementTypeEnum::Input].border - s.basePadding);
+				offset(textPos, textSize, -skin->layouts[(uint32)elementTypeEnum::Input].border - s.basePadding);
 			}
 
 			virtual void emit() const override
 			{
-				const auto &s = skin().defaults.inputBox;
+				const auto &s = skin->defaults.inputBox;
 				emitElement(elementTypeEnum::Input, mode(mainPos, mainSize), mainPos, mainSize);
 				if (data.type == inputTypeEnum::Real || data.type == inputTypeEnum::Integer)
 				{
@@ -223,12 +222,12 @@ namespace cage
 					m = mode(rightPos, ss);
 					emitElement(elementTypeEnum::InputButtonIncrement, m == 1 ? 0 : m, rightPos, ss);
 				}
-				base->text->emit(textPos, textSize);
+				hierarchy->text->emit(textPos, textSize);
 			}
 
 			bool insideButton(vec2 pos, vec2 point)
 			{
-				return pointInside(pos, vec2(skin().defaults.inputBox.buttonsSize, mainSize[1]), point);
+				return pointInside(pos, vec2(skin->defaults.inputBox.buttonsSize, mainSize[1]), point);
 			}
 
 			void increment(int sign)
@@ -259,7 +258,7 @@ namespace cage
 				{
 					// do nothing
 				}
-				base->impl->widgetEvent.dispatch(base->entity->name());
+				hierarchy->impl->widgetEvent.dispatch(hierarchy->entity->name());
 			}
 
 			void gainFocus()
@@ -298,7 +297,7 @@ namespace cage
 				}
 
 				// update cursor
-				base->text->updateCursorPosition(textPos, textSize, point, data.cursor);
+				hierarchy->text->updateCursorPosition(textPos, textSize, point, data.cursor);
 
 				return true;
 			}
@@ -332,7 +331,7 @@ namespace cage
 					utf32.erase(utf32.begin() + cursor);
 					data.value = convert32to8(utf32.data(), numeric_cast<uint32>(utf32.size()));
 					validate();
-					base->impl->widgetEvent.dispatch(base->entity->name());
+					hierarchy->impl->widgetEvent.dispatch(hierarchy->entity->name());
 				} break;
 				case 261: // delete
 				{
@@ -341,7 +340,7 @@ namespace cage
 					utf32.erase(utf32.begin() + cursor);
 					data.value = convert32to8(utf32.data(), numeric_cast<uint32>(utf32.size()));
 					validate();
-					base->impl->widgetEvent.dispatch(base->entity->name());
+					hierarchy->impl->widgetEvent.dispatch(hierarchy->entity->name());
 				} break;
 				}
 				return true;
@@ -363,14 +362,15 @@ namespace cage
 				data.value = convert32to8(utf32.data(), numeric_cast<uint32>(utf32.size()));
 				cursor++;
 				validate();
-				base->impl->widgetEvent.dispatch(base->entity->name());
+				hierarchy->impl->widgetEvent.dispatch(hierarchy->entity->name());
 				return true;
 			}
 		};
 	}
 
-	void inputCreate(guiItemStruct *item)
+	void inputCreate(hierarchyItemStruct *item)
 	{
-		item->widget = item->impl->itemsMemory.createObject<inputImpl>(item);
+		CAGE_ASSERT_RUNTIME(!item->item);
+		item->item = item->impl->itemsMemory.createObject<inputImpl>(item);
 	}
 }

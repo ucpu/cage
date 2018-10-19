@@ -71,10 +71,10 @@ namespace cage
 		return impl->focusName;
 	}
 
-	void guiClass::handleWindowEvents(windowClass *window)
+	void guiClass::handleWindowEvents(windowClass *window, sint32 order)
 	{
 		guiImpl *impl = (guiImpl*)this;
-		impl->listeners.attachAll(window);
+		impl->listeners.attachAll(window, order);
 	}
 
 	void guiClass::skipAllEventsUntilNextUpdate()

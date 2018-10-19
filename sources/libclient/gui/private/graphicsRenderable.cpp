@@ -16,7 +16,7 @@ namespace cage
 	renderableBaseStruct::renderableBaseStruct() : next(nullptr)
 	{}
 
-	void renderableBaseStruct::setClip(guiItemStruct *item)
+	void renderableBaseStruct::setClip(const hierarchyItemStruct *item)
 	{
 		clipPos = item->clipPos * item->impl->pointsScale;
 		clipSize = item->clipSize * item->impl->pointsScale;

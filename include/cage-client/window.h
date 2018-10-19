@@ -65,7 +65,7 @@ namespace cage
 		eventListener<bool(uint32, uint32, modifiersFlags)> keyPress, keyRelease, keyRepeat;
 		eventListener<bool(uint32)> keyChar;
 
-		void attachAll(windowClass *window);
+		void attachAll(windowClass *window, sint32 order = 0);
 	};
 }
 

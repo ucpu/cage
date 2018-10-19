@@ -13,83 +13,74 @@
 
 namespace cage
 {
-	void layoutDefaultCreate(guiItemStruct *item);
-
 	namespace
 	{
-		struct panelImpl : public widgetBaseStruct
+		struct panelImpl : public widgetItemStruct
 		{
 			panelComponent &data;
 
-			panelImpl(guiItemStruct *base) : widgetBaseStruct(base), data(GUI_REF_COMPONENT(panel))
+			panelImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(panel))
 			{
-				auto *impl = base->impl;
-				GUI_GET_COMPONENT(panel, gb, base->entity);
-				data = gb;
+				ensureItemHasLayout(hierarchy);
 			}
 
 			virtual void initialize() override
 			{
-				if (base->text)
-					base->text->text.apply(skin().defaults.panel.textFormat, base->impl);
-				if (!base->layout)
-					layoutDefaultCreate(base);
+				if (hierarchy->text)
+					hierarchy->text->text.apply(skin->defaults.panel.textFormat, hierarchy->impl);
 			}
 
 			virtual void findRequestedSize() override
 			{
-				base->layout->findRequestedSize();
-				offsetSize(base->requestedSize, skin().defaults.panel.contentPadding);
-				if (base->text)
+				hierarchy->firstChild->findRequestedSize();
+				hierarchy->requestedSize = hierarchy->firstChild->requestedSize;
+				offsetSize(hierarchy->requestedSize, skin->defaults.panel.contentPadding);
+				if (hierarchy->text)
 				{
-					base->requestedSize[1] += skin().defaults.panel.captionHeight;
-					vec2 cs = base->text->findRequestedSize();
-					offsetSize(cs, skin().defaults.panel.captionPadding);
-					base->requestedSize[0] = max(base->requestedSize[0], cs[0]);
+					hierarchy->requestedSize[1] += skin->defaults.panel.captionHeight;
+					vec2 cs = hierarchy->text->findRequestedSize();
+					offsetSize(cs, skin->defaults.panel.captionPadding);
+					hierarchy->requestedSize[0] = max(hierarchy->requestedSize[0], cs[0]);
 					// it is important to compare (text size + text padding) with (children size + children padding)
 					// and only after that to add border and base margin
 				}
-				offsetSize(base->requestedSize, skin().layouts[(uint32)elementTypeEnum::PanelBase].border);
-				offsetSize(base->requestedSize, skin().defaults.panel.baseMargin);
+				offsetSize(hierarchy->requestedSize, skin->layouts[(uint32)elementTypeEnum::PanelBase].border);
+				offsetSize(hierarchy->requestedSize, skin->defaults.panel.baseMargin);
 			}
 
 			virtual void findFinalPosition(const finalPositionStruct &update) override
 			{
 				finalPositionStruct u(update);
-				offset(u.renderPos, u.renderSize, -skin().defaults.panel.baseMargin);
-				offset(u.renderPos, u.renderSize, -skin().layouts[(uint32)elementTypeEnum::PanelBase].border);
-				if (base->text)
-					u.renderPos[1] += skin().defaults.panel.captionHeight;
-				offset(u.renderPos, u.renderSize, -skin().defaults.panel.contentPadding);
-				base->layout->findFinalPosition(u);
+				offset(u.renderPos, u.renderSize, -skin->defaults.panel.baseMargin);
+				offset(u.renderPos, u.renderSize, -skin->layouts[(uint32)elementTypeEnum::PanelBase].border);
+				if (hierarchy->text)
+					u.renderPos[1] += skin->defaults.panel.captionHeight;
+				offset(u.renderPos, u.renderSize, -skin->defaults.panel.contentPadding);
+				hierarchy->firstChild->findFinalPosition(u);
 			}
 
 			virtual void emit() const override
 			{
-				vec2 p = base->renderPos;
-				vec2 s = base->renderSize;
-				offset(p, s, -skin().defaults.panel.baseMargin);
+				vec2 p = hierarchy->renderPos;
+				vec2 s = hierarchy->renderSize;
+				offset(p, s, -skin->defaults.panel.baseMargin);
 				emitElement(elementTypeEnum::PanelBase, mode(false, 0), p, s);
-				if (base->text)
+				if (hierarchy->text)
 				{
-					s = vec2(s[0], skin().defaults.panel.captionHeight);
+					s = vec2(s[0], skin->defaults.panel.captionHeight);
 					emitElement(elementTypeEnum::PanelCaption, mode(false, 0), p, s);
-					offset(p, s, -skin().layouts[(uint32)elementTypeEnum::PanelCaption].border);
-					offset(p, s, -skin().defaults.panel.captionPadding);
-					base->text->emit(p, s);
+					offset(p, s, -skin->layouts[(uint32)elementTypeEnum::PanelCaption].border);
+					offset(p, s, -skin->defaults.panel.captionPadding);
+					hierarchy->text->emit(p, s);
 				}
-				base->childrenEmit();
-			}
-
-			virtual bool canBeMergedWithScrollbars() const override
-			{
-				return true;
+				hierarchy->childrenEmit();
 			}
 		};
 	}
 
-	void panelCreate(guiItemStruct *item)
+	void panelCreate(hierarchyItemStruct *item)
 	{
-		item->widget = item->impl->itemsMemory.createObject<panelImpl>(item);
+		CAGE_ASSERT_RUNTIME(!item->item);
+		item->item = item->impl->itemsMemory.createObject<panelImpl>(item);
 	}
 }

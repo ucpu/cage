@@ -17,12 +17,12 @@
 
 namespace cage
 {
-	void textCreate(guiItemStruct *item)
+	void textCreate(hierarchyItemStruct *item)
 	{
 		item->text = item->impl->itemsMemory.createObject<textItemStruct>(item);
 	}
 
-	textItemStruct::textItemStruct(guiItemStruct *base) : base(base), skipInitialize(false)
+	textItemStruct::textItemStruct(hierarchyItemStruct *hierarchy) : hierarchy(hierarchy), skipInitialize(false)
 	{}
 
 	namespace
@@ -46,10 +46,10 @@ namespace cage
 	{
 		if (skipInitialize)
 			return;
-		auto *impl = base->impl;
-		if (GUI_HAS_COMPONENT(textFormat, base->entity))
+		auto *impl = hierarchy->impl;
+		if (GUI_HAS_COMPONENT(textFormat, hierarchy->entity))
 		{
-			GUI_GET_COMPONENT(textFormat, f, base->entity);
+			GUI_GET_COMPONENT(textFormat, f, hierarchy->entity);
 			text.apply(f, impl);
 		}
 		transcript();
@@ -57,10 +57,10 @@ namespace cage
 
 	void textItemStruct::transcript()
 	{
-		auto *impl = base->impl;
+		auto *impl = hierarchy->impl;
 		string value;
 		{
-			GUI_GET_COMPONENT(text, t, base->entity);
+			GUI_GET_COMPONENT(text, t, hierarchy->entity);
 			if (t.assetName && t.textName)
 				value = loadInternationalizedText(impl, t.assetName, t.textName, t.value);
 			else
@@ -79,7 +79,7 @@ namespace cage
 		if (text.font)
 		{
 			text.font->transcript(value, nullptr, text.count);
-			text.glyphs = (uint32*)base->impl->itemsMemory.allocate(text.count * sizeof(uint32));
+			text.glyphs = (uint32*)hierarchy->impl->itemsMemory.allocate(text.count * sizeof(uint32));
 			text.font->transcript(value, text.glyphs, text.count);
 		}
 	}
@@ -102,15 +102,15 @@ namespace cage
 		if ((text.count == 0 || size[0] <= 0) && text.cursor > 0)
 			return nullptr; // early exit
 		CAGE_ASSERT_RUNTIME(text.color.valid());
-		auto *e = base->impl->emitControl;
+		auto *e = hierarchy->impl->emitControl;
 		auto *t = e->memory.createObject<renderableTextStruct>();
-		t->setClip(base);
+		t->setClip(hierarchy);
 		t->data = text;
 		t->data.glyphs = (uint32*)e->memory.allocate(t->data.count * sizeof(uint32));
 		detail::memcpy(t->data.glyphs, text.glyphs, t->data.count * sizeof(uint32));
-		t->data.format.size *= base->impl->pointsScale;
-		t->data.pos = position * base->impl->pointsScale;
-		t->data.format.wrapWidth = size[0] * base->impl->pointsScale;
+		t->data.format.size *= hierarchy->impl->pointsScale;
+		t->data.pos = position * hierarchy->impl->pointsScale;
+		t->data.format.wrapWidth = size[0] * hierarchy->impl->pointsScale;
 		e->last->next = t;
 		e->last = t;
 		return t;

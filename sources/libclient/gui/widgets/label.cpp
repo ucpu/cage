@@ -14,49 +14,49 @@ namespace cage
 {
 	namespace
 	{
-		struct labelImpl : public widgetBaseStruct
+		struct labelImpl : public widgetItemStruct
 		{
-			labelImpl(guiItemStruct *base) : widgetBaseStruct(base)
+			labelImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy)
 			{}
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT_RUNTIME(!base->firstChild, "label may not have children");
-				CAGE_ASSERT_RUNTIME(!base->layout, "label may not have layout");
-				CAGE_ASSERT_RUNTIME(!!base->text || !!base->image, "label must have text or image");
-				if (base->text)
-					base->text->text.apply(skin().defaults.label.textFormat, base->impl);
-				if (base->image)
-					base->image->apply(skin().defaults.label.imageFormat);
+				CAGE_ASSERT_RUNTIME(!hierarchy->firstChild, "label may not have children");
+				CAGE_ASSERT_RUNTIME(!!hierarchy->text || !!hierarchy->image, "label must have text or image");
+				if (hierarchy->text)
+					hierarchy->text->text.apply(skin->defaults.label.textFormat, hierarchy->impl);
+				if (hierarchy->image)
+					hierarchy->image->apply(skin->defaults.label.imageFormat);
 			}
 
 			virtual void findRequestedSize() override
 			{
-				base->requestedSize = vec2();
-				if (base->text)
-					base->requestedSize = max(base->requestedSize, base->text->findRequestedSize());
-				else if (base->image)
-					base->requestedSize = max(base->requestedSize, base->image->findRequestedSize());
+				hierarchy->requestedSize = vec2();
+				if (hierarchy->text)
+					hierarchy->requestedSize = max(hierarchy->requestedSize, hierarchy->text->findRequestedSize());
+				else if (hierarchy->image)
+					hierarchy->requestedSize = max(hierarchy->requestedSize, hierarchy->image->findRequestedSize());
 				else
 					CAGE_ASSERT_RUNTIME(false);
-				offsetSize(base->requestedSize, skin().defaults.label.margin);
+				offsetSize(hierarchy->requestedSize, skin->defaults.label.margin);
 			}
 
 			virtual void emit() const override
 			{
-				vec2 p = base->renderPos;
-				vec2 s = base->renderSize;
-				offset(p, s, -skin().defaults.label.margin);
-				if (base->image)
-					base->image->emit(p, s);
-				if (base->text)
-					base->text->emit(p, s);
+				vec2 p = hierarchy->renderPos;
+				vec2 s = hierarchy->renderSize;
+				offset(p, s, -skin->defaults.label.margin);
+				if (hierarchy->image)
+					hierarchy->image->emit(p, s);
+				if (hierarchy->text)
+					hierarchy->text->emit(p, s);
 			}
 		};
 	}
 
-	void labelCreate(guiItemStruct *item)
+	void labelCreate(hierarchyItemStruct *item)
 	{
-		item->widget = item->impl->itemsMemory.createObject<labelImpl>(item);
+		CAGE_ASSERT_RUNTIME(!item->item);
+		item->item = item->impl->itemsMemory.createObject<labelImpl>(item);
 	}
 }

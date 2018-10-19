@@ -15,51 +15,50 @@ namespace cage
 {
 	namespace
 	{
-		struct radioBoxImpl : public widgetBaseStruct
+		struct radioBoxImpl : public widgetItemStruct
 		{
 			radioBoxComponent &data;
 
-			radioBoxImpl(guiItemStruct *base) : widgetBaseStruct(base), data(GUI_REF_COMPONENT(radioBox))
+			radioBoxImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(radioBox))
 			{}
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT_RUNTIME(!base->firstChild, "radiobox may not have children");
-				CAGE_ASSERT_RUNTIME(!base->layout, "radiobox may not have layout");
-				CAGE_ASSERT_RUNTIME(!base->image, "radiobox may not have image");
-				if (base->text)
-					base->text->text.apply(skin().defaults.radioBox.textFormat, base->impl);
+				CAGE_ASSERT_RUNTIME(!hierarchy->firstChild, "radiobox may not have children");
+				CAGE_ASSERT_RUNTIME(!hierarchy->image, "radiobox may not have image");
+				if (hierarchy->text)
+					hierarchy->text->text.apply(skin->defaults.radioBox.textFormat, hierarchy->impl);
 			}
 
 			virtual void findRequestedSize() override
 			{
-				base->requestedSize = skin().defaults.radioBox.size;
-				if (base->text)
+				hierarchy->requestedSize = skin->defaults.radioBox.size;
+				if (hierarchy->text)
 				{
-					vec2 txtSize = base->text->findRequestedSize() + skin().defaults.radioBox.labelOffset;
-					base->requestedSize[0] += txtSize[0];
-					base->requestedSize[1] = max(base->requestedSize[1], txtSize[1]);
+					vec2 txtSize = hierarchy->text->findRequestedSize() + skin->defaults.radioBox.labelOffset;
+					hierarchy->requestedSize[0] += txtSize[0];
+					hierarchy->requestedSize[1] = max(hierarchy->requestedSize[1], txtSize[1]);
 				}
-				offsetSize(base->requestedSize, skin().defaults.radioBox.margin);
+				offsetSize(hierarchy->requestedSize, skin->defaults.radioBox.margin);
 			}
 
 			virtual void emit() const override
 			{
-				vec2 sd = skin().defaults.radioBox.size;
+				vec2 sd = skin->defaults.radioBox.size;
 				{
-					vec2 p = base->renderPos;
-					offsetPosition(p, -skin().defaults.radioBox.margin);
+					vec2 p = hierarchy->renderPos;
+					offsetPosition(p, -skin->defaults.radioBox.margin);
 					emitElement(elementTypeEnum((uint32)elementTypeEnum::RadioBoxUnchecked + (uint32)data.state), mode(p, sd), p, sd);
 				}
-				if (base->text)
+				if (hierarchy->text)
 				{
-					vec2 p = base->renderPos;
-					vec2 s = base->renderSize;
-					offset(p, s, -skin().defaults.radioBox.margin);
-					vec2 o = sd * vec2(1, 0) + skin().defaults.radioBox.labelOffset;
+					vec2 p = hierarchy->renderPos;
+					vec2 s = hierarchy->renderSize;
+					offset(p, s, -skin->defaults.radioBox.margin);
+					vec2 o = sd * vec2(1, 0) + skin->defaults.radioBox.labelOffset;
 					p += o;
 					s -= o;
-					base->text->emit(p, s);
+					hierarchy->text->emit(p, s);
 				}
 			}
 
@@ -69,7 +68,7 @@ namespace cage
 					data.state = checkBoxStateEnum::Unchecked;
 				else
 					data.state = checkBoxStateEnum::Checked;
-				base->impl->widgetEvent.dispatch(base->entity->name());
+				hierarchy->impl->widgetEvent.dispatch(hierarchy->entity->name());
 			}
 
 			virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
@@ -85,8 +84,9 @@ namespace cage
 		};
 	}
 
-	void radioBoxCreate(guiItemStruct *item)
+	void radioBoxCreate(hierarchyItemStruct *item)
 	{
-		item->widget = item->impl->itemsMemory.createObject<radioBoxImpl>(item);
+		CAGE_ASSERT_RUNTIME(!item->item);
+		item->item = item->impl->itemsMemory.createObject<radioBoxImpl>(item);
 	}
 }

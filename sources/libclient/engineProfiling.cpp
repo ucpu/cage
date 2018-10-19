@@ -120,17 +120,13 @@ namespace cage
 				entityClass *panel = g->createUnique();
 				{
 					panelIndex = panel->name();
-					GUI_GET_COMPONENT(panel, c, panel);
-					GUI_GET_COMPONENT(position, p, panel);
-					p.anchor = screenPosition;
-					p.position.values[0] = screenPosition[0];
-					p.position.values[1] = screenPosition[1];
-					p.position.units[0] = unitEnum::ScreenWidth;
-					p.position.units[1] = unitEnum::ScreenHeight;
+					GUI_GET_COMPONENT(scrollbars, sc, panel);
+					sc.alignment = screenPosition;
 				}
 				entityClass *layout = g->createUnique();
 				{
 					layoutIndex = layout->name();
+					GUI_GET_COMPONENT(panel, c, layout);
 					GUI_GET_COMPONENT(layoutTable, l, layout);
 					GUI_GET_COMPONENT(parent, child, layout);
 					child.parent = panel->name();

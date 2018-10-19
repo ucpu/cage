@@ -42,7 +42,7 @@ namespace cage
 			}
 		};
 
-		struct colorPickerImpl : public widgetBaseStruct
+		struct colorPickerImpl : public widgetItemStruct
 		{
 			colorPickerComponent &data;
 			colorPickerImpl *small, *large;
@@ -51,15 +51,14 @@ namespace cage
 			vec2 resultPos, resultSize;
 			vec2 rectPos, rectSize;
 
-			colorPickerImpl(guiItemStruct *base, colorPickerImpl *small = nullptr) : widgetBaseStruct(base), data(GUI_REF_COMPONENT(colorPicker)), small(small), large(nullptr)
+			colorPickerImpl(hierarchyItemStruct *hierarchy, colorPickerImpl *small = nullptr) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(colorPicker)), small(small), large(nullptr)
 			{}
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT_RUNTIME(!base->firstChild, "color picker may not have children");
-				CAGE_ASSERT_RUNTIME(!base->layout, "color picker may not have layout");
-				CAGE_ASSERT_RUNTIME(!base->text, "color picker may not have text");
-				CAGE_ASSERT_RUNTIME(!base->image, "color picker may not have image");
+				CAGE_ASSERT_RUNTIME(!hierarchy->firstChild, "color picker may not have children");
+				CAGE_ASSERT_RUNTIME(!hierarchy->text, "color picker may not have text");
+				CAGE_ASSERT_RUNTIME(!hierarchy->image, "color picker may not have image");
 
 				if (data.collapsible)
 				{
@@ -72,10 +71,11 @@ namespace cage
 					{ // this is the small base
 						if (hasFocus(1 | 2 | 4))
 						{ // create popup
-							guiItemStruct *item = base->impl->itemsMemory.createObject<guiItemStruct>(base->impl, base->entity);
-							item->attachParent(base->impl->root);
-							item->widget = large = base->impl->itemsMemory.createObject<colorPickerImpl>(item, this);
+							hierarchyItemStruct *item = hierarchy->impl->itemsMemory.createObject<hierarchyItemStruct>(hierarchy->impl, hierarchy->entity);
+							item->attachParent(hierarchy->impl->root);
+							item->item = large = hierarchy->impl->itemsMemory.createObject<colorPickerImpl>(item, this);
 							large->widgetState = widgetState;
+							large->skin = skin;
 							small = this;
 						}
 						else
@@ -96,49 +96,49 @@ namespace cage
 			virtual void findRequestedSize() override
 			{
 				if (this == large)
-					base->requestedSize = skin().defaults.colorPicker.fullSize;
+					hierarchy->requestedSize = skin->defaults.colorPicker.fullSize;
 				else if (this == small)
-					base->requestedSize = skin().defaults.colorPicker.collapsedSize;
+					hierarchy->requestedSize = skin->defaults.colorPicker.collapsedSize;
 				else
 					CAGE_ASSERT_RUNTIME(false);
-				offsetSize(base->requestedSize, skin().defaults.colorPicker.margin);
+				offsetSize(hierarchy->requestedSize, skin->defaults.colorPicker.margin);
 			}
 
 			virtual void findFinalPosition(const finalPositionStruct &update) override
 			{
 				if (this == large && small)
 				{ // this is a popup
-					base->renderSize = base->requestedSize;
-					base->renderPos = small->base->renderPos + small->base->renderSize * 0.5 - base->renderSize * 0.5;
-					base->moveToWindow(true, true);
+					hierarchy->renderSize = hierarchy->requestedSize;
+					hierarchy->renderPos = small->hierarchy->renderPos + small->hierarchy->renderSize * 0.5 - hierarchy->renderSize * 0.5;
+					hierarchy->moveToWindow(true, true);
 				}
 				if (this == large)
 				{
-					vec2 p = base->renderPos;
-					vec2 s = base->renderSize;
-					offset(p, s, -skin().defaults.colorPicker.margin - skin().layouts[(uint32)elementTypeEnum::ColorPickerFull].border);
+					vec2 p = hierarchy->renderPos;
+					vec2 s = hierarchy->renderSize;
+					offset(p, s, -skin->defaults.colorPicker.margin - skin->layouts[(uint32)elementTypeEnum::ColorPickerFull].border);
 					sliderPos = p;
 					sliderSize = s;
-					sliderSize[1] *= skin().defaults.colorPicker.hueBarPortion;
+					sliderSize[1] *= skin->defaults.colorPicker.hueBarPortion;
 					resultPos = p;
 					resultPos[1] += sliderSize[1];
 					resultSize = s;
-					resultSize[0] *= skin().defaults.colorPicker.resultBarPortion;
-					resultSize[1] *= 1 - skin().defaults.colorPicker.hueBarPortion;
+					resultSize[0] *= skin->defaults.colorPicker.resultBarPortion;
+					resultSize[1] *= 1 - skin->defaults.colorPicker.hueBarPortion;
 					rectPos = resultPos;
 					rectPos[0] += resultSize[0];
-					rectSize[0] = s[0] * (1 - skin().defaults.colorPicker.resultBarPortion);
+					rectSize[0] = s[0] * (1 - skin->defaults.colorPicker.resultBarPortion);
 					rectSize[1] = resultSize[1];
 				}
 			}
 
 			void emitColor(vec2 pos, vec2 size, uint32 mode, const vec4 &margin) const
 			{
-				auto *e = base->impl->emitControl;
+				auto *e = hierarchy->impl->emitControl;
 				auto *t = e->memory.createObject<colorPickerRenderableStruct>();
 				offset(pos, size, -margin);
-				t->setClip(base);
-				t->pos = base->impl->pointsToNdc(pos, size);
+				t->setClip(hierarchy);
+				t->pos = hierarchy->impl->pointsToNdc(pos, size);
 				t->mode = mode;
 				t->rgb = data.color;
 				e->last->next = t;
@@ -147,9 +147,9 @@ namespace cage
 
 			virtual void emit() const override
 			{
-				vec2 p = base->renderPos;
-				vec2 s = base->renderSize;
-				offset(p, s, -skin().defaults.colorPicker.margin);
+				vec2 p = hierarchy->renderPos;
+				vec2 s = hierarchy->renderSize;
+				offset(p, s, -skin->defaults.colorPicker.margin);
 				if (this == large)
 				{ // large
 					emitElement(elementTypeEnum::ColorPickerFull, mode(true, 1 | 2 | 4), p, s);
@@ -157,14 +157,14 @@ namespace cage
 					emitElement(elementTypeEnum::ColorPickerHSliderPanel, m, sliderPos, sliderSize);
 					emitElement(elementTypeEnum::ColorPickerSVRect, m, rectPos, rectSize);
 					emitElement(elementTypeEnum::ColorPickerResult, m, resultPos, resultSize);
-					emitColor(sliderPos, sliderSize, 1, skin().layouts[(uint32)elementTypeEnum::ColorPickerHSliderPanel].border);
-					emitColor(rectPos, rectSize, 2, skin().layouts[(uint32)elementTypeEnum::ColorPickerSVRect].border);
-					emitColor(resultPos, resultSize, 0, skin().layouts[(uint32)elementTypeEnum::ColorPickerResult].border);
+					emitColor(sliderPos, sliderSize, 1, skin->layouts[(uint32)elementTypeEnum::ColorPickerHSliderPanel].border);
+					emitColor(rectPos, rectSize, 2, skin->layouts[(uint32)elementTypeEnum::ColorPickerSVRect].border);
+					emitColor(resultPos, resultSize, 0, skin->layouts[(uint32)elementTypeEnum::ColorPickerResult].border);
 				}
 				else
 				{ // small
 					emitElement(elementTypeEnum::ColorPickerCompact, mode(true, 1 | 2 | 4), p, s);
-					emitColor(p, s, 0, skin().layouts[(uint32)elementTypeEnum::ColorPickerCompact].border);
+					emitColor(p, s, 0, skin->layouts[(uint32)elementTypeEnum::ColorPickerCompact].border);
 				}
 			}
 
@@ -191,7 +191,7 @@ namespace cage
 						vec2 p = clamp((point - sliderPos) / sliderSize, 0, 1);
 						hsv[0] = p[0];
 						data.color = convertHsvToRgb(hsv);
-						base->impl->widgetEvent.dispatch(base->entity->name());
+						hierarchy->impl->widgetEvent.dispatch(hierarchy->entity->name());
 					}
 					else if (hasFocus(4))
 					{
@@ -200,7 +200,7 @@ namespace cage
 						hsv[1] = p[0];
 						hsv[2] = 1 - p[1];
 						data.color = convertHsvToRgb(hsv);
-						base->impl->widgetEvent.dispatch(base->entity->name());
+						hierarchy->impl->widgetEvent.dispatch(hierarchy->entity->name());
 					}
 				}
 				return true;
@@ -218,8 +218,9 @@ namespace cage
 		};
 	}
 
-	void colorPickerCreate(guiItemStruct *item)
+	void colorPickerCreate(hierarchyItemStruct *item)
 	{
-		item->widget = item->impl->itemsMemory.createObject<colorPickerImpl>(item);
+		CAGE_ASSERT_RUNTIME(!item->item);
+		item->item = item->impl->itemsMemory.createObject<colorPickerImpl>(item);
 	}
 }

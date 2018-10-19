@@ -15,7 +15,7 @@ namespace cage
 {
 	namespace
 	{
-		struct layoutTableImpl : public layoutBaseStruct
+		struct layoutTableImpl : public layoutItemStruct
 		{
 			layoutTableComponent data; // may not be reference
 			real *widths;
@@ -23,18 +23,18 @@ namespace cage
 			uint32 mws, mhs;
 			uint32 childs;
 
-			layoutTableImpl(guiItemStruct *base, bool justLine) : layoutBaseStruct(base), widths(nullptr), heights(nullptr), mws(0), mhs(0), childs(0)
+			layoutTableImpl(hierarchyItemStruct *hierarchy, bool justLine) : layoutItemStruct(hierarchy), widths(nullptr), heights(nullptr), mws(0), mhs(0), childs(0)
 			{
-				auto impl = base->impl;
+				auto impl = hierarchy->impl;
 				if (justLine)
 				{
-					GUI_GET_COMPONENT(layoutLine, l, base->entity);
+					GUI_GET_COMPONENT(layoutLine, l, hierarchy->entity);
 					data.vertical = l.vertical;
 					data.sections = 1;
 				}
 				else
 				{
-					GUI_GET_COMPONENT(layoutTable, t, base->entity);
+					GUI_GET_COMPONENT(layoutTable, t, hierarchy->entity);
 					data = t;
 				}
 			}
@@ -44,10 +44,10 @@ namespace cage
 
 			virtual void findRequestedSize() override
 			{
-				auto impl = base->impl;
+				auto impl = hierarchy->impl;
 				{ // count childs
 					childs = 0;
-					guiItemStruct *c = base->firstChild;
+					hierarchyItemStruct *c = hierarchy->firstChild;
 					while (c)
 					{
 						childs++;
@@ -84,12 +84,11 @@ namespace cage
 				// populate widths & heights
 				vec2 m;
 				{
-					guiItemStruct *c = base->firstChild;
+					hierarchyItemStruct *c = hierarchy->firstChild;
 					uint32 idx = 0;
 					while (c)
 					{
 						c->findRequestedSize();
-						c->checkExplicitPosition(c->requestedSize);
 						m = max(m, c->requestedSize);
 						uint32 wi = data.vertical ? (idx % data.sections) : (idx / data.sections);
 						uint32 hi = data.vertical ? (idx / data.sections) : (idx % data.sections);
@@ -109,24 +108,24 @@ namespace cage
 						widths[x] = m[0];
 					for (uint32 y = 0; y < mhs; y++)
 						heights[y] = m[1];
-					base->requestedSize = m * vec2(mws, mhs);
+					hierarchy->requestedSize = m * vec2(mws, mhs);
 				}
 				else
 				{
-					base->requestedSize = vec2();
+					hierarchy->requestedSize = vec2();
 					for (uint32 x = 0; x < mws; x++)
-						base->requestedSize[0] += widths[x];
+						hierarchy->requestedSize[0] += widths[x];
 					for (uint32 y = 0; y < mhs; y++)
-						base->requestedSize[1] += heights[y];
+						hierarchy->requestedSize[1] += heights[y];
 				}
-				CAGE_ASSERT_RUNTIME(base->requestedSize.valid());
+				CAGE_ASSERT_RUNTIME(hierarchy->requestedSize.valid());
 			}
 
 			virtual void findFinalPosition(const finalPositionStruct &update) override
 			{
-				guiItemStruct *c = base->firstChild;
+				hierarchyItemStruct *c = hierarchy->firstChild;
 				uint32 idx = 0;
-				vec2 spacing = (update.renderSize - base->requestedSize) / vec2(mws, mhs);
+				vec2 spacing = (update.renderSize - hierarchy->requestedSize) / vec2(mws, mhs);
 				spacing = max(spacing, vec2());
 				vec2 pos = update.renderPos;
 				while (c)
@@ -171,13 +170,15 @@ namespace cage
 		};
 	}
 
-	void layoutLineCreate(guiItemStruct *item)
+	void layoutLineCreate(hierarchyItemStruct *item)
 	{
-		item->layout = item->impl->itemsMemory.createObject<layoutTableImpl>(item, true);
+		CAGE_ASSERT_RUNTIME(!item->item);
+		item->item = item->impl->itemsMemory.createObject<layoutTableImpl>(item, true);
 	}
 
-	void layoutTableCreate(guiItemStruct *item)
+	void layoutTableCreate(hierarchyItemStruct *item)
 	{
-		item->layout = item->impl->itemsMemory.createObject<layoutTableImpl>(item, false);
+		CAGE_ASSERT_RUNTIME(!item->item);
+		item->item = item->impl->itemsMemory.createObject<layoutTableImpl>(item, false);
 	}
 }

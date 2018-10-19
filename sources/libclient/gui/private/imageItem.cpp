@@ -16,22 +16,22 @@
 
 namespace cage
 {
-	void imageCreate(guiItemStruct *item)
+	void imageCreate(hierarchyItemStruct *item)
 	{
 		item->image = item->impl->itemsMemory.createObject<imageItemStruct>(item);
 	}
 
-	imageItemStruct::imageItemStruct(guiItemStruct *base) : base(base), skipInitialize(false)
+	imageItemStruct::imageItemStruct(hierarchyItemStruct *hierarchy) : hierarchy(hierarchy), skipInitialize(false)
 	{}
 
 	void imageItemStruct::initialize()
 	{
 		if (skipInitialize)
 			return;
-		auto *impl = base->impl;
-		if (GUI_HAS_COMPONENT(imageFormat, base->entity))
+		auto *impl = hierarchy->impl;
+		if (GUI_HAS_COMPONENT(imageFormat, hierarchy->entity))
 		{
-			GUI_GET_COMPONENT(imageFormat, f, base->entity);
+			GUI_GET_COMPONENT(imageFormat, f, hierarchy->entity);
 			apply(f);
 		}
 		assign();
@@ -39,15 +39,15 @@ namespace cage
 
 	void imageItemStruct::assign()
 	{
-		auto *impl = base->impl;
-		GUI_GET_COMPONENT(image, i, base->entity);
+		auto *impl = hierarchy->impl;
+		GUI_GET_COMPONENT(image, i, hierarchy->entity);
 		assign(i);
 	}
 
 	void imageItemStruct::assign(const imageComponent &value)
 	{
 		image = value;
-		texture = base->impl->assetManager->tryGet<assetSchemeIndexTexture, textureClass>(value.textureName);
+		texture = hierarchy->impl->assetManager->tryGet<assetSchemeIndexTexture, textureClass>(value.textureName);
 	}
 
 	void imageItemStruct::apply(const imageFormatComponent &f)
@@ -71,11 +71,11 @@ namespace cage
 	{
 		if (!texture)
 			return nullptr;
-		auto *e = base->impl->emitControl;
+		auto *e = hierarchy->impl->emitControl;
 		auto *t = e->memory.createObject<renderableImageStruct>();
-		t->setClip(base);
+		t->setClip(hierarchy);
 		t->data.texture = texture;
-		t->data.ndcPos = base->impl->pointsToNdc(position, size);
+		t->data.ndcPos = hierarchy->impl->pointsToNdc(position, size);
 		t->data.uvClip = vec4(image.textureUvOffset, image.textureUvOffset + image.textureUvSize);
 		// todo format mode
 		t->data.aniTexFrames = detail::evalSamplesForTextureAnimation(texture, getApplicationTime(), image.animationStart, format.animationSpeed, format.animationOffset);

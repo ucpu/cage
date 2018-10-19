@@ -15,45 +15,44 @@ namespace cage
 {
 	namespace
 	{
-		struct sliderBarImpl : public widgetBaseStruct
+		struct sliderBarImpl : public widgetItemStruct
 		{
 			sliderBarComponent &data;
 			skinWidgetDefaultsStruct::sliderBarStruct::directionStruct defaults;
 			elementTypeEnum baseElement;
 			elementTypeEnum dotElement;
 
-			sliderBarImpl(guiItemStruct *base) : widgetBaseStruct(base), data(GUI_REF_COMPONENT(sliderBar))
+			sliderBarImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(sliderBar))
 			{
 				data.value = clamp(data.value, data.min, data.max);
 			}
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT_RUNTIME(!base->firstChild, "slider may not have children");
-				CAGE_ASSERT_RUNTIME(!base->layout, "slider may not have layout");
-				CAGE_ASSERT_RUNTIME(!base->text, "slider may not have text");
-				CAGE_ASSERT_RUNTIME(!base->image, "slider may not have image");
+				CAGE_ASSERT_RUNTIME(!hierarchy->firstChild, "slider may not have children");
+				CAGE_ASSERT_RUNTIME(!hierarchy->text, "slider may not have text");
+				CAGE_ASSERT_RUNTIME(!hierarchy->image, "slider may not have image");
 			}
 
 			virtual void findRequestedSize() override
 			{
-				defaults = data.vertical ? skin().defaults.sliderBar.vertical : skin().defaults.sliderBar.horizontal;
+				defaults = data.vertical ? skin->defaults.sliderBar.vertical : skin->defaults.sliderBar.horizontal;
 				baseElement = data.vertical ? elementTypeEnum::SliderVerticalPanel : elementTypeEnum::SliderHorizontalPanel;
 				dotElement = data.vertical ? elementTypeEnum::SliderVerticalDot : elementTypeEnum::SliderHorizontalDot;
-				//vec4 border = skin().layouts[(uint32)baseElement].border;
-				base->requestedSize = defaults.size;
-				offsetSize(base->requestedSize, defaults.margin);
+				//vec4 border = skin->layouts[(uint32)baseElement].border;
+				hierarchy->requestedSize = defaults.size;
+				offsetSize(hierarchy->requestedSize, defaults.margin);
 			}
 
 			virtual void emit() const override
 			{
 				CAGE_ASSERT_RUNTIME(data.value.valid() && data.min.valid() && data.max.valid());
 				CAGE_ASSERT_RUNTIME(data.max > data.min);
-				vec2 p = base->renderPos;
-				vec2 s = base->renderSize;
+				vec2 p = hierarchy->renderPos;
+				vec2 s = hierarchy->renderSize;
 				offset(p, s, -defaults.margin);
 				emitElement(baseElement, mode(false), p, s);
-				offset(p, s, -skin().layouts[(uint32)baseElement].border);
+				offset(p, s, -skin->layouts[(uint32)baseElement].border);
 				real f = (data.value - data.min) / (data.max - data.min);
 				real ds1 = min(s[0], s[1]);
 				vec2 ds = vec2(ds1, ds1);
@@ -64,9 +63,9 @@ namespace cage
 
 			void update(vec2 point)
 			{
-				vec2 p = base->renderPos;
-				vec2 s = base->renderSize;
-				offset(p, s, -defaults.margin - skin().layouts[(uint32)baseElement].border);
+				vec2 p = hierarchy->renderPos;
+				vec2 s = hierarchy->renderSize;
+				offset(p, s, -defaults.margin - skin->layouts[(uint32)baseElement].border);
 				if (s[0] == s[1])
 					return;
 				real ds1 = min(s[0], s[1]);
@@ -82,7 +81,7 @@ namespace cage
 					if (data.vertical)
 						f = 1 - f;
 					data.value = f * (data.max - data.min) + data.min;
-					base->impl->widgetEvent.dispatch(base->entity->name());
+					hierarchy->impl->widgetEvent.dispatch(hierarchy->entity->name());
 				}
 			}
 
@@ -106,8 +105,9 @@ namespace cage
 		};
 	}
 
-	void sliderBarCreate(guiItemStruct *item)
+	void sliderBarCreate(hierarchyItemStruct *item)
 	{
-		item->widget = item->impl->itemsMemory.createObject<sliderBarImpl>(item);
+		CAGE_ASSERT_RUNTIME(!item->item);
+		item->item = item->impl->itemsMemory.createObject<sliderBarImpl>(item);
 	}
 }

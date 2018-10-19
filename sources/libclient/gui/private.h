@@ -5,13 +5,13 @@
 #include <atomic>
 
 #define GUI_HAS_COMPONENT(T,E) (E)->has(impl->components.T)
-#define GUI_REF_COMPONENT(T) base->entity->value<CAGE_JOIN(T, Component)>(base->impl->components.T)
+#define GUI_REF_COMPONENT(T) hierarchy->entity->value<CAGE_JOIN(T, Component)>(hierarchy->impl->components.T)
 #define GUI_GET_COMPONENT(T,N,E) CAGE_JOIN(T, Component) &N = (E)->value<CAGE_JOIN(T, Component)>(impl->components.T);
 
 namespace cage
 {
 	class guiImpl;
-	struct guiItemStruct;
+	struct hierarchyItemStruct;
 
 	struct skinDataStruct : public skinConfigStruct
 	{
@@ -26,20 +26,9 @@ namespace cage
 
 		renderableBaseStruct();
 
-		void setClip(guiItemStruct *item);
+		void setClip(const hierarchyItemStruct *item);
 
 		virtual void render(guiImpl *impl);
-	};
-
-	struct renderableDebugStruct : public renderableBaseStruct
-	{
-		struct elementStruct
-		{
-			vec4 position;
-			vec4 color;
-		} data;
-
-		virtual void render(guiImpl *impl) override;
 	};
 
 	struct renderableElementStruct : public renderableBaseStruct
@@ -102,9 +91,9 @@ namespace cage
 		finalPositionStruct();
 	};
 
-	struct guiItemStruct
+	struct hierarchyItemStruct
 	{
-		// size (points) as seen by parent (envelope)
+		// size (points) as seen by parent
 		vec2 requestedSize;
 		vec2 renderPos, renderSize;
 		vec2 clipPos, clipSize; // clip pos/size are in same coordinate system as render pos/size, they make a rectangle intersection of parents viewport and our render pos/size
@@ -112,93 +101,109 @@ namespace cage
 		guiImpl *const impl;
 		entityClass *const entity;
 
-		guiItemStruct *parent;
-		guiItemStruct *prevSibling, *nextSibling;
-		guiItemStruct *firstChild, *lastChild;
+		hierarchyItemStruct *parent;
+		hierarchyItemStruct *prevSibling, *nextSibling;
+		hierarchyItemStruct *firstChild, *lastChild;
+		sint32 order; // relative ordering of items with same parent
 
-		struct widgetBaseStruct *widget;
-		struct layoutBaseStruct *layout;
+		struct baseItemStruct *item;
 		struct textItemStruct *text;
 		struct imageItemStruct *image;
 
-		sint32 order; // relative ordering of items with same parent
 		bool subsidedItem; // prevent use of explicit position
 
-		guiItemStruct(guiImpl *impl, entityClass *entity);
+		hierarchyItemStruct(guiImpl *impl, entityClass *entity);
 
 		// called top->down
 		void initialize(); // initialize and validate widget, layout, text and image, initialize children
 		void findRequestedSize(); // fills in the requestedSize
 		void findFinalPosition(const finalPositionStruct &update); // given position and available space in the finalPositionStruct, determine actual position and size
+		void childrenEmit() const;
 
-		// base helpers for derived classes
-		void checkExplicitPosition(vec2 &pos, vec2 &size) const;
-		void checkExplicitPosition(vec2 &size) const;
+		// helpers
 		void moveToWindow(bool horizontal, bool vertical);
-
-		// parenting helpers
 		void detachChildren();
 		void detachParent();
-		void attachParent(guiItemStruct *newParent);
+		void attachParent(hierarchyItemStruct *newParent);
 
-		// called top->down
-		void childrenEmit() const;
+		// debug
 		void emitDebug() const;
 		void emitDebug(vec2 pos, vec2 size, vec4 color) const;
+		void printDebug(uint32 offset) const;
 	};
 
-	struct widgetBaseStruct
+	struct baseItemStruct
 	{
-		guiItemStruct *const base;
+		hierarchyItemStruct *const hierarchy;
 
-		widgetStateComponent widgetState;
-
-		widgetBaseStruct(guiItemStruct *base);
-
-		const skinDataStruct &skin() const;
-		uint32 mode(bool hover = true, uint32 focusParts = 1) const;
-		uint32 mode(const vec2 &pos, const vec2 &size, uint32 focusParts = 1) const;
-		bool hasFocus(uint32 part = 1) const;
-		void makeFocused(uint32 part = 1);
-
-		virtual void initialize() = 0;
-		virtual void findRequestedSize() = 0;
-		virtual void findFinalPosition(const finalPositionStruct &update);
-		virtual void emit() const = 0;
-
-		renderableElementStruct *emitElement(elementTypeEnum element, uint32 mode, vec2 pos, vec2 size) const;
-
-		virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point);
-		virtual bool mouseDouble(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point);
-		virtual bool mouseRelease(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point);
-		virtual bool mouseMove(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point);
-		virtual bool mouseWheel(sint8 wheel, modifiersFlags modifiers, vec2 point);
-		virtual bool keyPress(uint32 key, uint32 scanCode, modifiersFlags modifiers);
-		virtual bool keyRepeat(uint32 key, uint32 scanCode, modifiersFlags modifiers);
-		virtual bool keyRelease(uint32 key, uint32 scanCode, modifiersFlags modifiers);
-		virtual bool keyChar(uint32 key);
-
-		virtual bool canBeMergedWithScrollbars() const;
-	};
-
-	struct layoutBaseStruct
-	{
-		guiItemStruct *const base;
-
-		layoutBaseStruct(guiItemStruct *base);
+		baseItemStruct(hierarchyItemStruct *hierarchy);
 
 		virtual void initialize() = 0;
 		virtual void findRequestedSize() = 0;
 		virtual void findFinalPosition(const finalPositionStruct &update) = 0;
+		virtual void emit() const = 0;
+
+		virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) = 0;
+		virtual bool mouseDouble(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) = 0;
+		virtual bool mouseRelease(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) = 0;
+		virtual bool mouseMove(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) = 0;
+		virtual bool mouseWheel(sint8 wheel, modifiersFlags modifiers, vec2 point) = 0;
+		virtual bool keyPress(uint32 key, uint32 scanCode, modifiersFlags modifiers) = 0;
+		virtual bool keyRepeat(uint32 key, uint32 scanCode, modifiersFlags modifiers) = 0;
+		virtual bool keyRelease(uint32 key, uint32 scanCode, modifiersFlags modifiers) = 0;
+		virtual bool keyChar(uint32 key) = 0;
+	};
+
+	struct widgetItemStruct : public baseItemStruct
+	{
+		widgetStateComponent widgetState;
+		const skinDataStruct *skin;
+
+		widgetItemStruct(hierarchyItemStruct *hierarchy);
+
+		uint32 mode(bool hover = true, uint32 focusParts = 1) const;
+		uint32 mode(const vec2 &pos, const vec2 &size, uint32 focusParts = 1) const;
+		bool hasFocus(uint32 part = 1) const;
+		void makeFocused(uint32 part = 1);
+		renderableElementStruct *emitElement(elementTypeEnum element, uint32 mode, vec2 pos, vec2 size) const;
+
+		virtual void findFinalPosition(const finalPositionStruct &update) override;
+
+		virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override;
+		virtual bool mouseDouble(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override;
+		virtual bool mouseRelease(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override;
+		virtual bool mouseMove(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override;
+		virtual bool mouseWheel(sint8 wheel, modifiersFlags modifiers, vec2 point) override;
+		virtual bool keyPress(uint32 key, uint32 scanCode, modifiersFlags modifiers) override;
+		virtual bool keyRepeat(uint32 key, uint32 scanCode, modifiersFlags modifiers) override;
+		virtual bool keyRelease(uint32 key, uint32 scanCode, modifiersFlags modifiers) override;
+		virtual bool keyChar(uint32 key) override;
+	};
+
+	struct layoutItemStruct : public baseItemStruct
+	{
+		layoutItemStruct(hierarchyItemStruct *hierarchy);
+
+		virtual void emit() const override;
+
+		virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override;
+		virtual bool mouseDouble(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override;
+		virtual bool mouseRelease(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override;
+		virtual bool mouseMove(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override;
+		virtual bool mouseWheel(sint8 wheel, modifiersFlags modifiers, vec2 point) override;
+		virtual bool keyPress(uint32 key, uint32 scanCode, modifiersFlags modifiers) override;
+		virtual bool keyRepeat(uint32 key, uint32 scanCode, modifiersFlags modifiers) override;
+		virtual bool keyRelease(uint32 key, uint32 scanCode, modifiersFlags modifiers) override;
+		virtual bool keyChar(uint32 key) override;
 	};
 
 	struct textItemStruct
 	{
-		guiItemStruct *const base;
+		hierarchyItemStruct *const hierarchy;
 		renderableTextStruct::textStruct text;
 		bool skipInitialize;
 
-		textItemStruct(guiItemStruct *base);
+		textItemStruct(hierarchyItemStruct *hierarchy);
 
 		void initialize();
 
@@ -215,13 +220,13 @@ namespace cage
 
 	struct imageItemStruct
 	{
-		guiItemStruct *const base;
+		hierarchyItemStruct *const hierarchy;
 		imageComponent image;
 		imageFormatComponent format;
 		textureClass *texture;
 		bool skipInitialize;
 
-		imageItemStruct(guiItemStruct *base);
+		imageItemStruct(hierarchyItemStruct *hierarchy);
 
 		void initialize();
 
@@ -251,11 +256,11 @@ namespace cage
 		real zoom, retina, pointsScale; // how many pixels per point (1D)
 		uint32 focusName; // focused entity name
 		uint32 focusParts; // bitmask of focused parts of the single widget (bits 30 and 31 are reserved for scrollbars)
-		widgetBaseStruct *hover;
+		widgetItemStruct *hover;
 
 		memoryArenaGrowing<memoryAllocatorPolicyLinear<>, memoryConcurrentPolicyNone> itemsArena;
 		memoryArena itemsMemory;
-		guiItemStruct *root;
+		hierarchyItemStruct *root;
 
 		struct graphicsDataStruct
 		{
@@ -285,7 +290,7 @@ namespace cage
 		holder<swapBufferControllerClass> emitController;
 
 		windowEventListeners listeners;
-		std::vector<widgetBaseStruct*> mouseEventReceivers;
+		std::vector<widgetItemStruct*> mouseEventReceivers;
 		bool eventsEnabled;
 
 		std::vector<skinDataStruct> skins;
@@ -297,29 +302,20 @@ namespace cage
 
 		bool eventPoint(const pointStruct &ptIn, vec2 &ptOut);
 		vec4 pointsToNdc(vec2 position, vec2 size);
-		real eval(real val, unitEnum unit, real defaul = real::Nan);
-		template<uint32 N> typename vecN<N>::type eval(const valuesStruct<N> &v, real defaul = real::Nan)
-		{
-			typename vecN<N>::type result;
-			for (uint32 i = 0; i < N; i++)
-				result[i] = eval(v.values[i], v.units[i], defaul);
-			return result;
-		}
-		template<uint32 M, uint32 N> typename vecN<N>::type eval(const valuesStruct<N> &v, typename vecN<M>::type defaul)
-		{
-			typename vecN<N>::type result;
-			for (uint32 i = 0; i < N; i++)
-				result[i] = eval(v.values[i], v.units[i], defaul[i % M]);
-			return result;
-		}
 
 		void graphicsDispatch();
+
+		uint32 entityWidgetsCount(entityClass *e);
+		uint32 entityLayoutsCount(entityClass *e);
 	};
 
 	void offsetPosition(vec2 &position, const vec4 &offset);
 	void offsetSize(vec2 &size, const vec4 &offset);
 	void offset(vec2 &position, vec2 &size, const vec4 &offset);
 	bool pointInside(vec2 pos, vec2 size, vec2 point);
+
+	hierarchyItemStruct *subsideItem(hierarchyItemStruct *item);
+	void ensureItemHasLayout(hierarchyItemStruct *item); // if the item's entity does not have any layout, subside the item and add default layouter to it
 }
 
 #endif // guard_private_h_BEDE53C63BB74919B9BD171B995FD1A1
