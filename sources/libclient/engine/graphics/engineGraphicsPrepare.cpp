@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <vector>
+#include <unordered_map>
 
 #include <cage-core/core.h>
 #include <cage-core/log.h>
@@ -144,6 +145,9 @@ namespace cage
 			uint64 dispatchTime;
 			sint32 shm2d, shmCube;
 
+			typedef std::unordered_map<meshClass*, objectsStruct*> opaqueObjectsMapType;
+			opaqueObjectsMapType opaqueObjectsMap;
+
 			static real lightRange(const vec3 &color, const vec3 &attenuation)
 			{
 				real c = max(color[0], max(color[1], color[2]));
@@ -182,6 +186,7 @@ namespace cage
 
 			renderPassImpl *newRenderPass()
 			{
+				opaqueObjectsMap.clear();
 				renderPassImpl *t = dispatchArena.createObject<renderPassImpl>();
 				if (graphicsDispatch->firstRenderPass)
 					graphicsDispatch->lastRenderPass->next = t;
@@ -366,24 +371,23 @@ namespace cage
 				}
 				else
 				{ // opaque
-					for (objectsStruct *it = pass->firstOpaque; it; it = it->next)
-					{
-						if (it->count == it->max)
-							continue;
-						if (it->mesh != m)
-							continue;
-						obj = it;
-						break;
-					}
-					if (!obj)
+					auto it = opaqueObjectsMap.find(m);
+					if (it == opaqueObjectsMap.end())
 					{
 						obj = dispatchArena.createObject<objectsStruct>(m, CAGE_SHADER_MAX_RENDER_INSTANCES);
-						// add at begin
-						if (pass->firstOpaque)
-							obj->next = pass->firstOpaque;
+						// add at end
+						if (pass->lastOpaque)
+							pass->lastOpaque->next = obj;
 						else
-							pass->lastOpaque = obj;
-						pass->firstOpaque = obj;
+							pass->firstOpaque = obj;
+						pass->lastOpaque = obj;
+						opaqueObjectsMap[m] = obj;
+					}
+					else
+					{
+						obj = it->second;
+						if (obj->count + 1 == obj->max)
+							opaqueObjectsMap.erase(m);
 					}
 				}
 				objectsStruct::shaderMeshStruct *sm = obj->shaderMeshes + obj->count;
@@ -601,7 +605,6 @@ namespace cage
 				pointStruct resolution = window()->resolution();
 				graphicsDispatch->windowWidth = resolution.x;
 				graphicsDispatch->windowHeight = resolution.y;
-
 
 				{ // update model matrices
 					real interFactor = clamp(real(dispatchTime - emitTime) / controlThread().timePerTick, 0, 1);
