@@ -34,6 +34,9 @@ namespace cage
 	scrollbarsComponent::scrollbarsComponent() : overflow{ overflowModeEnum::Auto, overflowModeEnum::Auto }
 	{}
 
+	explicitSizeComponent::explicitSizeComponent() : size(vec2::Nan)
+	{}
+
 	generalComponentsStruct::generalComponentsStruct(entityManagerClass *ents)
 	{
 		detail::memset(this, 0, sizeof(*this));

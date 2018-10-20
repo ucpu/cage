@@ -22,9 +22,9 @@ namespace cage
 #define GCHL_GENERATE(T) void CAGE_JOIN(T, Create)(hierarchyItemStruct *item);
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS, GCHL_GUI_LAYOUT_COMPONENTS));
 #undef GCHL_GENERATE
-	void layoutDefaultCreate(hierarchyItemStruct *item);
 	void textCreate(hierarchyItemStruct *item);
 	void imageCreate(hierarchyItemStruct *item);
+	void explicitSizeCreate(hierarchyItemStruct *item);
 	void scrollbarsCreate(hierarchyItemStruct *item);
 	void printDebug(guiImpl *impl);
 
@@ -113,17 +113,21 @@ namespace cage
 		void generateItem(hierarchyItemStruct *item)
 		{
 			guiImpl *impl = item->impl;
-			if (GUI_HAS_COMPONENT(text, item->entity))
+
+			// explicit size
+			if (GUI_HAS_COMPONENT(explicitSize, item->entity))
 			{
-				CAGE_ASSERT_RUNTIME(!item->text);
-				textCreate(item);
-			}
-			if (GUI_HAS_COMPONENT(image, item->entity))
-			{
-				CAGE_ASSERT_RUNTIME(!item->image);
-				imageCreate(item);
+				explicitSizeCreate(item);
+				item = subsideItem(item);
 			}
 
+			// text and image
+			if (GUI_HAS_COMPONENT(text, item->entity))
+				textCreate(item);
+			if (GUI_HAS_COMPONENT(image, item->entity))
+				imageCreate(item);
+
+			// counts
 			uint32 wc = impl->entityWidgetsCount(item->entity);
 			bool sc = GUI_HAS_COMPONENT(scrollbars, item->entity);
 			uint32 lc = impl->entityLayoutsCount(item->entity);
@@ -286,8 +290,6 @@ namespace cage
 		generateHierarchy(impl);
 		generateItems(impl->root);
 		validateHierarchy(impl);
-		layoutDefaultCreate(impl->root);
-		layoutDefaultCreate(impl->root->firstChild);
 		validateHierarchy(impl);
 		{ // propagate widget state
 			widgetStateComponent ws;

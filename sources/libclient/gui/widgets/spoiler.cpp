@@ -56,6 +56,7 @@ namespace cage
 					return;
 				finalPositionStruct u(update);
 				u.renderPos[1] += skin->defaults.spoiler.captionHeight;
+				u.renderSize[1] -= skin->defaults.spoiler.captionHeight;
 				offset(u.renderPos, u.renderSize, -skin->layouts[(uint32)elementTypeEnum::PanelBase].border);
 				offset(u.renderPos, u.renderSize, -skin->defaults.spoiler.baseMargin - skin->defaults.spoiler.contentPadding);
 				hierarchy->firstChild->findFinalPosition(u);

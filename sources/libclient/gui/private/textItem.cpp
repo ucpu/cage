@@ -19,6 +19,7 @@ namespace cage
 {
 	void textCreate(hierarchyItemStruct *item)
 	{
+		CAGE_ASSERT_RUNTIME(!item->text);
 		item->text = item->impl->itemsMemory.createObject<textItemStruct>(item);
 	}
 

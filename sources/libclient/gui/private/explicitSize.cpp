@@ -15,9 +15,11 @@ namespace cage
 {
 	namespace
 	{
-		struct layoutDefaultImpl : public layoutItemStruct
+		struct explicitSizeImpl : public layoutItemStruct
 		{
-			layoutDefaultImpl(hierarchyItemStruct *hierarchy) : layoutItemStruct(hierarchy)
+			explicitSizeComponent &data;
+
+			explicitSizeImpl(hierarchyItemStruct *hierarchy) : layoutItemStruct(hierarchy), data(GUI_REF_COMPONENT(explicitSize))
 			{}
 
 			virtual void initialize() override
@@ -25,22 +27,28 @@ namespace cage
 
 			virtual void findRequestedSize() override
 			{
-				hierarchy->requestedSize = vec2();
 				hierarchyItemStruct *c = hierarchy->firstChild;
+				hierarchy->requestedSize = vec2();
 				while (c)
 				{
 					c->findRequestedSize();
 					hierarchy->requestedSize = max(hierarchy->requestedSize, c->requestedSize);
 					c = c->nextSibling;
 				}
+				for (uint32 i = 0; i < 2; i++)
+				{
+					if (data.size[i].valid())
+						hierarchy->requestedSize[i] = data.size[i];
+				}
+				CAGE_ASSERT_RUNTIME(hierarchy->requestedSize.valid());
 			}
 
 			virtual void findFinalPosition(const finalPositionStruct &update) override
 			{
+				finalPositionStruct u(update);
 				hierarchyItemStruct *c = hierarchy->firstChild;
 				while (c)
 				{
-					finalPositionStruct u(update);
 					c->findFinalPosition(u);
 					c = c->nextSibling;
 				}
@@ -48,9 +56,9 @@ namespace cage
 		};
 	}
 
-	void layoutDefaultCreate(hierarchyItemStruct *item)
+	void explicitSizeCreate(hierarchyItemStruct *item)
 	{
 		CAGE_ASSERT_RUNTIME(!item->item);
-		item->item = item->impl->itemsMemory.createObject<layoutDefaultImpl>(item);
+		item->item = item->impl->itemsMemory.createObject<explicitSizeImpl>(item);
 	}
 }

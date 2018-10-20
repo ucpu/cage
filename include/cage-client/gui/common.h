@@ -83,7 +83,13 @@ namespace cage
 		scrollbarsComponent();
 	};
 
-#define GCHL_GUI_COMMON_COMPONENTS parent, image, imageFormat, text, textFormat, selection, tooltip, widgetState, selectedItem, scrollbars
+	struct CAGE_API explicitSizeComponent
+	{
+		vec2 size;
+		explicitSizeComponent();
+	};
+
+#define GCHL_GUI_COMMON_COMPONENTS parent, image, imageFormat, text, textFormat, selection, tooltip, widgetState, selectedItem, scrollbars, explicitSize
 
 	struct CAGE_API generalComponentsStruct
 	{

@@ -54,7 +54,10 @@ namespace cage
 				offset(u.renderPos, u.renderSize, -skin->defaults.panel.baseMargin);
 				offset(u.renderPos, u.renderSize, -skin->layouts[(uint32)elementTypeEnum::PanelBase].border);
 				if (hierarchy->text)
+				{
 					u.renderPos[1] += skin->defaults.panel.captionHeight;
+					u.renderSize[1] -= skin->defaults.panel.captionHeight;
+				}
 				offset(u.renderPos, u.renderSize, -skin->defaults.panel.contentPadding);
 				hierarchy->firstChild->findFinalPosition(u);
 			}

@@ -42,16 +42,22 @@ namespace cage
 			requestedSize = text->findRequestedSize();
 		else if (image)
 			requestedSize = image->findRequestedSize();
+		else
+		{
+			requestedSize = vec2();
+			hierarchyItemStruct *c = firstChild;
+			while (c)
+			{
+				c->findRequestedSize();
+				requestedSize = max(requestedSize, c->requestedSize);
+				c = c->nextSibling;
+			}
+		}
 		CAGE_ASSERT_RUNTIME(requestedSize.valid());
 	}
 
 	void hierarchyItemStruct::findFinalPosition(const finalPositionStruct &update)
 	{
-		{
-			uint32 name = entity ? entity->name() : 0;
-			CAGE_ASSERT_RUNTIME(item, "trying to layout an entity without layouting specified", name);
-		}
-
 		CAGE_ASSERT_RUNTIME(requestedSize.valid());
 		CAGE_ASSERT_RUNTIME(update.renderPos.valid());
 		CAGE_ASSERT_RUNTIME(update.renderSize.valid());
@@ -66,7 +72,17 @@ namespace cage
 		clipPos = u.clipPos;
 		clipSize = u.clipSize;
 
-		item->findFinalPosition(u);
+		if (item)
+			item->findFinalPosition(u);
+		else
+		{
+			hierarchyItemStruct *c = firstChild;
+			while (c)
+			{
+				c->findFinalPosition(u);
+				c = c->nextSibling;
+			}
+		}
 
 		CAGE_ASSERT_RUNTIME(renderPos.valid());
 		CAGE_ASSERT_RUNTIME(renderSize.valid());

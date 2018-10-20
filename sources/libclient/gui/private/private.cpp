@@ -85,8 +85,7 @@ namespace cage
 	{
 		if (hierarchy->impl->entityLayoutsCount(hierarchy->entity) == 0)
 		{
-			hierarchyItemStruct *lh = subsideItem(hierarchy);
-			layoutDefaultCreate(lh);
+			subsideItem(hierarchy); // fall back to default layouting
 		}
 	}
 }
