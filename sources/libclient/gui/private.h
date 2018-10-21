@@ -86,8 +86,6 @@ namespace cage
 		vec2 renderPos, renderSize;
 		vec2 clipPos, clipSize;
 
-		void clip(vec2 p, vec2 s);
-
 		finalPositionStruct();
 	};
 
@@ -119,6 +117,7 @@ namespace cage
 		void findRequestedSize(); // fills in the requestedSize
 		void findFinalPosition(const finalPositionStruct &update); // given position and available space in the finalPositionStruct, determine actual position and size
 		void childrenEmit() const;
+		void generateEventReceivers() const;
 
 		// helpers
 		void moveToWindow(bool horizontal, bool vertical);
@@ -142,6 +141,7 @@ namespace cage
 		virtual void findRequestedSize() = 0;
 		virtual void findFinalPosition(const finalPositionStruct &update) = 0;
 		virtual void emit() const = 0;
+		virtual void generateEventReceivers() = 0;
 
 		virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) = 0;
 		virtual bool mouseDouble(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) = 0;
@@ -168,6 +168,7 @@ namespace cage
 		renderableElementStruct *emitElement(elementTypeEnum element, uint32 mode, vec2 pos, vec2 size) const;
 
 		virtual void findFinalPosition(const finalPositionStruct &update) override;
+		virtual void generateEventReceivers() override;
 
 		virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override;
 		virtual bool mouseDouble(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override;
@@ -185,6 +186,7 @@ namespace cage
 		layoutItemStruct(hierarchyItemStruct *hierarchy);
 
 		virtual void emit() const override;
+		virtual void generateEventReceivers() override;
 
 		virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override;
 		virtual bool mouseDouble(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override;
@@ -239,6 +241,17 @@ namespace cage
 		renderableImageStruct *emit(vec2 position, vec2 size) const;
 	};
 
+	struct eventReceiverStruct
+	{
+		vec2 pos, size;
+		widgetItemStruct *widget;
+		uint32 mask; // bitmask for event classes
+
+		eventReceiverStruct();
+
+		bool pointInside(vec2 point, uint32 maskRequests = 1) const;
+	};
+
 	class guiImpl : public guiClass
 	{
 	public:
@@ -290,7 +303,7 @@ namespace cage
 		holder<swapBufferControllerClass> emitController;
 
 		windowEventListeners listeners;
-		std::vector<widgetItemStruct*> mouseEventReceivers;
+		std::vector<eventReceiverStruct> mouseEventReceivers;
 		bool eventsEnabled;
 
 		std::vector<skinDataStruct> skins;
@@ -313,6 +326,7 @@ namespace cage
 	void offsetSize(vec2 &size, const vec4 &offset);
 	void offset(vec2 &position, vec2 &size, const vec4 &offset);
 	bool pointInside(vec2 pos, vec2 size, vec2 point);
+	bool clip(vec2 &pos, vec2 &size, vec2 clipPos, vec2 clipSize); // return whether the clipped rect has positive area
 
 	hierarchyItemStruct *subsideItem(hierarchyItemStruct *item);
 	void ensureItemHasLayout(hierarchyItemStruct *item); // if the item's entity does not have any layout, subside the item and add default layouter to it

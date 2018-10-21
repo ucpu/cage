@@ -13,13 +13,18 @@
 
 namespace cage
 {
+	eventReceiverStruct::eventReceiverStruct() : widget(nullptr), mask(1)
+	{}
+
+	bool eventReceiverStruct::pointInside(vec2 point, uint32 maskRequest) const
+	{
+		if ((mask & maskRequest) == 0)
+			return false;
+		return cage::pointInside(pos, size, point);
+	}
+
 	namespace
 	{
-		bool pointIsInside(hierarchyItemStruct *b, const vec2 &p)
-		{
-			return pointInside(b->renderPos, b->renderSize, p);
-		}
-
 		void findWidgets(hierarchyItemStruct *item, uint32 name, std::vector<widgetItemStruct*> &result)
 		{
 			{
@@ -56,22 +61,18 @@ namespace cage
 				bool res = false;
 				for (auto f : focused(impl))
 				{
-					if (f->widgetState.disabled)
-						res = true;
-					if ((f->*F)(a, m, pt))
+					if (f->widgetState.disabled || (f->*F)(a, m, pt))
 						res = true;
 				}
 				if (res)
 					return true;
 			}
 			// if nothing has focus, pass the event to anything under the cursor
-			for (auto it : impl->mouseEventReceivers)
+			for (const auto &it : impl->mouseEventReceivers)
 			{
-				if (pointIsInside(it->hierarchy, pt))
+				if (it.pointInside(pt))
 				{
-					if (it->widgetState.disabled)
-						return true;
-					if ((it->*F)(a, m, pt))
+					if (it.widget->widgetState.disabled || (it.widget->*F)(a, m, pt))
 						return true;
 				}
 			}
@@ -87,9 +88,7 @@ namespace cage
 			bool res = false;
 			for (auto f : focused(impl))
 			{
-				if (f->widgetState.disabled)
-					res = true;
-				if ((f->*F)(a, b, m))
+				if (f->widgetState.disabled || (f->*F)(a, b, m))
 					res = true;
 			}
 			return res;
@@ -105,7 +104,7 @@ namespace cage
 		{
 			bool ret = eventCoordinatesTransformer(ptIn, ptOut);
 			if (ret)
-				outputMouse = ptOut;
+				outputMouse = ptOut / pointsScale;
 			return ret;
 		}
 		outputMouse = ptOut = vec2(ptIn.x, ptIn.y) / pointsScale;
@@ -122,21 +121,8 @@ namespace cage
 	bool guiClass::mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, const pointStruct &point)
 	{
 		guiImpl *impl = (guiImpl*)this;
-		vec2 pt;
-		if (!impl->eventPoint(point, pt))
-			return false;
-		for (auto it : impl->mouseEventReceivers)
-		{
-			if (pointIsInside(it->hierarchy, pt))
-			{
-				if (it->widgetState.disabled)
-					return true;
-				if (it->mousePress(buttons, modifiers, pt))
-					return true;
-			}
-		}
 		impl->focusName = 0;
-		return false;
+		return passMouseEvent<mouseButtonsFlags, &widgetItemStruct::mousePress>(impl, buttons, modifiers, point);
 	}
 
 	bool guiClass::mouseDouble(mouseButtonsFlags buttons, modifiersFlags modifiers, const pointStruct &point)
@@ -163,13 +149,11 @@ namespace cage
 		vec2 pt;
 		if (!impl->eventPoint(point, pt))
 			return false;
-		for (auto it : impl->mouseEventReceivers)
+		for (const auto &it : impl->mouseEventReceivers)
 		{
-			if (pointIsInside(it->hierarchy, pt))
+			if (it.pointInside(pt, 1 | (1 << 31))) // also accept wheel events
 			{
-				if (it->widgetState.disabled)
-					return true;
-				if (it->mouseWheel(wheel, modifiers, pt))
+				if (it.widget->widgetState.disabled || it.widget->mouseWheel(wheel, modifiers, pt))
 					return true;
 			}
 		}
@@ -203,9 +187,7 @@ namespace cage
 		bool res = false;
 		for (auto f : focused(impl))
 		{
-			if (f->widgetState.disabled)
-				res = true;
-			if (f->keyChar(key))
+			if (f->widgetState.disabled || f->keyChar(key))
 				res = true;
 		}
 		return res;

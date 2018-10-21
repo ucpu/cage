@@ -45,6 +45,7 @@ namespace cage
 	{
 		CAGE_ASSERT_RUNTIME(parts != 0);
 		CAGE_ASSERT_RUNTIME(hierarchy->entity);
+		CAGE_ASSERT_RUNTIME(!widgetState.disabled);
 		hierarchy->impl->focusName = hierarchy->entity->name();
 		hierarchy->impl->focusParts = parts;
 	}
@@ -52,6 +53,16 @@ namespace cage
 	void widgetItemStruct::findFinalPosition(const finalPositionStruct &update)
 	{
 		// do nothing
+	}
+
+	void widgetItemStruct::generateEventReceivers()
+	{
+		eventReceiverStruct e;
+		e.widget = this;
+		e.pos = hierarchy->renderPos;
+		e.size = hierarchy->renderSize;
+		if (clip(e.pos, e.size, hierarchy->clipPos, hierarchy->clipSize))
+			hierarchy->impl->mouseEventReceivers.push_back(e);
 	}
 
 	renderableElementStruct *widgetItemStruct::emitElement(elementTypeEnum element, uint32 mode, vec2 pos, vec2 size) const

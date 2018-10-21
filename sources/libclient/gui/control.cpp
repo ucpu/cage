@@ -251,27 +251,14 @@ namespace cage
 #endif // CAGE_ASSERT_ENABLED
 		}
 
-		void generateEventReceivers(hierarchyItemStruct *item)
-		{
-			if (item->nextSibling)
-				generateEventReceivers(item->nextSibling);
-			if (item->firstChild)
-				generateEventReceivers(item->firstChild);
-			{
-				widgetItemStruct *w = dynamic_cast<widgetItemStruct*>(item->item);
-				if (w)
-					item->impl->mouseEventReceivers.push_back(w);
-			}
-		}
-
 		void findHover(guiImpl *impl)
 		{
 			impl->hover = nullptr;
-			for (auto it : impl->mouseEventReceivers)
+			for (const auto &it : impl->mouseEventReceivers)
 			{
-				if (pointInside(it->hierarchy->renderPos, it->hierarchy->renderSize, impl->outputMouse))
+				if (it.pointInside(impl->outputMouse))
 				{
-					impl->hover = it;
+					impl->hover = it.widget;
 					return;
 				}
 			}
@@ -290,7 +277,6 @@ namespace cage
 		generateHierarchy(impl);
 		generateItems(impl->root);
 		validateHierarchy(impl);
-		validateHierarchy(impl);
 		{ // propagate widget state
 			widgetStateComponent ws;
 			ws.skinIndex = 0;
@@ -305,7 +291,7 @@ namespace cage
 			u.renderSize = u.clipSize = impl->outputSize;
 			impl->root->findFinalPosition(u);
 		}
-		generateEventReceivers(impl->root);
+		impl->root->generateEventReceivers();
 		findHover(impl);
 		printDebug(impl);
 	}

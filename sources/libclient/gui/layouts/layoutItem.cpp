@@ -64,4 +64,9 @@ namespace cage
 	{
 		hierarchy->childrenEmit();
 	}
+
+	void layoutItemStruct::generateEventReceivers()
+	{
+		// do nothing
+	}
 }

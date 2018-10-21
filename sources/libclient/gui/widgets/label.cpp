@@ -51,6 +51,31 @@ namespace cage
 				if (hierarchy->text)
 					hierarchy->text->emit(p, s);
 			}
+
+			virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
+			{
+				return false;
+			}
+
+			virtual bool mouseDouble(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
+			{
+				return false;
+			}
+
+			virtual bool mouseRelease(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
+			{
+				return false;
+			}
+
+			virtual bool mouseMove(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
+			{
+				return false;
+			}
+
+			virtual bool mouseWheel(sint8 wheel, modifiersFlags modifiers, vec2 point) override
+			{
+				return false;
+			}
 		};
 	}
 

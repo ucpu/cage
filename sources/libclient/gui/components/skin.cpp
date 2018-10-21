@@ -309,7 +309,7 @@ namespace cage
 		textFormat.align = textAlignEnum::Center;
 	}
 
-	skinWidgetDefaultsStruct::scrollbarsStruct::scrollbarsStruct() : scrollbarSize(15), contentPadding(3)
+	skinWidgetDefaultsStruct::scrollbarsStruct::scrollbarsStruct() : scrollbarSize(15), contentPadding(4)
 	{}
 
 	skinWidgetDefaultsStruct::tooltipStruct::tooltipStruct() : textFormat(text)

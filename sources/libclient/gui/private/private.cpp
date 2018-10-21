@@ -15,19 +15,6 @@
 
 namespace cage
 {
-	void layoutDefaultCreate(hierarchyItemStruct *item);
-
-	void finalPositionStruct::clip(vec2 p, vec2 s)
-	{
-		CAGE_ASSERT_RUNTIME(p.valid());
-		CAGE_ASSERT_RUNTIME(s.valid() && s[0] >= 0 && s[1] >= 0, p, s);
-		CAGE_ASSERT_RUNTIME(clipPos.valid());
-		CAGE_ASSERT_RUNTIME(clipSize.valid() && clipSize[0] >= 0 && clipSize[1] >= 0, clipPos, clipSize);
-		vec2 e = min(clipPos + clipSize, p + s);
-		clipPos = max(clipPos, p);
-		clipSize = max(e - clipPos, vec2());
-	}
-
 	finalPositionStruct::finalPositionStruct() : renderPos(vec2::Nan), renderSize(vec2::Nan), clipPos(vec2::Nan), clipSize(vec2::Nan)
 	{}
 
@@ -59,6 +46,18 @@ namespace cage
 		if (point[0] > pos[0] || point[1] > pos[1])
 			return false;
 		return true;
+	}
+
+	bool clip(vec2 &pos, vec2 &size, vec2 clipPos, vec2 clipSize)
+	{
+		CAGE_ASSERT_RUNTIME(clipPos.valid());
+		CAGE_ASSERT_RUNTIME(clipSize.valid() && clipSize[0] >= 0 && clipSize[1] >= 0, clipPos, clipSize);
+		CAGE_ASSERT_RUNTIME(pos.valid());
+		CAGE_ASSERT_RUNTIME(size.valid() && size[0] >= 0 && size[1] >= 0, pos, size);
+		vec2 e = min(pos + size, clipPos + clipSize);
+		pos = max(pos, clipPos);
+		size = max(e - pos, vec2());
+		return size[0] > 0 && size[1] > 0;
 	}
 
 	hierarchyItemStruct *subsideItem(hierarchyItemStruct *item)

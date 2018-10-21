@@ -47,17 +47,14 @@ namespace cage
 			{
 				hierarchy->firstChild->findRequestedSize();
 				hierarchy->requestedSize = hierarchy->firstChild->requestedSize;
-				for (uint32 a = 0; a < 2; a++)
-				{
-					if (data.overflow[a] == overflowModeEnum::Always)
-						hierarchy->requestedSize[a] += skin->defaults.scrollbars.scrollbarSize + skin->defaults.scrollbars.contentPadding;
-				}
 			}
 
 			virtual void findFinalPosition(const finalPositionStruct &update) override
 			{
 				wheelFactor = 70 / (hierarchy->requestedSize[1] - update.renderSize[1]);
 				finalPositionStruct u(update);
+				u.renderSize = hierarchy->requestedSize;
+				real scw = skin->defaults.scrollbars.scrollbarSize + skin->defaults.scrollbars.contentPadding;
 				for (uint32 a = 0; a < 2; a++)
 				{
 					bool show = data.overflow[a] == overflowModeEnum::Always;
@@ -70,19 +67,17 @@ namespace cage
 						s.size[1 - a] = skin->defaults.scrollbars.scrollbarSize;
 						s.position[a] = update.renderPos[a];
 						s.position[1 - a] = update.renderPos[1 - a] + update.renderSize[1 - a] - s.size[1 - a];
-						u.renderPos[a] -= (hierarchy->requestedSize[a] - update.renderSize[a]) * scrollbars[a].value;
-						u.renderSize[a] = hierarchy->requestedSize[a];
-						u.renderSize[1 - a] -= s.size[1 - a] + skin->defaults.scrollbars.contentPadding;
-						u.renderSize[1 - a] = max(u.renderSize[1 - a], 0);
+						u.renderPos[a] -= (hierarchy->requestedSize[a] - update.renderSize[a] + scw) * scrollbars[a].value;
+						u.clipSize[1 - a] -= scw;
 						real minSize = min(s.size[0], s.size[1]);
 						s.dotSize = max(minSize, sqr(update.renderSize[a]) / hierarchy->requestedSize[a]);
 					}
 					else
 					{ // the content is smaller than the available area
 						u.renderPos[a] += (update.renderSize[a] - hierarchy->requestedSize[a]) * data.alignment[a];
-						u.renderSize[a] = hierarchy->requestedSize[a];
 					}
 				}
+				u.clipSize = max(u.clipSize, 0);
 				hierarchy->firstChild->findFinalPosition(u);
 			}
 
@@ -105,12 +100,39 @@ namespace cage
 				}
 			}
 
+			virtual void generateEventReceivers() override
+			{
+				for (uint32 a = 0; a < 2; a++)
+				{
+					const scrollbarStruct &s = scrollbars[a];
+					if (s.position.valid())
+					{
+						eventReceiverStruct e;
+						e.widget = this;
+						e.pos = s.position;
+						e.size = s.size;
+						if (clip(e.pos, e.size, hierarchy->clipPos, hierarchy->clipSize))
+							hierarchy->impl->mouseEventReceivers.push_back(e);
+					}
+				}
+
+				{ // event receiver for wheel
+					eventReceiverStruct e;
+					e.widget = this;
+					e.pos = hierarchy->renderPos;
+					e.size = hierarchy->renderSize;
+					e.mask = 1 << 31;
+					if (clip(e.pos, e.size, hierarchy->clipPos, hierarchy->clipSize))
+						hierarchy->impl->mouseEventReceivers.push_back(e);
+				}
+			}
+
 			bool handleMouse(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point, bool move)
 			{
 				if (buttons != mouseButtonsFlags::Left)
-					return false;
+					return true;
 				if (modifiers != modifiersFlags::None)
-					return false;
+					return true;
 				for (uint32 a = 0; a < 2; a++)
 				{
 					const scrollbarStruct &s = scrollbars[a];
@@ -126,7 +148,7 @@ namespace cage
 						}
 					}
 				}
-				return false;
+				return true;
 			}
 
 			virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
@@ -151,36 +173,6 @@ namespace cage
 					s.value = clamp(s.value, 0, 1);
 					return true;
 				}
-				return false;
-			}
-
-			virtual bool mouseDouble(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
-			{
-				return false;
-			}
-
-			virtual bool mouseRelease(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
-			{
-				return false;
-			}
-
-			virtual bool keyPress(uint32 key, uint32 scanCode, modifiersFlags modifiers) override
-			{
-				return false;
-			}
-
-			virtual bool keyRepeat(uint32 key, uint32 scanCode, modifiersFlags modifiers) override
-			{
-				return false;
-			}
-
-			virtual bool keyRelease(uint32 key, uint32 scanCode, modifiersFlags modifiers) override
-			{
-				return false;
-			}
-
-			virtual bool keyChar(uint32 key) override
-			{
 				return false;
 			}
 		};

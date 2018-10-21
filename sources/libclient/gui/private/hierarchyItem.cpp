@@ -68,7 +68,7 @@ namespace cage
 		renderSize = update.renderSize;
 
 		finalPositionStruct u(update);
-		u.clip(u.renderPos, u.renderSize);
+		clip(u.clipPos, u.clipSize, u.renderPos, u.renderSize); // update the clip rect to intersection with the render rect
 		clipPos = u.clipPos;
 		clipSize = u.clipSize;
 
@@ -158,5 +158,15 @@ namespace cage
 			a->emitDebug();
 			a = a->nextSibling;
 		}
+	}
+
+	void hierarchyItemStruct::generateEventReceivers() const
+	{
+		if (nextSibling)
+			nextSibling->generateEventReceivers();
+		if (firstChild)
+			firstChild->generateEventReceivers();
+		if (item)
+			item->generateEventReceivers();
 	}
 }
