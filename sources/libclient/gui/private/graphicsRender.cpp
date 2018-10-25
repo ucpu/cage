@@ -76,9 +76,12 @@ namespace cage
 	void guiImpl::graphicsDispatch()
 	{
 		CAGE_ASSERT_RUNTIME(openglContext);
+		CAGE_CHECK_GL_ERROR_DEBUG();
 
 		if (auto lock = emitController->read())
 		{
+			CAGE_ASSERT_RUNTIME(outputResolution.x > 0 && outputResolution.y > 0);
+
 			// check skins textures
 			for (auto &s : skins)
 			{
@@ -97,6 +100,7 @@ namespace cage
 			}
 
 			// render all
+			CAGE_CHECK_GL_ERROR_DEBUG();
 			glEnable(GL_SCISSOR_TEST);
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -115,6 +119,7 @@ namespace cage
 			}
 			glDisable(GL_BLEND);
 			glDisable(GL_SCISSOR_TEST);
+			CAGE_CHECK_GL_ERROR_DEBUG();
 		}
 		else
 		{

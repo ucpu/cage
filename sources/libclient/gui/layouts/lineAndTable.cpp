@@ -126,7 +126,7 @@ namespace cage
 				hierarchyItemStruct *c = hierarchy->firstChild;
 				uint32 idx = 0;
 				vec2 spacing = (update.renderSize - hierarchy->requestedSize) / vec2(mws, mhs);
-				spacing = max(spacing, vec2());
+				//spacing = max(spacing, vec2());
 				vec2 pos = update.renderPos;
 				while (c)
 				{
@@ -138,7 +138,7 @@ namespace cage
 					{
 						finalPositionStruct u(update);
 						u.renderPos = pos + vec2(wi, hi) * spacing;
-						u.renderSize = s + spacing;
+						u.renderSize = max(s + spacing, 0);
 						c->findFinalPosition(u);
 					}
 

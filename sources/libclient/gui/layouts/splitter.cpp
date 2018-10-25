@@ -53,9 +53,9 @@ namespace cage
 				hierarchyItemStruct *a = hierarchy->firstChild, *b = hierarchy->firstChild->nextSibling;
 				uint32 axis = data.vertical ? 1 : 0;
 				finalPositionStruct u(update);
-				real split = data.inverse ? update.renderSize[axis] - b->requestedSize[axis] : a->requestedSize[axis];
+				real split = data.inverse ? max(update.renderSize[axis] - b->requestedSize[axis], 0) : a->requestedSize[axis];
 				u.renderPos[axis] += 0;
-				u.renderSize[axis] = max(split, 0);
+				u.renderSize[axis] = split;
 				a->findFinalPosition(u);
 				u.renderPos[axis] += split;
 				u.renderSize[axis] = max(update.renderSize[axis] - split, 0);

@@ -448,11 +448,12 @@ namespace cage
 				drawCalls = 0;
 				drawPrimitives = 0;
 
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+				CAGE_CHECK_GL_ERROR_DEBUG();
+
 				if (windowWidth == 0 || windowHeight == 0)
 					return;
 
-				CAGE_CHECK_GL_ERROR_DEBUG();
-				glBindFramebuffer(GL_FRAMEBUFFER, 0);
 				if (!shaderBlitColor)
 				{
 					glClear(GL_COLOR_BUFFER_BIT);
