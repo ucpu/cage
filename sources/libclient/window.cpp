@@ -16,7 +16,9 @@
 #include "graphics/private.h"
 #include <GLFW/glfw3.h>
 
-//#define GCHL_WINDOWS_THREAD
+#ifdef CAGE_SYSTEM_WINDOWS
+#define GCHL_WINDOWS_THREAD
+#endif // CAGE_SYSTEM_WINDOWS
 
 namespace cage
 {
@@ -95,6 +97,9 @@ namespace cage
 				MouseRelease,
 				MouseMove,
 				MouseWheel,
+#ifdef GCHL_WINDOWS_THREAD
+				DropRelativeMouseOffset,
+#endif
 			} type;
 
 			modifiersFlags modifiers;
@@ -124,6 +129,29 @@ namespace cage
 			};
 		};
 
+		modifiersFlags getKeyModifiers(int mods)
+		{
+			return modifiersFlags::None
+				| ((mods & GLFW_MOD_SHIFT) == GLFW_MOD_SHIFT ? modifiersFlags::Shift : modifiersFlags::None)
+				| ((mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL ? modifiersFlags::Ctrl : modifiersFlags::None)
+				| ((mods & GLFW_MOD_ALT) == GLFW_MOD_ALT ? modifiersFlags::Alt : modifiersFlags::None)
+				| ((mods & GLFW_MOD_SUPER) == GLFW_MOD_SUPER ? modifiersFlags::Super : modifiersFlags::None);
+		}
+
+		modifiersFlags getKeyModifiers(GLFWwindow *w)
+		{
+			modifiersFlags r = modifiersFlags::None;
+			if (glfwGetKey(w, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(w, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS)
+				r |= modifiersFlags::Shift;
+			if (glfwGetKey(w, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS || glfwGetKey(w, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS)
+				r |= modifiersFlags::Ctrl;
+			if (glfwGetKey(w, GLFW_KEY_LEFT_ALT) == GLFW_PRESS || glfwGetKey(w, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS)
+				r |= modifiersFlags::Alt;
+			if (glfwGetKey(w, GLFW_KEY_LEFT_SUPER) == GLFW_PRESS || glfwGetKey(w, GLFW_KEY_RIGHT_SUPER) == GLFW_PRESS)
+				r |= modifiersFlags::Super;
+			return r;
+		}
+
 		class windowImpl : public windowClass
 		{
 		public:
@@ -133,6 +161,7 @@ namespace cage
 			std::vector<eventStruct> eventsQueueLocked;
 			std::vector<eventStruct> eventsQueueNoLock;
 			std::set<uint32> stateKeys, stateCodes;
+			pointStruct currentMousePosition;
 			modifiersFlags stateMods;
 			mouseButtonsFlags stateButtons;
 			GLFWwindow *window;
@@ -142,8 +171,10 @@ namespace cage
 			holder<threadClass> windowThread;
 			holder<semaphoreClass> windowSemaphore;
 			std::atomic<bool> stopping;
+			std::vector<pointStruct> relativeMouseOffsets;
+			std::vector<pointStruct> absoluteMouseSets;
 
-			void treadEntry()
+			void threadEntry()
 			{
 				try
 				{
@@ -156,18 +187,31 @@ namespace cage
 				windowSemaphore->unlock();
 				while (!stopping)
 				{
+					try
 					{
-						scopeLock<mutexClass> l(windowsMutex());
-						try
 						{
+							scopeLock<mutexClass> l(windowsMutex());
 							glfwPollEvents();
 						}
-						catch (...)
+						
 						{
-							CAGE_LOG(severityEnum::Warning, "glfw", "an exception occured in event processing");
+							scopeLock<mutexClass> l(eventsMutex);
+							for (const auto &p : absoluteMouseSets)
+							{
+								eventStruct e;
+								e.type = eventStruct::eventType::DropRelativeMouseOffset;
+								e.modifiers = getKeyModifiers(window);
+								eventsQueueLocked.push_back(e);
+								glfwSetCursorPos(window, p.x, p.y);
+							}
+							absoluteMouseSets.clear();
 						}
 					}
-					threadSleep(5000);
+					catch (...)
+					{
+						CAGE_LOG(severityEnum::Warning, "glfw", "an exception occured in event processing");
+					}
+					threadSleep(2000);
 				}
 				finalizeWindow();
 			}
@@ -177,11 +221,14 @@ namespace cage
 			{
 				cageGlfwInitializeFunc();
 
+				scopeLock<mutexClass> l(windowsMutex());
+
 #ifdef GCHL_WINDOWS_THREAD
 				stopping = false;
 				windowSemaphore = newSemaphore(0, 1);
-				windowThread = newThread(delegate<void()>().bind<windowImpl, &windowImpl::treadEntry>(this), "window");
+				windowThread = newThread(delegate<void()>().bind<windowImpl, &windowImpl::threadEntry>(this), "window");
 				windowSemaphore->lock();
+				windowSemaphore.clear();
 				if (stopping)
 					CAGE_THROW_ERROR(exception, "failed to initialize window");
 #else
@@ -190,16 +237,14 @@ namespace cage
 
 				// initialize opengl
 				makeCurrent();
-				{
-					// initialize opengl functions (gl loader)
-					if (!gladLoadGL())
-						CAGE_THROW_ERROR(graphicsException, "gladLoadGl", 0);
-				}
+				if (!gladLoadGL())
+					CAGE_THROW_ERROR(exception, "gladLoadGl");
 				openglContextInitializeGeneral(this);
 			}
 
 			~windowImpl()
 			{
+				makeNotCurrent();
 #ifdef GCHL_WINDOWS_THREAD
 				stopping = true;
 				if (windowThread)
@@ -211,7 +256,6 @@ namespace cage
 
 			void initializeWindow()
 			{
-				scopeLock<mutexClass> lock(windowsMutex());
 				glfwDefaultWindowHints();
 				glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
 				glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
@@ -260,30 +304,20 @@ namespace cage
 					return false;
 				}
 			}
+
+			pointStruct processMousePositionEvent(pointStruct p)
+			{
+				currentMousePosition = p;
+#ifdef GCHL_WINDOWS_THREAD
+				for (const auto &r : relativeMouseOffsets)
+				{
+					currentMousePosition.x += r.x;
+					currentMousePosition.y += r.y;
+				}
+#endif
+				return currentMousePosition;
+			}
 		};
-
-		modifiersFlags getKeyModifiers(int mods)
-		{
-			return modifiersFlags::None
-				| ((mods & GLFW_MOD_SHIFT) == GLFW_MOD_SHIFT ? modifiersFlags::Shift : modifiersFlags::None)
-				| ((mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL ? modifiersFlags::Ctrl : modifiersFlags::None)
-				| ((mods & GLFW_MOD_ALT) == GLFW_MOD_ALT ? modifiersFlags::Alt : modifiersFlags::None)
-				| ((mods & GLFW_MOD_SUPER) == GLFW_MOD_SUPER ? modifiersFlags::Super : modifiersFlags::None);
-		}
-
-		modifiersFlags getKeyModifiers(GLFWwindow *w)
-		{
-			modifiersFlags r = modifiersFlags::None;
-			if (glfwGetKey(w, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(w, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS)
-				r |= modifiersFlags::Shift;
-			if (glfwGetKey(w, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS || glfwGetKey(w, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS)
-				r |= modifiersFlags::Ctrl;
-			if (glfwGetKey(w, GLFW_KEY_LEFT_ALT) == GLFW_PRESS || glfwGetKey(w, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS)
-				r |= modifiersFlags::Alt;
-			if (glfwGetKey(w, GLFW_KEY_LEFT_SUPER) == GLFW_PRESS || glfwGetKey(w, GLFW_KEY_RIGHT_SUPER) == GLFW_PRESS)
-				r |= modifiersFlags::Super;
-			return r;
-		}
 
 		void windowCloseEvent(GLFWwindow *w)
 		{
@@ -543,15 +577,20 @@ namespace cage
 	pointStruct windowClass::mousePosition() const
 	{
 		windowImpl *impl = (windowImpl*)this;
-		double x = 0, y = 0;
-		glfwGetCursorPos(impl->window, &x, &y);
-		return pointStruct((sint32)floor(x).value, (sint32)floor(y).value);
+		return impl->currentMousePosition;
 	}
 
 	void windowClass::mousePosition(const pointStruct &tmp)
 	{
 		windowImpl *impl = (windowImpl*)this;
+#ifdef GCHL_WINDOWS_THREAD
+		scopeLock<mutexClass> l(impl->eventsMutex);
+		impl->absoluteMouseSets.push_back(tmp);
+		const pointStruct &c = impl->currentMousePosition;
+		impl->relativeMouseOffsets.push_back(pointStruct(tmp.x - c.x, tmp.y - c.y));
+#else
 		glfwSetCursorPos(impl->window, tmp.x, tmp.y);
+#endif // GCHL_WINDOWS_THREAD
 	}
 
 	mouseButtonsFlags windowClass::mouseButtons() const
@@ -620,21 +659,21 @@ namespace cage
 				impl->events.keyChar.dispatch(e.codepoint);
 				break;
 			case eventStruct::eventType::MouseMove:
-				impl->events.mouseMove.dispatch(e.mouse.buttons, e.modifiers, pointStruct(e.mouse.x, e.mouse.y));
+				impl->events.mouseMove.dispatch(e.mouse.buttons, e.modifiers, impl->processMousePositionEvent(pointStruct(e.mouse.x, e.mouse.y)));
 				break;
 			case eventStruct::eventType::MousePress:
 				impl->stateButtons |= e.mouse.buttons;
-				impl->events.mousePress.dispatch(e.mouse.buttons, e.modifiers, pointStruct(e.mouse.x, e.mouse.y));
+				impl->events.mousePress.dispatch(e.mouse.buttons, e.modifiers, impl->processMousePositionEvent(pointStruct(e.mouse.x, e.mouse.y)));
 				break;
 			case eventStruct::eventType::MouseDouble:
-				impl->events.mouseDouble.dispatch(e.mouse.buttons, e.modifiers, pointStruct(e.mouse.x, e.mouse.y));
+				impl->events.mouseDouble.dispatch(e.mouse.buttons, e.modifiers, impl->processMousePositionEvent(pointStruct(e.mouse.x, e.mouse.y)));
 				break;
 			case eventStruct::eventType::MouseRelease:
-				impl->events.mouseRelease.dispatch(e.mouse.buttons, e.modifiers, pointStruct(e.mouse.x, e.mouse.y));
+				impl->events.mouseRelease.dispatch(e.mouse.buttons, e.modifiers, impl->processMousePositionEvent(pointStruct(e.mouse.x, e.mouse.y)));
 				impl->stateButtons &= ~e.mouse.buttons;
 				break;
 			case eventStruct::eventType::MouseWheel:
-				impl->events.mouseWheel.dispatch(e.mouse.wheel, e.modifiers, pointStruct(e.mouse.x, e.mouse.y));
+				impl->events.mouseWheel.dispatch(e.mouse.wheel, e.modifiers, impl->processMousePositionEvent(pointStruct(e.mouse.x, e.mouse.y)));
 				break;
 			case eventStruct::eventType::Resize:
 				impl->events.windowResize.dispatch(pointStruct(e.point.x, e.point.y));
@@ -659,6 +698,11 @@ namespace cage
 				impl->focus = false;
 				impl->events.focusLose.dispatch();
 				break;
+#ifdef GCHL_WINDOWS_THREAD
+			case eventStruct::eventType::DropRelativeMouseOffset:
+				impl->relativeMouseOffsets.erase(impl->relativeMouseOffsets.begin());
+				break;
+#endif
 			default:
 				CAGE_THROW_CRITICAL(exception, "invalid event type");
 			}

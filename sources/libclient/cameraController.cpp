@@ -1,6 +1,7 @@
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/entities.h>
+#include <cage-core/variableSmoothingBuffer.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
@@ -18,7 +19,10 @@ namespace cage
 		{
 		public:
 			windowEventListeners listeners;
-			eventListener<bool()> updateListener;
+			eventListener<void()> updateListener;
+			variableSmoothingBufferStruct<vec2, 2> mouseSmoother;
+			vec2 mouseMoveAccum;
+			variableSmoothingBufferStruct<vec3, 2> moveSmoother;
 
 			entityClass *entity;
 			bool keysPressedArrows[6]; // wsadeq
@@ -29,8 +33,8 @@ namespace cage
 					keysPressedArrows[i] = false;
 				movementSpeed = 1;
 				turningSpeed = vec2(0.008, 0.008);
-				pitchLimitUp = degs(50);
-				pitchLimitDown = degs(-50);
+				pitchLimitUp = degs(80);
+				pitchLimitDown = degs(-80);
 				mouseButton = (mouseButtonsFlags)0;
 				keysEqEnabled = true;
 				keysWsadEnabled = true;
@@ -77,20 +81,7 @@ namespace cage
 				pointStruct pt2 = centerMouse();
 				sint32 dx = pt2.x - pt.x;
 				sint32 dy = pt2.y - pt.y;
-				if (abs(dx) + abs(dy) > 100)
-					return false;
-				vec2 r = vec2(dx, dy) * turningSpeed;
-				ENGINE_GET_COMPONENT(transform, t, entity);
-				t.orientation = t.orientation * quat(rads(r[1]), rads(r[0]), degs());
-				if (!freeMove)
-				{ // limit pitch
-					vec3 f = t.orientation * vec3(0, 0, -1);
-					rads pitch = aSin(f[1]);
-					f[1] = 0; f = f.normalize();
-					rads yaw = aTan2(-f[0], f[2]) + degs(90);
-					pitch = clamp(pitch, pitchLimitDown, pitchLimitUp);
-					t.orientation = quat(pitch, yaw, degs());
-				}
+				mouseMoveAccum += vec2(dx, dy);
 				return false;
 			}
 
@@ -152,11 +143,31 @@ namespace cage
 				return setKey(a, false);
 			}
 
-			bool update()
+			void update()
 			{
 				if (!entity)
-					return false;
+					return;
 				ENGINE_GET_COMPONENT(transform, t, entity);
+
+				// orientation
+				mouseSmoother.add(mouseMoveAccum);
+				mouseMoveAccum = vec2();
+				vec2 r = mouseSmoother.smooth() * turningSpeed;
+				if (freeMove)
+				{
+					t.orientation = t.orientation * quat(rads(r[1]), rads(r[0]), degs());
+				}
+				else
+				{ // limit pitch
+					vec3 f = t.orientation * vec3(0, 0, -1);
+					rads pitch = aSin(f[1]);
+					f[1] = 0; f = f.normalize();
+					rads yaw = aTan2(-f[0], f[2]) + degs(90) + rads(r[0]);
+					pitch = clamp(pitch + rads(r[1]), pitchLimitDown, pitchLimitUp);
+					t.orientation = quat(pitch, yaw, degs());
+				}
+
+				// movement
 				vec3 f = t.orientation * vec3(0, 0, -1);
 				vec3 l = t.orientation * vec3(-1, 0, 0);
 				vec3 u = vec3(0, 1, 0);
@@ -175,8 +186,10 @@ namespace cage
 				if (keysPressedArrows[4]) movement += u;
 				if (keysPressedArrows[5]) movement -= u;
 				if (movement != vec3())
-					t.position += movement.normalize() * movementSpeed;
-				return false;
+					moveSmoother.add(movement.normalize() * movementSpeed);
+				else
+					moveSmoother.add(vec3());
+				t.position += moveSmoother.smooth();
 			}
 		};
 	}
