@@ -21,7 +21,7 @@ namespace cage
 		textFormatComponent textFormatComponentInit()
 		{
 			textFormatComponent text;
-			text.color = vec3();
+			text.color = vec3(1, 1, 1);
 			text.font = hashString("cage/font/ubuntu/Ubuntu-R.ttf");
 			text.align = textAlignEnum::Left;
 			text.lineSpacing = 0;
@@ -100,31 +100,8 @@ namespace cage
 	skinConfigStruct::skinConfigStruct() : textureName(hashString("cage/texture/gui.psd"))
 	{
 		std::vector<elementTypeEnum> largeElements = {
-			elementTypeEnum::WindowBaseNormal,
-			elementTypeEnum::GroupPanel,
+			elementTypeEnum::PanelBase, // overlaps SpoilerBase
 			elementTypeEnum::TextArea,
-			elementTypeEnum::ComboBoxList,
-			elementTypeEnum::ListBoxList,
-		};
-
-		std::vector<elementTypeEnum> wideElements = {
-			elementTypeEnum::Button,
-			elementTypeEnum::ButtonTop,
-			elementTypeEnum::ButtonBottom,
-			elementTypeEnum::ButtonLeft,
-			elementTypeEnum::ButtonRight,
-			elementTypeEnum::ButtonHorizontal,
-			elementTypeEnum::ButtonVertical,
-			elementTypeEnum::Input,
-			elementTypeEnum::ComboBoxBase,
-			elementTypeEnum::ComboBoxItem,
-			elementTypeEnum::ListBoxItem,
-			elementTypeEnum::ProgressBar,
-			elementTypeEnum::WindowBaseModal,
-			elementTypeEnum::WindowCaption,
-			elementTypeEnum::GroupCaption,
-			elementTypeEnum::TaskBarBase,
-			elementTypeEnum::ToolTip,
 		};
 
 		std::vector<elementTypeEnum> smallElements = {
@@ -132,55 +109,90 @@ namespace cage
 			elementTypeEnum::ScrollbarVerticalPanel,
 			elementTypeEnum::ScrollbarHorizontalDot,
 			elementTypeEnum::ScrollbarVerticalDot,
+			elementTypeEnum::InvalidElement,
+			elementTypeEnum::ToolTip,
+			elementTypeEnum::InvalidElement,
+			elementTypeEnum::PanelCaption,
+			elementTypeEnum::InvalidElement,
+			elementTypeEnum::SpoilerCaption,
+			elementTypeEnum::SpoilerIconCollapsed,
+			elementTypeEnum::SpoilerIconShown,
+			elementTypeEnum::InvalidElement,
+			elementTypeEnum::Button,
+			elementTypeEnum::InvalidElement,
+			elementTypeEnum::Input,
+			elementTypeEnum::InputButtonDecrement,
+			elementTypeEnum::InputButtonIncrement,
+			elementTypeEnum::InvalidElement,
+			elementTypeEnum::CheckBoxUnchecked,
+			elementTypeEnum::CheckBoxChecked,
+			elementTypeEnum::CheckBoxIndetermined,
+			elementTypeEnum::InvalidElement,
+			elementTypeEnum::RadioBoxUnchecked,
+			elementTypeEnum::RadioBoxChecked,
+			elementTypeEnum::RadioBoxIndetermined,
+			elementTypeEnum::InvalidElement,
+			elementTypeEnum::ComboBoxBase,
+			elementTypeEnum::ComboBoxList,
+			elementTypeEnum::InvalidElement,
+			elementTypeEnum::ListBoxBase,
+			elementTypeEnum::InvalidElement,
+			elementTypeEnum::ListBoxItemUnchecked,
+			elementTypeEnum::ComboBoxItemUnchecked,
+			elementTypeEnum::InvalidElement,
+			elementTypeEnum::ListBoxItemChecked,
+			elementTypeEnum::ComboBoxItemChecked,
+			elementTypeEnum::InvalidElement,
 			elementTypeEnum::SliderHorizontalPanel,
 			elementTypeEnum::SliderVerticalPanel,
 			elementTypeEnum::SliderHorizontalDot,
 			elementTypeEnum::SliderVerticalDot,
-			elementTypeEnum::GroupCell,
-			elementTypeEnum::SpoilerIconCollapsed,
-			elementTypeEnum::SpoilerIconShown,
-			elementTypeEnum::InputButtonDecrement,
-			elementTypeEnum::InputButtonIncrement,
-			elementTypeEnum::CheckBoxUnchecked,
-			elementTypeEnum::CheckBoxChecked,
-			elementTypeEnum::CheckBoxIndetermined,
-			elementTypeEnum::RadioBoxUnchecked,
-			elementTypeEnum::RadioBoxChecked,
-			elementTypeEnum::ColorPickerCompact,
-			elementTypeEnum::ColorPickerResult,
-			elementTypeEnum::WindowButtonMinimize,
-			elementTypeEnum::WindowButtonMaximize,
-			elementTypeEnum::WindowButtonRestore,
-			elementTypeEnum::WindowButtonClose,
-			elementTypeEnum::WindowResizer,
-			elementTypeEnum::TaskBarItem,
+			elementTypeEnum::InvalidElement,
+			elementTypeEnum::ProgressBar,
+			elementTypeEnum::InvalidElement,
+			elementTypeEnum::ColorPickerCompact, // overlaps: ColorPickerFull
+			elementTypeEnum::ColorPickerPreviewPanel, // overlaps: ColorPickerHuePanel, ColorPickerSatValPanel
+		};
+
+		std::set<elementTypeEnum> wideElements = {
+			elementTypeEnum::PanelCaption,
+			elementTypeEnum::SpoilerCaption,
+			elementTypeEnum::Button,
+			elementTypeEnum::Input,
+			elementTypeEnum::ComboBoxBase,
+			elementTypeEnum::ComboBoxList,
+			elementTypeEnum::ListBoxBase,
+			elementTypeEnum::ListBoxItemUnchecked,
+			elementTypeEnum::ComboBoxItemUnchecked,
+			elementTypeEnum::ListBoxItemChecked,
+			elementTypeEnum::ComboBoxItemChecked,
+			elementTypeEnum::ToolTip,
+			elementTypeEnum::ProgressBar,
 		};
 
 		std::set<elementTypeEnum> noBorder = {
-			elementTypeEnum::RadioBoxChecked,
-			elementTypeEnum::RadioBoxUnchecked,
-			elementTypeEnum::SliderHorizontalDot,
-			elementTypeEnum::SliderVerticalDot,
-			elementTypeEnum::WindowResizer,
+			//elementTypeEnum::ScrollbarHorizontalDot, elementTypeEnum::ScrollbarVerticalDot,
+			elementTypeEnum::SpoilerIconCollapsed, elementTypeEnum::SpoilerIconShown,
+			elementTypeEnum::RadioBoxChecked, elementTypeEnum::RadioBoxUnchecked, elementTypeEnum::RadioBoxIndetermined,
+			elementTypeEnum::SliderHorizontalDot, elementTypeEnum::SliderVerticalDot,
 		};
 
 		std::set<elementTypeEnum> noFocus = {
-			elementTypeEnum::GroupCell, elementTypeEnum::GroupPanel, elementTypeEnum::SpoilerIconCollapsed, elementTypeEnum::SpoilerIconShown, elementTypeEnum::GroupCaption,
-			elementTypeEnum::WindowBaseModal, elementTypeEnum::WindowBaseNormal, elementTypeEnum::WindowCaption, elementTypeEnum::WindowResizer,
+			elementTypeEnum::PanelBase, elementTypeEnum::PanelCaption,
+			elementTypeEnum::SpoilerBase, elementTypeEnum::SpoilerCaption, elementTypeEnum::SpoilerIconCollapsed, elementTypeEnum::SpoilerIconShown,
 			elementTypeEnum::InputButtonDecrement, elementTypeEnum::InputButtonIncrement,
-			elementTypeEnum::ComboBoxList,
+			elementTypeEnum::ComboBoxList, elementTypeEnum::ComboBoxItemUnchecked, elementTypeEnum::ComboBoxItemChecked,
+			elementTypeEnum::ListBoxItemUnchecked, elementTypeEnum::ListBoxItemChecked,
 			elementTypeEnum::ProgressBar,
-			elementTypeEnum::ScrollbarHorizontalDot, elementTypeEnum::ScrollbarHorizontalPanel, elementTypeEnum::ScrollbarVerticalDot, elementTypeEnum::ScrollbarVerticalPanel,
-			elementTypeEnum::ColorPickerHSliderPanel, elementTypeEnum::ColorPickerResult, elementTypeEnum::ColorPickerSVRect,
+			elementTypeEnum::ColorPickerHuePanel, elementTypeEnum::ColorPickerPreviewPanel, elementTypeEnum::ColorPickerSatValPanel,
 			elementTypeEnum::ToolTip,
 		};
 
 		std::set<elementTypeEnum> noHover = {
-			elementTypeEnum::GroupCell, elementTypeEnum::GroupPanel,
-			elementTypeEnum::WindowBaseModal, elementTypeEnum::WindowBaseNormal,
-			elementTypeEnum::ComboBoxList, elementTypeEnum::ListBoxList,
-			elementTypeEnum::ProgressBar,
-			elementTypeEnum::ColorPickerHSliderPanel, elementTypeEnum::ColorPickerResult, elementTypeEnum::ColorPickerSVRect,
+			elementTypeEnum::PanelBase,
+			elementTypeEnum::SpoilerBase, elementTypeEnum::SpoilerIconCollapsed, elementTypeEnum::SpoilerIconShown,
+			elementTypeEnum::ComboBoxList,
+			elementTypeEnum::ColorPickerHuePanel, elementTypeEnum::ColorPickerPreviewPanel, elementTypeEnum::ColorPickerSatValPanel,
 			elementTypeEnum::ToolTip,
 		};
 
@@ -193,6 +205,11 @@ namespace cage
 			packer.size = vec2(5, 5) * 24.f / 1024;
 			for (auto it : largeElements)
 			{
+				if (it == elementTypeEnum::InvalidElement)
+				{
+					packer.newLine();
+					continue;
+				}
 				bool border = noBorder.count(it) == 0;
 				layouts[(uint32)it].textureUv.data[0] = packer.next(border);
 				if (noFocus.count(it) == 0)
@@ -203,24 +220,18 @@ namespace cage
 			}
 			packer.newLine();
 
-			// wide
-			packer.size = vec2(5, 1) * 24.f / 1024;
-			for (auto it : wideElements)
-			{
-				bool border = noBorder.count(it) == 0;
-				layouts[(uint32)it].textureUv.data[0] = packer.next(border);
-				if (noFocus.count(it) == 0)
-					layouts[(uint32)it].textureUv.data[1] = packer.next(border);
-				if (noHover.count(it) == 0)
-					layouts[(uint32)it].textureUv.data[2] = packer.next(border);
-				layouts[(uint32)it].textureUv.data[3] = packer.next(border);
-			}
-			packer.newLine();
-
-			// small
-			packer.size = vec2(1, 1) * 24.f / 1024;
+			// small / wide
 			for (auto it : smallElements)
 			{
+				if (it == elementTypeEnum::InvalidElement)
+				{
+					packer.newLine();
+					continue;
+				}
+				if (wideElements.count(it))
+					packer.size = vec2(5, 1) * 24.f / 1024;
+				else
+					packer.size = vec2(1, 1) * 24.f / 1024;
 				bool border = noBorder.count(it) == 0;
 				layouts[(uint32)it].textureUv.data[0] = packer.next(border);
 				if (noFocus.count(it) == 0)
@@ -237,10 +248,11 @@ namespace cage
 				layouts[(uint32)it].border = vec4();
 		}
 
-		{ // color picker
+		{ // overlaps
 			layouts[(uint32)elementTypeEnum::ColorPickerFull].textureUv = layouts[(uint32)elementTypeEnum::ColorPickerCompact].textureUv;
-			layouts[(uint32)elementTypeEnum::ColorPickerHSliderPanel].textureUv = layouts[(uint32)elementTypeEnum::ColorPickerResult].textureUv;
-			layouts[(uint32)elementTypeEnum::ColorPickerSVRect].textureUv = layouts[(uint32)elementTypeEnum::ColorPickerResult].textureUv;
+			layouts[(uint32)elementTypeEnum::ColorPickerHuePanel].textureUv = layouts[(uint32)elementTypeEnum::ColorPickerPreviewPanel].textureUv;
+			layouts[(uint32)elementTypeEnum::ColorPickerSatValPanel].textureUv = layouts[(uint32)elementTypeEnum::ColorPickerPreviewPanel].textureUv;
+			layouts[(uint32)elementTypeEnum::SpoilerBase].textureUv = layouts[(uint32)elementTypeEnum::PanelBase].textureUv;
 		}
 	}
 
@@ -267,7 +279,7 @@ namespace cage
 	skinWidgetDefaultsStruct::radioBoxStruct::radioBoxStruct() : textFormat(text), margin(1, 1, 1, 1), size(28, 28), labelOffset(3, 5)
 	{}
 
-	skinWidgetDefaultsStruct::comboBoxStruct::comboBoxStruct() : placeholderFormat(text), itemsFormat(text), selectedFormat(text), basePadding(1, 1, 1, 1), baseMargin(1, 1, 1, 1), listPadding(0, 0, 0, 0), itemPadding(1, 1, 1, 1), size(250, 32), listOffset(-6), itemSpacing(0)
+	skinWidgetDefaultsStruct::comboBoxStruct::comboBoxStruct() : placeholderFormat(text), itemsFormat(text), selectedFormat(text), basePadding(1, 1, 1, 1), baseMargin(1, 1, 1, 1), listPadding(0, 0, 0, 0), itemPadding(1, 2, 1, 2), size(250, 32), listOffset(-6), itemSpacing(-2)
 	{
 		placeholderFormat.color = vec3(0.5, 0.5, 0.5);
 		placeholderFormat.align = textAlignEnum::Center;
@@ -291,9 +303,11 @@ namespace cage
 		horizontal.padding = vec4(1, 1, 1, 1);
 		horizontal.margin = vec4(1, 1, 1, 1);
 		horizontal.size = vec2(150, 28);
+		horizontal.collapsedBar = true;
 		vertical.padding = vec4(1, 1, 1, 1);
 		vertical.margin = vec4(1, 1, 1, 1);
 		vertical.size = vec2(28, 150);
+		vertical.collapsedBar = true;
 	}
 
 	skinWidgetDefaultsStruct::colorPickerStruct::colorPickerStruct() : margin(1, 1, 1, 1), collapsedSize(40, 32), fullSize(250, 180), hueBarPortion(0.18), resultBarPortion(0.35)

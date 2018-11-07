@@ -19,7 +19,7 @@ namespace cage
 	labelComponent::labelComponent()
 	{}
 
-	buttonComponent::buttonComponent() : allowMerging(false)
+	buttonComponent::buttonComponent()
 	{}
 
 	inputComponent::Union::Union() : i(0)

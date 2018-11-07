@@ -80,7 +80,8 @@ namespace cage
 
 		if (auto lock = emitController->read())
 		{
-			CAGE_ASSERT_RUNTIME(outputResolution.x > 0 && outputResolution.y > 0);
+			if (outputResolution.x <= 0 || outputResolution.y <= 0)
+				return;
 
 			// check skins textures
 			for (auto &s : skins)

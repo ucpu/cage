@@ -154,12 +154,12 @@ namespace cage
 				{ // large
 					emitElement(elementTypeEnum::ColorPickerFull, mode(true, 1 | 2 | 4), p, s);
 					uint32 m = mode(false, 0);
-					emitElement(elementTypeEnum::ColorPickerHSliderPanel, m, sliderPos, sliderSize);
-					emitElement(elementTypeEnum::ColorPickerSVRect, m, rectPos, rectSize);
-					emitElement(elementTypeEnum::ColorPickerResult, m, resultPos, resultSize);
-					emitColor(sliderPos, sliderSize, 1, skin->layouts[(uint32)elementTypeEnum::ColorPickerHSliderPanel].border);
-					emitColor(rectPos, rectSize, 2, skin->layouts[(uint32)elementTypeEnum::ColorPickerSVRect].border);
-					emitColor(resultPos, resultSize, 0, skin->layouts[(uint32)elementTypeEnum::ColorPickerResult].border);
+					emitElement(elementTypeEnum::ColorPickerHuePanel, m, sliderPos, sliderSize);
+					emitElement(elementTypeEnum::ColorPickerSatValPanel, m, rectPos, rectSize);
+					emitElement(elementTypeEnum::ColorPickerPreviewPanel, m, resultPos, resultSize);
+					emitColor(sliderPos, sliderSize, 1, skin->layouts[(uint32)elementTypeEnum::ColorPickerHuePanel].border);
+					emitColor(rectPos, rectSize, 2, skin->layouts[(uint32)elementTypeEnum::ColorPickerSatValPanel].border);
+					emitColor(resultPos, resultSize, 0, skin->layouts[(uint32)elementTypeEnum::ColorPickerPreviewPanel].border);
 				}
 				else
 				{ // small

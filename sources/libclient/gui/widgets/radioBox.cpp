@@ -48,7 +48,7 @@ namespace cage
 				{
 					vec2 p = hierarchy->renderPos;
 					offsetPosition(p, -skin->defaults.radioBox.margin);
-					emitElement(elementTypeEnum((uint32)elementTypeEnum::RadioBoxUnchecked + (uint32)data.state), mode(p, sd), p, sd);
+					emitElement(elementTypeEnum((uint32)elementTypeEnum::RadioBoxUnchecked + (uint32)data.state), mode(), p, sd);
 				}
 				if (hierarchy->text)
 				{

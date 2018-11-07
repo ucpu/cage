@@ -39,7 +39,6 @@ namespace cage
 				defaults = data.vertical ? skin->defaults.sliderBar.vertical : skin->defaults.sliderBar.horizontal;
 				baseElement = data.vertical ? elementTypeEnum::SliderVerticalPanel : elementTypeEnum::SliderHorizontalPanel;
 				dotElement = data.vertical ? elementTypeEnum::SliderVerticalDot : elementTypeEnum::SliderHorizontalDot;
-				//vec4 border = skin->layouts[(uint32)baseElement].border;
 				hierarchy->requestedSize = defaults.size;
 				offsetSize(hierarchy->requestedSize, defaults.margin);
 			}
@@ -51,8 +50,21 @@ namespace cage
 				vec2 p = hierarchy->renderPos;
 				vec2 s = hierarchy->renderSize;
 				offset(p, s, -defaults.margin);
-				emitElement(baseElement, mode(false), p, s);
+				{
+					vec2 bp = p, bs = s;
+					if (defaults.collapsedBar)
+					{
+						vec2 fs;
+						offsetSize(fs, skin->layouts[(uint32)baseElement].border);
+						vec2 diff = (bs - fs) / 2;
+						real m = min(diff[0], diff[1]);
+						diff = vec2(m, m);
+						offset(bp, bs, -vec4(diff, diff));
+					}
+					emitElement(baseElement, mode(), bp, bs);
+				}
 				offset(p, s, -skin->layouts[(uint32)baseElement].border);
+				offset(p, s, -defaults.padding);
 				real f = (data.value - data.min) / (data.max - data.min);
 				real ds1 = min(s[0], s[1]);
 				vec2 ds = vec2(ds1, ds1);

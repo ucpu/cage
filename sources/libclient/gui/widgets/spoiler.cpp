@@ -45,8 +45,8 @@ namespace cage
 				hierarchy->requestedSize[1] += skin->defaults.spoiler.captionHeight;
 				vec2 cs = hierarchy->text ? hierarchy->text->findRequestedSize() : vec2();
 				offsetSize(cs, skin->defaults.spoiler.captionPadding);
-				hierarchy->requestedSize[0] = max(hierarchy->requestedSize[0], cs[0]);
-				offsetSize(hierarchy->requestedSize, skin->layouts[(uint32)elementTypeEnum::PanelBase].border);
+				hierarchy->requestedSize[0] = max(hierarchy->requestedSize[0], cs[0] + skin->defaults.spoiler.captionHeight);
+				offsetSize(hierarchy->requestedSize, skin->layouts[(uint32)elementTypeEnum::SpoilerBase].border);
 				offsetSize(hierarchy->requestedSize, skin->defaults.spoiler.baseMargin);
 			}
 
@@ -57,7 +57,7 @@ namespace cage
 				finalPositionStruct u(update);
 				u.renderPos[1] += skin->defaults.spoiler.captionHeight;
 				u.renderSize[1] -= skin->defaults.spoiler.captionHeight;
-				offset(u.renderPos, u.renderSize, -skin->layouts[(uint32)elementTypeEnum::PanelBase].border);
+				offset(u.renderPos, u.renderSize, -skin->layouts[(uint32)elementTypeEnum::SpoilerBase].border);
 				offset(u.renderPos, u.renderSize, -skin->defaults.spoiler.baseMargin - skin->defaults.spoiler.contentPadding);
 				hierarchy->firstChild->findFinalPosition(u);
 			}
@@ -67,14 +67,20 @@ namespace cage
 				vec2 p = hierarchy->renderPos;
 				vec2 s = hierarchy->renderSize;
 				offset(p, s, -skin->defaults.spoiler.baseMargin);
-				emitElement(elementTypeEnum::PanelBase, mode(false), p, s);
+				emitElement(elementTypeEnum::SpoilerBase, mode(false), p, s);
 				s = vec2(s[0], skin->defaults.spoiler.captionHeight);
-				emitElement(elementTypeEnum::PanelCaption, mode(p, s), p, s);
-				offset(p, s, -skin->layouts[(uint32)elementTypeEnum::PanelCaption].border - skin->defaults.spoiler.captionPadding);
+				emitElement(elementTypeEnum::SpoilerCaption, mode(p, s), p, s);
+				offset(p, s, -skin->layouts[(uint32)elementTypeEnum::SpoilerCaption].border - skin->defaults.spoiler.captionPadding);
+				vec2 is = vec2(s[1], s[1]);
+				vec2 ip = vec2(p[0] + s[0] - is[0], p[1]);
+				emitElement(data.collapsed ? elementTypeEnum::SpoilerIconCollapsed : elementTypeEnum::SpoilerIconShown, mode(false, 0), ip, is);
 				if (hierarchy->text)
+				{
+					s[0] -= s[1];
+					s[0] = max(0, s[0]);
 					hierarchy->text->emit(p, s);
+				}
 				hierarchy->childrenEmit();
-				// todo emit spoiler icon
 			}
 
 			void collapse(hierarchyItemStruct *item)

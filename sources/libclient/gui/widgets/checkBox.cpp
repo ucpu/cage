@@ -48,7 +48,7 @@ namespace cage
 				{
 					vec2 p = hierarchy->renderPos;
 					offsetPosition(p, -skin->defaults.checkBox.margin);
-					emitElement(elementTypeEnum((uint32)elementTypeEnum::CheckBoxUnchecked + (uint32)data.state), mode(p, sd), p, sd);
+					emitElement(elementTypeEnum((uint32)elementTypeEnum::CheckBoxUnchecked + (uint32)data.state), mode(), p, sd);
 				}
 				if (hierarchy->text)
 				{

@@ -9,7 +9,6 @@ namespace cage
 
 	struct CAGE_API buttonComponent
 	{
-		bool allowMerging;
 		// textComponent defines foreground
 		// imageComponent defines background
 		buttonComponent();
@@ -59,7 +58,6 @@ namespace cage
 
 	struct CAGE_API textAreaComponent
 	{
-		// vec2 scrollbars;
 		memoryBuffer *buffer; // utf-8 encoded string
 		uint32 cursor; // unicode characters (not bytes)
 		uint32 maxLength; // bytes
@@ -92,7 +90,6 @@ namespace cage
 
 	struct CAGE_API comboBoxComponent
 	{
-		// real scrollbar;
 		uint32 selected; // -1 = nothing selected
 		// textComponent defines placeholder
 		// children with textComponent defines individual lines
@@ -138,7 +135,6 @@ namespace cage
 		panelComponent();
 		// textComponent defines caption
 		// imageComponent defines background
-		// may be merged with scrollbarsComponent
 	};
 
 	struct CAGE_API spoilerComponent
@@ -148,7 +144,6 @@ namespace cage
 		spoilerComponent();
 		// textComponent defines caption
 		// imageComponent defines background
-		// may be merged with scrollbarsComponent
 	};
 
 #define GCHL_GUI_WIDGET_COMPONENTS label, button, input, textArea, checkBox, radioBox, comboBox, listBox, progressBar, sliderBar, colorPicker, panel, spoiler

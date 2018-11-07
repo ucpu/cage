@@ -97,6 +97,7 @@ namespace cage
 			{
 				vec4 padding, margin;
 				vec2 size;
+				bool collapsedBar;
 			} horizontal, vertical;
 			sliderBarStruct();
 		} sliderBar;
@@ -165,58 +166,41 @@ namespace cage
 		ScrollbarVerticalPanel,
 		ScrollbarHorizontalDot,
 		ScrollbarVerticalDot,
-		SliderHorizontalPanel,
-		SliderVerticalPanel,
-		SliderHorizontalDot,
-		SliderVerticalDot,
-		Button,
-		ButtonTop,
-		ButtonBottom,
-		ButtonLeft,
-		ButtonRight,
-		ButtonHorizontal,
-		ButtonVertical,
-		TextArea,
-		GroupCell,             // deprecated
-		GroupPanel,            // deprecated
-		GroupCaption,          // deprecated
-		PanelBase = GroupPanel,
-		PanelCaption = GroupCaption,
-		SpoilerBase = GroupPanel,
-		SpoilerCaption = GroupCaption,
+		ToolTip,
+		PanelBase,
+		PanelCaption,
+		SpoilerBase,
+		SpoilerCaption,
 		SpoilerIconCollapsed,
 		SpoilerIconShown,
-		InputButtonIncrement,
-		InputButtonDecrement,
+		Button,
 		Input,
+		InputButtonDecrement,
+		InputButtonIncrement,
+		TextArea,
 		CheckBoxUnchecked,
 		CheckBoxChecked,
 		CheckBoxIndetermined,
 		RadioBoxUnchecked,
 		RadioBoxChecked,
-		RadioBoxIndetermined = RadioBoxChecked,
+		RadioBoxIndetermined,
 		ComboBoxBase,
 		ComboBoxList,
-		ComboBoxItem,
+		ComboBoxItemUnchecked,
+		ComboBoxItemChecked,
+		ListBoxBase,
+		ListBoxItemUnchecked,
+		ListBoxItemChecked,
+		SliderHorizontalPanel,
+		SliderVerticalPanel,
+		SliderHorizontalDot,
+		SliderVerticalDot,
+		ProgressBar,
 		ColorPickerCompact,
 		ColorPickerFull,
-		ColorPickerHSliderPanel,
-		ColorPickerSVRect,
-		ColorPickerResult,
-		ProgressBar,
-		ListBoxList,
-		ListBoxItem,
-		WindowBaseNormal,      // deprecated
-		WindowBaseModal,       // deprecated
-		WindowCaption,         // deprecated
-		WindowButtonMinimize,  // deprecated
-		WindowButtonMaximize,  // deprecated
-		WindowButtonRestore,   // deprecated
-		WindowButtonClose,     // deprecated
-		WindowResizer,         // deprecated
-		TaskBarBase,           // deprecated
-		TaskBarItem,           // deprecated
-		ToolTip,
+		ColorPickerHuePanel,
+		ColorPickerSatValPanel,
+		ColorPickerPreviewPanel,
 		TotalElements,
 		InvalidElement = (uint32)-1,
 	};
