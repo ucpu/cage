@@ -228,7 +228,7 @@ namespace cage
 
 		uint16 b = impl->framesBoneIndex(bone);
 		if (b == (uint16)-1)
-			return mat4(); // that bone is not animated
+			return mat4::Nan; // that bone is not animated
 
 		vec3 s = evaluateMatrix(coef, impl->scaleFrames[b], impl->scaleTimes[b], impl->scaleValues[b]);
 		mat4 S = mat4(s[0], 0,0,0,0, s[1], 0,0,0,0, s[2], 0,0,0,0, 1);

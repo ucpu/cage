@@ -84,6 +84,7 @@ namespace cage
 
 	struct CAGE_API skeletonHeaderStruct
 	{
+		mat4 globalInverse;
 		uint32 bonesCount;
 
 		// follows:

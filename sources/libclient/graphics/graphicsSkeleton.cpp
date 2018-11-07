@@ -35,6 +35,7 @@ namespace cage
 			};
 
 			memoryArena mem;
+			mat4 globalInverse;
 			uint16 totalBones;
 			uint16 *boneParents;
 			mat4 *baseMatrices;
@@ -42,11 +43,12 @@ namespace cage
 		};
 	}
 
-	void skeletonClass::allocate(uint32 totalBones, const uint16 *boneParents, const mat4 *baseMatrices, const mat4 *invRestMatrices)
+	void skeletonClass::allocate(const mat4 &globalInverse, uint32 totalBones, const uint16 *boneParents, const mat4 *baseMatrices, const mat4 *invRestMatrices)
 	{
 		skeletonImpl *impl = (skeletonImpl*)this;
 		impl->deallocate();
 
+		impl->globalInverse = globalInverse;
 		impl->totalBones = totalBones;
 
 		impl->boneParents = (uint16*)impl->mem.allocate(impl->totalBones * sizeof(uint16));
@@ -64,7 +66,7 @@ namespace cage
 		return impl->totalBones;
 	}
 
-	void skeletonClass::evaluatePose(const animationClass *animation, real coef, mat4 *temporary, mat4 *output) const
+	void skeletonClass::animateSkin(const animationClass *animation, real coef, mat4 *temporary, mat4 *output) const
 	{
 		CAGE_ASSERT_RUNTIME(coef >= 0 && coef <= 1, coef);
 		skeletonImpl *impl = (skeletonImpl*)this;
@@ -79,8 +81,41 @@ namespace cage
 				CAGE_ASSERT_RUNTIME(p < i, p, i);
 				temporary[i] = temporary[p];
 			}
-			temporary[i] = temporary[i] * impl->baseMatrices[i] * animation->evaluate(i, coef);
-			output[i] = temporary[i] * impl->invRestMatrices[i];
+			mat4 anim = animation->evaluate(i, coef);
+			temporary[i] = temporary[i] * (anim.valid() ? anim : impl->baseMatrices[i]);
+			output[i] = impl->globalInverse * temporary[i] * impl->invRestMatrices[i];
+		}
+	}
+
+	namespace
+	{
+		vec3 pos(const mat4 &m)
+		{
+			return vec3(m * vec4(0, 0, 0, 1));
+		}
+	}
+
+	void skeletonClass::animateSkeleton(const animationClass *animation, real coef, mat4 *temporary, mat4 *output) const
+	{
+		animateSkin(animation, coef, temporary, output); // compute temporary
+
+		skeletonImpl *impl = (skeletonImpl*)this;
+
+		for (uint32 i = 0; i < impl->totalBones; i++)
+		{
+			uint16 p = impl->boneParents[i];
+			if (p == (uint16)-1)
+				output[i] = mat4(real(0)); // degenerate
+			else
+			{
+				vec3 a = pos(temporary[p]);
+				vec3 b = pos(temporary[i]);
+				transform tr;
+				tr.position = a;
+				tr.orientation = quat(b - a, vec3(0, 1, 0));
+				tr.scale = a.distance(b);
+				output[i] = mat4(tr);
+			}
 		}
 	}
 

@@ -12,8 +12,6 @@ namespace cage
 	componentClass *transformComponent::componentHistory;
 	componentClass *renderComponent::component;
 	componentClass *animatedSkeletonComponent::component;
-	componentClass *configuredSkeletonComponent::component;
-	componentClass *configuredSkeletonComponent::componentHistory;
 	componentClass *animatedTextureComponent::component;
 	componentClass *lightComponent::component;
 	componentClass *shadowmapComponent::component;
@@ -24,7 +22,6 @@ namespace cage
 	transformComponent::transformComponent(const transform &t) : transform(t) {}
 	renderComponent::renderComponent() : color(0, 0, 0), object(0), renderMask(1) {}
 	animatedSkeletonComponent::animatedSkeletonComponent() : startTime(0), name(0), speed(1), offset(0) {}
-	configuredSkeletonComponent::configuredSkeletonComponent() {}
 	animatedTextureComponent::animatedTextureComponent() : startTime(0), speed(1), offset(0) {}
 	lightComponent::lightComponent() : color(1, 1, 1), attenuation(1, 0, 0.01), spotAngle(degs(60)), spotExponent(1.5), lightType(lightTypeEnum::Point) {}
 	shadowmapComponent::shadowmapComponent() : worldRadius(0, 0, 0), resolution(256) {}

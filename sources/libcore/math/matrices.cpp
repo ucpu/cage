@@ -27,12 +27,6 @@ namespace cage
 			CAGE_THROW_ERROR(exception, "error parsing mat3");
 	}
 
-	mat3::mat3(const real other[9])
-	{
-		for (uint8 i = 0; i < 9; i++)
-			data[i] = other[i];
-	}
-
 	mat3::mat3(real a, real b, real c, real d, real e, real f, real g, real h, real i)
 	{
 		data[0] = a;
@@ -219,12 +213,6 @@ namespace cage
 			data[i] = detail::mathSplit(s).toFloat();
 		if (!s.empty())
 			CAGE_THROW_ERROR(exception, "error parsing mat4");
-	}
-
-	mat4::mat4(const real other[16])
-	{
-		for (uint8 i = 0; i < 16; i++)
-			data[i] = other[i];
 	}
 
 	mat4::mat4(real a, real b, real c, real d, real e, real f, real g, real h, real i, real j, real k, real l, real m, real n, real o, real p)

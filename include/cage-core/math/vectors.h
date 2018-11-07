@@ -124,7 +124,7 @@ namespace cage
 
 	struct CAGE_API quat
 	{
-		real data[4];
+		real data[4]; // x, y, z, w
 
 		GCHL_GEN_QUATERNION_BASE(quat, 4);
 

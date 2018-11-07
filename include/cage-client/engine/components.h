@@ -35,14 +35,6 @@ namespace cage
 		animatedSkeletonComponent();
 	};
 
-	struct CAGE_API configuredSkeletonComponent
-	{
-		static componentClass *component;
-		static componentClass *componentHistory;
-		mat4 configuration[MaxBonesCount];
-		configuredSkeletonComponent();
-	};
-
 	struct CAGE_API lightComponent
 	{
 		static componentClass *component;

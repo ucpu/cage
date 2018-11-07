@@ -22,10 +22,13 @@ namespace
 		}
 		if (skeleton->index(n) != (uint16)-1)
 		{
-			aiBone *b = skeleton->bone(n);
 			if (!detail.empty())
 				detail += ", ";
-			detail += string() + "offset: " + conv(b->mOffsetMatrix) + ", weights: " + b->mNumWeights;
+			aiBone *b = skeleton->bone(n);
+			if (b)
+				detail += string() + "offset: " + conv(b->mOffsetMatrix) + ", weights: " + b->mNumWeights;
+			else
+				detail += string("no bone");
 		}
 		CAGE_LOG_CONTINUE(severityEnum::Info, logComponentName, string().fill(offset, '\t') + detail);
 		for (uint32 i = 0; i < n->mNumChildren; i++)
@@ -40,6 +43,7 @@ void processSkeleton()
 	holder<assimpSkeletonClass> skeleton = context->skeleton();
 
 	skeletonHeaderStruct s;
+	s.globalInverse = conv(scene->mRootNode->mTransformation).inverse();
 	s.bonesCount = skeleton->bonesCount();
 
 	std::vector<uint16> ps;
@@ -59,17 +63,7 @@ void processSkeleton()
 		aiNode *n = skeleton->node(i);
 		aiBone *b = skeleton->bone(i);
 		mat4 t = conv(n->mTransformation);
-		mat4 o = conv(b->mOffsetMatrix);
-		{ // update the t to contain all inter-bone transformations
-			aiNode *stop = skeleton->parent(n);
-			aiNode *p = n->mParent;
-			while (p != stop)
-			{
-				mat4 m = conv(p->mTransformation);
-				t = t * m;
-				p = p->mParent;
-			}
-		}
+		mat4 o = b ? conv(b->mOffsetMatrix) : mat4();
 		CAGE_ASSERT_RUNTIME(t.valid() && o.valid(), t, o);
 		ps.push_back(skeleton->parent(i));
 		bs.push_back(t);

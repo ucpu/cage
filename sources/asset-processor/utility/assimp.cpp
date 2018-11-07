@@ -27,18 +27,31 @@ namespace
 	public:
 		assimpSkeletonImpl(const aiScene *scene)
 		{
-			// find all names that correspond to bones
-			for (uint32 mi = 0; mi < scene->mNumMeshes; mi++)
-			{
-				aiMesh *m = scene->mMeshes[mi];
-				for (uint32 bi = 0; bi < m->mNumBones; bi++)
-				{
-					aiBone *b = m->mBones[bi];
-					indices[b->mName] = (uint16)-1;
-				}
-			}
 			// find nodes and parents
-			traverseNodes(scene->mRootNode, -1);
+			{
+				std::map<aiString, aiNode*, cmpAiStr> names;
+				// find names
+				traverseNodes1(names, scene->mRootNode);
+				std::set<aiString, cmpAiStr> interested;
+				// find interested
+				for (uint32 mi = 0; mi < scene->mNumMeshes; mi++)
+				{
+					aiMesh *m = scene->mMeshes[mi];
+					for (uint32 bi = 0; bi < m->mNumBones; bi++)
+					{
+						aiBone *b = m->mBones[bi];
+						CAGE_ASSERT_RUNTIME(names.count(b->mName) == 1);
+						aiNode *n = names[b->mName];
+						while (n && interested.count(n->mName) == 0)
+						{
+							interested.insert(n->mName);
+							n = n->mParent;
+						}
+					}
+				}
+				// find nodes
+				traverseNodes2(interested, scene->mRootNode, -1);
+			}
 			// update indices
 			{
 				uint16 i = 0;
@@ -63,18 +76,56 @@ namespace
 						bones[idx] = b;
 				}
 			}
+#ifdef CAGE_ASSERT_ENABLED
+			validate();
+#endif // CAGE_ASSERT_ENABLED
 		}
 
-		void traverseNodes(aiNode *n, uint16 pi)
+		void validate()
 		{
-			if (n->mName.length && indices.count(n->mName))
+			uint32 num = numeric_cast<uint32>(bones.size());
+			CAGE_ASSERT_RUNTIME(num == nodes.size());
+			CAGE_ASSERT_RUNTIME(num == parents.size());
+			for (uint32 i = 0; i < num; i++)
 			{
-				nodes.push_back(n);
-				parents.push_back(pi);
-				pi = numeric_cast<uint16>(parents.size() - 1);
+				if (nodes[i]->mParent)
+				{
+					CAGE_ASSERT_RUNTIME(parents[i] < i, parents[i], i);
+					CAGE_ASSERT_RUNTIME(parent(nodes[i]) == nodes[parents[i]]);
+				}
+				else
+				{
+					CAGE_ASSERT_RUNTIME(parents[i] == (uint16)-1);
+				}
+				if (bones[i])
+				{
+					CAGE_ASSERT_RUNTIME(bones[i]->mName == nodes[i]->mName);
+				}
+				if (nodes[i]->mName.length)
+				{
+					CAGE_ASSERT_RUNTIME(indices.count(nodes[i]->mName) == 1);
+					CAGE_ASSERT_RUNTIME(indices[nodes[i]->mName] == i);
+				}
 			}
+		}
+
+		void traverseNodes1(std::map<aiString, aiNode*, cmpAiStr> &names, aiNode *n)
+		{
+			if (n->mName.length)
+				names[n->mName] = n;
 			for (uint32 i = 0; i < n->mNumChildren; i++)
-				traverseNodes(n->mChildren[i], pi);
+				traverseNodes1(names, n->mChildren[i]);
+		}
+
+		void traverseNodes2(const std::set<aiString, cmpAiStr> &interested, aiNode *n, uint16 pi)
+		{
+			if (interested.count(n->mName) == 0)
+				return;
+			nodes.push_back(n);
+			parents.push_back(pi);
+			pi = numeric_cast<uint16>(parents.size() - 1);
+			for (uint32 i = 0; i < n->mNumChildren; i++)
+				traverseNodes2(interested, n->mChildren[i], pi);
 		}
 
 		std::vector<aiBone*> bones;

@@ -11,6 +11,7 @@
 #include <cage-core/entities.h>
 #include <cage-core/assets.h>
 #include <cage-core/hashString.h>
+#include <cage-core/color.h>
 #include <cage-core/swapBufferController.h>
 
 #define CAGE_EXPORT
@@ -33,26 +34,13 @@ namespace cage
 		CAGE_ASSERT_COMPILE(CAGE_SHADER_MAX_ARMATURE_MATRICES == MaxBonesCount, incompatible_shader_definition_with_code);
 
 		configBool renderMissingMeshes("cage-client.engine.renderMissingMeshes", false);
+		configBool renderSkeletonBones("cage-client.engine.renderSkeletonBones", false);
 
 		struct shadowmapImpl : public shadowmapComponent
 		{
 			mat4 shadowMat;
 			sint32 index;
 			shadowmapImpl(const shadowmapComponent &other) : shadowmapComponent(other), index(0) {}
-		};
-
-		struct configuredSkeletonImpl
-		{
-			configuredSkeletonComponent current;
-			configuredSkeletonComponent history;
-			configuredSkeletonImpl(entityClass *e)
-			{
-				current = e->value<configuredSkeletonComponent>(configuredSkeletonComponent::component);
-				if (e->has(configuredSkeletonComponent::componentHistory))
-					history = e->value<configuredSkeletonComponent>(configuredSkeletonComponent::componentHistory);
-				else
-					history = current;
-			}
 		};
 
 		struct emitTransformsStruct
@@ -70,7 +58,6 @@ namespace cage
 			renderComponent render;
 			animatedTextureComponent *animatedTexture;
 			animatedSkeletonComponent *animatedSkeleton;
-			configuredSkeletonImpl *configuredSkeleton;
 			emitRenderStruct()
 			{
 				detail::memset(this, 0, sizeof(emitRenderStruct));
@@ -351,12 +338,40 @@ namespace cage
 				}
 			}
 
+			void addRenderableSkeleton(renderPassImpl *pass, emitRenderStruct *e, skeletonClass *s, const mat4 &model, const mat4 &mvp)
+			{
+				mat4 armature[MaxBonesCount];
+				uint32 bonesCount = s->bonesCount();
+				if (e->animatedSkeleton && assets()->ready(e->animatedSkeleton->name))
+				{
+					CAGE_ASSERT_RUNTIME(s->bonesCount() == bonesCount, s->bonesCount(), bonesCount);
+					const auto &ba = *e->animatedSkeleton;
+					animationClass *an = assets()->get<assetSchemeIndexAnimation, animationClass>(ba.name);
+					real c = detail::evalCoefficientForSkeletalAnimation(an, dispatchTime, ba.startTime, ba.speed, ba.offset);
+					s->animateSkeleton(an, c, tmpArmature, armature);
+				}
+				meshClass *mesh = assets()->get<assetSchemeIndexMesh, meshClass>(hashString("cage/mesh/bone.obj"));
+				CAGE_ASSERT_RUNTIME(mesh->getSkeletonName() == 0);
+				for (uint32 i = 0; i < bonesCount; i++)
+				{
+					e->render.color = convertHsvToRgb(vec3(real(i) / real(bonesCount), 1, 1));
+					mat4 m = model * armature[i];
+					addRenderableMesh(pass, e, mesh, m, pass->viewProj * m);
+				}
+			}
+
 			void addRenderableMesh(renderPassImpl *pass, emitRenderStruct *e, meshClass *m, const mat4 &model, const mat4 &mvp)
 			{
 				if (!frustumCulling(m->getBoundingBox(), mvp))
 					return;
 				if (pass->targetShadowmap != 0 && (m->getFlags() & meshFlags::ShadowCast) == meshFlags::None)
 					return;
+				if (m->getSkeletonName() != 0 && renderSkeletonBones)
+				{
+					skeletonClass *s = assets()->get<assetSchemeIndexSkeleton, skeletonClass>(m->getSkeletonName());
+					addRenderableSkeleton(pass, e, s, model, mvp);
+					return;
+				}
 				objectsStruct *obj = nullptr;
 				if ((m->getFlags() & meshFlags::Translucency) == meshFlags::Translucency)
 				{ // translucent
@@ -402,19 +417,14 @@ namespace cage
 				{
 					objectsStruct::shaderArmatureStruct *sa = obj->shaderArmatures + obj->count;
 					uint32 bonesCount = m->getSkeletonBones();
-					if (e->configuredSkeleton)
-					{
-						for (uint32 i = 0; i < bonesCount; i++)
-							sa->armature[i] = e->configuredSkeleton->current.configuration[i];
-					}
-					else if (e->animatedSkeleton && m->getSkeletonName() != 0 && assets()->ready(e->animatedSkeleton->name))
+					if (e->animatedSkeleton && m->getSkeletonName() != 0 && assets()->ready(e->animatedSkeleton->name))
 					{
 						skeletonClass *skel = assets()->get<assetSchemeIndexSkeleton, skeletonClass>(m->getSkeletonName());
 						CAGE_ASSERT_RUNTIME(skel->bonesCount() == bonesCount, skel->bonesCount(), bonesCount);
 						const auto &ba = *e->animatedSkeleton;
 						animationClass *an = assets()->get<assetSchemeIndexAnimation, animationClass>(ba.name);
 						real c = detail::evalCoefficientForSkeletalAnimation(an, dispatchTime, ba.startTime, ba.speed, ba.offset);
-						skel->evaluatePose(an, c, tmpArmature, sa->armature);
+						skel->animateSkin(an, c, tmpArmature, sa->armature);
 					}
 					else
 					{
@@ -530,8 +540,6 @@ namespace cage
 						c->animatedTexture = emitWrite->emitArena.createObject<animatedTextureComponent>(e->value<animatedTextureComponent>(animatedTextureComponent::component));
 					if (e->has(animatedSkeletonComponent::component))
 						c->animatedSkeleton = emitWrite->emitArena.createObject<animatedSkeletonComponent>(e->value<animatedSkeletonComponent>(animatedSkeletonComponent::component));
-					if (e->has(configuredSkeletonComponent::component))
-						c->configuredSkeleton = emitWrite->emitArena.createObject<configuredSkeletonImpl>(e);
 					emitWrite->renderables.push_back(c);
 				}
 

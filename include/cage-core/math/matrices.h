@@ -7,7 +7,6 @@ namespace cage
 
 		// constructors
 		mat3(); // identity
-		explicit mat3(const real other[9]);
 		explicit mat3(real a, real b, real c, real d, real e, real f, real g, real h, real i);
 		explicit mat3(const vec3 &forward, const vec3 &up, bool keepUp = false);
 		explicit mat3(const quat &other);
@@ -54,7 +53,6 @@ namespace cage
 
 		// constructors
 		mat4(); // identity
-		explicit mat4(const real other[16]);
 		explicit mat4(real a, real b, real c, real d, real e, real f, real g, real h, real i, real j, real k, real l, real m, real n, real o, real p);
 		explicit mat4(real other); // scale matrix
 		explicit mat4(const mat3 &other);

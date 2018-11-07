@@ -1,8 +1,9 @@
 
 []
-fake.obj
-square.obj
-sphere.obj
+bone.obj
 cone.obj
+fake.obj
 guiElement.obj
 guiWire.obj
+sphere.obj
+square.obj

@@ -426,7 +426,7 @@ void processMesh()
 		dsm.box += aabb(p);
 	}
 	CAGE_LOG(severityEnum::Info, logComponentName, string() + "bounding box: " + dsm.box);
-	// note: when exporting with bones, the bounding box must encapsulate the mesh in all possible poses
+	// todo: when exporting with bones, the bounding box must encapsulate the mesh in all possible poses
 
 	if (dsm.uvs())
 	{
@@ -504,7 +504,7 @@ void processMesh()
 			if (abs(sum - 1) > 1e-3 && sum > 1e-3)
 			{
 				float f = 1 / sum;
-				CAGE_LOG(severityEnum::Warning, logComponentName, string() + "renormalizing vertex weights for " + i + ", by " + f);
+				CAGE_LOG(severityEnum::Warning, logComponentName, string() + "renormalizing bone weights for " + i + "th vertex by factor " + f);
 				for (uint32 j = 0; j < 4; j++)
 					boneWeights[i * 4 + j] *= f;
 			}

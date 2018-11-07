@@ -285,12 +285,6 @@ namespace cage
 					ENGINE_GET_COMPONENT(transform, ts, e);
 					transformComponent &hs = e->value<transformComponent>(transformComponent::componentHistory);
 					hs = ts;
-					if (e->has(configuredSkeletonComponent::component))
-					{
-						ENGINE_GET_COMPONENT(configuredSkeleton, cs, e);
-						configuredSkeletonComponent &hs = e->value<configuredSkeletonComponent>(configuredSkeletonComponent::componentHistory);
-						hs = cs;
-					}
 				}
 			}
 
@@ -485,8 +479,6 @@ namespace cage
 					renderComponent::component = entityManager->defineComponent(renderComponent(), true);
 					animatedTextureComponent::component = entityManager->defineComponent(animatedTextureComponent(), false);
 					animatedSkeletonComponent::component = entityManager->defineComponent(animatedSkeletonComponent(), false);
-					configuredSkeletonComponent::component = entityManager->defineComponent(configuredSkeletonComponent(), false);
-					configuredSkeletonComponent::componentHistory = entityManager->defineComponent(configuredSkeletonComponent(), false);
 					lightComponent::component = entityManager->defineComponent(lightComponent(), true);
 					shadowmapComponent::component = entityManager->defineComponent(shadowmapComponent(), false);
 					cameraComponent::component = entityManager->defineComponent(cameraComponent(), true);
