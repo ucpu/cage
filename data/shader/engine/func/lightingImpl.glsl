@@ -13,7 +13,7 @@ struct lightStruct
 
 layout(std140, binding = CAGE_SHADER_UNIBLOCK_LIGHTS) uniform Lights
 {
-	lightStruct uniLights[CAGE_SHADER_MAX_RENDER_INSTANCES];
+	lightStruct uniLights[CAGE_SHADER_MAX_INSTANCES];
 };
 
 float attenuation(float dist, vec3 att)

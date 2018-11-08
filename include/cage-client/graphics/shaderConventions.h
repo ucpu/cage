@@ -1,5 +1,5 @@
-#define CAGE_SHADER_MAX_RENDER_INSTANCES 8
-#define CAGE_SHADER_MAX_ARMATURE_MATRICES 128
+#define CAGE_SHADER_MAX_INSTANCES 128
+#define CAGE_SHADER_MAX_BONES 1365
 
 // attribute in locations
 
@@ -31,6 +31,10 @@
 #define CAGE_SHADER_TEXTURE_SHADOW 10
 #define CAGE_SHADER_TEXTURE_SHADOW_CUBE 11
 #define CAGE_SHADER_TEXTURE_DEPTH 12
+
+// uniform locations
+
+#define CAGE_SHADER_UNI_BONESPERINSTANCE 1
 
 // uniform block bindings
 

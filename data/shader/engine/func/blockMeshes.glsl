@@ -13,6 +13,6 @@ layout(std140, binding = CAGE_SHADER_UNIBLOCK_MESHES) uniform Meshes
 $if translucent = 1
 	meshStruct uniMeshes[1];
 $else
-	meshStruct uniMeshes[CAGE_SHADER_MAX_RENDER_INSTANCES];
+	meshStruct uniMeshes[CAGE_SHADER_MAX_INSTANCES];
 $end
 };

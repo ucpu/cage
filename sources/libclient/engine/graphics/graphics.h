@@ -8,6 +8,13 @@ namespace cage
 		shaderConfigStruct();
 	};
 
+	struct mat3x4
+	{
+		vec4 data[3];
+
+		mat3x4(const mat4 &in);
+	};
+
 	struct objectsStruct
 	{
 		shaderConfigStruct shaderConfig;
@@ -19,10 +26,7 @@ namespace cage
 			vec4 color;
 			vec4 aniTexFrames;
 		} *shaderMeshes;
-		struct shaderArmatureStruct
-		{
-			mat4 armature[MaxBonesCount];
-		} *shaderArmatures;
+		mat3x4 *shaderArmatures;
 		textureClass *textures[MaxTexturesCountPerMaterial];
 		meshClass *mesh;
 		objectsStruct *next;

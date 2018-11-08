@@ -165,7 +165,8 @@ namespace cage
 				if (obj->shaderArmatures)
 				{
 					armatureDataBuffer->bind();
-					armatureDataBuffer->writeRange(obj->shaderArmatures, 0, sizeof(objectsStruct::shaderArmatureStruct) * obj->count);
+					armatureDataBuffer->writeRange(obj->shaderArmatures, 0, sizeof(mat3x4) * obj->count * obj->mesh->getSkeletonBones());
+					shr->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, obj->mesh->getSkeletonBones());
 				}
 				obj->mesh->bind();
 				setTwoSided((obj->mesh->getFlags() & meshFlags::TwoSided) == meshFlags::TwoSided);
@@ -415,11 +416,11 @@ namespace cage
 				viewportDataBuffer = newUniformBuffer(window());
 				viewportDataBuffer->writeWhole(nullptr, sizeof(renderPassStruct::shaderViewportStruct), GL_DYNAMIC_DRAW);
 				meshDataBuffer = newUniformBuffer(window());
-				meshDataBuffer->writeWhole(nullptr, sizeof(objectsStruct::shaderMeshStruct) * CAGE_SHADER_MAX_RENDER_INSTANCES, GL_DYNAMIC_DRAW);
+				meshDataBuffer->writeWhole(nullptr, sizeof(objectsStruct::shaderMeshStruct) * CAGE_SHADER_MAX_INSTANCES, GL_DYNAMIC_DRAW);
 				armatureDataBuffer = newUniformBuffer(window());
-				armatureDataBuffer->writeWhole(nullptr, sizeof(objectsStruct::shaderArmatureStruct) * CAGE_SHADER_MAX_RENDER_INSTANCES, GL_DYNAMIC_DRAW);
+				armatureDataBuffer->writeWhole(nullptr, sizeof(mat3x4) * CAGE_SHADER_MAX_BONES, GL_DYNAMIC_DRAW);
 				lightsDataBuffer = newUniformBuffer(window());
-				lightsDataBuffer->writeWhole(nullptr, sizeof(lightsStruct::shaderLightStruct) * CAGE_SHADER_MAX_RENDER_INSTANCES, GL_DYNAMIC_DRAW);
+				lightsDataBuffer->writeWhole(nullptr, sizeof(lightsStruct::shaderLightStruct) * CAGE_SHADER_MAX_INSTANCES, GL_DYNAMIC_DRAW);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 

@@ -31,8 +31,6 @@ namespace cage
 {
 	namespace
 	{
-		CAGE_ASSERT_COMPILE(CAGE_SHADER_MAX_ARMATURE_MATRICES == MaxBonesCount, incompatible_shader_definition_with_code);
-
 		configBool renderMissingMeshes("cage-client.engine.renderMissingMeshes", false);
 		configBool renderSkeletonBones("cage-client.engine.renderSkeletonBones", false);
 
@@ -122,7 +120,8 @@ namespace cage
 			emitStruct *emitRead, *emitWrite;
 			holder<swapBufferControllerClass> swapController;
 
-			mat4 tmpArmature[MaxBonesCount];
+			mat4 tmpArmature[CAGE_SHADER_MAX_BONES];
+			mat4 tmpArmature2[CAGE_SHADER_MAX_BONES];
 
 			memoryArenaGrowing<memoryAllocatorPolicyLinear<>, memoryConcurrentPolicyNone> dispatchMemory;
 			memoryArena dispatchArena;
@@ -340,7 +339,6 @@ namespace cage
 
 			void addRenderableSkeleton(renderPassImpl *pass, emitRenderStruct *e, skeletonClass *s, const mat4 &model, const mat4 &mvp)
 			{
-				mat4 armature[MaxBonesCount];
 				uint32 bonesCount = s->bonesCount();
 				if (e->animatedSkeleton && assets()->ready(e->animatedSkeleton->name))
 				{
@@ -348,14 +346,19 @@ namespace cage
 					const auto &ba = *e->animatedSkeleton;
 					animationClass *an = assets()->get<assetSchemeIndexAnimation, animationClass>(ba.name);
 					real c = detail::evalCoefficientForSkeletalAnimation(an, dispatchTime, ba.startTime, ba.speed, ba.offset);
-					s->animateSkeleton(an, c, tmpArmature, armature);
+					s->animateSkeleton(an, c, tmpArmature, tmpArmature2);
+				}
+				else
+				{
+					for (uint32 i = 0; i < bonesCount; i++)
+						tmpArmature2[i] = mat4();
 				}
 				meshClass *mesh = assets()->get<assetSchemeIndexMesh, meshClass>(hashString("cage/mesh/bone.obj"));
 				CAGE_ASSERT_RUNTIME(mesh->getSkeletonName() == 0);
 				for (uint32 i = 0; i < bonesCount; i++)
 				{
 					e->render.color = convertHsvToRgb(vec3(real(i) / real(bonesCount), 1, 1));
-					mat4 m = model * armature[i];
+					mat4 m = model * tmpArmature2[i];
 					addRenderableMesh(pass, e, mesh, m, pass->viewProj * m);
 				}
 			}
@@ -389,7 +392,10 @@ namespace cage
 					auto it = opaqueObjectsMap.find(m);
 					if (it == opaqueObjectsMap.end())
 					{
-						obj = dispatchArena.createObject<objectsStruct>(m, CAGE_SHADER_MAX_RENDER_INSTANCES);
+						uint32 mm = CAGE_SHADER_MAX_INSTANCES;
+						if (m->getSkeletonBones())
+							mm = min(mm, CAGE_SHADER_MAX_BONES / m->getSkeletonBones());
+						obj = dispatchArena.createObject<objectsStruct>(m, mm);
 						// add at end
 						if (pass->lastOpaque)
 							pass->lastOpaque->next = obj;
@@ -415,8 +421,8 @@ namespace cage
 					sm->aniTexFrames = detail::evalSamplesForTextureAnimation(obj->textures[CAGE_SHADER_TEXTURE_ALBEDO], dispatchTime, e->animatedTexture->startTime, e->animatedTexture->speed, e->animatedTexture->offset);
 				if (obj->shaderArmatures)
 				{
-					objectsStruct::shaderArmatureStruct *sa = obj->shaderArmatures + obj->count;
 					uint32 bonesCount = m->getSkeletonBones();
+					mat3x4 *sa = obj->shaderArmatures + obj->count * bonesCount;
 					if (e->animatedSkeleton && m->getSkeletonName() != 0 && assets()->ready(e->animatedSkeleton->name))
 					{
 						skeletonClass *skel = assets()->get<assetSchemeIndexSkeleton, skeletonClass>(m->getSkeletonName());
@@ -424,12 +430,14 @@ namespace cage
 						const auto &ba = *e->animatedSkeleton;
 						animationClass *an = assets()->get<assetSchemeIndexAnimation, animationClass>(ba.name);
 						real c = detail::evalCoefficientForSkeletalAnimation(an, dispatchTime, ba.startTime, ba.speed, ba.offset);
-						skel->animateSkin(an, c, tmpArmature, sa->armature);
+						skel->animateSkin(an, c, tmpArmature, tmpArmature2);
+						for (uint32 i = 0; i < bonesCount; i++)
+							sa[i] = tmpArmature2[i];
 					}
 					else
 					{
 						for (uint32 i = 0; i < bonesCount; i++)
-							sa->armature[i] = mat4();
+							sa[i] = mat4();
 					}
 				}
 				obj->count++;
@@ -480,7 +488,7 @@ namespace cage
 					}
 					if (!lig)
 					{
-						lig = dispatchArena.createObject<lightsStruct>(e->light.lightType, 0, CAGE_SHADER_MAX_RENDER_INSTANCES);
+						lig = dispatchArena.createObject<lightsStruct>(e->light.lightType, 0, CAGE_SHADER_MAX_INSTANCES);
 						// add at begin
 						if (pass->firstLighting)
 							lig->next = pass->firstLighting;
@@ -665,6 +673,14 @@ namespace cage
 		graphicsPrepareImpl *graphicsPrepare;
 	}
 
+	mat3x4::mat3x4(const mat4 &in)
+	{
+		CAGE_ASSERT_RUNTIME(in[3] == 0 && in[7] == 0 && in[11] == 0 && in[15] == 1, in);
+		for (uint32 a = 0; a < 4; a++)
+			for (uint32 b = 0; b < 3; b++)
+				data[b][a] = in[a * 4 + b];
+	}
+
 	shaderConfigStruct::shaderConfigStruct()
 	{
 		detail::memset(this, 0, sizeof(shaderConfigStruct));
@@ -677,7 +693,7 @@ namespace cage
 		if ((mesh->getFlags() & meshFlags::Bones) == meshFlags::Bones)
 		{
 			CAGE_ASSERT_RUNTIME(mesh->getSkeletonName() == 0 || ass->ready(mesh->getSkeletonName()));
-			shaderArmatures = (shaderArmatureStruct*)graphicsPrepare->dispatchArena.allocate(sizeof(shaderArmatureStruct) * max);
+			shaderArmatures = (mat3x4*)graphicsPrepare->dispatchArena.allocate(sizeof(mat3x4) * mesh->getSkeletonBones() * max);
 		}
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		{
