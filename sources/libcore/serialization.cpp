@@ -14,7 +14,7 @@ namespace cage
 		return *this;
 	}
 
-	char *serializer::access(uintPtr size)
+	char *serializer::accessRaw(uintPtr size)
 	{
 		uintPtr o = buffer.size();
 		buffer.resizeGrowSmart(buffer.size() + size);

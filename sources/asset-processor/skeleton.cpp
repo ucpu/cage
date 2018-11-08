@@ -42,8 +42,11 @@ void processSkeleton()
 	const aiScene *scene = context->getScene();
 	holder<assimpSkeletonClass> skeleton = context->skeleton();
 
+	mat4 axesScale = mat4(axesScaleMatrix());
+	mat4 axesScaleInv = axesScale.inverse();
+
 	skeletonHeaderStruct s;
-	s.globalInverse = conv(scene->mRootNode->mTransformation).inverse();
+	s.globalInverse = conv(scene->mRootNode->mTransformation).inverse() * axesScale;
 	s.bonesCount = skeleton->bonesCount();
 
 	std::vector<uint16> ps;
@@ -63,7 +66,7 @@ void processSkeleton()
 		aiNode *n = skeleton->node(i);
 		aiBone *b = skeleton->bone(i);
 		mat4 t = conv(n->mTransformation);
-		mat4 o = b ? conv(b->mOffsetMatrix) : mat4();
+		mat4 o = (b ? conv(b->mOffsetMatrix) : mat4()) * axesScaleInv;
 		CAGE_ASSERT_RUNTIME(t.valid() && o.valid(), t, o);
 		ps.push_back(skeleton->parent(i));
 		bs.push_back(t);

@@ -24,7 +24,7 @@ layout(index = CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION) subroutine (skeletonFu
 	for (int i = 0; i < 4; i++)
 		sum += uniArmatures[meshIndex].armature[inBoneIndex[i]] * inBoneWeight[i];
 	pos = sum * pos;
-	normal = transpose(mat3(sum)) * normal;
+	normal = mat3(sum) * normal;
 }
 
 layout(location = CAGE_SHADER_ROUTINEUNIF_SKELETON) subroutine uniform skeletonFunc uniSkeleton;

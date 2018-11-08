@@ -286,58 +286,6 @@ namespace
 			CAGE_THROW_ERROR(exception, "shadow cast is enabled, but depth write is disabled");
 	}
 
-	mat3 transformationMatrix()
-	{
-		string axes = properties("axes").toLower();
-		if (axes.empty() || axes == "+x+y+z")
-			return mat3();
-		if (axes.length() != 6)
-			CAGE_THROW_ERROR(exception, "wrong axes definition: length (must be in format +x+y+z)");
-		mat3 result(0,0,0,0,00,0,0,0,0);
-		int sign = 0;
-		uint32 axesUsedCounts[3] = { 0, 0, 0 };
-		for (uint32 i = 0; i < 6; i++)
-		{
-			char c = axes[i];
-			if (i % 2 == 0)
-			{ // signs
-				if (c != '+' && c != '-')
-					CAGE_THROW_ERROR(exception, "wrong axes definition: signs (must be in format +x+y+z)");
-				if (c == '+')
-					sign = 1;
-				else
-					sign = -1;
-			}
-			else
-			{ // axes
-				uint32 out = i / 2;
-				uint32 in = -1;
-				switch (c)
-				{
-				case 'x':
-					axesUsedCounts[0]++;
-					in = 0;
-					break;
-				case 'y':
-					axesUsedCounts[1]++;
-					in = 1;
-					break;
-				case 'z':
-					axesUsedCounts[2]++;
-					in = 2;
-					break;
-				default:
-					CAGE_THROW_ERROR(exception, "wrong axes definition: invalid axis (must be in format +x+y+z)");
-				}
-				result[in * 3 + out] = real(sign);
-			}
-		}
-		if (axesUsedCounts[0] != 1 || axesUsedCounts[1] != 1 || axesUsedCounts[2] != 1)
-			CAGE_THROW_ERROR(exception, "wrong axes definition: axes counts (must be in format +x+y+z)");
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "using axes conversion matrix: " + result);
-		return result;
-	}
-
 	void loadSkeletonName(meshHeaderStruct &dsm)
 	{
 		string n = properties("override_skeleton");
@@ -412,21 +360,19 @@ void processMesh()
 	printMaterial(dsm, mat);
 	validateFlags(dsm, mat);
 
-	mat3 axes = transformationMatrix();
-
 	cage::memoryBuffer dataBuffer;
 	cage::serializer ser(dataBuffer);
 
 	dsm.box = aabb();
-	mat3 axes2 = axes * properties("scale").toFloat();
+	mat3 axes = axesMatrix();
+	mat3 axesScale = axesScaleMatrix();
 	for (uint32 i = 0; i < dsm.verticesCount; i++)
 	{
-		vec3 p = axes2 * conv(am->mVertices[i]);
+		vec3 p = axesScale * conv(am->mVertices[i]);
 		ser << p;
 		dsm.box += aabb(p);
 	}
 	CAGE_LOG(severityEnum::Info, logComponentName, string() + "bounding box: " + dsm.box);
-	// todo: when exporting with bones, the bounding box must encapsulate the mesh in all possible poses
 
 	if (dsm.uvs())
 	{
@@ -450,10 +396,20 @@ void processMesh()
 
 	if (dsm.bones())
 	{
+		// enlarge bounding box
+		{
+			vec3 c = dsm.box.center();
+			vec3 a = dsm.box.a - c;
+			vec3 b = dsm.box.b - c;
+			real s = 2;
+			dsm.box = aabb(a * s + c, b * s + c);
+			CAGE_LOG(severityEnum::Info, logComponentName, string() + "enlarged bounding box: " + dsm.box);
+		}
+		CAGE_ASSERT_RUNTIME(am->mNumBones > 0);
 		holder<assimpSkeletonClass> skeleton = context->skeleton();
 		dsm.skeletonBones = skeleton->bonesCount();
-		uint16 *boneIndices = (uint16*)ser.access(sizeof(uint16) * 4 * dsm.verticesCount);
-		float *boneWeights = (float*)ser.access(sizeof(float) * 4 * dsm.verticesCount);
+		auto boneIndices = ser.accessArray<uint16>(4 * dsm.verticesCount);
+		auto boneWeights = ser.accessArray<float>(4 * dsm.verticesCount);
 		// initialize with empty values
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
 		{
@@ -467,7 +423,9 @@ void processMesh()
 		for (uint32 boneIndex = 0; boneIndex < am->mNumBones; boneIndex++)
 		{
 			aiBone *bone = am->mBones[boneIndex];
-			uint32 boneId = skeleton->index(bone->mName);
+			CAGE_ASSERT_RUNTIME(bone);
+			uint16 boneId = skeleton->index(bone);
+			CAGE_ASSERT_RUNTIME(boneId != (uint16)-1);
 			for (uint32 weightIndex = 0; weightIndex < bone->mNumWeights; weightIndex++)
 			{
 				aiVertexWeight *w = bone->mWeights + weightIndex;

@@ -48,3 +48,6 @@ vec3 conv(const aiColor3D &v);
 vec4 conv(const aiColor4D &v);
 mat4 conv(const aiMatrix4x4 &v);
 quat conv(const aiQuaternion &q);
+
+mat3 axesMatrix();
+mat3 axesScaleMatrix();

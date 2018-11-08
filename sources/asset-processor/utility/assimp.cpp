@@ -630,3 +630,60 @@ quat conv(const aiQuaternion &q)
 	r.data[3] = q.w;
 	return r;
 }
+
+mat3 axesMatrix()
+{
+	string axes = properties("axes").toLower();
+	if (axes.empty() || axes == "+x+y+z")
+		return mat3();
+	if (axes.length() != 6)
+		CAGE_THROW_ERROR(exception, "wrong axes definition: length (must be in format +x+y+z)");
+	mat3 result(0, 0, 0, 0, 00, 0, 0, 0, 0);
+	int sign = 0;
+	uint32 axesUsedCounts[3] = { 0, 0, 0 };
+	for (uint32 i = 0; i < 6; i++)
+	{
+		char c = axes[i];
+		if (i % 2 == 0)
+		{ // signs
+			if (c != '+' && c != '-')
+				CAGE_THROW_ERROR(exception, "wrong axes definition: signs (must be in format +x+y+z)");
+			if (c == '+')
+				sign = 1;
+			else
+				sign = -1;
+		}
+		else
+		{ // axes
+			uint32 out = i / 2;
+			uint32 in = -1;
+			switch (c)
+			{
+			case 'x':
+				axesUsedCounts[0]++;
+				in = 0;
+				break;
+			case 'y':
+				axesUsedCounts[1]++;
+				in = 1;
+				break;
+			case 'z':
+				axesUsedCounts[2]++;
+				in = 2;
+				break;
+			default:
+				CAGE_THROW_ERROR(exception, "wrong axes definition: invalid axis (must be in format +x+y+z)");
+			}
+			result[in * 3 + out] = real(sign);
+		}
+	}
+	if (axesUsedCounts[0] != 1 || axesUsedCounts[1] != 1 || axesUsedCounts[2] != 1)
+		CAGE_THROW_ERROR(exception, "wrong axes definition: axes counts (must be in format +x+y+z)");
+	CAGE_LOG(severityEnum::Info, logComponentName, string() + "using axes conversion matrix: " + result);
+	return result;
+}
+
+mat3 axesScaleMatrix()
+{
+	return axesMatrix() * properties("scale").toFloat();
+}

@@ -7,6 +7,16 @@ display = bake model
 type = bool
 default = false
 
+[axes]
+display = axes
+type = string
+default = +x+y+z
+
+[scale]
+display = scale
+type = real
+default = 1
+
 [bone_names]
 display = export bone names
 type = bool
