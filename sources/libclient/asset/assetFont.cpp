@@ -10,8 +10,6 @@
 #include <cage-client/graphics.h>
 #include <cage-client/assetStructs.h>
 
-#include <cage-core/pointer.h>
-
 namespace cage
 {
 	namespace
