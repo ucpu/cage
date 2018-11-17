@@ -54,7 +54,7 @@ namespace cage
 		template <class T>
 		struct serializerArrayAccessor
 		{
-			serializerArrayAccessor(serializer &ser, char *ptr, uint32 count) : ser(ser), initOff(ptr - ser.buffer.data()), count(count)
+			serializerArrayAccessor(serializer &ser, char *ptr, uint32 count) : ser(ser), initOff(ptr - ser.accessRaw(0)), count(count)
 			{}
 
 			T &operator [] (uint32 idx)
@@ -65,7 +65,7 @@ namespace cage
 
 			T *accessRaw()
 			{
-				return (T*)(ser.buffer.data() + initOff);
+				return (T*)(ser.accessRaw(0) + initOff);
 			}
 
 		private:
