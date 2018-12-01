@@ -105,6 +105,17 @@ cage_ide_sort_files(cage-asset-analyze)
 cage_ide_working_dir_in_place(cage-asset-analyze)
 
 ########
+# CAGE-MATERIAL-TOOL
+########
+
+file(GLOB_RECURSE cage-material-tool-sources "sources/material-tool/*")
+add_executable(cage-material-tool ${cage-material-tool-sources})
+target_link_libraries(cage-material-tool cage-core)
+cage_ide_category(cage-material-tool cage)
+cage_ide_sort_files(cage-material-tool)
+cage_ide_working_dir_in_place(cage-material-tool)
+
+########
 # FINALIZATION
 ########
 

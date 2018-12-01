@@ -203,7 +203,8 @@ namespace cage
 
 	bool entityManagerClass::has(uint32 entityName) const
 	{
-		CAGE_ASSERT_RUNTIME(entityName != 0);
+		if (entityName == 0)
+			return false;
 		return ((entityManagerImpl *)this)->namedEntities->exists(entityName);
 	}
 
