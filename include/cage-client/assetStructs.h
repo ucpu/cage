@@ -120,13 +120,12 @@ namespace cage
 		real worldSize;
 		real pixelsSize;
 		uint32 lodsCount;
+		uint32 meshesCount;
 
 		// follows:
-		// threshold, float, for first lod
-		// count, uint32, number of meshes in this lod level
-		// array of meshes, each uint32
-		// threshold, float, for second lod
-		// ...
+		// array of thresholds, each float
+		// array of mesh indices, each uint32 (one item more than thresholds)
+		// array of mesh names, each uint32
 	};
 
 	struct CAGE_API fontHeaderStruct

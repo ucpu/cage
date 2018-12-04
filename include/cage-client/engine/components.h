@@ -49,7 +49,7 @@ namespace cage
 	struct CAGE_API shadowmapComponent
 	{
 		static componentClass *component;
-		vec3 worldRadius;
+		vec3 worldSize;
 		uint32 resolution;
 		shadowmapComponent();
 	};

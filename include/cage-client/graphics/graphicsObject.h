@@ -8,15 +8,10 @@ namespace cage
 		real worldSize;
 		real pixelsSize;
 
-		void setLodLevels(uint32 count);
-		void setLodThreshold(uint32 lod, float threshold);
-		void setLodMeshes(uint32 lod, uint32 count);
-		void setMeshName(uint32 lod, uint32 index, uint32 name);
+		void setLods(uint32 lodsCount, uint32 meshesCount, const float *thresholds, const uint32 *meshIndices, const uint32 *meshNames);
 
 		uint32 lodsCount() const;
-		real lodsThreshold(uint32 lod) const;
-		uint32 meshesCount(uint32 lod) const;
-		uint32 meshesName(uint32 lod, uint32 index) const;
+		uint32 lodSelect(float threshold) const;
 		pointerRange<const uint32> meshes(uint32 lod) const;
 	};
 

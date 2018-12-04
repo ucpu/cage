@@ -27,23 +27,11 @@ namespace cage
 			obj->shadower = h.shadower;
 			obj->worldSize = h.worldSize;
 			obj->pixelsSize = h.pixelsSize;
-			obj->setLodLevels(h.lodsCount);
 
-			for (uint32 l = 0; l < h.lodsCount; l++)
-			{
-				float thr;
-				des >> thr;
-				obj->setLodThreshold(l, thr);
-				uint32 cnt;
-				des >> cnt;
-				obj->setLodMeshes(l, cnt);
-				for (uint32 m = 0; m < cnt; m++)
-				{
-					uint32 nam;
-					des >> nam;
-					obj->setMeshName(l, m, nam);
-				}
-			}
+			float *thresholds = (float*)des.access(h.lodsCount * sizeof(uint32));
+			uint32 *indices = (uint32*)des.access((h.lodsCount + 1) * sizeof(uint32));
+			uint32 *names = (uint32*)des.access(h.meshesCount * sizeof(uint32));
+			obj->setLods(h.lodsCount, h.meshesCount, thresholds, indices, names);
 		}
 
 		void processDone(const assetContextStruct *context, void *schemePointer)

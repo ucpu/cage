@@ -87,6 +87,12 @@ namespace cage
 			mat4 proj;
 			mat4 viewProj;
 			uint32 renderMask;
+			real lodSelection; // vertical size of screen, at distance of one world-space-unit from camera, in pixels
+			bool lodOrthographic;
+			renderPassImpl()
+			{
+				detail::memset(this, 0, sizeof(renderPassImpl));
+			}
 		};
 
 		struct emitStruct
@@ -182,6 +188,11 @@ namespace cage
 				return t;
 			}
 
+			real fovToLodSelection(rads fov)
+			{
+				return tan(fov * 0.5) * 2;
+			}
+
 			void initializeRenderPassForCamera(renderPassImpl *pass, emitCameraStruct *camera, eyeEnum eye)
 			{
 				mat4 mat = camera->model;
@@ -195,9 +206,12 @@ namespace cage
 					{
 					case cameraTypeEnum::Orthographic:
 						pass->proj = orthographicProjection(-camera->camera.orthographicSize[0], camera->camera.orthographicSize[0], -camera->camera.orthographicSize[1], camera->camera.orthographicSize[1], camera->camera.near, camera->camera.far);
+						pass->lodSelection = camera->camera.orthographicSize[1] * h;
+						pass->lodOrthographic = true;
 						break;
 					case cameraTypeEnum::Perspective:
 						pass->proj = perspectiveProjection(camera->camera.perspectiveFov, real(w) / real(h), camera->camera.near, camera->camera.far);
+						pass->lodSelection = fovToLodSelection(camera->camera.perspectiveFov) * h;
 						break;
 					default:
 						CAGE_THROW_ERROR(exception, "invalid camera type");
@@ -223,8 +237,14 @@ namespace cage
 					cam.eyeSeparation = camera->camera.eyeSeparation;
 					cam.ortographic = camera->camera.cameraType == cameraTypeEnum::Orthographic;
 					stereoscopy(eye, cam, real(graphicsDispatch->windowWidth) / real(graphicsDispatch->windowHeight), (stereoModeEnum)graphicsPrepareThread().stereoMode, pass->view, pass->proj, x, y, w, h);
-					if (camera->camera.cameraType == cameraTypeEnum::Orthographic)
+					if (camera->camera.cameraType == cameraTypeEnum::Perspective)
+						pass->lodSelection = fovToLodSelection(camera->camera.perspectiveFov) * graphicsDispatch->windowHeight;
+					else
+					{
 						pass->proj = orthographicProjection(-camera->camera.orthographicSize[0], camera->camera.orthographicSize[0], -camera->camera.orthographicSize[1], camera->camera.orthographicSize[1], camera->camera.near, camera->camera.far);
+						pass->lodSelection = camera->camera.orthographicSize[1] * graphicsDispatch->windowHeight;
+						pass->lodOrthographic = true;
+					}
 					pass->vpX = numeric_cast<uint32>(x * real(graphicsDispatch->windowWidth));
 					pass->vpY = numeric_cast<uint32>(y * real(graphicsDispatch->windowHeight));
 					pass->vpW = numeric_cast<uint32>(w * real(graphicsDispatch->windowWidth));
@@ -249,13 +269,17 @@ namespace cage
 				switch (light->light.lightType)
 				{
 				case lightTypeEnum::Directional:
-					pass->proj = orthographicProjection(-light->shadowmap->worldRadius[0], light->shadowmap->worldRadius[0], -light->shadowmap->worldRadius[1], light->shadowmap->worldRadius[1], -light->shadowmap->worldRadius[2], light->shadowmap->worldRadius[2]);
+					pass->proj = orthographicProjection(-light->shadowmap->worldSize[0], light->shadowmap->worldSize[0], -light->shadowmap->worldSize[1], light->shadowmap->worldSize[1], -light->shadowmap->worldSize[2], light->shadowmap->worldSize[2]);
+					pass->lodSelection = light->shadowmap->worldSize[1] * 2;
+					pass->lodOrthographic = true;
 					break;
 				case lightTypeEnum::Spot:
-					pass->proj = perspectiveProjection(light->light.spotAngle, 1, light->shadowmap->worldRadius[0], light->shadowmap->worldRadius[1]);
+					pass->proj = perspectiveProjection(light->light.spotAngle, 1, light->shadowmap->worldSize[0], light->shadowmap->worldSize[1]);
+					pass->lodSelection = fovToLodSelection(light->light.spotAngle) * light->shadowmap->resolution;
 					break;
 				case lightTypeEnum::Point:
-					pass->proj = perspectiveProjection(degs(90), 1, light->shadowmap->worldRadius[0], light->shadowmap->worldRadius[1]);
+					pass->proj = perspectiveProjection(degs(90), 1, light->shadowmap->worldSize[0], light->shadowmap->worldSize[1]);
+					pass->lodSelection = fovToLodSelection(degs(90)) * light->shadowmap->resolution;
 					break;
 				default:
 					CAGE_THROW_CRITICAL(exception, "invalid light type");
@@ -276,7 +300,7 @@ namespace cage
 
 			void addRenderableObjects(renderPassImpl *pass, bool shadows)
 			{
-				const vec3 up = vec3(pass->view.inverse() * vec4(0, 1, 0, 0));
+				CAGE_ASSERT_RUNTIME(pass->lodSelection > 0);
 				for (emitRenderStruct *e : emitRead->renderables)
 				{
 					if ((e->render.renderMask & pass->renderMask) == 0)
@@ -300,39 +324,33 @@ namespace cage
 						objectClass *o = assets()->get<assetSchemeIndexObject, objectClass>(e->render.object);
 						if (o->lodsCount() == 0)
 							continue;
+						if (shadows && o->shadower)
+						{
+							CAGE_ASSERT_RUNTIME(assets()->ready(o->shadower), e->render.object, o->shadower);
+							meshClass *m = assets()->get<assetSchemeIndexMesh, meshClass>(o->shadower);
+							addRenderableMesh(pass, e, m, e->model, mvp);
+							continue;
+						}
 						uint32 lod = 0;
-						if (shadows)
+						if (o->lodsCount() > 1)
 						{
-							if (o->shadower)
+							real d = 1;
+							if (!pass->lodOrthographic)
 							{
-								CAGE_ASSERT_RUNTIME(assets()->ready(o->shadower), e->render.object, o->shadower);
-								meshClass *m = assets()->get<assetSchemeIndexMesh, meshClass>(o->shadower);
-								addRenderableMesh(pass, e, m, e->model, mvp);
-								continue;
+								vec4 ep4 = e->model * vec4(0, 0, 0, 1);
+								d = (vec3(ep4) / ep4[3]).distance(vec3(pass->shaderViewport.eyePos));
 							}
-							lod = o->lodsCount() - 1;
+							real f = pass->lodSelection * o->worldSize / (d * o->pixelsSize);
+							lod = o->lodSelect(f.value);
 						}
-						else if (o->worldSize > 0 && o->pixelsSize > 0 && o->lodsCount() > 1)
+						for (uint32 msh : o->meshes(lod))
 						{
-							vec4 a4 = mvp * vec4(0,0,0,1);
-							vec4 b4 = mvp * vec4(up * o->worldSize, 1);
-							vec2 a2 = vec2(a4) / a4[3];
-							vec2 b2 = vec2(b4) / b4[3];
-							real f = length(a2 - b2) * pass->vpH / o->pixelsSize;
-							for (uint32 i = 0; i < o->lodsCount(); i++)
-							{
-								if (f < o->lodsThreshold(i))
-									lod = i;
-							}
-						}
-						for (uint32 mshi = 0, mshe = o->meshesCount(lod); mshi < mshe; mshi++)
-						{
-							meshClass *m = assets()->get<assetSchemeIndexMesh, meshClass>(o->meshesName(lod, mshi));
+							meshClass *m = assets()->get<assetSchemeIndexMesh, meshClass>(msh);
 							addRenderableMesh(pass, e, m, e->model, mvp);
 						}
 					} break;
 					default:
-						CAGE_THROW_CRITICAL(exception, "render an invalid-scheme asset");
+						CAGE_THROW_CRITICAL(exception, "trying to render an invalid-scheme asset");
 					}
 				}
 			}

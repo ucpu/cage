@@ -1,4 +1,5 @@
 #include <vector>
+#include <algorithm>
 
 #include <cage-core/core.h>
 #include <cage-core/math.h>
@@ -13,15 +14,6 @@ namespace cage
 {
 	namespace
 	{
-		struct lodStruct
-		{
-			lodStruct() : threshold(0)
-			{}
-
-			float threshold;
-			std::vector<uint32> meshes;
-		};
-
 		class objectImpl : public objectClass
 		{
 		public:
@@ -33,62 +25,51 @@ namespace cage
 				pixelsSize = 0;
 			}
 
-			std::vector<lodStruct> lods;
+			std::vector<float> thresholds;
+			std::vector<uint32> indices;
+			std::vector<uint32> names;
 		};
 	}
 
-	void objectClass::setLodLevels(uint32 count)
+	void objectClass::setLods(uint32 lodsCount, uint32 meshesCount, const float *thresholds, const uint32 *meshIndices, const uint32 *meshNames)
 	{
+		CAGE_ASSERT_RUNTIME(meshIndices[0] == 0);
+		CAGE_ASSERT_RUNTIME(meshIndices[lodsCount] == meshesCount);
+		CAGE_ASSERT_RUNTIME(std::is_sorted(thresholds, thresholds + lodsCount, [](float a, float b) {
+			return b < a;
+		}));
+		CAGE_ASSERT_RUNTIME(std::is_sorted(meshIndices, meshIndices + lodsCount + 1));
 		objectImpl *impl = (objectImpl*)this;
-		impl->lods.resize(count);
-	}
-
-	void objectClass::setLodThreshold(uint32 lod, float threshold)
-	{
-		objectImpl *impl = (objectImpl*)this;
-		impl->lods[lod].threshold = threshold;
-	}
-
-	void objectClass::setLodMeshes(uint32 lod, uint32 count)
-	{
-		objectImpl *impl = (objectImpl*)this;
-		impl->lods[lod].meshes.resize(count);
-	}
-
-	void objectClass::setMeshName(uint32 lod, uint32 index, uint32 name)
-	{
-		objectImpl *impl = (objectImpl*)this;
-		impl->lods[lod].meshes[index] = name;
+		impl->thresholds.resize(lodsCount);
+		impl->indices.resize(lodsCount + 1);
+		impl->names.resize(meshesCount);
+		detail::memcpy(impl->thresholds.data(), thresholds, sizeof(uint32) * lodsCount);
+		detail::memcpy(impl->indices.data(), meshIndices, sizeof(uint32) * (lodsCount + 1));
+		detail::memcpy(impl->names.data(), meshNames, sizeof(float) * meshesCount);
 	}
 
 	uint32 objectClass::lodsCount() const
 	{
 		objectImpl *impl = (objectImpl*)this;
-		return numeric_cast<uint32>(impl->lods.size());
+		return numeric_cast<uint32>(impl->thresholds.size());
 	}
 
-	real  objectClass::lodsThreshold(uint32 lod) const
+	uint32 objectClass::lodSelect(float threshold) const
 	{
 		objectImpl *impl = (objectImpl*)this;
-		return impl->lods[lod].threshold;
-	}
-
-	uint32 objectClass::meshesCount(uint32 lod) const
-	{
-		objectImpl *impl = (objectImpl*)this;
-		return numeric_cast<uint32>(impl->lods[lod].meshes.size());
-	}
-
-	uint32 objectClass::meshesName(uint32 lod, uint32 index) const
-	{
-		objectImpl *impl = (objectImpl*)this;
-		return impl->lods[lod].meshes[index];
+		// todo rewrite to binary search
+		uint32 cnt = numeric_cast<uint32>(impl->thresholds.size());
+		uint32 lod = 0;
+		while (lod + 1 < cnt && threshold < impl->thresholds[lod + 1])
+			lod++;
+		return lod;
 	}
 
 	pointerRange<const uint32> objectClass::meshes(uint32 lod) const
 	{
 		objectImpl *impl = (objectImpl*)this;
-		return impl->lods[lod].meshes;
+		CAGE_ASSERT_RUNTIME(lod < lodsCount());
+		return { impl->names.data() + impl->indices[lod], impl->names.data() + impl->indices[lod + 1] };
 	}
 
 	holder<objectClass> newObject()
