@@ -1,8 +1,8 @@
 
 #define CAGE_EXPORT
 #include <cage-core/core.h>
-#include <cage-core/variableSmoothingBuffer.h>
 #include <cage-core/math.h>
+#include <cage-core/variableSmoothingBuffer.h>
 
 namespace cage
 {

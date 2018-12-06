@@ -69,12 +69,12 @@ namespace cage
 			avg = privat::averageQuaternions(buffer, N);
 		}
 
-		const quat &smooth() const
+		quat smooth() const
 		{
 			return avg;
 		}
 
-		const quat &last() const
+		quat last() const
 		{
 			return buffer[index];
 		}
