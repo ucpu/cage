@@ -21,8 +21,10 @@ namespace cage
 			windowEventListeners listeners;
 			eventListener<void()> updateListener;
 			variableSmoothingBufferStruct<vec2, 2> mouseSmoother;
-			vec2 mouseMoveAccum;
 			variableSmoothingBufferStruct<vec3, 2> moveSmoother;
+			variableSmoothingBufferStruct<real, 2> wheelSmoother;
+			vec2 mouseMoveAccum;
+			real wheelAccum;
 
 			entityClass *entity;
 			bool keysPressedArrows[6]; // wsadeq
@@ -32,6 +34,7 @@ namespace cage
 				for (uint32 i = 0; i < 6; i++)
 					keysPressedArrows[i] = false;
 				movementSpeed = 1;
+				wheelSpeed = 10;
 				turningSpeed = vec2(0.008, 0.008);
 				pitchLimitUp = degs(80);
 				pitchLimitDown = degs(-80);
@@ -43,6 +46,7 @@ namespace cage
 
 				listeners.mousePress.bind<cameraControllerImpl, &cameraControllerImpl::mousePress>(this);
 				listeners.mouseMove.bind<cameraControllerImpl, &cameraControllerImpl::mouseMove>(this);
+				listeners.mouseWheel.bind<cameraControllerImpl, &cameraControllerImpl::mouseWheel>(this);
 				listeners.keyPress.bind<cameraControllerImpl, &cameraControllerImpl::keyPress>(this);
 				listeners.keyRelease.bind<cameraControllerImpl, &cameraControllerImpl::keyRelease>(this);
 				listeners.attachAll(window());
@@ -62,7 +66,7 @@ namespace cage
 
 			bool mouseEnabled(mouseButtonsFlags buttons)
 			{
-				return window()->isFocused() && (mouseButton == mouseButtonsFlags::None || (buttons & mouseButton) == mouseButton);
+				return !!entity && window()->isFocused() && (mouseButton == mouseButtonsFlags::None || (buttons & mouseButton) == mouseButton);
 			}
 
 			bool mousePress(mouseButtonsFlags buttons, modifiersFlags, const pointStruct &)
@@ -74,14 +78,20 @@ namespace cage
 
 			bool mouseMove(mouseButtonsFlags buttons, modifiersFlags, const pointStruct &pt)
 			{
-				if (!entity)
-					return false;
 				if (!mouseEnabled(buttons))
 					return false;
 				pointStruct pt2 = centerMouse();
 				sint32 dx = pt2.x - pt.x;
 				sint32 dy = pt2.y - pt.y;
 				mouseMoveAccum += vec2(dx, dy);
+				return false;
+			}
+
+			bool mouseWheel(sint8 wheel, modifiersFlags, const pointStruct &)
+			{
+				if (!entity)
+					return false;
+				wheelAccum += wheel;
 				return false;
 			}
 
@@ -152,10 +162,12 @@ namespace cage
 				// orientation
 				mouseSmoother.add(mouseMoveAccum);
 				mouseMoveAccum = vec2();
+				wheelSmoother.add(wheelAccum);
+				wheelAccum = 0;
 				vec2 r = mouseSmoother.smooth() * turningSpeed;
 				if (freeMove)
 				{
-					t.orientation = t.orientation * quat(rads(r[1]), rads(r[0]), degs());
+					t.orientation = t.orientation * quat(rads(r[1]), rads(r[0]), degs(wheelSmoother.smooth() * wheelSpeed));
 				}
 				else
 				{ // limit pitch

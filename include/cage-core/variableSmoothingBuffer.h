@@ -50,6 +50,40 @@ namespace cage
 		T buffer[N];
 		T sum;
 	};
+
+	namespace privat
+	{
+		CAGE_API quat averageQuaternions(const quat *quaternions, uint32 count);
+	}
+
+	template<uint32 N>
+	struct variableSmoothingBufferStruct<quat, N>
+	{
+		variableSmoothingBufferStruct() : index(0)
+		{}
+
+		void add(const quat &value)
+		{
+			index = (index + 1) % N;
+			buffer[index] = value;
+			avg = privat::averageQuaternions(buffer, N);
+		}
+
+		const quat &smooth() const
+		{
+			return avg;
+		}
+
+		const quat &last() const
+		{
+			return buffer[index];
+		}
+
+	private:
+		uint32 index;
+		quat buffer[N];
+		quat avg;
+	};
 }
 
 #endif // guard_variableSmoothingBuffer_h_A47863F30E264545882F83741CC64A3F

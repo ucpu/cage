@@ -8,6 +8,7 @@ namespace cage
 	public:
 		void setEntity(entityClass *entity = nullptr);
 		vec2 turningSpeed;
+		real wheelSpeed;
 		real movementSpeed;
 		rads pitchLimitUp;
 		rads pitchLimitDown;
