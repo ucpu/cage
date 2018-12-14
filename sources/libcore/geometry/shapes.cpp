@@ -215,6 +215,11 @@ namespace cage
 			*this = aabb::Universe;
 	}
 
+	aabb::aabb(const plane &other)
+	{
+		CAGE_THROW_CRITICAL(notImplementedException, "plane to aabb");
+	}
+
 	aabb aabb::operator + (const aabb &other) const
 	{
 		if (other.empty())

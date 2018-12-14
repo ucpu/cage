@@ -17,19 +17,36 @@ namespace cage
 	{
 		struct itemBase
 		{
-			virtual operator aabb() const = 0;
+			aabb box;
+			vec3 center;
+			const uint32 name;
+			
+			virtual aabb getBox() const = 0;
 			virtual bool intersects(const line &other) = 0;
 			virtual bool intersects(const triangle &other) = 0;
 			virtual bool intersects(const plane &other) = 0;
 			virtual bool intersects(const sphere &other) = 0;
 			virtual bool intersects(const aabb &other) = 0;
+
+			itemBase(uint32 name) : name(name)
+			{}
+
+			void update()
+			{
+				box = getBox();
+				center = box.center();
+			}
 		};
 
 		template<class T>
 		struct itemShape : public itemBase, public T
 		{
-			itemShape(const T &other) : T(other) {}
-			virtual operator aabb() const { return aabb(*this); }
+			itemShape(uint32 name, const T &other) : itemBase(name), T(other)
+			{
+				update();
+			}
+
+			virtual aabb getBox() const { return aabb(*(T*)(this)); }
 			virtual bool intersects(const line &other) { return cage::intersects(*this, other); };
 			virtual bool intersects(const triangle &other) { return cage::intersects(*this, other); };
 			virtual bool intersects(const plane &other) { return cage::intersects(*this, other); };
@@ -56,16 +73,6 @@ namespace cage
 			{}
 		};
 
-		struct itemHelperStruct
-		{
-			aabb box;
-			uint32 name;
-
-			itemHelperStruct(uint32 name, const aabb &box) : box(box), name(name)
-			{}
-		};
-		typedef std::vector<itemHelperStruct>::iterator helperIterator;
-
 		class spatialDataImpl : public spatialDataClass
 		{
 		public:
@@ -75,7 +82,8 @@ namespace cage
 			holder<cage::hashTableClass<itemBase>> itemsTable;
 			std::atomic<bool> dirty;
 			std::vector<nodeStruct> nodes;
-			std::vector<itemHelperStruct> helpers;
+			std::vector<itemBase*> indices;
+			typedef std::vector<itemBase*>::iterator indicesIterator;
 			std::array<aabb, binsCount> leftBinBoxes;
 			std::array<aabb, binsCount> rightBinBoxes;
 
@@ -89,10 +97,10 @@ namespace cage
 				clear();
 			}
 
-			static void sortHelpersByAxis(helperIterator begin, helperIterator end, uint32 axis)
+			static void sortHelpersByAxis(indicesIterator begin, indicesIterator end, uint32 axis)
 			{
-				std::sort(begin, end, [&](const itemHelperStruct &a, const itemHelperStruct &b) {
-					return a.box.center()[axis] < b.box.center()[axis];
+				std::sort(begin, end, [&](const itemBase *a, const itemBase *b) {
+					return a->center[axis] < b->center[axis];
 				});
 			}
 
@@ -103,15 +111,15 @@ namespace cage
 				return itemsCount * (splitIndex + 1) / binsCount;
 			}
 
-			aabb makeBox(helperIterator begin, helperIterator end)
+			aabb makeBox(indicesIterator begin, indicesIterator end)
 			{
 				aabb res;
 				for (auto it = begin; it != end; it++)
-					res += it->box;
+					res += (*it)->box;
 				return res;
 			}
 
-			void evaluateAxis(helperIterator begin, helperIterator end, uint32 axis, uint32 &bestAxis, uint32 &bestSplit, real &bestSah)
+			void evaluateAxis(indicesIterator begin, indicesIterator end, uint32 axis, uint32 &bestAxis, uint32 &bestSplit, real &bestSah)
 			{
 				uint32 itemsCount = numeric_cast<uint32>(end - begin);
 				// prepare bin boxes
@@ -145,7 +153,7 @@ namespace cage
 			{
 				nodeStruct &node = nodes[nodeIndex];
 				CAGE_ASSERT_RUNTIME(node.a >= 0 && node.b >= 0);
-				node.box = makeBox(helpers.begin() + node.a, helpers.begin() + (node.a + node.b));
+				node.box = makeBox(indices.begin() + node.a, indices.begin() + (node.a + node.b));
 			}
 
 			void rebuild(uint32 nodeIndex, uint32 nodeDepth, real parentSah)
@@ -162,8 +170,8 @@ namespace cage
 				real bestSah = real::PositiveInfinity;
 				for (uint32 axis = 0; axis < 3; axis++)
 				{
-					sortHelpersByAxis(helpers.begin() + node.a, helpers.begin() + (node.a + node.b), axis);
-					evaluateAxis(helpers.begin() + node.a, helpers.begin() + (node.a + node.b), axis, bestAxis, bestSplit, bestSah);
+					sortHelpersByAxis(indices.begin() + node.a, indices.begin() + (node.a + node.b), axis);
+					evaluateAxis(indices.begin() + node.a, indices.begin() + (node.a + node.b), axis, bestAxis, bestSplit, bestSah);
 				}
 				CAGE_ASSERT_RUNTIME(bestSah.valid());
 				if (bestSah >= parentSah)
@@ -173,7 +181,7 @@ namespace cage
 				}
 				CAGE_ASSERT_RUNTIME(bestAxis < 3);
 				CAGE_ASSERT_RUNTIME(bestSplit + 1 < binsCount); // splits count is one less than bins count
-				sortHelpersByAxis(helpers.begin() + node.a, helpers.begin() + (node.a + node.b), bestAxis);
+				sortHelpersByAxis(indices.begin() + node.a, indices.begin() + (node.a + node.b), bestAxis);
 				uint32 split = splitItems(bestSplit, node.b);
 				sint32 leftNodeIndex = numeric_cast<sint32>(nodes.size());
 				nodes.emplace_back(node.a, split);
@@ -207,7 +215,7 @@ namespace cage
 				{ // leaf node
 					aabb box;
 					for (uint32 i = node.a, e = node.a + node.b; i < e; i++)
-						box += helpers[i].box;
+						box += indices[i]->box;
 					CAGE_ASSERT_RUNTIME(similar(node.box, box));
 				}
 			}
@@ -216,24 +224,21 @@ namespace cage
 			{
 				dirty = true;
 				nodes.clear();
-				helpers.clear();
+				indices.clear();
 				if (itemsTable->count() == 0)
 				{
 					dirty = false;
 					return;
 				}
 				nodes.reserve(itemsTable->count());
-				helpers.reserve(itemsTable->count());
+				indices.reserve(itemsTable->count());
 				for (const hashTablePair<itemBase> &it : *itemsTable)
-				{
-					aabb box = *it.second;
-					helpers.emplace_back(it.first, box);
-				}
+					indices.push_back(it.second);
 				nodes.emplace_back(0, numeric_cast<sint32>(itemsTable->count()));
 				rebuild(0, 0, real::PositiveInfinity);
 				CAGE_ASSERT_RUNTIME(nodes[0].box.valid());
 #ifdef CAGE_DEBUG
-				//validate(0);
+				validate(0);
 #endif // CAGE_DEBUG
 				dirty = false;
 			}
@@ -257,29 +262,39 @@ namespace cage
 			}
 
 			template<class T>
-			void intersection(const T &other, uint32 nodeIndex)
+			struct intersectorStruct
 			{
-				const nodeStruct &node = data->nodes[nodeIndex];
-				if (!intersects(other, node.box))
-					return;
-				if (node.a < 0)
-				{ // internode
-					intersection(other, -node.a);
-					intersection(other, -node.b);
+				const spatialDataImpl *data;
+				std::vector<uint32> &resultNames;
+				const T &other;
+
+				intersectorStruct(const spatialDataImpl *data, std::vector<uint32> &resultNames, const T &other) : data(data), resultNames(resultNames), other(other)
+				{
+					intersection(0);
 				}
-				else
-				{ // leaf
-					for (uint32 i = node.a, e = node.a + node.b; i < e; i++)
-					{
-						if (!intersects(data->helpers[i].box, other))
-							continue;
-						uint32 name = data->helpers[i].name;
-						itemBase *item = data->itemsTable->get(name, false);
-						if (item->intersects(other))
-							resultNames.push_back(name);
+
+				void intersection(uint32 nodeIndex)
+				{
+					const nodeStruct &node = data->nodes[nodeIndex];
+					if (!intersects(other, node.box))
+						return;
+					if (node.a < 0)
+					{ // internode
+						intersection(-node.a);
+						intersection(-node.b);
+					}
+					else
+					{ // leaf
+						for (uint32 i = node.a, e = node.a + node.b; i < e; i++)
+						{
+							itemBase *item = data->indices[i];
+							if (item->intersects(other))
+								resultNames.push_back(item->name);
+						}
 					}
 				}
-			}
+			};
+
 
 			template<class T>
 			void intersection(const T &other)
@@ -288,9 +303,7 @@ namespace cage
 				clear();
 				if (data->nodes.empty())
 					return;
-				intersection(other, 0);
-				std::sort(resultNames.begin(), resultNames.end());
-				resultNames.erase(std::unique(resultNames.begin(), resultNames.end()), resultNames.end());
+				intersectorStruct<T> i(data, resultNames, other);
 			}
 		};
 	}
@@ -349,7 +362,7 @@ namespace cage
 		CAGE_ASSERT_RUNTIME(other.isPoint() || other.isSegment());
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		remove(name);
-		impl->itemsTable->add(name, impl->itemsArena.createObject<itemShape<line>>(other));
+		impl->itemsTable->add(name, impl->itemsArena.createObject<itemShape<line>>(name, other));
 	}
 
 	void spatialDataClass::update(uint32 name, const triangle &other)
@@ -358,7 +371,7 @@ namespace cage
 		CAGE_ASSERT_RUNTIME(other.area() < real::PositiveInfinity);
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		remove(name);
-		impl->itemsTable->add(name, impl->itemsArena.createObject<itemShape<triangle>>(other));
+		impl->itemsTable->add(name, impl->itemsArena.createObject<itemShape<triangle>>(name, other));
 	}
 
 	void spatialDataClass::update(uint32 name, const sphere &other)
@@ -367,7 +380,7 @@ namespace cage
 		CAGE_ASSERT_RUNTIME(other.volume() < real::PositiveInfinity);
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		remove(name);
-		impl->itemsTable->add(name, impl->itemsArena.createObject<itemShape<sphere>>(other));
+		impl->itemsTable->add(name, impl->itemsArena.createObject<itemShape<sphere>>(name, other));
 	}
 
 	void spatialDataClass::update(uint32 name, const aabb &other)
@@ -376,7 +389,7 @@ namespace cage
 		CAGE_ASSERT_RUNTIME(other.volume() < real::PositiveInfinity);
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		remove(name);
-		impl->itemsTable->add(name, impl->itemsArena.createObject<itemShape<aabb>>(other));
+		impl->itemsTable->add(name, impl->itemsArena.createObject<itemShape<aabb>>(name, other));
 	}
 
 	void spatialDataClass::remove(uint32 name)

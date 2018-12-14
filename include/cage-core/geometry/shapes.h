@@ -158,6 +158,7 @@ namespace cage
 		explicit aabb(const triangle &other) : a(min(min(other[0], other[1]), other[2])), b(max(max(other[0], other[1]), other[2])) {};
 		explicit aabb(const sphere &other) : a(other.center - other.radius), b(other.center + other.radius) {};
 		explicit aabb(const line &other);
+		explicit aabb(const plane &other);
 
 		// compound operators
 		aabb &operator += (const aabb &other) { return *this = *this + other; }
