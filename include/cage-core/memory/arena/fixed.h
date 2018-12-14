@@ -48,6 +48,10 @@ namespace cage
 			allocator.flush();
 		}
 
+		const void *getOrigin() const { return origin; }
+		uintPtr getCurrentSize() const { return size; }
+		uintPtr getReservedSize() const { return size; }
+
 	private:
 		AllocatorPolicy allocator;
 		ConcurrentPolicy concurrent;

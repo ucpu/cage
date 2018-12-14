@@ -1,6 +1,7 @@
 namespace cage
 {
-	template<class T> struct memoryArenaStd
+	template<class T>
+	struct memoryArenaStd
 	{
 		typedef T value_type;
 		typedef value_type *pointer;
@@ -10,7 +11,8 @@ namespace cage
 		typedef uintPtr size_type;
 		typedef sintPtr difference_type;
 
-		template<class U> struct rebind
+		template<class U>
+		struct rebind
 		{
 			typedef memoryArenaStd<U> other;
 		};
@@ -68,7 +70,8 @@ namespace cage
 
 	private:
 		memoryArena a;
-		template<class U> friend struct memoryArenaStd;
+		template<class U>
+		friend struct memoryArenaStd;
 	};
 }
 

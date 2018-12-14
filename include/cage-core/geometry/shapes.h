@@ -170,7 +170,7 @@ namespace cage
 		aabb operator * (const transform &other) const { return *this * mat4(other); };
 
 		// comparison operators
-		bool operator == (const aabb &other) const { return (empty() == other.empty()) || (a == other.a && b == other.b); }
+		bool operator == (const aabb &other) const { return (empty() == other.empty()) && (empty() || (a == other.a && b == other.b)); }
 		bool operator != (const aabb &other) const { return !(*this == other); }
 
 		// conversion operators

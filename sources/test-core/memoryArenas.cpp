@@ -21,7 +21,8 @@ namespace
 			CAGE_TEST(((uint8*)pole)[i] == (uint8)(i + 10)); // do not use numeric_cast
 	}
 
-	template<uint32 Size> struct testStruct
+	template<uint32 Size>
+	struct testStruct
 	{
 		testStruct()
 		{
@@ -42,17 +43,18 @@ namespace
 		uint8 pole[Size];
 	};
 
-	template<uint32 Size> sint32 testStruct<Size>::count;
+	template<uint32 Size>
+	sint32 testStruct<Size>::count;
 
 	template<template<class...> class ArenaPolicy,
 		class BoundsPolicy, class TagPolicy, class TrackPolicy,
 		uintPtr Alignment, uint32 AllocatorPolicy, class Traits>
-		struct memoryArenaTest {};
+	struct memoryArenaTest {};
 
 	template<template<class...> class ArenaPolicy,
 		class BoundsPolicy, class TagPolicy, class TrackPolicy,
 		uintPtr Alignment, class Traits>
-		struct memoryArenaTest<ArenaPolicy, BoundsPolicy, TagPolicy, TrackPolicy, Alignment, 0, Traits>
+	struct memoryArenaTest<ArenaPolicy, BoundsPolicy, TagPolicy, TrackPolicy, Alignment, 0, Traits>
 	{ // pool
 		memoryArenaTest()
 		{
@@ -96,7 +98,7 @@ namespace
 	template<template<class...> class ArenaPolicy,
 		class BoundsPolicy, class TagPolicy, class TrackPolicy,
 		uintPtr Alignment, class Traits>
-		struct memoryArenaTest<ArenaPolicy, BoundsPolicy, TagPolicy, TrackPolicy, Alignment, 1, Traits>
+	struct memoryArenaTest<ArenaPolicy, BoundsPolicy, TagPolicy, TrackPolicy, Alignment, 1, Traits>
 	{ // linear
 		memoryArenaTest()
 		{
@@ -118,7 +120,7 @@ namespace
 	template<template<class...> class ArenaPolicy,
 		class BoundsPolicy, class TagPolicy, class TrackPolicy,
 		uintPtr Alignment, class Traits>
-		struct memoryArenaTest<ArenaPolicy, BoundsPolicy, TagPolicy, TrackPolicy, Alignment, 2, Traits>
+	struct memoryArenaTest<ArenaPolicy, BoundsPolicy, TagPolicy, TrackPolicy, Alignment, 2, Traits>
 	{ // nFrame
 		memoryArenaTest()
 		{
@@ -154,7 +156,7 @@ namespace
 	template<template<class...> class ArenaPolicy,
 		class BoundsPolicy, class TagPolicy, class TrackPolicy,
 		uintPtr Alignment, class Traits>
-		struct memoryArenaTest<ArenaPolicy, BoundsPolicy, TagPolicy, TrackPolicy, Alignment, 3, Traits>
+	struct memoryArenaTest<ArenaPolicy, BoundsPolicy, TagPolicy, TrackPolicy, Alignment, 3, Traits>
 	{ // queue
 		memoryArenaTest()
 		{
@@ -191,7 +193,7 @@ namespace
 	template<template<class...> class ArenaPolicy,
 		class BoundsPolicy, class TagPolicy, class TrackPolicy,
 		uintPtr Alignment, class Traits>
-		struct memoryArenaTest<ArenaPolicy, BoundsPolicy, TagPolicy, TrackPolicy, Alignment, 4, Traits>
+	struct memoryArenaTest<ArenaPolicy, BoundsPolicy, TagPolicy, TrackPolicy, Alignment, 4, Traits>
 	{ // stack
 		memoryArenaTest()
 		{
@@ -258,4 +260,16 @@ void testMemoryArenas()
 	{ memoryArenaTest<memoryArenaFixed, memoryBoundsPolicySimple, memoryTagPolicySimple, memoryTrackPolicySimple, 8, 3, Traits<>> a; }
 	// stack
 	{ memoryArenaTest<memoryArenaGrowing, memoryBoundsPolicySimple, memoryTagPolicySimple, memoryTrackPolicySimple, 8, 4, Traits<>> a; }
+
+	// indexed
+	{ 
+		memoryArenaIndexed<memoryArenaGrowing<memoryAllocatorPolicyPool<8>, memoryConcurrentPolicyNone>, 8> a(1024 * 1024);
+		a.deallocate(a.allocate(8));
+	}
+	{
+		memoryArenaIndexed<memoryArenaGrowing<memoryAllocatorPolicyLinear<>, memoryConcurrentPolicyNone>, 8> a(1024 * 1024);
+		void *p = a.allocate(8);
+		CAGE_TEST(a.i2p(a.p2i(p)) == p);
+		a.flush();
+	}
 }

@@ -52,7 +52,7 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_API memoryBuffer compress(const memoryBuffer &input, uint32 quality = 100); // quality is 0 to 100
+		CAGE_API memoryBuffer compress(const memoryBuffer &input); // quality is 0 to 100
 		CAGE_API memoryBuffer decompress(const memoryBuffer &input, uintPtr outputSize);
 	}
 }

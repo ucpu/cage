@@ -110,10 +110,10 @@ namespace cage
 
 	namespace detail
 	{
-		memoryBuffer compress(const memoryBuffer &input, uint32 quality)
+		memoryBuffer compress(const memoryBuffer &input)
 		{
 			memoryBuffer output(compressionBound(input.size()));
-			uintPtr res = compress(input.data(), input.size(), output.data(), output.size(), quality);
+			uintPtr res = compress(input.data(), input.size(), output.data(), output.size());
 			output.resize(res);
 			return output;
 		}

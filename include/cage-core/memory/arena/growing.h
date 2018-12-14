@@ -65,6 +65,10 @@ namespace cage
 			allocator.flush();
 		}
 
+		const void *getOrigin() const { return origin; }
+		uintPtr getCurrentSize() const { return currentSize; }
+		uintPtr getReservedSize() const { return addressSize; }
+
 	private:
 		holder<virtualMemoryClass> memory;
 		AllocatorPolicy allocator;

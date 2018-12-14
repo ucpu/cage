@@ -35,11 +35,10 @@ namespace cage
 			return ::compressBound(numeric_cast<uLong>(size));
 		}
 
-		uintPtr compress(const void *inputBuffer, uintPtr inputSize, void *outputBuffer, uintPtr outputSize, uint32 quality)
+		uintPtr compress(const void *inputBuffer, uintPtr inputSize, void *outputBuffer, uintPtr outputSize)
 		{
-			CAGE_ASSERT_RUNTIME(quality <= 100, quality);
 			uLongf s = numeric_cast<uLongf>(outputSize);
-			int level = numeric_cast<int>(quality / 100.f * (Z_BEST_COMPRESSION - Z_BEST_SPEED) + Z_BEST_SPEED);
+			int level = numeric_cast<int>(Z_BEST_COMPRESSION);
 			int res = ::compress2((Bytef*)outputBuffer, &s, (const Bytef*)inputBuffer, numeric_cast<uLong>(inputSize), level);
 			switch (res)
 			{

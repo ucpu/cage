@@ -1,6 +1,7 @@
 #include <vector>
 #include <algorithm>
 #include <atomic>
+#include <array>
 
 #define CAGE_EXPORT
 #include <cage-core/core.h>
@@ -45,27 +46,42 @@ namespace cage
 			itemShape<aabb> e;
 		};
 
-		static const uintPtr maxSize = sizeof(itemUnion);
+		struct nodeStruct
+		{
+			aabb box;
+			sint32 a; // negative -> inner node, -a = index of left child; non-negative -> leaf node, a = offset into itemNames array
+			sint32 b; // negative -> inner node, -b = index of right child; non-negative -> leaf node, b = items count
+			
+			nodeStruct(sint32 a, sint32 b) : a(a), b(b)
+			{}
+		};
+
+		struct itemHelperStruct
+		{
+			aabb box;
+			uint32 name;
+
+			itemHelperStruct(uint32 name, const aabb &box) : box(box), name(name)
+			{}
+		};
+		typedef std::vector<itemHelperStruct>::iterator helperIterator;
 
 		class spatialDataImpl : public spatialDataClass
 		{
 		public:
-			memoryArenaGrowing<memoryAllocatorPolicyPool<maxSize>, memoryConcurrentPolicyNone> pool;
-			memoryArena arena;
-			typedef holder<cage::hashTableClass<itemBase>> itemsMapType;
-			itemsMapType allItems;
-			std::vector<itemsMapType> itemsGrid;
-			aabb gridUniverse;
-			uint32 rx, ry, rz;
-			real gridResolutionCoefficient;
+			static const uint32 binsCount = 10;
+			memoryArenaIndexed<memoryArenaGrowing<memoryAllocatorPolicyPool<sizeof(itemUnion)>, memoryConcurrentPolicyNone>, sizeof(itemUnion)> itemsPool;
+			memoryArena itemsArena;
+			holder<cage::hashTableClass<itemBase>> itemsTable;
 			std::atomic<bool> dirty;
+			std::vector<nodeStruct> nodes;
+			std::vector<itemHelperStruct> helpers;
+			std::array<aabb, binsCount> leftBinBoxes;
+			std::array<aabb, binsCount> rightBinBoxes;
 
-			spatialDataImpl(const spatialDataCreateConfig &config) :
-				pool(config.memory), arena(&pool),
-				rx(0), ry(0), rz(0), gridResolutionCoefficient(config.gridResolutionCoefficient), dirty(false)
+			spatialDataImpl(const spatialDataCreateConfig &config) : itemsPool(config.maxItems * sizeof(itemUnion)), itemsArena(&itemsPool), dirty(false)
 			{
-				uint32 maxItems = numeric_cast<uint32>(config.memory / maxSize);
-				allItems = newHashTable<itemBase>(min(maxItems, 100u), maxItems * 2); // times 2 to compensate for fill ratio
+				itemsTable = newHashTable<itemBase>(min(config.maxItems, 100u), config.maxItems * 2); // times 2 to compensate for fill ratio
 			}
 
 			~spatialDataImpl()
@@ -73,85 +89,155 @@ namespace cage
 				clear();
 			}
 
-			static uint32 gridRange(real search, real left, real right, uint32 res)
+			static void sortHelpersByAxis(helperIterator begin, helperIterator end, uint32 axis)
 			{
-				if (search < left)
-					return 0;
-				if (search >= right)
-					return res - 1;
-				uint32 result = numeric_cast<uint32>((search - left) / (right - left) * (res - 1));
-				CAGE_ASSERT_RUNTIME(result >= 0 && result < res, result, res);
-				return result;
+				std::sort(begin, end, [&](const itemHelperStruct &a, const itemHelperStruct &b) {
+					return a.box.center()[axis] < b.box.center()[axis];
+				});
 			}
 
-			void gridRange(const aabb &box, uint32 &xMin, uint32 &xMax, uint32 &yMin, uint32 &yMax, uint32 &zMin, uint32 &zMax) const
+			static uint32 splitItems(uint32 splitIndex, uint32 itemsCount)
 			{
-				xMin = gridRange(box.a[0], gridUniverse.a[0], gridUniverse.b[0], rx);
-				yMin = gridRange(box.a[1], gridUniverse.a[1], gridUniverse.b[1], ry);
-				zMin = gridRange(box.a[2], gridUniverse.a[2], gridUniverse.b[2], rz);
-				xMax = gridRange(box.b[0], gridUniverse.a[0], gridUniverse.b[0], rx) + 1;
-				yMax = gridRange(box.b[1], gridUniverse.a[1], gridUniverse.b[1], ry) + 1;
-				zMax = gridRange(box.b[2], gridUniverse.a[2], gridUniverse.b[2], rz) + 1;
+				// for convenience, split index that corresponds to all items on left and no items on right is allowed here
+				CAGE_ASSERT_RUNTIME(splitIndex < binsCount);
+				return itemsCount * (splitIndex + 1) / binsCount;
 			}
 
-			template<class T>
-			void gridRangeGeneric(const T &box, uint32 &xMin, uint32 &xMax, uint32 &yMin, uint32 &yMax, uint32 &zMin, uint32 &zMax) const
+			aabb makeBox(helperIterator begin, helperIterator end)
 			{
-				gridRange(aabb(box), xMin, xMax, yMin, yMax, zMin, zMax);
+				aabb res;
+				for (auto it = begin; it != end; it++)
+					res += it->box;
+				return res;
+			}
+
+			void evaluateAxis(helperIterator begin, helperIterator end, uint32 axis, uint32 &bestAxis, uint32 &bestSplit, real &bestSah)
+			{
+				uint32 itemsCount = numeric_cast<uint32>(end - begin);
+				// prepare bin boxes
+				for (uint32 i = 0; i < binsCount - 1; i++)
+					leftBinBoxes[i] = makeBox(begin + splitItems(i, itemsCount), begin + splitItems(i + 1, itemsCount));
+				leftBinBoxes[binsCount - 1] = makeBox(begin + splitItems(binsCount - 2, itemsCount), end);
+				// right to left sweep
+				rightBinBoxes[binsCount - 1] = leftBinBoxes[binsCount - 1];
+				for (uint32 i = binsCount - 1; i > 0; i--)
+					rightBinBoxes[i - 1] = rightBinBoxes[i] + leftBinBoxes[i - 1];
+				// left to right sweep
+				for (uint32 i = 1; i < binsCount; i++)
+					leftBinBoxes[i] += leftBinBoxes[i - 1];
+				// compute sah
+				for (uint32 i = 0; i < binsCount - 1; i++)
+				{
+					uint32 split = splitItems(i, itemsCount);
+					real sahL = leftBinBoxes[i].surface() * split;
+					real sahR = rightBinBoxes[i + 1].surface() * (itemsCount - split - 1);
+					real sah = sahL + sahR;
+					if (sah < bestSah)
+					{
+						bestAxis = axis;
+						bestSplit = i;
+						bestSah = sah;
+					}
+				}
+			}
+
+			void makeNodeBox(uint32 nodeIndex)
+			{
+				nodeStruct &node = nodes[nodeIndex];
+				CAGE_ASSERT_RUNTIME(node.a >= 0 && node.b >= 0);
+				node.box = makeBox(helpers.begin() + node.a, helpers.begin() + (node.a + node.b));
+			}
+
+			void rebuild(uint32 nodeIndex, uint32 nodeDepth, real parentSah)
+			{
+				nodeStruct &node = nodes[nodeIndex];
+				CAGE_ASSERT_RUNTIME(node.a >= 0 && node.b >= 0);
+				if (node.b < 10)
+				{
+					makeNodeBox(nodeIndex);
+					return; // leaf node: too few primitives
+				}
+				uint32 bestAxis = -1;
+				uint32 bestSplit = -1;
+				real bestSah = real::PositiveInfinity;
+				for (uint32 axis = 0; axis < 3; axis++)
+				{
+					sortHelpersByAxis(helpers.begin() + node.a, helpers.begin() + (node.a + node.b), axis);
+					evaluateAxis(helpers.begin() + node.a, helpers.begin() + (node.a + node.b), axis, bestAxis, bestSplit, bestSah);
+				}
+				CAGE_ASSERT_RUNTIME(bestSah.valid());
+				if (bestSah >= parentSah)
+				{
+					makeNodeBox(nodeIndex);
+					return; // leaf node: split would make no improvement
+				}
+				CAGE_ASSERT_RUNTIME(bestAxis < 3);
+				CAGE_ASSERT_RUNTIME(bestSplit + 1 < binsCount); // splits count is one less than bins count
+				sortHelpersByAxis(helpers.begin() + node.a, helpers.begin() + (node.a + node.b), bestAxis);
+				uint32 split = splitItems(bestSplit, node.b);
+				sint32 leftNodeIndex = numeric_cast<sint32>(nodes.size());
+				nodes.emplace_back(node.a, split);
+				rebuild(leftNodeIndex, nodeDepth + 1, bestSah);
+				sint32 rightNodeIndex = numeric_cast<sint32>(nodes.size());
+				nodes.emplace_back(node.a + split, node.b - split);
+				rebuild(rightNodeIndex, nodeDepth + 1, bestSah);
+				node.a = -leftNodeIndex;
+				node.b = -rightNodeIndex;
+				node.box = nodes[leftNodeIndex].box + nodes[rightNodeIndex].box;
+			}
+
+			bool similar(const aabb &a, const aabb &b)
+			{
+				return (length(a.a - b.a) + length(a.b - b.b)) < 1e-3;
+			}
+
+			void validate(uint32 nodeIndex)
+			{
+				nodeStruct &node = nodes[nodeIndex];
+				CAGE_ASSERT_RUNTIME((node.a < 0) == (node.b < 0));
+				if (node.a < 0)
+				{ // inner node
+					nodeStruct &l = nodes[-node.a];
+					nodeStruct &r = nodes[-node.b];
+					CAGE_ASSERT_RUNTIME(similar(node.box, l.box + r.box));
+					validate(-node.a);
+					validate(-node.b);
+				}
+				else
+				{ // leaf node
+					aabb box;
+					for (uint32 i = node.a, e = node.a + node.b; i < e; i++)
+						box += helpers[i].box;
+					CAGE_ASSERT_RUNTIME(similar(node.box, box));
+				}
 			}
 
 			void rebuild()
 			{
-				rx = ry = rz = 0;
-				gridUniverse = aabb();
-				if (allItems->count() == 0)
+				dirty = true;
+				nodes.clear();
+				helpers.clear();
+				if (itemsTable->count() == 0)
 				{
 					dirty = false;
 					return;
 				}
-
-				for (auto it = allItems->begin(), et = allItems->end(); it != et; it++)
-					gridUniverse += aabb(*it->second);
-				decideResolution();
-
-				itemsGrid.resize(rx * ry * rz);
-				uint32 itemsPerCell = numeric_cast<uint32>(allItems->count() / itemsGrid.size() + 1) * 2;
-				itemsPerCell = min(itemsPerCell, allItems->count());
-				for (auto &&it : itemsGrid)
-					it = newHashTable<itemBase>(itemsPerCell, allItems->count());
-				for (auto it = allItems->begin(), et = allItems->end(); it != et; it++)
+				nodes.reserve(itemsTable->count());
+				helpers.reserve(itemsTable->count());
+				for (const hashTablePair<itemBase> &it : *itemsTable)
 				{
-					uint32 xMin, xMax, yMin, yMax, zMin, zMax;
-					gridRange(aabb(*it->second), xMin, xMax, yMin, yMax, zMin, zMax);
-					for (uint32 z = zMin; z < zMax; z++)
-						for (uint32 y = yMin; y < yMax; y++)
-							for (uint32 x = xMin; x < xMax; x++)
-								itemsGrid[((z * ry) + y) * rx + x]->add(it->first, it->second);
+					aabb box = *it.second;
+					helpers.emplace_back(it.first, box);
 				}
-
+				nodes.emplace_back(0, numeric_cast<sint32>(itemsTable->count()));
+				rebuild(0, 0, real::PositiveInfinity);
+				CAGE_ASSERT_RUNTIME(nodes[0].box.valid());
+#ifdef CAGE_DEBUG
+				//validate(0);
+#endif // CAGE_DEBUG
 				dirty = false;
 			}
-
-			void decideResolution()
-			{
-				vec3 d = gridUniverse.size();
-				real scale = gridResolutionCoefficient * allItems->count() / (
-					(d[0] > 0 ? d[0] : 1) *
-					(d[1] > 0 ? d[1] : 1) *
-					(d[2] > 0 ? d[2] : 1)
-					);
-				scale = pow(scale, 0.3333333);
-				rx = d[0] > 0 ? max(numeric_cast<uint32>(d[0] * scale), 1u) : 1;
-				ry = d[1] > 0 ? max(numeric_cast<uint32>(d[1] * scale), 1u) : 1;
-				rz = d[2] > 0 ? max(numeric_cast<uint32>(d[2] * scale), 1u) : 1;
-			}
 		};
-
-		template<>
-		void spatialDataImpl::gridRangeGeneric(const plane &box, uint32 &xMin, uint32 &xMax, uint32 &yMin, uint32 &yMax, uint32 &zMin, uint32 &zMax) const
-		{
-			gridRange(aabb::Universe, xMin, xMax, yMin, yMax, zMin, zMax);
-		}
 
 		class spatialQueryImpl : public spatialQueryClass
 		{
@@ -171,30 +257,40 @@ namespace cage
 			}
 
 			template<class T>
+			void intersection(const T &other, uint32 nodeIndex)
+			{
+				const nodeStruct &node = data->nodes[nodeIndex];
+				if (!intersects(other, node.box))
+					return;
+				if (node.a < 0)
+				{ // internode
+					intersection(other, -node.a);
+					intersection(other, -node.b);
+				}
+				else
+				{ // leaf
+					for (uint32 i = node.a, e = node.a + node.b; i < e; i++)
+					{
+						if (!intersects(data->helpers[i].box, other))
+							continue;
+						uint32 name = data->helpers[i].name;
+						itemBase *item = data->itemsTable->get(name, false);
+						if (item->intersects(other))
+							resultNames.push_back(name);
+					}
+				}
+			}
+
+			template<class T>
 			void intersection(const T &other)
 			{
 				CAGE_ASSERT_RUNTIME(!data->dirty);
 				clear();
-				if (data->rx == 0)
+				if (data->nodes.empty())
 					return;
-				uint32 xMin, xMax, yMin, yMax, zMin, zMax;
-				data->gridRangeGeneric(other, xMin, xMax, yMin, yMax, zMin, zMax);
-				for (uint32 z = zMin; z < zMax; z++)
-				{
-					for (uint32 y = yMin; y < yMax; y++)
-					{
-						for (uint32 x = xMin; x < xMax; x++)
-						{
-							const auto &mp = data->itemsGrid[((z * data->ry) + y) * data->rx + x];
-							for (auto it = mp->begin(), et = mp->end(); it != et; it++)
-								if (it->second->intersects(other))
-									resultNames.push_back(it->first);
-						}
-					}
-				}
+				intersection(other, 0);
 				std::sort(resultNames.begin(), resultNames.end());
-				auto et = std::unique(resultNames.begin(), resultNames.end());
-				resultNames.resize(et - resultNames.begin());
+				resultNames.erase(std::unique(resultNames.begin(), resultNames.end()), resultNames.end());
 			}
 		};
 	}
@@ -253,7 +349,7 @@ namespace cage
 		CAGE_ASSERT_RUNTIME(other.isPoint() || other.isSegment());
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		remove(name);
-		impl->allItems->add(name, impl->arena.createObject<itemShape<line>>(other));
+		impl->itemsTable->add(name, impl->itemsArena.createObject<itemShape<line>>(other));
 	}
 
 	void spatialDataClass::update(uint32 name, const triangle &other)
@@ -262,7 +358,7 @@ namespace cage
 		CAGE_ASSERT_RUNTIME(other.area() < real::PositiveInfinity);
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		remove(name);
-		impl->allItems->add(name, impl->arena.createObject<itemShape<triangle>>(other));
+		impl->itemsTable->add(name, impl->itemsArena.createObject<itemShape<triangle>>(other));
 	}
 
 	void spatialDataClass::update(uint32 name, const sphere &other)
@@ -271,7 +367,7 @@ namespace cage
 		CAGE_ASSERT_RUNTIME(other.volume() < real::PositiveInfinity);
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		remove(name);
-		impl->allItems->add(name, impl->arena.createObject<itemShape<sphere>>(other));
+		impl->itemsTable->add(name, impl->itemsArena.createObject<itemShape<sphere>>(other));
 	}
 
 	void spatialDataClass::update(uint32 name, const aabb &other)
@@ -280,26 +376,26 @@ namespace cage
 		CAGE_ASSERT_RUNTIME(other.volume() < real::PositiveInfinity);
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		remove(name);
-		impl->allItems->add(name, impl->arena.createObject<itemShape<aabb>>(other));
+		impl->itemsTable->add(name, impl->itemsArena.createObject<itemShape<aabb>>(other));
 	}
 
 	void spatialDataClass::remove(uint32 name)
 	{
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		impl->dirty = true;
-		auto item = impl->allItems->get(name, true);
+		auto item = impl->itemsTable->get(name, true);
 		if (!item)
 			return;
-		impl->allItems->remove(name);
-		impl->arena.deallocate(item);
+		impl->itemsTable->remove(name);
+		impl->itemsArena.deallocate(item);
 	}
 
 	void spatialDataClass::clear()
 	{
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		impl->dirty = true;
-		impl->arena.flush();
-		impl->allItems->clear();
+		impl->itemsArena.flush();
+		impl->itemsTable->clear();
 	}
 
 	void spatialDataClass::rebuild()
@@ -308,7 +404,7 @@ namespace cage
 		impl->rebuild();
 	}
 
-	spatialDataCreateConfig::spatialDataCreateConfig() : memory(1024 * 1024 * 64), gridResolutionCoefficient(0.2)
+	spatialDataCreateConfig::spatialDataCreateConfig() : maxItems(1000 * 100)
 	{}
 
 	holder<spatialDataClass> newSpatialData(const spatialDataCreateConfig &config)

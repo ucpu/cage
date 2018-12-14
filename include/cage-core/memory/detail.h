@@ -21,7 +21,7 @@ namespace cage
 		}
 
 		CAGE_API uintPtr compressionBound(uintPtr size);
-		CAGE_API uintPtr compress(const void *inputBuffer, uintPtr inputSize, void *outputBuffer, uintPtr outputSize, uint32 quality = 100); // quality is 0 to 100
+		CAGE_API uintPtr compress(const void *inputBuffer, uintPtr inputSize, void *outputBuffer, uintPtr outputSize);
 		CAGE_API uintPtr decompress(const void *inputBuffer, uintPtr inputSize, void *outputBuffer, uintPtr outputSize);
 	}
 

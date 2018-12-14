@@ -40,10 +40,9 @@ namespace cage
 			}
 
 			collisionDataImpl(const collisionDataCreateConfig &config) :
-				pool(spatialConfig(config).memory), arena(&pool), maxCollisionPairs(config.maxCollisionPairs)
+				pool(spatialConfig(config).maxItems * sizeof(itemStruct)), arena(&pool), maxCollisionPairs(config.maxCollisionPairs)
 			{
-				uint32 maxItems = numeric_cast<uint32>(spatialConfig(config).memory / sizeof(itemStruct));
-				allItems = newHashTable<itemStruct>(min(maxItems, 100u), maxItems);
+				allItems = newHashTable<itemStruct>(min(spatialConfig(config).maxItems, 100u), spatialConfig(config).maxItems);
 				spatial = newSpatialData(spatialConfig(config));
 			}
 

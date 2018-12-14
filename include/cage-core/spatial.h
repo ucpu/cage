@@ -31,8 +31,7 @@ namespace cage
 
 	struct CAGE_API spatialDataCreateConfig
 	{
-		uintPtr memory;
-		real gridResolutionCoefficient; // the higher the coefficient, the higher the resolution
+		uint32 maxItems;
 		spatialDataCreateConfig();
 	};
 
