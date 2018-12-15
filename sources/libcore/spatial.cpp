@@ -69,14 +69,13 @@ namespace cage
 			sint32 a; // negative -> inner node, -a = index of left child; non-negative -> leaf node, a = offset into itemNames array
 			sint32 b; // negative -> inner node, -b = index of right child; non-negative -> leaf node, b = items count
 			
-			nodeStruct(sint32 a, sint32 b) : a(a), b(b)
+			nodeStruct(const aabb &box, sint32 a, sint32 b) : box(box), a(a), b(b)
 			{}
 		};
 
 		class spatialDataImpl : public spatialDataClass
 		{
 		public:
-			static const uint32 binsCount = 10;
 			memoryArenaIndexed<memoryArenaGrowing<memoryAllocatorPolicyPool<sizeof(itemUnion)>, memoryConcurrentPolicyNone>, sizeof(itemUnion)> itemsPool;
 			memoryArena itemsArena;
 			holder<cage::hashTableClass<itemBase>> itemsTable;
@@ -84,8 +83,10 @@ namespace cage
 			std::vector<nodeStruct> nodes;
 			std::vector<itemBase*> indices;
 			typedef std::vector<itemBase*>::iterator indicesIterator;
+			static const uint32 binsCount = 10;
 			std::array<aabb, binsCount> leftBinBoxes;
 			std::array<aabb, binsCount> rightBinBoxes;
+			std::array<uint32, binsCount> leftBinCounts;
 
 			spatialDataImpl(const spatialDataCreateConfig &config) : itemsPool(config.maxItems * sizeof(itemUnion)), itemsArena(&itemsPool), dirty(false)
 			{
@@ -97,101 +98,84 @@ namespace cage
 				clear();
 			}
 
-			static void sortHelpersByAxis(indicesIterator begin, indicesIterator end, uint32 axis)
-			{
-				std::sort(begin, end, [&](const itemBase *a, const itemBase *b) {
-					return a->center[axis] < b->center[axis];
-				});
-			}
-
-			static uint32 splitItems(uint32 splitIndex, uint32 itemsCount)
-			{
-				// for convenience, split index that corresponds to all items on left and no items on right is allowed here
-				CAGE_ASSERT_RUNTIME(splitIndex < binsCount);
-				return itemsCount * (splitIndex + 1) / binsCount;
-			}
-
-			aabb makeBox(indicesIterator begin, indicesIterator end)
-			{
-				aabb res;
-				for (auto it = begin; it != end; it++)
-					res += (*it)->box;
-				return res;
-			}
-
-			void evaluateAxis(indicesIterator begin, indicesIterator end, uint32 axis, uint32 &bestAxis, uint32 &bestSplit, real &bestSah)
-			{
-				uint32 itemsCount = numeric_cast<uint32>(end - begin);
-				// prepare bin boxes
-				for (uint32 i = 0; i < binsCount - 1; i++)
-					leftBinBoxes[i] = makeBox(begin + splitItems(i, itemsCount), begin + splitItems(i + 1, itemsCount));
-				leftBinBoxes[binsCount - 1] = makeBox(begin + splitItems(binsCount - 2, itemsCount), end);
-				// right to left sweep
-				rightBinBoxes[binsCount - 1] = leftBinBoxes[binsCount - 1];
-				for (uint32 i = binsCount - 1; i > 0; i--)
-					rightBinBoxes[i - 1] = rightBinBoxes[i] + leftBinBoxes[i - 1];
-				// left to right sweep
-				for (uint32 i = 1; i < binsCount; i++)
-					leftBinBoxes[i] += leftBinBoxes[i - 1];
-				// compute sah
-				for (uint32 i = 0; i < binsCount - 1; i++)
-				{
-					uint32 split = splitItems(i, itemsCount);
-					real sahL = leftBinBoxes[i].surface() * split;
-					real sahR = rightBinBoxes[i + 1].surface() * (itemsCount - split - 1);
-					real sah = sahL + sahR;
-					if (sah < bestSah)
-					{
-						bestAxis = axis;
-						bestSplit = i;
-						bestSah = sah;
-					}
-				}
-			}
-
-			void makeNodeBox(uint32 nodeIndex)
-			{
-				nodeStruct &node = nodes[nodeIndex];
-				CAGE_ASSERT_RUNTIME(node.a >= 0 && node.b >= 0);
-				node.box = makeBox(indices.begin() + node.a, indices.begin() + (node.a + node.b));
-			}
-
 			void rebuild(uint32 nodeIndex, uint32 nodeDepth, real parentSah)
 			{
 				nodeStruct &node = nodes[nodeIndex];
-				CAGE_ASSERT_RUNTIME(node.a >= 0 && node.b >= 0);
-				if (node.b < 10)
-				{
-					makeNodeBox(nodeIndex);
+				CAGE_ASSERT_RUNTIME(node.a >= 0 && node.b >= 0); // is leaf now
+				if (node.b < 16)
 					return; // leaf node: too few primitives
-				}
 				uint32 bestAxis = -1;
 				uint32 bestSplit = -1;
+				uint32 bestItemsCount = 0;
 				real bestSah = real::PositiveInfinity;
+				aabb bestBoxLeft;
+				aabb bestBoxRight;
 				for (uint32 axis = 0; axis < 3; axis++)
 				{
-					sortHelpersByAxis(indices.begin() + node.a, indices.begin() + (node.a + node.b), axis);
-					evaluateAxis(indices.begin() + node.a, indices.begin() + (node.a + node.b), axis, bestAxis, bestSplit, bestSah);
+					for (aabb &b : leftBinBoxes)
+						b = aabb();
+					for (uint32 &c : leftBinCounts)
+						c = 0;
+					real binSizeInv = 1.0 / (node.box.size()[axis] / binsCount);
+					real planeOffset = node.box.a[axis];
+					for (uint32 i = node.a, et = node.a + node.b; i != et; i++)
+					{
+						itemBase *item = indices[i];
+						uint32 binIndex = numeric_cast<uint32>((item->center[axis] - planeOffset) * binSizeInv);
+						CAGE_ASSERT_RUNTIME(binIndex < binsCount);
+						leftBinBoxes[binIndex] += item->box;
+						leftBinCounts[binIndex]++;
+					}
+					// right to left sweep
+					rightBinBoxes[binsCount - 1] = leftBinBoxes[binsCount - 1];
+					for (uint32 i = binsCount - 1; i > 0; i--)
+						rightBinBoxes[i - 1] = rightBinBoxes[i] + leftBinBoxes[i - 1];
+					// left to right sweep
+					for (uint32 i = 1; i < binsCount; i++)
+					{
+						leftBinBoxes[i] += leftBinBoxes[i - 1];
+						leftBinCounts[i] += leftBinCounts[i - 1];
+					}
+					CAGE_ASSERT_RUNTIME(leftBinCounts[binsCount - 1] == node.b);
+					// compute sah
+					for (uint32 i = 0; i < binsCount - 1; i++)
+					{
+						real sahL = leftBinBoxes[i].surface() * leftBinCounts[i];
+						real sahR = rightBinBoxes[i + 1].surface() * (node.b - leftBinCounts[i]);
+						real sah = sahL + sahR;
+						if (sah < bestSah)
+						{
+							bestAxis = axis;
+							bestSplit = i;
+							bestSah = sah;
+							bestItemsCount = leftBinCounts[bestSplit];
+							bestBoxLeft = leftBinBoxes[i];
+							bestBoxRight = rightBinBoxes[i + 1];
+						}
+					}
 				}
 				CAGE_ASSERT_RUNTIME(bestSah.valid());
 				if (bestSah >= parentSah)
-				{
-					makeNodeBox(nodeIndex);
 					return; // leaf node: split would make no improvement
-				}
 				CAGE_ASSERT_RUNTIME(bestAxis < 3);
 				CAGE_ASSERT_RUNTIME(bestSplit + 1 < binsCount); // splits count is one less than bins count
-				sortHelpersByAxis(indices.begin() + node.a, indices.begin() + (node.a + node.b), bestAxis);
-				uint32 split = splitItems(bestSplit, node.b);
+				CAGE_ASSERT_RUNTIME(bestItemsCount > 0 && bestItemsCount < numeric_cast<uint32>(node.b));
+				{
+					real binSizeInv = 1.0 / (node.box.size()[bestAxis] / binsCount);
+					real planeOffset = node.box.a[bestAxis];
+					std::partition(indices.begin() + node.a, indices.begin() + (node.a + node.b), [&](itemBase *item) {
+						uint32 binIndex = numeric_cast<uint32>((item->center[bestAxis] - planeOffset) * binSizeInv);
+						return binIndex < bestSplit + 1;
+					});
+				}
 				sint32 leftNodeIndex = numeric_cast<sint32>(nodes.size());
-				nodes.emplace_back(node.a, split);
+				nodes.emplace_back(bestBoxLeft, node.a, bestItemsCount);
 				rebuild(leftNodeIndex, nodeDepth + 1, bestSah);
 				sint32 rightNodeIndex = numeric_cast<sint32>(nodes.size());
-				nodes.emplace_back(node.a + split, node.b - split);
+				nodes.emplace_back(bestBoxRight, node.a + bestItemsCount, node.b - bestItemsCount);
 				rebuild(rightNodeIndex, nodeDepth + 1, bestSah);
 				node.a = -leftNodeIndex;
 				node.b = -rightNodeIndex;
-				node.box = nodes[leftNodeIndex].box + nodes[rightNodeIndex].box;
 			}
 
 			bool similar(const aabb &a, const aabb &b)
@@ -207,9 +191,9 @@ namespace cage
 				{ // inner node
 					nodeStruct &l = nodes[-node.a];
 					nodeStruct &r = nodes[-node.b];
-					CAGE_ASSERT_RUNTIME(similar(node.box, l.box + r.box));
 					validate(-node.a);
 					validate(-node.b);
+					CAGE_ASSERT_RUNTIME(similar(node.box, l.box + r.box));
 				}
 				else
 				{ // leaf node
@@ -232,9 +216,13 @@ namespace cage
 				}
 				nodes.reserve(itemsTable->count());
 				indices.reserve(itemsTable->count());
+				aabb worldBox;
 				for (const hashTablePair<itemBase> &it : *itemsTable)
+				{
 					indices.push_back(it.second);
-				nodes.emplace_back(0, numeric_cast<sint32>(itemsTable->count()));
+					worldBox += it.second->box;
+				}
+				nodes.emplace_back(worldBox, 0, numeric_cast<sint32>(itemsTable->count()));
 				rebuild(0, 0, real::PositiveInfinity);
 				CAGE_ASSERT_RUNTIME(nodes[0].box.valid());
 #ifdef CAGE_DEBUG
@@ -267,8 +255,9 @@ namespace cage
 				const spatialDataImpl *data;
 				std::vector<uint32> &resultNames;
 				const T &other;
+				const aabb otherBox;
 
-				intersectorStruct(const spatialDataImpl *data, std::vector<uint32> &resultNames, const T &other) : data(data), resultNames(resultNames), other(other)
+				intersectorStruct(const spatialDataImpl *data, std::vector<uint32> &resultNames, const T &other) : data(data), resultNames(resultNames), other(other), otherBox(other)
 				{
 					intersection(0);
 				}
@@ -276,6 +265,8 @@ namespace cage
 				void intersection(uint32 nodeIndex)
 				{
 					const nodeStruct &node = data->nodes[nodeIndex];
+					//if (!intersects(otherBox, node.box))
+					//	return;
 					if (!intersects(other, node.box))
 						return;
 					if (node.a < 0)
@@ -294,7 +285,6 @@ namespace cage
 					}
 				}
 			};
-
 
 			template<class T>
 			void intersection(const T &other)
