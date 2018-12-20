@@ -46,6 +46,7 @@ add_subdirectory(vorbis)
 add_subdirectory(utfcpp)
 add_subdirectory(simplefilewatcher)
 add_subdirectory(msdfgen)
+add_subdirectory(xsimd)
 
 add_dependencies(png_static zlib)
 add_dependencies(jpeg-static zlib)

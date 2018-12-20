@@ -49,3 +49,6 @@
 [submodule "msdfgen/msdfgen"]
 	path = msdfgen/msdfgen
 	url = https://github.com/ckohnert/msdfgen.git
+[submodule "xsimd/xsimd"]
+	path = xsimd/xsimd
+	url = https://github.com/QuantStack/xsimd.git
