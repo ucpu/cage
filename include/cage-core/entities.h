@@ -6,7 +6,7 @@ namespace cage
 	class CAGE_API entityManagerClass
 	{
 	public:
-		template<class T> componentClass *defineComponent(const T &prototype, bool enumerableEntities) { return zPrivateDefineComponent(sizeof(T), (void*)&prototype, enumerableEntities); }
+		template<class T> componentClass *defineComponent(const T &prototype, bool enumerableEntities) { return zPrivateDefineComponent(sizeof(T), alignof(T), (void*)&prototype, enumerableEntities); }
 		componentClass *componentByIndex(uint32 index) const;
 		uint32 componentsCount() const;
 
@@ -26,7 +26,7 @@ namespace cage
 		void destroy(); // destroy all entities
 
 	private:
-		componentClass *zPrivateDefineComponent(uintPtr typeSize, void *prototype, bool enumerableEntities);
+		componentClass *zPrivateDefineComponent(uintPtr typeSize, uintPtr typeAlignment, void *prototype, bool enumerableEntities);
 	};
 
 	struct CAGE_API entityManagerCreateConfig

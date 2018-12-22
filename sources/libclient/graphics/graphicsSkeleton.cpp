@@ -51,9 +51,9 @@ namespace cage
 		impl->globalInverse = globalInverse;
 		impl->totalBones = totalBones;
 
-		impl->boneParents = (uint16*)impl->mem.allocate(impl->totalBones * sizeof(uint16));
-		impl->baseMatrices = (mat4*)impl->mem.allocate(impl->totalBones * sizeof(mat4));
-		impl->invRestMatrices = (mat4*)impl->mem.allocate(impl->totalBones * sizeof(mat4));
+		impl->boneParents = (uint16*)impl->mem.allocate(impl->totalBones * sizeof(uint16), sizeof(uintPtr));
+		impl->baseMatrices = (mat4*)impl->mem.allocate(impl->totalBones * sizeof(mat4), sizeof(uintPtr));
+		impl->invRestMatrices = (mat4*)impl->mem.allocate(impl->totalBones * sizeof(mat4), sizeof(uintPtr));
 
 		detail::memcpy(impl->boneParents, boneParents, impl->totalBones * sizeof(uint16));
 		detail::memcpy(impl->baseMatrices, baseMatrices, impl->totalBones * sizeof(mat4));

@@ -27,7 +27,7 @@ namespace cage
 			}
 			context->returnData = ani;
 
-			deserializer des(context->originalData, context->originalSize);
+			deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
 			animationHeaderStruct data;
 			des >> data;
 			uint16 *indexes = (uint16*)des.access(data.animationBonesCount * sizeof(uint16));

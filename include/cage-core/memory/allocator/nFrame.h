@@ -1,6 +1,6 @@
 namespace cage
 {
-	template<uint8 N, uintPtr Alignment = sizeof(uintPtr), class BoundsPolicy = GCHL_DEFAULT_MEMORY_BOUNDS_POLICY, class TaggingPolicy = GCHL_DEFAULT_MEMORY_TAG_POLICY, class TrackingPolicy = GCHL_DEFAULT_MEMORY_TRACK_POLICY>
+	template<uint8 N, class BoundsPolicy = GCHL_DEFAULT_MEMORY_BOUNDS_POLICY, class TaggingPolicy = GCHL_DEFAULT_MEMORY_TAG_POLICY, class TrackingPolicy = GCHL_DEFAULT_MEMORY_TRACK_POLICY>
 	struct memoryAllocatorPolicyNFrame
 	{
 		memoryAllocatorPolicyNFrame() : origin(nullptr), totalSize(0), current(0) {}
@@ -22,9 +22,9 @@ namespace cage
 			}
 		}
 
-		void *allocate(uintPtr size)
+		void *allocate(uintPtr size, uintPtr alignment)
 		{
-			return allocs[current].allocate(size);
+			return allocs[current].allocate(size, alignment);
 		}
 
 		void deallocate(void *ptr)
@@ -39,7 +39,7 @@ namespace cage
 		}
 
 	private:
-		memoryAllocatorPolicyLinear<Alignment, BoundsPolicy, TaggingPolicy, TrackingPolicy> allocs[N];
+		memoryAllocatorPolicyLinear<BoundsPolicy, TaggingPolicy, TrackingPolicy> allocs[N];
 		void *origin;
 		uintPtr totalSize;
 		uint8 current;

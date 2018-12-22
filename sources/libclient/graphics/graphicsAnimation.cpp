@@ -111,16 +111,16 @@ namespace cage
 		impl->deallocate();
 		impl->duration = duration;
 		impl->bones = bones;
-		impl->indexes = (uint16*)impl->mem.allocate(sizeof(uint16) * bones);
-		impl->positionFrames = (uint16*)impl->mem.allocate(sizeof(uint16) * bones);
-		impl->positionTimes = (real**)impl->mem.allocate(sizeof(real*) * bones);
-		impl->positionValues = (vec3**)impl->mem.allocate(sizeof(vec3*) * bones);
-		impl->rotationFrames = (uint16*)impl->mem.allocate(sizeof(uint16) * bones);
-		impl->rotationTimes = (real**)impl->mem.allocate(sizeof(real*) * bones);
-		impl->rotationValues = (quat**)impl->mem.allocate(sizeof(quat*) * bones);
-		impl->scaleFrames = (uint16*)impl->mem.allocate(sizeof(uint16) * bones);
-		impl->scaleTimes = (real**)impl->mem.allocate(sizeof(real*) * bones);
-		impl->scaleValues = (vec3**)impl->mem.allocate(sizeof(vec3*) * bones);
+		impl->indexes = (uint16*)impl->mem.allocate(sizeof(uint16) * bones, sizeof(uintPtr));
+		impl->positionFrames = (uint16*)impl->mem.allocate(sizeof(uint16) * bones, sizeof(uintPtr));
+		impl->positionTimes = (real**)impl->mem.allocate(sizeof(real*) * bones, sizeof(uintPtr));
+		impl->positionValues = (vec3**)impl->mem.allocate(sizeof(vec3*) * bones, sizeof(uintPtr));
+		impl->rotationFrames = (uint16*)impl->mem.allocate(sizeof(uint16) * bones, sizeof(uintPtr));
+		impl->rotationTimes = (real**)impl->mem.allocate(sizeof(real*) * bones, sizeof(uintPtr));
+		impl->rotationValues = (quat**)impl->mem.allocate(sizeof(quat*) * bones, sizeof(uintPtr));
+		impl->scaleFrames = (uint16*)impl->mem.allocate(sizeof(uint16) * bones, sizeof(uintPtr));
+		impl->scaleTimes = (real**)impl->mem.allocate(sizeof(real*) * bones, sizeof(uintPtr));
+		impl->scaleValues = (vec3**)impl->mem.allocate(sizeof(vec3*) * bones, sizeof(uintPtr));
 
 		detail::memcpy(impl->indexes, indexes, sizeof(uint16) * bones);
 		detail::memcpy(impl->positionFrames, positionFrames, sizeof(uint16) * bones);
@@ -132,9 +132,9 @@ namespace cage
 		{
 			if (impl->positionFrames[b])
 			{
-				impl->positionTimes[b] = (real*)impl->mem.allocate(sizeof(real) * impl->positionFrames[b]);
+				impl->positionTimes[b] = (real*)impl->mem.allocate(sizeof(real) * impl->positionFrames[b], sizeof(uintPtr));
 				des.read(impl->positionTimes[b], positionFrames[b] * sizeof(float));
-				impl->positionValues[b] = (vec3*)impl->mem.allocate(sizeof(vec3) * impl->positionFrames[b]);
+				impl->positionValues[b] = (vec3*)impl->mem.allocate(sizeof(vec3) * impl->positionFrames[b], sizeof(uintPtr));
 				des.read(impl->positionValues[b], positionFrames[b] * sizeof(vec3));
 			}
 			else
@@ -145,9 +145,9 @@ namespace cage
 
 			if (impl->rotationFrames[b])
 			{
-				impl->rotationTimes[b] = (real*)impl->mem.allocate(sizeof(real) * impl->rotationFrames[b]);
+				impl->rotationTimes[b] = (real*)impl->mem.allocate(sizeof(real) * impl->rotationFrames[b], sizeof(uintPtr));
 				des.read(impl->rotationTimes[b], rotationFrames[b] * sizeof(float));
-				impl->rotationValues[b] = (quat*)impl->mem.allocate(sizeof(quat) * impl->rotationFrames[b]);
+				impl->rotationValues[b] = (quat*)impl->mem.allocate(sizeof(quat) * impl->rotationFrames[b], sizeof(uintPtr));
 				des.read(impl->rotationValues[b], rotationFrames[b] * sizeof(quat));
 			}
 			else
@@ -158,9 +158,9 @@ namespace cage
 
 			if (impl->scaleFrames[b])
 			{
-				impl->scaleTimes[b] = (real*)impl->mem.allocate(sizeof(real) * impl->scaleFrames[b]);
+				impl->scaleTimes[b] = (real*)impl->mem.allocate(sizeof(real) * impl->scaleFrames[b], sizeof(uintPtr));
 				des.read(impl->scaleTimes[b], scaleFrames[b] * sizeof(float));
-				impl->scaleValues[b] = (vec3*)impl->mem.allocate(sizeof(vec3) * impl->scaleFrames[b]);
+				impl->scaleValues[b] = (vec3*)impl->mem.allocate(sizeof(vec3) * impl->scaleFrames[b], sizeof(uintPtr));
 				des.read(impl->scaleValues[b], scaleFrames[b] * sizeof(vec3));
 			}
 			else
@@ -200,7 +200,8 @@ namespace cage
 			CAGE_THROW_CRITICAL(exception, "impossible frame index");
 		}
 
-		template<class Type> Type evaluateMatrix(real coef, uint16 frames, const real *times, const Type *values)
+		template<class Type>
+		Type evaluateMatrix(real coef, uint16 frames, const real *times, const Type *values)
 		{
 			switch (frames)
 			{

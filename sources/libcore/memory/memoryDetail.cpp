@@ -10,26 +10,6 @@ namespace cage
 {
 	namespace detail
 	{
-		void *malloca(uintPtr size, uintPtr alignment)
-		{
-			CAGE_ASSERT_RUNTIME(isPowerOf2(alignment), "impossible alignment", alignment);
-			void *p = detail::systemArena().allocate(size + alignment - 1 + sizeof(void*));
-			if (!p)
-				return nullptr;
-			void *ptr = (void*)((numeric_cast<uintPtr>(p) + sizeof(void*) + alignment - 1) & ~(alignment - 1));
-			*((void **)ptr - 1) = p;
-			CAGE_ASSERT_RUNTIME(numeric_cast<uintPtr>(ptr) % alignment == 0, ptr, alignment);
-			return ptr;
-		}
-
-		void freea(void *ptr)
-		{
-			if (!ptr)
-				return;
-			void *p = *((void **)ptr - 1);
-			detail::systemArena().deallocate(p);
-		}
-
 		uintPtr compressionBound(uintPtr size)
 		{
 			return ::compressBound(numeric_cast<uLong>(size));
@@ -76,6 +56,26 @@ namespace cage
 
 		namespace
 		{
+			void *malloca(uintPtr size, uintPtr alignment)
+			{
+				CAGE_ASSERT_RUNTIME(isPowerOf2(alignment), "impossible alignment", alignment);
+				void *p = ::malloc(size + alignment - 1 + sizeof(void*));
+				if (!p)
+					return nullptr;
+				void *ptr = (void*)((numeric_cast<uintPtr>(p) + sizeof(void*) + alignment - 1) & ~(alignment - 1));
+				*((void **)ptr - 1) = p;
+				CAGE_ASSERT_RUNTIME(numeric_cast<uintPtr>(ptr) % alignment == 0, ptr, alignment);
+				return ptr;
+			}
+
+			void freea(void *ptr)
+			{
+				if (!ptr)
+					return;
+				void *p = *((void **)ptr - 1);
+				::free(p);
+			}
+
 			class memory1Impl
 			{
 			public:
@@ -93,9 +93,9 @@ namespace cage
 					{}
 				}
 
-				void *allocate(uintPtr size)
+				void *allocate(uintPtr size, uintPtr alignment)
 				{
-					void *tmp = ::malloc(size);
+					void *tmp = malloca(size, alignment);
 					if (!tmp)
 						CAGE_THROW_ERROR(outOfMemoryException, "out of memory", size);
 					allocations++;
@@ -106,7 +106,7 @@ namespace cage
 				{
 					if (!ptr)
 						return;
-					::free(ptr);
+					freea(ptr);
 					if (allocations-- == 0)
 						CAGE_THROW_CRITICAL(exception, "memory corruption - double deallocation detected");
 				}

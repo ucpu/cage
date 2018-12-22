@@ -35,7 +35,7 @@ namespace cage
 
 		pointer allocate(size_type cnt, void *hint = 0)
 		{
-			return(pointer)a.allocate(cnt * sizeof(T));
+			return (pointer)a.allocate(cnt * sizeof(T), alignof(T));
 		}
 
 		void deallocate(pointer ptr, size_type)
@@ -43,9 +43,9 @@ namespace cage
 			a.deallocate(ptr);
 		}
 
-		const size_type max_size() const noexcept
+		size_type max_size() const noexcept
 		{
-			return 0;
+			return -1;
 		}
 
 		void construct(pointer ptr, const T &t)

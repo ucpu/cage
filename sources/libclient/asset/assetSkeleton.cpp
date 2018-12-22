@@ -27,7 +27,7 @@ namespace cage
 			}
 			context->returnData = skl;
 
-			deserializer des(context->originalData, context->originalSize);
+			deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
 			skeletonHeaderStruct data;
 			des >> data;
 			uint16 *boneParents = (uint16*)des.access(sizeof(uint16) * data.bonesCount);

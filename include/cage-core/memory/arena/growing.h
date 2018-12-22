@@ -19,12 +19,12 @@ namespace cage
 			scopeLock<ConcurrentPolicy> g(&concurrent);
 		}
 
-		void *allocate(uintPtr size)
+		void *allocate(uintPtr size, uintPtr alignment)
 		{
 			scopeLock<ConcurrentPolicy> g(&concurrent);
 			try
 			{
-				void *tmp = allocator.allocate(size);
+				void *tmp = allocator.allocate(size, alignment);
 				CAGE_ASSERT_RUNTIME(tmp >= origin, "allocator corrupted", tmp, origin, size);
 				CAGE_ASSERT_RUNTIME((char*)tmp + size <= (char*)origin + currentSize, "allocator corrupted", tmp, origin, size, currentSize);
 				return tmp;
@@ -38,7 +38,7 @@ namespace cage
 			}
 			try
 			{
-				void *tmp = allocator.allocate(size);
+				void *tmp = allocator.allocate(size, alignment);
 				CAGE_ASSERT_RUNTIME(tmp >= origin, "allocator corrupted", tmp, origin, size);
 				CAGE_ASSERT_RUNTIME((char*)tmp + size <= (char*)origin + currentSize, "allocator corrupted", tmp, origin, size, currentSize);
 				return tmp;

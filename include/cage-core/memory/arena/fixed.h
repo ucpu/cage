@@ -5,7 +5,7 @@ namespace cage
 	{
 		memoryArenaFixed(uintPtr size) : size(size)
 		{
-			origin = detail::systemArena().allocate(size);
+			origin = detail::systemArena().allocate(size, sizeof(uintPtr));
 			allocator.setOrigin(origin);
 			allocator.setSize(size);
 		}
@@ -16,12 +16,12 @@ namespace cage
 			detail::systemArena().deallocate(origin);
 		}
 
-		void *allocate(uintPtr size)
+		void *allocate(uintPtr size, uintPtr alignment)
 		{
 			scopeLock<ConcurrentPolicy> g(&concurrent);
 			try
 			{
-				void *tmp = allocator.allocate(size);
+				void *tmp = allocator.allocate(size, alignment);
 				CAGE_ASSERT_RUNTIME(numeric_cast<uintPtr>(tmp) >= numeric_cast<uintPtr>(origin), "allocator corrupted", tmp, origin, size);
 				CAGE_ASSERT_RUNTIME(numeric_cast<uintPtr>(tmp) + size <= numeric_cast<uintPtr>(origin) + this->size, "allocator corrupted", tmp, origin, size, this->size);
 				return tmp;

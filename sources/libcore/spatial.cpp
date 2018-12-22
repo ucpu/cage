@@ -4,6 +4,7 @@
 #include <array>
 
 #define CAGE_EXPORT
+//#define CAGE_ASSERT_ENABLED 1
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
@@ -17,7 +18,7 @@ namespace cage
 {
 	namespace
 	{
-		union fastPoint
+		union alignas(16) fastPoint
 		{
 			xsimd::batch<float, 4> v4;
 			struct
@@ -85,6 +86,8 @@ namespace cage
 
 		bool intersects(const fastBox &a, const fastBox &b)
 		{
+			CAGE_ASSERT_RUNTIME(uintPtr(&a) % alignof(fastBox) == 0);
+			CAGE_ASSERT_RUNTIME(uintPtr(&b) % alignof(fastBox) == 0);
 			if (a.empty() || b.empty())
 				return false;
 			static const xsimd::batch<float, 4> mask = { 1,1,1,0 };
@@ -95,7 +98,7 @@ namespace cage
 			return true;
 		}
 
-		struct alignas(16) itemBase
+		struct itemBase
 		{
 			fastBox box;
 			vec3 center;
@@ -163,11 +166,11 @@ namespace cage
 		class spatialDataImpl : public spatialDataClass
 		{
 		public:
-			memoryArenaGrowing<memoryAllocatorPolicyPool<sizeof(itemUnion), GCHL_DEFAULT_MEMORY_STORE_SIZE, alignof(itemUnion)>, memoryConcurrentPolicyNone> itemsPool;
+			memoryArenaGrowing<memoryAllocatorPolicyPool<templates::poolAllocatorAtomSize<itemUnion>::result>, memoryConcurrentPolicyNone> itemsPool;
 			memoryArena itemsArena;
 			holder<cage::hashTableClass<itemBase>> itemsTable;
 			std::atomic<bool> dirty;
-			std::vector<nodeStruct> nodes;
+			std::vector<nodeStruct, memoryArenaStd<nodeStruct>> nodes;
 			std::vector<itemBase*> indices;
 			typedef std::vector<itemBase*>::iterator indicesIterator;
 			static const uint32 binsCount = 10;
@@ -175,8 +178,11 @@ namespace cage
 			std::array<fastBox, binsCount> rightBinBoxes;
 			std::array<uint32, binsCount> leftBinCounts;
 
-			spatialDataImpl(const spatialDataCreateConfig &config) : itemsPool(config.maxItems * sizeof(itemUnion)), itemsArena(&itemsPool), dirty(false)
+			spatialDataImpl(const spatialDataCreateConfig &config) : itemsPool(config.maxItems * sizeof(itemUnion)), itemsArena(&itemsPool), dirty(false), nodes(detail::systemArena())
 			{
+				CAGE_ASSERT_RUNTIME((uintPtr(this) % alignof(fastBox)) == 0, uintPtr(this) % alignof(fastBox), alignof(fastBox));
+				CAGE_ASSERT_RUNTIME((uintPtr(leftBinBoxes.data()) % alignof(fastBox)) == 0);
+				CAGE_ASSERT_RUNTIME((uintPtr(rightBinBoxes.data()) % alignof(fastBox)) == 0);
 				itemsTable = newHashTable<itemBase>(min(config.maxItems, 100u), config.maxItems * 2); // times 2 to compensate for fill ratio
 			}
 
@@ -311,9 +317,10 @@ namespace cage
 				}
 				nodes.emplace_back(worldBox, 0, numeric_cast<sint32>(itemsTable->count()));
 				rebuild(0, 0, real::PositiveInfinity);
-#ifdef CAGE_DEBUG
+				CAGE_ASSERT_RUNTIME(uintPtr(nodes.data()) % alignof(nodeStruct) == 0, uintPtr(nodes.data()) % alignof(nodeStruct), alignof(nodeStruct), alignof(fastBox), sizeof(nodeStruct));
+#ifdef CAGE_ASSERT_ENABLED
 				validate(0);
-#endif // CAGE_DEBUG
+#endif // CAGE_ASSERT_ENABLED
 				dirty = false;
 			}
 		};
@@ -345,6 +352,8 @@ namespace cage
 
 				intersectorStruct(const spatialDataImpl *data, std::vector<uint32> &resultNames, const T &other) : data(data), resultNames(resultNames), other(other), otherBox(aabb(other))
 				{
+					CAGE_ASSERT_RUNTIME((uintPtr(this) % alignof(fastBox)) == 0, uintPtr(this) % alignof(fastBox), alignof(fastBox));
+					CAGE_ASSERT_RUNTIME((uintPtr(&otherBox) % alignof(fastBox)) == 0);
 					intersection(0);
 				}
 

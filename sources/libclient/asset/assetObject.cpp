@@ -20,7 +20,7 @@ namespace cage
 			objectClass *obj = static_cast<objectClass*>(context->assetHolder.get());
 			context->returnData = obj;
 
-			deserializer des(context->originalData, context->originalSize);
+			deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
 			objectHeaderStruct h;
 			des >> h;
 			obj->collider = h.collider;

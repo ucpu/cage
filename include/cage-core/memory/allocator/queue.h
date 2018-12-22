@@ -1,6 +1,6 @@
 namespace cage
 {
-	template<uintPtr Alignment = sizeof(uintPtr), class BoundsPolicy = GCHL_DEFAULT_MEMORY_BOUNDS_POLICY, class TaggingPolicy = GCHL_DEFAULT_MEMORY_TAG_POLICY, class TrackingPolicy = GCHL_DEFAULT_MEMORY_TRACK_POLICY>
+	template<class BoundsPolicy = GCHL_DEFAULT_MEMORY_BOUNDS_POLICY, class TaggingPolicy = GCHL_DEFAULT_MEMORY_TAG_POLICY, class TrackingPolicy = GCHL_DEFAULT_MEMORY_TRACK_POLICY>
 	struct memoryAllocatorPolicyQueue
 	{
 		memoryAllocatorPolicyQueue() : origin(nullptr), front(nullptr), back(nullptr), totalSize(0)
@@ -18,9 +18,9 @@ namespace cage
 			totalSize = size;
 		}
 
-		void *allocate(uintPtr size)
+		void *allocate(uintPtr size, uintPtr alignment)
 		{
-			uintPtr alig = detail::addToAlign((uintPtr)back + sizeof(uintPtr) + BoundsPolicy::SizeFront, Alignment);
+			uintPtr alig = detail::addToAlign((uintPtr)back + sizeof(uintPtr) + BoundsPolicy::SizeFront, alignment);
 			uintPtr total = alig + sizeof(uintPtr) + BoundsPolicy::SizeFront + size + BoundsPolicy::SizeBack;
 
 			if (back < front && (char*)back + total > (char*)front)
@@ -31,7 +31,7 @@ namespace cage
 			{
 				if ((char*)back + total > (char*)origin + totalSize)
 				{
-					alig = detail::addToAlign((uintPtr)origin + sizeof(uintPtr) + BoundsPolicy::SizeFront, Alignment);
+					alig = detail::addToAlign((uintPtr)origin + sizeof(uintPtr) + BoundsPolicy::SizeFront, alignment);
 					total = alig + sizeof(uintPtr) + BoundsPolicy::SizeFront + size + BoundsPolicy::SizeBack;
 					if ((char*)origin + total > (char*)front)
 						CAGE_THROW_SILENT(outOfMemoryException, "out of memory", total);
@@ -40,7 +40,7 @@ namespace cage
 			}
 
 			void *result = (char*)back + alig + sizeof(uintPtr) + BoundsPolicy::SizeFront;
-			CAGE_ASSERT_RUNTIME((uintPtr)result % Alignment == 0, "alignment failed", result, total, Alignment, back, front, alig, BoundsPolicy::SizeFront, size, BoundsPolicy::SizeBack);
+			CAGE_ASSERT_RUNTIME((uintPtr)result % alignment == 0, "alignment failed", result, total, alignment, back, front, alig, BoundsPolicy::SizeFront, size, BoundsPolicy::SizeBack);
 
 			*(uintPtr*)((char*)result - BoundsPolicy::SizeFront - sizeof(uintPtr)) = size;
 			bound.setFront((char*)result - BoundsPolicy::SizeFront);

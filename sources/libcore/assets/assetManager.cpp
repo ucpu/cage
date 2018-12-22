@@ -179,7 +179,7 @@ namespace cage
 						CAGE_ASSERT_RUNTIME(readSize <= allocSize, readSize, allocSize);
 						if (buff.size() < readSize + sizeof(assetHeaderStruct) + h->dependenciesCount * sizeof(uint32))
 							CAGE_THROW_ERROR(exception, "cage asset file content truncated");
-						ass->compressedData = detail::systemArena().allocate(allocSize);
+						ass->compressedData = detail::systemArena().allocate(allocSize, sizeof(uintPtr));
 						detail::memcpy(ass->compressedData, buff.data() + sizeof(assetHeaderStruct) + h->dependenciesCount * sizeof(uint32), readSize);
 						ass->originalData = (char*)ass->compressedData + ass->compressedSize;
 					}

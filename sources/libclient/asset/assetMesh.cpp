@@ -42,7 +42,7 @@ namespace cage
 				context->returnData = msh;
 			}
 
-			deserializer des(context->originalData, context->originalSize);
+			deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
 			meshHeaderStruct data;
 			des >> data;
 			const void *materialData = des.access(data.materialSize);

@@ -32,7 +32,7 @@ namespace
 
 	void *allocateMemory()
 	{
-		return arena.allocate(allocSize);
+		return arena.allocate(allocSize, sizeof(uintPtr));
 	}
 
 	void deallocateMemory(void *tmp)
@@ -40,7 +40,8 @@ namespace
 		arena.deallocate(tmp);
 	}
 
-	template<void *Allocate(), void Deallocate(void *)> const uint64 measure()
+	template<void *Allocate(), void Deallocate(void *)>
+	uint64 measure()
 	{
 		detail::memset(allocated, 1, (INPUT_SIZE + 1) * sizeof(void*));
 		holder <timerClass> tmr = newTimer();
@@ -63,9 +64,10 @@ namespace
 		return tmr->microsSinceStart();
 	}
 
-	template<class Concurrent, uintPtr AllocSize> void measureArena()
+	template<class Concurrent, uintPtr AllocSize>
+	void measureArena()
 	{
-		typedef memoryArenaFixed<memoryAllocatorPolicyPool<AllocSize, false>, Concurrent> pool;
+		typedef memoryArenaFixed<memoryAllocatorPolicyPool<AllocSize>, Concurrent> pool;
 		pool a((INPUT_SIZE + 5) * (AllocSize + sizeof(uintPtr) * 3));
 		arena = memoryArena(&a);
 
@@ -74,7 +76,8 @@ namespace
 		CAGE_LOG(severityEnum::Info, "performance", string() + "timing: " + system + "\t" + memory + "\t" + (memory < system ? "ok" : "bad") + "\t" + ((float)memory / (float)system));
 	}
 
-	template<uintPtr AllocSize> void measureAllocSize(uintPtr realAllocs)
+	template<uintPtr AllocSize>
+	void measureAllocSize(uintPtr realAllocs)
 	{
 		CAGE_LOG(severityEnum::Info, "performance", string() + "Atom " + AllocSize + ", allocations " + realAllocs + " bytes");
 		allocSize = realAllocs;

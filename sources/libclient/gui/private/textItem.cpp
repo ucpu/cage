@@ -80,7 +80,7 @@ namespace cage
 		if (text.font)
 		{
 			text.font->transcript(value, nullptr, text.count);
-			text.glyphs = (uint32*)hierarchy->impl->itemsMemory.allocate(text.count * sizeof(uint32));
+			text.glyphs = (uint32*)hierarchy->impl->itemsMemory.allocate(text.count * sizeof(uint32), sizeof(uintPtr));
 			text.font->transcript(value, text.glyphs, text.count);
 		}
 	}
@@ -107,7 +107,7 @@ namespace cage
 		auto *t = e->memory.createObject<renderableTextStruct>();
 		t->setClip(hierarchy);
 		t->data = text;
-		t->data.glyphs = (uint32*)e->memory.allocate(t->data.count * sizeof(uint32));
+		t->data.glyphs = (uint32*)e->memory.allocate(t->data.count * sizeof(uint32), sizeof(uintPtr));
 		detail::memcpy(t->data.glyphs, text.glyphs, t->data.count * sizeof(uint32));
 		t->data.format.size *= hierarchy->impl->pointsScale;
 		t->data.pos = position * hierarchy->impl->pointsScale;

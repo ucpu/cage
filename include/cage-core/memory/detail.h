@@ -2,9 +2,6 @@ namespace cage
 {
 	namespace detail
 	{
-		CAGE_API void *malloca(uintPtr size, uintPtr alignment);
-		CAGE_API void freea(void *ptr);
-
 		inline bool isPowerOf2(uintPtr x)
 		{
 			return x && !(x & (x - 1));
@@ -27,14 +24,22 @@ namespace cage
 
 	namespace templates
 	{
-		template<class T> struct allocatorSizeList
+		template<class T>
+		struct poolAllocatorAtomSize
+		{
+			static const uintPtr result = sizeof(T) + alignof(T);
+		};
+
+		template<class T>
+		struct allocatorSizeList
 		{
 			void *a;
 			void *b;
 			T t;
 		};
 
-		template<class K, class V> struct allocatorSizeMap
+		template<class K, class V>
+		struct allocatorSizeMap
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
 			void *a;
@@ -60,7 +65,8 @@ namespace cage
 #endif
 		};
 
-		template<class T> struct allocatorSizeSet
+		template<class T>
+		struct allocatorSizeSet
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
 			void *a;

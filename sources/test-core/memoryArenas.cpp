@@ -43,6 +43,10 @@ namespace
 		uint8 pole[Size];
 	};
 
+	template <uint32 Size, uintPtr Alignment>
+	struct alignas(Alignment) alignedTestStruct : public testStruct<Size>
+	{};
+
 	template<uint32 Size>
 	sint32 testStruct<Size>::count;
 
@@ -56,9 +60,15 @@ namespace
 		uintPtr Alignment, class Traits>
 	struct memoryArenaTest<ArenaPolicy, BoundsPolicy, TagPolicy, TrackPolicy, Alignment, 0, Traits>
 	{ // pool
+		template<uintPtr Size, uintPtr Alignment>
+		struct alignas(Alignment) alignmentHelper
+		{
+			char data[Size];
+		};
+
 		memoryArenaTest()
 		{
-			ArenaPolicy<memoryAllocatorPolicyPool<Traits::AtomSize, Traits::StoreSize, Alignment, BoundsPolicy, TagPolicy, TrackPolicy>, memoryConcurrentPolicyNone> pool(Traits::MemoryLimit);
+			ArenaPolicy<memoryAllocatorPolicyPool<templates::poolAllocatorAtomSize<alignmentHelper<Traits::AtomSize, Alignment>>::result, BoundsPolicy, TagPolicy, TrackPolicy>, memoryConcurrentPolicyNone> pool(Traits::MemoryLimit);
 			PrintTest;
 			memoryArena a(&pool);
 			std::vector<void*> alokace;
@@ -78,7 +88,7 @@ namespace
 				else
 				{
 					uint32 sz = randomRange((uint32)1, (uint32)(Traits::AtomSize - 1)) + (uint32)2;
-					void *tmp = a.allocate(sz);
+					void *tmp = a.allocate(sz, Alignment);
 					CAGE_TEST(numeric_cast<uintPtr>(tmp) % Alignment == 0, tmp, Alignment);
 					(*(uint16*)tmp) = sz;
 					construct((char*)tmp + 2, sz - 2);
@@ -102,10 +112,10 @@ namespace
 	{ // linear
 		memoryArenaTest()
 		{
-			ArenaPolicy<memoryAllocatorPolicyLinear<Alignment, BoundsPolicy, TagPolicy, TrackPolicy>, memoryConcurrentPolicyNone> pool(Traits::MemoryLimit);
+			ArenaPolicy<memoryAllocatorPolicyLinear<BoundsPolicy, TagPolicy, TrackPolicy>, memoryConcurrentPolicyNone> pool(Traits::MemoryLimit);
 			PrintTest;
 			memoryArena a(&pool);
-			typedef testStruct<Traits::ObjectSize> ts;
+			typedef alignedTestStruct<Traits::ObjectSize, Alignment> ts;
 			ts::count = 0;
 			for (uint32 i = 0; i < Traits::ObjectsCount; i++)
 			{
@@ -124,10 +134,10 @@ namespace
 	{ // nFrame
 		memoryArenaTest()
 		{
-			ArenaPolicy<memoryAllocatorPolicyNFrame<Traits::Frames, Alignment, BoundsPolicy, TagPolicy, TrackPolicy>, memoryConcurrentPolicyNone> pool(Traits::MemoryLimit);
+			ArenaPolicy<memoryAllocatorPolicyNFrame<Traits::Frames, BoundsPolicy, TagPolicy, TrackPolicy>, memoryConcurrentPolicyNone> pool(Traits::MemoryLimit);
 			PrintTest;
 			memoryArena a(&pool);
-			typedef testStruct<Traits::ObjectSize> ts;
+			typedef alignedTestStruct<Traits::ObjectSize, Alignment> ts;
 			ts::count = 0;
 			ts *last[Traits::Frames];
 			for (uint32 i = 0; i < Traits::Frames; i++)
@@ -160,10 +170,10 @@ namespace
 	{ // queue
 		memoryArenaTest()
 		{
-			ArenaPolicy<memoryAllocatorPolicyQueue<Alignment, BoundsPolicy, TagPolicy, TrackPolicy>, memoryConcurrentPolicyNone> pool(Traits::MemoryLimit);
+			ArenaPolicy<memoryAllocatorPolicyQueue<BoundsPolicy, TagPolicy, TrackPolicy>, memoryConcurrentPolicyNone> pool(Traits::MemoryLimit);
 			PrintTest;
 			memoryArena a(&pool);
-			typedef testStruct<Traits::ObjectSize> ts;
+			typedef alignedTestStruct<Traits::ObjectSize, Alignment> ts;
 			ts::count = 0;
 			ts *objects[Traits::ObjectsCount];
 			uint32 allocations = 0;
@@ -197,10 +207,10 @@ namespace
 	{ // stack
 		memoryArenaTest()
 		{
-			ArenaPolicy<memoryAllocatorPolicyStack<Alignment, BoundsPolicy, TagPolicy, TrackPolicy>, memoryConcurrentPolicyNone> pool(Traits::MemoryLimit);
+			ArenaPolicy<memoryAllocatorPolicyStack<BoundsPolicy, TagPolicy, TrackPolicy>, memoryConcurrentPolicyNone> pool(Traits::MemoryLimit);
 			PrintTest;
 			memoryArena a(&pool);
-			typedef testStruct<Traits::ObjectSize> ts;
+			typedef alignedTestStruct<Traits::ObjectSize, Alignment> ts;
 			ts::count = 0;
 			ts *objects[Traits::ObjectsCount];
 			uint32 allocations = 0;
@@ -222,14 +232,13 @@ namespace
 		}
 	};
 
-	template<uintPtr ObjectSize_ = 42, uintPtr AtomSize_ = 42, uint32 Frames_ = 2, uint32 Rounds_ = 10, bool StoreSize_ = true, uint32 ObjectsCount_ = 2048, uintPtr MemoryLimit_ = 1024 * 1024 * 8>
+	template<uintPtr ObjectSize_ = 42, uintPtr AtomSize_ = 42, uint32 Frames_ = 2, uint32 Rounds_ = 10, uint32 ObjectsCount_ = 2048, uintPtr MemoryLimit_ = 1024 * 1024 * 8>
 	struct Traits
 	{
 		static const uintPtr ObjectSize = ObjectSize_;
 		static const uintPtr AtomSize = AtomSize_;
 		static const uint32 Frames = Frames_;
 		static const uint32 Rounds = Rounds_;
-		static const bool StoreSize = StoreSize_;
 		static const uint32 ObjectsCount = ObjectsCount_;
 		static const uintPtr MemoryLimit = MemoryLimit_;
 	};
@@ -244,7 +253,7 @@ void testMemoryArenas()
 	{ memoryArenaTest<memoryArenaGrowing, memoryBoundsPolicyNone, memoryTagPolicyNone, memoryTrackPolicyNone, 8, 0, Traits<>> a; }
 	{ memoryArenaTest<memoryArenaGrowing, memoryBoundsPolicySimple, memoryTagPolicySimple, memoryTrackPolicySimple, 32, 0, Traits<>> a; }
 	{ memoryArenaTest<memoryArenaGrowing, memoryBoundsPolicyNone, memoryTagPolicyNone, memoryTrackPolicyNone, 32, 0, Traits<>> a; }
-	{ memoryArenaTest<memoryArenaGrowing, memoryBoundsPolicySimple, memoryTagPolicySimple, memoryTrackPolicyAdvanced, 8, 0, Traits<42, 42, 2, 2, false, 30>> a; }
+	{ memoryArenaTest<memoryArenaGrowing, memoryBoundsPolicySimple, memoryTagPolicySimple, memoryTrackPolicyAdvanced, 8, 0, Traits<42, 42, 2, 2, 30>> a; }
 	{ memoryArenaTest<memoryArenaGrowing, memoryBoundsPolicySimple, memoryTagPolicySimple, memoryTrackPolicySimple, 8, 0, Traits<13>> a; }
 	{ memoryArenaTest<memoryArenaGrowing, memoryBoundsPolicySimple, memoryTagPolicySimple, memoryTrackPolicySimple, 8, 0, Traits<42, 2200, 2, 3>> a; }
 	// linear
@@ -260,16 +269,4 @@ void testMemoryArenas()
 	{ memoryArenaTest<memoryArenaFixed, memoryBoundsPolicySimple, memoryTagPolicySimple, memoryTrackPolicySimple, 8, 3, Traits<>> a; }
 	// stack
 	{ memoryArenaTest<memoryArenaGrowing, memoryBoundsPolicySimple, memoryTagPolicySimple, memoryTrackPolicySimple, 8, 4, Traits<>> a; }
-
-	// indexed
-	{ 
-		memoryArenaIndexed<memoryArenaGrowing<memoryAllocatorPolicyPool<8>, memoryConcurrentPolicyNone>, 8> a(1024 * 1024);
-		a.deallocate(a.allocate(8));
-	}
-	{
-		memoryArenaIndexed<memoryArenaGrowing<memoryAllocatorPolicyLinear<>, memoryConcurrentPolicyNone>, 8> a(1024 * 1024);
-		void *p = a.allocate(8);
-		CAGE_TEST(a.i2p(a.p2i(p)) == p);
-		a.flush();
-	}
 }

@@ -46,7 +46,7 @@ namespace cage
 		if (buffer)
 			detail::systemArena().deallocate(buffer);
 		allocated = requested;
-		buffer = (float*)detail::systemArena().allocate(allocated * sizeof(float));
+		buffer = (float*)detail::systemArena().allocate(allocated * sizeof(float), sizeof(uintPtr));
 		if (!buffer)
 			checkSoundIoError(SoundIoErrorNoMem);
 	}

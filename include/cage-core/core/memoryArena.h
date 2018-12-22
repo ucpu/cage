@@ -2,7 +2,8 @@ namespace cage
 {
 	namespace privat
 	{
-		struct cageNewSpecifier {};
+		struct cageNewSpecifier
+		{};
 	}
 }
 
@@ -26,14 +27,14 @@ namespace cage
 	private:
 		struct Stub
 		{
-			void *(*alloc)(void *, uintPtr);
+			void *(*alloc)(void *, uintPtr, uintPtr);
 			void(*dealloc)(void *, void *);
 			void(*fls)(void *);
 
 			template<class A>
-			static void *allocate(void *inst, uintPtr size)
+			static void *allocate(void *inst, uintPtr size, uintPtr alignment)
 			{
-				return((A*)inst)->allocate(size);
+				return ((A*)inst)->allocate(size, alignment);
 			}
 
 			template<class A>
@@ -61,7 +62,8 @@ namespace cage
 		void *inst;
 
 	public:
-		memoryArena() : stub(nullptr), inst(nullptr) {}
+		memoryArena() : stub(nullptr), inst(nullptr)
+		{}
 
 		memoryArena(const memoryArena &a)
 		{
@@ -83,9 +85,11 @@ namespace cage
 			return *this;
 		}
 
-		void *allocate(uintPtr size)
+		void *allocate(uintPtr size, uintPtr alignment)
 		{
-			return stub->alloc(inst, size);
+			void *res = stub->alloc(inst, size, alignment);
+			CAGE_ASSERT_RUNTIME((uintPtr(res) % alignment) == 0, size, alignment, res, uintPtr(res) % alignment);
+			return res;
 		}
 
 		void deallocate(void *ptr)
@@ -101,7 +105,7 @@ namespace cage
 		template<class T, class... Ts>
 		T *createObject(Ts... vs)
 		{
-			void *ptr = allocate(sizeof(T));
+			void *ptr = allocate(sizeof(T), alignof(T));
 			try
 			{
 				return new(ptr, privat::cageNewSpecifier()) T(templates::forward<Ts>(vs)...);

@@ -69,7 +69,7 @@ namespace
 				CAGE_LOG(severityEnum::Note, "exception", string() + "Limit: " + Limit);
 				CAGE_THROW_CRITICAL(exception, "Insufficient memory allocator pool unit size");
 			}
-			return (pointer)detail::systemArena().allocate(cnt * sizeof(T));
+			return (pointer)detail::systemArena().allocate(cnt * sizeof(T), alignof(T));
 		}
 
 		void deallocate(pointer ptr, size_type cnt)

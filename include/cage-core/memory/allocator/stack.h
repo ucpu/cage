@@ -1,6 +1,6 @@
 namespace cage
 {
-	template<uintPtr Alignment = sizeof(uintPtr), class BoundsPolicy = GCHL_DEFAULT_MEMORY_BOUNDS_POLICY, class TaggingPolicy = GCHL_DEFAULT_MEMORY_TAG_POLICY, class TrackingPolicy = GCHL_DEFAULT_MEMORY_TRACK_POLICY>
+	template<class BoundsPolicy = GCHL_DEFAULT_MEMORY_BOUNDS_POLICY, class TaggingPolicy = GCHL_DEFAULT_MEMORY_TAG_POLICY, class TrackingPolicy = GCHL_DEFAULT_MEMORY_TRACK_POLICY>
 	struct memoryAllocatorPolicyStack
 	{
 		memoryAllocatorPolicyStack() : origin(nullptr), current(nullptr), totalSize(0)
@@ -18,16 +18,16 @@ namespace cage
 			totalSize = size;
 		}
 
-		void *allocate(uintPtr size)
+		void *allocate(uintPtr size, uintPtr alignment)
 		{
-			uintPtr alig = detail::addToAlign((uintPtr)current + sizeof(uintPtr) + BoundsPolicy::SizeFront, Alignment);
+			uintPtr alig = detail::addToAlign((uintPtr)current + sizeof(uintPtr) + BoundsPolicy::SizeFront, alignment);
 			uintPtr total = alig + sizeof(uintPtr) + BoundsPolicy::SizeFront + size + BoundsPolicy::SizeBack;
 
 			if ((char*)current + total > (char*)origin + totalSize)
 				CAGE_THROW_SILENT(outOfMemoryException, "out of memory", total);
 
 			void *result = (char*)current + alig + sizeof(uintPtr) + BoundsPolicy::SizeFront;
-			CAGE_ASSERT_RUNTIME((uintPtr)result % Alignment == 0, "alignment failed", result, total, Alignment, current, alig, BoundsPolicy::SizeFront, size, BoundsPolicy::SizeBack);
+			CAGE_ASSERT_RUNTIME((uintPtr)result % alignment == 0, "alignment failed", result, total, alignment, current, alig, BoundsPolicy::SizeFront, size, BoundsPolicy::SizeBack);
 
 			*(uintPtr*)((char*)result - BoundsPolicy::SizeFront - sizeof(uintPtr)) = alig;
 			bound.setFront((char*)result - BoundsPolicy::SizeFront);

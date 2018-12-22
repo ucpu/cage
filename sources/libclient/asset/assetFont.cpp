@@ -36,7 +36,7 @@ namespace cage
 			}
 			context->returnData = font;
 
-			deserializer des(context->originalData, context->originalSize);
+			deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
 			fontHeaderStruct data;
 			des >> data;
 			const char *image = des.access(data.texSize);

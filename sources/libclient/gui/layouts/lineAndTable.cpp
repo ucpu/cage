@@ -77,8 +77,8 @@ namespace cage
 				}
 				CAGE_ASSERT_RUNTIME(mws * mhs >= childs, mws, mhs, childs);
 				// allocate widths & heights
-				widths = (real*)impl->itemsMemory.allocate(mws * sizeof(real));
-				heights = (real*)impl->itemsMemory.allocate(mhs * sizeof(real));
+				widths = (real*)impl->itemsMemory.allocate(mws * sizeof(real), sizeof(uintPtr));
+				heights = (real*)impl->itemsMemory.allocate(mhs * sizeof(real), sizeof(uintPtr));
 				detail::memset(widths, 0, mws * sizeof(real));
 				detail::memset(heights, 0, mhs * sizeof(real));
 				// populate widths & heights

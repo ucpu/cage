@@ -17,6 +17,5 @@
 #include "memory/arena/fixed.h"
 #include "memory/arena/growing.h"
 #include "memory/arenaStd.h"
-#include "memory/arenaIndexed.h"
 
 #endif // guard_memory_h_f1434537_bf7f_4eed_a603_7145ab2f0515_

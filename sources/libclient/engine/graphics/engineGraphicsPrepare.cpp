@@ -707,11 +707,11 @@ namespace cage
 	objectsStruct::objectsStruct(meshClass *mesh, uint32 max) : shaderMeshes(nullptr), shaderArmatures(nullptr), mesh(mesh), next(nullptr), count(0), max(max)
 	{
 		assetManagerClass *ass = assets();
-		shaderMeshes = (shaderMeshStruct*)graphicsPrepare->dispatchArena.allocate(sizeof(shaderMeshStruct) * max);
+		shaderMeshes = (shaderMeshStruct*)graphicsPrepare->dispatchArena.allocate(sizeof(shaderMeshStruct) * max, sizeof(uintPtr));
 		if ((mesh->getFlags() & meshFlags::Bones) == meshFlags::Bones)
 		{
 			CAGE_ASSERT_RUNTIME(mesh->getSkeletonName() == 0 || ass->ready(mesh->getSkeletonName()));
-			shaderArmatures = (mat3x4*)graphicsPrepare->dispatchArena.allocate(sizeof(mat3x4) * mesh->getSkeletonBones() * max);
+			shaderArmatures = (mat3x4*)graphicsPrepare->dispatchArena.allocate(sizeof(mat3x4) * mesh->getSkeletonBones() * max, sizeof(uintPtr));
 		}
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		{
@@ -750,7 +750,7 @@ namespace cage
 
 	lightsStruct::lightsStruct(lightTypeEnum lightType, sint32 shadowmap, uint32 max) : shaderLights(nullptr), next(nullptr), count(0), max(max), shadowmap(shadowmap), lightType(lightType)
 	{
-		shaderLights = (shaderLightStruct*)graphicsPrepare->dispatchArena.allocate(sizeof(shaderLightStruct) * max);
+		shaderLights = (shaderLightStruct*)graphicsPrepare->dispatchArena.allocate(sizeof(shaderLightStruct) * max, alignof(shaderLightStruct));
 		switch (lightType)
 		{
 		case lightTypeEnum::Directional:

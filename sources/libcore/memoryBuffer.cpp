@@ -52,7 +52,7 @@ namespace cage
 	void memoryBuffer::reserve(uintPtr cap)
 	{
 		free();
-		data_ = (char*)detail::systemArena().allocate(cap);
+		data_ = (char*)detail::systemArena().allocate(cap, sizeof(uintPtr));
 		capacity_ = cap;
 		size_ = 0;
 	}
@@ -60,7 +60,7 @@ namespace cage
 	void memoryBuffer::reallocate(uintPtr size)
 	{
 		free();
-		data_ = (char*)detail::systemArena().allocate(size);
+		data_ = (char*)detail::systemArena().allocate(size, sizeof(uintPtr));
 		capacity_ = size_ = size;
 	}
 

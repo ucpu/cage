@@ -13,11 +13,11 @@ namespace cage
 			textPackClass *texts = nullptr;
 			if (!context->assetHolder)
 				context->assetHolder = newTextPack().transfev();
-			texts = static_cast<textPackClass*> (context->assetHolder.get());
+			texts = static_cast<textPackClass*>(context->assetHolder.get());
 			texts->clear();
 			context->returnData = texts;
 
-			deserializer des(context->originalData, context->originalSize);
+			deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
 			uint32 cnt;
 			des >> cnt;
 			for (uint32 i = 0; i < cnt; i++)

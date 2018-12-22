@@ -81,13 +81,14 @@ namespace cage
 			entityManagerImpl *const manager;
 			holder<groupImpl> componentEntities;
 			const uintPtr typeSize;
+			const uintPtr typeAlignment;
 			void *prototype;
 			const uint32 vectorIndex;
 
-			componentImpl(entityManagerImpl *manager, uintPtr typeSize, void *prototype, bool enumerableEntities) :
-				manager(manager), typeSize(typeSize), vectorIndex(numeric_cast<uint32>(manager->components.size()))
+			componentImpl(entityManagerImpl *manager, uintPtr typeSize, uintPtr typeAlignment, void *prototype, bool enumerableEntities) :
+				manager(manager), typeSize(typeSize), typeAlignment(typeAlignment), vectorIndex(numeric_cast<uint32>(manager->components.size()))
 			{
-				this->prototype = detail::systemArena().allocate(typeSize);
+				this->prototype = detail::systemArena().allocate(typeSize, typeAlignment);
 				detail::memcpy(this->prototype, prototype, typeSize);
 				if (enumerableEntities)
 					componentEntities = detail::systemArena().createHolder<groupImpl>(manager);
@@ -214,10 +215,10 @@ namespace cage
 		impl->allEntities.destroy();
 	}
 
-	componentClass *entityManagerClass::zPrivateDefineComponent(uintPtr typeSize, void *prototype, bool enumerableEntities)
+	componentClass *entityManagerClass::zPrivateDefineComponent(uintPtr typeSize, uintPtr typeAlignment, void *prototype, bool enumerableEntities)
 	{
 		entityManagerImpl *impl = (entityManagerImpl *)this;
-		componentImpl *c = detail::systemArena().createObject<componentImpl>(impl, typeSize, prototype, enumerableEntities);
+		componentImpl *c = detail::systemArena().createObject<componentImpl>(impl, typeSize, typeAlignment, prototype, enumerableEntities);
 		impl->components.push_back(c);
 		return c;
 	}
@@ -305,7 +306,7 @@ namespace cage
 		componentImpl *ci = (componentImpl *)component;
 		if (impl->components.size() < ci->vectorIndex + 1)
 			impl->components.resize(ci->vectorIndex + 1);
-		void *c = detail::systemArena().allocate(ci->typeSize);
+		void *c = detail::systemArena().allocate(ci->typeSize, ci->typeAlignment);
 		impl->components[ci->vectorIndex] = c;
 		detail::memcpy(c, ci->prototype, ci->typeSize);
 		if (ci->componentEntities)
