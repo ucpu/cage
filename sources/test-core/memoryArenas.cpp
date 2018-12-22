@@ -60,7 +60,7 @@ namespace
 		uintPtr Alignment, class Traits>
 	struct memoryArenaTest<ArenaPolicy, BoundsPolicy, TagPolicy, TrackPolicy, Alignment, 0, Traits>
 	{ // pool
-		template<uintPtr Size, uintPtr Alignment>
+		template<uintPtr Size>
 		struct alignas(Alignment) alignmentHelper
 		{
 			char data[Size];
@@ -68,7 +68,7 @@ namespace
 
 		memoryArenaTest()
 		{
-			ArenaPolicy<memoryAllocatorPolicyPool<templates::poolAllocatorAtomSize<alignmentHelper<Traits::AtomSize, Alignment>>::result, BoundsPolicy, TagPolicy, TrackPolicy>, memoryConcurrentPolicyNone> pool(Traits::MemoryLimit);
+			ArenaPolicy<memoryAllocatorPolicyPool<templates::poolAllocatorAtomSize<alignmentHelper<Traits::AtomSize>>::result, BoundsPolicy, TagPolicy, TrackPolicy>, memoryConcurrentPolicyNone> pool(Traits::MemoryLimit);
 			PrintTest;
 			memoryArena a(&pool);
 			std::vector<void*> alokace;
