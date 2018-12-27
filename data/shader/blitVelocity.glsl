@@ -16,13 +16,13 @@ void main()
 
 $define shader fragment
 
-layout(binding = 0) uniform sampler2D uniTexture;
+layout(binding = 0) uniform sampler2D texVelocity;
 in vec2 varUv;
 out vec4 outColor;
 
 void main()
 {
-	vec2 v = texture(uniTexture, varUv).xy;
+	vec2 v = texture(texVelocity, varUv).xy;
 	float s = length(v);
 	outColor = vec4(abs(v) * pow(s * 10.0, 0.2) / s, 0.0, 1.0);
 }

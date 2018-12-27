@@ -87,6 +87,7 @@ namespace cage
 			holder<textureClass> specialTexture;
 			holder<textureClass> normalTexture;
 			holder<textureClass> colorTexture;
+			holder<textureClass> intermediateTexture;
 			holder<textureClass> velocityTexture;
 			holder<textureClass> depthTexture;
 
@@ -155,6 +156,7 @@ namespace cage
 				specialTexture->bind(); specialTexture->image2d(w, h, GL_RG8, GL_RG, GL_UNSIGNED_BYTE, nullptr);
 				normalTexture->bind(); normalTexture->image2d(w, h, GL_RGB16F, GL_RGB, GL_HALF_FLOAT, nullptr);
 				colorTexture->bind(); colorTexture->image2d(w, h, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+				intermediateTexture->bind(); intermediateTexture->image2d(w, h, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
 				velocityTexture->bind(); velocityTexture->image2d(w, h, GL_RG16F, GL_RG, GL_HALF_FLOAT, nullptr);
 				depthTexture->bind(); depthTexture->image2d(w, h, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 				CAGE_CHECK_GL_ERROR_DEBUG();
@@ -217,6 +219,13 @@ namespace cage
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
+			void bindGBufferTextures()
+			{
+				const uint32 tius[5] = { CAGE_SHADER_TEXTURE_ALBEDO, CAGE_SHADER_TEXTURE_SPECIAL, CAGE_SHADER_TEXTURE_NORMAL, CAGE_SHADER_TEXTURE_VELOCITY, CAGE_SHADER_TEXTURE_DEPTH };
+				textureClass *texs[5] = { albedoTexture.get(), specialTexture.get(), normalTexture.get(), velocityTexture.get(), depthTexture.get() };
+				textureClass::multiBind(5, tius, texs);
+			}
+
 			void renderLighting(renderPassStruct *pass)
 			{
 				CAGE_ASSERT_RUNTIME(pass->targetShadowmap == 0);
@@ -226,13 +235,8 @@ namespace cage
 				renderTarget->colorTexture(0, colorTexture.get());
 				renderTarget->drawAttachments(1);
 				renderTarget->checkStatus();
+				bindGBufferTextures();
 				CAGE_CHECK_GL_ERROR_DEBUG();
-
-				{
-					const uint32 tius[4] = { CAGE_SHADER_TEXTURE_ALBEDO, CAGE_SHADER_TEXTURE_SPECIAL, CAGE_SHADER_TEXTURE_NORMAL, CAGE_SHADER_TEXTURE_DEPTH };
-					textureClass *texs[4] = { albedoTexture.get(), specialTexture.get(), normalTexture.get(), depthTexture.get() };
-					textureClass::multiBind(4, tius, texs);
-				}
 
 				setTwoSided(false);
 				setDepthTest(false, false);
@@ -320,6 +324,14 @@ namespace cage
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
+			void renderEffectPrepare(textureClass *&texSource, textureClass *&texTarget)
+			{
+				renderTarget->colorTexture(0, texTarget);
+				renderTarget->checkStatus();
+				texSource->bind();
+				std::swap(texSource, texTarget);
+			}
+
 			void renderPass(renderPassStruct *pass)
 			{
 				viewportDataBuffer->bind();
@@ -372,14 +384,33 @@ namespace cage
 				glActiveTexture(GL_TEXTURE0);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
-				if (pass->targetShadowmap == 0 && pass->targetTexture)
-				{ // blit from gBuffer to the texture
-					renderTarget->bind();
-					renderTarget->depthTexture(nullptr);
+				if (pass->targetShadowmap)
+					return;
+
+				renderTarget->bind();
+				renderTarget->depthTexture(nullptr);
+				renderTarget->drawAttachments(1);
+
+				textureClass *texSource = colorTexture.get();
+				textureClass *texTarget = intermediateTexture.get();
+				if (pass->effects != cameraEffectsFlags::None)
+				{ // all screen-space post-processing
+					bindGBufferTextures();
+					if ((pass->effects & cameraEffectsFlags::MotionBlur) == cameraEffectsFlags::MotionBlur)
+					{
+						renderEffectPrepare(texSource, texTarget);
+						shaderMotionBlur->bind();
+						meshSquare->bind();
+						meshSquare->dispatch();
+						CAGE_CHECK_GL_ERROR_DEBUG();
+					}
+				}
+
+				if (texSource != pass->targetTexture)
+				{ // blit to final output texture
 					renderTarget->colorTexture(0, pass->targetTexture);
-					renderTarget->drawAttachments(1);
 					renderTarget->checkStatus();
-					colorTexture->bind();
+					texSource->bind();
 					shaderBlitColor->bind();
 					uint32 w = gBufferWidth, h = gBufferHeight;
 					shaderBlitColor->uniform(0, vec4(pass->vpX, pass->vpY, pass->vpW, pass->vpH) / vec4(w, h, w, h));
@@ -403,7 +434,7 @@ namespace cage
 				gBufferWidth = gBufferHeight = 0;
 
 #define GCHL_GENERATE(NAME) NAME = newTexture(window()); NAME->filters(GL_LINEAR, GL_LINEAR, 0);
-				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, albedoTexture, specialTexture, normalTexture, colorTexture, velocityTexture, depthTexture));
+				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, albedoTexture, specialTexture, normalTexture, colorTexture, intermediateTexture, velocityTexture, depthTexture));
 #undef GCHL_GENERATE
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
@@ -438,6 +469,7 @@ namespace cage
 				specialTexture.clear();
 				normalTexture.clear();
 				colorTexture.clear();
+				intermediateTexture.clear();
 				velocityTexture.clear();
 				depthTexture.clear();
 				shadowmaps2d.clear();
@@ -490,6 +522,7 @@ namespace cage
 						}
 						if (renderPass->targetShadowmap == 0)
 						{ // render to screen
+							renderPass->targetTexture = colorTexture.get();
 							continue;
 						}
 						// render to shadowmap

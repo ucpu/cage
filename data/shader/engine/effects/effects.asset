@@ -1,0 +1,8 @@
+
+[]
+scheme = pack
+effects.pack
+
+[]
+scheme = shader
+motionBlur.glsl

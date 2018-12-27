@@ -114,6 +114,13 @@ namespace cage
 		Spot,
 	};
 
+	enum class cameraEffectsFlags : uint32
+	{
+		None = 0,
+		MotionBlur = 1 << 0,
+	};
+	GCHL_ENUM_BITS(cameraEffectsFlags);
+
 	enum class cameraClearFlags : uint32
 	{
 		None = 0,

@@ -82,6 +82,7 @@ namespace cage
 		uint32 shadowmapResolution;
 		uint32 clearFlags;
 		uint32 vpX, vpY, vpW, vpH;
+		cameraEffectsFlags effects;
 		renderPassStruct();
 	};
 
@@ -90,6 +91,7 @@ namespace cage
 		meshClass *meshSquare, *meshSphere, *meshCone, *meshFake;
 		shaderClass *shaderBlitColor, *shaderBlitDepth, *shaderBlitVelocity;
 		shaderClass *shaderDepth, *shaderGBuffer, *shaderLighting, *shaderTranslucent;
+		shaderClass *shaderMotionBlur;
 		uint32 windowWidth, windowHeight;
 		renderPassStruct *firstRenderPass, *lastRenderPass;
 	};

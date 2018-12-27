@@ -49,7 +49,7 @@ namespace cage
 			void updateModelMatrix(real interFactor)
 			{
 				model = mat4(interpolate(transformHistory, transform, interFactor));
-				modelPrev = mat4(interpolate(transformHistory, transform, interFactor - 1.0));
+				modelPrev = mat4(interpolate(transformHistory, transform, interFactor - 0.5));
 			}
 		};
 
@@ -275,6 +275,7 @@ namespace cage
 				pass->targetTexture = camera->camera.target;
 				pass->clearFlags = ((camera->camera.clear & cameraClearFlags::Color) == cameraClearFlags::Color ? GL_COLOR_BUFFER_BIT : 0) | ((camera->camera.clear & cameraClearFlags::Depth) == cameraClearFlags::Depth ? GL_DEPTH_BUFFER_BIT : 0);
 				pass->renderMask = camera->camera.renderMask;
+				pass->effects = camera->camera.effects;
 				addRenderableObjects(pass, false);
 				for (auto it : emitRead->lights)
 					addLight(pass, it);
@@ -653,6 +654,7 @@ namespace cage
 					graphicsDispatch->shaderGBuffer = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/gBuffer.glsl"));
 					graphicsDispatch->shaderLighting = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/lighting.glsl"));
 					graphicsDispatch->shaderTranslucent = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/translucent.glsl"));
+					graphicsDispatch->shaderMotionBlur = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/motionBlur.glsl"));
 				}
 
 				emitRead = emitBuffers[lock.index()];
@@ -688,16 +690,12 @@ namespace cage
 				}
 
 				{ // generate camera render passes
-					struct cameraComparatorStruct
+					std::sort(emitRead->cameras.begin(), emitRead->cameras.end(), [](const emitCameraStruct *a, const emitCameraStruct *b)
 					{
-						const bool operator() (const emitCameraStruct *a, const emitCameraStruct *b) const
-						{
-							if (!!a->camera.target == !!b->camera.target)
-								return a->camera.cameraOrder < b->camera.cameraOrder;
-							return a->camera.target > b->camera.target;
-						}
-					};
-					std::sort(emitRead->cameras.begin(), emitRead->cameras.end(), cameraComparatorStruct());
+						if (!!a->camera.target == !!b->camera.target)
+							return a->camera.cameraOrder < b->camera.cameraOrder;
+						return a->camera.target > b->camera.target;
+					});
 					for (auto it : emitRead->cameras)
 					{
 						if (graphicsPrepareThread().stereoMode == stereoModeEnum::Mono || it->camera.target)

@@ -16,11 +16,11 @@ void main()
 
 $define shader fragment
 
-layout(binding = 0) uniform sampler2D uniTexture;
+layout(binding = 0) uniform sampler2D texColor;
 in vec2 varUv;
 out vec4 outColor;
 
 void main()
 {
-	outColor = vec4(texture(uniTexture, varUv).rgb, 1.0);
+	outColor = vec4(texture(texColor, varUv).rgb, 1.0);
 }

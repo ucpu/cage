@@ -68,6 +68,7 @@ namespace cage
 		real eyeSeparation;
 		sint32 cameraOrder;
 		uint32 renderMask;
+		cameraEffectsFlags effects;
 		cameraClearFlags clear;
 		cameraTypeEnum cameraType;
 		cameraComponent();

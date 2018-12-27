@@ -25,7 +25,7 @@ namespace cage
 	animatedTextureComponent::animatedTextureComponent() : startTime(0), speed(1), offset(0) {}
 	lightComponent::lightComponent() : color(1, 1, 1), attenuation(1, 0, 0.01), spotAngle(degs(60)), spotExponent(1.5), lightType(lightTypeEnum::Point) {}
 	shadowmapComponent::shadowmapComponent() : worldSize(0, 0, 0), resolution(256) {}
-	cameraComponent::cameraComponent() : viewportSize(1, 1), target(nullptr), perspectiveFov(degs(60)), near(1), far(100), zeroParallaxDistance(10), eyeSeparation(0.3), cameraOrder(0), renderMask(1), clear(cameraClearFlags::Depth | cameraClearFlags::Color), cameraType(cameraTypeEnum::Perspective) {}
+	cameraComponent::cameraComponent() : viewportSize(1, 1), target(nullptr), perspectiveFov(degs(60)), near(1), far(100), zeroParallaxDistance(10), eyeSeparation(0.3), cameraOrder(0), renderMask(1), effects(cameraEffectsFlags::MotionBlur), clear(cameraClearFlags::Depth | cameraClearFlags::Color), cameraType(cameraTypeEnum::Perspective) {}
 	voiceComponent::voiceComponent() : input(nullptr), startTime(0), name(0), renderMask(1) {}
 	listenerComponent::listenerComponent() : output(nullptr), renderMask(1), speedOfSound(343.3), dopplerEffect(false) {}
 

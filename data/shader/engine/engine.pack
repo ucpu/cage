@@ -1,5 +1,8 @@
 
-[1] #shader
+[]
+effects/effects.pack
+
+[]
 lighting.glsl
 depth.glsl
 gBuffer.glsl
