@@ -61,6 +61,7 @@ namespace cage
 			Color,
 			Depth2d,
 			DepthCube,
+			Velocity,
 		};
 
 		struct visualizableTextureStruct
@@ -86,6 +87,7 @@ namespace cage
 			holder<textureClass> specialTexture;
 			holder<textureClass> normalTexture;
 			holder<textureClass> colorTexture;
+			holder<textureClass> velocityTexture;
 			holder<textureClass> depthTexture;
 
 			holder<uniformBufferClass> viewportDataBuffer;
@@ -153,6 +155,7 @@ namespace cage
 				specialTexture->bind(); specialTexture->image2d(w, h, GL_RG8, GL_RG, GL_UNSIGNED_BYTE, nullptr);
 				normalTexture->bind(); normalTexture->image2d(w, h, GL_RGB16F, GL_RGB, GL_HALF_FLOAT, nullptr);
 				colorTexture->bind(); colorTexture->image2d(w, h, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+				velocityTexture->bind(); velocityTexture->image2d(w, h, GL_RG16F, GL_RG, GL_HALF_FLOAT, nullptr);
 				depthTexture->bind(); depthTexture->image2d(w, h, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
@@ -200,7 +203,7 @@ namespace cage
 				CAGE_ASSERT_RUNTIME(pass->targetShadowmap == 0);
 
 				gBufferTarget->bind();
-				gBufferTarget->drawAttachments(15);
+				gBufferTarget->drawAttachments(31);
 				gBufferTarget->checkStatus();
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
@@ -400,7 +403,7 @@ namespace cage
 				gBufferWidth = gBufferHeight = 0;
 
 #define GCHL_GENERATE(NAME) NAME = newTexture(window()); NAME->filters(GL_LINEAR, GL_LINEAR, 0);
-				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, albedoTexture, specialTexture, normalTexture, colorTexture, depthTexture));
+				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, albedoTexture, specialTexture, normalTexture, colorTexture, velocityTexture, depthTexture));
 #undef GCHL_GENERATE
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
@@ -409,6 +412,7 @@ namespace cage
 				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_SPECIAL, specialTexture.get());
 				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_NORMAL, normalTexture.get());
 				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_COLOR, colorTexture.get());
+				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_VELOCITY, velocityTexture.get());
 				gBufferTarget->depthTexture(depthTexture.get());
 				renderTarget = newFrameBuffer(window());
 				CAGE_CHECK_GL_ERROR_DEBUG();
@@ -434,6 +438,7 @@ namespace cage
 				specialTexture.clear();
 				normalTexture.clear();
 				colorTexture.clear();
+				velocityTexture.clear();
 				depthTexture.clear();
 				shadowmaps2d.clear();
 				shadowmapsCube.clear();
@@ -467,6 +472,7 @@ namespace cage
 				visualizableTextures.emplace_back(albedoTexture.get(), visualizableTextureModeEnum::Color);
 				visualizableTextures.emplace_back(specialTexture.get(), visualizableTextureModeEnum::Color);
 				visualizableTextures.emplace_back(normalTexture.get(), visualizableTextureModeEnum::Color);
+				visualizableTextures.emplace_back(velocityTexture.get(), visualizableTextureModeEnum::Velocity);
 				visualizableTextures.emplace_back(depthTexture.get(), visualizableTextureModeEnum::Depth2d);
 
 				{ // prepare all render targets
@@ -533,15 +539,21 @@ namespace cage
 						visualizeIndex += numeric_cast<sint32>(visualizableTextures.size());
 					visualizableTextureStruct &v = visualizableTextures[visualizeIndex];
 					v.tex->bind();
-					if (v.visualizableTextureMode == visualizableTextureModeEnum::Color)
+					switch (v.visualizableTextureMode)
 					{
+					case visualizableTextureModeEnum::Color:
 						shaderBlitColor->bind();
 						shaderBlitColor->uniform(0, vec4(0, 0, 1, 1));
-					}
-					else
-					{
+						break;
+					case visualizableTextureModeEnum::Depth2d:
+					case visualizableTextureModeEnum::DepthCube:
 						shaderBlitDepth->bind();
 						shaderBlitDepth->uniform(0, vec4(0, 0, 1, 1));
+						break;
+					case visualizableTextureModeEnum::Velocity:
+						shaderBlitVelocity->bind();
+						shaderBlitVelocity->uniform(0, vec4(0, 0, 1, 1));
+						break;
 					}
 					meshSquare->bind();
 					meshSquare->dispatch();

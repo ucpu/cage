@@ -45,9 +45,11 @@ namespace cage
 		{
 			transformComponent transform, transformHistory;
 			mat4 model;
+			mat4 modelPrev;
 			void updateModelMatrix(real interFactor)
 			{
 				model = mat4(interpolate(transformHistory, transform, interFactor));
+				modelPrev = mat4(interpolate(transformHistory, transform, interFactor - 1.0));
 			}
 		};
 
@@ -86,6 +88,7 @@ namespace cage
 			mat4 view;
 			mat4 proj;
 			mat4 viewProj;
+			mat4 viewProjPrev;
 			uint32 renderMask;
 			real lodSelection; // vertical size of screen, at distance of one world-space-unit from camera, in pixels
 			bool lodOrthographic;
@@ -188,14 +191,49 @@ namespace cage
 				return t;
 			}
 
-			real fovToLodSelection(rads fov)
+			static real fovToLodSelection(rads fov)
 			{
 				return tan(fov * 0.5) * 2;
 			}
 
+			static void initializeStereoCamera(renderPassImpl *pass, emitCameraStruct *camera, eyeEnum eye, const mat4 &model)
+			{
+				real x = camera->camera.viewportOrigin[0], y = camera->camera.viewportOrigin[1], w = camera->camera.viewportSize[0], h = camera->camera.viewportSize[1];
+				stereoCameraStruct cam;
+				cam.position = vec3(model * vec4(0, 0, 0, 1));
+				cam.direction = vec3(model * vec4(0, 0, -1, 0));
+				cam.worldUp = vec3(model * vec4(0, 1, 0, 0));
+				cam.fov = camera->camera.perspectiveFov;
+				cam.near = camera->camera.near;
+				cam.far = camera->camera.far;
+				cam.zeroParallaxDistance = camera->camera.zeroParallaxDistance;
+				cam.eyeSeparation = camera->camera.eyeSeparation;
+				cam.ortographic = camera->camera.cameraType == cameraTypeEnum::Orthographic;
+				stereoscopy(eye, cam, real(graphicsDispatch->windowWidth) / real(graphicsDispatch->windowHeight), (stereoModeEnum)graphicsPrepareThread().stereoMode, pass->view, pass->proj, x, y, w, h);
+				if (camera->camera.cameraType == cameraTypeEnum::Perspective)
+					pass->lodSelection = fovToLodSelection(camera->camera.perspectiveFov) * graphicsDispatch->windowHeight;
+				else
+				{
+					pass->proj = orthographicProjection(-camera->camera.orthographicSize[0], camera->camera.orthographicSize[0], -camera->camera.orthographicSize[1], camera->camera.orthographicSize[1], camera->camera.near, camera->camera.far);
+					pass->lodSelection = camera->camera.orthographicSize[1] * graphicsDispatch->windowHeight;
+					pass->lodOrthographic = true;
+				}
+				pass->viewProj = pass->proj * pass->view;
+				pass->vpX = numeric_cast<uint32>(x * real(graphicsDispatch->windowWidth));
+				pass->vpY = numeric_cast<uint32>(y * real(graphicsDispatch->windowHeight));
+				pass->vpW = numeric_cast<uint32>(w * real(graphicsDispatch->windowWidth));
+				pass->vpH = numeric_cast<uint32>(h * real(graphicsDispatch->windowHeight));
+			}
+
+			static void initializeTargetCamera(renderPassImpl *pass, const mat4 &model)
+			{
+				vec3 p = vec3(model * vec4(0, 0, 0, 1));
+				pass->view = lookAt(p, p + vec3(model * vec4(0, 0, -1, 0)), vec3(model * vec4(0, 1, 0, 0)));
+				pass->viewProj = pass->proj * pass->view;
+			}
+
 			void initializeRenderPassForCamera(renderPassImpl *pass, emitCameraStruct *camera, eyeEnum eye)
 			{
-				mat4 mat = camera->model;
 				if (camera->camera.target)
 				{
 					uint32 w = 0, h = 0;
@@ -216,8 +254,9 @@ namespace cage
 					default:
 						CAGE_THROW_ERROR(exception, "invalid camera type");
 					}
-					vec3 p = vec3(mat * vec4(0, 0, 0, 1));
-					pass->view = lookAt(p, p + vec3(mat * vec4(0, 0, -1, 0)), vec3(mat * vec4(0, 1, 0, 0)));
+					initializeTargetCamera(pass, camera->modelPrev);
+					pass->viewProjPrev = pass->viewProj;
+					initializeTargetCamera(pass, camera->model);
 					pass->vpX = numeric_cast<uint32>(camera->camera.viewportOrigin[0] * w);
 					pass->vpY = numeric_cast<uint32>(camera->camera.viewportOrigin[1] * h);
 					pass->vpW = numeric_cast<uint32>(camera->camera.viewportSize[0] * w);
@@ -225,34 +264,12 @@ namespace cage
 				}
 				else
 				{
-					real x = camera->camera.viewportOrigin[0], y = camera->camera.viewportOrigin[1], w = camera->camera.viewportSize[0], h = camera->camera.viewportSize[1];
-					stereoCameraStruct cam;
-					cam.direction = vec3(mat * vec4(0, 0, -1, 0));
-					cam.position = vec3(mat * vec4(0, 0, 0, 1));
-					cam.worldUp = vec3(mat * vec4(0, 1, 0, 0));
-					cam.fov = camera->camera.perspectiveFov;
-					cam.near = camera->camera.near;
-					cam.far = camera->camera.far;
-					cam.zeroParallaxDistance = camera->camera.zeroParallaxDistance;
-					cam.eyeSeparation = camera->camera.eyeSeparation;
-					cam.ortographic = camera->camera.cameraType == cameraTypeEnum::Orthographic;
-					stereoscopy(eye, cam, real(graphicsDispatch->windowWidth) / real(graphicsDispatch->windowHeight), (stereoModeEnum)graphicsPrepareThread().stereoMode, pass->view, pass->proj, x, y, w, h);
-					if (camera->camera.cameraType == cameraTypeEnum::Perspective)
-						pass->lodSelection = fovToLodSelection(camera->camera.perspectiveFov) * graphicsDispatch->windowHeight;
-					else
-					{
-						pass->proj = orthographicProjection(-camera->camera.orthographicSize[0], camera->camera.orthographicSize[0], -camera->camera.orthographicSize[1], camera->camera.orthographicSize[1], camera->camera.near, camera->camera.far);
-						pass->lodSelection = camera->camera.orthographicSize[1] * graphicsDispatch->windowHeight;
-						pass->lodOrthographic = true;
-					}
-					pass->vpX = numeric_cast<uint32>(x * real(graphicsDispatch->windowWidth));
-					pass->vpY = numeric_cast<uint32>(y * real(graphicsDispatch->windowHeight));
-					pass->vpW = numeric_cast<uint32>(w * real(graphicsDispatch->windowWidth));
-					pass->vpH = numeric_cast<uint32>(h * real(graphicsDispatch->windowHeight));
+					initializeStereoCamera(pass, camera, eye, camera->modelPrev);
+					pass->viewProjPrev = pass->viewProj;
+					initializeStereoCamera(pass, camera, eye, camera->model);
 				}
-				pass->viewProj = pass->proj * pass->view;
 				pass->shaderViewport.vpInv = pass->viewProj.inverse();
-				pass->shaderViewport.eyePos = mat * vec4(0, 0, 0, 1);
+				pass->shaderViewport.eyePos = camera->model * vec4(0, 0, 0, 1);
 				pass->shaderViewport.ambientLight = vec4(camera->camera.ambientLight, 0);
 				pass->shaderViewport.viewport = vec4(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
 				pass->targetTexture = camera->camera.target;
@@ -285,6 +302,7 @@ namespace cage
 					CAGE_THROW_CRITICAL(exception, "invalid light type");
 				}
 				pass->viewProj = pass->proj * pass->view;
+				pass->viewProjPrev = pass->viewProj;
 				pass->shadowmapResolution = pass->vpW = pass->vpH = light->shadowmap->resolution;
 				pass->renderMask = 0xffffffff;
 				pass->targetShadowmap = light->light.lightType == lightTypeEnum::Point ? (-shmCube++ - 1) : (shm2d++ + 1);
@@ -305,11 +323,10 @@ namespace cage
 				{
 					if ((e->render.renderMask & pass->renderMask) == 0)
 						continue;
-					mat4 mvp = pass->viewProj * e->model;
 					if (!assets()->ready(e->render.object))
 					{
 						if (renderMissingMeshes)
-							addRenderableMesh(pass, e, graphicsDispatch->meshFake, e->model, mvp);
+							addRenderableMesh(pass, e, graphicsDispatch->meshFake);
 						continue;
 					}
 					switch (assets()->scheme(e->render.object))
@@ -317,7 +334,7 @@ namespace cage
 					case assetSchemeIndexMesh:
 					{
 						meshClass *m = assets()->get<assetSchemeIndexMesh, meshClass>(e->render.object);
-						addRenderableMesh(pass, e, m, e->model, mvp);
+						addRenderableMesh(pass, e, m);
 					} break;
 					case assetSchemeIndexObject:
 					{
@@ -328,7 +345,7 @@ namespace cage
 						{
 							CAGE_ASSERT_RUNTIME(assets()->ready(o->shadower), e->render.object, o->shadower);
 							meshClass *m = assets()->get<assetSchemeIndexMesh, meshClass>(o->shadower);
-							addRenderableMesh(pass, e, m, e->model, mvp);
+							addRenderableMesh(pass, e, m);
 							continue;
 						}
 						uint32 lod = 0;
@@ -346,7 +363,7 @@ namespace cage
 						for (uint32 msh : o->meshes(lod))
 						{
 							meshClass *m = assets()->get<assetSchemeIndexMesh, meshClass>(msh);
-							addRenderableMesh(pass, e, m, e->model, mvp);
+							addRenderableMesh(pass, e, m);
 						}
 					} break;
 					default:
@@ -377,11 +394,17 @@ namespace cage
 				{
 					e->render.color = convertHsvToRgb(vec3(real(i) / real(bonesCount), 1, 1));
 					mat4 m = model * tmpArmature2[i];
-					addRenderableMesh(pass, e, mesh, m, pass->viewProj * m);
+					mat4 mvp = pass->viewProj * m;
+					addRenderableMesh(pass, e, mesh, m, mvp, mvp);
 				}
 			}
 
-			void addRenderableMesh(renderPassImpl *pass, emitRenderStruct *e, meshClass *m, const mat4 &model, const mat4 &mvp)
+			void addRenderableMesh(renderPassImpl *pass, emitRenderStruct *e, meshClass *m)
+			{
+				addRenderableMesh(pass, e, m, e->model, pass->viewProj * e->model, pass->viewProjPrev * e->modelPrev);
+			}
+
+			void addRenderableMesh(renderPassImpl *pass, emitRenderStruct *e, meshClass *m, const mat4 &model, const mat4 &mvp, const mat4 &mvpPrev)
 			{
 				if (!frustumCulling(m->getBoundingBox(), mvp))
 					return;
@@ -433,8 +456,12 @@ namespace cage
 				sm->color = vec4(e->render.color, 0);
 				sm->mMat = model;
 				sm->mvpMat = mvp;
+				if ((m->getFlags() & meshFlags::VelocityWrite) == meshFlags::VelocityWrite)
+					sm->mvpPrevMat = mvpPrev;
+				else
+					sm->mvpPrevMat = mvp;
 				sm->normalMat = mat4(modelToNormal(model));
-				sm->normalMat[15] = ((m->getFlags() & meshFlags::Lighting) == meshFlags::Lighting) ? 1 : 0; // is ligting enabled
+				sm->normalMat.data[2][3] = ((m->getFlags() & meshFlags::Lighting) == meshFlags::Lighting) ? 1 : 0; // is ligting enabled
 				if (e->animatedTexture)
 					sm->aniTexFrames = detail::evalSamplesForTextureAnimation(obj->textures[CAGE_SHADER_TEXTURE_ALBEDO], dispatchTime, e->animatedTexture->startTime, e->animatedTexture->speed, e->animatedTexture->offset);
 				if (obj->shaderArmatures)
@@ -621,6 +648,7 @@ namespace cage
 					graphicsDispatch->meshFake = ass->get<assetSchemeIndexMesh, meshClass>(hashString("cage/mesh/fake.obj"));
 					graphicsDispatch->shaderBlitColor = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/blitColor.glsl"));
 					graphicsDispatch->shaderBlitDepth = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/blitDepth.glsl"));
+					graphicsDispatch->shaderBlitVelocity = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/blitVelocity.glsl"));
 					graphicsDispatch->shaderDepth = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/depth.glsl"));
 					graphicsDispatch->shaderGBuffer = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/gBuffer.glsl"));
 					graphicsDispatch->shaderLighting = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/lighting.glsl"));

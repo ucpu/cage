@@ -15,8 +15,9 @@ namespace cage
 		TwoSided = 1 << 7,
 		DepthTest = 1 << 8,
 		DepthWrite = 1 << 9,
-		Lighting = 1 << 10,
-		ShadowCast = 1 << 11,
+		VelocityWrite = 1 << 10,
+		Lighting = 1 << 11,
+		ShadowCast = 1 << 12,
 	};
 	GCHL_ENUM_BITS(meshFlags);
 

@@ -65,6 +65,7 @@ namespace
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "two sides: " + ((dsm.flags & meshFlags::TwoSided) == meshFlags::TwoSided));
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "depth test: " + ((dsm.flags & meshFlags::DepthTest) == meshFlags::DepthTest));
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "depth write: " + ((dsm.flags & meshFlags::DepthWrite) == meshFlags::DepthWrite));
+		CAGE_LOG(severityEnum::Info, logComponentName, string() + "velocity write: " + ((dsm.flags & meshFlags::VelocityWrite) == meshFlags::VelocityWrite));
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "shadow cast: " + ((dsm.flags & meshFlags::ShadowCast) == meshFlags::ShadowCast));
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		{
@@ -145,6 +146,11 @@ namespace
 			if (v == "no-depth-write")
 			{
 				dsm.flags &= ~meshFlags::DepthWrite;
+				continue;
+			}
+			if (v == "no-velocity-write")
+			{
+				dsm.flags &= ~meshFlags::VelocityWrite;
 				continue;
 			}
 			if (v == "no-lighting")
@@ -325,7 +331,7 @@ void processMesh()
 	meshHeaderStruct dsm;
 	memset(&dsm, 0, sizeof(dsm));
 	dsm.materialSize = sizeof(meshHeaderStruct::materialDataStruct);
-	dsm.flags = meshFlags::DepthTest | meshFlags::DepthWrite | meshFlags::Lighting | meshFlags::ShadowCast;
+	dsm.flags = meshFlags::DepthTest | meshFlags::DepthWrite | meshFlags::VelocityWrite | meshFlags::Lighting | meshFlags::ShadowCast;
 
 	uint32 indicesPerPrimitive = 0;
 	switch (am->mPrimitiveTypes)

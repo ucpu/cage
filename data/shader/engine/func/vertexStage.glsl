@@ -18,6 +18,8 @@ out vec3 varNormal; // object space
 out vec3 varTangent; // object space
 out vec3 varBitangent; // object space
 out vec3 varPosition; // world space
+out vec4 varPosition4;
+out vec4 varPosition4Prev;
 flat out int varInstanceId;
 
 void main()
@@ -30,11 +32,13 @@ $end
 	pos = vec4(inPosition, 1.0);
 	normal = inNormal;
 	uniSkeleton();
-	gl_Position = uniMeshes[meshIndex].mvpMat * pos;
 	varUv = inUv;
 	varNormal = normal;
 	varTangent = inTangent;
 	varBitangent = inBitangent;
 	varInstanceId = gl_InstanceID;
-	varPosition = gl_Position.xyz / gl_Position.w;
+	varPosition4 = uniMeshes[meshIndex].mvpMat * pos;
+	varPosition4Prev = uniMeshes[meshIndex].mvpPrevMat * pos;
+	varPosition = varPosition4.xyz / varPosition4.w;
+	gl_Position = varPosition4;
 }

@@ -7,3 +7,4 @@ shader.pack
 scheme = shader
 blitColor.glsl
 blitDepth.glsl
+blitVelocity.glsl

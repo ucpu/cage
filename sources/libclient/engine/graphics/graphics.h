@@ -20,9 +20,10 @@ namespace cage
 		shaderConfigStruct shaderConfig;
 		struct shaderMeshStruct
 		{
-			mat4 normalMat;
-			mat4 mMat;
 			mat4 mvpMat;
+			mat4 mvpPrevMat;
+			mat3x4 normalMat;
+			mat3x4 mMat;
 			vec4 color;
 			vec4 aniTexFrames;
 		} *shaderMeshes;
@@ -87,7 +88,7 @@ namespace cage
 	struct graphicsDispatchStruct
 	{
 		meshClass *meshSquare, *meshSphere, *meshCone, *meshFake;
-		shaderClass *shaderBlitColor, *shaderBlitDepth;
+		shaderClass *shaderBlitColor, *shaderBlitDepth, *shaderBlitVelocity;
 		shaderClass *shaderDepth, *shaderGBuffer, *shaderLighting, *shaderTranslucent;
 		uint32 windowWidth, windowHeight;
 		renderPassStruct *firstRenderPass, *lastRenderPass;

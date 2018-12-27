@@ -30,7 +30,7 @@ namespace cage
 
 	stereoCameraStruct::stereoCameraStruct() : ortographic(false) {}
 
-	void stereoscopy(eyeEnum eye, const stereoCameraStruct & camera, real aspectRatio, stereoModeEnum stereoMode, mat4 & view, mat4 & projection, real & viewportX, real & viewportY, real & viewportWidth, real & viewportHeight)
+	void stereoscopy(eyeEnum eye, const stereoCameraStruct &camera, real aspectRatio, stereoModeEnum stereoMode, mat4 &view, mat4 &projection, real &viewportX, real &viewportY, real &viewportWidth, real &viewportHeight)
 	{
 		aspectRatio *= viewportWidth / viewportHeight;
 		switch (eye)

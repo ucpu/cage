@@ -1,9 +1,10 @@
 
 struct meshStruct
 {
-	mat4 normalMat;
-	mat4 mMat;
 	mat4 mvpMat;
+	mat4 mvpPrevMat;
+	mat3x4 normalMat;
+	mat3x4 mMat;
 	vec4 color;
 	vec4 aniTexFrames;
 };
