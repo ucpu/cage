@@ -3,26 +3,80 @@
 
 namespace cage
 {
+	enum class noiseTypeEnum
+	{
+		Value,
+		Perlin,
+		Simplex,
+		Cubic,
+		Cellular,
+		White,
+	};
+
+	enum class noiseInterpolationEnum
+	{
+		Quintic,
+		Hermite,
+		Linear,
+	};
+
+	enum class noiseFractalTypeEnum
+	{
+		Fbm,
+		Billow,
+		RigidMulti,
+	};
+
 	enum class noiseDistanceEnum
 	{
 		Euclidean,
-		EuclideanSquared,
 		Manhattan, // length in axial directions
-		Chebychev, // length of the longest axis
+		Natural, // blend of euclidean and manhattan
+		//EuclideanSquared,
+		//Chebychev, // length of the longest axis
 	};
 
-	CAGE_API real noiseValue(uint32 seed,       real  coord);
-	CAGE_API real noiseValue(uint32 seed, const vec2 &coord);
-	CAGE_API real noiseValue(uint32 seed, const vec3 &coord);
-	CAGE_API real noiseValue(uint32 seed, const vec4 &coord);
-	CAGE_API real noiseClouds(uint32 seed,       real  coord, uint32 octaves = 3);
-	CAGE_API real noiseClouds(uint32 seed, const vec2 &coord, uint32 octaves = 3);
-	CAGE_API real noiseClouds(uint32 seed, const vec3 &coord, uint32 octaves = 3);
-	CAGE_API real noiseClouds(uint32 seed, const vec4 &coord, uint32 octaves = 3);
-	CAGE_API vec4 noiseCell(uint32 seed,       real  coord, noiseDistanceEnum distance = noiseDistanceEnum::Euclidean);
-	CAGE_API vec4 noiseCell(uint32 seed, const vec2 &coord, noiseDistanceEnum distance = noiseDistanceEnum::Euclidean);
-	CAGE_API vec4 noiseCell(uint32 seed, const vec3 &coord, noiseDistanceEnum distance = noiseDistanceEnum::Euclidean);
-	CAGE_API vec4 noiseCell(uint32 seed, const vec4 &coord, noiseDistanceEnum distance = noiseDistanceEnum::Euclidean);
+	enum class noiseOperationEnum
+	{
+		None,
+		Distance,
+		Add,
+		Subtract,
+		Multiply,
+		Divide,
+	};
+
+	class CAGE_API noiseClass
+	{
+	public:
+		real evaluate(real position);
+		real evaluate(vec2 position);
+		real evaluate(vec3 position);
+		real evaluate(vec4 position);
+		void evaluate(uint32 count, real positions[], real results[]);
+		void evaluate(uint32 count, vec2 positions[], real results[]);
+		void evaluate(uint32 count, vec3 positions[], real results[]);
+		void evaluate(uint32 count, vec4 positions[], real results[]);
+	};
+
+	struct CAGE_API noiseCreateConfig
+	{
+		noiseTypeEnum type;
+		noiseInterpolationEnum interpolation;
+		noiseFractalTypeEnum fractalType;
+		noiseDistanceEnum distance;
+		noiseOperationEnum operation;
+		uint32 seed;
+		uint32 octaves;
+		real lacunarity;
+		real gain;
+		real frequency;
+		uint8 index0, index1;
+
+		noiseCreateConfig(uint32 seed = 1337);
+	};
+
+	CAGE_API holder<noiseClass> newNoise(const noiseCreateConfig &config);
 }
 
 #endif // guard_noise_h_189F28C1827941F488646FA87D7913F4
