@@ -52,3 +52,6 @@
 [submodule "xsimd/xsimd"]
 	path = xsimd/xsimd
 	url = https://github.com/QuantStack/xsimd.git
+[submodule "fastnoise/fastnoise"]
+	path = fastnoise/fastnoise
+	url = https://github.com/Auburns/FastNoise.git

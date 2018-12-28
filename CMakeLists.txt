@@ -47,6 +47,7 @@ add_subdirectory(utfcpp)
 add_subdirectory(simplefilewatcher)
 add_subdirectory(msdfgen)
 add_subdirectory(xsimd)
+add_subdirectory(fastnoise)
 
 add_dependencies(png_static zlib)
 add_dependencies(jpeg-static zlib)
@@ -81,4 +82,5 @@ set_target_properties(vorbisenc PROPERTIES FOLDER cage/externals)
 set_target_properties(vorbisfile PROPERTIES FOLDER cage/externals)
 set_target_properties(simplefilewatcher PROPERTIES FOLDER cage/externals)
 set_target_properties(lib_msdfgen PROPERTIES FOLDER cage/externals)
+set_target_properties(fastnoise PROPERTIES FOLDER cage/externals)
 
