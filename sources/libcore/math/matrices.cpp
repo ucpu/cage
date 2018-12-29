@@ -597,11 +597,4 @@ namespace cage
 			0, 0, 0, 1
 		).transpose();
 	}
-
-	mat3 modelToNormal(const mat4 &value)
-	{
-		return mat3(value[0], value[1], value[2],
-			value[4], value[5], value[6],
-			value[8], value[9], value[10]).inverse().transpose();
-	}
 }

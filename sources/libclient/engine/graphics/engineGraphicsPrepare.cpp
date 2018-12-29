@@ -49,7 +49,7 @@ namespace cage
 			void updateModelMatrix(real interFactor)
 			{
 				model = mat4(interpolate(transformHistory, transform, interFactor));
-				modelPrev = mat4(interpolate(transformHistory, transform, interFactor - 0.5));
+				modelPrev = mat4(interpolate(transformHistory, transform, interFactor - 0.2));
 			}
 		};
 
@@ -444,11 +444,13 @@ namespace cage
 						else
 							pass->firstOpaque = obj;
 						pass->lastOpaque = obj;
-						opaqueObjectsMap[m] = obj;
+						if (mm > 1)
+							opaqueObjectsMap[m] = obj;
 					}
 					else
 					{
 						obj = it->second;
+						CAGE_ASSERT_RUNTIME(obj->count < obj->max);
 						if (obj->count + 1 == obj->max)
 							opaqueObjectsMap.erase(m);
 					}
@@ -461,7 +463,7 @@ namespace cage
 					sm->mvpPrevMat = mvpPrev;
 				else
 					sm->mvpPrevMat = mvp;
-				sm->normalMat = mat4(modelToNormal(model));
+				sm->normalMat = mat3(model).inverse();
 				sm->normalMat.data[2][3] = ((m->getFlags() & meshFlags::Lighting) == meshFlags::Lighting) ? 1 : 0; // is ligting enabled
 				if (e->animatedTexture)
 					sm->aniTexFrames = detail::evalSamplesForTextureAnimation(obj->textures[CAGE_SHADER_TEXTURE_ALBEDO], dispatchTime, e->animatedTexture->startTime, e->animatedTexture->speed, e->animatedTexture->offset);
@@ -723,6 +725,13 @@ namespace cage
 		for (uint32 a = 0; a < 4; a++)
 			for (uint32 b = 0; b < 3; b++)
 				data[b][a] = in[a * 4 + b];
+	}
+
+	mat3x4::mat3x4(const mat3 &in)
+	{
+		for (uint32 a = 0; a < 3; a++)
+			for (uint32 b = 0; b < 3; b++)
+				data[b][a] = in[a * 3 + b];
 	}
 
 	shaderConfigStruct::shaderConfigStruct()

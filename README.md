@@ -2,9 +2,22 @@ C++ 3D game engine designed primarily for strategy games.
 A long-term hobby project that turned out to be quite BIG.
 
 # Examples
- - [Grid](https://github.com/ucpu/grid) - simple but complete game
- - [Cragsman](https://github.com/ucpu/cragsman) - a game with procedurally generated terrain and simple physics
- - [Cage-examples](https://github.com/ucpu/cage-examples) - a collection of test scenes and applications
+
+## Grid
+![Grid](https://raw.githubusercontent.com/ucpu/grid/master/screenshots/3.png)
+[Grid](https://github.com/ucpu/grid) - simple but complete game
+
+## Cragsman
+![Grid](https://raw.githubusercontent.com/ucpu/cragsman/master/screenshots/2.png)
+[Cragsman](https://github.com/ucpu/cragsman) - a game demo with procedurally generated terrain and simple physics
+
+## Space Ants
+![Grid](https://raw.githubusercontent.com/ucpu/space-ants/master/screenshots/2.png)
+[Space-ants](https://github.com/ucpu/space-ants) - visual simulation of thousands little spaceships at war
+
+## Cage Examples
+![Grid](https://raw.githubusercontent.com/ucpu/cage-examples/master/screenshots/3.png)
+[Cage-examples](https://github.com/ucpu/cage-examples) - a collection of test scenes and applications
 
 # Features
 
@@ -77,7 +90,7 @@ A long-term hobby project that turned out to be quite BIG.
      - the scene is defined entirely by entities
        - cameras, renderables, lights & shadows, listeners, voices, ...
      - pipeline-like processing using threads dedicated to specific tasks
-       - *30 000 objects* at 30 fps (cpu-bound)
+       - *50 000 objects* at 30 fps (cpu-bound)
        - all rendering is through automatic instancing to reduce draw call overhead
      - directional, spot and point lights
         - automatic shadow maps

@@ -42,16 +42,16 @@ namespace cage
 					texture->imageCube(w, h, GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT, GL_HALF_FLOAT, nullptr);
 				else
 					texture->image2d(w, h, GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT, GL_HALF_FLOAT, nullptr);
-				texture->filters(GL_LINEAR, GL_LINEAR, 0);
-				texture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-				//glTexParameteri(texture->getTarget(), GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-				//glTexParameteri(texture->getTarget(), GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 			shadowmapBufferStruct(uint32 target) : width(0), height(0)
 			{
 				CAGE_ASSERT_RUNTIME(target == GL_TEXTURE_CUBE_MAP || target == GL_TEXTURE_2D);
 				texture = newTexture(window(), target);
+				texture->filters(GL_LINEAR, GL_LINEAR, 0);
+				texture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+				//glTexParameteri(target, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+				//glTexParameteri(target, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 		};
@@ -433,7 +433,7 @@ namespace cage
 
 				gBufferWidth = gBufferHeight = 0;
 
-#define GCHL_GENERATE(NAME) NAME = newTexture(window()); NAME->filters(GL_LINEAR, GL_LINEAR, 0);
+#define GCHL_GENERATE(NAME) NAME = newTexture(window()); NAME->filters(GL_LINEAR, GL_LINEAR, 0); NAME->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, albedoTexture, specialTexture, normalTexture, colorTexture, intermediateTexture, velocityTexture, depthTexture));
 #undef GCHL_GENERATE
 				CAGE_CHECK_GL_ERROR_DEBUG();

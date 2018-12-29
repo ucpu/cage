@@ -12,6 +12,7 @@ namespace cage
 	{
 		vec4 data[3];
 
+		mat3x4(const mat3 &in);
 		mat3x4(const mat4 &in);
 	};
 

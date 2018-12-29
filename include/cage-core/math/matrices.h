@@ -110,7 +110,6 @@ namespace cage
 	CAGE_API mat4 perspectiveProjection(rads fov, real aspectRatio, real near, real far, real zeroParallaxDistance, real eyeSeparation);
 	CAGE_API mat4 perspectiveProjection(real left, real right, real bottom, real top, real near, real far);
 	CAGE_API mat4 orthographicProjection(real left, real right, real bottom, real top, real near, real far);
-	CAGE_API mat3 modelToNormal(const mat4 &value);
 
 	inline vec3 vec3::operator * (const mat3 &other) const { return other * *this; }
 	inline vec4 vec4::operator * (const mat4 &other) const { return other * *this; }
