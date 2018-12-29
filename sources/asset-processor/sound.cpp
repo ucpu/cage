@@ -141,7 +141,7 @@ namespace
 		unsigned int channels;
 		unsigned int sampleRate;
 		drflac_uint64 totalSampleCount;
-		float* pSampleData = drflac_open_and_decode_file_f32(pathJoin(inputDirectory, inputFile).c_str(), &channels, &sampleRate, &totalSampleCount);
+		float* pSampleData = drflac_open_file_and_read_pcm_frames_f32(pathJoin(inputDirectory, inputFile).c_str(), &channels, &sampleRate, &totalSampleCount);
 		if (!pSampleData)
 			CAGE_THROW_ERROR(exception, "failed to read flac file");
 		sds.channels = channels;
@@ -157,7 +157,7 @@ namespace
 		unsigned int channels;
 		unsigned int sampleRate;
 		drwav_uint64 totalSampleCount;
-		float* pSampleData = drwav_open_and_read_file_f32(pathJoin(inputDirectory, inputFile).c_str(), &channels, &sampleRate, &totalSampleCount);
+		float* pSampleData = drwav_open_file_and_read_pcm_frames_f32(pathJoin(inputDirectory, inputFile).c_str(), &channels, &sampleRate, &totalSampleCount);
 		if (!pSampleData)
 			CAGE_THROW_ERROR(exception, "failed to read wav file");
 		sds.channels = channels;
