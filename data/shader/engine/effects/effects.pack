@@ -1,3 +1,4 @@
 
 []
 motionBlur.glsl
+fxaa.glsl

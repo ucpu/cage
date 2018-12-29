@@ -404,6 +404,14 @@ namespace cage
 						meshSquare->dispatch();
 						CAGE_CHECK_GL_ERROR_DEBUG();
 					}
+					if ((pass->effects & cameraEffectsFlags::AntiAliasing) == cameraEffectsFlags::AntiAliasing)
+					{
+						renderEffectPrepare(texSource, texTarget);
+						shaderFxaa->bind();
+						meshSquare->bind();
+						meshSquare->dispatch();
+						CAGE_CHECK_GL_ERROR_DEBUG();
+					}
 				}
 
 				if (texSource != pass->targetTexture)

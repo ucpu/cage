@@ -117,7 +117,9 @@ namespace cage
 	enum class cameraEffectsFlags : uint32
 	{
 		None = 0,
-		MotionBlur = 1 << 0,
+		AmbientOcclusion = 1 << 0,
+		MotionBlur = 1 << 1,
+		AntiAliasing = 1 << 2,
 	};
 	GCHL_ENUM_BITS(cameraEffectsFlags);
 
