@@ -12,8 +12,6 @@ void main()
 
 $define shader fragment
 
-// https://raw.githubusercontent.com/openglsuperbible/sb6code/master/bin/media/shaders/ssao/ssao.fs.glsl
-
 $include ../func/pointsOnSphere.glsl
 $include ../func/randomNumbers.glsl
 $include ../func/random.glsl
@@ -23,37 +21,53 @@ layout(binding = CAGE_SHADER_TEXTURE_DEPTH) uniform sampler2D texDepth;
 
 out float outAo;
 
-const float ssaoRadius = 20.0;
-const uint sampleCount = 64;
+layout(location = 0) uniform mat4 uniViewProj;
+layout(location = 1) uniform mat4 uniViewProjInv;
 
-float linearize(float d)
-{
-	return 1.0 / (1.0 + d);
-}
+const float ssaoRadius = 0.30;
+const uint sampleCount = 32;
 
 void main()
 {
-	vec2 texelSize = 2.0 / textureSize(texNormal, 0).xy;
+	vec2 texelSize = float(CAGE_SHADER_SSAO_DOWNSCALE) / textureSize(texNormal, 0).xy;
 	vec2 myUv = gl_FragCoord.xy * texelSize;
-	//vec3 N = textureLod(texNormal, myUv, 0).xyz;
-	float myDepth = linearize(textureLod(texDepth, myUv, 0).x);
-	int n = int(randomFunc(gl_FragCoord.xy) * 10000.0);
 
+	// my normal
+	vec3 myNormal = textureLod(texNormal, myUv, 0).xyz;
+	if (dot(myNormal, myNormal) < 0.1)
+	{
+		// no lighting here
+		outAo = 1.0;
+		return;
+	}
+
+	// my position
+	float myDepth = textureLod(texDepth, myUv, 0).x * 2.0 - 1.0;
+	vec4 pos4 = vec4(myUv * 2.0 - 1.0, myDepth, 1.0);
+	pos4 = uniViewProjInv * pos4;
+	vec3 myPos = pos4.xyz / pos4.w;
+
+	// sampling
+	int n = int(randomFunc(myPos) * 10000.0);
 	float occ = 0.0;
 	for (int i = 0; i < sampleCount; i++)
 	{
 		vec3 dir = pointsOnSphere[(n + i) % 256];
-		float r = (randomNumbers[(n * 13 + i) % 256] * 0.9 + 0.1) * ssaoRadius;
-		// todo inverse direction if in "back" hemisphere
-		float sampleDepth = linearize(textureLod(texDepth, (myUv + dir.xy * r * texelSize), 0).x);
-		//sampleDepth += dir.z * r * 0.00001;
-		if (myDepth < sampleDepth)
+		float r = (randomNumbers[(n * 13 + i * 2) % 256]) * ssaoRadius;
+		dir = sign(dot(myNormal, dir)) * dir;
+		vec3 sw = myPos + dir * r;
+		vec4 s4 = uniViewProj * vec4(sw, 1.0);
+		vec3 ss = s4.xyz / s4.w;
+		float sampleDepth = textureLod(texDepth, ss.xy * 0.5 + 0.5, 0).x * 2.0 - 1.0;
+		if (sampleDepth + 0.0001 < ss.z)
 		{
-			float d = sampleDepth - myDepth;
-			occ += max(1.0 - d * 10.0, 0.0);
+			//vec4 t4 = vec4(ss.xy, sampleDepth, 1.0);
+			//t4 = uniViewProjInv * t4;
+			//vec3 tw = t4.xyz / t4.w;
+			//float d = expectedDepth - theirDepth;
+			//occ += 1.0 / (1.0 + d);
+			occ += 1.0;
 		}
 	}
-
-	outAo = 1.0 - occ / sampleCount;
-	outAo = min(outAo * 2.0, 1.0); // todo remove this temporary workaround
+	outAo = occ / sampleCount;
 }

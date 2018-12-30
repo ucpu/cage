@@ -160,8 +160,8 @@ namespace cage
 				colorTexture->bind(); colorTexture->image2d(w, h, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
 				intermediateTexture->bind(); intermediateTexture->image2d(w, h, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
 				velocityTexture->bind(); velocityTexture->image2d(w, h, GL_RG16F, GL_RG, GL_HALF_FLOAT, nullptr);
-				ambientOcclusionTexture->bind(); ambientOcclusionTexture->image2d(w / 2, h / 2, GL_R16, GL_RED, GL_UNSIGNED_SHORT, nullptr);
-				ambientOcclusionTexture2->bind(); ambientOcclusionTexture2->image2d(w / 2, h / 2, GL_R16, GL_RED, GL_UNSIGNED_SHORT, nullptr);
+				ambientOcclusionTexture->bind(); ambientOcclusionTexture->image2d(w / CAGE_SHADER_SSAO_DOWNSCALE, h / CAGE_SHADER_SSAO_DOWNSCALE, GL_R16, GL_RED, GL_UNSIGNED_SHORT, nullptr);
+				ambientOcclusionTexture2->bind(); ambientOcclusionTexture2->image2d(w / CAGE_SHADER_SSAO_DOWNSCALE, h / CAGE_SHADER_SSAO_DOWNSCALE, GL_R16, GL_RED, GL_UNSIGNED_SHORT, nullptr);
 				depthTexture->bind(); depthTexture->image2d(w, h, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
@@ -343,6 +343,15 @@ namespace cage
 				glScissor(x, y, w, h);
 			}
 
+			void ssaoBlur(holder<textureClass> &tex1, holder<textureClass> &tex2, const vec2 &direction)
+			{
+				tex1->bind();
+				renderTarget->colorTexture(0, tex2.get());
+				renderTarget->checkStatus();
+				shaderSsaoBlur->uniform(0, direction);
+				meshSquare->dispatch();
+			}
+
 			void renderPass(renderPassStruct *pass)
 			{
 				viewportDataBuffer->bind();
@@ -409,32 +418,27 @@ namespace cage
 					bindGBufferTextures();
 					if ((pass->effects & cameraEffectsFlags::AmbientOcclusion) == cameraEffectsFlags::AmbientOcclusion)
 					{
-						viewportAndScissor(pass->vpX / 2, pass->vpY / 2, pass->vpW / 2, pass->vpH / 2);
+						viewportAndScissor(pass->vpX / CAGE_SHADER_SSAO_DOWNSCALE, pass->vpY / CAGE_SHADER_SSAO_DOWNSCALE, pass->vpW / CAGE_SHADER_SSAO_DOWNSCALE, pass->vpH / CAGE_SHADER_SSAO_DOWNSCALE);
 						{ // generate
 							renderTarget->colorTexture(0, ambientOcclusionTexture.get());
 							renderTarget->checkStatus();
 							shaderSsaoGenerate->bind();
+							shaderSsaoGenerate->uniform(0, pass->viewProj);
+							shaderSsaoGenerate->uniform(1, pass->viewProj.inverse());
 							meshSquare->dispatch();
 						}
 						{ // blur
-							shaderBlur->bind();
-							// horizontal
-							ambientOcclusionTexture->bind();
-							renderTarget->colorTexture(0, ambientOcclusionTexture2.get());
-							renderTarget->checkStatus();
-							shaderBlur->uniform(0, vec2(2.0, 0.0));
-							meshSquare->dispatch();
-							// vertical
-							ambientOcclusionTexture2->bind();
-							renderTarget->colorTexture(0, ambientOcclusionTexture.get());
-							renderTarget->checkStatus();
-							shaderBlur->uniform(0, vec2(0.0, 2.0));
-							meshSquare->dispatch();
+							shaderSsaoBlur->bind();
+							ssaoBlur(ambientOcclusionTexture, ambientOcclusionTexture2, vec2(2.0, 0.0));
+							ssaoBlur(ambientOcclusionTexture2, ambientOcclusionTexture, vec2(0.0, 2.0));
+							ssaoBlur(ambientOcclusionTexture, ambientOcclusionTexture2, vec2(1.0, 0.0));
+							ssaoBlur(ambientOcclusionTexture2, ambientOcclusionTexture, vec2(0.0, 1.0));
 						}
 						viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
 						{ // apply
 							renderEffectPrepare(texSource, texTarget);
 							shaderSsaoApply->bind();
+							shaderSsaoApply->uniform(0, vec3(pass->shaderViewport.ambientLight));
 							meshSquare->dispatch();
 						}
 						CAGE_CHECK_GL_ERROR_DEBUG();

@@ -9,4 +9,3 @@ lighting.glsl
 depth.glsl
 gBuffer.glsl
 translucent.glsl
-blur.glsl

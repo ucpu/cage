@@ -31,6 +31,8 @@ out vec4 outOutput;
 
 layout(location = 0) uniform vec2 direction;
 
+// todo do not blur over depth or normal discontinuities
+
 void main()
 {
 	vec2 texelSize = 1.0 / textureSize(texInput, 0).xy;

@@ -17,11 +17,13 @@ layout(binding = CAGE_SHADER_TEXTURE_AMBIENTOCCLUSION) uniform sampler2D texAo;
 
 out vec4 outColor;
 
+layout(location = 0) uniform vec3 uniAoIntensity;
+
 void main()
 {
 	vec2 texelSize = 1.0 / textureSize(texColor, 0).xy;
 	vec2 uv = gl_FragCoord.xy * texelSize;
 	float ao = textureLod(texAo, uv, 0).x;
 	vec4 color = textureLod(texColor, uv, 0);
-	outColor = color * vec4(vec3(ao), 1.0);
+	outColor = vec4(color.rgb - vec3(ao) * uniAoIntensity, 1.0);
 }

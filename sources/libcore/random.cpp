@@ -93,11 +93,21 @@ namespace cage
 
 	vec3 randomGenerator::randomDirection3()
 	{
+		vec3 p;
+		while (true)
+		{
+			p = randomRange3(-1, 1);
+			if (p.squaredLength() < 1)
+				break;
+		}
+		return p.normalize();
+		/*
 		real u = randomChance();
 		real v = randomChance();
 		rads theta = rads(real::TwoPi * u);
 		rads phi = aCos(2 * v - 1);
 		return vec3(cos(theta) * sin(phi), sin(theta) * sin(phi), cos(phi)).normalize();
+		*/
 	}
 
 	quat randomGenerator::randomDirectionQuat()

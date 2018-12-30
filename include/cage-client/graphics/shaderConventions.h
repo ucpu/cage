@@ -1,5 +1,6 @@
 #define CAGE_SHADER_MAX_INSTANCES 128
 #define CAGE_SHADER_MAX_BONES 1365
+#define CAGE_SHADER_SSAO_DOWNSCALE 3
 
 // attribute in locations
 

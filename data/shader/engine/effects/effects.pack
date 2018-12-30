@@ -1,6 +1,7 @@
 
 []
+ssaoGenerate.glsl
+ssaoBlur.glsl
+ssaoApply.glsl
 motionBlur.glsl
 fxaa.glsl
-ssaoApply.glsl
-ssaoGenerate.glsl

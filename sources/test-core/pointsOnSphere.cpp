@@ -25,14 +25,5 @@ void generatePointsOnSphere()
 	file->writeLine(generatePoint());
 	file->writeLine("}");
 
-	file->writeLine("");
-
-	file->writeLine("float randomNumbers[] =");
-	file->writeLine("{");
-	for (uint32 i = 0; i < 255; i++)
-		file->writeLine(string() + randomChance() + ",");
-	file->writeLine(randomChance());
-	file->writeLine("}");
-
 	file->close();
 }

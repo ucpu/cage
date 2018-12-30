@@ -85,9 +85,6 @@ namespace cage
 
 		struct renderPassImpl : public renderPassStruct
 		{
-			mat4 view;
-			mat4 proj;
-			mat4 viewProj;
 			mat4 viewProjPrev;
 			uint32 renderMask;
 			real lodSelection; // vertical size of screen, at distance of one world-space-unit from camera, in pixels
@@ -656,8 +653,8 @@ namespace cage
 					graphicsDispatch->shaderGBuffer = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/gBuffer.glsl"));
 					graphicsDispatch->shaderLighting = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/lighting.glsl"));
 					graphicsDispatch->shaderTranslucent = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/translucent.glsl"));
-					graphicsDispatch->shaderBlur = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/blur.glsl"));
 					graphicsDispatch->shaderSsaoGenerate = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/ssaoGenerate.glsl"));
+					graphicsDispatch->shaderSsaoBlur = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/ssaoBlur.glsl"));
 					graphicsDispatch->shaderSsaoApply = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/ssaoApply.glsl"));
 					graphicsDispatch->shaderMotionBlur = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/motionBlur.glsl"));
 					graphicsDispatch->shaderFxaa = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/fxaa.glsl"));
