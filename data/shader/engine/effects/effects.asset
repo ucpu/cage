@@ -7,3 +7,5 @@ effects.pack
 scheme = shader
 motionBlur.glsl
 fxaa.glsl
+ssaoApply.glsl
+ssaoGenerate.glsl

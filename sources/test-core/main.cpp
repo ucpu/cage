@@ -45,6 +45,7 @@ void testTcp();
 void testUdp();
 void testUdpDiscovery();
 void testProgram();
+void generatePointsOnSphere();
 
 int main()
 {
@@ -54,6 +55,7 @@ int main()
 	log1->output.bind<logOutputPolicyStdOut>();
 
 	newFilesystem()->remove("testdir");
+	//generatePointsOnSphere();
 	testMacros();
 	testEnums();
 	testExceptions();

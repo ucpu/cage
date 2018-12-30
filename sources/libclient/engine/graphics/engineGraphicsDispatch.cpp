@@ -89,6 +89,8 @@ namespace cage
 			holder<textureClass> colorTexture;
 			holder<textureClass> intermediateTexture;
 			holder<textureClass> velocityTexture;
+			holder<textureClass> ambientOcclusionTexture;
+			holder<textureClass> ambientOcclusionTexture2;
 			holder<textureClass> depthTexture;
 
 			holder<uniformBufferClass> viewportDataBuffer;
@@ -158,6 +160,8 @@ namespace cage
 				colorTexture->bind(); colorTexture->image2d(w, h, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
 				intermediateTexture->bind(); intermediateTexture->image2d(w, h, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
 				velocityTexture->bind(); velocityTexture->image2d(w, h, GL_RG16F, GL_RG, GL_HALF_FLOAT, nullptr);
+				ambientOcclusionTexture->bind(); ambientOcclusionTexture->image2d(w / 2, h / 2, GL_R16, GL_RED, GL_UNSIGNED_SHORT, nullptr);
+				ambientOcclusionTexture2->bind(); ambientOcclusionTexture2->image2d(w / 2, h / 2, GL_R16, GL_RED, GL_UNSIGNED_SHORT, nullptr);
 				depthTexture->bind(); depthTexture->image2d(w, h, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
@@ -221,9 +225,10 @@ namespace cage
 
 			void bindGBufferTextures()
 			{
-				const uint32 tius[5] = { CAGE_SHADER_TEXTURE_ALBEDO, CAGE_SHADER_TEXTURE_SPECIAL, CAGE_SHADER_TEXTURE_NORMAL, CAGE_SHADER_TEXTURE_VELOCITY, CAGE_SHADER_TEXTURE_DEPTH };
-				textureClass *texs[5] = { albedoTexture.get(), specialTexture.get(), normalTexture.get(), velocityTexture.get(), depthTexture.get() };
-				textureClass::multiBind(5, tius, texs);
+				const uint32 tius[] = { CAGE_SHADER_TEXTURE_ALBEDO, CAGE_SHADER_TEXTURE_SPECIAL, CAGE_SHADER_TEXTURE_NORMAL, CAGE_SHADER_TEXTURE_VELOCITY, CAGE_SHADER_TEXTURE_AMBIENTOCCLUSION, CAGE_SHADER_TEXTURE_DEPTH };
+				static const uint32 cnt = sizeof(tius) / sizeof(tius[0]);
+				textureClass *texs[cnt] = { albedoTexture.get(), specialTexture.get(), normalTexture.get(), velocityTexture.get(), ambientOcclusionTexture.get(), depthTexture.get() };
+				textureClass::multiBind(cnt, tius, texs);
 			}
 
 			void renderLighting(renderPassStruct *pass)
@@ -332,15 +337,20 @@ namespace cage
 				std::swap(texSource, texTarget);
 			}
 
+			static void viewportAndScissor(sint32 x, sint32 y, uint32 w, uint32 h)
+			{
+				glViewport(x, y, w, h);
+				glScissor(x, y, w, h);
+			}
+
 			void renderPass(renderPassStruct *pass)
 			{
 				viewportDataBuffer->bind();
 				viewportDataBuffer->writeRange(&pass->shaderViewport, 0, sizeof(renderPassStruct::shaderViewportStruct));
+				viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
 				glEnable(GL_DEPTH_TEST);
 				glEnable(GL_SCISSOR_TEST);
 				glDisable(GL_BLEND);
-				glViewport(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
-				glScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
 				// reset the state
@@ -390,17 +400,49 @@ namespace cage
 				renderTarget->bind();
 				renderTarget->depthTexture(nullptr);
 				renderTarget->drawAttachments(1);
+				meshSquare->bind();
 
 				textureClass *texSource = colorTexture.get();
 				textureClass *texTarget = intermediateTexture.get();
 				if (pass->effects != cameraEffectsFlags::None)
 				{ // all screen-space post-processing
 					bindGBufferTextures();
+					if ((pass->effects & cameraEffectsFlags::AmbientOcclusion) == cameraEffectsFlags::AmbientOcclusion)
+					{
+						viewportAndScissor(pass->vpX / 2, pass->vpY / 2, pass->vpW / 2, pass->vpH / 2);
+						{ // generate
+							renderTarget->colorTexture(0, ambientOcclusionTexture.get());
+							renderTarget->checkStatus();
+							shaderSsaoGenerate->bind();
+							meshSquare->dispatch();
+						}
+						{ // blur
+							shaderBlur->bind();
+							// horizontal
+							ambientOcclusionTexture->bind();
+							renderTarget->colorTexture(0, ambientOcclusionTexture2.get());
+							renderTarget->checkStatus();
+							shaderBlur->uniform(0, vec2(2.0, 0.0));
+							meshSquare->dispatch();
+							// vertical
+							ambientOcclusionTexture2->bind();
+							renderTarget->colorTexture(0, ambientOcclusionTexture.get());
+							renderTarget->checkStatus();
+							shaderBlur->uniform(0, vec2(0.0, 2.0));
+							meshSquare->dispatch();
+						}
+						viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
+						{ // apply
+							renderEffectPrepare(texSource, texTarget);
+							shaderSsaoApply->bind();
+							meshSquare->dispatch();
+						}
+						CAGE_CHECK_GL_ERROR_DEBUG();
+					}
 					if ((pass->effects & cameraEffectsFlags::MotionBlur) == cameraEffectsFlags::MotionBlur)
 					{
 						renderEffectPrepare(texSource, texTarget);
 						shaderMotionBlur->bind();
-						meshSquare->bind();
 						meshSquare->dispatch();
 						CAGE_CHECK_GL_ERROR_DEBUG();
 					}
@@ -408,7 +450,6 @@ namespace cage
 					{
 						renderEffectPrepare(texSource, texTarget);
 						shaderFxaa->bind();
-						meshSquare->bind();
 						meshSquare->dispatch();
 						CAGE_CHECK_GL_ERROR_DEBUG();
 					}
@@ -422,7 +463,6 @@ namespace cage
 					shaderBlitColor->bind();
 					uint32 w = gBufferWidth, h = gBufferHeight;
 					shaderBlitColor->uniform(0, vec4(pass->vpX, pass->vpY, pass->vpW, pass->vpH) / vec4(w, h, w, h));
-					meshSquare->bind();
 					meshSquare->dispatch();
 					CAGE_CHECK_GL_ERROR_DEBUG();
 				}
@@ -442,7 +482,7 @@ namespace cage
 				gBufferWidth = gBufferHeight = 0;
 
 #define GCHL_GENERATE(NAME) NAME = newTexture(window()); NAME->filters(GL_LINEAR, GL_LINEAR, 0); NAME->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, albedoTexture, specialTexture, normalTexture, colorTexture, intermediateTexture, velocityTexture, depthTexture));
+				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, albedoTexture, specialTexture, normalTexture, colorTexture, intermediateTexture, velocityTexture, ambientOcclusionTexture, ambientOcclusionTexture2, depthTexture));
 #undef GCHL_GENERATE
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
@@ -512,6 +552,7 @@ namespace cage
 				visualizableTextures.emplace_back(albedoTexture.get(), visualizableTextureModeEnum::Color);
 				visualizableTextures.emplace_back(specialTexture.get(), visualizableTextureModeEnum::Color);
 				visualizableTextures.emplace_back(normalTexture.get(), visualizableTextureModeEnum::Color);
+				visualizableTextures.emplace_back(ambientOcclusionTexture.get(), visualizableTextureModeEnum::Color);
 				visualizableTextures.emplace_back(velocityTexture.get(), visualizableTextureModeEnum::Velocity);
 				visualizableTextures.emplace_back(depthTexture.get(), visualizableTextureModeEnum::Depth2d);
 
@@ -571,8 +612,7 @@ namespace cage
 
 				{ // blit to the window
 					glBindFramebuffer(GL_FRAMEBUFFER, 0);
-					glViewport(0, 0, windowWidth, windowHeight);
-					glScissor(0, 0, windowWidth, windowHeight);
+					viewportAndScissor(0, 0, windowWidth, windowHeight);
 					setTwoSided(false);
 					setDepthTest(false, false);
 					sint32 visualizeIndex = visualizeBuffer % numeric_cast<sint32>(visualizableTextures.size());
