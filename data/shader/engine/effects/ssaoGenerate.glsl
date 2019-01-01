@@ -24,8 +24,15 @@ out float outAo;
 layout(location = 0) uniform mat4 uniViewProj;
 layout(location = 1) uniform mat4 uniViewProjInv;
 
-const float ssaoRadius = 0.30;
-const uint sampleCount = 32;
+const float ssaoRadius = 0.50;
+const uint sampleCount = 64;
+
+vec3 s2w(vec2 p, float d)
+{
+	vec4 p4 = vec4(p, d, 1.0);
+	p4 = uniViewProjInv * p4;
+	return p4.xyz / p4.w;
+}
 
 void main()
 {
@@ -37,37 +44,38 @@ void main()
 	if (dot(myNormal, myNormal) < 0.1)
 	{
 		// no lighting here
-		outAo = 1.0;
+		outAo = 0.0;
 		return;
 	}
 
 	// my position
 	float myDepth = textureLod(texDepth, myUv, 0).x * 2.0 - 1.0;
-	vec4 pos4 = vec4(myUv * 2.0 - 1.0, myDepth, 1.0);
-	pos4 = uniViewProjInv * pos4;
-	vec3 myPos = pos4.xyz / pos4.w;
+	vec3 myPos = s2w(myUv * 2.0 - 1.0, myDepth);
 
 	// sampling
-	int n = int(randomFunc(myPos) * 10000.0);
+	int n = int(randomFunc(myPos * 10.0) * 10000.0);
 	float occ = 0.0;
+	float total = 0.0;
 	for (int i = 0; i < sampleCount; i++)
 	{
 		vec3 dir = pointsOnSphere[(n + i) % 256];
+		float d = dot(myNormal, dir);
+		dir = sign(d) * dir; // move the direction into front hemisphere
+		d = abs(d);
+		if (d < 0.3)
+			continue; // the direction is close to the surface and susceptible to noise
 		float r = (randomNumbers[(n * 13 + i * 2) % 256]) * ssaoRadius;
-		dir = sign(dot(myNormal, dir)) * dir;
 		vec3 sw = myPos + dir * r;
 		vec4 s4 = uniViewProj * vec4(sw, 1.0);
 		vec3 ss = s4.xyz / s4.w;
 		float sampleDepth = textureLod(texDepth, ss.xy * 0.5 + 0.5, 0).x * 2.0 - 1.0;
-		if (sampleDepth + 0.0001 < ss.z)
+		if (sampleDepth < ss.z)
 		{
-			//vec4 t4 = vec4(ss.xy, sampleDepth, 1.0);
-			//t4 = uniViewProjInv * t4;
-			//vec3 tw = t4.xyz / t4.w;
-			//float d = expectedDepth - theirDepth;
-			//occ += 1.0 / (1.0 + d);
-			occ += 1.0;
+			vec3 otherPos = s2w(ss.xy, sampleDepth);
+			float diff = length(sw - otherPos);
+			occ += smoothstep(1.0, 0.0, diff / ssaoRadius);
 		}
+		total += 1.0;
 	}
-	outAo = occ / sampleCount;
+	outAo = occ / total;
 }

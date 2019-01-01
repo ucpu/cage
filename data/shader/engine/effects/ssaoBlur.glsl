@@ -14,8 +14,8 @@ $define shader fragment
 
 // https://www.opengl.org/discussion_boards/showthread.php/164908-Gaussian-Blur-on-texture
 
-const vec2 gaussFilter[7] = 
-{ 
+const vec2 gaussFilter7[7] =
+{
 	vec2(-3.0, 0.015625),
 	vec2(-2.0, 0.09375),
 	vec2(-1.0, 0.234375),
@@ -23,6 +23,15 @@ const vec2 gaussFilter[7] =
 	vec2(+1.0, 0.234375),
 	vec2(+2.0, 0.09375),
 	vec2(+3.0, 0.015625)
+};
+
+const vec2 gaussFilter5[5] =
+{
+	vec2(-2.0, 0.06136),
+	vec2(-1.0, 0.24477),
+	vec2(+0.0, 0.38774),
+	vec2(+1.0, 0.24477),
+	vec2(+2.0, 0.06136)
 };
 
 layout(binding = 0) uniform sampler2D texInput;
@@ -40,7 +49,7 @@ void main()
 	outOutput = vec4(0.0);
 	for(int i = 0; i < 7; i++)
 	{
-		vec2 uv = center + direction * gaussFilter[i].x * texelSize;
-		outOutput += textureLod(texInput,  uv, 0) * gaussFilter[i].y;
+		vec2 uv = center + direction * gaussFilter7[i].x * texelSize;
+		outOutput += textureLod(texInput,  uv, 0) * gaussFilter7[i].y;
 	}
 }

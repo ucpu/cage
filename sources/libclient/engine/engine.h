@@ -26,13 +26,13 @@ namespace cage
 			CAGE_ASSERT_RUNTIME(dispatch > emit);
 			uint64 r = dispatch + correction;
 			if (r > emit + step)
-				correction += sint64(step) / -200;
+				correction += sint64(step) / -500;
 			else if (r < emit)
-				correction += sint64(step) / 200;
+				correction += sint64(step) / 500;
 			return max(emit, dispatch + correction);
 		}
 
-		interpolationTimingCorrector() : correction(0)
+		interpolationTimingCorrector() : correction(-70000)
 		{}
 
 		sint64 correction;

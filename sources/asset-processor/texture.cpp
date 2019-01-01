@@ -139,7 +139,7 @@ namespace
 					const float lc = convertToNormalIntensity(x - 1, y + 0);
 					const float dX = (tr + 2.f * rc + br) - (tl + 2.f * lc + bl);
 					const float dY = (bl + 2.f * bc + br) - (tl + 2.f * tc + tr);
-					vec3 v(dX, dY, strength);
+					vec3 v(-dX, -dY, strength);
 					v = v.normalize();
 					v += 1;
 					v *= 0.5;
@@ -472,13 +472,11 @@ void processTexture()
 	}
 
 	{ // vertical flip
-		std::set<string> extsToSkip;
-		extsToSkip.insert("tga");
-		if (properties("flip_v").toBool() == (extsToSkip.find(pathExtractExtension(inputFile).toLower()) != extsToSkip.end()))
+		if (!properties("flip_v").toBool())
 		{
 			for (std::vector<imageLayerStruct>::iterator it = images.begin(), et = images.end(); it != et; it++)
 				it->performFlipv();
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "image vertically flipped");
+			CAGE_LOG(severityEnum::Info, logComponentName, string() + "image vertically flipped (flip_v was false)");
 		}
 	}
 

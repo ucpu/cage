@@ -429,8 +429,8 @@ namespace cage
 						}
 						{ // blur
 							shaderSsaoBlur->bind();
-							ssaoBlur(ambientOcclusionTexture, ambientOcclusionTexture2, vec2(2.0, 0.0));
-							ssaoBlur(ambientOcclusionTexture2, ambientOcclusionTexture, vec2(0.0, 2.0));
+							//ssaoBlur(ambientOcclusionTexture, ambientOcclusionTexture2, vec2(2.0, 0.0));
+							//ssaoBlur(ambientOcclusionTexture2, ambientOcclusionTexture, vec2(0.0, 2.0));
 							ssaoBlur(ambientOcclusionTexture, ambientOcclusionTexture2, vec2(1.0, 0.0));
 							ssaoBlur(ambientOcclusionTexture2, ambientOcclusionTexture, vec2(0.0, 1.0));
 						}
