@@ -16,8 +16,9 @@ layout(std140, binding = CAGE_SHADER_UNIBLOCK_LIGHTS) uniform Lights
 	lightStruct uniLights[CAGE_SHADER_MAX_INSTANCES];
 };
 
-float attenuation(float dist, vec3 att)
+float attenuation(float dist)
 {
+	vec3 att = uniLights[lightIndex].attenuation.xyz;
 	return 1.0 / (att.x + dist * (att.y + dist * att.z));
 }
 
@@ -32,7 +33,7 @@ vec3 lightDirectionalImpl(float shadow)
 
 vec3 lightPointImpl(float shadow)
 {
-	vec3 light = uniLights[lightIndex].color.rgb * attenuation(length(uniLights[lightIndex].position.xyz - position), uniLights[lightIndex].attenuation.xyz);
+	vec3 light = uniLights[lightIndex].color.rgb * attenuation(length(uniLights[lightIndex].position.xyz - position));
 	return lightingBrdf(
 		light * shadow,
 		normalize(uniLights[lightIndex].position.xyz - position),
@@ -42,14 +43,16 @@ vec3 lightPointImpl(float shadow)
 
 vec3 lightSpotImpl(float shadow)
 {
-	vec3 light = uniLights[lightIndex].color.rgb * attenuation(length(uniLights[lightIndex].position.xyz - position), uniLights[lightIndex].attenuation.xyz);
+	vec3 light = uniLights[lightIndex].color.rgb * attenuation(length(uniLights[lightIndex].position.xyz - position));
 	vec3 lightSourceToFragmentDirection = normalize(uniLights[lightIndex].position.xyz - position);
-	float d = max(dot(-uniLights[lightIndex].direction.xyz, lightSourceToFragmentDirection), 0);
-	if (d < uniLights[lightIndex].color[3])
+	float d = max(dot(-uniLights[lightIndex].direction.xyz, lightSourceToFragmentDirection), 0.0);
+	float a = uniLights[lightIndex].color[3]; // angle
+	float e = uniLights[lightIndex].attenuation[3]; // exponent
+	if (d < a)
 		return vec3(0);
-	d = (d - uniLights[lightIndex].color[3]) / (1 - uniLights[lightIndex].color[3]);
+	d = pow(d, e);
 	return lightingBrdf(
-		light * pow(d, uniLights[lightIndex].attenuation[3]) * shadow,
+		light * d * shadow,
 		lightSourceToFragmentDirection,
 		normalize(uniEyePos.xyz - position)
 	);

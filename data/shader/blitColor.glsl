@@ -22,5 +22,5 @@ out vec4 outColor;
 
 void main()
 {
-	outColor = vec4(texture(texColor, varUv).rgb, 1.0);
+	outColor = vec4(textureLod(texColor, varUv, 0).rgb, 1.0);
 }

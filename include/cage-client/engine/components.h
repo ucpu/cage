@@ -66,6 +66,7 @@ namespace cage
 		real near, far;
 		real zeroParallaxDistance;
 		real eyeSeparation;
+		real ssaoWorldRadius;
 		sint32 cameraOrder;
 		uint32 renderMask;
 		cameraEffectsFlags effects;

@@ -22,7 +22,7 @@ out vec4 outColor;
 
 void main()
 {
-	vec2 v = texture(texVelocity, varUv).xy;
+	vec2 v = textureLod(texVelocity, varUv, 0).xy;
 	float s = length(v);
 	outColor = vec4(abs(v) * pow(s * 10.0, 0.2) / s, 0.0, 1.0);
 }

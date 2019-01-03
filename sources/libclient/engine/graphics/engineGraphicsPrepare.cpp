@@ -273,6 +273,7 @@ namespace cage
 				pass->clearFlags = ((camera->camera.clear & cameraClearFlags::Color) == cameraClearFlags::Color ? GL_COLOR_BUFFER_BIT : 0) | ((camera->camera.clear & cameraClearFlags::Depth) == cameraClearFlags::Depth ? GL_DEPTH_BUFFER_BIT : 0);
 				pass->renderMask = camera->camera.renderMask;
 				pass->effects = camera->camera.effects;
+				pass->ssaoWorldRadius = camera->camera.ssaoWorldRadius;
 				addRenderableObjects(pass, false);
 				for (auto it : emitRead->lights)
 					addLight(pass, it);
@@ -309,7 +310,7 @@ namespace cage
 					0.5, 0.0, 0.0, 0.0,
 					0.0, 0.5, 0.0, 0.0,
 					0.0, 0.0, 0.5, 0.0,
-					0.5, 0.5, 0.498, 1.0);
+					0.5, 0.5, 0.5, 1.0);
 				light->shadowmap->shadowMat = bias * pass->viewProj;
 				addRenderableObjects(pass, true);
 			}

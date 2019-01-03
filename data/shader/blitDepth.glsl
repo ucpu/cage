@@ -22,7 +22,7 @@ out vec4 outColor;
 
 void main()
 {
-	float v = texture(texDepth, varUv).r;
+	float v = textureLod(texDepth, varUv, 0).r;
 	if (v < 1e-7)
 		outColor = vec4(1.0, 0.0, 0.0, 1.0);
 	else if (v > 1 - 1e-7)

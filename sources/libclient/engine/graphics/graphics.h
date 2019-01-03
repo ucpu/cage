@@ -82,6 +82,7 @@ namespace cage
 		mat4 view;
 		mat4 proj;
 		mat4 viewProj;
+		real ssaoWorldRadius;
 		sint32 targetShadowmap; // 0 = window (or texture); positive = 2d shadowmap; negative = cube shadowmap
 		uint32 shadowmapResolution;
 		uint32 clearFlags;

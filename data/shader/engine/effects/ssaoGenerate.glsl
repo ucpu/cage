@@ -23,8 +23,8 @@ out float outAo;
 
 layout(location = 0) uniform mat4 uniViewProj;
 layout(location = 1) uniform mat4 uniViewProjInv;
+layout(location = 2) uniform float ssaoRadius;
 
-const float ssaoRadius = 0.50;
 const uint sampleCount = 64;
 
 vec3 s2w(vec2 p, float d)
