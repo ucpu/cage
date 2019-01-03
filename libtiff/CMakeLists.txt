@@ -14,6 +14,7 @@ option(jpeg "use libjpeg (required for JPEG compression)" OFF)
 option(old-jpeg "support for Old JPEG compression (read-only)" OFF)
 option(jbig "use ISO JBIG compression (requires JBIT-KIT library)" OFF)
 option(lzma "use liblzma (required for LZMA2 compression)" OFF)
+option(webp "use libwebp (required for WEBP compression)" OFF)
 
 add_subdirectory(libtiff)
 
