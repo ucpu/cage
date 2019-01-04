@@ -1,8 +1,4 @@
+
 []
 engine/engine.pack
 gui/gui.pack
-
-[]
-blitColor.glsl
-blitDepth.glsl
-blitVelocity.glsl

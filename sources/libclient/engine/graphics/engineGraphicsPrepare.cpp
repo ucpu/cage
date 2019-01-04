@@ -273,7 +273,7 @@ namespace cage
 				pass->clearFlags = ((camera->camera.clear & cameraClearFlags::Color) == cameraClearFlags::Color ? GL_COLOR_BUFFER_BIT : 0) | ((camera->camera.clear & cameraClearFlags::Depth) == cameraClearFlags::Depth ? GL_DEPTH_BUFFER_BIT : 0);
 				pass->renderMask = camera->camera.renderMask;
 				pass->effects = camera->camera.effects;
-				pass->ssaoWorldRadius = camera->camera.ssaoWorldRadius;
+				(cameraEffectsStruct&)*pass = (cameraEffectsStruct&)camera->camera;
 				addRenderableObjects(pass, false);
 				for (auto it : emitRead->lights)
 					addLight(pass, it);
@@ -641,15 +641,16 @@ namespace cage
 				if (!ass->ready(hashString("cage/cage.pack")))
 					return;
 
-				if (!graphicsDispatch->shaderBlitColor)
+				if (!graphicsDispatch->shaderBlit)
 				{
 					graphicsDispatch->meshSquare = ass->get<assetSchemeIndexMesh, meshClass>(hashString("cage/mesh/square.obj"));
 					graphicsDispatch->meshSphere = ass->get<assetSchemeIndexMesh, meshClass>(hashString("cage/mesh/sphere.obj"));
 					graphicsDispatch->meshCone = ass->get<assetSchemeIndexMesh, meshClass>(hashString("cage/mesh/cone.obj"));
 					graphicsDispatch->meshFake = ass->get<assetSchemeIndexMesh, meshClass>(hashString("cage/mesh/fake.obj"));
-					graphicsDispatch->shaderBlitColor = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/blitColor.glsl"));
-					graphicsDispatch->shaderBlitDepth = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/blitDepth.glsl"));
-					graphicsDispatch->shaderBlitVelocity = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/blitVelocity.glsl"));
+					graphicsDispatch->shaderVisualizeColor = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/visualize/color.glsl"));
+					graphicsDispatch->shaderVisualizeDepth = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/visualize/depth.glsl"));
+					graphicsDispatch->shaderVisualizeVelocity = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/visualize/velocity.glsl"));
+					graphicsDispatch->shaderBlit = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/blit.glsl"));
 					graphicsDispatch->shaderDepth = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/depth.glsl"));
 					graphicsDispatch->shaderGBuffer = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/gBuffer.glsl"));
 					graphicsDispatch->shaderLighting = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/lighting.glsl"));
@@ -671,8 +672,14 @@ namespace cage
 				dispatchArena.flush();
 
 				pointStruct resolution = window()->resolution();
-				graphicsDispatch->windowWidth = resolution.x;
-				graphicsDispatch->windowHeight = resolution.y;
+				graphicsDispatch->windowWidth = numeric_cast<uint32>(resolution.x);
+				graphicsDispatch->windowHeight = numeric_cast<uint32>(resolution.y);
+
+				if (graphicsDispatch->windowWidth == 0 || graphicsDispatch->windowHeight == 0)
+				{
+					emitRead = nullptr;
+					return;
+				}
 
 				{ // update model matrices
 					real interFactor = clamp(real(dispatchTime - emitTime) / controlThread().timePerTick, 0, 1);
@@ -696,9 +703,11 @@ namespace cage
 				{ // generate camera render passes
 					std::sort(emitRead->cameras.begin(), emitRead->cameras.end(), [](const emitCameraStruct *a, const emitCameraStruct *b)
 					{
-						if (!!a->camera.target == !!b->camera.target)
-							return a->camera.cameraOrder < b->camera.cameraOrder;
-						return a->camera.target > b->camera.target;
+						return a->camera.cameraOrder < b->camera.cameraOrder;
+					});
+					std::stable_sort(emitRead->cameras.begin(), emitRead->cameras.end(), [](const emitCameraStruct *a, const emitCameraStruct *b)
+					{
+						return !!a->camera.target > !!b->camera.target;
 					});
 					for (auto it : emitRead->cameras)
 					{

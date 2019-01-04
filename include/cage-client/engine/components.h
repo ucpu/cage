@@ -54,7 +54,14 @@ namespace cage
 		shadowmapComponent();
 	};
 
-	struct CAGE_API cameraComponent
+	struct CAGE_API cameraEffectsStruct
+	{
+		real ssaoWorldRadius;
+		cameraEffectsFlags effects;
+		cameraEffectsStruct();
+	};
+
+	struct CAGE_API cameraComponent : public cameraEffectsStruct
 	{
 		static componentClass *component;
 		vec3 ambientLight;
@@ -66,10 +73,8 @@ namespace cage
 		real near, far;
 		real zeroParallaxDistance;
 		real eyeSeparation;
-		real ssaoWorldRadius;
 		sint32 cameraOrder;
 		uint32 renderMask;
-		cameraEffectsFlags effects;
 		cameraClearFlags clear;
 		cameraTypeEnum cameraType;
 		cameraComponent();

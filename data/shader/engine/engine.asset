@@ -5,7 +5,9 @@ engine.pack
 
 []
 scheme = shader
+blit.glsl
 lighting.glsl
 depth.glsl
 gBuffer.glsl
 translucent.glsl
+

@@ -195,6 +195,16 @@ namespace cage
 	void textureClass::multiBind(uint32 count, const uint32 tius[], const textureClass *const texs[])
 	{
 		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentContext());
+		GLint active = 0;
+		glGetIntegerv(GL_ACTIVE_TEXTURE, &active);
+		for (uint32 i = 0; i < count; i++)
+		{
+			glActiveTexture(GL_TEXTURE0 + tius[i]);
+			texs[i] ? texs[i]->bind() : void();
+		}
+		glActiveTexture(active);
+		CAGE_CHECK_GL_ERROR_DEBUG();
+		/*
 		CAGE_ASSERT_RUNTIME(count <= 32);
 		uint32 textures[32];
 		detail::memset(textures, 0, sizeof(textures));
@@ -210,6 +220,7 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 		for (uint32 i = 0; i < 32; i++)
 			privat::setSpecificTexture(i, textures[i]);
+		*/
 	}
 
 	holder<textureClass> newTexture(windowClass *context)

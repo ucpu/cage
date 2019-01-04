@@ -65,7 +65,7 @@ namespace cage
 		translucentStruct(meshClass *mesh);
 	};
 
-	struct renderPassStruct
+	struct renderPassStruct : public cameraEffectsStruct
 	{
 		struct shaderViewportStruct
 		{
@@ -82,20 +82,18 @@ namespace cage
 		mat4 view;
 		mat4 proj;
 		mat4 viewProj;
-		real ssaoWorldRadius;
 		sint32 targetShadowmap; // 0 = window (or texture); positive = 2d shadowmap; negative = cube shadowmap
 		uint32 shadowmapResolution;
 		uint32 clearFlags;
 		uint32 vpX, vpY, vpW, vpH;
-		cameraEffectsFlags effects;
 		renderPassStruct();
 	};
 
 	struct graphicsDispatchStruct
 	{
 		meshClass *meshSquare, *meshSphere, *meshCone, *meshFake;
-		shaderClass *shaderBlitColor, *shaderBlitDepth, *shaderBlitVelocity;
-		shaderClass *shaderDepth, *shaderGBuffer, *shaderLighting, *shaderTranslucent;
+		shaderClass *shaderVisualizeColor, *shaderVisualizeDepth, *shaderVisualizeVelocity;
+		shaderClass *shaderBlit, *shaderDepth, *shaderGBuffer, *shaderLighting, *shaderTranslucent;
 		shaderClass *shaderSsaoGenerate, *shaderSsaoBlur, *shaderSsaoApply, *shaderMotionBlur, *shaderFxaa;
 		uint32 windowWidth, windowHeight;
 		renderPassStruct *firstRenderPass, *lastRenderPass;
