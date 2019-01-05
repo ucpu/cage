@@ -18,13 +18,15 @@ namespace cage
 		data[8] = 1;
 	}
 
-	mat3::mat3(const string &str)
+	mat3 mat3::parse(const string &str)
 	{
+		mat3 data;
 		string s = detail::tryRemoveParentheses(str);
 		for (uint32 i = 0; i < 9; i++)
 			data[i] = detail::mathSplit(s).toFloat();
 		if (!s.empty())
 			CAGE_THROW_ERROR(exception, "error parsing mat3");
+		return data;
 	}
 
 	mat3::mat3(real a, real b, real c, real d, real e, real f, real g, real h, real i)
@@ -206,13 +208,15 @@ namespace cage
 		data[15] = 1;
 	}
 
-	mat4::mat4(const string &str)
+	mat4 mat4::parse(const string &str)
 	{
+		mat4 data;
 		string s = detail::tryRemoveParentheses(str);
 		for (uint32 i = 0; i < 16; i++)
 			data[i] = detail::mathSplit(s).toFloat();
 		if (!s.empty())
 			CAGE_THROW_ERROR(exception, "error parsing mat4");
+		return data;
 	}
 
 	mat4::mat4(real a, real b, real c, real d, real e, real f, real g, real h, real i, real j, real k, real l, real m, real n, real o, real p)

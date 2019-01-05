@@ -5,40 +5,48 @@
 
 namespace cage
 {
-	vec2::vec2(const string &str)
+	vec2 vec2::parse(const string &str)
 	{
+		vec2 data;
 		string s = detail::tryRemoveParentheses(str);
 		for (uint32 i = 0; i < Dimension; i++)
 			data[i] = detail::mathSplit(s).toFloat();
 		if (!s.empty())
 			CAGE_THROW_ERROR(exception, "error parsing vec2");
+		return data;
 	}
 
-	vec3::vec3(const string &str)
+	vec3 vec3::parse(const string &str)
 	{
+		vec3 data;
 		string s = detail::tryRemoveParentheses(str);
 		for (uint32 i = 0; i < Dimension; i++)
 			data[i] = detail::mathSplit(s).toFloat();
 		if (!s.empty())
 			CAGE_THROW_ERROR(exception, "error parsing vec3");
+		return data;
 	}
 
-	vec4::vec4(const string &str)
+	vec4 vec4::parse(const string &str)
 	{
+		vec4 data;
 		string s = detail::tryRemoveParentheses(str);
 		for (uint32 i = 0; i < Dimension; i++)
 			data[i] = detail::mathSplit(s).toFloat();
 		if (!s.empty())
 			CAGE_THROW_ERROR(exception, "error parsing vec4");
+		return data;
 	}
 
-	quat::quat(const string &str)
+	quat quat::parse(const string &str)
 	{
+		quat data;
 		string s = detail::tryRemoveParentheses(str);
 		for (uint32 i = 0; i < 4; i++)
 			data[i] = detail::mathSplit(s).toFloat();
 		if (!s.empty())
 			CAGE_THROW_ERROR(exception, "error parsing quat");
+		return data;
 	}
 
 	quat::quat()

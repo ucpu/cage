@@ -154,15 +154,15 @@ namespace cage
 					return;
 				gBufferWidth = w;
 				gBufferHeight = h;
-				albedoTexture->bind(); albedoTexture->image2d(w, h, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-				specialTexture->bind(); specialTexture->image2d(w, h, GL_RG8, GL_RG, GL_UNSIGNED_BYTE, nullptr);
-				normalTexture->bind(); normalTexture->image2d(w, h, GL_RGB16F, GL_RGB, GL_HALF_FLOAT, nullptr);
-				colorTexture->bind(); colorTexture->image2d(w, h, GL_RGB10_A2, GL_RGB, GL_UNSIGNED_SHORT, nullptr);
-				intermediateTexture->bind(); intermediateTexture->image2d(w, h, GL_RGB10_A2, GL_RGB, GL_UNSIGNED_SHORT, nullptr);
-				velocityTexture->bind(); velocityTexture->image2d(w, h, GL_RG16F, GL_RG, GL_HALF_FLOAT, nullptr);
-				ambientOcclusionTexture->bind(); ambientOcclusionTexture->image2d(max(w / CAGE_SHADER_SSAO_DOWNSCALE, 1u), max(h / CAGE_SHADER_SSAO_DOWNSCALE, 1u), GL_R8, GL_RED, GL_UNSIGNED_BYTE, nullptr);
-				ambientOcclusionTexture2->bind(); ambientOcclusionTexture2->image2d(max(w / CAGE_SHADER_SSAO_DOWNSCALE, 1u), max(h / CAGE_SHADER_SSAO_DOWNSCALE, 1u), GL_R8, GL_RED, GL_UNSIGNED_BYTE, nullptr);
-				depthTexture->bind(); depthTexture->image2d(w, h, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+				albedoTexture->bind(); albedoTexture->image2d(w, h, GL_RGB8);
+				specialTexture->bind(); specialTexture->image2d(w, h, GL_RG8);
+				normalTexture->bind(); normalTexture->image2d(w, h, GL_RGB16F);
+				colorTexture->bind(); colorTexture->image2d(w, h, GL_RGB16F);
+				intermediateTexture->bind(); intermediateTexture->image2d(w, h, GL_RGB16F);
+				velocityTexture->bind(); velocityTexture->image2d(w, h, GL_RG16F);
+				ambientOcclusionTexture->bind(); ambientOcclusionTexture->image2d(max(w / CAGE_SHADER_SSAO_DOWNSCALE, 1u), max(h / CAGE_SHADER_SSAO_DOWNSCALE, 1u), GL_R8);
+				ambientOcclusionTexture2->bind(); ambientOcclusionTexture2->image2d(max(w / CAGE_SHADER_SSAO_DOWNSCALE, 1u), max(h / CAGE_SHADER_SSAO_DOWNSCALE, 1u), GL_R8);
+				depthTexture->bind(); depthTexture->image2d(w, h, GL_DEPTH_COMPONENT32);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
@@ -209,7 +209,7 @@ namespace cage
 				CAGE_ASSERT_RUNTIME(pass->targetShadowmap == 0);
 
 				gBufferTarget->bind();
-				gBufferTarget->drawAttachments(31);
+				gBufferTarget->activeAttachments(31);
 				gBufferTarget->checkStatus();
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
@@ -238,7 +238,7 @@ namespace cage
 				renderTarget->bind();
 				renderTarget->depthTexture(nullptr);
 				renderTarget->colorTexture(0, colorTexture.get());
-				renderTarget->drawAttachments(1);
+				renderTarget->activeAttachments(1);
 				renderTarget->checkStatus();
 				bindGBufferTextures();
 				CAGE_CHECK_GL_ERROR_DEBUG();
@@ -295,7 +295,7 @@ namespace cage
 				CAGE_ASSERT_RUNTIME(pass->targetShadowmap == 0);
 
 				gBufferTarget->bind();
-				gBufferTarget->drawAttachments(1 << CAGE_SHADER_ATTRIB_OUT_COLOR);
+				gBufferTarget->activeAttachments(1 << CAGE_SHADER_ATTRIB_OUT_COLOR);
 				gBufferTarget->checkStatus();
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
@@ -354,7 +354,7 @@ namespace cage
 				meshSquare->dispatch();
 			}
 
-			void resetAllTextures()
+			static void resetAllTextures()
 			{
 				for (uint32 i = 0; i < 16; i++)
 				{
@@ -399,7 +399,7 @@ namespace cage
 					renderTarget->bind();
 					renderTarget->depthTexture(pass->targetShadowmap > 0 ? shadowmaps2d[pass->targetShadowmap - 1].texture.get() : shadowmapsCube[-pass->targetShadowmap - 1].texture.get());
 					renderTarget->colorTexture(0, nullptr);
-					renderTarget->drawAttachments(0);
+					renderTarget->activeAttachments(0);
 					renderTarget->checkStatus();
 					glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 					glClear(GL_DEPTH_BUFFER_BIT);
@@ -425,7 +425,7 @@ namespace cage
 
 				renderTarget->bind();
 				renderTarget->depthTexture(nullptr);
-				renderTarget->drawAttachments(1);
+				renderTarget->activeAttachments(1);
 				meshSquare->bind();
 
 				textureClass *texSource = colorTexture.get();
@@ -472,7 +472,6 @@ namespace cage
 				if (texSource != pass->targetTexture)
 				{ // blit to final output texture
 					texTarget = pass->targetTexture;
-					uint32 w = gBufferWidth, h = gBufferHeight;
 					shaderBlit->bind();
 					renderEffect(texSource, texTarget);
 				}
@@ -496,14 +495,14 @@ namespace cage
 #undef GCHL_GENERATE
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
-				gBufferTarget = newFrameBuffer(window());
+				gBufferTarget = newDrawFrameBuffer(window());
 				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_ALBEDO, albedoTexture.get());
 				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_SPECIAL, specialTexture.get());
 				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_NORMAL, normalTexture.get());
 				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_COLOR, colorTexture.get());
 				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_VELOCITY, velocityTexture.get());
 				gBufferTarget->depthTexture(depthTexture.get());
-				renderTarget = newFrameBuffer(window());
+				renderTarget = newDrawFrameBuffer(window());
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
 				viewportDataBuffer = newUniformBuffer(window());
@@ -563,7 +562,8 @@ namespace cage
 				}
 
 				visualizableTextures.clear();
-				visualizableTextures.emplace_back(colorTexture.get(), visualizableTextureModeEnum::Color);
+				visualizableTextures.emplace_back(colorTexture.get(), visualizableTextureModeEnum::Color); // unscaled
+				visualizableTextures.emplace_back(colorTexture.get(), visualizableTextureModeEnum::Color); // scaled
 				visualizableTextures.emplace_back(albedoTexture.get(), visualizableTextureModeEnum::Color);
 				visualizableTextures.emplace_back(specialTexture.get(), visualizableTextureModeEnum::Color);
 				visualizableTextures.emplace_back(normalTexture.get(), visualizableTextureModeEnum::Color);
@@ -636,29 +636,40 @@ namespace cage
 					meshSquare->bind();
 					visualizableTextureStruct &v = visualizableTextures[visualizeIndex];
 					v.tex->bind();
-					switch (v.visualizableTextureMode)
+					if (visualizeIndex == 0)
 					{
-					case visualizableTextureModeEnum::Color:
+						CAGE_ASSERT_RUNTIME(v.visualizableTextureMode == visualizableTextureModeEnum::Color);
 						shaderVisualizeColor->bind();
-						shaderVisualizeColor->uniform(0, vec2(1.0 / windowWidth, 1.0 / windowHeight));
+						shaderVisualizeColor->uniform(0, vec2(1.0 / gBufferWidth, 1.0 / gBufferHeight));
 						meshSquare->dispatch();
-						break;
-					case visualizableTextureModeEnum::Depth2d:
-					case visualizableTextureModeEnum::DepthCube:
+					}
+					else
 					{
-						shaderVisualizeDepth->bind();
-						shaderVisualizeDepth->uniform(0, vec2(1.0 / windowWidth, 1.0 / windowHeight));
-						GLint cmpMode = 0;
-						glGetTexParameteriv(v.tex->getTarget(), GL_TEXTURE_COMPARE_MODE, &cmpMode);
-						glTexParameteri(v.tex->getTarget(), GL_TEXTURE_COMPARE_MODE, GL_NONE);
-						meshSquare->dispatch();
-						glTexParameteri(v.tex->getTarget(), GL_TEXTURE_COMPARE_MODE, cmpMode);
-					} break;
-					case visualizableTextureModeEnum::Velocity:
-						shaderVisualizeVelocity->bind();
-						shaderVisualizeVelocity->uniform(0, vec2(1.0 / windowWidth, 1.0 / windowHeight));
-						meshSquare->dispatch();
-						break;
+						vec2 scale = vec2(1.0 / windowWidth, 1.0 / windowHeight);
+						switch (v.visualizableTextureMode)
+						{
+						case visualizableTextureModeEnum::Color:
+							shaderVisualizeColor->bind();
+							shaderVisualizeColor->uniform(0, scale);
+							meshSquare->dispatch();
+							break;
+						case visualizableTextureModeEnum::Depth2d:
+						case visualizableTextureModeEnum::DepthCube:
+						{
+							shaderVisualizeDepth->bind();
+							shaderVisualizeDepth->uniform(0, scale);
+							GLint cmpMode = 0;
+							glGetTexParameteriv(v.tex->getTarget(), GL_TEXTURE_COMPARE_MODE, &cmpMode);
+							glTexParameteri(v.tex->getTarget(), GL_TEXTURE_COMPARE_MODE, GL_NONE);
+							meshSquare->dispatch();
+							glTexParameteri(v.tex->getTarget(), GL_TEXTURE_COMPARE_MODE, cmpMode);
+						} break;
+						case visualizableTextureModeEnum::Velocity:
+							shaderVisualizeVelocity->bind();
+							shaderVisualizeVelocity->uniform(0, scale);
+							meshSquare->dispatch();
+							break;
+						}
 					}
 					CAGE_CHECK_GL_ERROR_DEBUG();
 				}

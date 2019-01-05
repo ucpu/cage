@@ -84,7 +84,7 @@ namespace cage
 			mat4 anim = animation->evaluate(i, coef);
 			temporary[i] = temporary[i] * (anim.valid() ? anim : impl->baseMatrices[i]);
 			output[i] = impl->globalInverse * temporary[i] * impl->invRestMatrices[i];
-			CAGE_ASSERT_RUNTIME(output[i].valid());
+			CAGE_ASSERT_RUNTIME(output[i].valid(), output[i], i);
 		}
 	}
 
@@ -106,17 +106,19 @@ namespace cage
 		{
 			uint16 p = impl->boneParents[i];
 			if (p == (uint16)-1)
-				output[i] = mat4(real(0)); // degenerate
+				output[i] = mat4(0); // degenerate
 			else
 			{
 				vec3 a = pos(temporary[p]);
 				vec3 b = pos(temporary[i]);
 				transform tr;
 				tr.position = a;
-				tr.orientation = quat(b - a, vec3(0, 1, 0));
 				tr.scale = a.distance(b);
+				if (tr.scale > 0)
+					tr.orientation = quat(b - a, vec3(0, 1, 0));
 				output[i] = impl->globalInverse * mat4(tr);
 			}
+			CAGE_ASSERT_RUNTIME(output[i].valid(), output[i], i);
 		}
 	}
 

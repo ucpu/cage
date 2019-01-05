@@ -1,5 +1,4 @@
 #define GCHL_GEN_QUATERNION_BASE(NAME,N) \
-explicit NAME(const string &str); \
 NAME operator - () const { return inverse(); } \
 NAME operator + () const { return *this; } \
 real &operator [] (uint32 idx) { CAGE_ASSERT_RUNTIME (idx < N, "index out of range", idx, N); return data[idx]; } \
@@ -25,6 +24,7 @@ NAME operator - (const NAME &other) const { NAME r; for (uint32 i = 0; i < N; i+
 NAME operator - (real other) const { NAME r; for (uint32 i = 0; i < N; i++) r.data[i] = data[i] - other; return r; } \
 NAME operator * (real other) const { NAME r; for (uint32 i = 0; i < N; i++) r.data[i] = data[i] * other; return r; } \
 NAME operator / (real other) const { NAME r; real d = real(1) / other; for (uint32 i = 0; i < N; i++) r.data[i] = data[i] * d; return r; } \
+static NAME parse(const string &str); \
 static const NAME Nan;
 
 #define GCHL_GEN_VECTOR_BASE(NAME, N) \

@@ -13,12 +13,16 @@ namespace cage
 {
 	namespace
 	{
+		class drawMark;
+		class readMark;
+
 		class frameBufferImpl : public frameBufferClass
 		{
 		public:
 			uint32 id;
+			uint32 target;
 
-			frameBufferImpl()
+			frameBufferImpl(uint32 target) : id(0), target(target)
 			{
 				glGenFramebuffers(1, &id);
 				CAGE_CHECK_GL_ERROR_DEBUG();
@@ -29,52 +33,79 @@ namespace cage
 			{
 				glDeleteFramebuffers(1, &id);
 			}
+
+			void setBinded()
+			{
+				switch (target)
+				{
+				case GL_DRAW_FRAMEBUFFER:
+					setCurrentObject<drawMark>(id);
+					break;
+				case GL_READ_FRAMEBUFFER:
+					setCurrentObject<readMark>(id);
+					break;
+				default:
+					CAGE_THROW_CRITICAL(exception, "invalid frame buffer target");
+				}
+			}
+
+			void checkBinded()
+			{
+				switch (target)
+				{
+				case GL_DRAW_FRAMEBUFFER:
+					CAGE_ASSERT_RUNTIME(getCurrentObject<drawMark>() == id);
+					break;
+				case GL_READ_FRAMEBUFFER:
+					CAGE_ASSERT_RUNTIME(getCurrentObject<readMark>() == id);
+					break;
+				default:
+					CAGE_THROW_CRITICAL(exception, "invalid frame buffer target");
+				}
+			}
 		};
 	}
 
-	const uint32 frameBufferClass::getId() const
+	uint32 frameBufferClass::getId() const
 	{
 		frameBufferImpl *impl = (frameBufferImpl *)this;
 		return impl->id;
 	}
 
-	void frameBufferClass::bind() const
+	uint32 frameBufferClass::getTarget() const
 	{
-		bind(true, true);
+		frameBufferImpl *impl = (frameBufferImpl *)this;
+		return impl->target;
 	}
 
-	void frameBufferClass::bind(bool draw, bool read) const
+	void frameBufferClass::bind() const
 	{
-		CAGE_ASSERT_RUNTIME(draw || read, draw, read, "at least one must be specified");
 		frameBufferImpl *impl = (frameBufferImpl *)this;
-		uint32 target = 0;
-		if (draw) target |= GL_DRAW_FRAMEBUFFER;
-		if (read) target |= GL_READ_FRAMEBUFFER;
-		glBindFramebuffer(target, impl->id);
+		glBindFramebuffer(impl->target, impl->id);
 		CAGE_CHECK_GL_ERROR_DEBUG();
-		setCurrentObject<frameBufferClass>(impl->id);
+		impl->setBinded();
 	}
 
 	void frameBufferClass::depthTexture(textureClass *tex)
 	{
 		frameBufferImpl *impl = (frameBufferImpl*)this;
-		CAGE_ASSERT_RUNTIME(getCurrentObject<frameBufferClass>() == impl->id);
-		glFramebufferTexture(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, tex ? tex->getId() : 0, 0);
+		impl->checkBinded();
+		glFramebufferTexture(impl->target, GL_DEPTH_ATTACHMENT, tex ? tex->getId() : 0, 0);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
 	void frameBufferClass::colorTexture(uint32 index, textureClass *tex)
 	{
 		frameBufferImpl *impl = (frameBufferImpl*)this;
-		CAGE_ASSERT_RUNTIME(getCurrentObject<frameBufferClass>() == impl->id);
-		glFramebufferTexture(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + index, tex ? tex->getId() : 0, 0);
+		impl->checkBinded();
+		glFramebufferTexture(impl->target, GL_COLOR_ATTACHMENT0 + index, tex ? tex->getId() : 0, 0);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void frameBufferClass::drawAttachments(uint32 mask)
+	void frameBufferClass::activeAttachments(uint32 mask)
 	{
 		frameBufferImpl *impl = (frameBufferImpl*)this;
-		CAGE_ASSERT_RUNTIME(getCurrentObject<frameBufferClass>() == impl->id);
+		impl->checkBinded();
 		uint32 count = 0;
 		GLenum bufs[32];
 		for (uint32 i = 0, bit = 1; i < 32; i++, bit *= 2)
@@ -82,23 +113,53 @@ namespace cage
 			if (mask & bit)
 				bufs[count++] = GL_COLOR_ATTACHMENT0 + i;
 		}
-		glDrawBuffers(count, bufs);
+		switch (impl->target)
+		{
+		case GL_DRAW_FRAMEBUFFER:
+			glDrawBuffers(count, bufs);
+			break;
+		case GL_READ_FRAMEBUFFER:
+			CAGE_ASSERT_RUNTIME(count == 1);
+			glReadBuffer(*bufs);
+			break;
+		default:
+			CAGE_THROW_CRITICAL(exception, "invalid frame buffer target");
+		}
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
 	void frameBufferClass::checkStatus()
 	{
 		frameBufferImpl *impl = (frameBufferImpl*)this;
-		CAGE_ASSERT_RUNTIME(getCurrentObject<frameBufferClass>() == impl->id);
-		GLenum result = glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER);
+		impl->checkBinded();
+		GLenum result = glCheckFramebufferStatus(impl->target);
 		CAGE_CHECK_GL_ERROR_DEBUG();
-		if (result != GL_FRAMEBUFFER_COMPLETE)
-			CAGE_THROW_ERROR(graphicsException, "frameBufferClass::checkStatus: frame buffer check failed", numeric_cast<uint32>(result));
+		switch (result)
+		{
+		case GL_FRAMEBUFFER_COMPLETE:
+			return;
+		case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+			CAGE_THROW_ERROR(graphicsException, "incomplete frame buffer: attachment", numeric_cast<uint32>(result));
+		//case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
+		//	CAGE_THROW_ERROR(graphicsException, "incomplete frame buffer: dimensions", numeric_cast<uint32>(result));
+		case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+			CAGE_THROW_ERROR(graphicsException, "incomplete frame buffer: missing attachment", numeric_cast<uint32>(result));
+		case GL_FRAMEBUFFER_UNSUPPORTED:
+			CAGE_THROW_ERROR(graphicsException, "incomplete frame buffer: unsupported", numeric_cast<uint32>(result));
+		default:
+			CAGE_THROW_ERROR(graphicsException, "incomplete frame buffer: unknown error", numeric_cast<uint32>(result));
+		}
 	}
 
-	holder<frameBufferClass> newFrameBuffer(windowClass *context)
+	holder<frameBufferClass> newDrawFrameBuffer(windowClass *context)
 	{
 		CAGE_ASSERT_RUNTIME(getCurrentContext() == context);
-		return detail::systemArena().createImpl <frameBufferClass, frameBufferImpl>();
+		return detail::systemArena().createImpl<frameBufferClass, frameBufferImpl>(GL_DRAW_FRAMEBUFFER);
+	}
+
+	holder<frameBufferClass> newReadFrameBuffer(windowClass *context)
+	{
+		CAGE_ASSERT_RUNTIME(getCurrentContext() == context);
+		return detail::systemArena().createImpl<frameBufferClass, frameBufferImpl>(GL_READ_FRAMEBUFFER);
 	}
 }

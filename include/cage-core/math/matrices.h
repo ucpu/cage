@@ -11,7 +11,6 @@ namespace cage
 		explicit mat3(const vec3 &forward, const vec3 &up, bool keepUp = false);
 		explicit mat3(const quat &other);
 		explicit mat3(const mat4 &other);
-		explicit mat3(const string &str);
 
 		// compound operators
 		mat3 &operator *= (real other) { return *this = *this * other; }
@@ -40,6 +39,7 @@ namespace cage
 		mat3 normalize() const;
 		real determinant() const;
 		bool valid() const;
+		static mat3 parse(const string &str);
 
 		// constants
 		static const mat3 Zero;
@@ -60,7 +60,6 @@ namespace cage
 		explicit mat4(const vec3 &position, const quat &orientation, const vec3 &scale = vec3(1, 1, 1));
 		explicit mat4(const quat &other) { *this = mat4(mat3(other)); }
 		explicit inline mat4(const transform &other);
-		explicit mat4(const string &str);
 
 		// compound operators
 		mat4 &operator *= (real other) { return *this = *this * other; }
@@ -88,6 +87,7 @@ namespace cage
 		mat4 normalize() const;
 		real determinant() const;
 		bool valid() const;
+		static mat4 parse(const string &str);
 
 		// constants
 		static const mat4 Zero;

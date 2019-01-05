@@ -80,7 +80,7 @@ $if 1
 	float tan2alpha = (cos2alpha - 1.0) / cos2alpha;
 	float D = exp(tan2alpha / roughness2) / (3.14159 * roughness2 * cos2alpha * cos2alpha);
 
-	vec3 specular = mix(vec3(1.0), albedo, metalness) * ((F * G * D) / max(NoV * NoL * 3.14159, 0.00001));
+	vec3 specular = mix(vec3(1.0), albedo, metalness) * max((F * G * D) / max(NoV * NoL * 3.14159, 0.00001), 0.0);
 	vec3 diffuse = albedo * NoL;
 	return light * (diffuse + specular);
 $end

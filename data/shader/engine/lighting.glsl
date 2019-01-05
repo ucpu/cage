@@ -27,7 +27,7 @@ layout(binding = CAGE_SHADER_TEXTURE_SPECIAL) uniform sampler2D texGbufferSpecia
 layout(binding = CAGE_SHADER_TEXTURE_NORMAL) uniform sampler2D texGbufferNormal;
 
 flat in int varInstanceId;
-out vec4 outColor;
+out vec3 outColor;
 
 void main()
 {
@@ -39,5 +39,5 @@ void main()
 	metalness = special.g;
 	emissive = 0;
 	normal = texelFetch(texGbufferNormal, ivec2(gl_FragCoord.xy), 0).xyz;
-	outColor.rgb = uniLightType();
+	outColor = uniLightType();
 }

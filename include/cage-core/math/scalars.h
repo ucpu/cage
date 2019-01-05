@@ -7,7 +7,6 @@ namespace cage
 
 		// constructors
 		real() : value(0) {}
-		explicit real(const string &str);
 
 #define GCHL_GENERATE(TYPE) real (TYPE other): value ((float)other) {}
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, float, double));
@@ -72,6 +71,7 @@ namespace cage
 		real ceil() const;
 		real smoothstep() { return value * value * (3 - 2 * value); }
 		real smootherstep() { return value * value * value * (value * (value * 6 - 15) + 10); }
+		static real parse(const string &str);
 
 		// constants
 		static const real Pi;

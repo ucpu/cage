@@ -62,6 +62,7 @@ void testEvents()
 		l.detach();
 	}
 
+	/*
 	{
 		CAGE_TESTCASE("copy ctor, op=");
 		n = 0;
@@ -76,6 +77,7 @@ void testEvents()
 		d1.dispatch();
 		CAGE_TEST(n == 1);
 	}
+	*/
 
 	{
 		CAGE_TESTCASE("events with two arguments");

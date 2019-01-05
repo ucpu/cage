@@ -7,8 +7,10 @@
 
 namespace cage
 {
-	real::real(const string &str) : value(detail::tryRemoveParentheses(str).toFloat())
-	{}
+	real real::parse(const string &str)
+	{
+		return detail::tryRemoveParentheses(str).toFloat();
+	}
 
 	real sin(rads value)
 	{

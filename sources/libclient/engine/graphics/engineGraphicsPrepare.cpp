@@ -703,11 +703,8 @@ namespace cage
 				{ // generate camera render passes
 					std::sort(emitRead->cameras.begin(), emitRead->cameras.end(), [](const emitCameraStruct *a, const emitCameraStruct *b)
 					{
+						CAGE_ASSERT_RUNTIME(a->camera.cameraOrder != b->camera.cameraOrder, a->camera.cameraOrder);
 						return a->camera.cameraOrder < b->camera.cameraOrder;
-					});
-					std::stable_sort(emitRead->cameras.begin(), emitRead->cameras.end(), [](const emitCameraStruct *a, const emitCameraStruct *b)
-					{
-						return !!a->camera.target > !!b->camera.target;
 					});
 					for (auto it : emitRead->cameras)
 					{

@@ -83,7 +83,7 @@ namespace
 			CAGE_TEST(b == b);
 			CAGE_TEST(!(b != b));
 			string s(b);
-			T c = T(s);
+			T c = T::parse(s);
 			CAGE_TEST(b == c);
 		}
 
@@ -712,7 +712,7 @@ namespace
 				{
 					real v = randomRange(-1e5, 1e5);
 					string s = v;
-					real r = real(s);
+					real r = real::parse(s);
 					test(v, r);
 				}
 			}
@@ -722,7 +722,7 @@ namespace
 				{
 					vec2 v = randomRange2(-1e5, 1e5);
 					string s = v;
-					vec2 r = vec2(s);
+					vec2 r = vec2::parse(s);
 					test(v, r);
 				}
 			}
@@ -732,7 +732,7 @@ namespace
 				{
 					vec3 v = randomRange3(-1e5, 1e5);
 					string s = v;
-					vec3 r = vec3(s);
+					vec3 r = vec3::parse(s);
 					test(v, r);
 				}
 			}
@@ -742,7 +742,7 @@ namespace
 				{
 					vec4 v = randomRange4(-1e5, 1e5);
 					string s = v;
-					vec4 r = vec4(s);
+					vec4 r = vec4::parse(s);
 					test(v, r);
 				}
 			}
@@ -752,7 +752,7 @@ namespace
 				{
 					quat v = randomDirectionQuat();
 					string s = v;
-					quat r = quat(s);
+					quat r = quat::parse(s);
 					test(v, r);
 				}
 			}
@@ -762,7 +762,7 @@ namespace
 				{
 					mat3 v = mat3(randomDirectionQuat());
 					string s = v;
-					mat3 r = mat3(s);
+					mat3 r = mat3::parse(s);
 					test(v, r);
 				}
 			}
@@ -772,7 +772,7 @@ namespace
 				{
 					mat4 v = mat4(randomDirection3() * 100, randomDirectionQuat(), randomDirection3() * 2);
 					string s = v;
-					mat4 r = mat4(s);
+					mat4 r = mat4::parse(s);
 					test(v, r);
 				}
 			}
@@ -783,7 +783,7 @@ namespace
 				{
 					transform v = transform(randomDirection3() * 100, randomDirectionQuat(), randomChance() + 0.5);
 					string s = v;
-					transform r = transform(s);
+					transform r = transform::parse(s);
 					test(v.position, r.position);
 					test(v.orientation, r.orientation);
 					test(v.scale, r.scale);
@@ -792,36 +792,36 @@ namespace
 			*/
 			{
 				CAGE_TESTCASE("negative tests");
-				CAGE_TEST_THROWN(real("bla"));
-				CAGE_TEST_THROWN(real("(bla)"));
-				CAGE_TEST_THROWN(real(""));
-				CAGE_TEST_THROWN(real("  "));
-				CAGE_TEST_THROWN(real("()"));
-				CAGE_TEST_THROWN(real("-"));
-				CAGE_TEST_THROWN(real("+"));
-				CAGE_TEST_THROWN(real("(3"));
-				CAGE_TEST_THROWN(real("3)"));
-				CAGE_TEST_THROWN(real("1.0,"));
-				CAGE_TEST_THROWN(real(",5"));
-				CAGE_TEST_THROWN(vec3("bla"));
-				CAGE_TEST_THROWN(vec3("(bla)"));
-				CAGE_TEST_THROWN(vec3(""));
-				CAGE_TEST_THROWN(vec3("()"));
-				CAGE_TEST_THROWN(vec3("-"));
-				CAGE_TEST_THROWN(vec3("+"));
-				CAGE_TEST_THROWN(vec3("(3"));
-				CAGE_TEST_THROWN(vec3("3)"));
-				CAGE_TEST_THROWN(vec3("3,5"));
-				CAGE_TEST_THROWN(vec3("3,"));
-				CAGE_TEST_THROWN(vec3(",3"));
-				CAGE_TEST_THROWN(vec3(",3,3"));
-				CAGE_TEST_THROWN(vec3("3,3,"));
-				CAGE_TEST_THROWN(vec3("3,3, "));
-				CAGE_TEST_THROWN(vec3(" ,3, 4"));
-				CAGE_TEST_THROWN(vec3("4 ,, 4"));
-				CAGE_TEST_THROWN(vec3("4 , , 4"));
-				CAGE_TEST_THROWN(vec3("4, ,5"));
-				CAGE_TEST_THROWN(vec3("(4, ,5)"));
+				CAGE_TEST_THROWN(real::parse("bla"));
+				CAGE_TEST_THROWN(real::parse("(bla)"));
+				CAGE_TEST_THROWN(real::parse(""));
+				CAGE_TEST_THROWN(real::parse("  "));
+				CAGE_TEST_THROWN(real::parse("()"));
+				CAGE_TEST_THROWN(real::parse("-"));
+				CAGE_TEST_THROWN(real::parse("+"));
+				CAGE_TEST_THROWN(real::parse("(3"));
+				CAGE_TEST_THROWN(real::parse("3)"));
+				CAGE_TEST_THROWN(real::parse("1.0,"));
+				CAGE_TEST_THROWN(real::parse(",5"));
+				CAGE_TEST_THROWN(vec3::parse("bla"));
+				CAGE_TEST_THROWN(vec3::parse("(bla)"));
+				CAGE_TEST_THROWN(vec3::parse(""));
+				CAGE_TEST_THROWN(vec3::parse("()"));
+				CAGE_TEST_THROWN(vec3::parse("-"));
+				CAGE_TEST_THROWN(vec3::parse("+"));
+				CAGE_TEST_THROWN(vec3::parse("(3"));
+				CAGE_TEST_THROWN(vec3::parse("3)"));
+				CAGE_TEST_THROWN(vec3::parse("3,5"));
+				CAGE_TEST_THROWN(vec3::parse("3,"));
+				CAGE_TEST_THROWN(vec3::parse(",3"));
+				CAGE_TEST_THROWN(vec3::parse(",3,3"));
+				CAGE_TEST_THROWN(vec3::parse("3,3,"));
+				CAGE_TEST_THROWN(vec3::parse("3,3, "));
+				CAGE_TEST_THROWN(vec3::parse(" ,3, 4"));
+				CAGE_TEST_THROWN(vec3::parse("4 ,, 4"));
+				CAGE_TEST_THROWN(vec3::parse("4 , , 4"));
+				CAGE_TEST_THROWN(vec3::parse("4, ,5"));
+				CAGE_TEST_THROWN(vec3::parse("(4, ,5)"));
 			}
 		}
 	}

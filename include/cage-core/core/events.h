@@ -10,12 +10,13 @@ namespace cage
 			eventLinker();
 			eventLinker(eventLinker &other);
 			virtual ~eventLinker();
-			eventLinker &operator = (eventLinker &other);
+			eventLinker &operator = (eventLinker &other) = delete;
 			void attach(eventLinker *d, sint32 order);
 			void detach();
 			eventLinker *p, *n;
 		private:
 			void unlink();
+			bool valid() const;
 			sint32 order;
 		};
 

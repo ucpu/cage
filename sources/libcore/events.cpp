@@ -6,11 +6,13 @@ namespace cage
 {
 	namespace
 	{
+		/*
 		mutexClass *eventsMutex()
 		{
 			static holder<mutexClass> *m = new holder<mutexClass>(newMutex()); // this leak is intentional
 			return m->get();
 		}
+		*/
 	}
 
 	namespace privat
@@ -18,7 +20,7 @@ namespace cage
 		eventLinker::eventLinker() : p(nullptr), n(nullptr), order(detail::numeric_limits<sint32>::min())
 		{}
 
-		eventLinker::eventLinker(eventLinker &other)
+		eventLinker::eventLinker(eventLinker &other) : eventLinker()
 		{
 			attach(&other, other.order);
 		}
@@ -28,6 +30,7 @@ namespace cage
 			detach();
 		}
 
+		/*
 		eventLinker &eventLinker::operator = (eventLinker &other)
 		{
 			if (&other == this)
@@ -35,10 +38,11 @@ namespace cage
 			attach(&other, other.order);
 			return *this;
 		}
+		*/
 
 		void eventLinker::attach(eventLinker *d, sint32 o)
 		{
-			scopeLock<mutexClass> lck(eventsMutex());
+			//scopeLock<mutexClass> lck(eventsMutex());
 			unlink();
 			order = o;
 			// find rightmost node
@@ -63,11 +67,12 @@ namespace cage
 					n->p = this;
 				p->n = this;
 			}
+			CAGE_ASSERT_RUNTIME(valid(), "multiple events with same order are prohibited (unless zero)");
 		}
 
 		void eventLinker::detach()
 		{
-			scopeLock<mutexClass> lck(eventsMutex());
+			//scopeLock<mutexClass> lck(eventsMutex());
 			unlink();
 		}
 
@@ -78,6 +83,17 @@ namespace cage
 			if (n)
 				n->p = p;
 			p = n = nullptr;
+		}
+
+		bool eventLinker::valid() const
+		{
+			if (order == 0)
+				return true;
+			if (p && p->order >= order)
+				return false;
+			if (n && n->order <= order)
+				return false;
+			return true;
 		}
 	}
 }

@@ -145,7 +145,7 @@ namespace cage
 			string sm, sd;
 			for (uint32 i = 0; i < channels; i++)
 			{
-				sm += string(mapping[i]).fill(4);
+				sm += string(mapping[i] + 1).fill(4);
 				sd += string(device[i]).fill(4);
 			}
 			CAGE_LOG_CONTINUE(severityEnum::Note, "sound", string() + "device channel ids:  " + sd);

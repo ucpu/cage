@@ -17,7 +17,5 @@ out vec4 outColor;
 
 void main()
 {
-	vec2 texelSize = 1.0 / textureSize(texColor, 0).xy;
-	vec2 uv = gl_FragCoord.xy * texelSize;
-	outColor = vec4(textureLod(texColor, uv, 0).rgb, 1.0);
+	outColor = texelFetch(texColor, ivec2(gl_FragCoord.xy), 0);
 }
