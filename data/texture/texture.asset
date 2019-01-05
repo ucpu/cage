@@ -5,6 +5,7 @@ gui.psd
 
 []
 scheme = texture
+degamma_on = true
 helper.jpg
 
 []

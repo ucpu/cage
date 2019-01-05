@@ -13,7 +13,7 @@
 
 namespace
 {
-	const uint32 convertFilter(const string &f)
+	uint32 convertFilter(const string &f)
 	{
 		if (f == "GL_NEAREST_MIPMAP_NEAREST")
 			return GL_NEAREST_MIPMAP_NEAREST;
@@ -30,7 +30,7 @@ namespace
 		return 0;
 	}
 
-	const bool requireMipmaps(const uint32 f)
+	bool requireMipmaps(const uint32 f)
 	{
 		switch (f)
 		{
@@ -44,7 +44,7 @@ namespace
 		}
 	}
 
-	const uint32 convertWrap(const string &f)
+	uint32 convertWrap(const string &f)
 	{
 		if (f == "GL_CLAMP_TO_EDGE")
 			return GL_CLAMP_TO_EDGE;
@@ -57,7 +57,7 @@ namespace
 		return 0;
 	}
 
-	const uint32 convertTarget(const string &f)
+	uint32 convertTarget(const string &f)
 	{
 		if (f == "GL_TEXTURE_2D")
 			return GL_TEXTURE_2D;
@@ -70,7 +70,7 @@ namespace
 		return 0;
 	}
 
-	const ILenum convertBppToFormat(uint32 bpp)
+	ILenum convertBppToFormat(uint32 bpp)
 	{
 		switch (bpp)
 		{
@@ -89,6 +89,11 @@ namespace
 		uint32 width;
 		uint32 height;
 		uint32 bpp; // bytes per pixel
+
+		void resizeDevil(uint32 depth = 1)
+		{
+			ilTexImage(width, height, depth, bpp, convertBppToFormat(bpp), IL_UNSIGNED_BYTE, nullptr);
+		}
 
 		void saveToDevil(uint32 depth = 0)
 		{
@@ -173,7 +178,7 @@ namespace
 		}
 
 	private:
-		const float convertToNormalIntensity(sint32 x, sint32 y)
+		float convertToNormalIntensity(sint32 x, sint32 y)
 		{
 			x = min((sint32)width - 1, max(0, x));
 			y = min((sint32)height - 1, max(0, y));
@@ -244,7 +249,7 @@ namespace
 			ILuint im = ilGenImage();
 			ilBindImage(im);
 			iluImageParameter(ILU_FILTER, ILU_BILINEAR);
-			ilSetPixels(0, 0, 0, images[0].width, images[0].height, numeric_cast<uint32>(images.size()), convertBppToFormat(images[0].bpp), IL_UNSIGNED_BYTE, nullptr);
+			images[0].resizeDevil(numeric_cast<uint32>(images.size()));
 			for (std::vector<imageLayerStruct>::iterator it = images.begin(), et = images.end(); it != et; it++)
 				it->saveToDevil(numeric_cast<uint32>(it - images.begin()));
 			if (!iluScale(max(images[0].width / downscale, 1u), max(images[0].height / downscale, 1u), max(numeric_cast<uint32>(images.size()), 1u)))
@@ -260,6 +265,7 @@ namespace
 			ILuint im = ilGenImage();
 			ilBindImage(im);
 			iluImageParameter(ILU_FILTER, ILU_BILINEAR);
+			images[0].resizeDevil();
 			for (std::vector<imageLayerStruct>::iterator it = images.begin(), et = images.end(); it != et; it++)
 			{
 				CAGE_LOG(severityEnum::Info, logComponentName, string() + "downscaling slice: " + numeric_cast<uint32>(it - images.begin()));
@@ -278,12 +284,13 @@ namespace
 		ILuint im = ilGenImage();
 		ilBindImage(im);
 		coef = 1.f / coef;
-		for (std::vector<imageLayerStruct>::iterator it = images.begin(), et = images.end(); it != et; it++)
+		images[0].resizeDevil();
+		for (auto &it : images)
 		{
-			it->saveToDevil();
+			it.saveToDevil();
 			if (!iluGammaCorrect(coef))
 				CAGE_THROW_ERROR(exception, "iluGammaCorrect");
-			it->loadFromDevil();
+			it.loadFromDevil();
 		}
 		ilBindImage(0);
 		ilDeleteImage(im);
@@ -446,21 +453,21 @@ void processTexture()
 		}
 	}
 
-	{ // premultiply alpha
-		if (properties("premultiply_alpha").toBool())
-		{
-			for (std::vector<imageLayerStruct>::iterator it = images.begin(), et = images.end(); it != et; it++)
-				it->premultiplyAlpha();
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "premultiplied alpha");
-		}
-	}
-
 	{ // downscale
 		uint32 downscale = properties("downscale").toUint32();
 		if (downscale > 1)
 		{
 			performDownscale(downscale, target == GL_TEXTURE_3D);
 			CAGE_LOG(severityEnum::Info, logComponentName, string() + "downscaled: " + images[0].width + "*" + images[0].height + "*" + numeric_cast<uint32>(images.size()));
+		}
+	}
+
+	{ // premultiply alpha
+		if (properties("premultiply_alpha").toBool())
+		{
+			for (std::vector<imageLayerStruct>::iterator it = images.begin(), et = images.end(); it != et; it++)
+				it->premultiplyAlpha();
+			CAGE_LOG(severityEnum::Info, logComponentName, string() + "premultiplied alpha");
 		}
 	}
 

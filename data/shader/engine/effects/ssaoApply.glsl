@@ -14,17 +14,15 @@ $define shader fragment
 
 layout(binding = 0) uniform sampler2D texColor;
 layout(binding = CAGE_SHADER_TEXTURE_AMBIENTOCCLUSION) uniform sampler2D texAo;
-
-out vec4 outColor;
-
 layout(location = 0) uniform vec3 uniAoIntensity;
+
+out vec3 outColor;
 
 void main()
 {
 	vec2 texelSize = 1.0 / textureSize(texColor, 0).xy;
 	vec2 uv = gl_FragCoord.xy * texelSize;
 	float ao = textureLod(texAo, uv, 0).x;
-	//ao = clamp(ao, 0.0, 1.0);
 	vec3 color = textureLod(texColor, uv, 0).xyz;
-	outColor = vec4(color - uniAoIntensity * ao, 1.0);
+	outColor = max(color - uniAoIntensity * ao, vec3(0.0));
 }

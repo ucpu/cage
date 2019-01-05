@@ -4,4 +4,5 @@ ssaoGenerate.glsl
 ssaoBlur.glsl
 ssaoApply.glsl
 motionBlur.glsl
+toneMapping.glsl
 fxaa.glsl

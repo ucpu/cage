@@ -94,7 +94,7 @@ namespace cage
 		meshClass *meshSquare, *meshSphere, *meshCone, *meshFake;
 		shaderClass *shaderVisualizeColor, *shaderVisualizeDepth, *shaderVisualizeVelocity;
 		shaderClass *shaderBlit, *shaderDepth, *shaderGBuffer, *shaderLighting, *shaderTranslucent;
-		shaderClass *shaderSsaoGenerate, *shaderSsaoBlur, *shaderSsaoApply, *shaderMotionBlur, *shaderFxaa;
+		shaderClass *shaderSsaoGenerate, *shaderSsaoBlur, *shaderSsaoApply, *shaderMotionBlur, *shaderToneMapping, *shaderFxaa;
 		uint32 windowWidth, windowHeight;
 		renderPassStruct *firstRenderPass, *lastRenderPass;
 	};

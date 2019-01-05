@@ -407,7 +407,7 @@ void processMesh()
 			vec3 c = dsm.box.center();
 			vec3 a = dsm.box.a - c;
 			vec3 b = dsm.box.b - c;
-			real s = 2;
+			real s = 3;
 			dsm.box = aabb(a * s + c, b * s + c);
 			CAGE_LOG(severityEnum::Info, logComponentName, string() + "enlarged bounding box: " + dsm.box);
 		}

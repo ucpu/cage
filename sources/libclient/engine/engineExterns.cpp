@@ -23,7 +23,7 @@ namespace cage
 	renderComponent::renderComponent() : color(0, 0, 0), object(0), renderMask(1) {}
 	animatedSkeletonComponent::animatedSkeletonComponent() : startTime(0), name(0), speed(1), offset(0) {}
 	animatedTextureComponent::animatedTextureComponent() : startTime(0), speed(1), offset(0) {}
-	lightComponent::lightComponent() : color(1, 1, 1), attenuation(1, 0, 0.01), spotAngle(degs(40)), spotExponent(40), lightType(lightTypeEnum::Point) {}
+	lightComponent::lightComponent() : color(1, 1, 1), attenuation(1, 0, 0.01), spotAngle(degs(40)), spotExponent(80), lightType(lightTypeEnum::Point) {}
 	shadowmapComponent::shadowmapComponent() : worldSize(0, 0, 0), resolution(256) {}
 	cameraEffectsStruct::cameraEffectsStruct() : ssaoWorldRadius(0.5), effects(cameraEffectsFlags::None) {}
 	cameraComponent::cameraComponent() : viewportSize(1, 1), target(nullptr), perspectiveFov(degs(60)), near(1), far(100), zeroParallaxDistance(10), eyeSeparation(0.3), cameraOrder(0), renderMask(1), clear(cameraClearFlags::Depth | cameraClearFlags::Color), cameraType(cameraTypeEnum::Perspective) {}

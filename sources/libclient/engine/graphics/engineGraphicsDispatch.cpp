@@ -104,6 +104,9 @@ namespace cage
 			bool lastTwoSided;
 			bool lastDepthTest;
 			bool lastDepthWrite;
+			
+			textureClass *texSource;
+			textureClass *texTarget;
 
 			static void applyShaderRoutines(shaderConfigStruct *c, shaderClass *s)
 			{
@@ -114,6 +117,27 @@ namespace cage
 				}
 				s->applySubroutines();
 				CAGE_CHECK_GL_ERROR_DEBUG();
+			}
+
+			static void viewportAndScissor(sint32 x, sint32 y, uint32 w, uint32 h)
+			{
+				glViewport(x, y, w, h);
+				glScissor(x, y, w, h);
+			}
+
+			static void resetAllTextures()
+			{
+				for (uint32 i = 0; i < 16; i++)
+				{
+					glActiveTexture(GL_TEXTURE0 + i);
+					glBindTexture(GL_TEXTURE_1D, 0);
+					glBindTexture(GL_TEXTURE_1D_ARRAY, 0);
+					glBindTexture(GL_TEXTURE_2D, 0);
+					glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+					glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+					glBindTexture(GL_TEXTURE_3D, 0);
+				}
+				glActiveTexture(GL_TEXTURE0);
 			}
 
 			void setTwoSided(bool twoSided)
@@ -148,21 +172,21 @@ namespace cage
 				}
 			}
 
-			void gBufferResize(uint32 w, uint32 h)
+			void bindGBufferTextures()
 			{
-				if (w == gBufferWidth && h == gBufferHeight)
-					return;
-				gBufferWidth = w;
-				gBufferHeight = h;
-				albedoTexture->bind(); albedoTexture->image2d(w, h, GL_RGB8);
-				specialTexture->bind(); specialTexture->image2d(w, h, GL_RG8);
-				normalTexture->bind(); normalTexture->image2d(w, h, GL_RGB16F);
-				colorTexture->bind(); colorTexture->image2d(w, h, GL_RGB16F);
-				intermediateTexture->bind(); intermediateTexture->image2d(w, h, GL_RGB16F);
-				velocityTexture->bind(); velocityTexture->image2d(w, h, GL_RG16F);
-				ambientOcclusionTexture->bind(); ambientOcclusionTexture->image2d(max(w / CAGE_SHADER_SSAO_DOWNSCALE, 1u), max(h / CAGE_SHADER_SSAO_DOWNSCALE, 1u), GL_R8);
-				ambientOcclusionTexture2->bind(); ambientOcclusionTexture2->image2d(max(w / CAGE_SHADER_SSAO_DOWNSCALE, 1u), max(h / CAGE_SHADER_SSAO_DOWNSCALE, 1u), GL_R8);
-				depthTexture->bind(); depthTexture->image2d(w, h, GL_DEPTH_COMPONENT32);
+				const uint32 tius[] = { CAGE_SHADER_TEXTURE_ALBEDO, CAGE_SHADER_TEXTURE_SPECIAL, CAGE_SHADER_TEXTURE_NORMAL, CAGE_SHADER_TEXTURE_VELOCITY, CAGE_SHADER_TEXTURE_AMBIENTOCCLUSION, CAGE_SHADER_TEXTURE_DEPTH };
+				static const uint32 cnt = sizeof(tius) / sizeof(tius[0]);
+				textureClass *texs[cnt] = { albedoTexture.get(), specialTexture.get(), normalTexture.get(), velocityTexture.get(), ambientOcclusionTexture.get(), depthTexture.get() };
+				textureClass::multiBind(cnt, tius, texs);
+			}
+
+			void renderEffect()
+			{
+				renderTarget->colorTexture(0, texTarget);
+				renderTarget->checkStatus();
+				texSource->bind();
+				std::swap(texSource, texTarget);
+				meshSquare->dispatch();
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
@@ -206,16 +230,6 @@ namespace cage
 
 			void renderOpaque(renderPassStruct *pass)
 			{
-				CAGE_ASSERT_RUNTIME(pass->targetShadowmap == 0);
-
-				gBufferTarget->bind();
-				gBufferTarget->activeAttachments(31);
-				gBufferTarget->checkStatus();
-				CAGE_CHECK_GL_ERROR_DEBUG();
-
-				if (pass->clearFlags)
-					glClear(pass->clearFlags);
-
 				shaderClass *shr = pass->targetShadowmap ? shaderDepth : shaderGBuffer;
 				shr->bind();
 				for (objectsStruct *o = pass->firstOpaque; o; o = o->next)
@@ -223,32 +237,8 @@ namespace cage
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
-			void bindGBufferTextures()
-			{
-				const uint32 tius[] = { CAGE_SHADER_TEXTURE_ALBEDO, CAGE_SHADER_TEXTURE_SPECIAL, CAGE_SHADER_TEXTURE_NORMAL, CAGE_SHADER_TEXTURE_VELOCITY, CAGE_SHADER_TEXTURE_AMBIENTOCCLUSION, CAGE_SHADER_TEXTURE_DEPTH };
-				static const uint32 cnt = sizeof(tius) / sizeof(tius[0]);
-				textureClass *texs[cnt] = { albedoTexture.get(), specialTexture.get(), normalTexture.get(), velocityTexture.get(), ambientOcclusionTexture.get(), depthTexture.get() };
-				textureClass::multiBind(cnt, tius, texs);
-			}
-
 			void renderLighting(renderPassStruct *pass)
 			{
-				CAGE_ASSERT_RUNTIME(pass->targetShadowmap == 0);
-
-				renderTarget->bind();
-				renderTarget->depthTexture(nullptr);
-				renderTarget->colorTexture(0, colorTexture.get());
-				renderTarget->activeAttachments(1);
-				renderTarget->checkStatus();
-				bindGBufferTextures();
-				CAGE_CHECK_GL_ERROR_DEBUG();
-
-				setTwoSided(false);
-				setDepthTest(false, false);
-				glEnable(GL_BLEND);
-				glBlendFunc(GL_ONE, GL_ONE);
-				CAGE_CHECK_GL_ERROR_DEBUG();
-
 				shaderClass *shr = shaderLighting;
 				shr->bind();
 				for (lightsStruct *l = pass->firstLighting; l; l = l->next)
@@ -285,24 +275,12 @@ namespace cage
 					drawCalls++;
 					drawPrimitives += l->count * mesh->getPrimitivesCount();
 				}
-
 				glCullFace(GL_BACK);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
 			void renderTranslucent(renderPassStruct *pass)
 			{
-				CAGE_ASSERT_RUNTIME(pass->targetShadowmap == 0);
-
-				gBufferTarget->bind();
-				gBufferTarget->activeAttachments(1 << CAGE_SHADER_ATTRIB_OUT_COLOR);
-				gBufferTarget->checkStatus();
-				CAGE_CHECK_GL_ERROR_DEBUG();
-
-				setDepthTest(true, true);
-				glEnable(GL_BLEND);
-				CAGE_CHECK_GL_ERROR_DEBUG();
-
 				shaderClass *shr = shaderTranslucent;
 				shr->bind();
 				for (translucentStruct *t = pass->firstTranslucent; t; t = t->next)
@@ -325,47 +303,161 @@ namespace cage
 					  */
 					}
 				}
-
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
-			void renderEffect(textureClass *&texSource, textureClass *&texTarget)
+			void renderDeferredPass(renderPassStruct *pass)
 			{
-				renderTarget->colorTexture(0, texTarget);
-				renderTarget->checkStatus();
-				texSource->bind();
-				std::swap(texSource, texTarget);
-				meshSquare->dispatch();
+				// opaque
+				gBufferTarget->bind();
+				gBufferTarget->activeAttachments(31);
+				gBufferTarget->checkStatus();
 				CAGE_CHECK_GL_ERROR_DEBUG();
-			}
+				if (pass->clearFlags)
+					glClear(pass->clearFlags);
+				renderOpaque(pass);
+				setTwoSided(false);
+				setDepthTest(false, false);
+				CAGE_CHECK_GL_ERROR_DEBUG();
 
-			static void viewportAndScissor(sint32 x, sint32 y, uint32 w, uint32 h)
-			{
-				glViewport(x, y, w, h);
-				glScissor(x, y, w, h);
-			}
-
-			void ssaoBlur(holder<textureClass> &tex1, holder<textureClass> &tex2, const vec2 &direction)
-			{
-				tex1->bind();
-				renderTarget->colorTexture(0, tex2.get());
+				// lighting
+				renderTarget->bind();
+				renderTarget->depthTexture(nullptr);
+				renderTarget->colorTexture(0, colorTexture.get());
+				renderTarget->activeAttachments(1);
 				renderTarget->checkStatus();
-				shaderSsaoBlur->uniform(0, direction);
-				meshSquare->dispatch();
-			}
+				bindGBufferTextures();
+				glEnable(GL_BLEND);
+				glBlendFunc(GL_ONE, GL_ONE);
+				CAGE_CHECK_GL_ERROR_DEBUG();
+				renderLighting(pass);
+				setDepthTest(false, false);
+				glDisable(GL_BLEND);
+				glActiveTexture(GL_TEXTURE0);
+				CAGE_CHECK_GL_ERROR_DEBUG();
 
-			static void resetAllTextures()
-			{
-				for (uint32 i = 0; i < 16; i++)
+				// opaque screen-space effects
+				renderTarget->bind();
+				renderTarget->depthTexture(nullptr);
+				renderTarget->activeAttachments(1);
+				meshSquare->bind();
+				texSource = colorTexture.get();
+				texTarget = intermediateTexture.get();
+				CAGE_CHECK_GL_ERROR_DEBUG();
+
+				if ((pass->effects & cameraEffectsFlags::AmbientOcclusion) == cameraEffectsFlags::AmbientOcclusion)
 				{
-					glActiveTexture(GL_TEXTURE0 + i);
-					glBindTexture(GL_TEXTURE_1D, 0);
-					glBindTexture(GL_TEXTURE_1D_ARRAY, 0);
-					glBindTexture(GL_TEXTURE_2D, 0);
-					glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
-					glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-					glBindTexture(GL_TEXTURE_3D, 0);
+					viewportAndScissor(pass->vpX / CAGE_SHADER_SSAO_DOWNSCALE, pass->vpY / CAGE_SHADER_SSAO_DOWNSCALE, pass->vpW / CAGE_SHADER_SSAO_DOWNSCALE, pass->vpH / CAGE_SHADER_SSAO_DOWNSCALE);
+					{ // generate
+						renderTarget->colorTexture(0, ambientOcclusionTexture.get());
+						renderTarget->checkStatus();
+						shaderSsaoGenerate->bind();
+						shaderSsaoGenerate->uniform(0, pass->viewProj);
+						shaderSsaoGenerate->uniform(1, pass->viewProj.inverse());
+						shaderSsaoGenerate->uniform(2, pass->ssaoWorldRadius);
+						meshSquare->dispatch();
+					}
+					{ // blur
+						shaderSsaoBlur->bind();
+						auto ssaoBlur = [&](holder<textureClass> &tex1, holder<textureClass> &tex2, const vec2 &direction)
+						{
+							tex1->bind();
+							renderTarget->colorTexture(0, tex2.get());
+							renderTarget->checkStatus();
+							shaderSsaoBlur->uniform(0, direction);
+							meshSquare->dispatch();
+						};
+						ssaoBlur(ambientOcclusionTexture, ambientOcclusionTexture2, vec2(1.0, 0.0));
+						ssaoBlur(ambientOcclusionTexture2, ambientOcclusionTexture, vec2(0.0, 1.0));
+					}
+					viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
+					{ // apply
+						shaderSsaoApply->bind();
+						shaderSsaoApply->uniform(0, vec3(pass->shaderViewport.ambientLight));
+						renderEffect();
+					}
 				}
+
+				if ((pass->effects & cameraEffectsFlags::MotionBlur) == cameraEffectsFlags::MotionBlur)
+				{
+					shaderMotionBlur->bind();
+					renderEffect();
+				}
+
+				// transparencies
+				if (pass->firstTranslucent)
+				{
+					if (texSource != colorTexture.get())
+					{
+						shaderBlit->bind();
+						renderEffect();
+					}
+					CAGE_ASSERT_RUNTIME(texSource == colorTexture.get());
+					CAGE_ASSERT_RUNTIME(texTarget == intermediateTexture.get());
+
+					gBufferTarget->bind();
+					gBufferTarget->activeAttachments(1 << CAGE_SHADER_ATTRIB_OUT_COLOR);
+					gBufferTarget->checkStatus();
+					CAGE_CHECK_GL_ERROR_DEBUG();
+
+					setDepthTest(true, true);
+					glEnable(GL_BLEND);
+					CAGE_CHECK_GL_ERROR_DEBUG();
+
+					renderTranslucent(pass);
+
+					setDepthTest(false, false);
+					glDisable(GL_BLEND);
+					glActiveTexture(GL_TEXTURE0);
+					CAGE_CHECK_GL_ERROR_DEBUG();
+
+					renderTarget->bind();
+					renderTarget->depthTexture(nullptr);
+					renderTarget->activeAttachments(1);
+					meshSquare->bind();
+					bindGBufferTextures();
+				}
+
+				// final screen-space effects
+				if ((pass->effects & cameraEffectsFlags::ToneMapping) == cameraEffectsFlags::ToneMapping)
+				{
+					shaderToneMapping->bind();
+					renderEffect();
+				}
+
+				if ((pass->effects & cameraEffectsFlags::AntiAliasing) == cameraEffectsFlags::AntiAliasing)
+				{
+					shaderFxaa->bind();
+					renderEffect();
+				}
+
+				// blit to final output texture
+				if (texSource != pass->targetTexture)
+				{
+					texTarget = pass->targetTexture;
+					shaderBlit->bind();
+					renderEffect();
+				}
+			}
+
+			void renderShadowPass(renderPassStruct *pass)
+			{
+				renderTarget->bind();
+				renderTarget->depthTexture(pass->targetShadowmap > 0 ? shadowmaps2d[pass->targetShadowmap - 1].texture.get() : shadowmapsCube[-pass->targetShadowmap - 1].texture.get());
+				renderTarget->colorTexture(0, nullptr);
+				renderTarget->activeAttachments(0);
+				renderTarget->checkStatus();
+				glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+				glClear(GL_DEPTH_BUFFER_BIT);
+				CAGE_CHECK_GL_ERROR_DEBUG();
+
+				shaderClass *shr = shaderDepth;
+				shr->bind();
+				for (objectsStruct *o = pass->firstOpaque; o; o = o->next)
+					renderObject(o, shr);
+
+				glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
 			void renderPass(renderPassStruct *pass)
@@ -376,9 +468,6 @@ namespace cage
 				glEnable(GL_DEPTH_TEST);
 				glEnable(GL_SCISSOR_TEST);
 				glDisable(GL_BLEND);
-				CAGE_CHECK_GL_ERROR_DEBUG();
-
-				// reset the state
 				lastTwoSided = true;
 				setTwoSided(false);
 				lastDepthTest = false; lastDepthWrite = false;
@@ -387,94 +476,32 @@ namespace cage
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
 				if (pass->targetShadowmap == 0)
-				{ // deferred renderer
-					renderOpaque(pass);
-					if (pass->firstLighting)
-						renderLighting(pass);
-					if (pass->firstTranslucent)
-						renderTranslucent(pass);
-				}
+					renderDeferredPass(pass);
 				else
-				{ // shadowmap
-					renderTarget->bind();
-					renderTarget->depthTexture(pass->targetShadowmap > 0 ? shadowmaps2d[pass->targetShadowmap - 1].texture.get() : shadowmapsCube[-pass->targetShadowmap - 1].texture.get());
-					renderTarget->colorTexture(0, nullptr);
-					renderTarget->activeAttachments(0);
-					renderTarget->checkStatus();
-					glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-					glClear(GL_DEPTH_BUFFER_BIT);
-					CAGE_CHECK_GL_ERROR_DEBUG();
-
-					shaderClass *shr = shaderDepth;
-					shr->bind();
-					for (objectsStruct *o = pass->firstOpaque; o; o = o->next)
-						renderObject(o, shr);
-
-					glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-					CAGE_CHECK_GL_ERROR_DEBUG();
-				}
+					renderShadowPass(pass);
 
 				setTwoSided(false);
 				setDepthTest(false, false);
-				glDisable(GL_BLEND);
-				glActiveTexture(GL_TEXTURE0);
+				resetAllTextures();
 				CAGE_CHECK_GL_ERROR_DEBUG();
+			}
 
-				if (pass->targetShadowmap)
+			void gBufferResize(uint32 w, uint32 h)
+			{
+				if (w == gBufferWidth && h == gBufferHeight)
 					return;
-
-				renderTarget->bind();
-				renderTarget->depthTexture(nullptr);
-				renderTarget->activeAttachments(1);
-				meshSquare->bind();
-
-				textureClass *texSource = colorTexture.get();
-				textureClass *texTarget = intermediateTexture.get();
-				if (pass->effects != cameraEffectsFlags::None)
-				{ // all screen-space post-processing
-					bindGBufferTextures();
-					if ((pass->effects & cameraEffectsFlags::AmbientOcclusion) == cameraEffectsFlags::AmbientOcclusion)
-					{
-						viewportAndScissor(pass->vpX / CAGE_SHADER_SSAO_DOWNSCALE, pass->vpY / CAGE_SHADER_SSAO_DOWNSCALE, pass->vpW / CAGE_SHADER_SSAO_DOWNSCALE, pass->vpH / CAGE_SHADER_SSAO_DOWNSCALE);
-						{ // generate
-							renderTarget->colorTexture(0, ambientOcclusionTexture.get());
-							renderTarget->checkStatus();
-							shaderSsaoGenerate->bind();
-							shaderSsaoGenerate->uniform(0, pass->viewProj);
-							shaderSsaoGenerate->uniform(1, pass->viewProj.inverse());
-							shaderSsaoGenerate->uniform(2, pass->ssaoWorldRadius);
-							meshSquare->dispatch();
-						}
-						{ // blur
-							shaderSsaoBlur->bind();
-							ssaoBlur(ambientOcclusionTexture, ambientOcclusionTexture2, vec2(1.0, 0.0));
-							ssaoBlur(ambientOcclusionTexture2, ambientOcclusionTexture, vec2(0.0, 1.0));
-						}
-						viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
-						{ // apply
-							shaderSsaoApply->bind();
-							shaderSsaoApply->uniform(0, vec3(pass->shaderViewport.ambientLight));
-							renderEffect(texSource, texTarget);
-						}
-					}
-					if ((pass->effects & cameraEffectsFlags::MotionBlur) == cameraEffectsFlags::MotionBlur)
-					{
-						shaderMotionBlur->bind();
-						renderEffect(texSource, texTarget);
-					}
-					if ((pass->effects & cameraEffectsFlags::AntiAliasing) == cameraEffectsFlags::AntiAliasing)
-					{
-						shaderFxaa->bind();
-						renderEffect(texSource, texTarget);
-					}
-				}
-
-				if (texSource != pass->targetTexture)
-				{ // blit to final output texture
-					texTarget = pass->targetTexture;
-					shaderBlit->bind();
-					renderEffect(texSource, texTarget);
-				}
+				gBufferWidth = w;
+				gBufferHeight = h;
+				albedoTexture->bind(); albedoTexture->image2d(w, h, GL_RGB8);
+				specialTexture->bind(); specialTexture->image2d(w, h, GL_RG8);
+				normalTexture->bind(); normalTexture->image2d(w, h, GL_RGB16F);
+				colorTexture->bind(); colorTexture->image2d(w, h, GL_RGB16F);
+				intermediateTexture->bind(); intermediateTexture->image2d(w, h, GL_RGB16F);
+				velocityTexture->bind(); velocityTexture->image2d(w, h, GL_RG16F);
+				ambientOcclusionTexture->bind(); ambientOcclusionTexture->image2d(max(w / CAGE_SHADER_SSAO_DOWNSCALE, 1u), max(h / CAGE_SHADER_SSAO_DOWNSCALE, 1u), GL_R8);
+				ambientOcclusionTexture2->bind(); ambientOcclusionTexture2->image2d(max(w / CAGE_SHADER_SSAO_DOWNSCALE, 1u), max(h / CAGE_SHADER_SSAO_DOWNSCALE, 1u), GL_R8);
+				depthTexture->bind(); depthTexture->image2d(w, h, GL_DEPTH_COMPONENT32);
+				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
 		public:

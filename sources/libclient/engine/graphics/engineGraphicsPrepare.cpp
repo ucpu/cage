@@ -659,6 +659,7 @@ namespace cage
 					graphicsDispatch->shaderSsaoBlur = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/ssaoBlur.glsl"));
 					graphicsDispatch->shaderSsaoApply = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/ssaoApply.glsl"));
 					graphicsDispatch->shaderMotionBlur = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/motionBlur.glsl"));
+					graphicsDispatch->shaderToneMapping = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/toneMapping.glsl"));
 					graphicsDispatch->shaderFxaa = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/fxaa.glsl"));
 				}
 
