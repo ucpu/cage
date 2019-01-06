@@ -12,7 +12,7 @@ void main()
 
 $define shader fragment
 
-layout(binding = 0) uniform sampler2D texColor;
+layout(binding = CAGE_SHADER_TEXTURE_COLOR) uniform sampler2D texColor;
 
 out vec3 outColor;
 
@@ -31,9 +31,7 @@ vec3 Uncharted2Tonemap(vec3 x)
 
 void main()
 {
-	vec2 texelSize = 1.0 / textureSize(texColor, 0).xy;
-	vec2 uv = gl_FragCoord.xy * texelSize;
-	vec3 color = textureLod(texColor, uv, 0).xyz;
+	vec3 color = texelFetch(texColor, ivec2(gl_FragCoord.xy), 0).xyz;
 
 	// tone mapping
 	//color *= 16.0;

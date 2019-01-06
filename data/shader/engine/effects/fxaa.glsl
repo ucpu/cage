@@ -14,7 +14,7 @@ $define shader fragment
 
 // https://github.com/McNopper/OpenGL/blob/master/Example42/shader/fxaa.frag.glsl
 
-layout(binding = 0) uniform sampler2D texColor; 
+layout(binding = CAGE_SHADER_TEXTURE_COLOR) uniform sampler2D texColor;
 
 out vec4 outColor;
 

@@ -34,7 +34,7 @@ const vec2 gaussFilter5[5] =
 	vec2(+2.0, 0.06136)
 };
 
-layout(binding = 0) uniform sampler2D texInput;
+layout(binding = CAGE_SHADER_TEXTURE_COLOR) uniform sampler2D texInput;
 
 out vec4 outOutput;
 

@@ -174,9 +174,9 @@ namespace cage
 
 			void bindGBufferTextures()
 			{
-				const uint32 tius[] = { CAGE_SHADER_TEXTURE_ALBEDO, CAGE_SHADER_TEXTURE_SPECIAL, CAGE_SHADER_TEXTURE_NORMAL, CAGE_SHADER_TEXTURE_VELOCITY, CAGE_SHADER_TEXTURE_AMBIENTOCCLUSION, CAGE_SHADER_TEXTURE_DEPTH };
+				const uint32 tius[] = { CAGE_SHADER_TEXTURE_ALBEDO, CAGE_SHADER_TEXTURE_SPECIAL, CAGE_SHADER_TEXTURE_NORMAL, CAGE_SHADER_TEXTURE_COLOR, CAGE_SHADER_TEXTURE_DEPTH, CAGE_SHADER_TEXTURE_VELOCITY, CAGE_SHADER_TEXTURE_AMBIENTOCCLUSION };
 				static const uint32 cnt = sizeof(tius) / sizeof(tius[0]);
-				textureClass *texs[cnt] = { albedoTexture.get(), specialTexture.get(), normalTexture.get(), velocityTexture.get(), ambientOcclusionTexture.get(), depthTexture.get() };
+				textureClass *texs[cnt] = { albedoTexture.get(), specialTexture.get(), normalTexture.get(), colorTexture.get(), depthTexture.get(), velocityTexture.get(), ambientOcclusionTexture.get() };
 				textureClass::multiBind(cnt, tius, texs);
 			}
 
@@ -333,13 +333,14 @@ namespace cage
 				renderLighting(pass);
 				setDepthTest(false, false);
 				glDisable(GL_BLEND);
-				glActiveTexture(GL_TEXTURE0);
+				glActiveTexture(GL_TEXTURE0 + CAGE_SHADER_TEXTURE_COLOR);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
 				// opaque screen-space effects
 				renderTarget->bind();
 				renderTarget->depthTexture(nullptr);
 				renderTarget->activeAttachments(1);
+				bindGBufferTextures();
 				meshSquare->bind();
 				texSource = colorTexture.get();
 				texTarget = intermediateTexture.get();
@@ -408,7 +409,7 @@ namespace cage
 
 					setDepthTest(false, false);
 					glDisable(GL_BLEND);
-					glActiveTexture(GL_TEXTURE0);
+					glActiveTexture(GL_TEXTURE0 + CAGE_SHADER_TEXTURE_COLOR);
 					CAGE_CHECK_GL_ERROR_DEBUG();
 
 					renderTarget->bind();
