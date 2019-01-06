@@ -12,10 +12,11 @@ void main()
 
 $define shader fragment
 
+$include ssaoParams.glsl
+
 layout(binding = CAGE_SHADER_TEXTURE_COLOR) uniform sampler2D texColor;
 layout(binding = CAGE_SHADER_TEXTURE_ALBEDO) uniform sampler2D texAlbedo;
 layout(binding = CAGE_SHADER_TEXTURE_AMBIENTOCCLUSION) uniform sampler2D texAo;
-layout(location = 0) uniform vec3 uniAoIntensity;
 
 out vec3 outColor;
 
@@ -24,6 +25,6 @@ void main()
 	float ao = textureLod(texAo, gl_FragCoord.xy / textureSize(texColor, 0).xy, 0).x;
 	vec3 albedo = texelFetch(texAlbedo, ivec2(gl_FragCoord.xy), 0).xyz;
 	vec3 color = texelFetch(texColor, ivec2(gl_FragCoord.xy), 0).xyz;
-	ao = sqrt(ao);
-	outColor = color - albedo * uniAoIntensity * ao;
+	ao = pow(ao * params[0] + params[1], params[2]);
+	outColor = color - albedo * ambientLight * ao;
 }

@@ -14,19 +14,23 @@ $define shader fragment
 
 layout(binding = CAGE_SHADER_TEXTURE_COLOR) uniform sampler2D texColor;
 
-out vec3 outColor;
+layout(std140, binding = CAGE_SHADER_UNIBLOCK_TONEMAP) uniform Tonemap
+{
+	vec4 tonemapFirst; // shoulderStrength, linearStrength, linearAngle, toeStrength
+	vec4 tonemapSecond; // toeNumerator, toeDenominator, white, gamma
+};
 
-float A = 0.15;
-float B = 0.50;
-float C = 0.10;
-float D = 0.20;
-float E = 0.02;
-float F = 0.30;
-float W = 11.2;
+out vec3 outColor;
 
 vec3 Uncharted2Tonemap(vec3 x)
 {
-   return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F;
+	float shoulderStrength = tonemapFirst[0];
+	float linearStrength = tonemapFirst[1];
+	float linearAngle = tonemapFirst[2];
+	float toeStrength = tonemapFirst[3];
+	float toeNumerator = tonemapSecond[0];
+	float toeDenominator = tonemapSecond[1];
+	return ((x * (shoulderStrength * x + linearAngle * linearStrength) + toeStrength * toeNumerator) / (x * (shoulderStrength * x + linearStrength) + toeStrength * toeDenominator)) - toeNumerator / toeDenominator;
 }
 
 void main()
@@ -34,14 +38,10 @@ void main()
 	vec3 color = texelFetch(texColor, ivec2(gl_FragCoord.xy), 0).xyz;
 
 	// tone mapping
-	//color *= 16.0;
-	//float exposureBias = 2.0;
-	//vec3 curr = Uncharted2Tonemap(exposureBias * color);
-	//vec3 whiteScale = 1.0 / Uncharted2Tonemap(vec3(W));
-	//color = curr * whiteScale;
+	color = Uncharted2Tonemap(color) / Uncharted2Tonemap(vec3(tonemapSecond[2]));
 
 	// gamma correction
-	color = pow(color, vec3(1.0 / 2.2));
+	color = pow(color, vec3(1.0 / tonemapSecond[3]));
 
 	outColor = color;
 }

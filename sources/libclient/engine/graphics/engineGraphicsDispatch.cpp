@@ -71,16 +71,16 @@ namespace cage
 			visualizableTextureStruct(textureClass *tex, visualizableTextureModeEnum vtm) : tex(tex), visualizableTextureMode(vtm) {};
 		};
 
-		struct graphicsDispatchImpl : public graphicsDispatchStruct
+		struct ssaoShaderStruct
 		{
-		public:
-			uint32 drawCalls;
-			uint32 drawPrimitives;
+			mat4 viewProj;
+			mat4 viewProjInv;
+			vec4 params; // strength, bias, power, radius
+			vec4 ambientLight;
+		};
 
-		private:
-			uint32 gBufferWidth;
-			uint32 gBufferHeight;
-
+		struct graphicsDispatchHolders
+		{
 			holder<frameBufferClass> gBufferTarget;
 			holder<frameBufferClass> renderTarget;
 			holder<textureClass> albedoTexture;
@@ -97,9 +97,22 @@ namespace cage
 			holder<uniformBufferClass> meshDataBuffer;
 			holder<uniformBufferClass> armatureDataBuffer;
 			holder<uniformBufferClass> lightsDataBuffer;
+			holder<uniformBufferClass> tonemapDataBuffer;
+			holder<uniformBufferClass> ssaoDataBuffer;
 
 			std::vector<shadowmapBufferStruct> shadowmaps2d, shadowmapsCube;
 			std::vector<visualizableTextureStruct> visualizableTextures;
+		};
+
+		struct graphicsDispatchImpl : public graphicsDispatchStruct, private graphicsDispatchHolders
+		{
+		public:
+			uint32 drawCalls;
+			uint32 drawPrimitives;
+
+		private:
+			uint32 gBufferWidth;
+			uint32 gBufferHeight;
 
 			bool lastTwoSided;
 			bool lastDepthTest;
@@ -349,13 +362,19 @@ namespace cage
 				if ((pass->effects & cameraEffectsFlags::AmbientOcclusion) == cameraEffectsFlags::AmbientOcclusion)
 				{
 					viewportAndScissor(pass->vpX / CAGE_SHADER_SSAO_DOWNSCALE, pass->vpY / CAGE_SHADER_SSAO_DOWNSCALE, pass->vpW / CAGE_SHADER_SSAO_DOWNSCALE, pass->vpH / CAGE_SHADER_SSAO_DOWNSCALE);
+					{
+						ssaoShaderStruct s;
+						s.viewProj = pass->viewProj;
+						s.viewProjInv = pass->viewProj.inverse();
+						s.params = vec4(pass->ssao.strength, pass->ssao.bias, pass->ssao.power, pass->ssao.worldRadius);
+						s.ambientLight = vec4(pass->shaderViewport.ambientLight);
+						ssaoDataBuffer->bind();
+						ssaoDataBuffer->writeRange(&s, 0, sizeof(ssaoShaderStruct));
+					}
 					{ // generate
 						renderTarget->colorTexture(0, ambientOcclusionTexture.get());
 						renderTarget->checkStatus();
 						shaderSsaoGenerate->bind();
-						shaderSsaoGenerate->uniform(0, pass->viewProj);
-						shaderSsaoGenerate->uniform(1, pass->viewProj.inverse());
-						shaderSsaoGenerate->uniform(2, pass->ssaoWorldRadius);
 						meshSquare->dispatch();
 					}
 					{ // blur
@@ -368,13 +387,12 @@ namespace cage
 							shaderSsaoBlur->uniform(0, direction);
 							meshSquare->dispatch();
 						};
-						ssaoBlur(ambientOcclusionTexture, ambientOcclusionTexture2, vec2(1.0, 0.0));
-						ssaoBlur(ambientOcclusionTexture2, ambientOcclusionTexture, vec2(0.0, 1.0));
+						ssaoBlur(ambientOcclusionTexture, ambientOcclusionTexture2, vec2(pass->ssao.blurRadius, 0.0));
+						ssaoBlur(ambientOcclusionTexture2, ambientOcclusionTexture, vec2(0.0, pass->ssao.blurRadius));
 					}
 					viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
 					{ // apply
 						shaderSsaoApply->bind();
-						shaderSsaoApply->uniform(0, vec3(pass->shaderViewport.ambientLight));
 						renderEffect();
 					}
 				}
@@ -422,6 +440,8 @@ namespace cage
 				// final screen-space effects
 				if ((pass->effects & cameraEffectsFlags::ToneMapping) == cameraEffectsFlags::ToneMapping)
 				{
+					tonemapDataBuffer->bind();
+					tonemapDataBuffer->writeRange(&pass->tonemap, 0, sizeof(cameraTonemapStruct));
 					shaderToneMapping->bind();
 					renderEffect();
 				}
@@ -514,7 +534,7 @@ namespace cage
 			void initialize()
 			{
 				shadowmaps2d.reserve(4);
-				shadowmapsCube.reserve(8);
+				shadowmapsCube.reserve(32);
 
 				gBufferWidth = gBufferHeight = 0;
 
@@ -541,34 +561,17 @@ namespace cage
 				armatureDataBuffer->writeWhole(nullptr, sizeof(mat3x4) * CAGE_SHADER_MAX_BONES, GL_DYNAMIC_DRAW);
 				lightsDataBuffer = newUniformBuffer(window());
 				lightsDataBuffer->writeWhole(nullptr, sizeof(lightsStruct::shaderLightStruct) * CAGE_SHADER_MAX_INSTANCES, GL_DYNAMIC_DRAW);
+				tonemapDataBuffer = newUniformBuffer(window());
+				tonemapDataBuffer->writeWhole(nullptr, sizeof(cameraTonemapStruct), GL_DYNAMIC_DRAW);
+				ssaoDataBuffer = newUniformBuffer(window());
+				ssaoDataBuffer->writeWhole(nullptr, sizeof(ssaoShaderStruct), GL_DYNAMIC_DRAW);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
 			void finalize()
 			{
 				gBufferWidth = gBufferHeight = 0;
-
-				gBufferTarget.clear();
-				renderTarget.clear();
-
-				albedoTexture.clear();
-				specialTexture.clear();
-				normalTexture.clear();
-				colorTexture.clear();
-				intermediateTexture.clear();
-				velocityTexture.clear();
-				ambientOcclusionTexture.clear();
-				ambientOcclusionTexture2.clear();
-				depthTexture.clear();
-
-				viewportDataBuffer.clear();
-				meshDataBuffer.clear();
-				armatureDataBuffer.clear();
-				lightsDataBuffer.clear();
-
-				shadowmaps2d.clear();
-				shadowmapsCube.clear();
-				visualizableTextures.clear();
+				*(graphicsDispatchHolders*)this = graphicsDispatchHolders();
 			}
 
 			void tick()
@@ -645,6 +648,8 @@ namespace cage
 				meshDataBuffer->bind(CAGE_SHADER_UNIBLOCK_MESHES);
 				armatureDataBuffer->bind(CAGE_SHADER_UNIBLOCK_ARMATURES);
 				lightsDataBuffer->bind(CAGE_SHADER_UNIBLOCK_LIGHTS);
+				tonemapDataBuffer->bind(CAGE_SHADER_UNIBLOCK_TONEMAP);
+				ssaoDataBuffer->bind(CAGE_SHADER_UNIBLOCK_SSAO);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
 				{ // render all passes

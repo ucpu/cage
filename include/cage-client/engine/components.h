@@ -54,9 +54,36 @@ namespace cage
 		shadowmapComponent();
 	};
 
+	struct CAGE_API cameraSsaoStruct
+	{
+		real worldRadius;
+		real blurRadius;
+		real strength;
+		real bias;
+		real power;
+		// ao = pow(ao * strength + bias, power)
+		cameraSsaoStruct();
+	};
+
+	struct CAGE_API cameraTonemapStruct
+	{
+		real shoulderStrength;
+		real linearStrength;
+		real linearAngle;
+		real toeStrength;
+		real toeNumerator;
+		real toeDenominator;
+		real white;
+		real gamma;
+		cameraTonemapStruct();
+	};
+
 	struct CAGE_API cameraEffectsStruct
 	{
-		real ssaoWorldRadius;
+		cameraSsaoStruct ssao;
+		// motion blur
+		cameraTonemapStruct tonemap;
+		// fxaa
 		cameraEffectsFlags effects;
 		cameraEffectsStruct();
 	};

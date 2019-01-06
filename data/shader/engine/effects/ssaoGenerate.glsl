@@ -16,21 +16,19 @@ $include ../func/pointsOnSphere.glsl
 $include ../func/randomNumbers.glsl
 $include ../func/random.glsl
 
+$include ssaoParams.glsl
+
 layout(binding = CAGE_SHADER_TEXTURE_NORMAL) uniform sampler2D texNormal;
 layout(binding = CAGE_SHADER_TEXTURE_DEPTH) uniform sampler2D texDepth;
 
 out float outAo;
-
-layout(location = 0) uniform mat4 uniViewProj;
-layout(location = 1) uniform mat4 uniViewProjInv;
-layout(location = 2) uniform float ssaoRadius;
 
 const uint sampleCount = 64;
 
 vec3 s2w(vec2 p, float d)
 {
 	vec4 p4 = vec4(p, d, 1.0);
-	p4 = uniViewProjInv * p4;
+	p4 = viewProjInv * p4;
 	return p4.xyz / p4.w;
 }
 
@@ -54,19 +52,19 @@ void main()
 
 	// sampling
 	int n = int(randomFunc(myPos * 10.0) * 10000.0);
+	float ssaoRadius = params[3];
 	float occ = 0.0;
 	float total = 0.0;
 	for (int i = 0; i < sampleCount; i++)
 	{
 		vec3 dir = pointsOnSphere[(n + i) % 256];
 		float d = dot(myNormal, dir);
-		dir = sign(d) * dir; // move the direction into front hemisphere
-		d = abs(d);
-		if (d < 0.3)
+		if (abs(d) < 0.3)
 			continue; // the direction is close to the surface and susceptible to noise
+		dir = sign(d) * dir; // move the direction into front hemisphere
 		float r = (randomNumbers[(n * 13 + i * 2) % 256]) * ssaoRadius;
 		vec3 sw = myPos + dir * r;
-		vec4 s4 = uniViewProj * vec4(sw, 1.0);
+		vec4 s4 = viewProj * vec4(sw, 1.0);
 		vec3 ss = s4.xyz / s4.w;
 		float sampleDepth = textureLod(texDepth, ss.xy * 0.5 + 0.5, 0).x * 2.0 - 1.0;
 		if (sampleDepth < ss.z)
