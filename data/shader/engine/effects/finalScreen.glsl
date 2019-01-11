@@ -13,11 +13,14 @@ void main()
 $define shader fragment
 
 layout(binding = CAGE_SHADER_TEXTURE_COLOR) uniform sampler2D texColor;
+layout(binding = CAGE_SHADER_TEXTURE_LUMINANCE) uniform sampler2D texLuminance;
 
-layout(std140, binding = CAGE_SHADER_UNIBLOCK_TONEMAP) uniform Tonemap
+layout(std140, binding = CAGE_SHADER_UNIBLOCK_FINALSCREEN) uniform FinalScreen
 {
 	vec4 tonemapFirst; // shoulderStrength, linearStrength, linearAngle, toeStrength
-	vec4 tonemapSecond; // toeNumerator, toeDenominator, white, gamma
+	vec4 tonemapSecond; // toeNumerator, toeDenominator, white, tonemapEnabled
+	vec4 luminanceParams; // exposureKey, adaptationStrength
+	vec4 gammaParams; // gamma
 };
 
 out vec3 outColor;
@@ -37,11 +40,21 @@ void main()
 {
 	vec3 color = texelFetch(texColor, ivec2(gl_FragCoord.xy), 0).xyz;
 
+	// exposure control
+	if (luminanceParams[1] > 0.0)
+	{
+		float avgLuminance = texelFetch(texLuminance, ivec2(0), 0).x;
+		avgLuminance = exp(avgLuminance);
+		//avgLuminance = mix(1.0, avgLuminance, luminanceParams[1]);
+		color *= luminanceParams[0] / avgLuminance;
+	}
+
 	// tone mapping
-	color = Uncharted2Tonemap(color) / Uncharted2Tonemap(vec3(tonemapSecond[2]));
+	if (tonemapSecond[3] > 0.5)
+		color = Uncharted2Tonemap(color) / Uncharted2Tonemap(vec3(tonemapSecond[2]));
 
 	// gamma correction
-	color = pow(color, vec3(1.0 / tonemapSecond[3]));
+	color = pow(color, vec3(gammaParams[0]));
 
 	outColor = color;
 }

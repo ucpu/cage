@@ -82,6 +82,7 @@ namespace cage
 		mat4 view;
 		mat4 proj;
 		mat4 viewProj;
+		uintPtr entityId;
 		sint32 targetShadowmap; // 0 = window (or texture); positive = 2d shadowmap; negative = cube shadowmap
 		uint32 shadowmapResolution;
 		uint32 clearFlags;
@@ -94,7 +95,7 @@ namespace cage
 		meshClass *meshSquare, *meshSphere, *meshCone, *meshFake;
 		shaderClass *shaderVisualizeColor, *shaderVisualizeDepth, *shaderVisualizeVelocity;
 		shaderClass *shaderBlit, *shaderDepth, *shaderGBuffer, *shaderLighting, *shaderTranslucent;
-		shaderClass *shaderSsaoGenerate, *shaderSsaoBlur, *shaderSsaoApply, *shaderMotionBlur, *shaderToneMapping, *shaderFxaa;
+		shaderClass *shaderSsaoGenerate, *shaderSsaoBlur, *shaderSsaoApply, *shaderMotionBlur, *shaderLuminanceCollection, *shaderLuminanceCopy, *shaderFinalScreen, *shaderFxaa;
 		uint32 windowWidth, windowHeight;
 		renderPassStruct *firstRenderPass, *lastRenderPass;
 	};

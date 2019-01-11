@@ -68,6 +68,7 @@ namespace cage
 		{
 			lightComponent light;
 			shadowmapImpl *shadowmap;
+			uintPtr entityId;
 			emitLightStruct()
 			{
 				detail::memset(this, 0, sizeof(emitLightStruct));
@@ -77,6 +78,7 @@ namespace cage
 		struct emitCameraStruct : public emitTransformsStruct
 		{
 			cameraComponent camera;
+			uintPtr entityId;
 			emitCameraStruct()
 			{
 				detail::memset(this, 0, sizeof(emitCameraStruct));
@@ -135,6 +137,8 @@ namespace cage
 			interpolationTimingCorrector itc;
 			uint64 emitTime;
 			uint64 dispatchTime;
+			uint64 lastDispatchTime;
+			uint64 elapsedDispatchTime;
 			sint32 shm2d, shmCube;
 
 			typedef std::unordered_map<meshClass*, objectsStruct*> opaqueObjectsMapType;
@@ -272,8 +276,11 @@ namespace cage
 				pass->targetTexture = camera->camera.target;
 				pass->clearFlags = ((camera->camera.clear & cameraClearFlags::Color) == cameraClearFlags::Color ? GL_COLOR_BUFFER_BIT : 0) | ((camera->camera.clear & cameraClearFlags::Depth) == cameraClearFlags::Depth ? GL_DEPTH_BUFFER_BIT : 0);
 				pass->renderMask = camera->camera.renderMask;
-				pass->effects = camera->camera.effects;
+				pass->entityId = camera->entityId;
 				(cameraEffectsStruct&)*pass = (cameraEffectsStruct&)camera->camera;
+				real eyeAdaptationSpeed = real(elapsedDispatchTime) * 1e-6;
+				pass->eyeAdaptation.adaptationSpeedDarker *= eyeAdaptationSpeed;
+				pass->eyeAdaptation.adaptationSpeedLighter *= eyeAdaptationSpeed;
 				addRenderableObjects(pass, false);
 				for (auto it : emitRead->lights)
 					addLight(pass, it);
@@ -312,6 +319,7 @@ namespace cage
 					0.0, 0.0, 0.5, 0.0,
 					0.5, 0.5, 0.5, 1.0);
 				light->shadowmap->shadowMat = bias * pass->viewProj;
+				pass->entityId = light->entityId;
 				addRenderableObjects(pass, true);
 			}
 
@@ -552,7 +560,7 @@ namespace cage
 				lig->count++;
 			}
 
-			graphicsPrepareImpl(const engineCreateConfig &config) : emitBufferA(config), emitBufferB(config), emitBufferC(config), emitBuffers{ &emitBufferA, &emitBufferB, &emitBufferC }, emitRead(nullptr), emitWrite(nullptr), dispatchMemory(config.graphicsDispatchMemory), dispatchArena(&dispatchMemory), emitTime(0), dispatchTime(0)
+			graphicsPrepareImpl(const engineCreateConfig &config) : emitBufferA(config), emitBufferB(config), emitBufferC(config), emitBuffers{ &emitBufferA, &emitBufferB, &emitBufferC }, emitRead(nullptr), emitWrite(nullptr), dispatchMemory(config.graphicsDispatchMemory), dispatchArena(&dispatchMemory), emitTime(0), dispatchTime(0), lastDispatchTime(0), elapsedDispatchTime(0)
 			{
 				swapBufferControllerCreateConfig cfg(3);
 				cfg.repeatedReads = true;
@@ -609,6 +617,7 @@ namespace cage
 					c->light = e->value<lightComponent>(lightComponent::component);
 					if (e->has(shadowmapComponent::component))
 						c->shadowmap = emitWrite->emitArena.createObject<shadowmapImpl>(e->value<shadowmapComponent>(shadowmapComponent::component));
+					c->entityId = ((uintPtr)e) ^ e->name();
 					emitWrite->lights.push_back(c);
 				}
 
@@ -622,6 +631,7 @@ namespace cage
 					else
 						c->transformHistory = c->transform;
 					c->camera = e->value<cameraComponent>(cameraComponent::component);
+					c->entityId = ((uintPtr)e) ^ e->name();
 					emitWrite->cameras.push_back(c);
 				}
 
@@ -659,7 +669,9 @@ namespace cage
 					graphicsDispatch->shaderSsaoBlur = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/ssaoBlur.glsl"));
 					graphicsDispatch->shaderSsaoApply = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/ssaoApply.glsl"));
 					graphicsDispatch->shaderMotionBlur = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/motionBlur.glsl"));
-					graphicsDispatch->shaderToneMapping = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/toneMapping.glsl"));
+					graphicsDispatch->shaderLuminanceCollection = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/luminanceCollection.glsl"));
+					graphicsDispatch->shaderLuminanceCopy = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/luminanceCopy.glsl"));
+					graphicsDispatch->shaderFinalScreen = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/finalScreen.glsl"));
 					graphicsDispatch->shaderFxaa = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/fxaa.glsl"));
 				}
 
@@ -667,6 +679,8 @@ namespace cage
 
 				emitTime = emitRead->time;
 				dispatchTime = itc(emitTime, time, controlThread().timePerTick);
+				elapsedDispatchTime = dispatchTime - lastDispatchTime;
+				lastDispatchTime = dispatchTime;
 				shm2d = shmCube = 0;
 
 				graphicsDispatch->firstRenderPass = graphicsDispatch->lastRenderPass = nullptr;

@@ -119,10 +119,13 @@ namespace cage
 		None = 0,
 		AmbientOcclusion = 1 << 0,
 		MotionBlur = 1 << 1,
-		ToneMapping = 1 << 2,
-		AntiAliasing = 1 << 3,
-		IntermediatePass = AmbientOcclusion | MotionBlur,
-		FinalPass = IntermediatePass | ToneMapping | AntiAliasing,
+		EyeAdaptation = 1 << 2,
+		ToneMapping = 1 << 3,
+		GammaCorrection = 1 << 4,
+		AntiAliasing = 1 << 5,
+		GeometryPass = AmbientOcclusion | MotionBlur,
+		ScreenPass = EyeAdaptation | ToneMapping | GammaCorrection | AntiAliasing,
+		AllEffects = GeometryPass | ScreenPass,
 	};
 	GCHL_ENUM_BITS(cameraEffectsFlags);
 

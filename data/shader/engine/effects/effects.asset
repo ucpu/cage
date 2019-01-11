@@ -9,5 +9,7 @@ ssaoGenerate.glsl
 ssaoBlur.glsl
 ssaoApply.glsl
 motionBlur.glsl
-toneMapping.glsl
+luminanceCollection.glsl
+luminanceCopy.glsl
+finalScreen.glsl
 fxaa.glsl

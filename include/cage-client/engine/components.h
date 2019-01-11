@@ -65,6 +65,15 @@ namespace cage
 		cameraSsaoStruct();
 	};
 
+	struct CAGE_API cameraEyeAdaptationStruct
+	{
+		real exposureKey;
+		real adaptationStrength;
+		real adaptationSpeedDarker;
+		real adaptationSpeedLighter;
+		cameraEyeAdaptationStruct();
+	};
+
 	struct CAGE_API cameraTonemapStruct
 	{
 		real shoulderStrength;
@@ -74,16 +83,15 @@ namespace cage
 		real toeNumerator;
 		real toeDenominator;
 		real white;
-		real gamma;
 		cameraTonemapStruct();
 	};
 
 	struct CAGE_API cameraEffectsStruct
 	{
 		cameraSsaoStruct ssao;
-		// motion blur
+		cameraEyeAdaptationStruct eyeAdaptation;
 		cameraTonemapStruct tonemap;
-		// fxaa
+		real gamma;
 		cameraEffectsFlags effects;
 		cameraEffectsStruct();
 	};

@@ -1,4 +1,6 @@
 #include <vector>
+#include <map>
+#include <set>
 
 #include <cage-core/core.h>
 #include <cage-core/log.h>
@@ -79,6 +81,53 @@ namespace cage
 			vec4 ambientLight;
 		};
 
+		struct finalScreenShaderStruct
+		{
+			cameraTonemapStruct tonemap; // 7 reals
+			real tonemapEnabled;
+			cameraEyeAdaptationStruct eyeAdaptation; // 4 reals
+			real gamma;
+			real _dummy3;
+			real _dummy4;
+			real _dummy5;
+		};
+
+		struct cameraSpecificDataStruct
+		{
+			holder<textureClass> luminanceCollectionTexture; // w*h
+			holder<textureClass> luminanceAccumulationTexture; // 1*1
+
+			cameraSpecificDataStruct() : width(0), height(0)
+			{}
+
+			void update(uint32 w, uint32 h)
+			{
+				if (!luminanceCollectionTexture)
+				{
+					luminanceCollectionTexture = newTexture(window());
+					luminanceCollectionTexture->filters(GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR, 0);
+					luminanceCollectionTexture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+					luminanceAccumulationTexture = newTexture(window());
+					luminanceAccumulationTexture->filters(GL_NEAREST, GL_NEAREST, 0);
+					luminanceAccumulationTexture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+					luminanceAccumulationTexture->image2d(1, 1, GL_R16F);
+					CAGE_CHECK_GL_ERROR_DEBUG();
+				}
+				if (w != width || h != height)
+				{
+					width = w;
+					height = h;
+					luminanceCollectionTexture->bind();
+					luminanceCollectionTexture->image2d(max(w / CAGE_SHADER_LUMINANCE_DOWNSCALE, 1u), max(h / CAGE_SHADER_LUMINANCE_DOWNSCALE, 1u), GL_R16F);
+					CAGE_CHECK_GL_ERROR_DEBUG();
+				}
+			}
+
+		private:
+			uint32 width;
+			uint32 height;
+		};
+
 		struct graphicsDispatchHolders
 		{
 			holder<frameBufferClass> gBufferTarget;
@@ -97,11 +146,12 @@ namespace cage
 			holder<uniformBufferClass> meshDataBuffer;
 			holder<uniformBufferClass> armatureDataBuffer;
 			holder<uniformBufferClass> lightsDataBuffer;
-			holder<uniformBufferClass> tonemapDataBuffer;
 			holder<uniformBufferClass> ssaoDataBuffer;
+			holder<uniformBufferClass> finalScreenDataBuffer;
 
 			std::vector<shadowmapBufferStruct> shadowmaps2d, shadowmapsCube;
 			std::vector<visualizableTextureStruct> visualizableTextures;
+			std::map<uintPtr, cameraSpecificDataStruct> cameras;
 		};
 
 		struct graphicsDispatchImpl : public graphicsDispatchStruct, private graphicsDispatchHolders
@@ -321,6 +371,10 @@ namespace cage
 
 			void renderDeferredPass(renderPassStruct *pass)
 			{
+				// camera specific data
+				cameraSpecificDataStruct &cs = cameras[pass->entityId];
+				cs.update(pass->vpW, pass->vpH);
+
 				// opaque
 				gBufferTarget->bind();
 				gBufferTarget->activeAttachments(31);
@@ -359,6 +413,7 @@ namespace cage
 				texTarget = intermediateTexture.get();
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
+				// ssao
 				if ((pass->effects & cameraEffectsFlags::AmbientOcclusion) == cameraEffectsFlags::AmbientOcclusion)
 				{
 					viewportAndScissor(pass->vpX / CAGE_SHADER_SSAO_DOWNSCALE, pass->vpY / CAGE_SHADER_SSAO_DOWNSCALE, pass->vpW / CAGE_SHADER_SSAO_DOWNSCALE, pass->vpH / CAGE_SHADER_SSAO_DOWNSCALE);
@@ -397,10 +452,46 @@ namespace cage
 					}
 				}
 
+				// motion blur
 				if ((pass->effects & cameraEffectsFlags::MotionBlur) == cameraEffectsFlags::MotionBlur)
 				{
 					shaderMotionBlur->bind();
 					renderEffect();
+				}
+
+				// eye adaptation
+				if ((pass->effects & cameraEffectsFlags::EyeAdaptation) == cameraEffectsFlags::EyeAdaptation)
+				{
+					// bind the luminance texture for use
+					{
+						glActiveTexture(GL_TEXTURE0 + CAGE_SHADER_TEXTURE_LUMINANCE);
+						cs.luminanceAccumulationTexture->bind();
+						glActiveTexture(GL_TEXTURE0 + CAGE_SHADER_TEXTURE_COLOR);
+					}
+					// luminance collection
+					{
+						viewportAndScissor(pass->vpX / CAGE_SHADER_LUMINANCE_DOWNSCALE, pass->vpY / CAGE_SHADER_LUMINANCE_DOWNSCALE, pass->vpW / CAGE_SHADER_LUMINANCE_DOWNSCALE, pass->vpH / CAGE_SHADER_LUMINANCE_DOWNSCALE);
+						renderTarget->colorTexture(0, cs.luminanceCollectionTexture.get());
+						renderTarget->checkStatus();
+						texSource->bind();
+						shaderLuminanceCollection->bind();
+						meshSquare->dispatch();
+					}
+					// downscale
+					{
+						cs.luminanceCollectionTexture->bind();
+						cs.luminanceCollectionTexture->generateMipmaps();
+					}
+					// luminance copy
+					{
+						viewportAndScissor(0, 0, 1, 1);
+						renderTarget->colorTexture(0, cs.luminanceAccumulationTexture.get());
+						renderTarget->checkStatus();
+						shaderLuminanceCopy->bind();
+						shaderLuminanceCopy->uniform(0, vec2(pass->eyeAdaptation.adaptationSpeedDarker, pass->eyeAdaptation.adaptationSpeedLighter));
+						meshSquare->dispatch();
+					}
+					viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
 				}
 
 				// transparencies
@@ -437,15 +528,25 @@ namespace cage
 					bindGBufferTextures();
 				}
 
-				// final screen-space effects
-				if ((pass->effects & cameraEffectsFlags::ToneMapping) == cameraEffectsFlags::ToneMapping)
+				// final screen effects
+				if ((pass->effects & (cameraEffectsFlags::EyeAdaptation | cameraEffectsFlags::ToneMapping | cameraEffectsFlags::GammaCorrection)) != cameraEffectsFlags::None)
 				{
-					tonemapDataBuffer->bind();
-					tonemapDataBuffer->writeRange(&pass->tonemap, 0, sizeof(cameraTonemapStruct));
-					shaderToneMapping->bind();
+					finalScreenShaderStruct f;
+					if ((pass->effects & cameraEffectsFlags::EyeAdaptation) == cameraEffectsFlags::EyeAdaptation)
+						f.eyeAdaptation = pass->eyeAdaptation;
+					f.tonemap = pass->tonemap;
+					f.tonemapEnabled = (pass->effects & cameraEffectsFlags::ToneMapping) == cameraEffectsFlags::ToneMapping;
+					if ((pass->effects & cameraEffectsFlags::GammaCorrection) == cameraEffectsFlags::GammaCorrection)
+						f.gamma = 1.0 / pass->gamma;
+					else
+						f.gamma = 1.0;
+					finalScreenDataBuffer->bind();
+					finalScreenDataBuffer->writeRange(&f, 0, sizeof(f));
+					shaderFinalScreen->bind();
 					renderEffect();
 				}
 
+				// fxaa
 				if ((pass->effects & cameraEffectsFlags::AntiAliasing) == cameraEffectsFlags::AntiAliasing)
 				{
 					shaderFxaa->bind();
@@ -561,10 +662,10 @@ namespace cage
 				armatureDataBuffer->writeWhole(nullptr, sizeof(mat3x4) * CAGE_SHADER_MAX_BONES, GL_DYNAMIC_DRAW);
 				lightsDataBuffer = newUniformBuffer(window());
 				lightsDataBuffer->writeWhole(nullptr, sizeof(lightsStruct::shaderLightStruct) * CAGE_SHADER_MAX_INSTANCES, GL_DYNAMIC_DRAW);
-				tonemapDataBuffer = newUniformBuffer(window());
-				tonemapDataBuffer->writeWhole(nullptr, sizeof(cameraTonemapStruct), GL_DYNAMIC_DRAW);
 				ssaoDataBuffer = newUniformBuffer(window());
 				ssaoDataBuffer->writeWhole(nullptr, sizeof(ssaoShaderStruct), GL_DYNAMIC_DRAW);
+				finalScreenDataBuffer = newUniformBuffer(window());
+				finalScreenDataBuffer->writeWhole(nullptr, sizeof(finalScreenShaderStruct), GL_DYNAMIC_DRAW);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
@@ -648,14 +749,22 @@ namespace cage
 				meshDataBuffer->bind(CAGE_SHADER_UNIBLOCK_MESHES);
 				armatureDataBuffer->bind(CAGE_SHADER_UNIBLOCK_ARMATURES);
 				lightsDataBuffer->bind(CAGE_SHADER_UNIBLOCK_LIGHTS);
-				tonemapDataBuffer->bind(CAGE_SHADER_UNIBLOCK_TONEMAP);
+				finalScreenDataBuffer->bind(CAGE_SHADER_UNIBLOCK_FINALSCREEN);
 				ssaoDataBuffer->bind(CAGE_SHADER_UNIBLOCK_SSAO);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
 				{ // render all passes
+					std::set<uintPtr> camerasToDestroy;
+					for (auto &cs : cameras)
+						camerasToDestroy.insert(cs.first);
 					for (renderPassStruct *pass = firstRenderPass; pass; pass = pass->next)
+					{
 						renderPass(pass);
-					CAGE_CHECK_GL_ERROR_DEBUG();
+						CAGE_CHECK_GL_ERROR_DEBUG();
+						camerasToDestroy.erase(pass->entityId);
+					}
+					for (auto r : camerasToDestroy)
+						cameras.erase(r);
 				}
 
 				{ // blit to the window

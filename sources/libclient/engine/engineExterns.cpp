@@ -25,9 +25,10 @@ namespace cage
 	animatedTextureComponent::animatedTextureComponent() : startTime(0), speed(1), offset(0) {}
 	lightComponent::lightComponent() : color(1, 1, 1), attenuation(1, 0, 3), spotAngle(degs(40)), spotExponent(80), lightType(lightTypeEnum::Point) {}
 	shadowmapComponent::shadowmapComponent() : worldSize(0, 0, 0), resolution(256) {}
-	cameraTonemapStruct::cameraTonemapStruct() : shoulderStrength(0.22), linearStrength(0.30), linearAngle(0.10), toeStrength(0.20), toeNumerator(0.01), toeDenominator(0.30), white(11.2), gamma(2.2) {}
 	cameraSsaoStruct::cameraSsaoStruct() : worldRadius(0.5), blurRadius(1), strength(1), bias(0), power(0.5) {}
-	cameraEffectsStruct::cameraEffectsStruct() : effects(cameraEffectsFlags::None) {}
+	cameraEyeAdaptationStruct::cameraEyeAdaptationStruct() : exposureKey(1.0), adaptationStrength(0.5), adaptationSpeedDarker(0.1), adaptationSpeedLighter(0.5) {} // darker should take 5 times longer
+	cameraTonemapStruct::cameraTonemapStruct() : shoulderStrength(0.22), linearStrength(0.30), linearAngle(0.10), toeStrength(0.20), toeNumerator(0.01), toeDenominator(0.30), white(11.2) {}
+	cameraEffectsStruct::cameraEffectsStruct() : gamma(2.2), effects(cameraEffectsFlags::None) {}
 	cameraComponent::cameraComponent() : viewportSize(1, 1), target(nullptr), perspectiveFov(degs(60)), near(1), far(100), zeroParallaxDistance(10), eyeSeparation(0.3), cameraOrder(0), renderMask(1), clear(cameraClearFlags::Depth | cameraClearFlags::Color), cameraType(cameraTypeEnum::Perspective) {}
 	voiceComponent::voiceComponent() : input(nullptr), startTime(0), name(0), renderMask(1) {}
 	listenerComponent::listenerComponent() : output(nullptr), renderMask(1), speedOfSound(343.3), dopplerEffect(false) {}
