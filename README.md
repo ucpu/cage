@@ -21,7 +21,7 @@ A long-term hobby project that turned out to be quite BIG.
 
 # Features
 
-## Ease of use
+## Ease of Use
  - ease of use here refers to single, easy to understand programming API
  - even that the engine depends on several libraries, they are all hidden behind the scene
  - the API consists of both functions and classes, whichever is more convenient
@@ -73,47 +73,50 @@ A long-term hobby project that turned out to be quite BIG.
 
 ## Client Library
    - Low-level API
-     - Window management & events (via GLFW)
-     - Graphics
+     - window management & events (via GLFW)
+     - graphics
        - currently OpenGL 4.4
          - the plan is to switch to Vulkan only (when there is enough time)
        - actual objective abstraction of most OpenGL objects
          - semi-debugging layer that validates that the objects are correctly bound
-     - Sound (via soundio)
+     - sound (via soundio)
        - support for spatial sound (multiple channels)
-     - Gui
+     - gui
        - novel API through entities
        - flexible automatic layouting
        - flexible skinning
-       - no custom (application defined) widgets, which allows fairly simple and efficient implementation
+       - no custom (application defined) widgets, this allows fairly simple and efficient implementation
    - Engine (high-level) API
      - the scene is defined entirely by entities
        - cameras, renderables, lights & shadows, listeners, voices, ...
-     - pipeline-like processing using threads dedicated to specific tasks
+     - pipeline-like processing using multiple threads
        - *50 000 objects* at 30 fps (cpu-bound)
        - all rendering is through automatic instancing to reduce draw call overhead
+     - graphics effects
+       - hdr, tonemapping, gamma correction
+       - motion blur (per object), ssao, fxaa
      - directional, spot and point lights
         - automatic shadow maps
-     - roughness/metallic workflow (however the shaders could be improved a lot)
+     - roughness/metallic workflow
 
 ## Tools
-   - asset-processor
+   - Asset processor
      - texture loading (via DevIL)
-       - DevIL has lgpl license, which may cause trouble, and is planned to be replaced
+       - DevIL is planned to be replaced due to license issue (when suitable alternative is available)
      - mesh loading (via Assimp)
      - sound (via Ogg/Vorbis and dr_libs)
      - shader
        - custom $preprocessor with support for includes, conditional composition, token replacements etc...
      - font (via freetype and msdfgen)
        - multi-distance-field scalable font textures
-   - asset-database
+   - Asset database
      - manages automatic asset processing
      - only processes assets that are out-of-date
      - can be set to listen to changes and act immediately
        - notifies all connected games whenever an asset has changed so that the engine can reload it
      - assets are configured in simple ini-like files (good for version-control-systems)
      - easily extensible to any custom formats
-   - asset-analyze
+   - Asset analyze
      - given a path to a folder, it will analyze all files in it and generate basic asset configuration
 
 # Building

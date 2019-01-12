@@ -235,7 +235,7 @@ namespace cage
 	real distance(const line &a, const triangle &b)
 	{
 		if (intersects(a, b))
-			return distance(a, plane(b));
+			return 0;
 		return min(min(distance(a, makeSegment(b[0], b[1])),
 			distance(a, makeSegment(b[1], b[2]))),
 			distance(a, makeSegment(b[2], b[0])));
