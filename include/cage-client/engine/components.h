@@ -67,10 +67,10 @@ namespace cage
 
 	struct CAGE_API cameraEyeAdaptationStruct
 	{
-		real exposureKey;
-		real adaptationStrength;
-		real adaptationSpeedDarker;
-		real adaptationSpeedLighter;
+		real key;
+		real strength;
+		real darkerSpeed;
+		real lighterSpeed;
 		cameraEyeAdaptationStruct();
 	};
 

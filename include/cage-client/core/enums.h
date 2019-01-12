@@ -124,8 +124,8 @@ namespace cage
 		GammaCorrection = 1 << 4,
 		AntiAliasing = 1 << 5,
 		GeometryPass = AmbientOcclusion | MotionBlur,
-		ScreenPass = EyeAdaptation | ToneMapping | GammaCorrection | AntiAliasing,
-		AllEffects = GeometryPass | ScreenPass,
+		ScreenPass = ToneMapping | GammaCorrection | AntiAliasing,
+		CombinedPass = GeometryPass | ScreenPass,
 	};
 	GCHL_ENUM_BITS(cameraEffectsFlags);
 

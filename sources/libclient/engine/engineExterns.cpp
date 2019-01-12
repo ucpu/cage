@@ -26,7 +26,7 @@ namespace cage
 	lightComponent::lightComponent() : color(1, 1, 1), attenuation(1, 0, 3), spotAngle(degs(40)), spotExponent(80), lightType(lightTypeEnum::Point) {}
 	shadowmapComponent::shadowmapComponent() : worldSize(0, 0, 0), resolution(256) {}
 	cameraSsaoStruct::cameraSsaoStruct() : worldRadius(0.5), blurRadius(1), strength(1), bias(0), power(0.5) {}
-	cameraEyeAdaptationStruct::cameraEyeAdaptationStruct() : exposureKey(1.0), adaptationStrength(0.5), adaptationSpeedDarker(0.1), adaptationSpeedLighter(0.5) {} // darker should take 5 times longer
+	cameraEyeAdaptationStruct::cameraEyeAdaptationStruct() : key(0.5), strength(1.0), darkerSpeed(0.1), lighterSpeed(1) {} // darker should take at least 5 times longer
 	cameraTonemapStruct::cameraTonemapStruct() : shoulderStrength(0.22), linearStrength(0.30), linearAngle(0.10), toeStrength(0.20), toeNumerator(0.01), toeDenominator(0.30), white(11.2) {}
 	cameraEffectsStruct::cameraEffectsStruct() : gamma(2.2), effects(cameraEffectsFlags::None) {}
 	cameraComponent::cameraComponent() : viewportSize(1, 1), target(nullptr), perspectiveFov(degs(60)), near(1), far(100), zeroParallaxDistance(10), eyeSeparation(0.3), cameraOrder(0), renderMask(1), clear(cameraClearFlags::Depth | cameraClearFlags::Color), cameraType(cameraTypeEnum::Perspective) {}

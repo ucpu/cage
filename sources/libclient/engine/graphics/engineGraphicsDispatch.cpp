@@ -85,7 +85,10 @@ namespace cage
 		{
 			cameraTonemapStruct tonemap; // 7 reals
 			real tonemapEnabled;
-			cameraEyeAdaptationStruct eyeAdaptation; // 4 reals
+			real eyeAdaptationKey;
+			real eyeAdaptationStrength;
+			real _dummy1;
+			real _dummy2;
 			real gamma;
 			real _dummy3;
 			real _dummy4;
@@ -488,7 +491,7 @@ namespace cage
 						renderTarget->colorTexture(0, cs.luminanceAccumulationTexture.get());
 						renderTarget->checkStatus();
 						shaderLuminanceCopy->bind();
-						shaderLuminanceCopy->uniform(0, vec2(pass->eyeAdaptation.adaptationSpeedDarker, pass->eyeAdaptation.adaptationSpeedLighter));
+						shaderLuminanceCopy->uniform(0, vec2(pass->eyeAdaptation.darkerSpeed, pass->eyeAdaptation.lighterSpeed));
 						meshSquare->dispatch();
 					}
 					viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
@@ -533,7 +536,10 @@ namespace cage
 				{
 					finalScreenShaderStruct f;
 					if ((pass->effects & cameraEffectsFlags::EyeAdaptation) == cameraEffectsFlags::EyeAdaptation)
-						f.eyeAdaptation = pass->eyeAdaptation;
+					{
+						f.eyeAdaptationKey = pass->eyeAdaptation.key;
+						f.eyeAdaptationStrength = pass->eyeAdaptation.strength;
+					}
 					f.tonemap = pass->tonemap;
 					f.tonemapEnabled = (pass->effects & cameraEffectsFlags::ToneMapping) == cameraEffectsFlags::ToneMapping;
 					if ((pass->effects & cameraEffectsFlags::GammaCorrection) == cameraEffectsFlags::GammaCorrection)

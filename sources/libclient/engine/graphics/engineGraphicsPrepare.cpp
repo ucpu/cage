@@ -279,8 +279,8 @@ namespace cage
 				pass->entityId = camera->entityId;
 				(cameraEffectsStruct&)*pass = (cameraEffectsStruct&)camera->camera;
 				real eyeAdaptationSpeed = real(elapsedDispatchTime) * 1e-6;
-				pass->eyeAdaptation.adaptationSpeedDarker *= eyeAdaptationSpeed;
-				pass->eyeAdaptation.adaptationSpeedLighter *= eyeAdaptationSpeed;
+				pass->eyeAdaptation.darkerSpeed *= eyeAdaptationSpeed;
+				pass->eyeAdaptation.lighterSpeed *= eyeAdaptationSpeed;
 				addRenderableObjects(pass, false);
 				for (auto it : emitRead->lights)
 					addLight(pass, it);
