@@ -125,6 +125,7 @@ namespace cage
 			case GL_R11F_G11F_B10F:
 			case GL_RGB9_E5:
 			case GL_R3_G3_B2:
+			case GL_SRGB8:
 				return GL_RGB;
 			case GL_RGBA8:
 			case GL_RGBA16:
@@ -142,6 +143,7 @@ namespace cage
 			case GL_RGB5_A1:
 			case GL_RGB10_A2:
 			case GL_RGB10_A2UI:
+			case GL_SRGB8_ALPHA8:
 				return GL_RGBA;
 			case GL_DEPTH_COMPONENT16:
 			case GL_DEPTH_COMPONENT24:

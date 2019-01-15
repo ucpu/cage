@@ -109,7 +109,7 @@ namespace
 			ilCopyPixels(0, 0, depth, width, height, 1, convertBppToFormat(bpp), IL_UNSIGNED_BYTE, data.data());
 		}
 
-		void performFlipv()
+		void performFlipV()
 		{
 			std::vector<uint8> tmp;
 			uint32 line = width * bpp;
@@ -127,7 +127,7 @@ namespace
 		void convertHeightToNormal(float strength)
 		{
 			strength = 1.f / strength;
-			std::vector<unsigned char> result;
+			std::vector<uint8> result;
 			result.resize(width * height * 3);
 			uint32 pos = 0;
 			for (sint32 y = 0; (uint32)y < height; y++)
@@ -149,9 +149,9 @@ namespace
 					v += 1;
 					v *= 0.5;
 					v *= 255;
-					result[pos + 0] = numeric_cast<unsigned char>(v[0]);
-					result[pos + 1] = numeric_cast<unsigned char>(v[1]);
-					result[pos + 2] = numeric_cast<unsigned char>(v[2]);
+					result[pos + 0] = numeric_cast<uint8>(v[0]);
+					result[pos + 1] = numeric_cast<uint8>(v[1]);
+					result[pos + 2] = numeric_cast<uint8>(v[2]);
 					pos += 3;
 				}
 			}
@@ -159,10 +159,9 @@ namespace
 			bpp = 3;
 		}
 
-		void premultiplyAlpha()
+		template<bool SRGB>
+		void premultiplyAlphaImpl()
 		{
-			if (bpp != 4)
-				return;
 			uint32 line = width * bpp;
 			for (uint32 y = 0; y < height; y++)
 			{
@@ -170,11 +169,32 @@ namespace
 				for (uint32 x = 0; x < width; x++)
 				{
 					uint8 *t = l + x * bpp;
-					float f = t[3] / 255.f;
+					real a = t[3] / 255.f;
 					for (uint32 i = 0; i < 3; i++)
-						t[i] = numeric_cast<uint8>(f * t[i]);
+					{
+						if (SRGB)
+						{
+							real v = t[i] / 255.f;
+							v = pow(v, 2.2f);
+							v *= a; // alpha premultiplied in linear space
+							v = pow(v, 1.0f / 2.2f);
+							t[i] = numeric_cast<uint8>(v * 255.f);
+						}
+						else
+							t[i] = numeric_cast<uint8>(a * t[i]);
+					}
 				}
 			}
+		}
+
+		void premultiplyAlpha()
+		{
+			if (bpp != 4)
+				CAGE_THROW_ERROR(exception, "premultiplied alpha requires 4 components");
+			if (properties("srgb").toBool())
+				premultiplyAlphaImpl<true>();
+			else
+				premultiplyAlphaImpl<false>();
 		}
 
 	private:
@@ -193,7 +213,7 @@ namespace
 			default:
 				CAGE_THROW_CRITICAL(exception, "invalid bpp");
 			}
-			return sum / 256.f / bpp;
+			return sum / 255.f / bpp;
 		}
 	};
 
@@ -279,23 +299,6 @@ namespace
 		}
 	}
 
-	void performDegamma(float coef)
-	{
-		ILuint im = ilGenImage();
-		ilBindImage(im);
-		coef = 1.f / coef;
-		images[0].resizeDevil();
-		for (auto &it : images)
-		{
-			it.saveToDevil();
-			if (!iluGammaCorrect(coef))
-				CAGE_THROW_ERROR(exception, "iluGammaCorrect");
-			it.loadFromDevil();
-		}
-		ilBindImage(0);
-		ilDeleteImage(im);
-	}
-
 	void checkConsistency(uint32 target)
 	{
 		uint32 frames = numeric_cast<uint32>(images.size());
@@ -315,9 +318,8 @@ namespace
 			CAGE_THROW_ERROR(exception, "image has zeroed resolution");
 		if (im0.bpp == 0 || im0.bpp > 4)
 			CAGE_THROW_ERROR(exception, "image has invalid bpp");
-		for (std::vector<imageLayerStruct>::iterator it = images.begin(), et = images.end(); it != et; it++)
+		for (auto &imi : images)
 		{
-			imageLayerStruct &imi = *it;
 			if (imi.width != im0.width || imi.height != im0.height)
 				CAGE_THROW_ERROR(exception, "frames has inconsistent resolutions");
 			if (imi.bpp != im0.bpp)
@@ -347,26 +349,45 @@ namespace
 		data.dimY = images[0].height;
 		data.dimZ = numeric_cast<uint32>(images.size());
 		data.bpp = images[0].bpp;
-		switch (data.bpp)
+		if (properties("srgb").toBool())
 		{
-		case 1:
-			data.copyFormat = GL_RED;
-			data.internalFormat = GL_R8;
-			break;
-		case 2:
-			data.copyFormat = GL_RG;
-			data.internalFormat = GL_RG8;
-			break;
-		case 3:
-			data.copyFormat = GL_RGB;
-			data.internalFormat = GL_RGB8;
-			break;
-		case 4:
-			data.copyFormat = GL_RGBA;
-			data.internalFormat = GL_RGBA8;
-			break;
-		default:
-			CAGE_THROW_ERROR(exception, "unsupported bpp");
+			switch (data.bpp)
+			{
+			case 3:
+				data.internalFormat = GL_SRGB8;
+				data.copyFormat = GL_RGB;
+				break;
+			case 4:
+				data.internalFormat = GL_SRGB8_ALPHA8;
+				data.copyFormat = GL_RGBA;
+				break;
+			default:
+				CAGE_THROW_ERROR(exception, "unsupported bpp");
+			}
+		}
+		else
+		{
+			switch (data.bpp)
+			{
+			case 1:
+				data.internalFormat = GL_R8;
+				data.copyFormat = GL_RED;
+				break;
+			case 2:
+				data.internalFormat = GL_RG8;
+				data.copyFormat = GL_RG;
+				break;
+			case 3:
+				data.internalFormat = GL_RGB8;
+				data.copyFormat = GL_RGB;
+				break;
+			case 4:
+				data.internalFormat = GL_RGBA8;
+				data.copyFormat = GL_RGBA;
+				break;
+			default:
+				CAGE_THROW_ERROR(exception, "unsupported bpp");
+			}
 		}
 		data.copyType = GL_UNSIGNED_BYTE;
 		data.stride = data.dimX * data.dimY * data.bpp;
@@ -400,8 +421,13 @@ namespace
 
 void processTexture()
 {
-	if (properties("convert_normal").toFloat() > 0 && properties("premultiply_alpha").toBool())
-		CAGE_THROW_ERROR(exception, "conversion to normal map and premultiplied alpha are incompatible");
+	if (properties("convert_normal").toFloat() > 0)
+	{
+		if (properties("premultiply_alpha").toBool())
+			CAGE_THROW_ERROR(exception, "conversion to normal map and premultiplied alpha are incompatible");
+		if (properties("srgb").toBool())
+			CAGE_THROW_ERROR(exception, "conversion to normal map and srgb are incompatible");
+	}
 
 	ilInit();
 	iluInit();
@@ -447,9 +473,18 @@ void processTexture()
 		float strength = properties("convert_normal").toFloat();
 		if (strength > 0)
 		{
-			for (std::vector<imageLayerStruct>::iterator it = images.begin(), et = images.end(); it != et; it++)
-				it->convertHeightToNormal(strength);
+			for (auto &it : images)
+				it.convertHeightToNormal(strength);
 			CAGE_LOG(severityEnum::Info, logComponentName, string() + "converted from height map to normal map with strength of " + strength);
+		}
+	}
+
+	{ // premultiply alpha
+		if (properties("premultiply_alpha").toBool())
+		{
+			for (auto &it : images)
+				it.premultiplyAlpha();
+			CAGE_LOG(severityEnum::Info, logComponentName, string() + "premultiplied alpha");
 		}
 	}
 
@@ -462,27 +497,11 @@ void processTexture()
 		}
 	}
 
-	{ // premultiply alpha
-		if (properties("premultiply_alpha").toBool())
-		{
-			for (std::vector<imageLayerStruct>::iterator it = images.begin(), et = images.end(); it != et; it++)
-				it->premultiplyAlpha();
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "premultiplied alpha");
-		}
-	}
-
-	if (properties("degamma_on").toBool())
-	{ // degamma
-		float coef = properties("degamma_coef").toFloat();
-		performDegamma(coef);
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "gamma correction by " + coef);
-	}
-
 	{ // vertical flip
 		if (!properties("flip_v").toBool())
 		{
-			for (std::vector<imageLayerStruct>::iterator it = images.begin(), et = images.end(); it != et; it++)
-				it->performFlipv();
+			for (auto &it : images)
+				it.performFlipV();
 			CAGE_LOG(severityEnum::Info, logComponentName, string() + "image vertically flipped (flip_v was false)");
 		}
 	}
@@ -491,12 +510,13 @@ void processTexture()
 
 	if (configGetBool("cage-asset-processor.texture.preview"))
 	{ // preview images
-		for (std::vector<imageLayerStruct>::iterator it = images.begin(), et = images.end(); it != et; it++)
+		uint32 index = 0;
+		for (auto &it : images)
 		{
-			string dbgName = pathJoin(configGetString("cage-asset-processor.texture.path", "asset-preview"), pathMakeValid(inputName) + "_" + (it - images.begin()) + ".png");
+			string dbgName = pathJoin(configGetString("cage-asset-processor.texture.path", "asset-preview"), pathMakeValid(inputName) + "_" + (index++) + ".png");
 			holder<pngImageClass> png = newPngImage();
-			png->empty(it->width, it->height, it->bpp);
-			detail::memcpy(png->bufferData(), it->data.data(), png->bufferSize());
+			png->empty(it.width, it.height, it.bpp);
+			detail::memcpy(png->bufferData(), it.data.data(), png->bufferSize());
 			png->verticalFlip();
 			png->encodeFile(dbgName);
 		}
