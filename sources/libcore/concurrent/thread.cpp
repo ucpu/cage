@@ -50,13 +50,13 @@ namespace cage
 				handle = CreateThread(nullptr, 0, &threadFunctionImpl, this, 0, &tid);
 				if (!handle)
 					CAGE_THROW_ERROR(exception, "CreateThread");
-				myid = numeric_cast<uint64>(tid);
+				myid = uint64(tid);
 
 #else
 
 				if (pthread_create(&handle, nullptr, &threadFunctionImpl, this) != 0)
 					CAGE_THROW_ERROR(codeException, "pthread_create", errno);
-				myid = numeric_cast<uint64>(handle);
+				myid = uint64(handle);
 
 #endif
 			}
@@ -214,7 +214,6 @@ namespace cage
 		{
 			threadImpl *impl = (threadImpl*)params;
 			setCurrentThreadName(impl->threadName);
-			//CAGE_LOG(severityEnum::Info, "thread", string() + "thread '" + getCurrentThreadName() + "' started");
 			try
 			{
 				impl->function();

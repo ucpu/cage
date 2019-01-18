@@ -33,7 +33,10 @@ namespace cage
 		bool valid() const { return orientation.valid() && position.valid() && scale.valid(); }
 	};
 
-	mat4::mat4(const transform &other) { *this = mat4(other.position, other.orientation, vec3(other.scale, other.scale, other.scale)); }
+	mat4::mat4(const transform &other)
+	{
+		*this = mat4(other.position, other.orientation, vec3(other.scale, other.scale, other.scale));
+	}
 
 	inline transform inverse(const transform &th) { return th.inverse(); }
 	inline bool valid(const transform &th) { return th.valid(); }

@@ -19,9 +19,9 @@ namespace cage
 	template<severityEnum Severity, const char *Components, bool SameThread, bool Continuous>
 	inline bool logFilterPolicyCustom(const detail::loggerInfo &info)
 	{
-		if (info.severity < Severity)
+		if (!logFilterPolicySeverity<Severity>(info))
 			return false;
-		if (SameThread && (info.createThreadId != info.currentThreadId))
+		if (SameThread && !logFilterPolicyThread(info))
 			return false;
 		if (!Continuous && info.continuous)
 			return false;

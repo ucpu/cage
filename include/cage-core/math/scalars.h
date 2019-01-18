@@ -38,8 +38,6 @@ namespace cage
 		real operator [] (uint32 idx) const { CAGE_ASSERT_RUNTIME(idx == 0, "index out of range", idx); return *this; }
 
 		// comparison operators
-		//bool operator == (real other) const { return (*this - other).abs() <= (abs() < other.abs() ? other.abs() : abs()) * epsilon; }
-
 #define GCHL_GENERATE(OPERATOR) bool operator OPERATOR (real other) const { return value OPERATOR other.value; };
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, != , <, >, <= , >= , == ));
 #undef GCHL_GENERATE
@@ -187,7 +185,8 @@ namespace cage
 
 	namespace detail
 	{
-		template<> struct numeric_limits<real> : public numeric_limits<decltype(real::value)> {};
+		template<>
+		struct numeric_limits<real> : public numeric_limits<decltype(real::value)> {};
 	}
 
 	template<class To>

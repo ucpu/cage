@@ -54,7 +54,9 @@ namespace cage
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, bool, float, double, const char*, \
 				const string&, real, rads, degs, const vec2&, const vec3&, const vec4&, const quat&, const mat3&, const mat4&));
 #undef GCHL_GENERATE
-			template<class U> assertClass &variable(const char *name, U *var)
+
+			template<class U>
+			assertClass &variable(const char *name, U *var)
 			{
 				if (!valid)
 				{
@@ -65,7 +67,9 @@ namespace cage
 				}
 				return *this;
 			}
-			template<class U> assertClass &variable(const char *name, const U &var)
+
+			template<class U>
+			assertClass &variable(const char *name, const U &var)
 			{
 				if (!valid)
 					format(name, "<unknown variable type>");

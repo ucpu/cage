@@ -21,18 +21,18 @@ namespace cage
 	uint64 threadId()
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
-		return numeric_cast<uint64>(GetCurrentThreadId());
+		return uint64(GetCurrentThreadId());
 #else
-		return numeric_cast<uint64>(pthread_self());
+		return uint64(pthread_self());
 #endif
 	}
 
 	uint64 processId()
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
-		return numeric_cast<uint64>(GetCurrentProcessId());
+		return uint64(GetCurrentProcessId());
 #else
-		return numeric_cast<uint64>(getpid());
+		return uint64(getpid());
 #endif
 	}
 

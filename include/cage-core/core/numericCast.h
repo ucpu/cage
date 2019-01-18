@@ -40,21 +40,24 @@ namespace cage
 		};
 
 		template<bool Specialized>
-		struct numeric_cast_helper_specialized {};
+		struct numeric_cast_helper_specialized
+		{};
 
 		template<>
-		struct numeric_cast_helper_specialized <true>
+		struct numeric_cast_helper_specialized<true>
 		{
-			template<class To, class From> static To cast(From from)
+			template<class To, class From>
+			static To cast(From from)
 			{
 				return numeric_cast_helper_signed<detail::numeric_limits<To>::is_signed, detail::numeric_limits<From>::is_signed>::template cast<To>(from);
 			}
 		};
 
 		template<>
-		struct numeric_cast_helper_specialized <false>
+		struct numeric_cast_helper_specialized<false>
 		{
-			template<class To, class From> static To cast(From from)
+			template<class To, class From>
+			static To cast(From from)
 			{
 				CAGE_ASSERT_COMPILE(false, numeric_cast_is_only_allowed_for_numbers);
 				return 0;
@@ -66,11 +69,5 @@ namespace cage
 	To numeric_cast(From from)
 	{
 		return privat::numeric_cast_helper_specialized<detail::numeric_limits<To>::is_specialized && detail::numeric_limits<From>::is_specialized>::template cast<To>(from);
-	}
-
-	template<class To, class From>
-	To numeric_cast(From *from)
-	{
-		return numeric_cast<To>((uintPtr)from);
 	}
 }

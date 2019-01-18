@@ -1,7 +1,9 @@
 namespace cage
 {
-	template<class> struct eventListener;
-	template<class> struct eventDispatcher;
+	template<class>
+	struct eventListener;
+	template<class>
+	struct eventDispatcher;
 
 	namespace privat
 	{

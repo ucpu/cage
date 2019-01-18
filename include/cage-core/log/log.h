@@ -5,15 +5,15 @@ namespace cage
 		struct CAGE_API loggerInfo
 		{
 			string message;
+			string currentThreadName;
 			const char *component;
 			const char *file;
 			const char *function;
 			uint64 time;
 			uint64 createThreadId;
 			uint64 currentThreadId;
-			string currentThreadName;
-			severityEnum severity;
 			uint32 line;
+			severityEnum severity;
 			bool continuous;
 			bool debug;
 			loggerInfo();

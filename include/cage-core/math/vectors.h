@@ -176,7 +176,10 @@ namespace cage
 	CAGE_API vec3 randomDirection3();
 	CAGE_API quat randomDirectionQuat();
 
-	template<uint32 N> struct vecN {};
+	template<uint32 N>
+	struct vecN
+	{};
+
 	template<> struct vecN<1> { typedef real type; };
 	template<> struct vecN<2> { typedef vec2 type; };
 	template<> struct vecN<3> { typedef vec3 type; };

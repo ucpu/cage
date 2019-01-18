@@ -22,8 +22,8 @@ namespace cage
 			try
 			{
 				void *tmp = allocator.allocate(size, alignment);
-				CAGE_ASSERT_RUNTIME(numeric_cast<uintPtr>(tmp) >= numeric_cast<uintPtr>(origin), "allocator corrupted", tmp, origin, size);
-				CAGE_ASSERT_RUNTIME(numeric_cast<uintPtr>(tmp) + size <= numeric_cast<uintPtr>(origin) + this->size, "allocator corrupted", tmp, origin, size, this->size);
+				CAGE_ASSERT_RUNTIME(uintPtr(tmp) >= uintPtr(origin), "allocator corrupted", tmp, origin, size);
+				CAGE_ASSERT_RUNTIME(uintPtr(tmp) + size <= uintPtr(origin) + this->size, "allocator corrupted", tmp, origin, size, this->size);
 				return tmp;
 			}
 			catch (outOfMemoryException &e)

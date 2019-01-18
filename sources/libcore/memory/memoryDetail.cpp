@@ -62,9 +62,9 @@ namespace cage
 				void *p = ::malloc(size + alignment - 1 + sizeof(void*));
 				if (!p)
 					return nullptr;
-				void *ptr = (void*)((numeric_cast<uintPtr>(p) + sizeof(void*) + alignment - 1) & ~(alignment - 1));
+				void *ptr = (void*)((uintPtr(p) + sizeof(void*) + alignment - 1) & ~(alignment - 1));
 				*((void **)ptr - 1) = p;
-				CAGE_ASSERT_RUNTIME(numeric_cast<uintPtr>(ptr) % alignment == 0, ptr, alignment);
+				CAGE_ASSERT_RUNTIME(uintPtr(ptr) % alignment == 0, ptr, alignment);
 				return ptr;
 			}
 

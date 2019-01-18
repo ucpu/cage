@@ -3,7 +3,8 @@ namespace cage
 	// core
 	namespace detail
 	{
-		template<uint32 N> struct stringBase;
+		template<uint32 N>
+		struct stringBase;
 	}
 	typedef detail::stringBase<1000> string;
 
@@ -74,12 +75,14 @@ namespace cage
 	struct randomGenerator;
 	struct lineReaderBuffer;
 	struct memoryBuffer;
-	template<class T> class hashTableClass;
+	template<class T>
+	class hashTableClass;
 	class iniClass;
 	class pngImageClass;
 	class programClass;
 	class threadPoolClass;
-	template<class T> class concurrentQueueClass;
+	template<class T>
+	class concurrentQueueClass;
 	struct swapBufferControllerCreateConfig;
 	class swapBufferControllerClass;
 	class timerClass;

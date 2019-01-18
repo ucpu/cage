@@ -39,7 +39,7 @@ namespace cage
 		}
 
 		// operator bool
-		operator bool() const
+		explicit operator bool() const
 		{
 			return !!data;
 		}
@@ -65,14 +65,16 @@ namespace cage
 		}
 
 		// method transfer
-		template<class M> holder<M> transfer();
+		template<class M>
+		holder<M> transfer();
 
 	private:
 		delegate<void(void *)> action;
 		void *data;
 	};
 
-	template<class T> struct holder
+	template<class T>
+	struct holder
 	{
 		// constructor
 		holder() : data(nullptr) {}
@@ -135,7 +137,7 @@ namespace cage
 		}
 
 		// operator bool
-		operator bool() const
+		explicit operator bool() const
 		{
 			return !!data;
 		}
@@ -161,7 +163,8 @@ namespace cage
 		}
 
 		// method transfer
-		template<class M> holder<M> transfer()
+		template<class M>
+		holder<M> transfer()
 		{
 			if (*this)
 			{
@@ -192,10 +195,12 @@ namespace cage
 		T *data;
 	};
 
-	template<> struct holder<void>
+	template<>
+	struct holder<void>
 	{}; // this specialization is purposefully empty, use holdeV instead
 
-	template<class M> holder<M> holdev::transfer()
+	template<class M>
+	holder<M> holdev::transfer()
 	{
 		if (*this)
 		{

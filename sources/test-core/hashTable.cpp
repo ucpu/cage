@@ -45,7 +45,7 @@ void testHashTable()
 		for (uint32 i = 1; i < 10000; i++)
 			tbl->add(i, (void*)(uintPtr)i);
 		for (uint32 i = 1; i < 10000; i++)
-			CAGE_TEST(numeric_cast<uint32>(tbl->get(i, false)) == i);
+			CAGE_TEST(numeric_cast<uint32>((uintPtr)tbl->get(i, false)) == i);
 	}
 
 	{
@@ -74,7 +74,7 @@ void testHashTable()
 			if (mp.size() == 5000 || (mp.size() > 0 && randomRange(0, 100) < 30))
 			{
 				uint32 name = mp.begin()->first;
-				CAGE_TEST(numeric_cast<uint32>(tbl->get(name, false)) == mp[name]);
+				CAGE_TEST(numeric_cast<uint32>((uintPtr)tbl->get(name, false)) == mp[name]);
 				tbl->remove(name);
 				mp.erase(name);
 			}
@@ -83,7 +83,7 @@ void testHashTable()
 				uint32 name = randomRange(1, 100000);
 				if (mp.find(name) != mp.end())
 				{
-					CAGE_TEST(numeric_cast<uint32>(tbl->get(name, false)) == mp[name]);
+					CAGE_TEST(numeric_cast<uint32>((uintPtr)tbl->get(name, false)) == mp[name]);
 					tbl->remove(name);
 				}
 				uint32 value = randomRange(1, 100000);
@@ -94,7 +94,7 @@ void testHashTable()
 		}
 		for (std::map<uint32, uint32>::iterator it = mp.begin(), e = mp.end(); it != e; it++)
 		{
-			CAGE_TEST(numeric_cast<uint32>(tbl->get(it->first, false)) == it->second);
+			CAGE_TEST(numeric_cast<uint32>((uintPtr)tbl->get(it->first, false)) == it->second);
 			tbl->remove(it->first);
 		}
 		CAGE_TEST(tbl->count() == 0);

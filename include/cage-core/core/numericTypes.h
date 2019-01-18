@@ -24,7 +24,8 @@ namespace cage
 	namespace privat
 	{
 		template<bool>
-		struct helper_is_char_signed {};
+		struct helper_is_char_signed
+		{};
 
 		template<>
 		struct helper_is_char_signed<true>
@@ -89,10 +90,12 @@ namespace cage
 
 #ifdef CAGE_SYSTEM_WINDOWS
 		template<>
-		struct numeric_limits<unsigned long> : public numeric_limits<unsigned int> {};
+		struct numeric_limits<unsigned long> : public numeric_limits<unsigned int>
+		{};
 #else
 		template<>
-		struct numeric_limits<unsigned long> : public numeric_limits<unsigned long long> {};
+		struct numeric_limits<unsigned long> : public numeric_limits<unsigned long long>
+		{};
 #endif
 
 		template<>
@@ -137,10 +140,12 @@ namespace cage
 
 #ifdef CAGE_SYSTEM_WINDOWS
 		template<>
-		struct numeric_limits<signed long> : public numeric_limits<signed int> {};
+		struct numeric_limits<signed long> : public numeric_limits<signed int>
+		{};
 #else
 		template<>
-		struct numeric_limits<signed long> : public numeric_limits<signed long long> {};
+		struct numeric_limits<signed long> : public numeric_limits<signed long long>
+		{};
 #endif
 
 		template<>
@@ -165,23 +170,24 @@ namespace cage
 
 		// char is distinct type from both unsigned char and signed char
 		template<>
-		struct numeric_limits<char> : public numeric_limits<privat::helper_is_char_signed<((signed char)-1) != ((unsigned char)-1)>::type> {};
+		struct numeric_limits<char> : public numeric_limits<privat::helper_is_char_signed<((signed char)-1) != ((unsigned char)-1)>::type>
+		{};
 	}
 
 	namespace privat
 	{
 		namespace endianness
 		{
-            constexpr uint32 one = 1;
+			constexpr uint32 one = 1;
 
 			constexpr bool little()
 			{
-                return ((const uint8&)(one) == 1);
+				return ((const uint8&)(one) == 1);
 			}
 
 			constexpr bool big() // network
 			{
-			    return !little();
+				return !little();
 			}
 
 			template<class T>

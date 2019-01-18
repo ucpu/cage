@@ -42,7 +42,7 @@ A long-term hobby project that turned out to be quite BIG.
 ## Notes
  - Cage is NOT an IDE or editor
    - when developing with Cage, you use your preferred editor
-   - all interaction with Cage is in c++ code, ini configuration files and the CLI tools
+   - all interaction with Cage is with c++ code, INI configuration files and CLI tools
 
 # Components
 
@@ -57,6 +57,7 @@ A long-term hobby project that turned out to be quite BIG.
      - shapes: line (ray, segment), triangle, plane, aabb, sphere, ...
      - no templates, all is float
      - intersections & collisions
+     - spatial acceleration structure (BVH)
    - Entities
      - this is the heart of all Cage's higher-level APIs
      - entities are identified by pointer and, optionally, by a number
@@ -82,19 +83,21 @@ A long-term hobby project that turned out to be quite BIG.
      - sound (via soundio)
        - support for spatial sound (multiple channels)
      - gui
-       - novel API through entities
+       - API by entities
        - flexible automatic layouting
        - flexible skinning
-       - no custom (application defined) widgets, this allows fairly simple and efficient implementation
+       - no custom (application defined) widgets, this allows fairly efficient implementation
    - Engine (high-level) API
      - the scene is defined entirely by entities
-       - cameras, renderables, lights & shadows, listeners, voices, ...
+       - cameras, renderables, lights & shadows
+       - listeners, voices
      - pipeline-like processing using multiple threads
        - *50 000 objects* at 30 fps (cpu-bound)
        - all rendering is through automatic instancing to reduce draw call overhead
      - graphics effects
        - hdr, tonemapping, gamma correction
        - motion blur (per object), ssao, fxaa
+       - normal mapping
      - directional, spot and point lights
         - automatic shadow maps
      - roughness/metallic workflow
@@ -102,7 +105,7 @@ A long-term hobby project that turned out to be quite BIG.
 ## Tools
    - Asset processor
      - texture loading (via DevIL)
-       - DevIL is planned to be replaced due to license issue (when suitable alternative is available)
+       - DevIL is planned to be replaced due to license issue (when suitable alternative is found)
      - mesh loading (via Assimp)
      - sound (via Ogg/Vorbis and dr_libs)
      - shader
@@ -117,7 +120,7 @@ A long-term hobby project that turned out to be quite BIG.
      - assets are configured in simple ini-like files (good for version-control-systems)
      - easily extensible to any custom formats
    - Asset analyze
-     - given a path to a folder, it will analyze all files in it and generate basic asset configuration
+     - given path to a folder, it analyzes all files in it and generates initial asset configuration
 
 # Building
 

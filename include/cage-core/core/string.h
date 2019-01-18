@@ -417,7 +417,7 @@ namespace cage
 		}
 
 		template<uint32 N>
-		struct stringComparatorFastBase
+		struct stringComparatorFast
 		{
 			bool operator () (const stringBase<N> &a, const stringBase<N> &b) const
 			{
@@ -427,5 +427,5 @@ namespace cage
 	}
 
 	typedef detail::stringBase<1000> string;
-	typedef detail::stringComparatorFastBase<1000> stringComparatorFast;
+	typedef detail::stringComparatorFast<1000> stringComparatorFast;
 }

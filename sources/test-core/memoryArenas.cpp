@@ -89,7 +89,7 @@ namespace
 				{
 					uint32 sz = randomRange((uint32)1, (uint32)(Traits::AtomSize - 1)) + (uint32)2;
 					void *tmp = a.allocate(sz, Alignment);
-					CAGE_TEST(numeric_cast<uintPtr>(tmp) % Alignment == 0, tmp, Alignment);
+					CAGE_TEST(uintPtr(tmp) % Alignment == 0, tmp, Alignment);
 					(*(uint16*)tmp) = sz;
 					construct((char*)tmp + 2, sz - 2);
 					alokace.push_back(tmp);
@@ -120,7 +120,7 @@ namespace
 			for (uint32 i = 0; i < Traits::ObjectsCount; i++)
 			{
 				void *tmp = a.createObject<ts>();
-				CAGE_TEST(numeric_cast<uintPtr>(tmp) % Alignment == 0, tmp, Alignment);
+				CAGE_TEST(uintPtr(tmp) % Alignment == 0, tmp, Alignment);
 			}
 			CAGE_TEST(ts::count == Traits::ObjectsCount);
 			a.flush();
@@ -147,7 +147,7 @@ namespace
 				for (uint32 i = 0; i < Traits::ObjectsCount; i++)
 				{
 					ts *l = a.createObject<ts>();
-					CAGE_TEST(numeric_cast<uintPtr>(l) % Alignment == 0, l, Alignment);
+					CAGE_TEST(uintPtr(l) % Alignment == 0, l, Alignment);
 					if (i == 0)
 						last[round % Traits::Frames] = l;
 				}
@@ -189,7 +189,7 @@ namespace
 				else
 				{
 					ts *tmp = a.createObject<ts>();
-					CAGE_TEST(numeric_cast<uintPtr>(tmp) % Alignment == 0, tmp, Alignment);
+					CAGE_TEST(uintPtr(tmp) % Alignment == 0, tmp, Alignment);
 					objects[allocations++] = tmp;
 				}
 				CAGE_TEST(allocations == ts::count, allocations, ts::count);
@@ -221,7 +221,7 @@ namespace
 				else
 				{
 					ts *tmp = a.createObject<ts>();
-					CAGE_TEST(numeric_cast<uintPtr>(tmp) % Alignment == 0, tmp, Alignment);
+					CAGE_TEST(uintPtr(tmp) % Alignment == 0, tmp, Alignment);
 					objects[allocations++] = tmp;
 				}
 				CAGE_TEST(allocations == ts::count, allocations, ts::count);
