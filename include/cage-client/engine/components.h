@@ -11,6 +11,7 @@ namespace cage
 	{
 		static componentClass *component;
 		vec3 color;
+		//real opacity;
 		uint32 object;
 		uint32 renderMask;
 		renderComponent();
@@ -49,62 +50,39 @@ namespace cage
 	struct CAGE_API shadowmapComponent
 	{
 		static componentClass *component;
+		// directional: width, height, depth
+		// spot: near, far, unused
 		vec3 worldSize;
 		uint32 resolution;
 		shadowmapComponent();
 	};
 
-	struct CAGE_API cameraSsaoStruct
+	struct CAGE_API renderTextComponent
 	{
-		real worldRadius;
-		real blurRadius;
-		real strength;
-		real bias;
-		real power;
-		// ao = pow(ao * strength + bias, power)
-		cameraSsaoStruct();
-	};
-
-	struct CAGE_API cameraEyeAdaptationStruct
-	{
-		real key;
-		real strength;
-		real darkerSpeed;
-		real lighterSpeed;
-		cameraEyeAdaptationStruct();
-	};
-
-	struct CAGE_API cameraTonemapStruct
-	{
-		real shoulderStrength;
-		real linearStrength;
-		real linearAngle;
-		real toeStrength;
-		real toeNumerator;
-		real toeDenominator;
-		real white;
-		cameraTonemapStruct();
-	};
-
-	struct CAGE_API cameraEffectsStruct
-	{
-		cameraSsaoStruct ssao;
-		cameraEyeAdaptationStruct eyeAdaptation;
-		cameraTonemapStruct tonemap;
-		real gamma;
-		cameraEffectsFlags effects;
-		cameraEffectsStruct();
+		static componentClass *component;
+		string value; // list of parameters separated by '|' when formatted, otherwise the string as is
+		vec3 color;
+		//real opacity;
+		uint32 assetName;
+		uint32 textName;
+		uint32 font;
+		uint32 renderMask;
+		renderTextComponent();
 	};
 
 	struct CAGE_API cameraComponent : public cameraEffectsStruct
 	{
 		static componentClass *component;
 		vec3 ambientLight;
-		vec2 viewportOrigin;
-		vec2 viewportSize;
-		vec2 orthographicSize;
+		vec2 viewportOrigin; // [0..1]
+		vec2 viewportSize; // [0..1]
+		union CameraUnion
+		{
+			vec2 orthographicSize;
+			rads perspectiveFov;
+			CameraUnion();
+		} camera;
 		textureClass *target;
-		rads perspectiveFov;
 		real near, far;
 		real zeroParallaxDistance;
 		real eyeSeparation;

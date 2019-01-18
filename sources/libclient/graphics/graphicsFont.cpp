@@ -24,9 +24,7 @@ namespace cage
 	{
 		struct processDataStruct
 		{
-			vec3 color;
 			vec2 mousePosition;
-			vec2 pos;
 			mutable vec2 outSize;
 			const fontClass::formatStruct *format;
 			const uint32 *gls;
@@ -41,8 +39,6 @@ namespace cage
 
 		class fontImpl : public fontClass
 		{
-			static const uint32 charsPerBatch = 256;
-
 		public:
 			holder<uniformBufferClass> uni;
 			holder<textureClass> tex;
@@ -88,7 +84,7 @@ namespace cage
 				shr(nullptr), msh(nullptr), spaceGlyph(0), returnGlyph(0), cursorGlyph(-1)
 			{
 				uni = newUniformBuffer(gl);
-				uni->writeWhole(nullptr, sizeof(InstanceStruct) * charsPerBatch, GL_DYNAMIC_DRAW);
+				uni->writeWhole(nullptr, sizeof(InstanceStruct) * CAGE_SHADER_MAX_CHARACTERS, GL_DYNAMIC_DRAW);
 				tex = newTexture(gl);
 				instances.reserve(1000);
 			}
@@ -137,9 +133,9 @@ namespace cage
 				real x;
 				switch (data.format->align)
 				{
-				case textAlignEnum::Left: x = data.pos[0]; break;
-				case textAlignEnum::Right: x = data.pos[0] + data.format->wrapWidth - lineWidth; break;
-				case textAlignEnum::Center: x = data.pos[0] + (data.format->wrapWidth - lineWidth) / 2; break;
+				case textAlignEnum::Left: break;
+				case textAlignEnum::Right: x = data.format->wrapWidth - lineWidth; break;
+				case textAlignEnum::Center: x = (data.format->wrapWidth - lineWidth) / 2; break;
 				default: CAGE_THROW_CRITICAL(exception, "invalid align enum value");
 				}
 
@@ -180,7 +176,7 @@ namespace cage
 				const uint32 *totalEnd = data.gls + data.count;
 				const uint32 *it = data.gls;
 				real actualLineHeight = (lineHeight + data.format->lineSpacing) * data.format->size;
-				real lineY = -data.pos[1] + (firstLineOffset - data.format->lineSpacing * 0.75) * data.format->size;
+				real lineY = (firstLineOffset - data.format->lineSpacing * 0.75) * data.format->size;
 
 				if (data.count == 0)
 				{ // process cursor
@@ -243,19 +239,18 @@ namespace cage
 				{
 					uni->bind();
 					uni->bind(1);
-					shr->uniform(2, data.color);
 
 					uint32 s = numeric_cast<uint32>(instances.size());
-					uint32 a = s / charsPerBatch;
-					uint32 b = s - a * charsPerBatch;
+					uint32 a = s / CAGE_SHADER_MAX_CHARACTERS;
+					uint32 b = s - a * CAGE_SHADER_MAX_CHARACTERS;
 					for (uint32 i = 0; i < a; i++)
 					{
-						uni->writeRange(&instances[i * charsPerBatch], 0, sizeof(InstanceStruct) * charsPerBatch);
-						msh->dispatch(charsPerBatch);
+						uni->writeRange(&instances[i * CAGE_SHADER_MAX_CHARACTERS], 0, sizeof(InstanceStruct) * CAGE_SHADER_MAX_CHARACTERS);
+						msh->dispatch(CAGE_SHADER_MAX_CHARACTERS);
 					}
 					if (b)
 					{
-						uni->writeRange(&instances[a * charsPerBatch], 0, sizeof(InstanceStruct) * b);
+						uni->writeRange(&instances[a * CAGE_SHADER_MAX_CHARACTERS], 0, sizeof(InstanceStruct) * b);
 						msh->dispatch(b);
 					}
 
@@ -263,18 +258,6 @@ namespace cage
 				}
 			}
 		};
-	}
-
-	void fontClass::bind(meshClass *mesh, shaderClass *shader, uint32 screenWidth, uint32 screenHeight) const
-	{
-		fontImpl *impl = (fontImpl*)this;
-		glActiveTexture(GL_TEXTURE0);
-		impl->tex->bind();
-		impl->msh = mesh;
-		impl->msh->bind();
-		impl->shr = shader;
-		impl->shr->bind();
-		impl->shr->uniform(0, vec2(2.0 / screenWidth, 2.0 / screenHeight));
 	}
 
 	void fontClass::setLine(real lineHeight, real firstLineOffset)
@@ -387,16 +370,25 @@ namespace cage
 		cursor = data.outCursor;
 	}
 
-	void fontClass::render(const uint32 *glyphs, uint32 count, const formatStruct &format, const vec2 &position, const vec3 &color, uint32 cursor)
+	void fontClass::bind(meshClass *mesh, shaderClass *shader) const
+	{
+		fontImpl *impl = (fontImpl*)this;
+		glActiveTexture(GL_TEXTURE0);
+		impl->tex->bind();
+		impl->msh = mesh;
+		impl->msh->bind();
+		impl->shr = shader;
+		impl->shr->bind();
+	}
+
+	void fontClass::render(const uint32 *glyphs, uint32 count, const formatStruct &format, uint32 cursor)
 	{
 		processDataStruct data;
 		data.format = &format;
 		data.gls = glyphs;
 		data.count = count;
 		data.cursor = getApplicationTime() % 1000000 < 300000 ? -1 : cursor;
-		data.pos = position;
 		data.render = true;
-		data.color = color;
 		((fontImpl*)this)->processText(data);
 	}
 

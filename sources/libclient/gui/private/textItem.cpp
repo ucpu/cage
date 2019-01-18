@@ -26,21 +26,21 @@ namespace cage
 	textItemStruct::textItemStruct(hierarchyItemStruct *hierarchy) : hierarchy(hierarchy), skipInitialize(false)
 	{}
 
-	namespace
+	// this is also used in engine
+	string loadInternationalizedText(assetManagerClass *assets, uint32 asset, uint32 text, string params)
 	{
-		const string loadInternationalizedText(guiImpl *impl, uint32 asset, uint32 text, string params)
+		if (asset == 0 || text == 0)
+			return params;
+		auto a = assets->tryGet<assetSchemeIndexTextPackage, textPackClass>(asset);
+		if (a)
 		{
-			auto a = impl->assetManager->tryGet<assetSchemeIndexTextPackage, textPackClass>(asset);
-			if (a)
-			{
-				std::vector<string> ps;
-				while (!params.empty())
-					ps.push_back(params.split("|"));
-				return a->format(text, numeric_cast<uint32>(ps.size()), ps.data());
-			}
-			else
-				return "";
+			std::vector<string> ps;
+			while (!params.empty())
+				ps.push_back(params.split("|"));
+			return a->format(text, numeric_cast<uint32>(ps.size()), ps.data());
 		}
+		else
+			return "";
 	}
 
 	void textItemStruct::initialize()
@@ -62,10 +62,7 @@ namespace cage
 		string value;
 		{
 			GUI_GET_COMPONENT(text, t, hierarchy->entity);
-			if (t.assetName && t.textName)
-				value = loadInternationalizedText(impl, t.assetName, t.textName, t.value);
-			else
-				value = t.value;
+			value = loadInternationalizedText(impl->assetManager, t.assetName, t.textName, t.value);
 		}
 		transcript(value);
 	}
@@ -110,7 +107,14 @@ namespace cage
 		t->data.glyphs = (uint32*)e->memory.allocate(t->data.count * sizeof(uint32), sizeof(uintPtr));
 		detail::memcpy(t->data.glyphs, text.glyphs, t->data.count * sizeof(uint32));
 		t->data.format.size *= hierarchy->impl->pointsScale;
-		t->data.pos = position * hierarchy->impl->pointsScale;
+		auto orr = hierarchy->impl->outputResolution;
+		position *= hierarchy->impl->pointsScale;
+		t->data.transform = mat4(
+			2.0 / orr[0], 0, 0, 2.0 * position[0] / orr[0] - 1.0,
+			0, 2.0 / orr[1], 0, 1.0 - 2.0 * position[1] / orr[1],
+			0, 0, 1, 0,
+			0, 0, 0, 1
+		).transpose();
 		t->data.format.wrapWidth = size[0] * hierarchy->impl->pointsScale;
 		e->last->next = t;
 		e->last = t;

@@ -372,6 +372,23 @@ namespace cage
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
+			void renderTexts(renderPassStruct *pass)
+			{
+				for (textsStruct *t = pass->firstText; t; t = t->next)
+				{
+					t->font->bind(meshSquare, shaderFont);
+					for (textsStruct::renderStruct *r = t->firtsRender; r; r = r->next)
+					{
+						shaderFont->uniform(0, r->transform);
+						shaderFont->uniform(4, r->color);
+						t->font->render(r->glyphs, r->count, r->format);
+						drawCalls += (r->count + CAGE_SHADER_MAX_CHARACTERS - 1) / CAGE_SHADER_MAX_CHARACTERS;
+						drawPrimitives += r->count * 2;
+					}
+				}
+				CAGE_CHECK_GL_ERROR_DEBUG();
+			}
+
 			void renderDeferredPass(renderPassStruct *pass)
 			{
 				// camera specific data
@@ -498,7 +515,7 @@ namespace cage
 				}
 
 				// transparencies
-				if (pass->firstTranslucent)
+				if (!!pass->firstTranslucent || !!pass->firstText)
 				{
 					if (texSource != colorTexture.get())
 					{
@@ -519,7 +536,15 @@ namespace cage
 
 					renderTranslucent(pass);
 
+					setDepthTest(true, false);
+					setTwoSided(true);
+					glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+					CAGE_CHECK_GL_ERROR_DEBUG();
+
+					renderTexts(pass);
+
 					setDepthTest(false, false);
+					setTwoSided(false);
 					glDisable(GL_BLEND);
 					glActiveTexture(GL_TEXTURE0 + CAGE_SHADER_TEXTURE_COLOR);
 					CAGE_CHECK_GL_ERROR_DEBUG();

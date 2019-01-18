@@ -29,6 +29,9 @@
 
 namespace cage
 {
+	// implemented in gui
+	string loadInternationalizedText(assetManagerClass *assets, uint32 asset, uint32 text, string params);
+
 	namespace
 	{
 		configBool renderMissingMeshes("cage-client.engine.renderMissingMeshes", false);
@@ -53,14 +56,23 @@ namespace cage
 			}
 		};
 
-		struct emitRenderStruct : public emitTransformsStruct
+		struct emitRenderObjectStruct : public emitTransformsStruct
 		{
 			renderComponent render;
 			animatedTextureComponent *animatedTexture;
 			animatedSkeletonComponent *animatedSkeleton;
-			emitRenderStruct()
+			emitRenderObjectStruct()
 			{
-				detail::memset(this, 0, sizeof(emitRenderStruct));
+				detail::memset(this, 0, sizeof(emitRenderObjectStruct));
+			}
+		};
+
+		struct emitRenderTextStruct : public emitTransformsStruct
+		{
+			renderTextComponent renderText;
+			emitRenderTextStruct()
+			{
+				detail::memset(this, 0, sizeof(emitRenderTextStruct));
 			}
 		};
 
@@ -102,7 +114,8 @@ namespace cage
 			memoryArenaGrowing<memoryAllocatorPolicyLinear<>, memoryConcurrentPolicyNone> emitMemory;
 			memoryArena emitArena;
 
-			std::vector<emitRenderStruct*> renderables;
+			std::vector<emitRenderObjectStruct*> renderableObjects;
+			std::vector<emitRenderTextStruct*> renderableTexts;
 			std::vector<emitLightStruct*> lights;
 			std::vector<emitCameraStruct*> cameras;
 
@@ -110,7 +123,8 @@ namespace cage
 
 			emitStruct(const engineCreateConfig &config) : emitMemory(config.graphicsEmitMemory), emitArena(&emitMemory), time(0)
 			{
-				renderables.reserve(256);
+				renderableObjects.reserve(256);
+				renderableTexts.reserve(64);
 				lights.reserve(32);
 				cameras.reserve(4);
 			}
@@ -143,6 +157,8 @@ namespace cage
 
 			typedef std::unordered_map<meshClass*, objectsStruct*> opaqueObjectsMapType;
 			opaqueObjectsMapType opaqueObjectsMap;
+			typedef std::unordered_map<fontClass*, textsStruct*> textsMapType;
+			textsMapType textsMap;
 
 			static real lightRange(const vec3 &color, const vec3 &attenuation)
 			{
@@ -183,6 +199,7 @@ namespace cage
 			renderPassImpl *newRenderPass()
 			{
 				opaqueObjectsMap.clear();
+				textsMap.clear();
 				renderPassImpl *t = dispatchArena.createObject<renderPassImpl>();
 				if (graphicsDispatch->firstRenderPass)
 					graphicsDispatch->lastRenderPass->next = t;
@@ -204,7 +221,7 @@ namespace cage
 				cam.position = vec3(model * vec4(0, 0, 0, 1));
 				cam.direction = vec3(model * vec4(0, 0, -1, 0));
 				cam.worldUp = vec3(model * vec4(0, 1, 0, 0));
-				cam.fov = camera->camera.perspectiveFov;
+				cam.fov = camera->camera.camera.perspectiveFov;
 				cam.near = camera->camera.near;
 				cam.far = camera->camera.far;
 				cam.zeroParallaxDistance = camera->camera.zeroParallaxDistance;
@@ -212,11 +229,12 @@ namespace cage
 				cam.ortographic = camera->camera.cameraType == cameraTypeEnum::Orthographic;
 				stereoscopy(eye, cam, real(graphicsDispatch->windowWidth) / real(graphicsDispatch->windowHeight), (stereoModeEnum)graphicsPrepareThread().stereoMode, pass->view, pass->proj, x, y, w, h);
 				if (camera->camera.cameraType == cameraTypeEnum::Perspective)
-					pass->lodSelection = fovToLodSelection(camera->camera.perspectiveFov) * graphicsDispatch->windowHeight;
+					pass->lodSelection = fovToLodSelection(camera->camera.camera.perspectiveFov) * graphicsDispatch->windowHeight;
 				else
 				{
-					pass->proj = orthographicProjection(-camera->camera.orthographicSize[0], camera->camera.orthographicSize[0], -camera->camera.orthographicSize[1], camera->camera.orthographicSize[1], camera->camera.near, camera->camera.far);
-					pass->lodSelection = camera->camera.orthographicSize[1] * graphicsDispatch->windowHeight;
+					const vec2 &os = camera->camera.camera.orthographicSize;
+					pass->proj = orthographicProjection(-os[0], os[0], -os[1], os[1], camera->camera.near, camera->camera.far);
+					pass->lodSelection = os[1] * graphicsDispatch->windowHeight;
 					pass->lodOrthographic = true;
 				}
 				pass->viewProj = pass->proj * pass->view;
@@ -244,13 +262,15 @@ namespace cage
 					switch (camera->camera.cameraType)
 					{
 					case cameraTypeEnum::Orthographic:
-						pass->proj = orthographicProjection(-camera->camera.orthographicSize[0], camera->camera.orthographicSize[0], -camera->camera.orthographicSize[1], camera->camera.orthographicSize[1], camera->camera.near, camera->camera.far);
-						pass->lodSelection = camera->camera.orthographicSize[1] * h;
+					{
+						const vec2 &os = camera->camera.camera.orthographicSize;
+						pass->proj = orthographicProjection(-os[0], os[0], -os[1], os[1], camera->camera.near, camera->camera.far);
+						pass->lodSelection = os[1] * h;
 						pass->lodOrthographic = true;
-						break;
+					} break;
 					case cameraTypeEnum::Perspective:
-						pass->proj = perspectiveProjection(camera->camera.perspectiveFov, real(w) / real(h), camera->camera.near, camera->camera.far);
-						pass->lodSelection = fovToLodSelection(camera->camera.perspectiveFov) * h;
+						pass->proj = perspectiveProjection(camera->camera.camera.perspectiveFov, real(w) / real(h), camera->camera.near, camera->camera.far);
+						pass->lodSelection = fovToLodSelection(camera->camera.camera.perspectiveFov) * h;
 						break;
 					default:
 						CAGE_THROW_ERROR(exception, "invalid camera type");
@@ -282,6 +302,7 @@ namespace cage
 				pass->eyeAdaptation.darkerSpeed *= eyeAdaptationSpeed;
 				pass->eyeAdaptation.lighterSpeed *= eyeAdaptationSpeed;
 				addRenderableObjects(pass, false);
+				addRenderableTexts(pass);
 				for (auto it : emitRead->lights)
 					addLight(pass, it);
 			}
@@ -326,7 +347,7 @@ namespace cage
 			void addRenderableObjects(renderPassImpl *pass, bool shadows)
 			{
 				CAGE_ASSERT_RUNTIME(pass->lodSelection > 0);
-				for (emitRenderStruct *e : emitRead->renderables)
+				for (emitRenderObjectStruct *e : emitRead->renderableObjects)
 				{
 					if ((e->render.renderMask & pass->renderMask) == 0)
 						continue;
@@ -379,7 +400,7 @@ namespace cage
 				}
 			}
 
-			void addRenderableSkeleton(renderPassImpl *pass, emitRenderStruct *e, skeletonClass *s, const mat4 &model, const mat4 &mvp)
+			void addRenderableSkeleton(renderPassImpl *pass, emitRenderObjectStruct *e, skeletonClass *s, const mat4 &model, const mat4 &mvp)
 			{
 				uint32 bonesCount = s->bonesCount();
 				if (e->animatedSkeleton && assets()->ready(e->animatedSkeleton->name))
@@ -406,12 +427,12 @@ namespace cage
 				}
 			}
 
-			void addRenderableMesh(renderPassImpl *pass, emitRenderStruct *e, meshClass *m)
+			void addRenderableMesh(renderPassImpl *pass, emitRenderObjectStruct *e, meshClass *m)
 			{
 				addRenderableMesh(pass, e, m, e->model, pass->viewProj * e->model, pass->viewProjPrev * e->modelPrev);
 			}
 
-			void addRenderableMesh(renderPassImpl *pass, emitRenderStruct *e, meshClass *m, const mat4 &model, const mat4 &mvp, const mat4 &mvpPrev)
+			void addRenderableMesh(renderPassImpl *pass, emitRenderObjectStruct *e, meshClass *m, const mat4 &model, const mat4 &mvp, const mat4 &mvpPrev)
 			{
 				if (!frustumCulling(m->getBoundingBox(), mvp))
 					return;
@@ -497,6 +518,62 @@ namespace cage
 				obj->count++;
 			}
 
+			void addRenderableTexts(renderPassImpl *pass)
+			{
+				for (emitRenderTextStruct *e : emitRead->renderableTexts)
+				{
+					if ((e->renderText.renderMask & pass->renderMask) == 0)
+						continue;
+					if (!e->renderText.font)
+						e->renderText.font = hashString("cage/font/ubuntu/Ubuntu-R.ttf");
+					if (!assets()->ready(e->renderText.font))
+						continue;
+					string s = loadInternationalizedText(assets(), e->renderText.assetName, e->renderText.textName, e->renderText.value);
+					if (s.empty())
+						continue;
+
+					fontClass *font = assets()->get<assetSchemeIndexFont, fontClass>(e->renderText.font);
+					textsStruct::renderStruct *r = dispatchArena.createObject<textsStruct::renderStruct>();
+					font->transcript(s, nullptr, r->count);
+					r->glyphs = (uint32*)dispatchArena.allocate(r->count * sizeof(uint32), sizeof(uint32));
+					font->transcript(s, r->glyphs, r->count);
+					r->color = e->renderText.color;
+					r->format.size = 1;
+					vec2 size;
+					font->size(r->glyphs, r->count, r->format, size);
+					r->format.wrapWidth = size[0];
+					r->transform = pass->viewProj * e->model * mat4(vec3(size * vec2(-0.5, 0.5), 0));
+
+					// todo frustum culling
+
+					textsStruct *tex = nullptr;
+					{
+						auto it = textsMap.find(font);
+						if (it == textsMap.end())
+						{
+							tex = dispatchArena.createObject<textsStruct>();
+							tex->font = font;
+							// add at end
+							if (pass->lastText)
+								pass->lastText->next = tex;
+							else
+								pass->firstText = tex;
+							pass->lastText = tex;
+							textsMap[font] = tex;
+						}
+						else
+							tex = it->second;
+					}
+
+					// add at end
+					if (tex->lastRender)
+						tex->lastRender->next = r;
+					else
+						tex->firtsRender = r;
+					tex->lastRender = r;
+				}
+			}
+
 			void addLight(renderPassImpl *pass, emitLightStruct *e)
 			{
 				mat4 mvpMat;
@@ -572,6 +649,15 @@ namespace cage
 				dispatchArena.flush();
 			}
 
+			void emitTransform(emitTransformsStruct *c, entityClass *e)
+			{
+				c->transform = e->value<transformComponent>(transformComponent::component);
+				if (e->has(transformComponent::componentHistory))
+					c->transformHistory = e->value<transformComponent>(transformComponent::componentHistory);
+				else
+					c->transformHistory = c->transform;
+			}
+
 			void emit(uint64 time)
 			{
 				auto lock = swapController->write();
@@ -582,38 +668,40 @@ namespace cage
 				}
 
 				emitWrite = emitBuffers[lock.index()];
-				emitWrite->renderables.clear();
+				emitWrite->renderableObjects.clear();
+				emitWrite->renderableTexts.clear();
 				emitWrite->lights.clear();
 				emitWrite->cameras.clear();
 				emitWrite->emitArena.flush();
 				emitWrite->time = time;
 
-				// emit renderables
+				// emit renderable objects
 				for (entityClass *e : renderComponent::component->entities())
 				{
-					emitRenderStruct *c = emitWrite->emitArena.createObject<emitRenderStruct>();
-					c->transform = e->value<transformComponent>(transformComponent::component);
-					if (e->has(transformComponent::componentHistory))
-						c->transformHistory = e->value<transformComponent>(transformComponent::componentHistory);
-					else
-						c->transformHistory = c->transform;
+					emitRenderObjectStruct *c = emitWrite->emitArena.createObject<emitRenderObjectStruct>();
+					emitTransform(c, e);
 					c->render = e->value<renderComponent>(renderComponent::component);
 					if (e->has(animatedTextureComponent::component))
 						c->animatedTexture = emitWrite->emitArena.createObject<animatedTextureComponent>(e->value<animatedTextureComponent>(animatedTextureComponent::component));
 					if (e->has(animatedSkeletonComponent::component))
 						c->animatedSkeleton = emitWrite->emitArena.createObject<animatedSkeletonComponent>(e->value<animatedSkeletonComponent>(animatedSkeletonComponent::component));
-					emitWrite->renderables.push_back(c);
+					emitWrite->renderableObjects.push_back(c);
+				}
+
+				// emit renderable texts
+				for (entityClass *e : renderTextComponent::component->entities())
+				{
+					emitRenderTextStruct *c = emitWrite->emitArena.createObject<emitRenderTextStruct>();
+					emitTransform(c, e);
+					c->renderText = e->value<renderTextComponent>(renderTextComponent::component);
+					emitWrite->renderableTexts.push_back(c);
 				}
 
 				// emit lights
 				for (entityClass *e : lightComponent::component->entities())
 				{
 					emitLightStruct *c = emitWrite->emitArena.createObject<emitLightStruct>();
-					c->transform = e->value<transformComponent>(transformComponent::component);
-					if (e->has(transformComponent::componentHistory))
-						c->transformHistory = e->value<transformComponent>(transformComponent::componentHistory);
-					else
-						c->transformHistory = c->transform;
+					emitTransform(c, e);
 					c->light = e->value<lightComponent>(lightComponent::component);
 					if (e->has(shadowmapComponent::component))
 						c->shadowmap = emitWrite->emitArena.createObject<shadowmapImpl>(e->value<shadowmapComponent>(shadowmapComponent::component));
@@ -625,11 +713,7 @@ namespace cage
 				for (entityClass *e : cameraComponent::component->entities())
 				{
 					emitCameraStruct *c = emitWrite->emitArena.createObject<emitCameraStruct>();
-					c->transform = e->value<transformComponent>(transformComponent::component);
-					if (e->has(transformComponent::componentHistory))
-						c->transformHistory = e->value<transformComponent>(transformComponent::componentHistory);
-					else
-						c->transformHistory = c->transform;
+					emitTransform(c, e);
 					c->camera = e->value<cameraComponent>(cameraComponent::component);
 					c->entityId = ((uintPtr)e) ^ e->name();
 					emitWrite->cameras.push_back(c);
@@ -673,6 +757,7 @@ namespace cage
 					graphicsDispatch->shaderLuminanceCopy = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/luminanceCopy.glsl"));
 					graphicsDispatch->shaderFinalScreen = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/finalScreen.glsl"));
 					graphicsDispatch->shaderFxaa = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/fxaa.glsl"));
+					graphicsDispatch->shaderFont = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/gui/font.glsl"));
 				}
 
 				emitRead = emitBuffers[lock.index()];
@@ -698,11 +783,13 @@ namespace cage
 
 				{ // update model matrices
 					real interFactor = clamp(real(dispatchTime - emitTime) / controlThread().timePerTick, 0, 1);
+					for (auto it : emitRead->renderableObjects)
+						it->updateModelMatrix(interFactor);
+					for (auto it : emitRead->renderableTexts)
+						it->updateModelMatrix(interFactor);
 					for (auto it : emitRead->lights)
 						it->updateModelMatrix(interFactor);
 					for (auto it : emitRead->cameras)
-						it->updateModelMatrix(interFactor);
-					for (auto it : emitRead->renderables)
 						it->updateModelMatrix(interFactor);
 					//CAGE_LOG_DEBUG(severityEnum::Info, "engine", string() + "emit: " + emitTime + "\t dispatch time: " + dispatchTime + "\t interpolation: " + interFactor + "\t correction: " + itc.correction);
 				}
@@ -826,6 +913,12 @@ namespace cage
 	}
 
 	translucentStruct::translucentStruct(meshClass *mesh) : object(mesh, 1), firstLight(nullptr), lastLight(nullptr), next(nullptr)
+	{}
+
+	textsStruct::renderStruct::renderStruct() : glyphs(nullptr), count(0), next(nullptr)
+	{}
+
+	textsStruct::textsStruct() : firtsRender(nullptr), lastRender(nullptr), font(nullptr), next(nullptr)
 	{}
 
 	renderPassStruct::renderPassStruct()

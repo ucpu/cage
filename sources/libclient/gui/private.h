@@ -53,11 +53,11 @@ namespace cage
 	{
 		struct textStruct
 		{
-			uint32 *glyphs;
-			fontClass *font;
+			mat4 transform;
 			fontClass::formatStruct format;
 			vec3 color;
-			vec2 pos;
+			fontClass *font;
+			uint32 *glyphs;
 			uint32 cursor;
 			uint32 count;
 			textStruct();

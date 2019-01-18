@@ -32,8 +32,10 @@ namespace cage
 	void renderableTextStruct::render(guiImpl *impl)
 	{
 		guiImpl::graphicsDataStruct &context = impl->graphicsData;
-		data.font->bind(context.fontMesh, context.fontShader, impl->outputResolution[0], impl->outputResolution[1]);
-		data.font->render(data.glyphs, data.count, data.format, data.pos, data.color, data.cursor);
+		data.font->bind(context.fontMesh, context.fontShader);
+		context.fontShader->uniform(0, data.transform);
+		context.fontShader->uniform(4, data.color);
+		data.font->render(data.glyphs, data.count, data.format, data.cursor);
 	}
 
 	void renderableImageStruct::render(guiImpl *impl)

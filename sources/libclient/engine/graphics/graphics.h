@@ -65,6 +65,23 @@ namespace cage
 		translucentStruct(meshClass *mesh);
 	};
 
+	struct textsStruct
+	{
+		struct renderStruct
+		{
+			fontClass::formatStruct format;
+			mat4 transform;
+			vec3 color;
+			uint32 *glyphs;
+			uint32 count;
+			renderStruct *next;
+			renderStruct();
+		} *firtsRender, *lastRender;
+		fontClass *font;
+		textsStruct *next;
+		textsStruct();
+	};
+
 	struct renderPassStruct : public cameraEffectsStruct
 	{
 		struct shaderViewportStruct
@@ -77,6 +94,7 @@ namespace cage
 		objectsStruct *firstOpaque, *lastOpaque;
 		lightsStruct *firstLighting, *lastLighting;
 		translucentStruct *firstTranslucent, *lastTranslucent;
+		textsStruct *firstText, *lastText;
 		renderPassStruct *next;
 		textureClass *targetTexture;
 		mat4 view;
@@ -96,6 +114,7 @@ namespace cage
 		shaderClass *shaderVisualizeColor, *shaderVisualizeDepth, *shaderVisualizeVelocity;
 		shaderClass *shaderBlit, *shaderDepth, *shaderGBuffer, *shaderLighting, *shaderTranslucent;
 		shaderClass *shaderSsaoGenerate, *shaderSsaoBlur, *shaderSsaoApply, *shaderMotionBlur, *shaderLuminanceCollection, *shaderLuminanceCopy, *shaderFinalScreen, *shaderFxaa;
+		shaderClass *shaderFont;
 		uint32 windowWidth, windowHeight;
 		renderPassStruct *firstRenderPass, *lastRenderPass;
 	};
