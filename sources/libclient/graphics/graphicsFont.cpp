@@ -298,7 +298,7 @@ namespace cage
 		default:
 			CAGE_THROW_ERROR(exception, "unsupported bpp");
 		}
-		impl->tex->filters(GL_LINEAR, GL_LINEAR, 100);
+		impl->tex->filters(GL_LINEAR, GL_LINEAR, 0);
 		impl->tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 		//impl->tex->generateMipmaps();
 	}

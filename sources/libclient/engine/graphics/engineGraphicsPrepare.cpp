@@ -222,8 +222,8 @@ namespace cage
 				cam.direction = vec3(model * vec4(0, 0, -1, 0));
 				cam.worldUp = vec3(model * vec4(0, 1, 0, 0));
 				cam.fov = camera->camera.camera.perspectiveFov;
-				cam.near = camera->camera.near;
 				cam.far = camera->camera.far;
+				cam.near = camera->camera.near;
 				cam.zeroParallaxDistance = camera->camera.zeroParallaxDistance;
 				cam.eyeSeparation = camera->camera.eyeSeparation;
 				cam.ortographic = camera->camera.cameraType == cameraTypeEnum::Orthographic;
