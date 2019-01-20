@@ -35,7 +35,7 @@ namespace cage
 
 	mat4::mat4(const transform &other)
 	{
-		*this = mat4(other.position, other.orientation, vec3(other.scale, other.scale, other.scale));
+		*this = mat4(other.position, other.orientation, vec3(other.scale));
 	}
 
 	inline transform inverse(const transform &th) { return th.inverse(); }

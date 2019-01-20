@@ -34,8 +34,9 @@ namespace cage
 			uint32 primitivesCount;
 			uint32 skeletonName;
 			uint32 skeletonBones;
+			uint32 instancesLimitHint;
 
-			meshImpl() : id(0), vbo(0), verticesCount(0), verticesOffset(0), indicesCount(0), indicesOffset(0), materialSize(0), materialOffset(0), flags(meshFlags::None), primitiveType(GL_TRIANGLES), primitivesCount(0), skeletonName(0), skeletonBones(0)
+			meshImpl() : id(0), vbo(0), verticesCount(0), verticesOffset(0), indicesCount(0), indicesOffset(0), materialSize(0), materialOffset(0), flags(meshFlags::None), primitiveType(GL_TRIANGLES), primitivesCount(0), skeletonName(0), skeletonBones(0), instancesLimitHint(0)
 			{
 				for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 					textures[i] = 0;
@@ -223,6 +224,12 @@ namespace cage
 		impl->skeletonBones = bones;
 	}
 
+	void meshClass::setInstancesLimitHint(uint32 limit)
+	{
+		meshImpl *impl = (meshImpl*)this;
+		impl->instancesLimitHint = limit;
+	}
+
 	uint32 meshClass::getVerticesCount() const
 	{
 		meshImpl *impl = (meshImpl*)this;
@@ -270,6 +277,12 @@ namespace cage
 	{
 		meshImpl *impl = (meshImpl*)this;
 		return impl->skeletonBones;
+	}
+
+	uint32 meshClass::getInstancesLimitHint() const
+	{
+		meshImpl *impl = (meshImpl*)this;
+		return impl->instancesLimitHint;
 	}
 
 	void meshClass::dispatch() const

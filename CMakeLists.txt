@@ -105,15 +105,15 @@ cage_ide_sort_files(cage-asset-analyze)
 cage_ide_working_dir_in_place(cage-asset-analyze)
 
 ########
-# CAGE-MATERIAL-TOOL
+# CAGE-COMBINE-PNG
 ########
 
-file(GLOB_RECURSE cage-material-tool-sources "sources/material-tool/*")
-add_executable(cage-material-tool ${cage-material-tool-sources})
-target_link_libraries(cage-material-tool cage-core)
-cage_ide_category(cage-material-tool cage)
-cage_ide_sort_files(cage-material-tool)
-cage_ide_working_dir_in_place(cage-material-tool)
+file(GLOB_RECURSE cage-combine-png-sources "sources/combine-png/*")
+add_executable(cage-combine-png ${cage-combine-png-sources})
+target_link_libraries(cage-combine-png cage-core)
+cage_ide_category(cage-combine-png cage)
+cage_ide_sort_files(cage-combine-png)
+cage_ide_working_dir_in_place(cage-combine-png)
 
 ########
 # FINALIZATION

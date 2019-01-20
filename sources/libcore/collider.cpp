@@ -478,9 +478,9 @@ namespace cage
 			*/
 		}
 
-		real minSizeObject(const colliderClass *o)
+		real minSizeObject(const colliderClass *o, real scale)
 		{
-			vec3 s = o->box().size();
+			vec3 s = o->box().size() * scale;
 			return min(min(s[0], s[1]), s[2]);
 		}
 
@@ -657,7 +657,7 @@ namespace cage
 		CAGE_ASSERT_RUNTIME(time2 >= time1, time2, time1);
 		
 		// find first contact
-		real minSize = min(minSizeObject(ao) * at1.scale, minSizeObject(bo) * bt1.scale) * 0.5;
+		real minSize = min(minSizeObject(ao, at1.scale), minSizeObject(bo, bt1.scale)) * 0.5;
 		real maxDist = max(distance(interpolate(at1.position, at2.position, time1), interpolate(at1.position, at2.position, time2)),
 						   distance(interpolate(bt1.position, bt2.position, time1), interpolate(bt1.position, bt2.position, time2)));
 		real maxDiff = (maxDist > minSize ? (minSize / maxDist) : 1) * (time2 - time1);

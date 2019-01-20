@@ -30,7 +30,7 @@ void processObject()
 	for (uint32 sec = 0; sec < ini->sectionCount(); sec++)
 	{
 		string section = ini->section(sec);
-		if (section == "size" || section == "ref")
+		if (section == "size")
 			continue;
 		else if (!section.isDigitsOnly())
 		{
@@ -80,26 +80,6 @@ void processObject()
 	{ // sizes
 		o.worldSize = ini->getFloat("size", "world");
 		o.pixelsSize = ini->getFloat("size", "pixels");
-	}
-
-	{ // refs
-		string s;
-		s = ini->getString("ref", "shadower");
-		if (!s.empty())
-		{
-			s = pathJoin(pathExtractPath(inputName), s);
-			o.shadower = hashString(s.c_str());
-			deps.insert(o.shadower);
-			writeLine(string("ref=") + s);
-		}
-		s = ini->getString("ref", "collider");
-		if (!s.empty())
-		{
-			s = pathJoin(pathExtractPath(inputName), s);
-			o.collider = hashString(s.c_str());
-			deps.insert(o.collider);
-			writeLine(string("ref=") + s);
-		}
 	}
 
 	assetHeaderStruct h = initializeAssetHeaderStruct();

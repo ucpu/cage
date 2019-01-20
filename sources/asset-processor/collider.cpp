@@ -16,16 +16,14 @@ void processCollider()
 
 	holder<colliderClass> collider = newCollider();
 
-	float scale = properties("scale").toFloat();
-	CAGE_LOG(severityEnum::Info, logComponentName, string() + "using scale: " + scale);
-
+	mat3 axesScale = axesScaleMatrix();
 	for (uint32 i = 0; i < am->mNumFaces; i++)
 	{
 		triangle tri;
 		for (uint32 j = 0; j < 3; j++)
 		{
 			uint32 idx = numeric_cast<uint32>(am->mFaces[i].mIndices[j]);
-			tri[j] = (*(cage::vec3*)&(am->mVertices[idx])) * scale;
+			tri[j] = axesScale * conv(am->mVertices[i]);
 		}
 		collider->addTriangle(tri);
 	}

@@ -254,7 +254,7 @@ void testGeometry()
 			mat4 rot1(quat(degs(30), degs(), degs()));
 			mat4 rot2(quat(degs(), degs(315), degs()));
 			mat4 tran(vec3(0, 10, 0));
-			mat4 scl(real(3));
+			mat4 scl = mat4::scale(3);
 			CAGE_TEST((a * rot1).volume() > a.volume());
 			CAGE_TEST((a * rot1 * rot2).volume() > a.volume());
 			CAGE_TEST((a * scl).volume() > a.volume());

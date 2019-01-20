@@ -29,7 +29,8 @@ static const NAME Nan;
 
 #define GCHL_GEN_VECTOR_BASE(NAME, N) \
 GCHL_GEN_QUATERNION_BASE(NAME, N) \
-NAME() { for (uint32 i = 0; i < N; i++) data[i] = 0; } \
+NAME() : NAME(0) {} \
+explicit NAME(real value) { for (uint32 i = 0; i < N; i++) data[i] = value; } \
 NAME min(const NAME &other) const { NAME r; for (uint32 i = 0; i < N; i++) r.data[i] = data[i] < other.data[i] ? data[i] : other.data[i]; return r; } \
 NAME max(const NAME &other) const { NAME r; for (uint32 i = 0; i < N; i++) r.data[i] = data[i] > other.data[i] ? data[i] : other.data[i]; return r; } \
 NAME min(real other) const { NAME r; for (uint32 i = 0; i < N; i++) r.data[i] = data[i] < other ? data[i] : other; return r; } \

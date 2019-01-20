@@ -7,15 +7,15 @@ display = bake model
 type = bool
 default = false
 
-[scale]
-display = scale
-type = real
-default = 1
-
 [axes]
 display = axes
 type = string
 default = +x+y+z
+
+[scale]
+display = scale
+type = real
+default = 1
 
 [export_uv]
 display = export uvs
@@ -45,3 +45,11 @@ type = string
 [override_material]
 display = path to cpm material
 type = string
+
+[instances_limit]
+display = instances limit hint
+type = uint32
+min = 1
+max = 1000000
+default = 1000000
+

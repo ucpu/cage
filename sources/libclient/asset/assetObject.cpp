@@ -23,8 +23,6 @@ namespace cage
 			deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
 			objectHeaderStruct h;
 			des >> h;
-			obj->collider = h.collider;
-			obj->shadower = h.shadower;
 			obj->worldSize = h.worldSize;
 			obj->pixelsSize = h.pixelsSize;
 

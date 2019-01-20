@@ -3,8 +3,6 @@ namespace cage
 	class CAGE_API objectClass
 	{
 	public:
-		uint32 shadower;
-		uint32 collider;
 		real worldSize;
 		real pixelsSize;
 

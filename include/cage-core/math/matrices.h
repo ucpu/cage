@@ -54,7 +54,6 @@ namespace cage
 		// constructors
 		mat4(); // identity
 		explicit mat4(real a, real b, real c, real d, real e, real f, real g, real h, real i, real j, real k, real l, real m, real n, real o, real p);
-		explicit mat4(real other); // scale matrix
 		explicit mat4(const mat3 &other);
 		explicit mat4(const vec3 &other); // translation matrix
 		explicit mat4(const vec3 &position, const quat &orientation, const vec3 &scale = vec3(1, 1, 1));
@@ -88,6 +87,8 @@ namespace cage
 		real determinant() const;
 		bool valid() const;
 		static mat4 parse(const string &str);
+		static mat4 scale(real scl) { return scale(vec3(scl)); };
+		static mat4 scale(const vec3 &scl) { return mat4(scl[0], 0, 0, 0, 0, scl[1], 0, 0, 0, 0, scl[2], 0, 0, 0, 0, 1); };
 
 		// constants
 		static const mat4 Zero;

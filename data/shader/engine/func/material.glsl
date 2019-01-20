@@ -78,6 +78,7 @@ void materialLoad()
 	metalness = uniMaterial.specialBase.g;
 	emissive = uniMaterial.specialBase.b;
 	colorMask = uniMaterial.specialBase.a;
+	smoothNormal = normal;
 	uniMatMapAlbedo();
 	uniMatMapSpecial();
 	uniMatMapNormal();

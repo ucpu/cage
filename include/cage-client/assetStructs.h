@@ -50,6 +50,7 @@ namespace cage
 		uint32 skeletonName;
 		uint32 skeletonBones;
 		uint32 textureNames[MaxTexturesCountPerMaterial];
+		uint32 instancesLimitHint;
 		uint32 materialSize;
 
 		bool uvs() const;
@@ -115,8 +116,6 @@ namespace cage
 
 	struct CAGE_API objectHeaderStruct
 	{
-		uint32 shadower;
-		uint32 collider;
 		real worldSize;
 		real pixelsSize;
 		uint32 lodsCount;

@@ -6,6 +6,9 @@
 #ifdef CAGE_SYSTEM_WINDOWS
 #include "../incWin.h"
 #include <intrin.h> // __debugbreak
+#else
+#include <sys/types.h>
+#include <sys/ptrace.h>
 #endif
 
 #include <limits>
@@ -26,6 +29,27 @@ namespace cage
 			} isLocal;
 			bool isGlobalBreakpointEnabled = true;
 			bool isGlobalAssertDeadly = true;
+
+#ifndef CAGE_SYSTEM_WINDOWS
+			bool isDebuggingImpl()
+			{
+				// another attempt, another failure
+				//if (ptrace(PTRACE_TRACEME, 0, 1, 0) < 0)
+				//	return true;
+				// seriously, how can anyone use linux?
+				return false;
+			}
+#endif
+
+			bool isDebugging()
+			{
+#ifdef CAGE_SYSTEM_WINDOWS
+				return IsDebuggerPresent();
+#else
+				static bool underDebugger = isDebuggingImpl();
+				return underDebugger;
+#endif
+			}
 		}
 
 		void terminate()
@@ -37,13 +61,13 @@ namespace cage
 
 		void debugOutput(const string &msg)
 		{
-#ifdef CAGE_SYSTEM_WINDOWS
-			if (IsDebuggerPresent())
-			{
-				string value = msg + "\n";
-				OutputDebugString(value.c_str());
+			if (!isDebugging())
 				return;
-			}
+#ifdef CAGE_SYSTEM_WINDOWS
+			string value = msg + "\n";
+			OutputDebugString(value.c_str());
+#else
+			// todo
 #endif
 		}
 
@@ -51,11 +75,12 @@ namespace cage
 		{
 			if (!isLocal.breakpointEnabled || !isGlobalBreakpointEnabled)
 				return;
+			if (!isDebugging())
+				return;
 #ifdef CAGE_SYSTEM_WINDOWS
-			if (IsDebuggerPresent())
-				__debugbreak();
+			__debugbreak();
 #else
-			//__builtin_trap();
+			__builtin_trap();
 #endif
 		}
 

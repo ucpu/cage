@@ -369,13 +369,6 @@ namespace cage
 						objectClass *o = assets()->get<assetSchemeIndexObject, objectClass>(e->render.object);
 						if (o->lodsCount() == 0)
 							continue;
-						if (shadows && o->shadower)
-						{
-							CAGE_ASSERT_RUNTIME(assets()->ready(o->shadower), e->render.object, o->shadower);
-							meshClass *m = assets()->get<assetSchemeIndexMesh, meshClass>(o->shadower);
-							addRenderableMesh(pass, e, m);
-							continue;
-						}
 						uint32 lod = 0;
 						if (o->lodsCount() > 1)
 						{
@@ -462,6 +455,7 @@ namespace cage
 					if (it == opaqueObjectsMap.end())
 					{
 						uint32 mm = CAGE_SHADER_MAX_INSTANCES;
+						mm = min(mm, m->getInstancesLimitHint());
 						if (m->getSkeletonBones())
 							mm = min(mm, CAGE_SHADER_MAX_BONES / m->getSkeletonBones());
 						obj = dispatchArena.createObject<objectsStruct>(m, mm);
@@ -588,7 +582,7 @@ namespace cage
 						return; // this light's volume is outside view frustum
 					break;
 				case lightTypeEnum::Point:
-					mvpMat = pass->viewProj * e->model * mat4(lightRange(e->light.color, e->light.attenuation));
+					mvpMat = pass->viewProj * e->model * mat4::scale(lightRange(e->light.color, e->light.attenuation));
 					if (!frustumCulling(graphicsDispatch->meshSphere->getBoundingBox(), mvpMat))
 						return; // this light's volume is outside view frustum
 					break;

@@ -355,6 +355,8 @@ void processMesh()
 
 	loadSkeletonName(dsm);
 
+	dsm.instancesLimitHint = properties("instances_limit").toUint32();
+
 	meshHeaderStruct::materialDataStruct mat;
 	memset(&mat, 0, sizeof(mat));
 	mat.albedoBase = vec4(0, 0, 0, 1);

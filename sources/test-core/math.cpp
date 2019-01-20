@@ -51,7 +51,8 @@ void test(rads a, rads b)
 
 namespace
 {
-	template<class T, uint32 N> void checkVectors()
+	template<class T, uint32 N>
+	void checkVectors()
 	{
 		{
 			T r;
@@ -119,6 +120,8 @@ namespace
 			valid(a);
 			interpolate(a, b, 0.5);
 		}
+
+		T t(3.5);
 	}
 
 	void testMathCompiles()
@@ -606,9 +609,9 @@ namespace
 			{
 				vec3 pos = randomDirection3() * randomRange(real(0.1), 10);
 				quat rot = randomDirectionQuat();
-				real scl = randomRange(real(0.1), 10);
-				mat4 m1 = mat4(pos) * mat4(rot) * mat4(scl);
-				mat4 m2 = mat4(pos, rot, vec3(scl, scl, scl));
+				vec3 scl = randomRange3(real(0.1), 10);
+				mat4 m1 = mat4(pos) * mat4(rot) * mat4::scale(scl);
+				mat4 m2 = mat4(pos, rot, scl);
 				test(m1, m2);
 			}
 		}
@@ -630,12 +633,7 @@ namespace
 				real sa = randomRange(real(0.1), 10);
 				real sb = randomRange(real(0.1), 10);
 				transform ta(pa, oa, sa), tb(pb, ob, sb);
-				mat4 ma(pa, oa, vec3(sa, sa, sa)), mb(pb, ob, vec3(sb, sb, sb));
-				test(mat4(ta), ma);
-				mat4 mc1 = ma * mb;
-				transform tc = ta * tb;
-				mat4 mc2 = mat4(tc);
-				test(mc1, mc2);
+				test(mat4(ta * tb), mat4(ta) * mat4(tb));
 				interpolate(ta, tb, 0.42);
 			}
 		}
@@ -649,9 +647,8 @@ namespace
 				quat o = randomDirectionQuat();
 				real s = randomRange(real(0.1), 10);
 				transform t(p, o, s);
-				transform ti = t.inverse();
 				mat4 m1 = mat4(t).inverse();
-				mat4 m2 = mat4(ti);
+				mat4 m2 = mat4(t.inverse());
 				test(m1, m2);
 			}
 		}

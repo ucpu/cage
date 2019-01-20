@@ -106,7 +106,7 @@ namespace cage
 		{
 			uint16 p = impl->boneParents[i];
 			if (p == (uint16)-1)
-				output[i] = mat4(0); // degenerate
+				output[i] = mat4::scale(0); // degenerate
 			else
 			{
 				vec3 a = pos(temporary[p]);

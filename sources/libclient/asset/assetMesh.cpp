@@ -54,6 +54,7 @@ namespace cage
 			msh->setBoundingBox(data.box);
 			msh->setTextures(data.textureNames);
 			msh->setSkeleton(data.skeletonName, data.skeletonBones);
+			msh->setInstancesLimitHint(data.instancesLimitHint);
 
 			msh->setBuffers(
 				data.verticesCount, data.vertexSize(), verticesData,

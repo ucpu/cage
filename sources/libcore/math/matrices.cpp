@@ -239,26 +239,6 @@ namespace cage
 		data[15] = p;
 	}
 
-	mat4::mat4(real other)
-	{
-		data[0] = other;
-		data[1] = 0;
-		data[2] = 0;
-		data[3] = 0;
-		data[4] = 0;
-		data[5] = other;
-		data[6] = 0;
-		data[7] = 0;
-		data[8] = 0;
-		data[9] = 0;
-		data[10] = other;
-		data[11] = 0;
-		data[12] = 0;
-		data[13] = 0;
-		data[14] = 0;
-		data[15] = 1;
-	}
-
 	mat4::mat4(const mat3 &other)
 	{
 		data[0] = other.data[0];
@@ -301,16 +281,10 @@ namespace cage
 
 	mat4::mat4(const vec3 &position, const quat &orientation, const vec3 &scale)
 	{
-		*this = mat4(orientation);
-		for (uint32 i = 0; i < 3; i++)
-		{
-			data[0 + i * 4] *= scale[i];
-			data[1 + i * 4] *= scale[i];
-			data[2 + i * 4] *= scale[i];
-		}
-		data[12] = position[0];
-		data[13] = position[1];
-		data[14] = position[2];
+		mat4 t(position);
+		mat4 r(orientation);
+		mat4 s = mat4::scale(scale);
+		*this = t * r * s;
 	}
 
 	mat4 mat4::operator * (real other) const

@@ -165,10 +165,10 @@ void testCollisions()
 		}
 		{
 			CAGE_TESTCASE("one tetraedr is very small");
-			CAGE_TEST(collisionDetection(c1.get(), c1.get(), 
-				transform(vec3(-5, 0, 0), quat(), 0.01), 
-				transform(vec3(5, 0, 0)), 
-				transform(vec3(), quat(), 0.01), 
+			CAGE_TEST(collisionDetection(c1.get(), c1.get(),
+				transform(vec3(-5, 0, 0), quat(), 0.01),
+				transform(vec3(5, 0, 0)),
+				transform(vec3(), quat(), 0.01),
 				transform(), fractionBefore, fractionContact));
 			CAGE_TEST(fractionContact > 0 && fractionContact < 1);
 		}
@@ -177,7 +177,7 @@ void testCollisions()
 			CAGE_TEST(!collisionDetection(c1.get(), c1.get(),
 				transform(vec3(-5, 0, 0)),
 				transform(vec3(5, 0, 0)),
-				transform(vec3(-5, 0, 0)), 
+				transform(vec3(-5, 0, 0)),
 				transform(vec3(5, 0, 0)), fractionBefore, fractionContact));
 			CAGE_TEST(!fractionContact.valid());
 		}

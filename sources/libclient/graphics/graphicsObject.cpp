@@ -19,8 +19,6 @@ namespace cage
 		public:
 			objectImpl()
 			{
-				shadower = 0;
-				collider = 0;
 				worldSize = 0;
 				pixelsSize = 0;
 			}
