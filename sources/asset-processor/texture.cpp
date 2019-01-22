@@ -5,11 +5,26 @@
 
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/png.h>
+#include <cage-core/color.h>
 
 #include <cage-client/opengl.h>
 
 #include <IL/il.h>
 #include <IL/ilu.h>
+
+vec2 convertSpecularToSpecial(const vec3 &spec)
+{
+	vec3 hsv = convertRgbToHsv(spec);
+	return vec2(1 - hsv[2], hsv[1]);
+	/*
+	real r = (spec[0] + spec[1] + spec[2]) / 3;
+	vec3 d = abs(spec - r);
+	real m = (d[0] + d[1] + d[2]) / 3;
+	CAGE_ASSERT_RUNTIME(r >= 0 && r <= 1, r, m, spec);
+	CAGE_ASSERT_RUNTIME(m >= 0 && m <= 1, r, m, spec);
+	return vec2(1 - r, m);
+	*/
+}
 
 namespace
 {
@@ -159,6 +174,61 @@ namespace
 			bpp = 3;
 		}
 
+		void convertSpecularToSpecial()
+		{
+			uint32 pixels = width * height;
+			switch (bpp)
+			{
+			case 1:
+			{
+				for (uint32 i = 0; i < pixels; i++)
+				{
+					vec3 color = vec3(real(data[i]) / 255);
+					vec2 special = ::convertSpecularToSpecial(color);
+					CAGE_ASSERT_RUNTIME(special[1] < 1e-7);
+					data[i] = numeric_cast<uint8>(special[0] * 255);
+				}
+			} break;
+			case 3:
+			{
+				std::vector<uint8> res;
+				res.resize(pixels * 2);
+				for (uint32 i = 0; i < pixels; i++)
+				{
+					vec3 color = vec3(data[i * 3 + 0], data[i * 3 + 1], data[i * 3 + 2]) / 255;
+					vec2 special = ::convertSpecularToSpecial(color);
+					res[i * 2 + 0] = numeric_cast<uint8>(special[0] * 255);
+					res[i * 2 + 1] = numeric_cast<uint8>(special[1] * 255);
+				}
+				std::swap(res, data);
+				bpp = 2;
+			} break;
+			default:
+				CAGE_THROW_ERROR(exception, "1 or 3 channels are required for conversion of specular color to special material");
+			}
+		}
+
+		void invert(uint32 channelIndex)
+		{
+			if (channelIndex >= bpp)
+				CAGE_THROW_ERROR(exception, "texture does not have that channel");
+			uint32 pixels = width * height;
+			for (uint32 i = 0; i < pixels; i++)
+				data[i * bpp + channelIndex] = 255 - data[i * bpp + channelIndex];
+		}
+
+		void premultiplyAlpha()
+		{
+			if (bpp != 4)
+				CAGE_THROW_ERROR(exception, "premultiplied alpha requires 4 components");
+			if (properties("srgb").toBool())
+				premultiplyAlphaImpl<true>();
+			else
+				premultiplyAlphaImpl<false>();
+		}
+
+	private:
+
 		template<bool SRGB>
 		void premultiplyAlphaImpl()
 		{
@@ -187,17 +257,6 @@ namespace
 			}
 		}
 
-		void premultiplyAlpha()
-		{
-			if (bpp != 4)
-				CAGE_THROW_ERROR(exception, "premultiplied alpha requires 4 components");
-			if (properties("srgb").toBool())
-				premultiplyAlphaImpl<true>();
-			else
-				premultiplyAlphaImpl<false>();
-		}
-
-	private:
 		float convertToNormalIntensity(sint32 x, sint32 y)
 		{
 			x = min((sint32)width - 1, max(0, x));
@@ -421,12 +480,21 @@ namespace
 
 void processTexture()
 {
-	if (properties("convert_normal").toFloat() > 0)
 	{
-		if (properties("premultiply_alpha").toBool())
-			CAGE_THROW_ERROR(exception, "conversion to normal map and premultiplied alpha are incompatible");
-		if (properties("srgb").toBool())
-			CAGE_THROW_ERROR(exception, "conversion to normal map and srgb are incompatible");
+		bool n = properties("convert_normal").toFloat() > 0;
+		bool s = properties("convert_specular_to_special").toBool();
+		bool a = properties("premultiply_alpha").toBool();
+		bool g = properties("srgb").toBool();
+		//bool inv_r = properties("invert_r").toBool();
+		//bool inv_g = properties("invert_g").toBool();
+		//bool inv_b = properties("invert_b").toBool();
+		//bool inv_a = properties("invert_a").toBool();
+		if (n && s)
+			CAGE_THROW_ERROR(exception, "only one conversion is possible");
+		if ((n || s) && a)
+			CAGE_THROW_ERROR(exception, "premultiplied alpha is only for colors");
+		if ((n || s) && g)
+			CAGE_THROW_ERROR(exception, "srgb is only for colors");
 	}
 
 	ilInit();
@@ -479,6 +547,15 @@ void processTexture()
 		}
 	}
 
+	{ // convert specular to special
+		if (properties("convert_specular_to_special").toBool())
+		{
+			for (auto &it : images)
+				it.convertSpecularToSpecial();
+			CAGE_LOG(severityEnum::Info, logComponentName, string() + "converted from specular colors to material special");
+		}
+	}
+
 	{ // premultiply alpha
 		if (properties("premultiply_alpha").toBool())
 		{
@@ -503,6 +580,33 @@ void processTexture()
 			for (auto &it : images)
 				it.performFlipV();
 			CAGE_LOG(severityEnum::Info, logComponentName, string() + "image vertically flipped (flip_v was false)");
+		}
+	}
+
+	{ // invert
+		if (properties("invert_r").toBool())
+		{
+			for (auto &it : images)
+				it.invert(0);
+			CAGE_LOG(severityEnum::Info, logComponentName, string() + "red channel inverted");
+		}
+		if (properties("invert_g").toBool())
+		{
+			for (auto &it : images)
+				it.invert(1);
+			CAGE_LOG(severityEnum::Info, logComponentName, string() + "green channel inverted");
+		}
+		if (properties("invert_b").toBool())
+		{
+			for (auto &it : images)
+				it.invert(2);
+			CAGE_LOG(severityEnum::Info, logComponentName, string() + "blue channel inverted");
+		}
+		if (properties("invert_a").toBool())
+		{
+			for (auto &it : images)
+				it.invert(3);
+			CAGE_LOG(severityEnum::Info, logComponentName, string() + "alpha channel inverted");
 		}
 	}
 

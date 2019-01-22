@@ -251,9 +251,9 @@ namespace cage
 				renderTarget->colorTexture(0, texTarget);
 				renderTarget->checkStatus();
 				texSource->bind();
-				std::swap(texSource, texTarget);
 				meshSquare->dispatch();
 				CAGE_CHECK_GL_ERROR_DEBUG();
+				std::swap(texSource, texTarget);
 			}
 
 			void renderObject(objectsStruct *obj, shaderClass *shr)

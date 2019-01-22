@@ -8,11 +8,59 @@ type = enum
 values = GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_2D_ARRAY, GL_TEXTURE_CUBE_MAP
 default = GL_TEXTURE_2D
 
+[convert_normal]
+display = height to normal
+hint = conversion strength (0 to disable)
+type = real
+default = 0
+min = 0
+
+[convert_specular_to_special]
+display = specular color to roughness and metalness
+type = bool
+default = false
+
+[premultiply_alpha]
+display = premultiply alpha
+type = bool
+default = false
+
 [downscale]
 display = downscale
 type = uint32
 min = 1
 default = 1
+
+[flip_v]
+display = vertical flip
+type = bool
+default = false
+
+[invert_r]
+display = invert red channel
+type = bool
+default = false
+
+[invert_g]
+display = invert green channel
+type = bool
+default = false
+
+[invert_b]
+display = invert blue channel
+type = bool
+default = false
+
+[invert_a]
+display = invert alpha channel
+type = bool
+default = false
+
+[srgb]
+display = sRGB
+hint = degamma (linearize) the RGB channels
+type = bool
+default = false
 
 [animation_duration]
 display = animation duration
@@ -24,29 +72,6 @@ default = 1000000
 display = animation loop
 type = bool
 default = true
-
-[premultiply_alpha]
-display = premultiply alpha
-type = bool
-default = false
-
-[srgb]
-display = sRGB
-hint = degamma (linearize) the RGB channels
-type = bool
-default = false
-
-[flip_v]
-display = vertical flip
-type = bool
-default = false
-
-[convert_normal]
-display = height to normal
-hint = conversion strength (0 to disable)
-type = real
-default = 0
-min = 0
 
 [filter_min]
 display = minification filter

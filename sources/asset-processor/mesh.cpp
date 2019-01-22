@@ -6,6 +6,8 @@
 #include <cage-client/graphics/shaderConventions.h>
 #include <cage-client/opengl.h>
 
+vec2 convertSpecularToSpecial(const vec3 &spec);
+
 namespace
 {
 	void setFlags(meshFlags &flags, meshFlags idx, bool available, const char *name)
@@ -182,12 +184,14 @@ namespace
 		if (matName.length > 0)
 			CAGE_LOG(severityEnum::Info, logComponentName, string() + "material name: '" + matName.C_Str() + "'");
 
+		// opacity
 		m->Get(AI_MATKEY_OPACITY, mat.albedoBase[3].value);
 		if (mat.albedoBase[3] <= 1e-7)
 			dsm.flags |= meshFlags::Transparency;
 		else if (mat.albedoBase[3] < 1)
 			dsm.flags |= meshFlags::Translucency;
 
+		// albedo
 		if (loadTextureAssimp(m, dsm, aiTextureType_DIFFUSE, CAGE_SHADER_TEXTURE_ALBEDO))
 		{
 			int flg = 0;
@@ -201,7 +205,7 @@ namespace
 		}
 		else
 		{
-			aiColor3D color = aiColor3D(1, 1, 1);
+			aiColor3D color = aiColor3D(1);
 			m->Get(AI_MATKEY_COLOR_DIFFUSE, color);
 			mat.albedoBase = vec4(conv(color), mat.albedoBase[3]);
 
@@ -211,17 +215,31 @@ namespace
 				dsm.flags |= meshFlags::Translucency;
 		}
 
-		if (!loadTextureAssimp(m, dsm, aiTextureType_SHININESS, CAGE_SHADER_TEXTURE_SPECIAL))
+		// special
+		if (!loadTextureAssimp(m, dsm, aiTextureType_SPECULAR, CAGE_SHADER_TEXTURE_SPECIAL))
 		{
-			float shininess = -1;
-			m->Get(AI_MATKEY_SHININESS, shininess);
-			if (shininess >= 0)
-				mat.specialBase[0] = sqrt(2 / (2 + shininess)); // convert shininess to roughness
+			aiColor3D spec = aiColor3D(0);
+			m->Get(AI_MATKEY_COLOR_SPECULAR, spec);
+			if (conv(spec) != vec3(0))
+			{ // convert specular color to special material
+				vec2 s = convertSpecularToSpecial(conv(spec));
+				mat.specialBase[0] = s[0];
+				mat.specialBase[1] = s[1];
+			}
+			else
+			{ // convert shininess to roughness
+				float shininess = -1;
+				m->Get(AI_MATKEY_SHININESS, shininess);
+				if (shininess >= 0)
+					mat.specialBase[0] = sqrt(2 / (2 + shininess));
+			}
 		}
 
+		// normal map
 		loadTextureAssimp(m, dsm, aiTextureType_HEIGHT, CAGE_SHADER_TEXTURE_NORMAL);
 		loadTextureAssimp(m, dsm, aiTextureType_NORMALS, CAGE_SHADER_TEXTURE_NORMAL);
 
+		// two sided
 		{
 			int twosided = false;
 			m->Get(AI_MATKEY_TWOSIDED, twosided);
