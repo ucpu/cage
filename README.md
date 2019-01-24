@@ -119,8 +119,6 @@ A long-term hobby project that turned out to be quite BIG.
        - notifies all connected games whenever an asset has changed so that the engine can reload it
      - assets are configured in simple ini-like files (good for version-control-systems)
      - easily extensible to any custom formats
-   - Asset analyze
-     - given path to a folder, it analyzes all files in it and generates initial asset configuration
 
 # Building
 
