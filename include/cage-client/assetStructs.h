@@ -65,6 +65,7 @@ namespace cage
 			vec4 specialBase;
 			vec4 albedoMult;
 			vec4 specialMult;
+			materialDataStruct();
 		};
 
 		// follows:

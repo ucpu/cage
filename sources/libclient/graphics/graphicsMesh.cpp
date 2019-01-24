@@ -10,15 +10,24 @@
 #include <cage-client/graphics.h>
 #include <cage-client/graphics/shaderConventions.h>
 #include <cage-client/opengl.h>
+#include <cage-client/assetStructs.h>
 #include "private.h"
 
 namespace cage
 {
+	meshHeaderStruct::materialDataStruct::materialDataStruct()
+	{
+		albedoBase[3] = 1;
+		albedoMult = specialMult = vec4(1, 1, 1, 1);
+	}
+
 	namespace
 	{
 		class meshImpl : public meshClass
 		{
 		public:
+			aabb box;
+			uint32 textures[MaxTexturesCountPerMaterial];
 			uint32 id;
 			uint32 vbo;
 			uint32 verticesCount;
@@ -27,16 +36,15 @@ namespace cage
 			uint32 indicesOffset;
 			uint32 materialSize;
 			uint32 materialOffset;
-			meshFlags flags;
 			uint32 primitiveType;
-			aabb box;
-			uint32 textures[MaxTexturesCountPerMaterial];
 			uint32 primitivesCount;
 			uint32 skeletonName;
 			uint32 skeletonBones;
 			uint32 instancesLimitHint;
+			meshFlags flags;
 
-			meshImpl() : id(0), vbo(0), verticesCount(0), verticesOffset(0), indicesCount(0), indicesOffset(0), materialSize(0), materialOffset(0), flags(meshFlags::None), primitiveType(GL_TRIANGLES), primitivesCount(0), skeletonName(0), skeletonBones(0), instancesLimitHint(0)
+			meshImpl() : box(aabb::Universe), id(0), vbo(0), verticesCount(0), verticesOffset(0), indicesCount(0), indicesOffset(0), materialSize(0), materialOffset(0), primitiveType(GL_TRIANGLES), primitivesCount(0), skeletonName(0), skeletonBones(0), instancesLimitHint(1),
+				flags(meshFlags::DepthTest | meshFlags::DepthWrite | meshFlags::VelocityWrite | meshFlags::Lighting | meshFlags::Normals | meshFlags::ShadowCast | meshFlags::Uvs)
 			{
 				for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 					textures[i] = 0;
