@@ -52,8 +52,6 @@ namespace cage
 				texture = newTexture(window(), target);
 				texture->filters(GL_LINEAR, GL_LINEAR, 16);
 				texture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-				//glTexParameteri(target, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-				//glTexParameteri(target, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 		};
@@ -77,8 +75,9 @@ namespace cage
 		{
 			mat4 viewProj;
 			mat4 viewProjInv;
-			vec4 params; // strength, bias, power, radius
 			vec4 ambientLight;
+			vec4 params; // strength, bias, power, radius
+			uint32 iparams[4];
 		};
 
 		struct finalScreenShaderStruct
@@ -443,6 +442,7 @@ namespace cage
 						s.viewProjInv = pass->viewProj.inverse();
 						s.params = vec4(pass->ssao.strength, pass->ssao.bias, pass->ssao.power, pass->ssao.worldRadius);
 						s.ambientLight = vec4(pass->shaderViewport.ambientLight);
+						s.iparams[0] = pass->ssao.samplesCount;
 						ssaoDataBuffer->bind();
 						ssaoDataBuffer->writeRange(&s, 0, sizeof(ssaoShaderStruct));
 					}

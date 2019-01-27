@@ -26,5 +26,5 @@ void main()
 	vec3 albedo = texelFetch(texAlbedo, ivec2(gl_FragCoord.xy), 0).xyz;
 	vec3 color = texelFetch(texColor, ivec2(gl_FragCoord.xy), 0).xyz;
 	ao = pow(ao * params[0] + params[1], params[2]);
-	outColor = color - albedo * ambientLight * ao;
+	outColor = color - albedo * vec3(ambientLight) * ao;
 }

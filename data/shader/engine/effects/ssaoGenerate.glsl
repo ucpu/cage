@@ -23,8 +23,6 @@ layout(binding = CAGE_SHADER_TEXTURE_DEPTH) uniform sampler2D texDepth;
 
 out float outAo;
 
-const uint sampleCount = 64;
-
 vec3 s2w(vec2 p, float d)
 {
 	vec4 p4 = vec4(p, d, 1.0);
@@ -55,7 +53,7 @@ void main()
 	float ssaoRadius = params[3];
 	float occ = 0.0;
 	float total = 0.0;
-	for (int i = 0; i < sampleCount; i++)
+	for (int i = 0; i < iparams[0]; i++)
 	{
 		vec3 dir = pointsOnSphere[(n + i) % 256];
 		float d = dot(myNormal, dir);

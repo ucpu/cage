@@ -8,6 +8,7 @@ namespace cage
 		real bias;
 		real power;
 		// ao = pow(ao * strength + bias, power)
+		uint32 samplesCount;
 		cameraSsaoStruct();
 	};
 
