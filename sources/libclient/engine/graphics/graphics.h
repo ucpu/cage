@@ -92,7 +92,7 @@ namespace cage
 			vec4 ambientLight;
 		} shaderViewport;
 		objectsStruct *firstOpaque, *lastOpaque;
-		lightsStruct *firstLighting, *lastLighting;
+		lightsStruct *firstLight, *lastLight;
 		translucentStruct *firstTranslucent, *lastTranslucent;
 		textsStruct *firstText, *lastText;
 		renderPassStruct *next;

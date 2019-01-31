@@ -165,7 +165,7 @@ namespace cage
 				real c = max(color[0], max(color[1], color[2]));
 				if (c <= 1e-5)
 					return 0;
-				real e = c * 256.f / 3.f;
+				real e = c * 1000;
 				real x = attenuation[0], y = attenuation[1], z = attenuation[2];
 				if (z < 1e-5)
 				{
@@ -212,6 +212,118 @@ namespace cage
 			static real fovToLodSelection(rads fov)
 			{
 				return tan(fov * 0.5) * 2;
+			}
+
+			static void sortTranslucentBackToFront(renderPassImpl *pass)
+			{
+				if (!pass->firstTranslucent)
+					return;
+
+				struct sorter
+				{
+					const vec3 center;
+
+					uint32 count(translucentStruct *p)
+					{
+						uint32 result = 0;
+						while (p)
+						{
+							result++;
+							p = p->next;
+						}
+						return result;
+					}
+
+					bool isSorted(translucentStruct *p)
+					{
+						if (!p->next)
+							return true;
+						if (distance(p) < distance(p->next))
+							return false;
+						return isSorted(p->next);
+					}
+
+					sorter(renderPassImpl *pass) : center(pass->shaderViewport.eyePos)
+					{
+						uint32 initialCount = count(pass->firstTranslucent);
+						pass->firstTranslucent = sort(pass->firstTranslucent, pass->lastTranslucent);
+						pass->lastTranslucent = getTail(pass->firstTranslucent);
+						uint32 finalCount = count(pass->firstTranslucent);
+						CAGE_ASSERT_RUNTIME(initialCount == finalCount, initialCount, finalCount);
+						CAGE_ASSERT_RUNTIME(isSorted(pass->firstTranslucent));
+					}
+
+					vec3 position(translucentStruct *p)
+					{
+						const vec4 *m = p->object.shaderMeshes[0].mMat.data;
+						return vec3(m[0][3], m[1][3], m[2][3]);
+					}
+
+					real distance(translucentStruct *p)
+					{
+						return squaredDistance(center, position(p));
+					}
+
+					translucentStruct *partition(translucentStruct *head, translucentStruct *end, translucentStruct *&newHead, translucentStruct *&newEnd)
+					{
+						translucentStruct *prev = nullptr, *cur = head, *pivot = end, *tail = end;
+						while (cur != pivot)
+						{
+							if (distance(cur) > distance(pivot)) // back-to-front
+							{
+								if (!newHead)
+									newHead = cur;
+								prev = cur;
+								cur = cur->next;
+							}
+							else
+							{
+								if (prev)
+									prev->next = cur->next;
+								translucentStruct *tmp = cur->next;
+								cur->next = nullptr;
+								tail->next = cur;
+								tail = cur;
+								cur = tmp;
+							}
+						}
+						if (!newHead)
+							newHead = pivot;
+						newEnd = tail;
+						return pivot;
+					}
+
+					translucentStruct *getTail(translucentStruct *cur)
+					{
+						if (!cur)
+							return nullptr;
+						while (cur->next)
+							cur = cur->next;
+						return cur;
+					}
+
+					translucentStruct *sort(translucentStruct *head, translucentStruct *end)
+					{
+						// https://www.geeksforgeeks.org/quicksort-on-singly-linked-list/
+						// modified
+						if (!head || head == end)
+							return head;
+						translucentStruct *newHead = nullptr, *newEnd = nullptr;
+						translucentStruct *pivot = partition(head, end, newHead, newEnd);
+						if (newHead != pivot)
+						{
+							translucentStruct *tmp = newHead;
+							while (tmp->next != pivot)
+								tmp = tmp->next;
+							tmp->next = nullptr;
+							newHead = sort(newHead, tmp);
+							tmp = getTail(newHead);
+							tmp->next = pivot;
+						}
+						pivot->next = sort(pivot->next, newEnd);
+						return newHead;
+					}
+				} sorterInstance(pass);
 			}
 
 			static void initializeStereoCamera(renderPassImpl *pass, emitCameraStruct *camera, eyeEnum eye, const mat4 &model)
@@ -301,10 +413,11 @@ namespace cage
 				real eyeAdaptationSpeed = real(elapsedDispatchTime) * 1e-6;
 				pass->eyeAdaptation.darkerSpeed *= eyeAdaptationSpeed;
 				pass->eyeAdaptation.lighterSpeed *= eyeAdaptationSpeed;
-				addRenderableObjects(pass, false);
+				addRenderableObjects(pass);
 				addRenderableTexts(pass);
 				for (auto it : emitRead->lights)
 					addLight(pass, it);
+				sortTranslucentBackToFront(pass);
 			}
 
 			void initializeRenderPassForShadowmap(renderPassImpl *pass, emitLightStruct *light)
@@ -341,10 +454,10 @@ namespace cage
 					0.5, 0.5, 0.5, 1.0);
 				light->shadowmap->shadowMat = bias * pass->viewProj;
 				pass->entityId = light->entityId;
-				addRenderableObjects(pass, true);
+				addRenderableObjects(pass);
 			}
 
-			void addRenderableObjects(renderPassImpl *pass, bool shadows)
+			void addRenderableObjects(renderPassImpl *pass)
 			{
 				CAGE_ASSERT_RUNTIME(pass->lodSelection > 0);
 				for (emitRenderObjectStruct *e : emitRead->renderableObjects)
@@ -448,6 +561,11 @@ namespace cage
 					else
 						pass->firstTranslucent = t;
 					pass->lastTranslucent = t;
+					if ((m->getFlags() & meshFlags::Lighting) == meshFlags::Lighting)
+					{
+						for (auto it : emitRead->lights)
+							addLight(t, mvp, it); // todo pass other parameters needed for the intersection tests
+					}
 				}
 				else
 				{ // opaque
@@ -568,44 +686,55 @@ namespace cage
 				}
 			}
 
-			void addLight(renderPassImpl *pass, emitLightStruct *e)
+			void addLight(renderPassImpl *pass, emitLightStruct *light)
 			{
 				mat4 mvpMat;
-				switch (e->light.lightType)
+				switch (light->light.lightType)
 				{
 				case lightTypeEnum::Directional:
 					mvpMat = mat4(2, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, -1, -1, 0, 1); // full screen quad
 					break;
 				case lightTypeEnum::Spot:
-					mvpMat = pass->viewProj * e->model * lightSpotCone(lightRange(e->light.color, e->light.attenuation), e->light.spotAngle);
+					mvpMat = pass->viewProj * light->model * lightSpotCone(lightRange(light->light.color, light->light.attenuation), light->light.spotAngle);
 					if (!frustumCulling(graphicsDispatch->meshCone->getBoundingBox(), mvpMat))
 						return; // this light's volume is outside view frustum
 					break;
 				case lightTypeEnum::Point:
-					mvpMat = pass->viewProj * e->model * mat4::scale(lightRange(e->light.color, e->light.attenuation));
+					mvpMat = pass->viewProj * light->model * mat4::scale(lightRange(light->light.color, light->light.attenuation));
 					if (!frustumCulling(graphicsDispatch->meshSphere->getBoundingBox(), mvpMat))
 						return; // this light's volume is outside view frustum
 					break;
 				}
+				addLight(pass->firstLight, pass->lastLight, mvpMat, light);
+			}
+
+			void addLight(translucentStruct *trans, const mat4 &mvpMat, emitLightStruct *light)
+			{
+				// todo test if the mesh is in range of the light
+				addLight(trans->firstLight, trans->lastLight, mvpMat, light);
+			}
+
+			void addLight(lightsStruct *&firstLight, lightsStruct *&lastLight, const mat4 &mvpMat, emitLightStruct *light)
+			{
 				lightsStruct *lig = nullptr;
-				if (e->shadowmap)
+				if (light->shadowmap)
 				{
-					lig = dispatchArena.createObject<lightsStruct>(e->light.lightType, e->shadowmap->index, 1);
+					lig = dispatchArena.createObject<lightsStruct>(light->light.lightType, light->shadowmap->index, 1);
 					// add at end
-					if (pass->lastLighting)
-						pass->lastLighting->next = lig;
+					if (lastLight)
+						lastLight->next = lig;
 					else
-						pass->firstLighting = lig;
-					pass->lastLighting = lig;
-					lig->shaderLights[0].shadowMat = e->shadowmap->shadowMat;
+						firstLight = lig;
+					lastLight = lig;
+					lig->shaderLights[0].shadowMat = light->shadowmap->shadowMat;
 				}
 				else
 				{
-					for (lightsStruct *it = pass->firstLighting; it; it = it->next)
+					for (lightsStruct *it = firstLight; it; it = it->next)
 					{
 						if (it->count == it->max)
 							continue;
-						if (it->lightType != e->light.lightType)
+						if (it->lightType != light->light.lightType)
 							continue;
 						if (it->shadowmap != 0)
 							continue;
@@ -613,21 +742,22 @@ namespace cage
 					}
 					if (!lig)
 					{
-						lig = dispatchArena.createObject<lightsStruct>(e->light.lightType, 0, CAGE_SHADER_MAX_INSTANCES);
+						lig = dispatchArena.createObject<lightsStruct>(light->light.lightType, 0, CAGE_SHADER_MAX_INSTANCES);
 						// add at begin
-						if (pass->firstLighting)
-							lig->next = pass->firstLighting;
+						if (firstLight)
+							lig->next = firstLight;
 						else
-							pass->lastLighting = lig;
-						pass->firstLighting = lig;
+							lastLight = lig;
+						firstLight = lig;
 					}
 				}
 				lightsStruct::shaderLightStruct *sl = lig->shaderLights + lig->count;
+				// todo this struct could be precomputed
 				sl->mvpMat = mvpMat;
-				sl->color = vec4(e->light.color, cos(e->light.spotAngle * 0.5));
-				sl->attenuation = vec4(e->light.attenuation, e->light.spotExponent);
-				sl->direction = vec4(vec3(e->model * vec4(0, 0, -1, 0)).normalize(), 0);
-				sl->position = e->model * vec4(0, 0, 0, 1); sl->position /= sl->position[3];
+				sl->color = vec4(light->light.color, cos(light->light.spotAngle * 0.5));
+				sl->attenuation = vec4(light->light.attenuation, light->light.spotExponent);
+				sl->direction = vec4(vec3(light->model * vec4(0, 0, -1, 0)).normalize(), 0);
+				sl->position = light->model * vec4(0, 0, 0, 1);
 				lig->count++;
 			}
 

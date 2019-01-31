@@ -20,6 +20,6 @@ void main()
 {
 	vec2 uv = gl_FragCoord.xy * uniScale;
 	vec2 v = textureLod(texVelocity, uv, 0).xy;
-	float s = length(v);
-	outColor = vec3(abs(v) * pow(s * 10.0, 0.2) / s, 0.0);
+	float s = max(length(v) - 1e-5, 0.0);
+	outColor = vec3(abs(v) * pow(s * 5.0, 0.2) / (s + 1e-5), 0.0);
 }

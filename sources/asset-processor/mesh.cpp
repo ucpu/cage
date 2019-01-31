@@ -47,7 +47,10 @@ namespace
 			CAGE_LOG(severityEnum::Warning, logComponentName, string() + "material has multiple (" + texCount + ") textures of type " + (uint32)tt + ", usage " + usage);
 		aiString texAsName;
 		m->GetTexture(tt, 0, &texAsName, nullptr, nullptr, nullptr, nullptr, nullptr);
-		cage::string n = pathJoin(pathExtractPath(inputName), cage::string(texAsName.C_Str()));
+		cage::string tn = texAsName.C_Str();
+		if (tn.pattern("//", "", ""))
+			tn = string() + "./" + tn.subString(2, -1);
+		cage::string n = pathJoin(pathExtractPath(inputName), tn);
 		dsm.textureNames[usage] = hashString(n.c_str());
 		writeLine(string("ref = ") + n);
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "texture '" + n + "' (" + dsm.textureNames[usage] + ") of type " + (uint32)tt + ", usage " + usage);
@@ -306,8 +309,6 @@ namespace
 			CAGE_THROW_ERROR(exception, "tangents are exported, but uvs are missing");
 		if ((dsm.flags & meshFlags::Tangents) == meshFlags::Tangents && (dsm.flags & meshFlags::Normals) == meshFlags::None)
 			CAGE_THROW_ERROR(exception, "tangents are exported, but normals are missing");
-		if ((dsm.flags & meshFlags::ShadowCast) == meshFlags::ShadowCast && ((dsm.flags & meshFlags::DepthWrite) == meshFlags::None))
-			CAGE_THROW_ERROR(exception, "shadow cast is enabled, but depth write is disabled");
 	}
 
 	void loadSkeletonName(meshHeaderStruct &dsm)

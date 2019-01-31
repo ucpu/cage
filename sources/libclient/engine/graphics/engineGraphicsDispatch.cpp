@@ -255,7 +255,24 @@ namespace cage
 				std::swap(texSource, texTarget);
 			}
 
+			void renderDispatch(objectsStruct *obj)
+			{
+				renderDispatch(obj->mesh, obj->count);
+			}
+
+			void renderDispatch(meshClass *mesh, uint32 count)
+			{
+				mesh->dispatch(count);
+				drawCalls++;
+				drawPrimitives += count * mesh->getPrimitivesCount();
+			}
+
 			void renderObject(objectsStruct *obj, shaderClass *shr)
+			{
+				renderObject(obj, shr, obj->mesh->getFlags());
+			}
+
+			void renderObject(objectsStruct *obj, shaderClass *shr, meshFlags flags)
 			{
 				applyShaderRoutines(&obj->shaderConfig, shr);
 				meshDataBuffer->bind();
@@ -267,8 +284,8 @@ namespace cage
 					shr->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, obj->mesh->getSkeletonBones());
 				}
 				obj->mesh->bind();
-				setTwoSided((obj->mesh->getFlags() & meshFlags::TwoSided) == meshFlags::TwoSided);
-				setDepthTest((obj->mesh->getFlags() & meshFlags::DepthTest) == meshFlags::DepthTest, (obj->mesh->getFlags() & meshFlags::DepthWrite) == meshFlags::DepthWrite);
+				setTwoSided((flags & meshFlags::TwoSided) == meshFlags::TwoSided);
+				setDepthTest((flags & meshFlags::DepthTest) == meshFlags::DepthTest, (flags & meshFlags::DepthWrite) == meshFlags::DepthWrite);
 				{ // bind textures
 					uint32 tius[MaxTexturesCountPerMaterial];
 					textureClass *texs[MaxTexturesCountPerMaterial];
@@ -288,9 +305,7 @@ namespace cage
 					textureClass::multiBind(MaxTexturesCountPerMaterial, tius, texs);
 				}
 				CAGE_CHECK_GL_ERROR_DEBUG();
-				obj->mesh->dispatch(obj->count);
-				drawCalls++;
-				drawPrimitives += obj->count * obj->mesh->getPrimitivesCount();
+				renderDispatch(obj);
 			}
 
 			void renderOpaque(renderPassStruct *pass)
@@ -306,7 +321,7 @@ namespace cage
 			{
 				shaderClass *shr = shaderLighting;
 				shr->bind();
-				for (lightsStruct *l = pass->firstLighting; l; l = l->next)
+				for (lightsStruct *l = pass->firstLight; l; l = l->next)
 				{
 					applyShaderRoutines(&l->shaderConfig, shr);
 					meshClass *mesh = nullptr;
@@ -336,9 +351,7 @@ namespace cage
 					lightsDataBuffer->bind();
 					lightsDataBuffer->writeRange(l->shaderLights, 0, sizeof(lightsStruct::shaderLightStruct) * l->count);
 					mesh->bind();
-					mesh->dispatch(l->count);
-					drawCalls++;
-					drawPrimitives += l->count * mesh->getPrimitivesCount();
+					renderDispatch(mesh, l->count);
 				}
 				glCullFace(GL_BACK);
 				CAGE_CHECK_GL_ERROR_DEBUG();
@@ -357,15 +370,14 @@ namespace cage
 					}
 
 					{ // render lights on the object
-					  /*
-					  glBlendFunc(GL_ONE, GL_ONE); // assume premultiplied alpha
-					  for (lightsStruct *l = t->firstLight; l; l = l->next)
-					  {
-					  l->setShaderRoutines(shr);
-					  shr->applySubroutines();
-					  // todo
-					  }
-					  */
+						lightsDataBuffer->bind();
+						glBlendFunc(GL_ONE, GL_ONE); // assume premultiplied alpha
+						for (lightsStruct *l = t->firstLight; l; l = l->next)
+						{
+							lightsDataBuffer->writeRange(l->shaderLights, 0, sizeof(lightsStruct::shaderLightStruct) * l->count);
+							applyShaderRoutines(&l->shaderConfig, shr);
+							renderDispatch(t->object.mesh, l->count);
+						}
 					}
 				}
 				CAGE_CHECK_GL_ERROR_DEBUG();
@@ -607,7 +619,9 @@ namespace cage
 				shaderClass *shr = shaderDepth;
 				shr->bind();
 				for (objectsStruct *o = pass->firstOpaque; o; o = o->next)
-					renderObject(o, shr);
+					renderObject(o, shr, o->mesh->getFlags() | meshFlags::DepthWrite);
+				for (translucentStruct *o = pass->firstTranslucent; o; o = o->next)
+					renderObject(&o->object, shr, o->object.mesh->getFlags() | meshFlags::DepthWrite);
 
 				glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 				CAGE_CHECK_GL_ERROR_DEBUG();
