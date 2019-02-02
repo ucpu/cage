@@ -27,7 +27,7 @@ void main()
 	bitangent = normalize(varBitangent);
 	position = varPosition;
 	materialLoad();
-	normal = normalize(mat3(uniMeshes[meshIndex].normalMat) * normal);
+	normalToWorld();
 	outColor.rgb = uniLightType();
 	outColor.a = opacity;
 }

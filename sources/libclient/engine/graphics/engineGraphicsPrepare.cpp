@@ -551,7 +551,7 @@ namespace cage
 					return;
 				}
 				objectsStruct *obj = nullptr;
-				if ((m->getFlags() & meshFlags::Translucency) == meshFlags::Translucency)
+				if ((m->getFlags() & meshFlags::Translucency) == meshFlags::Translucency || e->render.opacity < 1)
 				{ // translucent
 					translucentStruct *t = dispatchArena.createObject<translucentStruct>(m);
 					obj = &t->object;
@@ -595,7 +595,7 @@ namespace cage
 					}
 				}
 				objectsStruct::shaderMeshStruct *sm = obj->shaderMeshes + obj->count;
-				sm->color = vec4(e->render.color, 0);
+				sm->color = vec4(e->render.color, e->render.opacity);
 				sm->mMat = model;
 				sm->mvpMat = mvp;
 				if ((m->getFlags() & meshFlags::VelocityWrite) == meshFlags::VelocityWrite)

@@ -38,6 +38,6 @@ void main()
 	roughness = special.r;
 	metalness = special.g;
 	emissive = 0;
-	smoothNormal = normal = texelFetch(texGbufferNormal, ivec2(gl_FragCoord.xy), 0).xyz;
+	normal = texelFetch(texGbufferNormal, ivec2(gl_FragCoord.xy), 0).xyz;
 	outColor = uniLightType();
 }

@@ -37,8 +37,8 @@ $end
 	varTangent = inTangent;
 	varBitangent = inBitangent;
 	varInstanceId = gl_InstanceID;
+	varPosition = transpose(uniMeshes[meshIndex].mMat) * pos;
 	varPosition4 = uniMeshes[meshIndex].mvpMat * pos;
 	varPosition4Prev = uniMeshes[meshIndex].mvpPrevMat * pos;
-	varPosition = varPosition4.xyz / varPosition4.w;
 	gl_Position = varPosition4;
 }

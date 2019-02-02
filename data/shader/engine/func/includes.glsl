@@ -12,7 +12,6 @@ vec3 position;
 vec3 tangent;
 vec3 bitangent;
 vec3 normal;
-vec3 smoothNormal;
 vec3 albedo;
 vec2 uv;
 float roughness;

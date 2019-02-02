@@ -78,11 +78,20 @@ void materialLoad()
 	metalness = uniMaterial.specialBase.g;
 	emissive = uniMaterial.specialBase.b;
 	colorMask = uniMaterial.specialBase.a;
-	smoothNormal = normal;
 	uniMatMapAlbedo();
 	uniMatMapSpecial();
 	uniMatMapNormal();
 	albedo = mix(albedo, uniMeshes[meshIndex].color.rgb, colorMask);
+	opacity *= uniMeshes[meshIndex].color.a;
 	if (!gl_FrontFacing)
 		normal = -normal;
+}
+
+void normalToWorld()
+{
+	mat3x4 nm = uniMeshes[meshIndex].normalMat;
+	if (nm[2][3] > 0.5) // is lighting enabled
+		normal = normalize(mat3(nm) * normal);
+	else
+		normal = vec3(0.0);
 }

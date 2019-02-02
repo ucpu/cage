@@ -4,7 +4,7 @@ $include lightingImpl.glsl
 
 vec3 normalOffsetShadows()
 {
-	return position + smoothNormal * 0.2;
+	return position + normal * 0.2;
 }
 
 subroutine vec3 lightTypeFunc();

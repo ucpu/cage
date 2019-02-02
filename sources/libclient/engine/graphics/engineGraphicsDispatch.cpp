@@ -245,12 +245,24 @@ namespace cage
 				textureClass::multiBind(cnt, tius, texs);
 			}
 
+			void bindShadowmap(sint32 shadowmap)
+			{
+				if (shadowmap != 0)
+				{
+					glActiveTexture(GL_TEXTURE0 + (shadowmap > 0 ? CAGE_SHADER_TEXTURE_SHADOW : CAGE_SHADER_TEXTURE_SHADOW_CUBE));
+					shadowmapBufferStruct &s = shadowmap > 0 ? shadowmaps2d[shadowmap - 1] : shadowmapsCube[-shadowmap - 1];
+					s.texture->bind();
+				}
+			}
+
 			void renderEffect()
 			{
 				renderTarget->colorTexture(0, texTarget);
+#ifdef CAGE_DEBUG
 				renderTarget->checkStatus();
+#endif // CAGE_DEBUG
 				texSource->bind();
-				meshSquare->dispatch();
+				renderDispatch(meshSquare, 1);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 				std::swap(texSource, texTarget);
 			}
@@ -342,12 +354,7 @@ namespace cage
 					default:
 						CAGE_THROW_CRITICAL(exception, "invalid light type");
 					}
-					if (l->shadowmap != 0)
-					{
-						glActiveTexture(GL_TEXTURE0 + (l->shadowmap > 0 ? CAGE_SHADER_TEXTURE_SHADOW : CAGE_SHADER_TEXTURE_SHADOW_CUBE));
-						shadowmapBufferStruct &s = l->shadowmap > 0 ? shadowmaps2d[l->shadowmap - 1] : shadowmapsCube[-l->shadowmap - 1];
-						s.texture->bind();
-					}
+					bindShadowmap(l->shadowmap);
 					lightsDataBuffer->bind();
 					lightsDataBuffer->writeRange(l->shaderLights, 0, sizeof(lightsStruct::shaderLightStruct) * l->count);
 					mesh->bind();
@@ -369,13 +376,15 @@ namespace cage
 						renderObject(&t->object, shr);
 					}
 
+					if (t->firstLight)
 					{ // render lights on the object
 						lightsDataBuffer->bind();
 						glBlendFunc(GL_ONE, GL_ONE); // assume premultiplied alpha
 						for (lightsStruct *l = t->firstLight; l; l = l->next)
 						{
-							lightsDataBuffer->writeRange(l->shaderLights, 0, sizeof(lightsStruct::shaderLightStruct) * l->count);
 							applyShaderRoutines(&l->shaderConfig, shr);
+							bindShadowmap(l->shadowmap);
+							lightsDataBuffer->writeRange(l->shaderLights, 0, sizeof(lightsStruct::shaderLightStruct) * l->count);
 							renderDispatch(t->object.mesh, l->count);
 						}
 					}
@@ -462,7 +471,7 @@ namespace cage
 						renderTarget->colorTexture(0, ambientOcclusionTexture.get());
 						renderTarget->checkStatus();
 						shaderSsaoGenerate->bind();
-						meshSquare->dispatch();
+						renderDispatch(meshSquare, 1);
 					}
 					{ // blur
 						shaderSsaoBlur->bind();
@@ -472,7 +481,7 @@ namespace cage
 							renderTarget->colorTexture(0, tex2.get());
 							renderTarget->checkStatus();
 							shaderSsaoBlur->uniform(0, direction);
-							meshSquare->dispatch();
+							renderDispatch(meshSquare, 1);
 						};
 						ssaoBlur(ambientOcclusionTexture, ambientOcclusionTexture2, vec2(pass->ssao.blurRadius, 0.0));
 						ssaoBlur(ambientOcclusionTexture2, ambientOcclusionTexture, vec2(0.0, pass->ssao.blurRadius));
@@ -507,7 +516,7 @@ namespace cage
 						renderTarget->checkStatus();
 						texSource->bind();
 						shaderLuminanceCollection->bind();
-						meshSquare->dispatch();
+						renderDispatch(meshSquare, 1);
 					}
 					// downscale
 					{
@@ -521,7 +530,7 @@ namespace cage
 						renderTarget->checkStatus();
 						shaderLuminanceCopy->bind();
 						shaderLuminanceCopy->uniform(0, vec2(pass->eyeAdaptation.darkerSpeed, pass->eyeAdaptation.lighterSpeed));
-						meshSquare->dispatch();
+						renderDispatch(meshSquare, 1);
 					}
 					viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
 				}
@@ -828,7 +837,7 @@ namespace cage
 						CAGE_ASSERT_RUNTIME(v.visualizableTextureMode == visualizableTextureModeEnum::Color);
 						shaderVisualizeColor->bind();
 						shaderVisualizeColor->uniform(0, vec2(1.0 / gBufferWidth, 1.0 / gBufferHeight));
-						meshSquare->dispatch();
+						renderDispatch(meshSquare, 1);
 					}
 					else
 					{
@@ -838,7 +847,7 @@ namespace cage
 						case visualizableTextureModeEnum::Color:
 							shaderVisualizeColor->bind();
 							shaderVisualizeColor->uniform(0, scale);
-							meshSquare->dispatch();
+							renderDispatch(meshSquare, 1);
 							break;
 						case visualizableTextureModeEnum::Depth2d:
 						case visualizableTextureModeEnum::DepthCube:
@@ -848,13 +857,13 @@ namespace cage
 							GLint cmpMode = 0;
 							glGetTexParameteriv(v.tex->getTarget(), GL_TEXTURE_COMPARE_MODE, &cmpMode);
 							glTexParameteri(v.tex->getTarget(), GL_TEXTURE_COMPARE_MODE, GL_NONE);
-							meshSquare->dispatch();
+							renderDispatch(meshSquare, 1);
 							glTexParameteri(v.tex->getTarget(), GL_TEXTURE_COMPARE_MODE, cmpMode);
 						} break;
 						case visualizableTextureModeEnum::Velocity:
 							shaderVisualizeVelocity->bind();
 							shaderVisualizeVelocity->uniform(0, scale);
-							meshSquare->dispatch();
+							renderDispatch(meshSquare, 1);
 							break;
 						}
 					}

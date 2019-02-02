@@ -32,13 +32,7 @@ void main()
 	materialLoad();
 	if (opacity < 0.5)
 		discard;
-	{
-		mat3x4 nm = uniMeshes[meshIndex].normalMat;
-		if (nm[2][3] > 0.5) // is ligting enabled
-			normal = normalize(mat3(nm) * normal);
-		else
-			normal = vec3(0.0);
-	}
+	normalToWorld();
 	outColor = lightAmbientImpl();
 	outAlbedo = albedo;
 	outSpecial = vec2(roughness, metalness);

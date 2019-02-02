@@ -11,7 +11,7 @@ namespace cage
 	{
 		static componentClass *component;
 		vec3 color;
-		//real opacity;
+		real opacity;
 		uint32 object;
 		uint32 renderMask;
 		renderComponent();

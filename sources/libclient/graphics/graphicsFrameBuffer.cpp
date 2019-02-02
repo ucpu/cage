@@ -140,7 +140,7 @@ namespace cage
 			return;
 		case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
 			CAGE_THROW_ERROR(graphicsException, "incomplete frame buffer: attachment", numeric_cast<uint32>(result));
-		//case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
+		//case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS: // this is defined for ES only
 		//	CAGE_THROW_ERROR(graphicsException, "incomplete frame buffer: dimensions", numeric_cast<uint32>(result));
 		case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
 			CAGE_THROW_ERROR(graphicsException, "incomplete frame buffer: missing attachment", numeric_cast<uint32>(result));
