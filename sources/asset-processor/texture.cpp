@@ -15,15 +15,7 @@
 vec2 convertSpecularToSpecial(const vec3 &spec)
 {
 	vec3 hsv = convertRgbToHsv(spec);
-	return vec2(1 - hsv[2], hsv[1]);
-	/*
-	real r = (spec[0] + spec[1] + spec[2]) / 3;
-	vec3 d = abs(spec - r);
-	real m = (d[0] + d[1] + d[2]) / 3;
-	CAGE_ASSERT_RUNTIME(r >= 0 && r <= 1, r, m, spec);
-	CAGE_ASSERT_RUNTIME(m >= 0 && m <= 1, r, m, spec);
-	return vec2(1 - r, m);
-	*/
+	return vec2(hsv[2], hsv[1]);
 }
 
 namespace

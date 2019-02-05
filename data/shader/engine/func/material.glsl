@@ -82,6 +82,7 @@ void materialLoad()
 	uniMatMapSpecial();
 	uniMatMapNormal();
 	albedo = mix(albedo, uniMeshes[meshIndex].color.rgb, colorMask);
+	albedo *= uniMeshes[meshIndex].color.a; // premultiplied alpha
 	opacity *= uniMeshes[meshIndex].color.a;
 	if (!gl_FrontFacing)
 		normal = -normal;

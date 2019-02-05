@@ -1,7 +1,7 @@
 
 $if 0
 
-vec2 poissonDisk3[] = 
+vec2 poissonDisk3[] =
 {
 	vec2(0.6063219, 0.5190338),
 	vec2(-0.4597267, 0.382616),
@@ -10,7 +10,7 @@ vec2 poissonDisk3[] =
 
 $end
 
-vec2 poissonDisk4[] = 
+vec2 poissonDisk4[] =
 {
 	vec2(0.3159476, -0.5665059),
 	vec2(-0.4944367, -0.6350549),
@@ -20,7 +20,7 @@ vec2 poissonDisk4[] =
 
 $if 0
 
-vec2 poissonDisk5[] = 
+vec2 poissonDisk5[] =
 {
 	vec2(0.5653731, 0.1983621),
 	vec2(-0.2598436, -0.2333631),
@@ -29,7 +29,7 @@ vec2 poissonDisk5[] =
 	vec2(-0.7602307, 0.2693977)
 };
 
-vec2 poissonDisk6[] = 
+vec2 poissonDisk6[] =
 {
 	vec2(-0.1975761, -0.02255318),
 	vec2(-0.6688942, 0.1921623),
@@ -39,7 +39,7 @@ vec2 poissonDisk6[] =
 	vec2(0.4763275, 0.1502644)
 };
 
-vec2 poissonDisk7[] = 
+vec2 poissonDisk7[] =
 {
 	vec2(0.7733756, -0.2455644),
 	vec2(0.003098245, 0.04153573),
@@ -50,7 +50,7 @@ vec2 poissonDisk7[] =
 	vec2(0.6860402, 0.450619)
 };
 
-vec2 poissonDisk8[] = 
+vec2 poissonDisk8[] =
 {
 	vec2(0.8835875, -0.03626551),
 	vec2(0.4562066, -0.8122772),
@@ -62,7 +62,7 @@ vec2 poissonDisk8[] =
 	vec2(-0.8029583, 0.1457353)
 };
 
-vec2 poissonDisk26[] = 
+vec2 poissonDisk26[] =
 {
 	vec2(-0.8395362f, 0.001017071f),
 	vec2(-0.5569903f, 0.40532f),
@@ -92,7 +92,7 @@ vec2 poissonDisk26[] =
 	vec2(-0.6520876f, 0.7390382f)
 };
 
-vec2 poissonDisk64[] = 
+vec2 poissonDisk64[] =
 {
 	vec2(-0.613392, 0.617481),
 	vec2(0.170019, -0.040254),
