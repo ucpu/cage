@@ -826,6 +826,7 @@ namespace cage
 				{
 					emitLightStruct *c = emitWrite->emitArena.createObject<emitLightStruct>();
 					emitTransform(c, e);
+					c->transformHistory.scale = c->transform.scale = 1;
 					c->light = e->value<lightComponent>(lightComponent::component);
 					if (e->has(shadowmapComponent::component))
 						c->shadowmap = emitWrite->emitArena.createObject<shadowmapImpl>(e->value<shadowmapComponent>(shadowmapComponent::component));
@@ -838,6 +839,7 @@ namespace cage
 				{
 					emitCameraStruct *c = emitWrite->emitArena.createObject<emitCameraStruct>();
 					emitTransform(c, e);
+					c->transformHistory.scale = c->transform.scale = 1;
 					c->camera = e->value<cameraComponent>(cameraComponent::component);
 					c->entityId = ((uintPtr)e) ^ e->name();
 					emitWrite->cameras.push_back(c);

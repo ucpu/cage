@@ -42,7 +42,7 @@ namespace cage
 				keyToggleFullscreen = 300; // f11
 				keyModifiers = modifiersFlags::Ctrl;
 				profilingScope = engineProfilingScopeEnum::Full;
-				profilingMode = engineProfilingModeEnum::Average;
+				profilingMode = engineProfilingModeEnum::Maximum;
 				screenPosition = vec2(1, 0);
 
 				keyPressListener.bind<engineProfilingImpl, &engineProfilingImpl::keyPress>(this);
