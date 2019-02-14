@@ -462,7 +462,7 @@ namespace cage
 				CAGE_ASSERT_RUNTIME(pass->lodSelection > 0);
 				for (emitRenderObjectStruct *e : emitRead->renderableObjects)
 				{
-					if ((e->render.renderMask & pass->renderMask) == 0)
+					if ((e->render.renderMask & pass->renderMask) == 0 || e->render.object == 0)
 						continue;
 					if (!assets()->ready(e->render.object))
 					{
