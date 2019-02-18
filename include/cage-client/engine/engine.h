@@ -23,13 +23,19 @@ namespace cage
 	};
 	CAGE_API graphicsDispatchThreadClass &graphicsDispatchThread();
 
+	struct CAGE_API graphicsUploadThreadClass
+	{
+		static const uint32 threadIndex = 2;
+	};
+	//CAGE_API graphicsUploadThreadClass &graphicsUploadThread();
+
 	struct CAGE_API graphicsPrepareThreadClass
 	{
 		eventDispatcher<bool()> initialize;
 		eventDispatcher<bool()> finalize;
 		eventDispatcher<bool()> prepare;
 		stereoModeEnum stereoMode;
-		static const uint32 threadIndex = 2;
+		static const uint32 threadIndex = 3;
 		graphicsPrepareThreadClass();
 	};
 	CAGE_API graphicsPrepareThreadClass &graphicsPrepareThread();
@@ -40,7 +46,7 @@ namespace cage
 		eventDispatcher<bool()> finalize;
 		eventDispatcher<bool()> sound;
 		uint64 timePerTick;
-		static const uint32 threadIndex = 3;
+		static const uint32 threadIndex = 4;
 		soundThreadClass();
 	};
 	CAGE_API soundThreadClass &soundThread();

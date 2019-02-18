@@ -80,12 +80,12 @@ namespace cage
 			};
 			std::vector<InstanceStruct> instances;
 
-			fontImpl(windowClass *gl) : texWidth(0), texHeight(0),
+			fontImpl() : texWidth(0), texHeight(0),
 				shr(nullptr), msh(nullptr), spaceGlyph(0), returnGlyph(0), cursorGlyph(-1)
 			{
-				uni = newUniformBuffer(gl);
+				uni = newUniformBuffer();
 				uni->writeWhole(nullptr, sizeof(InstanceStruct) * CAGE_SHADER_MAX_CHARACTERS, GL_DYNAMIC_DRAW);
-				tex = newTexture(gl);
+				tex = newTexture();
 				instances.reserve(1000);
 			}
 
@@ -392,9 +392,8 @@ namespace cage
 		((fontImpl*)this)->processText(data);
 	}
 
-	holder<fontClass> newFont(windowClass *context)
+	holder<fontClass> newFont()
 	{
-		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentContext() == context);
-		return detail::systemArena().createImpl<fontClass, fontImpl>(context);
+		return detail::systemArena().createImpl<fontClass, fontImpl>();
 	}
 }

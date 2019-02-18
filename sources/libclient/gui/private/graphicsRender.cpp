@@ -77,7 +77,6 @@ namespace cage
 
 	void guiImpl::graphicsDispatch()
 	{
-		CAGE_ASSERT_RUNTIME(openglContext);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 
 		if (auto lock = emitController->read())

@@ -66,6 +66,7 @@ namespace cage
 
 			holder<assetManagerClass> assets;
 			holder<windowClass> window;
+			holder<windowClass> windowUpload;
 			holder<soundContextClass> sound;
 			holder<speakerClass> speaker;
 			holder<busClass> masterBus;
@@ -82,6 +83,7 @@ namespace cage
 			holder<barrierClass> threadsStateBarier;
 			holder<threadClass> graphicsDispatchThreadHolder;
 			holder<threadClass> graphicsPrepareThreadHolder;
+			holder<threadClass> graphicsUploadThreadHolder;
 			holder<threadClass> soundThreadHolder;
 			holder<threadPoolClass> emitThreadsHolder;
 
@@ -143,7 +145,7 @@ namespace cage
 			void graphicsDispatchInitializeStage()
 			{
 				window->makeCurrent();
-				gui->graphicsInitialize(window.get());
+				gui->graphicsInitialize();
 				graphicsDispatchInitialize();
 			}
 
@@ -370,6 +372,22 @@ namespace cage
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE_ENTRY, graphicsPrepare, graphicsDispatch, sound));
 #undef GCHL_GENERATE_ENTRY
 
+			void graphicsUploadEntry()
+			{
+				windowUpload->makeCurrent();
+				while (!stopping)
+				{
+					while (assets->processCustomThread(graphicsUploadThreadClass::threadIndex));
+					threadSleep(5000);
+				}
+				while (assets->countTotal() > 0)
+				{
+					while (assets->processCustomThread(graphicsUploadThreadClass::threadIndex));
+					threadSleep(5000);
+				}
+				windowUpload->makeNotCurrent();
+			}
+
 			void initialize(const engineCreateConfig &config)
 			{
 				CAGE_ASSERT_RUNTIME(engineStarted == 0);
@@ -389,6 +407,9 @@ namespace cage
 				{ // create graphics
 					window = newWindow();
 					window->makeNotCurrent();
+					windowUpload = newWindow(window.get());
+					windowUpload->makeNotCurrent();
+					windowUpload->modeSetHidden();
 				}
 
 				{ // create sound
@@ -430,6 +451,7 @@ namespace cage
 				{ // create threads
 					graphicsDispatchThreadHolder = newThread(delegate<void()>().bind<engineDataStruct, &engineDataStruct::graphicsDispatchEntry>(this), "engine graphics dispatch");
 					graphicsPrepareThreadHolder = newThread(delegate<void()>().bind<engineDataStruct, &engineDataStruct::graphicsPrepareEntry>(this), "engine graphics prepare");
+					graphicsUploadThreadHolder = newThread(delegate<void()>().bind<engineDataStruct, &engineDataStruct::graphicsUploadEntry>(this), "engine graphics upload");
 					soundThreadHolder = newThread(delegate<void()>().bind<engineDataStruct, &engineDataStruct::soundEntry>(this), "engine sound");
 					emitThreadsHolder = newThreadPool("engine emit ", 3);
 					emitThreadsHolder->function.bind<engineDataStruct, &engineDataStruct::emitThreadsEntry>(this);
@@ -437,18 +459,18 @@ namespace cage
 
 				{ // initialize asset schemes
 					// core assets
-					assets->defineScheme<void>(assetSchemeIndexPack, genAssetSchemePack(controlThread().threadIndex));
-					assets->defineScheme<memoryBuffer>(assetSchemeIndexRaw, genAssetSchemeRaw(controlThread().threadIndex));
-					assets->defineScheme<textPackClass>(assetSchemeIndexTextPackage, genAssetSchemeTextPackage(controlThread().threadIndex));
-					assets->defineScheme<colliderClass>(assetSchemeIndexCollider, genAssetSchemeCollider(controlThread().threadIndex));
+					assets->defineScheme<void>(assetSchemeIndexPack, genAssetSchemePack(controlThreadClass::threadIndex));
+					assets->defineScheme<memoryBuffer>(assetSchemeIndexRaw, genAssetSchemeRaw(controlThreadClass::threadIndex));
+					assets->defineScheme<textPackClass>(assetSchemeIndexTextPackage, genAssetSchemeTextPackage(controlThreadClass::threadIndex));
+					assets->defineScheme<colliderClass>(assetSchemeIndexCollider, genAssetSchemeCollider(controlThreadClass::threadIndex));
 					// client assets
-					assets->defineScheme<shaderClass>(assetSchemeIndexShader, genAssetSchemeShader(graphicsDispatchThread().threadIndex, window.get()));
-					assets->defineScheme<textureClass>(assetSchemeIndexTexture, genAssetSchemeTexture(graphicsDispatchThread().threadIndex, window.get()));
-					assets->defineScheme<meshClass>(assetSchemeIndexMesh, genAssetSchemeMesh(graphicsDispatchThread().threadIndex, window.get()));
+					assets->defineScheme<shaderClass>(assetSchemeIndexShader, genAssetSchemeShader(graphicsUploadThreadClass::threadIndex, window.get()));
+					assets->defineScheme<textureClass>(assetSchemeIndexTexture, genAssetSchemeTexture(graphicsUploadThreadClass::threadIndex, window.get()));
+					assets->defineScheme<meshClass>(assetSchemeIndexMesh, genAssetSchemeMesh(graphicsDispatchThreadClass::threadIndex, window.get()));
 					assets->defineScheme<skeletonClass>(assetSchemeIndexSkeleton, genAssetSchemeSkeleton(graphicsPrepareThreadClass::threadIndex));
 					assets->defineScheme<animationClass>(assetSchemeIndexAnimation, genAssetSchemeAnimation(graphicsPrepareThreadClass::threadIndex));
 					assets->defineScheme<objectClass>(assetSchemeIndexObject, genAssetSchemeObject(graphicsPrepareThreadClass::threadIndex));
-					assets->defineScheme<fontClass>(assetSchemeIndexFont, genAssetSchemeFont(graphicsDispatchThreadClass::threadIndex, window.get()));
+					assets->defineScheme<fontClass>(assetSchemeIndexFont, genAssetSchemeFont(graphicsUploadThreadClass::threadIndex, window.get()));
 					assets->defineScheme<sourceClass>(assetSchemeIndexSound, genAssetSchemeSound(soundThreadClass::threadIndex, sound.get()));
 					// cage pack
 					assets->add(hashString("cage/cage.pack"));
@@ -569,6 +591,7 @@ namespace cage
 				{ // wait for threads to finish
 					graphicsPrepareThreadHolder->wait();
 					graphicsDispatchThreadHolder->wait();
+					graphicsUploadThreadHolder->wait();
 					soundThreadHolder->wait();
 				}
 
@@ -593,6 +616,9 @@ namespace cage
 					if (window)
 						window->makeCurrent();
 					window.clear();
+					if (windowUpload)
+						windowUpload->makeCurrent();
+					windowUpload.clear();
 				}
 
 				{ // destroy assets

@@ -12,16 +12,14 @@
 
 namespace cage
 {
-	void guiClass::graphicsInitialize(windowClass *openglContext)
+	void guiClass::graphicsInitialize()
 	{
 		guiImpl *impl = (guiImpl*)this;
-		CAGE_ASSERT_RUNTIME(impl->openglContext == nullptr);
-		impl->openglContext = openglContext;
 
 		// preallocate skins element buffers
 		for (auto &s : impl->skins)
 		{
-			s.elementsGpuBuffer = newUniformBuffer(openglContext);
+			s.elementsGpuBuffer = newUniformBuffer();
 			s.elementsGpuBuffer->bind();
 			s.elementsGpuBuffer->writeWhole(nullptr, sizeof(skinElementLayoutStruct::textureUvStruct) * (uint32)elementTypeEnum::TotalElements);
 		}
@@ -30,10 +28,8 @@ namespace cage
 	void guiClass::graphicsFinalize()
 	{
 		guiImpl *impl = (guiImpl*)this;
-		CAGE_ASSERT_RUNTIME(impl->openglContext != nullptr);
 		for (auto &it : impl->skins)
 			it.elementsGpuBuffer.clear();
-		impl->openglContext = nullptr;
 	}
 
 	void guiClass::graphicsRender()

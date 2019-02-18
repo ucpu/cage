@@ -13,6 +13,6 @@ namespace cage
 		void checkStatus();
 	};
 
-	CAGE_API holder<frameBufferClass> newDrawFrameBuffer(windowClass *context);
-	CAGE_API holder<frameBufferClass> newReadFrameBuffer(windowClass *context);
+	CAGE_API holder<frameBufferClass> newDrawFrameBuffer();
+	CAGE_API holder<frameBufferClass> newReadFrameBuffer();
 }

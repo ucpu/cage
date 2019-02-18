@@ -81,9 +81,8 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	holder<uniformBufferClass> newUniformBuffer(windowClass *context)
+	holder<uniformBufferClass> newUniformBuffer()
 	{
-		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentContext() == context);
-		return detail::systemArena().createImpl <uniformBufferClass, uniformBufferImpl>();
+		return detail::systemArena().createImpl<uniformBufferClass, uniformBufferImpl>();
 	}
 }

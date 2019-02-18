@@ -315,9 +315,8 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	holder<meshClass> newMesh(windowClass *context)
+	holder<meshClass> newMesh()
 	{
-		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentContext() == context);
 		return detail::systemArena().createImpl <meshClass, meshImpl>();
 	}
 }

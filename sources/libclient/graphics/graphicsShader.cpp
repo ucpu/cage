@@ -571,9 +571,8 @@ namespace cage
 			CAGE_THROW_ERROR(graphicsException, "shader validation failed", len);
 	}
 
-	holder<shaderClass> newShader(windowClass *context)
+	holder<shaderClass> newShader()
 	{
-		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentContext() == context);
-		return detail::systemArena().createImpl <shaderClass, shaderImpl>();
+		return detail::systemArena().createImpl<shaderClass, shaderImpl>();
 	}
 }

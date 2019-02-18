@@ -258,7 +258,6 @@ namespace cage
 		holder<entityManagerClass> entityManager;
 		componentsStruct components;
 
-		windowClass *openglContext;
 		assetManagerClass *assetManager;
 
 		pointStruct inputResolution; // last window resolution (pixels)

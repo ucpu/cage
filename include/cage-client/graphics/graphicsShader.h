@@ -22,5 +22,5 @@ namespace cage
 		void applySubroutines() const;
 	};
 
-	CAGE_API holder<shaderClass> newShader(windowClass *context);
+	CAGE_API holder<shaderClass> newShader();
 }

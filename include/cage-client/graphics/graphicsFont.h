@@ -27,5 +27,5 @@ namespace cage
 		void render(const uint32 *glyphs, uint32 count, const formatStruct &format, uint32 cursor = -1);
 	};
 
-	CAGE_API holder<fontClass> newFont(windowClass *context);
+	CAGE_API holder<fontClass> newFont();
 }

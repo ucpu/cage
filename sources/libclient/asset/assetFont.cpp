@@ -22,8 +22,6 @@ namespace cage
 
 		void processLoad(const assetContextStruct *context, void *schemePointer)
 		{
-			windowClass *gm = (windowClass *)schemePointer;
-
 			fontClass *font = nullptr;
 			if (context->assetHolder)
 			{
@@ -31,7 +29,7 @@ namespace cage
 			}
 			else
 			{
-				context->assetHolder = newFont(gm).transfev();
+				context->assetHolder = newFont().transfev();
 				font = static_cast<fontClass*>(context->assetHolder.get());
 			}
 			context->returnData = font;

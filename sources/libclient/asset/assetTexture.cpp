@@ -27,20 +27,19 @@ namespace cage
 
 		void processLoad(const assetContextStruct *context, void *schemePointer)
 		{
-			windowClass *gm = (windowClass *)schemePointer;
 			textureHeaderStruct *data = (textureHeaderStruct*)context->originalData;
 
 			textureClass *tex = nullptr;
 			if (context->assetHolder)
 			{
-				tex = static_cast<textureClass*> (context->assetHolder.get());
+				tex = static_cast<textureClass*>(context->assetHolder.get());
 				CAGE_ASSERT_RUNTIME(tex->getTarget() == data->target, "texture target cannot change");
 				tex->bind();
 			}
 			else
 			{
-				context->assetHolder = newTexture(gm, data->target).transfev();
-				tex = static_cast<textureClass*> (context->assetHolder.get());
+				context->assetHolder = newTexture(data->target).transfev();
+				tex = static_cast<textureClass*>(context->assetHolder.get());
 			}
 			context->returnData = tex;
 

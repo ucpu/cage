@@ -14,8 +14,6 @@ namespace cage
 	{
 		void processLoad(const assetContextStruct *context, void *schemePointer)
 		{
-			windowClass *gm = (windowClass *)schemePointer;
-
 			shaderClass *shr = nullptr;
 			if (context->assetHolder)
 			{
@@ -24,7 +22,7 @@ namespace cage
 			}
 			else
 			{
-				context->assetHolder = newShader(gm).transfev();
+				context->assetHolder = newShader().transfev();
 				shr = static_cast<shaderClass*> (context->assetHolder.get());
 			}
 			context->returnData = shr;

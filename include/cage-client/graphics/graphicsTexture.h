@@ -26,8 +26,8 @@ namespace cage
 		static void multiBind(uint32 count, const uint32 tius[], const textureClass *const texs[]);
 	};
 
-	CAGE_API holder<textureClass> newTexture(windowClass *context);
-	CAGE_API holder<textureClass> newTexture(windowClass *context, uint32 target);
+	CAGE_API holder<textureClass> newTexture();
+	CAGE_API holder<textureClass> newTexture(uint32 target);
 
 	namespace detail
 	{

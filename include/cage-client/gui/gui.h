@@ -16,7 +16,7 @@ namespace cage
 	class CAGE_API guiClass
 	{
 	public:
-		void graphicsInitialize(windowClass *graphicContext);
+		void graphicsInitialize();
 		void graphicsFinalize();
 		void graphicsRender();
 

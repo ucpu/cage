@@ -42,7 +42,7 @@ namespace cage
 		entityManager(newEntityManager(config.entitiesConfig ? *config.entitiesConfig : entityManagerCreateConfig())), components(entityManager.get()),
 		itemsArena(config.itemsArenaSize), itemsMemory(&itemsArena), root(nullptr),
 		emitData{config, config, config}, emitControl(nullptr),
-		openglContext(nullptr), assetManager(config.assetManager),
+		assetManager(config.assetManager),
 		focusName(0), focusParts(0), hover(nullptr), eventsEnabled(false),
 		zoom(1)
 	{
@@ -68,7 +68,6 @@ namespace cage
 
 	guiImpl::~guiImpl()
 	{
-		CAGE_ASSERT_RUNTIME(openglContext == nullptr);
 		focusName = 0;
 		hover = nullptr;
 		itemsMemory.flush();

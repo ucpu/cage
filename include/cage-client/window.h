@@ -26,6 +26,7 @@ namespace cage
 		bool isFullscreen() const;
 		void modeSetFullscreen(const pointStruct &resolution, uint32 frequency = 0, const string &deviceId = "");
 		void modeSetWindowed(windowFlags flags = windowFlags::Border);
+		void modeSetHidden();
 
 		bool mouseVisible() const;
 		void mouseVisible(bool value);

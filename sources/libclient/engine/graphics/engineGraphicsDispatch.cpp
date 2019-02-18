@@ -49,7 +49,7 @@ namespace cage
 			shadowmapBufferStruct(uint32 target) : width(0), height(0)
 			{
 				CAGE_ASSERT_RUNTIME(target == GL_TEXTURE_CUBE_MAP || target == GL_TEXTURE_2D);
-				texture = newTexture(window(), target);
+				texture = newTexture(target);
 				texture->filters(GL_LINEAR, GL_LINEAR, 16);
 				texture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 				CAGE_CHECK_GL_ERROR_DEBUG();
@@ -106,10 +106,10 @@ namespace cage
 			{
 				if (!luminanceCollectionTexture)
 				{
-					luminanceCollectionTexture = newTexture(window());
+					luminanceCollectionTexture = newTexture();
 					luminanceCollectionTexture->filters(GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR, 0);
 					luminanceCollectionTexture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-					luminanceAccumulationTexture = newTexture(window());
+					luminanceAccumulationTexture = newTexture();
 					luminanceAccumulationTexture->filters(GL_NEAREST, GL_NEAREST, 0);
 					luminanceAccumulationTexture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 					luminanceAccumulationTexture->image2d(1, 1, GL_R16F);
@@ -693,32 +693,32 @@ namespace cage
 
 				gBufferWidth = gBufferHeight = 0;
 
-#define GCHL_GENERATE(NAME) NAME = newTexture(window()); NAME->filters(GL_LINEAR, GL_LINEAR, 0); NAME->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+#define GCHL_GENERATE(NAME) NAME = newTexture(); NAME->filters(GL_LINEAR, GL_LINEAR, 0); NAME->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, albedoTexture, specialTexture, normalTexture, colorTexture, intermediateTexture, velocityTexture, ambientOcclusionTexture, ambientOcclusionTexture2, depthTexture));
 #undef GCHL_GENERATE
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
-				gBufferTarget = newDrawFrameBuffer(window());
+				gBufferTarget = newDrawFrameBuffer();
 				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_ALBEDO, albedoTexture.get());
 				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_SPECIAL, specialTexture.get());
 				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_NORMAL, normalTexture.get());
 				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_COLOR, colorTexture.get());
 				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_VELOCITY, velocityTexture.get());
 				gBufferTarget->depthTexture(depthTexture.get());
-				renderTarget = newDrawFrameBuffer(window());
+				renderTarget = newDrawFrameBuffer();
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
-				viewportDataBuffer = newUniformBuffer(window());
+				viewportDataBuffer = newUniformBuffer();
 				viewportDataBuffer->writeWhole(nullptr, sizeof(renderPassStruct::shaderViewportStruct), GL_DYNAMIC_DRAW);
-				meshDataBuffer = newUniformBuffer(window());
+				meshDataBuffer = newUniformBuffer();
 				meshDataBuffer->writeWhole(nullptr, sizeof(objectsStruct::shaderMeshStruct) * CAGE_SHADER_MAX_INSTANCES, GL_DYNAMIC_DRAW);
-				armatureDataBuffer = newUniformBuffer(window());
+				armatureDataBuffer = newUniformBuffer();
 				armatureDataBuffer->writeWhole(nullptr, sizeof(mat3x4) * CAGE_SHADER_MAX_BONES, GL_DYNAMIC_DRAW);
-				lightsDataBuffer = newUniformBuffer(window());
+				lightsDataBuffer = newUniformBuffer();
 				lightsDataBuffer->writeWhole(nullptr, sizeof(lightsStruct::shaderLightStruct) * CAGE_SHADER_MAX_INSTANCES, GL_DYNAMIC_DRAW);
-				ssaoDataBuffer = newUniformBuffer(window());
+				ssaoDataBuffer = newUniformBuffer();
 				ssaoDataBuffer->writeWhole(nullptr, sizeof(ssaoShaderStruct), GL_DYNAMIC_DRAW);
-				finalScreenDataBuffer = newUniformBuffer(window());
+				finalScreenDataBuffer = newUniformBuffer();
 				finalScreenDataBuffer->writeWhole(nullptr, sizeof(finalScreenShaderStruct), GL_DYNAMIC_DRAW);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
@@ -885,7 +885,7 @@ namespace cage
 			{
 				CAGE_CHECK_GL_ERROR_DEBUG();
 				window()->swapBuffers();
-				glFinish(); // this is where the engine should be waiting for the gpu
+				//glFinish(); // this is where the engine should be waiting for the gpu
 			}
 		};
 	}

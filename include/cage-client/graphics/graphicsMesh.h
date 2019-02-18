@@ -29,5 +29,5 @@ namespace cage
 		void dispatch(uint32 instances) const;
 	};
 
-	CAGE_API holder<meshClass> newMesh(windowClass *context);
+	CAGE_API holder<meshClass> newMesh();
 }

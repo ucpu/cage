@@ -31,7 +31,7 @@ namespace cage
 			{
 				switch (index)
 				{
-#define GCHL_GENERATE(I) case I: return setCurrentObject<numberedTextureClass<I> >(id);
+#define GCHL_GENERATE(I) case I: return setCurrentObject<numberedTextureClass<I>>(id);
 					GCHL_GENERATE(0);
 					CAGE_EVAL_MEDIUM(CAGE_REPEAT(31, GCHL_GENERATE));
 #undef GCHL_GENERATE
@@ -47,7 +47,7 @@ namespace cage
 			{
 				switch (activeTexture())
 				{
-#define GCHL_GENERATE(I) case I: return getCurrentObject<numberedTextureClass<I> >();
+#define GCHL_GENERATE(I) case I: return getCurrentObject<numberedTextureClass<I>>();
 					GCHL_GENERATE(0);
 					CAGE_EVAL_MEDIUM(CAGE_REPEAT(31, GCHL_GENERATE));
 #undef GCHL_GENERATE
@@ -194,7 +194,9 @@ namespace cage
 		textureImpl *impl = (textureImpl*)this;
 		glBindTexture(impl->target, impl->id);
 		CAGE_CHECK_GL_ERROR_DEBUG();
+#ifdef CAGE_ASSERT_ENABLED
 		privat::setCurrentTexture(impl->id);
+#endif // CAGE_ASSERT_ENABLED
 	}
 
 	void textureClass::image2d(uint32 w, uint32 h, uint32 internalFormat)
@@ -316,16 +318,15 @@ namespace cage
 		*/
 	}
 
-	holder<textureClass> newTexture(windowClass *context)
+	holder<textureClass> newTexture()
 	{
-		return newTexture(context, GL_TEXTURE_2D);
+		return newTexture(GL_TEXTURE_2D);
 	}
 
-	holder<textureClass> newTexture(windowClass *context, uint32 target)
+	holder<textureClass> newTexture(uint32 target)
 	{
-		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentContext() == context);
 		CAGE_ASSERT_RUNTIME(target == GL_TEXTURE_2D || target == GL_TEXTURE_2D_ARRAY || target == GL_TEXTURE_RECTANGLE || target == GL_TEXTURE_3D || target == GL_TEXTURE_CUBE_MAP);
-		return detail::systemArena().createImpl <textureClass, textureImpl>(target);
+		return detail::systemArena().createImpl<textureClass, textureImpl>(target);
 	}
 
 	namespace detail

@@ -27,8 +27,6 @@ namespace cage
 
 		void processLoad(const assetContextStruct *context, void *schemePointer)
 		{
-			windowClass *gm = (windowClass *)schemePointer;
-
 			meshClass *msh = nullptr;
 			if (context->assetHolder)
 			{
@@ -37,7 +35,7 @@ namespace cage
 			}
 			else
 			{
-				context->assetHolder = newMesh(gm).transfev();
+				context->assetHolder = newMesh().transfev();
 				msh = (meshClass*)context->assetHolder.get();
 				context->returnData = msh;
 			}

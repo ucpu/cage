@@ -151,15 +151,13 @@ namespace cage
 		}
 	}
 
-	holder<frameBufferClass> newDrawFrameBuffer(windowClass *context)
+	holder<frameBufferClass> newDrawFrameBuffer()
 	{
-		CAGE_ASSERT_RUNTIME(getCurrentContext() == context);
 		return detail::systemArena().createImpl<frameBufferClass, frameBufferImpl>(GL_DRAW_FRAMEBUFFER);
 	}
 
-	holder<frameBufferClass> newReadFrameBuffer(windowClass *context)
+	holder<frameBufferClass> newReadFrameBuffer()
 	{
-		CAGE_ASSERT_RUNTIME(getCurrentContext() == context);
 		return detail::systemArena().createImpl<frameBufferClass, frameBufferImpl>(GL_READ_FRAMEBUFFER);
 	}
 }

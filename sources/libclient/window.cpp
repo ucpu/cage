@@ -559,6 +559,14 @@ namespace cage
 		glfwSetWindowAttrib(impl->window, GLFW_RESIZABLE, (flags & windowFlags::Resizeable) == windowFlags::Resizeable);
 	}
 
+	void windowClass::modeSetHidden()
+	{
+		windowImpl *impl = (windowImpl*)this;
+		if (glfwGetWindowMonitor(impl->window))
+			modeSetWindowed();
+		glfwHideWindow(impl->window);
+	}
+
 	bool windowClass::mouseVisible() const
 	{
 		windowImpl *impl = (windowImpl*)this;

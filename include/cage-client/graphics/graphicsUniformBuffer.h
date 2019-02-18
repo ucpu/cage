@@ -12,5 +12,5 @@ namespace cage
 		void writeRange(void *data, uint32 offset, uint32 size);
 	};
 
-	CAGE_API holder<uniformBufferClass> newUniformBuffer(windowClass *context);
+	CAGE_API holder<uniformBufferClass> newUniformBuffer();
 }
