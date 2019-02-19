@@ -13,7 +13,8 @@ namespace cage
 #ifdef GCHL_ENABLE_CONTEXT_BINDING_CHECKS
 
 		uint32 contextTypeIndexInitializer();
-		template<class T> uint32 contextTypeIndex()
+		template<class T>
+		uint32 contextTypeIndex()
 		{
 			static const uint32 index = contextTypeIndexInitializer();
 			return index;
@@ -21,14 +22,16 @@ namespace cage
 		void contextSetCurrentObjectType(uint32 typeIndex, uint32 id);
 		uint32 contextGetCurrentObjectType(uint32 typeIndex);
 
-		template<class T> void setCurrentObject(uint32 id)
+		template<class T>
+		void setCurrentObject(uint32 id)
 		{
 			contextSetCurrentObjectType(contextTypeIndex<T>(), id);
 		}
 
-		template<class T> uint32 getCurrentObject()
+		template<class T>
+		uint32 getCurrentObject()
 		{
-			return contextGetCurrentObjectType(contextTypeIndex <T>());
+			return contextGetCurrentObjectType(contextTypeIndex<T>());
 		}
 
 		void setCurrentContext(windowClass *context);
@@ -36,9 +39,11 @@ namespace cage
 
 #else
 
-		template<class T> void setCurrentObject(uint32 id) {}
+		template<class T>
+		void setCurrentObject(uint32 id) {}
 
-		template<class T> uint32 getCurrentObject() { return -1; }
+		template<class T>
+		uint32 getCurrentObject() { return -1; }
 
 		inline void setCurrentContext(windowClass *context) {}
 		inline windowClass *getCurrentContext() { return nullptr; }

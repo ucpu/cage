@@ -104,6 +104,22 @@ namespace cage
 			if (cageSevr > severityEnum::Info)
 				detail::debugBreakpoint();
 		}
+
+		bool logOpenglInfo()
+		{
+			GLint major = 0, minor = 0;
+			glGetIntegerv(GL_MAJOR_VERSION, &major);
+			glGetIntegerv(GL_MINOR_VERSION, &minor);
+			CAGE_CHECK_GL_ERROR_DEBUG();
+			const GLubyte *vendor = nullptr, *renderer = nullptr;
+			vendor = glGetString(GL_VENDOR);
+			renderer = glGetString(GL_RENDERER);
+			CAGE_CHECK_GL_ERROR_DEBUG();
+			CAGE_LOG(severityEnum::Info, "graphics", string() + "opengl version: " + major + "." + minor);
+			CAGE_LOG_CONTINUE(severityEnum::Info, "graphics", string() + "device vendor: '" + (char*)vendor + "'");
+			CAGE_LOG_CONTINUE(severityEnum::Info, "graphics", string() + "device renderer: '" + (char*)renderer + "'");
+			return true;
+		}
 	}
 
 	namespace graphicsPrivat
@@ -114,19 +130,7 @@ namespace cage
 			if (GLAD_GL_KHR_debug)
 				glDebugMessageCallback(&openglErrorCallbackImpl, w);
 
-			{ // query context info
-				GLint major = 0, minor = 0;
-				glGetIntegerv(GL_MAJOR_VERSION, &major);
-				glGetIntegerv(GL_MINOR_VERSION, &minor);
-				CAGE_CHECK_GL_ERROR_DEBUG();
-				const GLubyte *vendor = nullptr, *renderer = nullptr;
-				vendor = glGetString(GL_VENDOR);
-				renderer = glGetString(GL_RENDERER);
-				CAGE_CHECK_GL_ERROR_DEBUG();
-				CAGE_LOG_CONTINUE(severityEnum::Note, "graphics", string() + "opengl version: " + major + "." + minor);
-				CAGE_LOG_CONTINUE(severityEnum::Note, "graphics", string() + "device vendor: '" + (char*)vendor + "'");
-				CAGE_LOG_CONTINUE(severityEnum::Note, "graphics", string() + "device renderer: '" + (char*)renderer + "'");
-			}
+			static bool blah = logOpenglInfo(); // log just once
 
 			{ // pack alignment
 				glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -137,37 +141,38 @@ namespace cage
 
 #ifdef GCHL_ENABLE_CONTEXT_BINDING_CHECKS
 
-		holder<mutexClass> assertContextMutex;
-		class assertContextMutexInitializer
+		struct assertContextStruct
 		{
-		public:
-			assertContextMutexInitializer()
-			{
-				assertContextMutex = newMutex();
-			}
-			~assertContextMutexInitializer()
-			{
-				assertContextMutex.clear();
-			}
-		} assertContextMutexInitializerInstance;
+			holder<mutexClass> mutex;
+			std::map<windowClass*, std::map<uint32, uint32>> objects;
+			std::map<uint64, windowClass*> contexts;
 
-		std::map<windowClass*, std::map<uint32, uint32>> assertContextCurrentObjects;
-		std::map<uint64, windowClass*> assertThreadCurrentContext;
+			assertContextStruct()
+			{
+				mutex = newMutex();
+			}
+		};
+
+		assertContextStruct &assertContext()
+		{
+			static assertContextStruct s;
+			return s;
+		}
 
 		void setCurrentContext(windowClass *ctx)
 		{
-			scopeLock<mutexClass> lock(assertContextMutex);
+			scopeLock<mutexClass> lock(assertContext().mutex);
 			if (ctx)
-				assertThreadCurrentContext[threadId()] = ctx;
+				assertContext().contexts[threadId()] = ctx;
 			else
-				assertThreadCurrentContext.erase(threadId());
+				assertContext().contexts.erase(threadId());
 		}
 
 		windowClass *getCurrentContext()
 		{
-			scopeLock<mutexClass> lock(assertContextMutex);
-			std::map<uint64, windowClass*>::iterator it = assertThreadCurrentContext.find(threadId());
-			if (it == assertThreadCurrentContext.end())
+			scopeLock<mutexClass> lock(assertContext().mutex);
+			auto it = assertContext().contexts.find(threadId());
+			if (it == assertContext().contexts.end())
 				return nullptr;
 			CAGE_ASSERT_RUNTIME(it->second);
 			return it->second;
@@ -175,6 +180,7 @@ namespace cage
 
 		uint32 contextTypeIndexInitializer()
 		{
+			scopeLock<mutexClass> lock(assertContext().mutex);
 			static uint32 index = 0;
 			return index++;
 		}
@@ -182,16 +188,16 @@ namespace cage
 		void contextSetCurrentObjectType(uint32 typeIndex, uint32 id)
 		{
 			auto cc = getCurrentContext();
-			scopeLock<mutexClass> lock(assertContextMutex);
-			assertContextCurrentObjects[cc][typeIndex] = id;
+			scopeLock<mutexClass> lock(assertContext().mutex);
+			assertContext().objects[cc][typeIndex] = id;
 		}
 
 		uint32 contextGetCurrentObjectType(uint32 typeIndex)
 		{
 			auto cc = getCurrentContext();
-			scopeLock<mutexClass> lock(assertContextMutex);
-			std::map<uint32, uint32> &m = assertContextCurrentObjects[cc];
-			std::map<uint32, uint32>::iterator it = m.find(typeIndex);
+			scopeLock<mutexClass> lock(assertContext().mutex);
+			std::map<uint32, uint32> &m = assertContext().objects[cc];
+			auto it = m.find(typeIndex);
 			if (it == m.end())
 				return -1;
 			return it->second;

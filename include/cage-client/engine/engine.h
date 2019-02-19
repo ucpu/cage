@@ -23,12 +23,6 @@ namespace cage
 	};
 	CAGE_API graphicsDispatchThreadClass &graphicsDispatchThread();
 
-	struct CAGE_API graphicsUploadThreadClass
-	{
-		static const uint32 threadIndex = 2;
-	};
-	//CAGE_API graphicsUploadThreadClass &graphicsUploadThread();
-
 	struct CAGE_API graphicsPrepareThreadClass
 	{
 		eventDispatcher<bool()> initialize;

@@ -15,9 +15,10 @@ namespace cage
 	{
 		namespace
 		{
-			template<uint32 N> class numberedTextureClass {};
+			template<uint32 N>
+			class numberedTextureClass {};
 
-			const sint32 activeTexture()
+			sint32 activeTexture()
 			{
 				sint32 i = -1;
 				glGetIntegerv(GL_ACTIVE_TEXTURE, &i);
@@ -43,7 +44,7 @@ namespace cage
 				setSpecificTexture(activeTexture(), id);
 			}
 
-			const uint32 getCurrentTexture()
+			uint32 getCurrentTexture()
 			{
 				switch (activeTexture())
 				{

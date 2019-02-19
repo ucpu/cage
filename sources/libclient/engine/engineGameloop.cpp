@@ -28,10 +28,21 @@
 
 #include "engine.h"
 
+//#define CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
+
 namespace cage
 {
 	namespace
 	{
+		struct graphicsUploadThreadClass
+		{
+#ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
+			static const uint32 threadIndex = 2;
+#else
+			static const uint32 threadIndex = graphicsDispatchThreadClass::threadIndex;
+#endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
+		};
+
 		struct scopedSemaphores
 		{
 			scopedSemaphores(holder<semaphoreClass> &lock, holder<semaphoreClass> &unlock) : sem(unlock.get())
@@ -66,7 +77,9 @@ namespace cage
 
 			holder<assetManagerClass> assets;
 			holder<windowClass> window;
+#ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 			holder<windowClass> windowUpload;
+#endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 			holder<soundContextClass> sound;
 			holder<speakerClass> speaker;
 			holder<busClass> masterBus;
@@ -83,7 +96,9 @@ namespace cage
 			holder<barrierClass> threadsStateBarier;
 			holder<threadClass> graphicsDispatchThreadHolder;
 			holder<threadClass> graphicsPrepareThreadHolder;
+#ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 			holder<threadClass> graphicsUploadThreadHolder;
+#endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 			holder<threadClass> soundThreadHolder;
 			holder<threadPoolClass> emitThreadsHolder;
 
@@ -372,6 +387,7 @@ namespace cage
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE_ENTRY, graphicsPrepare, graphicsDispatch, sound));
 #undef GCHL_GENERATE_ENTRY
 
+#ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 			void graphicsUploadEntry()
 			{
 				windowUpload->makeCurrent();
@@ -387,6 +403,7 @@ namespace cage
 				}
 				windowUpload->makeNotCurrent();
 			}
+#endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 
 			void initialize(const engineCreateConfig &config)
 			{
@@ -407,9 +424,11 @@ namespace cage
 				{ // create graphics
 					window = newWindow();
 					window->makeNotCurrent();
+#ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 					windowUpload = newWindow(window.get());
 					windowUpload->makeNotCurrent();
 					windowUpload->modeSetHidden();
+#endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 				}
 
 				{ // create sound
@@ -451,7 +470,9 @@ namespace cage
 				{ // create threads
 					graphicsDispatchThreadHolder = newThread(delegate<void()>().bind<engineDataStruct, &engineDataStruct::graphicsDispatchEntry>(this), "engine graphics dispatch");
 					graphicsPrepareThreadHolder = newThread(delegate<void()>().bind<engineDataStruct, &engineDataStruct::graphicsPrepareEntry>(this), "engine graphics prepare");
+#ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 					graphicsUploadThreadHolder = newThread(delegate<void()>().bind<engineDataStruct, &engineDataStruct::graphicsUploadEntry>(this), "engine graphics upload");
+#endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 					soundThreadHolder = newThread(delegate<void()>().bind<engineDataStruct, &engineDataStruct::soundEntry>(this), "engine sound");
 					emitThreadsHolder = newThreadPool("engine emit ", 3);
 					emitThreadsHolder->function.bind<engineDataStruct, &engineDataStruct::emitThreadsEntry>(this);
@@ -591,7 +612,9 @@ namespace cage
 				{ // wait for threads to finish
 					graphicsPrepareThreadHolder->wait();
 					graphicsDispatchThreadHolder->wait();
+#ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 					graphicsUploadThreadHolder->wait();
+#endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 					soundThreadHolder->wait();
 				}
 
@@ -616,9 +639,11 @@ namespace cage
 					if (window)
 						window->makeCurrent();
 					window.clear();
+#ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 					if (windowUpload)
 						windowUpload->makeCurrent();
 					windowUpload.clear();
+#endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 				}
 
 				{ // destroy assets
