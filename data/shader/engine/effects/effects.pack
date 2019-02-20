@@ -1,5 +1,8 @@
 
 []
+bloomGenerate.glsl
+bloomBlur.glsl
+bloomApply.glsl
 ssaoGenerate.glsl
 ssaoBlur.glsl
 ssaoApply.glsl

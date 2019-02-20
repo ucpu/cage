@@ -10,6 +10,7 @@ namespace cage
 		void depthTexture(textureClass *tex);
 		void colorTexture(uint32 index, textureClass *tex);
 		void activeAttachments(uint32 mask);
+		void clear();
 		void checkStatus();
 	};
 

@@ -12,6 +12,19 @@ namespace cage
 		cameraSsaoStruct();
 	};
 
+	struct CAGE_API cameraMotionBlurStruct
+	{
+		// todo
+	};
+
+	struct CAGE_API cameraBloomStruct
+	{
+		uint32 blurPasses;
+		real blurRadius;
+		real threshold;
+		cameraBloomStruct();
+	};
+
 	struct CAGE_API cameraEyeAdaptationStruct
 	{
 		real key;
@@ -36,6 +49,8 @@ namespace cage
 	struct CAGE_API cameraEffectsStruct
 	{
 		cameraSsaoStruct ssao;
+		cameraMotionBlurStruct motionBlur;
+		cameraBloomStruct bloom;
 		cameraEyeAdaptationStruct eyeAdaptation;
 		cameraTonemapStruct tonemap;
 		real gamma;

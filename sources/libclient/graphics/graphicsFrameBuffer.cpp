@@ -128,6 +128,14 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
+	void frameBufferClass::clear()
+	{
+		depthTexture(nullptr);
+		for (uint32 i = 0; i < 8; i++)
+			colorTexture(i, nullptr);
+		activeAttachments(0);
+	}
+
 	void frameBufferClass::checkStatus()
 	{
 		frameBufferImpl *impl = (frameBufferImpl*)this;

@@ -16,7 +16,7 @@ $include ssaoParams.glsl
 
 layout(binding = CAGE_SHADER_TEXTURE_COLOR) uniform sampler2D texColor;
 layout(binding = CAGE_SHADER_TEXTURE_ALBEDO) uniform sampler2D texAlbedo;
-layout(binding = CAGE_SHADER_TEXTURE_AMBIENTOCCLUSION) uniform sampler2D texAo;
+layout(binding = CAGE_SHADER_TEXTURE_EFFECTS) uniform sampler2D texAo;
 
 out vec3 outColor;
 

@@ -13,7 +13,7 @@ void main()
 $define shader fragment
 
 layout(binding = CAGE_SHADER_TEXTURE_COLOR) uniform sampler2D texColor;
-layout(binding = CAGE_SHADER_TEXTURE_LUMINANCE) uniform sampler2D texLuminance;
+layout(binding = CAGE_SHADER_TEXTURE_EFFECTS) uniform sampler2D texLuminance;
 
 layout(std140, binding = CAGE_SHADER_UNIBLOCK_FINALSCREEN) uniform FinalScreen
 {

@@ -13,7 +13,7 @@ void main()
 $define shader fragment
 
 layout(binding = CAGE_SHADER_TEXTURE_COLOR) uniform sampler2D texColor;
-layout(binding = CAGE_SHADER_TEXTURE_VELOCITY) uniform sampler2D texVelocity;
+layout(binding = CAGE_SHADER_TEXTURE_EFFECTS) uniform sampler2D texVelocity;
 out vec4 outColor;
 
 void main()

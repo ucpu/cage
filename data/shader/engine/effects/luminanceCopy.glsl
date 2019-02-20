@@ -12,7 +12,7 @@ void main()
 
 $define shader fragment
 
-layout(binding = CAGE_SHADER_TEXTURE_LUMINANCE) uniform sampler2D texLuminanceOld;
+layout(binding = CAGE_SHADER_TEXTURE_EFFECTS) uniform sampler2D texLuminanceOld;
 layout(binding = CAGE_SHADER_TEXTURE_COLOR) uniform sampler2D texLuminanceNew;
 layout(location = 0) uniform vec2 uniAdaptationSpeed; // darker, lighter
 

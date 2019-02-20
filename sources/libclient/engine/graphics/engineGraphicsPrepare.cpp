@@ -879,6 +879,9 @@ namespace cage
 					graphicsDispatch->shaderSsaoBlur = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/ssaoBlur.glsl"));
 					graphicsDispatch->shaderSsaoApply = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/ssaoApply.glsl"));
 					graphicsDispatch->shaderMotionBlur = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/motionBlur.glsl"));
+					graphicsDispatch->shaderBloomGenerate = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/bloomGenerate.glsl"));
+					graphicsDispatch->shaderBloomBlur = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/bloomBlur.glsl"));
+					graphicsDispatch->shaderBloomApply = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/bloomApply.glsl"));
 					graphicsDispatch->shaderLuminanceCollection = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/luminanceCollection.glsl"));
 					graphicsDispatch->shaderLuminanceCopy = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/luminanceCopy.glsl"));
 					graphicsDispatch->shaderFinalScreen = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/finalScreen.glsl"));
