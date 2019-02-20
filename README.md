@@ -96,11 +96,15 @@ A long-term hobby project that turned out to be quite BIG.
        - all rendering is through automatic instancing to reduce draw call overhead
      - graphics effects
        - hdr, tonemapping, gamma correction
-       - motion blur (per object), ssao, fxaa
+       - motion blur (per object)
+       - ssao
+       - fxaa
+       - bloom
        - normal mapping
      - directional, spot and point lights
         - automatic shadow maps
      - roughness/metallic workflow
+     - stereoscopic rendering
 
 ## Tools
    - Asset processor

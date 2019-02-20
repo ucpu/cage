@@ -20,15 +20,21 @@ out vec3 outBloom;
 
 void main()
 {
-	vec2 texelSize = float(CAGE_SHADER_BLOOM_DOWNSCALE) / textureSize(texColor, 0).xy;
-	vec3 c = vec3(0.0);
+	vec3 acc = vec3(0.0);
+	int cnt = 0;
 	for (int y = 0; y < CAGE_SHADER_BLOOM_DOWNSCALE; y++)
+	{
 		for (int x = 0; x < CAGE_SHADER_BLOOM_DOWNSCALE; x++)
-			c += textureLod(texColor, (gl_FragCoord.xy + vec2(x, y) - CAGE_SHADER_BLOOM_DOWNSCALE * 0.5) * texelSize, 0).rgb;
-	c /= float(CAGE_SHADER_BLOOM_DOWNSCALE * CAGE_SHADER_BLOOM_DOWNSCALE);
-	float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
-	if (l > uniBloomParams[0])
-		outBloom = c;
+		{
+			vec3 c = texelFetch(texColor, ivec2(gl_FragCoord) * CAGE_SHADER_BLOOM_DOWNSCALE + ivec2(x, y) - CAGE_SHADER_BLOOM_DOWNSCALE / 2, 0).rgb;
+			float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+			int m = int(l > uniBloomParams[0]);
+			acc += float(m) * c;
+			cnt += m;
+		}
+	}
+	if (cnt > 0)
+		outBloom = acc / float(cnt);
 	else
 		outBloom = vec3(0.0);
 }
