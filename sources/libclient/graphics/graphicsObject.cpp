@@ -29,6 +29,13 @@ namespace cage
 		};
 	}
 
+	void objectClass::setDebugName(const string &name)
+	{
+#ifdef CAGE_DEBUG
+		debugName = name;
+#endif // CAGE_DEBUG
+	}
+
 	void objectClass::setLods(uint32 lodsCount, uint32 meshesCount, const float *thresholds, const uint32 *meshIndices, const uint32 *meshNames)
 	{
 		CAGE_ASSERT_RUNTIME(meshIndices[0] == 0);

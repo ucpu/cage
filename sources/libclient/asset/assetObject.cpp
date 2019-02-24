@@ -16,7 +16,10 @@ namespace cage
 		void processLoad(const assetContextStruct *context, void *schemePointer)
 		{
 			if (!context->assetHolder)
+			{
 				context->assetHolder = newObject().transfev();
+				static_cast<objectClass*>(context->assetHolder.get())->setDebugName(context->textName);
+			}
 			objectClass *obj = static_cast<objectClass*>(context->assetHolder.get());
 			context->returnData = obj;
 

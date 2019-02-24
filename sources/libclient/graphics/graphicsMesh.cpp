@@ -94,6 +94,15 @@ namespace cage
 		};
 	}
 
+	void meshClass::setDebugName(const string &name)
+	{
+#ifdef CAGE_DEBUG
+		debugName = name;
+#endif // CAGE_DEBUG
+		meshImpl *impl = (meshImpl*)this;
+		glObjectLabel(GL_VERTEX_ARRAY, impl->id, name.length(), name.c_str());
+	}
+
 	uint32 meshClass::getId() const
 	{
 		return ((meshImpl*)this)->id;

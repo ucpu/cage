@@ -24,6 +24,7 @@ namespace cage
 			{
 				context->assetHolder = newAnimation().transfev();
 				ani = static_cast<animationClass*>(context->assetHolder.get());
+				ani->setDebugName(context->textName);
 			}
 			context->returnData = ani;
 

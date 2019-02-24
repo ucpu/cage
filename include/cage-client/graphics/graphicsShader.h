@@ -2,7 +2,13 @@ namespace cage
 {
 	class CAGE_API shaderClass
 	{
+#ifdef CAGE_DEBUG
+		detail::stringBase<64> debugName;
+#endif // CAGE_DEBUG
+
 	public:
+		void setDebugName(const string &name);
+
 		uint32 getId() const;
 		void bind() const;
 

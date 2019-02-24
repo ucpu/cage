@@ -164,6 +164,15 @@ namespace cage
 		}
 	}
 
+	void textureClass::setDebugName(const string &name)
+	{
+#ifdef CAGE_DEBUG
+		debugName = name;
+#endif // CAGE_DEBUG
+		textureImpl *impl = (textureImpl*)this;
+		glObjectLabel(GL_TEXTURE, impl->id, name.length(), name.c_str());
+	}
+
 	uint32 textureClass::getId() const
 	{
 		return ((textureImpl*)this)->id;

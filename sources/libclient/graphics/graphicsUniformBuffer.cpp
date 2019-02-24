@@ -33,6 +33,15 @@ namespace cage
 		};
 	}
 
+	void uniformBufferClass::setDebugName(const string &name)
+	{
+#ifdef CAGE_DEBUG
+		debugName = name;
+#endif // CAGE_DEBUG
+		uniformBufferImpl *impl = (uniformBufferImpl*)this;
+		glObjectLabel(GL_BUFFER, impl->id, name.length(), name.c_str());
+	}
+
 	uint32 uniformBufferClass::getId() const
 	{
 		return ((uniformBufferImpl*)this)->id;

@@ -24,6 +24,7 @@ namespace cage
 			{
 				context->assetHolder = newSkeleton().transfev();
 				skl = static_cast<skeletonClass*>(context->assetHolder.get());
+				skl->setDebugName(context->textName);
 			}
 			context->returnData = skl;
 

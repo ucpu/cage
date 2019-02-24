@@ -2,7 +2,13 @@ namespace cage
 {
 	class CAGE_API frameBufferClass
 	{
+#ifdef CAGE_DEBUG
+		detail::stringBase<64> debugName;
+#endif // CAGE_DEBUG
+
 	public:
+		void setDebugName(const string &name);
+
 		uint32 getId() const;
 		uint32 getTarget() const;
 		void bind() const;

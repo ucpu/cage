@@ -203,6 +203,13 @@ namespace cage
 		};
 	}
 
+	void sourceClass::setDebugName(const string &name)
+	{
+#ifdef CAGE_DEBUG
+		debugName = name;
+#endif // CAGE_DEBUG
+	}
+
 	void sourceClass::setDataNone()
 	{
 		soundSourceImpl *impl = (soundSourceImpl*)this;

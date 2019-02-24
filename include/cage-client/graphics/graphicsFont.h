@@ -2,7 +2,13 @@ namespace cage
 {
 	class CAGE_API fontClass
 	{
+#ifdef CAGE_DEBUG
+		detail::stringBase<64> debugName;
+#endif // CAGE_DEBUG
+
 	public:
+		void setDebugName(const string &name);
+
 		void setLine(real lineHeight, real firstLineOffset);
 		void setImage(uint32 width, uint32 height, uint32 size, const void *data);
 		void setGlyphs(uint32 count, const void *data, const real *kerning);

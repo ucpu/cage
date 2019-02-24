@@ -46,6 +46,15 @@ namespace cage
 		};
 	}
 
+	void shaderClass::setDebugName(const string &name)
+	{
+#ifdef CAGE_DEBUG
+		debugName = name;
+#endif // CAGE_DEBUG
+		shaderImpl *impl = (shaderImpl*)this;
+		glObjectLabel(GL_PROGRAM, impl->id, name.length(), name.c_str());
+	}
+
 	uint32 shaderClass::getId() const
 	{
 		return ((shaderImpl*)this)->id;

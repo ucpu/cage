@@ -30,15 +30,16 @@ namespace cage
 			meshClass *msh = nullptr;
 			if (context->assetHolder)
 			{
-				msh = (meshClass*)context->assetHolder.get();
+				msh = static_cast<meshClass*>(context->assetHolder.get());
 				msh->bind();
 			}
 			else
 			{
 				context->assetHolder = newMesh().transfev();
-				msh = (meshClass*)context->assetHolder.get();
-				context->returnData = msh;
+				msh = static_cast<meshClass*>(context->assetHolder.get());
+				msh->setDebugName(context->textName);
 			}
+			context->returnData = msh;
 
 			deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
 			meshHeaderStruct data;

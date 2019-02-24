@@ -41,15 +41,16 @@ namespace cage
 				height = h;
 				texture->bind();
 				if (texture->getTarget() == GL_TEXTURE_CUBE_MAP)
-					texture->imageCube(w, h, GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT, GL_HALF_FLOAT, nullptr);
+					texture->imageCube(w, h, GL_DEPTH_COMPONENT16);
 				else
-					texture->image2d(w, h, GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT, GL_HALF_FLOAT, nullptr);
+					texture->image2d(w, h, GL_DEPTH_COMPONENT16);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 			shadowmapBufferStruct(uint32 target) : width(0), height(0)
 			{
 				CAGE_ASSERT_RUNTIME(target == GL_TEXTURE_CUBE_MAP || target == GL_TEXTURE_2D);
 				texture = newTexture(target);
+				texture->setDebugName("shadowmap");
 				texture->filters(GL_LINEAR, GL_LINEAR, 16);
 				texture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 				CAGE_CHECK_GL_ERROR_DEBUG();
@@ -119,6 +120,7 @@ namespace cage
 					else
 					{
 						luminanceCollectionTexture = newTexture();
+						luminanceCollectionTexture->setDebugName("luminanceCollectionTexture");
 						luminanceCollectionTexture->filters(GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR, 0);
 						luminanceCollectionTexture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 					}
@@ -128,6 +130,7 @@ namespace cage
 					else
 					{
 						luminanceAccumulationTexture = newTexture();
+						luminanceAccumulationTexture->setDebugName("luminanceAccumulationTexture");
 						luminanceAccumulationTexture->filters(GL_NEAREST, GL_NEAREST, 0);
 						luminanceAccumulationTexture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 					}
@@ -730,7 +733,7 @@ namespace cage
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
-			void resizeTexture(holder<textureClass> &texture, bool enabled, uint32 internalFormat, uint32 downscale = 1)
+			void resizeTexture(const string &debugName, holder<textureClass> &texture, bool enabled, uint32 internalFormat, uint32 downscale = 1)
 			{
 				if (enabled)
 				{
@@ -739,6 +742,7 @@ namespace cage
 					else
 					{
 						texture = newTexture();
+						texture->setDebugName(debugName);
 						texture->filters(GL_LINEAR, GL_LINEAR, 0);
 						texture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 					}
@@ -763,11 +767,11 @@ namespace cage
 				depthTexture->bind(); depthTexture->image2d(w, h, GL_DEPTH_COMPONENT32);
 				intermediateTexture->bind(); intermediateTexture->image2d(w, h, GL_RGB16F);
 
-				resizeTexture(velocityTexture, (cameraEffects & cameraEffectsFlags::MotionBlur) == cameraEffectsFlags::MotionBlur, GL_RG16F);
-				resizeTexture(ambientOcclusionTexture1, (cameraEffects & cameraEffectsFlags::AmbientOcclusion) == cameraEffectsFlags::AmbientOcclusion, GL_R8, CAGE_SHADER_SSAO_DOWNSCALE);
-				resizeTexture(ambientOcclusionTexture2, (cameraEffects & cameraEffectsFlags::AmbientOcclusion) == cameraEffectsFlags::AmbientOcclusion, GL_R8, CAGE_SHADER_SSAO_DOWNSCALE);
-				resizeTexture(bloomTexture1, (cameraEffects & cameraEffectsFlags::Bloom) == cameraEffectsFlags::Bloom, GL_RGB16F, CAGE_SHADER_BLOOM_DOWNSCALE);
-				resizeTexture(bloomTexture2, (cameraEffects & cameraEffectsFlags::Bloom) == cameraEffectsFlags::Bloom, GL_RGB16F, CAGE_SHADER_BLOOM_DOWNSCALE);
+				resizeTexture("velocityTexture", velocityTexture, (cameraEffects & cameraEffectsFlags::MotionBlur) == cameraEffectsFlags::MotionBlur, GL_RG16F);
+				resizeTexture("ambientOcclusionTexture1", ambientOcclusionTexture1, (cameraEffects & cameraEffectsFlags::AmbientOcclusion) == cameraEffectsFlags::AmbientOcclusion, GL_R8, CAGE_SHADER_SSAO_DOWNSCALE);
+				resizeTexture("ambientOcclusionTexture2", ambientOcclusionTexture2, (cameraEffects & cameraEffectsFlags::AmbientOcclusion) == cameraEffectsFlags::AmbientOcclusion, GL_R8, CAGE_SHADER_SSAO_DOWNSCALE);
+				resizeTexture("bloomTexture1", bloomTexture1, (cameraEffects & cameraEffectsFlags::Bloom) == cameraEffectsFlags::Bloom, GL_RGB16F, CAGE_SHADER_BLOOM_DOWNSCALE);
+				resizeTexture("bloomTexture2", bloomTexture2, (cameraEffects & cameraEffectsFlags::Bloom) == cameraEffectsFlags::Bloom, GL_RGB16F, CAGE_SHADER_BLOOM_DOWNSCALE);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
 				gBufferTarget->bind();
@@ -788,7 +792,7 @@ namespace cage
 
 				lastGBufferWidth = lastGBufferHeight = 0;
 
-#define GCHL_GENERATE(NAME) NAME = newTexture(); NAME->filters(GL_LINEAR, GL_LINEAR, 0); NAME->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+#define GCHL_GENERATE(NAME) NAME = newTexture(); NAME->setDebugName(CAGE_STRINGIZE(NAME)); NAME->filters(GL_LINEAR, GL_LINEAR, 0); NAME->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, albedoTexture, specialTexture, normalTexture, colorTexture, depthTexture, intermediateTexture));
 #undef GCHL_GENERATE
 				CAGE_CHECK_GL_ERROR_DEBUG();
@@ -803,16 +807,22 @@ namespace cage
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
 				viewportDataBuffer = newUniformBuffer();
+				viewportDataBuffer->setDebugName("viewportDataBuffer");
 				viewportDataBuffer->writeWhole(nullptr, sizeof(renderPassStruct::shaderViewportStruct), GL_DYNAMIC_DRAW);
 				meshDataBuffer = newUniformBuffer();
+				meshDataBuffer->setDebugName("meshDataBuffer");
 				meshDataBuffer->writeWhole(nullptr, sizeof(objectsStruct::shaderMeshStruct) * CAGE_SHADER_MAX_INSTANCES, GL_DYNAMIC_DRAW);
 				armatureDataBuffer = newUniformBuffer();
+				armatureDataBuffer->setDebugName("armatureDataBuffer");
 				armatureDataBuffer->writeWhole(nullptr, sizeof(mat3x4) * CAGE_SHADER_MAX_BONES, GL_DYNAMIC_DRAW);
 				lightsDataBuffer = newUniformBuffer();
+				lightsDataBuffer->setDebugName("lightsDataBuffer");
 				lightsDataBuffer->writeWhole(nullptr, sizeof(lightsStruct::shaderLightStruct) * CAGE_SHADER_MAX_INSTANCES, GL_DYNAMIC_DRAW);
 				ssaoDataBuffer = newUniformBuffer();
+				ssaoDataBuffer->setDebugName("ssaoDataBuffer");
 				ssaoDataBuffer->writeWhole(nullptr, sizeof(ssaoShaderStruct), GL_DYNAMIC_DRAW);
 				finalScreenDataBuffer = newUniformBuffer();
+				finalScreenDataBuffer->setDebugName("finalScreenDataBuffer");
 				finalScreenDataBuffer->writeWhole(nullptr, sizeof(finalScreenShaderStruct), GL_DYNAMIC_DRAW);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}

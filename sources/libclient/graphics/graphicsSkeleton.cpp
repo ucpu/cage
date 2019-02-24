@@ -43,6 +43,13 @@ namespace cage
 		};
 	}
 
+	void skeletonClass::setDebugName(const string &name)
+	{
+#ifdef CAGE_DEBUG
+		debugName = name;
+#endif // CAGE_DEBUG
+	}
+
 	void skeletonClass::allocate(const mat4 &globalInverse, uint32 totalBones, const uint16 *boneParents, const mat4 *baseMatrices, const mat4 *invRestMatrices)
 	{
 		skeletonImpl *impl = (skeletonImpl*)this;

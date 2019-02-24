@@ -2,7 +2,13 @@ namespace cage
 {
 	class CAGE_API animationClass
 	{
+#ifdef CAGE_DEBUG
+		detail::stringBase<64> debugName;
+#endif // CAGE_DEBUG
+
 	public:
+		void setDebugName(const string &name);
+
 		void allocate(uint64 duration, uint32 bones, const uint16 *indexes, const uint16 *positionFrames, const uint16 *rotationFrames, const uint16 *scaleFrames, const void *data);
 
 		mat4 evaluate(uint16 bone, real coef) const;

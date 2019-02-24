@@ -17,13 +17,14 @@ namespace cage
 			shaderClass *shr = nullptr;
 			if (context->assetHolder)
 			{
-				shr = static_cast<shaderClass*> (context->assetHolder.get());
+				shr = static_cast<shaderClass*>(context->assetHolder.get());
 				shr->bind();
 			}
 			else
 			{
 				context->assetHolder = newShader().transfev();
-				shr = static_cast<shaderClass*> (context->assetHolder.get());
+				shr = static_cast<shaderClass*>(context->assetHolder.get());
+				shr->setDebugName(context->textName);
 			}
 			context->returnData = shr;
 
@@ -53,8 +54,8 @@ namespace cage
 		assetSchemeStruct s;
 		s.threadIndex = threadIndex;
 		s.schemePointer = memoryContext;
-		s.load.bind <&processLoad>();
-		s.done.bind <&processDone>();
+		s.load.bind<&processLoad>();
+		s.done.bind<&processDone>();
 		return s;
 	}
 }

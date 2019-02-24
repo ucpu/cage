@@ -31,6 +31,7 @@ namespace cage
 			{
 				context->assetHolder = newFont().transfev();
 				font = static_cast<fontClass*>(context->assetHolder.get());
+				font->setDebugName(context->textName);
 			}
 			context->returnData = font;
 

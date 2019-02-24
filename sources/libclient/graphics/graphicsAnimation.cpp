@@ -105,6 +105,13 @@ namespace cage
 		};
 	}
 
+	void animationClass::setDebugName(const string &name)
+	{
+#ifdef CAGE_DEBUG
+		debugName = name;
+#endif // CAGE_DEBUG
+	}
+
 	void animationClass::allocate(uint64 duration, uint32 bones, const uint16 *indexes, const uint16 *positionFrames, const uint16 *rotationFrames, const uint16 *scaleFrames, const void *data)
 	{
 		animationImpl *impl = (animationImpl*)this;

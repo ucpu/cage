@@ -40,6 +40,7 @@ namespace cage
 			{
 				context->assetHolder = newTexture(data->target).transfev();
 				tex = static_cast<textureClass*>(context->assetHolder.get());
+				tex->setDebugName(context->textName);
 			}
 			context->returnData = tex;
 

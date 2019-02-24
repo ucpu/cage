@@ -15,7 +15,7 @@ namespace cage
 	{
 		void processDecompress(const assetContextStruct *context, void *schemePointer)
 		{
-			soundHeaderStruct *snd = (soundHeaderStruct *)context->compressedData;
+			soundHeaderStruct *snd = (soundHeaderStruct*)context->compressedData;
 			switch (snd->soundType)
 			{
 			case soundTypeEnum::RawRaw:
@@ -37,21 +37,22 @@ namespace cage
 
 		void processLoad(const assetContextStruct *context, void *schemePointer)
 		{
-			soundContextClass *gm = (soundContextClass *)schemePointer;
+			soundContextClass *gm = (soundContextClass*)schemePointer;
 
 			sourceClass *source = nullptr;
 			if (context->assetHolder)
 			{
-				source = static_cast<sourceClass*> (context->assetHolder.get());
+				source = static_cast<sourceClass*>(context->assetHolder.get());
 			}
 			else
 			{
 				context->assetHolder = newSource(gm).transfev();
-				source = static_cast<sourceClass*> (context->assetHolder.get());
+				source = static_cast<sourceClass*>(context->assetHolder.get());
+				source->setDebugName(context->textName);
 			}
 			context->returnData = source;
 
-			soundHeaderStruct *snd = (soundHeaderStruct *)context->compressedData;
+			soundHeaderStruct *snd = (soundHeaderStruct*)context->compressedData;
 
 			source->setDataRepeat((snd->flags & soundFlags::RepeatBeforeStart) == soundFlags::RepeatBeforeStart, (snd->flags & soundFlags::RepeatAfterEnd) == soundFlags::RepeatAfterEnd);
 
@@ -83,9 +84,9 @@ namespace cage
 		assetSchemeStruct s;
 		s.threadIndex = threadIndex;
 		s.schemePointer = memoryContext;
-		s.decompress.bind <&processDecompress>();
-		s.load.bind <&processLoad>();
-		s.done.bind <&processDone>();
+		s.decompress.bind<&processDecompress>();
+		s.load.bind<&processLoad>();
+		s.done.bind<&processDone>();
 		return s;
 	}
 }

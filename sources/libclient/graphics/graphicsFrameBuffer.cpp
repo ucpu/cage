@@ -66,6 +66,15 @@ namespace cage
 		};
 	}
 
+	void frameBufferClass::setDebugName(const string &name)
+	{
+#ifdef CAGE_DEBUG
+		debugName = name;
+#endif // CAGE_DEBUG
+		frameBufferImpl *impl = (frameBufferImpl *)this;
+		glObjectLabel(GL_FRAMEBUFFER, impl->id, name.length(), name.c_str());
+	}
+
 	uint32 frameBufferClass::getId() const
 	{
 		frameBufferImpl *impl = (frameBufferImpl *)this;

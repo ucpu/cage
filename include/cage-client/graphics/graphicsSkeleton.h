@@ -2,7 +2,13 @@ namespace cage
 {
 	class CAGE_API skeletonClass
 	{
+#ifdef CAGE_DEBUG
+		detail::stringBase<64> debugName;
+#endif // CAGE_DEBUG
+
 	public:
+		void setDebugName(const string &name);
+
 		void allocate(const mat4 &globalInverse, uint32 totalBones, const uint16 *boneParents, const mat4 *baseMatrices, const mat4 *invRestMatrices);
 
 		uint32 bonesCount() const;

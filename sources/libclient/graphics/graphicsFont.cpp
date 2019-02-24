@@ -260,6 +260,16 @@ namespace cage
 		};
 	}
 
+	void fontClass::setDebugName(const string &name)
+	{
+#ifdef CAGE_DEBUG
+		debugName = name;
+#endif // CAGE_DEBUG
+		fontImpl *impl = (fontImpl*)this;
+		impl->uni->setDebugName(name);
+		impl->tex->setDebugName(name);
+	}
+
 	void fontClass::setLine(real lineHeight, real firstLineOffset)
 	{
 		fontImpl *impl = (fontImpl*)this;
