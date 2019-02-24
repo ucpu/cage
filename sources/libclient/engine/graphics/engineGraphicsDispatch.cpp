@@ -101,35 +101,50 @@ namespace cage
 			holder<textureClass> luminanceCollectionTexture; // w*h
 			holder<textureClass> luminanceAccumulationTexture; // 1*1
 
-			cameraSpecificDataStruct() : width(0), height(0)
+			cameraSpecificDataStruct() : width(0), height(0), cameraEffects(cameraEffectsFlags::None)
 			{}
 
-			void update(uint32 w, uint32 h)
+			void update(uint32 w, uint32 h, cameraEffectsFlags ce)
 			{
-				if (!luminanceCollectionTexture)
+				if (w == width && h == height && ce == cameraEffects)
+					return;
+				width = w;
+				height = h;
+				cameraEffects = ce;
+
+				if ((ce & cameraEffectsFlags::EyeAdaptation) == cameraEffectsFlags::EyeAdaptation)
 				{
-					luminanceCollectionTexture = newTexture();
-					luminanceCollectionTexture->filters(GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR, 0);
-					luminanceCollectionTexture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-					luminanceAccumulationTexture = newTexture();
-					luminanceAccumulationTexture->filters(GL_NEAREST, GL_NEAREST, 0);
-					luminanceAccumulationTexture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+					if (luminanceCollectionTexture)
+						luminanceCollectionTexture->bind();
+					else
+					{
+						luminanceCollectionTexture = newTexture();
+						luminanceCollectionTexture->filters(GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR, 0);
+						luminanceCollectionTexture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+					}
+					luminanceCollectionTexture->image2d(max(w / CAGE_SHADER_LUMINANCE_DOWNSCALE, 1u), max(h / CAGE_SHADER_LUMINANCE_DOWNSCALE, 1u), GL_R16F);
+					if (luminanceAccumulationTexture)
+						luminanceAccumulationTexture->bind();
+					else
+					{
+						luminanceAccumulationTexture = newTexture();
+						luminanceAccumulationTexture->filters(GL_NEAREST, GL_NEAREST, 0);
+						luminanceAccumulationTexture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+					}
 					luminanceAccumulationTexture->image2d(1, 1, GL_R16F);
 					CAGE_CHECK_GL_ERROR_DEBUG();
 				}
-				if (w != width || h != height)
+				else
 				{
-					width = w;
-					height = h;
-					luminanceCollectionTexture->bind();
-					luminanceCollectionTexture->image2d(max(w / CAGE_SHADER_LUMINANCE_DOWNSCALE, 1u), max(h / CAGE_SHADER_LUMINANCE_DOWNSCALE, 1u), GL_R16F);
-					CAGE_CHECK_GL_ERROR_DEBUG();
+					luminanceCollectionTexture.clear();
+					luminanceAccumulationTexture.clear();
 				}
 			}
 
 		private:
 			uint32 width;
 			uint32 height;
+			cameraEffectsFlags cameraEffects;
 		};
 
 		struct graphicsDispatchHolders
@@ -167,8 +182,9 @@ namespace cage
 			uint32 drawPrimitives;
 
 		private:
-			uint32 gBufferWidth;
-			uint32 gBufferHeight;
+			uint32 lastGBufferWidth;
+			uint32 lastGBufferHeight;
+			cameraEffectsFlags lastCameraEffects;
 
 			bool lastTwoSided;
 			bool lastDepthTest;
@@ -417,7 +433,7 @@ namespace cage
 			{
 				// camera specific data
 				cameraSpecificDataStruct &cs = cameras[pass->entityId];
-				cs.update(pass->vpW, pass->vpH);
+				cs.update(pass->vpW, pass->vpH, pass->effects);
 
 				// opaque
 				gBufferTarget->bind();
@@ -543,6 +559,7 @@ namespace cage
 						renderDispatch(meshSquare, 1);
 					}
 					viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
+					texSource->bind();
 				}
 
 				// transparencies
@@ -713,28 +730,53 @@ namespace cage
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
-			void gBufferResize(uint32 w, uint32 h)
+			void resizeTexture(holder<textureClass> &texture, bool enabled, uint32 internalFormat, uint32 downscale = 1)
 			{
-				if (w == gBufferWidth && h == gBufferHeight)
+				if (enabled)
+				{
+					if (texture)
+						texture->bind();
+					else
+					{
+						texture = newTexture();
+						texture->filters(GL_LINEAR, GL_LINEAR, 0);
+						texture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+					}
+					texture->image2d(max(lastGBufferWidth / downscale, 1u), max(lastGBufferHeight / downscale, 1u), internalFormat);
+				}
+				else
+					texture.clear();
+			}
+
+			void gBufferResize(uint32 w, uint32 h, cameraEffectsFlags cameraEffects)
+			{
+				if (w == lastGBufferWidth && h == lastGBufferHeight && lastCameraEffects == cameraEffects)
 					return;
-				gBufferWidth = w;
-				gBufferHeight = h;
+				lastGBufferWidth = w;
+				lastGBufferHeight = h;
+				lastCameraEffects = cameraEffects;
+
 				albedoTexture->bind(); albedoTexture->image2d(w, h, GL_RGB8);
 				specialTexture->bind(); specialTexture->image2d(w, h, GL_RG8);
 				normalTexture->bind(); normalTexture->image2d(w, h, GL_RGB16F);
 				colorTexture->bind(); colorTexture->image2d(w, h, GL_RGB16F);
-				intermediateTexture->bind(); intermediateTexture->image2d(w, h, GL_RGB16F);
-				velocityTexture->bind(); velocityTexture->image2d(w, h, GL_RG16F);
-				ambientOcclusionTexture1->bind(); ambientOcclusionTexture1->image2d(max(w / CAGE_SHADER_SSAO_DOWNSCALE, 1u), max(h / CAGE_SHADER_SSAO_DOWNSCALE, 1u), GL_R8);
-				ambientOcclusionTexture2->bind(); ambientOcclusionTexture2->image2d(max(w / CAGE_SHADER_SSAO_DOWNSCALE, 1u), max(h / CAGE_SHADER_SSAO_DOWNSCALE, 1u), GL_R8);
-				bloomTexture1->bind(); bloomTexture1->image2d(max(w / CAGE_SHADER_BLOOM_DOWNSCALE, 1u), max(h / CAGE_SHADER_BLOOM_DOWNSCALE, 1u), GL_RGB16F);
-				bloomTexture2->bind(); bloomTexture2->image2d(max(w / CAGE_SHADER_BLOOM_DOWNSCALE, 1u), max(h / CAGE_SHADER_BLOOM_DOWNSCALE, 1u), GL_RGB16F);
 				depthTexture->bind(); depthTexture->image2d(w, h, GL_DEPTH_COMPONENT32);
+				intermediateTexture->bind(); intermediateTexture->image2d(w, h, GL_RGB16F);
+
+				resizeTexture(velocityTexture, (cameraEffects & cameraEffectsFlags::MotionBlur) == cameraEffectsFlags::MotionBlur, GL_RG16F);
+				resizeTexture(ambientOcclusionTexture1, (cameraEffects & cameraEffectsFlags::AmbientOcclusion) == cameraEffectsFlags::AmbientOcclusion, GL_R8, CAGE_SHADER_SSAO_DOWNSCALE);
+				resizeTexture(ambientOcclusionTexture2, (cameraEffects & cameraEffectsFlags::AmbientOcclusion) == cameraEffectsFlags::AmbientOcclusion, GL_R8, CAGE_SHADER_SSAO_DOWNSCALE);
+				resizeTexture(bloomTexture1, (cameraEffects & cameraEffectsFlags::Bloom) == cameraEffectsFlags::Bloom, GL_RGB16F, CAGE_SHADER_BLOOM_DOWNSCALE);
+				resizeTexture(bloomTexture2, (cameraEffects & cameraEffectsFlags::Bloom) == cameraEffectsFlags::Bloom, GL_RGB16F, CAGE_SHADER_BLOOM_DOWNSCALE);
+				CAGE_CHECK_GL_ERROR_DEBUG();
+
+				gBufferTarget->bind();
+				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_VELOCITY, (cameraEffects & cameraEffectsFlags::MotionBlur) == cameraEffectsFlags::MotionBlur ? velocityTexture.get() : nullptr);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
 		public:
-			graphicsDispatchImpl(const engineCreateConfig &config) : drawCalls(0), drawPrimitives(0), gBufferWidth(0), gBufferHeight(0), lastTwoSided(false), lastDepthTest(false)
+			graphicsDispatchImpl(const engineCreateConfig &config) : drawCalls(0), drawPrimitives(0), lastGBufferWidth(0), lastGBufferHeight(0), lastCameraEffects(cameraEffectsFlags::None), lastTwoSided(false), lastDepthTest(false)
 			{
 				detail::memset(static_cast<graphicsDispatchStruct*>(this), 0, sizeof(graphicsDispatchStruct));
 			}
@@ -744,10 +786,10 @@ namespace cage
 				shadowmaps2d.reserve(4);
 				shadowmapsCube.reserve(32);
 
-				gBufferWidth = gBufferHeight = 0;
+				lastGBufferWidth = lastGBufferHeight = 0;
 
 #define GCHL_GENERATE(NAME) NAME = newTexture(); NAME->filters(GL_LINEAR, GL_LINEAR, 0); NAME->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, albedoTexture, specialTexture, normalTexture, colorTexture, intermediateTexture, velocityTexture, ambientOcclusionTexture1, ambientOcclusionTexture2, bloomTexture1, bloomTexture2, depthTexture));
+				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, albedoTexture, specialTexture, normalTexture, colorTexture, depthTexture, intermediateTexture));
 #undef GCHL_GENERATE
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
@@ -756,7 +798,6 @@ namespace cage
 				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_SPECIAL, specialTexture.get());
 				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_NORMAL, normalTexture.get());
 				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_COLOR, colorTexture.get());
-				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_VELOCITY, velocityTexture.get());
 				gBufferTarget->depthTexture(depthTexture.get());
 				renderTarget = newDrawFrameBuffer();
 				CAGE_CHECK_GL_ERROR_DEBUG();
@@ -778,7 +819,7 @@ namespace cage
 
 			void finalize()
 			{
-				gBufferWidth = gBufferHeight = 0;
+				lastGBufferWidth = lastGBufferHeight = 0;
 				*(graphicsDispatchHolders*)this = graphicsDispatchHolders();
 			}
 
@@ -813,8 +854,10 @@ namespace cage
 
 				{ // prepare all render targets
 					uint32 maxW = windowWidth, maxH = windowHeight;
+					cameraEffectsFlags cameraEffects = cameraEffectsFlags::None;
 					for (renderPassStruct *renderPass = firstRenderPass; renderPass; renderPass = renderPass->next)
 					{
+						cameraEffects |= renderPass->effects;
 						if (renderPass->targetTexture)
 						{ // render to texture
 							visualizableTextures.emplace_back(renderPass->targetTexture, visualizableTextureModeEnum::Color);
@@ -849,7 +892,7 @@ namespace cage
 							visualizableTextures.emplace_back(s.texture.get(), visualizableTextureModeEnum::DepthCube);
 						}
 					}
-					gBufferResize(maxW, maxH);
+					gBufferResize(maxW, maxH, cameraEffects);
 					CAGE_CHECK_GL_ERROR_DEBUG();
 				}
 
@@ -890,7 +933,7 @@ namespace cage
 					{
 						CAGE_ASSERT_RUNTIME(v.visualizableTextureMode == visualizableTextureModeEnum::Color);
 						shaderVisualizeColor->bind();
-						shaderVisualizeColor->uniform(0, vec2(1.0 / gBufferWidth, 1.0 / gBufferHeight));
+						shaderVisualizeColor->uniform(0, vec2(1.0 / lastGBufferWidth, 1.0 / lastGBufferHeight));
 						renderDispatch(meshSquare, 1);
 					}
 					else
