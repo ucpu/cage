@@ -278,6 +278,24 @@ namespace cage
 				}
 			}
 
+			void gaussianBlur(holder<textureClass> &texData, holder<textureClass> &texHelper, uint32 mipmapLevel = 0)
+			{
+				shaderGaussianBlur->bind();
+				shaderGaussianBlur->uniform(1, (int)mipmapLevel);
+				auto blur = [&](holder<textureClass> &tex1, holder<textureClass> &tex2, const vec2 &direction)
+				{
+					tex1->bind();
+					renderTarget->colorTexture(0, tex2.get(), mipmapLevel);
+#ifdef CAGE_DEBUG
+					renderTarget->checkStatus();
+#endif // CAGE_DEBUG
+					shaderGaussianBlur->uniform(0, direction);
+					renderDispatch(meshSquare, 1);
+				};
+				blur(texData, texHelper, vec2(1, 0));
+				blur(texHelper, texData, vec2(0, 1));
+			}
+
 			void renderEffect()
 			{
 				renderTarget->colorTexture(0, texTarget);
@@ -497,17 +515,7 @@ namespace cage
 						renderDispatch(meshSquare, 1);
 					}
 					{ // blur
-						shaderSsaoBlur->bind();
-						auto ssaoBlur = [&](holder<textureClass> &tex1, holder<textureClass> &tex2, const vec2 &direction)
-						{
-							tex1->bind();
-							renderTarget->colorTexture(0, tex2.get());
-							renderTarget->checkStatus();
-							shaderSsaoBlur->uniform(0, direction);
-							renderDispatch(meshSquare, 1);
-						};
-						ssaoBlur(ambientOcclusionTexture1, ambientOcclusionTexture2, vec2(pass->ssao.blurRadius, 0.0));
-						ssaoBlur(ambientOcclusionTexture2, ambientOcclusionTexture1, vec2(0.0, pass->ssao.blurRadius));
+						gaussianBlur(ambientOcclusionTexture1, ambientOcclusionTexture2);
 					}
 					viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
 					{ // apply
@@ -619,19 +627,13 @@ namespace cage
 						renderDispatch(meshSquare, 1);
 					}
 					{ // blur
-						shaderBloomBlur->bind();
-						auto bloomBlur = [&](holder<textureClass> &tex1, holder<textureClass> &tex2, const vec2 &direction)
-						{
-							tex1->bind();
-							renderTarget->colorTexture(0, tex2.get());
-							renderTarget->checkStatus();
-							shaderBloomBlur->uniform(0, direction);
-							renderDispatch(meshSquare, 1);
-						};
+						bloomTexture1->bind();
+						bloomTexture1->generateMipmaps();
 						for (uint32 i = 0; i < pass->bloom.blurPasses; i++)
 						{
-							bloomBlur(bloomTexture1, bloomTexture2, vec2(pass->bloom.blurRadius, 0.0));
-							bloomBlur(bloomTexture2, bloomTexture1, vec2(0.0, pass->bloom.blurRadius));
+							uint32 d = CAGE_SHADER_BLOOM_DOWNSCALE + i;
+							viewportAndScissor(pass->vpX / d, pass->vpY / d, pass->vpW / d, pass->vpH / d);
+							gaussianBlur(bloomTexture1, bloomTexture2, i);
 						}
 					}
 					viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
@@ -641,6 +643,7 @@ namespace cage
 						glActiveTexture(GL_TEXTURE0 + CAGE_SHADER_TEXTURE_COLOR);
 						CAGE_CHECK_GL_ERROR_DEBUG();
 						shaderBloomApply->bind();
+						shaderBloomApply->uniform(0, (int)pass->bloom.blurPasses);
 						renderEffect();
 					}
 				}
@@ -733,7 +736,7 @@ namespace cage
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
-			void resizeTexture(const string &debugName, holder<textureClass> &texture, bool enabled, uint32 internalFormat, uint32 downscale = 1)
+			bool resizeTexture(const string &debugName, holder<textureClass> &texture, bool enabled, uint32 internalFormat, uint32 downscale = 1)
 			{
 				if (enabled)
 				{
@@ -750,6 +753,7 @@ namespace cage
 				}
 				else
 					texture.clear();
+				return enabled;
 			}
 
 			void gBufferResize(uint32 w, uint32 h, cameraEffectsFlags cameraEffects)
@@ -770,8 +774,16 @@ namespace cage
 				resizeTexture("velocityTexture", velocityTexture, (cameraEffects & cameraEffectsFlags::MotionBlur) == cameraEffectsFlags::MotionBlur, GL_RG16F);
 				resizeTexture("ambientOcclusionTexture1", ambientOcclusionTexture1, (cameraEffects & cameraEffectsFlags::AmbientOcclusion) == cameraEffectsFlags::AmbientOcclusion, GL_R8, CAGE_SHADER_SSAO_DOWNSCALE);
 				resizeTexture("ambientOcclusionTexture2", ambientOcclusionTexture2, (cameraEffects & cameraEffectsFlags::AmbientOcclusion) == cameraEffectsFlags::AmbientOcclusion, GL_R8, CAGE_SHADER_SSAO_DOWNSCALE);
-				resizeTexture("bloomTexture1", bloomTexture1, (cameraEffects & cameraEffectsFlags::Bloom) == cameraEffectsFlags::Bloom, GL_RGB16F, CAGE_SHADER_BLOOM_DOWNSCALE);
-				resizeTexture("bloomTexture2", bloomTexture2, (cameraEffects & cameraEffectsFlags::Bloom) == cameraEffectsFlags::Bloom, GL_RGB16F, CAGE_SHADER_BLOOM_DOWNSCALE);
+				if (resizeTexture("bloomTexture1", bloomTexture1, (cameraEffects & cameraEffectsFlags::Bloom) == cameraEffectsFlags::Bloom, GL_RGB16F, CAGE_SHADER_BLOOM_DOWNSCALE))
+				{
+					bloomTexture1->generateMipmaps();
+					bloomTexture1->filters(GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, 0);
+				}
+				if (resizeTexture("bloomTexture2", bloomTexture2, (cameraEffects & cameraEffectsFlags::Bloom) == cameraEffectsFlags::Bloom, GL_RGB16F, CAGE_SHADER_BLOOM_DOWNSCALE))
+				{
+					bloomTexture2->generateMipmaps();
+					bloomTexture2->filters(GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, 0);
+				}
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
 				gBufferTarget->bind();

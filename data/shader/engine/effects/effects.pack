@@ -1,13 +1,12 @@
 
 []
-bloomGenerate.glsl
-bloomBlur.glsl
 bloomApply.glsl
-ssaoGenerate.glsl
-ssaoBlur.glsl
-ssaoApply.glsl
-motionBlur.glsl
-luminanceCollection.glsl
-luminanceCopy.glsl
+bloomGenerate.glsl
 finalScreen.glsl
 fxaa.glsl
+gaussianBlur.glsl
+luminanceCollection.glsl
+luminanceCopy.glsl
+motionBlur.glsl
+ssaoApply.glsl
+ssaoGenerate.glsl

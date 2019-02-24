@@ -14,7 +14,7 @@ namespace cage
 		void bind() const;
 
 		void depthTexture(textureClass *tex);
-		void colorTexture(uint32 index, textureClass *tex);
+		void colorTexture(uint32 index, textureClass *tex, uint32 mipmapLevel = 0);
 		void activeAttachments(uint32 mask);
 		void clear();
 		void checkStatus();

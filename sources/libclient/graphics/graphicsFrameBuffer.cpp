@@ -103,11 +103,11 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void frameBufferClass::colorTexture(uint32 index, textureClass *tex)
+	void frameBufferClass::colorTexture(uint32 index, textureClass *tex, uint32 mipmapLevel)
 	{
 		frameBufferImpl *impl = (frameBufferImpl*)this;
 		impl->checkBinded();
-		glFramebufferTexture(impl->target, GL_COLOR_ATTACHMENT0 + index, tex ? tex->getId() : 0, 0);
+		glFramebufferTexture(impl->target, GL_COLOR_ATTACHMENT0 + index, tex ? tex->getId() : 0, mipmapLevel);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 

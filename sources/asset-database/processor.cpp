@@ -58,9 +58,17 @@ namespace
 
 	bool parseDatabank(const string &path)
 	{
-		uint32 errors = 0;
 		holder<iniClass> ini = newIni();
-		ini->load(pathJoin(configPathInput, path));
+		try
+		{
+			ini->load(pathJoin(configPathInput, path));
+		}
+		catch (cage::exception &)
+		{
+			CAGE_LOG(severityEnum::Error, "database", string() + "invalid ini file in databank '" + path + "'");
+			return false;
+		}
+		uint32 errors = 0;
 		for (uint32 sectionIndex = 0, sectionIndexEnd = ini->sectionCount(); sectionIndex != sectionIndexEnd; sectionIndex++)
 		{
 			// load assets group properties

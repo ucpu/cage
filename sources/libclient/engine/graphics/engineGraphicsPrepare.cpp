@@ -875,12 +875,11 @@ namespace cage
 					graphicsDispatch->shaderGBuffer = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/gBuffer.glsl"));
 					graphicsDispatch->shaderLighting = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/lighting.glsl"));
 					graphicsDispatch->shaderTranslucent = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/translucent.glsl"));
+					graphicsDispatch->shaderGaussianBlur = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/gaussianBlur.glsl"));
 					graphicsDispatch->shaderSsaoGenerate = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/ssaoGenerate.glsl"));
-					graphicsDispatch->shaderSsaoBlur = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/ssaoBlur.glsl"));
 					graphicsDispatch->shaderSsaoApply = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/ssaoApply.glsl"));
 					graphicsDispatch->shaderMotionBlur = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/motionBlur.glsl"));
 					graphicsDispatch->shaderBloomGenerate = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/bloomGenerate.glsl"));
-					graphicsDispatch->shaderBloomBlur = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/bloomBlur.glsl"));
 					graphicsDispatch->shaderBloomApply = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/bloomApply.glsl"));
 					graphicsDispatch->shaderLuminanceCollection = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/luminanceCollection.glsl"));
 					graphicsDispatch->shaderLuminanceCopy = ass->get<assetSchemeIndexShader, shaderClass>(hashString("cage/shader/engine/effects/luminanceCopy.glsl"));

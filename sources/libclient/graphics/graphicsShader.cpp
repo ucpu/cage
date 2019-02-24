@@ -407,6 +407,7 @@ namespace cage
 	void shaderClass::relink()
 	{
 		shaderImpl *impl = (shaderImpl*)this;
+		CAGE_ASSERT_RUNTIME(!impl->sources.empty(), "shader has no sources");
 
 		impl->subroutinesVertex.clear();
 		impl->subroutinesTessControl.clear();
@@ -418,8 +419,8 @@ namespace cage
 		glLinkProgram(impl->id);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 
-		for (auto it = impl->sources.begin(), et = impl->sources.end(); it != et; it++)
-			glDetachShader(impl->id, *it);
+		for (auto it : impl->sources)
+			glDetachShader(impl->id, it);
 		impl->sources.clear();
 		CAGE_CHECK_GL_ERROR_DEBUG();
 

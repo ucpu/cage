@@ -3,7 +3,6 @@ namespace cage
 	struct CAGE_API cameraSsaoStruct
 	{
 		real worldRadius;
-		real blurRadius;
 		real strength;
 		real bias;
 		real power;
@@ -20,7 +19,6 @@ namespace cage
 	struct CAGE_API cameraBloomStruct
 	{
 		uint32 blurPasses;
-		real blurRadius;
 		real threshold;
 		cameraBloomStruct();
 	};
