@@ -25,13 +25,13 @@ namespace
 		}
 	}
 
-	void loadTextureExternal(meshHeaderStruct &dsm, iniClass *ini, const string &type, uint32 usage)
+	void loadTextureCage(const string &pathBase, meshHeaderStruct &dsm, iniClass *ini, const string &type, uint32 usage)
 	{
 		CAGE_ASSERT_RUNTIME(usage < MaxTexturesCountPerMaterial, usage, MaxTexturesCountPerMaterial, type);
 		string n = ini->getString("textures", type);
 		if (n.empty())
 			return;
-		n = pathJoin(pathExtractPath(inputName), n);
+		n = pathJoin(pathBase, n);
 		dsm.textureNames[usage] = hashString(n.c_str());
 		writeLine(string("ref = ") + n);
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "texture '" + n + "' (" + dsm.textureNames[usage] + ") of type " + type + ", usage " + usage);
@@ -85,10 +85,9 @@ namespace
 		CAGE_LOG(severityEnum::Info, logComponentName, "using cage (.cpm) material");
 
 		writeLine(string("use = ") + path);
-		path = pathJoin(inputDirectory, path);
 
 		holder<iniClass> ini = newIni();
-		ini->load(path);
+		ini->load(pathJoin(inputDirectory, path));
 
 		mat.albedoBase = vec4(
 			toVec3(ini->getString("base", "albedo", "0, 0, 0")),
@@ -115,9 +114,10 @@ namespace
 			ini->getString("mult", "mask", "1").toFloat()
 		);
 
-		loadTextureExternal(dsm, ini.get(), "albedo", CAGE_SHADER_TEXTURE_ALBEDO);
-		loadTextureExternal(dsm, ini.get(), "special", CAGE_SHADER_TEXTURE_SPECIAL);
-		loadTextureExternal(dsm, ini.get(), "normal", CAGE_SHADER_TEXTURE_NORMAL);
+		string pathBase = pathExtractPath(path);
+		loadTextureCage(pathBase, dsm, ini.get(), "albedo", CAGE_SHADER_TEXTURE_ALBEDO);
+		loadTextureCage(pathBase, dsm, ini.get(), "special", CAGE_SHADER_TEXTURE_SPECIAL);
+		loadTextureCage(pathBase, dsm, ini.get(), "normal", CAGE_SHADER_TEXTURE_NORMAL);
 
 		for (uint32 i = 0, e = ini->itemCount("flags"); i != e; i++)
 		{
