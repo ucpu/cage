@@ -52,7 +52,6 @@ namespace cage
 	{ \
 		CAGE_ASSERT_RUNTIME(min <= max, min, max); \
 		TYPE res = interpolate(min, max, this->randomChance()); \
-		/*CAGE_ASSERT_RUNTIME(res >= min && res < max, res, min, max);*/ \
 		return res; \
 	}
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, real, rads, float));
@@ -62,9 +61,9 @@ namespace cage
 	{
 		CAGE_ASSERT_RUNTIME(min <= max, min, max);
 		uint64 r = next();
-		if (r == detail::numeric_limits<uint64>::max())
-			return min;
 		double f = (double)r / (double)detail::numeric_limits<uint64>::max();
+		if (f >= 1.0)
+			f = 0;
 		double res = (max - min) * f + min;
 		CAGE_ASSERT_RUNTIME(res >= min && res < max, res, min, max);
 		return res;
@@ -73,9 +72,9 @@ namespace cage
 	real randomGenerator::randomChance()
 	{
 		uint64 r = next();
-		if (r == detail::numeric_limits<uint64>::max())
-			return 0;
 		real res = (real)r / (real)detail::numeric_limits<uint64>::max();
+		if (res >= 1.0)
+			res = 0;
 		CAGE_ASSERT_RUNTIME(res >= 0.f && res < 1.f, res);
 		return res;
 	}
@@ -93,21 +92,11 @@ namespace cage
 
 	vec3 randomGenerator::randomDirection3()
 	{
-		vec3 p;
-		while (true)
-		{
-			p = randomRange3(-1, 1);
-			if (p.squaredLength() < 1)
-				break;
-		}
-		return p.normalize();
-		/*
-		real u = randomChance();
-		real v = randomChance();
-		rads theta = rads(real::TwoPi * u);
-		rads phi = aCos(2 * v - 1);
-		return vec3(cos(theta) * sin(phi), sin(theta) * sin(phi), cos(phi)).normalize();
-		*/
+		real z = randomRange(-1.f, 1.f);
+		vec2 p = randomDirection2() * sqrt(1 - sqr(z));
+		vec3 r = vec3(p, z);
+		CAGE_ASSERT_RUNTIME(abs(r.squaredLength() - 1) < 1e-5);
+		return r;
 	}
 
 	quat randomGenerator::randomDirectionQuat()
