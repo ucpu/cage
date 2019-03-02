@@ -100,7 +100,7 @@ namespace cage
 
 					if (index < 0)
 					{ // before start
-						const uint32 r = min(numeric_cast<uint32>(-index), requestLeft);
+						uint32 r = numeric_cast<uint32>(min(-index, (sint64)requestLeft));
 						if (repeatBeforeStart)
 							readCycle(buffer, index, r);
 						else
@@ -112,7 +112,7 @@ namespace cage
 
 					if (index < frames && requestLeft)
 					{ // inside
-						const uint32 r = min(frames - numeric_cast<uint32>(index), requestLeft);
+						uint32 r = numeric_cast<uint32>(min((sint64)frames - index, (sint64)requestLeft));
 						readSwitchSource(buffer, numeric_cast<uint32>(index), r);
 						buffer += channels * r;
 						requestLeft -= r;
@@ -121,7 +121,7 @@ namespace cage
 
 					if (index >= frames && requestLeft)
 					{ // after end
-						const uint32 r = requestLeft;
+						uint32 r = requestLeft;
 						if (repeatAfterEnd)
 							readCycle(buffer, index, r);
 						else
