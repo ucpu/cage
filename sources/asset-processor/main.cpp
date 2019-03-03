@@ -84,15 +84,14 @@ namespace
 		}
 	}
 
-	holder<logOutputPolicyFileClass> secondaryLogFile;
-	holder<loggerClass> secondaryLog;
-
 	void initializeSecondaryLog(const string &path)
 	{
-		secondaryLogFile = newLogOutputPolicyFile(path, false);
-		secondaryLog = newLogger();
-		secondaryLog->output.bind<logOutputPolicyFileClass, &logOutputPolicyFileClass::output>(secondaryLogFile.get());
-		secondaryLog->format.bind<&logFormatPolicyFileShort>();
+		static holder<logOutputPolicyFileClass> *secondaryLogFile = new holder<logOutputPolicyFileClass>(); // intentional leak
+		static holder<loggerClass> *secondaryLog = new holder<loggerClass>(); // intentional leak - this will allow to log to the very end of the application
+		*secondaryLogFile = newLogOutputPolicyFile(path, false);
+		*secondaryLog = newLogger();
+		(*secondaryLog)->output.bind<logOutputPolicyFileClass, &logOutputPolicyFileClass::output>(secondaryLogFile->get());
+		(*secondaryLog)->format.bind<&logFormatPolicyFileShort>();
 	}
 }
 

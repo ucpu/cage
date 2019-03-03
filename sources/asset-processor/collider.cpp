@@ -14,20 +14,30 @@ void processCollider()
 	default: CAGE_THROW_ERROR(exception, "collider works with triangles only");
 	}
 
-	holder<colliderClass> collider = newCollider();
+	CAGE_LOG(severityEnum::Info, logComponentName, string() + "loaded triangles: " + am->mNumFaces);
 
+	holder<colliderClass> collider = newCollider();
 	mat3 axesScale = axesScaleMatrix();
 	for (uint32 i = 0; i < am->mNumFaces; i++)
 	{
 		triangle tri;
+		tri = triangle(vec3(), vec3(), vec3());
 		for (uint32 j = 0; j < 3; j++)
 		{
 			uint32 idx = numeric_cast<uint32>(am->mFaces[i].mIndices[j]);
-			tri[j] = axesScale * conv(am->mVertices[i]);
+			tri[j] = axesScale * conv(am->mVertices[idx]);
 		}
-		collider->addTriangle(tri);
+		if (!tri.degenerated())
+			collider->addTriangle(tri);
 	}
-	CAGE_LOG(severityEnum::Info, logComponentName, string() + "total triangles: " + collider->trianglesCount());
+
+	{ // count degenerated
+		uint32 deg = am->mNumFaces - collider->trianglesCount();
+		if (deg)
+		{
+			CAGE_LOG(severityEnum::Warning, logComponentName, string() + "degenerated triangles: " + deg);
+		}
+	}
 
 	collider->rebuild();
 
