@@ -12,11 +12,14 @@ void main()
 
 $define shader fragment
 
-$include ../func/pointsOnSphere.glsl
-$include ../func/randomNumbers.glsl
 $include ../func/random.glsl
 
 $include ssaoParams.glsl
+
+layout(std140, binding = CAGE_SHADER_UNIBLOCK_SSAO_POINTS) uniform SsaoPoints
+{
+	vec4 pointsOnSphere[256];
+};
 
 layout(binding = CAGE_SHADER_TEXTURE_NORMAL) uniform sampler2D texNormal;
 layout(binding = CAGE_SHADER_TEXTURE_DEPTH) uniform sampler2D texDepth;
@@ -55,12 +58,12 @@ void main()
 	float total = 0.0;
 	for (int i = 0; i < iparams[0]; i++)
 	{
-		vec3 dir = pointsOnSphere[(n + i) % 256];
+		vec3 dir = pointsOnSphere[(n + i) % 256].xyz;
 		float d = dot(myNormal, dir);
 		if (abs(d) < 0.3)
 			continue; // the direction is close to the surface and susceptible to noise
 		dir = sign(d) * dir; // move the direction into front hemisphere
-		float r = (randomNumbers[(n * 13 + i * 2) % 256]) * ssaoRadius;
+		float r = (pointsOnSphere[(n * 13 + i * 2) % 256].w) * ssaoRadius;
 		vec3 sw = myPos + dir * r;
 		vec4 s4 = viewProj * vec4(sw, 1.0);
 		vec3 ss = s4.xyz / s4.w;

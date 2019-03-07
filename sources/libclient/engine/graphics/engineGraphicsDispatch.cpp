@@ -19,6 +19,7 @@
 
 #include "../engine.h"
 #include "graphics.h"
+#include "ssaoPoints.h"
 
 namespace cage
 {
@@ -171,6 +172,7 @@ namespace cage
 			holder<uniformBufferClass> armatureDataBuffer;
 			holder<uniformBufferClass> lightsDataBuffer;
 			holder<uniformBufferClass> ssaoDataBuffer;
+			holder<uniformBufferClass> ssaoPointsBuffer;
 			holder<uniformBufferClass> finalScreenDataBuffer;
 
 			std::vector<shadowmapBufferStruct> shadowmaps2d, shadowmapsCube;
@@ -833,6 +835,12 @@ namespace cage
 				ssaoDataBuffer = newUniformBuffer();
 				ssaoDataBuffer->setDebugName("ssaoDataBuffer");
 				ssaoDataBuffer->writeWhole(nullptr, sizeof(ssaoShaderStruct), GL_DYNAMIC_DRAW);
+				ssaoPointsBuffer = newUniformBuffer();
+				ssaoPointsBuffer->setDebugName("ssaoPointsBuffer");
+				{
+					ssaoPointsShaderStruct p;
+					ssaoPointsBuffer->writeWhole(&p, sizeof(ssaoPointsShaderStruct), GL_STATIC_DRAW);
+				}
 				finalScreenDataBuffer = newUniformBuffer();
 				finalScreenDataBuffer->setDebugName("finalScreenDataBuffer");
 				finalScreenDataBuffer->writeWhole(nullptr, sizeof(finalScreenShaderStruct), GL_DYNAMIC_DRAW);
@@ -924,6 +932,7 @@ namespace cage
 				lightsDataBuffer->bind(CAGE_SHADER_UNIBLOCK_LIGHTS);
 				finalScreenDataBuffer->bind(CAGE_SHADER_UNIBLOCK_FINALSCREEN);
 				ssaoDataBuffer->bind(CAGE_SHADER_UNIBLOCK_SSAO);
+				ssaoPointsBuffer->bind(CAGE_SHADER_UNIBLOCK_SSAO_POINTS);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
 				{ // render all passes
