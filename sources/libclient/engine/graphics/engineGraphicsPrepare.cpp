@@ -165,7 +165,7 @@ namespace cage
 				real c = max(color[0], max(color[1], color[2]));
 				if (c <= 1e-5)
 					return 0;
-				real e = c * 1000;
+				real e = c * 100;
 				real x = attenuation[0], y = attenuation[1], z = attenuation[2];
 				if (z < 1e-5)
 				{
