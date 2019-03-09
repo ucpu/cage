@@ -6,6 +6,7 @@
 #include <cage-core/math.h>
 #include <cage-core/log.h>
 #include <cage-core/concurrent.h>
+#include <cage-core/config.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
@@ -24,6 +25,15 @@ namespace cage
 {
 	namespace
 	{
+		configBool confDebugContext("cage-client.graphics.debugContext",
+#ifdef CAGE_DEBUG
+			true
+#else
+			false
+#endif // CAGE_DEBUG
+			);
+		configBool confNoErrorContext("cage-client.graphics.noErrorContext", false);
+
 		void handleGlfwError(int, const char *message)
 		{
 			CAGE_LOG(severityEnum::Error, "glfw", message);
@@ -209,7 +219,7 @@ namespace cage
 					}
 					catch (...)
 					{
-						CAGE_LOG(severityEnum::Warning, "glfw", "an exception occured in event processing");
+						CAGE_LOG(severityEnum::Warning, "window", "an exception occured in event processing");
 					}
 					threadSleep(2000);
 				}
@@ -226,7 +236,8 @@ namespace cage
 #ifdef GCHL_WINDOWS_THREAD
 				stopping = false;
 				windowSemaphore = newSemaphore(0, 1);
-				windowThread = newThread(delegate<void()>().bind<windowImpl, &windowImpl::threadEntry>(this), "window");
+				static uint32 threadIndex = 0;
+				windowThread = newThread(delegate<void()>().bind<windowImpl, &windowImpl::threadEntry>(this), string() + "window " + (threadIndex++));
 				windowSemaphore->lock();
 				windowSemaphore.clear();
 				if (stopping)
@@ -257,22 +268,26 @@ namespace cage
 			void initializeWindow()
 			{
 				glfwDefaultWindowHints();
+				glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 				glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
 				glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
 				glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 				glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
+				glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, confDebugContext ? GLFW_TRUE : GLFW_FALSE);
+				if (confDebugContext)
+					CAGE_LOG(severityEnum::Info, "graphics", "creating DEBUG opengl context");
+				bool noErr = confNoErrorContext && !confDebugContext;
+				glfwWindowHint(GLFW_CONTEXT_NO_ERROR, noErr ? GLFW_TRUE : GLFW_FALSE);
+				if (noErr)
+					CAGE_LOG(severityEnum::Info, "graphics", "creating NO ERROR opengl context");
 				glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
-				glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT,
-#ifdef CAGE_DEBUG
-					GLFW_TRUE
-#else
-					GLFW_FALSE
-#endif
-				);
 				glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-				window = glfwCreateWindow(1, 1, "Cage GLFW Window", NULL, shareContext ? ((windowImpl*)shareContext)->window : nullptr);
+				glfwWindowHint(GLFW_ALPHA_BITS, 0); // save some gpu memory
+				glfwWindowHint(GLFW_DEPTH_BITS, 0);
+				glfwWindowHint(GLFW_STENCIL_BITS, 0);
+				window = glfwCreateWindow(1, 1, "Cage Window", NULL, shareContext ? ((windowImpl*)shareContext)->window : nullptr);
 				if (!window)
-					CAGE_THROW_ERROR(exception, "failed to create glfw window");
+					CAGE_THROW_ERROR(exception, "failed to create window");
 				glfwSetWindowUserPointer(window, this);
 				initializeEvents();
 			}
@@ -549,6 +564,7 @@ namespace cage
 			resolution.x == 0 ? v->width : resolution.x,
 			resolution.y == 0 ? v->height : resolution.y,
 			frequency == 0 ? glfwGetVideoMode(m)->refreshRate : frequency);
+		glfwShowWindow(impl->window);
 	}
 
 	void windowClass::modeSetWindowed(windowFlags flags)
@@ -557,6 +573,7 @@ namespace cage
 		glfwSetWindowMonitor(impl->window, nullptr, 100, 100, 800, 600, 0);
 		glfwSetWindowAttrib(impl->window, GLFW_DECORATED, (flags & windowFlags::Border) == windowFlags::Border);
 		glfwSetWindowAttrib(impl->window, GLFW_RESIZABLE, (flags & windowFlags::Resizeable) == windowFlags::Resizeable);
+		glfwShowWindow(impl->window);
 	}
 
 	void windowClass::modeSetHidden()

@@ -159,7 +159,7 @@ namespace cage
 	{
 		string oldName = currentThreadName();
 		currentThreadName() = name;
-		CAGE_LOG(severityEnum::Info, "thread", string() + "renaming thread id '" + threadId() + "' from '" + oldName + "' to '" + name + "'");
+		CAGE_LOG(severityEnum::Info, "thread", string() + "renamed thread id '" + threadId() + "' to '" + name + "'" + (oldName.empty() ? "" : string() + " was '" + oldName + "'"));
 
 		if (!name.empty())
 		{

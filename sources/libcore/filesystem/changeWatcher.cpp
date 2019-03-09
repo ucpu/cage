@@ -69,6 +69,6 @@ namespace cage
 
 	holder<changeWatcherClass> newChangeWatcher()
 	{
-		return detail::systemArena().createImpl <changeWatcherClass, changeWatcherImpl>();
+		return detail::systemArena().createImpl<changeWatcherClass, changeWatcherImpl>();
 	}
 }

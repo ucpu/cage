@@ -34,6 +34,8 @@ namespace cage
 {
 	namespace
 	{
+		configBool confAutoAssetListen("cage-client.engine.assetsListen", false);
+
 		struct graphicsUploadThreadClass
 		{
 #ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
@@ -498,10 +500,9 @@ namespace cage
 				}
 
 				{ // initialize assets change listening
-					static configBool confAutoAssetListen("cage-client.engine.autoAssetListen", false);
 					if (confAutoAssetListen)
 					{
-						CAGE_LOG(severityEnum::Info, "assets", "assets updates listening enabled");
+						CAGE_LOG(severityEnum::Info, "assets", "enabling assets updates listening");
 						detail::overrideBreakpoint overrideBreakpoint;
 						detail::overrideException overrideException;
 						try
@@ -510,7 +511,7 @@ namespace cage
 						}
 						catch (const exception &)
 						{
-							CAGE_LOG(severityEnum::Warning, "assets", "assets updates listening failed");
+							CAGE_LOG(severityEnum::Warning, "assets", "assets updates failed to connect to the database");
 						}
 					}
 				}

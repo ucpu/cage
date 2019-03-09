@@ -4,11 +4,15 @@
 #include <cage-core/concurrent.h>
 #include <cage-core/filesystem.h>
 #include <cage-core/timer.h>
+#include <cage-core/config.h>
+#include <cage-core/systemInformation.h>
 
 namespace cage
 {
 	namespace
 	{
+		configBool confDetailedInfo("cage-core.log.detailedVendorInfo", false);
+
 		mutexClass *loggerMutex()
 		{
 			static holder<mutexClass> *m = new holder<mutexClass>(newMutex()); // this leak is intentional
@@ -115,13 +119,17 @@ namespace cage
 					version += ", ";
 
 #ifdef CAGE_ARCHITECTURE_64
-					version += "64";
+					version += "64 bit";
 #else
-					version += "32";
+					version += "32 bit";
 #endif // CAGE_ARCHITECTURE_64
+					version += ", ";
+					version += "build at: " __DATE__ " " __TIME__;
 
-					CAGE_LOG(severityEnum::Info, "log", string() + "cage version: " + version + " bit, build at: " __DATE__ " " __TIME__);
+					CAGE_LOG(severityEnum::Info, "log", string() + "cage version: " + version);
 				}
+
+				setCurrentThreadName(pathExtractFilename(detail::getExecutableFullPathNoExe()));
 
 				CAGE_LOG(severityEnum::Info, "log", string() + "process id: " + processId());
 
@@ -129,7 +137,25 @@ namespace cage
 				detail::getSystemDateTime(y, M, d, h, m, s);
 				CAGE_LOG(severityEnum::Info, "log", string() + "current time: " + detail::formatDateTime(y, M, d, h, m, s));
 
-				setCurrentThreadName(pathExtractFilename(detail::getExecutableFullPathNoExe()));
+				if (confDetailedInfo)
+				{
+					CAGE_LOG(severityEnum::Info, "log", "detailed system information:");
+					try
+					{
+						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", string() + "system name: '" + systemName() + "'");
+						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", string() + "user name: '" + userName() + "'");
+						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", string() + "host name: '" + hostName() + "'");
+						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", string() + "processors count: " + processorsCount());
+						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", string() + "processor name: '" + processorName() + "'");
+						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", string() + "processor speed: " + (processorClockSpeed() / 1000000) + " MHz");
+						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", string() + "memory capacity: " + (memoryCapacity() / 1024 / 1024) + " MB");
+						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", string() + "memory available: " + (memoryAvailable() / 1024 / 1024) + " MB");
+					}
+					catch (exception &)
+					{
+						// do nothing
+					}
+				}
 			}
 
 			~centralLogStaticInitializerClass()

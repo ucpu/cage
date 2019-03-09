@@ -22,11 +22,11 @@ namespace cage
 {
 	enum class severityEnum
 	{
-		Hint, // possible improvement available
 		Note, // details for subsequent log
-		Warning, // not error, but should be dealt with
-		Info, // we are good
-		Error, // network connection interrupted, file access denied
+		Hint, // possible improvement available
+		Warning, // deprecated behavior, dangerous actions
+		Info, // we are good, progress report
+		Error, // invalid user input, network connection interrupted, file access denied
 		Critical // not implemented function, exception inside destructor, assert failure
 	};
 

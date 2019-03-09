@@ -6,6 +6,7 @@
 #include <cage-core/log.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/lineReader.h>
+#include <cage-core/config.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
@@ -17,6 +18,11 @@
 
 namespace cage
 {
+	namespace
+	{
+		configBool confDetailedInfo("cage-client.graphics.detailedVendorInfo", false);
+	}
+
 	void checkGlError()
 	{
 		GLenum err = glGetError();
@@ -55,6 +61,8 @@ namespace cage
 			if (ctx->debugOpenglErrorCallback)
 				return ctx->debugOpenglErrorCallback(source, type, id, severity, message);
 
+			severityEnum cageSevr = severityEnum::Error;
+
 			const char *src = nullptr;
 			switch (source)
 			{
@@ -73,12 +81,11 @@ namespace cage
 			case GL_DEBUG_TYPE_ERROR: tp = "error"; break;
 			case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: tp = "undefined behavior"; break;
 			case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: tp = "deprecated behavior"; break;
-			case GL_DEBUG_TYPE_PERFORMANCE: tp = "performance"; break;
+			case GL_DEBUG_TYPE_PERFORMANCE: tp = "performance"; cageSevr = severityEnum::Warning; break;
 			case GL_DEBUG_TYPE_OTHER: tp = "other"; break;
 			default: tp = "unknown type";
 			}
 
-			severityEnum cageSevr = severityEnum::Error;
 			const char *sevr = nullptr;
 			switch (severity)
 			{
@@ -93,10 +100,7 @@ namespace cage
 			lineReaderBuffer lrb((char*)message, detail::strlen(message));
 			for (string line; lrb.readLine(line);)
 				CAGE_LOG_CONTINUE(cageSevr, "graphics", line);
-			CAGE_LOG_CONTINUE(cageSevr, "graphics", string("source: ") + string(src));
-			CAGE_LOG_CONTINUE(cageSevr, "graphics", string("type: ") + string(tp));
-			CAGE_LOG_CONTINUE(cageSevr, "graphics", string("severity: ") + string(sevr));
-			CAGE_LOG_CONTINUE(cageSevr, "graphics", string("id: ") + string(id));
+			CAGE_LOG_CONTINUE(severityEnum::Note, "graphics", string() + "source: " + src + ", type: " + tp + ", severity: " + sevr + ", id: " + id);
 
 			if (id == 131218 && severity == GL_DEBUG_SEVERITY_MEDIUM && type == GL_DEBUG_TYPE_PERFORMANCE)
 				return; // do not break on messages that shader is beeing recompiled based on opengl state
@@ -118,6 +122,17 @@ namespace cage
 			CAGE_LOG(severityEnum::Info, "graphics", string() + "opengl version: " + major + "." + minor);
 			CAGE_LOG_CONTINUE(severityEnum::Info, "graphics", string() + "device vendor: '" + (char*)vendor + "'");
 			CAGE_LOG_CONTINUE(severityEnum::Info, "graphics", string() + "device renderer: '" + (char*)renderer + "'");
+			if (confDetailedInfo)
+			{
+				CAGE_LOG(severityEnum::Info, "graphics", string() + "opengl extensions: ");
+				GLint num = 0;
+				glGetIntegerv(GL_NUM_EXTENSIONS, &num);
+				for (GLint i = 0; i < num; i++)
+				{
+					const GLubyte *ext = glGetStringi(GL_EXTENSIONS, i);
+					CAGE_LOG_CONTINUE(severityEnum::Info, "graphics", string() + "extension: '" + (char*)ext + "'");
+				}
+			}
 			return true;
 		}
 	}
@@ -127,8 +142,7 @@ namespace cage
 		void openglContextInitializeGeneral(windowClass *w)
 		{
 			// initialize debug messages
-			if (GLAD_GL_KHR_debug)
-				glDebugMessageCallback(&openglErrorCallbackImpl, w);
+			glDebugMessageCallback(&openglErrorCallbackImpl, w);
 
 			static bool blah = logOpenglInfo(); // log just once
 

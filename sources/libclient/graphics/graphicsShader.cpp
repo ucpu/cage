@@ -381,6 +381,9 @@ namespace cage
 			char buf[shaderLogBufferSize];
 			glGetShaderInfoLog(shader, shaderLogBufferSize - 1, &len, buf);
 			checkGlErrorDeleteShader(shader);
+#ifdef CAGE_DEBUG
+			CAGE_LOG(severityEnum::Note, "shader", string() + "shader name: " + debugName);
+#endif // CAGE_DEBUG
 			CAGE_LOG(severityEnum::Warning, "shader", string() + "shader compilation log (id: " + impl->id + ", stage: " + typeName + "):");
 			lineReaderBuffer lrb(buf, len);
 			for (string line; lrb.readLine(line);)
@@ -392,6 +395,9 @@ namespace cage
 		if (len != GL_TRUE)
 		{
 			glDeleteShader(shader);
+#ifdef CAGE_DEBUG
+			CAGE_LOG(severityEnum::Note, "shader", string() + "shader name: " + debugName);
+#endif // CAGE_DEBUG
 			CAGE_THROW_ERROR(graphicsException, "shader compilation failed", len);
 		}
 
@@ -440,6 +446,9 @@ namespace cage
 			char buf[shaderLogBufferSize];
 			glGetProgramInfoLog(impl->id, shaderLogBufferSize - 1, &len, buf);
 			CAGE_CHECK_GL_ERROR_DEBUG();
+#ifdef CAGE_DEBUG
+			CAGE_LOG(severityEnum::Note, "shader", string() + "shader name: " + debugName);
+#endif // CAGE_DEBUG
 			CAGE_LOG(severityEnum::Warning, "shader", string() + "shader linking log (id: " + impl->id + "):");
 			lineReaderBuffer lrb(buf, len);
 			for (string line; lrb.readLine(line);)
@@ -449,7 +458,12 @@ namespace cage
 		glGetProgramiv(impl->id, GL_LINK_STATUS, &len);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 		if (len != GL_TRUE)
+		{
+#ifdef CAGE_DEBUG
+			CAGE_LOG(severityEnum::Note, "shader", string() + "shader name: " + debugName);
+#endif // CAGE_DEBUG
 			CAGE_THROW_ERROR(graphicsException, "shader linking failed", len);
+		}
 
 		if (shaderIntrospection)
 		{
@@ -569,6 +583,9 @@ namespace cage
 			char buf[shaderLogBufferSize];
 			glGetProgramInfoLog(impl->id, shaderLogBufferSize - 1, &len, buf);
 			CAGE_CHECK_GL_ERROR_DEBUG();
+#ifdef CAGE_DEBUG
+			CAGE_LOG(severityEnum::Note, "shader", string() + "shader name: " + debugName);
+#endif // CAGE_DEBUG
 			CAGE_LOG(severityEnum::Warning, "shader", string() + "shader validation log (id: " + impl->id + "):");
 			lineReaderBuffer lrb(buf, len);
 			for (string line; lrb.readLine(line);)
