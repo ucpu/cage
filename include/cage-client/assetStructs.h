@@ -37,26 +37,29 @@ namespace cage
 		uint32 animationDuration;
 
 		// follows:
-		// array of array of texels
+		// array of texels
 	};
 
 	struct CAGE_API meshHeaderStruct
 	{
 		aabb box;
-		meshFlags flags;
+		meshDataFlags flags;
 		uint32 primitiveType; // one of GL_POINTS, GL_LINES, GL_LINE_LOOP, GL_LINE_STRIP, GL_TRIANGLES, GL_TRIANGLE_STRIP, GL_TRIANGLE_FAN, ...
 		uint32 verticesCount;
 		uint32 indicesCount; // zero for non-indexed draws
 		uint32 skeletonName;
 		uint32 skeletonBones;
 		uint32 textureNames[MaxTexturesCountPerMaterial];
+		uint32 uvDimension;
+		uint8 auxDimensions[4];
 		uint32 instancesLimitHint;
+		meshRenderFlags renderFlags;
 		uint32 materialSize;
 
-		bool uvs() const;
 		bool normals() const;
 		bool tangents() const;
 		bool bones() const;
+		bool uvs() const;
 		uint32 vertexSize() const;
 
 		struct CAGE_API materialDataStruct
@@ -69,19 +72,22 @@ namespace cage
 		};
 
 		// follows:
-		// material (may or may not be the materialDataStruct)
 		// array of coordinates, each vec3
-		// array of uv, each vec2, if meshFlags::Uvs
 		// array of normals, each vec3, if meshFlags::Normals
 		// array of tangents, each vec3, if meshFlags::Tangents
 		// array of bitangents, each vec3, if meshFlags::Tangents
 		// array of bone indices, each 4 * uint16, if meshFlags::Bones
-		// array of bone weight, each 4 * float, if meshFlags::Bones
+		// array of bone weights, each 4 * float, if meshFlags::Bones
+		// array of uvs, each vec* (the dimensionality is given in uvDimension), if meshDataFlags::Uvs
+		// array of auxiliary data, each vec*, if meshDataFlags::aux0
+		// array of auxiliary data, each vec*, if meshDataFlags::aux1
+		// array of auxiliary data, each vec*, if meshDataFlags::aux2
+		// array of auxiliary data, each vec*, if meshDataFlags::aux3
 		// array of indices, each uint32
+		// material (may or may not be the materialDataStruct)
 
 		// notes:
 		// the four bone weights for each vertex must add to one
-		// meshFlags::Transparency and meshFlags::Translucency are mutually exclusive
 	};
 
 	struct CAGE_API skeletonHeaderStruct

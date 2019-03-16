@@ -2,30 +2,41 @@ namespace cage
 {
 	// assets
 
-	enum class meshFlags : uint32
+	enum class meshDataFlags : uint32
 	{
 		None = 0,
-		Uvs = 1 << 0,
-		Normals = 1 << 1,
-		Tangents = 1 << 2,
-		Bones = 1 << 3,
-		OpacityTexture = 1 << 4,
-		Transparency = 1 << 5,
-		Translucency = 1 << 6,
-		TwoSided = 1 << 7,
-		DepthTest = 1 << 8,
-		DepthWrite = 1 << 9,
-		VelocityWrite = 1 << 10,
-		Lighting = 1 << 11,
-		ShadowCast = 1 << 12,
+		Normals = 1 << 0,
+		Tangents = 1 << 1,
+		Bones = 1 << 2,
+		Uvs = 1 << 3,
+		Aux0 = 1 << 4,
+		Aux1 = 1 << 5,
+		Aux2 = 1 << 6,
+		Aux3 = 1 << 7,
 	};
-	GCHL_ENUM_BITS(meshFlags);
+	GCHL_ENUM_BITS(meshDataFlags);
+
+	enum class meshRenderFlags : uint32
+	{
+		None = 0,
+		OpacityTexture = 1 << 1,
+		Transparency = 1 << 2, // mutually exclusive with Translucency
+		Translucency = 1 << 3, // mutually exclusive with Transparency
+		TwoSided = 1 << 4,
+		DepthTest = 1 << 5,
+		DepthWrite = 1 << 6,
+		VelocityWrite = 1 << 7,
+		ShadowCast = 1 << 8,
+		Lighting = 1 << 9,
+	};
+	GCHL_ENUM_BITS(meshRenderFlags);
 
 	enum class textureFlags : uint32
 	{
 		None = 0,
-		GenerateBitmap = 1 << 0,
+		GenerateMipmaps = 1 << 0,
 		AnimationLoop = 1 << 1,
+		AllowDownscale = 1 << 2,
 	};
 	GCHL_ENUM_BITS(textureFlags);
 

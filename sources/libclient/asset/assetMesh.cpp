@@ -11,18 +11,23 @@
 #include <cage-client/graphics.h>
 #include <cage-client/opengl.h>
 #include <cage-client/assetStructs.h>
+#include <cage-client/graphics/shaderConventions.h>
 
 namespace cage
 {
 	namespace
 	{
+		constexpr meshDataFlags auxFlag(uint32 i)
+		{
+			return i == 0 ? meshDataFlags::Aux0 : i == 1 ? meshDataFlags::Aux1 : i == 2 ? meshDataFlags::Aux2 : i == 3 ? meshDataFlags::Aux3 : meshDataFlags::None;
+		}
+
 		void processDecompress(const assetContextStruct *context, void *schemePointer)
 		{
-			meshHeaderStruct *hdr = (meshHeaderStruct*)context->compressedData;
-			uintPtr sth = sizeof(meshHeaderStruct) + hdr->materialSize;
-			detail::memcpy(context->originalData, context->compressedData, sth);
-			uintPtr res = detail::decompress((char*)context->compressedData + sth, numeric_cast<uintPtr>(context->compressedSize - sth), (char*)context->originalData + sth, numeric_cast<uintPtr>(context->originalSize - sth));
-			CAGE_ASSERT_RUNTIME(res == context->originalSize - sth, res, context->originalSize, sth);
+			uintPtr mhs = sizeof(meshHeaderStruct);
+			detail::memcpy(context->originalData, context->compressedData, mhs);
+			uintPtr res = detail::decompress((char*)context->compressedData + mhs, numeric_cast<uintPtr>(context->compressedSize - mhs), (char*)context->originalData + mhs, numeric_cast<uintPtr>(context->originalSize - mhs));
+			CAGE_ASSERT_RUNTIME(res == context->originalSize - mhs, res, context->originalSize, mhs);
 		}
 
 		void processLoad(const assetContextStruct *context, void *schemePointer)
@@ -44,16 +49,17 @@ namespace cage
 			deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
 			meshHeaderStruct data;
 			des >> data;
-			const void *materialData = des.access(data.materialSize);
-			const void *verticesData = des.access(data.verticesCount * data.vertexSize());
-			uint32 *indicesData = (uint32*)des.access(data.indicesCount * sizeof(uint32));
 
-			msh->setFlags(data.flags);
+			msh->setFlags(data.renderFlags);
 			msh->setPrimitiveType(data.primitiveType);
 			msh->setBoundingBox(data.box);
-			msh->setTextures(data.textureNames);
+			msh->setTextureNames(data.textureNames);
 			msh->setSkeleton(data.skeletonName, data.skeletonBones);
 			msh->setInstancesLimitHint(data.instancesLimitHint);
+
+			const void *verticesData = des.access(data.verticesCount * data.vertexSize());
+			uint32 *indicesData = (uint32*)des.access(data.indicesCount * sizeof(uint32));
+			const void *materialData = des.access(data.materialSize);
 
 			msh->setBuffers(
 				data.verticesCount, data.vertexSize(), verticesData,
@@ -62,49 +68,68 @@ namespace cage
 			);
 
 			uint32 ptr = 0;
-			msh->setAttribute(0, 3, GL_FLOAT, 0, ptr);
+			msh->setAttribute(CAGE_SHADER_ATTRIB_IN_POSITION, 3, GL_FLOAT, 0, ptr);
 			ptr += data.verticesCount * sizeof(vec3);
 
-			if (data.uvs())
-			{
-				msh->setAttribute(1, 2, GL_FLOAT, 0, ptr);
-				ptr += data.verticesCount * sizeof(vec2);
-			}
-			else
-				msh->setAttribute(1, 0, 0, 0, 0);
-
+			// normals
 			if (data.normals())
 			{
-				msh->setAttribute(2, 3, GL_FLOAT, 0, ptr);
+				msh->setAttribute(CAGE_SHADER_ATTRIB_IN_NORMAL, 3, GL_FLOAT, 0, ptr);
 				ptr += data.verticesCount * sizeof(vec3);
 			}
 			else
-				msh->setAttribute(2, 0, 0, 0, 0);
+				msh->setAttribute(CAGE_SHADER_ATTRIB_IN_NORMAL, 0, 0, 0, 0);
 
+			// tangents
 			if (data.tangents())
 			{
-				msh->setAttribute(3, 3, GL_FLOAT, 0, ptr);
+				msh->setAttribute(CAGE_SHADER_ATTRIB_IN_TANGENT, 3, GL_FLOAT, 0, ptr);
 				ptr += data.verticesCount * sizeof(vec3);
-				msh->setAttribute(4, 3, GL_FLOAT, 0, ptr);
+				msh->setAttribute(CAGE_SHADER_ATTRIB_IN_BITANGENT, 3, GL_FLOAT, 0, ptr);
 				ptr += data.verticesCount * sizeof(vec3);
 			}
 			else
 			{
-				msh->setAttribute(3, 0, 0, 0, 0);
-				msh->setAttribute(4, 0, 0, 0, 0);
+				msh->setAttribute(CAGE_SHADER_ATTRIB_IN_TANGENT, 0, 0, 0, 0);
+				msh->setAttribute(CAGE_SHADER_ATTRIB_IN_BITANGENT, 0, 0, 0, 0);
 			}
 
+			// bones
 			if (data.bones())
 			{
-				msh->setAttribute(5, 4, GL_UNSIGNED_SHORT, 0, ptr);
+				msh->setAttribute(CAGE_SHADER_ATTRIB_IN_BONEINDEX, 4, GL_UNSIGNED_SHORT, 0, ptr);
 				ptr += data.verticesCount * sizeof(uint16) * 4;
-				msh->setAttribute(6, 4, GL_FLOAT, 0, ptr);
+				msh->setAttribute(CAGE_SHADER_ATTRIB_IN_BONEWEIGHT, 4, GL_FLOAT, 0, ptr);
 				ptr += data.verticesCount * sizeof(vec4);
 			}
 			else
 			{
-				msh->setAttribute(5, 0, 0, 0, 0);
-				msh->setAttribute(6, 0, 0, 0, 0);
+				msh->setAttribute(CAGE_SHADER_ATTRIB_IN_BONEINDEX, 0, 0, 0, 0);
+				msh->setAttribute(CAGE_SHADER_ATTRIB_IN_BONEWEIGHT, 0, 0, 0, 0);
+			}
+
+			// uvs
+			if (data.uvs())
+			{
+				msh->setAttribute(CAGE_SHADER_ATTRIB_IN_UV, data.uvDimension, GL_FLOAT, 0, ptr);
+				ptr += data.verticesCount * sizeof(float) * data.uvDimension;
+			}
+			else
+				msh->setAttribute(CAGE_SHADER_ATTRIB_IN_UV, 0, 0, 0, 0);
+
+			// aux
+			for (uint32 i = 0; i < 4; i++)
+			{
+				meshDataFlags f = auxFlag(i);
+				if ((data.flags & f) == f)
+				{
+					msh->setAttribute(CAGE_SHADER_ATTRIB_IN_AUX0 + i, data.auxDimensions[i], GL_FLOAT, 0, ptr);
+					ptr += data.verticesCount * sizeof(float) * data.auxDimensions[i];
+				}
+				else
+				{
+					msh->setAttribute(CAGE_SHADER_ATTRIB_IN_AUX0 + i, 0, 0, 0, 0);
+				}
 			}
 		}
 
@@ -126,28 +151,39 @@ namespace cage
 		return s;
 	}
 
-	bool meshHeaderStruct::uvs() const
-	{
-		return (flags & meshFlags::Uvs) == meshFlags::Uvs;
-	}
-
 	bool meshHeaderStruct::normals() const
 	{
-		return (flags & meshFlags::Normals) == meshFlags::Normals;
+		return (flags & meshDataFlags::Normals) == meshDataFlags::Normals;
 	}
 
 	bool meshHeaderStruct::tangents() const
 	{
-		return (flags & meshFlags::Tangents) == meshFlags::Tangents;
+		return (flags & meshDataFlags::Tangents) == meshDataFlags::Tangents;
 	}
 
 	bool meshHeaderStruct::bones() const
 	{
-		return (flags & meshFlags::Bones) == meshFlags::Bones;
+		return (flags & meshDataFlags::Bones) == meshDataFlags::Bones;
+	}
+
+	bool meshHeaderStruct::uvs() const
+	{
+		return (flags & meshDataFlags::Uvs) == meshDataFlags::Uvs;
 	}
 
 	uint32 meshHeaderStruct::vertexSize() const
 	{
-		return sizeof(float) * (3 + (int)uvs() * 2 + (int)normals() * 3 + (int)tangents() * 6) + (int)bones() * (sizeof(uint16) + sizeof(float)) * 4;
+		uint32 p = sizeof(float) * 3;
+		uint32 u = sizeof(float) * (int)uvs() * uvDimension;
+		uint32 n = sizeof(float) * (int)normals() * 3;
+		uint32 t = sizeof(float) * (int)tangents() * 6;
+		uint32 b = (int)bones() * (sizeof(uint16) + sizeof(float)) * 4;
+		uint32 a = 0;
+		for (uint32 i = 0; i < 4; i++)
+		{
+			meshDataFlags f = auxFlag(i);
+			a += sizeof(float) * (int)((flags & f) == f) * auxDimensions[i];
+		}
+		return p + u + n + t + b + a;
 	}
 }

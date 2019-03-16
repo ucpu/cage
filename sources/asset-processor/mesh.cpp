@@ -10,7 +10,7 @@ vec2 convertSpecularToSpecial(const vec3 &spec);
 
 namespace
 {
-	void setFlags(meshFlags &flags, meshFlags idx, bool available, const char *name)
+	void setFlags(meshDataFlags &flags, meshDataFlags idx, bool available, const char *name)
 	{
 		bool requested = properties(name).toBool();
 		if (requested && !available)
@@ -63,15 +63,15 @@ namespace
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "albedoMult: " + mat.albedoMult);
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "specialBase: " + mat.specialBase);
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "specialMult: " + mat.specialMult);
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "opacity texture: " + ((dsm.flags & meshFlags::OpacityTexture) == meshFlags::OpacityTexture));
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "transparency: " + ((dsm.flags & meshFlags::Transparency) == meshFlags::Transparency));
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "translucency: " + ((dsm.flags & meshFlags::Translucency) == meshFlags::Translucency));
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "lighting: " + ((dsm.flags & meshFlags::Lighting) == meshFlags::Lighting));
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "two sides: " + ((dsm.flags & meshFlags::TwoSided) == meshFlags::TwoSided));
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "depth test: " + ((dsm.flags & meshFlags::DepthTest) == meshFlags::DepthTest));
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "depth write: " + ((dsm.flags & meshFlags::DepthWrite) == meshFlags::DepthWrite));
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "velocity write: " + ((dsm.flags & meshFlags::VelocityWrite) == meshFlags::VelocityWrite));
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "shadow cast: " + ((dsm.flags & meshFlags::ShadowCast) == meshFlags::ShadowCast));
+		CAGE_LOG(severityEnum::Info, logComponentName, string() + "opacity texture: " + ((dsm.renderFlags & meshRenderFlags::OpacityTexture) == meshRenderFlags::OpacityTexture));
+		CAGE_LOG(severityEnum::Info, logComponentName, string() + "transparency: " + ((dsm.renderFlags & meshRenderFlags::Transparency) == meshRenderFlags::Transparency));
+		CAGE_LOG(severityEnum::Info, logComponentName, string() + "translucency: " + ((dsm.renderFlags & meshRenderFlags::Translucency) == meshRenderFlags::Translucency));
+		CAGE_LOG(severityEnum::Info, logComponentName, string() + "lighting: " + ((dsm.renderFlags & meshRenderFlags::Lighting) == meshRenderFlags::Lighting));
+		CAGE_LOG(severityEnum::Info, logComponentName, string() + "two sides: " + ((dsm.renderFlags & meshRenderFlags::TwoSided) == meshRenderFlags::TwoSided));
+		CAGE_LOG(severityEnum::Info, logComponentName, string() + "depth test: " + ((dsm.renderFlags & meshRenderFlags::DepthTest) == meshRenderFlags::DepthTest));
+		CAGE_LOG(severityEnum::Info, logComponentName, string() + "depth write: " + ((dsm.renderFlags & meshRenderFlags::DepthWrite) == meshRenderFlags::DepthWrite));
+		CAGE_LOG(severityEnum::Info, logComponentName, string() + "velocity write: " + ((dsm.renderFlags & meshRenderFlags::VelocityWrite) == meshRenderFlags::VelocityWrite));
+		CAGE_LOG(severityEnum::Info, logComponentName, string() + "shadow cast: " + ((dsm.renderFlags & meshRenderFlags::ShadowCast) == meshRenderFlags::ShadowCast));
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		{
 			if (dsm.textureNames[i] == 0)
@@ -94,9 +94,9 @@ namespace
 			ini->getString("base", "opacity", "1").toFloat()
 		);
 		if (mat.albedoBase[3] <= 1e-7)
-			dsm.flags |= meshFlags::Transparency;
+			dsm.renderFlags |= meshRenderFlags::Transparency;
 		else if (mat.albedoBase[3] < 1)
-			dsm.flags |= meshFlags::Translucency;
+			dsm.renderFlags |= meshRenderFlags::Translucency;
 
 		mat.specialBase = vec4(
 			ini->getString("base", "roughness", "0").toFloat(),
@@ -125,47 +125,47 @@ namespace
 			string v = ini->get("flags", n);
 			if (v == "opacity-texture")
 			{
-				dsm.flags |= meshFlags::OpacityTexture;
+				dsm.renderFlags |= meshRenderFlags::OpacityTexture;
 				continue;
 			}
 			if (v == "two-sided")
 			{
-				dsm.flags |= meshFlags::TwoSided;
+				dsm.renderFlags |= meshRenderFlags::TwoSided;
 				continue;
 			}
 			if (v == "transparency")
 			{
-				dsm.flags |= meshFlags::Transparency;
+				dsm.renderFlags |= meshRenderFlags::Transparency;
 				continue;
 			}
 			if (v == "translucency")
 			{
-				dsm.flags |= meshFlags::Translucency;
+				dsm.renderFlags |= meshRenderFlags::Translucency;
 				continue;
 			}
 			if (v == "no-depth-test")
 			{
-				dsm.flags &= ~meshFlags::DepthTest;
+				dsm.renderFlags &= ~meshRenderFlags::DepthTest;
 				continue;
 			}
 			if (v == "no-depth-write")
 			{
-				dsm.flags &= ~meshFlags::DepthWrite;
+				dsm.renderFlags &= ~meshRenderFlags::DepthWrite;
 				continue;
 			}
 			if (v == "no-velocity-write")
 			{
-				dsm.flags &= ~meshFlags::VelocityWrite;
+				dsm.renderFlags &= ~meshRenderFlags::VelocityWrite;
 				continue;
 			}
 			if (v == "no-lighting")
 			{
-				dsm.flags &= ~meshFlags::Lighting;
+				dsm.renderFlags &= ~meshRenderFlags::Lighting;
 				continue;
 			}
 			if (v == "no-shadow-cast")
 			{
-				dsm.flags &= ~meshFlags::ShadowCast;
+				dsm.renderFlags &= ~meshRenderFlags::ShadowCast;
 				continue;
 			}
 			CAGE_LOG(severityEnum::Note, "exception", string() + "specified flag: '" + v + "'");
@@ -190,9 +190,9 @@ namespace
 		// opacity
 		m->Get(AI_MATKEY_OPACITY, mat.albedoBase[3].value);
 		if (mat.albedoBase[3] <= 1e-7)
-			dsm.flags |= meshFlags::Transparency;
+			dsm.renderFlags |= meshRenderFlags::Transparency;
 		else if (mat.albedoBase[3] < 1)
-			dsm.flags |= meshFlags::Translucency;
+			dsm.renderFlags |= meshRenderFlags::Translucency;
 
 		// albedo
 		if (loadTextureAssimp(m, dsm, aiTextureType_DIFFUSE, CAGE_SHADER_TEXTURE_ALBEDO))
@@ -201,9 +201,9 @@ namespace
 			m->Get(AI_MATKEY_TEXFLAGS(aiTextureType_DIFFUSE, 0), flg);
 			if ((flg & aiTextureFlags_UseAlpha) == aiTextureFlags_UseAlpha || mat.albedoBase[3] <= 1e-7)
 			{
-				dsm.flags |= meshFlags::OpacityTexture;
-				if ((dsm.flags & meshFlags::Transparency) == meshFlags::None)
-					dsm.flags |= meshFlags::Translucency;
+				dsm.renderFlags |= meshRenderFlags::OpacityTexture;
+				if ((dsm.renderFlags & meshRenderFlags::Transparency) == meshRenderFlags::None)
+					dsm.renderFlags |= meshRenderFlags::Translucency;
 			}
 		}
 		else
@@ -213,9 +213,9 @@ namespace
 			mat.albedoBase = vec4(conv(color), mat.albedoBase[3]);
 
 			if (mat.albedoBase[3] < 1e-7)
-				dsm.flags |= meshFlags::Transparency;
+				dsm.renderFlags |= meshRenderFlags::Transparency;
 			else if (mat.albedoBase[3] < 1 - 1e-7)
-				dsm.flags |= meshFlags::Translucency;
+				dsm.renderFlags |= meshRenderFlags::Translucency;
 		}
 
 		// special
@@ -247,7 +247,7 @@ namespace
 			int twosided = false;
 			m->Get(AI_MATKEY_TWOSIDED, twosided);
 			if (twosided)
-				dsm.flags |= meshFlags::TwoSided;
+				dsm.renderFlags |= meshRenderFlags::TwoSided;
 		}
 	}
 
@@ -294,20 +294,20 @@ namespace
 
 	void validateFlags(const meshHeaderStruct &dsm, const meshHeaderStruct::materialDataStruct &mat)
 	{
-		if ((dsm.flags & meshFlags::OpacityTexture) == meshFlags::OpacityTexture && (dsm.flags & (meshFlags::Translucency | meshFlags::Transparency)) == meshFlags::None)
+		if ((dsm.renderFlags & meshRenderFlags::OpacityTexture) == meshRenderFlags::OpacityTexture && (dsm.renderFlags & (meshRenderFlags::Translucency | meshRenderFlags::Transparency)) == meshRenderFlags::None)
 			CAGE_THROW_ERROR(exception, "material flags contains opacity texture, but neither translucency nor transparency is set");
-		if ((dsm.flags & meshFlags::Translucency) == meshFlags::Translucency && (dsm.flags & meshFlags::Transparency) == meshFlags::Transparency)
+		if ((dsm.renderFlags & meshRenderFlags::Translucency) == meshRenderFlags::Translucency && (dsm.renderFlags & meshRenderFlags::Transparency) == meshRenderFlags::Transparency)
 			CAGE_THROW_ERROR(exception, "material flags transparency and translucency are mutually exclusive");
 		{
 			uint32 texCount = 0;
 			for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 				texCount += dsm.textureNames[i] == 0 ? 0 : 1;
-			if (texCount && (dsm.flags & meshFlags::Uvs) == meshFlags::None)
+			if (texCount && (dsm.flags & meshDataFlags::Uvs) == meshDataFlags::None)
 				CAGE_THROW_ERROR(exception, "material has textures, but uvs are missing");
 		}
-		if ((dsm.flags & meshFlags::Tangents) == meshFlags::Tangents && (dsm.flags & meshFlags::Uvs) == meshFlags::None)
+		if ((dsm.flags & meshDataFlags::Tangents) == meshDataFlags::Tangents && (dsm.flags & meshDataFlags::Uvs) == meshDataFlags::None)
 			CAGE_THROW_ERROR(exception, "tangents are exported, but uvs are missing");
-		if ((dsm.flags & meshFlags::Tangents) == meshFlags::Tangents && (dsm.flags & meshFlags::Normals) == meshFlags::None)
+		if ((dsm.flags & meshDataFlags::Tangents) == meshDataFlags::Tangents && (dsm.flags & meshDataFlags::Normals) == meshDataFlags::None)
 			CAGE_THROW_ERROR(exception, "tangents are exported, but normals are missing");
 	}
 
@@ -350,7 +350,7 @@ void processMesh()
 	meshHeaderStruct dsm;
 	memset(&dsm, 0, sizeof(dsm));
 	dsm.materialSize = sizeof(meshHeaderStruct::materialDataStruct);
-	dsm.flags = meshFlags::DepthTest | meshFlags::DepthWrite | meshFlags::VelocityWrite | meshFlags::Lighting | meshFlags::ShadowCast;
+	dsm.renderFlags = meshRenderFlags::DepthTest | meshRenderFlags::DepthWrite | meshRenderFlags::VelocityWrite | meshRenderFlags::Lighting | meshRenderFlags::ShadowCast;
 
 	uint32 indicesPerPrimitive = 0;
 	switch (am->mPrimitiveTypes)
@@ -367,10 +367,10 @@ void processMesh()
 	CAGE_LOG(severityEnum::Info, logComponentName, cage::string() + "vertices count: " + dsm.verticesCount);
 	CAGE_LOG(severityEnum::Info, logComponentName, cage::string() + "indices count: " + dsm.indicesCount);
 
-	setFlags(dsm.flags, meshFlags::Uvs, am->GetNumUVChannels() > 0, "export_uv");
-	setFlags(dsm.flags, meshFlags::Normals, am->HasNormals(), "export_normal");
-	setFlags(dsm.flags, meshFlags::Tangents, am->HasTangentsAndBitangents(), "export_tangent");
-	setFlags(dsm.flags, meshFlags::Bones, am->HasBones(), "export_bones");
+	setFlags(dsm.flags, meshDataFlags::Uvs, am->GetNumUVChannels() > 0, "export_uv");
+	setFlags(dsm.flags, meshDataFlags::Normals, am->HasNormals(), "export_normal");
+	setFlags(dsm.flags, meshDataFlags::Tangents, am->HasTangentsAndBitangents(), "export_tangent");
+	setFlags(dsm.flags, meshDataFlags::Bones, am->HasBones(), "export_bones");
 
 	loadSkeletonName(dsm);
 
@@ -400,12 +400,6 @@ void processMesh()
 		dsm.box += aabb(p);
 	}
 	CAGE_LOG(severityEnum::Info, logComponentName, string() + "bounding box: " + dsm.box);
-
-	if (dsm.uvs())
-	{
-		for (uint32 i = 0; i < dsm.verticesCount; i++)
-			ser << cage::vec2(conv(am->mTextureCoords[0][i]));
-	}
 
 	if (dsm.normals())
 	{
@@ -497,14 +491,23 @@ void processMesh()
 		CAGE_ASSERT_RUNTIME(maxBoneId <= dsm.skeletonBones, maxBoneId, dsm.skeletonBones);
 	}
 
+	if (dsm.uvs())
+	{
+		dsm.uvDimension = 3;
+		for (uint32 i = 0; i < dsm.verticesCount; i++)
+			ser << conv(am->mTextureCoords[0][i]);
+	}
+
 	for (uint32 i = 0; i < am->mNumFaces; i++)
 	{
 		for (uint32 j = 0; j < indicesPerPrimitive; j++)
 			ser << numeric_cast<uint32>(am->mFaces[i].mIndices[j]);
 	}
 
+	ser << mat;
+
 	assetHeaderStruct h = initializeAssetHeaderStruct();
-	h.originalSize = sizeof(dsm) + sizeof(mat) + dataBuffer.size();
+	h.originalSize = sizeof(dsm) + dataBuffer.size();
 	if (dsm.skeletonName)
 		h.dependenciesCount++;
 	for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
@@ -512,7 +515,7 @@ void processMesh()
 			h.dependenciesCount++;
 
 	cage::memoryBuffer compressed = detail::compress(dataBuffer);
-	h.compressedSize = sizeof(dsm) + sizeof(mat) + compressed.size();
+	h.compressedSize = sizeof(dsm) + compressed.size();
 
 	holder<fileClass> f = newFile(outputFileName, fileMode(false, true));
 	f->write(&h, sizeof(h));
@@ -522,7 +525,6 @@ void processMesh()
 		if (dsm.textureNames[i])
 			f->write(&dsm.textureNames[i], sizeof(uint32));
 	f->write(&dsm, sizeof(dsm));
-	f->write(&mat, sizeof(mat));
 	f->write(compressed.data(), compressed.size());
 	f->close();
 }

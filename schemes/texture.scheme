@@ -5,20 +5,21 @@ index = 11
 [target]
 display = texture type
 type = enum
-values = GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_2D_ARRAY, GL_TEXTURE_CUBE_MAP
-default = GL_TEXTURE_2D
+values = 2d, 3d, 2d_array, cube_map
+default = 2d
 
-[convert_normal]
-display = height to normal
-hint = conversion strength (0 to disable)
+[convert]
+display = re-purpose the texture
+type = enum
+values = none, height_to_normal, specular_to_special, skybox_to_cube
+default = none
+
+[normal_strength]
+display = normal strength
+hint = used when convert is set to height_to_normal
 type = real
-default = 0
+default = 1
 min = 0
-
-[convert_specular_to_special]
-display = specular color to roughness and metalness
-type = bool
-default = false
 
 [premultiply_alpha]
 display = premultiply alpha
@@ -57,8 +58,8 @@ type = bool
 default = false
 
 [srgb]
-display = sRGB
-hint = degamma (linearize) the RGB channels
+display = srgb
+hint = degamma (linearize) the rgb channels
 type = bool
 default = false
 
@@ -76,14 +77,14 @@ default = true
 [filter_min]
 display = minification filter
 type = enum
-values = GL_NEAREST_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_NEAREST, GL_NEAREST_MIPMAP_LINEAR, GL_LINEAR_MIPMAP_LINEAR, GL_NEAREST, GL_LINEAR
-default = GL_LINEAR_MIPMAP_LINEAR
+values = nearest_mipmap_nearest, linear_mipmap_nearest, nearest_mipmap_linear, linear_mipmap_linear, nearest, linear
+default = linear_mipmap_linear
 
 [filter_mag]
 display = magnification filter
 type = enum
-values = GL_NEAREST, GL_LINEAR
-default = GL_LINEAR
+values = nearest, linear
+default = linear
 
 [filter_aniso]
 display = anisotropic filter
@@ -94,18 +95,18 @@ default = 16
 [wrap_x]
 display = wrap x
 type = enum
-values = GL_CLAMP_TO_EDGE, GL_CLAMP_TO_BORDER, GL_MIRRORED_REPEAT, GL_REPEAT
-default = GL_REPEAT
+values = clamp_to_edge, clamp_to_border, mirrored_repeat, repeat
+default = repeat
 
 [wrap_y]
 display = wrap y
 type = enum
-values = GL_CLAMP_TO_EDGE, GL_CLAMP_TO_BORDER, GL_MIRRORED_REPEAT, GL_REPEAT
-default = GL_REPEAT
+values = clamp_to_edge, clamp_to_border, mirrored_repeat, repeat
+default = repeat
 
 [wrap_z]
 display = wrap z
 type = enum
-values = GL_CLAMP_TO_EDGE, GL_CLAMP_TO_BORDER, GL_MIRRORED_REPEAT, GL_REPEAT
-default = GL_REPEAT
+values = clamp_to_edge, clamp_to_border, mirrored_repeat, repeat
+default = repeat
 

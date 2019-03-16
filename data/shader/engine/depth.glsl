@@ -7,7 +7,7 @@ $define shader fragment
 $include func/includes.glsl
 $include func/material.glsl
 
-in vec2 varUv;
+in vec3 varUv;
 in vec3 varNormal; // object space
 in vec3 varTangent; // object space
 in vec3 varBitangent; // object space

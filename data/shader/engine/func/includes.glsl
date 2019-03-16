@@ -13,7 +13,7 @@ vec3 tangent;
 vec3 bitangent;
 vec3 normal;
 vec3 albedo;
-vec2 uv;
+vec3 uv;
 float roughness;
 float metalness;
 float opacity;

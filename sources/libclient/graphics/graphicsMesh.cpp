@@ -18,7 +18,7 @@ namespace cage
 	meshHeaderStruct::materialDataStruct::materialDataStruct()
 	{
 		albedoBase[3] = 1;
-		albedoMult = specialMult = vec4(1, 1, 1, 1);
+		albedoMult = specialMult = vec4(1);
 	}
 
 	namespace
@@ -41,10 +41,11 @@ namespace cage
 			uint32 skeletonName;
 			uint32 skeletonBones;
 			uint32 instancesLimitHint;
-			meshFlags flags;
+			meshRenderFlags flags;
 
-			meshImpl() : box(aabb::Universe), id(0), vbo(0), verticesCount(0), verticesOffset(0), indicesCount(0), indicesOffset(0), materialSize(0), materialOffset(0), primitiveType(GL_TRIANGLES), primitivesCount(0), skeletonName(0), skeletonBones(0), instancesLimitHint(1),
-				flags(meshFlags::DepthTest | meshFlags::DepthWrite | meshFlags::VelocityWrite | meshFlags::Lighting | meshFlags::Normals | meshFlags::ShadowCast | meshFlags::Uvs)
+			static const meshRenderFlags defaultFlags = meshRenderFlags::DepthTest | meshRenderFlags::DepthWrite | meshRenderFlags::VelocityWrite | meshRenderFlags::Lighting | meshRenderFlags::ShadowCast;
+
+			meshImpl() : box(aabb::Universe), id(0), vbo(0), verticesCount(0), verticesOffset(0), indicesCount(0), indicesOffset(0), materialSize(0), materialOffset(0), primitiveType(GL_TRIANGLES), primitivesCount(0), skeletonName(0), skeletonBones(0), instancesLimitHint(1), flags(defaultFlags)
 			{
 				for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 					textures[i] = 0;
@@ -122,7 +123,7 @@ namespace cage
 		setCurrentObject<uniformBufferClass>(impl->id);
 	}
 
-	void meshClass::setFlags(meshFlags flags)
+	void meshClass::setFlags(meshRenderFlags flags)
 	{
 		meshImpl *impl = (meshImpl*)this;
 		impl->flags = flags;
@@ -141,11 +142,18 @@ namespace cage
 		impl->box = box;
 	}
 
-	void meshClass::setTextures(const uint32 *textureNames)
+	void meshClass::setTextureNames(const uint32 *textureNames)
 	{
 		meshImpl *impl = (meshImpl*)this;
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 			impl->textures[i] = textureNames[i];
+	}
+
+	void meshClass::setTextureName(uint32 texIdx, uint32 name)
+	{
+		meshImpl *impl = (meshImpl*)this;
+		CAGE_ASSERT_RUNTIME(texIdx < MaxTexturesCountPerMaterial, texIdx, MaxTexturesCountPerMaterial);
+		impl->textures[texIdx] = name;
 	}
 
 	void meshClass::setBuffers(uint32 verticesCount, uint32 vertexSize, const void *vertexData, uint32 indicesCount, const uint32 *indexData, uint32 materialSize, const void *materialData)
@@ -265,7 +273,7 @@ namespace cage
 		return impl->primitivesCount;
 	}
 
-	meshFlags meshClass::getFlags() const
+	meshRenderFlags meshClass::getFlags() const
 	{
 		meshImpl *impl = (meshImpl*)this;
 		return impl->flags;
@@ -277,7 +285,13 @@ namespace cage
 		return impl->box;
 	}
 
-	uint32 meshClass::textureName(uint32 texIdx) const
+	const uint32 *meshClass::getTextureNames() const
+	{
+		meshImpl *impl = (meshImpl*)this;
+		return impl->textures;
+	}
+
+	uint32 meshClass::getTextureName(uint32 texIdx) const
 	{
 		meshImpl *impl = (meshImpl*)this;
 		CAGE_ASSERT_RUNTIME(texIdx < MaxTexturesCountPerMaterial, texIdx, MaxTexturesCountPerMaterial);

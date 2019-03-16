@@ -542,7 +542,7 @@ namespace cage
 			{
 				if (!frustumCulling(m->getBoundingBox(), mvp))
 					return;
-				if (pass->targetShadowmap != 0 && (m->getFlags() & meshFlags::ShadowCast) == meshFlags::None)
+				if (pass->targetShadowmap != 0 && (m->getFlags() & meshRenderFlags::ShadowCast) == meshRenderFlags::None)
 					return;
 				if (m->getSkeletonName() != 0 && renderSkeletonBones)
 				{
@@ -551,7 +551,7 @@ namespace cage
 					return;
 				}
 				objectsStruct *obj = nullptr;
-				if ((m->getFlags() & meshFlags::Translucency) == meshFlags::Translucency || e->render.opacity < 1)
+				if ((m->getFlags() & meshRenderFlags::Translucency) == meshRenderFlags::Translucency || e->render.opacity < 1)
 				{ // translucent
 					translucentStruct *t = dispatchArena.createObject<translucentStruct>(m);
 					obj = &t->object;
@@ -561,7 +561,7 @@ namespace cage
 					else
 						pass->firstTranslucent = t;
 					pass->lastTranslucent = t;
-					if ((m->getFlags() & meshFlags::Lighting) == meshFlags::Lighting)
+					if ((m->getFlags() & meshRenderFlags::Lighting) == meshRenderFlags::Lighting)
 					{
 						for (auto it : emitRead->lights)
 							addLight(t, mvp, it); // todo pass other parameters needed for the intersection tests
@@ -598,12 +598,12 @@ namespace cage
 				sm->color = vec4(e->render.color, e->render.opacity);
 				sm->mMat = model;
 				sm->mvpMat = mvp;
-				if ((m->getFlags() & meshFlags::VelocityWrite) == meshFlags::VelocityWrite)
+				if ((m->getFlags() & meshRenderFlags::VelocityWrite) == meshRenderFlags::VelocityWrite)
 					sm->mvpPrevMat = mvpPrev;
 				else
 					sm->mvpPrevMat = mvp;
 				sm->normalMat = mat3(model).inverse();
-				sm->normalMat.data[2][3] = ((m->getFlags() & meshFlags::Lighting) == meshFlags::Lighting) ? 1 : 0; // is ligting enabled
+				sm->normalMat.data[2][3] = ((m->getFlags() & meshRenderFlags::Lighting) == meshRenderFlags::Lighting) ? 1 : 0; // is ligting enabled
 				if (e->animatedTexture)
 					sm->aniTexFrames = detail::evalSamplesForTextureAnimation(obj->textures[CAGE_SHADER_TEXTURE_ALBEDO], dispatchTime, e->animatedTexture->startTime, e->animatedTexture->speed, e->animatedTexture->offset);
 				if (obj->shaderArmatures)
@@ -981,41 +981,65 @@ namespace cage
 	{
 		assetManagerClass *ass = assets();
 		shaderMeshes = (shaderMeshStruct*)graphicsPrepare->dispatchArena.allocate(sizeof(shaderMeshStruct) * max, sizeof(uintPtr));
-		if ((mesh->getFlags() & meshFlags::Bones) == meshFlags::Bones)
+		if (mesh->getSkeletonBones())
 		{
 			CAGE_ASSERT_RUNTIME(mesh->getSkeletonName() == 0 || ass->ready(mesh->getSkeletonName()));
 			shaderArmatures = (mat3x4*)graphicsPrepare->dispatchArena.allocate(sizeof(mat3x4) * mesh->getSkeletonBones() * max, sizeof(uintPtr));
 		}
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		{
-			uint32 n = mesh->textureName(i);
+			uint32 n = mesh->getTextureName(i);
 			textures[i] = n ? ass->get<assetSchemeIndexTexture, textureClass>(n) : nullptr;
 		}
-		graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_VERTEX_SHADER, CAGE_SHADER_ROUTINEUNIF_SKELETON, (mesh->getFlags() & meshFlags::Bones) == meshFlags::Bones ? CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION : CAGE_SHADER_ROUTINEPROC_SKELETONNOTHING);
+		graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_VERTEX_SHADER, CAGE_SHADER_ROUTINEUNIF_SKELETON, mesh->getSkeletonBones() > 0 ? CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION : CAGE_SHADER_ROUTINEPROC_SKELETONNOTHING);
 		if (textures[CAGE_SHADER_TEXTURE_ALBEDO])
 		{
-			if (textures[CAGE_SHADER_TEXTURE_ALBEDO]->getTarget() == GL_TEXTURE_2D_ARRAY)
+			switch (textures[CAGE_SHADER_TEXTURE_ALBEDO]->getTarget())
+			{
+			case GL_TEXTURE_2D_ARRAY:
 				graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPALBEDO, CAGE_SHADER_ROUTINEPROC_MAPALBEDOARRAY);
-			else
+				break;
+			case GL_TEXTURE_CUBE_MAP:
+				graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPALBEDO, CAGE_SHADER_ROUTINEPROC_MAPALBEDOCUBE);
+				break;
+			default:
 				graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPALBEDO, CAGE_SHADER_ROUTINEPROC_MAPALBEDO2D);
+				break;
+			}
 		}
 		else
 			graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPALBEDO, CAGE_SHADER_ROUTINEPROC_MATERIALNOTHING);
 		if (textures[CAGE_SHADER_TEXTURE_SPECIAL])
 		{
-			if (textures[CAGE_SHADER_TEXTURE_SPECIAL]->getTarget() == GL_TEXTURE_2D_ARRAY)
+			switch (textures[CAGE_SHADER_TEXTURE_SPECIAL]->getTarget())
+			{
+			case GL_TEXTURE_2D_ARRAY:
 				graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL, CAGE_SHADER_ROUTINEPROC_MAPSPECIALARRAY);
-			else
+				break;
+			case GL_TEXTURE_CUBE_MAP:
+				graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL, CAGE_SHADER_ROUTINEPROC_MAPSPECIALCUBE);
+				break;
+			default:
 				graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL, CAGE_SHADER_ROUTINEPROC_MAPSPECIAL2D);
+				break;
+			}
 		}
 		else
 			graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL, CAGE_SHADER_ROUTINEPROC_MATERIALNOTHING);
 		if (textures[CAGE_SHADER_TEXTURE_NORMAL])
 		{
-			if (textures[CAGE_SHADER_TEXTURE_NORMAL]->getTarget() == GL_TEXTURE_2D_ARRAY)
+			switch (textures[CAGE_SHADER_TEXTURE_NORMAL]->getTarget())
+			{
+			case GL_TEXTURE_2D_ARRAY:
 				graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPNORMAL, CAGE_SHADER_ROUTINEPROC_MAPNORMALARRAY);
-			else
+				break;
+			case GL_TEXTURE_CUBE_MAP:
+				graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPNORMAL, CAGE_SHADER_ROUTINEPROC_MAPNORMALCUBE);
+				break;
+			default:
 				graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPNORMAL, CAGE_SHADER_ROUTINEPROC_MAPNORMAL2D);
+				break;
+			}
 		}
 		else
 			graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_MAPNORMAL, CAGE_SHADER_ROUTINEPROC_MATERIALNOTHING);

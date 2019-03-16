@@ -151,6 +151,8 @@ namespace cage
 				glPixelStorei(GL_PACK_ALIGNMENT, 1);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
+
+			glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 		}
 
 #ifdef GCHL_ENABLE_CONTEXT_BINDING_CHECKS

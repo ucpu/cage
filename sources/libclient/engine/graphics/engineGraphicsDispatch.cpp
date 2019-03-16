@@ -327,7 +327,7 @@ namespace cage
 				renderObject(obj, shr, obj->mesh->getFlags());
 			}
 
-			void renderObject(objectsStruct *obj, shaderClass *shr, meshFlags flags)
+			void renderObject(objectsStruct *obj, shaderClass *shr, meshRenderFlags flags)
 			{
 				applyShaderRoutines(&obj->shaderConfig, shr);
 				meshDataBuffer->bind();
@@ -339,8 +339,8 @@ namespace cage
 					shr->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, obj->mesh->getSkeletonBones());
 				}
 				obj->mesh->bind();
-				setTwoSided((flags & meshFlags::TwoSided) == meshFlags::TwoSided);
-				setDepthTest((flags & meshFlags::DepthTest) == meshFlags::DepthTest, (flags & meshFlags::DepthWrite) == meshFlags::DepthWrite);
+				setTwoSided((flags & meshRenderFlags::TwoSided) == meshRenderFlags::TwoSided);
+				setDepthTest((flags & meshRenderFlags::DepthTest) == meshRenderFlags::DepthTest, (flags & meshRenderFlags::DepthWrite) == meshRenderFlags::DepthWrite);
 				{ // bind textures
 					uint32 tius[MaxTexturesCountPerMaterial];
 					textureClass *texs[MaxTexturesCountPerMaterial];
@@ -348,7 +348,18 @@ namespace cage
 					{
 						if (obj->textures[i])
 						{
-							tius[i] = (obj->textures[i]->getTarget() == GL_TEXTURE_2D_ARRAY ? CAGE_SHADER_TEXTURE_ALBEDO_ARRAY : CAGE_SHADER_TEXTURE_ALBEDO) + i;
+							switch (obj->textures[i]->getTarget())
+							{
+							case GL_TEXTURE_2D_ARRAY:
+								tius[i] = CAGE_SHADER_TEXTURE_ALBEDO_ARRAY + i;
+								break;
+							case GL_TEXTURE_CUBE_MAP:
+								tius[i] = CAGE_SHADER_TEXTURE_ALBEDO_CUBE + i;
+								break;
+							default:
+								tius[i] = CAGE_SHADER_TEXTURE_ALBEDO + i;
+								break;
+							}
 							texs[i] = obj->textures[i];
 						}
 						else
@@ -704,9 +715,9 @@ namespace cage
 				shaderClass *shr = shaderDepth;
 				shr->bind();
 				for (objectsStruct *o = pass->firstOpaque; o; o = o->next)
-					renderObject(o, shr, o->mesh->getFlags() | meshFlags::DepthWrite);
+					renderObject(o, shr, o->mesh->getFlags() | meshRenderFlags::DepthWrite);
 				for (translucentStruct *o = pass->firstTranslucent; o; o = o->next)
-					renderObject(&o->object, shr, o->object.mesh->getFlags() | meshFlags::DepthWrite);
+					renderObject(&o->object, shr, o->object.mesh->getFlags() | meshRenderFlags::DepthWrite);
 
 				glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 				CAGE_CHECK_GL_ERROR_DEBUG();

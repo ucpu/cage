@@ -90,7 +90,7 @@ namespace cage
 				tex->image2d(data->dimX, data->dimY, data->internalFormat, data->copyFormat, data->copyType, values);
 			tex->filters(data->filterMin, data->filterMag, data->filterAniso);
 			tex->wraps(data->wrapX, data->wrapY, data->wrapZ);
-			if ((data->flags & textureFlags::GenerateBitmap) == textureFlags::GenerateBitmap)
+			if ((data->flags & textureFlags::GenerateMipmaps) == textureFlags::GenerateMipmaps)
 				tex->generateMipmaps();
 
 			tex->animationDuration = data->animationDuration;

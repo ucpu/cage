@@ -22,17 +22,17 @@ namespace
 {
 	uint32 convertFilter(const string &f)
 	{
-		if (f == "GL_NEAREST_MIPMAP_NEAREST")
+		if (f == "nearest_mipmap_nearest")
 			return GL_NEAREST_MIPMAP_NEAREST;
-		if (f == "GL_LINEAR_MIPMAP_NEAREST")
+		if (f == "linear_mipmap_nearest")
 			return GL_LINEAR_MIPMAP_NEAREST;
-		if (f == "GL_NEAREST_MIPMAP_LINEAR")
+		if (f == "nearest_mipmap_linear")
 			return GL_NEAREST_MIPMAP_LINEAR;
-		if (f == "GL_LINEAR_MIPMAP_LINEAR")
+		if (f == "linear_mipmap_linear")
 			return GL_LINEAR_MIPMAP_LINEAR;
-		if (f == "GL_NEAREST")
+		if (f == "nearest")
 			return GL_NEAREST;
-		if (f == "GL_LINEAR")
+		if (f == "linear")
 			return GL_LINEAR;
 		return 0;
 	}
@@ -53,26 +53,26 @@ namespace
 
 	uint32 convertWrap(const string &f)
 	{
-		if (f == "GL_CLAMP_TO_EDGE")
+		if (f == "clamp_to_edge")
 			return GL_CLAMP_TO_EDGE;
-		if (f == "GL_CLAMP_TO_BORDER")
+		if (f == "clamp_to_border")
 			return GL_CLAMP_TO_BORDER;
-		if (f == "GL_MIRRORED_REPEAT")
+		if (f == "mirrored_repeat")
 			return GL_MIRRORED_REPEAT;
-		if (f == "GL_REPEAT")
+		if (f == "repeat")
 			return GL_REPEAT;
 		return 0;
 	}
 
 	uint32 convertTarget(const string &f)
 	{
-		if (f == "GL_TEXTURE_2D")
+		if (f == "2d")
 			return GL_TEXTURE_2D;
-		if (f == "GL_TEXTURE_2D_ARRAY")
+		if (f == "2d_array")
 			return GL_TEXTURE_2D_ARRAY;
-		if (f == "GL_TEXTURE_CUBE_MAP")
+		if (f == "cube_map")
 			return GL_TEXTURE_CUBE_MAP;
-		if (f == "GL_TEXTURE_3D")
+		if (f == "3d")
 			return GL_TEXTURE_3D;
 		return 0;
 	}
@@ -196,7 +196,7 @@ namespace
 				bpp = 2;
 			} break;
 			default:
-				CAGE_THROW_ERROR(exception, "1 or 3 channels are required for conversion of specular color to special material");
+				CAGE_THROW_ERROR(exception, "exactly 1 or 3 channels are required for conversion of specular color to special material");
 			}
 		}
 
@@ -312,9 +312,9 @@ namespace
 		ilDeleteImage(im);
 	}
 
-	void performDownscale(uint32 downscale, bool d3d)
+	void performDownscale(uint32 downscale, uint32 target)
 	{
-		if (d3d)
+		if (target == GL_TEXTURE_3D)
 		{ // downscale image as a whole
 			CAGE_LOG(severityEnum::Info, logComponentName, string() + "downscaling whole image");
 			ILuint im = ilGenImage();
@@ -350,6 +350,70 @@ namespace
 		}
 	}
 
+	void performSkyboxToCube()
+	{
+		if (images.size() != 1)
+			CAGE_THROW_ERROR(exception, "skybox_to_cube requires one input image");
+		imageLayerStruct src = templates::move(images[0]);
+		images.clear();
+		images.resize(6);
+		if (src.width * 3 != src.height * 4)
+			CAGE_THROW_ERROR(exception, "skybox_to_cube requires source image to be 4:3");
+		uint32 sideIndex = 0;
+		for (auto &m : images)
+		{
+			m.width = src.width / 4;
+			m.height = src.height / 3;
+			m.bpp = src.bpp;
+			m.data.resize(m.width * m.height * m.bpp);
+			/*
+			     +---+
+			     | 2 |
+			 +---+---+---+---+
+			 | 1 | 4 | 0 | 5 |
+			 +---+---+---+---+
+			     | 3 |
+			     +---+
+			*/
+			uint32 yOffset = 0, xOffset = 0;
+			switch (sideIndex++)
+			{
+			case 0:
+				xOffset = 2;
+				yOffset = 1;
+				break;
+			case 1:
+				xOffset = 0;
+				yOffset = 1;
+				break;
+			case 2:
+				xOffset = 1;
+				yOffset = 0;
+				break;
+			case 3:
+				xOffset = 1;
+				yOffset = 2;
+				break;
+			case 4:
+				xOffset = 1;
+				yOffset = 1;
+				break;
+			case 5:
+				xOffset = 3;
+				yOffset = 1;
+				break;
+			}
+			xOffset *= m.width;
+			yOffset *= m.height;
+			for (uint32 y = 0; y < m.height; y++)
+			{
+				const uint8 *s = src.data.data() + src.width * src.bpp * (y + yOffset) + src.bpp * xOffset;
+				uint8 *t = m.data.data() + m.width * m.bpp * y;
+				detail::memcpy(t, s, m.width * m.bpp);
+			}
+		}
+	}
+
 	void checkConsistency(uint32 target)
 	{
 		uint32 frames = numeric_cast<uint32>(images.size());
@@ -363,10 +427,10 @@ namespace
 		if (target == GL_TEXTURE_CUBE_MAP && frames != 6)
 			CAGE_THROW_ERROR(exception, "cube texture requires exactly 6 images");
 		if (target != GL_TEXTURE_2D && frames == 1)
-			CAGE_LOG(severityEnum::Warning, logComponentName, "texture has only one frame. consider setting target to GL_TEXTURE_2D");
+			CAGE_LOG(severityEnum::Warning, logComponentName, "texture has only one frame. consider setting target to 2d");
 		imageLayerStruct &im0 = images[0];
 		if (im0.width == 0 || im0.height == 0)
-			CAGE_THROW_ERROR(exception, "image has zeroed resolution");
+			CAGE_THROW_ERROR(exception, "image has zero resolution");
 		if (im0.bpp == 0 || im0.bpp > 4)
 			CAGE_THROW_ERROR(exception, "image has invalid bpp");
 		for (auto &imi : images)
@@ -376,14 +440,12 @@ namespace
 			if (imi.bpp != im0.bpp)
 				CAGE_THROW_ERROR(exception, "frames has inconsistent bpp");
 		}
+		if (target == GL_TEXTURE_CUBE_MAP && im0.width != im0.height)
+			CAGE_THROW_ERROR(exception, "cube texture requires square textures");
 	}
 
 	void exportTexture(uint32 target)
 	{
-#ifdef CAGE_DEBUG
-		checkConsistency(target);
-#endif
-
 		textureHeaderStruct data;
 		detail::memset(&data, 0, sizeof(textureHeaderStruct));
 		data.target = target;
@@ -394,7 +456,7 @@ namespace
 		data.wrapY = convertWrap(properties("wrap_y"));
 		data.wrapZ = convertWrap(properties("wrap_z"));
 		data.flags =
-			(requireMipmaps(data.filterMin) ? textureFlags::GenerateBitmap : textureFlags::None) |
+			(requireMipmaps(data.filterMin) ? textureFlags::GenerateMipmaps : textureFlags::None) |
 			(properties("animation_loop").toBool() ? textureFlags::AnimationLoop : textureFlags::None);
 		data.dimX = images[0].width;
 		data.dimY = images[0].height;
@@ -413,7 +475,7 @@ namespace
 				data.copyFormat = GL_RGBA;
 				break;
 			default:
-				CAGE_THROW_ERROR(exception, "unsupported bpp");
+				CAGE_THROW_ERROR(exception, "unsupported bpp (with srgb)");
 			}
 		}
 		else
@@ -473,28 +535,23 @@ namespace
 void processTexture()
 {
 	{
-		bool n = properties("convert_normal").toFloat() > 0;
-		bool s = properties("convert_specular_to_special").toBool();
+		bool n = properties("convert") == "height_to_normal";
+		bool s = properties("convert") == "specular_to_special";
+		bool c = properties("convert") == "skybox_to_cube";
 		bool a = properties("premultiply_alpha").toBool();
 		bool g = properties("srgb").toBool();
-		//bool inv_r = properties("invert_r").toBool();
-		//bool inv_g = properties("invert_g").toBool();
-		//bool inv_b = properties("invert_b").toBool();
-		//bool inv_a = properties("invert_a").toBool();
-		if (n && s)
-			CAGE_THROW_ERROR(exception, "only one conversion is possible");
 		if ((n || s) && a)
 			CAGE_THROW_ERROR(exception, "premultiplied alpha is only for colors");
 		if ((n || s) && g)
 			CAGE_THROW_ERROR(exception, "srgb is only for colors");
+		if (c && properties("target") != "cube_map")
+			CAGE_THROW_ERROR(exception, "convert skybox_to_cube requires target to be cube_map");
 	}
 
 	ilInit();
 	iluInit();
 	ilEnable(IL_CONV_PAL);
 	ilEnable(IL_FILE_OVERWRITE);
-
-	uint32 target = convertTarget(properties("target"));
 
 	{ // load all files
 		uint32 firstDollar = inputFile.find('$');
@@ -525,14 +582,13 @@ void processTexture()
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "loading done");
 	}
 
-	CAGE_LOG(severityEnum::Info, logComponentName, string() + "resolution: " + images[0].width + "*" + images[0].height + "*" + numeric_cast<uint32>(images.size()));
-	CAGE_LOG(severityEnum::Info, logComponentName, string() + "channels: " + images[0].bpp);
-	checkConsistency(target);
+	CAGE_LOG(severityEnum::Info, logComponentName, string() + "input resolution: " + images[0].width + "*" + images[0].height + "*" + numeric_cast<uint32>(images.size()));
+	CAGE_LOG(severityEnum::Info, logComponentName, string() + "input channels: " + images[0].bpp);
 
 	{ // convert height map to normal map
-		float strength = properties("convert_normal").toFloat();
-		if (strength > 0)
+		if (properties("convert") == "height_to_normal")
 		{
+			float strength = properties("normal_strength").toFloat();
 			for (auto &it : images)
 				it.convertHeightToNormal(strength);
 			CAGE_LOG(severityEnum::Info, logComponentName, string() + "converted from height map to normal map with strength of " + strength);
@@ -540,13 +596,24 @@ void processTexture()
 	}
 
 	{ // convert specular to special
-		if (properties("convert_specular_to_special").toBool())
+		if (properties("convert") == "specular_to_special")
 		{
 			for (auto &it : images)
 				it.convertSpecularToSpecial();
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "converted from specular colors to material special");
+			CAGE_LOG(severityEnum::Info, logComponentName, string() + "converted specular colors to material special");
 		}
 	}
+
+	{ // convert skybox to cube
+		if (properties("convert") == "skybox_to_cube")
+		{
+			performSkyboxToCube();
+			CAGE_LOG(severityEnum::Info, logComponentName, string() + "converted skybox to cube map");
+		}
+	}
+
+	uint32 target = convertTarget(properties("target"));
+	checkConsistency(target);
 
 	{ // premultiply alpha
 		if (properties("premultiply_alpha").toBool())
@@ -561,7 +628,7 @@ void processTexture()
 		uint32 downscale = properties("downscale").toUint32();
 		if (downscale > 1)
 		{
-			performDownscale(downscale, target == GL_TEXTURE_3D);
+			performDownscale(downscale, target);
 			CAGE_LOG(severityEnum::Info, logComponentName, string() + "downscaled: " + images[0].width + "*" + images[0].height + "*" + numeric_cast<uint32>(images.size()));
 		}
 	}
@@ -601,6 +668,9 @@ void processTexture()
 			CAGE_LOG(severityEnum::Info, logComponentName, string() + "alpha channel inverted");
 		}
 	}
+
+	CAGE_LOG(severityEnum::Info, logComponentName, string() + "output resolution: " + images[0].width + "*" + images[0].height + "*" + numeric_cast<uint32>(images.size()));
+	CAGE_LOG(severityEnum::Info, logComponentName, string() + "output channels: " + images[0].bpp);
 
 	exportTexture(target);
 

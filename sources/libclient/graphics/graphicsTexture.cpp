@@ -292,7 +292,6 @@ namespace cage
 	{
 		textureImpl *impl = (textureImpl*)this;
 		CAGE_ASSERT_RUNTIME(privat::getCurrentTexture() == impl->id);
-		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 		glGenerateMipmap(impl->target);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
