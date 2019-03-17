@@ -25,7 +25,7 @@ namespace cage
 
 	namespace templates
 	{
-		template<bool Cond, class T = void> struct enable_if {};
+		template<bool Cond, class T> struct enable_if {};
 		template<class T> struct enable_if<true, T> { typedef T type; };
 		template<uintPtr Size> struct base_unsigned_type {};
 		template<> struct base_unsigned_type<1> { typedef uint8 type; };
