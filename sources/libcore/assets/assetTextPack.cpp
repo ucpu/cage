@@ -12,7 +12,7 @@ namespace cage
 		{
 			textPackClass *texts = nullptr;
 			if (!context->assetHolder)
-				context->assetHolder = newTextPack().transfev();
+				context->assetHolder = newTextPack().cast<void>();
 			texts = static_cast<textPackClass*>(context->assetHolder.get());
 			texts->clear();
 			context->returnData = texts;

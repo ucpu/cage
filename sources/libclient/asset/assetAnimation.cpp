@@ -22,7 +22,7 @@ namespace cage
 			}
 			else
 			{
-				context->assetHolder = newAnimation().transfev();
+				context->assetHolder = newAnimation().cast<void>();
 				ani = static_cast<animationClass*>(context->assetHolder.get());
 				ani->setDebugName(context->textName);
 			}
@@ -31,11 +31,11 @@ namespace cage
 			deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
 			animationHeaderStruct data;
 			des >> data;
-			uint16 *indexes = (uint16*)des.access(data.animationBonesCount * sizeof(uint16));
-			uint16 *positionFrames = (uint16*)des.access(data.animationBonesCount * sizeof(uint16));
-			uint16 *rotationFrames = (uint16*)des.access(data.animationBonesCount * sizeof(uint16));
-			uint16 *scaleFrames = (uint16*)des.access(data.animationBonesCount * sizeof(uint16));
-			ani->allocate(data.duration, data.animationBonesCount, indexes, positionFrames, rotationFrames, scaleFrames, des.current);
+			uint16 *indexes = (uint16*)des.advance(data.animationBonesCount * sizeof(uint16));
+			uint16 *positionFrames = (uint16*)des.advance(data.animationBonesCount * sizeof(uint16));
+			uint16 *rotationFrames = (uint16*)des.advance(data.animationBonesCount * sizeof(uint16));
+			uint16 *scaleFrames = (uint16*)des.advance(data.animationBonesCount * sizeof(uint16));
+			ani->allocate(data.duration, data.animationBonesCount, indexes, positionFrames, rotationFrames, scaleFrames, des.advance(0));
 		}
 
 		void processDone(const assetContextStruct *context, void *schemePointer)

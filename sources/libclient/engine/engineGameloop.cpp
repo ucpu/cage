@@ -774,7 +774,7 @@ namespace cage
 			{ \
 			case engineProfilingModeEnum::Average: result += buffer.smooth(); break; \
 			case engineProfilingModeEnum::Maximum: result += buffer.max(); break; \
-			case engineProfilingModeEnum::Last: result += buffer.last(); break; \
+			case engineProfilingModeEnum::Last: result += buffer.current(); break; \
 			default: CAGE_THROW_CRITICAL(exception, "invalid profiling mode enum"); \
 			} \
 		}

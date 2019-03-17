@@ -18,7 +18,7 @@ namespace cage
 		void processLoad(const assetContextStruct *context, void *schemePointer)
 		{
 			if (!context->assetHolder)
-				context->assetHolder = newCollider().transfev();
+				context->assetHolder = newCollider().cast<void>();
 			colliderClass *col = static_cast<colliderClass*>(context->assetHolder.get());
 			context->returnData = col;
 

@@ -6,7 +6,7 @@ namespace cage
 	struct CAGE_API memoryBuffer
 	{
 		memoryBuffer(); // no allocation ctor
-		memoryBuffer(uintPtr size);
+		memoryBuffer(uintPtr size, uintPtr capacity = 0);
 		memoryBuffer(memoryBuffer &&other) noexcept;
 		memoryBuffer &operator = (memoryBuffer &&other) noexcept;
 		~memoryBuffer();
@@ -16,13 +16,15 @@ namespace cage
 
 		memoryBuffer copy() const;
 
-		void reserve(uintPtr cap); // allocates new buffer and resets the size to zero, the data is not preserved nor initialized
-		void reallocate(uintPtr size); // allocates new buffer and changes the size, the data is not preserved nor initialized
+		void allocate(uintPtr size, uintPtr cap = 0); // allocates new buffer; sets the size; the data is not preserved nor initialized
+		void reserve(uintPtr cap); // allocates new buffer if needed; size and data is preserved; allows the buffer to grow only
+		void resizeThrow(uintPtr size); // sets the size; does no allocations or deallocations; does not initialize any new data; throws outOfMemoryException if capacity is not enough
+		void resize(uintPtr size); // reserves enough space and sets the size; does not initialize any new data
+		void resizeSmart(uintPtr size); // reserves more than enough space and sets the size; does not initialize any new data
+		void shrink(); // reallocates the buffer if needed; size and data is preserved; shrinks the capacity to the size
+		void zero(); // fills the buffer (up to current size) with zeros
+		void clear(); // sets size to zero; does not deallocate the buffer
 		void free(); // deallocates the buffer
-		void zero(); // fills the buffer with zeros
-		void resize(uintPtr size); // sets the size without any allocations; does not initialize any new memory; throws outOfMemoryException when the allocated buffer is too small
-		void resizeGrow(uintPtr size); // allows to change the size, reallocates (and moves) the buffer when needed
-		void resizeGrowSmart(uintPtr size); // same as resizeGrow, but allocates more than is actually needed to hopefully save some memory reallocations in the future
 
 		char *data()
 		{
@@ -52,7 +54,7 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_API memoryBuffer compress(const memoryBuffer &input); // quality is 0 to 100
+		CAGE_API memoryBuffer compress(const memoryBuffer &input);
 		CAGE_API memoryBuffer decompress(const memoryBuffer &input, uintPtr outputSize);
 	}
 }

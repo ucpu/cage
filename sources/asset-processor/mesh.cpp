@@ -389,6 +389,7 @@ void processMesh()
 
 	cage::memoryBuffer dataBuffer;
 	cage::serializer ser(dataBuffer);
+	cage::serializer dsmPlaceholder = ser.placeholder(sizeof(dsm));
 
 	dsm.box = aabb();
 	mat3 axes = axesMatrix();
@@ -429,8 +430,9 @@ void processMesh()
 		CAGE_ASSERT_RUNTIME(am->mNumBones > 0);
 		holder<assimpSkeletonClass> skeleton = context->skeleton();
 		dsm.skeletonBones = skeleton->bonesCount();
-		auto boneIndices = ser.accessArray<uint16>(4 * dsm.verticesCount);
-		auto boneWeights = ser.accessArray<float>(4 * dsm.verticesCount);
+		serializer ser2 = ser.placeholder((sizeof(uint16) + sizeof(float)) * 4 * dsm.verticesCount);
+		uint16 *boneIndices = (uint16*)ser2.advance(sizeof(uint16) * 4 * dsm.verticesCount);
+		float *boneWeights = (float*)ser2.advance(sizeof(float) * 4 * dsm.verticesCount);
 		// initialize with empty values
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
 		{
@@ -505,9 +507,10 @@ void processMesh()
 	}
 
 	ser << mat;
+	dsmPlaceholder << dsm;
 
 	assetHeaderStruct h = initializeAssetHeaderStruct();
-	h.originalSize = sizeof(dsm) + dataBuffer.size();
+	h.originalSize = dataBuffer.size();
 	if (dsm.skeletonName)
 		h.dependenciesCount++;
 	for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
@@ -515,7 +518,7 @@ void processMesh()
 			h.dependenciesCount++;
 
 	cage::memoryBuffer compressed = detail::compress(dataBuffer);
-	h.compressedSize = sizeof(dsm) + compressed.size();
+	h.compressedSize = compressed.size();
 
 	holder<fileClass> f = newFile(outputFileName, fileMode(false, true));
 	f->write(&h, sizeof(h));
@@ -524,7 +527,6 @@ void processMesh()
 	for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		if (dsm.textureNames[i])
 			f->write(&dsm.textureNames[i], sizeof(uint32));
-	f->write(&dsm, sizeof(dsm));
 	f->write(compressed.data(), compressed.size());
 	f->close();
 }

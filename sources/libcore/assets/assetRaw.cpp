@@ -24,10 +24,10 @@ namespace cage
 		void processLoad(const assetContextStruct *context, void *schemePointer)
 		{
 			if (!context->assetHolder)
-				context->assetHolder = newMemoryBuffer().transfev();
+				context->assetHolder = newMemoryBuffer().cast<void>();
 			memoryBuffer *mem = static_cast<memoryBuffer*>(context->assetHolder.get());
 			context->returnData = mem;
-			mem->reallocate(numeric_cast<uintPtr>(context->originalSize));
+			mem->allocate(numeric_cast<uintPtr>(context->originalSize));
 			detail::memcpy(mem->data(), context->originalData, mem->size());
 		}
 

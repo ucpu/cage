@@ -23,6 +23,7 @@ void testMemoryArenas();
 void testMemoryPools();
 void testMemoryPerformance();
 void testMemoryBuffers();
+void testSerialization();
 void testConcurrent();
 void testConcurrentQueue();
 void testFiles();
@@ -72,6 +73,7 @@ int main()
 	testMemoryPools();
 	testMemoryPerformance();
 	testMemoryBuffers();
+	testSerialization();
 	testConcurrent();
 	testConcurrentQueue();
 	testFiles();

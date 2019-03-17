@@ -17,14 +17,6 @@ namespace cage
 	{
 		configUint32 textureDownscale("cage-client.graphics.textureDownscale", 1);
 
-		void processDecompress(const assetContextStruct *context, void *schemePointer)
-		{
-			static const uintPtr sth = sizeof(textureHeaderStruct);
-			detail::memcpy(context->originalData, context->compressedData, sth);
-			uintPtr res = detail::decompress((char*)context->compressedData + sth, numeric_cast<uintPtr>(context->compressedSize - sth), (char*)context->originalData + sth, numeric_cast<uintPtr>(context->originalSize - sth));
-			CAGE_ASSERT_RUNTIME(res == context->originalSize - sth, res, context->originalSize, sth);
-		}
-
 		void processLoad(const assetContextStruct *context, void *schemePointer)
 		{
 			textureHeaderStruct *data = (textureHeaderStruct*)context->originalData;
@@ -38,7 +30,7 @@ namespace cage
 			}
 			else
 			{
-				context->assetHolder = newTexture(data->target).transfev();
+				context->assetHolder = newTexture(data->target).cast<void>();
 				tex = static_cast<textureClass*>(context->assetHolder.get());
 				tex->setDebugName(context->textName);
 			}
@@ -50,37 +42,6 @@ namespace cage
 				uint32 bytesSize = data->dimX * data->dimY * data->dimZ * data->bpp;
 				CAGE_ASSERT_RUNTIME((values + bytesSize) == ((char*)context->originalData + context->originalSize), bytesSize, context->originalSize);
 			}
-
-			/*
-			{
-				uint32 downscale = textureDownscale;
-				while (downscale > 1)
-				{
-					uint32 ox = data->dimX;
-					uint32 oy = data->dimY;
-					uint32 oz = data->dimZ;
-					uint32 nx = max(ox / 2u, 1u);
-					uint32 ny = max(oy / 2u, 1u);
-					uint32 nz = (data->target == GL_TEXTURE_3D) ? max(oz / 2u, 1u) : oz;
-
-					for (uint32 z = 0; z < nz; z++)
-					{
-						for (uint32 y = 0; y < ny; y++)
-						{
-							for (uint32 x = 0; x < nx; x++)
-							{
-								// todo
-							}
-						}
-					}
-
-					data->dimX = nx;
-					data->dimY = ny;
-					data->dimZ = nz;
-					downscale--;
-				}
-			}
-			*/
 
 			if (data->target == GL_TEXTURE_3D || data->target == GL_TEXTURE_2D_ARRAY)
 				tex->image3d(data->dimX, data->dimY, data->dimZ, data->internalFormat, data->copyFormat, data->copyType, values);
@@ -111,7 +72,6 @@ namespace cage
 		s.schemePointer = memoryContext;
 		s.load.bind<&processLoad>();
 		s.done.bind<&processDone>();
-		s.decompress.bind<&processDecompress>();
 		return s;
 	}
 }

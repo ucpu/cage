@@ -587,7 +587,7 @@ namespace cage
 									finalStruct f;
 									f.channel = ch;
 									f.msgSeqn = it->first;
-									f.data.reallocate(it->second.totalSize);
+									f.data.allocate(it->second.totalSize);
 									uint32 maxIndex = it->second.totalSize / 256;
 									for (auto &d : it->second.parts)
 									{
@@ -706,7 +706,7 @@ namespace cage
 				case cmdType::shortMessage:
 				{
 					receivingStruct::finalStruct msg;
-					msg.data.reallocate(cmd.size);
+					msg.data.allocate(cmd.size);
 					detail::memcpy(msg.data.data(), cmd.data.data(), cmd.size);
 					msg.channel = cmd.channel;
 					msg.msgSeqn = cmd.msgSeqn;
@@ -744,7 +744,7 @@ namespace cage
 						d >> id;
 					}
 					// decompress packet
-					b.reallocate(wholePacket.size() * 10);
+					b.allocate(wholePacket.size() * 10);
 					b.resize(detail::decompress(wholePacket.data() + 8, wholePacket.size() - 8, b.data(), b.size()));
 				}
 				deserializer d(b);
@@ -767,11 +767,11 @@ namespace cage
 					receiving.receivedPacketsSeqns.insert(packetSeqn);
 					// process acks
 					sending.ack(ackSeqn, ackBits);
-					if (d.current < d.end)
+					if (d.available() > 0)
 						sending.needToSendAnAck = true;
 				}
 				// read packet commands
-				while (d.current < d.end)
+				while (d.available() > 0)
 				{
 					commandStruct cmd;
 					cmd.deserialize(d);

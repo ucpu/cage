@@ -7,7 +7,7 @@ namespace cage
 {
 	memoryConcurrentPolicyMutex::memoryConcurrentPolicyMutex()
 	{
-		mutex = newMutex().transfev();
+		mutex = newMutex().cast<void>();
 	}
 
 	void memoryConcurrentPolicyMutex::lock()

@@ -147,7 +147,7 @@ namespace
 		sds.channels = channels;
 		sds.frames = numeric_cast<uint32>(totalSampleCount / channels);
 		sds.sampleRate = sampleRate;
-		buf1.reallocate(sds.channels * sds.frames * sizeof(float));
+		buf1.allocate(sds.channels * sds.frames * sizeof(float));
 		detail::memcpy(buf1.data(), pSampleData, buf1.size());
 		drflac_free(pSampleData);
 	}
@@ -163,7 +163,7 @@ namespace
 		sds.channels = channels;
 		sds.frames = numeric_cast<uint32>(totalSampleCount / channels);
 		sds.sampleRate = sampleRate;
-		buf1.reallocate(sds.channels * sds.frames * sizeof(float));
+		buf1.allocate(sds.channels * sds.frames * sizeof(float));
 		detail::memcpy(buf1.data(), pSampleData, buf1.size());
 		drwav_free(pSampleData);
 	}
@@ -179,7 +179,7 @@ namespace
 			sds.channels = vi->channels;
 			sds.sampleRate = vi->rate;
 			sds.frames = numeric_cast<uint32>(ov_pcm_total(&vf, -1));
-			buf1.reallocate(sds.channels * sds.frames * sizeof(float));
+			buf1.allocate(sds.channels * sds.frames * sizeof(float));
 			uint32 offset = 0;
 			while (true)
 			{

@@ -6,6 +6,7 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/png.h>
 #include <cage-core/color.h>
+#include <cage-core/serialization.h>
 
 #include <cage-client/opengl.h>
 
@@ -511,22 +512,19 @@ namespace
 		for (auto it = images.begin(), et = images.end(); it != et; it++)
 			h.originalSize += it->data.size();
 
-		memoryBuffer inputBuffer(numeric_cast<uintPtr>(h.originalSize - sizeof(data)));
-		{
-			char *last = inputBuffer.data();
-			for (auto it = images.begin(), et = images.end(); it != et; it++)
-			{
-				detail::memcpy(last, it->data.data(), it->data.size());
-				last += it->data.size();
-			}
-		}
+		memoryBuffer inputBuffer;
+		inputBuffer.reserve(h.originalSize);
+		serializer ser(inputBuffer);
+		ser << data;
+		for (const auto &it : images)
+			ser.write(it.data.data(), it.data.size());
+
 		memoryBuffer outputBuffer = detail::compress(inputBuffer);
-		h.compressedSize = sizeof(data) + outputBuffer.size();
+		h.compressedSize = outputBuffer.size();
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "final size: " + h.originalSize + ", compressed size: " + h.compressedSize + ", ratio: " + h.compressedSize / (float)h.originalSize);
 
 		holder<fileClass> f = newFile(outputFileName, fileMode(false, true));
 		f->write(&h, sizeof(h));
-		f->write(&data, sizeof(data));
 		f->write(outputBuffer.data(), outputBuffer.size());
 		f->close();
 	}

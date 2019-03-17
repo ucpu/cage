@@ -2,6 +2,7 @@
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
 #include <cage-core/assets.h>
+#include <cage-core/serialization.h>
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
 #include <cage-client/core.h>
@@ -22,24 +23,24 @@ namespace cage
 			}
 			else
 			{
-				context->assetHolder = newShader().transfev();
+				context->assetHolder = newShader().cast<void>();
 				shr = static_cast<shaderClass*>(context->assetHolder.get());
 				shr->setDebugName(context->textName);
 			}
 			context->returnData = shr;
 
-			uint32 count = *(uint32*)context->originalData;
-			char *pos = (char*)context->originalData + sizeof(count);
+			deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
+			uint32 count;
+			des >> count;
 			for (uint32 i = 0; i < count; i++)
 			{
-				uint32 type = *(uint32*)pos;
-				pos += sizeof(type);
-				uint32 len = *(uint32*)pos;
-				pos += sizeof(len);
+				uint32 type, len;
+				des >> type >> len;
+				const char *pos = (const char *)des.advance(len);
 				shr->source(type, pos, len);
-				pos += len;
 			}
 			shr->relink();
+			CAGE_ASSERT_RUNTIME(des.available() == 0);
 		}
 
 		void processDone(const assetContextStruct *context, void *schemePointer)

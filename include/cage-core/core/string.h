@@ -20,17 +20,13 @@ namespace cage
 			// constructors
 			stringBase() : current(0)
 			{
-#ifdef CAGE_DEBUG
 				data[current] = 0;
-#endif
 			}
 
 			stringBase(const stringBase &other) noexcept : current(other.current)
 			{
 				detail::memcpy(data, other.data, current);
-#ifdef CAGE_DEBUG
 				data[current] = 0;
-#endif
 			}
 
 			template<uint32 M>
@@ -40,9 +36,7 @@ namespace cage
 					CAGE_THROW_ERROR(exception, "string truncation");
 				current = other.current;
 				detail::memcpy(data, other.data, current);
-#ifdef CAGE_DEBUG
 				data[current] = 0;
-#endif
 			}
 
 			stringBase(bool other)
@@ -51,7 +45,6 @@ namespace cage
 				*this = (other ? "true" : "false");
 			}
 
-#ifdef CAGE_DEBUG
 #define GCHL_GENERATE(TYPE) \
 			stringBase(TYPE other)\
 			{\
@@ -59,14 +52,6 @@ namespace cage
 				current = privat::sprint1(data, other);\
 				data[current] = 0;\
 			}
-#else
-#define GCHL_GENERATE(TYPE) \
-			stringBase(TYPE other)\
-			{\
-				CAGE_ASSERT_COMPILE(N >= 20, string_too_short);\
-				current = privat::sprint1(data, other);\
-			}
-#endif
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, float, double));
 #undef GCHL_GENERATE
 
@@ -74,9 +59,7 @@ namespace cage
 			{
 				CAGE_ASSERT_COMPILE(N >= 20, string_too_short);
 				current = privat::sprint1(data, other);
-#ifdef CAGE_DEBUG
 				data[current] = 0;
-#endif
 			}
 
 			stringBase(const char *pos, uint32 len)
@@ -85,9 +68,7 @@ namespace cage
 					CAGE_THROW_ERROR(exception, "string truncation");
 				current = len;
 				detail::memcpy(data, pos, len);
-#ifdef CAGE_DEBUG
 				data[current] = 0;
-#endif
 			}
 
 			stringBase(const char *other)
@@ -97,9 +78,7 @@ namespace cage
 					CAGE_THROW_ERROR(exception, "string truncation");
 				current = numeric_cast<uint32>(len);
 				detail::memcpy(data, other, current);
-#ifdef CAGE_DEBUG
 				data[current] = 0;
-#endif
 			}
 
 			// assignment operators
@@ -109,9 +88,7 @@ namespace cage
 					return *this;
 				current = other.current;
 				detail::memcpy(data, other.data, current);
-#ifdef CAGE_DEBUG
 				data[current] = 0;
-#endif
 				return *this;
 			}
 
@@ -122,9 +99,7 @@ namespace cage
 					CAGE_THROW_ERROR(exception, "string truncation");
 				detail::memcpy(data + current, other.data, other.current);
 				current += other.current;
-#ifdef CAGE_DEBUG
 				data[current] = 0;
-#endif
 				return *this;
 			}
 
@@ -161,7 +136,7 @@ namespace cage
 			// methods
 			const char *c_str() const
 			{
-				const_cast<char*>(data)[current] = 0;
+				CAGE_ASSERT_RUNTIME(data[current] == 0);
 				return data;
 			}
 
@@ -169,7 +144,7 @@ namespace cage
 			{
 				stringBase ret(*this);
 				for (uint32 i = 0; i < current; i++)
-					ret[current - i - 1] = data[i];
+					ret.data[current - i - 1] = data[i];
 				return ret;
 			}
 
@@ -187,12 +162,13 @@ namespace cage
 			{
 				stringBase ret(*this);
 				privat::stringReplace(ret.data, ret.current, N, what.data, what.current, with.data, with.current);
+				ret.data[ret.current] = 0;
 				return ret;
 			}
 
 			stringBase replace(uint32 start, uint32 length, const stringBase &with) const
 			{
-				return this->subString(0, start) + with + this->subString(start + length, -1);
+				return subString(0, start) + with + subString(start + length, -1);
 			}
 
 			stringBase remove(uint32 start, uint32 length) const
@@ -209,6 +185,7 @@ namespace cage
 			{
 				stringBase ret(*this);
 				privat::stringTrim(ret.data, ret.current, trimChars.data, trimChars.current, left, right);
+				ret.data[ret.current] = 0;
 				return ret;
 			}
 
@@ -216,15 +193,18 @@ namespace cage
 			{
 				stringBase ret;
 				privat::stringSplit(data, current, ret.data, ret.current, splitChars.data, splitChars.current);
+				data[current] = 0;
+				ret.data[ret.current] = 0;
 				return ret;
 			}
 
 			stringBase fill(uint32 size, char c = ' ') const
 			{
-				stringBase res = *this;
-				while (res.length() < size)
-					res += stringBase(&c, 1);
-				return res;
+				stringBase ret = *this;
+				while (ret.length() < size)
+					ret += stringBase(&c, 1);
+				ret.data[ret.current] = 0;
+				return ret;
 			}
 
 			stringBase toUpper() const
@@ -317,10 +297,11 @@ namespace cage
 			{
 				stringBase ret(*this);
 				privat::stringOrder(ret.data, ret.current);
+				ret.data[ret.current] = 0;
 				return ret;
 			}
 
-			bool contains(char other) const // requires to be ordered
+			bool contains(char other) const // this has to be ordered
 			{
 				return privat::stringContains(data, current, other);
 			}
@@ -359,7 +340,7 @@ namespace cage
 				if (empty())
 					return false;
 				if (allowSign && (data[0] == '-' || data[0] == '+'))
-					return subString(1, current - 1).isInteger(false);
+					return subString(1, current - 1).isDigitsOnly();
 				else
 					return isDigitsOnly();
 			}
@@ -373,7 +354,7 @@ namespace cage
 					return isInteger(allowSign);
 				stringBase whole = subString(0, d);
 				stringBase part = subString(d + 1, -1);
-				return whole.isInteger(allowSign) && part.isInteger(false);
+				return whole.isInteger(allowSign) && part.isDigitsOnly();
 			}
 
 			bool isBool() const
@@ -388,16 +369,18 @@ namespace cage
 
 			stringBase encodeUrl() const
 			{
-				stringBase res;
-				privat::encodeUrl(data, current, res.data, res.current, N);
-				return res;
+				stringBase ret;
+				privat::encodeUrl(data, current, ret.data, ret.current, N);
+				ret.data[ret.current] = 0;
+				return ret;
 			}
 
 			stringBase decodeUrl() const
 			{
-				stringBase res;
-				privat::decodeUrl(data, current, res.data, res.current, N);
-				return res;
+				stringBase ret;
+				privat::decodeUrl(data, current, ret.data, ret.current, N);
+				ret.data[ret.current] = 0;
+				return ret;
 			}
 
 			static const uint32 MaxLength = N;

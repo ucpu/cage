@@ -340,7 +340,7 @@ namespace cage
 		static const uint32 shaderLogBufferSize = 1024 * 8;
 	}
 
-	void shaderClass::source(uint32 type, void *data, uint32 length)
+	void shaderClass::source(uint32 type, const char *data, uint32 length)
 	{
 		shaderImpl *impl = (shaderImpl*)this;
 

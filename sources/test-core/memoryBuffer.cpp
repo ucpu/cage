@@ -1,11 +1,53 @@
 #include "main.h"
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/stdBufferStream.h>
-#include <cage-core/serialization.h>
 
 void testMemoryBuffers()
 {
 	CAGE_TESTCASE("memory buffers");
+
+	{
+		CAGE_TESTCASE("methods & size & capacity");
+		memoryBuffer b(13, 42);
+		CAGE_TEST(b.size() == 13);
+		CAGE_TEST(b.capacity() == 42);
+		b.allocate(20);
+		CAGE_TEST(b.size() == 20);
+		CAGE_TEST(b.capacity() == 20);
+		b.reserve(30);
+		CAGE_TEST(b.size() == 20);
+		CAGE_TEST(b.capacity() == 30);
+		b.resize(10);
+		CAGE_TEST(b.size() == 10);
+		CAGE_TEST(b.capacity() == 30);
+		CAGE_TEST_THROWN(b.resizeThrow(50));
+		CAGE_TEST(b.size() == 10);
+		CAGE_TEST(b.capacity() == 30);
+		b.resizeThrow(20);
+		CAGE_TEST(b.size() == 20);
+		CAGE_TEST(b.capacity() == 30);
+		b.resize(50);
+		CAGE_TEST(b.size() == 50);
+		CAGE_TEST(b.capacity() == 50);
+		b.reserve(100);
+		CAGE_TEST(b.size() == 50);
+		CAGE_TEST(b.capacity() == 100);
+		b.shrink();
+		CAGE_TEST(b.size() == 50);
+		CAGE_TEST(b.capacity() == 50);
+		b.clear();
+		CAGE_TEST(b.size() == 0);
+		CAGE_TEST(b.capacity() == 50);
+		b.resizeSmart(1000);
+		CAGE_TEST(b.size() == 1000);
+		CAGE_TEST(b.capacity() > 1000);
+		b.resizeSmart(10);
+		CAGE_TEST(b.size() == 10);
+		CAGE_TEST(b.capacity() > 1000);
+		b.free();
+		CAGE_TEST(b.size() == 0);
+		CAGE_TEST(b.capacity() == 0);
+	}
 
 	{
 		CAGE_TESTCASE("compression");
@@ -91,23 +133,6 @@ void testMemoryBuffers()
 			os.write((char*)&data.u16, 2);
 			CAGE_TEST(b.size() >= 128 + 8 + 2 && b.size() <= sizeof(dataStruct), b.size(), sizeof(dataStruct));
 			CAGE_TEST(detail::memcmp(&data, b.data(), b.size()) == 0);
-		}
-	}
-
-	{
-		CAGE_TESTCASE("serialization");
-		{
-			memoryBuffer b1;
-			serializer s(b1);
-			s << 42 << string("hi there") << 13;
-			CAGE_TEST(b1.size() == sizeof(42) + (4 + 8) + sizeof(13));
-			int i42, i13;
-			string hi;
-			deserializer d(b1);
-			d >> i42 >> hi >> i13;
-			CAGE_TEST(i42 == 42);
-			CAGE_TEST(i13 == 13);
-			CAGE_TEST(hi == "hi there");
 		}
 	}
 }

@@ -2,11 +2,8 @@ namespace cage
 {
 	struct CAGE_API memoryConcurrentPolicyNone
 	{
-		void lock()
-		{}
-
-		void unlock()
-		{}
+		void lock() {}
+		void unlock() {}
 	};
 
 	struct CAGE_API memoryConcurrentPolicyMutex
@@ -16,6 +13,6 @@ namespace cage
 		void unlock();
 
 	private:
-		holdev mutex;
+		holder<void> mutex;
 	};
 }

@@ -11,7 +11,7 @@ void processRaw()
 	memoryBuffer data;
 	{ // load file
 		holder<fileClass> f = newFile(inputFile, fileMode(true, false));
-		data.reallocate(numeric_cast<uintPtr>(f->size()));
+		data.allocate(numeric_cast<uintPtr>(f->size()));
 		f->read(data.data(), data.size());
 	}
 

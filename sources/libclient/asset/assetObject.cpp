@@ -17,7 +17,7 @@ namespace cage
 		{
 			if (!context->assetHolder)
 			{
-				context->assetHolder = newObject().transfev();
+				context->assetHolder = newObject().cast<void>();
 				static_cast<objectClass*>(context->assetHolder.get())->setDebugName(context->textName);
 			}
 			objectClass *obj = static_cast<objectClass*>(context->assetHolder.get());
@@ -29,9 +29,9 @@ namespace cage
 			obj->worldSize = h.worldSize;
 			obj->pixelsSize = h.pixelsSize;
 
-			float *thresholds = (float*)des.access(h.lodsCount * sizeof(uint32));
-			uint32 *indices = (uint32*)des.access((h.lodsCount + 1) * sizeof(uint32));
-			uint32 *names = (uint32*)des.access(h.meshesCount * sizeof(uint32));
+			float *thresholds = (float*)des.advance(h.lodsCount * sizeof(uint32));
+			uint32 *indices = (uint32*)des.advance((h.lodsCount + 1) * sizeof(uint32));
+			uint32 *names = (uint32*)des.advance(h.meshesCount * sizeof(uint32));
 			obj->setLods(h.lodsCount, h.meshesCount, thresholds, indices, names);
 		}
 

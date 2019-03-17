@@ -3,136 +3,102 @@
 
 namespace cage
 {
-	namespace detail
-	{
-		template <class T>
-		struct serializerArrayAccessor;
-	}
-
 	struct CAGE_API serializer
 	{
-		memoryBuffer &buffer;
+		serializer(void *data, uintPtr size);
+		explicit serializer(memoryBuffer &buffer, uintPtr size = detail::numeric_limits<uintPtr>::max());
 		
-		explicit serializer(memoryBuffer &buffer) : buffer(buffer)
-		{}
+		serializer(serializer &&other) = default;
+		serializer(const serializer &) = delete;
+		serializer &operator = (serializer &&other) = default;
+		serializer &operator = (const serializer &) = delete;
 
-		serializer &write(const void *data, uintPtr size);
+		uintPtr available() const; // number of bytes still available in the buffer (valid only if the maximum size was given in the constructor)
+		serializer placeholder(uintPtr s);
+		void write(const void *d, uintPtr s);
+		void *advance(uintPtr s); // returns the original position
 
-		char *accessRaw(uintPtr size); // the pointer returned may be invalidated by any writes or other accesses to the serializer
+	private:
+		explicit serializer(memoryBuffer &buffer, void *data, uintPtr offset, uintPtr size);
 
-		template <class T>
-		detail::serializerArrayAccessor<T> accessArray(uint32 count);
+		memoryBuffer &buffer;
+		void *data;
+		uintPtr offset; // current position in the buffer
+		uintPtr size; // max size of the buffer
 	};
+
+	struct CAGE_API deserializer
+	{
+		deserializer(const void *data, uintPtr size);
+		explicit deserializer(const memoryBuffer &buffer);
+
+		deserializer(deserializer &&other) = default;
+		deserializer(const deserializer &) = delete;
+		deserializer &operator = (deserializer &&other) = default;
+		deserializer &operator = (const deserializer &) = delete;
+
+		uintPtr available() const; // number of bytes still available in the buffer
+		deserializer placeholder(uintPtr s);
+		void read(void *d, uintPtr s);
+		const void *advance(uintPtr s); // returns the original position
+
+	private:
+		explicit deserializer(const void *data, uintPtr offset, uintPtr size);
+
+		const void *data;
+		uintPtr offset; // current position in the buffer
+		uintPtr size; // max size of the buffer
+	};
+
+	// general serialization
 
 	template <class T>
 	serializer &operator << (serializer &s, const T &v)
 	{
-		return s.write(&v, sizeof(T));
+		s.write(&v, sizeof(v));
+		return s;
 	}
-
-	template <uint32 N>
-	serializer &operator << (serializer &s, const detail::stringBase<N> &v)
-	{
-		uint32 l = v.length();
-		return s.write(&l, sizeof(l)).write(v.c_str(), l);
-	}
-
-	template <class T>
-	serializer &operator << (serializer &s, T *v)
-	{
-		CAGE_ASSERT_COMPILE(false, do_not_serialize_a_pointer);
-	}
-
-	template <class T>
-	serializer &operator << (serializer &s, const holder<T> &v)
-	{
-		CAGE_ASSERT_COMPILE(false, do_not_serialize_holder);
-	}
-
-	namespace detail
-	{
-		template <class T>
-		struct serializerArrayAccessor
-		{
-			serializerArrayAccessor(serializer &ser, char *ptr, uint32 count) : ser(ser), initOff(ptr - ser.accessRaw(0)), count(count)
-			{}
-
-			T &operator [] (uint32 idx)
-			{
-				CAGE_ASSERT_RUNTIME(idx < count);
-				return accessRaw()[idx];
-			}
-
-			T *accessRaw()
-			{
-				return (T*)(ser.accessRaw(0) + initOff);
-			}
-
-		private:
-			serializer &ser;
-			const uintPtr initOff;
-			const uint32 count;
-		};
-	}
-
-	template <class T>
-	detail::serializerArrayAccessor<T> serializer::accessArray(uint32 count)
-	{
-		return detail::serializerArrayAccessor<T>(*this, accessRaw(count * sizeof(T)), count);
-	}
-
-	struct CAGE_API deserializer
-	{
-		const char *current;
-		const char *end;
-
-		deserializer(const void *data, uintPtr size) : current((char*)data), end(current + size)
-		{}
-
-		explicit deserializer(const memoryBuffer &buffer);
-
-		deserializer &read(void *data, uintPtr size)
-		{
-			if (current + size > end)
-				CAGE_THROW_ERROR(exception, "deserialization beyond range");
-			detail::memcpy(data, current, size);
-			current += size;
-			return *this;
-		}
-
-		const char *access(uintPtr size)
-		{
-			if (current + size > end)
-				CAGE_THROW_ERROR(exception, "deserialization beyond range");
-			const char *c = current;
-			current += size;
-			return c;
-		}
-	};
 
 	template <class T>
 	deserializer &operator >> (deserializer &s, T &v)
 	{
-		return s.read(&v, sizeof(T));
+		s.read(&v, sizeof(v));
+		return s;
+	}
+
+	// specialization for strings
+
+	template <uint32 N>
+	serializer &operator << (serializer &s, const detail::stringBase<N> &v)
+	{
+		serializer ss = s.placeholder(sizeof(v.length()) + v.length()); // write all or nothing
+		ss << v.length();
+		ss.write(v.c_str(), v.length());
+		return s;
 	}
 
 	template <uint32 N>
 	deserializer &operator >> (deserializer &s, detail::stringBase<N> &v)
 	{
-		uint32 l;
-		s >> l;
-		if (s.current + l > s.end)
-			CAGE_THROW_ERROR(exception, "deserialization beyond range");
-		v = detail::stringBase<N>(s.current, l);
-		s.current += l;
+		decltype(v.length()) size;
+		s >> size;
+		v = detail::stringBase<N>((const char*)s.advance(size), size);
 		return s;
 	}
 
+	// disable serialization of raw pointers and holders
+
 	template <class T>
-	deserializer &operator >> (deserializer &s, T *v)
-	{
-		CAGE_ASSERT_COMPILE(false, do_not_deserialize_a_pointer);
-	}
+	serializer &operator << (serializer &s, const T *v) = delete;
+
+	template <class T>
+	serializer &operator << (serializer &s, const holder<T> &v) = delete;
+
+	template <class T>
+	deserializer &operator >> (deserializer &s, T *v) = delete;
+
+	template <class T>
+	deserializer &operator >> (deserializer &s, holder<T> &v) = delete;
 }
 
 #endif

@@ -46,7 +46,7 @@ namespace cage
 			}
 			else
 			{
-				context->assetHolder = newSource(gm).transfev();
+				context->assetHolder = newSource(gm).cast<void>();
 				source = static_cast<sourceClass*>(context->assetHolder.get());
 				source->setDebugName(context->textName);
 			}

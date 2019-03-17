@@ -6,7 +6,7 @@ namespace cage
 	{
 		assetContextStruct();
 		detail::stringBase<64> textName;
-		mutable holdev assetHolder;
+		mutable holder<void> assetHolder;
 		uint64 compressedSize;
 		uint64 originalSize;
 		mutable void *assetPointer;

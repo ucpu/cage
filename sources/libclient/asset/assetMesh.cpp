@@ -1,7 +1,6 @@
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
-#include <cage-core/memory.h>
 #include <cage-core/assets.h>
 #include <cage-core/color.h>
 #include <cage-core/serialization.h>
@@ -22,14 +21,6 @@ namespace cage
 			return i == 0 ? meshDataFlags::Aux0 : i == 1 ? meshDataFlags::Aux1 : i == 2 ? meshDataFlags::Aux2 : i == 3 ? meshDataFlags::Aux3 : meshDataFlags::None;
 		}
 
-		void processDecompress(const assetContextStruct *context, void *schemePointer)
-		{
-			uintPtr mhs = sizeof(meshHeaderStruct);
-			detail::memcpy(context->originalData, context->compressedData, mhs);
-			uintPtr res = detail::decompress((char*)context->compressedData + mhs, numeric_cast<uintPtr>(context->compressedSize - mhs), (char*)context->originalData + mhs, numeric_cast<uintPtr>(context->originalSize - mhs));
-			CAGE_ASSERT_RUNTIME(res == context->originalSize - mhs, res, context->originalSize, mhs);
-		}
-
 		void processLoad(const assetContextStruct *context, void *schemePointer)
 		{
 			meshClass *msh = nullptr;
@@ -40,7 +31,7 @@ namespace cage
 			}
 			else
 			{
-				context->assetHolder = newMesh().transfev();
+				context->assetHolder = newMesh().cast<void>();
 				msh = static_cast<meshClass*>(context->assetHolder.get());
 				msh->setDebugName(context->textName);
 			}
@@ -57,9 +48,10 @@ namespace cage
 			msh->setSkeleton(data.skeletonName, data.skeletonBones);
 			msh->setInstancesLimitHint(data.instancesLimitHint);
 
-			const void *verticesData = des.access(data.verticesCount * data.vertexSize());
-			uint32 *indicesData = (uint32*)des.access(data.indicesCount * sizeof(uint32));
-			const void *materialData = des.access(data.materialSize);
+			const void *verticesData = des.advance(data.verticesCount * data.vertexSize());
+			uint32 *indicesData = (uint32*)des.advance(data.indicesCount * sizeof(uint32));
+			const void *materialData = des.advance(data.materialSize);
+			CAGE_ASSERT_RUNTIME(des.available() == 0);
 
 			msh->setBuffers(
 				data.verticesCount, data.vertexSize(), verticesData,
@@ -147,7 +139,6 @@ namespace cage
 		s.schemePointer = memoryContext;
 		s.load.bind<&processLoad>();
 		s.done.bind<&processDone>();
-		s.decompress.bind<&processDecompress>();
 		return s;
 	}
 

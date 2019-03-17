@@ -15,6 +15,7 @@
 #include <cage-core/config.h>
 #include <cage-core/hashTable.h>
 #include <cage-core/hashString.h>
+#include <cage-core/memory.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/concurrentQueue.h>
 
@@ -29,6 +30,14 @@ namespace cage
 	namespace
 	{
 		static const uint32 currentAssetVersion = 1;
+
+		void defaultDecompress(const assetContextStruct *context)
+		{
+			if (context->compressedSize == 0)
+				return;
+			uintPtr res = detail::decompress(context->compressedData, numeric_cast<uintPtr>(context->compressedSize), context->originalData, numeric_cast<uintPtr>(context->originalSize));
+			CAGE_ASSERT_RUNTIME(res == context->originalSize, res, context->originalSize);
+		}
 
 		struct assetContextPrivateStruct : public assetContextStruct
 		{
@@ -121,7 +130,7 @@ namespace cage
 					pth = pathJoin(path, name);
 				holder<fileClass> f = newFile(pth, fileMode(true, false));
 				auto s = f->size();
-				buff.reallocate(numeric_cast<uintPtr>(s));
+				buff.allocate(numeric_cast<uintPtr>(s));
 				f->read(buff.data(), s);
 				return buff;
 			}
@@ -226,6 +235,8 @@ namespace cage
 						{
 							if (schemes[ass->scheme].decompress)
 								schemes[ass->scheme].decompress(ass, schemes[ass->scheme].schemePointer);
+							else
+								defaultDecompress(ass);
 						}
 						catch (...)
 						{

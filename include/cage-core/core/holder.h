@@ -1,99 +1,26 @@
 namespace cage
 {
-	template<class T> struct holder;
-
-	struct CAGE_API holdev
-	{
-		// constructor
-		holdev() : data(nullptr) {}
-		holdev(void *value, delegate<void(void*)> action) : action(action), data(value) {}
-
-		// destructor
-		~holdev()
-		{
-			if (action)
-				action(data);
-		}
-
-		// move constructor
-		holdev(holdev &&other)
-		{
-			data = other.data;
-			action = other.action;
-			other.data = nullptr;
-			other.action.clear();
-		}
-
-		// move assignment operator
-		holdev &operator = (holdev &&other)
-		{
-			if (data == other.data)
-				return *this;
-			if (action)
-				action(data);
-			data = other.data;
-			action = other.action;
-			other.data = nullptr;
-			other.action.clear();
-			return *this;
-		}
-
-		// operator bool
-		explicit operator bool() const
-		{
-			return !!data;
-		}
-
-		// method get
-		void *get()
-		{
-			return data;
-		}
-
-		const void *get() const
-		{
-			return data;
-		}
-
-		// method clear
-		void clear()
-		{
-			if (action)
-				action(data);
-			action.clear();
-			data = nullptr;
-		}
-
-		// method transfer
-		template<class M>
-		holder<M> transfer();
-
-	private:
-		delegate<void(void *)> action;
-		void *data;
-	};
-
 	template<class T>
 	struct holder
 	{
 		// constructor
 		holder() : data(nullptr) {}
-		holder(T *value, delegate<void(void*)> action) : action(action), data(value) {}
+		explicit holder(T *value, delegate<void(void*)> deleter) : deleter(deleter), data(value) {}
 
 		// destructor
 		~holder()
 		{
-			if (action)
-				action(data);
+			if (deleter)
+				deleter(data);
 		}
 
 		// move constructor
 		holder(holder &&other)
 		{
 			data = other.data;
-			action = other.action;
+			deleter = other.deleter;
 			other.data = nullptr;
-			other.action.clear();
+			other.deleter.clear();
 		}
 
 		// move assignment operator
@@ -101,13 +28,19 @@ namespace cage
 		{
 			if (data == other.data)
 				return *this;
-			if (action)
-				action(data);
+			if (deleter)
+				deleter(data);
 			data = other.data;
-			action = other.action;
+			deleter = other.deleter;
 			other.data = nullptr;
-			other.action.clear();
+			other.deleter.clear();
 			return *this;
+		}
+
+		// operator bool
+		explicit operator bool() const
+		{
+			return !!data;
 		}
 
 		// operator ->
@@ -136,12 +69,6 @@ namespace cage
 			return *data;
 		}
 
-		// operator bool
-		explicit operator bool() const
-		{
-			return !!data;
-		}
-
 		// method get
 		T *get()
 		{
@@ -156,60 +83,126 @@ namespace cage
 		// method clear
 		void clear()
 		{
-			if (action)
-				action(data);
-			action.clear();
+			if (deleter)
+				deleter(data);
+			deleter.clear();
 			data = nullptr;
 		}
 
-		// method transfer
+		// method cast
 		template<class M>
-		holder<M> transfer()
+		holder<M> cast()
 		{
 			if (*this)
 			{
-				holder<M> tmp(dynamic_cast<M*>(data), action);
-				data = nullptr;
-				action.clear();
-				return tmp;
+				holder<M> tmp(dynamic_cast<M*>(data), deleter);
+				if (tmp)
+				{
+					data = nullptr;
+					deleter.clear();
+					return tmp;
+				}
 			}
-			else
-				return holder<M>();
+			return holder<M>();
 		}
 
-		holdev transfev()
+		template<>
+		holder<void> cast()
 		{
 			if (*this)
 			{
-				holdev tmp = holdev(data, action);
+				holder<void> tmp = holder<void>(data, deleter);
 				data = nullptr;
-				action.clear();
+				deleter.clear();
 				return tmp;
 			}
-			else
-				return holdev();
+			return holder<void>();
 		}
 
 	private:
-		delegate<void(void *)> action;
+		delegate<void(void *)> deleter;
 		T *data;
 	};
 
 	template<>
 	struct holder<void>
-	{}; // this specialization is purposefully empty, use holdeV instead
-
-	template<class M>
-	holder<M> holdev::transfer()
 	{
-		if (*this)
+		// constructor
+		holder() : data(nullptr) {}
+		explicit holder(void *value, delegate<void(void*)> deleter) : deleter(deleter), data(value) {}
+
+		// destructor
+		~holder()
 		{
-			holder<M> tmp((M*)data, action);
-			data = nullptr;
-			action.clear();
-			return tmp;
+			if (deleter)
+				deleter(data);
 		}
-		else
+
+		// move constructor
+		holder(holder &&other)
+		{
+			data = other.data;
+			deleter = other.deleter;
+			other.data = nullptr;
+			other.deleter.clear();
+		}
+
+		// move assignment operator
+		holder &operator = (holder &&other)
+		{
+			if (data == other.data)
+				return *this;
+			if (deleter)
+				deleter(data);
+			data = other.data;
+			deleter = other.deleter;
+			other.data = nullptr;
+			other.deleter.clear();
+			return *this;
+		}
+
+		// operator bool
+		explicit operator bool() const
+		{
+			return !!data;
+		}
+
+		// method get
+		void *get()
+		{
+			return data;
+		}
+
+		const void *get() const
+		{
+			return data;
+		}
+
+		// method clear
+		void clear()
+		{
+			if (deleter)
+				deleter(data);
+			deleter.clear();
+			data = nullptr;
+		}
+
+		// method cast
+		template<class M>
+		holder<M> cast()
+		{
+			if (*this)
+			{
+				holder<M> tmp((M*)data, deleter);
+				data = nullptr;
+				deleter.clear();
+				return tmp;
+			}
 			return holder<M>();
-	}
+		}
+
+	private:
+		delegate<void(void *)> deleter;
+		void *data;
+	};
 }

@@ -128,7 +128,7 @@ namespace cage
 		template<class T, class I, class... Ts>
 		holder<T> createImpl(Ts... vs)
 		{
-			return createHolder<I>(templates::forward<Ts>(vs)...).template transfer<T>();
+			return createHolder<I>(templates::forward<Ts>(vs)...).template cast<T>();
 		};
 
 		template<class T>

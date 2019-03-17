@@ -34,7 +34,7 @@ namespace
 		ts->test(1);
 	}
 
-	void functionTakingHolder(holdev hld)
+	void functionTakingHolder(holder<void> hld)
 	{
 		CAGE_TEST(gCount == 1);
 		hld.clear();
@@ -49,7 +49,7 @@ void testHolder()
 	{
 		CAGE_TESTCASE("takeByReference & takeByValue");
 		CAGE_TEST(gCount == 0);
-		holder <tester> ts = detail::systemArena().createHolder <tester>();
+		holder<tester> ts = detail::systemArena().createHolder<tester>();
 		CAGE_TEST(gCount == 1);
 		takeByReference(ts);
 		CAGE_TEST(gCount == 1);
@@ -57,15 +57,15 @@ void testHolder()
 		CAGE_TEST(gCount == 0);
 	}
 	{
-		CAGE_TESTCASE("default ctor & copy ctor & holdev");
+		CAGE_TESTCASE("default ctor & copy ctor & holder<void>");
 		CAGE_TEST(gCount == 0);
-		holder <tester> a = detail::systemArena().createHolder <tester>();
+		holder<tester> a = detail::systemArena().createHolder<tester>();
 		CAGE_TEST(gCount == 1);
-		holdev b = a.transfev();
+		holder<void> b = a.cast<void>();
 		CAGE_TEST(gCount == 1);
-		holdev c(templates::move(b));
+		holder<void> c(templates::move(b));
 		CAGE_TEST(gCount == 1);
-		holder <tester> d = c.transfer <tester>();
+		holder<tester> d = c.cast<tester>();
 		CAGE_TEST(gCount == 1);
 		d.clear();
 		CAGE_TEST(gCount == 0);
@@ -73,9 +73,9 @@ void testHolder()
 	{
 		CAGE_TESTCASE("function taking holder");
 		CAGE_TEST(gCount == 0);
-		holder <tester> a = detail::systemArena().createHolder <tester>();
+		holder<tester> a = detail::systemArena().createHolder<tester>();
 		CAGE_TEST(gCount == 1);
-		holdev b = a.transfev();
+		holder<void> b = a.cast<void>();
 		CAGE_TEST(gCount == 1);
 		functionTakingHolder(templates::move(b));
 		CAGE_TEST(gCount == 0);
@@ -83,15 +83,15 @@ void testHolder()
 	{
 		CAGE_TESTCASE("several transfers");
 		CAGE_TEST(gCount == 0);
-		holder <tester> a = detail::systemArena().createHolder <tester>();
+		holder<tester> a = detail::systemArena().createHolder<tester>();
 		CAGE_TEST(gCount == 1);
-		holdev b = a.transfev();
+		holder<void> b = a.cast<void>();
 		CAGE_TEST(gCount == 1);
-		holder <tester> c = b.transfer <tester>();
+		holder<tester> c = b.cast<tester>();
 		CAGE_TEST(gCount == 1);
-		holdev d = c.transfev();
+		holder<void> d = c.cast<void>();
 		CAGE_TEST(gCount == 1);
-		holder <tester> e = d.transfer <tester>();
+		holder<tester> e = d.cast<tester>();
 		CAGE_TEST(gCount == 1);
 		e.clear();
 		CAGE_TEST(gCount == 0);
@@ -99,7 +99,7 @@ void testHolder()
 	{
 		CAGE_TESTCASE("bool tests");
 		CAGE_TEST(gCount == 0);
-		holder <tester> a = detail::systemArena().createHolder <tester>();
+		holder<tester> a = detail::systemArena().createHolder<tester>();
 		CAGE_TEST(gCount == 1);
 		bool b = (bool)a;
 		bool c = !a;

@@ -8,8 +8,14 @@ namespace cage
 	{
 		variableSmoothingBufferStruct() : index(0), sum(T())
 		{
+			seed(T());
+		}
+
+		void seed(const T &value)
+		{
 			for (uint32 i = 0; i < N; i++)
-				buffer[i] = T();
+				buffer[i] = value;
+			sum = value * N;
 		}
 
 		void add(const T &value)
@@ -24,9 +30,14 @@ namespace cage
 			return sum / N;
 		}
 
-		T last() const
+		T current() const
 		{
 			return buffer[index];
+		}
+
+		T oldest() const
+		{
+			return buffer[(index + 1) % N];
 		}
 
 		T max() const
@@ -62,6 +73,13 @@ namespace cage
 		variableSmoothingBufferStruct() : index(0)
 		{}
 
+		void seed(const quat &value)
+		{
+			for (uint32 i = 0; i < N; i++)
+				buffer[i] = value;
+			avg = value;
+		}
+
 		void add(const quat &value)
 		{
 			index = (index + 1) % N;
@@ -74,9 +92,14 @@ namespace cage
 			return avg;
 		}
 
-		quat last() const
+		quat current() const
 		{
 			return buffer[index];
+		}
+
+		quat oldest() const
+		{
+			return buffer[(index + 1) % N];
 		}
 
 	private:

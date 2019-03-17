@@ -8,9 +8,9 @@ namespace cage
 	memoryBuffer::memoryBuffer() : data_(nullptr), size_(0), capacity_(0)
 	{}
 
-	memoryBuffer::memoryBuffer(uintPtr size) : data_(nullptr), size_(0), capacity_(0)
+	memoryBuffer::memoryBuffer(uintPtr size, uintPtr capacity) : data_(nullptr), size_(0), capacity_(0)
 	{
-		reallocate(size);
+		allocate(size, capacity);
 	}
 
 	memoryBuffer::memoryBuffer(memoryBuffer &&other) noexcept
@@ -49,26 +49,58 @@ namespace cage
 		return r;
 	}
 
-	void memoryBuffer::reserve(uintPtr cap)
+	void memoryBuffer::allocate(uintPtr size, uintPtr cap)
 	{
 		free();
+		if (size > cap)
+			cap = size;
 		data_ = (char*)detail::systemArena().allocate(cap, sizeof(uintPtr));
 		capacity_ = cap;
-		size_ = 0;
+		size_ = size;
 	}
 
-	void memoryBuffer::reallocate(uintPtr size)
+	void memoryBuffer::reserve(uintPtr cap)
 	{
-		free();
-		data_ = (char*)detail::systemArena().allocate(size, sizeof(uintPtr));
-		capacity_ = size_ = size;
+		if (cap < capacity_)
+			return;
+		uintPtr s = size_;
+		resize(cap);
+		size_ = s;
 	}
 
-	void memoryBuffer::free()
+	void memoryBuffer::resizeThrow(uintPtr size)
 	{
-		detail::systemArena().deallocate(data_);
-		data_ = nullptr;
-		capacity_ = size_ = 0;
+		if (size > capacity_)
+			CAGE_THROW_ERROR(outOfMemoryException, "size exceeds reserved buffer", size);
+		size_ = size;
+	}
+
+	void memoryBuffer::resize(uintPtr size)
+	{
+		if (size <= capacity_)
+		{
+			size_ = size;
+			return;
+		}
+		memoryBuffer c = templates::move(*this);
+		allocate(size);
+		detail::memcpy(data_, c.data(), c.size());
+	}
+
+	void memoryBuffer::resizeSmart(uintPtr size)
+	{
+		resize(numeric_cast<uintPtr>(size * 1.5) + 100);
+		size_ = size;
+	}
+
+	void memoryBuffer::shrink()
+	{
+		if (capacity_ == size_)
+			return;
+		CAGE_ASSERT_RUNTIME(capacity_ > size_);
+		memoryBuffer c = templates::move(*this);
+		allocate(c.size());
+		detail::memcpy(data_, c.data(), c.size());
 	}
 
 	void memoryBuffer::zero()
@@ -76,36 +108,16 @@ namespace cage
 		detail::memset(data_, 0, size_);
 	}
 
-	void memoryBuffer::resize(uintPtr size)
+	void memoryBuffer::clear()
 	{
-		if (size > capacity_)
-			CAGE_THROW_ERROR(outOfMemoryException, "size exceeds preallocated buffer", size);
-		size_ = size;
+		size_ = 0;
 	}
 
-	void memoryBuffer::resizeGrow(uintPtr size)
+	void memoryBuffer::free()
 	{
-		if (size <= capacity_)
-		{
-			size_ = size;
-			return;
-		}
-		memoryBuffer c = copy();
-		reallocate(size);
-		detail::memcpy(data_, c.data(), c.size());
-	}
-
-	void memoryBuffer::resizeGrowSmart(uintPtr size)
-	{
-		if (size <= capacity_)
-		{
-			size_ = size;
-			return;
-		}
-		memoryBuffer c = copy();
-		reallocate(numeric_cast<uintPtr>(size * 1.5) + 100);
-		detail::memcpy(data_, c.data(), c.size());
-		size_ = size;
+		detail::systemArena().deallocate(data_);
+		data_ = nullptr;
+		capacity_ = size_ = 0;
 	}
 
 	namespace detail

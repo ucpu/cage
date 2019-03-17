@@ -12,7 +12,7 @@ namespace cage
 		uint32 getId() const;
 		void bind() const;
 
-		void source(uint32 type, void *data, uint32 length);
+		void source(uint32 type, const char *data, uint32 length);
 		void relink();
 		void validate();
 

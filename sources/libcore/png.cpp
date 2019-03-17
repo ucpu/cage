@@ -59,7 +59,7 @@ namespace cage
 		void pngWriteFunc(png_structp png, png_bytep buf, png_size_t siz)
 		{
 			pngIoCtx *io = (pngIoCtx*)png_get_io_ptr(png);
-			io->buf.resizeGrowSmart(io->off + siz);
+			io->buf.resizeSmart(io->off + siz);
 			detail::memcpy(io->buf.data() + io->off, buf, siz);
 			io->off += siz;
 		}
@@ -128,7 +128,7 @@ namespace cage
 			rows.resize(height);
 			uint32 cols = width * components * bpp;
 			CAGE_ASSERT_RUNTIME(cols == png_get_rowbytes(png, info), cols, png_get_rowbytes(png, info));
-			out.reallocate(height * cols);
+			out.allocate(height * cols);
 			for (uint32 y = 0; y < height; y++)
 				rows[y] = (png_bytep)out.data() + y * cols;
 			png_read_image(png, rows.data());
@@ -197,7 +197,7 @@ namespace cage
 		impl->height = h;
 		impl->channels = c;
 		impl->bytesPerChannel = bpc;
-		impl->mem.reallocate(w * h * c * bpc);
+		impl->mem.allocate(w * h * c * bpc);
 		impl->mem.zero();
 	}
 
@@ -205,7 +205,7 @@ namespace cage
 	{
 		pngBufferImpl *impl = (pngBufferImpl*)this;
 		CAGE_ASSERT_RUNTIME(impl->mem.data(), "png image not initialized");
-		buffer.reallocate((uintPtr)impl->width * impl->height * impl->channels * impl->bytesPerChannel);
+		buffer.allocate((uintPtr)impl->width * impl->height * impl->channels * impl->bytesPerChannel);
 		encodePng(impl->mem, buffer, impl->width, impl->height, impl->channels, impl->bytesPerChannel);
 	}
 
@@ -335,7 +335,7 @@ namespace cage
 		uint32 lineSize = impl->bytesPerChannel * impl->channels * impl->width;
 		uint32 swapsCount = impl->height / 2;
 		memoryBuffer tmp;
-		tmp.reallocate(lineSize);
+		tmp.allocate(lineSize);
 		for (uint32 i = 0; i < swapsCount; i++)
 		{
 			detail::memcpy(tmp.data(), impl->mem.data() + i * lineSize, lineSize);
