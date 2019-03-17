@@ -1,6 +1,8 @@
-#include "utility/assimp.h"
-
 #include <vector>
+
+#include "utility/assimp.h"
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/serialization.h>
 
 namespace
 {
@@ -107,44 +109,44 @@ void processAnimation()
 	CAGE_LOG(severityEnum::Info, logComponentName, string() + "animated bones: " + a.animationBonesCount);
 	CAGE_LOG(severityEnum::Info, logComponentName, string() + "total keys: " + totalKeys);
 
-	assetHeaderStruct h = initializeAssetHeaderStruct();
-	h.originalSize = sizeof(a) + a.animationBonesCount * sizeof(uint16) * 4 + size;
-
-	holder<fileClass> f = newFile(outputFileName, fileMode(false, true));
-	f->write(&h, sizeof(h));
-	f->write(&a, sizeof(a));
+	memoryBuffer buff;
+	serializer ser(buff);
+	ser << a;
 
 	// bone indices
-	f->write(boneIndices.data(), boneIndices.size() * sizeof(uint16));
+	ser.write(boneIndices.data(), boneIndices.size() * sizeof(uint16));
 
 	// position frames counts
 	for (bone &b : bones)
-	{
-		uint16 c = numeric_cast<uint16>(b.posTimes.size());
-		f->write(&c, sizeof(uint16));
-	}
+		ser << numeric_cast<uint16>(b.posTimes.size());
 
 	// rotation frames counts
 	for (bone &b : bones)
-	{
-		uint16 c = numeric_cast<uint16>(b.rotTimes.size());
-		f->write(&c, sizeof(uint16));
-	}
+		ser << numeric_cast<uint16>(b.rotTimes.size());
 
 	// scale frames counts
 	for (bone &b : bones)
-	{
-		uint16 c = numeric_cast<uint16>(b.sclTimes.size());
-		f->write(&c, sizeof(uint16));
-	}
+		ser << numeric_cast<uint16>(b.sclTimes.size());
 
 	for (bone &b : bones)
 	{
-		f->write(b.posTimes.data(), b.posTimes.size() * sizeof(float));
-		f->write(b.posVals.data(), b.posVals.size() * sizeof(vec3));
-		f->write(b.rotTimes.data(), b.rotTimes.size() * sizeof(float));
-		f->write(b.rotVals.data(), b.rotVals.size() * sizeof(quat));
-		f->write(b.sclTimes.data(), b.sclTimes.size() * sizeof(float));
-		f->write(b.sclVals.data(), b.sclVals.size() * sizeof(vec3));
+		ser.write(b.posTimes.data(), b.posTimes.size() * sizeof(float));
+		ser.write(b.posVals.data(), b.posVals.size() * sizeof(vec3));
+		ser.write(b.rotTimes.data(), b.rotTimes.size() * sizeof(float));
+		ser.write(b.rotVals.data(), b.rotVals.size() * sizeof(quat));
+		ser.write(b.sclTimes.data(), b.sclTimes.size() * sizeof(float));
+		ser.write(b.sclVals.data(), b.sclVals.size() * sizeof(vec3));
 	}
+
+	CAGE_LOG(severityEnum::Info, logComponentName, string() + "buffer size (before compression): " + buff.size());
+	memoryBuffer comp = detail::compress(buff);
+	CAGE_LOG(severityEnum::Info, logComponentName, string() + "buffer size (after compression): " + comp.size());
+
+	assetHeaderStruct h = initializeAssetHeaderStruct();
+	h.originalSize = numeric_cast<uint32>(buff.size());
+	h.compressedSize = numeric_cast<uint32>(comp.size());
+	holder<fileClass> f = newFile(outputFileName, fileMode(false, true));
+	f->write(&h, sizeof(h));
+	f->write(comp.data(), comp.size());
+	f->close();
 }

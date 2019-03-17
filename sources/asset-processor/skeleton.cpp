@@ -2,6 +2,8 @@
 #include <map>
 
 #include "utility/assimp.h"
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/serialization.h>
 
 namespace
 {
@@ -73,16 +75,25 @@ void processSkeleton()
 		is.push_back(o);
 	}
 
-	assetHeaderStruct h = initializeAssetHeaderStruct();
-	h.originalSize = sizeof(s) + s.bonesCount * (sizeof(uint16) + sizeof(mat4) + sizeof(mat4));
+	memoryBuffer buff;
+	serializer ser(buff);
+	ser << s;
+	// parent bone indices
+	ser.write(ps.data(), s.bonesCount * sizeof(uint16));
+	// base transformation matrices
+	ser.write(bs.data(), s.bonesCount * sizeof(mat4));
+	// inverted rest matrices
+	ser.write(is.data(), s.bonesCount * sizeof(mat4));
 
+	CAGE_LOG(severityEnum::Info, logComponentName, string() + "buffer size (before compression): " + buff.size());
+	memoryBuffer comp = detail::compress(buff);
+	CAGE_LOG(severityEnum::Info, logComponentName, string() + "buffer size (after compression): " + comp.size());
+
+	assetHeaderStruct h = initializeAssetHeaderStruct();
+	h.originalSize = numeric_cast<uint32>(buff.size());
+	h.compressedSize = numeric_cast<uint32>(comp.size());
 	holder<fileClass> f = newFile(outputFileName, fileMode(false, true));
 	f->write(&h, sizeof(h));
-	f->write(&s, sizeof(s));
-	// parent bone indices
-	f->write(ps.data(), s.bonesCount * sizeof(uint16));
-	// base transformation matrices
-	f->write(bs.data(), s.bonesCount * sizeof(mat4));
-	// inverted rest matrices
-	f->write(is.data(), s.bonesCount * sizeof(mat4));
+	f->write(comp.data(), comp.size());
+	f->close();
 }

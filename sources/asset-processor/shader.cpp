@@ -6,6 +6,8 @@
 #include "processor.h"
 
 #include <cage-core/timer.h>
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/serialization.h>
 #include <cage-client/opengl.h>
 
 namespace
@@ -471,35 +473,36 @@ void processShader()
 	}
 
 	{
+		memoryBuffer buff;
+		serializer ser(buff);
+		ser << numeric_cast<uint32>(codes.size());
+		for (const auto &it : codes)
+		{
+			ser << (uint32)shaderType(it.first);
+			ser << numeric_cast<uint32>(it.second.length());
+			ser.write(it.second.c_str(), it.second.length());
+		}
+
+		CAGE_LOG(severityEnum::Info, logComponentName, string() + "buffer size (before compression): " + buff.size());
+		memoryBuffer comp = detail::compress(buff);
+		CAGE_LOG(severityEnum::Info, logComponentName, string() + "buffer size (after compression): " + comp.size());
+
+		assetHeaderStruct h = initializeAssetHeaderStruct();
+		h.originalSize = numeric_cast<uint32>(buff.size());
+		h.compressedSize = numeric_cast<uint32>(comp.size());
 		holder<fileClass> f = newFile(outputFileName, fileMode(false, true));
-		{
-			assetHeaderStruct h = initializeAssetHeaderStruct();
-			h.originalSize = sizeof(uint32) + numeric_cast<uint32>(codes.size()) * sizeof(uint32) * 2;
-			for (auto it = codes.begin(), et = codes.end(); it != et; it++)
-				h.originalSize += numeric_cast<uint32>(it->second.length());
-			f->write(&h, sizeof(h));
-		}
-		{
-			uint32 len = numeric_cast<uint32>(codes.size());
-			f->write(&len, sizeof(len));
-		}
-		for (std::map <string, std::string>::iterator it = codes.begin(), et = codes.end(); it != et; it++)
-		{
-			uint32 len = shaderType(it->first);
-			f->write(&len, sizeof(len));
-			len = numeric_cast<uint32>(it->second.size());
-			f->write(&len, sizeof(len));
-			f->write(it->second.c_str(), numeric_cast<uint32>(it->second.length()));
-		}
+		f->write(&h, sizeof(h));
+		f->write(comp.data(), comp.size());
+		f->close();
 	}
 
 	if (configShaderPrint)
 	{
-		for (std::map <string, std::string>::iterator it = codes.begin(), et = codes.end(); it != et; it++)
+		for (const auto &it : codes)
 		{
-			string name = pathJoin(configGetString("cage-asset-processor.shader.path", "asset-preview"), pathMakeValid(inputName) + "_" + it->first + ".glsl");
+			string name = pathJoin(configGetString("cage-asset-processor.shader.path", "asset-preview"), pathMakeValid(inputName) + "_" + it.first + ".glsl");
 			holder<fileClass> f = newFile(name, fileMode(false, true, true));
-			f->write(it->second.c_str(), numeric_cast<uint32>(it->second.length()));
+			f->write(it.second.c_str(), it.second.length());
 		}
 	}
 }

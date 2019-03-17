@@ -89,6 +89,11 @@ namespace cage
 
 	void memoryBuffer::resizeSmart(uintPtr size)
 	{
+		if (size <= capacity_)
+		{
+			size_ = size;
+			return;
+		}
 		resize(numeric_cast<uintPtr>(size * 1.5) + 100);
 		size_ = size;
 	}

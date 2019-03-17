@@ -388,6 +388,7 @@ void processMesh()
 	validateFlags(dsm, mat);
 
 	cage::memoryBuffer dataBuffer;
+	dataBuffer.reserve(dsm.vertexSize() * dsm.verticesCount);
 	cage::serializer ser(dataBuffer);
 	cage::serializer dsmPlaceholder = ser.placeholder(sizeof(dsm));
 
