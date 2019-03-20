@@ -208,9 +208,9 @@ namespace
 
 	void decodeAll()
 	{
-		if (inputFile.pattern("", "", ".flac"))
+		if (inputFile.isPattern("", "", ".flac"))
 			decodeFlac();
-		else if (inputFile.pattern("", "", ".wav"))
+		else if (inputFile.isPattern("", "", ".wav"))
 			decodeWav();
 		else
 			decodeVorbis();

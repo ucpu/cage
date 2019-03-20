@@ -48,7 +48,7 @@ namespace
 		aiString texAsName;
 		m->GetTexture(tt, 0, &texAsName, nullptr, nullptr, nullptr, nullptr, nullptr);
 		cage::string tn = texAsName.C_Str();
-		if (tn.pattern("//", "", ""))
+		if (tn.isPattern("//", "", ""))
 			tn = string() + "./" + tn.subString(2, -1);
 		cage::string n = pathJoin(pathExtractPath(inputName), tn);
 		dsm.textureNames[usage] = hashString(n.c_str());

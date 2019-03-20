@@ -888,10 +888,13 @@ namespace cage
 				visualizableTextures.emplace_back(albedoTexture.get(), visualizableTextureModeEnum::Color);
 				visualizableTextures.emplace_back(specialTexture.get(), visualizableTextureModeEnum::Color);
 				visualizableTextures.emplace_back(normalTexture.get(), visualizableTextureModeEnum::Color);
-				visualizableTextures.emplace_back(ambientOcclusionTexture1.get(), visualizableTextureModeEnum::Color);
-				visualizableTextures.emplace_back(bloomTexture1.get(), visualizableTextureModeEnum::Color);
-				visualizableTextures.emplace_back(velocityTexture.get(), visualizableTextureModeEnum::Velocity);
 				visualizableTextures.emplace_back(depthTexture.get(), visualizableTextureModeEnum::Depth2d);
+				if (ambientOcclusionTexture1)
+					visualizableTextures.emplace_back(ambientOcclusionTexture1.get(), visualizableTextureModeEnum::Color);
+				if (bloomTexture1)
+					visualizableTextures.emplace_back(bloomTexture1.get(), visualizableTextureModeEnum::Color);
+				if (velocityTexture)
+					visualizableTextures.emplace_back(velocityTexture.get(), visualizableTextureModeEnum::Velocity);
 
 				{ // prepare all render targets
 					uint32 maxW = windowWidth, maxH = windowHeight;

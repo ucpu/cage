@@ -243,7 +243,7 @@ namespace
 		virtual void write(const char* message)
 		{
 			string m = message;
-			if (m.pattern("", "", "\n"))
+			if (m.isPattern("", "", "\n"))
 				m = m.subString(0, m.length() - 1);
 			CAGE_LOG(severity, "assimp", m);
 		}

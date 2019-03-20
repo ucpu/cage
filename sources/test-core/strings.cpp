@@ -92,8 +92,8 @@ namespace
 		}
 		{
 			CAGE_TESTCASE("ordered");
-			CAGE_TEST(string("ahoj").order() == "ahjo");
-			CAGE_TEST(string("nazdar").order() == "adnrz");
+			CAGE_TEST(string("ahoj").sortAndUnique() == "ahjo");
+			CAGE_TEST(string("nazdar").sortAndUnique() == "adnrz");
 		}
 		{
 			CAGE_TESTCASE("tolower, toupper");
@@ -276,28 +276,28 @@ namespace
 			CAGE_TEST(string("   ori  ").trim(false, true) == "   ori");
 			CAGE_TEST(string("   ori  ").trim(true, false) == "ori  ");
 			CAGE_TEST(string("   ori  ").trim(false, false) == "   ori  ");
-			CAGE_TEST(string("   ori  ").trim(true, true, string(" i").order()) == "or");
+			CAGE_TEST(string("   ori  ").trim(true, true, string(" i").sortAndUnique()) == "or");
 			CAGE_TEST(string("magma").trim(true, true, string("am")) == "g");
 			CAGE_TEST_ASSERTED(string("magma").trim(true, true, "za"));
 			CAGE_TEST(string("magma").trim(true, true, "") == "magma");
 		}
 		{
 			CAGE_TESTCASE("contains");
-			CAGE_TEST(string("opice").order().contains('c'));
-			CAGE_TEST(!string("opice").order().contains('a'));
+			CAGE_TEST(string("opice").sortAndUnique().contains('c'));
+			CAGE_TEST(!string("opice").sortAndUnique().contains('a'));
 			CAGE_TEST_ASSERTED(string("za").contains('a'));
 		}
 		{
 			CAGE_TESTCASE("pattern");
-			CAGE_TEST(string("ratata://omega.alt.com/blah/keee/jojo.armagedon").pattern("", "://", ""));
-			CAGE_TEST(string("ratata://omega.alt.com/blah/keee/jojo.armagedon").pattern("rat", "alt", "don"));
-			CAGE_TEST(string("ratata://omega.alt.com/blah/keee/jojo.armagedon").pattern("ratata", "://", "armagedon"));
-			CAGE_TEST(string("ratata://omega.alt.com/blah/keee/jojo.armagedon").pattern("ratata", "jojo.", "armagedon"));
-			CAGE_TEST(!string("ratata://omega.alt.com/blah/keee/jojo.armagedon").pattern("", ":///", ""));
-			CAGE_TEST(!string("ratata://omega.alt.com/blah/keee/jojo.armagedon").pattern("http", "", ""));
-			CAGE_TEST(!string("ratata://omega.alt.com/blah/keee/jojo.armagedon").pattern("", "", ".cz"));
-			CAGE_TEST(!string("ratata://omega.alt.com/blah/keee/jojo.armagedon").pattern("rat", "tata", ""));
-			CAGE_TEST(!string("ratata://omega.alt.com/blah/keee/jojo.armagedon").pattern("", "armag", "gedon"));
+			CAGE_TEST(string("ratata://omega.alt.com/blah/keee/jojo.armagedon").isPattern("", "://", ""));
+			CAGE_TEST(string("ratata://omega.alt.com/blah/keee/jojo.armagedon").isPattern("rat", "alt", "don"));
+			CAGE_TEST(string("ratata://omega.alt.com/blah/keee/jojo.armagedon").isPattern("ratata", "://", "armagedon"));
+			CAGE_TEST(string("ratata://omega.alt.com/blah/keee/jojo.armagedon").isPattern("ratata", "jojo.", "armagedon"));
+			CAGE_TEST(!string("ratata://omega.alt.com/blah/keee/jojo.armagedon").isPattern("", ":///", ""));
+			CAGE_TEST(!string("ratata://omega.alt.com/blah/keee/jojo.armagedon").isPattern("http", "", ""));
+			CAGE_TEST(!string("ratata://omega.alt.com/blah/keee/jojo.armagedon").isPattern("", "", ".cz"));
+			CAGE_TEST(!string("ratata://omega.alt.com/blah/keee/jojo.armagedon").isPattern("rat", "tata", ""));
+			CAGE_TEST(!string("ratata://omega.alt.com/blah/keee/jojo.armagedon").isPattern("", "armag", "gedon"));
 		}
 		{
 			CAGE_TESTCASE("url encode and decode");
@@ -390,7 +390,7 @@ namespace
 		CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
 		a.reverse();
 		CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-		a.order();
+		a.sortAndUnique();
 		CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
 		a.toLower();
 		CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");

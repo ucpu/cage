@@ -124,7 +124,7 @@ namespace cage
 			{
 				std::vector<char> data2(data, data + current);
 				uint32 current2 = current;
-				stringOrder(data2.data(), current2);
+				stringSortAndUnique(data2.data(), current2);
 				if (current2 != current)
 					return false;
 				return detail::memcmp(data, data2.data(), current) == 0;
@@ -207,7 +207,7 @@ namespace cage
 			return -1;
 		}
 
-		void stringOrder(char *data, uint32 &current)
+		void stringSortAndUnique(char *data, uint32 &current)
 		{
 			std::sort(data, data + current);
 			auto it = std::unique(data, data + current);

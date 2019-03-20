@@ -618,7 +618,7 @@ namespace cage
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
 			string p = getExecutableFullPath();
-			CAGE_ASSERT_RUNTIME(p.pattern("", "", ".exe"));
+			CAGE_ASSERT_RUNTIME(p.isPattern("", "", ".exe"));
 			return p.subString(0, p.length() - 4);
 #else
 			return getExecutableFullPath();

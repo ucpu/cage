@@ -7,7 +7,7 @@ namespace cage
 	{
 	public:
 		void empty(uint32 w, uint32 h, uint32 c = 4, uint32 bpc = 1);
-		void encodeBuffer(memoryBuffer &buffer);
+		memoryBuffer encodeBuffer();
 		void encodeFile(const string &filename);
 
 		void decodeBuffer(const memoryBuffer &buffer, uint32 channels = -1, uint32 bpc = 1);

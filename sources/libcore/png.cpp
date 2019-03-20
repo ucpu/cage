@@ -201,20 +201,20 @@ namespace cage
 		impl->mem.zero();
 	}
 
-	void pngImageClass::encodeBuffer(memoryBuffer &buffer)
+	memoryBuffer pngImageClass::encodeBuffer()
 	{
 		pngBufferImpl *impl = (pngBufferImpl*)this;
 		CAGE_ASSERT_RUNTIME(impl->mem.data(), "png image not initialized");
-		buffer.allocate((uintPtr)impl->width * impl->height * impl->channels * impl->bytesPerChannel);
+		memoryBuffer buffer((uintPtr)impl->width * impl->height * impl->channels * impl->bytesPerChannel);
 		encodePng(impl->mem, buffer, impl->width, impl->height, impl->channels, impl->bytesPerChannel);
+		return buffer;
 	}
 
 	void pngImageClass::encodeFile(const string &filename)
 	{
-		memoryBuffer buffer;
-		encodeBuffer(buffer);
+		memoryBuffer buffer = encodeBuffer();
 		holder<fileClass> f = newFile(filename, fileMode(false, true));
-		f->write(buffer.data(), buffer.size());
+		f->writeBuffer(buffer);
 	}
 
 	void pngImageClass::decodeMemory(const void *buffer, uintPtr size, uint32 channels, uint32 bpc)

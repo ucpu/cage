@@ -352,19 +352,19 @@ namespace
 
 	bool isNameDatabank(const string &name)
 	{
-		return name.pattern("", "", ".asset");
+		return name.isPattern("", "", ".asset");
 	}
 
 	bool isNameIgnored(const string &name)
 	{
 		for (stringSet::iterator it = configIgnoreExtensions.begin(), et = configIgnoreExtensions.end(); it != et; it++)
 		{
-			if (name.pattern("", "", *it))
+			if (name.isPattern("", "", *it))
 				return true;
 		}
 		for (stringSet::iterator it = configIgnorePaths.begin(), et = configIgnorePaths.end(); it != et; it++)
 		{
-			if (name.pattern(*it, "", ""))
+			if (name.isPattern(*it, "", ""))
 				return true;
 		}
 		return false;
@@ -573,7 +573,7 @@ namespace
 				loadSchemesDirectory(name);
 				continue;
 			}
-			if (!name.pattern("", "", ".scheme"))
+			if (!name.isPattern("", "", ".scheme"))
 				continue;
 			schemeStruct s;
 			s.name = name.subString(0, name.length() - 7);

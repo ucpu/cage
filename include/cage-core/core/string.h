@@ -8,7 +8,7 @@ namespace cage
 		CAGE_API void stringTrim(char *data, uint32 &current, const char *what, uint32 whatLen, bool left, bool right);
 		CAGE_API void stringSplit(char *data, uint32 &current, char *ret, uint32 &retLen, const char *what, uint32 whatLen);
 		CAGE_API uint32 stringFind(const char *data, uint32 current, const char *what, uint32 whatLen, uint32 offset);
-		CAGE_API void stringOrder(char *data, uint32 &current);
+		CAGE_API void stringSortAndUnique(char *data, uint32 &current);
 		CAGE_API bool stringContains(const char *data, uint32 current, char what);
 	}
 
@@ -293,20 +293,20 @@ namespace cage
 				return current;
 			}
 
-			stringBase order() const // best used with contains
+			stringBase sortAndUnique() const // best used with contains
 			{
 				stringBase ret(*this);
-				privat::stringOrder(ret.data, ret.current);
+				privat::stringSortAndUnique(ret.data, ret.current);
 				ret.data[ret.current] = 0;
 				return ret;
 			}
 
-			bool contains(char other) const // this has to be ordered
+			bool contains(char other) const // this has to be sorted and unique
 			{
 				return privat::stringContains(data, current, other);
 			}
 
-			bool pattern(const stringBase &prefix, const stringBase &infix, const stringBase &suffix) const
+			bool isPattern(const stringBase &prefix, const stringBase &infix, const stringBase &suffix) const
 			{
 				if (current < prefix.current + infix.current + suffix.current)
 					return false;
