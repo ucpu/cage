@@ -24,6 +24,16 @@ namespace cage
 	inline   bool perpendicular(const plane &a, const triangle &b) { return perpendicular(b, a); }
 	CAGE_API bool perpendicular(const plane &a, const plane &b);
 
+	CAGE_API rads angle(const line &a, const line &b);
+	CAGE_API rads angle(const line &a, const triangle &b);
+	CAGE_API rads angle(const line &a, const plane &b);
+	inline   rads angle(const triangle &a, const line &b) { return angle(b, a); };
+	CAGE_API rads angle(const triangle &a, const triangle &b);
+	CAGE_API rads angle(const triangle &a, const plane &b);
+	inline   rads angle(const plane &a, const line &b) { return angle(b, a); };
+	inline   rads angle(const plane &a, const triangle &b) { return angle(b, a); };
+	CAGE_API rads angle(const plane &a, const plane &b);
+
 	//CAGE_API real distance(const vec3 &a, const vec3 &b);
 	CAGE_API real distance(const vec3 &a, const line &b);
 	CAGE_API real distance(const vec3 &a, const triangle &b);

@@ -235,6 +235,19 @@ namespace
 			angle = angle / scalar;
 			scalar = angle / angle;
 		}
+
+		{
+			CAGE_TESTCASE("atan2");
+			for (uint32 i = 0; i < 10; i++)
+			{
+				rads a = randomAngle().normalize();
+				real d = randomRange(0.1, 10.0);
+				real x = cos(a) * d;
+				real y = sin(a) * d;
+				rads r = aTan2(x, y).normalize();
+				test(a, r);
+			}
+		}
 	}
 
 	void testMathVec2()

@@ -119,23 +119,6 @@ string properties(const string &name)
 	}
 }
 
-vec3 toVec3(const string &s)
-{
-	try
-	{
-		string tmp = s;
-		real a = tmp.split(",").trim().toFloat();
-		real b = tmp.split(",").trim().toFloat();
-		real c = tmp.trim().toFloat();
-		return vec3(a, b, c);
-	}
-	catch (...)
-	{
-		CAGE_LOG(severityEnum::Note, "exception", string() + "failed to parse string '" + s + "' as 3-component vector (comma separated)");
-		throw;
-	}
-}
-
 int main(int argc, const char *args[])
 {
 	try

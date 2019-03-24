@@ -205,17 +205,20 @@ namespace cage
 				fastBox bestBoxRight;
 				for (uint32 axis = 0; axis < 3; axis++)
 				{
+					if (node.box.high.v4[axis] - node.box.low.v4[axis] < 1e-7)
+						continue; // the box is flat (along this axis)
 					for (fastBox &b : leftBinBoxes)
 						b = fastBox();
 					for (uint32 &c : leftBinCounts)
 						c = 0;
-					real binSizeInv = 1.0 / ((node.box.high.v4[axis] - node.box.low.v4[axis]) / binsCount);
+					real binSizeInv = binsCount / (node.box.high.v4[axis] - node.box.low.v4[axis]);
 					real planeOffset = node.box.low.v4[axis];
 					for (sint32 i = node.a(), et = node.a() + node.b(); i != et; i++)
 					{
 						itemBase *item = indices[i];
 						uint32 binIndex = numeric_cast<uint32>((item->center[axis] - planeOffset) * binSizeInv);
-						CAGE_ASSERT_RUNTIME(binIndex < binsCount);
+						CAGE_ASSERT_RUNTIME(binIndex <= binsCount);
+						binIndex = min(binIndex, binsCount - 1);
 						leftBinBoxes[binIndex] += item->box;
 						leftBinCounts[binIndex]++;
 					}
@@ -254,7 +257,7 @@ namespace cage
 				CAGE_ASSERT_RUNTIME(bestSplit + 1 < binsCount); // splits count is one less than bins count
 				CAGE_ASSERT_RUNTIME(bestItemsCount > 0 && bestItemsCount < numeric_cast<uint32>(node.b()));
 				{
-					real binSizeInv = 1.0 / ((node.box.high.v4[bestAxis] - node.box.low.v4[bestAxis]) / binsCount);
+					real binSizeInv = binsCount / (node.box.high.v4[bestAxis] - node.box.low.v4[bestAxis]);
 					real planeOffset = node.box.low.v4[bestAxis];
 					std::partition(indices.begin() + node.a(), indices.begin() + (node.a() + node.b()), [&](itemBase *item) {
 						uint32 binIndex = numeric_cast<uint32>((item->center[bestAxis] - planeOffset) * binSizeInv);

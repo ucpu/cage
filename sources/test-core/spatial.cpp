@@ -157,7 +157,29 @@ void testSpatial()
 	}
 
 	{
-		CAGE_TESTCASE("test spheres");
+		CAGE_TESTCASE("points");
+		holder<spatialDataClass> data = newSpatialData(spatialDataCreateConfig());
+		for (uint32 i = 1; i < 100; i++)
+			data->update(i, aabb(generateRandomPoint()));
+		data->rebuild();
+		holder<spatialQueryClass> query = newSpatialQuery(data.get());
+		query->intersection(sphere(vec3(50, 0, 0), 100));
+	}
+
+	{
+		CAGE_TESTCASE("multiple points on same location");
+		static const vec3 pts[3] = { vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 1) };
+		holder<spatialDataClass> data = newSpatialData(spatialDataCreateConfig());
+		for (uint32 i = 1; i < 100; i++)
+			data->update(i, aabb(pts[i % 3]));
+		data->rebuild();
+		holder<spatialQueryClass> query = newSpatialQuery(data.get());
+		query->intersection(sphere(vec3(0, 0, 0), 5));
+		CAGE_TEST(query->resultCount() == 99);
+	}
+
+	{
+		CAGE_TESTCASE("spheres");
 		holder<spatialDataClass> data = newSpatialData(spatialDataCreateConfig());
 		data->update(1, sphere(vec3(), 100));
 		data->rebuild();

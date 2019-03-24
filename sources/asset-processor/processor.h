@@ -28,7 +28,6 @@ extern string inputIdentifier;
 extern const char *logComponentName;
 
 void writeLine(const string &other);
-vec3 toVec3(const string &s);
 string properties(const string &name);
 
 assetHeaderStruct initializeAssetHeaderStruct();

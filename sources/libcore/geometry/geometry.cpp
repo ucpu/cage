@@ -122,6 +122,9 @@ namespace cage
 
 
 
+
+
+
 	bool parallel(const vec3 &dir1, const vec3 &dir2)
 	{
 		return abs(dot(dir1, dir2)) >= 1 - real::epsilon;
@@ -191,6 +194,52 @@ namespace cage
 	{
 		return perpendicular(a.normal, b.normal);
 	}
+
+
+
+
+
+
+	namespace
+	{
+		rads angle(const vec3 &a, const vec3 &b)
+		{
+			CAGE_ASSERT_RUNTIME(abs(a.squaredLength() - 1) < 1e-4);
+			CAGE_ASSERT_RUNTIME(abs(b.squaredLength() - 1) < 1e-4);
+			return aCos(dot(a, b));
+		}
+	}
+
+	rads angle(const line &a, const line &b)
+	{
+		return angle(a.direction, b.direction);
+	}
+
+	rads angle(const line &a, const triangle &b)
+	{
+		return rads(degs(90)) - angle(a.direction, b.normal());
+	}
+
+	rads angle(const line &a, const plane &b)
+	{
+		return rads(degs(90)) - angle(a.direction, b.normal);
+	}
+
+	rads angle(const triangle &a, const triangle &b)
+	{
+		return angle(a.normal(), b.normal());
+	}
+
+	rads angle(const triangle &a, const plane &b)
+	{
+		return angle(a.normal(), b.normal);
+	}
+
+	rads angle(const plane &a, const plane &b)
+	{
+		return angle(a.normal, b.normal);
+	}
+
 
 
 
@@ -887,6 +936,8 @@ namespace cage
 		}
 		return true;
 	}
+
+
 
 
 

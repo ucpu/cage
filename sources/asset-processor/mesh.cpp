@@ -90,7 +90,7 @@ namespace
 		ini->load(pathJoin(inputDirectory, path));
 
 		mat.albedoBase = vec4(
-			toVec3(ini->getString("base", "albedo", "0, 0, 0")),
+			vec3::parse(ini->getString("base", "albedo", "0, 0, 0")),
 			ini->getString("base", "opacity", "1").toFloat()
 		);
 		if (mat.albedoBase[3] <= 1e-7)
@@ -105,7 +105,7 @@ namespace
 			ini->getString("base", "mask", "0").toFloat()
 		);
 
-		mat.albedoMult = vec4(toVec3(ini->getString("mult", "albedo", "1, 1, 1")), 1);
+		mat.albedoMult = vec4(vec3::parse(ini->getString("mult", "albedo", "1, 1, 1")), 1);
 
 		mat.specialMult = vec4(
 			ini->getString("mult", "roughness", "1").toFloat(),

@@ -32,7 +32,8 @@ namespace cage
 				static holder<mutexClass> mut = newMutex();
 				scopeLock<mutexClass> lock(mut);
 
-				CAGE_LOG(severityEnum::Info, "program", string() + "launching program '" + cmd + "' in directory '" + workingDir + "'");
+				CAGE_LOG(severityEnum::Info, "program", string() + "launching program '" + cmd + "'");
+				CAGE_LOG_CONTINUE(severityEnum::Note, "program", string() + "working directory '" + workingDir + "'");
 
 				SECURITY_ATTRIBUTES saAttr;
 				detail::memset(&saAttr, 0, sizeof(SECURITY_ATTRIBUTES));
@@ -172,7 +173,8 @@ namespace cage
 				static holder<mutexClass> mut = newMutex();
 				scopeLock<mutexClass> lock(mut);
 
-				CAGE_LOG(severityEnum::Info, "program", string() + "launching program '" + cmd + "' in directory '" + workingDir + "'");
+				CAGE_LOG(severityEnum::Info, "program", string() + "launching program '" + cmd + "'");
+				CAGE_LOG_CONTINUE(severityEnum::Note, "program", string() + "working directory '" + workingDir + "'");
 
 				if (pipe(aStdinPipe) < 0)
 					CAGE_THROW_ERROR(exception, "failed to open pipe");

@@ -68,7 +68,33 @@ void testGeometry()
 
 		{
 			CAGE_TESTCASE("distances");
-			// todo
+			line a = makeSegment(vec3(0, -1, 0), vec3(0, 1, 0));
+			line b = makeSegment(vec3(1, -2, 0), vec3(1, 2, 0));
+			line c = makeSegment(vec3(0, 0, 0), vec3(0, 0, 1));
+			line d = makeSegment(vec3(3, -1, 0), vec3(3, 1, 0));
+			test(distance(a, a), 0);
+			test(distance(a, b), 1);
+			test(distance(a, c), 0);
+			test(distance(b, c), 1);
+			test(distance(a, d), 3);
+		}
+
+		{
+			CAGE_TESTCASE("angles");
+			line a = makeSegment(vec3(0, -1, 1), vec3(0, 1, 1));
+			line b = makeSegment(vec3(-1, 0, 2), vec3(1, 0, 2));
+			line c = makeSegment(vec3(0, 0, 0), vec3(1, 1, 1));
+			line d = makeSegment(vec3(3, -1, 0), vec3(3, 1, 0));
+			test(angle(a, a), degs(0));
+			test(angle(a, b), degs(90));
+			test(angle(a, c), aTan2(1, sqrt(2)));
+			CAGE_TEST(!perpendicular(a, a));
+			CAGE_TEST(perpendicular(a, b));
+			CAGE_TEST(!perpendicular(a, c));
+			CAGE_TEST(parallel(a, a));
+			CAGE_TEST(!parallel(a, b));
+			CAGE_TEST(!parallel(a, c));
+			CAGE_TEST(parallel(a, d));
 		}
 
 		{
