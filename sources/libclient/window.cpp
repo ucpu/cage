@@ -555,32 +555,85 @@ namespace cage
 		return !!glfwGetWindowMonitor(impl->window);
 	}
 
-	void windowClass::modeSetFullscreen(const pointStruct &resolution, uint32 frequency, const string &deviceId)
+	bool windowClass::isMaximized() const
 	{
 		windowImpl *impl = (windowImpl*)this;
+		return !!glfwGetWindowAttrib(impl->window, GLFW_MAXIMIZED);
+	}
+
+	bool windowClass::isWindowed() const
+	{
+		return !isHidden() && !isMinimized() && !isMaximized() && !isFullscreen();
+	}
+
+	bool windowClass::isMinimized() const
+	{
+		windowImpl *impl = (windowImpl*)this;
+		return !!glfwGetWindowAttrib(impl->window, GLFW_ICONIFIED);
+	}
+
+	bool windowClass::isHidden() const
+	{
+		windowImpl *impl = (windowImpl*)this;
+		return !glfwGetWindowAttrib(impl->window, GLFW_VISIBLE);
+	}
+
+	bool windowClass::isVisible() const
+	{
+		return !isHidden() && !isMinimized();
+	}
+
+	namespace
+	{
+		void normalizeWindow(windowImpl *impl, windowFlags flags)
+		{
+			if (impl->isFullscreen())
+				glfwSetWindowMonitor(impl->window, nullptr, 100, 100, 800, 600, 0);
+			if (impl->isHidden())
+				glfwShowWindow(impl->window);
+			if (impl->isMinimized() || impl->isMaximized())
+				glfwRestoreWindow(impl->window);
+			glfwSetWindowAttrib(impl->window, GLFW_DECORATED, (flags & windowFlags::Border) == windowFlags::Border);
+			glfwSetWindowAttrib(impl->window, GLFW_RESIZABLE, (flags & windowFlags::Resizeable) == windowFlags::Resizeable);
+		}
+	}
+
+	void windowClass::setFullscreen(const pointStruct &resolution, uint32 frequency, const string &deviceId)
+	{
+		windowImpl *impl = (windowImpl*)this;
+		normalizeWindow(impl, windowFlags::None);
 		GLFWmonitor *m = getMonitorById(deviceId);
 		const GLFWvidmode *v = glfwGetVideoMode(m);
 		glfwSetWindowMonitor(impl->window, m, 0, 0,
 			resolution.x == 0 ? v->width : resolution.x,
 			resolution.y == 0 ? v->height : resolution.y,
 			frequency == 0 ? glfwGetVideoMode(m)->refreshRate : frequency);
-		glfwShowWindow(impl->window);
 	}
 
-	void windowClass::modeSetWindowed(windowFlags flags)
+	void windowClass::setMaximized()
 	{
 		windowImpl *impl = (windowImpl*)this;
-		glfwSetWindowMonitor(impl->window, nullptr, 100, 100, 800, 600, 0);
-		glfwSetWindowAttrib(impl->window, GLFW_DECORATED, (flags & windowFlags::Border) == windowFlags::Border);
-		glfwSetWindowAttrib(impl->window, GLFW_RESIZABLE, (flags & windowFlags::Resizeable) == windowFlags::Resizeable);
-		glfwShowWindow(impl->window);
+		normalizeWindow(impl, windowFlags::Border | windowFlags::Resizeable);
+		glfwMaximizeWindow(impl->window);
 	}
 
-	void windowClass::modeSetHidden()
+	void windowClass::setWindowed(windowFlags flags)
 	{
 		windowImpl *impl = (windowImpl*)this;
-		if (glfwGetWindowMonitor(impl->window))
-			modeSetWindowed();
+		normalizeWindow(impl, flags);
+	}
+
+	void windowClass::setMinimized()
+	{
+		windowImpl *impl = (windowImpl*)this;
+		normalizeWindow(impl, windowFlags::Resizeable);
+		glfwIconifyWindow(impl->window);
+	}
+
+	void windowClass::setHidden()
+	{
+		windowImpl *impl = (windowImpl*)this;
+		normalizeWindow(impl, windowFlags::None);
 		glfwHideWindow(impl->window);
 	}
 
@@ -738,8 +791,16 @@ namespace cage
 	{
 		windowImpl *impl = (windowImpl*)this;
 		int w = 0, h = 0;
-		glfwGetWindowSize(impl->window, &w, &h);
+		glfwGetFramebufferSize(impl->window, &w, &h);
 		return pointStruct(w, h);
+	}
+
+	float windowClass::contentScaling() const
+	{
+		windowImpl *impl = (windowImpl*)this;
+		float y = 1;
+		glfwGetWindowContentScale(impl->window, nullptr, &y);
+		return y;
 	}
 
 	pointStruct windowClass::windowedSize() const

@@ -244,7 +244,7 @@ namespace cage
 					try
 					{
 						detail::overrideBreakpoint ob;
-						window()->modeSetFullscreen(pointStruct(0, 0));
+						window()->setFullscreen(pointStruct(0, 0));
 					}
 					catch (...)
 					{
@@ -253,8 +253,7 @@ namespace cage
 				}
 				else
 				{
-					window()->modeSetWindowed((windowFlags)(windowFlags::Resizeable | windowFlags::Border));
-					window()->windowedSize(pointStruct(800, 600));
+					window()->setWindowed(windowFlags::Resizeable | windowFlags::Border);
 				}
 			}
 

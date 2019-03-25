@@ -24,9 +24,17 @@ namespace cage
 
 		bool isFocused() const;
 		bool isFullscreen() const;
-		void modeSetFullscreen(const pointStruct &resolution, uint32 frequency = 0, const string &deviceId = "");
-		void modeSetWindowed(windowFlags flags = windowFlags::Border);
-		void modeSetHidden();
+		bool isMaximized() const;
+		bool isWindowed() const; // not hidden, not minimized, not maximized and not fullscreen
+		bool isMinimized() const;
+		bool isHidden() const;
+		bool isVisible() const; // not hidden and not minimized
+
+		void setFullscreen(const pointStruct &resolution, uint32 frequency = 0, const string &deviceId = "");
+		void setMaximized();
+		void setWindowed(windowFlags flags = windowFlags::Border | windowFlags::Resizeable);
+		void setMinimized();
+		void setHidden();
 
 		bool mouseVisible() const;
 		void mouseVisible(bool value);
@@ -40,10 +48,10 @@ namespace cage
 		bool keyboardScanCode(uint32 code) const;
 
 		pointStruct resolution() const;
+		float contentScaling() const;
 
 		pointStruct windowedSize() const;
 		void windowedSize(const pointStruct &);
-
 		pointStruct windowedPosition() const;
 		void windowedPosition(const pointStruct &);
 
