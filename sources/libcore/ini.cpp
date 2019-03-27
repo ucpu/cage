@@ -167,7 +167,7 @@ namespace cage
 	void iniClass::load(const string &filename)
 	{
 		iniImpl *impl = (iniImpl*)this;
-		holder<fileClass> file = newFile(filename, fileMode(true, false, true));
+		holder<fileClass> file = newFile(filename, fileMode(true, false));
 		clear();
 		try
 		{

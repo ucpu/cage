@@ -23,6 +23,7 @@ namespace cage
 	CAGE_API string pathToAbs(const string &path);
 	CAGE_API bool pathIsAbs(const string &path);
 	CAGE_API void pathCreateDirectories(const string &path);
+	CAGE_API void pathCreateArchive(const string &path, const string &type = "");
 	CAGE_API bool pathExists(const string &path);
 	CAGE_API bool pathIsDirectory(const string &path);
 	CAGE_API void pathMove(const string &from, const string &to);

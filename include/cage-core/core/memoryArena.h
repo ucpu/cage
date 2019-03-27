@@ -122,7 +122,8 @@ namespace cage
 		{
 			delegate<void(void*)> d;
 			d.bind<memoryArena, &memoryArena::destroy<T>>(this);
-			return holder<T>(createObject<T>(templates::forward<Ts>(vs)...), d);
+			T *p = createObject<T>(templates::forward<Ts>(vs)...);
+			return holder<T>(p, p, d);
 		};
 
 		template<class T, class I, class... Ts>

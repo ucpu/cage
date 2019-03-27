@@ -27,6 +27,7 @@ void testSerialization();
 void testConcurrent();
 void testConcurrentQueue();
 void testFiles();
+void testArchives();
 void testHashTable();
 void testRandom();
 void testIni();
@@ -77,6 +78,7 @@ int main()
 	testConcurrent();
 	testConcurrentQueue();
 	testFiles();
+	testArchives();
 	testHashTable();
 	testRandom();
 	testIni();

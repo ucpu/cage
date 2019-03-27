@@ -1,8 +1,9 @@
 #include <cstdlib>
-#include <map>
+#include <set>
 
 #include "main.h"
 #include <cage-core/filesystem.h>
+#include <cage-core/memoryBuffer.h>
 
 #define FILE_BLOCKS (10)
 #define BLOCK_SIZE (8*1024*1024)
@@ -18,16 +19,16 @@ void testFiles()
 		CAGE_TEST(!fs->valid());
 	}
 
-	holder<char> data = holder<char>((char*)malloc(BLOCK_SIZE), delegate<void(void*)>().bind<&free>());
+	memoryBuffer data(BLOCK_SIZE);
 	for (uint32 i = 0; i < BLOCK_SIZE; i++)
-		(&*data)[i] = (char)(i % 26 + 'A');
+		data.data()[i] = (char)(i % 26 + 'A');
 
 	{
 		CAGE_TESTCASE("write to file");
 		holder<fileClass> f = newFile("testdir/files/1", fileMode(false, true));
 		CAGE_TEST(f);
 		for (uint32 i = 0; i < FILE_BLOCKS; i++)
-			f->write(data.get(), BLOCK_SIZE);
+			f->write(data.data(), BLOCK_SIZE);
 	}
 
 	{
@@ -35,11 +36,11 @@ void testFiles()
 		holder<fileClass> f = newFile("testdir/files/1", fileMode(true, false));
 		CAGE_TEST(f);
 		CAGE_TEST(f->size() == (uint64)FILE_BLOCKS * (uint64)BLOCK_SIZE);
-		holder <char> tmp = holder<char>((char*)malloc(BLOCK_SIZE), delegate<void(void*)>().bind<&free>());
+		memoryBuffer tmp(BLOCK_SIZE);
 		for (uint32 i = 0; i < FILE_BLOCKS; i++)
 		{
-			f->read(&*tmp, BLOCK_SIZE);
-			CAGE_TEST(detail::memcmp(&*tmp, &*data, BLOCK_SIZE) == 0);
+			f->read(tmp.data(), BLOCK_SIZE);
+			CAGE_TEST(detail::memcmp(tmp.data(), data.data(), BLOCK_SIZE) == 0);
 		}
 	}
 
@@ -56,15 +57,29 @@ void testFiles()
 		CAGE_TESTCASE("list directory");
 		holder<directoryListClass> fs = newDirectoryList("testdir/files");
 		CAGE_TEST(fs);
-		std::map<string, bool> mp;
+		std::set<string> mp;
 		while (fs->valid())
 		{
-			mp[fs->name()] = true;
+			mp.insert(fs->name());
 			fs->next();
 		}
 		CAGE_TEST(mp.size() == 32);
 		for (uint32 i = 1; i <= 32; i++)
-			CAGE_TEST(mp[i] == true);
+			CAGE_TEST(mp.count(string(i)));
+	}
+
+	{
+		CAGE_TESTCASE("list directory - test directories");
+		holder<directoryListClass> fs = newDirectoryList("testdir");
+		CAGE_TEST(fs);
+		bool found = false;
+		while (fs->valid())
+		{
+			if (fs->name() == "files")
+				found = fs->isDirectory();
+			fs->next();
+		}
+		CAGE_TEST(found);
 	}
 
 	{
@@ -117,7 +132,7 @@ void testFiles()
 	{
 		CAGE_TESTCASE("lines");
 
-		string bs = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
+		const string bs = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
 
 		{
 			holder<fileClass> f = newFile("testdir/files/lines", fileMode(false, true, true));

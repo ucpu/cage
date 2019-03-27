@@ -128,7 +128,7 @@ void testSceneEntities()
 		for (uint32 i = 0; i < totalComponents; i++)
 			manager->defineComponent(vec3(), true);
 
-		typedef std::map<uint32, std::set<uint32> > referenceType;
+		typedef std::map<uint32, std::set<uint32>> referenceType;
 		referenceType reference;
 		uint32 entName = 1;
 
@@ -280,7 +280,7 @@ void testSceneEntities()
 			exists[n] = true;
 		}
 
-		holder <timerClass> tmr = newTimer();
+		holder<timerClass> tmr = newTimer();
 
 		for (uint32 cycle = 0; cycle < totalCycles; cycle++)
 		{

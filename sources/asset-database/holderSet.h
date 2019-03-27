@@ -19,7 +19,7 @@ struct holderSet
 	{
 		T tmp;
 		tmp.name = name;
-		holder<T> tmh(&tmp, delegate<void(void*)>());
+		holder<T> tmh(&tmp, nullptr, delegate<void(void*)>());
 		return const_cast<holderSet*>(this)->data.find(tmh);
 	}
 

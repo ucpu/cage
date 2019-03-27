@@ -54,37 +54,44 @@ namespace cage
 	template<class T>
 	struct holder
 	{
+		holder(const holder &) = delete;
+		holder &operator = (const holder &) = delete;
+
 		// constructor
-		holder() : data(nullptr) {}
-		explicit holder(T *value, delegate<void(void*)> deleter) : deleter(deleter), data(value) {}
+		holder() : ptr(nullptr), data(nullptr) {}
+		explicit holder(T *data, void *ptr, delegate<void(void*)> deleter) : deleter(deleter), ptr(ptr), data(data) {}
 
 		// destructor
 		~holder()
 		{
 			if (deleter)
-				deleter(data);
+				deleter(ptr);
 		}
 
 		// move constructor
 		holder(holder &&other)
 		{
-			data = other.data;
 			deleter = other.deleter;
-			other.data = nullptr;
+			ptr = other.ptr;
+			data = other.data;
 			other.deleter.clear();
+			other.ptr = nullptr;
+			other.data = nullptr;
 		}
 
 		// move assignment operator
 		holder &operator = (holder &&other)
 		{
-			if (data == other.data)
+			if (ptr == other.ptr)
 				return *this;
 			if (deleter)
-				deleter(data);
-			data = other.data;
+				deleter(ptr);
 			deleter = other.deleter;
-			other.data = nullptr;
+			ptr = other.ptr;
+			data = other.data;
 			other.deleter.clear();
+			other.ptr = nullptr;
+			other.data = nullptr;
 			return *this;
 		}
 
@@ -135,8 +142,9 @@ namespace cage
 		void clear()
 		{
 			if (deleter)
-				deleter(data);
+				deleter(ptr);
 			deleter.clear();
+			ptr = nullptr;
 			data = nullptr;
 		}
 
@@ -146,11 +154,12 @@ namespace cage
 		{
 			if (*this)
 			{
-				holder<M> tmp(privat::holderCaster<M, T>()(data), deleter);
+				holder<M> tmp(privat::holderCaster<M, T>()(data), ptr, deleter);
 				if (tmp)
 				{
-					data = nullptr;
 					deleter.clear();
+					ptr = nullptr;
+					data = nullptr;
 					return tmp;
 				}
 			}
@@ -159,7 +168,8 @@ namespace cage
 
 	private:
 		delegate<void(void *)> deleter;
-		T *data;
+		void *ptr; // pointer to deallocate
+		T *data; // pointer to the object (may differ in case of classes with inheritance)
 	};
 }
 

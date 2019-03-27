@@ -656,6 +656,9 @@ namespace
 			CAGE_TEST(pathJoin("k://a", "..") == "k:/");
 			CAGE_TEST(pathJoin("/a", "..") == "/");
 			CAGE_TEST(pathJoin("../../a/b", "c") == "../../a/b/c");
+			CAGE_TEST(pathJoin("", "ab") == "ab");
+			CAGE_TEST(pathJoin("ab", "") == "ab");
+			CAGE_TEST(pathJoin("/ab", "") == "/ab");
 			CAGE_TEST_THROWN(pathJoin("/a", "../.."));
 			CAGE_TEST_THROWN(pathJoin("a", "/a"));
 			CAGE_TEST_THROWN(pathJoin("a", "c:/"));
@@ -664,6 +667,7 @@ namespace
 			CAGE_TEST_THROWN(pathJoin("k:/", ".."));
 			CAGE_TEST_THROWN(pathJoin("k://", ".."));
 			CAGE_TEST_THROWN(pathJoin("/", ".."));
+			CAGE_TEST_THROWN(pathJoin("", "/ab"));
 		}
 		{
 			CAGE_TESTCASE("path to relative");
