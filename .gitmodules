@@ -55,3 +55,6 @@
 [submodule "fastnoise/fastnoise"]
 	path = fastnoise/fastnoise
 	url = https://github.com/Auburns/FastNoise.git
+[submodule "libzip/libzip"]
+	path = libzip/libzip
+	url = https://github.com/nih-at/libzip.git
