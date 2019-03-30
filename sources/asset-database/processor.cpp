@@ -152,6 +152,7 @@ namespace
 		detail::overrideBreakpoint overrideBreakpoint;
 		CAGE_LOG(severityEnum::Info, "asset", ass.name);
 		ass.corrupted = true;
+		ass.needNotify = true;
 		ass.files.clear();
 		ass.references.clear();
 		ass.internationalizedName = "";
@@ -165,7 +166,7 @@ namespace
 			holder<programClass> prg = newProgram(scheme->processor);
 			prg->writeLine(pathToAbs(configPathInput)); // inputDirectory
 			prg->writeLine(ass.name); // inputName
-			prg->writeLine(pathToAbs(configPathOutput)); // outputDirectory
+			prg->writeLine(pathToAbs(string(configPathIntermediate).empty() ? configPathOutput : configPathIntermediate)); // outputDirectory
 			prg->writeLine(ass.outputPath()); // outputName
 			prg->writeLine(ass.databank); // assetPath
 			prg->writeLine(pathJoin(configPathScheme, ass.scheme)); // schemePath
@@ -404,6 +405,41 @@ namespace
 		}
 	}
 
+	void moveIntermediateFiles()
+	{
+		holder<directoryListClass> listIn = newDirectoryList(configPathIntermediate);
+		holder<directoryListClass> listOut = newDirectoryList(configPathOutput); // keep the archive open until all files are written (this significantly speeds up the moving process, but it causes the process to keep all the files in memory)
+		uint64 movedSize = 0;
+		while (listIn->valid())
+		{
+			if (movedSize > configArchiveWriteThreshold)
+			{
+				listOut.clear(); // close the archive
+				listOut = newDirectoryList(configPathOutput); // reopen the archive
+				movedSize = 0;
+			}
+			string f = pathJoin(configPathIntermediate, listIn->name());
+			string t = pathJoin(configPathOutput, listIn->name());
+			movedSize += newFile(f, fileMode(true, false))->size();
+			pathMove(f, t);
+			listIn->next();
+		}
+		pathRemove(configPathIntermediate);
+	}
+
+	void sendAllNotifications()
+	{
+		for (auto &it : assets)
+		{
+			if (it->needNotify)
+			{
+				CAGE_ASSERT_RUNTIME(!it->corrupted);
+				notifierNotify(it->name);
+				const_cast<assetStruct*>(it.get())->needNotify = false;
+			}
+		}
+	}
+
 	holderSet<assetStruct>::iterator itg;
 	holder<mutexClass> mut;
 	holder<threadPoolClass> threads;
@@ -425,11 +461,6 @@ namespace
 				try
 				{
 					processAsset(*ass);
-					if (!ass->corrupted)
-					{
-						scopeLock<mutexClass> m(mut);
-						notifierNotify(ass->name);
-					}
 				}
 				catch (const cage::exception &)
 				{
@@ -437,7 +468,7 @@ namespace
 				}
 				catch (...)
 				{
-					CAGE_LOG(severityEnum::Error, "exception", "cought unknown exception in asset processing thread");
+					CAGE_LOG(severityEnum::Error, "exception", "caught unknown exception in asset processing thread");
 				}
 			}
 		}
@@ -457,6 +488,8 @@ namespace
 	void checkAssets()
 	{
 		CAGE_LOG(severityEnum::Info, "database", "looking for assets to process");
+		if (!string(configPathIntermediate).empty())
+			pathRemove(configPathIntermediate);
 		verdictValue = false;
 		files.clear();
 		findFiles("");
@@ -550,6 +583,8 @@ namespace
 
 		// finalize
 		timestamp = newestFile;
+		if (!string(configPathIntermediate).empty())
+			moveIntermediateFiles();
 		save();
 		if (countBadDatabanks || countCorrupted || countMissingReferences)
 		{
@@ -560,6 +595,7 @@ namespace
 		}
 		else
 		{
+			sendAllNotifications();
 			CAGE_LOG(severityEnum::Info, "verdict", "ok");
 			verdictValue = true;
 		}
@@ -588,6 +624,17 @@ namespace
 			schemes.insert(templates::move(s));
 		}
 	}
+
+	void checkOutputDir()
+	{
+		pathTypeFlags t = pathType(configPathOutput);
+		if (configOutputArchive && (t & pathTypeFlags::NotFound) == pathTypeFlags::NotFound)
+			return pathCreateArchive(configPathOutput);
+		if ((t & pathTypeFlags::Archive) == pathTypeFlags::Archive)
+			return;
+		// the output is not an archive, output to it directly
+		configPathIntermediate = "";
+	}
 }
 
 void start()
@@ -604,6 +651,7 @@ void start()
 		load();
 
 	// find changes
+	checkOutputDir();
 	checkAssets();
 }
 

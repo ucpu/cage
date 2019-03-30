@@ -313,9 +313,9 @@ namespace cage
 		auto at = archiveFindTowardsRoot(to, false, pt);
 		if (!af && !at)
 			return realMove(from, to);
-		if (af == at)
+		if (af && af == at)
 			return af->move(pf, pt);
-		mixedMove(af, pf, at, pt);
+		mixedMove(af, af ? pf : from, at, at ? pt : to);
 	}
 
 	void pathRemove(const string &path)

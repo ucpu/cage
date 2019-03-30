@@ -5,13 +5,16 @@ typedef std::set<string, stringComparatorFast> stringSet;
 
 extern configString configPathInput;
 extern configString configPathOutput;
+extern configString configPathIntermediate;
 extern configString configPathDatabase;
 extern configString configPathReverse;
 extern configString configPathForward;
 extern configString configPathScheme;
 extern configSint32 configNotifierPort;
+extern configUint64 configArchiveWriteThreshold;
 extern configBool configFromScratch;
 extern configBool configListening;
+extern configBool configOutputArchive;
 extern stringSet configIgnoreExtensions;
 extern stringSet configIgnorePaths;
 

@@ -15,6 +15,7 @@ struct assetStruct
 	stringSet files;
 	stringSet references;
 	bool corrupted;
+	bool needNotify;
 
 	void load(fileClass *file);
 	void save(fileClass *file) const;

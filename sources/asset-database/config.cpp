@@ -12,13 +12,16 @@ using namespace cage;
 
 configString configPathInput("cage-asset-database.path.input", "data");
 configString configPathOutput("cage-asset-database.path.output", "assets");
+configString configPathIntermediate("cage-asset-database.path.intermediate", "assetstmp");
 configString configPathDatabase("cage-asset-database.path.database", "asset-database.bin");
 configString configPathReverse("cage-asset-database.path.reverse", "asset-reverse.txt");
 configString configPathForward("cage-asset-database.path.forward", "asset-forward.txt");
 configString configPathScheme("cage-asset-database.path.scheme", "schemes");
 configSint32 configNotifierPort("cage-asset-database.database.port", 65042);
+configUint64 configArchiveWriteThreshold("cage-asset-database.database.archiveWriteThreshold", 256 * 1024 * 1024);
 configBool configListening("cage-asset-database.database.listening", false);
 configBool configFromScratch("cage-asset-database.database.fromscratch", false);
+configBool configOutputArchive("cage-asset-database.database.outputArchive", true);
 stringSet configIgnoreExtensions;
 stringSet configIgnorePaths;
 

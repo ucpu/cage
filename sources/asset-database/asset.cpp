@@ -10,7 +10,7 @@ using namespace cage;
 #include "utilities.h"
 #include "asset.h"
 
-assetStruct::assetStruct() : corrupted(true)
+assetStruct::assetStruct() : corrupted(true), needNotify(false)
 {}
 
 void assetStruct::load(fileClass *f)

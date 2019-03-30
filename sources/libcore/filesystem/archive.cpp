@@ -2,6 +2,7 @@
 
 #include "filesystem.h"
 #include <cage-core/concurrent.h>
+#include <cage-core/memoryBuffer.h>
 
 namespace cage
 {
@@ -17,7 +18,19 @@ namespace cage
 
 	void mixedMove(std::shared_ptr<archiveVirtual> &af, const string &pf, std::shared_ptr<archiveVirtual> &at, const string &pt)
 	{
-		CAGE_THROW_ERROR(notImplementedException, "mixedMove");
+		{
+			holder<fileClass> f = af ? af->file(pf, fileMode(true, false)) : realNewFile(pf, fileMode(true, false));
+			holder<fileClass> t = at ? at->file(pt, fileMode(false, true)) : realNewFile(pt, fileMode(false, true));
+			// todo split big files into multiple smaller steps
+			memoryBuffer b = f->readBuffer(f->size());
+			f->close();
+			t->writeBuffer(b);
+			t->close();
+		}
+		if (af)
+			af->remove(pf);
+		else
+			realRemove(pf);
 	}
 
 	namespace

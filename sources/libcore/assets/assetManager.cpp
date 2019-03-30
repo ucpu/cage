@@ -740,7 +740,7 @@ namespace cage
 		ass->ready = !!value;
 	}
 
-	assetManagerCreateConfig::assetManagerCreateConfig() : assetsFolderName("assets"), threadMaxCount(5), schemeMaxCount(50)
+	assetManagerCreateConfig::assetManagerCreateConfig() : assetsFolderName("assets.zip"), threadMaxCount(5), schemeMaxCount(50)
 	{}
 
 	holder<assetManagerClass> newAssetManager(const assetManagerCreateConfig &config)
