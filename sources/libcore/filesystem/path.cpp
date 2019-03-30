@@ -1,4 +1,5 @@
 #include <vector>
+#include <initializer_list>
 
 #include "filesystem.h"
 
@@ -31,7 +32,7 @@ namespace cage
 			case '/':
 				return allowSlash;
 			default:
-				return true;
+				return c >= 32;
 			}
 #endif
 		}
@@ -44,10 +45,22 @@ namespace cage
 
 	bool pathIsValid(const string &path)
 	{
-		for (uint32 i = 0, e = path.length(); i < e; i++)
-			if (!validateCharacter(path[i], true))
-				return false;
+		string d, p, f, e;
+		pathDecompose(path, d, p, f, e);
+		uint32 i = 0;
+		for (const string &it : { d, p, f, e })
+		{
+			for (auto c : it)
+				if (!validateCharacter(c, i == 1))
+					return false;
+			i++;
+		}
 		return true;
+	}
+
+	bool pathIsAbs(const string &path)
+	{
+		return path.find(':') != -1 || (path.length() > 0 && path[0] == '/');
 	}
 
 	string pathToRel(const string &path, const string &ref)
@@ -87,63 +100,6 @@ namespace cage
 		return pathJoin(pathWorkingDir(), path);
 	}
 
-	bool pathIsAbs(const string &path)
-	{
-		return path.find(':') != -1 || (path.length() > 0 && path[0] == '/');
-	}
-
-	void pathCreateDirectories(const string &path)
-	{
-		string p;
-		auto a = archiveTryOpen(path, p);
-		if (a)
-			a->createDirectories(p);
-		else
-			realCreateDirectories(path);
-	}
-
-	bool pathExists(const string &path)
-	{
-		string p;
-		auto a = archiveTryOpen(path, p);
-		if (a)
-			return a->exists(p);
-		else
-			return realExists(path);
-	}
-
-	bool pathIsDirectory(const string &path)
-	{
-		string p;
-		auto a = archiveTryOpen(path, p);
-		if (a)
-			return a->isDirectory(p);
-		else
-			return realIsDirectory(path);
-	}
-
-	void pathMove(const string &from, const string &to)
-	{
-		string pf, pt;
-		auto af = archiveTryOpen(from, pf);
-		auto at = archiveTryOpen(to, pt);
-		if (!af && !at)
-			return realMove(from, to);
-		if (af == at)
-			return af->move(pf, pt);
-		archiveMove(af, pf, at, pt);
-	}
-
-	void pathRemove(const string &path)
-	{
-		string p;
-		auto a = archiveTryOpen(path, p);
-		if (a)
-			a->remove(p);
-		else
-			realRemove(path);
-	}
-
 	string pathJoin(const string &a, const string &b)
 	{
 		if (b.empty())
@@ -159,44 +115,6 @@ namespace cage
 		string result = pathSimplify(a + "/" + b);
 		CAGE_ASSERT_RUNTIME(pathIsAbs(result) == pathIsAbs(a), a, b, result, pathIsAbs(result), pathIsAbs(a));
 		return result;
-	}
-
-	uint64 pathLastChange(const string &path)
-	{
-		string p;
-		auto a = archiveTryOpen(path, p);
-		if (a)
-			return a->lastChange(p);
-		else
-			return realLastChange(path);
-	}
-
-	string pathFind(const string &name)
-	{
-		return pathFind(name, pathWorkingDir());
-	}
-
-	string pathFind(const string &name, const string &whereToStart)
-	{
-		if (name.empty())
-			CAGE_THROW_ERROR(exception, "name cannot be empty");
-		try
-		{
-			string p = whereToStart;
-			while (true)
-			{
-				string s = pathJoin(p, name);
-				if (pathIsDirectory(s) || pathExists(s))
-					return s;
-				p = pathJoin(p, "..");
-			}
-		}
-		catch (const exception &)
-		{
-			CAGE_LOG(severityEnum::Note, "exception", string() + "name: '" + name + "'");
-			CAGE_LOG(severityEnum::Note, "exception", string() + "whereToStart: '" + whereToStart + "'");
-			CAGE_THROW_ERROR(exception, "failed to find the path");
-		}
 	}
 
 	string pathSimplify(const string &path)
@@ -245,7 +163,7 @@ namespace cage
 		return result;
 	}
 
-	string pathMakeValid(const string &path, const string &replacement, bool allowDirectories)
+	string pathReplaceInvalidCharacters(const string &path, const string &replacement, bool allowDirectories)
 	{
 		string tmp = normalize(path);
 		string res;
@@ -355,5 +273,97 @@ namespace cage
 		string d, p, f, e;
 		pathDecompose(input, d, p, f, e);
 		return e;
+	}
+
+	pathTypeFlags pathType(const string &path)
+	{
+		if (!pathIsValid(path))
+			return pathTypeFlags::Invalid;
+		string p;
+		auto a = archiveFindTowardsRoot(path, true, p);
+		if (a)
+		{
+			if (p.empty())
+				return pathTypeFlags::File | pathTypeFlags::Archive;
+			return a->type(p) | pathTypeFlags::InsideArchive;
+		}
+		else
+			return realType(path);
+	}
+
+	bool pathIsFile(const string &path)
+	{
+		return (pathType(path) & pathTypeFlags::File) == pathTypeFlags::File;
+	}
+
+	void pathCreateDirectories(const string &path)
+	{
+		string p;
+		auto a = archiveFindTowardsRoot(path, true, p);
+		if (a)
+			a->createDirectories(p);
+		else
+			realCreateDirectories(path);
+	}
+
+	void pathMove(const string &from, const string &to)
+	{
+		string pf, pt;
+		auto af = archiveFindTowardsRoot(from, false, pf);
+		auto at = archiveFindTowardsRoot(to, false, pt);
+		if (!af && !at)
+			return realMove(from, to);
+		if (af == at)
+			return af->move(pf, pt);
+		mixedMove(af, pf, at, pt);
+	}
+
+	void pathRemove(const string &path)
+	{
+		string p;
+		auto a = archiveFindTowardsRoot(path, false, p);
+		if (a)
+			a->remove(p);
+		else
+			realRemove(path);
+	}
+
+	uint64 pathLastChange(const string &path)
+	{
+		string p;
+		auto a = archiveFindTowardsRoot(path, false, p);
+		if (a)
+			return a->lastChange(p);
+		else
+			return realLastChange(path);
+	}
+
+	string pathSearchTowardsRoot(const string &name, pathTypeFlags type)
+	{
+		return pathSearchTowardsRoot(name, pathWorkingDir(), type);
+	}
+
+	string pathSearchTowardsRoot(const string &name, const string &whereToStart, pathTypeFlags type)
+	{
+		if (name.empty())
+			CAGE_THROW_ERROR(exception, "name cannot be empty");
+		try
+		{
+			detail::overrideException oe;
+			string p = whereToStart;
+			while (true)
+			{
+				string s = pathJoin(p, name);
+				if ((pathType(s) & type) != pathTypeFlags::None)
+					return s;
+				p = pathJoin(p, "..");
+			}
+		}
+		catch (const exception &)
+		{
+			CAGE_LOG(severityEnum::Note, "exception", string() + "name: '" + name + "'");
+			CAGE_LOG(severityEnum::Note, "exception", string() + "whereToStart: '" + whereToStart + "'");
+			CAGE_THROW_ERROR(exception, "failed to find the path");
+		}
 	}
 }

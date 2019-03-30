@@ -231,7 +231,9 @@ namespace cage
 	void iniClass::save(const string &filename) const
 	{
 		iniImpl *impl = (iniImpl*)this;
-		holder<fileClass> file = newFile(filename, fileMode(false, true, true));
+		fileMode fm(false, true);
+		fm.textual = true;
+		holder<fileClass> file = newFile(filename, fm);
 		for (const auto &i : impl->sections.cont)
 		{
 			file->writeLine(string() + "[" + i.first + "]");

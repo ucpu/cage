@@ -241,7 +241,7 @@ namespace
 
 	void load()
 	{
-		if (!pathExists(configPathDatabase))
+		if (!pathIsFile(configPathDatabase))
 			return;
 		CAGE_LOG(severityEnum::Info, "database", string() + "loading database cache: '" + configPathDatabase + "'");
 		holder<fileClass> f = newFile(configPathDatabase, fileMode(true, false));
@@ -288,7 +288,9 @@ namespace
 		// save reverse
 		if (!((string)configPathReverse).empty())
 		{
-			holder<fileClass> f = newFile(configPathReverse, fileMode(false, true, true));
+			fileMode fm(false, true);
+			fm.textual = true;
+			holder<fileClass> f = newFile(configPathReverse, fm);
 			std::vector <std::pair <string, const assetStruct*> > items;
 			for (holderSet <assetStruct>::iterator ita = assets.begin(), eta = assets.end(); ita != eta; ita++)
 			{
@@ -320,7 +322,9 @@ namespace
 		// save forward
 		if (!((string)configPathForward).empty())
 		{
-			holder<fileClass> f = newFile(configPathForward, fileMode(false, true, true));
+			fileMode fm(false, true);
+			fm.textual = true;
+			holder<fileClass> f = newFile(configPathForward, fm);
 			std::vector <std::pair <string, const assetStruct*> > items;
 			for (holderSet <assetStruct>::iterator ita = assets.begin(), eta = assets.end(); ita != eta; ita++)
 			{

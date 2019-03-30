@@ -269,7 +269,7 @@ namespace
 
 	void parse(const string &filename, const bool allowParsingHash = false)
 	{
-		holder<fileClass> file = newFile(filename, fileMode(true, false, true));
+		holder<fileClass> file = newFile(filename, fileMode(true, false));
 		uint32 lineNumber = 0;
 		std::vector<sint32> stack;
 		for (string line; file->readLine(line);)
@@ -395,7 +395,7 @@ namespace
 							line = pathJoin(pathExtractPath(pathToRel(filename, inputDirectory)), line);
 							writeLine(string("use=") + line);
 							string fn = pathJoin(inputDirectory, line);
-							if (!pathExists(fn))
+							if (!pathIsFile(fn))
 							{
 								CAGE_LOG(severityEnum::Note, "exception", string() + "requested file '" + line + "'");
 								CAGE_THROW_ERROR(exception, "'$include' file not found");
@@ -412,7 +412,7 @@ namespace
 								CAGE_THROW_ERROR(exception, "'$import' expects one parameter");
 							if (!pathIsAbs(line))
 								line = pathJoin(inputDirectory, line);
-							if (!pathExists(line))
+							if (!pathIsFile(line))
 							{
 								CAGE_LOG(severityEnum::Note, "exception", string() + "requested file '" + line + "'");
 								CAGE_THROW_ERROR(exception, "'$import' file not found");
@@ -500,8 +500,10 @@ void processShader()
 	{
 		for (const auto &it : codes)
 		{
-			string name = pathJoin(configGetString("cage-asset-processor.shader.path", "asset-preview"), pathMakeValid(inputName) + "_" + it.first + ".glsl");
-			holder<fileClass> f = newFile(name, fileMode(false, true, true));
+			string name = pathJoin(configGetString("cage-asset-processor.shader.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + "_" + it.first + ".glsl");
+			fileMode fm(false, true);
+			fm.textual = true;
+			holder<fileClass> f = newFile(name, fm);
 			f->write(it.second.c_str(), it.second.length());
 		}
 	}

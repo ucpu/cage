@@ -210,16 +210,16 @@ namespace cage
 			stringBase toUpper() const
 			{
 				stringBase ret(*this);
-				for (uint32 i = 0; i < current; i++)
-					ret.data[i] = detail::toupper(data[i]);
+				for (char &c : ret)
+					c = detail::toupper(c);
 				return ret;
 			}
 
 			stringBase toLower() const
 			{
 				stringBase ret(*this);
-				for (uint32 i = 0; i < current; i++)
-					ret.data[i] = detail::tolower(data[i]);
+				for (char &c : ret)
+					c = detail::tolower(c);
 				return ret;
 			}
 
@@ -327,9 +327,9 @@ namespace cage
 
 			bool isDigitsOnly() const
 			{
-				for (uint32 i = 0; i < current; i++)
+				for (char c : *this)
 				{
-					if (data[i] < '0' || data[i] > '9')
+					if (c < '0' || c > '9')
 						return false;
 				}
 				return true;
@@ -381,6 +381,26 @@ namespace cage
 				privat::decodeUrl(data, current, ret.data, ret.current, N);
 				ret.data[ret.current] = 0;
 				return ret;
+			}
+
+			char *begin()
+			{
+				return data;
+			}
+
+			char *end()
+			{
+				return data + current;
+			}
+
+			const char *begin() const
+			{
+				return data;
+			}
+
+			const char *end() const
+			{
+				return data + current;
 			}
 
 			static const uint32 MaxLength = N;

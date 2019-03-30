@@ -680,6 +680,22 @@ namespace
 			CAGE_TEST(pathToRel(pathJoin(pathWorkingDir(), "abc")) == "abc");
 			CAGE_TEST(pathToRel(pathJoin(pathWorkingDir(), "abc"), pathJoin(pathWorkingDir(), "abc")) == "");
 		}
+		{
+			CAGE_TESTCASE("path validity");
+			CAGE_TEST(pathIsValid("hi-Jane"));
+			CAGE_TEST(pathIsValid("/peter/pan"));
+			CAGE_TEST(pathIsValid("proto:/path1/path2/file.ext")); // this path must be considered valid even on windows
+
+#ifdef CAGE_SYSTEM_WINDOWS
+			// these file names are invalid on windows, but are valid on linux
+			// this makes testing a lot more complex.
+			// for example, it would make sense to allow "windows forbidden characters" inside archives even on windows, since these limitations do not apply to archives
+			//   but the function cannot possibly know where is the path going to be used
+			CAGE_TEST(!pathIsValid("a:b:c"));
+			CAGE_TEST(!pathIsValid("a/b:c"));
+			CAGE_TEST(!pathIsValid("/a:b"));
+#endif // CAGE_SYSTEM_WINDOWS
+		}
 	}
 }
 

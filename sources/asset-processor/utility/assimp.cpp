@@ -203,7 +203,7 @@ namespace
 
 		virtual bool Exists(const char *pFile) const
 		{
-			return f->exists(pFile);
+			return (f->type(pFile) & pathTypeFlags::File) == pathTypeFlags::File;
 		}
 
 		virtual char getOsSeparator() const

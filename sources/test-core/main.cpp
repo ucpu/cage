@@ -56,7 +56,6 @@ int main()
 	log1->format.bind<logFormatPolicyConsole>();
 	log1->output.bind<logOutputPolicyStdOut>();
 
-	newFilesystem()->remove("testdir");
 	//generatePointsOnSphere();
 	testMacros();
 	testEnums();
@@ -98,10 +97,10 @@ int main()
 	testUdp();
 	testUdpDiscovery();
 	testProgram();
-	newFilesystem()->remove("testdir");
+	pathRemove("testdir");
 
 	{
-		CAGE_TESTCASE("all tests done");
+		CAGE_TESTCASE("all tests done ok");
 	}
 
 	return 0;

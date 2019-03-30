@@ -4,7 +4,7 @@
 
 namespace cage
 {
-	fileVirtual::fileVirtual(const string &name, const fileMode &mode) : name(name), mode(mode)
+	fileVirtual::fileVirtual(const string &path, const fileMode &mode) : myPath(path), mode(mode)
 	{}
 
 	bool fileMode::valid() const
@@ -99,12 +99,6 @@ namespace cage
 		impl->seek(position);
 	}
 
-	void fileClass::reopen(const fileMode &mode)
-	{
-		fileVirtual *impl = (fileVirtual *)this;
-		impl->reopen(mode);
-	}
-
 	void fileClass::flush()
 	{
 		fileVirtual *impl = (fileVirtual *)this;
@@ -129,31 +123,13 @@ namespace cage
 		return impl->size();
 	}
 
-	string fileClass::name() const
-	{
-		fileVirtual *impl = (fileVirtual *)this;
-		return pathExtractFilename(impl->name);
-	}
-
-	string fileClass::path() const
-	{
-		fileVirtual *impl = (fileVirtual *)this;
-		return pathExtractPath(impl->name);
-	}
-
-	fileMode fileClass::mode() const
-	{
-		fileVirtual *impl = (fileVirtual *)this;
-		return impl->mode;
-	}
-
-	holder<fileClass> newFile(const string &name, const fileMode &mode)
+	holder<fileClass> newFile(const string &path, const fileMode &mode)
 	{
 		string p;
-		auto a = archiveTryOpen(name, p);
+		auto a = archiveFindTowardsRoot(path, false, p);
 		if (a)
 			return a->file(p, mode);
 		else
-			return realNewFile(name, mode);
+			return realNewFile(path, mode);
 	}
 }

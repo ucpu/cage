@@ -356,12 +356,14 @@ namespace
 		if (configGetBool("cage-asset-processor.font.preview"))
 		{
 			texels->verticalFlip();
-			texels->encodeFile(pathJoin(configGetString("cage-asset-processor.font.path", "asset-preview"), pathMakeValid(inputName) + ".png"));
+			texels->encodeFile(pathJoin(configGetString("cage-asset-processor.font.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".png"));
 		}
 
 		if (configGetBool("cage-asset-processor.font.glyphs"))
 		{ // glyphs
-			holder<fileClass> f = newFile(pathJoin(configGetString("cage-asset-processor.font.path", "asset-preview"), pathMakeValid(inputName) + ".glyphs.txt"), fileMode(false, true, true));
+			fileMode fm(false, true);
+			fm.textual = true;
+			holder<fileClass> f = newFile(pathJoin(configGetString("cage-asset-processor.font.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".glyphs.txt"), fm);
 			f->writeLine(
 				string("glyph").fill(10) +
 				string("tex coord").fill(60) +
@@ -384,7 +386,9 @@ namespace
 
 		if (configGetBool("cage-asset-processor.font.characters"))
 		{ // characters
-			holder<fileClass> f = newFile(pathJoin(configGetString("cage-asset-processor.font.path", "asset-preview"), pathMakeValid(inputName) + ".characters.txt"), fileMode(false, true, true));
+			fileMode fm(false, true);
+			fm.textual = true;
+			holder<fileClass> f = newFile(pathJoin(configGetString("cage-asset-processor.font.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".characters.txt"), fm);
 			f->writeLine(
 				string("code").fill(10) +
 				string("char").fill(5) +
@@ -404,7 +408,9 @@ namespace
 
 		if (configGetBool("cage-asset-processor.font.kerning"))
 		{ // kerning
-			holder<fileClass> f = newFile(pathJoin(configGetString("cage-asset-processor.font.path", "asset-preview"), pathMakeValid(inputName) + ".kerning.txt"), fileMode(false, true, true));
+			fileMode fm(false, true);
+			fm.textual = true;
+			holder<fileClass> f = newFile(pathJoin(configGetString("cage-asset-processor.font.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".kerning.txt"), fm);
 			f->writeLine(
 				string("g1").fill(5) +
 				string("g2").fill(5) +

@@ -359,7 +359,9 @@ namespace cage
 
 		if (shaderIntrospection)
 		{
-			holder<fileClass> f = newFile(string() + "shaderIntrospection/" + impl->id + "/" + typeName + ".glsl", fileMode(false, true, true));
+			fileMode fm(false, true);
+			fm.textual = true;
+			holder<fileClass> f = newFile(string() + "shaderIntrospection/" + impl->id + "/" + typeName + ".glsl", fm);
 			f->write(data, length);
 		}
 
@@ -468,7 +470,9 @@ namespace cage
 		if (shaderIntrospection)
 		{
 			{ // uniforms
-				holder<fileClass> f = newFile(string() + "shaderIntrospection/" + impl->id + "/uniforms.txt", fileMode(false, true, true));
+				fileMode fm(false, true);
+				fm.textual = true;
+				holder<fileClass> f = newFile(string() + "shaderIntrospection/" + impl->id + "/uniforms.txt", fm);
 				f->writeLine("<location> <type> <name>");
 				GLint numUniforms = 0;
 				glGetProgramInterfaceiv(impl->id, GL_UNIFORM, GL_ACTIVE_RESOURCES, &numUniforms);
@@ -488,7 +492,9 @@ namespace cage
 			}
 
 			{ // blocks
-				holder<fileClass> f = newFile(string() + "shaderIntrospection/" + impl->id + "/blocks.txt", fileMode(false, true, true));
+				fileMode fm(false, true);
+				fm.textual = true;
+				holder<fileClass> f = newFile(string() + "shaderIntrospection/" + impl->id + "/blocks.txt", fm);
 				f->writeLine("<binding> <name> <variables> <size>");
 				GLint numBlocks = 0;
 				glGetProgramInterfaceiv(impl->id, GL_UNIFORM_BLOCK, GL_ACTIVE_RESOURCES, &numBlocks);
@@ -506,7 +512,9 @@ namespace cage
 			}
 
 			{ // subroutines
-				holder<fileClass> f = newFile(string() + "shaderIntrospection/" + impl->id + "/routines.txt", fileMode(false, true, true));
+				fileMode fm(false, true);
+				fm.textual = true;
+				holder<fileClass> f = newFile(string() + "shaderIntrospection/" + impl->id + "/routines.txt", fm);
 				f->writeLine("<stage> <location> <name> <compatibles>");
 				const GLint stages[] = { GL_VERTEX_SUBROUTINE_UNIFORM, GL_TESS_CONTROL_SUBROUTINE_UNIFORM, GL_TESS_EVALUATION_SUBROUTINE_UNIFORM, GL_GEOMETRY_SUBROUTINE_UNIFORM, GL_FRAGMENT_SUBROUTINE_UNIFORM, GL_COMPUTE_SUBROUTINE_UNIFORM };
 				const GLint stages2[] = { GL_VERTEX_SHADER, GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER, GL_GEOMETRY_SHADER, GL_FRAGMENT_SHADER, GL_COMPUTE_SHADER };
@@ -541,7 +549,9 @@ namespace cage
 			}
 
 			{ // inouts
-				holder<fileClass> f = newFile(string() + "shaderIntrospection/" + impl->id + "/inout.txt", fileMode(false, true, true));
+				fileMode fm(false, true);
+				fm.textual = true;
+				holder<fileClass> f = newFile(string() + "shaderIntrospection/" + impl->id + "/inout.txt", fm);
 				f->writeLine("<inout> <location> <index> <type> <name>");
 				const GLint stages[] = { GL_PROGRAM_INPUT, GL_PROGRAM_OUTPUT };
 				const string stageNames[] = { "in", "out" };

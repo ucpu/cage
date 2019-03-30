@@ -72,7 +72,7 @@ namespace cage
 
 			string path;
 			uint32 countTotal, countProcessing;
-			uint32 hackQueueWaitCounter; // it is desirable to process as much items from the queue in single tick, however, since the items are beeing pushed back to the same queue, some form of termination mechanism must be provided
+			uint32 hackQueueWaitCounter; // it is desirable to process as many items from the queue in single tick, however, since the items are being pushed back to the same queue, some form of termination mechanism must be provided
 			uint32 generateName;
 			std::atomic<bool> destroying;
 
@@ -80,11 +80,20 @@ namespace cage
 			{
 				try
 				{
-					path = pathFind(config.assetsFolderName, pathWorkingDir());
+					try
+					{
+						detail::overrideException oe;
+						path = pathSearchTowardsRoot(config.assetsFolderName, pathWorkingDir(), pathTypeFlags::Directory | pathTypeFlags::Archive);
+					}
+					catch(const exception &)
+					{
+						path = pathSearchTowardsRoot(config.assetsFolderName, pathExtractPath(detail::getExecutableFullPath()), pathTypeFlags::Directory | pathTypeFlags::Archive);
+					}
 				}
-				catch(const exception &)
+				catch (const exception &)
 				{
-					path = pathFind(config.assetsFolderName, pathExtractPath(detail::getExecutableFullPath()));
+					CAGE_LOG(severityEnum::Error, "assetManager", "failed to find the directory with assets");
+					throw;
 				}
 				CAGE_LOG(severityEnum::Info, "assetManager", string() + "using asset path: '" + path + "'");
 				index = newHashTable<assetContextPrivateStruct>(1000, 1000000);
@@ -739,19 +748,22 @@ namespace cage
 		return detail::systemArena().createImpl <assetManagerClass, assetManagerImpl>(config);
 	}
 
-	assetHeaderStruct initializeAssetHeader(const string &name_, uint16 schemeIndex)
+	namespace detail
 	{
-		assetHeaderStruct a;
-		detail::memset(&a, 0, sizeof(assetHeaderStruct));
-		detail::memcpy(a.cageName, "cageAss", 7);
-		a.version = currentAssetVersion;
-		string name = name_;
-		static const uint32 maxTexName = sizeof(a.textName);
-		if (name.length() >= maxTexName)
-			name = string() + ".." + name.subString(name.length() - maxTexName - 3, maxTexName - 3);
-		CAGE_ASSERT_RUNTIME(name.length() < sizeof(a.textName), name);
-		detail::memcpy(a.textName, name.c_str(), name.length());
-		a.scheme = schemeIndex;
-		return a;
+		assetHeaderStruct initializeAssetHeader(const string &name_, uint16 schemeIndex)
+		{
+			assetHeaderStruct a;
+			detail::memset(&a, 0, sizeof(assetHeaderStruct));
+			detail::memcpy(a.cageName, "cageAss", 7);
+			a.version = currentAssetVersion;
+			string name = name_;
+			static const uint32 maxTexName = sizeof(a.textName);
+			if (name.length() >= maxTexName)
+				name = string() + ".." + name.subString(name.length() - maxTexName - 3, maxTexName - 3);
+			CAGE_ASSERT_RUNTIME(name.length() < sizeof(a.textName), name);
+			detail::memcpy(a.textName, name.c_str(), name.length());
+			a.scheme = schemeIndex;
+			return a;
+		}
 	}
 }

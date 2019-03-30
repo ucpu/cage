@@ -30,7 +30,7 @@ void testIni()
 			for (uint32 i = 2; i < 7; i++)
 				ini->set(s, i, s + i);
 		ini->save("testdir/test.ini");
-		CAGE_TEST(newFilesystem()->exists("testdir/test.ini"));
+		CAGE_TEST(pathIsFile("testdir/test.ini"));
 	}
 
 	{

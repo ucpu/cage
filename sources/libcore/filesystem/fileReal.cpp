@@ -19,19 +19,20 @@ namespace cage
 {
 	namespace
 	{
-		struct fileReal : public fileVirtual
+		class fileReal : public fileVirtual
 		{
+		public:
 			FILE *f;
 
-			fileReal(const string &name, const fileMode &mode) : fileVirtual(name, mode), f(nullptr)
+			fileReal(const string &path, const fileMode &mode) : fileVirtual(path, mode), f(nullptr)
 			{
-				CAGE_ASSERT_RUNTIME(mode.valid(), "invalid file mode", name, mode.read, mode.write, mode.append, mode.textual);
-				pathCreateDirectories(pathExtractPath(name));
-				f = fopen(name.c_str(), mode.mode().c_str());
+				CAGE_ASSERT_RUNTIME(mode.valid(), "invalid file mode", path, mode.read, mode.write, mode.append, mode.textual);
+				realCreateDirectories(pathJoin(path, ".."));
+				f = fopen(path.c_str(), mode.mode().c_str());
 				if (!f)
 				{
 					CAGE_LOG(severityEnum::Note, "exception", string("read: ") + mode.read + ", write: " + mode.write + ", append: " + mode.append + ", text: " + mode.textual);
-					CAGE_LOG(severityEnum::Note, "exception", string("name: ") + name);
+					CAGE_LOG(severityEnum::Note, "exception", string("path: ") + path);
 					CAGE_THROW_ERROR(codeException, "fopen", errno);
 				}
 			}
@@ -50,6 +51,7 @@ namespace cage
 			void read(void *data, uint64 size) override
 			{
 				CAGE_ASSERT_RUNTIME(f, "file closed");
+				CAGE_ASSERT_RUNTIME(mode.read);
 				if (size == 0)
 					return;
 				if (fread(data, (size_t)size, 1, f) != 1)
@@ -59,6 +61,7 @@ namespace cage
 			void write(const void *data, uint64 size) override
 			{
 				CAGE_ASSERT_RUNTIME(f, "file closed");
+				CAGE_ASSERT_RUNTIME(mode.write);
 				if (size == 0)
 					return;
 				if (fwrite(data, (size_t)size, 1, f) != 1)
@@ -70,15 +73,6 @@ namespace cage
 				CAGE_ASSERT_RUNTIME(f, "file closed");
 				if (fseek(f, position, 0) != 0)
 					CAGE_THROW_ERROR(codeException, "fseek", errno);
-			}
-
-			void reopen(const fileMode &mode) override
-			{
-				CAGE_ASSERT_RUNTIME(mode.valid(), "invalid file mode", name, mode.read, mode.write, mode.append, mode.textual);
-				f = freopen(nullptr, mode.mode().c_str(), f);
-				if (!f)
-					CAGE_THROW_ERROR(codeException, "freopen", errno);
-				this->mode = mode;
 			}
 
 			void flush() override
@@ -117,8 +111,8 @@ namespace cage
 		};
 	}
 
-	holder<fileClass> realNewFile(const string &name, const fileMode &mode)
+	holder<fileClass> realNewFile(const string &path, const fileMode &mode)
 	{
-		return detail::systemArena().createImpl<fileClass, fileReal>(name, mode);
+		return detail::systemArena().createImpl<fileClass, fileReal>(path, mode);
 	}
 }

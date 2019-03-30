@@ -30,7 +30,7 @@ namespace cage
 				, pdir(nullptr), pent(nullptr)
 #endif
 			{
-				pathCreateDirectories(path);
+				realCreateDirectories(path);
 
 #ifdef CAGE_SYSTEM_WINDOWS
 
@@ -42,11 +42,11 @@ namespace cage
 					DWORD len = GetFinalPathNameByHandle(hFile, buffer, string::MaxLength, VOLUME_NAME_DOS);
 					CloseHandle(hFile);
 					if (len < string::MaxLength)
-						const_cast<string&>(this->path) = string(buffer + 4);
+						const_cast<string&>(myPath) = string(buffer + 4);
 				}
 				*/
 
-				list = FindFirstFile(pathJoin(this->path, "*").c_str(), &ffd);
+				list = FindFirstFile(pathJoin(myPath, "*").c_str(), &ffd);
 				valid_ = list != INVALID_HANDLE_VALUE;
 				if (!valid_)
 					return;
@@ -70,6 +70,20 @@ namespace cage
 #else
 				if (pdir)
 					closedir(pdir);
+#endif
+			}
+
+			bool valid() const override
+			{
+				return valid_;
+			}
+
+			string name() const override
+			{
+#ifdef CAGE_SYSTEM_WINDOWS
+				return ffd.cFileName;
+#else
+				return pent->d_name;
 #endif
 			}
 
@@ -98,20 +112,6 @@ namespace cage
 
 				if (name() == "." || name() == "..")
 					next();
-			}
-
-			bool valid() const override
-			{
-				return valid_;
-			}
-
-			string name() const override
-			{
-#ifdef CAGE_SYSTEM_WINDOWS
-				return ffd.cFileName;
-#else
-				return pent->d_name;
-#endif
 			}
 		};
 	}

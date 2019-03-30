@@ -16,24 +16,28 @@
 
 namespace cage
 {
-	string pathWorkingDir()
+	pathTypeFlags realType(const string &path)
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
 
-		char buffer[string::MaxLength];
-		uint32 len = GetCurrentDirectory(string::MaxLength - 1, buffer);
-		if (len <= 0)
-			CAGE_THROW_ERROR(codeException, "GetCurrentDirectory", GetLastError());
-		if (len >= string::MaxLength)
-			CAGE_THROW_ERROR(exception, "path too long");
-		return pathSimplify(string(buffer, len));
+		auto a = GetFileAttributes(path.c_str());
+		if (a == INVALID_FILE_ATTRIBUTES)
+			return pathTypeFlags::NotFound;
+		if ((a & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
+			return pathTypeFlags::Directory;
+		else
+			return pathTypeFlags::File;
 
 #else
 
-		char buffer[string::MaxLength];
-		if (getcwd(buffer, string::MaxLength - 1) != nullptr)
-			return pathSimplify(buffer);
-		CAGE_THROW_ERROR(exception, "getcwd");
+		struct stat st;
+		if (stat(path.c_str(), &st) != 0)
+			return pathTypeFlags::NotFound;
+		if ((st.st_mode & S_IFDIR) == S_IFDIR)
+			return pathTypeFlags::Directory;
+		if ((st.st_mode & S_IFREG) == S_IFREG)
+			return pathTypeFlags::File;
+		return pathTypeFlags::None;
 
 #endif
 	}
@@ -52,7 +56,7 @@ namespace cage
 			if (pos)
 			{
 				const string p = pth.subString(0, pos);
-				if (pathIsDirectory(p))
+				if ((realType(p) & pathTypeFlags::Directory) == pathTypeFlags::Directory)
 					continue;
 
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -75,42 +79,6 @@ namespace cage
 #endif
 			}
 		}
-	}
-
-	bool realExists(const string &path)
-	{
-#ifdef CAGE_SYSTEM_WINDOWS
-
-		auto res = GetFileAttributes(path.c_str());
-		return res != INVALID_FILE_ATTRIBUTES;
-
-#else
-
-		struct stat st;
-		if (stat(path.c_str(), &st) == 0)
-			return (st.st_mode & S_IFREG) == S_IFREG;
-		return false;
-
-#endif
-	}
-
-	bool realIsDirectory(const string &path)
-	{
-#ifdef CAGE_SYSTEM_WINDOWS
-
-		auto res = GetFileAttributes(path.c_str());
-		if (res != INVALID_FILE_ATTRIBUTES)
-			return !!(res & FILE_ATTRIBUTE_DIRECTORY);
-		return false;
-
-#else
-
-		struct stat st;
-		if (stat(path.c_str(), &st) == 0)
-			return (st.st_mode & S_IFDIR) == S_IFDIR;
-		return false;
-
-#endif
 	}
 
 	void realMove(const string &from, const string &to)
@@ -140,7 +108,8 @@ namespace cage
 
 	void realRemove(const string &path)
 	{
-		if (pathIsDirectory(path))
+		pathTypeFlags t = realType(path);
+		if ((t & pathTypeFlags::Directory) == pathTypeFlags::Directory)
 		{
 			holder<directoryListClass> list = newDirectoryList(path);
 			while (list->valid())
@@ -156,7 +125,7 @@ namespace cage
 				CAGE_THROW_ERROR(codeException, "rmdir", errno);
 #endif
 		}
-		else if (pathExists(path))
+		else if ((t & pathTypeFlags::NotFound) == pathTypeFlags::None)
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
 			if (DeleteFile(path.c_str()) == 0)
@@ -197,6 +166,28 @@ namespace cage
 			return st.st_mtime;
 		CAGE_LOG(severityEnum::Note, "exception", string() + "path: '" + path + "'");
 		CAGE_THROW_ERROR(codeException, "stat", errno);
+
+#endif
+	}
+
+	string pathWorkingDir()
+	{
+#ifdef CAGE_SYSTEM_WINDOWS
+
+		char buffer[string::MaxLength];
+		uint32 len = GetCurrentDirectory(string::MaxLength - 1, buffer);
+		if (len <= 0)
+			CAGE_THROW_ERROR(codeException, "GetCurrentDirectory", GetLastError());
+		if (len >= string::MaxLength)
+			CAGE_THROW_ERROR(exception, "path too long");
+		return pathSimplify(string(buffer, len));
+
+#else
+
+		char buffer[string::MaxLength];
+		if (getcwd(buffer, string::MaxLength - 1) != nullptr)
+			return pathSimplify(buffer);
+		CAGE_THROW_ERROR(exception, "getcwd");
 
 #endif
 	}

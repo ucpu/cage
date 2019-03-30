@@ -1,9 +1,21 @@
 namespace cage
 {
+	enum class assetStateEnum : uint32
+	{
+		Ready,
+		NotFound,
+		Error,
+		Unknown,
+	};
+
 	class CAGE_API assetManagerClass
 	{
 	public:
-		template<class T> void defineScheme(uint32 index, const assetSchemeStruct &value) { zScheme(index, value, sizeof(T)); }
+		template<class T>
+		void defineScheme(uint32 index, const assetSchemeStruct &value)
+		{
+			zScheme(index, value, sizeof(T));
+		}
 
 		void add(uint32 assetName);
 		void fabricate(uint32 scheme, uint32 assetName, const string &textName = "");
@@ -14,27 +26,31 @@ namespace cage
 		uint32 scheme(uint32 assetName) const;
 		uint32 generateUniqueName();
 
-		template<uint32 Scheme, class T> T *tryGet(uint32 assetName) const
+		template<uint32 Scheme, class T>
+		T *tryGet(uint32 assetName) const
 		{
 			if (!ready(assetName))
 				return nullptr;
 			return get<Scheme, T>(assetName);
 		}
-		template<uint32 Scheme> void *tryGet(uint32 assetName) const
+		template<uint32 Scheme>
+		void *tryGet(uint32 assetName) const
 		{
 			if (!ready(assetName))
 				return nullptr;
 			return get<Scheme>(assetName);
 		}
 
-		template<uint32 Scheme, class T> T *get(uint32 assetName) const
+		template<uint32 Scheme, class T>
+		T *get(uint32 assetName) const
 		{
 			CAGE_ASSERT_RUNTIME(ready(assetName));
 			CAGE_ASSERT_RUNTIME(scheme(assetName) == Scheme, assetName, scheme(assetName), Scheme);
 			CAGE_ASSERT_RUNTIME(zGetTypeSize(Scheme) == sizeof(T), zGetTypeSize(Scheme), sizeof(T), assetName);
 			return (T*)zGet(assetName);
 		}
-		template<uint32 Scheme> void *get(uint32 assetName) const
+		template<uint32 Scheme>
+		void *get(uint32 assetName) const
 		{
 			CAGE_ASSERT_RUNTIME(ready(assetName));
 			CAGE_ASSERT_RUNTIME(scheme(assetName) == Scheme, assetName, scheme(assetName), Scheme);
@@ -42,13 +58,15 @@ namespace cage
 			return zGet(assetName);
 		}
 
-		template<uint32 Scheme, class T> void set(uint32 assetName, T *value)
+		template<uint32 Scheme, class T>
+		void set(uint32 assetName, T *value)
 		{
 			CAGE_ASSERT_RUNTIME(scheme(assetName) == Scheme, assetName, scheme(assetName), Scheme);
 			CAGE_ASSERT_RUNTIME(zGetTypeSize(Scheme) == sizeof(T), zGetTypeSize(Scheme), sizeof(T), assetName);
 			zSet(assetName, value);
 		}
-		template<uint32 Scheme> void set(uint32 assetName, void *value)
+		template<uint32 Scheme>
+		void set(uint32 assetName, void *value)
 		{
 			CAGE_ASSERT_RUNTIME(scheme(assetName) == Scheme, assetName, scheme(assetName), Scheme);
 			CAGE_ASSERT_RUNTIME(zGetTypeSize(Scheme) == -1, zGetTypeSize(Scheme), assetName);
@@ -77,7 +95,11 @@ namespace cage
 		void zSet(uint32 assetName, void *value);
 	};
 
-	template<> inline void assetManagerClass::defineScheme<void>(uint32 index, const assetSchemeStruct &value) { zScheme(index, value, -1); }
+	template<>
+	inline void assetManagerClass::defineScheme<void>(uint32 index, const assetSchemeStruct &value)
+	{
+		zScheme(index, value, -1);
+	}
 
 	struct CAGE_API assetManagerCreateConfig
 	{
@@ -89,5 +111,8 @@ namespace cage
 
 	CAGE_API holder<assetManagerClass> newAssetManager(const assetManagerCreateConfig &config);
 
-	CAGE_API assetHeaderStruct initializeAssetHeader(const string &name, uint16 schemeIndex);
+	namespace detail
+	{
+		CAGE_API assetHeaderStruct initializeAssetHeader(const string &name, uint16 schemeIndex);
+	}
 }

@@ -129,7 +129,7 @@ int main(int argc, const char *args[])
 			inputDirectory = pathExtractPath(args[2]);
 			inputName = pathExtractFilename(args[2]);
 			derivedProperties();
-			initializeSecondaryLog(pathJoin(configGetString("cage-asset-processor.analyze-log.path", "analyze-log"), pathMakeValid(inputName) + ".log"));
+			initializeSecondaryLog(pathJoin(configGetString("cage-asset-processor.analyze-log.path", "analyze-log"), pathReplaceInvalidCharacters(inputName) + ".log"));
 			return processAnalyze();
 		}
 
@@ -137,7 +137,7 @@ int main(int argc, const char *args[])
 			CAGE_THROW_ERROR(exception, "missing asset type parameter");
 
 		loadProperties();
-		initializeSecondaryLog(pathJoin(configGetString("cage-asset-processor.process-log.path", "process-log"), pathMakeValid(inputName) + ".log"));
+		initializeSecondaryLog(pathJoin(configGetString("cage-asset-processor.process-log.path", "process-log"), pathReplaceInvalidCharacters(inputName) + ".log"));
 
 #define GCHL_GENERATE(N) CAGE_LOG(severityEnum::Info, "asset-processor", string() + "input " CAGE_STRINGIZE(N) ": '" + N + "'");
 		CAGE_EVAL_MEDIUM(CAGE_EXPAND_ARGS(GCHL_GENERATE, inputDirectory, inputName, outputDirectory, outputName, assetPath, schemePath, schemeIndex, inputFileName, outputFileName, inputFile, inputSpec, inputIdentifier));

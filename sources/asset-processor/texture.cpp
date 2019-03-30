@@ -570,7 +570,7 @@ void processTexture()
 			while (true)
 			{
 				string name = prefix + string(index).reverse().fill(dollarsCount, '0').reverse() + suffix;
-				if (!pathExists(pathJoin(inputDirectory, name)))
+				if (!pathIsFile(pathJoin(inputDirectory, name)))
 					break;
 				CAGE_LOG(severityEnum::Info, logComponentName, string() + "loading file: '" + name + "'");
 				loadFile(name);
@@ -677,7 +677,7 @@ void processTexture()
 		uint32 index = 0;
 		for (auto &it : images)
 		{
-			string dbgName = pathJoin(configGetString("cage-asset-processor.texture.path", "asset-preview"), pathMakeValid(inputName) + "_" + (index++) + ".png");
+			string dbgName = pathJoin(configGetString("cage-asset-processor.texture.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + "_" + (index++) + ".png");
 			holder<pngImageClass> png = newPngImage();
 			png->empty(it.width, it.height, it.bpp);
 			detail::memcpy(png->bufferData(), it.data.data(), png->bufferSize());

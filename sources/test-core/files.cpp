@@ -12,12 +12,7 @@ void testFiles()
 {
 	CAGE_TESTCASE("files");
 
-	{
-		CAGE_TESTCASE("testdir has no subfolder files");
-		holder<directoryListClass> fs = newDirectoryList("testdir/files");
-		CAGE_TEST(fs);
-		CAGE_TEST(!fs->valid());
-	}
+	pathRemove("testdir");
 
 	memoryBuffer data(BLOCK_SIZE);
 	for (uint32 i = 0; i < BLOCK_SIZE; i++)
@@ -135,14 +130,14 @@ void testFiles()
 		const string bs = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
 
 		{
-			holder<fileClass> f = newFile("testdir/files/lines", fileMode(false, true, true));
+			holder<fileClass> f = newFile("testdir/files/lines", fileMode(false, true));
 			string s = bs;
 			while (!s.empty())
 				f->writeLine(s.split("/"));
 		}
 
 		{
-			holder<fileClass> f = newFile("testdir/files/lines", fileMode(true, false, true));
+			holder<fileClass> f = newFile("testdir/files/lines", fileMode(true, false));
 			string s = bs;
 			for (string line; f->readLine(line);)
 				CAGE_TEST(line == s.split("/"));
@@ -157,11 +152,11 @@ void testFiles()
 			CAGE_TESTCASE("simple move");
 			string source = "testdir/files/1";
 			string dest = "testdir/moved/1";
-			CAGE_TEST(pathExists(source));
-			CAGE_TEST(!pathExists(dest));
+			CAGE_TEST(pathIsFile(source));
+			CAGE_TEST(!pathIsFile(dest));
 			pathMove(source, dest);
-			CAGE_TEST(!pathExists(source));
-			CAGE_TEST(pathExists(dest));
+			CAGE_TEST(!pathIsFile(source));
+			CAGE_TEST(pathIsFile(dest));
 		}
 
 		{

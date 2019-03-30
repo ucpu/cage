@@ -2,7 +2,7 @@ namespace cage
 {
 	struct CAGE_API fileMode
 	{
-		fileMode(bool read, bool write, bool textual = false, bool append = false) : read(read), write(write), textual(textual), append(append)
+		fileMode(bool read, bool write) : read(read), write(write), textual(false), append(false)
 		{}
 
 		bool valid() const;
@@ -24,15 +24,11 @@ namespace cage
 		void writeLine(const string &line);
 		void writeBuffer(const memoryBuffer &buffer);
 		void seek(uint64 position);
-		void reopen(const fileMode &mode);
 		void flush();
 		void close();
 		uint64 tell() const;
 		uint64 size() const;
-		string name() const;
-		string path() const;
-		fileMode mode() const;
 	};
 
-	CAGE_API holder<fileClass> newFile(const string &name, const fileMode &mode);
+	CAGE_API holder<fileClass> newFile(const string &path, const fileMode &mode);
 }

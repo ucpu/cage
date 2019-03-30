@@ -31,7 +31,10 @@ namespace cage
 		public:
 			fileOutputPolicyImpl(const string &path, bool append)
 			{
-				f = newFile(path, fileMode(false, true, true, append));
+				fileMode fm(false, true);
+				fm.textual = true;
+				fm.append = append;
+				f = newFile(path, fm);
 			}
 
 			holder<fileClass> f;

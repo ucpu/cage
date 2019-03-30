@@ -257,7 +257,7 @@ namespace
 		if (!path.empty())
 		{
 			path = pathJoin(pathExtractPath(inputFile), path);
-			if (!pathExists(pathJoin(inputDirectory, path)))
+			if (!pathIsFile(pathJoin(inputDirectory, path)))
 				CAGE_THROW_ERROR(exception, "overriden material path does not exist");
 			loadMaterialCage(dsm, mat, path);
 			return;
@@ -283,7 +283,7 @@ namespace
 
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "looking for implicit cage material at '" + path + "'");
 
-		if (pathExists(pathJoin(inputDirectory, path)))
+		if (pathIsFile(pathJoin(inputDirectory, path)))
 		{
 			loadMaterialCage(dsm, mat, path);
 			return;

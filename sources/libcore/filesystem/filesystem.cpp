@@ -11,7 +11,7 @@ namespace cage
 		public:
 			string current;
 
-			const string makePath(const string &path) const
+			string makePath(const string &path) const
 			{
 				if (pathIsAbs(path))
 					return pathToRel(path);
@@ -25,6 +25,30 @@ namespace cage
 	{
 		filesystemImpl *impl = (filesystemImpl*)this;
 		impl->current = impl->makePath(path);
+	}
+
+	string filesystemClass::currentDir() const
+	{
+		filesystemImpl *impl = (filesystemImpl*)this;
+		return impl->current;
+	}
+
+	pathTypeFlags filesystemClass::type(const string &path) const
+	{
+		filesystemImpl *impl = (filesystemImpl*)this;
+		return pathType(impl->makePath(path));
+	}
+
+	uint64 filesystemClass::lastChange(const string &path) const
+	{
+		filesystemImpl *impl = (filesystemImpl*)this;
+		return pathLastChange(impl->makePath(path));
+	}
+
+	holder<fileClass> filesystemClass::openFile(const string &path, const fileMode &mode)
+	{
+		filesystemImpl *impl = (filesystemImpl*)this;
+		return newFile(impl->makePath(path), mode);
 	}
 
 	holder<directoryListClass> filesystemClass::directoryList(const string &path)
@@ -41,12 +65,6 @@ namespace cage
 		return cw;
 	}
 
-	holder<fileClass> filesystemClass::openFile(const string &path, const fileMode &mode)
-	{
-		filesystemImpl *impl = (filesystemImpl*)this;
-		return newFile(impl->makePath(path), mode);
-	}
-
 	void filesystemClass::move(const string &from, const string &to)
 	{
 		filesystemImpl *impl = (filesystemImpl*)this;
@@ -57,30 +75,6 @@ namespace cage
 	{
 		filesystemImpl *impl = (filesystemImpl*)this;
 		return pathRemove(impl->makePath(path));
-	}
-
-	string filesystemClass::currentDir() const
-	{
-		filesystemImpl *impl = (filesystemImpl*)this;
-		return impl->current;
-	}
-
-	bool filesystemClass::exists(const string &path) const
-	{
-		filesystemImpl *impl = (filesystemImpl*)this;
-		return pathExists(impl->makePath(path));
-	}
-
-	bool filesystemClass::isDirectory(const string &path) const
-	{
-		filesystemImpl *impl = (filesystemImpl*)this;
-		return pathIsDirectory(impl->makePath(path));
-	}
-
-	uint64 filesystemClass::lastChange(const string &path) const
-	{
-		filesystemImpl *impl = (filesystemImpl*)this;
-		return pathLastChange(impl->makePath(path));
 	}
 
 	holder<filesystemClass> newFilesystem()

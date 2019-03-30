@@ -42,8 +42,10 @@ void processInterpack()
 
 	if (configGetBool("cage-asset-processor.interpack.preview"))
 	{
-		string dbgName = pathJoin(configGetString("cage-asset-processor.interpack.path", "asset-preview"), pathMakeValid(inputName) + ".txt");
-		holder<fileClass> f = newFile(dbgName, fileMode(false, true, true));
+		string dbgName = pathJoin(configGetString("cage-asset-processor.interpack.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".txt");
+		fileMode fm(false, true);
+		fm.textual = true;
+		holder<fileClass> f = newFile(dbgName, fm);
 		for (std::map<uint32, std::map<string, string>>::iterator sch = assets.begin(), sche = assets.end(); sch != sche; sch++)
 		{
 			uint32 s = sch->first;

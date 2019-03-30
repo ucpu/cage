@@ -46,6 +46,7 @@ namespace cage
 	class filesystemClass;
 	class directoryListClass;
 	class changeWatcherClass;
+	enum class pathTypeFlags : uint32;
 
 	// memory
 	class virtualMemoryClass;
@@ -59,13 +60,7 @@ namespace cage
 	class udpServerClass;
 
 	// assets
-	enum class assetStateEnum : uint32
-	{
-		Ready,
-		NotFound,
-		Error,
-		Unknown,
-	};
+	enum class assetStateEnum : uint32;
 	struct assetManagerCreateConfig;
 	struct assetContextStruct;
 	struct assetSchemeStruct;
