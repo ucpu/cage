@@ -105,19 +105,27 @@ namespace cage
 			void move(const string &from, const string &to) override
 			{
 				LOCK;
-				CAGE_THROW_CRITICAL(notImplementedException, "move on zip archive is not yet implemented");
+				auto i = zip_name_locate(zip, from.c_str(), 0);
+				if (i < 0)
+					CAGE_THROW_ERROR(exception, "zip_name_locate");
+				if (zip_file_rename(zip, i, to.c_str(), ZIP_FL_ENC_UTF_8) != 0)
+					CAGE_THROW_ERROR(exception, "zip_file_rename");
 			}
 
 			void remove(const string &path) override
 			{
 				LOCK;
-				CAGE_THROW_CRITICAL(notImplementedException, "remove on zip archive is not yet implemented");
+				auto i = zip_name_locate(zip, path.c_str(), 0);
+				if (i < 0)
+					CAGE_THROW_ERROR(exception, "zip_name_locate");
+				if (zip_delete(zip, i) != 0)
+					CAGE_THROW_ERROR(exception, "zip_delete");
 			}
 
 			uint64 lastChange(const string &path) override
 			{
 				LOCK;
-				CAGE_THROW_CRITICAL(notImplementedException, "lastChange on zip archive is not yet implemented");
+				CAGE_THROW_CRITICAL(notImplementedException, "lastChange is not yet implemented for zip archives");
 			}
 
 			holder<fileClass> file(const string &path, const fileMode &mode) override;
@@ -309,7 +317,11 @@ namespace cage
 				{
 					auto n = zip_get_name(a->zip, i, 0);
 					if (!n)
+					{
+						if (zip_get_error(a->zip)->zip_err == ZIP_ER_DELETED)
+							continue;
 						CAGE_THROW_ERROR(exception, "zip_get_name");
+					}
 					if (n[0] == 0)
 						continue;
 					string s = n;
