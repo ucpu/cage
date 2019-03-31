@@ -358,6 +358,7 @@ namespace cage
 		holder<fileClass> archiveZip::file(const string &path, const fileMode &mode)
 		{
 			CAGE_ASSERT_RUNTIME(!path.empty());
+			CAGE_ASSERT_RUNTIME(mode.valid());
 			CAGE_ASSERT_RUNTIME(mode.read != mode.write, "zip archive cannot open file for both reading and writing simultaneously");
 			CAGE_ASSERT_RUNTIME(!mode.append, "zip archive cannot open file for append");
 			createDirectories(pathJoin(path, ".."));

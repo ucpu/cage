@@ -97,8 +97,8 @@ namespace cage
 			}
 
 			CAGE_LOG(cageSevr, "graphics", "debug message:");
-			lineReaderBuffer lrb((char*)message, detail::strlen(message));
-			for (string line; lrb.readLine(line);)
+			holder<lineReaderClass> lrb = newLineReader((char*)message, detail::strlen(message));
+			for (string line; lrb->readLine(line);)
 				CAGE_LOG_CONTINUE(cageSevr, "graphics", line);
 			CAGE_LOG_CONTINUE(severityEnum::Note, "graphics", string() + "source: " + src + ", type: " + tp + ", severity: " + sevr + ", id: " + id);
 

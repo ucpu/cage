@@ -41,9 +41,13 @@ namespace cage
 			{
 				if (f)
 				{
-					if (fclose(f) != 0)
+					try
 					{
-						detail::terminate();
+						close();
+					}
+					catch (...)
+					{
+						// do nothing
 					}
 				}
 			}
@@ -84,13 +88,11 @@ namespace cage
 
 			void close() override
 			{
-				if (f)
-				{
-					FILE *t = f;
-					f = nullptr;
-					if (fclose(t) != 0)
-						CAGE_THROW_ERROR(codeException, "fclose", errno);
-				}
+				CAGE_ASSERT_RUNTIME(f, "file closed");
+				FILE *t = f;
+				f = nullptr;
+				if (fclose(t) != 0)
+					CAGE_THROW_ERROR(codeException, "fclose", errno);
 			}
 
 			uint64 tell() const override

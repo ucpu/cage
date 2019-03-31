@@ -1,6 +1,7 @@
 #include "filesystem.h"
 
 #include <cage-core/memoryBuffer.h>
+#include <cage-core/math.h> // min
 
 namespace cage
 {
@@ -9,10 +10,12 @@ namespace cage
 
 	bool fileMode::valid() const
 	{
-		if (append && !write)
-			return false;
 		if (!read && !write)
 			return false;
+		if (append && !write)
+			return false;
+		if (textual && read)
+			return false; // forbid reading files in text mode, we will do the line-ending conversions on our own
 		return true;
 	}
 
@@ -49,24 +52,34 @@ namespace cage
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		line = "";
-		uint64 left = size() - tell();
+		uint64 pos = tell();
+		uint64 siz = size();
+		uint64 left = siz - pos;
 		if (left == 0)
 			return false;
-		char c = 0;
-		while (left--)
+		uint32 s = numeric_cast<uint32>(min(left, (uint64)string::MaxLength));
+		char *lineData = const_cast<char*>(line.c_str());
+		read(lineData, s);
+		line = string(lineData, s);
+		auto p = line.find('\n');
+		if (p == (uint32)-1)
 		{
-			read(&c, 1);
-			if (c == '\n')
-			{
-#ifdef CAGE_SYSTEM_WINDOWS
-				if (!line.empty() && line[line.length() - 1] == '\r')
-					line = line.subString(0, line.length() - 1);
-#endif
-				return true;
-			}
-			line += string(&c, 1);
+			if (s == string::MaxLength)
+				CAGE_THROW_ERROR(exception, "line too long");
+			p = s;
+			seek(siz);
 		}
-		return !line.empty();
+		else
+			seek(pos + p + 1);
+		if (p == 0)
+		{
+			line = "";
+			return true;
+		}
+		line = string(lineData, p);
+		if (!line.empty() && line[line.length() - 1] == '\r')
+			line = line.subString(0, line.length() - 1);
+		return true;
 	}
 
 	memoryBuffer fileClass::readBuffer(uintPtr size)

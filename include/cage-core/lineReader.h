@@ -3,24 +3,16 @@
 
 namespace cage
 {
-	struct CAGE_API lineReaderBuffer
+	class CAGE_API lineReaderClass
 	{
-		lineReaderBuffer(const char *buffer, uintPtr size) : buffer(buffer), size(size)
-		{}
-
-		lineReaderBuffer(const memoryBuffer &buffer);
-
+	public:
 		bool readLine(string &line);
-
-		uintPtr left() const
-		{
-			return size;
-		}
-
-	private:
-		const char *buffer;
-		uintPtr size;
+		uintPtr left() const;
 	};
+
+	CAGE_API holder<lineReaderClass> newLineReader(const char *buffer, uintPtr size); // the buffer must outlive the reader
+	CAGE_API holder<lineReaderClass> newLineReader(const memoryBuffer &buffer); // the buffer must outlive the reader
+	CAGE_API holder<lineReaderClass> newLineReader(memoryBuffer &&buffer); // the reader takes over the buffer
 }
 
 #endif // guard_lineReader_h_09089ef7_374c_4571_85be_3e7de9acc3aa_

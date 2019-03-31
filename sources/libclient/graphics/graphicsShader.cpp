@@ -387,8 +387,8 @@ namespace cage
 			CAGE_LOG(severityEnum::Note, "shader", string() + "shader name: " + debugName);
 #endif // CAGE_DEBUG
 			CAGE_LOG(severityEnum::Warning, "shader", string() + "shader compilation log (id: " + impl->id + ", stage: " + typeName + "):");
-			lineReaderBuffer lrb(buf, len);
-			for (string line; lrb.readLine(line);)
+			holder<lineReaderClass> lrb = newLineReader(buf, len);
+			for (string line; lrb->readLine(line);)
 				CAGE_LOG_CONTINUE(severityEnum::Note, "shader", line);
 		}
 
@@ -452,8 +452,8 @@ namespace cage
 			CAGE_LOG(severityEnum::Note, "shader", string() + "shader name: " + debugName);
 #endif // CAGE_DEBUG
 			CAGE_LOG(severityEnum::Warning, "shader", string() + "shader linking log (id: " + impl->id + "):");
-			lineReaderBuffer lrb(buf, len);
-			for (string line; lrb.readLine(line);)
+			holder<lineReaderClass> lrb = newLineReader(buf, len);
+			for (string line; lrb->readLine(line);)
 				CAGE_LOG_CONTINUE(severityEnum::Note, "shader", line);
 		}
 
@@ -597,8 +597,8 @@ namespace cage
 			CAGE_LOG(severityEnum::Note, "shader", string() + "shader name: " + debugName);
 #endif // CAGE_DEBUG
 			CAGE_LOG(severityEnum::Warning, "shader", string() + "shader validation log (id: " + impl->id + "):");
-			lineReaderBuffer lrb(buf, len);
-			for (string line; lrb.readLine(line);)
+			holder<lineReaderClass> lrb = newLineReader(buf, len);
+			for (string line; lrb->readLine(line);)
 				CAGE_LOG_CONTINUE(severityEnum::Note, "shader", line);
 		}
 

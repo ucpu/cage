@@ -68,7 +68,7 @@ namespace cage
 
 	// utilities
 	struct randomGenerator;
-	struct lineReaderBuffer;
+	class lineReaderClass;
 	struct memoryBuffer;
 	template<class T>
 	class hashTableClass;

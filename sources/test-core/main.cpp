@@ -28,6 +28,7 @@ void testConcurrent();
 void testConcurrentQueue();
 void testFiles();
 void testArchives();
+void testLineReader();
 void testHashTable();
 void testRandom();
 void testIni();
@@ -78,6 +79,7 @@ int main()
 	testConcurrentQueue();
 	testFiles();
 	testArchives();
+	testLineReader();
 	testHashTable();
 	testRandom();
 	testIni();
