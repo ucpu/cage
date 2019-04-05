@@ -24,7 +24,7 @@ void processAnimation()
 
 	if (scene->mNumAnimations == 0)
 		CAGE_THROW_ERROR(exception, "no animations available");
-	uint32 chosenAnimationIndex = -1;
+	uint32 chosenAnimationIndex = m;
 	if (scene->mNumAnimations > 1 || !inputSpec.empty())
 	{
 		for (uint32 i = 0; i < scene->mNumAnimations; i++)
@@ -38,7 +38,7 @@ void processAnimation()
 	}
 	else
 		chosenAnimationIndex = 0;
-	if (chosenAnimationIndex == -1)
+	if (chosenAnimationIndex == m)
 		CAGE_THROW_ERROR(exception, "no animation name matches the specifier");
 	aiAnimation *ani = scene->mAnimations[chosenAnimationIndex];
 	if (ani->mNumChannels == 0 || ani->mNumMeshChannels != 0 || ani->mNumMorphMeshChannels != 0)
@@ -63,7 +63,7 @@ void processAnimation()
 	{
 		aiNodeAnim *n = ani->mChannels[channelIndex];
 		uint16 idx = skeleton->index(n->mNodeName);
-		if (idx == (uint16)-1)
+		if (idx == m)
 		{
 			CAGE_LOG(severityEnum::Warning, logComponentName, string() + "channel index: " + channelIndex + ", name: '" + n->mNodeName.data + "', has no corresponding bone and will be ignored");
 			continue;

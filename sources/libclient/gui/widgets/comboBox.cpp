@@ -58,7 +58,7 @@ namespace cage
 					c = c->nextSibling;
 				}
 				if (data.selected >= count)
-					data.selected = -1;
+					data.selected = m;
 				consolidateSelection();
 				if (hasFocus())
 				{
@@ -82,7 +82,7 @@ namespace cage
 				offset(p, s, -skin->defaults.comboBox.baseMargin);
 				emitElement(elementTypeEnum::ComboBoxBase, mode(), p, s);
 				offset(p, s, -skin->layouts[(uint32)elementTypeEnum::ComboBoxBase].border - skin->defaults.comboBox.basePadding);
-				if (data.selected == -1)
+				if (data.selected == m)
 				{ // emit placeholder
 					if (hierarchy->text)
 						hierarchy->text->emit(p, s);

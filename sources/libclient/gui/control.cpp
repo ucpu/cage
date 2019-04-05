@@ -84,7 +84,7 @@ namespace cage
 			for (auto e : impl->entityManager->entities())
 			{
 				uint32 name = e->name();
-				CAGE_ASSERT_RUNTIME(name != 0 && name != -1, name);
+				CAGE_ASSERT_RUNTIME(name != 0 && name != m, name);
 				hierarchyItemStruct *item = impl->itemsMemory.createObject<hierarchyItemStruct>(impl, e);
 				map[name] = item;
 			}
@@ -96,7 +96,7 @@ namespace cage
 				if (GUI_HAS_COMPONENT(parent, e))
 				{
 					GUI_GET_COMPONENT(parent, p, e);
-					CAGE_ASSERT_RUNTIME(p.parent != 0 && p.parent != -1 && p.parent != name, p.parent, name);
+					CAGE_ASSERT_RUNTIME(p.parent != 0 && p.parent != m && p.parent != name, p.parent, name);
 					CAGE_ASSERT_RUNTIME(map.find(p.parent) != map.end(), p.parent, name);
 					item->order = p.order;
 					attachHierarchy(item, map[p.parent]);
@@ -177,7 +177,7 @@ namespace cage
 		void propagateWidgetState(const widgetStateComponent &from, widgetStateComponent &to)
 		{
 			to.disabled = to.disabled || from.disabled;
-			if (from.skinIndex != -1)
+			if (from.skinIndex != m)
 				to.skinIndex = from.skinIndex;
 		}
 

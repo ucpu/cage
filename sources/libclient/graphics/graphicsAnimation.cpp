@@ -100,7 +100,7 @@ namespace cage
 				for (uint32 i = 0; i < bones; i++)
 					if (indexes[i] == boneIndex)
 						return i;
-				return (uint16)-1;
+				return m;
 			}
 		};
 	}
@@ -235,7 +235,7 @@ namespace cage
 		animationImpl *impl = (animationImpl*)this;
 
 		uint16 b = impl->framesBoneIndex(bone);
-		if (b == (uint16)-1)
+		if (b == m)
 			return mat4::Nan; // that bone is not animated
 
 		vec3 s = evaluateMatrix(coef, impl->scaleFrames[b], impl->scaleTimes[b], impl->scaleValues[b]);

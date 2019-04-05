@@ -672,17 +672,17 @@ namespace cage
 
 	void configLoadIni(const string &filename, const string &prefix)
 	{
-		if (prefix.find('.') != -1 || prefix.empty())
+		if (prefix.find('.') != m || prefix.empty())
 			CAGE_LOG(severityEnum::Warning, "config", string() + "dangerous config prefix '" + prefix + "'");
 		holder<iniClass> ini = newIni();
 		ini->load(filename);
 		for (string section : ini->sections())
 		{
-			if (section.find('.') != -1)
+			if (section.find('.') != m)
 				CAGE_LOG(severityEnum::Warning, "config", string() + "dangerous config section '" + section + "'");
 			for (string name : ini->items(section))
 			{
-				if (name.find('.') != -1)
+				if (name.find('.') != m)
 					CAGE_LOG(severityEnum::Warning, "config", string() + "dangerous config field '" + name + "'");
 				string value = ini->getString(section, name);
 				configSetDynamic(string() + (prefix.empty() ? "" : prefix + ".") + section + "." + name, value);
@@ -692,7 +692,7 @@ namespace cage
 
 	void configSaveIni(const string &filename, const string &prefix)
 	{
-		if (prefix.find('.') != -1 || prefix.empty())
+		if (prefix.find('.') != m || prefix.empty())
 			CAGE_LOG(severityEnum::Warning, "config", string() + "dangerous config prefix '" + prefix + "'");
 		holder<iniClass> ini = newIni();
 		holder<configListClass> cnf = newConfigList();

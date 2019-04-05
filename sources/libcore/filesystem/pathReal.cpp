@@ -48,8 +48,8 @@ namespace cage
 		uint32 off = 0;
 		while (true)
 		{
-			uint32 pos = pth.subString(off, -1).find('/');
-			if (pos == -1)
+			uint32 pos = pth.subString(off, m).find('/');
+			if (pos == m)
 				return; // done
 			pos += off;
 			off = pos + 1;

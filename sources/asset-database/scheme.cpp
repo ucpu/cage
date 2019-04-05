@@ -20,8 +20,8 @@ void schemeStruct::parse(iniClass *ini)
 		CAGE_LOG(severityEnum::Note, "exception", string() + "scheme: " + name);
 		CAGE_THROW_ERROR(exception, "empty scheme processor field");
 	}
-	schemeIndex = ini->getUint32("scheme", "index", -1);
-	if (schemeIndex == -1)
+	schemeIndex = ini->getUint32("scheme", "index", m);
+	if (schemeIndex == m)
 	{
 		CAGE_LOG(severityEnum::Note, "exception", string() + "scheme: " + name);
 		CAGE_THROW_ERROR(exception, "empty scheme index field");
@@ -196,7 +196,7 @@ bool schemeFieldStruct::valid() const
 				return false;
 			if (valuesContainsValue(values, ""))
 				return false;
-			if (defaul.find(',') != -1)
+			if (defaul.find(',') != m)
 				return false;
 			if (!defaul.empty() && !valuesContainsValue(values, defaul))
 				return false;
@@ -284,7 +284,7 @@ bool schemeFieldStruct::applyToAssetField(string &val, const string &assetName) 
 	}
 	else if (type == "enum")
 	{
-		if (val.find(',') != -1)
+		if (val.find(',') != m)
 		{
 			CAGE_LOG(severityEnum::Error, "database", string() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' contains comma");
 			return false;

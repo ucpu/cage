@@ -42,7 +42,7 @@ namespace cage
 			pthread_t handle;
 #endif
 
-			threadImpl(delegate<void()> function, const string &threadName) : threadName(threadName), function(function), myid(-1)
+			threadImpl(delegate<void()> function, const string &threadName) : threadName(threadName), function(function), myid(m)
 			{
 #ifdef CAGE_SYSTEM_WINDOWS
 

@@ -18,7 +18,7 @@ namespace
 
 	configBool configShaderPrint("cage-asset-processor.shader.preview");
 
-	const bool validDefineChar(const char c)
+	bool validDefineChar(const char c)
 	{
 		if (c >= 'a' && c <= 'z')
 			return true;
@@ -31,7 +31,7 @@ namespace
 		return false;
 	}
 
-	const bool validDefine(const string &s)
+	bool validDefine(const string &s)
 	{
 		if (s.empty())
 			return false;
@@ -43,7 +43,7 @@ namespace
 		return true;
 	}
 
-	const string outputTokenization(string input)
+	string outputTokenization(string input)
 	{
 		string result;
 		while (!input.empty())
@@ -72,7 +72,7 @@ namespace
 		return result;
 	}
 
-	const bool evalExpToBool(const string &l)
+	bool evalExpToBool(const string &l)
 	{
 		if (l.isReal(true))
 			return l.toFloat() != 0;
@@ -85,99 +85,99 @@ namespace
 		}
 	}
 
-	const string eval(const string &input);
+	string eval(const string &input);
 
-	const string evalExp(const string &l)
+	string evalExp(const string &l)
 	{
 		if (l.empty())
 			CAGE_THROW_ERROR(exception, "unexpected end of line");
 		uint32 p = l.find('|');
-		if (p != -1)
+		if (p != m)
 		{
 			string left = evalExp(l.subString(0, p));
-			string right = evalExp(l.subString(p + 1, -1));
+			string right = evalExp(l.subString(p + 1, m));
 			return evalExpToBool(left) || evalExpToBool(right);
 		}
 		p = l.find('&');
-		if (p != -1)
+		if (p != m)
 		{
 			string left = evalExp(l.subString(0, p));
-			string right = evalExp(l.subString(p + 1, -1));
+			string right = evalExp(l.subString(p + 1, m));
 			return evalExpToBool(left) && evalExpToBool(right);
 		}
 		p = l.find('<');
-		if (p != -1)
+		if (p != m)
 		{
 			string left = evalExp(l.subString(0, p));
-			string right = evalExp(l.subString(p + 1, -1));
+			string right = evalExp(l.subString(p + 1, m));
 			if (left.isReal(true) && right.isReal(true))
 				return left.toFloat() < right.toFloat();
 			else
 				return left < right;
 		}
 		p = l.find('>');
-		if (p != -1)
+		if (p != m)
 		{
 			string left = evalExp(l.subString(0, p));
-			string right = evalExp(l.subString(p + 1, -1));
+			string right = evalExp(l.subString(p + 1, m));
 			if (left.isReal(true) && right.isReal(true))
 				return left.toFloat() > right.toFloat();
 			else
 				return left > right;
 		}
 		p = l.find('=');
-		if (p != -1)
+		if (p != m)
 		{
 			string left = evalExp(l.subString(0, p));
-			string right = evalExp(l.subString(p + 1, -1));
+			string right = evalExp(l.subString(p + 1, m));
 			if (left.isInteger(true) && right.isInteger(true))
 				return left.toSint32() == right.toSint32();
 			else
 				return left == right;
 		}
 		p = l.find('-');
-		if (p != -1)
+		if (p != m)
 		{
 			sint32 left = evalExp(l.subString(0, p)).toSint32();
-			sint32 right = evalExp(l.subString(p + 1, -1)).toSint32();
+			sint32 right = evalExp(l.subString(p + 1, m)).toSint32();
 			return string(left - right);
 		}
 		p = l.find('+');
-		if (p != -1)
+		if (p != m)
 		{
 			string left = evalExp(l.subString(0, p));
-			string right = evalExp(l.subString(p + 1, -1));
+			string right = evalExp(l.subString(p + 1, m));
 			if (left.isInteger(true) && right.isInteger(true))
 				return string(left.toSint32() + right.toSint32());
 			else
 				return left + right;
 		}
 		p = l.find('%');
-		if (p != -1)
+		if (p != m)
 		{
 			sint32 left = evalExp(l.subString(0, p)).toSint32();
-			sint32 right = evalExp(l.subString(p + 1, -1)).toSint32();
+			sint32 right = evalExp(l.subString(p + 1, m)).toSint32();
 			return string(left % right);
 		}
 		p = l.find('/');
-		if (p != -1)
+		if (p != m)
 		{
 			sint32 left = evalExp(l.subString(0, p)).toSint32();
-			sint32 right = evalExp(l.subString(p + 1, -1)).toSint32();
+			sint32 right = evalExp(l.subString(p + 1, m)).toSint32();
 			return string(left / right);
 		}
 		p = l.find('*');
-		if (p != -1)
+		if (p != m)
 		{
 			sint32 left = evalExp(l.subString(0, p)).toSint32();
-			sint32 right = evalExp(l.subString(p + 1, -1)).toSint32();
+			sint32 right = evalExp(l.subString(p + 1, m)).toSint32();
 			return string(left * right);
 		}
 		p = l.find('^');
-		if (p != -1)
+		if (p != m)
 		{
 			string left = evalExp(l.subString(0, p));
-			string right = evalExp(l.subString(p + 1, -1));
+			string right = evalExp(l.subString(p + 1, m));
 			if (right.isInteger(false))
 			{
 				uint32 index = right.toUint32();
@@ -201,7 +201,7 @@ namespace
 		}
 		if (l[0] == '!')
 		{
-			return !evalExpToBool(evalExp(l.subString(1, -1)));
+			return !evalExpToBool(evalExp(l.subString(1, m)));
 		}
 		if (defines.find(l) != defines.end())
 		{
@@ -210,24 +210,24 @@ namespace
 		return l;
 	}
 
-	const string eval(const string &input)
+	string eval(const string &input)
 	{
 		string l = input;
 		l = l.replace(" ", "").replace("\t", "").replace("\n", "");
 		while (true)
 		{
 			uint32 z = l.find(')');
-			if (z == -1)
+			if (z == m)
 				break;
 			uint32 o = l.subString(0, z).reverse().find('(');
-			if (o == -1)
+			if (o == m)
 			{
 				CAGE_LOG(severityEnum::Note, "exception", string("expression: '") + input + "'");
 				CAGE_THROW_ERROR(exception, "unmatched ')'");
 			}
 			l = l.replace(z - o - 1, o + 2, evalExp(l.subString(z - o, o)));
 		}
-		if (l.find('(') != -1)
+		if (l.find('(') != m)
 		{
 			CAGE_LOG(severityEnum::Note, "exception", string("expression: '") + input + "'");
 			CAGE_THROW_ERROR(exception, "unmatched '('");
@@ -242,7 +242,7 @@ namespace
 		codes[defines["shader"]] += std::string(s.c_str(), s.length()) + "\n";
 	}
 
-	const uint32 shaderType(const string &name)
+	uint32 shaderType(const string &name)
 	{
 		if (name == "vertex")
 			return GL_VERTEX_SHADER;
@@ -259,7 +259,7 @@ namespace
 		return 0;
 	}
 
-	const bool stackIsOk(const std::vector <sint32> &stack)
+	bool stackIsOk(const std::vector <sint32> &stack)
 	{
 		for (std::vector<sint32>::const_iterator it = stack.begin(), et = stack.end(); it != et; it++)
 			if (*it != 1)
@@ -283,7 +283,7 @@ namespace
 					continue;
 				if (line[0] == '$' || (allowParsingHash && line[0] == '#'))
 				{
-					line = line.subString(1, -1).trim();
+					line = line.subString(1, m).trim();
 					string cmd = line.split();
 					line = line.trim();
 					if (cmd == "if")

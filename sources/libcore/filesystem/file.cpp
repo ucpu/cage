@@ -62,7 +62,7 @@ namespace cage
 		read(lineData, s);
 		line = string(lineData, s);
 		auto p = line.find('\n');
-		if (p == (uint32)-1)
+		if (p == m)
 		{
 			if (s == string::MaxLength)
 				CAGE_THROW_ERROR(exception, "line too long");

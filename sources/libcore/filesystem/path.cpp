@@ -60,7 +60,7 @@ namespace cage
 
 	bool pathIsAbs(const string &path)
 	{
-		return path.find(':') != -1 || (path.length() > 0 && path[0] == '/');
+		return path.find(':') != m || (path.length() > 0 && path[0] == '/');
 	}
 
 	string pathToRel(const string &path, const string &ref)
@@ -182,19 +182,19 @@ namespace cage
 		// find drive
 		string p = normalize(input);
 		uint32 i = p.find(':');
-		if (i == -1)
+		if (i == m)
 			drive = "";
 		else
 		{
 			drive = p.subString(0, i);
-			p = p.subString(i + 1, -1);
+			p = p.subString(i + 1, m);
 			if (p.empty() || p[0] != '/')
 				p = string("/") + p;
 		}
 		// find filename
 		p = p.reverse();
 		i = p.find('/');
-		if (i == -1)
+		if (i == m)
 		{
 			file = p;
 			directory = "";
@@ -202,7 +202,7 @@ namespace cage
 		else
 		{
 			file = p.subString(0, i);
-			directory = p.subString(i, -1).reverse();
+			directory = p.subString(i, m).reverse();
 			if (directory.length() > 1)
 				directory = directory.subString(0, directory.length() - 1);
 		}
@@ -218,7 +218,7 @@ namespace cage
 		}
 		// find extension
 		i = file.find('.');
-		if (i == -1)
+		if (i == m)
 		{
 			extension = "";
 			file = file.reverse();
@@ -226,7 +226,7 @@ namespace cage
 		else
 		{
 			extension = file.subString(0, i + 1).reverse();
-			file = file.subString(i + 1, -1).reverse();
+			file = file.subString(i + 1, m).reverse();
 		}
 	}
 

@@ -139,7 +139,7 @@ namespace cage
 			while (true)
 			{
 				pos = stringFind(data, current, what, whatLen, pos);
-				if (pos == -1)
+				if (pos == m)
 					break;
 				if (current + withLen - whatLen > maxLength)
 					CAGE_THROW_ERROR(exception, "string truncation");
@@ -199,12 +199,12 @@ namespace cage
 		uint32 stringFind(const char *data, uint32 current, const char *what, uint32 whatLen, uint32 offset)
 		{
 			if (whatLen == 0 || offset + whatLen >= current)
-				return -1;
+				return m;
 			uint32 end = current - whatLen + 1;
 			for (uint32 i = offset; i < end; i++)
 				if (detail::memcmp(data + i, what, whatLen) == 0)
 					return i;
-			return -1;
+			return m;
 		}
 
 		void stringSortAndUnique(char *data, uint32 &current)

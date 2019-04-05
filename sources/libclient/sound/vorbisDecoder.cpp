@@ -6,7 +6,7 @@ namespace cage
 {
 	namespace soundPrivat
 	{
-		vorbisDataStruct::vorbisDataStruct() : currentPosition(-1)
+		vorbisDataStruct::vorbisDataStruct() : currentPosition(m)
 		{
 			callbacks.read_func = &read_func;
 			callbacks.seek_func = &seek_func;

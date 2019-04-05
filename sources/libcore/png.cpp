@@ -228,9 +228,9 @@ namespace cage
 	{
 		pngBufferImpl *impl = (pngBufferImpl*)this;
 		decodePng(buffer, impl->mem, impl->width, impl->height, impl->channels, impl->bytesPerChannel);
-		if (channels == -1)
+		if (channels == m)
 			channels = impl->channels;
-		if (bpc == -1)
+		if (bpc == m)
 			bpc = impl->bytesPerChannel;
 		convert(channels, bpc);
 	}

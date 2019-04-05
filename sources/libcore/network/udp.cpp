@@ -35,7 +35,7 @@ namespace cage
 
 			struct receiverStruct
 			{
-				receiverStruct() : sockIndex(-1), connId(0)
+				receiverStruct() : sockIndex(m), connId(0)
 				{}
 
 				addr address;
@@ -74,7 +74,7 @@ namespace cage
 							if (r)
 							{
 								r->packets.push_back(templates::move(b));
-								if (r->sockIndex == -1)
+								if (r->sockIndex == m)
 								{
 									r->sockIndex = sockIndex;
 									r->address = adr;
@@ -322,7 +322,7 @@ namespace cage
 					case cmdType::longMessageTail:
 						d >> channel >> msgSeqn >> size;
 						d.read(data.data(), size);
-						index = (uint16)-1;
+						index = m;
 						break;
 					default:
 						// exception (not fatal) - the packet could get corrupted on the network
@@ -482,7 +482,7 @@ namespace cage
 					}
 
 					// sending does not need to be under mutex
-					if (sockReceiver->sockIndex == -1)
+					if (sockReceiver->sockIndex == m)
 					{
 						for (sock &s : sockGroup->socks)
 						{
@@ -591,7 +591,7 @@ namespace cage
 									uint32 maxIndex = it->second.totalSize / 256;
 									for (auto &d : it->second.parts)
 									{
-										if (d.first == (uint16)-1)
+										if (d.first == m)
 										{ // tail
 											uint32 off = (it->second.totalSize / 256) * 256;
 											detail::memcpy(f.data.data() + off, d.second.data.data(), it->second.totalSize - off);

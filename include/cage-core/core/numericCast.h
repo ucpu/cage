@@ -59,7 +59,7 @@ namespace cage
 			template<class To, class From>
 			static To cast(From from)
 			{
-				CAGE_ASSERT_COMPILE(false, numeric_cast_is_only_allowed_for_numbers);
+				CAGE_ASSERT_COMPILE(false, numeric_cast_is_allowed_for_numbers_only);
 				return 0;
 			}
 		};

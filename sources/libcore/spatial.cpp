@@ -197,8 +197,8 @@ namespace cage
 				CAGE_ASSERT_RUNTIME(node.a() >= 0 && node.b() >= 0); // is leaf now
 				if (node.b() < 16)
 					return; // leaf node: too few primitives
-				uint32 bestAxis = -1;
-				uint32 bestSplit = -1;
+				uint32 bestAxis = m;
+				uint32 bestSplit = m;
 				uint32 bestItemsCount = 0;
 				real bestSah = real::PositiveInfinity;
 				fastBox bestBoxLeft;

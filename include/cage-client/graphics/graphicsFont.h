@@ -30,7 +30,7 @@ namespace cage
 		void size(const uint32 *glyphs, uint32 count, const formatStruct &format, vec2 &size, const vec2 &mousePosition, uint32 &cursor);
 
 		void bind(meshClass *mesh, shaderClass *shader) const;
-		void render(const uint32 *glyphs, uint32 count, const formatStruct &format, uint32 cursor = -1);
+		void render(const uint32 *glyphs, uint32 count, const formatStruct &format, uint32 cursor = m);
 	};
 
 	CAGE_API holder<fontClass> newFont();

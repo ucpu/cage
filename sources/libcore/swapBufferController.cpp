@@ -140,7 +140,7 @@ namespace cage
 
 	namespace privat
 	{
-		swapBufferLock::swapBufferLock() : controller_(nullptr), index_(-1)
+		swapBufferLock::swapBufferLock() : controller_(nullptr), index_(m)
 		{}
 
 		swapBufferLock::swapBufferLock(swapBufferControllerClass *controller, uint32 index) : controller_(controller), index_(index)
@@ -149,7 +149,7 @@ namespace cage
 			CAGE_ASSERT_RUNTIME(impl->states[index] == stateEnum::Reading || impl->states[index] == stateEnum::Writing);
 		}
 
-		swapBufferLock::swapBufferLock(swapBufferLock &&other) : controller_(nullptr), index_(-1)
+		swapBufferLock::swapBufferLock(swapBufferLock &&other) : controller_(nullptr), index_(m)
 		{
 			std::swap(controller_, other.controller_);
 			std::swap(index_, other.index_);
@@ -170,7 +170,7 @@ namespace cage
 				swapBufferControllerImpl *impl = (swapBufferControllerImpl*)controller_;
 				impl->finished(index_);
 				controller_ = nullptr;
-				index_ = -1;
+				index_ = m;
 			}
 			std::swap(controller_, other.controller_);
 			std::swap(index_, other.index_);

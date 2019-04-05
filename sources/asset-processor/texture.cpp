@@ -553,18 +553,18 @@ void processTexture()
 
 	{ // load all files
 		uint32 firstDollar = inputFile.find('$');
-		if (firstDollar == -1)
+		if (firstDollar == m)
 			loadFile(inputFile);
 		else
 		{
 			images.reserve(100);
 			string prefix = inputFile.subString(0, firstDollar);
-			string suffix = inputFile.subString(firstDollar, -1);
+			string suffix = inputFile.subString(firstDollar, m);
 			uint32 dollarsCount = 0;
 			while (!suffix.empty() && suffix[0] == '$')
 			{
 				dollarsCount++;
-				suffix = suffix.subString(1, -1);
+				suffix = suffix.subString(1, m);
 			}
 			uint32 index = 0;
 			while (true)

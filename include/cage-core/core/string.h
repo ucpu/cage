@@ -153,7 +153,7 @@ namespace cage
 				if (start >= current)
 					return "";
 				uint32 len = length;
-				if (length == -1 || start + length > current)
+				if (length == m || start + length > current)
 					len = current - start;
 				return stringBase(data + start, len);
 			}
@@ -168,17 +168,17 @@ namespace cage
 
 			stringBase replace(uint32 start, uint32 length, const stringBase &with) const
 			{
-				return subString(0, start) + with + subString(start + length, -1);
+				return subString(0, start) + with + subString(start + length, m);
 			}
 
 			stringBase remove(uint32 start, uint32 length) const
 			{
-				return subString(0, start) + subString(start + length, -1);
+				return subString(0, start) + subString(start + length, m);
 			}
 
 			stringBase insert(uint32 start, const stringBase &what) const
 			{
-				return subString(0, start) + what + subString(start, -1);
+				return subString(0, start) + what + subString(start, m);
 			}
 
 			stringBase trim(bool left = true, bool right = true, const stringBase &trimChars = "\t\n ") const
@@ -285,7 +285,7 @@ namespace cage
 				for (uint32 i = offset; i < current; i++)
 					if (data[i] == other)
 						return i;
-				return -1;
+				return m;
 			}
 
 			uint32 length() const
@@ -317,7 +317,7 @@ namespace cage
 				if (infix.empty())
 					return true;
 				uint32 pos = find(infix, prefix.current);
-				return pos != (uint32)-1 && pos <= current - infix.current - suffix.current;
+				return pos != m && pos <= current - infix.current - suffix.current;
 			}
 
 			bool empty() const
@@ -350,10 +350,10 @@ namespace cage
 				if (empty())
 					return false;
 				uint32 d = find('.');
-				if (d == -1)
+				if (d == m)
 					return isInteger(allowSign);
 				stringBase whole = subString(0, d);
-				stringBase part = subString(d + 1, -1);
+				stringBase part = subString(d + 1, m);
 				return whole.isInteger(allowSign) && part.isDigitsOnly();
 			}
 

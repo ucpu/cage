@@ -202,6 +202,6 @@ namespace cage
 		ColorPickerSatValPanel,
 		ColorPickerPreviewPanel,
 		TotalElements,
-		InvalidElement = (uint32)-1,
+		InvalidElement = m,
 	};
 }

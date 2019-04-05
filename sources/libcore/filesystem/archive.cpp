@@ -75,7 +75,7 @@ namespace cage
 			if (pathExtractPathNoDrive(path) == "/")
 				return {}; // do not throw an exception by going beyond root
 			string a = pathJoin(path, "..");
-			string b = path.subString(a.length() + 1, -1);
+			string b = path.subString(a.length() + 1, m);
 			CAGE_ASSERT_RUNTIME(pathJoin(a, b) == path, a, b, path);
 			insidePath = pathJoin(b, insidePath);
 			return recursiveFind(a, true, insidePath);

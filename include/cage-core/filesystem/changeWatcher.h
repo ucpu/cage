@@ -4,7 +4,7 @@ namespace cage
 	{
 	public:
 		void registerPath(const string &path);
-		string waitForChange(uint64 time = -1);
+		string waitForChange(uint64 time = m);
 	};
 
 	CAGE_API holder<changeWatcherClass> newChangeWatcher();

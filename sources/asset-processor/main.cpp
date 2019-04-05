@@ -42,12 +42,12 @@ namespace
 	void derivedProperties()
 	{
 		inputFile = inputName;
-		if (inputFile.find(';') != -1)
+		if (inputFile.find(';') != m)
 		{
 			inputIdentifier = inputFile.split(";");
 			std::swap(inputIdentifier, inputFile);
 		}
-		if (inputFile.find('?') != -1)
+		if (inputFile.find('?') != m)
 		{
 			inputSpec = inputFile.split("?");
 			std::swap(inputSpec, inputFile);
@@ -74,7 +74,7 @@ namespace
 			string value = readLine();
 			if (value == "cage-end")
 				break;
-			if (value.find('=') == -1)
+			if (value.find('=') == m)
 			{
 				CAGE_LOG(severityEnum::Note, "exception", string("line: ") + value);
 				CAGE_THROW_ERROR(exception, "missing '=' in property line");

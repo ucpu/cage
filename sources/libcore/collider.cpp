@@ -26,7 +26,7 @@ namespace cage
 				// for node - index of right child node
 				uint32 right;
 
-				nodeStruct() : left(-1), right(-1)
+				nodeStruct() : left(m), right(m)
 				{}
 			};
 
@@ -60,8 +60,8 @@ namespace cage
 				}
 
 				// find partitioning axis and split plane
-				uint32 axis = -1;
-				uint32 split = -1;
+				uint32 axis = m;
+				uint32 split = m;
 				{
 					real bestSah = real::PositiveInfinity;
 					uint32 siz = numeric_cast<uint32>(ts.size());
@@ -143,7 +143,7 @@ namespace cage
 			{
 				CAGE_ASSERT_RUNTIME(idx < nodes.size(), idx, nodes.size());
 				const nodeStruct &n = nodes[idx];
-				if (n.left == -1)
+				if (n.left == m)
 				{ // node
 					CAGE_ASSERT_RUNTIME(intersection(boxes[idx], boxes[idx + 1]) == boxes[idx + 1]);
 					CAGE_ASSERT_RUNTIME(intersection(boxes[idx], boxes[n.right]) == boxes[n.right]);
@@ -316,7 +316,7 @@ namespace cage
 		return tmp;
 	}
 
-	collisionPairStruct::collisionPairStruct() : a(-1), b(-1)
+	collisionPairStruct::collisionPairStruct() : a(m), b(m)
 	{}
 
 	collisionPairStruct::collisionPairStruct(uint32 a, uint32 b) : a(a), b(b)
@@ -410,7 +410,7 @@ namespace cage
 				const collisionObjectImpl::nodeStruct &an = ao->nodes[a];
 				const collisionObjectImpl::nodeStruct &bn = bo->nodes[b];
 
-				if (an.left != -1 && bn.left != -1)
+				if (an.left != m && bn.left != m)
 				{
 					for (uint32 ai = an.left; ai < an.right; ai++)
 					{
@@ -431,7 +431,7 @@ namespace cage
 					return;
 				}
 
-				if (an.left == -1 && bn.left == -1)
+				if (an.left == m && bn.left == m)
 				{
 					process(a + 1, b + 1);
 					process(a + 1, bn.right);
@@ -440,13 +440,13 @@ namespace cage
 					return;
 				}
 
-				if (an.left == -1)
+				if (an.left == m)
 				{
 					process(a + 1, b);
 					process(an.right, b);
 				}
 
-				if (bn.left == -1)
+				if (bn.left == m)
 				{
 					process(a, b + 1);
 					process(a, bn.right);
@@ -507,7 +507,7 @@ namespace cage
 				if (!cage::intersects(l, b))
 					return real::Nan;
 				const auto &n = col->nodes[nodeIdx];
-				if (n.left == -1)
+				if (n.left == cage::m)
 				{ // node
 					real c1 = distance(l, nodeIdx + 1);
 					real c2 = distance(l, n.right);
@@ -546,7 +546,7 @@ namespace cage
 				if (!cage::intersects(l, b))
 					return false;
 				const auto &n = col->nodes[nodeIdx];
-				if (n.left == -1)
+				if (n.left == cage::m)
 				{ // node
 					return intersects(l, nodeIdx + 1) || intersects(l, n.right);
 				}
@@ -574,7 +574,7 @@ namespace cage
 				if (!cage::intersects(l, b))
 					return vec3::Nan;
 				const auto &n = col->nodes[nodeIdx];
-				if (n.left == -1)
+				if (n.left == cage::m)
 				{ // node
 					vec3 c1 = intersection(l, nodeIdx + 1);
 					vec3 c2 = intersection(l, n.right);

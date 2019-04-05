@@ -60,7 +60,7 @@ namespace
 				{ // produce
 					uint32 sum = 0;
 					for (uint32 i = 0; i < elementsCount; i++)
-						sum += (tmpBuff[i] = randomRange(0u, (uint32)-1));
+						sum += (tmpBuff[i] = randomRange(0u, m));
 					tmpSum = sum;
 					generated++;
 				}

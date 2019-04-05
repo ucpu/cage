@@ -54,7 +54,7 @@ namespace cage
 		{
 			CAGE_ASSERT_RUNTIME(ready(assetName));
 			CAGE_ASSERT_RUNTIME(scheme(assetName) == Scheme, assetName, scheme(assetName), Scheme);
-			CAGE_ASSERT_RUNTIME(zGetTypeSize(Scheme) == -1, zGetTypeSize(Scheme), assetName);
+			CAGE_ASSERT_RUNTIME(zGetTypeSize(Scheme) == m, zGetTypeSize(Scheme), assetName);
 			return zGet(assetName);
 		}
 
@@ -69,7 +69,7 @@ namespace cage
 		void set(uint32 assetName, void *value)
 		{
 			CAGE_ASSERT_RUNTIME(scheme(assetName) == Scheme, assetName, scheme(assetName), Scheme);
-			CAGE_ASSERT_RUNTIME(zGetTypeSize(Scheme) == -1, zGetTypeSize(Scheme), assetName);
+			CAGE_ASSERT_RUNTIME(zGetTypeSize(Scheme) == m, zGetTypeSize(Scheme), assetName);
 			zSet(assetName, value);
 		}
 
@@ -98,7 +98,7 @@ namespace cage
 	template<>
 	inline void assetManagerClass::defineScheme<void>(uint32 index, const assetSchemeStruct &value)
 	{
-		zScheme(index, value, -1);
+		zScheme(index, value, m);
 	}
 
 	struct CAGE_API assetManagerCreateConfig

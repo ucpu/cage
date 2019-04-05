@@ -40,7 +40,7 @@ namespace cage
 
 			void threadEntryLocal()
 			{
-				uint32 thrIndex = -1;
+				uint32 thrIndex = m;
 				{
 					scopeLock<mutexClass> l(mutex);
 					thrIndex = threadIndexInitializer++;

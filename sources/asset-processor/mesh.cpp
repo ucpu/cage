@@ -49,7 +49,7 @@ namespace
 		m->GetTexture(tt, 0, &texAsName, nullptr, nullptr, nullptr, nullptr, nullptr);
 		cage::string tn = texAsName.C_Str();
 		if (tn.isPattern("//", "", ""))
-			tn = string() + "./" + tn.subString(2, -1);
+			tn = string() + "./" + tn.subString(2, cage::m);
 		cage::string n = pathJoin(pathExtractPath(inputName), tn);
 		dsm.textureNames[usage] = hashString(n.c_str());
 		writeLine(string("ref = ") + n);
@@ -439,7 +439,7 @@ void processMesh()
 		{
 			for (uint32 j = 0; j < 4; j++)
 			{
-				boneIndices[i * 4 + j] = (uint16)-1;
+				boneIndices[i * 4 + j] = m;
 				boneWeights[i * 4 + j] = 0;
 			}
 		}
@@ -449,14 +449,14 @@ void processMesh()
 			aiBone *bone = am->mBones[boneIndex];
 			CAGE_ASSERT_RUNTIME(bone);
 			uint16 boneId = skeleton->index(bone);
-			CAGE_ASSERT_RUNTIME(boneId != (uint16)-1);
+			CAGE_ASSERT_RUNTIME(boneId != m);
 			for (uint32 weightIndex = 0; weightIndex < bone->mNumWeights; weightIndex++)
 			{
 				aiVertexWeight *w = bone->mWeights + weightIndex;
 				bool ok = false;
 				for (uint32 i = 0; i < 4; i++)
 				{
-					if (boneIndices[w->mVertexId * 4 + i] == (uint16)-1)
+					if (boneIndices[w->mVertexId * 4 + i] == m)
 					{
 						boneIndices[w->mVertexId * 4 + i] = boneId;
 						boneWeights[w->mVertexId * 4 + i] = w->mWeight;
@@ -474,7 +474,7 @@ void processMesh()
 			float sum = 0;
 			for (uint32 j = 0; j < 4; j++)
 			{
-				if (boneIndices[i * 4 + j] == (uint16)-1)
+				if (boneIndices[i * 4 + j] == m)
 				{
 					CAGE_ASSERT_RUNTIME(boneWeights[i * 4 + j] == 0, i, j);
 					boneIndices[i * 4 + j] = 0; // prevent shader from accessing invalid memory

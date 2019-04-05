@@ -10,7 +10,7 @@ uint32 cageTestCaseStruct::counter = 0;
 void testMacros();
 void testEnums();
 void testExceptions();
-void testNumericCast();
+void testNumericTypes();
 void testTemplates();
 void testStrings();
 void testDelegates();
@@ -61,7 +61,7 @@ int main()
 	testMacros();
 	testEnums();
 	testExceptions();
-	testNumericCast();
+	testNumericTypes();
 	testTemplates();
 	testStrings();
 	testDelegates();

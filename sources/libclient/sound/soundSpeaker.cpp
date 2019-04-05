@@ -45,9 +45,9 @@ namespace cage
 				switch (channels)
 				{
 				case 1: return 0;
-				case 2: return -1;
+				case 2: return m;
 				case 3: return 1;
-				case 4: return -1;
+				case 4: return m;
 				case 5: return 1;
 				case 6: return 1;
 				case 7: return 1;
@@ -56,11 +56,11 @@ namespace cage
 			case SoundIoChannelIdLfe:
 				switch (channels)
 				{
-				case 1: return -1;
-				case 2: return -1;
-				case 3: return -1;
-				case 4: return -1;
-				case 5: return -1;
+				case 1: return m;
+				case 2: return m;
+				case 3: return m;
+				case 4: return m;
+				case 5: return m;
 				case 6: return 5;
 				case 7: return 6;
 				default: return 7;
@@ -69,67 +69,67 @@ namespace cage
 			case SoundIoChannelIdTopBackLeft:
 				switch (channels)
 				{
-				case 1: return -1;
-				case 2: return -1;
-				case 3: return -1;
+				case 1: return m;
+				case 2: return m;
+				case 3: return m;
 				case 4: return 2;
 				case 5: return 3;
 				case 6: return 3;
-				case 7: return -1;
+				case 7: return m;
 				default: return 5;
 				}
 			case SoundIoChannelIdBackRight:
 			case SoundIoChannelIdTopBackRight:
 				switch (channels)
 				{
-				case 1: return -1;
-				case 2: return -1;
-				case 3: return -1;
+				case 1: return m;
+				case 2: return m;
+				case 3: return m;
 				case 4: return 3;
 				case 5: return 4;
 				case 6: return 4;
-				case 7: return -1;
+				case 7: return m;
 				default: return 6;
 				}
 			case SoundIoChannelIdBackCenter:
 			case SoundIoChannelIdTopBackCenter:
 				switch (channels)
 				{
-				case 1: return -1;
-				case 2: return -1;
-				case 3: return -1;
-				case 4: return -1;
-				case 5: return -1;
-				case 6: return -1;
+				case 1: return m;
+				case 2: return m;
+				case 3: return m;
+				case 4: return m;
+				case 5: return m;
+				case 6: return m;
 				case 7: return 5;
-				default: return -1;
+				default: return m;
 				}
 			case SoundIoChannelIdSideLeft:
 				switch (channels)
 				{
-				case 1: return -1;
-				case 2: return -1;
-				case 3: return -1;
-				case 4: return -1;
-				case 5: return -1;
-				case 6: return -1;
+				case 1: return m;
+				case 2: return m;
+				case 3: return m;
+				case 4: return m;
+				case 5: return m;
+				case 6: return m;
 				case 7: return 3;
 				default: return 3;
 				}
 			case SoundIoChannelIdSideRight:
 				switch (channels)
 				{
-				case 1: return -1;
-				case 2: return -1;
-				case 3: return -1;
-				case 4: return -1;
-				case 5: return -1;
-				case 6: return -1;
+				case 1: return m;
+				case 2: return m;
+				case 3: return m;
+				case 4: return m;
+				case 5: return m;
+				case 6: return m;
 				case 7: return 4;
 				default: return 4;
 				}
 			default:
-				return -1;
+				return m;
 			}
 		}
 
@@ -139,7 +139,7 @@ namespace cage
 				mapping[i] = channelIndex(channels, device[i]);
 #ifdef CAGE_ASSERT_ENABLED
 			for (uint32 i = 0; i < channels; i++)
-				if (mapping[i] != -1)
+				if (mapping[i] != m)
 					CAGE_ASSERT_RUNTIME(mapping[i] < min(8u, channels), mapping[i], device[i], channels, i);
 #endif // CAGE_ASSERT_ENABLED
 			string sm, sd;
@@ -364,7 +364,7 @@ namespace cage
 							const float *frame = rp;
 							for (uint32 ch = 0; ch < numeric_cast<uint32>(stream->layout.channel_count); ch++)
 							{
-								if (channelMapping[ch] == -1)
+								if (channelMapping[ch] == m)
 									convertCallback(0, areas[ch].ptr);
 								else
 									convertCallback(frame[channelMapping[ch]] * (ch < sizeof(channelVolumes) / sizeof(channelVolumes[0]) ? channelVolumes[ch] : 0.f), areas[ch].ptr);

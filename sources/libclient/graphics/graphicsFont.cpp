@@ -33,7 +33,7 @@ namespace cage
 			uint32 cursor;
 			bool render;
 			processDataStruct() : mousePosition(vec2::Nan), format(nullptr), gls(nullptr),
-				outCursor(0), count(0), cursor(-1), render(false)
+				outCursor(0), count(0), cursor(m), render(false)
 			{}
 		};
 
@@ -81,7 +81,7 @@ namespace cage
 			std::vector<InstanceStruct> instances;
 
 			fontImpl() : texWidth(0), texHeight(0),
-				shr(nullptr), msh(nullptr), spaceGlyph(0), returnGlyph(0), cursorGlyph(-1)
+				shr(nullptr), msh(nullptr), spaceGlyph(0), returnGlyph(0), cursorGlyph(m)
 			{
 				uni = newUniformBuffer();
 				uni->writeWhole(nullptr, sizeof(InstanceStruct) * CAGE_SHADER_MAX_CHARACTERS, GL_DYNAMIC_DRAW);
@@ -397,7 +397,7 @@ namespace cage
 		data.format = &format;
 		data.gls = glyphs;
 		data.count = count;
-		data.cursor = getApplicationTime() % 1000000 < 300000 ? -1 : cursor;
+		data.cursor = getApplicationTime() % 1000000 < 300000 ? m : cursor;
 		data.render = true;
 		((fontImpl*)this)->processText(data);
 	}

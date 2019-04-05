@@ -43,4 +43,12 @@ void testEnums()
 		testFlags b = testFlags::testFlags1 | testFlags::testFlags3;
 		b |= testFlags::testFlags2;
 	}
+
+	{
+		CAGE_TESTCASE("flags functions any and none");
+		CAGE_TEST(any(testFlags::testFlags1 | testFlags::testFlags3));
+		CAGE_TEST(!any(testFlags::testFlags0));
+		CAGE_TEST(!none(testFlags::testFlags1 | testFlags::testFlags3));
+		CAGE_TEST(none(testFlags::testFlags0));
+	}
 }

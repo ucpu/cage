@@ -10,9 +10,9 @@ namespace cage
 		memoryBuffer encodeBuffer();
 		void encodeFile(const string &filename);
 
-		void decodeBuffer(const memoryBuffer &buffer, uint32 channels = -1, uint32 bpc = 1);
-		void decodeMemory(const void *buffer, uintPtr size, uint32 channels = -1, uint32 bpc = 1);
-		void decodeFile(const string &filename, uint32 channels = -1, uint32 bpc = 1);
+		void decodeBuffer(const memoryBuffer &buffer, uint32 channels = m, uint32 bpc = 1);
+		void decodeMemory(const void *buffer, uintPtr size, uint32 channels = m, uint32 bpc = 1);
+		void decodeFile(const string &filename, uint32 channels = m, uint32 bpc = 1);
 
 		uint32 width() const;
 		uint32 height() const;

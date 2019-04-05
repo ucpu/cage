@@ -13,7 +13,7 @@
 
 namespace cage
 {
-	widgetStateComponent::widgetStateComponent() : skinIndex(-1), disabled(false)
+	widgetStateComponent::widgetStateComponent() : skinIndex(m), disabled(false)
 	{}
 
 	labelComponent::labelComponent()
@@ -25,10 +25,10 @@ namespace cage
 	inputComponent::Union::Union() : i(0)
 	{}
 
-	inputComponent::inputComponent() : cursor(-1), type(inputTypeEnum::Text), style(inputStyleFlags::ShowArrowButtons), valid(false)
+	inputComponent::inputComponent() : cursor(m), type(inputTypeEnum::Text), style(inputStyleFlags::ShowArrowButtons), valid(false)
 	{}
 
-	textAreaComponent::textAreaComponent() : buffer(nullptr), cursor(-1), maxLength(1024 * 1024), style(inputStyleFlags::None)
+	textAreaComponent::textAreaComponent() : buffer(nullptr), cursor(m), maxLength(1024 * 1024), style(inputStyleFlags::None)
 	{}
 
 	checkBoxComponent::checkBoxComponent() : state(checkBoxStateEnum::Unchecked)
@@ -37,7 +37,7 @@ namespace cage
 	radioBoxComponent::radioBoxComponent() : group(0), state(checkBoxStateEnum::Unchecked)
 	{}
 
-	comboBoxComponent::comboBoxComponent() : selected(-1)
+	comboBoxComponent::comboBoxComponent() : selected(m)
 	{}
 
 	listBoxComponent::listBoxComponent()

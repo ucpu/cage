@@ -215,7 +215,7 @@ namespace cage
 			std::map<uint32, uint32> &m = assertContext().objects[cc];
 			auto it = m.find(typeIndex);
 			if (it == m.end())
-				return -1;
+				return cage::m;
 			return it->second;
 		}
 

@@ -16,7 +16,7 @@ namespace cage
 	parentComponent::parentComponent() : parent(0), order(0)
 	{}
 
-	imageComponent::imageComponent() : animationStart(-1), textureName(0), textureUvSize{1, 1}
+	imageComponent::imageComponent() : animationStart(m), textureName(0), textureUvSize{1, 1}
 	{}
 
 	imageFormatComponent::imageFormatComponent() : animationSpeed(1), mode(imageModeEnum::Stretch)
@@ -28,7 +28,7 @@ namespace cage
 	textFormatComponent::textFormatComponent() : color(vec3::Nan), font(0), size(real::Nan), lineSpacing(real::Nan), align((textAlignEnum)-1)
 	{}
 
-	selectionComponent::selectionComponent() : start(-1), length(0)
+	selectionComponent::selectionComponent() : start(m), length(0)
 	{}
 
 	scrollbarsComponent::scrollbarsComponent() : overflow{ overflowModeEnum::Auto, overflowModeEnum::Auto }

@@ -22,7 +22,7 @@ namespace
 				detail += ", ";
 			detail += string() + "transform: " + conv(n->mTransformation);
 		}
-		if (skeleton->index(n) != (uint16)-1)
+		if (skeleton->index(n) != m)
 		{
 			if (!detail.empty())
 				detail += ", ";

@@ -217,7 +217,7 @@ namespace
 			while (idx < charsetChars.size() && charsetChars[idx] < '\n')
 				idx++;
 			charsetChars.insert(charsetChars.begin() + idx, '\n');
-			charsetGlyphs.insert(charsetGlyphs.begin() + idx, -1);
+			charsetGlyphs.insert(charsetGlyphs.begin() + idx, (uint32)-1);
 			data.charCount++;
 		}
 

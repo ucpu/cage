@@ -231,43 +231,43 @@ namespace
 				CAGE_TEST(s.find('a', 2) == 3);
 				CAGE_TEST(s.find(':', 0) == 6);
 				CAGE_TEST(s.find(':', 3) == 6);
-				CAGE_TEST(s.find(':', 7) == -1);
+				CAGE_TEST(s.find(':', 7) == m);
 				CAGE_TEST(s.find("ta", 0) == 2);
 				CAGE_TEST(s.find("://", 0) == 6);
 				CAGE_TEST(s.find("a", 2) == 3);
 				CAGE_TEST(s.find("ra", 0) == 0);
 				CAGE_TEST(s.find("tata", 0) == 2);
-				CAGE_TEST(s.find("tata", 7) == -1);
+				CAGE_TEST(s.find("tata", 7) == m);
 			}
 			{
 				CAGE_TESTCASE("0123456789");
 				const string s = "0123456789";
-				CAGE_TEST(s.find("35", 0) == -1);
+				CAGE_TEST(s.find("35", 0) == m);
 				CAGE_TEST(s.find("45", 0) == 4);
 				CAGE_TEST(s.find("34", 0) == 3);
 				CAGE_TEST(s.find("0", 0) == 0);
 				CAGE_TEST(s.find("89", 0) == 8);
 				CAGE_TEST(s.find("9", 0) == 9);
-				CAGE_TEST(s.find("k", 0) == -1);
+				CAGE_TEST(s.find("k", 0) == m);
 			}
 			{
 				CAGE_TESTCASE("finding char only");
 				const string s = "0123456789";
-				CAGE_TEST(s.find('j', 0) == -1);
+				CAGE_TEST(s.find('j', 0) == m);
 				CAGE_TEST(s.find('4', 0) == 4);
 				CAGE_TEST(s.find('3', 0) == 3);
 				CAGE_TEST(s.find('0', 0) == 0);
 				CAGE_TEST(s.find('8', 0) == 8);
 				CAGE_TEST(s.find('9', 0) == 9);
-				CAGE_TEST(s.find('k', 0) == -1);
+				CAGE_TEST(s.find('k', 0) == m);
 			}
 			{
 				CAGE_TESTCASE("corner cases");
 				const string s = "0123456789";
-				CAGE_TEST(s.find('a', 100) == -1);
-				CAGE_TEST(s.find("a", 100) == -1);
-				CAGE_TEST(s.find("abcdefghijklmnopq", 0) == -1);
-				CAGE_TEST(s.find("") == -1);
+				CAGE_TEST(s.find('a', 100) == m);
+				CAGE_TEST(s.find("a", 100) == m);
+				CAGE_TEST(s.find("abcdefghijklmnopq", 0) == m);
+				CAGE_TEST(s.find("") == m);
 			}
 		}
 		{
@@ -405,9 +405,9 @@ namespace
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
 			sub = a.subString(15, 50);
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-			sub = a.subString(0, -1);
+			sub = a.subString(0, m);
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-			sub = a.subString(17, -1);
+			sub = a.subString(17, m);
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
 			sub = a.subString(-5, 12);
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
@@ -420,9 +420,9 @@ namespace
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
 			rem = a.remove(15, 50);
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-			rem = a.remove(0, -1);
+			rem = a.remove(0, m);
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-			rem = a.remove(17, -1);
+			rem = a.remove(17, m);
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
 			rem = a.remove(-5, 12);
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");

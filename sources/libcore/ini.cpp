@@ -141,7 +141,7 @@ namespace cage
 	{
 		void validateString(const string &str)
 		{
-			if (str.empty() || str.find('#') != -1 || str.find('[') != -1 || str.find(']') != -1 || str.find('=') != -1)
+			if (str.empty() || str.find('#') != m || str.find('[') != m || str.find(']') != m || str.find('=') != m)
 				CAGE_THROW_ERROR(exception, "invalid value");
 		}
 	}
@@ -150,7 +150,7 @@ namespace cage
 	{
 		validateString(section);
 		validateString(item);
-		if (value.find('#') != -1)
+		if (value.find('#') != m)
 			CAGE_THROW_ERROR(exception, "invalid value");
 		iniImpl *impl = (iniImpl*)this;
 		if (!sectionExists(section))
@@ -179,7 +179,7 @@ namespace cage
 				if (line.empty())
 					continue;
 				uint32 pos = line.find('#');
-				if (pos != -1)
+				if (pos != m)
 					line = line.subString(0, pos);
 				line = line.trim();
 				if (line.empty())
@@ -198,12 +198,12 @@ namespace cage
 					CAGE_THROW_ERROR(exception, "item outside section");
 				pos = line.find('=');
 				string itemName, itemValue;
-				if (pos == -1)
+				if (pos == m)
 					itemValue = line;
 				else
 				{
 					itemName = line.subString(0, pos).trim();
-					itemValue = line.subString(pos + 1, -1).trim();
+					itemValue = line.subString(pos + 1, m).trim();
 				}
 				if (itemName.empty())
 					itemName = string(itemIndex++);

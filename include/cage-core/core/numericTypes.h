@@ -42,7 +42,7 @@ namespace cage
 
 	namespace detail
 	{
-		template<class C>
+		template<class T>
 		struct numeric_limits
 		{
 			static const bool is_specialized = false;
@@ -208,5 +208,23 @@ namespace cage
 				return u.t;
 			}
 		}
+
+		struct maxStruct
+		{
+			template<class T>
+			constexpr operator T () const
+			{
+				return detail::numeric_limits<T>::max();
+			}
+		};
+
+		template<class T> constexpr bool operator == (T lhs, maxStruct rhs) { return lhs == detail::numeric_limits<T>::max(); }
+		template<class T> constexpr bool operator != (T lhs, maxStruct rhs) { return lhs != detail::numeric_limits<T>::max(); }
+		template<class T> constexpr bool operator <= (T lhs, maxStruct rhs) { return lhs <= detail::numeric_limits<T>::max(); }
+		template<class T> constexpr bool operator >= (T lhs, maxStruct rhs) { return lhs >= detail::numeric_limits<T>::max(); }
+		template<class T> constexpr bool operator < (T lhs, maxStruct rhs) { return lhs < detail::numeric_limits<T>::max(); }
+		template<class T> constexpr bool operator > (T lhs, maxStruct rhs) { return lhs > detail::numeric_limits<T>::max(); }
 	}
+
+	static constexpr const privat::maxStruct m; // represents the maximum value possible in any numeric type
 }

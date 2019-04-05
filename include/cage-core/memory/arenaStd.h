@@ -45,7 +45,7 @@ namespace cage
 
 		size_type max_size() const noexcept
 		{
-			return -1;
+			return m;
 		}
 
 		void construct(pointer ptr, const T &t)

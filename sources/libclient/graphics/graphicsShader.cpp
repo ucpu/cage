@@ -432,12 +432,12 @@ namespace cage
 		impl->sources.clear();
 		CAGE_CHECK_GL_ERROR_DEBUG();
 
-		{ GLint count; glGetProgramStageiv(impl->id, GL_VERTEX_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesVertex.resize(count, -1); }
-		{ GLint count; glGetProgramStageiv(impl->id, GL_TESS_CONTROL_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesTessControl.resize(count, -1); }
-		{ GLint count; glGetProgramStageiv(impl->id, GL_TESS_EVALUATION_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesTessEvaluation.resize(count, -1); }
-		{ GLint count; glGetProgramStageiv(impl->id, GL_GEOMETRY_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesGeometry.resize(count, -1); }
-		{ GLint count; glGetProgramStageiv(impl->id, GL_FRAGMENT_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesFragment.resize(count, -1); }
-		{ GLint count; glGetProgramStageiv(impl->id, GL_COMPUTE_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesCompute.resize(count, -1); }
+		{ GLint count; glGetProgramStageiv(impl->id, GL_VERTEX_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesVertex.resize(count, m); }
+		{ GLint count; glGetProgramStageiv(impl->id, GL_TESS_CONTROL_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesTessControl.resize(count, m); }
+		{ GLint count; glGetProgramStageiv(impl->id, GL_TESS_EVALUATION_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesTessEvaluation.resize(count, m); }
+		{ GLint count; glGetProgramStageiv(impl->id, GL_GEOMETRY_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesGeometry.resize(count, m); }
+		{ GLint count; glGetProgramStageiv(impl->id, GL_FRAGMENT_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesFragment.resize(count, m); }
+		{ GLint count; glGetProgramStageiv(impl->id, GL_COMPUTE_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesCompute.resize(count, m); }
 		CAGE_CHECK_GL_ERROR_DEBUG();
 
 		GLint len;
@@ -481,7 +481,7 @@ namespace cage
 					const GLenum props[] = { GL_BLOCK_INDEX, GL_LOCATION, GL_TYPE, GL_ARRAY_SIZE };
 					GLint values[4];
 					glGetProgramResourceiv(impl->id, GL_UNIFORM, unif, 4, props, 4, nullptr, values);
-					if (values[0] != -1)
+					if (values[0] != m)
 						continue; // skip variables that are inside any block
 					GLchar name[100];
 					GLint nameLen = 0;
@@ -536,7 +536,7 @@ namespace cage
 						// enumerate compatible subroutines
 						const GLenum props2[] = { GL_COMPATIBLE_SUBROUTINES };
 						GLint values2[100];
-						GLint numCompatibles = -1;
+						GLint numCompatibles = m;
 						glGetProgramResourceiv(impl->id, stage, routine, 1, props2, 99, &numCompatibles, values2);
 						for (GLint compat = 0; compat < numCompatibles; compat++)
 						{
@@ -564,7 +564,7 @@ namespace cage
 					{
 						const GLenum props[] = { GL_LOCATION, GL_TYPE, GL_ARRAY_SIZE, GL_LOCATION_INDEX };
 						GLint values[4];
-						values[3] = -1;
+						values[3] = m;
 						glGetProgramResourceiv(impl->id, stage, var, 3 + stageIndex, props, 4, nullptr, values);
 						GLchar name[100];
 						GLint nameLen = 0;

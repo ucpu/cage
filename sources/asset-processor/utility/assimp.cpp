@@ -50,7 +50,7 @@ namespace
 					}
 				}
 				// find nodes
-				traverseNodes2(interested, scene->mRootNode, -1);
+				traverseNodes2(interested, scene->mRootNode, m);
 			}
 			// update indices
 			{
@@ -95,7 +95,7 @@ namespace
 				}
 				else
 				{
-					CAGE_ASSERT_RUNTIME(parents[i] == (uint16)-1);
+					CAGE_ASSERT_RUNTIME(parents[i] == m);
 				}
 				if (bones[i])
 				{
@@ -398,7 +398,7 @@ aiNode *assimpSkeletonClass::node(aiBone *bone) const
 aiNode *assimpSkeletonClass::node(uint16 index) const
 {
 	const assimpSkeletonImpl *impl = (const assimpSkeletonImpl*)this;
-	if (index == (uint16)-1)
+	if (index == m)
 		return nullptr;
 	return impl->nodes[index];
 }
@@ -411,7 +411,7 @@ aiBone *assimpSkeletonClass::bone(aiNode *node) const
 aiBone *assimpSkeletonClass::bone(uint16 index) const
 {
 	const assimpSkeletonImpl *impl = (const assimpSkeletonImpl*)this;
-	if (index == (uint16)-1)
+	if (index == m)
 		return nullptr;
 	return impl->bones[index];
 }
@@ -420,31 +420,31 @@ uint16 assimpSkeletonClass::index(const aiString &name) const
 {
 	const assimpSkeletonImpl *impl = (const assimpSkeletonImpl*)this;
 	if (!name.length)
-		return (uint16)-1;
+		return m;
 	if (!impl->indices.count(name))
-		return (uint16)-1;
+		return m;
 	return impl->indices.at(name);
 }
 
 uint16 assimpSkeletonClass::index(aiNode *node) const
 {
 	if (!node)
-		return (uint16)-1;
+		return m;
 	return index(node->mName);
 }
 
 uint16 assimpSkeletonClass::index(aiBone *bone) const
 {
 	if (!bone)
-		return (uint16)-1;
+		return m;
 	return index(bone->mName);
 }
 
 uint16 assimpSkeletonClass::parent(uint16 index) const
 {
 	const assimpSkeletonImpl *impl = (const assimpSkeletonImpl*)this;
-	if (index == (uint16)-1)
-		return (uint16)-1;
+	if (index == m)
+		return m;
 	return impl->parents[index];
 }
 
@@ -656,7 +656,7 @@ mat3 axesMatrix()
 		else
 		{ // axes
 			uint32 out = i / 2;
-			uint32 in = -1;
+			uint32 in = m;
 			switch (c)
 			{
 			case 'x':

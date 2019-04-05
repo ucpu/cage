@@ -126,7 +126,7 @@ namespace cage
 					for (const triangle &t : item->collider->triangles())
 					{
 						if (intersects(shape, t * *item))
-							resultPairs.emplace_back(-1, i);
+							resultPairs.emplace_back(m, i);
 						i++;
 					}
 					CAGE_ASSERT_RUNTIME(!resultPairs.empty());

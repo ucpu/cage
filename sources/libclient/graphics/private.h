@@ -43,7 +43,7 @@ namespace cage
 		void setCurrentObject(uint32 id) {}
 
 		template<class T>
-		uint32 getCurrentObject() { return -1; }
+		uint32 getCurrentObject() { return m; }
 
 		inline void setCurrentContext(windowClass *context) {}
 		inline windowClass *getCurrentContext() { return nullptr; }

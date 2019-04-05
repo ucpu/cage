@@ -81,7 +81,7 @@ namespace cage
 		for (uint32 i = 0; i < impl->totalBones; i++)
 		{
 			uint16 p = impl->boneParents[i];
-			if (p == (uint16)-1)
+			if (p == m)
 				temporary[i] = mat4();
 			else
 			{
@@ -112,7 +112,7 @@ namespace cage
 		for (uint32 i = 0; i < impl->totalBones; i++)
 		{
 			uint16 p = impl->boneParents[i];
-			if (p == (uint16)-1)
+			if (p == m)
 				output[i] = mat4::scale(0); // degenerate
 			else
 			{

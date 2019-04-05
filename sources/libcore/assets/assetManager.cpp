@@ -47,7 +47,7 @@ namespace cage
 			uint32 scheme;
 			uint32 references;
 			std::atomic<bool> processing, ready, error, dependenciesDoneFlag, fabricated;
-			assetContextPrivateStruct() : internationalizedPrevious(0), scheme(-1), references(0), processing(false), ready(false), error(true), dependenciesDoneFlag(false), fabricated(false) {}
+			assetContextPrivateStruct() : internationalizedPrevious(0), scheme(m), references(0), processing(false), ready(false), error(true), dependenciesDoneFlag(false), fabricated(false) {}
 		};
 
 		struct assetSchemePrivateStruct : public assetSchemeStruct
@@ -101,7 +101,7 @@ namespace cage
 				queueCustomLoad.reserve(config.threadMaxCount);
 				queueCustomDone.reserve(config.threadMaxCount);
 				concurrentQueueCreateConfig tsqc;
-				tsqc.maxElements = -1;
+				tsqc.maxElements = m;
 				for (uint32 i = 0; i < config.threadMaxCount; i++)
 				{
 					queueCustomLoad.push_back(newConcurrentQueue<assetContextPrivateStruct*>(tsqc));
@@ -157,7 +157,7 @@ namespace cage
 					CAGE_ASSERT_RUNTIME(ass->compressedData == nullptr);
 					CAGE_ASSERT_RUNTIME(ass->internationalizedPrevious == 0);
 					ass->internationalizedPrevious = ass->internationalizedName;
-					ass->scheme = -1;
+					ass->scheme = m;
 					ass->assetFlags = 0;
 					ass->compressedSize = ass->originalSize = 0;
 					ass->internationalizedName = 0;
@@ -179,7 +179,7 @@ namespace cage
 							CAGE_THROW_ERROR(exception, "cage asset text name not bounded");
 						if (h->scheme >= schemes.size())
 							CAGE_THROW_ERROR(exception, "cage asset scheme out of range");
-						if (ass->scheme != -1 && ass->scheme != h->scheme)
+						if (ass->scheme != m && ass->scheme != h->scheme)
 							CAGE_THROW_ERROR(exception, "cage asset scheme cannot change");
 						if (buff.size() < sizeof(assetHeaderStruct) + h->dependenciesCount * sizeof(uint32))
 							CAGE_THROW_ERROR(exception, "cage asset file dependencies truncated");
@@ -481,7 +481,7 @@ namespace cage
 				countProcessing++;
 				ass->processing = true;
 				ass->ready = false;
-				if (ass->scheme == -1 || ass->fabricated)
+				if (ass->scheme == m || ass->fabricated)
 					queueRemoveDependencies->push(ass);
 				else
 				{
@@ -632,7 +632,7 @@ namespace cage
 		assetContextPrivateStruct *ass = impl->index->get(assetName, true);
 		if (ass)
 			return ass->scheme;
-		return -1;
+		return m;
 	}
 
 	uint32 assetManagerClass::generateUniqueName()
@@ -656,7 +656,7 @@ namespace cage
 			impl->countTotal++;
 			impl->assetStartLoading(ass);
 		}
-		CAGE_ASSERT_RUNTIME(ass->references < (uint32)-1);
+		CAGE_ASSERT_RUNTIME(ass->references < m);
 		ass->references++;
 	}
 
