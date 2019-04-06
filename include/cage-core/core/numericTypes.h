@@ -226,5 +226,7 @@ namespace cage
 		template<class T> constexpr bool operator > (T lhs, maxStruct rhs) { return lhs > detail::numeric_limits<T>::max(); }
 	}
 
-	static constexpr const privat::maxStruct m; // represents the maximum value possible in any numeric type
+	static constexpr const privat::maxStruct m = privat::maxStruct(); // represents the maximum value possible in any numeric type
 }
+
+
