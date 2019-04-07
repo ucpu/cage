@@ -7,6 +7,7 @@
 #include <cage-core/memory.h>
 #include <cage-core/filesystem.h>
 #include <cage-core/ini.h>
+#include <cage-core/pointerRangeHolder.h>
 
 namespace cage
 {
@@ -33,7 +34,6 @@ namespace cage
 			memoryArenaGrowing<memoryAllocatorPolicyPool<sizeof(templates::allocatorSizeMap<string, string>)>, memoryConcurrentPolicyNone> pool;
 			memoryArena arena;
 			containerMap<holder<inisection>> sections;
-			std::vector<string> tmpSections, tmpItems;
 		};
 	}
 
@@ -64,13 +64,14 @@ namespace cage
 		return impl->sections.cont.count(section);
 	}
 
-	pointerRange<string> iniClass::sections() const
+	holder<pointerRange<string>> iniClass::sections() const
 	{
 		iniImpl *impl = (iniImpl*)this;
-		impl->tmpSections.clear();
+		pointerRangeHolder<string> tmp;
+		tmp.reserve(impl->sections.cont.size());
 		for (auto &it : impl->sections.cont)
-			impl->tmpSections.push_back(it.first);
-		return impl->tmpSections;
+			tmp.push_back(it.first);
+		return tmp;
 	}
 
 	void iniClass::sectionRemove(const string &section)
@@ -112,14 +113,17 @@ namespace cage
 		return impl->sections.cont[section]->items.cont.count(item);
 	}
 
-	pointerRange<string> iniClass::items(const string &section) const
+	holder<pointerRange<string>> iniClass::items(const string &section) const
 	{
 		iniImpl *impl = (iniImpl*)this;
-		impl->tmpItems.clear();
-		if (sectionExists(section))
-			for (auto it : impl->sections.cont[section]->items.cont)
-				impl->tmpItems.push_back(it.first);
-		return impl->tmpItems;
+		pointerRangeHolder<string> tmp;
+		if (!sectionExists(section))
+			return tmp;
+		auto &cont = impl->sections.cont[section]->items.cont;
+		tmp.reserve(cont.size());
+		for (auto it : cont)
+			tmp.push_back(it.first);
+		return tmp;
 	}
 
 	void iniClass::itemRemove(const string &section, const string &item)

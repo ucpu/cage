@@ -7,7 +7,7 @@ namespace cage
 	{
 	public:
 		uint32 resultCount() const;
-		const uint32 *resultArray() const;
+		const uint32 *resultData() const;
 		pointerRange<const uint32> result() const;
 
 		void intersection(const line &shape);

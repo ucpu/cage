@@ -8,17 +8,19 @@ namespace
 {
 	void drawCircle(pngImageClass *png)
 	{
-		uint32 w = png->width(), h = png->height(), channels = png->channels();
+		uint32 w = png->width(), h = png->height();
 		vec2 center = vec2(w, h) * 0.5;
 		real radiusMax = min(w, h) * 0.5;
-		for (real r = 10; r < radiusMax; r += 1)
+		for (uint32 y = 0; y < h; y++)
 		{
-			for (rads a; a < rads::Full; a += degs(1))
+			for (uint32 x = 0; x < w; x++)
 			{
-				vec2 p = center + vec2(sin(a), cos(a)) * r;
-				vec3 color = convertHsvToRgb(vec3(real(a) / real::TwoPi, 1, r / radiusMax));
-				for (uint32 i = 0; i < channels; i++)
-					png->value(numeric_cast<uint32>(p[0]), numeric_cast<uint32>(p[1]), i, color[i].value);
+				real xx = (real(x) - w / 2) / radiusMax;
+				real yy = (real(y) - h / 2) / radiusMax;
+				real h = aTan2(xx, yy).normalize() / rads::Full;
+				real s = length(vec2(xx, yy));
+				vec3 color = s <= 1 ? convertHsvToRgb(vec3(h, s, 1)) : vec3();
+				png->set(x, y, color);
 			}
 		}
 	}
@@ -27,19 +29,41 @@ namespace
 void testPng()
 {
 	CAGE_TESTCASE("png");
+
 	{
-		CAGE_TESTCASE("circle");
+		CAGE_TESTCASE("circle 8bit");
 		holder<pngImageClass> png = newPngImage();
 		png->empty(400, 300, 3);
 		drawCircle(png.get());
-		png->encodeFile("testdir/circle.png");
+		png->encodeFile("images/circle1.png");
 		CAGE_TEST(png->bufferSize() == 400 * 300 * 3);
 		png = newPngImage();
 		CAGE_TEST(png->bufferSize() == 0);
-		png->decodeFile("testdir/circle.png");
+		png->decodeFile("images/circle1.png", m, m);
 		CAGE_TEST(png->channels() == 3);
+		CAGE_TEST(png->bytesPerChannel() == 1);
 		CAGE_TEST(png->width() == 400);
 		CAGE_TEST(png->height() == 300);
 		CAGE_TEST(png->bufferSize() == 400 * 300 * 3);
 	}
+
+	{
+		CAGE_TESTCASE("circle 16bit");
+		holder<pngImageClass> png = newPngImage();
+		png->empty(400, 300, 3, 2);
+		drawCircle(png.get());
+		png->encodeFile("images/circle2.png");
+		CAGE_TEST(png->bufferSize() == 400 * 300 * 3 * 2);
+		png = newPngImage();
+		CAGE_TEST(png->bufferSize() == 0);
+		png->decodeFile("images/circle2.png", m, m);
+		CAGE_TEST(png->channels() == 3);
+		CAGE_TEST(png->bytesPerChannel() == 2);
+		CAGE_TEST(png->width() == 400);
+		CAGE_TEST(png->height() == 300);
+		CAGE_TEST(png->bufferSize() == 400 * 300 * 3 * 2);
+		png->encodeFile("images/circle2_2.png");
+	}
+
+	// todo conversions
 }

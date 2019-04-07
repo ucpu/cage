@@ -118,25 +118,25 @@ namespace cage
 				n.SetNoiseType(convert(config.type, config.octaves));
 			}
 
-			void evaluate(uint32 count, real positions[], real results[])
+			void evaluate(uint32 count, const real positions[], real results[])
 			{
 				for (uint32 i = 0; i < count; i++)
 					results[i] = n.GetNoise(positions[i].value, 0);
 			}
 
-			void evaluate(uint32 count, vec2 positions[], real results[])
+			void evaluate(uint32 count, const vec2 positions[], real results[])
 			{
 				for (uint32 i = 0; i < count; i++)
 					results[i] = n.GetNoise(positions[i][0].value, positions[i][1].value);
 			}
 
-			void evaluate(uint32 count, vec3 positions[], real results[])
+			void evaluate(uint32 count, const vec3 positions[], real results[])
 			{
 				for (uint32 i = 0; i < count; i++)
 					results[i] = n.GetNoise(positions[i][0].value, positions[i][1].value, positions[i][2].value);
 			}
 
-			void evaluate(uint32 count, vec4 positions[], real results[])
+			void evaluate(uint32 count, const vec4 positions[], real results[])
 			{
 				CAGE_THROW_CRITICAL(notImplementedException, "4D noise functions are not implemented");
 			}
@@ -175,25 +175,25 @@ namespace cage
 		return result;
 	}
 
-	void noiseClass::evaluate(uint32 count, real positions[], real results[])
+	void noiseClass::evaluate(uint32 count, const real positions[], real results[])
 	{
 		noiseImpl *impl = (noiseImpl*)this;
 		impl->evaluate(count, positions, results);
 	}
 
-	void noiseClass::evaluate(uint32 count, vec2 positions[], real results[])
+	void noiseClass::evaluate(uint32 count, const vec2 positions[], real results[])
 	{
 		noiseImpl *impl = (noiseImpl*)this;
 		impl->evaluate(count, positions, results);
 	}
 
-	void noiseClass::evaluate(uint32 count, vec3 positions[], real results[])
+	void noiseClass::evaluate(uint32 count, const vec3 positions[], real results[])
 	{
 		noiseImpl *impl = (noiseImpl*)this;
 		impl->evaluate(count, positions, results);
 	}
 
-	void noiseClass::evaluate(uint32 count, vec4 positions[], real results[])
+	void noiseClass::evaluate(uint32 count, const vec4 positions[], real results[])
 	{
 		noiseImpl *impl = (noiseImpl*)this;
 		impl->evaluate(count, positions, results);

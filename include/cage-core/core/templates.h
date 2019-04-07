@@ -1,28 +1,5 @@
 namespace cage
 {
-	template<class T>
-	struct pointerRange
-	{
-	private:
-		T *begin_;
-		T *end_;
-
-	public:
-		pointerRange() : begin_(nullptr), end_(nullptr)
-		{}
-
-		pointerRange(T *begin, T *end) : begin_(begin), end_(end)
-		{}
-
-		template<class U>
-		pointerRange(U &other) : begin_(other.data()), end_(other.data() + other.size())
-		{}
-
-		T *begin() const { return begin_; }
-		T *end() const { return end_; }
-		uintPtr size() const { return end_ - begin_; }
-	};
-
 	namespace templates
 	{
 		template<bool Cond, class T> struct enable_if {};
@@ -33,6 +10,9 @@ namespace cage
 		template<> struct base_unsigned_type<4> { typedef uint32 type; };
 		template<> struct base_unsigned_type<8> { typedef uint64 type; };
 		template<class T> struct underlying_type { typedef typename base_unsigned_type<sizeof(T)>::type type; };
+
+		template<class T> struct remove_const { typedef T type; };
+		template<class T> struct remove_const<const T> { typedef T type; };
 
 		template<class T> struct remove_reference      { typedef T type; };
 		template<class T> struct remove_reference<T&>  { typedef T type; };
@@ -54,5 +34,7 @@ namespace cage
 	template<class T> inline typename templates::enable_if<enable_bitmask_operators<T>::enable, bool>::type any(T lhs) { typedef typename templates::underlying_type<T>::type underlying; return static_cast<underlying>(lhs) != 0; }
 	template<class T> inline typename templates::enable_if<enable_bitmask_operators<T>::enable, bool>::type none(T lhs) { typedef typename templates::underlying_type<T>::type underlying; return static_cast<underlying>(lhs) == 0; }
 
+// this macro has to be used inside namespace cage
 #define GCHL_ENUM_BITS(Type) template<> struct enable_bitmask_operators<Type> { static const bool enable = true; };
+
 }

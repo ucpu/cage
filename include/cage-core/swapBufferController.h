@@ -39,11 +39,11 @@ namespace cage
 			swapBufferLock();
 			swapBufferLock(swapBufferControllerClass *controller, uint32 index);
 			swapBufferLock(const swapBufferLock &) = delete; // non-copyable
-			swapBufferLock(swapBufferLock &&other); // moveable
+			swapBufferLock(swapBufferLock &&other); // movable
 			~swapBufferLock();
 			swapBufferLock &operator = (const swapBufferLock &) = delete; // non-copyable
-			swapBufferLock &operator = (swapBufferLock &&other); // moveable
-			operator bool() const { return !!controller_; }
+			swapBufferLock &operator = (swapBufferLock &&other); // movable
+			explicit operator bool() const { return !!controller_; }
 			uint32 index() const { CAGE_ASSERT_RUNTIME(!!controller_); return index_; }
 
 		private:

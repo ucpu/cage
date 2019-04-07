@@ -51,7 +51,7 @@ void testNoise()
 			config.type = noiseTypeEnum::Value;
 			config.octaves = oct;
 			holder<noiseClass> noise = newNoise(config);
-			generateImage(string() + "noise/value_" + oct + ".png", noise);
+			generateImage(string() + "images/value_" + oct + ".png", noise);
 		}
 	}
 
@@ -63,7 +63,7 @@ void testNoise()
 			config.type = noiseTypeEnum::Perlin;
 			config.octaves = oct;
 			holder<noiseClass> noise = newNoise(config);
-			generateImage(string() + "noise/perlin_" + oct + ".png", noise);
+			generateImage(string() + "images/perlin_" + oct + ".png", noise);
 		}
 	}
 
@@ -75,7 +75,7 @@ void testNoise()
 			config.type = noiseTypeEnum::Simplex;
 			config.octaves = oct;
 			holder<noiseClass> noise = newNoise(config);
-			generateImage(string() + "noise/simplex_" + oct + ".png", noise);
+			generateImage(string() + "images/simplex_" + oct + ".png", noise);
 		}
 	}
 
@@ -86,21 +86,21 @@ void testNoise()
 			config.type = noiseTypeEnum::Cellular;
 			config.operation = noiseOperationEnum::None;
 			holder<noiseClass> noise = newNoise(config);
-			generateImage(string() + "noise/cellular_none.png", noise);
+			generateImage(string() + "images/cellular_none.png", noise);
 		}
 		{
 			noiseCreateConfig config;
 			config.type = noiseTypeEnum::Cellular;
 			config.operation = noiseOperationEnum::Distance;
 			holder<noiseClass> noise = newNoise(config);
-			generateImage(string() + "noise/cellular_distance.png", noise);
+			generateImage(string() + "images/cellular_distance.png", noise);
 		}
 		{
 			noiseCreateConfig config;
 			config.type = noiseTypeEnum::Cellular;
 			config.operation = noiseOperationEnum::Divide;
 			holder<noiseClass> noise = newNoise(config);
-			generateImage(string() + "noise/cellular_divide.png", noise);
+			generateImage(string() + "images/cellular_divide.png", noise);
 		}
 	}
 }

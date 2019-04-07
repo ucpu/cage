@@ -145,6 +145,9 @@ namespace cage
 				CAGE_THROW_ERROR(exception, "png encoder failed (png_structp)");
 			pngIoCtx ioCtx(out);
 			png_set_write_fn(png, &ioCtx, &pngWriteFunc, &pngFlushFunc);
+
+			if (privat::endianness::little())
+				png_set_swap(png);
 			info = png_create_info_struct(png);
 			if (!info)
 				CAGE_THROW_ERROR(exception, "png encoder failed (png_infop)");
@@ -169,6 +172,8 @@ namespace cage
 			}
 			png_set_IHDR(png, info, width, height, bpp * 8, colorType, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 			png_write_info(png, info);
+			if (privat::endianness::little())
+				png_set_swap(png);
 
 			std::vector<png_bytep> rows;
 			rows.resize(height);
@@ -329,6 +334,70 @@ namespace cage
 		}
 	}
 
+
+	real pngImageClass::get1(uint32 x, uint32 y) const
+	{
+		pngBufferImpl *impl = (pngBufferImpl*)this;
+		CAGE_ASSERT_RUNTIME(channels() == 1);
+		return value(x, y, 0);
+	}
+
+	vec2 pngImageClass::get2(uint32 x, uint32 y) const
+	{
+		pngBufferImpl *impl = (pngBufferImpl*)this;
+		CAGE_ASSERT_RUNTIME(channels() == 2);
+		return vec2(value(x, y, 0), value(x, y, 1));
+	}
+
+	vec3 pngImageClass::get3(uint32 x, uint32 y) const
+	{
+		pngBufferImpl *impl = (pngBufferImpl*)this;
+		CAGE_ASSERT_RUNTIME(channels() == 3);
+		return vec3(value(x, y, 0), value(x, y, 1), value(x, y, 2));
+
+	}
+
+	vec4 pngImageClass::get4(uint32 x, uint32 y) const
+	{
+		pngBufferImpl *impl = (pngBufferImpl*)this;
+		CAGE_ASSERT_RUNTIME(channels() == 4);
+		return vec4(value(x, y, 0), value(x, y, 1), value(x, y, 2), value(x, y, 3));
+	}
+
+	void pngImageClass::set(uint32 x, uint32 y, const real &v)
+	{
+		pngBufferImpl *impl = (pngBufferImpl*)this;
+		CAGE_ASSERT_RUNTIME(channels() == 1);
+		value(x, y, 0, v.value);
+	}
+
+	void pngImageClass::set(uint32 x, uint32 y, const vec2 &v)
+	{
+		pngBufferImpl *impl = (pngBufferImpl*)this;
+		CAGE_ASSERT_RUNTIME(channels() == 2);
+		value(x, y, 0, v[0].value);
+		value(x, y, 1, v[1].value);
+	}
+
+	void pngImageClass::set(uint32 x, uint32 y, const vec3 &v)
+	{
+		pngBufferImpl *impl = (pngBufferImpl*)this;
+		CAGE_ASSERT_RUNTIME(channels() == 3);
+		value(x, y, 0, v[0].value);
+		value(x, y, 1, v[1].value);
+		value(x, y, 2, v[2].value);
+	}
+
+	void pngImageClass::set(uint32 x, uint32 y, const vec4 &v)
+	{
+		pngBufferImpl *impl = (pngBufferImpl*)this;
+		CAGE_ASSERT_RUNTIME(channels() == 4);
+		value(x, y, 0, v[0].value);
+		value(x, y, 1, v[1].value);
+		value(x, y, 2, v[2].value);
+		value(x, y, 3, v[3].value);
+	}
+
 	void pngImageClass::verticalFlip()
 	{
 		pngBufferImpl *impl = (pngBufferImpl*)this;
@@ -359,8 +428,8 @@ namespace cage
 
 	void pngBlit(pngImageClass *sourcePng, pngImageClass *targetPng, uint32 sourceX, uint32 sourceY, uint32 targetX, uint32 targetY, uint32 width, uint32 height)
 	{
-		CAGE_ASSERT_RUNTIME(sourcePng->channels() == targetPng->channels(), "images are incompatible", sourcePng->channels(), targetPng->channels());
-		CAGE_ASSERT_RUNTIME(sourcePng->bytesPerChannel() == targetPng->bytesPerChannel(), "images are incompatible", sourcePng->bytesPerChannel(), targetPng->bytesPerChannel());
+		CAGE_ASSERT_RUNTIME(sourcePng->channels() == targetPng->channels(), "images are incompatible (different count of channels)", sourcePng->channels(), targetPng->channels());
+		CAGE_ASSERT_RUNTIME(sourcePng->bytesPerChannel() == targetPng->bytesPerChannel(), "images are incompatible (different bytes per channel)", sourcePng->bytesPerChannel(), targetPng->bytesPerChannel());
 		uint32 sw = sourcePng->width();
 		uint32 sh = sourcePng->height();
 		uint32 tw = targetPng->width();

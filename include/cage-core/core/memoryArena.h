@@ -126,10 +126,10 @@ namespace cage
 			return holder<T>(p, p, d);
 		};
 
-		template<class T, class I, class... Ts>
-		holder<T> createImpl(Ts... vs)
+		template<class Holder, class Impl, class... Ts>
+		holder<Holder> createImpl(Ts... vs)
 		{
-			return createHolder<I>(templates::forward<Ts>(vs)...).template cast<T>();
+			return createHolder<Impl>(templates::forward<Ts>(vs)...).template cast<Holder>();
 		};
 
 		template<class T>

@@ -25,6 +25,18 @@ namespace cage
 		float value(uint32 x, uint32 y, uint32 c) const;
 		void value(uint32 x, uint32 y, uint32 c, float v);
 
+		// getting a value must match the number of channels
+		real get1(uint32 x, uint32 y) const;
+		vec2 get2(uint32 x, uint32 y) const;
+		vec3 get3(uint32 x, uint32 y) const;
+		vec4 get4(uint32 x, uint32 y) const;
+
+		// setting a value must match the number of channels
+		void set(uint32 x, uint32 y, const real &value);
+		void set(uint32 x, uint32 y, const vec2 &value);
+		void set(uint32 x, uint32 y, const vec3 &value);
+		void set(uint32 x, uint32 y, const vec4 &value);
+
 		void verticalFlip();
 		void convert(uint32 channels, uint32 bpc);
 	};

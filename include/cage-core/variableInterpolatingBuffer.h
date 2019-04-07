@@ -81,7 +81,7 @@ namespace cage
 			return interp(1, current);
 		}
 
-		operator bool() const
+		explicit operator bool() const
 		{
 			return times[0] != 0;
 		}

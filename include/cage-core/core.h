@@ -14,6 +14,7 @@
 #include "core/holder.h"
 #include "core/memoryArena.h"
 #include "core/string.h"
+#include "core/pointerRange.h"
 
 namespace cage
 {

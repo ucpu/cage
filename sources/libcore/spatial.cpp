@@ -402,7 +402,7 @@ namespace cage
 		return numeric_cast<uint32>(impl->resultNames.size());
 	}
 
-	const uint32 *spatialQueryClass::resultArray() const
+	const uint32 *spatialQueryClass::resultData() const
 	{
 		spatialQueryImpl *impl = (spatialQueryImpl*)this;
 		return impl->resultNames.data();

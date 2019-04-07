@@ -50,7 +50,7 @@ namespace
 
 		void checkResults(const std::set<uint32> &b)
 		{
-			const uint32 *res = query->resultArray();
+			const uint32 *res = query->resultData();
 			const uint32 cnt = query->resultCount();
 			CAGE_TEST(b.size() == cnt);
 			std::set<uint32> a(res, res + cnt);
