@@ -3,97 +3,6 @@
 
 namespace cage
 {
-	CAGE_API void configSetBool(const string &name, bool value);
-	CAGE_API void configSetSint32(const string &name, sint32 value);
-	CAGE_API void configSetUint32(const string &name, uint32 value);
-	CAGE_API void configSetSint64(const string &name, sint64 value);
-	CAGE_API void configSetUint64(const string &name, uint64 value);
-	CAGE_API void configSetFloat(const string &name, float value);
-	CAGE_API void configSetDouble(const string &name, double value);
-	CAGE_API void configSetString(const string &name, const string &value);
-	CAGE_API void configSetDynamic(const string &name, const string &value);
-
-	CAGE_API bool configGetBool(const string &name, bool value = false);
-	CAGE_API sint32 configGetSint32(const string &name, sint32 value = 0);
-	CAGE_API uint32 configGetUint32(const string &name, uint32 value = 0);
-	CAGE_API sint64 configGetSint64(const string &name, sint64 value = 0);
-	CAGE_API uint64 configGetUint64(const string &name, uint64 value = 0);
-	CAGE_API float configGetFloat(const string &name, float value = 0);
-	CAGE_API double configGetDouble(const string &name, double value = 0);
-	CAGE_API string configGetString(const string &name, const string &value = "");
-
-	struct CAGE_API configBool
-	{
-		configBool(const string &name, bool value = false);
-		operator bool() const;
-		configBool &operator = (bool value);
-	private:
-		void *data;
-	};
-
-	struct CAGE_API configSint32
-	{
-		configSint32(const string &name, sint32 value = 0);
-		operator sint32() const;
-		configSint32 &operator = (sint32 value);
-	private:
-		void *data;
-	};
-
-	struct CAGE_API configUint32
-	{
-		configUint32(const string &name, uint32 value = 0);
-		operator uint32() const;
-		configUint32 &operator = (uint32 value);
-	private:
-		void *data;
-	};
-
-	struct CAGE_API configSint64
-	{
-		configSint64(const string &name, sint64 value = 0);
-		operator sint64() const;
-		configSint64 &operator = (sint64 value);
-	private:
-		void *data;
-	};
-
-	struct CAGE_API configUint64
-	{
-		configUint64(const string &name, uint64 value = 0);
-		operator uint64() const;
-		configUint64 &operator = (uint64 value);
-	private:
-		void *data;
-	};
-
-	struct CAGE_API configFloat
-	{
-		configFloat(const string &name, float value = 0);
-		operator float() const;
-		configFloat &operator = (float value);
-	private:
-		void *data;
-	};
-
-	struct CAGE_API configDouble
-	{
-		configDouble(const string &name, double value = 0);
-		operator double() const;
-		configDouble &operator = (double value);
-	private:
-		void *data;
-	};
-
-	struct CAGE_API configString
-	{
-		configString(const string &name, const string &value = "");
-		operator string() const;
-		configString &operator = (const string &value);
-	private:
-		void *data;
-	};
-
 	enum class configTypeEnum
 	{
 		Undefined,
@@ -106,6 +15,35 @@ namespace cage
 		Double,
 		String,
 	};
+
+	CAGE_API string configTypeToString(const configTypeEnum type);
+	CAGE_API void configSetDynamic(const string &name, const string &value);
+	CAGE_API configTypeEnum configGetType(const string &name);
+
+#define GCHL_CONFIG(T, t) \
+	struct CAGE_API CAGE_JOIN(config, T) { CAGE_JOIN(config, T)(const string &name); CAGE_JOIN(config, T)(const string &name, t default_); operator t() const; CAGE_JOIN(config, T) &operator = (t value); private: void *data; }; \
+	CAGE_API void CAGE_JOIN(configSet, T)(const string &name, t value); \
+	CAGE_API t CAGE_JOIN(configGet, T)(const string &name, t default_ = 0);
+	GCHL_CONFIG(Bool, bool)
+	GCHL_CONFIG(Sint32, sint32)
+	GCHL_CONFIG(Sint64, sint64)
+	GCHL_CONFIG(Uint32, uint32)
+	GCHL_CONFIG(Uint64, uint64)
+	GCHL_CONFIG(Float, float)
+	GCHL_CONFIG(Double, double)
+#undef GCHL_CONFIG
+
+	struct CAGE_API configString
+	{
+		configString(const string &name);
+		configString(const string &name, const string &default_);
+		operator string() const;
+		configString &operator = (const string &value);
+	private:
+		void *data;
+	};
+	CAGE_API void configSetString(const string &name, const string &value);
+	CAGE_API string configGetString(const string &name, const string &default_ = "");
 
 	class CAGE_API configListClass
 	{

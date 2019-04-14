@@ -34,13 +34,7 @@ namespace cage
 			};
 			string *s;
 
-			variable() : type(configTypeEnum::Undefined), s(nullptr) {}
-
-			void clear()
-			{
-				u64 = 0;
-				type = configTypeEnum::Undefined;
-			}
+			variable() : type(configTypeEnum::Undefined), u64(0), s(nullptr) {}
 
 			void set(bool value) { type = configTypeEnum::Bool; b = value; }
 			void set(sint32 value) { type = configTypeEnum::Sint32; s32 = value; }
@@ -116,7 +110,7 @@ namespace cage
 			return false;
 		}
 
-		bool loadGlobalConfiguration()
+		int loadGlobalConfiguration()
 		{
 			string efp = detail::getExecutableFullPathNoExe();
 			string en = pathExtractFilename(efp);
@@ -126,18 +120,22 @@ namespace cage
 				loadConfigFile(pathJoin(ep, "cage.ini"), "");
 			if (!loadConfigFile(pathJoin(wp, en + ".ini"), en))
 				loadConfigFile(pathJoin(ep, en + ".ini"), en);
-			return false;
+			return 0;
 		}
 
 		variable *getVar(const string &name)
 		{
-			static bool cageIni = loadGlobalConfiguration();
+			static int cageIni = loadGlobalConfiguration();
 			(void)cageIni;
 			return directVariable(name);
 		}
 
-		template<class C> const C cast(const variable *v) {}
-		template<> const bool cast(const variable *v)
+		template<class C>
+		const C cast(const variable *v)
+		{}
+
+		template<>
+		const bool cast(const variable *v)
 		{
 			switch (v->type)
 			{
@@ -149,10 +147,12 @@ namespace cage
 			case configTypeEnum::Float: return real(v->f) != real(0);
 			case configTypeEnum::Double: return real(v->d) != real(0);
 			case configTypeEnum::String: CAGE_ASSERT_RUNTIME(v->s); return v->s->toBool();
-			default: CAGE_THROW_ERROR(exception, "variable type is unspecified");
+			default: return false;
 			}
 		}
-		template<> const sint32 cast(const variable *v)
+
+		template<>
+		const sint32 cast(const variable *v)
 		{
 			switch (v->type)
 			{
@@ -164,10 +164,12 @@ namespace cage
 			case configTypeEnum::Float:  return numeric_cast<sint32>(v->f);
 			case configTypeEnum::Double: return numeric_cast<sint32>(v->d);
 			case configTypeEnum::String: CAGE_ASSERT_RUNTIME(v->s); return v->s->toSint32();
-			default: CAGE_THROW_ERROR(exception, "variable type is unspecified");
+			default: return 0;
 			}
 		}
-		template<> const uint32 cast(const variable *v)
+
+		template<>
+		const uint32 cast(const variable *v)
 		{
 			switch (v->type)
 			{
@@ -179,10 +181,12 @@ namespace cage
 			case configTypeEnum::Float:  return numeric_cast<uint32>(v->f);
 			case configTypeEnum::Double: return numeric_cast<uint32>(v->d);
 			case configTypeEnum::String: CAGE_ASSERT_RUNTIME(v->s); return v->s->toUint32();
-			default: CAGE_THROW_ERROR(exception, "variable type is unspecified");
+			default: return 0;
 			}
 		}
-		template<> const sint64 cast(const variable *v)
+
+		template<>
+		const sint64 cast(const variable *v)
 		{
 			switch (v->type)
 			{
@@ -194,10 +198,12 @@ namespace cage
 			case configTypeEnum::Float:  return numeric_cast<sint64>(v->f);
 			case configTypeEnum::Double: return numeric_cast<sint64>(v->d);
 			case configTypeEnum::String: CAGE_ASSERT_RUNTIME(v->s); return v->s->toSint64();
-			default: CAGE_THROW_ERROR(exception, "variable type is unspecified");
+			default: return 0;
 			}
 		}
-		template<> const uint64 cast(const variable *v)
+
+		template<>
+		const uint64 cast(const variable *v)
 		{
 			switch (v->type)
 			{
@@ -209,10 +215,12 @@ namespace cage
 			case configTypeEnum::Float:  return numeric_cast<uint64>(v->f);
 			case configTypeEnum::Double: return numeric_cast<uint64>(v->d);
 			case configTypeEnum::String: CAGE_ASSERT_RUNTIME(v->s); return v->s->toUint64();
-			default: CAGE_THROW_ERROR(exception, "variable type is unspecified");
+			default: return 0;
 			}
 		}
-		template<> const float cast(const variable *v)
+
+		template<>
+		const float cast(const variable *v)
 		{
 			switch (v->type)
 			{
@@ -224,10 +232,12 @@ namespace cage
 			case configTypeEnum::Float:  return numeric_cast<float>(v->f);
 			case configTypeEnum::Double: return numeric_cast<float>(v->d);
 			case configTypeEnum::String: CAGE_ASSERT_RUNTIME(v->s); return v->s->toFloat();
-			default: CAGE_THROW_ERROR(exception, "variable type is unspecified");
+			default: return 0;
 			}
 		}
-		template<> const double cast(const variable *v)
+
+		template<>
+		const double cast(const variable *v)
 		{
 			switch (v->type)
 			{
@@ -239,10 +249,12 @@ namespace cage
 			case configTypeEnum::Float:  return numeric_cast<double>(v->f);
 			case configTypeEnum::Double: return numeric_cast<double>(v->d);
 			case configTypeEnum::String: CAGE_ASSERT_RUNTIME(v->s); return v->s->toDouble();
-			default: CAGE_THROW_ERROR(exception, "variable type is unspecified");
+			default: return 0;
 			}
 		}
-		template<> const string cast(const variable *v)
+
+		template<>
+		const string cast(const variable *v)
 		{
 			switch (v->type)
 			{
@@ -254,7 +266,7 @@ namespace cage
 			case configTypeEnum::Float: return v->f;
 			case configTypeEnum::Double: return v->d;
 			case configTypeEnum::String: CAGE_ASSERT_RUNTIME(v->s); return *v->s;
-			default: CAGE_THROW_ERROR(exception, "variable type is unspecified");
+			default: return "";
 			}
 		}
 
@@ -275,58 +287,27 @@ namespace cage
 
 			void next()
 			{
-				CAGE_ASSERT_RUNTIME(valid, "config variables lister is at invalid location");
+				CAGE_ASSERT_RUNTIME(valid, "configListClass is at invalid location");
 				valid = ++it != et;
 			}
 		};
 	}
 
-	void configSetBool(const string &name, bool value)
+	string configTypeToString(const configTypeEnum type)
 	{
-		scopeLock<mutexClass> lock(mut());
-		getVar(name)->set(value);
-	}
-
-	void configSetSint32(const string &name, sint32 value)
-	{
-		scopeLock<mutexClass> lock(mut());
-		getVar(name)->set(value);
-	}
-
-	void configSetUint32(const string &name, uint32 value)
-	{
-		scopeLock<mutexClass> lock(mut());
-		getVar(name)->set(value);
-	}
-
-	void configSetSint64(const string &name, sint64 value)
-	{
-		scopeLock<mutexClass> lock(mut());
-		getVar(name)->set(value);
-	}
-
-	void configSetUint64(const string &name, uint64 value)
-	{
-		scopeLock<mutexClass> lock(mut());
-		getVar(name)->set(value);
-	}
-
-	void configSetFloat(const string &name, float value)
-	{
-		scopeLock<mutexClass> lock(mut());
-		getVar(name)->set(value);
-	}
-
-	void configSetDouble(const string &name, double value)
-	{
-		scopeLock<mutexClass> lock(mut());
-		getVar(name)->set(value);
-	}
-
-	void configSetString(const string &name, const string &value)
-	{
-		scopeLock<mutexClass> lock(mut());
-		getVar(name)->set(value);
+		switch (type)
+		{
+		case configTypeEnum::Bool: return "bool";
+		case configTypeEnum::Sint32: return "sint32";
+		case configTypeEnum::Uint32: return "uint32";
+		case configTypeEnum::Sint64: return "sint64";
+		case configTypeEnum::Uint64: return "uint64";
+		case configTypeEnum::Float: return "float";
+		case configTypeEnum::Double: return "double";
+		case configTypeEnum::String: return "string";
+		case configTypeEnum::Undefined: return "undefined";
+		default: CAGE_THROW_CRITICAL(exception, "invalid config type enum");
+		}
 	}
 
 	void configSetDynamic(const string &name, const string &value)
@@ -335,237 +316,36 @@ namespace cage
 		getVar(name)->setDynamic(value);
 	}
 
-	bool configGetBool(const string &name, bool value)
+	configTypeEnum configGetType(const string &name)
 	{
 		scopeLock<mutexClass> lock(mut());
-		variable *v = getVar(name);
-		if (v->type == configTypeEnum::Undefined)
-			v->set(value);
-		return cast<bool>(v);
+		return getVar(name)->type;
 	}
 
-	sint32 configGetSint32(const string &name, sint32 value)
-	{
-		scopeLock<mutexClass> lock(mut());
-		variable *v = getVar(name);
-		if (v->type == configTypeEnum::Undefined)
-			v->set(value);
-		return cast<sint32>(v);
-	}
+#define GCHL_CONFIG(T, t) \
+	void CAGE_JOIN(configSet, T)(const string &name, t value) { scopeLock<mutexClass> lock(mut()); getVar(name)->set(value); } \
+	t CAGE_JOIN(configGet, T)(const string &name, t default_) { scopeLock<mutexClass> lock(mut()); variable *v = getVar(name); if (v->type == configTypeEnum::Undefined) return default_; return cast<t>(v); } \
+	CAGE_JOIN(config, T)::CAGE_JOIN(config, T)(const string &name) { scopeLock<mutexClass> lock(mut()); data = getVar(name); } \
+	CAGE_JOIN(config, T)::CAGE_JOIN(config, T)(const string &name, t default_) { scopeLock<mutexClass> lock(mut()); data = getVar(name); variable *v = (variable*)data; if (v->type == configTypeEnum::Undefined) v->set(default_); } \
+	CAGE_JOIN(config, T) &CAGE_JOIN(config, T)::operator = (t value) { ((variable*)data)->set(value); return *this; } \
+	CAGE_JOIN(config, T)::operator t() const { return cast<t>((variable*)data); } \
+	t configListClass::CAGE_JOIN(get, T)() const { configListImpl *impl = (configListImpl*)this; CAGE_ASSERT_RUNTIME(impl->valid, "configListClass is at invalid location"); return cast<t>(impl->it->second); }
+	GCHL_CONFIG(Bool, bool)
+	GCHL_CONFIG(Sint32, sint32)
+	GCHL_CONFIG(Sint64, sint64)
+	GCHL_CONFIG(Uint32, uint32)
+	GCHL_CONFIG(Uint64, uint64)
+	GCHL_CONFIG(Float, float)
+	GCHL_CONFIG(Double, double)
+#undef GCHL_CONFIG
 
-	uint32 configGetUint32(const string &name, uint32 value)
-	{
-		scopeLock<mutexClass> lock(mut());
-		variable *v = getVar(name);
-		if (v->type == configTypeEnum::Undefined)
-			v->set(value);
-		return cast<uint32>(v);
-	}
-
-	sint64 configGetSint64(const string &name, sint64 value)
-	{
-		scopeLock<mutexClass> lock(mut());
-		variable *v = getVar(name);
-		if (v->type == configTypeEnum::Undefined)
-			v->set(value);
-		return cast<sint64>(v);
-	}
-
-	uint64 configGetUint64(const string &name, uint64 value)
-	{
-		scopeLock<mutexClass> lock(mut());
-		variable *v = getVar(name);
-		if (v->type == configTypeEnum::Undefined)
-			v->set(value);
-		return cast<uint64>(v);
-	}
-
-	float configGetFloat(const string &name, float value)
-	{
-		scopeLock<mutexClass> lock(mut());
-		variable *v = getVar(name);
-		if (v->type == configTypeEnum::Undefined)
-			v->set(value);
-		return cast<float>(v);
-	}
-
-	double configGetDouble(const string &name, double value)
-	{
-		scopeLock<mutexClass> lock(mut());
-		variable *v = getVar(name);
-		if (v->type == configTypeEnum::Undefined)
-			v->set(value);
-		return cast<double>(v);
-	}
-
-	string configGetString(const string &name, const string &value)
-	{
-		scopeLock<mutexClass> lock(mut());
-		variable *v = getVar(name);
-		if (v->type == configTypeEnum::Undefined)
-			v->set(value);
-		return cast<string>(v);
-	}
-
-	configBool::configBool(const string &name, bool value)
-	{
-		scopeLock<mutexClass> lock(mut());
-		data = getVar(name);
-		variable *v = (variable*)data;
-		if (v->type == configTypeEnum::Undefined)
-			v->set(value);
-	}
-
-	configBool::operator bool() const
-	{
-		return cast<bool>((variable*)data);
-	}
-
-	configBool &configBool::operator=(bool value)
-	{
-		((variable*)data)->set(value);
-		return *this;
-	}
-
-	configSint32::configSint32(const string &name, sint32 value)
-	{
-		scopeLock<mutexClass> lock(mut());
-		data = getVar(name);
-		variable *v = (variable*)data;
-		if (v->type == configTypeEnum::Undefined)
-			v->set(value);
-	}
-
-	configSint32::operator sint32() const
-	{
-		return cast<sint32>((variable*)data);
-	}
-
-	configSint32 &configSint32::operator=(sint32 value)
-	{
-		((variable*)data)->set(value);
-		return *this;
-	}
-
-	configUint32::configUint32(const string &name, uint32 value)
-	{
-		scopeLock<mutexClass> lock(mut());
-		data = getVar(name);
-		variable *v = (variable*)data;
-		if (v->type == configTypeEnum::Undefined)
-			v->set(value);
-	}
-
-	configUint32::operator uint32() const
-	{
-		return cast<uint32>((variable*)data);
-	}
-
-	configUint32 &configUint32::operator=(uint32 value)
-	{
-		((variable*)data)->set(value);
-		return *this;
-	}
-
-	configSint64::configSint64(const string &name, sint64 value)
-	{
-		scopeLock<mutexClass> lock(mut());
-		data = getVar(name);
-		variable *v = (variable*)data;
-		if (v->type == configTypeEnum::Undefined)
-			v->set(value);
-	}
-
-	configSint64::operator sint64() const
-	{
-		return cast<sint64>((variable*)data);
-	}
-
-	configSint64 &configSint64::operator=(sint64 value)
-	{
-		((variable*)data)->set(value);
-		return *this;
-	}
-
-	configUint64::configUint64(const string &name, uint64 value)
-	{
-		scopeLock<mutexClass> lock(mut());
-		data = getVar(name);
-		variable *v = (variable*)data;
-		if (v->type == configTypeEnum::Undefined)
-			v->set(value);
-	}
-
-	configUint64::operator uint64() const
-	{
-		return cast<uint64>((variable*)data);
-	}
-
-	configUint64 &configUint64::operator=(uint64 value)
-	{
-		((variable*)data)->set(value);
-		return *this;
-	}
-
-	configFloat::configFloat(const string &name, float value)
-	{
-		scopeLock<mutexClass> lock(mut());
-		data = getVar(name);
-		variable *v = (variable*)data;
-		if (v->type == configTypeEnum::Undefined)
-			v->set(value);
-	}
-
-	configFloat::operator float() const
-	{
-		return cast<float>((variable*)data);
-	}
-
-	configFloat &configFloat::operator=(float value)
-	{
-		((variable*)data)->set(value);
-		return *this;
-	}
-
-	configDouble::configDouble(const string &name, double value)
-	{
-		scopeLock<mutexClass> lock(mut());
-		data = getVar(name);
-		variable *v = (variable*)data;
-		if (v->type == configTypeEnum::Undefined)
-			v->set(value);
-	}
-
-	configDouble::operator double() const
-	{
-		return cast<double>((variable*)data);
-	}
-
-	configDouble &configDouble::operator=(double value)
-	{
-		((variable*)data)->set(value);
-		return *this;
-	}
-
-	configString::configString(const string &name, const string &value)
-	{
-		scopeLock<mutexClass> lock(mut());
-		data = getVar(name);
-		variable *v = (variable*)data;
-		if (v->type == configTypeEnum::Undefined)
-			v->set(value);
-	}
-
-	configString::operator string() const
-	{
-		return cast<string>((variable*)data);
-	}
-
-	configString &configString::operator=(const string &value)
-	{
-		((variable*)data)->set(value);
-		return *this;
-	}
+	void configSetString(const string &name, const string &value) { scopeLock<mutexClass> lock(mut()); getVar(name)->set(value); }
+	string configGetString(const string &name, const string &default_) { scopeLock<mutexClass> lock(mut()); variable *v = getVar(name); if (v->type == configTypeEnum::Undefined) return default_; return cast<string>(v); }
+	configString::configString(const string &name) { scopeLock<mutexClass> lock(mut()); data = getVar(name); }
+	configString::configString(const string &name, const string &default_) { scopeLock<mutexClass> lock(mut()); data = getVar(name); variable *v = (variable*)data; if (v->type == configTypeEnum::Undefined) v->set(default_); }
+	configString &configString::operator = (const string &value) { ((variable*)data)->set(value); return *this; }
+	configString::operator string() const { return cast<string>((variable*)data); }
+	string configListClass::getString() const { configListImpl *impl = (configListImpl*)this; CAGE_ASSERT_RUNTIME(impl->valid, "configListClass is at invalid location"); return cast<string>(impl->it->second); }
 
 	bool configListClass::valid() const
 	{
@@ -576,87 +356,20 @@ namespace cage
 	string configListClass::name() const
 	{
 		configListImpl *impl = (configListImpl*)this;
-		CAGE_ASSERT_RUNTIME(impl->valid, "config variables lister is at invalid location");
+		CAGE_ASSERT_RUNTIME(impl->valid, "configListClass is at invalid location");
 		return impl->it->first;
 	}
 
 	configTypeEnum configListClass::type() const
 	{
 		configListImpl *impl = (configListImpl*)this;
-		CAGE_ASSERT_RUNTIME(impl->valid, "config variables lister is at invalid location");
+		CAGE_ASSERT_RUNTIME(impl->valid, "configListClass is at invalid location");
 		return impl->it->second->type;
 	}
 
 	string configListClass::typeName() const
 	{
-		switch (type())
-		{
-		case configTypeEnum::Bool: return "bool";
-		case configTypeEnum::Sint32: return "sint32";
-		case configTypeEnum::Uint32: return "uint32";
-		case configTypeEnum::Sint64: return "sint64";
-		case configTypeEnum::Uint64: return "uint64";
-		case configTypeEnum::Float: return "float";
-		case configTypeEnum::Double: return "double";
-		case configTypeEnum::String: return "string";
-		default: return "unspecified";
-		}
-	}
-
-	bool configListClass::getBool() const
-	{
-		configListImpl *impl = (configListImpl*)this;
-		CAGE_ASSERT_RUNTIME(impl->valid, "config variables lister is at invalid location");
-		return cast<bool>(impl->it->second);
-	}
-
-	sint32 configListClass::getSint32() const
-	{
-		configListImpl *impl = (configListImpl*)this;
-		CAGE_ASSERT_RUNTIME(impl->valid, "config variables lister is at invalid location");
-		return cast<sint32>(impl->it->second);
-	}
-
-	uint32 configListClass::getUint32() const
-	{
-		configListImpl *impl = (configListImpl*)this;
-		CAGE_ASSERT_RUNTIME(impl->valid, "config variables lister is at invalid location");
-		return cast<uint32>(impl->it->second);
-	}
-
-	sint64 configListClass::getSint64() const
-	{
-		configListImpl *impl = (configListImpl*)this;
-		CAGE_ASSERT_RUNTIME(impl->valid, "config variables lister is at invalid location");
-		return cast<sint64>(impl->it->second);
-	}
-
-	uint64 configListClass::getUint64() const
-	{
-		configListImpl *impl = (configListImpl*)this;
-		CAGE_ASSERT_RUNTIME(impl->valid, "config variables lister is at invalid location");
-		return cast<uint64>(impl->it->second);
-	}
-
-	float configListClass::getFloat() const
-	{
-		configListImpl *impl = (configListImpl*)this;
-		CAGE_ASSERT_RUNTIME(impl->valid, "config variables lister is at invalid location");
-		return cast<float>(impl->it->second);
-	}
-
-	double configListClass::getDouble() const
-	{
-		configListImpl *impl = (configListImpl*)this;
-		CAGE_ASSERT_RUNTIME(impl->valid, "config variables lister is at invalid location");
-		return cast<double>(impl->it->second);
-	}
-
-	string configListClass::getString() const
-	{
-		configListImpl *impl = (configListImpl*)this;
-		CAGE_ASSERT_RUNTIME(impl->valid, "config variables lister is at invalid location");
-		return cast<string>(impl->it->second);
+		return configTypeToString(type());
 	}
 
 	void configListClass::next()
@@ -719,14 +432,16 @@ namespace cage
 		{
 			~autoConfigBackupClass()
 			{
-				try
+				if (autoBackup)
 				{
-					if (autoBackup)
+					try
+					{
 						configSaveIni(detail::getExecutableFullPathNoExe() + "-backup.ini", "");
-				}
-				catch (...)
-				{
-					// do nothing
+					}
+					catch (...)
+					{
+						CAGE_LOG(severityEnum::Warning, "config", "failed to save configuration backup");
+					}
 				}
 			}
 		} autoConfigBackupInstance;
