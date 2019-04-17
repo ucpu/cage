@@ -102,38 +102,21 @@ namespace cage
 		}
 
 		// operator ->
-		T *operator -> ()
-		{
-			CAGE_ASSERT_RUNTIME(data, "data is null");
-			return data;
-		}
-
-		const T *operator -> () const
+		T *operator -> () const
 		{
 			CAGE_ASSERT_RUNTIME(data, "data is null");
 			return data;
 		}
 
 		// operator *
-		typename privat::holderDereference<T>::type operator * ()
-		{
-			CAGE_ASSERT_RUNTIME(data, "data is null");
-			return *data;
-		}
-
-		const typename privat::holderDereference<T>::type operator * () const
+		typename privat::holderDereference<T>::type operator * () const
 		{
 			CAGE_ASSERT_RUNTIME(data, "data is null");
 			return *data;
 		}
 
 		// method get
-		T *get()
-		{
-			return data;
-		}
-
-		const T *get() const
+		T *get() const
 		{
 			return data;
 		}
