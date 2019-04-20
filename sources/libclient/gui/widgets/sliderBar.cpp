@@ -21,6 +21,7 @@ namespace cage
 			skinWidgetDefaultsStruct::sliderBarStruct::directionStruct defaults;
 			elementTypeEnum baseElement;
 			elementTypeEnum dotElement;
+			real normalizedValue;
 
 			sliderBarImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(sliderBar))
 			{
@@ -32,6 +33,9 @@ namespace cage
 				CAGE_ASSERT_RUNTIME(!hierarchy->firstChild, "slider may not have children");
 				CAGE_ASSERT_RUNTIME(!hierarchy->text, "slider may not have text");
 				CAGE_ASSERT_RUNTIME(!hierarchy->image, "slider may not have image");
+				CAGE_ASSERT_RUNTIME(data.value.valid() && data.min.valid() && data.max.valid());
+				CAGE_ASSERT_RUNTIME(data.max > data.min);
+				normalizedValue = (data.value - data.min) / (data.max - data.min);
 			}
 
 			virtual void findRequestedSize() override
@@ -45,8 +49,6 @@ namespace cage
 
 			virtual void emit() const override
 			{
-				CAGE_ASSERT_RUNTIME(data.value.valid() && data.min.valid() && data.max.valid());
-				CAGE_ASSERT_RUNTIME(data.max > data.min);
 				vec2 p = hierarchy->renderPos;
 				vec2 s = hierarchy->renderSize;
 				offset(p, s, -defaults.margin);
@@ -65,7 +67,7 @@ namespace cage
 				}
 				offset(p, s, -skin->layouts[(uint32)baseElement].border);
 				offset(p, s, -defaults.padding);
-				real f = (data.value - data.min) / (data.max - data.min);
+				real f = normalizedValue;
 				real ds1 = min(s[0], s[1]);
 				vec2 ds = vec2(ds1, ds1);
 				vec2 inner = s - ds;

@@ -22,18 +22,21 @@ namespace cage
 		{
 			inputComponent &data;
 			selectionComponent &selection;
+			bool showArrows;
 
 			vec2 leftPos, rightPos;
 			vec2 mainPos, mainSize;
 			vec2 textPos, textSize;
 
-			inputImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(input)), selection(GUI_REF_COMPONENT(selection))
+			inputImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(input)), selection(GUI_REF_COMPONENT(selection)), showArrows(false)
 			{}
 
 			virtual void initialize() override
 			{
 				CAGE_ASSERT_RUNTIME(!hierarchy->firstChild, "input box may not have children");
 				CAGE_ASSERT_RUNTIME(!hierarchy->image, "input box may not have image");
+
+				showArrows = data.type == inputTypeEnum::Real || data.type == inputTypeEnum::Integer;
 
 				switch (data.type)
 				{
@@ -180,7 +183,7 @@ namespace cage
 				mainSize = hierarchy->renderSize;
 				offset(mainPos, mainSize, -s.margin);
 				leftPos = rightPos = mainPos;
-				if (data.type == inputTypeEnum::Real || data.type == inputTypeEnum::Integer)
+				if (showArrows)
 				{
 					mainSize[0] -= (s.buttonsSize + s.buttonsOffset) * 2;
 					real mw = mainSize[0];
@@ -214,7 +217,7 @@ namespace cage
 			{
 				const auto &s = skin->defaults.inputBox;
 				emitElement(elementTypeEnum::Input, mode(mainPos, mainSize), mainPos, mainSize);
-				if (data.type == inputTypeEnum::Real || data.type == inputTypeEnum::Integer)
+				if (showArrows)
 				{
 					vec2 ss = vec2(s.buttonsSize, mainSize[1]);
 					uint32 m = mode(leftPos, ss);

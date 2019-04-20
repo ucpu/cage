@@ -36,8 +36,9 @@ namespace cage
 			comboBoxComponent &data;
 			comboListImpl *list;
 			uint32 count;
+			uint32 selected;
 
-			comboBoxImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(comboBox)), list(nullptr), count(0)
+			comboBoxImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(comboBox)), list(nullptr), count(0), selected(m)
 			{}
 
 			virtual void initialize() override
@@ -59,6 +60,7 @@ namespace cage
 				}
 				if (data.selected >= count)
 					data.selected = m;
+				selected = data.selected;
 				consolidateSelection();
 				if (hasFocus())
 				{
@@ -82,7 +84,7 @@ namespace cage
 				offset(p, s, -skin->defaults.comboBox.baseMargin);
 				emitElement(elementTypeEnum::ComboBoxBase, mode(), p, s);
 				offset(p, s, -skin->layouts[(uint32)elementTypeEnum::ComboBoxBase].border - skin->defaults.comboBox.basePadding);
-				if (data.selected == m)
+				if (selected == m)
 				{ // emit placeholder
 					if (hierarchy->text)
 						hierarchy->text->emit(p, s);
@@ -93,7 +95,7 @@ namespace cage
 					uint32 idx = 0;
 					while (c)
 					{
-						if (idx++ == data.selected)
+						if (idx++ == selected)
 						{
 							c->text->emit(p, s)->setClip(hierarchy);
 							break;
@@ -129,7 +131,7 @@ namespace cage
 				uint32 idx = 0;
 				while (c)
 				{
-					if (data.selected == idx++)
+					if (selected == idx++)
 						c->entity->add(hierarchy->impl->components.selectedItem);
 					else
 						c->entity->remove(hierarchy->impl->components.selectedItem);
@@ -196,7 +198,7 @@ namespace cage
 				vec2 s = c->renderSize;
 				uint32 m = allowHover ? mode(p, s, 0) : 0;
 				allowHover &= !m; // items may have small overlap, this will ensure that only one item has hover
-				emitElement(idx == combo->data.selected ? elementTypeEnum::ComboBoxItemChecked : elementTypeEnum::ComboBoxItemUnchecked, m, p, s);
+				emitElement(idx == combo->selected ? elementTypeEnum::ComboBoxItemChecked : elementTypeEnum::ComboBoxItemUnchecked, m, p, s);
 				offset(p, s, itemFrame);
 				c->text->emit(p, s)->setClip(hierarchy);
 				c = c->nextSibling;

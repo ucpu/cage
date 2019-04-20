@@ -18,8 +18,9 @@ namespace cage
 		struct radioBoxImpl : public widgetItemStruct
 		{
 			radioBoxComponent &data;
+			elementTypeEnum element;
 
-			radioBoxImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(radioBox))
+			radioBoxImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(radioBox)), element(elementTypeEnum::TotalElements)
 			{}
 
 			virtual void initialize() override
@@ -28,6 +29,7 @@ namespace cage
 				CAGE_ASSERT_RUNTIME(!hierarchy->image, "radiobox may not have image");
 				if (hierarchy->text)
 					hierarchy->text->text.apply(skin->defaults.radioBox.textFormat, hierarchy->impl);
+				element = elementTypeEnum((uint32)elementTypeEnum::RadioBoxUnchecked + (uint32)data.state);
 			}
 
 			virtual void findRequestedSize() override
@@ -48,7 +50,7 @@ namespace cage
 				{
 					vec2 p = hierarchy->renderPos;
 					offsetPosition(p, -skin->defaults.radioBox.margin);
-					emitElement(elementTypeEnum((uint32)elementTypeEnum::RadioBoxUnchecked + (uint32)data.state), mode(), p, sd);
+					emitElement(element, mode(), p, sd);
 				}
 				if (hierarchy->text)
 				{

@@ -18,15 +18,17 @@ namespace cage
 		struct spoilerImpl : public widgetItemStruct
 		{
 			spoilerComponent &data;
+			bool collapsed;
 
-			spoilerImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(spoiler))
+			spoilerImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(spoiler)), collapsed(false)
 			{
 				ensureItemHasLayout(hierarchy);
 			}
 
 			virtual void initialize() override
 			{
-				if (data.collapsed)
+				collapsed = data.collapsed;
+				if (collapsed)
 					hierarchy->detachChildren();
 				if (hierarchy->text)
 					hierarchy->text->text.apply(skin->defaults.spoiler.textFormat, hierarchy->impl);
@@ -73,7 +75,7 @@ namespace cage
 				offset(p, s, -skin->layouts[(uint32)elementTypeEnum::SpoilerCaption].border - skin->defaults.spoiler.captionPadding);
 				vec2 is = vec2(s[1], s[1]);
 				vec2 ip = vec2(p[0] + s[0] - is[0], p[1]);
-				emitElement(data.collapsed ? elementTypeEnum::SpoilerIconCollapsed : elementTypeEnum::SpoilerIconShown, mode(false, 0), ip, is);
+				emitElement(collapsed ? elementTypeEnum::SpoilerIconCollapsed : elementTypeEnum::SpoilerIconShown, mode(false, 0), ip, is);
 				if (hierarchy->text)
 				{
 					s[0] -= s[1];

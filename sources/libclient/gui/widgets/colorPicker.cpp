@@ -47,6 +47,7 @@ namespace cage
 			colorPickerComponent &data;
 			colorPickerImpl *small, *large;
 
+			vec3 color;
 			vec2 sliderPos, sliderSize;
 			vec2 resultPos, resultSize;
 			vec2 rectPos, rectSize;
@@ -91,6 +92,7 @@ namespace cage
 					large = this;
 				}
 				CAGE_ASSERT_RUNTIME(small != large);
+				color = data.color;
 			}
 
 			virtual void findRequestedSize() override
@@ -140,7 +142,7 @@ namespace cage
 				t->setClip(hierarchy);
 				t->pos = hierarchy->impl->pointsToNdc(pos, size);
 				t->mode = mode;
-				t->rgb = data.color;
+				t->rgb = color;
 				e->last->next = t;
 				e->last = t;
 			}
