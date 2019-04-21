@@ -113,7 +113,7 @@ namespace cage
 			}
 		};
 
-		// compare sequance numbers with correct wrapping
+		// compare sequence numbers with correct wrapping
 		// semantically: return a < b
 		constexpr bool comp(uint16 a, uint16 b)
 		{

@@ -19,14 +19,11 @@ void testUdpDiscovery()
 	}
 
 	uint32 cnt = clt->peersCount();
-	CAGE_TEST(cnt > 0);
 	CAGE_LOG(severityEnum::Info, "test", string() + "got " + cnt + " responses");
-	for (uint32 i = 0; i < cnt; i++)
+	CAGE_TEST(cnt > 0);
+	for (const auto &r : clt->peers())
 	{
-		string msg;
-		string addr;
-		uint16 port;
-		clt->peerData(i, msg, addr, port);
-		CAGE_LOG(severityEnum::Info, "test", string() + "address: " + addr + ", port: " + port + ", message: " + msg);
+		CAGE_LOG(severityEnum::Info, "test", string() + "address: " + r.address + ", message: " + r.message);
+		CAGE_TEST(r.port == 1342);
 	}
 }

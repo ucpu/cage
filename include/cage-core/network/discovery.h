@@ -1,12 +1,23 @@
 namespace cage
 {
+	struct CAGE_API discoveryPeerStruct
+	{
+		string message;
+		string address;
+		uint16 port;
+
+		discoveryPeerStruct() : port(0)
+		{}
+	};
+
 	class CAGE_API discoveryClientClass
 	{
 	public:
 		void update();
 		void addServer(const string &address, uint16 port);
 		uint32 peersCount() const;
-		void peerData(uint32 index, string &message, string &address, uint16 &port) const;
+		discoveryPeerStruct peerData(uint32 index) const;
+		holder<pointerRange<discoveryPeerStruct>> peers() const;
 	};
 
 	class CAGE_API discoveryServerClass
@@ -16,6 +27,6 @@ namespace cage
 		string message;
 	};
 
-	CAGE_API holder<discoveryClientClass> newDiscoveryClient(uint16 sendPort, uint32 gameId);
+	CAGE_API holder<discoveryClientClass> newDiscoveryClient(uint16 listenPort, uint32 gameId);
 	CAGE_API holder<discoveryServerClass> newDiscoveryServer(uint16 listenPort, uint16 gamePort, uint32 gameId);
 }
