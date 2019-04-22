@@ -15,7 +15,7 @@
 
 namespace cage
 {
-	finalPositionStruct::finalPositionStruct() : renderPos(vec2::Nan), renderSize(vec2::Nan), clipPos(vec2::Nan), clipSize(vec2::Nan)
+	finalPositionStruct::finalPositionStruct() : renderPos(vec2::Nan()), renderSize(vec2::Nan()), clipPos(vec2::Nan()), clipSize(vec2::Nan())
 	{}
 
 	void offsetPosition(vec2 &position, const vec4 &offset)

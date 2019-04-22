@@ -26,7 +26,7 @@ namespace cage
 				vec2 size;
 				real dotSize;
 				real &value;
-				scrollbarStruct(real &value) : position(vec2::Nan), size(vec2::Nan), dotSize(real::Nan), value(value)
+				scrollbarStruct(real &value) : position(vec2::Nan()), size(vec2::Nan()), dotSize(real::Nan()), value(value)
 				{}
 			} scrollbars[2];
 

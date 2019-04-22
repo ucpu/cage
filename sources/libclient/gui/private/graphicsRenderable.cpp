@@ -31,7 +31,7 @@ namespace cage
 	renderableElementStruct::renderableElementStruct() : skinBuffer(nullptr), skinTexture(nullptr)
 	{}
 
-	renderableTextStruct::textStruct::textStruct() : glyphs(nullptr), font(nullptr), color(vec3::Nan), cursor(m), count(0)
+	renderableTextStruct::textStruct::textStruct() : glyphs(nullptr), font(nullptr), color(vec3::Nan()), cursor(m), count(0)
 	{}
 
 	void renderableTextStruct::textStruct::apply(const textFormatComponent &f, guiImpl *impl)

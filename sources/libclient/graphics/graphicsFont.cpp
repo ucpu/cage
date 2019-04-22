@@ -17,7 +17,7 @@
 
 namespace cage
 {
-	fontClass::formatStruct::formatStruct() : align(textAlignEnum::Left), size(13), wrapWidth(real::PositiveInfinity), lineSpacing(0)
+	fontClass::formatStruct::formatStruct() : align(textAlignEnum::Left), size(13), wrapWidth(real::Infinity()), lineSpacing(0)
 	{}
 
 	namespace
@@ -32,7 +32,7 @@ namespace cage
 			uint32 count;
 			uint32 cursor;
 			bool render;
-			processDataStruct() : mousePosition(vec2::Nan), format(nullptr), gls(nullptr),
+			processDataStruct() : mousePosition(vec2::Nan()), format(nullptr), gls(nullptr),
 				outCursor(0), count(0), cursor(m), render(false)
 			{}
 		};

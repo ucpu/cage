@@ -63,7 +63,7 @@ namespace cage
 				uint32 axis = m;
 				uint32 split = m;
 				{
-					real bestSah = real::PositiveInfinity;
+					real bestSah = real::Infinity();
 					uint32 siz = numeric_cast<uint32>(ts.size());
 					for (uint32 ax = 0; ax < 3; ax++)
 					{
@@ -474,7 +474,7 @@ namespace cage
 			if (r.valid())
 				return r.minimum / distance(bt1.position - at1.position, bt2.position - at2.position);
 			else
-				return real::Nan; // no contact
+				return real::Nan(); // no contact
 			*/
 		}
 
@@ -505,7 +505,7 @@ namespace cage
 			{
 				aabb b = col->boxes[nodeIdx];
 				if (!cage::intersects(l, b))
-					return real::Nan;
+					return real::Nan();
 				const auto &n = col->nodes[nodeIdx];
 				if (n.left == cage::m)
 				{ // node
@@ -521,7 +521,7 @@ namespace cage
 				}
 				else
 				{ // leaf
-					real d = real::PositiveInfinity;
+					real d = real::Infinity();
 					for (uint32 ti = n.left; ti != n.right; ti++)
 					{
 						const triangle &t = col->tris[ti];
@@ -529,7 +529,7 @@ namespace cage
 						if (p.valid() && p < d)
 							d = p;
 					}
-					return d == real::PositiveInfinity ? real::Nan : d;
+					return d == real::Infinity() ? real::Nan() : d;
 				}
 			}
 
@@ -572,7 +572,7 @@ namespace cage
 			{
 				aabb b = col->boxes[nodeIdx];
 				if (!cage::intersects(l, b))
-					return vec3::Nan;
+					return vec3::Nan();
 				const auto &n = col->nodes[nodeIdx];
 				if (n.left == cage::m)
 				{ // node
@@ -592,8 +592,8 @@ namespace cage
 				}
 				else
 				{ // leaf
-					real d = real::PositiveInfinity;
-					vec3 r = vec3::Nan;
+					real d = real::Infinity();
+					vec3 r = vec3::Nan();
 					for (uint32 ti = n.left; ti != n.right; ti++)
 					{
 						const triangle &t = col->tris[ti];
@@ -643,8 +643,8 @@ namespace cage
 		CAGE_ASSERT_RUNTIME(at1.scale == at2.scale);
 		CAGE_ASSERT_RUNTIME(bt1.scale == bt2.scale);
 
-		fractionBefore = real::Nan;
-		fractionContact = real::Nan;
+		fractionBefore = real::Nan();
+		fractionContact = real::Nan();
 
 		// find approximate time range of contact
 		real time1 = timeOfContact(ao, bo, at1, bt1, at2, bt2);

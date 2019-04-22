@@ -43,8 +43,8 @@ namespace cage
 			// initialize to negative box
 			fastBox()
 			{
-				low.v4 = { real::PositiveInfinity.value, real::PositiveInfinity.value, real::PositiveInfinity.value, 0 };
-				high.v4 = { real::NegativeInfinity.value, real::NegativeInfinity.value, real::NegativeInfinity.value, 0 };
+				low.v4 = { real::Infinity().value, real::Infinity().value, real::Infinity().value, 0 };
+				high.v4 = { -real::Infinity().value, -real::Infinity().value, -real::Infinity().value, 0 };
 			}
 
 			explicit fastBox(const aabb &b)
@@ -75,7 +75,7 @@ namespace cage
 
 			bool empty() const
 			{
-				return low.v4[0] == real::PositiveInfinity.value;
+				return low.v4[0] == real::Infinity().value;
 			}
 
 			explicit operator aabb () const
@@ -200,7 +200,7 @@ namespace cage
 				uint32 bestAxis = m;
 				uint32 bestSplit = m;
 				uint32 bestItemsCount = 0;
-				real bestSah = real::PositiveInfinity;
+				real bestSah = real::Infinity();
 				fastBox bestBoxLeft;
 				fastBox bestBoxRight;
 				for (uint32 axis = 0; axis < 3; axis++)
@@ -319,7 +319,7 @@ namespace cage
 					worldBox += it.second->box;
 				}
 				nodes.emplace_back(worldBox, 0, numeric_cast<sint32>(itemsTable->count()));
-				rebuild(0, 0, real::PositiveInfinity);
+				rebuild(0, 0, real::Infinity());
 				CAGE_ASSERT_RUNTIME(uintPtr(nodes.data()) % alignof(nodeStruct) == 0, uintPtr(nodes.data()) % alignof(nodeStruct), alignof(nodeStruct), alignof(fastBox), sizeof(nodeStruct));
 #ifdef CAGE_ASSERT_ENABLED
 				validate(0);
@@ -456,7 +456,7 @@ namespace cage
 	void spatialDataClass::update(uint32 name, const triangle &other)
 	{
 		CAGE_ASSERT_RUNTIME(other.valid());
-		CAGE_ASSERT_RUNTIME(other.area() < real::PositiveInfinity);
+		CAGE_ASSERT_RUNTIME(other.area() < real::Infinity());
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		remove(name);
 		impl->itemsTable->add(name, impl->itemsArena.createObject<itemShape<triangle>>(name, other));
@@ -465,7 +465,7 @@ namespace cage
 	void spatialDataClass::update(uint32 name, const sphere &other)
 	{
 		CAGE_ASSERT_RUNTIME(other.valid());
-		CAGE_ASSERT_RUNTIME(other.volume() < real::PositiveInfinity);
+		CAGE_ASSERT_RUNTIME(other.volume() < real::Infinity());
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		remove(name);
 		impl->itemsTable->add(name, impl->itemsArena.createObject<itemShape<sphere>>(name, other));
@@ -474,7 +474,7 @@ namespace cage
 	void spatialDataClass::update(uint32 name, const aabb &other)
 	{
 		CAGE_ASSERT_RUNTIME(other.valid());
-		CAGE_ASSERT_RUNTIME(other.volume() < real::PositiveInfinity);
+		CAGE_ASSERT_RUNTIME(other.volume() < real::Infinity());
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		remove(name);
 		impl->itemsTable->add(name, impl->itemsArena.createObject<itemShape<aabb>>(name, other));

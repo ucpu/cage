@@ -39,7 +39,7 @@ void processObject()
 		}
 		lodStruct ls;
 		ls.index = section.toUint32();
-		ls.threshold = real::Nan.value;
+		ls.threshold = real::Nan().value;
 		for (uint32 itm = 0; itm < ini->itemCount(section); itm++)
 		{
 			string n = ini->item(section, itm);

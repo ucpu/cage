@@ -43,9 +43,9 @@ void test(const quat &a, const quat &b)
 void test(rads a, rads b)
 {
 	if (a < rads(0))
-		a += rads::Full;
+		a += rads::Full();
 	if (b < rads(0))
-		b += rads::Full;
+		b += rads::Full();
 	test(real(a), real(b));
 }
 
@@ -135,18 +135,16 @@ namespace
 	void testMathReal()
 	{
 		CAGE_TESTCASE("real");
-		CAGE_TEST(real::Pi > 3.1 && real::Pi < 3.2);
-		CAGE_TEST(real::E > 2.7 && real::E < 2.8);
-		CAGE_TEST(real::HalfPi > 1.5 && real::HalfPi < 1.6);
-		CAGE_TEST(real::TwoPi > 6.2 && real::TwoPi < 6.3);
-		CAGE_TEST(real::PositiveInfinity.valid());
-		CAGE_TEST(real::NegativeInfinity.valid());
-		CAGE_TEST(!real::Nan.valid());
-		CAGE_TEST(!real::PositiveInfinity.finite());
-		CAGE_TEST(!real::NegativeInfinity.finite());
-		CAGE_TEST(!real::Nan.finite());
-		CAGE_TEST(real::Pi.finite());
+		CAGE_TEST(real::Pi() > 3.1 && real::Pi() < 3.2);
+		CAGE_TEST(real::E() > 2.7 && real::E() < 2.8);
+		CAGE_TEST(real::Infinity().valid());
+		CAGE_TEST(!real::Nan().valid());
+		CAGE_TEST(!real::Infinity().finite());
+		CAGE_TEST(!real::Nan().finite());
+		CAGE_TEST(real::Pi().finite());
 		CAGE_TEST(real(0).finite());
+		CAGE_TEST(real(42).finite());
+		CAGE_TEST(real(42).valid());
 		real a = 3;
 		test(a + 2, 5);
 		test(2 + a, 5);
@@ -212,8 +210,8 @@ namespace
 	{
 		CAGE_TESTCASE("degs & rads");
 		test(rads(degs(0)), rads(0));
-		test(rads(degs(90)), rads(real::HalfPi));
-		test(rads(degs(180)), rads(real::Pi));
+		test(rads(degs(90)), rads(real::Pi() / 2));
+		test(rads(degs(180)), rads(real::Pi()));
 		test(rads(degs(90 * 15)).normalize(), degs((90 * 15) % 360));
 		test(rads(degs(0)).normalize(), degs(0));
 		test(rads(degs(-270)).normalize(), degs(90));
@@ -674,11 +672,11 @@ namespace
 		{
 			CAGE_TESTCASE("sin");
 			test(sin(rads(0)), 0);
-			test(sin(rads(real::Pi / 6)), ::sin(real::Pi.value / 6));
-			test(sin(rads(real::Pi / 4)), ::sin(real::Pi.value / 4));
-			test(sin(rads(real::Pi / 2)), ::sin(real::Pi.value / 2));
-			test(sin(rads(real::Pi)), ::sin(real::Pi.value));
-			test(sin(rads(real::Pi * 2)), ::sin(real::Pi.value * 2));
+			test(sin(rads(real::Pi() / 6)), ::sin(real::Pi().value / 6));
+			test(sin(rads(real::Pi() / 4)), ::sin(real::Pi().value / 4));
+			test(sin(rads(real::Pi() / 2)), ::sin(real::Pi().value / 2));
+			test(sin(rads(real::Pi() * 1)), ::sin(real::Pi().value * 1));
+			test(sin(rads(real::Pi() * 2)), ::sin(real::Pi().value * 2));
 		}
 
 		{

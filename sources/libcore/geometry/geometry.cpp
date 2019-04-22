@@ -127,7 +127,7 @@ namespace cage
 
 	bool parallel(const vec3 &dir1, const vec3 &dir2)
 	{
-		return abs(dot(dir1, dir2)) >= 1 - real::epsilon;
+		return abs(dot(dir1, dir2)) >= 1 - 1e-7;
 	}
 
 	bool parallel(const line &a, const line &b)
@@ -162,7 +162,7 @@ namespace cage
 
 	bool perpendicular(const vec3 &dir1, const vec3 &dir2)
 	{
-		return abs(dot(dir1, dir2)) <= real::epsilon;
+		return abs(dot(dir1, dir2)) <= 1e-7;
 	}
 
 	bool perpendicular(const line &a, const line &b)
@@ -311,7 +311,7 @@ namespace cage
 	{
 		if (intersects(a, b))
 			return 0;
-		real d = real::PositiveInfinity;
+		real d = real::Infinity();
 		for (uint32 i = 0; i < 3; i++)
 		{
 			d = min(d, distance(a[i], b));
@@ -364,7 +364,7 @@ namespace cage
 			1, 3, 5,
 			3, 5, 7
 		};
-		real d = real::PositiveInfinity;
+		real d = real::Infinity();
 		for (uint32 i = 0; i < 12; i++)
 		{
 			triangle t(
@@ -417,17 +417,17 @@ namespace cage
 
 	bool intersects(const vec3 &point, const line &other)
 	{
-		return distance(point, other) <= real::epsilon;
+		return distance(point, other) <= 1e-7;
 	}
 
 	bool intersects(const vec3 &point, const triangle &other)
 	{
-		return distance(point, other) <= real::epsilon;
+		return distance(point, other) <= 1e-7;
 	}
 
 	bool intersects(const vec3 &point, const plane &other)
 	{
-		return distance(point, other) <= real::epsilon;
+		return distance(point, other) <= 1e-7;
 	}
 
 	bool intersects(const vec3 &point, const sphere &other)
@@ -447,7 +447,7 @@ namespace cage
 
 	bool intersects(const line &a, const line &b)
 	{
-		return distance(a, b) <= real::epsilon;
+		return distance(a, b) <= 1e-7;
 	}
 
 	bool intersects(const line &ray, const triangle &tri)
@@ -459,7 +459,7 @@ namespace cage
 		vec3 edge2 = v2 - v0;
 		vec3 pvec = cross(ray.direction, edge2);
 		real det = dot(edge1, pvec);
-		if (abs(det) < real::epsilon)
+		if (abs(det) < 1e-7)
 			return false;
 		real invDet = 1 / det;
 		vec3 tvec = ray.origin - v0;
@@ -749,7 +749,7 @@ namespace cage
 	bool intersects(const plane &a, const plane &b)
 	{
 		if (parallel(a, b))
-			return abs(a.d - b.d) < real::epsilon;
+			return abs(a.d - b.d) < 1e-7;
 		return true;
 	}
 
@@ -804,20 +804,20 @@ namespace cage
 		vec3 edge2 = v2 - v0;
 		vec3 pvec = cross(ray.direction, edge2);
 		real det = dot(edge1, pvec);
-		if (abs(det) < real::epsilon)
-			return vec3::Nan;
+		if (abs(det) < 1e-7)
+			return vec3::Nan();
 		real invDet = 1 / det;
 		vec3 tvec = ray.origin - v0;
 		real u = dot(tvec, pvec) * invDet;
 		if (u < 0 || u > 1)
-			return vec3::Nan;
+			return vec3::Nan();
 		vec3 qvec = cross(tvec, edge1);
 		real v = dot(ray.direction, qvec) * invDet;
 		if (v < 0 || u + v > 1)
-			return vec3::Nan;
+			return vec3::Nan();
 		real t = dot(edge2, qvec) * invDet;
 		if (t < ray.minimum || t > ray.maximum)
-			return vec3::Nan;
+			return vec3::Nan();
 		return ray.origin + t * ray.direction;
 	}
 

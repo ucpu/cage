@@ -18,7 +18,7 @@ namespace cage
 		serializer ser(buffer);
 		ser << component->index();
 		ser << (uint64)typeSize;
-		ser << (uint32)0; // cnt placeholder
+		serializer cntPlaceholder = ser.placeholder(sizeof(uint32));
 		uint32 cnt = 0;
 		for (entityClass *e : entities->entities())
 		{
@@ -31,12 +31,16 @@ namespace cage
 			ser << name;
 			ser.write(e->unsafeValue(component), typeSize);
 		}
-		*(uint32*)(buffer.data() + sizeof(component->index()) + sizeof(uint64)) = cnt;
+		if (cnt == 0)
+			return {};
+		cntPlaceholder << cnt;
 		return buffer;
 	}
 
 	void entitiesDeserialize(const void *buffer, uintPtr size, entityManagerClass *manager)
 	{
+		if (size == 0)
+			return;
 		deserializer des(buffer, size);
 		uint32 componentIndex;
 		des >> componentIndex;

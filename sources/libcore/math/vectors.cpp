@@ -208,4 +208,9 @@ namespace cage
 			return vec3(0, data[1].sign(), 0);
 		return vec3(0, 0, data[2].sign());
 	}
+
+	vec2 vec2::Nan() { return vec2(real::Nan(), real::Nan()); }
+	vec3 vec3::Nan() { return vec3(real::Nan(), real::Nan(), real::Nan()); }
+	vec4 vec4::Nan() { return vec4(real::Nan(), real::Nan(), real::Nan(), real::Nan()); }
+	quat quat::Nan() { return quat(real::Nan(), real::Nan(), real::Nan(), real::Nan()); }
 }

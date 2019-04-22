@@ -600,8 +600,8 @@ namespace cage
 						for (uint32 i = 1; i < lanczosResolution; i++)
 						{
 							real x = real(i * lanczosA) / real(lanczosResolution);
-							real px = x * real::Pi;
-							lanczosTable[i] = real(lanczosA) * sin(rads(px)) * sin(rads(px / lanczosA)) / (real::Pi * real::Pi * x * x);
+							real px = x * real::Pi();
+							lanczosTable[i] = real(lanczosA) * sin(rads(px)) * sin(rads(px / lanczosA)) / (real::Pi() * real::Pi() * x * x);
 						}
 					}
 				} lanczosTableInitializer;

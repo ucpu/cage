@@ -32,7 +32,7 @@ namespace
 	{
 		real x = randomRange(-120, 120);
 		real z = randomRange(-120, 120);
-		real y = 4 * sin(rads(x * sqrt(abs(z + 2) + 0.3))) + 2 * real::E.pow(1 + cos(rads(x / 20 + (z - 40) / 30)));
+		real y = 4 * sin(rads(x * sqrt(abs(z + 2) + 0.3))) + 2 * real::E().pow(1 + cos(rads(x / 20 + (z - 40) / 30)));
 		vec3 o = vec3(x, y, z);
 		vec3 s = generateRandomPoint() * 0.05;
 		return aabb(o + s, o - s);

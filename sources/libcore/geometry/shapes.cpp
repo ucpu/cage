@@ -27,12 +27,12 @@ namespace cage
 		}
 		else if (isLine())
 		{
-			if (minimum != real::NegativeInfinity || maximum != real::PositiveInfinity)
+			if (minimum != -real::Infinity() || maximum != real::Infinity())
 				return false;
 		}
 		else if (isRay())
 		{
-			if (minimum != 0 || maximum != real::PositiveInfinity)
+			if (minimum != 0 || maximum != real::Infinity())
 				return false;
 		}
 		else if (isSegment())
@@ -42,7 +42,7 @@ namespace cage
 		}
 		else
 			return false;
-		return abs(direction.squaredLength() - 1) < real::epsilon;
+		return abs(direction.squaredLength() - 1) < 1e-6;
 	}
 
 	line line::normalize() const
@@ -50,7 +50,7 @@ namespace cage
 		if (!valid())
 			return line();
 		line r = *this;
-		if (r.isPoint() || r.direction.squaredLength() < real::epsilon)
+		if (r.isPoint() || r.direction.squaredLength() < 1e-7)
 		{
 			r.origin = r.a();
 			r.direction = vec3(1, 0, 0);
@@ -74,7 +74,7 @@ namespace cage
 				}
 			}
 			else if (r.maximum.finite())
-				r = line(r.b(), -r.direction, 0, real::PositiveInfinity);
+				r = line(r.b(), -r.direction, 0, real::Infinity());
 			if (r.isLine())
 			{
 				//real d = distance(vec3(), r);
@@ -92,12 +92,12 @@ namespace cage
 
 	line makeRay(const vec3 &a, const vec3 &b)
 	{
-		return line(a, b - a, 0, real::PositiveInfinity).normalize();
+		return line(a, b - a, 0, real::Infinity()).normalize();
 	}
 
 	line makeLine(const vec3 &a, const vec3 &b)
 	{
-		return line(a, b - a, real::NegativeInfinity, real::PositiveInfinity).normalize();
+		return line(a, b - a, -real::Infinity(), real::Infinity()).normalize();
 	}
 
 	triangle triangle::operator * (const mat4 &other) const
@@ -156,7 +156,7 @@ namespace cage
 		real dotACAC = dot(c - a, c - a);
 		real d = 2.0f*(dotABAB*dotACAC - dotABAC*dotABAC);
 		vec3 referencePt = a;
-		if (abs(d) <= real::epsilon)
+		if (abs(d) <= 1e-7)
 		{
 			aabb bbox = aabb(other);
 			center = bbox.center();
@@ -190,7 +190,7 @@ namespace cage
 			*this = sphere((a + b) * 0.5, distance(a, b) * 0.5);
 		}
 		else
-			*this = sphere(vec3(), real::PositiveInfinity);
+			*this = sphere(vec3(), real::Infinity());
 	}
 
 	sphere sphere::operator * (const mat4 &other) const
@@ -212,7 +212,7 @@ namespace cage
 			*this = aabb(a, b);
 		}
 		else
-			*this = aabb::Universe;
+			*this = aabb::Universe();
 	}
 
 	aabb::aabb(const plane &other)
@@ -261,4 +261,6 @@ namespace cage
 		real wz = b[2] - a[2];
 		return (wx*wy + wx*wz + wy*wz) * 2;
 	}
+
+	aabb aabb::Universe() { return aabb(vec3(-real::Infinity()), vec3(real::Infinity())); }
 }

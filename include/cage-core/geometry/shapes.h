@@ -9,7 +9,7 @@ namespace cage
 		real maximum;
 
 		// constructors
-		line() : origin(vec3::Nan), direction(vec3::Nan), minimum(real::Nan), maximum(real::Nan) {};
+		line() : origin(vec3::Nan()), direction(vec3::Nan()), minimum(real::Nan()), maximum(real::Nan()) {};
 		line(vec3 origin, vec3 direction, real minimum, real maximum) : origin(origin), direction(direction), minimum(minimum), maximum(maximum) {};
 
 		// compound operators
@@ -45,7 +45,7 @@ namespace cage
 		vec3 vertices[3];
 
 		// constructors
-		triangle() : vertices{ vec3::Nan, vec3::Nan , vec3::Nan } {};
+		triangle() : vertices{ vec3::Nan(), vec3::Nan(), vec3::Nan() } {};
 		triangle(const vec3 vertices[3]) : vertices{ vertices[0], vertices[1], vertices[2] } {};
 		triangle(const vec3 &a, const vec3 &b, const vec3 &c) : vertices{ a, b, c } {};
 		triangle(const real coords[9]) : vertices{ vec3(coords[0], coords[1], coords[2]), vec3(coords[3], coords[4], coords[5]), vec3(coords[6], coords[7], coords[8]) } {};
@@ -84,7 +84,7 @@ namespace cage
 		real d;
 
 		// constructors
-		plane() : normal(vec3::Nan), d(real::Nan) {};
+		plane() : normal(vec3::Nan()), d(real::Nan()) {};
 		plane(const vec3 &normal, real d) : normal(normal), d(d) {};
 		plane(const vec3 &point, const vec3 &normal);
 		plane(const vec3 &a, const vec3 &b, const vec3 &c);
@@ -118,7 +118,7 @@ namespace cage
 		real radius;
 
 		// constructors
-		sphere() : center(vec3::Nan), radius(real::Nan) {};
+		sphere() : center(vec3::Nan()), radius(real::Nan()) {};
 		sphere(const vec3 &center, real radius) : center(center), radius(radius) {};
 		explicit sphere(const triangle &other);
 		explicit sphere(const aabb &other);
@@ -142,8 +142,8 @@ namespace cage
 		// methods
 		bool valid() const { return center.valid() && radius >= 0; }
 		bool empty() const { return !valid(); }
-		real volume() const { return empty() ? 0 : 4 * real::Pi * radius * radius * radius / 3; }
-		real surface() const { return empty() ? 0 : 4 * real::Pi * radius * radius; }
+		real volume() const { return empty() ? 0 : 4 * real::Pi() * radius * radius * radius / 3; }
+		real surface() const { return empty() ? 0 : 4 * real::Pi() * radius * radius; }
 	};
 
 	struct CAGE_API aabb
@@ -152,7 +152,7 @@ namespace cage
 		vec3 a, b;
 
 		// constructor
-		aabb() : a(vec3::Nan), b(vec3::Nan) {}
+		aabb() : a(vec3::Nan()), b(vec3::Nan()) {}
 		aabb(const vec3 &a, const vec3 &b) : a(min(a, b)), b(max(a, b)) {}
 		explicit aabb(const vec3 &point) : a(point), b(point) {}
 		explicit aabb(const triangle &other) : a(min(min(other[0], other[1]), other[2])), b(max(max(other[0], other[1]), other[2])) {};
@@ -187,7 +187,7 @@ namespace cage
 		real diagonal() const { return empty() ? 0 : a.distance(b); }
 
 		// constants
-		static const aabb Universe;
+		static aabb Universe();
 	};
 
 	CAGE_API line makeSegment(const vec3 &a, const vec3 &b);

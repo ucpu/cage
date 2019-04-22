@@ -225,7 +225,7 @@ namespace cage
 
 #endif
 
-			return string(buffer, len);
+			return pathSimplify(string(buffer, len));
 		}
 
 		string getExecutableFullPathNoExe()

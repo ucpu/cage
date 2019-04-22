@@ -71,9 +71,9 @@ namespace cage
 			void query(const colliderClass *collider, const transform &t1, const transform &t2)
 			{
 				resultName = 0;
-				resultFractionBefore = resultFractionContact = real::Nan;
+				resultFractionBefore = resultFractionContact = real::Nan();
 				resultPairs.clear();
-				real best = real::PositiveInfinity;
+				real best = real::Infinity();
 				spatial->intersection(collider->box() * t1 + collider->box() * t2);
 				for (uint32 nameIt : spatial->result())
 				{
@@ -102,9 +102,9 @@ namespace cage
 			void query(const T &shape)
 			{
 				resultName = 0;
-				resultFractionBefore = resultFractionContact = real::Nan;
+				resultFractionBefore = resultFractionContact = real::Nan();
 				resultPairs.clear();
-				real best = real::PositiveInfinity;
+				real best = real::Infinity();
 				spatialIntersection(shape);
 				for (uint32 nameIt : spatial->result())
 				{
@@ -137,7 +137,7 @@ namespace cage
 		template<>
 		void collisionQueryImpl::spatialIntersection(const plane &shape)
 		{
-			spatial->intersection(aabb::Universe);
+			spatial->intersection(aabb::Universe());
 		}
 	}
 

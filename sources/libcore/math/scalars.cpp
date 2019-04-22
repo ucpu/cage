@@ -1,4 +1,5 @@
 #include <cmath>
+#include <limits>
 
 #define CAGE_EXPORT
 #include <cage-core/core.h>
@@ -47,12 +48,12 @@ namespace cage
 		if (x > 0) return aTan(y / x);
 		if (x < 0)
 		{
-			if (y < 0) return aTan(y / x) - rads(real::Pi);
-			return aTan(y / x) + rads(real::Pi);
+			if (y < 0) return aTan(y / x) - rads(real::Pi());
+			return aTan(y / x) + rads(real::Pi());
 		}
-		if (y < 0) return rads(-real::HalfPi);
-		if (y > 0) return rads(real::HalfPi);
-		return rads::Nan;
+		if (y < 0) return rads(-real::Pi() / 2);
+		if (y > 0) return rads(real::Pi() / 2);
+		return rads::Nan();
 	}
 
 	real real::sqrt() const
@@ -86,4 +87,16 @@ namespace cage
 	{
 		return ::ceil(value);
 	}
+
+	real real::Pi() { return 3.14159265358979323846264338327950288; }
+	real real::E() { return 2.718281828459045235360287471352; }
+	real real::Ln2() { return 0.69314718055994530942; }
+	real real::Ln10() { return 2.302585092994045684; }
+	real real::Infinity() { return std::numeric_limits<float>::infinity(); }
+	real real::Nan() { return std::numeric_limits<float>::quiet_NaN(); }
+
+	rads rads::Stright() { return rads(real::Pi()); }
+	rads rads::Right() { return rads::Stright() / 2; }
+	rads rads::Full() { return rads::Stright() * 2; }
+	rads rads::Nan() { return rads(real::Nan()); }
 }

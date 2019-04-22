@@ -3,7 +3,6 @@ namespace cage
 	struct CAGE_API real
 	{
 		float value;
-		static float epsilon;
 
 		// constructors
 		real() : value(0) {}
@@ -47,12 +46,12 @@ namespace cage
 
 		// methods
 		real sqr() const { return value * value; }
-		real powE() const { return pow(E); }
+		real powE() const { return pow(E()); }
 		real pow2() const { return pow(2); }
 		real pow10() const { return pow(10); }
 		real log(real base) const { return ln() / base.ln(); }
-		real log2() const { return ln() / Ln2; }
-		real log10() const { return ln() / Ln10; }
+		real log2() const { return ln() / Ln2(); }
+		real log10() const { return ln() / Ln10(); }
 		real min(real other) const { return *this < other ? *this : other; }
 		real max(real other) const { return *this > other ? *this : other; }
 		real clamp() const { return clamp(0, 1); }
@@ -60,7 +59,7 @@ namespace cage
 		real abs() const { if (value < 0) return -value; return value; }
 		sint32 sign() const { if (*this > 0) return 1; else if (*this < 0) return -1; else return 0; }
 		bool valid() const { return value == value; }
-		bool finite() const { return valid() && *this != real::PositiveInfinity && *this != real::NegativeInfinity; }
+		bool finite() const { return valid() && *this != real::Infinity() && *this != -real::Infinity(); }
 		real sqrt() const;
 		real pow(real power) const;
 		real ln() const;
@@ -72,15 +71,12 @@ namespace cage
 		static real parse(const string &str);
 
 		// constants
-		static const real Pi;
-		static const real HalfPi;
-		static const real TwoPi;
-		static const real E; // Euler's number
-		static const real Ln2; // natural logarithm of 2
-		static const real Ln10; // natural logarithm of 10
-		static const real PositiveInfinity;
-		static const real NegativeInfinity;
-		static const real Nan;
+		static real Pi();
+		static real E(); // Euler's number
+		static real Ln2(); // natural logarithm of 2
+		static real Ln10(); // natural logarithm of 10
+		static real Infinity();
+		static real Nan();
 		static const uint32 Dimension = 1;
 	};
 
@@ -120,21 +116,20 @@ namespace cage
 		operator string() const { return string() + value + " rads"; }
 
 		// methods
-		rads normalize() const { if (value < 0) return Full - rads(-value % (real)Full); else return rads(value % (real)Full); }
+		rads normalize() const { if (value < 0) return Full() - rads(-value % (real)Full()); else return rads(value % (real)Full()); }
 		rads min(rads other) const { return rads(value.min(other.value)); }
 		rads max(rads other) const { return rads(value.max(other.value)); }
-		rads clamp() const { return clamp(Zero, Full); }
+		rads clamp() const { return clamp(rads(), Full()); }
 		rads clamp(rads min, rads max) const { return rads(value.clamp(min.value, max.value)); }
 		rads abs() const { return rads(value.abs()); }
 		sint32 sign() const { return value.sign(); }
 		bool valid() const { return value.valid(); }
 
 		// constants
-		static const rads Zero;
-		static const rads Right;
-		static const rads Stright;
-		static const rads Full;
-		static const rads Nan;
+		static rads Right();
+		static rads Stright();
+		static rads Full();
+		static rads Nan();
 
 		friend struct real;
 		friend struct degs;
@@ -203,8 +198,8 @@ namespace cage
 	inline real::real(rads other) : value(other.value.value) {}
 	inline real::real(degs other) : value(other.value.value) {}
 	inline rads real::operator * (rads other) const { return other * value; }
-	inline rads::rads(degs other) : value(other.value * real::Pi / (real)180) {}
-	inline degs::degs(rads other) : value(other.value * (real)180 / real::Pi) {}
+	inline rads::rads(degs other) : value(other.value * real::Pi() / (real)180) {}
+	inline degs::degs(rads other) : value(other.value * (real)180 / real::Pi()) {}
 
 	CAGE_API real sin(rads value);
 	CAGE_API real cos(rads value);

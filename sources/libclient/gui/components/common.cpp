@@ -25,7 +25,7 @@ namespace cage
 	textComponent::textComponent() : assetName(0), textName(0)
 	{}
 
-	textFormatComponent::textFormatComponent() : color(vec3::Nan), font(0), size(real::Nan), lineSpacing(real::Nan), align((textAlignEnum)-1)
+	textFormatComponent::textFormatComponent() : color(vec3::Nan()), font(0), size(real::Nan()), lineSpacing(real::Nan()), align((textAlignEnum)-1)
 	{}
 
 	selectionComponent::selectionComponent() : start(m), length(0)
@@ -34,7 +34,7 @@ namespace cage
 	scrollbarsComponent::scrollbarsComponent() : overflow{ overflowModeEnum::Auto, overflowModeEnum::Auto }
 	{}
 
-	explicitSizeComponent::explicitSizeComponent() : size(vec2::Nan)
+	explicitSizeComponent::explicitSizeComponent() : size(vec2::Nan())
 	{}
 
 	generalComponentsStruct::generalComponentsStruct(entityManagerClass *ents)

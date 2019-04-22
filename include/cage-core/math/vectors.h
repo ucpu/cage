@@ -25,7 +25,7 @@ NAME operator - (real other) const { NAME r; for (uint32 i = 0; i < N; i++) r.da
 NAME operator * (real other) const { NAME r; for (uint32 i = 0; i < N; i++) r.data[i] = data[i] * other; return r; } \
 NAME operator / (real other) const { NAME r; real d = real(1) / other; for (uint32 i = 0; i < N; i++) r.data[i] = data[i] * d; return r; } \
 static NAME parse(const string &str); \
-static const NAME Nan;
+static NAME Nan();
 
 #define GCHL_GEN_VECTOR_BASE(NAME, N) \
 GCHL_GEN_QUATERNION_BASE(NAME, N) \

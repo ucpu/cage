@@ -42,8 +42,8 @@ namespace cage
 		static mat3 parse(const string &str);
 
 		// constants
-		static const mat3 Zero;
-		static const mat3 Nan;
+		static mat3 Zero();
+		static mat3 Nan();
 	};
 
 	struct CAGE_API mat4
@@ -91,8 +91,8 @@ namespace cage
 		static mat4 scale(const vec3 &scl) { return mat4(scl[0], 0, 0, 0, 0, scl[1], 0, 0, 0, 0, scl[2], 0, 0, 0, 0, 1); };
 
 		// constants
-		static const mat4 Zero;
-		static const mat4 Nan;
+		static mat4 Zero();
+		static mat4 Nan();
 	};
 
 	inline mat3 inverse(const mat3 &th) { return th.inverse(); }

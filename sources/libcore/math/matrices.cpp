@@ -575,4 +575,9 @@ namespace cage
 			0, 0, 0, 1
 		).transpose();
 	}
+
+	mat3 mat3::Nan() { return mat3(real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan()); }
+	mat3 mat3::Zero() { return mat3(0, 0, 0, 0, 0, 0, 0, 0, 0); }
+	mat4 mat4::Nan() { return mat4(real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan()); }
+	mat4 mat4::Zero() { return mat4(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0); }
 }
