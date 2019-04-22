@@ -259,22 +259,22 @@ namespace cage
 				int status = 0;
 				try
 				{
-				    while (true)
-				    {
-        				errno = 0;
-				        int res = waitpid(pid, &status, 0);
-				        int err = errno;
-				        if (res < 0 && err == EINTR)
-				            continue;
-				        if (res != pid)
-					        CAGE_THROW_ERROR(codeException, "waitpid", err);
-					    break;
-				    }
+					while (true)
+					{
+						errno = 0;
+						int res = waitpid(pid, &status, 0);
+						int err = errno;
+						if (res < 0 && err == EINTR)
+							continue;
+						if (res != pid)
+							CAGE_THROW_ERROR(codeException, "waitpid", err);
+						break;
+					}
 				}
 				catch (...)
 				{
-				    pid = 0;
-				    throw;
+					pid = 0;
+					throw;
 				}
 				pid = 0;
 				return status;
