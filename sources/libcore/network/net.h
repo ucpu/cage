@@ -97,8 +97,8 @@ namespace cage
 			uintPtr available() const;
 			void send(const void *buffer, uintPtr bufferSize);
 			void sendTo(const void *buffer, uintPtr bufferSize, const addr &remoteAddress);
-			uintPtr recv(void *buffer, uintPtr bufferSize, int flags = 0, bool ignoreReset = false);
-			uintPtr recvFrom(void *buffer, uintPtr bufferSize, addr &remoteAddress, int flags = 0, bool ignoreReset = false);
+			uintPtr recv(void *buffer, uintPtr bufferSize, int flags = 0);
+			uintPtr recvFrom(void *buffer, uintPtr bufferSize, addr &remoteAddress, int flags = 0);
 
 			bool operator < (const sock &other) const // fast comparison
 			{

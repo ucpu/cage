@@ -12,6 +12,8 @@ void runClient()
 {
 	CAGE_LOG(severityEnum::Info, "config", string() + "running in client mode");
 
+	//configSetSint32("cage-core.udp.logLevel", 10);
+
 	configString address("address");
 	configUint32 port("port");
 	CAGE_LOG(severityEnum::Info, "config", string() + "address: '" + address + "'");

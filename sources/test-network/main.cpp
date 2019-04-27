@@ -56,12 +56,12 @@ namespace
 	void runManager()
 	{
 		uint16 port = randomRange(1025u, 65535u);
-		runnerStruct runnerClient1(1, string() + "cage-test-network -n network-test-client-1 -c -p " + port + " -l " + randomRange(0.0, 0.001));
-		runnerStruct runnerClient2(2, string() + "cage-test-network -n network-test-client-2 -c -p " + port + " -l " + randomRange(0.0, 0.001));
-		runnerStruct runnerServer0(0, string() + "cage-test-network -n network-test-server-0 -s -p " + port + " -l " + randomRange(0.0, 0.001));
-		runnerStruct runnerClient3(3, string() + "cage-test-network -n network-test-client-3 -c -p " + port + " -l " + randomRange(0.0, 0.001));
-		runnerStruct runnerClient4(4, string() + "cage-test-network -n network-test-client-4 -c -p " + port + " -l " + randomRange(0.0, 0.001));
-		runnerStruct runnerClient5(5, string() + "cage-test-network -n network-test-client-5 -c -p " + port + " -l " + randomRange(0.0, 0.2));
+		runnerStruct runnerClient1(1, string() + "cage-test-network -n network-test-client-1 -c -p " + port);
+		runnerStruct runnerClient2(2, string() + "cage-test-network -n network-test-client-2 -c -p " + port);
+		runnerStruct runnerServer0(0, string() + "cage-test-network -n network-test-server-0 -s -p " + port);
+		runnerStruct runnerClient3(3, string() + "cage-test-network -n network-test-client-3 -c -p " + port);
+		//runnerStruct runnerClient4(4, string() + "cage-test-network -n network-test-client-4 -c -p " + port);
+		//runnerStruct runnerClient5(5, string() + "cage-test-network -n network-test-client-5 -c -p " + port);
 	}
 
 	void initializeSecondaryLog(const string &path)

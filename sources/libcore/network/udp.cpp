@@ -10,7 +10,6 @@
 #include "net.h"
 #include <cage-core/math.h> // random
 #include <cage-core/config.h>
-#include <cage-core/memory.h> // decompress
 #include <cage-core/concurrent.h>
 #include <cage-core/serialization.h>
 
@@ -22,8 +21,9 @@ namespace cage
 
 		configFloat simulatedPacketLoss("cage-core.udp.simulatedPacketLoss", 0);
 		configUint32 mtu("cage-core.udp.mtu", 1100);
-		configUint32 packetsPerService("cage-core.udp.packetsPerService", 20);
+		//configUint32 packetsPerService("cage-core.udp.packetsPerService", 20);
 		configUint32 logLevel("cage-core.udp.logLevel", 0);
+
 #define UDP_LOG(LEVEL, MSG) { if (logLevel >= (LEVEL)) { CAGE_LOG(severityEnum::Info, "udp", string() + MSG); } }
 
 		struct sockGroupStruct
@@ -66,7 +66,7 @@ namespace cage
 							break;
 						memoryBuffer b(a);
 						addr adr;
-						b.resize(s.recvFrom(b.data(), a, adr, 0, true));
+						b.resize(s.recvFrom(b.data(), a, adr, 0));
 						if (b.size() >= 8)
 						{
 							uint32 connId = ((uint32*)b.data())[1];
@@ -225,9 +225,6 @@ namespace cage
 			udpConnectionImpl(std::shared_ptr<sockGroupStruct> sg, std::shared_ptr<sockGroupStruct::receiverStruct> rec) : sockGroup(sg), sockReceiver(rec), startTime(getApplicationTime()), connId(rec->connId), established(false)
 			{
 				UDP_LOG(1, "accepting new connection");
-				serviceReceiving();
-				if (!established)
-					CAGE_THROW_ERROR(exception, "the received packet does not initialize a new connection");
 			}
 
 			~udpConnectionImpl()
@@ -386,37 +383,29 @@ namespace cage
 						else
 							it++;
 					}
-					cmds.erase(std::remove_if(cmds.begin(), cmds.end(), [](const std::shared_ptr<sendingCommandStruct> &cmd) {
-						return cmd->type == cmdType::invalid;
-					}), cmds.end());
 				}
 			} sending;
 
 			memoryBuffer preparePacket()
 			{
 				uint64 current = getApplicationTime();
-				uintPtr precompressedSize = 0;
-				memoryBuffer compressed;
-				memoryBuffer working;
-				serializer s(working);
+				memoryBuffer packet;
+				serializer s(packet);
+				s << 'c' << 'a' << 'g' << 'e';
+				s << connId;
 				{
 					uint32 ackBits = encodeAck(receiving.packetSeqn, receiving.receivedPacketsSeqns);
 					s << sending.packetSeqn << receiving.packetSeqn << ackBits;
 					UDP_LOG(3, "preparing packet seqn " + sending.packetSeqn + ", ack-seqn " + receiving.packetSeqn + ", ack-bits: " + ackBits);
 				}
-				precompressedSize = working.size();
-				compressed = detail::compress(working);
-				uint32 m = mtu;
+				uint32 lm = mtu;
 				while (!sending.cmds.empty())
 				{
 					auto cmd = sending.cmds.front();
 					memoryBuffer cmdb = cmd->serialize();
-					s.write(cmdb.data(), cmdb.size());
-					memoryBuffer tmp = detail::compress(working);
-					if (tmp.size() > m)
+					if (packet.size() + cmdb.size() > lm)
 						break;
-					precompressedSize = working.size();
-					compressed = templates::move(tmp);
+					s.write(cmdb.data(), cmdb.size());
 					sending.cmds.pop_front();
 					cmd->lastTimeSend = current;
 					cmd->sendCount++;
@@ -425,12 +414,8 @@ namespace cage
 					UDP_LOG(5, "added command of type " + (uint32)cmd->type + ", channel: " + cmd->channel + ", msg-seqn: " + cmd->msgSeqn + ", index: " + cmd->index + ", size: " + cmd->size);
 				}
 				sending.packetSeqn++;
-				memoryBuffer result(compressed.size() + 8);
-				detail::memcpy(result.data(), "cage", 4);
-				detail::memcpy(result.data() + 4, &connId, 4);
-				detail::memcpy(result.data() + 8, compressed.data(), compressed.size());
-				UDP_LOG(4, "prepared packet with original size: " + precompressedSize + ", compressed size: " + compressed.size());
-				return result;
+				UDP_LOG(4, "prepared packet with size: " + packet.size());
+				return packet;
 			}
 
 			void serviceSending()
@@ -465,8 +450,7 @@ namespace cage
 				}
 
 				// make packets and send them
-				uint32 packetsLimit = packetsPerService;
-				for (uint32 packetCount = 0; packetCount < packetsLimit; packetCount++)
+				while (true)
 				{
 					if (sending.cmds.empty() && !sending.needToSendAnAck)
 						break;
@@ -727,27 +711,20 @@ namespace cage
 				}
 			}
 
-			void handleReceivedPacket(const memoryBuffer &wholePacket)
+			void handleReceivedPacket(const memoryBuffer &b)
 			{
-				UDP_LOG(5, "received packet with " + wholePacket.size() + " bytes");
-				memoryBuffer b;
-				{
-					deserializer d(wholePacket);
-					{
-						// read signature
-						char c, a, g, e;
-						d >> c >> a >> g >> e;
-						if (c != 'c' || a != 'a' || g != 'g' || e != 'e')
-							CAGE_THROW_ERROR(exception, "invalid udp packet signature");
-						// read connection id
-						uint32 id;
-						d >> id;
-					}
-					// decompress packet
-					b.allocate(wholePacket.size() * 10);
-					b.resize(detail::decompress(wholePacket.data() + 8, wholePacket.size() - 8, b.data(), b.size()));
-				}
+				UDP_LOG(5, "received packet with " + b.size() + " bytes");
 				deserializer d(b);
+				{
+					// read signature
+					char c, a, g, e;
+					d >> c >> a >> g >> e;
+					if (c != 'c' || a != 'a' || g != 'g' || e != 'e')
+						CAGE_THROW_ERROR(exception, "invalid udp packet signature");
+					// read connection id
+					uint32 id;
+					d >> id;
+				}
 				{
 					// read packet header
 					uint16 packetSeqn, ackSeqn;
@@ -797,6 +774,12 @@ namespace cage
 					{
 						// do nothing
 					}
+				}
+				{
+					auto &cmds = sending.cmds;
+					cmds.erase(std::remove_if(cmds.begin(), cmds.end(), [](const std::shared_ptr<sendingStruct::sendingCommandStruct> &cmd) {
+						return cmd->type == cmdType::invalid;
+					}), cmds.end());
 				}
 				receiving.consolidate();
 			}
@@ -884,30 +867,6 @@ namespace cage
 
 				serviceReceiving();
 				serviceSending();
-
-				/*
-				if (logLevel >= 6)
-				{
-					{
-						if (sending.resendCmds.size())
-							CAGE_LOG(severityEnum::Info, "udp", string() + "unacknowledged commands count: " + sending.resendCmds.size());
-					}
-					{
-						uint32 longs = 0;
-						for (auto &i : receiving.longs)
-							longs += numeric_cast<uint32>(i.size());
-						if (longs)
-							CAGE_LOG(severityEnum::Info, "udp", string() + "incomplete long messages count: " + longs);
-					}
-					{
-						uint32 onhold = 0;
-						for (auto &i : receiving.holds)
-							onhold += numeric_cast<uint32>(i.size());
-						if (onhold)
-							CAGE_LOG(severityEnum::Info, "udp", string() + "on hold messages count: " + onhold);
-					}
-				}
-				*/
 			}
 		};
 
@@ -958,7 +917,14 @@ namespace cage
 				}
 				try
 				{
-					return detail::systemArena().createImpl<udpConnectionClass, udpConnectionImpl>(sockGroup, acc);
+					auto c = detail::systemArena().createHolder<udpConnectionImpl>(sockGroup, acc);
+					c->serviceReceiving();
+					if (!c->established)
+					{
+						UDP_LOG(2, "received packets failed to initialize new connection");
+						return {};
+					}
+					return c.cast<udpConnectionClass>();
 				}
 				catch (...)
 				{

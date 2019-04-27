@@ -115,7 +115,7 @@ namespace cage
 						buffer.resize(1024);
 						try
 						{
-							buffer.resize(s.s.recvFrom(buffer.data(), buffer.size(), a, 0, true));
+							buffer.resize(s.s.recvFrom(buffer.data(), buffer.size(), a, 0));
 						}
 						catch (const cage::exception &)
 						{
@@ -233,7 +233,7 @@ namespace cage
 						buffer.resize(256);
 						try
 						{
-							buffer.resize(s.recvFrom(buffer.data(), buffer.size(), a, 0, true));
+							buffer.resize(s.recvFrom(buffer.data(), buffer.size(), a, 0));
 						}
 						catch (const cage::exception &)
 						{

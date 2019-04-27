@@ -4,6 +4,7 @@
 #include <cage-core/network.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
+#include <cage-core/random.h>
 
 using namespace cage;
 
@@ -17,11 +18,10 @@ namespace
 		holder<udpConnectionClass> udp;
 		memoryBuffer b;
 		const uint64 timeStart;
-		uint64 bytes;
-		uint32 sent, received;
+		uint64 sendSeqn, recvSeqn, recvCnt, recvBytes;
 		uint32 step;
 
-		connImpl(holder<udpConnectionClass> udp) : udp(templates::move(udp)), timeStart(getApplicationTime()), bytes(0), sent(0), received(0), step(0)
+		connImpl(holder<udpConnectionClass> udp) : udp(templates::move(udp)), timeStart(getApplicationTime()), sendSeqn(0), recvSeqn(0), recvCnt(0), recvBytes(0), step(0)
 		{}
 
 		~connImpl()
@@ -31,20 +31,20 @@ namespace
 
 		void statistics()
 		{
-			uint64 throughput = numeric_cast<uint64>(1000000.0 * bytes / (getApplicationTime() - timeStart));
-			CAGE_LOG(severityEnum::Info, "conn", string() + "messages: sent: " + sent + ", received: " + received + ", ratio: " + (100.f * received / sent) + " %");
-			CAGE_LOG(severityEnum::Info, "conn", string() + "data: received: " + (bytes / 1024) + " KB, throughput: " + (throughput / 1024) + " KB/s");
+			uint64 throughput = numeric_cast<uint64>(1000000.0 * recvBytes / (getApplicationTime() - timeStart));
+			CAGE_LOG(severityEnum::Info, "conn", string() + "messages send: " + sendSeqn + ", received: " + recvCnt + ", delivery ratio: " + ((real)recvCnt / (real)recvSeqn) + ", data received: " + (recvBytes / 1024) + " KB, throughput: " + (throughput / 1024) + " KB/s");
 		}
 
 		bool process()
 		{
+			step++;
 			if ((step % 30) == 15)
 				statistics();
-			if (step++ > 5 * 60 * 30)
-			{
-				CAGE_LOG(severityEnum::Info, "conn", "consider me done");
-				return true;
-			}
+			//if (step > 5 * 60 * 30)
+			//{
+			//	CAGE_LOG(severityEnum::Info, "conn", "consider me done");
+			//	return true;
+			//}
 			try
 			{
 				udp->update();
@@ -52,23 +52,28 @@ namespace
 				{ // read
 					while (udp->available())
 					{
-						received++;
 						memoryBuffer b = udp->read();
-						bytes += b.size();
+						recvBytes += b.size();
+						deserializer d(b);
+						uint64 r;
+						d >> r;
+						recvSeqn = max(r, recvSeqn);
+						recvCnt++;
 					}
 				}
 
-				for (uint32 j = 0; j < 10; j++)
+				for (uint32 j = 0; j < 150; j++)
 				{ // send
 					b.resize(0);
 					serializer s(b);
-					uint32 cnt = randomRange(5, 1000);
-					if (randomChance() < 0.1)
-						cnt *= 100;
-					for (uint32 i = 0; i < cnt; i++)
-						s << (char)randomRange(0, 255);
-					udp->write(b, randomRange(0, 100), randomChance() < 0.1);
-					sent++;
+					s << sendSeqn++;
+					uint32 bytes = randomRange(10, 2000);
+					if (randomChance() < 0.01)
+						bytes *= randomRange(10, 20);
+					bytes /= sizeof(decltype(currentRandomGenerator().next()));
+					for (uint32 i = 0; i < bytes; i++)
+						s << currentRandomGenerator().next();
+					udp->write(b, randomRange(0, 20), randomChance() < 0.1);
 				}
 
 				return false;

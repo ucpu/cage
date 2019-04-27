@@ -183,21 +183,21 @@ namespace cage
 				CAGE_THROW_ERROR(codeException, "send failed (sendto)", WSAGetLastError());
 		}
 
-		uintPtr sock::recv(void *buffer, uintPtr bufferSize, int flags, bool ignoreReset)
+		uintPtr sock::recv(void *buffer, uintPtr bufferSize, int flags)
 		{
 			CAGE_ASSERT_RUNTIME(connected);
 			int rtn;
 			if ((rtn = ::recv(descriptor, (raw_type*)buffer, numeric_cast<int>(bufferSize), flags)) < 0)
 			{
 				int err = WSAGetLastError();
-				if (err != WSAEWOULDBLOCK && (err != WSAECONNRESET || !ignoreReset))
+				if (err != WSAEWOULDBLOCK && (err != WSAECONNRESET || protocol != IPPROTO_UDP))
 					CAGE_THROW_ERROR(codeException, "received failed (recv)", err);
 				rtn = 0;
 			}
 			return rtn;
 		}
 
-		uintPtr sock::recvFrom(void *buffer, uintPtr bufferSize, addr &remoteAddress, int flags, bool ignoreReset)
+		uintPtr sock::recvFrom(void *buffer, uintPtr bufferSize, addr &remoteAddress, int flags)
 		{
 			//CAGE_ASSERT_RUNTIME(!connected);
 			remoteAddress.addrlen = sizeof(remoteAddress.storage);
@@ -205,7 +205,7 @@ namespace cage
 			if ((rtn = ::recvfrom(descriptor, (raw_type*)buffer, numeric_cast<int>(bufferSize), flags, (sockaddr*)&remoteAddress.storage, &remoteAddress.addrlen)) < 0)
 			{
 				int err = WSAGetLastError();
-				if (err != WSAEWOULDBLOCK && (err != WSAECONNRESET || !ignoreReset))
+				if (err != WSAEWOULDBLOCK && (err != WSAECONNRESET || protocol != IPPROTO_UDP))
 					CAGE_THROW_ERROR(codeException, "received failed (recvfrom)", err);
 				rtn = 0;
 			}
