@@ -13,10 +13,10 @@ void processTextpack()
 	ini->load(inputFileName);
 
 	std::map<string, string> texts;
-	for (uint32 sec = 0; sec < ini->sectionCount(); sec++)
+	for (uint32 sec = 0; sec < ini->sectionsCount(); sec++)
 	{
 		string section = ini->section(sec);
-		for (uint32 itm = 0; itm < ini->itemCount(section); itm++)
+		for (uint32 itm = 0; itm < ini->itemsCount(section); itm++)
 		{
 			string n = ini->item(section, itm);
 			string v = ini->get(section, n);

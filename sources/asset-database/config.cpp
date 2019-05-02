@@ -4,7 +4,7 @@
 #include <cage-core/log.h>
 #include <cage-core/config.h>
 #include <cage-core/filesystem.h>
-#include <cage-core/cmdOptions.h>
+#include <cage-core/ini.h>
 
 using namespace cage;
 
@@ -27,17 +27,34 @@ stringSet configIgnorePaths;
 
 void configParseCmd(int argc, const char *args[])
 {
-	holder<cmdOptionsClass> cso = newCmdOptions(argc, args, "sl");
-	while (cso->next())
 	{
-		switch (cso->option())
+		holder<iniClass> ini = newIni();
+		ini->parseCmd(argc, args);
+		for (string option : ini->sections())
 		{
-		case 's':
-			configFromScratch = true;
-			break;
-		case 'l':
-			configListening = true;
-			break;
+			if (option == "s" || option == "scratch")
+			{
+				if (ini->itemsCount(option) != 1)
+				{
+					CAGE_LOG(severityEnum::Note, "exception", string() + "option: '" + option + "'");
+					CAGE_THROW_ERROR(exception, "option expects one argument");
+				}
+				configFromScratch = ini->get(option, "0").toBool();
+			}
+			else if (option == "l" || option == "listen")
+			{
+				if (ini->itemsCount(option) != 1)
+				{
+					CAGE_LOG(severityEnum::Note, "exception", string() + "option: '" + option + "'");
+					CAGE_THROW_ERROR(exception, "option expects one argument");
+				}
+				configListening = ini->get(option, "0").toBool();
+			}
+			else
+			{
+				CAGE_LOG(severityEnum::Note, "exception", string() + "option: '" + option + "'");
+				CAGE_THROW_ERROR(exception, "unknown option");
+			}
 		}
 	}
 

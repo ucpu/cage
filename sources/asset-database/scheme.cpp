@@ -26,13 +26,13 @@ void schemeStruct::parse(iniClass *ini)
 		CAGE_LOG(severityEnum::Note, "exception", string() + "scheme: " + name);
 		CAGE_THROW_ERROR(exception, "empty scheme index field");
 	}
-	if (ini->itemCount("scheme") != 2)
+	if (ini->itemsCount("scheme") != 2)
 	{
 		CAGE_LOG(severityEnum::Note, "exception", string() + "scheme: " + name);
 		CAGE_THROW_ERROR(exception, "invalid fields in scheme section");
 	}
 
-	for (uint32 sectionIndex = 0, sectionIndexEnd = ini->sectionCount(); sectionIndex != sectionIndexEnd; sectionIndex++)
+	for (uint32 sectionIndex = 0, sectionIndexEnd = ini->sectionsCount(); sectionIndex != sectionIndexEnd; sectionIndex++)
 	{
 		string section = ini->section(sectionIndex);
 		if (section == "scheme")
