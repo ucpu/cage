@@ -9,6 +9,34 @@
 using namespace cage;
 
 #include "conn.h"
+#include "runner.h"
+
+struct thrStruct
+{
+	holder<threadClass> thr;
+	holder<connClass> conn;
+	runnerStruct runner;
+	bool done;
+
+	thrStruct(holder<connClass> conn) : conn(templates::move(conn)), done(false)
+	{
+		thr = newThread(delegate<void()>().bind<thrStruct, &thrStruct::entry>(this), "thr");
+	}
+
+	void entry()
+	{
+		try
+		{
+			while (!conn->process())
+				runner.step();
+		}
+		catch (...)
+		{
+			// nothing
+		}
+		done = true;
+	}
+};
 
 void runServer()
 {
@@ -19,8 +47,8 @@ void runServer()
 
 	holder<udpServerClass> server = newUdpServer(numeric_cast<uint16>((uint32)port));
 	bool hadConnection = false;
-	std::list<holder<connClass>> conns;
-	uint64 time = getApplicationTime();
+	std::list<thrStruct> thrs;
+	runnerStruct runner;
 	while (true)
 	{
 		while (true)
@@ -30,35 +58,27 @@ void runServer()
 			{
 				CAGE_LOG(severityEnum::Info, "server", "connection accepted");
 				hadConnection = true;
-				conns.emplace_back(newConn(templates::move(a)));
+				thrs.emplace_back(newConn(templates::move(a)));
 			}
 			else
 				break;
 		}
 		if (hadConnection)
 		{
-			auto it = conns.begin();
-			while (it != conns.end())
+			auto it = thrs.begin();
+			while (it != thrs.end())
 			{
-				if ((*it)->process())
+				if (it->done)
 				{
 					CAGE_LOG(severityEnum::Info, "server", "connection finished");
-					it = conns.erase(it);
+					it = thrs.erase(it);
 				}
 				else
 					it++;
 			}
-			if (conns.empty())
+			if (thrs.empty())
 				break;
 		}
-		{
-			uint64 t = getApplicationTime();
-			sint64 s = time + timeStep - t;
-			if (s > 0)
-				threadSleep(s);
-			else
-				CAGE_LOG(severityEnum::Warning, "server", "cannot keep up");
-			time += timeStep;
-		}
+		runner.step();
 	}
 }

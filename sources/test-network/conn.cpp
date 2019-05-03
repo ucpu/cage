@@ -18,33 +18,33 @@ namespace
 		holder<udpConnectionClass> udp;
 		memoryBuffer b;
 		const uint64 timeStart;
+		uint64 timeStats;
 		uint64 sendSeqn, recvSeqn, recvCnt, recvBytes;
-		uint32 step;
 
-		connImpl(holder<udpConnectionClass> udp) : udp(templates::move(udp)), timeStart(getApplicationTime()), sendSeqn(0), recvSeqn(0), recvCnt(0), recvBytes(0), step(0)
+		connImpl(holder<udpConnectionClass> udp) : udp(templates::move(udp)), timeStart(getApplicationTime()), timeStats(timeStart + 1000000), sendSeqn(0), recvSeqn(0), recvCnt(0), recvBytes(0)
 		{}
 
 		~connImpl()
 		{
-			statistics();
+			statistics(getApplicationTime());
 		}
 
-		void statistics()
+		void statistics(uint64 t)
 		{
-			uint64 throughput = numeric_cast<uint64>(1000000.0 * recvBytes / (getApplicationTime() - timeStart));
+			uint64 throughput = numeric_cast<uint64>(1000000.0 * recvBytes / (t - timeStart));
 			CAGE_LOG(severityEnum::Info, "conn", string() + "messages send: " + sendSeqn + ", received: " + recvCnt + ", delivery ratio: " + ((real)recvCnt / (real)recvSeqn) + ", data received: " + (recvBytes / 1024) + " KB, throughput: " + (throughput / 1024) + " KB/s");
 		}
 
 		bool process()
 		{
-			step++;
-			if ((step % 30) == 15)
-				statistics();
-			//if (step > 5 * 60 * 30)
-			//{
-			//	CAGE_LOG(severityEnum::Info, "conn", "consider me done");
-			//	return true;
-			//}
+			{
+				uint64 t = getApplicationTime();
+				if (t > timeStats)
+				{
+					statistics(t);
+					timeStats = t + 1000000;
+				}
+			}
 			try
 			{
 				udp->update();

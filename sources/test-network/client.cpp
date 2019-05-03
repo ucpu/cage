@@ -7,6 +7,7 @@
 using namespace cage;
 
 #include "conn.h"
+#include "runner.h"
 
 void runClient()
 {
@@ -20,15 +21,7 @@ void runClient()
 	CAGE_LOG(severityEnum::Info, "config", string() + "port: " + (uint32)port);
 
 	holder<connClass> client = newConn(newUdpConnection(address, port, 0));
-	uint64 time = getApplicationTime();
+	runnerStruct runner;
 	while (!client->process())
-	{
-		uint64 t = getApplicationTime();
-		sint64 s = numeric_cast<sint64>(time + timeStep) - numeric_cast<sint64>(t);
-		if (s > 0)
-			threadSleep(s);
-		else
-			CAGE_LOG(severityEnum::Warning, "client", "cannot keep up");
-		time += timeStep;
-	}
+		runner.step();
 }
