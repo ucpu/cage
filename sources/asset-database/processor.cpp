@@ -69,7 +69,7 @@ namespace
 			return false;
 		}
 		uint32 errors = 0;
-		for (uint32 sectionIndex = 0, sectionIndexEnd = ini->sectionCount(); sectionIndex != sectionIndexEnd; sectionIndex++)
+		for (uint32 sectionIndex = 0, sectionIndexEnd = ini->sectionsCount(); sectionIndex != sectionIndexEnd; sectionIndex++)
 		{
 			// load assets group properties
 			string section = ini->section(sectionIndex);
@@ -89,7 +89,7 @@ namespace
 			}
 
 			// find invalid properties
-			for (uint32 i = 0, e = ini->itemCount(section); i != e; i++)
+			for (uint32 i = 0, e = ini->itemsCount(section); i != e; i++)
 			{
 				string item = ini->item(section, i);
 				if (item.isDigitsOnly() || item == "scheme")
@@ -134,7 +134,7 @@ namespace
 					errors++;
 					ass.corrupted = true;
 				}
-				for (uint32 i = 0, e = ini->itemCount(section); i != e; i++)
+				for (uint32 i = 0, e = ini->itemsCount(section); i != e; i++)
 				{
 					string item = ini->item(section, i);
 					if (item.isDigitsOnly() || item == "scheme")

@@ -12,11 +12,11 @@ void processInterpack()
 	ini->load(inputFileName);
 
 	std::map<uint32, std::map<string, string>> assets;
-	for (uint32 sec = 0; sec < ini->sectionCount(); sec++)
+	for (uint32 sec = 0; sec < ini->sectionsCount(); sec++)
 	{
 		string section = ini->section(sec);
 		uint32 sch = section.toUint32();
-		for (uint32 itm = 0; itm < ini->itemCount(section); itm++)
+		for (uint32 itm = 0; itm < ini->itemsCount(section); itm++)
 		{
 			string n = ini->item(section, itm);
 			string v = ini->get(section, n);

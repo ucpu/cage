@@ -13,7 +13,8 @@ namespace cage
 {
 	namespace
 	{
-		template<class Value> struct containerMap
+		template<class Value>
+		struct containerMap
 		{
 			containerMap(memoryArena arena) : cont(stringComparatorFast(), arena) {}
 			typedef std::map<string, Value, stringComparatorFast, memoryArenaStd<std::pair<const string, Value>>> contType;
@@ -37,7 +38,7 @@ namespace cage
 		};
 	}
 
-	uint32 iniClass::sectionCount() const
+	uint32 iniClass::sectionsCount() const
 	{
 		iniImpl *impl = (iniImpl*)this;
 		return numeric_cast<uint32>(impl->sections.cont.size());
@@ -80,7 +81,7 @@ namespace cage
 		impl->sections.cont.erase(section);
 	}
 
-	uint32 iniClass::itemCount(const string &section) const
+	uint32 iniClass::itemsCount(const string &section) const
 	{
 		if (!sectionExists(section))
 			return 0;
@@ -126,6 +127,19 @@ namespace cage
 		return tmp;
 	}
 
+	holder<pointerRange<string>> iniClass::values(const string &section) const
+	{
+		iniImpl *impl = (iniImpl*)this;
+		pointerRangeHolder<string> tmp;
+		if (!sectionExists(section))
+			return tmp;
+		auto &cont = impl->sections.cont[section]->items.cont;
+		tmp.reserve(cont.size());
+		for (auto it : cont)
+			tmp.push_back(it.second);
+		return tmp;
+	}
+
 	void iniClass::itemRemove(const string &section, const string &item)
 	{
 		iniImpl *impl = (iniImpl*)this;
@@ -168,9 +182,84 @@ namespace cage
 		impl->sections.cont.clear();
 	}
 
+	void iniClass::merge(const iniClass *source)
+	{
+		for (string s : source->sections())
+		{
+			for (string i : source->items(s))
+				set(s, i, source->get(s, i));
+		}
+	}
+
+	namespace
+	{
+		void checkCmdOption(iniClass *ini, string &prev, const string &current)
+		{
+			if (prev != "--")
+			{
+				if (ini->itemsCount(prev) == 0)
+					ini->set(prev, "0", "true");
+				if (current != "--")
+					ini->sectionRemove(current);
+			}
+			prev = current;
+		}
+	}
+
+	void iniClass::parseCmd(uint32 argc, const char *const args[])
+	{
+		clear();
+		try
+		{
+			bool argumentsOnly = false;
+			string option = "--";
+			for (uint32 i = 1; i < argc; i++)
+			{
+				string s = args[i];
+				CAGE_ASSERT_RUNTIME(!s.empty());
+				if (!argumentsOnly)
+				{
+					if (s.isPattern("---", "", ""))
+						CAGE_THROW_ERROR(exception, "invalid option prefix (---)");
+					if (s == "-")
+						CAGE_THROW_ERROR(exception, "missing option name");
+					if (s == "--")
+					{
+						argumentsOnly = true;
+						checkCmdOption(this, option, "--");
+						continue;
+					}
+					if (s.isPattern("--", "", ""))
+					{
+						string o = s.remove(0, 2);
+						checkCmdOption(this, option, o);
+						continue;
+					}
+					if (s.isPattern("-", "", ""))
+					{
+						for (uint32 i = 1, e = s.length(); i != e; i++)
+						{
+							string o = string(&s[i], 1);
+							checkCmdOption(this, option, o);
+						}
+						continue;
+					}
+				}
+				set(option, itemsCount(option), s);
+			}
+			checkCmdOption(this, option, "--");
+		}
+		catch (...)
+		{
+			CAGE_LOG(severityEnum::Note, "exception", string() + "failed to parse command line arguments:");
+			for (uint32 i = 0; i < argc; i++)
+				CAGE_LOG_CONTINUE(severityEnum::Note, "exception", args[i]);
+			throw;
+		}
+	}
+
 	void iniClass::load(const string &filename)
 	{
-		iniImpl *impl = (iniImpl*)this;
 		holder<fileClass> file = newFile(filename, fileMode(true, false));
 		clear();
 		try
@@ -220,15 +309,6 @@ namespace cage
 		{
 			CAGE_LOG(severityEnum::Note, "exception", string() + "failed to load ini file: '" + filename + "'");
 			throw;
-		}
-	}
-
-	void iniClass::merge(const iniClass *source)
-	{
-		for (string s : source->sections())
-		{
-			for (string i : source->items(s))
-				set(s, i, source->get(s, i));
 		}
 	}
 

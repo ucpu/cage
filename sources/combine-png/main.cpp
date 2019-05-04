@@ -4,7 +4,7 @@
 #include <cage-core/log.h>
 #include <cage-core/math.h>
 #include <cage-core/png.h>
-#include <cage-core/cmdOptions.h>
+#include <cage-core/ini.h>
 
 using namespace cage;
 
@@ -17,27 +17,27 @@ int main(int argc, const char *args[])
 		log1->format.bind<logFormatPolicyConsole>();
 		log1->output.bind<logOutputPolicyStdOut>();
 
-		holder<cmdOptionsClass> cmd = newCmdOptions(argc, args, "1:2:3:4:o:");
+		holder<iniClass> cmd = newIni();
+		cmd->parseCmd(argc, args);
 		holder<pngImageClass> pngs[4];
 		uint32 width = 0, height = 0;
 		uint32 channels = 0;
 		string output;
-		while (cmd->next())
+		for (string option : cmd->sections())
 		{
-			switch (cmd->option())
+			if (option == "1" || option == "2" || option == "3" || option == "4")
 			{
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			{
-				uint32 index = cmd->option() - '1';
-				CAGE_LOG(severityEnum::Info, "material-tool", string() + "loading image: '" + cmd->argument() + "' for " + (index + 1) + "th channel");
-				if (pngs[index])
-					CAGE_THROW_ERROR(exception, "same channel specified multiple times");
+				uint32 index = option.toUint32() - 1;
+				if (cmd->itemsCount(option) != 1)
+				{
+					CAGE_LOG(severityEnum::Note, "exception", string() + "option: '" + option + "'");
+					CAGE_THROW_ERROR(exception, "option expects one argument");
+				}
+				string name = cmd->get(option, "0");
+				CAGE_LOG(severityEnum::Info, "combine-png", string() + "loading image: '" + name + "' for " + (index + 1) + "th channel");
 				holder<pngImageClass> p = newPngImage();
-				p->decodeFile(cmd->argument());
-				CAGE_LOG(severityEnum::Info, "material-tool", string() + "image resolution: " + p->width() + "x" + p->height() + ", channels: " + p->channels());
+				p->decodeFile(name);
+				CAGE_LOG(severityEnum::Info, "combine-png", string() + "image resolution: " + p->width() + "x" + p->height() + ", channels: " + p->channels());
 				if (width == 0)
 				{
 					width = p->width();
@@ -49,23 +49,31 @@ int main(int argc, const char *args[])
 						CAGE_THROW_ERROR(exception, "image resolution does not match");
 				}
 				if (p->channels() != 1)
-					CAGE_THROW_ERROR(exception, "the image is not grayscale");
+					CAGE_THROW_ERROR(exception, "the image has to be mono channel");
 				channels = max(channels, index + 1u);
 				pngs[index] = templates::move(p);
-			} break;
-			case 'o':
-				if (!output.empty())
-					CAGE_THROW_ERROR(exception, "output name specified multiple times");
-				output = cmd->argument();
-				break;
+			}
+			else if (option == "o" || option == "output")
+			{
+				if (cmd->itemsCount(option) != 1)
+				{
+					CAGE_LOG(severityEnum::Note, "exception", string() + "option: '" + option + "'");
+					CAGE_THROW_ERROR(exception, "option expects one argument");
+				}
+				output = cmd->get(option, "0");
+			}
+			else
+			{
+				CAGE_LOG(severityEnum::Note, "exception", string() + "option: '" + option + "'");
+				CAGE_THROW_ERROR(exception, "unknown option");
 			}
 		}
 		if (channels == 0)
 			CAGE_THROW_ERROR(exception, "no inputs specified");
 		if (output.empty())
-			output = "material.png";
+			output = "combined.png";
 
-		CAGE_LOG(severityEnum::Info, "material-tool", string() + "combining image");
+		CAGE_LOG(severityEnum::Info, "combine-png", string() + "combining image");
 		holder<pngImageClass> res = newPngImage();
 		res->empty(width, height, channels);
 		for (uint32 i = 0; i < channels; i++)
@@ -80,10 +88,10 @@ int main(int argc, const char *args[])
 			}
 		}
 
-		CAGE_LOG(severityEnum::Info, "material-tool", string() + "saving image");
+		CAGE_LOG(severityEnum::Info, "combine-png", string() + "saving image");
 		res->encodeFile(output);
 
-		CAGE_LOG(severityEnum::Info, "material-tool", string() + "ok");
+		CAGE_LOG(severityEnum::Info, "combine-png", string() + "ok");
 		return 0;
 	}
 	catch (const cage::exception &)

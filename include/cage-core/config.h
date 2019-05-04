@@ -65,6 +65,8 @@ namespace cage
 
 	CAGE_API holder<configListClass> newConfigList();
 
+	CAGE_API void configApplyIni(const iniClass *ini, const string &prefix);
+	CAGE_API void configGenerateIni(iniClass *ini, const string &prefix); // clears the ini before use
 	CAGE_API void configLoadIni(const string &filename, const string &prefix);
 	CAGE_API void configSaveIni(const string &filename, const string &prefix);
 }

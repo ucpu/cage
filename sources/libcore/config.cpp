@@ -383,12 +383,10 @@ namespace cage
 		return detail::systemArena().createImpl<configListClass, configListImpl>();
 	}
 
-	void configLoadIni(const string &filename, const string &prefix)
+	void configApplyIni(const iniClass *ini, const string &prefix)
 	{
 		if (prefix.find('.') != m || prefix.empty())
 			CAGE_LOG(severityEnum::Warning, "config", string() + "dangerous config prefix '" + prefix + "'");
-		holder<iniClass> ini = newIni();
-		ini->load(filename);
 		for (string section : ini->sections())
 		{
 			if (section.find('.') != m)
@@ -403,11 +401,11 @@ namespace cage
 		}
 	}
 
-	void configSaveIni(const string &filename, const string &prefix)
+	void configGenerateIni(iniClass *ini, const string &prefix)
 	{
 		if (prefix.find('.') != m || prefix.empty())
 			CAGE_LOG(severityEnum::Warning, "config", string() + "dangerous config prefix '" + prefix + "'");
-		holder<iniClass> ini = newIni();
+		ini->clear();
 		holder<configListClass> cnf = newConfigList();
 		while (cnf->valid())
 		{
@@ -421,6 +419,19 @@ namespace cage
 				ini->set(s, n, cnf->getString());
 			cnf->next();
 		}
+	}
+
+	void configLoadIni(const string &filename, const string &prefix)
+	{
+		holder<iniClass> ini = newIni();
+		ini->load(filename);
+		configApplyIni(ini.get(), prefix);
+	}
+
+	void configSaveIni(const string &filename, const string &prefix)
+	{
+		holder<iniClass> ini = newIni();
+		configGenerateIni(ini.get(), prefix);
 		ini->save(filename);
 	}
 

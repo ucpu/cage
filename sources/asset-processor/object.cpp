@@ -27,7 +27,7 @@ void processObject()
 	std::vector<lodStruct> lods;
 	std::set<uint32> deps;
 	uint32 totalMeshes = 0;
-	for (uint32 sec = 0; sec < ini->sectionCount(); sec++)
+	for (uint32 sec = 0; sec < ini->sectionsCount(); sec++)
 	{
 		string section = ini->section(sec);
 		if (section == "size")
@@ -40,7 +40,7 @@ void processObject()
 		lodStruct ls;
 		ls.index = section.toUint32();
 		ls.threshold = real::Nan().value;
-		for (uint32 itm = 0; itm < ini->itemCount(section); itm++)
+		for (uint32 itm = 0; itm < ini->itemsCount(section); itm++)
 		{
 			string n = ini->item(section, itm);
 			string v = ini->get(section, n);
