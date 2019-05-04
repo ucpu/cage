@@ -82,12 +82,29 @@ namespace cage
 
 		void sock::setBufferSize(uint32 sending, uint32 receiving)
 		{
-			sint32 val = numeric_cast<sint32>(sending);
-			if (setsockopt(descriptor, SOL_SOCKET, SO_SNDBUF, (raw_type*)&val, sizeof(val)) != 0)
-				CAGE_THROW_ERROR(codeException, "setting sending buffer size (setsockopt)", WSAGetLastError());
-			val = numeric_cast<sint32>(receiving);
-			if (setsockopt(descriptor, SOL_SOCKET, SO_RCVBUF, (raw_type*)&val, sizeof(val)) != 0)
-				CAGE_THROW_ERROR(codeException, "setting receiving buffer size (setsockopt)", WSAGetLastError());
+			const auto &fnc = [&](int optname, sint32 request)
+			{
+				socklen_t len = sizeof(sint32);
+				sint32 cur = 0;
+				if (getsockopt(descriptor, SOL_SOCKET, optname, (raw_type*)&cur, &len) != 0)
+					CAGE_THROW_ERROR(codeException, "retrieving buffer size (getsockopt)", WSAGetLastError());
+				CAGE_ASSERT_RUNTIME(len == sizeof(sint32));
+				sint32 last = request;
+				sint32 r = request;
+				while (cur != last && cur < r)
+				{
+					CAGE_ASSERT_RUNTIME(r > 0);
+					if (setsockopt(descriptor, SOL_SOCKET, optname, (raw_type*)&r, len) != 0)
+						CAGE_THROW_ERROR(codeException, "setting buffer size (setsockopt)", WSAGetLastError());
+					last = cur;
+					if (getsockopt(descriptor, SOL_SOCKET, optname, (raw_type*)&cur, &len) != 0)
+						CAGE_THROW_ERROR(codeException, "retrieving buffer size (getsockopt)", WSAGetLastError());
+					r -= 32768;
+				}
+				CAGE_LOG(severityEnum::Info, "socket", string() + "buffer request: " + request + ", current: " + cur + ", last: " + last);
+			};
+			fnc(SO_SNDBUF, numeric_cast<sint32>(sending));
+			fnc(SO_RCVBUF, numeric_cast<sint32>(receiving));
 		}
 
 		void sock::setBufferSize(uint32 size)

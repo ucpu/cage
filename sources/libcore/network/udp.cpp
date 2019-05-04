@@ -19,10 +19,10 @@ namespace cage
 	{
 		using namespace privat;
 
-		configFloat simulatedPacketLoss("cage-core.udp.simulatedPacketLoss", 0);
-		configUint32 mtu("cage-core.udp.mtu", 1100);
-		//configUint32 packetsPerService("cage-core.udp.packetsPerService", 20);
 		configUint32 logLevel("cage-core.udp.logLevel", 0);
+		configFloat confSimulatedPacketLoss("cage-core.udp.simulatedPacketLoss", 0);
+		configUint32 confMtu("cage-core.udp.mtu", 1100);
+		configUint32 confBufferSize("cage-core.udp.bufferSize", 1024 * 1024);
 
 #define UDP_LOG(LEVEL, MSG) { if (logLevel >= (LEVEL)) { CAGE_LOG(severityEnum::Info, "udp", string() + MSG); } }
 
@@ -48,6 +48,12 @@ namespace cage
 			std::weak_ptr<std::vector<std::shared_ptr<receiverStruct>>> accepting;
 			std::vector<sock> socks;
 			holder<mutexClass> mut;
+
+			void applyBufferSizes()
+			{
+				for (sock &s : socks)
+					s.setBufferSize(confBufferSize);
+			}
 
 			void readAll()
 			{
@@ -199,6 +205,7 @@ namespace cage
 						sockGroup->socks.push_back(std::move(s));
 					lst.next();
 				}
+				sockGroup->applyBufferSizes();
 				if (sockGroup->socks.empty())
 					CAGE_THROW_ERROR(exception, "failed to connect (no sockets available)");
 				UDP_LOG(2, "created " + sockGroup->socks.size() + " sockets");
@@ -398,7 +405,7 @@ namespace cage
 					s << sending.packetSeqn << receiving.packetSeqn << ackBits;
 					UDP_LOG(3, "preparing packet seqn " + sending.packetSeqn + ", ack-seqn " + receiving.packetSeqn + ", ack-bits: " + ackBits);
 				}
-				uint32 lm = mtu;
+				uint32 lm = confMtu;
 				while (!sending.cmds.empty())
 				{
 					auto cmd = sending.cmds.front();
@@ -459,7 +466,7 @@ namespace cage
 					memoryBuffer b = preparePacket();
 
 					// simulated packet loss for testing purposes
-					if (randomChance() < real(simulatedPacketLoss))
+					if (randomChance() < real(confSimulatedPacketLoss))
 					{
 						UDP_LOG(4, "dropping prepared packet due to simulated packet loss");
 						continue;
@@ -891,6 +898,7 @@ namespace cage
 						sockGroup->socks.push_back(std::move(s));
 					lst.next();
 				}
+				sockGroup->applyBufferSizes();
 				if (sockGroup->socks.empty())
 					CAGE_THROW_ERROR(exception, "failed to bind (no sockets available)");
 				accepting = std::make_shared<std::vector<std::shared_ptr<sockGroupStruct::receiverStruct>>>();
