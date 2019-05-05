@@ -1,10 +1,9 @@
 #include <array>
 #include <vector>
-#include <deque>
 #include <set>
 #include <map>
+#include <list>
 #include <memory>
-#include <unordered_map>
 #include <algorithm>
 
 #include "net.h"
@@ -15,16 +14,48 @@
 
 namespace cage
 {
+	// nomenclature:
+	// message - udpConnectionClass methods read and write work with messages
+	// packet - system functions work with packets
+	// command - messages are fragmented into commands which are grouped into packets
+
 	namespace
 	{
 		using namespace privat;
 
 		configUint32 logLevel("cage-core.udp.logLevel", 0);
 		configFloat confSimulatedPacketLoss("cage-core.udp.simulatedPacketLoss", 0);
-		configUint32 confMtu("cage-core.udp.mtu", 1100);
-		configUint32 confBufferSize("cage-core.udp.bufferSize", 1024 * 1024);
+		configUint32 confMtu("cage-core.udp.maxTransferUnit", 1100);
+		configUint32 confBufferSize("cage-core.udp.systemBufferSize", 1024 * 1024);
 
 #define UDP_LOG(LEVEL, MSG) { if (logLevel >= (LEVEL)) { CAGE_LOG(severityEnum::Info, "udp", string() + MSG); } }
+
+		struct memView
+		{
+			memView() : offset(0), size(0)
+			{}
+
+			memView(const std::shared_ptr<memoryBuffer> &buffer, uintPtr offset, uintPtr size) : buffer(buffer), offset(offset), size(size)
+			{}
+
+			serializer ser()
+			{
+				serializer s(*buffer);
+				s.advance(offset);
+				return s.placeholder(size);
+			}
+
+			deserializer des() const
+			{
+				deserializer d(*buffer);
+				d.advance(offset);
+				return d.placeholder(size);
+			}
+
+			std::shared_ptr<memoryBuffer> buffer;
+			uintPtr offset;
+			uintPtr size;
+		};
 
 		struct sockGroupStruct
 		{
@@ -39,12 +70,12 @@ namespace cage
 				{}
 
 				addr address;
-				std::vector<memoryBuffer> packets;
+				std::vector<memView> packets;
 				uint32 sockIndex;
 				uint32 connId;
 			};
 
-			std::unordered_map<uint32, std::weak_ptr<receiverStruct>> receivers;
+			std::map<uint32, std::weak_ptr<receiverStruct>> receivers;
 			std::weak_ptr<std::vector<std::shared_ptr<receiverStruct>>> accepting;
 			std::vector<sock> socks;
 			holder<mutexClass> mut;
@@ -57,29 +88,45 @@ namespace cage
 
 			void readAll()
 			{
-				uint32 sockIndex = 0;
-				for (sock &s : socks)
+				for (uint32 sockIndex = 0; sockIndex < socks.size(); sockIndex++)
 				{
+					sock &s = socks[sockIndex];
 					if (!s.isValid())
-					{
-						sockIndex++;
 						continue;
-					}
-					while (true)
+					while (auto avail = s.available())
 					{
-						auto a = s.available();
-						if (!a)
-							break;
-						memoryBuffer b(a);
+						std::shared_ptr<memoryBuffer> buff = std::make_shared<memoryBuffer>();
+						buff->resize(avail);
 						addr adr;
-						b.resize(s.recvFrom(b.data(), a, adr, 0));
-						if (b.size() >= 8)
+						uintPtr off = 0;
+						while (avail)
 						{
-							uint32 connId = ((uint32*)b.data())[1];
+							uintPtr siz = s.recvFrom(buff->data() + off, avail, adr);
+							CAGE_ASSERT_RUNTIME(siz <= avail, siz, avail, off);
+							memView mv(buff, off, siz);
+							avail -= siz;
+							off += siz;
+							if (siz < 8)
+							{
+								UDP_LOG(7, "received invalid packet (too small)");
+								continue;
+							}
+							deserializer des = mv.des();
+							{ // read signature
+								char c, a, g, e;
+								des >> c >> a >> g >> e;
+								if (c != 'c' || a != 'a' || g != 'g' || e != 'e')
+								{
+									UDP_LOG(7, "received invalid packet (wrong signature)");
+									continue;
+								}
+							}
+							uint32 connId;
+							des >> connId;
 							auto r = receivers[connId].lock();
 							if (r)
 							{
-								r->packets.push_back(templates::move(b));
+								r->packets.push_back(mv);
 								if (r->sockIndex == m)
 								{
 									r->sockIndex = sockIndex;
@@ -89,26 +136,22 @@ namespace cage
 							else
 							{
 								auto ac = accepting.lock();
-								if (ac)
+								if (!ac)
 								{
-									auto s = std::make_shared<receiverStruct>();
-									s->address = adr;
-									s->connId = connId;
-									s->packets.push_back(templates::move(b));
-									s->sockIndex = sockIndex;
-									receivers[connId] = s;
-									ac->push_back(s);
+									UDP_LOG(7, "received invalid packet (unknown connection id)");
+									continue;
 								}
+								auto s = std::make_shared<receiverStruct>();
+								s->address = adr;
+								s->connId = connId;
+								s->packets.push_back(mv);
+								s->sockIndex = sockIndex;
+								receivers[connId] = s;
+								ac->push_back(s);
 							}
 						}
-						else
-						{
-							UDP_LOG(7, "received invalid packet of " + b.size() + " bytes, available " + a + " bytes");
-						}
 					}
-					sockIndex++;
 				}
-				CAGE_ASSERT_RUNTIME(sockIndex == socks.size(), sockIndex, socks.size());
 				for (auto it = receivers.begin(); it != receivers.end();)
 				{
 					if (!it->second.lock())
@@ -151,13 +194,13 @@ namespace cage
 			return result;
 		}
 
-		uint32 encodeAck(uint16 seqn, const std::set<uint16> &set)
+		uint32 encodeAck(uint16 seqn, const std::set<uint16> &bits)
 		{
 			uint32 result = 0;
 			for (uint16 i = 0; i < 32; i++)
 			{
 				uint16 s = seqn - i - 1;
-				if (set.count(s))
+				if (bits.count(s))
 				{
 					uint32 m = 1 << i;
 					result |= m;
@@ -166,7 +209,7 @@ namespace cage
 			return result;
 		}
 
-		/*
+#ifdef CAGE_DEBUG
 		class ackTesterClass
 		{
 		public:
@@ -183,7 +226,43 @@ namespace cage
 				CAGE_ASSERT_RUNTIME(encodeAck(1, { 0 }) == 1);
 			}
 		} ackTesterInstance;
-		*/
+#endif // CAGE_DEBUG
+
+		struct packAckStruct
+		{
+			uint32 ackBits;
+			uint16 ackSeqn;
+
+			packAckStruct() : ackBits(0), ackSeqn(0)
+			{}
+
+			packAckStruct(uint16 seqn, uint32 bits) : ackBits(bits), ackSeqn(seqn)
+			{}
+
+			bool operator < (const packAckStruct &other) const
+			{
+				if (ackSeqn == other.ackSeqn)
+					return ackBits < other.ackBits;
+				return ackSeqn < other.ackSeqn;
+			}
+		};
+
+		enum class cmdTypeEnum : uint8
+		{
+			invalid = 0,
+			connectionInit, // uint8 responseIndex
+			timing, // uint16 newIndex, uint16 copyIndex, uint64 newTime, uint64 copyTime
+			ack, // packAckStruct
+			shortMessage = 42, // uint8 channel, uint16 msgSeqn, uint16 size, data
+			longMessage, // uint8 channel, uint16 msgSeqn, uint32 totalSize, uint16 index, data
+		};
+
+		const uint16 LongSize = 200;
+
+		uint16 longCmdsCount(uint32 totalSize)
+		{
+			return totalSize / LongSize + ((totalSize % LongSize) == 0 ? 0 : 1);
+		}
 
 		class udpConnectionImpl : public udpConnectionClass
 		{
@@ -239,443 +318,449 @@ namespace cage
 				UDP_LOG(2, "destroying connection");
 			}
 
-			// COMMAND
-
-			enum class cmdType : uint8
-			{
-				invalid = 0,
-				connectionInit, // uint16 index, 256 bytes connection identifier
-				shortMessage, // uint8 channel, uint16 msgSeqn, uint16 size, data
-				longMessageHead, // uint8 channel, uint16 msgSeqn, uint32 totalSize, 256 bytes data
-				longMessageBody, // uint8 channel, uint16 msgSeqn, uint16 index, 256 bytes data
-				longMessageTail, // uint8 channel, uint16 msgSeqn, uint16 size, data
-			};
-
-			struct commandStruct
-			{
-				std::array<char, 256> data;
-				uint32 totalSize;
-				uint16 size; // valid: 1 .. 256 inclusive
-				uint16 msgSeqn;
-				uint16 index;
-				cmdType type;
-				uint8 channel;
-
-				commandStruct()
-				{
-					detail::memset(this, 0, sizeof(*this));
-				}
-
-				memoryBuffer serialize() const
-				{
-					memoryBuffer b;
-					b.reserve(sizeof(commandStruct));
-					serializer s(b);
-					s << type;
-					switch(type)
-					{
-					case cmdType::connectionInit:
-						s << index;
-						break;
-					case cmdType::shortMessage:
-						s << channel << msgSeqn << size;
-						s.write(data.data(), size);
-						break;
-					case cmdType::longMessageHead:
-						s << channel << msgSeqn << totalSize;
-						s.write(data.data(), 256);
-						break;
-					case cmdType::longMessageBody:
-						s << channel << msgSeqn << index;
-						s.write(data.data(), 256);
-						break;
-					case cmdType::longMessageTail:
-						s << channel << msgSeqn << size;
-						s.write(data.data(), size);
-						break;
-					default:
-						// critical - we should have had this under control
-						CAGE_THROW_CRITICAL(exception, "invalid command type");
-					}
-					return b;
-				}
-			
-				void deserialize(deserializer &d)
-				{
-					detail::memset(this, 0, sizeof(*this));
-					d >> type;
-					switch (type)
-					{
-					case cmdType::connectionInit:
-						d >> index;
-						break;
-					case cmdType::shortMessage:
-						d >> channel >> msgSeqn >> size;
-						d.read(data.data(), size);
-						break;
-					case cmdType::longMessageHead:
-						d >> channel >> msgSeqn >> totalSize;
-						d.read(data.data(), 256);
-						size = 256;
-						break;
-					case cmdType::longMessageBody:
-						d >> channel >> msgSeqn >> index;
-						d.read(data.data(), 256);
-						size = 256;
-						break;
-					case cmdType::longMessageTail:
-						d >> channel >> msgSeqn >> size;
-						d.read(data.data(), size);
-						index = m;
-						break;
-					default:
-						// exception (not fatal) - the packet could get corrupted on the network
-						CAGE_LOG(severityEnum::Note, "exception", string() + "command type: " + (uint32)type);
-						CAGE_THROW_ERROR(exception, "invalid command type");
-					}
-				}
-			};
-
 			// SENDING
+
+			void dispatchPacket(const void *data, uintPtr size)
+			{
+				{ // simulated packet loss for testing purposes
+					float ch = confSimulatedPacketLoss;
+					if (ch > 0 && randomChance() < ch)
+					{
+						UDP_LOG(4, "dropping packet due to simulated packet loss");
+						return;
+					}
+				}
+
+				// sending does not need to be under mutex
+				if (sockReceiver->sockIndex == m)
+				{
+					for (sock &s : sockGroup->socks)
+					{
+						if (!s.isValid())
+							continue;
+						CAGE_ASSERT_RUNTIME(s.getConnected());
+						try
+						{
+							s.send(data, size);
+						}
+						catch (...)
+						{
+							// do nothing, i guess
+						}
+					}
+				}
+				else
+				{
+					sock &s = sockGroup->socks[sockReceiver->sockIndex];
+					if (s.isValid())
+					{
+						try
+						{
+							if (s.getConnected())
+							{
+								CAGE_ASSERT_RUNTIME(s.getRemoteAddress() == sockReceiver->address);
+								s.send(data, size);
+							}
+							else
+								s.sendTo(data, size, sockReceiver->address);
+						}
+						catch (...)
+						{
+							// do nothing, i guess
+						}
+					}
+				}
+			}
 
 			struct sendingStruct
 			{
-				struct sendingCommandStruct : public commandStruct
+				struct reliableMsgStruct
 				{
-					uint64 lastTimeSend;
-					uint32 sendCount;
+					std::shared_ptr<memoryBuffer> data;
+					std::vector<bool> parts; // acked parts
+					uint64 timeAdded;
+					uint64 timeLastSend;
+					uint16 resendsCount;
+					uint16 msgSeqn;
+					uint8 channel;
 
-					sendingCommandStruct(const commandStruct &cmd) : commandStruct(cmd), lastTimeSend(0), sendCount(0)
+					reliableMsgStruct() : timeAdded(0), timeLastSend(0), resendsCount(0), msgSeqn(0), channel(0)
 					{}
 				};
 
-				std::array<uint16, 256> seqnPerChannel; // next seqn to be used
-				uint16 packetSeqn; // next seqn to be used
-				std::deque<std::shared_ptr<sendingCommandStruct>> cmds;
-				std::set<std::shared_ptr<sendingCommandStruct>> resendCmds;
-				std::map<uint16, std::vector<std::weak_ptr<sendingCommandStruct>>> resendsInPackets;
-				bool needToSendAnAck;
-
-				sendingStruct() : packetSeqn(0), needToSendAnAck(false)
+				struct msgAckStruct
 				{
-					detail::memset(seqnPerChannel.data(), 0, 256 * 2);
-				}
+					std::weak_ptr<reliableMsgStruct> msg;
+					uint16 index;
 
-				void addNewCmd(const commandStruct &cmd)
-				{
-					auto cmdp = std::make_shared<sendingCommandStruct>(cmd);
-					if (cmdp->channel >= 128)
-						resendCmds.insert(cmdp);
-					cmds.push_back(cmdp);
-				}
+					msgAckStruct() : index(0)
+					{}
+				};
 
-				void ack(uint16 ackSeqn, uint32 ackBits)
+				struct commandStruct
 				{
-					for (uint16 s : decodeAck(ackSeqn, ackBits))
-					{
-						for (auto &w : resendsInPackets[s])
-						{
-							auto c = w.lock();
-							if (!c)
-								continue;
-							c->type = cmdType::invalid;
-							resendCmds.erase(c);
-						}
-						resendsInPackets.erase(ackSeqn);
-					}
-					for (auto it = resendsInPackets.begin(); it != resendsInPackets.end(); )
-					{
-						if (comp(it->first + 32, ackSeqn))
-							it = resendsInPackets.erase(it); // that packet seqn cannot be acked anymore
-						else
-							it++;
-					}
+					packAckStruct packAck;
+					memView data;
+					msgAckStruct msgAck;
+					uint16 msgSeqn;
+					uint8 channel;
+					cmdTypeEnum type;
+
+					commandStruct() : msgSeqn(0), channel(0), type(cmdTypeEnum::invalid)
+					{}
+				};
+
+				std::list<std::shared_ptr<reliableMsgStruct>> relMsgs;
+				std::vector<commandStruct> cmds;
+				std::map<uint16, std::vector<msgAckStruct>> ackMap; // mapping packet seqn to message parts
+				std::array<uint16, 256> seqnPerChannel; // next message seqn to be used
+				std::set<uint16> seqnToAck; // packets seqn to be acked
+				uint16 packetSeqn; // next packet seqn to be used
+
+				sendingStruct() : packetSeqn(0)
+				{
+					for (uint16 &s : seqnPerChannel)
+						s = 0;
 				}
 			} sending;
 
-			memoryBuffer preparePacket()
+			void generateCommands(std::shared_ptr<sendingStruct::reliableMsgStruct> &msg)
 			{
-				uint64 current = getApplicationTime();
-				memoryBuffer packet;
-				serializer s(packet);
-				s << 'c' << 'a' << 'g' << 'e';
-				s << connId;
-				{
-					uint32 ackBits = encodeAck(receiving.packetSeqn, receiving.receivedPacketsSeqns);
-					s << sending.packetSeqn << receiving.packetSeqn << ackBits;
-					UDP_LOG(3, "preparing packet seqn " + sending.packetSeqn + ", ack-seqn " + receiving.packetSeqn + ", ack-bits: " + ackBits);
+				sendingStruct::commandStruct cmd;
+				cmd.data.buffer = msg->data;
+				cmd.msgSeqn = msg->msgSeqn;
+				cmd.channel = msg->channel;
+				if (msg->channel >= 128)
+					cmd.msgAck.msg = msg;
+
+				bool completelyAcked = true;
+
+				if (msg->data->size() > LongSize)
+				{ // long message
+					cmd.type = cmdTypeEnum::longMessage;
+					uint16 totalCount = longCmdsCount(numeric_cast<uint32>(msg->data->size()));
+					for (uint16 index = 0; index < totalCount; index++)
+					{
+						if (msg->parts.empty() || !msg->parts[index])
+						{
+							cmd.data.offset = index * LongSize;
+							cmd.data.size = index + 1 == totalCount ? msg->data->size() - cmd.data.offset : LongSize;
+							cmd.msgAck.index = index;
+							sending.cmds.push_back(cmd);
+							completelyAcked = false;
+						}
+					}
 				}
-				uint32 lm = confMtu;
-				while (!sending.cmds.empty())
-				{
-					auto cmd = sending.cmds.front();
-					memoryBuffer cmdb = cmd->serialize();
-					if (packet.size() + cmdb.size() > lm)
-						break;
-					s.write(cmdb.data(), cmdb.size());
-					sending.cmds.pop_front();
-					cmd->lastTimeSend = current;
-					cmd->sendCount++;
-					if (cmd->channel >= 128)
-						sending.resendsInPackets[sending.packetSeqn].push_back(cmd);
-					UDP_LOG(5, "added command of type " + (uint32)cmd->type + ", channel: " + cmd->channel + ", msg-seqn: " + cmd->msgSeqn + ", index: " + cmd->index + ", size: " + cmd->size);
+				else
+				{ // short message
+					if (msg->parts.empty() || !msg->parts[0])
+					{
+						cmd.data.size = msg->data->size();
+						cmd.type = cmdTypeEnum::shortMessage;
+						sending.cmds.push_back(cmd);
+						completelyAcked = false;
+					}
 				}
-				sending.packetSeqn++;
-				UDP_LOG(4, "prepared packet with size: " + packet.size());
-				return packet;
+
+				if (completelyAcked)
+					msg.reset();
+			}
+
+			void generateAckCommands()
+			{
+				std::vector<packAckStruct> acks;
+				for (uint16 a : sending.seqnToAck)
+					acks.emplace_back(a + 1, encodeAck(a + 1, { a })); // todo this has to be optimized to use all 32 bits
+
+#ifdef CAGE_ASSERT_ENABLED
+				{ // verification
+					std::set<uint16> ver;
+					for (packAckStruct pa : acks)
+					{
+						std::set<uint16> c = decodeAck(pa.ackSeqn, pa.ackBits);
+						ver.insert(c.begin(), c.end());
+					}
+					CAGE_ASSERT_RUNTIME(ver == sending.seqnToAck);
+				}
+#endif // CAGE_ASSERT_ENABLED
+
+				for (packAckStruct pa : acks)
+				{
+					sendingStruct::commandStruct cmd;
+					cmd.packAck = pa;
+					cmd.type = cmdTypeEnum::ack;
+					sending.cmds.push_back(cmd);
+				}
+			}
+
+			void resendReliableMessages()
+			{
+				for (std::shared_ptr<sendingStruct::reliableMsgStruct> &msg : sending.relMsgs)
+				{
+					if (!msg)
+						continue;
+					// todo resend timing
+					generateCommands(msg);
+					// todo detect disconnection
+				}
+			}
+
+			void composePackets()
+			{
+				uint32 mtu = confMtu;
+				memoryBuffer buff;
+				buff.reserve(mtu);
+				serializer ser(buff);
+				uint16 currentPacketSeqn = 0;
+				for (const sendingStruct::commandStruct &cmd : sending.cmds)
+				{
+					uint32 cmdSize = numeric_cast<uint32>(cmd.data.size) + 10;
+
+					// send current packet
+					if (buff.size() > 0 && buff.size() + cmdSize > mtu)
+					{
+						dispatchPacket(buff.data(), buff.size());
+						buff.resize(0);
+						ser = serializer(buff);
+					}
+
+					// generate packet header
+					if (buff.size() == 0)
+					{
+						static const char c = 'c', a = 'a', g = 'g', e = 'e';
+						ser << c << a << g << e << connId;
+						currentPacketSeqn = sending.packetSeqn++;
+						ser << currentPacketSeqn;
+					}
+
+					// serialize the command
+					ser << cmd.type;
+					switch (cmd.type)
+					{
+					case cmdTypeEnum::connectionInit:
+					{
+						ser << cmd.channel;
+					} break;
+					case cmdTypeEnum::ack:
+					{
+						ser << cmd.packAck.ackSeqn << cmd.packAck.ackBits;
+					} break;
+					case cmdTypeEnum::shortMessage:
+					{
+						ser << cmd.channel << cmd.msgSeqn;
+						uint16 size = numeric_cast<uint16>(cmd.data.size);
+						ser << size;
+						ser.write(cmd.data.buffer->data(), size);
+					} break;
+					case cmdTypeEnum::longMessage:
+					{
+						ser << cmd.channel << cmd.msgSeqn;
+						uint32 totalSize = numeric_cast<uint32>(cmd.data.buffer->size());
+						uint16 index = numeric_cast<uint16>(cmd.data.offset / LongSize);
+						ser << totalSize << index;
+						ser.write(cmd.data.buffer->data() + cmd.data.offset, cmd.data.size);
+					} break;
+					default:
+						CAGE_THROW_CRITICAL(exception, "invalid udp command type enum");
+					}
+					if (cmd.msgAck.msg.lock())
+						sending.ackMap[currentPacketSeqn].push_back(cmd.msgAck);
+				}
+				if (buff.size() > 0)
+					dispatchPacket(buff.data(), buff.size());
 			}
 
 			void serviceSending()
 			{
 				if (!established)
 				{
-					commandStruct cmd;
-					cmd.type = cmdType::connectionInit;
-					sending.addNewCmd(cmd);
+					sendingStruct::commandStruct cmd;
+					cmd.type = cmdTypeEnum::connectionInit;
+					sending.cmds.push_back(cmd);
 				}
 
-				{ // resends
-					uint64 current = getApplicationTime();
-					for (auto it = sending.resendCmds.begin(); it != sending.resendCmds.end(); )
+				generateAckCommands();
+				resendReliableMessages();
+				composePackets();
+
+				// finish up
+				bool generateNextAcks = sending.cmds.size() > 100;
+				sending.cmds.clear();
+				if (generateNextAcks)
+					generateAckCommands(); // duplicate current acks in next iteration
+				sending.seqnToAck.clear();
+
+				{ // clear finished reliable messages
+					auto it = sending.relMsgs.begin();
+					auto et = sending.relMsgs.end();
+					while (it != et)
 					{
-						auto &cmd = *it;
-						if (cmd->type == cmdType::invalid)
-						{
-							it = sending.resendCmds.erase(it);
-							continue;
-						}
-						// todo the resend should happen after round-trip-time + some variance
-						if (cmd->sendCount && cmd.use_count() == 1 && (cmd->lastTimeSend + (1u << cmd->sendCount) * 30000) < current)
-						{
-							if (cmd->sendCount >= 10)
-								CAGE_THROW_ERROR(disconnectedException, "too many failed attempts for reliable message");
-							sending.cmds.push_back(cmd);
-							UDP_LOG(5, "resending command of type " + (uint32)cmd->type + ", channel: " + cmd->channel + ", msg-seqn: " + cmd->msgSeqn + ", index: " + cmd->index + ", size: " + cmd->size);
-						}
-						it++;
+						if (!*it)
+							it = sending.relMsgs.erase(it);
+						else
+							it++;
 					}
 				}
 
-				// make packets and send them
-				while (true)
-				{
-					if (sending.cmds.empty() && !sending.needToSendAnAck)
-						break;
-					sending.needToSendAnAck = false;
-
-					memoryBuffer b = preparePacket();
-
-					// simulated packet loss for testing purposes
-					if (randomChance() < real(confSimulatedPacketLoss))
-					{
-						UDP_LOG(4, "dropping prepared packet due to simulated packet loss");
-						continue;
-					}
-
-					// sending does not need to be under mutex
-					if (sockReceiver->sockIndex == m)
-					{
-						for (sock &s : sockGroup->socks)
-						{
-							if (!s.isValid())
-								continue;
-							try
-							{
-								s.send(b.data(), b.size());
-							}
-							catch (...)
-							{
-								// do nothing, i guess
-							}
-						}
-					}
-					else
-					{
-						sock &s = sockGroup->socks[sockReceiver->sockIndex];
-						if (s.isValid())
-						{
-							try
-							{
-								if (s.getConnected())
-								{
-									CAGE_ASSERT_RUNTIME(s.getRemoteAddress() == sockReceiver->address);
-									s.send(b.data(), b.size());
-								}
-								else
-									s.sendTo(b.data(), b.size(), sockReceiver->address);
-							}
-							catch (...)
-							{
-								// do nothing, i guess
-							}
-						}
-					}
-				}
+				// todo clear ackMap
 			}
 
 			// RECEIVING
 
 			struct receivingStruct
 			{
-				std::array<uint16, 256> seqnPerChannel; // minimum expected seqn
-				std::set<uint16> receivedPacketsSeqns;
-				uint16 packetSeqn; // minimum expected seqn
-
-				struct longStruct
-				{
-					struct partStruct
-					{
-						std::array<char, 256> data;
-					};
-					std::map<uint16, partStruct> parts;
-					uint32 totalSize;
-					
-					longStruct() : totalSize(0)
-					{}
-
-					bool isComplete() const
-					{
-						if (totalSize == 0)
-							return false;
-						uint32 cnt = totalSize / 256 + (totalSize % 256 > 0 ? 1 : 0);
-						return parts.size() == cnt;
-					}
-				};
-				std::array<std::map<uint16, longStruct>, 256> longs;
-
-				struct finalStruct
+				struct msgStruct
 				{
 					memoryBuffer data;
+					std::vector<bool> parts; // acked parts
 					uint16 msgSeqn;
 					uint8 channel;
-					finalStruct() : channel(0), msgSeqn(0)
+
+					msgStruct() : msgSeqn(0), channel(0)
 					{}
 				};
-				std::array<std::vector<finalStruct>, 256> holds;
-				std::deque<finalStruct> messages;
+
+				std::array<std::map<uint16, msgStruct>, 256> staging;
+				std::array<uint16, 256> seqnPerChannel; // minimum expected message seqn
+				std::list<msgStruct> messages;
+				std::set<packAckStruct> ackPacks;
+				uint16 packetSeqn; // minimum expected packet seqn
 
 				receivingStruct() : packetSeqn(0)
 				{
-					detail::memset(seqnPerChannel.data(), 0, 256 * 2);
-				}
-
-				void handleReceivedMessage(finalStruct &&msg)
-				{
-					holds[msg.channel].push_back(templates::move(msg));
-				}
-
-				void consolidate()
-				{
-					{ // check long messages
-						// check completed messages
-						for (uint32 ch = 0; ch < 256; ch++)
-						{
-							auto &lngs = longs[ch];
-							for (auto it = lngs.begin(); it != lngs.end(); )
-							{
-								if (it->second.isComplete())
-								{
-									finalStruct f;
-									f.channel = ch;
-									f.msgSeqn = it->first;
-									f.data.allocate(it->second.totalSize);
-									uint32 maxIndex = it->second.totalSize / 256;
-									for (auto &d : it->second.parts)
-									{
-										if (d.first == m)
-										{ // tail
-											uint32 off = (it->second.totalSize / 256) * 256;
-											detail::memcpy(f.data.data() + off, d.second.data.data(), it->second.totalSize - off);
-										}
-										else
-										{ // body (or head)
-											if (d.first > maxIndex)
-												CAGE_THROW_ERROR(exception, "long-message body-part-index out of range");
-											detail::memcpy(f.data.data() + d.first * 256, d.second.data.data(), 256);
-										}
-									}
-									handleReceivedMessage(templates::move(f));
-									it = lngs.erase(it);
-								}
-								else
-									it++;
-							}
-						}
-
-						// check old messages
-						for (uint32 ch = 0; ch < 256; ch++)
-						{
-							auto &lngs = longs[ch];
-							for (auto it = lngs.begin(); it != lngs.end(); )
-							{
-								if (comp(it->first, seqnPerChannel[ch]))
-									it = lngs.erase(it); // that message cannot be used anymore
-								else
-									it++;
-							}
-						}
-					}
-
-					{ // check messages on hold
-						// sort all messages (per channel)
-						for (uint32 ch = 0; ch < 256; ch++)
-						{
-							std::sort(holds[ch].begin(), holds[ch].end(), [](const finalStruct &a, const finalStruct &b) {
-								return comp(a.msgSeqn, b.msgSeqn);
-							});
-						}
-
-						// non-reliable messages
-						for (uint32 ch = 0; ch < 128; ch++)
-						{
-							for (finalStruct &msg : holds[ch])
-							{
-								if (!comp(msg.msgSeqn, seqnPerChannel[ch]))
-								{
-									seqnPerChannel[ch] = msg.msgSeqn + (uint16)1;
-									messages.push_back(templates::move(msg));
-								}
-							}
-							holds[ch].clear();
-						}
-
-						// reliable messages
-						for (uint32 ch = 128; ch < 256; ch++)
-						{
-							holds[ch].erase(std::remove_if(holds[ch].begin(), holds[ch].end(), [&](finalStruct &msg) {
-								if (comp(msg.msgSeqn, seqnPerChannel[ch]))
-									return true;
-								if (msg.msgSeqn == seqnPerChannel[ch])
-								{
-									seqnPerChannel[ch] = msg.msgSeqn + (uint16)1;
-									messages.push_back(templates::move(msg));
-									return true;
-								}
-								return false;
-							}), holds[ch].end());
-						}
-					}
-
-					{ // erase old receivedPacketsSeqns
-						for (auto it = receivedPacketsSeqns.begin(); it != receivedPacketsSeqns.end(); )
-						{
-							if (comp(*it, packetSeqn) && !comp(*it + 32, packetSeqn))
-								it++;
-							else
-								it = receivedPacketsSeqns.erase(it);
-						}
-					}
+					for (uint16 &s : seqnPerChannel)
+						s = 0;
 				}
 			} receiving;
 
-			void handleReceivedCommand(const commandStruct &cmd)
+			void processAcks()
 			{
-				UDP_LOG(4, "received command of type " + (uint32)cmd.type + ", channel: " + cmd.channel + ", msg-seqn: " + cmd.msgSeqn + ", index: " + cmd.index + ", size: " + cmd.size);
-				switch (cmd.type)
+				std::set<uint16> acks;
+				for (const auto &a : receiving.ackPacks)
 				{
-				case cmdType::connectionInit:
+					std::set<uint16> s = decodeAck(a.ackSeqn, a.ackBits);
+#if __cplusplus >= 201703L
+					acks.merge(s);
+#else
+					acks.insert(s.begin(), s.end());
+#endif
+				}
+				receiving.ackPacks.clear();
+				for (uint16 ack : acks)
 				{
-					UDP_LOG(3, "received connection init command with index " + cmd.index);
+					if (sending.ackMap.count(ack) == 0)
+						continue;
+					for (auto &ma : sending.ackMap[ack])
+					{
+						auto m = ma.msg.lock();
+						if (m)
+							m->parts[ma.index] = true;
+					}
+					sending.ackMap.erase(ack);
+				}
+			}
+
+			void processReceived()
+			{
+				/*
+				// erase obsolete
+				for (uint32 channel = 0; channel < 255; channel++)
+				{
+					auto &seqnpc = receiving.seqnPerChannel[channel];
+					auto &stage = receiving.staging[channel];
+					auto it = stage.begin();
+					auto et = stage.end();
+					while (it != et)
+					{
+						if (comp(it->second.msgSeqn, seqnpc))
+							it = stage.erase(it);
+						else
+							it++;
+					}
+				}
+				*/
+
+				// unreliable
+				for (uint32 channel = 0; channel < 128; channel++)
+				{
+					auto &seqnpc = receiving.seqnPerChannel[channel];
+					auto &stage = receiving.staging[channel];
+					std::vector<receivingStruct::msgStruct*> msgs;
+					msgs.reserve(stage.size());
+					for (auto &it : stage)
+						msgs.push_back(&it.second);
+					std::sort(msgs.begin(), msgs.end(), [](const receivingStruct::msgStruct *a, receivingStruct::msgStruct *b) {
+						return comp(a->msgSeqn, b->msgSeqn);
+					});
+					for (receivingStruct::msgStruct *msg : msgs)
+					{
+						if (msg->data.size() == 0)
+							continue;
+						if (comp(msg->msgSeqn, seqnpc))
+						{
+							// this message is obsolete
+							msg->data.free();
+							continue;
+						}
+						bool complete = true;
+						for (bool p : msg->parts)
+							complete = complete && p;
+						if (!complete)
+							continue;
+						seqnpc = msg->msgSeqn + (uint16)1;
+						receiving.messages.push_back(templates::move(*msg));
+					}
+				}
+
+				// reliable
+				for (uint32 channel = 128; channel < 256; channel++)
+				{
+					auto &seqnpc = receiving.seqnPerChannel[channel];
+					auto &stage = receiving.staging[channel];
+					while (true)
+					{
+						if (stage.count(seqnpc) == 0)
+							break;
+						receivingStruct::msgStruct &msg = stage[seqnpc];
+						if (msg.data.size() == 0)
+							break;
+						bool complete = true;
+						for (bool p : msg.parts)
+							complete = complete && p;
+						if (!complete)
+							break;
+						seqnpc++;
+						receiving.messages.push_back(templates::move(msg));
+					}
+				}
+
+				// erase empty
+				for (uint32 channel = 0; channel < 255; channel++)
+				{
+					auto &stage = receiving.staging[channel];
+					auto it = stage.begin();
+					auto et = stage.end();
+					while (it != et)
+					{
+						if (it->second.data.size() == 0)
+							it = stage.erase(it);
+						else
+							it++;
+					}
+				}
+			}
+
+			void handleReceivedCommand(deserializer &d)
+			{
+				cmdTypeEnum type;
+				d >> type;
+				switch (type)
+				{
+				case cmdTypeEnum::connectionInit:
+				{
+					uint8 index = 0;
+					d >> index;
+					UDP_LOG(3, "received connection init command with index " + index);
 					if (!established)
 					{
 						if (logLevel >= 2)
@@ -683,112 +768,124 @@ namespace cage
 							string a;
 							uint16 p;
 							sockReceiver->address.translate(a, p, true);
-							CAGE_LOG(severityEnum::Info, "udp", string() + "connection established, remote address: \"" + a + "\", remote port: " + p);
+							CAGE_LOG(severityEnum::Info, "udp", string() + "connection established, remote address: '" + a + "', remote port: " + p);
 						}
 						established = true;
 					}
-					if (cmd.index == 0)
+					if (index == 0)
 					{
-						commandStruct c = cmd;
-						c.index = 1;
-						sending.addNewCmd(c);
+						sendingStruct::commandStruct cmd;
+						cmd.channel = index + 1;
+						cmd.type = cmdTypeEnum::connectionInit;
+						sending.cmds.push_back(cmd);
 					}
 				} break;
-				case cmdType::shortMessage:
+				case cmdTypeEnum::ack:
 				{
-					receivingStruct::finalStruct msg;
-					msg.data.allocate(cmd.size);
-					detail::memcpy(msg.data.data(), cmd.data.data(), cmd.size);
-					msg.channel = cmd.channel;
-					msg.msgSeqn = cmd.msgSeqn;
-					receiving.handleReceivedMessage(std::move(msg));
+					packAckStruct ackPack;
+					d >> ackPack.ackSeqn >> ackPack.ackBits;
+					receiving.ackPacks.insert(ackPack);
 				} break;
-				case cmdType::longMessageHead:
-				case cmdType::longMessageBody:
-				case cmdType::longMessageTail:
+				case cmdTypeEnum::shortMessage:
 				{
-					receivingStruct::longStruct &l = receiving.longs[cmd.channel][cmd.msgSeqn];
-					l.parts[cmd.index].data = cmd.data;
-					if (cmd.totalSize)
-						l.totalSize = cmd.totalSize;
+					receivingStruct::msgStruct msg;
+					uint16 size = 0;
+					d >> msg.channel >> msg.msgSeqn >> size;
+					if (comp(msg.msgSeqn, receiving.seqnPerChannel[msg.channel]))
+					{ // obsolete
+						d.advance(size);
+					}
+					else
+					{
+						msg.data.resize(size);
+						d.read(msg.data.data(), size);
+						receiving.staging[msg.channel][msg.msgSeqn] = templates::move(msg);
+					}
+				} break;
+				case cmdTypeEnum::longMessage:
+				{
+					uint8 channel = 0;
+					uint16 msgSeqn = 0;
+					uint32 totalSize = 0;
+					uint16 index = 0;
+					d >> channel >> msgSeqn >> totalSize >> index;
+					uint16 totalCount = longCmdsCount(totalSize);
+					if (index >= totalCount)
+						CAGE_THROW_ERROR(exception, "invalid long message index");
+					uint16 size = index + 1 == totalCount ? totalSize - (totalCount - 1) * LongSize : LongSize;
+					if (comp(msgSeqn, receiving.seqnPerChannel[channel]))
+					{ // obsolete
+						d.advance(size);
+					}
+					else
+					{
+						receivingStruct::msgStruct &msg = receiving.staging[channel][msgSeqn];
+						if (msg.data.size() == 0)
+						{
+							msg.data.resize(totalSize);
+							msg.channel = channel;
+							msg.msgSeqn = msgSeqn;
+							msg.parts.resize(totalCount);
+						}
+						else if (msg.data.size() != totalSize)
+							CAGE_THROW_ERROR(exception, "inconsistent message total size");
+						msg.parts[index] = true;
+						d.read(msg.data.data() + index * LongSize, size);
+					}
 				} break;
 				default:
-					// critical - the type was already checked during deserialization
-					CAGE_THROW_CRITICAL(exception, "invalid command type");
+					CAGE_THROW_ERROR(exception, "invalid message type enum");
 				}
 			}
 
-			void handleReceivedPacket(const memoryBuffer &b)
+			void handleReceivedPacket(const memView &b)
 			{
-				UDP_LOG(5, "received packet with " + b.size() + " bytes");
-				deserializer d(b);
-				{
-					// read signature
-					char c, a, g, e;
-					d >> c >> a >> g >> e;
-					if (c != 'c' || a != 'a' || g != 'g' || e != 'e')
-						CAGE_THROW_ERROR(exception, "invalid udp packet signature");
-					// read connection id
-					uint32 id;
-					d >> id;
+				deserializer d = b.des();
+				UDP_LOG(5, "received packet with " + d.available() + " bytes");
+				{ // read signature and connection id
+					uint32 sign, id;
+					d >> sign >> id;
 				}
-				{
-					// read packet header
-					uint16 packetSeqn, ackSeqn;
-					uint32 ackBits;
-					d >> packetSeqn >> ackSeqn >> ackBits;
-					UDP_LOG(3, "received packet seqn " + packetSeqn + ", ack-seqn " + ackSeqn + ", ack-bits " + ackBits + ", size " + b.size() + " bytes");
+				{ // read packet header
+					uint16 packetSeqn;
+					d >> packetSeqn;
+					UDP_LOG(3, "received packet seqn " + packetSeqn);
 					// check if the packet is in order
 					if (comp(packetSeqn, receiving.packetSeqn))
 					{
 						UDP_LOG(4, "the packet is out of order");
 						// the packet is a duplicate or was delayed
-						// since packet duplication or delay are common on network, we do not want to close the socket
+						// since packets duplication or delays are common on network, we do not want to close the socket
 						//   therefore we ignore the packet, but do not throw an exception
 						return;
 					}
 					receiving.packetSeqn = packetSeqn + (uint16)1;
-					receiving.receivedPacketsSeqns.insert(packetSeqn);
-					// process acks
-					sending.ack(ackSeqn, ackBits);
-					if (d.available() > 0)
-						sending.needToSendAnAck = true;
+					sending.seqnToAck.insert(packetSeqn);
 				}
 				// read packet commands
 				while (d.available() > 0)
-				{
-					commandStruct cmd;
-					cmd.deserialize(d);
-					handleReceivedCommand(cmd);
-				}
+					handleReceivedCommand(d);
 			}
 
 			void serviceReceiving()
 			{
-				std::vector<memoryBuffer> packets;
+				std::vector<memView> packets;
 				{
 					scopeLock<mutexClass> lock(sockGroup->mut);
 					sockGroup->readAll();
 					sockReceiver->packets.swap(packets);
 				}
-				for (memoryBuffer &b : packets)
+				try
 				{
-					try
-					{
+					for (memView &b : packets)
 						handleReceivedPacket(b);
-					}
-					catch (...)
-					{
-						// do nothing
-					}
 				}
+				catch (...)
 				{
-					auto &cmds = sending.cmds;
-					cmds.erase(std::remove_if(cmds.begin(), cmds.end(), [](const std::shared_ptr<sendingStruct::sendingCommandStruct> &cmd) {
-						return cmd->type == cmdType::invalid;
-					}), cmds.end());
+					// do nothing
 				}
-				receiving.consolidate();
+				processAcks();
+				processReceived();
 			}
 
 			// COMMON
@@ -799,11 +896,17 @@ namespace cage
 			const uint32 connId;
 			bool established;
 
+			// API
+
 			uintPtr available()
 			{
-				detail::overrideBreakpoint brk;
+				/*
 				if (receiving.messages.empty())
+				{
+					detail::overrideBreakpoint brk;
 					serviceReceiving();
+				}
+				*/
 				if (receiving.messages.empty())
 					return 0;
 				return receiving.messages.front().data.size();
@@ -827,51 +930,23 @@ namespace cage
 				if (buffer.size() == 0)
 					return; // ignore empty messages
 
-				// common command fields
-				commandStruct cmd;
-				cmd.channel = numeric_cast<uint8>(channel + reliable * 128);
-				cmd.msgSeqn = sending.seqnPerChannel[cmd.channel]++;
-				cmd.totalSize = numeric_cast<uint32>(buffer.size());
-
-				if (buffer.size() > 256)
-				{ // long message
-					cmd.size = 256;
-					// head
-					cmd.type = cmdType::longMessageHead;
-					detail::memcpy(cmd.data.data(), buffer.data(), 256);
-					sending.addNewCmd(cmd);
-					// bodies
-					cmd.type = cmdType::longMessageBody;
-					uint32 bodies = numeric_cast<uint32>(buffer.size() / 256);
-					for (uint32 i = 1; i < bodies; i++)
-					{
-						cmd.index = i;
-						detail::memcpy(cmd.data.data(), buffer.data() + i * 256, 256);
-						sending.addNewCmd(cmd);
-					}
-					// tail
-					CAGE_ASSERT_RUNTIME(buffer.size() - bodies * 256 <= 256, buffer.size(), bodies);
-					if (buffer.size() > bodies * 256)
-					{
-						cmd.type = cmdType::longMessageTail;
-						cmd.size = numeric_cast<uint16>(buffer.size() - bodies * 256);
-						detail::memcpy(cmd.data.data(), buffer.data() + bodies * 256, cmd.size);
-						sending.addNewCmd(cmd);
-					}
+				auto msg = std::make_shared<sendingStruct::reliableMsgStruct>();
+				msg->data = std::make_shared<memoryBuffer>(buffer.copy());
+				msg->channel = numeric_cast<uint8>(channel + reliable * 128);
+				msg->msgSeqn = sending.seqnPerChannel[msg->channel]++;
+				if (reliable)
+				{
+					msg->timeAdded = getApplicationTime();
+					msg->parts.resize(longCmdsCount(numeric_cast<uint32>(msg->data->size())));
+					sending.relMsgs.push_back(templates::move(msg));
 				}
 				else
-				{ // short message
-					cmd.type = cmdType::shortMessage;
-					cmd.size = numeric_cast<uint16>(buffer.size());
-					detail::memcpy(cmd.data.data(), buffer.data(), buffer.size());
-					sending.addNewCmd(cmd);
-				}
+					generateCommands(msg);
 			}
 
 			void service()
 			{
-				detail::overrideBreakpoint brk;
-
+				//detail::overrideBreakpoint brk;
 				serviceReceiving();
 				serviceSending();
 			}

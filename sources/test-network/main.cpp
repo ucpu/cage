@@ -15,18 +15,18 @@ void runClient();
 
 namespace
 {
-	struct runnerStruct
+	struct runStruct
 	{
 		holder<threadClass> thr;
 		string cmd;
 		uint32 name;
 
-		runnerStruct(uint32 name, const string &cmd) : cmd(cmd), name(name)
+		runStruct(uint32 name, const string &cmd) : cmd(cmd), name(name)
 		{
-			thr = newThread(delegate<void()>().bind<runnerStruct, &runnerStruct::run>(this), name);
+			thr = newThread(delegate<void()>().bind<runStruct, &runStruct::run>(this), name);
 		}
 	
-		~runnerStruct()
+		~runStruct()
 		{
 			thr->wait();
 		}
@@ -56,12 +56,12 @@ namespace
 	void runManager()
 	{
 		uint16 port = randomRange(1025u, 65535u);
-		runnerStruct runnerClient1(1, string() + "cage-test-network -n network-test-client-1 -c -p " + port);
-		runnerStruct runnerClient2(2, string() + "cage-test-network -n network-test-client-2 -c -p " + port);
-		runnerStruct runnerServer0(0, string() + "cage-test-network -n network-test-server-0 -s -p " + port);
-		runnerStruct runnerClient3(3, string() + "cage-test-network -n network-test-client-3 -c -p " + port);
-		//runnerStruct runnerClient4(4, string() + "cage-test-network -n network-test-client-4 -c -p " + port);
-		//runnerStruct runnerClient5(5, string() + "cage-test-network -n network-test-client-5 -c -p " + port);
+		runStruct runnerClient1(1, string() + "cage-test-network -n network-test-client-1 -c -p " + port);
+		runStruct runnerClient2(2, string() + "cage-test-network -n network-test-client-2 -c -p " + port);
+		runStruct runnerServer0(0, string() + "cage-test-network -n network-test-server-0 -s -p " + port);
+		runStruct runnerClient3(3, string() + "cage-test-network -n network-test-client-3 -c -p " + port);
+		//runStruct runnerClient4(4, string() + "cage-test-network -n network-test-client-4 -c -p " + port);
+		//runStruct runnerClient5(5, string() + "cage-test-network -n network-test-client-5 -c -p " + port);
 	}
 
 	void initializeSecondaryLog(const string &path)
@@ -98,6 +98,9 @@ int main(int argc, const char *args[])
 		configString address("address", "localhost");
 		configUint32 port("port", 42789);
 		configFloat packetLoss("cage-core.udp.simulatedPacketLoss");
+		configUint32 confMessages("messages", 150);
+		if (packetLoss == 0)
+			packetLoss = 0.001f;
 		bool modeServer = false;
 		bool modeClient = false;
 		for (string option : cmd->sections())
@@ -159,6 +162,15 @@ int main(int argc, const char *args[])
 				packetLoss = cmd->getFloat(option, "0");
 				if (packetLoss < 0 || packetLoss > 1)
 					CAGE_THROW_ERROR(exception, "invalid packet loss");
+			}
+			else if (option == "m" || option == "messages")
+			{
+				if (cmd->itemsCount(option) != 1)
+				{
+					CAGE_LOG(severityEnum::Note, "exception", string() + "option: '" + option + "'");
+					CAGE_THROW_ERROR(exception, "option expects one argument");
+				}
+				confMessages = cmd->getUint32(option, "0");
 			}
 			else
 			{

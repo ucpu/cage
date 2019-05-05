@@ -56,4 +56,16 @@ void testSerialization()
 		CAGE_TEST(t == 4.0);
 		CAGE_TEST(b1.size() == 4 * 8);
 	}
+
+	{
+		CAGE_TESTCASE("moving");
+		memoryBuffer b1;
+		serializer s1(b1);
+		deserializer d1(b1);
+		memoryBuffer b2;
+		serializer s2(b2);
+		deserializer d2(b2);
+		s1 = templates::move(s2);
+		d2 = templates::move(d1);
+	}
 }

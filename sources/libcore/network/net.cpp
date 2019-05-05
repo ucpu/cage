@@ -101,7 +101,7 @@ namespace cage
 						CAGE_THROW_ERROR(codeException, "retrieving buffer size (getsockopt)", WSAGetLastError());
 					r -= 32768;
 				}
-				CAGE_LOG(severityEnum::Info, "socket", string() + "buffer request: " + request + ", current: " + cur + ", last: " + last);
+				//CAGE_LOG(severityEnum::Info, "socket", string() + "buffer request: " + request + ", current: " + cur + ", last: " + last);
 			};
 			fnc(SO_SNDBUF, numeric_cast<sint32>(sending));
 			fnc(SO_RCVBUF, numeric_cast<sint32>(receiving));

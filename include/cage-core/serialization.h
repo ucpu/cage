@@ -6,11 +6,11 @@ namespace cage
 	struct CAGE_API serializer
 	{
 		serializer(void *data, uintPtr size);
-		explicit serializer(memoryBuffer &buffer, uintPtr size = detail::numeric_limits<uintPtr>::max());
+		explicit serializer(memoryBuffer &buffer, uintPtr size = m);
 		
-		serializer(serializer &&other) = default;
+		serializer(serializer &&) = default;
 		serializer(const serializer &) = delete;
-		serializer &operator = (serializer &&other) = default;
+		serializer &operator = (serializer &&) = default;
 		serializer &operator = (const serializer &) = delete;
 
 		uintPtr available() const; // number of bytes still available in the buffer (valid only if the maximum size was given in the constructor)
@@ -19,9 +19,9 @@ namespace cage
 		void *advance(uintPtr s); // returns the original position
 
 	private:
-		explicit serializer(memoryBuffer &buffer, void *data, uintPtr offset, uintPtr size);
+		explicit serializer(memoryBuffer *buffer, void *data, uintPtr offset, uintPtr size);
 
-		memoryBuffer &buffer;
+		memoryBuffer *buffer;
 		void *data;
 		uintPtr offset; // current position in the buffer
 		uintPtr size; // max size of the buffer
@@ -32,9 +32,9 @@ namespace cage
 		deserializer(const void *data, uintPtr size);
 		explicit deserializer(const memoryBuffer &buffer);
 
-		deserializer(deserializer &&other) = default;
+		deserializer(deserializer &&) = default;
 		deserializer(const deserializer &) = delete;
-		deserializer &operator = (deserializer &&other) = default;
+		deserializer &operator = (deserializer &&) = default;
 		deserializer &operator = (const deserializer &) = delete;
 
 		uintPtr available() const; // number of bytes still available in the buffer

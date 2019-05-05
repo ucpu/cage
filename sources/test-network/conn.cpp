@@ -5,6 +5,7 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 #include <cage-core/random.h>
+#include <cage-core/config.h>
 
 using namespace cage;
 
@@ -12,6 +13,8 @@ using namespace cage;
 
 namespace
 {
+	configUint32 confMessages("messages");
+
 	class connImpl : public connClass
 	{
 	public:
@@ -32,7 +35,7 @@ namespace
 		void statistics(uint64 t)
 		{
 			uint64 throughput = numeric_cast<uint64>(1000000.0 * recvBytes / (t - timeStart));
-			CAGE_LOG(severityEnum::Info, "conn", string() + "messages send: " + sendSeqn + ", received: " + recvCnt + ", delivery ratio: " + ((real)recvCnt / (real)recvSeqn) + ", data received: " + (recvBytes / 1024) + " KB, throughput: " + (throughput / 1024) + " KB/s");
+			CAGE_LOG(severityEnum::Info, "conn", string() + "messages send: " + sendSeqn + ", received: " + recvCnt + ", delivery ratio: " + ((double)recvCnt / (double)recvSeqn) + ", data received: " + (recvBytes / 1024) + " KB, throughput: " + (throughput / 1024) + " KB/s");
 		}
 
 		bool process()
@@ -62,11 +65,12 @@ namespace
 					}
 				}
 
-				for (uint32 j = 0; j < 150; j++)
+				uint32 cnt = confMessages;
+				for (uint32 j = 0; j < cnt; j++)
 				{ // send
 					b.resize(0);
 					serializer s(b);
-					s << sendSeqn++;
+					s << ++sendSeqn;
 					uint32 bytes = randomRange(10, 2000);
 					if (randomChance() < 0.01)
 						bytes *= randomRange(10, 20);
