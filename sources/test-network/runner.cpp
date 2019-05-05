@@ -7,16 +7,21 @@ using namespace cage;
 
 #include "runner.h"
 
-runnerStruct::runnerStruct() : time(getApplicationTime()), timeStep(1000000 / (randomRange(20, 40)))
+runnerStruct::runnerStruct() : time(getApplicationTime()), timeStep(1000000 / (randomRange(25, 35)))
 {}
 
 void runnerStruct::step()
 {
 	uint64 t = getApplicationTime();
 	sint64 s = time + timeStep - t;
-	if (s > 0)
+	if (s >= 0)
+	{
 		threadSleep(s);
+		time += timeStep;
+	}
 	else
+	{
 		CAGE_LOG(severityEnum::Warning, "runner", "cannot keep up");
-	time += timeStep;
+		time = t;
+	}
 }

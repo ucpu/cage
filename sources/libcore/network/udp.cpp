@@ -93,63 +93,73 @@ namespace cage
 					sock &s = socks[sockIndex];
 					if (!s.isValid())
 						continue;
-					while (auto avail = s.available())
+					try
 					{
-						std::shared_ptr<memoryBuffer> buff = std::make_shared<memoryBuffer>();
-						buff->resize(avail);
 						addr adr;
-						uintPtr off = 0;
-						while (avail)
+						while (true)
 						{
-							uintPtr siz = s.recvFrom(buff->data() + off, avail, adr);
-							CAGE_ASSERT_RUNTIME(siz <= avail, siz, avail, off);
-							memView mv(buff, off, siz);
-							avail -= siz;
-							off += siz;
-							if (siz < 8)
+							auto avail = s.available();
+							if (avail < 8)
+								break;
+							std::shared_ptr<memoryBuffer> buff = std::make_shared<memoryBuffer>();
+							buff->resize(avail);
+							uintPtr off = 0;
+							while (avail)
 							{
-								UDP_LOG(7, "received invalid packet (too small)");
-								continue;
-							}
-							deserializer des = mv.des();
-							{ // read signature
-								char c, a, g, e;
-								des >> c >> a >> g >> e;
-								if (c != 'c' || a != 'a' || g != 'g' || e != 'e')
+								uintPtr siz = s.recvFrom(buff->data() + off, avail, adr);
+								CAGE_ASSERT_RUNTIME(siz <= avail, siz, avail, off);
+								memView mv(buff, off, siz);
+								avail -= siz;
+								off += siz;
+								if (siz < 8)
 								{
-									UDP_LOG(7, "received invalid packet (wrong signature)");
+									UDP_LOG(7, "received invalid packet (too small)");
 									continue;
 								}
-							}
-							uint32 connId;
-							des >> connId;
-							auto r = receivers[connId].lock();
-							if (r)
-							{
-								r->packets.push_back(mv);
-								if (r->sockIndex == m)
-								{
-									r->sockIndex = sockIndex;
-									r->address = adr;
+								deserializer des = mv.des();
+								{ // read signature
+									char c, a, g, e;
+									des >> c >> a >> g >> e;
+									if (c != 'c' || a != 'a' || g != 'g' || e != 'e')
+									{
+										UDP_LOG(7, "received invalid packet (wrong signature)");
+										continue;
+									}
 								}
-							}
-							else
-							{
-								auto ac = accepting.lock();
-								if (!ac)
+								uint32 connId;
+								des >> connId;
+								auto r = receivers[connId].lock();
+								if (r)
 								{
-									UDP_LOG(7, "received invalid packet (unknown connection id)");
-									continue;
+									r->packets.push_back(mv);
+									if (r->sockIndex == m)
+									{
+										r->sockIndex = sockIndex;
+										r->address = adr;
+									}
 								}
-								auto s = std::make_shared<receiverStruct>();
-								s->address = adr;
-								s->connId = connId;
-								s->packets.push_back(mv);
-								s->sockIndex = sockIndex;
-								receivers[connId] = s;
-								ac->push_back(s);
+								else
+								{
+									auto ac = accepting.lock();
+									if (!ac)
+									{
+										UDP_LOG(7, "received invalid packet (unknown connection id)");
+										continue;
+									}
+									auto s = std::make_shared<receiverStruct>();
+									s->address = adr;
+									s->connId = connId;
+									s->packets.push_back(mv);
+									s->sockIndex = sockIndex;
+									receivers[connId] = s;
+									ac->push_back(s);
+								}
 							}
 						}
+					}
+					catch (...)
+					{
+						// nothing?
 					}
 				}
 				for (auto it = receivers.begin(); it != receivers.end();)
@@ -297,7 +307,7 @@ namespace cage
 					{
 						while (true)
 						{
-							threadSleep(1000);
+							threadSleep(5000);
 							service();
 							if (established)
 								break;
@@ -988,7 +998,7 @@ namespace cage
 
 			holder<udpConnectionClass> accept()
 			{
-				detail::overrideBreakpoint brk;
+				//detail::overrideBreakpoint brk;
 				std::shared_ptr<sockGroupStruct::receiverStruct> acc;
 				{
 					scopeLock<mutexClass> lock(sockGroup->mut);
