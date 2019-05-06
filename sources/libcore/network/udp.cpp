@@ -197,7 +197,7 @@ namespace cage
 				uint32 m = 1 << i;
 				if ((bits & m) == m)
 				{
-					uint16 s = seqn - i - 1;
+					uint16 s = seqn - i;
 					result.insert(s);
 				}
 			}
@@ -209,7 +209,7 @@ namespace cage
 			uint32 result = 0;
 			for (uint16 i = 0; i < 32; i++)
 			{
-				uint16 s = seqn - i - 1;
+				uint16 s = seqn - i;
 				if (bits.count(s))
 				{
 					uint32 m = 1 << i;
@@ -225,15 +225,11 @@ namespace cage
 		public:
 			ackTesterClass()
 			{
-				CAGE_ASSERT_RUNTIME(encodeAck(1000, { 999, 998, 996 }) == 11);
-				CAGE_ASSERT_RUNTIME(encodeAck(1000, decodeAck(1000, 0)) == 0);
-				CAGE_ASSERT_RUNTIME(encodeAck(1000, decodeAck(1000, 11)) == 11);
-				CAGE_ASSERT_RUNTIME(encodeAck(1000, decodeAck(1000, 42)) == 42);
-				CAGE_ASSERT_RUNTIME(encodeAck(1000, decodeAck(1000, 123456)) == 123456);
-				CAGE_ASSERT_RUNTIME(encodeAck(5, decodeAck(5, 123456)) == 123456);
-				CAGE_ASSERT_RUNTIME(encodeAck(1000, { 999, 998, 996, 1342 }) == 11);
-				CAGE_ASSERT_RUNTIME(encodeAck(1000, {}) == 0);
-				CAGE_ASSERT_RUNTIME(encodeAck(1, { 0 }) == 1);
+				CAGE_ASSERT_RUNTIME(decodeAck(1000, encodeAck(1000, { 999 })) == std::set<uint16>({ 999 }));
+				CAGE_ASSERT_RUNTIME(decodeAck(1000, encodeAck(1000, { 1000 })) == std::set<uint16>({ 1000 }));
+				CAGE_ASSERT_RUNTIME(decodeAck(1000, encodeAck(1000, { 1000, 999 })) == std::set<uint16>({ 1000, 999 }));
+				CAGE_ASSERT_RUNTIME(decodeAck(1000, encodeAck(1000, { 1000, 999, 990 })) == std::set<uint16>({ 1000, 999, 990 }));
+				CAGE_ASSERT_RUNTIME(decodeAck(5, encodeAck(5, { 1, 65533 })) == std::set<uint16>({ 1, 65533 }));
 			}
 		} ackTesterInstance;
 #endif // CAGE_DEBUG
@@ -388,13 +384,11 @@ namespace cage
 				{
 					std::shared_ptr<memoryBuffer> data;
 					std::vector<bool> parts; // acked parts
-					uint64 timeAdded;
-					uint64 timeLastSend;
-					uint16 resendsCount;
+					uint16 step;
 					uint16 msgSeqn;
 					uint8 channel;
 
-					reliableMsgStruct() : timeAdded(0), timeLastSend(0), resendsCount(0), msgSeqn(0), channel(0)
+					reliableMsgStruct() : step(1), msgSeqn(0), channel(0)
 					{}
 				};
 
@@ -478,9 +472,36 @@ namespace cage
 
 			void generateAckCommands()
 			{
+				if (sending.seqnToAck.empty())
+					return;
+
 				std::vector<packAckStruct> acks;
-				for (uint16 a : sending.seqnToAck)
-					acks.emplace_back(a + 1, encodeAck(a + 1, { a })); // todo this has to be optimized to use all 32 bits
+				auto it = sending.seqnToAck.rbegin();
+				auto et = sending.seqnToAck.rend();
+				uint16 front = *it++;
+				std::set<uint16> tmp;
+				tmp.insert(front);
+				while (it != et)
+				{
+					uint16 n = *it++;
+					uint16 dist = min((uint16)(n - front), (uint16)(front - n));
+					if (dist < 32)
+						tmp.insert(n);
+					else
+					{
+						packAckStruct p(front, encodeAck(front, tmp));
+						CAGE_ASSERT_RUNTIME(decodeAck(p.ackSeqn, p.ackBits) == tmp);
+						acks.push_back(p);
+						tmp.clear();
+						front = n;
+						tmp.insert(front);
+					}
+				}
+				{
+					packAckStruct p(front, encodeAck(front, tmp));
+					CAGE_ASSERT_RUNTIME(decodeAck(p.ackSeqn, p.ackBits) == tmp);
+					acks.push_back(p);
+				}
 
 #ifdef CAGE_ASSERT_ENABLED
 				{ // verification
@@ -509,9 +530,10 @@ namespace cage
 				{
 					if (!msg)
 						continue;
-					// todo resend timing
-					generateCommands(msg);
-					// todo detect disconnection
+					if ((msg->step & (msg->step - 1)) == 0) // send when step is power of 2
+						generateCommands(msg);
+					if (msg && msg->step++ >= 300)
+						CAGE_THROW_ERROR(disconnectedException, "too many failed attempts at sending a reliable message");
 				}
 			}
 
@@ -946,7 +968,6 @@ namespace cage
 				msg->msgSeqn = sending.seqnPerChannel[msg->channel]++;
 				if (reliable)
 				{
-					msg->timeAdded = getApplicationTime();
 					msg->parts.resize(longCmdsCount(numeric_cast<uint32>(msg->data->size())));
 					sending.relMsgs.push_back(templates::move(msg));
 				}
@@ -956,7 +977,7 @@ namespace cage
 
 			void service()
 			{
-				//detail::overrideBreakpoint brk;
+				detail::overrideBreakpoint brk;
 				serviceReceiving();
 				serviceSending();
 			}
@@ -998,7 +1019,7 @@ namespace cage
 
 			holder<udpConnectionClass> accept()
 			{
-				//detail::overrideBreakpoint brk;
+				detail::overrideBreakpoint brk;
 				std::shared_ptr<sockGroupStruct::receiverStruct> acc;
 				{
 					scopeLock<mutexClass> lock(sockGroup->mut);
