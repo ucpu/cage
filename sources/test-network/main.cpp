@@ -55,13 +55,10 @@ namespace
 
 	void runManager()
 	{
-		uint16 port = randomRange(1025u, 65535u);
-		runStruct runnerClient1(1, string() + "cage-test-network -n network-test-client-1 -c -p " + port);
-		runStruct runnerClient2(2, string() + "cage-test-network -n network-test-client-2 -c -p " + port);
-		runStruct runnerServer0(0, string() + "cage-test-network -n network-test-server-0 -s -p " + port);
-		runStruct runnerClient3(3, string() + "cage-test-network -n network-test-client-3 -c -p " + port);
-		//runStruct runnerClient4(4, string() + "cage-test-network -n network-test-client-4 -c -p " + port);
-		//runStruct runnerClient5(5, string() + "cage-test-network -n network-test-client-5 -c -p " + port);
+		runStruct runnerClient1(1, string() + "cage-test-network -n network-test-1 -c");
+		runStruct runnerClient2(2, string() + "cage-test-network -n network-test-2 -c" + " -l 0.2");
+		runStruct runnerServer0(0, string() + "cage-test-network -n network-test-0 -s");
+		runStruct runnerClient3(3, string() + "cage-test-network -n network-test-3 -c");
 	}
 
 	void initializeSecondaryLog(const string &path)
@@ -99,8 +96,6 @@ int main(int argc, const char *args[])
 		configUint32 port("port", 42789);
 		configFloat packetLoss("cage-core.udp.simulatedPacketLoss");
 		configUint32 confMessages("messages", 150);
-		if (packetLoss == 0)
-			packetLoss = 0.001f;
 		bool modeServer = false;
 		bool modeClient = false;
 		for (string option : cmd->sections())

@@ -35,7 +35,7 @@ namespace
 		void statistics(uint64 t)
 		{
 			uint64 throughput = numeric_cast<uint64>(1000000.0 * recvBytes / (t - timeStart));
-			CAGE_LOG(severityEnum::Info, "conn", string() + "messages send: " + sendSeqn + ", received: " + recvCnt + ", delivery ratio: " + ((double)recvCnt / (double)recvSeqn) + ", data received: " + (recvBytes / 1024) + " KB, throughput: " + (throughput / 1024) + " KB/s");
+			CAGE_LOG(severityEnum::Info, "conn", string() + "messages send: " + sendSeqn + ", received: " + recvCnt + ", ratio: " + ((double)recvCnt / (double)recvSeqn) + ", data: " + (recvBytes / 1024) + " KB, throughput: " + (throughput / 1024) + " KB/s");
 		}
 
 		bool process()

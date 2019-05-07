@@ -25,7 +25,7 @@ namespace cage
 
 		configUint32 logLevel("cage-core.udp.logLevel", 0);
 		configFloat confSimulatedPacketLoss("cage-core.udp.simulatedPacketLoss", 0);
-		configUint32 confMtu("cage-core.udp.maxTransferUnit", 1100);
+		configUint32 confMtu("cage-core.udp.maxTransferUnit", 1450);
 		configUint32 confBufferSize("cage-core.udp.systemBufferSize", 1024 * 1024);
 
 #define UDP_LOG(LEVEL, MSG) { if (logLevel >= (LEVEL)) { CAGE_LOG(severityEnum::Info, "udp", string() + MSG); } }
@@ -37,13 +37,6 @@ namespace cage
 
 			memView(const std::shared_ptr<memoryBuffer> &buffer, uintPtr offset, uintPtr size) : buffer(buffer), offset(offset), size(size)
 			{}
-
-			serializer ser()
-			{
-				serializer s(*buffer);
-				s.advance(offset);
-				return s.placeholder(size);
-			}
 
 			deserializer des() const
 			{
@@ -256,14 +249,17 @@ namespace cage
 		enum class cmdTypeEnum : uint8
 		{
 			invalid = 0,
-			connectionInit, // uint8 responseIndex
-			timing, // uint16 newIndex, uint16 copyIndex, uint64 newTime, uint64 copyTime
-			ack, // packAckStruct
-			shortMessage = 42, // uint8 channel, uint16 msgSeqn, uint16 size, data
-			longMessage, // uint8 channel, uint16 msgSeqn, uint32 totalSize, uint16 index, data
+			connectionInit = 1, // uint8 responseIndex, uint16 LongSize
+			connectionFinish = 2,
+			acknowledgement = 13, // uint16 packetSeqn, uint32 bits
+			shortMessage = 20, // uint8 channel, uint16 msgSeqn, uint16 size, data
+			longMessage = 21, // uint8 channel, uint16 msgSeqn, uint32 totalSize, uint16 index, data
+			ackQuality = 42,
+			mtuDiscovery = 43,
+			rttDiscovery = 44, // uint16 step, uint16 myIndex, uint16 yourIndex, uint64 myTime, uint64 yourTime
 		};
 
-		const uint16 LongSize = 200;
+		const uint16 LongSize = 470; // designed to work well with default mtu (fits 3 long message commands in single packet)
 
 		uint16 longCmdsCount(uint32 totalSize)
 		{
@@ -345,14 +341,7 @@ namespace cage
 						if (!s.isValid())
 							continue;
 						CAGE_ASSERT_RUNTIME(s.getConnected());
-						try
-						{
-							s.send(data, size);
-						}
-						catch (...)
-						{
-							// do nothing, i guess
-						}
+						s.send(data, size);
 					}
 				}
 				else
@@ -360,20 +349,13 @@ namespace cage
 					sock &s = sockGroup->socks[sockReceiver->sockIndex];
 					if (s.isValid())
 					{
-						try
+						if (s.getConnected())
 						{
-							if (s.getConnected())
-							{
-								CAGE_ASSERT_RUNTIME(s.getRemoteAddress() == sockReceiver->address);
-								s.send(data, size);
-							}
-							else
-								s.sendTo(data, size, sockReceiver->address);
+							CAGE_ASSERT_RUNTIME(s.getRemoteAddress() == sockReceiver->address);
+							s.send(data, size);
 						}
-						catch (...)
-						{
-							// do nothing, i guess
-						}
+						else
+							s.sendTo(data, size, sockReceiver->address);
 					}
 				}
 			}
@@ -409,8 +391,9 @@ namespace cage
 					uint16 msgSeqn;
 					uint8 channel;
 					cmdTypeEnum type;
+					sint8 priority;
 
-					commandStruct() : msgSeqn(0), channel(0), type(cmdTypeEnum::invalid)
+					commandStruct() : msgSeqn(0), channel(0), type(cmdTypeEnum::invalid), priority(0)
 					{}
 				};
 
@@ -428,12 +411,13 @@ namespace cage
 				}
 			} sending;
 
-			void generateCommands(std::shared_ptr<sendingStruct::reliableMsgStruct> &msg)
+			void generateCommands(std::shared_ptr<sendingStruct::reliableMsgStruct> &msg, sint8 priority)
 			{
 				sendingStruct::commandStruct cmd;
 				cmd.data.buffer = msg->data;
 				cmd.msgSeqn = msg->msgSeqn;
 				cmd.channel = msg->channel;
+				cmd.priority = priority;
 				if (msg->channel >= 128)
 					cmd.msgAck.msg = msg;
 
@@ -470,7 +454,7 @@ namespace cage
 					msg.reset();
 			}
 
-			void generateAckCommands()
+			void generateAckCommands(sint8 priority)
 			{
 				if (sending.seqnToAck.empty())
 					return;
@@ -484,7 +468,7 @@ namespace cage
 				while (it != et)
 				{
 					uint16 n = *it++;
-					uint16 dist = min((uint16)(n - front), (uint16)(front - n));
+					uint16 dist = front - n;
 					if (dist < 32)
 						tmp.insert(n);
 					else
@@ -519,7 +503,8 @@ namespace cage
 				{
 					sendingStruct::commandStruct cmd;
 					cmd.packAck = pa;
-					cmd.type = cmdTypeEnum::ack;
+					cmd.type = cmdTypeEnum::acknowledgement;
+					cmd.priority = priority;
 					sending.cmds.push_back(cmd);
 				}
 			}
@@ -531,7 +516,27 @@ namespace cage
 					if (!msg)
 						continue;
 					if ((msg->step & (msg->step - 1)) == 0) // send when step is power of 2
-						generateCommands(msg);
+					{
+						sint8 priority = 0;
+						switch (msg->step)
+						{
+						case 8:
+						case 16:
+							priority = 1;
+							break;
+						case 32:
+						case 64:
+							priority = 2;
+							break;
+						case 128:
+							priority = 3;
+							break;
+						case 256:
+							priority = 4;
+							break;
+						}
+						generateCommands(msg, priority);
+					}
 					if (msg && msg->step++ >= 300)
 						CAGE_THROW_ERROR(disconnectedException, "too many failed attempts at sending a reliable message");
 				}
@@ -571,9 +576,9 @@ namespace cage
 					{
 					case cmdTypeEnum::connectionInit:
 					{
-						ser << cmd.channel;
+						ser << cmd.channel << LongSize;
 					} break;
-					case cmdTypeEnum::ack:
+					case cmdTypeEnum::acknowledgement:
 					{
 						ser << cmd.packAck.ackSeqn << cmd.packAck.ackBits;
 					} break;
@@ -608,18 +613,29 @@ namespace cage
 				{
 					sendingStruct::commandStruct cmd;
 					cmd.type = cmdTypeEnum::connectionInit;
+					cmd.priority = 10;
 					sending.cmds.push_back(cmd);
 				}
 
-				generateAckCommands();
+				generateAckCommands(0);
 				resendReliableMessages();
-				composePackets();
+
+				std::stable_sort(sending.cmds.begin(), sending.cmds.end(), [](const sendingStruct::commandStruct &a, const sendingStruct::commandStruct &b) {
+					return a.priority > b.priority; // higher priority first
+				});
+
+				try
+				{
+					composePackets();
+				}
+				catch (...)
+				{
+					// do nothing, i guess
+				}
 
 				// finish up
-				bool generateNextAcks = sending.cmds.size() > 100;
 				sending.cmds.clear();
-				if (generateNextAcks)
-					generateAckCommands(); // duplicate current acks in next iteration
+				generateAckCommands(3); // duplicate current acks in next iteration
 				sending.seqnToAck.clear();
 
 				{ // clear finished reliable messages
@@ -634,7 +650,20 @@ namespace cage
 					}
 				}
 
-				// todo clear ackMap
+				{ // clear ackMap
+					auto it = sending.ackMap.begin();
+					auto et = sending.ackMap.end();
+					while (it != et)
+					{
+						it->second.erase(std::remove_if(it->second.begin(), it->second.end(), [](sendingStruct::msgAckStruct &p){
+							return !p.msg.lock();
+						}), it->second.end());
+						if (it->second.empty())
+							it = sending.ackMap.erase(it);
+						else
+							it++;
+					}
+				}
 			}
 
 			// RECEIVING
@@ -791,8 +820,14 @@ namespace cage
 				case cmdTypeEnum::connectionInit:
 				{
 					uint8 index = 0;
-					d >> index;
+					uint16 longSize = 0;
+					d >> index >> longSize;
 					UDP_LOG(3, "received connection init command with index " + index);
+					if (longSize != LongSize)
+					{
+						UDP_LOG(3, "the connection has incompatible LongSize: " + longSize + ", my LongSize: " + LongSize);
+						CAGE_THROW_ERROR(disconnectedException, "incompatible connection (LongSize)");
+					}
 					if (!established)
 					{
 						if (logLevel >= 2)
@@ -809,10 +844,11 @@ namespace cage
 						sendingStruct::commandStruct cmd;
 						cmd.channel = index + 1;
 						cmd.type = cmdTypeEnum::connectionInit;
+						cmd.priority = 10;
 						sending.cmds.push_back(cmd);
 					}
 				} break;
-				case cmdTypeEnum::ack:
+				case cmdTypeEnum::acknowledgement:
 				{
 					packAckStruct ackPack;
 					d >> ackPack.ackSeqn >> ackPack.ackBits;
@@ -972,7 +1008,7 @@ namespace cage
 					sending.relMsgs.push_back(templates::move(msg));
 				}
 				else
-					generateCommands(msg);
+					generateCommands(msg, 0);
 			}
 
 			void service()
