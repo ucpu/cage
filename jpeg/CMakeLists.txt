@@ -6,6 +6,10 @@ message(STATUS "----------------------------------------------------------------
 
 option(ENABLE_SHARED "Build shared libraries" FALSE)
 
+if("$ENV{TRAVIS_OS_NAME}" STREQUAL "windows")
+	option(WITH_SIMD "Include SIMD extensions, if available for this platform" false)
+endif()
+
 if(APPLE)
 	option(WITH_SIMD "Include SIMD extensions, if available for this platform" false)
 endif()
