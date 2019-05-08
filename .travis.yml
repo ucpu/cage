@@ -11,6 +11,8 @@ addons:
     packages:
       - g++-5
       - g++-6
+      - g++-7
+      - clang
       - xorg-dev
       - nasm
 
@@ -22,6 +24,18 @@ matrix:
     - env: COMPILER=g++-5 COMPILERC=gcc-5 CONFIG=relwithdebinfo
     - env: COMPILER=g++-6 COMPILERC=gcc-6 CONFIG=relwithdebinfo
     - env: COMPILER=g++-6 COMPILERC=gcc-6 CONFIG=debug
+    - env: COMPILER=g++-7 COMPILERC=gcc-7 CONFIG=relwithdebinfo
+    - env: COMPILER=g++-7 COMPILERC=gcc-7 CONFIG=debug
+    - env: COMPILER=clang++ COMPILERC=clang CONFIG=relwithdebinfo
+    - env: COMPILER=clang++ COMPILERC=clang CONFIG=debug
+    - os: windows
+      env: CONFIG=relwithdebinfo ARCH="x64"
+    - os: windows
+      env: CONFIG=debug ARCH="x64"
+    - os: windows
+      env: CONFIG=relwithdebinfo ARCH="Win32"
+    - os: windows
+      env: CONFIG=debug ARCH="Win32"
     - os: osx
       compiler: clang
       env: CONFIG=relwithdebinfo
@@ -33,8 +47,10 @@ matrix:
 script:
   - export CXX=$COMPILER && export CC=$COMPILERC
   - mkdir build && cd build
-  - cmake -DCMAKE_BUILD_TYPE=$CONFIG ..
-  - cmake --build .
+  - if [ "$TRAVIS_OS_NAME" != "windows" ] ; then cmake -DCMAKE_BUILD_TYPE=$CONFIG .. ; fi
+  - if [ "$TRAVIS_OS_NAME" == "windows" ] ; then cmake -A $ARCH .. ; fi
+  - if [ "$TRAVIS_OS_NAME" != "windows" ] ; then cmake --build . ; fi
+  - if [ "$TRAVIS_OS_NAME" == "windows" ] ; then cmake --build . --config $CONFIG ; fi
   - result/$CONFIG/cage-test-core
   - result/$CONFIG/cage-asset-database
 

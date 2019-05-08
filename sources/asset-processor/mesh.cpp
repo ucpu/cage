@@ -483,7 +483,7 @@ void processMesh()
 				maxBoneId = max(maxBoneId, boneIndices[i * 4 + j] + 1u);
 			}
 			// renormalize weights
-			if (abs(sum - 1) > 1e-3 && sum > 1e-3)
+			if (cage::abs(sum - 1) > 1e-3 && sum > 1e-3)
 			{
 				float f = 1 / sum;
 				CAGE_LOG(severityEnum::Warning, logComponentName, string() + "renormalizing bone weights for " + i + "th vertex by factor " + f);

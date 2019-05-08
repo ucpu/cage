@@ -49,6 +49,8 @@ namespace cage
 					CAGE_ASSERT_RUNTIME(data.step.f >= 0);
 					CAGE_ASSERT_RUNTIME(data.max.f >= data.min.f);
 					break;
+				default:
+					break;
 				}
 
 				if (hasFocus())
@@ -111,6 +113,8 @@ namespace cage
 					case inputTypeEnum::Real:
 						if (data.value.isReal(true))
 							data.value = consolidate<real>(data.value.toFloat(), data.min.f, data.max.f, data.step.f);
+						break;
+					default:
 						break;
 					}
 				}

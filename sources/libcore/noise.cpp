@@ -16,8 +16,8 @@ namespace cage
 			case noiseDistanceEnum::Euclidean: return FastNoise::Euclidean;
 			case noiseDistanceEnum::Manhattan: return FastNoise::Manhattan;
 			case noiseDistanceEnum::Natural: return FastNoise::Natural;
+			default: CAGE_THROW_CRITICAL(exception, "invalid noise distance enum");
 			}
-			CAGE_THROW_CRITICAL(exception, "invalid noise distance enum");
 		}
 
 		FastNoise::CellularReturnType convert(noiseOperationEnum operation)
@@ -28,8 +28,8 @@ namespace cage
 			case noiseOperationEnum::Subtract: return FastNoise::Distance2Sub;
 			case noiseOperationEnum::Multiply: return FastNoise::Distance2Mul;
 			case noiseOperationEnum::Divide: return FastNoise::Distance2Div;
+			default: CAGE_THROW_CRITICAL(exception, "invalid noise operation enum");
 			}
-			CAGE_THROW_CRITICAL(exception, "invalid noise operation enum");
 		}
 
 		FastNoise::FractalType convert(noiseFractalTypeEnum type)
@@ -39,8 +39,8 @@ namespace cage
 			case noiseFractalTypeEnum::Fbm: return FastNoise::FBM;
 			case noiseFractalTypeEnum::Billow: return FastNoise::Billow;
 			case noiseFractalTypeEnum::RigidMulti: return FastNoise::RigidMulti;
+			default: CAGE_THROW_CRITICAL(exception, "invalid noise fractal type enum");
 			}
-			CAGE_THROW_CRITICAL(exception, "invalid noise fractal type enum");
 		}
 
 		FastNoise::Interp convert(noiseInterpolationEnum interpolation)
@@ -50,8 +50,8 @@ namespace cage
 			case noiseInterpolationEnum::Quintic: return FastNoise::Quintic;
 			case noiseInterpolationEnum::Hermite: return FastNoise::Hermite;
 			case noiseInterpolationEnum::Linear: return FastNoise::Linear;
+			default: CAGE_THROW_CRITICAL(exception, "invalid noise interpolation enum");
 			}
-			CAGE_THROW_CRITICAL(exception, "invalid noise interpolation enum");
 		}
 
 		FastNoise::NoiseType convert(noiseTypeEnum type, uint32 octaves)
@@ -64,8 +64,8 @@ namespace cage
 				case noiseTypeEnum::Perlin: return FastNoise::PerlinFractal;
 				case noiseTypeEnum::Simplex: return FastNoise::SimplexFractal;
 				case noiseTypeEnum::Cubic: return FastNoise::CubicFractal;
+				default: CAGE_THROW_CRITICAL(exception, "invalid noise type enum (or unsupported number of octaves)");
 				}
-				CAGE_THROW_CRITICAL(exception, "invalid noise type enum (or unsupported number of octaves)");
 			}
 			else
 			{
@@ -77,8 +77,8 @@ namespace cage
 				case noiseTypeEnum::Cubic: return FastNoise::Cubic;
 				case noiseTypeEnum::Cellular: return FastNoise::Cellular;
 				case noiseTypeEnum::White: return FastNoise::WhiteNoise;
+				default: CAGE_THROW_CRITICAL(exception, "invalid noise type enum");
 				}
-				CAGE_THROW_CRITICAL(exception, "invalid noise type enum");
 			}
 		}
 
