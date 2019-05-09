@@ -249,14 +249,13 @@ namespace cage
 		enum class cmdTypeEnum : uint8
 		{
 			invalid = 0,
-			connectionInit = 1, // uint8 responseIndex, uint16 LongSize
+			connectionInit = 1, // uint16 responseIndex, uint16 LongSize
 			connectionFinish = 2,
 			acknowledgement = 13, // uint16 packetSeqn, uint32 bits
 			shortMessage = 20, // uint8 channel, uint16 msgSeqn, uint16 size, data
 			longMessage = 21, // uint8 channel, uint16 msgSeqn, uint32 totalSize, uint16 index, data
-			ackQuality = 42,
+			statsDiscovery = 42, // uint64 aReceivedBytes, uint64 aSentBytes, uint64 aTime, uint64 bReceivedBytes, uint64 bSentBytes, uint64 bTime, uint32 aReceivedPackets, uint32 aSentPackets, uint32 bReceivedPackets, uint32 bSentPackets, uint16 step
 			mtuDiscovery = 43,
-			rttDiscovery = 44, // uint16 step, uint16 myIndex, uint16 yourIndex, uint64 myTime, uint64 yourTime
 		};
 
 		const uint16 LongSize = 470; // designed to work well with default mtu (fits 3 long message commands in single packet)
@@ -269,7 +268,7 @@ namespace cage
 		class udpConnectionImpl : public udpConnectionClass
 		{
 		public:
-			udpConnectionImpl(const string &address, uint16 port, uint64 timeout) : startTime(getApplicationTime()), connId(randomRange(1u, detail::numeric_limits<uint32>::max())), established(false)
+			udpConnectionImpl(const string &address, uint16 port, uint64 timeout) : statsLastTimestamp(0), startTime(getApplicationTime()), connId(randomRange(1u, detail::numeric_limits<uint32>::max())), established(false)
 			{
 				UDP_LOG(1, "creating new connection to address: '" + address + "', port: " + port + ", timeout: " + timeout);
 				sockGroup = std::make_shared<sockGroupStruct>();
@@ -310,7 +309,7 @@ namespace cage
 				}
 			}
 
-			udpConnectionImpl(std::shared_ptr<sockGroupStruct> sg, std::shared_ptr<sockGroupStruct::receiverStruct> rec) : sockGroup(sg), sockReceiver(rec), startTime(getApplicationTime()), connId(rec->connId), established(false)
+			udpConnectionImpl(std::shared_ptr<sockGroupStruct> sg, std::shared_ptr<sockGroupStruct::receiverStruct> rec) : statsLastTimestamp(0), sockGroup(sg), sockReceiver(rec), startTime(getApplicationTime()), connId(rec->connId), established(false)
 			{
 				UDP_LOG(1, "accepting new connection");
 			}
@@ -318,12 +317,32 @@ namespace cage
 			~udpConnectionImpl()
 			{
 				UDP_LOG(2, "destroying connection");
+
+				// send connection closed packet
+				try
+				{
+					if (established)
+					{
+						sending.cmds.clear();
+						sendingStruct::commandStruct cmd;
+						cmd.type = cmdTypeEnum::connectionFinish;
+						sending.cmds.push_back(cmd);
+						composePackets();
+					}
+				}
+				catch (...)
+				{
+					// nothing
+				}
 			}
 
 			// SENDING
 
 			void dispatchPacket(const void *data, uintPtr size)
 			{
+				stats.bytesSentTotal += size;
+				stats.packetsSentTotal++;
+
 				{ // simulated packet loss for testing purposes
 					float ch = confSimulatedPacketLoss;
 					if (ch > 0 && randomChance() < ch)
@@ -370,7 +389,7 @@ namespace cage
 					uint16 msgSeqn;
 					uint8 channel;
 
-					reliableMsgStruct() : step(1), msgSeqn(0), channel(0)
+					reliableMsgStruct() : step(0), msgSeqn(0), channel(0)
 					{}
 				};
 
@@ -383,22 +402,59 @@ namespace cage
 					{}
 				};
 
+				union commandUnion
+				{
+					uint16 initIndex;
+
+					packAckStruct ack;
+
+					struct msgStruct
+					{
+						uint16 msgSeqn;
+						uint8 channel;
+					} msg;
+
+					struct statsStruct
+					{
+						struct sideStruct
+						{
+							uint64 time;
+							uint64 receivedBytes;
+							uint64 sentBytes;
+							uint32 receivedPackets;
+							uint32 sentPackets;
+						} a, b;
+						uint16 step;
+
+						statsStruct()
+						{
+							detail::memset(this, 0, sizeof(*this));
+						}
+					} stats;
+
+					commandUnion()
+					{
+						detail::memset(this, 0, sizeof(*this));
+					}
+
+					~commandUnion()
+					{}
+				};
+
 				struct commandStruct
 				{
-					packAckStruct packAck;
-					memView data;
+					commandUnion data;
 					msgAckStruct msgAck;
-					uint16 msgSeqn;
-					uint8 channel;
+					memView msgData;
 					cmdTypeEnum type;
 					sint8 priority;
 
-					commandStruct() : msgSeqn(0), channel(0), type(cmdTypeEnum::invalid), priority(0)
+					commandStruct() : type(cmdTypeEnum::invalid), priority(0)
 					{}
 				};
 
 				std::list<std::shared_ptr<reliableMsgStruct>> relMsgs;
-				std::vector<commandStruct> cmds;
+				std::list<commandStruct> cmds;
 				std::map<uint16, std::vector<msgAckStruct>> ackMap; // mapping packet seqn to message parts
 				std::array<uint16, 256> seqnPerChannel; // next message seqn to be used
 				std::set<uint16> seqnToAck; // packets seqn to be acked
@@ -414,9 +470,9 @@ namespace cage
 			void generateCommands(std::shared_ptr<sendingStruct::reliableMsgStruct> &msg, sint8 priority)
 			{
 				sendingStruct::commandStruct cmd;
-				cmd.data.buffer = msg->data;
-				cmd.msgSeqn = msg->msgSeqn;
-				cmd.channel = msg->channel;
+				cmd.msgData.buffer = msg->data;
+				cmd.data.msg.msgSeqn = msg->msgSeqn;
+				cmd.data.msg.channel = msg->channel;
 				cmd.priority = priority;
 				if (msg->channel >= 128)
 					cmd.msgAck.msg = msg;
@@ -431,8 +487,8 @@ namespace cage
 					{
 						if (msg->parts.empty() || !msg->parts[index])
 						{
-							cmd.data.offset = index * LongSize;
-							cmd.data.size = index + 1 == totalCount ? msg->data->size() - cmd.data.offset : LongSize;
+							cmd.msgData.offset = index * LongSize;
+							cmd.msgData.size = index + 1 == totalCount ? msg->data->size() - cmd.msgData.offset : LongSize;
 							cmd.msgAck.index = index;
 							sending.cmds.push_back(cmd);
 							completelyAcked = false;
@@ -443,7 +499,7 @@ namespace cage
 				{ // short message
 					if (msg->parts.empty() || !msg->parts[0])
 					{
-						cmd.data.size = msg->data->size();
+						cmd.msgData.size = msg->data->size();
 						cmd.type = cmdTypeEnum::shortMessage;
 						sending.cmds.push_back(cmd);
 						completelyAcked = false;
@@ -502,10 +558,10 @@ namespace cage
 				for (packAckStruct pa : acks)
 				{
 					sendingStruct::commandStruct cmd;
-					cmd.packAck = pa;
+					cmd.data.ack = pa;
 					cmd.type = cmdTypeEnum::acknowledgement;
 					cmd.priority = priority;
-					sending.cmds.push_back(cmd);
+					sending.cmds.push_back(templates::move(cmd));
 				}
 			}
 
@@ -515,30 +571,81 @@ namespace cage
 				{
 					if (!msg)
 						continue;
-					if ((msg->step & (msg->step - 1)) == 0) // send when step is power of 2
+					sint8 priority = -1;
+					switch (msg->step)
 					{
-						sint8 priority = 0;
-						switch (msg->step)
-						{
-						case 8:
-						case 16:
-							priority = 1;
-							break;
-						case 32:
-						case 64:
-							priority = 2;
-							break;
-						case 128:
-							priority = 3;
-							break;
-						case 256:
-							priority = 4;
-							break;
-						}
-						generateCommands(msg, priority);
+					case 0:
+						// purposefully skip number one, it is almost impossible to get ack that fast
+					case 2:
+					case 4:
+						priority = 0;
+						break;
+					case 8:
+					case 16:
+						priority = 1;
+						break;
+					case 30:
+					case 60:
+					case 90:
+						priority = 2;
+						break;
+					case 120:
+					case 150:
+					case 180:
+						priority = 3;
+						break;
+					case 210:
+					case 240:
+					case 270:
+						priority = 4;
+						break;
 					}
+					if (priority >= 0)
+						generateCommands(msg, priority);
 					if (msg && msg->step++ >= 300)
 						CAGE_THROW_ERROR(disconnectedException, "too many failed attempts at sending a reliable message");
+				}
+			}
+
+			void serializeCommand(const sendingStruct::commandStruct &cmd, serializer &ser)
+			{
+				ser << cmd.type;
+				switch (cmd.type)
+				{
+				case cmdTypeEnum::connectionInit:
+				{
+					ser << cmd.data.initIndex << LongSize;
+				} break;
+				case cmdTypeEnum::connectionFinish:
+				{
+					// nothing
+				} break;
+				case cmdTypeEnum::acknowledgement:
+				{
+					ser << cmd.data.ack.ackSeqn << cmd.data.ack.ackBits;
+				} break;
+				case cmdTypeEnum::shortMessage:
+				{
+					ser << cmd.data.msg.channel << cmd.data.msg.msgSeqn;
+					uint16 size = numeric_cast<uint16>(cmd.msgData.size);
+					ser << size;
+					ser.write(cmd.msgData.buffer->data(), size);
+				} break;
+				case cmdTypeEnum::longMessage:
+				{
+					ser << cmd.data.msg.channel << cmd.data.msg.msgSeqn;
+					uint32 totalSize = numeric_cast<uint32>(cmd.msgData.buffer->size());
+					uint16 index = numeric_cast<uint16>(cmd.msgData.offset / LongSize);
+					ser << totalSize << index;
+					ser.write(cmd.msgData.buffer->data() + cmd.msgData.offset, cmd.msgData.size);
+				} break;
+				case cmdTypeEnum::statsDiscovery:
+				{
+					const auto &s = cmd.data.stats;
+					ser << s.a.receivedBytes << s.a.sentBytes << s.a.time << s.b.receivedBytes << s.b.sentBytes << s.b.time << s.a.receivedPackets << s.a.sentPackets << s.b.receivedPackets << s.b.sentPackets << s.step;
+				} break;
+				default:
+					CAGE_THROW_CRITICAL(exception, "invalid udp command type enum");
 				}
 			}
 
@@ -549,16 +656,18 @@ namespace cage
 				buff.reserve(mtu);
 				serializer ser(buff);
 				uint16 currentPacketSeqn = 0;
+				bool empty = true;
 				for (const sendingStruct::commandStruct &cmd : sending.cmds)
 				{
-					uint32 cmdSize = numeric_cast<uint32>(cmd.data.size) + 10;
+					uint32 cmdSize = numeric_cast<uint32>(cmd.msgData.size) + 10;
 
 					// send current packet
-					if (buff.size() > 0 && buff.size() + cmdSize > mtu)
+					if (!empty && buff.size() + cmdSize > mtu)
 					{
 						dispatchPacket(buff.data(), buff.size());
 						buff.resize(0);
 						ser = serializer(buff);
+						empty = true;
 					}
 
 					// generate packet header
@@ -571,39 +680,12 @@ namespace cage
 					}
 
 					// serialize the command
-					ser << cmd.type;
-					switch (cmd.type)
-					{
-					case cmdTypeEnum::connectionInit:
-					{
-						ser << cmd.channel << LongSize;
-					} break;
-					case cmdTypeEnum::acknowledgement:
-					{
-						ser << cmd.packAck.ackSeqn << cmd.packAck.ackBits;
-					} break;
-					case cmdTypeEnum::shortMessage:
-					{
-						ser << cmd.channel << cmd.msgSeqn;
-						uint16 size = numeric_cast<uint16>(cmd.data.size);
-						ser << size;
-						ser.write(cmd.data.buffer->data(), size);
-					} break;
-					case cmdTypeEnum::longMessage:
-					{
-						ser << cmd.channel << cmd.msgSeqn;
-						uint32 totalSize = numeric_cast<uint32>(cmd.data.buffer->size());
-						uint16 index = numeric_cast<uint16>(cmd.data.offset / LongSize);
-						ser << totalSize << index;
-						ser.write(cmd.data.buffer->data() + cmd.data.offset, cmd.data.size);
-					} break;
-					default:
-						CAGE_THROW_CRITICAL(exception, "invalid udp command type enum");
-					}
+					serializeCommand(cmd, ser);
 					if (cmd.msgAck.msg.lock())
 						sending.ackMap[currentPacketSeqn].push_back(cmd.msgAck);
+					empty = false;
 				}
-				if (buff.size() > 0)
+				if (!empty)
 					dispatchPacket(buff.data(), buff.size());
 			}
 
@@ -617,10 +699,16 @@ namespace cage
 					sending.cmds.push_back(cmd);
 				}
 
+				if (getApplicationTime() > statsLastTimestamp + 1000000)
+				{
+					sendingStruct::commandUnion::statsStruct p;
+					handleStats(p);
+				}
+
 				generateAckCommands(0);
 				resendReliableMessages();
 
-				std::stable_sort(sending.cmds.begin(), sending.cmds.end(), [](const sendingStruct::commandStruct &a, const sendingStruct::commandStruct &b) {
+				sending.cmds.sort([](const sendingStruct::commandStruct &a, const sendingStruct::commandStruct &b) {
 					return a.priority > b.priority; // higher priority first
 				});
 
@@ -811,6 +899,36 @@ namespace cage
 				}
 			}
 
+			void handleStats(sendingStruct::commandUnion::statsStruct &p)
+			{
+				udpConnectionStatisticsStruct &s = stats;
+				statsLastTimestamp = getApplicationTime();
+				if (p.step > 0)
+				{
+					s.roundTripDuration = statsLastTimestamp - p.b.time;
+					s.bytesReceivedLately = s.bytesReceivedTotal - p.b.receivedBytes;
+					s.bytesSentLately = s.bytesSentTotal - p.b.sentBytes;
+					s.bytesDeliveredLately = p.a.receivedBytes - s.bytesDeliveredTotal;
+					s.bytesDeliveredTotal = p.a.receivedBytes;
+					s.packetsReceivedLately = s.packetsReceivedTotal - p.b.receivedPackets;
+					s.packetsSentLately = s.packetsSentTotal - p.b.sentPackets;
+					s.packetsDeliveredLately = p.a.receivedPackets - s.packetsDeliveredTotal;
+					s.packetsDeliveredTotal = p.a.receivedPackets;
+				}
+				p.b = p.a;
+				p.a.receivedBytes = s.bytesReceivedTotal;
+				p.a.receivedPackets = s.packetsReceivedTotal;
+				p.a.sentBytes = s.bytesSentTotal;
+				p.a.sentPackets = s.packetsSentTotal;
+				p.a.time = statsLastTimestamp;
+				p.step++;
+				sendingStruct::commandStruct cmd;
+				cmd.data.stats = p;
+				cmd.type = cmdTypeEnum::statsDiscovery;
+				cmd.priority = 1;
+				sending.cmds.push_back(templates::move(cmd));
+			}
+
 			void handleReceivedCommand(deserializer &d)
 			{
 				cmdTypeEnum type;
@@ -819,7 +937,7 @@ namespace cage
 				{
 				case cmdTypeEnum::connectionInit:
 				{
-					uint8 index = 0;
+					uint16 index = 0;
 					uint16 longSize = 0;
 					d >> index >> longSize;
 					UDP_LOG(3, "received connection init command with index " + index);
@@ -842,11 +960,15 @@ namespace cage
 					if (index == 0)
 					{
 						sendingStruct::commandStruct cmd;
-						cmd.channel = index + 1;
+						cmd.data.initIndex = index + 1;
 						cmd.type = cmdTypeEnum::connectionInit;
 						cmd.priority = 10;
 						sending.cmds.push_back(cmd);
 					}
+				} break;
+				case cmdTypeEnum::connectionFinish:
+				{
+					CAGE_THROW_ERROR(disconnectedException, "connection closed by other end");
 				} break;
 				case cmdTypeEnum::acknowledgement:
 				{
@@ -901,6 +1023,12 @@ namespace cage
 						d.read(msg.data.data() + index * LongSize, size);
 					}
 				} break;
+				case cmdTypeEnum::statsDiscovery:
+				{
+					sendingStruct::commandUnion::statsStruct s;
+					d >> s.a.receivedBytes >> s.a.sentBytes >> s.a.time >> s.b.receivedBytes >> s.b.sentBytes >> s.b.time >> s.a.receivedPackets >> s.a.sentPackets >> s.b.receivedPackets >> s.b.sentPackets >> s.step;
+					handleStats(s);
+				} break;
 				default:
 					CAGE_THROW_ERROR(exception, "invalid message type enum");
 				}
@@ -910,6 +1038,8 @@ namespace cage
 			{
 				deserializer d = b.des();
 				UDP_LOG(5, "received packet with " + d.available() + " bytes");
+				stats.bytesReceivedTotal += d.available();
+				stats.packetsReceivedTotal++;
 				{ // read signature and connection id
 					uint32 sign, id;
 					d >> sign >> id;
@@ -958,8 +1088,10 @@ namespace cage
 
 			// COMMON
 
+			udpConnectionStatisticsStruct stats;
 			std::shared_ptr<sockGroupStruct> sockGroup;
 			std::shared_ptr<sockGroupStruct::receiverStruct> sockReceiver;
+			uint64 statsLastTimestamp;
 			const uint64 startTime;
 			const uint32 connId;
 			bool established;
@@ -1141,6 +1273,12 @@ namespace cage
 		impl->service();
 	}
 
+	const udpConnectionStatisticsStruct &udpConnectionClass::statistics() const
+	{
+		const udpConnectionImpl *impl = (const udpConnectionImpl*)this;
+		return impl->stats;
+	}
+
 	holder<udpConnectionClass> udpServerClass::accept()
 	{
 		udpServerImpl *impl = (udpServerImpl*)this;
@@ -1155,5 +1293,10 @@ namespace cage
 	holder<udpServerClass> newUdpServer(uint16 port)
 	{
 		return detail::systemArena().createImpl<udpServerClass, udpServerImpl>(port);
+	}
+
+	udpConnectionStatisticsStruct::udpConnectionStatisticsStruct()
+	{
+		detail::memset(this, 0, sizeof(*this));
 	}
 }

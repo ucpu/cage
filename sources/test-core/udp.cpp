@@ -61,7 +61,7 @@ namespace
 		{
 			serverImpl srv;
 			while (srv.service())
-				threadSleep(1000);
+				threadSleep(5000);
 		}
 	};
 
@@ -87,6 +87,11 @@ namespace
 
 		~clientImpl()
 		{
+			if (udp)
+			{
+				const auto &s = udp->statistics();
+				CAGE_LOG(severityEnum::Info, "udp-stats", string() + "rtt: " + (s.roundTripDuration / 1000) + " ms, received: " + (s.bytesReceivedTotal / 1024) + " KB, " + s.packetsReceivedTotal + " packets");
+			}
 			connectionsLeft--;
 		}
 
@@ -113,7 +118,7 @@ namespace
 		{
 			clientImpl cl;
 			while (cl.service())
-				threadSleep(1000);
+				threadSleep(5000);
 		}
 	};
 }

@@ -1,6 +1,19 @@
 namespace cage
 {
-	// connection-oriented, sequenced and optionally reliable datagram protocol on top of udp
+	struct CAGE_API udpConnectionStatisticsStruct
+	{
+		uint64 roundTripDuration;
+		uint64 bytesReceivedTotal, bytesSentTotal, bytesDeliveredTotal;
+		uint64 bytesReceivedLately, bytesSentLately, bytesDeliveredLately;
+		uint32 packetsReceivedTotal, packetsSentTotal, packetsDeliveredTotal;
+		uint32 packetsReceivedLately, packetsSentLately, packetsDeliveredLately;
+
+		udpConnectionStatisticsStruct();
+
+		// example: bytesPerSecondDeliveredAverage = 1000000 * bytesDeliveredLately / roundTripDuration;
+	};
+
+	// low latency, connection-oriented, sequenced and optionally reliable datagram protocol on top of udp
 	class CAGE_API udpConnectionClass
 	{
 	public:
@@ -20,6 +33,8 @@ namespace cage
 		// update will check for received packets and flush packets pending for send
 		// update also manages timeouts and resending, therefore it should be called periodically even if you wrote nothing
 		void update();
+
+		const udpConnectionStatisticsStruct &statistics() const;
 	};
 
 	// non-zero timeout will block the caller for up to the specified time to ensure that the connection is established and throw an exception otherwise

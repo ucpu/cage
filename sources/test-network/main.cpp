@@ -56,7 +56,7 @@ namespace
 	void runManager()
 	{
 		runStruct runnerClient1(1, string() + "cage-test-network -n network-test-1 -c");
-		runStruct runnerClient2(2, string() + "cage-test-network -n network-test-2 -c" + " -l 0.2");
+		runStruct runnerClient2(2, string() + "cage-test-network -n network-test-2 -c -l 0.2");
 		runStruct runnerServer0(0, string() + "cage-test-network -n network-test-0 -s");
 		runStruct runnerClient3(3, string() + "cage-test-network -n network-test-3 -c");
 	}
