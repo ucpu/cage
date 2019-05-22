@@ -7,10 +7,6 @@ set(CAGE_EXTERNALS_MODULE_PATH "${CMAKE_CURRENT_BINARY_DIR}/cmake-modules" PAREN
 list(INSERT CMAKE_MODULE_PATH 0 "${CAGE_EXTERNALS_MODULE_PATH}")
 include(cage_gen_module.cmake)
 
-# make cmake search for additional programs etc. in the extra folder
-# the programs provided here should have higher priority than system programs
-list(INSERT CMAKE_PREFIX_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/extra")
-
 # some config
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_STANDARD 11)

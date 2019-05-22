@@ -5,14 +5,7 @@ message(STATUS "jpeg")
 message(STATUS "----------------------------------------------------------------")
 
 option(ENABLE_SHARED "Build shared libraries" FALSE)
-
-if("$ENV{TRAVIS_OS_NAME}" STREQUAL "windows")
-	option(WITH_SIMD "Include SIMD extensions, if available for this platform" false)
-endif()
-
-if(APPLE)
-	option(WITH_SIMD "Include SIMD extensions, if available for this platform" false)
-endif()
+option(WITH_SIMD "Include SIMD extensions, if available for this platform" false)
 
 if(NOT CMAKE_INSTALL_DOCDIR)
 	set(CMAKE_INSTALL_DOCDIR ${CMAKE_INSTALL_BINDIR})
