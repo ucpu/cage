@@ -78,12 +78,12 @@ namespace cage
 			return *this;
 		}
 
-		explicit operator bool() const
+		explicit operator bool() const noexcept
 		{
 			return stub.fnc != nullptr;
 		}
 
-		void clear()
+		void clear() noexcept
 		{
 			stub.inst = nullptr;
 			stub.fnc = nullptr;

@@ -38,33 +38,6 @@ namespace cage
 			T t;
 		};
 
-		template<class K, class V>
-		struct allocatorSizeMap
-		{
-#ifdef CAGE_SYSTEM_WINDOWS
-			void *a;
-			void *b;
-			void *c;
-			char d;
-			char e;
-			struct
-			{
-				K k;
-				V v;
-			} pair;
-#else
-			char d;
-			void *a;
-			void *b;
-			void *c;
-			struct
-			{
-				K k;
-				V v;
-			} pair;
-#endif
-		};
-
 		template<class T>
 		struct allocatorSizeSet
 		{
@@ -83,5 +56,17 @@ namespace cage
 			T t;
 #endif
 		};
+
+		template<class K, class V>
+		struct allocatorSizeMap
+		{
+			struct pair
+			{
+				K k;
+				V v;
+			};
+			allocatorSizeSet<pair> s;
+		};
+
 	}
 }

@@ -69,7 +69,7 @@ namespace cage
 		}
 
 		// move constructor
-		holder(holder &&other)
+		holder(holder &&other) noexcept
 		{
 			deleter = other.deleter;
 			ptr = other.ptr;

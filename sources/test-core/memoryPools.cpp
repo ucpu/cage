@@ -13,19 +13,25 @@ namespace
 #pragma pack(push,1)
 #endif
 
-	template<uintPtr Size> struct testStruct
+	template<uintPtr Size>
+	struct
+#ifndef CAGE_SYSTEM_WINDOWS
+		__attribute__((__packed__))
+#endif // !CAGE_SYSTEM_WINDOWS
+		testStruct
 	{
-		int a;
-		char dummy[Size - sizeof(int)];
-		testStruct(int a = 0) : a(a) {}
-		const bool operator < (const testStruct &other) const { return a < other.a; }
+		sint32 a;
+		char dummy[Size - sizeof(sint32)];
+		testStruct(sint32 a = 0) : a(a), dummy{} {}
+		bool operator < (const testStruct &other) const { return a < other.a; }
 	};
 
 #ifdef CAGE_SYSTEM_WINDOWS
 #pragma pack(pop)
 #endif
 
-	template<uintPtr Limit, class T = void*> struct interceptMemoryArena
+	template<uintPtr Limit, class T = void*>
+	struct interceptMemoryArena
 	{
 		typedef T value_type;
 		typedef value_type *pointer;
@@ -35,7 +41,8 @@ namespace
 		typedef uintPtr size_type;
 		typedef sintPtr difference_type;
 
-		template<class U> struct rebind
+		template<class U>
+		struct rebind
 		{
 			typedef interceptMemoryArena<Limit, U> other;
 		};
@@ -46,7 +53,8 @@ namespace
 		interceptMemoryArena(const interceptMemoryArena &other)
 		{}
 
-		template<class U> explicit interceptMemoryArena(const interceptMemoryArena<Limit, U> &other)
+		template<class U>
+		explicit interceptMemoryArena(const interceptMemoryArena<Limit, U> &other)
 		{}
 
 		pointer address(reference r) const
@@ -61,26 +69,24 @@ namespace
 
 		pointer allocate(size_type cnt, void *hint = 0)
 		{
-			//CAGE_LOG(severityEnum::Info, "allocation", string() + "allocation, cnt: " + cnt + ", size: " + sizeof(T) + ", limit: " + Limit);
 			if (cnt * sizeof(T) > Limit)
 			{
 				CAGE_LOG(severityEnum::Note, "exception", string() + "sizeof(T): " + sizeof(T));
 				CAGE_LOG(severityEnum::Note, "exception", string() + "cnt: " + cnt);
 				CAGE_LOG(severityEnum::Note, "exception", string() + "Limit: " + Limit);
-				CAGE_THROW_CRITICAL(exception, "Insufficient memory allocator pool unit size");
+				CAGE_THROW_CRITICAL(exception, "insufficient atom size for pool allocator");
 			}
 			return (pointer)detail::systemArena().allocate(cnt * sizeof(T), alignof(T));
 		}
 
 		void deallocate(pointer ptr, size_type cnt)
 		{
-			//CAGE_LOG(severityEnum::Info, "allocation", string() + "deallocation, cnt: " + cnt + ", size: " + sizeof(T) + ", limit: " + Limit);
 			detail::systemArena().deallocate(ptr);
 		}
 
-		const size_type max_size() const noexcept
+		size_type max_size() const noexcept
 		{
-			return 0;
+			return 100;
 		}
 
 		void construct(pointer ptr, const T &t)
@@ -93,28 +99,26 @@ namespace
 			p->~T();
 		}
 
-		const bool operator == (const interceptMemoryArena &other) const
+		bool operator == (const interceptMemoryArena &other) const
 		{
 			return true;
 		}
 
-		const bool operator != (const interceptMemoryArena &other) const
+		bool operator != (const interceptMemoryArena &other) const
 		{
 			return false;
 		}
 	};
 
-	template<uintPtr TestStructSize> struct memoryArenaStdTest
+	template<uintPtr TestStructSize>
+	struct memoryArenaStdTest
 	{
 		typedef testStruct<TestStructSize> ts;
 
 		memoryArenaStdTest()
 		{
 			if (sizeof(ts) != TestStructSize)
-			{
-				CAGE_LOG(severityEnum::Warning, "test", string() + "memoryArenaStd tests skipped, requested size: " + TestStructSize + ", real size: " + sizeof(ts));
-				return;
-			}
+				CAGE_THROW_CRITICAL(exception, "invalid padding is messing up with the test struct");
 
 			CAGE_TESTCASE(string() + "memoryArenaStd sizes, " + sizeof(ts));
 			{

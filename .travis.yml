@@ -14,7 +14,6 @@ addons:
       - g++-7
       - clang
       - xorg-dev
-      - nasm
 
 matrix:
   fast_finish: true
