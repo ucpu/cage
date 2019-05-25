@@ -12,7 +12,7 @@
 #include <cage-core/assets.h>
 #include <cage-core/hashString.h>
 #include <cage-core/color.h>
-#include <cage-core/swapBufferController.h>
+#include <cage-core/swapBufferGuard.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
@@ -140,7 +140,7 @@ namespace cage
 			emitStruct emitBufferA, emitBufferB, emitBufferC; // this is awfully stupid, damn you c++
 			emitStruct *emitBuffers[3];
 			emitStruct *emitRead, *emitWrite;
-			holder<swapBufferControllerClass> swapController;
+			holder<swapBufferGuardClass> swapController;
 
 			mat4 tmpArmature[CAGE_SHADER_MAX_BONES];
 			mat4 tmpArmature2[CAGE_SHADER_MAX_BONES];
@@ -763,9 +763,9 @@ namespace cage
 
 			graphicsPrepareImpl(const engineCreateConfig &config) : emitBufferA(config), emitBufferB(config), emitBufferC(config), emitBuffers{ &emitBufferA, &emitBufferB, &emitBufferC }, emitRead(nullptr), emitWrite(nullptr), dispatchMemory(config.graphicsDispatchMemory), dispatchArena(&dispatchMemory), emitTime(0), dispatchTime(0), lastDispatchTime(0), elapsedDispatchTime(0)
 			{
-				swapBufferControllerCreateConfig cfg(3);
+				swapBufferGuardCreateConfig cfg(3);
 				cfg.repeatedReads = true;
-				swapController = newSwapBufferController(cfg);
+				swapController = newSwapBufferGuard(cfg);
 			}
 
 			~graphicsPrepareImpl()

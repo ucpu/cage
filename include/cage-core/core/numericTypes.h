@@ -53,8 +53,8 @@ namespace cage
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = false;
-			static constexpr uint8 min() { return 0; };
-			static constexpr uint8 max() { return 255u; };
+			static constexpr const uint8 min() { return 0; };
+			static constexpr const uint8 max() { return 255u; };
 			typedef uint8 make_unsigned;
 		};
 
@@ -63,8 +63,8 @@ namespace cage
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = false;
-			static constexpr uint16 min() { return 0; };
-			static constexpr uint16 max() { return 65535u; };
+			static constexpr const uint16 min() { return 0; };
+			static constexpr const uint16 max() { return 65535u; };
 			typedef uint16 make_unsigned;
 		};
 
@@ -73,8 +73,8 @@ namespace cage
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = false;
-			static constexpr uint32 min() { return 0; };
-			static constexpr uint32 max() { return 4294967295u; };
+			static constexpr const uint32 min() { return 0; };
+			static constexpr const uint32 max() { return 4294967295u; };
 			typedef uint32 make_unsigned;
 		};
 
@@ -83,8 +83,8 @@ namespace cage
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = false;
-			static constexpr uint64 min() { return 0; };
-			static constexpr uint64 max() { return 18446744073709551615LLu; };
+			static constexpr const uint64 min() { return 0; };
+			static constexpr const uint64 max() { return 18446744073709551615LLu; };
 			typedef uint64 make_unsigned;
 		};
 
@@ -103,8 +103,8 @@ namespace cage
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = true;
-			static constexpr sint8 min() { return -127 - 1; };
-			static constexpr sint8 max() { return  127; };
+			static constexpr const sint8 min() { return -127 - 1; };
+			static constexpr const sint8 max() { return  127; };
 			typedef uint8 make_unsigned;
 		};
 
@@ -113,8 +113,8 @@ namespace cage
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = true;
-			static constexpr sint16 min() { return -32767 - 1; };
-			static constexpr sint16 max() { return  32767; };
+			static constexpr const sint16 min() { return -32767 - 1; };
+			static constexpr const sint16 max() { return  32767; };
 			typedef uint16 make_unsigned;
 		};
 
@@ -123,8 +123,8 @@ namespace cage
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = true;
-			static constexpr sint32 min() { return -2147483647 - 1; };
-			static constexpr sint32 max() { return  2147483647; };
+			static constexpr const sint32 min() { return -2147483647 - 1; };
+			static constexpr const sint32 max() { return  2147483647; };
 			typedef uint32 make_unsigned;
 		};
 
@@ -133,8 +133,8 @@ namespace cage
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = true;
-			static constexpr sint64 min() { return -9223372036854775807LL - 1; };
-			static constexpr sint64 max() { return  9223372036854775807LL; };
+			static constexpr const sint64 min() { return -9223372036854775807LL - 1; };
+			static constexpr const sint64 max() { return  9223372036854775807LL; };
 			typedef uint64 make_unsigned;
 		};
 
@@ -153,8 +153,8 @@ namespace cage
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = true;
-			static constexpr float min() { return -1e+37f; };
-			static constexpr float max() { return  1e+37f; };
+			static constexpr const float min() { return -1e+37f; };
+			static constexpr const float max() { return  1e+37f; };
 			typedef float make_unsigned;
 		};
 
@@ -163,8 +163,8 @@ namespace cage
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = true;
-			static constexpr double min() { return -1e+308; };
-			static constexpr double max() { return  1e+308; };
+			static constexpr const double min() { return -1e+308; };
+			static constexpr const double max() { return  1e+308; };
 			typedef double make_unsigned;
 		};
 
@@ -178,7 +178,7 @@ namespace cage
 	{
 		namespace endianness
 		{
-			constexpr uint32 one = 1;
+			constexpr const uint32 one = 1;
 
 			constexpr bool little()
 			{
@@ -191,12 +191,13 @@ namespace cage
 			}
 
 			template<class T>
-			T change(T val)
+			constexpr T change(T val)
 			{
-				union
+				union U
 				{
 					T t;
 					uint8 a[sizeof(T)];
+					U() : t(T()) {}
 				} u;
 				u.t = val;
 				for (uint32 i = 0; i < sizeof(T) / 2; i++)

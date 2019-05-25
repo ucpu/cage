@@ -3,7 +3,7 @@
 #include "processor.h"
 
 #include <cage-core/hashString.h>
-#include <cage-core/png.h>
+#include <cage-core/image.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 #include "utility/binPacking.h"
@@ -36,7 +36,7 @@ namespace
 	struct glyphStruct
 	{
 		fontHeaderStruct::glyphDataStruct data;
-		holder<pngImageClass> png;
+		holder<imageClass> png;
 		uint32 pngX, pngY;
 		glyphStruct() : pngX(0), pngY(0)
 		{}
@@ -48,7 +48,7 @@ namespace
 	std::vector<real> kerning;
 	std::vector<uint32> charsetChars;
 	std::vector<uint32> charsetGlyphs;
-	holder<pngImageClass> texels;
+	holder<imageClass> texels;
 
 	vec3 to(const msdfgen::FloatRGB &rgb)
 	{
@@ -74,7 +74,7 @@ namespace
 		shape.bounds(l, b, r, t);
 
 		// generate glyph image
-		g.png = newPngImage();
+		g.png = newImage();
 		g.png->empty(numeric_cast<uint32>(r - l) + border * 2, numeric_cast<uint32>(t - b) + border * 2, 3);
 		msdfgen::Bitmap<msdfgen::FloatRGB> msdf(g.png->width(), g.png->height());
 		msdfgen::generateMSDF(msdf, shape, 4.0, 1.0, from(-vec2(l, b) + border));
@@ -293,14 +293,14 @@ namespace
 	void createAtlasPixels()
 	{
 		CAGE_LOG(severityEnum::Info, logComponentName, "create atlas pixels");
-		texels = newPngImage();
+		texels = newImage();
 		texels->empty(data.texWidth, data.texHeight, 3);
 		for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
 		{
 			glyphStruct &g = glyphs[glyphIndex];
 			if (!g.png)
 				continue;
-			pngBlit(g.png.get(), texels.get(), 0, 0, g.pngX, g.pngY, g.png->width(), g.png->height());
+			imageBlit(g.png.get(), texels.get(), 0, 0, g.pngX, g.pngY, g.png->width(), g.png->height());
 		}
 		data.texSize = numeric_cast<uint32>(texels->bufferSize());
 	}

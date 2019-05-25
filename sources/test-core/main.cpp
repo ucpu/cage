@@ -43,7 +43,7 @@ void testSceneSerialize();
 void testVariableInterpolatingBuffer();
 void testVariableSmoothingBufferStruct();
 void testCopyAndMove();
-void testSwapBufferController();
+void testSwapBufferGuard();
 void testTcp();
 void testUdp();
 void testUdpDiscovery();
@@ -53,7 +53,6 @@ void generatePointsOnSphere();
 int main()
 {
 	holder<loggerClass> log1 = newLogger();
-	log1->filter.bind<logFilterPolicyPass>();
 	log1->format.bind<logFormatPolicyConsole>();
 	log1->output.bind<logOutputPolicyStdOut>();
 
@@ -94,7 +93,7 @@ int main()
 	testVariableInterpolatingBuffer();
 	testVariableSmoothingBufferStruct();
 	testCopyAndMove();
-	testSwapBufferController();
+	testSwapBufferGuard();
 	testTcp();
 	testUdp();
 	testUdpDiscovery();

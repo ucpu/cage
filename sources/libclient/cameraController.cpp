@@ -20,9 +20,9 @@ namespace cage
 		public:
 			windowEventListeners listeners;
 			eventListener<void()> updateListener;
-			variableSmoothingBufferStruct<vec2, 2> mouseSmoother;
-			variableSmoothingBufferStruct<vec3, 2> moveSmoother;
-			variableSmoothingBufferStruct<real, 2> wheelSmoother;
+			variableSmoothingBuffer<vec2, 2> mouseSmoother;
+			variableSmoothingBuffer<vec3, 2> moveSmoother;
+			variableSmoothingBuffer<real, 2> wheelSmoother;
 			vec2 mouseMoveAccum;
 			real wheelAccum;
 

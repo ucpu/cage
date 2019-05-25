@@ -4,7 +4,7 @@
 #include "processor.h"
 
 #include <cage-core/memoryBuffer.h>
-#include <cage-core/png.h>
+#include <cage-core/image.h>
 #include <cage-core/color.h>
 #include <cage-core/serialization.h>
 
@@ -678,7 +678,7 @@ void processTexture()
 		for (auto &it : images)
 		{
 			string dbgName = pathJoin(configGetString("cage-asset-processor.texture.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + "_" + (index++) + ".png");
-			holder<pngImageClass> png = newPngImage();
+			holder<imageClass> png = newImage();
 			png->empty(it.width, it.height, it.bpp);
 			detail::memcpy(png->bufferData(), it.data.data(), png->bufferSize());
 			png->verticalFlip();

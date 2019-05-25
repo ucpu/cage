@@ -4,7 +4,7 @@
 #include "main.h"
 #include <cage-core/math.h>
 #include <cage-core/noise.h>
-#include <cage-core/png.h>
+#include <cage-core/image.h>
 
 namespace
 {
@@ -26,7 +26,7 @@ namespace
 				positions.push_back(vec2(x - resolution / 2, y - resolution / 2) * 0.01);
 		}
 		noise->evaluate(resolution * resolution, positions.data(), results.data());
-		holder<pngImageClass> png = newPngImage();
+		holder<imageClass> png = newImage();
 		png->empty(resolution, resolution, 1, 1);
 		uint8 *buffer = (uint8*)png->bufferData();
 		uint32 index = 0;

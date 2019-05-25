@@ -56,7 +56,7 @@ namespace cage
 		explicit mat4(real a, real b, real c, real d, real e, real f, real g, real h, real i, real j, real k, real l, real m, real n, real o, real p);
 		explicit mat4(const mat3 &other);
 		explicit mat4(const vec3 &other); // translation matrix
-		explicit mat4(const vec3 &position, const quat &orientation, const vec3 &scale = vec3(1, 1, 1));
+		explicit mat4(const vec3 &position, const quat &orientation, const vec3 &scale = vec3(1));
 		explicit mat4(const quat &other) { *this = mat4(mat3(other)); }
 		explicit inline mat4(const transform &other);
 

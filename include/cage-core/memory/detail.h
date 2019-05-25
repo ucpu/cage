@@ -17,6 +17,16 @@ namespace cage
 			return (alignment - addToAlign(ptr, alignment)) % alignment;
 		}
 
+		inline uintPtr roundDownTo(uintPtr val, uintPtr size)
+		{
+			return (val / size) * size;
+		}
+
+		inline uintPtr roundUpTo(uintPtr val, uintPtr size)
+		{
+			return roundDownTo(val + size - 1, size);
+		}
+
 		CAGE_API uintPtr compressionBound(uintPtr size);
 		CAGE_API uintPtr compress(const void *inputBuffer, uintPtr inputSize, void *outputBuffer, uintPtr outputSize);
 		CAGE_API uintPtr decompress(const void *inputBuffer, uintPtr inputSize, void *outputBuffer, uintPtr outputSize);
@@ -67,6 +77,5 @@ namespace cage
 			};
 			allocatorSizeSet<pair> s;
 		};
-
 	}
 }

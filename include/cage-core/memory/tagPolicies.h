@@ -13,12 +13,16 @@ namespace cage
 	{
 		void set(void *ptr, uintPtr size)
 		{
-			detail::memset(ptr, 0xEF, size);
+			uintPtr s = size / 2;
+			for (uintPtr i = 0; i < s; i++)
+				*((uint16*)ptr + i) = 0xBEAF;
 		}
 
 		void check(void *ptr, uintPtr size)
 		{
-			detail::memset(ptr, 0xFE, size);
+			uintPtr s = size / 2;
+			for (uintPtr i = 0; i < s; i++)
+				*((uint16*)ptr + i) = 0xDEAD;
 		}
 	};
 }

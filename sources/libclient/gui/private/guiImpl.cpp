@@ -2,7 +2,7 @@
 #include <cage-core/math.h>
 #include <cage-core/memory.h>
 #include <cage-core/entities.h>
-#include <cage-core/swapBufferController.h>
+#include <cage-core/swapBufferGuard.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
@@ -60,9 +60,9 @@ namespace cage
 		skins.resize(config.skinsCount);
 
 		{
-			swapBufferControllerCreateConfig cfg(3);
+			swapBufferGuardCreateConfig cfg(3);
 			cfg.repeatedReads = true;
-			emitController = newSwapBufferController(cfg);
+			emitController = newSwapBufferGuard(cfg);
 		}
 	};
 

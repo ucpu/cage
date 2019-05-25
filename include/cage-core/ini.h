@@ -78,7 +78,6 @@ namespace cage
 #undef GCHL_GENERATE
 	};
 
-	CAGE_API holder<iniClass> newIni(uintPtr memory);
 	CAGE_API holder<iniClass> newIni(memoryArena arena);
 	CAGE_API holder<iniClass> newIni(); // uses system memory arena
 }

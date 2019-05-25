@@ -3,7 +3,7 @@
 #include <cage-core/core.h>
 #include <cage-core/log.h>
 #include <cage-core/math.h>
-#include <cage-core/png.h>
+#include <cage-core/image.h>
 #include <cage-core/ini.h>
 
 using namespace cage;
@@ -13,13 +13,12 @@ int main(int argc, const char *args[])
 	try
 	{
 		holder<loggerClass> log1 = newLogger();
-		log1->filter.bind<logFilterPolicyPass>();
 		log1->format.bind<logFormatPolicyConsole>();
 		log1->output.bind<logOutputPolicyStdOut>();
 
 		holder<iniClass> cmd = newIni();
 		cmd->parseCmd(argc, args);
-		holder<pngImageClass> pngs[4];
+		holder<imageClass> pngs[4];
 		uint32 width = 0, height = 0;
 		uint32 channels = 0;
 		string output;
@@ -34,10 +33,10 @@ int main(int argc, const char *args[])
 					CAGE_THROW_ERROR(exception, "option expects one argument");
 				}
 				string name = cmd->get(option, "0");
-				CAGE_LOG(severityEnum::Info, "combine-png", string() + "loading image: '" + name + "' for " + (index + 1) + "th channel");
-				holder<pngImageClass> p = newPngImage();
+				CAGE_LOG(severityEnum::Info, "combine-image", string() + "loading image: '" + name + "' for " + (index + 1) + "th channel");
+				holder<imageClass> p = newImage();
 				p->decodeFile(name);
-				CAGE_LOG(severityEnum::Info, "combine-png", string() + "image resolution: " + p->width() + "x" + p->height() + ", channels: " + p->channels());
+				CAGE_LOG(severityEnum::Info, "combine-image", string() + "image resolution: " + p->width() + "x" + p->height() + ", channels: " + p->channels());
 				if (width == 0)
 				{
 					width = p->width();
@@ -73,12 +72,12 @@ int main(int argc, const char *args[])
 		if (output.empty())
 			output = "combined.png";
 
-		CAGE_LOG(severityEnum::Info, "combine-png", string() + "combining image");
-		holder<pngImageClass> res = newPngImage();
+		CAGE_LOG(severityEnum::Info, "combine-image", string() + "combining image");
+		holder<imageClass> res = newImage();
 		res->empty(width, height, channels);
 		for (uint32 i = 0; i < channels; i++)
 		{
-			holder<pngImageClass> &src = pngs[i];
+			holder<imageClass> &src = pngs[i];
 			if (!src)
 				continue;
 			for (uint32 y = 0; y < height; y++)
@@ -88,10 +87,10 @@ int main(int argc, const char *args[])
 			}
 		}
 
-		CAGE_LOG(severityEnum::Info, "combine-png", string() + "saving image");
+		CAGE_LOG(severityEnum::Info, "combine-image", string() + "saving image");
 		res->encodeFile(output);
 
-		CAGE_LOG(severityEnum::Info, "combine-png", string() + "ok");
+		CAGE_LOG(severityEnum::Info, "combine-image", string() + "ok");
 		return 0;
 	}
 	catch (const cage::exception &)

@@ -91,11 +91,6 @@ namespace
 			CAGE_TEST(string("omega").reverse() == "agemo");
 		}
 		{
-			CAGE_TESTCASE("ordered");
-			CAGE_TEST(string("ahoj").sortAndUnique() == "ahjo");
-			CAGE_TEST(string("nazdar").sortAndUnique() == "adnrz");
-		}
-		{
 			CAGE_TESTCASE("tolower, toupper");
 			CAGE_TEST(string("AlMachNa").toLower() == "almachna");
 			CAGE_TEST(string("AlMachNa").toUpper() == "ALMACHNA");
@@ -268,6 +263,8 @@ namespace
 				CAGE_TEST(s.find("a", 100) == m);
 				CAGE_TEST(s.find("abcdefghijklmnopq", 0) == m);
 				CAGE_TEST(s.find("") == m);
+				CAGE_TEST(s.find(s) == 0);
+				CAGE_TEST(string("h").find('h') == 0);
 			}
 		}
 		{
@@ -276,16 +273,10 @@ namespace
 			CAGE_TEST(string("   ori  ").trim(false, true) == "   ori");
 			CAGE_TEST(string("   ori  ").trim(true, false) == "ori  ");
 			CAGE_TEST(string("   ori  ").trim(false, false) == "   ori  ");
-			CAGE_TEST(string("   ori  ").trim(true, true, string(" i").sortAndUnique()) == "or");
+			CAGE_TEST(string("   ori  ").trim(true, true, " i") == "or");
 			CAGE_TEST(string("magma").trim(true, true, string("am")) == "g");
 			CAGE_TEST_ASSERTED(string("magma").trim(true, true, "za"));
 			CAGE_TEST(string("magma").trim(true, true, "") == "magma");
-		}
-		{
-			CAGE_TESTCASE("contains");
-			CAGE_TEST(string("opice").sortAndUnique().contains('c'));
-			CAGE_TEST(!string("opice").sortAndUnique().contains('a'));
-			CAGE_TEST_ASSERTED(string("za").contains('a'));
 		}
 		{
 			CAGE_TESTCASE("pattern");
@@ -389,8 +380,6 @@ namespace
 		pathDecompose(a, d, p, f, e);
 		CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
 		a.reverse();
-		CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-		a.sortAndUnique();
 		CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
 		a.toLower();
 		CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");

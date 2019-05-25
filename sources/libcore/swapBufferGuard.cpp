@@ -3,7 +3,7 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/concurrent.h>
-#include <cage-core/swapBufferController.h>
+#include <cage-core/swapBufferGuard.h>
 
 namespace cage
 {
@@ -18,10 +18,10 @@ namespace cage
 			Wrote,
 		};
 
-		class swapBufferControllerImpl : public swapBufferControllerClass
+		class swapBufferControllerImpl : public swapBufferGuardClass
 		{
 		public:
-			swapBufferControllerImpl(const swapBufferControllerCreateConfig &config) : states{ stateEnum::Nothing, stateEnum::Nothing, stateEnum::Nothing, stateEnum::Nothing }, ri(0), wi(0), buffersCount(config.buffersCount), repeatedReads(config.repeatedReads), repeatedWrites(config.repeatedWrites)
+			swapBufferControllerImpl(const swapBufferGuardCreateConfig &config) : states{ stateEnum::Nothing, stateEnum::Nothing, stateEnum::Nothing, stateEnum::Nothing }, ri(0), wi(0), buffersCount(config.buffersCount), repeatedReads(config.repeatedReads), repeatedWrites(config.repeatedWrites)
 			{
 				CAGE_ASSERT_RUNTIME(buffersCount > 1 && buffersCount < 5);
 				CAGE_ASSERT_RUNTIME(buffersCount > 1u + repeatedReads + repeatedWrites);
@@ -143,7 +143,7 @@ namespace cage
 		swapBufferLock::swapBufferLock() : controller_(nullptr), index_(m)
 		{}
 
-		swapBufferLock::swapBufferLock(swapBufferControllerClass *controller, uint32 index) : controller_(controller), index_(index)
+		swapBufferLock::swapBufferLock(swapBufferGuardClass *controller, uint32 index) : controller_(controller), index_(index)
 		{
 			swapBufferControllerImpl *impl = (swapBufferControllerImpl*)controller_;
 			CAGE_ASSERT_RUNTIME(impl->states[index] == stateEnum::Reading || impl->states[index] == stateEnum::Writing);
@@ -178,24 +178,24 @@ namespace cage
 		}
 	}
 
-	privat::swapBufferLock swapBufferControllerClass::read()
+	privat::swapBufferLock swapBufferGuardClass::read()
 	{
 		swapBufferControllerImpl *impl = (swapBufferControllerImpl*)this;
 		return impl->read();
 	}
 
-	privat::swapBufferLock swapBufferControllerClass::write()
+	privat::swapBufferLock swapBufferGuardClass::write()
 	{
 		swapBufferControllerImpl *impl = (swapBufferControllerImpl*)this;
 		return impl->write();
 	}
 
-	swapBufferControllerCreateConfig::swapBufferControllerCreateConfig(uint32 buffersCount) : buffersCount(buffersCount), repeatedReads(false), repeatedWrites(false)
+	swapBufferGuardCreateConfig::swapBufferGuardCreateConfig(uint32 buffersCount) : buffersCount(buffersCount), repeatedReads(false), repeatedWrites(false)
 	{}
 
-	holder<swapBufferControllerClass> newSwapBufferController(const swapBufferControllerCreateConfig &config)
+	holder<swapBufferGuardClass> newSwapBufferGuard(const swapBufferGuardCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<swapBufferControllerClass, swapBufferControllerImpl>(config);
+		return detail::systemArena().createImpl<swapBufferGuardClass, swapBufferControllerImpl>(config);
 	}
 }
 

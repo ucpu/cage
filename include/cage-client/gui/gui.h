@@ -75,6 +75,6 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_API holder<pngImageClass> guiSkinTemplateExport(const skinConfigStruct &skin, uint32 resolution);
+		CAGE_API holder<imageClass> guiSkinTemplateExport(const skinConfigStruct &skin, uint32 resolution);
 	}
 }

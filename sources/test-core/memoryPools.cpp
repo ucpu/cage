@@ -12,7 +12,6 @@ namespace
 #ifdef CAGE_SYSTEM_WINDOWS
 #pragma pack(push,1)
 #endif
-
 	template<uintPtr Size>
 	struct
 #ifndef CAGE_SYSTEM_WINDOWS
@@ -25,27 +24,14 @@ namespace
 		testStruct(sint32 a = 0) : a(a), dummy{} {}
 		bool operator < (const testStruct &other) const { return a < other.a; }
 	};
-
 #ifdef CAGE_SYSTEM_WINDOWS
 #pragma pack(pop)
 #endif
 
-	template<uintPtr Limit, class T = void*>
+	template<uintPtr Limit, class T>
 	struct interceptMemoryArena
 	{
 		typedef T value_type;
-		typedef value_type *pointer;
-		typedef const value_type *const_pointer;
-		typedef value_type &reference;
-		typedef const value_type &const_reference;
-		typedef uintPtr size_type;
-		typedef sintPtr difference_type;
-
-		template<class U>
-		struct rebind
-		{
-			typedef interceptMemoryArena<Limit, U> other;
-		};
 
 		interceptMemoryArena()
 		{}
@@ -57,17 +43,13 @@ namespace
 		explicit interceptMemoryArena(const interceptMemoryArena<Limit, U> &other)
 		{}
 
-		pointer address(reference r) const
+		template<class U>
+		struct rebind
 		{
-			return &r;
-		}
+			typedef interceptMemoryArena<Limit, U> other;
+		};
 
-		const_pointer address(const_reference r) const
-		{
-			return &r;
-		}
-
-		pointer allocate(size_type cnt, void *hint = 0)
+		T *allocate(uintPtr cnt)
 		{
 			if (cnt * sizeof(T) > Limit)
 			{
@@ -76,27 +58,12 @@ namespace
 				CAGE_LOG(severityEnum::Note, "exception", string() + "Limit: " + Limit);
 				CAGE_THROW_CRITICAL(exception, "insufficient atom size for pool allocator");
 			}
-			return (pointer)detail::systemArena().allocate(cnt * sizeof(T), alignof(T));
+			return (T*)detail::systemArena().allocate(cnt * sizeof(T), alignof(T));
 		}
 
-		void deallocate(pointer ptr, size_type cnt)
+		void deallocate(T *ptr, uintPtr) noexcept
 		{
 			detail::systemArena().deallocate(ptr);
-		}
-
-		size_type max_size() const noexcept
-		{
-			return 100;
-		}
-
-		void construct(pointer ptr, const T &t)
-		{
-			new (ptr) T(t);
-		}
-
-		void destroy(pointer p)
-		{
-			p->~T();
 		}
 
 		bool operator == (const interceptMemoryArena &other) const
@@ -177,6 +144,7 @@ void testMemoryPools()
 	memoryArenaStdTest<18>();
 	memoryArenaStdTest<20>();
 	memoryArenaStdTest<123>();
+	memoryArenaStdTest<10000>(); // larger than page size
 
 	{
 		CAGE_TESTCASE("createHolder");

@@ -437,7 +437,7 @@ namespace cage
 
 	namespace
 	{
-		configBool autoBackup("cage-core.config.autoBackup");
+		configBool autoBackup("cage-core.config.autoBackup", false);
 
 		struct autoConfigBackupClass
 		{

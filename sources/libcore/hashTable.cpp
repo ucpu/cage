@@ -30,14 +30,14 @@ namespace cage
 			class hashTableImpl : public hashTablePriv
 			{
 			public:
-				hashTableImpl(uint32 initItems, uint32 maxItems, float maxFillRate) : lines(nullptr), used(0), tombs(0), total(0), maxFillRate(maxFillRate), maxPages(0)
+				hashTableImpl(uint32 initItems, uint32 maxItems, float maxFillRate) : pageSize(detail::memoryPageSize()), lines(nullptr), used(0), tombs(0), total(0), maxFillRate(maxFillRate), maxPages(0)
 				{
 					CAGE_ASSERT_RUNTIME(initItems <= maxItems);
 					CAGE_ASSERT_RUNTIME(maxFillRate > 0 && maxFillRate < 1, maxFillRate);
 					mem = newVirtualMemory();
-					maxPages = numeric_cast<uint32>(detail::roundUpToMemoryPage(numeric_cast<uintPtr>(maxItems * sizeof(hashTableLineStruct) / maxFillRate)) / detail::memoryPageSize());
+					maxPages = numeric_cast<uint32>(detail::roundUpTo(numeric_cast<uintPtr>(maxItems * sizeof(hashTableLineStruct) / maxFillRate), pageSize) / pageSize);
 					lines = (hashTableLineStruct*)mem->reserve(maxPages);
-					mem->increase(detail::roundUpToMemoryPage(initItems * sizeof(hashTableLineStruct)) / detail::memoryPageSize());
+					mem->increase(detail::roundUpTo(initItems * sizeof(hashTableLineStruct), pageSize) / pageSize);
 					total = capacity();
 					clear();
 				}
@@ -47,7 +47,7 @@ namespace cage
 					if (used + 1 > total * maxFillRate)
 					{
 						if (mem->pages() == maxPages)
-							CAGE_THROW_ERROR(outOfMemoryException, "hash table is out of memory", maxPages * detail::memoryPageSize());
+							CAGE_THROW_ERROR(outOfMemoryException, "hash table is out of memory", maxPages * pageSize);
 						mem->increase(min(maxPages, numeric_cast<uint32>(mem->pages() * 1.5 + 1)) - mem->pages());
 					}
 					std::vector<hashTableLineStruct> tmp;
@@ -65,9 +65,10 @@ namespace cage
 
 				const uint32 capacity() const
 				{
-					return numeric_cast<uint32>(mem->pages() * detail::memoryPageSize() / sizeof(hashTableLineStruct));
+					return numeric_cast<uint32>(mem->pages() * pageSize / sizeof(hashTableLineStruct));
 				}
 
+				const uintPtr pageSize;
 				hashTableLineStruct *lines;
 				uint32 used;
 				uint32 tombs;

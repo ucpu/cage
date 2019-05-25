@@ -8,8 +8,7 @@ namespace cage
 		CAGE_API void stringTrim(char *data, uint32 &current, const char *what, uint32 whatLen, bool left, bool right);
 		CAGE_API void stringSplit(char *data, uint32 &current, char *ret, uint32 &retLen, const char *what, uint32 whatLen);
 		CAGE_API uint32 stringFind(const char *data, uint32 current, const char *what, uint32 whatLen, uint32 offset);
-		CAGE_API void stringSortAndUnique(char *data, uint32 &current);
-		CAGE_API bool stringContains(const char *data, uint32 current, char what);
+		CAGE_API int stringComparison(const char *ad, uint32 al, const char *bd, uint32 bl);
 	}
 
 	namespace detail
@@ -122,14 +121,14 @@ namespace cage
 			}
 
 			// comparison operators
-#define GCHL_GENERATE(OPERATOR) bool operator OPERATOR (const stringBase &other) const { return detail::strcmp (c_str (), other.c_str ()) OPERATOR 0; }
+#define GCHL_GENERATE(OPERATOR) bool operator OPERATOR (const stringBase &other) const { return privat::stringComparison(data, current, other.data, other.current) OPERATOR 0; }
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, == , != , <= , >= , <, >));
 #undef GCHL_GENERATE
 
 			bool compareFast(const stringBase &other) const
 			{
 				if (current == other.current)
-					return *this < other;
+					return detail::memcmp(data, other.data, current) < 0;
 				return current < other.current;
 			}
 
@@ -282,28 +281,7 @@ namespace cage
 
 			uint32 find(char other, uint32 offset = 0) const
 			{
-				for (uint32 i = offset; i < current; i++)
-					if (data[i] == other)
-						return i;
-				return m;
-			}
-
-			uint32 length() const
-			{
-				return current;
-			}
-
-			stringBase sortAndUnique() const // best used with contains
-			{
-				stringBase ret(*this);
-				privat::stringSortAndUnique(ret.data, ret.current);
-				ret.data[ret.current] = 0;
-				return ret;
-			}
-
-			bool contains(char other) const // this has to be sorted and unique
-			{
-				return privat::stringContains(data, current, other);
+				return privat::stringFind(data, current, &other, 1, offset);
 			}
 
 			bool isPattern(const stringBase &prefix, const stringBase &infix, const stringBase &suffix) const
@@ -318,11 +296,6 @@ namespace cage
 					return true;
 				uint32 pos = find(infix, prefix.current);
 				return pos != m && pos <= current - infix.current - suffix.current;
-			}
-
-			bool empty() const
-			{
-				return current == 0;
 			}
 
 			bool isDigitsOnly() const
@@ -383,6 +356,21 @@ namespace cage
 				return ret;
 			}
 
+			bool empty() const
+			{
+				return current == 0;
+			}
+
+			uint32 length() const
+			{
+				return current;
+			}
+
+			uint32 size() const
+			{
+				return current;
+			}
+
 			char *begin()
 			{
 				return data;
@@ -414,7 +402,7 @@ namespace cage
 		};
 
 		template<uint32 N>
-		inline bool stringCompareFast(const stringBase<N> &a, const stringBase<N> &b)
+		inline bool stringCompareFast(const stringBase<N> &a, const stringBase<N> &b) noexcept
 		{
 			return a.compareFast(b);
 		}
@@ -422,7 +410,7 @@ namespace cage
 		template<uint32 N>
 		struct stringComparatorFast
 		{
-			bool operator () (const stringBase<N> &a, const stringBase<N> &b) const
+			bool operator () (const stringBase<N> &a, const stringBase<N> &b) const noexcept
 			{
 				return stringCompareFast(a, b);
 			}

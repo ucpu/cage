@@ -1,20 +1,8 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
-#include <cage-core/concurrent.h>
 
 namespace cage
 {
-	namespace
-	{
-		/*
-		mutexClass *eventsMutex()
-		{
-			static holder<mutexClass> *m = new holder<mutexClass>(newMutex()); // this leak is intentional
-			return m->get();
-		}
-		*/
-	}
-
 	namespace privat
 	{
 		eventLinker::eventLinker() : p(nullptr), n(nullptr), order(detail::numeric_limits<sint32>::min())
@@ -30,19 +18,8 @@ namespace cage
 			detach();
 		}
 
-		/*
-		eventLinker &eventLinker::operator = (eventLinker &other)
-		{
-			if (&other == this)
-				return *this;
-			attach(&other, other.order);
-			return *this;
-		}
-		*/
-
 		void eventLinker::attach(eventLinker *d, sint32 o)
 		{
-			//scopeLock<mutexClass> lck(eventsMutex());
 			unlink();
 			order = o;
 			// find rightmost node
@@ -72,7 +49,6 @@ namespace cage
 
 		void eventLinker::detach()
 		{
-			//scopeLock<mutexClass> lck(eventsMutex());
 			unlink();
 		}
 

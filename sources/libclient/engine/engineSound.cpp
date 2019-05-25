@@ -7,7 +7,7 @@
 #include <cage-core/entities.h>
 #include <cage-core/assets.h>
 #include <cage-core/hashString.h>
-#include <cage-core/swapBufferController.h>
+#include <cage-core/swapBufferGuard.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
@@ -121,7 +121,7 @@ namespace cage
 			emitStruct emitBufferA, emitBufferB, emitBufferC; // this is awfully stupid, damn you c++
 			emitStruct *emitBuffers[3];
 			emitStruct *emitRead, *emitWrite;
-			holder<swapBufferControllerClass> swapController;
+			holder<swapBufferGuardClass> swapController;
 
 			std::vector<holder<mixStruct>> mixers;
 			std::vector<float> soundMixBuffer;
@@ -136,9 +136,9 @@ namespace cage
 				mixers.reserve(256);
 				soundMixBuffer.resize(10000);
 				{
-					swapBufferControllerCreateConfig cfg(3);
+					swapBufferGuardCreateConfig cfg(3);
 					cfg.repeatedReads = true;
-					swapController = newSwapBufferController(cfg);
+					swapController = newSwapBufferGuard(cfg);
 				}
 			}
 

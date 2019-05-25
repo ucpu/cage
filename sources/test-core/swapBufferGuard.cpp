@@ -1,7 +1,7 @@
 #include "main.h"
 #include <cage-core/math.h>
 #include <cage-core/concurrent.h>
-#include <cage-core/swapBufferController.h>
+#include <cage-core/swapBufferGuard.h>
 #include <cage-core/threadPool.h>
 
 namespace
@@ -11,7 +11,7 @@ namespace
 	{
 	public:
 		static const uint32 elementsCount = 100;
-		holder<swapBufferControllerClass> controller;
+		holder<swapBufferGuardClass> controller;
 		uint32 buffers[BuffersCount][elementsCount];
 		uint32 sums[BuffersCount];
 		uint32 indices[BuffersCount];
@@ -85,10 +85,10 @@ namespace
 		{
 			CAGE_TESTCASE(string() + "buffers count: " + BuffersCount + ", repeated reads: " + repeatedReads + ", repeated writes: " + repeatedWrites);
 			running = true;
-			swapBufferControllerCreateConfig cfg(BuffersCount);
+			swapBufferGuardCreateConfig cfg(BuffersCount);
 			cfg.repeatedReads = repeatedReads;
 			cfg.repeatedWrites = repeatedWrites;
-			controller = newSwapBufferController(cfg);
+			controller = newSwapBufferGuard(cfg);
 			holder<threadClass> t1 = newThread(delegate<void()>().bind<swapBufferTester, &swapBufferTester::consumer>(this), "consumer");
 			holder<threadClass> t2 = newThread(delegate<void()>().bind<swapBufferTester, &swapBufferTester::producer>(this), "producer");
 			while (read < 2000)
@@ -102,9 +102,9 @@ namespace
 	};
 }
 
-void testSwapBufferController()
+void testSwapBufferGuard()
 {
-	CAGE_TESTCASE("swapBufferController");
+	CAGE_TESTCASE("swapBufferGuard");
 	swapBufferTester<2>().run(false, false);
 	swapBufferTester<3>().run(false, false);
 	swapBufferTester<3>().run(true, false);

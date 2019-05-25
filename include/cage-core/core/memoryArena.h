@@ -38,19 +38,19 @@ namespace cage
 			}
 
 			template<class A>
-			static void deallocate(void *inst, void *ptr)
+			static void deallocate(void *inst, void *ptr) noexcept
 			{
 				((A*)inst)->deallocate(ptr);
 			}
 
 			template<class A>
-			static void flush(void *inst)
+			static void flush(void *inst) noexcept
 			{
 				((A*)inst)->flush();
 			}
 
 			template<class A>
-			static Stub init()
+			static Stub init() noexcept
 			{
 				Stub s;
 				s.alloc = &allocate<A>;
@@ -62,28 +62,21 @@ namespace cage
 		void *inst;
 
 	public:
-		memoryArena() : stub(nullptr), inst(nullptr)
+		memoryArena() noexcept : stub(nullptr), inst(nullptr)
 		{}
 
-		memoryArena(const memoryArena &a)
-		{
-			*this = a;
-		}
-
 		template<class A>
-		memoryArena(A *a)
+		memoryArena(A *a) noexcept
 		{
 			static Stub stb = Stub::init<A>();
 			this->stub = &stb;
 			inst = a;
 		}
 
-		memoryArena &operator = (const memoryArena &a)
-		{
-			stub = a.stub;
-			inst = a.inst;
-			return *this;
-		}
+		memoryArena(const memoryArena &a) = default;
+		memoryArena(memoryArena &&a) = default;
+		memoryArena &operator = (const memoryArena &) = default;
+		memoryArena &operator = (memoryArena &&) = default;
 
 		void *allocate(uintPtr size, uintPtr alignment)
 		{
@@ -92,12 +85,12 @@ namespace cage
 			return res;
 		}
 
-		void deallocate(void *ptr)
+		void deallocate(void *ptr) noexcept
 		{
 			stub->dealloc(inst, ptr);
 		}
 
-		void flush()
+		void flush() noexcept
 		{
 			stub->fls(inst);
 		}
@@ -133,7 +126,7 @@ namespace cage
 		};
 
 		template<class T>
-		void destroy(void *ptr)
+		void destroy(void *ptr) noexcept
 		{
 			if (!ptr)
 				return;
@@ -143,17 +136,18 @@ namespace cage
 			}
 			catch (...)
 			{
-				CAGE_THROW_CRITICAL(exception, "exception thrown in destructor");
+				CAGE_ASSERT_RUNTIME(false, "exception thrown in destructor");
+				detail::terminate();
 			}
 			deallocate(ptr);
 		}
 
-		bool operator == (const memoryArena &other) const
+		bool operator == (const memoryArena &other) const noexcept
 		{
 			return inst == other.inst;
 		}
 
-		bool operator != (const memoryArena &other) const
+		bool operator != (const memoryArena &other) const noexcept
 		{
 			return !(*this == other);
 		}

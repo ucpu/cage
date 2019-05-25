@@ -9,6 +9,9 @@ namespace cage
 		scopeLock(holder<T> &ptr, bool tryLock) : scopeLock(ptr.get(), tryLock)
 		{}
 
+		scopeLock(holder<T> &ptr) : scopeLock(ptr.get())
+		{}
+
 		scopeLock(T *ptr, bool tryLock) : ptr(ptr)
 		{
 			if (tryLock)
@@ -20,9 +23,6 @@ namespace cage
 				ptr->lock();
 		}
 
-		scopeLock(holder<T> &ptr) : scopeLock(ptr.get())
-		{}
-
 		scopeLock(T *ptr) : ptr(ptr)
 		{
 			ptr->lock();
@@ -32,8 +32,8 @@ namespace cage
 		scopeLock(const scopeLock &) = delete;
 		scopeLock &operator = (const scopeLock &) = delete;
 
-		// moveable
-		scopeLock(scopeLock &&other) : ptr(other.ptr)
+		// movable
+		scopeLock(scopeLock &&other) noexcept : ptr(other.ptr)
 		{
 			other.ptr = nullptr;
 		}

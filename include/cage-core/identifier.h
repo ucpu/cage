@@ -9,7 +9,8 @@ namespace cage
 		CAGE_API string identifierToString(const uint8 *data, uint32 size);
 	}
 
-	template<uint32 N> struct identifierStruct
+	template<uint32 N>
+	struct identifierStruct
 	{
 		explicit identifierStruct(bool randomize = false)
 		{

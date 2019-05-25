@@ -24,8 +24,8 @@ namespace
 		const uint64 timeStart;
 		uint64 timeStats;
 		uint64 sendSeqn, recvSeqn, recvCnt, recvBytes;
-		variableSmoothingBufferStruct<uint64, 100> smoothRtt;
-		variableSmoothingBufferStruct<uint64, 100> smoothThroughput;
+		variableSmoothingBuffer<uint64, 100> smoothRtt;
+		variableSmoothingBuffer<uint64, 100> smoothThroughput;
 
 		connImpl(holder<udpConnectionClass> udp) : udp(templates::move(udp)), timeStart(getApplicationTime()), timeStats(timeStart + 1000000), sendSeqn(0), recvSeqn(0), recvCnt(0), recvBytes(0)
 		{}

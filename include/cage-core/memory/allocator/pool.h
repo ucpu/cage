@@ -5,7 +5,7 @@ namespace cage
 	{
 		CAGE_ASSERT_COMPILE(AtomSize > 0, objectsMustBeAtLeastOneByte);
 
-		static uintPtr objectSizeInit()
+		static constexpr uintPtr objectSizeInit()
 		{
 			uintPtr res = AtomSize + BoundsPolicy::SizeFront + BoundsPolicy::SizeBack;
 			if (res < sizeof(uintPtr))
@@ -14,9 +14,7 @@ namespace cage
 		}
 
 		memoryAllocatorPolicyPool() : origin(nullptr), current(nullptr), totalSize(0), objectSize(objectSizeInit())
-		{
-			CAGE_ASSERT_RUNTIME(objectSize < detail::memoryPageSize(), "objects too big", objectSize, detail::memoryPageSize());
-		}
+		{}
 
 		void setOrigin(void *newOrigin)
 		{
@@ -55,7 +53,7 @@ namespace cage
 
 			void *next = *(void**)current;
 			uintPtr alig = detail::addToAlign((uintPtr)current, alignment);
-			CAGE_ASSERT_RUNTIME(size + alig <= AtomSize, "size with alignemnt too big", size, alignment, alig, AtomSize);
+			CAGE_ASSERT_RUNTIME(size + alig <= AtomSize, "size with alignment too big", size, alignment, alig, AtomSize);
 			void *result = (char*)current + alig;
 
 			bound.setFront((char*)current - BoundsPolicy::SizeFront);

@@ -73,13 +73,13 @@ namespace cage
 	template<class T>
 	class hashTableClass;
 	class iniClass;
-	class pngImageClass;
+	class imageClass;
 	class programClass;
 	class threadPoolClass;
 	template<class T>
 	class concurrentQueueClass;
-	struct swapBufferControllerCreateConfig;
-	class swapBufferControllerClass;
+	struct swapBufferGuardCreateConfig;
+	class swapBufferGuardClass;
 	class timerClass;
 	class colliderClass;
 	struct spatialDataCreateConfig;

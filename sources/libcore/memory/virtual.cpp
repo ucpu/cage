@@ -18,7 +18,7 @@ namespace cage
 		class virtualMemoryImpl : public virtualMemoryClass
 		{
 		public:
-			virtualMemoryImpl() : origin(nullptr), pgs(0), total(0)
+			virtualMemoryImpl() : origin(nullptr), pgs(0), total(0), pageSize(detail::memoryPageSize())
 			{}
 
 			~virtualMemoryImpl()
@@ -35,13 +35,13 @@ namespace cage
 
 #ifdef CAGE_SYSTEM_WINDOWS
 
-				origin = VirtualAlloc(nullptr, pages * detail::memoryPageSize(), MEM_RESERVE, PAGE_NOACCESS);
+				origin = VirtualAlloc(nullptr, pages * pageSize, MEM_RESERVE, PAGE_NOACCESS);
 				if (!origin)
 					CAGE_THROW_ERROR(exception, "VirtualAlloc");
 
 #else
 
-				origin = mmap(nullptr, pages * detail::memoryPageSize(), PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+				origin = mmap(nullptr, pages * pageSize, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 				if (origin == MAP_FAILED)
 					CAGE_THROW_ERROR(codeException, "mmap", errno);
 
@@ -59,7 +59,7 @@ namespace cage
 				if (!VirtualFree(origin, 0, MEM_RELEASE))
 					CAGE_THROW_ERROR(exception, "VirtualFree");
 #else
-				if (munmap(origin, total * detail::memoryPageSize()) != 0)
+				if (munmap(origin, total * pageSize) != 0)
 					CAGE_THROW_ERROR(codeException, "munmap", errno);
 #endif
 
@@ -76,10 +76,10 @@ namespace cage
 					CAGE_THROW_CRITICAL(exception, "virtual memory depleted");
 
 #ifdef CAGE_SYSTEM_WINDOWS
-				if (!VirtualAlloc((char*)origin + pgs * detail::memoryPageSize(), pages * detail::memoryPageSize(), MEM_COMMIT, PAGE_READWRITE))
+				if (!VirtualAlloc((char*)origin + pgs * pageSize, pages * pageSize, MEM_COMMIT, PAGE_READWRITE))
 					CAGE_THROW_ERROR(exception, "VirtualAlloc");
 #else
-				if (mprotect((char*)origin + pgs * detail::memoryPageSize(), pages * detail::memoryPageSize(), PROT_READ | PROT_WRITE) != 0)
+				if (mprotect((char*)origin + pgs * pageSize, pages * pageSize, PROT_READ | PROT_WRITE) != 0)
 					CAGE_THROW_ERROR(codeException, "mprotect", errno);
 #endif
 
@@ -93,10 +93,10 @@ namespace cage
 				CAGE_ASSERT_RUNTIME(pages < pgs, "invalid value - too few left", pages, pgs);
 
 #ifdef CAGE_SYSTEM_WINDOWS
-				if (!VirtualFree((char*)origin + detail::memoryPageSize() * (pgs - pages), detail::memoryPageSize() * pages, MEM_DECOMMIT))
+				if (!VirtualFree((char*)origin + pageSize * (pgs - pages), pageSize * pages, MEM_DECOMMIT))
 					CAGE_THROW_ERROR(exception, "VirtualFree");
 #else
-				if (!mprotect((char*)origin + detail::memoryPageSize() * (pgs - pages), detail::memoryPageSize() * pages, PROT_NONE))
+				if (!mprotect((char*)origin + pageSize * (pgs - pages), pageSize * pages, PROT_NONE))
 					CAGE_THROW_ERROR(codeException, "mprotect", errno);
 #endif
 
@@ -105,6 +105,7 @@ namespace cage
 
 			void *origin;
 			uintPtr pgs, total;
+			const uintPtr pageSize;
 		};
 	}
 

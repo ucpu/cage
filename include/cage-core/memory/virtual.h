@@ -15,15 +15,5 @@ namespace cage
 	namespace detail
 	{
 		CAGE_API uintPtr memoryPageSize();
-
-		inline uintPtr roundDownToMemoryPage(uintPtr size)
-		{
-			return (size / memoryPageSize()) * memoryPageSize();
-		}
-
-		inline uintPtr roundUpToMemoryPage(uintPtr size)
-		{
-			return ((size + memoryPageSize() - 1) / memoryPageSize()) * memoryPageSize();
-		}
 	}
 }

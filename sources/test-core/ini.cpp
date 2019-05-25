@@ -28,7 +28,7 @@ void testIni()
 
 	{
 		CAGE_TESTCASE("basic ini");
-		holder<iniClass> ini = newIni(1024 * 1024); // 1 MB memory
+		holder<iniClass> ini = newIni(); // 1 MB memory
 		ini->setString("section", "item", "value");
 		CAGE_TEST(ini->getString("section", "item", "default") == "value");
 		CAGE_TEST(ini->getString("section", "non-item", "default") == "default");
@@ -45,7 +45,7 @@ void testIni()
 
 	{
 		CAGE_TESTCASE("save ini");
-		holder<iniClass> ini = newIni(1024 * 1024); // 1 MB memory
+		holder<iniClass> ini = newIni(); // 1 MB memory
 		for (uint32 s = 3; s < 6; s++)
 			for (uint32 i = 2; i < 7; i++)
 				ini->set(s, i, s + i);
@@ -55,7 +55,7 @@ void testIni()
 
 	{
 		CAGE_TESTCASE("load ini");
-		holder<iniClass> ini = newIni(1024 * 1024); // 1 MB memory
+		holder<iniClass> ini = newIni(); // 1 MB memory
 		ini->load("testdir/test.ini");
 		for (uint32 s = 3; s < 6; s++)
 			for (uint32 i = 2; i < 7; i++)

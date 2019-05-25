@@ -16,9 +16,9 @@ namespace cage
 	}
 
 	template<class T, class F = privat::defaultInterpolatorFunctor<T>>
-	struct variableInterpolatingBufferStruct
+	struct variableInterpolatingBuffer
 	{
-		variableInterpolatingBufferStruct(F fnc = F()) : fnc(fnc)
+		variableInterpolatingBuffer(F fnc = F()) : fnc(fnc)
 		{
 			clear();
 		}

@@ -5,7 +5,7 @@
 #include <cage-core/log.h>
 #include <cage-core/assets.h>
 #include <cage-core/hashString.h>
-#include <cage-core/swapBufferController.h>
+#include <cage-core/swapBufferGuard.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>

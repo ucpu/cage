@@ -9,18 +9,18 @@ void testVariableSmoothingBufferStruct()
 
 	{
 		CAGE_TESTCASE("compilations");
-		variableSmoothingBufferStruct<uint32> iUint32;
-		variableSmoothingBufferStruct<real> iReal;
-		variableSmoothingBufferStruct<rads> iRads;
-		variableSmoothingBufferStruct<vec2> iVec2;
-		variableSmoothingBufferStruct<vec3> iVec3;
-		variableSmoothingBufferStruct<vec4> iVec4;
-		variableSmoothingBufferStruct<quat> iQuat;
+		variableSmoothingBuffer<uint32> iUint32;
+		variableSmoothingBuffer<real> iReal;
+		variableSmoothingBuffer<rads> iRads;
+		variableSmoothingBuffer<vec2> iVec2;
+		variableSmoothingBuffer<vec3> iVec3;
+		variableSmoothingBuffer<vec4> iVec4;
+		variableSmoothingBuffer<quat> iQuat;
 	}
 
 	{
 		CAGE_TESTCASE("smoothing with real");
-		variableSmoothingBufferStruct<real, 3> v;
+		variableSmoothingBuffer<real, 3> v;
 		CAGE_TEST(v.current() == 0);
 		v.seed(13);
 		v.add(90);
@@ -36,7 +36,7 @@ void testVariableSmoothingBufferStruct()
 
 	{
 		CAGE_TESTCASE("smoothing with uint32");
-		variableSmoothingBufferStruct<uint32, 4> v;
+		variableSmoothingBuffer<uint32, 4> v;
 		CAGE_TEST(v.current() == 0);
 		v.add(20);
 		v.add(10);
@@ -51,7 +51,7 @@ void testVariableSmoothingBufferStruct()
 
 	{
 		CAGE_TESTCASE("smoothing with quat");
-		variableSmoothingBufferStruct<quat, 4> v;
+		variableSmoothingBuffer<quat, 4> v;
 		v.seed(quat(degs(50), degs(), degs()));
 		v.add(quat(degs(20), degs(), degs()));
 		v.add(quat(degs(10), degs(), degs()));

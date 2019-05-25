@@ -11,8 +11,10 @@ namespace cage
 		{
 			eventLinker();
 			eventLinker(eventLinker &other);
-			virtual ~eventLinker();
+			eventLinker(eventLinker &&other) = delete;
 			eventLinker &operator = (eventLinker &other) = delete;
+			eventLinker &operator = (eventLinker &&other) = delete;
+			virtual ~eventLinker();
 			void attach(eventLinker *d, sint32 order);
 			void detach();
 			eventLinker *p, *n;

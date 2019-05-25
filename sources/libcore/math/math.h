@@ -13,10 +13,8 @@ namespace cage
 
 		inline string mathSplit(string &s)
 		{
-			static const string seps = string("\t, ").sortAndUnique();
-			static const string trims = string("\t ").sortAndUnique();
-			string res = s.split(seps).trim(true, true, trims);
-			s = s.trim(true, true, trims);
+			string res = s.split("\t ,").trim(true, true, "\t ");
+			s = s.trim(true, true, "\t ");
 			return res;
 		}
 	}

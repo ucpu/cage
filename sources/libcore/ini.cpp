@@ -30,9 +30,7 @@ namespace cage
 		class iniImpl : public iniClass
 		{
 		public:
-			iniImpl(uintPtr memory) : pool(memory), arena(&pool), sections(arena) {}
-			iniImpl(memoryArena arena) : pool(1), arena(arena), sections(arena) {}
-			memoryArenaGrowing<memoryAllocatorPolicyPool<sizeof(templates::allocatorSizeMap<string, string>)>, memoryConcurrentPolicyNone> pool;
+			iniImpl(memoryArena arena) : arena(arena), sections(arena) {}
 			memoryArena arena;
 			containerMap<holder<inisection>> sections;
 		};
@@ -324,11 +322,6 @@ namespace cage
 			for (const auto &j : i.second->items.cont)
 				file->writeLine(string() + j.first + "=" + j.second);
 		}
-	}
-
-	holder<iniClass> newIni(uintPtr memory)
-	{
-		return detail::systemArena().createImpl<iniClass, iniImpl>(memory);
 	}
 
 	holder<iniClass> newIni(memoryArena arena)

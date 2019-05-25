@@ -14,7 +14,7 @@
 #include <cage-core/memoryBuffer.h> // for sizeof in defineScheme
 #include <cage-core/threadPool.h>
 #include <cage-core/variableSmoothingBuffer.h>
-#include <cage-core/swapBufferController.h>
+#include <cage-core/swapBufferGuard.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
@@ -63,19 +63,19 @@ namespace cage
 
 		struct engineDataStruct
 		{
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferControlTick;
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferControlEmit;
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferControlSleep;
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsPrepareWait;
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsPrepareTick;
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsDispatchWait;
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsDispatchTick;
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsDispatchSwap;
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsDrawCalls;
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferGraphicsDrawPrimitives;
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferSoundWait;
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferSoundTick;
-			variableSmoothingBufferStruct<uint64, 60> profilingBufferSoundSleep;
+			variableSmoothingBuffer<uint64, 60> profilingBufferControlTick;
+			variableSmoothingBuffer<uint64, 60> profilingBufferControlEmit;
+			variableSmoothingBuffer<uint64, 60> profilingBufferControlSleep;
+			variableSmoothingBuffer<uint64, 60> profilingBufferGraphicsPrepareWait;
+			variableSmoothingBuffer<uint64, 60> profilingBufferGraphicsPrepareTick;
+			variableSmoothingBuffer<uint64, 60> profilingBufferGraphicsDispatchWait;
+			variableSmoothingBuffer<uint64, 60> profilingBufferGraphicsDispatchTick;
+			variableSmoothingBuffer<uint64, 60> profilingBufferGraphicsDispatchSwap;
+			variableSmoothingBuffer<uint64, 60> profilingBufferGraphicsDrawCalls;
+			variableSmoothingBuffer<uint64, 60> profilingBufferGraphicsDrawPrimitives;
+			variableSmoothingBuffer<uint64, 60> profilingBufferSoundWait;
+			variableSmoothingBuffer<uint64, 60> profilingBufferSoundTick;
+			variableSmoothingBuffer<uint64, 60> profilingBufferSoundSleep;
 
 			holder<assetManagerClass> assets;
 			holder<windowClass> window;

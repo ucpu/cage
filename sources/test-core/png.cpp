@@ -1,12 +1,12 @@
 #include "main.h"
 #include <cage-core/math.h>
-#include <cage-core/png.h>
+#include <cage-core/image.h>
 #include <cage-core/color.h>
 #include <cage-core/noise.h>
 
 namespace
 {
-	void drawCircle(pngImageClass *png)
+	void drawCircle(imageClass *png)
 	{
 		uint32 w = png->width(), h = png->height();
 		vec2 center = vec2(w, h) * 0.5;
@@ -32,12 +32,12 @@ void testPng()
 
 	{
 		CAGE_TESTCASE("circle 8bit");
-		holder<pngImageClass> png = newPngImage();
+		holder<imageClass> png = newImage();
 		png->empty(400, 300, 3);
 		drawCircle(png.get());
 		png->encodeFile("images/circle1.png");
 		CAGE_TEST(png->bufferSize() == 400 * 300 * 3);
-		png = newPngImage();
+		png = newImage();
 		CAGE_TEST(png->bufferSize() == 0);
 		png->decodeFile("images/circle1.png", m, m);
 		CAGE_TEST(png->channels() == 3);
@@ -49,12 +49,12 @@ void testPng()
 
 	{
 		CAGE_TESTCASE("circle 16bit");
-		holder<pngImageClass> png = newPngImage();
+		holder<imageClass> png = newImage();
 		png->empty(400, 300, 3, 2);
 		drawCircle(png.get());
 		png->encodeFile("images/circle2.png");
 		CAGE_TEST(png->bufferSize() == 400 * 300 * 3 * 2);
-		png = newPngImage();
+		png = newImage();
 		CAGE_TEST(png->bufferSize() == 0);
 		png->decodeFile("images/circle2.png", m, m);
 		CAGE_TEST(png->channels() == 3);

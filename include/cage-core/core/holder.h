@@ -54,21 +54,10 @@ namespace cage
 	template<class T>
 	struct holder
 	{
-		holder(const holder &) = delete;
-		holder &operator = (const holder &) = delete;
-
-		// constructor
 		holder() : ptr(nullptr), data(nullptr) {}
 		explicit holder(T *data, void *ptr, delegate<void(void*)> deleter) : deleter(deleter), ptr(ptr), data(data) {}
 
-		// destructor
-		~holder()
-		{
-			if (deleter)
-				deleter(ptr);
-		}
-
-		// move constructor
+		holder(const holder &) = delete;
 		holder(holder &&other) noexcept
 		{
 			deleter = other.deleter;
@@ -79,8 +68,8 @@ namespace cage
 			other.data = nullptr;
 		}
 
-		// move assignment operator
-		holder &operator = (holder &&other)
+		holder &operator = (const holder &) = delete;
+		holder &operator = (holder &&other) noexcept
 		{
 			if (ptr == other.ptr)
 				return *this;
@@ -95,33 +84,34 @@ namespace cage
 			return *this;
 		}
 
-		// operator bool
+		~holder()
+		{
+			if (deleter)
+				deleter(ptr);
+		}
+
 		explicit operator bool() const
 		{
 			return !!data;
 		}
 
-		// operator ->
 		T *operator -> () const
 		{
 			CAGE_ASSERT_RUNTIME(data, "data is null");
 			return data;
 		}
 
-		// operator *
 		typename privat::holderDereference<T>::type operator * () const
 		{
 			CAGE_ASSERT_RUNTIME(data, "data is null");
 			return *data;
 		}
 
-		// method get
 		T *get() const
 		{
 			return data;
 		}
 
-		// method clear
 		void clear()
 		{
 			if (deleter)
@@ -131,7 +121,6 @@ namespace cage
 			data = nullptr;
 		}
 
-		// method cast
 		template<class M>
 		holder<M> cast()
 		{

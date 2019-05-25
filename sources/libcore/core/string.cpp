@@ -120,6 +120,13 @@ namespace cage
 
 		namespace
 		{
+			void stringSortAndUnique(char *data, uint32 &current)
+			{
+				std::sort(data, data + current);
+				auto it = std::unique(data, data + current);
+				current = numeric_cast<uint32>(it - data);
+			}
+
 			bool isOrdered(const char *data, uint32 current)
 			{
 				std::vector<char> data2(data, data + current);
@@ -128,6 +135,12 @@ namespace cage
 				if (current2 != current)
 					return false;
 				return detail::memcmp(data, data2.data(), current) == 0;
+			}
+
+			bool stringContains(const char *data, uint32 current, char what)
+			{
+				CAGE_ASSERT_RUNTIME(isOrdered(data, current));
+				return std::binary_search(data, data + current, what);
 			}
 		}
 
@@ -178,7 +191,7 @@ namespace cage
 		void stringSplit(char *data, uint32 &current, char *ret, uint32 &retLen, const char *what, uint32 whatLen)
 		{
 			CAGE_ASSERT_RUNTIME(retLen == 0);
-			CAGE_ASSERT_RUNTIME(isOrdered(what, whatLen));
+			CAGE_ASSERT_RUNTIME(isOrdered(what, whatLen), string(what, whatLen));
 			if (whatLen == 0)
 				return;
 			for (uint32 i = 0; i < current; i++)
@@ -198,7 +211,7 @@ namespace cage
 
 		uint32 stringFind(const char *data, uint32 current, const char *what, uint32 whatLen, uint32 offset)
 		{
-			if (whatLen == 0 || offset + whatLen >= current)
+			if (whatLen == 0 || offset + whatLen > current)
 				return m;
 			uint32 end = current - whatLen + 1;
 			for (uint32 i = offset; i < end; i++)
@@ -207,17 +220,13 @@ namespace cage
 			return m;
 		}
 
-		void stringSortAndUnique(char *data, uint32 &current)
+		int stringComparison(const char *ad, uint32 al, const char *bd, uint32 bl)
 		{
-			std::sort(data, data + current);
-			auto it = std::unique(data, data + current);
-			current = numeric_cast<uint32>(it - data);
-		}
-
-		bool stringContains(const char *data, uint32 current, char what)
-		{
-			CAGE_ASSERT_RUNTIME(isOrdered(data, current));
-			return std::binary_search(data, data + current, what);
+			uint32 l = al < bl ? al : bl;
+			int c = detail::memcmp(ad, bd, l);
+			if (c == 0)
+				return al == bl ? 0 : al < bl ? -1 : 1;
+			return c;
 		}
 	}
 }
