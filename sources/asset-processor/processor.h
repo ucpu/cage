@@ -2,9 +2,9 @@
 #include <cage-core/log.h>
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
-#include <cage-core/filesystem.h>
+#include <cage-core/files.h>
 #include <cage-core/config.h>
-#include <cage-core/assets.h>
+#include <cage-core/assetStructs.h>
 
 #include <cage-client/core.h>
 #include <cage-client/assetStructs.h>

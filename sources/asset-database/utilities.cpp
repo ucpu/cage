@@ -1,5 +1,5 @@
 #include <cage-core/core.h>
-#include <cage-core/filesystem.h>
+#include <cage-core/files.h>
 
 using namespace cage;
 

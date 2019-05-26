@@ -10,8 +10,9 @@
 #include <cage-core/geometry.h>
 #include <cage-core/network.h>
 #include <cage-core/concurrent.h>
-#include <cage-core/filesystem.h>
-#include <cage-core/assets.h>
+#include <cage-core/files.h>
+#include <cage-core/assetStructs.h>
+#include <cage-core/assetManager.h>
 #include <cage-core/config.h>
 #include <cage-core/hashTable.h>
 #include <cage-core/hashString.h>
@@ -21,9 +22,6 @@
 
 namespace cage
 {
-	assetContextStruct::assetContextStruct() : compressedSize(0), originalSize(0), assetPointer(nullptr), returnData(nullptr), compressedData(nullptr), originalData(nullptr), realName(0), internationalizedName(0), assetFlags(0) {}
-	assetSchemeStruct::assetSchemeStruct() : schemePointer(nullptr), threadIndex(0) {}
-
 	configUint32 logLevel("cage-core.assetManager.logLevel", 0);
 #define ASS_LOG(LEVEL, ASS, MSG) { if (logLevel >= (LEVEL)) { CAGE_LOG(severityEnum::Info, "assetManager", string() + "asset '" + (ASS)->textName + "' (" + (ASS)->realName + " / " + (ASS)->internationalizedName + "): " + MSG); } }
 
@@ -37,6 +35,12 @@ namespace cage
 				return;
 			uintPtr res = detail::decompress(context->compressedData, numeric_cast<uintPtr>(context->compressedSize), context->originalData, numeric_cast<uintPtr>(context->originalSize));
 			CAGE_ASSERT_RUNTIME(res == context->originalSize, res, context->originalSize);
+		}
+
+		void defaultDone(const assetContextStruct *context)
+		{
+			context->assetHolder.clear();
+			context->returnData = nullptr;
 		}
 
 		struct assetContextPrivateStruct : public assetContextStruct
@@ -277,6 +281,8 @@ namespace cage
 						{
 							if (schemes[ass->scheme].done)
 								schemes[ass->scheme].done(ass, schemes[ass->scheme].schemePointer);
+							else
+								defaultDone(ass);
 						}
 						catch (...)
 						{
@@ -748,22 +754,19 @@ namespace cage
 		return detail::systemArena().createImpl <assetManagerClass, assetManagerImpl>(config);
 	}
 
-	namespace detail
+	assetHeaderStruct initializeAssetHeader(const string &name_, uint16 schemeIndex)
 	{
-		assetHeaderStruct initializeAssetHeader(const string &name_, uint16 schemeIndex)
-		{
-			assetHeaderStruct a;
-			detail::memset(&a, 0, sizeof(assetHeaderStruct));
-			detail::memcpy(a.cageName, "cageAss", 7);
-			a.version = currentAssetVersion;
-			string name = name_;
-			static const uint32 maxTexName = sizeof(a.textName);
-			if (name.length() >= maxTexName)
-				name = string() + ".." + name.subString(name.length() - maxTexName - 3, maxTexName - 3);
-			CAGE_ASSERT_RUNTIME(name.length() < sizeof(a.textName), name);
-			detail::memcpy(a.textName, name.c_str(), name.length());
-			a.scheme = schemeIndex;
-			return a;
-		}
+		assetHeaderStruct a;
+		detail::memset(&a, 0, sizeof(assetHeaderStruct));
+		detail::memcpy(a.cageName, "cageAss", 7);
+		a.version = currentAssetVersion;
+		string name = name_;
+		static const uint32 maxTexName = sizeof(a.textName);
+		if (name.length() >= maxTexName)
+			name = string() + ".." + name.subString(name.length() - maxTexName - 3, maxTexName - 3);
+		CAGE_ASSERT_RUNTIME(name.length() < sizeof(a.textName), name);
+		detail::memcpy(a.textName, name.c_str(), name.length());
+		a.scheme = schemeIndex;
+		return a;
 	}
 }

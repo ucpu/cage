@@ -2,7 +2,7 @@
 #include <cage-core/math.h>
 #include <cage-core/memory.h>
 #include <cage-core/entities.h>
-#include <cage-core/assets.h>
+#include <cage-core/assetManager.h>
 #include <cage-core/textPack.h>
 
 #define CAGE_EXPORT

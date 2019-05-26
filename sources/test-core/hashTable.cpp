@@ -141,5 +141,6 @@ void testHashTable()
 		CAGE_TESTCASE("hash function");
 		using detail::hash;
 		CAGE_TEST(hash(13) != hash(15));
+		CAGE_TEST(hash(42) == hash(42));
 	}
 }

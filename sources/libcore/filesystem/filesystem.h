@@ -3,7 +3,8 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/log.h>
-#include <cage-core/filesystem.h>
+#include <cage-core/files.h>
+#include <cage-core/fileUtils.h>
 
 namespace cage
 {

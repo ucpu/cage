@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "assimp.h"
+#include <cage-core/fileUtils.h>
 
 #include <assimp/Exporter.hpp>
 #include <assimp/IOStream.hpp>

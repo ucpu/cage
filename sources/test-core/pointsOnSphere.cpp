@@ -1,7 +1,7 @@
 #include "main.h"
 
 #include <cage-core/math.h>
-#include <cage-core/filesystem.h>
+#include <cage-core/files.h>
 
 namespace
 {

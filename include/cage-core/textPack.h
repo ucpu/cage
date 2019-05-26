@@ -17,6 +17,9 @@ namespace cage
 	};
 
 	CAGE_API holder<textPackClass> newTextPack();
+
+	CAGE_API assetSchemeStruct genAssetSchemeTextPackage(const uint32 threadIndex);
+	static const uint32 assetSchemeIndexTextPackage = 2;
 }
 
 #endif // guard_textPack_h_B436B597745C461DAA266CE6FBBE10D1

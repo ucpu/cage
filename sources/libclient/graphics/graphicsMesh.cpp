@@ -2,7 +2,7 @@
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
 #include <cage-core/log.h>
-#include <cage-core/memory/detail.h> // addToAlign
+#include <cage-core/memory.h> // addToAlign
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>

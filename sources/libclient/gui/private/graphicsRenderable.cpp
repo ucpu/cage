@@ -1,7 +1,7 @@
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/memory.h>
-#include <cage-core/assets.h>
+#include <cage-core/assetManager.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>

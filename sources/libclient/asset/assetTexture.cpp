@@ -3,7 +3,7 @@
 #include <cage-core/geometry.h>
 #include <cage-core/config.h>
 #include <cage-core/memory.h>
-#include <cage-core/assets.h>
+#include <cage-core/assetStructs.h>
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
 #include <cage-client/core.h>
@@ -57,12 +57,6 @@ namespace cage
 			tex->animationDuration = data->animationDuration;
 			tex->animationLoop = (data->flags & textureFlags::AnimationLoop) == textureFlags::AnimationLoop;
 		}
-
-		void processDone(const assetContextStruct *context, void *schemePointer)
-		{
-			context->assetHolder.clear();
-			context->returnData = nullptr;
-		}
 	}
 
 	assetSchemeStruct genAssetSchemeTexture(uint32 threadIndex, windowClass *memoryContext)
@@ -71,7 +65,6 @@ namespace cage
 		s.threadIndex = threadIndex;
 		s.schemePointer = memoryContext;
 		s.load.bind<&processLoad>();
-		s.done.bind<&processDone>();
 		return s;
 	}
 }

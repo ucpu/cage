@@ -2,7 +2,8 @@
 #include <set>
 
 #include "main.h"
-#include <cage-core/filesystem.h>
+#include <cage-core/files.h>
+#include <cage-core/fileUtils.h>
 #include <cage-core/memoryBuffer.h>
 
 #define FILE_BLOCKS (10)

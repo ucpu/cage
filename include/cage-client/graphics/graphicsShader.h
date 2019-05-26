@@ -29,4 +29,7 @@ namespace cage
 	};
 
 	CAGE_API holder<shaderClass> newShader();
+
+	CAGE_API assetSchemeStruct genAssetSchemeShader(uint32 threadIndex, windowClass *memoryContext);
+	static const uint32 assetSchemeIndexShader = 10;
 }

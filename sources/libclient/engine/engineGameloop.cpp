@@ -6,8 +6,9 @@
 #include <cage-core/config.h>
 #include <cage-core/entities.h>
 #include <cage-core/concurrent.h>
-#include <cage-core/filesystem.h> // getExecutableName
-#include <cage-core/assets.h>
+#include <cage-core/files.h> // getExecutableName
+#include <cage-core/assetStructs.h>
+#include <cage-core/assetManager.h>
 #include <cage-core/hashString.h>
 #include <cage-core/collider.h> // for sizeof in defineScheme
 #include <cage-core/textPack.h> // for sizeof in defineScheme

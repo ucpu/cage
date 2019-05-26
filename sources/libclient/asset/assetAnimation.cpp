@@ -1,7 +1,7 @@
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
-#include <cage-core/assets.h>
+#include <cage-core/assetStructs.h>
 #include <cage-core/serialization.h>
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
@@ -37,12 +37,6 @@ namespace cage
 			uint16 *scaleFrames = (uint16*)des.advance(data.animationBonesCount * sizeof(uint16));
 			ani->allocate(data.duration, data.animationBonesCount, indexes, positionFrames, rotationFrames, scaleFrames, des.advance(0));
 		}
-
-		void processDone(const assetContextStruct *context, void *schemePointer)
-		{
-			context->assetHolder.clear();
-			context->returnData = nullptr;
-		}
 	}
 
 	assetSchemeStruct genAssetSchemeAnimation(uint32 threadIndex)
@@ -50,7 +44,6 @@ namespace cage
 		assetSchemeStruct s;
 		s.threadIndex = threadIndex;
 		s.load.bind<&processLoad>();
-		s.done.bind<&processDone>();
 		return s;
 	}
 }

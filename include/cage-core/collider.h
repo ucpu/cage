@@ -61,6 +61,9 @@ namespace cage
 	inline   bool intersects(const colliderClass *ao, const colliderClass *bo, const transform &at, const transform &bt) { return collisionDetection(ao, bo, at, bt); }
 
 	CAGE_API vec3 intersection(const line &shape, const colliderClass *collider, const transform &t);
+
+	CAGE_API assetSchemeStruct genAssetSchemeCollider(const uint32 threadIndex);
+	static const uint32 assetSchemeIndexCollider = 3;
 }
 
 #endif // guard_collider_h_qeqwdrwuegfoixwoihediuzerw456

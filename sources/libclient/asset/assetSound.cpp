@@ -1,7 +1,7 @@
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
-#include <cage-core/assets.h>
+#include <cage-core/assetStructs.h>
 #include "../sound/vorbisDecoder.h"
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
@@ -71,12 +71,6 @@ namespace cage
 				CAGE_THROW_CRITICAL(exception, "invalid sound type");
 			}
 		}
-
-		void processDone(const assetContextStruct *context, void *schemePointer)
-		{
-			context->assetHolder.clear();
-			context->returnData = nullptr;
-		}
 	}
 
 	assetSchemeStruct genAssetSchemeSound(uint32 threadIndex, soundContextClass *memoryContext)
@@ -86,7 +80,6 @@ namespace cage
 		s.schemePointer = memoryContext;
 		s.decompress.bind<&processDecompress>();
 		s.load.bind<&processLoad>();
-		s.done.bind<&processDone>();
 		return s;
 	}
 }

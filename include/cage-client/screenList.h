@@ -1,3 +1,6 @@
+#ifndef guard_screenList_h_q56ew4rk87h64847
+#define guard_screenList_h_q56ew4rk87h64847
+
 namespace cage
 {
 	struct CAGE_API screenMode
@@ -29,3 +32,5 @@ namespace cage
 
 	CAGE_API holder<screenListClass> newScreenList();
 }
+
+#endif // guard_screenList_h_q56ew4rk87h64847

@@ -244,5 +244,14 @@ namespace cage
 		CAGE_ASSERT_COMPILE(detail::numeric_limits<unsigned long>::max() == std::numeric_limits<unsigned long>::max(), assert_numeric_limits);
 		CAGE_ASSERT_COMPILE(detail::numeric_limits<unsigned long long>::min() == std::numeric_limits<unsigned long long>::min(), assert_numeric_limits);
 		CAGE_ASSERT_COMPILE(detail::numeric_limits<unsigned long long>::max() == std::numeric_limits<unsigned long long>::max(), assert_numeric_limits);
+
+		CAGE_ASSERT_COMPILE(detail::numeric_limits<uint8>::min() == std::numeric_limits<uint8>::min(), assert_numeric_limits);
+		CAGE_ASSERT_COMPILE(detail::numeric_limits<sint8>::max() == std::numeric_limits<sint8>::max(), assert_numeric_limits);
+		CAGE_ASSERT_COMPILE(detail::numeric_limits<uint16>::min() == std::numeric_limits<uint16>::min(), assert_numeric_limits);
+		CAGE_ASSERT_COMPILE(detail::numeric_limits<sint16>::max() == std::numeric_limits<sint16>::max(), assert_numeric_limits);
+		CAGE_ASSERT_COMPILE(detail::numeric_limits<uint32>::min() == std::numeric_limits<uint32>::min(), assert_numeric_limits);
+		CAGE_ASSERT_COMPILE(detail::numeric_limits<sint32>::max() == std::numeric_limits<sint32>::max(), assert_numeric_limits);
+		CAGE_ASSERT_COMPILE(detail::numeric_limits<uint64>::min() == std::numeric_limits<uint64>::min(), assert_numeric_limits);
+		CAGE_ASSERT_COMPILE(detail::numeric_limits<sint64>::max() == std::numeric_limits<sint64>::max(), assert_numeric_limits);
 	}
 }

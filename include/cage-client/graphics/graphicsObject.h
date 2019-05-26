@@ -20,4 +20,7 @@ namespace cage
 	};
 
 	CAGE_API holder<objectClass> newObject();
+
+	CAGE_API assetSchemeStruct genAssetSchemeObject(uint32 threadIndex);
+	static const uint32 assetSchemeIndexObject = 15;
 }

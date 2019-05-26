@@ -2,7 +2,7 @@
 #include <cage-core/core.h>
 #include <cage-core/log.h>
 #include <cage-core/concurrent.h>
-#include <cage-core/filesystem.h>
+#include <cage-core/files.h>
 #include <cage-core/program.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS

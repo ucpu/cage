@@ -5,7 +5,7 @@
 #include <cage-core/log.h>
 #include <cage-core/math.h>
 #include <cage-core/concurrent.h>
-#include <cage-core/filesystem.h>
+#include <cage-core/files.h>
 #include <cage-core/ini.h>
 #include <cage-core/config.h>
 

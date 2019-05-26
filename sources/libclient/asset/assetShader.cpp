@@ -1,7 +1,7 @@
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
-#include <cage-core/assets.h>
+#include <cage-core/assetStructs.h>
 #include <cage-core/serialization.h>
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
@@ -42,12 +42,6 @@ namespace cage
 			shr->relink();
 			CAGE_ASSERT_RUNTIME(des.available() == 0);
 		}
-
-		void processDone(const assetContextStruct *context, void *schemePointer)
-		{
-			context->assetHolder.clear();
-			context->returnData = nullptr;
-		}
 	}
 
 	assetSchemeStruct genAssetSchemeShader(uint32 threadIndex, windowClass *memoryContext)
@@ -56,7 +50,6 @@ namespace cage
 		s.threadIndex = threadIndex;
 		s.schemePointer = memoryContext;
 		s.load.bind<&processLoad>();
-		s.done.bind<&processDone>();
 		return s;
 	}
 }

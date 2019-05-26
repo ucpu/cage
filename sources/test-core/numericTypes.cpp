@@ -1,4 +1,5 @@
 #include "main.h"
+#include <cage-core/endianness.h>
 
 void testNumericTypes()
 {
@@ -28,8 +29,8 @@ void testNumericTypes()
 
 	{
 		CAGE_TESTCASE("endianity");
-		CAGE_TEST(privat::endianness::change((uint16)0x1234) == (uint16)0x3412);
-		CAGE_TEST(privat::endianness::change((uint32)0x12345678) == (uint32)0x78563412);
+		CAGE_TEST(endianness::change((uint16)0x1234) == (uint16)0x3412);
+		CAGE_TEST(endianness::change((uint32)0x12345678) == (uint32)0x78563412);
 	}
 
 	{

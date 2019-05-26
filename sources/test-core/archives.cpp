@@ -1,7 +1,8 @@
 #include <set>
 
 #include "main.h"
-#include <cage-core/filesystem.h>
+#include <cage-core/files.h>
+#include <cage-core/fileUtils.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 #include <cage-core/math.h>

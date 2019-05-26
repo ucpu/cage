@@ -9,9 +9,9 @@ addons:
     sources:
       - ubuntu-toolchain-r-test
     packages:
-      - g++-5
       - g++-6
       - g++-7
+      - g++-8
       - clang
       - xorg-dev
 
@@ -20,11 +20,12 @@ matrix:
   exclude:
     - compiler: gcc
   include:
-    - env: COMPILER=g++-5 COMPILERC=gcc-5 CONFIG=relwithdebinfo
     - env: COMPILER=g++-6 COMPILERC=gcc-6 CONFIG=relwithdebinfo
     - env: COMPILER=g++-6 COMPILERC=gcc-6 CONFIG=debug
     - env: COMPILER=g++-7 COMPILERC=gcc-7 CONFIG=relwithdebinfo
     - env: COMPILER=g++-7 COMPILERC=gcc-7 CONFIG=debug
+    - env: COMPILER=g++-8 COMPILERC=gcc-7 CONFIG=relwithdebinfo
+    - env: COMPILER=g++-8 COMPILERC=gcc-7 CONFIG=debug
     - env: COMPILER=clang++ COMPILERC=clang CONFIG=relwithdebinfo
     - env: COMPILER=clang++ COMPILERC=clang CONFIG=debug
     - os: windows

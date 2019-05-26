@@ -1,5 +1,5 @@
 #include "main.h"
-#include <cage-core/filesystem.h>
+#include <cage-core/files.h>
 #include <cage-core/ini.h>
 
 #include <vector>

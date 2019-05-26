@@ -4,9 +4,10 @@
 #include <cage-core/core.h>
 #include <cage-core/log.h>
 #include <cage-core/math.h>
-#include <cage-core/filesystem.h>
+#include <cage-core/files.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/image.h>
+#include <cage-core/endianness.h>
 
 #include <vector>
 
@@ -89,7 +90,7 @@ namespace cage
 			png_byte bitDepth  = png_get_bit_depth(png, info);
 
 			png_set_expand(png);
-			if (privat::endianness::little())
+			if (endianness::little())
 				png_set_swap(png);
 
 			png_read_update_info(png, info);
@@ -146,7 +147,7 @@ namespace cage
 			pngIoCtx ioCtx(out);
 			png_set_write_fn(png, &ioCtx, &pngWriteFunc, &pngFlushFunc);
 
-			if (privat::endianness::little())
+			if (endianness::little())
 				png_set_swap(png);
 			info = png_create_info_struct(png);
 			if (!info)
@@ -172,7 +173,7 @@ namespace cage
 			}
 			png_set_IHDR(png, info, width, height, bpp * 8, colorType, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 			png_write_info(png, info);
-			if (privat::endianness::little())
+			if (endianness::little())
 				png_set_swap(png);
 
 			std::vector<png_bytep> rows;
