@@ -237,19 +237,77 @@ namespace cage
 	template<class T> inline typename templates::enable_if<enable_bitmask_operators<T>::enable, bool>::type none(T lhs) { typedef typename templates::underlying_type<T>::type underlying; return static_cast<underlying>(lhs) == 0; }
 
 	// this macro has to be used inside namespace cage
-#define GCHL_ENUM_BITS(Type) template<> struct enable_bitmask_operators<Type> { static const bool enable = true; };
+#define GCHL_ENUM_BITS(TYPE) template<> struct enable_bitmask_operators<TYPE> { static const bool enable = true; };
 
 	// forward declarations
 
-	// core
+	enum class assetStateEnum : uint32;
+	class assetManagerClass;
+	struct assetManagerCreateConfig;
+	struct assetContextStruct;
+	struct assetSchemeStruct;
+	struct assetHeaderStruct;
+	class colliderClass;
+	struct collisionPairStruct;
+	class collisionQueryClass;
+	class collisionDataClass;
+	struct collisionDataCreateConfig;
+	class mutexClass;
+	class barrierClass;
+	class semaphoreClass;
+	class conditionalBaseClass;
+	class conditionalClass;
+	class threadClass;
+	struct concurrentQueueCreateConfig;
+	template<class T>
+	class concurrentQueueClass;
+	enum class configTypeEnum : uint32;
+	struct configBool;
+	struct configSint32;
+	struct configSint64;
+	struct configUint32;
+	struct configUint64;
+	struct configFloat;
+	struct configDouble;
+	struct configString;
+	class configListClass;
 	namespace detail
 	{
 		template<uint32 N>
 		struct stringBase;
 	}
 	typedef detail::stringBase<1000> string;
-
-	// math
+	struct componentCreateConfig;
+	class entityManagerClass;
+	struct entityManagerCreateConfig;
+	class entityClass;
+	class componentClass;
+	class groupClass;
+	struct fileMode;
+	class fileClass;
+	enum class pathTypeFlags : uint32;
+	class changeWatcherClass;
+	class directoryListClass;
+	class filesystemClass;
+	struct line;
+	struct triangle;
+	struct plane;
+	struct sphere;
+	struct aabb;
+	struct hashString;
+	template<class T>
+	struct hashTablePair;
+	template<class T>
+	struct hashTableIt;
+	template<class T>
+	class hashTableClass;
+	template<uint32 N>
+	struct identifierStruct;
+	class imageClass;
+	class iniClass;
+	class lineReaderClass;
+	class loggerClass;
+	class logOutputPolicyFileClass;
 	struct real;
 	struct rads;
 	struct degs;
@@ -260,75 +318,33 @@ namespace cage
 	struct mat3;
 	struct mat4;
 	struct transform;
-
-	// geometry
-	struct line;
-	struct triangle;
-	struct plane;
-	struct sphere;
-	struct aabb;
-
-	// entities
-	struct entityManagerCreateConfig;
-	class componentClass;
-	class entityClass;
-	class groupClass;
-	class entityManagerClass;
-
-	// concurrent
-	class mutexClass;
-	class barrierClass;
-	class semaphoreClass;
-	class threadClass;
-
-	// filesystem
-	struct fileMode;
-	class fileClass;
-	class filesystemClass;
-	class directoryListClass;
-	class changeWatcherClass;
-	enum class pathTypeFlags : uint32;
-
-	// memory
-	class virtualMemoryClass;
-
-	// network
-	class discoveryClientClass;
-	class discoveryServerClass;
+	template<class T>
+	struct memoryArenaStd;
+	struct memoryBuffer;
 	class tcpConnectionClass;
 	class tcpServerClass;
+	struct udpConnectionStatisticsStruct;
 	class udpConnectionClass;
 	class udpServerClass;
-
-	// assets
-	enum class assetStateEnum : uint32;
-	struct assetManagerCreateConfig;
-	struct assetContextStruct;
-	struct assetSchemeStruct;
-	class assetManagerClass;
-
-	// utilities
-	struct randomGenerator;
-	class lineReaderClass;
-	struct memoryBuffer;
-	template<class T>
-	class hashTableClass;
-	class iniClass;
-	class imageClass;
+	struct discoveryPeerStruct;
+	class discoveryClientClass;
+	class discoveryServerClass;
+	class noiseClass;
+	struct noiseCreateConfig;
 	class programClass;
-	class threadPoolClass;
+	struct randomGenerator;
 	template<class T>
-	class concurrentQueueClass;
-	struct swapBufferGuardCreateConfig;
-	class swapBufferGuardClass;
-	class timerClass;
-	class colliderClass;
-	struct spatialDataCreateConfig;
-	class spatialDataClass;
+	struct scopeLock;
+	struct serializer;
+	struct deserializer;
 	class spatialQueryClass;
-	struct collisionPairStruct;
-	struct collisionDataCreateConfig;
-	class collisionDataClass;
-	class collisionQueryClass;
+	class spatialDataClass;
+	struct spatialDataCreateConfig;
+	class bufferIStream;
+	class bufferOStream;
+	class swapBufferGuardClass;
+	struct swapBufferGuardCreateConfig;
 	class textPackClass;
+	class threadPoolClass;
+	class timerClass;
 }

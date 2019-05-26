@@ -87,12 +87,12 @@ namespace cage
 			void *prototype;
 			const uint32 vectorIndex;
 
-			componentImpl(entityManagerImpl *manager, uintPtr typeSize, uintPtr typeAlignment, void *prototype, bool enumerableEntities) :
+			componentImpl(entityManagerImpl *manager, uintPtr typeSize, uintPtr typeAlignment, void *prototype, const componentCreateConfig &config) :
 				manager(manager), typeSize(typeSize), typeAlignment(typeAlignment), vectorIndex(numeric_cast<uint32>(manager->components.size()))
 			{
 				this->prototype = detail::systemArena().allocate(typeSize, typeAlignment);
 				detail::memcpy(this->prototype, prototype, typeSize);
-				if (enumerableEntities)
+				if (config.enumerableEntities)
 					componentEntities = detail::systemArena().createHolder<groupImpl>(manager);
 			}
 
@@ -217,10 +217,10 @@ namespace cage
 		impl->allEntities.destroy();
 	}
 
-	componentClass *entityManagerClass::zPrivateDefineComponent(uintPtr typeSize, uintPtr typeAlignment, void *prototype, bool enumerableEntities)
+	componentClass *entityManagerClass::zPrivateDefineComponent(uintPtr typeSize, uintPtr typeAlignment, void *prototype, const componentCreateConfig &config)
 	{
 		entityManagerImpl *impl = (entityManagerImpl *)this;
-		componentImpl *c = detail::systemArena().createObject<componentImpl>(impl, typeSize, typeAlignment, prototype, enumerableEntities);
+		componentImpl *c = detail::systemArena().createObject<componentImpl>(impl, typeSize, typeAlignment, prototype, config);
 		impl->components.push_back(c);
 		return c;
 	}

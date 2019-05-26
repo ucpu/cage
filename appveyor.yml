@@ -6,23 +6,18 @@ image:
   - Visual Studio 2017
 
 platform:
-  - Win32
   - x64
+  - Win32
 
 configuration:
-  - Debug
   - RelWithDebInfo
+  - Debug
 
 clone_folder: c:\project
 
 init:
   - msbuild /version
   - cmake --version
-
-install:
-  #- choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
-  #- refreshenv
-  #- cmake --version
 
 before_build:
   - git submodule update --init --recursive

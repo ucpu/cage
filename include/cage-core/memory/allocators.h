@@ -1,6 +1,6 @@
 namespace cage
 {
-	template<class BoundsPolicy = GCHL_DEFAULT_MEMORY_BOUNDS_POLICY, class TaggingPolicy = GCHL_DEFAULT_MEMORY_TAG_POLICY, class TrackingPolicy = GCHL_DEFAULT_MEMORY_TRACK_POLICY>
+	template<class BoundsPolicy = memoryBoundsPolicyDefault, class TaggingPolicy = memoryTagPolicyDefault, class TrackingPolicy = memoryTrackPolicyDefault>
 	struct memoryAllocatorPolicyLinear
 	{
 		memoryAllocatorPolicyLinear() : origin(nullptr), current(nullptr), totalSize(0)
@@ -58,7 +58,7 @@ namespace cage
 		uintPtr totalSize;
 	};
 
-	template<uint8 N, class BoundsPolicy = GCHL_DEFAULT_MEMORY_BOUNDS_POLICY, class TaggingPolicy = GCHL_DEFAULT_MEMORY_TAG_POLICY, class TrackingPolicy = GCHL_DEFAULT_MEMORY_TRACK_POLICY>
+	template<uint8 N, class BoundsPolicy = memoryBoundsPolicyDefault, class TaggingPolicy = memoryTagPolicyDefault, class TrackingPolicy = memoryTrackPolicyDefault>
 	struct memoryAllocatorPolicyNFrame
 	{
 		memoryAllocatorPolicyNFrame() : origin(nullptr), totalSize(0), current(0) {}
@@ -103,7 +103,7 @@ namespace cage
 		uint8 current;
 	};
 
-	template<uintPtr AtomSize, class BoundsPolicy = GCHL_DEFAULT_MEMORY_BOUNDS_POLICY, class TaggingPolicy = GCHL_DEFAULT_MEMORY_TAG_POLICY, class TrackingPolicy = GCHL_DEFAULT_MEMORY_TRACK_POLICY>
+	template<uintPtr AtomSize, class BoundsPolicy = memoryBoundsPolicyDefault, class TaggingPolicy = memoryTagPolicyDefault, class TrackingPolicy = memoryTrackPolicyDefault>
 	struct memoryAllocatorPolicyPool
 	{
 		CAGE_ASSERT_COMPILE(AtomSize > 0, objectsMustBeAtLeastOneByte);
@@ -203,7 +203,7 @@ namespace cage
 		const uintPtr objectSize;
 	};
 
-	template<class BoundsPolicy = GCHL_DEFAULT_MEMORY_BOUNDS_POLICY, class TaggingPolicy = GCHL_DEFAULT_MEMORY_TAG_POLICY, class TrackingPolicy = GCHL_DEFAULT_MEMORY_TRACK_POLICY>
+	template<class BoundsPolicy = memoryBoundsPolicyDefault, class TaggingPolicy = memoryTagPolicyDefault, class TrackingPolicy = memoryTrackPolicyDefault>
 	struct memoryAllocatorPolicyQueue
 	{
 		memoryAllocatorPolicyQueue() : origin(nullptr), front(nullptr), back(nullptr), totalSize(0)
@@ -288,7 +288,7 @@ namespace cage
 		uintPtr totalSize;
 	};
 
-	template<class BoundsPolicy = GCHL_DEFAULT_MEMORY_BOUNDS_POLICY, class TaggingPolicy = GCHL_DEFAULT_MEMORY_TAG_POLICY, class TrackingPolicy = GCHL_DEFAULT_MEMORY_TRACK_POLICY>
+	template<class BoundsPolicy = memoryBoundsPolicyDefault, class TaggingPolicy = memoryTagPolicyDefault, class TrackingPolicy = memoryTrackPolicyDefault>
 	struct memoryAllocatorPolicyStack
 	{
 		memoryAllocatorPolicyStack() : origin(nullptr), current(nullptr), totalSize(0)

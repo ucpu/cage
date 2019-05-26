@@ -1,17 +1,5 @@
 namespace cage
 {
-#if defined (CAGE_DEBUG)
-#define GCHL_DEFAULT_MEMORY_BOUNDS_POLICY memoryBoundsPolicySimple
-#define GCHL_DEFAULT_MEMORY_TAG_POLICY memoryTagPolicySimple
-#define GCHL_DEFAULT_MEMORY_TRACK_POLICY memoryTrackPolicySimple
-#else
-#define GCHL_DEFAULT_MEMORY_BOUNDS_POLICY memoryBoundsPolicyNone
-#define GCHL_DEFAULT_MEMORY_TAG_POLICY memoryTagPolicyNone
-#define GCHL_DEFAULT_MEMORY_TRACK_POLICY memoryTrackPolicyNone
-#endif
-}
-namespace cage
-{
 	struct CAGE_API memoryBoundsPolicyNone
 	{
 		static const uintPtr SizeFront = 0;
@@ -61,27 +49,7 @@ namespace cage
 		static const uint32 PatternFront = 0xCDCDCDCD;
 		static const uint32 PatternBack = 0xDCDCDCDC;
 	};
-}
-namespace cage
-{
-	struct CAGE_API memoryConcurrentPolicyNone
-	{
-		void lock() {}
-		void unlock() {}
-	};
 
-	struct CAGE_API memoryConcurrentPolicyMutex
-	{
-		memoryConcurrentPolicyMutex();
-		void lock();
-		void unlock();
-
-	private:
-		holder<void> mutex;
-	};
-}
-namespace cage
-{
 	struct CAGE_API memoryTagPolicyNone
 	{
 		void set(void *ptr, uintPtr size)
@@ -107,9 +75,7 @@ namespace cage
 				*((uint16*)ptr + i) = 0xDEAD;
 		}
 	};
-}
-namespace cage
-{
+
 	struct CAGE_API memoryTrackPolicyNone
 	{
 		void set(void *ptr, uintPtr size)
@@ -161,4 +127,30 @@ namespace cage
 	private:
 		void *data;
 	};
+
+	struct CAGE_API memoryConcurrentPolicyNone
+	{
+		void lock() {}
+		void unlock() {}
+	};
+
+	struct CAGE_API memoryConcurrentPolicyMutex
+	{
+		memoryConcurrentPolicyMutex();
+		void lock();
+		void unlock();
+
+	private:
+		holder<void> mutex;
+	};
+
+#ifdef CAGE_DEBUG
+	typedef memoryBoundsPolicySimple memoryBoundsPolicyDefault;
+	typedef memoryTagPolicySimple memoryTagPolicyDefault;
+	typedef memoryTrackPolicySimple memoryTrackPolicyDefault;
+#else
+	typedef memoryBoundsPolicyNone memoryBoundsPolicyDefault;
+	typedef memoryTagPolicyNone memoryTagPolicyDefault;
+	typedef memoryTrackPolicyNone memoryTrackPolicyDefault;
+#endif
 }

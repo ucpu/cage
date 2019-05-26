@@ -15,6 +15,7 @@ void testStrings();
 void testDelegates();
 void testHolder();
 void testPointerRange();
+void testEnumerate();
 void testEvents();
 void testMath();
 void testMathGlm();
@@ -65,6 +66,7 @@ int main()
 	testDelegates();
 	testHolder();
 	testPointerRange();
+	testEnumerate();
 	testEvents();
 	testMath();
 	testMathGlm();

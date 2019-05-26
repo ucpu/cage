@@ -3,7 +3,7 @@
 
 namespace cage
 {
-	enum class configTypeEnum
+	enum class configTypeEnum : uint32
 	{
 		Undefined,
 		Bool,

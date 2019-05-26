@@ -3,10 +3,18 @@
 
 namespace cage
 {
+	struct CAGE_API componentCreateConfig
+	{
+		bool enumerableEntities;
+
+		componentCreateConfig(bool enumerableEntities) : enumerableEntities(enumerableEntities)
+		{}
+	};
+
 	class CAGE_API entityManagerClass
 	{
 	public:
-		template<class T> componentClass *defineComponent(const T &prototype, bool enumerableEntities) { return zPrivateDefineComponent(sizeof(T), alignof(T), (void*)&prototype, enumerableEntities); }
+		template<class T> componentClass *defineComponent(const T &prototype, const componentCreateConfig &config) { return zPrivateDefineComponent(sizeof(T), alignof(T), (void*)&prototype, config); }
 		componentClass *componentByIndex(uint32 index) const;
 		uint32 componentsCount() const;
 
@@ -26,7 +34,7 @@ namespace cage
 		void destroy(); // destroy all entities
 
 	private:
-		componentClass *zPrivateDefineComponent(uintPtr typeSize, uintPtr typeAlignment, void *prototype, bool enumerableEntities);
+		componentClass *zPrivateDefineComponent(uintPtr typeSize, uintPtr typeAlignment, void *prototype, const componentCreateConfig &config);
 	};
 
 	struct CAGE_API entityManagerCreateConfig
