@@ -146,3 +146,9 @@ A long-term hobby project that turned out to be quite BIG.
 # Building
 
 - see [BUILDING](BUILDING.md).
+
+# Contributing
+
+- Contributions are welcome!
+- Questions, bug reports and feature requests are best done on github issue tracker.
+Create a pull request for code changes.
