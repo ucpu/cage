@@ -1,8 +1,8 @@
 #include <vector>
-#include <initializer_list>
 
 #include "main.h"
 #include <cage-core/enumerate.h>
+#include <cage-core/pointerRangeHolder.h>
 
 namespace
 {
@@ -14,6 +14,11 @@ namespace
 		res.push_back("ge");
 		res.push_back("don");
 		return res;
+	}
+
+	holder<pointerRange<const string>> genHolder()
+	{
+		return pointerRangeHolder<const string>(genStrings());
 	}
 }
 
@@ -37,6 +42,7 @@ void testEnumerate()
 			CAGE_TEST(*it == names[it.cnt]);
 			CAGE_TEST(it->size() == names[it.cnt].size());
 		}
+		CAGE_TEST(i == names.size());
 	}
 
 	{
@@ -47,6 +53,7 @@ void testEnumerate()
 			CAGE_TEST(*it == names[i]);
 			CAGE_TEST(it.cnt == i++ + 5);
 		}
+		CAGE_TEST(i == names.size());
 	}
 
 	{
@@ -57,6 +64,7 @@ void testEnumerate()
 			CAGE_TEST(it.cnt == i++);
 			CAGE_TEST(*it == names[it.cnt]);
 		}
+		CAGE_TEST(i == names.size());
 	}
 
 	{
@@ -65,7 +73,7 @@ void testEnumerate()
 		uint32 i = 0;
 		for (auto it : range)
 			CAGE_TEST(it.cnt == i++);
-		CAGE_TEST(i == 4);
+		CAGE_TEST(i == genStrings().size());
 	}
 
 	{
@@ -73,7 +81,7 @@ void testEnumerate()
 		uint32 i = 0;
 		for (auto it : enumerate(genStrings()))
 			CAGE_TEST(it.cnt == i++);
-		CAGE_TEST(i == 4);
+		CAGE_TEST(i == genStrings().size());
 	}
 
 	{
@@ -85,17 +93,40 @@ void testEnumerate()
 			CAGE_TEST(it.cnt == i++);
 			CAGE_TEST(*it == names[it.cnt]);
 		}
+		CAGE_TEST(i == names.size());
 	}
 
-	/*
 	{
-		CAGE_TESTCASE("initializer list");
-
-		uint32 i = 5;
-		for (auto it : enumerate({ "a", "b", "c" }))
+		CAGE_TESTCASE("c array");
+		const char *arr[] = { "a", "bb", "ccc" };
+		uint32 i = 0;
+		for (auto it : enumerate(arr))
 		{
-			// todo
+			CAGE_TEST(it.cnt == i++);
+			CAGE_TEST(*it == arr[it.cnt]);
 		}
+		CAGE_TEST(i == 3);
 	}
-	*/
+
+	{
+		CAGE_TESTCASE("pointer range");
+		uint32 i = 0;
+		for (auto it : enumerate(pointerRange<const string>(names)))
+		{
+			CAGE_TEST(it.cnt == i++);
+			CAGE_TEST(*it == names[it.cnt]);
+		}
+		CAGE_TEST(i == names.size());
+	}
+
+	{
+		CAGE_TESTCASE("holder of pointer range");
+		uint32 i = 0;
+		for (auto it : enumerate(genHolder()))
+		{
+			CAGE_TEST(it.cnt == i++);
+			CAGE_TEST(it->length() > 0);
+		}
+		CAGE_TEST(i == genStrings().size());
+	}
 }

@@ -70,10 +70,9 @@ namespace
 			return false;
 		}
 		uint32 errors = 0;
-		for (uint32 sectionIndex = 0, sectionIndexEnd = ini->sectionsCount(); sectionIndex != sectionIndexEnd; sectionIndex++)
+		for (const string &section : ini->sections())
 		{
 			// load assets group properties
-			string section = ini->section(sectionIndex);
 			string scheme = ini->getString(section, "scheme");
 			if (scheme.empty())
 			{
@@ -90,9 +89,8 @@ namespace
 			}
 
 			// find invalid properties
-			for (uint32 i = 0, e = ini->itemsCount(section); i != e; i++)
+			for (const string &item : ini->items(section))
 			{
-				string item = ini->item(section, i);
 				if (item.isDigitsOnly() || item == "scheme")
 					continue;
 				if (sch->schemeFields.find(item) == sch->schemeFields.end())
@@ -119,9 +117,9 @@ namespace
 					ass2.corrupted = true;
 					ok = false;
 				}
-				for (holderSet<assetStruct>::iterator asIt = assets.begin(), asEt = assets.end(); asIt != asEt; asIt++)
+				for (const auto &it : assets)
 				{
-					assetStruct &ass2 = *const_cast<assetStruct*>(asIt->get());
+					assetStruct &ass2 = *it;
 					if (ass2.outputPath() == ass.outputPath())
 					{
 						CAGE_LOG(severityEnum::Error, "database", string() + "asset output path collision '" + ass.name + "' in databank '" + path + "' in section '" + section + "'");
@@ -135,9 +133,8 @@ namespace
 					errors++;
 					ass.corrupted = true;
 				}
-				for (uint32 i = 0, e = ini->itemsCount(section); i != e; i++)
+				for (const string &item : ini->items(section))
 				{
-					string item = ini->item(section, i);
 					if (item.isDigitsOnly() || item == "scheme")
 						continue;
 					ass.fields[item] = ini->getString(section, item);
@@ -172,8 +169,8 @@ namespace
 			prg->writeLine(ass.databank); // assetPath
 			prg->writeLine(pathJoin(configPathScheme, ass.scheme)); // schemePath
 			prg->writeLine(string(scheme->schemeIndex)); // schemeIndex
-			for (stringMap::const_iterator it = ass.fields.begin(), et = ass.fields.end(); it != et; it++)
-				prg->writeLine(string() + it->first + "=" + it->second);
+			for (const auto &it : ass.fields)
+				prg->writeLine(string() + it.first + "=" + it.second);
 			prg->writeLine("cage-end");
 
 			bool begin = false, end = false;
@@ -294,24 +291,19 @@ namespace
 			fm.textual = true;
 			holder<fileClass> f = newFile(configPathReverse, fm);
 			std::vector <std::pair <string, const assetStruct*> > items;
-			for (holderSet <assetStruct>::iterator ita = assets.begin(), eta = assets.end(); ita != eta; ita++)
+			for (const auto &it : assets)
 			{
-				const assetStruct &ass = **ita;
-				items.push_back(std::pair <string, const assetStruct*>(ass.outputPath(), &ass));
+				const assetStruct &ass = *it;
+				items.push_back(std::pair<string, const assetStruct*>(ass.outputPath(), &ass));
 			}
-			struct cmp
-			{
-				const bool operator () (const std::pair <string, const assetStruct*> &a, const std::pair <string, const assetStruct*> &b) const
-				{
-					return a.first < b.first;
-				}
-			};
-			std::sort(items.begin(), items.end(), cmp());
+			std::sort(items.begin(), items.end(), [](const auto &a, const auto &b) {
+				return a.first < b.first;
+			});
 			f->writeLine("<hash>     <asset name>                                                 <scheme>        <databank>");
-			for (std::vector <std::pair <string, const assetStruct*> >::iterator ita = items.begin(), eta = items.end(); ita != eta; ita++)
+			for (const auto &it : items)
 			{
-				const assetStruct &ass = *ita->second;
-				write(f, ita->first.fill(10));
+				const assetStruct &ass = *it.second;
+				write(f, it.first.fill(10));
 				if (ass.corrupted)
 					write(f, "CORRUPTED");
 				write(f, ass.name.fill(60));
@@ -327,24 +319,19 @@ namespace
 			fileMode fm(false, true);
 			fm.textual = true;
 			holder<fileClass> f = newFile(configPathForward, fm);
-			std::vector <std::pair <string, const assetStruct*> > items;
-			for (holderSet <assetStruct>::iterator ita = assets.begin(), eta = assets.end(); ita != eta; ita++)
+			std::vector<std::pair<string, const assetStruct*>> items;
+			for (const auto &it : assets)
 			{
-				const assetStruct &ass = **ita;
+				const assetStruct &ass = *it;
 				items.push_back(std::pair <string, const assetStruct*>(ass.name, &ass));
 			}
-			struct cmp
-			{
-				const bool operator () (const std::pair <string, const assetStruct*> &a, const std::pair <string, const assetStruct*> &b) const
-				{
-					return a.first < b.first;
-				}
-			};
-			std::sort(items.begin(), items.end(), cmp());
+			std::sort(items.begin(), items.end(), [](const auto &a, const auto &b) {
+				return a.first < b.first;
+			});
 			f->writeLine("<hash>     <asset name>                                                 <scheme>        <databank>");
-			for (std::vector <std::pair <string, const assetStruct*> >::iterator ita = items.begin(), eta = items.end(); ita != eta; ita++)
+			for (const auto &it : items)
 			{
-				const assetStruct &ass = *ita->second;
+				const assetStruct &ass = *it.second;
 				write(f, ass.outputPath().fill(10));
 				if (ass.corrupted)
 					write(f, "CORRUPTED");
@@ -363,14 +350,14 @@ namespace
 
 	bool isNameIgnored(const string &name)
 	{
-		for (stringSet::iterator it = configIgnoreExtensions.begin(), et = configIgnoreExtensions.end(); it != et; it++)
+		for (const string &it : configIgnoreExtensions)
 		{
-			if (name.isPattern("", "", *it))
+			if (name.isPattern("", "", it))
 				return true;
 		}
-		for (stringSet::iterator it = configIgnorePaths.begin(), et = configIgnorePaths.end(); it != et; it++)
+		for (const string &it : configIgnorePaths)
 		{
-			if (name.isPattern(*it, "", ""))
+			if (name.isPattern(it, "", ""))
 				return true;
 		}
 		return false;
@@ -501,9 +488,9 @@ namespace
 		uint32 countCorrupted = 0;
 		uint32 countMissingReferences = 0;
 
-		for (holderSet<assetStruct>::iterator asIt = assets.begin(); asIt != assets.end();)
+		for (auto asIt = assets.begin(); asIt != assets.end();)
 		{
-			assetStruct &ass = *const_cast<assetStruct*>(asIt->get());
+			assetStruct &ass = **asIt;
 
 			// check for deleted, modified or corrupted databank
 			if (files.find(ass.databank) == files.end() || corruptedDbsCopy.find(ass.databank) != corruptedDbsCopy.end() || files[ass.databank] > timestamp)
@@ -513,9 +500,9 @@ namespace
 			}
 
 			// check for deleted or modified files
-			for (stringSet::iterator fIt = ass.files.begin(), fEt = ass.files.end(); fIt != fEt; fIt++)
+			for (const string &f : ass.files)
 			{
-				if (files.find(*fIt) == files.end() || files[*fIt] > timestamp)
+				if (files.find(f) == files.end() || files[f] > timestamp)
 					ass.corrupted = true;
 			}
 
@@ -524,28 +511,25 @@ namespace
 
 		// find new or modified databanks
 		uint64 newestFile = 0;
-		for (filesMap::iterator fIt = files.begin(), fEt = files.end(); fIt != fEt; fIt++)
+		for (const auto &f : files)
 		{
-			newestFile = std::max(newestFile, fIt->second);
-			if (isNameDatabank(fIt->first))
+			newestFile = std::max(newestFile, f.second);
+			if (isNameDatabank(f.first))
 			{
-				bool wasCorrupted = corruptedDbsCopy.find(fIt->first) != corruptedDbsCopy.end();
-				if (fIt->second > timestamp || wasCorrupted)
+				bool wasCorrupted = corruptedDbsCopy.find(f.first) != corruptedDbsCopy.end();
+				if (f.second > timestamp || wasCorrupted)
 				{
-					bool corrupted = !parseDatabank(fIt->first);
+					bool corrupted = !parseDatabank(f.first);
 					if (corrupted)
-						corruptedDatabanks.insert(fIt->first);
+						corruptedDatabanks.insert(f.first);
 					countBadDatabanks += corrupted;
 				}
 			}
 		}
 
 		stringSet outputHashes;
-		for (holderSet<assetStruct>::iterator asIt = assets.begin(), asEt = assets.end(); asIt != asEt; asIt++)
-		{
-			assetStruct &ass = *const_cast<assetStruct*>(asIt->get());
-			outputHashes.insert(ass.outputPath());
-		}
+		for (const auto &it : assets)
+			outputHashes.insert(it->outputPath());
 
 		{ // reprocess assets
 			itg = assets.begin();
@@ -553,9 +537,9 @@ namespace
 			CAGE_ASSERT_RUNTIME(itg == assets.end());
 		}
 
-		for (holderSet<assetStruct>::iterator asIt = assets.begin(), asEt = assets.end(); asIt != asEt; asIt++)
+		for (const auto &it : assets)
 		{
-			assetStruct &ass = *const_cast<assetStruct*>(asIt->get());
+			assetStruct &ass = *it;
 
 			// check internationalized name collisions
 			if (!ass.internationalizedName.empty() && outputHashes.find(ass.internationalizedPath()) != outputHashes.end())
@@ -566,12 +550,12 @@ namespace
 
 			// warn about missing references
 			bool anyMissing = false;
-			for (stringSet::iterator refIt = ass.references.begin(), refEt = ass.references.end(); refIt != refEt; refIt++)
+			for (const string &it : ass.references)
 			{
-				if (!assets.exists(*refIt))
+				if (!assets.exists(it))
 				{
 					anyMissing = true;
-					CAGE_LOG(severityEnum::Warning, "database", string() + "asset '" + ass.name + "' in databank '" + ass.databank + "' is missing reference '" + *refIt + "'");
+					CAGE_LOG(severityEnum::Warning, "database", string() + "asset '" + ass.name + "' in databank '" + ass.databank + "' is missing reference '" + it + "'");
 				}
 			}
 			if (anyMissing)
@@ -642,7 +626,7 @@ void start()
 {
 	// load schemes
 	loadSchemesDirectory("");
-	CAGE_LOG(severityEnum::Info, "database", string() + "Loaded " + schemes.size() + " schemes");
+	CAGE_LOG(severityEnum::Info, "database", string() + "loaded " + schemes.size() + " schemes");
 
 	// load
 	timestamp = 0;

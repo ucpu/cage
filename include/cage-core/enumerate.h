@@ -5,8 +5,8 @@ namespace cage
 {
 	namespace privat
 	{
-		template<class Container, class It1, class It2, class Counter>
-		struct enumerateStruct
+		template<class Range, class It1, class It2, class Counter>
+		struct enumerateStruct : private Range
 		{
 			template<class It>
 			struct iterator
@@ -34,6 +34,12 @@ namespace cage
 
 				iterator(It it, Counter cnt) : p(it, cnt)
 				{}
+
+				template<class U>
+				bool operator == (const iterator<U> &other) const
+				{
+					return p.it == other.p.it;
+				}
 
 				template<class U>
 				bool operator != (const iterator<U> &other) const
@@ -65,42 +71,61 @@ namespace cage
 			auto begin() { return iterator<It1>(it1, start); }
 			auto end() { return iterator<It2>(it2, start); }
 
-			enumerateStruct(Container &&cont, It1 it1, It2 it2, Counter start) : cont(templates::move(cont)), it1(it1), it2(it2), start(start)
+			enumerateStruct(Range &&range, It1 it1, It2 it2, Counter start) : Range(templates::move(range)), it1(it1), it2(it2), start(start)
 			{}
 
 		private:
-			const Container cont; // extend lifetime of the container
 			const It1 it1;
 			const It2 it2;
 			const Counter start;
 		};
+
+		// generic
+		template<class Range, class It1, class It2, class Counter>
+		inline auto enumerate(Range &&range, It1 it1, It2 it2, Counter start)
+		{
+			return privat::enumerateStruct<Range, It1, It2, Counter>(templates::move(range), it1, it2, start);
+		}
 	}
 
+	// two iterators
 	template<class It1, class It2, class Counter = uintPtr>
-	inline auto enumerate(It1 it1, It2 it2, Counter start = 0)
+	inline auto enumerate(It1 it1, It2 it2, Counter start = Counter())
 	{
 		struct none {};
-		return privat::enumerateStruct<none, It1, It2, Counter>(none(), it1, it2, start);
+		return privat::enumerate(none(), it1, it2, start);
 	}
 
-	template<class Container, class Counter = typename Container::size_type>
-	inline auto enumerate(Container &cont)
+	// l-value range
+	template<class Range, class Counter = typename Range::size_type>
+	inline auto enumerate(Range &range)
 	{
 		struct none {};
-		return privat::enumerateStruct<none, decltype(cont.begin()), decltype(cont.end()), Counter>(none(), cont.begin(), cont.end(), 0);
+		return privat::enumerate(none(), range.begin(), range.end(), Counter());
 	}
 
-	template<class Container, class Counter = typename Container::size_type>
-	inline auto enumerate(const Container &cont)
+	// const range
+	template<class Range, class Counter = typename Range::size_type>
+	inline auto enumerate(const Range &range)
 	{
 		struct none {};
-		return privat::enumerateStruct<none, decltype(cont.begin()), decltype(cont.end()), Counter>(none(), cont.begin(), cont.end(), 0);
+		return privat::enumerate(none(), range.begin(), range.end(), Counter());
 	}
 
-	template<class Container, class Counter = typename Container::size_type>
-	inline auto enumerate(Container &&cont)
+	// r-value range
+	template<class Range, class Counter = typename Range::size_type>
+	inline auto enumerate(Range &&range)
 	{
-		return privat::enumerateStruct<Container, decltype(cont.begin()), decltype(cont.end()), Counter>(templates::move(cont), cont.begin(), cont.end(), 0);
+		// we need to extend lifetime of the temporary (we take ownership of the variable)
+		return privat::enumerate(templates::move(range), range.begin(), range.end(), Counter());
+	}
+
+	// c array
+	template<class T, uintPtr N, class Counter = uintPtr>
+	inline auto enumerate(T (&range)[N])
+	{
+		struct none {};
+		return privat::enumerate(none(), range, range + N, Counter());
 	}
 }
 

@@ -14,12 +14,10 @@ void processPack()
 	ini->load(inputFileName);
 
 	std::set<uint32> assets;
-	for (uint32 sec = 0; sec < ini->sectionsCount(); sec++)
+	for (const string &section : ini->sections())
 	{
-		string section = ini->section(sec);
-		for (uint32 itm = 0; itm < ini->itemsCount(section); itm++)
+		for (const string &n : ini->items(section))
 		{
-			string n = ini->item(section, itm);
 			if (!n.isDigitsOnly())
 				CAGE_THROW_ERROR(exception, "invalid asset pack definition");
 			string v = ini->get(section, n);
@@ -34,6 +32,6 @@ void processPack()
 
 	holder<fileClass> f = newFile(outputFileName, fileMode(false, true));
 	f->write(&h, sizeof(h));
-	for (auto it = assets.begin(), et = assets.end(); it != et; it++)
-		f->write(&*it, sizeof(uint32));
+	for (uint32 it : assets)
+		f->write(&it, sizeof(uint32));
 }

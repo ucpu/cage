@@ -32,9 +32,8 @@ void schemeStruct::parse(iniClass *ini)
 		CAGE_THROW_ERROR(exception, "invalid fields in scheme section");
 	}
 
-	for (uint32 sectionIndex = 0, sectionIndexEnd = ini->sectionsCount(); sectionIndex != sectionIndexEnd; sectionIndex++)
+	for (const string &section : ini->sections())
 	{
-		string section = ini->section(sectionIndex);
 		if (section == "scheme")
 			continue;
 		schemeFieldStruct fld;
@@ -83,9 +82,9 @@ void schemeStruct::save(fileClass *f)
 	write(f, processor);
 	write(f, schemeIndex);
 	write(f, schemeFields.size());
-	for (holderSet<schemeFieldStruct>::iterator i = schemeFields.begin(), e = schemeFields.end(); i != e; i++)
+	for (const auto &it : schemeFields)
 	{
-		const schemeFieldStruct &c = **i;
+		const schemeFieldStruct &c = *it;
 		write(f, c.name);
 		write(f, c.type);
 		write(f, c.min);
@@ -98,8 +97,8 @@ void schemeStruct::save(fileClass *f)
 bool schemeStruct::applyOnAsset(assetStruct &ass)
 {
 	bool ok = true;
-	for (holderSet <schemeFieldStruct>::iterator it = schemeFields.begin(), et = schemeFields.end(); it != et; it++)
-		ok = (*it)->applyToAssetField(ass.fields[(*it)->name], ass.name) && ok;
+	for (const auto &it : schemeFields)
+		ok = it->applyToAssetField(ass.fields[it->name], ass.name) && ok;
 	return ok;
 }
 

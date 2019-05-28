@@ -52,17 +52,17 @@ void assetStruct::save(fileClass *f) const
 	write(f, scheme);
 	write(f, databank);
 	write(f, numeric_cast<uint32>(fields.size()));
-	for (stringMap::const_iterator i = fields.begin(), e = fields.end(); i != e; i++)
+	for (auto it : fields)
 	{
-		write(f, i->first);
-		write(f, i->second);
+		write(f, it.first);
+		write(f, it.second);
 	}
 	write(f, numeric_cast<uint32>(files.size()));
-	for (stringSet::const_iterator i = files.begin(), e = files.end(); i != e; i++)
-		write(f, *i);
+	for (const string &it : files)
+		write(f, it);
 	write(f, numeric_cast<uint32>(references.size()));
-	for (stringSet::const_iterator i = references.begin(), e = references.end(); i != e; i++)
-		write(f, *i);
+	for (const string &it : references)
+		write(f, it);
 	write(f, corrupted);
 }
 

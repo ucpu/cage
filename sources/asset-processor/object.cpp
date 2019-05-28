@@ -27,9 +27,8 @@ void processObject()
 	std::vector<lodStruct> lods;
 	std::set<uint32> deps;
 	uint32 totalMeshes = 0;
-	for (uint32 sec = 0; sec < ini->sectionsCount(); sec++)
+	for (const string &section : ini->sections())
 	{
-		string section = ini->section(sec);
 		if (section == "size")
 			continue;
 		else if (!section.isDigitsOnly())
@@ -40,9 +39,8 @@ void processObject()
 		lodStruct ls;
 		ls.index = section.toUint32();
 		ls.threshold = real::Nan().value;
-		for (uint32 itm = 0; itm < ini->itemsCount(section); itm++)
+		for (const string &n : ini->items(section))
 		{
-			string n = ini->item(section, itm);
 			string v = ini->get(section, n);
 			if (n.isDigitsOnly())
 			{
@@ -91,8 +89,8 @@ void processObject()
 
 	holder<fileClass> f = newFile(outputFileName, fileMode(false, true));
 	f->write(&h, sizeof(h));
-	for (auto it = deps.begin(), et = deps.end(); it != et; it++)
-		f->write(&*it, sizeof(uint32));
+	for (uint32 it : deps)
+		f->write(&it, sizeof(uint32));
 	o.lodsCount = numeric_cast<uint32>(lods.size());
 	o.meshesCount = totalMeshes;
 	f->write(&o, sizeof(o));

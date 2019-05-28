@@ -119,9 +119,8 @@ namespace
 		loadTextureCage(pathBase, dsm, ini.get(), "special", CAGE_SHADER_TEXTURE_SPECIAL);
 		loadTextureCage(pathBase, dsm, ini.get(), "normal", CAGE_SHADER_TEXTURE_NORMAL);
 
-		for (uint32 i = 0, e = ini->itemsCount("flags"); i != e; i++)
+		for (const string &n : ini->items("flags"))
 		{
-			string n = ini->item("flags", i);
 			string v = ini->get("flags", n);
 			if (v == "opacity-texture")
 			{

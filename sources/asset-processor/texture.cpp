@@ -7,6 +7,7 @@
 #include <cage-core/image.h>
 #include <cage-core/color.h>
 #include <cage-core/serialization.h>
+#include <cage-core/enumerate.h>
 
 #include <cage-client/opengl.h>
 
@@ -322,12 +323,13 @@ namespace
 			ilBindImage(im);
 			iluImageParameter(ILU_FILTER, ILU_BILINEAR);
 			images[0].resizeDevil(numeric_cast<uint32>(images.size()));
-			for (std::vector<imageLayerStruct>::iterator it = images.begin(), et = images.end(); it != et; it++)
-				it->saveToDevil(numeric_cast<uint32>(it - images.begin()));
+			//for (std::vector<imageLayerStruct>::iterator it = images.begin(), et = images.end(); it != et; it++)
+			for (auto it : enumerate(images))
+				it->saveToDevil(numeric_cast<uint32>(it.cnt));
 			if (!iluScale(max(images[0].width / downscale, 1u), max(images[0].height / downscale, 1u), max(numeric_cast<uint32>(images.size()), 1u)))
 				CAGE_THROW_ERROR(exception, "iluScale");
-			for (std::vector<imageLayerStruct>::iterator it = images.begin(), et = images.end(); it != et; it++)
-				it->loadFromDevil(numeric_cast<uint32>(it - images.begin()));
+			for (auto it : enumerate(images))
+				it->loadFromDevil(numeric_cast<uint32>(it.cnt));
 			ilBindImage(0);
 			ilDeleteImage(im);
 		}
@@ -338,9 +340,9 @@ namespace
 			ilBindImage(im);
 			iluImageParameter(ILU_FILTER, ILU_BILINEAR);
 			images[0].resizeDevil();
-			for (std::vector<imageLayerStruct>::iterator it = images.begin(), et = images.end(); it != et; it++)
+			for (auto it : enumerate(images))
 			{
-				CAGE_LOG(severityEnum::Info, logComponentName, string() + "downscaling slice: " + numeric_cast<uint32>(it - images.begin()));
+				CAGE_LOG(severityEnum::Info, logComponentName, string() + "downscaling slice: " + it.cnt);
 				it->saveToDevil();
 				if (!iluScale(max(it->width / downscale, 1u), max(it->height / downscale, 1u), 1))
 					CAGE_THROW_ERROR(exception, "iluScale");
@@ -509,8 +511,8 @@ namespace
 
 		assetHeaderStruct h = initializeAssetHeaderStruct();
 		h.originalSize = sizeof(data);
-		for (auto it = images.begin(), et = images.end(); it != et; it++)
-			h.originalSize += it->data.size();
+		for (const auto &it : images)
+			h.originalSize += it.data.size();
 
 		memoryBuffer inputBuffer;
 		inputBuffer.reserve(h.originalSize);

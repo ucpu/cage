@@ -49,6 +49,7 @@ void testTcp();
 void testUdp();
 void testUdpDiscovery();
 void testProgram();
+void testSystemInformation();
 void generatePointsOnSphere();
 
 int main()
@@ -100,6 +101,7 @@ int main()
 	testUdp();
 	testUdpDiscovery();
 	testProgram();
+	testSystemInformation();
 	pathRemove("testdir");
 
 	{

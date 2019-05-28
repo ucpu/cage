@@ -30,7 +30,7 @@ void configParseCmd(int argc, const char *args[])
 	{
 		holder<iniClass> ini = newIni();
 		ini->parseCmd(argc, args);
-		for (string option : ini->sections())
+		for (const string &option : ini->sections())
 		{
 			if (option == "s" || option == "scratch")
 			{

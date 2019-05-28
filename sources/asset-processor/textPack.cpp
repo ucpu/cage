@@ -13,12 +13,10 @@ void processTextpack()
 	ini->load(inputFileName);
 
 	std::map<string, string> texts;
-	for (uint32 sec = 0; sec < ini->sectionsCount(); sec++)
+	for (const string &section : ini->sections())
 	{
-		string section = ini->section(sec);
-		for (uint32 itm = 0; itm < ini->itemsCount(section); itm++)
+		for (string n : ini->items(section))
 		{
-			string n = ini->item(section, itm);
 			string v = ini->get(section, n);
 			if (!section.isDigitsOnly())
 				n = section + "/" + n;
@@ -36,20 +34,20 @@ void processTextpack()
 		h.internationalizedName = hashString(intr.c_str());
 	}
 	h.originalSize = sizeof(uint32) + numeric_cast<uint32>(texts.size()) * sizeof(uint32) * 2;
-	for (auto it = texts.begin(), et = texts.end(); it != et; it++)
-		h.originalSize += numeric_cast<uint32>(it->second.length());
+	for (auto it : texts)
+		h.originalSize += numeric_cast<uint32>(it.second.length());
 
 	holder<fileClass> f = newFile(outputFileName, fileMode(false, true));
 	f->write(&h, sizeof(h));
 	uint32 count = numeric_cast<uint32>(texts.size());
 	f->write(&count, sizeof(uint32));
-	for (std::map<string, string>::iterator ass = texts.begin(), asse = texts.end(); ass != asse; ass++)
+	for (auto it : texts)
 	{
-		uint32 name = hashString(ass->first.c_str());
+		uint32 name = hashString(it.first.c_str());
 		f->write(&name, sizeof(uint32));
-		uint32 len = ass->second.length();
+		uint32 len = it.second.length();
 		f->write(&len, sizeof(uint32));
-		f->write(ass->second.c_str(), len);
+		f->write(it.second.c_str(), len);
 	}
 
 	if (configGetBool("cage-asset-processor.textpack.preview"))
@@ -58,7 +56,7 @@ void processTextpack()
 		fileMode fm(false, true);
 		fm.textual = true;
 		holder<fileClass> f = newFile(dbgName, fm);
-		for (std::map <string, string>::iterator ass = texts.begin(), asse = texts.end(); ass != asse; ass++)
-			f->writeLine(string(hashString(ass->first.c_str())).fill(10) + " " + ass->first + " = " + ass->second);
+		for (auto it : texts)
+			f->writeLine(string(hashString(it.first.c_str())).fill(10) + " " + it.first + " = " + it.second);
 	}
 }

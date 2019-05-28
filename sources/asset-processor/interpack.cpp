@@ -12,13 +12,11 @@ void processInterpack()
 	ini->load(inputFileName);
 
 	std::map<uint32, std::map<string, string>> assets;
-	for (uint32 sec = 0; sec < ini->sectionsCount(); sec++)
+	for (const string &section : ini->sections())
 	{
-		string section = ini->section(sec);
 		uint32 sch = section.toUint32();
-		for (uint32 itm = 0; itm < ini->itemsCount(section); itm++)
+		for (const string &n : ini->items(section))
 		{
-			string n = ini->item(section, itm);
 			string v = ini->get(section, n);
 			v = pathJoin(pathExtractPath(inputName), v);
 			assets[sch][n] = v;
@@ -27,13 +25,13 @@ void processInterpack()
 	}
 
 	holder<fileClass> f = newFile(outputFileName, fileMode(false, true));
-	for (std::map<uint32, std::map<string, string>>::iterator sch = assets.begin(), sche = assets.end(); sch != sche; sch++)
+	for (auto sch : assets)
 	{
-		uint32 s = sch->first;
-		for (std::map<string, string>::iterator ass = sch->second.begin(), asse = sch->second.end(); ass != asse; ass++)
+		uint32 s = sch.first;
+		for (auto ass : sch.second)
 		{
-			uint32 a = hashString(ass->first.c_str());
-			uint32 b = hashString(ass->second.c_str());
+			uint32 a = hashString(ass.first.c_str());
+			uint32 b = hashString(ass.second.c_str());
 			f->write(&s, sizeof(uint32));
 			f->write(&a, sizeof(uint32));
 			f->write(&b, sizeof(uint32));
@@ -46,14 +44,14 @@ void processInterpack()
 		fileMode fm(false, true);
 		fm.textual = true;
 		holder<fileClass> f = newFile(dbgName, fm);
-		for (std::map<uint32, std::map<string, string>>::iterator sch = assets.begin(), sche = assets.end(); sch != sche; sch++)
+		for (auto sch : assets)
 		{
-			uint32 s = sch->first;
-			for (std::map<string, string>::iterator ass = sch->second.begin(), asse = sch->second.end(); ass != asse; ass++)
+			uint32 s = sch.first;
+			for (auto ass : sch.second)
 			{
-				uint32 a = hashString(ass->first.c_str());
-				uint32 b = hashString(ass->second.c_str());
-				f->writeLine(string(s).fill(2) + " " + string(a).fill(10) + " " + string(b).fill(10) + " " + ass->first + " = " + ass->second);
+				uint32 a = hashString(ass.first.c_str());
+				uint32 b = hashString(ass.second.c_str());
+				f->writeLine(string(s).fill(2) + " " + string(a).fill(10) + " " + string(b).fill(10) + " " + ass.first + " = " + ass.second);
 			}
 		}
 	}

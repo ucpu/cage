@@ -259,10 +259,10 @@ namespace
 		return 0;
 	}
 
-	bool stackIsOk(const std::vector <sint32> &stack)
+	bool stackIsOk(const std::vector<sint32> &stack)
 	{
-		for (std::vector<sint32>::const_iterator it = stack.begin(), et = stack.end(); it != et; it++)
-			if (*it != 1)
+		for (sint32 it : stack)
+			if (it != 1)
 				return false;
 		return true;
 	}
@@ -468,8 +468,8 @@ void processShader()
 		uint32 y, M, d, h, m, s;
 		detail::getSystemDateTime(y, M, d, h, m, s);
 		prepend += string() + "// " + detail::formatDateTime(y, M, d, h, m, s) + "\n";
-		for (std::map <string, std::string>::iterator it = codes.begin(), et = codes.end(); it != et; it++)
-			codes[it->first] = std::string(prepend.c_str(), prepend.length()) + it->second;
+		for (auto &it : codes)
+			it.second = std::string(prepend.c_str(), prepend.length()) + it.second;
 	}
 
 	{
