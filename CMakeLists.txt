@@ -106,15 +106,15 @@ cage_ide_sort_files(cage-asset-database)
 cage_ide_working_dir_in_place(cage-asset-database)
 
 ########
-# CAGE-COMBINE-IMAGE
+# CAGE-IMAGE
 ########
 
-file(GLOB_RECURSE cage-combine-image-sources "sources/combine-image/*")
-add_executable(cage-combine-image ${cage-combine-image-sources})
-target_link_libraries(cage-combine-image cage-core)
-cage_ide_category(cage-combine-image cage)
-cage_ide_sort_files(cage-combine-image)
-cage_ide_working_dir_in_place(cage-combine-image)
+file(GLOB_RECURSE cage-image-sources "sources/image/*")
+add_executable(cage-image ${cage-image-sources})
+target_link_libraries(cage-image cage-core)
+cage_ide_category(cage-image cage)
+cage_ide_sort_files(cage-image)
+cage_ide_working_dir_in_place(cage-image)
 
 ########
 # FINALIZATION
