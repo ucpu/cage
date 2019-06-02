@@ -116,7 +116,7 @@ namespace cage
 #elif defined(CAGE_SYSTEM_MAC)
 					version += "mac";
 #else
-	#error unknown platform
+#error unknown platform
 #endif // CAGE_SYSTEM_WINDOWS
 					version += ", ";
 
@@ -135,9 +135,14 @@ namespace cage
 
 				CAGE_LOG(severityEnum::Info, "log", string() + "process id: " + processId());
 
-				uint32 y, M, d, h, m, s;
-				detail::getSystemDateTime(y, M, d, h, m, s);
-				CAGE_LOG(severityEnum::Info, "log", string() + "current time: " + detail::formatDateTime(y, M, d, h, m, s));
+				{
+					uint32 y, M, d, h, m, s;
+					detail::getSystemDateTime(y, M, d, h, m, s);
+					CAGE_LOG(severityEnum::Info, "log", string() + "current time: " + detail::formatDateTime(y, M, d, h, m, s));
+				}
+
+				CAGE_LOG(severityEnum::Info, "log", string() + "executable path: " + detail::getExecutableFullPath());
+				CAGE_LOG(severityEnum::Info, "log", string() + "working directory: " + pathWorkingDir());
 
 				if (confDetailedInfo)
 				{
