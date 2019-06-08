@@ -72,7 +72,32 @@ void testFiles()
 		while (fs->valid())
 		{
 			if (fs->name() == "files")
-				found = fs->isDirectory();
+			{
+				CAGE_TEST(fs->isDirectory());
+				found = true;
+			}
+			fs->next();
+		}
+		CAGE_TEST(found);
+	}
+
+	{
+		CAGE_TESTCASE("list directory - test empty file");
+		{
+			auto f = newFile("testdir/empty.txt", fileMode(false, true));
+			//f->writeLine("haha");
+		}
+		holder<directoryListClass> fs = newDirectoryList("testdir");
+		CAGE_TEST(fs);
+		bool found = false;
+		while (fs->valid())
+		{
+			if (fs->name() == "empty.txt")
+			{
+				CAGE_TEST(any(fs->type() & pathTypeFlags::File));
+				CAGE_TEST(!fs->isDirectory());
+				found = true;
+			}
 			fs->next();
 		}
 		CAGE_TEST(found);

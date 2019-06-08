@@ -72,9 +72,9 @@ namespace cage
 			if (matchExact)
 			{
 				pathTypeFlags t = realType(path);
-				if ((t & pathTypeFlags::File) == pathTypeFlags::File)
+				if (any(t & pathTypeFlags::File))
 					return archiveTryGet(path);
-				if ((t & pathTypeFlags::NotFound) == pathTypeFlags::None)
+				if (none(t & pathTypeFlags::NotFound))
 					return {}; // the path exists (most likely a directory) and is not an archive
 			}
 			if (pathExtractPathNoDrive(path) == "/")
@@ -109,7 +109,7 @@ namespace cage
 			{
 				mutex = newMutex();
 				realCreateDirectories(pathJoin(path, ".."));
-				zip = zip_open(path.c_str(), ZIP_CREATE, nullptr);
+				zip = zip_open(path.c_str(), ZIP_CREATE | ZIP_EXCL, nullptr);
 				if (!zip)
 					CAGE_THROW_ERROR(exception, "zip_open");
 				static const string comment = "Archive created by Cage";
@@ -121,7 +121,9 @@ namespace cage
 			archiveZip(const string &path) : archiveVirtual(path), zip(nullptr)
 			{
 				mutex = newMutex();
-				zip = zip_open(path.c_str(), 0, nullptr);
+				if (newFile(path, fileMode(true, false))->size() == 0)
+					CAGE_THROW_ERROR(exception, "empty file"); // this is a temporary workaround until it is improved in the libzip
+				zip = zip_open(path.c_str(), ZIP_CHECKCONS, nullptr);
 				if (!zip)
 					CAGE_THROW_ERROR(exception, "zip_open");
 			}

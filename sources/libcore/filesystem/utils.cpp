@@ -98,7 +98,7 @@ namespace cage
 
 	bool directoryListClass::isDirectory() const
 	{
-		return (type() & (pathTypeFlags::Directory | pathTypeFlags::Archive)) != pathTypeFlags::None;
+		return any(type() & (pathTypeFlags::Directory | pathTypeFlags::Archive));
 	}
 
 	uint64 directoryListClass::lastChange() const
