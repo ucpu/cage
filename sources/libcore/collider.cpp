@@ -183,7 +183,7 @@ namespace cage
 		return numeric_cast<uint32>(impl->tris.size());
 	}
 
-	const triangle *colliderClass::triangleData() const
+	const triangle *colliderClass::trianglesData() const
 	{
 		collisionObjectImpl *impl = (collisionObjectImpl*)this;
 		return impl->tris.data();

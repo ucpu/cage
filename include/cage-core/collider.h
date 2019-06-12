@@ -7,8 +7,8 @@ namespace cage
 	{
 	public:
 		uint32 trianglesCount() const;
+		const triangle *trianglesData() const;
 		const triangle &triangleData(uint32 idx) const;
-		const triangle *triangleData() const;
 		pointerRange<const triangle> triangles() const;
 
 		void addTriangle(const triangle &t);
