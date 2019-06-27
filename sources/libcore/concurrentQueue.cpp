@@ -1,7 +1,8 @@
-#include <deque>
+#include <list>
 
 #define CAGE_EXPORT
 #include <cage-core/core.h>
+#include <cage-core/log.h>
 #include <cage-core/memory.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/concurrentQueue.h>
@@ -10,12 +11,18 @@ namespace cage
 {
 	concurrentQueueCreateConfig::concurrentQueueCreateConfig() : arena(detail::systemArena()), maxElements(1000) {}
 
+	namespace detail
+	{
+		concurrentQueueTerminatedException::concurrentQueueTerminatedException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept : exception(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER)
+		{};
+	}
+
 	namespace
 	{
 		class concurrentQueueImpl : public privat::concurrentQueuePriv
 		{
 		public:
-			concurrentQueueImpl(const concurrentQueueCreateConfig &config) : maxItems(config.maxElements)
+			concurrentQueueImpl(const concurrentQueueCreateConfig &config) : maxItems(config.maxElements), stop(false)
 			{
 				mutex = newMutex();
 				writer = newConditionalBase();
@@ -34,6 +41,8 @@ namespace cage
 				scopeLock<mutexClass> sl(mutex);
 				while (true)
 				{
+					if (stop)
+						CAGE_THROW_SILENT(detail::concurrentQueueTerminatedException, "concurrent queue terminated");
 					if (items.size() >= maxItems)
 						writer->wait(sl);
 					else
@@ -48,6 +57,8 @@ namespace cage
 			bool tryPush(void *value)
 			{
 				scopeLock<mutexClass> sl(mutex);
+				if (stop)
+					CAGE_THROW_SILENT(detail::concurrentQueueTerminatedException, "concurrent queue terminated");
 				if (items.size() < maxItems)
 				{
 					items.push_back(value);
@@ -62,6 +73,8 @@ namespace cage
 				scopeLock<mutexClass> sl(mutex);
 				while (true)
 				{
+					if (stop)
+						CAGE_THROW_SILENT(detail::concurrentQueueTerminatedException, "concurrent queue terminated");
 					if (items.empty())
 						reader->wait(sl);
 					else
@@ -77,6 +90,8 @@ namespace cage
 			bool tryPop(void *&value)
 			{
 				scopeLock<mutexClass> sl(mutex);
+				if (stop)
+					CAGE_THROW_SILENT(detail::concurrentQueueTerminatedException, "concurrent queue terminated");
 				if (!items.empty())
 				{
 					value = items.front();
@@ -87,10 +102,33 @@ namespace cage
 				return false;
 			}
 
+			bool tryPopNoStop(void *&value)
+			{
+				scopeLock<mutexClass> sl(mutex);
+				if (!items.empty())
+				{
+					value = items.front();
+					items.pop_front();
+					return true;
+				}
+				return false;
+			}
+
+			void terminate()
+			{
+				{
+					scopeLock<mutexClass> sl(mutex);
+					stop = true;
+				}
+				writer->broadcast();
+				reader->broadcast();
+			}
+
 			holder<mutexClass> mutex;
 			holder<conditionalBaseClass> writer, reader;
-			std::deque<void*> items;
+			std::list<void*> items;
 			uint32 maxItems;
+			bool stop;
 		};
 	}
 
@@ -120,10 +158,28 @@ namespace cage
 			return impl->tryPop(value);
 		}
 
+		bool concurrentQueuePriv::tryPopNoStop(void *&value)
+		{
+			concurrentQueueImpl *impl = (concurrentQueueImpl *)this;
+			return impl->tryPopNoStop(value);
+		}
+
 		uint32 concurrentQueuePriv::estimatedSize() const
 		{
 			concurrentQueueImpl *impl = (concurrentQueueImpl *)this;
 			return numeric_cast<uint32>(impl->items.size());
+		}
+
+		void concurrentQueuePriv::terminate()
+		{
+			concurrentQueueImpl *impl = (concurrentQueueImpl *)this;
+			impl->terminate();
+		}
+
+		bool concurrentQueuePriv::stopped() const
+		{
+			concurrentQueueImpl *impl = (concurrentQueueImpl *)this;
+			return impl->stop;
 		}
 
 		holder<concurrentQueuePriv> newConcurrentQueue(const concurrentQueueCreateConfig &config)

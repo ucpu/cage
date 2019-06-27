@@ -60,6 +60,11 @@ namespace cage
 			assetSchemePrivateStruct() : typeSize(0) {}
 		};
 
+		void destroy(assetContextPrivateStruct *ptr)
+		{
+			detail::systemArena().destroy<assetContextPrivateStruct>(ptr);
+		}
+
 		class assetManagerImpl : public assetManagerClass
 		{
 		public:
@@ -79,6 +84,13 @@ namespace cage
 			uint32 hackQueueWaitCounter; // it is desirable to process as many items from the queue in single tick, however, since the items are being pushed back to the same queue, some form of termination mechanism must be provided
 			uint32 generateName;
 			std::atomic<bool> destroying;
+
+			holder<concurrentQueueClass<assetContextPrivateStruct*>> createQueue()
+			{
+				concurrentQueueCreateConfig tsqc;
+				tsqc.maxElements = m;
+				return newConcurrentQueue<assetContextPrivateStruct*>(tsqc, delegate<void(assetContextPrivateStruct*)>().bind<&destroy>());
+			}
 
 			assetManagerImpl(const assetManagerCreateConfig &config) : countTotal(0), countProcessing(0), hackQueueWaitCounter(0), generateName(0), destroying(false)
 			{
@@ -104,18 +116,16 @@ namespace cage
 				schemes.resize(config.schemeMaxCount);
 				queueCustomLoad.reserve(config.threadMaxCount);
 				queueCustomDone.reserve(config.threadMaxCount);
-				concurrentQueueCreateConfig tsqc;
-				tsqc.maxElements = m;
 				for (uint32 i = 0; i < config.threadMaxCount; i++)
 				{
-					queueCustomLoad.push_back(newConcurrentQueue<assetContextPrivateStruct*>(tsqc));
-					queueCustomDone.push_back(newConcurrentQueue<assetContextPrivateStruct*>(tsqc));
+					queueCustomLoad.push_back(createQueue());
+					queueCustomDone.push_back(createQueue());
 				}
-				queueLoadFile = newConcurrentQueue<assetContextPrivateStruct*>(tsqc);
-				queueDecompression = newConcurrentQueue<assetContextPrivateStruct*>(tsqc);
-				queueAddDependencies = newConcurrentQueue<assetContextPrivateStruct*>(tsqc);
-				queueWaitDependencies = newConcurrentQueue<assetContextPrivateStruct*>(tsqc);
-				queueRemoveDependencies = newConcurrentQueue<assetContextPrivateStruct*>(tsqc);
+				queueLoadFile = createQueue();
+				queueDecompression = createQueue();
+				queueAddDependencies = createQueue();
+				queueWaitDependencies = createQueue();
+				queueRemoveDependencies = createQueue();
 				loadingThread = newThread(delegate<void()>().bind<assetManagerImpl, &assetManagerImpl::loadingThreadEntry>(this), "asset disk io");
 				decompressionThread = newThread(delegate<void()>().bind<assetManagerImpl, &assetManagerImpl::decompressionThreadEntry>(this), "asset decompression");
 			}

@@ -55,7 +55,7 @@ namespace cage
 	{
 		if (severity < detail::getExceptionSilenceSeverity())
 			return *this;
-		GCHL_EXCEPTION_GENERATE_LOG("invalid utf8 string");
+		GCHL_EXCEPTION_GENERATE_LOG(string("utf8 error: '") + message + "'");
 		return *this;
 	};
 

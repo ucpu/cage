@@ -253,5 +253,7 @@ namespace cage
 		CAGE_ASSERT_COMPILE(detail::numeric_limits<sint32>::max() == std::numeric_limits<sint32>::max(), assert_numeric_limits);
 		CAGE_ASSERT_COMPILE(detail::numeric_limits<uint64>::min() == std::numeric_limits<uint64>::min(), assert_numeric_limits);
 		CAGE_ASSERT_COMPILE(detail::numeric_limits<sint64>::max() == std::numeric_limits<sint64>::max(), assert_numeric_limits);
+
+		CAGE_ASSERT_COMPILE(sizeof(bool) == 1, assert_size_bool);
 	}
 }

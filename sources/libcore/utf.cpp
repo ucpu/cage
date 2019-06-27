@@ -13,7 +13,7 @@ namespace utf8
 #endif
 
 #define TRY_BEGIN try
-#define TRY_END catch (const std::exception &) { CAGE_THROW_ERROR(utf8Exception, "Invalid utf-8 string"); }
+#define TRY_END catch (const std::exception &e) { CAGE_THROW_ERROR(utf8Exception, e.what()); }
 
 namespace cage
 {
