@@ -79,7 +79,7 @@ namespace cage
 
 		std::atomic<severityEnum> &globalExceptionSilenceSeverity()
 		{
-			static std::atomic<severityEnum> sev = (severityEnum)0;
+			static std::atomic<severityEnum> sev = { (severityEnum)0 };
 			return sev;
 		}
 	}

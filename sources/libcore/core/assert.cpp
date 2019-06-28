@@ -35,13 +35,13 @@ namespace cage
 
 		std::atomic<bool> &isGlobalBreakpointEnabled()
 		{
-			static std::atomic<bool> is = true;
+			static std::atomic<bool> is = { true };
 			return is;
 		}
 
 		std::atomic<bool> &isGlobalAssertDeadly()
 		{
-			static std::atomic<bool> is = true;
+			static std::atomic<bool> is = { true };
 			return is;
 		}
 
