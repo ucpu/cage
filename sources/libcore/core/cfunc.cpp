@@ -67,7 +67,8 @@ namespace cage
 	{
 		namespace
 		{
-			template<class T> void genericScan(const char *s, T &value)
+			template<class T>
+			void genericScan(const char *s, T &value)
 			{
 				errno = 0;
 				char *e = nullptr;
@@ -92,7 +93,8 @@ namespace cage
 				}
 			}
 
-			template<> void genericScan<sint64>(const char *s, sint64 &value)
+			template<>
+			void genericScan<sint64>(const char *s, sint64 &value)
 			{
 				errno = 0;
 				char *e = nullptr;
@@ -104,7 +106,8 @@ namespace cage
 				}
 			}
 
-			template<> void genericScan<uint64>(const char *s, uint64 &value)
+			template<>
+			void genericScan<uint64>(const char *s, uint64 &value)
 			{
 				errno = 0;
 				char *e = nullptr;
@@ -116,7 +119,8 @@ namespace cage
 				}
 			}
 
-			template<> void genericScan<double>(const char *s, double &value)
+			template<>
+			void genericScan<double>(const char *s, double &value)
 			{
 				errno = 0;
 				char *e = nullptr;
@@ -129,7 +133,8 @@ namespace cage
 				value = v;
 			}
 
-			template<> void genericScan<float>(const char *s, float &value)
+			template<>
+			void genericScan<float>(const char *s, float &value)
 			{
 				double v;
 				genericScan(s, v);

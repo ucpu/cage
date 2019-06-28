@@ -9,7 +9,7 @@
 
 namespace cage
 {
-	concurrentQueueCreateConfig::concurrentQueueCreateConfig() : arena(detail::systemArena()), maxElements(1000) {}
+	concurrentQueueCreateConfig::concurrentQueueCreateConfig() : arena(detail::systemArena()), maxElements(m) {}
 
 	namespace detail
 	{
@@ -124,7 +124,13 @@ namespace cage
 				reader->broadcast();
 			}
 
-			holder<mutexClass> mutex;
+			bool stopped() const
+			{
+				scopeLock<mutexClass> sl(mutex); // mandate memory barriers
+				return stop;
+			}
+
+			mutable holder<mutexClass> mutex;
 			holder<conditionalBaseClass> writer, reader;
 			std::list<void*> items;
 			uint32 maxItems;
@@ -179,7 +185,7 @@ namespace cage
 		bool concurrentQueuePriv::stopped() const
 		{
 			concurrentQueueImpl *impl = (concurrentQueueImpl *)this;
-			return impl->stop;
+			return impl->stopped();
 		}
 
 		holder<concurrentQueuePriv> newConcurrentQueue(const concurrentQueueCreateConfig &config)

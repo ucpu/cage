@@ -62,7 +62,8 @@ namespace cage
 
 		void destroy(assetContextPrivateStruct *ptr)
 		{
-			detail::systemArena().destroy<assetContextPrivateStruct>(ptr);
+			// these pointers are owned by the hash map, not by the concurrent queues
+			ptr->error = true;
 		}
 
 		class assetManagerImpl : public assetManagerClass
@@ -87,9 +88,7 @@ namespace cage
 
 			holder<concurrentQueueClass<assetContextPrivateStruct*>> createQueue()
 			{
-				concurrentQueueCreateConfig tsqc;
-				tsqc.maxElements = m;
-				return newConcurrentQueue<assetContextPrivateStruct*>(tsqc, delegate<void(assetContextPrivateStruct*)>().bind<&destroy>());
+				return newConcurrentQueue<assetContextPrivateStruct*>({}, delegate<void(assetContextPrivateStruct*)>().bind<&destroy>());
 			}
 
 			assetManagerImpl(const assetManagerCreateConfig &config) : countTotal(0), countProcessing(0), hackQueueWaitCounter(0), generateName(0), destroying(false)

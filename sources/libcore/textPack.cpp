@@ -25,8 +25,6 @@ namespace cage
 			}
 			else
 				mid = "";
-			//if (prev.length() + mid.length() + res.length() >= string::MaxLength)
-			//	CAGE_THROW_ERROR(exception, "string too long");
 			res = prev + mid + res;
 		}
 	}

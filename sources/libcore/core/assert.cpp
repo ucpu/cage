@@ -13,45 +13,62 @@
 
 #include <limits>
 #include <exception>
+#include <atomic>
 
 namespace cage
 {
-	namespace detail
+	namespace
 	{
-		namespace
+		struct IsLocal
 		{
-			thread_local struct IsLocal
-			{
-				bool breakpointEnabled;
-				bool assertDeadly;
-				IsLocal() : breakpointEnabled(true), assertDeadly(true)
-				{}
-			} isLocal;
-			bool isGlobalBreakpointEnabled = true;
-			bool isGlobalAssertDeadly = true;
+			bool breakpointEnabled;
+			bool assertDeadly;
+			IsLocal() : breakpointEnabled(true), assertDeadly(true)
+			{}
+		};
 
-#ifndef CAGE_SYSTEM_WINDOWS
-			bool isDebuggingImpl()
-			{
-				// another attempt, another failure
-				//if (ptrace(PTRACE_TRACEME, 0, 1, 0) < 0)
-				//	return true;
-				// seriously, how can anyone use linux?
-				return false;
-			}
-#endif
-
-			bool isDebugging()
-			{
-#ifdef CAGE_SYSTEM_WINDOWS
-				return IsDebuggerPresent();
-#else
-				static bool underDebugger = isDebuggingImpl();
-				return underDebugger;
-#endif
-			}
+		IsLocal &isLocal()
+		{
+			thread_local IsLocal is;
+			return is;
 		}
 
+		std::atomic<bool> &isGlobalBreakpointEnabled()
+		{
+			static std::atomic<bool> is = true;
+			return is;
+		}
+
+		std::atomic<bool> &isGlobalAssertDeadly()
+		{
+			static std::atomic<bool> is = true;
+			return is;
+		}
+
+#ifndef CAGE_SYSTEM_WINDOWS
+		bool isDebuggingImpl()
+		{
+			// another attempt, another failure
+			//if (ptrace(PTRACE_TRACEME, 0, 1, 0) < 0)
+			//	return true;
+			// seriously, how can anyone use linux?
+			return false;
+		}
+#endif
+
+		bool isDebugging()
+		{
+#ifdef CAGE_SYSTEM_WINDOWS
+			return IsDebuggerPresent();
+#else
+			static bool underDebugger = isDebuggingImpl();
+			return underDebugger;
+#endif
+		}
+	}
+
+	namespace detail
+	{
 		void terminate()
 		{
 			debugOutput("invoking terminate");
@@ -73,7 +90,7 @@ namespace cage
 
 		void debugBreakpoint()
 		{
-			if (!isLocal.breakpointEnabled || !isGlobalBreakpointEnabled)
+			if (!isLocal().breakpointEnabled || !isGlobalBreakpointEnabled())
 				return;
 			if (!isDebugging())
 				return;
@@ -84,34 +101,34 @@ namespace cage
 #endif
 		}
 
-		overrideBreakpoint::overrideBreakpoint(bool enable) : original(isLocal.breakpointEnabled)
+		overrideBreakpoint::overrideBreakpoint(bool enable) : original(isLocal().breakpointEnabled)
 		{
-			isLocal.breakpointEnabled = enable;
+			isLocal().breakpointEnabled = enable;
 		}
 
 		overrideBreakpoint::~overrideBreakpoint()
 		{
-			isLocal.breakpointEnabled = original;
+			isLocal().breakpointEnabled = original;
 		}
 
-		overrideAssert::overrideAssert(bool deadly) : original(isLocal.assertDeadly)
+		overrideAssert::overrideAssert(bool deadly) : original(isLocal().assertDeadly)
 		{
-			isLocal.assertDeadly = deadly;
+			isLocal().assertDeadly = deadly;
 		}
 
 		overrideAssert::~overrideAssert()
 		{
-			isLocal.assertDeadly = original;
+			isLocal().assertDeadly = original;
 		}
 
 		void setGlobalBreakpointOverride(bool enable)
 		{
-			isGlobalBreakpointEnabled = enable;
+			isGlobalBreakpointEnabled() = enable;
 		}
 
 		void setGlobalAssertOverride(bool enable)
 		{
-			isGlobalAssertDeadly = enable;
+			isGlobalAssertDeadly() = enable;
 		}
 	}
 
@@ -153,7 +170,7 @@ namespace cage
 			if (valid)
 				return;
 
-			if (detail::isLocal.assertDeadly && detail::isGlobalAssertDeadly)
+			if (isLocal().assertDeadly && isGlobalAssertDeadly())
 				detail::terminate();
 			else
 				CAGE_THROW_CRITICAL(exception, "assert failure");

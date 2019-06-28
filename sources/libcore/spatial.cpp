@@ -4,7 +4,6 @@
 #include <array>
 
 #define CAGE_EXPORT
-//#define CAGE_ASSERT_ENABLED 1
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>

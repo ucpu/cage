@@ -1,5 +1,6 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
+#include <cage-core/log.h>
 #include <cage-core/utf.h>
 
 #ifdef CAGE_DEBUG
@@ -17,6 +18,17 @@ namespace utf8
 
 namespace cage
 {
+	utf8Exception::utf8Exception(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept : exception(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER)
+	{};
+
+	utf8Exception &utf8Exception::log()
+	{
+		if (severity < detail::getExceptionSilenceSeverity())
+			return *this;
+		GCHL_EXCEPTION_GENERATE_LOG(string("utf8 error: '") + message + "'");
+		return *this;
+	};
+
 	bool valid(const char *str)
 	{
 		return valid(str, numeric_cast<uint32>(detail::strlen(str)));

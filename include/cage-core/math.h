@@ -63,7 +63,7 @@ namespace cage
 		real clamp(real minimal, real maximal) const { CAGE_ASSERT_RUNTIME(minimal <= maximal, value, minimal.value, maximal.value); return value < minimal.value ? minimal : value > maximal.value ? maximal : value; }
 		real abs() const { if (value < 0) return -value; return value; }
 		sint32 sign() const { if (*this > 0) return 1; else if (*this < 0) return -1; else return 0; }
-		bool valid() const { return value == value; }
+		bool valid() const;
 		bool finite() const { return valid() && *this != real::Infinity() && *this != -real::Infinity(); }
 		real sqrt() const;
 		real pow(real power) const;

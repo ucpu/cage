@@ -3,6 +3,7 @@
 
 #define CAGE_EXPORT
 #include <cage-core/core.h>
+#include <cage-core/log.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/threadPool.h>
 
@@ -13,15 +14,15 @@ namespace cage
 		class threadPoolImpl : public threadPoolClass
 		{
 		public:
-			std::vector<holder<threadClass>> thrs;
 			holder<barrierClass> barrier1;
 			holder<barrierClass> barrier2;
 			holder<mutexClass> mutex;
 			std::exception_ptr exptr;
+			std::vector<holder<threadClass>> thrs;
 			uint32 threadIndexInitializer, threadsCount;
-			volatile bool ending;
+			bool ending;
 
-			threadPoolImpl(const string threadNames, uint32 threads) : threadIndexInitializer(0), threadsCount(threads ? threads : processorsCount()), ending(false)
+			threadPoolImpl(const string &threadNames, uint32 threads) : threadIndexInitializer(0), threadsCount(threads == m ? processorsCount() : threads), ending(false)
 			{
 				barrier1 = newBarrier(threadsCount + 1);
 				barrier2 = newBarrier(threadsCount + 1);
@@ -57,7 +58,9 @@ namespace cage
 					catch (...)
 					{
 						scopeLock<mutexClass> l(mutex);
-						if (!exptr)
+						if (exptr)
+							CAGE_LOG(severityEnum::Warning, "thread-pool", "discarding an exception caught in a thread pool");
+						else
 							exptr = std::current_exception();
 					}
 					{ scopeLock<barrierClass> l(barrier2); }
@@ -66,6 +69,12 @@ namespace cage
 
 			void run()
 			{
+				if (threadsCount == 0)
+				{
+					function(0, 1);
+					return;
+				}
+
 				{ scopeLock<barrierClass> l(barrier1); }
 				{ scopeLock<barrierClass> l(barrier2); }
 				if (exptr)
@@ -80,7 +89,7 @@ namespace cage
 		impl->run();
 	}
 
-	holder<threadPoolClass> newThreadPool(const string threadNames, uint32 threadsCount)
+	holder<threadPoolClass> newThreadPool(const string &threadNames, uint32 threadsCount)
 	{
 		return detail::systemArena().createImpl<threadPoolClass, threadPoolImpl>(threadNames, threadsCount);
 	}

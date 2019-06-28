@@ -335,7 +335,6 @@ namespace cage
 		}
 	}
 
-
 	real imageClass::get1(uint32 x, uint32 y) const
 	{
 		pngBufferImpl *impl = (pngBufferImpl*)this;

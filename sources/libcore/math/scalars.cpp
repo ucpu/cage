@@ -56,6 +56,11 @@ namespace cage
 		return rads::Nan();
 	}
 
+	bool real::valid() const
+	{
+		return !std::isnan(value);
+	}
+
 	real real::sqrt() const
 	{
 		return ::sqrt(value);

@@ -35,14 +35,14 @@ namespace cage
 
 #ifdef CAGE_SYSTEM_WINDOWS
 
-		const LARGE_INTEGER frequencyInitializer()
+		LARGE_INTEGER frequencyInitializer()
 		{
 			LARGE_INTEGER freq;
 			QueryPerformanceFrequency(&freq);
 			return freq;
 		}
 
-		const LARGE_INTEGER frequency()
+		LARGE_INTEGER frequency()
 		{
 			static LARGE_INTEGER freq = frequencyInitializer();
 			return freq;
@@ -50,7 +50,7 @@ namespace cage
 
 #else
 
-		const uint64 convert(const struct timespec &t)
+		uint64 convert(const struct timespec &t)
 		{
 			return t.tv_sec * 1000000 + t.tv_nsec / 1000;
 		}
@@ -134,7 +134,7 @@ namespace cage
 
 		namespace
 		{
-			inline string fill(uint32 a)
+			string fill(uint32 a)
 			{
 				if (a < 10)
 					return string() + "0" + a;

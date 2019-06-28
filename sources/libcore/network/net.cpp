@@ -2,6 +2,17 @@
 
 namespace cage
 {
+	disconnectedException::disconnectedException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept : exception(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER)
+	{};
+
+	disconnectedException &disconnectedException::log()
+	{
+		if (severity < detail::getExceptionSilenceSeverity())
+			return *this;
+		GCHL_EXCEPTION_GENERATE_LOG(message);
+		return *this;
+	};
+
 	namespace privat
 	{
 		addr::addr() : addrlen(0)

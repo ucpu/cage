@@ -2,17 +2,10 @@
 #include <cage-core/core.h>
 #include <cage-core/log.h>
 
+#include <atomic>
+
 namespace cage
 {
-	namespace detail
-	{
-		namespace
-		{
-			thread_local severityEnum localExceptionSilenceSeverity = (severityEnum)0;
-			severityEnum globalExceptionSilenceSeverity = (severityEnum)0;
-		}
-	}
-
 	// exception
 
 	exception::exception(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept :
@@ -46,32 +39,6 @@ namespace cage
 		return *this;
 	};
 
-	// utf8Exception
-
-	utf8Exception::utf8Exception(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept : exception(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER)
-	{};
-
-	utf8Exception &utf8Exception::log()
-	{
-		if (severity < detail::getExceptionSilenceSeverity())
-			return *this;
-		GCHL_EXCEPTION_GENERATE_LOG(string("utf8 error: '") + message + "'");
-		return *this;
-	};
-
-	// disconnectedException
-
-	disconnectedException::disconnectedException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept : exception(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER)
-	{};
-
-	disconnectedException &disconnectedException::log()
-	{
-		if (severity < detail::getExceptionSilenceSeverity())
-			return *this;
-		GCHL_EXCEPTION_GENERATE_LOG(message);
-		return *this;
-	};
-
 	// outOfMemoryException
 
 	outOfMemoryException::outOfMemoryException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uintPtr memory) noexcept : exception(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER), memory(memory)
@@ -102,26 +69,41 @@ namespace cage
 
 	// overrides
 
+	namespace
+	{
+		severityEnum &localExceptionSilenceSeverity()
+		{
+			thread_local severityEnum sev = (severityEnum)0;
+			return sev;
+		}
+
+		std::atomic<severityEnum> &globalExceptionSilenceSeverity()
+		{
+			static std::atomic<severityEnum> sev = (severityEnum)0;
+			return sev;
+		}
+	}
+
 	namespace detail
 	{
-		overrideException::overrideException(severityEnum severity) : original(localExceptionSilenceSeverity)
+		overrideException::overrideException(severityEnum severity) : original(localExceptionSilenceSeverity())
 		{
-			localExceptionSilenceSeverity = severity;
+			localExceptionSilenceSeverity() = severity;
 		}
 
 		overrideException::~overrideException()
 		{
-			localExceptionSilenceSeverity = original;
+			localExceptionSilenceSeverity() = original;
 		}
 
 		void setGlobalExceptionOverride(severityEnum severity)
 		{
-			globalExceptionSilenceSeverity = severity;
+			globalExceptionSilenceSeverity() = severity;
 		}
 
 		severityEnum getExceptionSilenceSeverity()
 		{
-			return localExceptionSilenceSeverity > globalExceptionSilenceSeverity ? localExceptionSilenceSeverity : globalExceptionSilenceSeverity;
+			return localExceptionSilenceSeverity() > (severityEnum)globalExceptionSilenceSeverity() ? localExceptionSilenceSeverity() : (severityEnum)globalExceptionSilenceSeverity();
 		}
 	}
 }

@@ -153,18 +153,6 @@ namespace cage
 		virtual notImplementedException &log();
 	};
 
-	struct CAGE_API utf8Exception : public exception
-	{
-		utf8Exception(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept;
-		virtual utf8Exception &log();
-	};
-
-	struct CAGE_API disconnectedException : public exception
-	{
-		disconnectedException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept;
-		virtual disconnectedException &log();
-	};
-
 	struct CAGE_API outOfMemoryException : public exception
 	{
 		outOfMemoryException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uintPtr memory) noexcept;

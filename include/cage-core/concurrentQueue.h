@@ -114,7 +114,8 @@ namespace cage
 			void *tmp = nullptr;
 			while (queue->tryPopNoStop(tmp))
 			{
-				deleter((T*)tmp);
+				if (deleter)
+					deleter((T*)tmp);
 			}
 		}
 

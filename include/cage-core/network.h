@@ -3,6 +3,12 @@
 
 namespace cage
 {
+	struct CAGE_API disconnectedException : public exception
+	{
+		disconnectedException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept;
+		virtual disconnectedException &log();
+	};
+
 	// tcp
 
 	class CAGE_API tcpConnectionClass
