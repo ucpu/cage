@@ -10,13 +10,10 @@ namespace cage
 		concurrentQueueCreateConfig();
 	};
 
-	namespace detail
+	struct CAGE_API concurrentQueueTerminatedException : public exception
 	{
-		struct CAGE_API concurrentQueueTerminatedException : public exception
-		{
-			concurrentQueueTerminatedException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept;
-		};
-	}
+		concurrentQueueTerminatedException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept;
+	};
 
 	namespace privat
 	{

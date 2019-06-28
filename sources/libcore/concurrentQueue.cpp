@@ -11,11 +11,8 @@ namespace cage
 {
 	concurrentQueueCreateConfig::concurrentQueueCreateConfig() : arena(detail::systemArena()), maxElements(m) {}
 
-	namespace detail
-	{
-		concurrentQueueTerminatedException::concurrentQueueTerminatedException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept : exception(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER)
-		{};
-	}
+	concurrentQueueTerminatedException::concurrentQueueTerminatedException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept : exception(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER)
+	{};
 
 	namespace
 	{
@@ -42,7 +39,7 @@ namespace cage
 				while (true)
 				{
 					if (stop)
-						CAGE_THROW_SILENT(detail::concurrentQueueTerminatedException, "concurrent queue terminated");
+						CAGE_THROW_SILENT(concurrentQueueTerminatedException, "concurrent queue terminated");
 					if (items.size() >= maxItems)
 						writer->wait(sl);
 					else
@@ -58,7 +55,7 @@ namespace cage
 			{
 				scopeLock<mutexClass> sl(mutex);
 				if (stop)
-					CAGE_THROW_SILENT(detail::concurrentQueueTerminatedException, "concurrent queue terminated");
+					CAGE_THROW_SILENT(concurrentQueueTerminatedException, "concurrent queue terminated");
 				if (items.size() < maxItems)
 				{
 					items.push_back(value);
@@ -74,7 +71,7 @@ namespace cage
 				while (true)
 				{
 					if (stop)
-						CAGE_THROW_SILENT(detail::concurrentQueueTerminatedException, "concurrent queue terminated");
+						CAGE_THROW_SILENT(concurrentQueueTerminatedException, "concurrent queue terminated");
 					if (items.empty())
 						reader->wait(sl);
 					else
@@ -91,7 +88,7 @@ namespace cage
 			{
 				scopeLock<mutexClass> sl(mutex);
 				if (stop)
-					CAGE_THROW_SILENT(detail::concurrentQueueTerminatedException, "concurrent queue terminated");
+					CAGE_THROW_SILENT(concurrentQueueTerminatedException, "concurrent queue terminated");
 				if (!items.empty())
 				{
 					value = items.front();

@@ -39,7 +39,7 @@ namespace
 						threadSleep(1); // simulate work
 				}
 			}
-			catch (const detail::concurrentQueueTerminatedException &)
+			catch (const concurrentQueueTerminatedException &)
 			{
 				// nothing
 			}
@@ -63,7 +63,7 @@ namespace
 						threadSleep(1);
 				}
 			}
-			catch (const detail::concurrentQueueTerminatedException &)
+			catch (const concurrentQueueTerminatedException &)
 			{
 				// nothing
 			}
@@ -86,7 +86,7 @@ namespace
 					queue->push(tsk);
 				}
 			}
-			catch (const detail::concurrentQueueTerminatedException &)
+			catch (const concurrentQueueTerminatedException &)
 			{
 				// nothing
 			}
@@ -111,7 +111,7 @@ namespace
 						threadSleep(1);
 				}
 			}
-			catch (const detail::concurrentQueueTerminatedException &)
+			catch (const concurrentQueueTerminatedException &)
 			{
 				// nothing
 			}
@@ -173,7 +173,7 @@ namespace
 					destroy(tsk);
 				}
 			}
-			catch (const detail::concurrentQueueTerminatedException &)
+			catch (const concurrentQueueTerminatedException &)
 			{
 				// nothing
 			}
@@ -196,7 +196,7 @@ namespace
 					queue->push(tsk);
 				}
 			}
-			catch (const detail::concurrentQueueTerminatedException &)
+			catch (const concurrentQueueTerminatedException &)
 			{
 				// nothing
 			}
