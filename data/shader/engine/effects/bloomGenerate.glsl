@@ -27,7 +27,8 @@ void main()
 		for (int x = 0; x < CAGE_SHADER_BLOOM_DOWNSCALE; x++)
 		{
 			vec3 c = texelFetch(texColor, ivec2(gl_FragCoord) * CAGE_SHADER_BLOOM_DOWNSCALE + ivec2(x, y) - CAGE_SHADER_BLOOM_DOWNSCALE / 2, 0).rgb;
-			float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+			//float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+			float l = dot(c, vec3(0.3333));
 			int m = int(l > uniBloomParams[0]);
 			acc += float(m) * c;
 			cnt += m;
