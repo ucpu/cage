@@ -12,6 +12,9 @@ namespace cage
 {
 	using namespace privat;
 
+	discoveryPeerStruct::discoveryPeerStruct() : port(0)
+	{}
+
 	namespace
 	{
 		static const uint32 idSize = 64;

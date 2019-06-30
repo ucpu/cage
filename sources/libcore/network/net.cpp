@@ -5,18 +5,32 @@ namespace cage
 	disconnectedException::disconnectedException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept : exception(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER)
 	{};
 
-	disconnectedException &disconnectedException::log()
+	namespace
 	{
-		if (severity < detail::getExceptionSilenceSeverity())
-			return *this;
-		GCHL_EXCEPTION_GENERATE_LOG(message);
-		return *this;
-	};
+#ifdef CAGE_SYSTEM_WINDOWS
+		bool networkInitializeImpl()
+		{
+			WSADATA wsaData;
+			int err = WSAStartup(MAKEWORD(2, 2), &wsaData);
+			if (err != 0)
+				CAGE_THROW_CRITICAL(codeException, "WSAStartup", err);
+			return true;
+		}
+#endif
+
+		void networkInitialize()
+		{
+#ifdef CAGE_SYSTEM_WINDOWS
+			static const bool init = networkInitializeImpl();
+#endif
+		}
+	}
 
 	namespace privat
 	{
 		addr::addr() : addrlen(0)
 		{
+			networkInitialize();
 			detail::memset(&storage, 0, sizeof(storage));
 		}
 
@@ -34,6 +48,7 @@ namespace cage
 
 		sock::sock(int family, int type, int protocol) : descriptor(INVALID_SOCKET), family(family), type(type), protocol(protocol), connected(false)
 		{
+			networkInitialize();
 			descriptor = socket(family, type, protocol);
 			if (descriptor == INVALID_SOCKET)
 				CAGE_THROW_ERROR(codeException, "socket creation failed (socket)", WSAGetLastError());
@@ -245,6 +260,7 @@ namespace cage
 
 		addrList::addrList(const char *address, uint16 port, int family, int type, int protocol, int flags) : start(nullptr), current(nullptr)
 		{
+			networkInitialize();
 			addrinfo hints;
 			detail::memset(&hints, 0, sizeof(hints));
 			hints.ai_family = family;
@@ -311,26 +327,4 @@ namespace cage
 			current = current->ai_next;
 		}
 	}
-
-#ifdef CAGE_SYSTEM_WINDOWS
-	namespace
-	{
-		class networkInitializerClass
-		{
-		public:
-			networkInitializerClass()
-			{
-				WSADATA wsaData;
-				int err = WSAStartup(MAKEWORD(2, 2), &wsaData);
-				if (err != 0)
-					CAGE_THROW_CRITICAL(codeException, "WSAStartup", err);
-			}
-
-			~networkInitializerClass()
-			{
-				WSACleanup();
-			}
-		} networkInitializerInstance;
-	}
-#endif
 }

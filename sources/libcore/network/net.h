@@ -44,6 +44,7 @@ namespace cage
 		struct addr
 		{
 			addr();
+
 			void translate(string &address, uint16 &port, bool domain = false) const;
 
 			bool operator < (const addr &other) const // fast (binary) comparison

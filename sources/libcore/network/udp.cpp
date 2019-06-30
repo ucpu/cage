@@ -319,9 +319,10 @@ namespace cage
 				UDP_LOG(2, "destroying connection");
 
 				// send connection closed packet
-				try
+				if (established)
 				{
-					if (established)
+					detail::overrideBreakpoint ob;
+					try
 					{
 						sending.cmds.clear();
 						sendingStruct::commandStruct cmd;
@@ -329,10 +330,10 @@ namespace cage
 						sending.cmds.push_back(cmd);
 						composePackets();
 					}
-				}
-				catch (...)
-				{
-					// nothing
+					catch (...)
+					{
+						// nothing
+					}
 				}
 			}
 

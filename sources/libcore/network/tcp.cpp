@@ -161,8 +161,6 @@ namespace cage
 		{
 			if (*ptr == '\n')
 			{
-				if (ptr - s >= string::MaxLength)
-					CAGE_THROW_ERROR(exception, "line too long");
 				line = string(s, numeric_cast<uint32>(ptr - s));
 				detail::memmove(s, ptr + 1, e - ptr - 1);
 				impl->buffer.resize(e - ptr - 1);

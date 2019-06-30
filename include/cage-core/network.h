@@ -6,7 +6,6 @@ namespace cage
 	struct CAGE_API disconnectedException : public exception
 	{
 		disconnectedException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept;
-		virtual disconnectedException &log();
 	};
 
 	// tcp
@@ -101,8 +100,7 @@ namespace cage
 		string address;
 		uint16 port;
 
-		discoveryPeerStruct() : port(0)
-		{}
+		discoveryPeerStruct();
 	};
 
 	class CAGE_API discoveryClientClass
