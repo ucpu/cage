@@ -52,7 +52,7 @@ namespace cage
 				ptr->unlock();
 		}
 
-		operator bool() const
+		explicit operator bool() const noexcept
 		{
 			return !!ptr;
 		}

@@ -3,7 +3,7 @@
 
 namespace cage
 {
-	class CAGE_API collisionQueryClass
+	class CAGE_API collisionQueryClass : private immovable
 	{
 	public:
 		uint32 name() const;
@@ -24,7 +24,7 @@ namespace cage
 		void query(const aabb &shape);
 	};
 
-	class CAGE_API collisionDataClass
+	class CAGE_API collisionDataClass : private immovable
 	{
 	public:
 		void update(uint32 name, const colliderClass *collider, const transform &t);

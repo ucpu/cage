@@ -1,6 +1,6 @@
 namespace cage
 {
-	class CAGE_API textureClass
+	class CAGE_API textureClass : private immovable
 	{
 #ifdef CAGE_DEBUG
 		detail::stringBase<64> debugName;

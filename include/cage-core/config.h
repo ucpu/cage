@@ -45,7 +45,7 @@ namespace cage
 	CAGE_API void configSetString(const string &name, const string &value);
 	CAGE_API string configGetString(const string &name, const string &default_ = "");
 
-	class CAGE_API configListClass
+	class CAGE_API configListClass : private immovable
 	{
 	public:
 		bool valid() const;

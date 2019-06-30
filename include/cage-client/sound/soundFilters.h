@@ -6,14 +6,14 @@ namespace cage
 		delegate<void(const soundDataBufferStruct&)> input;
 	};
 
-	class CAGE_API filterClass
+	class CAGE_API filterClass : private immovable
 	{
 	public:
 		void setBus(busClass *bus);
 		delegate<void(const filterApiStruct&)> execute;
 	};
 
-	class CAGE_API volumeFilterClass
+	class CAGE_API volumeFilterClass : private immovable
 	{
 	public:
 		holder<filterClass> filter;

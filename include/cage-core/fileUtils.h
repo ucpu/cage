@@ -3,7 +3,7 @@
 
 namespace cage
 {
-	class CAGE_API changeWatcherClass
+	class CAGE_API changeWatcherClass : private immovable
 	{
 	public:
 		void registerPath(const string &path);
@@ -12,7 +12,7 @@ namespace cage
 
 	CAGE_API holder<changeWatcherClass> newChangeWatcher();
 
-	class CAGE_API directoryListClass
+	class CAGE_API directoryListClass : private immovable
 	{
 	public:
 		bool valid() const;
@@ -28,7 +28,7 @@ namespace cage
 
 	CAGE_API holder<directoryListClass> newDirectoryList(const string &path);
 
-	class CAGE_API filesystemClass
+	class CAGE_API filesystemClass : private immovable
 	{
 	public:
 		void changeDir(const string &path);

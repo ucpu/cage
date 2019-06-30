@@ -1,6 +1,6 @@
 namespace cage
 {
-	class CAGE_API skeletonClass
+	class CAGE_API skeletonClass : private immovable
 	{
 #ifdef CAGE_DEBUG
 		detail::stringBase<64> debugName;

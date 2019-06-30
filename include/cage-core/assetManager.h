@@ -11,7 +11,7 @@ namespace cage
 		Unknown,
 	};
 
-	class CAGE_API assetManagerClass
+	class CAGE_API assetManagerClass : private immovable
 	{
 	public:
 		template<class T>

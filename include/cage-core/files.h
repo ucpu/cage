@@ -17,7 +17,7 @@ namespace cage
 		bool append;
 	};
 
-	class CAGE_API fileClass
+	class CAGE_API fileClass : private immovable
 	{
 	public:
 		void read(void *data, uint64 size);

@@ -3,7 +3,7 @@
 
 namespace cage
 {
-	class CAGE_API timerClass
+	class CAGE_API timerClass : private immovable
 	{
 	public:
 		void reset();

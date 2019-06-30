@@ -23,7 +23,7 @@ namespace cage
 		};
 	}
 
-	class CAGE_API loggerClass
+	class CAGE_API loggerClass : private immovable
 	{
 	public:
 		delegate<bool(const detail::loggerInfo &)> filter;
@@ -41,7 +41,7 @@ namespace cage
 	CAGE_API void logOutputPolicyStdOut(const string &message);
 	CAGE_API void logOutputPolicyStdErr(const string &message);
 
-	class CAGE_API logOutputPolicyFileClass
+	class CAGE_API logOutputPolicyFileClass : private immovable
 	{
 	public:
 		void output(const string &message);

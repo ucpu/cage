@@ -239,6 +239,17 @@ namespace cage
 	// this macro has to be used inside namespace cage
 #define GCHL_ENUM_BITS(TYPE) template<> struct enable_bitmask_operators<TYPE> { static const bool enable = true; };
 
+	// immovable
+
+	struct CAGE_API immovable
+	{
+		immovable() = default;
+		immovable(const immovable &) = delete;
+		immovable(immovable &&) = delete;
+		immovable &operator = (const immovable &) = delete;
+		immovable &operator = (immovable &&) = delete;
+	};
+
 	// forward declarations
 
 	enum class assetStateEnum : uint32;

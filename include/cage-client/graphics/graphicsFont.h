@@ -1,6 +1,6 @@
 namespace cage
 {
-	class CAGE_API fontClass
+	class CAGE_API fontClass : private immovable
 	{
 #ifdef CAGE_DEBUG
 		detail::stringBase<64> debugName;

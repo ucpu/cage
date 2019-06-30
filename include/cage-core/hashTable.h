@@ -16,7 +16,7 @@ namespace cage
 			uint32 first;
 		};
 
-		class CAGE_API hashTablePriv
+		class CAGE_API hashTablePriv : private immovable
 		{
 		public:
 			void add(uint32 name, void *value);
@@ -57,7 +57,7 @@ namespace cage
 	};
 
 	template<class T>
-	class hashTableClass
+	class hashTableClass : private immovable
 	{
 	public:
 		hashTableClass(holder<privat::hashTablePriv> table) : table(templates::move(table)) {}

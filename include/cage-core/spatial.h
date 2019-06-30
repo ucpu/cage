@@ -3,7 +3,7 @@
 
 namespace cage
 {
-	class CAGE_API spatialQueryClass
+	class CAGE_API spatialQueryClass : private immovable
 	{
 	public:
 		uint32 resultCount() const;
@@ -17,7 +17,7 @@ namespace cage
 		void intersection(const aabb &shape);
 	};
 
-	class CAGE_API spatialDataClass
+	class CAGE_API spatialDataClass : private immovable
 	{
 	public:
 		void update(uint32 name, const line &other);

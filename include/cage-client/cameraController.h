@@ -3,7 +3,7 @@
 
 namespace cage
 {
-	class CAGE_API cameraControllerClass
+	class CAGE_API cameraControllerClass : private immovable
 	{
 	public:
 		void setEntity(entityClass *entity = nullptr);

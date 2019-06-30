@@ -31,7 +31,7 @@
 
 namespace cage
 {
-	class CAGE_API iniClass
+	class CAGE_API iniClass : private immovable
 	{
 	public:
 		uint32 sectionsCount() const;

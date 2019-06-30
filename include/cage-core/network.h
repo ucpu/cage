@@ -10,7 +10,7 @@ namespace cage
 
 	// tcp
 
-	class CAGE_API tcpConnectionClass
+	class CAGE_API tcpConnectionClass : private immovable
 	{
 	public:
 		string address() const; // remote address
@@ -29,7 +29,7 @@ namespace cage
 
 	CAGE_API holder<tcpConnectionClass> newTcpConnection(const string &address, uint16 port); // blocking
 
-	class CAGE_API tcpServerClass
+	class CAGE_API tcpServerClass : private immovable
 	{
 	public:
 		uint16 port() const; // local port
@@ -56,7 +56,7 @@ namespace cage
 	};
 
 	// low latency, connection-oriented, sequenced and optionally reliable datagram protocol on top of udp
-	class CAGE_API udpConnectionClass
+	class CAGE_API udpConnectionClass : private immovable
 	{
 	public:
 		// returns size of the first packet queued for reading, if any, and zero otherwise
@@ -83,7 +83,7 @@ namespace cage
 	// zero timeout will return immediately and the connection will be established progressively as you use it
 	CAGE_API holder<udpConnectionClass> newUdpConnection(const string &address, uint16 port, uint64 timeout = 3000000);
 
-	class CAGE_API udpServerClass
+	class CAGE_API udpServerClass : private immovable
 	{
 	public:
 		// returns empty holder if no new peer has connected
@@ -103,7 +103,7 @@ namespace cage
 		discoveryPeerStruct();
 	};
 
-	class CAGE_API discoveryClientClass
+	class CAGE_API discoveryClientClass : private immovable
 	{
 	public:
 		void update();
@@ -113,7 +113,7 @@ namespace cage
 		holder<pointerRange<discoveryPeerStruct>> peers() const;
 	};
 
-	class CAGE_API discoveryServerClass
+	class CAGE_API discoveryServerClass : private immovable
 	{
 	public:
 		void update();

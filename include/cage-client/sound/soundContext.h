@@ -1,6 +1,6 @@
 namespace cage
 {
-	class CAGE_API soundContextClass
+	class CAGE_API soundContextClass : private immovable
 	{
 	public:
 		string getContextName() const;

@@ -11,7 +11,7 @@ namespace cage
 		{}
 	};
 
-	class CAGE_API entityManagerClass
+	class CAGE_API entityManagerClass : private immovable
 	{
 	public:
 		template<class T> componentClass *defineComponent(const T &prototype, const componentCreateConfig &config) { return zPrivateDefineComponent(sizeof(T), alignof(T), (void*)&prototype, config); }
@@ -42,7 +42,7 @@ namespace cage
 
 	CAGE_API holder<entityManagerClass> newEntityManager(const entityManagerCreateConfig &config);
 
-	class CAGE_API entityClass
+	class CAGE_API entityClass : private immovable
 	{
 	public:
 		uint32 name() const;
@@ -62,7 +62,7 @@ namespace cage
 		void destroy();
 	};
 
-	class CAGE_API componentClass
+	class CAGE_API componentClass : private immovable
 	{
 	public:
 		entityManagerClass *manager() const;
@@ -75,7 +75,7 @@ namespace cage
 		void destroy(); // destroy all entities with this component
 	};
 
-	class CAGE_API groupClass
+	class CAGE_API groupClass : private immovable
 	{
 	public:
 		entityManagerClass *manager() const;

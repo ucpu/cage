@@ -13,7 +13,7 @@ namespace cage
 		componentsStruct(entityManagerClass *ents);
 	};
 
-	class CAGE_API guiClass
+	class CAGE_API guiClass : private immovable
 	{
 	public:
 		void graphicsInitialize();

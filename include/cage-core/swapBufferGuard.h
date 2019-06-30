@@ -5,6 +5,7 @@ namespace cage
 {
 	/*
 	holder<swapBufferGuardClass> controller = newSwapBufferGuard();
+
 	// consumer thread
 	while (running)
 	{
@@ -17,6 +18,7 @@ namespace cage
 			// the producer cannot keep up
 		}
 	}
+
 	// producer thread
 	while (running)
 	{
@@ -52,7 +54,7 @@ namespace cage
 		};
 	}
 
-	class CAGE_API swapBufferGuardClass
+	class CAGE_API swapBufferGuardClass : private immovable
 	{
 	public:
 		privat::swapBufferLock read();

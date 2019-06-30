@@ -3,7 +3,7 @@
 
 namespace cage
 {
-	class CAGE_API imageClass
+	class CAGE_API imageClass : private immovable
 	{
 	public:
 		void empty(uint32 w, uint32 h, uint32 c = 4, uint32 bpc = 1);

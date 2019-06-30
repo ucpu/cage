@@ -11,7 +11,7 @@ namespace cage
 		uint32 frequency;
 	};
 
-	class CAGE_API screenDeviceClass
+	class CAGE_API screenDeviceClass // : private immovable
 	{
 	public:
 		uint32 modesCount() const;
@@ -22,12 +22,13 @@ namespace cage
 		string id() const;
 	};
 
-	class CAGE_API screenListClass
+	class CAGE_API screenListClass : private immovable
 	{
 	public:
 		uint32 devicesCount() const;
 		uint32 primaryDevice() const;
 		const screenDeviceClass &device(uint32 index) const;
+		//holder<pointerRange<const screenDeviceClass*>> devices() const;
 	};
 
 	CAGE_API holder<screenListClass> newScreenList();

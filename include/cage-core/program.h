@@ -3,7 +3,7 @@
 
 namespace cage
 {
-	class CAGE_API programClass
+	class CAGE_API programClass : private immovable
 	{
 	public:
 		string getCmdString() const;

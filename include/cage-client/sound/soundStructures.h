@@ -7,9 +7,11 @@ namespace cage
 		uint32 channels;
 
 		soundInterleavedBufferStruct();
-		soundInterleavedBufferStruct(const soundInterleavedBufferStruct &other);
+		soundInterleavedBufferStruct(const soundInterleavedBufferStruct &other); // creates a reference of the original buffer
+		soundInterleavedBufferStruct(soundInterleavedBufferStruct &&) = delete;
 		~soundInterleavedBufferStruct();
-		soundInterleavedBufferStruct &operator = (const soundInterleavedBufferStruct &other);
+		soundInterleavedBufferStruct &operator = (const soundInterleavedBufferStruct &other); // creates a reference of the original buffer
+		soundInterleavedBufferStruct &operator = (soundInterleavedBufferStruct &&) = delete;
 
 		void resize(uint32 channels, uint32 frames);
 		void clear();

@@ -1,6 +1,6 @@
 namespace cage
 {
-	class CAGE_API busClass
+	class CAGE_API busClass : private immovable
 	{
 	public:
 		void addInput(busClass *bus);

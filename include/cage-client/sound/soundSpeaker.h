@@ -1,6 +1,6 @@
 namespace cage
 {
-	class CAGE_API speakerClass
+	class CAGE_API speakerClass : private immovable
 	{
 	public:
 		string getStreamName() const;

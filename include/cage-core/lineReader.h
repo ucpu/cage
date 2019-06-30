@@ -3,7 +3,7 @@
 
 namespace cage
 {
-	class CAGE_API lineReaderClass
+	class CAGE_API lineReaderClass : private immovable
 	{
 	public:
 		bool readLine(string &line);

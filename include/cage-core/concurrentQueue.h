@@ -17,7 +17,7 @@ namespace cage
 
 	namespace privat
 	{
-		class CAGE_API concurrentQueuePriv
+		class CAGE_API concurrentQueuePriv : private immovable
 		{
 		public:
 			void push(void *value);
@@ -35,7 +35,7 @@ namespace cage
 	}
 
 	template<class T>
-	class concurrentQueueClass
+	class concurrentQueueClass : private immovable
 	{
 	public:
 		concurrentQueueClass(const concurrentQueueCreateConfig &config) : queue(privat::newConcurrentQueue(config))
@@ -100,7 +100,7 @@ namespace cage
 	};
 
 	template<class T>
-	class concurrentQueueClass<T*>
+	class concurrentQueueClass<T*> : private immovable
 	{
 	public:
 		concurrentQueueClass(const concurrentQueueCreateConfig &config, delegate<void(T*)> deleter) : queue(privat::newConcurrentQueue(config)), deleter(deleter)

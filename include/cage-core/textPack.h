@@ -3,7 +3,7 @@
 
 namespace cage
 {
-	class CAGE_API textPackClass
+	class CAGE_API textPackClass : private immovable
 	{
 	public:
 		void set(uint32 name, const string &text);

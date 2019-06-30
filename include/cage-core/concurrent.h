@@ -5,7 +5,7 @@
 
 namespace cage
 {
-	class CAGE_API mutexClass
+	class CAGE_API mutexClass : private immovable
 	{
 	public:
 		// locking the same mutex again in the same thread is undefined behavior
@@ -16,7 +16,7 @@ namespace cage
 
 	CAGE_API holder<mutexClass> newMutex();
 
-	class CAGE_API barrierClass
+	class CAGE_API barrierClass : private immovable
 	{
 	public:
 		void lock();
@@ -25,7 +25,7 @@ namespace cage
 
 	CAGE_API holder<barrierClass> newBarrier(uint32 value);
 
-	class CAGE_API semaphoreClass
+	class CAGE_API semaphoreClass : private immovable
 	{
 	public:
 		void lock(); // decrements value
@@ -34,7 +34,7 @@ namespace cage
 
 	CAGE_API holder<semaphoreClass> newSemaphore(uint32 value, uint32 max);
 
-	class CAGE_API conditionalBaseClass
+	class CAGE_API conditionalBaseClass : private immovable
 	{
 	public:
 		void wait(mutexClass *mut);
@@ -46,7 +46,7 @@ namespace cage
 
 	CAGE_API holder<conditionalBaseClass> newConditionalBase();
 
-	class CAGE_API conditionalClass
+	class CAGE_API conditionalClass : private immovable
 	{
 		// this is a compound class containing both mutex and conditional variable
 	public:
@@ -59,7 +59,7 @@ namespace cage
 
 	CAGE_API holder<conditionalClass> newConditional(bool broadcast = false);
 
-	class CAGE_API threadClass
+	class CAGE_API threadClass : private immovable
 	{
 	public:
 		uint64 id() const;

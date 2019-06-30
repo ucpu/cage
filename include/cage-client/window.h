@@ -3,7 +3,7 @@
 
 namespace cage
 {
-	class CAGE_API windowClass
+	class CAGE_API windowClass : private immovable
 	{
 	public:
 		struct

@@ -46,7 +46,7 @@ namespace cage
 		Divide,
 	};
 
-	class CAGE_API noiseClass
+	class CAGE_API noiseClass : private immovable
 	{
 	public:
 		real evaluate(real position);

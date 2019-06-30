@@ -91,7 +91,7 @@ namespace cage
 					deleter_(ptr_);
 			}
 
-			explicit operator bool() const
+			explicit operator bool() const noexcept
 			{
 				return !!data_;
 			}

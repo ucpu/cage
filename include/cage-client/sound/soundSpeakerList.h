@@ -1,6 +1,6 @@
 namespace cage
 {
-	class CAGE_API speakerListClass
+	class CAGE_API speakerListClass : private immovable
 	{
 	public:
 		uint32 deviceCount() const;

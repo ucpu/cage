@@ -1,6 +1,6 @@
 namespace cage
 {
-	class CAGE_API animationClass
+	class CAGE_API animationClass : private immovable
 	{
 #ifdef CAGE_DEBUG
 		detail::stringBase<64> debugName;

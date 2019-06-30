@@ -27,7 +27,6 @@ namespace cage
 	class filterClass;
 	class volumeFilterClass;
 	class sourceClass;
-	class speakerClass;
 	class speakerListClass;
 
 	struct guiCreateConfig;

@@ -3,7 +3,7 @@
 
 namespace cage
 {
-	class CAGE_API colliderClass
+	class CAGE_API colliderClass : private immovable
 	{
 	public:
 		uint32 trianglesCount() const;

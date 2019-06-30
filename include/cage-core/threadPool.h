@@ -3,7 +3,7 @@
 
 namespace cage
 {
-	class CAGE_API threadPoolClass
+	class CAGE_API threadPoolClass : private immovable
 	{
 	public:
 		// thread index, threads count

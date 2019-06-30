@@ -1,6 +1,6 @@
 namespace cage
 {
-	class CAGE_API shaderClass
+	class CAGE_API shaderClass : private immovable
 	{
 #ifdef CAGE_DEBUG
 		detail::stringBase<64> debugName;

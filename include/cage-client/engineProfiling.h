@@ -40,7 +40,7 @@ namespace cage
 		None,
 	};
 
-	class CAGE_API engineProfilingClass
+	class CAGE_API engineProfilingClass : private immovable
 	{
 	public:
 		vec2 screenPosition;

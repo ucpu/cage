@@ -1,6 +1,6 @@
 namespace cage
 {
-	class CAGE_API uniformBufferClass
+	class CAGE_API uniformBufferClass : private immovable
 	{
 #ifdef CAGE_DEBUG
 		detail::stringBase<64> debugName;
