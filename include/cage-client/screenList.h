@@ -6,29 +6,30 @@ namespace cage
 	struct CAGE_API screenMode
 	{
 	public:
-		screenMode();
 		pointStruct resolution;
 		uint32 frequency;
+		screenMode();
 	};
 
-	class CAGE_API screenDeviceClass // : private immovable
+	class CAGE_API screenDeviceClass : private immovable
 	{
 	public:
+		string id() const;
+		string name() const;
+
 		uint32 modesCount() const;
 		uint32 currentMode() const;
 		const screenMode &mode(uint32 index) const;
 		pointerRange<const screenMode> modes() const;
-		string name() const;
-		string id() const;
 	};
 
 	class CAGE_API screenListClass : private immovable
 	{
 	public:
 		uint32 devicesCount() const;
-		uint32 primaryDevice() const;
-		const screenDeviceClass &device(uint32 index) const;
-		//holder<pointerRange<const screenDeviceClass*>> devices() const;
+		uint32 defaultDevice() const;
+		const screenDeviceClass *device(uint32 index) const;
+		holder<pointerRange<const screenDeviceClass *>> devices() const;
 	};
 
 	CAGE_API holder<screenListClass> newScreenList();

@@ -1,15 +1,14 @@
-#include <vector>
-
 #include <cage-core/core.h>
-#include <cage-core/math.h>
+#include <cage-core/pointerRangeHolder.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
 #include <cage-client/core.h>
-#include <cage-client/graphics.h>
-#include "graphics/private.h"
+#include "graphics/private.h" // getMonitorId
 #include <cage-client/screenList.h>
 #include <GLFW/glfw3.h>
+
+#include <vector>
 
 namespace cage
 {
@@ -63,11 +62,11 @@ namespace cage
 				{
 					if (ms[i] == prim)
 						primary = i;
-					devices.push_back(screenDeviceImpl(ms[i]));
+					devices.push_back(detail::systemArena().createHolder<screenDeviceImpl>(ms[i]));
 				}
 			}
 
-			std::vector<screenDeviceImpl> devices;
+			std::vector<holder<screenDeviceImpl>> devices;
 			uint32 primary;
 		};
 	}
@@ -117,24 +116,27 @@ namespace cage
 		return numeric_cast<uint32>(impl->devices.size());
 	}
 
-	uint32 screenListClass::primaryDevice() const
+	uint32 screenListClass::defaultDevice() const
 	{
 		screenListImpl *impl = (screenListImpl*)this;
 		return impl->primary;
 	}
 
-	const screenDeviceClass &screenListClass::device(uint32 index) const
+	const screenDeviceClass *screenListClass::device(uint32 index) const
 	{
 		screenListImpl *impl = (screenListImpl*)this;
-		return impl->devices[index];
+		return impl->devices[index].get();
 	}
 
-	/*
 	holder<pointerRange<const screenDeviceClass*>> screenListClass::devices() const
 	{
-		// todo
+		const screenListImpl *impl = (const screenListImpl*)this;
+		pointerRangeHolder<const screenDeviceClass*> prh;
+		prh.reserve(impl->devices.size());
+		for (auto &it : impl->devices)
+			prh.push_back(it.get());
+		return prh;
 	}
-	*/
 
 	holder<screenListClass> newScreenList()
 	{
