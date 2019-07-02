@@ -6,16 +6,16 @@
 #include <cage-core/math.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/files.h>
-#include <cage-core/ini.h>
 #include <cage-core/config.h>
+#include <cage-core/configIni.h>
 
 namespace cage
 {
 	namespace
 	{
-		mutexClass *mut()
+		syncMutex *mut()
 		{
-			static holder<mutexClass> *m = new holder<mutexClass>(newMutex()); // this leak is intentional
+			static holder<syncMutex> *m = new holder<syncMutex>(newSyncMutex()); // this leak is intentional
 			return m->get();
 		}
 
@@ -90,7 +90,7 @@ namespace cage
 				// the logic of function configLoadIni is replicated here
 				try
 				{
-					holder<iniClass> ini = newIni();
+					holder<configIni> ini = newConfigIni();
 					ini->load(filename);
 					for (string section : ini->sections())
 					{
@@ -270,9 +270,9 @@ namespace cage
 			}
 		}
 
-		class configListImpl : public configListClass
+		class configListImpl : public configList
 		{
-			scopeLock<mutexClass> lock;
+			scopeLock<syncMutex> lock;
 
 		public:
 			varsType::iterator it, et;
@@ -287,7 +287,7 @@ namespace cage
 
 			void next()
 			{
-				CAGE_ASSERT_RUNTIME(valid, "configListClass is at invalid location");
+				CAGE_ASSERT_RUNTIME(valid, "configList is at invalid location");
 				valid = ++it != et;
 			}
 		};
@@ -312,24 +312,24 @@ namespace cage
 
 	void configSetDynamic(const string &name, const string &value)
 	{
-		scopeLock<mutexClass> lock(mut());
+		scopeLock<syncMutex> lock(mut());
 		getVar(name)->setDynamic(value);
 	}
 
 	configTypeEnum configGetType(const string &name)
 	{
-		scopeLock<mutexClass> lock(mut());
+		scopeLock<syncMutex> lock(mut());
 		return getVar(name)->type;
 	}
 
 #define GCHL_CONFIG(T, t) \
-	void CAGE_JOIN(configSet, T)(const string &name, t value) { scopeLock<mutexClass> lock(mut()); getVar(name)->set(value); } \
-	t CAGE_JOIN(configGet, T)(const string &name, t default_) { scopeLock<mutexClass> lock(mut()); variable *v = getVar(name); if (v->type == configTypeEnum::Undefined) return default_; return cast<t>(v); } \
-	CAGE_JOIN(config, T)::CAGE_JOIN(config, T)(const string &name) { scopeLock<mutexClass> lock(mut()); data = getVar(name); } \
-	CAGE_JOIN(config, T)::CAGE_JOIN(config, T)(const string &name, t default_) { scopeLock<mutexClass> lock(mut()); data = getVar(name); variable *v = (variable*)data; if (v->type == configTypeEnum::Undefined) v->set(default_); } \
+	void CAGE_JOIN(configSet, T)(const string &name, t value) { scopeLock<syncMutex> lock(mut()); getVar(name)->set(value); } \
+	t CAGE_JOIN(configGet, T)(const string &name, t default_) { scopeLock<syncMutex> lock(mut()); variable *v = getVar(name); if (v->type == configTypeEnum::Undefined) return default_; return cast<t>(v); } \
+	CAGE_JOIN(config, T)::CAGE_JOIN(config, T)(const string &name) { scopeLock<syncMutex> lock(mut()); data = getVar(name); } \
+	CAGE_JOIN(config, T)::CAGE_JOIN(config, T)(const string &name, t default_) { scopeLock<syncMutex> lock(mut()); data = getVar(name); variable *v = (variable*)data; if (v->type == configTypeEnum::Undefined) v->set(default_); } \
 	CAGE_JOIN(config, T) &CAGE_JOIN(config, T)::operator = (t value) { ((variable*)data)->set(value); return *this; } \
 	CAGE_JOIN(config, T)::operator t() const { return cast<t>((variable*)data); } \
-	t configListClass::CAGE_JOIN(get, T)() const { configListImpl *impl = (configListImpl*)this; CAGE_ASSERT_RUNTIME(impl->valid, "configListClass is at invalid location"); return cast<t>(impl->it->second); }
+	t configList::CAGE_JOIN(get, T)() const { configListImpl *impl = (configListImpl*)this; CAGE_ASSERT_RUNTIME(impl->valid, "configList is at invalid location"); return cast<t>(impl->it->second); }
 	GCHL_CONFIG(Bool, bool)
 	GCHL_CONFIG(Sint32, sint32)
 	GCHL_CONFIG(Sint64, sint64)
@@ -339,51 +339,51 @@ namespace cage
 	GCHL_CONFIG(Double, double)
 #undef GCHL_CONFIG
 
-	void configSetString(const string &name, const string &value) { scopeLock<mutexClass> lock(mut()); getVar(name)->set(value); }
-	string configGetString(const string &name, const string &default_) { scopeLock<mutexClass> lock(mut()); variable *v = getVar(name); if (v->type == configTypeEnum::Undefined) return default_; return cast<string>(v); }
-	configString::configString(const string &name) { scopeLock<mutexClass> lock(mut()); data = getVar(name); }
-	configString::configString(const string &name, const string &default_) { scopeLock<mutexClass> lock(mut()); data = getVar(name); variable *v = (variable*)data; if (v->type == configTypeEnum::Undefined) v->set(default_); }
+	void configSetString(const string &name, const string &value) { scopeLock<syncMutex> lock(mut()); getVar(name)->set(value); }
+	string configGetString(const string &name, const string &default_) { scopeLock<syncMutex> lock(mut()); variable *v = getVar(name); if (v->type == configTypeEnum::Undefined) return default_; return cast<string>(v); }
+	configString::configString(const string &name) { scopeLock<syncMutex> lock(mut()); data = getVar(name); }
+	configString::configString(const string &name, const string &default_) { scopeLock<syncMutex> lock(mut()); data = getVar(name); variable *v = (variable*)data; if (v->type == configTypeEnum::Undefined) v->set(default_); }
 	configString &configString::operator = (const string &value) { ((variable*)data)->set(value); return *this; }
 	configString::operator string() const { return cast<string>((variable*)data); }
-	string configListClass::getString() const { configListImpl *impl = (configListImpl*)this; CAGE_ASSERT_RUNTIME(impl->valid, "configListClass is at invalid location"); return cast<string>(impl->it->second); }
+	string configList::getString() const { configListImpl *impl = (configListImpl*)this; CAGE_ASSERT_RUNTIME(impl->valid, "configList is at invalid location"); return cast<string>(impl->it->second); }
 
-	bool configListClass::valid() const
+	bool configList::valid() const
 	{
 		configListImpl *impl = (configListImpl*)this;
 		return impl->valid;
 	}
 
-	string configListClass::name() const
+	string configList::name() const
 	{
 		configListImpl *impl = (configListImpl*)this;
-		CAGE_ASSERT_RUNTIME(impl->valid, "configListClass is at invalid location");
+		CAGE_ASSERT_RUNTIME(impl->valid, "configList is at invalid location");
 		return impl->it->first;
 	}
 
-	configTypeEnum configListClass::type() const
+	configTypeEnum configList::type() const
 	{
 		configListImpl *impl = (configListImpl*)this;
-		CAGE_ASSERT_RUNTIME(impl->valid, "configListClass is at invalid location");
+		CAGE_ASSERT_RUNTIME(impl->valid, "configList is at invalid location");
 		return impl->it->second->type;
 	}
 
-	string configListClass::typeName() const
+	string configList::typeName() const
 	{
 		return configTypeToString(type());
 	}
 
-	void configListClass::next()
+	void configList::next()
 	{
 		configListImpl *impl = (configListImpl*)this;
 		impl->next();
 	}
 
-	holder<configListClass> newConfigList()
+	holder<configList> newConfigList()
 	{
-		return detail::systemArena().createImpl<configListClass, configListImpl>();
+		return detail::systemArena().createImpl<configList, configListImpl>();
 	}
 
-	void configApplyIni(const iniClass *ini, const string &prefix)
+	void configApplyIni(const configIni *ini, const string &prefix)
 	{
 		if (prefix.find('.') != m || prefix.empty())
 			CAGE_LOG(severityEnum::Warning, "config", string() + "dangerous config prefix '" + prefix + "'");
@@ -401,12 +401,12 @@ namespace cage
 		}
 	}
 
-	void configGenerateIni(iniClass *ini, const string &prefix)
+	void configGenerateIni(configIni *ini, const string &prefix)
 	{
 		if (prefix.find('.') != m || prefix.empty())
 			CAGE_LOG(severityEnum::Warning, "config", string() + "dangerous config prefix '" + prefix + "'");
 		ini->clear();
-		holder<configListClass> cnf = newConfigList();
+		holder<configList> cnf = newConfigList();
 		while (cnf->valid())
 		{
 			string p = cnf->name().reverse();
@@ -423,14 +423,14 @@ namespace cage
 
 	void configLoadIni(const string &filename, const string &prefix)
 	{
-		holder<iniClass> ini = newIni();
+		holder<configIni> ini = newConfigIni();
 		ini->load(filename);
 		configApplyIni(ini.get(), prefix);
 	}
 
 	void configSaveIni(const string &filename, const string &prefix)
 	{
-		holder<iniClass> ini = newIni();
+		holder<configIni> ini = newConfigIni();
 		configGenerateIni(ini.get(), prefix);
 		ini->save(filename);
 	}

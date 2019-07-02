@@ -26,7 +26,7 @@ namespace cage
 				CAGE_ASSERT_RUNTIME(uintPtr(tmp) + size <= uintPtr(origin) + this->size, "allocator corrupted", tmp, origin, size, this->size);
 				return tmp;
 			}
-			catch (outOfMemoryException &e)
+			catch (outOfMemory &e)
 			{
 				e.severity = severityEnum::Error;
 				e.log();
@@ -85,7 +85,7 @@ namespace cage
 			{
 				return alloc(size, alignment);
 			}
-			catch (const outOfMemoryException &e)
+			catch (const outOfMemory &e)
 			{
 				// allocate one more third plus some constant
 				uintPtr adding = detail::roundUpTo((memory->pages() + 1) * pageSize / 3 + e.memory, pageSize);
@@ -97,7 +97,7 @@ namespace cage
 			{
 				return alloc(size, alignment);
 			}
-			catch (outOfMemoryException &e)
+			catch (outOfMemory &e)
 			{
 				e.severity = severityEnum::Error;
 				e.log();

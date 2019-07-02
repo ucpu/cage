@@ -3,7 +3,7 @@
 
 #include "main.h"
 #include <cage-core/math.h>
-#include <cage-core/noise.h>
+#include <cage-core/noiseFunction.h>
 #include <cage-core/image.h>
 
 namespace
@@ -14,7 +14,7 @@ namespace
 	const sint32 resolution = 1024;
 #endif // CAGE_DEBUG
 
-	void generateImage(const string &fileName, holder<noiseClass> &noise)
+	void generateImage(const string &fileName, holder<noiseFunction> &noise)
 	{
 		std::vector<vec2> positions;
 		std::vector<real> results;
@@ -26,7 +26,7 @@ namespace
 				positions.push_back(vec2(x - resolution / 2, y - resolution / 2) * 0.01);
 		}
 		noise->evaluate(resolution * resolution, positions.data(), results.data());
-		holder<imageClass> png = newImage();
+		holder<image> png = newImage();
 		png->empty(resolution, resolution, 1, 1);
 		uint8 *buffer = (uint8*)png->bufferData();
 		uint32 index = 0;
@@ -47,10 +47,10 @@ void testNoise()
 		CAGE_TESTCASE("value");
 		for (uint32 oct : {1, 2, 3})
 		{
-			noiseCreateConfig config;
+			noiseFunctionCreateConfig config;
 			config.type = noiseTypeEnum::Value;
 			config.octaves = oct;
-			holder<noiseClass> noise = newNoise(config);
+			holder<noiseFunction> noise = newNoiseFunction(config);
 			generateImage(string() + "images/value_" + oct + ".png", noise);
 		}
 	}
@@ -59,10 +59,10 @@ void testNoise()
 		CAGE_TESTCASE("perlin");
 		for (uint32 oct : {1, 2, 3})
 		{
-			noiseCreateConfig config;
+			noiseFunctionCreateConfig config;
 			config.type = noiseTypeEnum::Perlin;
 			config.octaves = oct;
-			holder<noiseClass> noise = newNoise(config);
+			holder<noiseFunction> noise = newNoiseFunction(config);
 			generateImage(string() + "images/perlin_" + oct + ".png", noise);
 		}
 	}
@@ -71,10 +71,10 @@ void testNoise()
 		CAGE_TESTCASE("simplex");
 		for (uint32 oct : {1, 2, 3})
 		{
-			noiseCreateConfig config;
+			noiseFunctionCreateConfig config;
 			config.type = noiseTypeEnum::Simplex;
 			config.octaves = oct;
-			holder<noiseClass> noise = newNoise(config);
+			holder<noiseFunction> noise = newNoiseFunction(config);
 			generateImage(string() + "images/simplex_" + oct + ".png", noise);
 		}
 	}
@@ -82,24 +82,24 @@ void testNoise()
 	{
 		CAGE_TESTCASE("cellular");
 		{
-			noiseCreateConfig config;
+			noiseFunctionCreateConfig config;
 			config.type = noiseTypeEnum::Cellular;
 			config.operation = noiseOperationEnum::None;
-			holder<noiseClass> noise = newNoise(config);
+			holder<noiseFunction> noise = newNoiseFunction(config);
 			generateImage(string() + "images/cellular_none.png", noise);
 		}
 		{
-			noiseCreateConfig config;
+			noiseFunctionCreateConfig config;
 			config.type = noiseTypeEnum::Cellular;
 			config.operation = noiseOperationEnum::Distance;
-			holder<noiseClass> noise = newNoise(config);
+			holder<noiseFunction> noise = newNoiseFunction(config);
 			generateImage(string() + "images/cellular_distance.png", noise);
 		}
 		{
-			noiseCreateConfig config;
+			noiseFunctionCreateConfig config;
 			config.type = noiseTypeEnum::Cellular;
 			config.operation = noiseOperationEnum::Divide;
-			holder<noiseClass> noise = newNoise(config);
+			holder<noiseFunction> noise = newNoiseFunction(config);
 			generateImage(string() + "images/cellular_divide.png", noise);
 		}
 	}

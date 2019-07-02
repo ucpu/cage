@@ -14,14 +14,14 @@ namespace utf8
 #endif
 
 #define TRY_BEGIN try
-#define TRY_END catch (const std::exception &e) { CAGE_THROW_ERROR(utf8Exception, e.what()); }
+#define TRY_END catch (const std::exception &e) { CAGE_THROW_ERROR(invalidUtfString, e.what()); }
 
 namespace cage
 {
-	utf8Exception::utf8Exception(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept : exception(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER)
+	invalidUtfString::invalidUtfString(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept : exception(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER)
 	{};
 
-	utf8Exception &utf8Exception::log()
+	invalidUtfString &invalidUtfString::log()
 	{
 		if (severity < detail::getExceptionSilenceSeverity())
 			return *this;

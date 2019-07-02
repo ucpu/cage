@@ -10,9 +10,9 @@ namespace cage
 		concurrentQueueCreateConfig();
 	};
 
-	struct CAGE_API concurrentQueueTerminatedException : public exception
+	struct CAGE_API concurrentQueueTerminated : public exception
 	{
-		concurrentQueueTerminatedException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept;
+		concurrentQueueTerminated(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept;
 	};
 
 	namespace privat
@@ -35,23 +35,74 @@ namespace cage
 	}
 
 	template<class T>
-	class concurrentQueueClass : private immovable
+	class concurrentQueue : private immovable
 	{
 	public:
-		concurrentQueueClass(const concurrentQueueCreateConfig &config) : queue(privat::newConcurrentQueue(config))
+		concurrentQueue(const concurrentQueueCreateConfig &config) : queue(privat::newConcurrentQueue(config))
 		{}
 
-		~concurrentQueueClass()
+		~concurrentQueue()
 		{
 			void *tmp = nullptr;
 			while (queue->tryPopNoStop(tmp))
 				queue->arena.deallocate(tmp);
 		}
 
-		void push(const T &value) { queue->push(queue->arena.createObject<T>(value)); }
-		void push(T &&value) { queue->push(queue->arena.createObject<T>(templates::move(value))); }
-		bool tryPush(const T &value) { return queue->tryPush(queue->arena.createObject<T>(value)); }
-		bool tryPush(T &&value) { return queue->tryPush(queue->arena.createObject<T>(templates::move(value))); }
+		void push(const T &value)
+		{
+			T *tmp = queue->arena.createObject<T>(value);
+			try
+			{
+				queue->push(tmp);
+			}
+			catch (...)
+			{
+				queue->arena.destroy<T>(tmp);
+				throw;
+			}
+		}
+
+		void push(T &&value)
+		{
+			T *tmp = queue->arena.createObject<T>(templates::move(value));
+			try
+			{
+				queue->push(tmp);
+			}
+			catch (...)
+			{
+				queue->arena.destroy<T>(tmp);
+				throw;
+			}
+		}
+
+		bool tryPush(const T &value)
+		{
+			T *tmp = queue->arena.createObject<T>(value);
+			try
+			{
+				return queue->tryPush(tmp);
+			}
+			catch (...)
+			{
+				queue->arena.destroy<T>(tmp);
+				throw;
+			}
+		}
+
+		bool tryPush(T &&value)
+		{
+			T *tmp = queue->arena.createObject<T>(templates::move(value));
+			try
+			{
+				return queue->tryPush(tmp);
+			}
+			catch (...)
+			{
+				queue->arena.destroy<T>(tmp);
+				throw;
+			}
+		}
 
 		void pop(T &value)
 		{
@@ -100,13 +151,13 @@ namespace cage
 	};
 
 	template<class T>
-	class concurrentQueueClass<T*> : private immovable
+	class concurrentQueue<T*> : private immovable
 	{
 	public:
-		concurrentQueueClass(const concurrentQueueCreateConfig &config, delegate<void(T*)> deleter) : queue(privat::newConcurrentQueue(config)), deleter(deleter)
+		concurrentQueue(const concurrentQueueCreateConfig &config, delegate<void(T*)> deleter) : queue(privat::newConcurrentQueue(config)), deleter(deleter)
 		{}
 
-		~concurrentQueueClass()
+		~concurrentQueue()
 		{
 			void *tmp = nullptr;
 			while (queue->tryPopNoStop(tmp))
@@ -130,15 +181,15 @@ namespace cage
 	};
 
 	template<class T>
-	holder<concurrentQueueClass<T>> newConcurrentQueue(const concurrentQueueCreateConfig &config)
+	holder<concurrentQueue<T>> newConcurrentQueue(const concurrentQueueCreateConfig &config)
 	{
-		return detail::systemArena().createHolder<concurrentQueueClass<T>>(config);
+		return detail::systemArena().createHolder<concurrentQueue<T>>(config);
 	}
 
 	template<class T>
-	holder<concurrentQueueClass<T>> newConcurrentQueue(const concurrentQueueCreateConfig &config, delegate<void(T)> deleter)
+	holder<concurrentQueue<T>> newConcurrentQueue(const concurrentQueueCreateConfig &config, delegate<void(T)> deleter)
 	{
-		return detail::systemArena().createHolder<concurrentQueueClass<T>>(config, deleter);
+		return detail::systemArena().createHolder<concurrentQueue<T>>(config, deleter);
 	}
 }
 

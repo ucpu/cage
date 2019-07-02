@@ -162,12 +162,12 @@ namespace cage
 			sint32 b() const { return box.high.s.i; }
 		};
 
-		class spatialDataImpl : public spatialDataClass
+		class spatialDataImpl : public spatialData
 		{
 		public:
 			memoryArenaGrowing<memoryAllocatorPolicyPool<templates::poolAllocatorAtomSize<itemUnion>::result>, memoryConcurrentPolicyNone> itemsPool;
 			memoryArena itemsArena;
-			holder<cage::hashTableClass<itemBase>> itemsTable;
+			holder<cage::hashTable<itemBase>> itemsTable;
 			std::atomic<bool> dirty;
 			std::vector<nodeStruct, memoryArenaStd<nodeStruct>> nodes;
 			std::vector<itemBase*> indices;
@@ -327,7 +327,7 @@ namespace cage
 			}
 		};
 
-		class spatialQueryImpl : public spatialQueryClass
+		class spatialQueryImpl : public spatialQuery
 		{
 		public:
 			const spatialDataImpl *const data;
@@ -395,55 +395,55 @@ namespace cage
 		};
 	}
 
-	uint32 spatialQueryClass::resultCount() const
+	uint32 spatialQuery::resultCount() const
 	{
 		spatialQueryImpl *impl = (spatialQueryImpl*)this;
 		return numeric_cast<uint32>(impl->resultNames.size());
 	}
 
-	const uint32 *spatialQueryClass::resultData() const
+	const uint32 *spatialQuery::resultData() const
 	{
 		spatialQueryImpl *impl = (spatialQueryImpl*)this;
 		return impl->resultNames.data();
 	}
 
-	pointerRange<const uint32> spatialQueryClass::result() const
+	pointerRange<const uint32> spatialQuery::result() const
 	{
 		spatialQueryImpl *impl = (spatialQueryImpl*)this;
 		return impl->resultNames;
 	}
 
-	void spatialQueryClass::intersection(const line &shape)
+	void spatialQuery::intersection(const line &shape)
 	{
 		spatialQueryImpl *impl = (spatialQueryImpl*)this;
 		impl->intersection(shape);
 	}
 
-	void spatialQueryClass::intersection(const triangle &shape)
+	void spatialQuery::intersection(const triangle &shape)
 	{
 		spatialQueryImpl *impl = (spatialQueryImpl*)this;
 		impl->intersection(shape);
 	}
 
-	void spatialQueryClass::intersection(const plane &shape)
+	void spatialQuery::intersection(const plane &shape)
 	{
 		spatialQueryImpl *impl = (spatialQueryImpl*)this;
 		impl->intersection(shape);
 	}
 
-	void spatialQueryClass::intersection(const sphere &shape)
+	void spatialQuery::intersection(const sphere &shape)
 	{
 		spatialQueryImpl *impl = (spatialQueryImpl*)this;
 		impl->intersection(shape);
 	}
 
-	void spatialQueryClass::intersection(const aabb &shape)
+	void spatialQuery::intersection(const aabb &shape)
 	{
 		spatialQueryImpl *impl = (spatialQueryImpl*)this;
 		impl->intersection(shape);
 	}
 
-	void spatialDataClass::update(uint32 name, const line &other)
+	void spatialData::update(uint32 name, const line &other)
 	{
 		CAGE_ASSERT_RUNTIME(other.valid());
 		CAGE_ASSERT_RUNTIME(other.isPoint() || other.isSegment());
@@ -452,7 +452,7 @@ namespace cage
 		impl->itemsTable->add(name, impl->itemsArena.createObject<itemShape<line>>(name, other));
 	}
 
-	void spatialDataClass::update(uint32 name, const triangle &other)
+	void spatialData::update(uint32 name, const triangle &other)
 	{
 		CAGE_ASSERT_RUNTIME(other.valid());
 		CAGE_ASSERT_RUNTIME(other.area() < real::Infinity());
@@ -461,7 +461,7 @@ namespace cage
 		impl->itemsTable->add(name, impl->itemsArena.createObject<itemShape<triangle>>(name, other));
 	}
 
-	void spatialDataClass::update(uint32 name, const sphere &other)
+	void spatialData::update(uint32 name, const sphere &other)
 	{
 		CAGE_ASSERT_RUNTIME(other.valid());
 		CAGE_ASSERT_RUNTIME(other.volume() < real::Infinity());
@@ -470,7 +470,7 @@ namespace cage
 		impl->itemsTable->add(name, impl->itemsArena.createObject<itemShape<sphere>>(name, other));
 	}
 
-	void spatialDataClass::update(uint32 name, const aabb &other)
+	void spatialData::update(uint32 name, const aabb &other)
 	{
 		CAGE_ASSERT_RUNTIME(other.valid());
 		CAGE_ASSERT_RUNTIME(other.volume() < real::Infinity());
@@ -479,7 +479,7 @@ namespace cage
 		impl->itemsTable->add(name, impl->itemsArena.createObject<itemShape<aabb>>(name, other));
 	}
 
-	void spatialDataClass::remove(uint32 name)
+	void spatialData::remove(uint32 name)
 	{
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		impl->dirty = true;
@@ -490,7 +490,7 @@ namespace cage
 		impl->itemsArena.deallocate(item);
 	}
 
-	void spatialDataClass::clear()
+	void spatialData::clear()
 	{
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		impl->dirty = true;
@@ -498,7 +498,7 @@ namespace cage
 		impl->itemsTable->clear();
 	}
 
-	void spatialDataClass::rebuild()
+	void spatialData::rebuild()
 	{
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		impl->rebuild();
@@ -507,13 +507,13 @@ namespace cage
 	spatialDataCreateConfig::spatialDataCreateConfig() : maxItems(1000 * 100)
 	{}
 
-	holder<spatialDataClass> newSpatialData(const spatialDataCreateConfig &config)
+	holder<spatialData> newSpatialData(const spatialDataCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<spatialDataClass, spatialDataImpl>(config);
+		return detail::systemArena().createImpl<spatialData, spatialDataImpl>(config);
 	}
 
-	holder<spatialQueryClass> newSpatialQuery(const spatialDataClass *data)
+	holder<spatialQuery> newSpatialQuery(const spatialData *data)
 	{
-		return detail::systemArena().createImpl<spatialQueryClass, spatialQueryImpl>((spatialDataImpl*)data);
+		return detail::systemArena().createImpl<spatialQuery, spatialQueryImpl>((spatialDataImpl*)data);
 	}
 }

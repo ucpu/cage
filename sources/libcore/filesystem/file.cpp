@@ -56,13 +56,13 @@ namespace cage
 		return md;
 	}
 
-	void fileClass::read(void *data, uint64 size)
+	void file::read(void *data, uint64 size)
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		impl->read(data, size);
 	}
 
-	bool fileClass::readLine(string &line)
+	bool file::readLine(string &line)
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		line = "";
@@ -96,66 +96,66 @@ namespace cage
 		return true;
 	}
 
-	memoryBuffer fileClass::readBuffer(uintPtr size)
+	memoryBuffer file::readBuffer(uintPtr size)
 	{
 		memoryBuffer r(size);
 		read(r.data(), r.size());
 		return r;
 	}
 
-	void fileClass::write(const void *data, uint64 size)
+	void file::write(const void *data, uint64 size)
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		impl->write(data, size);
 	}
 
-	void fileClass::writeLine(const string &data)
+	void file::writeLine(const string &data)
 	{
 		string d = data + "\n";
 		write(d.c_str(), d.length());
 	}
 
-	void fileClass::writeBuffer(const memoryBuffer &buffer)
+	void file::writeBuffer(const memoryBuffer &buffer)
 	{
 		write(buffer.data(), buffer.size());
 	}
 
-	void fileClass::seek(uint64 position)
+	void file::seek(uint64 position)
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		impl->seek(position);
 	}
 
-	void fileClass::flush()
+	void file::flush()
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		impl->flush();
 	}
 
-	void fileClass::close()
+	void file::close()
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		impl->close();
 	}
 
-	uint64 fileClass::tell() const
+	uint64 file::tell() const
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		return impl->tell();
 	}
 
-	uint64 fileClass::size() const
+	uint64 file::size() const
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		return impl->size();
 	}
 
-	holder<fileClass> newFile(const string &path, const fileMode &mode)
+	holder<file> newFile(const string &path, const fileMode &mode)
 	{
 		string p;
 		auto a = archiveFindTowardsRoot(path, false, p);
 		if (a)
-			return a->file(p, mode);
+			return a->openFile(p, mode);
 		else
 			return realNewFile(path, mode);
 	}
@@ -256,8 +256,8 @@ namespace cage
 		};
 	}
 
-	holder<fileClass> realNewFile(const string &path, const fileMode &mode)
+	holder<file> realNewFile(const string &path, const fileMode &mode)
 	{
-		return detail::systemArena().createImpl<fileClass, fileReal>(path, mode);
+		return detail::systemArena().createImpl<file, fileReal>(path, mode);
 	}
 }

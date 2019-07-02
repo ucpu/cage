@@ -36,7 +36,7 @@ namespace
 	struct glyphStruct
 	{
 		fontHeaderStruct::glyphDataStruct data;
-		holder<imageClass> png;
+		holder<image> png;
 		uint32 pngX, pngY;
 		glyphStruct() : pngX(0), pngY(0)
 		{}
@@ -48,7 +48,7 @@ namespace
 	std::vector<real> kerning;
 	std::vector<uint32> charsetChars;
 	std::vector<uint32> charsetGlyphs;
-	holder<imageClass> texels;
+	holder<image> texels;
 
 	vec3 to(const msdfgen::FloatRGB &rgb)
 	{
@@ -314,7 +314,7 @@ namespace
 		CAGE_ASSERT_RUNTIME(charsetChars.size() == charsetGlyphs.size(), charsetChars.size(), charsetGlyphs.size());
 		CAGE_ASSERT_RUNTIME(kerning.size() == 0 || kerning.size() == data.glyphCount * data.glyphCount, kerning.size(), data.glyphCount * data.glyphCount, data.glyphCount);
 
-		assetHeaderStruct h = initializeAssetHeaderStruct();
+		assetHeader h = initializeAssetHeaderStruct();
 		h.originalSize = sizeof(data) + data.texSize +
 			data.glyphCount * sizeof(fontHeaderStruct::glyphDataStruct) +
 			sizeof(real) * numeric_cast<uint32>(kerning.size()) +
@@ -343,7 +343,7 @@ namespace
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "buffer size (after compression): " + buf.size());
 		h.compressedSize = buf.size();
 
-		holder<fileClass> f = newFile(outputFileName, fileMode(false, true));
+		holder<file> f = newFile(outputFileName, fileMode(false, true));
 		f->write(&h, sizeof(h));
 		f->writeBuffer(buf);
 		f->close();
@@ -363,7 +363,7 @@ namespace
 		{ // glyphs
 			fileMode fm(false, true);
 			fm.textual = true;
-			holder<fileClass> f = newFile(pathJoin(configGetString("cage-asset-processor.font.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".glyphs.txt"), fm);
+			holder<file> f = newFile(pathJoin(configGetString("cage-asset-processor.font.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".glyphs.txt"), fm);
 			f->writeLine(
 				string("glyph").fill(10) +
 				string("tex coord").fill(60) +
@@ -388,7 +388,7 @@ namespace
 		{ // characters
 			fileMode fm(false, true);
 			fm.textual = true;
-			holder<fileClass> f = newFile(pathJoin(configGetString("cage-asset-processor.font.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".characters.txt"), fm);
+			holder<file> f = newFile(pathJoin(configGetString("cage-asset-processor.font.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".characters.txt"), fm);
 			f->writeLine(
 				string("code").fill(10) +
 				string("char").fill(5) +
@@ -410,7 +410,7 @@ namespace
 		{ // kerning
 			fileMode fm(false, true);
 			fm.textual = true;
-			holder<fileClass> f = newFile(pathJoin(configGetString("cage-asset-processor.font.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".kerning.txt"), fm);
+			holder<file> f = newFile(pathJoin(configGetString("cage-asset-processor.font.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".kerning.txt"), fm);
 			f->writeLine(
 				string("g1").fill(5) +
 				string("g2").fill(5) +

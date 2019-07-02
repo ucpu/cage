@@ -6,7 +6,7 @@
 
 namespace cage
 {
-	string textPackClass::format(const string &format, uint32 paramCount, const string *paramValues)
+	string textPack::format(const string &format, uint32 paramCount, const string *paramValues)
 	{
 		string res = format;
 		while (true)
@@ -31,34 +31,34 @@ namespace cage
 
 	namespace
 	{
-		class textPackImpl : public textPackClass
+		class textPackImpl : public textPack
 		{
 		public:
 			std::map<uint32, string> texts;
 		};
 	}
 
-	void textPackClass::set(uint32 name, const string &text)
+	void textPack::set(uint32 name, const string &text)
 	{
 		CAGE_ASSERT_RUNTIME(name != 0);
 		textPackImpl *impl = (textPackImpl*)this;
 		impl->texts[name] = text;
 	}
 
-	void textPackClass::erase(uint32 name)
+	void textPack::erase(uint32 name)
 	{
 		CAGE_ASSERT_RUNTIME(name != 0);
 		textPackImpl *impl = (textPackImpl*)this;
 		impl->texts.erase(name);
 	}
 
-	void textPackClass::clear()
+	void textPack::clear()
 	{
 		textPackImpl *impl = (textPackImpl*)this;
 		impl->texts.clear();
 	}
 
-	string textPackClass::get(uint32 name) const
+	string textPack::get(uint32 name) const
 	{
 		CAGE_ASSERT_RUNTIME(name != 0);
 		textPackImpl *impl = (textPackImpl*)this;
@@ -68,14 +68,14 @@ namespace cage
 		return it->second;
 	}
 
-	string textPackClass::format(uint32 name, uint32 paramCount, const string *paramValues) const
+	string textPack::format(uint32 name, uint32 paramCount, const string *paramValues) const
 	{
 		CAGE_ASSERT_RUNTIME(name != 0);
 		return format(get(name), paramCount, paramValues);
 	}
 
-	holder<textPackClass> newTextPack()
+	holder<textPack> newTextPack()
 	{
-		return detail::systemArena().createImpl<textPackClass, textPackImpl>();
+		return detail::systemArena().createImpl<textPack, textPackImpl>();
 	}
 }

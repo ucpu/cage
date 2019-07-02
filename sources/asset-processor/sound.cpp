@@ -14,7 +14,7 @@ namespace
 
 	struct vorbisEncoderStruct
 	{
-		fileClass *f;
+		file *f;
 
 		ogg_stream_state os;
 		vorbis_info vi;
@@ -25,7 +25,7 @@ namespace
 		ogg_page og;
 		int ret;
 
-		vorbisEncoderStruct(fileClass *f) : f(f) {}
+		vorbisEncoderStruct(file *f) : f(f) {}
 
 		void processBlock()
 		{
@@ -255,10 +255,10 @@ void processSound()
 		CAGE_THROW_CRITICAL(exception, "invalid sound type");
 	}
 
-	assetHeaderStruct h = initializeAssetHeaderStruct();
+	assetHeader h = initializeAssetHeaderStruct();
 	h.originalSize = sizeof(soundHeaderStruct) + sds.frames * sds.channels * sizeof(float);
 
-	holder<fileClass> f = newFile(outputFileName, fileMode(true, true));
+	holder<file> f = newFile(outputFileName, fileMode(true, true));
 	f->write(&h, sizeof(h));
 	f->write(&sds, sizeof(sds));
 
@@ -273,7 +273,7 @@ void processSound()
 	{
 		vorbisEncoderStruct ves(f.get());
 		ves.encode();
-		uint32 oggSize = numeric_cast<uint32>(f->size() - sizeof(soundHeaderStruct) - sizeof(assetHeaderStruct));
+		uint32 oggSize = numeric_cast<uint32>(f->size() - sizeof(soundHeaderStruct) - sizeof(assetHeader));
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "original size: " + h.originalSize + " bytes");
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "compressed size: " + oggSize + " bytes");
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "compression ratio: " + (oggSize / (float)h.originalSize));
@@ -295,10 +295,10 @@ void processSound()
 		if (configGetBool("cage-asset-processor.sound.preview"))
 		{ // preview ogg
 			string dbgName = pathJoin(configGetString("cage-asset-processor.sound.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".ogg");
-			holder<fileClass> df = newFile(dbgName, fileMode(false, true));
+			holder<file> df = newFile(dbgName, fileMode(false, true));
 			void *buf = detail::systemArena().allocate(oggSize, sizeof(uintPtr));
 			f->flush();
-			f->seek(sizeof(assetHeaderStruct) + sizeof(soundHeaderStruct));
+			f->seek(sizeof(assetHeader) + sizeof(soundHeaderStruct));
 			f->read(buf, oggSize);
 			df->write(buf, oggSize);
 			detail::systemArena().deallocate(buf);

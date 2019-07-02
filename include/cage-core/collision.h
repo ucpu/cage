@@ -3,19 +3,19 @@
 
 namespace cage
 {
-	class CAGE_API collisionQueryClass : private immovable
+	class CAGE_API collisionQuery : private immovable
 	{
 	public:
 		uint32 name() const;
 		real fractionBefore() const;
 		real fractionContact() const;
 		uint32 collisionPairsCount() const;
-		const collisionPairStruct *collisionPairsData() const;
-		pointerRange<const collisionPairStruct> collisionPairs() const;
-		void collider(const colliderClass *&c, transform &t) const;
+		const collisionPair *collisionPairsData() const;
+		pointerRange<const collisionPair> collisionPairs() const;
+		void collider(const collisionMesh *&c, transform &t) const;
 
-		void query(const colliderClass *collider, const transform &t);
-		void query(const colliderClass *collider, const transform &t1, const transform &t2);
+		void query(const collisionMesh *collider, const transform &t);
+		void query(const collisionMesh *collider, const transform &t1, const transform &t2);
 
 		void query(const line &shape);
 		void query(const triangle &shape);
@@ -24,10 +24,10 @@ namespace cage
 		void query(const aabb &shape);
 	};
 
-	class CAGE_API collisionDataClass : private immovable
+	class CAGE_API collisionData : private immovable
 	{
 	public:
-		void update(uint32 name, const colliderClass *collider, const transform &t);
+		void update(uint32 name, const collisionMesh *collider, const transform &t);
 		void remove(uint32 name);
 		void clear();
 		void rebuild();
@@ -40,8 +40,8 @@ namespace cage
 		collisionDataCreateConfig();
 	};
 
-	CAGE_API holder<collisionDataClass> newCollisionData(const collisionDataCreateConfig &config);
-	CAGE_API holder<collisionQueryClass> newCollisionQuery(const collisionDataClass *data);
+	CAGE_API holder<collisionData> newCollisionData(const collisionDataCreateConfig &config);
+	CAGE_API holder<collisionQuery> newCollisionQuery(const collisionData *data);
 }
 
 #endif // guard_collision_h_erthg456ter4h56r1th64rth

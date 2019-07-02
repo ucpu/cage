@@ -3,7 +3,7 @@
 
 namespace cage
 {
-	class CAGE_API imageClass : private immovable
+	class CAGE_API image : private immovable
 	{
 	public:
 		void empty(uint32 w, uint32 h, uint32 c = 4, uint32 bpc = 1);
@@ -44,9 +44,9 @@ namespace cage
 		void convert(uint32 channels, uint32 bpc);
 	};
 
-	CAGE_API holder<imageClass> newImage();
+	CAGE_API holder<image> newImage();
 
-	CAGE_API void imageBlit(imageClass *sourcePng, imageClass *targetPng, uint32 sourceX, uint32 sourceY, uint32 targetX, uint32 targetY, uint32 width, uint32 height);
+	CAGE_API void imageBlit(image *source, image *target, uint32 sourceX, uint32 sourceY, uint32 targetX, uint32 targetY, uint32 width, uint32 height);
 }
 
 #endif // guard_image_h_681DF37FA76B4FA48C656E96AF90EE69

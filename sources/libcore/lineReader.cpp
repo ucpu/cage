@@ -7,7 +7,7 @@ namespace cage
 {
 	namespace
 	{
-		class lineReaderImpl : public lineReaderClass
+		class lineReaderImpl : public lineReader
 		{
 		public:
 			lineReaderImpl(const char *buff, uintPtr size) : buffer(buff), size(size)
@@ -22,7 +22,7 @@ namespace cage
 		};
 	}
 
-	bool lineReaderClass::readLine(string &line)
+	bool lineReader::readLine(string &line)
 	{
 		lineReaderImpl *impl = (lineReaderImpl*)this;
 
@@ -52,24 +52,24 @@ namespace cage
 		return true;
 	}
 
-	uintPtr lineReaderClass::left() const
+	uintPtr lineReader::left() const
 	{
 		lineReaderImpl *impl = (lineReaderImpl*)this;
 		return impl->size;
 	}
 
-	holder<lineReaderClass> newLineReader(const char *buffer, uintPtr size)
+	holder<lineReader> newLineReader(const char *buffer, uintPtr size)
 	{
-		return detail::systemArena().createImpl<lineReaderClass, lineReaderImpl>(buffer, size);
+		return detail::systemArena().createImpl<lineReader, lineReaderImpl>(buffer, size);
 	}
 
-	holder<lineReaderClass> newLineReader(const memoryBuffer &buffer)
+	holder<lineReader> newLineReader(const memoryBuffer &buffer)
 	{
-		return detail::systemArena().createImpl<lineReaderClass, lineReaderImpl>(buffer.data(), buffer.size());
+		return detail::systemArena().createImpl<lineReader, lineReaderImpl>(buffer.data(), buffer.size());
 	}
 
-	holder<lineReaderClass> newLineReader(memoryBuffer &&buffer)
+	holder<lineReader> newLineReader(memoryBuffer &&buffer)
 	{
-		return detail::systemArena().createImpl<lineReaderClass, lineReaderImpl>(templates::move(buffer));
+		return detail::systemArena().createImpl<lineReader, lineReaderImpl>(templates::move(buffer));
 	}
 }

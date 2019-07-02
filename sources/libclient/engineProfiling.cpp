@@ -116,14 +116,14 @@ namespace cage
 
 				clearEntities();
 				profilingModeOld = profilingScope;
-				entityManagerClass *g = gui()->entities();
-				entityClass *panel = g->createUnique();
+				entityManager *g = gui()->entities();
+				entity *panel = g->createUnique();
 				{
 					panelIndex = panel->name();
 					GUI_GET_COMPONENT(scrollbars, sc, panel);
 					sc.alignment = screenPosition;
 				}
-				entityClass *layout = g->createUnique();
+				entity *layout = g->createUnique();
 				{
 					layoutIndex = layout->name();
 					GUI_GET_COMPONENT(panel, c, layout);
@@ -141,7 +141,7 @@ namespace cage
 				uint32 labelsCountExt = labelsCount + (profilingScope == engineProfilingScopeEnum::Full ? 3 : 0);
 				for (uint32 i = 0; i < labelsCountExt * 2; i++)
 				{
-					entityClass *timing = g->createUnique();
+					entity *timing = g->createUnique();
 					labelIndices[i] = timing->name();
 					GUI_GET_COMPONENT(label, c, timing);
 					GUI_GET_COMPONENT(parent, child, timing);
@@ -179,7 +179,7 @@ namespace cage
 			{
 				if (name == 0)
 					return;
-				entityManagerClass *g = gui()->entities();
+				entityManager *g = gui()->entities();
 				if (!g->has(name))
 					return;
 				g->get(name)->destroy();
@@ -196,7 +196,7 @@ namespace cage
 
 			void checkEntities()
 			{
-				entityManagerClass *g = gui()->entities();
+				entityManager *g = gui()->entities();
 				bool panelPresent = panelIndex != 0 && g->has(panelIndex);
 				bool visible = profilingScope != engineProfilingScopeEnum::None;
 				if (panelPresent != visible || profilingModeOld != profilingScope)
@@ -212,7 +212,7 @@ namespace cage
 				CAGE_ASSERT_RUNTIME(index < sizeof(labelIndices) / sizeof(labelIndices[0]), index);
 				if (labelIndices[index] == 0 || !gui()->entities()->has(labelIndices[index]))
 					return;
-				entityClass *timing = gui()->entities()->get(labelIndices[index]);
+				entity *timing = gui()->entities()->get(labelIndices[index]);
 				GUI_GET_COMPONENT(text, t, timing);
 				t.value = value;
 			}

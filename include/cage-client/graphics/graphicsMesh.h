@@ -39,6 +39,6 @@ namespace cage
 
 	CAGE_API holder<meshClass> newMesh();
 
-	CAGE_API assetSchemeStruct genAssetSchemeMesh(uint32 threadIndex, windowClass *memoryContext);
+	CAGE_API assetScheme genAssetSchemeMesh(uint32 threadIndex, windowClass *memoryContext);
 	static const uint32 assetSchemeIndexMesh = 12;
 }

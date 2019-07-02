@@ -61,7 +61,7 @@ namespace cage
 	{
 		if (!renderDebugConfig)
 			return;
-		real h = real(detail::hash(entity ? entity->name() : 0)) / real(detail::numeric_limits<uint32>().max());
+		real h = real(detail::hash(ent ? ent->name() : 0)) / real(detail::numeric_limits<uint32>().max());
 		emitDebug(renderPos, renderSize, vec4(convertHsvToRgb(vec3(h, 1, 1)), 1));
 	}
 
@@ -79,14 +79,14 @@ namespace cage
 	void hierarchyItemStruct::printDebug(uint32 offset) const
 	{
 		string spaces = string().fill(offset * 4);
-		CAGE_LOG_CONTINUE(severityEnum::Info, "gui-debug", spaces + "HIERARCHY: entity: " + (entity ? entity->name() : 0u) + ", subsided: " + subsidedItem);
+		CAGE_LOG_CONTINUE(severityEnum::Info, "gui-debug", spaces + "HIERARCHY: entity: " + (ent ? ent->name() : 0u) + ", subsided: " + subsidedItem);
 		if (item)
 		{
 			CAGE_LOG_CONTINUE(severityEnum::Info, "gui-debug", spaces + "  ITEM: " + typeid(*item).name());
 		}
 		if (text)
 		{
-			GUI_GET_COMPONENT(text, text, entity);
+			GUI_GET_COMPONENT(text, text, ent);
 			CAGE_LOG_CONTINUE(severityEnum::Info, "gui-debug", spaces + "  TEXT: '" + text.value + "'");
 		}
 		CAGE_LOG_CONTINUE(severityEnum::Info, "gui-debug", spaces + "  requested size: " + requestedSize);

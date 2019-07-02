@@ -24,7 +24,7 @@ namespace cage
 			uintPtr total = alig + BoundsPolicy::SizeFront + size + BoundsPolicy::SizeBack;
 
 			if ((char*)current + total > (char*)origin + totalSize)
-				CAGE_THROW_SILENT(outOfMemoryException, "out of memory", total);
+				CAGE_THROW_SILENT(outOfMemory, "out of memory", total);
 
 			void *result = (char*)current + alig + BoundsPolicy::SizeFront;
 			CAGE_ASSERT_RUNTIME((uintPtr)result % alignment == 0, "alignment failed", result, total, alignment, current, alig, BoundsPolicy::SizeFront, size, BoundsPolicy::SizeBack);
@@ -152,7 +152,7 @@ namespace cage
 			CAGE_ASSERT_RUNTIME(current >= origin && current <= (char*)origin + totalSize, "current is corrupted", current, origin, totalSize);
 
 			if (current >= (char*)origin + totalSize)
-				CAGE_THROW_SILENT(outOfMemoryException, "out of memory", objectSize);
+				CAGE_THROW_SILENT(outOfMemory, "out of memory", objectSize);
 
 			void *next = *(void**)current;
 			uintPtr alig = detail::addToAlign((uintPtr)current, alignment);
@@ -228,7 +228,7 @@ namespace cage
 
 			if (back < front && (char*)back + total >(char*)front)
 			{
-				CAGE_THROW_SILENT(outOfMemoryException, "out of memory", total);
+				CAGE_THROW_SILENT(outOfMemory, "out of memory", total);
 			}
 			else if (back >= front)
 			{
@@ -237,7 +237,7 @@ namespace cage
 					alig = detail::addToAlign((uintPtr)origin + sizeof(uintPtr) + BoundsPolicy::SizeFront, alignment);
 					total = alig + sizeof(uintPtr) + BoundsPolicy::SizeFront + size + BoundsPolicy::SizeBack;
 					if ((char*)origin + total > (char*)front)
-						CAGE_THROW_SILENT(outOfMemoryException, "out of memory", total);
+						CAGE_THROW_SILENT(outOfMemory, "out of memory", total);
 					back = origin;
 				}
 			}
@@ -312,7 +312,7 @@ namespace cage
 			uintPtr total = alig + sizeof(uintPtr) + BoundsPolicy::SizeFront + size + BoundsPolicy::SizeBack;
 
 			if ((char*)current + total > (char*)origin + totalSize)
-				CAGE_THROW_SILENT(outOfMemoryException, "out of memory", total);
+				CAGE_THROW_SILENT(outOfMemory, "out of memory", total);
 
 			void *result = (char*)current + alig + sizeof(uintPtr) + BoundsPolicy::SizeFront;
 			CAGE_ASSERT_RUNTIME((uintPtr)result % alignment == 0, "alignment failed", result, total, alignment, current, alig, BoundsPolicy::SizeFront, size, BoundsPolicy::SizeBack);

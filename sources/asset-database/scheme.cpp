@@ -3,7 +3,7 @@
 
 #include <cage-core/core.h>
 #include <cage-core/log.h>
-#include <cage-core/ini.h>
+#include <cage-core/configIni.h>
 
 using namespace cage;
 
@@ -12,7 +12,7 @@ using namespace cage;
 #include "scheme.h"
 #include "asset.h"
 
-void schemeStruct::parse(iniClass *ini)
+void schemeStruct::parse(configIni *ini)
 {
 	processor = ini->getString("scheme", "processor");
 	if (processor.empty())
@@ -56,7 +56,7 @@ void schemeStruct::parse(iniClass *ini)
 	}
 }
 
-void schemeStruct::load(fileClass *f)
+void schemeStruct::load(file *f)
 {
 	read(f, name);
 	read(f, processor);
@@ -76,7 +76,7 @@ void schemeStruct::load(fileClass *f)
 	}
 }
 
-void schemeStruct::save(fileClass *f)
+void schemeStruct::save(file *f)
 {
 	write(f, name);
 	write(f, processor);

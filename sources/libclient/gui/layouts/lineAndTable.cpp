@@ -28,13 +28,13 @@ namespace cage
 				auto impl = hierarchy->impl;
 				if (justLine)
 				{
-					GUI_GET_COMPONENT(layoutLine, l, hierarchy->entity);
+					GUI_GET_COMPONENT(layoutLine, l, hierarchy->ent);
 					data.vertical = l.vertical;
 					data.sections = 1;
 				}
 				else
 				{
-					GUI_GET_COMPONENT(layoutTable, t, hierarchy->entity);
+					GUI_GET_COMPONENT(layoutTable, t, hierarchy->ent);
 					data = t;
 				}
 			}

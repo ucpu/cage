@@ -22,7 +22,7 @@ string inputIdentifier; // identifier
 
 const char *logComponentName;
 
-assetHeaderStruct initializeAssetHeaderStruct()
+assetHeader initializeAssetHeaderStruct()
 {
 	return initializeAssetHeader(inputName, numeric_cast<uint16>(schemeIndex));
 }
@@ -86,12 +86,12 @@ namespace
 
 	void initializeSecondaryLog(const string &path)
 	{
-		static holder<logOutputPolicyFileClass> *secondaryLogFile = new holder<logOutputPolicyFileClass>(); // intentional leak
-		static holder<loggerClass> *secondaryLog = new holder<loggerClass>(); // intentional leak - this will allow to log to the very end of the application
-		*secondaryLogFile = newLogOutputPolicyFile(path, false);
+		static holder<logOutputFile> *secondaryLogFile = new holder<logOutputFile>(); // intentional leak
+		static holder<logger> *secondaryLog = new holder<logger>(); // intentional leak - this will allow to log to the very end of the application
+		*secondaryLogFile = newLogOutputFile(path, false);
 		*secondaryLog = newLogger();
-		(*secondaryLog)->output.bind<logOutputPolicyFileClass, &logOutputPolicyFileClass::output>(secondaryLogFile->get());
-		(*secondaryLog)->format.bind<&logFormatPolicyFileShort>();
+		(*secondaryLog)->output.bind<logOutputFile, &logOutputFile::output>(secondaryLogFile->get());
+		(*secondaryLog)->format.bind<&logFormatFileShort>();
 	}
 }
 

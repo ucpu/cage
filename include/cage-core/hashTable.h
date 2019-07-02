@@ -57,10 +57,10 @@ namespace cage
 	};
 
 	template<class T>
-	class hashTableClass : private immovable
+	class hashTable : private immovable
 	{
 	public:
-		hashTableClass(holder<privat::hashTablePriv> table) : table(templates::move(table)) {}
+		hashTable(holder<privat::hashTablePriv> table) : table(templates::move(table)) {}
 		void add(uint32 name, T *value) { return table->add(name, value); }
 		void remove(uint32 name) { return table->remove(name); }
 		T *get(uint32 name, bool allowNull) const { return (T*)table->get(name, allowNull); }
@@ -75,9 +75,9 @@ namespace cage
 	};
 
 	template<class T>
-	holder<hashTableClass<T>> newHashTable(uint32 initItems, uint32 maxItems, float maxFillRate = 0.6)
+	holder<hashTable<T>> newHashTable(uint32 initItems, uint32 maxItems, float maxFillRate = 0.6)
 	{
-		return detail::systemArena().createHolder<hashTableClass<T>>(privat::newHashTable(initItems, maxItems, maxFillRate));
+		return detail::systemArena().createHolder<hashTable<T>>(privat::newHashTable(initItems, maxItems, maxFillRate));
 	}
 }
 

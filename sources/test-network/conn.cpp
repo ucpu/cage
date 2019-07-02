@@ -19,7 +19,7 @@ namespace
 	class connImpl : public connClass
 	{
 	public:
-		holder<udpConnectionClass> udp;
+		holder<udpConnection> udp;
 		memoryBuffer b;
 		const uint64 timeStart;
 		uint64 timeStats;
@@ -27,7 +27,7 @@ namespace
 		variableSmoothingBuffer<uint64, 100> smoothRtt;
 		variableSmoothingBuffer<uint64, 100> smoothThroughput;
 
-		connImpl(holder<udpConnectionClass> udp) : udp(templates::move(udp)), timeStart(getApplicationTime()), timeStats(timeStart + 1000000), sendSeqn(0), recvSeqn(0), recvCnt(0), recvBytes(0)
+		connImpl(holder<udpConnection> udp) : udp(templates::move(udp)), timeStart(getApplicationTime()), timeStats(timeStart + 1000000), sendSeqn(0), recvSeqn(0), recvCnt(0), recvBytes(0)
 		{}
 
 		~connImpl()
@@ -112,7 +112,7 @@ bool connClass::process()
 	return impl->process();
 }
 
-holder<connClass> newConn(holder<udpConnectionClass> udp)
+holder<connClass> newConn(holder<udpConnection> udp)
 {
 	return detail::systemArena().createImpl<connClass, connImpl>(templates::move(udp));
 }

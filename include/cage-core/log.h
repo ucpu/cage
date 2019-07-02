@@ -23,7 +23,7 @@ namespace cage
 		};
 	}
 
-	class CAGE_API loggerClass : private immovable
+	class CAGE_API logger : private immovable
 	{
 	public:
 		delegate<bool(const detail::loggerInfo &)> filter;
@@ -31,27 +31,27 @@ namespace cage
 		delegate<void(const string &)> output;
 	};
 
-	CAGE_API holder<loggerClass> newLogger();
+	CAGE_API holder<logger> newLogger();
 
-	CAGE_API void logFormatPolicyConsole(const detail::loggerInfo &info, delegate<void(const string &)> output);
-	CAGE_API void logFormatPolicyFileShort(const detail::loggerInfo &info, delegate<void(const string &)> output);
-	CAGE_API void logFormatPolicyFileLong(const detail::loggerInfo &info, delegate<void(const string &)> output);
+	CAGE_API void logFormatConsole(const detail::loggerInfo &info, delegate<void(const string &)> output);
+	CAGE_API void logFormatFileShort(const detail::loggerInfo &info, delegate<void(const string &)> output);
+	CAGE_API void logFormatFileLong(const detail::loggerInfo &info, delegate<void(const string &)> output);
 
-	CAGE_API void logOutputPolicyDebug(const string &message);
-	CAGE_API void logOutputPolicyStdOut(const string &message);
-	CAGE_API void logOutputPolicyStdErr(const string &message);
+	CAGE_API void logOutputDebug(const string &message);
+	CAGE_API void logOutputStdOut(const string &message);
+	CAGE_API void logOutputStdErr(const string &message);
 
-	class CAGE_API logOutputPolicyFileClass : private immovable
+	class CAGE_API logOutputFile : private immovable
 	{
 	public:
 		void output(const string &message);
 	};
 
-	CAGE_API holder<logOutputPolicyFileClass> newLogOutputPolicyFile(const string &path, bool append);
+	CAGE_API holder<logOutputFile> newLogOutputFile(const string &path, bool append);
 
 	namespace detail
 	{
-		CAGE_API loggerClass *getCentralLog();
+		CAGE_API logger *getCentralLog();
 		CAGE_API string severityToString(const severityEnum severity);
 	}
 

@@ -3,7 +3,7 @@
 #include <cage-core/core.h>
 #include <cage-core/log.h>
 #include <cage-core/math.h>
-#include <cage-core/ini.h>
+#include <cage-core/configIni.h>
 #include <cage-core/program.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/config.h>
@@ -17,7 +17,7 @@ namespace
 {
 	struct runStruct
 	{
-		holder<threadClass> thr;
+		holder<thread> thr;
 		string cmd;
 		uint32 name;
 
@@ -33,7 +33,7 @@ namespace
 
 		void run()
 		{
-			holder<programClass> prg = newProgram(cmd);
+			holder<program> prg = newProgram(cmd);
 			{
 				while (true)
 				{
@@ -63,12 +63,12 @@ namespace
 
 	void initializeSecondaryLog(const string &path)
 	{
-		static holder<logOutputPolicyFileClass> *secondaryLogFile = new holder<logOutputPolicyFileClass>(); // intentional leak
-		static holder<loggerClass> *secondaryLog = new holder<loggerClass>(); // intentional leak - this will allow to log to the very end of the application
-		*secondaryLogFile = newLogOutputPolicyFile(path, false);
+		static holder<logOutputFile> *secondaryLogFile = new holder<logOutputFile>(); // intentional leak
+		static holder<logger> *secondaryLog = new holder<logger>(); // intentional leak - this will allow to log to the very end of the application
+		*secondaryLogFile = newLogOutputFile(path, false);
 		*secondaryLog = newLogger();
-		(*secondaryLog)->output.bind<logOutputPolicyFileClass, &logOutputPolicyFileClass::output>(secondaryLogFile->get());
-		(*secondaryLog)->format.bind<&logFormatPolicyFileShort>();
+		(*secondaryLog)->output.bind<logOutputFile, &logOutputFile::output>(secondaryLogFile->get());
+		(*secondaryLog)->format.bind<&logFormatFileShort>();
 	}
 }
 
@@ -77,9 +77,9 @@ int main(int argc, const char *args[])
 	try
 	{
 		// log to console
-		holder<loggerClass> log1 = newLogger();
-		log1->format.bind<logFormatPolicyConsole>();
-		log1->output.bind<logOutputPolicyStdOut>();
+		holder<logger> log1 = newLogger();
+		log1->format.bind<logFormatConsole>();
+		log1->output.bind<logOutputStdOut>();
 
 		if (argc == 1)
 		{
@@ -88,7 +88,7 @@ int main(int argc, const char *args[])
 			return 0;
 		}
 
-		holder<iniClass> cmd = newIni();
+		holder<configIni> cmd = newConfigIni();
 		cmd->parseCmd(argc, args);
 		string name;
 		configString address("address", "localhost");

@@ -30,9 +30,9 @@ namespace cage
 		if (skipInitialize)
 			return;
 		auto *impl = hierarchy->impl;
-		if (GUI_HAS_COMPONENT(imageFormat, hierarchy->entity))
+		if (GUI_HAS_COMPONENT(imageFormat, hierarchy->ent))
 		{
-			GUI_GET_COMPONENT(imageFormat, f, hierarchy->entity);
+			GUI_GET_COMPONENT(imageFormat, f, hierarchy->ent);
 			apply(f);
 		}
 		assign();
@@ -41,7 +41,7 @@ namespace cage
 	void imageItemStruct::assign()
 	{
 		auto *impl = hierarchy->impl;
-		GUI_GET_COMPONENT(image, i, hierarchy->entity);
+		GUI_GET_COMPONENT(image, i, hierarchy->ent);
 		assign(i);
 	}
 

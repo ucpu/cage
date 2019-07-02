@@ -72,7 +72,7 @@ namespace cage
 					{ // this is the small base
 						if (hasFocus(1 | 2 | 4))
 						{ // create popup
-							hierarchyItemStruct *item = hierarchy->impl->itemsMemory.createObject<hierarchyItemStruct>(hierarchy->impl, hierarchy->entity);
+							hierarchyItemStruct *item = hierarchy->impl->itemsMemory.createObject<hierarchyItemStruct>(hierarchy->impl, hierarchy->ent);
 							item->attachParent(hierarchy->impl->root);
 							item->item = large = hierarchy->impl->itemsMemory.createObject<colorPickerImpl>(item, this);
 							large->widgetState = widgetState;
@@ -193,7 +193,7 @@ namespace cage
 						vec2 p = clamp((point - sliderPos) / sliderSize, 0, 1);
 						hsv[0] = p[0];
 						data.color = convertHsvToRgb(hsv);
-						hierarchy->impl->widgetEvent.dispatch(hierarchy->entity->name());
+						hierarchy->impl->widgetEvent.dispatch(hierarchy->ent->name());
 					}
 					else if (hasFocus(4))
 					{
@@ -202,7 +202,7 @@ namespace cage
 						hsv[1] = p[0];
 						hsv[2] = 1 - p[1];
 						data.color = convertHsvToRgb(hsv);
-						hierarchy->impl->widgetEvent.dispatch(hierarchy->entity->name());
+						hierarchy->impl->widgetEvent.dispatch(hierarchy->ent->name());
 					}
 				}
 				return true;

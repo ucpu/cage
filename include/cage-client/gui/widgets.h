@@ -150,9 +150,9 @@ namespace cage
 
 	struct CAGE_API widgetsComponentsStruct
 	{
-#define GCHL_GENERATE(T) componentClass *T;
+#define GCHL_GENERATE(T) entityComponent *T;
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS));
 #undef GCHL_GENERATE
-		widgetsComponentsStruct(entityManagerClass *ents);
+		widgetsComponentsStruct(entityManager *ents);
 	};
 }

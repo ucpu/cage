@@ -78,7 +78,7 @@ namespace cage
 				}
 				else
 				{ // asset input
-					assetManagerClass *ass = assets();
+					assetManager *ass = assets();
 					if (!ass->ready(voice->voice.name))
 						return;
 					ass->get<assetSchemeIndexSound, sourceClass>(voice->voice.name)->addOutput(bus.get());
@@ -121,7 +121,7 @@ namespace cage
 			emitStruct emitBufferA, emitBufferB, emitBufferC; // this is awfully stupid, damn you c++
 			emitStruct *emitBuffers[3];
 			emitStruct *emitRead, *emitWrite;
-			holder<swapBufferGuardClass> swapController;
+			holder<swapBufferGuard> swapController;
 
 			std::vector<holder<mixStruct>> mixers;
 			std::vector<float> soundMixBuffer;
@@ -164,7 +164,7 @@ namespace cage
 				emitWrite->time = time;
 
 				// emit voices
-				for (entityClass *e : voiceComponent::component->entities())
+				for (entity *e : voiceComponent::component->entities())
 				{
 					emitVoiceStruct *c = emitWrite->emitArena.createObject<emitVoiceStruct>();
 					c->transform = e->value<transformComponent>(transformComponent::component);
@@ -177,7 +177,7 @@ namespace cage
 				}
 
 				// emit listeners
-				for (entityClass *e : listenerComponent::component->entities())
+				for (entity *e : listenerComponent::component->entities())
 				{
 					emitListenerStruct *c = emitWrite->emitArena.createObject<emitListenerStruct>();
 					c->transform = e->value<transformComponent>(transformComponent::component);

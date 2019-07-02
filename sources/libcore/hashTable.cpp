@@ -47,7 +47,7 @@ namespace cage
 					if (used + 1 > total * maxFillRate)
 					{
 						if (mem->pages() == maxPages)
-							CAGE_THROW_ERROR(outOfMemoryException, "hash table is out of memory", maxPages * pageSize);
+							CAGE_THROW_ERROR(outOfMemory, "hash table is out of memory", maxPages * pageSize);
 						mem->increase(min(maxPages, numeric_cast<uint32>(mem->pages() * 1.5 + 1)) - mem->pages());
 					}
 					std::vector<hashTableLineStruct> tmp;

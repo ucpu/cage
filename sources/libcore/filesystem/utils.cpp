@@ -15,12 +15,12 @@ namespace cage
 {
 	namespace
 	{
-		class changeWatcherImpl : public changeWatcherClass, public FW::FileWatchListener
+		class changeWatcherImpl : public filesystemWatcher, public FW::FileWatchListener
 		{
 		public:
 			std::set<string, stringComparatorFast> files;
 			holder<FW::FileWatcher> fw;
-			holder<timerClass> timer;
+			holder<timer> timer;
 
 			changeWatcherImpl()
 			{
@@ -51,11 +51,11 @@ namespace cage
 		};
 	}
 
-	void changeWatcherClass::registerPath(const string & path)
+	void filesystemWatcher::registerPath(const string & path)
 	{
 		changeWatcherImpl *impl = (changeWatcherImpl*)this;
 		impl->fw->addWatch(path.c_str(), impl);
-		holder<directoryListClass> dl = newDirectoryList(path);
+		holder<directoryList> dl = newDirectoryList(path);
 		while (dl->valid())
 		{
 			if (dl->isDirectory())
@@ -64,66 +64,66 @@ namespace cage
 		}
 	}
 
-	string changeWatcherClass::waitForChange(uint64 time)
+	string filesystemWatcher::waitForChange(uint64 time)
 	{
 		changeWatcherImpl *impl = (changeWatcherImpl*)this;
 		return impl->waitForChange(time);
 	}
 
-	holder<changeWatcherClass> newChangeWatcher()
+	holder<filesystemWatcher> newFilesystemWatcher()
 	{
-		return detail::systemArena().createImpl<changeWatcherClass, changeWatcherImpl>();
+		return detail::systemArena().createImpl<filesystemWatcher, changeWatcherImpl>();
 	}
 
 	directoryListVirtual::directoryListVirtual(const string &path) : myPath(path)
 	{}
 
-	bool directoryListClass::valid() const
+	bool directoryList::valid() const
 	{
 		directoryListVirtual *impl = (directoryListVirtual *)this;
 		return impl->valid();
 	}
 
-	string directoryListClass::name() const
+	string directoryList::name() const
 	{
 		directoryListVirtual *impl = (directoryListVirtual *)this;
 		return impl->name();
 	}
 
-	pathTypeFlags directoryListClass::type() const
+	pathTypeFlags directoryList::type() const
 	{
 		directoryListVirtual *impl = (directoryListVirtual *)this;
 		return pathType(impl->fullPath());
 	}
 
-	bool directoryListClass::isDirectory() const
+	bool directoryList::isDirectory() const
 	{
 		return any(type() & (pathTypeFlags::Directory | pathTypeFlags::Archive));
 	}
 
-	uint64 directoryListClass::lastChange() const
+	uint64 directoryList::lastChange() const
 	{
 		directoryListVirtual *impl = (directoryListVirtual *)this;
 		return pathLastChange(impl->fullPath());
 	}
 
-	holder<fileClass> directoryListClass::openFile(const fileMode &mode)
+	holder<file> directoryList::openFile(const fileMode &mode)
 	{
 		directoryListVirtual *impl = (directoryListVirtual *)this;
 		return newFile(impl->fullPath(), mode);
 	}
 
-	holder<filesystemClass> directoryListClass::openDirectory()
+	holder<filesystem> directoryList::openDirectory()
 	{
 		directoryListVirtual *impl = (directoryListVirtual *)this;
 		if (!isDirectory())
 			CAGE_THROW_ERROR(exception, "is not dir");
-		holder<filesystemClass> fs = newFilesystem();
+		holder<filesystem> fs = newFilesystem();
 		fs->changeDir(impl->fullPath());
 		return fs;
 	}
 
-	holder<directoryListClass> directoryListClass::directoryList()
+	holder<directoryList> directoryList::listDirectory()
 	{
 		directoryListVirtual *impl = (directoryListVirtual *)this;
 		if (!isDirectory())
@@ -131,7 +131,7 @@ namespace cage
 		return newDirectoryList(impl->fullPath());
 	}
 
-	void directoryListClass::next()
+	void directoryList::next()
 	{
 		directoryListVirtual *impl = (directoryListVirtual *)this;
 		impl->next();
@@ -142,12 +142,12 @@ namespace cage
 		return pathJoin(myPath, name());
 	}
 
-	holder<directoryListClass> newDirectoryList(const string &path)
+	holder<directoryList> newDirectoryList(const string &path)
 	{
 		string p;
 		auto a = archiveFindTowardsRoot(path, true, p);
 		if (a)
-			return a->directoryList(p);
+			return a->listDirectory(p);
 		else
 			return realNewDirectoryList(path);
 	}
@@ -260,14 +260,14 @@ namespace cage
 		};
 	}
 
-	holder<directoryListClass> realNewDirectoryList(const string &path)
+	holder<directoryList> realNewDirectoryList(const string &path)
 	{
-		return detail::systemArena().createImpl<directoryListClass, directoryListReal>(path);
+		return detail::systemArena().createImpl<directoryList, directoryListReal>(path);
 	}
 
 	namespace
 	{
-		class filesystemImpl : public filesystemClass
+		class filesystemImpl : public filesystem
 		{
 		public:
 			string current;
@@ -282,64 +282,64 @@ namespace cage
 		};
 	}
 
-	void filesystemClass::changeDir(const string &path)
+	void filesystem::changeDir(const string &path)
 	{
 		filesystemImpl *impl = (filesystemImpl*)this;
 		impl->current = impl->makePath(path);
 	}
 
-	string filesystemClass::currentDir() const
+	string filesystem::currentDir() const
 	{
 		filesystemImpl *impl = (filesystemImpl*)this;
 		return impl->current;
 	}
 
-	pathTypeFlags filesystemClass::type(const string &path) const
+	pathTypeFlags filesystem::type(const string &path) const
 	{
 		filesystemImpl *impl = (filesystemImpl*)this;
 		return pathType(impl->makePath(path));
 	}
 
-	uint64 filesystemClass::lastChange(const string &path) const
+	uint64 filesystem::lastChange(const string &path) const
 	{
 		filesystemImpl *impl = (filesystemImpl*)this;
 		return pathLastChange(impl->makePath(path));
 	}
 
-	holder<fileClass> filesystemClass::openFile(const string &path, const fileMode &mode)
+	holder<file> filesystem::openFile(const string &path, const fileMode &mode)
 	{
 		filesystemImpl *impl = (filesystemImpl*)this;
 		return newFile(impl->makePath(path), mode);
 	}
 
-	holder<directoryListClass> filesystemClass::directoryList(const string &path)
+	holder<directoryList> filesystem::listDirectory(const string &path)
 	{
 		filesystemImpl *impl = (filesystemImpl*)this;
 		return newDirectoryList(impl->makePath(path));
 	}
 
-	holder<changeWatcherClass> filesystemClass::changeWatcher(const string &path)
+	holder<filesystemWatcher> filesystem::watchFilesystem(const string &path)
 	{
 		filesystemImpl *impl = (filesystemImpl*)this;
-		holder<changeWatcherClass> cw = newChangeWatcher();
+		holder<filesystemWatcher> cw = newFilesystemWatcher();
 		cw->registerPath(impl->makePath(path));
 		return cw;
 	}
 
-	void filesystemClass::move(const string &from, const string &to)
+	void filesystem::move(const string &from, const string &to)
 	{
 		filesystemImpl *impl = (filesystemImpl*)this;
 		return pathMove(impl->makePath(from), impl->makePath(to));
 	}
 
-	void filesystemClass::remove(const string &path)
+	void filesystem::remove(const string &path)
 	{
 		filesystemImpl *impl = (filesystemImpl*)this;
 		return pathRemove(impl->makePath(path));
 	}
 
-	holder<filesystemClass> newFilesystem()
+	holder<filesystem> newFilesystem()
 	{
-		return detail::systemArena().createImpl<filesystemClass, filesystemImpl>();
+		return detail::systemArena().createImpl<filesystem, filesystemImpl>();
 	}
 }

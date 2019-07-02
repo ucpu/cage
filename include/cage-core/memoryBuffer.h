@@ -18,7 +18,7 @@ namespace cage
 
 		void allocate(uintPtr size, uintPtr cap = 0); // allocates new buffer; sets the size; the data is not preserved nor initialized
 		void reserve(uintPtr cap); // allocates new buffer if needed; size and data is preserved; allows the buffer to grow only
-		void resizeThrow(uintPtr size); // sets the size; does no allocations or deallocations; does not initialize any new data; throws outOfMemoryException if capacity is not enough
+		void resizeThrow(uintPtr size); // sets the size; does no allocations or deallocations; does not initialize any new data; throws outOfMemory if capacity is not enough
 		void resize(uintPtr size); // reserves enough space and sets the size; does not initialize any new data
 		void resizeSmart(uintPtr size); // reserves more than enough space and sets the size; does not initialize any new data
 		void shrink(); // reallocates the buffer if needed; size and data is preserved; shrinks the capacity to the size

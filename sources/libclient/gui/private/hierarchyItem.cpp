@@ -14,9 +14,9 @@
 
 namespace cage
 {
-	hierarchyItemStruct::hierarchyItemStruct(guiImpl *impl, entityClass *entity) :
+	hierarchyItemStruct::hierarchyItemStruct(guiImpl *impl, entity *ent) :
 		requestedSize(vec2::Nan()), renderPos(vec2::Nan()), renderSize(vec2::Nan()), clipPos(vec2::Nan()), clipSize(vec2::Nan()),
-		impl(impl), entity(entity),
+		impl(impl), ent(ent),
 		parent(nullptr), prevSibling(nullptr), nextSibling(nullptr), firstChild(nullptr), lastChild(nullptr),
 		item(nullptr), text(nullptr), image(nullptr),
 		order(0), subsidedItem(false)

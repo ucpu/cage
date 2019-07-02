@@ -24,13 +24,13 @@ namespace cage
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
 
-		class programImpl : public programClass
+		class programImpl : public program
 		{
 		public:
 			programImpl(const string &cmd, const string &workingDir) : cmd(cmd), workingDir(workingDir), hChildStd_IN_Rd(nullptr), hChildStd_IN_Wr(nullptr), hChildStd_OUT_Rd(nullptr), hChildStd_OUT_Wr(nullptr), /*hChildStd_ERR_Rd (nullptr), hChildStd_ERR_Wr (nullptr),*/ hProcess(nullptr), hThread(nullptr)
 			{
-				static holder<mutexClass> mut = newMutex();
-				scopeLock<mutexClass> lock(mut);
+				static holder<syncMutex> mut = newSyncMutex();
+				scopeLock<syncMutex> lock(mut);
 
 				CAGE_LOG(severityEnum::Info, "program", string() + "launching program '" + cmd + "'");
 				CAGE_LOG_CONTINUE(severityEnum::Note, "program", string() + "working directory '" + workingDir + "'");
@@ -141,7 +141,7 @@ namespace cage
 		static const int PIPE_READ = 0;
 		static const int PIPE_WRITE = 1;
 
-		class programImpl : public programClass
+		class programImpl : public program
 		{
 		public:
 			const string cmd;
@@ -170,8 +170,8 @@ namespace cage
 
 			programImpl(const string &cmd, const string &workingDir) : cmd(cmd), workingDir(workingDir), aStdinPipe{0, 0}, aStdoutPipe{0, 0}, pid(0)
 			{
-				static holder<mutexClass> mut = newMutex();
-				scopeLock<mutexClass> lock(mut);
+				static holder<syncMutex> mut = newSyncMutex();
+				scopeLock<syncMutex> lock(mut);
 
 				CAGE_LOG(severityEnum::Info, "program", string() + "launching program '" + cmd + "'");
 				CAGE_LOG_CONTINUE(severityEnum::Note, "program", string() + "working directory '" + workingDir + "'");
@@ -286,7 +286,7 @@ namespace cage
 
 #ifdef CAGE_SYSTEM_WINDOWS
 
-	void programClass::read(void *data, uint32 size)
+	void program::read(void *data, uint32 size)
 	{
 		programImpl *impl = (programImpl*)this;
 		DWORD read = 0;
@@ -296,7 +296,7 @@ namespace cage
 			CAGE_THROW_ERROR(exception, "insufficient data");
 	}
 
-	void programClass::write(const void *data, uint32 size)
+	void program::write(const void *data, uint32 size)
 	{
 		programImpl *impl = (programImpl*)this;
 		DWORD written = 0;
@@ -308,7 +308,7 @@ namespace cage
 
 #else
 
-	void programClass::read(void *data, uint32 size)
+	void program::read(void *data, uint32 size)
 	{
 		programImpl *impl = (programImpl*)this;
 		auto r = ::read(impl->aStdoutPipe[PIPE_READ], data, size);
@@ -318,7 +318,7 @@ namespace cage
 			CAGE_THROW_ERROR(exception, "insufficient data");
 	}
 
-	void programClass::write(const void *data, uint32 size)
+	void program::write(const void *data, uint32 size)
 	{
 		programImpl *impl = (programImpl*)this;
 		auto r = ::write(impl->aStdinPipe[PIPE_WRITE], data, size);
@@ -330,7 +330,7 @@ namespace cage
 
 #endif
 
-	string programClass::readLine()
+	string program::readLine()
 	{
 		string res;
 		while (true)
@@ -359,43 +359,43 @@ namespace cage
 		return res;
 	}
 
-	void programClass::writeLine(const string &data)
+	void program::writeLine(const string &data)
 	{
 		string d = data + "\n";
 		write(d.c_str(), d.length());
 	}
 
-	void programClass::terminate()
+	void program::terminate()
 	{
 		programImpl *impl = (programImpl*)this;
 		impl->terminate();
 	}
 
-	int programClass::wait()
+	int program::wait()
 	{
 		programImpl *impl = (programImpl*)this;
 		return impl->wait();
 	}
 
-	string programClass::getCmdString() const
+	string program::getCmdString() const
 	{
 		programImpl *impl = (programImpl*)this;
 		return impl->cmd;
 	}
 
-	string programClass::getWorkingDir() const
+	string program::getWorkingDir() const
 	{
 		programImpl *impl = (programImpl*)this;
 		return impl->workingDir;
 	}
 
-	holder<programClass> newProgram(const string &cmd)
+	holder<program> newProgram(const string &cmd)
 	{
-		return detail::systemArena().createImpl<programClass, programImpl>(cmd, pathWorkingDir());
+		return detail::systemArena().createImpl<program, programImpl>(cmd, pathWorkingDir());
 	}
 
-	holder<programClass> newProgram(const string &cmd, const string &workingDirectory)
+	holder<program> newProgram(const string &cmd, const string &workingDirectory)
 	{
-		return detail::systemArena().createImpl<programClass, programImpl>(cmd, pathToAbs(workingDirectory));
+		return detail::systemArena().createImpl<program, programImpl>(cmd, pathToAbs(workingDirectory));
 	}
 }

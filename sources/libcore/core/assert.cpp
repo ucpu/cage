@@ -145,7 +145,7 @@ namespace cage
 			}
 		}
 
-		assertClass::assertClass(bool exp, const char *expt, const char *file, const char *line, const char *function) : valid(exp)
+		assertPriv::assertPriv(bool exp, const char *expt, const char *file, const char *line, const char *function) : valid(exp)
 		{
 			if (!valid)
 			{
@@ -165,7 +165,7 @@ namespace cage
 			}
 		}
 
-		void assertClass::operator () () const
+		void assertPriv::operator () () const
 		{
 			if (valid)
 				return;
@@ -177,7 +177,7 @@ namespace cage
 		}
 
 #define GCHL_GENERATE(TYPE) \
-		assertClass &assertClass::variable(const char *name, TYPE var)\
+		assertPriv &assertPriv::variable(const char *name, TYPE var)\
 		{\
 			if (!valid)\
 			{\
@@ -191,7 +191,7 @@ namespace cage
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(TYPE) \
-		assertClass &assertClass::variable(const char *name, TYPE var)\
+		assertPriv &assertPriv::variable(const char *name, TYPE var)\
 		{\
 			if (!valid)\
 			{\
@@ -202,21 +202,21 @@ namespace cage
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, real, rads, degs, const vec2&, const vec3&, const vec4&, const quat&, const mat3&, const mat4&));
 #undef GCHL_GENERATE
 
-		assertClass &assertClass::variable(const char *name, const string &var)
+		assertPriv &assertPriv::variable(const char *name, const string &var)
 		{
 			if (!valid)
 				format(name, var.c_str());
 			return *this;
 		}
 
-		assertClass &assertClass::variable(const char *name, const char *var)
+		assertPriv &assertPriv::variable(const char *name, const char *var)
 		{
 			if (!valid)
 				format(name, var);
 			return *this;
 		}
 
-		void assertClass::format(const char *name, const char *var) const
+		void assertPriv::format(const char *name, const char *var) const
 		{
 			char buffer[2048];
 			buffer[0] = 0;

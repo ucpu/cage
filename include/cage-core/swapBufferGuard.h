@@ -4,7 +4,7 @@
 namespace cage
 {
 	/*
-	holder<swapBufferGuardClass> controller = newSwapBufferGuard();
+	holder<swapBufferGuard> controller = newSwapBufferGuard();
 
 	// consumer thread
 	while (running)
@@ -39,7 +39,7 @@ namespace cage
 		{
 		public:
 			swapBufferLock();
-			swapBufferLock(swapBufferGuardClass *controller, uint32 index);
+			swapBufferLock(swapBufferGuard *controller, uint32 index);
 			swapBufferLock(const swapBufferLock &) = delete; // non-copyable
 			swapBufferLock(swapBufferLock &&other); // movable
 			~swapBufferLock();
@@ -49,12 +49,12 @@ namespace cage
 			uint32 index() const { CAGE_ASSERT_RUNTIME(!!controller_); return index_; }
 
 		private:
-			swapBufferGuardClass *controller_;
+			swapBufferGuard *controller_;
 			uint32 index_;
 		};
 	}
 
-	class CAGE_API swapBufferGuardClass : private immovable
+	class CAGE_API swapBufferGuard : private immovable
 	{
 	public:
 		privat::swapBufferLock read();
@@ -69,7 +69,7 @@ namespace cage
 		swapBufferGuardCreateConfig(uint32 buffersCount);
 	};
 
-	CAGE_API holder<swapBufferGuardClass> newSwapBufferGuard(const swapBufferGuardCreateConfig &config);
+	CAGE_API holder<swapBufferGuard> newSwapBufferGuard(const swapBufferGuardCreateConfig &config);
 }
 
 #endif // guard_swapBufferController_h_rds4jh4jdr64jzdr64

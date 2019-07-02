@@ -129,7 +129,7 @@ namespace cage
 
 	plane::plane(const line &a, const vec3 &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		CAGE_THROW_CRITICAL(notImplemented, "geometry");
 	}
 
 	plane plane::operator * (const mat4 &other) const
@@ -217,7 +217,7 @@ namespace cage
 
 	aabb::aabb(const plane &other)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "plane to aabb");
+		CAGE_THROW_CRITICAL(notImplemented, "plane to aabb");
 	}
 
 	aabb aabb::operator + (const aabb &other) const

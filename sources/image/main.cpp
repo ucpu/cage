@@ -4,11 +4,11 @@
 #include <cage-core/log.h>
 #include <cage-core/math.h>
 #include <cage-core/image.h>
-#include <cage-core/ini.h>
+#include <cage-core/configIni.h>
 
 using namespace cage;
 
-void separate(holder<iniClass> &cmd)
+void separate(holder<configIni> &cmd)
 {
 	string names[4] = { "1.png", "2.png", "3.png", "4.png" };
 	string input = "input.png";
@@ -37,13 +37,13 @@ void separate(holder<iniClass> &cmd)
 	}
 
 	CAGE_LOG(severityEnum::Info, "image", string() + "loading image: '" + input + "'");
-	holder<imageClass> in = newImage();
+	holder<image> in = newImage();
 	in->decodeFile(input);
 	uint32 width = in->width();
 	uint32 height = in->height();
 	CAGE_LOG(severityEnum::Info, "image", string() + "image resolution: " + width + "x" + height + ", channels: " + in->channels());
 
-	holder<imageClass> out = newImage();
+	holder<image> out = newImage();
 	for (uint32 ch = 0; ch < in->channels(); ch++)
 	{
 		if (names[ch].empty())
@@ -60,9 +60,9 @@ void separate(holder<iniClass> &cmd)
 	CAGE_LOG(severityEnum::Info, "image", string() + "ok");
 }
 
-void combine(holder<iniClass> &cmd)
+void combine(holder<configIni> &cmd)
 {
-	holder<imageClass> pngs[4];
+	holder<image> pngs[4];
 	uint32 width = 0, height = 0;
 	uint32 channels = 0;
 	string output = "combined.png";
@@ -78,7 +78,7 @@ void combine(holder<iniClass> &cmd)
 			uint32 index = option.toUint32() - 1;
 			string name = cmd->get(option, "0");
 			CAGE_LOG(severityEnum::Info, "image", string() + "loading image: '" + name + "' for " + (index + 1) + "th channel");
-			holder<imageClass> p = newImage();
+			holder<image> p = newImage();
 			p->decodeFile(name);
 			CAGE_LOG(severityEnum::Info, "image", string() + "image resolution: " + p->width() + "x" + p->height() + ", channels: " + p->channels());
 			if (width == 0)
@@ -115,11 +115,11 @@ void combine(holder<iniClass> &cmd)
 		CAGE_THROW_ERROR(exception, "no inputs specified");
 
 	CAGE_LOG(severityEnum::Info, "image", string() + "combining image");
-	holder<imageClass> res = newImage();
+	holder<image> res = newImage();
 	res->empty(width, height, channels);
 	for (uint32 i = 0; i < channels; i++)
 	{
-		holder<imageClass> &src = pngs[i];
+		holder<image> &src = pngs[i];
 		if (!src)
 			continue;
 		for (uint32 y = 0; y < height; y++)
@@ -138,11 +138,11 @@ int main(int argc, const char *args[])
 {
 	try
 	{
-		holder<loggerClass> log1 = newLogger();
-		log1->format.bind<logFormatPolicyConsole>();
-		log1->output.bind<logOutputPolicyStdOut>();
+		holder<logger> log1 = newLogger();
+		log1->format.bind<logFormatConsole>();
+		log1->output.bind<logOutputStdOut>();
 
-		holder<iniClass> cmd = newIni();
+		holder<configIni> cmd = newConfigIni();
 		cmd->parseCmd(argc, args);
 
 		for (const string &option : cmd->sections())

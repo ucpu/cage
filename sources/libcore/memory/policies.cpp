@@ -10,17 +10,17 @@ namespace cage
 {
 	memoryConcurrentPolicyMutex::memoryConcurrentPolicyMutex()
 	{
-		mutex = newMutex().cast<void>();
+		mutex = newSyncMutex().cast<void>();
 	}
 
 	void memoryConcurrentPolicyMutex::lock()
 	{
-		((mutexClass*)mutex.get())->lock();
+		((syncMutex*)mutex.get())->lock();
 	}
 
 	void memoryConcurrentPolicyMutex::unlock()
 	{
-		((mutexClass*)mutex.get())->unlock();
+		((syncMutex*)mutex.get())->unlock();
 	}
 
 	memoryTrackPolicySimple::~memoryTrackPolicySimple()

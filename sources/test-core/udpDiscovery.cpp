@@ -6,8 +6,8 @@ void testUdpDiscovery()
 {
 	CAGE_TESTCASE("udp discovery");
 
-	holder<discoveryServerClass> srv = newDiscoveryServer(4243, 1342, 5555);
-	holder<discoveryClientClass> clt = newDiscoveryClient(4243, 5555);
+	holder<discoveryServer> srv = newDiscoveryServer(4243, 1342, 5555);
+	holder<discoveryClient> clt = newDiscoveryClient(4243, 5555);
 
 	uint32 round = 0;
 	while (clt->peersCount() == 0 && round++ < 50)

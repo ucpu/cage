@@ -11,7 +11,7 @@ namespace cage
 {
 	concurrentQueueCreateConfig::concurrentQueueCreateConfig() : arena(detail::systemArena()), maxElements(m) {}
 
-	concurrentQueueTerminatedException::concurrentQueueTerminatedException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept : exception(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER)
+	concurrentQueueTerminated::concurrentQueueTerminated(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept : exception(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER)
 	{};
 
 	namespace
@@ -21,25 +21,25 @@ namespace cage
 		public:
 			concurrentQueueImpl(const concurrentQueueCreateConfig &config) : maxItems(config.maxElements), stop(false)
 			{
-				mutex = newMutex();
-				writer = newConditionalBase();
-				reader = newConditionalBase();
+				mut = newSyncMutex();
+				writer = newSyncConditionalBase();
+				reader = newSyncConditionalBase();
 				arena = config.arena;
 			}
 
 			~concurrentQueueImpl()
 			{
-				scopeLock<mutexClass> sl(mutex);
+				scopeLock<syncMutex> sl(mut);
 				CAGE_ASSERT_RUNTIME(items.empty(), "the concurrent queue may not be destroyed before all items are removed");
 			}
 
 			void push(void *value)
 			{
-				scopeLock<mutexClass> sl(mutex);
+				scopeLock<syncMutex> sl(mut);
 				while (true)
 				{
 					if (stop)
-						CAGE_THROW_SILENT(concurrentQueueTerminatedException, "concurrent queue terminated");
+						CAGE_THROW_SILENT(concurrentQueueTerminated, "concurrent queue terminated");
 					if (items.size() >= maxItems)
 						writer->wait(sl);
 					else
@@ -53,9 +53,9 @@ namespace cage
 
 			bool tryPush(void *value)
 			{
-				scopeLock<mutexClass> sl(mutex);
+				scopeLock<syncMutex> sl(mut);
 				if (stop)
-					CAGE_THROW_SILENT(concurrentQueueTerminatedException, "concurrent queue terminated");
+					CAGE_THROW_SILENT(concurrentQueueTerminated, "concurrent queue terminated");
 				if (items.size() < maxItems)
 				{
 					items.push_back(value);
@@ -67,11 +67,11 @@ namespace cage
 
 			void pop(void *&value)
 			{
-				scopeLock<mutexClass> sl(mutex);
+				scopeLock<syncMutex> sl(mut);
 				while (true)
 				{
 					if (stop)
-						CAGE_THROW_SILENT(concurrentQueueTerminatedException, "concurrent queue terminated");
+						CAGE_THROW_SILENT(concurrentQueueTerminated, "concurrent queue terminated");
 					if (items.empty())
 						reader->wait(sl);
 					else
@@ -86,9 +86,9 @@ namespace cage
 
 			bool tryPop(void *&value)
 			{
-				scopeLock<mutexClass> sl(mutex);
+				scopeLock<syncMutex> sl(mut);
 				if (stop)
-					CAGE_THROW_SILENT(concurrentQueueTerminatedException, "concurrent queue terminated");
+					CAGE_THROW_SILENT(concurrentQueueTerminated, "concurrent queue terminated");
 				if (!items.empty())
 				{
 					value = items.front();
@@ -101,7 +101,7 @@ namespace cage
 
 			bool tryPopNoStop(void *&value)
 			{
-				scopeLock<mutexClass> sl(mutex);
+				scopeLock<syncMutex> sl(mut);
 				if (!items.empty())
 				{
 					value = items.front();
@@ -114,7 +114,7 @@ namespace cage
 			void terminate()
 			{
 				{
-					scopeLock<mutexClass> sl(mutex);
+					scopeLock<syncMutex> sl(mut);
 					stop = true;
 				}
 				writer->broadcast();
@@ -123,12 +123,12 @@ namespace cage
 
 			bool stopped() const
 			{
-				scopeLock<mutexClass> sl(mutex); // mandate memory barriers
+				scopeLock<syncMutex> sl(mut); // mandate memory barriers
 				return stop;
 			}
 
-			mutable holder<mutexClass> mutex;
-			holder<conditionalBaseClass> writer, reader;
+			mutable holder<syncMutex> mut;
+			holder<syncConditionalBase> writer, reader;
 			std::list<void*> items;
 			uint32 maxItems;
 			bool stop;

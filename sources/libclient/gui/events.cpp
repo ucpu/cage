@@ -29,7 +29,7 @@ namespace cage
 		{
 			{
 				widgetItemStruct *w = nullptr;
-				if (item->entity && item->entity->name() == name && (w = dynamic_cast<widgetItemStruct*>(item->item)))
+				if (item->ent && item->ent->name() == name && (w = dynamic_cast<widgetItemStruct*>(item->item)))
 					result.push_back(w);
 			}
 			hierarchyItemStruct *c = item->firstChild;

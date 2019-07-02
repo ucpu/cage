@@ -4,14 +4,14 @@
 #include <cage-core/entities.h>
 #include <cage-core/memoryBuffer.h>
 
-void defineManager(entityManagerClass *man)
+void defineManager(entityManager *man)
 {
 	man->defineComponent<float>(0, randomChance() < 0.5);
 	man->defineComponent<int>(0, randomChance() < 0.5);
 	man->defineComponent<vec3>(vec3(), randomChance() < 0.5);
 }
 
-void generateEntity(entityClass *e)
+void generateEntity(entity *e)
 {
 	bool a = randomChance() < 0.5;
 	bool b = randomChance() < 0.5;
@@ -24,7 +24,7 @@ void generateEntity(entityClass *e)
 		e->value<vec3>(e->manager()->componentByIndex(2)) = randomDirection3();
 }
 
-void changeEntities(entityManagerClass *man)
+void changeEntities(entityManager *man)
 {
 	for (uint32 round = 0; round < 100; round++)
 	{
@@ -33,18 +33,18 @@ void changeEntities(entityManagerClass *man)
 			man->get(a)->destroy();
 		else
 		{
-			entityClass *e = man->create(a);
+			entity *e = man->create(a);
 			generateEntity(e);
 		}
 	}
 	for (uint32 round = 0; round < 5; round++)
 	{
-		entityClass *e = man->createAnonymous();
+		entity *e = man->createAnonymous();
 		generateEntity(e);
 	}
 }
 
-void sync(entityManagerClass *a, entityManagerClass *b)
+void sync(entityManager *a, entityManager *b)
 {
 	for (uint32 i = 0; i < 3; i++)
 	{
@@ -53,18 +53,18 @@ void sync(entityManagerClass *a, entityManagerClass *b)
 	}
 }
 
-void check(entityManagerClass *a, entityManagerClass *b)
+void check(entityManager *a, entityManager *b)
 {
 	uint32 cnt = a->group()->count();
-	entityClass *const *ents = a->group()->array();
+	entity *const *ents = a->group()->array();
 	for (uint32 ei = 0; ei < cnt; ei++)
 	{
-		entityClass *ea = ents[ei];
+		entity *ea = ents[ei];
 		uint32 aName = ea->name();
 		if (aName == 0)
 			continue;
 		CAGE_TEST(b->has(aName));
-		entityClass *eb = b->get(aName);
+		entity *eb = b->get(aName);
 		for (uint32 i = 0; i < 3; i++)
 		{
 			if (ea->has(a->componentByIndex(i)))
@@ -80,10 +80,10 @@ void testSceneSerialize()
 {
 	CAGE_TESTCASE("serializer");
 
-	holder<entityManagerClass> manA = newEntityManager(entityManagerCreateConfig());
+	holder<entityManager> manA = newEntityManager(entityManagerCreateConfig());
 	defineManager(manA.get());
 
-	holder<entityManagerClass> manB = newEntityManager(entityManagerCreateConfig());
+	holder<entityManager> manB = newEntityManager(entityManagerCreateConfig());
 	defineManager(manB.get());
 
 	CAGE_TESTCASE("randomized test");

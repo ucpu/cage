@@ -4,7 +4,7 @@
 #include <cage-core/log.h>
 #include <cage-core/config.h>
 #include <cage-core/files.h>
-#include <cage-core/ini.h>
+#include <cage-core/configIni.h>
 
 using namespace cage;
 
@@ -28,7 +28,7 @@ stringSet configIgnorePaths;
 void configParseCmd(int argc, const char *args[])
 {
 	{
-		holder<iniClass> ini = newIni();
+		holder<configIni> ini = newConfigIni();
 		ini->parseCmd(argc, args);
 		for (const string &option : ini->sections())
 		{
@@ -66,7 +66,7 @@ void configParseCmd(int argc, const char *args[])
 	configIgnorePaths.insert(".svn");
 	configIgnorePaths.insert(".git");
 	configIgnorePaths.insert(".vs");
-	holder<configListClass> list = newConfigList();
+	holder<configList> list = newConfigList();
 	while (list->valid())
 	{
 		string n = list->name();

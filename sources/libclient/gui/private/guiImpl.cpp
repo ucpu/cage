@@ -14,7 +14,7 @@
 
 namespace cage
 {
-	componentsStruct::componentsStruct(entityManagerClass *ents) : generalComponentsStruct(ents), layoutsComponentsStruct(ents), widgetsComponentsStruct(ents)
+	componentsStruct::componentsStruct(entityManager *ents) : generalComponentsStruct(ents), layoutsComponentsStruct(ents), widgetsComponentsStruct(ents)
 	{}
 
 	guiImpl::graphicsDataStruct::graphicsDataStruct() :
@@ -93,7 +93,7 @@ namespace cage
 		return vec4(resPos, resPos + resSiz);
 	}
 
-	uint32 guiImpl::entityWidgetsCount(entityClass *e)
+	uint32 guiImpl::entityWidgetsCount(entity *e)
 	{
 		guiImpl *impl = this;
 		uint32 result = 0;
@@ -103,7 +103,7 @@ namespace cage
 		return result;
 	}
 
-	uint32 guiImpl::entityLayoutsCount(entityClass *e)
+	uint32 guiImpl::entityLayoutsCount(entity *e)
 	{
 		guiImpl *impl = this;
 		uint32 result = 0;

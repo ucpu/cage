@@ -24,8 +24,8 @@ namespace cage
 	void mixedMove(std::shared_ptr<archiveVirtual> &af, const string &pf, std::shared_ptr<archiveVirtual> &at, const string &pt)
 	{
 		{
-			holder<fileClass> f = af ? af->file(pf, fileMode(true, false)) : realNewFile(pf, fileMode(true, false));
-			holder<fileClass> t = at ? at->file(pt, fileMode(false, true)) : realNewFile(pt, fileMode(false, true));
+			holder<file> f = af ? af->openFile(pf, fileMode(true, false)) : realNewFile(pf, fileMode(true, false));
+			holder<file> t = at ? at->openFile(pt, fileMode(false, true)) : realNewFile(pt, fileMode(false, true));
 			// todo split big files into multiple smaller steps
 			memoryBuffer b = f->readBuffer(f->size());
 			f->close();
@@ -42,9 +42,9 @@ namespace cage
 	{
 		std::shared_ptr<archiveVirtual> archiveTryGet(const string &path)
 		{
-			static holder<mutexClass> *mutex = new holder<mutexClass>(newMutex()); // this leak is intentional
+			static holder<syncMutex> *mutex = new holder<syncMutex>(newSyncMutex()); // this leak is intentional
 			static std::map<string, std::weak_ptr<archiveVirtual>> *map = new std::map<string, std::weak_ptr<archiveVirtual>>(); // this leak is intentional
-			scopeLock<mutexClass> l(*mutex);
+			scopeLock<syncMutex> l(*mutex);
 			auto it = map->find(path);
 			if (it != map->end())
 			{
@@ -95,19 +95,19 @@ namespace cage
 
 	namespace
 	{
-#define LOCK scopeLock<mutexClass> lock(mutex)
+#define LOCK scopeLock<syncMutex> lock(mutex)
 
 		class archiveZip : public archiveVirtual
 		{
 		public:
-			holder<mutexClass> mutex;
+			holder<syncMutex> mutex;
 			std::vector<memoryBuffer> writtenBuffers;
 			zip_t *zip;
 
 			// create archive
 			archiveZip(const string &path, const string &options) : archiveVirtual(path), zip(nullptr)
 			{
-				mutex = newMutex();
+				mutex = newSyncMutex();
 				realCreateDirectories(pathJoin(path, ".."));
 				zip = zip_open(path.c_str(), ZIP_CREATE | ZIP_EXCL, nullptr);
 				if (!zip)
@@ -120,7 +120,7 @@ namespace cage
 			// open archive
 			archiveZip(const string &path) : archiveVirtual(path), zip(nullptr)
 			{
-				mutex = newMutex();
+				mutex = newSyncMutex();
 				if (newFile(path, fileMode(true, false))->size() == 0)
 					CAGE_THROW_ERROR(exception, "empty file"); // this is a temporary workaround until it is improved in the libzip
 				zip = zip_open(path.c_str(), ZIP_CHECKCONS, nullptr);
@@ -210,15 +210,15 @@ namespace cage
 			uint64 lastChange(const string &path) override
 			{
 				LOCK;
-				CAGE_THROW_CRITICAL(notImplementedException, "lastChange is not yet implemented for zip archives");
+				CAGE_THROW_CRITICAL(notImplemented, "lastChange is not yet implemented for zip archives");
 			}
 
-			holder<fileClass> file(const string &path, const fileMode &mode) override;
-			holder<directoryListClass> directoryList(const string &path) override;
+			holder<file> openFile(const string &path, const fileMode &mode) override;
+			holder<directoryList> listDirectory(const string &path) override;
 		};
 
 #undef LOCK
-#define LOCK scopeLock<mutexClass> lock(a->mutex)
+#define LOCK scopeLock<syncMutex> lock(a->mutex)
 
 		struct fileZipRead : public fileVirtual
 		{
@@ -258,7 +258,7 @@ namespace cage
 
 			void write(const void *data, uint64 size) override
 			{
-				CAGE_THROW_CRITICAL(notImplementedException, "calling write on read-only zip file");
+				CAGE_THROW_CRITICAL(notImplemented, "calling write on read-only zip file");
 			}
 
 			void seek(uint64 position) override
@@ -334,7 +334,7 @@ namespace cage
 
 			void read(void *data, uint64 size) override
 			{
-				CAGE_THROW_CRITICAL(notImplementedException, "calling read on write-only zip file");
+				CAGE_THROW_CRITICAL(notImplemented, "calling read on write-only zip file");
 			}
 
 			void write(const void *data, uint64 size) override
@@ -345,7 +345,7 @@ namespace cage
 
 			void seek(uint64 position) override
 			{
-				CAGE_THROW_CRITICAL(notImplementedException, "calling seek on write-only zip file");
+				CAGE_THROW_CRITICAL(notImplemented, "calling seek on write-only zip file");
 			}
 
 			void flush() override
@@ -440,7 +440,7 @@ namespace cage
 			}
 		};
 
-		holder<fileClass> archiveZip::file(const string &path, const fileMode &mode)
+		holder<file> archiveZip::openFile(const string &path, const fileMode &mode)
 		{
 			CAGE_ASSERT_RUNTIME(!path.empty());
 			CAGE_ASSERT_RUNTIME(mode.valid());
@@ -448,15 +448,15 @@ namespace cage
 			CAGE_ASSERT_RUNTIME(!mode.append, "zip archive cannot open file for append");
 			createDirectories(pathJoin(path, ".."));
 			if (mode.read)
-				return detail::systemArena().createImpl<fileClass, fileZipRead>(std::dynamic_pointer_cast<archiveZip>(shared_from_this()), path, mode);
+				return detail::systemArena().createImpl<file, fileZipRead>(std::dynamic_pointer_cast<archiveZip>(shared_from_this()), path, mode);
 			else
-				return detail::systemArena().createImpl<fileClass, fileZipWrite>(std::dynamic_pointer_cast<archiveZip>(shared_from_this()), path, mode);
+				return detail::systemArena().createImpl<file, fileZipWrite>(std::dynamic_pointer_cast<archiveZip>(shared_from_this()), path, mode);
 		}
 
-		holder<directoryListClass> archiveZip::directoryList(const string &path)
+		holder<directoryList> archiveZip::listDirectory(const string &path)
 		{
 			createDirectories(path);
-			return detail::systemArena().createImpl<directoryListClass, directoryListZip>(std::dynamic_pointer_cast<archiveZip>(shared_from_this()), path);
+			return detail::systemArena().createImpl<directoryList, directoryListZip>(std::dynamic_pointer_cast<archiveZip>(shared_from_this()), path);
 		}
 	}
 

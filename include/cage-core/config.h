@@ -45,7 +45,7 @@ namespace cage
 	CAGE_API void configSetString(const string &name, const string &value);
 	CAGE_API string configGetString(const string &name, const string &default_ = "");
 
-	class CAGE_API configListClass : private immovable
+	class CAGE_API configList : private immovable
 	{
 	public:
 		bool valid() const;
@@ -63,10 +63,10 @@ namespace cage
 		void next();
 	};
 
-	CAGE_API holder<configListClass> newConfigList();
+	CAGE_API holder<configList> newConfigList();
 
-	CAGE_API void configApplyIni(const iniClass *ini, const string &prefix);
-	CAGE_API void configGenerateIni(iniClass *ini, const string &prefix); // clears the ini before use
+	CAGE_API void configApplyIni(const configIni *ini, const string &prefix);
+	CAGE_API void configGenerateIni(configIni *ini, const string &prefix); // clears the ini before use
 	CAGE_API void configLoadIni(const string &filename, const string &prefix);
 	CAGE_API void configSaveIni(const string &filename, const string &prefix);
 }

@@ -64,7 +64,7 @@ namespace cage
 				consolidateSelection();
 				if (hasFocus())
 				{
-					hierarchyItemStruct *item = hierarchy->impl->itemsMemory.createObject<hierarchyItemStruct>(hierarchy->impl, hierarchy->entity);
+					hierarchyItemStruct *item = hierarchy->impl->itemsMemory.createObject<hierarchyItemStruct>(hierarchy->impl, hierarchy->ent);
 					item->attachParent(hierarchy->impl->root);
 					item->item = list = hierarchy->impl->itemsMemory.createObject<comboListImpl>(item, this);
 					list->widgetState = widgetState;
@@ -110,7 +110,7 @@ namespace cage
 				hierarchyItemStruct *c = hierarchy->firstChild;
 				while (c)
 				{
-					if (!c->entity)
+					if (!c->ent)
 						return false;
 					if (c->item)
 						return false;
@@ -132,9 +132,9 @@ namespace cage
 				while (c)
 				{
 					if (selected == idx++)
-						c->entity->add(hierarchy->impl->components.selectedItem);
+						c->ent->add(hierarchy->impl->components.selectedItem);
 					else
-						c->entity->remove(hierarchy->impl->components.selectedItem);
+						c->ent->remove(hierarchy->impl->components.selectedItem);
 					c = c->nextSibling;
 				}
 			}
@@ -227,7 +227,7 @@ namespace cage
 				c = c->nextSibling;
 			}
 			combo->consolidateSelection();
-			hierarchy->impl->widgetEvent.dispatch(hierarchy->entity->name());
+			hierarchy->impl->widgetEvent.dispatch(hierarchy->ent->name());
 			return true;
 		}
 	}

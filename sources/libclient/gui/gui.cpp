@@ -107,13 +107,13 @@ namespace cage
 		return impl->components;
 	}
 
-	entityManagerClass *guiClass::entities()
+	entityManager *guiClass::entities()
 	{
 		guiImpl *impl = (guiImpl*)this;
 		return impl->entityManager.get();
 	}
 
-	assetManagerClass *guiClass::assets()
+	assetManager *guiClass::assets()
 	{
 		guiImpl *impl = (guiImpl*)this;
 		return impl->assetManager;

@@ -13,7 +13,7 @@ using namespace cage;
 
 struct thrStruct
 {
-	holder<threadClass> thr;
+	holder<thread> thr;
 	holder<connClass> conn;
 	runnerStruct runner;
 	bool done;
@@ -45,7 +45,7 @@ void runServer()
 	configUint32 port("port");
 	CAGE_LOG(severityEnum::Info, "config", string() + "port: " + (uint32)port);
 
-	holder<udpServerClass> server = newUdpServer(numeric_cast<uint16>((uint32)port));
+	holder<udpServer> server = newUdpServer(numeric_cast<uint16>((uint32)port));
 	bool hadConnection = false;
 	std::list<thrStruct> thrs;
 	runnerStruct runner;

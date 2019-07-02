@@ -64,20 +64,10 @@ namespace cage
 
 	namespace
 	{
-		class mutexInitClass
+		syncMutex *windowsMutex()
 		{
-		public:
-			mutexInitClass()
-			{
-				m = newMutex();
-			}
-			holder<mutexClass> m;
-		};
-
-		mutexClass *windowsMutex()
-		{
-			static mutexInitClass *m = new mutexInitClass(); // intentional leak
-			return m->m.get();
+			static holder<syncMutex> *m = new holder<syncMutex>(newSyncMutex()); // intentional leak
+			return m->get();
 		}
 
 		struct eventStruct
@@ -167,7 +157,7 @@ namespace cage
 		public:
 			uint64 lastMouseButtonPressTimes[5]; // unused, left, right, unused, middle
 			windowClass *shareContext;
-			holder<mutexClass> eventsMutex;
+			holder<syncMutex> eventsMutex;
 			std::vector<eventStruct> eventsQueueLocked;
 			std::vector<eventStruct> eventsQueueNoLock;
 			std::set<uint32> stateKeys, stateCodes;
@@ -178,8 +168,8 @@ namespace cage
 			bool focus;
 
 #ifdef GCHL_WINDOWS_THREAD
-			holder<threadClass> windowThread;
-			holder<semaphoreClass> windowSemaphore;
+			holder<thread> windowThread;
+			holder<syncSemaphore> windowSemaphore;
 			std::atomic<bool> stopping;
 			std::vector<pointStruct> relativeMouseOffsets;
 			std::vector<pointStruct> absoluteMouseSets;
@@ -200,12 +190,12 @@ namespace cage
 					try
 					{
 						{
-							scopeLock<mutexClass> l(windowsMutex());
+							scopeLock<syncMutex> l(windowsMutex());
 							glfwPollEvents();
 						}
 						
 						{
-							scopeLock<mutexClass> l(eventsMutex);
+							scopeLock<syncMutex> l(eventsMutex);
 							for (const auto &p : absoluteMouseSets)
 							{
 								eventStruct e;
@@ -227,15 +217,15 @@ namespace cage
 			}
 #endif
 
-			windowImpl(windowClass *shareContext) : lastMouseButtonPressTimes{0,0,0,0,0}, shareContext(shareContext), eventsMutex(newMutex()), stateMods(modifiersFlags::None), stateButtons(mouseButtonsFlags::None), window(nullptr), focus(true)
+			windowImpl(windowClass *shareContext) : lastMouseButtonPressTimes{0,0,0,0,0}, shareContext(shareContext), eventsMutex(newSyncMutex()), stateMods(modifiersFlags::None), stateButtons(mouseButtonsFlags::None), window(nullptr), focus(true)
 			{
 				cageGlfwInitializeFunc();
 
-				scopeLock<mutexClass> l(windowsMutex());
+				scopeLock<syncMutex> l(windowsMutex());
 
 #ifdef GCHL_WINDOWS_THREAD
 				stopping = false;
-				windowSemaphore = newSemaphore(0, 1);
+				windowSemaphore = newSyncSemaphore(0, 1);
 				static uint32 threadIndex = 0;
 				windowThread = newThread(delegate<void()>().bind<windowImpl, &windowImpl::threadEntry>(this), string() + "window " + (threadIndex++));
 				windowSemaphore->lock();
@@ -294,7 +284,7 @@ namespace cage
 
 			void finalizeWindow()
 			{
-				scopeLock<mutexClass> lock(windowsMutex());
+				scopeLock<syncMutex> lock(windowsMutex());
 				glfwDestroyWindow(window);
 				window = nullptr;
 			}
@@ -340,7 +330,7 @@ namespace cage
 			eventStruct e;
 			e.type = eventStruct::eventType::Close;
 			e.modifiers = getKeyModifiers(w);
-			scopeLock<mutexClass> l(impl->eventsMutex);
+			scopeLock<syncMutex> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
 
@@ -365,7 +355,7 @@ namespace cage
 			e.modifiers = getKeyModifiers(mods);
 			e.key.key = key;
 			e.key.scancode = scancode;
-			scopeLock<mutexClass> l(impl->eventsMutex);
+			scopeLock<syncMutex> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
 
@@ -376,7 +366,7 @@ namespace cage
 			e.type = eventStruct::eventType::KeyChar;
 			e.modifiers = getKeyModifiers(w);
 			e.codepoint = codepoint;
-			scopeLock<mutexClass> l(impl->eventsMutex);
+			scopeLock<syncMutex> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
 
@@ -394,7 +384,7 @@ namespace cage
 				e.mouse.buttons |= mouseButtonsFlags::Right;
 			if (glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_MIDDLE))
 				e.mouse.buttons |= mouseButtonsFlags::Middle;
-			scopeLock<mutexClass> l(impl->eventsMutex);
+			scopeLock<syncMutex> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
 
@@ -433,7 +423,7 @@ namespace cage
 			e.mouse.x = numeric_cast<sint32>(floor(xpos));
 			e.mouse.y = numeric_cast<sint32>(floor(ypos));
 			bool doubleClick = impl->determineMouseDoubleClick(e);
-			scopeLock<mutexClass> l(impl->eventsMutex);
+			scopeLock<syncMutex> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 			if (doubleClick)
 			{
@@ -453,7 +443,7 @@ namespace cage
 			e.mouse.x = numeric_cast<sint32>(floor(xpos));
 			e.mouse.y = numeric_cast<sint32>(floor(ypos));
 			e.mouse.wheel = numeric_cast<sint8>(yoffset);
-			scopeLock<mutexClass> l(impl->eventsMutex);
+			scopeLock<syncMutex> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
 
@@ -465,7 +455,7 @@ namespace cage
 			e.modifiers = getKeyModifiers(w);
 			e.point.x = width;
 			e.point.y = height;
-			scopeLock<mutexClass> l(impl->eventsMutex);
+			scopeLock<syncMutex> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
 
@@ -477,7 +467,7 @@ namespace cage
 			e.modifiers = getKeyModifiers(w);
 			e.point.x = xpos;
 			e.point.y = ypos;
-			scopeLock<mutexClass> l(impl->eventsMutex);
+			scopeLock<syncMutex> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
 
@@ -490,7 +480,7 @@ namespace cage
 			else
 				e.type = eventStruct::eventType::Show;
 			e.modifiers = getKeyModifiers(w);
-			scopeLock<mutexClass> l(impl->eventsMutex);
+			scopeLock<syncMutex> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
 
@@ -503,7 +493,7 @@ namespace cage
 			else
 				e.type = eventStruct::eventType::FocusLose;
 			e.modifiers = getKeyModifiers(w);
-			scopeLock<mutexClass> l(impl->eventsMutex);
+			scopeLock<syncMutex> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
 
@@ -513,7 +503,7 @@ namespace cage
 			eventStruct e;
 			e.type = eventStruct::eventType::Paint;
 			e.modifiers = getKeyModifiers(w);
-			scopeLock<mutexClass> l(impl->eventsMutex);
+			scopeLock<syncMutex> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
 
@@ -662,7 +652,7 @@ namespace cage
 	{
 		windowImpl *impl = (windowImpl*)this;
 #ifdef GCHL_WINDOWS_THREAD
-		scopeLock<mutexClass> l(impl->eventsMutex);
+		scopeLock<syncMutex> l(impl->eventsMutex);
 		impl->absoluteMouseSets.push_back(tmp);
 		const pointStruct &c = impl->currentMousePosition;
 		impl->relativeMouseOffsets.push_back(pointStruct(tmp.x - c.x, tmp.y - c.y));
@@ -700,12 +690,12 @@ namespace cage
 		windowImpl *impl = (windowImpl*)this;
 #ifndef GCHL_WINDOWS_THREAD
 		{
-			scopeLock<mutexClass> l(windowsMutex());
+			scopeLock<syncMutex> l(windowsMutex());
 			glfwPollEvents();
 		}
 #endif
 		{
-			scopeLock<mutexClass> l(impl->eventsMutex);
+			scopeLock<syncMutex> l(impl->eventsMutex);
 			impl->eventsQueueNoLock.insert(impl->eventsQueueNoLock.end(), impl->eventsQueueLocked.begin(), impl->eventsQueueLocked.end());
 			impl->eventsQueueLocked.clear();
 		}

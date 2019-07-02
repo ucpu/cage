@@ -10,7 +10,7 @@
 #include <cage-core/assetStructs.h>
 #include <cage-core/assetManager.h>
 #include <cage-core/hashString.h>
-#include <cage-core/collider.h> // for sizeof in defineScheme
+#include <cage-core/collisionMesh.h> // for sizeof in defineScheme
 #include <cage-core/textPack.h> // for sizeof in defineScheme
 #include <cage-core/memoryBuffer.h> // for sizeof in defineScheme
 #include <cage-core/threadPool.h>
@@ -48,7 +48,7 @@ namespace cage
 
 		struct scopedSemaphores
 		{
-			scopedSemaphores(holder<semaphoreClass> &lock, holder<semaphoreClass> &unlock) : sem(unlock.get())
+			scopedSemaphores(holder<syncSemaphore> &lock, holder<syncSemaphore> &unlock) : sem(unlock.get())
 			{
 				lock->lock();
 			}
@@ -59,7 +59,7 @@ namespace cage
 			}
 
 		private:
-			semaphoreClass *sem;
+			syncSemaphore *sem;
 		};
 
 		struct engineDataStruct
@@ -78,7 +78,7 @@ namespace cage
 			variableSmoothingBuffer<uint64, 60> profilingBufferSoundTick;
 			variableSmoothingBuffer<uint64, 60> profilingBufferSoundSleep;
 
-			holder<assetManagerClass> assets;
+			holder<assetManager> assets;
 			holder<windowClass> window;
 #ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 			holder<windowClass> windowUpload;
@@ -90,20 +90,20 @@ namespace cage
 			holder<busClass> effectsBus;
 			holder<busClass> guiBus;
 			holder<guiClass> gui;
-			holder<entityManagerClass> entities;
+			holder<entityManager> entities;
 
-			holder<mutexClass> assetsSoundMutex;
-			holder<mutexClass> assetsGraphicsMutex;
-			holder<semaphoreClass> graphicsSemaphore1;
-			holder<semaphoreClass> graphicsSemaphore2;
-			holder<barrierClass> threadsStateBarier;
-			holder<threadClass> graphicsDispatchThreadHolder;
-			holder<threadClass> graphicsPrepareThreadHolder;
+			holder<syncMutex> assetsSoundMutex;
+			holder<syncMutex> assetsGraphicsMutex;
+			holder<syncSemaphore> graphicsSemaphore1;
+			holder<syncSemaphore> graphicsSemaphore2;
+			holder<syncBarrier> threadsStateBarier;
+			holder<thread> graphicsDispatchThreadHolder;
+			holder<thread> graphicsPrepareThreadHolder;
 #ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
-			holder<threadClass> graphicsUploadThreadHolder;
+			holder<thread> graphicsUploadThreadHolder;
 #endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
-			holder<threadClass> soundThreadHolder;
-			holder<threadPoolClass> emitThreadsHolder;
+			holder<thread> soundThreadHolder;
+			holder<threadPool> emitThreadsHolder;
 
 			std::atomic<uint32> engineStarted;
 			std::atomic<bool> stopping;
@@ -130,7 +130,7 @@ namespace cage
 					time1 = getApplicationTime();
 					{
 						scopedSemaphores lockDispatch(graphicsSemaphore1, graphicsSemaphore2);
-						scopeLock<mutexClass> lockAssets(assetsGraphicsMutex);
+						scopeLock<syncMutex> lockAssets(assetsGraphicsMutex);
 						time2 = getApplicationTime();
 						assets->processCustomThread(graphicsPrepareThread().threadIndex);
 						graphicsPrepareThread().prepare.dispatch();
@@ -247,7 +247,7 @@ namespace cage
 				{
 					time1 = getApplicationTime();
 					{
-						scopeLock<mutexClass> lockAssets(assetsSoundMutex);
+						scopeLock<syncMutex> lockAssets(assetsSoundMutex);
 						time2 = getApplicationTime();
 						assets->processCustomThread(soundThreadClass::threadIndex);
 						soundThread().sound.dispatch();
@@ -285,10 +285,10 @@ namespace cage
 			void controlTryAssets()
 			{
 				assetSyncAttempts++;
-				scopeLock<mutexClass> lockGraphics(assetsGraphicsMutex, assetSyncAttempts < 30);
+				scopeLock<syncMutex> lockGraphics(assetsGraphicsMutex, assetSyncAttempts < 30);
 				if (lockGraphics)
 				{
-					scopeLock<mutexClass> lockSound(assetsSoundMutex, assetSyncAttempts < 15);
+					scopeLock<syncMutex> lockSound(assetsSoundMutex, assetSyncAttempts < 15);
 					if (lockSound)
 					{
 						controlThread().assets.dispatch();
@@ -300,7 +300,7 @@ namespace cage
 
 			void updateHistoryComponents()
 			{
-				for (entityClass *e : transformComponent::component->entities())
+				for (entity *e : transformComponent::component->entities())
 				{
 					ENGINE_GET_COMPONENT(transform, ts, e);
 					transformComponent &hs = e->value<transformComponent>(transformComponent::componentHistory);
@@ -373,15 +373,15 @@ namespace cage
 			{ \
 				try { CAGE_JOIN(NAME, InitializeStage)(); } \
 				catch (...) { CAGE_LOG(severityEnum::Error, "engine", "exception caught in initialization (engine) in " CAGE_STRINGIZE(NAME)); engineStop(); } \
-				{ scopeLock<barrierClass> l(threadsStateBarier); } \
-				{ scopeLock<barrierClass> l(threadsStateBarier); } \
+				{ scopeLock<syncBarrier> l(threadsStateBarier); } \
+				{ scopeLock<syncBarrier> l(threadsStateBarier); } \
 				try { CAGE_JOIN(NAME, Thread)().initialize.dispatch(); } \
 				catch (...) { CAGE_LOG(severityEnum::Error, "engine", "exception caught in initialization (application) in " CAGE_STRINGIZE(NAME)); engineStop(); } \
-				{ scopeLock<barrierClass> l(threadsStateBarier); } \
+				{ scopeLock<syncBarrier> l(threadsStateBarier); } \
 				try { CAGE_JOIN(NAME, GameloopStage)(); } \
 				catch (...) { CAGE_LOG(severityEnum::Error, "engine", "exception caught in gameloop in " CAGE_STRINGIZE(NAME)); engineStop(); } \
 				CAGE_JOIN(NAME, StopStage)(); \
-				{ scopeLock<barrierClass> l(threadsStateBarier); } \
+				{ scopeLock<syncBarrier> l(threadsStateBarier); } \
 				try { CAGE_JOIN(NAME, Thread)().finalize.dispatch(); } \
 				catch (...) { CAGE_LOG(severityEnum::Error, "engine", "exception caught in finalization (application) in " CAGE_STRINGIZE(NAME)); } \
 				try { CAGE_JOIN(NAME, FinalizeStage)(); } \
@@ -463,11 +463,11 @@ namespace cage
 				}
 
 				{ // create sync objects
-					threadsStateBarier = newBarrier(4);
-					assetsSoundMutex = newMutex();
-					assetsGraphicsMutex = newMutex();
-					graphicsSemaphore1 = newSemaphore(1, 1);
-					graphicsSemaphore2 = newSemaphore(0, 1);
+					threadsStateBarier = newSyncBarrier(4);
+					assetsSoundMutex = newSyncMutex();
+					assetsGraphicsMutex = newSyncMutex();
+					graphicsSemaphore1 = newSyncSemaphore(1, 1);
+					graphicsSemaphore2 = newSyncSemaphore(0, 1);
 				}
 
 				{ // create threads
@@ -485,8 +485,8 @@ namespace cage
 					// core assets
 					assets->defineScheme<void>(assetSchemeIndexPack, genAssetSchemePack(controlThreadClass::threadIndex));
 					assets->defineScheme<memoryBuffer>(assetSchemeIndexRaw, genAssetSchemeRaw(controlThreadClass::threadIndex));
-					assets->defineScheme<textPackClass>(assetSchemeIndexTextPackage, genAssetSchemeTextPackage(controlThreadClass::threadIndex));
-					assets->defineScheme<colliderClass>(assetSchemeIndexCollider, genAssetSchemeCollider(controlThreadClass::threadIndex));
+					assets->defineScheme<textPack>(assetSchemeIndexTextPackage, genAssetSchemeTextPackage(controlThreadClass::threadIndex));
+					assets->defineScheme<collisionMesh>(assetSchemeIndexCollisionMesh, genAssetSchemeCollisionMesh(controlThreadClass::threadIndex));
 					// client assets
 					assets->defineScheme<shaderClass>(assetSchemeIndexShader, genAssetSchemeShader(graphicsUploadThreadClass::threadIndex, window.get()));
 					assets->defineScheme<textureClass>(assetSchemeIndexTexture, genAssetSchemeTexture(graphicsUploadThreadClass::threadIndex, window.get()));
@@ -518,7 +518,7 @@ namespace cage
 				}
 
 				{ // initialize entity components
-					entityManagerClass *entityManager = entities.get();
+					entityManager *entityManager = entities.get();
 					transformComponent::component = entityManager->defineComponent(transformComponent(), true);
 					transformComponent::componentHistory = entityManager->defineComponent(transformComponent(), false);
 					renderComponent::component = entityManager->defineComponent(renderComponent(), true);
@@ -532,7 +532,7 @@ namespace cage
 					listenerComponent::component = entityManager->defineComponent(listenerComponent(), true);
 				}
 
-				{ scopeLock<barrierClass> l(threadsStateBarier); }
+				{ scopeLock<syncBarrier> l(threadsStateBarier); }
 				CAGE_LOG(severityEnum::Info, "engine", "engine initialized");
 
 				CAGE_ASSERT_RUNTIME(engineStarted == 1);
@@ -558,8 +558,8 @@ namespace cage
 
 				currentControlTime = currentSoundTime = getApplicationTime();
 
-				{ scopeLock<barrierClass> l(threadsStateBarier); }
-				{ scopeLock<barrierClass> l(threadsStateBarier); }
+				{ scopeLock<syncBarrier> l(threadsStateBarier); }
+				{ scopeLock<syncBarrier> l(threadsStateBarier); }
 
 				try
 				{
@@ -592,7 +592,7 @@ namespace cage
 				engineStarted = 5;
 
 				CAGE_LOG(severityEnum::Info, "engine", "finalizing engine");
-				{ scopeLock<barrierClass> l(threadsStateBarier); }
+				{ scopeLock<syncBarrier> l(threadsStateBarier); }
 
 				{ // unload assets
 					assets->remove(hashString("cage/cage.pack"));
@@ -714,12 +714,12 @@ namespace cage
 		return engineData->sound.get();
 	}
 
-	assetManagerClass *assets()
+	assetManager *assets()
 	{
 		return engineData->assets.get();
 	}
 
-	entityManagerClass *entities()
+	entityManager *entities()
 	{
 		return engineData->entities.get();
 	}

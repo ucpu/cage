@@ -40,10 +40,10 @@ namespace
 
 	struct checker
 	{
-		spatialDataClass *const data;
-		holder<spatialQueryClass> query;
+		spatialData *const data;
+		holder<spatialQuery> query;
 
-		checker(spatialDataClass *data) : data(data)
+		checker(spatialData *data) : data(data)
 		{
 			query = newSpatialQuery(data);
 		}
@@ -95,7 +95,7 @@ namespace
 		}
 	};
 
-	void verifiableQueries(const aabb elData[], const uint32 elCount, spatialDataClass *data)
+	void verifiableQueries(const aabb elData[], const uint32 elCount, spatialData *data)
 	{
 		checker c(data);
 		for (uint32 qi = 0; qi < 30; qi++)
@@ -104,7 +104,7 @@ namespace
 			c.verifiableRange(elData, elCount);
 	}
 
-	void randomQueries(spatialDataClass *data)
+	void randomQueries(spatialData *data)
 	{
 		checker c(data);
 		for (uint32 qi = 0; qi < 30; qi++)
@@ -120,7 +120,7 @@ void testSpatial()
 
 	{
 		CAGE_TESTCASE("basic tests");
-		holder<spatialDataClass> data = newSpatialData(spatialDataCreateConfig());
+		holder<spatialData> data = newSpatialData(spatialDataCreateConfig());
 		std::vector<aabb> elements;
 
 		// insertions
@@ -158,32 +158,32 @@ void testSpatial()
 
 	{
 		CAGE_TESTCASE("points");
-		holder<spatialDataClass> data = newSpatialData(spatialDataCreateConfig());
+		holder<spatialData> data = newSpatialData(spatialDataCreateConfig());
 		for (uint32 i = 1; i < 100; i++)
 			data->update(i, aabb(generateRandomPoint()));
 		data->rebuild();
-		holder<spatialQueryClass> query = newSpatialQuery(data.get());
+		holder<spatialQuery> query = newSpatialQuery(data.get());
 		query->intersection(sphere(vec3(50, 0, 0), 100));
 	}
 
 	{
 		CAGE_TESTCASE("multiple points on same location");
 		static const vec3 pts[3] = { vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 1) };
-		holder<spatialDataClass> data = newSpatialData(spatialDataCreateConfig());
+		holder<spatialData> data = newSpatialData(spatialDataCreateConfig());
 		for (uint32 i = 1; i < 100; i++)
 			data->update(i, aabb(pts[i % 3]));
 		data->rebuild();
-		holder<spatialQueryClass> query = newSpatialQuery(data.get());
+		holder<spatialQuery> query = newSpatialQuery(data.get());
 		query->intersection(sphere(vec3(0, 0, 0), 5));
 		CAGE_TEST(query->resultCount() == 99);
 	}
 
 	{
 		CAGE_TESTCASE("spheres");
-		holder<spatialDataClass> data = newSpatialData(spatialDataCreateConfig());
+		holder<spatialData> data = newSpatialData(spatialDataCreateConfig());
 		data->update(1, sphere(vec3(), 100));
 		data->rebuild();
-		holder<spatialQueryClass> query = newSpatialQuery(data.get());
+		holder<spatialQuery> query = newSpatialQuery(data.get());
 		query->intersection(sphere(vec3(50, 0, 0), 100));
 		CAGE_TEST(query->resultCount() == 1);
 
@@ -193,8 +193,8 @@ void testSpatial()
 
 	{
 		CAGE_TESTCASE("performance tests");
-		holder<spatialDataClass> data = newSpatialData(spatialDataCreateConfig());
-		holder<timerClass> tmr = newTimer();
+		holder<spatialData> data = newSpatialData(spatialDataCreateConfig());
+		holder<timer> tmr = newTimer();
 
 		for (uint32 i = 0; i < limit; i++)
 		{

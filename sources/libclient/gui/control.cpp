@@ -115,29 +115,29 @@ namespace cage
 			guiImpl *impl = item->impl;
 
 			// explicit size
-			if (GUI_HAS_COMPONENT(explicitSize, item->entity))
+			if (GUI_HAS_COMPONENT(explicitSize, item->ent))
 			{
 				explicitSizeCreate(item);
 				item = subsideItem(item);
 			}
 
 			// text and image
-			if (GUI_HAS_COMPONENT(text, item->entity))
+			if (GUI_HAS_COMPONENT(text, item->ent))
 				textCreate(item);
-			if (GUI_HAS_COMPONENT(image, item->entity))
+			if (GUI_HAS_COMPONENT(image, item->ent))
 				imageCreate(item);
 
 			// counts
-			uint32 wc = impl->entityWidgetsCount(item->entity);
-			bool sc = GUI_HAS_COMPONENT(scrollbars, item->entity);
-			uint32 lc = impl->entityLayoutsCount(item->entity);
-			CAGE_ASSERT_RUNTIME(wc <= 1, item->entity->name());
-			CAGE_ASSERT_RUNTIME(lc <= 1, item->entity->name());
+			uint32 wc = impl->entityWidgetsCount(item->ent);
+			bool sc = GUI_HAS_COMPONENT(scrollbars, item->ent);
+			uint32 lc = impl->entityLayoutsCount(item->ent);
+			CAGE_ASSERT_RUNTIME(wc <= 1, item->ent->name());
+			CAGE_ASSERT_RUNTIME(lc <= 1, item->ent->name());
 
 			// widget
 			if (wc)
 			{
-#define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, item->entity)) { CAGE_ASSERT_RUNTIME(!item->item, item->entity->name()); CAGE_JOIN(T, Create)(item); }
+#define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, item->ent)) { CAGE_ASSERT_RUNTIME(!item->item, item->ent->name()); CAGE_JOIN(T, Create)(item); }
 				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS));
 #undef GCHL_GENERATE
 				CAGE_ASSERT_RUNTIME(item->item);
@@ -157,7 +157,7 @@ namespace cage
 			// layouter
 			if (lc)
 			{
-#define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, item->entity)) { CAGE_ASSERT_RUNTIME(!item->item, item->entity->name()); CAGE_JOIN(T, Create)(item); }
+#define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, item->ent)) { CAGE_ASSERT_RUNTIME(!item->item, item->ent->name()); CAGE_JOIN(T, Create)(item); }
 				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_LAYOUT_COMPONENTS));
 #undef GCHL_GENERATE
 				CAGE_ASSERT_RUNTIME(item->item);
@@ -166,7 +166,7 @@ namespace cage
 
 		void generateItems(hierarchyItemStruct *item)
 		{
-			if (item->entity && !item->subsidedItem)
+			if (item->ent && !item->subsidedItem)
 				generateItem(item);
 			if (item->firstChild)
 				generateItems(item->firstChild);
@@ -186,9 +186,9 @@ namespace cage
 			guiImpl *impl = item->impl;
 			{
 				widgetStateComponent ws(wsp);
-				if (item->entity && GUI_HAS_COMPONENT(widgetState, item->entity))
+				if (item->ent && GUI_HAS_COMPONENT(widgetState, item->ent))
 				{
-					GUI_GET_COMPONENT(widgetState, w, item->entity);
+					GUI_GET_COMPONENT(widgetState, w, item->ent);
 					propagateWidgetState(w, ws);
 				}
 				if (widgetItemStruct *wi = dynamic_cast<widgetItemStruct*>(item->item))

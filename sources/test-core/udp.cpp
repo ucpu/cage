@@ -17,8 +17,8 @@ namespace
 	class serverImpl
 	{
 	public:
-		holder<udpServerClass> udp;
-		std::vector<holder<udpConnectionClass>> conns;
+		holder<udpServer> udp;
+		std::vector<holder<udpConnection>> conns;
 		uint64 lastTime;
 		bool hadConnection;
 
@@ -68,7 +68,7 @@ namespace
 	class clientImpl
 	{
 	public:
-		holder<udpConnectionClass> udp;
+		holder<udpConnection> udp;
 
 		std::vector<memoryBuffer> sends;
 		uint32 si, ri;
@@ -131,8 +131,8 @@ void testUdp()
 	configSetUint32("cage-core.udp.packetsPerService", 1);
 	configSetFloat("cage-core.udp.simulatedPacketLoss", 0.1f);
 
-	holder<threadClass> server = newThread(delegate<void()>().bind<&serverImpl::entry>(), "server");
-	std::vector<holder<threadClass>> clients;
+	holder<thread> server = newThread(delegate<void()>().bind<&serverImpl::entry>(), "server");
+	std::vector<holder<thread>> clients;
 	clients.resize(3);
 	uint32 index = 0;
 	for (auto &c : clients)

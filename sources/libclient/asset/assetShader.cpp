@@ -13,7 +13,7 @@ namespace cage
 {
 	namespace
 	{
-		void processLoad(const assetContextStruct *context, void *schemePointer)
+		void processLoad(const assetContext *context, void *schemePointer)
 		{
 			shaderClass *shr = nullptr;
 			if (context->assetHolder)
@@ -44,9 +44,9 @@ namespace cage
 		}
 	}
 
-	assetSchemeStruct genAssetSchemeShader(uint32 threadIndex, windowClass *memoryContext)
+	assetScheme genAssetSchemeShader(uint32 threadIndex, windowClass *memoryContext)
 	{
-		assetSchemeStruct s;
+		assetScheme s;
 		s.threadIndex = threadIndex;
 		s.schemePointer = memoryContext;
 		s.load.bind<&processLoad>();

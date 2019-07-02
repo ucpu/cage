@@ -269,7 +269,7 @@ namespace
 
 	void parse(const string &filename, const bool allowParsingHash = false)
 	{
-		holder<fileClass> file = newFile(filename, fileMode(true, false));
+		holder<file> file = newFile(filename, fileMode(true, false));
 		uint32 lineNumber = 0;
 		std::vector<sint32> stack;
 		for (string line; file->readLine(line);)
@@ -487,10 +487,10 @@ void processShader()
 		memoryBuffer comp = detail::compress(buff);
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "buffer size (after compression): " + comp.size());
 
-		assetHeaderStruct h = initializeAssetHeaderStruct();
+		assetHeader h = initializeAssetHeaderStruct();
 		h.originalSize = numeric_cast<uint32>(buff.size());
 		h.compressedSize = numeric_cast<uint32>(comp.size());
-		holder<fileClass> f = newFile(outputFileName, fileMode(false, true));
+		holder<file> f = newFile(outputFileName, fileMode(false, true));
 		f->write(&h, sizeof(h));
 		f->write(comp.data(), comp.size());
 		f->close();
@@ -503,7 +503,7 @@ void processShader()
 			string name = pathJoin(configGetString("cage-asset-processor.shader.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + "_" + it.first + ".glsl");
 			fileMode fm(false, true);
 			fm.textual = true;
-			holder<fileClass> f = newFile(name, fm);
+			holder<file> f = newFile(name, fm);
 			f->write(it.second.c_str(), it.second.length());
 		}
 	}

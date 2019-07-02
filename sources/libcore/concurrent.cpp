@@ -27,7 +27,7 @@
 
 namespace cage
 {
-	class mutexImpl : public mutexClass
+	class mutexImpl : public syncMutex
 	{
 	public:
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -55,7 +55,7 @@ namespace cage
 		}
 	};
 
-	bool mutexClass::tryLock()
+	bool syncMutex::tryLock()
 	{
 		mutexImpl *impl = (mutexImpl *)this;
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -70,7 +70,7 @@ namespace cage
 #endif
 	}
 
-	void mutexClass::lock()
+	void syncMutex::lock()
 	{
 		mutexImpl *impl = (mutexImpl *)this;
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -86,7 +86,7 @@ namespace cage
 #endif
 	}
 
-	void mutexClass::unlock()
+	void syncMutex::unlock()
 	{
 		mutexImpl *impl = (mutexImpl *)this;
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -98,14 +98,14 @@ namespace cage
 #endif
 	}
 
-	holder<mutexClass> newMutex()
+	holder<syncMutex> newSyncMutex()
 	{
-		return detail::systemArena().createImpl<mutexClass, mutexImpl>();
+		return detail::systemArena().createImpl<syncMutex, mutexImpl>();
 	}
 
 	namespace
 	{
-		class semaphoreImpl : public semaphoreClass
+		class semaphoreImpl : public syncSemaphore
 		{
 		public:
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -140,7 +140,7 @@ namespace cage
 		};
 	}
 
-	void semaphoreClass::lock()
+	void syncSemaphore::lock()
 	{
 		semaphoreImpl *impl = (semaphoreImpl *)this;
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -156,7 +156,7 @@ namespace cage
 #endif
 	}
 
-	void semaphoreClass::unlock()
+	void syncSemaphore::unlock()
 	{
 		semaphoreImpl *impl = (semaphoreImpl *)this;
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -168,9 +168,9 @@ namespace cage
 #endif
 	}
 
-	holder<semaphoreClass> newSemaphore(uint32 value, uint32 max)
+	holder<syncSemaphore> newSyncSemaphore(uint32 value, uint32 max)
 	{
-		return detail::systemArena().createImpl<semaphoreClass, semaphoreImpl>(value, max);
+		return detail::systemArena().createImpl<syncSemaphore, semaphoreImpl>(value, max);
 	}
 }
 
@@ -242,16 +242,16 @@ namespace cage
 {
 	namespace
 	{
-		class barrierImpl : public barrierClass
+		class barrierImpl : public syncBarrier
 		{
 		public:
 #ifdef CAGE_SYSTEM_WINDOWS
 
-			holder<mutexClass> mut;
-			holder<semaphoreClass> sem1, sem2;
+			holder<syncMutex> mut;
+			holder<syncSemaphore> sem1, sem2;
 			uint32 total, current;
 
-			barrierImpl(uint32 value) : mut(newMutex()), sem1(newSemaphore(0, value)), sem2(newSemaphore(0, value)), total(value), current(0)
+			barrierImpl(uint32 value) : mut(newSyncMutex()), sem1(newSyncSemaphore(0, value)), sem2(newSyncSemaphore(0, value)), total(value), current(0)
 			{}
 
 			~barrierImpl()
@@ -260,7 +260,7 @@ namespace cage
 			void lock()
 			{
 				{
-					scopeLock<mutexClass> l(mut);
+					scopeLock<syncMutex> l(mut);
 					if (++current == total)
 					{
 						for (uint32 i = 0; i < total; i++)
@@ -269,7 +269,7 @@ namespace cage
 				}
 				sem1->lock();
 				{
-					scopeLock<mutexClass> l(mut);
+					scopeLock<syncMutex> l(mut);
 					if (--current == 0)
 					{
 						for (uint32 i = 0; i < total; i++)
@@ -302,25 +302,25 @@ namespace cage
 		};
 	}
 
-	void barrierClass::lock()
+	void syncBarrier::lock()
 	{
 		barrierImpl *impl = (barrierImpl*)this;
 		impl->lock();;
 	}
 
-	void barrierClass::unlock()
+	void syncBarrier::unlock()
 	{
 		// does nothing
 	}
 
-	holder<barrierClass> newBarrier(uint32 value)
+	holder<syncBarrier> newSyncBarrier(uint32 value)
 	{
-		return detail::systemArena().createImpl<barrierClass, barrierImpl>(value);
+		return detail::systemArena().createImpl<syncBarrier, barrierImpl>(value);
 	}
 
 	namespace
 	{
-		class conditionalBaseImpl : public conditionalBaseClass
+		class conditionalBaseImpl : public syncConditionalBase
 		{
 		public:
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -348,22 +348,22 @@ namespace cage
 			}
 		};
 
-		class conditionalImpl : public conditionalClass
+		class conditionalImpl : public syncConditional
 		{
 		public:
-			holder<mutexClass> mut;
-			holder<conditionalBaseClass> cond;
+			holder<syncMutex> mut;
+			holder<syncConditionalBase> cond;
 			bool broadcasting;
 
 			conditionalImpl(bool broadcasting) : broadcasting(broadcasting)
 			{
-				mut = newMutex();
-				cond = newConditionalBase();
+				mut = newSyncMutex();
+				cond = newSyncConditionalBase();
 			}
 		};
 	}
 
-	void conditionalBaseClass::wait(mutexClass *mut)
+	void syncConditionalBase::wait(syncMutex *mut)
 	{
 		conditionalBaseImpl *impl = (conditionalBaseImpl *)this;
 		mutexImpl *m = (mutexImpl*)mut;
@@ -374,7 +374,7 @@ namespace cage
 #endif
 	}
 
-	void conditionalBaseClass::signal()
+	void syncConditionalBase::signal()
 	{
 		conditionalBaseImpl *impl = (conditionalBaseImpl *)this;
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -384,7 +384,7 @@ namespace cage
 #endif
 	}
 
-	void conditionalBaseClass::broadcast()
+	void syncConditionalBase::broadcast()
 	{
 		conditionalBaseImpl *impl = (conditionalBaseImpl *)this;
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -394,18 +394,18 @@ namespace cage
 #endif
 	}
 
-	holder<conditionalBaseClass> newConditionalBase()
+	holder<syncConditionalBase> newSyncConditionalBase()
 	{
-		return detail::systemArena().createImpl<conditionalBaseClass, conditionalBaseImpl>();
+		return detail::systemArena().createImpl<syncConditionalBase, conditionalBaseImpl>();
 	}
 
-	void conditionalClass::lock()
+	void syncConditional::lock()
 	{
 		conditionalImpl *impl = (conditionalImpl *)this;
 		impl->mut->lock();
 	}
 
-	void conditionalClass::unlock()
+	void syncConditional::unlock()
 	{
 		conditionalImpl *impl = (conditionalImpl *)this;
 		impl->mut->unlock();
@@ -415,27 +415,27 @@ namespace cage
 			impl->cond->signal();
 	}
 
-	void conditionalClass::wait()
+	void syncConditional::wait()
 	{
 		conditionalImpl *impl = (conditionalImpl *)this;
 		impl->cond->wait(impl->mut);
 	}
 
-	void conditionalClass::signal()
+	void syncConditional::signal()
 	{
 		conditionalImpl *impl = (conditionalImpl *)this;
 		impl->cond->signal();
 	}
 
-	void conditionalClass::broadcast()
+	void syncConditional::broadcast()
 	{
 		conditionalImpl *impl = (conditionalImpl *)this;
 		impl->cond->broadcast();
 	}
 
-	holder<conditionalClass> newConditional(bool broadcast)
+	holder<syncConditional> newSyncConditional(bool broadcast)
 	{
-		return detail::systemArena().createImpl<conditionalClass, conditionalImpl>(broadcast);
+		return detail::systemArena().createImpl<syncConditional, conditionalImpl>(broadcast);
 	}
 
 	namespace
@@ -446,7 +446,7 @@ namespace cage
 		void *threadFunctionImpl(void *);
 #endif
 
-		class threadImpl : public threadClass
+		class threadImpl : public thread
 		{
 		public:
 			const string threadName;
@@ -501,13 +501,13 @@ namespace cage
 		};
 	}
 
-	uint64 threadClass::id() const
+	uint64 thread::id() const
 	{
 		threadImpl *impl = (threadImpl*)this;
 		return impl->myid;
 	}
 
-	bool threadClass::done() const
+	bool thread::done() const
 	{
 		threadImpl *impl = (threadImpl*)this;
 
@@ -521,7 +521,7 @@ namespace cage
 		switch (pthread_kill(impl->handle, 0))
 		{
 		case 0: return false;
-		default: const_cast<threadClass*>(this)->wait(); return true;
+		default: const_cast<thread*>(this)->wait(); return true;
 		}
 #else
 		switch (int err = pthread_tryjoin_np(impl->handle, nullptr))
@@ -534,7 +534,7 @@ namespace cage
 #endif
 	}
 
-	void threadClass::wait()
+	void thread::wait()
 	{
 		threadImpl *impl = (threadImpl*)this;
 
@@ -559,9 +559,9 @@ namespace cage
 		}
 	}
 
-	holder<threadClass> newThread(delegate<void()> func, const string &threadName)
+	holder<thread> newThread(delegate<void()> func, const string &threadName)
 	{
-		return detail::systemArena().createImpl<threadClass, threadImpl>(func, threadName);
+		return detail::systemArena().createImpl<thread, threadImpl>(func, threadName);
 	}
 
 	namespace

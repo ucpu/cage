@@ -21,7 +21,7 @@ void testFiles()
 
 	{
 		CAGE_TESTCASE("write to file");
-		holder<fileClass> f = newFile("testdir/files/1", fileMode(false, true));
+		holder<file> f = newFile("testdir/files/1", fileMode(false, true));
 		CAGE_TEST(f);
 		for (uint32 i = 0; i < FILE_BLOCKS; i++)
 			f->write(data.data(), BLOCK_SIZE);
@@ -29,7 +29,7 @@ void testFiles()
 
 	{
 		CAGE_TESTCASE("read from file");
-		holder<fileClass> f = newFile("testdir/files/1", fileMode(true, false));
+		holder<file> f = newFile("testdir/files/1", fileMode(true, false));
 		CAGE_TEST(f);
 		CAGE_TEST(f->size() == (uint64)FILE_BLOCKS * (uint64)BLOCK_SIZE);
 		memoryBuffer tmp(BLOCK_SIZE);
@@ -42,7 +42,7 @@ void testFiles()
 
 	{
 		CAGE_TESTCASE("create several files");
-		holder<filesystemClass> fs = newFilesystem();
+		holder<filesystem> fs = newFilesystem();
 		fs->changeDir("testdir/files");
 		CAGE_TEST(fs);
 		for (uint32 i = 2; i <= 32; i++)
@@ -51,7 +51,7 @@ void testFiles()
 
 	{
 		CAGE_TESTCASE("list directory");
-		holder<directoryListClass> fs = newDirectoryList("testdir/files");
+		holder<directoryList> fs = newDirectoryList("testdir/files");
 		CAGE_TEST(fs);
 		std::set<string> mp;
 		while (fs->valid())
@@ -66,7 +66,7 @@ void testFiles()
 
 	{
 		CAGE_TESTCASE("list directory - test directories");
-		holder<directoryListClass> fs = newDirectoryList("testdir");
+		holder<directoryList> fs = newDirectoryList("testdir");
 		CAGE_TEST(fs);
 		bool found = false;
 		while (fs->valid())
@@ -87,7 +87,7 @@ void testFiles()
 			auto f = newFile("testdir/empty.txt", fileMode(false, true));
 			//f->writeLine("haha");
 		}
-		holder<directoryListClass> fs = newDirectoryList("testdir");
+		holder<directoryList> fs = newDirectoryList("testdir");
 		CAGE_TEST(fs);
 		bool found = false;
 		while (fs->valid())
@@ -111,13 +111,13 @@ void testFiles()
 			{
 				for (char c = 'a'; c < a; c++)
 				{
-					holder<filesystemClass> fs = newFilesystem();
+					holder<filesystem> fs = newFilesystem();
 					fs->changeDir("testdir/files");
 					fs->changeDir(string(&a, 1));
 					fs->changeDir(string(&b, 1));
 					fs->openFile(string(&c, 1), fileMode(false, true));
 				}
-				holder<filesystemClass> fs = newFilesystem();
+				holder<filesystem> fs = newFilesystem();
 				fs->changeDir("testdir/files");
 				fs->changeDir(string(&a, 1));
 				fs->changeDir(string(&b, 1));
@@ -125,7 +125,7 @@ void testFiles()
 			}
 			for (char b = 'e'; b < 'h'; b++)
 			{
-				holder<filesystemClass> fs = newFilesystem();
+				holder<filesystem> fs = newFilesystem();
 				fs->changeDir("testdir/files");
 				fs->changeDir(string(&a, 1));
 				fs->openFile(string(&b, 1), fileMode(false, true));
@@ -135,7 +135,7 @@ void testFiles()
 
 	{
 		CAGE_TESTCASE("list files in subsequent directory");
-		holder<directoryListClass> fs = newDirectoryList("testdir/files/d/b");
+		holder<directoryList> fs = newDirectoryList("testdir/files/d/b");
 		uint32 cnt = 0;
 		while (fs->valid())
 		{
@@ -156,14 +156,14 @@ void testFiles()
 		const string bs = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
 
 		{
-			holder<fileClass> f = newFile("testdir/files/lines", fileMode(false, true));
+			holder<file> f = newFile("testdir/files/lines", fileMode(false, true));
 			string s = bs;
 			while (!s.empty())
 				f->writeLine(s.split("/"));
 		}
 
 		{
-			holder<fileClass> f = newFile("testdir/files/lines", fileMode(true, false));
+			holder<file> f = newFile("testdir/files/lines", fileMode(true, false));
 			string s = bs;
 			for (string line; f->readLine(line);)
 				CAGE_TEST(line == s.split("/"));

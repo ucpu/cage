@@ -22,6 +22,6 @@ namespace cage
 		CAGE_API real evalCoefficientForSkeletalAnimation(animationClass *animation, uint64 emitTime, uint64 animationStart, real animationSpeed, real animationOffset);
 	}
 
-	CAGE_API assetSchemeStruct genAssetSchemeAnimation(uint32 threadIndex);
+	CAGE_API assetScheme genAssetSchemeAnimation(uint32 threadIndex);
 	static const uint32 assetSchemeIndexAnimation = 14;
 }

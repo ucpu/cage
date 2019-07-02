@@ -64,8 +64,8 @@ namespace cage
 	CAGE_API void engineFinalize();
 
 	CAGE_API soundContextClass *sound();
-	CAGE_API assetManagerClass *assets();
-	CAGE_API entityManagerClass *entities();
+	CAGE_API assetManager *assets();
+	CAGE_API entityManager *entities();
 	CAGE_API windowClass *window();
 	CAGE_API guiClass *gui();
 	CAGE_API speakerClass *speaker();

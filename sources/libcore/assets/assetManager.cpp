@@ -29,7 +29,7 @@ namespace cage
 	{
 		static const uint32 currentAssetVersion = 1;
 
-		void defaultDecompress(const assetContextStruct *context)
+		void defaultDecompress(const assetContext *context)
 		{
 			if (context->compressedSize == 0)
 				return;
@@ -37,13 +37,13 @@ namespace cage
 			CAGE_ASSERT_RUNTIME(res == context->originalSize, res, context->originalSize);
 		}
 
-		void defaultDone(const assetContextStruct *context)
+		void defaultDone(const assetContext *context)
 		{
 			context->assetHolder.clear();
 			context->returnData = nullptr;
 		}
 
-		struct assetContextPrivateStruct : public assetContextStruct
+		struct assetContextPrivateStruct : public assetContext
 		{
 			std::vector<uint32> dependencies;
 			std::vector<uint32> dependenciesNew;
@@ -54,7 +54,7 @@ namespace cage
 			assetContextPrivateStruct() : internationalizedPrevious(0), scheme(m), references(0), processing(false), ready(false), error(true), dependenciesDoneFlag(false), fabricated(false) {}
 		};
 
-		struct assetSchemePrivateStruct : public assetSchemeStruct
+		struct assetSchemePrivateStruct : public assetScheme
 		{
 			uintPtr typeSize;
 			assetSchemePrivateStruct() : typeSize(0) {}
@@ -66,19 +66,19 @@ namespace cage
 			ptr->error = true;
 		}
 
-		class assetManagerImpl : public assetManagerClass
+		class assetManagerImpl : public assetManager
 		{
 		public:
 			std::map<uint32, std::set<assetContextPrivateStruct*>> interNames;
 			std::vector<assetSchemePrivateStruct> schemes;
-			holder<hashTableClass<assetContextPrivateStruct>> index;
-			holder<tcpConnectionClass> listener;
-			holder<threadClass> loadingThread;
-			holder<threadClass> decompressionThread;
+			holder<hashTable<assetContextPrivateStruct>> index;
+			holder<tcpConnection> listener;
+			holder<thread> loadingThread;
+			holder<thread> decompressionThread;
 
-			std::vector<holder<concurrentQueueClass<assetContextPrivateStruct*>>> queueCustomLoad, queueCustomDone;
-			holder<concurrentQueueClass<assetContextPrivateStruct*>> queueLoadFile, queueDecompression;
-			holder<concurrentQueueClass<assetContextPrivateStruct*>> queueAddDependencies, queueWaitDependencies, queueRemoveDependencies;
+			std::vector<holder<concurrentQueue<assetContextPrivateStruct*>>> queueCustomLoad, queueCustomDone;
+			holder<concurrentQueue<assetContextPrivateStruct*>> queueLoadFile, queueDecompression;
+			holder<concurrentQueue<assetContextPrivateStruct*>> queueAddDependencies, queueWaitDependencies, queueRemoveDependencies;
 
 			string path;
 			uint32 countTotal, countProcessing;
@@ -86,7 +86,7 @@ namespace cage
 			uint32 generateName;
 			std::atomic<bool> destroying;
 
-			holder<concurrentQueueClass<assetContextPrivateStruct*>> createQueue()
+			holder<concurrentQueue<assetContextPrivateStruct*>> createQueue()
 			{
 				return newConcurrentQueue<assetContextPrivateStruct*>({}, delegate<void(assetContextPrivateStruct*)>().bind<&destroy>());
 			}
@@ -150,7 +150,7 @@ namespace cage
 				string pth;
 				if (!findAssetPath.dispatch(name, pth))
 					pth = pathJoin(path, name);
-				holder<fileClass> f = newFile(pth, fileMode(true, false));
+				holder<file> f = newFile(pth, fileMode(true, false));
 				auto s = f->size();
 				buff.allocate(numeric_cast<uintPtr>(s));
 				f->read(buff.data(), s);
@@ -181,9 +181,9 @@ namespace cage
 					{
 						detail::overrideBreakpoint overrideBreakpoint;
 						memoryBuffer buff = findAsset(ass->realName);
-						if (buff.size() < sizeof(assetHeaderStruct))
+						if (buff.size() < sizeof(assetHeader))
 							CAGE_THROW_ERROR(exception, "asset is missing required header");
-						assetHeaderStruct *h = (assetHeaderStruct*)buff.data();
+						assetHeader *h = (assetHeader*)buff.data();
 						if (detail::memcmp(h->cageName, "cageAss", 8) != 0)
 							CAGE_THROW_ERROR(exception, "file is not a cage asset");
 						if (h->version != currentAssetVersion)
@@ -194,7 +194,7 @@ namespace cage
 							CAGE_THROW_ERROR(exception, "cage asset scheme out of range");
 						if (ass->scheme != m && ass->scheme != h->scheme)
 							CAGE_THROW_ERROR(exception, "cage asset scheme cannot change");
-						if (buff.size() < sizeof(assetHeaderStruct) + h->dependenciesCount * sizeof(uint32))
+						if (buff.size() < sizeof(assetHeader) + h->dependenciesCount * sizeof(uint32))
 							CAGE_THROW_ERROR(exception, "cage asset file dependencies truncated");
 						ass->scheme = h->scheme;
 						ass->assetFlags = h->flags;
@@ -204,14 +204,14 @@ namespace cage
 						ass->textName = detail::stringBase<sizeof(h->textName)>(h->textName);
 						ass->dependenciesNew.resize(h->dependenciesCount);
 						if (h->dependenciesCount)
-							detail::memcpy(ass->dependenciesNew.data(), buff.data() + sizeof(assetHeaderStruct), h->dependenciesCount * sizeof(uint32));
+							detail::memcpy(ass->dependenciesNew.data(), buff.data() + sizeof(assetHeader), h->dependenciesCount * sizeof(uint32));
 						uintPtr allocSize = numeric_cast<uintPtr>(ass->compressedSize + ass->originalSize);
 						uintPtr readSize = numeric_cast<uintPtr>(h->compressedSize == 0 ? h->originalSize : h->compressedSize);
 						CAGE_ASSERT_RUNTIME(readSize <= allocSize, readSize, allocSize);
-						if (buff.size() < readSize + sizeof(assetHeaderStruct) + h->dependenciesCount * sizeof(uint32))
+						if (buff.size() < readSize + sizeof(assetHeader) + h->dependenciesCount * sizeof(uint32))
 							CAGE_THROW_ERROR(exception, "cage asset file content truncated");
 						ass->compressedData = detail::systemArena().allocate(allocSize, sizeof(uintPtr));
-						detail::memcpy(ass->compressedData, buff.data() + sizeof(assetHeaderStruct) + h->dependenciesCount * sizeof(uint32), readSize);
+						detail::memcpy(ass->compressedData, buff.data() + sizeof(assetHeader) + h->dependenciesCount * sizeof(uint32), readSize);
 						ass->originalData = (char*)ass->compressedData + ass->compressedSize;
 					}
 					catch (...)
@@ -547,13 +547,13 @@ namespace cage
 		};
 	}
 
-	void assetManagerClass::listen(const string &address, uint16 port)
+	void assetManager::listen(const string &address, uint16 port)
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		impl->listener = newTcpConnection(address, port);
 	}
 
-	uint32 assetManagerClass::dependenciesCount(uint32 assetName) const
+	uint32 assetManager::dependenciesCount(uint32 assetName) const
 	{
 		CAGE_ASSERT_RUNTIME(ready(assetName), assetName);
 		assetManagerImpl *impl = (assetManagerImpl*)this;
@@ -562,7 +562,7 @@ namespace cage
 		return numeric_cast<uint32>(ass->dependencies.size());
 	}
 
-	uint32 assetManagerClass::dependencyName(uint32 assetName, uint32 index) const
+	uint32 assetManager::dependencyName(uint32 assetName, uint32 index) const
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		assetContextPrivateStruct *ass = impl->index->get(assetName, false);
@@ -571,7 +571,7 @@ namespace cage
 		return ass->dependencies[index];
 	}
 
-	pointerRange<const uint32> assetManagerClass::dependencies(uint32 assetName) const
+	pointerRange<const uint32> assetManager::dependencies(uint32 assetName) const
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		assetContextPrivateStruct *ass = impl->index->get(assetName, false);
@@ -579,31 +579,31 @@ namespace cage
 		return ass->dependencies;
 	}
 
-	uint32 assetManagerClass::countTotal() const
+	uint32 assetManager::countTotal() const
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		return impl->countTotal;
 	}
 
-	uint32 assetManagerClass::countProcessing() const
+	uint32 assetManager::countProcessing() const
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		return impl->countProcessing;
 	}
 
-	bool assetManagerClass::processControlThread()
+	bool assetManager::processControlThread()
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		return impl->processControlThread();
 	}
 
-	bool assetManagerClass::processCustomThread(uint32 threadIndex)
+	bool assetManager::processCustomThread(uint32 threadIndex)
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		return impl->processCustomThread(threadIndex);
 	}
 
-	assetStateEnum assetManagerClass::state(uint32 assetName) const
+	assetStateEnum assetManager::state(uint32 assetName) const
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		assetContextPrivateStruct *ass = impl->index->get(assetName, true);
@@ -618,7 +618,7 @@ namespace cage
 		return assetStateEnum::NotFound;
 	}
 
-	bool assetManagerClass::ready(uint32 assetName) const
+	bool assetManager::ready(uint32 assetName) const
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		switch (state(assetName))
@@ -641,7 +641,7 @@ namespace cage
 		}
 	}
 
-	uint32 assetManagerClass::scheme(uint32 assetName) const
+	uint32 assetManager::scheme(uint32 assetName) const
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		assetContextPrivateStruct *ass = impl->index->get(assetName, true);
@@ -650,13 +650,13 @@ namespace cage
 		return m;
 	}
 
-	uint32 assetManagerClass::generateUniqueName()
+	uint32 assetManager::generateUniqueName()
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		return impl->generateUniqueName();
 	}
 
-	void assetManagerClass::add(uint32 assetName)
+	void assetManager::add(uint32 assetName)
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		CAGE_ASSERT_RUNTIME(assetName != 0);
@@ -675,7 +675,7 @@ namespace cage
 		ass->references++;
 	}
 
-	void assetManagerClass::fabricate(uint32 scheme, uint32 assetName, const string &textName)
+	void assetManager::fabricate(uint32 scheme, uint32 assetName, const string &textName)
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		CAGE_ASSERT_RUNTIME(assetName != 0);
@@ -694,7 +694,7 @@ namespace cage
 		ass->references++;
 	}
 
-	void assetManagerClass::remove(uint32 assetName)
+	void assetManager::remove(uint32 assetName)
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		assetContextPrivateStruct *ass = impl->index->get(assetName, true);
@@ -706,7 +706,7 @@ namespace cage
 			impl->assetStartRemoving(ass);
 	}
 
-	void assetManagerClass::reload(uint32 assetName, bool recursive)
+	void assetManager::reload(uint32 assetName, bool recursive)
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		assetContextPrivateStruct *ass = impl->index->get(assetName, false);
@@ -720,23 +720,23 @@ namespace cage
 		}
 	}
 
-	void assetManagerClass::zScheme(uint32 index, const assetSchemeStruct &value, uintPtr typeSize)
+	void assetManager::zScheme(uint32 index, const assetScheme &value, uintPtr typeSize)
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		CAGE_ASSERT_RUNTIME(index < impl->schemes.size());
 		CAGE_ASSERT_RUNTIME(value.threadIndex < impl->queueCustomLoad.size());
-		(assetSchemeStruct&)impl->schemes[index] = value;
+		(assetScheme&)impl->schemes[index] = value;
 		impl->schemes[index].typeSize = typeSize;
 	}
 
-	uintPtr assetManagerClass::zGetTypeSize(uint32 scheme) const
+	uintPtr assetManager::zGetTypeSize(uint32 scheme) const
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		CAGE_ASSERT_RUNTIME(scheme < impl->schemes.size(), scheme, impl->schemes.size());
 		return impl->schemes[scheme].typeSize;
 	}
 
-	void *assetManagerClass::zGet(uint32 assetName) const
+	void *assetManager::zGet(uint32 assetName) const
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		assetContextPrivateStruct *ass = impl->index->get(assetName, false);
@@ -745,7 +745,7 @@ namespace cage
 		return ass->returnData;
 	}
 
-	void assetManagerClass::zSet(uint32 assetName, void *value)
+	void assetManager::zSet(uint32 assetName, void *value)
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		assetContextPrivateStruct *ass = impl->index->get(assetName, false);
@@ -758,15 +758,15 @@ namespace cage
 	assetManagerCreateConfig::assetManagerCreateConfig() : assetsFolderName("assets.zip"), threadMaxCount(5), schemeMaxCount(50)
 	{}
 
-	holder<assetManagerClass> newAssetManager(const assetManagerCreateConfig &config)
+	holder<assetManager> newAssetManager(const assetManagerCreateConfig &config)
 	{
-		return detail::systemArena().createImpl <assetManagerClass, assetManagerImpl>(config);
+		return detail::systemArena().createImpl <assetManager, assetManagerImpl>(config);
 	}
 
-	assetHeaderStruct initializeAssetHeader(const string &name_, uint16 schemeIndex)
+	assetHeader initializeAssetHeader(const string &name_, uint16 schemeIndex)
 	{
-		assetHeaderStruct a;
-		detail::memset(&a, 0, sizeof(assetHeaderStruct));
+		assetHeader a;
+		detail::memset(&a, 0, sizeof(assetHeader));
 		detail::memcpy(a.cageName, "cageAss", 7);
 		a.version = currentAssetVersion;
 		string name = name_;

@@ -13,7 +13,7 @@ namespace cage
 {
 	namespace
 	{
-		void processLoad(const assetContextStruct *context, void *schemePointer)
+		void processLoad(const assetContext *context, void *schemePointer)
 		{
 			fontClass *font = nullptr;
 			if (context->assetHolder)
@@ -47,9 +47,9 @@ namespace cage
 		}
 	}
 
-	assetSchemeStruct genAssetSchemeFont(uint32 threadIndex, windowClass *memoryContext)
+	assetScheme genAssetSchemeFont(uint32 threadIndex, windowClass *memoryContext)
 	{
-		assetSchemeStruct s;
+		assetScheme s;
 		s.threadIndex = threadIndex;
 		s.schemePointer = memoryContext;
 		s.load.bind<&processLoad>();

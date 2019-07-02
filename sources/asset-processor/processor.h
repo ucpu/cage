@@ -30,7 +30,7 @@ extern const char *logComponentName;
 void writeLine(const string &other);
 string properties(const string &name);
 
-assetHeaderStruct initializeAssetHeaderStruct();
+assetHeader initializeAssetHeaderStruct();
 
 void processTexture();
 void processShader();

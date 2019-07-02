@@ -95,7 +95,7 @@ namespace cage
 					if (data.vertical)
 						f = 1 - f;
 					data.value = f * (data.max - data.min) + data.min;
-					hierarchy->impl->widgetEvent.dispatch(hierarchy->entity->name());
+					hierarchy->impl->widgetEvent.dispatch(hierarchy->ent->name());
 				}
 			}
 

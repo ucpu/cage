@@ -3,11 +3,11 @@
 
 namespace cage
 {
-	typedef delegate<void(const assetContextStruct *, void *)> assetDelegate;
+	typedef delegate<void(const assetContext *, void *)> assetDelegate;
 
-	struct CAGE_API assetContextStruct
+	struct CAGE_API assetContext
 	{
-		assetContextStruct();
+		assetContext();
 		detail::stringBase<64> textName;
 		mutable holder<void> assetHolder;
 		uint64 compressedSize;
@@ -21,9 +21,9 @@ namespace cage
 		uint32 assetFlags;
 	};
 
-	struct CAGE_API assetSchemeStruct
+	struct CAGE_API assetScheme
 	{
-		assetSchemeStruct();
+		assetScheme();
 		assetDelegate decompress;
 		assetDelegate load;
 		assetDelegate done;
@@ -31,7 +31,7 @@ namespace cage
 		uint32 threadIndex;
 	};
 
-	struct CAGE_API assetHeaderStruct
+	struct CAGE_API assetHeader
 	{
 		// this is the first header found in every asset file
 
@@ -69,7 +69,7 @@ namespace cage
 	};
 	*/
 
-	CAGE_API assetHeaderStruct initializeAssetHeader(const string &name, uint16 schemeIndex);
+	CAGE_API assetHeader initializeAssetHeader(const string &name, uint16 schemeIndex);
 }
 
 #endif // guard_assetsStructs_h_k1i71789ds69r787jhg14j

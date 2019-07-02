@@ -16,10 +16,10 @@ bool consoleLogFilter(const cage::detail::loggerInfo &info)
 
 int main(int argc, const char *args[])
 {
-	holder<loggerClass> conLog = newLogger();
+	holder<logger> conLog = newLogger();
 	conLog->filter.bind<&consoleLogFilter>();
-	conLog->format.bind<&logFormatPolicyConsole>();
-	conLog->output.bind<&logOutputPolicyStdOut>();
+	conLog->format.bind<&logFormatConsole>();
+	conLog->output.bind<&logOutputStdOut>();
 
 	configParseCmd(argc, args);
 

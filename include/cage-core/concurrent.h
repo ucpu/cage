@@ -5,7 +5,7 @@
 
 namespace cage
 {
-	class CAGE_API mutexClass : private immovable
+	class CAGE_API syncMutex : private immovable
 	{
 	public:
 		// locking the same mutex again in the same thread is undefined behavior
@@ -14,39 +14,39 @@ namespace cage
 		void unlock();
 	};
 
-	CAGE_API holder<mutexClass> newMutex();
+	CAGE_API holder<syncMutex> newSyncMutex();
 
-	class CAGE_API barrierClass : private immovable
+	class CAGE_API syncBarrier : private immovable
 	{
 	public:
 		void lock();
 		void unlock(); // does nothing
 	};
 
-	CAGE_API holder<barrierClass> newBarrier(uint32 value);
+	CAGE_API holder<syncBarrier> newSyncBarrier(uint32 value);
 
-	class CAGE_API semaphoreClass : private immovable
+	class CAGE_API syncSemaphore : private immovable
 	{
 	public:
 		void lock(); // decrements value
 		void unlock(); // increments value
 	};
 
-	CAGE_API holder<semaphoreClass> newSemaphore(uint32 value, uint32 max);
+	CAGE_API holder<syncSemaphore> newSyncSemaphore(uint32 value, uint32 max);
 
-	class CAGE_API conditionalBaseClass : private immovable
+	class CAGE_API syncConditionalBase : private immovable
 	{
 	public:
-		void wait(mutexClass *mut);
-		void wait(holder<mutexClass> &mut) { return wait(mut.get()); }
-		void wait(scopeLock<mutexClass> &mut) { return wait(mut.ptr); }
+		void wait(syncMutex *mut);
+		void wait(holder<syncMutex> &mut) { return wait(mut.get()); }
+		void wait(scopeLock<syncMutex> &mut) { return wait(mut.ptr); }
 		void signal();
 		void broadcast();
 	};
 
-	CAGE_API holder<conditionalBaseClass> newConditionalBase();
+	CAGE_API holder<syncConditionalBase> newSyncConditionalBase();
 
-	class CAGE_API conditionalClass : private immovable
+	class CAGE_API syncConditional : private immovable
 	{
 		// this is a compound class containing both mutex and conditional variable
 	public:
@@ -57,9 +57,9 @@ namespace cage
 		void broadcast(); // broadcast the conditional variable without touching the mutex
 	};
 
-	CAGE_API holder<conditionalClass> newConditional(bool broadcast = false);
+	CAGE_API holder<syncConditional> newSyncConditional(bool broadcast = false);
 
-	class CAGE_API threadClass : private immovable
+	class CAGE_API thread : private immovable
 	{
 	public:
 		uint64 id() const;
@@ -67,7 +67,7 @@ namespace cage
 		void wait();
 	};
 
-	CAGE_API holder<threadClass> newThread(delegate<void()> func, const string &threadName);
+	CAGE_API holder<thread> newThread(delegate<void()> func, const string &threadName);
 
 	CAGE_API void setCurrentThreadName(const string &name);
 	CAGE_API string getCurrentThreadName();

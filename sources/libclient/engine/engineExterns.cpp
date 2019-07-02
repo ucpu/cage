@@ -8,17 +8,17 @@
 
 namespace cage
 {
-	componentClass *transformComponent::component;
-	componentClass *transformComponent::componentHistory;
-	componentClass *renderComponent::component;
-	componentClass *animatedSkeletonComponent::component;
-	componentClass *animatedTextureComponent::component;
-	componentClass *lightComponent::component;
-	componentClass *shadowmapComponent::component;
-	componentClass *renderTextComponent::component;
-	componentClass *cameraComponent::component;
-	componentClass *voiceComponent::component;
-	componentClass *listenerComponent::component;
+	entityComponent *transformComponent::component;
+	entityComponent *transformComponent::componentHistory;
+	entityComponent *renderComponent::component;
+	entityComponent *animatedSkeletonComponent::component;
+	entityComponent *animatedTextureComponent::component;
+	entityComponent *lightComponent::component;
+	entityComponent *shadowmapComponent::component;
+	entityComponent *renderTextComponent::component;
+	entityComponent *cameraComponent::component;
+	entityComponent *voiceComponent::component;
+	entityComponent *listenerComponent::component;
 
 	transformComponent::transformComponent(const transform &t) : transform(t) {}
 	renderComponent::renderComponent() : color(0), opacity(1), object(0), renderMask(1) {}

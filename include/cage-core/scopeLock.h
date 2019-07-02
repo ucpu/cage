@@ -60,7 +60,7 @@ namespace cage
 	private:
 		T *ptr;
 
-		friend class conditionalBaseClass;
+		friend class syncConditionalBase;
 	};
 }
 

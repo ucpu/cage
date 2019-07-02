@@ -13,7 +13,7 @@ using namespace cage;
 assetStruct::assetStruct() : corrupted(true), needNotify(false)
 {}
 
-void assetStruct::load(fileClass *f)
+void assetStruct::load(file *f)
 {
 	read(f, name);
 	read(f, internationalizedName);
@@ -45,7 +45,7 @@ void assetStruct::load(fileClass *f)
 	read(f, corrupted);
 }
 
-void assetStruct::save(fileClass *f) const
+void assetStruct::save(file *f) const
 {
 	write(f, name);
 	write(f, internationalizedName);

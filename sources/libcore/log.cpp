@@ -15,15 +15,15 @@ namespace cage
 	{
 		configBool confDetailedInfo("cage-core.log.detailedVendorInfo", false);
 
-		mutexClass *loggerMutex()
+		syncMutex *loggerMutex()
 		{
-			static holder<mutexClass> *m = new holder<mutexClass>(newMutex()); // this leak is intentional
+			static holder<syncMutex> *m = new holder<syncMutex>(newSyncMutex()); // this leak is intentional
 			return m->get();
 		}
 
-		timerClass *loggerTimer()
+		timer *loggerTimer()
 		{
-			static holder<timerClass> *t = new holder<timerClass>(newTimer()); // this leak is intentional
+			static holder<timer> *t = new holder<timer>(newTimer()); // this leak is intentional
 			return t->get();
 		}
 
@@ -33,7 +33,7 @@ namespace cage
 			return l;
 		}
 
-		class loggerImpl : public loggerClass
+		class loggerImpl : public logger
 		{
 		public:
 			loggerImpl *prev, *next;
@@ -42,7 +42,7 @@ namespace cage
 			loggerImpl() : prev(nullptr), next(nullptr), thread(threadId())
 			{
 				{
-					scopeLock<mutexClass> l(loggerMutex());
+					scopeLock<syncMutex> l(loggerMutex());
 					if (loggerLast())
 					{
 						prev = loggerLast();
@@ -51,13 +51,13 @@ namespace cage
 					loggerLast() = this;
 				}
 
-				output.bind<&logOutputPolicyStdErr>();
+				output.bind<&logOutputStdErr>();
 			}
 
 			~loggerImpl()
 			{
 				{
-					scopeLock<mutexClass> l(loggerMutex());
+					scopeLock<syncMutex> l(loggerMutex());
 					if (prev)
 						prev->next = next;
 					if (next)
@@ -68,7 +68,7 @@ namespace cage
 			}
 		};
 
-		bool logFilterPolicyNoDebug(const detail::loggerInfo &info)
+		bool logFilterNoDebug(const detail::loggerInfo &info)
 		{
 			return !info.debug;
 		}
@@ -79,19 +79,19 @@ namespace cage
 			centralLogClass()
 			{
 				loggerDebug = newLogger();
-				loggerDebug->filter.bind<&logFilterPolicyNoDebug>();
-				loggerDebug->format.bind<&logFormatPolicyConsole>();
-				loggerDebug->output.bind<&logOutputPolicyDebug>();
+				loggerDebug->filter.bind<&logFilterNoDebug>();
+				loggerDebug->format.bind<&logFormatConsole>();
+				loggerDebug->output.bind<&logOutputDebug>();
 
-				loggerOutputCentralFile = newLogOutputPolicyFile(pathExtractFilename(detail::getExecutableFullPathNoExe()) + ".log", false);
+				loggerOutputCentralFile = newLogOutputFile(pathExtractFilename(detail::getExecutableFullPathNoExe()) + ".log", false);
 				loggerCentralFile = newLogger();
-				loggerCentralFile->output.bind<logOutputPolicyFileClass, &logOutputPolicyFileClass::output>(loggerOutputCentralFile.get());
-				loggerCentralFile->format.bind<&logFormatPolicyFileShort>();
+				loggerCentralFile->output.bind<logOutputFile, &logOutputFile::output>(loggerOutputCentralFile.get());
+				loggerCentralFile->format.bind<&logFormatFileShort>();
 			}
 
-			holder<loggerClass> loggerDebug;
-			holder<logOutputPolicyFileClass> loggerOutputCentralFile;
-			holder<loggerClass> loggerCentralFile;
+			holder<logger> loggerDebug;
+			holder<logOutputFile> loggerOutputCentralFile;
+			holder<logger> loggerCentralFile;
 		};
 
 		class centralLogStaticInitializerClass
@@ -180,7 +180,7 @@ namespace cage
 			}
 		} centralLogStaticInitializerInstance;
 
-		void logFormatPolicyFileImpl(const detail::loggerInfo &info, delegate<void(const string &)> output, bool longer)
+		void logFormatFileImpl(const detail::loggerInfo &info, delegate<void(const string &)> output, bool longer)
 		{
 			if (info.continuous)
 			{
@@ -207,10 +207,10 @@ namespace cage
 			}
 		}
 
-		class fileOutputPolicyImpl : public logOutputPolicyFileClass
+		class fileOutputImpl : public logOutputFile
 		{
 		public:
-			fileOutputPolicyImpl(const string &path, bool append)
+			fileOutputImpl(const string &path, bool append)
 			{
 				fileMode fm(false, true);
 				fm.textual = true;
@@ -218,13 +218,13 @@ namespace cage
 				f = newFile(path, fm);
 			}
 
-			holder<fileClass> f;
+			holder<file> f;
 		};
 	}
 
-	holder<loggerClass> newLogger()
+	holder<logger> newLogger()
 	{
-		return detail::systemArena().createImpl<loggerClass, loggerImpl>();
+		return detail::systemArena().createImpl<logger, loggerImpl>();
 	}
 
 	namespace detail
@@ -232,7 +232,7 @@ namespace cage
 		loggerInfo::loggerInfo() : component(""), file(nullptr), function(nullptr), time(0), createThreadId(0), currentThreadId(0), severity(severityEnum::Critical), line(0), continuous(false), debug(false)
 		{}
 
-		loggerClass *getCentralLog()
+		logger *getCentralLog()
 		{
 			static centralLogClass *centralLogInstance = new centralLogClass(); // this leak is intentional
 			return centralLogInstance->loggerCentralFile.get();
@@ -273,7 +273,7 @@ namespace cage
 				info.line = line;
 				info.function = function;
 
-				scopeLock<mutexClass> l(loggerMutex());
+				scopeLock<syncMutex> l(loggerMutex());
 				loggerImpl *cur = loggerLast();
 				while (cur)
 				{
@@ -301,48 +301,48 @@ namespace cage
 		}
 	}
 
-	void logFormatPolicyConsole(const detail::loggerInfo &info, delegate<void(const string &)> output)
+	void logFormatConsole(const detail::loggerInfo &info, delegate<void(const string &)> output)
 	{
 		output(info.message);
 	}
 
-	void logFormatPolicyFileShort(const detail::loggerInfo &info, delegate<void(const string &)> output)
+	void logFormatFileShort(const detail::loggerInfo &info, delegate<void(const string &)> output)
 	{
-		logFormatPolicyFileImpl(info, output, false);
+		logFormatFileImpl(info, output, false);
 	}
 
-	void logFormatPolicyFileLong(const detail::loggerInfo &info, delegate<void(const string &)> output)
+	void logFormatFileLong(const detail::loggerInfo &info, delegate<void(const string &)> output)
 	{
-		logFormatPolicyFileImpl(info, output, true);
+		logFormatFileImpl(info, output, true);
 	}
 
-	void logOutputPolicyDebug(const string &message)
+	void logOutputDebug(const string &message)
 	{
 		detail::debugOutput(message.c_str());
 	}
 
-	void logOutputPolicyStdOut(const string &message)
+	void logOutputStdOut(const string &message)
 	{
 		fprintf(stdout, "%s\n", message.c_str());
 		fflush(stdout);
 	}
 
-	void logOutputPolicyStdErr(const string &message)
+	void logOutputStdErr(const string &message)
 	{
 		fprintf(stderr, "%s\n", message.c_str());
 		fflush(stderr);
 	}
 
-	void logOutputPolicyFileClass::output(const string &message)
+	void logOutputFile::output(const string &message)
 	{
-		fileOutputPolicyImpl *impl = (fileOutputPolicyImpl*)this;
+		fileOutputImpl *impl = (fileOutputImpl*)this;
 		impl->f->writeLine(message);
 		impl->f->flush();
 	}
 
-	holder<logOutputPolicyFileClass> newLogOutputPolicyFile(const string &path, bool append)
+	holder<logOutputFile> newLogOutputFile(const string &path, bool append)
 	{
-		return detail::systemArena().createImpl<logOutputPolicyFileClass, fileOutputPolicyImpl>(path, append);
+		return detail::systemArena().createImpl<logOutputFile, fileOutputImpl>(path, append);
 	}
 
 	uint64 getApplicationTime()

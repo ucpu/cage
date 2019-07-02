@@ -3,7 +3,7 @@
 
 namespace cage
 {
-	class CAGE_API programClass : private immovable
+	class CAGE_API program : private immovable
 	{
 	public:
 		string getCmdString() const;
@@ -18,8 +18,8 @@ namespace cage
 		int wait();
 	};
 
-	CAGE_API holder<programClass> newProgram(const string &cmd);
-	CAGE_API holder<programClass> newProgram(const string &cmd, const string &workingDirectory);
+	CAGE_API holder<program> newProgram(const string &cmd);
+	CAGE_API holder<program> newProgram(const string &cmd, const string &workingDirectory);
 }
 
 #endif // guard_program_h_f16ac3b2_6520_4503_a6ad_f4a582216f67_

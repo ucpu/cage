@@ -253,25 +253,25 @@ namespace cage
 	// forward declarations
 
 	enum class assetStateEnum : uint32;
-	class assetManagerClass;
+	class assetManager;
 	struct assetManagerCreateConfig;
-	struct assetContextStruct;
-	struct assetSchemeStruct;
-	struct assetHeaderStruct;
-	class colliderClass;
-	struct collisionPairStruct;
-	class collisionQueryClass;
-	class collisionDataClass;
+	struct assetContext;
+	struct assetScheme;
+	struct assetHeader;
+	class collisionMesh;
+	struct collisionPair;
+	class collisionQuery;
+	class collisionData;
 	struct collisionDataCreateConfig;
-	class mutexClass;
-	class barrierClass;
-	class semaphoreClass;
-	class conditionalBaseClass;
-	class conditionalClass;
-	class threadClass;
+	class syncMutex;
+	class syncBarrier;
+	class syncSemaphore;
+	class syncConditionalBase;
+	class syncConditional;
+	class thread;
 	struct concurrentQueueCreateConfig;
 	template<class T>
-	class concurrentQueueClass;
+	class concurrentQueue;
 	enum class configTypeEnum : uint32;
 	struct configBool;
 	struct configSint32;
@@ -281,25 +281,26 @@ namespace cage
 	struct configFloat;
 	struct configDouble;
 	struct configString;
-	class configListClass;
+	class configList;
+	class configIni;
 	namespace detail
 	{
 		template<uint32 N>
 		struct stringBase;
 	}
 	typedef detail::stringBase<1000> string;
-	struct componentCreateConfig;
-	class entityManagerClass;
+	struct entityComponentCreateConfig;
+	class entityManager;
 	struct entityManagerCreateConfig;
-	class entityClass;
-	class componentClass;
-	class groupClass;
+	class entity;
+	class entityComponent;
+	class entityGroup;
 	struct fileMode;
-	class fileClass;
+	class file;
 	enum class pathTypeFlags : uint32;
-	class changeWatcherClass;
-	class directoryListClass;
-	class filesystemClass;
+	class filesystemWatcher;
+	class directoryList;
+	class filesystem;
 	struct line;
 	struct triangle;
 	struct plane;
@@ -311,14 +312,13 @@ namespace cage
 	template<class T>
 	struct hashTableIt;
 	template<class T>
-	class hashTableClass;
+	class hashTable;
 	template<uint32 N>
-	struct identifierStruct;
-	class imageClass;
-	class iniClass;
-	class lineReaderClass;
-	class loggerClass;
-	class logOutputPolicyFileClass;
+	struct identifier;
+	class image;
+	class lineReader;
+	class logger;
+	class logOutputFile;
 	struct real;
 	struct rads;
 	struct degs;
@@ -332,30 +332,30 @@ namespace cage
 	template<class T>
 	struct memoryArenaStd;
 	struct memoryBuffer;
-	class tcpConnectionClass;
-	class tcpServerClass;
-	struct udpConnectionStatisticsStruct;
-	class udpConnectionClass;
-	class udpServerClass;
-	struct discoveryPeerStruct;
-	class discoveryClientClass;
-	class discoveryServerClass;
-	class noiseClass;
-	struct noiseCreateConfig;
-	class programClass;
+	class tcpConnection;
+	class tcpServer;
+	struct udpConnectionStatistics;
+	class udpConnection;
+	class udpServer;
+	struct discoveryPeer;
+	class discoveryClient;
+	class discoveryServer;
+	class noiseFunction;
+	struct noiseFunctionCreateConfig;
+	class program;
 	struct randomGenerator;
 	template<class T>
 	struct scopeLock;
 	struct serializer;
 	struct deserializer;
-	class spatialQueryClass;
-	class spatialDataClass;
+	class spatialQuery;
+	class spatialData;
 	struct spatialDataCreateConfig;
 	class bufferIStream;
 	class bufferOStream;
-	class swapBufferGuardClass;
+	class swapBufferGuard;
 	struct swapBufferGuardCreateConfig;
-	class textPackClass;
-	class threadPoolClass;
-	class timerClass;
+	class textPack;
+	class threadPool;
+	class timer;
 }

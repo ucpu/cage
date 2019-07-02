@@ -4,7 +4,7 @@
 
 void senderThread()
 {
-	holder<tcpConnectionClass> sender = newTcpConnection("localhost", 4241);
+	holder<tcpConnection> sender = newTcpConnection("localhost", 4241);
 	sender->writeLine("ahoj");
 	sender->writeLine("nazdar");
 	sender->writeLine("cau");
@@ -14,9 +14,9 @@ void testTcp()
 {
 	CAGE_TESTCASE("tcp");
 
-	holder<tcpServerClass> server = newTcpServer(4241);
-	holder<threadClass> thr = newThread(delegate<void()>().bind<&senderThread>(), "tcp test sender");
-	holder<tcpConnectionClass> receiver;
+	holder<tcpServer> server = newTcpServer(4241);
+	holder<thread> thr = newThread(delegate<void()>().bind<&senderThread>(), "tcp test sender");
+	holder<tcpConnection> receiver;
 	while (!receiver)
 	{
 		threadSleep(1000);

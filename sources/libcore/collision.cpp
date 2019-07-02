@@ -8,7 +8,7 @@
 #include <cage-core/memory.h>
 #include <cage-core/hashTable.h>
 #include <cage-core/collision.h>
-#include <cage-core/collider.h>
+#include <cage-core/collisionMesh.h>
 #include <cage-core/spatial.h>
 
 namespace cage
@@ -17,19 +17,19 @@ namespace cage
 	{
 		struct itemStruct : public transform
 		{
-			const colliderClass *collider;
+			const collisionMesh *collider;
 
-			itemStruct(const colliderClass *collider, const transform &t) : transform(t), collider(collider) {}
+			itemStruct(const collisionMesh *collider, const transform &t) : transform(t), collider(collider) {}
 		};
 
-		class collisionDataImpl : public collisionDataClass
+		class collisionDataImpl : public collisionData
 		{
 		public:
 			memoryArenaGrowing<memoryAllocatorPolicyPool<sizeof(itemStruct)>, memoryConcurrentPolicyNone> pool;
 			memoryArena arena;
-			typedef holder<cage::hashTableClass<itemStruct>> itemsMapType;
+			typedef holder<cage::hashTable<itemStruct>> itemsMapType;
 			itemsMapType allItems;
-			holder<spatialDataClass> spatial;
+			holder<spatialData> spatial;
 			const uint32 maxCollisionPairs;
 
 			static spatialDataCreateConfig spatialConfig(const collisionDataCreateConfig &config)
@@ -52,23 +52,23 @@ namespace cage
 			}
 		};
 
-		class collisionQueryImpl : public collisionQueryClass
+		class collisionQueryImpl : public collisionQuery
 		{
 		public:
 			const collisionDataImpl *const data;
-			holder<spatialQueryClass> spatial;
+			holder<spatialQuery> spatial;
 			uint32 resultName;
 			real resultFractionBefore;
 			real resultFractionContact;
-			std::vector<collisionPairStruct> resultPairs;
-			std::vector<collisionPairStruct> tmpPairs;
+			std::vector<collisionPair> resultPairs;
+			std::vector<collisionPair> tmpPairs;
 
 			collisionQueryImpl(const collisionDataImpl *data) : data(data), resultName(0)
 			{
 				spatial = newSpatialQuery(data->spatial.get());
 			}
 
-			void query(const colliderClass *collider, const transform &t1, const transform &t2)
+			void query(const collisionMesh *collider, const transform &t1, const transform &t2)
 			{
 				resultName = 0;
 				resultFractionBefore = resultFractionContact = real::Nan();
@@ -141,43 +141,43 @@ namespace cage
 		}
 	}
 
-	uint32 collisionQueryClass::name() const
+	uint32 collisionQuery::name() const
 	{
 		collisionQueryImpl *impl = (collisionQueryImpl*)this;
 		return impl->resultName;
 	}
 
-	real collisionQueryClass::fractionBefore() const
+	real collisionQuery::fractionBefore() const
 	{
 		collisionQueryImpl *impl = (collisionQueryImpl*)this;
 		return impl->resultFractionBefore;
 	}
 
-	real collisionQueryClass::fractionContact() const
+	real collisionQuery::fractionContact() const
 	{
 		collisionQueryImpl *impl = (collisionQueryImpl*)this;
 		return impl->resultFractionContact;
 	}
 
-	uint32 collisionQueryClass::collisionPairsCount() const
+	uint32 collisionQuery::collisionPairsCount() const
 	{
 		collisionQueryImpl *impl = (collisionQueryImpl*)this;
 		return numeric_cast<uint32>(impl->resultPairs.size());
 	}
 
-	const collisionPairStruct *collisionQueryClass::collisionPairsData() const
+	const collisionPair *collisionQuery::collisionPairsData() const
 	{
 		collisionQueryImpl *impl = (collisionQueryImpl*)this;
 		return impl->resultPairs.data();
 	}
 
-	pointerRange<const collisionPairStruct> collisionQueryClass::collisionPairs() const
+	pointerRange<const collisionPair> collisionQuery::collisionPairs() const
 	{
 		collisionQueryImpl *impl = (collisionQueryImpl*)this;
 		return impl->resultPairs;
 	}
 
-	void collisionQueryClass::collider(const colliderClass *&c, transform &t) const
+	void collisionQuery::collider(const collisionMesh *&c, transform &t) const
 	{
 		collisionQueryImpl *impl = (collisionQueryImpl*)this;
 		CAGE_ASSERT_RUNTIME(impl->resultName);
@@ -186,48 +186,48 @@ namespace cage
 		t = *r;
 	}
 
-	void collisionQueryClass::query(const colliderClass *collider, const transform &t)
+	void collisionQuery::query(const collisionMesh *collider, const transform &t)
 	{
 		query(collider, t, t);
 	}
 
-	void collisionQueryClass::query(const colliderClass *collider, const transform &t1, const transform &t2)
+	void collisionQuery::query(const collisionMesh *collider, const transform &t1, const transform &t2)
 	{
 		collisionQueryImpl *impl = (collisionQueryImpl*)this;
 		impl->query(collider, t1, t2);
 	}
 
-	void collisionQueryClass::query(const line &shape)
+	void collisionQuery::query(const line &shape)
 	{
 		collisionQueryImpl *impl = (collisionQueryImpl*)this;
 		impl->query(shape);
 	}
 
-	void collisionQueryClass::query(const triangle &shape)
+	void collisionQuery::query(const triangle &shape)
 	{
 		collisionQueryImpl *impl = (collisionQueryImpl*)this;
 		impl->query(shape);
 	}
 
-	void collisionQueryClass::query(const plane &shape)
+	void collisionQuery::query(const plane &shape)
 	{
 		collisionQueryImpl *impl = (collisionQueryImpl*)this;
 		impl->query(shape);
 	}
 
-	void collisionQueryClass::query(const sphere &shape)
+	void collisionQuery::query(const sphere &shape)
 	{
 		collisionQueryImpl *impl = (collisionQueryImpl*)this;
 		impl->query(shape);
 	}
 
-	void collisionQueryClass::query(const aabb &shape)
+	void collisionQuery::query(const aabb &shape)
 	{
 		collisionQueryImpl *impl = (collisionQueryImpl*)this;
 		impl->query(shape);
 	}
 
-	void collisionDataClass::update(uint32 name, const colliderClass *collider, const transform &t)
+	void collisionData::update(uint32 name, const collisionMesh *collider, const transform &t)
 	{
 		collisionDataImpl *impl = (collisionDataImpl*)this;
 		remove(name);
@@ -236,7 +236,7 @@ namespace cage
 		impl->spatial->update(name, collider->box() * mat4(t));
 	}
 
-	void collisionDataClass::remove(uint32 name)
+	void collisionData::remove(uint32 name)
 	{
 		collisionDataImpl *impl = (collisionDataImpl*)this;
 		impl->spatial->remove(name);
@@ -247,7 +247,7 @@ namespace cage
 		impl->arena.deallocate(item);
 	}
 
-	void collisionDataClass::clear()
+	void collisionData::clear()
 	{
 		collisionDataImpl *impl = (collisionDataImpl*)this;
 		impl->arena.flush();
@@ -255,7 +255,7 @@ namespace cage
 		impl->spatial->clear();
 	}
 
-	void collisionDataClass::rebuild()
+	void collisionData::rebuild()
 	{
 		collisionDataImpl *impl = (collisionDataImpl*)this;
 		impl->spatial->rebuild();
@@ -264,13 +264,13 @@ namespace cage
 	collisionDataCreateConfig::collisionDataCreateConfig() : spatialConfig(nullptr), maxCollisionPairs(100)
 	{}
 
-	holder<collisionDataClass> newCollisionData(const collisionDataCreateConfig &config)
+	holder<collisionData> newCollisionData(const collisionDataCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<collisionDataClass, collisionDataImpl>(config);
+		return detail::systemArena().createImpl<collisionData, collisionDataImpl>(config);
 	}
 
-	holder<collisionQueryClass> newCollisionQuery(const collisionDataClass *data)
+	holder<collisionQuery> newCollisionQuery(const collisionData *data)
 	{
-		return detail::systemArena().createImpl<collisionQueryClass, collisionQueryImpl>((collisionDataImpl*)data);
+		return detail::systemArena().createImpl<collisionQuery, collisionQueryImpl>((collisionDataImpl*)data);
 	}
 }

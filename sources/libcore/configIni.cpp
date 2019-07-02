@@ -6,7 +6,7 @@
 #include <cage-core/log.h>
 #include <cage-core/memory.h>
 #include <cage-core/files.h>
-#include <cage-core/ini.h>
+#include <cage-core/configIni.h>
 #include <cage-core/pointerRangeHolder.h>
 
 namespace cage
@@ -27,7 +27,7 @@ namespace cage
 			containerMap<string> items;
 		};
 
-		class iniImpl : public iniClass
+		class iniImpl : public configIni
 		{
 		public:
 			iniImpl(memoryArena arena) : arena(arena), sections(arena) {}
@@ -36,13 +36,13 @@ namespace cage
 		};
 	}
 
-	uint32 iniClass::sectionsCount() const
+	uint32 configIni::sectionsCount() const
 	{
 		iniImpl *impl = (iniImpl*)this;
 		return numeric_cast<uint32>(impl->sections.cont.size());
 	}
 
-	string iniClass::section(uint32 section) const
+	string configIni::section(uint32 section) const
 	{
 		iniImpl *impl = (iniImpl*)this;
 		auto i = impl->sections.cont.cbegin();
@@ -57,13 +57,13 @@ namespace cage
 		return i->first;
 	}
 
-	bool iniClass::sectionExists(const string &section) const
+	bool configIni::sectionExists(const string &section) const
 	{
 		iniImpl *impl = (iniImpl*)this;
 		return impl->sections.cont.count(section);
 	}
 
-	holder<pointerRange<string>> iniClass::sections() const
+	holder<pointerRange<string>> configIni::sections() const
 	{
 		iniImpl *impl = (iniImpl*)this;
 		pointerRangeHolder<string> tmp;
@@ -73,13 +73,13 @@ namespace cage
 		return tmp;
 	}
 
-	void iniClass::sectionRemove(const string &section)
+	void configIni::sectionRemove(const string &section)
 	{
 		iniImpl *impl = (iniImpl*)this;
 		impl->sections.cont.erase(section);
 	}
 
-	uint32 iniClass::itemsCount(const string &section) const
+	uint32 configIni::itemsCount(const string &section) const
 	{
 		if (!sectionExists(section))
 			return 0;
@@ -87,7 +87,7 @@ namespace cage
 		return numeric_cast<uint32>(impl->sections.cont[section]->items.cont.size());
 	}
 
-	string iniClass::item(const string &section, uint32 item) const
+	string configIni::item(const string &section, uint32 item) const
 	{
 		if (!sectionExists(section))
 			return "";
@@ -104,7 +104,7 @@ namespace cage
 		return i->first;
 	}
 
-	bool iniClass::itemExists(const string &section, const string &item) const
+	bool configIni::itemExists(const string &section, const string &item) const
 	{
 		if (!sectionExists(section))
 			return false;
@@ -112,7 +112,7 @@ namespace cage
 		return impl->sections.cont[section]->items.cont.count(item);
 	}
 
-	holder<pointerRange<string>> iniClass::items(const string &section) const
+	holder<pointerRange<string>> configIni::items(const string &section) const
 	{
 		iniImpl *impl = (iniImpl*)this;
 		pointerRangeHolder<string> tmp;
@@ -125,7 +125,7 @@ namespace cage
 		return tmp;
 	}
 
-	holder<pointerRange<string>> iniClass::values(const string &section) const
+	holder<pointerRange<string>> configIni::values(const string &section) const
 	{
 		iniImpl *impl = (iniImpl*)this;
 		pointerRangeHolder<string> tmp;
@@ -138,14 +138,14 @@ namespace cage
 		return tmp;
 	}
 
-	void iniClass::itemRemove(const string &section, const string &item)
+	void configIni::itemRemove(const string &section, const string &item)
 	{
 		iniImpl *impl = (iniImpl*)this;
 		if (sectionExists(section))
 			impl->sections.cont[section]->items.cont.erase(item);
 	}
 
-	string iniClass::get(const string &section, const string &item) const
+	string configIni::get(const string &section, const string &item) const
 	{
 		if (!itemExists(section, item))
 			return "";
@@ -162,7 +162,7 @@ namespace cage
 		}
 	}
 
-	void iniClass::set(const string &section, const string &item, const string &value)
+	void configIni::set(const string &section, const string &item, const string &value)
 	{
 		validateString(section);
 		validateString(item);
@@ -174,13 +174,13 @@ namespace cage
 		impl->sections.cont[section]->items.cont[item] = value;
 	}
 
-	void iniClass::clear()
+	void configIni::clear()
 	{
 		iniImpl *impl = (iniImpl*)this;
 		impl->sections.cont.clear();
 	}
 
-	void iniClass::merge(const iniClass *source)
+	void configIni::merge(const configIni *source)
 	{
 		for (string s : source->sections())
 		{
@@ -191,7 +191,7 @@ namespace cage
 
 	namespace
 	{
-		void checkCmdOption(iniClass *ini, string &prev, const string &current)
+		void checkCmdOption(configIni *ini, string &prev, const string &current)
 		{
 			if (prev != "--")
 			{
@@ -204,7 +204,7 @@ namespace cage
 		}
 	}
 
-	void iniClass::parseCmd(uint32 argc, const char *const args[])
+	void configIni::parseCmd(uint32 argc, const char *const args[])
 	{
 		clear();
 		try
@@ -256,9 +256,9 @@ namespace cage
 		}
 	}
 
-	void iniClass::load(const string &filename)
+	void configIni::load(const string &filename)
 	{
-		holder<fileClass> file = newFile(filename, fileMode(true, false));
+		holder<file> file = newFile(filename, fileMode(true, false));
 		clear();
 		try
 		{
@@ -310,12 +310,12 @@ namespace cage
 		}
 	}
 
-	void iniClass::save(const string &filename) const
+	void configIni::save(const string &filename) const
 	{
 		iniImpl *impl = (iniImpl*)this;
 		fileMode fm(false, true);
 		fm.textual = true;
-		holder<fileClass> file = newFile(filename, fm);
+		holder<file> file = newFile(filename, fm);
 		for (const auto &i : impl->sections.cont)
 		{
 			file->writeLine(string() + "[" + i.first + "]");
@@ -324,13 +324,13 @@ namespace cage
 		}
 	}
 
-	holder<iniClass> newIni(memoryArena arena)
+	holder<configIni> newConfigIni(memoryArena arena)
 	{
-		return detail::systemArena().createImpl<iniClass, iniImpl>(arena);
+		return detail::systemArena().createImpl<configIni, iniImpl>(arena);
 	}
 
-	holder<iniClass> newIni()
+	holder<configIni> newConfigIni()
 	{
-		return detail::systemArena().createImpl<iniClass, iniImpl>(detail::systemArena());
+		return detail::systemArena().createImpl<configIni, iniImpl>(detail::systemArena());
 	}
 }

@@ -35,7 +35,7 @@ namespace cage
 			case Z_MEM_ERROR: // some allocation failed
 				CAGE_THROW_ERROR(exception, "compression failed with allocation error");
 			case Z_BUF_ERROR: // output buffer was too small
-				CAGE_THROW_ERROR(outOfMemoryException, "output buffer for compression is too small", 0);
+				CAGE_THROW_ERROR(outOfMemory, "output buffer for compression is too small", 0);
 			case Z_STREAM_ERROR:
 				CAGE_THROW_CRITICAL(exception, "invalid compression level");
 			default:
@@ -54,7 +54,7 @@ namespace cage
 			case Z_MEM_ERROR: // some allocation failed
 				CAGE_THROW_ERROR(exception, "decompression failed with allocation error");
 			case Z_BUF_ERROR: // output buffer was too small
-				CAGE_THROW_ERROR(outOfMemoryException, "output buffer for decompression is too small", 0);
+				CAGE_THROW_ERROR(outOfMemory, "output buffer for decompression is too small", 0);
 			case Z_DATA_ERROR:
 				CAGE_THROW_ERROR(exception, "input buffer for decompression is corrupted");
 			default:
@@ -105,7 +105,7 @@ namespace cage
 				{
 					void *tmp = malloca(size, alignment);
 					if (!tmp)
-						CAGE_THROW_ERROR(outOfMemoryException, "out of memory", size);
+						CAGE_THROW_ERROR(outOfMemory, "out of memory", size);
 					allocations++;
 					return tmp;
 				}

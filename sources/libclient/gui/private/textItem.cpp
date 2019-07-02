@@ -27,11 +27,11 @@ namespace cage
 	{}
 
 	// this is also used in engine
-	string loadInternationalizedText(assetManagerClass *assets, uint32 asset, uint32 text, string params)
+	string loadInternationalizedText(assetManager *assets, uint32 asset, uint32 text, string params)
 	{
 		if (asset == 0 || text == 0)
 			return params;
-		auto a = assets->tryGet<assetSchemeIndexTextPackage, textPackClass>(asset);
+		auto a = assets->tryGet<assetSchemeIndexTextPackage, textPack>(asset);
 		if (a)
 		{
 			std::vector<string> ps;
@@ -48,9 +48,9 @@ namespace cage
 		if (skipInitialize)
 			return;
 		auto *impl = hierarchy->impl;
-		if (GUI_HAS_COMPONENT(textFormat, hierarchy->entity))
+		if (GUI_HAS_COMPONENT(textFormat, hierarchy->ent))
 		{
-			GUI_GET_COMPONENT(textFormat, f, hierarchy->entity);
+			GUI_GET_COMPONENT(textFormat, f, hierarchy->ent);
 			text.apply(f, impl);
 		}
 		transcript();
@@ -61,7 +61,7 @@ namespace cage
 		auto *impl = hierarchy->impl;
 		string value;
 		{
-			GUI_GET_COMPONENT(text, t, hierarchy->entity);
+			GUI_GET_COMPONENT(text, t, hierarchy->ent);
 			value = loadInternationalizedText(impl->assetManager, t.assetName, t.textName, t.value);
 		}
 		transcript(value);

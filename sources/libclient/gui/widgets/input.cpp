@@ -265,7 +265,7 @@ namespace cage
 				{
 					// do nothing
 				}
-				hierarchy->impl->widgetEvent.dispatch(hierarchy->entity->name());
+				hierarchy->impl->widgetEvent.dispatch(hierarchy->ent->name());
 			}
 
 			void gainFocus()
@@ -338,7 +338,7 @@ namespace cage
 					utf32.erase(utf32.begin() + cursor);
 					data.value = convert32to8(utf32.data(), numeric_cast<uint32>(utf32.size()));
 					validate();
-					hierarchy->impl->widgetEvent.dispatch(hierarchy->entity->name());
+					hierarchy->impl->widgetEvent.dispatch(hierarchy->ent->name());
 				} break;
 				case 261: // delete
 				{
@@ -347,7 +347,7 @@ namespace cage
 					utf32.erase(utf32.begin() + cursor);
 					data.value = convert32to8(utf32.data(), numeric_cast<uint32>(utf32.size()));
 					validate();
-					hierarchy->impl->widgetEvent.dispatch(hierarchy->entity->name());
+					hierarchy->impl->widgetEvent.dispatch(hierarchy->ent->name());
 				} break;
 				}
 				return true;
@@ -369,7 +369,7 @@ namespace cage
 				data.value = convert32to8(utf32.data(), numeric_cast<uint32>(utf32.size()));
 				cursor++;
 				validate();
-				hierarchy->impl->widgetEvent.dispatch(hierarchy->entity->name());
+				hierarchy->impl->widgetEvent.dispatch(hierarchy->ent->name());
 				return true;
 			}
 		};

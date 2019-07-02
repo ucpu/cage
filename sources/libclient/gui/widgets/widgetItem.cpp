@@ -37,16 +37,16 @@ namespace cage
 
 	bool widgetItemStruct::hasFocus(uint32 parts) const
 	{
-		CAGE_ASSERT_RUNTIME(hierarchy->entity);
-		return hierarchy->impl->focusName && hierarchy->impl->focusName == hierarchy->entity->name() && (hierarchy->impl->focusParts & parts) > 0;
+		CAGE_ASSERT_RUNTIME(hierarchy->ent);
+		return hierarchy->impl->focusName && hierarchy->impl->focusName == hierarchy->ent->name() && (hierarchy->impl->focusParts & parts) > 0;
 	}
 
 	void widgetItemStruct::makeFocused(uint32 parts)
 	{
 		CAGE_ASSERT_RUNTIME(parts != 0);
-		CAGE_ASSERT_RUNTIME(hierarchy->entity);
+		CAGE_ASSERT_RUNTIME(hierarchy->ent);
 		CAGE_ASSERT_RUNTIME(!widgetState.disabled);
-		hierarchy->impl->focusName = hierarchy->entity->name();
+		hierarchy->impl->focusName = hierarchy->ent->name();
 		hierarchy->impl->focusParts = parts;
 	}
 

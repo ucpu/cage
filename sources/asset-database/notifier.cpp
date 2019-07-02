@@ -16,13 +16,13 @@ namespace
 		notifierClass(const uint16 port)
 		{
 			server = newTcpServer(port);
-			mut = newMutex();
+			mut = newSyncMutex();
 		}
 
 		void accept()
 		{
-			scopeLock<mutexClass> lck(mut);
-			holder<tcpConnectionClass> tmp = server->accept();
+			scopeLock<syncMutex> lck(mut);
+			holder<tcpConnection> tmp = server->accept();
 			if (tmp)
 				connections.push_back(templates::move(tmp));
 		}
@@ -30,8 +30,8 @@ namespace
 		void notify(const string &str)
 		{
 			detail::overrideBreakpoint overrideBreakpoint;
-			scopeLock<mutexClass> lck(mut);
-			std::list<holder<tcpConnectionClass>>::iterator it = connections.begin();
+			scopeLock<syncMutex> lck(mut);
+			std::list<holder<tcpConnection>>::iterator it = connections.begin();
 			while (it != connections.end())
 			{
 				try
@@ -47,9 +47,9 @@ namespace
 		}
 
 	private:
-		holder<tcpServerClass> server;
-		std::list<holder<tcpConnectionClass>> connections;
-		holder<mutexClass> mut;
+		holder<tcpServer> server;
+		std::list<holder<tcpConnection>> connections;
+		holder<syncMutex> mut;
 	};
 
 	holder<notifierClass> notifierInstance;

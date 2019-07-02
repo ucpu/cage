@@ -31,7 +31,7 @@
 namespace cage
 {
 	// implemented in gui
-	string loadInternationalizedText(assetManagerClass *assets, uint32 asset, uint32 text, string params);
+	string loadInternationalizedText(assetManager *assets, uint32 asset, uint32 text, string params);
 
 	namespace
 	{
@@ -141,7 +141,7 @@ namespace cage
 			emitStruct emitBufferA, emitBufferB, emitBufferC; // this is awfully stupid, damn you c++
 			emitStruct *emitBuffers[3];
 			emitStruct *emitRead, *emitWrite;
-			holder<swapBufferGuardClass> swapController;
+			holder<swapBufferGuard> swapController;
 
 			mat4 tmpArmature[CAGE_SHADER_MAX_BONES];
 			mat4 tmpArmature2[CAGE_SHADER_MAX_BONES];
@@ -774,7 +774,7 @@ namespace cage
 				dispatchArena.flush();
 			}
 
-			void emitTransform(emitTransformsStruct *c, entityClass *e)
+			void emitTransform(emitTransformsStruct *c, entity *e)
 			{
 				c->transform = e->value<transformComponent>(transformComponent::component);
 				if (e->has(transformComponent::componentHistory))
@@ -801,7 +801,7 @@ namespace cage
 				emitWrite->time = time;
 
 				// emit renderable objects
-				for (entityClass *e : renderComponent::component->entities())
+				for (entity *e : renderComponent::component->entities())
 				{
 					emitRenderObjectStruct *c = emitWrite->emitArena.createObject<emitRenderObjectStruct>();
 					emitTransform(c, e);
@@ -814,7 +814,7 @@ namespace cage
 				}
 
 				// emit renderable texts
-				for (entityClass *e : renderTextComponent::component->entities())
+				for (entity *e : renderTextComponent::component->entities())
 				{
 					emitRenderTextStruct *c = emitWrite->emitArena.createObject<emitRenderTextStruct>();
 					emitTransform(c, e);
@@ -823,7 +823,7 @@ namespace cage
 				}
 
 				// emit lights
-				for (entityClass *e : lightComponent::component->entities())
+				for (entity *e : lightComponent::component->entities())
 				{
 					emitLightStruct *c = emitWrite->emitArena.createObject<emitLightStruct>();
 					emitTransform(c, e);
@@ -836,7 +836,7 @@ namespace cage
 				}
 
 				// emit cameras
-				for (entityClass *e : cameraComponent::component->entities())
+				for (entity *e : cameraComponent::component->entities())
 				{
 					emitCameraStruct *c = emitWrite->emitArena.createObject<emitCameraStruct>();
 					emitTransform(c, e);
@@ -858,7 +858,7 @@ namespace cage
 					return;
 				}
 
-				assetManagerClass *ass = assets();
+				assetManager *ass = assets();
 				if (!ass->ready(hashString("cage/cage.pack")))
 					return;
 
@@ -980,7 +980,7 @@ namespace cage
 
 	objectsStruct::objectsStruct(meshClass *mesh, uint32 max) : shaderMeshes(nullptr), shaderArmatures(nullptr), mesh(mesh), next(nullptr), count(0), max(max)
 	{
-		assetManagerClass *ass = assets();
+		assetManager *ass = assets();
 		shaderMeshes = (shaderMeshStruct*)graphicsPrepare->dispatchArena.allocate(sizeof(shaderMeshStruct) * max, sizeof(uintPtr));
 		if (mesh->getSkeletonBones())
 		{

@@ -11,7 +11,7 @@ namespace
 	{
 	public:
 		static const uint32 elementsCount = 100;
-		holder<swapBufferGuardClass> controller;
+		holder<swapBufferGuard> controller;
 		uint32 buffers[BuffersCount][elementsCount];
 		uint32 sums[BuffersCount];
 		uint32 indices[BuffersCount];
@@ -89,8 +89,8 @@ namespace
 			cfg.repeatedReads = repeatedReads;
 			cfg.repeatedWrites = repeatedWrites;
 			controller = newSwapBufferGuard(cfg);
-			holder<threadClass> t1 = newThread(delegate<void()>().bind<swapBufferTester, &swapBufferTester::consumer>(this), "consumer");
-			holder<threadClass> t2 = newThread(delegate<void()>().bind<swapBufferTester, &swapBufferTester::producer>(this), "producer");
+			holder<thread> t1 = newThread(delegate<void()>().bind<swapBufferTester, &swapBufferTester::consumer>(this), "consumer");
+			holder<thread> t2 = newThread(delegate<void()>().bind<swapBufferTester, &swapBufferTester::producer>(this), "producer");
 			while (read < 2000)
 				threadSleep(1000);
 			running = false;

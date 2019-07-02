@@ -3,7 +3,7 @@
 
 namespace cage
 {
-	class CAGE_API threadPoolClass : private immovable
+	class CAGE_API threadPool : private immovable
 	{
 	public:
 		// thread index, threads count
@@ -14,7 +14,7 @@ namespace cage
 
 	// threadsCount == 0 -> run in calling thread
 	// threadsCount == m -> as many threads as there is processors
-	CAGE_API holder<threadPoolClass> newThreadPool(const string &threadNames = "worker_", uint32 threadsCount = m);
+	CAGE_API holder<threadPool> newThreadPool(const string &threadNames = "worker_", uint32 threadsCount = m);
 }
 
 #endif // guard_threadPool_h_85C3A6DCAB82493AB056948639D0AC0A

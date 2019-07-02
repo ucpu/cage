@@ -26,9 +26,9 @@ namespace cage
 
 	struct CAGE_API layoutsComponentsStruct
 	{
-#define GCHL_GENERATE(T) componentClass *T;
+#define GCHL_GENERATE(T) entityComponent *T;
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_LAYOUT_COMPONENTS));
 #undef GCHL_GENERATE
-		layoutsComponentsStruct(entityManagerClass *ents);
+		layoutsComponentsStruct(entityManager *ents);
 	};
 }

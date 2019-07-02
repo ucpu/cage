@@ -11,11 +11,11 @@ namespace cage
 		Unknown,
 	};
 
-	class CAGE_API assetManagerClass : private immovable
+	class CAGE_API assetManager : private immovable
 	{
 	public:
 		template<class T>
-		void defineScheme(uint32 index, const assetSchemeStruct &value)
+		void defineScheme(uint32 index, const assetScheme &value)
 		{
 			zScheme(index, value, sizeof(T));
 		}
@@ -92,14 +92,14 @@ namespace cage
 		eventDispatcher<bool(uint32, string&)> findAssetPath; // this event is called from the loading thread
 
 	private:
-		void zScheme(uint32 index, const assetSchemeStruct &value, uintPtr typeSize);
+		void zScheme(uint32 index, const assetScheme &value, uintPtr typeSize);
 		uintPtr zGetTypeSize(uint32 scheme) const;
 		void *zGet(uint32 assetName) const;
 		void zSet(uint32 assetName, void *value);
 	};
 
 	template<>
-	inline void assetManagerClass::defineScheme<void>(uint32 index, const assetSchemeStruct &value)
+	inline void assetManager::defineScheme<void>(uint32 index, const assetScheme &value)
 	{
 		zScheme(index, value, m);
 	}
@@ -112,12 +112,12 @@ namespace cage
 		assetManagerCreateConfig();
 	};
 
-	CAGE_API holder<assetManagerClass> newAssetManager(const assetManagerCreateConfig &config);
+	CAGE_API holder<assetManager> newAssetManager(const assetManagerCreateConfig &config);
 
-	CAGE_API assetSchemeStruct genAssetSchemePack(const uint32 threadIndex);
+	CAGE_API assetScheme genAssetSchemePack(const uint32 threadIndex);
 	static const uint32 assetSchemeIndexPack = 0;
 
-	CAGE_API assetSchemeStruct genAssetSchemeRaw(const uint32 threadIndex);
+	CAGE_API assetScheme genAssetSchemeRaw(const uint32 threadIndex);
 	static const uint32 assetSchemeIndexRaw = 1;
 }
 

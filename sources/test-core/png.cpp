@@ -2,11 +2,11 @@
 #include <cage-core/math.h>
 #include <cage-core/image.h>
 #include <cage-core/color.h>
-#include <cage-core/noise.h>
+#include <cage-core/noiseFunction.h>
 
 namespace
 {
-	void drawCircle(imageClass *png)
+	void drawCircle(image *png)
 	{
 		uint32 w = png->width(), h = png->height();
 		vec2 center = vec2(w, h) * 0.5;
@@ -32,7 +32,7 @@ void testPng()
 
 	{
 		CAGE_TESTCASE("circle 8bit");
-		holder<imageClass> png = newImage();
+		holder<image> png = newImage();
 		png->empty(400, 300, 3);
 		drawCircle(png.get());
 		png->encodeFile("images/circle1.png");
@@ -49,7 +49,7 @@ void testPng()
 
 	{
 		CAGE_TESTCASE("circle 16bit");
-		holder<imageClass> png = newImage();
+		holder<image> png = newImage();
 		png->empty(400, 300, 3, 2);
 		drawCircle(png.get());
 		png->encodeFile("images/circle2.png");

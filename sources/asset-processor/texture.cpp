@@ -509,7 +509,7 @@ namespace
 		data.stride = data.dimX * data.dimY * data.bpp;
 		data.animationDuration = properties("animation_duration").toUint32();
 
-		assetHeaderStruct h = initializeAssetHeaderStruct();
+		assetHeader h = initializeAssetHeaderStruct();
 		h.originalSize = sizeof(data);
 		for (const auto &it : images)
 			h.originalSize += it.data.size();
@@ -525,7 +525,7 @@ namespace
 		h.compressedSize = outputBuffer.size();
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "final size: " + h.originalSize + ", compressed size: " + h.compressedSize + ", ratio: " + h.compressedSize / (float)h.originalSize);
 
-		holder<fileClass> f = newFile(outputFileName, fileMode(false, true));
+		holder<file> f = newFile(outputFileName, fileMode(false, true));
 		f->write(&h, sizeof(h));
 		f->write(outputBuffer.data(), outputBuffer.size());
 		f->close();
@@ -680,7 +680,7 @@ void processTexture()
 		for (auto &it : images)
 		{
 			string dbgName = pathJoin(configGetString("cage-asset-processor.texture.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + "_" + (index++) + ".png");
-			holder<imageClass> png = newImage();
+			holder<image> png = newImage();
 			png->empty(it.width, it.height, it.bpp);
 			detail::memcpy(png->bufferData(), it.data.data(), png->bufferSize());
 			png->verticalFlip();

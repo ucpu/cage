@@ -62,7 +62,7 @@ namespace cage
 
 	hierarchyItemStruct *subsideItem(hierarchyItemStruct *item)
 	{
-		hierarchyItemStruct *n = item->impl->itemsMemory.createObject<hierarchyItemStruct>(item->impl, item->entity);
+		hierarchyItemStruct *n = item->impl->itemsMemory.createObject<hierarchyItemStruct>(item->impl, item->ent);
 		{
 			hierarchyItemStruct *i = item->firstChild;
 			while (i)
@@ -82,7 +82,7 @@ namespace cage
 
 	void ensureItemHasLayout(hierarchyItemStruct *hierarchy)
 	{
-		if (hierarchy->impl->entityLayoutsCount(hierarchy->entity) == 0)
+		if (hierarchy->impl->entityLayoutsCount(hierarchy->ent) == 0)
 		{
 			subsideItem(hierarchy); // fall back to default layouting
 		}

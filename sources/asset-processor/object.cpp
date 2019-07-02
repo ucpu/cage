@@ -4,7 +4,7 @@
 
 #include "processor.h"
 
-#include <cage-core/ini.h>
+#include <cage-core/configIni.h>
 #include <cage-core/hashString.h>
 
 namespace
@@ -21,7 +21,7 @@ void processObject()
 {
 	writeLine(string("use=") + inputFile);
 
-	holder<iniClass> ini = newIni();
+	holder<configIni> ini = newConfigIni();
 	ini->load(inputFileName);
 
 	std::vector<lodStruct> lods;
@@ -80,14 +80,14 @@ void processObject()
 		o.pixelsSize = ini->getFloat("size", "pixels");
 	}
 
-	assetHeaderStruct h = initializeAssetHeaderStruct();
+	assetHeader h = initializeAssetHeaderStruct();
 	h.dependenciesCount = numeric_cast<uint16>(deps.size());
 	h.originalSize = sizeof(objectHeaderStruct);
 	h.originalSize += numeric_cast<uint32>(lods.size()) * sizeof(uint32);
 	h.originalSize += numeric_cast<uint32>(lods.size() + 1) * sizeof(uint32);
 	h.originalSize += totalMeshes * sizeof(uint32);
 
-	holder<fileClass> f = newFile(outputFileName, fileMode(false, true));
+	holder<file> f = newFile(outputFileName, fileMode(false, true));
 	f->write(&h, sizeof(h));
 	for (uint32 it : deps)
 		f->write(&it, sizeof(uint32));

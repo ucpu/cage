@@ -13,7 +13,7 @@ void testLineReader()
 
 	{
 		CAGE_TESTCASE("line reader from memory");
-		holder<lineReaderClass> lr = newLineReader(data.c_str(), data.length());
+		holder<lineReader> lr = newLineReader(data.c_str(), data.length());
 		string l;
 		CAGE_TEST(lr->readLine(l));
 		CAGE_TEST(l == "abc");
@@ -30,7 +30,7 @@ void testLineReader()
 
 	{
 		CAGE_TESTCASE("line reading from file (binary)");
-		holder<fileClass> lr = newFile("testdir/lineReaderTest", fileMode(true, false));
+		holder<file> lr = newFile("testdir/lineReaderTest", fileMode(true, false));
 		string l;
 		CAGE_TEST(lr->readLine(l));
 		CAGE_TEST(l == "abc");

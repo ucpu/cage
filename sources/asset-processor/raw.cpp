@@ -10,12 +10,12 @@ void processRaw()
 
 	memoryBuffer data;
 	{ // load file
-		holder<fileClass> f = newFile(inputFile, fileMode(true, false));
+		holder<file> f = newFile(inputFile, fileMode(true, false));
 		data.allocate(numeric_cast<uintPtr>(f->size()));
 		f->read(data.data(), data.size());
 	}
 
-	assetHeaderStruct h = initializeAssetHeaderStruct();
+	assetHeader h = initializeAssetHeaderStruct();
 	h.originalSize = numeric_cast<uint32>(data.size());
 
 	CAGE_LOG(severityEnum::Info, logComponentName, string() + "original data size: " + data.size() + " bytes");
@@ -35,7 +35,7 @@ void processRaw()
 	else
 		CAGE_LOG(severityEnum::Info, logComponentName, "data are under compression threshold");
 
-	holder<fileClass> f = newFile(outputFileName, fileMode(false, true));
+	holder<file> f = newFile(outputFileName, fileMode(false, true));
 	f->write(&h, sizeof(h));
 	f->write(data.data(), data.size());
 	f->close();

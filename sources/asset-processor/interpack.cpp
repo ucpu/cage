@@ -1,14 +1,14 @@
 #include <map>
 
 #include "processor.h"
-#include <cage-core/ini.h>
+#include <cage-core/configIni.h>
 #include <cage-core/hashString.h>
 
 void processInterpack()
 {
 	writeLine(string("use=") + inputFile);
 
-	holder<iniClass> ini = newIni();
+	holder<configIni> ini = newConfigIni();
 	ini->load(inputFileName);
 
 	std::map<uint32, std::map<string, string>> assets;
@@ -24,7 +24,7 @@ void processInterpack()
 		}
 	}
 
-	holder<fileClass> f = newFile(outputFileName, fileMode(false, true));
+	holder<file> f = newFile(outputFileName, fileMode(false, true));
 	for (auto sch : assets)
 	{
 		uint32 s = sch.first;
@@ -43,7 +43,7 @@ void processInterpack()
 		string dbgName = pathJoin(configGetString("cage-asset-processor.interpack.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".txt");
 		fileMode fm(false, true);
 		fm.textual = true;
-		holder<fileClass> f = newFile(dbgName, fm);
+		holder<file> f = newFile(dbgName, fm);
 		for (auto sch : assets)
 		{
 			uint32 s = sch.first;

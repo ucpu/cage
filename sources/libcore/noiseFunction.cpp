@@ -1,7 +1,7 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/math.h>
-#include <cage-core/noise.h>
+#include <cage-core/noiseFunction.h>
 
 #include <fastnoise/FastNoise.h>
 
@@ -82,12 +82,12 @@ namespace cage
 			}
 		}
 
-		class noiseImpl : public noiseClass
+		class noiseImpl : public noiseFunction
 		{
 		public:
 			FastNoise n;
 
-			noiseImpl(const noiseCreateConfig &config) : n(config.seed)
+			noiseImpl(const noiseFunctionCreateConfig &config) : n(config.seed)
 			{
 				n.SetCellularDistanceFunction(convert(config.distance));
 				switch (config.operation)
@@ -138,12 +138,12 @@ namespace cage
 
 			void evaluate(uint32 count, const vec4 positions[], real results[])
 			{
-				CAGE_THROW_CRITICAL(notImplementedException, "4D noise functions are not implemented");
+				CAGE_THROW_CRITICAL(notImplemented, "4D noise functions are not implemented");
 			}
 		};
 	}
 
-	real noiseClass::evaluate(real position)
+	real noiseFunction::evaluate(real position)
 	{
 		noiseImpl *impl = (noiseImpl*)this;
 		real result;
@@ -151,7 +151,7 @@ namespace cage
 		return result;
 	}
 
-	real noiseClass::evaluate(vec2 position)
+	real noiseFunction::evaluate(vec2 position)
 	{
 		noiseImpl *impl = (noiseImpl*)this;
 		real result;
@@ -159,7 +159,7 @@ namespace cage
 		return result;
 	}
 
-	real noiseClass::evaluate(vec3 position)
+	real noiseFunction::evaluate(vec3 position)
 	{
 		noiseImpl *impl = (noiseImpl*)this;
 		real result;
@@ -167,7 +167,7 @@ namespace cage
 		return result;
 	}
 
-	real noiseClass::evaluate(vec4 position)
+	real noiseFunction::evaluate(vec4 position)
 	{
 		noiseImpl *impl = (noiseImpl*)this;
 		real result;
@@ -175,35 +175,35 @@ namespace cage
 		return result;
 	}
 
-	void noiseClass::evaluate(uint32 count, const real positions[], real results[])
+	void noiseFunction::evaluate(uint32 count, const real positions[], real results[])
 	{
 		noiseImpl *impl = (noiseImpl*)this;
 		impl->evaluate(count, positions, results);
 	}
 
-	void noiseClass::evaluate(uint32 count, const vec2 positions[], real results[])
+	void noiseFunction::evaluate(uint32 count, const vec2 positions[], real results[])
 	{
 		noiseImpl *impl = (noiseImpl*)this;
 		impl->evaluate(count, positions, results);
 	}
 
-	void noiseClass::evaluate(uint32 count, const vec3 positions[], real results[])
+	void noiseFunction::evaluate(uint32 count, const vec3 positions[], real results[])
 	{
 		noiseImpl *impl = (noiseImpl*)this;
 		impl->evaluate(count, positions, results);
 	}
 
-	void noiseClass::evaluate(uint32 count, const vec4 positions[], real results[])
+	void noiseFunction::evaluate(uint32 count, const vec4 positions[], real results[])
 	{
 		noiseImpl *impl = (noiseImpl*)this;
 		impl->evaluate(count, positions, results);
 	}
 
-	noiseCreateConfig::noiseCreateConfig(uint32 seed) : seed(seed), type(noiseTypeEnum::Simplex), interpolation(noiseInterpolationEnum::Quintic), fractalType(noiseFractalTypeEnum::Fbm), distance(noiseDistanceEnum::Euclidean), operation(noiseOperationEnum::None), octaves(0), lacunarity(2), gain(0.5), frequency(1), index0(0), index1(1)
+	noiseFunctionCreateConfig::noiseFunctionCreateConfig(uint32 seed) : seed(seed), type(noiseTypeEnum::Simplex), interpolation(noiseInterpolationEnum::Quintic), fractalType(noiseFractalTypeEnum::Fbm), distance(noiseDistanceEnum::Euclidean), operation(noiseOperationEnum::None), octaves(0), lacunarity(2), gain(0.5), frequency(1), index0(0), index1(1)
 	{}
 
-	holder<noiseClass> newNoise(const noiseCreateConfig &config)
+	holder<noiseFunction> newNoiseFunction(const noiseFunctionCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<noiseClass, noiseImpl>(config);
+		return detail::systemArena().createImpl<noiseFunction, noiseImpl>(config);
 	}
 }

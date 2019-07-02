@@ -5,7 +5,7 @@
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
-#include <cage-core/collider.h>
+#include <cage-core/collisionMesh.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 
@@ -13,7 +13,7 @@ namespace cage
 {
 	namespace
 	{
-		class collisionObjectImpl : public colliderClass
+		class collisionObjectImpl : public collisionMesh
 		{
 		public:
 			struct nodeStruct
@@ -37,7 +37,7 @@ namespace cage
 
 			collisionObjectImpl() : dirty(true)
 			{
-				((colliderClass*)this)->rebuild();
+				((collisionMesh*)this)->rebuild();
 			}
 
 			void build(std::vector<triangle> &ts, uint32 level)
@@ -177,52 +177,52 @@ namespace cage
 		};
 	}
 
-	uint32 colliderClass::trianglesCount() const
+	uint32 collisionMesh::trianglesCount() const
 	{
 		collisionObjectImpl *impl = (collisionObjectImpl*)this;
 		return numeric_cast<uint32>(impl->tris.size());
 	}
 
-	const triangle *colliderClass::trianglesData() const
+	const triangle *collisionMesh::trianglesData() const
 	{
 		collisionObjectImpl *impl = (collisionObjectImpl*)this;
 		return impl->tris.data();
 	}
 
-	const triangle &colliderClass::triangleData(uint32 idx) const
+	const triangle &collisionMesh::triangleData(uint32 idx) const
 	{
 		collisionObjectImpl *impl = (collisionObjectImpl*)this;
 		return impl->tris[idx];
 	}
 
-	pointerRange<const triangle> colliderClass::triangles() const
+	pointerRange<const triangle> collisionMesh::triangles() const
 	{
 		collisionObjectImpl *impl = (collisionObjectImpl*)this;
 		return impl->tris;
 	}
 
-	void colliderClass::addTriangle(const triangle &t)
+	void collisionMesh::addTriangle(const triangle &t)
 	{
 		collisionObjectImpl *impl = (collisionObjectImpl*)this;
 		impl->tris.push_back(t);
 		impl->dirty = true;
 	}
 
-	void colliderClass::addTriangles(const triangle *data, uint32 count)
+	void collisionMesh::addTriangles(const triangle *data, uint32 count)
 	{
 		collisionObjectImpl *impl = (collisionObjectImpl*)this;
 		impl->tris.insert(impl->tris.end(), data, data + count);
 		impl->dirty = true;
 	}
 
-	void colliderClass::clear()
+	void collisionMesh::clear()
 	{
 		collisionObjectImpl *impl = (collisionObjectImpl*)this;
 		impl->tris.clear();
 		impl->dirty = true;
 	}
 
-	void colliderClass::rebuild()
+	void collisionMesh::rebuild()
 	{
 		collisionObjectImpl *impl = (collisionObjectImpl*)this;
 		if (!impl->dirty)
@@ -231,13 +231,13 @@ namespace cage
 		impl->rebuild();
 	}
 
-	bool colliderClass::needsRebuild() const
+	bool collisionMesh::needsRebuild() const
 	{
 		collisionObjectImpl *impl = (collisionObjectImpl*)this;
 		return impl->dirty;
 	}
 
-	const aabb &colliderClass::box() const
+	const aabb &collisionMesh::box() const
 	{
 		CAGE_ASSERT_RUNTIME(!needsRebuild());
 		collisionObjectImpl *impl = (collisionObjectImpl*)this;
@@ -269,7 +269,7 @@ namespace cage
 		}
 	}
 
-	memoryBuffer colliderClass::serialize(bool includeAdditionalData) const
+	memoryBuffer collisionMesh::serialize(bool includeAdditionalData) const
 	{
 		const collisionObjectImpl *impl = (collisionObjectImpl*)this;
 		collisionObjectHeader header;
@@ -288,7 +288,7 @@ namespace cage
 		return buffer;
 	}
 
-	void colliderClass::deserialize(const memoryBuffer &buffer)
+	void collisionMesh::deserialize(const memoryBuffer &buffer)
 	{
 		collisionObjectImpl *impl = (collisionObjectImpl*)this;
 		deserializer des(buffer);
@@ -304,25 +304,25 @@ namespace cage
 		readVector(des, impl->nodes, header.nodesCount);
 	}
 
-	holder<colliderClass> newCollider()
+	holder<collisionMesh> newCollisionMesh()
 	{
-		return detail::systemArena().createImpl<colliderClass, collisionObjectImpl>();
+		return detail::systemArena().createImpl<collisionMesh, collisionObjectImpl>();
 	}
 
-	holder<colliderClass> newCollider(const memoryBuffer &buffer)
+	holder<collisionMesh> newCollisionMesh(const memoryBuffer &buffer)
 	{
-		holder<colliderClass> tmp = newCollider();
+		holder<collisionMesh> tmp = newCollisionMesh();
 		tmp->deserialize(buffer);
 		return tmp;
 	}
 
-	collisionPairStruct::collisionPairStruct() : a(m), b(m)
+	collisionPair::collisionPair() : a(m), b(m)
 	{}
 
-	collisionPairStruct::collisionPairStruct(uint32 a, uint32 b) : a(a), b(b)
+	collisionPair::collisionPair(uint32 a, uint32 b) : a(a), b(b)
 	{}
 
-	bool collisionPairStruct::operator < (const collisionPairStruct &other) const
+	bool collisionPair::operator < (const collisionPair &other) const
 	{
 		if (a == other.a)
 			return b < other.b;
@@ -389,11 +389,11 @@ namespace cage
 
 			const collisionObjectImpl *ao;
 			const collisionObjectImpl *bo;
-			collisionPairStruct *outputBuffer;
+			collisionPair *outputBuffer;
 			uint32 bufferSize;
 			uint32 result;
 
-			collisionDetector(const collisionObjectImpl *ao, const collisionObjectImpl *bo, const transform &am, const transform &bm, collisionPairStruct *outputBuffer, uint32 bufferSize) :
+			collisionDetector(const collisionObjectImpl *ao, const collisionObjectImpl *bo, const transform &am, const transform &bm, collisionPair *outputBuffer, uint32 bufferSize) :
 				ats(ao->tris.data(), numeric_cast<uint32>(ao->tris.size()), am), bts(bo->tris.data(), numeric_cast<uint32>(bo->tris.size()), bm),
 				abs(ao->boxes.data(), numeric_cast<uint32>(ao->boxes.size()), am), bbs(bo->boxes.data(), numeric_cast<uint32>(bo->boxes.size()), bm),
 				ao(ao), bo(bo), outputBuffer(outputBuffer), bufferSize(bufferSize), result(0)
@@ -460,7 +460,7 @@ namespace cage
 			}
 		};
 
-		real timeOfContact(const colliderClass *ao, const colliderClass *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2)
+		real timeOfContact(const collisionMesh *ao, const collisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2)
 		{
 			return 0;
 			/*
@@ -478,7 +478,7 @@ namespace cage
 			*/
 		}
 
-		real minSizeObject(const colliderClass *o, real scale)
+		real minSizeObject(const collisionMesh *o, real scale)
 		{
 			vec3 s = o->box().size() * scale;
 			return min(min(s[0], s[1]), s[2]);
@@ -488,7 +488,7 @@ namespace cage
 		{
 			if (!l.isLine())
 				return distance(l.a(), p);
-			CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+			CAGE_THROW_CRITICAL(notImplemented, "geometry");
 		}
 
 		class intersectionDetector
@@ -621,7 +621,7 @@ namespace cage
 		};
 	}
 
-	uint32 collisionDetection(const colliderClass *ao, const colliderClass *bo, const transform &at, const transform &bt, collisionPairStruct *outputBuffer, uint32 bufferSize)
+	uint32 collisionDetection(const collisionMesh *ao, const collisionMesh *bo, const transform &at, const transform &bt, collisionPair *outputBuffer, uint32 bufferSize)
 	{
 		CAGE_ASSERT_RUNTIME(!ao->needsRebuild());
 		CAGE_ASSERT_RUNTIME(!bo->needsRebuild());
@@ -638,7 +638,7 @@ namespace cage
 		}
 	}
 
-	uint32 collisionDetection(const colliderClass *ao, const colliderClass *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, real &fractionBefore, real &fractionContact, collisionPairStruct *outputBuffer, uint32 bufferSize)
+	uint32 collisionDetection(const collisionMesh *ao, const collisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, real &fractionBefore, real &fractionContact, collisionPair *outputBuffer, uint32 bufferSize)
 	{
 		CAGE_ASSERT_RUNTIME(at1.scale == at2.scale);
 		CAGE_ASSERT_RUNTIME(bt1.scale == bt2.scale);
@@ -705,26 +705,26 @@ namespace cage
 		return res;
 	}
 
-	bool collisionDetection(const colliderClass *ao, const colliderClass *bo, const transform &at, const transform &bt)
+	bool collisionDetection(const collisionMesh *ao, const collisionMesh *bo, const transform &at, const transform &bt)
 	{
-		collisionPairStruct buf;
+		collisionPair buf;
 		return collisionDetection(ao, bo, at, bt, &buf, 1) > 0;
 	}
 
-	bool collisionDetection(const colliderClass *ao, const colliderClass *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2)
+	bool collisionDetection(const collisionMesh *ao, const collisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2)
 	{
 		real fractionBefore, fractionContact;
-		collisionPairStruct buf;
+		collisionPair buf;
 		return collisionDetection(ao, bo, at1, bt1, at2, bt2, fractionBefore, fractionContact, &buf, 1) > 0;
 	}
 
-	bool collisionDetection(const colliderClass *ao, const colliderClass *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, real &fractionBefore, real &fractionContact)
+	bool collisionDetection(const collisionMesh *ao, const collisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, real &fractionBefore, real &fractionContact)
 	{
-		collisionPairStruct buf;
+		collisionPair buf;
 		return collisionDetection(ao, bo, at1, bt1, at2, bt2, fractionBefore, fractionContact, &buf, 1) > 0;
 	}
 
-	uint32 collisionDetection(const colliderClass *ao, const colliderClass *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, collisionPairStruct *outputBuffer, uint32 bufferSize)
+	uint32 collisionDetection(const collisionMesh *ao, const collisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, collisionPair *outputBuffer, uint32 bufferSize)
 	{
 		real fractionBefore, fractionContact;
 		return collisionDetection(ao, bo, at1, bt1, at2, bt2, fractionBefore, fractionContact, outputBuffer, bufferSize);
@@ -732,68 +732,68 @@ namespace cage
 
 
 
-	real distance(const line &shape, const colliderClass *collider, const transform &t)
+	real distance(const line &shape, const collisionMesh *collider, const transform &t)
 	{
 		intersectionDetector d((const collisionObjectImpl*)collider, t);
 		return d.distance(shape);
 	}
 
-	real distance(const triangle &shape, const colliderClass *collider, const transform &t)
+	real distance(const triangle &shape, const collisionMesh *collider, const transform &t)
 	{
 		intersectionDetector d((const collisionObjectImpl*)collider, t);
 		return d.distance(shape);
 	}
 
-	real distance(const plane &shape, const colliderClass *collider, const transform &t)
+	real distance(const plane &shape, const collisionMesh *collider, const transform &t)
 	{
 		intersectionDetector d((const collisionObjectImpl*)collider, t);
 		return d.distance(shape);
 	}
 
-	real distance(const sphere &shape, const colliderClass *collider, const transform &t)
+	real distance(const sphere &shape, const collisionMesh *collider, const transform &t)
 	{
 		intersectionDetector d((const collisionObjectImpl*)collider, t);
 		return d.distance(shape);
 	}
 
-	real distance(const aabb &shape, const colliderClass *collider, const transform &t)
+	real distance(const aabb &shape, const collisionMesh *collider, const transform &t)
 	{
 		intersectionDetector d((const collisionObjectImpl*)collider, t);
 		return d.distance(shape);
 	}
 
-	real distance(const colliderClass *ao, const colliderClass *bo, const transform &at, const transform &bt)
+	real distance(const collisionMesh *ao, const collisionMesh *bo, const transform &at, const transform &bt)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "collider-collider distance");
+		CAGE_THROW_CRITICAL(notImplemented, "collisionMesh-collisionMesh distance");
 	}
 
 
 
-	bool intersects(const line &shape, const colliderClass *collider, const transform &t)
-	{
-		intersectionDetector d((const collisionObjectImpl*)collider, t);
-		return d.intersects(shape);
-	}
-
-	bool intersects(const triangle &shape, const colliderClass *collider, const transform &t)
+	bool intersects(const line &shape, const collisionMesh *collider, const transform &t)
 	{
 		intersectionDetector d((const collisionObjectImpl*)collider, t);
 		return d.intersects(shape);
 	}
 
-	bool intersects(const plane &shape, const colliderClass *collider, const transform &t)
+	bool intersects(const triangle &shape, const collisionMesh *collider, const transform &t)
 	{
 		intersectionDetector d((const collisionObjectImpl*)collider, t);
 		return d.intersects(shape);
 	}
 
-	bool intersects(const sphere &shape, const colliderClass *collider, const transform &t)
+	bool intersects(const plane &shape, const collisionMesh *collider, const transform &t)
 	{
 		intersectionDetector d((const collisionObjectImpl*)collider, t);
 		return d.intersects(shape);
 	}
 
-	bool intersects(const aabb &shape, const colliderClass *collider, const transform &t)
+	bool intersects(const sphere &shape, const collisionMesh *collider, const transform &t)
+	{
+		intersectionDetector d((const collisionObjectImpl*)collider, t);
+		return d.intersects(shape);
+	}
+
+	bool intersects(const aabb &shape, const collisionMesh *collider, const transform &t)
 	{
 		intersectionDetector d((const collisionObjectImpl*)collider, t);
 		return d.intersects(shape);
@@ -801,7 +801,7 @@ namespace cage
 
 
 
-	vec3 intersection(const line &shape, const colliderClass *collider, const transform &t)
+	vec3 intersection(const line &shape, const collisionMesh *collider, const transform &t)
 	{
 		intersectionDetector d((const collisionObjectImpl*)collider, t);
 		return d.intersection(shape);

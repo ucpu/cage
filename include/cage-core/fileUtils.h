@@ -3,16 +3,16 @@
 
 namespace cage
 {
-	class CAGE_API changeWatcherClass : private immovable
+	class CAGE_API filesystemWatcher : private immovable
 	{
 	public:
 		void registerPath(const string &path);
 		string waitForChange(uint64 time = m);
 	};
 
-	CAGE_API holder<changeWatcherClass> newChangeWatcher();
+	CAGE_API holder<filesystemWatcher> newFilesystemWatcher();
 
-	class CAGE_API directoryListClass : private immovable
+	class CAGE_API directoryList : private immovable
 	{
 	public:
 		bool valid() const;
@@ -20,29 +20,29 @@ namespace cage
 		pathTypeFlags type() const;
 		bool isDirectory() const; // directory or archive
 		uint64 lastChange() const;
-		holder<fileClass> openFile(const fileMode &mode);
-		holder<filesystemClass> openDirectory();
-		holder<directoryListClass> directoryList();
+		holder<file> openFile(const fileMode &mode);
+		holder<filesystem> openDirectory();
+		holder<directoryList> listDirectory();
 		void next();
 	};
 
-	CAGE_API holder<directoryListClass> newDirectoryList(const string &path);
+	CAGE_API holder<directoryList> newDirectoryList(const string &path);
 
-	class CAGE_API filesystemClass : private immovable
+	class CAGE_API filesystem : private immovable
 	{
 	public:
 		void changeDir(const string &path);
 		string currentDir() const;
 		pathTypeFlags type(const string &path) const;
 		uint64 lastChange(const string &path) const;
-		holder<fileClass> openFile(const string &path, const fileMode &mode);
-		holder<directoryListClass> directoryList(const string &path);
-		holder<changeWatcherClass> changeWatcher(const string &path);
+		holder<file> openFile(const string &path, const fileMode &mode);
+		holder<directoryList> listDirectory(const string &path);
+		holder<filesystemWatcher> watchFilesystem(const string &path);
 		void move(const string &from, const string &to);
 		void remove(const string &path);
 	};
 
-	CAGE_API holder<filesystemClass> newFilesystem();
+	CAGE_API holder<filesystem> newFilesystem();
 }
 
 #endif // guard_fileutils_h_yesxrt92851637ojnuhg

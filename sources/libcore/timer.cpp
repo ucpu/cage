@@ -16,7 +16,7 @@ namespace cage
 {
 	namespace
 	{
-		class timerImpl : public timerClass
+		class timerImpl : public timer
 		{
 		public:
 			uint64 last; // in micros
@@ -58,7 +58,7 @@ namespace cage
 #endif
 	}
 
-	void timerClass::reset()
+	void timer::reset()
 	{
 		timerImpl *impl = (timerImpl*)this;
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -69,7 +69,7 @@ namespace cage
 		impl->last = 0;
 	}
 
-	uint64 timerClass::microsSinceStart()
+	uint64 timer::microsSinceStart()
 	{
 		timerImpl *impl = (timerImpl*)this;
 
@@ -88,7 +88,7 @@ namespace cage
 #endif
 	}
 
-	uint64 timerClass::microsSinceLast()
+	uint64 timer::microsSinceLast()
 	{
 		timerImpl *impl = (timerImpl*)this;
 		uint64 curr = microsSinceStart();
@@ -97,9 +97,9 @@ namespace cage
 		return res;
 	}
 
-	holder<timerClass> newTimer()
+	holder<timer> newTimer()
 	{
-		return detail::systemArena().createImpl<timerClass, timerImpl>();
+		return detail::systemArena().createImpl<timer, timerImpl>();
 	}
 
 	namespace detail

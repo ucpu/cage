@@ -71,7 +71,7 @@ namespace cage
 	void memoryBuffer::resizeThrow(uintPtr size)
 	{
 		if (size > capacity_)
-			CAGE_THROW_ERROR(outOfMemoryException, "size exceeds reserved buffer", size);
+			CAGE_THROW_ERROR(outOfMemory, "size exceeds reserved buffer", size);
 		size_ = size;
 	}
 

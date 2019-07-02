@@ -1,5 +1,5 @@
 #include "utility/assimp.h"
-#include <cage-core/collider.h>
+#include <cage-core/collisionMesh.h>
 #include <cage-core/memoryBuffer.h>
 
 void processCollider()
@@ -16,7 +16,7 @@ void processCollider()
 
 	CAGE_LOG(severityEnum::Info, logComponentName, string() + "loaded triangles: " + am->mNumFaces);
 
-	holder<colliderClass> collider = newCollider();
+	holder<collisionMesh> collider = newCollisionMesh();
 	mat3 axesScale = axesScaleMatrix();
 	for (uint32 i = 0; i < am->mNumFaces; i++)
 	{
@@ -49,10 +49,10 @@ void processCollider()
 	memoryBuffer comp = detail::compress(buff);
 	CAGE_LOG(severityEnum::Info, logComponentName, string() + "buffer size (after compression): " + comp.size());
 
-	assetHeaderStruct h = initializeAssetHeaderStruct();
+	assetHeader h = initializeAssetHeaderStruct();
 	h.originalSize = numeric_cast<uint32>(buff.size());
 	h.compressedSize = numeric_cast<uint32>(comp.size());
-	holder<fileClass> f = newFile(outputFileName, fileMode(false, true));
+	holder<file> f = newFile(outputFileName, fileMode(false, true));
 	f->write(&h, sizeof(h));
 	f->write(comp.data(), comp.size());
 	f->close();

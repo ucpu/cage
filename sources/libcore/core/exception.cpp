@@ -26,12 +26,12 @@ namespace cage
 		return *this;
 	};
 
-	// notImplementedException
+	// notImplemented
 
-	notImplementedException::notImplementedException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept : exception(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER)
+	notImplemented::notImplemented(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept : exception(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER)
 	{};
 
-	notImplementedException &notImplementedException::log()
+	notImplemented &notImplemented::log()
 	{
 		if (severity < detail::getExceptionSilenceSeverity())
 			return *this;
@@ -39,12 +39,12 @@ namespace cage
 		return *this;
 	};
 
-	// outOfMemoryException
+	// outOfMemory
 
-	outOfMemoryException::outOfMemoryException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uintPtr memory) noexcept : exception(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER), memory(memory)
+	outOfMemory::outOfMemory(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uintPtr memory) noexcept : exception(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER), memory(memory)
 	{};
 
-	outOfMemoryException &outOfMemoryException::log()
+	outOfMemory &outOfMemory::log()
 	{
 		if (severity < detail::getExceptionSilenceSeverity())
 			return *this;

@@ -97,7 +97,7 @@ namespace cage
 			}
 
 			CAGE_LOG(cageSevr, "graphics", "debug message:");
-			holder<lineReaderClass> lrb = newLineReader((char*)message, detail::strlen(message));
+			holder<lineReader> lrb = newLineReader((char*)message, detail::strlen(message));
 			for (string line; lrb->readLine(line);)
 				CAGE_LOG_CONTINUE(cageSevr, "graphics", line);
 			CAGE_LOG_CONTINUE(severityEnum::Note, "graphics", string() + "source: " + src + ", type: " + tp + ", severity: " + sevr + ", id: " + id);
@@ -159,13 +159,13 @@ namespace cage
 
 		struct assertContextStruct
 		{
-			holder<mutexClass> mutex;
+			holder<syncMutex> mutex;
 			std::map<windowClass*, std::map<uint32, uint32>> objects;
 			std::map<uint64, windowClass*> contexts;
 
 			assertContextStruct()
 			{
-				mutex = newMutex();
+				mutex = newSyncMutex();
 			}
 		};
 
@@ -177,7 +177,7 @@ namespace cage
 
 		void setCurrentContext(windowClass *ctx)
 		{
-			scopeLock<mutexClass> lock(assertContext().mutex);
+			scopeLock<syncMutex> lock(assertContext().mutex);
 			if (ctx)
 				assertContext().contexts[threadId()] = ctx;
 			else
@@ -186,7 +186,7 @@ namespace cage
 
 		windowClass *getCurrentContext()
 		{
-			scopeLock<mutexClass> lock(assertContext().mutex);
+			scopeLock<syncMutex> lock(assertContext().mutex);
 			auto it = assertContext().contexts.find(threadId());
 			if (it == assertContext().contexts.end())
 				return nullptr;
@@ -196,7 +196,7 @@ namespace cage
 
 		uint32 contextTypeIndexInitializer()
 		{
-			scopeLock<mutexClass> lock(assertContext().mutex);
+			scopeLock<syncMutex> lock(assertContext().mutex);
 			static uint32 index = 0;
 			return index++;
 		}
@@ -204,14 +204,14 @@ namespace cage
 		void contextSetCurrentObjectType(uint32 typeIndex, uint32 id)
 		{
 			auto cc = getCurrentContext();
-			scopeLock<mutexClass> lock(assertContext().mutex);
+			scopeLock<syncMutex> lock(assertContext().mutex);
 			assertContext().objects[cc][typeIndex] = id;
 		}
 
 		uint32 contextGetCurrentObjectType(uint32 typeIndex)
 		{
 			auto cc = getCurrentContext();
-			scopeLock<mutexClass> lock(assertContext().mutex);
+			scopeLock<syncMutex> lock(assertContext().mutex);
 			std::map<uint32, uint32> &m = assertContext().objects[cc];
 			auto it = m.find(typeIndex);
 			if (it == m.end())

@@ -71,7 +71,7 @@ struct holderSet
 		return numeric_cast<uint32>(data.size());
 	}
 
-	void load(fileClass *file)
+	void load(file *file)
 	{
 		uint32 s = 0;
 		read(file, s);
@@ -83,7 +83,7 @@ struct holderSet
 		}
 	}
 
-	void save(fileClass *file)
+	void save(file *file)
 	{
 		uint32 s = size();
 		write(file, s);

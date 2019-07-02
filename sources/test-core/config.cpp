@@ -4,7 +4,7 @@
 void printVariables()
 {
 	CAGE_TESTCASE("traversing variables:");
-	holder <configListClass> iter = newConfigList();
+	holder <configList> iter = newConfigList();
 	while (iter->valid())
 	{
 		string res = iter->name() + ": " + iter->typeName();

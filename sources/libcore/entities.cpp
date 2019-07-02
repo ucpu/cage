@@ -18,24 +18,24 @@ namespace cage
 		class entityImpl;
 		class groupImpl;
 
-		class groupImpl : public groupClass
+		class groupImpl : public entityGroup
 		{
 		public:
 			entityManagerImpl *const manager;
-			std::vector<entityClass*> entities;
+			std::vector<entity*> entities;
 			const uint32 vectorIndex;
 
 			groupImpl(entityManagerImpl *manager);
 		};
 
-		class entityManagerImpl : public entityManagerClass
+		class entityManagerImpl : public entityManager
 		{
 		public:
 			std::vector<componentImpl*> components;
 			std::vector<groupImpl*> groups;
 			groupImpl allEntities;
 			uint32 generateName;
-			holder<hashTableClass<entityImpl>> namedEntities;
+			holder<hashTable<entityImpl>> namedEntities;
 
 #if defined (CAGE_SYSTEM_WINDOWS)
 #pragma warning (push)
@@ -77,7 +77,7 @@ namespace cage
 			entities.reserve(100);
 		}
 
-		class componentImpl : public componentClass
+		class componentImpl : public entityComponent
 		{
 		public:
 			entityManagerImpl *const manager;
@@ -87,7 +87,7 @@ namespace cage
 			void *prototype;
 			const uint32 vectorIndex;
 
-			componentImpl(entityManagerImpl *manager, uintPtr typeSize, uintPtr typeAlignment, void *prototype, const componentCreateConfig &config) :
+			componentImpl(entityManagerImpl *manager, uintPtr typeSize, uintPtr typeAlignment, void *prototype, const entityComponentCreateConfig &config) :
 				manager(manager), typeSize(typeSize), typeAlignment(typeAlignment), vectorIndex(numeric_cast<uint32>(manager->components.size()))
 			{
 				this->prototype = detail::systemArena().allocate(typeSize, typeAlignment);
@@ -102,12 +102,12 @@ namespace cage
 			}
 		};
 
-		class entityImpl : public entityClass
+		class entityImpl : public entity
 		{
 		public:
 			entityManagerImpl *const manager;
 			const uint32 name;
-			std::set<groupClass*> groups;
+			std::set<entityGroup*> groups;
 			std::vector<void*> components;
 
 			entityImpl(entityManagerImpl *manager, uint32 name) :
@@ -131,33 +131,33 @@ namespace cage
 		};
 	}
 
-	componentClass *entityManagerClass::componentByIndex(uint32 index) const
+	entityComponent *entityManager::componentByIndex(uint32 index) const
 	{
 		entityManagerImpl *impl = (entityManagerImpl *)this;
 		CAGE_ASSERT_RUNTIME(index < impl->components.size());
 		return impl->components[index];
 	}
 
-	groupClass *entityManagerClass::groupByIndex(uint32 index) const
+	entityGroup *entityManager::groupByIndex(uint32 index) const
 	{
 		entityManagerImpl *impl = (entityManagerImpl *)this;
 		CAGE_ASSERT_RUNTIME(index < impl->groups.size());
 		return impl->groups[index];
 	}
 
-	uint32 entityManagerClass::componentsCount() const
+	uint32 entityManager::componentsCount() const
 	{
 		entityManagerImpl *impl = (entityManagerImpl *)this;
 		return numeric_cast<uint32>(impl->components.size());
 	}
 
-	uint32 entityManagerClass::groupsCount() const
+	uint32 entityManager::groupsCount() const
 	{
 		entityManagerImpl *impl = (entityManagerImpl *)this;
 		return numeric_cast<uint32>(impl->groups.size());
 	}
 
-	groupClass *entityManagerClass::defineGroup()
+	entityGroup *entityManager::defineGroup()
 	{
 		entityManagerImpl *impl = (entityManagerImpl *)this;
 		groupImpl *b = detail::systemArena().createObject<groupImpl>(impl);
@@ -165,25 +165,25 @@ namespace cage
 		return b;
 	}
 
-	const groupClass *entityManagerClass::group() const
+	const entityGroup *entityManager::group() const
 	{
 		entityManagerImpl *impl = (entityManagerImpl *)this;
 		return &impl->allEntities;
 	}
 
-	entityClass *entityManagerClass::createUnique()
+	entity *entityManager::createUnique()
 	{
 		entityManagerImpl *impl = (entityManagerImpl *)this;
 		return create(impl->generateUniqueName());
 	}
 
-	entityClass *entityManagerClass::createAnonymous()
+	entity *entityManager::createAnonymous()
 	{
 		entityManagerImpl *impl = (entityManagerImpl *)this;
 		return detail::systemArena().createObject<entityImpl>(impl, 0);
 	}
 
-	entityClass *entityManagerClass::create(uint32 name)
+	entity *entityManager::create(uint32 name)
 	{
 		entityManagerImpl *impl = (entityManagerImpl *)this;
 		CAGE_ASSERT_RUNTIME(name != 0);
@@ -191,33 +191,33 @@ namespace cage
 		return detail::systemArena().createObject<entityImpl>(impl, name);
 	}
 
-	entityClass *entityManagerClass::get(uint32 entityName) const
+	entity *entityManager::get(uint32 entityName) const
 	{
 		entityManagerImpl *impl = (entityManagerImpl *)this;
 		return impl->namedEntities->get(entityName, false);
 	}
 
-	entityClass *entityManagerClass::getOrCreate(uint32 entityName)
+	entity *entityManager::getOrCreate(uint32 entityName)
 	{
 		if (has(entityName))
 			return get(entityName);
 		return create(entityName);
 	}
 
-	bool entityManagerClass::has(uint32 entityName) const
+	bool entityManager::has(uint32 entityName) const
 	{
 		if (entityName == 0)
 			return false;
 		return ((entityManagerImpl *)this)->namedEntities->exists(entityName);
 	}
 
-	void entityManagerClass::destroy()
+	void entityManager::destroy()
 	{
 		entityManagerImpl *impl = (entityManagerImpl *)this;
 		impl->allEntities.destroy();
 	}
 
-	componentClass *entityManagerClass::zPrivateDefineComponent(uintPtr typeSize, uintPtr typeAlignment, void *prototype, const componentCreateConfig &config)
+	entityComponent *entityManager::zPrivateDefineComponent(uintPtr typeSize, uintPtr typeAlignment, void *prototype, const entityComponentCreateConfig &config)
 	{
 		entityManagerImpl *impl = (entityManagerImpl *)this;
 		componentImpl *c = detail::systemArena().createObject<componentImpl>(impl, typeSize, typeAlignment, prototype, config);
@@ -225,48 +225,48 @@ namespace cage
 		return c;
 	}
 
-	holder<entityManagerClass> newEntityManager(const entityManagerCreateConfig &config)
+	holder<entityManager> newEntityManager(const entityManagerCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<entityManagerClass, entityManagerImpl>(config);
+		return detail::systemArena().createImpl<entityManager, entityManagerImpl>(config);
 	}
 
-	uintPtr componentClass::typeSize() const
+	uintPtr entityComponent::typeSize() const
 	{
 		componentImpl *impl = (componentImpl*)this;
 		return impl->typeSize;
 	}
 
-	uint32 componentClass::index() const
+	uint32 entityComponent::index() const
 	{
 		componentImpl *impl = (componentImpl*)this;
 		return impl->vectorIndex;
 	}
 
-	const groupClass *componentClass::group() const
+	const entityGroup *entityComponent::group() const
 	{
 		componentImpl *impl = (componentImpl *)this;
 		return impl->componentEntities.get();
 	}
 
-	void componentClass::destroy()
+	void entityComponent::destroy()
 	{
 		componentImpl *impl = (componentImpl *)this;
 		impl->componentEntities.get()->destroy();
 	}
 
-	entityManagerClass *componentClass::manager() const
+	entityManager *entityComponent::manager() const
 	{
 		componentImpl *impl = (componentImpl*)this;
 		return impl->manager;
 	}
 
-	uint32 entityClass::name() const
+	uint32 entity::name() const
 	{
 		entityImpl *impl = (entityImpl*)this;
 		return impl->name;
 	}
 
-	void entityClass::add(groupClass *group)
+	void entity::add(entityGroup *group)
 	{
 		if (has(group))
 			return;
@@ -276,13 +276,13 @@ namespace cage
 		group->entityAdded.dispatch(this);
 	}
 
-	void entityClass::remove(groupClass *group)
+	void entity::remove(entityGroup *group)
 	{
 		if (!has(group))
 			return;
 		entityImpl *impl = (entityImpl*)this;
 		impl->groups.erase(group);
-		for (std::vector<entityClass*>::reverse_iterator it = ((groupImpl*)group)->entities.rbegin(), et = ((groupImpl*)group)->entities.rend(); it != et; it++)
+		for (std::vector<entity*>::reverse_iterator it = ((groupImpl*)group)->entities.rbegin(), et = ((groupImpl*)group)->entities.rend(); it != et; it++)
 		{
 			if (*it == impl)
 			{
@@ -293,14 +293,14 @@ namespace cage
 		group->entityRemoved.dispatch(this);
 	}
 
-	bool entityClass::has(const groupClass *group) const
+	bool entity::has(const entityGroup *group) const
 	{
 		entityImpl *impl = (entityImpl*)this;
 		CAGE_ASSERT_RUNTIME(((groupImpl*)group)->manager == impl->manager, "incompatible group");
-		return impl->groups.find(const_cast<groupClass*>(group)) != impl->groups.end();
+		return impl->groups.find(const_cast<entityGroup*>(group)) != impl->groups.end();
 	}
 
-	void entityClass::add(componentClass *component)
+	void entity::add(entityComponent *component)
 	{
 		if (has(component))
 			return;
@@ -315,7 +315,7 @@ namespace cage
 			ci->componentEntities->add(this);
 	}
 
-	void entityClass::remove(componentClass *component)
+	void entity::remove(entityComponent *component)
 	{
 		if (!has(component))
 			return;
@@ -327,7 +327,7 @@ namespace cage
 		impl->components[ci->vectorIndex] = nullptr;
 	}
 
-	bool entityClass::has(const componentClass *component) const
+	bool entity::has(const entityComponent *component) const
 	{
 		entityImpl *impl = (entityImpl*)this;
 		componentImpl *ci = (componentImpl *)component;
@@ -337,19 +337,19 @@ namespace cage
 		return false;
 	}
 
-	void entityClass::destroy()
+	void entity::destroy()
 	{
 		entityImpl *impl = (entityImpl*)this;
 		detail::systemArena().destroy <entityImpl>(impl);
 	}
 
-	entityManagerClass *entityClass::manager() const
+	entityManager *entity::manager() const
 	{
 		entityImpl *impl = (entityImpl*)this;
 		return impl->manager;
 	}
 
-	void *entityClass::unsafeValue(componentClass *component)
+	void *entity::unsafeValue(entityComponent *component)
 	{
 		entityImpl *impl = (entityImpl*)this;
 		componentImpl *ci = (componentImpl*)component;
@@ -363,19 +363,19 @@ namespace cage
 		return unsafeValue(component);
 	}
 
-	uint32 groupClass::index() const
+	uint32 entityGroup::index() const
 	{
 		groupImpl *impl = (groupImpl*)this;
 		return impl->vectorIndex;
 	}
 
-	uint32 groupClass::count() const
+	uint32 entityGroup::count() const
 	{
 		groupImpl *impl = (groupImpl*)this;
 		return numeric_cast <uint32> (impl->entities.size());
 	}
 
-	entityClass *const *groupClass::array() const
+	entity *const *entityGroup::array() const
 	{
 		groupImpl *impl = (groupImpl*)this;
 		if (impl->entities.empty())
@@ -383,13 +383,13 @@ namespace cage
 		return &impl->entities[0];
 	}
 
-	pointerRange<entityClass *const> groupClass::entities() const
+	pointerRange<entity *const> entityGroup::entities() const
 	{
 		groupImpl *impl = (groupImpl*)this;
 		return impl->entities;
 	}
 
-	void groupClass::merge(const groupClass *other)
+	void entityGroup::merge(const entityGroup *other)
 	{
 		if (other == this)
 			return;
@@ -397,7 +397,7 @@ namespace cage
 			it->add(this);
 	}
 
-	void groupClass::subtract(const groupClass *other)
+	void entityGroup::subtract(const entityGroup *other)
 	{
 		if (other == this)
 		{
@@ -408,11 +408,11 @@ namespace cage
 			it->remove(this);
 	}
 
-	void groupClass::intersect(const groupClass *other)
+	void entityGroup::intersect(const entityGroup *other)
 	{
 		if (other == this)
 			return;
-		std::vector<entityClass*> r;
+		std::vector<entity*> r;
 		for (auto it : entities())
 			if (!it->has(other))
 				r.push_back(it);
@@ -420,27 +420,27 @@ namespace cage
 			it->remove(this);
 	}
 
-	void groupClass::clear()
+	void entityGroup::clear()
 	{
 		groupImpl *impl = (groupImpl*)this;
 		while (!impl->entities.empty())
 			impl->entities[0]->remove(this);
 	}
 
-	void groupClass::destroy()
+	void entityGroup::destroy()
 	{
 		groupImpl *impl = (groupImpl*)this;
 		while (!impl->entities.empty())
 			(*impl->entities.rbegin())->destroy();
 	}
 
-	entityManagerClass *groupClass::manager() const
+	entityManager *entityGroup::manager() const
 	{
 		groupImpl *impl = (groupImpl*)this;
 		return impl->manager;
 	}
 
-	memoryBuffer entitiesSerialize(const groupClass *entities, componentClass *component)
+	memoryBuffer entitiesSerialize(const entityGroup *entities, entityComponent *component)
 	{
 		uintPtr typeSize = component->typeSize();
 		memoryBuffer buffer;
@@ -449,7 +449,7 @@ namespace cage
 		ser << (uint64)typeSize;
 		serializer cntPlaceholder = ser.placeholder(sizeof(uint32));
 		uint32 cnt = 0;
-		for (entityClass *e : entities->entities())
+		for (entity *e : entities->entities())
 		{
 			uint32 name = e->name();
 			if (name == 0)
@@ -466,7 +466,7 @@ namespace cage
 		return buffer;
 	}
 
-	void entitiesDeserialize(const void *buffer, uintPtr size, entityManagerClass *manager)
+	void entitiesDeserialize(const void *buffer, uintPtr size, entityManager *manager)
 	{
 		if (size == 0)
 			return;
@@ -475,7 +475,7 @@ namespace cage
 		des >> componentIndex;
 		if (componentIndex >= manager->componentsCount())
 			CAGE_THROW_ERROR(exception, "incompatible component (different index)");
-		componentClass *component = manager->componentByIndex(componentIndex);
+		entityComponent *component = manager->componentByIndex(componentIndex);
 		uint64 typeSize;
 		des >> typeSize;
 		if (component->typeSize() != typeSize)
@@ -488,12 +488,12 @@ namespace cage
 			des >> name;
 			if (name == 0)
 				CAGE_THROW_ERROR(exception, "invalid entity");
-			entityClass *e = manager->getOrCreate(name);
+			entity *e = manager->getOrCreate(name);
 			des.read(e->unsafeValue(component), numeric_cast<uintPtr>(typeSize));
 		}
 	}
 
-	void entitiesDeserialize(const memoryBuffer &buffer, entityManagerClass *manager)
+	void entitiesDeserialize(const memoryBuffer &buffer, entityManager *manager)
 	{
 		entitiesDeserialize(buffer.data(), buffer.size(), manager);
 	}

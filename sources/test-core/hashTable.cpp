@@ -8,7 +8,7 @@
 
 template<uint32 I, uint32 L> void performance()
 {
-	holder<timerClass> tmr = newTimer();
+	holder<timer> tmr = newTimer();
 	uint32 tm_system, tm_hash;
 	volatile void *res;
 
@@ -23,7 +23,7 @@ template<uint32 I, uint32 L> void performance()
 	}
 
 	{
-		holder<hashTableClass<void>> tbl = newHashTable<void>(100, 100000);
+		holder<hashTable<void>> tbl = newHashTable<void>(100, 100000);
 		for (uint32 i = 1; i <= I; i++)
 			tbl->add(i, (void*)(uintPtr)i);
 		tmr->reset();
@@ -41,7 +41,7 @@ void testHashTable()
 
 	{
 		CAGE_TESTCASE("basic inserts and gets");
-		holder<hashTableClass<void>> tbl = newHashTable<void>(10, 20000);
+		holder<hashTable<void>> tbl = newHashTable<void>(10, 20000);
 		for (uint32 i = 1; i < 10000; i++)
 			tbl->add(i, (void*)(uintPtr)i);
 		for (uint32 i = 1; i < 10000; i++)
@@ -50,7 +50,7 @@ void testHashTable()
 
 	{
 		CAGE_TESTCASE("more operations");
-		holder<hashTableClass<void>> tbl = newHashTable<void>(10, 20000);
+		holder<hashTable<void>> tbl = newHashTable<void>(10, 20000);
 		for (uint32 i = 1; i < 10000; i++)
 			tbl->add(i, (void*)(uintPtr)i);
 		for (uint32 i = 1000; i < 5000; i++)
@@ -67,7 +67,7 @@ void testHashTable()
 
 	{
 		CAGE_TESTCASE("randomized access");
-		holder<hashTableClass<void>> tbl = newHashTable<void>(100, 20000);
+		holder<hashTable<void>> tbl = newHashTable<void>(100, 20000);
 		std::map<uint32, uint32> mp;
 		for (uint32 i = 0; i < 100000; i++)
 		{
@@ -102,7 +102,7 @@ void testHashTable()
 
 	{
 		CAGE_TESTCASE("templates");
-		holder<hashTableClass<uint32>> tbl = newHashTable<uint32>(100, 1000);
+		holder<hashTable<uint32>> tbl = newHashTable<uint32>(100, 1000);
 		uint32 i = 42;
 		tbl->add(13, &i);
 		CAGE_TEST(tbl->get(13, false) == &i);
@@ -111,7 +111,7 @@ void testHashTable()
 
 	{
 		CAGE_TESTCASE("iterators");
-		holder<hashTableClass<uint32>> tbl = newHashTable<uint32>(100, 1000);
+		holder<hashTable<uint32>> tbl = newHashTable<uint32>(100, 1000);
 		uint32 i = 42;
 		tbl->add(13, &i);
 		tbl->add(42, &i);

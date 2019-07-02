@@ -3,10 +3,10 @@
 
 namespace cage
 {
-	struct CAGE_API utf8Exception : public exception
+	struct CAGE_API invalidUtfString : public exception
 	{
-		utf8Exception(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept;
-		virtual utf8Exception &log();
+		invalidUtfString(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept;
+		virtual invalidUtfString &log();
 	};
 
 	CAGE_API bool valid(const char *str);

@@ -475,7 +475,7 @@ namespace cage
 		pathTypeFlags t = realType(path);
 		if ((t & pathTypeFlags::Directory) == pathTypeFlags::Directory)
 		{
-			holder<directoryListClass> list = newDirectoryList(path);
+			holder<directoryList> list = newDirectoryList(path);
 			while (list->valid())
 			{
 				pathRemove(pathJoin(path, list->name()));

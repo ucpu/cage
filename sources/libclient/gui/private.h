@@ -5,7 +5,7 @@
 #include <atomic>
 
 #define GUI_HAS_COMPONENT(T,E) (E)->has(impl->components.T)
-#define GUI_REF_COMPONENT(T) hierarchy->entity->value<CAGE_JOIN(T, Component)>(hierarchy->impl->components.T)
+#define GUI_REF_COMPONENT(T) hierarchy->ent->value<CAGE_JOIN(T, Component)>(hierarchy->impl->components.T)
 #define GUI_GET_COMPONENT(T,N,E) CAGE_JOIN(T, Component) &N = (E)->value<CAGE_JOIN(T, Component)>(impl->components.T);
 
 namespace cage
@@ -97,7 +97,7 @@ namespace cage
 		vec2 clipPos, clipSize; // clip pos/size are in same coordinate system as render pos/size, they make a rectangle intersection of parents viewport and our render pos/size
 
 		guiImpl *const impl;
-		entityClass *const entity;
+		entity *const ent;
 
 		hierarchyItemStruct *parent;
 		hierarchyItemStruct *prevSibling, *nextSibling;
@@ -110,7 +110,7 @@ namespace cage
 
 		bool subsidedItem; // prevent use of explicit position
 
-		hierarchyItemStruct(guiImpl *impl, entityClass *entity);
+		hierarchyItemStruct(guiImpl *impl, entity *ent);
 
 		// called top->down
 		void initialize(); // initialize and validate widget, layout, text and image, initialize children
@@ -255,10 +255,10 @@ namespace cage
 	class guiImpl : public guiClass
 	{
 	public:
-		holder<entityManagerClass> entityManager;
+		holder<entityManager> entityManager;
 		componentsStruct components;
 
-		assetManagerClass *assetManager;
+		assetManager *assetManager;
 
 		pointStruct inputResolution; // last window resolution (pixels)
 		pointStruct inputMouse; // last position of mouse (pixels)
@@ -299,7 +299,7 @@ namespace cage
 			~emitDataStruct();
 			void flush();
 		} emitData[3], *emitControl;
-		holder<swapBufferGuardClass> emitController;
+		holder<swapBufferGuard> emitController;
 
 		windowEventListeners listeners;
 		std::vector<eventReceiverStruct> mouseEventReceivers;
@@ -317,8 +317,8 @@ namespace cage
 
 		void graphicsDispatch();
 
-		uint32 entityWidgetsCount(entityClass *e);
-		uint32 entityLayoutsCount(entityClass *e);
+		uint32 entityWidgetsCount(entity *e);
+		uint32 entityLayoutsCount(entity *e);
 	};
 
 	void offsetPosition(vec2 &position, const vec4 &offset);

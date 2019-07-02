@@ -3,14 +3,14 @@
 
 namespace cage
 {
-	struct CAGE_API disconnectedException : public exception
+	struct CAGE_API disconnected : public exception
 	{
-		disconnectedException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept;
+		disconnected(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept;
 	};
 
 	// tcp
 
-	class CAGE_API tcpConnectionClass : private immovable
+	class CAGE_API tcpConnection : private immovable
 	{
 	public:
 		string address() const; // remote address
@@ -27,22 +27,22 @@ namespace cage
 		void writeLine(const string &line);
 	};
 
-	CAGE_API holder<tcpConnectionClass> newTcpConnection(const string &address, uint16 port); // blocking
+	CAGE_API holder<tcpConnection> newTcpConnection(const string &address, uint16 port); // blocking
 
-	class CAGE_API tcpServerClass : private immovable
+	class CAGE_API tcpServer : private immovable
 	{
 	public:
 		uint16 port() const; // local port
 
 		// returns empty holder if no new peer has connected
-		holder<tcpConnectionClass> accept(); // non-blocking
+		holder<tcpConnection> accept(); // non-blocking
 	};
 
-	CAGE_API holder<tcpServerClass> newTcpServer(uint16 port); // non-blocking
+	CAGE_API holder<tcpServer> newTcpServer(uint16 port); // non-blocking
 
 	// udp
 
-	struct CAGE_API udpConnectionStatisticsStruct
+	struct CAGE_API udpConnectionStatistics
 	{
 		uint64 roundTripDuration;
 		uint64 bytesReceivedTotal, bytesSentTotal, bytesDeliveredTotal;
@@ -50,13 +50,13 @@ namespace cage
 		uint32 packetsReceivedTotal, packetsSentTotal, packetsDeliveredTotal;
 		uint32 packetsReceivedLately, packetsSentLately, packetsDeliveredLately;
 
-		udpConnectionStatisticsStruct();
+		udpConnectionStatistics();
 
 		// example: bytesPerSecondDeliveredAverage = 1000000 * bytesDeliveredLately / roundTripDuration;
 	};
 
 	// low latency, connection-oriented, sequenced and optionally reliable datagram protocol on top of udp
-	class CAGE_API udpConnectionClass : private immovable
+	class CAGE_API udpConnection : private immovable
 	{
 	public:
 		// returns size of the first packet queued for reading, if any, and zero otherwise
@@ -76,52 +76,52 @@ namespace cage
 		// update also manages timeouts and resending, therefore it should be called periodically even if you wrote nothing
 		void update();
 
-		const udpConnectionStatisticsStruct &statistics() const;
+		const udpConnectionStatistics &statistics() const;
 	};
 
 	// non-zero timeout will block the caller for up to the specified time to ensure that the connection is established and throw an exception otherwise
 	// zero timeout will return immediately and the connection will be established progressively as you use it
-	CAGE_API holder<udpConnectionClass> newUdpConnection(const string &address, uint16 port, uint64 timeout = 3000000);
+	CAGE_API holder<udpConnection> newUdpConnection(const string &address, uint16 port, uint64 timeout = 3000000);
 
-	class CAGE_API udpServerClass : private immovable
+	class CAGE_API udpServer : private immovable
 	{
 	public:
 		// returns empty holder if no new peer has connected
-		holder<udpConnectionClass> accept(); // non-blocking
+		holder<udpConnection> accept(); // non-blocking
 	};
 
-	CAGE_API holder<udpServerClass> newUdpServer(uint16 port); // non-blocking
+	CAGE_API holder<udpServer> newUdpServer(uint16 port); // non-blocking
 
 	// discovery
 
-	struct CAGE_API discoveryPeerStruct
+	struct CAGE_API discoveryPeer
 	{
 		string message;
 		string address;
 		uint16 port;
 
-		discoveryPeerStruct();
+		discoveryPeer();
 	};
 
-	class CAGE_API discoveryClientClass : private immovable
+	class CAGE_API discoveryClient : private immovable
 	{
 	public:
 		void update();
 		void addServer(const string &address, uint16 port);
 		uint32 peersCount() const;
-		discoveryPeerStruct peerData(uint32 index) const;
-		holder<pointerRange<discoveryPeerStruct>> peers() const;
+		discoveryPeer peerData(uint32 index) const;
+		holder<pointerRange<discoveryPeer>> peers() const;
 	};
 
-	class CAGE_API discoveryServerClass : private immovable
+	class CAGE_API discoveryServer : private immovable
 	{
 	public:
 		void update();
 		string message;
 	};
 
-	CAGE_API holder<discoveryClientClass> newDiscoveryClient(uint16 listenPort, uint32 gameId);
-	CAGE_API holder<discoveryServerClass> newDiscoveryServer(uint16 listenPort, uint16 gamePort, uint32 gameId);
+	CAGE_API holder<discoveryClient> newDiscoveryClient(uint16 listenPort, uint32 gameId);
+	CAGE_API holder<discoveryServer> newDiscoveryServer(uint16 listenPort, uint16 gamePort, uint32 gameId);
 }
 
 #endif // guard_network_h_f311f15d_426e_4077_8b9b_a5ee12e78b39_

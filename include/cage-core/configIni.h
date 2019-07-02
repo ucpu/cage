@@ -31,7 +31,7 @@
 
 namespace cage
 {
-	class CAGE_API iniClass : private immovable
+	class CAGE_API configIni : private immovable
 	{
 	public:
 		uint32 sectionsCount() const;
@@ -50,7 +50,7 @@ namespace cage
 		void set(const string &section, const string &item, const string &value);
 
 		void clear();
-		void merge(const iniClass *source); // items in this are overridden by items in source
+		void merge(const configIni *source); // items in this are overridden by items in source
 		void parseCmd(uint32 argc, const char *const args[]); // clears this before parsing
 		void load(const string &filename); // clears this before loading
 		void save(const string &filename) const;
@@ -78,8 +78,8 @@ namespace cage
 #undef GCHL_GENERATE
 	};
 
-	CAGE_API holder<iniClass> newIni(memoryArena arena);
-	CAGE_API holder<iniClass> newIni(); // uses system memory arena
+	CAGE_API holder<configIni> newConfigIni(memoryArena arena);
+	CAGE_API holder<configIni> newConfigIni(); // uses system memory arena
 }
 
 #endif // guard_iniReader_h_c866b123_b27e_4758_ab8e_702ef8f315de_

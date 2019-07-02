@@ -93,9 +93,9 @@ namespace cage
 
 	struct CAGE_API generalComponentsStruct
 	{
-#define GCHL_GENERATE(T) componentClass *T;
+#define GCHL_GENERATE(T) entityComponent *T;
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_COMMON_COMPONENTS));
 #undef GCHL_GENERATE
-		generalComponentsStruct(entityManagerClass *ents);
+		generalComponentsStruct(entityManager *ents);
 	};
 }

@@ -25,9 +25,9 @@ struct schemeStruct
 	uint32 schemeIndex;
 	holderSet<schemeFieldStruct> schemeFields;
 
-	void parse(iniClass *ini);
-	void load(fileClass *file);
-	void save(fileClass *file);
+	void parse(configIni *ini);
+	void load(file *file);
+	void save(file *file);
 	bool applyOnAsset(struct assetStruct &ass);
 	inline bool operator < (const schemeStruct &other) const
 	{

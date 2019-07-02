@@ -278,7 +278,7 @@ namespace cage
 			return distanceLines(a.a(), a.b(), b.a(), b.b());
 		if (a.isSegment() && b.isSegment())
 			return distanceSegments(a.a(), a.b(), b.a(), b.b());
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		CAGE_THROW_CRITICAL(notImplemented, "geometry");
 	}
 
 	real distance(const line &a, const triangle &b)
@@ -304,7 +304,7 @@ namespace cage
 
 	real distance(const line &a, const aabb &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		CAGE_THROW_CRITICAL(notImplemented, "geometry");
 	}
 
 	real distance(const triangle &a, const triangle &b)
@@ -391,7 +391,7 @@ namespace cage
 
 	real distance(const plane &a, const aabb &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		CAGE_THROW_CRITICAL(notImplemented, "geometry");
 	}
 
 	real distance(const sphere &a, const sphere &b)
@@ -406,7 +406,7 @@ namespace cage
 
 	real distance(const aabb &a, const aabb &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		CAGE_THROW_CRITICAL(notImplemented, "geometry");
 	}
 
 
@@ -478,7 +478,7 @@ namespace cage
 
 	bool intersects(const line &a, const plane &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		CAGE_THROW_CRITICAL(notImplemented, "geometry");
 	}
 
 	bool intersects(const line &a, const sphere &b)
@@ -823,7 +823,7 @@ namespace cage
 
 	vec3 intersection(const line &a, const plane &b)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		CAGE_THROW_CRITICAL(notImplemented, "geometry");
 	}
 
 	line intersection(const line &a, const sphere &b)
@@ -880,27 +880,27 @@ namespace cage
 
 	bool frustumCulling(const vec3 &shape, const mat4 &mvp)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		CAGE_THROW_CRITICAL(notImplemented, "geometry");
 	}
 
 	bool frustumCulling(const line &shape, const mat4 &mvp)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		CAGE_THROW_CRITICAL(notImplemented, "geometry");
 	}
 
 	bool frustumCulling(const triangle &shape, const mat4 &mvp)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		CAGE_THROW_CRITICAL(notImplemented, "geometry");
 	}
 
 	bool frustumCulling(const plane &shape, const mat4 &mvp)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		CAGE_THROW_CRITICAL(notImplemented, "geometry");
 	}
 
 	bool frustumCulling(const sphere &shape, const mat4 &mvp)
 	{
-		CAGE_THROW_CRITICAL(notImplementedException, "geometry");
+		CAGE_THROW_CRITICAL(notImplemented, "geometry");
 	}
 
 	namespace

@@ -27,6 +27,6 @@ namespace cage
 
 	CAGE_API holder<sourceClass> newSource(soundContextClass *context);
 
-	CAGE_API assetSchemeStruct genAssetSchemeSound(uint32 threadIndex, soundContextClass *memoryContext);
+	CAGE_API assetScheme genAssetSchemeSound(uint32 threadIndex, soundContextClass *memoryContext);
 	static const uint32 assetSchemeIndexSound = 20;
 }

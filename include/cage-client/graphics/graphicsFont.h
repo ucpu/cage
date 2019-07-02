@@ -35,6 +35,6 @@ namespace cage
 
 	CAGE_API holder<fontClass> newFont();
 
-	CAGE_API assetSchemeStruct genAssetSchemeFont(uint32 threadIndex, windowClass *memoryContext);
+	CAGE_API assetScheme genAssetSchemeFont(uint32 threadIndex, windowClass *memoryContext);
 	static const uint32 assetSchemeIndexFont = 16;
 }

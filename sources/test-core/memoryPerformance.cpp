@@ -58,7 +58,7 @@ namespace
 	uint64 measure()
 	{
 		detail::memset(allocated, 1, (INPUT_SIZE + 1) * sizeof(void*));
-		holder<timerClass> tmr = newTimer();
+		holder<timer> tmr = newTimer();
 		uint32 allocations = 0;
 		for (uint32 cycle = 0; cycle < CYCLES_COUNT; cycle++)
 		{

@@ -9,7 +9,7 @@
 #include <cage-core/files.h>
 #include <cage-core/fileUtils.h>
 #include <cage-core/concurrent.h>
-#include <cage-core/ini.h>
+#include <cage-core/configIni.h>
 #include <cage-core/program.h>
 #include <cage-core/threadPool.h>
 
@@ -36,12 +36,12 @@ namespace
 		string name;
 		databankStruct(const string &s = "") : name(s) {};
 
-		void load(fileClass *f)
+		void load(file *f)
 		{
 			read(f, name);
 		}
 
-		void save(fileClass *f) const
+		void save(file *f) const
 		{
 			write(f, name);
 		}
@@ -59,7 +59,7 @@ namespace
 
 	bool parseDatabank(const string &path)
 	{
-		holder<iniClass> ini = newIni();
+		holder<configIni> ini = newConfigIni();
 		try
 		{
 			ini->load(pathJoin(configPathInput, path));
@@ -161,7 +161,7 @@ namespace
 			if (!scheme->applyOnAsset(ass))
 				CAGE_THROW_WARNING(exception, "asset has invalid configuration");
 
-			holder<programClass> prg = newProgram(scheme->processor);
+			holder<program> prg = newProgram(scheme->processor);
 			prg->writeLine(pathToAbs(configPathInput)); // inputDirectory
 			prg->writeLine(ass.name); // inputName
 			prg->writeLine(pathToAbs(string(configPathIntermediate).empty() ? configPathOutput : configPathIntermediate)); // outputDirectory
@@ -243,7 +243,7 @@ namespace
 		if (!pathIsFile(configPathDatabase))
 			return;
 		CAGE_LOG(severityEnum::Info, "database", string() + "loading database cache: '" + configPathDatabase + "'");
-		holder<fileClass> f = newFile(configPathDatabase, fileMode(true, false));
+		holder<file> f = newFile(configPathDatabase, fileMode(true, false));
 		string b;
 		if (!f->readLine(b) || b != databaseBegin)
 			CAGE_THROW_ERROR(exception, "wrong file format");
@@ -261,7 +261,7 @@ namespace
 		CAGE_LOG(severityEnum::Info, "database", string() + "loaded " + assets.size() + " asset entries");
 	}
 
-	void write(holder<fileClass> &f, const string &s)
+	void write(holder<file> &f, const string &s)
 	{
 		f->write(s.c_str(), s.length());
 		f->write(" ", 1);
@@ -273,7 +273,7 @@ namespace
 		if (!((string)configPathDatabase).empty())
 		{
 			CAGE_LOG(severityEnum::Info, "database", string() + "saving database cache: '" + configPathDatabase + "'");
-			holder<fileClass> f = newFile(configPathDatabase, fileMode(false, true));
+			holder<file> f = newFile(configPathDatabase, fileMode(false, true));
 			f->writeLine(databaseBegin);
 			f->writeLine(databaseVersion);
 			f->write(&timestamp, sizeof(timestamp));
@@ -289,7 +289,7 @@ namespace
 		{
 			fileMode fm(false, true);
 			fm.textual = true;
-			holder<fileClass> f = newFile(configPathReverse, fm);
+			holder<file> f = newFile(configPathReverse, fm);
 			std::vector <std::pair <string, const assetStruct*> > items;
 			for (const auto &it : assets)
 			{
@@ -318,7 +318,7 @@ namespace
 		{
 			fileMode fm(false, true);
 			fm.textual = true;
-			holder<fileClass> f = newFile(configPathForward, fm);
+			holder<file> f = newFile(configPathForward, fm);
 			std::vector<std::pair<string, const assetStruct*>> items;
 			for (const auto &it : assets)
 			{
@@ -370,7 +370,7 @@ namespace
 	{
 		string pth = pathJoin(configPathInput, path);
 		CAGE_LOG(severityEnum::Info, "database", string() + "checking path '" + pth + "'");
-		holder<directoryListClass> d = newDirectoryList(pth);
+		holder<directoryList> d = newDirectoryList(pth);
 		while (d->valid())
 		{
 			string p = pathJoin(path, d->name());
@@ -395,8 +395,8 @@ namespace
 
 	void moveIntermediateFiles()
 	{
-		holder<directoryListClass> listIn = newDirectoryList(configPathIntermediate);
-		holder<directoryListClass> listOut = newDirectoryList(configPathOutput); // keep the archive open until all files are written (this significantly speeds up the moving process, but it causes the process to keep all the files in memory)
+		holder<directoryList> listIn = newDirectoryList(configPathIntermediate);
+		holder<directoryList> listOut = newDirectoryList(configPathOutput); // keep the archive open until all files are written (this significantly speeds up the moving process, but it causes the process to keep all the files in memory)
 		uint64 movedSize = 0;
 		while (listIn->valid())
 		{
@@ -429,8 +429,8 @@ namespace
 	}
 
 	holderSet<assetStruct>::iterator itg;
-	holder<mutexClass> mut;
-	holder<threadPoolClass> threads;
+	holder<syncMutex> mut;
+	holder<threadPool> threads;
 
 	void threadEntry(uint32, uint32)
 	{
@@ -438,7 +438,7 @@ namespace
 		{
 			assetStruct *ass = nullptr;
 			{
-				scopeLock<mutexClass> m(mut);
+				scopeLock<syncMutex> m(mut);
 				if (itg != assets.end())
 					ass = const_cast<assetStruct*>(itg++->get());
 			}
@@ -467,7 +467,7 @@ namespace
 	public:
 		threadsInitializerClass()
 		{
-			mut = newMutex();
+			mut = newSyncMutex();
 			threads = newThreadPool();
 			threads->function.bind<&threadEntry>();
 		}
@@ -589,7 +589,7 @@ namespace
 	void loadSchemesDirectory(const string &dir)
 	{
 		string realpath = pathJoin(configPathScheme, dir);
-		holder<directoryListClass> lst = newFilesystem()->directoryList(realpath);
+		holder<directoryList> lst = newFilesystem()->listDirectory(realpath);
 		for (; lst->valid(); lst->next())
 		{
 			string name = pathJoin(dir, lst->name());
@@ -603,7 +603,7 @@ namespace
 			schemeStruct s;
 			s.name = name.subString(0, name.length() - 7);
 			CAGE_LOG(severityEnum::Info, "database", string() + "loading scheme '" + s.name + "'");
-			holder<iniClass> ini = newIni();
+			holder<configIni> ini = newConfigIni();
 			ini->load(pathJoin(configPathScheme, name));
 			s.parse(ini.get());
 			schemes.insert(templates::move(s));
@@ -644,7 +644,7 @@ void listen()
 {
 	CAGE_LOG(severityEnum::Info, "database", "initializing listening for changes");
 	notifierInitialize(configNotifierPort);
-	holder<changeWatcherClass> changes = newChangeWatcher();
+	holder<filesystemWatcher> changes = newFilesystemWatcher();
 	changes->registerPath(configPathInput);
 	uint32 cycles = 0;
 	bool changed = false;

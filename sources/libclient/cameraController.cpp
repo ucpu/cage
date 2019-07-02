@@ -26,10 +26,10 @@ namespace cage
 			vec2 mouseMoveAccum;
 			real wheelAccum;
 
-			entityClass *entity;
+			entity *ent;
 			bool keysPressedArrows[6]; // wsadeq
 
-			cameraControllerImpl(entityClass *entity) : entity(entity)
+			cameraControllerImpl(entity *ent) : ent(ent)
 			{
 				for (uint32 i = 0; i < 6; i++)
 					keysPressedArrows[i] = false;
@@ -66,7 +66,7 @@ namespace cage
 
 			bool mouseEnabled(mouseButtonsFlags buttons)
 			{
-				return !!entity && window()->isFocused() && (mouseButton == mouseButtonsFlags::None || (buttons & mouseButton) == mouseButton);
+				return !!ent && window()->isFocused() && (mouseButton == mouseButtonsFlags::None || (buttons & mouseButton) == mouseButton);
 			}
 
 			bool mousePress(mouseButtonsFlags buttons, modifiersFlags, const pointStruct &)
@@ -89,7 +89,7 @@ namespace cage
 
 			bool mouseWheel(sint8 wheel, modifiersFlags, const pointStruct &)
 			{
-				if (!entity)
+				if (!ent)
 					return false;
 				wheelAccum += wheel;
 				return false;
@@ -155,9 +155,9 @@ namespace cage
 
 			void update()
 			{
-				if (!entity)
+				if (!ent)
 					return;
-				ENGINE_GET_COMPONENT(transform, t, entity);
+				ENGINE_GET_COMPONENT(transform, t, ent);
 
 				// orientation
 				mouseSmoother.add(mouseMoveAccum);
@@ -206,14 +206,14 @@ namespace cage
 		};
 	}
 
-	void cameraControllerClass::setEntity(entityClass *entity)
+	void cameraControllerClass::setEntity(entity *ent)
 	{
 		cameraControllerImpl *impl = (cameraControllerImpl*)this;
-		impl->entity = entity;
+		impl->ent = ent;
 	}
 
-	holder<cameraControllerClass> newCameraController(entityClass *entity)
+	holder<cameraControllerClass> newCameraController(entity *ent)
 	{
-		return detail::systemArena().createImpl<cameraControllerClass, cameraControllerImpl>(entity);
+		return detail::systemArena().createImpl<cameraControllerClass, cameraControllerImpl>(ent);
 	}
 }

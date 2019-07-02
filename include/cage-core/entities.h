@@ -3,111 +3,111 @@
 
 namespace cage
 {
-	struct CAGE_API componentCreateConfig
+	struct CAGE_API entityComponentCreateConfig
 	{
 		bool enumerableEntities;
 
-		componentCreateConfig(bool enumerableEntities) : enumerableEntities(enumerableEntities)
+		entityComponentCreateConfig(bool enumerableEntities) : enumerableEntities(enumerableEntities)
 		{}
 	};
 
-	class CAGE_API entityManagerClass : private immovable
+	class CAGE_API entityManager : private immovable
 	{
 	public:
-		template<class T> componentClass *defineComponent(const T &prototype, const componentCreateConfig &config) { return zPrivateDefineComponent(sizeof(T), alignof(T), (void*)&prototype, config); }
-		componentClass *componentByIndex(uint32 index) const;
+		template<class T> entityComponent *defineComponent(const T &prototype, const entityComponentCreateConfig &config) { return zPrivateDefineComponent(sizeof(T), alignof(T), (void*)&prototype, config); }
+		entityComponent *componentByIndex(uint32 index) const;
 		uint32 componentsCount() const;
 
-		groupClass *defineGroup();
-		groupClass *groupByIndex(uint32 index) const;
+		entityGroup *defineGroup();
+		entityGroup *groupByIndex(uint32 index) const;
 		uint32 groupsCount() const;
-		const groupClass *group() const; // group containing all entities
+		const entityGroup *group() const; // group containing all entities
 
-		entityClass *createUnique(); // new entity with unique name
-		entityClass *createAnonymous(); // new entity with name = 0, accessible only with the pointer
-		entityClass *create(uint32 name); // must be non-zero
-		entityClass *get(uint32 entityName) const; // throw if it does not exist
-		entityClass *getOrCreate(uint32 entityName);
+		entity *createUnique(); // new entity with unique name
+		entity *createAnonymous(); // new entity with name = 0, accessible only with the pointer
+		entity *create(uint32 name); // must be non-zero
+		entity *get(uint32 entityName) const; // throw if it does not exist
+		entity *getOrCreate(uint32 entityName);
 		bool has(uint32 entityName) const;
-		inline pointerRange<entityClass *const> entities() const;
+		pointerRange<entity *const> entities() const;
 
 		void destroy(); // destroy all entities
 
 	private:
-		componentClass *zPrivateDefineComponent(uintPtr typeSize, uintPtr typeAlignment, void *prototype, const componentCreateConfig &config);
+		entityComponent *zPrivateDefineComponent(uintPtr typeSize, uintPtr typeAlignment, void *prototype, const entityComponentCreateConfig &config);
 	};
 
 	struct CAGE_API entityManagerCreateConfig
 	{};
 
-	CAGE_API holder<entityManagerClass> newEntityManager(const entityManagerCreateConfig &config);
+	CAGE_API holder<entityManager> newEntityManager(const entityManagerCreateConfig &config);
 
-	class CAGE_API entityClass : private immovable
+	class CAGE_API entity : private immovable
 	{
 	public:
 		uint32 name() const;
-		entityManagerClass *manager() const;
+		entityManager *manager() const;
 
-		void add(groupClass *group);
-		void remove(groupClass *group);
-		bool has(const groupClass *group) const;
+		void add(entityGroup *group);
+		void remove(entityGroup *group);
+		bool has(const entityGroup *group) const;
 
-		void add(componentClass *component);
-		template<class T> void add(componentClass *component, const T &prototype) { add(component); value<T>(component) = prototype; }
-		void remove(componentClass *component);
-		bool has(const componentClass *component) const;
-		template<class T> inline T &value(componentClass *component);
-		void *unsafeValue(componentClass *component);
+		void add(entityComponent *component);
+		template<class T> void add(entityComponent *component, const T &prototype) { add(component); value<T>(component) = prototype; }
+		void remove(entityComponent *component);
+		bool has(const entityComponent *component) const;
+		template<class T> T &value(entityComponent *component);
+		void *unsafeValue(entityComponent *component);
 
 		void destroy();
 	};
 
-	class CAGE_API componentClass : private immovable
+	class CAGE_API entityComponent : private immovable
 	{
 	public:
-		entityManagerClass *manager() const;
+		entityManager *manager() const;
 		uint32 index() const;
 		uintPtr typeSize() const;
 
-		const groupClass *group() const; // all entities with this component
-		inline pointerRange<entityClass *const> entities() const;
+		const entityGroup *group() const; // all entities with this component
+		pointerRange<entity *const> entities() const;
 
 		void destroy(); // destroy all entities with this component
 	};
 
-	class CAGE_API groupClass : private immovable
+	class CAGE_API entityGroup : private immovable
 	{
 	public:
-		entityManagerClass *manager() const;
+		entityManager *manager() const;
 		uint32 index() const;
 
 		uint32 count() const;
-		entityClass *const *array() const;
-		pointerRange<entityClass *const> entities() const;
+		entity *const *array() const;
+		pointerRange<entity *const> entities() const;
 
-		void add(entityClass *entity) { entity->add(this); }
-		void remove(entityClass *entity) { entity->remove(this); }
+		void add(entity *ent) { ent->add(this); }
+		void remove(entity *ent) { ent->remove(this); }
 		void add(uint32 entityName) { add(manager()->get(entityName)); }
 		void remove(uint32 entityName) { remove(manager()->get(entityName)); }
 
-		void merge(const groupClass *other); // add all entities from the other group into this group
-		void subtract(const groupClass *other); // remove all entities, which are present in the other group, from this group
-		void intersect(const groupClass *other); // remove all entities, which are NOT present in the other group, from this group
+		void merge(const entityGroup *other); // add all entities from the other group into this group
+		void subtract(const entityGroup *other); // remove all entities, which are present in the other group, from this group
+		void intersect(const entityGroup *other); // remove all entities, which are NOT present in the other group, from this group
 
 		void clear(); // remove all entities from this group
 		void destroy(); // destroy all entities in this group
 
-		mutable eventDispatcher<bool(entityClass*)> entityAdded;
-		mutable eventDispatcher<bool(entityClass*)> entityRemoved;
+		mutable eventDispatcher<bool(entity*)> entityAdded;
+		mutable eventDispatcher<bool(entity*)> entityRemoved;
 	};
 
-	inline pointerRange<entityClass *const> entityManagerClass::entities() const { return group()->entities(); }
-	template<class T> inline T &entityClass::value(componentClass *component) { CAGE_ASSERT_RUNTIME(component->typeSize() == sizeof(T), "type is incompatible", component->typeSize(), sizeof(T)); return *(T*)unsafeValue(component); }
-	inline pointerRange<entityClass *const> componentClass::entities() const { return group()->entities(); }
+	inline pointerRange<entity *const> entityManager::entities() const { return group()->entities(); }
+	template<class T> inline T &entity::value(entityComponent *component) { CAGE_ASSERT_RUNTIME(component->typeSize() == sizeof(T), "type is incompatible", component->typeSize(), sizeof(T)); return *(T*)unsafeValue(component); }
+	inline pointerRange<entity *const> entityComponent::entities() const { return group()->entities(); }
 
-	CAGE_API memoryBuffer entitiesSerialize(const groupClass *entities, componentClass *component);
-	CAGE_API void entitiesDeserialize(const memoryBuffer &buffer, entityManagerClass *manager);
-	CAGE_API void entitiesDeserialize(const void *buffer, uintPtr size, entityManagerClass *manager);
+	CAGE_API memoryBuffer entitiesSerialize(const entityGroup *entities, entityComponent *component);
+	CAGE_API void entitiesDeserialize(const memoryBuffer &buffer, entityManager *manager);
+	CAGE_API void entitiesDeserialize(const void *buffer, uintPtr size, entityManager *manager);
 }
 
 #endif // guard_entities_h_1259B2E89D514872B54F01F42E1EC56A

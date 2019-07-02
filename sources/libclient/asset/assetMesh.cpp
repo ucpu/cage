@@ -21,7 +21,7 @@ namespace cage
 			return i == 0 ? meshDataFlags::Aux0 : i == 1 ? meshDataFlags::Aux1 : i == 2 ? meshDataFlags::Aux2 : i == 3 ? meshDataFlags::Aux3 : meshDataFlags::None;
 		}
 
-		void processLoad(const assetContextStruct *context, void *schemePointer)
+		void processLoad(const assetContext *context, void *schemePointer)
 		{
 			meshClass *msh = nullptr;
 			if (context->assetHolder)
@@ -126,9 +126,9 @@ namespace cage
 		}
 	}
 
-	assetSchemeStruct genAssetSchemeMesh(uint32 threadIndex, windowClass *memoryContext)
+	assetScheme genAssetSchemeMesh(uint32 threadIndex, windowClass *memoryContext)
 	{
-		assetSchemeStruct s;
+		assetScheme s;
 		s.threadIndex = threadIndex;
 		s.schemePointer = memoryContext;
 		s.load.bind<&processLoad>();

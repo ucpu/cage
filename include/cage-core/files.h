@@ -17,7 +17,7 @@ namespace cage
 		bool append;
 	};
 
-	class CAGE_API fileClass : private immovable
+	class CAGE_API file : private immovable
 	{
 	public:
 		void read(void *data, uint64 size);
@@ -33,7 +33,7 @@ namespace cage
 		uint64 size() const;
 	};
 
-	CAGE_API holder<fileClass> newFile(const string &path, const fileMode &mode);
+	CAGE_API holder<file> newFile(const string &path, const fileMode &mode);
 
 	enum class pathTypeFlags : uint32
 	{

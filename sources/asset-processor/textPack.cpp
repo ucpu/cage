@@ -2,14 +2,14 @@
 
 #include "processor.h"
 
-#include <cage-core/ini.h>
+#include <cage-core/configIni.h>
 #include <cage-core/hashString.h>
 
 void processTextpack()
 {
 	writeLine(string("use=") + inputFile);
 
-	holder<iniClass> ini = newIni();
+	holder<configIni> ini = newConfigIni();
 	ini->load(inputFileName);
 
 	std::map<string, string> texts;
@@ -25,7 +25,7 @@ void processTextpack()
 	}
 	CAGE_LOG(severityEnum::Info, logComponentName, string() + "loaded " + texts.size() + " texts");
 
-	assetHeaderStruct h = initializeAssetHeaderStruct();
+	assetHeader h = initializeAssetHeaderStruct();
 	string intr = properties("internationalized");
 	if (!intr.empty())
 	{
@@ -37,7 +37,7 @@ void processTextpack()
 	for (auto it : texts)
 		h.originalSize += numeric_cast<uint32>(it.second.length());
 
-	holder<fileClass> f = newFile(outputFileName, fileMode(false, true));
+	holder<file> f = newFile(outputFileName, fileMode(false, true));
 	f->write(&h, sizeof(h));
 	uint32 count = numeric_cast<uint32>(texts.size());
 	f->write(&count, sizeof(uint32));
@@ -55,7 +55,7 @@ void processTextpack()
 		string dbgName = pathJoin(configGetString("cage-asset-processor.textpack.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".txt");
 		fileMode fm(false, true);
 		fm.textual = true;
-		holder<fileClass> f = newFile(dbgName, fm);
+		holder<file> f = newFile(dbgName, fm);
 		for (auto it : texts)
 			f->writeLine(string(hashString(it.first.c_str())).fill(10) + " " + it.first + " = " + it.second);
 	}

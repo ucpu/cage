@@ -13,7 +13,7 @@ namespace cage
 {
 	namespace
 	{
-		void processLoad(const assetContextStruct *context, void *schemePointer)
+		void processLoad(const assetContext *context, void *schemePointer)
 		{
 			skeletonClass *skl = nullptr;
 			if (context->assetHolder)
@@ -39,9 +39,9 @@ namespace cage
 		}
 	}
 
-	assetSchemeStruct genAssetSchemeSkeleton(uint32 threadIndex)
+	assetScheme genAssetSchemeSkeleton(uint32 threadIndex)
 	{
-		assetSchemeStruct s;
+		assetScheme s;
 		s.threadIndex = threadIndex;
 		s.load.bind<&processLoad>();
 		return s;

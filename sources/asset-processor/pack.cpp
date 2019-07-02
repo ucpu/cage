@@ -3,14 +3,14 @@
 
 #include "processor.h"
 
-#include <cage-core/ini.h>
+#include <cage-core/configIni.h>
 #include <cage-core/hashString.h>
 
 void processPack()
 {
 	writeLine(string("use=") + inputFile);
 
-	holder<iniClass> ini = newIni();
+	holder<configIni> ini = newConfigIni();
 	ini->load(inputFileName);
 
 	std::set<uint32> assets;
@@ -27,10 +27,10 @@ void processPack()
 		}
 	}
 
-	assetHeaderStruct h = initializeAssetHeaderStruct();
+	assetHeader h = initializeAssetHeaderStruct();
 	h.dependenciesCount = numeric_cast<uint16>(assets.size());
 
-	holder<fileClass> f = newFile(outputFileName, fileMode(false, true));
+	holder<file> f = newFile(outputFileName, fileMode(false, true));
 	f->write(&h, sizeof(h));
 	for (uint32 it : assets)
 		f->write(&it, sizeof(uint32));

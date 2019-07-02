@@ -17,7 +17,7 @@ namespace cage
 	{
 		namespace
 		{
-			void renderRectangle(imageClass *png, uint32 x1, uint32 y1, uint32 x2, uint32 y2, const vec3 &color)
+			void renderRectangle(image *png, uint32 x1, uint32 y1, uint32 x2, uint32 y2, const vec3 &color)
 			{
 				uint8 c[3] = { numeric_cast<uint8>(color[0] * 255), numeric_cast<uint8>(color[1] * 255), numeric_cast<uint8>(color[2] * 255) };
 				CAGE_ASSERT_RUNTIME(x1 <= x2 && y1 <= y2);
@@ -37,7 +37,7 @@ namespace cage
 				}
 			}
 
-			void renderRectangle(imageClass *png, const vec4 &rect, const vec3 &color)
+			void renderRectangle(image *png, const vec4 &rect, const vec3 &color)
 			{
 				renderRectangle(png,
 					numeric_cast<uint32>(rect[0] * png->width()),
@@ -47,7 +47,7 @@ namespace cage
 					color);
 			}
 
-			void renderRectangle(imageClass *png, const skinElementLayoutStruct::textureUvOiStruct &rects, const vec3 &outerBorder, const vec3 &innerBorder, const vec3 &content)
+			void renderRectangle(image *png, const skinElementLayoutStruct::textureUvOiStruct &rects, const vec3 &outerBorder, const vec3 &innerBorder, const vec3 &content)
 			{
 				renderRectangle(png, rects.outer, outerBorder);
 				renderRectangle(png, interpolate(rects.outer, rects.inner, 0.5), innerBorder);
@@ -55,9 +55,9 @@ namespace cage
 			}
 		}
 
-		holder<imageClass> guiSkinTemplateExport(const skinConfigStruct &skin, uint32 resolution)
+		holder<image> guiSkinTemplateExport(const skinConfigStruct &skin, uint32 resolution)
 		{
-			holder<imageClass> png = newImage();
+			holder<image> png = newImage();
 			png->empty(resolution, resolution, 4);
 			for (uint32 type = 0; type < (uint32)elementTypeEnum::TotalElements; type++)
 			{

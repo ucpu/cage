@@ -13,7 +13,7 @@ namespace cage
 {
 	namespace
 	{
-		void processDecompress(const assetContextStruct *context, void *schemePointer)
+		void processDecompress(const assetContext *context, void *schemePointer)
 		{
 			soundHeaderStruct *snd = (soundHeaderStruct*)context->compressedData;
 			switch (snd->soundType)
@@ -35,7 +35,7 @@ namespace cage
 			CAGE_ASSERT_RUNTIME(snd->sampleRate == r, snd->sampleRate, r);
 		}
 
-		void processLoad(const assetContextStruct *context, void *schemePointer)
+		void processLoad(const assetContext *context, void *schemePointer)
 		{
 			soundContextClass *gm = (soundContextClass*)schemePointer;
 
@@ -73,9 +73,9 @@ namespace cage
 		}
 	}
 
-	assetSchemeStruct genAssetSchemeSound(uint32 threadIndex, soundContextClass *memoryContext)
+	assetScheme genAssetSchemeSound(uint32 threadIndex, soundContextClass *memoryContext)
 	{
-		assetSchemeStruct s;
+		assetScheme s;
 		s.threadIndex = threadIndex;
 		s.schemePointer = memoryContext;
 		s.decompress.bind<&processDecompress>();

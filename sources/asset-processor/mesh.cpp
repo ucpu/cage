@@ -1,6 +1,6 @@
 #include "utility/assimp.h"
 #include <cage-core/hashString.h>
-#include <cage-core/ini.h>
+#include <cage-core/configIni.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 #include <cage-client/graphics/shaderConventions.h>
@@ -25,7 +25,7 @@ namespace
 		}
 	}
 
-	void loadTextureCage(const string &pathBase, meshHeaderStruct &dsm, iniClass *ini, const string &type, uint32 usage)
+	void loadTextureCage(const string &pathBase, meshHeaderStruct &dsm, configIni *ini, const string &type, uint32 usage)
 	{
 		CAGE_ASSERT_RUNTIME(usage < MaxTexturesCountPerMaterial, usage, MaxTexturesCountPerMaterial, type);
 		string n = ini->getString("textures", type);
@@ -86,7 +86,7 @@ namespace
 
 		writeLine(string("use = ") + path);
 
-		holder<iniClass> ini = newIni();
+		holder<configIni> ini = newConfigIni();
 		ini->load(pathJoin(inputDirectory, path));
 
 		mat.albedoBase = vec4(
@@ -509,7 +509,7 @@ void processMesh()
 	ser << mat;
 	dsmPlaceholder << dsm;
 
-	assetHeaderStruct h = initializeAssetHeaderStruct();
+	assetHeader h = initializeAssetHeaderStruct();
 	h.originalSize = dataBuffer.size();
 	if (dsm.skeletonName)
 		h.dependenciesCount++;
@@ -520,7 +520,7 @@ void processMesh()
 	cage::memoryBuffer compressed = detail::compress(dataBuffer);
 	h.compressedSize = compressed.size();
 
-	holder<fileClass> f = newFile(outputFileName, fileMode(false, true));
+	holder<file> f = newFile(outputFileName, fileMode(false, true));
 	f->write(&h, sizeof(h));
 	if (dsm.skeletonName)
 		f->write(&dsm.skeletonName, sizeof(uint32));

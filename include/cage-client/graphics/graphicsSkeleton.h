@@ -18,6 +18,6 @@ namespace cage
 
 	CAGE_API holder<skeletonClass> newSkeleton();
 
-	CAGE_API assetSchemeStruct genAssetSchemeSkeleton(uint32 threadIndex);
+	CAGE_API assetScheme genAssetSchemeSkeleton(uint32 threadIndex);
 	static const uint32 assetSchemeIndexSkeleton = 13;
 }

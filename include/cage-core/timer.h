@@ -3,7 +3,7 @@
 
 namespace cage
 {
-	class CAGE_API timerClass : private immovable
+	class CAGE_API timer : private immovable
 	{
 	public:
 		void reset();
@@ -11,7 +11,7 @@ namespace cage
 		uint64 microsSinceLast();
 	};
 
-	CAGE_API holder<timerClass> newTimer();
+	CAGE_API holder<timer> newTimer();
 
 	namespace detail
 	{

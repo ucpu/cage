@@ -6,7 +6,7 @@ namespace cage
 	class CAGE_API cameraControllerClass : private immovable
 	{
 	public:
-		void setEntity(entityClass *entity = nullptr);
+		void setEntity(entity *ent = nullptr);
 		vec2 turningSpeed;
 		real wheelSpeed;
 		real movementSpeed;
@@ -19,7 +19,7 @@ namespace cage
 		bool freeMove; // true -> like a space ship (ignores pitch limits), false -> fps (uses pitch limits)
 	};
 
-	CAGE_API holder<cameraControllerClass> newCameraController(entityClass *entity = nullptr);
+	CAGE_API holder<cameraControllerClass> newCameraController(entity *ent = nullptr);
 }
 
 #endif // guard_camera_h_E21CB47685994BD39846DDB714AF034A

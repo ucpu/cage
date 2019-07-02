@@ -17,22 +17,22 @@ void testSceneEntities()
 	{
 		CAGE_TESTCASE("basic functionality");
 
-		holder<entityManagerClass> manager = newEntityManager(entityManagerCreateConfig());
+		holder<entityManager> manager = newEntityManager(entityManagerCreateConfig());
 
-		componentClass *position = manager->defineComponent(vec3(), true);
-		componentClass *velocity = manager->defineComponent(vec3(0, -1, 0), false);
-		componentClass *orientation = manager->defineComponent(quat(), true);
+		entityComponent *position = manager->defineComponent(vec3(), true);
+		entityComponent *velocity = manager->defineComponent(vec3(0, -1, 0), false);
+		entityComponent *orientation = manager->defineComponent(quat(), true);
 
-		groupClass *movement = manager->defineGroup();
+		entityGroup *movement = manager->defineGroup();
 
-		entityClass *terrain = manager->createAnonymous();
+		entity *terrain = manager->createAnonymous();
 		(void)terrain;
-		entityClass *player = manager->createAnonymous();
+		entity *player = manager->createAnonymous();
 		player->add(position);
 		player->add(velocity);
 		player->add(orientation);
 		player->add(movement);
-		entityClass *tank = manager->createAnonymous();
+		entity *tank = manager->createAnonymous();
 		tank->add(position, vec3(100, 0, 50));
 		tank->add(orientation);
 
@@ -58,7 +58,7 @@ void testSceneEntities()
 	{
 		CAGE_TESTCASE("deletions");
 
-		holder<entityManagerClass> manager = newEntityManager(entityManagerCreateConfig());
+		holder<entityManager> manager = newEntityManager(entityManagerCreateConfig());
 		for (uint32 i = 0; i < 3; i++)
 			manager->defineComponent(vec3(), true);
 		for (uint32 i = 0; i < 3; i++)
@@ -66,20 +66,20 @@ void testSceneEntities()
 
 		struct helpStruct
 		{
-			componentClass *c;
-			eventListener<bool(entityClass*)> listener;
+			entityComponent *c;
+			eventListener<bool(entity*)> listener;
 
-			helpStruct(componentClass *c) : c(c)
+			helpStruct(entityComponent *c) : c(c)
 			{
 				listener.bind<helpStruct, &helpStruct::entityDestroyed>(this);
 			}
 
-			bool entityDestroyed(entityClass *e)
+			bool entityDestroyed(entity *e)
 			{
 				uint32 cnt = c->group()->count();
 				if (cnt > 2)
 				{
-					entityClass *const *ents = c->group()->array();
+					entity *const *ents = c->group()->array();
 					if (*ents != e)
 						(*ents)->destroy();
 				}
@@ -93,7 +93,7 @@ void testSceneEntities()
 		{
 			for (uint32 i = 0; i < 100; i++)
 			{
-				entityClass *e = manager->createUnique();
+				entity *e = manager->createUnique();
 				for (uint32 j = 0; j < 3; j++)
 				{
 					if (randomChance() < 0.5)
@@ -123,7 +123,7 @@ void testSceneEntities()
 		static const uint32 totalComponents = 15;
 #endif
 
-		holder<entityManagerClass> manager = newEntityManager(entityManagerCreateConfig());
+		holder<entityManager> manager = newEntityManager(entityManagerCreateConfig());
 
 		for (uint32 i = 0; i < totalComponents; i++)
 			manager->defineComponent(vec3(), true);
@@ -152,7 +152,7 @@ void testSceneEntities()
 				case 2:
 				{ // add entity
 					CAGE_ASSERT_RUNTIME(reference.find(entName) == reference.end(), entName, reference.size());
-					entityClass *e = manager->create(entName);
+					entity *e = manager->create(entName);
 					reference[entName];
 					for (uint32 i = 0; i < totalComponents; i++)
 					{
@@ -170,7 +170,7 @@ void testSceneEntities()
 						break;
 					referenceType::iterator it = reference.begin();
 					std::advance(it, randomRange((uint32)0, numeric_cast<uint32>(reference.size())));
-					entityClass *e = manager->get(it->first);
+					entity *e = manager->get(it->first);
 					for (uint32 i = 0; i < totalComponents; i++)
 					{
 						if (randomChance() < 0.5)
@@ -186,7 +186,7 @@ void testSceneEntities()
 						break;
 					referenceType::iterator it = reference.begin();
 					std::advance(it, randomRange((uint32)0, numeric_cast<uint32>(reference.size())));
-					entityClass *e = manager->get(it->first);
+					entity *e = manager->get(it->first);
 					for (uint32 i = 0; i < totalComponents; i++)
 					{
 						if (randomChance() < 0.5)
@@ -204,22 +204,22 @@ void testSceneEntities()
 			CAGE_TEST(entsCnt == reference.size());
 			if (entsCnt == 0)
 				continue;
-			std::vector<entityClass*> allEntities;
+			std::vector<entity*> allEntities;
 			allEntities.reserve(entsCnt);
-			std::vector<std::vector<entityClass*> > componentEntities;
+			std::vector<std::vector<entity*> > componentEntities;
 			componentEntities.resize(totalComponents);
 			for (referenceType::iterator it = reference.begin(), et = reference.end(); it != et; it++)
 			{
-				entityClass *e = manager->get(it->first);
+				entity *e = manager->get(it->first);
 				allEntities.push_back(e);
 				for (std::set<uint32>::iterator cit = it->second.begin(), cet = it->second.end(); cit != cet; cit++)
 					componentEntities[*cit].push_back(e);
 			}
-			entityClass *const *entsBufConst = manager->group()->array();
-			std::vector<entityClass*> entsBuf(entsBufConst, entsBufConst + entsCnt);
+			entity *const *entsBufConst = manager->group()->array();
+			std::vector<entity*> entsBuf(entsBufConst, entsBufConst + entsCnt);
 			std::sort(entsBuf.begin(), entsBuf.end());
 			std::sort(allEntities.begin(), allEntities.end());
-			CAGE_TEST(detail::memcmp(&entsBuf[0], &allEntities[0], sizeof(entityClass*) * entsCnt) == 0);
+			CAGE_TEST(detail::memcmp(&entsBuf[0], &allEntities[0], sizeof(entity*) * entsCnt) == 0);
 			for (uint32 i = 0; i < totalComponents; i++)
 			{
 				entsCnt = manager->componentByIndex(i)->group()->count();
@@ -227,10 +227,10 @@ void testSceneEntities()
 				if (entsCnt == 0)
 					continue;
 				entsBufConst = manager->componentByIndex(i)->group()->array();
-				entsBuf = std::vector<entityClass*>(entsBufConst, entsBufConst + entsCnt);
+				entsBuf = std::vector<entity*>(entsBufConst, entsBufConst + entsCnt);
 				std::sort(entsBuf.begin(), entsBuf.end());
 				std::sort(componentEntities[i].begin(), componentEntities[i].end());
-				CAGE_TEST(detail::memcmp(&entsBuf[0], &componentEntities[i][0], sizeof(entityClass*) * entsCnt) == 0);
+				CAGE_TEST(detail::memcmp(&entsBuf[0], &componentEntities[i][0], sizeof(entity*) * entsCnt) == 0);
 			}
 		}
 	}
@@ -254,9 +254,9 @@ void testSceneEntities()
 		static const uint32 initialEntities = 5000;
 #endif
 
-		holder<entityManagerClass> manager = newEntityManager(entityManagerCreateConfig());
-		componentClass *components[totalComponents];
-		groupClass *groups[totalGroups];
+		holder<entityManager> manager = newEntityManager(entityManagerCreateConfig());
+		entityComponent *components[totalComponents];
+		entityGroup *groups[totalGroups];
 
 		for (uint32 i = 0; i < totalComponents; i++)
 			components[i] = manager->defineComponent(vec3(), true);
@@ -271,7 +271,7 @@ void testSceneEntities()
 		for (uint32 i = 0; i < initialEntities; i++)
 		{
 			uint32 n = entityNameIndex++;
-			entityClass *e = manager->create(n);
+			entity *e = manager->create(n);
 			for (uint32 j = n % totalComponents, je = min(j + usedComponents, totalComponents); j < je; j++)
 				e->add(components[j]);
 			for (uint32 j = 0; j < totalGroups; j++)
@@ -280,7 +280,7 @@ void testSceneEntities()
 			exists[n] = true;
 		}
 
-		holder<timerClass> tmr = newTimer();
+		holder<timer> tmr = newTimer();
 
 		for (uint32 cycle = 0; cycle < totalCycles; cycle++)
 		{
@@ -300,7 +300,7 @@ void testSceneEntities()
 				for (uint32 i = 0, et = randomRange(1, 20); i < et; i++)
 				{
 					uint32 n = entityNameIndex++;
-					entityClass *e = manager->create(n);
+					entity *e = manager->create(n);
 					for (uint32 j = n % totalComponents, je = min(j + usedComponents, totalComponents); j < je; j++)
 						e->add(components[j]);
 					for (uint32 j = 0; j < totalGroups; j++)
@@ -316,11 +316,11 @@ void testSceneEntities()
 					if (randomChance() < 0.5)
 						continue;
 					uint32 cnt = groups[j]->count();
-					entityClass *const *ents = groups[j]->array();
+					entity *const *ents = groups[j]->array();
 					bool w = randomChance() < 0.2;
 					for (uint32 k = 0; k < cnt; k++)
 					{
-						entityClass *e = ents[k];
+						entity *e = ents[k];
 						uint32 n = e->name();
 						for (uint32 m = n % totalComponents, me = min(m + usedComponents, totalComponents); m < me; m++)
 						{

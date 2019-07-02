@@ -10,7 +10,7 @@ namespace cage
 
 	struct CAGE_API componentsStruct : public generalComponentsStruct, public widgetsComponentsStruct, public layoutsComponentsStruct
 	{
-		componentsStruct(entityManagerClass *ents);
+		componentsStruct(entityManager *ents);
 	};
 
 	class CAGE_API guiClass : private immovable
@@ -57,13 +57,13 @@ namespace cage
 		const skinConfigStruct &skin(uint32 index = 0) const;
 
 		componentsStruct &components();
-		entityManagerClass *entities();
-		assetManagerClass *assets();
+		entityManager *entities();
+		assetManager *assets();
 	};
 
 	struct CAGE_API guiCreateConfig
 	{
-		assetManagerClass *assetManager;
+		assetManager *assetManager;
 		entityManagerCreateConfig *entitiesConfig;
 		uintPtr itemsArenaSize;
 		uintPtr emitArenaSize;
@@ -75,6 +75,6 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_API holder<imageClass> guiSkinTemplateExport(const skinConfigStruct &skin, uint32 resolution);
+		CAGE_API holder<image> guiSkinTemplateExport(const skinConfigStruct &skin, uint32 resolution);
 	}
 }

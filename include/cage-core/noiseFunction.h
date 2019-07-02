@@ -1,5 +1,5 @@
-#ifndef guard_noise_h_189F28C1827941F488646FA87D7913F4
-#define guard_noise_h_189F28C1827941F488646FA87D7913F4
+#ifndef guard_noiseFunction_h_189F28C1827941F488646FA87D7913F4
+#define guard_noiseFunction_h_189F28C1827941F488646FA87D7913F4
 
 namespace cage
 {
@@ -46,7 +46,7 @@ namespace cage
 		Divide,
 	};
 
-	class CAGE_API noiseClass : private immovable
+	class CAGE_API noiseFunction : private immovable
 	{
 	public:
 		real evaluate(real position);
@@ -59,7 +59,7 @@ namespace cage
 		void evaluate(uint32 count, const vec4 positions[], real results[]);
 	};
 
-	struct CAGE_API noiseCreateConfig
+	struct CAGE_API noiseFunctionCreateConfig
 	{
 		noiseTypeEnum type;
 		noiseInterpolationEnum interpolation;
@@ -73,10 +73,10 @@ namespace cage
 		real frequency;
 		uint8 index0, index1;
 
-		noiseCreateConfig(uint32 seed = 1337);
+		noiseFunctionCreateConfig(uint32 seed = 1337);
 	};
 
-	CAGE_API holder<noiseClass> newNoise(const noiseCreateConfig &config);
+	CAGE_API holder<noiseFunction> newNoiseFunction(const noiseFunctionCreateConfig &config);
 }
 
-#endif // guard_noise_h_189F28C1827941F488646FA87D7913F4
+#endif // guard_noiseFunction_h_189F28C1827941F488646FA87D7913F4
