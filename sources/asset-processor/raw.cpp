@@ -9,8 +9,8 @@ void processRaw()
 	writeLine(string("use=") + inputFile);
 
 	memoryBuffer data;
-	{ // load file
-		holder<file> f = newFile(inputFile, fileMode(true, false));
+	{ // load fileHandle
+		holder<fileHandle> f = newFile(inputFile, fileMode(true, false));
 		data.allocate(numeric_cast<uintPtr>(f->size()));
 		f->read(data.data(), data.size());
 	}
@@ -35,7 +35,7 @@ void processRaw()
 	else
 		CAGE_LOG(severityEnum::Info, logComponentName, "data are under compression threshold");
 
-	holder<file> f = newFile(outputFileName, fileMode(false, true));
+	holder<fileHandle> f = newFile(outputFileName, fileMode(false, true));
 	f->write(&h, sizeof(h));
 	f->write(data.data(), data.size());
 	f->close();

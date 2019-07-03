@@ -17,7 +17,7 @@ namespace cage
 		speakerSamplerate();
 	};
 
-	class CAGE_API speakerDeviceClass : private immovable
+	class CAGE_API speakerDevice : private immovable
 	{
 	public:
 		string id() const;
@@ -35,16 +35,16 @@ namespace cage
 		pointerRange<const speakerSamplerate> samplerates() const;
 	};
 
-	class CAGE_API speakerListClass : private immovable
+	class CAGE_API speakerList : private immovable
 	{
 	public:
 		uint32 devicesCount() const;
 		uint32 defaultDevice() const;
-		const speakerDeviceClass *device(uint32 index) const;
-		holder<pointerRange<const speakerDeviceClass *>> devices() const;
+		const speakerDevice *device(uint32 index) const;
+		holder<pointerRange<const speakerDevice *>> devices() const;
 	};
 
-	CAGE_API holder<speakerListClass> newSpeakerList(bool inputs = false);
+	CAGE_API holder<speakerList> newSpeakerList(bool inputs = false);
 }
 
 #endif // guard_speakerList_h_m1n5ewqa7r8fuj4

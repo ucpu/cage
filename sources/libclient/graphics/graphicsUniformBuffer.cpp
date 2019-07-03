@@ -13,7 +13,7 @@ namespace cage
 {
 	namespace
 	{
-		class uniformBufferImpl : public uniformBufferClass
+		class uniformBufferImpl : public uniformBuffer
 		{
 		public:
 			uint32 id;
@@ -33,7 +33,7 @@ namespace cage
 		};
 	}
 
-	void uniformBufferClass::setDebugName(const string &name)
+	void uniformBuffer::setDebugName(const string &name)
 	{
 #ifdef CAGE_DEBUG
 		debugName = name;
@@ -42,27 +42,27 @@ namespace cage
 		glObjectLabel(GL_BUFFER, impl->id, name.length(), name.c_str());
 	}
 
-	uint32 uniformBufferClass::getId() const
+	uint32 uniformBuffer::getId() const
 	{
 		return ((uniformBufferImpl*)this)->id;
 	}
 
-	void uniformBufferClass::bind() const
+	void uniformBuffer::bind() const
 	{
 		uniformBufferImpl *impl = (uniformBufferImpl*)this;
 		glBindBuffer(GL_UNIFORM_BUFFER, impl->id);
 		CAGE_CHECK_GL_ERROR_DEBUG();
-		setCurrentObject<uniformBufferClass>(impl->id);
+		setCurrentObject<uniformBuffer>(impl->id);
 	}
 
-	void uniformBufferClass::bind(uint32 bindingPoint) const
+	void uniformBuffer::bind(uint32 bindingPoint) const
 	{
 		uniformBufferImpl *impl = (uniformBufferImpl*)this;
 		glBindBufferBase(GL_UNIFORM_BUFFER, bindingPoint, impl->id);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void uniformBufferClass::bind(uint32 bindingPoint, uint32 offset, uint32 size) const
+	void uniformBuffer::bind(uint32 bindingPoint, uint32 offset, uint32 size) const
 	{
 		uniformBufferImpl *impl = (uniformBufferImpl*)this;
 		CAGE_ASSERT_RUNTIME(offset + size <= impl->size, "insufficient buffer size", offset, size, impl->size);
@@ -70,28 +70,28 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void uniformBufferClass::writeWhole(void *data, uint32 size, uint32 usage)
+	void uniformBuffer::writeWhole(void *data, uint32 size, uint32 usage)
 	{
 		if (usage == 0)
 			usage = GL_STATIC_DRAW;
 		uniformBufferImpl *impl = (uniformBufferImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<uniformBufferClass>() == impl->id);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<uniformBuffer>() == impl->id);
 		glBufferData(GL_UNIFORM_BUFFER, size, data, usage);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 		impl->size = size;
 	}
 
-	void uniformBufferClass::writeRange(void *data, uint32 offset, uint32 size)
+	void uniformBuffer::writeRange(void *data, uint32 offset, uint32 size)
 	{
 		uniformBufferImpl *impl = (uniformBufferImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<uniformBufferClass>() == impl->id);
+		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<uniformBuffer>() == impl->id);
 		CAGE_ASSERT_RUNTIME(offset + size <= impl->size, "insufficient buffer size", offset, size, impl->size);
 		glBufferSubData(GL_UNIFORM_BUFFER, offset, size, data);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	holder<uniformBufferClass> newUniformBuffer()
+	holder<uniformBuffer> newUniformBuffer()
 	{
-		return detail::systemArena().createImpl<uniformBufferClass, uniformBufferImpl>();
+		return detail::systemArena().createImpl<uniformBuffer, uniformBufferImpl>();
 	}
 }

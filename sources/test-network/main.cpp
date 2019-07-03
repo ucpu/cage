@@ -4,7 +4,7 @@
 #include <cage-core/log.h>
 #include <cage-core/math.h>
 #include <cage-core/configIni.h>
-#include <cage-core/program.h>
+#include <cage-core/process.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/config.h>
 
@@ -17,7 +17,7 @@ namespace
 {
 	struct runStruct
 	{
-		holder<thread> thr;
+		holder<threadHandle> thr;
 		string cmd;
 		uint32 name;
 
@@ -33,7 +33,7 @@ namespace
 
 		void run()
 		{
-			holder<program> prg = newProgram(cmd);
+			holder<processHandle> prg = newProcess(cmd);
 			{
 				while (true)
 				{
@@ -49,7 +49,7 @@ namespace
 			}
 			int res = prg->wait();
 			if (res != 0)
-				CAGE_LOG(severityEnum::Info, "manager", string() + name + ": program ended with code: " + res);
+				CAGE_LOG(severityEnum::Info, "manager", string() + name + ": processHandle ended with code: " + res);
 		}
 	};
 
@@ -63,11 +63,11 @@ namespace
 
 	void initializeSecondaryLog(const string &path)
 	{
-		static holder<logOutputFile> *secondaryLogFile = new holder<logOutputFile>(); // intentional leak
+		static holder<loggerOutputFile> *secondaryLogFile = new holder<loggerOutputFile>(); // intentional leak
 		static holder<logger> *secondaryLog = new holder<logger>(); // intentional leak - this will allow to log to the very end of the application
-		*secondaryLogFile = newLogOutputFile(path, false);
+		*secondaryLogFile = newLoggerOutputFile(path, false);
 		*secondaryLog = newLogger();
-		(*secondaryLog)->output.bind<logOutputFile, &logOutputFile::output>(secondaryLogFile->get());
+		(*secondaryLog)->output.bind<loggerOutputFile, &loggerOutputFile::output>(secondaryLogFile->get());
 		(*secondaryLog)->format.bind<&logFormatFileShort>();
 	}
 }

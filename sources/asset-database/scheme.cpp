@@ -56,7 +56,7 @@ void schemeStruct::parse(configIni *ini)
 	}
 }
 
-void schemeStruct::load(file *f)
+void schemeStruct::load(fileHandle *f)
 {
 	read(f, name);
 	read(f, processor);
@@ -76,7 +76,7 @@ void schemeStruct::load(file *f)
 	}
 }
 
-void schemeStruct::save(file *f)
+void schemeStruct::save(fileHandle *f)
 {
 	write(f, name);
 	write(f, processor);

@@ -37,7 +37,7 @@ void processTextpack()
 	for (auto it : texts)
 		h.originalSize += numeric_cast<uint32>(it.second.length());
 
-	holder<file> f = newFile(outputFileName, fileMode(false, true));
+	holder<fileHandle> f = newFile(outputFileName, fileMode(false, true));
 	f->write(&h, sizeof(h));
 	uint32 count = numeric_cast<uint32>(texts.size());
 	f->write(&count, sizeof(uint32));
@@ -55,7 +55,7 @@ void processTextpack()
 		string dbgName = pathJoin(configGetString("cage-asset-processor.textpack.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".txt");
 		fileMode fm(false, true);
 		fm.textual = true;
-		holder<file> f = newFile(dbgName, fm);
+		holder<fileHandle> f = newFile(dbgName, fm);
 		for (auto it : texts)
 			f->writeLine(string(hashString(it.first.c_str())).fill(10) + " " + it.first + " = " + it.second);
 	}

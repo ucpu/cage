@@ -88,8 +88,8 @@ namespace cage
 
 		void listen(const string &address, uint16 port);
 
-		eventDispatcher<bool(uint32, memoryBuffer&)> findAssetBuffer; // this event is called from the loading thread
-		eventDispatcher<bool(uint32, string&)> findAssetPath; // this event is called from the loading thread
+		eventDispatcher<bool(uint32, memoryBuffer&)> findAssetBuffer; // this event is called from the loading threadHandle
+		eventDispatcher<bool(uint32, string&)> findAssetPath; // this event is called from the loading threadHandle
 
 	private:
 		void zScheme(uint32 index, const assetScheme &value, uintPtr typeSize);

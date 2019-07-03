@@ -20,16 +20,16 @@ void testFiles()
 		data.data()[i] = (char)(i % 26 + 'A');
 
 	{
-		CAGE_TESTCASE("write to file");
-		holder<file> f = newFile("testdir/files/1", fileMode(false, true));
+		CAGE_TESTCASE("write to fileHandle");
+		holder<fileHandle> f = newFile("testdir/files/1", fileMode(false, true));
 		CAGE_TEST(f);
 		for (uint32 i = 0; i < FILE_BLOCKS; i++)
 			f->write(data.data(), BLOCK_SIZE);
 	}
 
 	{
-		CAGE_TESTCASE("read from file");
-		holder<file> f = newFile("testdir/files/1", fileMode(true, false));
+		CAGE_TESTCASE("read from fileHandle");
+		holder<fileHandle> f = newFile("testdir/files/1", fileMode(true, false));
 		CAGE_TEST(f);
 		CAGE_TEST(f->size() == (uint64)FILE_BLOCKS * (uint64)BLOCK_SIZE);
 		memoryBuffer tmp(BLOCK_SIZE);
@@ -82,7 +82,7 @@ void testFiles()
 	}
 
 	{
-		CAGE_TESTCASE("list directory - test empty file");
+		CAGE_TESTCASE("list directory - test empty fileHandle");
 		{
 			auto f = newFile("testdir/empty.txt", fileMode(false, true));
 			//f->writeLine("haha");
@@ -146,8 +146,8 @@ void testFiles()
 	}
 
 	{
-		CAGE_TESTCASE("non-existing file");
-		CAGE_TEST_THROWN(newFile("testdir/files/non-existing-file", fileMode(true, false)));
+		CAGE_TESTCASE("non-existing fileHandle");
+		CAGE_TEST_THROWN(newFile("testdir/files/non-existing-fileHandle", fileMode(true, false)));
 	}
 
 	{
@@ -156,14 +156,14 @@ void testFiles()
 		const string bs = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
 
 		{
-			holder<file> f = newFile("testdir/files/lines", fileMode(false, true));
+			holder<fileHandle> f = newFile("testdir/files/lines", fileMode(false, true));
 			string s = bs;
 			while (!s.empty())
 				f->writeLine(s.split("/"));
 		}
 
 		{
-			holder<file> f = newFile("testdir/files/lines", fileMode(true, false));
+			holder<fileHandle> f = newFile("testdir/files/lines", fileMode(true, false));
 			string s = bs;
 			for (string line; f->readLine(line);)
 				CAGE_TEST(line == s.split("/"));
@@ -172,7 +172,7 @@ void testFiles()
 	}
 
 	{
-		CAGE_TESTCASE("move file");
+		CAGE_TESTCASE("move fileHandle");
 
 		{
 			CAGE_TESTCASE("simple move");
@@ -191,8 +191,8 @@ void testFiles()
 		}
 
 		{
-			CAGE_TESTCASE("move non-existing file");
-			CAGE_TEST_THROWN(pathMove("testdir/moved/non-existing-file", "testdir/moved/1"));
+			CAGE_TESTCASE("move non-existing fileHandle");
+			CAGE_TEST_THROWN(pathMove("testdir/moved/non-existing-fileHandle", "testdir/moved/1"));
 		}
 	}
 }

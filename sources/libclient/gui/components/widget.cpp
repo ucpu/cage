@@ -58,7 +58,7 @@ namespace cage
 	spoilerComponent::spoilerComponent() : collapsesSiblings(true), collapsed(true)
 	{}
 
-	widgetsComponentsStruct::widgetsComponentsStruct(entityManager *ents)
+	guiWidgetsComponents::guiWidgetsComponents(entityManager *ents)
 	{
 		detail::memset(this, 0, sizeof(*this));
 #define GCHL_GENERATE(T) T = ents->defineComponent<CAGE_JOIN(T, Component)>(CAGE_JOIN(T, Component)(), false);

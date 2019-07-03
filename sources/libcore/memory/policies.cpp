@@ -37,7 +37,7 @@ namespace cage
 		struct allocation
 		{
 			uint64 time;
-			uint64 thread;
+			uint64 threadHandle;
 			uintPtr size;
 		};
 
@@ -60,7 +60,7 @@ namespace cage
 				CAGE_ASSERT_RUNTIME(allocations.find(ptr) == allocations.end(), "duplicate allocation at same address");
 				allocation a;
 				a.size = size;
-				a.thread = threadId();
+				a.threadHandle = threadId();
 				a.time = CAGE_LOG(severityEnum::Info, "memory", string("allocation at ") + string(ptr) + " of size " + size);
 				allocations[ptr] = a;
 			}
@@ -82,7 +82,7 @@ namespace cage
 			void reportAllocatins() const
 			{
 				for (std::map <void*, allocation>::const_iterator i = allocations.begin(), e = allocations.end(); i != e; i++)
-					CAGE_LOG_CONTINUE(severityEnum::Note, "memory", string("memory at ") + string(i->first) + " of size " + i->second.size + " allocated in thread " + i->second.thread + " at time " + i->second.time);
+					CAGE_LOG_CONTINUE(severityEnum::Note, "memory", string("memory at ") + string(i->first) + " of size " + i->second.size + " allocated in threadHandle " + i->second.threadHandle + " at time " + i->second.time);
 			}
 
 			std::map <void*, allocation> allocations;

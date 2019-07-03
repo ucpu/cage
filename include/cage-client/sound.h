@@ -4,10 +4,10 @@
 #include "sound/soundError.h"
 #include "sound/soundContext.h"
 #include "sound/soundStructures.h"
-#include "sound/soundBus.h"
-#include "sound/soundFilters.h"
+#include "sound/mixingBus.h"
+#include "sound/mixingFilters.h"
 #include "sound/soundSource.h"
-#include "sound/soundSpeaker.h"
+#include "sound/speakerOutput.h"
 #include "sound/soundConfig.h"
 
 #endif // guard_sound_h_8EF0985E04CD4714B530EA7D605E92EC

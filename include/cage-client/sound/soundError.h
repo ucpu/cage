@@ -1,8 +1,8 @@
 namespace cage
 {
-	struct soundException : public codeException
+	struct soundError : public codeException
 	{
-		soundException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uint32 code) noexcept;
-		virtual soundException &log();
+		soundError(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uint32 code) noexcept;
+		virtual soundError &log();
 	};
 }

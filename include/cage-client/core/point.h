@@ -1,24 +1,24 @@
 namespace cage
 {
-	struct CAGE_API pointStruct
+	struct CAGE_API ivec2
 	{
-		pointStruct() : x(0), y(0)
+		ivec2() : x(0), y(0)
 		{}
 
-		pointStruct(sint32 x, sint32 y) : x(x), y(y)
+		ivec2(sint32 x, sint32 y) : x(x), y(y)
 		{}
 
-		bool operator == (const pointStruct &other) const
+		bool operator == (const ivec2 &other) const
 		{
 			return x == other.x && y == other.y;
 		}
 
-		bool operator != (const pointStruct &other) const
+		bool operator != (const ivec2 &other) const
 		{
 			return !(*this == other);
 		}
 
-		bool operator < (const pointStruct &other) const
+		bool operator < (const ivec2 &other) const
 		{
 			if (x == other.x)
 				return y < other.y;

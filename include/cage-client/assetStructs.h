@@ -4,7 +4,7 @@
 namespace cage
 {
 	/*
-	struct CAGE_API shaderHeaderStruct
+	struct CAGE_API shaderProgramHeader
 	{
 	// follows:
 	// number of stages, uint32
@@ -16,7 +16,7 @@ namespace cage
 	};
 	*/
 
-	struct CAGE_API textureHeaderStruct
+	struct CAGE_API renderTextureHeader
 	{
 		textureFlags flags;
 		uint32 target; // GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_2D_ARRAY, GL_TEXTURE_CUBE_MAP, ...
@@ -40,7 +40,7 @@ namespace cage
 		// array of texels
 	};
 
-	struct CAGE_API meshHeaderStruct
+	struct CAGE_API renderMeshHeader
 	{
 		aabb box;
 		meshDataFlags flags;
@@ -62,13 +62,13 @@ namespace cage
 		bool uvs() const;
 		uint32 vertexSize() const;
 
-		struct CAGE_API materialDataStruct
+		struct CAGE_API materialData
 		{
 			vec4 albedoBase;
 			vec4 specialBase;
 			vec4 albedoMult;
 			vec4 specialMult;
-			materialDataStruct();
+			materialData();
 		};
 
 		// follows:
@@ -84,13 +84,13 @@ namespace cage
 		// array of auxiliary data, each vec*, if meshDataFlags::aux2
 		// array of auxiliary data, each vec*, if meshDataFlags::aux3
 		// array of indices, each uint32
-		// material (may or may not be the materialDataStruct)
+		// material (may or may not be the materialData)
 
 		// notes:
 		// the four bone weights for each vertex must add to one
 	};
 
-	struct CAGE_API skeletonHeaderStruct
+	struct CAGE_API skeletonRigHeader
 	{
 		mat4 globalInverse;
 		uint32 bonesCount;
@@ -101,7 +101,7 @@ namespace cage
 		// array of inverted rest matrices, each mat4
 	};
 
-	struct CAGE_API animationHeaderStruct
+	struct CAGE_API skeletalAnimationHeader
 	{
 		uint64 duration; // in microseconds
 		uint32 skeletonBonesCount;
@@ -121,7 +121,7 @@ namespace cage
 		//   array of scale values, each vec3
 	};
 
-	struct CAGE_API objectHeaderStruct
+	struct CAGE_API renderObjectHeader
 	{
 		real worldSize;
 		real pixelsSize;
@@ -134,7 +134,7 @@ namespace cage
 		// array of mesh names, each uint32
 	};
 
-	struct CAGE_API fontHeaderStruct
+	struct CAGE_API fontFaceHeader
 	{
 		fontFlags flags;
 		vec2 glyphMaxSize; // linear units
@@ -145,7 +145,7 @@ namespace cage
 		uint32 glyphCount;
 		uint32 charCount;
 
-		struct CAGE_API glyphDataStruct
+		struct CAGE_API glyphData
 		{
 			vec4 texUv;
 			vec2 size; // linear units
@@ -155,7 +155,7 @@ namespace cage
 
 		// follows:
 		// texture data
-		// array of glyphDataStruct
+		// array of glyphData
 		// array of kerning, each 1 real
 		// array of charset characters, each uint32
 		// array of charset glyphs, each uint32
@@ -165,7 +165,7 @@ namespace cage
 		// linear units must be multiplied by font size before rendering
 	};
 
-	struct CAGE_API soundHeaderStruct
+	struct CAGE_API soundSourceHeader
 	{
 		soundTypeEnum soundType;
 		soundFlags flags;
@@ -173,11 +173,11 @@ namespace cage
 		uint32 channels;
 		uint32 sampleRate;
 
-		// follows (for raw file):
+		// follows (for raw fileHandle):
 		// array of frames, each channels * float
 		// ...
 
-		// follows (for compressed file):
+		// follows (for compressed fileHandle):
 		// ogg/vorbis compressed stream
 	};
 }

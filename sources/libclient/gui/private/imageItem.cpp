@@ -32,7 +32,7 @@ namespace cage
 		auto *impl = hierarchy->impl;
 		if (GUI_HAS_COMPONENT(imageFormat, hierarchy->ent))
 		{
-			GUI_GET_COMPONENT(imageFormat, f, hierarchy->ent);
+			CAGE_COMPONENT_GUI(imageFormat, f, hierarchy->ent);
 			apply(f);
 		}
 		assign();
@@ -41,14 +41,14 @@ namespace cage
 	void imageItemStruct::assign()
 	{
 		auto *impl = hierarchy->impl;
-		GUI_GET_COMPONENT(image, i, hierarchy->ent);
+		CAGE_COMPONENT_GUI(image, i, hierarchy->ent);
 		assign(i);
 	}
 
 	void imageItemStruct::assign(const imageComponent &value)
 	{
 		image = value;
-		texture = hierarchy->impl->assetManager->tryGet<assetSchemeIndexTexture, textureClass>(value.textureName);
+		texture = hierarchy->impl->assetManager->tryGet<assetSchemeIndexRenderTexture, renderTexture>(value.textureName);
 	}
 
 	void imageItemStruct::apply(const imageFormatComponent &f)

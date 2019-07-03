@@ -52,9 +52,9 @@ namespace cage
 		uintPtr soundEmitMemory;
 		entityManagerCreateConfig *entities;
 		assetManagerCreateConfig *assets;
-		guiCreateConfig *gui;
+		guiManagerCreateConfig *gui;
 		soundContextCreateConfig *soundContext;
-		speakerCreateConfig *speaker;
+		speakerOutputCreateConfig *speaker;
 		engineCreateConfig();
 	};
 
@@ -63,18 +63,18 @@ namespace cage
 	CAGE_API void engineStop();
 	CAGE_API void engineFinalize();
 
-	CAGE_API soundContextClass *sound();
+	CAGE_API soundContext *sound();
 	CAGE_API assetManager *assets();
 	CAGE_API entityManager *entities();
-	CAGE_API windowClass *window();
-	CAGE_API guiClass *gui();
-	CAGE_API speakerClass *speaker();
-	CAGE_API busClass *masterMixer();
-	CAGE_API busClass *musicMixer();
-	CAGE_API busClass *effectsMixer();
-	CAGE_API busClass *guiMixer();
+	CAGE_API windowHandle *window();
+	CAGE_API guiManager *gui();
+	CAGE_API speakerOutput *speaker();
+	CAGE_API mixingBus *masterMixer();
+	CAGE_API mixingBus *musicMixer();
+	CAGE_API mixingBus *effectsMixer();
+	CAGE_API mixingBus *guiMixer();
 	CAGE_API uint64 currentControlTime();
 }
 
-#define ENGINE_GET_COMPONENT(T,C,E) ::cage::CAGE_JOIN(T, Component) &C = (E)->value<::cage::CAGE_JOIN(T, Component)>(::cage::CAGE_JOIN(T, Component)::component);
-#define GUI_GET_COMPONENT(T,C,E) ::cage::CAGE_JOIN(T, Component) &C = (E)->value<::cage::CAGE_JOIN(T, Component)>(::cage::gui()->components().T);
+#define CAGE_COMPONENT_ENGINE(T,C,E) ::cage::CAGE_JOIN(T, Component) &C = (E)->value<::cage::CAGE_JOIN(T, Component)>(::cage::CAGE_JOIN(T, Component)::component);
+#define CAGE_COMPONENT_GUI(T,C,E) ::cage::CAGE_JOIN(T, Component) &C = (E)->value<::cage::CAGE_JOIN(T, Component)>(::cage::gui()->components().T);

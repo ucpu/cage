@@ -48,8 +48,8 @@ namespace cage
 
 		struct mixStruct
 		{
-			holder<busClass> bus;
-			holder<filterClass> filter;
+			holder<mixingBus> bus;
+			holder<mixingFilter> filter;
 			soundPrepareImpl *data;
 			emitVoiceStruct *voice;
 			emitListenerStruct *listener;
@@ -63,8 +63,8 @@ namespace cage
 					bus->clear();
 				else
 				{
-					bus = newBus(sound());
-					filter = newFilter(sound());
+					bus = newMixingBus(sound());
+					filter = newMixingFilter(sound());
 					filter->execute.bind<mixStruct, &mixStruct::exe>(this);
 				}
 				this->voice = voice;
@@ -81,7 +81,7 @@ namespace cage
 					assetManager *ass = assets();
 					if (!ass->ready(voice->voice.name))
 						return;
-					ass->get<assetSchemeIndexSound, sourceClass>(voice->voice.name)->addOutput(bus.get());
+					ass->get<assetSchemeIndexSoundSource, soundSource>(voice->voice.name)->addOutput(bus.get());
 				}
 				if (listener->listener.output)
 					bus->addOutput(listener->listener.output);
@@ -90,7 +90,7 @@ namespace cage
 				filter->setBus(bus.get());
 			}
 
-			void exe(const filterApiStruct &api);
+			void exe(const mixingFilterApi &api);
 		};
 
 		struct emitStruct
@@ -239,7 +239,7 @@ namespace cage
 			}
 		};
 
-		void mixStruct::exe(const filterApiStruct &api)
+		void mixStruct::exe(const mixingFilterApi &api)
 		{
 			CAGE_ASSERT_RUNTIME(voice && listener);
 			vec3 posVoice = interpolate(voice->transformHistory.position, voice->transform.position, data->interFactor);

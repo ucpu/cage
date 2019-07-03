@@ -52,7 +52,7 @@ void processCollider()
 	assetHeader h = initializeAssetHeaderStruct();
 	h.originalSize = numeric_cast<uint32>(buff.size());
 	h.compressedSize = numeric_cast<uint32>(comp.size());
-	holder<file> f = newFile(outputFileName, fileMode(false, true));
+	holder<fileHandle> f = newFile(outputFileName, fileMode(false, true));
 	f->write(&h, sizeof(h));
 	f->write(comp.data(), comp.size());
 	f->close();

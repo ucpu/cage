@@ -79,17 +79,17 @@ namespace cage
 			variableSmoothingBuffer<uint64, 60> profilingBufferSoundSleep;
 
 			holder<assetManager> assets;
-			holder<windowClass> window;
+			holder<windowHandle> window;
 #ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
-			holder<windowClass> windowUpload;
+			holder<windowHandle> windowUpload;
 #endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
-			holder<soundContextClass> sound;
-			holder<speakerClass> speaker;
-			holder<busClass> masterBus;
-			holder<busClass> musicBus;
-			holder<busClass> effectsBus;
-			holder<busClass> guiBus;
-			holder<guiClass> gui;
+			holder<soundContext> sound;
+			holder<speakerOutput> speaker;
+			holder<mixingBus> masterBus;
+			holder<mixingBus> musicBus;
+			holder<mixingBus> effectsBus;
+			holder<mixingBus> guiBus;
+			holder<guiManager> gui;
 			holder<entityManager> entities;
 
 			holder<syncMutex> assetsSoundMutex;
@@ -97,12 +97,12 @@ namespace cage
 			holder<syncSemaphore> graphicsSemaphore1;
 			holder<syncSemaphore> graphicsSemaphore2;
 			holder<syncBarrier> threadsStateBarier;
-			holder<thread> graphicsDispatchThreadHolder;
-			holder<thread> graphicsPrepareThreadHolder;
+			holder<threadHandle> graphicsDispatchThreadHolder;
+			holder<threadHandle> graphicsPrepareThreadHolder;
 #ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
-			holder<thread> graphicsUploadThreadHolder;
+			holder<threadHandle> graphicsUploadThreadHolder;
 #endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
-			holder<thread> soundThreadHolder;
+			holder<threadHandle> soundThreadHolder;
 			holder<threadPool> emitThreadsHolder;
 
 			std::atomic<uint32> engineStarted;
@@ -302,7 +302,7 @@ namespace cage
 			{
 				for (entity *e : transformComponent::component->entities())
 				{
-					ENGINE_GET_COMPONENT(transform, ts, e);
+					CAGE_COMPONENT_ENGINE(transform, ts, e);
 					transformComponent &hs = e->value<transformComponent>(transformComponent::componentHistory);
 					hs = ts;
 				}
@@ -322,7 +322,7 @@ namespace cage
 					graphicsPrepareEmit(currentControlTime);
 					break;
 				default:
-					CAGE_THROW_CRITICAL(exception, "invalid engine emit thread index");
+					CAGE_THROW_CRITICAL(exception, "invalid engine emit threadHandle index");
 				}
 			}
 
@@ -437,11 +437,11 @@ namespace cage
 				{ // create sound
 					string name = pathExtractFilename(detail::getExecutableFullPathNoExe());
 					sound = newSoundContext(config.soundContext ? *config.soundContext : soundContextCreateConfig(), name);
-					speaker = newSpeaker(sound.get(), config.speaker ? *config.speaker : speakerCreateConfig(), name);
-					masterBus = newBus(sound.get());
-					musicBus = newBus(sound.get());
-					effectsBus = newBus(sound.get());
-					guiBus = newBus(sound.get());
+					speaker = newSpeakerOutput(sound.get(), config.speaker ? *config.speaker : speakerOutputCreateConfig(), name);
+					masterBus = newMixingBus(sound.get());
+					musicBus = newMixingBus(sound.get());
+					effectsBus = newMixingBus(sound.get());
+					guiBus = newMixingBus(sound.get());
 					speaker->setInput(masterBus.get());
 					masterBus->addInput(musicBus.get());
 					masterBus->addInput(effectsBus.get());
@@ -449,11 +449,11 @@ namespace cage
 				}
 
 				{ // create gui
-					guiCreateConfig c;
+					guiManagerCreateConfig c;
 					if (config.gui)
 						c = *config.gui;
 					c.assetManager = assets.get();
-					gui = newGui(c);
+					gui = newGuiManager(c);
 					gui->handleWindowEvents(window.get());
 					gui->setOutputSoundBus(guiBus.get());
 				}
@@ -488,14 +488,14 @@ namespace cage
 					assets->defineScheme<textPack>(assetSchemeIndexTextPackage, genAssetSchemeTextPackage(controlThreadClass::threadIndex));
 					assets->defineScheme<collisionMesh>(assetSchemeIndexCollisionMesh, genAssetSchemeCollisionMesh(controlThreadClass::threadIndex));
 					// client assets
-					assets->defineScheme<shaderClass>(assetSchemeIndexShader, genAssetSchemeShader(graphicsUploadThreadClass::threadIndex, window.get()));
-					assets->defineScheme<textureClass>(assetSchemeIndexTexture, genAssetSchemeTexture(graphicsUploadThreadClass::threadIndex, window.get()));
-					assets->defineScheme<meshClass>(assetSchemeIndexMesh, genAssetSchemeMesh(graphicsDispatchThreadClass::threadIndex, window.get()));
-					assets->defineScheme<skeletonClass>(assetSchemeIndexSkeleton, genAssetSchemeSkeleton(graphicsPrepareThreadClass::threadIndex));
-					assets->defineScheme<animationClass>(assetSchemeIndexAnimation, genAssetSchemeAnimation(graphicsPrepareThreadClass::threadIndex));
-					assets->defineScheme<objectClass>(assetSchemeIndexObject, genAssetSchemeObject(graphicsPrepareThreadClass::threadIndex));
-					assets->defineScheme<fontClass>(assetSchemeIndexFont, genAssetSchemeFont(graphicsUploadThreadClass::threadIndex, window.get()));
-					assets->defineScheme<sourceClass>(assetSchemeIndexSound, genAssetSchemeSound(soundThreadClass::threadIndex, sound.get()));
+					assets->defineScheme<shaderProgram>(assetSchemeIndexShaderProgram, genAssetSchemeShaderProgram(graphicsUploadThreadClass::threadIndex, window.get()));
+					assets->defineScheme<renderTexture>(assetSchemeIndexRenderTexture, genAssetSchemeRenderTexture(graphicsUploadThreadClass::threadIndex, window.get()));
+					assets->defineScheme<renderMesh>(assetSchemeIndexMesh, genAssetSchemeRenderMesh(graphicsDispatchThreadClass::threadIndex, window.get()));
+					assets->defineScheme<skeletonRig>(assetSchemeIndexSkeletonRig, genAssetSchemeSkeletonRig(graphicsPrepareThreadClass::threadIndex));
+					assets->defineScheme<skeletalAnimation>(assetSchemeIndexSkeletalAnimation, genAssetSchemeSkeletalAnimation(graphicsPrepareThreadClass::threadIndex));
+					assets->defineScheme<renderObject>(assetSchemeIndexRenderObject, genAssetSchemeRenderObject(graphicsPrepareThreadClass::threadIndex));
+					assets->defineScheme<fontFace>(assetSchemeIndexFontFace, genAssetSchemeFontFace(graphicsUploadThreadClass::threadIndex, window.get()));
+					assets->defineScheme<soundSource>(assetSchemeIndexSoundSource, genAssetSchemeSoundSource(soundThreadClass::threadIndex, sound.get()));
 					// cage pack
 					assets->add(hashString("cage/cage.pack"));
 				}
@@ -522,8 +522,8 @@ namespace cage
 					transformComponent::component = entityManager->defineComponent(transformComponent(), true);
 					transformComponent::componentHistory = entityManager->defineComponent(transformComponent(), false);
 					renderComponent::component = entityManager->defineComponent(renderComponent(), true);
-					animatedTextureComponent::component = entityManager->defineComponent(animatedTextureComponent(), false);
-					animatedSkeletonComponent::component = entityManager->defineComponent(animatedSkeletonComponent(), false);
+					textureAnimationComponent::component = entityManager->defineComponent(textureAnimationComponent(), false);
+					skeletalAnimationComponent::component = entityManager->defineComponent(skeletalAnimationComponent(), false);
 					lightComponent::component = entityManager->defineComponent(lightComponent(), true);
 					shadowmapComponent::component = entityManager->defineComponent(shadowmapComponent(), false);
 					renderTextComponent::component = entityManager->defineComponent(renderTextComponent(), true);
@@ -709,7 +709,7 @@ namespace cage
 		engineData.clear();
 	}
 
-	soundContextClass *sound()
+	soundContext *sound()
 	{
 		return engineData->sound.get();
 	}
@@ -724,37 +724,37 @@ namespace cage
 		return engineData->entities.get();
 	}
 
-	windowClass *window()
+	windowHandle *window()
 	{
 		return engineData->window.get();
 	}
 
-	guiClass *gui()
+	guiManager *gui()
 	{
 		return engineData->gui.get();
 	}
 
-	speakerClass *speaker()
+	speakerOutput *speaker()
 	{
 		return engineData->speaker.get();
 	}
 
-	busClass *masterMixer()
+	mixingBus *masterMixer()
 	{
 		return engineData->masterBus.get();
 	}
 
-	busClass *musicMixer()
+	mixingBus *musicMixer()
 	{
 		return engineData->musicBus.get();
 	}
 
-	busClass *effectsMixer()
+	mixingBus *effectsMixer()
 	{
 		return engineData->effectsBus.get();
 	}
 
-	busClass *guiMixer()
+	mixingBus *guiMixer()
 	{
 		return engineData->guiBus.get();
 	}

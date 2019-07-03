@@ -18,7 +18,7 @@ namespace cage
 			holder<syncBarrier> barrier2;
 			holder<syncMutex> mutex;
 			std::exception_ptr exptr;
-			std::vector<holder<thread>> thrs;
+			std::vector<holder<threadHandle>> thrs;
 			uint32 threadIndexInitializer, threadsCount;
 			bool ending;
 
@@ -59,7 +59,7 @@ namespace cage
 					{
 						scopeLock<syncMutex> l(mutex);
 						if (exptr)
-							CAGE_LOG(severityEnum::Warning, "thread-pool", "discarding an exception caught in a thread pool");
+							CAGE_LOG(severityEnum::Warning, "threadHandle-pool", "discarding an exception caught in a threadHandle pool");
 						else
 							exptr = std::current_exception();
 					}

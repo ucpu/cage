@@ -29,19 +29,19 @@ namespace cage
 		switch (err)
 		{
 		case GL_NO_ERROR: return;
-		case GL_INVALID_ENUM: CAGE_THROW_ERROR(graphicsException, "gl_invalid_enum", err); break;
-		case GL_INVALID_VALUE: CAGE_THROW_ERROR(graphicsException, "gl_invalid_value", err); break;
-		case GL_INVALID_OPERATION: CAGE_THROW_ERROR(graphicsException, "gl_invalid_operation", err); break;
-		case GL_INVALID_FRAMEBUFFER_OPERATION: CAGE_THROW_ERROR(graphicsException, "gl_invalid_framebuffer_operation", err); break;
-		case GL_OUT_OF_MEMORY: CAGE_THROW_ERROR(graphicsException, "gl_out_of_memory", err); break;
-		default: CAGE_THROW_CRITICAL(graphicsException, "gl_unknown_error", err); break;
+		case GL_INVALID_ENUM: CAGE_THROW_ERROR(graphicsError, "gl_invalid_enum", err); break;
+		case GL_INVALID_VALUE: CAGE_THROW_ERROR(graphicsError, "gl_invalid_value", err); break;
+		case GL_INVALID_OPERATION: CAGE_THROW_ERROR(graphicsError, "gl_invalid_operation", err); break;
+		case GL_INVALID_FRAMEBUFFER_OPERATION: CAGE_THROW_ERROR(graphicsError, "gl_invalid_framebuffer_operation", err); break;
+		case GL_OUT_OF_MEMORY: CAGE_THROW_ERROR(graphicsError, "gl_out_of_memory", err); break;
+		default: CAGE_THROW_CRITICAL(graphicsError, "gl_unknown_error", err); break;
 		}
 	}
 
-	graphicsException::graphicsException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uint32 code) noexcept : codeException(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER, code)
+	graphicsError::graphicsError(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uint32 code) noexcept : codeException(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER, code)
 	{}
 
-	graphicsException &graphicsException::log()
+	graphicsError &graphicsError::log()
 	{
 		if (severity < detail::getExceptionSilenceSeverity())
 			return *this;
@@ -56,7 +56,7 @@ namespace cage
 			if (id == 131185 && severity == GL_DEBUG_SEVERITY_NOTIFICATION && type == GL_DEBUG_TYPE_OTHER && source == GL_DEBUG_SOURCE_API)
 				return; // ignore messages like: Buffer detailed info: Buffer object 3 (bound to GL_ELEMENT_ARRAY_BUFFER_ARB, GL_ARRAY_BUFFER_ARB, and GL_UNIFORM_BUFFER_EXT, usage hint is GL_STATIC_DRAW) will use VIDEO memory as the source for buffer object operations.
 
-			windowClass *ctx = (windowClass*)userParam;
+			windowHandle *ctx = (windowHandle*)userParam;
 			CAGE_ASSERT_RUNTIME(ctx, "missing context");
 			if (ctx->debugOpenglErrorCallback)
 				return ctx->debugOpenglErrorCallback(source, type, id, severity, message);
@@ -139,7 +139,7 @@ namespace cage
 
 	namespace graphicsPrivat
 	{
-		void openglContextInitializeGeneral(windowClass *w)
+		void openglContextInitializeGeneral(windowHandle *w)
 		{
 			// initialize debug messages
 			glDebugMessageCallback(&openglErrorCallbackImpl, w);
@@ -160,8 +160,8 @@ namespace cage
 		struct assertContextStruct
 		{
 			holder<syncMutex> mutex;
-			std::map<windowClass*, std::map<uint32, uint32>> objects;
-			std::map<uint64, windowClass*> contexts;
+			std::map<windowHandle*, std::map<uint32, uint32>> objects;
+			std::map<uint64, windowHandle*> contexts;
 
 			assertContextStruct()
 			{
@@ -175,7 +175,7 @@ namespace cage
 			return s;
 		}
 
-		void setCurrentContext(windowClass *ctx)
+		void setCurrentContext(windowHandle *ctx)
 		{
 			scopeLock<syncMutex> lock(assertContext().mutex);
 			if (ctx)
@@ -184,7 +184,7 @@ namespace cage
 				assertContext().contexts.erase(threadId());
 		}
 
-		windowClass *getCurrentContext()
+		windowHandle *getCurrentContext()
 		{
 			scopeLock<syncMutex> lock(assertContext().mutex);
 			auto it = assertContext().contexts.find(threadId());

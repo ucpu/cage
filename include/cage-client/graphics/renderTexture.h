@@ -1,6 +1,6 @@
 namespace cage
 {
-	class CAGE_API textureClass : private immovable
+	class CAGE_API renderTexture : private immovable
 	{
 #ifdef CAGE_DEBUG
 		detail::stringBase<64> debugName;
@@ -29,17 +29,17 @@ namespace cage
 		void wraps(uint32 s, uint32 t, uint32 r);
 		void generateMipmaps();
 
-		static void multiBind(uint32 count, const uint32 tius[], const textureClass *const texs[]);
+		static void multiBind(uint32 count, const uint32 tius[], const renderTexture *const texs[]);
 	};
 
-	CAGE_API holder<textureClass> newTexture();
-	CAGE_API holder<textureClass> newTexture(uint32 target);
+	CAGE_API holder<renderTexture> newRenderTexture();
+	CAGE_API holder<renderTexture> newRenderTexture(uint32 target);
 
 	namespace detail
 	{
-		CAGE_API vec4 evalSamplesForTextureAnimation(const textureClass *texture, uint64 emitTime, uint64 animationStart, real animationSpeed, real animationOffset);
+		CAGE_API vec4 evalSamplesForTextureAnimation(const renderTexture *texture, uint64 emitTime, uint64 animationStart, real animationSpeed, real animationOffset);
 	}
 
-	CAGE_API assetScheme genAssetSchemeTexture(uint32 threadIndex, windowClass *memoryContext);
-	static const uint32 assetSchemeIndexTexture = 11;
+	CAGE_API assetScheme genAssetSchemeRenderTexture(uint32 threadIndex, windowHandle *memoryContext);
+	static const uint32 assetSchemeIndexRenderTexture = 11;
 }

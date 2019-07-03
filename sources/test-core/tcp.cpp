@@ -15,7 +15,7 @@ void testTcp()
 	CAGE_TESTCASE("tcp");
 
 	holder<tcpServer> server = newTcpServer(4241);
-	holder<thread> thr = newThread(delegate<void()>().bind<&senderThread>(), "tcp test sender");
+	holder<threadHandle> thr = newThread(delegate<void()>().bind<&senderThread>(), "tcp test sender");
 	holder<tcpConnection> receiver;
 	while (!receiver)
 	{

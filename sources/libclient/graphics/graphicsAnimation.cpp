@@ -13,7 +13,7 @@ namespace cage
 {
 	namespace
 	{
-		class animationImpl : public animationClass
+		class animationImpl : public skeletalAnimation
 		{
 		public:
 			animationImpl() : mem(detail::systemArena())
@@ -105,14 +105,14 @@ namespace cage
 		};
 	}
 
-	void animationClass::setDebugName(const string &name)
+	void skeletalAnimation::setDebugName(const string &name)
 	{
 #ifdef CAGE_DEBUG
 		debugName = name;
 #endif // CAGE_DEBUG
 	}
 
-	void animationClass::allocate(uint64 duration, uint32 bones, const uint16 *indexes, const uint16 *positionFrames, const uint16 *rotationFrames, const uint16 *scaleFrames, const void *data)
+	void skeletalAnimation::allocate(uint64 duration, uint32 bones, const uint16 *indexes, const uint16 *positionFrames, const uint16 *rotationFrames, const uint16 *scaleFrames, const void *data)
 	{
 		animationImpl *impl = (animationImpl*)this;
 		impl->deallocate();
@@ -229,7 +229,7 @@ namespace cage
 		}
 	}
 
-	mat4 animationClass::evaluate(uint16 bone, real coef) const
+	mat4 skeletalAnimation::evaluate(uint16 bone, real coef) const
 	{
 		CAGE_ASSERT_RUNTIME(coef >= 0 && coef <= 1, coef);
 		animationImpl *impl = (animationImpl*)this;
@@ -246,20 +246,20 @@ namespace cage
 		return T * R * S;
 	}
 
-	uint64 animationClass::duration() const
+	uint64 skeletalAnimation::duration() const
 	{
 		animationImpl *impl = (animationImpl*)this;
 		return impl->duration;
 	}
 
-	holder<animationClass> newAnimation()
+	holder<skeletalAnimation> newSkeletalAnimation()
 	{
-		return detail::systemArena().createImpl<animationClass, animationImpl>();
+		return detail::systemArena().createImpl<skeletalAnimation, animationImpl>();
 	}
 
 	namespace detail
 	{
-		real evalCoefficientForSkeletalAnimation(animationClass *animation, uint64 emitTime, uint64 animationStart, real animationSpeed, real animationOffset)
+		real evalCoefficientForSkeletalAnimation(skeletalAnimation *animation, uint64 emitTime, uint64 animationStart, real animationSpeed, real animationOffset)
 		{
 			if (!animation)
 				return 0;

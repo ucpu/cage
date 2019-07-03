@@ -1,6 +1,6 @@
 namespace cage
 {
-	struct CAGE_API cameraSsaoStruct
+	struct CAGE_API cameraSsao
 	{
 		real worldRadius;
 		real strength;
@@ -8,31 +8,31 @@ namespace cage
 		real power;
 		// ao = pow(ao * strength + bias, power)
 		uint32 samplesCount;
-		cameraSsaoStruct();
+		cameraSsao();
 	};
 
-	struct CAGE_API cameraMotionBlurStruct
+	struct CAGE_API cameraMotionBlur
 	{
 		// todo
 	};
 
-	struct CAGE_API cameraBloomStruct
+	struct CAGE_API cameraBloom
 	{
 		uint32 blurPasses;
 		real threshold;
-		cameraBloomStruct();
+		cameraBloom();
 	};
 
-	struct CAGE_API cameraEyeAdaptationStruct
+	struct CAGE_API cameraEyeAdaptation
 	{
 		real key;
 		real strength;
 		real darkerSpeed;
 		real lighterSpeed;
-		cameraEyeAdaptationStruct();
+		cameraEyeAdaptation();
 	};
 
-	struct CAGE_API cameraTonemapStruct
+	struct CAGE_API cameraTonemap
 	{
 		real shoulderStrength;
 		real linearStrength;
@@ -41,18 +41,18 @@ namespace cage
 		real toeNumerator;
 		real toeDenominator;
 		real white;
-		cameraTonemapStruct();
+		cameraTonemap();
 	};
 
-	struct CAGE_API cameraEffectsStruct
+	struct CAGE_API cameraEffects
 	{
-		cameraSsaoStruct ssao;
-		cameraMotionBlurStruct motionBlur;
-		cameraBloomStruct bloom;
-		cameraEyeAdaptationStruct eyeAdaptation;
-		cameraTonemapStruct tonemap;
+		cameraSsao ssao;
+		cameraMotionBlur motionBlur;
+		cameraBloom bloom;
+		cameraEyeAdaptation eyeAdaptation;
+		cameraTonemap tonemap;
 		real gamma;
 		cameraEffectsFlags effects;
-		cameraEffectsStruct();
+		cameraEffects();
 	};
 }

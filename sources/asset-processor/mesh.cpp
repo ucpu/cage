@@ -25,7 +25,7 @@ namespace
 		}
 	}
 
-	void loadTextureCage(const string &pathBase, meshHeaderStruct &dsm, configIni *ini, const string &type, uint32 usage)
+	void loadTextureCage(const string &pathBase, renderMeshHeader &dsm, configIni *ini, const string &type, uint32 usage)
 	{
 		CAGE_ASSERT_RUNTIME(usage < MaxTexturesCountPerMaterial, usage, MaxTexturesCountPerMaterial, type);
 		string n = ini->getString("textures", type);
@@ -37,7 +37,7 @@ namespace
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "texture '" + n + "' (" + dsm.textureNames[usage] + ") of type " + type + ", usage " + usage);
 	}
 
-	bool loadTextureAssimp(aiMaterial *m, meshHeaderStruct &dsm, aiTextureType tt, uint32 usage)
+	bool loadTextureAssimp(aiMaterial *m, renderMeshHeader &dsm, aiTextureType tt, uint32 usage)
 	{
 		CAGE_ASSERT_RUNTIME(usage < MaxTexturesCountPerMaterial, usage, MaxTexturesCountPerMaterial, tt);
 		uint32 texCount = m->GetTextureCount(tt);
@@ -57,7 +57,7 @@ namespace
 		return true;
 	}
 
-	void printMaterial(const meshHeaderStruct &dsm, const meshHeaderStruct::materialDataStruct &mat)
+	void printMaterial(const renderMeshHeader &dsm, const renderMeshHeader::materialData &mat)
 	{
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "albedoBase: " + mat.albedoBase);
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "albedoMult: " + mat.albedoMult);
@@ -80,7 +80,7 @@ namespace
 		}
 	}
 
-	void loadMaterialCage(meshHeaderStruct &dsm, meshHeaderStruct::materialDataStruct &mat, string path)
+	void loadMaterialCage(renderMeshHeader &dsm, renderMeshHeader::materialData &mat, string path)
 	{
 		CAGE_LOG(severityEnum::Info, logComponentName, "using cage (.cpm) material");
 
@@ -172,7 +172,7 @@ namespace
 		}
 	}
 
-	void loadMaterialAssimp(const aiScene *scene, const aiMesh *am, meshHeaderStruct &dsm, meshHeaderStruct::materialDataStruct &mat)
+	void loadMaterialAssimp(const aiScene *scene, const aiMesh *am, renderMeshHeader &dsm, renderMeshHeader::materialData &mat)
 	{
 		CAGE_LOG(severityEnum::Info, logComponentName, "converting assimp material");
 
@@ -250,7 +250,7 @@ namespace
 		}
 	}
 
-	void loadMaterial(const aiScene *scene, const aiMesh *am, meshHeaderStruct &dsm, meshHeaderStruct::materialDataStruct &mat)
+	void loadMaterial(const aiScene *scene, const aiMesh *am, renderMeshHeader &dsm, renderMeshHeader::materialData &mat)
 	{
 		string path = properties("override_material");
 		if (!path.empty())
@@ -291,7 +291,7 @@ namespace
 		loadMaterialAssimp(scene, am, dsm, mat);
 	}
 
-	void validateFlags(const meshHeaderStruct &dsm, const meshHeaderStruct::materialDataStruct &mat)
+	void validateFlags(const renderMeshHeader &dsm, const renderMeshHeader::materialData &mat)
 	{
 		if ((dsm.renderFlags & meshRenderFlags::OpacityTexture) == meshRenderFlags::OpacityTexture && (dsm.renderFlags & (meshRenderFlags::Translucency | meshRenderFlags::Transparency)) == meshRenderFlags::None)
 			CAGE_THROW_ERROR(exception, "material flags contains opacity texture, but neither translucency nor transparency is set");
@@ -310,7 +310,7 @@ namespace
 			CAGE_THROW_ERROR(exception, "tangents are exported, but normals are missing");
 	}
 
-	void loadSkeletonName(meshHeaderStruct &dsm)
+	void loadSkeletonName(renderMeshHeader &dsm)
 	{
 		string n = properties("override_skeleton");
 		if (!dsm.bones())
@@ -346,9 +346,9 @@ void processMesh()
 	if (am->GetNumUVChannels() > 1)
 		CAGE_LOG(severityEnum::Warning, logComponentName, "multiple uv channels are not supported - using only the first");
 
-	meshHeaderStruct dsm;
+	renderMeshHeader dsm;
 	memset(&dsm, 0, sizeof(dsm));
-	dsm.materialSize = sizeof(meshHeaderStruct::materialDataStruct);
+	dsm.materialSize = sizeof(renderMeshHeader::materialData);
 	dsm.renderFlags = meshRenderFlags::DepthTest | meshRenderFlags::DepthWrite | meshRenderFlags::VelocityWrite | meshRenderFlags::Lighting | meshRenderFlags::ShadowCast;
 
 	uint32 indicesPerPrimitive = 0;
@@ -375,7 +375,7 @@ void processMesh()
 
 	dsm.instancesLimitHint = properties("instances_limit").toUint32();
 
-	meshHeaderStruct::materialDataStruct mat;
+	renderMeshHeader::materialData mat;
 	memset(&mat, 0, sizeof(mat));
 	mat.albedoBase = vec4(0, 0, 0, 1);
 	mat.specialBase = vec4(0, 0, 0, 0);
@@ -520,7 +520,7 @@ void processMesh()
 	cage::memoryBuffer compressed = detail::compress(dataBuffer);
 	h.compressedSize = compressed.size();
 
-	holder<file> f = newFile(outputFileName, fileMode(false, true));
+	holder<fileHandle> f = newFile(outputFileName, fileMode(false, true));
 	f->write(&h, sizeof(h));
 	if (dsm.skeletonName)
 		f->write(&dsm.skeletonName, sizeof(uint32));

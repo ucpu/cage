@@ -23,22 +23,22 @@ namespace cage
 
 		void processLoad(const assetContext *context, void *schemePointer)
 		{
-			meshClass *msh = nullptr;
+			renderMesh *msh = nullptr;
 			if (context->assetHolder)
 			{
-				msh = static_cast<meshClass*>(context->assetHolder.get());
+				msh = static_cast<renderMesh*>(context->assetHolder.get());
 				msh->bind();
 			}
 			else
 			{
-				context->assetHolder = newMesh().cast<void>();
-				msh = static_cast<meshClass*>(context->assetHolder.get());
+				context->assetHolder = newRenderMesh().cast<void>();
+				msh = static_cast<renderMesh*>(context->assetHolder.get());
 				msh->setDebugName(context->textName);
 			}
 			context->returnData = msh;
 
 			deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
-			meshHeaderStruct data;
+			renderMeshHeader data;
 			des >> data;
 
 			msh->setFlags(data.renderFlags);
@@ -126,7 +126,7 @@ namespace cage
 		}
 	}
 
-	assetScheme genAssetSchemeMesh(uint32 threadIndex, windowClass *memoryContext)
+	assetScheme genAssetSchemeRenderMesh(uint32 threadIndex, windowHandle *memoryContext)
 	{
 		assetScheme s;
 		s.threadIndex = threadIndex;
@@ -135,27 +135,27 @@ namespace cage
 		return s;
 	}
 
-	bool meshHeaderStruct::normals() const
+	bool renderMeshHeader::normals() const
 	{
 		return (flags & meshDataFlags::Normals) == meshDataFlags::Normals;
 	}
 
-	bool meshHeaderStruct::tangents() const
+	bool renderMeshHeader::tangents() const
 	{
 		return (flags & meshDataFlags::Tangents) == meshDataFlags::Tangents;
 	}
 
-	bool meshHeaderStruct::bones() const
+	bool renderMeshHeader::bones() const
 	{
 		return (flags & meshDataFlags::Bones) == meshDataFlags::Bones;
 	}
 
-	bool meshHeaderStruct::uvs() const
+	bool renderMeshHeader::uvs() const
 	{
 		return (flags & meshDataFlags::Uvs) == meshDataFlags::Uvs;
 	}
 
-	uint32 meshHeaderStruct::vertexSize() const
+	uint32 renderMeshHeader::vertexSize() const
 	{
 		uint32 p = sizeof(float) * 3;
 		uint32 u = sizeof(float) * (int)uvs() * uvDimension;

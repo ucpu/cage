@@ -3,7 +3,7 @@
 #include <cage-core/log.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/files.h>
-#include <cage-core/program.h>
+#include <cage-core/process.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
 #include "incWin.h"
@@ -24,7 +24,7 @@ namespace cage
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
 
-		class programImpl : public program
+		class programImpl : public processHandle
 		{
 		public:
 			programImpl(const string &cmd, const string &workingDir) : cmd(cmd), workingDir(workingDir), hChildStd_IN_Rd(nullptr), hChildStd_IN_Wr(nullptr), hChildStd_OUT_Rd(nullptr), hChildStd_OUT_Wr(nullptr), /*hChildStd_ERR_Rd (nullptr), hChildStd_ERR_Wr (nullptr),*/ hProcess(nullptr), hThread(nullptr)
@@ -32,8 +32,8 @@ namespace cage
 				static holder<syncMutex> mut = newSyncMutex();
 				scopeLock<syncMutex> lock(mut);
 
-				CAGE_LOG(severityEnum::Info, "program", string() + "launching program '" + cmd + "'");
-				CAGE_LOG_CONTINUE(severityEnum::Note, "program", string() + "working directory '" + workingDir + "'");
+				CAGE_LOG(severityEnum::Info, "processHandle", string() + "launching processHandle '" + cmd + "'");
+				CAGE_LOG_CONTINUE(severityEnum::Note, "processHandle", string() + "working directory '" + workingDir + "'");
 
 				SECURITY_ATTRIBUTES saAttr;
 				detail::memset(&saAttr, 0, sizeof(SECURITY_ATTRIBUTES));
@@ -82,7 +82,7 @@ namespace cage
 				closeHandle(hChildStd_OUT_Wr);
 				closeHandle(hChildStd_IN_Rd);
 
-				CAGE_LOG_CONTINUE(severityEnum::Info, "program", string() + "process id: " + templates::underlying_type<DWORD>::type(GetProcessId(hProcess)));
+				CAGE_LOG_CONTINUE(severityEnum::Info, "processHandle", string() + "process id: " + templates::underlying_type<DWORD>::type(GetProcessId(hProcess)));
 			}
 
 			static void closeHandle(HANDLE &h)
@@ -141,7 +141,7 @@ namespace cage
 		static const int PIPE_READ = 0;
 		static const int PIPE_WRITE = 1;
 
-		class programImpl : public program
+		class programImpl : public processHandle
 		{
 		public:
 			const string cmd;
@@ -173,8 +173,8 @@ namespace cage
 				static holder<syncMutex> mut = newSyncMutex();
 				scopeLock<syncMutex> lock(mut);
 
-				CAGE_LOG(severityEnum::Info, "program", string() + "launching program '" + cmd + "'");
-				CAGE_LOG_CONTINUE(severityEnum::Note, "program", string() + "working directory '" + workingDir + "'");
+				CAGE_LOG(severityEnum::Info, "processHandle", string() + "launching processHandle '" + cmd + "'");
+				CAGE_LOG_CONTINUE(severityEnum::Note, "processHandle", string() + "working directory '" + workingDir + "'");
 
 				if (pipe(aStdinPipe) < 0)
 					CAGE_THROW_ERROR(exception, "failed to open pipe");
@@ -203,7 +203,7 @@ namespace cage
 					if (dup2(aStdoutPipe[PIPE_WRITE], STDERR_FILENO) == -1)
 						CAGE_THROW_ERROR(exception, "failed to duplicate stderr pipe");
 
-					// close unused file descriptors
+					// close unused fileHandle descriptors
 					close(aStdinPipe[PIPE_READ]);
 					close(aStdinPipe[PIPE_WRITE]);
 					close(aStdoutPipe[PIPE_READ]);
@@ -223,7 +223,7 @@ namespace cage
 				{
 					// parent process
 
-					// close unused file descriptors
+					// close unused fileHandle descriptors
 					close(aStdinPipe[PIPE_READ]);
 					close(aStdoutPipe[PIPE_WRITE]);
 				}
@@ -237,7 +237,7 @@ namespace cage
 					CAGE_THROW_ERROR(exception, "fork failed");
 				}
 
-				CAGE_LOG_CONTINUE(severityEnum::Info, "program", string() + "process id: " + pid);
+				CAGE_LOG_CONTINUE(severityEnum::Info, "processHandle", string() + "process id: " + pid);
 			}
 
 			~programImpl()
@@ -286,7 +286,7 @@ namespace cage
 
 #ifdef CAGE_SYSTEM_WINDOWS
 
-	void program::read(void *data, uint32 size)
+	void processHandle::read(void *data, uint32 size)
 	{
 		programImpl *impl = (programImpl*)this;
 		DWORD read = 0;
@@ -296,7 +296,7 @@ namespace cage
 			CAGE_THROW_ERROR(exception, "insufficient data");
 	}
 
-	void program::write(const void *data, uint32 size)
+	void processHandle::write(const void *data, uint32 size)
 	{
 		programImpl *impl = (programImpl*)this;
 		DWORD written = 0;
@@ -308,7 +308,7 @@ namespace cage
 
 #else
 
-	void program::read(void *data, uint32 size)
+	void processHandle::read(void *data, uint32 size)
 	{
 		programImpl *impl = (programImpl*)this;
 		auto r = ::read(impl->aStdoutPipe[PIPE_READ], data, size);
@@ -318,7 +318,7 @@ namespace cage
 			CAGE_THROW_ERROR(exception, "insufficient data");
 	}
 
-	void program::write(const void *data, uint32 size)
+	void processHandle::write(const void *data, uint32 size)
 	{
 		programImpl *impl = (programImpl*)this;
 		auto r = ::write(impl->aStdinPipe[PIPE_WRITE], data, size);
@@ -330,7 +330,7 @@ namespace cage
 
 #endif
 
-	string program::readLine()
+	string processHandle::readLine()
 	{
 		string res;
 		while (true)
@@ -359,43 +359,43 @@ namespace cage
 		return res;
 	}
 
-	void program::writeLine(const string &data)
+	void processHandle::writeLine(const string &data)
 	{
 		string d = data + "\n";
 		write(d.c_str(), d.length());
 	}
 
-	void program::terminate()
+	void processHandle::terminate()
 	{
 		programImpl *impl = (programImpl*)this;
 		impl->terminate();
 	}
 
-	int program::wait()
+	int processHandle::wait()
 	{
 		programImpl *impl = (programImpl*)this;
 		return impl->wait();
 	}
 
-	string program::getCmdString() const
+	string processHandle::getCmdString() const
 	{
 		programImpl *impl = (programImpl*)this;
 		return impl->cmd;
 	}
 
-	string program::getWorkingDir() const
+	string processHandle::getWorkingDir() const
 	{
 		programImpl *impl = (programImpl*)this;
 		return impl->workingDir;
 	}
 
-	holder<program> newProgram(const string &cmd)
+	holder<processHandle> newProcess(const string &cmd)
 	{
-		return detail::systemArena().createImpl<program, programImpl>(cmd, pathWorkingDir());
+		return detail::systemArena().createImpl<processHandle, programImpl>(cmd, pathWorkingDir());
 	}
 
-	holder<program> newProgram(const string &cmd, const string &workingDirectory)
+	holder<processHandle> newProcess(const string &cmd, const string &workingDirectory)
 	{
-		return detail::systemArena().createImpl<program, programImpl>(cmd, pathToAbs(workingDirectory));
+		return detail::systemArena().createImpl<processHandle, programImpl>(cmd, pathToAbs(workingDirectory));
 	}
 }

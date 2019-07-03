@@ -5,17 +5,17 @@ using namespace cage;
 
 #include "utilities.h"
 
-void read(file *f, uint64 &n)
+void read(fileHandle *f, uint64 &n)
 {
 	f->read(&n, sizeof(n));
 }
 
-void read(file *f, uint32 &n)
+void read(fileHandle *f, uint32 &n)
 {
 	f->read(&n, sizeof(n));
 }
 
-void read(file *f, string &s)
+void read(fileHandle *f, string &s)
 {
 	uint32 n = 0;
 	read(f, n);
@@ -26,29 +26,29 @@ void read(file *f, string &s)
 	s = string(tmp, n);
 }
 
-void read(file *f, bool &n)
+void read(fileHandle *f, bool &n)
 {
 	f->read(&n, sizeof(n));
 }
 
-void write(file *f, const uint64 n)
+void write(fileHandle *f, const uint64 n)
 {
 	f->write(&n, sizeof(n));
 }
 
-void write(file *f, const uint32 n)
+void write(fileHandle *f, const uint32 n)
 {
 	f->write(&n, sizeof(n));
 }
 
-void write(file *f, const string &s)
+void write(fileHandle *f, const string &s)
 {
 	uint32 n = s.length();
 	write(f, n);
 	f->write(s.c_str(), n);
 }
 
-void write(file *f, const bool n)
+void write(fileHandle *f, const bool n)
 {
 	f->write(&n, sizeof(n));
 }

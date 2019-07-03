@@ -90,7 +90,7 @@ void testConcurrent()
 
 	{
 		CAGE_TESTCASE("barrier");
-		holder<thread> thrs[4];
+		holder<threadHandle> thrs[4];
 		for (uint32 i = 0; i < 4; i++)
 			thrs[i] = newThread(delegate<void()>().bind<&threadTest>(), string() + "worker_" + i);
 		for (uint32 i = 0; i < 4; i++)
@@ -98,7 +98,7 @@ void testConcurrent()
 	}
 
 	{
-		CAGE_TESTCASE("thread-pool");
+		CAGE_TESTCASE("threadHandle-pool");
 		{
 			CAGE_TESTCASE("global variable (mutex)");
 			counterGlobal = 0;
@@ -118,7 +118,7 @@ void testConcurrent()
 			CAGE_TEST(counterGlobal == 600);
 		}
 		{
-			CAGE_TESTCASE("thread local variable");
+			CAGE_TESTCASE("threadHandle local variable");
 			counterGlobal = 0;
 			counterLocal = 0;
 			holder<threadPool> thrs = newThreadPool("worker_", 4);
@@ -131,7 +131,7 @@ void testConcurrent()
 			CAGE_TEST(counterGlobal == 6);
 		}
 		{
-			CAGE_TESTCASE("thread-pool run must block");
+			CAGE_TESTCASE("threadHandle-pool run must block");
 			counterGlobal = 0;
 			holder<threadPool> thrs = newThreadPool("worker_", 4);
 			thrs->function.bind<&longTimeTest>();

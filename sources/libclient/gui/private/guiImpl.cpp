@@ -14,7 +14,7 @@
 
 namespace cage
 {
-	componentsStruct::componentsStruct(entityManager *ents) : generalComponentsStruct(ents), layoutsComponentsStruct(ents), widgetsComponentsStruct(ents)
+	guiComponents::guiComponents(entityManager *ents) : guiGeneralComponents(ents), guiLayoutsComponents(ents), guiWidgetsComponents(ents)
 	{}
 
 	guiImpl::graphicsDataStruct::graphicsDataStruct() :
@@ -23,7 +23,7 @@ namespace cage
 		debugMesh(nullptr), elementMesh(nullptr), fontMesh(nullptr), imageMesh(nullptr)
 	{}
 
-	guiImpl::emitDataStruct::emitDataStruct(const guiCreateConfig &config) :
+	guiImpl::emitDataStruct::emitDataStruct(const guiManagerCreateConfig &config) :
 		arena(config.emitArenaSize), memory(&arena), first(nullptr), last(nullptr)
 	{}
 
@@ -38,7 +38,7 @@ namespace cage
 		memory.flush();
 	}
 
-	guiImpl::guiImpl(const guiCreateConfig &config) :
+	guiImpl::guiImpl(const guiManagerCreateConfig &config) :
 		entityManager(newEntityManager(config.entitiesConfig ? *config.entitiesConfig : entityManagerCreateConfig())), components(entityManager.get()),
 		itemsArena(config.itemsArenaSize), itemsMemory(&itemsArena), root(nullptr),
 		emitData{config, config, config}, emitControl(nullptr),
@@ -46,16 +46,16 @@ namespace cage
 		focusName(0), focusParts(0), hover(nullptr), eventsEnabled(false),
 		zoom(1)
 	{
-		listeners.windowResize.bind<guiClass, &guiClass::windowResize>(this);
-		listeners.mousePress.bind<guiClass, &guiClass::mousePress>(this);
-		listeners.mouseDouble.bind<guiClass, &guiClass::mouseDouble>(this);
-		listeners.mouseRelease.bind<guiClass, &guiClass::mouseRelease>(this);
-		listeners.mouseMove.bind<guiClass, &guiClass::mouseMove>(this);
-		listeners.mouseWheel.bind<guiClass, &guiClass::mouseWheel>(this);
-		listeners.keyPress.bind<guiClass, &guiClass::keyPress>(this);
-		listeners.keyRepeat.bind<guiClass, &guiClass::keyRepeat>(this);
-		listeners.keyRelease.bind<guiClass, &guiClass::keyRelease>(this);
-		listeners.keyChar.bind<guiClass, &guiClass::keyChar>(this);
+		listeners.windowResize.bind<guiManager, &guiManager::windowResize>(this);
+		listeners.mousePress.bind<guiManager, &guiManager::mousePress>(this);
+		listeners.mouseDouble.bind<guiManager, &guiManager::mouseDouble>(this);
+		listeners.mouseRelease.bind<guiManager, &guiManager::mouseRelease>(this);
+		listeners.mouseMove.bind<guiManager, &guiManager::mouseMove>(this);
+		listeners.mouseWheel.bind<guiManager, &guiManager::mouseWheel>(this);
+		listeners.keyPress.bind<guiManager, &guiManager::keyPress>(this);
+		listeners.keyRepeat.bind<guiManager, &guiManager::keyRepeat>(this);
+		listeners.keyRelease.bind<guiManager, &guiManager::keyRelease>(this);
+		listeners.keyChar.bind<guiManager, &guiManager::keyChar>(this);
 
 		skins.resize(config.skinsCount);
 

@@ -297,7 +297,7 @@ namespace
 		ilBindImage(im);
 		{
 			string wholeFilename = pathJoin(inputDirectory, filename);
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "loading file '" + wholeFilename + "'");
+			CAGE_LOG(severityEnum::Info, logComponentName, string() + "loading fileHandle '" + wholeFilename + "'");
 			if (!ilLoadImage(wholeFilename.c_str()))
 				CAGE_THROW_ERROR(exception, "image format not supported");
 		}
@@ -449,8 +449,8 @@ namespace
 
 	void exportTexture(uint32 target)
 	{
-		textureHeaderStruct data;
-		detail::memset(&data, 0, sizeof(textureHeaderStruct));
+		renderTextureHeader data;
+		detail::memset(&data, 0, sizeof(renderTextureHeader));
 		data.target = target;
 		data.filterMin = convertFilter(properties("filter_min"));
 		data.filterMag = convertFilter(properties("filter_mag"));
@@ -525,7 +525,7 @@ namespace
 		h.compressedSize = outputBuffer.size();
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "final size: " + h.originalSize + ", compressed size: " + h.compressedSize + ", ratio: " + h.compressedSize / (float)h.originalSize);
 
-		holder<file> f = newFile(outputFileName, fileMode(false, true));
+		holder<fileHandle> f = newFile(outputFileName, fileMode(false, true));
 		f->write(&h, sizeof(h));
 		f->write(outputBuffer.data(), outputBuffer.size());
 		f->close();
@@ -574,7 +574,7 @@ void processTexture()
 				string name = prefix + string(index).reverse().fill(dollarsCount, '0').reverse() + suffix;
 				if (!pathIsFile(pathJoin(inputDirectory, name)))
 					break;
-				CAGE_LOG(severityEnum::Info, logComponentName, string() + "loading file: '" + name + "'");
+				CAGE_LOG(severityEnum::Info, logComponentName, string() + "loading fileHandle: '" + name + "'");
 				loadFile(name);
 				index++;
 			}

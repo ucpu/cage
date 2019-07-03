@@ -17,23 +17,23 @@ namespace cage
 		renderComponent();
 	};
 
-	struct CAGE_API animatedTextureComponent
+	struct CAGE_API textureAnimationComponent
 	{
 		static entityComponent *component;
 		uint64 startTime;
 		real speed;
 		real offset;
-		animatedTextureComponent();
+		textureAnimationComponent();
 	};
 
-	struct CAGE_API animatedSkeletonComponent
+	struct CAGE_API skeletalAnimationComponent
 	{
 		static entityComponent *component;
 		uint64 startTime;
 		uint32 name;
 		real speed;
 		real offset;
-		animatedSkeletonComponent();
+		skeletalAnimationComponent();
 	};
 
 	struct CAGE_API lightComponent
@@ -70,7 +70,7 @@ namespace cage
 		renderTextComponent();
 	};
 
-	struct CAGE_API cameraComponent : public cameraEffectsStruct
+	struct CAGE_API cameraComponent : public cameraEffects
 	{
 		static entityComponent *component;
 		vec3 ambientLight;
@@ -82,7 +82,7 @@ namespace cage
 			rads perspectiveFov;
 			CameraUnion();
 		} camera;
-		textureClass *target;
+		renderTexture *target;
 		real near, far;
 		real zeroParallaxDistance;
 		real eyeSeparation;
@@ -97,7 +97,7 @@ namespace cage
 	{
 		static entityComponent *component;
 		uint64 startTime;
-		busClass *input;
+		mixingBus *input;
 		uint32 name;
 		uint32 renderMask;
 		voiceComponent();
@@ -107,7 +107,7 @@ namespace cage
 	{
 		static entityComponent *component;
 		vec3 attenuation; // constant, linear, quadratic
-		busClass *output;
+		mixingBus *output;
 		uint32 renderMask;
 		real speedOfSound;
 		bool dopplerEffect;

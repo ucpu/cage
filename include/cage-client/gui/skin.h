@@ -7,7 +7,7 @@ namespace cage
 		Sides,
 	};
 
-	struct CAGE_API skinWidgetDefaultsStruct // all sizes are in points
+	struct CAGE_API guiSkinWidgetDefaults // all sizes are in points
 	{
 		struct CAGE_API labelStruct
 		{
@@ -141,10 +141,10 @@ namespace cage
 			textFormatComponent textFormat;
 			tooltipStruct();
 		} tooltip;
-		skinWidgetDefaultsStruct();
+		guiSkinWidgetDefaults();
 	};
 
-	struct CAGE_API skinElementLayoutStruct
+	struct CAGE_API guiSkinElementLayout
 	{
 		struct CAGE_API textureUvOiStruct
 		{
@@ -157,7 +157,7 @@ namespace cage
 			textureUvStruct();
 		} textureUv;
 		vec4 border; // left, top, right, bottom; all in points
-		skinElementLayoutStruct();
+		guiSkinElementLayout();
 	};
 
 	enum class elementTypeEnum : uint32

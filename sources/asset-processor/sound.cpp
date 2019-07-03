@@ -9,12 +9,12 @@
 
 namespace
 {
-	soundHeaderStruct sds;
+	soundSourceHeader sds;
 	memoryBuffer buf1;
 
 	struct vorbisEncoderStruct
 	{
-		file *f;
+		fileHandle *f;
 
 		ogg_stream_state os;
 		vorbis_info vi;
@@ -25,7 +25,7 @@ namespace
 		ogg_page og;
 		int ret;
 
-		vorbisEncoderStruct(file *f) : f(f) {}
+		vorbisEncoderStruct(fileHandle *f) : f(f) {}
 
 		void processBlock()
 		{
@@ -143,7 +143,7 @@ namespace
 		drflac_uint64 totalSampleCount;
 		float* pSampleData = drflac_open_file_and_read_pcm_frames_f32(pathJoin(inputDirectory, inputFile).c_str(), &channels, &sampleRate, &totalSampleCount);
 		if (!pSampleData)
-			CAGE_THROW_ERROR(exception, "failed to read flac file");
+			CAGE_THROW_ERROR(exception, "failed to read flac fileHandle");
 		sds.channels = channels;
 		sds.frames = numeric_cast<uint32>(totalSampleCount / channels);
 		sds.sampleRate = sampleRate;
@@ -159,7 +159,7 @@ namespace
 		drwav_uint64 totalSampleCount;
 		float* pSampleData = drwav_open_file_and_read_pcm_frames_f32(pathJoin(inputDirectory, inputFile).c_str(), &channels, &sampleRate, &totalSampleCount);
 		if (!pSampleData)
-			CAGE_THROW_ERROR(exception, "failed to read wav file");
+			CAGE_THROW_ERROR(exception, "failed to read wav fileHandle");
 		sds.channels = channels;
 		sds.frames = numeric_cast<uint32>(totalSampleCount / channels);
 		sds.sampleRate = sampleRate;
@@ -243,22 +243,22 @@ void processSound()
 	switch (sds.soundType)
 	{
 	case soundTypeEnum::RawRaw:
-		CAGE_LOG(severityEnum::Info, logComponentName, "sound type: raw file, raw play");
+		CAGE_LOG(severityEnum::Info, logComponentName, "sound type: raw fileHandle, raw play");
 		break;
 	case soundTypeEnum::CompressedRaw:
-		CAGE_LOG(severityEnum::Info, logComponentName, "sound type: compressed file, raw play");
+		CAGE_LOG(severityEnum::Info, logComponentName, "sound type: compressed fileHandle, raw play");
 		break;
 	case soundTypeEnum::CompressedCompressed:
-		CAGE_LOG(severityEnum::Info, logComponentName, "sound type: compressed file, compressed play");
+		CAGE_LOG(severityEnum::Info, logComponentName, "sound type: compressed fileHandle, compressed play");
 		break;
 	default:
 		CAGE_THROW_CRITICAL(exception, "invalid sound type");
 	}
 
 	assetHeader h = initializeAssetHeaderStruct();
-	h.originalSize = sizeof(soundHeaderStruct) + sds.frames * sds.channels * sizeof(float);
+	h.originalSize = sizeof(soundSourceHeader) + sds.frames * sds.channels * sizeof(float);
 
-	holder<file> f = newFile(outputFileName, fileMode(true, true));
+	holder<fileHandle> f = newFile(outputFileName, fileMode(true, true));
 	f->write(&h, sizeof(h));
 	f->write(&sds, sizeof(sds));
 
@@ -273,17 +273,17 @@ void processSound()
 	{
 		vorbisEncoderStruct ves(f.get());
 		ves.encode();
-		uint32 oggSize = numeric_cast<uint32>(f->size() - sizeof(soundHeaderStruct) - sizeof(assetHeader));
+		uint32 oggSize = numeric_cast<uint32>(f->size() - sizeof(soundSourceHeader) - sizeof(assetHeader));
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "original size: " + h.originalSize + " bytes");
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "compressed size: " + oggSize + " bytes");
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "compression ratio: " + (oggSize / (float)h.originalSize));
 		switch (sds.soundType)
 		{
 		case soundTypeEnum::CompressedRaw:
-			h.compressedSize = oggSize + sizeof(soundHeaderStruct);
+			h.compressedSize = oggSize + sizeof(soundSourceHeader);
 			break;
 		case soundTypeEnum::CompressedCompressed:
-			h.compressedSize = oggSize + sizeof(soundHeaderStruct);
+			h.compressedSize = oggSize + sizeof(soundSourceHeader);
 			h.originalSize = 0; // the sound will not be decoded on asset load, so do not allocate space for it
 			break;
 		case soundTypeEnum::RawRaw:
@@ -295,10 +295,10 @@ void processSound()
 		if (configGetBool("cage-asset-processor.sound.preview"))
 		{ // preview ogg
 			string dbgName = pathJoin(configGetString("cage-asset-processor.sound.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".ogg");
-			holder<file> df = newFile(dbgName, fileMode(false, true));
+			holder<fileHandle> df = newFile(dbgName, fileMode(false, true));
 			void *buf = detail::systemArena().allocate(oggSize, sizeof(uintPtr));
 			f->flush();
-			f->seek(sizeof(assetHeader) + sizeof(soundHeaderStruct));
+			f->seek(sizeof(assetHeader) + sizeof(soundSourceHeader));
 			f->read(buf, oggSize);
 			df->write(buf, oggSize);
 			detail::systemArena().deallocate(buf);

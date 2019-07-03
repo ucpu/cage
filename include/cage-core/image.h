@@ -12,7 +12,7 @@ namespace cage
 		memoryBuffer encodeBuffer();
 		void encodeFile(const string &filename);
 
-		// decode png
+		// decode
 		void decodeBuffer(const memoryBuffer &buffer, uint32 channels = m, uint32 bpc = 1);
 		void decodeMemory(const void *buffer, uintPtr size, uint32 channels = m, uint32 bpc = 1);
 		void decodeFile(const string &filename, uint32 channels = m, uint32 bpc = 1);

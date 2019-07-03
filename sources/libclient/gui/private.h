@@ -6,17 +6,17 @@
 
 #define GUI_HAS_COMPONENT(T,E) (E)->has(impl->components.T)
 #define GUI_REF_COMPONENT(T) hierarchy->ent->value<CAGE_JOIN(T, Component)>(hierarchy->impl->components.T)
-#define GUI_GET_COMPONENT(T,N,E) CAGE_JOIN(T, Component) &N = (E)->value<CAGE_JOIN(T, Component)>(impl->components.T);
+#define CAGE_COMPONENT_GUI(T,N,E) CAGE_JOIN(T, Component) &N = (E)->value<CAGE_JOIN(T, Component)>(impl->components.T);
 
 namespace cage
 {
 	class guiImpl;
 	struct hierarchyItemStruct;
 
-	struct skinDataStruct : public skinConfigStruct
+	struct skinDataStruct : public guiSkinConfig
 	{
-		holder<uniformBufferClass> elementsGpuBuffer;
-		textureClass *texture;
+		holder<uniformBuffer> elementsGpuBuffer;
+		renderTexture *texture;
 	};
 
 	struct renderableBaseStruct
@@ -41,8 +41,8 @@ namespace cage
 			uint32 mode;
 			elementStruct();
 		} data;
-		const uniformBufferClass *skinBuffer;
-		const textureClass *skinTexture;
+		const uniformBuffer *skinBuffer;
+		const renderTexture *skinTexture;
 
 		renderableElementStruct();
 
@@ -54,9 +54,9 @@ namespace cage
 		struct textStruct
 		{
 			mat4 transform;
-			fontClass::formatStruct format;
+			fontFace::formatStruct format;
 			vec3 color;
-			fontClass *font;
+			fontFace *font;
 			uint32 *glyphs;
 			uint32 cursor;
 			uint32 count;
@@ -74,7 +74,7 @@ namespace cage
 			vec4 ndcPos;
 			vec4 uvClip;
 			vec4 aniTexFrames;
-			textureClass *texture;
+			renderTexture *texture;
 			imageStruct();
 		} data;
 
@@ -225,7 +225,7 @@ namespace cage
 		hierarchyItemStruct *const hierarchy;
 		imageComponent image;
 		imageFormatComponent format;
-		textureClass *texture;
+		renderTexture *texture;
 		bool skipInitialize;
 
 		imageItemStruct(hierarchyItemStruct *hierarchy);
@@ -252,17 +252,17 @@ namespace cage
 		bool pointInside(vec2 point, uint32 maskRequests = 1) const;
 	};
 
-	class guiImpl : public guiClass
+	class guiImpl : public guiManager
 	{
 	public:
 		holder<entityManager> entityManager;
-		componentsStruct components;
+		guiComponents components;
 
 		assetManager *assetManager;
 
-		pointStruct inputResolution; // last window resolution (pixels)
-		pointStruct inputMouse; // last position of mouse (pixels)
-		pointStruct outputResolution; // resolution of output texture or screen (pixels)
+		ivec2 inputResolution; // last window resolution (pixels)
+		ivec2 inputMouse; // last position of mouse (pixels)
+		ivec2 outputResolution; // resolution of output texture or screen (pixels)
 		vec2 outputSize; // (points)
 		vec2 outputMouse; // (points)
 		real zoom, retina, pointsScale; // how many pixels per point (1D)
@@ -276,16 +276,16 @@ namespace cage
 
 		struct graphicsDataStruct
 		{
-			shaderClass *debugShader;
-			shaderClass *elementShader;
-			shaderClass *fontShader;
-			shaderClass *imageAnimatedShader;
-			shaderClass *imageStaticShader;
-			shaderClass *colorPickerShader[3];
-			meshClass *debugMesh;
-			meshClass *elementMesh;
-			meshClass *fontMesh;
-			meshClass *imageMesh;
+			shaderProgram *debugShader;
+			shaderProgram *elementShader;
+			shaderProgram *fontShader;
+			shaderProgram *imageAnimatedShader;
+			shaderProgram *imageStaticShader;
+			shaderProgram *colorPickerShader[3];
+			renderMesh *debugMesh;
+			renderMesh *elementMesh;
+			renderMesh *fontMesh;
+			renderMesh *imageMesh;
 			graphicsDataStruct();
 		} graphicsData;
 
@@ -294,7 +294,7 @@ namespace cage
 			memoryArenaGrowing<memoryAllocatorPolicyLinear<>, memoryConcurrentPolicyNone> arena;
 			memoryArena memory;
 			renderableBaseStruct *first, *last;
-			emitDataStruct(const guiCreateConfig &config);
+			emitDataStruct(const guiManagerCreateConfig &config);
 			emitDataStruct(emitDataStruct &&other); // this is not defined, is it? but it is required, is it not?
 			~emitDataStruct();
 			void flush();
@@ -307,12 +307,12 @@ namespace cage
 
 		std::vector<skinDataStruct> skins;
 
-		guiImpl(const guiCreateConfig &config);
+		guiImpl(const guiManagerCreateConfig &config);
 		~guiImpl();
 
 		void scaling();
 
-		bool eventPoint(const pointStruct &ptIn, vec2 &ptOut);
+		bool eventPoint(const ivec2 &ptIn, vec2 &ptOut);
 		vec4 pointsToNdc(vec2 position, vec2 size);
 
 		void graphicsDispatch();

@@ -37,9 +37,9 @@ namespace cage
 		{
 		public:
 			loggerImpl *prev, *next;
-			const uint64 thread;
+			const uint64 threadHandle;
 
-			loggerImpl() : prev(nullptr), next(nullptr), thread(threadId())
+			loggerImpl() : prev(nullptr), next(nullptr), threadHandle(threadId())
 			{
 				{
 					scopeLock<syncMutex> l(loggerMutex());
@@ -83,14 +83,14 @@ namespace cage
 				loggerDebug->format.bind<&logFormatConsole>();
 				loggerDebug->output.bind<&logOutputDebug>();
 
-				loggerOutputCentralFile = newLogOutputFile(pathExtractFilename(detail::getExecutableFullPathNoExe()) + ".log", false);
+				loggerOutputCentralFile = newLoggerOutputFile(pathExtractFilename(detail::getExecutableFullPathNoExe()) + ".log", false);
 				loggerCentralFile = newLogger();
-				loggerCentralFile->output.bind<logOutputFile, &logOutputFile::output>(loggerOutputCentralFile.get());
+				loggerCentralFile->output.bind<loggerOutputFile, &loggerOutputFile::output>(loggerOutputCentralFile.get());
 				loggerCentralFile->format.bind<&logFormatFileShort>();
 			}
 
 			holder<logger> loggerDebug;
-			holder<logOutputFile> loggerOutputCentralFile;
+			holder<loggerOutputFile> loggerOutputCentralFile;
 			holder<logger> loggerCentralFile;
 		};
 
@@ -194,9 +194,9 @@ namespace cage
 				res += detail::severityToString(info.severity) + " ";
 				res += string(info.component).fill(20) + " ";
 				res += info.message;
-				if (longer && info.file)
+				if (longer && info.fileHandle)
 				{
-					string flf = string(" ") + string(info.file) + ":" + string(info.line) + " (" + string(info.function) + ")";
+					string flf = string(" ") + string(info.fileHandle) + ":" + string(info.line) + " (" + string(info.function) + ")";
 					if (res.length() + flf.length() + 10 < string::MaxLength)
 					{
 						res += string().fill(string::MaxLength - flf.length() - res.length() - 5);
@@ -207,7 +207,7 @@ namespace cage
 			}
 		}
 
-		class fileOutputImpl : public logOutputFile
+		class fileOutputImpl : public loggerOutputFile
 		{
 		public:
 			fileOutputImpl(const string &path, bool append)
@@ -218,7 +218,7 @@ namespace cage
 				f = newFile(path, fm);
 			}
 
-			holder<file> f;
+			holder<fileHandle> f;
 		};
 	}
 
@@ -229,7 +229,7 @@ namespace cage
 
 	namespace detail
 	{
-		loggerInfo::loggerInfo() : component(""), file(nullptr), function(nullptr), time(0), createThreadId(0), currentThreadId(0), severity(severityEnum::Critical), line(0), continuous(false), debug(false)
+		loggerInfo::loggerInfo() : component(""), fileHandle(nullptr), function(nullptr), time(0), createThreadId(0), currentThreadId(0), severity(severityEnum::Critical), line(0), continuous(false), debug(false)
 		{}
 
 		logger *getCentralLog()
@@ -255,7 +255,7 @@ namespace cage
 
 	namespace privat
 	{
-		uint64 makeLog(const char *file, uint32 line, const char *function, severityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept
+		uint64 makeLog(const char *fileHandle, uint32 line, const char *function, severityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept
 		{
 			try
 			{
@@ -269,7 +269,7 @@ namespace cage
 				info.currentThreadId = threadId();
 				info.currentThreadName = getCurrentThreadName();
 				info.time = getApplicationTime();
-				info.file = file;
+				info.fileHandle = fileHandle;
 				info.line = line;
 				info.function = function;
 
@@ -279,7 +279,7 @@ namespace cage
 				{
 					if (cur->output)
 					{
-						info.createThreadId = cur->thread;
+						info.createThreadId = cur->threadHandle;
 						if (!cur->filter || cur->filter(info))
 						{
 							if (cur->format)
@@ -333,16 +333,16 @@ namespace cage
 		fflush(stderr);
 	}
 
-	void logOutputFile::output(const string &message)
+	void loggerOutputFile::output(const string &message)
 	{
 		fileOutputImpl *impl = (fileOutputImpl*)this;
 		impl->f->writeLine(message);
 		impl->f->flush();
 	}
 
-	holder<logOutputFile> newLogOutputFile(const string &path, bool append)
+	holder<loggerOutputFile> newLoggerOutputFile(const string &path, bool append)
 	{
-		return detail::systemArena().createImpl<logOutputFile, fileOutputImpl>(path, append);
+		return detail::systemArena().createImpl<loggerOutputFile, fileOutputImpl>(path, append);
 	}
 
 	uint64 getApplicationTime()

@@ -42,7 +42,7 @@ namespace cage
 	{
 		guiImpl::graphicsDataStruct &context = impl->graphicsData;
 		data.texture->bind();
-		shaderClass *shr = data.texture->getTarget() == GL_TEXTURE_2D_ARRAY ? context.imageAnimatedShader : context.imageStaticShader;
+		shaderProgram *shr = data.texture->getTarget() == GL_TEXTURE_2D_ARRAY ? context.imageAnimatedShader : context.imageStaticShader;
 		shr->bind();
 		shr->uniform(0, data.ndcPos);
 		shr->uniform(1, data.uvClip);
@@ -62,13 +62,13 @@ namespace cage
 			target[3] = 1 - source[1];
 		}
 
-		void copyTextureUv(const skinElementLayoutStruct::textureUvOiStruct &source, skinElementLayoutStruct::textureUvOiStruct &target)
+		void copyTextureUv(const guiSkinElementLayout::textureUvOiStruct &source, guiSkinElementLayout::textureUvOiStruct &target)
 		{
 			copyTextureUv(source.inner, target.inner);
 			copyTextureUv(source.outer, target.outer);
 		}
 
-		void copyTextureUv(const skinElementLayoutStruct::textureUvStruct &source, skinElementLayoutStruct::textureUvStruct &target)
+		void copyTextureUv(const guiSkinElementLayout::textureUvStruct &source, guiSkinElementLayout::textureUvStruct &target)
 		{
 			for (int i = 0; i < 4; i++)
 				copyTextureUv(source.data[i], target.data[i]);
@@ -94,7 +94,7 @@ namespace cage
 			// write skins uv coordinates
 			for (auto &s : skins)
 			{
-				skinElementLayoutStruct::textureUvStruct textureUvs[(uint32)elementTypeEnum::TotalElements];
+				guiSkinElementLayout::textureUvStruct textureUvs[(uint32)elementTypeEnum::TotalElements];
 				for (uint32 i = 0; i < (uint32)elementTypeEnum::TotalElements; i++)
 					copyTextureUv(s.layouts[i].textureUv, textureUvs[i]);
 				s.elementsGpuBuffer->bind();

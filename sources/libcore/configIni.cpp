@@ -258,14 +258,14 @@ namespace cage
 
 	void configIni::load(const string &filename)
 	{
-		holder<file> file = newFile(filename, fileMode(true, false));
+		holder<fileHandle> fileHandle = newFile(filename, fileMode(true, false));
 		clear();
 		try
 		{
 			string sec = "";
 			uint32 secIndex = 0;
 			uint32 itemIndex = 0;
-			for (string line; file->readLine(line);)
+			for (string line; fileHandle->readLine(line);)
 			{
 				if (line.empty())
 					continue;
@@ -305,7 +305,7 @@ namespace cage
 		}
 		catch (...)
 		{
-			CAGE_LOG(severityEnum::Note, "exception", string() + "failed to load ini file: '" + filename + "'");
+			CAGE_LOG(severityEnum::Note, "exception", string() + "failed to load ini fileHandle: '" + filename + "'");
 			throw;
 		}
 	}
@@ -315,12 +315,12 @@ namespace cage
 		iniImpl *impl = (iniImpl*)this;
 		fileMode fm(false, true);
 		fm.textual = true;
-		holder<file> file = newFile(filename, fm);
+		holder<fileHandle> fileHandle = newFile(filename, fm);
 		for (const auto &i : impl->sections.cont)
 		{
-			file->writeLine(string() + "[" + i.first + "]");
+			fileHandle->writeLine(string() + "[" + i.first + "]");
 			for (const auto &j : i.second->items.cont)
-				file->writeLine(string() + j.first + "=" + j.second);
+				fileHandle->writeLine(string() + j.first + "=" + j.second);
 		}
 	}
 

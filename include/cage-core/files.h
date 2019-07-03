@@ -17,7 +17,7 @@ namespace cage
 		bool append;
 	};
 
-	class CAGE_API file : private immovable
+	class CAGE_API fileHandle : private immovable
 	{
 	public:
 		void read(void *data, uint64 size);
@@ -33,7 +33,7 @@ namespace cage
 		uint64 size() const;
 	};
 
-	CAGE_API holder<file> newFile(const string &path, const fileMode &mode);
+	CAGE_API holder<fileHandle> newFile(const string &path, const fileMode &mode);
 
 	enum class pathTypeFlags : uint32
 	{
@@ -61,7 +61,7 @@ namespace cage
 
 	// path decomposition
 
-	CAGE_API void pathDecompose(const string &input, string &drive, string &directory, string &file, string &extension);
+	CAGE_API void pathDecompose(const string &input, string &drive, string &directory, string &fileHandle, string &extension);
 	CAGE_API string pathExtractDrive(const string &input);
 	CAGE_API string pathExtractPath(const string &input);
 	CAGE_API string pathExtractPathNoDrive(const string &input);

@@ -15,21 +15,21 @@ namespace cage
 	{
 		void processLoad(const assetContext *context, void *schemePointer)
 		{
-			skeletonClass *skl = nullptr;
+			skeletonRig *skl = nullptr;
 			if (context->assetHolder)
 			{
-				skl = static_cast<skeletonClass*>(context->assetHolder.get());
+				skl = static_cast<skeletonRig*>(context->assetHolder.get());
 			}
 			else
 			{
-				context->assetHolder = newSkeleton().cast<void>();
-				skl = static_cast<skeletonClass*>(context->assetHolder.get());
+				context->assetHolder = newSkeletonRig().cast<void>();
+				skl = static_cast<skeletonRig*>(context->assetHolder.get());
 				skl->setDebugName(context->textName);
 			}
 			context->returnData = skl;
 
 			deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
-			skeletonHeaderStruct data;
+			skeletonRigHeader data;
 			des >> data;
 			uint16 *boneParents = (uint16*)des.advance(sizeof(uint16) * data.bonesCount);
 			mat4 *baseMatrices = (mat4*)des.advance(sizeof(mat4) * data.bonesCount);
@@ -39,7 +39,7 @@ namespace cage
 		}
 	}
 
-	assetScheme genAssetSchemeSkeleton(uint32 threadIndex)
+	assetScheme genAssetSchemeSkeletonRig(uint32 threadIndex)
 	{
 		assetScheme s;
 		s.threadIndex = threadIndex;

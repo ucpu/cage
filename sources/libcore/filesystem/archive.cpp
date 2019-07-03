@@ -24,8 +24,8 @@ namespace cage
 	void mixedMove(std::shared_ptr<archiveVirtual> &af, const string &pf, std::shared_ptr<archiveVirtual> &at, const string &pt)
 	{
 		{
-			holder<file> f = af ? af->openFile(pf, fileMode(true, false)) : realNewFile(pf, fileMode(true, false));
-			holder<file> t = at ? at->openFile(pt, fileMode(false, true)) : realNewFile(pt, fileMode(false, true));
+			holder<fileHandle> f = af ? af->openFile(pf, fileMode(true, false)) : realNewFile(pf, fileMode(true, false));
+			holder<fileHandle> t = at ? at->openFile(pt, fileMode(false, true)) : realNewFile(pt, fileMode(false, true));
 			// todo split big files into multiple smaller steps
 			memoryBuffer b = f->readBuffer(f->size());
 			f->close();
@@ -52,7 +52,7 @@ namespace cage
 				if (a)
 					return a;
 			}
-			// todo determine archive type of the file
+			// todo determine archive type of the fileHandle
 			try
 			{
 				detail::overrideException oe;
@@ -122,7 +122,7 @@ namespace cage
 			{
 				mutex = newSyncMutex();
 				if (newFile(path, fileMode(true, false))->size() == 0)
-					CAGE_THROW_ERROR(exception, "empty file"); // this is a temporary workaround until it is improved in the libzip
+					CAGE_THROW_ERROR(exception, "empty fileHandle"); // this is a temporary workaround until it is improved in the libzip
 				zip = zip_open(path.c_str(), ZIP_CHECKCONS, nullptr);
 				if (!zip)
 					CAGE_THROW_ERROR(exception, "zip_open");
@@ -213,7 +213,7 @@ namespace cage
 				CAGE_THROW_CRITICAL(notImplemented, "lastChange is not yet implemented for zip archives");
 			}
 
-			holder<file> openFile(const string &path, const fileMode &mode) override;
+			holder<fileHandle> openFile(const string &path, const fileMode &mode) override;
 			holder<directoryList> listDirectory(const string &path) override;
 		};
 
@@ -258,7 +258,7 @@ namespace cage
 
 			void write(const void *data, uint64 size) override
 			{
-				CAGE_THROW_CRITICAL(notImplemented, "calling write on read-only zip file");
+				CAGE_THROW_CRITICAL(notImplemented, "calling write on read-only zip fileHandle");
 			}
 
 			void seek(uint64 position) override
@@ -334,7 +334,7 @@ namespace cage
 
 			void read(void *data, uint64 size) override
 			{
-				CAGE_THROW_CRITICAL(notImplemented, "calling read on write-only zip file");
+				CAGE_THROW_CRITICAL(notImplemented, "calling read on write-only zip fileHandle");
 			}
 
 			void write(const void *data, uint64 size) override
@@ -345,7 +345,7 @@ namespace cage
 
 			void seek(uint64 position) override
 			{
-				CAGE_THROW_CRITICAL(notImplemented, "calling seek on write-only zip file");
+				CAGE_THROW_CRITICAL(notImplemented, "calling seek on write-only zip fileHandle");
 			}
 
 			void flush() override
@@ -440,17 +440,17 @@ namespace cage
 			}
 		};
 
-		holder<file> archiveZip::openFile(const string &path, const fileMode &mode)
+		holder<fileHandle> archiveZip::openFile(const string &path, const fileMode &mode)
 		{
 			CAGE_ASSERT_RUNTIME(!path.empty());
 			CAGE_ASSERT_RUNTIME(mode.valid());
-			CAGE_ASSERT_RUNTIME(mode.read != mode.write, "zip archive cannot open file for both reading and writing simultaneously");
-			CAGE_ASSERT_RUNTIME(!mode.append, "zip archive cannot open file for append");
+			CAGE_ASSERT_RUNTIME(mode.read != mode.write, "zip archive cannot open fileHandle for both reading and writing simultaneously");
+			CAGE_ASSERT_RUNTIME(!mode.append, "zip archive cannot open fileHandle for append");
 			createDirectories(pathJoin(path, ".."));
 			if (mode.read)
-				return detail::systemArena().createImpl<file, fileZipRead>(std::dynamic_pointer_cast<archiveZip>(shared_from_this()), path, mode);
+				return detail::systemArena().createImpl<fileHandle, fileZipRead>(std::dynamic_pointer_cast<archiveZip>(shared_from_this()), path, mode);
 			else
-				return detail::systemArena().createImpl<file, fileZipWrite>(std::dynamic_pointer_cast<archiveZip>(shared_from_this()), path, mode);
+				return detail::systemArena().createImpl<fileHandle, fileZipWrite>(std::dynamic_pointer_cast<archiveZip>(shared_from_this()), path, mode);
 		}
 
 		holder<directoryList> archiveZip::listDirectory(const string &path)

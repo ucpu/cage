@@ -60,7 +60,7 @@ namespace cage
 
 	namespace
 	{
-		class textureImpl : public textureClass
+		class textureImpl : public renderTexture
 		{
 		public:
 			const uint32 target;
@@ -164,7 +164,7 @@ namespace cage
 		}
 	}
 
-	void textureClass::setDebugName(const string &name)
+	void renderTexture::setDebugName(const string &name)
 	{
 #ifdef CAGE_DEBUG
 		debugName = name;
@@ -173,24 +173,24 @@ namespace cage
 		glObjectLabel(GL_TEXTURE, impl->id, name.length(), name.c_str());
 	}
 
-	uint32 textureClass::getId() const
+	uint32 renderTexture::getId() const
 	{
 		return ((textureImpl*)this)->id;
 	}
 
-	uint32 textureClass::getTarget() const
+	uint32 renderTexture::getTarget() const
 	{
 		return ((textureImpl*)this)->target;
 	}
 
-	void textureClass::getResolution(uint32 &width, uint32 &height) const
+	void renderTexture::getResolution(uint32 &width, uint32 &height) const
 	{
 		textureImpl *impl = (textureImpl*)this;
 		width = impl->width;
 		height = impl->height;
 	}
 
-	void textureClass::getResolution(uint32 &width, uint32 &height, uint32 &depth) const
+	void renderTexture::getResolution(uint32 &width, uint32 &height, uint32 &depth) const
 	{
 		textureImpl *impl = (textureImpl*)this;
 		width = impl->width;
@@ -198,7 +198,7 @@ namespace cage
 		depth = impl->depth;
 	}
 
-	void textureClass::bind() const
+	void renderTexture::bind() const
 	{
 		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentContext());
 		textureImpl *impl = (textureImpl*)this;
@@ -209,12 +209,12 @@ namespace cage
 #endif // CAGE_ASSERT_ENABLED
 	}
 
-	void textureClass::image2d(uint32 w, uint32 h, uint32 internalFormat)
+	void renderTexture::image2d(uint32 w, uint32 h, uint32 internalFormat)
 	{
 		image2d(w, h, internalFormat, textureFormat(internalFormat), textureType(internalFormat), nullptr);
 	}
 
-	void textureClass::image2d(uint32 w, uint32 h, uint32 internalFormat, uint32 format, uint32 type, const void *data)
+	void renderTexture::image2d(uint32 w, uint32 h, uint32 internalFormat, uint32 format, uint32 type, const void *data)
 	{
 		textureImpl *impl = (textureImpl*)this;
 		CAGE_ASSERT_RUNTIME(privat::getCurrentTexture() == impl->id);
@@ -226,12 +226,12 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void textureClass::imageCube(uint32 w, uint32 h, uint32 internalFormat)
+	void renderTexture::imageCube(uint32 w, uint32 h, uint32 internalFormat)
 	{
 		imageCube(w, h, internalFormat, textureFormat(internalFormat), textureType(internalFormat), nullptr, 0);
 	}
 
-	void textureClass::imageCube(uint32 w, uint32 h, uint32 internalFormat, uint32 format, uint32 type, const void *data, uintPtr stride)
+	void renderTexture::imageCube(uint32 w, uint32 h, uint32 internalFormat, uint32 format, uint32 type, const void *data, uintPtr stride)
 	{
 		textureImpl *impl = (textureImpl*)this;
 		CAGE_ASSERT_RUNTIME(privat::getCurrentTexture() == impl->id);
@@ -244,12 +244,12 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void textureClass::image3d(uint32 w, uint32 h, uint32 d, uint32 internalFormat)
+	void renderTexture::image3d(uint32 w, uint32 h, uint32 d, uint32 internalFormat)
 	{
 		image3d(w, h, d, internalFormat, textureFormat(internalFormat), textureType(internalFormat), nullptr);
 	}
 
-	void textureClass::image3d(uint32 w, uint32 h, uint32 d, uint32 internalFormat, uint32 format, uint32 type, const void *data)
+	void renderTexture::image3d(uint32 w, uint32 h, uint32 d, uint32 internalFormat, uint32 format, uint32 type, const void *data)
 	{
 		textureImpl *impl = (textureImpl*)this;
 		CAGE_ASSERT_RUNTIME(privat::getCurrentTexture() == impl->id);
@@ -261,7 +261,7 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void textureClass::filters(uint32 mig, uint32 mag, uint32 aniso)
+	void renderTexture::filters(uint32 mig, uint32 mag, uint32 aniso)
 	{
 		textureImpl *impl = (textureImpl*)this;
 		CAGE_ASSERT_RUNTIME(privat::getCurrentTexture() == impl->id);
@@ -273,12 +273,12 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void textureClass::wraps(uint32 s, uint32 t)
+	void renderTexture::wraps(uint32 s, uint32 t)
 	{
 		wraps(s, t, GL_REPEAT);
 	}
 
-	void textureClass::wraps(uint32 s, uint32 t, uint32 r)
+	void renderTexture::wraps(uint32 s, uint32 t, uint32 r)
 	{
 		textureImpl *impl = (textureImpl*)this;
 		CAGE_ASSERT_RUNTIME(privat::getCurrentTexture() == impl->id);
@@ -288,7 +288,7 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void textureClass::generateMipmaps()
+	void renderTexture::generateMipmaps()
 	{
 		textureImpl *impl = (textureImpl*)this;
 		CAGE_ASSERT_RUNTIME(privat::getCurrentTexture() == impl->id);
@@ -296,7 +296,7 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void textureClass::multiBind(uint32 count, const uint32 tius[], const textureClass *const texs[])
+	void renderTexture::multiBind(uint32 count, const uint32 tius[], const renderTexture *const texs[])
 	{
 		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentContext());
 		GLint active = 0;
@@ -327,20 +327,20 @@ namespace cage
 		*/
 	}
 
-	holder<textureClass> newTexture()
+	holder<renderTexture> newRenderTexture()
 	{
-		return newTexture(GL_TEXTURE_2D);
+		return newRenderTexture(GL_TEXTURE_2D);
 	}
 
-	holder<textureClass> newTexture(uint32 target)
+	holder<renderTexture> newRenderTexture(uint32 target)
 	{
 		CAGE_ASSERT_RUNTIME(target == GL_TEXTURE_2D || target == GL_TEXTURE_2D_ARRAY || target == GL_TEXTURE_RECTANGLE || target == GL_TEXTURE_3D || target == GL_TEXTURE_CUBE_MAP);
-		return detail::systemArena().createImpl<textureClass, textureImpl>(target);
+		return detail::systemArena().createImpl<renderTexture, textureImpl>(target);
 	}
 
 	namespace detail
 	{
-		vec4 evalSamplesForTextureAnimation(const textureClass *texture, uint64 emitTime, uint64 animationStart, real animationSpeed, real animationOffset)
+		vec4 evalSamplesForTextureAnimation(const renderTexture *texture, uint64 emitTime, uint64 animationStart, real animationSpeed, real animationOffset)
 		{
 			if (!texture)
 				return vec4();

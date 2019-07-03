@@ -131,8 +131,8 @@ void testUdp()
 	configSetUint32("cage-core.udp.packetsPerService", 1);
 	configSetFloat("cage-core.udp.simulatedPacketLoss", 0.1f);
 
-	holder<thread> server = newThread(delegate<void()>().bind<&serverImpl::entry>(), "server");
-	std::vector<holder<thread>> clients;
+	holder<threadHandle> server = newThread(delegate<void()>().bind<&serverImpl::entry>(), "server");
+	std::vector<holder<threadHandle>> clients;
 	clients.resize(3);
 	uint32 index = 0;
 	for (auto &c : clients)

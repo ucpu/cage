@@ -41,15 +41,15 @@ namespace cage
 		const imageFormatComponent imageInit = imageFormatComponentInit();
 	}
 
-	skinElementLayoutStruct::textureUvStruct::textureUvStruct()
+	guiSkinElementLayout::textureUvStruct::textureUvStruct()
 	{
 		detail::memset(this, 0, sizeof(*this));
 	}
 
-	skinElementLayoutStruct::skinElementLayoutStruct() : border(5, 5, 5, 5)
+	guiSkinElementLayout::guiSkinElementLayout() : border(5, 5, 5, 5)
 	{}
 
-	skinWidgetDefaultsStruct::skinWidgetDefaultsStruct()
+	guiSkinWidgetDefaults::guiSkinWidgetDefaults()
 	{}
 
 	namespace
@@ -60,13 +60,13 @@ namespace cage
 			real frame; // spacing around element
 			real border; // border inside element
 
-			skinElementLayoutStruct::textureUvOiStruct next(bool allowBorder)
+			guiSkinElementLayout::textureUvOiStruct next(bool allowBorder)
 			{
 				vec2 s = size + frame * 2;
 				CAGE_ASSERT_RUNTIME(s[0] < 1, s, frame, border, size);
 				if (p[0] + s[0] > 1)
 					newLine();
-				skinElementLayoutStruct::textureUvOiStruct r;
+				guiSkinElementLayout::textureUvOiStruct r;
 				r.outer[0] = p[0] + frame;
 				r.outer[1] = p[1] + frame;
 				r.outer[2] = r.outer[0] + size[0];
@@ -97,7 +97,7 @@ namespace cage
 		};
 	}
 
-	skinConfigStruct::skinConfigStruct() : textureName(hashString("cage/texture/gui.psd"))
+	guiSkinConfig::guiSkinConfig() : textureName(hashString("cage/texture/gui.psd"))
 	{
 		std::vector<elementTypeEnum> largeElements = {
 			elementTypeEnum::PanelBase, // overlaps SpoilerBase
@@ -256,30 +256,30 @@ namespace cage
 		}
 	}
 
-	skinWidgetDefaultsStruct::labelStruct::labelStruct() : textFormat(textInit), imageFormat(imageInit), margin(1, 2, 1, 2)
+	guiSkinWidgetDefaults::labelStruct::labelStruct() : textFormat(textInit), imageFormat(imageInit), margin(1, 2, 1, 2)
 	{}
 
-	skinWidgetDefaultsStruct::buttonStruct::buttonStruct() : textFormat(textInit), imageFormat(imageInit), padding(1, 1, 1, 1), margin(1, 1, 1, 1), size(150, 32)
+	guiSkinWidgetDefaults::buttonStruct::buttonStruct() : textFormat(textInit), imageFormat(imageInit), padding(1, 1, 1, 1), margin(1, 1, 1, 1), size(150, 32)
 	{
 		textFormat.align = textAlignEnum::Center;
 	}
 
-	skinWidgetDefaultsStruct::inputStruct::inputStruct() : textValidFormat(textInit), textInvalidFormat(textInit), placeholderFormat(textInit), basePadding(2, 2, 2, 2), margin(1, 1, 1, 1), size(300, 32), buttonsSize(32), buttonsOffset(2), buttonsMode(inputButtonsPlacementModeEnum::Sides)
+	guiSkinWidgetDefaults::inputStruct::inputStruct() : textValidFormat(textInit), textInvalidFormat(textInit), placeholderFormat(textInit), basePadding(2, 2, 2, 2), margin(1, 1, 1, 1), size(300, 32), buttonsSize(32), buttonsOffset(2), buttonsMode(inputButtonsPlacementModeEnum::Sides)
 	{
 		textInvalidFormat.color = vec3(1,0,0);
 		placeholderFormat.color = vec3(0.5,0.5,0.5);
 	}
 
-	skinWidgetDefaultsStruct::textAreaStruct::textAreaStruct() : textFormat(textInit), padding(3, 3, 3, 3), margin(1, 1, 1, 1), size(450, 200)
+	guiSkinWidgetDefaults::textAreaStruct::textAreaStruct() : textFormat(textInit), padding(3, 3, 3, 3), margin(1, 1, 1, 1), size(450, 200)
 	{}
 
-	skinWidgetDefaultsStruct::checkBoxStruct::checkBoxStruct() : textFormat(textInit), margin(1, 1, 1, 1), size(28, 28), labelOffset(3, 5)
+	guiSkinWidgetDefaults::checkBoxStruct::checkBoxStruct() : textFormat(textInit), margin(1, 1, 1, 1), size(28, 28), labelOffset(3, 5)
 	{}
 
-	skinWidgetDefaultsStruct::radioBoxStruct::radioBoxStruct() : textFormat(textInit), margin(1, 1, 1, 1), size(28, 28), labelOffset(3, 5)
+	guiSkinWidgetDefaults::radioBoxStruct::radioBoxStruct() : textFormat(textInit), margin(1, 1, 1, 1), size(28, 28), labelOffset(3, 5)
 	{}
 
-	skinWidgetDefaultsStruct::comboBoxStruct::comboBoxStruct() : placeholderFormat(textInit), itemsFormat(textInit), selectedFormat(textInit), basePadding(1, 1, 1, 1), baseMargin(1, 1, 1, 1), listPadding(0, 0, 0, 0), itemPadding(1, 2, 1, 2), size(250, 32), listOffset(-6), itemSpacing(-2)
+	guiSkinWidgetDefaults::comboBoxStruct::comboBoxStruct() : placeholderFormat(textInit), itemsFormat(textInit), selectedFormat(textInit), basePadding(1, 1, 1, 1), baseMargin(1, 1, 1, 1), listPadding(0, 0, 0, 0), itemPadding(1, 2, 1, 2), size(250, 32), listOffset(-6), itemSpacing(-2)
 	{
 		placeholderFormat.color = vec3(0.5, 0.5, 0.5);
 		placeholderFormat.align = textAlignEnum::Center;
@@ -287,10 +287,10 @@ namespace cage
 		selectedFormat.align = textAlignEnum::Center;
 	}
 
-	skinWidgetDefaultsStruct::listBoxStruct::listBoxStruct() : textFormat(textInit), basePadding(0, 0, 0, 0), baseMargin(1, 1, 1, 1), itemPadding(1, 1, 1, 1), size(250, 32), itemSpacing(0)
+	guiSkinWidgetDefaults::listBoxStruct::listBoxStruct() : textFormat(textInit), basePadding(0, 0, 0, 0), baseMargin(1, 1, 1, 1), itemPadding(1, 1, 1, 1), size(250, 32), itemSpacing(0)
 	{}
 
-	skinWidgetDefaultsStruct::progressBarStruct::progressBarStruct() : textFormat(textInit), backgroundImageFormat(imageInit), fillingImageFormat(imageInit), baseMargin(1, 1, 1, 1), textPadding(1, 1, 1, 1), fillingPadding(1, 1, 1, 1), size(200, 28)
+	guiSkinWidgetDefaults::progressBarStruct::progressBarStruct() : textFormat(textInit), backgroundImageFormat(imageInit), fillingImageFormat(imageInit), baseMargin(1, 1, 1, 1), textPadding(1, 1, 1, 1), fillingPadding(1, 1, 1, 1), size(200, 28)
 	{
 		fillingImage.animationStart = 0;
 		fillingImage.textureName = hashString("todo");
@@ -298,7 +298,7 @@ namespace cage
 		fillingImage.textureUvSize = vec2(1, 1);
 	}
 
-	skinWidgetDefaultsStruct::sliderBarStruct::sliderBarStruct()
+	guiSkinWidgetDefaults::sliderBarStruct::sliderBarStruct()
 	{
 		horizontal.padding = vec4(1, 1, 1, 1);
 		horizontal.margin = vec4(1, 1, 1, 1);
@@ -310,22 +310,22 @@ namespace cage
 		vertical.collapsedBar = true;
 	}
 
-	skinWidgetDefaultsStruct::colorPickerStruct::colorPickerStruct() : margin(1, 1, 1, 1), collapsedSize(40, 32), fullSize(250, 180), hueBarPortion(0.18), resultBarPortion(0.35)
+	guiSkinWidgetDefaults::colorPickerStruct::colorPickerStruct() : margin(1, 1, 1, 1), collapsedSize(40, 32), fullSize(250, 180), hueBarPortion(0.18), resultBarPortion(0.35)
 	{}
 
-	skinWidgetDefaultsStruct::panelStruct::panelStruct() : textFormat(textInit), imageFormat(imageInit), contentPadding(2, 2, 2, 2), baseMargin(1, 1, 1, 1), captionPadding(3, 1, 3, 1), captionHeight(28)
+	guiSkinWidgetDefaults::panelStruct::panelStruct() : textFormat(textInit), imageFormat(imageInit), contentPadding(2, 2, 2, 2), baseMargin(1, 1, 1, 1), captionPadding(3, 1, 3, 1), captionHeight(28)
 	{
 		textFormat.align = textAlignEnum::Center;
 	}
 
-	skinWidgetDefaultsStruct::spoilerStruct::spoilerStruct() : textFormat(textInit), imageFormat(imageInit), contentPadding(2, 2, 2, 2), baseMargin(1, 1, 1, 1), captionPadding(3, 1, 3, 1), captionHeight(28)
+	guiSkinWidgetDefaults::spoilerStruct::spoilerStruct() : textFormat(textInit), imageFormat(imageInit), contentPadding(2, 2, 2, 2), baseMargin(1, 1, 1, 1), captionPadding(3, 1, 3, 1), captionHeight(28)
 	{
 		textFormat.align = textAlignEnum::Center;
 	}
 
-	skinWidgetDefaultsStruct::scrollbarsStruct::scrollbarsStruct() : scrollbarSize(15), contentPadding(4)
+	guiSkinWidgetDefaults::scrollbarsStruct::scrollbarsStruct() : scrollbarSize(15), contentPadding(4)
 	{}
 
-	skinWidgetDefaultsStruct::tooltipStruct::tooltipStruct() : textFormat(textInit)
+	guiSkinWidgetDefaults::tooltipStruct::tooltipStruct() : textFormat(textInit)
 	{}
 }

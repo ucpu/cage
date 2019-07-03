@@ -446,7 +446,7 @@ namespace cage
 		void *threadFunctionImpl(void *);
 #endif
 
-		class threadImpl : public thread
+		class threadImpl : public threadHandle
 		{
 		public:
 			const string threadName;
@@ -490,7 +490,7 @@ namespace cage
 #ifdef CAGE_SYSTEM_WINDOWS
 					CloseHandle(handle);
 #endif
-					CAGE_LOG(severityEnum::Critical, "thread", string() + "exception thrown in thread '" + threadName + "' cannot be propagated to the caller thread, terminating now");
+					CAGE_LOG(severityEnum::Critical, "threadHandle", string() + "exception thrown in threadHandle '" + threadName + "' cannot be propagated to the caller threadHandle, terminating now");
 					std::terminate();
 				}
 
@@ -501,13 +501,13 @@ namespace cage
 		};
 	}
 
-	uint64 thread::id() const
+	uint64 threadHandle::id() const
 	{
 		threadImpl *impl = (threadImpl*)this;
 		return impl->myid;
 	}
 
-	bool thread::done() const
+	bool threadHandle::done() const
 	{
 		threadImpl *impl = (threadImpl*)this;
 
@@ -521,7 +521,7 @@ namespace cage
 		switch (pthread_kill(impl->handle, 0))
 		{
 		case 0: return false;
-		default: const_cast<thread*>(this)->wait(); return true;
+		default: const_cast<threadHandle*>(this)->wait(); return true;
 		}
 #else
 		switch (int err = pthread_tryjoin_np(impl->handle, nullptr))
@@ -534,7 +534,7 @@ namespace cage
 #endif
 	}
 
-	void thread::wait()
+	void threadHandle::wait()
 	{
 		threadImpl *impl = (threadImpl*)this;
 
@@ -559,9 +559,9 @@ namespace cage
 		}
 	}
 
-	holder<thread> newThread(delegate<void()> func, const string &threadName)
+	holder<threadHandle> newThread(delegate<void()> func, const string &threadName)
 	{
-		return detail::systemArena().createImpl<thread, threadImpl>(func, threadName);
+		return detail::systemArena().createImpl<threadHandle, threadImpl>(func, threadName);
 	}
 
 	namespace
@@ -577,7 +577,7 @@ namespace cage
 	{
 		string oldName = currentThreadName();
 		currentThreadName() = name;
-		CAGE_LOG(severityEnum::Info, "thread", string() + "renamed thread id '" + threadId() + "' to '" + name + "'" + (oldName.empty() ? "" : string() + " was '" + oldName + "'"));
+		CAGE_LOG(severityEnum::Info, "threadHandle", string() + "renamed threadHandle id '" + threadId() + "' to '" + name + "'" + (oldName.empty() ? "" : string() + " was '" + oldName + "'"));
 
 		if (!name.empty())
 		{
@@ -588,7 +588,7 @@ namespace cage
 			{
 				DWORD dwType; // Must be 0x1000.
 				LPCSTR szName; // Pointer to name (in user addr space).
-				DWORD dwThreadID; // Thread ID (-1=caller thread).
+				DWORD dwThreadID; // Thread ID (-1=caller threadHandle).
 				DWORD dwFlags; // Reserved for future use, must be zero.
 			};
 #pragma pack(pop)
@@ -639,9 +639,9 @@ namespace cage
 			catch (...)
 			{
 				impl->exptr = std::current_exception();
-				CAGE_LOG(severityEnum::Warning, "thread", string() + "unhandled exception in thread '" + getCurrentThreadName() + "'");
+				CAGE_LOG(severityEnum::Warning, "threadHandle", string() + "unhandled exception in threadHandle '" + getCurrentThreadName() + "'");
 			}
-			CAGE_LOG(severityEnum::Info, "thread", string() + "thread '" + getCurrentThreadName() + "' ended");
+			CAGE_LOG(severityEnum::Info, "threadHandle", string() + "threadHandle '" + getCurrentThreadName() + "' ended");
 #ifdef CAGE_SYSTEM_WINDOWS
 			return 0;
 #else

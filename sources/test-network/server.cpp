@@ -13,7 +13,7 @@ using namespace cage;
 
 struct thrStruct
 {
-	holder<thread> thr;
+	holder<threadHandle> thr;
 	holder<connClass> conn;
 	runnerStruct runner;
 	bool done;

@@ -219,7 +219,7 @@ namespace cage
 	void image::encodeFile(const string &filename)
 	{
 		memoryBuffer buffer = encodeBuffer();
-		holder<file> f = newFile(filename, fileMode(false, true));
+		holder<fileHandle> f = newFile(filename, fileMode(false, true));
 		f->writeBuffer(buffer);
 	}
 
@@ -243,7 +243,7 @@ namespace cage
 
 	void image::decodeFile(const string &filename, uint32 channels, uint32 bpc)
 	{
-		holder<file> f = newFile(filename, fileMode(true, false));
+		holder<fileHandle> f = newFile(filename, fileMode(true, false));
 		memoryBuffer buffer(numeric_cast<uintPtr>(f->size()));
 		f->read(buffer.data(), buffer.size());
 		f->close();

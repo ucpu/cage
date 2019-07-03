@@ -10,7 +10,7 @@
 #include <cage-core/fileUtils.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/configIni.h>
-#include <cage-core/program.h>
+#include <cage-core/process.h>
 #include <cage-core/threadPool.h>
 
 using namespace cage;
@@ -36,12 +36,12 @@ namespace
 		string name;
 		databankStruct(const string &s = "") : name(s) {};
 
-		void load(file *f)
+		void load(fileHandle *f)
 		{
 			read(f, name);
 		}
 
-		void save(file *f) const
+		void save(fileHandle *f) const
 		{
 			write(f, name);
 		}
@@ -66,7 +66,7 @@ namespace
 		}
 		catch (cage::exception &)
 		{
-			CAGE_LOG(severityEnum::Error, "database", string() + "invalid ini file in databank '" + path + "'");
+			CAGE_LOG(severityEnum::Error, "database", string() + "invalid ini fileHandle in databank '" + path + "'");
 			return false;
 		}
 		uint32 errors = 0;
@@ -161,7 +161,7 @@ namespace
 			if (!scheme->applyOnAsset(ass))
 				CAGE_THROW_WARNING(exception, "asset has invalid configuration");
 
-			holder<program> prg = newProgram(scheme->processor);
+			holder<processHandle> prg = newProcess(scheme->processor);
 			prg->writeLine(pathToAbs(configPathInput)); // inputDirectory
 			prg->writeLine(ass.name); // inputName
 			prg->writeLine(pathToAbs(string(configPathIntermediate).empty() ? configPathOutput : configPathIntermediate)); // outputDirectory
@@ -222,7 +222,7 @@ namespace
 
 			int ret = prg->wait();
 			if (ret != 0)
-				CAGE_THROW_WARNING(codeException, "program returned error code", ret);
+				CAGE_THROW_WARNING(codeException, "processHandle returned error code", ret);
 
 			ass.corrupted = false;
 		}
@@ -243,25 +243,25 @@ namespace
 		if (!pathIsFile(configPathDatabase))
 			return;
 		CAGE_LOG(severityEnum::Info, "database", string() + "loading database cache: '" + configPathDatabase + "'");
-		holder<file> f = newFile(configPathDatabase, fileMode(true, false));
+		holder<fileHandle> f = newFile(configPathDatabase, fileMode(true, false));
 		string b;
 		if (!f->readLine(b) || b != databaseBegin)
-			CAGE_THROW_ERROR(exception, "wrong file format");
+			CAGE_THROW_ERROR(exception, "wrong fileHandle format");
 		if (!f->readLine(b) || b != databaseVersion)
 		{
-			CAGE_LOG(severityEnum::Warning, "database", "assets database file version mismatch, database will not be loaded");
+			CAGE_LOG(severityEnum::Warning, "database", "assets database fileHandle version mismatch, database will not be loaded");
 			return;
 		}
 		f->read(&timestamp, sizeof(timestamp));
 		corruptedDatabanks.load(f.get());
 		assets.load(f.get());
 		if (!f->readLine(b) || b != databaseEnd)
-			CAGE_THROW_ERROR(exception, "wrong file end");
+			CAGE_THROW_ERROR(exception, "wrong fileHandle end");
 		f->close();
 		CAGE_LOG(severityEnum::Info, "database", string() + "loaded " + assets.size() + " asset entries");
 	}
 
-	void write(holder<file> &f, const string &s)
+	void write(holder<fileHandle> &f, const string &s)
 	{
 		f->write(s.c_str(), s.length());
 		f->write(" ", 1);
@@ -273,7 +273,7 @@ namespace
 		if (!((string)configPathDatabase).empty())
 		{
 			CAGE_LOG(severityEnum::Info, "database", string() + "saving database cache: '" + configPathDatabase + "'");
-			holder<file> f = newFile(configPathDatabase, fileMode(false, true));
+			holder<fileHandle> f = newFile(configPathDatabase, fileMode(false, true));
 			f->writeLine(databaseBegin);
 			f->writeLine(databaseVersion);
 			f->write(&timestamp, sizeof(timestamp));
@@ -289,7 +289,7 @@ namespace
 		{
 			fileMode fm(false, true);
 			fm.textual = true;
-			holder<file> f = newFile(configPathReverse, fm);
+			holder<fileHandle> f = newFile(configPathReverse, fm);
 			std::vector <std::pair <string, const assetStruct*> > items;
 			for (const auto &it : assets)
 			{
@@ -318,7 +318,7 @@ namespace
 		{
 			fileMode fm(false, true);
 			fm.textual = true;
-			holder<file> f = newFile(configPathForward, fm);
+			holder<fileHandle> f = newFile(configPathForward, fm);
 			std::vector<std::pair<string, const assetStruct*>> items;
 			for (const auto &it : assets)
 			{
@@ -456,7 +456,7 @@ namespace
 				}
 				catch (...)
 				{
-					CAGE_LOG(severityEnum::Error, "exception", "caught unknown exception in asset processing thread");
+					CAGE_LOG(severityEnum::Error, "exception", "caught unknown exception in asset processing threadHandle");
 				}
 			}
 		}

@@ -72,7 +72,7 @@ void processObject()
 		return a.threshold > b.threshold;
 	});
 
-	objectHeaderStruct o;
+	renderObjectHeader o;
 	detail::memset(&o, 0, sizeof(o));
 
 	{ // sizes
@@ -82,12 +82,12 @@ void processObject()
 
 	assetHeader h = initializeAssetHeaderStruct();
 	h.dependenciesCount = numeric_cast<uint16>(deps.size());
-	h.originalSize = sizeof(objectHeaderStruct);
+	h.originalSize = sizeof(renderObjectHeader);
 	h.originalSize += numeric_cast<uint32>(lods.size()) * sizeof(uint32);
 	h.originalSize += numeric_cast<uint32>(lods.size() + 1) * sizeof(uint32);
 	h.originalSize += totalMeshes * sizeof(uint32);
 
-	holder<file> f = newFile(outputFileName, fileMode(false, true));
+	holder<fileHandle> f = newFile(outputFileName, fileMode(false, true));
 	f->write(&h, sizeof(h));
 	for (uint32 it : deps)
 		f->write(&it, sizeof(uint32));

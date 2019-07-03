@@ -18,11 +18,11 @@ namespace cage
 			static bool fired = false;
 			if (fired)
 				return;
-			CAGE_LOG(severityEnum::Warning, "sound", "failed to set thread priority for audio");
+			CAGE_LOG(severityEnum::Warning, "sound", "failed to set threadHandle priority for audio");
 			fired = true;
 		}
 
-		class soundContextImpl : public soundContextClass
+		class soundContextImpl : public soundContext
 		{
 		public:
 			string name;
@@ -34,7 +34,7 @@ namespace cage
 				CAGE_LOG(severityEnum::Info, "sound", string() + "creating sound context, name: '" + name + "'");
 				soundio = soundio_create();
 				if (!soundio)
-					CAGE_THROW_ERROR(soundException, "error create soundio", 0);
+					CAGE_THROW_ERROR(soundError, "error create soundio", 0);
 				soundio->app_name = this->name.c_str();
 				soundio->emit_rtprio_warning = &rtprioWarningCallback;
 				checkSoundIoError(soundio_connect(soundio));
@@ -51,20 +51,20 @@ namespace cage
 
 	namespace soundPrivat
 	{
-		SoundIo *soundioFromContext(soundContextClass *context)
+		SoundIo *soundioFromContext(soundContext *context)
 		{
 			soundContextImpl *impl = (soundContextImpl*)context;
 			return impl->soundio;
 		}
 
-		memoryArena linksArenaFromContext(soundContextClass *context)
+		memoryArena linksArenaFromContext(soundContext *context)
 		{
 			soundContextImpl *impl = (soundContextImpl*)context;
 			return memoryArena(&impl->linksMemory);
 		}
 	}
 
-	string soundContextClass::getContextName() const
+	string soundContext::getContextName() const
 	{
 		soundContextImpl *impl = (soundContextImpl*)this;
 		return impl->name;
@@ -73,8 +73,8 @@ namespace cage
 	soundContextCreateConfig::soundContextCreateConfig() : linksMemory(1024 * 1024)
 	{}
 
-	holder<soundContextClass> newSoundContext(const soundContextCreateConfig &config, const string &name)
+	holder<soundContext> newSoundContext(const soundContextCreateConfig &config, const string &name)
 	{
-		return detail::systemArena().createImpl <soundContextClass, soundContextImpl>(config, name);
+		return detail::systemArena().createImpl <soundContext, soundContextImpl>(config, name);
 	}
 }

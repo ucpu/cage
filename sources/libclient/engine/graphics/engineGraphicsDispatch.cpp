@@ -33,7 +33,7 @@ namespace cage
 			uint32 width;
 			uint32 height;
 		public:
-			holder<textureClass> texture;
+			holder<renderTexture> texture;
 			void resize(uint32 w, uint32 h)
 			{
 				if (w == width && h == height)
@@ -50,7 +50,7 @@ namespace cage
 			shadowmapBufferStruct(uint32 target) : width(0), height(0)
 			{
 				CAGE_ASSERT_RUNTIME(target == GL_TEXTURE_CUBE_MAP || target == GL_TEXTURE_2D);
-				texture = newTexture(target);
+				texture = newRenderTexture(target);
 				texture->setDebugName("shadowmap");
 				texture->filters(GL_LINEAR, GL_LINEAR, 16);
 				texture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
@@ -68,9 +68,9 @@ namespace cage
 
 		struct visualizableTextureStruct
 		{
-			textureClass *tex;
+			renderTexture *tex;
 			visualizableTextureModeEnum visualizableTextureMode;
-			visualizableTextureStruct(textureClass *tex, visualizableTextureModeEnum vtm) : tex(tex), visualizableTextureMode(vtm) {};
+			visualizableTextureStruct(renderTexture *tex, visualizableTextureModeEnum vtm) : tex(tex), visualizableTextureMode(vtm) {};
 		};
 
 		struct ssaoShaderStruct
@@ -84,7 +84,7 @@ namespace cage
 
 		struct finalScreenShaderStruct
 		{
-			cameraTonemapStruct tonemap; // 7 reals
+			cameraTonemap tonemap; // 7 reals
 			real tonemapEnabled;
 
 			real eyeAdaptationKey;
@@ -100,8 +100,8 @@ namespace cage
 
 		struct cameraSpecificDataStruct
 		{
-			holder<textureClass> luminanceCollectionTexture; // w*h
-			holder<textureClass> luminanceAccumulationTexture; // 1*1
+			holder<renderTexture> luminanceCollectionTexture; // w*h
+			holder<renderTexture> luminanceAccumulationTexture; // 1*1
 
 			cameraSpecificDataStruct() : width(0), height(0), cameraEffects(cameraEffectsFlags::None)
 			{}
@@ -120,7 +120,7 @@ namespace cage
 						luminanceCollectionTexture->bind();
 					else
 					{
-						luminanceCollectionTexture = newTexture();
+						luminanceCollectionTexture = newRenderTexture();
 						luminanceCollectionTexture->setDebugName("luminanceCollectionTexture");
 						luminanceCollectionTexture->filters(GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR, 0);
 						luminanceCollectionTexture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
@@ -130,7 +130,7 @@ namespace cage
 						luminanceAccumulationTexture->bind();
 					else
 					{
-						luminanceAccumulationTexture = newTexture();
+						luminanceAccumulationTexture = newRenderTexture();
 						luminanceAccumulationTexture->setDebugName("luminanceAccumulationTexture");
 						luminanceAccumulationTexture->filters(GL_NEAREST, GL_NEAREST, 0);
 						luminanceAccumulationTexture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
@@ -153,27 +153,27 @@ namespace cage
 
 		struct graphicsDispatchHolders
 		{
-			holder<frameBufferClass> gBufferTarget;
-			holder<frameBufferClass> renderTarget;
-			holder<textureClass> albedoTexture;
-			holder<textureClass> specialTexture;
-			holder<textureClass> normalTexture;
-			holder<textureClass> colorTexture;
-			holder<textureClass> intermediateTexture;
-			holder<textureClass> velocityTexture;
-			holder<textureClass> ambientOcclusionTexture1;
-			holder<textureClass> ambientOcclusionTexture2;
-			holder<textureClass> bloomTexture1;
-			holder<textureClass> bloomTexture2;
-			holder<textureClass> depthTexture;
+			holder<frameBuffer> gBufferTarget;
+			holder<frameBuffer> renderTarget;
+			holder<renderTexture> albedoTexture;
+			holder<renderTexture> specialTexture;
+			holder<renderTexture> normalTexture;
+			holder<renderTexture> colorTexture;
+			holder<renderTexture> intermediateTexture;
+			holder<renderTexture> velocityTexture;
+			holder<renderTexture> ambientOcclusionTexture1;
+			holder<renderTexture> ambientOcclusionTexture2;
+			holder<renderTexture> bloomTexture1;
+			holder<renderTexture> bloomTexture2;
+			holder<renderTexture> depthTexture;
 
-			holder<uniformBufferClass> viewportDataBuffer;
-			holder<uniformBufferClass> meshDataBuffer;
-			holder<uniformBufferClass> armatureDataBuffer;
-			holder<uniformBufferClass> lightsDataBuffer;
-			holder<uniformBufferClass> ssaoDataBuffer;
-			holder<uniformBufferClass> ssaoPointsBuffer;
-			holder<uniformBufferClass> finalScreenDataBuffer;
+			holder<uniformBuffer> viewportDataBuffer;
+			holder<uniformBuffer> meshDataBuffer;
+			holder<uniformBuffer> armatureDataBuffer;
+			holder<uniformBuffer> lightsDataBuffer;
+			holder<uniformBuffer> ssaoDataBuffer;
+			holder<uniformBuffer> ssaoPointsBuffer;
+			holder<uniformBuffer> finalScreenDataBuffer;
 
 			std::vector<shadowmapBufferStruct> shadowmaps2d, shadowmapsCube;
 			std::vector<visualizableTextureStruct> visualizableTextures;
@@ -195,10 +195,10 @@ namespace cage
 			bool lastDepthTest;
 			bool lastDepthWrite;
 			
-			textureClass *texSource;
-			textureClass *texTarget;
+			renderTexture *texSource;
+			renderTexture *texTarget;
 
-			static void applyShaderRoutines(shaderConfigStruct *c, shaderClass *s)
+			static void applyShaderRoutines(shaderConfigStruct *c, shaderProgram *s)
 			{
 				for (uint32 i = 0; i < MaxRoutines; i++)
 				{
@@ -266,8 +266,8 @@ namespace cage
 			{
 				const uint32 tius[] = { CAGE_SHADER_TEXTURE_ALBEDO, CAGE_SHADER_TEXTURE_SPECIAL, CAGE_SHADER_TEXTURE_NORMAL, CAGE_SHADER_TEXTURE_COLOR, CAGE_SHADER_TEXTURE_DEPTH };
 				static const uint32 cnt = sizeof(tius) / sizeof(tius[0]);
-				textureClass *texs[cnt] = { albedoTexture.get(), specialTexture.get(), normalTexture.get(), colorTexture.get(), depthTexture.get() };
-				textureClass::multiBind(cnt, tius, texs);
+				renderTexture *texs[cnt] = { albedoTexture.get(), specialTexture.get(), normalTexture.get(), colorTexture.get(), depthTexture.get() };
+				renderTexture::multiBind(cnt, tius, texs);
 			}
 
 			void bindShadowmap(sint32 shadowmap)
@@ -280,11 +280,11 @@ namespace cage
 				}
 			}
 
-			void gaussianBlur(holder<textureClass> &texData, holder<textureClass> &texHelper, uint32 mipmapLevel = 0)
+			void gaussianBlur(holder<renderTexture> &texData, holder<renderTexture> &texHelper, uint32 mipmapLevel = 0)
 			{
 				shaderGaussianBlur->bind();
 				shaderGaussianBlur->uniform(1, (int)mipmapLevel);
-				auto blur = [&](holder<textureClass> &tex1, holder<textureClass> &tex2, const vec2 &direction)
+				auto blur = [&](holder<renderTexture> &tex1, holder<renderTexture> &tex2, const vec2 &direction)
 				{
 					tex1->bind();
 					renderTarget->colorTexture(0, tex2.get(), mipmapLevel);
@@ -315,19 +315,19 @@ namespace cage
 				renderDispatch(obj->mesh, obj->count);
 			}
 
-			void renderDispatch(meshClass *mesh, uint32 count)
+			void renderDispatch(renderMesh *mesh, uint32 count)
 			{
 				mesh->dispatch(count);
 				drawCalls++;
 				drawPrimitives += count * mesh->getPrimitivesCount();
 			}
 
-			void renderObject(objectsStruct *obj, shaderClass *shr)
+			void renderObject(objectsStruct *obj, shaderProgram *shr)
 			{
 				renderObject(obj, shr, obj->mesh->getFlags());
 			}
 
-			void renderObject(objectsStruct *obj, shaderClass *shr, meshRenderFlags flags)
+			void renderObject(objectsStruct *obj, shaderProgram *shr, meshRenderFlags flags)
 			{
 				applyShaderRoutines(&obj->shaderConfig, shr);
 				meshDataBuffer->bind();
@@ -343,7 +343,7 @@ namespace cage
 				setDepthTest((flags & meshRenderFlags::DepthTest) == meshRenderFlags::DepthTest, (flags & meshRenderFlags::DepthWrite) == meshRenderFlags::DepthWrite);
 				{ // bind textures
 					uint32 tius[MaxTexturesCountPerMaterial];
-					textureClass *texs[MaxTexturesCountPerMaterial];
+					renderTexture *texs[MaxTexturesCountPerMaterial];
 					for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 					{
 						if (obj->textures[i])
@@ -368,7 +368,7 @@ namespace cage
 							texs[i] = nullptr;
 						}
 					}
-					textureClass::multiBind(MaxTexturesCountPerMaterial, tius, texs);
+					renderTexture::multiBind(MaxTexturesCountPerMaterial, tius, texs);
 				}
 				CAGE_CHECK_GL_ERROR_DEBUG();
 				renderDispatch(obj);
@@ -376,7 +376,7 @@ namespace cage
 
 			void renderOpaque(renderPassStruct *pass)
 			{
-				shaderClass *shr = pass->targetShadowmap ? shaderDepth : shaderGBuffer;
+				shaderProgram *shr = pass->targetShadowmap ? shaderDepth : shaderGBuffer;
 				shr->bind();
 				for (objectsStruct *o = pass->firstOpaque; o; o = o->next)
 					renderObject(o, shr);
@@ -385,12 +385,12 @@ namespace cage
 
 			void renderLighting(renderPassStruct *pass)
 			{
-				shaderClass *shr = shaderLighting;
+				shaderProgram *shr = shaderLighting;
 				shr->bind();
 				for (lightsStruct *l = pass->firstLight; l; l = l->next)
 				{
 					applyShaderRoutines(&l->shaderConfig, shr);
-					meshClass *mesh = nullptr;
+					renderMesh *mesh = nullptr;
 					switch (l->lightType)
 					{
 					case lightTypeEnum::Directional:
@@ -420,7 +420,7 @@ namespace cage
 
 			void renderTranslucent(renderPassStruct *pass)
 			{
-				shaderClass *shr = shaderTranslucent;
+				shaderProgram *shr = shaderTranslucent;
 				shr->bind();
 				for (translucentStruct *t = pass->firstTranslucent; t; t = t->next)
 				{
@@ -712,7 +712,7 @@ namespace cage
 				glClear(GL_DEPTH_BUFFER_BIT);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
-				shaderClass *shr = shaderDepth;
+				shaderProgram *shr = shaderDepth;
 				shr->bind();
 				for (objectsStruct *o = pass->firstOpaque; o; o = o->next)
 					renderObject(o, shr, o->mesh->getFlags() | meshRenderFlags::DepthWrite);
@@ -749,7 +749,7 @@ namespace cage
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
-			bool resizeTexture(const string &debugName, holder<textureClass> &texture, bool enabled, uint32 internalFormat, uint32 downscale = 1)
+			bool resizeTexture(const string &debugName, holder<renderTexture> &texture, bool enabled, uint32 internalFormat, uint32 downscale = 1)
 			{
 				if (enabled)
 				{
@@ -757,7 +757,7 @@ namespace cage
 						texture->bind();
 					else
 					{
-						texture = newTexture();
+						texture = newRenderTexture();
 						texture->setDebugName(debugName);
 						texture->filters(GL_LINEAR, GL_LINEAR, 0);
 						texture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
@@ -817,18 +817,18 @@ namespace cage
 
 				lastGBufferWidth = lastGBufferHeight = 0;
 
-#define GCHL_GENERATE(NAME) NAME = newTexture(); NAME->setDebugName(CAGE_STRINGIZE(NAME)); NAME->filters(GL_LINEAR, GL_LINEAR, 0); NAME->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+#define GCHL_GENERATE(NAME) NAME = newRenderTexture(); NAME->setDebugName(CAGE_STRINGIZE(NAME)); NAME->filters(GL_LINEAR, GL_LINEAR, 0); NAME->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, albedoTexture, specialTexture, normalTexture, colorTexture, depthTexture, intermediateTexture));
 #undef GCHL_GENERATE
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
-				gBufferTarget = newDrawFrameBuffer();
+				gBufferTarget = newFrameBufferDraw();
 				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_ALBEDO, albedoTexture.get());
 				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_SPECIAL, specialTexture.get());
 				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_NORMAL, normalTexture.get());
 				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_COLOR, colorTexture.get());
 				gBufferTarget->depthTexture(depthTexture.get());
-				renderTarget = newDrawFrameBuffer();
+				renderTarget = newFrameBufferDraw();
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
 				viewportDataBuffer = newUniformBuffer();
@@ -1017,7 +1017,7 @@ namespace cage
 					{
 						checkGlError();
 					}
-					catch (const graphicsException &)
+					catch (const graphicsError &)
 					{
 					}
 				}

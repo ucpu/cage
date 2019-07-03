@@ -91,11 +91,11 @@ namespace cage
 
 #define GCHL_GUI_COMMON_COMPONENTS parent, image, imageFormat, text, textFormat, selection, tooltip, widgetState, selectedItem, scrollbars, explicitSize
 
-	struct CAGE_API generalComponentsStruct
+	struct CAGE_API guiGeneralComponents
 	{
 #define GCHL_GENERATE(T) entityComponent *T;
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_COMMON_COMPONENTS));
 #undef GCHL_GENERATE
-		generalComponentsStruct(entityManager *ents);
+		guiGeneralComponents(entityManager *ents);
 	};
 }

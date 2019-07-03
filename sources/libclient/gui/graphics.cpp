@@ -12,7 +12,7 @@
 
 namespace cage
 {
-	void guiClass::graphicsInitialize()
+	void guiManager::graphicsInitialize()
 	{
 		guiImpl *impl = (guiImpl*)this;
 
@@ -21,18 +21,18 @@ namespace cage
 		{
 			s.elementsGpuBuffer = newUniformBuffer();
 			s.elementsGpuBuffer->bind();
-			s.elementsGpuBuffer->writeWhole(nullptr, sizeof(skinElementLayoutStruct::textureUvStruct) * (uint32)elementTypeEnum::TotalElements);
+			s.elementsGpuBuffer->writeWhole(nullptr, sizeof(guiSkinElementLayout::textureUvStruct) * (uint32)elementTypeEnum::TotalElements);
 		}
 	}
 
-	void guiClass::graphicsFinalize()
+	void guiManager::graphicsFinalize()
 	{
 		guiImpl *impl = (guiImpl*)this;
 		for (auto &it : impl->skins)
 			it.elementsGpuBuffer.clear();
 	}
 
-	void guiClass::graphicsRender()
+	void guiManager::graphicsRender()
 	{
 		guiImpl *impl = (guiImpl*)this;
 		impl->graphicsDispatch();

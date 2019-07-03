@@ -15,21 +15,21 @@ namespace cage
 	{
 		void processLoad(const assetContext *context, void *schemePointer)
 		{
-			animationClass *ani = nullptr;
+			skeletalAnimation *ani = nullptr;
 			if (context->assetHolder)
 			{
-				ani = static_cast<animationClass*>(context->assetHolder.get());
+				ani = static_cast<skeletalAnimation*>(context->assetHolder.get());
 			}
 			else
 			{
-				context->assetHolder = newAnimation().cast<void>();
-				ani = static_cast<animationClass*>(context->assetHolder.get());
+				context->assetHolder = newSkeletalAnimation().cast<void>();
+				ani = static_cast<skeletalAnimation*>(context->assetHolder.get());
 				ani->setDebugName(context->textName);
 			}
 			context->returnData = ani;
 
 			deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
-			animationHeaderStruct data;
+			skeletalAnimationHeader data;
 			des >> data;
 			uint16 *indexes = (uint16*)des.advance(data.animationBonesCount * sizeof(uint16));
 			uint16 *positionFrames = (uint16*)des.advance(data.animationBonesCount * sizeof(uint16));
@@ -39,7 +39,7 @@ namespace cage
 		}
 	}
 
-	assetScheme genAssetSchemeAnimation(uint32 threadIndex)
+	assetScheme genAssetSchemeSkeletalAnimation(uint32 threadIndex)
 	{
 		assetScheme s;
 		s.threadIndex = threadIndex;

@@ -37,7 +37,7 @@ namespace cage
 	explicitSizeComponent::explicitSizeComponent() : size(vec2::Nan())
 	{}
 
-	generalComponentsStruct::generalComponentsStruct(entityManager *ents)
+	guiGeneralComponents::guiGeneralComponents(entityManager *ents)
 	{
 		detail::memset(this, 0, sizeof(*this));
 #define GCHL_GENERATE(T) T = ents->defineComponent<CAGE_JOIN(T, Component)>(CAGE_JOIN(T, Component)(), false);

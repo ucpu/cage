@@ -1,17 +1,17 @@
 #include "main.h"
-#include <cage-core/program.h>
+#include <cage-core/process.h>
 
 void testProgram()
 {
-	CAGE_TESTCASE("program");
+	CAGE_TESTCASE("processHandle");
 	string cmd;
 #ifdef CAGE_SYSTEM_WINDOWS
-	// on windows, echo is built-in program of cmd
+	// on windows, echo is built-in processHandle of cmd
 	cmd = "cmd /C echo hi there";
 #else
 	cmd = "echo hi there";
 #endif // CAGE_SYSTEM_WINDOWS
-	holder<program> prg = newProgram(cmd);
+	holder<processHandle> prg = newProcess(cmd);
 	CAGE_TEST(prg->readLine() == "hi there");
 	CAGE_TEST(prg->wait() == 0);
 }

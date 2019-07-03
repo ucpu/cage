@@ -8,7 +8,7 @@
 
 namespace cage
 {
-	class fileVirtual : public file
+	class fileVirtual : public fileHandle
 	{
 	public:
 		const string myPath; // full name as seen by the application
@@ -44,7 +44,7 @@ namespace cage
 		virtual void move(const string &from, const string &to) = 0;
 		virtual void remove(const string &path) = 0;
 		virtual uint64 lastChange(const string &path) = 0;
-		virtual holder<file> openFile(const string &path, const fileMode &mode) = 0;
+		virtual holder<fileHandle> openFile(const string &path, const fileMode &mode) = 0;
 		virtual holder<directoryList> listDirectory(const string &path) = 0;
 	};
 
@@ -53,7 +53,7 @@ namespace cage
 	void realMove(const string &from, const string &to);
 	void realRemove(const string &path);
 	uint64 realLastChange(const string &path);
-	holder<file> realNewFile(const string &path, const fileMode &mode);
+	holder<fileHandle> realNewFile(const string &path, const fileMode &mode);
 	holder<directoryList> realNewDirectoryList(const string &path);
 
 	void mixedMove(std::shared_ptr<archiveVirtual> &af, const string &pf, std::shared_ptr<archiveVirtual> &at, const string &pt);

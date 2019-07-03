@@ -86,7 +86,7 @@ namespace cage
 		}
 		if (text)
 		{
-			GUI_GET_COMPONENT(text, text, ent);
+			CAGE_COMPONENT_GUI(text, text, ent);
 			CAGE_LOG_CONTINUE(severityEnum::Info, "gui-debug", spaces + "  TEXT: '" + text.value + "'");
 		}
 		CAGE_LOG_CONTINUE(severityEnum::Info, "gui-debug", spaces + "  requested size: " + requestedSize);

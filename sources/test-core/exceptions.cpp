@@ -48,7 +48,7 @@ void testExceptions()
 		try
 		{
 			CAGE_TESTCASE("exception transfer between threads");
-			holder<thread> thr = newThread(delegate<void()>().bind<&throwingFunction>(), "throwing thread");
+			holder<threadHandle> thr = newThread(delegate<void()>().bind<&throwingFunction>(), "throwing threadHandle");
 			CAGE_TEST_THROWN(thr->wait());
 		}
 		catch (...)

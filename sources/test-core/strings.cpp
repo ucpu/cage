@@ -466,7 +466,7 @@ namespace
 
 	void testFilePaths()
 	{
-		CAGE_TESTCASE("file paths");
+		CAGE_TESTCASE("fileHandle paths");
 		{
 			CAGE_TESTCASE("path decompose");
 			string s = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
@@ -548,11 +548,11 @@ namespace
 			CAGE_TEST(p == "/");
 			CAGE_TEST(f == "pes");
 			CAGE_TEST(e == "");
-			s = "/path/path/path/file.ext";
+			s = "/path/path/path/fileHandle.ext";
 			pathDecompose(s, d, p, f, e);
 			CAGE_TEST(d == "");
 			CAGE_TEST(p == "/path/path/path");
-			CAGE_TEST(f == "file");
+			CAGE_TEST(f == "fileHandle");
 			CAGE_TEST(e == ".ext");
 			s = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
 			CAGE_TEST(pathExtractPath(s) == "ratata://omega.alt.com/blah/keee");
@@ -673,10 +673,10 @@ namespace
 			CAGE_TESTCASE("path validity");
 			CAGE_TEST(pathIsValid("hi-Jane"));
 			CAGE_TEST(pathIsValid("/peter/pan"));
-			CAGE_TEST(pathIsValid("proto:/path1/path2/file.ext")); // this path must be considered valid even on windows
+			CAGE_TEST(pathIsValid("proto:/path1/path2/fileHandle.ext")); // this path must be considered valid even on windows
 
 #ifdef CAGE_SYSTEM_WINDOWS
-			// these file names are invalid on windows, but are valid on linux
+			// these fileHandle names are invalid on windows, but are valid on linux
 			// this makes testing a lot more complex.
 			// for example, it would make sense to allow "windows forbidden characters" inside archives even on windows, since these limitations do not apply to archives
 			//   but the function cannot possibly know where is the path going to be used

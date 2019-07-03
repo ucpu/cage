@@ -1,6 +1,6 @@
 namespace cage
 {
-	class CAGE_API uniformBufferClass : private immovable
+	class CAGE_API uniformBuffer : private immovable
 	{
 #ifdef CAGE_DEBUG
 		detail::stringBase<64> debugName;
@@ -18,5 +18,5 @@ namespace cage
 		void writeRange(void *data, uint32 offset, uint32 size);
 	};
 
-	CAGE_API holder<uniformBufferClass> newUniformBuffer();
+	CAGE_API holder<uniformBuffer> newUniformBuffer();
 }

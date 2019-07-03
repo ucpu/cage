@@ -81,10 +81,10 @@ namespace cage
 
 		bool loadConfigFile(const string &filename, string prefix)
 		{
-			CAGE_LOG_DEBUG(severityEnum::Info, "config", string() + "trying to load configuration file: '" + filename + "'");
+			CAGE_LOG_DEBUG(severityEnum::Info, "config", string() + "trying to load configuration fileHandle: '" + filename + "'");
 			if (pathIsFile(filename))
 			{
-				CAGE_LOG(severityEnum::Info, "config", string() + "loading configuration file: '" + filename + "'");
+				CAGE_LOG(severityEnum::Info, "config", string() + "loading configuration fileHandle: '" + filename + "'");
 				if (!prefix.empty())
 					prefix += ".";
 				// the logic of function configLoadIni is replicated here

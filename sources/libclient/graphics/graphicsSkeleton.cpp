@@ -11,7 +11,7 @@ namespace cage
 {
 	namespace
 	{
-		class skeletonImpl : public skeletonClass
+		class skeletonImpl : public skeletonRig
 		{
 		public:
 			skeletonImpl() : mem(detail::systemArena()), totalBones(0), boneParents(nullptr), baseMatrices(nullptr), invRestMatrices(nullptr)
@@ -43,14 +43,14 @@ namespace cage
 		};
 	}
 
-	void skeletonClass::setDebugName(const string &name)
+	void skeletonRig::setDebugName(const string &name)
 	{
 #ifdef CAGE_DEBUG
 		debugName = name;
 #endif // CAGE_DEBUG
 	}
 
-	void skeletonClass::allocate(const mat4 &globalInverse, uint32 totalBones, const uint16 *boneParents, const mat4 *baseMatrices, const mat4 *invRestMatrices)
+	void skeletonRig::allocate(const mat4 &globalInverse, uint32 totalBones, const uint16 *boneParents, const mat4 *baseMatrices, const mat4 *invRestMatrices)
 	{
 		skeletonImpl *impl = (skeletonImpl*)this;
 		impl->deallocate();
@@ -67,13 +67,13 @@ namespace cage
 		detail::memcpy(impl->invRestMatrices, invRestMatrices, impl->totalBones * sizeof(mat4));
 	}
 
-	uint32 skeletonClass::bonesCount() const
+	uint32 skeletonRig::bonesCount() const
 	{
 		skeletonImpl *impl = (skeletonImpl*)this;
 		return impl->totalBones;
 	}
 
-	void skeletonClass::animateSkin(const animationClass *animation, real coef, mat4 *temporary, mat4 *output) const
+	void skeletonRig::animateSkin(const skeletalAnimation *animation, real coef, mat4 *temporary, mat4 *output) const
 	{
 		CAGE_ASSERT_RUNTIME(coef >= 0 && coef <= 1, coef);
 		skeletonImpl *impl = (skeletonImpl*)this;
@@ -103,7 +103,7 @@ namespace cage
 		}
 	}
 
-	void skeletonClass::animateSkeleton(const animationClass *animation, real coef, mat4 *temporary, mat4 *output) const
+	void skeletonRig::animateSkeleton(const skeletalAnimation *animation, real coef, mat4 *temporary, mat4 *output) const
 	{
 		animateSkin(animation, coef, temporary, output); // compute temporary
 
@@ -129,8 +129,8 @@ namespace cage
 		}
 	}
 
-	holder<skeletonClass> newSkeleton()
+	holder<skeletonRig> newSkeletonRig()
 	{
-		return detail::systemArena().createImpl<skeletonClass, skeletonImpl>();
+		return detail::systemArena().createImpl<skeletonRig, skeletonImpl>();
 	}
 }

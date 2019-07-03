@@ -6,7 +6,7 @@ namespace cage
 	/*
 	holder<swapBufferGuard> controller = newSwapBufferGuard();
 
-	// consumer thread
+	// consumer threadHandle
 	while (running)
 	{
 		if (auto lock = controller->read())
@@ -19,7 +19,7 @@ namespace cage
 		}
 	}
 
-	// producer thread
+	// producer threadHandle
 	while (running)
 	{
 		if (auto lock = controller->write())

@@ -26,10 +26,10 @@ namespace cage
 			dtNoise,
 		};
 
-		class soundSourceImpl : public sourceClass, public busInterfaceStruct
+		class soundSourceImpl : public soundSource, public busInterfaceStruct
 		{
 		public:
-			std::set<busClass*, std::less<busClass*>, memoryArenaStd<busClass*>> outputs;
+			std::set<mixingBus*, std::less<mixingBus*>, memoryArenaStd<mixingBus*>> outputs;
 			std::vector<float> rawData;
 			std::vector<float> temporaryData1;
 			std::vector<float> temporaryData2;
@@ -44,8 +44,8 @@ namespace cage
 
 			soundPrivat::vorbisDataStruct vorbisData;
 
-			soundSourceImpl(soundContextClass *context) :
-				busInterfaceStruct(delegate<void(busClass*)>().bind<soundSourceImpl, &soundSourceImpl::busDestroyed>(this), delegate<void(const soundDataBufferStruct&)>().bind<soundSourceImpl, &soundSourceImpl::execute>(this)),
+			soundSourceImpl(soundContext *context) :
+				busInterfaceStruct(delegate<void(mixingBus*)>().bind<soundSourceImpl, &soundSourceImpl::busDestroyed>(this), delegate<void(const soundDataBufferStruct&)>().bind<soundSourceImpl, &soundSourceImpl::execute>(this)),
 				outputs(linksArenaFromContext(context)),
 				channels(0), frames(0), sampleRate(0), pitch(0), dataType(dtNone), repeatBeforeStart(false), repeatAfterEnd(false)
 			{}
@@ -182,7 +182,7 @@ namespace cage
 				}
 			}
 
-			void busDestroyed(busClass *bus)
+			void busDestroyed(mixingBus *bus)
 			{
 				CAGE_ASSERT_RUNTIME(outputs.find(bus) != outputs.end());
 				outputs.erase(bus);
@@ -203,20 +203,20 @@ namespace cage
 		};
 	}
 
-	void sourceClass::setDebugName(const string &name)
+	void soundSource::setDebugName(const string &name)
 	{
 #ifdef CAGE_DEBUG
 		debugName = name;
 #endif // CAGE_DEBUG
 	}
 
-	void sourceClass::setDataNone()
+	void soundSource::setDataNone()
 	{
 		soundSourceImpl *impl = (soundSourceImpl*)this;
 		impl->clearAllBuffers();
 	}
 
-	void sourceClass::setDataRaw(uint32 channels, uint32 frames, uint32 sampleRate, float *data)
+	void soundSource::setDataRaw(uint32 channels, uint32 frames, uint32 sampleRate, float *data)
 	{
 		CAGE_ASSERT_RUNTIME(frames > 0);
 		CAGE_ASSERT_RUNTIME(channels > 0);
@@ -232,7 +232,7 @@ namespace cage
 		detail::memcpy(&impl->rawData[0], data, channels * frames * sizeof(float));
 	}
 
-	void sourceClass::setDataVorbis(uintPtr size, void *buffer)
+	void soundSource::setDataVorbis(uintPtr size, void *buffer)
 	{
 		CAGE_ASSERT_RUNTIME(size > 0);
 		CAGE_ASSERT_RUNTIME(buffer != nullptr);
@@ -243,7 +243,7 @@ namespace cage
 		impl->vorbisData.decode(impl->channels, impl->frames, impl->sampleRate, nullptr);
 	}
 
-	void sourceClass::setDataTone(uint32 pitch)
+	void soundSource::setDataTone(uint32 pitch)
 	{
 		CAGE_ASSERT_RUNTIME(pitch > 0);
 		soundSourceImpl *impl = (soundSourceImpl*)this;
@@ -252,54 +252,54 @@ namespace cage
 		impl->pitch = pitch;
 	}
 
-	void sourceClass::setDataNoise()
+	void soundSource::setDataNoise()
 	{
 		soundSourceImpl *impl = (soundSourceImpl*)this;
 		impl->clearAllBuffers();
 		impl->dataType = dtNoise;
 	}
 
-	void sourceClass::setDataRepeat(bool repeatBeforeStart, bool repeatAfterEnd)
+	void soundSource::setDataRepeat(bool repeatBeforeStart, bool repeatAfterEnd)
 	{
 		soundSourceImpl *impl = (soundSourceImpl*)this;
 		impl->repeatBeforeStart = repeatBeforeStart;
 		impl->repeatAfterEnd = repeatAfterEnd;
 	}
 
-	void sourceClass::addOutput(busClass *bus)
+	void soundSource::addOutput(mixingBus *bus)
 	{
 		soundSourceImpl *impl = (soundSourceImpl*)this;
 		busAddInput(bus, impl);
 		impl->outputs.insert(bus);
 	}
 
-	void sourceClass::removeOutput(busClass *bus)
+	void soundSource::removeOutput(mixingBus *bus)
 	{
 		soundSourceImpl *impl = (soundSourceImpl*)this;
 		busRemoveInput(bus, impl);
 		impl->outputs.erase(bus);
 	}
 
-	uint64 sourceClass::getDuration() const
+	uint64 soundSource::getDuration() const
 	{
 		soundSourceImpl *impl = (soundSourceImpl*)this;
 		return (uint64)1000000 * impl->frames / impl->sampleRate;
 	}
 
-	uint32 sourceClass::getChannels() const
+	uint32 soundSource::getChannels() const
 	{
 		soundSourceImpl *impl = (soundSourceImpl*)this;
 		return impl->channels;
 	}
 
-	uint32 sourceClass::getSampleRate() const
+	uint32 soundSource::getSampleRate() const
 	{
 		soundSourceImpl *impl = (soundSourceImpl*)this;
 		return impl->sampleRate;
 	}
 
-	holder<sourceClass> newSource(soundContextClass *context)
+	holder<soundSource> newSoundSource(soundContext *context)
 	{
-		return detail::systemArena().createImpl <sourceClass, soundSourceImpl>(context);
+		return detail::systemArena().createImpl <soundSource, soundSourceImpl>(context);
 	}
 }

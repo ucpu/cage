@@ -107,7 +107,7 @@ namespace cage
 		return pathLastChange(impl->fullPath());
 	}
 
-	holder<file> directoryList::openFile(const fileMode &mode)
+	holder<fileHandle> directoryList::openFile(const fileMode &mode)
 	{
 		directoryListVirtual *impl = (directoryListVirtual *)this;
 		return newFile(impl->fullPath(), mode);
@@ -306,7 +306,7 @@ namespace cage
 		return pathLastChange(impl->makePath(path));
 	}
 
-	holder<file> filesystem::openFile(const string &path, const fileMode &mode)
+	holder<fileHandle> filesystem::openFile(const string &path, const fileMode &mode)
 	{
 		filesystemImpl *impl = (filesystemImpl*)this;
 		return newFile(impl->makePath(path), mode);

@@ -10,7 +10,7 @@ namespace cage
 			string message;
 			string currentThreadName;
 			const char *component;
-			const char *file;
+			const char *fileHandle;
 			const char *function;
 			uint64 time;
 			uint64 createThreadId;
@@ -41,13 +41,13 @@ namespace cage
 	CAGE_API void logOutputStdOut(const string &message);
 	CAGE_API void logOutputStdErr(const string &message);
 
-	class CAGE_API logOutputFile : private immovable
+	class CAGE_API loggerOutputFile : private immovable
 	{
 	public:
 		void output(const string &message);
 	};
 
-	CAGE_API holder<logOutputFile> newLogOutputFile(const string &path, bool append);
+	CAGE_API holder<loggerOutputFile> newLoggerOutputFile(const string &path, bool append);
 
 	namespace detail
 	{
@@ -57,7 +57,7 @@ namespace cage
 
 	namespace privat
 	{
-		CAGE_API uint64 makeLog(const char *file, uint32 line, const char *function, severityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept;
+		CAGE_API uint64 makeLog(const char *fileHandle, uint32 line, const char *function, severityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept;
 		inline uint64 makeLog(severityEnum severity, const char *component, const string &message, bool continuous, bool debug) { return makeLog(nullptr, 0, nullptr, severity, component, message, continuous, debug); }
 	}
 }

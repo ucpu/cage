@@ -40,7 +40,7 @@ namespace cage
 		None,
 	};
 
-	class CAGE_API engineProfilingClass : private immovable
+	class CAGE_API engineProfiling : private immovable
 	{
 	public:
 		vec2 screenPosition;
@@ -56,7 +56,7 @@ namespace cage
 		engineProfilingModeEnum profilingMode;
 	};
 
-	CAGE_API holder<engineProfilingClass> newEngineProfiling();
+	CAGE_API holder<engineProfiling> newEngineProfiling();
 }
 
 #endif // guard_engine_profiling_h_76C3A56EFED14909B79D2CEB55DDC4F2

@@ -17,14 +17,14 @@ namespace cage
 		{
 			if (!context->assetHolder)
 			{
-				context->assetHolder = newObject().cast<void>();
-				static_cast<objectClass*>(context->assetHolder.get())->setDebugName(context->textName);
+				context->assetHolder = newRenderObject().cast<void>();
+				static_cast<renderObject*>(context->assetHolder.get())->setDebugName(context->textName);
 			}
-			objectClass *obj = static_cast<objectClass*>(context->assetHolder.get());
+			renderObject *obj = static_cast<renderObject*>(context->assetHolder.get());
 			context->returnData = obj;
 
 			deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
-			objectHeaderStruct h;
+			renderObjectHeader h;
 			des >> h;
 			obj->worldSize = h.worldSize;
 			obj->pixelsSize = h.pixelsSize;
@@ -36,7 +36,7 @@ namespace cage
 		}
 	}
 
-	assetScheme genAssetSchemeObject(uint32 threadIndex)
+	assetScheme genAssetSchemeRenderObject(uint32 threadIndex)
 	{
 		assetScheme s;
 		s.threadIndex = threadIndex;

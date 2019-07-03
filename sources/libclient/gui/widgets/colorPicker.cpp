@@ -24,7 +24,7 @@ namespace cage
 
 			virtual void render(guiImpl *impl) override
 			{
-				shaderClass *shr = impl->graphicsData.colorPickerShader[mode];
+				shaderProgram *shr = impl->graphicsData.colorPickerShader[mode];
 				shr->bind();
 				shr->uniform(0, pos);
 				switch (mode)
@@ -36,7 +36,7 @@ namespace cage
 					shr->uniform(1, convertRgbToHsv(rgb)[0]);
 					break;
 				}
-				meshClass *mesh = impl->graphicsData.imageMesh;
+				renderMesh *mesh = impl->graphicsData.imageMesh;
 				mesh->bind();
 				mesh->dispatch();
 			}

@@ -268,10 +268,9 @@ namespace cage
 	class syncSemaphore;
 	class syncConditionalBase;
 	class syncConditional;
-	class thread;
+	class threadHandle;
 	struct concurrentQueueCreateConfig;
-	template<class T>
-	class concurrentQueue;
+	template<class T> class concurrentQueue;
 	enum class configTypeEnum : uint32;
 	struct configBool;
 	struct configSint32;
@@ -283,11 +282,7 @@ namespace cage
 	struct configString;
 	class configList;
 	class configIni;
-	namespace detail
-	{
-		template<uint32 N>
-		struct stringBase;
-	}
+	namespace detail { template<uint32 N> struct stringBase; }
 	typedef detail::stringBase<1000> string;
 	struct entityComponentCreateConfig;
 	class entityManager;
@@ -296,7 +291,7 @@ namespace cage
 	class entityComponent;
 	class entityGroup;
 	struct fileMode;
-	class file;
+	class fileHandle;
 	enum class pathTypeFlags : uint32;
 	class filesystemWatcher;
 	class directoryList;
@@ -307,18 +302,14 @@ namespace cage
 	struct sphere;
 	struct aabb;
 	struct hashString;
-	template<class T>
-	struct hashTablePair;
-	template<class T>
-	struct hashTableIt;
-	template<class T>
-	class hashTable;
-	template<uint32 N>
-	struct identifier;
+	template<class T> struct hashTablePair;
+	template<class T> struct hashTableIt;
+	template<class T> class hashTable;
+	template<uint32 N> struct identifier;
 	class image;
 	class lineReader;
 	class logger;
-	class logOutputFile;
+	class loggerOutputFile;
 	struct real;
 	struct rads;
 	struct degs;
@@ -329,8 +320,7 @@ namespace cage
 	struct mat3;
 	struct mat4;
 	struct transform;
-	template<class T>
-	struct memoryArenaStd;
+	template<class T> struct memoryArenaStd;
 	struct memoryBuffer;
 	class tcpConnection;
 	class tcpServer;
@@ -342,10 +332,9 @@ namespace cage
 	class discoveryServer;
 	class noiseFunction;
 	struct noiseFunctionCreateConfig;
-	class program;
+	class processHandle;
 	struct randomGenerator;
-	template<class T>
-	struct scopeLock;
+	template<class T> struct scopeLock;
 	struct serializer;
 	struct deserializer;
 	class spatialQuery;

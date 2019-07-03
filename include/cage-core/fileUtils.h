@@ -20,7 +20,7 @@ namespace cage
 		pathTypeFlags type() const;
 		bool isDirectory() const; // directory or archive
 		uint64 lastChange() const;
-		holder<file> openFile(const fileMode &mode);
+		holder<fileHandle> openFile(const fileMode &mode);
 		holder<filesystem> openDirectory();
 		holder<directoryList> listDirectory();
 		void next();
@@ -35,7 +35,7 @@ namespace cage
 		string currentDir() const;
 		pathTypeFlags type(const string &path) const;
 		uint64 lastChange(const string &path) const;
-		holder<file> openFile(const string &path, const fileMode &mode);
+		holder<fileHandle> openFile(const string &path, const fileMode &mode);
 		holder<directoryList> listDirectory(const string &path);
 		holder<filesystemWatcher> watchFilesystem(const string &path);
 		void move(const string &from, const string &to);

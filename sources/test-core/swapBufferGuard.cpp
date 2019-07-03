@@ -89,8 +89,8 @@ namespace
 			cfg.repeatedReads = repeatedReads;
 			cfg.repeatedWrites = repeatedWrites;
 			controller = newSwapBufferGuard(cfg);
-			holder<thread> t1 = newThread(delegate<void()>().bind<swapBufferTester, &swapBufferTester::consumer>(this), "consumer");
-			holder<thread> t2 = newThread(delegate<void()>().bind<swapBufferTester, &swapBufferTester::producer>(this), "producer");
+			holder<threadHandle> t1 = newThread(delegate<void()>().bind<swapBufferTester, &swapBufferTester::consumer>(this), "consumer");
+			holder<threadHandle> t2 = newThread(delegate<void()>().bind<swapBufferTester, &swapBufferTester::producer>(this), "producer");
 			while (read < 2000)
 				threadSleep(1000);
 			running = false;

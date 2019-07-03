@@ -9,10 +9,10 @@
 
 namespace cage
 {
-	soundException::soundException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uint32 code) noexcept : codeException(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER, code)
+	soundError::soundError(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uint32 code) noexcept : codeException(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER, code)
 	{};
 
-	soundException &soundException::log()
+	soundError &soundError::log()
 	{
 		if (severity < detail::getExceptionSilenceSeverity())
 			return *this;
@@ -43,10 +43,10 @@ namespace cage
 			case SoundIoErrorInterrupted:
 			case SoundIoErrorUnderflow:
 			case SoundIoErrorEncodingString:
-				CAGE_THROW_ERROR(soundException, soundio_strerror(code), code);
+				CAGE_THROW_ERROR(soundError, soundio_strerror(code), code);
 				break;
 			default:
-				CAGE_THROW_CRITICAL(soundException, "unknown sound error", code);
+				CAGE_THROW_CRITICAL(soundError, "unknown sound error", code);
 			}
 		}
 	}

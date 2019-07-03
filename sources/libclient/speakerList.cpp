@@ -21,7 +21,7 @@ namespace cage
 
 	namespace
 	{
-		struct speakerDeviceImpl : public speakerDeviceClass
+		struct speakerDeviceImpl : public speakerDevice
 		{
 			string deviceId;
 			string deviceName;
@@ -67,7 +67,7 @@ namespace cage
 			}
 		};
 
-		class speakerListImpl : public speakerListClass
+		class speakerListImpl : public speakerList
 		{
 		public:
 			std::vector<holder<speakerDeviceImpl>> devices;
@@ -75,7 +75,7 @@ namespace cage
 
 			speakerListImpl(bool inputs) : defaultDevice(m)
 			{
-				holder<soundContextClass> cnx = newSoundContext(soundContextCreateConfig());
+				holder<soundContext> cnx = newSoundContext(soundContextCreateConfig());
 				SoundIo *soundio = soundioFromContext(cnx.get());
 				if (inputs)
 				{
@@ -105,103 +105,103 @@ namespace cage
 		};
 	}
 
-	string speakerDeviceClass::id() const
+	string speakerDevice::id() const
 	{
 		const speakerDeviceImpl *impl = (const speakerDeviceImpl *)this;
 		return impl->deviceId;
 	}
 
-	string speakerDeviceClass::name() const
+	string speakerDevice::name() const
 	{
 		const speakerDeviceImpl *impl = (const speakerDeviceImpl *)this;
 		return impl->deviceName;
 	}
 
-	bool speakerDeviceClass::raw() const
+	bool speakerDevice::raw() const
 	{
 		const speakerDeviceImpl *impl = (const speakerDeviceImpl *)this;
 		return impl->raw;
 	}
 
-	uint32 speakerDeviceClass::layoutsCount() const
+	uint32 speakerDevice::layoutsCount() const
 	{
 		const speakerDeviceImpl *impl = (const speakerDeviceImpl *)this;
 		return numeric_cast<uint32>(impl->layouts.size());
 	}
 
-	uint32 speakerDeviceClass::currentLayout() const
+	uint32 speakerDevice::currentLayout() const
 	{
 		const speakerDeviceImpl *impl = (const speakerDeviceImpl *)this;
 		return impl->layoutCurrent;
 	}
 
-	const speakerLayout &speakerDeviceClass::layout(uint32 index) const
+	const speakerLayout &speakerDevice::layout(uint32 index) const
 	{
 		const speakerDeviceImpl *impl = (const speakerDeviceImpl *)this;
 		return impl->layouts[index];
 	}
 
-	pointerRange<const speakerLayout> speakerDeviceClass::layouts() const
+	pointerRange<const speakerLayout> speakerDevice::layouts() const
 	{
 		const speakerDeviceImpl *impl = (const speakerDeviceImpl *)this;
 		return impl->layouts;
 	}
 
-	uint32 speakerDeviceClass::sampleratesCount() const
+	uint32 speakerDevice::sampleratesCount() const
 	{
 		const speakerDeviceImpl *impl = (const speakerDeviceImpl *)this;
 		return numeric_cast<uint32>(impl->samplerates.size());
 	}
 
-	uint32 speakerDeviceClass::currentSamplerate() const
+	uint32 speakerDevice::currentSamplerate() const
 	{
 		const speakerDeviceImpl *impl = (const speakerDeviceImpl *)this;
 		return impl->samplerateCurrent;
 	}
 
-	const speakerSamplerate &speakerDeviceClass::samplerate(uint32 index) const
+	const speakerSamplerate &speakerDevice::samplerate(uint32 index) const
 	{
 		const speakerDeviceImpl *impl = (const speakerDeviceImpl *)this;
 		return impl->samplerates[index];
 	}
 
-	pointerRange<const speakerSamplerate> speakerDeviceClass::samplerates() const
+	pointerRange<const speakerSamplerate> speakerDevice::samplerates() const
 	{
 		const speakerDeviceImpl *impl = (const speakerDeviceImpl *)this;
 		return impl->samplerates;
 	}
 
 
-	uint32 speakerListClass::devicesCount() const
+	uint32 speakerList::devicesCount() const
 	{
 		const speakerListImpl *impl = (const speakerListImpl *)this;
 		return numeric_cast<uint32>(impl->devices.size());
 	}
 
-	uint32 speakerListClass::defaultDevice() const
+	uint32 speakerList::defaultDevice() const
 	{
 		const speakerListImpl *impl = (const speakerListImpl *)this;
 		return impl->defaultDevice;
 	}
 
-	const speakerDeviceClass *speakerListClass::device(uint32 index) const
+	const speakerDevice *speakerList::device(uint32 index) const
 	{
 		const speakerListImpl *impl = (const speakerListImpl *)this;
 		return impl->devices[index].get();
 	}
 
-	holder<pointerRange<const speakerDeviceClass *>> speakerListClass::devices() const
+	holder<pointerRange<const speakerDevice *>> speakerList::devices() const
 	{
 		const speakerListImpl *impl = (const speakerListImpl *)this;
-		pointerRangeHolder<const speakerDeviceClass *> prh;
+		pointerRangeHolder<const speakerDevice *> prh;
 		prh.reserve(impl->devices.size());
 		for (auto &it : impl->devices)
 			prh.push_back(it.get());
 		return prh;
 	}
 
-	holder<speakerListClass> newSpeakerList(bool inputs)
+	holder<speakerList> newSpeakerList(bool inputs)
 	{
-		return detail::systemArena().createImpl <speakerListClass, speakerListImpl>(inputs);
+		return detail::systemArena().createImpl <speakerList, speakerListImpl>(inputs);
 	}
 }

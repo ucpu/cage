@@ -16,7 +16,7 @@ namespace cage
 {
 	namespace
 	{
-		class engineProfilingImpl : public engineProfilingClass
+		class engineProfilingImpl : public engineProfiling
 		{
 		public:
 			eventListener<bool(uint32, uint32, modifiersFlags)> keyPressListener;
@@ -120,15 +120,15 @@ namespace cage
 				entity *panel = g->createUnique();
 				{
 					panelIndex = panel->name();
-					GUI_GET_COMPONENT(scrollbars, sc, panel);
+					CAGE_COMPONENT_GUI(scrollbars, sc, panel);
 					sc.alignment = screenPosition;
 				}
 				entity *layout = g->createUnique();
 				{
 					layoutIndex = layout->name();
-					GUI_GET_COMPONENT(panel, c, layout);
-					GUI_GET_COMPONENT(layoutTable, l, layout);
-					GUI_GET_COMPONENT(parent, child, layout);
+					CAGE_COMPONENT_GUI(panel, c, layout);
+					CAGE_COMPONENT_GUI(layoutTable, l, layout);
+					CAGE_COMPONENT_GUI(parent, child, layout);
 					child.parent = panel->name();
 				}
 
@@ -143,13 +143,13 @@ namespace cage
 				{
 					entity *timing = g->createUnique();
 					labelIndices[i] = timing->name();
-					GUI_GET_COMPONENT(label, c, timing);
-					GUI_GET_COMPONENT(parent, child, timing);
+					CAGE_COMPONENT_GUI(label, c, timing);
+					CAGE_COMPONENT_GUI(parent, child, timing);
 					child.parent = layout->name();
 					child.order = i;
 					if (i % 2 == 1)
 					{
-						GUI_GET_COMPONENT(textFormat, tf, timing);
+						CAGE_COMPONENT_GUI(textFormat, tf, timing);
 						tf.align = textAlignEnum::Right;
 					}
 				}
@@ -213,7 +213,7 @@ namespace cage
 				if (labelIndices[index] == 0 || !gui()->entities()->has(labelIndices[index]))
 					return;
 				entity *timing = gui()->entities()->get(labelIndices[index]);
-				GUI_GET_COMPONENT(text, t, timing);
+				CAGE_COMPONENT_GUI(text, t, timing);
 				t.value = value;
 			}
 
@@ -244,7 +244,7 @@ namespace cage
 					try
 					{
 						detail::overrideBreakpoint ob;
-						window()->setFullscreen(pointStruct(0, 0));
+						window()->setFullscreen(ivec2(0, 0));
 					}
 					catch (...)
 					{
@@ -329,8 +329,8 @@ namespace cage
 		};
 	}
 
-	holder<engineProfilingClass> newEngineProfiling()
+	holder<engineProfiling> newEngineProfiling()
 	{
-		return detail::systemArena().createImpl<engineProfilingClass, engineProfilingImpl>();
+		return detail::systemArena().createImpl<engineProfiling, engineProfilingImpl>();
 	}
 }

@@ -11,8 +11,8 @@ namespace cage
 	entityComponent *transformComponent::component;
 	entityComponent *transformComponent::componentHistory;
 	entityComponent *renderComponent::component;
-	entityComponent *animatedSkeletonComponent::component;
-	entityComponent *animatedTextureComponent::component;
+	entityComponent *skeletalAnimationComponent::component;
+	entityComponent *textureAnimationComponent::component;
 	entityComponent *lightComponent::component;
 	entityComponent *shadowmapComponent::component;
 	entityComponent *renderTextComponent::component;
@@ -22,16 +22,16 @@ namespace cage
 
 	transformComponent::transformComponent(const transform &t) : transform(t) {}
 	renderComponent::renderComponent() : color(0), opacity(1), object(0), renderMask(1) {}
-	animatedSkeletonComponent::animatedSkeletonComponent() : startTime(0), name(0), speed(1), offset(0) {}
-	animatedTextureComponent::animatedTextureComponent() : startTime(0), speed(1), offset(0) {}
+	skeletalAnimationComponent::skeletalAnimationComponent() : startTime(0), name(0), speed(1), offset(0) {}
+	textureAnimationComponent::textureAnimationComponent() : startTime(0), speed(1), offset(0) {}
 	lightComponent::lightComponent() : color(1), attenuation(1, 0, 3), spotAngle(degs(40)), spotExponent(80), lightType(lightTypeEnum::Point) {}
 	shadowmapComponent::shadowmapComponent() : worldSize(0, 0, 0), resolution(256) {}
 	renderTextComponent::renderTextComponent() : color(1), assetName(0), textName(0), font(0), renderMask(1) {}
-	cameraSsaoStruct::cameraSsaoStruct() : worldRadius(0.5), strength(1), bias(0), power(0.5), samplesCount(20) {}
-	cameraBloomStruct::cameraBloomStruct() : blurPasses(5), threshold(1) {}
-	cameraEyeAdaptationStruct::cameraEyeAdaptationStruct() : key(0.5), strength(1.0), darkerSpeed(0.1), lighterSpeed(1) {} // darker should take at least 5 times longer
-	cameraTonemapStruct::cameraTonemapStruct() : shoulderStrength(0.22), linearStrength(0.30), linearAngle(0.10), toeStrength(0.20), toeNumerator(0.01), toeDenominator(0.30), white(11.2) {}
-	cameraEffectsStruct::cameraEffectsStruct() : gamma(2.2), effects(cameraEffectsFlags::None) {}
+	cameraSsao::cameraSsao() : worldRadius(0.5), strength(1), bias(0), power(0.5), samplesCount(20) {}
+	cameraBloom::cameraBloom() : blurPasses(5), threshold(1) {}
+	cameraEyeAdaptation::cameraEyeAdaptation() : key(0.5), strength(1.0), darkerSpeed(0.1), lighterSpeed(1) {} // darker should take at least 5 times longer
+	cameraTonemap::cameraTonemap() : shoulderStrength(0.22), linearStrength(0.30), linearAngle(0.10), toeStrength(0.20), toeNumerator(0.01), toeDenominator(0.30), white(11.2) {}
+	cameraEffects::cameraEffects() : gamma(2.2), effects(cameraEffectsFlags::None) {}
 	cameraComponent::CameraUnion::CameraUnion() : perspectiveFov(degs(60)) {}
 	cameraComponent::cameraComponent() : viewportSize(1, 1), target(nullptr), near(1), far(100), zeroParallaxDistance(10), eyeSeparation(0.3), cameraOrder(0), renderMask(1), clear(cameraClearFlags::Depth | cameraClearFlags::Color), cameraType(cameraTypeEnum::Perspective) {}
 	voiceComponent::voiceComponent() : input(nullptr), startTime(0), name(0), renderMask(1) {}

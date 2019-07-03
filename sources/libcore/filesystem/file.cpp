@@ -56,13 +56,13 @@ namespace cage
 		return md;
 	}
 
-	void file::read(void *data, uint64 size)
+	void fileHandle::read(void *data, uint64 size)
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		impl->read(data, size);
 	}
 
-	bool file::readLine(string &line)
+	bool fileHandle::readLine(string &line)
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		line = "";
@@ -96,61 +96,61 @@ namespace cage
 		return true;
 	}
 
-	memoryBuffer file::readBuffer(uintPtr size)
+	memoryBuffer fileHandle::readBuffer(uintPtr size)
 	{
 		memoryBuffer r(size);
 		read(r.data(), r.size());
 		return r;
 	}
 
-	void file::write(const void *data, uint64 size)
+	void fileHandle::write(const void *data, uint64 size)
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		impl->write(data, size);
 	}
 
-	void file::writeLine(const string &data)
+	void fileHandle::writeLine(const string &data)
 	{
 		string d = data + "\n";
 		write(d.c_str(), d.length());
 	}
 
-	void file::writeBuffer(const memoryBuffer &buffer)
+	void fileHandle::writeBuffer(const memoryBuffer &buffer)
 	{
 		write(buffer.data(), buffer.size());
 	}
 
-	void file::seek(uint64 position)
+	void fileHandle::seek(uint64 position)
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		impl->seek(position);
 	}
 
-	void file::flush()
+	void fileHandle::flush()
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		impl->flush();
 	}
 
-	void file::close()
+	void fileHandle::close()
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		impl->close();
 	}
 
-	uint64 file::tell() const
+	uint64 fileHandle::tell() const
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		return impl->tell();
 	}
 
-	uint64 file::size() const
+	uint64 fileHandle::size() const
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		return impl->size();
 	}
 
-	holder<file> newFile(const string &path, const fileMode &mode)
+	holder<fileHandle> newFile(const string &path, const fileMode &mode)
 	{
 		string p;
 		auto a = archiveFindTowardsRoot(path, false, p);
@@ -169,7 +169,7 @@ namespace cage
 
 			fileReal(const string &path, const fileMode &mode) : fileVirtual(path, mode), f(nullptr)
 			{
-				CAGE_ASSERT_RUNTIME(mode.valid(), "invalid file mode", path, mode.read, mode.write, mode.append, mode.textual);
+				CAGE_ASSERT_RUNTIME(mode.valid(), "invalid fileHandle mode", path, mode.read, mode.write, mode.append, mode.textual);
 				realCreateDirectories(pathJoin(path, ".."));
 				f = fopen(path.c_str(), mode.mode().c_str());
 				if (!f)
@@ -197,7 +197,7 @@ namespace cage
 
 			void read(void *data, uint64 size) override
 			{
-				CAGE_ASSERT_RUNTIME(f, "file closed");
+				CAGE_ASSERT_RUNTIME(f, "fileHandle closed");
 				CAGE_ASSERT_RUNTIME(mode.read);
 				if (size == 0)
 					return;
@@ -207,7 +207,7 @@ namespace cage
 
 			void write(const void *data, uint64 size) override
 			{
-				CAGE_ASSERT_RUNTIME(f, "file closed");
+				CAGE_ASSERT_RUNTIME(f, "fileHandle closed");
 				CAGE_ASSERT_RUNTIME(mode.write);
 				if (size == 0)
 					return;
@@ -217,21 +217,21 @@ namespace cage
 
 			void seek(uint64 position) override
 			{
-				CAGE_ASSERT_RUNTIME(f, "file closed");
+				CAGE_ASSERT_RUNTIME(f, "fileHandle closed");
 				if (fseek(f, position, 0) != 0)
 					CAGE_THROW_ERROR(codeException, "fseek", errno);
 			}
 
 			void flush() override
 			{
-				CAGE_ASSERT_RUNTIME(f, "file closed");
+				CAGE_ASSERT_RUNTIME(f, "fileHandle closed");
 				if (fflush(f) != 0)
 					CAGE_THROW_ERROR(codeException, "fflush", errno);
 			}
 
 			void close() override
 			{
-				CAGE_ASSERT_RUNTIME(f, "file closed");
+				CAGE_ASSERT_RUNTIME(f, "fileHandle closed");
 				FILE *t = f;
 				f = nullptr;
 				if (fclose(t) != 0)
@@ -240,13 +240,13 @@ namespace cage
 
 			uint64 tell() const override
 			{
-				CAGE_ASSERT_RUNTIME(f, "file closed");
+				CAGE_ASSERT_RUNTIME(f, "fileHandle closed");
 				return ftell(f);
 			}
 
 			uint64 size() const override
 			{
-				CAGE_ASSERT_RUNTIME(f, "file closed");
+				CAGE_ASSERT_RUNTIME(f, "fileHandle closed");
 				uint64 pos = ftell(f);
 				fseek(f, 0, 2);
 				uint64 siz = ftell(f);
@@ -256,8 +256,8 @@ namespace cage
 		};
 	}
 
-	holder<file> realNewFile(const string &path, const fileMode &mode)
+	holder<fileHandle> realNewFile(const string &path, const fileMode &mode)
 	{
-		return detail::systemArena().createImpl<file, fileReal>(path, mode);
+		return detail::systemArena().createImpl<fileHandle, fileReal>(path, mode);
 	}
 }

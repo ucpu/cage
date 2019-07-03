@@ -17,7 +17,7 @@
 
 namespace cage
 {
-	fontClass::formatStruct::formatStruct() : align(textAlignEnum::Left), size(13), wrapWidth(real::Infinity()), lineSpacing(0)
+	fontFace::formatStruct::formatStruct() : align(textAlignEnum::Left), size(13), wrapWidth(real::Infinity()), lineSpacing(0)
 	{}
 
 	namespace
@@ -26,7 +26,7 @@ namespace cage
 		{
 			vec2 mousePosition;
 			mutable vec2 outSize;
-			const fontClass::formatStruct *format;
+			const fontFace::formatStruct *format;
 			const uint32 *gls;
 			mutable uint32 outCursor;
 			uint32 count;
@@ -37,28 +37,28 @@ namespace cage
 			{}
 		};
 
-		class fontImpl : public fontClass
+		class fontImpl : public fontFace
 		{
 		public:
-			holder<uniformBufferClass> uni;
-			holder<textureClass> tex;
+			holder<uniformBuffer> uni;
+			holder<renderTexture> tex;
 			uint32 texWidth, texHeight;
-			shaderClass *shr;
-			meshClass *msh;
+			shaderProgram *shr;
+			renderMesh *msh;
 			uint32 spaceGlyph;
 			uint32 returnGlyph;
 			uint32 cursorGlyph;
 			real lineHeight;
 			real firstLineOffset;
 
-			std::vector<fontHeaderStruct::glyphDataStruct> glyphsArray;
+			std::vector<fontFaceHeader::glyphData> glyphsArray;
 			std::vector<real> kerning;
 			std::vector<uint32> charmapChars;
 			std::vector<uint32> charmapGlyphs;
 
-			fontHeaderStruct::glyphDataStruct getGlyph(uint32 glyphIndex, real size)
+			fontFaceHeader::glyphData getGlyph(uint32 glyphIndex, real size)
 			{
-				fontHeaderStruct::glyphDataStruct r(glyphsArray[glyphIndex]);
+				fontFaceHeader::glyphData r(glyphsArray[glyphIndex]);
 				r.advance *= size;
 				r.bearing *= size;
 				r.size *= size;
@@ -69,7 +69,7 @@ namespace cage
 			{
 				vec4 wrld;
 				vec4 text;
-				InstanceStruct(real x, real y, const fontHeaderStruct::glyphDataStruct &g)
+				InstanceStruct(real x, real y, const fontFaceHeader::glyphData &g)
 				{
 					text = g.texUv;
 					wrld[0] = x + g.bearing[0];
@@ -85,7 +85,7 @@ namespace cage
 			{
 				uni = newUniformBuffer();
 				uni->writeWhole(nullptr, sizeof(InstanceStruct) * CAGE_SHADER_MAX_CHARACTERS, GL_DYNAMIC_DRAW);
-				tex = newTexture();
+				tex = newRenderTexture();
 				instances.reserve(1000);
 			}
 
@@ -123,7 +123,7 @@ namespace cage
 			{
 				if (data.render && begin == data.gls + data.cursor)
 				{
-					fontHeaderStruct::glyphDataStruct g = getGlyph(cursorGlyph, data.format->size);
+					fontFaceHeader::glyphData g = getGlyph(cursorGlyph, data.format->size);
 					instances.emplace_back(x, lineY, g);
 				}
 			}
@@ -155,7 +155,7 @@ namespace cage
 				while (begin != end)
 				{
 					processCursor(data, begin, x, lineY);
-					fontHeaderStruct::glyphDataStruct g = getGlyph(*begin, data.format->size);
+					fontFaceHeader::glyphData g = getGlyph(*begin, data.format->size);
 					real k = findKerning(prev, *begin, data.format->size);
 					prev = *begin++;
 					if (data.render)
@@ -260,7 +260,7 @@ namespace cage
 		};
 	}
 
-	void fontClass::setDebugName(const string &name)
+	void fontFace::setDebugName(const string &name)
 	{
 #ifdef CAGE_DEBUG
 		debugName = name;
@@ -270,14 +270,14 @@ namespace cage
 		impl->tex->setDebugName(name);
 	}
 
-	void fontClass::setLine(real lineHeight, real firstLineOffset)
+	void fontFace::setLine(real lineHeight, real firstLineOffset)
 	{
 		fontImpl *impl = (fontImpl*)this;
 		impl->lineHeight = lineHeight;
 		impl->firstLineOffset = -firstLineOffset;
 	}
 
-	void fontClass::setImage(uint32 width, uint32 height, uint32 size, const void *data)
+	void fontFace::setImage(uint32 width, uint32 height, uint32 size, const void *data)
 	{
 		fontImpl *impl = (fontImpl*)this;
 		impl->texWidth = width;
@@ -313,11 +313,11 @@ namespace cage
 		//impl->tex->generateMipmaps();
 	}
 
-	void fontClass::setGlyphs(uint32 count, const void *data, const real *kerning)
+	void fontFace::setGlyphs(uint32 count, const void *data, const real *kerning)
 	{
 		fontImpl *impl = (fontImpl*)this;
 		impl->glyphsArray.resize(count);
-		detail::memcpy(impl->glyphsArray.data(), data, sizeof(fontHeaderStruct::glyphDataStruct) * count);
+		detail::memcpy(impl->glyphsArray.data(), data, sizeof(fontFaceHeader::glyphData) * count);
 		if (kerning)
 		{
 			impl->kerning.resize(count * count);
@@ -328,7 +328,7 @@ namespace cage
 		impl->cursorGlyph = count - 1; // last glyph
 	}
 
-	void fontClass::setCharmap(uint32 count, const uint32 *chars, const uint32 *glyphs)
+	void fontFace::setCharmap(uint32 count, const uint32 *chars, const uint32 *glyphs)
 	{
 		fontImpl *impl = (fontImpl*)this;
 		impl->charmapChars.resize(count);
@@ -342,12 +342,12 @@ namespace cage
 		impl->spaceGlyph = impl->findGlyphIndex(' ');
 	}
 
-	void fontClass::transcript(const string &text, uint32 *glyphs, uint32 &count)
+	void fontFace::transcript(const string &text, uint32 *glyphs, uint32 &count)
 	{
 		transcript(text.c_str(), glyphs, count);
 	}
 
-	void fontClass::transcript(const char *text, uint32 *glyphs, uint32 &count)
+	void fontFace::transcript(const char *text, uint32 *glyphs, uint32 &count)
 	{
 		fontImpl *impl = (fontImpl*)this;
 		if (glyphs)
@@ -360,14 +360,14 @@ namespace cage
 			count = countCharacters(text);
 	}
 
-	void fontClass::size(const uint32 *glyphs, uint32 count, const formatStruct &format, vec2 &size)
+	void fontFace::size(const uint32 *glyphs, uint32 count, const formatStruct &format, vec2 &size)
 	{
 		vec2 mp;
 		uint32 c;
 		this->size(glyphs, count, format, size, mp, c);
 	}
 
-	void fontClass::size(const uint32 *glyphs, uint32 count, const formatStruct &format, vec2 &size, const vec2 &mousePosition, uint32 &cursor)
+	void fontFace::size(const uint32 *glyphs, uint32 count, const formatStruct &format, vec2 &size, const vec2 &mousePosition, uint32 &cursor)
 	{
 		processDataStruct data;
 		data.mousePosition = mousePosition;
@@ -380,7 +380,7 @@ namespace cage
 		cursor = data.outCursor;
 	}
 
-	void fontClass::bind(meshClass *mesh, shaderClass *shader) const
+	void fontFace::bind(renderMesh *mesh, shaderProgram *shader) const
 	{
 		fontImpl *impl = (fontImpl*)this;
 		glActiveTexture(GL_TEXTURE0);
@@ -391,7 +391,7 @@ namespace cage
 		impl->shr->bind();
 	}
 
-	void fontClass::render(const uint32 *glyphs, uint32 count, const formatStruct &format, uint32 cursor)
+	void fontFace::render(const uint32 *glyphs, uint32 count, const formatStruct &format, uint32 cursor)
 	{
 		processDataStruct data;
 		data.format = &format;
@@ -402,8 +402,8 @@ namespace cage
 		((fontImpl*)this)->processText(data);
 	}
 
-	holder<fontClass> newFont()
+	holder<fontFace> newFontFace()
 	{
-		return detail::systemArena().createImpl<fontClass, fontImpl>();
+		return detail::systemArena().createImpl<fontFace, fontImpl>();
 	}
 }

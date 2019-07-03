@@ -14,7 +14,7 @@ namespace cage
 {
 	namespace
 	{
-		class objectImpl : public objectClass
+		class objectImpl : public renderObject
 		{
 		public:
 			objectImpl()
@@ -29,14 +29,14 @@ namespace cage
 		};
 	}
 
-	void objectClass::setDebugName(const string &name)
+	void renderObject::setDebugName(const string &name)
 	{
 #ifdef CAGE_DEBUG
 		debugName = name;
 #endif // CAGE_DEBUG
 	}
 
-	void objectClass::setLods(uint32 lodsCount, uint32 meshesCount, const float *thresholds, const uint32 *meshIndices, const uint32 *meshNames)
+	void renderObject::setLods(uint32 lodsCount, uint32 meshesCount, const float *thresholds, const uint32 *meshIndices, const uint32 *meshNames)
 	{
 		CAGE_ASSERT_RUNTIME(meshIndices[0] == 0);
 		CAGE_ASSERT_RUNTIME(meshIndices[lodsCount] == meshesCount);
@@ -53,13 +53,13 @@ namespace cage
 		detail::memcpy(impl->names.data(), meshNames, sizeof(float) * meshesCount);
 	}
 
-	uint32 objectClass::lodsCount() const
+	uint32 renderObject::lodsCount() const
 	{
 		objectImpl *impl = (objectImpl*)this;
 		return numeric_cast<uint32>(impl->thresholds.size());
 	}
 
-	uint32 objectClass::lodSelect(float threshold) const
+	uint32 renderObject::lodSelect(float threshold) const
 	{
 		objectImpl *impl = (objectImpl*)this;
 		// todo rewrite to binary search
@@ -70,15 +70,15 @@ namespace cage
 		return lod;
 	}
 
-	pointerRange<const uint32> objectClass::meshes(uint32 lod) const
+	pointerRange<const uint32> renderObject::meshes(uint32 lod) const
 	{
 		objectImpl *impl = (objectImpl*)this;
 		CAGE_ASSERT_RUNTIME(lod < lodsCount());
 		return { impl->names.data() + impl->indices[lod], impl->names.data() + impl->indices[lod + 1] };
 	}
 
-	holder<objectClass> newObject()
+	holder<renderObject> newRenderObject()
 	{
-		return detail::systemArena().createImpl<objectClass, objectImpl>();
+		return detail::systemArena().createImpl<renderObject, objectImpl>();
 	}
 }

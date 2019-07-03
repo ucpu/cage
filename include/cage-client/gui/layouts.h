@@ -24,11 +24,11 @@ namespace cage
 
 #define GCHL_GUI_LAYOUT_COMPONENTS layoutLine, layoutTable, layoutSplitter
 
-	struct CAGE_API layoutsComponentsStruct
+	struct CAGE_API guiLayoutsComponents
 	{
 #define GCHL_GENERATE(T) entityComponent *T;
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_LAYOUT_COMPONENTS));
 #undef GCHL_GENERATE
-		layoutsComponentsStruct(entityManager *ents);
+		guiLayoutsComponents(entityManager *ents);
 	};
 }

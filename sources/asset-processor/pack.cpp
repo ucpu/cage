@@ -30,7 +30,7 @@ void processPack()
 	assetHeader h = initializeAssetHeaderStruct();
 	h.dependenciesCount = numeric_cast<uint16>(assets.size());
 
-	holder<file> f = newFile(outputFileName, fileMode(false, true));
+	holder<fileHandle> f = newFile(outputFileName, fileMode(false, true));
 	f->write(&h, sizeof(h));
 	for (uint32 it : assets)
 		f->write(&it, sizeof(uint32));

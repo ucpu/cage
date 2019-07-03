@@ -8,7 +8,7 @@ namespace cage
 {
 	namespace graphicsPrivat
 	{
-		void openglContextInitializeGeneral(windowClass *w);
+		void openglContextInitializeGeneral(windowHandle *w);
 
 #ifdef GCHL_ENABLE_CONTEXT_BINDING_CHECKS
 
@@ -34,8 +34,8 @@ namespace cage
 			return contextGetCurrentObjectType(contextTypeIndex<T>());
 		}
 
-		void setCurrentContext(windowClass *context);
-		windowClass *getCurrentContext();
+		void setCurrentContext(windowHandle *context);
+		windowHandle *getCurrentContext();
 
 #else
 
@@ -45,8 +45,8 @@ namespace cage
 		template<class T>
 		uint32 getCurrentObject() { return m; }
 
-		inline void setCurrentContext(windowClass *context) {}
-		inline windowClass *getCurrentContext() { return nullptr; }
+		inline void setCurrentContext(windowHandle *context) {}
+		inline windowHandle *getCurrentContext() { return nullptr; }
 
 #endif
 

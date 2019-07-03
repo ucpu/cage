@@ -19,24 +19,24 @@ namespace cage
 
 		void processLoad(const assetContext *context, void *schemePointer)
 		{
-			textureHeaderStruct *data = (textureHeaderStruct*)context->originalData;
+			renderTextureHeader *data = (renderTextureHeader*)context->originalData;
 
-			textureClass *tex = nullptr;
+			renderTexture *tex = nullptr;
 			if (context->assetHolder)
 			{
-				tex = static_cast<textureClass*>(context->assetHolder.get());
+				tex = static_cast<renderTexture*>(context->assetHolder.get());
 				CAGE_ASSERT_RUNTIME(tex->getTarget() == data->target, "texture target cannot change");
 				tex->bind();
 			}
 			else
 			{
-				context->assetHolder = newTexture(data->target).cast<void>();
-				tex = static_cast<textureClass*>(context->assetHolder.get());
+				context->assetHolder = newRenderTexture(data->target).cast<void>();
+				tex = static_cast<renderTexture*>(context->assetHolder.get());
 				tex->setDebugName(context->textName);
 			}
 			context->returnData = tex;
 
-			char *values = ((char*)context->originalData) + sizeof(textureHeaderStruct);
+			char *values = ((char*)context->originalData) + sizeof(renderTextureHeader);
 
 			{
 				uint32 bytesSize = data->dimX * data->dimY * data->dimZ * data->bpp;
@@ -59,7 +59,7 @@ namespace cage
 		}
 	}
 
-	assetScheme genAssetSchemeTexture(uint32 threadIndex, windowClass *memoryContext)
+	assetScheme genAssetSchemeRenderTexture(uint32 threadIndex, windowHandle *memoryContext)
 	{
 		assetScheme s;
 		s.threadIndex = threadIndex;

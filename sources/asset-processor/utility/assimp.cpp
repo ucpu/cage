@@ -138,7 +138,7 @@ namespace
 	class cageIoStream : public Assimp::IOStream
 	{
 	public:
-		cageIoStream(cage::holder<cage::file> r) : r(templates::move(r))
+		cageIoStream(cage::holder<cage::fileHandle> r) : r(templates::move(r))
 		{}
 
 		virtual ~cageIoStream()
@@ -190,7 +190,7 @@ namespace
 		}
 
 	private:
-		cage::holder<cage::file> r;
+		cage::holder<cage::fileHandle> r;
 	};
 
 	class cageIoSystem : public Assimp::IOSystem
@@ -511,7 +511,7 @@ uint32 assimpContextClass::selectMesh() const
 	switch (candidates.size())
 	{
 	case 0:
-		CAGE_THROW_ERROR(exception, "file does not contain requested mesh");
+		CAGE_THROW_ERROR(exception, "fileHandle does not contain requested mesh");
 	case 1:
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "using mesh at index " + *candidates.begin());
 		return *candidates.begin();

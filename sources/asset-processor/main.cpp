@@ -6,7 +6,7 @@
 
 // passed names
 string inputDirectory; // c:/asset
-string inputName; // path/file?specifier;identifier
+string inputName; // path/fileHandle?specifier;identifier
 string outputDirectory; // c:/data
 string outputName; // 123456789
 string assetPath;
@@ -14,9 +14,9 @@ string schemePath;
 uint32 schemeIndex;
 
 // derived names
-string inputFileName; // c:/asset/path/file
+string inputFileName; // c:/asset/path/fileHandle
 string outputFileName; // c:/data/123456789
-string inputFile; // path/file
+string inputFile; // path/fileHandle
 string inputSpec; // specifier
 string inputIdentifier; // identifier
 
@@ -86,11 +86,11 @@ namespace
 
 	void initializeSecondaryLog(const string &path)
 	{
-		static holder<logOutputFile> *secondaryLogFile = new holder<logOutputFile>(); // intentional leak
+		static holder<loggerOutputFile> *secondaryLogFile = new holder<loggerOutputFile>(); // intentional leak
 		static holder<logger> *secondaryLog = new holder<logger>(); // intentional leak - this will allow to log to the very end of the application
-		*secondaryLogFile = newLogOutputFile(path, false);
+		*secondaryLogFile = newLoggerOutputFile(path, false);
 		*secondaryLog = newLogger();
-		(*secondaryLog)->output.bind<logOutputFile, &logOutputFile::output>(secondaryLogFile->get());
+		(*secondaryLog)->output.bind<loggerOutputFile, &loggerOutputFile::output>(secondaryLogFile->get());
 		(*secondaryLog)->format.bind<&logFormatFileShort>();
 	}
 }

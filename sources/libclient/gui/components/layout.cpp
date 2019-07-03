@@ -22,7 +22,7 @@ namespace cage
 	layoutSplitterComponent::layoutSplitterComponent() : vertical(false), inverse(false)
 	{}
 
-	layoutsComponentsStruct::layoutsComponentsStruct(entityManager *ents)
+	guiLayoutsComponents::guiLayoutsComponents(entityManager *ents)
 	{
 		detail::memset(this, 0, sizeof(*this));
 #define GCHL_GENERATE(T) T = ents->defineComponent<CAGE_JOIN(T, Component)>(CAGE_JOIN(T, Component)(), false);

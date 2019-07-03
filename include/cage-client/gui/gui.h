@@ -1,80 +1,80 @@
 namespace cage
 {
-	struct CAGE_API skinConfigStruct
+	struct CAGE_API guiSkinConfig
 	{
-		skinElementLayoutStruct layouts[(uint32)elementTypeEnum::TotalElements];
-		skinWidgetDefaultsStruct defaults;
+		guiSkinElementLayout layouts[(uint32)elementTypeEnum::TotalElements];
+		guiSkinWidgetDefaults defaults;
 		uint32 textureName;
-		skinConfigStruct();
+		guiSkinConfig();
 	};
 
-	struct CAGE_API componentsStruct : public generalComponentsStruct, public widgetsComponentsStruct, public layoutsComponentsStruct
+	struct CAGE_API guiComponents : public guiGeneralComponents, public guiWidgetsComponents, public guiLayoutsComponents
 	{
-		componentsStruct(entityManager *ents);
+		guiComponents(entityManager *ents);
 	};
 
-	class CAGE_API guiClass : private immovable
+	class CAGE_API guiManager : private immovable
 	{
 	public:
 		void graphicsInitialize();
 		void graphicsFinalize();
 		void graphicsRender();
 
-		//void soundInitialize(soundContextClass *soundContext);
+		//void soundInitialize(soundContext *soundContext);
 		//void soundFinalize();
 		//void soundRender();
 
-		void setOutputResolution(const pointStruct &resolution, real retina = 1); // resolution: pixels; retina: how many pixels per point (1D)
+		void setOutputResolution(const ivec2 &resolution, real retina = 1); // resolution: pixels; retina: how many pixels per point (1D)
 		void setZoom(real zoom); // pixels per point (1D)
-		pointStruct getOutputResolution() const;
+		ivec2 getOutputResolution() const;
 		real getOutputRetina() const;
 		real getZoom() const;
-		void setOutputSoundBus(busClass *bus);
-		busClass *getOutputSoundBus() const;
+		void setOutputSoundBus(mixingBus *bus);
+		mixingBus *getOutputSoundBus() const;
 		void setFocus(uint32 widget);
 		uint32 getFocus() const;
 		void controlUpdateStart(); // must be called before processing events
 		void controlUpdateDone(); // accesses asset manager
 
-		bool windowResize(const pointStruct &);
-		bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, const pointStruct &point);
-		bool mouseDouble(mouseButtonsFlags buttons, modifiersFlags modifiers, const pointStruct &point);
-		bool mouseRelease(mouseButtonsFlags buttons, modifiersFlags modifiers, const pointStruct &point);
-		bool mouseMove(mouseButtonsFlags buttons, modifiersFlags modifiers, const pointStruct &point);
-		bool mouseWheel(sint8 wheel, modifiersFlags modifiers, const pointStruct &point);
+		bool windowResize(const ivec2 &);
+		bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, const ivec2 &point);
+		bool mouseDouble(mouseButtonsFlags buttons, modifiersFlags modifiers, const ivec2 &point);
+		bool mouseRelease(mouseButtonsFlags buttons, modifiersFlags modifiers, const ivec2 &point);
+		bool mouseMove(mouseButtonsFlags buttons, modifiersFlags modifiers, const ivec2 &point);
+		bool mouseWheel(sint8 wheel, modifiersFlags modifiers, const ivec2 &point);
 		bool keyPress(uint32 key, uint32 scanCode, modifiersFlags modifiers);
 		bool keyRepeat(uint32 key, uint32 scanCode, modifiersFlags modifiers);
 		bool keyRelease(uint32 key, uint32 scanCode, modifiersFlags modifiers);
 		bool keyChar(uint32 key);
 
-		void handleWindowEvents(windowClass *window, sint32 order = 0);
+		void handleWindowEvents(windowHandle *window, sint32 order = 0);
 		void skipAllEventsUntilNextUpdate();
-		pointStruct getInputResolution() const;
-		delegate<bool(const pointStruct&, vec2&)> eventCoordinatesTransformer; // called from controlUpdateStart or from any window events, it should return false to signal that the point is outside the gui, otherwise the point should be converted from window coordinate system to the gui output resolution coordinate system
+		ivec2 getInputResolution() const;
+		delegate<bool(const ivec2&, vec2&)> eventCoordinatesTransformer; // called from controlUpdateStart or from any window events, it should return false to signal that the point is outside the gui, otherwise the point should be converted from window coordinate system to the gui output resolution coordinate system
 		eventDispatcher<bool(uint32)> widgetEvent; // called from controlUpdateStart or window events
 
-		skinConfigStruct &skin(uint32 index = 0);
-		const skinConfigStruct &skin(uint32 index = 0) const;
+		guiSkinConfig &skin(uint32 index = 0);
+		const guiSkinConfig &skin(uint32 index = 0) const;
 
-		componentsStruct &components();
+		guiComponents &components();
 		entityManager *entities();
 		assetManager *assets();
 	};
 
-	struct CAGE_API guiCreateConfig
+	struct CAGE_API guiManagerCreateConfig
 	{
 		assetManager *assetManager;
 		entityManagerCreateConfig *entitiesConfig;
 		uintPtr itemsArenaSize;
 		uintPtr emitArenaSize;
 		uint32 skinsCount;
-		guiCreateConfig();
+		guiManagerCreateConfig();
 	};
 
-	CAGE_API holder<guiClass> newGui(const guiCreateConfig &config);
+	CAGE_API holder<guiManager> newGuiManager(const guiManagerCreateConfig &config);
 
 	namespace detail
 	{
-		CAGE_API holder<image> guiSkinTemplateExport(const skinConfigStruct &skin, uint32 resolution);
+		CAGE_API holder<image> guiSkinTemplateExport(const guiSkinConfig &skin, uint32 resolution);
 	}
 }

@@ -1,51 +1,52 @@
 namespace cage
 {
-	struct graphicsException;
+	struct graphicsError;
 	struct windowEventListeners;
 	struct stereoCameraStruct;
-	class windowClass;
-	class animationClass;
-	class fontClass;
-	class frameBufferClass;
-	class meshClass;
-	class objectClass;
-	class screenDeviceClass;
-	class screenListClass;
-	class shaderClass;
-	class skeletonClass;
-	class textureClass;
-	class uniformBufferClass;
+	class windowHandle;
+	class skeletalAnimation;
+	class fontFace;
+	class frameBuffer;
+	class renderMesh;
+	class renderObject;
+	class renderTexture;
+	class screenDevice;
+	class screenList;
+	class shaderProgram;
+	class skeletonRig;
+	class uniformBuffer;
 
-	struct soundException;
+	struct soundError;
 	struct soundContextCreateConfig;
-	struct speakerCreateConfig;
-	struct filterApiStruct;
+	struct speakerOutputCreateConfig;
+	struct mixingFilterApi;
 	struct soundInterleavedBufferStruct;
 	struct soundDataBufferStruct;
-	class soundContextClass;
-	class speakerClass;
-	class busClass;
-	class filterClass;
-	class volumeFilterClass;
-	class sourceClass;
-	class speakerDeviceClass;
-	class speakerListClass;
+	class soundContext;
+	class speakerOutput;
+	class mixingBus;
+	class mixingFilter;
+	class volumeFilter;
+	class soundSource;
+	class speakerDevice;
+	class speakerList;
 
-	struct guiCreateConfig;
-	class guiClass;
+	struct guiManagerCreateConfig;
+	class guiManager;
 
 	struct engineCreateConfig;
 	struct transformComponent;
+	// todo matrixComponent -> allow for skew, non-uniform scale, etc.
 	struct renderComponent;
-	struct animatedTextureComponent;
-	struct animatedSkeletonComponent;
-	struct configuredSkeletonComponent;
+	struct textureAnimationComponent;
+	struct skeletalAnimationComponent;
+	// todo skeletonPoseComponent;
 	struct lightComponent;
 	struct shadowmapComponent;
 	struct cameraComponent;
 	struct voiceComponent;
 	struct listenerComponent;
 
-	class engineProfilingClass;
-	class cameraControllerClass;
+	class engineProfiling;
+	class cameraController;
 }

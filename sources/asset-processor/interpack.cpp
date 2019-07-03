@@ -24,7 +24,7 @@ void processInterpack()
 		}
 	}
 
-	holder<file> f = newFile(outputFileName, fileMode(false, true));
+	holder<fileHandle> f = newFile(outputFileName, fileMode(false, true));
 	for (auto sch : assets)
 	{
 		uint32 s = sch.first;
@@ -43,7 +43,7 @@ void processInterpack()
 		string dbgName = pathJoin(configGetString("cage-asset-processor.interpack.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".txt");
 		fileMode fm(false, true);
 		fm.textual = true;
-		holder<file> f = newFile(dbgName, fm);
+		holder<fileHandle> f = newFile(dbgName, fm);
 		for (auto sch : assets)
 		{
 			uint32 s = sch.first;

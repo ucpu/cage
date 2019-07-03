@@ -15,7 +15,7 @@ namespace cage
 {
 	namespace
 	{
-		class cameraControllerImpl : public cameraControllerClass
+		class cameraControllerImpl : public cameraController
 		{
 		public:
 			windowEventListeners listeners;
@@ -54,10 +54,10 @@ namespace cage
 				controlThread().update.attach(updateListener);
 			}
 
-			const pointStruct centerMouse()
+			const ivec2 centerMouse()
 			{
 				auto w = window();
-				pointStruct pt2 = w->resolution();
+				ivec2 pt2 = w->resolution();
 				pt2.x /= 2;
 				pt2.y /= 2;
 				w->mousePosition(pt2);
@@ -69,25 +69,25 @@ namespace cage
 				return !!ent && window()->isFocused() && (mouseButton == mouseButtonsFlags::None || (buttons & mouseButton) == mouseButton);
 			}
 
-			bool mousePress(mouseButtonsFlags buttons, modifiersFlags, const pointStruct &)
+			bool mousePress(mouseButtonsFlags buttons, modifiersFlags, const ivec2 &)
 			{
 				if (mouseEnabled(buttons))
 					centerMouse();
 				return false;
 			}
 
-			bool mouseMove(mouseButtonsFlags buttons, modifiersFlags, const pointStruct &pt)
+			bool mouseMove(mouseButtonsFlags buttons, modifiersFlags, const ivec2 &pt)
 			{
 				if (!mouseEnabled(buttons))
 					return false;
-				pointStruct pt2 = centerMouse();
+				ivec2 pt2 = centerMouse();
 				sint32 dx = pt2.x - pt.x;
 				sint32 dy = pt2.y - pt.y;
 				mouseMoveAccum += vec2(dx, dy);
 				return false;
 			}
 
-			bool mouseWheel(sint8 wheel, modifiersFlags, const pointStruct &)
+			bool mouseWheel(sint8 wheel, modifiersFlags, const ivec2 &)
 			{
 				if (!ent)
 					return false;
@@ -157,7 +157,7 @@ namespace cage
 			{
 				if (!ent)
 					return;
-				ENGINE_GET_COMPONENT(transform, t, ent);
+				CAGE_COMPONENT_ENGINE(transform, t, ent);
 
 				// orientation
 				mouseSmoother.add(mouseMoveAccum);
@@ -206,14 +206,14 @@ namespace cage
 		};
 	}
 
-	void cameraControllerClass::setEntity(entity *ent)
+	void cameraController::setEntity(entity *ent)
 	{
 		cameraControllerImpl *impl = (cameraControllerImpl*)this;
 		impl->ent = ent;
 	}
 
-	holder<cameraControllerClass> newCameraController(entity *ent)
+	holder<cameraController> newCameraController(entity *ent)
 	{
-		return detail::systemArena().createImpl<cameraControllerClass, cameraControllerImpl>(ent);
+		return detail::systemArena().createImpl<cameraController, cameraControllerImpl>(ent);
 	}
 }
