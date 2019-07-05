@@ -201,11 +201,11 @@ namespace cage
 
 	holder<mixingFilter> newMixingFilter(soundContext *context)
 	{
-		return detail::systemArena().createImpl <mixingFilter, soundFilterImpl>(context);
+		return detail::systemArena().createImpl<mixingFilter, soundFilterImpl>(context);
 	}
 
 	holder<mixingBus> newMixingBus(soundContext *context)
 	{
-		return detail::systemArena().createImpl <mixingBus, soundBusImpl>(context);
+		return detail::systemArena().createImpl<mixingBus, soundBusImpl>(context);
 	}
 }

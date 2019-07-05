@@ -48,7 +48,7 @@ namespace cage
 	void imageItemStruct::assign(const imageComponent &value)
 	{
 		image = value;
-		texture = hierarchy->impl->assetManager->tryGet<assetSchemeIndexRenderTexture, renderTexture>(value.textureName);
+		texture = hierarchy->impl->assetMgr->tryGet<assetSchemeIndexRenderTexture, renderTexture>(value.textureName);
 	}
 
 	void imageItemStruct::apply(const imageFormatComponent &f)

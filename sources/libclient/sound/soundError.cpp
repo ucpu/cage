@@ -12,14 +12,6 @@ namespace cage
 	soundError::soundError(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uint32 code) noexcept : codeException(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER, code)
 	{};
 
-	soundError &soundError::log()
-	{
-		if (severity < detail::getExceptionSilenceSeverity())
-			return *this;
-		codeException::log();
-		return *this;
-	}
-
 	namespace soundPrivat
 	{
 		void checkSoundIoError(int code)

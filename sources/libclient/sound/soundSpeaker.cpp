@@ -482,6 +482,6 @@ namespace cage
 
 	holder<speakerOutput> newSpeakerOutput(soundContext *context, const speakerOutputCreateConfig &config, string name)
 	{
-		return detail::systemArena().createImpl <speakerOutput, soundSpeakerImpl>(context, config, name);
+		return detail::systemArena().createImpl<speakerOutput, soundSpeakerImpl>(context, config, name);
 	}
 }

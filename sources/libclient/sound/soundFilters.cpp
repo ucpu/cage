@@ -34,6 +34,6 @@ namespace cage
 
 	holder<volumeFilter> newVolumeFilter(soundContext *context)
 	{
-		return detail::systemArena().createImpl <volumeFilter, volumeFilterImpl>(context);
+		return detail::systemArena().createImpl<volumeFilter, volumeFilterImpl>(context);
 	}
 }

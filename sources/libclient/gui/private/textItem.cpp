@@ -62,7 +62,7 @@ namespace cage
 		string value;
 		{
 			CAGE_COMPONENT_GUI(text, t, hierarchy->ent);
-			value = loadInternationalizedText(impl->assetManager, t.assetName, t.textName, t.value);
+			value = loadInternationalizedText(impl->assetMgr, t.assetName, t.textName, t.value);
 		}
 		transcript(value);
 	}

@@ -300,6 +300,6 @@ namespace cage
 
 	holder<soundSource> newSoundSource(soundContext *context)
 	{
-		return detail::systemArena().createImpl <soundSource, soundSourceImpl>(context);
+		return detail::systemArena().createImpl<soundSource, soundSourceImpl>(context);
 	}
 }

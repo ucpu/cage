@@ -39,10 +39,10 @@ namespace cage
 	}
 
 	guiImpl::guiImpl(const guiManagerCreateConfig &config) :
-		entityManager(newEntityManager(config.entitiesConfig ? *config.entitiesConfig : entityManagerCreateConfig())), components(entityManager.get()),
+		entityMgr(newEntityManager(config.entitiesConfig ? *config.entitiesConfig : entityManagerCreateConfig())), components(entityMgr.get()),
 		itemsArena(config.itemsArenaSize), itemsMemory(&itemsArena), root(nullptr),
 		emitData{config, config, config}, emitControl(nullptr),
-		assetManager(config.assetManager),
+		assetMgr(config.assetMgr),
 		focusName(0), focusParts(0), hover(nullptr), eventsEnabled(false),
 		zoom(1)
 	{

@@ -255,10 +255,10 @@ namespace cage
 	class guiImpl : public guiManager
 	{
 	public:
-		holder<entityManager> entityManager;
+		holder<entityManager> entityMgr;
 		guiComponents components;
 
-		assetManager *assetManager;
+		assetManager *assetMgr;
 
 		ivec2 inputResolution; // last window resolution (pixels)
 		ivec2 inputMouse; // last position of mouse (pixels)

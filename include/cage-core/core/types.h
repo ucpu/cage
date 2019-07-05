@@ -332,6 +332,7 @@ namespace cage
 	class discoveryServer;
 	class noiseFunction;
 	struct noiseFunctionCreateConfig;
+	struct processCreateConfig;
 	class processHandle;
 	struct randomGenerator;
 	template<class T> struct scopeLock;

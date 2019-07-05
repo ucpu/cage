@@ -20,6 +20,9 @@
 
 namespace cage
 {
+	processCreateConfig::processCreateConfig(const string &cmd, const string &workingDirectory) : cmd(cmd), workingDirectory(workingDirectory)
+	{}
+
 	namespace
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -27,7 +30,7 @@ namespace cage
 		class programImpl : public processHandle
 		{
 		public:
-			programImpl(const string &cmd, const string &workingDir) : cmd(cmd), workingDir(workingDir), hChildStd_IN_Rd(nullptr), hChildStd_IN_Wr(nullptr), hChildStd_OUT_Rd(nullptr), hChildStd_OUT_Wr(nullptr), /*hChildStd_ERR_Rd (nullptr), hChildStd_ERR_Wr (nullptr),*/ hProcess(nullptr), hThread(nullptr)
+			programImpl(const processCreateConfig &config) : cmd(config.cmd), workingDir(pathToAbs(config.workingDirectory)), hChildStd_IN_Rd(nullptr), hChildStd_IN_Wr(nullptr), hChildStd_OUT_Rd(nullptr), hChildStd_OUT_Wr(nullptr), /*hChildStd_ERR_Rd (nullptr), hChildStd_ERR_Wr (nullptr),*/ hProcess(nullptr), hThread(nullptr)
 			{
 				static holder<syncMutex> mut = newSyncMutex();
 				scopeLock<syncMutex> lock(mut);
@@ -168,7 +171,7 @@ namespace cage
 				}
 			};
 
-			programImpl(const string &cmd, const string &workingDir) : cmd(cmd), workingDir(workingDir), aStdinPipe{0, 0}, aStdoutPipe{0, 0}, pid(0)
+			programImpl(const processCreateConfig &config) : cmd(config.cmd), workingDir(pathToAbs(config.workingDirectory)), aStdinPipe{0, 0}, aStdoutPipe{0, 0}, pid(0)
 			{
 				static holder<syncMutex> mut = newSyncMutex();
 				scopeLock<syncMutex> lock(mut);
@@ -389,13 +392,8 @@ namespace cage
 		return impl->workingDir;
 	}
 
-	holder<processHandle> newProcess(const string &cmd)
+	holder<processHandle> newProcess(const processCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<processHandle, programImpl>(cmd, pathWorkingDir());
-	}
-
-	holder<processHandle> newProcess(const string &cmd, const string &workingDirectory)
-	{
-		return detail::systemArena().createImpl<processHandle, programImpl>(cmd, pathToAbs(workingDirectory));
+		return detail::systemArena().createImpl<processHandle, programImpl>(config);
 	}
 }

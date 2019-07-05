@@ -264,7 +264,7 @@ namespace cage
 
 	holder<virtualMemoryClass> newVirtualMemory()
 	{
-		return detail::systemArena().createImpl <virtualMemoryClass, virtualMemoryImpl>();
+		return detail::systemArena().createImpl<virtualMemoryClass, virtualMemoryImpl>();
 	}
 
 	namespace detail

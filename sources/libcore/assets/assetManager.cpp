@@ -760,7 +760,7 @@ namespace cage
 
 	holder<assetManager> newAssetManager(const assetManagerCreateConfig &config)
 	{
-		return detail::systemArena().createImpl <assetManager, assetManagerImpl>(config);
+		return detail::systemArena().createImpl<assetManager, assetManagerImpl>(config);
 	}
 
 	assetHeader initializeAssetHeader(const string &name_, uint16 schemeIndex)

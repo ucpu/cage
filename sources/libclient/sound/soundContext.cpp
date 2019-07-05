@@ -13,13 +13,15 @@ namespace cage
 {
 	namespace
 	{
+		bool rtprioWarningCallbackOnce()
+		{
+			CAGE_LOG(severityEnum::Warning, "sound", "failed to set thread priority for audio");
+			return true;
+		}
+
 		void rtprioWarningCallback()
 		{
-			static bool fired = false;
-			if (fired)
-				return;
-			CAGE_LOG(severityEnum::Warning, "sound", "failed to set threadHandle priority for audio");
-			fired = true;
+			static bool fired = rtprioWarningCallbackOnce();
 		}
 
 		class soundContextImpl : public soundContext
@@ -75,6 +77,6 @@ namespace cage
 
 	holder<soundContext> newSoundContext(const soundContextCreateConfig &config, const string &name)
 	{
-		return detail::systemArena().createImpl <soundContext, soundContextImpl>(config, name);
+		return detail::systemArena().createImpl<soundContext, soundContextImpl>(config, name);
 	}
 }

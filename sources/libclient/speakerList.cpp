@@ -202,6 +202,6 @@ namespace cage
 
 	holder<speakerList> newSpeakerList(bool inputs)
 	{
-		return detail::systemArena().createImpl <speakerList, speakerListImpl>(inputs);
+		return detail::systemArena().createImpl<speakerList, speakerListImpl>(inputs);
 	}
 }

@@ -110,16 +110,16 @@ namespace cage
 	entityManager *guiManager::entities()
 	{
 		guiImpl *impl = (guiImpl*)this;
-		return impl->entityManager.get();
+		return impl->entityMgr.get();
 	}
 
 	assetManager *guiManager::assets()
 	{
 		guiImpl *impl = (guiImpl*)this;
-		return impl->assetManager;
+		return impl->assetMgr;
 	}
 
-	guiManagerCreateConfig::guiManagerCreateConfig() : assetManager(nullptr), entitiesConfig(nullptr),
+	guiManagerCreateConfig::guiManagerCreateConfig() : assetMgr(nullptr), entitiesConfig(nullptr),
 		itemsArenaSize(1024 * 1024 * 16), emitArenaSize(1024 * 1024 * 16),
 		skinsCount(1)
 	{}

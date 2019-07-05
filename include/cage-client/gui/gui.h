@@ -63,7 +63,7 @@ namespace cage
 
 	struct CAGE_API guiManagerCreateConfig
 	{
-		assetManager *assetManager;
+		assetManager *assetMgr;
 		entityManagerCreateConfig *entitiesConfig;
 		uintPtr itemsArenaSize;
 		uintPtr emitArenaSize;
