@@ -29,7 +29,7 @@ void testLineReader()
 	}
 
 	{
-		CAGE_TESTCASE("line reading from fileHandle (binary)");
+		CAGE_TESTCASE("line reading from file (binary)");
 		holder<fileHandle> lr = newFile("testdir/lineReaderTest", fileMode(true, false));
 		string l;
 		CAGE_TEST(lr->readLine(l));
@@ -46,8 +46,8 @@ void testLineReader()
 	}
 
 	{
-		// reading a fileHandle in text mode has been disabled
-		CAGE_TESTCASE("line reading from fileHandle (textual)");
+		// reading a file in text mode has been disabled
+		CAGE_TESTCASE("line reading from file (textual)");
 		fileMode fm(true, false);
 		fm.textual = true;
 		CAGE_TEST_ASSERTED(newFile("testdir/lineReaderTest", fm));

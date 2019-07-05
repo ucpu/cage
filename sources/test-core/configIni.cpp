@@ -22,9 +22,9 @@ namespace
 	}
 }
 
-void testIni()
+void testConfigIni()
 {
-	CAGE_TESTCASE("ini");
+	CAGE_TESTCASE("config ini");
 
 	{
 		CAGE_TESTCASE("basic ini");

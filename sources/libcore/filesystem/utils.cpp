@@ -20,21 +20,21 @@ namespace cage
 		public:
 			std::set<string, stringComparatorFast> files;
 			holder<FW::FileWatcher> fw;
-			holder<timer> timer;
+			holder<timer> clock;
 
 			changeWatcherImpl()
 			{
 				fw = detail::systemArena().createHolder<FW::FileWatcher>();
-				timer = newTimer();
+				clock = newTimer();
 			}
 
 			const string waitForChange(uint64 time)
 			{
-				timer->reset();
+				clock->reset();
 				while (files.empty())
 				{
 					fw->update();
-					if (files.empty() && timer->microsSinceStart() > time)
+					if (files.empty() && clock->microsSinceStart() > time)
 						return "";
 					else
 						threadSleep(1000 * 100);

@@ -3,6 +3,14 @@
 
 namespace cage
 {
+	namespace detail
+	{
+		// lfOnly == true -> returns false when no new line is found
+		// lfOnly == false -> the rest of the buffer is treated as last line
+		// set lfOnly to true when you may expand the buffer with more data sometime later
+		CAGE_API bool readLine(string &output, const char *&buffer, uintPtr &size, bool lfOnly);
+	}
+
 	class CAGE_API lineReader : private immovable
 	{
 	public:

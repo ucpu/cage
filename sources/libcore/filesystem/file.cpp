@@ -1,6 +1,7 @@
 #include "filesystem.h"
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/math.h> // min
+#include <cage-core/lineReader.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
 
@@ -65,34 +66,25 @@ namespace cage
 	bool fileHandle::readLine(string &line)
 	{
 		fileVirtual *impl = (fileVirtual *)this;
-		line = "";
-		uint64 pos = tell();
-		uint64 siz = size();
-		uint64 left = siz - pos;
-		if (left == 0)
+
+		const uint64 origPos = tell();
+		const uint64 origSize = size();
+		const uint64 origLeft = origSize - origPos;
+		if (origLeft == 0)
 			return false;
-		uint32 s = numeric_cast<uint32>(min(left, (uint64)string::MaxLength));
-		char *lineData = const_cast<char*>(line.c_str());
-		read(lineData, s);
-		line = string(lineData, s);
-		auto p = line.find('\n');
-		if (p == m)
+
+		char buffer[string::MaxLength + 1];
+		uintPtr s = numeric_cast<uint32>(min(origLeft, (uint64)string::MaxLength));
+		read(buffer, s);
+		const char *b = buffer;
+		if (!detail::readLine(line, b, s, origLeft >= string::MaxLength))
 		{
-			if (s == string::MaxLength)
+			seek(origPos);
+			if (origLeft >= string::MaxLength)
 				CAGE_THROW_ERROR(exception, "line too long");
-			p = s;
-			seek(siz);
+			return false;
 		}
-		else
-			seek(pos + p + 1);
-		if (p == 0)
-		{
-			line = "";
-			return true;
-		}
-		line = string(lineData, p);
-		if (!line.empty() && line[line.length() - 1] == '\r')
-			line = line.subString(0, line.length() - 1);
+		seek(min(origPos + (b - buffer), origSize));
 		return true;
 	}
 

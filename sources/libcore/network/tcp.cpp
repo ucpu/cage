@@ -1,5 +1,8 @@
-#include <vector>
+
 #include "net.h"
+#include <cage-core/lineReader.h>
+
+#include <vector>
 
 namespace cage
 {
@@ -156,19 +159,14 @@ namespace cage
 		tcpConnectionImpl *impl = (tcpConnectionImpl*)this;
 		if (impl->buffer.empty())
 			return false;
-		char *ptr = &impl->buffer[0], *s = ptr, *e = ptr + impl->buffer.size();
-		while (ptr != e)
-		{
-			if (*ptr == '\n')
-			{
-				line = string(s, numeric_cast<uint32>(ptr - s));
-				detail::memmove(s, ptr + 1, e - ptr - 1);
-				impl->buffer.resize(e - ptr - 1);
-				return true;
-			}
-			ptr++;
-		}
-		return false;
+
+		const char *b = impl->buffer.data();
+		uintPtr s = impl->buffer.size();
+		if (!detail::readLine(line, b, s, true))
+			return false;
+		detail::memmove(impl->buffer.data(), b, s);
+		impl->buffer.resize(s);
+		return true;
 	}
 
 	void tcpConnection::writeLine(const string &str)

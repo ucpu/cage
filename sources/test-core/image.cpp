@@ -26,9 +26,9 @@ namespace
 	}
 }
 
-void testPng()
+void testImage()
 {
-	CAGE_TESTCASE("png");
+	CAGE_TESTCASE("image");
 
 	{
 		CAGE_TESTCASE("circle 8bit");

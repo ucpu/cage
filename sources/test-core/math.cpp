@@ -854,7 +854,7 @@ namespace
 		{
 			CAGE_LOG(severityEnum::Info, "test", string("matrices count: ") + matricesCount);
 			mat4 res;
-			holder <timer> tmr = newTimer();
+			holder<timer> tmr = newTimer();
 			for (uint32 i = 0; i < matricesCount; i++)
 				res *= matrices[i];
 			CAGE_LOG(severityEnum::Note, "test", string("duration: ") + tmr->microsSinceStart());
