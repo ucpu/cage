@@ -132,8 +132,8 @@ namespace cage
 
 	string pathSimplify(const string &path)
 	{
-		string drive, directory, fileHandle, extension;
-		pathDecompose(path, drive, directory, fileHandle, extension);
+		string drive, directory, file, extension;
+		pathDecompose(path, drive, directory, file, extension);
 		bool absolute = !drive.empty() || (!directory.empty() && directory[0] == '/');
 		std::vector<string> parts;
 		while (true)
@@ -168,11 +168,11 @@ namespace cage
 			directory += it;
 		}
 		result += directory;
-		fileHandle += extension;
-		if (!result.empty() && !fileHandle.empty() && result[result.length() - 1] != '/')
-			result += string() + "/" + fileHandle;
+		file += extension;
+		if (!result.empty() && !file.empty() && result[result.length() - 1] != '/')
+			result += string() + "/" + file;
 		else
-			result += fileHandle;
+			result += file;
 		return result;
 	}
 
@@ -190,7 +190,7 @@ namespace cage
 		return res;
 	}
 
-	void pathDecompose(const string &input, string &drive, string &directory, string &fileHandle, string &extension)
+	void pathDecompose(const string &input, string &drive, string &directory, string &file, string &extension)
 	{
 		// find drive
 		string p = normalize(input);
@@ -209,37 +209,37 @@ namespace cage
 		i = p.find('/');
 		if (i == m)
 		{
-			fileHandle = p;
+			file = p;
 			directory = "";
 		}
 		else
 		{
-			fileHandle = p.subString(0, i);
+			file = p.subString(0, i);
 			directory = p.subString(i, m).reverse();
 			if (directory.length() > 1)
 				directory = directory.subString(0, directory.length() - 1);
 		}
-		if (fileHandle == "." || fileHandle == "..")
+		if (file == "." || file == "..")
 		{
 			if (directory.empty())
-				directory = fileHandle;
+				directory = file;
 			else if (directory[directory.length() - 1] == '/')
-				directory += fileHandle;
+				directory += file;
 			else
-				directory += string("/") + fileHandle;
-			fileHandle = "";
+				directory += string("/") + file;
+			file = "";
 		}
 		// find extension
-		i = fileHandle.find('.');
+		i = file.find('.');
 		if (i == m)
 		{
 			extension = "";
-			fileHandle = fileHandle.reverse();
+			file = file.reverse();
 		}
 		else
 		{
-			extension = fileHandle.subString(0, i + 1).reverse();
-			fileHandle = fileHandle.subString(i + 1, m).reverse();
+			extension = file.subString(0, i + 1).reverse();
+			file = file.subString(i + 1, m).reverse();
 		}
 	}
 

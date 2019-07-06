@@ -61,7 +61,7 @@ namespace cage
 
 	// path decomposition
 
-	CAGE_API void pathDecompose(const string &input, string &drive, string &directory, string &fileHandle, string &extension);
+	CAGE_API void pathDecompose(const string &input, string &drive, string &directory, string &file, string &extension);
 	CAGE_API string pathExtractDrive(const string &input);
 	CAGE_API string pathExtractPath(const string &input);
 	CAGE_API string pathExtractPathNoDrive(const string &input);

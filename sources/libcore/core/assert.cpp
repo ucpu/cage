@@ -145,7 +145,7 @@ namespace cage
 			}
 		}
 
-		assertPriv::assertPriv(bool exp, const char *expt, const char *fileHandle, const char *line, const char *function) : valid(exp)
+		assertPriv::assertPriv(bool exp, const char *expt, const char *file, const char *line, const char *function) : valid(exp)
 		{
 			if (!valid)
 			{
@@ -156,7 +156,7 @@ namespace cage
 				detail::strcat(buffer, "' failed");
 				assertOutputLine(buffer, false);
 				buffer[0] = 0;
-				detail::strcat(buffer, fileHandle);
+				detail::strcat(buffer, file);
 				detail::strcat(buffer, "(");
 				detail::strcat(buffer, line);
 				detail::strcat(buffer, ") - ");

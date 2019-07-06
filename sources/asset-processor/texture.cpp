@@ -297,7 +297,7 @@ namespace
 		ilBindImage(im);
 		{
 			string wholeFilename = pathJoin(inputDirectory, filename);
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "loading fileHandle '" + wholeFilename + "'");
+			CAGE_LOG(severityEnum::Info, logComponentName, string() + "loading file '" + wholeFilename + "'");
 			if (!ilLoadImage(wholeFilename.c_str()))
 				CAGE_THROW_ERROR(exception, "image format not supported");
 		}
@@ -574,7 +574,7 @@ void processTexture()
 				string name = prefix + string(index).reverse().fill(dollarsCount, '0').reverse() + suffix;
 				if (!pathIsFile(pathJoin(inputDirectory, name)))
 					break;
-				CAGE_LOG(severityEnum::Info, logComponentName, string() + "loading fileHandle: '" + name + "'");
+				CAGE_LOG(severityEnum::Info, logComponentName, string() + "loading file: '" + name + "'");
 				loadFile(name);
 				index++;
 			}

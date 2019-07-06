@@ -194,9 +194,9 @@ namespace cage
 				res += detail::severityToString(info.severity) + " ";
 				res += string(info.component).fill(20) + " ";
 				res += info.message;
-				if (longer && info.fileHandle)
+				if (longer && info.file)
 				{
-					string flf = string(" ") + string(info.fileHandle) + ":" + string(info.line) + " (" + string(info.function) + ")";
+					string flf = string(" ") + string(info.file) + ":" + string(info.line) + " (" + string(info.function) + ")";
 					if (res.length() + flf.length() + 10 < string::MaxLength)
 					{
 						res += string().fill(string::MaxLength - flf.length() - res.length() - 5);
@@ -229,7 +229,7 @@ namespace cage
 
 	namespace detail
 	{
-		loggerInfo::loggerInfo() : component(""), fileHandle(nullptr), function(nullptr), time(0), createThreadId(0), currentThreadId(0), severity(severityEnum::Critical), line(0), continuous(false), debug(false)
+		loggerInfo::loggerInfo() : component(""), file(nullptr), function(nullptr), time(0), createThreadId(0), currentThreadId(0), severity(severityEnum::Critical), line(0), continuous(false), debug(false)
 		{}
 
 		logger *getCentralLog()
@@ -255,7 +255,7 @@ namespace cage
 
 	namespace privat
 	{
-		uint64 makeLog(const char *fileHandle, uint32 line, const char *function, severityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept
+		uint64 makeLog(const char *file, uint32 line, const char *function, severityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept
 		{
 			try
 			{
@@ -269,7 +269,7 @@ namespace cage
 				info.currentThreadId = threadId();
 				info.currentThreadName = getCurrentThreadName();
 				info.time = getApplicationTime();
-				info.fileHandle = fileHandle;
+				info.file = file;
 				info.line = line;
 				info.function = function;
 

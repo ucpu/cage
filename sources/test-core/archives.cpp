@@ -143,21 +143,21 @@ void testArchives()
 	}
 
 	{
-		CAGE_TESTCASE("first fileHandle");
+		CAGE_TESTCASE("first file");
 		testWriteFile("first", data1);
 		testReadFile("first");
 		testListDirectory("");
 	}
 
 	{
-		CAGE_TESTCASE("second fileHandle");
+		CAGE_TESTCASE("second file");
 		testWriteFile("second", data2);
 		testReadFile("second");
 		testListDirectory("");
 	}
 
 	{
-		CAGE_TESTCASE("third fileHandle (inside directory)");
+		CAGE_TESTCASE("third file (inside directory)");
 		testWriteFile("dir/third", data3);
 		testReadFile("dir/third");
 		testListDirectory("");
@@ -228,7 +228,7 @@ void testArchives()
 	}
 
 	{
-		CAGE_TESTCASE("fileHandle seek & tell");
+		CAGE_TESTCASE("file seek & tell");
 		string path = pathJoin(directories[1], "multi/1");
 		pathTypeFlags type = pathType(path);
 		CAGE_TEST((type & pathTypeFlags::File) == pathTypeFlags::File);
@@ -254,7 +254,7 @@ void testArchives()
 	}
 
 	{
-		CAGE_TESTCASE("remove a fileHandle");
+		CAGE_TESTCASE("remove a file");
 		{
 			holder<directoryList> list = newDirectoryList(directories[1]); // keep the archive open
 			for (const string &dir : directories)
@@ -266,7 +266,7 @@ void testArchives()
 	}
 
 	{
-		CAGE_TESTCASE("move a fileHandle");
+		CAGE_TESTCASE("move a file");
 		{
 			CAGE_TESTCASE("inside same archive");
 			for (const string &dir : directories)

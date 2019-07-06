@@ -143,7 +143,7 @@ namespace
 		drflac_uint64 totalSampleCount;
 		float* pSampleData = drflac_open_file_and_read_pcm_frames_f32(pathJoin(inputDirectory, inputFile).c_str(), &channels, &sampleRate, &totalSampleCount);
 		if (!pSampleData)
-			CAGE_THROW_ERROR(exception, "failed to read flac fileHandle");
+			CAGE_THROW_ERROR(exception, "failed to read flac file");
 		sds.channels = channels;
 		sds.frames = numeric_cast<uint32>(totalSampleCount / channels);
 		sds.sampleRate = sampleRate;
@@ -159,7 +159,7 @@ namespace
 		drwav_uint64 totalSampleCount;
 		float* pSampleData = drwav_open_file_and_read_pcm_frames_f32(pathJoin(inputDirectory, inputFile).c_str(), &channels, &sampleRate, &totalSampleCount);
 		if (!pSampleData)
-			CAGE_THROW_ERROR(exception, "failed to read wav fileHandle");
+			CAGE_THROW_ERROR(exception, "failed to read wav file");
 		sds.channels = channels;
 		sds.frames = numeric_cast<uint32>(totalSampleCount / channels);
 		sds.sampleRate = sampleRate;
@@ -243,13 +243,13 @@ void processSound()
 	switch (sds.soundType)
 	{
 	case soundTypeEnum::RawRaw:
-		CAGE_LOG(severityEnum::Info, logComponentName, "sound type: raw fileHandle, raw play");
+		CAGE_LOG(severityEnum::Info, logComponentName, "sound type: raw file, raw play");
 		break;
 	case soundTypeEnum::CompressedRaw:
-		CAGE_LOG(severityEnum::Info, logComponentName, "sound type: compressed fileHandle, raw play");
+		CAGE_LOG(severityEnum::Info, logComponentName, "sound type: compressed file, raw play");
 		break;
 	case soundTypeEnum::CompressedCompressed:
-		CAGE_LOG(severityEnum::Info, logComponentName, "sound type: compressed fileHandle, compressed play");
+		CAGE_LOG(severityEnum::Info, logComponentName, "sound type: compressed file, compressed play");
 		break;
 	default:
 		CAGE_THROW_CRITICAL(exception, "invalid sound type");

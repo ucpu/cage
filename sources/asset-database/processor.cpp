@@ -66,7 +66,7 @@ namespace
 		}
 		catch (cage::exception &)
 		{
-			CAGE_LOG(severityEnum::Error, "database", string() + "invalid ini fileHandle in databank '" + path + "'");
+			CAGE_LOG(severityEnum::Error, "database", string() + "invalid ini file in databank '" + path + "'");
 			return false;
 		}
 		uint32 errors = 0;
@@ -246,17 +246,17 @@ namespace
 		holder<fileHandle> f = newFile(configPathDatabase, fileMode(true, false));
 		string b;
 		if (!f->readLine(b) || b != databaseBegin)
-			CAGE_THROW_ERROR(exception, "wrong fileHandle format");
+			CAGE_THROW_ERROR(exception, "invalid file format");
 		if (!f->readLine(b) || b != databaseVersion)
 		{
-			CAGE_LOG(severityEnum::Warning, "database", "assets database fileHandle version mismatch, database will not be loaded");
+			CAGE_LOG(severityEnum::Warning, "database", "assets database file version mismatch, database will not be loaded");
 			return;
 		}
 		f->read(&timestamp, sizeof(timestamp));
 		corruptedDatabanks.load(f.get());
 		assets.load(f.get());
 		if (!f->readLine(b) || b != databaseEnd)
-			CAGE_THROW_ERROR(exception, "wrong fileHandle end");
+			CAGE_THROW_ERROR(exception, "wrong file end");
 		f->close();
 		CAGE_LOG(severityEnum::Info, "database", string() + "loaded " + assets.size() + " asset entries");
 	}

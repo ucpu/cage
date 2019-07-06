@@ -24,9 +24,9 @@
 #define CAGE_THROW_CRITICAL(EXCEPTION, ...) { throw EXCEPTION(GCHL_THROW_ARGS ::cage::severityEnum::Critical, __VA_ARGS__).log(); }
 
 #ifdef CAGE_DEBUG
-#define GCHL_EXCEPTION_GENERATE_CTOR_PARAMS const char *fileHandle, uint32 line, const char *function, severityEnum severity, const char *message
-#define GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER fileHandle, line, function, severity, message
-#define GCHL_EXCEPTION_GENERATE_LOG(MESSAGE) { ::cage::privat::makeLog(fileHandle, line, function, severity, "exception", (MESSAGE), false, false); ::cage::detail::debugBreakpoint(); }
+#define GCHL_EXCEPTION_GENERATE_CTOR_PARAMS const char *file, uint32 line, const char *function, severityEnum severity, const char *message
+#define GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER file, line, function, severity, message
+#define GCHL_EXCEPTION_GENERATE_LOG(MESSAGE) { ::cage::privat::makeLog(file, line, function, severity, "exception", (MESSAGE), false, false); ::cage::detail::debugBreakpoint(); }
 #else
 #define GCHL_EXCEPTION_GENERATE_CTOR_PARAMS severityEnum severity, const char *message
 #define GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER severity, message
@@ -88,7 +88,7 @@ namespace cage
 	{
 		struct CAGE_API assertPriv
 		{
-			assertPriv(bool exp, const char *expt, const char *fileHandle, const char *line, const char *function);
+			assertPriv(bool exp, const char *expt, const char *file, const char *line, const char *function);
 			void operator () () const;
 
 #define GCHL_GENERATE(TYPE) assertPriv &variable(const char *name, TYPE var);
@@ -129,7 +129,7 @@ namespace cage
 		Hint, // possible improvement available
 		Warning, // deprecated behavior, dangerous actions
 		Info, // we are good, progress report
-		Error, // invalid user input, network connection interrupted, fileHandle access denied
+		Error, // invalid user input, network connection interrupted, file access denied
 		Critical // not implemented function, exception inside destructor, assert failure
 	};
 
@@ -139,7 +139,7 @@ namespace cage
 		virtual ~exception() noexcept;
 		virtual exception &log();
 #ifdef CAGE_DEBUG
-		const char *fileHandle;
+		const char *file;
 		const char *function;
 		uint32 line;
 #endif

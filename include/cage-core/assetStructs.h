@@ -33,7 +33,7 @@ namespace cage
 
 	struct CAGE_API assetHeader
 	{
-		// this is the first header found in every asset fileHandle
+		// this is the first header found in every asset file
 
 		char cageName[8]; // cageAss\0
 		uint32 version;

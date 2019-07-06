@@ -52,7 +52,7 @@ namespace cage
 				if (a)
 					return a;
 			}
-			// todo determine archive type of the fileHandle
+			// todo determine archive type of the file
 			try
 			{
 				detail::overrideException oe;
@@ -122,7 +122,7 @@ namespace cage
 			{
 				mutex = newSyncMutex();
 				if (newFile(path, fileMode(true, false))->size() == 0)
-					CAGE_THROW_ERROR(exception, "empty fileHandle"); // this is a temporary workaround until it is improved in the libzip
+					CAGE_THROW_ERROR(exception, "empty file"); // this is a temporary workaround until it is improved in the libzip
 				zip = zip_open(path.c_str(), ZIP_CHECKCONS, nullptr);
 				if (!zip)
 					CAGE_THROW_ERROR(exception, "zip_open");
@@ -258,7 +258,7 @@ namespace cage
 
 			void write(const void *data, uint64 size) override
 			{
-				CAGE_THROW_CRITICAL(notImplemented, "calling write on read-only zip fileHandle");
+				CAGE_THROW_CRITICAL(notImplemented, "calling write on read-only zip file");
 			}
 
 			void seek(uint64 position) override
@@ -334,7 +334,7 @@ namespace cage
 
 			void read(void *data, uint64 size) override
 			{
-				CAGE_THROW_CRITICAL(notImplemented, "calling read on write-only zip fileHandle");
+				CAGE_THROW_CRITICAL(notImplemented, "calling read on write-only zip file");
 			}
 
 			void write(const void *data, uint64 size) override
@@ -345,7 +345,7 @@ namespace cage
 
 			void seek(uint64 position) override
 			{
-				CAGE_THROW_CRITICAL(notImplemented, "calling seek on write-only zip fileHandle");
+				CAGE_THROW_CRITICAL(notImplemented, "calling seek on write-only zip file");
 			}
 
 			void flush() override
@@ -444,8 +444,8 @@ namespace cage
 		{
 			CAGE_ASSERT_RUNTIME(!path.empty());
 			CAGE_ASSERT_RUNTIME(mode.valid());
-			CAGE_ASSERT_RUNTIME(mode.read != mode.write, "zip archive cannot open fileHandle for both reading and writing simultaneously");
-			CAGE_ASSERT_RUNTIME(!mode.append, "zip archive cannot open fileHandle for append");
+			CAGE_ASSERT_RUNTIME(mode.read != mode.write, "zip archive cannot open file for both reading and writing simultaneously");
+			CAGE_ASSERT_RUNTIME(!mode.append, "zip archive cannot open file for append");
 			createDirectories(pathJoin(path, ".."));
 			if (mode.read)
 				return detail::systemArena().createImpl<fileHandle, fileZipRead>(std::dynamic_pointer_cast<archiveZip>(shared_from_this()), path, mode);

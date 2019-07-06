@@ -10,7 +10,7 @@ namespace cage
 
 	exception::exception(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept :
 #ifdef CAGE_DEBUG
-	fileHandle(fileHandle), function(function), line(line),
+		file(file), function(function), line(line),
 #endif
 		message(message), severity(severity)
 	{};

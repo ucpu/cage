@@ -9,7 +9,7 @@ void processRaw()
 	writeLine(string("use=") + inputFile);
 
 	memoryBuffer data;
-	{ // load fileHandle
+	{ // load file
 		holder<fileHandle> f = newFile(inputFile, fileMode(true, false));
 		data.allocate(numeric_cast<uintPtr>(f->size()));
 		f->read(data.data(), data.size());

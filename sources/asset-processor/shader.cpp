@@ -269,10 +269,10 @@ namespace
 
 	void parse(const string &filename, const bool allowParsingHash = false)
 	{
-		holder<fileHandle> fileHandle = newFile(filename, fileMode(true, false));
+		holder<fileHandle> file = newFile(filename, fileMode(true, false));
 		uint32 lineNumber = 0;
 		std::vector<sint32> stack;
-		for (string line; fileHandle->readLine(line);)
+		for (string line; file->readLine(line);)
 		{
 			const string originalLine = line;
 			lineNumber++;
@@ -397,14 +397,14 @@ namespace
 							string fn = pathJoin(inputDirectory, line);
 							if (!pathIsFile(fn))
 							{
-								CAGE_LOG(severityEnum::Note, "exception", string() + "requested fileHandle '" + line + "'");
-								CAGE_THROW_ERROR(exception, "'$include' fileHandle not found");
+								CAGE_LOG(severityEnum::Note, "exception", string() + "requested file '" + line + "'");
+								CAGE_THROW_ERROR(exception, "'$include' file not found");
 							}
 							if (configShaderPrint)
-								output(string() + "// CAGE: include fileHandle: '" + line + "'");
+								output(string() + "// CAGE: include file: '" + line + "'");
 							parse(fn);
 							if (configShaderPrint)
-								output(string() + "// CAGE: return to fileHandle: '" + pathToRel(filename, inputDirectory) + "':" + lineNumber);
+								output(string() + "// CAGE: return to file: '" + pathToRel(filename, inputDirectory) + "':" + lineNumber);
 						}
 						else if (cmd == "import")
 						{
@@ -414,14 +414,14 @@ namespace
 								line = pathJoin(inputDirectory, line);
 							if (!pathIsFile(line))
 							{
-								CAGE_LOG(severityEnum::Note, "exception", string() + "requested fileHandle '" + line + "'");
-								CAGE_THROW_ERROR(exception, "'$import' fileHandle not found");
+								CAGE_LOG(severityEnum::Note, "exception", string() + "requested file '" + line + "'");
+								CAGE_THROW_ERROR(exception, "'$import' file not found");
 							}
 							if (configShaderPrint)
-								output(string() + "// CAGE: import fileHandle: '" + pathToRel(line, inputDirectory) + "'");
+								output(string() + "// CAGE: import file: '" + pathToRel(line, inputDirectory) + "'");
 							parse(line, true);
 							if (configShaderPrint)
-								output(string() + "// CAGE: return to fileHandle: '" + pathToRel(filename, inputDirectory) + "':" + lineNumber);
+								output(string() + "// CAGE: return to file: '" + pathToRel(filename, inputDirectory) + "':" + lineNumber);
 						}
 						else
 						{
@@ -435,7 +435,7 @@ namespace
 			}
 			catch (...)
 			{
-				CAGE_LOG(severityEnum::Note, "exception", string() + "in fileHandle: '" + filename + "':" + lineNumber);
+				CAGE_LOG(severityEnum::Note, "exception", string() + "in file: '" + filename + "':" + lineNumber);
 				CAGE_LOG(severityEnum::Note, "exception", string() + "original line: '" + originalLine + "'");
 				throw;
 			}
@@ -443,8 +443,8 @@ namespace
 
 		if (!stack.empty())
 		{
-			CAGE_LOG(severityEnum::Note, "exception", string() + "in fileHandle: '" + filename + "':" + lineNumber);
-			CAGE_THROW_ERROR(exception, "unexpected end of fileHandle; expecting '$end'");
+			CAGE_LOG(severityEnum::Note, "exception", string() + "in file: '" + filename + "':" + lineNumber);
+			CAGE_THROW_ERROR(exception, "unexpected end of file; expecting '$end'");
 		}
 	}
 }

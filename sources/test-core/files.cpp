@@ -20,7 +20,7 @@ void testFiles()
 		data.data()[i] = (char)(i % 26 + 'A');
 
 	{
-		CAGE_TESTCASE("write to fileHandle");
+		CAGE_TESTCASE("write to file");
 		holder<fileHandle> f = newFile("testdir/files/1", fileMode(false, true));
 		CAGE_TEST(f);
 		for (uint32 i = 0; i < FILE_BLOCKS; i++)
@@ -28,7 +28,7 @@ void testFiles()
 	}
 
 	{
-		CAGE_TESTCASE("read from fileHandle");
+		CAGE_TESTCASE("read from file");
 		holder<fileHandle> f = newFile("testdir/files/1", fileMode(true, false));
 		CAGE_TEST(f);
 		CAGE_TEST(f->size() == (uint64)FILE_BLOCKS * (uint64)BLOCK_SIZE);
@@ -82,7 +82,7 @@ void testFiles()
 	}
 
 	{
-		CAGE_TESTCASE("list directory - test empty fileHandle");
+		CAGE_TESTCASE("list directory - test empty file");
 		{
 			auto f = newFile("testdir/empty.txt", fileMode(false, true));
 			//f->writeLine("haha");
@@ -146,8 +146,8 @@ void testFiles()
 	}
 
 	{
-		CAGE_TESTCASE("non-existing fileHandle");
-		CAGE_TEST_THROWN(newFile("testdir/files/non-existing-fileHandle", fileMode(true, false)));
+		CAGE_TESTCASE("non-existing file");
+		CAGE_TEST_THROWN(newFile("testdir/files/non-existing-file", fileMode(true, false)));
 	}
 
 	{
@@ -172,7 +172,7 @@ void testFiles()
 	}
 
 	{
-		CAGE_TESTCASE("move fileHandle");
+		CAGE_TESTCASE("move file");
 
 		{
 			CAGE_TESTCASE("simple move");
@@ -191,8 +191,8 @@ void testFiles()
 		}
 
 		{
-			CAGE_TESTCASE("move non-existing fileHandle");
-			CAGE_TEST_THROWN(pathMove("testdir/moved/non-existing-fileHandle", "testdir/moved/1"));
+			CAGE_TESTCASE("move non-existing file");
+			CAGE_TEST_THROWN(pathMove("testdir/moved/non-existing-file", "testdir/moved/1"));
 		}
 	}
 }

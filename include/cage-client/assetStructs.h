@@ -173,11 +173,11 @@ namespace cage
 		uint32 channels;
 		uint32 sampleRate;
 
-		// follows (for raw fileHandle):
+		// follows (for raw file):
 		// array of frames, each channels * float
 		// ...
 
-		// follows (for compressed fileHandle):
+		// follows (for compressed file):
 		// ogg/vorbis compressed stream
 	};
 }

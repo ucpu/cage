@@ -26,8 +26,8 @@ struct schemeStruct
 	holderSet<schemeFieldStruct> schemeFields;
 
 	void parse(configIni *ini);
-	void load(fileHandle *fileHandle);
-	void save(fileHandle *fileHandle);
+	void load(fileHandle *fileName);
+	void save(fileHandle *fileName);
 	bool applyOnAsset(struct assetStruct &ass);
 	inline bool operator < (const schemeStruct &other) const
 	{

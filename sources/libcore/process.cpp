@@ -206,7 +206,7 @@ namespace cage
 					if (dup2(aStdoutPipe[PIPE_WRITE], STDERR_FILENO) == -1)
 						CAGE_THROW_ERROR(exception, "failed to duplicate stderr pipe");
 
-					// close unused fileHandle descriptors
+					// close unused file descriptors
 					close(aStdinPipe[PIPE_READ]);
 					close(aStdinPipe[PIPE_WRITE]);
 					close(aStdoutPipe[PIPE_READ]);
@@ -226,7 +226,7 @@ namespace cage
 				{
 					// parent process
 
-					// close unused fileHandle descriptors
+					// close unused file descriptors
 					close(aStdinPipe[PIPE_READ]);
 					close(aStdoutPipe[PIPE_WRITE]);
 				}

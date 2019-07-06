@@ -2,7 +2,7 @@
 #define guard_iniReader_h_c866b123_b27e_4758_ab8e_702ef8f315de_
 
 /*
-	rules for loading from fileHandle:
+	rules for loading from file:
 	char '#' denotes a comment (to end of line)
 	empty lines (or lines containing only white chars ' ' and '\t') are skipped
 	chars '\\', '\'' and '"' have no special meaning

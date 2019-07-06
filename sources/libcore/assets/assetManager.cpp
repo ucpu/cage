@@ -185,7 +185,7 @@ namespace cage
 							CAGE_THROW_ERROR(exception, "asset is missing required header");
 						assetHeader *h = (assetHeader*)buff.data();
 						if (detail::memcmp(h->cageName, "cageAss", 8) != 0)
-							CAGE_THROW_ERROR(exception, "fileHandle is not a cage asset");
+							CAGE_THROW_ERROR(exception, "file is not a cage asset");
 						if (h->version != currentAssetVersion)
 							CAGE_THROW_ERROR(exception, "cage asset version mismatch");
 						if (h->textName[sizeof(h->textName) - 1] != 0)
@@ -195,7 +195,7 @@ namespace cage
 						if (ass->scheme != m && ass->scheme != h->scheme)
 							CAGE_THROW_ERROR(exception, "cage asset scheme cannot change");
 						if (buff.size() < sizeof(assetHeader) + h->dependenciesCount * sizeof(uint32))
-							CAGE_THROW_ERROR(exception, "cage asset fileHandle dependencies truncated");
+							CAGE_THROW_ERROR(exception, "cage asset file dependencies truncated");
 						ass->scheme = h->scheme;
 						ass->assetFlags = h->flags;
 						ass->compressedSize = h->compressedSize;
@@ -209,7 +209,7 @@ namespace cage
 						uintPtr readSize = numeric_cast<uintPtr>(h->compressedSize == 0 ? h->originalSize : h->compressedSize);
 						CAGE_ASSERT_RUNTIME(readSize <= allocSize, readSize, allocSize);
 						if (buff.size() < readSize + sizeof(assetHeader) + h->dependenciesCount * sizeof(uint32))
-							CAGE_THROW_ERROR(exception, "cage asset fileHandle content truncated");
+							CAGE_THROW_ERROR(exception, "cage asset file content truncated");
 						ass->compressedData = detail::systemArena().allocate(allocSize, sizeof(uintPtr));
 						detail::memcpy(ass->compressedData, buff.data() + sizeof(assetHeader) + h->dependenciesCount * sizeof(uint32), readSize);
 						ass->originalData = (char*)ass->compressedData + ass->compressedSize;

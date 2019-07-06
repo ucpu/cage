@@ -6,7 +6,7 @@
 
 // passed names
 string inputDirectory; // c:/asset
-string inputName; // path/fileHandle?specifier;identifier
+string inputName; // path/file?specifier;identifier
 string outputDirectory; // c:/data
 string outputName; // 123456789
 string assetPath;
@@ -14,9 +14,9 @@ string schemePath;
 uint32 schemeIndex;
 
 // derived names
-string inputFileName; // c:/asset/path/fileHandle
+string inputFileName; // c:/asset/path/file
 string outputFileName; // c:/data/123456789
-string inputFile; // path/fileHandle
+string inputFile; // path/file
 string inputSpec; // specifier
 string inputIdentifier; // identifier
 

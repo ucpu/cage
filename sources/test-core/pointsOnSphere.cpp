@@ -16,14 +16,14 @@ void generatePointsOnSphere()
 {
 	CAGE_TESTCASE("generatePointsOnSphere");
 
-	holder<fileHandle> fileHandle = newFile("pointsOnSphere.txt", fileMode(false, true));
+	holder<fileHandle> file = newFile("pointsOnSphere.txt", fileMode(false, true));
 
-	fileHandle->writeLine("vec3 pointsOnSphere[] =");
-	fileHandle->writeLine("{");
+	file->writeLine("vec3 pointsOnSphere[] =");
+	file->writeLine("{");
 	for (uint32 i = 0; i < 255; i++)
-		fileHandle->writeLine(generatePoint() + ",");
-	fileHandle->writeLine(generatePoint());
-	fileHandle->writeLine("}");
+		file->writeLine(generatePoint() + ",");
+	file->writeLine(generatePoint());
+	file->writeLine("}");
 
-	fileHandle->close();
+	file->close();
 }

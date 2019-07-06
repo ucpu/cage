@@ -71,24 +71,24 @@ struct holderSet
 		return numeric_cast<uint32>(data.size());
 	}
 
-	void load(fileHandle *fileHandle)
+	void load(fileHandle *fileName)
 	{
 		uint32 s = 0;
-		read(fileHandle, s);
+		read(fileName, s);
 		for (uint32 i = 0; i < s; i++)
 		{
 			T tmp;
-			tmp.load(fileHandle);
+			tmp.load(fileName);
 			insert(templates::move(tmp));
 		}
 	}
 
-	void save(fileHandle *fileHandle)
+	void save(fileHandle *fileName)
 	{
 		uint32 s = size();
-		write(fileHandle, s);
+		write(fileName, s);
 		for (iterator it = begin(), et = end(); it != et; it++)
-			(*it)->save(fileHandle);
+			(*it)->save(fileName);
 	}
 
 private:

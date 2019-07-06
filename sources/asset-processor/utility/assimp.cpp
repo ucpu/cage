@@ -511,7 +511,7 @@ uint32 assimpContextClass::selectMesh() const
 	switch (candidates.size())
 	{
 	case 0:
-		CAGE_THROW_ERROR(exception, "fileHandle does not contain requested mesh");
+		CAGE_THROW_ERROR(exception, "file does not contain requested mesh");
 	case 1:
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "using mesh at index " + *candidates.begin());
 		return *candidates.begin();
