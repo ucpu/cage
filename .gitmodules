@@ -58,3 +58,6 @@
 [submodule "libzip/libzip"]
 	path = libzip/libzip
 	url = https://github.com/nih-at/libzip.git
+[submodule "optick/optick"]
+	path = optick/optick
+	url = https://github.com/ucpu/optick.git

@@ -9,7 +9,7 @@ include(cage_gen_module.cmake)
 
 # some config
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 # disable compilation warnings
 if(MSVC)
@@ -45,6 +45,7 @@ add_subdirectory(msdfgen)
 add_subdirectory(xsimd)
 add_subdirectory(fastnoise)
 add_subdirectory(libzip)
+add_subdirectory(optick)
 
 add_dependencies(png_static zlib)
 add_dependencies(jpeg-static zlib)
@@ -82,4 +83,5 @@ set_target_properties(simplefilewatcher PROPERTIES FOLDER cage/externals)
 set_target_properties(lib_msdfgen PROPERTIES FOLDER cage/externals)
 set_target_properties(fastnoise PROPERTIES FOLDER cage/externals)
 set_target_properties(zip PROPERTIES FOLDER cage/externals)
+set_target_properties(OptickCore PROPERTIES FOLDER cage/externals)
 
