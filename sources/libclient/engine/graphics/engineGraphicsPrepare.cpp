@@ -217,6 +217,7 @@ namespace cage
 
 			static void sortTranslucentBackToFront(renderPassImpl *pass)
 			{
+				OPTICK_EVENT();
 				if (!pass->firstTranslucent)
 					return;
 
@@ -366,6 +367,7 @@ namespace cage
 
 			void initializeRenderPassForCamera(renderPassImpl *pass, emitCameraStruct *camera, eyeEnum eye)
 			{
+				OPTICK_EVENT();
 				if (camera->camera.target)
 				{
 					uint32 w = 0, h = 0;
@@ -423,6 +425,7 @@ namespace cage
 
 			void initializeRenderPassForShadowmap(renderPassImpl *pass, emitLightStruct *light)
 			{
+				OPTICK_EVENT();
 				pass->view = light->model.inverse();
 				switch (light->light.lightType)
 				{
@@ -460,6 +463,7 @@ namespace cage
 
 			void addRenderableObjects(renderPassImpl *pass)
 			{
+				OPTICK_EVENT();
 				CAGE_ASSERT_RUNTIME(pass->lodSelection > 0);
 				for (emitRenderObjectStruct *e : emitRead->renderableObjects)
 				{
@@ -633,6 +637,7 @@ namespace cage
 
 			void addRenderableTexts(renderPassImpl *pass)
 			{
+				OPTICK_EVENT();
 				for (emitRenderTextStruct *e : emitRead->renderableTexts)
 				{
 					if ((e->renderText.renderMask & pass->renderMask) == 0)

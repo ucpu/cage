@@ -38,3 +38,5 @@ namespace cage
 		sint64 correction;
 	};
 }
+
+#include <optick.h>

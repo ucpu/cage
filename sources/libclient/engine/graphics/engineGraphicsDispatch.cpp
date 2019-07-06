@@ -376,6 +376,7 @@ namespace cage
 
 			void renderOpaque(renderPassStruct *pass)
 			{
+				OPTICK_EVENT();
 				shaderProgram *shr = pass->targetShadowmap ? shaderDepth : shaderGBuffer;
 				shr->bind();
 				for (objectsStruct *o = pass->firstOpaque; o; o = o->next)
@@ -385,6 +386,7 @@ namespace cage
 
 			void renderLighting(renderPassStruct *pass)
 			{
+				OPTICK_EVENT();
 				shaderProgram *shr = shaderLighting;
 				shr->bind();
 				for (lightsStruct *l = pass->firstLight; l; l = l->next)
@@ -420,6 +422,7 @@ namespace cage
 
 			void renderTranslucent(renderPassStruct *pass)
 			{
+				OPTICK_EVENT();
 				shaderProgram *shr = shaderTranslucent;
 				shr->bind();
 				for (translucentStruct *t = pass->firstTranslucent; t; t = t->next)
@@ -448,6 +451,7 @@ namespace cage
 
 			void renderTexts(renderPassStruct *pass)
 			{
+				OPTICK_EVENT();
 				for (textsStruct *t = pass->firstText; t; t = t->next)
 				{
 					t->font->bind(meshSquare, shaderFont);
@@ -465,6 +469,7 @@ namespace cage
 
 			void renderCameraPass(renderPassStruct *pass)
 			{
+				OPTICK_EVENT();
 				// camera specific data
 				cameraSpecificDataStruct &cs = cameras[pass->entityId];
 				cs.update(pass->vpW, pass->vpH, pass->effects);
@@ -703,6 +708,7 @@ namespace cage
 
 			void renderShadowPass(renderPassStruct *pass)
 			{
+				OPTICK_EVENT();
 				renderTarget->bind();
 				renderTarget->clear();
 				renderTarget->depthTexture(pass->targetShadowmap > 0 ? shadowmaps2d[pass->targetShadowmap - 1].texture.get() : shadowmapsCube[-pass->targetShadowmap - 1].texture.get());
@@ -725,6 +731,7 @@ namespace cage
 
 			void renderPass(renderPassStruct *pass)
 			{
+				OPTICK_EVENT();
 				viewportDataBuffer->bind();
 				viewportDataBuffer->writeRange(&pass->shaderViewport, 0, sizeof(renderPassStruct::shaderViewportStruct));
 				viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
@@ -773,6 +780,8 @@ namespace cage
 			{
 				if (w == lastGBufferWidth && h == lastGBufferHeight && lastCameraEffects == cameraEffects)
 					return;
+
+				OPTICK_EVENT();
 				lastGBufferWidth = w;
 				lastGBufferHeight = h;
 				lastCameraEffects = cameraEffects;
