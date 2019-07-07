@@ -36,7 +36,7 @@ namespace cage
 	namespace
 	{
 		configBool confAutoAssetListen("cage-client.engine.assetsListen", false);
-		configUint32 confOptickFrameMode("cage-client.optick.frameMode", 0);
+		configUint32 confOptickFrameMode("cage-client.optick.frameMode", 1);
 
 		struct graphicsUploadThreadClass
 		{
@@ -155,12 +155,12 @@ namespace cage
 				{
 					if (confOptickFrameMode == graphicsPrepareThreadClass::threadIndex)
 					{
-						OPTICK_FRAME("graphicsPrepare");
+						OPTICK_FRAME("engine graphics prepare");
 						graphicsPrepareStep();
 					}
 					else
 					{
-						OPTICK_EVENT("graphicsPrepare");
+						OPTICK_EVENT("engine graphics prepare");
 						graphicsPrepareStep();
 					}
 				}
@@ -214,12 +214,12 @@ namespace cage
 					}
 					profilingBufferGraphicsDrawCalls.add(drawCalls);
 					profilingBufferGraphicsDrawPrimitives.add(drawPrimitives);
-					if (graphicsPrepareThread().stereoMode == stereoModeEnum::Mono)
-					{
-						OPTICK_EVENT("gui render");
-						gui->graphicsRender();
-						CAGE_CHECK_GL_ERROR_DEBUG();
-					}
+				}
+				if (graphicsPrepareThread().stereoMode == stereoModeEnum::Mono)
+				{
+					OPTICK_EVENT("gui render");
+					gui->graphicsRender();
+					CAGE_CHECK_GL_ERROR_DEBUG();
 				}
 				uint64 time3 = getApplicationTime();
 				{
@@ -242,12 +242,12 @@ namespace cage
 				{
 					if (confOptickFrameMode == graphicsDispatchThreadClass::threadIndex)
 					{
-						OPTICK_FRAME("graphicsDispatch");
+						OPTICK_FRAME("engine graphics dispatch");
 						graphicsDispatchStep();
 					}
 					else
 					{
-						OPTICK_EVENT("graphicsDispatch");
+						OPTICK_EVENT("engine graphics dispatch");
 						graphicsDispatchStep();
 					}
 				}
@@ -328,12 +328,12 @@ namespace cage
 				{
 					if (confOptickFrameMode == soundThreadClass::threadIndex)
 					{
-						OPTICK_FRAME("sound");
+						OPTICK_FRAME("engine sound");
 						soundStep();
 					}
 					else
 					{
-						OPTICK_EVENT("sound");
+						OPTICK_EVENT("engine sound");
 						soundStep();
 					}
 				}
@@ -405,7 +405,7 @@ namespace cage
 				case 1:
 				{
 					OPTICK_EVENT("gui emit");
-					gui->controlUpdateDone(); // guiEmit
+					gui->controlUpdateDone();
 				} break;
 				case 2:
 				{
@@ -470,12 +470,12 @@ namespace cage
 				{
 					if (confOptickFrameMode == controlThreadClass::threadIndex)
 					{
-						OPTICK_FRAME("control");
+						OPTICK_FRAME("engine control");
 						controlStep();
 					}
 					else
 					{
-						OPTICK_EVENT("control");
+						OPTICK_EVENT("engine control");
 						controlStep();
 					}
 				}
@@ -488,7 +488,6 @@ namespace cage
 #define GCHL_GENERATE_ENTRY(NAME) \
 			void CAGE_JOIN(NAME, Entry)() \
 			{ \
-				OPTICK_THREAD(CAGE_STRINGIZE(NAME)); \
 				try { CAGE_JOIN(NAME, InitializeStage)(); } \
 				catch (...) { CAGE_LOG(severityEnum::Error, "engine", "exception caught in initialization (engine) in " CAGE_STRINGIZE(NAME)); engineStop(); } \
 				{ scopeLock<syncBarrier> l(threadsStateBarier); } \
@@ -659,7 +658,7 @@ namespace cage
 
 			void start()
 			{
-				OPTICK_THREAD("control");
+				OPTICK_THREAD("engine control");
 				CAGE_ASSERT_RUNTIME(engineStarted == 2);
 				engineStarted = 3;
 

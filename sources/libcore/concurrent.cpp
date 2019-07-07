@@ -25,6 +25,8 @@
 #include <dispatch/dispatch.h>
 #endif
 
+#include <optick.h>
+
 namespace cage
 {
 	class mutexImpl : public syncMutex
@@ -632,6 +634,7 @@ namespace cage
 		{
 			threadImpl *impl = (threadImpl*)params;
 			setCurrentThreadName(impl->threadName);
+			OPTICK_THREAD(impl->threadName.c_str());
 			try
 			{
 				impl->function();
