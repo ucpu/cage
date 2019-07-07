@@ -289,7 +289,10 @@ namespace cage
 				else
 				{
 					if (timeDelay < soundThread().timePerTick)
+					{
+						OPTICK_EVENT("sleep");
 						threadSleep(soundThread().timePerTick - timeDelay);
+					}
 					currentSoundTime += soundThread().timePerTick;
 				}
 			}
@@ -428,7 +431,10 @@ namespace cage
 				else
 				{
 					if (timeDelay < controlThread().timePerTick)
+					{
+						OPTICK_EVENT("sleep");
 						threadSleep(controlThread().timePerTick - timeDelay);
+					}
 					currentControlTime += controlThread().timePerTick;
 				}
 			}
