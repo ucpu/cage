@@ -438,7 +438,7 @@ namespace cage
 					}
 				}
 
-				// control threadHandle - network updates
+				// control thread - network updates
 				if (listener)
 				{
 					try

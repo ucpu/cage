@@ -49,7 +49,7 @@ namespace
 			}
 			int res = prg->wait();
 			if (res != 0)
-				CAGE_LOG(severityEnum::Info, "manager", string() + name + ": processHandle ended with code: " + res);
+				CAGE_LOG(severityEnum::Info, "manager", string() + name + ": process ended with code: " + res);
 		}
 	};
 

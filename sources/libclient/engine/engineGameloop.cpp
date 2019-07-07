@@ -322,7 +322,7 @@ namespace cage
 					graphicsPrepareEmit(currentControlTime);
 					break;
 				default:
-					CAGE_THROW_CRITICAL(exception, "invalid engine emit threadHandle index");
+					CAGE_THROW_CRITICAL(exception, "invalid engine emit thread index");
 				}
 			}
 

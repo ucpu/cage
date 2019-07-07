@@ -207,7 +207,7 @@ namespace
 						if (ass.internationalizedName.empty())
 							ass.internationalizedName = line;
 						else
-							CAGE_THROW_WARNING(exception, "assets internationalized name cannot be overriden");
+							CAGE_THROW_WARNING(exception, "assets internationalized name cannot be overridden");
 					}
 					else
 					{
@@ -222,7 +222,7 @@ namespace
 
 			int ret = prg->wait();
 			if (ret != 0)
-				CAGE_THROW_WARNING(codeException, "processHandle returned error code", ret);
+				CAGE_THROW_WARNING(codeException, "process returned error code", ret);
 
 			ass.corrupted = false;
 		}
@@ -456,7 +456,7 @@ namespace
 				}
 				catch (...)
 				{
-					CAGE_LOG(severityEnum::Error, "exception", "caught unknown exception in asset processing threadHandle");
+					CAGE_LOG(severityEnum::Error, "exception", "caught unknown exception in asset processing thread");
 				}
 			}
 		}

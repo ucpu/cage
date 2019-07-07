@@ -3,10 +3,10 @@
 
 void testProgram()
 {
-	CAGE_TESTCASE("processHandle");
+	CAGE_TESTCASE("process");
 	string cmd;
 #ifdef CAGE_SYSTEM_WINDOWS
-	// on windows, echo is built-in processHandle of cmd
+	// on windows, echo is built-in process of cmd
 	cmd = "cmd /C echo hi there";
 #else
 	cmd = "echo hi there";

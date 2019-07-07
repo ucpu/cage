@@ -59,7 +59,7 @@ namespace cage
 					{
 						scopeLock<syncMutex> l(mutex);
 						if (exptr)
-							CAGE_LOG(severityEnum::Warning, "threadHandle-pool", "discarding an exception caught in a threadHandle pool");
+							CAGE_LOG(severityEnum::Warning, "threadPool", "discarding an exception caught in a thread pool");
 						else
 							exptr = std::current_exception();
 					}
