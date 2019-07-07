@@ -20,6 +20,8 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/concurrentQueue.h>
 
+#include <optick.h>
+
 namespace cage
 {
 	configUint32 logLevel("cage-core.assetManager.logLevel", 0);
@@ -163,12 +165,14 @@ namespace cage
 				queueLoadFile->pop(ass);
 				if (ass)
 				{
+					OPTICK_EVENT("loading");
 					ASS_LOG(2, ass, "disk load");
 					CAGE_ASSERT_RUNTIME(ass->processing);
 					CAGE_ASSERT_RUNTIME(!ass->fabricated);
 					CAGE_ASSERT_RUNTIME(ass->originalData == nullptr);
 					CAGE_ASSERT_RUNTIME(ass->compressedData == nullptr);
 					CAGE_ASSERT_RUNTIME(ass->internationalizedPrevious == 0);
+					OPTICK_TAG("realName", ass->realName);
 					ass->internationalizedPrevious = ass->internationalizedName;
 					ass->scheme = m;
 					ass->assetFlags = 0;
@@ -201,7 +205,9 @@ namespace cage
 						ass->compressedSize = h->compressedSize;
 						ass->originalSize = h->originalSize;
 						ass->internationalizedName = h->internationalizedName;
-						ass->textName = detail::stringBase<sizeof(h->textName)>(h->textName);
+						//ass->textName = detail::stringBase<sizeof(h->textName)>(h->textName);
+						ass->textName = h->textName;
+						OPTICK_TAG("textName", ass->textName.c_str());
 						ass->dependenciesNew.resize(h->dependenciesCount);
 						if (h->dependenciesCount)
 							detail::memcpy(ass->dependenciesNew.data(), buff.data() + sizeof(assetHeader), h->dependenciesCount * sizeof(uint32));
@@ -246,6 +252,7 @@ namespace cage
 				queueDecompression->pop(ass);
 				if (ass)
 				{
+					OPTICK_EVENT("decompression");
 					ASS_LOG(2, ass, "decompression");
 					CAGE_ASSERT_RUNTIME(ass->processing);
 					CAGE_ASSERT_RUNTIME(!ass->fabricated);
@@ -253,6 +260,10 @@ namespace cage
 					{
 						CAGE_ASSERT_RUNTIME(ass->compressedData);
 						CAGE_ASSERT_RUNTIME(ass->scheme < schemes.size(), ass->scheme, schemes.size());
+						OPTICK_TAG("realName", ass->realName);
+						OPTICK_TAG("textName", ass->textName.c_str());
+						OPTICK_TAG("originalSize", ass->originalSize);
+						OPTICK_TAG("compressedSize", ass->compressedSize);
 						try
 						{
 							if (schemes[ass->scheme].decompress)
@@ -282,10 +293,13 @@ namespace cage
 					queueCustomDone[threadIndex]->tryPop(ass);
 					if (ass)
 					{
-						ASS_LOG(1, ass, "custom finish");
+						OPTICK_EVENT("asset done");
+						ASS_LOG(1, ass, "custom done");
 						CAGE_ASSERT_RUNTIME(ass->processing);
 						CAGE_ASSERT_RUNTIME(!ass->fabricated);
 						CAGE_ASSERT_RUNTIME(ass->scheme < schemes.size(), ass->scheme, schemes.size());
+						OPTICK_TAG("realName", ass->realName);
+						OPTICK_TAG("textName", ass->textName.c_str());
 						try
 						{
 							if (schemes[ass->scheme].done)
@@ -307,6 +321,7 @@ namespace cage
 					queueCustomLoad[threadIndex]->tryPop(ass);
 					if (ass)
 					{
+						OPTICK_EVENT("asset load");
 						ASS_LOG(1, ass, "custom load");
 						CAGE_ASSERT_RUNTIME(ass->processing);
 						CAGE_ASSERT_RUNTIME(!ass->fabricated);
@@ -314,6 +329,9 @@ namespace cage
 						{
 							CAGE_ASSERT_RUNTIME(ass->originalData);
 							CAGE_ASSERT_RUNTIME(ass->scheme < schemes.size(), ass->scheme, schemes.size());
+							OPTICK_TAG("realName", ass->realName);
+							OPTICK_TAG("textName", ass->textName.c_str());
+							OPTICK_TAG("scheme", ass->scheme);
 							try
 							{
 								if (schemes[ass->scheme].load)
@@ -339,8 +357,11 @@ namespace cage
 					queueRemoveDependencies->tryPop(ass);
 					if (ass)
 					{
+						OPTICK_EVENT("asset remove");
 						ASS_LOG(2, ass, "remove dependencies");
 						CAGE_ASSERT_RUNTIME(ass->processing);
+						OPTICK_TAG("realName", ass->realName);
+						OPTICK_TAG("textName", ass->textName.c_str());
 						for (auto it : ass->dependencies)
 							remove(it);
 						ass->dependencies.clear();
@@ -367,9 +388,12 @@ namespace cage
 					queueAddDependencies->tryPop(ass);
 					if (ass)
 					{
+						OPTICK_EVENT("asset add dependencies");
 						ASS_LOG(2, ass, "add dependencies");
 						CAGE_ASSERT_RUNTIME(ass->processing);
 						CAGE_ASSERT_RUNTIME(!ass->fabricated);
+						OPTICK_TAG("realName", ass->realName);
+						OPTICK_TAG("textName", ass->textName.c_str());
 						for (auto it : ass->dependenciesNew)
 							add(it);
 						for (auto it : ass->dependencies)
@@ -386,9 +410,12 @@ namespace cage
 					queueWaitDependencies->tryPop(ass);
 					if (ass)
 					{
+						OPTICK_EVENT("asset check dependencies");
 						ASS_LOG(3, ass, "check dependencies");
 						CAGE_ASSERT_RUNTIME(ass->processing);
 						CAGE_ASSERT_RUNTIME(!ass->fabricated);
+						OPTICK_TAG("realName", ass->realName);
+						OPTICK_TAG("textName", ass->textName.c_str());
 						bool wait = !ass->dependenciesDoneFlag;
 						if (!wait)
 						{
@@ -441,6 +468,7 @@ namespace cage
 				// control thread - network updates
 				if (listener)
 				{
+					OPTICK_EVENT("network notifications");
 					try
 					{
 						uint32 cnt = 0;

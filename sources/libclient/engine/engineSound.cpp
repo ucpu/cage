@@ -233,7 +233,11 @@ namespace cage
 					postEmit();
 					emitRead->fresh = false;
 				}
-				speaker()->update(dispatchTime);
+
+				{
+					OPTICK_EVENT("speaker");
+					speaker()->update(dispatchTime);
+				}
 
 				emitRead = nullptr;
 			}

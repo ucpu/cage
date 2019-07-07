@@ -217,9 +217,9 @@ namespace cage
 
 			static void sortTranslucentBackToFront(renderPassImpl *pass)
 			{
-				OPTICK_EVENT();
 				if (!pass->firstTranslucent)
 					return;
+				OPTICK_EVENT("sort translucent");
 
 				struct sorter
 				{
@@ -367,7 +367,7 @@ namespace cage
 
 			void initializeRenderPassForCamera(renderPassImpl *pass, emitCameraStruct *camera, eyeEnum eye)
 			{
-				OPTICK_EVENT();
+				OPTICK_EVENT("camera pass");
 				if (camera->camera.target)
 				{
 					uint32 w = 0, h = 0;
@@ -417,15 +417,14 @@ namespace cage
 				pass->eyeAdaptation.darkerSpeed *= eyeAdaptationSpeed;
 				pass->eyeAdaptation.lighterSpeed *= eyeAdaptationSpeed;
 				addRenderableObjects(pass);
+				addRenderableLights(pass);
 				addRenderableTexts(pass);
-				for (auto it : emitRead->lights)
-					addLight(pass, it);
 				sortTranslucentBackToFront(pass);
 			}
 
 			void initializeRenderPassForShadowmap(renderPassImpl *pass, emitLightStruct *light)
 			{
-				OPTICK_EVENT();
+				OPTICK_EVENT("shadowmap pass");
 				pass->view = light->model.inverse();
 				switch (light->light.lightType)
 				{
@@ -463,7 +462,7 @@ namespace cage
 
 			void addRenderableObjects(renderPassImpl *pass)
 			{
-				OPTICK_EVENT();
+				OPTICK_EVENT("objects");
 				CAGE_ASSERT_RUNTIME(pass->lodSelection > 0);
 				for (emitRenderObjectStruct *e : emitRead->renderableObjects)
 				{
@@ -637,7 +636,7 @@ namespace cage
 
 			void addRenderableTexts(renderPassImpl *pass)
 			{
-				OPTICK_EVENT();
+				OPTICK_EVENT("texts");
 				for (emitRenderTextStruct *e : emitRead->renderableTexts)
 				{
 					if ((e->renderText.renderMask & pass->renderMask) == 0)
@@ -690,6 +689,13 @@ namespace cage
 						tex->firtsRender = r;
 					tex->lastRender = r;
 				}
+			}
+
+			void addRenderableLights(renderPassImpl *pass)
+			{
+				OPTICK_EVENT("lights");
+				for (auto it : emitRead->lights)
+					addLight(pass, it);
 			}
 
 			void addLight(renderPassImpl *pass, emitLightStruct *light)
@@ -916,6 +922,7 @@ namespace cage
 				}
 
 				{ // update model matrices
+					OPTICK_EVENT("update model matrices");
 					real interFactor = clamp(real(dispatchTime - emitTime) / controlThread().timePerTick, 0, 1);
 					for (auto it : emitRead->renderableObjects)
 						it->updateModelMatrix(interFactor);
