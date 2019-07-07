@@ -8,7 +8,7 @@ namespace cage
 	class CAGE_API syncMutex : private immovable
 	{
 	public:
-		// locking the same mutex again in the same threadHandle is undefined behavior
+		// locking the same mutex again in the same thread is implementation defined behavior
 		bool tryLock(); // return true on successfully acquiring the lock
 		void lock();
 		void unlock();
@@ -73,7 +73,7 @@ namespace cage
 	CAGE_API string getCurrentThreadName();
 
 	CAGE_API uint32 processorsCount(); // return count of threads, that can physically run simultaneously
-	CAGE_API uint64 threadId(); // return id of current threadHandle
+	CAGE_API uint64 threadId(); // return id of current thread
 	CAGE_API uint64 processId(); // return id of current process
 	CAGE_API void threadSleep(uint64 micros);
 }

@@ -6,13 +6,13 @@ namespace cage
 	class CAGE_API threadPool : private immovable
 	{
 	public:
-		// threadHandle index, threads count
+		// thread index, threads count
 		delegate<void(uint32, uint32)> function;
 
 		void run();
 	};
 
-	// threadsCount == 0 -> run in calling threadHandle
+	// threadsCount == 0 -> run in calling thread
 	// threadsCount == m -> as many threads as there is processors
 	CAGE_API holder<threadPool> newThreadPool(const string &threadNames = "worker_", uint32 threadsCount = m);
 }

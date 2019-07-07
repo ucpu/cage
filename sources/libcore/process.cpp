@@ -4,6 +4,7 @@
 #include <cage-core/concurrent.h>
 #include <cage-core/files.h>
 #include <cage-core/process.h>
+#include <cage-core/lineReader.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
 #include "incWin.h"
@@ -35,8 +36,8 @@ namespace cage
 				static holder<syncMutex> mut = newSyncMutex();
 				scopeLock<syncMutex> lock(mut);
 
-				CAGE_LOG(severityEnum::Info, "processHandle", string() + "launching processHandle '" + cmd + "'");
-				CAGE_LOG_CONTINUE(severityEnum::Note, "processHandle", string() + "working directory '" + workingDir + "'");
+				CAGE_LOG(severityEnum::Info, "process", string() + "launching process '" + cmd + "'");
+				CAGE_LOG_CONTINUE(severityEnum::Note, "process", string() + "working directory '" + workingDir + "'");
 
 				SECURITY_ATTRIBUTES saAttr;
 				detail::memset(&saAttr, 0, sizeof(SECURITY_ATTRIBUTES));
@@ -85,7 +86,7 @@ namespace cage
 				closeHandle(hChildStd_OUT_Wr);
 				closeHandle(hChildStd_IN_Rd);
 
-				CAGE_LOG_CONTINUE(severityEnum::Info, "processHandle", string() + "process id: " + templates::underlying_type<DWORD>::type(GetProcessId(hProcess)));
+				CAGE_LOG_CONTINUE(severityEnum::Info, "process", string() + "process id: " + templates::underlying_type<DWORD>::type(GetProcessId(hProcess)));
 			}
 
 			static void closeHandle(HANDLE &h)
@@ -176,8 +177,8 @@ namespace cage
 				static holder<syncMutex> mut = newSyncMutex();
 				scopeLock<syncMutex> lock(mut);
 
-				CAGE_LOG(severityEnum::Info, "processHandle", string() + "launching processHandle '" + cmd + "'");
-				CAGE_LOG_CONTINUE(severityEnum::Note, "processHandle", string() + "working directory '" + workingDir + "'");
+				CAGE_LOG(severityEnum::Info, "process", string() + "launching process '" + cmd + "'");
+				CAGE_LOG_CONTINUE(severityEnum::Note, "process", string() + "working directory '" + workingDir + "'");
 
 				if (pipe(aStdinPipe) < 0)
 					CAGE_THROW_ERROR(exception, "failed to open pipe");
@@ -240,7 +241,7 @@ namespace cage
 					CAGE_THROW_ERROR(exception, "fork failed");
 				}
 
-				CAGE_LOG_CONTINUE(severityEnum::Info, "processHandle", string() + "process id: " + pid);
+				CAGE_LOG_CONTINUE(severityEnum::Info, "process", string() + "process id: " + pid);
 			}
 
 			~programImpl()
@@ -335,31 +336,18 @@ namespace cage
 
 	string processHandle::readLine()
 	{
-		string res;
-		while (true)
+		string out;
+		char buffer[string::MaxLength + 1];
+		uintPtr size = 0;
+		while (size < string::MaxLength)
 		{
-			char tmp;
-			try
-			{
-				read(&tmp, 1);
-			}
-			catch (const exception &)
-			{
-				return res;
-			}
-			if (tmp == '\n')
-			{
-				if (!res.empty() && res[res.length() - 1] == 13)
-					res = res.subString(0, res.length() - 1);
-				if (res.empty())
-					continue;
-				return res;
-			}
-			if (res.length() + 1 == string::MaxLength)
-				CAGE_THROW_ERROR(exception, "line too long");
-			res += string(&tmp, 1);
+			read(buffer + size, 1);
+			size++;
+			const char *b = buffer;
+			if (detail::readLine(out, b, size, true))
+				return out;
 		}
-		return res;
+		CAGE_THROW_ERROR(exception, "line too long");
 	}
 
 	void processHandle::writeLine(const string &data)

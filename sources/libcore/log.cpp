@@ -37,9 +37,9 @@ namespace cage
 		{
 		public:
 			loggerImpl *prev, *next;
-			const uint64 threadHandle;
+			const uint64 thread;
 
-			loggerImpl() : prev(nullptr), next(nullptr), threadHandle(threadId())
+			loggerImpl() : prev(nullptr), next(nullptr), thread(threadId())
 			{
 				{
 					scopeLock<syncMutex> l(loggerMutex());
@@ -279,7 +279,7 @@ namespace cage
 				{
 					if (cur->output)
 					{
-						info.createThreadId = cur->threadHandle;
+						info.createThreadId = cur->thread;
 						if (!cur->filter || cur->filter(info))
 						{
 							if (cur->format)
