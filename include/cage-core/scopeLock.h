@@ -6,13 +6,13 @@ namespace cage
 	template<class T>
 	struct scopeLock
 	{
-		scopeLock(holder<T> &ptr, bool tryLock) : scopeLock(ptr.get(), tryLock)
+		explicit scopeLock(holder<T> &ptr, bool tryLock) : scopeLock(ptr.get(), tryLock)
 		{}
 
-		scopeLock(holder<T> &ptr) : scopeLock(ptr.get())
+		explicit scopeLock(holder<T> &ptr) : scopeLock(ptr.get())
 		{}
 
-		scopeLock(T *ptr, bool tryLock) : ptr(ptr)
+		explicit scopeLock(T *ptr, bool tryLock) : ptr(ptr)
 		{
 			if (tryLock)
 			{
@@ -23,7 +23,7 @@ namespace cage
 				ptr->lock();
 		}
 
-		scopeLock(T *ptr) : ptr(ptr)
+		explicit scopeLock(T *ptr) : ptr(ptr)
 		{
 			ptr->lock();
 		}
@@ -40,16 +40,23 @@ namespace cage
 
 		scopeLock &operator = (scopeLock &&other)
 		{
-			if (ptr)
-				ptr->unlock();
+			clear();
 			ptr = other.ptr;
 			other.ptr = nullptr;
 		}
 
 		~scopeLock()
 		{
+			clear();
+		}
+
+		void clear()
+		{
 			if (ptr)
+			{
 				ptr->unlock();
+				ptr = nullptr;
+			}
 		}
 
 		explicit operator bool() const noexcept

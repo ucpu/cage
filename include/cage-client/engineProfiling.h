@@ -6,20 +6,14 @@ namespace cage
 	enum class engineProfilingStatsFlags
 	{
 		None = 0,
-		ControlTick = 1 << 0,
-		ControlEmit = 1 << 1,
-		ControlSleep = 1 << 2,
-		GraphicsPrepareWait = 1 << 3,
-		GraphicsPrepareTick = 1 << 4,
-		GraphicsDispatchWait = 1 << 5,
-		GraphicsDispatchTick = 1 << 6,
-		GraphicsDispatchSwap = 1 << 7,
-		GraphicsDrawCalls = 1 << 8,
-		GraphicsDrawPrimitives = 1 << 9,
-		SoundWait = 1 << 10,
-		SoundTick = 1 << 11,
-		SoundSleep = 1 << 12,
-		FrameTime = engineProfilingStatsFlags::GraphicsDispatchWait | engineProfilingStatsFlags::GraphicsDispatchTick | engineProfilingStatsFlags::GraphicsDispatchSwap,
+		Control = 1 << 0,
+		Sound = 1 << 1,
+		GraphicsPrepare = 1 << 2,
+		GraphicsDispatch = 1 << 3,
+		FrameTime = 1 << 4,
+		DrawCalls = 1 << 5,
+		DrawPrimitives = 1 << 6,
+		Entities = 1 << 7,
 	};
 	GCHL_ENUM_BITS(engineProfilingStatsFlags);
 

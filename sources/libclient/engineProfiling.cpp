@@ -66,45 +66,37 @@ namespace cage
 			void generateEntities()
 			{
 				static const engineProfilingStatsFlags flagsFull[] = {
-					engineProfilingStatsFlags::ControlTick,
-					engineProfilingStatsFlags::ControlEmit,
-					engineProfilingStatsFlags::ControlSleep,
-					engineProfilingStatsFlags::GraphicsPrepareWait,
-					engineProfilingStatsFlags::GraphicsPrepareTick,
-					engineProfilingStatsFlags::GraphicsDispatchWait,
-					engineProfilingStatsFlags::GraphicsDispatchTick,
-					engineProfilingStatsFlags::GraphicsDispatchSwap,
-					engineProfilingStatsFlags::SoundWait,
-					engineProfilingStatsFlags::SoundTick,
-					engineProfilingStatsFlags::SoundSleep,
-					engineProfilingStatsFlags::FrameTime
+					engineProfilingStatsFlags::Control,
+					engineProfilingStatsFlags::Sound,
+					engineProfilingStatsFlags::GraphicsPrepare,
+					engineProfilingStatsFlags::GraphicsDispatch,
+					engineProfilingStatsFlags::FrameTime,
+					engineProfilingStatsFlags::DrawCalls,
+					engineProfilingStatsFlags::DrawPrimitives,
+					engineProfilingStatsFlags::Entities,
 				};
 				static const char* namesFull[sizeof(flagsFull) / sizeof(flagsFull[0])] = {
-					"Control Tick: ",
-					"Control Emit: ",
-					"Control Sleep: ",
-					"Graphics Prepare Wait: ",
-					"Graphics Prepare Tick: ",
-					"Graphics Dispatch Wait: ",
-					"Graphics Dispatch Tick: ",
-					"Graphics Dispatch Swap: ",
-					"Sound Wait: ",
-					"Sound Tick: ",
-					"Sound Sleep: ",
-					"Frame Time: "
+					"Control: ",
+					"Sound: ",
+					"Graphics Prepare: ",
+					"Graphics Dispatch: ",
+					"Frame Time: ",
+					"Draw Calls: ",
+					"Draw Primitives: ",
+					"Entities: ",
 				};
 
 				static const engineProfilingStatsFlags flagsShort[] = {
-					engineProfilingStatsFlags::ControlTick | engineProfilingStatsFlags::ControlEmit,
-					engineProfilingStatsFlags::GraphicsPrepareTick,
-					engineProfilingStatsFlags::GraphicsDispatchTick,
-					engineProfilingStatsFlags::SoundTick,
+					engineProfilingStatsFlags::Control,
+					engineProfilingStatsFlags::Sound,
+					engineProfilingStatsFlags::GraphicsPrepare,
+					engineProfilingStatsFlags::FrameTime,
 				};
 				static const char* namesShort[sizeof(flagsShort) / sizeof(flagsShort[0])] = {
 					"Control: ",
-					"Prepare: ",
-					"Dispatch: ",
 					"Sound: ",
+					"Prepare: ",
+					"Frame: ",
 				};
 
 				static const engineProfilingStatsFlags flagsFps[] = {
@@ -138,18 +130,17 @@ namespace cage
 					sizeof(flagsFps) / sizeof(flagsFps[0]),
 					0 };
 				labelsCount = labelsPerMode[(uint32)profilingScope];
-				uint32 labelsCountExt = labelsCount + (profilingScope == engineProfilingScopeEnum::Full ? 3 : 0);
-				for (uint32 i = 0; i < labelsCountExt * 2; i++)
+				for (uint32 i = 0; i < labelsCount * 2; i++)
 				{
-					entity *timing = g->createUnique();
-					labelIndices[i] = timing->name();
-					CAGE_COMPONENT_GUI(label, c, timing);
-					CAGE_COMPONENT_GUI(parent, child, timing);
+					entity *e = g->createUnique();
+					labelIndices[i] = e->name();
+					CAGE_COMPONENT_GUI(label, c, e);
+					CAGE_COMPONENT_GUI(parent, child, e);
 					child.parent = layout->name();
 					child.order = i;
 					if (i % 2 == 1)
 					{
-						CAGE_COMPONENT_GUI(textFormat, tf, timing);
+						CAGE_COMPONENT_GUI(textFormat, tf, e);
 						tf.align = textAlignEnum::Right;
 					}
 				}
@@ -223,16 +214,10 @@ namespace cage
 				for (uint32 i = 0; i < labelsCount; i++)
 				{
 					setTextLabel(i * 2 + 0, labelNames[i]);
-					setTextLabel(i * 2 + 1, string() + (engineProfilingValues(labelFlags[i], profilingMode) / 1000) + " ms");
-				}
-				if (profilingModeOld == engineProfilingScopeEnum::Full)
-				{
-					setTextLabel(labelsCount * 2 + 0, "Entities: ");
-					setTextLabel(labelsCount * 2 + 1, entities()->group()->count());
-					setTextLabel(labelsCount * 2 + 2, "Draw Calls: ");
-					setTextLabel(labelsCount * 2 + 3, engineProfilingValues(engineProfilingStatsFlags::GraphicsDrawCalls, profilingMode));
-					setTextLabel(labelsCount * 2 + 4, "Draw Primitives: ");
-					setTextLabel(labelsCount * 2 + 5, engineProfilingValues(engineProfilingStatsFlags::GraphicsDrawPrimitives, profilingMode));
+					if (labelFlags[i] <= engineProfilingStatsFlags::FrameTime)
+						setTextLabel(i * 2 + 1, string() + (engineProfilingValues(labelFlags[i], profilingMode) / 1000) + " ms");
+					else
+						setTextLabel(i * 2 + 1, engineProfilingValues(labelFlags[i], profilingMode));
 				}
 				return false;
 			}

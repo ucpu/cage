@@ -63,21 +63,31 @@ namespace cage
 			syncSemaphore *sem;
 		};
 
+		struct scopedTimer
+		{
+			variableSmoothingBuffer<uint64, 60> &vsb;
+			uint64 st;
+
+			scopedTimer(variableSmoothingBuffer<uint64, 60> &vsb) : vsb(vsb), st(getApplicationTime())
+			{}
+
+			~scopedTimer()
+			{
+				uint64 et = getApplicationTime();
+				vsb.add(et - st);
+			}
+		};
+
 		struct engineDataStruct
 		{
-			variableSmoothingBuffer<uint64, 60> profilingBufferControlTick;
-			variableSmoothingBuffer<uint64, 60> profilingBufferControlEmit;
-			variableSmoothingBuffer<uint64, 60> profilingBufferControlSleep;
-			variableSmoothingBuffer<uint64, 60> profilingBufferGraphicsPrepareWait;
-			variableSmoothingBuffer<uint64, 60> profilingBufferGraphicsPrepareTick;
-			variableSmoothingBuffer<uint64, 60> profilingBufferGraphicsDispatchWait;
-			variableSmoothingBuffer<uint64, 60> profilingBufferGraphicsDispatchTick;
-			variableSmoothingBuffer<uint64, 60> profilingBufferGraphicsDispatchSwap;
-			variableSmoothingBuffer<uint64, 60> profilingBufferGraphicsDrawCalls;
-			variableSmoothingBuffer<uint64, 60> profilingBufferGraphicsDrawPrimitives;
-			variableSmoothingBuffer<uint64, 60> profilingBufferSoundWait;
-			variableSmoothingBuffer<uint64, 60> profilingBufferSoundTick;
-			variableSmoothingBuffer<uint64, 60> profilingBufferSoundSleep;
+			variableSmoothingBuffer<uint64, 60> profilingBufferControl;
+			variableSmoothingBuffer<uint64, 60> profilingBufferSound;
+			variableSmoothingBuffer<uint64, 60> profilingBufferGraphicsPrepare;
+			variableSmoothingBuffer<uint64, 60> profilingBufferGraphicsDispatch;
+			variableSmoothingBuffer<uint64, 60> profilingBufferFrameTime;
+			variableSmoothingBuffer<uint64, 60> profilingBufferDrawCalls;
+			variableSmoothingBuffer<uint64, 60> profilingBufferDrawPrimitives;
+			variableSmoothingBuffer<uint64, 60> profilingBufferEntities;
 
 			holder<assetManager> assets;
 			holder<windowHandle> window;
@@ -125,28 +135,21 @@ namespace cage
 
 			void graphicsPrepareStep()
 			{
-				uint64 time1 = getApplicationTime();
-				uint64 time2;
 				{
-					scopedSemaphores lockGraphics(graphicsSemaphore1, graphicsSemaphore2);
-					scopeLock<syncMutex> lockAssets(assetsGraphicsMutex);
-					time2 = getApplicationTime();
-					{
-						OPTICK_EVENT("assets");
-						assets->processCustomThread(graphicsPrepareThread().threadIndex);
-					}
-					{
-						OPTICK_EVENT("application prepare callback");
-						graphicsPrepareThread().prepare.dispatch();
-					}
-					{
-						OPTICK_EVENT("tick");
-						graphicsPrepareTick(time2);
-					}
+					OPTICK_EVENT("assets");
+					assets->processCustomThread(graphicsPrepareThread().threadIndex);
 				}
-				uint64 time3 = getApplicationTime();
-				profilingBufferGraphicsPrepareWait.add(time2 - time1);
-				profilingBufferGraphicsPrepareTick.add(time3 - time2);
+				scopedSemaphores lockGraphics(graphicsSemaphore1, graphicsSemaphore2);
+				scopeLock<syncMutex> lockAssets(assetsGraphicsMutex);
+				scopedTimer timing(profilingBufferGraphicsPrepare);
+				{
+					OPTICK_EVENT("callback");
+					graphicsPrepareThread().prepare.dispatch();
+				}
+				{
+					OPTICK_EVENT("tick");
+					graphicsPrepareTick(getApplicationTime());
+				}
 			}
 
 			void graphicsPrepareGameloopStage()
@@ -193,27 +196,23 @@ namespace cage
 
 			void graphicsDispatchStep()
 			{
-				uint64 time1 = getApplicationTime();
-				uint64 time2;
+				scopedTimer timing(profilingBufferFrameTime);
 				{
 					scopedSemaphores lockGraphics(graphicsSemaphore2, graphicsSemaphore1);
-					time2 = getApplicationTime();
-					{
-						OPTICK_EVENT("assets");
-						assets->processCustomThread(graphicsDispatchThreadClass::threadIndex);
-					}
+					scopedTimer timing(profilingBufferGraphicsDispatch);
 					{
 						OPTICK_EVENT("render callback");
 						graphicsDispatchThread().render.dispatch();
 					}
-					uint32 drawCalls = 0;
-					uint32 drawPrimitives = 0;
 					{
 						OPTICK_EVENT("tick");
+						uint32 drawCalls = 0, drawPrimitives = 0;
 						graphicsDispatchTick(drawCalls, drawPrimitives);
+						profilingBufferDrawCalls.add(drawCalls);
+						profilingBufferDrawPrimitives.add(drawPrimitives);
+						OPTICK_TAG("drawCalls", drawCalls);
+						OPTICK_TAG("drawPrimitives", drawPrimitives);
 					}
-					profilingBufferGraphicsDrawCalls.add(drawCalls);
-					profilingBufferGraphicsDrawPrimitives.add(drawPrimitives);
 				}
 				if (graphicsPrepareThread().stereoMode == stereoModeEnum::Mono)
 				{
@@ -221,7 +220,10 @@ namespace cage
 					gui->graphicsRender();
 					CAGE_CHECK_GL_ERROR_DEBUG();
 				}
-				uint64 time3 = getApplicationTime();
+				{
+					OPTICK_EVENT("assets");
+					assets->processCustomThread(graphicsDispatchThreadClass::threadIndex);
+				}
 				{
 					OPTICK_EVENT("swap callback");
 					graphicsDispatchThread().swap.dispatch();
@@ -230,10 +232,6 @@ namespace cage
 					OPTICK_EVENT("swap");
 					graphicsDispatchSwap();
 				}
-				uint64 time4 = getApplicationTime();
-				profilingBufferGraphicsDispatchWait.add(time2 - time1);
-				profilingBufferGraphicsDispatchTick.add(time3 - time2);
-				profilingBufferGraphicsDispatchSwap.add(time4 - time3);
 			}
 
 			void graphicsDispatchGameloopStage()
@@ -299,15 +297,9 @@ namespace cage
 
 			void soundStep()
 			{
-				uint64 time1 = getApplicationTime();
-				uint64 time2;
 				{
 					scopeLock<syncMutex> lockAssets(assetsSoundMutex);
-					time2 = getApplicationTime();
-					{
-						OPTICK_EVENT("assets");
-						assets->processCustomThread(soundThreadClass::threadIndex);
-					}
+					scopedTimer timing(profilingBufferSound);
 					{
 						OPTICK_EVENT("sound callback");
 						soundThread().sound.dispatch();
@@ -317,12 +309,12 @@ namespace cage
 						soundTick(currentSoundTime);
 					}
 				}
-				uint64 time3 = getApplicationTime();
-				soundTiming(time3 > currentSoundTime ? time3 - currentSoundTime : 0);
-				uint64 time4 = getApplicationTime();
-				profilingBufferSoundWait.add(time2 - time1);
-				profilingBufferSoundTick.add(time3 - time2);
-				profilingBufferSoundSleep.add(time4 - time3);
+				{
+					OPTICK_EVENT("assets");
+					assets->processCustomThread(soundThreadClass::threadIndex);
+				}
+				uint64 newTime = getApplicationTime();
+				soundTiming(newTime > currentSoundTime ? newTime - currentSoundTime : 0);
 			}
 
 			void soundGameloopStage()
@@ -362,26 +354,33 @@ namespace cage
 			// CONTROL
 			//////////////////////////////////////
 
-			void controlTryAssets()
+			void controlAssets()
 			{
-				OPTICK_EVENT("try assets");
-				assetSyncAttempts++;
-				scopeLock<syncMutex> lockGraphics(assetsGraphicsMutex, assetSyncAttempts < 30);
-				if (lockGraphics)
+				OPTICK_EVENT("assets");
 				{
-					scopeLock<syncMutex> lockSound(assetsSoundMutex, assetSyncAttempts < 15);
-					if (lockSound)
+					assetSyncAttempts++;
+					OPTICK_TAG("assetSyncAttempts", assetSyncAttempts);
+					scopeLock<syncMutex> lockGraphics(assetsGraphicsMutex, assetSyncAttempts < 20);
+					if (lockGraphics)
 					{
+						scopeLock<syncMutex> lockSound(assetsSoundMutex, assetSyncAttempts < 10);
+						if (lockSound)
 						{
-							OPTICK_EVENT("assets callback");
-							controlThread().assets.dispatch();
+							{
+								OPTICK_EVENT("callback");
+								controlThread().assets.dispatch();
+							}
+							{
+								OPTICK_EVENT("control");
+								while (assets->processControlThread());
+							}
+							assetSyncAttempts = 0;
 						}
-						{
-							OPTICK_EVENT("assets");
-							while (assets->processControlThread() || assets->processCustomThread(controlThreadClass::threadIndex));
-						}
-						assetSyncAttempts = 0;
 					}
+				}
+				{
+					OPTICK_EVENT("assets");
+					while (assets->processCustomThread(controlThreadClass::threadIndex));
 				}
 			}
 
@@ -441,8 +440,6 @@ namespace cage
 
 			void controlStep()
 			{
-				uint64 time1 = getApplicationTime();
-				controlTryAssets();
 				updateHistoryComponents();
 				{
 					OPTICK_EVENT("gui update");
@@ -454,20 +451,19 @@ namespace cage
 					window->processEvents();
 				}
 				{
+					scopedTimer timing(profilingBufferControl);
 					OPTICK_EVENT("application update");
 					controlThread().update.dispatch();
 				}
-				uint64 time2 = getApplicationTime();
 				{
 					OPTICK_EVENT("emit");
+					OPTICK_TAG("entitiesCount", entities->group()->count());
+					profilingBufferEntities.add(entities->group()->count());
 					emitThreadsHolder->run();
 				}
-				uint64 time3 = getApplicationTime();
-				controlTiming(time3 > currentControlTime ? time3 - currentControlTime : 0);
-				uint64 time4 = getApplicationTime();
-				profilingBufferControlTick.add(time2 - time1);
-				profilingBufferControlEmit.add(time3 - time2);
-				profilingBufferControlSleep.add(time4 - time3);
+				controlAssets();
+				uint64 newTime = getApplicationTime();
+				controlTiming(newTime > currentControlTime ? newTime - currentControlTime : 0);
 			}
 
 			void controlGameloopStage()
@@ -904,19 +900,14 @@ namespace cage
 			} \
 		}
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE,
-			ControlTick,
-			ControlEmit,
-			ControlSleep,
-			GraphicsPrepareWait,
-			GraphicsPrepareTick,
-			GraphicsDispatchWait,
-			GraphicsDispatchTick,
-			GraphicsDispatchSwap,
-			GraphicsDrawCalls,
-			GraphicsDrawPrimitives,
-			SoundWait,
-			SoundTick,
-			SoundSleep
+			Control,
+			Sound,
+			GraphicsPrepare,
+			GraphicsDispatch,
+			FrameTime,
+			DrawCalls,
+			DrawPrimitives,
+			Entities
 		));
 #undef GCHL_GENERATE
 		return result;
