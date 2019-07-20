@@ -30,7 +30,7 @@ namespace cage
 		} *shaderMeshes;
 		mat3x4 *shaderArmatures;
 		renderTexture *textures[MaxTexturesCountPerMaterial];
-		renderMesh *mesh;
+		renderMesh *const mesh;
 		objectsStruct *next;
 		uint32 count;
 		const uint32 max;
@@ -52,8 +52,8 @@ namespace cage
 		lightsStruct *next;
 		uint32 count;
 		const uint32 max;
-		sint32 shadowmap;
-		lightTypeEnum lightType;
+		const sint32 shadowmap;
+		const lightTypeEnum lightType;
 		lightsStruct(lightTypeEnum lightType, sint32 shadowmap, uint32 max);
 	};
 

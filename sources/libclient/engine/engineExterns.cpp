@@ -21,7 +21,7 @@ namespace cage
 	entityComponent *listenerComponent::component;
 
 	transformComponent::transformComponent(const transform &t) : transform(t) {}
-	renderComponent::renderComponent() : color(0), opacity(1), object(0), renderMask(1) {}
+	renderComponent::renderComponent() : color(real::Nan()), opacity(real::Nan()), object(0), renderMask(1) {}
 	skeletalAnimationComponent::skeletalAnimationComponent() : startTime(0), name(0), speed(1), offset(0) {}
 	textureAnimationComponent::textureAnimationComponent() : startTime(0), speed(1), offset(0) {}
 	lightComponent::lightComponent() : color(1), attenuation(1, 0, 3), spotAngle(degs(40)), spotExponent(80), lightType(lightTypeEnum::Point) {}

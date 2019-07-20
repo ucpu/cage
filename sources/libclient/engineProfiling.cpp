@@ -14,8 +14,27 @@
 
 namespace cage
 {
+	engineProfiling::engineProfiling() :
+		keyToggleProfilingScope(290), // f1
+		keyToggleProfilingMode(291), // f2
+		keyVisualizeBufferPrev(292), // f3
+		keyVisualizeBufferNext(293), // f4
+		keyToggleRenderMissingMeshes(294), // f5
+		keyToggleRenderSkeletonBones(295), // f6
+		keyToggleStereo(298), // f9
+		keyToggleFullscreen(300), // f11
+		keyModifiers(modifiersFlags::Ctrl),
+		profilingScope(engineProfilingScopeEnum::Full),
+		profilingMode(engineProfilingModeEnum::Maximum),
+		screenPosition(1, 0)
+	{}
+
 	namespace
 	{
+		configSint32 visualizeBuffer("cage-client.engine.debugVisualizeBuffer");
+		configBool renderMissingMeshes("cage-client.engine.debugMissingMeshes");
+		configBool renderSkeletonBones("cage-client.engine.debugSkeletonBones");
+
 		class engineProfilingImpl : public engineProfiling
 		{
 		public:
@@ -33,17 +52,6 @@ namespace cage
 			engineProfilingImpl() : profilingModeOld(engineProfilingScopeEnum::Full)
 			{
 				nullData();
-				keyToggleProfilingScope = 290; // f1
-				keyToggleProfilingMode = 291; // f2
-				keyVisualizeBufferPrev = 294; // f5
-				keyVisualizeBufferNext = 295; // f6
-				keyToggleRenderMissingMeshes = 297; // f8
-				keyToggleStereo = 298; // f9
-				keyToggleFullscreen = 300; // f11
-				keyModifiers = modifiersFlags::Ctrl;
-				profilingScope = engineProfilingScopeEnum::Full;
-				profilingMode = engineProfilingModeEnum::Maximum;
-				screenPosition = vec2(1, 0);
 
 				keyPressListener.bind<engineProfilingImpl, &engineProfilingImpl::keyPress>(this);
 				updateListener.bind<engineProfilingImpl, &engineProfilingImpl::update>(this);
@@ -244,9 +252,6 @@ namespace cage
 
 			bool keyPress(uint32 key, uint32, modifiersFlags mods)
 			{
-				static configSint32 visualizeBuffer("cage-client.engine.visualizeBuffer");
-				static configBool renderMeshes("cage-client.engine.renderMissingMeshes");
-
 				if (mods == keyModifiers)
 				{
 					if (key == keyToggleProfilingScope)
@@ -300,7 +305,12 @@ namespace cage
 					}
 					if (key == keyToggleRenderMissingMeshes)
 					{
-						renderMeshes = !renderMeshes;
+						renderMissingMeshes = !renderMissingMeshes;
+						return true;
+					}
+					if (key == keyToggleRenderSkeletonBones)
+					{
+						renderSkeletonBones = !renderSkeletonBones;
 						return true;
 					}
 					if (key == keyToggleFullscreen)

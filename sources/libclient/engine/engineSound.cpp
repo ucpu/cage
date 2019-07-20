@@ -152,11 +152,12 @@ namespace cage
 				auto lock = swapController->write();
 				if (!lock)
 				{
-					CAGE_LOG_DEBUG(severityEnum::Warning, "engine", "skipping sound emit (write)");
+					CAGE_LOG_DEBUG(severityEnum::Warning, "engine", "skipping sound emit");
 					return;
 				}
 
 				emitWrite = emitBuffers[lock.index()];
+				clearOnScopeExit resetEmitWrite(emitWrite);
 				emitWrite->fresh = true;
 				emitWrite->voices.clear();
 				emitWrite->listeners.clear();
@@ -188,12 +189,11 @@ namespace cage
 					c->listener = e->value<listenerComponent>(listenerComponent::component);
 					emitWrite->listeners.push_back(c);
 				}
-
-				emitWrite = nullptr;
 			}
 
 			void postEmit()
 			{
+				OPTICK_EVENT("post emit");
 				uint32 used = 0;
 				for (auto itL : emitRead->listeners)
 				{
@@ -219,11 +219,12 @@ namespace cage
 				auto lock = swapController->read();
 				if (!lock)
 				{
-					CAGE_LOG_DEBUG(severityEnum::Warning, "engine", "skipping sound emit (read)");
+					CAGE_LOG_DEBUG(severityEnum::Warning, "engine", "skipping sound tick");
 					return;
 				}
 
 				emitRead = emitBuffers[lock.index()];
+				clearOnScopeExit resetEmitRead(emitRead);
 				emitTime = emitRead->time;
 				dispatchTime = itc(emitTime, time, soundThread().timePerTick);
 				interFactor = clamp(real(dispatchTime - emitTime) / soundThread().timePerTick, 0, 1);
@@ -238,8 +239,6 @@ namespace cage
 					OPTICK_EVENT("speaker");
 					speaker()->update(dispatchTime);
 				}
-
-				emitRead = nullptr;
 			}
 		};
 

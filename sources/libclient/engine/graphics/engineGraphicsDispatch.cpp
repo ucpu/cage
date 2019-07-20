@@ -25,7 +25,7 @@ namespace cage
 {
 	namespace
 	{
-		configSint32 visualizeBuffer("cage-client.engine.visualizeBuffer", 0);
+		configSint32 visualizeBuffer("cage-client.engine.debugVisualizeBuffer", 0);
 
 		struct shadowmapBufferStruct
 		{

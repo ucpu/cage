@@ -35,8 +35,8 @@ namespace cage
 
 	namespace
 	{
-		configBool renderMissingMeshes("cage-client.engine.renderMissingMeshes", false);
-		configBool renderSkeletonBones("cage-client.engine.renderSkeletonBones", false);
+		configBool renderMissingMeshes("cage-client.engine.debugMissingMeshes", false);
+		configBool renderSkeletonBones("cage-client.engine.debugSkeletonBones", false);
 
 		struct shadowmapImpl : public shadowmapComponent
 		{
@@ -60,8 +60,8 @@ namespace cage
 		struct emitRenderObjectStruct : public emitTransformsStruct
 		{
 			renderComponent render;
-			textureAnimationComponent *animatedTexture;
-			skeletalAnimationComponent *animatedSkeleton;
+			const textureAnimationComponent *animatedTexture;
+			const skeletalAnimationComponent *animatedSkeleton;
 			emitRenderObjectStruct()
 			{
 				detail::memset(this, 0, sizeof(emitRenderObjectStruct));
@@ -474,7 +474,8 @@ namespace cage
 							addRenderableMesh(pass, e, graphicsDispatch->meshFake);
 						continue;
 					}
-					switch (assets()->scheme(e->render.object))
+					uint32 schemeIndex = assets()->scheme(e->render.object);
+					switch (schemeIndex)
 					{
 					case assetSchemeIndexMesh:
 					{
@@ -505,7 +506,7 @@ namespace cage
 						}
 					} break;
 					default:
-						CAGE_THROW_CRITICAL(exception, "trying to render an invalid-scheme asset");
+						CAGE_LOG(severityEnum::Warning, "engine", string() + "trying to render an asset " + e->render.object + " with unsupported scheme " + schemeIndex);
 					}
 				}
 			}
@@ -546,7 +547,7 @@ namespace cage
 			{
 				if (!frustumCulling(m->getBoundingBox(), mvp))
 					return;
-				if (pass->targetShadowmap != 0 && (m->getFlags() & meshRenderFlags::ShadowCast) == meshRenderFlags::None)
+				if (pass->targetShadowmap != 0 && none(m->getFlags() & meshRenderFlags::ShadowCast))
 					return;
 				if (m->getSkeletonName() != 0 && renderSkeletonBones)
 				{
@@ -555,7 +556,7 @@ namespace cage
 					return;
 				}
 				objectsStruct *obj = nullptr;
-				if ((m->getFlags() & meshRenderFlags::Translucency) == meshRenderFlags::Translucency || e->render.opacity < 1)
+				if (any(m->getFlags() & meshRenderFlags::Translucency) || e->render.opacity < 1)
 				{ // translucent
 					translucentStruct *t = dispatchArena.createObject<translucentStruct>(m);
 					obj = &t->object;
@@ -565,7 +566,7 @@ namespace cage
 					else
 						pass->firstTranslucent = t;
 					pass->lastTranslucent = t;
-					if ((m->getFlags() & meshRenderFlags::Lighting) == meshRenderFlags::Lighting)
+					if (any(m->getFlags() & meshRenderFlags::Lighting))
 					{
 						for (auto it : emitRead->lights)
 							addLight(t, mvp, it); // todo pass other parameters needed for the intersection tests
@@ -602,12 +603,12 @@ namespace cage
 				sm->color = vec4(e->render.color, e->render.opacity);
 				sm->mMat = model;
 				sm->mvpMat = mvp;
-				if ((m->getFlags() & meshRenderFlags::VelocityWrite) == meshRenderFlags::VelocityWrite)
+				if (any(m->getFlags() & meshRenderFlags::VelocityWrite))
 					sm->mvpPrevMat = mvpPrev;
 				else
 					sm->mvpPrevMat = mvp;
 				sm->normalMat = mat3(model).inverse();
-				sm->normalMat.data[2][3] = ((m->getFlags() & meshRenderFlags::Lighting) == meshRenderFlags::Lighting) ? 1 : 0; // is ligting enabled
+				sm->normalMat.data[2][3] = any(m->getFlags() & meshRenderFlags::Lighting) ? 1 : 0; // is lighting enabled
 				if (e->animatedTexture)
 					sm->aniTexFrames = detail::evalSamplesForTextureAnimation(obj->textures[CAGE_SHADER_TEXTURE_ALBEDO], dispatchTime, e->animatedTexture->startTime, e->animatedTexture->speed, e->animatedTexture->offset);
 				if (obj->shaderArmatures)
@@ -799,11 +800,12 @@ namespace cage
 				auto lock = swapController->write();
 				if (!lock)
 				{
-					CAGE_LOG_DEBUG(severityEnum::Warning, "engine", "skipping graphics emit (write)");
+					CAGE_LOG_DEBUG(severityEnum::Warning, "engine", "skipping graphics emit");
 					return;
 				}
 
 				emitWrite = emitBuffers[lock.index()];
+				clearOnScopeExit resetEmitWrite(emitWrite);
 				emitWrite->renderableObjects.clear();
 				emitWrite->renderableTexts.clear();
 				emitWrite->lights.clear();
@@ -856,8 +858,51 @@ namespace cage
 					c->entityId = ((uintPtr)e) ^ e->name();
 					emitWrite->cameras.push_back(c);
 				}
+			}
 
-				emitWrite = nullptr;
+			void updateDefaultAnimations(emitRenderObjectStruct *e)
+			{
+				if (!e->render.object)
+					return;
+				if (!assets()->ready(e->render.object))
+					return;
+				uint32 schemeIndex = assets()->scheme(e->render.object);
+				switch (schemeIndex)
+				{
+				case assetSchemeIndexMesh:
+				{
+					if (!e->render.color.valid())
+						e->render.color = vec3(0);
+					if (!e->render.opacity.valid())
+						e->render.opacity = 1;
+				} break;
+				case assetSchemeIndexRenderObject:
+				{
+					renderObject *o = assets()->get<assetSchemeIndexRenderObject, renderObject>(e->render.object);
+
+					if (!e->render.color.valid())
+						e->render.color = o->color;
+					if (!e->render.opacity.valid())
+						e->render.opacity = o->opacity;
+
+					if (!e->animatedTexture && o->texAnimSpeed.valid())
+					{
+						textureAnimationComponent *c = dispatchArena.createObject<textureAnimationComponent>();
+						c->offset = o->texAnimOffset;
+						c->speed = o->texAnimSpeed;
+						e->animatedTexture = c;
+					}
+
+					if (!e->animatedSkeleton && o->skelAnimName)
+					{
+						skeletalAnimationComponent *c = dispatchArena.createObject<skeletalAnimationComponent>();
+						c->name = o->skelAnimName;
+						c->offset = o->skelAnimOffset;
+						c->speed = o->skelAnimSpeed;
+						e->animatedSkeleton = c;
+					}
+				} break;
+				}
 			}
 
 			void tick(uint64 time)
@@ -865,7 +910,7 @@ namespace cage
 				auto lock = swapController->read();
 				if (!lock)
 				{
-					CAGE_LOG_DEBUG(severityEnum::Warning, "engine", "skipping graphics emit (read)");
+					CAGE_LOG_DEBUG(severityEnum::Warning, "engine", "skipping graphics prepare");
 					return;
 				}
 
@@ -901,6 +946,7 @@ namespace cage
 				}
 
 				emitRead = emitBuffers[lock.index()];
+				clearOnScopeExit resetEmitRead(emitRead);
 
 				emitTime = emitRead->time;
 				dispatchTime = itc(emitTime, time, controlThread().timePerTick);
@@ -916,9 +962,12 @@ namespace cage
 				graphicsDispatch->windowHeight = numeric_cast<uint32>(resolution.y);
 
 				if (graphicsDispatch->windowWidth == 0 || graphicsDispatch->windowHeight == 0)
-				{
-					emitRead = nullptr;
 					return;
+
+				{ // update default animations and colors
+					OPTICK_EVENT("update default animations");
+					for (auto it : emitRead->renderableObjects)
+						updateDefaultAnimations(it);
 				}
 
 				{ // update model matrices
@@ -962,8 +1011,6 @@ namespace cage
 						}
 					}
 				}
-
-				emitRead = nullptr;
 			}
 		};
 

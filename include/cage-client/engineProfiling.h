@@ -43,11 +43,13 @@ namespace cage
 		uint32 keyVisualizeBufferPrev;
 		uint32 keyVisualizeBufferNext;
 		uint32 keyToggleRenderMissingMeshes;
+		uint32 keyToggleRenderSkeletonBones;
 		uint32 keyToggleStereo;
 		uint32 keyToggleFullscreen;
 		modifiersFlags keyModifiers;
 		engineProfilingScopeEnum profilingScope;
 		engineProfilingModeEnum profilingMode;
+		engineProfiling();
 	};
 
 	CAGE_API holder<engineProfiling> newEngineProfiling();

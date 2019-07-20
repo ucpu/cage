@@ -37,6 +37,21 @@ namespace cage
 
 		sint64 correction;
 	};
+
+	struct clearOnScopeExit
+	{
+		template<class T>
+		clearOnScopeExit(T *&ptr) : ptr((void*&)ptr)
+		{}
+
+		~clearOnScopeExit()
+		{
+			ptr = nullptr;
+		}
+
+	private:
+		void *&ptr;
+	};
 }
 
 #include <optick.h>

@@ -17,17 +17,14 @@ namespace cage
 		class objectImpl : public renderObject
 		{
 		public:
-			objectImpl()
-			{
-				worldSize = 0;
-				pixelsSize = 0;
-			}
-
 			std::vector<float> thresholds;
 			std::vector<uint32> indices;
 			std::vector<uint32> names;
 		};
 	}
+
+	renderObject::renderObject() : color(0), opacity(1), texAnimSpeed(real::Nan()), skelAnimName(0), skelAnimSpeed(real::Nan())
+	{}
 
 	void renderObject::setDebugName(const string &name)
 	{
