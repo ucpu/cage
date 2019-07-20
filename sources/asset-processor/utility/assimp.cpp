@@ -264,7 +264,7 @@ namespace
 			aiProcess_TransformUVCoords |
 			aiProcess_FindDegenerates |
 			aiProcess_OptimizeGraph |
-			aiProcess_Debone |
+			//aiProcess_Debone | // see https://github.com/assimp/assimp/issues/2547
 			//aiProcess_SplitLargeMeshes |
 			0;
 
@@ -287,6 +287,8 @@ namespace
 			Assimp::DefaultLogger::get()->attachStream(&logInfo, Assimp::Logger::Info);
 			Assimp::DefaultLogger::get()->attachStream(&logWarn, Assimp::Logger::Warn);
 			Assimp::DefaultLogger::get()->attachStream(&logError, Assimp::Logger::Err);
+
+			//imp.SetPropertyBool(AI_CONFIG_PP_DB_ALL_OR_NONE, true);
 
 			try
 			{
