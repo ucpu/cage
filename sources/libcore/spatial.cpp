@@ -252,9 +252,11 @@ namespace cage
 				CAGE_ASSERT_RUNTIME(bestSah.valid());
 				if (bestSah >= parentSah)
 					return; // leaf node: split would make no improvement
+				if (bestItemsCount == 0)
+					return; // leaf node: split cannot separate any objects (they are probably all at one position)
 				CAGE_ASSERT_RUNTIME(bestAxis < 3);
 				CAGE_ASSERT_RUNTIME(bestSplit + 1 < binsCount); // splits count is one less than bins count
-				CAGE_ASSERT_RUNTIME(bestItemsCount > 0 && bestItemsCount < numeric_cast<uint32>(node.b()));
+				CAGE_ASSERT_RUNTIME(bestItemsCount < numeric_cast<uint32>(node.b()));
 				{
 					real binSizeInv = binsCount / (node.box.high.v4[bestAxis] - node.box.low.v4[bestAxis]);
 					real planeOffset = node.box.low.v4[bestAxis];
