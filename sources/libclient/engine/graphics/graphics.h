@@ -110,7 +110,7 @@ namespace cage
 
 	struct graphicsDispatchStruct
 	{
-		renderMesh *meshSquare, *meshSphere, *meshCone, *meshFake;
+		renderMesh *meshSquare, *meshSphere, *meshCone;
 		shaderProgram *shaderVisualizeColor, *shaderVisualizeDepth, *shaderVisualizeVelocity;
 		shaderProgram *shaderBlit, *shaderDepth, *shaderGBuffer, *shaderLighting, *shaderTranslucent;
 		shaderProgram *shaderGaussianBlur, *shaderSsaoGenerate, *shaderSsaoApply, *shaderMotionBlur, *shaderBloomGenerate, *shaderBloomApply, *shaderLuminanceCollection, *shaderLuminanceCopy, *shaderFinalScreen, *shaderFxaa;

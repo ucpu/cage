@@ -20,7 +20,7 @@ namespace
 		{
 			if (!detail.empty())
 				detail += ", ";
-			detail += string() + "transform: " + conv(n->mTransformation);
+			detail += string() + "has transform matrix";
 		}
 		if (skeleton->index(n) != m)
 		{
@@ -28,7 +28,7 @@ namespace
 				detail += ", ";
 			aiBone *b = skeleton->bone(n);
 			if (b)
-				detail += string() + "offset: " + conv(b->mOffsetMatrix) + ", weights: " + b->mNumWeights;
+				detail += string() + "weights: " + b->mNumWeights;
 			else
 				detail += string("no bone");
 		}

@@ -468,12 +468,7 @@ namespace cage
 				{
 					if ((e->render.renderMask & pass->renderMask) == 0 || e->render.object == 0)
 						continue;
-					if (!assets()->ready(e->render.object))
-					{
-						if (renderMissingMeshes)
-							addRenderableMesh(pass, e, graphicsDispatch->meshFake);
-						continue;
-					}
+					CAGE_ASSERT_RUNTIME(assets()->ready(e->render.object));
 					uint32 schemeIndex = assets()->scheme(e->render.object);
 					switch (schemeIndex)
 					{
@@ -864,19 +859,19 @@ namespace cage
 			{
 				if (!e->render.object)
 					return;
+
 				if (!assets()->ready(e->render.object))
-					return;
-				uint32 schemeIndex = assets()->scheme(e->render.object);
-				switch (schemeIndex)
 				{
-				case assetSchemeIndexMesh:
-				{
-					if (!e->render.color.valid())
-						e->render.color = vec3(0);
-					if (!e->render.opacity.valid())
-						e->render.opacity = 1;
-				} break;
-				case assetSchemeIndexRenderObject:
+					if (!renderMissingMeshes)
+					{
+						e->render.object = 0; // disable rendering further in the pipeline
+						return;
+					}
+					e->render.object = hashString("cage/mesh/fake.obj");
+					CAGE_ASSERT_RUNTIME(assets()->ready(e->render.object));
+				}
+
+				if (assets()->scheme(e->render.object) == assetSchemeIndexRenderObject)
 				{
 					renderObject *o = assets()->get<assetSchemeIndexRenderObject, renderObject>(e->render.object);
 
@@ -901,8 +896,12 @@ namespace cage
 						c->speed = o->skelAnimSpeed;
 						e->animatedSkeleton = c;
 					}
-				} break;
 				}
+
+				if (!e->render.color.valid())
+					e->render.color = vec3(0);
+				if (!e->render.opacity.valid())
+					e->render.opacity = 1;
 			}
 
 			void tick(uint64 time)
@@ -923,7 +922,6 @@ namespace cage
 					graphicsDispatch->meshSquare = ass->get<assetSchemeIndexMesh, renderMesh>(hashString("cage/mesh/square.obj"));
 					graphicsDispatch->meshSphere = ass->get<assetSchemeIndexMesh, renderMesh>(hashString("cage/mesh/sphere.obj"));
 					graphicsDispatch->meshCone = ass->get<assetSchemeIndexMesh, renderMesh>(hashString("cage/mesh/cone.obj"));
-					graphicsDispatch->meshFake = ass->get<assetSchemeIndexMesh, renderMesh>(hashString("cage/mesh/fake.obj"));
 					graphicsDispatch->shaderVisualizeColor = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/visualize/color.glsl"));
 					graphicsDispatch->shaderVisualizeDepth = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/visualize/depth.glsl"));
 					graphicsDispatch->shaderVisualizeVelocity = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/visualize/velocity.glsl"));
