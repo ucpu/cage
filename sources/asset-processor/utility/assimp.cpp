@@ -113,7 +113,14 @@ namespace
 		void traverseNodes1(std::map<aiString, aiNode*, cmpAiStr> &names, aiNode *n)
 		{
 			if (n->mName.length)
+			{
+				if (names.count(n->mName))
+				{ // make the name unique
+					n->mName = (string(n->mName.C_Str()) + "_" + (uintPtr)n).c_str();
+					CAGE_LOG_DEBUG(severityEnum::Warning, logComponentName, string() + "renamed a node: '" + n->mName.C_Str() + "'");
+				}
 				names[n->mName] = n;
+			}
 			for (uint32 i = 0; i < n->mNumChildren; i++)
 				traverseNodes1(names, n->mChildren[i]);
 		}
