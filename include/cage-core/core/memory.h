@@ -261,8 +261,8 @@ namespace cage
 			inst = a;
 		}
 
-		memoryArena(const memoryArena &a) = default;
-		memoryArena(memoryArena &&a) = default;
+		memoryArena(const memoryArena &) = default;
+		memoryArena(memoryArena &&) = default;
 		memoryArena &operator = (const memoryArena &) = default;
 		memoryArena &operator = (memoryArena &&) = default;
 

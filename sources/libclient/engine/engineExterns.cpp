@@ -22,8 +22,8 @@ namespace cage
 
 	transformComponent::transformComponent(const transform &t) : transform(t) {}
 	renderComponent::renderComponent() : color(real::Nan()), opacity(real::Nan()), object(0), renderMask(1) {}
-	skeletalAnimationComponent::skeletalAnimationComponent() : startTime(0), name(0), speed(1), offset(0) {}
-	textureAnimationComponent::textureAnimationComponent() : startTime(0), speed(1), offset(0) {}
+	skeletalAnimationComponent::skeletalAnimationComponent() : startTime(0), name(0), speed(real::Nan()), offset(real::Nan()) {}
+	textureAnimationComponent::textureAnimationComponent() : startTime(0), speed(real::Nan()), offset(real::Nan()) {}
 	lightComponent::lightComponent() : color(1), attenuation(1, 0, 3), spotAngle(degs(40)), spotExponent(80), lightType(lightTypeEnum::Point) {}
 	shadowmapComponent::shadowmapComponent() : worldSize(0, 0, 0), resolution(256) {}
 	renderTextComponent::renderTextComponent() : color(1), assetName(0), textName(0), font(0), renderMask(1) {}
@@ -36,8 +36,6 @@ namespace cage
 	cameraComponent::cameraComponent() : viewportSize(1, 1), target(nullptr), near(1), far(100), zeroParallaxDistance(10), eyeSeparation(0.3), cameraOrder(0), renderMask(1), clear(cameraClearFlags::Depth | cameraClearFlags::Color), cameraType(cameraTypeEnum::Perspective) {}
 	voiceComponent::voiceComponent() : input(nullptr), startTime(0), name(0), renderMask(1) {}
 	listenerComponent::listenerComponent() : output(nullptr), renderMask(1), speedOfSound(343.3), dopplerEffect(false) {}
-
-	engineCreateConfig engineConfig;
 
 	engineCreateConfig::engineCreateConfig() :
 		graphicsEmitMemory(1024 * 1024 * 32), graphicsDispatchMemory(1024 * 1024 * 32), soundEmitMemory(1024 * 1024 * 8),

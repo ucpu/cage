@@ -26,6 +26,13 @@ namespace cage
 			deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
 			renderObjectHeader h;
 			des >> h;
+			obj->color = h.color;
+			obj->opacity = h.opacity;
+			obj->texAnimSpeed = h.texAnimSpeed;
+			obj->texAnimOffset = h.texAnimOffset;
+			obj->skelAnimName = h.skelAnimName;
+			obj->skelAnimSpeed = h.skelAnimSpeed;
+			obj->skelAnimOffset = h.skelAnimOffset;
 			obj->worldSize = h.worldSize;
 			obj->pixelsSize = h.pixelsSize;
 

@@ -335,7 +335,7 @@ namespace
 		}
 		else
 		{ // downscale each image separately
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "downscaling each slice separatelly");
+			CAGE_LOG(severityEnum::Info, logComponentName, string() + "downscaling each slice separately");
 			ILuint im = ilGenImage();
 			ilBindImage(im);
 			iluImageParameter(ILU_FILTER, ILU_BILINEAR);
@@ -507,7 +507,7 @@ namespace
 		}
 		data.copyType = GL_UNSIGNED_BYTE;
 		data.stride = data.dimX * data.dimY * data.bpp;
-		data.animationDuration = properties("animation_duration").toUint32();
+		data.animationDuration = properties("animation_duration").toUint64();
 
 		assetHeader h = initializeAssetHeaderStruct();
 		h.originalSize = sizeof(data);

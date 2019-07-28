@@ -9,7 +9,7 @@ namespace cage
 	public:
 		void setDebugName(const string &name);
 
-		uint32 animationDuration;
+		uint64 animationDuration;
 		bool animationLoop;
 
 		uint32 getId() const;

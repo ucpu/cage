@@ -23,7 +23,7 @@ namespace cage
 		};
 	}
 
-	renderObject::renderObject() : color(real::Nan()), opacity(real::Nan()), texAnimSpeed(real::Nan()), skelAnimName(0), skelAnimSpeed(real::Nan())
+	renderObject::renderObject() : color(real::Nan()), opacity(real::Nan()), texAnimSpeed(real::Nan()), texAnimOffset(real::Nan()), skelAnimName(0), skelAnimSpeed(real::Nan()), skelAnimOffset(real::Nan())
 	{}
 
 	void renderObject::setDebugName(const string &name)

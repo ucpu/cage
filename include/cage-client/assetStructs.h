@@ -18,6 +18,7 @@ namespace cage
 
 	struct CAGE_API renderTextureHeader
 	{
+		uint64 animationDuration;
 		textureFlags flags;
 		uint32 target; // GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_2D_ARRAY, GL_TEXTURE_CUBE_MAP, ...
 		uint32 dimX;
@@ -34,7 +35,6 @@ namespace cage
 		uint32 wrapX;
 		uint32 wrapY;
 		uint32 wrapZ;
-		uint32 animationDuration;
 
 		// follows:
 		// array of texels
@@ -103,7 +103,7 @@ namespace cage
 
 	struct CAGE_API skeletalAnimationHeader
 	{
-		uint64 duration; // in microseconds
+		uint64 duration; // microseconds
 		uint32 skeletonBonesCount;
 		uint32 animationBonesCount;
 
@@ -123,6 +123,15 @@ namespace cage
 
 	struct CAGE_API renderObjectHeader
 	{
+		vec3 color;
+		real opacity;
+		
+		real texAnimSpeed;
+		real texAnimOffset;
+		uint32 skelAnimName;
+		real skelAnimSpeed;
+		real skelAnimOffset;
+
 		real worldSize;
 		real pixelsSize;
 		uint32 lodsCount;

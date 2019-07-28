@@ -24,14 +24,15 @@ void processObject()
 	holder<configIni> ini = newConfigIni();
 	ini->load(inputFileName);
 
+	string basePath = pathExtractPath(inputFile);
 	std::vector<lodStruct> lods;
 	std::set<uint32> deps;
 	uint32 totalMeshes = 0;
 	for (const string &section : ini->sections())
 	{
-		if (section == "size")
+		if (section == "render" || section == "skeletal_animation" || section == "texture_animation" || section == "size")
 			continue;
-		else if (!section.isDigitsOnly())
+		if (!section.isDigitsOnly())
 		{
 			CAGE_LOG(severityEnum::Note, "exception", string() + "section: '" + section + "'");
 			CAGE_THROW_ERROR(exception, "invalid object definition: unknown section");
@@ -44,7 +45,7 @@ void processObject()
 			string v = ini->get(section, n);
 			if (n.isDigitsOnly())
 			{
-				v = pathJoin(pathExtractPath(inputName), v);
+				v = pathJoin(basePath, v);
 				uint32 h = hashString(v.c_str());
 				ls.meshes.insert(h);
 				deps.insert(h);
@@ -73,9 +74,26 @@ void processObject()
 	});
 
 	renderObjectHeader o;
-	detail::memset(&o, 0, sizeof(o));
-
-	{ // sizes
+	{
+		detail::memset(&o, 0, sizeof(o));
+		string c = ini->getString("render", "color");
+		if (!c.empty())
+			o.color = vec3::parse(c);
+		else
+			o.color = vec3::Nan();
+		o.opacity = ini->getFloat("render", "opacity", real::Nan().value);
+		string s = ini->getString("skeletal_animation", "name");
+		if (!s.empty())
+		{
+			s = pathJoin(basePath, s);
+			o.skelAnimName = hashString(s.c_str());
+			deps.insert(o.skelAnimName);
+			writeLine(string("ref=") + s);
+		}
+		o.skelAnimSpeed = ini->getFloat("skeletal_animation", "speed", real::Nan().value);
+		o.skelAnimOffset = ini->getFloat("skeletal_animation", "offset", real::Nan().value);
+		o.texAnimSpeed = ini->getFloat("texture_animation", "speed", real::Nan().value);
+		o.texAnimOffset = ini->getFloat("texture_animation", "offset", real::Nan().value);
 		o.worldSize = ini->getFloat("size", "world");
 		o.pixelsSize = ini->getFloat("size", "pixels");
 	}

@@ -60,8 +60,8 @@ namespace cage
 		struct emitRenderObjectStruct : public emitTransformsStruct
 		{
 			renderComponent render;
-			const textureAnimationComponent *animatedTexture;
-			const skeletalAnimationComponent *animatedSkeleton;
+			textureAnimationComponent *animatedTexture;
+			skeletalAnimationComponent *animatedSkeleton;
 			emitRenderObjectStruct()
 			{
 				detail::memset(this, 0, sizeof(emitRenderObjectStruct));
@@ -121,8 +121,9 @@ namespace cage
 			std::vector<emitCameraStruct*> cameras;
 
 			uint64 time;
+			bool fresh;
 
-			emitStruct(const engineCreateConfig &config) : emitMemory(config.graphicsEmitMemory), emitArena(&emitMemory), time(0)
+			emitStruct(const engineCreateConfig &config) : emitMemory(config.graphicsEmitMemory), emitArena(&emitMemory), time(0), fresh(false)
 			{
 				renderableObjects.reserve(256);
 				renderableTexts.reserve(64);
@@ -370,6 +371,7 @@ namespace cage
 				OPTICK_EVENT("camera pass");
 				if (camera->camera.target)
 				{
+					OPTICK_TAG("target", (uintPtr)camera->camera.target);
 					uint32 w = 0, h = 0;
 					camera->camera.target->getResolution(w, h);
 					if (w == 0 || h == 0)
@@ -400,6 +402,7 @@ namespace cage
 				}
 				else
 				{
+					OPTICK_TAG("eye", (int)eye);
 					initializeStereoCamera(pass, camera, eye, camera->modelPrev);
 					pass->viewProjPrev = pass->viewProj;
 					initializeStereoCamera(pass, camera, eye, camera->model);
@@ -416,6 +419,11 @@ namespace cage
 				real eyeAdaptationSpeed = real(elapsedDispatchTime) * 1e-6;
 				pass->eyeAdaptation.darkerSpeed *= eyeAdaptationSpeed;
 				pass->eyeAdaptation.lighterSpeed *= eyeAdaptationSpeed;
+				OPTICK_TAG("x", pass->vpX);
+				OPTICK_TAG("y", pass->vpY);
+				OPTICK_TAG("width", pass->vpW);
+				OPTICK_TAG("height", pass->vpH);
+				OPTICK_TAG("renderMask", pass->renderMask);
 				addRenderableObjects(pass);
 				addRenderableLights(pass);
 				addRenderableTexts(pass);
@@ -457,6 +465,8 @@ namespace cage
 					0.5, 0.5, 0.5, 1.0);
 				light->shadowmap->shadowMat = bias * pass->viewProj;
 				pass->entityId = light->entityId;
+				OPTICK_TAG("resolution", pass->shadowmapResolution);
+				OPTICK_TAG("renderMask", pass->renderMask);
 				addRenderableObjects(pass);
 			}
 
@@ -544,7 +554,7 @@ namespace cage
 					return;
 				if (pass->targetShadowmap != 0 && none(m->getFlags() & meshRenderFlags::ShadowCast))
 					return;
-				if (m->getSkeletonName() != 0 && renderSkeletonBones)
+				if (m->getSkeletonName() && renderSkeletonBones)
 				{
 					skeletonRig *s = assets()->get<assetSchemeIndexSkeletonRig, skeletonRig>(m->getSkeletonName());
 					addRenderableSkeleton(pass, e, s, model, mvp);
@@ -610,7 +620,8 @@ namespace cage
 				{
 					uint32 bonesCount = m->getSkeletonBones();
 					mat3x4 *sa = obj->shaderArmatures + obj->count * bonesCount;
-					if (e->animatedSkeleton && m->getSkeletonName() != 0 && assets()->ready(e->animatedSkeleton->name))
+					CAGE_ASSERT_RUNTIME(!e->animatedSkeleton || e->animatedSkeleton->name);
+					if (e->animatedSkeleton && m->getSkeletonName() && assets()->ready(e->animatedSkeleton->name))
 					{
 						skeletonRig *skel = assets()->get<assetSchemeIndexSkeletonRig, skeletonRig>(m->getSkeletonName());
 						CAGE_ASSERT_RUNTIME(skel->bonesCount() == bonesCount, skel->bonesCount(), bonesCount);
@@ -807,6 +818,7 @@ namespace cage
 				emitWrite->cameras.clear();
 				emitWrite->emitArena.flush();
 				emitWrite->time = time;
+				emitWrite->fresh = true;
 
 				// emit renderable objects
 				for (entity *e : renderComponent::component->entities())
@@ -855,7 +867,7 @@ namespace cage
 				}
 			}
 
-			void updateDefaultAnimations(emitRenderObjectStruct *e)
+			void updateDefaultValues(emitRenderObjectStruct *e)
 			{
 				if (!e->render.object)
 					return;
@@ -880,21 +892,32 @@ namespace cage
 					if (!e->render.opacity.valid())
 						e->render.opacity = o->opacity;
 
-					if (!e->animatedTexture && o->texAnimSpeed.valid())
 					{
-						textureAnimationComponent *c = dispatchArena.createObject<textureAnimationComponent>();
-						c->offset = o->texAnimOffset;
-						c->speed = o->texAnimSpeed;
-						e->animatedTexture = c;
+						textureAnimationComponent *&c = e->animatedTexture;
+						if (!c && (o->texAnimSpeed.valid() || o->texAnimOffset.valid()))
+							c = emitRead->emitArena.createObject<textureAnimationComponent>();
+						if (c)
+						{
+							if (!c->speed.valid())
+								c->speed = o->texAnimSpeed;
+							if (!c->offset.valid())
+								c->offset = o->texAnimOffset;
+						}
 					}
 
-					if (!e->animatedSkeleton && o->skelAnimName)
 					{
-						skeletalAnimationComponent *c = dispatchArena.createObject<skeletalAnimationComponent>();
-						c->name = o->skelAnimName;
-						c->offset = o->skelAnimOffset;
-						c->speed = o->skelAnimSpeed;
-						e->animatedSkeleton = c;
+						skeletalAnimationComponent *&c = e->animatedSkeleton;
+						if (!c && o->skelAnimName)
+							c = emitRead->emitArena.createObject<skeletalAnimationComponent>();
+						if (c)
+						{
+							if (!c->name)
+								c->name = o->skelAnimName;
+							if (!c->speed.valid())
+								c->speed = o->skelAnimSpeed;
+							if (!c->offset.valid())
+								c->offset = o->skelAnimOffset;
+						}
 					}
 				}
 
@@ -902,6 +925,29 @@ namespace cage
 					e->render.color = vec3(0);
 				if (!e->render.opacity.valid())
 					e->render.opacity = 1;
+
+				if (e->animatedTexture)
+				{
+					textureAnimationComponent *c = e->animatedTexture;
+					if (!c->speed.valid())
+						c->speed = 1;
+					if (!c->offset.valid())
+						c->offset = 0;
+				}
+
+				if (e->animatedSkeleton)
+				{
+					if (e->animatedSkeleton->name)
+					{
+						skeletalAnimationComponent *c = e->animatedSkeleton;
+						if (!c->speed.valid())
+							c->speed = 1;
+						if (!c->offset.valid())
+							c->offset = 0;
+					}
+					else
+						e->animatedSkeleton = nullptr;
+				}
 			}
 
 			void tick(uint64 time)
@@ -962,10 +1008,12 @@ namespace cage
 				if (graphicsDispatch->windowWidth == 0 || graphicsDispatch->windowHeight == 0)
 					return;
 
-				{ // update default animations and colors
-					OPTICK_EVENT("update default animations");
+				if (emitRead->fresh)
+				{ // update default values
+					OPTICK_EVENT("update default values");
 					for (auto it : emitRead->renderableObjects)
-						updateDefaultAnimations(it);
+						updateDefaultValues(it);
+					emitRead->fresh = false;
 				}
 
 				{ // update model matrices
@@ -979,7 +1027,6 @@ namespace cage
 						it->updateModelMatrix(interFactor);
 					for (auto it : emitRead->cameras)
 						it->updateModelMatrix(interFactor);
-					//CAGE_LOG_DEBUG(severityEnum::Info, "engine", string() + "emit: " + emitTime + "\t dispatch time: " + dispatchTime + "\t interpolation: " + interFactor + "\t correction: " + itc.correction);
 				}
 
 				// generate shadowmap render passes
