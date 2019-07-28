@@ -35,10 +35,7 @@ void test(const vec2 &a, const vec2 &b)
 }
 void test(const quat &a, const quat &b)
 {
-	if (a.data[3] < 0) return test(inverse(a), b);
-	if (b.data[3] < 0) return test(a, inverse(b));
-	for (uint32 i = 0; i < 4; i++)
-		test(a[i], b[i]);
+	test(abs(a.dot(b)), 1);
 }
 void test(rads a, rads b)
 {
@@ -559,6 +556,21 @@ namespace
 					test(q * vec3(0, 0, -1), normalize(cross(u, r)));
 					test(q * vec3(0, 1, 0), u);
 					test(q * vec3(1, 0, 0), r);
+				}
+			}
+		}
+
+		{
+			CAGE_TESTCASE("slerpPrecise");
+			for (uint32 i = 0; i < 10; i++)
+			{
+				quat q1 = randomDirectionQuat();
+				quat q2 = randomDirectionQuat();
+				for (real t = 0.1; t < 0.9; t += 0.1)
+				{
+					quat qs = slerpPrecise(q1, q2, t);
+					quat qf = slerp(q1, q2, t);
+					test(qs, qf);
 				}
 			}
 		}

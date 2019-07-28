@@ -393,6 +393,7 @@ inline NAME CAGE_JOIN(randomRange, N) (real a, real b) { NAME r; for (uint32 i =
 	inline vec3 primaryAxis(vec3 &th) { return th.primaryAxis(); }
 	inline quat conjugate(const quat &th) { return th.conjugate(); }
 	CAGE_API quat lerp(const quat &min, const quat &max, real value);
+	CAGE_API quat slerpPrecise(const quat &min, const quat &max, real value);
 	CAGE_API quat slerp(const quat &min, const quat &max, real value);
 	CAGE_API quat rotate(const quat &from, const quat &toward, rads maxTurn);
 

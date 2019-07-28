@@ -53,8 +53,8 @@ namespace cage
 	transform interpolate(const transform &min, const transform &max, real value)
 	{
 		transform r;
-		r.position = interpolate(min.position, max.position, value);
 		r.orientation = interpolate(min.orientation, max.orientation, value);
+		r.position = interpolate(min.position, max.position, value);
 		r.scale = interpolate(min.scale, max.scale, value);
 		return r;
 	}

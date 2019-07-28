@@ -279,12 +279,16 @@ namespace cage
 		data[15] = 1;
 	}
 
-	mat4::mat4(const vec3 &position, const quat &orientation, const vec3 &scale)
+	mat4::mat4(const vec3 &p, const quat &q, const vec3 &s)
 	{
-		mat4 t(position);
-		mat4 r(orientation);
-		mat4 s = mat4::scale(scale);
-		*this = t * r * s;
+		// this = T * R * S
+		mat3 r(q);
+		*this = mat4(
+			r[0] * s[0], r[1] * s[0], r[2] * s[0], 0,
+			r[3] * s[1], r[4] * s[1], r[5] * s[1], 0,
+			r[6] * s[2], r[7] * s[2], r[8] * s[2], 0,
+			p[0], p[1], p[2], 1
+		);
 	}
 
 	mat4 mat4::operator * (real other) const

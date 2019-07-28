@@ -153,7 +153,7 @@ namespace cage
 		return (min * (1 - value) + max * value).normalize();
 	}
 
-	quat slerp(const quat &min, const quat &max, real value)
+	quat slerpPrecise(const quat &min, const quat &max, real value)
 	{
 		real dot = min.dot(max);
 		quat c;
@@ -171,6 +171,18 @@ namespace cage
 		}
 		else
 			return lerp(min, c, value);
+	}
+
+	quat slerp(const quat &l, const quat &r, real t)
+	{
+		// https://zeux.io/2016/05/05/optimizing-slerp/
+		real ca = l.dot(r);
+		real d = abs(ca);
+		real A = 1.0904f + d * (-3.2452f + d * (3.55645f - d * 1.43519f));
+		real B = 0.848013f + d * (-1.06021f + d * 0.215638f);
+		real k = A * (t - 0.5f) * (t - 0.5f) + B;
+		real ot = t + t * (t - 0.5f) * (t - 1) * k;
+		return normalize(l * (1 - ot) + r * (ca > 0 ? ot : -ot));
 	}
 
 	quat rotate(const quat &from, const quat &toward, rads maxTurn)

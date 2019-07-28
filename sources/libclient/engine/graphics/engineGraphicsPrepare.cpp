@@ -42,18 +42,20 @@ namespace cage
 		{
 			mat4 shadowMat;
 			sint32 index;
+
 			shadowmapImpl(const shadowmapComponent &other) : shadowmapComponent(other), index(0) {}
 		};
 
 		struct emitTransformsStruct
 		{
-			transformComponent transform, transformHistory;
+			transformComponent current, history;
 			mat4 model;
 			mat4 modelPrev;
+
 			void updateModelMatrix(real interFactor)
 			{
-				model = mat4(interpolate(transformHistory, transform, interFactor));
-				modelPrev = mat4(interpolate(transformHistory, transform, interFactor - 0.2));
+				model = mat4(interpolate(history, current, interFactor));
+				modelPrev = mat4(interpolate(history, current, interFactor - 0.2));
 			}
 		};
 
@@ -62,6 +64,7 @@ namespace cage
 			renderComponent render;
 			textureAnimationComponent *animatedTexture;
 			skeletalAnimationComponent *animatedSkeleton;
+
 			emitRenderObjectStruct()
 			{
 				detail::memset(this, 0, sizeof(emitRenderObjectStruct));
@@ -71,6 +74,7 @@ namespace cage
 		struct emitRenderTextStruct : public emitTransformsStruct
 		{
 			renderTextComponent renderText;
+
 			emitRenderTextStruct()
 			{
 				detail::memset(this, 0, sizeof(emitRenderTextStruct));
@@ -82,6 +86,7 @@ namespace cage
 			lightComponent light;
 			shadowmapImpl *shadowmap;
 			uintPtr entityId;
+
 			emitLightStruct()
 			{
 				detail::memset(this, 0, sizeof(emitLightStruct));
@@ -92,6 +97,7 @@ namespace cage
 		{
 			cameraComponent camera;
 			uintPtr entityId;
+
 			emitCameraStruct()
 			{
 				detail::memset(this, 0, sizeof(emitCameraStruct));
@@ -104,6 +110,7 @@ namespace cage
 			uint32 renderMask;
 			real lodSelection; // vertical size of screen, at distance of one world-space-unit from camera, in pixels
 			bool lodOrthographic;
+
 			renderPassImpl()
 			{
 				detail::memset(this, 0, sizeof(renderPassImpl));
@@ -794,11 +801,11 @@ namespace cage
 
 			void emitTransform(emitTransformsStruct *c, entity *e)
 			{
-				c->transform = e->value<transformComponent>(transformComponent::component);
+				c->current = e->value<transformComponent>(transformComponent::component);
 				if (e->has(transformComponent::componentHistory))
-					c->transformHistory = e->value<transformComponent>(transformComponent::componentHistory);
+					c->history = e->value<transformComponent>(transformComponent::componentHistory);
 				else
-					c->transformHistory = c->transform;
+					c->history = c->current;
 			}
 
 			void emit(uint64 time)
@@ -847,7 +854,7 @@ namespace cage
 				{
 					emitLightStruct *c = emitWrite->emitArena.createObject<emitLightStruct>();
 					emitTransform(c, e);
-					c->transformHistory.scale = c->transform.scale = 1;
+					c->history.scale = c->current.scale = 1;
 					c->light = e->value<lightComponent>(lightComponent::component);
 					if (e->has(shadowmapComponent::component))
 						c->shadowmap = emitWrite->emitArena.createObject<shadowmapImpl>(e->value<shadowmapComponent>(shadowmapComponent::component));
@@ -860,7 +867,7 @@ namespace cage
 				{
 					emitCameraStruct *c = emitWrite->emitArena.createObject<emitCameraStruct>();
 					emitTransform(c, e);
-					c->transformHistory.scale = c->transform.scale = 1;
+					c->history.scale = c->current.scale = 1;
 					c->camera = e->value<cameraComponent>(cameraComponent::component);
 					c->entityId = ((uintPtr)e) ^ e->name();
 					emitWrite->cameras.push_back(c);
