@@ -303,5 +303,21 @@ void testGeometry()
 			CAGE_TEST(frustumCulling(a, proj * mat4(vec3(5, 3, 0)).inverse()) == true);
 			CAGE_TEST(frustumCulling(a, proj * mat4(vec3(15, 3, 0)).inverse()) == false);
 		}
+
+		{
+			CAGE_TESTCASE("triangle-aabb intersects");
+			{
+				aabb box(vec3(5, 3, 8), vec3(12, 9, 10));
+				CAGE_TEST(intersects(triangle(vec3(6, 7, 8), vec3(11, 3, 8), vec3(11, 9, 10)), box)); // triangle fully inside
+				CAGE_TEST(!intersects(triangle(vec3(-6, 7, 8), vec3(-11, 3, 8), vec3(-11, 9, 10)), box)); // triangle fully outside
+			}
+			{ // triangles with all vertices outside
+				aabb box(vec3(0, 0, 0), vec3(2, 2, 2));
+				CAGE_TEST(intersects(triangle(vec3(-1, -1, 1), vec3(3, -1, 1), vec3(1, 3, 1)), box)); // plane cut
+				CAGE_TEST(intersects(triangle(vec3(0, -1, 1), vec3(3, -1, 1), vec3(3, 2, 1)), box)); // one edge
+				CAGE_TEST(intersects(triangle(vec3(0, 0, 5), vec3(0, 5, 0), vec3(5, 0, 0)), box)); // cut a corner
+				CAGE_TEST(intersects(triangle(vec3(-5, 1, 1), vec3(5, 1, 1), vec3(5, 1, 3)), box)); // needle
+			}
+		}
 	}
 }
