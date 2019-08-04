@@ -14,7 +14,7 @@ namespace cage
 	{
 		float value;
 
-		inline explicit real() : value(0) {}
+		inline real() : value(0) {}
 #define GCHL_GENERATE(TYPE) inline real (TYPE other) : value((float)other) {}
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, float, double));
 #undef GCHL_GENERATE
@@ -40,7 +40,8 @@ namespace cage
 	{
 		real value;
 
-		inline explicit rads(real value = 0) : value(value) {}
+		inline explicit rads() {}
+		inline explicit rads(real value) : value(value) {}
 		rads(degs other);
 
 		static rads parse(const string &str);
@@ -56,7 +57,8 @@ namespace cage
 	{
 		real value;
 
-		inline explicit degs(real value = 0) : value(value) {}
+		inline degs() {}
+		inline explicit degs(real value) : value(value) {}
 		degs(rads other);
 
 		static degs parse(const string &str);
@@ -72,7 +74,7 @@ namespace cage
 	{
 		real data[2];
 
-		inline explicit vec2() : vec2(0) {}
+		inline vec2() : vec2(0) {}
 		inline explicit vec2(real value) : data{ value, value} {}
 		inline explicit vec2(real x, real y) : data{ x, y } {}
 		inline explicit vec2(const vec3 &v);
@@ -91,7 +93,7 @@ namespace cage
 	{
 		real data[3];
 
-		inline explicit vec3() : vec3(0) {}
+		inline vec3() : vec3(0) {}
 		inline explicit vec3(real value) : data{ value, value, value } {}
 		inline explicit vec3(real x, real y, real z) : data{ x, y, z } {}
 		inline explicit vec3(const vec2 &v, real z) : data{ v[0], v[1], z } {}
@@ -110,7 +112,7 @@ namespace cage
 	{
 		real data[4];
 
-		inline explicit vec4() : vec4(0) {}
+		inline vec4() : vec4(0) {}
 		inline explicit vec4(real value) : data{ value, value, value, value } {}
 		inline explicit vec4(real x, real y, real z, real w) : data{ x, y, z, w } {}
 		inline explicit vec4(const vec2 &v, real z, real w) : data{ v[0], v[1], z, w } {}
@@ -130,7 +132,7 @@ namespace cage
 	{
 		real data[4]; // x, y, z, w
 
-		inline explicit quat() : quat(0, 0, 0, 1) {}
+		inline quat() : quat(0, 0, 0, 1) {}
 		inline explicit quat(real x, real y, real z, real w) : data{ x, y, z, w } {}
 		explicit quat(rads pitch, rads yaw, rads roll);
 		explicit quat(const vec3 &axis, rads angle);
@@ -150,9 +152,9 @@ namespace cage
 	{
 		real data[9];
 
-		inline explicit mat3() : mat3(1, 0, 0, 0, 1, 0, 0, 0, 1) {}
+		inline mat3() : mat3(1, 0, 0, 0, 1, 0, 0, 0, 1) {}
 		inline explicit mat3(real a, real b, real c, real d, real e, real f, real g, real h, real i) : data{ a, b, c, d, e, f, g, h, i } {}
-		inline explicit mat3(const vec3 &forward, const vec3 &up, bool keepUp = false);
+		explicit mat3(const vec3 &forward, const vec3 &up, bool keepUp = false);
 		explicit mat3(const quat &other);
 		explicit mat3(const mat4 &other);
 
@@ -169,7 +171,7 @@ namespace cage
 	{
 		real data[16]; // SRR0 RSR0 RRS0 TTT1
 
-		inline explicit mat4() : data{ 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 } {}
+		inline mat4() : data{ 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 } {}
 		inline explicit mat4(real a, real b, real c, real d, real e, real f, real g, real h, real i, real j, real k, real l, real m, real n, real o, real p) : data{ a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p } {}
 		inline explicit mat4(const mat3 &other) : data{ other[0], other[1], other[2], 0, other[3], other[4], other[5], 0, other[6], other[7], other[8], 0, 0, 0, 0, 1 } {}
 		inline explicit mat4(const vec3 &position) : data{ 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, position[0], position[1], position[2], 1 } {}
@@ -194,7 +196,8 @@ namespace cage
 		vec3 position;
 		real scale;
 
-		inline explicit transform(const vec3 &position = vec3(), const quat &orientation = quat(), real scale = 1) : orientation(orientation), position(position), scale(scale) {}
+		inline transform() : scale(1) {}
+		inline explicit transform(const vec3 &position, const quat &orientation = quat(), real scale = 1) : orientation(orientation), position(position), scale(scale) {}
 
 		static transform parse(const string &str);
 		inline operator string() const { return string() + "(" + position + "," + orientation + "," + scale + ")"; }
@@ -292,29 +295,29 @@ namespace cage
 	CAGE_API transform operator + (const vec3 &l, const transform &r);
 
 #define GCHL_GENERATE(OPERATOR) \
-	inline real &operator OPERATOR= (real &l, const real &r) { return l = l OPERATOR r; } \
-	inline rads &operator OPERATOR= (rads &l, const rads &r) { return l = l OPERATOR r; } \
-	inline rads &operator OPERATOR= (rads &l, const real &r) { return l = l OPERATOR r; } \
-	inline degs &operator OPERATOR= (degs &l, const degs &r) { return l = l OPERATOR r; } \
-	inline degs &operator OPERATOR= (degs &l, const real &r) { return l = l OPERATOR r; } \
-	inline vec2 &operator OPERATOR= (vec2 &l, const vec2 &r) { return l = l OPERATOR r; } \
-	inline vec2 &operator OPERATOR= (vec2 &l, const real &r) { return l = l OPERATOR r; } \
-	inline vec3 &operator OPERATOR= (vec3 &l, const vec3 &r) { return l = l OPERATOR r; } \
-	inline vec3 &operator OPERATOR= (vec3 &l, const real &r) { return l = l OPERATOR r; } \
-	inline vec4 &operator OPERATOR= (vec4 &l, const vec4 &r) { return l = l OPERATOR r; } \
-	inline vec4 &operator OPERATOR= (vec4 &l, const real &r) { return l = l OPERATOR r; }
+	inline real &operator OPERATOR##= (real &l, const real &r) { return l = l OPERATOR r; } \
+	inline rads &operator OPERATOR##= (rads &l, const rads &r) { return l = l OPERATOR r; } \
+	inline rads &operator OPERATOR##= (rads &l, const real &r) { return l = l OPERATOR r; } \
+	inline degs &operator OPERATOR##= (degs &l, const degs &r) { return l = l OPERATOR r; } \
+	inline degs &operator OPERATOR##= (degs &l, const real &r) { return l = l OPERATOR r; } \
+	inline vec2 &operator OPERATOR##= (vec2 &l, const vec2 &r) { return l = l OPERATOR r; } \
+	inline vec2 &operator OPERATOR##= (vec2 &l, const real &r) { return l = l OPERATOR r; } \
+	inline vec3 &operator OPERATOR##= (vec3 &l, const vec3 &r) { return l = l OPERATOR r; } \
+	inline vec3 &operator OPERATOR##= (vec3 &l, const real &r) { return l = l OPERATOR r; } \
+	inline vec4 &operator OPERATOR##= (vec4 &l, const vec4 &r) { return l = l OPERATOR r; } \
+	inline vec4 &operator OPERATOR##= (vec4 &l, const real &r) { return l = l OPERATOR r; }
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, -, *, /, % ));
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(OPERATOR) \
-	inline quat &operator OPERATOR= (quat &l, const quat &r) { return l = l OPERATOR r; } \
-	inline quat &operator OPERATOR= (quat &l, const real &r) { return l = l OPERATOR r; }
+	inline quat &operator OPERATOR##= (quat &l, const quat &r) { return l = l OPERATOR r; } \
+	inline quat &operator OPERATOR##= (quat &l, const real &r) { return l = l OPERATOR r; }
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, -, *, / ));
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(OPERATOR) \
-	inline mat3 &operator OPERATOR= (mat3 &l, const mat3 &r) { return l = l OPERATOR r; } \
-	inline mat3 &operator OPERATOR= (mat3 &l, const real &r) { return l = l OPERATOR r; } \
-	inline mat4 &operator OPERATOR= (mat4 &l, const mat4 &r) { return l = l OPERATOR r; } \
-	inline mat4 &operator OPERATOR= (mat4 &l, const real &r) { return l = l OPERATOR r; }
+	inline mat3 &operator OPERATOR##= (mat3 &l, const mat3 &r) { return l = l OPERATOR r; } \
+	inline mat3 &operator OPERATOR##= (mat3 &l, const real &r) { return l = l OPERATOR r; } \
+	inline mat4 &operator OPERATOR##= (mat4 &l, const mat4 &r) { return l = l OPERATOR r; } \
+	inline mat4 &operator OPERATOR##= (mat4 &l, const real &r) { return l = l OPERATOR r; }
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, * ));
 #undef GCHL_GENERATE
 	inline vec3 &operator *= (vec3 &l, const mat3 &r) { return l = l *= r; }
