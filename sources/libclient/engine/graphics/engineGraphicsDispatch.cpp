@@ -884,8 +884,10 @@ namespace cage
 				ssaoPointsBuffer = newUniformBuffer();
 				ssaoPointsBuffer->setDebugName("ssaoPointsBuffer");
 				{
-					ssaoPointsShaderStruct p;
-					ssaoPointsBuffer->writeWhole(&p, sizeof(ssaoPointsShaderStruct), GL_STATIC_DRAW);
+					const vec4 *points = nullptr;
+					uint32 count = 0;
+					pointsForSsaoShader(points, count);
+					ssaoPointsBuffer->writeWhole((void*)points, count * sizeof(vec4), GL_STATIC_DRAW);
 				}
 				finalScreenDataBuffer = newUniformBuffer();
 				finalScreenDataBuffer->setDebugName("finalScreenDataBuffer");

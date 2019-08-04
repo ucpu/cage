@@ -1,8 +1,4 @@
 namespace cage
 {
-	struct ssaoPointsShaderStruct
-	{
-		vec4 points[256];
-		ssaoPointsShaderStruct();
-	};
+	void pointsForSsaoShader(const vec4 *&points, uint32 &count);
 }

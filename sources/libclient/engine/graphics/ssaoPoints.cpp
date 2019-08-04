@@ -4,9 +4,9 @@
 
 namespace cage
 {
-	ssaoPointsShaderStruct::ssaoPointsShaderStruct()
+	namespace
 	{
-		static const vec4 ps[256] = {
+		const vec4 ps[256] = {
 		vec4(-0.573683, -0.811583, 0.110552, 0.937829),
 		vec4(-0.238698, -0.071648, 0.968447, 0.059155),
 		vec4(-0.972256, -0.060809, 0.225877, 0.683229),
@@ -264,6 +264,11 @@ namespace cage
 		vec4(-0.260166, -0.538388, 0.801531, 0.324472),
 		vec4(-0.131254, -0.219336, -0.966780, 0.882901)
 		};
-		detail::memcpy(points, ps, sizeof(ps));
-	};
+	}
+
+	void pointsForSsaoShader(const vec4 *&points, uint32 &count)
+	{
+		points = ps;
+		count = sizeof(ps) / sizeof(ps[0]);
+	}
 }
