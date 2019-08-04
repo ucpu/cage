@@ -248,8 +248,8 @@ namespace cage
 			vec3 posVoice = interpolate(voice->transformHistory.position, voice->transform.position, data->interFactor);
 			vec3 posListener = interpolate(listener->transformHistory.position, listener->transform.position, data->interFactor);
 			vec3 diff = posVoice - posListener;
-			real dist = diff.length();
-			vec3 dir = dist > 1e-7 ? diff.normalize() : vec3();
+			real dist = length(diff);
+			vec3 dir = dist > 1e-7 ? normalize(diff) : vec3();
 			vec3 &a = listener->listener.attenuation;
 			real vol = min(real(1) / (a[0] + a[1] * dist + a[2] * dist * dist), 1);
 			if (vol < 1e-5)
@@ -265,8 +265,8 @@ namespace cage
 				real scale = 1000000 / controlThread().timePerTick;
 				vec3 velL = scale * (listener->transformHistory.position - listener->transform.position);
 				vec3 velV = scale * (voice->transformHistory.position - voice->transform.position);
-				real vl = velL.dot(dir);
-				real vv = velV.dot(dir);
+				real vl = dot(velL, dir);
+				real vv = dot(velV, dir);
 				real doppler = max((listener->listener.speedOfSound + vl) / (listener->listener.speedOfSound + vv), 0);
 				s.sampleRate = numeric_cast<uint32>(real(s.sampleRate) * doppler);
 				sint64 ts = numeric_cast<sint64>(1000000 * dist / listener->listener.speedOfSound);
@@ -276,7 +276,7 @@ namespace cage
 			api.input(s);
 			for (uint32 i = 0; i < s.frames; i++)
 				s.buffer[i] *= vol.value;
-			soundPrivat::channelsDirection(s.buffer, api.output.buffer, api.output.channels, s.frames, dir * listener->transform.orientation.conjugate());
+			soundPrivat::channelsDirection(s.buffer, api.output.buffer, api.output.channels, s.frames, dir * conjugate(listener->transform.orientation));
 		}
 
 		soundPrepareImpl *soundPrepare;

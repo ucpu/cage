@@ -172,9 +172,9 @@ namespace cage
 				else
 				{ // limit pitch
 					vec3 f = t.orientation * vec3(0, 0, -1);
-					rads pitch = aSin(f[1]);
-					f[1] = 0; f = f.normalize();
-					rads yaw = aTan2(-f[0], f[2]) + degs(90) + rads(r[0]);
+					rads pitch = asin(f[1]);
+					f[1] = 0; f = normalize(f);
+					rads yaw = atan2(-f[0], f[2]) + degs(90) + rads(r[0]);
 					pitch = clamp(pitch + rads(r[1]), pitchLimitDown, pitchLimitUp);
 					t.orientation = quat(pitch, yaw, degs());
 				}
@@ -187,8 +187,8 @@ namespace cage
 					u = t.orientation * u;
 				else
 				{
-					f[1] = 0; f = f.normalize();
-					l[1] = 0; l = l.normalize();
+					f[1] = 0; f = normalize(f);
+					l[1] = 0; l = normalize(l);
 				}
 				vec3 movement = vec3();
 				if (keysPressedArrows[0]) movement += f;
@@ -198,7 +198,7 @@ namespace cage
 				if (keysPressedArrows[4]) movement += u;
 				if (keysPressedArrows[5]) movement -= u;
 				if (movement != vec3())
-					moveSmoother.add(movement.normalize() * movementSpeed);
+					moveSmoother.add(normalize(movement) * movementSpeed);
 				else
 					moveSmoother.add(vec3());
 				t.position += moveSmoother.smooth();

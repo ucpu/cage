@@ -54,7 +54,7 @@ namespace cage
 		TYPE res = interpolate(min, max, this->randomChance()); \
 		return res; \
 	}
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, real, rads, float));
+	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, real, rads, degs, float));
 #undef GCHL_GENERATE
 
 	double randomGenerator::randomRange(double min, double max)
@@ -95,7 +95,7 @@ namespace cage
 		real z = randomRange(-1.f, 1.f);
 		vec2 p = randomDirection2() * sqrt(1 - sqr(z));
 		vec3 r = vec3(p, z);
-		CAGE_ASSERT_RUNTIME(abs(r.squaredLength() - 1) < 1e-5);
+		CAGE_ASSERT_RUNTIME(abs(squaredLength(r) - 1) < 1e-5);
 		return r;
 	}
 
@@ -136,6 +136,6 @@ namespace cage
 	}
 
 #define GCHL_GENERATE(TYPE) TYPE randomRange(TYPE min, TYPE max) { return currentRandomGenerator().randomRange(min, max); }
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, real, rads, float, double));
+	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, real, rads, degs, float, double));
 #undef GCHL_GENERATE
 }

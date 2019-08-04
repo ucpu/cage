@@ -102,7 +102,7 @@ void testMathGlm()
 		{
 			for (real y = -10; y < 10; y += 0.1)
 				if (x != 0 || y != 0)
-					test(aTan2(x, y), rads(glm::atan(y.value, x.value)));
+					test(atan2(x, y), rads(glm::atan(y.value, x.value)));
 		}
 	}
 	{
@@ -229,7 +229,7 @@ void testMathGlm()
 				mat3 m;
 				for (uint32 i = 0; i < 9; i++)
 					m[i] = randomChance();
-				real mi = m.determinant();
+				real mi = determinant(m);
 				float gi = determinant(c2g(m));
 				test(mi, real(gi));
 			}
@@ -238,7 +238,7 @@ void testMathGlm()
 				mat4 m;
 				for (uint32 i = 0; i < 16; i++)
 					m[i] = randomChance();
-				real mi = m.determinant();
+				real mi = determinant(m);
 				float gi = determinant(c2g(m));
 				test(mi, real(gi));
 			}
@@ -248,14 +248,14 @@ void testMathGlm()
 			for (uint32 round = 0; round < 10; round++)
 			{
 				mat3 m = mat3(randomDirectionQuat());
-				mat3 mi = m.inverse();
+				mat3 mi = inverse(m);
 				mat3 gi = g2c(inverse(c2g(m)));
 				test(mi, gi);
 			}
 			for (uint32 round = 0; round < 10; round++)
 			{
 				mat4 m = mat4(randomChance3() * 2 - 1, randomDirectionQuat(), randomChance3() + 0.5);
-				mat4 mi = m.inverse();
+				mat4 mi = inverse(m);
 				mat4 gi = g2c(inverse(c2g(m)));
 				test(mi, gi);
 			}
@@ -290,7 +290,7 @@ void testMathGlm()
 			}
 			for (uint32 round = 0; round < 10; round++)
 			{
-				rads fov = randomRange(rads(degs(20)), degs(120));
+				rads fov = randomRange(degs(20), degs(120));
 				real aspect = randomChance() * 2 + 0.1;
 				real n = randomRange(real(1), 100);
 				real f = n + randomRange(real(1), 100);

@@ -109,12 +109,12 @@ namespace cage
 		t->data.format.size *= hierarchy->impl->pointsScale;
 		auto orr = hierarchy->impl->outputResolution;
 		position *= hierarchy->impl->pointsScale;
-		t->data.transform = mat4(
+		t->data.transform = transpose(mat4(
 			2.0 / orr[0], 0, 0, 2.0 * position[0] / orr[0] - 1.0,
 			0, 2.0 / orr[1], 0, 1.0 - 2.0 * position[1] / orr[1],
 			0, 0, 1, 0,
 			0, 0, 0, 1
-		).transpose();
+		));
 		t->data.format.wrapWidth = size[0] * hierarchy->impl->pointsScale;
 		e->last->next = t;
 		e->last = t;

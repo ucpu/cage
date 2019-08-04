@@ -543,7 +543,7 @@ namespace cage
 					{
 						ssaoShaderStruct s;
 						s.viewProj = pass->viewProj;
-						s.viewProjInv = pass->viewProj.inverse();
+						s.viewProjInv = inverse(pass->viewProj);
 						s.params = vec4(pass->ssao.strength, pass->ssao.bias, pass->ssao.power, pass->ssao.worldRadius);
 						s.ambientLight = vec4(pass->shaderViewport.ambientLight);
 						s.iparams[0] = pass->ssao.samplesCount;

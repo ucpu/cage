@@ -20,7 +20,7 @@ namespace cage
 		vec3 randomDirection3();
 		quat randomDirectionQuat();
 #define GCHL_GENERATE(TYPE) TYPE randomRange(TYPE min, TYPE max);
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, real, rads, float, double));
+		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, real, rads, degs, float, double));
 #undef GCHL_GENERATE
 	};
 

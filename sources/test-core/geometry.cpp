@@ -87,7 +87,7 @@ void testGeometry()
 			line d = makeSegment(vec3(3, -1, 0), vec3(3, 1, 0));
 			test(angle(a, a), degs(0));
 			test(angle(a, b), degs(90));
-			test(angle(a, c), aTan2(1, sqrt(2)));
+			test(angle(a, c), atan2(real(1), sqrt(2)));
 			CAGE_TEST(!perpendicular(a, a));
 			CAGE_TEST(perpendicular(a, b));
 			CAGE_TEST(!perpendicular(a, c));
@@ -265,7 +265,7 @@ void testGeometry()
 		{
 			CAGE_TESTCASE("distance to point");
 			aabb a(vec3(1, 3, 4), vec3(4, 7, 8));
-			test(distance(a, vec3(0, 0, 0)), vec3(1, 3, 4).length());
+			test(distance(a, vec3(0, 0, 0)), length(vec3(1, 3, 4)));
 			test(distance(a, vec3(2, 7, 6)), 0);
 			test(distance(a, vec3(3, 3, 10)), 2);
 		}
@@ -292,16 +292,16 @@ void testGeometry()
 			aabb a(vec3(1, 1, -7), vec3(3, 5, -1));
 			mat4 proj = perspectiveProjection(degs(90), 1, 2, 10);
 			// varying distance along z-axis
-			CAGE_TEST(frustumCulling(a, proj * mat4(vec3(2, 3, -10)).inverse()) == false);
-			CAGE_TEST(frustumCulling(a, proj * mat4(vec3(2, 3, -5)).inverse()) == true);
-			CAGE_TEST(frustumCulling(a, proj * mat4(vec3(2, 3, 0)).inverse()) == true);
-			CAGE_TEST(frustumCulling(a, proj * mat4(vec3(2, 3, 3)).inverse()) == true);
-			CAGE_TEST(frustumCulling(a, proj * mat4(vec3(2, 3, 10)).inverse()) == false);
+			CAGE_TEST(frustumCulling(a, proj * inverse(mat4(vec3(2, 3, -10)))) == false);
+			CAGE_TEST(frustumCulling(a, proj * inverse(mat4(vec3(2, 3, -5)))) == true);
+			CAGE_TEST(frustumCulling(a, proj * inverse(mat4(vec3(2, 3, 0)))) == true);
+			CAGE_TEST(frustumCulling(a, proj * inverse(mat4(vec3(2, 3, 3)))) == true);
+			CAGE_TEST(frustumCulling(a, proj * inverse(mat4(vec3(2, 3, 10)))) == false);
 			// box moved left and right
-			CAGE_TEST(frustumCulling(a, proj * mat4(vec3(-10, 3, 0)).inverse()) == false);
-			CAGE_TEST(frustumCulling(a, proj * mat4(vec3(0, 3, 0)).inverse()) == true);
-			CAGE_TEST(frustumCulling(a, proj * mat4(vec3(5, 3, 0)).inverse()) == true);
-			CAGE_TEST(frustumCulling(a, proj * mat4(vec3(15, 3, 0)).inverse()) == false);
+			CAGE_TEST(frustumCulling(a, proj * inverse(mat4(vec3(-10, 3, 0)))) == false);
+			CAGE_TEST(frustumCulling(a, proj * inverse(mat4(vec3(0, 3, 0)))) == true);
+			CAGE_TEST(frustumCulling(a, proj * inverse(mat4(vec3(5, 3, 0)))) == true);
+			CAGE_TEST(frustumCulling(a, proj * inverse(mat4(vec3(15, 3, 0)))) == false);
 		}
 
 		{

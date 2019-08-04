@@ -628,12 +628,12 @@ namespace cage
 		CAGE_ASSERT_RUNTIME(bufferSize > 0);
 		if (ao->trianglesCount() > bo->trianglesCount())
 		{
-			collisionDetector<false> d((const collisionObjectImpl*)ao, (const collisionObjectImpl*)bo, transform(), transform(at.inverse() * bt), outputBuffer, bufferSize);
+			collisionDetector<false> d((const collisionObjectImpl*)ao, (const collisionObjectImpl*)bo, transform(), transform(inverse(at) * bt), outputBuffer, bufferSize);
 			return d.process();
 		}
 		else
 		{
-			collisionDetector<true> d((const collisionObjectImpl*)ao, (const collisionObjectImpl*)bo, transform(bt.inverse() * at), transform(), outputBuffer, bufferSize);
+			collisionDetector<true> d((const collisionObjectImpl*)ao, (const collisionObjectImpl*)bo, transform(inverse(bt) * at), transform(), outputBuffer, bufferSize);
 			return d.process();
 		}
 	}

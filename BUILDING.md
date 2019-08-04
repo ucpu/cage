@@ -1,11 +1,18 @@
 
 # Dependencies
 
-## Linux
+## Linux (debian or ubuntu)
 
-Install some packages (debian or ubuntu).
+Install some required packages.
 ```bash
 sudo apt install xorg-dev
+```
+
+Optional sound backend (choose one).
+```bash
+sudo apt install libjack-jackd2-dev
+sudo apt install libpulse-dev
+sudo apt install libasound2-dev
 ```
 
 # Git Submodules

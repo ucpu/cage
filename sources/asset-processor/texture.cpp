@@ -154,7 +154,7 @@ namespace
 					const float dX = (tr + 2.f * rc + br) - (tl + 2.f * lc + bl);
 					const float dY = (bl + 2.f * bc + br) - (tl + 2.f * tc + tr);
 					vec3 v(-dX, -dY, strength);
-					v = v.normalize();
+					v = normalize(v);
 					v += 1;
 					v *= 0.5;
 					v *= 255;

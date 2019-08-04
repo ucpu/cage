@@ -49,23 +49,9 @@ namespace cage
 		return data;
 	}
 
-	quat::quat()
-	{
-		data[0] = data[1] = data[2] = 0;
-		data[3] = 1;
-	}
-
-	quat::quat(real x, real y, real z, real w)
-	{
-		data[0] = x;
-		data[1] = y;
-		data[2] = z;
-		data[3] = w;
-	}
-
 	quat::quat(rads pitch, rads yaw, rads roll)
 	{
-		vec3 eulerAngle = vec3(real(pitch), real(yaw), real(roll)) * real(0.5);
+		vec3 eulerAngle = vec3(real(pitch), real(yaw), real(roll)) * 0.5;
 		vec3 c;
 		vec3 s;
 		for (uint32 i = 0; i < 3; i++)
@@ -73,16 +59,16 @@ namespace cage
 			c[i] = cos(rads(eulerAngle[i]));
 			s[i] = sin(rads(eulerAngle[i]));
 		}
-		this->data[0] = s.data[0] * c.data[1] * c.data[2] - c.data[0] * s.data[1] * s.data[2];
-		this->data[1] = c.data[0] * s.data[1] * c.data[2] + s.data[0] * c.data[1] * s.data[2];
-		this->data[2] = c.data[0] * c.data[1] * s.data[2] - s.data[0] * s.data[1] * c.data[2];
-		this->data[3] = c.data[0] * c.data[1] * c.data[2] + s.data[0] * s.data[1] * s.data[2];
-		*this = this->normalize();
+		data[0] = s[0] * c[1] * c[2] - c[0] * s[1] * s[2];
+		data[1] = c[0] * s[1] * c[2] + s[0] * c[1] * s[2];
+		data[2] = c[0] * c[1] * s[2] - s[0] * s[1] * c[2];
+		data[3] = c[0] * c[1] * c[2] + s[0] * s[1] * s[2];
+		*this = normalize(*this);
 	}
 
 	quat::quat(const vec3 &axis, rads angle)
 	{
-		vec3 vn = axis.normalize();
+		vec3 vn = normalize(axis);
 		real sinAngle = sin(angle * 0.5);
 		data[0] = vn.data[0] * sinAngle;
 		data[1] = vn.data[1] * sinAngle;
@@ -134,49 +120,54 @@ namespace cage
 		*this = quat(mat3(forward, up, keepUp));
 	}
 
-	vec3 quat::operator * (const vec3 &other) const
+	vec3 operator * (const quat &l, const vec3 &r)
 	{
-		vec3 t = cross(vec3(data[0], data[1], data[2]), other) * 2;
-		return other + t * data[3] + cross(vec3(data[0], data[1], data[2]), t);
+		vec3 t = cross(vec3(l[0], l[1], l[2]), r) * 2;
+		return r + t * l[3] + cross(vec3(l[0], l[1], l[2]), t);
 	}
 
-	quat quat::operator * (const quat &other) const
+	vec3 operator * (const vec3 &l, const quat &r)
 	{
-		return quat(data[3] * other.data[0] + data[0] * other.data[3] + data[1] * other.data[2] - data[2] * other.data[1],
-			data[3] * other.data[1] + data[1] * other.data[3] + data[2] * other.data[0] - data[0] * other.data[2],
-			data[3] * other.data[2] + data[2] * other.data[3] + data[0] * other.data[1] - data[1] * other.data[0],
-			data[3] * other.data[3] - data[0] * other.data[0] - data[1] * other.data[1] - data[2] * other.data[2]);
+		return r * l;
 	}
 
-	quat lerp(const quat &min, const quat &max, real value)
+	quat operator * (const quat &l, const quat &r)
 	{
-		return (min * (1 - value) + max * value).normalize();
+		return quat(l[3] * r[0] + l[0] * r[3] + l[1] * r[2] - l[2] * r[1],
+			l[3] * r[1] + l[1] * r[3] + l[2] * r[0] - l[0] * r[2],
+			l[3] * r[2] + l[2] * r[3] + l[0] * r[1] - l[1] * r[0],
+			l[3] * r[3] - l[0] * r[0] - l[1] * r[1] - l[2] * r[2]);
 	}
 
-	quat slerpPrecise(const quat &min, const quat &max, real value)
+	quat lerp(const quat &a, const quat &b, real f)
 	{
-		real dot = min.dot(max);
+		return normalize(a * (1 - f) + b * f);
+	}
+
+	quat slerpPrecise(const quat &a, const quat &b, real f)
+	{
+		real dt = dot(a, b);
 		quat c;
-		if (dot < 0)
+		if (dt < 0)
 		{
-			dot = -dot;
-			c = max.inverse();
+			dt = -dt;
+			c = -b;
 		}
 		else
-			c = max;
-		if (dot < 1 - 1e-7)
+			c = b;
+		if (dt < 1 - 1e-7)
 		{
-			rads angle = aCos(dot);
-			return ((min * sin(angle * (1 - value)) + c * sin(angle * value)) * (1 / sin(angle))).normalize();
+			rads angle = acos(dt);
+			return normalize((a * sin(angle * (1 - f)) + c * sin(angle * f)) * (1 / sin(angle)));
 		}
 		else
-			return lerp(min, c, value);
+			return lerp(a, c, f);
 	}
 
 	quat slerp(const quat &l, const quat &r, real t)
 	{
 		// https://zeux.io/2016/05/05/optimizing-slerp/
-		real ca = l.dot(r);
+		real ca = dot(l, r);
 		real d = abs(ca);
 		real A = 1.0904f + d * (-3.2452f + d * (3.55645f - d * 1.43519f));
 		real B = 0.848013f + d * (-1.06021f + d * 0.215638f);
@@ -189,40 +180,35 @@ namespace cage
 	{
 		CAGE_ASSERT_RUNTIME(maxTurn >= degs(0), maxTurn);
 		CAGE_ASSERT_RUNTIME(maxTurn <= degs(180), maxTurn);
-		real dot = abs(from.dot(toward));
-		rads angle = aCos(dot);
+		real dt = abs(dot(from, toward));
+		rads angle = acos(dt);
 		if (angle > maxTurn)
-			return slerp(from, toward, maxTurn / angle);
+			return slerp(from, toward, real(maxTurn / angle));
 		else
 			return toward;
 	}
 
-	void quat::toAxisAngle(vec3 &axis, rads &angle) const
+	void toAxisAngle(const quat &x, vec3 &axis, rads &angle)
 	{
-		angle = aCos(data[3]) * 2;
-		real s = sqrt(1 - data[3] * data[3]);
+		angle = acos(x[3]) * 2;
+		real s = sqrt(1 - x[3] * x[3]);
 		if (s < 0.001)
 			axis = vec3(1, 0, 0);
 		else
 		{
 			s = 1 / s;
-			axis[0] = data[0] * s;
-			axis[1] = data[1] * s;
-			axis[2] = data[2] * s;
+			axis[0] = x[0] * s;
+			axis[1] = x[1] * s;
+			axis[2] = x[2] * s;
 		}
 	}
 
-	vec3 vec3::primaryAxis() const
+	vec3 primaryAxis(const vec3 &x)
 	{
-		if (data[0].abs() > data[1].abs() && data[0].abs() > data[2].abs())
-			return vec3(data[0].sign(), 0, 0);
-		if (data[1].abs() > data[2].abs())
-			return vec3(0, data[1].sign(), 0);
-		return vec3(0, 0, data[2].sign());
+		if (abs(x[0]) > abs(x[1]) && abs(x[0]) > abs(x[2]))
+			return vec3(sign(x[0]), 0, 0);
+		if (abs(x[1]) > abs(x[2]))
+			return vec3(0, sign(x[1]), 0);
+		return vec3(0, 0, sign(x[2]));
 	}
-
-	vec2 vec2::Nan() { return vec2(real::Nan(), real::Nan()); }
-	vec3 vec3::Nan() { return vec3(real::Nan(), real::Nan(), real::Nan()); }
-	vec4 vec4::Nan() { return vec4(real::Nan(), real::Nan(), real::Nan(), real::Nan()); }
-	quat quat::Nan() { return quat(real::Nan(), real::Nan(), real::Nan(), real::Nan()); }
 }

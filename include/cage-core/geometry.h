@@ -74,9 +74,9 @@ namespace cage
 		// methods
 		bool valid() const { return vertices[0].valid() && vertices[1].valid() && vertices[2].valid(); };
 		bool degenerated() const { return vertices[0] == vertices[1] || vertices[1] == vertices[2] || vertices[2] == vertices[0]; };
-		vec3 normal() const { return normalize((vertices[1] - vertices[0]).cross(vertices[2] - vertices[0])); }
+		vec3 normal() const { return normalize(cross((vertices[1] - vertices[0]), (vertices[2] - vertices[0]))); }
 		vec3 center() const { return (vertices[0] + vertices[1] + vertices[2]) / 3; }
-		real area() const { return length((vertices[1] - vertices[0]).cross(vertices[2] - vertices[0])) * 0.5; }
+		real area() const { return length(cross((vertices[1] - vertices[0]), (vertices[2] - vertices[0]))) * 0.5; }
 		triangle flip() const;
 	};
 
@@ -187,7 +187,7 @@ namespace cage
 		real surface() const;
 		vec3 center() const { return empty() ? vec3() : (a + b) * 0.5; }
 		vec3 size() const { return empty() ? vec3() : b - a; }
-		real diagonal() const { return empty() ? 0 : a.distance(b); }
+		real diagonal() const { return empty() ? 0 : distance(a, b); }
 
 		// constants
 		static aabb Universe();

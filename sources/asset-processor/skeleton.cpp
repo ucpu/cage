@@ -45,10 +45,10 @@ void processSkeleton()
 	holder<assimpSkeletonClass> skeleton = context->skeleton();
 
 	mat4 axesScale = mat4(axesScaleMatrix());
-	mat4 axesScaleInv = axesScale.inverse();
+	mat4 axesScaleInv = inverse(axesScale);
 
 	skeletonRigHeader s;
-	s.globalInverse = conv(scene->mRootNode->mTransformation).inverse() * axesScale;
+	s.globalInverse = inverse(conv(scene->mRootNode->mTransformation)) * axesScale;
 	s.bonesCount = skeleton->bonesCount();
 
 	std::vector<uint16> ps;

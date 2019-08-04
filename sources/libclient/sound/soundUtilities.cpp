@@ -460,55 +460,55 @@ namespace cage
 
 			vec3 speakerDirections[8][8] = {
 				{ // mono
-					vec3(+0, 0, -1).normalize(), // C
+					normalize(vec3(+0, 0, -1)), // C
 				},
 				{ // stereo
-					vec3(-1, 0, -1).normalize(), // L
-					vec3(+1, 0, -1).normalize(), // R
+					normalize(vec3(-1, 0, -1)), // L
+					normalize(vec3(+1, 0, -1)), // R
 				},
 				{ // 3
-					vec3(-1, 0, -1).normalize(), // L
-					vec3(+0, 0, -1).normalize(), // C
-					vec3(+1, 0, -1).normalize(), // R
+					normalize(vec3(-1, 0, -1)), // L
+					normalize(vec3(+0, 0, -1)), // C
+					normalize(vec3(+1, 0, -1)), // R
 				},
 				{ // 4
-					vec3(-1, 0, -1).normalize(), // FL
-					vec3(+1, 0, -1).normalize(), // FR
-					vec3(-1, 0, +1).normalize(), // RL
-					vec3(+1, 0, +1).normalize(), // RR
+					normalize(vec3(-1, 0, -1)), // FL
+					normalize(vec3(+1, 0, -1)), // FR
+					normalize(vec3(-1, 0, +1)), // RL
+					normalize(vec3(+1, 0, +1)), // RR
 				},
 				{ // 5
-					vec3(-1, 0, -1).normalize(), // FL
-					vec3(+0, 0, -1).normalize(), // C
-					vec3(+1, 0, -1).normalize(), // FR
-					vec3(-1, 0, +1).normalize(), // RL
-					vec3(+1, 0, +1).normalize(), // RR
+					normalize(vec3(-1, 0, -1)), // FL
+					normalize(vec3(+0, 0, -1)), // C
+					normalize(vec3(+1, 0, -1)), // FR
+					normalize(vec3(-1, 0, +1)), // RL
+					normalize(vec3(+1, 0, +1)), // RR
 				},
 				{ // 5.1
-					vec3(-1, 0, -1).normalize(), // FL
-					vec3(+0, 0, -1).normalize(), // C
-					vec3(+1, 0, -1).normalize(), // FR
-					vec3(-1, 0, +1).normalize(), // RL
-					vec3(+1, 0, +1).normalize(), // RR
+					normalize(vec3(-1, 0, -1)), // FL
+					normalize(vec3(+0, 0, -1)), // C
+					normalize(vec3(+1, 0, -1)), // FR
+					normalize(vec3(-1, 0, +1)), // RL
+					normalize(vec3(+1, 0, +1)), // RR
 					vec3(0, 0, 0), // LFE
 				},
 				{ // 6.1
-					vec3(-1, 0, -1).normalize(), // FL
-					vec3(+0, 0, -1).normalize(), // C
-					vec3(+1, 0, -1).normalize(), // FR
-					vec3(-1, 0, +0).normalize(), // SL
-					vec3(+1, 0, +0).normalize(), // SR
-					vec3(+0, 0, +1).normalize(), // RC
+					normalize(vec3(-1, 0, -1)), // FL
+					normalize(vec3(+0, 0, -1)), // C
+					normalize(vec3(+1, 0, -1)), // FR
+					normalize(vec3(-1, 0, +0)), // SL
+					normalize(vec3(+1, 0, +0)), // SR
+					normalize(vec3(+0, 0, +1)), // RC
 					vec3(0, 0, 0), // LFE
 				},
 				{ // 7.1
-					vec3(-1, 0, -1).normalize(), // FL
-					vec3(+0, 0, -1).normalize(), // C
-					vec3(+1, 0, -1).normalize(), // FR
-					vec3(-1, 0, +0).normalize(), // SL
-					vec3(+1, 0, +0).normalize(), // SR
-					vec3(-1, 0, +1).normalize(), // RL
-					vec3(+1, 0, +1).normalize(), // RR
+					normalize(vec3(-1, 0, -1)), // FL
+					normalize(vec3(+0, 0, -1)), // C
+					normalize(vec3(+1, 0, -1)), // FR
+					normalize(vec3(-1, 0, +0)), // SL
+					normalize(vec3(+1, 0, +0)), // SR
+					normalize(vec3(-1, 0, +1)), // RL
+					normalize(vec3(+1, 0, +1)), // RR
 					vec3(0, 0, 0), // LFE
 				},
 			};

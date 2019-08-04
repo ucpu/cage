@@ -204,9 +204,9 @@ namespace cage
 	{
 		rads angle(const vec3 &a, const vec3 &b)
 		{
-			CAGE_ASSERT_RUNTIME(abs(a.squaredLength() - 1) < 1e-4);
-			CAGE_ASSERT_RUNTIME(abs(b.squaredLength() - 1) < 1e-4);
-			return aCos(dot(a, b));
+			CAGE_ASSERT_RUNTIME(abs(squaredLength(a) - 1) < 1e-4);
+			CAGE_ASSERT_RUNTIME(abs(squaredLength(b) - 1) < 1e-4);
+			return acos(dot(a, b));
 		}
 	}
 
@@ -269,7 +269,7 @@ namespace cage
 	real distance(const vec3 &a, const aabb &b)
 	{
 		vec3 c = max(min(a, b.b), b.a);
-		return c.distance(a);
+		return distance(c, a);
 	}
 
 	real distance(const line &a, const line &b)
@@ -380,7 +380,7 @@ namespace cage
 	real distance(const plane &a, const plane &b)
 	{
 		if (parallel(a, b))
-			return a.d / a.normal.length() - b.d / b.normal.length();
+			return a.d / length(a.normal) - b.d / length(b.normal);
 		return 0;
 	}
 
@@ -812,8 +812,8 @@ namespace cage
 			return line();
 		CAGE_ASSERT_RUNTIME(a.normalized());
 		vec3 l = b.center - a.origin;
-		real tca = l.dot(a.direction);
-		real d2 = l.dot(l) - sqr(tca);
+		real tca = dot(l, a.direction);
+		real d2 = dot(l, l) - sqr(tca);
 		real r2 = sqr(b.radius);
 		if (d2 > r2)
 			return line();
@@ -928,11 +928,11 @@ namespace cage
 		vec3 edge0 = trig[1] - trig[0];
 		vec3 edge1 = trig[2] - trig[0];
 		vec3 v0 = trig[0] - sourcePosition;
-		real a = edge0.dot(edge0);
-		real b = edge0.dot(edge1);
-		real c = edge1.dot(edge1);
-		real d = edge0.dot(v0);
-		real e = edge1.dot(v0);
+		real a = dot(edge0, edge0);
+		real b = dot(edge0, edge1);
+		real c = dot(edge1, edge1);
+		real d = dot(edge0, v0);
+		real e = dot(edge1, v0);
 		real det = a * c - b * b;
 		real s = b * e - c * d;
 		real t = b * d - a * e;

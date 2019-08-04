@@ -15,41 +15,41 @@ namespace cage
 
 	real sin(rads value)
 	{
-		return ::sin(real(value).value);
+		return std::sin(real(value).value);
 	}
 
 	real cos(rads value)
 	{
-		return ::cos(real(value).value);
+		return std::cos(real(value).value);
 	}
 
 	real tan(rads value)
 	{
-		return ::tan(real(value).value);
+		return std::tan(real(value).value);
 	}
 
-	rads aSin(real value)
+	rads asin(real value)
 	{
-		return (rads) ::asin(value.value);
+		return (rads) std::asin(value.value);
 	}
 
-	rads aCos(real value)
+	rads acos(real value)
 	{
-		return (rads) ::acos(value.value);
+		return (rads) std::acos(value.value);
 	}
 
-	rads aTan(real value)
+	rads atan(real value)
 	{
-		return (rads) ::atan(value.value);
+		return (rads) std::atan(value.value);
 	}
 
-	rads aTan2(real x, real y)
+	rads atan2(real x, real y)
 	{
-		if (x > 0) return aTan(y / x);
+		if (x > 0) return atan(y / x);
 		if (x < 0)
 		{
-			if (y < 0) return aTan(y / x) - rads(real::Pi());
-			return aTan(y / x) + rads(real::Pi());
+			if (y < 0) return atan(y / x) - rads(real::Pi());
+			return atan(y / x) + rads(real::Pi());
 		}
 		if (y < 0) return rads(-real::Pi() / 2);
 		if (y > 0) return rads(real::Pi() / 2);
@@ -61,47 +61,61 @@ namespace cage
 		return !std::isnan(value);
 	}
 
-	real real::sqrt() const
+	real sqrt(real x)
 	{
-		return ::sqrt(value);
+		return std::sqrt(x.value);
 	}
 
-	real real::pow(real power) const
+	real pow(real base, real exponent)
 	{
-		return ::pow(value, power.value);
+		return std::pow(base.value, exponent.value);
 	}
 
-	real real::ln() const
+	real powE(real x)
 	{
-		if (*this <= (real)0)
-			CAGE_THROW_ERROR(exception, "invalid value");
-		return ::log(value);
+		return std::exp(x.value);
 	}
 
-	real real::round() const
+	real pow2(real x)
 	{
-		return ::round(value);
+		return std::exp2(x.value);
 	}
 
-	real real::floor() const
+	real pow10(real x)
 	{
-		return ::floor(value);
+		return std::pow(10, x.value);
 	}
 
-	real real::ceil() const
+	real log(real x)
 	{
-		return ::ceil(value);
+		return std::log(x.value);
 	}
 
-	real real::Pi() { return 3.14159265358979323846264338327950288; }
-	real real::E() { return 2.718281828459045235360287471352; }
-	real real::Ln2() { return 0.69314718055994530942; }
-	real real::Ln10() { return 2.302585092994045684; }
+	real log2(real x)
+	{
+		return std::log2(x.value);
+	}
+
+	real log10(real x)
+	{
+		return std::log10(x.value);
+	}
+
+	real round(real x)
+	{
+		return std::round(x.value);
+	}
+
+	real floor(real x)
+	{
+		return std::floor(x.value);
+	}
+
+	real ceil(real x)
+	{
+		return std::ceil(x.value);
+	}
+
 	real real::Infinity() { return std::numeric_limits<float>::infinity(); }
 	real real::Nan() { return std::numeric_limits<float>::quiet_NaN(); }
-
-	rads rads::Stright() { return rads(real::Pi()); }
-	rads rads::Right() { return rads::Stright() / 2; }
-	rads rads::Full() { return rads::Stright() * 2; }
-	rads rads::Nan() { return rads(real::Nan()); }
 }

@@ -414,7 +414,7 @@ namespace cage
 					pass->viewProjPrev = pass->viewProj;
 					initializeStereoCamera(pass, camera, eye, camera->model);
 				}
-				pass->shaderViewport.vpInv = pass->viewProj.inverse();
+				pass->shaderViewport.vpInv = inverse(pass->viewProj);
 				pass->shaderViewport.eyePos = camera->model * vec4(0, 0, 0, 1);
 				pass->shaderViewport.ambientLight = vec4(camera->camera.ambientLight, 0);
 				pass->shaderViewport.viewport = vec4(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
@@ -440,7 +440,7 @@ namespace cage
 			void initializeRenderPassForShadowmap(renderPassImpl *pass, emitLightStruct *light)
 			{
 				OPTICK_EVENT("shadowmap pass");
-				pass->view = light->model.inverse();
+				pass->view = inverse(light->model);
 				switch (light->light.lightType)
 				{
 				case lightTypeEnum::Directional:
@@ -506,7 +506,7 @@ namespace cage
 							if (!pass->lodOrthographic)
 							{
 								vec4 ep4 = e->model * vec4(0, 0, 0, 1);
-								d = (vec3(ep4) / ep4[3]).distance(vec3(pass->shaderViewport.eyePos));
+								d = distance(vec3(ep4) / ep4[3], vec3(pass->shaderViewport.eyePos));
 							}
 							real f = pass->lodSelection * o->worldSize / (d * o->pixelsSize);
 							lod = o->lodSelect(f.value);
@@ -619,7 +619,7 @@ namespace cage
 					sm->mvpPrevMat = mvpPrev;
 				else
 					sm->mvpPrevMat = mvp;
-				sm->normalMat = mat3(model).inverse();
+				sm->normalMat = inverse(mat3(model));
 				sm->normalMat.data[2][3] = any(m->getFlags() & meshRenderFlags::Lighting) ? 1 : 0; // is lighting enabled
 				if (e->animatedTexture)
 					sm->aniTexFrames = detail::evalSamplesForTextureAnimation(obj->textures[CAGE_SHADER_TEXTURE_ALBEDO], dispatchTime, e->animatedTexture->startTime, e->animatedTexture->speed, e->animatedTexture->offset);
@@ -782,7 +782,7 @@ namespace cage
 				sl->mvpMat = mvpMat;
 				sl->color = vec4(light->light.color, cos(light->light.spotAngle * 0.5));
 				sl->attenuation = vec4(light->light.attenuation, light->light.spotExponent);
-				sl->direction = vec4(vec3(light->model * vec4(0, 0, -1, 0)).normalize(), 0);
+				sl->direction = vec4(normalize(vec3(light->model * vec4(0, 0, -1, 0))), 0);
 				sl->position = light->model * vec4(0, 0, 0, 1);
 				lig->count++;
 			}

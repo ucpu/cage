@@ -42,7 +42,7 @@ namespace cage
 		}
 		else
 			return false;
-		return abs(direction.squaredLength() - 1) < 1e-6;
+		return abs(squaredLength(direction) - 1) < 1e-6;
 	}
 
 	line line::normalize() const
@@ -50,7 +50,7 @@ namespace cage
 		if (!valid())
 			return line();
 		line r = *this;
-		if (r.isPoint() || r.direction.squaredLength() < 1e-7)
+		if (r.isPoint() || squaredLength(r.direction) < 1e-7)
 		{
 			r.origin = r.a();
 			r.direction = vec3(1, 0, 0);
@@ -142,7 +142,7 @@ namespace cage
 
 	plane plane::normalize() const
 	{
-		real l = normal.length();
+		real l = length(normal);
 		return plane(normal / l, d * l); // d times or divided by l ?
 	}
 
@@ -195,9 +195,9 @@ namespace cage
 
 	sphere sphere::operator * (const mat4 &other) const
 	{
-		real sx2 = vec3(other[0], other[1], other[2]).squaredLength();
-		real sy2 = vec3(other[4], other[5], other[6]).squaredLength();
-		real sz2 = vec3(other[8], other[9], other[10]).squaredLength();
+		real sx2 = squaredLength(vec3(other[0], other[1], other[2]));
+		real sy2 = squaredLength(vec3(other[4], other[5], other[6]));
+		real sz2 = squaredLength(vec3(other[8], other[9], other[10]));
 		real s = sqrt(max(max(sx2, sy2), sz2));
 		vec4 p4 = vec4(center, 1) * other;
 		return sphere(vec3(p4) / p4[3], radius * s);

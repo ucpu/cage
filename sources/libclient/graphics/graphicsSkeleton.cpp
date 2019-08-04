@@ -120,7 +120,7 @@ namespace cage
 				vec3 b = pos(temporary[i]);
 				transform tr;
 				tr.position = a;
-				tr.scale = a.distance(b);
+				tr.scale = distance(a, b);
 				if (tr.scale > 0)
 					tr.orientation = quat(b - a, vec3(0, 1, 0));
 				output[i] = impl->globalInverse * mat4(tr);

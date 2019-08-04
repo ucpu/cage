@@ -35,7 +35,7 @@ void test(const vec2 &a, const vec2 &b)
 }
 void test(const quat &a, const quat &b)
 {
-	test(abs(a.dot(b)), 1);
+	test(abs(dot(a, b)), 1);
 }
 void test(rads a, rads b)
 {
@@ -88,20 +88,8 @@ namespace
 		{
 			const T a;
 			const T b;
-			a.inverse();
-			a.normalize();
-			a.min(b);
-			a.max(b);
-			a.min(0.5);
-			a.max(0.5);
-			a.clamp(a, b);
-			a.clamp(0.1, 0.9);
-			a.length();
-			a.squaredLength();
-			a.dot(b);
 			a.valid();
 
-			inverse(a);
 			normalize(a);
 			min(a, b);
 			max(a, b);
@@ -116,6 +104,9 @@ namespace
 			dot(a, b);
 			valid(a);
 			interpolate(a, b, 0.5);
+			abs(a);
+			distance(a, b);
+			squaredDistance(a, b);
 		}
 
 		T t(3.5);
@@ -209,15 +200,15 @@ namespace
 		test(rads(degs(0)), rads(0));
 		test(rads(degs(90)), rads(real::Pi() / 2));
 		test(rads(degs(180)), rads(real::Pi()));
-		test(rads(degs(90 * 15)).normalize(), degs((90 * 15) % 360));
-		test(rads(degs(0)).normalize(), degs(0));
-		test(rads(degs(-270)).normalize(), degs(90));
-		test(rads(degs(-180)).normalize(), degs(180));
-		test(rads(degs(-90)).normalize(), degs(270));
-		test(rads(degs(360)).normalize(), degs(0));
-		test(rads(degs(90)).normalize(), degs(90));
-		test(rads(degs(180)).normalize(), degs(180));
-		test(rads(degs(270)).normalize(), degs(270));
+		test(rads(normalize(degs(90 * 15))), degs((90 * 15) % 360));
+		test(rads(normalize(degs(0))), degs(0));
+		test(rads(normalize(degs(-270))), degs(90));
+		test(rads(normalize(degs(-180))), degs(180));
+		test(rads(normalize(degs(-90))), degs(270));
+		test(rads(normalize(degs(360))), degs(0));
+		test(rads(normalize(degs(90))), degs(90));
+		test(rads(normalize(degs(180))), degs(180));
+		test(rads(normalize(degs(270))), degs(270));
 
 		{
 			CAGE_TESTCASE("operators");
@@ -228,18 +219,18 @@ namespace
 			angle = angle * scalar;
 			angle = scalar * angle;
 			angle = angle / scalar;
-			scalar = angle / angle;
+			angle = angle / angle;
 		}
 
 		{
 			CAGE_TESTCASE("atan2");
 			for (uint32 i = 0; i < 10; i++)
 			{
-				rads a = randomAngle().normalize();
+				rads a = normalize(randomAngle());
 				real d = randomRange(0.1, 10.0);
 				real x = cos(a) * d;
 				real y = sin(a) * d;
-				rads r = aTan2(x, y).normalize();
+				rads r = normalize(atan2(x, y));
 				test(a, r);
 			}
 		}
@@ -259,8 +250,8 @@ namespace
 		test(a * b, vec2(6, 5));
 		test(a + b, b + a);
 		test(a * b, b * a);
-		test(a.max(c), vec2(5, 5));
-		test(a.min(c), vec2(3, 2));
+		test(max(a, c), vec2(5, 5));
+		test(min(a, c), vec2(3, 2));
 		vec2 d = a + c;
 		test(d, vec2(8, 7));
 
@@ -285,12 +276,12 @@ namespace
 		test(a * b, vec3(3, 5, 4));
 		test(a + b, b + a);
 		test(a * b, b * a);
-		test(a.max(b), vec3(3, 5, 4));
-		test(a.min(b), vec3(1, 1, 1));
+		test(max(a, b), vec3(3, 5, 4));
+		test(min(a, b), vec3(1, 1, 1));
 		vec3 c = a + b;
 		test(c, vec3(4, 6, 5));
-		test(a.cross(b), vec3(19, -11, -2));
-		test(a.dot(b), 12);
+		test(cross(a, b), vec3(19, -11, -2));
+		test(dot(a, b), 12);
 		test(a / b, vec3(3, 5, 1.f / 4));
 		test(8 / b, vec3(8, 8, 2));
 		test(a / (1.f / 3), vec3(9, 15, 3));
@@ -442,11 +433,11 @@ namespace
 			test(q1, m1);
 
 			mat4 q2 = mat4(quat(degs(), degs(-45), degs()));
-			mat4 m2 = lookAt(vec3(), vec3(-1, 0, -1).normalize(), vec3(0, 1, 0));
+			mat4 m2 = lookAt(vec3(), normalize(vec3(-1, 0, -1)), vec3(0, 1, 0));
 			test(q2, m2);
 
 			mat4 q3 = mat4(quat(degs(-45), degs(), degs()));
-			mat4 m3 = lookAt(vec3(), vec3(0, 1, -1).normalize(), vec3(0, 1, 0));
+			mat4 m3 = lookAt(vec3(), normalize(vec3(0, 1, -1)), vec3(0, 1, 0));
 			test(q3, m3);
 		}
 
@@ -599,11 +590,15 @@ namespace
 	{
 		CAGE_TESTCASE("mat4");
 
-		mat4 a(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 4, 5, 6, 1);
-		mat4 b(0, 0, 5, 0, 0, 1, 0, 0, -5, 0, 0, 0, 0, 0, 0, 1);
-		mat4 c(0, 0, 5, 0, 0, 1, 0, 0, -5, 0, 0, 0, -30, 5, 20, 1);
-		mat4 d = b * a;
-		test(d, c);
+		{
+			CAGE_TESTCASE("multiplication");
+
+			mat4 a(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 4, 5, 6, 1);
+			mat4 b(0, 0, 5, 0, 0, 1, 0, 0, -5, 0, 0, 0, 0, 0, 0, 1);
+			mat4 c(0, 0, 5, 0, 0, 1, 0, 0, -5, 0, 0, 0, -30, 5, 20, 1);
+			mat4 d = b * a;
+			test(d, c);
+		}
 
 		{
 			CAGE_TESTCASE("compose mat4 from position, rotation and scale");
@@ -638,6 +633,15 @@ namespace
 				test(m1, m2);
 			}
 		}
+
+		{
+			CAGE_TESTCASE("inverse");
+
+			mat4 a(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 50, -20, 9, 1);
+			mat4 b = inverse(a);
+			mat4 c(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -50, 20, -9, 1);
+			test(b, c);
+		}
 	}
 
 	void testMathTransform()
@@ -670,9 +674,10 @@ namespace
 				quat o = randomDirectionQuat();
 				real s = randomRange(real(0.1), 10);
 				transform t(p, o, s);
-				mat4 m1 = mat4(t).inverse();
-				mat4 m2 = mat4(t.inverse());
+				mat4 m1 = inverse(mat4(t));
+				mat4 m2 = mat4(inverse(t));
 				test(m1, m2);
+				round = round;
 			}
 		}
 	}
@@ -697,7 +702,7 @@ namespace
 			{
 				rads ang = degs(i);
 				real x = cos(ang), y = sin(ang);
-				rads ang2 = -aTan2(x, -y); // this is insane
+				rads ang2 = -atan2(x, -y); // this is insane
 				test(ang2, ang);
 			}
 		}
@@ -848,7 +853,7 @@ namespace
 
 	void testMathMatrixMultiplication()
 	{
-		CAGE_TESTCASE("matrix multiplication - performace");
+		CAGE_TESTCASE("matrix multiplication - performance");
 
 #if defined (CAGE_DEBUG)
 		static const uint32 matricesCount = 100;

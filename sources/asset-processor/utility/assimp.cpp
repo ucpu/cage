@@ -628,7 +628,7 @@ mat4 conv(const aiMatrix4x4 &m)
 	mat4 r;
 	detail::memcpy(&r, &m, sizeof(mat4));
 	//r[15] = 1;
-	return r.transpose();
+	return transpose(r);
 }
 
 quat conv(const aiQuaternion &q)

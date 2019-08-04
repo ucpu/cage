@@ -1,5 +1,5 @@
-C++ 3D game engine designed primarily for strategy games.
-A long-term hobby project that turned out to be quite BIG.
+Strategy games focused 3D game engine.
+It started as a hobby/learning project, but has become quite feature rich and has matured over the years.
 
 # Examples
 
@@ -28,24 +28,29 @@ A long-term hobby project that turned out to be quite BIG.
 ## Ease of Use
 
 - ease of use here refers to single, easy to understand API
-- even that the engine depends on several libraries, they are all hidden behind the scene
-- the API consists of both functions and classes, whichever is more convenient
-- the API is not polluted by any unnecessary includes (not even the standard libraries)
+  - the engine depends on several 3rd-party libraries, but they are all abstracted away
+    - consistent types for all uses
+  - the API consists of both functions and classes, whichever is more convenient
+  - the API is not polluted by any unnecessary includes (not even the standard libraries)
+    - FAST compilations - fast debug-fix-compile-run iterations
+  - consistent naming scheme
+- performance is greatly appreciated, but good API is always preferred
+
 
 ## Portable
 
 - runs on Windows and Linux
   - MacOS does not have required OpenGL version, but is otherwise supported
 - self-contained
-  - all dependencies are accessed as git submodules and compiled in
-  - (as much as possible - there are few package requirements on linux)
-- the Core library has no dependencies on graphics or sound and is therefore suitable to run head-less
+  - most dependencies are accessed as git submodules and compiled in
+  - there are just few package requirements on linux
+- the Core library has no dependencies on graphics or sound and is therefore suitable to run head-less on servers
 
 ## Friendly Licensing
 
 - MIT license is short and easy to understand
 - commercial or not, closed source or open source, ... whatever :D
-- (be sure to also check out the licenses for all dependencies)
+- all 3rd-party licenses are copied to single redistribute directory during build configuration
 
 ## Notes
 
@@ -67,20 +72,28 @@ A long-term hobby project that turned out to be quite BIG.
   - shapes: line (ray, segment), triangle, plane, aabb, sphere, ...
   - no templates, all is float
   - intersections & collisions
-  - spatial acceleration structure (BVH)
+  - spatial acceleration structures
 - Entities
   - this is the heart of all Cage's higher-level APIs
-  - entities are identified by pointer and, optionally, by a number
+  - entities are identified by pointer and, optionally, by a 32bit number
   - entities may be aggregated into groups for easier processing
   - entities may have any number of components
     - single entity may not have multiple instances of the same component
   - simple serialization
-    - components are treated as byte-buffers (no destructors etc.)
+    - components are treated as byte-buffers
 - Assets
   - thread-aware loading
   - transparent on-demand hot-reloading
   - automatic dependencies
 - Utilities
+  - strings & utf & hashes
+  - configuration
+  - events & delegates
+  - timers
+  - logging
+  - noise functions
+  - images
+  - ...
 
 ## Client Library
 
@@ -91,7 +104,7 @@ A long-term hobby project that turned out to be quite BIG.
   - currently OpenGL 4.4
     - the plan is to switch to Vulkan only (when there is enough time)
   - actual objective abstraction of most OpenGL objects
-    - semi-debugging layer that validates that the objects are correctly bound
+    - semi-debugging layer that validates that objects are correctly bound
 - sound (via soundio)
   - support for spatial sound (multiple channels)
 - gui
@@ -151,4 +164,4 @@ A long-term hobby project that turned out to be quite BIG.
 
 - Contributions are welcome!
 - Questions, bug reports and feature requests are best done on github issue tracker.
-Create a pull request for code changes.
+Create a pull request for code change proposals.
