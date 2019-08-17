@@ -161,7 +161,7 @@ namespace cage
 
 			fileReal(const string &path, const fileMode &mode) : fileVirtual(path, mode), f(nullptr)
 			{
-				CAGE_ASSERT_RUNTIME(mode.valid(), "invalid file mode", path, mode.read, mode.write, mode.append, mode.textual);
+				CAGE_ASSERT(mode.valid(), "invalid file mode", path, mode.read, mode.write, mode.append, mode.textual);
 				realCreateDirectories(pathJoin(path, ".."));
 				f = fopen(path.c_str(), mode.mode().c_str());
 				if (!f)
@@ -189,8 +189,8 @@ namespace cage
 
 			void read(void *data, uint64 size) override
 			{
-				CAGE_ASSERT_RUNTIME(f, "file closed");
-				CAGE_ASSERT_RUNTIME(mode.read);
+				CAGE_ASSERT(f, "file closed");
+				CAGE_ASSERT(mode.read);
 				if (size == 0)
 					return;
 				if (fread(data, (size_t)size, 1, f) != 1)
@@ -199,8 +199,8 @@ namespace cage
 
 			void write(const void *data, uint64 size) override
 			{
-				CAGE_ASSERT_RUNTIME(f, "file closed");
-				CAGE_ASSERT_RUNTIME(mode.write);
+				CAGE_ASSERT(f, "file closed");
+				CAGE_ASSERT(mode.write);
 				if (size == 0)
 					return;
 				if (fwrite(data, (size_t)size, 1, f) != 1)
@@ -209,21 +209,21 @@ namespace cage
 
 			void seek(uint64 position) override
 			{
-				CAGE_ASSERT_RUNTIME(f, "file closed");
+				CAGE_ASSERT(f, "file closed");
 				if (fseek(f, position, 0) != 0)
 					CAGE_THROW_ERROR(codeException, "fseek", errno);
 			}
 
 			void flush() override
 			{
-				CAGE_ASSERT_RUNTIME(f, "file closed");
+				CAGE_ASSERT(f, "file closed");
 				if (fflush(f) != 0)
 					CAGE_THROW_ERROR(codeException, "fflush", errno);
 			}
 
 			void close() override
 			{
-				CAGE_ASSERT_RUNTIME(f, "file closed");
+				CAGE_ASSERT(f, "file closed");
 				FILE *t = f;
 				f = nullptr;
 				if (fclose(t) != 0)
@@ -232,13 +232,13 @@ namespace cage
 
 			uint64 tell() const override
 			{
-				CAGE_ASSERT_RUNTIME(f, "file closed");
+				CAGE_ASSERT(f, "file closed");
 				return ftell(f);
 			}
 
 			uint64 size() const override
 			{
-				CAGE_ASSERT_RUNTIME(f, "file closed");
+				CAGE_ASSERT(f, "file closed");
 				uint64 pos = ftell(f);
 				fseek(f, 0, 2);
 				uint64 siz = ftell(f);

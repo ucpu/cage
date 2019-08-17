@@ -18,7 +18,7 @@ namespace cage
 	{
 		const uint32 channelIndex(uint32 channels, SoundIoChannelId id)
 		{
-			CAGE_ASSERT_RUNTIME(channels > 0);
+			CAGE_ASSERT(channels > 0);
 			switch (id)
 			{
 			case SoundIoChannelIdFrontLeft:
@@ -140,7 +140,7 @@ namespace cage
 #ifdef CAGE_ASSERT_ENABLED
 			for (uint32 i = 0; i < channels; i++)
 				if (mapping[i] != m)
-					CAGE_ASSERT_RUNTIME(mapping[i] < min(8u, channels), mapping[i], device[i], channels, i);
+					CAGE_ASSERT(mapping[i] < min(8u, channels), mapping[i], device[i], channels, i);
 #endif // CAGE_ASSERT_ENABLED
 			string sm, sd;
 			for (uint32 i = 0; i < channels; i++)
@@ -220,7 +220,7 @@ namespace cage
 				dataStruct() : first(true) {}
 				void init(SoundIo *context, uint32 channels, uint32 sampleRate)
 				{
-					CAGE_ASSERT_RUNTIME(channels <= 8);
+					CAGE_ASSERT(channels <= 8);
 					buffer.channels = channels;
 					buffer.sampleRate = sampleRate;
 					ring.init(context, channels * sampleRate * 2);
@@ -393,7 +393,7 @@ namespace cage
 
 			void busDestroyed(mixingBus *bus)
 			{
-				CAGE_ASSERT_RUNTIME(bus == inputBus);
+				CAGE_ASSERT(bus == inputBus);
 				inputBus = nullptr;
 			}
 		};

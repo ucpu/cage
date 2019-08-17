@@ -128,7 +128,7 @@ namespace cage
 			std::vector<png_bytep> rows;
 			rows.resize(height);
 			uint32 cols = width * components * bpp;
-			CAGE_ASSERT_RUNTIME(cols == png_get_rowbytes(png, info), cols, png_get_rowbytes(png, info));
+			CAGE_ASSERT(cols == png_get_rowbytes(png, info), cols, png_get_rowbytes(png, info));
 			out.allocate(height * cols);
 			for (uint32 y = 0; y < height; y++)
 				rows[y] = (png_bytep)out.data() + y * cols;
@@ -179,7 +179,7 @@ namespace cage
 			std::vector<png_bytep> rows;
 			rows.resize(height);
 			uint32 cols = width * components * bpp;
-			CAGE_ASSERT_RUNTIME(cols == png_get_rowbytes(png, info), cols, png_get_rowbytes(png, info));
+			CAGE_ASSERT(cols == png_get_rowbytes(png, info), cols, png_get_rowbytes(png, info));
 			for (uint32 y = 0; y < height; y++)
 				rows[y] = (png_bytep)in.data() + y * cols;
 			png_write_image(png, rows.data());
@@ -210,7 +210,7 @@ namespace cage
 	memoryBuffer image::encodeBuffer()
 	{
 		pngBufferImpl *impl = (pngBufferImpl*)this;
-		CAGE_ASSERT_RUNTIME(impl->mem.data(), "png image not initialized");
+		CAGE_ASSERT(impl->mem.data(), "png image not initialized");
 		memoryBuffer buffer((uintPtr)impl->width * impl->height * impl->channels * impl->bytesPerChannel);
 		encodePng(impl->mem, buffer, impl->width, impl->height, impl->channels, impl->bytesPerChannel);
 		return buffer;
@@ -253,28 +253,28 @@ namespace cage
 	uint32 image::width() const
 	{
 		const pngBufferImpl *impl = (const pngBufferImpl*)this;
-		CAGE_ASSERT_RUNTIME(impl->mem.data(), "png image not initialized");
+		CAGE_ASSERT(impl->mem.data(), "png image not initialized");
 		return impl->width;
 	}
 
 	uint32 image::height() const
 	{
 		const pngBufferImpl *impl = (const pngBufferImpl*)this;
-		CAGE_ASSERT_RUNTIME(impl->mem.data(), "png image not initialized");
+		CAGE_ASSERT(impl->mem.data(), "png image not initialized");
 		return impl->height;
 	}
 
 	uint32 image::channels() const
 	{
 		const pngBufferImpl *impl = (const pngBufferImpl*)this;
-		CAGE_ASSERT_RUNTIME(impl->mem.data(), "png image not initialized");
+		CAGE_ASSERT(impl->mem.data(), "png image not initialized");
 		return impl->channels;
 	}
 
 	uint32 image::bytesPerChannel() const
 	{
 		const pngBufferImpl *impl = (const pngBufferImpl*)this;
-		CAGE_ASSERT_RUNTIME(impl->mem.data(), "png image not initialized");
+		CAGE_ASSERT(impl->mem.data(), "png image not initialized");
 		return impl->bytesPerChannel;
 	}
 
@@ -293,8 +293,8 @@ namespace cage
 	float image::value(uint32 x, uint32 y, uint32 c) const
 	{
 		const pngBufferImpl *impl = (const pngBufferImpl*)this;
-		CAGE_ASSERT_RUNTIME(impl->mem.data(), "png image not initialized");
-		CAGE_ASSERT_RUNTIME(x < impl->width && y < impl->height && c < impl->channels, x, impl->width, y, impl->height, c, impl->channels);
+		CAGE_ASSERT(impl->mem.data(), "png image not initialized");
+		CAGE_ASSERT(x < impl->width && y < impl->height && c < impl->channels, x, impl->width, y, impl->height, c, impl->channels);
 		switch (impl->bytesPerChannel)
 		{
 		case 1:
@@ -315,8 +315,8 @@ namespace cage
 	void image::value(uint32 x, uint32 y, uint32 c, float v)
 	{
 		pngBufferImpl *impl = (pngBufferImpl*)this;
-		CAGE_ASSERT_RUNTIME(impl->mem.data(), "png image not initialized");
-		CAGE_ASSERT_RUNTIME(x < impl->width && y < impl->height && c < impl->channels, x, impl->width, y, impl->height, c, impl->channels);
+		CAGE_ASSERT(impl->mem.data(), "png image not initialized");
+		CAGE_ASSERT(x < impl->width && y < impl->height && c < impl->channels, x, impl->width, y, impl->height, c, impl->channels);
 		v = clamp(v, 0.f, 1.f);
 		switch (impl->bytesPerChannel)
 		{
@@ -338,21 +338,21 @@ namespace cage
 	real image::get1(uint32 x, uint32 y) const
 	{
 		pngBufferImpl *impl = (pngBufferImpl*)this;
-		CAGE_ASSERT_RUNTIME(channels() == 1);
+		CAGE_ASSERT(channels() == 1);
 		return value(x, y, 0);
 	}
 
 	vec2 image::get2(uint32 x, uint32 y) const
 	{
 		pngBufferImpl *impl = (pngBufferImpl*)this;
-		CAGE_ASSERT_RUNTIME(channels() == 2);
+		CAGE_ASSERT(channels() == 2);
 		return vec2(value(x, y, 0), value(x, y, 1));
 	}
 
 	vec3 image::get3(uint32 x, uint32 y) const
 	{
 		pngBufferImpl *impl = (pngBufferImpl*)this;
-		CAGE_ASSERT_RUNTIME(channels() == 3);
+		CAGE_ASSERT(channels() == 3);
 		return vec3(value(x, y, 0), value(x, y, 1), value(x, y, 2));
 
 	}
@@ -360,21 +360,21 @@ namespace cage
 	vec4 image::get4(uint32 x, uint32 y) const
 	{
 		pngBufferImpl *impl = (pngBufferImpl*)this;
-		CAGE_ASSERT_RUNTIME(channels() == 4);
+		CAGE_ASSERT(channels() == 4);
 		return vec4(value(x, y, 0), value(x, y, 1), value(x, y, 2), value(x, y, 3));
 	}
 
 	void image::set(uint32 x, uint32 y, const real &v)
 	{
 		pngBufferImpl *impl = (pngBufferImpl*)this;
-		CAGE_ASSERT_RUNTIME(channels() == 1);
+		CAGE_ASSERT(channels() == 1);
 		value(x, y, 0, v.value);
 	}
 
 	void image::set(uint32 x, uint32 y, const vec2 &v)
 	{
 		pngBufferImpl *impl = (pngBufferImpl*)this;
-		CAGE_ASSERT_RUNTIME(channels() == 2);
+		CAGE_ASSERT(channels() == 2);
 		value(x, y, 0, v[0].value);
 		value(x, y, 1, v[1].value);
 	}
@@ -382,7 +382,7 @@ namespace cage
 	void image::set(uint32 x, uint32 y, const vec3 &v)
 	{
 		pngBufferImpl *impl = (pngBufferImpl*)this;
-		CAGE_ASSERT_RUNTIME(channels() == 3);
+		CAGE_ASSERT(channels() == 3);
 		value(x, y, 0, v[0].value);
 		value(x, y, 1, v[1].value);
 		value(x, y, 2, v[2].value);
@@ -391,7 +391,7 @@ namespace cage
 	void image::set(uint32 x, uint32 y, const vec4 &v)
 	{
 		pngBufferImpl *impl = (pngBufferImpl*)this;
-		CAGE_ASSERT_RUNTIME(channels() == 4);
+		CAGE_ASSERT(channels() == 4);
 		value(x, y, 0, v[0].value);
 		value(x, y, 1, v[1].value);
 		value(x, y, 2, v[2].value);
@@ -428,16 +428,16 @@ namespace cage
 
 	void imageBlit(image *sourcePng, image *targetPng, uint32 sourceX, uint32 sourceY, uint32 targetX, uint32 targetY, uint32 width, uint32 height)
 	{
-		CAGE_ASSERT_RUNTIME(sourcePng->channels() == targetPng->channels(), "images are incompatible (different count of channels)", sourcePng->channels(), targetPng->channels());
-		CAGE_ASSERT_RUNTIME(sourcePng->bytesPerChannel() == targetPng->bytesPerChannel(), "images are incompatible (different bytes per channel)", sourcePng->bytesPerChannel(), targetPng->bytesPerChannel());
+		CAGE_ASSERT(sourcePng->channels() == targetPng->channels(), "images are incompatible (different count of channels)", sourcePng->channels(), targetPng->channels());
+		CAGE_ASSERT(sourcePng->bytesPerChannel() == targetPng->bytesPerChannel(), "images are incompatible (different bytes per channel)", sourcePng->bytesPerChannel(), targetPng->bytesPerChannel());
 		uint32 sw = sourcePng->width();
 		uint32 sh = sourcePng->height();
 		uint32 tw = targetPng->width();
 		uint32 th = targetPng->height();
-		CAGE_ASSERT_RUNTIME(sourceX + width <= sw);
-		CAGE_ASSERT_RUNTIME(sourceY + height <= sh);
-		CAGE_ASSERT_RUNTIME(targetX + width <= tw);
-		CAGE_ASSERT_RUNTIME(targetY + height <= th);
+		CAGE_ASSERT(sourceX + width <= sw);
+		CAGE_ASSERT(sourceY + height <= sh);
+		CAGE_ASSERT(targetX + width <= tw);
+		CAGE_ASSERT(targetY + height <= th);
 		uint32 bpc = sourcePng->bytesPerChannel();
 		uint32 cpp = sourcePng->channels();
 		uint32 ps = bpc * cpp;

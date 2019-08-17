@@ -29,7 +29,7 @@ namespace cage
 
 			void busDestroyed(mixingBus *bus)
 			{
-				CAGE_ASSERT_RUNTIME(filterBus == bus);
+				CAGE_ASSERT(filterBus == bus);
 				filterBus = nullptr;
 			}
 		};
@@ -67,8 +67,8 @@ namespace cage
 
 			void filterInput(const soundDataBufferStruct &buf)
 			{
-				CAGE_ASSERT_RUNTIME(currentFilter != filters.end());
-				CAGE_ASSERT_RUNTIME(buf.channels <= 8);
+				CAGE_ASSERT(currentFilter != filters.end());
+				CAGE_ASSERT(buf.channels <= 8);
 				currentFilter++;
 				if (currentFilter == filters.end())
 				{
@@ -90,8 +90,8 @@ namespace cage
 				if (inputs.empty())
 					return; // shortcut
 
-				CAGE_ASSERT_RUNTIME(buf.channels > 0 && buf.frames > 0 && buf.buffer, buf.channels, buf.frames, buf.buffer);
-				CAGE_ASSERT_RUNTIME(buf.channels <= 8);
+				CAGE_ASSERT(buf.channels > 0 && buf.frames > 0 && buf.buffer, buf.channels, buf.frames, buf.buffer);
+				CAGE_ASSERT(buf.channels <= 8);
 
 				if (filters.empty())
 				{ // shortcut, bypass all overhead associated with filters

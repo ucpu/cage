@@ -102,7 +102,7 @@ namespace cage
 	{
 		if (capacity_ == size_)
 			return;
-		CAGE_ASSERT_RUNTIME(capacity_ > size_);
+		CAGE_ASSERT(capacity_ > size_);
 		memoryBuffer c = templates::move(*this);
 		allocate(c.size());
 		detail::memcpy(data_, c.data(), c.size());

@@ -35,12 +35,12 @@ namespace cage
 
 	void renderObject::setLods(uint32 lodsCount, uint32 meshesCount, const float *thresholds, const uint32 *meshIndices, const uint32 *meshNames)
 	{
-		CAGE_ASSERT_RUNTIME(meshIndices[0] == 0);
-		CAGE_ASSERT_RUNTIME(meshIndices[lodsCount] == meshesCount);
-		CAGE_ASSERT_RUNTIME(std::is_sorted(thresholds, thresholds + lodsCount, [](float a, float b) {
+		CAGE_ASSERT(meshIndices[0] == 0);
+		CAGE_ASSERT(meshIndices[lodsCount] == meshesCount);
+		CAGE_ASSERT(std::is_sorted(thresholds, thresholds + lodsCount, [](float a, float b) {
 			return b < a;
 		}));
-		CAGE_ASSERT_RUNTIME(std::is_sorted(meshIndices, meshIndices + lodsCount + 1));
+		CAGE_ASSERT(std::is_sorted(meshIndices, meshIndices + lodsCount + 1));
 		objectImpl *impl = (objectImpl*)this;
 		impl->thresholds.resize(lodsCount);
 		impl->indices.resize(lodsCount + 1);
@@ -70,7 +70,7 @@ namespace cage
 	pointerRange<const uint32> renderObject::meshes(uint32 lod) const
 	{
 		objectImpl *impl = (objectImpl*)this;
-		CAGE_ASSERT_RUNTIME(lod < lodsCount());
+		CAGE_ASSERT(lod < lodsCount());
 		return { impl->names.data() + impl->indices[lod], impl->names.data() + impl->indices[lod + 1] };
 	}
 

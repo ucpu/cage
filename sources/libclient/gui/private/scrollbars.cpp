@@ -39,8 +39,8 @@ namespace cage
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT_RUNTIME(!hierarchy->text, "scrollbars may not have text");
-				CAGE_ASSERT_RUNTIME(!hierarchy->image, "scrollbars may not have image");
+				CAGE_ASSERT(!hierarchy->text, "scrollbars may not have text");
+				CAGE_ASSERT(!hierarchy->image, "scrollbars may not have image");
 			}
 
 			virtual void findRequestedSize() override
@@ -180,7 +180,7 @@ namespace cage
 
 	void scrollbarsCreate(hierarchyItemStruct *item)
 	{
-		CAGE_ASSERT_RUNTIME(!item->item);
+		CAGE_ASSERT(!item->item);
 		item->item = item->impl->itemsMemory.createObject<scrollbarsImpl>(item);
 	}
 }

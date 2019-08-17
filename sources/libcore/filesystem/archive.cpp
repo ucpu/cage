@@ -57,7 +57,7 @@ namespace cage
 			{
 				detail::overrideException oe;
 				auto a = archiveOpenZip(path);
-				CAGE_ASSERT_RUNTIME(a);
+				CAGE_ASSERT(a);
 				(*map)[path] = a;
 				return a;
 			}
@@ -81,7 +81,7 @@ namespace cage
 				return {}; // do not throw an exception by going beyond root
 			string a = pathJoin(path, "..");
 			string b = path.subString(a.length() + 1, m);
-			CAGE_ASSERT_RUNTIME(pathJoin(a, b) == path, a, b, path);
+			CAGE_ASSERT(pathJoin(a, b) == path, a, b, path);
 			insidePath = pathJoin(b, insidePath);
 			return recursiveFind(a, true, insidePath);
 		}
@@ -89,7 +89,7 @@ namespace cage
 
 	std::shared_ptr<archiveVirtual> archiveFindTowardsRoot(const string &path, bool matchExact, string &insidePath)
 	{
-		CAGE_ASSERT_RUNTIME(insidePath.empty());
+		CAGE_ASSERT(insidePath.empty());
 		return recursiveFind(pathToAbs(path), matchExact, insidePath);
 	}
 
@@ -251,7 +251,7 @@ namespace cage
 			void read(void *data, uint64 size) override
 			{
 				LOCK;
-				CAGE_ASSERT_RUNTIME(f);
+				CAGE_ASSERT(f);
 				if (zip_fread(f, data, size) != size)
 					CAGE_THROW_ERROR(exception, "zip_fread");
 			}
@@ -264,7 +264,7 @@ namespace cage
 			void seek(uint64 position) override
 			{
 				LOCK;
-				CAGE_ASSERT_RUNTIME(f);
+				CAGE_ASSERT(f);
 				if (zip_fseek(f, position, 0) != 0)
 					CAGE_THROW_ERROR(exception, "zip_fseek");
 			}
@@ -277,7 +277,7 @@ namespace cage
 			void close() override
 			{
 				LOCK;
-				CAGE_ASSERT_RUNTIME(f);
+				CAGE_ASSERT(f);
 				auto ff = f;
 				f = nullptr;
 				if (zip_fclose(ff) != 0)
@@ -287,7 +287,7 @@ namespace cage
 			uint64 tell() const override
 			{
 				LOCK;
-				CAGE_ASSERT_RUNTIME(f);
+				CAGE_ASSERT(f);
 				auto r = zip_ftell(f);
 				if (r < 0)
 					CAGE_THROW_ERROR(exception, "zip_ftell");
@@ -297,7 +297,7 @@ namespace cage
 			uint64 size() const override
 			{
 				LOCK;
-				CAGE_ASSERT_RUNTIME(f);
+				CAGE_ASSERT(f);
 				zip_stat_t st;
 				if (zip_stat(a->zip, myPath.c_str(), 0, &st) != 0)
 					CAGE_THROW_ERROR(exception, "zip_stat");
@@ -339,7 +339,7 @@ namespace cage
 
 			void write(const void *data, uint64 size) override
 			{
-				CAGE_ASSERT_RUNTIME(!closed);
+				CAGE_ASSERT(!closed);
 				s.write(data, size);
 			}
 
@@ -356,7 +356,7 @@ namespace cage
 			void close() override
 			{
 				LOCK;
-				CAGE_ASSERT_RUNTIME(!closed);
+				CAGE_ASSERT(!closed);
 				closed = true;
 				zip_source_t *src = zip_source_buffer(a->zip, m.data(), m.size(), 0);
 				if (!src)
@@ -374,13 +374,13 @@ namespace cage
 
 			uint64 tell() const override
 			{
-				CAGE_ASSERT_RUNTIME(!closed);
+				CAGE_ASSERT(!closed);
 				return m.size();
 			}
 
 			uint64 size() const override
 			{
-				CAGE_ASSERT_RUNTIME(!closed);
+				CAGE_ASSERT(!closed);
 				return m.size();
 			}
 		};
@@ -430,7 +430,7 @@ namespace cage
 
 			string name() const override
 			{
-				CAGE_ASSERT_RUNTIME(valid());
+				CAGE_ASSERT(valid());
 				return names[index];
 			}
 
@@ -442,10 +442,10 @@ namespace cage
 
 		holder<fileHandle> archiveZip::openFile(const string &path, const fileMode &mode)
 		{
-			CAGE_ASSERT_RUNTIME(!path.empty());
-			CAGE_ASSERT_RUNTIME(mode.valid());
-			CAGE_ASSERT_RUNTIME(mode.read != mode.write, "zip archive cannot open file for both reading and writing simultaneously");
-			CAGE_ASSERT_RUNTIME(!mode.append, "zip archive cannot open file for append");
+			CAGE_ASSERT(!path.empty());
+			CAGE_ASSERT(mode.valid());
+			CAGE_ASSERT(mode.read != mode.write, "zip archive cannot open file for both reading and writing simultaneously");
+			CAGE_ASSERT(!mode.append, "zip archive cannot open file for append");
 			createDirectories(pathJoin(path, ".."));
 			if (mode.read)
 				return detail::systemArena().createImpl<fileHandle, fileZipRead>(std::dynamic_pointer_cast<archiveZip>(shared_from_this()), path, mode);

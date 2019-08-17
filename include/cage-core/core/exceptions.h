@@ -6,9 +6,9 @@
 
 #ifdef CAGE_ASSERT_ENABLED
 #define GCHL_ASSVAR(VAR) .variable(CAGE_STRINGIZE(VAR), VAR)
-#define CAGE_ASSERT_RUNTIME(EXP, ...) { ::cage::privat::assertPriv(!!(EXP), CAGE_STRINGIZE(EXP), __FILE__, CAGE_STRINGIZE(__LINE__), __FUNCTION__) GCHL_DEFER(CAGE_EXPAND_ARGS(GCHL_ASSVAR, __VA_ARGS__))(); }
+#define CAGE_ASSERT(EXP, ...) { ::cage::privat::assertPriv(!!(EXP), CAGE_STRINGIZE(EXP), __FILE__, CAGE_STRINGIZE(__LINE__), __FUNCTION__) GCHL_DEFER(CAGE_EXPAND_ARGS(GCHL_ASSVAR, __VA_ARGS__))(); }
 #else
-#define CAGE_ASSERT_RUNTIME(EXP, ...)
+#define CAGE_ASSERT(EXP, ...)
 #endif
 
 #define CAGE_ASSERT_COMPILE(COND, MESS) enum { CAGE_JOIN(CAGE_JOIN(gchl_assert_, MESS), CAGE_JOIN(_, __LINE__)) = 1/((int)!!(COND)) }
@@ -192,8 +192,8 @@ namespace cage
 			template<class To, class From>
 			static To cast(From from)
 			{
-				CAGE_ASSERT_RUNTIME(from >= detail::numeric_limits<To>::min(), "numeric cast failure", from, detail::numeric_limits<To>::min());
-				CAGE_ASSERT_RUNTIME(from <= detail::numeric_limits<To>::max(), "numeric cast failure", from, detail::numeric_limits<To>::max());
+				CAGE_ASSERT(from >= detail::numeric_limits<To>::min(), "numeric cast failure", from, detail::numeric_limits<To>::min());
+				CAGE_ASSERT(from <= detail::numeric_limits<To>::max(), "numeric cast failure", from, detail::numeric_limits<To>::max());
 				return static_cast<To>(from);
 			}
 		};
@@ -204,9 +204,9 @@ namespace cage
 			template<class To, class From>
 			static To cast(From from)
 			{
-				CAGE_ASSERT_RUNTIME(from >= 0, "numeric cast failure", from);
+				CAGE_ASSERT(from >= 0, "numeric cast failure", from);
 				typedef typename detail::numeric_limits<From>::make_unsigned unsgFrom;
-				CAGE_ASSERT_RUNTIME(static_cast<unsgFrom>(from) <= detail::numeric_limits<To>::max(), "numeric cast failure", from, static_cast<unsgFrom>(from), detail::numeric_limits<To>::max());
+				CAGE_ASSERT(static_cast<unsgFrom>(from) <= detail::numeric_limits<To>::max(), "numeric cast failure", from, static_cast<unsgFrom>(from), detail::numeric_limits<To>::max());
 				return static_cast<To>(from);
 			}
 		};
@@ -218,7 +218,7 @@ namespace cage
 			static To cast(From from)
 			{
 				typedef typename detail::numeric_limits<To>::make_unsigned unsgTo;
-				CAGE_ASSERT_RUNTIME(from <= static_cast<unsgTo>(detail::numeric_limits<To>::max()), "numeric cast failure", from, detail::numeric_limits<To>::max(), static_cast<unsgTo>(detail::numeric_limits<To>::max()));
+				CAGE_ASSERT(from <= static_cast<unsgTo>(detail::numeric_limits<To>::max()), "numeric cast failure", from, detail::numeric_limits<To>::max(), static_cast<unsgTo>(detail::numeric_limits<To>::max()));
 				return static_cast<To>(from);
 			}
 		};

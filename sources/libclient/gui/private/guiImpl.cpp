@@ -82,7 +82,7 @@ namespace cage
 
 	vec4 guiImpl::pointsToNdc(vec2 position, vec2 size)
 	{
-		CAGE_ASSERT_RUNTIME(size[0] >= 0 && size[1] >= 0);
+		CAGE_ASSERT(size[0] >= 0 && size[1] >= 0);
 		position *= pointsScale;
 		size *= pointsScale;
 		vec2 os = outputSize * pointsScale;

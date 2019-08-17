@@ -38,7 +38,7 @@ namespace cage
 				kerning = (const real*)des.advance(data.glyphCount * data.glyphCount * sizeof(real));
 			const uint32 *charmapChars = (const uint32*)des.advance(sizeof(uint32) * data.charCount);
 			const uint32 *charmapGlyphs = (const uint32*)des.advance(sizeof(uint32) * data.charCount);
-			CAGE_ASSERT_RUNTIME(des.available() == 0);
+			CAGE_ASSERT(des.available() == 0);
 
 			font->setLine(data.lineHeight, data.firstLineOffset);
 			font->setImage(data.texWidth, data.texHeight, data.texSize, image);

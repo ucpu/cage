@@ -81,7 +81,7 @@ namespace cage
 				// todo
 			}
 		}
-		CAGE_ASSERT_RUNTIME(r.normalized());
+		CAGE_ASSERT(r.normalized());
 		return r;
 	}
 

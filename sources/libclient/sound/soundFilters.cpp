@@ -22,7 +22,7 @@ namespace cage
 
 			void exe(const mixingFilterApi &api)
 			{
-				CAGE_ASSERT_RUNTIME(volume >= 0, volume.value);
+				CAGE_ASSERT(volume >= 0, volume.value);
 				if (volume < 1e-7)
 					return;
 				api.input(api.output);

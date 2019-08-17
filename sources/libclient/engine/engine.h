@@ -22,8 +22,8 @@ namespace cage
 	{
 		uint64 operator() (uint64 emit, uint64 dispatch, uint64 step)
 		{
-			CAGE_ASSERT_RUNTIME(step > 0);
-			CAGE_ASSERT_RUNTIME(dispatch > emit);
+			CAGE_ASSERT(step > 0);
+			CAGE_ASSERT(dispatch > emit);
 			uint64 r = dispatch + correction;
 			if (r > emit + step)
 				correction += sint64(step) / -500;

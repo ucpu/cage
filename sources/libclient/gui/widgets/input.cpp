@@ -33,21 +33,21 @@ namespace cage
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT_RUNTIME(!hierarchy->firstChild, "input box may not have children");
-				CAGE_ASSERT_RUNTIME(!hierarchy->image, "input box may not have image");
+				CAGE_ASSERT(!hierarchy->firstChild, "input box may not have children");
+				CAGE_ASSERT(!hierarchy->image, "input box may not have image");
 
 				showArrows = data.type == inputTypeEnum::Real || data.type == inputTypeEnum::Integer;
 
 				switch (data.type)
 				{
 				case inputTypeEnum::Integer:
-					CAGE_ASSERT_RUNTIME(data.step.i >= 0);
-					CAGE_ASSERT_RUNTIME(data.max.i >= data.min.i);
+					CAGE_ASSERT(data.step.i >= 0);
+					CAGE_ASSERT(data.max.i >= data.min.i);
 					break;
 				case inputTypeEnum::Real:
-					CAGE_ASSERT_RUNTIME(data.min.f.valid() && data.step.f.valid() && data.max.f.valid());
-					CAGE_ASSERT_RUNTIME(data.step.f >= 0);
-					CAGE_ASSERT_RUNTIME(data.max.f >= data.min.f);
+					CAGE_ASSERT(data.min.f.valid() && data.step.f.valid() && data.max.f.valid());
+					CAGE_ASSERT(data.step.f >= 0);
+					CAGE_ASSERT(data.max.f >= data.min.f);
 					break;
 				default:
 					break;
@@ -316,8 +316,8 @@ namespace cage
 				utf32.resize(countCharacters(data.value));
 				uint32 len;
 				convert8to32(utf32.data(), len, data.value);
-				CAGE_ASSERT_RUNTIME(len == utf32.size(), len, utf32.size());
-				CAGE_ASSERT_RUNTIME(cursor <= len, cursor, len, data.value);
+				CAGE_ASSERT(len == utf32.size(), len, utf32.size());
+				CAGE_ASSERT(cursor <= len, cursor, len, data.value);
 				switch (key)
 				{
 				case 263: // left
@@ -363,8 +363,8 @@ namespace cage
 				utf32.reserve(len + 1);
 				utf32.resize(len);
 				convert8to32(utf32.data(), len, data.value);
-				CAGE_ASSERT_RUNTIME(len == utf32.size(), len, utf32.size());
-				CAGE_ASSERT_RUNTIME(cursor <= len, cursor, len, data.value);
+				CAGE_ASSERT(len == utf32.size(), len, utf32.size());
+				CAGE_ASSERT(cursor <= len, cursor, len, data.value);
 				utf32.insert(utf32.begin() + cursor, key);
 				data.value = convert32to8(utf32.data(), numeric_cast<uint32>(utf32.size()));
 				cursor++;
@@ -377,7 +377,7 @@ namespace cage
 
 	void inputCreate(hierarchyItemStruct *item)
 	{
-		CAGE_ASSERT_RUNTIME(!item->item);
+		CAGE_ASSERT(!item->item);
 		item->item = item->impl->itemsMemory.createObject<inputImpl>(item);
 	}
 }

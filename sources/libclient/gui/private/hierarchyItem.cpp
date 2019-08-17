@@ -21,7 +21,7 @@ namespace cage
 		item(nullptr), text(nullptr), image(nullptr),
 		order(0), subsidedItem(false)
 	{
-		CAGE_ASSERT_RUNTIME(impl);
+		CAGE_ASSERT(impl);
 	}
 
 	void hierarchyItemStruct::initialize()
@@ -53,16 +53,16 @@ namespace cage
 				c = c->nextSibling;
 			}
 		}
-		CAGE_ASSERT_RUNTIME(requestedSize.valid());
+		CAGE_ASSERT(requestedSize.valid());
 	}
 
 	void hierarchyItemStruct::findFinalPosition(const finalPositionStruct &update)
 	{
-		CAGE_ASSERT_RUNTIME(requestedSize.valid());
-		CAGE_ASSERT_RUNTIME(update.renderPos.valid());
-		CAGE_ASSERT_RUNTIME(update.renderSize.valid());
-		CAGE_ASSERT_RUNTIME(update.clipPos.valid());
-		CAGE_ASSERT_RUNTIME(update.clipSize.valid());
+		CAGE_ASSERT(requestedSize.valid());
+		CAGE_ASSERT(update.renderPos.valid());
+		CAGE_ASSERT(update.renderSize.valid());
+		CAGE_ASSERT(update.clipPos.valid());
+		CAGE_ASSERT(update.clipSize.valid());
 
 		renderPos = update.renderPos;
 		renderSize = update.renderSize;
@@ -84,14 +84,14 @@ namespace cage
 			}
 		}
 
-		CAGE_ASSERT_RUNTIME(renderPos.valid());
-		CAGE_ASSERT_RUNTIME(renderSize.valid());
-		CAGE_ASSERT_RUNTIME(clipPos.valid());
-		CAGE_ASSERT_RUNTIME(clipSize.valid());
+		CAGE_ASSERT(renderPos.valid());
+		CAGE_ASSERT(renderSize.valid());
+		CAGE_ASSERT(clipPos.valid());
+		CAGE_ASSERT(clipSize.valid());
 		for (uint32 a = 0; a < 2; a++)
 		{
-			CAGE_ASSERT_RUNTIME(clipPos[a] >= u.clipPos[a], clipPos, u.clipPos);
-			CAGE_ASSERT_RUNTIME(clipPos[a] + clipSize[a] <= u.clipPos[a] + u.clipSize[a], clipPos, clipSize, u.clipPos, u.clipSize);
+			CAGE_ASSERT(clipPos[a] >= u.clipPos[a], clipPos, u.clipPos);
+			CAGE_ASSERT(clipPos[a] + clipSize[a] <= u.clipPos[a] + u.clipSize[a], clipPos, clipSize, u.clipPos, u.clipSize);
 		}
 	}
 
@@ -119,7 +119,7 @@ namespace cage
 
 	void hierarchyItemStruct::detachParent()
 	{
-		CAGE_ASSERT_RUNTIME(parent);
+		CAGE_ASSERT(parent);
 		if (prevSibling)
 			prevSibling->nextSibling = nextSibling;
 		if (nextSibling)

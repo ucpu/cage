@@ -61,8 +61,8 @@ namespace cage
 		triangle operator * (const mat4 &other) const;
 		triangle operator * (const transform &other) const { return *this * mat4(other); };
 
-		vec3 operator [] (uint32 idx) const { CAGE_ASSERT_RUNTIME(idx < 3, "index out of range", idx); return vertices[idx]; }
-		vec3 &operator [] (uint32 idx) { CAGE_ASSERT_RUNTIME(idx < 3, "index out of range", idx); return vertices[idx]; }
+		vec3 operator [] (uint32 idx) const { CAGE_ASSERT(idx < 3, "index out of range", idx); return vertices[idx]; }
+		vec3 &operator [] (uint32 idx) { CAGE_ASSERT(idx < 3, "index out of range", idx); return vertices[idx]; }
 
 		// comparison operators
 		bool operator == (const triangle &other) const { for (uint8 i = 0; i < 3; i++) if (vertices[i] != other.vertices[i]) return false; return true; }

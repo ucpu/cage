@@ -32,8 +32,8 @@ namespace cage
 			public:
 				hashTableImpl(uint32 initItems, uint32 maxItems, float maxFillRate) : pageSize(detail::memoryPageSize()), lines(nullptr), used(0), tombs(0), total(0), maxFillRate(maxFillRate), maxPages(0)
 				{
-					CAGE_ASSERT_RUNTIME(initItems <= maxItems);
-					CAGE_ASSERT_RUNTIME(maxFillRate > 0 && maxFillRate < 1, maxFillRate);
+					CAGE_ASSERT(initItems <= maxItems);
+					CAGE_ASSERT(maxFillRate > 0 && maxFillRate < 1, maxFillRate);
 					mem = newVirtualMemory();
 					maxPages = numeric_cast<uint32>(detail::roundUpTo(numeric_cast<uintPtr>(maxItems * sizeof(hashTableLineStruct) / maxFillRate), pageSize) / pageSize);
 					lines = (hashTableLineStruct*)mem->reserve(maxPages);
@@ -86,7 +86,7 @@ namespace cage
 
 		void *hashTablePriv::get(uint32 name, bool allowNull) const
 		{
-			CAGE_ASSERT_RUNTIME(name > 0, name);
+			CAGE_ASSERT(name > 0, name);
 			hashTableImpl *impl = (hashTableImpl*)this;
 			uint32 h = name;
 			uint32 iter = 0;
@@ -108,8 +108,8 @@ namespace cage
 
 		void hashTablePriv::add(uint32 name, void *value)
 		{
-			CAGE_ASSERT_RUNTIME(name > 0);
-			CAGE_ASSERT_RUNTIME(value != nullptr);
+			CAGE_ASSERT(name > 0);
+			CAGE_ASSERT(value != nullptr);
 			hashTableImpl *impl = (hashTableImpl*)this;
 			if (impl->used + impl->tombs + 1 > impl->total * impl->maxFillRate)
 				impl->rehash();
@@ -137,7 +137,7 @@ namespace cage
 
 		void hashTablePriv::remove(uint32 name)
 		{
-			CAGE_ASSERT_RUNTIME(name > 0, name);
+			CAGE_ASSERT(name > 0, name);
 			hashTableImpl *impl = (hashTableImpl*)this;
 			uint32 h = name;
 			uint32 iter = 0;

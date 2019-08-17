@@ -295,7 +295,7 @@ namespace cage
 			{
 				if (e.type != eventStruct::eventType::MousePress)
 					return false;
-				CAGE_ASSERT_RUNTIME((uint32)e.mouse.buttons < sizeof(lastMouseButtonPressTimes) / sizeof(lastMouseButtonPressTimes[0]));
+				CAGE_ASSERT((uint32)e.mouse.buttons < sizeof(lastMouseButtonPressTimes) / sizeof(lastMouseButtonPressTimes[0]));
 				uint64 current = getApplicationTime();
 				uint64 &last = lastMouseButtonPressTimes[(uint32)e.mouse.buttons];
 				if (current - last < 500000)

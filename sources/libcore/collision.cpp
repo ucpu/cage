@@ -129,7 +129,7 @@ namespace cage
 							resultPairs.emplace_back(m, i);
 						i++;
 					}
-					CAGE_ASSERT_RUNTIME(!resultPairs.empty());
+					CAGE_ASSERT(!resultPairs.empty());
 				}
 			}
 		};
@@ -180,7 +180,7 @@ namespace cage
 	void collisionQuery::collider(const collisionMesh *&c, transform &t) const
 	{
 		collisionQueryImpl *impl = (collisionQueryImpl*)this;
-		CAGE_ASSERT_RUNTIME(impl->resultName);
+		CAGE_ASSERT(impl->resultName);
 		auto r = impl->data->allItems->get(impl->resultName, false);
 		c = r->collider;
 		t = *r;

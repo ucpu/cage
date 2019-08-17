@@ -36,7 +36,7 @@ namespace cage
 			if (context->compressedSize == 0)
 				return;
 			uintPtr res = detail::decompress(context->compressedData, numeric_cast<uintPtr>(context->compressedSize), context->originalData, numeric_cast<uintPtr>(context->originalSize));
-			CAGE_ASSERT_RUNTIME(res == context->originalSize, res, context->originalSize);
+			CAGE_ASSERT(res == context->originalSize, res, context->originalSize);
 		}
 
 		void defaultDone(const assetContext *context)
@@ -133,10 +133,10 @@ namespace cage
 
 			~assetManagerImpl()
 			{
-				CAGE_ASSERT_RUNTIME(countTotal == 0, countTotal);
-				CAGE_ASSERT_RUNTIME(countProcessing == 0, countProcessing);
-				CAGE_ASSERT_RUNTIME(index->count() == 0, index->count());
-				CAGE_ASSERT_RUNTIME(interNames.size() == 0, interNames.size());
+				CAGE_ASSERT(countTotal == 0, countTotal);
+				CAGE_ASSERT(countProcessing == 0, countProcessing);
+				CAGE_ASSERT(index->count() == 0, index->count());
+				CAGE_ASSERT(interNames.size() == 0, interNames.size());
 				destroying = true;
 				queueLoadFile->push(nullptr);
 				queueDecompression->push(nullptr);
@@ -167,11 +167,11 @@ namespace cage
 				{
 					OPTICK_EVENT("loading");
 					ASS_LOG(2, ass, "disk load");
-					CAGE_ASSERT_RUNTIME(ass->processing);
-					CAGE_ASSERT_RUNTIME(!ass->fabricated);
-					CAGE_ASSERT_RUNTIME(ass->originalData == nullptr);
-					CAGE_ASSERT_RUNTIME(ass->compressedData == nullptr);
-					CAGE_ASSERT_RUNTIME(ass->internationalizedPrevious == 0);
+					CAGE_ASSERT(ass->processing);
+					CAGE_ASSERT(!ass->fabricated);
+					CAGE_ASSERT(ass->originalData == nullptr);
+					CAGE_ASSERT(ass->compressedData == nullptr);
+					CAGE_ASSERT(ass->internationalizedPrevious == 0);
 					OPTICK_TAG("realName", ass->realName);
 					ass->internationalizedPrevious = ass->internationalizedName;
 					ass->scheme = m;
@@ -213,7 +213,7 @@ namespace cage
 							detail::memcpy(ass->dependenciesNew.data(), buff.data() + sizeof(assetHeader), h->dependenciesCount * sizeof(uint32));
 						uintPtr allocSize = numeric_cast<uintPtr>(ass->compressedSize + ass->originalSize);
 						uintPtr readSize = numeric_cast<uintPtr>(h->compressedSize == 0 ? h->originalSize : h->compressedSize);
-						CAGE_ASSERT_RUNTIME(readSize <= allocSize, readSize, allocSize);
+						CAGE_ASSERT(readSize <= allocSize, readSize, allocSize);
 						if (buff.size() < readSize + sizeof(assetHeader) + h->dependenciesCount * sizeof(uint32))
 							CAGE_THROW_ERROR(exception, "cage asset file content truncated");
 						ass->compressedData = detail::systemArena().allocate(allocSize, sizeof(uintPtr));
@@ -235,7 +235,7 @@ namespace cage
 							queueDecompression->push(ass);
 						else
 						{
-							CAGE_ASSERT_RUNTIME(ass->scheme < schemes.size(), ass->scheme, schemes.size());
+							CAGE_ASSERT(ass->scheme < schemes.size(), ass->scheme, schemes.size());
 							queueCustomLoad[schemes[ass->scheme].threadIndex]->push(ass);
 						}
 						queueAddDependencies->push(ass);
@@ -254,12 +254,12 @@ namespace cage
 				{
 					OPTICK_EVENT("decompression");
 					ASS_LOG(2, ass, "decompression");
-					CAGE_ASSERT_RUNTIME(ass->processing);
-					CAGE_ASSERT_RUNTIME(!ass->fabricated);
+					CAGE_ASSERT(ass->processing);
+					CAGE_ASSERT(!ass->fabricated);
 					if (!ass->error)
 					{
-						CAGE_ASSERT_RUNTIME(ass->compressedData);
-						CAGE_ASSERT_RUNTIME(ass->scheme < schemes.size(), ass->scheme, schemes.size());
+						CAGE_ASSERT(ass->compressedData);
+						CAGE_ASSERT(ass->scheme < schemes.size(), ass->scheme, schemes.size());
 						OPTICK_TAG("realName", ass->realName);
 						OPTICK_TAG("textName", ass->textName.c_str());
 						OPTICK_TAG("originalSize", ass->originalSize);
@@ -276,7 +276,7 @@ namespace cage
 							ass->error = true;
 						}
 					}
-					CAGE_ASSERT_RUNTIME(ass->scheme < schemes.size(), ass->scheme, schemes.size());
+					CAGE_ASSERT(ass->scheme < schemes.size(), ass->scheme, schemes.size());
 					queueCustomLoad[schemes[ass->scheme].threadIndex]->push(ass);
 					return true;
 				}
@@ -286,7 +286,7 @@ namespace cage
 
 			bool processCustomThread(uint32 threadIndex)
 			{
-				CAGE_ASSERT_RUNTIME(threadIndex < queueCustomDone.size(), threadIndex, queueCustomDone.size());
+				CAGE_ASSERT(threadIndex < queueCustomDone.size(), threadIndex, queueCustomDone.size());
 
 				{ // done
 					assetContextPrivateStruct *ass = nullptr;
@@ -295,9 +295,9 @@ namespace cage
 					{
 						OPTICK_EVENT("asset done");
 						ASS_LOG(1, ass, "custom done");
-						CAGE_ASSERT_RUNTIME(ass->processing);
-						CAGE_ASSERT_RUNTIME(!ass->fabricated);
-						CAGE_ASSERT_RUNTIME(ass->scheme < schemes.size(), ass->scheme, schemes.size());
+						CAGE_ASSERT(ass->processing);
+						CAGE_ASSERT(!ass->fabricated);
+						CAGE_ASSERT(ass->scheme < schemes.size(), ass->scheme, schemes.size());
 						OPTICK_TAG("realName", ass->realName);
 						OPTICK_TAG("textName", ass->textName.c_str());
 						try
@@ -323,12 +323,12 @@ namespace cage
 					{
 						OPTICK_EVENT("asset load");
 						ASS_LOG(1, ass, "custom load");
-						CAGE_ASSERT_RUNTIME(ass->processing);
-						CAGE_ASSERT_RUNTIME(!ass->fabricated);
+						CAGE_ASSERT(ass->processing);
+						CAGE_ASSERT(!ass->fabricated);
 						if (!ass->error)
 						{
-							CAGE_ASSERT_RUNTIME(ass->originalData);
-							CAGE_ASSERT_RUNTIME(ass->scheme < schemes.size(), ass->scheme, schemes.size());
+							CAGE_ASSERT(ass->originalData);
+							CAGE_ASSERT(ass->scheme < schemes.size(), ass->scheme, schemes.size());
 							OPTICK_TAG("realName", ass->realName);
 							OPTICK_TAG("textName", ass->textName.c_str());
 							OPTICK_TAG("scheme", ass->scheme);
@@ -359,14 +359,14 @@ namespace cage
 					{
 						OPTICK_EVENT("asset remove");
 						ASS_LOG(2, ass, "remove dependencies");
-						CAGE_ASSERT_RUNTIME(ass->processing);
+						CAGE_ASSERT(ass->processing);
 						OPTICK_TAG("realName", ass->realName);
 						OPTICK_TAG("textName", ass->textName.c_str());
 						for (auto it : ass->dependencies)
 							remove(it);
 						ass->dependencies.clear();
 						ass->processing = false;
-						CAGE_ASSERT_RUNTIME(countProcessing > 0);
+						CAGE_ASSERT(countProcessing > 0);
 						countProcessing--;
 						if (ass->references > 0)
 							assetStartLoading(ass);
@@ -376,7 +376,7 @@ namespace cage
 							interNameClear(ass->internationalizedName, ass);
 							index->remove(ass->realName);
 							detail::systemArena().destroy<assetContextPrivateStruct>(ass);
-							CAGE_ASSERT_RUNTIME(countTotal > 0);
+							CAGE_ASSERT(countTotal > 0);
 							countTotal--;
 						}
 						return true;
@@ -390,8 +390,8 @@ namespace cage
 					{
 						OPTICK_EVENT("asset add dependencies");
 						ASS_LOG(2, ass, "add dependencies");
-						CAGE_ASSERT_RUNTIME(ass->processing);
-						CAGE_ASSERT_RUNTIME(!ass->fabricated);
+						CAGE_ASSERT(ass->processing);
+						CAGE_ASSERT(!ass->fabricated);
 						OPTICK_TAG("realName", ass->realName);
 						OPTICK_TAG("textName", ass->textName.c_str());
 						for (auto it : ass->dependenciesNew)
@@ -412,8 +412,8 @@ namespace cage
 					{
 						OPTICK_EVENT("asset check dependencies");
 						ASS_LOG(3, ass, "check dependencies");
-						CAGE_ASSERT_RUNTIME(ass->processing);
-						CAGE_ASSERT_RUNTIME(!ass->fabricated);
+						CAGE_ASSERT(ass->processing);
+						CAGE_ASSERT(!ass->fabricated);
 						OPTICK_TAG("realName", ass->realName);
 						OPTICK_TAG("textName", ass->textName.c_str());
 						bool wait = !ass->dependenciesDoneFlag;
@@ -455,7 +455,7 @@ namespace cage
 						ass->originalSize = 0;
 						ass->processing = false;
 						ass->ready = true;
-						CAGE_ASSERT_RUNTIME(countProcessing > 0);
+						CAGE_ASSERT(countProcessing > 0);
 						countProcessing--;
 						if (ass->error)
 							CAGE_LOG(severityEnum::Warning, "assetManager", string() + "asset: '" + ass->textName + "', loading failed");
@@ -476,7 +476,7 @@ namespace cage
 						while (listener->readLine(line))
 						{
 							uint32 name = hashString(line.c_str());
-							CAGE_ASSERT_RUNTIME(name != 0);
+							CAGE_ASSERT(name != 0);
 							assetContextPrivateStruct *ass = index->get(name, true);
 							if (ass && ass->references > 0)
 							{
@@ -528,7 +528,7 @@ namespace cage
 					queueRemoveDependencies->push(ass);
 				else
 				{
-					CAGE_ASSERT_RUNTIME(ass->scheme < schemes.size(), ass->scheme, schemes.size());
+					CAGE_ASSERT(ass->scheme < schemes.size(), ass->scheme, schemes.size());
 					queueCustomDone[schemes[ass->scheme].threadIndex]->push(ass);
 				}
 			}
@@ -537,9 +537,9 @@ namespace cage
 			{
 				if (interName == 0)
 					return;
-				CAGE_ASSERT_RUNTIME(ass);
+				CAGE_ASSERT(ass);
 				auto &s = interNames[interName];
-				CAGE_ASSERT_RUNTIME(s.find(ass) == s.end());
+				CAGE_ASSERT(s.find(ass) == s.end());
 				s.insert(ass);
 				if (!index->exists(interName))
 					index->add(interName, ass);
@@ -549,11 +549,11 @@ namespace cage
 			{
 				if (interName == 0)
 					return;
-				CAGE_ASSERT_RUNTIME(ass);
-				CAGE_ASSERT_RUNTIME(index->exists(interName));
-				CAGE_ASSERT_RUNTIME(interNames.find(interName) != interNames.end());
+				CAGE_ASSERT(ass);
+				CAGE_ASSERT(index->exists(interName));
+				CAGE_ASSERT(interNames.find(interName) != interNames.end());
 				auto &s = interNames[interName];
-				CAGE_ASSERT_RUNTIME(s.find(ass) != s.end());
+				CAGE_ASSERT(s.find(ass) != s.end());
 				s.erase(ass);
 				index->remove(interName);
 				if (s.empty())
@@ -583,10 +583,10 @@ namespace cage
 
 	uint32 assetManager::dependenciesCount(uint32 assetName) const
 	{
-		CAGE_ASSERT_RUNTIME(ready(assetName), assetName);
+		CAGE_ASSERT(ready(assetName), assetName);
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		assetContextPrivateStruct *ass = impl->index->get(assetName, false);
-		CAGE_ASSERT_RUNTIME(ass);
+		CAGE_ASSERT(ass);
 		return numeric_cast<uint32>(ass->dependencies.size());
 	}
 
@@ -594,8 +594,8 @@ namespace cage
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		assetContextPrivateStruct *ass = impl->index->get(assetName, false);
-		CAGE_ASSERT_RUNTIME(ass);
-		CAGE_ASSERT_RUNTIME(index < ass->dependencies.size(), index, ass->dependencies.size(), assetName);
+		CAGE_ASSERT(ass);
+		CAGE_ASSERT(index < ass->dependencies.size(), index, ass->dependencies.size(), assetName);
 		return ass->dependencies[index];
 	}
 
@@ -603,7 +603,7 @@ namespace cage
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		assetContextPrivateStruct *ass = impl->index->get(assetName, false);
-		CAGE_ASSERT_RUNTIME(ass);
+		CAGE_ASSERT(ass);
 		return ass->dependencies;
 	}
 
@@ -687,7 +687,7 @@ namespace cage
 	void assetManager::add(uint32 assetName)
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
-		CAGE_ASSERT_RUNTIME(assetName != 0);
+		CAGE_ASSERT(assetName != 0);
 		assetContextPrivateStruct *ass = impl->index->get(assetName, true);
 		if (!ass)
 		{
@@ -699,16 +699,16 @@ namespace cage
 			impl->countTotal++;
 			impl->assetStartLoading(ass);
 		}
-		CAGE_ASSERT_RUNTIME(ass->references < m);
+		CAGE_ASSERT(ass->references < m);
 		ass->references++;
 	}
 
 	void assetManager::fabricate(uint32 scheme, uint32 assetName, const string &textName)
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
-		CAGE_ASSERT_RUNTIME(assetName != 0);
-		CAGE_ASSERT_RUNTIME(scheme < impl->schemes.size());
-		CAGE_ASSERT_RUNTIME(!impl->index->exists(assetName));
+		CAGE_ASSERT(assetName != 0);
+		CAGE_ASSERT(scheme < impl->schemes.size());
+		CAGE_ASSERT(!impl->index->exists(assetName));
 		assetContextPrivateStruct *ass = detail::systemArena().createObject<assetContextPrivateStruct>();
 		ass->fabricated = true;
 		ass->realName = assetName;
@@ -726,9 +726,9 @@ namespace cage
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		assetContextPrivateStruct *ass = impl->index->get(assetName, true);
-		CAGE_ASSERT_RUNTIME(ass);
-		CAGE_ASSERT_RUNTIME(ass->references > 0);
-		CAGE_ASSERT_RUNTIME(ass->realName == assetName, "assets cannot be removed by their internationalized names");
+		CAGE_ASSERT(ass);
+		CAGE_ASSERT(ass->references > 0);
+		CAGE_ASSERT(ass->realName == assetName, "assets cannot be removed by their internationalized names");
 		ass->references--;
 		if (ass->references == 0)
 			impl->assetStartRemoving(ass);
@@ -738,7 +738,7 @@ namespace cage
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		assetContextPrivateStruct *ass = impl->index->get(assetName, false);
-		CAGE_ASSERT_RUNTIME(ass);
+		CAGE_ASSERT(ass);
 		ASS_LOG(2, ass, "reload");
 		impl->assetStartLoading(ass);
 		if (recursive)
@@ -751,8 +751,8 @@ namespace cage
 	void assetManager::zScheme(uint32 index, const assetScheme &value, uintPtr typeSize)
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
-		CAGE_ASSERT_RUNTIME(index < impl->schemes.size());
-		CAGE_ASSERT_RUNTIME(value.threadIndex < impl->queueCustomLoad.size());
+		CAGE_ASSERT(index < impl->schemes.size());
+		CAGE_ASSERT(value.threadIndex < impl->queueCustomLoad.size());
 		(assetScheme&)impl->schemes[index] = value;
 		impl->schemes[index].typeSize = typeSize;
 	}
@@ -760,7 +760,7 @@ namespace cage
 	uintPtr assetManager::zGetTypeSize(uint32 scheme) const
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
-		CAGE_ASSERT_RUNTIME(scheme < impl->schemes.size(), scheme, impl->schemes.size());
+		CAGE_ASSERT(scheme < impl->schemes.size(), scheme, impl->schemes.size());
 		return impl->schemes[scheme].typeSize;
 	}
 
@@ -768,8 +768,8 @@ namespace cage
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		assetContextPrivateStruct *ass = impl->index->get(assetName, false);
-		CAGE_ASSERT_RUNTIME(ass);
-		CAGE_ASSERT_RUNTIME(ass->ready);
+		CAGE_ASSERT(ass);
+		CAGE_ASSERT(ass->ready);
 		return ass->returnData;
 	}
 
@@ -777,8 +777,8 @@ namespace cage
 	{
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		assetContextPrivateStruct *ass = impl->index->get(assetName, false);
-		CAGE_ASSERT_RUNTIME(ass);
-		CAGE_ASSERT_RUNTIME(ass->fabricated);
+		CAGE_ASSERT(ass);
+		CAGE_ASSERT(ass->fabricated);
 		ass->returnData = value;
 		ass->ready = !!value;
 	}
@@ -801,7 +801,7 @@ namespace cage
 		static const uint32 maxTexName = sizeof(a.textName);
 		if (name.length() >= maxTexName)
 			name = string() + ".." + name.subString(name.length() - maxTexName - 3, maxTexName - 3);
-		CAGE_ASSERT_RUNTIME(name.length() < sizeof(a.textName), name);
+		CAGE_ASSERT(name.length() < sizeof(a.textName), name);
 		detail::memcpy(a.textName, name.c_str(), name.length());
 		a.scheme = schemeIndex;
 		return a;

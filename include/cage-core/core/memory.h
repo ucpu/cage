@@ -98,13 +98,13 @@ namespace cage
 
 			T *operator -> () const
 			{
-				CAGE_ASSERT_RUNTIME(data_, "data is null");
+				CAGE_ASSERT(data_, "data is null");
 				return data_;
 			}
 
 			typename holderDereference<T>::type operator * () const
 			{
-				CAGE_ASSERT_RUNTIME(data_, "data is null");
+				CAGE_ASSERT(data_, "data is null");
 				return *data_;
 			}
 
@@ -269,7 +269,7 @@ namespace cage
 		void *allocate(uintPtr size, uintPtr alignment)
 		{
 			void *res = stub->alloc(inst, size, alignment);
-			CAGE_ASSERT_RUNTIME((uintPtr(res) % alignment) == 0, size, alignment, res, uintPtr(res) % alignment);
+			CAGE_ASSERT((uintPtr(res) % alignment) == 0, size, alignment, res, uintPtr(res) % alignment);
 			return res;
 		}
 
@@ -324,7 +324,7 @@ namespace cage
 			}
 			catch (...)
 			{
-				CAGE_ASSERT_RUNTIME(false, "exception thrown in destructor");
+				CAGE_ASSERT(false, "exception thrown in destructor");
 				detail::terminate();
 			}
 			deallocate(ptr);

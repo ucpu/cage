@@ -275,10 +275,10 @@ namespace
 		{
 			uint32 glyphIndex = 0, x = 0, y = 0;
 			packer->get(index, glyphIndex, x, y);
-			CAGE_ASSERT_RUNTIME(glyphIndex < glyphs.size(), glyphIndex, glyphs.size());
+			CAGE_ASSERT(glyphIndex < glyphs.size(), glyphIndex, glyphs.size());
 			glyphStruct &g = glyphs[glyphIndex];
-			CAGE_ASSERT_RUNTIME(x < res, "texture x coordinate out of range", x, res, index, glyphIndex);
-			CAGE_ASSERT_RUNTIME(y < res, "texture y coordinate out of range", y, res, index, glyphIndex);
+			CAGE_ASSERT(x < res, "texture x coordinate out of range", x, res, index, glyphIndex);
+			CAGE_ASSERT(y < res, "texture y coordinate out of range", y, res, index, glyphIndex);
 			g.pngX = x;
 			g.pngY = y;
 			vec2 to = vec2(g.pngX, g.pngY) / res;
@@ -309,10 +309,10 @@ namespace
 	{
 		CAGE_LOG(severityEnum::Info, logComponentName, "export data");
 
-		CAGE_ASSERT_RUNTIME(glyphs.size() == data.glyphCount, glyphs.size(), data.glyphCount);
-		CAGE_ASSERT_RUNTIME(charsetChars.size() == data.charCount, charsetChars.size(), data.charCount);
-		CAGE_ASSERT_RUNTIME(charsetChars.size() == charsetGlyphs.size(), charsetChars.size(), charsetGlyphs.size());
-		CAGE_ASSERT_RUNTIME(kerning.size() == 0 || kerning.size() == data.glyphCount * data.glyphCount, kerning.size(), data.glyphCount * data.glyphCount, data.glyphCount);
+		CAGE_ASSERT(glyphs.size() == data.glyphCount, glyphs.size(), data.glyphCount);
+		CAGE_ASSERT(charsetChars.size() == data.charCount, charsetChars.size(), data.charCount);
+		CAGE_ASSERT(charsetChars.size() == charsetGlyphs.size(), charsetChars.size(), charsetGlyphs.size());
+		CAGE_ASSERT(kerning.size() == 0 || kerning.size() == data.glyphCount * data.glyphCount, kerning.size(), data.glyphCount * data.glyphCount, data.glyphCount);
 
 		assetHeader h = initializeAssetHeaderStruct();
 		h.originalSize = sizeof(data) + data.texSize +
@@ -325,7 +325,7 @@ namespace
 		serializer sr(buf);
 
 		sr << data;
-		CAGE_ASSERT_RUNTIME(texels->bufferSize() == data.texSize);
+		CAGE_ASSERT(texels->bufferSize() == data.texSize);
 		sr.write(texels->bufferData(), texels->bufferSize());
 		for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
 			sr << glyphs[glyphIndex].data;
@@ -337,7 +337,7 @@ namespace
 			sr.write(&charsetGlyphs[0], sizeof(charsetGlyphs[0]) * charsetGlyphs.size());
 		}
 
-		CAGE_ASSERT_RUNTIME(h.originalSize == buf.size());
+		CAGE_ASSERT(h.originalSize == buf.size());
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "buffer size (before compression): " + buf.size());
 		buf = detail::compress(buf);
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "buffer size (after compression): " + buf.size());
@@ -421,7 +421,7 @@ namespace
 			else
 			{
 				uint32 m = data.glyphCount;
-				CAGE_ASSERT_RUNTIME(kerning.size() == m * m, kerning.size(), m);
+				CAGE_ASSERT(kerning.size() == m * m, kerning.size(), m);
 				for (uint32 x = 0; x < m; x++)
 				{
 					for (uint32 y = 0; y < m; y++)

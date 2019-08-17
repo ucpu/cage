@@ -8,13 +8,13 @@ namespace cage
 
 		void setOrigin(void *newOrigin)
 		{
-			CAGE_ASSERT_RUNTIME(!origin, "can only be set once", origin);
+			CAGE_ASSERT(!origin, "can only be set once", origin);
 			current = origin = newOrigin;
 		}
 
 		void setSize(uintPtr size)
 		{
-			CAGE_ASSERT_RUNTIME(size >= numeric_cast<uintPtr>((char*)current - (char*)origin), "size can not shrink", size, current, origin, totalSize);
+			CAGE_ASSERT(size >= numeric_cast<uintPtr>((char*)current - (char*)origin), "size can not shrink", size, current, origin, totalSize);
 			totalSize = size;
 		}
 
@@ -27,7 +27,7 @@ namespace cage
 				CAGE_THROW_SILENT(outOfMemory, "out of memory", total);
 
 			void *result = (char*)current + alig + BoundsPolicy::SizeFront;
-			CAGE_ASSERT_RUNTIME((uintPtr)result % alignment == 0, "alignment failed", result, total, alignment, current, alig, BoundsPolicy::SizeFront, size, BoundsPolicy::SizeBack);
+			CAGE_ASSERT((uintPtr)result % alignment == 0, "alignment failed", result, total, alignment, current, alig, BoundsPolicy::SizeFront, size, BoundsPolicy::SizeBack);
 
 			bound.setFront((char*)result - BoundsPolicy::SizeFront);
 			tag.set(result, size);
@@ -65,13 +65,13 @@ namespace cage
 
 		void setOrigin(void *newOrigin)
 		{
-			CAGE_ASSERT_RUNTIME(!origin, "nFrameAllocatorPolicy::setOrigin: can only be set once", origin);
+			CAGE_ASSERT(!origin, "nFrameAllocatorPolicy::setOrigin: can only be set once", origin);
 			origin = newOrigin;
 		}
 
 		void setSize(uintPtr size)
 		{
-			CAGE_ASSERT_RUNTIME(size > 0 && totalSize == 0, "nFrameAllocatorPolicy::setSize: can only be set once", origin, size, totalSize);
+			CAGE_ASSERT(size > 0 && totalSize == 0, "nFrameAllocatorPolicy::setSize: can only be set once", origin, size, totalSize);
 			totalSize = size;
 			for (uint8 i = 0; i < N; i++)
 			{
@@ -121,8 +121,8 @@ namespace cage
 
 		void setOrigin(void *newOrigin)
 		{
-			CAGE_ASSERT_RUNTIME(!origin, "can only be set once", origin, newOrigin);
-			CAGE_ASSERT_RUNTIME(newOrigin > (char*)objectSize, "origin too low", newOrigin, objectSize);
+			CAGE_ASSERT(!origin, "can only be set once", origin, newOrigin);
+			CAGE_ASSERT(newOrigin > (char*)objectSize, "origin too low", newOrigin, objectSize);
 			uintPtr addition = detail::addToAlign((uintPtr)newOrigin, objectSize);
 			if (addition < BoundsPolicy::SizeFront)
 				addition += objectSize;
@@ -133,11 +133,11 @@ namespace cage
 		{
 			if (size == 0 && totalSize == 0)
 				return;
-			CAGE_ASSERT_RUNTIME(size >= objectSize, "size must be at least the object size", size, objectSize);
+			CAGE_ASSERT(size >= objectSize, "size must be at least the object size", size, objectSize);
 			uintPtr s = size - objectSize - detail::subtractToAlign((uintPtr)origin + size, objectSize);
 			if (s == totalSize)
 				return;
-			CAGE_ASSERT_RUNTIME(s > totalSize, "size can not shrink", s, totalSize); // can only grow
+			CAGE_ASSERT(s > totalSize, "size can not shrink", s, totalSize); // can only grow
 			void *tmp = (char*)origin + totalSize;
 			totalSize = s;
 			while (tmp < (char*)origin + totalSize)
@@ -149,14 +149,14 @@ namespace cage
 
 		void *allocate(uintPtr size, uintPtr alignment)
 		{
-			CAGE_ASSERT_RUNTIME(current >= origin && current <= (char*)origin + totalSize, "current is corrupted", current, origin, totalSize);
+			CAGE_ASSERT(current >= origin && current <= (char*)origin + totalSize, "current is corrupted", current, origin, totalSize);
 
 			if (current >= (char*)origin + totalSize)
 				CAGE_THROW_SILENT(outOfMemory, "out of memory", objectSize);
 
 			void *next = *(void**)current;
 			uintPtr alig = detail::addToAlign((uintPtr)current, alignment);
-			CAGE_ASSERT_RUNTIME(size + alig <= AtomSize, "size with alignment too big", size, alignment, alig, AtomSize);
+			CAGE_ASSERT(size + alig <= AtomSize, "size with alignment too big", size, alignment, alig, AtomSize);
 			void *result = (char*)current + alig;
 
 			bound.setFront((char*)current - BoundsPolicy::SizeFront);
@@ -171,9 +171,9 @@ namespace cage
 		void deallocate(void *ptr)
 		{
 			void *ptrOrig = ptr;
-			CAGE_ASSERT_RUNTIME(ptr >= origin && ptr < (char*)origin + totalSize, "ptr must be element", ptr, origin, totalSize);
+			CAGE_ASSERT(ptr >= origin && ptr < (char*)origin + totalSize, "ptr must be element", ptr, origin, totalSize);
 			ptr = (char*)ptr - detail::subtractToAlign((uintPtr)ptr, objectSize);
-			CAGE_ASSERT_RUNTIME((uintPtr)ptr % objectSize == 0);
+			CAGE_ASSERT((uintPtr)ptr % objectSize == 0);
 
 			track.check(ptrOrig);
 			bound.checkFront((char*)ptr - BoundsPolicy::SizeFront);
@@ -211,13 +211,13 @@ namespace cage
 
 		void setOrigin(void *newOrigin)
 		{
-			CAGE_ASSERT_RUNTIME(!origin, "can only be set once", origin);
+			CAGE_ASSERT(!origin, "can only be set once", origin);
 			front = back = origin = newOrigin;
 		}
 
 		void setSize(uintPtr size)
 		{
-			CAGE_ASSERT_RUNTIME(size > 0 && totalSize == 0, "can only be set once", origin, size, totalSize);
+			CAGE_ASSERT(size > 0 && totalSize == 0, "can only be set once", origin, size, totalSize);
 			totalSize = size;
 		}
 
@@ -243,7 +243,7 @@ namespace cage
 			}
 
 			void *result = (char*)back + alig + sizeof(uintPtr) + BoundsPolicy::SizeFront;
-			CAGE_ASSERT_RUNTIME((uintPtr)result % alignment == 0, "alignment failed", result, total, alignment, back, front, alig, BoundsPolicy::SizeFront, size, BoundsPolicy::SizeBack);
+			CAGE_ASSERT((uintPtr)result % alignment == 0, "alignment failed", result, total, alignment, back, front, alig, BoundsPolicy::SizeFront, size, BoundsPolicy::SizeBack);
 
 			*(uintPtr*)((char*)result - BoundsPolicy::SizeFront - sizeof(uintPtr)) = size;
 			bound.setFront((char*)result - BoundsPolicy::SizeFront);
@@ -257,7 +257,7 @@ namespace cage
 
 		void deallocate(void *ptr)
 		{
-			CAGE_ASSERT_RUNTIME(ptr >= origin && ptr < (char*)origin + totalSize, "ptr must be element", ptr, origin, totalSize);
+			CAGE_ASSERT(ptr >= origin && ptr < (char*)origin + totalSize, "ptr must be element", ptr, origin, totalSize);
 
 			track.check(ptr);
 
@@ -296,13 +296,13 @@ namespace cage
 
 		void setOrigin(void *newOrigin)
 		{
-			CAGE_ASSERT_RUNTIME(!origin, "can only be set once", origin);
+			CAGE_ASSERT(!origin, "can only be set once", origin);
 			current = origin = newOrigin;
 		}
 
 		void setSize(uintPtr size)
 		{
-			CAGE_ASSERT_RUNTIME(size >= numeric_cast<uintPtr>((char*)current - (char*)origin), "size can not shrink", size, current, origin, totalSize);
+			CAGE_ASSERT(size >= numeric_cast<uintPtr>((char*)current - (char*)origin), "size can not shrink", size, current, origin, totalSize);
 			totalSize = size;
 		}
 
@@ -315,7 +315,7 @@ namespace cage
 				CAGE_THROW_SILENT(outOfMemory, "out of memory", total);
 
 			void *result = (char*)current + alig + sizeof(uintPtr) + BoundsPolicy::SizeFront;
-			CAGE_ASSERT_RUNTIME((uintPtr)result % alignment == 0, "alignment failed", result, total, alignment, current, alig, BoundsPolicy::SizeFront, size, BoundsPolicy::SizeBack);
+			CAGE_ASSERT((uintPtr)result % alignment == 0, "alignment failed", result, total, alignment, current, alig, BoundsPolicy::SizeFront, size, BoundsPolicy::SizeBack);
 
 			*(uintPtr*)((char*)result - BoundsPolicy::SizeFront - sizeof(uintPtr)) = alig;
 			bound.setFront((char*)result - BoundsPolicy::SizeFront);
@@ -329,7 +329,7 @@ namespace cage
 
 		void deallocate(void *ptr)
 		{
-			CAGE_ASSERT_RUNTIME(ptr >= origin && ptr < (char*)origin + totalSize, "ptr must be element", ptr, origin, totalSize);
+			CAGE_ASSERT(ptr >= origin && ptr < (char*)origin + totalSize, "ptr must be element", ptr, origin, totalSize);
 
 			track.check(ptr);
 

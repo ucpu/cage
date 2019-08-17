@@ -54,10 +54,10 @@ namespace cage
 				switch (target)
 				{
 				case GL_DRAW_FRAMEBUFFER:
-					CAGE_ASSERT_RUNTIME(getCurrentObject<drawMark>() == id);
+					CAGE_ASSERT(getCurrentObject<drawMark>() == id);
 					break;
 				case GL_READ_FRAMEBUFFER:
-					CAGE_ASSERT_RUNTIME(getCurrentObject<readMark>() == id);
+					CAGE_ASSERT(getCurrentObject<readMark>() == id);
 					break;
 				default:
 					CAGE_THROW_CRITICAL(exception, "invalid frame buffer target");
@@ -128,7 +128,7 @@ namespace cage
 			glDrawBuffers(count, bufs);
 			break;
 		case GL_READ_FRAMEBUFFER:
-			CAGE_ASSERT_RUNTIME(count == 1);
+			CAGE_ASSERT(count == 1);
 			glReadBuffer(*bufs);
 			break;
 		default:

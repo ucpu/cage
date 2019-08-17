@@ -208,7 +208,7 @@ namespace cage
 
 			void setTextLabel(uint32 index, const string &value)
 			{
-				CAGE_ASSERT_RUNTIME(index < sizeof(labelIndices) / sizeof(labelIndices[0]), index);
+				CAGE_ASSERT(index < sizeof(labelIndices) / sizeof(labelIndices[0]), index);
 				if (labelIndices[index] == 0 || !gui()->entities()->has(labelIndices[index]))
 					return;
 				entity *timing = gui()->entities()->get(labelIndices[index]);

@@ -155,7 +155,7 @@ namespace
 		ass.references.clear();
 		ass.internationalizedName = "";
 		schemeStruct *scheme = schemes.retrieve(ass.scheme);
-		CAGE_ASSERT_RUNTIME(scheme, "asset has invalid scheme");
+		CAGE_ASSERT(scheme, "asset has invalid scheme");
 		try
 		{
 			if (!scheme->applyOnAsset(ass))
@@ -421,7 +421,7 @@ namespace
 		{
 			if (it->needNotify)
 			{
-				CAGE_ASSERT_RUNTIME(!it->corrupted);
+				CAGE_ASSERT(!it->corrupted);
 				notifierNotify(it->name);
 				const_cast<assetStruct*>(it.get())->needNotify = false;
 			}
@@ -534,7 +534,7 @@ namespace
 		{ // reprocess assets
 			itg = assets.begin();
 			threads->run();
-			CAGE_ASSERT_RUNTIME(itg == assets.end());
+			CAGE_ASSERT(itg == assets.end());
 		}
 
 		for (const auto &it : assets)

@@ -18,7 +18,7 @@ namespace cage
 {
 	void imageCreate(hierarchyItemStruct *item)
 	{
-		CAGE_ASSERT_RUNTIME(!item->image);
+		CAGE_ASSERT(!item->image);
 		item->image = item->impl->itemsMemory.createObject<imageItemStruct>(item);
 	}
 

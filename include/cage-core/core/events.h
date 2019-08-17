@@ -93,7 +93,7 @@ namespace cage
 
 		R operator ()(Ts... vs) const
 		{
-			CAGE_ASSERT_RUNTIME(!!*this, stub.inst, stub.fnc);
+			CAGE_ASSERT(!!*this, stub.inst, stub.fnc);
 			return stub.fnc(stub.inst, templates::forward<Ts>(vs)...);
 		}
 	};
@@ -188,7 +188,7 @@ namespace cage
 
 		bool dispatch(Ts... vs) const
 		{
-			CAGE_ASSERT_RUNTIME(!this->p);
+			CAGE_ASSERT(!this->p);
 			const privat::eventLinker *l = this->n;
 			while (l)
 			{

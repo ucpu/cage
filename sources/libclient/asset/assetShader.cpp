@@ -40,7 +40,7 @@ namespace cage
 				shr->source(type, pos, len);
 			}
 			shr->relink();
-			CAGE_ASSERT_RUNTIME(des.available() == 0);
+			CAGE_ASSERT(des.available() == 0);
 		}
 	}
 

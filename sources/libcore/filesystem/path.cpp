@@ -126,7 +126,7 @@ namespace cage
 		if (a.empty())
 			return b;
 		string result = pathSimplify(a + "/" + b);
-		CAGE_ASSERT_RUNTIME(pathIsAbs(result) == pathIsAbs(a), a, b, result, pathIsAbs(result), pathIsAbs(a));
+		CAGE_ASSERT(pathIsAbs(result) == pathIsAbs(a), a, b, result, pathIsAbs(result), pathIsAbs(a));
 		return result;
 	}
 
@@ -596,7 +596,7 @@ namespace cage
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
 			string p = getExecutableFullPath();
-			CAGE_ASSERT_RUNTIME(p.isPattern("", "", ".exe"));
+			CAGE_ASSERT(p.isPattern("", "", ".exe"));
 			return p.subString(0, p.length() - 4);
 #else
 			return getExecutableFullPath();

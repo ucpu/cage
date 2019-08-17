@@ -114,12 +114,12 @@ namespace cage
 				sint32 cur = 0;
 				if (getsockopt(descriptor, SOL_SOCKET, optname, (raw_type*)&cur, &len) != 0)
 					CAGE_THROW_ERROR(codeException, "retrieving buffer size (getsockopt)", WSAGetLastError());
-				CAGE_ASSERT_RUNTIME(len == sizeof(sint32));
+				CAGE_ASSERT(len == sizeof(sint32));
 				sint32 last = request;
 				sint32 r = request;
 				while (cur != last && cur < r)
 				{
-					CAGE_ASSERT_RUNTIME(r > 0);
+					CAGE_ASSERT(r > 0);
 					if (setsockopt(descriptor, SOL_SOCKET, optname, (raw_type*)&r, len) != 0)
 						CAGE_THROW_ERROR(codeException, "setting buffer size (setsockopt)", WSAGetLastError());
 					last = cur;
@@ -214,21 +214,21 @@ namespace cage
 
 		void sock::send(const void *buffer, uintPtr bufferSize)
 		{
-			CAGE_ASSERT_RUNTIME(connected);
+			CAGE_ASSERT(connected);
 			if (::send(descriptor, (raw_type*)buffer, numeric_cast<int>(bufferSize), 0) != bufferSize)
 				CAGE_THROW_ERROR(codeException, "send failed (send)", WSAGetLastError());
 		}
 
 		void sock::sendTo(const void *buffer, uintPtr bufferSize, const addr &remoteAddress)
 		{
-			CAGE_ASSERT_RUNTIME(!connected);
+			CAGE_ASSERT(!connected);
 			if (::sendto(descriptor, (raw_type*)buffer, numeric_cast<int>(bufferSize), 0, (sockaddr*)&remoteAddress.storage, remoteAddress.addrlen) != bufferSize)
 				CAGE_THROW_ERROR(codeException, "send failed (sendto)", WSAGetLastError());
 		}
 
 		uintPtr sock::recv(void *buffer, uintPtr bufferSize, int flags)
 		{
-			CAGE_ASSERT_RUNTIME(connected);
+			CAGE_ASSERT(connected);
 			int rtn;
 			if ((rtn = ::recv(descriptor, (raw_type*)buffer, numeric_cast<int>(bufferSize), flags)) < 0)
 			{
@@ -242,7 +242,7 @@ namespace cage
 
 		uintPtr sock::recvFrom(void *buffer, uintPtr bufferSize, addr &remoteAddress, int flags)
 		{
-			//CAGE_ASSERT_RUNTIME(!connected);
+			//CAGE_ASSERT(!connected);
 			remoteAddress.addrlen = sizeof(remoteAddress.storage);
 			int rtn;
 			if ((rtn = ::recvfrom(descriptor, (raw_type*)buffer, numeric_cast<int>(bufferSize), flags, (sockaddr*)&remoteAddress.storage, &remoteAddress.addrlen)) < 0)
@@ -286,7 +286,7 @@ namespace cage
 
 		addr addrList::address() const
 		{
-			CAGE_ASSERT_RUNTIME(valid());
+			CAGE_ASSERT(valid());
 			addr address;
 			detail::memcpy(&address.storage, current->ai_addr, current->ai_addrlen);
 			address.addrlen = numeric_cast<socklen_t>(current->ai_addrlen);
@@ -295,25 +295,25 @@ namespace cage
 
 		int addrList::family() const
 		{
-			CAGE_ASSERT_RUNTIME(valid());
+			CAGE_ASSERT(valid());
 			return current->ai_family;
 		}
 
 		int addrList::type() const
 		{
-			CAGE_ASSERT_RUNTIME(valid());
+			CAGE_ASSERT(valid());
 			return current->ai_socktype;
 		}
 
 		int addrList::protocol() const
 		{
-			CAGE_ASSERT_RUNTIME(valid());
+			CAGE_ASSERT(valid());
 			return current->ai_protocol;
 		}
 
 		void addrList::getAll(addr &address, int &family, int &type, int &protocol) const
 		{
-			CAGE_ASSERT_RUNTIME(valid());
+			CAGE_ASSERT(valid());
 			detail::memcpy(&address.storage, current->ai_addr, current->ai_addrlen);
 			address.addrlen = numeric_cast<socklen_t>(current->ai_addrlen);
 			family = current->ai_family;
@@ -323,7 +323,7 @@ namespace cage
 
 		void addrList::next()
 		{
-			CAGE_ASSERT_RUNTIME(valid());
+			CAGE_ASSERT(valid());
 			current = current->ai_next;
 		}
 	}

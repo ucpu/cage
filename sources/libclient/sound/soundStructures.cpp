@@ -36,8 +36,8 @@ namespace cage
 
 	void soundInterleavedBufferStruct::resize(uint32 channels, uint32 frames)
 	{
-		CAGE_ASSERT_RUNTIME(channels > 0 && frames > 0, channels, frames);
-		CAGE_ASSERT_RUNTIME(!!allocated == !!buffer, allocated, buffer);
+		CAGE_ASSERT(channels > 0 && frames > 0, channels, frames);
+		CAGE_ASSERT(!!allocated == !!buffer, allocated, buffer);
 		this->channels = channels;
 		this->frames = frames;
 		uint32 requested = channels * frames;

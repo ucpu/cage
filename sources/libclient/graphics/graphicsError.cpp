@@ -57,7 +57,7 @@ namespace cage
 				return; // ignore messages like: Buffer detailed info: Buffer object 3 (bound to GL_ELEMENT_ARRAY_BUFFER_ARB, GL_ARRAY_BUFFER_ARB, and GL_UNIFORM_BUFFER_EXT, usage hint is GL_STATIC_DRAW) will use VIDEO memory as the source for buffer object operations.
 
 			windowHandle *ctx = (windowHandle*)userParam;
-			CAGE_ASSERT_RUNTIME(ctx, "missing context");
+			CAGE_ASSERT(ctx, "missing context");
 			if (ctx->debugOpenglErrorCallback)
 				return ctx->debugOpenglErrorCallback(source, type, id, severity, message);
 
@@ -190,7 +190,7 @@ namespace cage
 			auto it = assertContext().contexts.find(threadId());
 			if (it == assertContext().contexts.end())
 				return nullptr;
-			CAGE_ASSERT_RUNTIME(it->second);
+			CAGE_ASSERT(it->second);
 			return it->second;
 		}
 

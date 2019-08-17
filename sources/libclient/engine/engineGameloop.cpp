@@ -529,7 +529,7 @@ namespace cage
 
 			void initialize(const engineCreateConfig &config)
 			{
-				CAGE_ASSERT_RUNTIME(engineStarted == 0);
+				CAGE_ASSERT(engineStarted == 0);
 				engineStarted = 1;
 
 				CAGE_LOG(severityEnum::Info, "engine", "initializing engine");
@@ -654,14 +654,14 @@ namespace cage
 				{ scopeLock<syncBarrier> l(threadsStateBarier); }
 				CAGE_LOG(severityEnum::Info, "engine", "engine initialized");
 
-				CAGE_ASSERT_RUNTIME(engineStarted == 1);
+				CAGE_ASSERT(engineStarted == 1);
 				engineStarted = 2;
 			}
 
 			void start()
 			{
 				OPTICK_THREAD("engine control");
-				CAGE_ASSERT_RUNTIME(engineStarted == 2);
+				CAGE_ASSERT(engineStarted == 2);
 				engineStarted = 3;
 
 				try
@@ -702,13 +702,13 @@ namespace cage
 					CAGE_LOG(severityEnum::Error, "engine", "exception caught in finalization (application) in control");
 				}
 
-				CAGE_ASSERT_RUNTIME(engineStarted == 3);
+				CAGE_ASSERT(engineStarted == 3);
 				engineStarted = 4;
 			}
 
 			void finalize()
 			{
-				CAGE_ASSERT_RUNTIME(engineStarted == 4);
+				CAGE_ASSERT(engineStarted == 4);
 				engineStarted = 5;
 
 				CAGE_LOG(severityEnum::Info, "engine", "finalizing engine");
@@ -774,7 +774,7 @@ namespace cage
 
 				CAGE_LOG(severityEnum::Info, "engine", "engine finalized");
 
-				CAGE_ASSERT_RUNTIME(engineStarted == 5);
+				CAGE_ASSERT(engineStarted == 5);
 				engineStarted = 6;
 			}
 		};
@@ -802,20 +802,20 @@ namespace cage
 
 	void engineInitialize(const engineCreateConfig &config)
 	{
-		CAGE_ASSERT_RUNTIME(!engineData);
+		CAGE_ASSERT(!engineData);
 		engineData = detail::systemArena().createHolder<engineDataStruct>(config);
 		engineData->initialize(config);
 	}
 
 	void engineStart()
 	{
-		CAGE_ASSERT_RUNTIME(engineData);
+		CAGE_ASSERT(engineData);
 		engineData->start();
 	}
 
 	void engineStop()
 	{
-		CAGE_ASSERT_RUNTIME(engineData);
+		CAGE_ASSERT(engineData);
 		if (!engineData->stopping.exchange(true))
 		{
 			CAGE_LOG(severityEnum::Info, "engine", "stopping engine");
@@ -824,7 +824,7 @@ namespace cage
 
 	void engineFinalize()
 	{
-		CAGE_ASSERT_RUNTIME(engineData);
+		CAGE_ASSERT(engineData);
 		engineData->finalize();
 		engineData.clear();
 	}

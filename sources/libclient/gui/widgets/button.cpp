@@ -22,7 +22,7 @@ namespace cage
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT_RUNTIME(!hierarchy->firstChild, "button may not have children");
+				CAGE_ASSERT(!hierarchy->firstChild, "button may not have children");
 				if (hierarchy->text)
 					hierarchy->text->text.apply(skin->defaults.button.textFormat, hierarchy->impl);
 			}
@@ -67,7 +67,7 @@ namespace cage
 
 	void buttonCreate(hierarchyItemStruct *item)
 	{
-		CAGE_ASSERT_RUNTIME(!item->item);
+		CAGE_ASSERT(!item->item);
 		item->item = item->impl->itemsMemory.createObject<buttonImpl>(item);
 	}
 }

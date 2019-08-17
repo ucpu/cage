@@ -44,7 +44,7 @@ namespace cage
 					n->p = this;
 				p->n = this;
 			}
-			CAGE_ASSERT_RUNTIME(valid(), "multiple events with same order are prohibited (unless zero)");
+			CAGE_ASSERT(valid(), "multiple events with same order are prohibited (unless zero)");
 		}
 
 		void eventLinker::detach()

@@ -204,8 +204,8 @@ namespace cage
 	{
 		rads angle(const vec3 &a, const vec3 &b)
 		{
-			CAGE_ASSERT_RUNTIME(abs(squaredLength(a) - 1) < 1e-4);
-			CAGE_ASSERT_RUNTIME(abs(squaredLength(b) - 1) < 1e-4);
+			CAGE_ASSERT(abs(squaredLength(a) - 1) < 1e-4);
+			CAGE_ASSERT(abs(squaredLength(b) - 1) < 1e-4);
 			return acos(dot(a, b));
 		}
 	}
@@ -810,7 +810,7 @@ namespace cage
 	{
 		if (!a.valid() || !b.valid())
 			return line();
-		CAGE_ASSERT_RUNTIME(a.normalized());
+		CAGE_ASSERT(a.normalized());
 		vec3 l = b.center - a.origin;
 		real tca = dot(l, a.direction);
 		real d2 = dot(l, l) - sqr(tca);
@@ -820,7 +820,7 @@ namespace cage
 		real thc = sqrt(r2 - d2);
 		real t0 = tca - thc;
 		real t1 = tca + thc;
-		CAGE_ASSERT_RUNTIME(t1 >= t0);
+		CAGE_ASSERT(t1 >= t0);
 		if (t0 > a.maximum || t1 < a.minimum)
 			return line();
 		return line(a.origin, a.direction, max(a.minimum, t0), min(a.maximum, t1));
@@ -828,7 +828,7 @@ namespace cage
 
 	line intersection(const line &a, const aabb &b)
 	{
-		CAGE_ASSERT_RUNTIME(a.normalized());
+		CAGE_ASSERT(a.normalized());
 		real tmin = a.minimum;
 		real tmax = a.maximum;
 		for (uint32 i = 0; i < 3; i++)

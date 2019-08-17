@@ -40,7 +40,7 @@ namespace cage
 					if (data.size[i].valid())
 						hierarchy->requestedSize[i] = data.size[i];
 				}
-				CAGE_ASSERT_RUNTIME(hierarchy->requestedSize.valid());
+				CAGE_ASSERT(hierarchy->requestedSize.valid());
 			}
 
 			virtual void findFinalPosition(const finalPositionStruct &update) override
@@ -58,7 +58,7 @@ namespace cage
 
 	void explicitSizeCreate(hierarchyItemStruct *item)
 	{
-		CAGE_ASSERT_RUNTIME(!item->item);
+		CAGE_ASSERT(!item->item);
 		item->item = item->impl->itemsMemory.createObject<explicitSizeImpl>(item);
 	}
 }

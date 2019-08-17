@@ -49,7 +49,7 @@ namespace cage
 			}
 			shadowmapBufferStruct(uint32 target) : width(0), height(0)
 			{
-				CAGE_ASSERT_RUNTIME(target == GL_TEXTURE_CUBE_MAP || target == GL_TEXTURE_2D);
+				CAGE_ASSERT(target == GL_TEXTURE_CUBE_MAP || target == GL_TEXTURE_2D);
 				texture = newRenderTexture(target);
 				texture->setDebugName("shadowmap");
 				texture->filters(GL_LINEAR, GL_LINEAR, 16);
@@ -627,8 +627,8 @@ namespace cage
 						shaderBlit->bind();
 						renderEffect();
 					}
-					CAGE_ASSERT_RUNTIME(texSource == colorTexture.get());
-					CAGE_ASSERT_RUNTIME(texTarget == intermediateTexture.get());
+					CAGE_ASSERT(texSource == colorTexture.get());
+					CAGE_ASSERT(texTarget == intermediateTexture.get());
 
 					renderTarget->colorTexture(0, colorTexture.get());
 					renderTarget->depthTexture(depthTexture.get());
@@ -1013,7 +1013,7 @@ namespace cage
 					v.tex->bind();
 					if (visualizeIndex == 0)
 					{
-						CAGE_ASSERT_RUNTIME(v.visualizableTextureMode == visualizableTextureModeEnum::Color);
+						CAGE_ASSERT(v.visualizableTextureMode == visualizableTextureModeEnum::Color);
 						shaderVisualizeColor->bind();
 						shaderVisualizeColor->uniform(0, vec2(1.0 / lastGBufferWidth, 1.0 / lastGBufferHeight));
 						renderDispatch(meshSquare, 1);

@@ -30,11 +30,11 @@ namespace cage
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT_RUNTIME(!hierarchy->firstChild, "slider may not have children");
-				CAGE_ASSERT_RUNTIME(!hierarchy->text, "slider may not have text");
-				CAGE_ASSERT_RUNTIME(!hierarchy->image, "slider may not have image");
-				CAGE_ASSERT_RUNTIME(data.value.valid() && data.min.valid() && data.max.valid());
-				CAGE_ASSERT_RUNTIME(data.max > data.min);
+				CAGE_ASSERT(!hierarchy->firstChild, "slider may not have children");
+				CAGE_ASSERT(!hierarchy->text, "slider may not have text");
+				CAGE_ASSERT(!hierarchy->image, "slider may not have image");
+				CAGE_ASSERT(data.value.valid() && data.min.valid() && data.max.valid());
+				CAGE_ASSERT(data.max > data.min);
 				normalizedValue = (data.value - data.min) / (data.max - data.min);
 			}
 
@@ -121,7 +121,7 @@ namespace cage
 
 	void sliderBarCreate(hierarchyItemStruct *item)
 	{
-		CAGE_ASSERT_RUNTIME(!item->item);
+		CAGE_ASSERT(!item->item);
 		item->item = item->impl->itemsMemory.createObject<sliderBarImpl>(item);
 	}
 }

@@ -91,7 +91,7 @@ namespace cage
 
 			real findKerning(uint32 L, uint32 R, real size) const
 			{
-				CAGE_ASSERT_RUNTIME(L < glyphsArray.size() && R < glyphsArray.size(), L, R, glyphsArray.size());
+				CAGE_ASSERT(L < glyphsArray.size() && R < glyphsArray.size(), L, R, glyphsArray.size());
 				if (kerning.empty() || glyphsArray.empty())
 					return 0;
 				uint32 s = numeric_cast<uint32>(glyphsArray.size());
@@ -100,7 +100,7 @@ namespace cage
 
 			uint32 findGlyphIndex(uint32 character) const
 			{
-				CAGE_ASSERT_RUNTIME(charmapChars.size());
+				CAGE_ASSERT(charmapChars.size());
 				if (charmapChars[0] > character)
 					return 0; // otherwise the mid-1 could overflow
 				uint32 min = 0, max = numeric_cast<uint32>(charmapChars.size() - 1);
@@ -169,10 +169,10 @@ namespace cage
 
 			void processText(const processDataStruct &data)
 			{
-				CAGE_ASSERT_RUNTIME(!data.render || instances.empty());
-				CAGE_ASSERT_RUNTIME(data.format->align <= textAlignEnum::Center, data.format->align);
-				CAGE_ASSERT_RUNTIME(data.format->wrapWidth > 0, data.format->wrapWidth);
-				CAGE_ASSERT_RUNTIME(data.format->size > 0, data.format->size);
+				CAGE_ASSERT(!data.render || instances.empty());
+				CAGE_ASSERT(data.format->align <= textAlignEnum::Center, data.format->align);
+				CAGE_ASSERT(data.format->wrapWidth > 0, data.format->wrapWidth);
+				CAGE_ASSERT(data.format->size > 0, data.format->size);
 				const uint32 *totalEnd = data.gls + data.count;
 				const uint32 *it = data.gls;
 				real actualLineHeight = (lineHeight + data.format->lineSpacing) * data.format->size;
@@ -284,7 +284,7 @@ namespace cage
 		impl->texHeight = height;
 		impl->tex->bind();
 		uint32 bpp = size / (width * height);
-		CAGE_ASSERT_RUNTIME(width * height * bpp == size, "rounding error", width, height, bpp, size);
+		CAGE_ASSERT(width * height * bpp == size, "rounding error", width, height, bpp, size);
 		switch (bpp)
 		{
 		case 1:

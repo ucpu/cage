@@ -30,9 +30,9 @@ namespace cage
 			vds.init((char*)context->compressedData + sizeof(soundSourceHeader), numeric_cast<uintPtr>(context->compressedSize - sizeof(soundSourceHeader)));
 			uint32 ch = 0, f = 0, r = 0;
 			vds.decode(ch, f, r, (float*)context->originalData);
-			CAGE_ASSERT_RUNTIME(snd->channels == ch, snd->channels, ch);
-			CAGE_ASSERT_RUNTIME(snd->frames == f, snd->frames, f);
-			CAGE_ASSERT_RUNTIME(snd->sampleRate == r, snd->sampleRate, r);
+			CAGE_ASSERT(snd->channels == ch, snd->channels, ch);
+			CAGE_ASSERT(snd->frames == f, snd->frames, f);
+			CAGE_ASSERT(snd->sampleRate == r, snd->sampleRate, r);
 		}
 
 		void processLoad(const assetContext *context, void *schemePointer)

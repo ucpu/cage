@@ -134,14 +134,14 @@ namespace cage
 	entityComponent *entityManager::componentByIndex(uint32 index) const
 	{
 		entityManagerImpl *impl = (entityManagerImpl *)this;
-		CAGE_ASSERT_RUNTIME(index < impl->components.size());
+		CAGE_ASSERT(index < impl->components.size());
 		return impl->components[index];
 	}
 
 	entityGroup *entityManager::groupByIndex(uint32 index) const
 	{
 		entityManagerImpl *impl = (entityManagerImpl *)this;
-		CAGE_ASSERT_RUNTIME(index < impl->groups.size());
+		CAGE_ASSERT(index < impl->groups.size());
 		return impl->groups[index];
 	}
 
@@ -186,8 +186,8 @@ namespace cage
 	entity *entityManager::create(uint32 name)
 	{
 		entityManagerImpl *impl = (entityManagerImpl *)this;
-		CAGE_ASSERT_RUNTIME(name != 0);
-		CAGE_ASSERT_RUNTIME(!impl->namedEntities->exists(name), "entity name must be unique", name);
+		CAGE_ASSERT(name != 0);
+		CAGE_ASSERT(!impl->namedEntities->exists(name), "entity name must be unique", name);
 		return detail::systemArena().createObject<entityImpl>(impl, name);
 	}
 
@@ -296,7 +296,7 @@ namespace cage
 	bool entity::has(const entityGroup *group) const
 	{
 		entityImpl *impl = (entityImpl*)this;
-		CAGE_ASSERT_RUNTIME(((groupImpl*)group)->manager == impl->manager, "incompatible group");
+		CAGE_ASSERT(((groupImpl*)group)->manager == impl->manager, "incompatible group");
 		return impl->groups.find(const_cast<entityGroup*>(group)) != impl->groups.end();
 	}
 
@@ -331,7 +331,7 @@ namespace cage
 	{
 		entityImpl *impl = (entityImpl*)this;
 		componentImpl *ci = (componentImpl *)component;
-		CAGE_ASSERT_RUNTIME(ci->manager == impl->manager, "incompatible component");
+		CAGE_ASSERT(ci->manager == impl->manager, "incompatible component");
 		if (impl->components.size() > ci->vectorIndex)
 			return impl->components[ci->vectorIndex] != nullptr;
 		return false;

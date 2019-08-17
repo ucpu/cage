@@ -38,11 +38,11 @@ namespace cage
 	{ \
 		if (min == max) \
 			return min; \
-		CAGE_ASSERT_RUNTIME(min < max, min, max); \
+		CAGE_ASSERT(min < max, min, max); \
 		uint64 range = max - min; \
 		uint64 mod = next() % range; \
 		TYPE res = (TYPE)(mod + min); \
-		CAGE_ASSERT_RUNTIME(res >= min && res < max, res, min, max); \
+		CAGE_ASSERT(res >= min && res < max, res, min, max); \
 		return res; \
 	}
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64));
@@ -50,7 +50,7 @@ namespace cage
 
 #define GCHL_GENERATE(TYPE) TYPE randomGenerator::randomRange(TYPE min, TYPE max) \
 	{ \
-		CAGE_ASSERT_RUNTIME(min <= max, min, max); \
+		CAGE_ASSERT(min <= max, min, max); \
 		TYPE res = interpolate(min, max, this->randomChance()); \
 		return res; \
 	}
@@ -59,13 +59,13 @@ namespace cage
 
 	double randomGenerator::randomRange(double min, double max)
 	{
-		CAGE_ASSERT_RUNTIME(min <= max, min, max);
+		CAGE_ASSERT(min <= max, min, max);
 		uint64 r = next();
 		double f = (double)r / (double)detail::numeric_limits<uint64>::max();
 		if (f >= 1.0)
 			f = 0;
 		double res = (max - min) * f + min;
-		CAGE_ASSERT_RUNTIME(res >= min && res < max, res, min, max);
+		CAGE_ASSERT(res >= min && res < max, res, min, max);
 		return res;
 	}
 
@@ -75,7 +75,7 @@ namespace cage
 		real res = (real)r / (real)detail::numeric_limits<uint64>::max();
 		if (res >= 1.0)
 			res = 0;
-		CAGE_ASSERT_RUNTIME(res >= 0.f && res < 1.f, res);
+		CAGE_ASSERT(res >= 0.f && res < 1.f, res);
 		return res;
 	}
 
@@ -95,7 +95,7 @@ namespace cage
 		real z = randomRange(-1.f, 1.f);
 		vec2 p = randomDirection2() * sqrt(1 - sqr(z));
 		vec3 r = vec3(p, z);
-		CAGE_ASSERT_RUNTIME(abs(squaredLength(r) - 1) < 1e-5);
+		CAGE_ASSERT(abs(squaredLength(r) - 1) < 1e-5);
 		return r;
 	}
 

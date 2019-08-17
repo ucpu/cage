@@ -75,7 +75,7 @@ namespace cage
 
 	void skeletonRig::animateSkin(const skeletalAnimation *animation, real coef, mat4 *temporary, mat4 *output) const
 	{
-		CAGE_ASSERT_RUNTIME(coef >= 0 && coef <= 1, coef);
+		CAGE_ASSERT(coef >= 0 && coef <= 1, coef);
 		skeletonImpl *impl = (skeletonImpl*)this;
 
 		for (uint32 i = 0; i < impl->totalBones; i++)
@@ -85,13 +85,13 @@ namespace cage
 				temporary[i] = mat4();
 			else
 			{
-				CAGE_ASSERT_RUNTIME(p < i, p, i);
+				CAGE_ASSERT(p < i, p, i);
 				temporary[i] = temporary[p];
 			}
 			mat4 anim = animation->evaluate(i, coef);
 			temporary[i] = temporary[i] * (anim.valid() ? anim : impl->baseMatrices[i]);
 			output[i] = impl->globalInverse * temporary[i] * impl->invRestMatrices[i];
-			CAGE_ASSERT_RUNTIME(output[i].valid(), output[i], i);
+			CAGE_ASSERT(output[i].valid(), output[i], i);
 		}
 	}
 
@@ -125,7 +125,7 @@ namespace cage
 					tr.orientation = quat(b - a, vec3(0, 1, 0));
 				output[i] = impl->globalInverse * mat4(tr);
 			}
-			CAGE_ASSERT_RUNTIME(output[i].valid(), output[i], i);
+			CAGE_ASSERT(output[i].valid(), output[i], i);
 		}
 	}
 

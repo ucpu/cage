@@ -47,7 +47,7 @@ namespace cage
 				for (std::vector<rectStruct>::iterator it = rects.begin(), et = rects.end(); it != et; it++)
 				{
 					rectStruct &r = *it;
-					CAGE_ASSERT_RUNTIME(r.w < width && r.h < height, r.w, r.h, width, height, "impossibly large rectangle");
+					CAGE_ASSERT(r.w < width && r.h < height, r.w, r.h, width, height, "impossibly large rectangle");
 					if (x + r.w < width)
 					{
 						r.x = x;
@@ -88,7 +88,7 @@ namespace cage
 	void binPackingClass::get(uint32 index, uint32 &id, uint32 & x, uint32 & y) const
 	{
 		binPackingImpl *impl = (binPackingImpl*)this;
-		CAGE_ASSERT_RUNTIME(index < impl->rects.size(), index, impl->rects.size());
+		CAGE_ASSERT(index < impl->rects.size(), index, impl->rects.size());
 		rectStruct &r = impl->rects[index];
 		id = r.id;
 		x = r.x;

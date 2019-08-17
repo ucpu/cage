@@ -296,7 +296,7 @@ namespace cage
 	discoveryPeer discoveryClient::peerData(uint32 index) const
 	{
 		discoveryClientImpl *impl = (discoveryClientImpl*)this;
-		CAGE_ASSERT_RUNTIME(index < impl->peers.size());
+		CAGE_ASSERT(index < impl->peers.size());
 		auto it = impl->peers.begin();
 		std::advance(it, index);
 		return it->second;

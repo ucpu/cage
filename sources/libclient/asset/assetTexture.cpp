@@ -25,7 +25,7 @@ namespace cage
 			if (context->assetHolder)
 			{
 				tex = static_cast<renderTexture*>(context->assetHolder.get());
-				CAGE_ASSERT_RUNTIME(tex->getTarget() == data->target, "texture target cannot change");
+				CAGE_ASSERT(tex->getTarget() == data->target, "texture target cannot change");
 				tex->bind();
 			}
 			else
@@ -40,7 +40,7 @@ namespace cage
 
 			{
 				uint32 bytesSize = data->dimX * data->dimY * data->dimZ * data->bpp;
-				CAGE_ASSERT_RUNTIME((values + bytesSize) == ((char*)context->originalData + context->originalSize), bytesSize, context->originalSize);
+				CAGE_ASSERT((values + bytesSize) == ((char*)context->originalData + context->originalSize), bytesSize, context->originalSize);
 			}
 
 			if (data->target == GL_TEXTURE_3D || data->target == GL_TEXTURE_2D_ARRAY)

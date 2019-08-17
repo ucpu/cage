@@ -108,7 +108,7 @@ namespace cage
 		{
 			void *tmp = nullptr;
 			queue->pop(tmp);
-			CAGE_ASSERT_RUNTIME(tmp);
+			CAGE_ASSERT(tmp);
 			try
 			{
 				value = *(T*)tmp;
@@ -126,7 +126,7 @@ namespace cage
 			void *tmp = nullptr;
 			if (queue->tryPop(tmp))
 			{
-				CAGE_ASSERT_RUNTIME(tmp);
+				CAGE_ASSERT(tmp);
 				try
 				{
 					value = *(T*)tmp;

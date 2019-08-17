@@ -41,7 +41,7 @@ namespace
 					for (uint32 bi = 0; bi < m->mNumBones; bi++)
 					{
 						aiBone *b = m->mBones[bi];
-						CAGE_ASSERT_RUNTIME(names.count(b->mName) == 1);
+						CAGE_ASSERT(names.count(b->mName) == 1);
 						aiNode *n = names[b->mName];
 						while (n && interested.count(n->mName) == 0)
 						{
@@ -67,11 +67,11 @@ namespace
 				for (uint32 bi = 0; bi < m->mNumBones; bi++)
 				{
 					aiBone *b = m->mBones[bi];
-					CAGE_ASSERT_RUNTIME(indices.count(b->mName));
+					CAGE_ASSERT(indices.count(b->mName));
 					uint16 idx = indices[b->mName];
 					if (bones[idx])
 					{
-						CAGE_ASSERT_RUNTIME(conv(bones[idx]->mOffsetMatrix) == conv(b->mOffsetMatrix));
+						CAGE_ASSERT(conv(bones[idx]->mOffsetMatrix) == conv(b->mOffsetMatrix));
 					}
 					else
 						bones[idx] = b;
@@ -85,27 +85,27 @@ namespace
 		void validate()
 		{
 			uint32 num = numeric_cast<uint32>(bones.size());
-			CAGE_ASSERT_RUNTIME(num == nodes.size());
-			CAGE_ASSERT_RUNTIME(num == parents.size());
+			CAGE_ASSERT(num == nodes.size());
+			CAGE_ASSERT(num == parents.size());
 			for (uint32 i = 0; i < num; i++)
 			{
 				if (nodes[i]->mParent)
 				{
-					CAGE_ASSERT_RUNTIME(parents[i] < i, parents[i], i);
-					CAGE_ASSERT_RUNTIME(parent(nodes[i]) == nodes[parents[i]]);
+					CAGE_ASSERT(parents[i] < i, parents[i], i);
+					CAGE_ASSERT(parent(nodes[i]) == nodes[parents[i]]);
 				}
 				else
 				{
-					CAGE_ASSERT_RUNTIME(parents[i] == m);
+					CAGE_ASSERT(parents[i] == m);
 				}
 				if (bones[i])
 				{
-					CAGE_ASSERT_RUNTIME(bones[i]->mName == nodes[i]->mName);
+					CAGE_ASSERT(bones[i]->mName == nodes[i]->mName);
 				}
 				if (nodes[i]->mName.length)
 				{
-					CAGE_ASSERT_RUNTIME(indices.count(nodes[i]->mName) == 1);
-					CAGE_ASSERT_RUNTIME(indices[nodes[i]->mName] == i);
+					CAGE_ASSERT(indices.count(nodes[i]->mName) == 1);
+					CAGE_ASSERT(indices[nodes[i]->mName] == i);
 				}
 			}
 		}
@@ -395,8 +395,8 @@ namespace
 uint16 assimpSkeletonClass::bonesCount() const
 {
 	const assimpSkeletonImpl *impl = (const assimpSkeletonImpl*)this;
-	CAGE_ASSERT_RUNTIME(impl->bones.size() == impl->nodes.size());
-	CAGE_ASSERT_RUNTIME(impl->parents.size() == impl->nodes.size());
+	CAGE_ASSERT(impl->bones.size() == impl->nodes.size());
+	CAGE_ASSERT(impl->parents.size() == impl->nodes.size());
 	return numeric_cast<uint16>(impl->bones.size());
 }
 

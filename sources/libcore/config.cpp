@@ -69,7 +69,7 @@ namespace cage
 
 		variable *directVariable(const string &name)
 		{
-			CAGE_ASSERT_RUNTIME(!name.empty(), "variable name cannot be empty");
+			CAGE_ASSERT(!name.empty(), "variable name cannot be empty");
 			variable *v = directVariables()[name];
 			if (!v)
 			{
@@ -146,7 +146,7 @@ namespace cage
 			case configTypeEnum::Uint64: return v->u64 != 0;
 			case configTypeEnum::Float: return real(v->f) != real(0);
 			case configTypeEnum::Double: return real(v->d) != real(0);
-			case configTypeEnum::String: CAGE_ASSERT_RUNTIME(v->s); return v->s->toBool();
+			case configTypeEnum::String: CAGE_ASSERT(v->s); return v->s->toBool();
 			default: return false;
 			}
 		}
@@ -163,7 +163,7 @@ namespace cage
 			case configTypeEnum::Uint64: return numeric_cast<sint32>(v->u64);
 			case configTypeEnum::Float:  return numeric_cast<sint32>(v->f);
 			case configTypeEnum::Double: return numeric_cast<sint32>(v->d);
-			case configTypeEnum::String: CAGE_ASSERT_RUNTIME(v->s); return v->s->toSint32();
+			case configTypeEnum::String: CAGE_ASSERT(v->s); return v->s->toSint32();
 			default: return 0;
 			}
 		}
@@ -180,7 +180,7 @@ namespace cage
 			case configTypeEnum::Uint64: return numeric_cast<uint32>(v->u64);
 			case configTypeEnum::Float:  return numeric_cast<uint32>(v->f);
 			case configTypeEnum::Double: return numeric_cast<uint32>(v->d);
-			case configTypeEnum::String: CAGE_ASSERT_RUNTIME(v->s); return v->s->toUint32();
+			case configTypeEnum::String: CAGE_ASSERT(v->s); return v->s->toUint32();
 			default: return 0;
 			}
 		}
@@ -197,7 +197,7 @@ namespace cage
 			case configTypeEnum::Uint64: return numeric_cast<sint64>(v->u64);
 			case configTypeEnum::Float:  return numeric_cast<sint64>(v->f);
 			case configTypeEnum::Double: return numeric_cast<sint64>(v->d);
-			case configTypeEnum::String: CAGE_ASSERT_RUNTIME(v->s); return v->s->toSint64();
+			case configTypeEnum::String: CAGE_ASSERT(v->s); return v->s->toSint64();
 			default: return 0;
 			}
 		}
@@ -214,7 +214,7 @@ namespace cage
 			case configTypeEnum::Uint64: return numeric_cast<uint64>(v->u64);
 			case configTypeEnum::Float:  return numeric_cast<uint64>(v->f);
 			case configTypeEnum::Double: return numeric_cast<uint64>(v->d);
-			case configTypeEnum::String: CAGE_ASSERT_RUNTIME(v->s); return v->s->toUint64();
+			case configTypeEnum::String: CAGE_ASSERT(v->s); return v->s->toUint64();
 			default: return 0;
 			}
 		}
@@ -231,7 +231,7 @@ namespace cage
 			case configTypeEnum::Uint64: return numeric_cast<float>(v->u64);
 			case configTypeEnum::Float:  return numeric_cast<float>(v->f);
 			case configTypeEnum::Double: return numeric_cast<float>(v->d);
-			case configTypeEnum::String: CAGE_ASSERT_RUNTIME(v->s); return v->s->toFloat();
+			case configTypeEnum::String: CAGE_ASSERT(v->s); return v->s->toFloat();
 			default: return 0;
 			}
 		}
@@ -248,7 +248,7 @@ namespace cage
 			case configTypeEnum::Uint64: return numeric_cast<double>(v->u64);
 			case configTypeEnum::Float:  return numeric_cast<double>(v->f);
 			case configTypeEnum::Double: return numeric_cast<double>(v->d);
-			case configTypeEnum::String: CAGE_ASSERT_RUNTIME(v->s); return v->s->toDouble();
+			case configTypeEnum::String: CAGE_ASSERT(v->s); return v->s->toDouble();
 			default: return 0;
 			}
 		}
@@ -265,7 +265,7 @@ namespace cage
 			case configTypeEnum::Uint64: return v->u64;
 			case configTypeEnum::Float: return v->f;
 			case configTypeEnum::Double: return v->d;
-			case configTypeEnum::String: CAGE_ASSERT_RUNTIME(v->s); return *v->s;
+			case configTypeEnum::String: CAGE_ASSERT(v->s); return *v->s;
 			default: return "";
 			}
 		}
@@ -287,7 +287,7 @@ namespace cage
 
 			void next()
 			{
-				CAGE_ASSERT_RUNTIME(valid, "configList is at invalid location");
+				CAGE_ASSERT(valid, "configList is at invalid location");
 				valid = ++it != et;
 			}
 		};
@@ -329,7 +329,7 @@ namespace cage
 	CAGE_JOIN(config, T)::CAGE_JOIN(config, T)(const string &name, t default_) { scopeLock<syncMutex> lock(mut()); data = getVar(name); variable *v = (variable*)data; if (v->type == configTypeEnum::Undefined) v->set(default_); } \
 	CAGE_JOIN(config, T) &CAGE_JOIN(config, T)::operator = (t value) { ((variable*)data)->set(value); return *this; } \
 	CAGE_JOIN(config, T)::operator t() const { return cast<t>((variable*)data); } \
-	t configList::CAGE_JOIN(get, T)() const { configListImpl *impl = (configListImpl*)this; CAGE_ASSERT_RUNTIME(impl->valid, "configList is at invalid location"); return cast<t>(impl->it->second); }
+	t configList::CAGE_JOIN(get, T)() const { configListImpl *impl = (configListImpl*)this; CAGE_ASSERT(impl->valid, "configList is at invalid location"); return cast<t>(impl->it->second); }
 	GCHL_CONFIG(Bool, bool)
 	GCHL_CONFIG(Sint32, sint32)
 	GCHL_CONFIG(Sint64, sint64)
@@ -345,7 +345,7 @@ namespace cage
 	configString::configString(const string &name, const string &default_) { scopeLock<syncMutex> lock(mut()); data = getVar(name); variable *v = (variable*)data; if (v->type == configTypeEnum::Undefined) v->set(default_); }
 	configString &configString::operator = (const string &value) { ((variable*)data)->set(value); return *this; }
 	configString::operator string() const { return cast<string>((variable*)data); }
-	string configList::getString() const { configListImpl *impl = (configListImpl*)this; CAGE_ASSERT_RUNTIME(impl->valid, "configList is at invalid location"); return cast<string>(impl->it->second); }
+	string configList::getString() const { configListImpl *impl = (configListImpl*)this; CAGE_ASSERT(impl->valid, "configList is at invalid location"); return cast<string>(impl->it->second); }
 
 	bool configList::valid() const
 	{
@@ -356,14 +356,14 @@ namespace cage
 	string configList::name() const
 	{
 		configListImpl *impl = (configListImpl*)this;
-		CAGE_ASSERT_RUNTIME(impl->valid, "configList is at invalid location");
+		CAGE_ASSERT(impl->valid, "configList is at invalid location");
 		return impl->it->first;
 	}
 
 	configTypeEnum configList::type() const
 	{
 		configListImpl *impl = (configListImpl*)this;
-		CAGE_ASSERT_RUNTIME(impl->valid, "configList is at invalid location");
+		CAGE_ASSERT(impl->valid, "configList is at invalid location");
 		return impl->it->second->type;
 	}
 

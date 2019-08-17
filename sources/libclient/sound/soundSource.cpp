@@ -61,7 +61,7 @@ namespace cage
 				switch (dataType)
 				{
 				case dtRaw:
-					CAGE_ASSERT_RUNTIME((index + requestFrames) * channels <= rawData.size());
+					CAGE_ASSERT((index + requestFrames) * channels <= rawData.size());
 					detail::memcpy(buffer, rawData.data() + index * channels, requestFrames * channels * sizeof(float));
 					break;
 				case dtVorbis:
@@ -131,8 +131,8 @@ namespace cage
 						index += r;
 					}
 
-					CAGE_ASSERT_RUNTIME(buffer == temporaryData1.data() + temporaryData1.size());
-					CAGE_ASSERT_RUNTIME(requestLeft == 0);
+					CAGE_ASSERT(buffer == temporaryData1.data() + temporaryData1.size());
+					CAGE_ASSERT(requestLeft == 0);
 				}
 
 				// transfer the buffer
@@ -184,7 +184,7 @@ namespace cage
 
 			void busDestroyed(mixingBus *bus)
 			{
-				CAGE_ASSERT_RUNTIME(outputs.find(bus) != outputs.end());
+				CAGE_ASSERT(outputs.find(bus) != outputs.end());
 				outputs.erase(bus);
 			}
 
@@ -218,10 +218,10 @@ namespace cage
 
 	void soundSource::setDataRaw(uint32 channels, uint32 frames, uint32 sampleRate, float *data)
 	{
-		CAGE_ASSERT_RUNTIME(frames > 0);
-		CAGE_ASSERT_RUNTIME(channels > 0);
-		CAGE_ASSERT_RUNTIME(sampleRate > 0);
-		CAGE_ASSERT_RUNTIME(data != nullptr);
+		CAGE_ASSERT(frames > 0);
+		CAGE_ASSERT(channels > 0);
+		CAGE_ASSERT(sampleRate > 0);
+		CAGE_ASSERT(data != nullptr);
 		soundSourceImpl *impl = (soundSourceImpl*)this;
 		impl->clearAllBuffers();
 		impl->dataType = dtRaw;
@@ -234,8 +234,8 @@ namespace cage
 
 	void soundSource::setDataVorbis(uintPtr size, void *buffer)
 	{
-		CAGE_ASSERT_RUNTIME(size > 0);
-		CAGE_ASSERT_RUNTIME(buffer != nullptr);
+		CAGE_ASSERT(size > 0);
+		CAGE_ASSERT(buffer != nullptr);
 		soundSourceImpl *impl = (soundSourceImpl*)this;
 		impl->clearAllBuffers();
 		impl->dataType = dtVorbis;
@@ -245,7 +245,7 @@ namespace cage
 
 	void soundSource::setDataTone(uint32 pitch)
 	{
-		CAGE_ASSERT_RUNTIME(pitch > 0);
+		CAGE_ASSERT(pitch > 0);
 		soundSourceImpl *impl = (soundSourceImpl*)this;
 		impl->clearAllBuffers();
 		impl->dataType = dtTone;

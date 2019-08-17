@@ -55,17 +55,17 @@ namespace cage
 
 		void attachHierarchy(hierarchyItemStruct *item, hierarchyItemStruct *parent)
 		{
-			CAGE_ASSERT_RUNTIME(item && parent && !item->parent && !item->prevSibling && !item->nextSibling);
+			CAGE_ASSERT(item && parent && !item->parent && !item->prevSibling && !item->nextSibling);
 			item->parent = parent;
 			if (!parent->lastChild)
 			{
-				CAGE_ASSERT_RUNTIME(!parent->firstChild);
+				CAGE_ASSERT(!parent->firstChild);
 				parent->firstChild = parent->lastChild = item;
 			}
 			else
 			{
-				CAGE_ASSERT_RUNTIME(parent->firstChild && parent->lastChild);
-				CAGE_ASSERT_RUNTIME(!parent->lastChild->nextSibling);
+				CAGE_ASSERT(parent->firstChild && parent->lastChild);
+				CAGE_ASSERT(!parent->lastChild->nextSibling);
 				parent->lastChild->nextSibling = item;
 				item->prevSibling = parent->lastChild;
 				sortHierarchy(item);
@@ -84,7 +84,7 @@ namespace cage
 			for (auto e : impl->entityMgr->entities())
 			{
 				uint32 name = e->name();
-				CAGE_ASSERT_RUNTIME(name != 0 && name != m, name);
+				CAGE_ASSERT(name != 0 && name != m, name);
 				hierarchyItemStruct *item = impl->itemsMemory.createObject<hierarchyItemStruct>(impl, e);
 				map[name] = item;
 			}
@@ -96,8 +96,8 @@ namespace cage
 				if (GUI_HAS_COMPONENT(parent, e))
 				{
 					CAGE_COMPONENT_GUI(parent, p, e);
-					CAGE_ASSERT_RUNTIME(p.parent != 0 && p.parent != m && p.parent != name, p.parent, name);
-					CAGE_ASSERT_RUNTIME(map.find(p.parent) != map.end(), p.parent, name);
+					CAGE_ASSERT(p.parent != 0 && p.parent != m && p.parent != name, p.parent, name);
+					CAGE_ASSERT(map.find(p.parent) != map.end(), p.parent, name);
 					item->order = p.order;
 					attachHierarchy(item, map[p.parent]);
 				}
@@ -131,16 +131,16 @@ namespace cage
 			uint32 wc = impl->entityWidgetsCount(item->ent);
 			bool sc = GUI_HAS_COMPONENT(scrollbars, item->ent);
 			uint32 lc = impl->entityLayoutsCount(item->ent);
-			CAGE_ASSERT_RUNTIME(wc <= 1, item->ent->name());
-			CAGE_ASSERT_RUNTIME(lc <= 1, item->ent->name());
+			CAGE_ASSERT(wc <= 1, item->ent->name());
+			CAGE_ASSERT(lc <= 1, item->ent->name());
 
 			// widget
 			if (wc)
 			{
-#define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, item->ent)) { CAGE_ASSERT_RUNTIME(!item->item, item->ent->name()); CAGE_JOIN(T, Create)(item); }
+#define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, item->ent)) { CAGE_ASSERT(!item->item, item->ent->name()); CAGE_JOIN(T, Create)(item); }
 				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS));
 #undef GCHL_GENERATE
-				CAGE_ASSERT_RUNTIME(item->item);
+				CAGE_ASSERT(item->item);
 				if (sc || !!lc)
 					item = subsideItem(item);
 			}
@@ -149,7 +149,7 @@ namespace cage
 			if (sc)
 			{
 				scrollbarsCreate(item);
-				CAGE_ASSERT_RUNTIME(item->item);
+				CAGE_ASSERT(item->item);
 				if (!!lc)
 					item = subsideItem(item);
 			}
@@ -157,10 +157,10 @@ namespace cage
 			// layouter
 			if (lc)
 			{
-#define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, item->ent)) { CAGE_ASSERT_RUNTIME(!item->item, item->ent->name()); CAGE_JOIN(T, Create)(item); }
+#define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, item->ent)) { CAGE_ASSERT(!item->item, item->ent->name()); CAGE_JOIN(T, Create)(item); }
 				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_LAYOUT_COMPONENTS));
 #undef GCHL_GENERATE
-				CAGE_ASSERT_RUNTIME(item->item);
+				CAGE_ASSERT(item->item);
 			}
 		}
 
@@ -195,7 +195,7 @@ namespace cage
 				{
 					widgetStateComponent &w = wi->widgetState;
 					w = ws;
-					CAGE_ASSERT_RUNTIME(w.skinIndex < impl->skins.size(), w.skinIndex, impl->skins.size());
+					CAGE_ASSERT(w.skinIndex < impl->skins.size(), w.skinIndex, impl->skins.size());
 					wi->skin = &impl->skins[w.skinIndex];
 				}
 				if (item->firstChild)
@@ -218,29 +218,29 @@ namespace cage
 		{
 			if (item->prevSibling)
 			{
-				CAGE_ASSERT_RUNTIME(item->prevSibling->nextSibling == item);
+				CAGE_ASSERT(item->prevSibling->nextSibling == item);
 			}
 			if (item->nextSibling)
 			{
-				CAGE_ASSERT_RUNTIME(item->nextSibling->prevSibling == item);
+				CAGE_ASSERT(item->nextSibling->prevSibling == item);
 			}
-			CAGE_ASSERT_RUNTIME(!!item->firstChild == !!item->lastChild);
+			CAGE_ASSERT(!!item->firstChild == !!item->lastChild);
 			if (item->firstChild)
 			{
-				CAGE_ASSERT_RUNTIME(item->firstChild->prevSibling == nullptr);
+				CAGE_ASSERT(item->firstChild->prevSibling == nullptr);
 				hierarchyItemStruct *it = item->firstChild, *last = item->firstChild;
 				while (it)
 				{
-					CAGE_ASSERT_RUNTIME(it->parent == item);
+					CAGE_ASSERT(it->parent == item);
 					validateHierarchy(it);
 					last = it;
 					it = it->nextSibling;
 				}
-				CAGE_ASSERT_RUNTIME(item->lastChild == last);
+				CAGE_ASSERT(item->lastChild == last);
 			}
 			if (item->item)
 			{
-				CAGE_ASSERT_RUNTIME(item->item->hierarchy == item);
+				CAGE_ASSERT(item->item->hierarchy == item);
 			}
 		}
 

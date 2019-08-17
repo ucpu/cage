@@ -178,8 +178,8 @@ namespace cage
 
 	quat rotate(const quat &from, const quat &toward, rads maxTurn)
 	{
-		CAGE_ASSERT_RUNTIME(maxTurn >= degs(0), maxTurn);
-		CAGE_ASSERT_RUNTIME(maxTurn <= degs(180), maxTurn);
+		CAGE_ASSERT(maxTurn >= degs(0), maxTurn);
+		CAGE_ASSERT(maxTurn <= degs(180), maxTurn);
 		real dt = abs(dot(from, toward));
 		rads angle = acos(dt);
 		if (angle > maxTurn)

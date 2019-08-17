@@ -233,7 +233,7 @@ namespace cage
 
 			void next() override
 			{
-				CAGE_ASSERT_RUNTIME(valid_, "can not advance on invalid list");
+				CAGE_ASSERT(valid_, "can not advance on invalid list");
 
 #ifdef CAGE_SYSTEM_WINDOWS
 

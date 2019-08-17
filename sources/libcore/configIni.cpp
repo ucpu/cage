@@ -214,7 +214,7 @@ namespace cage
 			for (uint32 i = 1; i < argc; i++)
 			{
 				string s = args[i];
-				CAGE_ASSERT_RUNTIME(!s.empty());
+				CAGE_ASSERT(!s.empty());
 				if (!argumentsOnly)
 				{
 					if (s.isPattern("---", "", ""))

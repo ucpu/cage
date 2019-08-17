@@ -85,8 +85,8 @@ namespace cage
 
 		bool intersects(const fastBox &a, const fastBox &b)
 		{
-			CAGE_ASSERT_RUNTIME(uintPtr(&a) % alignof(fastBox) == 0);
-			CAGE_ASSERT_RUNTIME(uintPtr(&b) % alignof(fastBox) == 0);
+			CAGE_ASSERT(uintPtr(&a) % alignof(fastBox) == 0);
+			CAGE_ASSERT(uintPtr(&b) % alignof(fastBox) == 0);
 			if (a.empty() || b.empty())
 				return false;
 			static const xsimd::batch<float, 4> mask = { 1,1,1,0 };
@@ -179,9 +179,9 @@ namespace cage
 
 			spatialDataImpl(const spatialDataCreateConfig &config) : itemsPool(config.maxItems * sizeof(itemUnion)), itemsArena(&itemsPool), dirty(false), nodes(detail::systemArena())
 			{
-				CAGE_ASSERT_RUNTIME((uintPtr(this) % alignof(fastBox)) == 0, uintPtr(this) % alignof(fastBox), alignof(fastBox));
-				CAGE_ASSERT_RUNTIME((uintPtr(leftBinBoxes.data()) % alignof(fastBox)) == 0);
-				CAGE_ASSERT_RUNTIME((uintPtr(rightBinBoxes.data()) % alignof(fastBox)) == 0);
+				CAGE_ASSERT((uintPtr(this) % alignof(fastBox)) == 0, uintPtr(this) % alignof(fastBox), alignof(fastBox));
+				CAGE_ASSERT((uintPtr(leftBinBoxes.data()) % alignof(fastBox)) == 0);
+				CAGE_ASSERT((uintPtr(rightBinBoxes.data()) % alignof(fastBox)) == 0);
 				itemsTable = newHashTable<itemBase>(min(config.maxItems, 100u), config.maxItems * 2); // times 2 to compensate for fill ratio
 			}
 
@@ -193,7 +193,7 @@ namespace cage
 			void rebuild(uint32 nodeIndex, uint32 nodeDepth, real parentSah)
 			{
 				nodeStruct &node = nodes[nodeIndex];
-				CAGE_ASSERT_RUNTIME(node.a() >= 0 && node.b() >= 0); // is leaf now
+				CAGE_ASSERT(node.a() >= 0 && node.b() >= 0); // is leaf now
 				if (node.b() < 16)
 					return; // leaf node: too few primitives
 				uint32 bestAxis = m;
@@ -216,7 +216,7 @@ namespace cage
 					{
 						itemBase *item = indices[i];
 						uint32 binIndex = numeric_cast<uint32>((item->center[axis] - planeOffset) * binSizeInv);
-						CAGE_ASSERT_RUNTIME(binIndex <= binsCount);
+						CAGE_ASSERT(binIndex <= binsCount);
 						binIndex = min(binIndex, binsCount - 1);
 						leftBinBoxes[binIndex] += item->box;
 						leftBinCounts[binIndex]++;
@@ -231,7 +231,7 @@ namespace cage
 						leftBinBoxes[i] += leftBinBoxes[i - 1];
 						leftBinCounts[i] += leftBinCounts[i - 1];
 					}
-					CAGE_ASSERT_RUNTIME(leftBinCounts[binsCount - 1] == node.b());
+					CAGE_ASSERT(leftBinCounts[binsCount - 1] == node.b());
 					// compute sah
 					for (uint32 i = 0; i < binsCount - 1; i++)
 					{
@@ -249,14 +249,14 @@ namespace cage
 						}
 					}
 				}
-				CAGE_ASSERT_RUNTIME(bestSah.valid());
+				CAGE_ASSERT(bestSah.valid());
 				if (bestSah >= parentSah)
 					return; // leaf node: split would make no improvement
 				if (bestItemsCount == 0)
 					return; // leaf node: split cannot separate any objects (they are probably all at one position)
-				CAGE_ASSERT_RUNTIME(bestAxis < 3);
-				CAGE_ASSERT_RUNTIME(bestSplit + 1 < binsCount); // splits count is one less than bins count
-				CAGE_ASSERT_RUNTIME(bestItemsCount < numeric_cast<uint32>(node.b()));
+				CAGE_ASSERT(bestAxis < 3);
+				CAGE_ASSERT(bestSplit + 1 < binsCount); // splits count is one less than bins count
+				CAGE_ASSERT(bestItemsCount < numeric_cast<uint32>(node.b()));
 				{
 					real binSizeInv = binsCount / (node.box.high.v4[bestAxis] - node.box.low.v4[bestAxis]);
 					real planeOffset = node.box.low.v4[bestAxis];
@@ -283,21 +283,21 @@ namespace cage
 			void validate(uint32 nodeIndex)
 			{
 				nodeStruct &node = nodes[nodeIndex];
-				CAGE_ASSERT_RUNTIME((node.a() < 0) == (node.b() < 0));
+				CAGE_ASSERT((node.a() < 0) == (node.b() < 0));
 				if (node.a() < 0)
 				{ // inner node
 					nodeStruct &l = nodes[-node.a()];
 					nodeStruct &r = nodes[-node.b()];
 					validate(-node.a());
 					validate(-node.b());
-					CAGE_ASSERT_RUNTIME(similar(node.box, l.box + r.box));
+					CAGE_ASSERT(similar(node.box, l.box + r.box));
 				}
 				else
 				{ // leaf node
 					fastBox box;
 					for (uint32 i = node.a(), e = node.a() + node.b(); i < e; i++)
 						box += indices[i]->box;
-					CAGE_ASSERT_RUNTIME(similar(node.box, box));
+					CAGE_ASSERT(similar(node.box, box));
 				}
 			}
 
@@ -321,7 +321,7 @@ namespace cage
 				}
 				nodes.emplace_back(worldBox, 0, numeric_cast<sint32>(itemsTable->count()));
 				rebuild(0, 0, real::Infinity());
-				CAGE_ASSERT_RUNTIME(uintPtr(nodes.data()) % alignof(nodeStruct) == 0, uintPtr(nodes.data()) % alignof(nodeStruct), alignof(nodeStruct), alignof(fastBox), sizeof(nodeStruct));
+				CAGE_ASSERT(uintPtr(nodes.data()) % alignof(nodeStruct) == 0, uintPtr(nodes.data()) % alignof(nodeStruct), alignof(nodeStruct), alignof(fastBox), sizeof(nodeStruct));
 #ifdef CAGE_ASSERT_ENABLED
 				validate(0);
 #endif // CAGE_ASSERT_ENABLED
@@ -342,7 +342,7 @@ namespace cage
 
 			void clear()
 			{
-				CAGE_ASSERT_RUNTIME(!data->dirty);
+				CAGE_ASSERT(!data->dirty);
 				resultNames.clear();
 			}
 
@@ -356,8 +356,8 @@ namespace cage
 
 				intersectorStruct(const spatialDataImpl *data, std::vector<uint32> &resultNames, const T &other) : data(data), resultNames(resultNames), other(other), otherBox(aabb(other))
 				{
-					CAGE_ASSERT_RUNTIME((uintPtr(this) % alignof(fastBox)) == 0, uintPtr(this) % alignof(fastBox), alignof(fastBox));
-					CAGE_ASSERT_RUNTIME((uintPtr(&otherBox) % alignof(fastBox)) == 0);
+					CAGE_ASSERT((uintPtr(this) % alignof(fastBox)) == 0, uintPtr(this) % alignof(fastBox), alignof(fastBox));
+					CAGE_ASSERT((uintPtr(&otherBox) % alignof(fastBox)) == 0);
 					intersection(0);
 				}
 
@@ -388,7 +388,7 @@ namespace cage
 			template<class T>
 			void intersection(const T &other)
 			{
-				CAGE_ASSERT_RUNTIME(!data->dirty);
+				CAGE_ASSERT(!data->dirty);
 				clear();
 				if (data->nodes.empty())
 					return;
@@ -447,8 +447,8 @@ namespace cage
 
 	void spatialData::update(uint32 name, const line &other)
 	{
-		CAGE_ASSERT_RUNTIME(other.valid());
-		CAGE_ASSERT_RUNTIME(other.isPoint() || other.isSegment());
+		CAGE_ASSERT(other.valid());
+		CAGE_ASSERT(other.isPoint() || other.isSegment());
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		remove(name);
 		impl->itemsTable->add(name, impl->itemsArena.createObject<itemShape<line>>(name, other));
@@ -456,8 +456,8 @@ namespace cage
 
 	void spatialData::update(uint32 name, const triangle &other)
 	{
-		CAGE_ASSERT_RUNTIME(other.valid());
-		CAGE_ASSERT_RUNTIME(other.area() < real::Infinity());
+		CAGE_ASSERT(other.valid());
+		CAGE_ASSERT(other.area() < real::Infinity());
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		remove(name);
 		impl->itemsTable->add(name, impl->itemsArena.createObject<itemShape<triangle>>(name, other));
@@ -465,8 +465,8 @@ namespace cage
 
 	void spatialData::update(uint32 name, const sphere &other)
 	{
-		CAGE_ASSERT_RUNTIME(other.valid());
-		CAGE_ASSERT_RUNTIME(other.volume() < real::Infinity());
+		CAGE_ASSERT(other.valid());
+		CAGE_ASSERT(other.volume() < real::Infinity());
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		remove(name);
 		impl->itemsTable->add(name, impl->itemsArena.createObject<itemShape<sphere>>(name, other));
@@ -474,8 +474,8 @@ namespace cage
 
 	void spatialData::update(uint32 name, const aabb &other)
 	{
-		CAGE_ASSERT_RUNTIME(other.valid());
-		CAGE_ASSERT_RUNTIME(other.volume() < real::Infinity());
+		CAGE_ASSERT(other.valid());
+		CAGE_ASSERT(other.volume() < real::Infinity());
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		remove(name);
 		impl->itemsTable->add(name, impl->itemsArena.createObject<itemShape<aabb>>(name, other));

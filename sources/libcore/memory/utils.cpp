@@ -66,13 +66,13 @@ namespace cage
 		{
 			void *malloca(uintPtr size, uintPtr alignment)
 			{
-				CAGE_ASSERT_RUNTIME(isPowerOf2(alignment), "impossible alignment", alignment);
+				CAGE_ASSERT(isPowerOf2(alignment), "impossible alignment", alignment);
 				void *p = ::malloc(size + alignment - 1 + sizeof(void*));
 				if (!p)
 					return nullptr;
 				void *ptr = (void*)((uintPtr(p) + sizeof(void*) + alignment - 1) & ~(alignment - 1));
 				*((void **)ptr - 1) = p;
-				CAGE_ASSERT_RUNTIME(uintPtr(ptr) % alignment == 0, ptr, alignment);
+				CAGE_ASSERT(uintPtr(ptr) % alignment == 0, ptr, alignment);
 				return ptr;
 			}
 
@@ -151,8 +151,8 @@ namespace cage
 
 			void *reserve(const uintPtr pages)
 			{
-				CAGE_ASSERT_RUNTIME(pages > 0, "virtualMemory::reserve: zero pages not allowed", pages);
-				CAGE_ASSERT_RUNTIME(!origin, "virtualMemory::reserve: already reserved");
+				CAGE_ASSERT(pages > 0, "virtualMemory::reserve: zero pages not allowed", pages);
+				CAGE_ASSERT(!origin, "virtualMemory::reserve: already reserved");
 				total = pages;
 				pgs = 0;
 
@@ -192,8 +192,8 @@ namespace cage
 
 			void increase(uintPtr pages)
 			{
-				CAGE_ASSERT_RUNTIME(pages > 0, "invalid value - zero pages", pages);
-				CAGE_ASSERT_RUNTIME(origin, "invalid operation - first reserve");
+				CAGE_ASSERT(pages > 0, "invalid value - zero pages", pages);
+				CAGE_ASSERT(origin, "invalid operation - first reserve");
 
 				if (pages + pgs > total)
 					CAGE_THROW_CRITICAL(exception, "virtual memory depleted");
@@ -211,9 +211,9 @@ namespace cage
 
 			void decrease(uintPtr pages)
 			{
-				CAGE_ASSERT_RUNTIME(pages > 0, "invalid value - zero pages", pages);
-				CAGE_ASSERT_RUNTIME(origin, "invalid operation - first reserve");
-				CAGE_ASSERT_RUNTIME(pages < pgs, "invalid value - too few left", pages, pgs);
+				CAGE_ASSERT(pages > 0, "invalid value - zero pages", pages);
+				CAGE_ASSERT(origin, "invalid operation - first reserve");
+				CAGE_ASSERT(pages < pgs, "invalid value - too few left", pages, pgs);
 
 #ifdef CAGE_SYSTEM_WINDOWS
 				if (!VirtualFree((char*)origin + pageSize * (pgs - pages), pageSize * pages, MEM_DECOMMIT))

@@ -43,7 +43,7 @@ namespace cage
 
 	void listBoxCreate(hierarchyItemStruct *item)
 	{
-		CAGE_ASSERT_RUNTIME(!item->item);
+		CAGE_ASSERT(!item->item);
 		item->item = item->impl->itemsMemory.createObject<listBoxImpl>(item);
 	}
 }

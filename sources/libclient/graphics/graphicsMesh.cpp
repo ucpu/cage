@@ -152,14 +152,14 @@ namespace cage
 	void renderMesh::setTextureName(uint32 texIdx, uint32 name)
 	{
 		meshImpl *impl = (meshImpl*)this;
-		CAGE_ASSERT_RUNTIME(texIdx < MaxTexturesCountPerMaterial, texIdx, MaxTexturesCountPerMaterial);
+		CAGE_ASSERT(texIdx < MaxTexturesCountPerMaterial, texIdx, MaxTexturesCountPerMaterial);
 		impl->textures[texIdx] = name;
 	}
 
 	void renderMesh::setBuffers(uint32 verticesCount, uint32 vertexSize, const void *vertexData, uint32 indicesCount, const uint32 *indexData, uint32 materialSize, const void *materialData)
 	{
 		meshImpl *impl = (meshImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<renderMesh>() == impl->id);
+		CAGE_ASSERT(graphicsPrivat::getCurrentObject<renderMesh>() == impl->id);
 		{
 			if (impl->vbo)
 			{
@@ -216,7 +216,7 @@ namespace cage
 	void renderMesh::setAttribute(uint32 index, uint32 size, uint32 type, uint32 stride, uint32 startOffset)
 	{
 		meshImpl *impl = (meshImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<renderMesh>() == impl->id);
+		CAGE_ASSERT(graphicsPrivat::getCurrentObject<renderMesh>() == impl->id);
 		if (type == 0)
 			glDisableVertexAttribArray(index);
 		else
@@ -294,7 +294,7 @@ namespace cage
 	uint32 renderMesh::getTextureName(uint32 texIdx) const
 	{
 		meshImpl *impl = (meshImpl*)this;
-		CAGE_ASSERT_RUNTIME(texIdx < MaxTexturesCountPerMaterial, texIdx, MaxTexturesCountPerMaterial);
+		CAGE_ASSERT(texIdx < MaxTexturesCountPerMaterial, texIdx, MaxTexturesCountPerMaterial);
 		return impl->textures[texIdx];
 	}
 
@@ -319,7 +319,7 @@ namespace cage
 	void renderMesh::dispatch() const
 	{
 		meshImpl *impl = (meshImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<renderMesh>() == impl->id);
+		CAGE_ASSERT(graphicsPrivat::getCurrentObject<renderMesh>() == impl->id);
 		if (impl->indicesCount)
 			glDrawElements(impl->primitiveType, impl->indicesCount, GL_UNSIGNED_INT, (void*)(uintPtr)impl->indicesOffset);
 		else
@@ -330,7 +330,7 @@ namespace cage
 	void renderMesh::dispatch(uint32 instances) const
 	{
 		meshImpl *impl = (meshImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<renderMesh>() == impl->id);
+		CAGE_ASSERT(graphicsPrivat::getCurrentObject<renderMesh>() == impl->id);
 		if (impl->indicesCount)
 			glDrawElementsInstanced(impl->primitiveType, impl->indicesCount, GL_UNSIGNED_INT, (void*)(uintPtr)impl->indicesOffset, instances);
 		else

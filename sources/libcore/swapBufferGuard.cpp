@@ -23,8 +23,8 @@ namespace cage
 		public:
 			swapBufferControllerImpl(const swapBufferGuardCreateConfig &config) : states{ stateEnum::Nothing, stateEnum::Nothing, stateEnum::Nothing, stateEnum::Nothing }, ri(0), wi(0), buffersCount(config.buffersCount), repeatedReads(config.repeatedReads), repeatedWrites(config.repeatedWrites)
 			{
-				CAGE_ASSERT_RUNTIME(buffersCount > 1 && buffersCount < 5);
-				CAGE_ASSERT_RUNTIME(buffersCount > 1u + repeatedReads + repeatedWrites);
+				CAGE_ASSERT(buffersCount > 1 && buffersCount < 5);
+				CAGE_ASSERT(buffersCount > 1u + repeatedReads + repeatedWrites);
 				mutex = newSyncMutex();
 			}
 
@@ -47,7 +47,7 @@ namespace cage
 			privat::swapBufferLock read()
 			{
 				scopeLock<syncMutex> lock(mutex);
-				CAGE_ASSERT_RUNTIME(readable(), "one reading at a time only");
+				CAGE_ASSERT(readable(), "one reading at a time only");
 				if (repeatedReads)
 				{
 					if (next(ri) != wi && states[next(ri)] == stateEnum::Wrote)
@@ -77,7 +77,7 @@ namespace cage
 			privat::swapBufferLock write()
 			{
 				scopeLock<syncMutex> lock(mutex);
-				CAGE_ASSERT_RUNTIME(writeable(), "one writing at a time only");
+				CAGE_ASSERT(writeable(), "one writing at a time only");
 				if (repeatedWrites)
 				{
 					if ((next(wi) != ri && states[next(wi)] == stateEnum::Read) || states[next(wi)] == stateEnum::Nothing)
@@ -146,7 +146,7 @@ namespace cage
 		swapBufferLock::swapBufferLock(swapBufferGuard *controller, uint32 index) : controller_(controller), index_(index)
 		{
 			swapBufferControllerImpl *impl = (swapBufferControllerImpl*)controller_;
-			CAGE_ASSERT_RUNTIME(impl->states[index] == stateEnum::Reading || impl->states[index] == stateEnum::Writing);
+			CAGE_ASSERT(impl->states[index] == stateEnum::Reading || impl->states[index] == stateEnum::Writing);
 		}
 
 		swapBufferLock::swapBufferLock(swapBufferLock &&other) : controller_(nullptr), index_(m)

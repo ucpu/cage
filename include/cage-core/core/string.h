@@ -110,13 +110,13 @@ namespace cage
 
 			char &operator [] (uint32 idx)
 			{
-				CAGE_ASSERT_RUNTIME(idx < current, "index out of range", idx, current, N);
+				CAGE_ASSERT(idx < current, "index out of range", idx, current, N);
 				return data[idx];
 			}
 
 			char operator [] (uint32 idx) const
 			{
-				CAGE_ASSERT_RUNTIME(idx < current, "index out of range", idx, current, N);
+				CAGE_ASSERT(idx < current, "index out of range", idx, current, N);
 				return data[idx];
 			}
 
@@ -135,7 +135,7 @@ namespace cage
 			// methods
 			const char *c_str() const
 			{
-				CAGE_ASSERT_RUNTIME(data[current] == 0);
+				CAGE_ASSERT(data[current] == 0);
 				return data;
 			}
 

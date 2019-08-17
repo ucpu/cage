@@ -30,7 +30,7 @@ namespace cage
 			~concurrentQueueImpl()
 			{
 				scopeLock<syncMutex> sl(mut);
-				CAGE_ASSERT_RUNTIME(items.empty(), "the concurrent queue may not be destroyed before all items are removed");
+				CAGE_ASSERT(items.empty(), "the concurrent queue may not be destroyed before all items are removed");
 			}
 
 			void push(void *value)

@@ -75,7 +75,7 @@ namespace cage
 					if (childs > mws * mhs)
 						mws++;
 				}
-				CAGE_ASSERT_RUNTIME(mws * mhs >= childs, mws, mhs, childs);
+				CAGE_ASSERT(mws * mhs >= childs, mws, mhs, childs);
 				// allocate widths & heights
 				widths = (real*)impl->itemsMemory.allocate(mws * sizeof(real), sizeof(uintPtr));
 				heights = (real*)impl->itemsMemory.allocate(mhs * sizeof(real), sizeof(uintPtr));
@@ -92,7 +92,7 @@ namespace cage
 						m = max(m, c->requestedSize);
 						uint32 wi = data.vertical ? (idx % data.sections) : (idx / data.sections);
 						uint32 hi = data.vertical ? (idx / data.sections) : (idx % data.sections);
-						CAGE_ASSERT_RUNTIME(wi < mws && hi < mhs, wi, hi, mws, mhs, data.sections, data.vertical, idx);
+						CAGE_ASSERT(wi < mws && hi < mhs, wi, hi, mws, mhs, data.sections, data.vertical, idx);
 						real &w = widths[wi];
 						real &h = heights[hi];
 						w = max(w, c->requestedSize[0]);
@@ -118,7 +118,7 @@ namespace cage
 					for (uint32 y = 0; y < mhs; y++)
 						hierarchy->requestedSize[1] += heights[y];
 				}
-				CAGE_ASSERT_RUNTIME(hierarchy->requestedSize.valid());
+				CAGE_ASSERT(hierarchy->requestedSize.valid());
 			}
 
 			virtual void findFinalPosition(const finalPositionStruct &update) override
@@ -132,7 +132,7 @@ namespace cage
 				{
 					uint32 wi = data.vertical ? (idx % data.sections) : (idx / data.sections);
 					uint32 hi = data.vertical ? (idx / data.sections) : (idx % data.sections);
-					CAGE_ASSERT_RUNTIME(wi < mws && hi < mhs, wi, hi, mws, mhs, data.sections, data.vertical, idx);
+					CAGE_ASSERT(wi < mws && hi < mhs, wi, hi, mws, mhs, data.sections, data.vertical, idx);
 					vec2 s = vec2(widths[wi], heights[hi]);
 
 					{
@@ -172,13 +172,13 @@ namespace cage
 
 	void layoutLineCreate(hierarchyItemStruct *item)
 	{
-		CAGE_ASSERT_RUNTIME(!item->item);
+		CAGE_ASSERT(!item->item);
 		item->item = item->impl->itemsMemory.createObject<layoutTableImpl>(item, true);
 	}
 
 	void layoutTableCreate(hierarchyItemStruct *item)
 	{
-		CAGE_ASSERT_RUNTIME(!item->item);
+		CAGE_ASSERT(!item->item);
 		item->item = item->impl->itemsMemory.createObject<layoutTableImpl>(item, false);
 	}
 }

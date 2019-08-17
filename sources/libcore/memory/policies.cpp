@@ -57,7 +57,7 @@ namespace cage
 
 			void set(void *ptr, uintPtr size)
 			{
-				CAGE_ASSERT_RUNTIME(allocations.find(ptr) == allocations.end(), "duplicate allocation at same address");
+				CAGE_ASSERT(allocations.find(ptr) == allocations.end(), "duplicate allocation at same address");
 				allocation a;
 				a.size = size;
 				a.thread = threadId();
@@ -67,7 +67,7 @@ namespace cage
 
 			void check(void *ptr)
 			{
-				CAGE_ASSERT_RUNTIME(allocations.find(ptr) != allocations.end(), "deallocation at unknown address");
+				CAGE_ASSERT(allocations.find(ptr) != allocations.end(), "deallocation at unknown address");
 				allocations.erase(ptr);
 				CAGE_LOG(severityEnum::Info, "memory", string("deallocation at ") + string(ptr));
 			}

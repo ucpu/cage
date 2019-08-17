@@ -179,7 +179,7 @@ namespace
 				{
 					vec3 color = vec3(real(data[i]) / 255);
 					vec2 special = ::convertSpecularToSpecial(color);
-					CAGE_ASSERT_RUNTIME(special[1] < 1e-7);
+					CAGE_ASSERT(special[1] < 1e-7);
 					data[i] = numeric_cast<uint8>(special[0] * 255);
 				}
 			} break;

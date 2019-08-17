@@ -28,7 +28,7 @@ namespace cage
 			int res = ov_open_callbacks(this, &ovf, nullptr, 0, callbacks);
 			if (res < 0)
 				CAGE_THROW_ERROR(codeException, "failed to open vorbis stream", res);
-			CAGE_ASSERT_RUNTIME(ovf.links == 1, ovf.links);
+			CAGE_ASSERT(ovf.links == 1, ovf.links);
 		}
 
 		void vorbisDataStruct::clear()
@@ -42,7 +42,7 @@ namespace cage
 
 		void vorbisDataStruct::read(float *output, uint32 index, uint32 frames)
 		{
-			CAGE_ASSERT_RUNTIME(index + frames <= ov_pcm_total(&ovf, 0), index, frames, ov_pcm_total(&ovf, 0));
+			CAGE_ASSERT(index + frames <= ov_pcm_total(&ovf, 0), index, frames, ov_pcm_total(&ovf, 0));
 
 			int res = ov_pcm_seek(&ovf, index);
 			if (res != 0)
@@ -89,11 +89,11 @@ namespace cage
 
 		size_t vorbisDataStruct::read_func(void *ptr, size_t size, size_t nmemb, void *datasource)
 		{
-			CAGE_ASSERT_RUNTIME(size == 1 || nmemb == 1, size, nmemb);
+			CAGE_ASSERT(size == 1 || nmemb == 1, size, nmemb);
 			vorbisDataStruct *impl = (vorbisDataStruct*)datasource;
 			size_t r = size * nmemb;
 			r = min(r, impl->buffer.size() - impl->currentPosition);
-			CAGE_ASSERT_RUNTIME(r + impl->currentPosition <= impl->buffer.size(), r, impl->currentPosition, impl->buffer.size());
+			CAGE_ASSERT(r + impl->currentPosition <= impl->buffer.size(), r, impl->currentPosition, impl->buffer.size());
 			if (r > 0)
 				detail::memcpy(ptr, &impl->buffer[impl->currentPosition], r);
 			impl->currentPosition += r;

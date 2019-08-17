@@ -19,7 +19,7 @@ namespace cage
 {
 	void textCreate(hierarchyItemStruct *item)
 	{
-		CAGE_ASSERT_RUNTIME(!item->text);
+		CAGE_ASSERT(!item->text);
 		item->text = item->impl->itemsMemory.createObject<textItemStruct>(item);
 	}
 
@@ -99,7 +99,7 @@ namespace cage
 			return nullptr;
 		if ((text.count == 0 || size[0] <= 0) && text.cursor > 0)
 			return nullptr; // early exit
-		CAGE_ASSERT_RUNTIME(text.color.valid());
+		CAGE_ASSERT(text.color.valid());
 		auto *e = hierarchy->impl->emitControl;
 		auto *t = e->memory.createObject<renderableTextStruct>();
 		t->setClip(hierarchy);

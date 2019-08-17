@@ -46,7 +46,7 @@ namespace cage
 			swapBufferLock &operator = (const swapBufferLock &) = delete; // non-copyable
 			swapBufferLock &operator = (swapBufferLock &&other); // movable
 			explicit operator bool() const { return !!controller_; }
-			uint32 index() const { CAGE_ASSERT_RUNTIME(!!controller_); return index_; }
+			uint32 index() const { CAGE_ASSERT(!!controller_); return index_; }
 
 		private:
 			swapBufferGuard *controller_;

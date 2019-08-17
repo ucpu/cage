@@ -40,14 +40,14 @@ namespace cage
 
 	void textPack::set(uint32 name, const string &text)
 	{
-		CAGE_ASSERT_RUNTIME(name != 0);
+		CAGE_ASSERT(name != 0);
 		textPackImpl *impl = (textPackImpl*)this;
 		impl->texts[name] = text;
 	}
 
 	void textPack::erase(uint32 name)
 	{
-		CAGE_ASSERT_RUNTIME(name != 0);
+		CAGE_ASSERT(name != 0);
 		textPackImpl *impl = (textPackImpl*)this;
 		impl->texts.erase(name);
 	}
@@ -60,7 +60,7 @@ namespace cage
 
 	string textPack::get(uint32 name) const
 	{
-		CAGE_ASSERT_RUNTIME(name != 0);
+		CAGE_ASSERT(name != 0);
 		textPackImpl *impl = (textPackImpl*)this;
 		auto it = impl->texts.find(name);
 		if (it == impl->texts.end())
@@ -70,7 +70,7 @@ namespace cage
 
 	string textPack::format(uint32 name, uint32 paramCount, const string *paramValues) const
 	{
-		CAGE_ASSERT_RUNTIME(name != 0);
+		CAGE_ASSERT(name != 0);
 		return format(get(name), paramCount, paramValues);
 	}
 

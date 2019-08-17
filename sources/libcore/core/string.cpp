@@ -139,7 +139,7 @@ namespace cage
 
 			bool stringContains(const char *data, uint32 current, char what)
 			{
-				CAGE_ASSERT_RUNTIME(isOrdered(data, current));
+				CAGE_ASSERT(isOrdered(data, current));
 				return std::binary_search(data, data + current, what);
 			}
 		}
@@ -165,7 +165,7 @@ namespace cage
 
 		void stringTrim(char *data, uint32 &current, const char *what, uint32 whatLen, bool left, bool right)
 		{
-			CAGE_ASSERT_RUNTIME(isOrdered(what, whatLen));
+			CAGE_ASSERT(isOrdered(what, whatLen));
 			if (whatLen == 0)
 				return;
 			if (!left && !right)
@@ -190,8 +190,8 @@ namespace cage
 
 		void stringSplit(char *data, uint32 &current, char *ret, uint32 &retLen, const char *what, uint32 whatLen)
 		{
-			CAGE_ASSERT_RUNTIME(retLen == 0);
-			CAGE_ASSERT_RUNTIME(isOrdered(what, whatLen), string(what, whatLen));
+			CAGE_ASSERT(retLen == 0);
+			CAGE_ASSERT(isOrdered(what, whatLen), string(what, whatLen));
 			if (whatLen == 0)
 				return;
 			for (uint32 i = 0; i < current; i++)

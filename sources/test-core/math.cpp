@@ -293,6 +293,9 @@ namespace
 		CAGE_TEST(clamp(vec3(1, 3, 5), vec3(2, 2, 2), vec3(4, 4, 4)) == vec3(2, 3, 4));
 		CAGE_TEST(clamp(vec3(1, 3, 5), 2, 4) == vec3(2, 3, 4));
 
+		test(primaryAxis(vec3(13, -4, 1)), vec3(1, 0, 0));
+		test(primaryAxis(vec3(-3, -15, 4)), vec3(0, -1, 0));
+
 		// right = forward x up (in this order)
 		test(cross(vec3(0, 0, -1), vec3(0, 1, 0)), vec3(1, 0, 0));
 	}

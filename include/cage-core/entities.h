@@ -102,7 +102,7 @@ namespace cage
 	};
 
 	inline pointerRange<entity *const> entityManager::entities() const { return group()->entities(); }
-	template<class T> inline T &entity::value(entityComponent *component) { CAGE_ASSERT_RUNTIME(component->typeSize() == sizeof(T), "type is incompatible", component->typeSize(), sizeof(T)); return *(T*)unsafeValue(component); }
+	template<class T> inline T &entity::value(entityComponent *component) { CAGE_ASSERT(component->typeSize() == sizeof(T), "type is incompatible", component->typeSize(), sizeof(T)); return *(T*)unsafeValue(component); }
 	inline pointerRange<entity *const> entityComponent::entities() const { return group()->entities(); }
 
 	CAGE_API memoryBuffer entitiesSerialize(const entityGroup *entities, entityComponent *component);

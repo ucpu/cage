@@ -252,8 +252,8 @@ namespace cage
 
 	mat4 lookAt(const vec3 &eye, const vec3 &target, const vec3 &up)
 	{
-		CAGE_ASSERT_RUNTIME(eye != target);
-		CAGE_ASSERT_RUNTIME(up != vec3());
+		CAGE_ASSERT(eye != target);
+		CAGE_ASSERT(up != vec3());
 		vec3 f = normalize(target - eye);
 		vec3 u = normalize(up);
 		vec3 s = normalize(cross(f, u));
@@ -276,9 +276,9 @@ namespace cage
 
 	mat4 perspectiveProjection(rads fov, real aspectRatio, real near, real far)
 	{
-		CAGE_ASSERT_RUNTIME(fov > rads(0), real(fov).value, aspectRatio.value, near.value, far.value);
-		CAGE_ASSERT_RUNTIME(aspectRatio != 0, real(fov).value, aspectRatio.value, near.value, far.value);
-		CAGE_ASSERT_RUNTIME(sign(near) == sign(far) && near != far, real(fov).value, aspectRatio.value, near.value, far.value);
+		CAGE_ASSERT(fov > rads(0), real(fov).value, aspectRatio.value, near.value, far.value);
+		CAGE_ASSERT(aspectRatio != 0, real(fov).value, aspectRatio.value, near.value, far.value);
+		CAGE_ASSERT(sign(near) == sign(far) && near != far, real(fov).value, aspectRatio.value, near.value, far.value);
 		real f = 1 / tan(fov / 2);
 		return mat4(
 			f / aspectRatio, 0, 0, 0,
@@ -301,9 +301,9 @@ namespace cage
 
 	mat4 perspectiveProjection(real left, real right, real bottom, real top, real near, real far)
 	{
-		CAGE_ASSERT_RUNTIME(left != right, left.value, right.value, bottom.value, top.value, near.value, far.value);
-		CAGE_ASSERT_RUNTIME(bottom != top, left.value, right.value, bottom.value, top.value, near.value, far.value);
-		CAGE_ASSERT_RUNTIME(sign(near) == sign(far) && near != far, left.value, right.value, bottom.value, top.value, near.value, far.value);
+		CAGE_ASSERT(left != right, left.value, right.value, bottom.value, top.value, near.value, far.value);
+		CAGE_ASSERT(bottom != top, left.value, right.value, bottom.value, top.value, near.value, far.value);
+		CAGE_ASSERT(sign(near) == sign(far) && near != far, left.value, right.value, bottom.value, top.value, near.value, far.value);
 		return mat4(
 			near * 2.0 / (right - left), 0, 0, 0,
 			0, near * 2.0 / (top - bottom), 0, 0,
@@ -314,9 +314,9 @@ namespace cage
 
 	mat4 orthographicProjection(real left, real right, real bottom, real top, real near, real far)
 	{
-		CAGE_ASSERT_RUNTIME(left != right, left.value, right.value, bottom.value, top.value, near.value, far.value);
-		CAGE_ASSERT_RUNTIME(bottom != top, left.value, right.value, bottom.value, top.value, near.value, far.value);
-		CAGE_ASSERT_RUNTIME(near != far, left.value, right.value, bottom.value, top.value, near.value, far.value);
+		CAGE_ASSERT(left != right, left.value, right.value, bottom.value, top.value, near.value, far.value);
+		CAGE_ASSERT(bottom != top, left.value, right.value, bottom.value, top.value, near.value, far.value);
+		CAGE_ASSERT(near != far, left.value, right.value, bottom.value, top.value, near.value, far.value);
 		return transpose(mat4(
 			2 / (right - left), 0, 0, -(right + left) / (right - left),
 			0, 2 / (top - bottom), 0, -(top + bottom) / (top - bottom),

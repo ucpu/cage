@@ -35,7 +35,7 @@ namespace cage
 			mat4 *baseMatrices = (mat4*)des.advance(sizeof(mat4) * data.bonesCount);
 			mat4 *invRestMatrices = (mat4*)des.advance(sizeof(mat4) * data.bonesCount);
 			skl->allocate(data.globalInverse, data.bonesCount, boneParents, baseMatrices, invRestMatrices);
-			CAGE_ASSERT_RUNTIME(des.available() == 0);
+			CAGE_ASSERT(des.available() == 0);
 		}
 	}
 

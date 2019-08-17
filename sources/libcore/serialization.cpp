@@ -44,7 +44,7 @@ namespace cage
 
 	uintPtr serializer::available() const
 	{
-		CAGE_ASSERT_RUNTIME(size >= offset);
+		CAGE_ASSERT(size >= offset);
 		return size - offset;
 	}
 
@@ -81,7 +81,7 @@ namespace cage
 
 	uintPtr deserializer::available() const
 	{
-		CAGE_ASSERT_RUNTIME(size >= offset);
+		CAGE_ASSERT(size >= offset);
 		return size - offset;
 	}
 }

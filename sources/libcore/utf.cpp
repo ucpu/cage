@@ -71,7 +71,7 @@ namespace cage
 	void convert8to32(uint32 *outBuffer, uint32 &outCount, const char *inStr, uint32 inBytes)
 	{
 		TRY_BEGIN{
-		CAGE_ASSERT_RUNTIME(outCount >= countCharacters(inStr, inBytes), outCount, countCharacters(inStr, inBytes), inStr, inBytes);
+		CAGE_ASSERT(outCount >= countCharacters(inStr, inBytes), outCount, countCharacters(inStr, inBytes), inStr, inBytes);
 		uint32 *end = utf8::utf8to32(inStr, inStr + inBytes, outBuffer);
 		outCount = numeric_cast<uint32>(end - outBuffer);
 		}TRY_END
@@ -86,7 +86,7 @@ namespace cage
 	{
 		TRY_BEGIN{
 		char *end = utf8::utf32to8(inBuffer, inBuffer + inCount, outBuffer);
-		CAGE_ASSERT_RUNTIME(numeric_cast<uint32>(end - outBuffer) <= outBytes, end - outBuffer, outBytes);
+		CAGE_ASSERT(numeric_cast<uint32>(end - outBuffer) <= outBytes, end - outBuffer, outBytes);
 		outBytes = numeric_cast<uint32>(end - outBuffer);
 		}TRY_END
 	}

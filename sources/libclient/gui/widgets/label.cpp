@@ -21,8 +21,8 @@ namespace cage
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT_RUNTIME(!hierarchy->firstChild, "label may not have children");
-				CAGE_ASSERT_RUNTIME(!!hierarchy->text || !!hierarchy->image, "label must have text or image");
+				CAGE_ASSERT(!hierarchy->firstChild, "label may not have children");
+				CAGE_ASSERT(!!hierarchy->text || !!hierarchy->image, "label must have text or image");
 				if (hierarchy->text)
 					hierarchy->text->text.apply(skin->defaults.label.textFormat, hierarchy->impl);
 				if (hierarchy->image)
@@ -37,7 +37,7 @@ namespace cage
 				else if (hierarchy->image)
 					hierarchy->requestedSize = max(hierarchy->requestedSize, hierarchy->image->findRequestedSize());
 				else
-					CAGE_ASSERT_RUNTIME(false);
+					CAGE_ASSERT(false);
 				offsetSize(hierarchy->requestedSize, skin->defaults.label.margin);
 			}
 
@@ -81,7 +81,7 @@ namespace cage
 
 	void labelCreate(hierarchyItemStruct *item)
 	{
-		CAGE_ASSERT_RUNTIME(!item->item);
+		CAGE_ASSERT(!item->item);
 		item->item = item->impl->itemsMemory.createObject<labelImpl>(item);
 	}
 }

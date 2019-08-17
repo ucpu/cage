@@ -100,7 +100,7 @@ namespace cage
 							while (avail)
 							{
 								uintPtr siz = s.recvFrom(buff->data() + off, avail, adr);
-								CAGE_ASSERT_RUNTIME(siz <= avail, siz, avail, off);
+								CAGE_ASSERT(siz <= avail, siz, avail, off);
 								memView mv(buff, off, siz);
 								avail -= siz;
 								off += siz;
@@ -218,11 +218,11 @@ namespace cage
 		public:
 			ackTesterClass()
 			{
-				CAGE_ASSERT_RUNTIME(decodeAck(1000, encodeAck(1000, { 999 })) == std::set<uint16>({ 999 }));
-				CAGE_ASSERT_RUNTIME(decodeAck(1000, encodeAck(1000, { 1000 })) == std::set<uint16>({ 1000 }));
-				CAGE_ASSERT_RUNTIME(decodeAck(1000, encodeAck(1000, { 1000, 999 })) == std::set<uint16>({ 1000, 999 }));
-				CAGE_ASSERT_RUNTIME(decodeAck(1000, encodeAck(1000, { 1000, 999, 990 })) == std::set<uint16>({ 1000, 999, 990 }));
-				CAGE_ASSERT_RUNTIME(decodeAck(5, encodeAck(5, { 1, 65533 })) == std::set<uint16>({ 1, 65533 }));
+				CAGE_ASSERT(decodeAck(1000, encodeAck(1000, { 999 })) == std::set<uint16>({ 999 }));
+				CAGE_ASSERT(decodeAck(1000, encodeAck(1000, { 1000 })) == std::set<uint16>({ 1000 }));
+				CAGE_ASSERT(decodeAck(1000, encodeAck(1000, { 1000, 999 })) == std::set<uint16>({ 1000, 999 }));
+				CAGE_ASSERT(decodeAck(1000, encodeAck(1000, { 1000, 999, 990 })) == std::set<uint16>({ 1000, 999, 990 }));
+				CAGE_ASSERT(decodeAck(5, encodeAck(5, { 1, 65533 })) == std::set<uint16>({ 1, 65533 }));
 			}
 		} ackTesterInstance;
 #endif // CAGE_DEBUG
@@ -360,7 +360,7 @@ namespace cage
 					{
 						if (!s.isValid())
 							continue;
-						CAGE_ASSERT_RUNTIME(s.getConnected());
+						CAGE_ASSERT(s.getConnected());
 						s.send(data, size);
 					}
 				}
@@ -371,7 +371,7 @@ namespace cage
 					{
 						if (s.getConnected())
 						{
-							CAGE_ASSERT_RUNTIME(s.getRemoteAddress() == sockReceiver->address);
+							CAGE_ASSERT(s.getRemoteAddress() == sockReceiver->address);
 							s.send(data, size);
 						}
 						else
@@ -531,7 +531,7 @@ namespace cage
 					else
 					{
 						packAckStruct p(front, encodeAck(front, tmp));
-						CAGE_ASSERT_RUNTIME(decodeAck(p.ackSeqn, p.ackBits) == tmp);
+						CAGE_ASSERT(decodeAck(p.ackSeqn, p.ackBits) == tmp);
 						acks.push_back(p);
 						tmp.clear();
 						front = n;
@@ -540,7 +540,7 @@ namespace cage
 				}
 				{
 					packAckStruct p(front, encodeAck(front, tmp));
-					CAGE_ASSERT_RUNTIME(decodeAck(p.ackSeqn, p.ackBits) == tmp);
+					CAGE_ASSERT(decodeAck(p.ackSeqn, p.ackBits) == tmp);
 					acks.push_back(p);
 				}
 
@@ -552,7 +552,7 @@ namespace cage
 						std::set<uint16> c = decodeAck(pa.ackSeqn, pa.ackBits);
 						ver.insert(c.begin(), c.end());
 					}
-					CAGE_ASSERT_RUNTIME(ver == sending.seqnToAck);
+					CAGE_ASSERT(ver == sending.seqnToAck);
 				}
 #endif // CAGE_ASSERT_ENABLED
 
@@ -1126,8 +1126,8 @@ namespace cage
 
 			void write(const memoryBuffer &buffer, uint32 channel, bool reliable)
 			{
-				CAGE_ASSERT_RUNTIME(channel < 128, channel, reliable);
-				CAGE_ASSERT_RUNTIME(buffer.size() <= 16 * 1024 * 1024, buffer.size(), channel, reliable);
+				CAGE_ASSERT(channel < 128, channel, reliable);
+				CAGE_ASSERT(buffer.size() <= 16 * 1024 * 1024, buffer.size(), channel, reliable);
 				if (buffer.size() == 0)
 					return; // ignore empty messages
 

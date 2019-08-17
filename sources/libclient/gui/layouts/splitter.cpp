@@ -31,7 +31,7 @@ namespace cage
 					chc++;
 					c = c->nextSibling;
 				}
-				CAGE_ASSERT_RUNTIME(chc == 2, chc, "splitter layout must have exactly two children");
+				CAGE_ASSERT(chc == 2, chc, "splitter layout must have exactly two children");
 			}
 
 			virtual void findRequestedSize() override
@@ -45,7 +45,7 @@ namespace cage
 					hierarchy->requestedSize[!data.vertical] = max(hierarchy->requestedSize[!data.vertical], c->requestedSize[!data.vertical]);
 					c = c->nextSibling;
 				}
-				CAGE_ASSERT_RUNTIME(hierarchy->requestedSize.valid());
+				CAGE_ASSERT(hierarchy->requestedSize.valid());
 			}
 
 			virtual void findFinalPosition(const finalPositionStruct &update) override
@@ -66,7 +66,7 @@ namespace cage
 
 	void layoutSplitterCreate(hierarchyItemStruct *item)
 	{
-		CAGE_ASSERT_RUNTIME(!item->item);
+		CAGE_ASSERT(!item->item);
 		item->item = item->impl->itemsMemory.createObject<layoutSplitterImpl>(item);
 	}
 }

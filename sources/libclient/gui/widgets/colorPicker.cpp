@@ -57,15 +57,15 @@ namespace cage
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT_RUNTIME(!hierarchy->firstChild, "color picker may not have children");
-				CAGE_ASSERT_RUNTIME(!hierarchy->text, "color picker may not have text");
-				CAGE_ASSERT_RUNTIME(!hierarchy->image, "color picker may not have image");
+				CAGE_ASSERT(!hierarchy->firstChild, "color picker may not have children");
+				CAGE_ASSERT(!hierarchy->text, "color picker may not have text");
+				CAGE_ASSERT(!hierarchy->image, "color picker may not have image");
 
 				if (data.collapsible)
 				{
 					if (small)
 					{ // this is the large popup
-						CAGE_ASSERT_RUNTIME(small && small != this, small, this, large);
+						CAGE_ASSERT(small && small != this, small, this, large);
 						large = this;
 					}
 					else
@@ -91,7 +91,7 @@ namespace cage
 					small = nullptr;
 					large = this;
 				}
-				CAGE_ASSERT_RUNTIME(small != large);
+				CAGE_ASSERT(small != large);
 				color = data.color;
 			}
 
@@ -102,7 +102,7 @@ namespace cage
 				else if (this == small)
 					hierarchy->requestedSize = skin->defaults.colorPicker.collapsedSize;
 				else
-					CAGE_ASSERT_RUNTIME(false);
+					CAGE_ASSERT(false);
 				offsetSize(hierarchy->requestedSize, skin->defaults.colorPicker.margin);
 			}
 
@@ -222,7 +222,7 @@ namespace cage
 
 	void colorPickerCreate(hierarchyItemStruct *item)
 	{
-		CAGE_ASSERT_RUNTIME(!item->item);
+		CAGE_ASSERT(!item->item);
 		item->item = item->impl->itemsMemory.createObject<colorPickerImpl>(item);
 	}
 }

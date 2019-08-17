@@ -47,32 +47,32 @@ namespace cage
 		template<uint32 Scheme, class T>
 		T *get(uint32 assetName) const
 		{
-			CAGE_ASSERT_RUNTIME(ready(assetName));
-			CAGE_ASSERT_RUNTIME(scheme(assetName) == Scheme, assetName, scheme(assetName), Scheme);
-			CAGE_ASSERT_RUNTIME(zGetTypeSize(Scheme) == sizeof(T), zGetTypeSize(Scheme), sizeof(T), assetName);
+			CAGE_ASSERT(ready(assetName));
+			CAGE_ASSERT(scheme(assetName) == Scheme, assetName, scheme(assetName), Scheme);
+			CAGE_ASSERT(zGetTypeSize(Scheme) == sizeof(T), zGetTypeSize(Scheme), sizeof(T), assetName);
 			return (T*)zGet(assetName);
 		}
 		template<uint32 Scheme>
 		void *get(uint32 assetName) const
 		{
-			CAGE_ASSERT_RUNTIME(ready(assetName));
-			CAGE_ASSERT_RUNTIME(scheme(assetName) == Scheme, assetName, scheme(assetName), Scheme);
-			CAGE_ASSERT_RUNTIME(zGetTypeSize(Scheme) == m, zGetTypeSize(Scheme), assetName);
+			CAGE_ASSERT(ready(assetName));
+			CAGE_ASSERT(scheme(assetName) == Scheme, assetName, scheme(assetName), Scheme);
+			CAGE_ASSERT(zGetTypeSize(Scheme) == m, zGetTypeSize(Scheme), assetName);
 			return zGet(assetName);
 		}
 
 		template<uint32 Scheme, class T>
 		void set(uint32 assetName, T *value)
 		{
-			CAGE_ASSERT_RUNTIME(scheme(assetName) == Scheme, assetName, scheme(assetName), Scheme);
-			CAGE_ASSERT_RUNTIME(zGetTypeSize(Scheme) == sizeof(T), zGetTypeSize(Scheme), sizeof(T), assetName);
+			CAGE_ASSERT(scheme(assetName) == Scheme, assetName, scheme(assetName), Scheme);
+			CAGE_ASSERT(zGetTypeSize(Scheme) == sizeof(T), zGetTypeSize(Scheme), sizeof(T), assetName);
 			zSet(assetName, value);
 		}
 		template<uint32 Scheme>
 		void set(uint32 assetName, void *value)
 		{
-			CAGE_ASSERT_RUNTIME(scheme(assetName) == Scheme, assetName, scheme(assetName), Scheme);
-			CAGE_ASSERT_RUNTIME(zGetTypeSize(Scheme) == m, zGetTypeSize(Scheme), assetName);
+			CAGE_ASSERT(scheme(assetName) == Scheme, assetName, scheme(assetName), Scheme);
+			CAGE_ASSERT(zGetTypeSize(Scheme) == m, zGetTypeSize(Scheme), assetName);
 			zSet(assetName, value);
 		}
 

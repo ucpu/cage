@@ -65,7 +65,7 @@ namespace cage
 	void uniformBuffer::bind(uint32 bindingPoint, uint32 offset, uint32 size) const
 	{
 		uniformBufferImpl *impl = (uniformBufferImpl*)this;
-		CAGE_ASSERT_RUNTIME(offset + size <= impl->size, "insufficient buffer size", offset, size, impl->size);
+		CAGE_ASSERT(offset + size <= impl->size, "insufficient buffer size", offset, size, impl->size);
 		glBindBufferRange(GL_UNIFORM_BUFFER, bindingPoint, impl->id, offset, size);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
@@ -75,7 +75,7 @@ namespace cage
 		if (usage == 0)
 			usage = GL_STATIC_DRAW;
 		uniformBufferImpl *impl = (uniformBufferImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<uniformBuffer>() == impl->id);
+		CAGE_ASSERT(graphicsPrivat::getCurrentObject<uniformBuffer>() == impl->id);
 		glBufferData(GL_UNIFORM_BUFFER, size, data, usage);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 		impl->size = size;
@@ -84,8 +84,8 @@ namespace cage
 	void uniformBuffer::writeRange(void *data, uint32 offset, uint32 size)
 	{
 		uniformBufferImpl *impl = (uniformBufferImpl*)this;
-		CAGE_ASSERT_RUNTIME(graphicsPrivat::getCurrentObject<uniformBuffer>() == impl->id);
-		CAGE_ASSERT_RUNTIME(offset + size <= impl->size, "insufficient buffer size", offset, size, impl->size);
+		CAGE_ASSERT(graphicsPrivat::getCurrentObject<uniformBuffer>() == impl->id);
+		CAGE_ASSERT(offset + size <= impl->size, "insufficient buffer size", offset, size, impl->size);
 		glBufferSubData(GL_UNIFORM_BUFFER, offset, size, data);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}

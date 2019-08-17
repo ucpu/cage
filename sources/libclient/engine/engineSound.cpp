@@ -58,7 +58,7 @@ namespace cage
 
 			void prepare(emitVoiceStruct *voice, emitListenerStruct *listener)
 			{
-				CAGE_ASSERT_RUNTIME(!!voice == !!listener);
+				CAGE_ASSERT(!!voice == !!listener);
 				if (bus)
 					bus->clear();
 				else
@@ -71,7 +71,7 @@ namespace cage
 				this->listener = listener;
 				if (!voice)
 					return;
-				CAGE_ASSERT_RUNTIME(voice->voice.input == nullptr || voice->voice.name == 0, voice->voice.input, voice->voice.name, "voice may only have one source");
+				CAGE_ASSERT(voice->voice.input == nullptr || voice->voice.name == 0, voice->voice.input, voice->voice.name, "voice may only have one source");
 				if (voice->voice.input)
 				{ // direct bus input
 					voice->voice.input->addOutput(bus.get());
@@ -244,7 +244,7 @@ namespace cage
 
 		void mixStruct::exe(const mixingFilterApi &api)
 		{
-			CAGE_ASSERT_RUNTIME(voice && listener);
+			CAGE_ASSERT(voice && listener);
 			vec3 posVoice = interpolate(voice->transformHistory.position, voice->transform.position, data->interFactor);
 			vec3 posListener = interpolate(listener->transformHistory.position, listener->transform.position, data->interFactor);
 			vec3 diff = posVoice - posListener;

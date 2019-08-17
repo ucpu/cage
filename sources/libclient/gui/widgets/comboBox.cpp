@@ -43,8 +43,8 @@ namespace cage
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT_RUNTIME(!hierarchy->image, "combo box may not have image");
-				CAGE_ASSERT_RUNTIME(areChildrenValid(), "combo box children may not have other children, layouts, witgets or images and must have text");
+				CAGE_ASSERT(!hierarchy->image, "combo box may not have image");
+				CAGE_ASSERT(areChildrenValid(), "combo box children may not have other children, layouts, witgets or images and must have text");
 				if (hierarchy->text)
 					hierarchy->text->text.apply(skin->defaults.comboBox.placeholderFormat, hierarchy->impl);
 				count = 0;
@@ -234,7 +234,7 @@ namespace cage
 
 	void comboBoxCreate(hierarchyItemStruct *item)
 	{
-		CAGE_ASSERT_RUNTIME(!item->item);
+		CAGE_ASSERT(!item->item);
 		item->item = item->impl->itemsMemory.createObject<comboBoxImpl>(item);
 	}
 }

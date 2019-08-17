@@ -82,7 +82,7 @@ namespace cage
 							real d = (c + k1) * k2;
 							d = clamp(d, 0, planesCount);
 							uint32 j = numeric_cast<uint32>(d);
-							CAGE_ASSERT_RUNTIME(j < planesCount + 1);
+							CAGE_ASSERT(j < planesCount + 1);
 							boxes[j] += aabb(ts[i]);
 							counts[j]++;
 						}
@@ -114,16 +114,16 @@ namespace cage
 								bestSah = sah;
 								axis = ax;
 								split = cl[i];
-								CAGE_ASSERT_RUNTIME(axis < 3, axis, split, ts.size());
-								CAGE_ASSERT_RUNTIME(split > 0 && split < ts.size(), axis, split, ts.size());
+								CAGE_ASSERT(axis < 3, axis, split, ts.size());
+								CAGE_ASSERT(split > 0 && split < ts.size(), axis, split, ts.size());
 							}
 						}
 					}
 				}
 
 				// actually split the triangles
-				CAGE_ASSERT_RUNTIME(axis < 3, axis, split, ts.size());
-				CAGE_ASSERT_RUNTIME(split > 0 && split < ts.size(), axis, split, ts.size());
+				CAGE_ASSERT(axis < 3, axis, split, ts.size());
+				CAGE_ASSERT(split > 0 && split < ts.size(), axis, split, ts.size());
 				std::sort(ts.begin(), ts.end(), [axis](const triangle &a, const triangle &b) {
 					return a.center()[axis] < b.center()[axis];
 				});
@@ -141,12 +141,12 @@ namespace cage
 
 			void validate(uint32 idx)
 			{
-				CAGE_ASSERT_RUNTIME(idx < nodes.size(), idx, nodes.size());
+				CAGE_ASSERT(idx < nodes.size(), idx, nodes.size());
 				const nodeStruct &n = nodes[idx];
 				if (n.left == m)
 				{ // node
-					CAGE_ASSERT_RUNTIME(intersection(boxes[idx], boxes[idx + 1]) == boxes[idx + 1]);
-					CAGE_ASSERT_RUNTIME(intersection(boxes[idx], boxes[n.right]) == boxes[n.right]);
+					CAGE_ASSERT(intersection(boxes[idx], boxes[idx + 1]) == boxes[idx + 1]);
+					CAGE_ASSERT(intersection(boxes[idx], boxes[n.right]) == boxes[n.right]);
 					validate(idx + 1);
 					validate(n.right);
 				}
@@ -155,7 +155,7 @@ namespace cage
 					for (uint32 i = n.left; i < n.right; i++)
 					{
 						const triangle &t = tris[i];
-						CAGE_ASSERT_RUNTIME(intersection(boxes[idx], aabb(t)) == aabb(t));
+						CAGE_ASSERT(intersection(boxes[idx], aabb(t)) == aabb(t));
 					}
 				}
 			}
@@ -168,8 +168,8 @@ namespace cage
 				std::vector<triangle> ts;
 				ts.swap(tris);
 				build(ts, 0);
-				CAGE_ASSERT_RUNTIME(tris.size() == trisCount, tris.size(), trisCount);
-				CAGE_ASSERT_RUNTIME(boxes.size() == nodes.size(), boxes.size(), nodes.size());
+				CAGE_ASSERT(tris.size() == trisCount, tris.size(), trisCount);
+				CAGE_ASSERT(boxes.size() == nodes.size(), boxes.size(), nodes.size());
 #ifdef CAGE_DEBUG
 				//validate(0);
 #endif // CAGE_DEBUG
@@ -239,7 +239,7 @@ namespace cage
 
 	const aabb &collisionMesh::box() const
 	{
-		CAGE_ASSERT_RUNTIME(!needsRebuild());
+		CAGE_ASSERT(!needsRebuild());
 		collisionObjectImpl *impl = (collisionObjectImpl*)this;
 		return impl->boxes[0];
 	}
@@ -351,7 +351,7 @@ namespace cage
 
 			const T &operator[] (uint32 idx)
 			{
-				CAGE_ASSERT_RUNTIME(idx < data.size(), idx, data.size());
+				CAGE_ASSERT(idx < data.size(), idx, data.size());
 				if (!flags[idx])
 				{
 					data[idx] = original[idx] * m;
@@ -369,7 +369,7 @@ namespace cage
 
 			lazyData(const T *original, uint32 count, const transform &m) : original(original)
 			{
-				CAGE_ASSERT_RUNTIME(m == transform());
+				CAGE_ASSERT(m == transform());
 			}
 
 			const T &operator[] (uint32 idx) const
@@ -401,8 +401,8 @@ namespace cage
 
 			void process(uint32 a, uint32 b)
 			{
-				CAGE_ASSERT_RUNTIME(a < ao->nodes.size(), a, ao->nodes.size());
-				CAGE_ASSERT_RUNTIME(b < bo->nodes.size(), b, bo->nodes.size());
+				CAGE_ASSERT(a < ao->nodes.size(), a, ao->nodes.size());
+				CAGE_ASSERT(b < bo->nodes.size(), b, bo->nodes.size());
 
 				if (!intersects(abs[a], bbs[b]) || result == bufferSize)
 					return;
@@ -623,9 +623,9 @@ namespace cage
 
 	uint32 collisionDetection(const collisionMesh *ao, const collisionMesh *bo, const transform &at, const transform &bt, collisionPair *outputBuffer, uint32 bufferSize)
 	{
-		CAGE_ASSERT_RUNTIME(!ao->needsRebuild());
-		CAGE_ASSERT_RUNTIME(!bo->needsRebuild());
-		CAGE_ASSERT_RUNTIME(bufferSize > 0);
+		CAGE_ASSERT(!ao->needsRebuild());
+		CAGE_ASSERT(!bo->needsRebuild());
+		CAGE_ASSERT(bufferSize > 0);
 		if (ao->trianglesCount() > bo->trianglesCount())
 		{
 			collisionDetector<false> d((const collisionObjectImpl*)ao, (const collisionObjectImpl*)bo, transform(), transform(inverse(at) * bt), outputBuffer, bufferSize);
@@ -640,8 +640,8 @@ namespace cage
 
 	uint32 collisionDetection(const collisionMesh *ao, const collisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, real &fractionBefore, real &fractionContact, collisionPair *outputBuffer, uint32 bufferSize)
 	{
-		CAGE_ASSERT_RUNTIME(at1.scale == at2.scale);
-		CAGE_ASSERT_RUNTIME(bt1.scale == bt2.scale);
+		CAGE_ASSERT(at1.scale == at2.scale);
+		CAGE_ASSERT(bt1.scale == bt2.scale);
 
 		fractionBefore = real::Nan();
 		fractionContact = real::Nan();
@@ -650,18 +650,18 @@ namespace cage
 		real time1 = timeOfContact(ao, bo, at1, bt1, at2, bt2);
 		if (!time1.valid())
 			return 0;
-		CAGE_ASSERT_RUNTIME(time1 >= 0 && time1 <= 1, time1);
+		CAGE_ASSERT(time1 >= 0 && time1 <= 1, time1);
 		real time2 = 1 - timeOfContact(ao, bo, at2, bt2, at1, bt1);
-		CAGE_ASSERT_RUNTIME(time2.valid());
-		CAGE_ASSERT_RUNTIME(time2 >= 0 && time2 <= 1, time2);
-		CAGE_ASSERT_RUNTIME(time2 >= time1, time2, time1);
+		CAGE_ASSERT(time2.valid());
+		CAGE_ASSERT(time2 >= 0 && time2 <= 1, time2);
+		CAGE_ASSERT(time2 >= time1, time2, time1);
 		
 		// find first contact
 		real minSize = min(minSizeObject(ao, at1.scale), minSizeObject(bo, bt1.scale)) * 0.5;
 		real maxDist = max(distance(interpolate(at1.position, at2.position, time1), interpolate(at1.position, at2.position, time2)),
 						   distance(interpolate(bt1.position, bt2.position, time1), interpolate(bt1.position, bt2.position, time2)));
 		real maxDiff = (maxDist > minSize ? (minSize / maxDist) : 1) * (time2 - time1);
-		CAGE_ASSERT_RUNTIME(maxDiff > 0 && maxDiff <= 1, maxDiff);
+		CAGE_ASSERT(maxDiff > 0 && maxDiff <= 1, maxDiff);
 		maxDiff = min(maxDiff, (time2 - time1) * 0.2);
 		while (time1 <= time2)
 		{
@@ -694,14 +694,14 @@ namespace cage
 				fractionBefore = time;
 			}
 		}
-		CAGE_ASSERT_RUNTIME(fractionBefore >= 0 && fractionBefore <= 1, fractionBefore);
-		CAGE_ASSERT_RUNTIME(fractionContact >= 0 && fractionContact <= 1, fractionContact);
-		CAGE_ASSERT_RUNTIME(fractionBefore <= fractionContact, fractionBefore, fractionContact);
+		CAGE_ASSERT(fractionBefore >= 0 && fractionBefore <= 1, fractionBefore);
+		CAGE_ASSERT(fractionContact >= 0 && fractionContact <= 1, fractionContact);
+		CAGE_ASSERT(fractionBefore <= fractionContact, fractionBefore, fractionContact);
 
 		// fill the whole output buffer
 		uint32 res = collisionDetection(ao, bo, interpolate(at1, at2, fractionContact), interpolate(bt1, bt2, fractionContact), outputBuffer, bufferSize);
-		CAGE_ASSERT_RUNTIME(res > 0);
-		CAGE_ASSERT_RUNTIME(fractionBefore == 0 || !collisionDetection(ao, bo, interpolate(at1, at2, fractionBefore), interpolate(bt1, bt2, fractionBefore)));
+		CAGE_ASSERT(res > 0);
+		CAGE_ASSERT(fractionBefore == 0 || !collisionDetection(ao, bo, interpolate(at1, at2, fractionBefore), interpolate(bt1, bt2, fractionBefore)));
 		return res;
 	}
 

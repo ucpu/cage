@@ -178,7 +178,7 @@ namespace cage
 				real x = attenuation[0], y = attenuation[1], z = attenuation[2];
 				if (z < 1e-5)
 				{
-					CAGE_ASSERT_RUNTIME(y > 1e-5, "invalid light attenuation", attenuation);
+					CAGE_ASSERT(y > 1e-5, "invalid light attenuation", attenuation);
 					return (e - x) / y;
 				}
 				return (sqrt(y * y - 4 * z * (x - e)) - y) / (2 * z);
@@ -259,8 +259,8 @@ namespace cage
 						pass->firstTranslucent = sort(pass->firstTranslucent, pass->lastTranslucent);
 						pass->lastTranslucent = getTail(pass->firstTranslucent);
 						uint32 finalCount = count(pass->firstTranslucent);
-						CAGE_ASSERT_RUNTIME(initialCount == finalCount, initialCount, finalCount);
-						CAGE_ASSERT_RUNTIME(isSorted(pass->firstTranslucent));
+						CAGE_ASSERT(initialCount == finalCount, initialCount, finalCount);
+						CAGE_ASSERT(isSorted(pass->firstTranslucent));
 					}
 
 					vec3 position(translucentStruct *p)
@@ -480,12 +480,12 @@ namespace cage
 			void addRenderableObjects(renderPassImpl *pass)
 			{
 				OPTICK_EVENT("objects");
-				CAGE_ASSERT_RUNTIME(pass->lodSelection > 0);
+				CAGE_ASSERT(pass->lodSelection > 0);
 				for (emitRenderObjectStruct *e : emitRead->renderableObjects)
 				{
 					if ((e->render.renderMask & pass->renderMask) == 0 || e->render.object == 0)
 						continue;
-					CAGE_ASSERT_RUNTIME(assets()->ready(e->render.object));
+					CAGE_ASSERT(assets()->ready(e->render.object));
 					uint32 schemeIndex = assets()->scheme(e->render.object);
 					switch (schemeIndex)
 					{
@@ -528,7 +528,7 @@ namespace cage
 				uint32 bonesCount = s->bonesCount();
 				if (e->animatedSkeleton && assets()->ready(e->animatedSkeleton->name))
 				{
-					CAGE_ASSERT_RUNTIME(s->bonesCount() == bonesCount, s->bonesCount(), bonesCount);
+					CAGE_ASSERT(s->bonesCount() == bonesCount, s->bonesCount(), bonesCount);
 					const auto &ba = *e->animatedSkeleton;
 					skeletalAnimation *an = assets()->get<assetSchemeIndexSkeletalAnimation, skeletalAnimation>(ba.name);
 					real c = detail::evalCoefficientForSkeletalAnimation(an, dispatchTime, ba.startTime, ba.speed, ba.offset);
@@ -540,7 +540,7 @@ namespace cage
 						tmpArmature2[i] = mat4();
 				}
 				renderMesh *mesh = assets()->get<assetSchemeIndexMesh, renderMesh>(hashString("cage/mesh/bone.obj"));
-				CAGE_ASSERT_RUNTIME(mesh->getSkeletonName() == 0);
+				CAGE_ASSERT(mesh->getSkeletonName() == 0);
 				for (uint32 i = 0; i < bonesCount; i++)
 				{
 					e->render.color = convertHsvToRgb(vec3(real(i) / real(bonesCount), 1, 1));
@@ -606,7 +606,7 @@ namespace cage
 					else
 					{
 						obj = it->second;
-						CAGE_ASSERT_RUNTIME(obj->count < obj->max);
+						CAGE_ASSERT(obj->count < obj->max);
 						if (obj->count + 1 == obj->max)
 							opaqueObjectsMap.erase(m);
 					}
@@ -627,11 +627,11 @@ namespace cage
 				{
 					uint32 bonesCount = m->getSkeletonBones();
 					mat3x4 *sa = obj->shaderArmatures + obj->count * bonesCount;
-					CAGE_ASSERT_RUNTIME(!e->animatedSkeleton || e->animatedSkeleton->name);
+					CAGE_ASSERT(!e->animatedSkeleton || e->animatedSkeleton->name);
 					if (e->animatedSkeleton && m->getSkeletonName() && assets()->ready(e->animatedSkeleton->name))
 					{
 						skeletonRig *skel = assets()->get<assetSchemeIndexSkeletonRig, skeletonRig>(m->getSkeletonName());
-						CAGE_ASSERT_RUNTIME(skel->bonesCount() == bonesCount, skel->bonesCount(), bonesCount);
+						CAGE_ASSERT(skel->bonesCount() == bonesCount, skel->bonesCount(), bonesCount);
 						const auto &ba = *e->animatedSkeleton;
 						skeletalAnimation *an = assets()->get<assetSchemeIndexSkeletalAnimation, skeletalAnimation>(ba.name);
 						real c = detail::evalCoefficientForSkeletalAnimation(an, dispatchTime, ba.startTime, ba.speed, ba.offset);
@@ -887,7 +887,7 @@ namespace cage
 						return;
 					}
 					e->render.object = hashString("cage/mesh/fake.obj");
-					CAGE_ASSERT_RUNTIME(assets()->ready(e->render.object));
+					CAGE_ASSERT(assets()->ready(e->render.object));
 				}
 
 				if (assets()->scheme(e->render.object) == assetSchemeIndexRenderObject)
@@ -1047,7 +1047,7 @@ namespace cage
 				{ // generate camera render passes
 					std::sort(emitRead->cameras.begin(), emitRead->cameras.end(), [](const emitCameraStruct *a, const emitCameraStruct *b)
 					{
-						CAGE_ASSERT_RUNTIME(a->camera.cameraOrder != b->camera.cameraOrder, a->camera.cameraOrder);
+						CAGE_ASSERT(a->camera.cameraOrder != b->camera.cameraOrder, a->camera.cameraOrder);
 						return a->camera.cameraOrder < b->camera.cameraOrder;
 					});
 					for (auto it : emitRead->cameras)
@@ -1071,7 +1071,7 @@ namespace cage
 
 	mat3x4::mat3x4(const mat4 &in)
 	{
-		CAGE_ASSERT_RUNTIME(in[3] == 0 && in[7] == 0 && in[11] == 0 && in[15] == 1, in);
+		CAGE_ASSERT(in[3] == 0 && in[7] == 0 && in[11] == 0 && in[15] == 1, in);
 		for (uint32 a = 0; a < 4; a++)
 			for (uint32 b = 0; b < 3; b++)
 				data[b][a] = in[a * 4 + b];
@@ -1095,7 +1095,7 @@ namespace cage
 		shaderMeshes = (shaderMeshStruct*)graphicsPrepare->dispatchArena.allocate(sizeof(shaderMeshStruct) * max, sizeof(uintPtr));
 		if (mesh->getSkeletonBones())
 		{
-			CAGE_ASSERT_RUNTIME(mesh->getSkeletonName() == 0 || ass->ready(mesh->getSkeletonName()));
+			CAGE_ASSERT(mesh->getSkeletonName() == 0 || ass->ready(mesh->getSkeletonName()));
 			shaderArmatures = (mat3x4*)graphicsPrepare->dispatchArena.allocate(sizeof(mat3x4) * mesh->getSkeletonBones() * max, sizeof(uintPtr));
 		}
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)

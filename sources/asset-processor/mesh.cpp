@@ -27,7 +27,7 @@ namespace
 
 	void loadTextureCage(const string &pathBase, renderMeshHeader &dsm, configIni *ini, const string &type, uint32 usage)
 	{
-		CAGE_ASSERT_RUNTIME(usage < MaxTexturesCountPerMaterial, usage, MaxTexturesCountPerMaterial, type);
+		CAGE_ASSERT(usage < MaxTexturesCountPerMaterial, usage, MaxTexturesCountPerMaterial, type);
 		string n = ini->getString("textures", type);
 		if (n.empty())
 			return;
@@ -39,7 +39,7 @@ namespace
 
 	bool loadTextureAssimp(aiMaterial *m, renderMeshHeader &dsm, aiTextureType tt, uint32 usage)
 	{
-		CAGE_ASSERT_RUNTIME(usage < MaxTexturesCountPerMaterial, usage, MaxTexturesCountPerMaterial, tt);
+		CAGE_ASSERT(usage < MaxTexturesCountPerMaterial, usage, MaxTexturesCountPerMaterial, tt);
 		uint32 texCount = m->GetTextureCount(tt);
 		if (texCount == 0)
 			return false;
@@ -176,7 +176,7 @@ namespace
 	{
 		CAGE_LOG(severityEnum::Info, logComponentName, "converting assimp material");
 
-		CAGE_ASSERT_RUNTIME(am->mMaterialIndex < scene->mNumMaterials, "material index out of range", am->mMaterialIndex, scene->mNumMaterials);
+		CAGE_ASSERT(am->mMaterialIndex < scene->mNumMaterials, "material index out of range", am->mMaterialIndex, scene->mNumMaterials);
 		aiMaterial *m = scene->mMaterials[am->mMaterialIndex];
 		if (!m)
 			CAGE_THROW_ERROR(exception, "material is null");
@@ -427,7 +427,7 @@ void processMesh()
 			dsm.box = aabb(a * s + c, b * s + c);
 			CAGE_LOG(severityEnum::Info, logComponentName, string() + "enlarged bounding box: " + dsm.box);
 		}
-		CAGE_ASSERT_RUNTIME(am->mNumBones > 0);
+		CAGE_ASSERT(am->mNumBones > 0);
 		holder<assimpSkeletonClass> skeleton = context->skeleton();
 		dsm.skeletonBones = skeleton->bonesCount();
 		serializer ser2 = ser.placeholder((sizeof(uint16) + sizeof(float)) * 4 * dsm.verticesCount);
@@ -446,9 +446,9 @@ void processMesh()
 		for (uint32 boneIndex = 0; boneIndex < am->mNumBones; boneIndex++)
 		{
 			aiBone *bone = am->mBones[boneIndex];
-			CAGE_ASSERT_RUNTIME(bone);
+			CAGE_ASSERT(bone);
 			uint16 boneId = skeleton->index(bone);
-			CAGE_ASSERT_RUNTIME(boneId != m);
+			CAGE_ASSERT(boneId != m);
 			for (uint32 weightIndex = 0; weightIndex < bone->mNumWeights; weightIndex++)
 			{
 				aiVertexWeight *w = bone->mWeights + weightIndex;
@@ -463,7 +463,7 @@ void processMesh()
 						break;
 					}
 				}
-				CAGE_ASSERT_RUNTIME(ok, "single vertex may not be affected by more than four bones");
+				CAGE_ASSERT(ok, "single vertex may not be affected by more than four bones");
 			}
 		}
 		// validate
@@ -475,7 +475,7 @@ void processMesh()
 			{
 				if (boneIndices[i * 4 + j] == m)
 				{
-					CAGE_ASSERT_RUNTIME(boneWeights[i * 4 + j] == 0, i, j);
+					CAGE_ASSERT(boneWeights[i * 4 + j] == 0, i, j);
 					boneIndices[i * 4 + j] = 0; // prevent shader from accessing invalid memory
 				}
 				sum += boneWeights[i * 4 + j];
@@ -490,7 +490,7 @@ void processMesh()
 					boneWeights[i * 4 + j] *= f;
 			}
 		}
-		CAGE_ASSERT_RUNTIME(maxBoneId <= dsm.skeletonBones, maxBoneId, dsm.skeletonBones);
+		CAGE_ASSERT(maxBoneId <= dsm.skeletonBones, maxBoneId, dsm.skeletonBones);
 	}
 
 	if (dsm.uvs())

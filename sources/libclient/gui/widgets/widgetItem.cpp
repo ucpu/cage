@@ -37,15 +37,15 @@ namespace cage
 
 	bool widgetItemStruct::hasFocus(uint32 parts) const
 	{
-		CAGE_ASSERT_RUNTIME(hierarchy->ent);
+		CAGE_ASSERT(hierarchy->ent);
 		return hierarchy->impl->focusName && hierarchy->impl->focusName == hierarchy->ent->name() && (hierarchy->impl->focusParts & parts) > 0;
 	}
 
 	void widgetItemStruct::makeFocused(uint32 parts)
 	{
-		CAGE_ASSERT_RUNTIME(parts != 0);
-		CAGE_ASSERT_RUNTIME(hierarchy->ent);
-		CAGE_ASSERT_RUNTIME(!widgetState.disabled);
+		CAGE_ASSERT(parts != 0);
+		CAGE_ASSERT(hierarchy->ent);
+		CAGE_ASSERT(!widgetState.disabled);
 		hierarchy->impl->focusName = hierarchy->ent->name();
 		hierarchy->impl->focusParts = parts;
 	}
@@ -67,10 +67,10 @@ namespace cage
 
 	renderableElementStruct *widgetItemStruct::emitElement(elementTypeEnum element, uint32 mode, vec2 pos, vec2 size) const
 	{
-		CAGE_ASSERT_RUNTIME(element < elementTypeEnum::TotalElements);
-		CAGE_ASSERT_RUNTIME(mode < 4);
-		CAGE_ASSERT_RUNTIME(pos.valid());
-		CAGE_ASSERT_RUNTIME(size.valid());
+		CAGE_ASSERT(element < elementTypeEnum::TotalElements);
+		CAGE_ASSERT(mode < 4);
+		CAGE_ASSERT(pos.valid());
+		CAGE_ASSERT(size.valid());
 		auto *e = hierarchy->impl->emitControl;
 		auto *t = e->memory.createObject<renderableElementStruct>();
 		t->setClip(hierarchy);
