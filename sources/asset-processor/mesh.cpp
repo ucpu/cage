@@ -405,15 +405,27 @@ void processMesh()
 	if (dsm.normals())
 	{
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
-			ser << axes * conv(am->mNormals[i]);
+		{
+			vec3 n = axes * conv(am->mNormals[i]);
+			CAGE_ASSERT(abs(squaredLength(n) - 1) < 1e-3, "denormalized normal");
+			ser << n;
+		}
 	}
 
 	if (dsm.tangents())
 	{
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
-			ser << axes * conv(am->mTangents[i]);
+		{
+			vec3 n = axes * conv(am->mTangents[i]);
+			CAGE_ASSERT(abs(squaredLength(n) - 1) < 1e-3, "denormalized tangent");
+			ser << n;
+		}
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
-			ser << axes * conv(am->mBitangents[i]);
+		{
+			vec3 n = axes * conv(am->mBitangents[i]);
+			CAGE_ASSERT(abs(squaredLength(n) - 1) < 1e-3, "denormalized bitangent");
+			ser << n;
+		}
 	}
 
 	if (dsm.bones())
