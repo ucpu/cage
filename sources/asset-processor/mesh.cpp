@@ -507,9 +507,19 @@ void processMesh()
 
 	if (dsm.uvs())
 	{
-		dsm.uvDimension = 3;
-		for (uint32 i = 0; i < dsm.verticesCount; i++)
-			ser << conv(am->mTextureCoords[0][i]);
+		if (am->mNumUVComponents[0] == 3)
+		{
+			dsm.uvDimension = 3;
+			for (uint32 i = 0; i < dsm.verticesCount; i++)
+				ser << conv(am->mTextureCoords[0][i]);
+		}
+		else
+		{
+			dsm.uvDimension = 2;
+			for (uint32 i = 0; i < dsm.verticesCount; i++)
+				ser << vec2(conv(am->mTextureCoords[0][i]));
+		}
+		CAGE_LOG(severityEnum::Info, logComponentName, string() + "uv dimensionality: " + dsm.uvDimension);
 	}
 
 	for (uint32 i = 0; i < am->mNumFaces; i++)
