@@ -1,5 +1,6 @@
 #include <cage-core/core.h>
 #include <cage-core/math.h>
+#include <cage-core/camera.h>
 #include <cage-core/config.h>
 #include <cage-core/entities.h>
 
@@ -292,12 +293,12 @@ namespace cage
 						switch (graphicsPrepareThread().stereoMode)
 						{
 						case stereoModeEnum::Mono:
-							graphicsPrepareThread().stereoMode = stereoModeEnum::LeftRight;
+							graphicsPrepareThread().stereoMode = stereoModeEnum::Horizontal;
 							break;
-						case stereoModeEnum::LeftRight:
-							graphicsPrepareThread().stereoMode = stereoModeEnum::TopBottom;
+						case stereoModeEnum::Horizontal:
+							graphicsPrepareThread().stereoMode = stereoModeEnum::Vertical;
 							break;
-						case stereoModeEnum::TopBottom:
+						case stereoModeEnum::Vertical:
 							graphicsPrepareThread().stereoMode = stereoModeEnum::Mono;
 							break;
 						}

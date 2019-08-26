@@ -8,6 +8,8 @@
 #endif // _MSC_VER
 #endif
 
+#define GCHL_DIMENSION(TYPE) (sizeof(TYPE::data) / sizeof(TYPE::data[0]))
+
 namespace cage
 {
 	struct CAGE_API real
@@ -33,7 +35,6 @@ namespace cage
 		inline static real Log10() { return 2.302585092994045684; }
 		static real Infinity();
 		static real Nan();
-		static const uint32 Dimension = 1;
 	};
 
 	struct CAGE_API rads
@@ -86,7 +87,6 @@ namespace cage
 		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 2, "index out of range", idx); return data[idx]; }
 		inline bool valid() const { for (real d : data) if (!d.valid()) return false; return true; }
 		inline static vec2 Nan() { return vec2(real::Nan()); }
-		static const uint32 Dimension = 2;
 	};
 
 	struct CAGE_API vec3
@@ -105,7 +105,6 @@ namespace cage
 		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 3, "index out of range", idx); return data[idx]; }
 		inline bool valid() const { for (real d : data) if (!d.valid()) return false; return true; }
 		inline static vec3 Nan() { return vec3(real::Nan()); }
-		static const uint32 Dimension = 3;
 	};
 
 	struct CAGE_API vec4
@@ -125,7 +124,6 @@ namespace cage
 		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 4, "index out of range", idx); return data[idx]; }
 		inline bool valid() const { for (real d : data) if (!d.valid()) return false; return true; }
 		inline static vec4 Nan() { return vec4(real::Nan()); }
-		static const uint32 Dimension = 4;
 	};
 
 	struct CAGE_API quat
@@ -145,7 +143,6 @@ namespace cage
 		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 4, "index out of range", idx); return data[idx]; }
 		inline bool valid() const { for (real d : data) if (!d.valid()) return false; return true; }
 		inline static quat Nan() { return quat(real::Nan(), real::Nan(), real::Nan(), real::Nan()); }
-		static const uint32 Dimension = 4;
 	};
 
 	struct CAGE_API mat3
@@ -382,34 +379,34 @@ namespace cage
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, float, double, real, rads, degs));
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(TYPE) \
-	inline TYPE min(const TYPE &l, const TYPE &r) { TYPE res; for (uint32 i = 0; i < TYPE::Dimension; i++) res[i] = min(l[i], r[i]); return res; } \
-	inline TYPE max(const TYPE &l, const TYPE &r) { TYPE res; for (uint32 i = 0; i < TYPE::Dimension; i++) res[i] = max(l[i], r[i]); return res; } \
+	inline TYPE min(const TYPE &l, const TYPE &r) { TYPE res; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) res[i] = min(l[i], r[i]); return res; } \
+	inline TYPE max(const TYPE &l, const TYPE &r) { TYPE res; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) res[i] = max(l[i], r[i]); return res; } \
 	inline TYPE min(const TYPE &l, real r) { return min(l, TYPE(r)); } \
 	inline TYPE max(const TYPE &l, real r) { return max(l, TYPE(r)); } \
 	inline TYPE min(real l, const TYPE &r) { return min(TYPE(l), r); } \
 	inline TYPE max(real l, const TYPE &r) { return max(TYPE(l), r); } \
-	inline TYPE clamp(const TYPE &v, const TYPE &a, const TYPE &b) { TYPE res; for (uint32 i = 0; i < TYPE::Dimension; i++) res[i] = clamp(v[i], a[i], b[i]); return res; } \
+	inline TYPE clamp(const TYPE &v, const TYPE &a, const TYPE &b) { TYPE res; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) res[i] = clamp(v[i], a[i], b[i]); return res; } \
 	inline TYPE clamp(const TYPE &v, real a, real b) { return clamp(v, TYPE(a), TYPE(b)); }
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, vec2, vec3, vec4));
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(TYPE) \
-	inline real dot(const TYPE &l, const TYPE &r) { TYPE m = l * r; real sum = 0; for (uint32 i = 0; i < TYPE::Dimension; i++) sum += m[i]; return sum; } \
-	inline real squaredLength(const TYPE &x) { return dot(x, x); } \
-	inline real squaredDistance(const TYPE &l, const TYPE &r) { return squaredLength(l - r); } \
-	inline real length(const TYPE &x) { return sqrt(squaredLength(x)); } \
-	inline real distance(const TYPE &l, const TYPE &r) { return sqrt(squaredDistance(l, r)); } \
+	inline real dot(const TYPE &l, const TYPE &r) { TYPE m = l * r; real sum = 0; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) sum += m[i]; return sum; } \
+	inline real lengthSquared(const TYPE &x) { return dot(x, x); } \
+	inline real length(const TYPE &x) { return sqrt(lengthSquared(x)); } \
+	inline real distanceSquared(const TYPE &l, const TYPE &r) { return lengthSquared(l - r); } \
+	inline real distance(const TYPE &l, const TYPE &r) { return sqrt(distanceSquared(l, r)); } \
 	inline TYPE normalize(const TYPE &x) { return x / length(x); } \
 	inline TYPE abs(const TYPE &x) { return max(x, -x); }
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, vec2, vec3, vec4));
 #undef GCHL_GENERATE
 	inline real dot(const quat &l, const quat &r) { return dot((vec4&)l, (vec4&)r); }
-	inline real squaredLength(const quat &x) { return dot(x, x); }
-	inline real length(const quat &x) { return sqrt(squaredLength(x)); }
+	inline real lengthSquared(const quat &x) { return dot(x, x); }
+	inline real length(const quat &x) { return sqrt(lengthSquared(x)); }
 	inline quat normalize(const quat &x) { return x / length(x); }
+	inline quat conjugate(const quat &x) { return quat(-x[0], -x[1], -x[2], x[3]); }
 	inline real cross(const vec2 &l, const vec2 &r) { return l[0] * r[1] - l[1] * r[0]; }
 	inline vec3 cross(const vec3 &l, const vec3 &r) { return vec3(l[1] * r[2] - l[2] * r[1], l[2] * r[0] - l[0] * r[2], l[0] * r[1] - l[1] * r[0]); }
-	inline quat conjugate(const quat &x) { return quat(-x[0], -x[1], -x[2], x[3]); }
 	CAGE_API vec3 primaryAxis(const vec3 &x);
 	CAGE_API void toAxisAngle(const quat &x, vec3 &axis, rads &angle);
 	CAGE_API quat lerp(const quat &a, const quat &b, real f);
@@ -453,19 +450,6 @@ namespace cage
 	CAGE_API mat4 normalize(const mat4 &x);
 	CAGE_API real determinant(const mat4 &x);
 	CAGE_API transform inverse(const transform &x);
-	CAGE_API mat4 lookAt(const vec3 &eye, const vec3 &target, const vec3 &up);
-	CAGE_API mat4 perspectiveProjection(rads fov, real aspectRatio, real near, real far);
-	CAGE_API mat4 perspectiveProjection(rads fov, real aspectRatio, real near, real far, real zeroParallaxDistance, real eyeSeparation);
-	CAGE_API mat4 perspectiveProjection(real left, real right, real bottom, real top, real near, real far);
-	CAGE_API mat4 orthographicProjection(real left, real right, real bottom, real top, real near, real far);
-
-	/*
-	namespace detail
-	{
-		inline uint32 rotl32(uint32 value, sint8 shift) { CAGE_ASSERT(shift > -32 && shift < 32, "shift too big", shift); return (value << shift) | (value >> (32 - shift)); }
-		inline uint32 rotr32(uint32 value, sint8 shift) { CAGE_ASSERT(shift > -32 && shift < 32, "shift too big", shift); return (value >> shift) | (value << (32 - shift)); }
-	}
-	*/
 
 	namespace detail
 	{
@@ -477,18 +461,9 @@ namespace cage
 	{
 		return privat::numeric_cast_helper_specialized<detail::numeric_limits<To>::is_specialized>::template cast<To>(from.value);
 	};
-
-	/*
-	template<uint32 N> struct vecN {};
-	template<> struct vecN<1> { typedef real type; };
-	template<> struct vecN<2> { typedef vec2 type; };
-	template<> struct vecN<3> { typedef vec3 type; };
-	template<> struct vecN<4> { typedef vec4 type; };
-	template<uint32 N> struct matN {};
-	template<> struct matN<3> { typedef mat3 type; };
-	template<> struct matN<4> { typedef mat4 type; };
-	*/
 }
+
+#undef GCHL_DIMENSION
 
 #ifdef GCHL_UNDEF_INLINE
 #undef GCHL_UNDEF_INLINE

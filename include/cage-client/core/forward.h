@@ -2,7 +2,6 @@ namespace cage
 {
 	struct graphicsError;
 	struct windowEventListeners;
-	struct stereoCameraStruct;
 	class windowHandle;
 	class skeletalAnimation;
 	class fontFace;

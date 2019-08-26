@@ -67,22 +67,6 @@ namespace cage
 	};
 	GCHL_ENUM_BITS(soundFlags);
 
-	// stereoscopy
-
-	enum class stereoModeEnum : uint32
-	{
-		Mono,
-		LeftRight,
-		TopBottom,
-	};
-
-	enum class eyeEnum : uint32
-	{
-		Mono,
-		Left,
-		Right,
-	};
-
 	// window events
 
 	enum class modifiersFlags : uint32

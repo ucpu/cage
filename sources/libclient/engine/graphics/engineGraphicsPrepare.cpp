@@ -5,6 +5,7 @@
 #include <cage-core/core.h>
 #include <cage-core/log.h>
 #include <cage-core/math.h>
+#include <cage-core/camera.h>
 #include <cage-core/geometry.h>
 #include <cage-core/config.h>
 #include <cage-core/memory.h>
@@ -22,7 +23,6 @@
 #include <cage-client/engine.h>
 #include <cage-client/opengl.h>
 #include <cage-client/graphics/shaderConventions.h>
-#include <cage-client/stereoscopy.h>
 #include <cage-client/window.h>
 
 #include "../engine.h"
@@ -271,7 +271,7 @@ namespace cage
 
 					real distance(translucentStruct *p)
 					{
-						return squaredDistance(center, position(p));
+						return distanceSquared(center, position(p));
 					}
 
 					translucentStruct *partition(translucentStruct *head, translucentStruct *end, translucentStruct *&newHead, translucentStruct *&newEnd)
@@ -336,20 +336,23 @@ namespace cage
 				} sorterInstance(pass);
 			}
 
-			static void initializeStereoCamera(renderPassImpl *pass, emitCameraStruct *camera, eyeEnum eye, const mat4 &model)
+			static void initializeStereoCamera(renderPassImpl *pass, emitCameraStruct *camera, stereoEyeEnum eye, const mat4 &model)
 			{
-				real x = camera->camera.viewportOrigin[0], y = camera->camera.viewportOrigin[1], w = camera->camera.viewportSize[0], h = camera->camera.viewportSize[1];
-				stereoCameraStruct cam;
-				cam.position = vec3(model * vec4(0, 0, 0, 1));
-				cam.direction = vec3(model * vec4(0, 0, -1, 0));
-				cam.worldUp = vec3(model * vec4(0, 1, 0, 0));
-				cam.fov = camera->camera.camera.perspectiveFov;
-				cam.far = camera->camera.far;
-				cam.near = camera->camera.near;
-				cam.zeroParallaxDistance = camera->camera.zeroParallaxDistance;
-				cam.eyeSeparation = camera->camera.eyeSeparation;
-				cam.ortographic = camera->camera.cameraType == cameraTypeEnum::Orthographic;
-				stereoscopy(eye, cam, real(graphicsDispatch->windowWidth) / real(graphicsDispatch->windowHeight), (stereoModeEnum)graphicsPrepareThread().stereoMode, pass->view, pass->proj, x, y, w, h);
+				stereoCameraInput in;
+				in.position = vec3(model * vec4(0, 0, 0, 1));
+				in.orientation = quat(mat3(model));
+				in.viewportOrigin = camera->camera.viewportOrigin;
+				in.viewportSize = camera->camera.viewportSize;
+				in.aspectRatio = real(graphicsDispatch->windowWidth) / real(graphicsDispatch->windowHeight);
+				in.fov = camera->camera.camera.perspectiveFov;
+				in.far = camera->camera.far;
+				in.near = camera->camera.near;
+				in.zeroParallaxDistance = camera->camera.zeroParallaxDistance;
+				in.eyeSeparation = camera->camera.eyeSeparation;
+				in.orthographic = camera->camera.cameraType == cameraTypeEnum::Orthographic;
+				stereoCameraOutput out = stereoCamera(in, (stereoModeEnum)graphicsPrepareThread().stereoMode, eye);
+				pass->view = out.view;
+				pass->proj = out.projection;
 				if (camera->camera.cameraType == cameraTypeEnum::Perspective)
 					pass->lodSelection = fovToLodSelection(camera->camera.camera.perspectiveFov) * graphicsDispatch->windowHeight;
 				else
@@ -360,10 +363,10 @@ namespace cage
 					pass->lodOrthographic = true;
 				}
 				pass->viewProj = pass->proj * pass->view;
-				pass->vpX = numeric_cast<uint32>(x * real(graphicsDispatch->windowWidth));
-				pass->vpY = numeric_cast<uint32>(y * real(graphicsDispatch->windowHeight));
-				pass->vpW = numeric_cast<uint32>(w * real(graphicsDispatch->windowWidth));
-				pass->vpH = numeric_cast<uint32>(h * real(graphicsDispatch->windowHeight));
+				pass->vpX = numeric_cast<uint32>(out.viewportOrigin[0] * real(graphicsDispatch->windowWidth));
+				pass->vpY = numeric_cast<uint32>(out.viewportOrigin[1] * real(graphicsDispatch->windowHeight));
+				pass->vpW = numeric_cast<uint32>(out.viewportSize[0] * real(graphicsDispatch->windowWidth));
+				pass->vpH = numeric_cast<uint32>(out.viewportSize[1] * real(graphicsDispatch->windowHeight));
 			}
 
 			static void initializeTargetCamera(renderPassImpl *pass, const mat4 &model)
@@ -373,7 +376,7 @@ namespace cage
 				pass->viewProj = pass->proj * pass->view;
 			}
 
-			void initializeRenderPassForCamera(renderPassImpl *pass, emitCameraStruct *camera, eyeEnum eye)
+			void initializeRenderPassForCamera(renderPassImpl *pass, emitCameraStruct *camera, stereoEyeEnum eye)
 			{
 				OPTICK_EVENT("camera pass");
 				if (camera->camera.target)
@@ -1054,12 +1057,12 @@ namespace cage
 					{
 						if (graphicsPrepareThread().stereoMode == stereoModeEnum::Mono || it->camera.target)
 						{ // mono
-							initializeRenderPassForCamera(newRenderPass(), it, eyeEnum::Mono);
+							initializeRenderPassForCamera(newRenderPass(), it, stereoEyeEnum::Mono);
 						}
 						else
 						{ // stereo
-							initializeRenderPassForCamera(newRenderPass(), it, eyeEnum::Left);
-							initializeRenderPassForCamera(newRenderPass(), it, eyeEnum::Right);
+							initializeRenderPassForCamera(newRenderPass(), it, stereoEyeEnum::Left);
+							initializeRenderPassForCamera(newRenderPass(), it, stereoEyeEnum::Right);
 						}
 					}
 				}

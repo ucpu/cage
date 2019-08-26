@@ -348,4 +348,8 @@ namespace cage
 	class textPack;
 	class threadPool;
 	class timer;
+	enum class stereoModeEnum : uint32;
+	enum class stereoEyeEnum : uint32;
+	struct stereoCameraInput;
+	struct stereoCameraOutput;
 }

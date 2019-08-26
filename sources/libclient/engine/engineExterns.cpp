@@ -1,5 +1,6 @@
 #include <cage-core/core.h>
 #include <cage-core/math.h>
+#include <cage-core/camera.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>

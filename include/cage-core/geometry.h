@@ -315,13 +315,6 @@ namespace cage
 	inline   line intersection(const sphere &a, const line &b) { return intersection(b, a); };
 	inline   line intersection(const aabb &a, const line &b) { return intersection(b, a); };
 
-	CAGE_API bool frustumCulling(const vec3 &shape, const mat4 &mvp);
-	CAGE_API bool frustumCulling(const line &shape, const mat4 &mvp);
-	CAGE_API bool frustumCulling(const triangle &shape, const mat4 &mvp);
-	CAGE_API bool frustumCulling(const plane &shape, const mat4 &mvp);
-	CAGE_API bool frustumCulling(const sphere &shape, const mat4 &mvp);
-	CAGE_API bool frustumCulling(const aabb &shape, const mat4 &mvp);
-
 	CAGE_API vec3 closestPoint(const triangle &trig, const vec3 &point);
 	CAGE_API vec3 closestPoint(const plane &pl, const vec3 &point);
 }

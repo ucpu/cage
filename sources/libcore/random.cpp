@@ -95,7 +95,7 @@ namespace cage
 		real z = randomRange(-1.f, 1.f);
 		vec2 p = randomDirection2() * sqrt(1 - sqr(z));
 		vec3 r = vec3(p, z);
-		CAGE_ASSERT(abs(squaredLength(r) - 1) < 1e-5);
+		CAGE_ASSERT(abs(lengthSquared(r) - 1) < 1e-5);
 		return r;
 	}
 

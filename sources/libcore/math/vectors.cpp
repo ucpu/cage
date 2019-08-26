@@ -9,7 +9,7 @@ namespace cage
 	{
 		vec2 data;
 		string s = detail::tryRemoveParentheses(str);
-		for (uint32 i = 0; i < Dimension; i++)
+		for (uint32 i = 0; i < 2; i++)
 			data[i] = detail::mathSplit(s).toFloat();
 		if (!s.empty())
 			CAGE_THROW_ERROR(exception, "error parsing vec2");
@@ -20,7 +20,7 @@ namespace cage
 	{
 		vec3 data;
 		string s = detail::tryRemoveParentheses(str);
-		for (uint32 i = 0; i < Dimension; i++)
+		for (uint32 i = 0; i < 3; i++)
 			data[i] = detail::mathSplit(s).toFloat();
 		if (!s.empty())
 			CAGE_THROW_ERROR(exception, "error parsing vec3");
@@ -31,7 +31,7 @@ namespace cage
 	{
 		vec4 data;
 		string s = detail::tryRemoveParentheses(str);
-		for (uint32 i = 0; i < Dimension; i++)
+		for (uint32 i = 0; i < 4; i++)
 			data[i] = detail::mathSplit(s).toFloat();
 		if (!s.empty())
 			CAGE_THROW_ERROR(exception, "error parsing vec4");

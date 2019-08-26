@@ -407,7 +407,7 @@ void processMesh()
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
 		{
 			vec3 n = axes * conv(am->mNormals[i]);
-			CAGE_ASSERT(abs(squaredLength(n) - 1) < 1e-3, "denormalized normal");
+			CAGE_ASSERT(abs(lengthSquared(n) - 1) < 1e-3, "denormalized normal");
 			ser << n;
 		}
 	}
@@ -417,13 +417,13 @@ void processMesh()
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
 		{
 			vec3 n = axes * conv(am->mTangents[i]);
-			CAGE_ASSERT(abs(squaredLength(n) - 1) < 1e-3, "denormalized tangent");
+			CAGE_ASSERT(abs(lengthSquared(n) - 1) < 1e-3, "denormalized tangent");
 			ser << n;
 		}
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
 		{
 			vec3 n = axes * conv(am->mBitangents[i]);
-			CAGE_ASSERT(abs(squaredLength(n) - 1) < 1e-3, "denormalized bitangent");
+			CAGE_ASSERT(abs(lengthSquared(n) - 1) < 1e-3, "denormalized bitangent");
 			ser << n;
 		}
 	}

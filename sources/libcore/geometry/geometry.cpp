@@ -204,8 +204,8 @@ namespace cage
 	{
 		rads angle(const vec3 &a, const vec3 &b)
 		{
-			CAGE_ASSERT(abs(squaredLength(a) - 1) < 1e-4);
-			CAGE_ASSERT(abs(squaredLength(b) - 1) < 1e-4);
+			CAGE_ASSERT(abs(lengthSquared(a) - 1) < 1e-4);
+			CAGE_ASSERT(abs(lengthSquared(b) - 1) < 1e-4);
 			return acos(dot(a, b));
 		}
 	}
@@ -432,7 +432,7 @@ namespace cage
 
 	bool intersects(const vec3 &point, const sphere &other)
 	{
-		return squaredDistance(point, other.center) <= sqr(other.radius);
+		return distanceSquared(point, other.center) <= sqr(other.radius);
 	}
 
 	bool intersects(const vec3 &point, const aabb &other)
@@ -749,7 +749,7 @@ namespace cage
 
 	bool intersects(const sphere &a, const sphere &b)
 	{
-		return squaredDistance(a.center, b.center) <= sqr(a.radius + b.radius);
+		return distanceSquared(a.center, b.center) <= sqr(a.radius + b.radius);
 	}
 
 	bool intersects(const sphere &a, const aabb &b)
@@ -851,73 +851,6 @@ namespace cage
 		else
 			return aabb();
 	}
-
-
-
-
-
-
-
-	bool frustumCulling(const vec3 &shape, const mat4 &mvp)
-	{
-		CAGE_THROW_CRITICAL(notImplemented, "geometry");
-	}
-
-	bool frustumCulling(const line &shape, const mat4 &mvp)
-	{
-		CAGE_THROW_CRITICAL(notImplemented, "geometry");
-	}
-
-	bool frustumCulling(const triangle &shape, const mat4 &mvp)
-	{
-		CAGE_THROW_CRITICAL(notImplemented, "geometry");
-	}
-
-	bool frustumCulling(const plane &shape, const mat4 &mvp)
-	{
-		CAGE_THROW_CRITICAL(notImplemented, "geometry");
-	}
-
-	bool frustumCulling(const sphere &shape, const mat4 &mvp)
-	{
-		CAGE_THROW_CRITICAL(notImplemented, "geometry");
-	}
-
-	namespace
-	{
-		vec4 column(const mat4 &m, uint32 index)
-		{
-			return vec4(m[index], m[index + 4], m[index + 8], m[index + 12]);
-		}
-	}
-
-	bool frustumCulling(const aabb &box, const mat4 &mvp)
-	{
-		vec4 planes[6] = {
-			column(mvp, 3) + column(mvp, 0),
-			column(mvp, 3) - column(mvp, 0),
-			column(mvp, 3) + column(mvp, 1),
-			column(mvp, 3) - column(mvp, 1),
-			column(mvp, 3) + column(mvp, 2),
-			column(mvp, 3) - column(mvp, 2),
-		};
-		const vec3 b[] = { box.a, box.b };
-		for (uint32 i = 0; i < 6; i++)
-		{
-			const vec4 &p = planes[i]; // current plane
-			const vec3 pv = vec3( // current p-vertex
-				b[!!(p[0] > 0)][0],
-				b[!!(p[1] > 0)][1],
-				b[!!(p[2] > 0)][2]
-			);
-			const real d = dot(vec3(p), pv);
-			if (d < -p[3])
-				return false;
-		}
-		return true;
-	}
-
-
 
 
 

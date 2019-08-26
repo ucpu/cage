@@ -2,6 +2,7 @@
 
 #include "main.h"
 #include <cage-core/math.h>
+#include <cage-core/camera.h>
 #include <cage-core/timer.h>
 
 void test(real a, real b)
@@ -100,13 +101,13 @@ namespace
 			clamp(a, b, b);
 			clamp(a, 0.1, 0.9);
 			length(a);
-			squaredLength(a);
+			lengthSquared(a);
 			dot(a, b);
 			valid(a);
 			interpolate(a, b, 0.5);
 			abs(a);
 			distance(a, b);
-			squaredDistance(a, b);
+			distanceSquared(a, b);
 		}
 
 		T t(3.5);
