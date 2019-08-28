@@ -199,7 +199,7 @@ namespace cage
 				{
 					for (auto itV : emitRead->voices)
 					{
-						if ((itL->listener.renderMask & itV->voice.renderMask) == 0)
+						if ((itL->listener.sceneMask & itV->voice.sceneMask) == 0)
 							continue;
 						if (mixers.size() <= used)
 						{

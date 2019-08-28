@@ -13,7 +13,7 @@ namespace cage
 		vec3 color;
 		real opacity;
 		uint32 object;
-		uint32 renderMask;
+		uint32 sceneMask;
 		renderComponent();
 	};
 
@@ -43,6 +43,7 @@ namespace cage
 		vec3 attenuation; // constant, linear, quadratic
 		rads spotAngle;
 		real spotExponent;
+		uint32 sceneMask;
 		lightTypeEnum lightType;
 		lightComponent();
 	};
@@ -54,6 +55,7 @@ namespace cage
 		// spot: near, far, unused
 		vec3 worldSize;
 		uint32 resolution;
+		uint32 sceneMask;
 		shadowmapComponent();
 	};
 
@@ -66,7 +68,7 @@ namespace cage
 		uint32 assetName;
 		uint32 textName;
 		uint32 font;
-		uint32 renderMask;
+		uint32 sceneMask;
 		renderTextComponent();
 	};
 
@@ -87,7 +89,7 @@ namespace cage
 		real zeroParallaxDistance;
 		real eyeSeparation;
 		sint32 cameraOrder;
-		uint32 renderMask;
+		uint32 sceneMask;
 		cameraClearFlags clear;
 		cameraTypeEnum cameraType;
 		cameraComponent();
@@ -99,7 +101,7 @@ namespace cage
 		uint64 startTime;
 		mixingBus *input;
 		uint32 name;
-		uint32 renderMask;
+		uint32 sceneMask;
 		voiceComponent();
 	};
 
@@ -108,7 +110,7 @@ namespace cage
 		static entityComponent *component;
 		vec3 attenuation; // constant, linear, quadratic
 		mixingBus *output;
-		uint32 renderMask;
+		uint32 sceneMask;
 		real speedOfSound;
 		bool dopplerEffect;
 		listenerComponent();

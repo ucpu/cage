@@ -107,7 +107,7 @@ namespace cage
 		struct renderPassImpl : public renderPassStruct
 		{
 			mat4 viewProjPrev;
-			uint32 renderMask;
+			uint32 sceneMask;
 			real lodSelection; // vertical size of screen, at distance of one world-space-unit from camera, in pixels
 			bool lodOrthographic;
 
@@ -423,7 +423,7 @@ namespace cage
 				pass->shaderViewport.viewport = vec4(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
 				pass->targetTexture = camera->camera.target;
 				pass->clearFlags = ((camera->camera.clear & cameraClearFlags::Color) == cameraClearFlags::Color ? GL_COLOR_BUFFER_BIT : 0) | ((camera->camera.clear & cameraClearFlags::Depth) == cameraClearFlags::Depth ? GL_DEPTH_BUFFER_BIT : 0);
-				pass->renderMask = camera->camera.renderMask;
+				pass->sceneMask = camera->camera.sceneMask;
 				pass->entityId = camera->entityId;
 				(cameraEffects&)*pass = (cameraEffects&)camera->camera;
 				real eyeAdaptationSpeed = real(elapsedDispatchTime) * 1e-6;
@@ -433,7 +433,7 @@ namespace cage
 				OPTICK_TAG("y", pass->vpY);
 				OPTICK_TAG("width", pass->vpW);
 				OPTICK_TAG("height", pass->vpH);
-				OPTICK_TAG("renderMask", pass->renderMask);
+				OPTICK_TAG("sceneMask", pass->sceneMask);
 				addRenderableObjects(pass);
 				addRenderableLights(pass);
 				addRenderableTexts(pass);
@@ -465,7 +465,7 @@ namespace cage
 				pass->viewProj = pass->proj * pass->view;
 				pass->viewProjPrev = pass->viewProj;
 				pass->shadowmapResolution = pass->vpW = pass->vpH = light->shadowmap->resolution;
-				pass->renderMask = 0xffffffff;
+				pass->sceneMask = 0xffffffff;
 				pass->targetShadowmap = light->light.lightType == lightTypeEnum::Point ? (-shmCube++ - 1) : (shm2d++ + 1);
 				light->shadowmap->index = pass->targetShadowmap;
 				static const mat4 bias = mat4(
@@ -476,7 +476,7 @@ namespace cage
 				light->shadowmap->shadowMat = bias * pass->viewProj;
 				pass->entityId = light->entityId;
 				OPTICK_TAG("resolution", pass->shadowmapResolution);
-				OPTICK_TAG("renderMask", pass->renderMask);
+				OPTICK_TAG("sceneMask", pass->sceneMask);
 				addRenderableObjects(pass);
 			}
 
@@ -486,7 +486,7 @@ namespace cage
 				CAGE_ASSERT(pass->lodSelection > 0);
 				for (emitRenderObjectStruct *e : emitRead->renderableObjects)
 				{
-					if ((e->render.renderMask & pass->renderMask) == 0 || e->render.object == 0)
+					if ((e->render.sceneMask & pass->sceneMask) == 0 || e->render.object == 0)
 						continue;
 					CAGE_ASSERT(assets()->ready(e->render.object));
 					uint32 schemeIndex = assets()->scheme(e->render.object);
@@ -656,7 +656,7 @@ namespace cage
 				OPTICK_EVENT("texts");
 				for (emitRenderTextStruct *e : emitRead->renderableTexts)
 				{
-					if ((e->renderText.renderMask & pass->renderMask) == 0)
+					if ((e->renderText.sceneMask & pass->sceneMask) == 0)
 						continue;
 					if (!e->renderText.font)
 						e->renderText.font = hashString("cage/font/ubuntu/Ubuntu-R.ttf");
