@@ -2,99 +2,85 @@ namespace cage
 {
 	// delegates
 
-	template<class R>
-	struct delegate
-	{};
+	template<class T>
+	struct delegate;
 
 	template<class R, class... Ts>
 	struct delegate<R(Ts...)>
 	{
 	private:
-		struct
-		{
-			void *inst;
-			R(*fnc)(void *, Ts...);
-		} stub;
-
-		template<R(*F)(Ts...)>
-		static R functionStub(void *inst, Ts... vs)
-		{
-			(void)inst;
-			return F(templates::forward<Ts>(vs)...);
-		}
-
-		template<class C, R(C::*F)(Ts...)>
-		static R methodStub(void *inst, Ts... vs)
-		{
-			return (((C*)inst)->*F)(templates::forward<Ts>(vs)...);
-		}
-
-		template<class C, R(C::*F)(Ts...) const>
-		static R constStub(void *inst, Ts... vs)
-		{
-			return (((const C*)inst)->*F)(templates::forward<Ts>(vs)...);
-		}
-
-		template<class C, R(C::*F)(Ts...)>
-		struct methodWrapper
-		{
-			methodWrapper(C *inst) : inst(inst) {}
-			C *inst;
-		};
-
-		template<class C, R(C::*F)(Ts...) const>
-		struct constWrapper
-		{
-			constWrapper(const C *inst) : inst(inst) {}
-			const C *inst;
-		};
+		R(*fnc)(void *, Ts...) = nullptr;
+		void *inst = nullptr;
 
 	public:
 		delegate()
-		{
-			stub.inst = nullptr;
-			stub.fnc = nullptr;
-		}
+		{}
 
 		template<R(*F)(Ts...)>
 		delegate &bind()
 		{
-			stub.inst = nullptr;
-			stub.fnc = &functionStub<F>;
+			fnc = +[](void *inst, Ts... vs) {
+				(void)inst;
+				return F(templates::forward<Ts>(vs)...);
+			};
+			return *this;
+		}
+
+		template<class D, R(*F)(D, Ts...)>
+		delegate &bind(D d)
+		{
+			CAGE_ASSERT(sizeof(d) <= sizeof(inst));
+			union U
+			{
+				void *p;
+				D d;
+			};
+			fnc = +[](void *inst, Ts... vs) {
+				U u;
+				u.p = inst;
+				return F(u.d , templates::forward<Ts>(vs)...);
+			};
+			U u;
+			u.d = d;
+			inst = u.p;
 			return *this;
 		}
 
 		template<class C, R(C::*F)(Ts...)>
-		delegate &bind(methodWrapper<C, F> w)
+		delegate &bind(C *i)
 		{
-			stub.inst = w.inst;
-			stub.fnc = &methodStub<C, F>;
+			fnc = +[](void *inst, Ts... vs) {
+				return (((C*)inst)->*F)(templates::forward<Ts>(vs)...);
+			};
+			inst = i;
 			return *this;
 		}
 
 		template<class C, R(C::*F)(Ts...) const>
-		delegate &bind(constWrapper<C, F> w)
+		delegate &bind(const C *i)
 		{
-			stub.inst = const_cast<C*>(w.inst);
-			stub.fnc = &constStub<C, F>;
+			fnc = +[](void *inst, Ts... vs) {
+				return (((const C*)inst)->*F)(templates::forward<Ts>(vs)...);
+			};
+			inst = const_cast<C*>(i);
 			return *this;
 		}
 
 		explicit operator bool() const noexcept
 		{
-			return stub.fnc != nullptr;
+			return !!fnc;
 		}
 
 		void clear() noexcept
 		{
-			stub.inst = nullptr;
-			stub.fnc = nullptr;
+			inst = nullptr;
+			fnc = nullptr;
 		}
 
 		R operator ()(Ts... vs) const
 		{
-			CAGE_ASSERT(!!*this, stub.inst, stub.fnc);
-			return stub.fnc(stub.inst, templates::forward<Ts>(vs)...);
+			CAGE_ASSERT(!!*this, inst, fnc);
+			return fnc(inst, templates::forward<Ts>(vs)...);
 		}
 	};
 
