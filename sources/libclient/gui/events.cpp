@@ -193,19 +193,17 @@ namespace cage
 		return res;
 	}
 
-	bool guiImpl::eventComponentHandler(uint32 en)
+	void hierarchyItemStruct::fireWidgetEvent() const
 	{
-		auto *ents = entities();
-		if (ents->has(en))
+		if (ent->has(impl->components.event))
 		{
-			entity *e = ents->get(en);
-			if (e->has(components.event))
+			eventComponent &v = ent->value<eventComponent>(impl->components.event);
+			if (v.event)
 			{
-				eventComponent &v = e->value<eventComponent>(components.event);
-				if (v.event)
-					return v.event(en);
+				if (v.event(ent->name()))
+					return;
 			}
 		}
-		return false;
+		impl->widgetEvent.dispatch(ent->name());
 	}
 }

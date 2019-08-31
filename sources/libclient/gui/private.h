@@ -129,6 +129,8 @@ namespace cage
 		void emitDebug() const;
 		void emitDebug(vec2 pos, vec2 size, vec4 color) const;
 		void printDebug(uint32 offset) const;
+
+		void fireWidgetEvent() const;
 	};
 
 	struct baseItemStruct
@@ -300,9 +302,6 @@ namespace cage
 			void flush();
 		} emitData[3], *emitControl;
 		holder<swapBufferGuard> emitController;
-
-		eventListener<bool(uint32)> eventComponentListener;
-		bool eventComponentHandler(uint32 en);
 
 		windowEventListeners listeners;
 		std::vector<eventReceiverStruct> mouseEventReceivers;

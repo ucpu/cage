@@ -121,7 +121,7 @@ namespace cage
 
 	guiManagerCreateConfig::guiManagerCreateConfig() : assetMgr(nullptr), entitiesConfig(nullptr),
 		itemsArenaSize(1024 * 1024 * 16), emitArenaSize(1024 * 1024 * 16),
-		skinsCount(1), eventComponentOrder(-1000000)
+		skinsCount(1)
 	{}
 
 	holder<guiManager> newGuiManager(const guiManagerCreateConfig &config)

@@ -46,9 +46,6 @@ namespace cage
 		focusName(0), focusParts(0), hover(nullptr), eventsEnabled(false),
 		zoom(1)
 	{
-		eventComponentListener.bind<guiImpl, &guiImpl::eventComponentHandler>(this);
-		eventComponentListener.attach(widgetEvent, config.eventComponentOrder);
-
 		listeners.windowResize.bind<guiManager, &guiManager::windowResize>(this);
 		listeners.mousePress.bind<guiManager, &guiManager::mousePress>(this);
 		listeners.mouseDouble.bind<guiManager, &guiManager::mouseDouble>(this);

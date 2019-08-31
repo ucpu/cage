@@ -227,7 +227,7 @@ namespace cage
 				c = c->nextSibling;
 			}
 			combo->consolidateSelection();
-			hierarchy->impl->widgetEvent.dispatch(hierarchy->ent->name());
+			hierarchy->fireWidgetEvent();
 			return true;
 		}
 	}

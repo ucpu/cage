@@ -193,7 +193,7 @@ namespace cage
 						vec2 p = clamp((point - sliderPos) / sliderSize, 0, 1);
 						hsv[0] = p[0];
 						data.color = convertHsvToRgb(hsv);
-						hierarchy->impl->widgetEvent.dispatch(hierarchy->ent->name());
+						hierarchy->fireWidgetEvent();
 					}
 					else if (hasFocus(4))
 					{
@@ -202,7 +202,7 @@ namespace cage
 						hsv[1] = p[0];
 						hsv[2] = 1 - p[1];
 						data.color = convertHsvToRgb(hsv);
-						hierarchy->impl->widgetEvent.dispatch(hierarchy->ent->name());
+						hierarchy->fireWidgetEvent();
 					}
 				}
 				return true;

@@ -59,7 +59,7 @@ namespace cage
 					return true;
 				if (modifiers != modifiersFlags::None)
 					return true;
-				hierarchy->impl->widgetEvent.dispatch(hierarchy->ent->name());
+				hierarchy->fireWidgetEvent();
 				return true;
 			}
 		};

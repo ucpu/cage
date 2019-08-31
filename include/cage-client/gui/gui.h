@@ -68,7 +68,6 @@ namespace cage
 		uintPtr itemsArenaSize;
 		uintPtr emitArenaSize;
 		uint32 skinsCount;
-		sint32 eventComponentOrder;
 		guiManagerCreateConfig();
 	};
 
