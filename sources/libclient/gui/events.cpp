@@ -192,4 +192,20 @@ namespace cage
 		}
 		return res;
 	}
+
+	bool guiImpl::eventComponentHandler(uint32 en)
+	{
+		auto *ents = entities();
+		if (ents->has(en))
+		{
+			entity *e = ents->get(en);
+			if (e->has(components.event))
+			{
+				eventComponent &v = e->value<eventComponent>(components.event);
+				if (v.event)
+					return v.event(en);
+			}
+		}
+		return false;
+	}
 }

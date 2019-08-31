@@ -37,11 +37,17 @@ namespace cage
 	explicitSizeComponent::explicitSizeComponent() : size(vec2::Nan())
 	{}
 
-	guiGeneralComponents::guiGeneralComponents(entityManager *ents)
+	eventComponent::eventComponent()
+	{}
+
+	namespace privat
 	{
-		detail::memset(this, 0, sizeof(*this));
+		guiGeneralComponents::guiGeneralComponents(entityManager *ents)
+		{
+			detail::memset(this, 0, sizeof(*this));
 #define GCHL_GENERATE(T) T = ents->defineComponent<CAGE_JOIN(T, Component)>(CAGE_JOIN(T, Component)(), false);
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_COMMON_COMPONENTS));
+			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_COMMON_COMPONENTS));
 #undef GCHL_GENERATE
+		}
 	}
 }

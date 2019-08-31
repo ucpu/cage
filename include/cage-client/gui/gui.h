@@ -8,7 +8,7 @@ namespace cage
 		guiSkinConfig();
 	};
 
-	struct CAGE_API guiComponents : public guiGeneralComponents, public guiWidgetsComponents, public guiLayoutsComponents
+	struct CAGE_API guiComponents : public privat::guiGeneralComponents, public privat::guiWidgetsComponents, public privat::guiLayoutsComponents
 	{
 		guiComponents(entityManager *ents);
 	};
@@ -68,6 +68,7 @@ namespace cage
 		uintPtr itemsArenaSize;
 		uintPtr emitArenaSize;
 		uint32 skinsCount;
+		sint32 eventComponentOrder;
 		guiManagerCreateConfig();
 	};
 

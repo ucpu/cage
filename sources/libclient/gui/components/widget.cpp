@@ -58,11 +58,14 @@ namespace cage
 	spoilerComponent::spoilerComponent() : collapsesSiblings(true), collapsed(true)
 	{}
 
-	guiWidgetsComponents::guiWidgetsComponents(entityManager *ents)
+	namespace privat
 	{
-		detail::memset(this, 0, sizeof(*this));
+		guiWidgetsComponents::guiWidgetsComponents(entityManager *ents)
+		{
+			detail::memset(this, 0, sizeof(*this));
 #define GCHL_GENERATE(T) T = ents->defineComponent<CAGE_JOIN(T, Component)>(CAGE_JOIN(T, Component)(), false);
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS));
+			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS));
 #undef GCHL_GENERATE
+		}
 	}
 }

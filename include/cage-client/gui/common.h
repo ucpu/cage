@@ -89,13 +89,22 @@ namespace cage
 		explicitSizeComponent();
 	};
 
-#define GCHL_GUI_COMMON_COMPONENTS parent, image, imageFormat, text, textFormat, selection, tooltip, widgetState, selectedItem, scrollbars, explicitSize
-
-	struct CAGE_API guiGeneralComponents
+	struct CAGE_API eventComponent
 	{
-#define GCHL_GENERATE(T) entityComponent *T;
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_COMMON_COMPONENTS));
-#undef GCHL_GENERATE
-		guiGeneralComponents(entityManager *ents);
+		delegate<bool(uint32)> event;
+		eventComponent();
 	};
+
+#define GCHL_GUI_COMMON_COMPONENTS parent, image, imageFormat, text, textFormat, selection, tooltip, widgetState, selectedItem, scrollbars, explicitSize, event
+
+	namespace privat
+	{
+		struct CAGE_API guiGeneralComponents
+		{
+#define GCHL_GENERATE(T) entityComponent *T;
+			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_COMMON_COMPONENTS));
+#undef GCHL_GENERATE
+			guiGeneralComponents(entityManager *ents);
+		};
+	}
 }

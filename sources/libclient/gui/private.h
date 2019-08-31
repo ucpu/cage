@@ -301,6 +301,9 @@ namespace cage
 		} emitData[3], *emitControl;
 		holder<swapBufferGuard> emitController;
 
+		eventListener<bool(uint32)> eventComponentListener;
+		bool eventComponentHandler(uint32 en);
+
 		windowEventListeners listeners;
 		std::vector<eventReceiverStruct> mouseEventReceivers;
 		bool eventsEnabled;

@@ -148,11 +148,14 @@ namespace cage
 
 #define GCHL_GUI_WIDGET_COMPONENTS label, button, input, textArea, checkBox, radioBox, comboBox, listBox, progressBar, sliderBar, colorPicker, panel, spoiler
 
-	struct CAGE_API guiWidgetsComponents
+	namespace privat
 	{
+		struct CAGE_API guiWidgetsComponents
+		{
 #define GCHL_GENERATE(T) entityComponent *T;
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS));
+			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS));
 #undef GCHL_GENERATE
-		guiWidgetsComponents(entityManager *ents);
-	};
+			guiWidgetsComponents(entityManager *ents);
+		};
+	}
 }
