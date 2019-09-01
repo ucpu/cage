@@ -327,6 +327,18 @@ namespace
 		dsm.skeletonName = hashString(n.c_str());
 		writeLine(string("ref = ") + n);
 	}
+
+	vec3 fixUnitVector(vec3 n, const char *name)
+	{
+		if (abs(lengthSquared(n) - 1) > 1e-3)
+		{
+			CAGE_LOG(severityEnum::Warning, logComponentName, string() + "fixing denormalized " + name + ": " + n);
+			n = normalize(n);
+		}
+		if (!n.valid())
+			CAGE_THROW_ERROR(exception, name);
+		return n;
+	}
 }
 
 void processMesh()
@@ -407,8 +419,7 @@ void processMesh()
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
 		{
 			vec3 n = axes * conv(am->mNormals[i]);
-			CAGE_ASSERT(abs(lengthSquared(n) - 1) < 1e-3, "denormalized normal");
-			ser << n;
+			ser << fixUnitVector(n, "normal");
 		}
 	}
 
@@ -417,14 +428,12 @@ void processMesh()
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
 		{
 			vec3 n = axes * conv(am->mTangents[i]);
-			CAGE_ASSERT(abs(lengthSquared(n) - 1) < 1e-3, "denormalized tangent");
-			ser << n;
+			ser << fixUnitVector(n, "tangent");
 		}
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
 		{
 			vec3 n = axes * conv(am->mBitangents[i]);
-			CAGE_ASSERT(abs(lengthSquared(n) - 1) < 1e-3, "denormalized bitangent");
-			ser << n;
+			ser << fixUnitVector(n, "bitangent");
 		}
 	}
 
