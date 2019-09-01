@@ -53,3 +53,8 @@ min = 1
 max = 1000000
 default = 1000000
 
+[pass_invalid_normal]
+display = pass invalid normals
+type = bool
+default = false
+

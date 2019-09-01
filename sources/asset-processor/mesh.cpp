@@ -336,7 +336,16 @@ namespace
 			n = normalize(n);
 		}
 		if (!n.valid())
-			CAGE_THROW_ERROR(exception, name);
+		{
+			static bool passInvalid = properties("pass_invalid_normal").toBool();
+			if (passInvalid)
+			{
+				CAGE_LOG(severityEnum::Warning, logComponentName, string() + "pass invalid " + name + ": " + n);
+				n = vec3();
+			}
+			else
+				CAGE_THROW_ERROR(exception, name);
+		}
 		return n;
 	}
 }
