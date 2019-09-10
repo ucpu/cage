@@ -546,7 +546,7 @@ namespace cage
 				CAGE_ASSERT(mesh->getSkeletonName() == 0);
 				for (uint32 i = 0; i < bonesCount; i++)
 				{
-					e->render.color = convertHsvToRgb(vec3(real(i) / real(bonesCount), 1, 1));
+					e->render.color = colorHsvToRgb(vec3(real(i) / real(bonesCount), 1, 1));
 					mat4 m = model * tmpArmature2[i];
 					mat4 mvp = pass->viewProj * m;
 					addRenderableMesh(pass, e, mesh, m, mvp, mvp);

@@ -93,4 +93,18 @@ namespace cage
 	{
 		return detail::systemArena().createImpl<threadPool, threadPoolImpl>(threadNames, threadsCount);
 	}
+
+	void threadPoolTasksSplit(uint32 threadIndex, uint32 threadsCount, uint32 tasksCount, uint32 &begin, uint32 &end)
+	{
+		if (threadsCount == 0)
+		{
+			begin = 0;
+			end = tasksCount;
+			return;
+		}
+		CAGE_ASSERT(threadIndex < threadsCount);
+		uint32 tasksPerThread = tasksCount / threadsCount;
+		begin = threadIndex * tasksPerThread;
+		end = threadIndex + 1 == threadsCount ? tasksCount : begin + tasksPerThread;
+	}
 }

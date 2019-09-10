@@ -33,6 +33,12 @@ namespace
 
 		int test25() { return 0; }
 		int test25() const { return 1; }
+
+		static int test31(int) { return 0; }
+
+		static int test32(uint8) { return 8; }
+		static int test32(uint16) { return 16; }
+		static int test32(uint32) { return 32; }
 	};
 }
 
@@ -72,7 +78,7 @@ void testDelegates()
 		CAGE_TESTCASE("free functions with data");
 		delegate<int(int, int)> d7 = delegate<int(int, int)>().bind<int, &test5>(13);
 		CAGE_TEST(d7(42, 45) == 100);
-		delegate<void()> d8 = delegate<void()>().bind<void*, &test6>(&d7);
+		delegate<void()> d8 = delegate<void()>().bind<void*, &test6>(nullptr);
 		d8();
 	}
 
@@ -128,6 +134,28 @@ void testDelegates()
 		const tester ci;
 		delegate<int()> d28 = delegate<int()>().bind<tester, &tester::test25>(&ci);
 		CAGE_TEST(d28() == 1);
+	}
+
+	{
+		CAGE_TESTCASE("static methods");
+		delegate<int(int)> d41 = delegate<int(int)>().bind<&tester::test31>();
+		d41(7);
+	}
+
+	{
+		CAGE_TESTCASE("static method overloads");
+		delegate<int(uint8)> d44 = delegate<int(uint8)>().bind<&tester::test32>();
+		CAGE_TEST(d44(5) == 8);
+		delegate<int(uint16)> d45 = delegate<int(uint16)>().bind<&tester::test32>();
+		CAGE_TEST(d45(5) == 16);
+		delegate<int(uint32)> d46 = delegate<int(uint32)>().bind<&tester::test32>();
+		CAGE_TEST(d46(5) == 32);
+	}
+
+	{
+		CAGE_TESTCASE("static methods with data");
+		delegate<int()> d47 = delegate<int()>().bind<int, &tester::test31>(42);
+		d47();
 	}
 }
 

@@ -138,5 +138,17 @@ void testConcurrent()
 			thrs->run();
 			CAGE_TEST(counterGlobal == 40);
 		}
+		{
+			CAGE_TESTCASE("threadPoolTasksSplit");
+			uint32 b, e;
+			threadPoolTasksSplit(0, 3, 10, b, e);
+			CAGE_TEST(b == 0 && e == 3);
+			threadPoolTasksSplit(1, 3, 10, b, e);
+			CAGE_TEST(b == 3 && e == 6);
+			threadPoolTasksSplit(2, 3, 10, b, e);
+			CAGE_TEST(b == 6 && e == 10);
+			threadPoolTasksSplit(0, 0, 10, b, e);
+			CAGE_TEST(b == 0 && e == 10);
+		}
 	}
 }

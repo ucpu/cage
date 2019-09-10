@@ -17,9 +17,9 @@ namespace
 			{
 				real xx = (real(x) - w / 2) / radiusMax;
 				real yy = (real(y) - h / 2) / radiusMax;
-				real h = real(normalize(atan2(xx, yy)) / rads::Full());
+				real h = real(wrap(atan2(xx, yy)) / rads::Full());
 				real s = length(vec2(xx, yy));
-				vec3 color = s <= 1 ? convertHsvToRgb(vec3(h, s, 1)) : vec3();
+				vec3 color = s <= 1 ? colorHsvToRgb(vec3(h, s, 1)) : vec3();
 				png->set(x, y, color);
 			}
 		}

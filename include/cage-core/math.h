@@ -336,18 +336,13 @@ namespace cage
 	inline mat3::mat3(const mat4 &other) : data{ other[0], other[1], other[2], other[4], other[5], other[6], other[8], other[9], other[10] } {}
 	inline mat4::mat4(const transform &other) : mat4(other.position, other.orientation, vec3(other.scale)) {}
 
-	CAGE_API bool valid(float a);
-	CAGE_API bool valid(double a);
-#define GCHL_GENERATE(TYPE) \
-	inline bool valid(const TYPE &a) { return a.valid(); }
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, real, rads, degs, vec2, vec3, vec4, quat, mat3, mat4));
-#undef GCHL_GENERATE
 	inline real smoothstep(real x) { return x * x * (3 - 2 * x); }
 	inline real smootherstep(real x) { return x * x * x * (x * (x * 6 - 15) + 10); }
 	inline real abs(real x) { return x < 0 ? -x : x; }
 	inline sint32 sign(real x) { return x < 0 ? -1 : x > 0 ? 1 : 0; }
-	inline rads normalize(rads x) { if (x < rads()) return rads::Full() - -x % rads::Full(); else return x % rads::Full(); }
-	inline degs normalize(degs x) { if (x < degs()) return degs::Full() - -x % degs::Full(); else return x % degs::Full(); }
+	inline real wrap(real x) { if (x < 0) return 1 - -x % 1; else return x % 1; }
+	inline rads wrap(rads x) { if (x < rads()) return rads::Full() - -x % rads::Full(); else return x % rads::Full(); }
+	inline degs wrap(degs x) { if (x < degs()) return degs::Full() - -x % degs::Full(); else return x % degs::Full(); }
 	inline rads abs(rads x) { return rads(abs(x.value)); }
 	inline degs abs(degs x) { return degs(abs(x.value)); }
 	inline sint32 sign(rads x) { return sign(x.value); }
@@ -371,6 +366,49 @@ namespace cage
 	CAGE_API rads acos(real value);
 	CAGE_API rads atan(real value);
 	CAGE_API rads atan2(real x, real y);
+	CAGE_API real distanceWrap(real a, real b);
+	inline rads distanceAngle(rads a, rads b) { return distanceWrap((a / rads::Full()).value, (b / rads::Full()).value) * rads::Full(); }
+
+#define GCHL_GENERATE(TYPE) \
+	inline real dot(const TYPE &l, const TYPE &r) { TYPE m = l * r; real sum = 0; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) sum += m[i]; return sum; } \
+	inline real lengthSquared(const TYPE &x) { return dot(x, x); } \
+	inline real length(const TYPE &x) { return sqrt(lengthSquared(x)); } \
+	inline real distanceSquared(const TYPE &l, const TYPE &r) { return lengthSquared(l - r); } \
+	inline real distance(const TYPE &l, const TYPE &r) { return sqrt(distanceSquared(l, r)); } \
+	inline TYPE normalize(const TYPE &x) { return x / length(x); } \
+	inline TYPE abs(const TYPE &x) { return x < TYPE() ? -x : x; }
+	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, vec2, vec3, vec4));
+#undef GCHL_GENERATE
+	inline real dot(const quat &l, const quat &r) { return dot((vec4&)l, (vec4&)r); }
+	inline real lengthSquared(const quat &x) { return dot(x, x); }
+	inline real length(const quat &x) { return sqrt(lengthSquared(x)); }
+	inline quat normalize(const quat &x) { return x / length(x); }
+	inline quat conjugate(const quat &x) { return quat(-x[0], -x[1], -x[2], x[3]); }
+	inline real cross(const vec2 &l, const vec2 &r) { return l[0] * r[1] - l[1] * r[0]; }
+	inline vec3 cross(const vec3 &l, const vec3 &r) { return vec3(l[1] * r[2] - l[2] * r[1], l[2] * r[0] - l[0] * r[2], l[0] * r[1] - l[1] * r[0]); }
+	CAGE_API vec3 dominantAxis(const vec3 &x);
+	CAGE_API void toAxisAngle(const quat &x, vec3 &axis, rads &angle);
+	CAGE_API quat lerp(const quat &a, const quat &b, real f);
+	CAGE_API quat slerp(const quat &a, const quat &b, real f);
+	CAGE_API quat slerpPrecise(const quat &a, const quat &b, real f);
+	CAGE_API quat rotate(const quat &from, const quat &toward, rads maxTurn);
+
+	CAGE_API mat3 inverse(const mat3 &x);
+	CAGE_API mat3 transpose(const mat3 &x);
+	CAGE_API mat3 normalize(const mat3 &x);
+	CAGE_API real determinant(const mat3 &x);
+	CAGE_API mat4 inverse(const mat4 &x);
+	CAGE_API mat4 transpose(const mat4 &x);
+	CAGE_API mat4 normalize(const mat4 &x);
+	CAGE_API real determinant(const mat4 &x);
+	CAGE_API transform inverse(const transform &x);
+
+	CAGE_API bool valid(float a);
+	CAGE_API bool valid(double a);
+#define GCHL_GENERATE(TYPE) \
+	inline bool valid(const TYPE &a) { return a.valid(); }
+	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, real, rads, degs, vec2, vec3, vec4, quat, mat3, mat4));
+#undef GCHL_GENERATE
 
 #define GCHL_GENERATE(TYPE) \
 	inline TYPE min(TYPE a, TYPE b) { return a < b ? a : b; } \
@@ -391,28 +429,17 @@ namespace cage
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(TYPE) \
-	inline real dot(const TYPE &l, const TYPE &r) { TYPE m = l * r; real sum = 0; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) sum += m[i]; return sum; } \
-	inline real lengthSquared(const TYPE &x) { return dot(x, x); } \
-	inline real length(const TYPE &x) { return sqrt(lengthSquared(x)); } \
-	inline real distanceSquared(const TYPE &l, const TYPE &r) { return lengthSquared(l - r); } \
-	inline real distance(const TYPE &l, const TYPE &r) { return sqrt(distanceSquared(l, r)); } \
-	inline TYPE normalize(const TYPE &x) { return x / length(x); } \
-	inline TYPE abs(const TYPE &x) { return max(x, -x); }
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, vec2, vec3, vec4));
+	inline TYPE interpolate(TYPE a, TYPE b, real f) { return (TYPE)(a * (1 - f.value) + b * f.value); }
+	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64));
 #undef GCHL_GENERATE
-	inline real dot(const quat &l, const quat &r) { return dot((vec4&)l, (vec4&)r); }
-	inline real lengthSquared(const quat &x) { return dot(x, x); }
-	inline real length(const quat &x) { return sqrt(lengthSquared(x)); }
-	inline quat normalize(const quat &x) { return x / length(x); }
-	inline quat conjugate(const quat &x) { return quat(-x[0], -x[1], -x[2], x[3]); }
-	inline real cross(const vec2 &l, const vec2 &r) { return l[0] * r[1] - l[1] * r[0]; }
-	inline vec3 cross(const vec3 &l, const vec3 &r) { return vec3(l[1] * r[2] - l[2] * r[1], l[2] * r[0] - l[0] * r[2], l[0] * r[1] - l[1] * r[0]); }
-	CAGE_API vec3 primaryAxis(const vec3 &x);
-	CAGE_API void toAxisAngle(const quat &x, vec3 &axis, rads &angle);
-	CAGE_API quat lerp(const quat &a, const quat &b, real f);
-	CAGE_API quat slerp(const quat &a, const quat &b, real f);
-	CAGE_API quat slerpPrecise(const quat &a, const quat &b, real f);
-	CAGE_API quat rotate(const quat &from, const quat &toward, rads maxTurn);
+#define GCHL_GENERATE(TYPE) \
+	inline TYPE interpolate(TYPE a, TYPE b, real f) { return (TYPE)(a + (b - a) * f.value); }
+	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, float, double, real, rads, degs, vec2, vec3, vec4));
+#undef GCHL_GENERATE
+	inline quat interpolate(const quat &a, const quat &b, real f) { return slerp(a, b, f); }
+	inline transform interpolate(const transform &a, const transform &b, real f) { return transform(interpolate(a.position, b.position, f), interpolate(a.orientation, b.orientation, f), interpolate(a.scale, b.scale, f)); }
+	CAGE_API real interpolateWrap(real a, real b, real f);
+	inline rads interpolateAngle(rads a, rads b, real f) { return interpolateWrap((a / rads::Full()).value, (b / rads::Full()).value, f) * rads::Full(); }
 
 	CAGE_API real randomChance(); // 0 to 1; including 0, excluding 1
 #define GCHL_GENERATE(TYPE) \
@@ -429,27 +456,6 @@ namespace cage
 	inline vec4 randomChance4() { return vec4(randomChance(), randomChance(), randomChance(), randomChance()); }
 	inline vec4 randomRange4(real a, real b) { return vec4(randomRange(a, b), randomRange(a, b), randomRange(a, b), randomRange(a, b)); }
 	CAGE_API quat randomDirectionQuat();
-
-#define GCHL_GENERATE(TYPE) \
-	inline TYPE interpolate(TYPE a, TYPE b, real f) { return (TYPE)(a * (1 - f.value) + b * f.value); }
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64));
-#undef GCHL_GENERATE
-#define GCHL_GENERATE(TYPE) \
-	inline TYPE interpolate(TYPE a, TYPE b, real f) { return (TYPE)(a + (b - a) * f.value); }
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, float, double, real, rads, degs, vec2, vec3, vec4));
-#undef GCHL_GENERATE
-	inline quat interpolate(const quat &a, const quat &b, real f) { return slerp(a, b, f); }
-	inline transform interpolate(const transform &a, const transform &b, real f) { return transform(interpolate(a.position, b.position, f), interpolate(a.orientation, b.orientation, f), interpolate(a.scale, b.scale, f)); }
-
-	CAGE_API mat3 inverse(const mat3 &x);
-	CAGE_API mat3 transpose(const mat3 &x);
-	CAGE_API mat3 normalize(const mat3 &x);
-	CAGE_API real determinant(const mat3 &x);
-	CAGE_API mat4 inverse(const mat4 &x);
-	CAGE_API mat4 transpose(const mat4 &x);
-	CAGE_API mat4 normalize(const mat4 &x);
-	CAGE_API real determinant(const mat4 &x);
-	CAGE_API transform inverse(const transform &x);
 
 	namespace detail
 	{

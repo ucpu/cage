@@ -203,7 +203,7 @@ namespace cage
 		}
 	}
 
-	vec3 primaryAxis(const vec3 &x)
+	vec3 dominantAxis(const vec3 &x)
 	{
 		if (abs(x[0]) > abs(x[1]) && abs(x[0]) > abs(x[2]))
 			return vec3(sign(x[0]), 0, 0);

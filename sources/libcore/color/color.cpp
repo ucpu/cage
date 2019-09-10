@@ -1,4 +1,5 @@
 #include <cmath>
+#include "hsluv.h"
 
 #define CAGE_EXPORT
 #include <cage-core/core.h>
@@ -56,14 +57,14 @@ namespace cage
 		};
 	}
 
-	uint32 convertColorToRgbe(const vec3 &color)
+	uint32 colorRgbToRgbe(const vec3 &color)
 	{
 		chartoint hlp;
 		float2rgbe(hlp.rgbe, color.data[0].value, color.data[1].value, color.data[2].value);
 		return hlp.val;
 	}
 
-	vec3 convertRgbeToColor(uint32 color)
+	vec3 colorRgbeToRgb(uint32 color)
 	{
 		chartoint hlp;
 		hlp.val = color;
@@ -72,7 +73,7 @@ namespace cage
 		return res;
 	}
 
-	vec3 convertRgbToHsv(const vec3 &inColor)
+	vec3 colorRgbToHsv(const vec3 &inColor)
 	{
 		vec3 outColor;
 		real minColor = inColor[0] < inColor[1] ? inColor[0] : inColor[1];
@@ -100,7 +101,7 @@ namespace cage
 		return outColor;
 	}
 
-	vec3 convertHsvToRgb(const vec3 &inColor)
+	vec3 colorHsvToRgb(const vec3 &inColor)
 	{
 		vec3 outColor;
 		if (inColor[1] <= 0)
@@ -156,7 +157,23 @@ namespace cage
 		return outColor;
 	}
 
-	vec3 convertToRainbowColor(real inValue)
+	vec3 colorRgbToHsluv(const vec3 &rgb)
+	{
+		double h, s, l;
+		double r = rgb[0].value, g = rgb[1].value, b = rgb[2].value;
+		rgb2hsluv(r, g, b, &h, &s, &l);
+		return vec3(h / 360, s / 100, l / 100);
+	}
+
+	vec3 colorHsluvToRgb(const vec3 &hsluv)
+	{
+		double h = hsluv[0].value * 360, s = hsluv[1].value * 100, l = hsluv[2].value * 100;
+		double r, g, b;
+		hsluv2rgb(h, s, l, &r, &g, &b);
+		return vec3(r, g, b);
+	}
+
+	vec3 colorValueToHeatmapRgb(real inValue)
 	{
 		real value = 4.0f * (1.0f - inValue);
 		value = clamp(value, 0, 4);
@@ -192,5 +209,49 @@ namespace cage
 			break;
 		}
 		return result;
+	}
+
+	vec3 colorGammaToLinear(const vec3 &rgb, real gamma)
+	{
+		return vec3(pow(rgb[0], gamma), pow(rgb[1], gamma), pow(rgb[2], gamma));
+	}
+
+	vec3 colorLinearToGamma(const vec3 &rgb, real gamma)
+	{
+		return colorGammaToLinear(rgb, 1 / gamma);
+	}
+
+	real distanceColor(const vec3 &rgb1, const vec3 &rgb2)
+	{
+		vec3 hsluv1 = colorRgbToHsluv(rgb1);
+		vec3 hsluv2 = colorRgbToHsluv(rgb2);
+		real h1 = hsluv1[0];
+		real h2 = hsluv2[0];
+		real s1 = hsluv1[1];
+		real s2 = hsluv2[1];
+		real l1 = hsluv1[2];
+		real l2 = hsluv2[2];
+		real h = distanceWrap(h1, h2);
+		real s = abs(s1 - s2);
+		real l = abs(l1 - l2);
+		return length(vec3(h, s, l));
+	}
+
+	vec3 interpolateColor(const vec3 &rgb1, const vec3 &rgb2, real factor)
+	{
+		vec3 hsluv1 = colorRgbToHsluv(rgb1);
+		vec3 hsluv2 = colorRgbToHsluv(rgb2);
+		real h1 = hsluv1[0];
+		real h2 = hsluv2[0];
+		real s1 = hsluv1[1];
+		real s2 = hsluv2[1];
+		real l1 = hsluv1[2];
+		real l2 = hsluv2[2];
+		real h = interpolateWrap(h1, h2, factor);
+		real s = interpolate(s1, s2, factor);
+		real l = interpolate(l1, l2, factor);
+		vec3 hsluv = vec3(h, s, l);;
+		vec3 rgb = colorHsluvToRgb(hsluv);
+		return rgb;
 	}
 }

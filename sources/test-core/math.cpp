@@ -124,25 +124,29 @@ namespace
 	void testMathReal()
 	{
 		CAGE_TESTCASE("real");
-		CAGE_TEST(real::Pi() > 3.1 && real::Pi() < 3.2);
-		CAGE_TEST(real::E() > 2.7 && real::E() < 2.8);
-		CAGE_TEST(real::Infinity().valid());
-		CAGE_TEST(!real::Nan().valid());
-		CAGE_TEST(!real::Infinity().finite());
-		CAGE_TEST(!real::Nan().finite());
-		CAGE_TEST(real::Pi().finite());
-		CAGE_TEST(real(0).finite());
-		CAGE_TEST(real(42).finite());
-		CAGE_TEST(real(42).valid());
-		real a = 3;
-		test(a + 2, 5);
-		test(2 + a, 5);
-		test(a - 2, 1);
-		test(2 - a, -1);
-		test(a * 2, 6);
-		test(2 * a, 6);
-		test(a / 2, 1.5);
-		test(2 / a, 2.f / 3.f);
+
+		{
+			CAGE_TESTCASE("basics");
+			CAGE_TEST(real::Pi() > 3.1 && real::Pi() < 3.2);
+			CAGE_TEST(real::E() > 2.7 && real::E() < 2.8);
+			CAGE_TEST(real::Infinity().valid());
+			CAGE_TEST(!real::Nan().valid());
+			CAGE_TEST(!real::Infinity().finite());
+			CAGE_TEST(!real::Nan().finite());
+			CAGE_TEST(real::Pi().finite());
+			CAGE_TEST(real(0).finite());
+			CAGE_TEST(real(42).finite());
+			CAGE_TEST(real(42).valid());
+			real a = 3;
+			test(a + 2, 5);
+			test(2 + a, 5);
+			test(a - 2, 1);
+			test(2 - a, -1);
+			test(a * 2, 6);
+			test(2 * a, 6);
+			test(a / 2, 1.5);
+			test(2 / a, 2.f / 3.f);
+		}
 
 		{
 			CAGE_TESTCASE("modulo");
@@ -161,11 +165,66 @@ namespace
 		}
 
 		{
-			CAGE_TESTCASE("interpolating real");
+			CAGE_TESTCASE("wrap");
+			test(wrap(0.9 * 15), real(0.9 * 15) % 1);
+			test(wrap(0), 0);
+			test(wrap(-0.75), 0.25);
+			test(wrap(-0.5), 0.5);
+			test(wrap(-0.25), 0.75);
+			test(wrap(0.25), 0.25);
+			test(wrap(0.5), 0.5);
+			test(wrap(0.75), 0.75);
+		}
+
+		{
+			CAGE_TESTCASE("distanceWrap");
+			test(distanceWrap(0.25, 0.5), 0.25);
+			test(distanceWrap(0.75, 0.5), 0.25);
+			test(distanceWrap(0.5, 0.25), 0.25);
+			test(distanceWrap(0.5, 0.75), 0.25);
+			test(distanceWrap(0.5, 0.5), 0.0);
+			test(distanceWrap(0.1, 0.9), 0.2);
+			test(distanceWrap(0.1, 0.7), 0.4);
+			test(distanceWrap(0.1, 0.5), 0.4);
+			test(distanceWrap(0.1, 0.3), 0.2);
+			test(distanceWrap(-0.1, -0.3), 0.2);
+			test(distanceWrap(-0.1, 0.3), 0.4);
+			test(distanceWrap(0.1, -0.3), 0.4);
+			test(distanceWrap(0.1, -0.7), 0.2);
+			test(distanceWrap(-0.1, 0.7), 0.2);
+			test(distanceWrap(15.5, 0.7), 0.2);
+		}
+
+		{
+			CAGE_TESTCASE("interpolate");
 			test(interpolate(real(5), real(15), 0.5), 10);
 			test(interpolate(real(5), real(15), 0), 5);
 			test(interpolate(real(5), real(15), 1), 15);
 			test(interpolate(real(5), real(15), 0.2), 7);
+		}
+
+		{
+			CAGE_TESTCASE("interpolateWrap");
+			test(interpolateWrap(0.1, 0.5, 0), 0.1);
+			test(interpolateWrap(0.1, 0.5, 0.5), 0.3);
+			test(interpolateWrap(0.1, 0.5, 1), 0.5);
+			test(interpolateWrap(1.1, 1.5, 0.5), 0.3);
+			test(interpolateWrap(0.1, 13.5, 0.5), 0.3);
+			test(interpolateWrap(-0.1, -0.5, 0), 0.9);
+			test(interpolateWrap(-0.1, -0.5, 0.5), 0.7);
+			test(interpolateWrap(-0.1, -0.5, 1), 0.5);
+			test(interpolateWrap(-0.1, 0.5, 0.5), 0.7);
+			test(interpolateWrap(0.1, -0.5, 0.5), 0.3);
+			test(interpolateWrap(0.1, 0.9, 0), 0.1);
+			test(interpolateWrap(0.1, 0.9, 0.25), 0.05);
+			test(interpolateWrap(0.1, 0.9, 0.75), 0.95);
+			test(interpolateWrap(0.1, 0.9, 1), 0.9);
+			test(interpolateWrap(0.1, 0.7, 0), 0.1);
+			test(interpolateWrap(0.1, 0.7, 0.5), 0.9);
+			test(interpolateWrap(0.1, 0.7, 1), 0.7);
+			test(interpolateWrap(0.9, 0.3, 0), 0.9);
+			test(interpolateWrap(0.9, 0.3, 0.5), 0.1);
+			test(interpolateWrap(0.9, 0.3, 1), 0.3);
 		}
 
 		{
@@ -201,15 +260,15 @@ namespace
 		test(rads(degs(0)), rads(0));
 		test(rads(degs(90)), rads(real::Pi() / 2));
 		test(rads(degs(180)), rads(real::Pi()));
-		test(rads(normalize(degs(90 * 15))), degs((90 * 15) % 360));
-		test(rads(normalize(degs(0))), degs(0));
-		test(rads(normalize(degs(-270))), degs(90));
-		test(rads(normalize(degs(-180))), degs(180));
-		test(rads(normalize(degs(-90))), degs(270));
-		test(rads(normalize(degs(360))), degs(0));
-		test(rads(normalize(degs(90))), degs(90));
-		test(rads(normalize(degs(180))), degs(180));
-		test(rads(normalize(degs(270))), degs(270));
+		test(rads(wrap(degs(90 * 15))), degs((90 * 15) % 360));
+		test(rads(wrap(degs(0))), degs(0));
+		test(rads(wrap(degs(-270))), degs(90));
+		test(rads(wrap(degs(-180))), degs(180));
+		test(rads(wrap(degs(-90))), degs(270));
+		test(rads(wrap(degs(360))), degs(0));
+		test(rads(wrap(degs(90))), degs(90));
+		test(rads(wrap(degs(180))), degs(180));
+		test(rads(wrap(degs(270))), degs(270));
 
 		{
 			CAGE_TESTCASE("operators");
@@ -227,11 +286,11 @@ namespace
 			CAGE_TESTCASE("atan2");
 			for (uint32 i = 0; i < 10; i++)
 			{
-				rads a = normalize(randomAngle());
+				rads a = wrap(randomAngle());
 				real d = randomRange(0.1, 10.0);
 				real x = cos(a) * d;
 				real y = sin(a) * d;
-				rads r = normalize(atan2(x, y));
+				rads r = wrap(atan2(x, y));
 				test(a, r);
 			}
 		}
@@ -294,8 +353,8 @@ namespace
 		CAGE_TEST(clamp(vec3(1, 3, 5), vec3(2, 2, 2), vec3(4, 4, 4)) == vec3(2, 3, 4));
 		CAGE_TEST(clamp(vec3(1, 3, 5), 2, 4) == vec3(2, 3, 4));
 
-		test(primaryAxis(vec3(13, -4, 1)), vec3(1, 0, 0));
-		test(primaryAxis(vec3(-3, -15, 4)), vec3(0, -1, 0));
+		test(dominantAxis(vec3(13, -4, 1)), vec3(1, 0, 0));
+		test(dominantAxis(vec3(-3, -15, 4)), vec3(0, -1, 0));
 
 		// right = forward x up (in this order)
 		test(cross(vec3(0, 0, -1), vec3(0, 1, 0)), vec3(1, 0, 0));

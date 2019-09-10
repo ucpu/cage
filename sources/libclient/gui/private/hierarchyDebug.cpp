@@ -62,7 +62,7 @@ namespace cage
 		if (!renderDebugConfig)
 			return;
 		real h = real(detail::hash(ent ? ent->name() : 0)) / real(detail::numeric_limits<uint32>().max());
-		emitDebug(renderPos, renderSize, vec4(convertHsvToRgb(vec3(h, 1, 1)), 1));
+		emitDebug(renderPos, renderSize, vec4(colorHsvToRgb(vec3(h, 1, 1)), 1));
 	}
 
 	void hierarchyItemStruct::emitDebug(vec2 pos, vec2 size, vec4 color) const

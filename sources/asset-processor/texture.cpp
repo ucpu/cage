@@ -16,7 +16,7 @@
 
 vec2 convertSpecularToSpecial(const vec3 &spec)
 {
-	vec3 hsv = convertRgbToHsv(spec);
+	vec3 hsv = colorRgbToHsv(spec);
 	return vec2(hsv[2], hsv[1]);
 }
 

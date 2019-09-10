@@ -116,6 +116,32 @@ namespace cage
 		return std::ceil(x.value);
 	}
 
+	real distanceWrap(real a, real b)
+	{
+		a = wrap(a);
+		b = wrap(b);
+		if (abs(a - b) <= 0.5)
+			return abs(a - b);
+		if (a < b)
+			a += 1;
+		else
+			b += 1;
+		return wrap(abs(a - b));
+	}
+
+	real interpolateWrap(real a, real b, real f)
+	{
+		a = wrap(a);
+		b = wrap(b);
+		if (abs(a - b) <= 0.5)
+			return interpolate(a, b, f);
+		if (a < b)
+			a += 1;
+		else
+			b += 1;
+		return wrap(interpolate(a, b, f));
+	}
+
 	real real::Infinity() { return std::numeric_limits<float>::infinity(); }
 	real real::Nan() { return std::numeric_limits<float>::quiet_NaN(); }
 }

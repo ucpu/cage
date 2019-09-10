@@ -33,7 +33,7 @@ namespace cage
 					shr->uniform(1, rgb);
 					break;
 				case 2:
-					shr->uniform(1, convertRgbToHsv(rgb)[0]);
+					shr->uniform(1, colorRgbToHsv(rgb)[0]);
 					break;
 				}
 				renderMesh *mesh = impl->graphicsData.imageMesh;
@@ -189,19 +189,19 @@ namespace cage
 					}
 					if (hasFocus(2))
 					{
-						vec3 hsv = convertRgbToHsv(data.color);
+						vec3 hsv = colorRgbToHsv(data.color);
 						vec2 p = clamp((point - sliderPos) / sliderSize, 0, 1);
 						hsv[0] = p[0];
-						data.color = convertHsvToRgb(hsv);
+						data.color = colorHsvToRgb(hsv);
 						hierarchy->fireWidgetEvent();
 					}
 					else if (hasFocus(4))
 					{
-						vec3 hsv = convertRgbToHsv(data.color);
+						vec3 hsv = colorRgbToHsv(data.color);
 						vec2 p = clamp((point - rectPos) / rectSize, 0, 1);
 						hsv[1] = p[0];
 						hsv[2] = 1 - p[1];
-						data.color = convertHsvToRgb(hsv);
+						data.color = colorHsvToRgb(hsv);
 						hierarchy->fireWidgetEvent();
 					}
 				}
