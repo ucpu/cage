@@ -1,7 +1,7 @@
 
 [base]
 roughness = 0.5
-metalness = 0.0
+metallic = 0.0
 
 [mult]
 

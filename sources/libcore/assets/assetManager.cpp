@@ -25,7 +25,7 @@
 namespace cage
 {
 	configUint32 logLevel("cage-core.assetManager.logLevel", 0);
-#define ASS_LOG(LEVEL, ASS, MSG) { if (logLevel >= (LEVEL)) { CAGE_LOG(severityEnum::Info, "assetManager", string() + "asset '" + (ASS)->textName + "' (" + (ASS)->realName + " / " + (ASS)->internationalizedName + "): " + MSG); } }
+#define ASS_LOG(LEVEL, ASS, MSG) { if (logLevel >= (LEVEL)) { CAGE_LOG(severityEnum::Info, "assetManager", string() + "asset '" + (ASS)->textName + "' (" + (ASS)->realName + " / " + (ASS)->internationalName + "): " + MSG); } }
 
 	namespace
 	{
@@ -173,11 +173,11 @@ namespace cage
 					CAGE_ASSERT(ass->compressedData == nullptr);
 					CAGE_ASSERT(ass->internationalizedPrevious == 0);
 					OPTICK_TAG("realName", ass->realName);
-					ass->internationalizedPrevious = ass->internationalizedName;
+					ass->internationalizedPrevious = ass->internationalName;
 					ass->scheme = m;
 					ass->assetFlags = 0;
 					ass->compressedSize = ass->originalSize = 0;
-					ass->internationalizedName = 0;
+					ass->internationalName = 0;
 					ass->textName = string() + "<" + ass->realName + ">";
 					ass->dependenciesNew.clear();
 					ass->compressedData = ass->originalData = nullptr;
@@ -204,7 +204,7 @@ namespace cage
 						ass->assetFlags = h->flags;
 						ass->compressedSize = h->compressedSize;
 						ass->originalSize = h->originalSize;
-						ass->internationalizedName = h->internationalizedName;
+						ass->internationalName = h->internationalName;
 						//ass->textName = detail::stringBase<sizeof(h->textName)>(h->textName);
 						ass->textName = h->textName;
 						OPTICK_TAG("textName", ass->textName.c_str());
@@ -373,7 +373,7 @@ namespace cage
 						else
 						{
 							ASS_LOG(2, ass, "destroy");
-							interNameClear(ass->internationalizedName, ass);
+							interNameClear(ass->internationalName, ass);
 							index->remove(ass->realName);
 							detail::systemArena().destroy<assetContextPrivateStruct>(ass);
 							CAGE_ASSERT(countTotal > 0);
@@ -441,9 +441,9 @@ namespace cage
 							queueWaitDependencies->push(ass);
 							return (hackQueueWaitCounter++ % queueWaitDependencies->estimatedSize()) != 0;
 						}
-						if (ass->internationalizedName != ass->internationalizedPrevious)
+						if (ass->internationalName != ass->internationalizedPrevious)
 						{
-							interNameSet(ass->internationalizedName, ass);
+							interNameSet(ass->internationalName, ass);
 							interNameClear(ass->internationalizedPrevious, ass);
 						}
 						ass->internationalizedPrevious = 0;

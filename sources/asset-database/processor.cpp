@@ -26,7 +26,7 @@ using namespace cage;
 namespace
 {
 	const string databaseBegin = "cage-asset-database-begin";
-	const string databaseVersion = "8";
+	const string databaseVersion = "9";
 	const string databaseEnd = "cage-asset-database-end";
 
 	bool verdictValue = false;
@@ -69,10 +69,12 @@ namespace
 			CAGE_LOG(severityEnum::Error, "database", string() + "invalid ini file in databank '" + path + "'");
 			return false;
 		}
+
+		// load all sections
 		uint32 errors = 0;
 		for (const string &section : ini->sections())
 		{
-			// load assets group properties
+			// load scheme
 			string scheme = ini->getString(section, "scheme");
 			if (scheme.empty())
 			{
@@ -88,27 +90,41 @@ namespace
 				continue;
 			}
 
+			const auto items = ini->items(section);
+
 			// find invalid properties
-			for (const string &item : ini->items(section))
+			bool propertiesOk = true;
+			for (const string &prop : items)
 			{
-				if (item.isDigitsOnly() || item == "scheme")
+				if (prop.isDigitsOnly() || prop == "scheme")
 					continue;
-				if (sch->schemeFields.find(item) == sch->schemeFields.end())
+				if (!sch->schemeFields.exists(prop))
 				{
-					CAGE_LOG(severityEnum::Error, "database", string() + "invalid property '" + item + "' (value '" + ini->getString(section, item) + "') in databank '" + path + "' in section '" + section + "'");
-					errors++;
+					CAGE_LOG(severityEnum::Error, "database", string() + "unknown property '" + prop + "' (value '" + ini->getString(section, prop) + "') in databank '" + path + "' in section '" + section + "'");
+					propertiesOk = false;
 				}
 			}
-
-			// find all assets in the group
-			for (uint32 index = 0; ini->itemExists(section, string(index)); index++)
+			if (!propertiesOk)
 			{
+				errors++;
+				continue;
+			}
+
+			// find all assets
+			for (const string &assItem : items)
+			{
+				if (!assItem.isDigitsOnly())
+					continue; // not an asset
+
 				assetStruct ass;
 				ass.scheme = scheme;
 				ass.databank = path;
-				ass.name = ini->getString(section, string(index));
+				ass.name = ini->getString(section, assItem);
 				ass.name = pathJoin(pathExtractPath(ass.databank), ass.name);
 				bool ok = true;
+
+				// check for duplicate asset name
+				// (in case of multiple databanks in one folder)
 				if (assets.exists(ass.name))
 				{
 					CAGE_LOG(severityEnum::Error, "database", string() + "duplicate asset name '" + ass.name + "' in databank '" + path + "' in section '" + section + "'");
@@ -117,6 +133,8 @@ namespace
 					ass2.corrupted = true;
 					ok = false;
 				}
+
+				// check for hash collisions
 				for (const auto &it : assets)
 				{
 					assetStruct &ass2 = *it;
@@ -128,20 +146,39 @@ namespace
 						ok = false;
 					}
 				}
-				if (!ok)
+
+				// load asset properties
+				if (ok)
+				{
+					for (const string &prop : items)
+					{
+						if (prop.isDigitsOnly() || prop == "scheme")
+							continue;
+						CAGE_ASSERT(sch->schemeFields.exists(prop));
+						ass.fields[prop] = ini->getString(section, prop);
+					}
+				}
+				else
 				{
 					errors++;
 					ass.corrupted = true;
 				}
-				for (const string &item : ini->items(section))
-				{
-					if (item.isDigitsOnly() || item == "scheme")
-						continue;
-					ass.fields[item] = ini->getString(section, item);
-				}
+
 				assets.insert(templates::move(ass));
 			}
 		}
+
+		// check unused
+		if (errors == 0)
+		{
+			string s, t, v;
+			if (ini->anyUnused(s, t, v))
+			{
+				CAGE_LOG(severityEnum::Error, "database", string() + "unused property/asset '" + t + "' (value '" + v + "') in databank '" + path + "' in section '" + s + "'");
+				errors++;
+			}
+		}
+
 		return errors == 0;
 	}
 
@@ -153,7 +190,7 @@ namespace
 		ass.needNotify = true;
 		ass.files.clear();
 		ass.references.clear();
-		ass.internationalizedName = "";
+		ass.internationalName = "";
 		schemeStruct *scheme = schemes.retrieve(ass.scheme);
 		CAGE_ASSERT(scheme, "asset has invalid scheme");
 		try
@@ -202,12 +239,12 @@ namespace
 						ass.files.insert(line);
 					else if (param == "ref")
 						ass.references.insert(line);
-					else if (param == "internationalized")
+					else if (param == "internationalName")
 					{
-						if (ass.internationalizedName.empty())
-							ass.internationalizedName = line;
+						if (ass.internationalName.empty())
+							ass.internationalName = line;
 						else
-							CAGE_THROW_WARNING(exception, "assets internationalized name cannot be overridden");
+							CAGE_THROW_WARNING(exception, "assets international name cannot be overridden");
 					}
 					else
 					{
@@ -542,10 +579,10 @@ namespace
 			assetStruct &ass = *it;
 
 			// check internationalized name collisions
-			if (!ass.internationalizedName.empty() && outputHashes.find(ass.internationalizedPath()) != outputHashes.end())
+			if (!ass.internationalName.empty() && outputHashes.find(ass.internationalizedPath()) != outputHashes.end())
 			{
 				ass.corrupted = true;
-				CAGE_LOG(severityEnum::Warning, "database", string() + "asset '" + ass.name + "' in databank '" + ass.databank + "' with internationalized name '" + ass.internationalizedName + "' collides with another asset");
+				CAGE_LOG(severityEnum::Warning, "database", string() + "asset '" + ass.name + "' in databank '" + ass.databank + "' with internationalized name '" + ass.internationalName + "' collides with another asset");
 			}
 
 			// warn about missing references

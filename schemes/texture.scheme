@@ -5,24 +5,25 @@ index = 11
 [target]
 display = texture type
 type = enum
-values = 2d, 3d, 2d_array, cube_map
+values = 2d, 3d, 2dArray, cubeMap
 default = 2d
 
 [convert]
 display = re-purpose the texture
 type = enum
-values = none, height_to_normal, specular_to_special, skybox_to_cube
+values = none, heightToNormal, specularToSpecial, skyboxToCube
 default = none
 
-[normal_strength]
+[normalStrength]
 display = normal strength
-hint = used when convert is set to height_to_normal
+hint = used when convert is set to heightToNormal
 type = real
 default = 1
 min = 0
 
-[premultiply_alpha]
-display = premultiply alpha
+[premultiplyAlpha]
+display = premultiply rgb with alpha
+hint = true for color images, false otherwise
 type = bool
 default = false
 
@@ -32,81 +33,80 @@ type = uint32
 min = 1
 default = 1
 
-[flip_v]
+[flip]
 display = vertical flip
 type = bool
 default = false
 
-[invert_r]
+[invertRed]
 display = invert red channel
 type = bool
 default = false
 
-[invert_g]
+[invertGreen]
 display = invert green channel
 type = bool
 default = false
 
-[invert_b]
+[invertBlue]
 display = invert blue channel
 type = bool
 default = false
 
-[invert_a]
+[invertAlpha]
 display = invert alpha channel
 type = bool
 default = false
 
 [srgb]
-display = srgb
-hint = degamma (linearize) the rgb channels
+display = srgb (degamma/linearize)
+hint = true for color images, false otherwise
 type = bool
 default = false
 
-[animation_duration]
+[animationDuration]
 display = animation duration
 hint = microseconds
 type = uint32
 default = 1000000
 
-[animation_loop]
+[animationLoop]
 display = animation loop
 type = bool
 default = true
 
-[filter_min]
+[filterMin]
 display = minification filter
 type = enum
-values = nearest_mipmap_nearest, linear_mipmap_nearest, nearest_mipmap_linear, linear_mipmap_linear, nearest, linear
-default = linear_mipmap_linear
+values = nearestMipmapNearest, linearMipmapNearest, nearestMipmapLinear, linearMipmapLinear, nearest, linear
+default = linearMipmapLinear
 
-[filter_mag]
+[filterMag]
 display = magnification filter
 type = enum
 values = nearest, linear
 default = linear
 
-[filter_aniso]
+[filterAniso]
 display = anisotropic filter
 type = enum
 values = 0, 2, 4, 8, 16, 32, 64
 default = 16
 
-[wrap_x]
+[wrapX]
 display = wrap x
 type = enum
-values = clamp_to_edge, clamp_to_border, mirrored_repeat, repeat
+values = clampToEdge, clampToBorder, mirroredRepeat, repeat
 default = repeat
 
-[wrap_y]
+[wrapY]
 display = wrap y
 type = enum
-values = clamp_to_edge, clamp_to_border, mirrored_repeat, repeat
+values = clampToEdge, clampToBorder, mirroredRepeat, repeat
 default = repeat
 
-[wrap_z]
+[wrapZ]
 display = wrap z
 type = enum
-values = clamp_to_edge, clamp_to_border, mirrored_repeat, repeat
+values = clampToEdge, clampToBorder, mirroredRepeat, repeat
 default = repeat
-

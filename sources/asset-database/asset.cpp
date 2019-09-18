@@ -16,7 +16,7 @@ assetStruct::assetStruct() : corrupted(true), needNotify(false)
 void assetStruct::load(fileHandle *f)
 {
 	read(f, name);
-	read(f, internationalizedName);
+	read(f, internationalName);
 	read(f, scheme);
 	read(f, databank);
 	uint32 m = 0;
@@ -48,7 +48,7 @@ void assetStruct::load(fileHandle *f)
 void assetStruct::save(fileHandle *f) const
 {
 	write(f, name);
-	write(f, internationalizedName);
+	write(f, internationalName);
 	write(f, scheme);
 	write(f, databank);
 	write(f, numeric_cast<uint32>(fields.size()));
@@ -73,5 +73,5 @@ string assetStruct::outputPath() const
 
 string assetStruct::internationalizedPath() const
 {
-	return string(hashString(internationalizedName.c_str()));
+	return string(hashString(internationalName.c_str()));
 }

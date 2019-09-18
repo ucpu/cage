@@ -3,7 +3,7 @@ processor = cage-asset-processor font
 index = 16
 
 [resolution]
-display nominal resolution of one glyph
+display = nominal resolution of one glyph
 type = uint32
 default = 64
 

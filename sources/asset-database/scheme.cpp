@@ -26,11 +26,6 @@ void schemeStruct::parse(configIni *ini)
 		CAGE_LOG(severityEnum::Note, "exception", string() + "scheme: " + name);
 		CAGE_THROW_ERROR(exception, "empty scheme index field");
 	}
-	if (ini->itemsCount("scheme") != 2)
-	{
-		CAGE_LOG(severityEnum::Note, "exception", string() + "scheme: " + name);
-		CAGE_THROW_ERROR(exception, "invalid fields in scheme section");
-	}
 
 	for (const string &section : ini->sections())
 	{
@@ -38,13 +33,10 @@ void schemeStruct::parse(configIni *ini)
 			continue;
 		schemeFieldStruct fld;
 		fld.name = section;
-		fld.defaul = ini->getString(section, "default");
 #define GCHL_GENERATE(NAME) fld.NAME = ini->getString(section, CAGE_STRINGIZE(NAME));
-		GCHL_GENERATE(type);
-		GCHL_GENERATE(min);
-		GCHL_GENERATE(max);
-		GCHL_GENERATE(values);
+		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, display, hint, type, min, max, values))
 #undef GCHL_GENERATE
+		fld.defaul = ini->getString(section, "default");
 		if (fld.valid())
 			schemeFields.insert(templates::move(fld));
 		else
@@ -52,6 +44,18 @@ void schemeStruct::parse(configIni *ini)
 			CAGE_LOG(severityEnum::Note, "exception", string() + "scheme: " + name);
 			CAGE_LOG(severityEnum::Note, "exception", string() + "field: " + fld.name);
 			CAGE_THROW_ERROR(exception, "invalid scheme field data");
+		}
+	}
+
+	{
+		string s, t, v;
+		if (ini->anyUnused(s, t, v))
+		{
+			CAGE_LOG(severityEnum::Note, "exception", string() + "scheme: '" + name + "'");
+			CAGE_LOG(severityEnum::Note, "exception", string() + "section: '" + s + "'");
+			CAGE_LOG(severityEnum::Note, "exception", string() + "item: '" + t + "'");
+			CAGE_LOG(severityEnum::Note, "exception", string() + "value: '" + v + "'");
+			CAGE_THROW_ERROR(exception, "unused scheme property");
 		}
 	}
 }

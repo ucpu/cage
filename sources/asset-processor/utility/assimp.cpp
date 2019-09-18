@@ -300,7 +300,7 @@ namespace
 			try
 			{
 				uint32 flags = assimpDefaultLoadFlags;
-				if (properties("bake_model").toBool())
+				if (properties("bakeModel").toBool())
 					flags |= assimpBakeLoadFlags;
 				flags |= addFlags;
 				flags &= ~removeFlags;
@@ -352,7 +352,7 @@ namespace
 				if (am->HasNormals())
 					contains += "normals ";
 				if (am->HasTextureCoords(0))
-					contains += "uv ";
+					contains += "uvs ";
 				if (am->HasTangentsAndBitangents())
 					contains += "tangents ";
 				if (am->HasVertexColors(0))
@@ -481,18 +481,18 @@ uint32 assimpContextClass::selectMesh() const
 		CAGE_LOG(severityEnum::Note, "selectMesh", "using the first mesh, because it is the only mesh available");
 		return 0;
 	}
-	std::set<uint32> candidates;
 	if (inputSpec.isInteger(false))
 	{
 		uint32 n = inputSpec.toUint32();
 		if (n < scene->mNumMeshes)
 		{
-			candidates.insert(n);
-			CAGE_LOG(severityEnum::Note, "selectMesh", string() + "considering mesh index " + n + ", because the input specifier is numeric");
+			CAGE_LOG(severityEnum::Note, "selectMesh", string() + "using mesh index " + n + ", because the input specifier is numeric");
+			return n;
 		}
 		else
-			CAGE_LOG(severityEnum::Note, "selectMesh", string() + "the input specifier is numeric, but the index is out of range, so not considered as an index");
+			CAGE_THROW_ERROR(exception, "the input specifier is numeric, but the index is out of range");
 	}
+	std::set<uint32> candidates;
 	for (uint32 meshIndex = 0; meshIndex < scene->mNumMeshes; meshIndex++)
 	{
 		const aiMesh *am = scene->mMeshes[meshIndex];
@@ -627,7 +627,6 @@ mat4 conv(const aiMatrix4x4 &m)
 	CAGE_ASSERT_COMPILE(sizeof(aiMatrix4x4) == sizeof(cage::mat4), assimp_matrix4x4_is_not_interchangeable_with_mat4);
 	mat4 r;
 	detail::memcpy(&r, &m, sizeof(mat4));
-	//r[15] = 1;
 	return transpose(r);
 }
 

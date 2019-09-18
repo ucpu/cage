@@ -70,7 +70,7 @@ namespace
 			if (ret != 0)
 				CAGE_THROW_ERROR(codeException, "ogg_stream_init", ret);
 			vorbis_info_init(&vi);
-			ret = vorbis_encode_init_vbr(&vi, sds.channels, sds.sampleRate, properties("quality").toFloat());
+			ret = vorbis_encode_init_vbr(&vi, sds.channels, sds.sampleRate, properties("compressQuality").toFloat());
 			if (ret != 0)
 				CAGE_THROW_ERROR(codeException, "vorbis_encode_init_vbr", ret);
 			vorbis_comment_init(&vc);
@@ -223,18 +223,16 @@ void processSound()
 
 	decodeAll();
 
-	if (properties("before") == "repeat")
-		sds.flags = sds.flags | soundFlags::RepeatBeforeStart;
-	if (properties("after") == "repeat")
-		sds.flags = sds.flags | soundFlags::RepeatAfterEnd;
-	if (sds.frames * sds.channels * sizeof(float) < properties("small").toUint32())
+	if (properties("loopBefore").toBool())
+		sds.flags = sds.flags | soundFlags::LoopBeforeStart;
+	if (properties("loopAfter").toBool())
+		sds.flags = sds.flags | soundFlags::LoopAfterEnd;
+	if (sds.frames * sds.channels * sizeof(float) < properties("compressThreshold").toUint32())
 		sds.soundType = soundTypeEnum::RawRaw;
-	else if (properties("type") == "stream")
+	else if (properties("stream").toBool())
 		sds.soundType = soundTypeEnum::CompressedCompressed;
-	else if (properties("type") == "raw")
-		sds.soundType = soundTypeEnum::CompressedRaw;
 	else
-		CAGE_THROW_ERROR(exception, "invalid sound type parameter");
+		sds.soundType = soundTypeEnum::CompressedRaw;
 
 	CAGE_LOG(severityEnum::Info, logComponentName, string() + "flags: " + (uint32)sds.flags);
 	CAGE_LOG(severityEnum::Info, logComponentName, string() + "frames: " + sds.frames);

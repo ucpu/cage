@@ -453,7 +453,7 @@ void processShader()
 {
 	writeLine(string("use=") + inputFile);
 
-	defines["cage_shader_processor"] = "1";
+	defines["cageShaderProcessor"] = "1";
 #define GCHL_GENERATE(S) defines[CAGE_STRINGIZE(S)] = S;
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, inputDirectory, inputName, outputDirectory, outputName, assetPath, schemePath, inputSpec));
 #undef GCHL_GENERATE

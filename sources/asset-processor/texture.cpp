@@ -24,13 +24,13 @@ namespace
 {
 	uint32 convertFilter(const string &f)
 	{
-		if (f == "nearest_mipmap_nearest")
+		if (f == "nearestMipmapNearest")
 			return GL_NEAREST_MIPMAP_NEAREST;
-		if (f == "linear_mipmap_nearest")
+		if (f == "linearMipmapNearest")
 			return GL_LINEAR_MIPMAP_NEAREST;
-		if (f == "nearest_mipmap_linear")
+		if (f == "nearestMipmapLinear")
 			return GL_NEAREST_MIPMAP_LINEAR;
-		if (f == "linear_mipmap_linear")
+		if (f == "linearMipmapLinear")
 			return GL_LINEAR_MIPMAP_LINEAR;
 		if (f == "nearest")
 			return GL_NEAREST;
@@ -55,11 +55,11 @@ namespace
 
 	uint32 convertWrap(const string &f)
 	{
-		if (f == "clamp_to_edge")
+		if (f == "clampToEdge")
 			return GL_CLAMP_TO_EDGE;
-		if (f == "clamp_to_border")
+		if (f == "clampToBorder")
 			return GL_CLAMP_TO_BORDER;
-		if (f == "mirrored_repeat")
+		if (f == "mirroredRepeat")
 			return GL_MIRRORED_REPEAT;
 		if (f == "repeat")
 			return GL_REPEAT;
@@ -70,9 +70,9 @@ namespace
 	{
 		if (f == "2d")
 			return GL_TEXTURE_2D;
-		if (f == "2d_array")
+		if (f == "2dArray")
 			return GL_TEXTURE_2D_ARRAY;
-		if (f == "cube_map")
+		if (f == "cubeMap")
 			return GL_TEXTURE_CUBE_MAP;
 		if (f == "3d")
 			return GL_TEXTURE_3D;
@@ -226,6 +226,7 @@ namespace
 		template<bool SRGB>
 		void premultiplyAlphaImpl()
 		{
+			// todo depth
 			uint32 line = width * bpp;
 			for (uint32 y = 0; y < height; y++)
 			{
@@ -356,12 +357,12 @@ namespace
 	void performSkyboxToCube()
 	{
 		if (images.size() != 1)
-			CAGE_THROW_ERROR(exception, "skybox_to_cube requires one input image");
+			CAGE_THROW_ERROR(exception, "skyboxToCube requires one input image");
 		imageLayerStruct src = templates::move(images[0]);
 		images.clear();
 		images.resize(6);
 		if (src.width * 3 != src.height * 4)
-			CAGE_THROW_ERROR(exception, "skybox_to_cube requires source image to be 4:3");
+			CAGE_THROW_ERROR(exception, "skyboxToCube requires source image to be 4:3");
 		uint32 sideIndex = 0;
 		for (auto &m : images)
 		{
@@ -452,15 +453,15 @@ namespace
 		renderTextureHeader data;
 		detail::memset(&data, 0, sizeof(renderTextureHeader));
 		data.target = target;
-		data.filterMin = convertFilter(properties("filter_min"));
-		data.filterMag = convertFilter(properties("filter_mag"));
-		data.filterAniso = properties("filter_aniso").toUint32();
-		data.wrapX = convertWrap(properties("wrap_x"));
-		data.wrapY = convertWrap(properties("wrap_y"));
-		data.wrapZ = convertWrap(properties("wrap_z"));
+		data.filterMin = convertFilter(properties("filterMin"));
+		data.filterMag = convertFilter(properties("filterMag"));
+		data.filterAniso = properties("filterAniso").toUint32();
+		data.wrapX = convertWrap(properties("wrapX"));
+		data.wrapY = convertWrap(properties("wrapY"));
+		data.wrapZ = convertWrap(properties("wrapZ"));
 		data.flags =
 			(requireMipmaps(data.filterMin) ? textureFlags::GenerateMipmaps : textureFlags::None) |
-			(properties("animation_loop").toBool() ? textureFlags::AnimationLoop : textureFlags::None);
+			(properties("animationLoop").toBool() ? textureFlags::AnimationLoop : textureFlags::None);
 		data.dimX = images[0].width;
 		data.dimY = images[0].height;
 		data.dimZ = numeric_cast<uint32>(images.size());
@@ -507,7 +508,7 @@ namespace
 		}
 		data.copyType = GL_UNSIGNED_BYTE;
 		data.stride = data.dimX * data.dimY * data.bpp;
-		data.animationDuration = properties("animation_duration").toUint64();
+		data.animationDuration = properties("animationDuration").toUint64();
 
 		assetHeader h = initializeAssetHeaderStruct();
 		h.originalSize = sizeof(data);
@@ -535,17 +536,17 @@ namespace
 void processTexture()
 {
 	{
-		bool n = properties("convert") == "height_to_normal";
-		bool s = properties("convert") == "specular_to_special";
-		bool c = properties("convert") == "skybox_to_cube";
-		bool a = properties("premultiply_alpha").toBool();
+		bool n = properties("convert") == "heightToNormal";
+		bool s = properties("convert") == "specularToSpecial";
+		bool c = properties("convert") == "skyboxToCube";
+		bool a = properties("premultiplyAlpha").toBool();
 		bool g = properties("srgb").toBool();
 		if ((n || s) && a)
 			CAGE_THROW_ERROR(exception, "premultiplied alpha is only for colors");
 		if ((n || s) && g)
 			CAGE_THROW_ERROR(exception, "srgb is only for colors");
-		if (c && properties("target") != "cube_map")
-			CAGE_THROW_ERROR(exception, "convert skybox_to_cube requires target to be cube_map");
+		if (c && properties("target") != "cubeMap")
+			CAGE_THROW_ERROR(exception, "convert skyboxToCube requires target to be cubeMap");
 	}
 
 	ilInit();
@@ -586,9 +587,9 @@ void processTexture()
 	CAGE_LOG(severityEnum::Info, logComponentName, string() + "input channels: " + images[0].bpp);
 
 	{ // convert height map to normal map
-		if (properties("convert") == "height_to_normal")
+		if (properties("convert") == "heightToNormal")
 		{
-			float strength = properties("normal_strength").toFloat();
+			float strength = properties("normalStrength").toFloat();
 			for (auto &it : images)
 				it.convertHeightToNormal(strength);
 			CAGE_LOG(severityEnum::Info, logComponentName, string() + "converted from height map to normal map with strength of " + strength);
@@ -596,7 +597,7 @@ void processTexture()
 	}
 
 	{ // convert specular to special
-		if (properties("convert") == "specular_to_special")
+		if (properties("convert") == "specularToSpecial")
 		{
 			for (auto &it : images)
 				it.convertSpecularToSpecial();
@@ -605,7 +606,7 @@ void processTexture()
 	}
 
 	{ // convert skybox to cube
-		if (properties("convert") == "skybox_to_cube")
+		if (properties("convert") == "skyboxToCube")
 		{
 			performSkyboxToCube();
 			CAGE_LOG(severityEnum::Info, logComponentName, string() + "converted skybox to cube map");
@@ -616,7 +617,7 @@ void processTexture()
 	checkConsistency(target);
 
 	{ // premultiply alpha
-		if (properties("premultiply_alpha").toBool())
+		if (properties("premultiplyAlpha").toBool())
 		{
 			for (auto &it : images)
 				it.premultiplyAlpha();
@@ -634,34 +635,34 @@ void processTexture()
 	}
 
 	{ // vertical flip
-		if (!properties("flip_v").toBool())
+		if (!properties("flip").toBool())
 		{
 			for (auto &it : images)
 				it.performFlipV();
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "image vertically flipped (flip_v was false)");
+			CAGE_LOG(severityEnum::Info, logComponentName, string() + "image vertically flipped (flip was false)");
 		}
 	}
 
 	{ // invert
-		if (properties("invert_r").toBool())
+		if (properties("invertRed").toBool())
 		{
 			for (auto &it : images)
 				it.invert(0);
 			CAGE_LOG(severityEnum::Info, logComponentName, string() + "red channel inverted");
 		}
-		if (properties("invert_g").toBool())
+		if (properties("invertGreen").toBool())
 		{
 			for (auto &it : images)
 				it.invert(1);
 			CAGE_LOG(severityEnum::Info, logComponentName, string() + "green channel inverted");
 		}
-		if (properties("invert_b").toBool())
+		if (properties("invertBlue").toBool())
 		{
 			for (auto &it : images)
 				it.invert(2);
 			CAGE_LOG(severityEnum::Info, logComponentName, string() + "blue channel inverted");
 		}
-		if (properties("invert_a").toBool())
+		if (properties("invertAlpha").toBool())
 		{
 			for (auto &it : images)
 				it.invert(3);

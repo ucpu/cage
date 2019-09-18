@@ -26,12 +26,12 @@ void processTextpack()
 	CAGE_LOG(severityEnum::Info, logComponentName, string() + "loaded " + texts.size() + " texts");
 
 	assetHeader h = initializeAssetHeaderStruct();
-	string intr = properties("internationalized");
+	string intr = properties("internationalName");
 	if (!intr.empty())
 	{
 		intr = pathJoin(pathExtractPath(inputName), intr);
-		writeLine(string() + "internationalized = " + intr);
-		h.internationalizedName = hashString(intr.c_str());
+		writeLine(string() + "internationalName = " + intr);
+		h.internationalName = hashString(intr.c_str());
 	}
 	h.originalSize = sizeof(uint32) + numeric_cast<uint32>(texts.size()) * sizeof(uint32) * 2;
 	for (auto it : texts)
@@ -49,6 +49,7 @@ void processTextpack()
 		f->write(&len, sizeof(uint32));
 		f->write(it.second.c_str(), len);
 	}
+	f->close();
 
 	if (configGetBool("cage-asset-processor.textpack.preview"))
 	{

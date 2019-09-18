@@ -4,6 +4,8 @@
 struct schemeFieldStruct
 {
 	string name;
+	string display;
+	string hint;
 	string type;
 	string min;
 	string max;

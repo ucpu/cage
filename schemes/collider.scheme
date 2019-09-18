@@ -2,7 +2,7 @@
 processor = cage-asset-processor collider
 index = 3
 
-[bake_model]
+[bakeModel]
 display = bake model
 type = bool
 default = false

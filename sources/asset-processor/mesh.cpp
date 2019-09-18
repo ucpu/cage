@@ -91,7 +91,7 @@ namespace
 
 		mat.albedoBase = vec4(
 			vec3::parse(ini->getString("base", "albedo", "0, 0, 0")),
-			ini->getString("base", "opacity", "1").toFloat()
+			ini->getFloat("base", "opacity", 1)
 		);
 		if (mat.albedoBase[3] <= 1e-7)
 			dsm.renderFlags |= meshRenderFlags::Transparency;
@@ -99,19 +99,19 @@ namespace
 			dsm.renderFlags |= meshRenderFlags::Translucency;
 
 		mat.specialBase = vec4(
-			ini->getString("base", "roughness", "0").toFloat(),
-			ini->getString("base", "metalness", "0").toFloat(),
-			ini->getString("base", "emissive", "0").toFloat(),
-			ini->getString("base", "mask", "0").toFloat()
+			ini->getFloat("base", "roughness", 0),
+			ini->getFloat("base", "metallic", 0),
+			ini->getFloat("base", "emission", 0),
+			ini->getFloat("base", "mask", 0)
 		);
 
 		mat.albedoMult = vec4(vec3::parse(ini->getString("mult", "albedo", "1, 1, 1")), 1);
 
 		mat.specialMult = vec4(
-			ini->getString("mult", "roughness", "1").toFloat(),
-			ini->getString("mult", "metalness", "1").toFloat(),
-			ini->getString("mult", "emissive", "1").toFloat(),
-			ini->getString("mult", "mask", "1").toFloat()
+			ini->getFloat("mult", "roughness", 1),
+			ini->getFloat("mult", "metallic", 1),
+			ini->getFloat("mult", "emission", 1),
+			ini->getFloat("mult", "mask", 1)
 		);
 
 		string pathBase = pathExtractPath(path);
@@ -121,13 +121,13 @@ namespace
 
 		for (const string &n : ini->items("flags"))
 		{
-			string v = ini->get("flags", n);
-			if (v == "opacity-texture")
+			string v = ini->getString("flags", n);
+			if (v == "opacityTexture")
 			{
 				dsm.renderFlags |= meshRenderFlags::OpacityTexture;
 				continue;
 			}
-			if (v == "two-sided")
+			if (v == "twoSided")
 			{
 				dsm.renderFlags |= meshRenderFlags::TwoSided;
 				continue;
@@ -142,33 +142,44 @@ namespace
 				dsm.renderFlags |= meshRenderFlags::Translucency;
 				continue;
 			}
-			if (v == "no-depth-test")
+			if (v == "noDepthTest")
 			{
 				dsm.renderFlags &= ~meshRenderFlags::DepthTest;
 				continue;
 			}
-			if (v == "no-depth-write")
+			if (v == "noDepthWrite")
 			{
 				dsm.renderFlags &= ~meshRenderFlags::DepthWrite;
 				continue;
 			}
-			if (v == "no-velocity-write")
+			if (v == "noVelocityWrite")
 			{
 				dsm.renderFlags &= ~meshRenderFlags::VelocityWrite;
 				continue;
 			}
-			if (v == "no-lighting")
+			if (v == "noLighting")
 			{
 				dsm.renderFlags &= ~meshRenderFlags::Lighting;
 				continue;
 			}
-			if (v == "no-shadow-cast")
+			if (v == "noShadowCast")
 			{
 				dsm.renderFlags &= ~meshRenderFlags::ShadowCast;
 				continue;
 			}
 			CAGE_LOG(severityEnum::Note, "exception", string() + "specified flag: '" + v + "'");
 			CAGE_THROW_ERROR(exception, "unknown material flag");
+		}
+
+		{
+			string s, t, v;
+			if (ini->anyUnused(s, t, v))
+			{
+				CAGE_LOG(severityEnum::Note, "exception", string() + "section: " + s);
+				CAGE_LOG(severityEnum::Note, "exception", string() + "item: " + t);
+				CAGE_LOG(severityEnum::Note, "exception", string() + "value: " + v);
+				CAGE_THROW_ERROR(exception, "unused material property");
+			}
 		}
 	}
 
@@ -252,12 +263,12 @@ namespace
 
 	void loadMaterial(const aiScene *scene, const aiMesh *am, renderMeshHeader &dsm, renderMeshHeader::materialData &mat)
 	{
-		string path = properties("override_material");
+		string path = properties("material");
 		if (!path.empty())
 		{
 			path = pathJoin(pathExtractPath(inputFile), path);
 			if (!pathIsFile(pathJoin(inputDirectory, path)))
-				CAGE_THROW_ERROR(exception, "overriden material path does not exist");
+				CAGE_THROW_ERROR(exception, "explicitly given material path does not exist");
 			loadMaterialCage(dsm, mat, path);
 			return;
 		}
@@ -280,7 +291,7 @@ namespace
 		}
 		path += ".cpm";
 
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "looking for implicit cage material at '" + path + "'");
+		CAGE_LOG(severityEnum::Info, logComponentName, string() + "looking for implicit material at '" + path + "'");
 
 		if (pathIsFile(pathJoin(inputDirectory, path)))
 		{
@@ -312,7 +323,7 @@ namespace
 
 	void loadSkeletonName(renderMeshHeader &dsm)
 	{
-		string n = properties("override_skeleton");
+		string n = properties("skeleton");
 		if (!dsm.bones())
 		{
 			if (!n.empty())
@@ -337,7 +348,7 @@ namespace
 		}
 		if (!n.valid())
 		{
-			static bool passInvalid = properties("pass_invalid_normal").toBool();
+			static bool passInvalid = properties("passInvalidNormals").toBool();
 			if (passInvalid)
 			{
 				CAGE_LOG(severityEnum::Warning, logComponentName, string() + "pass invalid " + name + ": " + n);
@@ -355,9 +366,9 @@ void processMesh()
 	holder<assimpContextClass> context;
 	{
 		uint32 addFlags = 0;
-		if (properties("export_normal").toBool())
+		if (properties("normals").toBool())
 			addFlags |= aiProcess_GenSmoothNormals;
-		if (properties("export_tangent").toBool())
+		if (properties("tangents").toBool())
 			addFlags |= aiProcess_CalcTangentSpace;
 		context = newAssimpContext(addFlags, 0);
 	}
@@ -387,14 +398,14 @@ void processMesh()
 	CAGE_LOG(severityEnum::Info, logComponentName, cage::string() + "vertices count: " + dsm.verticesCount);
 	CAGE_LOG(severityEnum::Info, logComponentName, cage::string() + "indices count: " + dsm.indicesCount);
 
-	setFlags(dsm.flags, meshDataFlags::Uvs, am->GetNumUVChannels() > 0, "export_uv");
-	setFlags(dsm.flags, meshDataFlags::Normals, am->HasNormals(), "export_normal");
-	setFlags(dsm.flags, meshDataFlags::Tangents, am->HasTangentsAndBitangents(), "export_tangent");
-	setFlags(dsm.flags, meshDataFlags::Bones, am->HasBones(), "export_bones");
+	setFlags(dsm.flags, meshDataFlags::Uvs, am->GetNumUVChannels() > 0, "uvs");
+	setFlags(dsm.flags, meshDataFlags::Normals, am->HasNormals(), "normals");
+	setFlags(dsm.flags, meshDataFlags::Tangents, am->HasTangentsAndBitangents(), "tangents");
+	setFlags(dsm.flags, meshDataFlags::Bones, am->HasBones(), "bones");
 
 	loadSkeletonName(dsm);
 
-	dsm.instancesLimitHint = properties("instances_limit").toUint32();
+	dsm.instancesLimitHint = properties("instancesLimit").toUint32();
 
 	renderMeshHeader::materialData mat;
 	memset(&mat, 0, sizeof(mat));
@@ -406,6 +417,11 @@ void processMesh()
 	loadMaterial(scene, am, dsm, mat);
 	printMaterial(dsm, mat);
 	validateFlags(dsm, mat);
+
+	if (dsm.textureNames[CAGE_SHADER_TEXTURE_NORMAL] != 0 && !dsm.normals())
+		CAGE_THROW_ERROR(exception, "mesh uses normal map texture but has no normals");
+	if (dsm.textureNames[CAGE_SHADER_TEXTURE_NORMAL] != 0 && !dsm.tangents())
+		CAGE_THROW_ERROR(exception, "mesh uses normal map texture but has no tangents");
 
 	cage::memoryBuffer dataBuffer;
 	dataBuffer.reserve(dsm.vertexSize() * dsm.verticesCount);

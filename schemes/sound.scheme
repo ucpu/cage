@@ -2,34 +2,32 @@
 processor = cage-asset-processor sound
 index = 20
 
-[before]
-name = repeat before start
-type = enum
-values = repeat, discard
+[loopBefore]
+display = loop before start
+type = bool
+default = true
 
-[after]
-name = repeat after end
-type = enum
-values = repeat, discard
+[loopAfter]
+display = loop after end
+type = bool
+default = true
 
-[type]
-name = sound type
-hint = this determines run-time behavior
-type = enum
-values = raw, stream
-default = stream
+[stream]
+display = stream
+hint = streamed sounds are small in memory but have overhead associated with decoding and should not be used for frequently (repeatedly) played short sound effects
+type = bool
+default = true
 
-[quality]
-name = compression quality
-hint = only applies for the stream
+[compressThreshold]
+display = small file threshold
+hint = raw format is used if the file is smaller than the threshold (bytes) to reduce overhead caused by decoding a stream
+type = uint32
+default = 5000000
+
+[compressQuality]
+display = compression quality
+hint = only applies for stream sounds
 type = real
 min = -0.1
 max = 1.0
 default = 0.4
-
-[small]
-name = small file threshold
-hint = the threshold is in bytes; when the resulting sound is estimated to be smaller than this value, the processor will use raw instead of stream, independently of type configured
-type = uint32
-default = 5000000
-

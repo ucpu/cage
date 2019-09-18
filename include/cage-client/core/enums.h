@@ -62,8 +62,8 @@ namespace cage
 	enum class soundFlags : uint32
 	{
 		None = 0,
-		RepeatBeforeStart = 1 << 0,
-		RepeatAfterEnd = 1 << 1,
+		LoopBeforeStart = 1 << 0,
+		LoopAfterEnd = 1 << 1,
 	};
 	GCHL_ENUM_BITS(soundFlags);
 

@@ -109,13 +109,13 @@ void writeLine(const string &other)
 
 string properties(const string &name)
 {
-	std::map <string, string>::iterator it = props.find(name);
+	auto it = props.find(name);
 	if (it != props.end())
 		return it->second;
 	else
 	{
 		CAGE_LOG(severityEnum::Note, "exception", string() + "property name: '" + name + "'");
-		CAGE_THROW_ERROR(exception, "invalid property");
+		CAGE_THROW_ERROR(exception, "property not found");
 	}
 }
 
@@ -143,8 +143,8 @@ int main(int argc, const char *args[])
 		CAGE_EVAL_MEDIUM(CAGE_EXPAND_ARGS(GCHL_GENERATE, inputDirectory, inputName, outputDirectory, outputName, assetPath, schemePath, schemeIndex, inputFileName, outputFileName, inputFile, inputSpec, inputIdentifier));
 #undef GCHL_GENERATE
 
-		for (std::map<string, string>::iterator it = props.begin(), et = props.end(); it != et; it++)
-			CAGE_LOG(severityEnum::Info, "asset-processor", string() + "property '" + it->first + "': '" + it->second + "'");
+		for (const auto &it : props)
+			CAGE_LOG(severityEnum::Info, "asset-processor", string() + "property '" + it.first + "': '" + it.second + "'");
 
 		delegate<void()> func;
 		string component = string(args[1]);

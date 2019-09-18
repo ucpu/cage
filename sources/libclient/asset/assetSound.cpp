@@ -54,7 +54,7 @@ namespace cage
 
 			soundSourceHeader *snd = (soundSourceHeader*)context->compressedData;
 
-			source->setDataRepeat((snd->flags & soundFlags::RepeatBeforeStart) == soundFlags::RepeatBeforeStart, (snd->flags & soundFlags::RepeatAfterEnd) == soundFlags::RepeatAfterEnd);
+			source->setDataRepeat((snd->flags & soundFlags::LoopBeforeStart) == soundFlags::LoopBeforeStart, (snd->flags & soundFlags::LoopAfterEnd) == soundFlags::LoopAfterEnd);
 
 			switch (snd->soundType)
 			{

@@ -28,7 +28,7 @@ void testConfigIni()
 
 	{
 		CAGE_TESTCASE("basic ini");
-		holder<configIni> ini = newConfigIni(); // 1 MB memory
+		holder<configIni> ini = newConfigIni();
 		ini->setString("section", "item", "value");
 		CAGE_TEST(ini->getString("section", "item", "default") == "value");
 		CAGE_TEST(ini->getString("section", "non-item", "default") == "default");
@@ -45,7 +45,7 @@ void testConfigIni()
 
 	{
 		CAGE_TESTCASE("save ini");
-		holder<configIni> ini = newConfigIni(); // 1 MB memory
+		holder<configIni> ini = newConfigIni();
 		for (uint32 s = 3; s < 6; s++)
 			for (uint32 i = 2; i < 7; i++)
 				ini->set(s, i, s + i);
@@ -55,7 +55,7 @@ void testConfigIni()
 
 	{
 		CAGE_TESTCASE("load ini");
-		holder<configIni> ini = newConfigIni(); // 1 MB memory
+		holder<configIni> ini = newConfigIni();
 		ini->load("testdir/test.ini");
 		for (uint32 s = 3; s < 6; s++)
 			for (uint32 i = 2; i < 7; i++)
@@ -100,5 +100,40 @@ void testConfigIni()
 		testVectors(vectorize(ini->values("c")), { "very", "nice" });
 		testVectors(vectorize(ini->values("long")), { "true" });
 		testVectors(vectorize(ini->values("--")), { "pos1", "pos2" });
+	}
+
+	{
+		CAGE_TESTCASE("unused variables");
+		holder<configIni> ini = newConfigIni();
+		ini->set("a", "1", "a1");
+		ini->set("a", "2", "a2");
+		ini->set("b", "1", "b1");
+		CAGE_TEST(!ini->isUsed("a", "1"));
+		CAGE_TEST(!ini->isUsed("a", "2"));
+		CAGE_TEST(!ini->isUsed("b", "1"));
+		{
+			string s, t;
+			CAGE_TEST(ini->anyUnused(s, t));
+			CAGE_TEST(s == "a" || s == "b");
+			CAGE_TEST(t == "1" || t == "2");
+		}
+		ini->getString("a", "1");
+		ini->getString("a", "2");
+		CAGE_TEST(ini->isUsed("a", "1"));
+		CAGE_TEST(ini->isUsed("a", "2"));
+		CAGE_TEST(!ini->isUsed("b", "1"));
+		{
+			string s, t;
+			CAGE_TEST(ini->anyUnused(s, t));
+			CAGE_TEST(s == "b" && t == "1");
+		}
+		ini->getString("b", "1");
+		CAGE_TEST(ini->isUsed("a", "1"));
+		CAGE_TEST(ini->isUsed("a", "2"));
+		CAGE_TEST(ini->isUsed("b", "1"));
+		{
+			string s, t;
+			CAGE_TEST(!ini->anyUnused(s, t));
+		}
 	}
 }

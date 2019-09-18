@@ -2,7 +2,7 @@
 processor = cage-asset-processor mesh
 index = 12
 
-[bake_model]
+[bakeModel]
 display = bake model
 type = bool
 default = false
@@ -17,44 +17,47 @@ display = scale
 type = real
 default = 1
 
-[export_uv]
+[uvs]
 display = export uvs
 type = bool
 default = true
 
-[export_normal]
+[normals]
 display = export normals
 type = bool
 default = true
 
-[export_tangent]
-require = export_normal, export_uv
+[tangents]
 display = generate tangents
 type = bool
-default = true
+default = false
 
-[export_bones]
+[bones]
 display = export bones
 type = bool
 default = false
 
-[override_skeleton]
-display = skeleton name
+[skeleton]
+display = path to skeleton
+hint = leave empty to automatically deduce the name from the name of this file
 type = string
 
-[override_material]
+[material]
 display = path to cpm material
+hint = leave empty to use the material loaded with the mesh
 type = string
 
-[instances_limit]
-display = instances limit hint
+[instancesLimit]
+display = instances limit
+hint = limit preallocated instances count
 type = uint32
 min = 1
-max = 1000000
-default = 1000000
+max = 1000
+default = 1000
 
-[pass_invalid_normal]
+[passInvalidNormals]
 display = pass invalid normals
+hint = issue warning instead of error on invalid normal or (bi)tangent
 type = bool
 default = false
 

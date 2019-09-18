@@ -17,7 +17,7 @@ namespace cage
 		void *compressedData;
 		void *originalData;
 		uint32 realName;
-		uint32 internationalizedName;
+		uint32 internationalName;
 		uint32 assetFlags;
 	};
 
@@ -41,7 +41,7 @@ namespace cage
 		char textName[64];
 		uint64 compressedSize;
 		uint64 originalSize;
-		uint32 internationalizedName;
+		uint32 internationalName;
 		uint16 scheme;
 		uint16 dependenciesCount;
 

@@ -30,34 +30,21 @@ void processObject()
 	uint32 totalMeshes = 0;
 	for (const string &section : ini->sections())
 	{
-		if (section == "render" || section == "skeletal_animation" || section == "texture_animation" || section == "size")
-			continue;
 		if (!section.isDigitsOnly())
-		{
-			CAGE_LOG(severityEnum::Note, "exception", string() + "section: '" + section + "'");
-			CAGE_THROW_ERROR(exception, "invalid object definition: unknown section");
-		}
+			continue;
 		lodStruct ls;
 		ls.index = section.toUint32();
-		ls.threshold = real::Nan().value;
+		ls.threshold = ini->getFloat(section, "threshold", real::Nan().value);
 		for (const string &n : ini->items(section))
 		{
-			string v = ini->get(section, n);
-			if (n.isDigitsOnly())
-			{
-				v = pathJoin(basePath, v);
-				uint32 h = hashString(v.c_str());
-				ls.meshes.insert(h);
-				deps.insert(h);
-				writeLine(string("ref=") + v);
-			}
-			else if (n == "threshold")
-				ls.threshold = v.toFloat();
-			else
-			{
-				CAGE_LOG(severityEnum::Note, "exception", string() + "section: '" + section + "', item: '" + n + "', value: '" + v + "'");
-				CAGE_THROW_ERROR(exception, "invalid object definition: unknown item");
-			}
+			string v = ini->getString(section, n);
+			if (!n.isDigitsOnly())
+				continue;
+			v = pathJoin(basePath, v);
+			uint32 h = hashString(v.c_str());
+			ls.meshes.insert(h);
+			deps.insert(h);
+			writeLine(string("ref=") + v);
 		}
 		totalMeshes += numeric_cast<uint32>(ls.meshes.size());
 		lods.push_back(templates::move(ls));
@@ -65,7 +52,7 @@ void processObject()
 
 	for (lodStruct &ls : lods)
 	{
-		if (!(ls.threshold == ls.threshold))
+		if (!real(ls.threshold).valid())
 			ls.threshold = float(lods.size() - ls.index) / lods.size();
 	}
 
@@ -82,7 +69,7 @@ void processObject()
 		else
 			o.color = vec3::Nan();
 		o.opacity = ini->getFloat("render", "opacity", real::Nan().value);
-		string s = ini->getString("skeletal_animation", "name");
+		string s = ini->getString("skeletalAnimation", "name");
 		if (!s.empty())
 		{
 			s = pathJoin(basePath, s);
@@ -90,12 +77,23 @@ void processObject()
 			deps.insert(o.skelAnimName);
 			writeLine(string("ref=") + s);
 		}
-		o.skelAnimSpeed = ini->getFloat("skeletal_animation", "speed", real::Nan().value);
-		o.skelAnimOffset = ini->getFloat("skeletal_animation", "offset", real::Nan().value);
-		o.texAnimSpeed = ini->getFloat("texture_animation", "speed", real::Nan().value);
-		o.texAnimOffset = ini->getFloat("texture_animation", "offset", real::Nan().value);
+		o.skelAnimSpeed = ini->getFloat("skeletalAnimation", "speed", real::Nan().value);
+		o.skelAnimOffset = ini->getFloat("skeletalAnimation", "offset", real::Nan().value);
+		o.texAnimSpeed = ini->getFloat("textureAnimation", "speed", real::Nan().value);
+		o.texAnimOffset = ini->getFloat("textureAnimation", "offset", real::Nan().value);
 		o.worldSize = ini->getFloat("size", "world");
 		o.pixelsSize = ini->getFloat("size", "pixels");
+	}
+
+	{
+		string s, t, v;
+		if (ini->anyUnused(s, t, v))
+		{
+			CAGE_LOG(severityEnum::Note, "exception", string() + "section: " + s);
+			CAGE_LOG(severityEnum::Note, "exception", string() + "item: " + t);
+			CAGE_LOG(severityEnum::Note, "exception", string() + "value: " + v);
+			CAGE_THROW_ERROR(exception, "unused value");
+		}
 	}
 
 	assetHeader h = initializeAssetHeaderStruct();

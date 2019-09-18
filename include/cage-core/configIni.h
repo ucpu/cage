@@ -49,6 +49,12 @@ namespace cage
 		string get(const string &section, const string &item) const;
 		void set(const string &section, const string &item, const string &value);
 
+		void markUsed(const string &section, const string &item);
+		void markUnused(const string &section, const string &item);
+		bool isUsed(const string &section, const string &item) const;
+		bool anyUnused(string &section, string &item) const;
+		bool anyUnused(string &section, string &item, string &value) const;
+
 		void clear();
 		void merge(const configIni *source); // items in this are overridden by items in source
 		void parseCmd(uint32 argc, const char *const args[]); // clears this before parsing
@@ -61,6 +67,7 @@ namespace cage
 			string tmp = get(section, item); \
 			if (tmp.empty()) \
 				return defaul; \
+			const_cast<configIni*>(this)->markUsed(section, item); \
 			return tmp TO; \
 		} \
 		void CAGE_JOIN(set, NAME) (const string &section, const string &item, const TYPE &value) \
@@ -78,8 +85,12 @@ namespace cage
 #undef GCHL_GENERATE
 	};
 
+	CAGE_API holder<configIni> newConfigIni();
 	CAGE_API holder<configIni> newConfigIni(memoryArena arena);
-	CAGE_API holder<configIni> newConfigIni(); // uses system memory arena
+	CAGE_API holder<configIni> newConfigIni(const string &filename);
+	CAGE_API holder<configIni> newConfigIni(memoryArena arena, const string &filename);
+	CAGE_API holder<configIni> newConfigIni(uint32 argc, const char *const args[]);
+	CAGE_API holder<configIni> newConfigIni(memoryArena arena, uint32 argc, const char *const args[]);
 }
 
 #endif // guard_iniReader_h_c866b123_b27e_4758_ab8e_702ef8f315de_

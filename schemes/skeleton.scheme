@@ -2,7 +2,7 @@
 processor = cage-asset-processor skeleton
 index = 13
 
-[bake_model]
+[bakeModel]
 display = bake model
 type = bool
 default = false
@@ -17,12 +17,13 @@ display = scale
 type = real
 default = 1
 
-[bone_names]
-display = export bone names
-type = bool
-default = true
+#[boneNames]
+#display = export bone names
+#type = bool
+#default = true
 
-[animation_names]
-display = animation dependencies based on this asset's name
-type = bool
-default = true
+#[dependencies]
+#display = animations dependencies
+#hint = load animations from this file as dependencies
+#type = bool
+#default = true

@@ -401,11 +401,11 @@ namespace cage
 		}
 	}
 
-	void configGenerateIni(configIni *ini, const string &prefix)
+	holder<configIni> configGenerateIni(const string &prefix)
 	{
 		if (prefix.find('.') != m || prefix.empty())
 			CAGE_LOG(severityEnum::Warning, "config", string() + "dangerous config prefix '" + prefix + "'");
-		ini->clear();
+		holder<configIni> ini = newConfigIni();
 		holder<configList> cnf = newConfigList();
 		while (cnf->valid())
 		{
@@ -419,6 +419,7 @@ namespace cage
 				ini->set(s, n, cnf->getString());
 			cnf->next();
 		}
+		return ini;
 	}
 
 	void configLoadIni(const string &filename, const string &prefix)
@@ -430,8 +431,7 @@ namespace cage
 
 	void configSaveIni(const string &filename, const string &prefix)
 	{
-		holder<configIni> ini = newConfigIni();
-		configGenerateIni(ini.get(), prefix);
+		holder<configIni> ini = configGenerateIni(prefix);
 		ini->save(filename);
 	}
 

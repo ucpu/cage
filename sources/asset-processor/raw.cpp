@@ -19,7 +19,7 @@ void processRaw()
 	h.originalSize = numeric_cast<uint32>(data.size());
 
 	CAGE_LOG(severityEnum::Info, logComponentName, string() + "original data size: " + data.size() + " bytes");
-	if (data.size() >= properties("compress_threshold").toUint32())
+	if (data.size() >= properties("compressThreshold").toUint32())
 	{
 		memoryBuffer data2 = detail::compress(data);
 		CAGE_LOG(severityEnum::Info, logComponentName, string() + "compressed data size: " + data2.size() + " bytes");

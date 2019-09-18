@@ -5,21 +5,18 @@ fake.obj
 
 []
 scheme = mesh
-export_uv = false
-export_tangent = false
+uvs = false
 bone.obj
 
 []
 scheme = mesh
-export_normal = false
-export_tangent = false
+normals = false
 square.obj
 
 []
 scheme = mesh
-export_uv = false
-export_normal = false
-export_tangent = false
+uvs = false
+normals = false
 sphere.obj
 cone.obj
 guiElement.obj

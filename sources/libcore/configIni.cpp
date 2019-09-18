@@ -14,17 +14,24 @@ namespace cage
 	namespace
 	{
 		template<class Value>
-		struct containerMap
+		struct containerMap : public std::map<string, Value, stringComparatorFast, memoryArenaStd<std::pair<const string, Value>>>
 		{
-			containerMap(memoryArena arena) : cont(stringComparatorFast(), arena) {}
-			typedef std::map<string, Value, stringComparatorFast, memoryArenaStd<std::pair<const string, Value>>> contType;
-			contType cont;
+			typedef typename containerMap::map base;
+			containerMap(memoryArena arena) : base(stringComparatorFast(), arena) {}
 		};
 
-		struct inisection
+		struct iniValue
 		{
-			inisection(memoryArena arena) : items(arena) {}
-			containerMap<string> items;
+			string value;
+			bool used;
+			iniValue() : used(false) {}
+			iniValue(const string &value) : value(value), used(false) {}
+		};
+
+		struct iniSection
+		{
+			iniSection(memoryArena arena) : items(arena) {}
+			containerMap<iniValue> items;
 		};
 
 		class iniImpl : public configIni
@@ -32,20 +39,20 @@ namespace cage
 		public:
 			iniImpl(memoryArena arena) : arena(arena), sections(arena) {}
 			memoryArena arena;
-			containerMap<holder<inisection>> sections;
+			containerMap<holder<iniSection>> sections;
 		};
 	}
 
 	uint32 configIni::sectionsCount() const
 	{
 		iniImpl *impl = (iniImpl*)this;
-		return numeric_cast<uint32>(impl->sections.cont.size());
+		return numeric_cast<uint32>(impl->sections.size());
 	}
 
 	string configIni::section(uint32 section) const
 	{
 		iniImpl *impl = (iniImpl*)this;
-		auto i = impl->sections.cont.cbegin();
+		auto i = impl->sections.cbegin();
 		try
 		{
 			std::advance(i, section);
@@ -60,15 +67,15 @@ namespace cage
 	bool configIni::sectionExists(const string &section) const
 	{
 		iniImpl *impl = (iniImpl*)this;
-		return impl->sections.cont.count(section);
+		return impl->sections.count(section);
 	}
 
 	holder<pointerRange<string>> configIni::sections() const
 	{
 		iniImpl *impl = (iniImpl*)this;
 		pointerRangeHolder<string> tmp;
-		tmp.reserve(impl->sections.cont.size());
-		for (auto &it : impl->sections.cont)
+		tmp.reserve(impl->sections.size());
+		for (auto &it : impl->sections)
 			tmp.push_back(it.first);
 		return tmp;
 	}
@@ -76,7 +83,7 @@ namespace cage
 	void configIni::sectionRemove(const string &section)
 	{
 		iniImpl *impl = (iniImpl*)this;
-		impl->sections.cont.erase(section);
+		impl->sections.erase(section);
 	}
 
 	uint32 configIni::itemsCount(const string &section) const
@@ -84,7 +91,7 @@ namespace cage
 		if (!sectionExists(section))
 			return 0;
 		iniImpl *impl = (iniImpl*)this;
-		return numeric_cast<uint32>(impl->sections.cont[section]->items.cont.size());
+		return numeric_cast<uint32>(impl->sections[section]->items.size());
 	}
 
 	string configIni::item(const string &section, uint32 item) const
@@ -92,7 +99,7 @@ namespace cage
 		if (!sectionExists(section))
 			return "";
 		iniImpl *impl = (iniImpl*)this;
-		auto i = impl->sections.cont[section]->items.cont.cbegin();
+		auto i = impl->sections[section]->items.cbegin();
 		try
 		{
 			std::advance(i, item);
@@ -109,7 +116,7 @@ namespace cage
 		if (!sectionExists(section))
 			return false;
 		iniImpl *impl = (iniImpl*)this;
-		return impl->sections.cont[section]->items.cont.count(item);
+		return impl->sections[section]->items.count(item);
 	}
 
 	holder<pointerRange<string>> configIni::items(const string &section) const
@@ -118,7 +125,7 @@ namespace cage
 		pointerRangeHolder<string> tmp;
 		if (!sectionExists(section))
 			return tmp;
-		auto &cont = impl->sections.cont[section]->items.cont;
+		auto &cont = impl->sections[section]->items;
 		tmp.reserve(cont.size());
 		for (auto it : cont)
 			tmp.push_back(it.first);
@@ -131,10 +138,10 @@ namespace cage
 		pointerRangeHolder<string> tmp;
 		if (!sectionExists(section))
 			return tmp;
-		auto &cont = impl->sections.cont[section]->items.cont;
+		auto &cont = impl->sections[section]->items;
 		tmp.reserve(cont.size());
-		for (auto it : cont)
-			tmp.push_back(it.second);
+		for (const auto &it : cont)
+			tmp.push_back(it.second.value);
 		return tmp;
 	}
 
@@ -142,7 +149,7 @@ namespace cage
 	{
 		iniImpl *impl = (iniImpl*)this;
 		if (sectionExists(section))
-			impl->sections.cont[section]->items.cont.erase(item);
+			impl->sections[section]->items.erase(item);
 	}
 
 	string configIni::get(const string &section, const string &item) const
@@ -150,7 +157,7 @@ namespace cage
 		if (!itemExists(section, item))
 			return "";
 		iniImpl *impl = (iniImpl*)this;
-		return impl->sections.cont[section]->items.cont[item];
+		return impl->sections[section]->items[item].value;
 	}
 
 	namespace
@@ -158,7 +165,7 @@ namespace cage
 		void validateString(const string &str)
 		{
 			if (str.empty() || str.find('#') != m || str.find('[') != m || str.find(']') != m || str.find('=') != m)
-				CAGE_THROW_ERROR(exception, "invalid value");
+				CAGE_THROW_ERROR(exception, "invalid name");
 		}
 	}
 
@@ -170,14 +177,60 @@ namespace cage
 			CAGE_THROW_ERROR(exception, "invalid value");
 		iniImpl *impl = (iniImpl*)this;
 		if (!sectionExists(section))
-			impl->sections.cont[section] = impl->arena.createHolder<inisection>(impl->arena);
-		impl->sections.cont[section]->items.cont[item] = value;
+			impl->sections[section] = impl->arena.createHolder<iniSection>(impl->arena);
+		impl->sections[section]->items[item] = value;
+	}
+
+	void configIni::markUsed(const string &section, const string &item)
+	{
+		CAGE_ASSERT(itemExists(section, item), section, item);
+		iniImpl *impl = (iniImpl*)this;
+		impl->sections[section]->items[item].used = true;
+	}
+
+	void configIni::markUnused(const string &section, const string &item)
+	{
+		CAGE_ASSERT(itemExists(section, item), section, item);
+		iniImpl *impl = (iniImpl*)this;
+		impl->sections[section]->items[item].used = false;
+	}
+
+	bool configIni::isUsed(const string &section, const string &item) const
+	{
+		CAGE_ASSERT(itemExists(section, item), section, item);
+		iniImpl *impl = (iniImpl*)this;
+		return impl->sections[section]->items[item].used;
+	}
+
+	bool configIni::anyUnused(string &section, string &item) const
+	{
+		string value;
+		return anyUnused(section, item, value);
+	}
+
+	bool configIni::anyUnused(string &section, string &item, string &value) const
+	{
+		iniImpl *impl = (iniImpl*)this;
+		for (const auto &s : impl->sections)
+		{
+			for (const auto &t : s.second->items)
+			{
+				if (!t.second.used)
+				{
+					section = s.first;
+					item = t.first;
+					value = t.second.value;
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	void configIni::clear()
 	{
 		iniImpl *impl = (iniImpl*)this;
-		impl->sections.cont.clear();
+		impl->sections.clear();
 	}
 
 	void configIni::merge(const configIni *source)
@@ -316,12 +369,17 @@ namespace cage
 		fileMode fm(false, true);
 		fm.textual = true;
 		holder<fileHandle> file = newFile(filename, fm);
-		for (const auto &i : impl->sections.cont)
+		for (const auto &i : impl->sections)
 		{
 			file->writeLine(string() + "[" + i.first + "]");
-			for (const auto &j : i.second->items.cont)
-				file->writeLine(string() + j.first + "=" + j.second);
+			for (const auto &j : i.second->items)
+				file->writeLine(string() + j.first + "=" + j.second.value);
 		}
+	}
+
+	holder<configIni> newConfigIni()
+	{
+		return newConfigIni(detail::systemArena());
 	}
 
 	holder<configIni> newConfigIni(memoryArena arena)
@@ -329,8 +387,27 @@ namespace cage
 		return detail::systemArena().createImpl<configIni, iniImpl>(arena);
 	}
 
-	holder<configIni> newConfigIni()
+	holder<configIni> newConfigIni(const string &filename)
 	{
-		return detail::systemArena().createImpl<configIni, iniImpl>(detail::systemArena());
+		return newConfigIni(detail::systemArena(), filename);
+	}
+
+	holder<configIni> newConfigIni(memoryArena arena, const string &filename)
+	{
+		holder<configIni> ini = newConfigIni(arena);
+		ini->load(filename);
+		return ini;
+	}
+
+	holder<configIni> newConfigIni(uint32 argc, const char *const args[])
+	{
+		return newConfigIni(detail::systemArena(), argc, args);
+	}
+
+	holder<configIni> newConfigIni(memoryArena arena, uint32 argc, const char *const args[])
+	{
+		holder<configIni> ini = newConfigIni(arena);
+		ini->parseCmd(argc, args);
+		return ini;
 	}
 }

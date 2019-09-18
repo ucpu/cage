@@ -2,7 +2,7 @@
 processor = cage-asset-processor animation
 index = 14
 
-[bake_model]
+[bakeModel]
 display = bake model
 type = bool
 default = false

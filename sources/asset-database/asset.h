@@ -8,7 +8,7 @@ struct assetStruct
 {
 	assetStruct();
 	string name;
-	string internationalizedName;
+	string internationalName;
 	string scheme;
 	string databank;
 	stringMap fields;
