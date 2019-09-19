@@ -382,7 +382,7 @@ namespace
 
 	bool isNameDatabank(const string &name)
 	{
-		return name.isPattern("", "", ".asset");
+		return name.isPattern("", "", ".assets");
 	}
 
 	bool isNameIgnored(const string &name)
