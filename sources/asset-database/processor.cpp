@@ -204,7 +204,7 @@ namespace
 			prg->writeLine(pathToAbs(string(configPathIntermediate).empty() ? configPathOutput : configPathIntermediate)); // outputDirectory
 			prg->writeLine(ass.outputPath()); // outputName
 			prg->writeLine(ass.databank); // assetPath
-			prg->writeLine(pathJoin(configPathScheme, ass.scheme)); // schemePath
+			prg->writeLine(pathJoin(configPathSchemes, ass.scheme)); // schemePath
 			prg->writeLine(string(scheme->schemeIndex)); // schemeIndex
 			for (const auto &it : ass.fields)
 				prg->writeLine(string() + it.first + "=" + it.second);
@@ -321,12 +321,12 @@ namespace
 			CAGE_LOG(severityEnum::Info, "database", string() + "saved " + assets.size() + " asset entries");
 		}
 
-		// save reverse
-		if (!((string)configPathReverse).empty())
+		// save list by hash
+		if (!((string)configPathByHash).empty())
 		{
 			fileMode fm(false, true);
 			fm.textual = true;
-			holder<fileHandle> f = newFile(configPathReverse, fm);
+			holder<fileHandle> f = newFile(configPathByHash, fm);
 			std::vector <std::pair <string, const assetStruct*> > items;
 			for (const auto &it : assets)
 			{
@@ -336,26 +336,26 @@ namespace
 			std::sort(items.begin(), items.end(), [](const auto &a, const auto &b) {
 				return a.first < b.first;
 			});
-			f->writeLine("<hash>     <asset name>                                                 <scheme>        <databank>");
+			f->writeLine("<hash>     <asset name>                                                                                         <scheme>        <databank>");
 			for (const auto &it : items)
 			{
 				const assetStruct &ass = *it.second;
 				write(f, it.first.fill(10));
 				if (ass.corrupted)
 					write(f, "CORRUPTED");
-				write(f, ass.name.fill(60));
+				write(f, ass.name.fill(100));
 				write(f, ass.scheme.fill(15));
 				write(f, ass.databank.fill(30));
 				f->writeLine("");
 			}
 		}
 
-		// save forward
-		if (!((string)configPathForward).empty())
+		// save list by names
+		if (!((string)configPathByName).empty())
 		{
 			fileMode fm(false, true);
 			fm.textual = true;
-			holder<fileHandle> f = newFile(configPathForward, fm);
+			holder<fileHandle> f = newFile(configPathByName, fm);
 			std::vector<std::pair<string, const assetStruct*>> items;
 			for (const auto &it : assets)
 			{
@@ -365,14 +365,14 @@ namespace
 			std::sort(items.begin(), items.end(), [](const auto &a, const auto &b) {
 				return a.first < b.first;
 			});
-			f->writeLine("<hash>     <asset name>                                                 <scheme>        <databank>");
+			f->writeLine("<hash>     <asset name>                                                                                         <scheme>        <databank>");
 			for (const auto &it : items)
 			{
 				const assetStruct &ass = *it.second;
 				write(f, ass.outputPath().fill(10));
 				if (ass.corrupted)
 					write(f, "CORRUPTED");
-				write(f, ass.name.fill(60));
+				write(f, ass.name.fill(100));
 				write(f, ass.scheme.fill(15));
 				write(f, ass.databank.fill(30));
 				f->writeLine("");
@@ -625,7 +625,7 @@ namespace
 
 	void loadSchemesDirectory(const string &dir)
 	{
-		string realpath = pathJoin(configPathScheme, dir);
+		string realpath = pathJoin(configPathSchemes, dir);
 		holder<directoryList> lst = newFilesystem()->listDirectory(realpath);
 		for (; lst->valid(); lst->next())
 		{
@@ -641,7 +641,7 @@ namespace
 			s.name = name.subString(0, name.length() - 7);
 			CAGE_LOG(severityEnum::Info, "database", string() + "loading scheme '" + s.name + "'");
 			holder<configIni> ini = newConfigIni();
-			ini->load(pathJoin(configPathScheme, name));
+			ini->load(pathJoin(configPathSchemes, name));
 			s.parse(ini.get());
 			schemes.insert(templates::move(s));
 		}

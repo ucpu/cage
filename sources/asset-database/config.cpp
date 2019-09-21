@@ -13,10 +13,10 @@ using namespace cage;
 configString configPathInput("cage-asset-database.path.input", "data");
 configString configPathOutput("cage-asset-database.path.output", "assets");
 configString configPathIntermediate("cage-asset-database.path.intermediate", "assets-tmp");
-configString configPathDatabase("cage-asset-database.path.database", "asset-database.bin");
-configString configPathReverse("cage-asset-database.path.reverse", "asset-reverse.txt");
-configString configPathForward("cage-asset-database.path.forward", "asset-forward.txt");
-configString configPathScheme("cage-asset-database.path.scheme", "schemes");
+configString configPathDatabase("cage-asset-database.path.database", "assets-database");
+configString configPathByHash("cage-asset-database.path.listByHash", "assets-by-hash.txt");
+configString configPathByName("cage-asset-database.path.listByName", "assets-by-name.txt");
+configString configPathSchemes("cage-asset-database.path.schemes", "schemes");
 configSint32 configNotifierPort("cage-asset-database.database.port", 65042);
 configUint64 configArchiveWriteThreshold("cage-asset-database.database.archiveWriteThreshold", 256 * 1024 * 1024);
 configBool configListening("cage-asset-database.database.listening", false);
@@ -82,8 +82,8 @@ void configParseCmd(int argc, const char *args[])
 	configPathInput = pathSimplify(configPathInput);
 	configPathOutput = pathSimplify(configPathOutput);
 	configPathDatabase = pathSimplify(configPathDatabase);
-	configPathReverse = pathSimplify(configPathReverse);
-	configPathForward = pathSimplify(configPathForward);
-	configPathScheme = pathSimplify(configPathScheme);
+	configPathByHash = pathSimplify(configPathByHash);
+	configPathByName = pathSimplify(configPathByName);
+	configPathSchemes = pathSimplify(configPathSchemes);
 }
 
