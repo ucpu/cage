@@ -83,10 +83,7 @@ void testFiles()
 
 	{
 		CAGE_TESTCASE("list directory - test empty file");
-		{
-			auto f = newFile("testdir/empty.txt", fileMode(false, true));
-			//f->writeLine("haha");
-		}
+		newFile("testdir/empty.txt", fileMode(false, true));
 		holder<directoryList> fs = newDirectoryList("testdir");
 		CAGE_TEST(fs);
 		bool found = false;

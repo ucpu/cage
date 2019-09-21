@@ -132,7 +132,10 @@ namespace cage
 			{
 				LOCK;
 				if (zip_close(zip) != 0)
+				{
 					CAGE_LOG(severityEnum::Error, "exception", "failed to close zip archive. all changes may have been lost");
+					zip_discard(zip); // free the memory
+				}
 				zip = nullptr;
 			}
 
