@@ -44,7 +44,7 @@ namespace cage
 
 			entityManagerImpl(const entityManagerCreateConfig &config) : allEntities(this), generateName(0)
 			{
-				namedEntities = newHashTable<entityImpl>(1024, 1024 * 1024);
+				namedEntities = newHashTable<entityImpl>({});
 			}
 
 #if defined (CAGE_SYSTEM_WINDOWS)
@@ -194,7 +194,7 @@ namespace cage
 	entity *entityManager::get(uint32 entityName) const
 	{
 		entityManagerImpl *impl = (entityManagerImpl *)this;
-		return impl->namedEntities->get(entityName, false);
+		return impl->namedEntities->get(entityName);
 	}
 
 	entity *entityManager::getOrCreate(uint32 entityName)

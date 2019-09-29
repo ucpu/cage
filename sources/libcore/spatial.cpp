@@ -182,7 +182,7 @@ namespace cage
 				CAGE_ASSERT((uintPtr(this) % alignof(fastBox)) == 0, uintPtr(this) % alignof(fastBox), alignof(fastBox));
 				CAGE_ASSERT((uintPtr(leftBinBoxes.data()) % alignof(fastBox)) == 0);
 				CAGE_ASSERT((uintPtr(rightBinBoxes.data()) % alignof(fastBox)) == 0);
-				itemsTable = newHashTable<itemBase>(min(config.maxItems, 100u), config.maxItems * 2); // times 2 to compensate for fill ratio
+				itemsTable = newHashTable<itemBase>({});
 			}
 
 			~spatialDataImpl()
@@ -485,9 +485,9 @@ namespace cage
 	{
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		impl->dirty = true;
-		auto item = impl->itemsTable->get(name, true);
-		if (!item)
+		if (!impl->itemsTable->exists(name))
 			return;
+		auto item = impl->itemsTable->get(name);
 		impl->itemsTable->remove(name);
 		impl->itemsArena.deallocate(item);
 	}

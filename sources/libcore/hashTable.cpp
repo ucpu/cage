@@ -1,10 +1,8 @@
-#include <vector>
+#include <robin_hood.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core.h>
-#include <cage-core/memory.h>
 #include <cage-core/hashTable.h>
-#include <cage-core/math.h>
 
 namespace cage
 {
@@ -25,179 +23,108 @@ namespace cage
 	{
 		namespace
 		{
-			using detail::hash;
-
 			class hashTableImpl : public hashTablePriv
 			{
 			public:
-				hashTableImpl(uint32 initItems, uint32 maxItems, float maxFillRate) : pageSize(detail::memoryPageSize()), lines(nullptr), used(0), tombs(0), total(0), maxFillRate(maxFillRate), maxPages(0)
+				hashTableImpl(const hashTableCreateConfig &config)
 				{
-					CAGE_ASSERT(initItems <= maxItems);
-					CAGE_ASSERT(maxFillRate > 0 && maxFillRate < 1, maxFillRate);
-					mem = newVirtualMemory();
-					maxPages = numeric_cast<uint32>(detail::roundUpTo(numeric_cast<uintPtr>(maxItems * sizeof(hashTableLineStruct) / maxFillRate), pageSize) / pageSize);
-					lines = (hashTableLineStruct*)mem->reserve(maxPages);
-					mem->increase(detail::roundUpTo(initItems * sizeof(hashTableLineStruct), pageSize) / pageSize);
-					total = capacity();
-					clear();
+					data.reserve(config.initItems);
 				}
 
-				void rehash()
-				{
-					if (used + 1 > total * maxFillRate)
-					{
-						if (mem->pages() == maxPages)
-							CAGE_THROW_ERROR(outOfMemory, "hash table is out of memory", maxPages * pageSize);
-						mem->increase(min(maxPages, numeric_cast<uint32>(mem->pages() * 1.5 + 1)) - mem->pages());
-					}
-					std::vector<hashTableLineStruct> tmp;
-					tmp.reserve(used);
-					for (hashTableLineStruct *i = lines, *e = lines + total; i != e; i++)
-					{
-						if (i->first)
-							tmp.push_back(*i);
-					}
-					clear();
-					total = capacity();
-					for (auto i : tmp)
-						add(i.first, i.second);
-				}
-
-				const uint32 capacity() const
-				{
-					return numeric_cast<uint32>(mem->pages() * pageSize / sizeof(hashTableLineStruct));
-				}
-
-				const uintPtr pageSize;
-				hashTableLineStruct *lines;
-				uint32 used;
-				uint32 tombs;
-				uint32 total;
-				float maxFillRate;
-				uint32 maxPages;
-				holder<virtualMemoryClass> mem;
+				robin_hood::unordered_map<uint32, void*> data;
 			};
 		}
 
-		bool hashTablePriv::exists(uint32 name) const
+		typedef robin_hood::unordered_map<uint32, void*>::iterator iterator;
+		CAGE_ASSERT_COMPILE(sizeof(hashTableItPriv) >= sizeof(iterator), hashTableItPriv_must_be_at_least_as_large_st_the_original_iterator);
+
+		const hashTablePairPriv &hashTableItPriv::operator *() const
 		{
-			return get(name, true) != nullptr;
+			auto &it = ((iterator*)this)->operator*();
+			return *(hashTablePairPriv*)&it;
 		}
 
-		void *hashTablePriv::get(uint32 name, bool allowNull) const
+		const hashTablePairPriv *hashTableItPriv::operator ->() const
 		{
-			CAGE_ASSERT(name > 0, name);
-			hashTableImpl *impl = (hashTableImpl*)this;
-			uint32 h = name;
-			uint32 iter = 0;
-			while (iter++ < 100)
-			{
-				h = hash(h);
-				uint32 k = h % impl->total;
-				hashTableLineStruct &l = impl->lines[k];
-				if (l.first == name)
-					return l.second;
-				if (l.first != 0 || l.second != nullptr)
-					continue;
-				if (allowNull)
-					return nullptr;
-				CAGE_THROW_ERROR(exception, "hash table item not found");
-			}
-			CAGE_THROW_CRITICAL(exception, "infinite cycle");
+			return (hashTablePairPriv*)(*(iterator*)this).operator->();
+		}
+
+		void hashTableItPriv::operator ++()
+		{
+			++(*(iterator*)this);
+		}
+
+		bool hashTableItPriv::operator == (const hashTableItPriv &other) const
+		{
+			return (*(iterator*)this) == (*(iterator*)&other);
 		}
 
 		void hashTablePriv::add(uint32 name, void *value)
 		{
-			CAGE_ASSERT(name > 0);
-			CAGE_ASSERT(value != nullptr);
 			hashTableImpl *impl = (hashTableImpl*)this;
-			if (impl->used + impl->tombs + 1 > impl->total * impl->maxFillRate)
-				impl->rehash();
-			uint32 h = name;
-			uint32 iter = 0;
-			while (iter++ < 100)
-			{
-				h = hash(h);
-				uint32 k = h % impl->total;
-				hashTableLineStruct &l = impl->lines[k];
-				if (l.first == name)
-					CAGE_THROW_ERROR(exception, "duplicate key");
-				if (l.first == 0)
-				{
-					if (l.second != 0)
-						impl->tombs--;
-					l.first = name;
-					l.second = value;
-					impl->used++;
-					return;
-				}
-			}
-			CAGE_THROW_CRITICAL(exception, "infinite cycle");
+			auto r = impl->data.emplace(name, value);
+			if (!r.second)
+				CAGE_THROW_ERROR(exception, "duplicate key");
 		}
 
 		void hashTablePriv::remove(uint32 name)
 		{
-			CAGE_ASSERT(name > 0, name);
 			hashTableImpl *impl = (hashTableImpl*)this;
-			uint32 h = name;
-			uint32 iter = 0;
-			while (iter++ < 100)
+			impl->data.erase(name);
+		}
+
+		void *hashTablePriv::get(uint32 name) const
+		{
+			hashTableImpl *impl = (hashTableImpl*)this;
+			try
 			{
-				h = hash(h);
-				uint32 k = h % impl->total;
-				hashTableLineStruct &l = impl->lines[k];
-				if (l.first == name)
-				{
-					l.first = 0;
-					l.second = (void*)1; // tomb
-					impl->tombs++;
-					impl->used--;
-					return;
-				}
-				if (l.first == 0 && l.second == 0)
-					return; // item not found
+				return impl->data.at(name);
 			}
-			CAGE_THROW_CRITICAL(exception, "infinite cycle");
+			catch (std::out_of_range&)
+			{
+				CAGE_THROW_ERROR(exception, "hash table item not found");
+			}
+			return nullptr;
 		}
 
-		const hashTableLineStruct *hashTablePriv::begin() const
+		bool hashTablePriv::exists(uint32 name) const
 		{
 			hashTableImpl *impl = (hashTableImpl*)this;
-			const hashTableLineStruct *res = impl->lines - 1;
-			next(res);
-			return res;
+			return impl->data.count(name) == 1;
 		}
 
-		const hashTableLineStruct *hashTablePriv::end() const
+		hashTableItPriv hashTablePriv::begin() const
 		{
 			hashTableImpl *impl = (hashTableImpl*)this;
-			return impl->lines + impl->total;
+			auto it = impl->data.begin();
+			return *(hashTableItPriv*)&it;
 		}
 
-		void hashTablePriv::next(const hashTableLineStruct *&it) const
-		{
-			it++;
-			const hashTableLineStruct *e = end();
-			while (it != e && !it->first)
-				it++;
-		}
-
-		void hashTablePriv::clear()
+		hashTableItPriv hashTablePriv::end() const
 		{
 			hashTableImpl *impl = (hashTableImpl*)this;
-			impl->tombs = impl->used = 0;
-			detail::memset(impl->lines, 0, sizeof(hashTableLineStruct) * impl->total);
+			auto it = impl->data.end();
+			return *(hashTableItPriv*)&it;
 		}
 
 		uint32 hashTablePriv::count() const
 		{
 			hashTableImpl *impl = (hashTableImpl*)this;
-			return impl->used;
+			return numeric_cast<uint32>(impl->data.size());
 		}
 
-		holder<hashTablePriv> newHashTable(uint32 initItems, uint32 maxItems, float maxFillRate)
+		void hashTablePriv::clear()
 		{
-			return detail::systemArena().createImpl<hashTablePriv, hashTableImpl>(initItems, maxItems, maxFillRate);
+			hashTableImpl *impl = (hashTableImpl*)this;
+			impl->data.clear();
+		}
+
+		holder<hashTablePriv> newHashTable(const hashTableCreateConfig &config)
+		{
+			return detail::systemArena().createImpl<hashTablePriv, hashTableImpl>(config);
 		}
 	}
+
+	hashTableCreateConfig::hashTableCreateConfig() : initItems(0)
+	{}
 }

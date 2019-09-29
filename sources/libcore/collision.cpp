@@ -42,7 +42,7 @@ namespace cage
 			collisionDataImpl(const collisionDataCreateConfig &config) :
 				pool(spatialConfig(config).maxItems * sizeof(itemStruct)), arena(&pool), maxCollisionPairs(config.maxCollisionPairs)
 			{
-				allItems = newHashTable<itemStruct>(min(spatialConfig(config).maxItems, 100u), spatialConfig(config).maxItems);
+				allItems = newHashTable<itemStruct>({});
 				spatial = newSpatialData(spatialConfig(config));
 			}
 
@@ -78,7 +78,7 @@ namespace cage
 				for (uint32 nameIt : spatial->result())
 				{
 					tmpPairs.resize(data->maxCollisionPairs);
-					itemStruct *item = data->allItems->get(nameIt, false);
+					itemStruct *item = data->allItems->get(nameIt);
 					real fractBefore, fractContact;
 					uint32 res = collisionDetection(collider, item->collider, t1, *item, t2, *item, fractBefore, fractContact, tmpPairs.data(), numeric_cast<uint32>(tmpPairs.size()));
 					if (res > 0 && fractContact < best)
@@ -108,7 +108,7 @@ namespace cage
 				spatialIntersection(shape);
 				for (uint32 nameIt : spatial->result())
 				{
-					itemStruct *item = data->allItems->get(nameIt, false);
+					itemStruct *item = data->allItems->get(nameIt);
 					if (intersects(shape, item->collider, *item))
 					{
 						real d = distance(shape, item->collider, *item);
@@ -121,7 +121,7 @@ namespace cage
 				}
 				if (resultName)
 				{
-					itemStruct *item = data->allItems->get(resultName, false);
+					itemStruct *item = data->allItems->get(resultName);
 					uint32 i = 0;
 					for (const triangle &t : item->collider->triangles())
 					{
@@ -181,7 +181,7 @@ namespace cage
 	{
 		collisionQueryImpl *impl = (collisionQueryImpl*)this;
 		CAGE_ASSERT(impl->resultName);
-		auto r = impl->data->allItems->get(impl->resultName, false);
+		auto r = impl->data->allItems->get(impl->resultName);
 		c = r->collider;
 		t = *r;
 	}
@@ -240,9 +240,9 @@ namespace cage
 	{
 		collisionDataImpl *impl = (collisionDataImpl*)this;
 		impl->spatial->remove(name);
-		auto item = impl->allItems->get(name, true);
-		if (!item)
+		if (!impl->allItems->exists(name))
 			return;
+		auto item = impl->allItems->get(name);
 		impl->allItems->remove(name);
 		impl->arena.deallocate(item);
 	}

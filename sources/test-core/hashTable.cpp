@@ -1,38 +1,59 @@
 #include <map>
+#include <unordered_map>
 
 #include "main.h"
 #include <cage-core/math.h>
-#include <cage-core/memory.h>
 #include <cage-core/hashTable.h>
 #include <cage-core/timer.h>
 
-template<uint32 I, uint32 L> void performance()
+namespace
 {
-	holder<timer> tmr = newTimer();
-	uint32 tm_system, tm_hash;
-	volatile void *res;
-
+	template<uint32 I, uint32 L>
+	void performance()
 	{
-		std::map<uint32, void*> mp;
-		for (uint32 i = 1; i <= I; i++)
-			mp[i] = (void*)(uintPtr)(i);
-		tmr->reset();
-		for (uint32 i = 1; i <= L; i++)
-			res = mp[i % I + 1];
-		tm_system = numeric_cast<uint32>(tmr->microsSinceStart() / 100.0);
-	}
+		holder<timer> tmr = newTimer();
+		uint64 addStdMap, addStdUnordered, addCage;
+		uint64 readStdMap, readStdUnordered, readCage;
+		volatile void *res;
 
-	{
-		holder<hashTable<void>> tbl = newHashTable<void>(100, 100000);
-		for (uint32 i = 1; i <= I; i++)
-			tbl->add(i, (void*)(uintPtr)i);
-		tmr->reset();
-		for (uint32 i = 1; i <= L; i++)
-			res = tbl->get(i % I + 1, false);
-		tm_hash = numeric_cast<uint32>(tmr->microsSinceStart() / 100.0);
-	}
+		{
+			std::map<uint32, void*> mp;
+			tmr->reset();
+			for (uint32 i = 0; i <= I; i++)
+				mp[i] = (void*)(uintPtr)(i);
+			addStdMap = tmr->microsSinceLast();
+			for (uint32 i = 0; i <= L; i++)
+				res = mp[i % I];
+			readStdMap = tmr->microsSinceLast();
+		}
 
-	CAGE_LOG(severityEnum::Info, "performance", string("performance (") + I + "):\t" + tm_system + "\t" + tm_hash + "\t" + ((real)tm_hash / tm_system) + "\t" + (tm_hash < tm_system ? "ok" : "bad"));
+		{
+			std::unordered_map<uint32, void*> mp;
+			tmr->reset();
+			for (uint32 i = 0; i <= I; i++)
+				mp[i] = (void*)(uintPtr)(i);
+			addStdUnordered = tmr->microsSinceLast();
+			for (uint32 i = 0; i <= L; i++)
+				res = mp[i % I];
+			readStdUnordered = tmr->microsSinceLast();
+		}
+
+		{
+			holder<hashTable<void>> tbl = newHashTable<void>({});
+			tmr->reset();
+			for (uint32 i = 0; i <= I; i++)
+				tbl->add(i, (void*)(uintPtr)i);
+			addCage = tmr->microsSinceLast();
+			for (uint32 i = 0; i <= L; i++)
+				res = tbl->get(i % I);
+			readCage = tmr->microsSinceLast();
+		}
+
+		uint64 addStdBetter = min(addStdUnordered, addStdMap);
+		uint64 readStdBetter = min(readStdUnordered, readStdMap);
+		CAGE_LOG(severityEnum::Info, "performance", string("performance (add ") + I + "):\t\tstd::map: " + addStdMap + "\tstd::unordered: " + addStdUnordered + "\tcage: " + addCage + "\tratio: " + ((real)addCage / addStdBetter) + "\t" + (addCage < addStdBetter ? "better" : "worse"));
+		CAGE_LOG(severityEnum::Info, "performance", string("performance (read ") + L + "):\tstd::map: " + readStdMap + "\tstd::unordered: " + readStdUnordered + "\tcage: " + readCage + "\tratio: " + ((real)readCage / readStdBetter) + "\t" + (readCage < readStdBetter ? "better" : "worse"));
+	}
 }
 
 void testHashTable()
@@ -41,17 +62,18 @@ void testHashTable()
 
 	{
 		CAGE_TESTCASE("basic inserts and gets");
-		holder<hashTable<void>> tbl = newHashTable<void>(10, 20000);
-		for (uint32 i = 1; i < 10000; i++)
+		holder<hashTable<void>> tbl = newHashTable<void>({});
+		for (uint32 i = 0; i < 10000; i++)
 			tbl->add(i, (void*)(uintPtr)i);
-		for (uint32 i = 1; i < 10000; i++)
-			CAGE_TEST(numeric_cast<uint32>((uintPtr)tbl->get(i, false)) == i);
+		for (uint32 i = 0; i < 10000; i++)
+			CAGE_TEST(numeric_cast<uint32>((uintPtr)tbl->get(i)) == i);
+		tbl->add(m, &tbl);
 	}
 
 	{
 		CAGE_TESTCASE("more operations");
-		holder<hashTable<void>> tbl = newHashTable<void>(10, 20000);
-		for (uint32 i = 1; i < 10000; i++)
+		holder<hashTable<void>> tbl = newHashTable<void>({});
+		for (uint32 i = 0; i < 10000; i++)
 			tbl->add(i, (void*)(uintPtr)i);
 		for (uint32 i = 1000; i < 5000; i++)
 			tbl->remove(i);
@@ -60,67 +82,69 @@ void testHashTable()
 		CAGE_TEST(!tbl->exists(2000));
 		CAGE_TEST(!tbl->exists(3000));
 		CAGE_TEST(tbl->exists(7000));
-		CAGE_TEST_THROWN(tbl->get(2000, false));
-		CAGE_TEST(tbl->get(500, false) == (void*)500);
-		CAGE_TEST(tbl->get(7000, true) == (void*)7000);
+		CAGE_TEST_THROWN(tbl->get(2000));
+		CAGE_TEST(tbl->get(500) == (void*)500);
+		CAGE_TEST(tbl->get(7000) == (void*)7000);
 	}
 
 	{
 		CAGE_TESTCASE("randomized access");
-		holder<hashTable<void>> tbl = newHashTable<void>(100, 20000);
-		std::map<uint32, uint32> mp;
+		holder<hashTable<void>> tbl = newHashTable<void>({});
+		std::map<uint32, void*> mp;
 		for (uint32 i = 0; i < 100000; i++)
 		{
 			if (mp.size() == 5000 || (mp.size() > 0 && randomRange(0, 100) < 30))
 			{
 				uint32 name = mp.begin()->first;
-				CAGE_TEST(numeric_cast<uint32>((uintPtr)tbl->get(name, false)) == mp[name]);
+				CAGE_TEST(tbl->get(name) == mp[name]);
 				tbl->remove(name);
 				mp.erase(name);
 			}
 			else
 			{
-				uint32 name = randomRange(1, 100000);
+				uint32 name = randomRange(0, 100000);
 				if (mp.find(name) != mp.end())
 				{
-					CAGE_TEST(numeric_cast<uint32>((uintPtr)tbl->get(name, false)) == mp[name]);
+					CAGE_TEST(tbl->get(name) == mp[name]);
 					tbl->remove(name);
 				}
-				uint32 value = randomRange(1, 100000);
+				void *value = (void*)numeric_cast<uintPtr>(randomRange(0, 100000));
 				mp[name] = value;
 				tbl->add(name, (void*)(uintPtr)value);
 			}
 			CAGE_TEST(mp.size() == tbl->count());
 		}
-		for (std::map<uint32, uint32>::iterator it = mp.begin(), e = mp.end(); it != e; it++)
+		for (const auto &it : mp)
 		{
-			CAGE_TEST(numeric_cast<uint32>((uintPtr)tbl->get(it->first, false)) == it->second);
-			tbl->remove(it->first);
+			CAGE_TEST(tbl->get(it.first) == it.second);
+			tbl->remove(it.first);
 		}
 		CAGE_TEST(tbl->count() == 0);
 	}
 
 	{
 		CAGE_TESTCASE("templates");
-		holder<hashTable<uint32>> tbl = newHashTable<uint32>(100, 1000);
+		holder<hashTable<uint32>> tbl = newHashTable<uint32>({});
 		uint32 i = 42;
 		tbl->add(13, &i);
-		CAGE_TEST(tbl->get(13, false) == &i);
+		CAGE_TEST(tbl->get(13) == &i);
 		CAGE_TEST(tbl->count() == 1);
 	}
 
 	{
 		CAGE_TESTCASE("iterators");
-		holder<hashTable<uint32>> tbl = newHashTable<uint32>(100, 1000);
+		holder<hashTable<uint32>> tbl = newHashTable<uint32>({});
+		CAGE_TEST(tbl->begin() == tbl->end());
 		uint32 i = 42;
 		tbl->add(13, &i);
 		tbl->add(42, &i);
 		uint32 c = 0;
-		for (auto it : *tbl)
-        {
+		for (const auto &it : *tbl)
+		{
 			c++;
-			(void)it;
-        }
+			CAGE_TEST(it.first == 13 || it.first == 42);
+			CAGE_TEST(it.second == &i);
+		}
 		CAGE_TEST(c == 2);
 	}
 
