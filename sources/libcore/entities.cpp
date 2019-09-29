@@ -487,7 +487,7 @@ namespace cage
 			uint32 name;
 			des >> name;
 			if (name == 0)
-				CAGE_THROW_ERROR(exception, "invalid entity");
+				CAGE_THROW_ERROR(exception, "anonymous entity");
 			entity *e = manager->getOrCreate(name);
 			des.read(e->unsafeValue(component), numeric_cast<uintPtr>(typeSize));
 		}

@@ -48,7 +48,7 @@ namespace cage
 					b += aabb(it);
 				boxes.push_back(b);
 
-				// primitive nodes form a leaves
+				// primitive nodes form leaves
 				if (ts.size() <= 10)
 				{
 					nodeStruct n;
@@ -257,12 +257,14 @@ namespace cage
 			bool dirty;
 		};
 
-		template<class T> void writeVector(serializer &ser, const std::vector<T> &v)
+		template<class T>
+		void writeVector(serializer &ser, const std::vector<T> &v)
 		{
 			ser.write(v.data(), sizeof(T) * v.size());
 		}
 
-		template<class T> void readVector(deserializer &des, std::vector<T> &v, uint32 count)
+		template<class T>
+		void readVector(deserializer &des, std::vector<T> &v, uint32 count)
 		{
 			v.resize(count);
 			des.read(v.data(), sizeof(T) * count);

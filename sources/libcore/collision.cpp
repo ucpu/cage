@@ -180,7 +180,6 @@ namespace cage
 	void collisionQuery::collider(const collisionMesh *&c, transform &t) const
 	{
 		collisionQueryImpl *impl = (collisionQueryImpl*)this;
-		CAGE_ASSERT(impl->resultName);
 		auto r = impl->data->allItems->get(impl->resultName);
 		c = r->collider;
 		t = *r;
