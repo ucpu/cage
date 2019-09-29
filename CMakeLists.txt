@@ -46,6 +46,7 @@ add_subdirectory(xsimd)
 add_subdirectory(fastnoise)
 add_subdirectory(libzip)
 add_subdirectory(optick)
+add_subdirectory(robin-hood-hashing)
 
 add_dependencies(png_static zlib)
 add_dependencies(jpeg-static zlib)
@@ -87,5 +88,6 @@ set_target_properties(OptickCore PROPERTIES FOLDER cage/externals)
 if(TARGET OptickGui)
 	set_target_properties(OptickGui PROPERTIES FOLDER cage/utility EXCLUDE_FROM_ALL false)
 endif()
+set_target_properties(robin-hood-hashing PROPERTIES FOLDER cage/externals)
 
 

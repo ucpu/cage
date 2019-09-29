@@ -61,3 +61,6 @@
 [submodule "optick/optick"]
 	path = optick/optick
 	url = https://github.com/bombomby/optick.git
+[submodule "robin-hood-hashing/robin-hood-hashing"]
+	path = robin-hood-hashing/robin-hood-hashing
+	url = https://github.com/martinus/robin-hood-hashing.git
