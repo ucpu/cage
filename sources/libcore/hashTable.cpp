@@ -73,6 +73,15 @@ namespace cage
 			impl->data.erase(name);
 		}
 
+		void *hashTablePriv::tryGet(uint32 name) const
+		{
+			hashTableImpl *impl = (hashTableImpl*)this;
+			auto it = impl->data.find(name);
+			if (it == impl->data.end())
+				return nullptr;
+			return it->second;
+		}
+
 		void *hashTablePriv::get(uint32 name) const
 		{
 			hashTableImpl *impl = (hashTableImpl*)this;

@@ -26,6 +26,7 @@ namespace cage
 		entity *createUnique(); // new entity with unique name
 		entity *createAnonymous(); // new entity with name = 0, accessible only with the pointer
 		entity *create(uint32 name); // must be non-zero
+		entity *tryGet(uint32 entityName) const; // return nullptr if it does not exist
 		entity *get(uint32 entityName) const; // throw if it does not exist
 		entity *getOrCreate(uint32 entityName);
 		bool has(uint32 entityName) const;

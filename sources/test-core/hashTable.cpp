@@ -83,7 +83,9 @@ void testHashTable()
 		CAGE_TEST(!tbl->exists(3000));
 		CAGE_TEST(tbl->exists(7000));
 		CAGE_TEST_THROWN(tbl->get(2000));
+		CAGE_TEST(tbl->tryGet(2000) == nullptr);
 		CAGE_TEST(tbl->get(500) == (void*)500);
+		CAGE_TEST(tbl->tryGet(500) == (void*)500);
 		CAGE_TEST(tbl->get(7000) == (void*)7000);
 	}
 

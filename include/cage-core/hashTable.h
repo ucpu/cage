@@ -38,6 +38,7 @@ namespace cage
 		public:
 			void add(uint32 name, void *value);
 			void remove(uint32 name);
+			void *tryGet(uint32 name) const;
 			void *get(uint32 name) const;
 			bool exists(uint32 name) const;
 			hashTableItPriv begin() const;
@@ -70,7 +71,8 @@ namespace cage
 		hashTable(holder<privat::hashTablePriv> table) : table(templates::move(table)) {}
 		void add(uint32 name, T *value) { return table->add(name, value); }
 		void remove(uint32 name) { return table->remove(name); }
-		T *get(uint32 name) const { return (T*)table->get(name); }
+		T *tryGet(uint32 name) const { return (T*)table->tryGet(name); } // nullptr if not found
+		T *get(uint32 name) const { return (T*)table->get(name); } // throws if not found
 		bool exists(uint32 name) const { return table->exists(name); }
 		hashTableIt<T> begin() const { auto it = table->begin(); return *(hashTableIt<T>*)&it; }
 		hashTableIt<T> end() const { auto it = table->end(); return *(hashTableIt<T>*)&it; }

@@ -191,6 +191,12 @@ namespace cage
 		return detail::systemArena().createObject<entityImpl>(impl, name);
 	}
 
+	entity *entityManager::tryGet(uint32 entityName) const
+	{
+		entityManagerImpl *impl = (entityManagerImpl *)this;
+		return impl->namedEntities->tryGet(entityName);
+	}
+
 	entity *entityManager::get(uint32 entityName) const
 	{
 		entityManagerImpl *impl = (entityManagerImpl *)this;
