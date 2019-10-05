@@ -254,4 +254,11 @@ namespace cage
 	{
 		return privat::numeric_cast_helper_specialized<detail::numeric_limits<To>::is_specialized && detail::numeric_limits<From>::is_specialized>::template cast<To>(from);
 	}
+
+	template<class To, class From>
+	To class_cast(From from)
+	{
+		CAGE_ASSERT(dynamic_cast<To>(from), from);
+		return static_cast<To>(from);
+	}
 }

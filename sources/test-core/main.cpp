@@ -14,6 +14,7 @@ void testNumericTypes();
 void testStrings();
 void testDelegates();
 void testHolder();
+void testClasses();
 void testPointerRange();
 void testEnumerate();
 void testEvents();
@@ -66,6 +67,7 @@ int main()
 	testStrings();
 	testDelegates();
 	testHolder();
+	testClasses();
 	testPointerRange();
 	testEnumerate();
 	testEvents();

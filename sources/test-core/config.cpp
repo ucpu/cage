@@ -1,17 +1,20 @@
 #include "main.h"
 #include <cage-core/config.h>
 
-void printVariables()
+namespace
 {
-	CAGE_TESTCASE("traversing variables:");
-	holder<configList> iter = newConfigList();
-	while (iter->valid())
+	void printVariables()
 	{
-		string res = iter->name() + ": " + iter->typeName();
-		if (iter->type() != configTypeEnum::Undefined)
-			res += string(" = ") + iter->getString();
-		CAGE_LOG_CONTINUE(severityEnum::Note, "test", res);
-		iter->next();
+		CAGE_TESTCASE("traversing variables:");
+		holder<configList> iter = newConfigList();
+		while (iter->valid())
+		{
+			string res = iter->name() + ": " + iter->typeName();
+			if (iter->type() != configTypeEnum::Undefined)
+				res += string(" = ") + iter->getString();
+			CAGE_LOG_CONTINUE(severityEnum::Note, "test", res);
+			iter->next();
+		}
 	}
 }
 

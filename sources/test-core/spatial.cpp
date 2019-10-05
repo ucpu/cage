@@ -18,17 +18,17 @@ namespace
 	static const uint32 limit = 20000;
 #endif
 
-	const vec3 generateRandomPoint()
+	vec3 generateRandomPoint()
 	{
 		return randomRange3(-120, 120);
 	}
 
-	const aabb generateRandomBox()
+	aabb generateRandomBox()
 	{
 		return aabb(generateRandomPoint(), generateRandomPoint());
 	}
 
-	const aabb generateNonuniformBox()
+	aabb generateNonuniformBox()
 	{
 		real x = randomRange(-120, 120);
 		real z = randomRange(-120, 120);
