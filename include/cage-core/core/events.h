@@ -93,14 +93,14 @@ namespace cage
 
 	namespace privat
 	{
-		struct CAGE_API eventLinker
+		struct CAGE_API eventLinker : private immovable
 		{
 			eventLinker();
-			eventLinker(eventLinker &other);
-			eventLinker(eventLinker &&other) = delete;
-			eventLinker &operator = (eventLinker &other) = delete;
-			eventLinker &operator = (eventLinker &&other) = delete;
-			virtual ~eventLinker();
+			//eventLinker(eventLinker &other);
+			//eventLinker(eventLinker &&other) = delete;
+			//eventLinker &operator = (eventLinker &other) = delete;
+			//eventLinker &operator = (eventLinker &&other) = delete;
+			~eventLinker();
 			void attach(eventLinker *d, sint32 order);
 			void detach();
 			eventLinker *p, *n;
@@ -109,33 +109,26 @@ namespace cage
 			bool valid() const;
 			sint32 order;
 		};
-
-		template<class... Ts>
-		struct eventInvoker : public eventLinker
-		{
-			void attach(eventDispatcher<bool(Ts...)> &dispatcher, sint32 order = 0)
-			{
-				eventLinker::attach(&dispatcher, order);
-			}
-
-		protected:
-			virtual bool invoke(Ts... vs) const = 0;
-
-			friend struct eventDispatcher<bool(Ts...)>;
-		};
 	}
 
 	template<class... Ts>
-	struct eventListener<bool(Ts...)> : private privat::eventInvoker<Ts...>, public delegate<bool(Ts...)>
+	struct eventListener<bool(Ts...)> : protected privat::eventLinker, private delegate<bool(Ts...)>
 	{
-		using privat::eventInvoker<Ts...>::attach;
-		using privat::eventInvoker<Ts...>::detach;
-
-	private:
-		virtual bool invoke(Ts... vs) const override
+		void attach(eventDispatcher<bool(Ts...)> &dispatcher, sint32 order = 0)
 		{
-			if (*this)
-				return (*this)(templates::forward<Ts>(vs)...);
+			privat::eventLinker::attach(&dispatcher, order);
+		}
+
+		using privat::eventLinker::detach;
+		using delegate<bool(Ts...)>::bind;
+		using delegate<bool(Ts...)>::clear;
+
+	protected:
+		bool invoke(Ts... vs) const
+		{
+			auto &d = (delegate<bool(Ts...)>&)*this;
+			if (d)
+				return d(templates::forward<Ts>(vs)...);
 			return false;
 		}
 
@@ -143,24 +136,30 @@ namespace cage
 	};
 
 	template<class... Ts>
-	struct eventListener<void(Ts...)> : private privat::eventInvoker<Ts...>, public delegate<void(Ts...)>
+	struct eventListener<void(Ts...)> : protected eventListener<bool(Ts...)>, private delegate<void(Ts...)>
 	{
-		using privat::eventInvoker<Ts...>::attach;
-		using privat::eventInvoker<Ts...>::detach;
-
-	private:
-		virtual bool invoke(Ts... vs) const override
+		eventListener()
 		{
-			if (*this)
-				(*this)(templates::forward<Ts>(vs)...);
-			return false;
+			eventListener<bool(Ts...)>::template bind<eventListener, &eventListener::invoke>(this);
 		}
 
-		friend struct eventDispatcher<bool(Ts...)>;
+		using eventListener<bool(Ts...)>::attach;
+		using eventListener<bool(Ts...)>::detach;
+		using delegate<void(Ts...)>::bind;
+		using delegate<void(Ts...)>::clear;
+
+	private:
+		bool invoke(Ts... vs) const
+		{
+			auto &d = (delegate<void(Ts...)>&)*this;
+			if (d)
+				d(templates::forward<Ts>(vs)...);
+			return false;
+		}
 	};
 	
 	template<class... Ts>
-	struct eventDispatcher<bool(Ts...)> : private privat::eventInvoker<Ts...>
+	struct eventDispatcher<bool(Ts...)> : protected eventListener<bool(Ts...)>
 	{
 		void attach(eventListener<bool(Ts...)> &listener, sint32 order = 0)
 		{
@@ -172,27 +171,22 @@ namespace cage
 			listener.attach(*this, order);
 		}
 
+		using eventListener<bool(Ts...)>::detach;
+
 		bool dispatch(Ts... vs) const
 		{
 			CAGE_ASSERT(!this->p);
 			const privat::eventLinker *l = this->n;
 			while (l)
 			{
-				if (static_cast<const privat::eventInvoker<Ts...>*>(l)->invoke(templates::forward<Ts>(vs)...))
+				if (static_cast<const eventListener<bool(Ts...)>*>(l)->invoke(templates::forward<Ts>(vs)...))
 					return true;
 				l = l->n;
 			}
 			return false;
 		}
-		
-		using privat::eventInvoker<Ts...>::detach;
 
 	private:
-		virtual bool invoke(Ts... vs) const override
-		{
-			return false;
-		}
-
-		friend struct privat::eventInvoker<Ts...>;
+		friend struct eventListener<bool(Ts...)>;
 	};
 }

@@ -8,10 +8,12 @@ namespace cage
 		eventLinker::eventLinker() : p(nullptr), n(nullptr), order(detail::numeric_limits<sint32>::min())
 		{}
 
+		/*
 		eventLinker::eventLinker(eventLinker &other) : eventLinker()
 		{
 			attach(&other, other.order);
 		}
+		*/
 
 		eventLinker::~eventLinker()
 		{

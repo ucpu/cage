@@ -145,4 +145,28 @@ void testEvents()
 		CAGE_TEST(n == 8);
 		n = 3;
 	}
+
+	{
+		CAGE_TESTCASE("attach order");
+		n = 0;
+		eventDispatcher<bool()> d;
+		eventListener<void()> l;
+		l.bind<&incrementCallback>();
+		{
+			CAGE_TEST(n == 0);
+			d.attach(l);
+			d.dispatch();
+			CAGE_TEST(n == 1);
+			n = 0;
+			d.detach();
+		}
+		{
+			CAGE_TEST(n == 0);
+			l.attach(d);
+			d.dispatch();
+			CAGE_TEST(n == 1);
+			n = 0;
+			d.detach();
+		}
+	}
 }
