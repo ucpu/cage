@@ -62,23 +62,6 @@ void testEvents()
 		l.detach();
 	}
 
-	/*
-	{
-		CAGE_TESTCASE("copy ctor, op=");
-		n = 0;
-		eventDispatcher<bool()> d1, d2;
-		eventListener<bool()> l1, l2;
-		l1.bind<&simpleCallback>();
-		l2.bind<&simpleCallback>();
-		l1.attach(d1);
-		d1.dispatch();
-		CAGE_TEST(n == 1);
-		l1 = l2;
-		d1.dispatch();
-		CAGE_TEST(n == 1);
-	}
-	*/
-
 	{
 		CAGE_TESTCASE("events with two arguments");
 		n = 0;
@@ -148,25 +131,34 @@ void testEvents()
 
 	{
 		CAGE_TESTCASE("attach order");
-		n = 0;
-		eventDispatcher<bool()> d;
-		eventListener<void()> l;
-		l.bind<&incrementCallback>();
 		{
+			n = 0;
+			eventDispatcher<bool()> d;
+			eventListener<void()> l;
+			l.bind<&incrementCallback>();
 			CAGE_TEST(n == 0);
 			d.attach(l);
 			d.dispatch();
 			CAGE_TEST(n == 1);
-			n = 0;
-			d.detach();
 		}
 		{
+			n = 0;
+			eventDispatcher<bool()> d;
+			eventListener<void()> l;
+			l.bind<&incrementCallback>();
 			CAGE_TEST(n == 0);
 			l.attach(d);
 			d.dispatch();
 			CAGE_TEST(n == 1);
-			n = 0;
-			d.detach();
 		}
+	}
+
+	{
+		CAGE_TESTCASE("event names");
+		eventDispatcher<bool()> d("dispatcher D");
+		eventListener<bool()> l1("listener L1"), l2("listener L2");
+		d.attach(l1, 13);
+		d.attach(l2, 42);
+		d.logAllNames();
 	}
 }

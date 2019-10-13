@@ -1,19 +1,13 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
+#include <cage-core/log.h>
 
 namespace cage
 {
 	namespace privat
 	{
-		eventLinker::eventLinker() : p(nullptr), n(nullptr), order(detail::numeric_limits<sint32>::min())
+		eventLinker::eventLinker(const string &name) : p(nullptr), n(nullptr), order(detail::numeric_limits<sint32>::min()), name(name)
 		{}
-
-		/*
-		eventLinker::eventLinker(eventLinker &other) : eventLinker()
-		{
-			attach(&other, other.order);
-		}
-		*/
 
 		eventLinker::~eventLinker()
 		{
@@ -52,6 +46,18 @@ namespace cage
 		void eventLinker::detach()
 		{
 			unlink();
+		}
+
+		void eventLinker::logAllNames()
+		{
+			eventLinker *l = this;
+			while (l->p)
+				l = l->p;
+			while (l)
+			{
+				CAGE_LOG(severityEnum::Info, "event-listener", string()+ l->name + " (" + l->order + ")");
+				l = l->n;
+			}
 		}
 
 		void eventLinker::unlink()

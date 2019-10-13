@@ -95,25 +95,26 @@ namespace cage
 	{
 		struct CAGE_API eventLinker : private immovable
 		{
-			eventLinker();
-			//eventLinker(eventLinker &other);
-			//eventLinker(eventLinker &&other) = delete;
-			//eventLinker &operator = (eventLinker &other) = delete;
-			//eventLinker &operator = (eventLinker &&other) = delete;
+			eventLinker(const string &name);
 			~eventLinker();
 			void attach(eventLinker *d, sint32 order);
 			void detach();
+			void logAllNames();
 			eventLinker *p, *n;
 		private:
 			void unlink();
 			bool valid() const;
 			sint32 order;
+			const detail::stringBase<32> name;
 		};
 	}
 
 	template<class... Ts>
-	struct eventListener<bool(Ts...)> : protected privat::eventLinker, private delegate<bool(Ts...)>
+	struct eventListener<bool(Ts...)> : private privat::eventLinker, private delegate<bool(Ts...)>
 	{
+		eventListener(const string &name = "listener") : privat::eventLinker(name)
+		{}
+
 		void attach(eventDispatcher<bool(Ts...)> &dispatcher, sint32 order = 0)
 		{
 			privat::eventLinker::attach(&dispatcher, order);
@@ -123,7 +124,7 @@ namespace cage
 		using delegate<bool(Ts...)>::bind;
 		using delegate<bool(Ts...)>::clear;
 
-	protected:
+	private:
 		bool invoke(Ts... vs) const
 		{
 			auto &d = (delegate<bool(Ts...)>&)*this;
@@ -132,13 +133,14 @@ namespace cage
 			return false;
 		}
 
+		using privat::eventLinker::logAllNames;
 		friend struct eventDispatcher<bool(Ts...)>;
 	};
 
 	template<class... Ts>
-	struct eventListener<void(Ts...)> : protected eventListener<bool(Ts...)>, private delegate<void(Ts...)>
+	struct eventListener<void(Ts...)> : private eventListener<bool(Ts...)>, private delegate<void(Ts...)>
 	{
-		eventListener()
+		eventListener(const string &name = "listener") : eventListener<bool(Ts...)>(name)
 		{
 			eventListener<bool(Ts...)>::template bind<eventListener, &eventListener::invoke>(this);
 		}
@@ -159,19 +161,10 @@ namespace cage
 	};
 	
 	template<class... Ts>
-	struct eventDispatcher<bool(Ts...)> : protected eventListener<bool(Ts...)>
+	struct eventDispatcher<bool(Ts...)> : private eventListener<bool(Ts...)>
 	{
-		void attach(eventListener<bool(Ts...)> &listener, sint32 order = 0)
-		{
-			listener.attach(*this, order);
-		}
-
-		void attach(eventListener<void(Ts...)> &listener, sint32 order = 0)
-		{
-			listener.attach(*this, order);
-		}
-
-		using eventListener<bool(Ts...)>::detach;
+		eventDispatcher(const string &name = "dispatcher") : eventListener<bool(Ts...)>(name)
+		{}
 
 		bool dispatch(Ts... vs) const
 		{
@@ -185,6 +178,19 @@ namespace cage
 			}
 			return false;
 		}
+
+		void attach(eventListener<bool(Ts...)> &listener, sint32 order = 0)
+		{
+			listener.attach(*this, order);
+		}
+
+		void attach(eventListener<void(Ts...)> &listener, sint32 order = 0)
+		{
+			listener.attach(*this, order);
+		}
+
+		using eventListener<bool(Ts...)>::detach;
+		using eventListener<bool(Ts...)>::logAllNames;
 
 	private:
 		friend struct eventListener<bool(Ts...)>;
