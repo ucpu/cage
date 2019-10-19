@@ -83,8 +83,8 @@ void testCollisions()
 			c1->addTriangle(triangle(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0)));
 			memoryBuffer buff = c1->serialize();
 			holder<collisionMesh> c2 = newCollisionMesh(buff);
-			CAGE_TEST(c2->trianglesCount() == 3);
-			CAGE_TEST(c2->triangleData(2) == c1->triangleData(2));
+			CAGE_TEST(c2->triangles().size() == 3);
+			CAGE_TEST(c2->triangles()[2] == c1->triangles()[2]);
 		}
 		{
 			CAGE_TESTCASE("forgot rebuilt");

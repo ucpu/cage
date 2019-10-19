@@ -6,13 +6,11 @@ namespace cage
 	class CAGE_API collisionMesh : private immovable
 	{
 	public:
-		uint32 trianglesCount() const;
-		const triangle *trianglesData() const;
-		const triangle &triangleData(uint32 idx) const;
 		pointerRange<const triangle> triangles() const;
 
 		void addTriangle(const triangle &t);
 		void addTriangles(const triangle *data, uint32 count);
+		void addTriangles(const pointerRange<const triangle> &tris);
 		void clear();
 
 		void rebuild();

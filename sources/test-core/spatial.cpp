@@ -50,10 +50,8 @@ namespace
 
 		void checkResults(const std::set<uint32> &b)
 		{
-			const uint32 *res = query->resultData();
-			const uint32 cnt = query->resultCount();
-			CAGE_TEST(b.size() == cnt);
-			std::set<uint32> a(res, res + cnt);
+			CAGE_TEST(query->result().size() == b.size());
+			std::set<uint32> a(query->result().begin(), query->result().end());
 			for (auto ita = a.begin(), itb = b.begin(), eta = a.end(); ita != eta; ita++, itb++)
 				CAGE_TEST(*ita == *itb);
 		}
@@ -175,7 +173,7 @@ void testSpatial()
 		data->rebuild();
 		holder<spatialQuery> query = newSpatialQuery(data.get());
 		query->intersection(sphere(vec3(0, 0, 0), 5));
-		CAGE_TEST(query->resultCount() == 99);
+		CAGE_TEST(query->result().size() == 99);
 	}
 
 	{
@@ -185,9 +183,9 @@ void testSpatial()
 		data->rebuild();
 		holder<spatialQuery> query = newSpatialQuery(data.get());
 		query->intersection(sphere(vec3(50, 0, 0), 100));
-		CAGE_TEST(query->resultCount() == 1);
+		CAGE_TEST(query->result().size() == 1);
 		query->intersection(sphere(vec3(250, 0, 0), 100));
-		CAGE_TEST(query->resultCount() == 0);
+		CAGE_TEST(query->result().size() == 0);
 
 		// test aabb-sphere intersection
 		query->intersection(generateRandomBox());
@@ -202,7 +200,7 @@ void testSpatial()
 		data->rebuild();
 		holder<spatialQuery> query = newSpatialQuery(data.get());
 		query->intersection(sphere(vec3(0, 0, 0), 5));
-		CAGE_TEST(query->resultCount() == 33);
+		CAGE_TEST(query->result().size() == 33);
 	}
 
 	{

@@ -7,12 +7,10 @@ namespace cage
 	{
 	public:
 		uint32 name() const;
+		void collider(const collisionMesh *&c, transform &t) const;
 		real fractionBefore() const;
 		real fractionContact() const;
-		uint32 collisionPairsCount() const;
-		const collisionPair *collisionPairsData() const;
-		pointerRange<const collisionPair> collisionPairs() const;
-		void collider(const collisionMesh *&c, transform &t) const;
+		pointerRange<collisionPair> collisionPairs() const;
 
 		void query(const collisionMesh *collider, const transform &t);
 		void query(const collisionMesh *collider, const transform &t1, const transform &t2);

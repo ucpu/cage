@@ -396,19 +396,7 @@ namespace cage
 		};
 	}
 
-	uint32 spatialQuery::resultCount() const
-	{
-		spatialQueryImpl *impl = (spatialQueryImpl*)this;
-		return numeric_cast<uint32>(impl->resultNames.size());
-	}
-
-	const uint32 *spatialQuery::resultData() const
-	{
-		spatialQueryImpl *impl = (spatialQueryImpl*)this;
-		return impl->resultNames.data();
-	}
-
-	pointerRange<const uint32> spatialQuery::result() const
+	pointerRange<uint32> spatialQuery::result() const
 	{
 		spatialQueryImpl *impl = (spatialQueryImpl*)this;
 		return impl->resultNames;

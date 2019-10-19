@@ -155,19 +155,7 @@ namespace cage
 		return impl->resultFractionContact;
 	}
 
-	uint32 collisionQuery::collisionPairsCount() const
-	{
-		collisionQueryImpl *impl = (collisionQueryImpl*)this;
-		return numeric_cast<uint32>(impl->resultPairs.size());
-	}
-
-	const collisionPair *collisionQuery::collisionPairsData() const
-	{
-		collisionQueryImpl *impl = (collisionQueryImpl*)this;
-		return impl->resultPairs.data();
-	}
-
-	pointerRange<const collisionPair> collisionQuery::collisionPairs() const
+	pointerRange<collisionPair> collisionQuery::collisionPairs() const
 	{
 		collisionQueryImpl *impl = (collisionQueryImpl*)this;
 		return impl->resultPairs;

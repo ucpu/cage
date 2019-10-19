@@ -32,7 +32,7 @@ void processCollider()
 	}
 
 	{ // count degenerated
-		uint32 deg = am->mNumFaces - collider->trianglesCount();
+		uint32 deg = numeric_cast<uint32>(am->mNumFaces - collider->triangles().size());
 		if (deg)
 		{
 			CAGE_LOG(severityEnum::Warning, logComponentName, string() + "degenerated triangles: " + deg);

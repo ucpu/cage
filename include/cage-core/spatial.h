@@ -6,9 +6,7 @@ namespace cage
 	class CAGE_API spatialQuery : private immovable
 	{
 	public:
-		uint32 resultCount() const;
-		const uint32 *resultData() const;
-		pointerRange<const uint32> result() const;
+		pointerRange<uint32> result() const;
 
 		void intersection(const vec3 &shape);
 		void intersection(const line &shape);

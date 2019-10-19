@@ -177,24 +177,6 @@ namespace cage
 		};
 	}
 
-	uint32 collisionMesh::trianglesCount() const
-	{
-		collisionObjectImpl *impl = (collisionObjectImpl*)this;
-		return numeric_cast<uint32>(impl->tris.size());
-	}
-
-	const triangle *collisionMesh::trianglesData() const
-	{
-		collisionObjectImpl *impl = (collisionObjectImpl*)this;
-		return impl->tris.data();
-	}
-
-	const triangle &collisionMesh::triangleData(uint32 idx) const
-	{
-		collisionObjectImpl *impl = (collisionObjectImpl*)this;
-		return impl->tris[idx];
-	}
-
 	pointerRange<const triangle> collisionMesh::triangles() const
 	{
 		collisionObjectImpl *impl = (collisionObjectImpl*)this;
@@ -213,6 +195,11 @@ namespace cage
 		collisionObjectImpl *impl = (collisionObjectImpl*)this;
 		impl->tris.insert(impl->tris.end(), data, data + count);
 		impl->dirty = true;
+	}
+
+	void collisionMesh::addTriangles(const pointerRange<const triangle> &tris)
+	{
+		addTriangles(tris.data(), numeric_cast<uint32>(tris.size()));
 	}
 
 	void collisionMesh::clear()
@@ -628,7 +615,7 @@ namespace cage
 		CAGE_ASSERT(!ao->needsRebuild());
 		CAGE_ASSERT(!bo->needsRebuild());
 		CAGE_ASSERT(bufferSize > 0);
-		if (ao->trianglesCount() > bo->trianglesCount())
+		if (ao->triangles().size() > bo->triangles().size())
 		{
 			collisionDetector<false> d((const collisionObjectImpl*)ao, (const collisionObjectImpl*)bo, transform(), transform(inverse(at) * bt), outputBuffer, bufferSize);
 			return d.process();

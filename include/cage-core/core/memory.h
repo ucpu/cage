@@ -164,7 +164,10 @@ namespace cage
 		typedef uintPtr size_type;
 
 		pointerRange() : begin_(nullptr), end_(nullptr) {}
-		pointerRange(T *begin, T *end) : begin_(begin), end_(end) {}
+		template<class U>
+		pointerRange(U *begin, U *end) : begin_(begin), end_(end) {}
+		template<class U>
+		pointerRange(const pointerRange<U> &other) : begin_(other.begin()), end_(other.end()) {}
 		template<class U>
 		pointerRange(U &other) : begin_(other.data()), end_(other.data() + other.size()) {}
 
@@ -172,6 +175,7 @@ namespace cage
 		T *end() const { return end_; }
 		T *data() const { return begin_; }
 		size_type size() const { return end_ - begin_; }
+		T &operator[] (uint32 idx) const { CAGE_ASSERT(idx < size(), idx, size()); return begin_[idx]; }
 	};
 
 	template<class T>
@@ -184,6 +188,7 @@ namespace cage
 		T *end() const { return this->data_->end(); }
 		T *data() const { return begin(); }
 		size_type size() const { return end() - begin(); }
+		T &operator[] (uint32 idx) const { CAGE_ASSERT(idx < size(), idx, size()); return begin()[idx]; }
 	};
 
 	// memory arena
