@@ -1,11 +1,11 @@
 #include <vector>
 #include <set>
+#include <robin_hood.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/entities.h>
-#include <cage-core/hashTable.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 
@@ -35,7 +35,7 @@ namespace cage
 			std::vector<groupImpl*> groups;
 			groupImpl allEntities;
 			uint32 generateName;
-			holder<hashTable<entityImpl>> namedEntities;
+			robin_hood::unordered_map<uint32, entity*> namedEntities;
 
 #if defined (CAGE_SYSTEM_WINDOWS)
 #pragma warning (push)
@@ -43,9 +43,7 @@ namespace cage
 #endif
 
 			entityManagerImpl(const entityManagerCreateConfig &config) : allEntities(this), generateName(0)
-			{
-				namedEntities = newHashTable<entityImpl>({});
-			}
+			{}
 
 #if defined (CAGE_SYSTEM_WINDOWS)
 #pragma warning (pop)
@@ -114,7 +112,7 @@ namespace cage
 				manager(manager), name(name)
 			{
 				if (name != 0)
-					manager->namedEntities->add(name, this);
+					manager->namedEntities.emplace(name, this);
 				manager->allEntities.add(this);
 			}
 
@@ -126,7 +124,7 @@ namespace cage
 				while (!groups.empty())
 					remove(*groups.begin());
 				if (name != 0)
-					manager->namedEntities->remove(name);
+					manager->namedEntities.erase(name);
 			}
 		};
 	}
@@ -187,26 +185,30 @@ namespace cage
 	{
 		entityManagerImpl *impl = (entityManagerImpl *)this;
 		CAGE_ASSERT(name != 0);
-		CAGE_ASSERT(!impl->namedEntities->exists(name), "entity name must be unique", name);
+		CAGE_ASSERT(!impl->namedEntities.count(name), "entity name must be unique", name);
 		return detail::systemArena().createObject<entityImpl>(impl, name);
 	}
 
 	entity *entityManager::tryGet(uint32 entityName) const
 	{
 		entityManagerImpl *impl = (entityManagerImpl *)this;
-		return impl->namedEntities->tryGet(entityName);
+		auto it = impl->namedEntities.find(entityName);
+		if (it == impl->namedEntities.end())
+			return nullptr;
+		return it->second;
 	}
 
 	entity *entityManager::get(uint32 entityName) const
 	{
 		entityManagerImpl *impl = (entityManagerImpl *)this;
-		return impl->namedEntities->get(entityName);
+		return impl->namedEntities.at(entityName);
 	}
 
 	entity *entityManager::getOrCreate(uint32 entityName)
 	{
-		if (has(entityName))
-			return get(entityName);
+		entity *e = tryGet(entityName);
+		if (e)
+			return e;
 		return create(entityName);
 	}
 
@@ -214,7 +216,8 @@ namespace cage
 	{
 		if (entityName == 0)
 			return false;
-		return ((entityManagerImpl *)this)->namedEntities->exists(entityName);
+		entityManagerImpl *impl = (entityManagerImpl *)this;
+		return impl->namedEntities.count(entityName);
 	}
 
 	void entityManager::destroy()

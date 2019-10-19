@@ -467,6 +467,8 @@ namespace cage
 	{
 		return privat::numeric_cast_helper_specialized<detail::numeric_limits<To>::is_specialized>::template cast<To>(from.value);
 	};
+
+	CAGE_API uint32 hash(uint32 key);
 }
 
 #undef GCHL_DIMENSION

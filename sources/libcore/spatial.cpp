@@ -2,13 +2,13 @@
 #include <algorithm>
 #include <atomic>
 #include <array>
+#include <robin_hood.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
 #include <cage-core/memory.h>
-#include <cage-core/hashTable.h>
 #include <cage-core/spatial.h>
 
 #include <xsimd/xsimd.hpp>
@@ -167,7 +167,7 @@ namespace cage
 		public:
 			memoryArenaGrowing<memoryAllocatorPolicyPool<templates::poolAllocatorAtomSize<itemUnion>::result>, memoryConcurrentPolicyNone> itemsPool;
 			memoryArena itemsArena;
-			holder<cage::hashTable<itemBase>> itemsTable;
+			robin_hood::unordered_map<uint32, holder<itemBase>> itemsTable;
 			std::atomic<bool> dirty;
 			std::vector<nodeStruct, memoryArenaStd<nodeStruct>> nodes;
 			std::vector<itemBase*> indices;
@@ -182,7 +182,6 @@ namespace cage
 				CAGE_ASSERT((uintPtr(this) % alignof(fastBox)) == 0, uintPtr(this) % alignof(fastBox), alignof(fastBox));
 				CAGE_ASSERT((uintPtr(leftBinBoxes.data()) % alignof(fastBox)) == 0);
 				CAGE_ASSERT((uintPtr(rightBinBoxes.data()) % alignof(fastBox)) == 0);
-				itemsTable = newHashTable<itemBase>({});
 			}
 
 			~spatialDataImpl()
@@ -306,20 +305,20 @@ namespace cage
 				dirty = true;
 				nodes.clear();
 				indices.clear();
-				if (itemsTable->count() == 0)
+				if (itemsTable.size() == 0)
 				{
 					dirty = false;
 					return;
 				}
-				nodes.reserve(itemsTable->count());
-				indices.reserve(itemsTable->count());
+				nodes.reserve(itemsTable.size());
+				indices.reserve(itemsTable.size());
 				fastBox worldBox;
-				for (const hashTablePair<itemBase> &it : *itemsTable)
+				for (const auto &it : itemsTable)
 				{
-					indices.push_back(it.second);
+					indices.push_back(it.second.get());
 					worldBox += it.second->box;
 				}
-				nodes.emplace_back(worldBox, 0, numeric_cast<sint32>(itemsTable->count()));
+				nodes.emplace_back(worldBox, 0, numeric_cast<sint32>(itemsTable.size()));
 				rebuild(0, 0, real::Infinity());
 				CAGE_ASSERT(uintPtr(nodes.data()) % alignof(nodeStruct) == 0, uintPtr(nodes.data()) % alignof(nodeStruct), alignof(nodeStruct), alignof(fastBox), sizeof(nodeStruct));
 #ifdef CAGE_ASSERT_ENABLED
@@ -461,7 +460,7 @@ namespace cage
 		CAGE_ASSERT(other.isPoint() || other.isSegment());
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		remove(name);
-		impl->itemsTable->add(name, impl->itemsArena.createObject<itemShape<line>>(name, other));
+		impl->itemsTable[name] = impl->itemsArena.createImpl<itemBase, itemShape<line>>(name, other);
 	}
 
 	void spatialData::update(uint32 name, const triangle &other)
@@ -470,7 +469,7 @@ namespace cage
 		CAGE_ASSERT(other.area() < real::Infinity());
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		remove(name);
-		impl->itemsTable->add(name, impl->itemsArena.createObject<itemShape<triangle>>(name, other));
+		impl->itemsTable[name] = impl->itemsArena.createImpl<itemBase, itemShape<triangle>>(name, other);
 	}
 
 	void spatialData::update(uint32 name, const sphere &other)
@@ -479,7 +478,7 @@ namespace cage
 		CAGE_ASSERT(other.volume() < real::Infinity());
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		remove(name);
-		impl->itemsTable->add(name, impl->itemsArena.createObject<itemShape<sphere>>(name, other));
+		impl->itemsTable[name] = impl->itemsArena.createImpl<itemBase, itemShape<sphere>>(name, other);
 	}
 
 	void spatialData::update(uint32 name, const aabb &other)
@@ -488,26 +487,21 @@ namespace cage
 		CAGE_ASSERT(other.volume() < real::Infinity());
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		remove(name);
-		impl->itemsTable->add(name, impl->itemsArena.createObject<itemShape<aabb>>(name, other));
+		impl->itemsTable[name] = impl->itemsArena.createImpl<itemBase, itemShape<aabb>>(name, other);
 	}
 
 	void spatialData::remove(uint32 name)
 	{
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		impl->dirty = true;
-		if (!impl->itemsTable->exists(name))
-			return;
-		auto item = impl->itemsTable->get(name);
-		impl->itemsTable->remove(name);
-		impl->itemsArena.deallocate(item);
+		impl->itemsTable.erase(name);
 	}
 
 	void spatialData::clear()
 	{
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		impl->dirty = true;
-		impl->itemsArena.flush();
-		impl->itemsTable->clear();
+		impl->itemsTable.clear();
 	}
 
 	void spatialData::rebuild()

@@ -1,12 +1,12 @@
 #include <vector>
 #include <algorithm>
+#include <robin_hood.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
 #include <cage-core/memory.h>
-#include <cage-core/hashTable.h>
 #include <cage-core/collision.h>
 #include <cage-core/collisionMesh.h>
 #include <cage-core/spatial.h>
@@ -19,16 +19,14 @@ namespace cage
 		{
 			const collisionMesh *collider;
 
-			itemStruct(const collisionMesh *collider, const transform &t) : transform(t), collider(collider) {}
+			itemStruct(const collisionMesh *collider, const transform &t) : transform(t), collider(collider)
+			{}
 		};
 
 		class collisionDataImpl : public collisionData
 		{
 		public:
-			memoryArenaGrowing<memoryAllocatorPolicyPool<sizeof(itemStruct)>, memoryConcurrentPolicyNone> pool;
-			memoryArena arena;
-			typedef holder<cage::hashTable<itemStruct>> itemsMapType;
-			itemsMapType allItems;
+			robin_hood::unordered_map<uint32, itemStruct> allItems;
 			holder<spatialData> spatial;
 			const uint32 maxCollisionPairs;
 
@@ -39,10 +37,8 @@ namespace cage
 				return spatialDataCreateConfig();
 			}
 
-			collisionDataImpl(const collisionDataCreateConfig &config) :
-				pool(spatialConfig(config).maxItems * sizeof(itemStruct)), arena(&pool), maxCollisionPairs(config.maxCollisionPairs)
+			collisionDataImpl(const collisionDataCreateConfig &config) : maxCollisionPairs(config.maxCollisionPairs)
 			{
-				allItems = newHashTable<itemStruct>({});
 				spatial = newSpatialData(spatialConfig(config));
 			}
 
@@ -78,9 +74,9 @@ namespace cage
 				for (uint32 nameIt : spatial->result())
 				{
 					tmpPairs.resize(data->maxCollisionPairs);
-					itemStruct *item = data->allItems->get(nameIt);
+					const itemStruct &item = data->allItems.at(nameIt);
 					real fractBefore, fractContact;
-					uint32 res = collisionDetection(collider, item->collider, t1, *item, t2, *item, fractBefore, fractContact, tmpPairs.data(), numeric_cast<uint32>(tmpPairs.size()));
+					uint32 res = collisionDetection(collider, item.collider, t1, item, t2, item, fractBefore, fractContact, tmpPairs.data(), numeric_cast<uint32>(tmpPairs.size()));
 					if (res > 0 && fractContact < best)
 					{
 						tmpPairs.resize(res);
@@ -108,10 +104,10 @@ namespace cage
 				spatialIntersection(shape);
 				for (uint32 nameIt : spatial->result())
 				{
-					itemStruct *item = data->allItems->get(nameIt);
-					if (intersects(shape, item->collider, *item))
+					const itemStruct &item = data->allItems.at(nameIt);
+					if (intersects(shape, item.collider, item))
 					{
-						real d = distance(shape, item->collider, *item);
+						real d = distance(shape, item.collider, item);
 						if (d < best)
 						{
 							best = d;
@@ -121,11 +117,11 @@ namespace cage
 				}
 				if (resultName)
 				{
-					itemStruct *item = data->allItems->get(resultName);
+					const itemStruct &item = data->allItems.at(resultName);
 					uint32 i = 0;
-					for (const triangle &t : item->collider->triangles())
+					for (const triangle &t : item.collider->triangles())
 					{
-						if (intersects(shape, t * *item))
+						if (intersects(shape, t * item))
 							resultPairs.emplace_back(m, i);
 						i++;
 					}
@@ -180,9 +176,9 @@ namespace cage
 	void collisionQuery::collider(const collisionMesh *&c, transform &t) const
 	{
 		collisionQueryImpl *impl = (collisionQueryImpl*)this;
-		auto r = impl->data->allItems->get(impl->resultName);
-		c = r->collider;
-		t = *r;
+		auto r = impl->data->allItems.at(impl->resultName);
+		c = r.collider;
+		t = r;
 	}
 
 	void collisionQuery::query(const collisionMesh *collider, const transform &t)
@@ -230,8 +226,7 @@ namespace cage
 	{
 		collisionDataImpl *impl = (collisionDataImpl*)this;
 		remove(name);
-		itemStruct *it = impl->arena.createObject<itemStruct>(collider, t);
-		impl->allItems->add(name, it);
+		impl->allItems.emplace(name, itemStruct(collider, t));
 		impl->spatial->update(name, collider->box() * mat4(t));
 	}
 
@@ -239,18 +234,13 @@ namespace cage
 	{
 		collisionDataImpl *impl = (collisionDataImpl*)this;
 		impl->spatial->remove(name);
-		if (!impl->allItems->exists(name))
-			return;
-		auto item = impl->allItems->get(name);
-		impl->allItems->remove(name);
-		impl->arena.deallocate(item);
+		impl->allItems.erase(name);
 	}
 
 	void collisionData::clear()
 	{
 		collisionDataImpl *impl = (collisionDataImpl*)this;
-		impl->arena.flush();
-		impl->allItems->clear();
+		impl->allItems.clear();
 		impl->spatial->clear();
 	}
 

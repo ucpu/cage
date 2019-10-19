@@ -302,9 +302,6 @@ namespace cage
 	struct sphere;
 	struct aabb;
 	struct hashString;
-	template<class T> struct hashTablePair;
-	template<class T> struct hashTableIt;
-	template<class T> class hashTable;
 	template<uint32 N> struct identifier;
 	class image;
 	class lineReader;
