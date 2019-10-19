@@ -415,6 +415,11 @@ namespace cage
 		return impl->resultNames;
 	}
 
+	void spatialQuery::intersection(const vec3 &shape)
+	{
+		intersection(aabb(shape, shape));
+	}
+
 	void spatialQuery::intersection(const line &shape)
 	{
 		spatialQueryImpl *impl = (spatialQueryImpl*)this;
@@ -443,6 +448,11 @@ namespace cage
 	{
 		spatialQueryImpl *impl = (spatialQueryImpl*)this;
 		impl->intersection(shape);
+	}
+
+	void spatialData::update(uint32 name, const vec3 &other)
+	{
+		update(name, aabb(other, other));
 	}
 
 	void spatialData::update(uint32 name, const line &other)

@@ -10,6 +10,7 @@ namespace cage
 		const uint32 *resultData() const;
 		pointerRange<const uint32> result() const;
 
+		void intersection(const vec3 &shape);
 		void intersection(const line &shape);
 		void intersection(const triangle &shape);
 		void intersection(const plane &shape);
@@ -20,6 +21,7 @@ namespace cage
 	class CAGE_API spatialData : private immovable
 	{
 	public:
+		void update(uint32 name, const vec3 &other);
 		void update(uint32 name, const line &other);
 		void update(uint32 name, const triangle &other);
 		void update(uint32 name, const sphere &other);
