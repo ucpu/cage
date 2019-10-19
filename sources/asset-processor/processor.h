@@ -6,8 +6,8 @@
 #include <cage-core/config.h>
 #include <cage-core/assetStructs.h>
 
-#include <cage-client/core.h>
-#include <cage-client/assetStructs.h>
+#include <cage-engine/core.h>
+#include <cage-engine/assetStructs.h>
 
 using namespace cage;
 

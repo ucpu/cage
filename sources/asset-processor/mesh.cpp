@@ -3,8 +3,8 @@
 #include <cage-core/configIni.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
-#include <cage-client/graphics/shaderConventions.h>
-#include <cage-client/opengl.h>
+#include <cage-engine/graphics/shaderConventions.h>
+#include <cage-engine/opengl.h>
 
 vec2 convertSpecularToSpecial(const vec3 &spec);
 

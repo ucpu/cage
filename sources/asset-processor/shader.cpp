@@ -8,7 +8,7 @@
 #include <cage-core/timer.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
-#include <cage-client/opengl.h>
+#include <cage-engine/opengl.h>
 
 namespace
 {

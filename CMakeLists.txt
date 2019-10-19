@@ -67,17 +67,17 @@ cage_ide_sort_files(cage-test-network)
 cage_ide_working_dir_in_place(cage-test-network)
 
 ########
-# CAGE-CLIENT
+# CAGE-RENDER
 ########
 
-file(GLOB_RECURSE cage-client-sources "sources/libclient/*" "include/cage-client/*")
-add_library(cage-client SHARED ${cage-client-sources})
-target_include_directories(cage-client PUBLIC include)
-target_link_libraries(cage-client PRIVATE libsoundio_shared ogg vorbis vorbisfile glfw)
-target_link_libraries(cage-client PUBLIC cage-core glad)
-set_target_properties(cage-client PROPERTIES CXX_VISIBILITY_PRESET hidden)
-cage_ide_category(cage-client cage)
-cage_ide_sort_files(cage-client)
+file(GLOB_RECURSE cage-engine-sources "sources/libengine/*" "include/cage-engine/*")
+add_library(cage-engine SHARED ${cage-engine-sources})
+target_include_directories(cage-engine PUBLIC include)
+target_link_libraries(cage-engine PRIVATE libsoundio_shared ogg vorbis vorbisfile glfw)
+target_link_libraries(cage-engine PUBLIC cage-core glad)
+set_target_properties(cage-engine PROPERTIES CXX_VISIBILITY_PRESET hidden)
+cage_ide_category(cage-engine cage)
+cage_ide_sort_files(cage-engine)
 
 ########
 # CAGE-ASSET-PROCESSOR
@@ -85,7 +85,7 @@ cage_ide_sort_files(cage-client)
 
 file(GLOB_RECURSE cage-asset-processor-sources "sources/asset-processor/*")
 add_executable(cage-asset-processor ${cage-asset-processor-sources})
-target_link_libraries(cage-asset-processor cage-client IL ILU assimp freetype dr_libs ogg vorbis vorbisfile vorbisenc lib_msdfgen)
+target_link_libraries(cage-asset-processor cage-engine IL ILU assimp freetype dr_libs ogg vorbis vorbisfile vorbisenc lib_msdfgen)
 cage_ide_category(cage-asset-processor cage)
 cage_ide_sort_files(cage-asset-processor)
 cage_ide_working_dir_in_place(cage-asset-processor)

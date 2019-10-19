@@ -1,5 +1,5 @@
 Strategy games focused 3D game engine.
-It started as a hobby/learning project, but has become quite feature rich and has matured over the years.
+It started as a hobby/learning project, but has become fairly feature rich and mature over the years.
 
 # Examples
 
@@ -44,13 +44,13 @@ It started as a hobby/learning project, but has become quite feature rich and ha
 - self-contained
   - most dependencies are accessed as git submodules and compiled in
   - there are just few package requirements on linux
-- the Core library has no dependencies on graphics or sound and is therefore suitable to run head-less on servers
+- the Core library has no dependencies on graphics or sound and is suitable to run on headless servers
 
 ## Friendly Licensing
 
 - MIT license is short and easy to understand
 - commercial or not, closed source or open source, ... whatever :D
-- all 3rd-party licenses are copied to single redistribute directory during build configuration
+- all 3rd-party licenses are copied to single redistributable directory during build configuration
 
 ## Notes
 
@@ -58,7 +58,7 @@ It started as a hobby/learning project, but has become quite feature rich and ha
   - when developing with Cage, you use your preferred editor
   - all interaction with Cage is with c++ code, INI configuration files and CLI tools
 
-# Components
+# Modules
 
 ## Core Library
 
@@ -95,7 +95,7 @@ It started as a hobby/learning project, but has become quite feature rich and ha
   - images
   - ...
 
-## Client Library
+## Engine Library
 
 ### Low-level API
 
@@ -103,7 +103,7 @@ It started as a hobby/learning project, but has become quite feature rich and ha
 - graphics
   - currently OpenGL 4.4
     - the plan is to switch to Vulkan only (when there is enough time)
-  - actual objective abstraction of most OpenGL objects
+  - object abstraction of most OpenGL objects
     - semi-debugging layer that validates that objects are correctly bound
 - sound (via soundio)
   - support for spatial sound (multiple channels)
@@ -113,7 +113,7 @@ It started as a hobby/learning project, but has become quite feature rich and ha
   - flexible skinning
   - no custom (application defined) widgets, this allows fairly efficient implementation
 
-### Engine (high-level API)
+### High-level API
 
 - the scene is defined entirely by entities
   - transform (vec3 position, quaternion orientation, uniform scale)

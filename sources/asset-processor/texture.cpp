@@ -9,7 +9,7 @@
 #include <cage-core/serialization.h>
 #include <cage-core/enumerate.h>
 
-#include <cage-client/opengl.h>
+#include <cage-engine/opengl.h>
 
 #include <IL/il.h>
 #include <IL/ilu.h>
