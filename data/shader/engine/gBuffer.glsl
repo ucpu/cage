@@ -1,5 +1,5 @@
 
-$import shaderConventions.h
+$include ../shaderConventions.h
 
 $include func/vertexStage.glsl
 

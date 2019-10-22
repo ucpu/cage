@@ -1,5 +1,5 @@
 
-$import shaderConventions.h
+$include ../shaderConventions.h
 
 $define shader vertex
 
