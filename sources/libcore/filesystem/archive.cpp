@@ -121,8 +121,8 @@ namespace cage
 			archiveZip(const string &path) : archiveVirtual(path), zip(nullptr)
 			{
 				mutex = newSyncMutex();
-				if (newFile(path, fileMode(true, false))->size() == 0)
-					CAGE_THROW_ERROR(exception, "empty file"); // this is a temporary workaround until it is improved in the libzip
+				//if (newFile(path, fileMode(true, false))->size() == 0)
+				//	CAGE_THROW_ERROR(exception, "empty file"); // this is a temporary workaround until it is improved in the libzip
 				zip = zip_open(path.c_str(), ZIP_CHECKCONS, nullptr);
 				if (!zip)
 					CAGE_THROW_ERROR(exception, "zip_open");
