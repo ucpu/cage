@@ -1,6 +1,5 @@
 #include <cage-core/core.h>
 #include <cage-core/math.h>
-#include <cage-core/log.h>
 #include <cage-core/memory.h>
 #include "private.h"
 

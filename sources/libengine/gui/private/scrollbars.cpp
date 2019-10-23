@@ -2,7 +2,6 @@
 #include <cage-core/math.h>
 #include <cage-core/memory.h>
 #include <cage-core/entities.h>
-#include <cage-core/log.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>

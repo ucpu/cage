@@ -5,7 +5,7 @@ namespace cage
 {
 	struct CAGE_API fileMode
 	{
-		fileMode(bool read, bool write) : read(read), write(write), textual(false), append(false)
+		explicit fileMode(bool read, bool write) : read(read), write(write), textual(false), append(false)
 		{}
 
 		bool valid() const;

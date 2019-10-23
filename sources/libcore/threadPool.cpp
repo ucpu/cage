@@ -3,7 +3,6 @@
 
 #define CAGE_EXPORT
 #include <cage-core/core.h>
-#include <cage-core/log.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/threadPool.h>
 

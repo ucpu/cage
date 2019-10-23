@@ -95,7 +95,7 @@ namespace cage
 	{
 		struct CAGE_API eventLinker : private immovable
 		{
-			eventLinker(const string &name);
+			explicit eventLinker(const string &name);
 			~eventLinker();
 			void attach(eventLinker *d, sint32 order);
 			void detach();
@@ -112,7 +112,7 @@ namespace cage
 	template<class... Ts>
 	struct eventListener<bool(Ts...)> : private privat::eventLinker, private delegate<bool(Ts...)>
 	{
-		eventListener(const string &name = "listener") : privat::eventLinker(name)
+		explicit eventListener(const string &name = "listener") : privat::eventLinker(name)
 		{}
 
 		void attach(eventDispatcher<bool(Ts...)> &dispatcher, sint32 order = 0)
@@ -140,7 +140,7 @@ namespace cage
 	template<class... Ts>
 	struct eventListener<void(Ts...)> : private eventListener<bool(Ts...)>, private delegate<void(Ts...)>
 	{
-		eventListener(const string &name = "listener") : eventListener<bool(Ts...)>(name)
+		explicit eventListener(const string &name = "listener") : eventListener<bool(Ts...)>(name)
 		{
 			eventListener<bool(Ts...)>::template bind<eventListener, &eventListener::invoke>(this);
 		}
@@ -163,7 +163,7 @@ namespace cage
 	template<class... Ts>
 	struct eventDispatcher<bool(Ts...)> : private eventListener<bool(Ts...)>
 	{
-		eventDispatcher(const string &name = "dispatcher") : eventListener<bool(Ts...)>(name)
+		explicit eventDispatcher(const string &name = "dispatcher") : eventListener<bool(Ts...)>(name)
 		{}
 
 		bool dispatch(Ts... vs) const

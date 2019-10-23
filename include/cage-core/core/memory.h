@@ -259,7 +259,7 @@ namespace cage
 		{}
 
 		template<class A>
-		memoryArena(A *a) noexcept
+		explicit memoryArena(A *a) noexcept
 		{
 			static Stub stb = Stub::init<A>();
 			this->stub = &stb;

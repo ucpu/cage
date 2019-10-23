@@ -35,6 +35,32 @@
 
 namespace cage
 {
+	enum class severityEnum
+	{
+		Note, // details for subsequent log
+		Hint, // possible improvement available
+		Warning, // deprecated behavior, dangerous actions
+		Info, // we are good, progress report
+		Error, // invalid user input, network connection interrupted, file access denied
+		Critical // not implemented function, exception inside destructor, assert failure
+	};
+
+	namespace privat
+	{
+		CAGE_API uint64 makeLog(const char *file, uint32 line, const char *function, severityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept;
+		inline uint64 makeLog(severityEnum severity, const char *component, const string &message, bool continuous, bool debug) { return makeLog(nullptr, 0, nullptr, severity, component, message, continuous, debug); }
+	}
+
+#define CAGE_LOG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FILE__, __LINE__, __FUNCTION__, SEVERITY, COMPONENT, MESSAGE, false, false)
+#define CAGE_LOG_CONTINUE(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FILE__, __LINE__, __FUNCTION__, SEVERITY, COMPONENT, MESSAGE, true, false)
+#ifdef CAGE_DEBUG
+#define CAGE_LOG_DEBUG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FILE__, __LINE__, __FUNCTION__, SEVERITY, COMPONENT, MESSAGE, false, true)
+#define CAGE_LOG_CONTINUE_DEBUG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FILE__, __LINE__, __FUNCTION__, SEVERITY, COMPONENT, MESSAGE, true, true)
+#else
+#define CAGE_LOG_DEBUG(SEVERITY, COMPONENT, MESSAGE)
+#define CAGE_LOG_CONTINUE_DEBUG(SEVERITY, COMPONENT, MESSAGE)
+#endif
+
 	namespace privat
 	{
 #define GCHL_GENERATE(TYPE) CAGE_API uint32 sprint1(char *s, TYPE value); CAGE_API void sscan1(const char *s, TYPE &value);
@@ -64,7 +90,7 @@ namespace cage
 
 		struct CAGE_API overrideBreakpoint
 		{
-			overrideBreakpoint(bool enable = false);
+			explicit overrideBreakpoint(bool enable = false);
 			~overrideBreakpoint();
 
 		private:
@@ -73,7 +99,7 @@ namespace cage
 
 		struct CAGE_API overrideAssert
 		{
-			overrideAssert(bool deadly = false);
+			explicit overrideAssert(bool deadly = false);
 			~overrideAssert();
 
 		private:
@@ -88,7 +114,7 @@ namespace cage
 	{
 		struct CAGE_API assertPriv
 		{
-			assertPriv(bool exp, const char *expt, const char *file, const char *line, const char *function);
+			explicit assertPriv(bool exp, const char *expt, const char *file, const char *line, const char *function);
 			void operator () () const;
 
 #define GCHL_GENERATE(TYPE) assertPriv &variable(const char *name, TYPE var);
@@ -123,19 +149,9 @@ namespace cage
 		};
 	}
 
-	enum class severityEnum
-	{
-		Note, // details for subsequent log
-		Hint, // possible improvement available
-		Warning, // deprecated behavior, dangerous actions
-		Info, // we are good, progress report
-		Error, // invalid user input, network connection interrupted, file access denied
-		Critical // not implemented function, exception inside destructor, assert failure
-	};
-
 	struct CAGE_API exception
 	{
-		exception(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept;
+		explicit exception(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept;
 		virtual ~exception() noexcept;
 		virtual exception &log();
 #ifdef CAGE_DEBUG
@@ -149,20 +165,20 @@ namespace cage
 
 	struct CAGE_API notImplemented : public exception
 	{
-		notImplemented(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept;
+		explicit notImplemented(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept;
 		virtual notImplemented &log();
 	};
 
 	struct CAGE_API outOfMemory : public exception
 	{
-		outOfMemory(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uintPtr memory) noexcept;
+		explicit outOfMemory(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uintPtr memory) noexcept;
 		virtual outOfMemory &log();
 		uintPtr memory;
 	};
 
 	struct CAGE_API codeException : public exception
 	{
-		codeException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uint32 code) noexcept;
+		explicit codeException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uint32 code) noexcept;
 		virtual codeException &log();
 		uint32 code;
 	};
@@ -171,7 +187,7 @@ namespace cage
 	{
 		struct CAGE_API overrideException
 		{
-			overrideException(severityEnum severity = severityEnum::Critical);
+			explicit overrideException(severityEnum severity = severityEnum::Critical);
 			~overrideException();
 
 		private:

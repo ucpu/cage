@@ -3,7 +3,6 @@
 #include <unordered_map>
 
 #include <cage-core/core.h>
-#include <cage-core/log.h>
 #include <cage-core/math.h>
 #include <cage-core/camera.h>
 #include <cage-core/geometry.h>

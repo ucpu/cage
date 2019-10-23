@@ -54,12 +54,12 @@ namespace cage
 					{
 						ri = next(ri);
 						states[ri] = stateEnum::Reading;
-						return { this, ri };
+						return privat::swapBufferLock(this, ri);
 					}
 					if (states[ri] == stateEnum::Read)
 					{
 						states[ri] = stateEnum::Reading;
-						return { this, ri };
+						return privat::swapBufferLock(this, ri);
 					}
 				}
 				else
@@ -68,7 +68,7 @@ namespace cage
 					{
 						ri = next(ri);
 						states[ri] = stateEnum::Reading;
-						return { this, ri };
+						return privat::swapBufferLock(this, ri);
 					}
 				}
 				return {};
@@ -84,12 +84,12 @@ namespace cage
 					{
 						wi = next(wi);
 						states[wi] = stateEnum::Writing;
-						return { this, wi };
+						return privat::swapBufferLock(this, wi);
 					}
 					if (states[wi] == stateEnum::Wrote)
 					{
 						states[wi] = stateEnum::Writing;
-						return { this, wi };
+						return privat::swapBufferLock(this, wi);
 					}
 				}
 				else
@@ -98,7 +98,7 @@ namespace cage
 					{
 						wi = next(wi);
 						states[wi] = stateEnum::Writing;
-						return { this, wi };
+						return privat::swapBufferLock(this, wi);
 					}
 				}
 				return {};

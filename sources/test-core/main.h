@@ -1,5 +1,4 @@
 #include <cage-core/core.h>
-#include <cage-core/log.h>
 
 using namespace cage;
 

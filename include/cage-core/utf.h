@@ -5,7 +5,7 @@ namespace cage
 {
 	struct CAGE_API invalidUtfString : public exception
 	{
-		invalidUtfString(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept;
+		explicit invalidUtfString(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept;
 		virtual invalidUtfString &log();
 	};
 

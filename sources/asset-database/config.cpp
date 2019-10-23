@@ -1,7 +1,6 @@
 #include <set>
 
 #include <cage-core/core.h>
-#include <cage-core/log.h>
 #include <cage-core/config.h>
 #include <cage-core/files.h>
 #include <cage-core/configIni.h>

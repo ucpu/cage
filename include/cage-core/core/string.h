@@ -61,7 +61,7 @@ namespace cage
 				data[current] = 0;
 			}
 
-			stringBase(const char *pos, uint32 len)
+			explicit stringBase(const char *pos, uint32 len)
 			{
 				if (len > N)
 					CAGE_THROW_ERROR(exception, "string truncation");

@@ -10,8 +10,8 @@ namespace cage
 		uint64 s[2];
 
 		randomGenerator();
-		randomGenerator(uint64 s[2]);
-		randomGenerator(uint64 s1, uint64 s2);
+		explicit randomGenerator(uint64 s[2]);
+		explicit randomGenerator(uint64 s1, uint64 s2);
 		uint64 next();
 
 		real randomChance();

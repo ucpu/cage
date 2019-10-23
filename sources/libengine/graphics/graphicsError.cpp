@@ -3,7 +3,6 @@
 
 #include <cage-core/core.h>
 #include <cage-core/math.h>
-#include <cage-core/log.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/lineReader.h>
 #include <cage-core/config.h>

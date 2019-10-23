@@ -1,6 +1,5 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
-#include <cage-core/log.h>
 #include <cage-core/math.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS

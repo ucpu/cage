@@ -2,7 +2,6 @@
 #include <map>
 
 #include <cage-core/core.h>
-#include <cage-core/log.h>
 #include <cage-core/configIni.h>
 
 using namespace cage;

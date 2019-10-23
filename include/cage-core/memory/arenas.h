@@ -3,7 +3,7 @@ namespace cage
 	template<class AllocatorPolicy, class ConcurrentPolicy>
 	struct memoryArenaFixed
 	{
-		memoryArenaFixed(uintPtr size) : size(size)
+		explicit memoryArenaFixed(uintPtr size) : size(size)
 		{
 			origin = detail::systemArena().allocate(size, sizeof(uintPtr));
 			allocator.setOrigin(origin);
@@ -62,7 +62,7 @@ namespace cage
 	template<class AllocatorPolicy, class ConcurrentPolicy>
 	struct memoryArenaGrowing
 	{
-		memoryArenaGrowing(uintPtr addressSize, uintPtr initialSize = 1024 * 1024) : origin(nullptr), pageSize(detail::memoryPageSize()), addressSize(detail::roundUpTo(addressSize, pageSize)), currentSize(0)
+		explicit memoryArenaGrowing(uintPtr addressSize, uintPtr initialSize = 1024 * 1024) : origin(nullptr), pageSize(detail::memoryPageSize()), addressSize(detail::roundUpTo(addressSize, pageSize)), currentSize(0)
 		{
 			memory = newVirtualMemory();
 			origin = memory->reserve(this->addressSize / pageSize);

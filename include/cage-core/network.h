@@ -5,7 +5,7 @@ namespace cage
 {
 	struct CAGE_API disconnected : public exception
 	{
-		disconnected(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept;
+		explicit disconnected(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept;
 	};
 
 	// tcp

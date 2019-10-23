@@ -5,7 +5,7 @@ namespace cage
 {
 	struct CAGE_API serializer
 	{
-		serializer(void *data, uintPtr size);
+		explicit serializer(void *data, uintPtr size);
 		explicit serializer(memoryBuffer &buffer, uintPtr size = m);
 		
 		serializer(serializer &&) = default;
@@ -29,7 +29,7 @@ namespace cage
 
 	struct CAGE_API deserializer
 	{
-		deserializer(const void *data, uintPtr size);
+		explicit deserializer(const void *data, uintPtr size);
 		explicit deserializer(const memoryBuffer &buffer);
 
 		deserializer(deserializer &&) = default;

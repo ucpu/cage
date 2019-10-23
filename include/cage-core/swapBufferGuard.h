@@ -39,7 +39,7 @@ namespace cage
 		{
 		public:
 			swapBufferLock();
-			swapBufferLock(swapBufferGuard *controller, uint32 index);
+			explicit swapBufferLock(swapBufferGuard *controller, uint32 index);
 			swapBufferLock(const swapBufferLock &) = delete; // non-copyable
 			swapBufferLock(swapBufferLock &&other); // movable
 			~swapBufferLock();

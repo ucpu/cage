@@ -8,15 +8,15 @@ namespace cage
 	class CAGE_API bufferIStream : protected std::streambuf, public std::istream
 	{
 	public:
-		bufferIStream(const void *data, uintPtr size);
-		bufferIStream(const memoryBuffer &buffer);
+		explicit bufferIStream(const void *data, uintPtr size);
+		explicit bufferIStream(const memoryBuffer &buffer);
 		uintPtr position() const;
 	};
 
 	class CAGE_API bufferOStream : protected std::streambuf, public std::ostream
 	{
 	public:
-		bufferOStream(memoryBuffer &buffer);
+		explicit bufferOStream(memoryBuffer &buffer);
 
 	protected:
 		using std::streambuf::traits_type;
