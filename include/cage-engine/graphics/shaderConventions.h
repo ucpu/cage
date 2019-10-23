@@ -1,3 +1,8 @@
+
+/*
+$define allowParsingHash true
+*/
+
 #define CAGE_SHADER_MAX_CHARACTERS 512
 #define CAGE_SHADER_MAX_INSTANCES 64
 #define CAGE_SHADER_MAX_BONES 341
@@ -88,3 +93,7 @@
 #define CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL 2
 #define CAGE_SHADER_ROUTINEUNIF_MAPNORMAL 3
 #define CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE 4
+
+/*
+$undef allowParsingHash
+*/

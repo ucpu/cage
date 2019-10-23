@@ -237,8 +237,13 @@ namespace
 
 	void output(const string &s)
 	{
-		if (s.empty() || defines["shader"].empty())
+		if (s.empty())
 			return;
+		if (defines["shader"].empty())
+		{
+			CAGE_LOG_DEBUG(severityEnum::Warning, logComponentName, string() + "output to unspecified shader: '" + s + "'");
+			return;
+		}
 		codes[defines["shader"]] += std::string(s.c_str(), s.length()) + "\n";
 	}
 
@@ -267,7 +272,14 @@ namespace
 		return true;
 	}
 
-	void parse(const string &filename, const bool allowParsingHash = false)
+	bool allowParsingHash()
+	{
+		if (defines.count("allowParsingHash") == 0)
+			return false;
+		return defines["allowParsingHash"].toBool();
+	}
+
+	void parse(const string &filename)
 	{
 		holder<fileHandle> file = newFile(filename, fileMode(true, false));
 		uint32 lineNumber = 0;
@@ -281,7 +293,7 @@ namespace
 				line = line.trim();
 				if (line.empty())
 					continue;
-				if (line[0] == '$' || (allowParsingHash && line[0] == '#'))
+				if (line[0] == '$' || (allowParsingHash() && line[0] == '#'))
 				{
 					line = line.subString(1, m).trim();
 					string cmd = line.split();
@@ -329,8 +341,8 @@ namespace
 						if (!line.empty())
 							CAGE_THROW_ERROR(exception, "'$stack' cannot have parameters");
 						string s("// CAGE: stack:");
-						for (auto it = stack.begin(), et = stack.end(); it != et; it++)
-							s += string(" ") + *it;
+						for (const auto &it : stack)
+							s += string(" ") + it;
 						output(s);
 					}
 					else if (stackIsOk(stack))
@@ -385,8 +397,8 @@ namespace
 						{
 							if (!line.empty())
 								CAGE_THROW_ERROR(exception, "'$variables' expects no parameters");
-							for (auto it = defines.begin(), et = defines.end(); it != et; it++)
-								output(string() + "// CAGE: variable: '" + it->first + "' = '" + it->second + "'");
+							for (const auto &it : defines)
+								output(string() + "// CAGE: variable: '" + it.first + "' = '" + it.second + "'");
 						}
 						else if (cmd == "include")
 						{
@@ -403,23 +415,6 @@ namespace
 							if (configShaderPrint)
 								output(string() + "// CAGE: include file: '" + line + "'");
 							parse(fn);
-							if (configShaderPrint)
-								output(string() + "// CAGE: return to file: '" + pathToRel(filename, inputDirectory) + "':" + lineNumber);
-						}
-						else if (cmd == "import")
-						{
-							if (line.empty())
-								CAGE_THROW_ERROR(exception, "'$import' expects one parameter");
-							if (!pathIsAbs(line))
-								line = pathJoin(inputDirectory, line);
-							if (!pathIsFile(line))
-							{
-								CAGE_LOG(severityEnum::Note, "exception", string() + "requested file '" + line + "'");
-								CAGE_THROW_ERROR(exception, "'$import' file not found");
-							}
-							if (configShaderPrint)
-								output(string() + "// CAGE: import file: '" + pathToRel(line, inputDirectory) + "'");
-							parse(line, true);
 							if (configShaderPrint)
 								output(string() + "// CAGE: return to file: '" + pathToRel(filename, inputDirectory) + "':" + lineNumber);
 						}
