@@ -167,12 +167,10 @@ namespace cage
 			holder<renderTexture> depthTexture;
 
 			holder<uniformBuffer> viewportDataBuffer;
-			holder<uniformBuffer> meshDataBuffer;
-			holder<uniformBuffer> armatureDataBuffer;
-			holder<uniformBuffer> lightsDataBuffer;
 			holder<uniformBuffer> ssaoDataBuffer;
 			holder<uniformBuffer> ssaoPointsBuffer;
 			holder<uniformBuffer> finalScreenDataBuffer;
+			std::vector<holder<uniformBuffer>> disposableUbosArray;
 
 			std::vector<shadowmapBufferStruct> shadowmaps2d, shadowmapsCube;
 			std::vector<visualizableTextureStruct> visualizableTextures;
@@ -261,6 +259,15 @@ namespace cage
 				}
 			}
 
+			void useDisposableUbo(uint32 bindIndex, void *data, uint32 size)
+			{
+				holder<uniformBuffer> ubo = newUniformBuffer();
+				ubo->bind();
+				ubo->writeWhole(data, size, GL_STATIC_DRAW);
+				ubo->bind(bindIndex);
+				disposableUbosArray.push_back(templates::move(ubo));
+			}
+
 			void bindGBufferTextures()
 			{
 				const uint32 tius[] = { CAGE_SHADER_TEXTURE_ALBEDO, CAGE_SHADER_TEXTURE_SPECIAL, CAGE_SHADER_TEXTURE_NORMAL, CAGE_SHADER_TEXTURE_COLOR, CAGE_SHADER_TEXTURE_DEPTH };
@@ -329,12 +336,10 @@ namespace cage
 			void renderObject(objectsStruct *obj, shaderProgram *shr, meshRenderFlags flags)
 			{
 				applyShaderRoutines(&obj->shaderConfig, shr);
-				meshDataBuffer->bind();
-				meshDataBuffer->writeRange(obj->shaderMeshes, 0, sizeof(objectsStruct::shaderMeshStruct) * obj->count);
+				useDisposableUbo(CAGE_SHADER_UNIBLOCK_MESHES, obj->shaderMeshes, sizeof(objectsStruct::shaderMeshStruct) * obj->count);
 				if (obj->shaderArmatures)
 				{
-					armatureDataBuffer->bind();
-					armatureDataBuffer->writeRange(obj->shaderArmatures, 0, sizeof(mat3x4) * obj->count * obj->mesh->getSkeletonBones());
+					useDisposableUbo(CAGE_SHADER_UNIBLOCK_ARMATURES, obj->shaderArmatures, sizeof(mat3x4) * obj->count * obj->mesh->getSkeletonBones());
 					shr->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, obj->mesh->getSkeletonBones());
 				}
 				obj->mesh->bind();
@@ -410,8 +415,7 @@ namespace cage
 						CAGE_THROW_CRITICAL(exception, "invalid light type");
 					}
 					bindShadowmap(l->shadowmap);
-					lightsDataBuffer->bind();
-					lightsDataBuffer->writeRange(l->shaderLights, 0, sizeof(lightsStruct::shaderLightStruct) * l->count);
+					useDisposableUbo(CAGE_SHADER_UNIBLOCK_LIGHTS, l->shaderLights, sizeof(lightsStruct::shaderLightStruct) * l->count);
 					mesh->bind();
 					renderDispatch(mesh, l->count);
 				}
@@ -434,13 +438,12 @@ namespace cage
 
 					if (t->firstLight)
 					{ // render lights on the object
-						lightsDataBuffer->bind();
 						glBlendFunc(GL_ONE, GL_ONE); // assume premultiplied alpha
 						for (lightsStruct *l = t->firstLight; l; l = l->next)
 						{
 							applyShaderRoutines(&l->shaderConfig, shr);
 							bindShadowmap(l->shadowmap);
-							lightsDataBuffer->writeRange(l->shaderLights, 0, sizeof(lightsStruct::shaderLightStruct) * l->count);
+							useDisposableUbo(CAGE_SHADER_UNIBLOCK_LIGHTS, l->shaderLights, sizeof(lightsStruct::shaderLightStruct) * l->count);
 							renderDispatch(t->object.mesh, l->count);
 						}
 					}
@@ -868,15 +871,6 @@ namespace cage
 				viewportDataBuffer = newUniformBuffer();
 				viewportDataBuffer->setDebugName("viewportDataBuffer");
 				viewportDataBuffer->writeWhole(nullptr, sizeof(renderPassStruct::shaderViewportStruct), GL_DYNAMIC_DRAW);
-				meshDataBuffer = newUniformBuffer();
-				meshDataBuffer->setDebugName("meshDataBuffer");
-				meshDataBuffer->writeWhole(nullptr, sizeof(objectsStruct::shaderMeshStruct) * CAGE_SHADER_MAX_INSTANCES, GL_DYNAMIC_DRAW);
-				armatureDataBuffer = newUniformBuffer();
-				armatureDataBuffer->setDebugName("armatureDataBuffer");
-				armatureDataBuffer->writeWhole(nullptr, sizeof(mat3x4) * CAGE_SHADER_MAX_BONES, GL_DYNAMIC_DRAW);
-				lightsDataBuffer = newUniformBuffer();
-				lightsDataBuffer->setDebugName("lightsDataBuffer");
-				lightsDataBuffer->writeWhole(nullptr, sizeof(lightsStruct::shaderLightStruct) * CAGE_SHADER_MAX_INSTANCES, GL_DYNAMIC_DRAW);
 				ssaoDataBuffer = newUniformBuffer();
 				ssaoDataBuffer->setDebugName("ssaoDataBuffer");
 				ssaoDataBuffer->writeWhole(nullptr, sizeof(ssaoShaderStruct), GL_DYNAMIC_DRAW);
@@ -977,12 +971,10 @@ namespace cage
 				}
 
 				viewportDataBuffer->bind(CAGE_SHADER_UNIBLOCK_VIEWPORT);
-				meshDataBuffer->bind(CAGE_SHADER_UNIBLOCK_MESHES);
-				armatureDataBuffer->bind(CAGE_SHADER_UNIBLOCK_ARMATURES);
-				lightsDataBuffer->bind(CAGE_SHADER_UNIBLOCK_LIGHTS);
 				finalScreenDataBuffer->bind(CAGE_SHADER_UNIBLOCK_FINALSCREEN);
 				ssaoDataBuffer->bind(CAGE_SHADER_UNIBLOCK_SSAO);
 				ssaoPointsBuffer->bind(CAGE_SHADER_UNIBLOCK_SSAO_POINTS);
+				disposableUbosArray.clear();
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
 				{ // render all passes

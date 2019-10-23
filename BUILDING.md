@@ -20,6 +20,7 @@ sudo apt install libasound2-dev
 Make sure that git submodules are loaded too.
 ```bash
 git pull
+git submodule sync --recursive
 git submodule update --init --recursive
 ```
 
@@ -45,7 +46,8 @@ Prepare build directory.
 mkdir build ; cd build
 ```
 
-Choose a generator from those available for your platform.
+Use the following command to print all generators installed on your platform.
+Choose one according to your preference.
 ```bash
 cmake --help
 ```
