@@ -20,11 +20,48 @@ namespace cage
 
 	namespace
 	{
+		CAGE_ASSERT_COMPILE(sizeof(GLuint) == sizeof(uint32), incompatible_size_of_gluint);
+
+		struct sourceHolder
+		{
+			sourceHolder() : id(0)
+			{}
+
+			sourceHolder(uint32 id) : id(id)
+			{}
+
+			sourceHolder(const sourceHolder &) = delete;
+
+			sourceHolder(sourceHolder &&other) : id(0)
+			{
+				std::swap(id, other.id);
+			}
+
+			sourceHolder &operator = (const sourceHolder &) = delete;
+
+			sourceHolder &operator = (sourceHolder &&other)
+			{
+				std::swap(id, other.id);
+			}
+
+			~sourceHolder()
+			{
+				if (id)
+					glDeleteShader(id);
+				id = 0;
+			}
+
+			operator GLuint () const { return id; }
+
+		private:
+			uint32 id;
+		};
+
 		class shaderImpl : public shaderProgram
 		{
 		public:
 			uint32 id;
-			std::list <uint32> sources;
+			std::vector<GLuint> sources;
 			std::vector<uint32> subroutinesVertex;
 			std::vector<uint32> subroutinesTessControl;
 			std::vector<uint32> subroutinesTessEvaluation;
@@ -241,19 +278,6 @@ namespace cage
 
 	namespace
 	{
-		void checkGlErrorDeleteShader(uint32 shader)
-		{
-			try
-			{
-				CAGE_CHECK_GL_ERROR_DEBUG();
-			}
-			catch (const graphicsError &)
-			{
-				glDeleteShader(shader);
-				throw;
-			}
-		}
-
 		const string glTypeToName(uint32 type)
 		{
 			switch (type)
@@ -339,73 +363,75 @@ namespace cage
 		static const uint32 shaderLogBufferSize = 1024 * 8;
 	}
 
-	void shaderProgram::source(uint32 type, const char *data, uint32 length)
+	void shaderProgram::source(uint32 stage, const char *data, uint32 length)
 	{
 		shaderImpl *impl = (shaderImpl*)this;
 
-		string typeName;
-		switch (type)
+		string stageName;
+		switch (stage)
 		{
-		case GL_VERTEX_SHADER: typeName = "vertex"; break;
-		case GL_TESS_CONTROL_SHADER: typeName = "tess_control"; break;
-		case GL_TESS_EVALUATION_SHADER: typeName = "tess_evaluation"; break;
-		case GL_GEOMETRY_SHADER: typeName = "geometry"; break;
-		case GL_FRAGMENT_SHADER: typeName = "fragment"; break;
-		case GL_COMPUTE_SHADER: typeName = "compute"; break;
+		case GL_VERTEX_SHADER: stageName = "vertex"; break;
+		case GL_TESS_CONTROL_SHADER: stageName = "tess_control"; break;
+		case GL_TESS_EVALUATION_SHADER: stageName = "tess_evaluation"; break;
+		case GL_GEOMETRY_SHADER: stageName = "geometry"; break;
+		case GL_FRAGMENT_SHADER: stageName = "fragment"; break;
+		case GL_COMPUTE_SHADER: stageName = "compute"; break;
 		default:
-			CAGE_THROW_CRITICAL(exception, "invalid shader type");
+			CAGE_THROW_CRITICAL(exception, "invalid shader stage");
 		}
 
 		if (shaderIntrospection)
 		{
-			fileMode fm(false, true);
-			fm.textual = true;
-			holder<fileHandle> f = newFile(string() + "shaderIntrospection/" + impl->id + "/" + typeName + ".glsl", fm);
+			holder<fileHandle> f = newFile(string() + "shaderIntrospection/" + impl->id + "/" + stageName + ".glsl", fileMode(false, true));
 			f->write(data, length);
 		}
 
-		GLuint shader = glCreateShader(type);
+		sourceHolder shader = glCreateShader(stage);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 
 		GLint len = length;
 		const GLchar *tmp = (const GLchar *)data;
 		glShaderSource(shader, 1, &tmp, &len);
-		checkGlErrorDeleteShader(shader);
+		CAGE_CHECK_GL_ERROR_DEBUG();
 
 		glCompileShader(shader);
-		checkGlErrorDeleteShader(shader);
+		CAGE_CHECK_GL_ERROR_DEBUG();
 
+		len = 0;
 		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &len);
-		checkGlErrorDeleteShader(shader);
+		CAGE_CHECK_GL_ERROR_DEBUG();
 		if (len > 5)
 		{
 			char buf[shaderLogBufferSize];
 			glGetShaderInfoLog(shader, shaderLogBufferSize - 1, &len, buf);
-			checkGlErrorDeleteShader(shader);
+			CAGE_CHECK_GL_ERROR_DEBUG();
+			if (shaderIntrospection)
+			{
+				holder<fileHandle> f = newFile(string() + "shaderIntrospection/" + impl->id + "/" + stageName + "_compile.log", fileMode(false, true));
+				f->write(buf, len);
+			}
 #ifdef CAGE_DEBUG
 			CAGE_LOG(severityEnum::Note, "shader", string() + "shader name: " + debugName);
 #endif // CAGE_DEBUG
-			CAGE_LOG(severityEnum::Warning, "shader", string() + "shader compilation log (id: " + impl->id + ", stage: " + typeName + "):");
+			CAGE_LOG(severityEnum::Warning, "shader", string() + "shader compilation log (id: " + impl->id + ", stage: " + stageName + "):");
 			holder<lineReader> lrb = newLineReader(buf, len);
 			for (string line; lrb->readLine(line);)
-				CAGE_LOG_CONTINUE(severityEnum::Note, "shader", line);
+				CAGE_LOG_CONTINUE(severityEnum::Warning, "shader", line);
 		}
 
+		len = 0;
 		glGetShaderiv(shader, GL_COMPILE_STATUS, &len);
-		checkGlErrorDeleteShader(shader);
+		CAGE_CHECK_GL_ERROR_DEBUG();
 		if (len != GL_TRUE)
 		{
-			glDeleteShader(shader);
 #ifdef CAGE_DEBUG
 			CAGE_LOG(severityEnum::Note, "shader", string() + "shader name: " + debugName);
 #endif // CAGE_DEBUG
+			CAGE_LOG(severityEnum::Note, "shader", string() + "shader stage: " + stageName);
 			CAGE_THROW_ERROR(graphicsError, "shader compilation failed", len);
 		}
 
-		glAttachShader(impl->id, shader);
-		checkGlErrorDeleteShader(shader);
-
-		glDeleteShader(shader);
+		glAttachShader(impl->id, shader); // the shader source can be deleted after this
 		CAGE_CHECK_GL_ERROR_DEBUG();
 
 		impl->sources.push_back(shader);
@@ -426,20 +452,12 @@ namespace cage
 		glLinkProgram(impl->id);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 
-		for (auto it : impl->sources)
+		for (uint32 it : impl->sources)
 			glDetachShader(impl->id, it);
 		impl->sources.clear();
 		CAGE_CHECK_GL_ERROR_DEBUG();
 
-		{ GLint count; glGetProgramStageiv(impl->id, GL_VERTEX_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesVertex.resize(count, m); }
-		{ GLint count; glGetProgramStageiv(impl->id, GL_TESS_CONTROL_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesTessControl.resize(count, m); }
-		{ GLint count; glGetProgramStageiv(impl->id, GL_TESS_EVALUATION_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesTessEvaluation.resize(count, m); }
-		{ GLint count; glGetProgramStageiv(impl->id, GL_GEOMETRY_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesGeometry.resize(count, m); }
-		{ GLint count; glGetProgramStageiv(impl->id, GL_FRAGMENT_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesFragment.resize(count, m); }
-		{ GLint count; glGetProgramStageiv(impl->id, GL_COMPUTE_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesCompute.resize(count, m); }
-		CAGE_CHECK_GL_ERROR_DEBUG();
-
-		GLint len;
+		GLint len = 0;
 		glGetProgramiv(impl->id, GL_INFO_LOG_LENGTH, &len);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 		if (len > 5)
@@ -447,15 +465,21 @@ namespace cage
 			char buf[shaderLogBufferSize];
 			glGetProgramInfoLog(impl->id, shaderLogBufferSize - 1, &len, buf);
 			CAGE_CHECK_GL_ERROR_DEBUG();
+			if (shaderIntrospection)
+			{
+				holder<fileHandle> f = newFile(string() + "shaderIntrospection/" + impl->id + "/linking.log", fileMode(false, true));
+				f->write(buf, len);
+			}
 #ifdef CAGE_DEBUG
 			CAGE_LOG(severityEnum::Note, "shader", string() + "shader name: " + debugName);
 #endif // CAGE_DEBUG
 			CAGE_LOG(severityEnum::Warning, "shader", string() + "shader linking log (id: " + impl->id + "):");
 			holder<lineReader> lrb = newLineReader(buf, len);
 			for (string line; lrb->readLine(line);)
-				CAGE_LOG_CONTINUE(severityEnum::Note, "shader", line);
+				CAGE_LOG_CONTINUE(severityEnum::Warning, "shader", line);
 		}
 
+		len = 0;
 		glGetProgramiv(impl->id, GL_LINK_STATUS, &len);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 		if (len != GL_TRUE)
@@ -465,6 +489,14 @@ namespace cage
 #endif // CAGE_DEBUG
 			CAGE_THROW_ERROR(graphicsError, "shader linking failed", len);
 		}
+
+		{ GLint count; glGetProgramStageiv(impl->id, GL_VERTEX_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesVertex.resize(count, m); }
+		{ GLint count; glGetProgramStageiv(impl->id, GL_TESS_CONTROL_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesTessControl.resize(count, m); }
+		{ GLint count; glGetProgramStageiv(impl->id, GL_TESS_EVALUATION_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesTessEvaluation.resize(count, m); }
+		{ GLint count; glGetProgramStageiv(impl->id, GL_GEOMETRY_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesGeometry.resize(count, m); }
+		{ GLint count; glGetProgramStageiv(impl->id, GL_FRAGMENT_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesFragment.resize(count, m); }
+		{ GLint count; glGetProgramStageiv(impl->id, GL_COMPUTE_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesCompute.resize(count, m); }
+		CAGE_CHECK_GL_ERROR_DEBUG();
 
 		if (shaderIntrospection)
 		{
@@ -552,11 +584,11 @@ namespace cage
 				fm.textual = true;
 				holder<fileHandle> f = newFile(string() + "shaderIntrospection/" + impl->id + "/inout.txt", fm);
 				f->writeLine("<inout> <location> <index> <type> <name>");
-				const GLint stages[] = { GL_PROGRAM_INPUT, GL_PROGRAM_OUTPUT };
-				const string stageNames[] = { "in", "out" };
+				const GLint inouts[] = { GL_PROGRAM_INPUT, GL_PROGRAM_OUTPUT };
+				const string inoutsNames[] = { "in", "out" };
 				for (GLint stageIndex = 0; stageIndex < 2; stageIndex++)
 				{
-					GLint stage = stages[stageIndex];
+					GLint stage = inouts[stageIndex];
 					GLint numVars = 0;
 					glGetProgramInterfaceiv(impl->id, stage, GL_ACTIVE_RESOURCES, &numVars);
 					for (GLint var = 0; var < numVars; var++)
@@ -568,7 +600,7 @@ namespace cage
 						GLchar name[100];
 						GLint nameLen = 0;
 						glGetProgramResourceName(impl->id, stage, var, 99, &nameLen, name);
-						f->writeLine(string() + stageNames[stageIndex] + "\t" + values[0] + "\t" + values[3] + "\t" + glTypeToName(values[1]) + (values[2] > 1 ? string() + "[" + values[2] + "]" : "") + " " + string(name, nameLen));
+						f->writeLine(string() + inoutsNames[stageIndex] + "\t" + values[0] + "\t" + values[3] + "\t" + glTypeToName(values[1]) + (values[2] > 1 ? string() + "[" + values[2] + "]" : "") + " " + string(name, nameLen));
 					}
 				}
 				CAGE_CHECK_GL_ERROR_DEBUG();
@@ -592,13 +624,18 @@ namespace cage
 			char buf[shaderLogBufferSize];
 			glGetProgramInfoLog(impl->id, shaderLogBufferSize - 1, &len, buf);
 			CAGE_CHECK_GL_ERROR_DEBUG();
+			if (shaderIntrospection)
+			{
+				holder<fileHandle> f = newFile(string() + "shaderIntrospection/" + impl->id + "/validation.log", fileMode(false, true));
+				f->write(buf, len);
+			}
 #ifdef CAGE_DEBUG
 			CAGE_LOG(severityEnum::Note, "shader", string() + "shader name: " + debugName);
 #endif // CAGE_DEBUG
 			CAGE_LOG(severityEnum::Warning, "shader", string() + "shader validation log (id: " + impl->id + "):");
 			holder<lineReader> lrb = newLineReader(buf, len);
 			for (string line; lrb->readLine(line);)
-				CAGE_LOG_CONTINUE(severityEnum::Note, "shader", line);
+				CAGE_LOG_CONTINUE(severityEnum::Warning, "shader", line);
 		}
 
 		glGetProgramiv(impl->id, GL_VALIDATE_STATUS, &len);

@@ -263,7 +263,7 @@ namespace cage
 			{
 				holder<uniformBuffer> ubo = newUniformBuffer();
 				ubo->bind();
-				ubo->writeWhole(data, size, GL_STATIC_DRAW);
+				ubo->writeWhole(data, size, GL_STREAM_DRAW);
 				ubo->bind(bindIndex);
 				disposableUbosArray.push_back(templates::move(ubo));
 			}
