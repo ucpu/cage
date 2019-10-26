@@ -16,7 +16,17 @@ namespace cage
 
 		void writeWhole(void *data, uint32 size, uint32 usage = 0);
 		void writeRange(void *data, uint32 offset, uint32 size);
+
+		static uint32 getAlignmentRequirement();
 	};
 
-	CAGE_API holder<uniformBuffer> newUniformBuffer();
+	struct CAGE_API uniformBufferCreateConfig
+	{
+		uint32 size;
+		bool persistentMapped, coherentMapped, explicitFlush;
+
+		uniformBufferCreateConfig();
+	};
+
+	CAGE_API holder<uniformBuffer> newUniformBuffer(const uniformBufferCreateConfig &config = {});
 }

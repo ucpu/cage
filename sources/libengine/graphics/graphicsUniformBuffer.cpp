@@ -15,14 +15,45 @@ namespace cage
 		class uniformBufferImpl : public uniformBuffer
 		{
 		public:
+			const uniformBufferCreateConfig config;
+			void *mapped;
 			uint32 id;
 			uint32 size;
 
-			uniformBufferImpl() : id(0), size(0)
+			uniformBufferImpl(const uniformBufferCreateConfig &config) : config(config), mapped(nullptr), id(0), size(0)
 			{
+				CAGE_ASSERT(!config.explicitFlush || config.persistentMapped);
+				CAGE_ASSERT(!config.coherentMapped || config.persistentMapped);
+				CAGE_ASSERT(!config.persistentMapped || config.size > 0)
 				glGenBuffers(1, &id);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 				bind();
+				if (config.size > 0)
+				{
+					{
+						uint32 storageFlags = GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT;
+						if (config.persistentMapped)
+							storageFlags |= GL_MAP_PERSISTENT_BIT;
+						if (config.coherentMapped)
+							storageFlags |= GL_MAP_COHERENT_BIT;
+						glBufferStorage(GL_UNIFORM_BUFFER, config.size, nullptr, storageFlags);
+					}
+					CAGE_CHECK_GL_ERROR_DEBUG();
+					size = config.size;
+					if (config.persistentMapped)
+					{
+						uint32 accessFlags = GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT;
+						if (config.persistentMapped)
+							accessFlags |= GL_MAP_PERSISTENT_BIT;
+						if (config.coherentMapped)
+							accessFlags |= GL_MAP_COHERENT_BIT;
+						if (config.explicitFlush)
+							accessFlags |= GL_MAP_FLUSH_EXPLICIT_BIT;
+						mapped = glMapBufferRange(GL_UNIFORM_BUFFER, 0, size, accessFlags);
+						CAGE_CHECK_GL_ERROR_DEBUG();
+						CAGE_ASSERT(mapped);
+					}
+				}
 			}
 
 			~uniformBufferImpl()
@@ -65,32 +96,74 @@ namespace cage
 	{
 		uniformBufferImpl *impl = (uniformBufferImpl*)this;
 		CAGE_ASSERT(offset + size <= impl->size, "insufficient buffer size", offset, size, impl->size);
+		CAGE_ASSERT((offset % getAlignmentRequirement()) == 0, "the offset must be aligned", offset, getAlignmentRequirement());
 		glBindBufferRange(GL_UNIFORM_BUFFER, bindingPoint, impl->id, offset, size);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
 	void uniformBuffer::writeWhole(void *data, uint32 size, uint32 usage)
 	{
-		if (usage == 0)
-			usage = GL_STATIC_DRAW;
 		uniformBufferImpl *impl = (uniformBufferImpl*)this;
-		CAGE_ASSERT(graphicsPrivat::getCurrentObject<uniformBuffer>() == impl->id);
-		glBufferData(GL_UNIFORM_BUFFER, size, data, usage);
-		CAGE_CHECK_GL_ERROR_DEBUG();
-		impl->size = size;
+		if (impl->mapped || impl->config.size)
+		{
+			CAGE_ASSERT(usage == 0, "buffer storage is immutable");
+			CAGE_ASSERT(size == impl->size, "buffer storage is immutable");
+			writeRange(data, 0, size);
+		}
+		else
+		{
+			CAGE_ASSERT(graphicsPrivat::getCurrentObject<uniformBuffer>() == impl->id);
+			if (usage == 0)
+				usage = GL_STATIC_DRAW;
+			glBufferData(GL_UNIFORM_BUFFER, size, data, usage);
+			CAGE_CHECK_GL_ERROR_DEBUG();
+			impl->size = size;
+		}
 	}
 
 	void uniformBuffer::writeRange(void *data, uint32 offset, uint32 size)
 	{
 		uniformBufferImpl *impl = (uniformBufferImpl*)this;
-		CAGE_ASSERT(graphicsPrivat::getCurrentObject<uniformBuffer>() == impl->id);
 		CAGE_ASSERT(offset + size <= impl->size, "insufficient buffer size", offset, size, impl->size);
-		glBufferSubData(GL_UNIFORM_BUFFER, offset, size, data);
-		CAGE_CHECK_GL_ERROR_DEBUG();
+		if (impl->mapped)
+		{
+			detail::memcpy((char*)impl->mapped + offset, data, size);
+			if (impl->config.explicitFlush)
+			{
+				CAGE_ASSERT(graphicsPrivat::getCurrentObject<uniformBuffer>() == impl->id);
+				glFlushMappedBufferRange(GL_UNIFORM_BUFFER, offset, size);
+				CAGE_CHECK_GL_ERROR_DEBUG();
+			}
+		}
+		else
+		{
+			CAGE_ASSERT(graphicsPrivat::getCurrentObject<uniformBuffer>() == impl->id);
+			glBufferSubData(GL_UNIFORM_BUFFER, offset, size, data);
+			CAGE_CHECK_GL_ERROR_DEBUG();
+		}
 	}
 
-	holder<uniformBuffer> newUniformBuffer()
+	namespace
 	{
-		return detail::systemArena().createImpl<uniformBuffer, uniformBufferImpl>();
+		uint32 getAlignmentRequirementImpl()
+		{
+			uint32 alignment = 256;
+			glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, (GLint*)&alignment);
+			return alignment;
+		}
+	}
+
+	uint32 uniformBuffer::getAlignmentRequirement()
+	{
+		static uint32 alignment = getAlignmentRequirementImpl();
+		return alignment;
+	}
+
+	uniformBufferCreateConfig::uniformBufferCreateConfig() : size(0), persistentMapped(false), coherentMapped(false), explicitFlush(false)
+	{}
+
+	holder<uniformBuffer> newUniformBuffer(const uniformBufferCreateConfig &config)
+	{
+		return detail::systemArena().createImpl<uniformBuffer, uniformBufferImpl>(config);
 	}
 }
