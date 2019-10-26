@@ -3,6 +3,8 @@
 #include <cage-core/math.h>
 #include "math.h"
 
+#include <xsimd/xsimd.hpp>
+
 namespace cage
 {
 	mat3 mat3::parse(const string &str)
@@ -179,13 +181,17 @@ namespace cage
 	mat4 operator * (const mat4 &l, const mat4 &r)
 	{
 		mat4 res = mat4::Zero();
-		for (uint8 x = 0; x < 4; x++)
+		typedef xsimd::batch<float, 4> batch;
+		for (int i = 0; i < 4; i++)
 		{
-			for (uint8 y = 0; y < 4; y++)
+			batch s = xsimd::zero<batch>();
+			for (int j = 0; j < 4; j++)
 			{
-				for (uint8 z = 0; z < 4; z++)
-					res[y * 4 + x] += l[z * 4 + x] * r[y * 4 + z];
+				batch ll = batch((float*)(l.data + j * 4));
+				batch rr = batch(r[i * 4 + j].value);
+				s += ll * rr;
 			}
+			s.store_unaligned((float*)(res.data + i * 4));
 		}
 		return res;
 	}
