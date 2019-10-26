@@ -182,16 +182,17 @@ namespace cage
 	{
 		mat4 res = mat4::Zero();
 		typedef xsimd::batch<float, 4> batch;
-		for (int i = 0; i < 4; i++)
+		for (int i = 0; i < 16; i += 4)
 		{
 			batch s = xsimd::zero<batch>();
+			const float *rr_ = (float*)(r.data + i);
 			for (int j = 0; j < 4; j++)
 			{
 				batch ll = batch((float*)(l.data + j * 4));
-				batch rr = batch(r[i * 4 + j].value);
+				batch rr = batch(rr_[j]);
 				s += ll * rr;
 			}
-			s.store_unaligned((float*)(res.data + i * 4));
+			s.store_unaligned((float*)(res.data + i));
 		}
 		return res;
 	}
