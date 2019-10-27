@@ -1105,6 +1105,7 @@ namespace cage
 			uint32 n = mesh->getTextureName(i);
 			textures[i] = n ? ass->get<assetSchemeIndexRenderTexture, renderTexture>(n) : nullptr;
 		}
+		graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_LIGHTBRDF, CAGE_SHADER_ROUTINEPROC_LIGHTBRDFPBR);
 		graphicsPrepareImpl::setShaderRoutine(&shaderConfig, GL_VERTEX_SHADER, CAGE_SHADER_ROUTINEUNIF_SKELETON, mesh->getSkeletonBones() > 0 ? CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION : CAGE_SHADER_ROUTINEPROC_SKELETONNOTHING);
 		if (textures[CAGE_SHADER_TEXTURE_ALBEDO])
 		{

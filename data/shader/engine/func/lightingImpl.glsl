@@ -24,7 +24,7 @@ float attenuation(float dist)
 
 vec3 lightDirectionalImpl(float shadow)
 {
-	return lightingBrdf(
+	return uniLightingBrdf(
 		uniLights[lightIndex].color.rgb * shadow,
 		-uniLights[lightIndex].direction.xyz,
 		normalize(uniEyePos.xyz - position)
@@ -34,7 +34,7 @@ vec3 lightDirectionalImpl(float shadow)
 vec3 lightPointImpl(float shadow)
 {
 	vec3 light = uniLights[lightIndex].color.rgb * attenuation(length(uniLights[lightIndex].position.xyz - position));
-	return lightingBrdf(
+	return uniLightingBrdf(
 		light * shadow,
 		normalize(uniLights[lightIndex].position.xyz - position),
 		normalize(uniEyePos.xyz - position)
@@ -51,7 +51,7 @@ vec3 lightSpotImpl(float shadow)
 	if (d < a)
 		return vec3(0);
 	d = pow(d, e);
-	return lightingBrdf(
+	return uniLightingBrdf(
 		light * d * shadow,
 		lightSourceToFragmentDirection,
 		normalize(uniEyePos.xyz - position)

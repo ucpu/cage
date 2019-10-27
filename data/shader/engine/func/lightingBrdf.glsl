@@ -26,7 +26,9 @@ float GeometrySmith(float NoL, float NoV)
 	return ggx1 * ggx2;
 }
 
-vec3 lightingBrdf(vec3 light, vec3 L, vec3 V)
+subroutine vec3 lightingBrdfFunc(vec3, vec3, vec3);
+
+layout(index = CAGE_SHADER_ROUTINEPROC_LIGHTBRDFPBR) subroutine (lightingBrdfFunc) vec3 lightingBrdfPbr(vec3 light, vec3 L, vec3 V)
 {
 	vec3 N = normal;
 	if (dot(N, N) < 0.5)
@@ -53,3 +55,22 @@ vec3 lightingBrdf(vec3 light, vec3 L, vec3 V)
 	float denominator = 4.0 * NoV * NoL + 0.001;
 	return min(kD * albedo / 3.14159265359 + nominator / denominator, 100.0) * light * NoL;
 }
+
+layout(index = CAGE_SHADER_ROUTINEPROC_LIGHTBRDFPHONG) subroutine (lightingBrdfFunc) vec3 lightingBrdfPhong(vec3 light, vec3 L, vec3 V)
+{
+	vec3 N = normal;
+	if (dot(N, N) < 0.5)
+		return vec3(0.0); // lighting is disabled
+
+	//vec3 H = normalize(L + V);
+	vec3 R = reflect(-L, N);
+	
+	float shininess = 2.0 / (roughness * roughness) - 2.0;
+	float d = max(dot(L, N), 0.0);
+	float s = pow(max(dot(R, V), 0.0), shininess);
+
+	return albedo * d + vec3(s);
+}
+
+layout(location = CAGE_SHADER_ROUTINEUNIF_LIGHTBRDF) subroutine uniform lightingBrdfFunc uniLightingBrdf;
+
