@@ -8,6 +8,8 @@
 #include <cage-engine/graphics.h>
 #include "private.h"
 
+#include <algorithm>
+
 namespace cage
 {
 	namespace
@@ -195,15 +197,12 @@ namespace cage
 		{
 			CAGE_ASSERT(coef >= 0 && coef <= 1, coef);
 			CAGE_ASSERT(length > 0, length);
-			// todo rewrite as binary search
 			if (coef <= times[0])
 				return 0;
 			if (coef >= times[length - 1])
 				return length - 1;
-			for (uint32 i = 0; i + 1 < length; i++)
-				if (times[i + 1] > coef)
-					return i;
-			CAGE_THROW_CRITICAL(exception, "impossible frame index");
+			auto it = std::lower_bound(times, times + length, coef);
+			return numeric_cast<uint16>(it - times - 1);
 		}
 
 		template<class Type>
