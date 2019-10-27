@@ -61,7 +61,7 @@ namespace cage
 		{
 		public:
 			uint32 id;
-			std::vector<GLuint> sources;
+			std::vector<std::pair<GLuint, GLuint>> sources; // stage, id
 			std::vector<uint32> subroutinesVertex;
 			std::vector<uint32> subroutinesTessControl;
 			std::vector<uint32> subroutinesTessEvaluation;
@@ -434,7 +434,7 @@ namespace cage
 		glAttachShader(impl->id, shader); // the shader source can be deleted after this
 		CAGE_CHECK_GL_ERROR_DEBUG();
 
-		impl->sources.push_back(shader);
+		impl->sources.push_back({ stage, (GLuint)shader });
 	}
 
 	void shaderProgram::relink()
@@ -449,12 +449,18 @@ namespace cage
 		impl->subroutinesFragment.clear();
 		impl->subroutinesCompute.clear();
 
+		struct sourcesClearer
+		{
+			shaderImpl *impl;
+			sourcesClearer(shaderImpl *impl) : impl(impl) {}
+			~sourcesClearer() { impl->sources.clear(); }
+		} sourcesClearerInstance(impl);
+
 		glLinkProgram(impl->id);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 
-		for (uint32 it : impl->sources)
-			glDetachShader(impl->id, it);
-		impl->sources.clear();
+		for (const auto &it : impl->sources)
+			glDetachShader(impl->id, it.second);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 
 		GLint len = 0;
@@ -490,12 +496,18 @@ namespace cage
 			CAGE_THROW_ERROR(graphicsError, "shader linking failed", len);
 		}
 
-		{ GLint count; glGetProgramStageiv(impl->id, GL_VERTEX_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesVertex.resize(count, m); }
-		{ GLint count; glGetProgramStageiv(impl->id, GL_TESS_CONTROL_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesTessControl.resize(count, m); }
-		{ GLint count; glGetProgramStageiv(impl->id, GL_TESS_EVALUATION_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesTessEvaluation.resize(count, m); }
-		{ GLint count; glGetProgramStageiv(impl->id, GL_GEOMETRY_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesGeometry.resize(count, m); }
-		{ GLint count; glGetProgramStageiv(impl->id, GL_FRAGMENT_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesFragment.resize(count, m); }
-		{ GLint count; glGetProgramStageiv(impl->id, GL_COMPUTE_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesCompute.resize(count, m); }
+		const auto &hasStage = [impl](GLuint stage){
+			for (const auto &it : impl->sources)
+				if (it.first == stage)
+					return true;
+			return false;
+		};
+		if (hasStage(GL_VERTEX_SHADER)) { GLint count; glGetProgramStageiv(impl->id, GL_VERTEX_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesVertex.resize(count, 0); }
+		if (hasStage(GL_TESS_CONTROL_SHADER)) { GLint count; glGetProgramStageiv(impl->id, GL_TESS_CONTROL_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesTessControl.resize(count, 0); }
+		if (hasStage(GL_TESS_EVALUATION_SHADER)) { GLint count; glGetProgramStageiv(impl->id, GL_TESS_EVALUATION_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesTessEvaluation.resize(count, 0); }
+		if (hasStage(GL_GEOMETRY_SHADER)) { GLint count; glGetProgramStageiv(impl->id, GL_GEOMETRY_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesGeometry.resize(count, 0); }
+		if (hasStage(GL_FRAGMENT_SHADER)) { GLint count; glGetProgramStageiv(impl->id, GL_FRAGMENT_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesFragment.resize(count, 0); }
+		if (hasStage(GL_COMPUTE_SHADER)) { GLint count; glGetProgramStageiv(impl->id, GL_COMPUTE_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesCompute.resize(count, 0); }
 		CAGE_CHECK_GL_ERROR_DEBUG();
 
 		if (shaderIntrospection)

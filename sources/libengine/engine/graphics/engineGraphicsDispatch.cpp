@@ -69,7 +69,7 @@ namespace cage
 		{
 			renderTexture *tex;
 			visualizableTextureModeEnum visualizableTextureMode;
-			visualizableTextureStruct(renderTexture *tex, visualizableTextureModeEnum vtm) : tex(tex), visualizableTextureMode(vtm) {};
+			visualizableTextureStruct(renderTexture *tex, visualizableTextureModeEnum vtm) : tex(tex), visualizableTextureMode(vtm) {}
 		};
 
 		struct ssaoShaderStruct

@@ -39,7 +39,6 @@ namespace cage
 		class fontImpl : public fontFace
 		{
 		public:
-			holder<uniformBuffer> uni;
 			holder<renderTexture> tex;
 			uint32 texWidth, texHeight;
 			shaderProgram *shr;
@@ -82,8 +81,6 @@ namespace cage
 			fontImpl() : texWidth(0), texHeight(0),
 				shr(nullptr), msh(nullptr), spaceGlyph(0), returnGlyph(0), cursorGlyph(m)
 			{
-				uni = newUniformBuffer();
-				uni->writeWhole(nullptr, sizeof(InstanceStruct) * CAGE_SHADER_MAX_CHARACTERS, GL_DYNAMIC_DRAW);
 				tex = newRenderTexture();
 				instances.reserve(1000);
 			}
@@ -236,20 +233,21 @@ namespace cage
 
 				if (data.render)
 				{
-					uni->bind();
-					uni->bind(1);
-
 					uint32 s = numeric_cast<uint32>(instances.size());
 					uint32 a = s / CAGE_SHADER_MAX_CHARACTERS;
 					uint32 b = s - a * CAGE_SHADER_MAX_CHARACTERS;
 					for (uint32 i = 0; i < a; i++)
 					{
-						uni->writeRange(&instances[i * CAGE_SHADER_MAX_CHARACTERS], 0, sizeof(InstanceStruct) * CAGE_SHADER_MAX_CHARACTERS);
+						holder<uniformBuffer> uni = newUniformBuffer();
+						uni->bind(1);
+						uni->writeWhole(&instances[i * CAGE_SHADER_MAX_CHARACTERS], sizeof(InstanceStruct) * CAGE_SHADER_MAX_CHARACTERS, GL_STREAM_DRAW);
 						msh->dispatch(CAGE_SHADER_MAX_CHARACTERS);
 					}
 					if (b)
 					{
-						uni->writeRange(&instances[a * CAGE_SHADER_MAX_CHARACTERS], 0, sizeof(InstanceStruct) * b);
+						holder<uniformBuffer> uni = newUniformBuffer();
+						uni->bind(1);
+						uni->writeWhole(&instances[a * CAGE_SHADER_MAX_CHARACTERS], sizeof(InstanceStruct) * b, GL_STREAM_DRAW);
 						msh->dispatch(b);
 					}
 
@@ -265,7 +263,6 @@ namespace cage
 		debugName = name;
 #endif // CAGE_DEBUG
 		fontImpl *impl = (fontImpl*)this;
-		impl->uni->setDebugName(name);
 		impl->tex->setDebugName(name);
 	}
 

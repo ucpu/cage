@@ -64,7 +64,7 @@ namespace cage
 			cfg.repeatedReads = true;
 			emitController = newSwapBufferGuard(cfg);
 		}
-	};
+	}
 
 	guiImpl::~guiImpl()
 	{

@@ -7,6 +7,7 @@
 #include <cage-engine/core.h>
 #include <cage-engine/gui.h>
 #include <cage-engine/graphics.h>
+#include <cage-engine/opengl.h>
 #include <cage-engine/window.h>
 #include "private.h"
 
@@ -21,7 +22,7 @@ namespace cage
 		{
 			s.elementsGpuBuffer = newUniformBuffer();
 			s.elementsGpuBuffer->bind();
-			s.elementsGpuBuffer->writeWhole(nullptr, sizeof(guiSkinElementLayout::textureUvStruct) * (uint32)elementTypeEnum::TotalElements);
+			s.elementsGpuBuffer->writeWhole(nullptr, sizeof(guiSkinElementLayout::textureUvStruct) * (uint32)elementTypeEnum::TotalElements, GL_DYNAMIC_DRAW);
 		}
 	}
 
