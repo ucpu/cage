@@ -7,6 +7,8 @@ layout(std140, binding = CAGE_SHADER_UNIBLOCK_VIEWPORT) uniform Viewport
 	vec4 uniAmbientLight;
 };
 
+layout(location = CAGE_SHADER_UNI_ROUTINES) uniform uint uniRoutines[CAGE_SHADER_MAX_ROUTINES];
+
 vec4 pos;
 vec3 position;
 vec3 tangent;

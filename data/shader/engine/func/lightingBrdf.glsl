@@ -26,9 +26,7 @@ float GeometrySmith(float NoL, float NoV)
 	return ggx1 * ggx2;
 }
 
-subroutine vec3 lightingBrdfFunc(vec3, vec3, vec3);
-
-layout(index = CAGE_SHADER_ROUTINEPROC_LIGHTBRDFPBR) subroutine (lightingBrdfFunc) vec3 lightingBrdfPbr(vec3 light, vec3 L, vec3 V)
+vec3 lightingBrdfPbr(vec3 light, vec3 L, vec3 V)
 {
 	vec3 N = normal;
 	if (dot(N, N) < 0.5)
@@ -56,7 +54,7 @@ layout(index = CAGE_SHADER_ROUTINEPROC_LIGHTBRDFPBR) subroutine (lightingBrdfFun
 	return min(kD * albedo / 3.14159265359 + nominator / denominator, 100.0) * light * NoL;
 }
 
-layout(index = CAGE_SHADER_ROUTINEPROC_LIGHTBRDFPHONG) subroutine (lightingBrdfFunc) vec3 lightingBrdfPhong(vec3 light, vec3 L, vec3 V)
+vec3 lightingBrdfPhong(vec3 light, vec3 L, vec3 V)
 {
 	vec3 N = normal;
 	if (dot(N, N) < 0.5)
@@ -72,5 +70,13 @@ layout(index = CAGE_SHADER_ROUTINEPROC_LIGHTBRDFPHONG) subroutine (lightingBrdfF
 	return albedo * d + vec3(s);
 }
 
-layout(location = CAGE_SHADER_ROUTINEUNIF_LIGHTBRDF) subroutine uniform lightingBrdfFunc uniLightingBrdf;
+vec3 lightingBrdf(vec3 light, vec3 L, vec3 V)
+{
+	switch (uniRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTBRDF])
+	{
+	case CAGE_SHADER_ROUTINEPROC_LIGHTBRDFPBR: return lightingBrdfPbr(light, L, V);
+	case CAGE_SHADER_ROUTINEPROC_LIGHTBRDFPHONG: return lightingBrdfPhong(light, L, V);
+	default: return vec3(191.0, 85.0, 236.0) / 255.0;
+	}
+}
 

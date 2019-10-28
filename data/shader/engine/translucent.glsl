@@ -28,6 +28,6 @@ void main()
 	position = varPosition;
 	materialLoad();
 	normalToWorld();
-	outColor.rgb = uniLightType();
+	outColor.rgb = lightType();
 	outColor.a = opacity;
 }

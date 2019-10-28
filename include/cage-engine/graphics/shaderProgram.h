@@ -23,9 +23,6 @@ namespace cage
 #define GCHL_SHADER_UNIFORM(TYPE) void uniform (uint32 name, const TYPE *values, uint32 count);
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_SHADER_UNIFORM, sint32, uint32, real, vec2, vec3, vec4, quat, mat3, mat4));
 #undef GCHL_SHADER_UNIFORM
-
-		void subroutine(uint32 stage, uint32 name, uint32 value);
-		void applySubroutines() const;
 	};
 
 	CAGE_API holder<shaderProgram> newShaderProgram();

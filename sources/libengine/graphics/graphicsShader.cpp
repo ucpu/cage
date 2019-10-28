@@ -62,12 +62,6 @@ namespace cage
 		public:
 			uint32 id;
 			std::vector<std::pair<GLuint, GLuint>> sources; // stage, id
-			std::vector<uint32> subroutinesVertex;
-			std::vector<uint32> subroutinesTessControl;
-			std::vector<uint32> subroutinesTessEvaluation;
-			std::vector<uint32> subroutinesGeometry;
-			std::vector<uint32> subroutinesFragment;
-			std::vector<uint32> subroutinesCompute;
 
 			shaderImpl() : id(0)
 			{
@@ -242,40 +236,6 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void shaderProgram::subroutine(uint32 stage, uint32 name, uint32 value)
-	{
-		shaderImpl *impl = (shaderImpl*)this;
-		switch (stage)
-		{
-		case GL_VERTEX_SHADER: if (name < impl->subroutinesVertex.size()) impl->subroutinesVertex[name] = value; break;
-		case GL_TESS_CONTROL_SHADER: if (name < impl->subroutinesTessControl.size()) impl->subroutinesTessControl[name] = value; break;
-		case GL_TESS_EVALUATION_SHADER: if (name < impl->subroutinesTessEvaluation.size()) impl->subroutinesTessEvaluation[name] = value; break;
-		case GL_GEOMETRY_SHADER: if (name < impl->subroutinesGeometry.size()) impl->subroutinesGeometry[name] = value; break;
-		case GL_FRAGMENT_SHADER: if (name < impl->subroutinesFragment.size()) impl->subroutinesFragment[name] = value; break;
-		case GL_COMPUTE_SHADER: if (name < impl->subroutinesCompute.size()) impl->subroutinesCompute[name] = value; break;
-		default: CAGE_THROW_CRITICAL(exception, "invalid shader stage");
-		}
-	}
-
-	void shaderProgram::applySubroutines() const
-	{
-		shaderImpl *impl = (shaderImpl*)this;
-		CAGE_ASSERT(graphicsPrivat::getCurrentObject<shaderProgram>() == impl->id);
-		if (!impl->subroutinesVertex.empty())
-			glUniformSubroutinesuiv(GL_VERTEX_SHADER, numeric_cast<uint32>(impl->subroutinesVertex.size()), &impl->subroutinesVertex[0]);
-		if (!impl->subroutinesTessControl.empty())
-			glUniformSubroutinesuiv(GL_TESS_CONTROL_SHADER, numeric_cast<uint32>(impl->subroutinesTessControl.size()), &impl->subroutinesTessControl[0]);
-		if (!impl->subroutinesTessEvaluation.empty())
-			glUniformSubroutinesuiv(GL_TESS_EVALUATION_SHADER, numeric_cast<uint32>(impl->subroutinesTessEvaluation.size()), &impl->subroutinesTessEvaluation[0]);
-		if (!impl->subroutinesGeometry.empty())
-			glUniformSubroutinesuiv(GL_GEOMETRY_SHADER, numeric_cast<uint32>(impl->subroutinesGeometry.size()), &impl->subroutinesGeometry[0]);
-		if (!impl->subroutinesFragment.empty())
-			glUniformSubroutinesuiv(GL_FRAGMENT_SHADER, numeric_cast<uint32>(impl->subroutinesFragment.size()), &impl->subroutinesFragment[0]);
-		if (!impl->subroutinesCompute.empty())
-			glUniformSubroutinesuiv(GL_COMPUTE_SHADER, numeric_cast<uint32>(impl->subroutinesCompute.size()), &impl->subroutinesCompute[0]);
-		CAGE_CHECK_GL_ERROR_DEBUG();
-	}
-
 	namespace
 	{
 		const string glTypeToName(uint32 type)
@@ -442,13 +402,6 @@ namespace cage
 		shaderImpl *impl = (shaderImpl*)this;
 		CAGE_ASSERT(!impl->sources.empty(), "shader has no sources");
 
-		impl->subroutinesVertex.clear();
-		impl->subroutinesTessControl.clear();
-		impl->subroutinesTessEvaluation.clear();
-		impl->subroutinesGeometry.clear();
-		impl->subroutinesFragment.clear();
-		impl->subroutinesCompute.clear();
-
 		struct sourcesClearer
 		{
 			shaderImpl *impl;
@@ -495,20 +448,6 @@ namespace cage
 #endif // CAGE_DEBUG
 			CAGE_THROW_ERROR(graphicsError, "shader linking failed", len);
 		}
-
-		const auto &hasStage = [impl](GLuint stage){
-			for (const auto &it : impl->sources)
-				if (it.first == stage)
-					return true;
-			return false;
-		};
-		if (hasStage(GL_VERTEX_SHADER)) { GLint count; glGetProgramStageiv(impl->id, GL_VERTEX_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesVertex.resize(count, 0); }
-		if (hasStage(GL_TESS_CONTROL_SHADER)) { GLint count; glGetProgramStageiv(impl->id, GL_TESS_CONTROL_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesTessControl.resize(count, 0); }
-		if (hasStage(GL_TESS_EVALUATION_SHADER)) { GLint count; glGetProgramStageiv(impl->id, GL_TESS_EVALUATION_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesTessEvaluation.resize(count, 0); }
-		if (hasStage(GL_GEOMETRY_SHADER)) { GLint count; glGetProgramStageiv(impl->id, GL_GEOMETRY_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesGeometry.resize(count, 0); }
-		if (hasStage(GL_FRAGMENT_SHADER)) { GLint count; glGetProgramStageiv(impl->id, GL_FRAGMENT_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesFragment.resize(count, 0); }
-		if (hasStage(GL_COMPUTE_SHADER)) { GLint count; glGetProgramStageiv(impl->id, GL_COMPUTE_SHADER, GL_ACTIVE_SUBROUTINE_UNIFORM_LOCATIONS, &count); impl->subroutinesCompute.resize(count, 0); }
-		CAGE_CHECK_GL_ERROR_DEBUG();
 
 		if (shaderIntrospection)
 		{

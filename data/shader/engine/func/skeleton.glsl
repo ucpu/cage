@@ -6,12 +6,10 @@ layout(std140, binding = CAGE_SHADER_UNIBLOCK_ARMATURES) uniform Armatures
 
 layout(location = CAGE_SHADER_UNI_BONESPERINSTANCE) uniform uint uniBonesPerInstance;
 
-subroutine void skeletonFunc();
-
-layout(index = CAGE_SHADER_ROUTINEPROC_SKELETONNOTHING) subroutine (skeletonFunc) void skeletonNothing()
+void skeletonNothing()
 {}
 
-layout(index = CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION) subroutine (skeletonFunc) void skeletonAnimation()
+void skeletonAnimation()
 {
 	mat3x4 sum = mat3x4(0.0);
 	for (int i = 0; i < 4; i++)
@@ -20,4 +18,12 @@ layout(index = CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION) subroutine (skeletonFu
 	normal = transpose(mat3(sum)) * normal;
 }
 
-layout(location = CAGE_SHADER_ROUTINEUNIF_SKELETON) subroutine uniform skeletonFunc uniSkeleton;
+void skeleton()
+{
+	switch (uniRoutines[CAGE_SHADER_ROUTINEUNIF_SKELETON])
+	{
+	default:
+	case CAGE_SHADER_ROUTINEPROC_SKELETONNOTHING: skeletonNothing(); break;
+	case CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION: skeletonAnimation(); break;
+	}
+}

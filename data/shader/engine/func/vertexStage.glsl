@@ -31,7 +31,7 @@ $else
 $end
 	pos = vec4(inPosition, 1.0);
 	normal = inNormal;
-	uniSkeleton();
+	skeleton();
 	varUv = inUv;
 	varNormal = normal;
 	varTangent = inTangent;

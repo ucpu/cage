@@ -197,12 +197,7 @@ namespace cage
 
 			static void applyShaderRoutines(shaderConfigStruct *c, shaderProgram *s)
 			{
-				for (uint32 i = 0; i < MaxRoutines; i++)
-				{
-					if (c->shaderRoutineStage[i])
-						s->subroutine(c->shaderRoutineStage[i], c->shaderRoutineName[i], c->shaderRoutineValue[i]);
-				}
-				s->applySubroutines();
+				s->uniform(CAGE_SHADER_UNI_ROUTINES, c->shaderRoutines, CAGE_SHADER_MAX_ROUTINES);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
@@ -432,8 +427,10 @@ namespace cage
 				{
 					{ // render ambient object
 						glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // assume premultiplied alpha
-						shr->subroutine(GL_FRAGMENT_SHADER, CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE, CAGE_SHADER_ROUTINEPROC_LIGHTAMBIENT);
+						uint32 tmp = CAGE_SHADER_ROUTINEPROC_LIGHTAMBIENT;
+						std::swap(tmp, t->object.shaderConfig.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE]);
 						renderObject(&t->object, shr);
+						std::swap(tmp, t->object.shaderConfig.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE]);
 					}
 
 					if (t->firstLight)

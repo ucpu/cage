@@ -237,11 +237,12 @@ namespace
 
 	void output(const string &s)
 	{
-		if (s.empty())
-			return;
 		if (defines["shader"].empty())
 		{
-			CAGE_LOG_DEBUG(severityEnum::Warning, logComponentName, string() + "output to unspecified shader: '" + s + "'");
+			if (!s.empty())
+			{
+				CAGE_LOG_DEBUG(severityEnum::Warning, logComponentName, string() + "output to unspecified shader: '" + s + "'");
+			}
 			return;
 		}
 		codes[defines["shader"]] += std::string(s.c_str(), s.length()) + "\n";
@@ -292,7 +293,10 @@ namespace
 			{
 				line = line.trim();
 				if (line.empty())
+				{
+					output("");
 					continue;
+				}
 				if (line[0] == '$' || (allowParsingHash() && line[0] == '#'))
 				{
 					line = line.subString(1, m).trim();

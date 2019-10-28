@@ -3,7 +3,6 @@ namespace cage
 	// definition
 
 	static const uint32 MaxTexturesCountPerMaterial = 4;
-	static const uint32 MaxRoutines = 10;
 
 	// assets
 

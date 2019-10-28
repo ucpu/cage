@@ -2,10 +2,10 @@ namespace cage
 {
 	struct shaderConfigStruct
 	{
-		uint32 shaderRoutineStage[MaxRoutines];
-		uint32 shaderRoutineName[MaxRoutines];
-		uint32 shaderRoutineValue[MaxRoutines];
+		uint32 shaderRoutines[CAGE_SHADER_MAX_ROUTINES];
+
 		shaderConfigStruct();
+		void set(uint32 name, uint32 value);
 	};
 
 	struct mat3x4
