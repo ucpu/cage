@@ -93,7 +93,7 @@ int main(int argc, const char *args[])
 		string name;
 		configString address("address", "localhost");
 		configUint32 port("port", 42789);
-		configFloat packetLoss("cage-core.udp.simulatedPacketLoss");
+		configFloat packetLoss("cage.udp.simulatedPacketLoss");
 		configUint32 confMessages("messages", 150);
 		bool modeServer = false;
 		bool modeClient = false;

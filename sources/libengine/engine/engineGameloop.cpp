@@ -35,8 +35,8 @@ namespace cage
 {
 	namespace
 	{
-		configBool confAutoAssetListen("cage-engine.engine.assetsListen", false);
-		configUint32 confOptickFrameMode("cage-engine.optick.frameMode", 1);
+		configBool confAutoAssetListen("cage.assets.listen", false);
+		configUint32 confOptickFrameMode("cage.profiling.frameMode", 1);
 
 		struct graphicsUploadThreadClass
 		{

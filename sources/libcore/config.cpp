@@ -386,11 +386,11 @@ namespace cage
 	{
 		if (prefix.find('.') != m || prefix.empty())
 			CAGE_LOG(severityEnum::Warning, "config", string() + "dangerous config prefix '" + prefix + "'");
-		for (string section : ini->sections())
+		for (const string &section : ini->sections())
 		{
 			if (section.find('.') != m)
 				CAGE_LOG(severityEnum::Warning, "config", string() + "dangerous config section '" + section + "'");
-			for (string name : ini->items(section))
+			for (const string &name : ini->items(section))
 			{
 				if (name.find('.') != m)
 					CAGE_LOG(severityEnum::Warning, "config", string() + "dangerous config field '" + name + "'");
@@ -436,7 +436,7 @@ namespace cage
 
 	namespace
 	{
-		configBool autoBackup("cage-core.config.autoBackup", false);
+		configBool autoBackup("cage.config.autoBackup", false);
 
 		struct autoConfigBackupClass
 		{

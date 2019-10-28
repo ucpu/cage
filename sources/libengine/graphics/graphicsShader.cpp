@@ -16,7 +16,7 @@
 
 namespace cage
 {
-	configBool shaderIntrospection("cage-engine.graphics.shaderIntrospection", false);
+	configBool shaderIntrospection("cage.graphics.shaderIntrospection", false);
 
 	namespace
 	{

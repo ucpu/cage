@@ -4,9 +4,27 @@
 #include <cage-core/math.h>
 #include <cage-core/random.h>
 #include <cage-core/identifier.h>
+#include <cage-core/config.h>
 
 namespace cage
 {
+	namespace
+	{
+		configUint64 confDefault1("cage.random.seed1", 0);
+		configUint64 confDefault2("cage.random.seed2", 0);
+
+		randomGenerator initializeDefaultGenerator()
+		{
+			uint64 s[2];
+			s[0] = confDefault1;
+			s[1] = confDefault2;
+			if (s[0] == 0 && s[1] == 0)
+				privat::generateRandomData((uint8*)s, sizeof(s));
+			CAGE_LOG(severityEnum::Info, "random", string() + "initializing default random generator: " + s[0] + ", " + s[1]);
+			return randomGenerator(s);
+		}
+	}
+
 	randomGenerator::randomGenerator()
 	{
 		privat::generateRandomData((uint8*)s, sizeof(s));
@@ -106,7 +124,7 @@ namespace cage
 
 	randomGenerator &currentRandomGenerator()
 	{
-		static randomGenerator rnd;
+		static randomGenerator rnd = initializeDefaultGenerator();
 		return rnd;
 	}
 

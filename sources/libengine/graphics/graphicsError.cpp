@@ -19,7 +19,7 @@ namespace cage
 {
 	namespace
 	{
-		configBool confDetailedInfo("cage-engine.graphics.detailedVendorInfo", false);
+		configBool confDetailedInfo("cage.graphics.logOpenglExtensions", false);
 	}
 
 	void checkGlError()
@@ -118,19 +118,20 @@ namespace cage
 			vendor = glGetString(GL_VENDOR);
 			renderer = glGetString(GL_RENDERER);
 			CAGE_CHECK_GL_ERROR_DEBUG();
-			CAGE_LOG(severityEnum::Info, "graphics", string() + "opengl version: " + major + "." + minor);
-			CAGE_LOG_CONTINUE(severityEnum::Info, "graphics", string() + "device vendor: '" + (char*)vendor + "'");
-			CAGE_LOG_CONTINUE(severityEnum::Info, "graphics", string() + "device renderer: '" + (char*)renderer + "'");
+			CAGE_LOG(severityEnum::Info, "systemInfo", string() + "opengl version: " + major + "." + minor);
+			CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", string() + "device vendor: '" + (char*)vendor + "'");
+			CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", string() + "device renderer: '" + (char*)renderer + "'");
 			if (confDetailedInfo)
 			{
-				CAGE_LOG(severityEnum::Info, "graphics", string() + "opengl extensions: ");
+				CAGE_LOG(severityEnum::Info, "systemInfo", string() + "opengl extensions: ");
 				GLint num = 0;
 				glGetIntegerv(GL_NUM_EXTENSIONS, &num);
 				for (GLint i = 0; i < num; i++)
 				{
 					const GLubyte *ext = glGetStringi(GL_EXTENSIONS, i);
-					CAGE_LOG_CONTINUE(severityEnum::Info, "graphics", string() + "extension: '" + (char*)ext + "'");
+					CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", string() + "extension: '" + (char*)ext + "'");
 				}
+				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 			return true;
 		}

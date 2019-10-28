@@ -19,8 +19,8 @@ namespace cage
 {
 	namespace
 	{
-		configBool renderDebugConfig("cage-engine.gui.renderDebug", false);
-		configBool printDebugConfig("cage-engine.gui.printDebug", false);
+		configBool renderDebugConfig("cage.gui.renderHierarchy", false);
+		configBool printDebugConfig("cage.gui.logHierarchy", false);
 
 		struct renderableDebugStruct : public renderableBaseStruct
 		{

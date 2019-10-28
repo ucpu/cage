@@ -15,7 +15,7 @@ namespace cage
 {
 	namespace
 	{
-		configUint32 textureDownscale("cage-engine.graphics.textureDownscale", 1);
+		configUint32 textureDownscale("cage.graphics.textureDownscale", 1);
 
 		void processLoad(const assetContext *context, void *schemePointer)
 		{

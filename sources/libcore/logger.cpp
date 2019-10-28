@@ -13,7 +13,7 @@ namespace cage
 {
 	namespace
 	{
-		configBool confDetailedInfo("cage-core.log.detailedVendorInfo", false);
+		configBool confDetailedInfo("cage.system.logVendorInfo", false);
 
 		syncMutex *loggerMutex()
 		{
@@ -146,7 +146,7 @@ namespace cage
 
 				if (confDetailedInfo)
 				{
-					CAGE_LOG(severityEnum::Info, "log", "detailed system information:");
+					CAGE_LOG(severityEnum::Info, "systemInfo", "system information:");
 					try
 					{
 						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", string() + "system name: '" + systemName() + "'");

@@ -34,8 +34,9 @@ namespace cage
 
 	namespace
 	{
-		configBool renderMissingMeshes("cage-engine.engine.debugMissingMeshes", false);
-		configBool renderSkeletonBones("cage-engine.engine.debugSkeletonBones", false);
+		configBool renderMissingMeshes("cage.graphics.renderMissingMeshes", false);
+		configBool renderSkeletonBones("cage.graphics.renderSkeletonBones", false);
+		configBool lowLightingQuality("cage.graphics.simpleLighting", false);
 
 		struct shadowmapImpl : public shadowmapComponent
 		{
@@ -1099,7 +1100,7 @@ namespace cage
 			textures[i] = n ? ass->get<assetSchemeIndexRenderTexture, renderTexture>(n) : nullptr;
 		}
 
-		shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_LIGHTBRDF, CAGE_SHADER_ROUTINEPROC_LIGHTBRDFPBR);
+		shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_LIGHTBRDF, lowLightingQuality ? CAGE_SHADER_ROUTINEPROC_LIGHTBRDFPHONG : CAGE_SHADER_ROUTINEPROC_LIGHTBRDFPBR);
 		shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_SKELETON, mesh->getSkeletonBones() > 0 ? CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION : CAGE_SHADER_ROUTINEPROC_SKELETONNOTHING);
 
 		if (textures[CAGE_SHADER_TEXTURE_ALBEDO])
@@ -1160,7 +1161,7 @@ namespace cage
 	lightsStruct::lightsStruct(lightTypeEnum lightType, sint32 shadowmap, uint32 max) : shaderLights(nullptr), next(nullptr), count(0), max(max), shadowmap(shadowmap), lightType(lightType)
 	{
 		shaderLights = (shaderLightStruct*)graphicsPrepare->dispatchArena.allocate(sizeof(shaderLightStruct) * max, alignof(shaderLightStruct));
-		shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_LIGHTBRDF, CAGE_SHADER_ROUTINEPROC_LIGHTBRDFPBR);
+		shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_LIGHTBRDF, lowLightingQuality ? CAGE_SHADER_ROUTINEPROC_LIGHTBRDFPHONG : CAGE_SHADER_ROUTINEPROC_LIGHTBRDFPBR);
 		switch (lightType)
 		{
 		case lightTypeEnum::Directional:
