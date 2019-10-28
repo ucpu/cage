@@ -68,10 +68,10 @@ vec3 lightingBrdf(vec3 light, vec3 L, vec3 V)
 	if (dot(normal, normal) < 0.5)
 		return vec3(0.0); // lighting is disabled
 
-	switch (uniRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTBRDF])
+	switch (uniRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTINGQUALITY])
 	{
-	case CAGE_SHADER_ROUTINEPROC_LIGHTBRDFPBR: return lightingBrdfPbr(light, L, V);
-	case CAGE_SHADER_ROUTINEPROC_LIGHTBRDFPHONG: return lightingBrdfPhong(light, L, V);
+	case CAGE_SHADER_ROUTINEPROC_LIGHTINGQUALITYPBR: return lightingBrdfPbr(light, L, V);
+	case CAGE_SHADER_ROUTINEPROC_LIGHTINGQUALITYPHONG: return lightingBrdfPhong(light, L, V);
 	default: return vec3(191.0, 85.0, 236.0) / 255.0;
 	}
 }

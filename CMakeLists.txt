@@ -67,13 +67,13 @@ cage_ide_sort_files(cage-test-network)
 cage_ide_working_dir_in_place(cage-test-network)
 
 ########
-# CAGE-RENDER
+# CAGE-ENGINE
 ########
 
 file(GLOB_RECURSE cage-engine-sources "sources/libengine/*" "include/cage-engine/*")
 add_library(cage-engine SHARED ${cage-engine-sources})
 target_include_directories(cage-engine PUBLIC include)
-target_link_libraries(cage-engine PRIVATE libsoundio_shared ogg vorbis vorbisfile glfw)
+target_link_libraries(cage-engine PRIVATE libsoundio_static ogg vorbis vorbisfile glfw)
 target_link_libraries(cage-engine PUBLIC cage-core glad)
 set_target_properties(cage-engine PROPERTIES CXX_VISIBILITY_PRESET hidden)
 cage_ide_category(cage-engine cage)

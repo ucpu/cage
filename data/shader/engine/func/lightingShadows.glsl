@@ -2,6 +2,11 @@
 layout(binding = CAGE_SHADER_TEXTURE_SHADOW) uniform sampler2D texShadow2d;
 layout(binding = CAGE_SHADER_TEXTURE_SHADOW_CUBE) uniform samplerCube texShadowCube;
 
+float sampleShadowMap2dFast(vec3 shadowPos)
+{
+	return float(texture(texShadow2d, shadowPos.xy).x > shadowPos.z);
+}
+
 $if 1
 
 $include poissonDisk.glsl
@@ -12,7 +17,7 @@ float randomAngle(float freq, vec3 pos)
 	return fract(sin(dt) * 2105.2354) * 6.283285;
 }
 
-float sampleShadowMap2d(vec3 shadowPos)
+float sampleShadowMap2dGood(vec3 shadowPos)
 {
 	vec2 radius = 0.8 / textureSize(texShadow2d, 0).xy;
 	float visibility = 0.0;
@@ -29,7 +34,7 @@ float sampleShadowMap2d(vec3 shadowPos)
 
 $else
 
-float sampleShadowMap2d(vec3 shadowPos)
+float sampleShadowMap2dGood(vec3 shadowPos)
 {
 	vec2 res = 1.0 / textureSize(texShadow2d, 0).xy;
 	float visibility = 0.0;
@@ -40,6 +45,16 @@ float sampleShadowMap2d(vec3 shadowPos)
 }
 
 $end
+
+float sampleShadowMap2d(vec3 shadowPos)
+{
+	switch (uniRoutines[CAGE_SHADER_ROUTINEUNIF_SHADOWSQUALITY])
+	{
+	case CAGE_SHADER_ROUTINEPROC_SHADOWSQUALITYGOOD: return sampleShadowMap2dGood(shadowPos);
+	case CAGE_SHADER_ROUTINEPROC_SHADOWSQUALITYFAST: return sampleShadowMap2dFast(shadowPos);
+	default: return 0.0;
+	}
+}
 
 float sampleShadowMapCube(vec3 shadowPos)
 {

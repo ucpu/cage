@@ -33,8 +33,8 @@ namespace cage
 	namespace
 	{
 		configSint32 visualizeBuffer("cage.graphics.visualizeBuffer");
-		configBool renderMissingMeshes("cage.graphics.renderMissingMeshes");
-		configBool renderSkeletonBones("cage.graphics.renderSkeletonBones");
+		configBool confRenderMissingMeshes("cage.graphics.renderMissingMeshes");
+		configBool confRenderSkeletonBones("cage.graphics.renderSkeletonBones");
 
 		class engineProfilingImpl : public engineProfiling
 		{
@@ -306,12 +306,12 @@ namespace cage
 					}
 					if (key == keyToggleRenderMissingMeshes)
 					{
-						renderMissingMeshes = !renderMissingMeshes;
+						confRenderMissingMeshes = !confRenderMissingMeshes;
 						return true;
 					}
 					if (key == keyToggleRenderSkeletonBones)
 					{
-						renderSkeletonBones = !renderSkeletonBones;
+						confRenderSkeletonBones = !confRenderSkeletonBones;
 						return true;
 					}
 					if (key == keyToggleFullscreen)

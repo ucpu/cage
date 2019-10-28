@@ -34,9 +34,14 @@ namespace cage
 
 	namespace
 	{
-		configBool renderMissingMeshes("cage.graphics.renderMissingMeshes", false);
-		configBool renderSkeletonBones("cage.graphics.renderSkeletonBones", false);
-		configBool lowLightingQuality("cage.graphics.simpleLighting", false);
+		configBool confRenderMissingMeshes("cage.graphics.renderMissingMeshes", false);
+		configBool confRenderSkeletonBones("cage.graphics.renderSkeletonBones", false);
+		configBool confSimpleLighting("cage.graphics.simpleLighting", false);
+		configBool confSimpleShadows("cage.graphics.simpleShadows", false);
+		configBool confNoAmbientOcclusion("cage.graphics.disableAmbientOcclusion", false);
+		configBool confNoBloom("cage.graphics.disableBloom", false);
+		configBool confNoMotionBlur("cage.graphics.disableMotionBlur", false);
+		configBool confNoNormalMap("cage.graphics.disableNormalMaps", false);
 
 		struct shadowmapImpl : public shadowmapComponent
 		{
@@ -550,7 +555,7 @@ namespace cage
 					return;
 				if (pass->targetShadowmap != 0 && none(m->getFlags() & meshRenderFlags::ShadowCast))
 					return;
-				if (m->getSkeletonName() && renderSkeletonBones)
+				if (m->getSkeletonName() && confRenderSkeletonBones)
 				{
 					skeletonRig *s = assets()->get<assetSchemeIndexSkeletonRig, skeletonRig>(m->getSkeletonName());
 					addRenderableSkeleton(pass, e, s, model, mvp);
@@ -852,12 +857,20 @@ namespace cage
 				}
 
 				// emit cameras
+				cameraEffectsFlags effectsMask = ~cameraEffectsFlags::None;
+				if (confNoAmbientOcclusion)
+					effectsMask &= ~cameraEffectsFlags::AmbientOcclusion;
+				if (confNoBloom)
+					effectsMask &= ~cameraEffectsFlags::Bloom;
+				if (confNoMotionBlur)
+					effectsMask &= ~cameraEffectsFlags::MotionBlur;
 				for (entity *e : cameraComponent::component->entities())
 				{
 					emitCameraStruct *c = emitWrite->emitArena.createObject<emitCameraStruct>();
 					emitTransform(c, e);
 					c->history.scale = c->current.scale = 1;
 					c->camera = e->value<cameraComponent>(cameraComponent::component);
+					c->camera.effects &= effectsMask;
 					c->entityId = ((uintPtr)e) ^ e->name();
 					emitWrite->cameras.push_back(c);
 				}
@@ -870,7 +883,7 @@ namespace cage
 
 				if (!assets()->ready(e->render.object))
 				{
-					if (!renderMissingMeshes)
+					if (!confRenderMissingMeshes)
 					{
 						e->render.object = 0; // disable rendering further in the pipeline
 						return;
@@ -1100,7 +1113,8 @@ namespace cage
 			textures[i] = n ? ass->get<assetSchemeIndexRenderTexture, renderTexture>(n) : nullptr;
 		}
 
-		shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_LIGHTBRDF, lowLightingQuality ? CAGE_SHADER_ROUTINEPROC_LIGHTBRDFPHONG : CAGE_SHADER_ROUTINEPROC_LIGHTBRDFPBR);
+		shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_LIGHTINGQUALITY, confSimpleLighting ? CAGE_SHADER_ROUTINEPROC_LIGHTINGQUALITYPHONG : CAGE_SHADER_ROUTINEPROC_LIGHTINGQUALITYPBR);
+		shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_SHADOWSQUALITY, confSimpleShadows ? CAGE_SHADER_ROUTINEPROC_SHADOWSQUALITYFAST : CAGE_SHADER_ROUTINEPROC_SHADOWSQUALITYGOOD);
 		shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_SKELETON, mesh->getSkeletonBones() > 0 ? CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION : CAGE_SHADER_ROUTINEPROC_SKELETONNOTHING);
 
 		if (textures[CAGE_SHADER_TEXTURE_ALBEDO])
@@ -1139,7 +1153,7 @@ namespace cage
 		else
 			shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL, CAGE_SHADER_ROUTINEPROC_MATERIALNOTHING);
 
-		if (textures[CAGE_SHADER_TEXTURE_NORMAL])
+		if (textures[CAGE_SHADER_TEXTURE_NORMAL] && !confNoNormalMap)
 		{
 			switch (textures[CAGE_SHADER_TEXTURE_NORMAL]->getTarget())
 			{
@@ -1161,7 +1175,8 @@ namespace cage
 	lightsStruct::lightsStruct(lightTypeEnum lightType, sint32 shadowmap, uint32 max) : shaderLights(nullptr), next(nullptr), count(0), max(max), shadowmap(shadowmap), lightType(lightType)
 	{
 		shaderLights = (shaderLightStruct*)graphicsPrepare->dispatchArena.allocate(sizeof(shaderLightStruct) * max, alignof(shaderLightStruct));
-		shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_LIGHTBRDF, lowLightingQuality ? CAGE_SHADER_ROUTINEPROC_LIGHTBRDFPHONG : CAGE_SHADER_ROUTINEPROC_LIGHTBRDFPBR);
+		shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_LIGHTINGQUALITY, confSimpleLighting ? CAGE_SHADER_ROUTINEPROC_LIGHTINGQUALITYPHONG : CAGE_SHADER_ROUTINEPROC_LIGHTINGQUALITYPBR);
+		shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_SHADOWSQUALITY, confSimpleShadows ? CAGE_SHADER_ROUTINEPROC_SHADOWSQUALITYFAST : CAGE_SHADER_ROUTINEPROC_SHADOWSQUALITYGOOD);
 		switch (lightType)
 		{
 		case lightTypeEnum::Directional:
