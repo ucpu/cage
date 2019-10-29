@@ -20,12 +20,11 @@ namespace cage
 	invalidUtfString::invalidUtfString(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept : exception(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER)
 	{};
 
-	invalidUtfString &invalidUtfString::log()
+	void invalidUtfString::log()
 	{
 		if (severity < detail::getExceptionSilenceSeverity())
-			return *this;
+			return;
 		GCHL_EXCEPTION_GENERATE_LOG(string("utf8 error: '") + message + "'");
-		return *this;
 	};
 
 	bool valid(const char *str)

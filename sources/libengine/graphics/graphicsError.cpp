@@ -40,12 +40,11 @@ namespace cage
 	graphicsError::graphicsError(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uint32 code) noexcept : codeException(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER, code)
 	{}
 
-	graphicsError &graphicsError::log()
+	void graphicsError::log()
 	{
 		if (severity < detail::getExceptionSilenceSeverity())
-			return *this;
+			return;
 		codeException::log();
-		return *this;
 	}
 
 	namespace

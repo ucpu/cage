@@ -11,7 +11,7 @@ namespace cage
 	struct CAGE_API graphicsError : public codeException
 	{
 		graphicsError(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uint32 code) noexcept;
-		virtual graphicsError &log();
+		virtual void log();
 	};
 
 	namespace detail

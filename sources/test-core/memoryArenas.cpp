@@ -95,9 +95,8 @@ namespace
 					alokace.push_back(tmp);
 				}
 			}
-			for (std::vector<void*>::iterator i = alokace.begin(), e = alokace.end(); i != e; i++)
+			for (void *tmp : alokace)
 			{
-				void *tmp = *i;
 				uint16 sz = *(uint16*)tmp;
 				destruct((char*)tmp + 2, sz - 2);
 				a.deallocate(tmp);

@@ -15,7 +15,7 @@
 namespace cage
 {
 	// nomenclature:
-	// message - udpConnection methods read and write work with messages
+	// message - udpConnection methods read and write are working with messages
 	// packet - system functions work with packets
 	// command - messages are fragmented into commands which are grouped into packets
 
@@ -255,7 +255,7 @@ namespace cage
 			shortMessage = 20, // uint8 channel, uint16 msgSeqn, uint16 size, data
 			longMessage = 21, // uint8 channel, uint16 msgSeqn, uint32 totalSize, uint16 index, data
 			statsDiscovery = 42, // uint64 aReceivedBytes, uint64 aSentBytes, uint64 aTime, uint64 bReceivedBytes, uint64 bSentBytes, uint64 bTime, uint32 aReceivedPackets, uint32 aSentPackets, uint32 bReceivedPackets, uint32 bSentPackets, uint16 step
-			mtuDiscovery = 43,
+			mtuDiscovery = 43, // todo
 		};
 
 		const uint16 LongSize = 470; // designed to work well with default mtu (fits 3 long message commands in single packet)
@@ -556,7 +556,7 @@ namespace cage
 				}
 #endif // CAGE_ASSERT_ENABLED
 
-				for (packAckStruct pa : acks)
+				for (const packAckStruct &pa : acks)
 				{
 					sendingStruct::commandStruct cmd;
 					cmd.data.ack = pa;
@@ -652,7 +652,7 @@ namespace cage
 
 			void composePackets()
 			{
-				uint32 mtu = confMtu;
+				const uint32 mtu = confMtu;
 				memoryBuffer buff;
 				buff.reserve(mtu);
 				serializer ser(buff);
@@ -812,24 +812,6 @@ namespace cage
 
 			void processReceived()
 			{
-				/*
-				// erase obsolete
-				for (uint32 channel = 0; channel < 255; channel++)
-				{
-					auto &seqnpc = receiving.seqnPerChannel[channel];
-					auto &stage = receiving.staging[channel];
-					auto it = stage.begin();
-					auto et = stage.end();
-					while (it != et)
-					{
-						if (comp(it->second.msgSeqn, seqnpc))
-							it = stage.erase(it);
-						else
-							it++;
-					}
-				}
-				*/
-
 				// unreliable
 				for (uint32 channel = 0; channel < 128; channel++)
 				{
@@ -1101,13 +1083,6 @@ namespace cage
 
 			uintPtr available()
 			{
-				/*
-				if (receiving.messages.empty())
-				{
-					detail::overrideBreakpoint brk;
-					serviceReceiving();
-				}
-				*/
 				if (receiving.messages.empty())
 					return 0;
 				return receiving.messages.front().data.size();

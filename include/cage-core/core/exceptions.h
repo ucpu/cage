@@ -18,10 +18,10 @@
 #else
 #define GCHL_THROW_ARGS
 #endif
-#define CAGE_THROW_SILENT(EXCEPTION, ...) { throw EXCEPTION(GCHL_THROW_ARGS ::cage::severityEnum::Error, __VA_ARGS__); }
-#define CAGE_THROW_WARNING(EXCEPTION, ...) { throw EXCEPTION(GCHL_THROW_ARGS ::cage::severityEnum::Warning, __VA_ARGS__).log(); }
-#define CAGE_THROW_ERROR(EXCEPTION, ...) { throw EXCEPTION(GCHL_THROW_ARGS ::cage::severityEnum::Error, __VA_ARGS__).log(); }
-#define CAGE_THROW_CRITICAL(EXCEPTION, ...) { throw EXCEPTION(GCHL_THROW_ARGS ::cage::severityEnum::Critical, __VA_ARGS__).log(); }
+#define CAGE_THROW_SILENT(EXCEPTION, ...) { EXCEPTION e(GCHL_THROW_ARGS ::cage::severityEnum::Error, __VA_ARGS__); throw e; }
+#define CAGE_THROW_WARNING(EXCEPTION, ...) { EXCEPTION e(GCHL_THROW_ARGS ::cage::severityEnum::Warning, __VA_ARGS__); e.log(); throw e; }
+#define CAGE_THROW_ERROR(EXCEPTION, ...) { EXCEPTION e(GCHL_THROW_ARGS ::cage::severityEnum::Error, __VA_ARGS__); e.log(); throw e; }
+#define CAGE_THROW_CRITICAL(EXCEPTION, ...) { EXCEPTION e(GCHL_THROW_ARGS ::cage::severityEnum::Critical, __VA_ARGS__); e.log(); throw e; }
 
 #ifdef CAGE_DEBUG
 #define GCHL_EXCEPTION_GENERATE_CTOR_PARAMS const char *file, uint32 line, const char *function, severityEnum severity, const char *message
@@ -153,7 +153,7 @@ namespace cage
 	{
 		explicit exception(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept;
 		virtual ~exception() noexcept;
-		virtual exception &log();
+		virtual void log();
 #ifdef CAGE_DEBUG
 		const char *file;
 		const char *function;
@@ -166,20 +166,20 @@ namespace cage
 	struct CAGE_API notImplemented : public exception
 	{
 		explicit notImplemented(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept;
-		virtual notImplemented &log();
+		virtual void log();
 	};
 
 	struct CAGE_API outOfMemory : public exception
 	{
 		explicit outOfMemory(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uintPtr memory) noexcept;
-		virtual outOfMemory &log();
+		virtual void log();
 		uintPtr memory;
 	};
 
 	struct CAGE_API codeException : public exception
 	{
 		explicit codeException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uint32 code) noexcept;
-		virtual codeException &log();
+		virtual void log();
 		uint32 code;
 	};
 

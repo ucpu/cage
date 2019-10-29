@@ -17,12 +17,11 @@ namespace cage
 	exception::~exception() noexcept
 	{};
 
-	exception &exception::log()
+	void exception::log()
 	{
 		if (severity < detail::getExceptionSilenceSeverity())
-			return *this;
+			return;
 		GCHL_EXCEPTION_GENERATE_LOG(message);
-		return *this;
 	};
 
 	// notImplemented
@@ -30,12 +29,11 @@ namespace cage
 	notImplemented::notImplemented(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept : exception(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER)
 	{};
 
-	notImplemented &notImplemented::log()
+	void notImplemented::log()
 	{
 		if (severity < detail::getExceptionSilenceSeverity())
-			return *this;
+			return;
 		GCHL_EXCEPTION_GENERATE_LOG(string() + "not implemented: '" + message + "'");
-		return *this;
 	};
 
 	// outOfMemory
@@ -43,13 +41,12 @@ namespace cage
 	outOfMemory::outOfMemory(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uintPtr memory) noexcept : exception(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER), memory(memory)
 	{};
 
-	outOfMemory &outOfMemory::log()
+	void outOfMemory::log()
 	{
 		if (severity < detail::getExceptionSilenceSeverity())
-			return *this;
+			return;
 		CAGE_LOG_CONTINUE(severityEnum::Note, "exception", string("memory requested: ") + memory);
 		GCHL_EXCEPTION_GENERATE_LOG(message);
-		return *this;
 	};
 
 	// codeException
@@ -57,13 +54,12 @@ namespace cage
 	codeException::codeException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uint32 code) noexcept : exception(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER), code(code)
 	{};
 
-	codeException &codeException::log()
+	void codeException::log()
 	{
 		if (severity < detail::getExceptionSilenceSeverity())
-			return *this;
+			return;
 		CAGE_LOG_CONTINUE(severityEnum::Note, "exception", string("code: ") + code);
 		GCHL_EXCEPTION_GENERATE_LOG(message);
-		return *this;
 	};
 
 	// overrides

@@ -127,9 +127,9 @@ void testUdp()
 {
 	CAGE_TESTCASE("udp");
 
-	configSetUint32("cage-core.udp.logLevel", 2);
-	configSetUint32("cage-core.udp.packetsPerService", 1);
-	configSetFloat("cage-core.udp.simulatedPacketLoss", 0.1f);
+	configSetUint32("cage.udp.logLevel", 2);
+	configSetUint32("cage.udp.packetsPerService", 1);
+	configSetFloat("cage.udp.simulatedPacketLoss", 0.1f);
 
 	holder<threadHandle> server = newThread(delegate<void()>().bind<&serverImpl::entry>(), "server");
 	std::vector<holder<threadHandle>> clients;
