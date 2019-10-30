@@ -717,9 +717,9 @@ namespace cage
 				{
 					composePackets();
 				}
-				catch (...)
+				catch (const cage::exception &)
 				{
-					// do nothing, i guess
+					// do nothing
 				}
 
 				// finish up
@@ -1061,7 +1061,11 @@ namespace cage
 					for (memView &b : packets)
 						handleReceivedPacket(b);
 				}
-				catch (...)
+				catch (const disconnected &)
+				{
+					throw;
+				}
+				catch (cage::exception &)
 				{
 					// do nothing
 				}

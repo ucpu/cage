@@ -51,7 +51,14 @@ namespace
 					c->write(b, ch, r); // just repeat back the same message
 					lastTime = getApplicationTime();
 				}
-				c->update();
+				try
+				{
+					c->update();
+				}
+				catch (const disconnected &)
+				{
+					// ignore
+				}
 			}
 
 			return connectionsLeft > 0 || !hadConnection;
