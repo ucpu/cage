@@ -22,6 +22,8 @@ using namespace cage;
 #include "scheme.h"
 #include "notifier.h"
 
+#define CAGE_THROW_WARNING(EXCEPTION, ...) { EXCEPTION e(__FILE__, __LINE__, __FUNCTION__, ::cage::severityEnum::Warning, __VA_ARGS__); e.makeLog(); throw e; }
+
 namespace
 {
 	const string databaseBegin = "cage-asset-database-begin";
@@ -258,7 +260,7 @@ namespace
 
 			int ret = prg->wait();
 			if (ret != 0)
-				CAGE_THROW_WARNING(codeException, "process returned error code", ret);
+				CAGE_THROW_WARNING(systemError, "process returned error code", ret);
 
 			ass.corrupted = false;
 		}

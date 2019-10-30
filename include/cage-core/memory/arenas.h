@@ -100,7 +100,7 @@ namespace cage
 			catch (outOfMemory &e)
 			{
 				e.severity = severityEnum::Error;
-				e.log();
+				e.makeLog();
 				throw;
 			}
 		}

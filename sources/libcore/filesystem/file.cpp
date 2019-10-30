@@ -168,7 +168,7 @@ namespace cage
 				{
 					CAGE_LOG(severityEnum::Note, "exception", string("read: ") + mode.read + ", write: " + mode.write + ", append: " + mode.append + ", text: " + mode.textual);
 					CAGE_LOG(severityEnum::Note, "exception", string("path: ") + path);
-					CAGE_THROW_ERROR(codeException, "fopen", errno);
+					CAGE_THROW_ERROR(systemError, "fopen", errno);
 				}
 			}
 
@@ -194,7 +194,7 @@ namespace cage
 				if (size == 0)
 					return;
 				if (fread(data, (size_t)size, 1, f) != 1)
-					CAGE_THROW_ERROR(codeException, "fread", errno);
+					CAGE_THROW_ERROR(systemError, "fread", errno);
 			}
 
 			void write(const void *data, uint64 size) override
@@ -204,21 +204,21 @@ namespace cage
 				if (size == 0)
 					return;
 				if (fwrite(data, (size_t)size, 1, f) != 1)
-					CAGE_THROW_ERROR(codeException, "fwrite", errno);
+					CAGE_THROW_ERROR(systemError, "fwrite", errno);
 			}
 
 			void seek(uint64 position) override
 			{
 				CAGE_ASSERT(f, "file closed");
 				if (fseek(f, position, 0) != 0)
-					CAGE_THROW_ERROR(codeException, "fseek", errno);
+					CAGE_THROW_ERROR(systemError, "fseek", errno);
 			}
 
 			void flush() override
 			{
 				CAGE_ASSERT(f, "file closed");
 				if (fflush(f) != 0)
-					CAGE_THROW_ERROR(codeException, "fflush", errno);
+					CAGE_THROW_ERROR(systemError, "fflush", errno);
 			}
 
 			void close() override
@@ -227,7 +227,7 @@ namespace cage
 				FILE *t = f;
 				f = nullptr;
 				if (fclose(t) != 0)
-					CAGE_THROW_ERROR(codeException, "fclose", errno);
+					CAGE_THROW_ERROR(systemError, "fclose", errno);
 			}
 
 			uint64 tell() const override

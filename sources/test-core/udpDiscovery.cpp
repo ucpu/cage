@@ -20,10 +20,18 @@ void testUdpDiscovery()
 
 	uint32 cnt = clt->peersCount();
 	CAGE_LOG(severityEnum::Info, "test", string() + "got " + cnt + " responses");
-	CAGE_TEST(cnt > 0);
-	for (const auto &r : clt->peers())
+	if (cnt == 0)
 	{
-		CAGE_LOG(severityEnum::Info, "test", string() + "address: " + r.address + ", message: " + r.message);
-		CAGE_TEST(r.port == 1342);
+		CAGE_LOG(severityEnum::Error, "test", "udp discovery failed!");
+		CAGE_LOG(severityEnum::Note, "test", "the network may block broadcast messages");
+		CAGE_LOG(severityEnum::Note, "test", "or a firewall may block the ports");
+	}
+	else
+	{
+		for (const auto &r : clt->peers())
+		{
+			CAGE_LOG(severityEnum::Info, "test", string() + "address: " + r.address + ", message: " + r.message);
+			CAGE_TEST(r.port == 1342);
+		}
 	}
 }

@@ -10,7 +10,7 @@ namespace cage
 {
 	concurrentQueueCreateConfig::concurrentQueueCreateConfig() : arena(detail::systemArena()), maxElements(m) {}
 
-	concurrentQueueTerminated::concurrentQueueTerminated(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept : exception(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER)
+	concurrentQueueTerminated::concurrentQueueTerminated(const char *file, uint32 line, const char *function, severityEnum severity, const char *message) noexcept : exception(file, line, function, severity, message)
 	{};
 
 	namespace

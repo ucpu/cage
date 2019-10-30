@@ -44,10 +44,10 @@ namespace cage
 				saAttr.bInheritHandle = true;
 
 				if (!CreatePipe(&hChildStd_OUT_Rd, &hChildStd_OUT_Wr, &saAttr, 0))
-					CAGE_THROW_ERROR(codeException, "CreatePipe", GetLastError());
+					CAGE_THROW_ERROR(systemError, "CreatePipe", GetLastError());
 
 				if (!CreatePipe(&hChildStd_IN_Rd, &hChildStd_IN_Wr, &saAttr, 0))
-					CAGE_THROW_ERROR(codeException, "CreatePipe", GetLastError());
+					CAGE_THROW_ERROR(systemError, "CreatePipe", GetLastError());
 
 				PROCESS_INFORMATION piProcInfo;
 				detail::memset(&piProcInfo, 0, sizeof(PROCESS_INFORMATION));
@@ -76,7 +76,7 @@ namespace cage
 					&piProcInfo
 				))
 				{
-					CAGE_THROW_ERROR(codeException, "CreateProcess", GetLastError());
+					CAGE_THROW_ERROR(systemError, "CreateProcess", GetLastError());
 				}
 
 				hProcess = piProcInfo.hProcess;
@@ -124,7 +124,7 @@ namespace cage
 					CAGE_THROW_ERROR(exception, "WaitForSingleObject");
 				DWORD ret = 0;
 				if (GetExitCodeProcess(hProcess, &ret) == 0)
-					CAGE_THROW_ERROR(codeException, "GetExitCodeProcess", GetLastError());
+					CAGE_THROW_ERROR(systemError, "GetExitCodeProcess", GetLastError());
 				closeAllHandles();
 				return ret;
 			}
@@ -270,7 +270,7 @@ namespace cage
 						if (res < 0 && err == EINTR)
 							continue;
 						if (res != pid)
-							CAGE_THROW_ERROR(codeException, "waitpid", err);
+							CAGE_THROW_ERROR(systemError, "waitpid", err);
 						break;
 					}
 				}
@@ -294,7 +294,7 @@ namespace cage
 		programImpl *impl = (programImpl*)this;
 		DWORD read = 0;
 		if (!ReadFile(impl->hChildStd_OUT_Rd, data, size, &read, nullptr))
-			CAGE_THROW_ERROR(codeException, "ReadFile", GetLastError());
+			CAGE_THROW_ERROR(systemError, "ReadFile", GetLastError());
 		if (read != size)
 			CAGE_THROW_ERROR(exception, "insufficient data");
 	}
@@ -304,7 +304,7 @@ namespace cage
 		programImpl *impl = (programImpl*)this;
 		DWORD written = 0;
 		if (!WriteFile(impl->hChildStd_IN_Wr, data, size, &written, nullptr))
-			CAGE_THROW_ERROR(codeException, "WriteFile", GetLastError());
+			CAGE_THROW_ERROR(systemError, "WriteFile", GetLastError());
 		if (written != size)
 			CAGE_THROW_ERROR(exception, "data truncated");
 	}
@@ -316,7 +316,7 @@ namespace cage
 		programImpl *impl = (programImpl*)this;
 		auto r = ::read(impl->aStdoutPipe[PIPE_READ], data, size);
 		if (r < 0)
-			CAGE_THROW_ERROR(codeException, "read", errno);
+			CAGE_THROW_ERROR(systemError, "read", errno);
 		if (r != size)
 			CAGE_THROW_ERROR(exception, "insufficient data");
 	}
@@ -326,7 +326,7 @@ namespace cage
 		programImpl *impl = (programImpl*)this;
 		auto r = ::write(impl->aStdinPipe[PIPE_WRITE], data, size);
 		if (r < 0)
-			CAGE_THROW_ERROR(codeException, "write", errno);
+			CAGE_THROW_ERROR(systemError, "write", errno);
 		if (r != size)
 			CAGE_THROW_ERROR(exception, "data truncated");
 	}

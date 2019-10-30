@@ -8,10 +8,9 @@ namespace cage
 #define CAGE_CHECK_GL_ERROR_DEBUG()
 #endif
 
-	struct CAGE_API graphicsError : public codeException
+	struct CAGE_API graphicsError : public systemError
 	{
-		graphicsError(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uint32 code) noexcept;
-		virtual void log();
+		graphicsError(const char *file, uint32 line, const char *function, severityEnum severity, const char *message, uint32 code) noexcept;
 	};
 
 	namespace detail

@@ -33,25 +33,25 @@ namespace
 			{
 				int moreBlocks = vorbis_analysis_blockout(&v, &vb);
 				if (moreBlocks < 0)
-					CAGE_THROW_ERROR(codeException, "vorbis_analysis_blockout", moreBlocks);
+					CAGE_THROW_ERROR(systemError, "vorbis_analysis_blockout", moreBlocks);
 				if (moreBlocks == 0)
 					break;
 				ret = vorbis_analysis(&vb, nullptr);
 				if (ret != 0)
-					CAGE_THROW_ERROR(codeException, "vorbis_analysis", ret);
+					CAGE_THROW_ERROR(systemError, "vorbis_analysis", ret);
 				ret = vorbis_bitrate_addblock(&vb);
 				if (ret != 0)
-					CAGE_THROW_ERROR(codeException, "vorbis_bitrate_addblock", ret);
+					CAGE_THROW_ERROR(systemError, "vorbis_bitrate_addblock", ret);
 				while (true)
 				{
 					int morePackets = vorbis_bitrate_flushpacket(&v, &p);
 					if (morePackets < 0)
-						CAGE_THROW_ERROR(codeException, "vorbis_bitrate_flushpacket", morePackets);
+						CAGE_THROW_ERROR(systemError, "vorbis_bitrate_flushpacket", morePackets);
 					if (morePackets == 0)
 						break;
 					ret = ogg_stream_packetin(&os, &p);
 					if (ret != 0)
-						CAGE_THROW_ERROR(codeException, "ogg_stream_packetin p", ret);
+						CAGE_THROW_ERROR(systemError, "ogg_stream_packetin p", ret);
 					while (true)
 					{
 						ret = ogg_stream_pageout(&os, &og);
@@ -68,33 +68,33 @@ namespace
 		{
 			ret = ogg_stream_init(&os, 1);
 			if (ret != 0)
-				CAGE_THROW_ERROR(codeException, "ogg_stream_init", ret);
+				CAGE_THROW_ERROR(systemError, "ogg_stream_init", ret);
 			vorbis_info_init(&vi);
 			ret = vorbis_encode_init_vbr(&vi, sds.channels, sds.sampleRate, properties("compressQuality").toFloat());
 			if (ret != 0)
-				CAGE_THROW_ERROR(codeException, "vorbis_encode_init_vbr", ret);
+				CAGE_THROW_ERROR(systemError, "vorbis_encode_init_vbr", ret);
 			vorbis_comment_init(&vc);
 			vorbis_comment_add_tag(&vc, "ENCODER", "cage-asset-processor");
 			ret = vorbis_analysis_init(&v, &vi);
 			if (ret != 0)
-				CAGE_THROW_ERROR(codeException, "vorbis_analysis_init", ret);
+				CAGE_THROW_ERROR(systemError, "vorbis_analysis_init", ret);
 			ret = vorbis_block_init(&v, &vb);
 			if (ret != 0)
-				CAGE_THROW_ERROR(codeException, "vorbis_block_init", ret);
+				CAGE_THROW_ERROR(systemError, "vorbis_block_init", ret);
 			{
 				ogg_packet a, b, c;
 				ret = vorbis_analysis_headerout(&v, &vc, &a, &b, &c);
 				if (ret != 0)
-					CAGE_THROW_ERROR(codeException, "vorbis_analysis_headerout", ret);
+					CAGE_THROW_ERROR(systemError, "vorbis_analysis_headerout", ret);
 				ret = ogg_stream_packetin(&os, &a);
 				if (ret != 0)
-					CAGE_THROW_ERROR(codeException, "ogg_stream_packetin a", ret);
+					CAGE_THROW_ERROR(systemError, "ogg_stream_packetin a", ret);
 				ret = ogg_stream_packetin(&os, &b);
 				if (ret != 0)
-					CAGE_THROW_ERROR(codeException, "ogg_stream_packetin b", ret);
+					CAGE_THROW_ERROR(systemError, "ogg_stream_packetin b", ret);
 				ret = ogg_stream_packetin(&os, &c);
 				if (ret != 0)
-					CAGE_THROW_ERROR(codeException, "ogg_stream_packetin c", ret);
+					CAGE_THROW_ERROR(systemError, "ogg_stream_packetin c", ret);
 				while (true)
 				{
 					ret = ogg_stream_flush(&os, &og);
@@ -119,14 +119,14 @@ namespace
 				}
 				ret = vorbis_analysis_wrote(&v, wrt);
 				if (ret != 0)
-					CAGE_THROW_ERROR(codeException, "vorbis_analysis_wrote 1", ret);
+					CAGE_THROW_ERROR(systemError, "vorbis_analysis_wrote 1", ret);
 				processBlock();
 				offset += wrt;
 				frames -= wrt;
 			}
 			ret = vorbis_analysis_wrote(&v, 0);
 			if (ret != 0)
-				CAGE_THROW_ERROR(codeException, "vorbis_analysis_wrote 2", ret);
+				CAGE_THROW_ERROR(systemError, "vorbis_analysis_wrote 2", ret);
 			processBlock();
 			ogg_stream_clear(&os);
 			vorbis_block_clear(&vb);

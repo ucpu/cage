@@ -36,7 +36,7 @@ namespace
 	{
 		char buf[string::MaxLength];
 		if (fgets(buf, string::MaxLength, stdin) == nullptr)
-			CAGE_THROW_ERROR(codeException, "fgets", ferror(stdin));
+			CAGE_THROW_ERROR(systemError, "fgets", ferror(stdin));
 		return string(buf, numeric_cast<uint32>(detail::strlen(buf) - 1));
 	}
 
@@ -105,7 +105,7 @@ void writeLine(const string &other)
 			CAGE_LOG(severityEnum::Note, "asset-processor", string() + "reference hash: '" + (uint32)hashString(b.trim().c_str()) + "'");
 	}
 	if (fprintf(stdout, "%s\n", other.c_str()) < 0)
-		CAGE_THROW_ERROR(codeException, "fprintf", ferror(stdout));
+		CAGE_THROW_ERROR(systemError, "fprintf", ferror(stdout));
 }
 
 string properties(const string &name)

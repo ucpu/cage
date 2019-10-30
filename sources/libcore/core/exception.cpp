@@ -5,63 +5,6 @@
 
 namespace cage
 {
-	// exception
-
-	exception::exception(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept :
-#ifdef CAGE_DEBUG
-		file(file), function(function), line(line),
-#endif
-		message(message), severity(severity)
-	{};
-
-	exception::~exception() noexcept
-	{};
-
-	void exception::log()
-	{
-		if (severity < detail::getExceptionSilenceSeverity())
-			return;
-		GCHL_EXCEPTION_GENERATE_LOG(message);
-	};
-
-	// notImplemented
-
-	notImplemented::notImplemented(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept : exception(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER)
-	{};
-
-	void notImplemented::log()
-	{
-		if (severity < detail::getExceptionSilenceSeverity())
-			return;
-		GCHL_EXCEPTION_GENERATE_LOG(string() + "not implemented: '" + message + "'");
-	};
-
-	// outOfMemory
-
-	outOfMemory::outOfMemory(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uintPtr memory) noexcept : exception(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER), memory(memory)
-	{};
-
-	void outOfMemory::log()
-	{
-		if (severity < detail::getExceptionSilenceSeverity())
-			return;
-		CAGE_LOG_CONTINUE(severityEnum::Note, "exception", string("memory requested: ") + memory);
-		GCHL_EXCEPTION_GENERATE_LOG(message);
-	};
-
-	// codeException
-
-	codeException::codeException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uint32 code) noexcept : exception(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER), code(code)
-	{};
-
-	void codeException::log()
-	{
-		if (severity < detail::getExceptionSilenceSeverity())
-			return;
-		CAGE_LOG_CONTINUE(severityEnum::Note, "exception", string("code: ") + code);
-		GCHL_EXCEPTION_GENERATE_LOG(message);
-	};
-
 	// overrides
 
 	namespace
@@ -95,10 +38,55 @@ namespace cage
 		{
 			globalExceptionSilenceSeverity() = severity;
 		}
+	}
 
+	namespace
+	{
 		severityEnum getExceptionSilenceSeverity()
 		{
 			return localExceptionSilenceSeverity() > (severityEnum)globalExceptionSilenceSeverity() ? localExceptionSilenceSeverity() : (severityEnum)globalExceptionSilenceSeverity();
 		}
 	}
+
+	// exception
+
+	exception::exception(const char *file, uint32 line, const char *function, severityEnum severity, const char *message) noexcept : file(file), function(function), line(line), message(message), severity(severity)
+	{};
+
+	exception::~exception() noexcept
+	{};
+
+	void exception::makeLog()
+	{
+		if (severity < getExceptionSilenceSeverity())
+			return;
+		log();
+		::cage::detail::debugBreakpoint();
+	}
+
+	void exception::log()
+	{
+		::cage::privat::makeLog(file, line, function, severity, "exception", message, false, false);
+	};
+
+	// notImplemented
+
+	notImplemented::notImplemented(const char *file, uint32 line, const char *function, severityEnum severity, const char *message) noexcept : exception(file, line, function, severity, message)
+	{};
+
+	void notImplemented::log()
+	{
+		::cage::privat::makeLog(file, line, function, severity, "exception", string() + "not implemented: '" + message + "'", false, false);
+	};
+
+	// systemError
+
+	systemError::systemError(const char *file, uint32 line, const char *function, severityEnum severity, const char *message, uint32 code) noexcept : exception(file, line, function, severity, message), code(code)
+	{};
+
+	void systemError::log()
+	{
+		::cage::privat::makeLog(file, line, function, severityEnum::Note, "exception", string() + "code: " + code, false, false);
+		::cage::privat::makeLog(file, line, function, severity, "exception", message, false, false);
+	};
 }

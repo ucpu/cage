@@ -1,5 +1,12 @@
 namespace cage
 {
+	struct CAGE_API outOfMemory : public exception
+	{
+		explicit outOfMemory(const char *file, uint32 line, const char *function, severityEnum severity, const char *message, uintPtr memory) noexcept;
+		virtual void log();
+		uintPtr memory;
+	};
+
 	namespace detail
 	{
 		inline bool isPowerOf2(uintPtr x)

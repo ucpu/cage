@@ -430,7 +430,7 @@ namespace cage
 					if (err != ERROR_ALREADY_EXISTS)
 					{
 						CAGE_LOG(severityEnum::Note, "exception", string() + "path: '" + path + "'");
-						CAGE_THROW_ERROR(codeException, "CreateDirectory", err);
+						CAGE_THROW_ERROR(systemError, "CreateDirectory", err);
 					}
 				}
 #else
@@ -455,7 +455,7 @@ namespace cage
 		if (res == 0)
 		{
 			CAGE_LOG(severityEnum::Note, "exception", string() + "path from: '" + from + "'" + ", to: '" + to + "'");
-			CAGE_THROW_ERROR(codeException, "pathMove", GetLastError());
+			CAGE_THROW_ERROR(systemError, "pathMove", GetLastError());
 		}
 
 #else
@@ -464,7 +464,7 @@ namespace cage
 		if (res != 0)
 		{
 			CAGE_LOG(severityEnum::Note, "exception", string() + "path from: '" + from + "'" + ", to: '" + to + "'");
-			CAGE_THROW_ERROR(codeException, "pathMove", errno);
+			CAGE_THROW_ERROR(systemError, "pathMove", errno);
 		}
 
 #endif
@@ -483,20 +483,20 @@ namespace cage
 			}
 #ifdef CAGE_SYSTEM_WINDOWS
 			if (RemoveDirectory(path.c_str()) == 0)
-				CAGE_THROW_ERROR(codeException, "RemoveDirectory", GetLastError());
+				CAGE_THROW_ERROR(systemError, "RemoveDirectory", GetLastError());
 #else
 			if (rmdir(path.c_str()) != 0)
-				CAGE_THROW_ERROR(codeException, "rmdir", errno);
+				CAGE_THROW_ERROR(systemError, "rmdir", errno);
 #endif
 		}
 		else if ((t & pathTypeFlags::NotFound) == pathTypeFlags::None)
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
 			if (DeleteFile(path.c_str()) == 0)
-				CAGE_THROW_ERROR(codeException, "DeleteFile", GetLastError());
+				CAGE_THROW_ERROR(systemError, "DeleteFile", GetLastError());
 #else
 			if (unlink(path.c_str()) != 0)
-				CAGE_THROW_ERROR(codeException, "unlink", errno);
+				CAGE_THROW_ERROR(systemError, "unlink", errno);
 #endif
 		}
 	}
@@ -529,7 +529,7 @@ namespace cage
 		if (stat(pathToAbs(path).c_str(), &st) == 0)
 			return st.st_mtime;
 		CAGE_LOG(severityEnum::Note, "exception", string() + "path: '" + path + "'");
-		CAGE_THROW_ERROR(codeException, "stat", errno);
+		CAGE_THROW_ERROR(systemError, "stat", errno);
 
 #endif
 	}
@@ -541,7 +541,7 @@ namespace cage
 		char buffer[string::MaxLength];
 		uint32 len = GetCurrentDirectory(string::MaxLength - 1, buffer);
 		if (len <= 0)
-			CAGE_THROW_ERROR(codeException, "GetCurrentDirectory", GetLastError());
+			CAGE_THROW_ERROR(systemError, "GetCurrentDirectory", GetLastError());
 		if (len >= string::MaxLength)
 			CAGE_THROW_ERROR(exception, "path too long");
 		return pathSimplify(string(buffer, len));
@@ -566,7 +566,7 @@ namespace cage
 
 			uint32 len = GetModuleFileName(nullptr, (char*)&buffer, string::MaxLength);
 			if (len == 0)
-				CAGE_THROW_ERROR(codeException, "GetModuleFileName", GetLastError());
+				CAGE_THROW_ERROR(systemError, "GetModuleFileName", GetLastError());
 
 #elif defined(CAGE_SYSTEM_LINUX)
 
@@ -574,7 +574,7 @@ namespace cage
 			sprintf(id, "/proc/%d/exe", getpid());
 			sint32 len = readlink(id, buffer, string::MaxLength);
 			if (len == -1)
-				CAGE_THROW_ERROR(codeException, "readlink", errno);
+				CAGE_THROW_ERROR(systemError, "readlink", errno);
 
 #elif defined(CAGE_SYSTEM_MAC)
 

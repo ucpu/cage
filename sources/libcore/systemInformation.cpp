@@ -27,7 +27,7 @@ namespace cage
 		buf[0] = 0;
 		DWORD siz = string::MaxLength - 1;
 		if (!GetUserName(buf, &siz))
-			CAGE_THROW_ERROR(codeException, "GetUserName", GetLastError());
+			CAGE_THROW_ERROR(systemError, "GetUserName", GetLastError());
 		return buf;
 #else
 		// todo
@@ -42,7 +42,7 @@ namespace cage
 		buf[0] = 0;
 		DWORD siz = string::MaxLength - 1;
 		if (!GetComputerName(buf, &siz))
-			CAGE_THROW_ERROR(codeException, "GetComputerName", GetLastError());
+			CAGE_THROW_ERROR(systemError, "GetComputerName", GetLastError());
 		return buf;
 #else
 		// todo
@@ -88,7 +88,7 @@ namespace cage
 		memset(&ppi, 0, sizeof(ppi));
 		auto ret = CallNtPowerInformation(ProcessorInformation, nullptr, 0, &ppi, sizeof(ppi));
 		if (ret != 0)
-			CAGE_THROW_ERROR(codeException, "CallNtPowerInformation", ret);
+			CAGE_THROW_ERROR(systemError, "CallNtPowerInformation", ret);
 		return ppi[0].MaxMhz * 1000000;
 #else
 		// todo
@@ -102,7 +102,7 @@ namespace cage
 		MEMORYSTATUSEX m;
 		m.dwLength = sizeof(m);
 		if (!GlobalMemoryStatusEx(&m))
-			CAGE_THROW_ERROR(codeException, "GlobalMemoryStatusEx", GetLastError());
+			CAGE_THROW_ERROR(systemError, "GlobalMemoryStatusEx", GetLastError());
 		return m.ullTotalPhys;
 #else
 		// todo
@@ -116,7 +116,7 @@ namespace cage
 		MEMORYSTATUSEX m;
 		m.dwLength = sizeof(m);
 		if (!GlobalMemoryStatusEx(&m))
-			CAGE_THROW_ERROR(codeException, "GlobalMemoryStatusEx", GetLastError());
+			CAGE_THROW_ERROR(systemError, "GlobalMemoryStatusEx", GetLastError());
 		return m.ullAvailPhys;
 #else
 		// todo

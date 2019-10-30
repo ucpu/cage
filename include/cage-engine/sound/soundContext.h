@@ -1,8 +1,8 @@
 namespace cage
 {
-	struct soundError : public codeException
+	struct soundError : public systemError
 	{
-		soundError(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uint32 code) noexcept;
+		soundError(const char *file, uint32 line, const char *function, severityEnum severity, const char *message, uint32 code) noexcept;
 	};
 
 	class CAGE_API soundContext : private immovable

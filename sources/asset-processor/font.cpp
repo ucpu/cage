@@ -16,7 +16,7 @@
 #include FT_GLYPH_H
 #include FT_OUTLINE_H
 
-#define CALL(FNC, ...) { int err = FNC(__VA_ARGS__); if (err) { CAGE_LOG(severityEnum::Note, "exception", translateErrorCode(err)); CAGE_THROW_ERROR(codeException, "FreeType " CAGE_STRINGIZE(FNC) " error", err); } }
+#define CALL(FNC, ...) { int err = FNC(__VA_ARGS__); if (err) { CAGE_LOG(severityEnum::Note, "exception", translateErrorCode(err)); CAGE_THROW_ERROR(systemError, "FreeType " CAGE_STRINGIZE(FNC) " error", err); } }
 
 namespace
 {

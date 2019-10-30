@@ -17,14 +17,12 @@ namespace utf8
 
 namespace cage
 {
-	invalidUtfString::invalidUtfString(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept : exception(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER)
+	invalidUtfString::invalidUtfString(const char *file, uint32 line, const char *function, severityEnum severity, const char *message) noexcept : exception(file, line, function, severity, message)
 	{};
 
 	void invalidUtfString::log()
 	{
-		if (severity < detail::getExceptionSilenceSeverity())
-			return;
-		GCHL_EXCEPTION_GENERATE_LOG(string("utf8 error: '") + message + "'");
+		::cage::privat::makeLog(file, line, function, severity, "exception", string() + "utf8 error: '" + message + "'", false, false);
 	};
 
 	bool valid(const char *str)

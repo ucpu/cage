@@ -21,7 +21,7 @@ void testExceptions()
 		{
 			try
 			{
-				CAGE_THROW_ERROR(codeException, "intentional", 42);
+				CAGE_THROW_ERROR(systemError, "intentional", 42);
 			}
 			catch (const exception &e)
 			{
@@ -30,7 +30,7 @@ void testExceptions()
 				throw;
 			}
 		}
-		catch (const codeException &e)
+		catch (const systemError &e)
 		{
 			CAGE_TEST(detail::strcmp(e.message, "intentional") == 0);
 			CAGE_TEST(e.code == 42);

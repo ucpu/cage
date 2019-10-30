@@ -37,15 +37,8 @@ namespace cage
 		}
 	}
 
-	graphicsError::graphicsError(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uint32 code) noexcept : codeException(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER, code)
+	graphicsError::graphicsError(const char *file, uint32 line, const char *function, severityEnum severity, const char *message, uint32 code) noexcept : systemError(file, line, function, severity, message, code)
 	{}
-
-	void graphicsError::log()
-	{
-		if (severity < detail::getExceptionSilenceSeverity())
-			return;
-		codeException::log();
-	}
 
 	namespace
 	{

@@ -16,6 +16,15 @@
 
 namespace cage
 {
+	outOfMemory::outOfMemory(const char *file, uint32 line, const char *function, severityEnum severity, const char *message, uintPtr memory) noexcept : exception(file, line, function, severity, message), memory(memory)
+	{};
+
+	void outOfMemory::log()
+	{
+		::cage::privat::makeLog(file, line, function, severityEnum::Note, "exception", string() + "memory requested: " + memory, false, false);
+		::cage::privat::makeLog(file, line, function, severity, "exception", message, false, false);
+	};
+
 	namespace detail
 	{
 		uintPtr compressionBound(uintPtr size)
@@ -166,7 +175,7 @@ namespace cage
 
 				origin = mmap(nullptr, pages * pageSize, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 				if (origin == MAP_FAILED)
-					CAGE_THROW_ERROR(codeException, "mmap", errno);
+					CAGE_THROW_ERROR(systemError, "mmap", errno);
 
 #endif
 
@@ -183,7 +192,7 @@ namespace cage
 					CAGE_THROW_ERROR(exception, "VirtualFree");
 #else
 				if (munmap(origin, total * pageSize) != 0)
-					CAGE_THROW_ERROR(codeException, "munmap", errno);
+					CAGE_THROW_ERROR(systemError, "munmap", errno);
 #endif
 
 				origin = nullptr;
@@ -203,7 +212,7 @@ namespace cage
 					CAGE_THROW_ERROR(exception, "VirtualAlloc");
 #else
 				if (mprotect((char*)origin + pgs * pageSize, pages * pageSize, PROT_READ | PROT_WRITE) != 0)
-					CAGE_THROW_ERROR(codeException, "mprotect", errno);
+					CAGE_THROW_ERROR(systemError, "mprotect", errno);
 #endif
 
 				pgs += pages;
@@ -220,7 +229,7 @@ namespace cage
 					CAGE_THROW_ERROR(exception, "VirtualFree");
 #else
 				if (!mprotect((char*)origin + pageSize * (pgs - pages), pageSize * pages, PROT_NONE))
-					CAGE_THROW_ERROR(codeException, "mprotect", errno);
+					CAGE_THROW_ERROR(systemError, "mprotect", errno);
 #endif
 
 				pgs -= pages;

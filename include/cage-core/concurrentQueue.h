@@ -12,7 +12,7 @@ namespace cage
 
 	struct CAGE_API concurrentQueueTerminated : public exception
 	{
-		concurrentQueueTerminated(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept;
+		concurrentQueueTerminated(const char *file, uint32 line, const char *function, severityEnum severity, const char *message) noexcept;
 	};
 
 	namespace privat

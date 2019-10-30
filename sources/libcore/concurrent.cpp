@@ -67,7 +67,7 @@ namespace cage
 			return false;
 		if (r == 0)
 			return true;
-		CAGE_THROW_ERROR(codeException, "mutex trylock error", r);
+		CAGE_THROW_ERROR(systemError, "mutex trylock error", r);
 #endif
 	}
 
@@ -83,7 +83,7 @@ namespace cage
 			r = pthread_mutex_lock(&impl->mut);
 		} while (r == EINTR);
 		if (r != 0)
-			CAGE_THROW_ERROR(codeException, "mutex lock error", r);
+			CAGE_THROW_ERROR(systemError, "mutex lock error", r);
 #endif
 	}
 
@@ -95,7 +95,7 @@ namespace cage
 #else
 		int r = pthread_mutex_unlock(&impl->mut);
 		if (r != 0)
-			CAGE_THROW_CRITICAL(codeException, "mutex unlock error", r);
+			CAGE_THROW_CRITICAL(systemError, "mutex unlock error", r);
 #endif
 	}
 
@@ -474,7 +474,7 @@ namespace cage
 #else
 
 				if (pthread_create(&handle, nullptr, &threadFunctionImpl, this) != 0)
-					CAGE_THROW_ERROR(codeException, "pthread_create", errno);
+					CAGE_THROW_ERROR(systemError, "pthread_create", errno);
 				myid = uint64(handle);
 
 #endif
@@ -529,7 +529,7 @@ namespace cage
 		{
 		case 0: impl->handle = (pthread_t)nullptr; return true;
 		case EBUSY: return false;
-		default: CAGE_THROW_ERROR(codeException, "pthread_tryjoin_np", err);
+		default: CAGE_THROW_ERROR(systemError, "pthread_tryjoin_np", err);
 		}
 #endif
 #endif
@@ -547,7 +547,7 @@ namespace cage
 			switch (int err = pthread_join(impl->handle, nullptr))
 			{
 			case 0: impl->handle = (pthread_t)nullptr; break;
-			default: CAGE_THROW_ERROR(codeException, "pthread_join", err);
+			default: CAGE_THROW_ERROR(systemError, "pthread_join", err);
 			}
 		}
 #endif

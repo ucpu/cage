@@ -9,7 +9,7 @@
 
 namespace cage
 {
-	soundError::soundError(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uint32 code) noexcept : codeException(GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER, code)
+	soundError::soundError(const char *file, uint32 line, const char *function, severityEnum severity, const char *message, uint32 code) noexcept : systemError(file, line, function, severity, message, code)
 	{};
 
 	namespace soundPrivat

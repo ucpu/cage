@@ -3,34 +3,26 @@
 #define CAGE_ASSERT_ENABLED
 #endif
 #endif
-
 #ifdef CAGE_ASSERT_ENABLED
 #define GCHL_ASSVAR(VAR) .variable(CAGE_STRINGIZE(VAR), VAR)
 #define CAGE_ASSERT(EXP, ...) { ::cage::privat::assertPriv(!!(EXP), CAGE_STRINGIZE(EXP), __FILE__, CAGE_STRINGIZE(__LINE__), __FUNCTION__) GCHL_DEFER(CAGE_EXPAND_ARGS(GCHL_ASSVAR, __VA_ARGS__))(); }
 #else
 #define CAGE_ASSERT(EXP, ...)
 #endif
-
 #define CAGE_ASSERT_COMPILE(COND, MESS) enum { CAGE_JOIN(CAGE_JOIN(gchl_assert_, MESS), CAGE_JOIN(_, __LINE__)) = 1/((int)!!(COND)) }
 
-#ifdef CAGE_DEBUG
-#define GCHL_THROW_ARGS __FILE__, __LINE__, __FUNCTION__,
-#else
-#define GCHL_THROW_ARGS
-#endif
-#define CAGE_THROW_SILENT(EXCEPTION, ...) { EXCEPTION e(GCHL_THROW_ARGS ::cage::severityEnum::Error, __VA_ARGS__); throw e; }
-#define CAGE_THROW_WARNING(EXCEPTION, ...) { EXCEPTION e(GCHL_THROW_ARGS ::cage::severityEnum::Warning, __VA_ARGS__); e.log(); throw e; }
-#define CAGE_THROW_ERROR(EXCEPTION, ...) { EXCEPTION e(GCHL_THROW_ARGS ::cage::severityEnum::Error, __VA_ARGS__); e.log(); throw e; }
-#define CAGE_THROW_CRITICAL(EXCEPTION, ...) { EXCEPTION e(GCHL_THROW_ARGS ::cage::severityEnum::Critical, __VA_ARGS__); e.log(); throw e; }
+#define CAGE_THROW_SILENT(EXCEPTION, ...) { EXCEPTION e_(__FILE__, __LINE__, __FUNCTION__, ::cage::severityEnum::Error, __VA_ARGS__); throw e_; }
+#define CAGE_THROW_ERROR(EXCEPTION, ...) { EXCEPTION e_(__FILE__, __LINE__, __FUNCTION__, ::cage::severityEnum::Error, __VA_ARGS__); e_.makeLog(); throw e_; }
+#define CAGE_THROW_CRITICAL(EXCEPTION, ...) { EXCEPTION e_(__FILE__, __LINE__, __FUNCTION__, ::cage::severityEnum::Critical, __VA_ARGS__); e_.makeLog(); throw e_; }
 
+#define CAGE_LOG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FILE__, __LINE__, __FUNCTION__, SEVERITY, COMPONENT, MESSAGE, false, false)
+#define CAGE_LOG_CONTINUE(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FILE__, __LINE__, __FUNCTION__, SEVERITY, COMPONENT, MESSAGE, true, false)
 #ifdef CAGE_DEBUG
-#define GCHL_EXCEPTION_GENERATE_CTOR_PARAMS const char *file, uint32 line, const char *function, severityEnum severity, const char *message
-#define GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER file, line, function, severity, message
-#define GCHL_EXCEPTION_GENERATE_LOG(MESSAGE) { ::cage::privat::makeLog(file, line, function, severity, "exception", (MESSAGE), false, false); ::cage::detail::debugBreakpoint(); }
+#define CAGE_LOG_DEBUG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FILE__, __LINE__, __FUNCTION__, SEVERITY, COMPONENT, MESSAGE, false, true)
+#define CAGE_LOG_CONTINUE_DEBUG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FILE__, __LINE__, __FUNCTION__, SEVERITY, COMPONENT, MESSAGE, true, true)
 #else
-#define GCHL_EXCEPTION_GENERATE_CTOR_PARAMS severityEnum severity, const char *message
-#define GCHL_EXCEPTION_GENERATE_CTOR_INITIALIZER severity, message
-#define GCHL_EXCEPTION_GENERATE_LOG(MESSAGE) { ::cage::privat::makeLog(severity, "exception", (MESSAGE), false, false); ::cage::detail::debugBreakpoint(); }
+#define CAGE_LOG_DEBUG(SEVERITY, COMPONENT, MESSAGE)
+#define CAGE_LOG_CONTINUE_DEBUG(SEVERITY, COMPONENT, MESSAGE)
 #endif
 
 namespace cage
@@ -48,18 +40,8 @@ namespace cage
 	namespace privat
 	{
 		CAGE_API uint64 makeLog(const char *file, uint32 line, const char *function, severityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept;
-		inline uint64 makeLog(severityEnum severity, const char *component, const string &message, bool continuous, bool debug) { return makeLog(nullptr, 0, nullptr, severity, component, message, continuous, debug); }
+		//inline uint64 makeLog(severityEnum severity, const char *component, const string &message, bool continuous, bool debug) { return makeLog(nullptr, 0, nullptr, severity, component, message, continuous, debug); }
 	}
-
-#define CAGE_LOG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FILE__, __LINE__, __FUNCTION__, SEVERITY, COMPONENT, MESSAGE, false, false)
-#define CAGE_LOG_CONTINUE(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FILE__, __LINE__, __FUNCTION__, SEVERITY, COMPONENT, MESSAGE, true, false)
-#ifdef CAGE_DEBUG
-#define CAGE_LOG_DEBUG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FILE__, __LINE__, __FUNCTION__, SEVERITY, COMPONENT, MESSAGE, false, true)
-#define CAGE_LOG_CONTINUE_DEBUG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FILE__, __LINE__, __FUNCTION__, SEVERITY, COMPONENT, MESSAGE, true, true)
-#else
-#define CAGE_LOG_DEBUG(SEVERITY, COMPONENT, MESSAGE)
-#define CAGE_LOG_CONTINUE_DEBUG(SEVERITY, COMPONENT, MESSAGE)
-#endif
 
 	namespace privat
 	{
@@ -106,8 +88,18 @@ namespace cage
 			bool original;
 		};
 
+		struct CAGE_API overrideException
+		{
+			explicit overrideException(severityEnum severity = severityEnum::Critical);
+			~overrideException();
+
+		private:
+			severityEnum original;
+		};
+
 		CAGE_API void setGlobalBreakpointOverride(bool enable);
 		CAGE_API void setGlobalAssertOverride(bool enable);
+		CAGE_API void setGlobalExceptionOverride(severityEnum severity);
 	}
 
 	namespace privat
@@ -151,52 +143,31 @@ namespace cage
 
 	struct CAGE_API exception
 	{
-		explicit exception(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept;
+		explicit exception(const char *file, uint32 line, const char *function, severityEnum severity, const char *message) noexcept;
 		virtual ~exception() noexcept;
+
+		void makeLog();
 		virtual void log();
-#ifdef CAGE_DEBUG
+
 		const char *file;
 		const char *function;
-		uint32 line;
-#endif
 		const char *message;
+		uint32 line;
 		severityEnum severity;
 	};
 
 	struct CAGE_API notImplemented : public exception
 	{
-		explicit notImplemented(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS) noexcept;
+		explicit notImplemented(const char *file, uint32 line, const char *function, severityEnum severity, const char *message) noexcept;
 		virtual void log();
 	};
 
-	struct CAGE_API outOfMemory : public exception
+	struct CAGE_API systemError : public exception
 	{
-		explicit outOfMemory(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uintPtr memory) noexcept;
-		virtual void log();
-		uintPtr memory;
-	};
-
-	struct CAGE_API codeException : public exception
-	{
-		explicit codeException(GCHL_EXCEPTION_GENERATE_CTOR_PARAMS, uint32 code) noexcept;
+		explicit systemError(const char *file, uint32 line, const char *function, severityEnum severity, const char *message, uint32 code) noexcept;
 		virtual void log();
 		uint32 code;
 	};
-
-	namespace detail
-	{
-		struct CAGE_API overrideException
-		{
-			explicit overrideException(severityEnum severity = severityEnum::Critical);
-			~overrideException();
-
-		private:
-			severityEnum original;
-		};
-
-		CAGE_API void setGlobalExceptionOverride(severityEnum severity);
-		CAGE_API severityEnum getExceptionSilenceSeverity();
-	}
 
 	CAGE_API uint64 getApplicationTime();
 
