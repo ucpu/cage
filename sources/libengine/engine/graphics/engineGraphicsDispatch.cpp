@@ -150,6 +150,45 @@ namespace cage
 			cameraEffectsFlags cameraEffects;
 		};
 
+		struct uboCacheStruct
+		{
+			// double buffered ring buffer of uniform buffers :D
+			std::vector<holder<uniformBuffer>> data;
+			uint32 current, last, prev;
+
+			uboCacheStruct() : current(0), last(0), prev(0)
+			{
+				data.reserve(200);
+				data.resize(10);
+			}
+
+			uniformBuffer *get()
+			{
+				if ((current + 1) % data.size() == prev)
+				{
+					// grow the buffer
+					data.insert(data.begin() + prev, holder<uniformBuffer>());
+					prev++;
+					if (last > current)
+						last++;
+				}
+				auto &c = data[current];
+				current = (current + 1) % data.size();
+				if (!c)
+				{
+					c = newUniformBuffer({});
+					c->setDebugName("uboCache");
+				}
+				return &*c;
+			}
+
+			void frame()
+			{
+				prev = last;
+				last = current;
+			}
+		};
+
 		struct graphicsDispatchHolders
 		{
 			holder<frameBuffer> gBufferTarget;
@@ -166,11 +205,9 @@ namespace cage
 			holder<renderTexture> bloomTexture2;
 			holder<renderTexture> depthTexture;
 
-			holder<uniformBuffer> viewportDataBuffer;
-			holder<uniformBuffer> ssaoDataBuffer;
 			holder<uniformBuffer> ssaoPointsBuffer;
-			holder<uniformBuffer> finalScreenDataBuffer;
-			std::vector<holder<uniformBuffer>> disposableUbosArray;
+			uboCacheStruct uboCacheLarge;
+			uboCacheStruct uboCacheSmall;
 
 			std::vector<shadowmapBufferStruct> shadowmaps2d, shadowmapsCube;
 			std::vector<visualizableTextureStruct> visualizableTextures;
@@ -256,11 +293,13 @@ namespace cage
 
 			void useDisposableUbo(uint32 bindIndex, void *data, uint32 size)
 			{
-				holder<uniformBuffer> ubo = newUniformBuffer();
+				uniformBuffer *ubo = size > 256 ? uboCacheLarge.get() : uboCacheSmall.get();
 				ubo->bind();
-				ubo->writeWhole(data, size, GL_STREAM_DRAW);
+				if (ubo->getSize() < size)
+					ubo->writeWhole(data, size, GL_DYNAMIC_DRAW);
+				else
+					ubo->writeRange(data, 0, size);
 				ubo->bind(bindIndex);
-				disposableUbosArray.push_back(templates::move(ubo));
 			}
 
 			void bindGBufferTextures()
@@ -546,8 +585,7 @@ namespace cage
 						s.params = vec4(pass->ssao.strength, pass->ssao.bias, pass->ssao.power, pass->ssao.worldRadius);
 						s.ambientLight = vec4(pass->shaderViewport.ambientLight);
 						s.iparams[0] = pass->ssao.samplesCount;
-						ssaoDataBuffer->bind();
-						ssaoDataBuffer->writeRange(&s, 0, sizeof(ssaoShaderStruct));
+						useDisposableUbo(CAGE_SHADER_UNIBLOCK_SSAO, &s, sizeof(ssaoShaderStruct));
 					}
 					{ // generate
 						renderTarget->colorTexture(0, ambientOcclusionTexture1.get());
@@ -716,8 +754,7 @@ namespace cage
 						f.gamma = 1.0 / pass->gamma;
 					else
 						f.gamma = 1.0;
-					finalScreenDataBuffer->bind();
-					finalScreenDataBuffer->writeRange(&f, 0, sizeof(f));
+					useDisposableUbo(CAGE_SHADER_UNIBLOCK_FINALSCREEN, &f, sizeof(finalScreenShaderStruct));
 					shaderFinalScreen->bind();
 					renderEffect();
 				}
@@ -756,8 +793,7 @@ namespace cage
 
 			void renderPass(renderPassStruct *pass)
 			{
-				viewportDataBuffer->bind();
-				viewportDataBuffer->writeRange(&pass->shaderViewport, 0, sizeof(renderPassStruct::shaderViewportStruct));
+				useDisposableUbo(CAGE_SHADER_UNIBLOCK_VIEWPORT, &pass->shaderViewport, sizeof(renderPassStruct::shaderViewportStruct));
 				viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
 				glEnable(GL_DEPTH_TEST);
 				glEnable(GL_SCISSOR_TEST);
@@ -865,12 +901,6 @@ namespace cage
 				renderTarget = newFrameBufferDraw();
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
-				viewportDataBuffer = newUniformBuffer();
-				viewportDataBuffer->setDebugName("viewportDataBuffer");
-				viewportDataBuffer->writeWhole(nullptr, sizeof(renderPassStruct::shaderViewportStruct), GL_DYNAMIC_DRAW);
-				ssaoDataBuffer = newUniformBuffer();
-				ssaoDataBuffer->setDebugName("ssaoDataBuffer");
-				ssaoDataBuffer->writeWhole(nullptr, sizeof(ssaoShaderStruct), GL_DYNAMIC_DRAW);
 				ssaoPointsBuffer = newUniformBuffer();
 				ssaoPointsBuffer->setDebugName("ssaoPointsBuffer");
 				{
@@ -879,9 +909,6 @@ namespace cage
 					pointsForSsaoShader(points, count);
 					ssaoPointsBuffer->writeWhole((void*)points, count * sizeof(vec4), GL_STATIC_DRAW);
 				}
-				finalScreenDataBuffer = newUniformBuffer();
-				finalScreenDataBuffer->setDebugName("finalScreenDataBuffer");
-				finalScreenDataBuffer->writeWhole(nullptr, sizeof(finalScreenShaderStruct), GL_DYNAMIC_DRAW);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
@@ -967,11 +994,9 @@ namespace cage
 					CAGE_CHECK_GL_ERROR_DEBUG();
 				}
 
-				viewportDataBuffer->bind(CAGE_SHADER_UNIBLOCK_VIEWPORT);
-				finalScreenDataBuffer->bind(CAGE_SHADER_UNIBLOCK_FINALSCREEN);
-				ssaoDataBuffer->bind(CAGE_SHADER_UNIBLOCK_SSAO);
 				ssaoPointsBuffer->bind(CAGE_SHADER_UNIBLOCK_SSAO_POINTS);
-				disposableUbosArray.clear();
+				uboCacheLarge.frame();
+				uboCacheSmall.frame();
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
 				{ // render all passes

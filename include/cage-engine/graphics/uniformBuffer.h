@@ -17,6 +17,8 @@ namespace cage
 		void writeWhole(void *data, uint32 size, uint32 usage = 0);
 		void writeRange(void *data, uint32 offset, uint32 size);
 
+		uint32 getSize() const;
+
 		static uint32 getAlignmentRequirement();
 	};
 

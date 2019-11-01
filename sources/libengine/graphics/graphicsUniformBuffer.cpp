@@ -143,6 +143,12 @@ namespace cage
 		}
 	}
 
+	uint32 uniformBuffer::getSize() const
+	{
+		const uniformBufferImpl *impl = (const uniformBufferImpl*)this;
+		return impl->size;
+	}
+
 	namespace
 	{
 		uint32 getAlignmentRequirementImpl()
