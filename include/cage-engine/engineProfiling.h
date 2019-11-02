@@ -45,7 +45,6 @@ namespace cage
 		uint32 keyToggleRenderMissingMeshes;
 		uint32 keyToggleRenderSkeletonBones;
 		uint32 keyToggleStereo;
-		uint32 keyToggleFullscreen;
 		modifiersFlags keyModifiers;
 		engineProfilingScopeEnum profilingScope;
 		engineProfilingModeEnum profilingMode;

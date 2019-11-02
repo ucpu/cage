@@ -69,6 +69,11 @@ namespace cage
 	CAGE_API holder<configIni> configGenerateIni(const string &prefix);
 	CAGE_API void configLoadIni(const string &filename, const string &prefix);
 	CAGE_API void configSaveIni(const string &filename, const string &prefix);
+
+	namespace detail
+	{
+		CAGE_API string getConfigAppPrefix();
+	}
 }
 
 #endif // guard_config_h_B892887C89784EDE9E816F4BCF6EFB0F

@@ -6,7 +6,6 @@ namespace cage
 	class CAGE_API fpsCamera : private immovable
 	{
 	public:
-		void setEntity(entity *ent = nullptr);
 		vec2 turningSpeed;
 		real wheelSpeed;
 		real movementSpeed;
@@ -17,7 +16,9 @@ namespace cage
 		bool keysWsadEnabled;
 		bool keysArrowsEnabled;
 		bool freeMove; // true -> like a space ship (ignores pitch limits), false -> fps (uses pitch limits)
+
 		fpsCamera();
+		void setEntity(entity *ent = nullptr);
 	};
 
 	CAGE_API holder<fpsCamera> newFpsCamera(entity *ent = nullptr);

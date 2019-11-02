@@ -47,5 +47,7 @@ namespace cage
 	struct listenerComponent;
 
 	class engineProfiling;
-	class cameraController;
+	class fpsCamera;
+	struct fullscreenSwitcherCreateConfig;
+	class fullscreenSwitcher;
 }

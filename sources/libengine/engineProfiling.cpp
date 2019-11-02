@@ -23,7 +23,6 @@ namespace cage
 		keyToggleRenderMissingMeshes(294), // f5
 		keyToggleRenderSkeletonBones(295), // f6
 		keyToggleStereo(298), // f9
-		keyToggleFullscreen(300), // f11
 		keyModifiers(modifiersFlags::Ctrl),
 		profilingScope(engineProfilingScopeEnum::Full),
 		profilingMode(engineProfilingModeEnum::Maximum),
@@ -312,11 +311,6 @@ namespace cage
 					if (key == keyToggleRenderSkeletonBones)
 					{
 						confRenderSkeletonBones = !confRenderSkeletonBones;
-						return true;
-					}
-					if (key == keyToggleFullscreen)
-					{
-						setWindowFullscreen(!window()->isFullscreen());
 						return true;
 					}
 				}

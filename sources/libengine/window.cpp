@@ -582,8 +582,8 @@ namespace cage
 				glfwShowWindow(impl->window);
 			if (impl->isMinimized() || impl->isMaximized())
 				glfwRestoreWindow(impl->window);
-			glfwSetWindowAttrib(impl->window, GLFW_DECORATED, (flags & windowFlags::Border) == windowFlags::Border);
-			glfwSetWindowAttrib(impl->window, GLFW_RESIZABLE, (flags & windowFlags::Resizeable) == windowFlags::Resizeable);
+			glfwSetWindowAttrib(impl->window, GLFW_DECORATED, any(flags & windowFlags::Border));
+			glfwSetWindowAttrib(impl->window, GLFW_RESIZABLE, any(flags & windowFlags::Resizeable));
 		}
 	}
 

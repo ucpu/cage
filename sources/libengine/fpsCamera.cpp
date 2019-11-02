@@ -9,13 +9,13 @@
 #include <cage-engine/graphics.h>
 #include <cage-engine/window.h>
 #include <cage-engine/engine.h>
-#include <cage-engine/cameraController.h>
+#include <cage-engine/fpsCamera.h>
 
 namespace cage
 {
 	namespace
 	{
-		class cameraControllerImpl : public cameraController
+		class fpsCameraImpl : public fpsCamera
 		{
 		public:
 			windowEventListeners listeners;
@@ -29,28 +29,18 @@ namespace cage
 			entity *ent;
 			bool keysPressedArrows[6]; // wsadeq
 
-			cameraControllerImpl(entity *ent) : ent(ent)
+			fpsCameraImpl(entity *ent) : ent(ent)
 			{
 				for (uint32 i = 0; i < 6; i++)
 					keysPressedArrows[i] = false;
-				movementSpeed = 1;
-				wheelSpeed = 10;
-				turningSpeed = vec2(0.008, 0.008);
-				pitchLimitUp = degs(80);
-				pitchLimitDown = degs(-80);
-				mouseButton = (mouseButtonsFlags)0;
-				keysEqEnabled = true;
-				keysWsadEnabled = true;
-				keysArrowsEnabled = true;
-				freeMove = false;
 
-				listeners.mousePress.bind<cameraControllerImpl, &cameraControllerImpl::mousePress>(this);
-				listeners.mouseMove.bind<cameraControllerImpl, &cameraControllerImpl::mouseMove>(this);
-				listeners.mouseWheel.bind<cameraControllerImpl, &cameraControllerImpl::mouseWheel>(this);
-				listeners.keyPress.bind<cameraControllerImpl, &cameraControllerImpl::keyPress>(this);
-				listeners.keyRelease.bind<cameraControllerImpl, &cameraControllerImpl::keyRelease>(this);
+				listeners.mousePress.bind<fpsCameraImpl, &fpsCameraImpl::mousePress>(this);
+				listeners.mouseMove.bind<fpsCameraImpl, &fpsCameraImpl::mouseMove>(this);
+				listeners.mouseWheel.bind<fpsCameraImpl, &fpsCameraImpl::mouseWheel>(this);
+				listeners.keyPress.bind<fpsCameraImpl, &fpsCameraImpl::keyPress>(this);
+				listeners.keyRelease.bind<fpsCameraImpl, &fpsCameraImpl::keyRelease>(this);
 				listeners.attachAll(window());
-				updateListener.bind<cameraControllerImpl, &cameraControllerImpl::update>(this);
+				updateListener.bind<fpsCameraImpl, &fpsCameraImpl::update>(this);
 				controlThread().update.attach(updateListener);
 			}
 
@@ -206,14 +196,17 @@ namespace cage
 		};
 	}
 
-	void cameraController::setEntity(entity *ent)
+	fpsCamera::fpsCamera() : movementSpeed(1), wheelSpeed(10), turningSpeed(0.008), pitchLimitUp(degs(80)), pitchLimitDown(degs(-80)), mouseButton(mouseButtonsFlags::None), keysEqEnabled(true), keysWsadEnabled(true), keysArrowsEnabled(true), freeMove(false)
+	{}
+
+	void fpsCamera::setEntity(entity *ent)
 	{
-		cameraControllerImpl *impl = (cameraControllerImpl*)this;
+		fpsCameraImpl *impl = (fpsCameraImpl*)this;
 		impl->ent = ent;
 	}
 
-	holder<cameraController> newCameraController(entity *ent)
+	holder<fpsCamera> newFpsCamera(entity *ent)
 	{
-		return detail::systemArena().createImpl<cameraController, cameraControllerImpl>(ent);
+		return detail::systemArena().createImpl<fpsCamera, fpsCameraImpl>(ent);
 	}
 }

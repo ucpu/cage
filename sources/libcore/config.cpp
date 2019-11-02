@@ -91,9 +91,9 @@ namespace cage
 				{
 					holder<configIni> ini = newConfigIni();
 					ini->load(filename);
-					for (string section : ini->sections())
+					for (const string &section : ini->sections())
 					{
-						for (string name : ini->items(section))
+						for (const string &name : ini->items(section))
 						{
 							string value = ini->getString(section, name);
 							directVariable(prefix + section + "." + name)->setDynamic(value);
@@ -111,9 +111,8 @@ namespace cage
 
 		int loadGlobalConfiguration()
 		{
-			string efp = detail::getExecutableFullPathNoExe();
-			string en = pathExtractFilename(efp);
-			string ep = pathExtractPath(efp);
+			string en = detail::getConfigAppPrefix();
+			string ep = pathExtractPath(detail::getExecutableFullPath());
 			string wp = pathWorkingDir();
 			if (!loadConfigFile(pathJoin(wp, "cage.ini"), ""))
 				loadConfigFile(pathJoin(ep, "cage.ini"), "");
@@ -434,27 +433,35 @@ namespace cage
 		ini->save(filename);
 	}
 
+	namespace detail
+	{
+		string getConfigAppPrefix()
+		{
+			return pathExtractFilename(detail::getExecutableFullPathNoExe());
+		}
+	}
+
 	namespace
 	{
-		configBool autoBackup("cage.config.autoBackup", false);
+		configBool confAutoSave("cage.config.autoSave", false);
 
-		struct autoConfigBackupClass
+		struct autoSaveConfig
 		{
-			~autoConfigBackupClass()
+			~autoSaveConfig()
 			{
-				if (autoBackup)
+				if (confAutoSave)
 				{
 					try
 					{
-						configSaveIni(detail::getExecutableFullPathNoExe() + "-backup.ini", "");
+						configSaveIni(pathExtractFilename(detail::getExecutableFullPathNoExe()) + ".ini", detail::getConfigAppPrefix());
 					}
 					catch (...)
 					{
-						CAGE_LOG(severityEnum::Warning, "config", "failed to save configuration backup");
+						CAGE_LOG(severityEnum::Warning, "config", "failed to save configuration");
 					}
 				}
 			}
-		} autoConfigBackupInstance;
+		} autoSaveConfigInstance;
 	}
 }
 
