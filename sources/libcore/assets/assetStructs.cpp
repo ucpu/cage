@@ -10,7 +10,7 @@
 
 namespace cage
 {
-	assetContext::assetContext() : compressedSize(0), originalSize(0), assetPointer(nullptr), returnData(nullptr), compressedData(nullptr), originalData(nullptr), realName(0), internationalName(0), assetFlags(0) {}
+	assetContext::assetContext() : compressedSize(0), originalSize(0), assetPointer(nullptr), returnData(nullptr), compressedData(nullptr), originalData(nullptr), realName(0), aliasName(0), assetFlags(0) {}
 	assetScheme::assetScheme() : schemePointer(nullptr), threadIndex(0) {}
 
 	assetScheme genAssetSchemePack(uint32 threadIndex)

@@ -6,4 +6,3 @@ index = 10
 display = shader version
 type = string
 default = 440 core
-

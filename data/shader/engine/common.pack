@@ -2,11 +2,5 @@
 []
 effects/effects.pack
 visualize/visualize.pack
-
-[]
 blit.glsl
-lighting.glsl
 depth.glsl
-gBuffer.glsl
-translucent.glsl
-

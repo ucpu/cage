@@ -37,6 +37,7 @@ namespace cage
 	{
 		configBool confAutoAssetListen("cage.assets.listen", false);
 		configUint32 confOptickFrameMode("cage.profiling.frameMode", 1);
+		configBool confSimpleShaders("cage.graphics.simpleShaders", false);
 
 		struct graphicsUploadThreadClass
 		{
@@ -121,6 +122,7 @@ namespace cage
 			uint64 currentControlTime;
 			uint64 currentSoundTime;
 			uint32 assetSyncAttempts;
+			uint32 assetShaderTier;
 
 			engineDataStruct(const engineCreateConfig &config);
 
@@ -617,6 +619,8 @@ namespace cage
 					assets->defineScheme<soundSource>(assetSchemeIndexSoundSource, genAssetSchemeSoundSource(soundThreadClass::threadIndex, sound.get()));
 					// cage pack
 					assets->add(hashString("cage/cage.pack"));
+					assetShaderTier = confSimpleShaders ? hashString("cage/shader/engine/low.pack") : hashString("cage/shader/engine/high.pack");
+					assets->add(assetShaderTier);
 				}
 
 				{ // initialize assets change listening
@@ -716,6 +720,7 @@ namespace cage
 
 				{ // unload assets
 					assets->remove(hashString("cage/cage.pack"));
+					assets->remove(assetShaderTier);
 					while (assets->countTotal() > 0)
 					{
 						try
@@ -781,7 +786,7 @@ namespace cage
 
 		holder<engineDataStruct> engineData;
 
-		engineDataStruct::engineDataStruct(const engineCreateConfig &config) : engineStarted(0), stopping(false), currentControlTime(0), currentSoundTime(0), assetSyncAttempts(0)
+		engineDataStruct::engineDataStruct(const engineCreateConfig &config) : engineStarted(0), stopping(false), currentControlTime(0), currentSoundTime(0), assetSyncAttempts(0), assetShaderTier(0)
 		{
 			CAGE_LOG(severityEnum::Info, "engine", "creating engine");
 			graphicsDispatchCreate(config);

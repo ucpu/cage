@@ -36,8 +36,6 @@ namespace cage
 	{
 		configBool confRenderMissingMeshes("cage.graphics.renderMissingMeshes", false);
 		configBool confRenderSkeletonBones("cage.graphics.renderSkeletonBones", false);
-		configBool confSimpleLighting("cage.graphics.simpleLighting", false);
-		configBool confSimpleShadows("cage.graphics.simpleShadows", false);
 		configBool confNoAmbientOcclusion("cage.graphics.disableAmbientOcclusion", false);
 		configBool confNoBloom("cage.graphics.disableBloom", false);
 		configBool confNoMotionBlur("cage.graphics.disableMotionBlur", false);
@@ -969,7 +967,7 @@ namespace cage
 				}
 
 				assetManager *ass = assets();
-				if (!ass->ready(hashString("cage/cage.pack")))
+				if (!ass->ready(hashString("cage/cage.pack")) || !ass->ready(hashString("cage/shader/engine/engine.pack")))
 					return;
 
 				if (!graphicsDispatch->shaderBlit)
@@ -1112,9 +1110,6 @@ namespace cage
 			uint32 n = mesh->getTextureName(i);
 			textures[i] = n ? ass->get<assetSchemeIndexRenderTexture, renderTexture>(n) : nullptr;
 		}
-
-		shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_LIGHTINGQUALITY, confSimpleLighting ? CAGE_SHADER_ROUTINEPROC_LIGHTINGQUALITYPHONG : CAGE_SHADER_ROUTINEPROC_LIGHTINGQUALITYPBR);
-		shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_SHADOWSQUALITY, confSimpleShadows ? CAGE_SHADER_ROUTINEPROC_SHADOWSQUALITYFAST : CAGE_SHADER_ROUTINEPROC_SHADOWSQUALITYGOOD);
 		shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_SKELETON, mesh->getSkeletonBones() > 0 ? CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION : CAGE_SHADER_ROUTINEPROC_SKELETONNOTHING);
 
 		if (textures[CAGE_SHADER_TEXTURE_ALBEDO])
@@ -1175,8 +1170,6 @@ namespace cage
 	lightsStruct::lightsStruct(lightTypeEnum lightType, sint32 shadowmap, uint32 max) : shaderLights(nullptr), next(nullptr), count(0), max(max), shadowmap(shadowmap), lightType(lightType)
 	{
 		shaderLights = (shaderLightStruct*)graphicsPrepare->dispatchArena.allocate(sizeof(shaderLightStruct) * max, alignof(shaderLightStruct));
-		shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_LIGHTINGQUALITY, confSimpleLighting ? CAGE_SHADER_ROUTINEPROC_LIGHTINGQUALITYPHONG : CAGE_SHADER_ROUTINEPROC_LIGHTINGQUALITYPBR);
-		shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_SHADOWSQUALITY, confSimpleShadows ? CAGE_SHADER_ROUTINEPROC_SHADOWSQUALITYFAST : CAGE_SHADER_ROUTINEPROC_SHADOWSQUALITYGOOD);
 		switch (lightType)
 		{
 		case lightTypeEnum::Directional:

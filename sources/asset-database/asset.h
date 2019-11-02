@@ -8,7 +8,7 @@ struct assetStruct
 {
 	assetStruct();
 	string name;
-	string internationalName;
+	string aliasName;
 	string scheme;
 	string databank;
 	stringMap fields;
@@ -20,7 +20,7 @@ struct assetStruct
 	void load(fileHandle *fileName);
 	void save(fileHandle *fileName) const;
 	string outputPath() const;
-	string internationalizedPath() const;
+	string aliasPath() const;
 	bool operator < (const assetStruct &other) const
 	{
 		return stringCompareFast(name, other.name);

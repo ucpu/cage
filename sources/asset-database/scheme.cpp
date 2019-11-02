@@ -26,6 +26,16 @@ void schemeStruct::parse(configIni *ini)
 		CAGE_THROW_ERROR(exception, "empty scheme index field");
 	}
 
+	{
+		schemeFieldStruct fld;
+		fld.name = "alias";
+		fld.display = "alias";
+		fld.hint = "common name to reference the asset in multipacks";
+		fld.type = "string";
+		CAGE_ASSERT(fld.valid());
+		schemeFields.insert(templates::move(fld));
+	}
+
 	for (const string &section : ini->sections())
 	{
 		if (section == "scheme")

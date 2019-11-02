@@ -26,13 +26,6 @@ void processTextpack()
 	CAGE_LOG(severityEnum::Info, logComponentName, string() + "loaded " + texts.size() + " texts");
 
 	assetHeader h = initializeAssetHeaderStruct();
-	string intr = properties("internationalName");
-	if (!intr.empty())
-	{
-		intr = pathJoin(pathExtractPath(inputName), intr);
-		writeLine(string() + "internationalName = " + intr);
-		h.internationalName = hashString(intr.c_str());
-	}
 	h.originalSize = sizeof(uint32) + numeric_cast<uint32>(texts.size()) * sizeof(uint32) * 2;
 	for (auto it : texts)
 		h.originalSize += numeric_cast<uint32>(it.second.length());

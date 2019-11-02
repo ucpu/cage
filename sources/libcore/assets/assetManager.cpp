@@ -24,7 +24,7 @@
 namespace cage
 {
 	configUint32 logLevel("cage.assets.logLevel", 0);
-#define ASS_LOG(LEVEL, ASS, MSG) { if (logLevel >= (LEVEL)) { CAGE_LOG(severityEnum::Info, "assetManager", string() + "asset '" + (ASS)->textName + "' (" + (ASS)->realName + " / " + (ASS)->internationalName + "): " + MSG); } }
+#define ASS_LOG(LEVEL, ASS, MSG) { if (logLevel >= (LEVEL)) { CAGE_LOG(severityEnum::Info, "assetManager", string() + "asset '" + (ASS)->textName + "' (" + (ASS)->realName + " / " + (ASS)->aliasName + "): " + MSG); } }
 
 	namespace
 	{
@@ -48,11 +48,11 @@ namespace cage
 		{
 			std::vector<uint32> dependencies;
 			std::vector<uint32> dependenciesNew;
-			uint32 internationalizedPrevious;
+			uint32 aliasPrevious;
 			uint32 scheme;
 			uint32 references;
 			std::atomic<bool> processing, ready, error, dependenciesDoneFlag, fabricated;
-			assetContextPrivateStruct() : internationalizedPrevious(0), scheme(m), references(0), processing(false), ready(false), error(true), dependenciesDoneFlag(false), fabricated(false) {}
+			assetContextPrivateStruct() : aliasPrevious(0), scheme(m), references(0), processing(false), ready(false), error(true), dependenciesDoneFlag(false), fabricated(false) {}
 		};
 
 		struct assetSchemePrivateStruct : public assetScheme
@@ -70,7 +70,7 @@ namespace cage
 		class assetManagerImpl : public assetManager
 		{
 		public:
-			std::map<uint32, std::set<assetContextPrivateStruct*>> interNames;
+			std::map<uint32, std::set<assetContextPrivateStruct*>> aliasNames;
 			std::vector<assetSchemePrivateStruct> schemes;
 			robin_hood::unordered_map<uint32, assetContextPrivateStruct*> index;
 			holder<tcpConnection> listener;
@@ -134,7 +134,7 @@ namespace cage
 				CAGE_ASSERT(countTotal == 0, countTotal);
 				CAGE_ASSERT(countProcessing == 0, countProcessing);
 				CAGE_ASSERT(index.size() == 0, index.size());
-				CAGE_ASSERT(interNames.size() == 0, interNames.size());
+				CAGE_ASSERT(aliasNames.size() == 0, aliasNames.size());
 				destroying = true;
 				queueLoadFile->push(nullptr);
 				queueDecompression->push(nullptr);
@@ -169,13 +169,13 @@ namespace cage
 					CAGE_ASSERT(!ass->fabricated);
 					CAGE_ASSERT(ass->originalData == nullptr);
 					CAGE_ASSERT(ass->compressedData == nullptr);
-					CAGE_ASSERT(ass->internationalizedPrevious == 0);
+					CAGE_ASSERT(ass->aliasPrevious == 0);
 					OPTICK_TAG("realName", ass->realName);
-					ass->internationalizedPrevious = ass->internationalName;
+					ass->aliasPrevious = ass->aliasName;
 					ass->scheme = m;
 					ass->assetFlags = 0;
 					ass->compressedSize = ass->originalSize = 0;
-					ass->internationalName = 0;
+					ass->aliasName = 0;
 					ass->textName = string() + "<" + ass->realName + ">";
 					ass->dependenciesNew.clear();
 					ass->compressedData = ass->originalData = nullptr;
@@ -202,8 +202,7 @@ namespace cage
 						ass->assetFlags = h->flags;
 						ass->compressedSize = h->compressedSize;
 						ass->originalSize = h->originalSize;
-						ass->internationalName = h->internationalName;
-						//ass->textName = detail::stringBase<sizeof(h->textName)>(h->textName);
+						ass->aliasName = h->aliasName;
 						ass->textName = h->textName;
 						OPTICK_TAG("textName", ass->textName.c_str());
 						ass->dependenciesNew.resize(h->dependenciesCount);
@@ -371,7 +370,7 @@ namespace cage
 						else
 						{
 							ASS_LOG(2, ass, "destroy");
-							interNameClear(ass->internationalName, ass);
+							interNameClear(ass->aliasName, ass);
 							index.erase(ass->realName);
 							detail::systemArena().destroy<assetContextPrivateStruct>(ass);
 							CAGE_ASSERT(countTotal > 0);
@@ -439,12 +438,12 @@ namespace cage
 							queueWaitDependencies->push(ass);
 							return (hackQueueWaitCounter++ % queueWaitDependencies->estimatedSize()) != 0;
 						}
-						if (ass->internationalName != ass->internationalizedPrevious)
+						if (ass->aliasName != ass->aliasPrevious)
 						{
-							interNameSet(ass->internationalName, ass);
-							interNameClear(ass->internationalizedPrevious, ass);
+							interNameSet(ass->aliasName, ass);
+							interNameClear(ass->aliasPrevious, ass);
 						}
-						ass->internationalizedPrevious = 0;
+						ass->aliasPrevious = 0;
 						ass->dependenciesDoneFlag = false;
 						detail::systemArena().deallocate(ass->compressedData);
 						ass->compressedData = nullptr;
@@ -541,7 +540,7 @@ namespace cage
 				if (interName == 0)
 					return;
 				CAGE_ASSERT(ass);
-				auto &s = interNames[interName];
+				auto &s = aliasNames[interName];
 				CAGE_ASSERT(s.find(ass) == s.end());
 				s.insert(ass);
 				if (!index.count(interName))
@@ -554,13 +553,13 @@ namespace cage
 					return;
 				CAGE_ASSERT(ass);
 				CAGE_ASSERT(index.count(interName));
-				CAGE_ASSERT(interNames.find(interName) != interNames.end());
-				auto &s = interNames[interName];
+				CAGE_ASSERT(aliasNames.find(interName) != aliasNames.end());
+				auto &s = aliasNames[interName];
 				CAGE_ASSERT(s.find(ass) != s.end());
 				s.erase(ass);
 				index.erase(interName);
 				if (s.empty())
-					interNames.erase(interName);
+					aliasNames.erase(interName);
 				else
 					index[interName] = *s.begin();
 			}
@@ -728,7 +727,7 @@ namespace cage
 		assetManagerImpl *impl = (assetManagerImpl*)this;
 		assetContextPrivateStruct *ass = impl->index.at(assetName);
 		CAGE_ASSERT(ass->references > 0);
-		CAGE_ASSERT(ass->realName == assetName, "assets cannot be removed by their internationalized names");
+		CAGE_ASSERT(ass->realName == assetName, "assets cannot be removed by their alias names");
 		ass->references--;
 		if (ass->references == 0)
 			impl->assetStartRemoving(ass);

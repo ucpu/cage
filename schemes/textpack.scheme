@@ -1,9 +1,3 @@
 [scheme]
 processor = cage-asset-processor textpack
 index = 2
-
-[internationalName]
-display = international name
-hint = common name alias used to reference the asset in multilingual environment
-type = string
-

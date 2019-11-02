@@ -191,7 +191,7 @@ namespace
 		ass.needNotify = true;
 		ass.files.clear();
 		ass.references.clear();
-		ass.internationalName = "";
+		ass.aliasName = "";
 		schemeStruct *scheme = schemes.retrieve(ass.scheme);
 		CAGE_ASSERT(scheme, "asset has invalid scheme");
 		try
@@ -240,10 +240,10 @@ namespace
 						ass.files.insert(line);
 					else if (param == "ref")
 						ass.references.insert(line);
-					else if (param == "internationalName")
+					else if (param == "alias")
 					{
-						if (ass.internationalName.empty())
-							ass.internationalName = line;
+						if (ass.aliasName.empty())
+							ass.aliasName = line;
 						else
 							CAGE_THROW_WARNING(exception, "assets international name cannot be overridden");
 					}
@@ -579,11 +579,11 @@ namespace
 		{
 			assetStruct &ass = *it;
 
-			// check internationalized name collisions
-			if (!ass.internationalName.empty() && outputHashes.find(ass.internationalizedPath()) != outputHashes.end())
+			// check alias name collisions
+			if (!ass.aliasName.empty() && outputHashes.find(ass.aliasPath()) != outputHashes.end())
 			{
 				ass.corrupted = true;
-				CAGE_LOG(severityEnum::Warning, "database", string() + "asset '" + ass.name + "' in databank '" + ass.databank + "' with internationalized name '" + ass.internationalName + "' collides with another asset");
+				CAGE_LOG(severityEnum::Warning, "database", string() + "asset '" + ass.name + "' in databank '" + ass.databank + "' with alias name '" + ass.aliasName + "' collides with another asset");
 			}
 
 			// warn about missing references

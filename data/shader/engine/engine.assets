@@ -1,13 +1,35 @@
 
 []
 scheme = pack
-engine.pack
+common.pack
+
+[]
+scheme = pack
+alias = engine.pack
+low.pack
+high.pack
 
 []
 scheme = shader
 blit.glsl
-lighting.glsl
 depth.glsl
-gBuffer.glsl
-translucent.glsl
+
+
+[]
+scheme = shader
+alias = lighting.glsl
+lighting.glsl?high
+lighting.glsl?low
+
+[]
+scheme = shader
+alias = gBuffer.glsl
+gBuffer.glsl?high
+gBuffer.glsl?low
+
+[]
+scheme = shader
+alias = translucent.glsl
+translucent.glsl?high
+translucent.glsl?low
 

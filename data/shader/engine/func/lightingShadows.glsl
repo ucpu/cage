@@ -48,12 +48,11 @@ $end
 
 float sampleShadowMap2d(vec3 shadowPos)
 {
-	switch (uniRoutines[CAGE_SHADER_ROUTINEUNIF_SHADOWSQUALITY])
-	{
-	case CAGE_SHADER_ROUTINEPROC_SHADOWSQUALITYGOOD: return sampleShadowMap2dGood(shadowPos);
-	case CAGE_SHADER_ROUTINEPROC_SHADOWSQUALITYFAST: return sampleShadowMap2dFast(shadowPos);
-	default: return 0.0;
-	}
+$if inputSpec=high
+	return sampleShadowMap2dGood(shadowPos);
+$else
+	return sampleShadowMap2dFast(shadowPos);
+$end
 }
 
 float sampleShadowMapCube(vec3 shadowPos)

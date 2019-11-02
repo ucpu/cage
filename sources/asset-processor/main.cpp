@@ -25,7 +25,15 @@ const char *logComponentName;
 
 assetHeader initializeAssetHeaderStruct()
 {
-	return initializeAssetHeader(inputName, numeric_cast<uint16>(schemeIndex));
+	assetHeader h = initializeAssetHeader(inputName, numeric_cast<uint16>(schemeIndex));
+	string intr = properties("alias");
+	if (!intr.empty())
+	{
+		intr = pathJoin(pathExtractPath(inputName), intr);
+		writeLine(string() + "alias = " + intr);
+		h.aliasName = hashString(intr.c_str());
+	}
+	return h;
 }
 
 namespace

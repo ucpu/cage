@@ -8,6 +8,7 @@
 #include <cage-core/timer.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
+#include <cage-core/hashString.h>
 #include <cage-engine/opengl.h>
 
 namespace
@@ -203,9 +204,9 @@ namespace
 		{
 			return !evalExpToBool(evalExp(l.subString(1, m)));
 		}
-		if (defines.find(l) != defines.end())
+		if (defines.count(l))
 		{
-			return eval(defines[l]);
+			return defines[l];
 		}
 		return l;
 	}
@@ -453,9 +454,7 @@ void processShader()
 	writeLine(string("use=") + inputFile);
 
 	defines["cageShaderProcessor"] = "1";
-#define GCHL_GENERATE(S) defines[CAGE_STRINGIZE(S)] = S;
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, inputDirectory, inputName, outputDirectory, outputName, assetPath, schemePath, inputSpec));
-#undef GCHL_GENERATE
+	defines["inputSpec"] = inputSpec;
 
 	parse(inputFileName);
 
