@@ -80,7 +80,7 @@ namespace cage
 				if (inputs)
 				{
 					uint32 count = soundio_input_device_count(soundio);
-					devices.resize(count);
+					devices.reserve(count);
 					for (uint32 i = 0; i < count; i++)
 					{
 						SoundIoDevice *device = soundio_get_input_device(soundio, i);
@@ -92,7 +92,7 @@ namespace cage
 				else
 				{
 					int count = soundio_output_device_count(soundio);
-					devices.resize(count);
+					devices.reserve(count);
 					for (int i = 0; i < count; i++)
 					{
 						SoundIoDevice *device = soundio_get_output_device(soundio, i);
