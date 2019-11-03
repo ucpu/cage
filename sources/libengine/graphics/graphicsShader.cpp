@@ -42,6 +42,7 @@ namespace cage
 			sourceHolder &operator = (sourceHolder &&other)
 			{
 				std::swap(id, other.id);
+				return *this;
 			}
 
 			~sourceHolder()
