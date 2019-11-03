@@ -3,15 +3,16 @@ cmake_minimum_required(VERSION 3.2)
 # make cmake find our own provided libraries
 # the libraries provided here should have higher priority than system libraries
 set(CAGE_EXTERNALS_MODULE_PATH "${CMAKE_CURRENT_BINARY_DIR}/cmake-modules")
-set(CAGE_EXTERNALS_MODULE_PATH "${CMAKE_CURRENT_BINARY_DIR}/cmake-modules" PARENT_SCOPE)
+set(CAGE_EXTERNALS_MODULE_PATH "${CAGE_EXTERNALS_MODULE_PATH}" PARENT_SCOPE)
 list(INSERT CMAKE_MODULE_PATH 0 "${CAGE_EXTERNALS_MODULE_PATH}")
-include(cage_gen_module.cmake)
+list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(cmake/cage_gen_module.cmake)
 
 # some config
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_STANDARD 14)
 
-#ensure that all libraries are distinguishable from system libraries
+# ensure that all libraries are distinguishable from system libraries
 set(CMAKE_IMPORT_LIBRARY_PREFIX "${CMAKE_IMPORT_LIBRARY_PREFIX}cage-")
 set(CMAKE_SHARED_LIBRARY_PREFIX "${CMAKE_SHARED_LIBRARY_PREFIX}cage-")
 set(CMAKE_SHARED_MODULE_PREFIX "${CMAKE_SHARED_MODULE_PREFIX}cage-")
@@ -25,8 +26,8 @@ endif()
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -w")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
 
+# disable warnings that some files produced no symbols
 if(MSVC)
-	#disable warnings that some files produced no symbols
 	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -ignore:4221")
 	set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} -ignore:4221")
 endif()
