@@ -348,8 +348,9 @@ namespace cage
 
 	void entity::destroy()
 	{
+		CAGE_ASSERT(this); // calling free/delete on null is ok, but calling the destroy METHOD is not, and some compilers totally ignored that issue
 		entityImpl *impl = (entityImpl*)this;
-		detail::systemArena().destroy <entityImpl>(impl);
+		detail::systemArena().destroy<entityImpl>(impl);
 	}
 
 	entityManager *entity::manager() const
