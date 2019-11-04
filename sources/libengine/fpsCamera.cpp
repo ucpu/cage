@@ -20,8 +20,8 @@ namespace cage
 		public:
 			windowEventListeners listeners;
 			eventListener<void()> updateListener;
-			variableSmoothingBuffer<vec2, 2> mouseSmoother;
-			variableSmoothingBuffer<vec3, 2> moveSmoother;
+			variableSmoothingBuffer<vec2, 1> mouseSmoother;
+			variableSmoothingBuffer<vec3, 3> moveSmoother;
 			variableSmoothingBuffer<real, 2> wheelSmoother;
 			vec2 mouseMoveAccum;
 			real wheelAccum;
@@ -77,7 +77,7 @@ namespace cage
 				return false;
 			}
 
-			bool mouseWheel(sint8 wheel, modifiersFlags, const ivec2 &)
+			bool mouseWheel(sint32 wheel, modifiersFlags, const ivec2 &)
 			{
 				if (!ent)
 					return false;

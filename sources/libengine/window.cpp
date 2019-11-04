@@ -84,7 +84,6 @@ namespace cage
 				Resize,
 				Show,
 				Hide,
-				Paint,
 				FocusGain,
 				FocusLose,
 				KeyPress,
@@ -258,6 +257,7 @@ namespace cage
 			{
 				glfwDefaultWindowHints();
 				glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+				glfwWindowHint(GLFW_FOCUS_ON_SHOW, GLFW_TRUE);
 				glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
 				glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
 				glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -274,10 +274,11 @@ namespace cage
 				glfwWindowHint(GLFW_ALPHA_BITS, 0); // save some gpu memory
 				glfwWindowHint(GLFW_DEPTH_BITS, 0);
 				glfwWindowHint(GLFW_STENCIL_BITS, 0);
-				window = glfwCreateWindow(1, 1, "Cage Window", NULL, shareContext ? ((windowImpl*)shareContext)->window : nullptr);
+				window = glfwCreateWindow(1, 1, "Cage Window", NULL, shareContext ? ((windowImpl*)shareContext)->window : NULL);
 				if (!window)
 					CAGE_THROW_ERROR(exception, "failed to create window");
 				glfwSetWindowUserPointer(window, this);
+				glfwSetWindowSizeLimits(window, 160, 120, GLFW_DONT_CARE, GLFW_DONT_CARE);
 				initializeEvents();
 			}
 
@@ -483,6 +484,16 @@ namespace cage
 			impl->eventsQueueLocked.push_back(e);
 		}
 
+		void windowMaximizedCallback(GLFWwindow *w, int maximized)
+		{
+			windowImpl *impl = (windowImpl*)glfwGetWindowUserPointer(w);
+			eventStruct e;
+			e.type = eventStruct::eventType::Show; // window is visible when both maximized or restored
+			e.modifiers = getKeyModifiers(w);
+			scopeLock<syncMutex> l(impl->eventsMutex);
+			impl->eventsQueueLocked.push_back(e);
+		}
+
 		void windowFocusCallback(GLFWwindow *w, int focused)
 		{
 			windowImpl *impl = (windowImpl*)glfwGetWindowUserPointer(w);
@@ -491,16 +502,6 @@ namespace cage
 				e.type = eventStruct::eventType::FocusGain;
 			else
 				e.type = eventStruct::eventType::FocusLose;
-			e.modifiers = getKeyModifiers(w);
-			scopeLock<syncMutex> l(impl->eventsMutex);
-			impl->eventsQueueLocked.push_back(e);
-		}
-
-		void windowPaintCallback(GLFWwindow *w)
-		{
-			windowImpl *impl = (windowImpl*)glfwGetWindowUserPointer(w);
-			eventStruct e;
-			e.type = eventStruct::eventType::Paint;
 			e.modifiers = getKeyModifiers(w);
 			scopeLock<syncMutex> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
@@ -517,8 +518,8 @@ namespace cage
 			glfwSetWindowSizeCallback(window, &windowResizeCallback);
 			glfwSetWindowPosCallback(window, &windowMoveCallback);
 			glfwSetWindowIconifyCallback(window, &windowIconifiedCallback);
+			glfwSetWindowMaximizeCallback(window, &windowMaximizedCallback);
 			glfwSetWindowFocusCallback(window, &windowFocusCallback);
-			glfwSetWindowRefreshCallback(window, &windowPaintCallback);
 		}
 	}
 
@@ -754,9 +755,6 @@ namespace cage
 			case eventStruct::eventType::Hide:
 				impl->events.windowHide.dispatch();
 				break;
-			case eventStruct::eventType::Paint:
-				impl->events.windowPaint.dispatch();
-				break;
 			case eventStruct::eventType::FocusGain:
 				impl->focus = true;
 				impl->events.focusGain.dispatch();
@@ -847,7 +845,7 @@ namespace cage
 	void windowEventListeners::attachAll(windowHandle *window, sint32 order)
 	{
 #define GCHL_GENERATE(T) if(window) T.attach(window->events.T, order); else T.detach();
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, windowClose, windowShow, windowHide, windowPaint, windowMove, windowResize, mouseMove, mousePress, mouseDouble, mouseRelease, mouseWheel, focusGain, focusLose, keyPress, keyRelease, keyRepeat, keyChar));
+		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, windowClose, windowShow, windowHide, windowMove, windowResize, mouseMove, mousePress, mouseDouble, mouseRelease, mouseWheel, focusGain, focusLose, keyPress, keyRelease, keyRepeat, keyChar));
 #undef GCHL_GENERATE
 	}
 }

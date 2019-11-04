@@ -8,10 +8,10 @@ namespace cage
 	public:
 		struct
 		{
-			eventDispatcher<bool()> windowClose, windowShow, windowHide, windowPaint;
+			eventDispatcher<bool()> windowClose, windowShow, windowHide;
 			eventDispatcher<bool(const ivec2 &)> windowMove, windowResize;
 			eventDispatcher<bool(mouseButtonsFlags, modifiersFlags, const ivec2 &)> mouseMove, mousePress, mouseDouble, mouseRelease;
-			eventDispatcher<bool(sint8, modifiersFlags, const ivec2 &)> mouseWheel;
+			eventDispatcher<bool(sint32, modifiersFlags, const ivec2 &)> mouseWheel;
 			eventDispatcher<bool()> focusGain, focusLose;
 			eventDispatcher<bool(uint32, uint32, modifiersFlags)> keyPress, keyRelease, keyRepeat;
 			eventDispatcher<bool(uint32)> keyChar;
@@ -66,10 +66,10 @@ namespace cage
 
 	struct CAGE_API windowEventListeners
 	{
-		eventListener<bool()> windowClose, windowShow, windowHide, windowPaint;
+		eventListener<bool()> windowClose, windowShow, windowHide;
 		eventListener<bool(const ivec2 &)> windowMove, windowResize;
 		eventListener<bool(mouseButtonsFlags, modifiersFlags, const ivec2 &)> mouseMove, mousePress, mouseDouble, mouseRelease;
-		eventListener<bool(sint8, modifiersFlags, const ivec2 &)> mouseWheel;
+		eventListener<bool(sint32, modifiersFlags, const ivec2 &)> mouseWheel;
 		eventListener<bool()> focusGain, focusLose;
 		eventListener<bool(uint32, uint32, modifiersFlags)> keyPress, keyRelease, keyRepeat;
 		eventListener<bool(uint32)> keyChar;

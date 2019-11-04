@@ -41,7 +41,7 @@ namespace cage
 		bool mouseDouble(mouseButtonsFlags buttons, modifiersFlags modifiers, const ivec2 &point);
 		bool mouseRelease(mouseButtonsFlags buttons, modifiersFlags modifiers, const ivec2 &point);
 		bool mouseMove(mouseButtonsFlags buttons, modifiersFlags modifiers, const ivec2 &point);
-		bool mouseWheel(sint8 wheel, modifiersFlags modifiers, const ivec2 &point);
+		bool mouseWheel(sint32 wheel, modifiersFlags modifiers, const ivec2 &point);
 		bool keyPress(uint32 key, uint32 scanCode, modifiersFlags modifiers);
 		bool keyRepeat(uint32 key, uint32 scanCode, modifiersFlags modifiers);
 		bool keyRelease(uint32 key, uint32 scanCode, modifiersFlags modifiers);

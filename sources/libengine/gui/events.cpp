@@ -143,7 +143,7 @@ namespace cage
 		return passMouseEvent<mouseButtonsFlags, &widgetItemStruct::mouseMove>(impl, buttons, modifiers, point);
 	}
 
-	bool guiManager::mouseWheel(sint8 wheel, modifiersFlags modifiers, const ivec2 &point)
+	bool guiManager::mouseWheel(sint32 wheel, modifiersFlags modifiers, const ivec2 &point)
 	{
 		guiImpl *impl = (guiImpl*)this;
 		vec2 pt;

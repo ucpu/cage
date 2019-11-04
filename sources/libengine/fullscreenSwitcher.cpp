@@ -32,18 +32,24 @@ namespace cage
 			configUint32 confWindowTop;
 			configUint32 confWindowWidth;
 			configUint32 confWindowHeight;
+			configBool confWindowMaximized;
 			configUint32 confFullscreenWidth;
 			configUint32 confFullscreenHeight;
+			configUint32 confFullscreenFrequency;
+			configString confFullscreenMonitor;
 			configBool confFullscreenEnabled;
 
 			fullscreenSwitcherImpl(const fullscreenSwitcherCreateConfig &config) : window(config.window),
 				confWindowLeft(confName(config, "window.left"), 100),
 				confWindowTop(confName(config, "window.top"), 100),
-				confWindowWidth(confName(config, "window.width"), 0),
-				confWindowHeight(confName(config, "window.height"), 0),
-				confFullscreenWidth(confName(config, "fullscreen.width"), 0),
-				confFullscreenHeight(confName(config, "fullscreen.height"), 0),
-				confFullscreenEnabled(confName(config, "fullscreen.enabled"), config.defaultFullscreen)
+				confWindowWidth(confName(config, "window.windowWidth"), 800),
+				confWindowHeight(confName(config, "window.windowHeight"), 600),
+				confWindowMaximized(confName(config, "window.maximized"), true),
+				confFullscreenWidth(confName(config, "window.width"), 0),
+				confFullscreenHeight(confName(config, "window.height"), 0),
+				confFullscreenFrequency(confName(config, "window.refreshRate"), 0),
+				confFullscreenMonitor(confName(config, "window.monitor"), ""),
+				confFullscreenEnabled(confName(config, "window.fullscreen"), config.defaultFullscreen)
 			{
 				CAGE_ASSERT(window);
 				listeners.attachAll(window);
@@ -61,8 +67,7 @@ namespace cage
 					try
 					{
 						detail::overrideBreakpoint ob;
-						window->setFullscreen(ivec2(confFullscreenWidth, confFullscreenHeight));
-						confFullscreenEnabled = true;
+						window->setFullscreen(ivec2(confFullscreenWidth, confFullscreenHeight), confFullscreenFrequency, confFullscreenMonitor);
 					}
 					catch (...)
 					{
@@ -71,15 +76,12 @@ namespace cage
 				}
 				else
 				{
-					confFullscreenEnabled = false;
-					if (confWindowWidth == 0 || confWindowHeight == 0)
+					bool maximize = confWindowMaximized;
+					window->setWindowed();
+					window->windowedPosition(ivec2(confWindowLeft, confWindowTop));
+					window->windowedSize(ivec2(confWindowWidth, confWindowHeight));
+					if (maximize)
 						window->setMaximized();
-					else
-					{
-						window->setWindowed();
-						window->windowedSize(ivec2(confWindowWidth, confWindowHeight));
-						window->windowedPosition(ivec2(confWindowLeft, confWindowTop));
-					}
 				}
 			}
 
@@ -95,16 +97,18 @@ namespace cage
 
 			bool windowResize(const ivec2 &size)
 			{
+				if (confFullscreenEnabled = window->isFullscreen())
+				{
+					confFullscreenWidth = size.x;
+					confFullscreenHeight = size.y;
+					return false;
+				}
 				if (window->isWindowed())
 				{
 					confWindowWidth = size.x;
 					confWindowHeight = size.y;
 				}
-				else if (window->isMaximized())
-				{
-					confWindowWidth = 0;
-					confWindowHeight = 0;
-				}
+				confWindowMaximized = window->isMaximized();
 				return false;
 			}
 
@@ -131,7 +135,7 @@ namespace cage
 		impl->update(fullscreen);
 	}
 
-	fullscreenSwitcherCreateConfig::fullscreenSwitcherCreateConfig() : window(nullptr), defaultFullscreen(true)
+	fullscreenSwitcherCreateConfig::fullscreenSwitcherCreateConfig(bool defaultFullscreen) : window(nullptr), defaultFullscreen(defaultFullscreen)
 	{
 		configPrefix = detail::getConfigAppPrefix();
 		window = cage::window();
