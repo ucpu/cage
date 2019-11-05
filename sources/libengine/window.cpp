@@ -258,6 +258,7 @@ namespace cage
 				glfwDefaultWindowHints();
 				glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 				glfwWindowHint(GLFW_FOCUS_ON_SHOW, GLFW_TRUE);
+				glfwWindowHint(GLFW_AUTO_ICONIFY, GLFW_FALSE);
 				glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
 				glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
 				glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);

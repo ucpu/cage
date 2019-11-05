@@ -62,27 +62,29 @@ namespace cage
 
 			void update(bool fullscreen)
 			{
+				ivec2 p = ivec2(confWindowLeft, confWindowTop);
+				ivec2 s = ivec2(confWindowWidth, confWindowHeight);
+				bool maximize = confWindowMaximized;
+
 				if (fullscreen)
 				{
 					try
 					{
 						detail::overrideBreakpoint ob;
 						window->setFullscreen(ivec2(confFullscreenWidth, confFullscreenHeight), confFullscreenFrequency, confFullscreenMonitor);
+						return;
 					}
 					catch (...)
 					{
-						update(false);
+						// fall through to windowed
 					}
 				}
-				else
-				{
-					bool maximize = confWindowMaximized;
-					window->setWindowed();
-					window->windowedPosition(ivec2(confWindowLeft, confWindowTop));
-					window->windowedSize(ivec2(confWindowWidth, confWindowHeight));
-					if (maximize)
-						window->setMaximized();
-				}
+
+				window->setWindowed();
+				window->windowedPosition(p);
+				window->windowedSize(s);
+				if (maximize)
+					window->setMaximized();
 			}
 
 			bool windowMove(const ivec2 &pos)
