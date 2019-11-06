@@ -22,9 +22,9 @@ void testRandom()
 		for (uint32 i = 0; i < 2; i++)
 		{
 			randomGenerator r;
-			CAGE_LOG(severityEnum::Info, "generator seed", string() + r.s[0] + " " + r.s[1]);
+			CAGE_LOG(severityEnum::Info, "generator seed", stringizer() + r.s[0] + " " + r.s[1]);
 			for (uint32 i = 0; i < 3; i++)
-				CAGE_LOG_CONTINUE(severityEnum::Info, "random sequence", r.next());
+				CAGE_LOG_CONTINUE(severityEnum::Info, "random sequence", string(r.next()));
 		}
 	}
 
@@ -33,9 +33,9 @@ void testRandom()
 		for (uint32 i = 0; i < 2; i++)
 		{
 			randomGenerator r(13, 42);
-			CAGE_LOG(severityEnum::Info, "generator seed", string() + r.s[0] + " " + r.s[1]);
+			CAGE_LOG(severityEnum::Info, "generator seed", stringizer() + r.s[0] + " " + r.s[1]);
 			for (uint32 i = 0; i < 3; i++)
-				CAGE_LOG_CONTINUE(severityEnum::Info, "random sequence", r.next());
+				CAGE_LOG_CONTINUE(severityEnum::Info, "random sequence", string(r.next()));
 		}
 	}
 

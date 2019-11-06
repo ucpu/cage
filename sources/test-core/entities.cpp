@@ -333,7 +333,7 @@ void testSceneEntities()
 			}
 		}
 
-		CAGE_LOG(severityEnum::Info, "entities performance", string() + "avg time per cycle: " + (tmr->microsSinceStart() / totalCycles) + " us");
+		CAGE_LOG(severityEnum::Info, "entities performance", stringizer() + "avg time per cycle: " + (tmr->microsSinceStart() / totalCycles) + " us");
 	}
 }
 

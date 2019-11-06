@@ -28,7 +28,7 @@ namespace cage
 				mutex = newSyncMutex();
 				thrs.resize(threadsCount);
 				for (uint32 i = 0; i < threadsCount; i++)
-					thrs[i] = newThread(delegate<void()>().bind<threadPoolImpl, &threadPoolImpl::threadEntryLocal>(this), threadNames + i);
+					thrs[i] = newThread(delegate<void()>().bind<threadPoolImpl, &threadPoolImpl::threadEntryLocal>(this), stringizer() + threadNames + i);
 			}
 
 			~threadPoolImpl()

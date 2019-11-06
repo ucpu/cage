@@ -41,7 +41,7 @@ namespace
 			uint64 rtt = smoothRtt.smooth();
 			double lost = 1.0 - (double)recvCnt / (double)recvSeqn;
 			double overhead = 1.0 - (double)recvBytes / (double)udp->statistics().bytesReceivedTotal;
-			CAGE_LOG(severityEnum::Info, "conn", string() + "received: " + (recvBytes / 1024) + " KB, messages: " + recvCnt + ", lost: " + lost + ", overhead: " + overhead + ", throughput total: " + (throughput1 / 1024) + " KB/s, smooth: " + (throughput2 / 1024) + " KB/s, rtt: " + (rtt / 1000) + " ms");
+			CAGE_LOG(severityEnum::Info, "conn", stringizer() + "received: " + (recvBytes / 1024) + " KB, messages: " + recvCnt + ", lost: " + lost + ", overhead: " + overhead + ", throughput total: " + (throughput1 / 1024) + " KB/s, smooth: " + (throughput2 / 1024) + " KB/s, rtt: " + (rtt / 1000) + " ms");
 		}
 
 		bool process()

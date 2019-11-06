@@ -107,11 +107,11 @@ namespace
 
 void writeLine(const string &other)
 {
-	CAGE_LOG(severityEnum::Info, "asset-processor", string() + "writing: '" + other + "'");
+	CAGE_LOG(severityEnum::Info, "asset-processor", stringizer() + "writing: '" + other + "'");
 	{
 		string b = other;
 		if (b.split("=").trim() == "ref")
-			CAGE_LOG(severityEnum::Note, "asset-processor", string() + "reference hash: '" + (uint32)hashString(b.trim().c_str()) + "'");
+			CAGE_LOG(severityEnum::Note, "asset-processor", stringizer() + "reference hash: '" + (uint32)hashString(b.trim().c_str()) + "'");
 	}
 	if (fprintf(stdout, "%s\n", other.c_str()) < 0)
 		CAGE_THROW_ERROR(systemError, "fprintf", ferror(stdout));
@@ -124,7 +124,7 @@ string properties(const string &name)
 		return it->second;
 	else
 	{
-		CAGE_LOG(severityEnum::Note, "exception", string() + "property name: '" + name + "'");
+		CAGE_LOG(severityEnum::Note, "exception", stringizer() + "property name: '" + name + "'");
 		CAGE_THROW_ERROR(exception, "property not found");
 	}
 }
@@ -149,12 +149,12 @@ int main(int argc, const char *args[])
 		loadProperties();
 		initializeSecondaryLog(pathJoin(configGetString("cage-asset-processor.process-log.path", "process-log"), pathReplaceInvalidCharacters(inputName) + ".log"));
 
-#define GCHL_GENERATE(N) CAGE_LOG(severityEnum::Info, "asset-processor", string() + "input " CAGE_STRINGIZE(N) ": '" + N + "'");
+#define GCHL_GENERATE(N) CAGE_LOG(severityEnum::Info, "asset-processor", stringizer() + "input " CAGE_STRINGIZE(N) ": '" + N + "'");
 		CAGE_EVAL_MEDIUM(CAGE_EXPAND_ARGS(GCHL_GENERATE, inputDirectory, inputName, outputDirectory, outputName, assetPath, schemePath, schemeIndex, inputFileName, outputFileName, inputFile, inputSpec, inputIdentifier));
 #undef GCHL_GENERATE
 
 		for (const auto &it : props)
-			CAGE_LOG(severityEnum::Info, "asset-processor", string() + "property '" + it.first + "': '" + it.second + "'");
+			CAGE_LOG(severityEnum::Info, "asset-processor", stringizer() + "property '" + it.first + "': '" + it.second + "'");
 
 		delegate<void()> func;
 		string component = string(args[1]);
@@ -196,7 +196,7 @@ int main(int argc, const char *args[])
 	}
 	catch (const std::exception &e)
 	{
-		CAGE_LOG(severityEnum::Error, "exception", string() + "std exception: " + e.what());
+		CAGE_LOG(severityEnum::Error, "exception", stringizer() + "std exception: " + e.what());
 	}
 	catch (...)
 	{

@@ -86,7 +86,7 @@ namespace cage
 
 	void systemError::log()
 	{
-		::cage::privat::makeLog(file, line, function, severityEnum::Note, "exception", string() + "code: " + code, false, false);
+		::cage::privat::makeLog(file, line, function, severityEnum::Note, "exception", stringizer() + "code: " + code, false, false);
 		::cage::privat::makeLog(file, line, function, severity, "exception", message, false, false);
 	};
 }

@@ -195,7 +195,7 @@ namespace cage
 		{\
 			if (!valid)\
 			{\
-				format(name, string(var).c_str()); \
+				format(name, (stringizer() + var).value.c_str()); \
 			}\
 			return *this;\
 		}
@@ -218,13 +218,9 @@ namespace cage
 
 		void assertPriv::format(const char *name, const char *var) const
 		{
-			char buffer[2048];
-			buffer[0] = 0;
-			std::strcat(buffer, " > ");
-			std::strcat(buffer, name);
-			std::strcat(buffer, ": ");
-			std::strcat(buffer, var);
-			assertOutputLine(buffer);
+			stringizer s;
+			s + " > " + name + ": " + var;
+			assertOutputLine(s.value.c_str());
 		}
 	}
 

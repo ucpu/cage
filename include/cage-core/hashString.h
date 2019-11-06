@@ -66,6 +66,10 @@ namespace cage
 		{};
 
 		template<uint32 N>
+		explicit hashString(const detail::stringBase<N> &str) : hashString(str.c_str())
+		{}
+
+		template<uint32 N>
 		explicit hashString(const char(&str)[N]) : value(detail::hashCompile(str) | ((uint32)1 << 31))
 		{};
 

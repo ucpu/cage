@@ -343,7 +343,7 @@ namespace cage
 
 		if (shaderIntrospection)
 		{
-			holder<fileHandle> f = newFile(string() + "shaderIntrospection/" + impl->id + "/" + stageName + ".glsl", fileMode(false, true));
+			holder<fileHandle> f = newFile(stringizer() + "shaderIntrospection/" + impl->id + "/" + stageName + ".glsl", fileMode(false, true));
 			f->write(data, length);
 		}
 
@@ -368,13 +368,13 @@ namespace cage
 			CAGE_CHECK_GL_ERROR_DEBUG();
 			if (shaderIntrospection)
 			{
-				holder<fileHandle> f = newFile(string() + "shaderIntrospection/" + impl->id + "/" + stageName + "_compile.log", fileMode(false, true));
+				holder<fileHandle> f = newFile(stringizer() + "shaderIntrospection/" + impl->id + "/" + stageName + "_compile.log", fileMode(false, true));
 				f->write(buf, len);
 			}
 #ifdef CAGE_DEBUG
-			CAGE_LOG(severityEnum::Note, "shader", string() + "shader name: " + debugName);
+			CAGE_LOG(severityEnum::Note, "shader", stringizer() + "shader name: " + debugName);
 #endif // CAGE_DEBUG
-			CAGE_LOG(severityEnum::Warning, "shader", string() + "shader compilation log (id: " + impl->id + ", stage: " + stageName + "):");
+			CAGE_LOG(severityEnum::Warning, "shader", stringizer() + "shader compilation log (id: " + impl->id + ", stage: " + stageName + "):");
 			holder<lineReader> lrb = newLineReader(buf, len);
 			for (string line; lrb->readLine(line);)
 				CAGE_LOG_CONTINUE(severityEnum::Warning, "shader", line);
@@ -386,9 +386,9 @@ namespace cage
 		if (len != GL_TRUE)
 		{
 #ifdef CAGE_DEBUG
-			CAGE_LOG(severityEnum::Note, "shader", string() + "shader name: " + debugName);
+			CAGE_LOG(severityEnum::Note, "shader", stringizer() + "shader name: " + debugName);
 #endif // CAGE_DEBUG
-			CAGE_LOG(severityEnum::Note, "shader", string() + "shader stage: " + stageName);
+			CAGE_LOG(severityEnum::Note, "shader", stringizer() + "shader stage: " + stageName);
 			CAGE_THROW_ERROR(graphicsError, "shader compilation failed", len);
 		}
 
@@ -427,13 +427,13 @@ namespace cage
 			CAGE_CHECK_GL_ERROR_DEBUG();
 			if (shaderIntrospection)
 			{
-				holder<fileHandle> f = newFile(string() + "shaderIntrospection/" + impl->id + "/linking.log", fileMode(false, true));
+				holder<fileHandle> f = newFile(stringizer() + "shaderIntrospection/" + impl->id + "/linking.log", fileMode(false, true));
 				f->write(buf, len);
 			}
 #ifdef CAGE_DEBUG
-			CAGE_LOG(severityEnum::Note, "shader", string() + "shader name: " + debugName);
+			CAGE_LOG(severityEnum::Note, "shader", stringizer() + "shader name: " + debugName);
 #endif // CAGE_DEBUG
-			CAGE_LOG(severityEnum::Warning, "shader", string() + "shader linking log (id: " + impl->id + "):");
+			CAGE_LOG(severityEnum::Warning, "shader", stringizer() + "shader linking log (id: " + impl->id + "):");
 			holder<lineReader> lrb = newLineReader(buf, len);
 			for (string line; lrb->readLine(line);)
 				CAGE_LOG_CONTINUE(severityEnum::Warning, "shader", line);
@@ -445,7 +445,7 @@ namespace cage
 		if (len != GL_TRUE)
 		{
 #ifdef CAGE_DEBUG
-			CAGE_LOG(severityEnum::Note, "shader", string() + "shader name: " + debugName);
+			CAGE_LOG(severityEnum::Note, "shader", stringizer() + "shader name: " + debugName);
 #endif // CAGE_DEBUG
 			CAGE_THROW_ERROR(graphicsError, "shader linking failed", len);
 		}
@@ -455,7 +455,7 @@ namespace cage
 			{ // uniforms
 				fileMode fm(false, true);
 				fm.textual = true;
-				holder<fileHandle> f = newFile(string() + "shaderIntrospection/" + impl->id + "/uniforms.txt", fm);
+				holder<fileHandle> f = newFile(stringizer() + "shaderIntrospection/" + impl->id + "/uniforms.txt", fm);
 				f->writeLine("<location> <type> <name>");
 				GLint numUniforms = 0;
 				glGetProgramInterfaceiv(impl->id, GL_UNIFORM, GL_ACTIVE_RESOURCES, &numUniforms);
@@ -469,7 +469,7 @@ namespace cage
 					GLchar name[100];
 					GLint nameLen = 0;
 					glGetProgramResourceName(impl->id, GL_UNIFORM, unif, 99, &nameLen, name);
-					f->writeLine(string() + values[1] + "\t" + glTypeToName(values[2]) + (values[3] > 1 ? string() + "[" + values[3] + "]" : "") + " " + string(name, nameLen));
+					f->writeLine(stringizer() + values[1] + "\t" + glTypeToName(values[2]) + (values[3] > 1 ? stringizer() + "[" + values[3] + "]" : stringizer()) + " " + string(name, nameLen));
 				}
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
@@ -477,7 +477,7 @@ namespace cage
 			{ // blocks
 				fileMode fm(false, true);
 				fm.textual = true;
-				holder<fileHandle> f = newFile(string() + "shaderIntrospection/" + impl->id + "/blocks.txt", fm);
+				holder<fileHandle> f = newFile(stringizer() + "shaderIntrospection/" + impl->id + "/blocks.txt", fm);
 				f->writeLine("<binding> <name> <variables> <size>");
 				GLint numBlocks = 0;
 				glGetProgramInterfaceiv(impl->id, GL_UNIFORM_BLOCK, GL_ACTIVE_RESOURCES, &numBlocks);
@@ -489,7 +489,7 @@ namespace cage
 					GLchar name[100];
 					GLint nameLen = 0;
 					glGetProgramResourceName(impl->id, GL_UNIFORM_BLOCK, block, 99, &nameLen, name);
-					f->writeLine(string() + values[0] + "\t" + string(name, nameLen) + " " + values[2] + " " + values[1]);
+					f->writeLine(stringizer() + values[0] + "\t" + string(name, nameLen) + " " + values[2] + " " + values[1]);
 				}
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
@@ -497,7 +497,7 @@ namespace cage
 			{ // subroutines
 				fileMode fm(false, true);
 				fm.textual = true;
-				holder<fileHandle> f = newFile(string() + "shaderIntrospection/" + impl->id + "/routines.txt", fm);
+				holder<fileHandle> f = newFile(stringizer() + "shaderIntrospection/" + impl->id + "/routines.txt", fm);
 				f->writeLine("<stage> <location> <name> <compatibles>");
 				const GLint stages[] = { GL_VERTEX_SUBROUTINE_UNIFORM, GL_TESS_CONTROL_SUBROUTINE_UNIFORM, GL_TESS_EVALUATION_SUBROUTINE_UNIFORM, GL_GEOMETRY_SUBROUTINE_UNIFORM, GL_FRAGMENT_SUBROUTINE_UNIFORM, GL_COMPUTE_SUBROUTINE_UNIFORM };
 				const GLint stages2[] = { GL_VERTEX_SHADER, GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER, GL_GEOMETRY_SHADER, GL_FRAGMENT_SHADER, GL_COMPUTE_SHADER };
@@ -515,7 +515,7 @@ namespace cage
 						GLchar name[100];
 						GLint nameLen = 0;
 						glGetProgramResourceName(impl->id, stage, routine, 99, &nameLen, name);
-						f->writeLine(string() + stageIndex + "\t" + values[0] + "\t" + string(name, nameLen) + " " + values[1]);
+						f->writeLine(stringizer() + stageIndex + "\t" + values[0] + "\t" + string(name, nameLen) + " " + values[1]);
 						// enumerate compatible subroutines
 						const GLenum props2[] = { GL_COMPATIBLE_SUBROUTINES };
 						GLint values2[100];
@@ -524,7 +524,7 @@ namespace cage
 						for (GLint compat = 0; compat < numCompatibles; compat++)
 						{
 							glGetActiveSubroutineName(impl->id, stage2, values2[compat], 99, &nameLen, name);
-							f->writeLine(string() + "\t\t\t" + values2[compat] + "\t" + string(name, nameLen));
+							f->writeLine(stringizer() + "\t\t\t" + values2[compat] + "\t" + string(name, nameLen));
 						}
 					}
 				}
@@ -534,7 +534,7 @@ namespace cage
 			{ // inouts
 				fileMode fm(false, true);
 				fm.textual = true;
-				holder<fileHandle> f = newFile(string() + "shaderIntrospection/" + impl->id + "/inout.txt", fm);
+				holder<fileHandle> f = newFile(stringizer() + "shaderIntrospection/" + impl->id + "/inout.txt", fm);
 				f->writeLine("<inout> <location> <index> <type> <name>");
 				const GLint inouts[] = { GL_PROGRAM_INPUT, GL_PROGRAM_OUTPUT };
 				const string inoutsNames[] = { "in", "out" };
@@ -552,7 +552,7 @@ namespace cage
 						GLchar name[100];
 						GLint nameLen = 0;
 						glGetProgramResourceName(impl->id, stage, var, 99, &nameLen, name);
-						f->writeLine(string() + inoutsNames[stageIndex] + "\t" + values[0] + "\t" + values[3] + "\t" + glTypeToName(values[1]) + (values[2] > 1 ? string() + "[" + values[2] + "]" : "") + " " + string(name, nameLen));
+						f->writeLine(stringizer() + inoutsNames[stageIndex] + "\t" + values[0] + "\t" + values[3] + "\t" + glTypeToName(values[1]) + (values[2] > 1 ? stringizer() + "[" + values[2] + "]" : stringizer()) + " " + string(name, nameLen));
 					}
 				}
 				CAGE_CHECK_GL_ERROR_DEBUG();
@@ -578,13 +578,13 @@ namespace cage
 			CAGE_CHECK_GL_ERROR_DEBUG();
 			if (shaderIntrospection)
 			{
-				holder<fileHandle> f = newFile(string() + "shaderIntrospection/" + impl->id + "/validation.log", fileMode(false, true));
+				holder<fileHandle> f = newFile(stringizer() + "shaderIntrospection/" + impl->id + "/validation.log", fileMode(false, true));
 				f->write(buf, len);
 			}
 #ifdef CAGE_DEBUG
-			CAGE_LOG(severityEnum::Note, "shader", string() + "shader name: " + debugName);
+			CAGE_LOG(severityEnum::Note, "shader", stringizer() + "shader name: " + debugName);
 #endif // CAGE_DEBUG
-			CAGE_LOG(severityEnum::Warning, "shader", string() + "shader validation log (id: " + impl->id + "):");
+			CAGE_LOG(severityEnum::Warning, "shader", stringizer() + "shader validation log (id: " + impl->id + "):");
 			holder<lineReader> lrb = newLineReader(buf, len);
 			for (string line; lrb->readLine(line);)
 				CAGE_LOG_CONTINUE(severityEnum::Warning, "shader", line);

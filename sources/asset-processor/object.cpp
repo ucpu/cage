@@ -89,9 +89,9 @@ void processObject()
 		string s, t, v;
 		if (ini->anyUnused(s, t, v))
 		{
-			CAGE_LOG(severityEnum::Note, "exception", string() + "section: " + s);
-			CAGE_LOG(severityEnum::Note, "exception", string() + "item: " + t);
-			CAGE_LOG(severityEnum::Note, "exception", string() + "value: " + v);
+			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "section: " + s);
+			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "item: " + t);
+			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "value: " + v);
 			CAGE_THROW_ERROR(exception, "unused value");
 		}
 	}

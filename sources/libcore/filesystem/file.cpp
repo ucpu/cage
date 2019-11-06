@@ -166,8 +166,8 @@ namespace cage
 				f = fopen(path.c_str(), mode.mode().c_str());
 				if (!f)
 				{
-					CAGE_LOG(severityEnum::Note, "exception", string("read: ") + mode.read + ", write: " + mode.write + ", append: " + mode.append + ", text: " + mode.textual);
-					CAGE_LOG(severityEnum::Note, "exception", string("path: ") + path);
+					CAGE_LOG(severityEnum::Note, "exception", stringizer() + "read: " + mode.read + ", write: " + mode.write + ", append: " + mode.append + ", text: " + mode.textual);
+					CAGE_LOG(severityEnum::Note, "exception", stringizer() + "path: " + path);
 					CAGE_THROW_ERROR(systemError, "fopen", errno);
 				}
 			}

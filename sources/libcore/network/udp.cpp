@@ -28,7 +28,7 @@ namespace cage
 		configUint32 confMtu("cage.udp.maxTransferUnit", 1450);
 		configUint32 confBufferSize("cage.udp.systemBufferSize", 1024 * 1024);
 
-#define UDP_LOG(LEVEL, MSG) { if (logLevel >= (LEVEL)) { CAGE_LOG(severityEnum::Info, "udp", string() + MSG); } }
+#define UDP_LOG(LEVEL, MSG) { if (logLevel >= (LEVEL)) { CAGE_LOG(severityEnum::Info, "udp", stringizer() + MSG); } }
 
 		struct memView
 		{
@@ -936,7 +936,7 @@ namespace cage
 							string a;
 							uint16 p;
 							sockReceiver->address.translate(a, p, true);
-							CAGE_LOG(severityEnum::Info, "udp", string() + "connection established, remote address: '" + a + "', remote port: " + p);
+							CAGE_LOG(severityEnum::Info, "udp", stringizer() + "connection established, remote address: '" + a + "', remote port: " + p);
 						}
 						established = true;
 					}

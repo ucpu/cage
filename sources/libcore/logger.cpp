@@ -128,35 +128,35 @@ namespace cage
 					version += ", ";
 					version += "build at: " __DATE__ " " __TIME__;
 
-					CAGE_LOG(severityEnum::Info, "log", string() + "cage version: " + version);
+					CAGE_LOG(severityEnum::Info, "log", stringizer() + "cage version: " + version);
 				}
 
 				setCurrentThreadName(pathExtractFilename(detail::getExecutableFullPathNoExe()));
 
-				CAGE_LOG(severityEnum::Info, "log", string() + "process id: " + processId());
+				CAGE_LOG(severityEnum::Info, "log", stringizer() + "process id: " + processId());
 
 				{
 					uint32 y, M, d, h, m, s;
 					detail::getSystemDateTime(y, M, d, h, m, s);
-					CAGE_LOG(severityEnum::Info, "log", string() + "current time: " + detail::formatDateTime(y, M, d, h, m, s));
+					CAGE_LOG(severityEnum::Info, "log", stringizer() + "current time: " + detail::formatDateTime(y, M, d, h, m, s));
 				}
 
-				CAGE_LOG(severityEnum::Info, "log", string() + "executable path: " + detail::getExecutableFullPath());
-				CAGE_LOG(severityEnum::Info, "log", string() + "working directory: " + pathWorkingDir());
+				CAGE_LOG(severityEnum::Info, "log", stringizer() + "executable path: " + detail::getExecutableFullPath());
+				CAGE_LOG(severityEnum::Info, "log", stringizer() + "working directory: " + pathWorkingDir());
 
 				if (confDetailedInfo)
 				{
 					CAGE_LOG(severityEnum::Info, "systemInfo", "system information:");
 					try
 					{
-						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", string() + "system name: '" + systemName() + "'");
-						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", string() + "user name: '" + userName() + "'");
-						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", string() + "host name: '" + hostName() + "'");
-						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", string() + "processors count: " + processorsCount());
-						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", string() + "processor name: '" + processorName() + "'");
-						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", string() + "processor speed: " + (processorClockSpeed() / 1000000) + " MHz");
-						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", string() + "memory capacity: " + (memoryCapacity() / 1024 / 1024) + " MB");
-						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", string() + "memory available: " + (memoryAvailable() / 1024 / 1024) + " MB");
+						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", stringizer() + "system name: '" + systemName() + "'");
+						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", stringizer() + "user name: '" + userName() + "'");
+						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", stringizer() + "host name: '" + hostName() + "'");
+						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", stringizer() + "processors count: " + processorsCount());
+						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", stringizer() + "processor name: '" + processorName() + "'");
+						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", stringizer() + "processor speed: " + (processorClockSpeed() / 1000000) + " MHz");
+						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", stringizer() + "memory capacity: " + (memoryCapacity() / 1024 / 1024) + " MB");
+						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", stringizer() + "memory available: " + (memoryAvailable() / 1024 / 1024) + " MB");
 					}
 					catch (exception &)
 					{
@@ -176,7 +176,7 @@ namespace cage
 				duration /= 60;
 				uint32 hours = numeric_cast<uint32>(duration % 24);
 				duration /= 24;
-				CAGE_LOG(severityEnum::Info, "log", string() + "total duration: " + duration + " days, " + hours + " hours, " + mins + " minutes, " + secs + " seconds and " + micros + " microseconds");
+				CAGE_LOG(severityEnum::Info, "log", stringizer() + "total duration: " + duration + " days, " + hours + " hours, " + mins + " minutes, " + secs + " seconds and " + micros + " microseconds");
 			}
 		} centralLogStaticInitializerInstance;
 
@@ -184,7 +184,7 @@ namespace cage
 		{
 			if (info.continuous)
 			{
-				output(string("\t") + info.message);
+				output(stringizer() + "\t" + info.message);
 			}
 			else
 			{

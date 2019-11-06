@@ -21,7 +21,7 @@ namespace cage
 
 	void outOfMemory::log()
 	{
-		::cage::privat::makeLog(file, line, function, severityEnum::Note, "exception", string() + "memory requested: " + memory, false, false);
+		::cage::privat::makeLog(file, line, function, severityEnum::Note, "exception", stringizer() + "memory requested: " + memory, false, false);
 		::cage::privat::makeLog(file, line, function, severity, "exception", message, false, false);
 	};
 

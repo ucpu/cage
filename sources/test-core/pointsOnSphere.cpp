@@ -8,7 +8,7 @@ namespace
 	string generatePoint()
 	{
 		vec3 p = randomDirection3();
-		return string() + "vec3(" + p[0] + ", " + p[1] + ", " + p[2] + ")";
+		return stringizer() + "vec3(" + p[0] + ", " + p[1] + ", " + p[2] + ")";
 	}
 }
 

@@ -24,7 +24,6 @@ namespace cage
 		explicit real(degs other);
 
 		static real parse(const string &str);
-		inline operator string() const { return string(value); }
 		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx == 0, "index out of range", idx); return *this; }
 		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx == 0, "index out of range", idx); return *this; }
 		bool valid() const;
@@ -46,7 +45,6 @@ namespace cage
 		rads(degs other);
 
 		static rads parse(const string &str);
-		inline operator string() const { return string() + value + " rads"; }
 		inline bool valid() const { return value.valid(); }
 		inline static rads Full() { return rads(real::Pi().value * 2); };
 		inline static rads Nan() { return rads(real::Nan()); };
@@ -63,7 +61,6 @@ namespace cage
 		degs(rads other);
 
 		static degs parse(const string &str);
-		inline operator string() const { return string() + value + " degs"; }
 		inline bool valid() const { return value.valid(); }
 		inline static degs Full() { return degs(360); };
 		inline static degs Nan() { return degs(real::Nan()); };
@@ -82,7 +79,6 @@ namespace cage
 		inline explicit vec2(const vec4 &v);
 
 		static vec2 parse(const string &str);
-		inline operator string() const { return string("(") + data[0] + "," + data[1] + ")"; }
 		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 2, "index out of range", idx); return data[idx]; }
 		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 2, "index out of range", idx); return data[idx]; }
 		inline bool valid() const { for (real d : data) if (!d.valid()) return false; return true; }
@@ -100,7 +96,6 @@ namespace cage
 		inline explicit vec3(const vec4 &v);
 
 		static vec3 parse(const string &str);
-		inline operator string() const { return string("(") + data[0] + "," + data[1] + "," + data[2] + ")"; }
 		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 3, "index out of range", idx); return data[idx]; }
 		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 3, "index out of range", idx); return data[idx]; }
 		inline bool valid() const { for (real d : data) if (!d.valid()) return false; return true; }
@@ -119,7 +114,6 @@ namespace cage
 		inline explicit vec4(const vec3 &v, real w) : data{ v[0], v[1], v[2], w } {}
 
 		static vec4 parse(const string &str);
-		inline operator string() const { return string("(") + data[0] + "," + data[1] + "," + data[2] + "," + data[3] + ")"; }
 		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 4, "index out of range", idx); return data[idx]; }
 		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 4, "index out of range", idx); return data[idx]; }
 		inline bool valid() const { for (real d : data) if (!d.valid()) return false; return true; }
@@ -138,7 +132,6 @@ namespace cage
 		explicit quat(const vec3 &forward, const vec3 &up, bool keepUp = false);
 
 		static quat parse(const string &str);
-		inline operator string() const { return string("(") + data[0] + "," + data[1] + "," + data[2] + "," + data[3] + ")"; }
 		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 4, "index out of range", idx); return data[idx]; }
 		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 4, "index out of range", idx); return data[idx]; }
 		inline bool valid() const { for (real d : data) if (!d.valid()) return false; return true; }
@@ -156,7 +149,6 @@ namespace cage
 		explicit mat3(const mat4 &other);
 
 		static mat3 parse(const string &str);
-		inline operator string() const { string res = string() + "(" + data[0]; for (uint32 i = 1; i < 9; i++) res += string(",") + data[i]; return res + ")"; }
 		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 9, "index out of range", idx); return data[idx]; }
 		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 9, "index out of range", idx); return data[idx]; }
 		inline bool valid() const { for (real d : data) if (!d.valid()) return false; return true; }
@@ -179,7 +171,6 @@ namespace cage
 		inline static mat4 scale(real scl) { return scale(vec3(scl)); };
 		inline static mat4 scale(const vec3 &scl) { return mat4(scl[0], 0, 0, 0, 0, scl[1], 0, 0, 0, 0, scl[2], 0, 0, 0, 0, 1); }
 		static mat4 parse(const string &str);
-		inline operator string() const { string res = string() + "(" + data[0]; for (uint32 i = 1; i < 16; i++) res += string(",") + data[i]; return res + ")"; }
 		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 16, "index out of range", idx); return data[idx]; }
 		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 16, "index out of range", idx); return data[idx]; }
 		inline bool valid() const { for (real d : data) if (!d.valid()) return false; return true; }
@@ -197,7 +188,6 @@ namespace cage
 		inline explicit transform(const vec3 &position, const quat &orientation = quat(), real scale = 1) : orientation(orientation), position(position), scale(scale) {}
 
 		static transform parse(const string &str);
-		inline operator string() const { return string() + "(" + position + "," + orientation + "," + scale + ")"; }
 		inline bool valid() const { return orientation.valid() && position.valid() && scale.valid(); }
 	};
 
@@ -457,6 +447,8 @@ namespace cage
 	inline vec4 randomRange4(real a, real b) { return vec4(randomRange(a, b), randomRange(a, b), randomRange(a, b), randomRange(a, b)); }
 	CAGE_API quat randomDirectionQuat();
 
+	CAGE_API uint32 hash(uint32 key);
+
 	namespace detail
 	{
 		template<>
@@ -468,7 +460,18 @@ namespace cage
 		return privat::numeric_cast_helper_specialized<detail::numeric_limits<To>::is_specialized>::template cast<To>(from.value);
 	};
 
-	CAGE_API uint32 hash(uint32 key);
+	namespace detail
+	{
+		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const real &other) { return str + other.value; }
+		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const degs &other) { return str + other.value.value + "°"; }
+		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const rads &other) { return str + other.value.value + " rads"; }
+		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const vec2 &other) { return str + "(" + other[0].value + "," + other[1].value + ")"; }
+		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const vec3 &other) { return str + "(" + other[0].value + "," + other[1].value + "," + other[2].value + ")"; }
+		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const vec4 &other) { return str + "(" + other[0].value + "," + other[1].value + "," + other[2].value + "," + other[3].value + ")"; }
+		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const quat &other) { return str + "(" + other[0].value + "," + other[1].value + "," + other[2].value + "," + other[3].value + ")"; }
+		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const mat3 &other) { stringizerBase<N> res = stringizerBase<N>() + "(" + other[0].value; for (uint32 i = 1; i < 9; i++) res + "," + other[i].value; return res + ")"; }
+		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const mat4 &other) { stringizerBase<N> res = stringizerBase<N>() + "(" + other[0].value; for (uint32 i = 1; i < 16; i++) res + "," + other[i].value; return res + ")"; }
+	}
 }
 
 #undef GCHL_DIMENSION

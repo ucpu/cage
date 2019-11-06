@@ -283,10 +283,10 @@ namespace
 	void loadFrame()
 	{
 		uint32 slices = ilGetInteger(IL_IMAGE_DEPTH);
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "slices count: " + slices);
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "slices count: " + slices);
 		for (uint32 i = 0; i < slices; i++)
 		{
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "loading slice: " + i);
+			CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "loading slice: " + i);
 			loadSlice(i);
 		}
 	}
@@ -298,15 +298,15 @@ namespace
 		ilBindImage(im);
 		{
 			string wholeFilename = pathJoin(inputDirectory, filename);
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "loading file '" + wholeFilename + "'");
+			CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "loading file '" + wholeFilename + "'");
 			if (!ilLoadImage(wholeFilename.c_str()))
 				CAGE_THROW_ERROR(exception, "image format not supported");
 		}
 		uint32 frames = ilGetInteger(IL_NUM_IMAGES) + 1;
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "frames count: " + frames);
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "frames count: " + frames);
 		for (uint32 i = 0; i < frames; i++)
 		{
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "loading frame: " + i);
+			CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "loading frame: " + i);
 			ilBindImage(im);
 			ilActiveImage(i);
 			loadFrame();
@@ -319,7 +319,7 @@ namespace
 	{
 		if (target == GL_TEXTURE_3D)
 		{ // downscale image as a whole
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "downscaling whole image");
+			CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "downscaling whole image");
 			ILuint im = ilGenImage();
 			ilBindImage(im);
 			iluImageParameter(ILU_FILTER, ILU_BILINEAR);
@@ -336,14 +336,14 @@ namespace
 		}
 		else
 		{ // downscale each image separately
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "downscaling each slice separately");
+			CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "downscaling each slice separately");
 			ILuint im = ilGenImage();
 			ilBindImage(im);
 			iluImageParameter(ILU_FILTER, ILU_BILINEAR);
 			images[0].resizeDevil();
 			for (auto it : enumerate(images))
 			{
-				CAGE_LOG(severityEnum::Info, logComponentName, string() + "downscaling slice: " + it.cnt);
+				CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "downscaling slice: " + it.cnt);
 				it->saveToDevil();
 				if (!iluScale(max(it->width / downscale, 1u), max(it->height / downscale, 1u), 1))
 					CAGE_THROW_ERROR(exception, "iluScale");
@@ -524,7 +524,7 @@ namespace
 
 		memoryBuffer outputBuffer = detail::compress(inputBuffer);
 		h.compressedSize = outputBuffer.size();
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "final size: " + h.originalSize + ", compressed size: " + h.compressedSize + ", ratio: " + h.compressedSize / (float)h.originalSize);
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "final size: " + h.originalSize + ", compressed size: " + h.compressedSize + ", ratio: " + h.compressedSize / (float)h.originalSize);
 
 		holder<fileHandle> f = newFile(outputFileName, fileMode(false, true));
 		f->write(&h, sizeof(h));
@@ -575,16 +575,16 @@ void processTexture()
 				string name = prefix + string(index).reverse().fill(dollarsCount, '0').reverse() + suffix;
 				if (!pathIsFile(pathJoin(inputDirectory, name)))
 					break;
-				CAGE_LOG(severityEnum::Info, logComponentName, string() + "loading file: '" + name + "'");
+				CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "loading file: '" + name + "'");
 				loadFile(name);
 				index++;
 			}
 		}
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "loading done");
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "loading done");
 	}
 
-	CAGE_LOG(severityEnum::Info, logComponentName, string() + "input resolution: " + images[0].width + "*" + images[0].height + "*" + numeric_cast<uint32>(images.size()));
-	CAGE_LOG(severityEnum::Info, logComponentName, string() + "input channels: " + images[0].bpp);
+	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "input resolution: " + images[0].width + "*" + images[0].height + "*" + numeric_cast<uint32>(images.size()));
+	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "input channels: " + images[0].bpp);
 
 	{ // convert height map to normal map
 		if (properties("convert") == "heightToNormal")
@@ -592,7 +592,7 @@ void processTexture()
 			float strength = properties("normalStrength").toFloat();
 			for (auto &it : images)
 				it.convertHeightToNormal(strength);
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "converted from height map to normal map with strength of " + strength);
+			CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "converted from height map to normal map with strength of " + strength);
 		}
 	}
 
@@ -601,7 +601,7 @@ void processTexture()
 		{
 			for (auto &it : images)
 				it.convertSpecularToSpecial();
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "converted specular colors to material special");
+			CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "converted specular colors to material special");
 		}
 	}
 
@@ -609,7 +609,7 @@ void processTexture()
 		if (properties("convert") == "skyboxToCube")
 		{
 			performSkyboxToCube();
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "converted skybox to cube map");
+			CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "converted skybox to cube map");
 		}
 	}
 
@@ -621,7 +621,7 @@ void processTexture()
 		{
 			for (auto &it : images)
 				it.premultiplyAlpha();
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "premultiplied alpha");
+			CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "premultiplied alpha");
 		}
 	}
 
@@ -630,7 +630,7 @@ void processTexture()
 		if (downscale > 1)
 		{
 			performDownscale(downscale, target);
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "downscaled: " + images[0].width + "*" + images[0].height + "*" + numeric_cast<uint32>(images.size()));
+			CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "downscaled: " + images[0].width + "*" + images[0].height + "*" + numeric_cast<uint32>(images.size()));
 		}
 	}
 
@@ -639,7 +639,7 @@ void processTexture()
 		{
 			for (auto &it : images)
 				it.performFlipV();
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "image vertically flipped (flip was false)");
+			CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "image vertically flipped (flip was false)");
 		}
 	}
 
@@ -648,30 +648,30 @@ void processTexture()
 		{
 			for (auto &it : images)
 				it.invert(0);
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "red channel inverted");
+			CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "red channel inverted");
 		}
 		if (properties("invertGreen").toBool())
 		{
 			for (auto &it : images)
 				it.invert(1);
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "green channel inverted");
+			CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "green channel inverted");
 		}
 		if (properties("invertBlue").toBool())
 		{
 			for (auto &it : images)
 				it.invert(2);
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "blue channel inverted");
+			CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "blue channel inverted");
 		}
 		if (properties("invertAlpha").toBool())
 		{
 			for (auto &it : images)
 				it.invert(3);
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "alpha channel inverted");
+			CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "alpha channel inverted");
 		}
 	}
 
-	CAGE_LOG(severityEnum::Info, logComponentName, string() + "output resolution: " + images[0].width + "*" + images[0].height + "*" + numeric_cast<uint32>(images.size()));
-	CAGE_LOG(severityEnum::Info, logComponentName, string() + "output channels: " + images[0].bpp);
+	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "output resolution: " + images[0].width + "*" + images[0].height + "*" + numeric_cast<uint32>(images.size()));
+	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "output channels: " + images[0].bpp);
 
 	exportTexture(target);
 
@@ -680,7 +680,7 @@ void processTexture()
 		uint32 index = 0;
 		for (auto &it : images)
 		{
-			string dbgName = pathJoin(configGetString("cage-asset-processor.texture.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + "_" + (index++) + ".png");
+			string dbgName = pathJoin(configGetString("cage-asset-processor.texture.path", "asset-preview"), stringizer() + pathReplaceInvalidCharacters(inputName) + "_" + (index++) + ".png");
 			holder<image> png = newImage();
 			png->empty(it.width, it.height, it.bpp);
 			detail::memcpy(png->bufferData(), it.data.data(), png->bufferSize());

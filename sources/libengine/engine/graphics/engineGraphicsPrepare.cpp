@@ -510,7 +510,7 @@ namespace cage
 						}
 					} break;
 					default:
-						CAGE_LOG(severityEnum::Warning, "engine", string() + "trying to render an asset " + e->render.object + " with unsupported scheme " + schemeIndex);
+						CAGE_LOG(severityEnum::Warning, "engine", stringizer() + "trying to render an asset " + e->render.object + " with unsupported scheme " + schemeIndex);
 					}
 				}
 			}

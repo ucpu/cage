@@ -20,7 +20,7 @@ namespace cage
 #endif // CAGE_SYSTEM_WINDOWS
 
 			// this fallback solution will work for as long as the monitor is valid
-			return (uintPtr)monitor;
+			return string(monitor);
 		}
 
 		GLFWmonitor *getMonitorById(const string &id)

@@ -491,7 +491,7 @@ namespace cage
 #ifdef CAGE_SYSTEM_WINDOWS
 					CloseHandle(handle);
 #endif
-					CAGE_LOG(severityEnum::Critical, "thread", string() + "exception thrown in thread '" + threadName + "' cannot be propagated to the caller thread, terminating now");
+					CAGE_LOG(severityEnum::Critical, "thread", stringizer() + "exception thrown in thread '" + threadName + "' cannot be propagated to the caller thread, terminating now");
 					std::terminate();
 				}
 
@@ -578,7 +578,7 @@ namespace cage
 	{
 		string oldName = currentThreadName();
 		currentThreadName() = name;
-		CAGE_LOG(severityEnum::Info, "thread", string() + "renamed thread id '" + threadId() + "' to '" + name + "'" + (oldName.empty() ? "" : string() + " was '" + oldName + "'"));
+		CAGE_LOG(severityEnum::Info, "thread", stringizer() + "renamed thread id '" + threadId() + "' to '" + name + "'" + (oldName.empty() ? stringizer() : stringizer() + " was '" + oldName + "'"));
 
 		if (!name.empty())
 		{
@@ -618,7 +618,7 @@ namespace cage
 	{
 		string n = currentThreadName();
 		if (n.empty())
-			return threadId();
+			return string(threadId());
 		else
 			return n;
 	}
@@ -641,9 +641,9 @@ namespace cage
 			catch (...)
 			{
 				impl->exptr = std::current_exception();
-				CAGE_LOG(severityEnum::Warning, "thread", string() + "unhandled exception in thread '" + getCurrentThreadName() + "'");
+				CAGE_LOG(severityEnum::Warning, "thread", stringizer() + "unhandled exception in thread '" + getCurrentThreadName() + "'");
 			}
-			CAGE_LOG(severityEnum::Info, "thread", string() + "thread '" + getCurrentThreadName() + "' ended");
+			CAGE_LOG(severityEnum::Info, "thread", stringizer() + "thread '" + getCurrentThreadName() + "' ended");
 #ifdef CAGE_SYSTEM_WINDOWS
 			return 0;
 #else

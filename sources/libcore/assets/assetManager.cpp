@@ -24,7 +24,7 @@
 namespace cage
 {
 	configUint32 logLevel("cage.assets.logLevel", 0);
-#define ASS_LOG(LEVEL, ASS, MSG) { if (logLevel >= (LEVEL)) { CAGE_LOG(severityEnum::Info, "assetManager", string() + "asset '" + (ASS)->textName + "' (" + (ASS)->realName + " / " + (ASS)->aliasName + "): " + MSG); } }
+#define ASS_LOG(LEVEL, ASS, MSG) { if (logLevel >= (LEVEL)) { CAGE_LOG(severityEnum::Info, "assetManager", stringizer() + "asset '" + (ASS)->textName + "' (" + (ASS)->realName + " / " + (ASS)->aliasName + "): " + MSG); } }
 
 	namespace
 	{
@@ -111,7 +111,7 @@ namespace cage
 					CAGE_LOG(severityEnum::Error, "assetManager", "failed to find the directory with assets");
 					throw;
 				}
-				CAGE_LOG(severityEnum::Info, "assetManager", string() + "using asset path: '" + path + "'");
+				CAGE_LOG(severityEnum::Info, "assetManager", stringizer() + "using asset path: '" + path + "'");
 				schemes.resize(config.schemeMaxCount);
 				queueCustomLoad.reserve(config.threadMaxCount);
 				queueCustomDone.reserve(config.threadMaxCount);
@@ -149,7 +149,7 @@ namespace cage
 					return buff;
 				string pth;
 				if (!findAssetPath.dispatch(name, pth))
-					pth = pathJoin(path, name);
+					pth = pathJoin(path, string(name));
 				holder<fileHandle> f = newFile(pth, fileMode(true, false));
 				auto s = f->size();
 				buff.allocate(numeric_cast<uintPtr>(s));
@@ -176,7 +176,7 @@ namespace cage
 					ass->assetFlags = 0;
 					ass->compressedSize = ass->originalSize = 0;
 					ass->aliasName = 0;
-					ass->textName = string() + "<" + ass->realName + ">";
+					ass->textName = stringizer() + "<" + ass->realName + ">";
 					ass->dependenciesNew.clear();
 					ass->compressedData = ass->originalData = nullptr;
 					try
@@ -455,7 +455,7 @@ namespace cage
 						CAGE_ASSERT(countProcessing > 0);
 						countProcessing--;
 						if (ass->error)
-							CAGE_LOG(severityEnum::Warning, "assetManager", string() + "asset: '" + ass->textName + "', loading failed");
+							CAGE_LOG(severityEnum::Warning, "assetManager", stringizer() + "asset: '" + ass->textName + "', loading failed");
 						if (ass->references == 0)
 							assetStartRemoving(ass);
 						return true;
@@ -656,8 +656,8 @@ namespace cage
 		case assetStateEnum::Error:
 		{
 			assetContextPrivateStruct *ass = impl->index.at(assetName);
-			CAGE_LOG(severityEnum::Note, "exception", string() + "asset real name: " + assetName);
-			CAGE_LOG(severityEnum::Note, "exception", string() + "asset text name: '" + ass->textName + "'");
+			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "asset real name: " + assetName);
+			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "asset text name: '" + ass->textName + "'");
 			CAGE_THROW_ERROR(exception, "asset has failed to load");
 		}
 		case assetStateEnum::Unknown:
@@ -691,7 +691,7 @@ namespace cage
 		{
 			ass = detail::systemArena().createObject<assetContextPrivateStruct>();
 			ass->realName = assetName;
-			ass->textName = string() + "<" + assetName + ">";
+			ass->textName = stringizer() + "<" + assetName + ">";
 			ASS_LOG(2, ass, "created");
 			impl->index[ass->realName] = ass;
 			impl->countTotal++;

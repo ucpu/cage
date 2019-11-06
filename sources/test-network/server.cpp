@@ -39,10 +39,10 @@ struct thrStruct
 
 void runServer()
 {
-	CAGE_LOG(severityEnum::Info, "config", string() + "running in server mode");
+	CAGE_LOG(severityEnum::Info, "config", stringizer() + "running in server mode");
 
 	configUint32 port("port");
-	CAGE_LOG(severityEnum::Info, "config", string() + "port: " + (uint32)port);
+	CAGE_LOG(severityEnum::Info, "config", stringizer() + "port: " + (uint32)port);
 
 	holder<udpServer> server = newUdpServer(numeric_cast<uint16>((uint32)port));
 	bool hadConnection = false;

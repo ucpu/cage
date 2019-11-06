@@ -27,6 +27,9 @@ namespace cage
 		CAGE_API int memcmp(const void *ptr1, const void *ptr2, uintPtr num);
 
 		template<uint32 N>
+		struct stringizerBase;
+
+		template<uint32 N>
 		struct stringBase
 		{
 			// constructors
@@ -42,6 +45,9 @@ namespace cage
 			}
 
 			template<uint32 M>
+			stringBase(const stringizerBase<M> &other);
+
+			template<uint32 M>
 			stringBase(const stringBase<M> &other)
 			{
 				if (other.current > N)
@@ -51,14 +57,14 @@ namespace cage
 				data[current] = 0;
 			}
 
-			/*explicit*/ stringBase(bool other)
+			explicit stringBase(bool other)
 			{
 				CAGE_ASSERT_COMPILE(N >= 6, string_too_short);
 				*this = (other ? "true" : "false");
 			}
 
 #define GCHL_GENERATE(TYPE) \
-			/*explicit*/ stringBase(TYPE other)\
+			explicit stringBase(TYPE other)\
 			{\
 				CAGE_ASSERT_COMPILE(N >= 20, string_too_short);\
 				current = privat::toString(data, other);\
@@ -103,13 +109,6 @@ namespace cage
 				return *this;
 			}
 
-			stringBase &operator = (const char *other)
-			{
-				current = privat::toString(data, N, other);
-				data[current] = 0;
-				return *this;
-			}
-
 			// compound operators
 			stringBase &operator += (const stringBase &other)
 			{
@@ -121,20 +120,8 @@ namespace cage
 				return *this;
 			}
 
-			stringBase &operator += (const char *other)
-			{
-				current += privat::toString(data + current, N - current, other);
-				data[current] = 0;
-				return *this;
-			}
-
 			// binary operators
 			stringBase operator + (const stringBase &other) const
-			{
-				return stringBase(*this) += other;
-			}
-
-			stringBase operator + (const char *other) const
 			{
 				return stringBase(*this) += other;
 			}
@@ -418,23 +405,79 @@ namespace cage
 		};
 
 		template<uint32 N>
-		inline bool stringCompareFast(const stringBase<N> &a, const stringBase<N> &b) noexcept
+		struct stringizerBase
 		{
-			if (a.length() == b.length())
-				return detail::memcmp(a.begin(), b.begin(), a.length()) < 0;
-			return a.length() < b.length();
+			stringBase<N> value;
+		};
+
+		template<uint32 N, uint32 M>
+		stringizerBase<N> &operator + (stringizerBase<N> &str, const stringizerBase<M> &other)
+		{
+			str.value += other.value;
+			return str;
 		}
+
+		template<uint32 N, uint32 M>
+		stringizerBase<N> &operator + (stringizerBase<N> &str, const stringBase<M> &other)
+		{
+			str.value += other;
+			return str;
+		}
+
+		template<uint32 N>
+		stringizerBase<N> &operator + (stringizerBase<N> &str, const char *other)
+		{
+			str.value += other;
+			return str;
+		}
+
+		template<uint32 N>
+		stringizerBase<N> &operator + (stringizerBase<N> &str, char *other)
+		{
+			str.value += other;
+			return str;
+		}
+
+		template<uint32 N, class T>
+		stringizerBase<N> &operator + (stringizerBase<N> &str, T *other)
+		{
+			return str + (uintPtr)other;
+		}
+
+#define GCHL_GENERATE(TYPE) \
+		template<uint32 N> \
+		inline stringizerBase<N> &operator + (stringizerBase<N> &str, TYPE other) \
+		{ \
+			return str + stringBase<20>(other); \
+		}
+		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, float, double));
+#undef GCHL_GENERATE
+
+		template<uint32 N, class T>
+		inline stringizerBase<N> &operator + (stringizerBase<N> &&str, T &&other)
+		{
+			stringizerBase<N> &r = str; // allow to use l-value-reference operator overloads with r-value-reference stringizer
+			return str + other;
+		}
+
+		template<uint32 N>
+		template<uint32 M>
+		inline stringBase<N>::stringBase(const stringizerBase<M> &other) : stringBase(other.value)
+		{}
 
 		template<uint32 N>
 		struct stringComparatorFast
 		{
 			bool operator () (const stringBase<N> &a, const stringBase<N> &b) const noexcept
 			{
-				return stringCompareFast(a, b);
+				if (a.length() == b.length())
+					return detail::memcmp(a.begin(), b.begin(), a.length()) < 0;
+				return a.length() < b.length();
 			}
 		};
 	}
 
 	typedef detail::stringBase<1000> string;
+	typedef detail::stringizerBase<1000> stringizer;
 	typedef detail::stringComparatorFast<1000> stringComparatorFast;
 }

@@ -73,19 +73,19 @@ namespace cage
 	void hierarchyItemStruct::printDebug(uint32 offset) const
 	{
 		string spaces = string().fill(offset * 4);
-		CAGE_LOG_CONTINUE(severityEnum::Info, "gui-debug", spaces + "HIERARCHY: entity: " + (ent ? ent->name() : 0u) + ", subsided: " + subsidedItem);
+		CAGE_LOG_CONTINUE(severityEnum::Info, "gui-debug", stringizer() + spaces + "HIERARCHY: entity: " + (ent ? ent->name() : 0u) + ", subsided: " + subsidedItem);
 		if (item)
 		{
-			CAGE_LOG_CONTINUE(severityEnum::Info, "gui-debug", spaces + "  ITEM: " + typeid(*item).name());
+			CAGE_LOG_CONTINUE(severityEnum::Info, "gui-debug", stringizer() + spaces + "  ITEM: " + typeid(*item).name());
 		}
 		if (text)
 		{
 			CAGE_COMPONENT_GUI(text, text, ent);
-			CAGE_LOG_CONTINUE(severityEnum::Info, "gui-debug", spaces + "  TEXT: '" + text.value + "'");
+			CAGE_LOG_CONTINUE(severityEnum::Info, "gui-debug", stringizer() + spaces + "  TEXT: '" + text.value + "'");
 		}
-		CAGE_LOG_CONTINUE(severityEnum::Info, "gui-debug", spaces + "  requested size: " + requestedSize);
-		CAGE_LOG_CONTINUE(severityEnum::Info, "gui-debug", spaces + "  render position: " + renderPos + ", size: " + renderSize);
-		CAGE_LOG_CONTINUE(severityEnum::Info, "gui-debug", spaces + "  clip position: " + clipPos + ", size: " + clipSize);
+		CAGE_LOG_CONTINUE(severityEnum::Info, "gui-debug", stringizer() + spaces + "  requested size: " + requestedSize);
+		CAGE_LOG_CONTINUE(severityEnum::Info, "gui-debug", stringizer() + spaces + "  render position: " + renderPos + ", size: " + renderSize);
+		CAGE_LOG_CONTINUE(severityEnum::Info, "gui-debug", stringizer() + spaces + "  clip position: " + clipPos + ", size: " + clipSize);
 	}
 
 	void printDebug(guiImpl *impl)

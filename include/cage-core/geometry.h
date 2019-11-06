@@ -27,9 +27,6 @@ namespace cage
 		bool operator == (const line &other) const { return origin == other.origin && direction == other.direction && minimum == other.minimum && maximum == other.maximum; }
 		bool operator != (const line &other) const { return !(*this == other); }
 
-		// conversion operators
-		operator string() const { return string() + "(" + origin + ", " + direction + ", " + minimum + ", " + maximum + ")"; }
-
 		// methods
 		bool valid() const { return origin.valid() && direction.valid() && minimum.valid() && maximum.valid(); };
 		bool isPoint() const { return valid() && minimum == maximum; }
@@ -68,9 +65,6 @@ namespace cage
 		bool operator == (const triangle &other) const { for (uint8 i = 0; i < 3; i++) if (vertices[i] != other.vertices[i]) return false; return true; }
 		bool operator != (const triangle &other) const { return !(*this == other); }
 
-		// conversion operators
-		operator string() const { return string() + "(" + vertices[0] + ", " + vertices[1] + ", " + vertices[2] + ")"; }
-
 		// methods
 		bool valid() const { return vertices[0].valid() && vertices[1].valid() && vertices[2].valid(); };
 		bool degenerated() const { return vertices[0] == vertices[1] || vertices[1] == vertices[2] || vertices[2] == vertices[0]; };
@@ -106,9 +100,6 @@ namespace cage
 		bool operator == (const plane &other) const { return d == other.d && normal == other.normal; }
 		bool operator != (const plane &other) const { return !(*this == other); }
 
-		// conversion operators
-		operator string() const { return string() + "(" + normal + ", " + d + ")"; }
-
 		// methods
 		bool valid() const { return d.valid() && normal.valid(); };
 		plane normalize() const;
@@ -138,9 +129,6 @@ namespace cage
 		// comparison operators
 		bool operator == (const sphere &other) const { return (empty() == other.empty()) || (center == other.center && radius == other.radius); }
 		bool operator != (const sphere &other) const { return !(*this == other); }
-
-		// conversion operators
-		operator string() const { return string() + "(" + center + ", " + radius + ")"; }
 
 		// methods
 		bool valid() const { return center.valid() && radius >= 0; }
@@ -177,9 +165,6 @@ namespace cage
 		bool operator == (const aabb &other) const { return (empty() == other.empty()) && (empty() || (a == other.a && b == other.b)); }
 		bool operator != (const aabb &other) const { return !(*this == other); }
 
-		// conversion operators
-		operator string() const { return string() + "(" + a + "," + b + ")"; }
-
 		// methods
 		bool valid() const { return a.valid() && b.valid(); };
 		bool empty() const { return !valid(); }
@@ -192,6 +177,15 @@ namespace cage
 		// constants
 		static aabb Universe();
 	};
+
+	namespace detail
+	{
+		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const line &other) { return str + "(" + other.origin + ", " + other.direction + ", " + other.minimum + ", " + other.maximum + ")"; }
+		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const triangle &other) { return str + "(" + other.vertices[0] + ", " + other.vertices[1] + ", " + other.vertices[2] + ")"; }
+		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const plane &other) { return str + "(" + other.normal + ", " + other.d + ")"; }
+		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const sphere &other) { return str + "(" + other.center + ", " + other.radius + ")"; }
+		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const aabb &other) { return str + "(" + other.a + "," + other.b + ")"; }
+	}
 
 	CAGE_API line makeSegment(const vec3 &a, const vec3 &b);
 	CAGE_API line makeRay(const vec3 &a, const vec3 &b);

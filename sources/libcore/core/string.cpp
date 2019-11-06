@@ -59,7 +59,7 @@ namespace cage
 				}
 				if (!*s || !e || *e != 0 || std::isspace(*s) || errno != 0)
 				{
-					CAGE_LOG(severityEnum::Note, "exception", string() + "input string: '" + s + "'");
+					CAGE_LOG(severityEnum::Note, "exception", stringizer() + "input string: '" + s + "'");
 					CAGE_THROW_ERROR(exception, "fromString failed");
 				}
 			}
@@ -72,7 +72,7 @@ namespace cage
 				value = std::strtoll(s, &e, 10);
 				if (!*s || !e || *e != 0 || std::isspace(*s) || errno != 0)
 				{
-					CAGE_LOG(severityEnum::Note, "exception", string() + "input string: '" + s + "'");
+					CAGE_LOG(severityEnum::Note, "exception", stringizer() + "input string: '" + s + "'");
 					CAGE_THROW_ERROR(exception, "fromString failed");
 				}
 			}
@@ -85,7 +85,7 @@ namespace cage
 				value = std::strtoull(s, &e, 10);
 				if (!*s || !e || *s == '-' || *e != 0 || std::isspace(*s) || errno != 0)
 				{
-					CAGE_LOG(severityEnum::Note, "exception", string() + "input string: '" + s + "'");
+					CAGE_LOG(severityEnum::Note, "exception", stringizer() + "input string: '" + s + "'");
 					CAGE_THROW_ERROR(exception, "fromString failed");
 				}
 			}
@@ -98,7 +98,7 @@ namespace cage
 				double v = std::strtod(s, &e);
 				if (!*s || !e || *e != 0 || std::isspace(*s) || errno != 0)
 				{
-					CAGE_LOG(severityEnum::Note, "exception", string() + "input string: '" + s + "'");
+					CAGE_LOG(severityEnum::Note, "exception", stringizer() + "input string: '" + s + "'");
 					CAGE_THROW_ERROR(exception, "fromString failed");
 				}
 				value = v;
@@ -111,7 +111,7 @@ namespace cage
 				genericScan(s, v);
 				if (v < detail::numeric_limits<float>::min() || v > detail::numeric_limits<float>::max())
 				{
-					CAGE_LOG(severityEnum::Note, "exception", string() + "input string: '" + s + "'");
+					CAGE_LOG(severityEnum::Note, "exception", stringizer() + "input string: '" + s + "'");
 					CAGE_THROW_ERROR(exception, "fromString failed");
 				}
 				value = (float)v;

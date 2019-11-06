@@ -147,8 +147,8 @@ namespace cage
 				sm += string(mapping[i] + 1).fill(4);
 				sd += string(device[i]).fill(4);
 			}
-			CAGE_LOG_CONTINUE(severityEnum::Note, "sound", string() + "device channel ids:  " + sd);
-			CAGE_LOG_CONTINUE(severityEnum::Note, "sound", string() + "mapping channel ids: " + sm);
+			CAGE_LOG_CONTINUE(severityEnum::Note, "sound", stringizer() + "device channel ids:  " + sd);
+			CAGE_LOG_CONTINUE(severityEnum::Note, "sound", stringizer() + "mapping channel ids: " + sm);
 		}
 
 		void writeCallbackHelper(SoundIoOutStream *stream, int frameCountMin, int frameCountMax);
@@ -232,7 +232,7 @@ namespace cage
 				device(nullptr), stream(nullptr), inputBus(nullptr), convertCallback(nullptr),
 				errorCountUnderflow(0), errorCountExceptions(0), errorCountNoData(0)
 			{
-				CAGE_LOG(severityEnum::Info, "sound", string() + "creating speaker, name: '" + name + "'");
+				CAGE_LOG(severityEnum::Info, "sound", stringizer() + "creating speaker, name: '" + name + "'");
 
 				for (uint32 i = 0; i < sizeof(channelVolumes) / sizeof(channelVolumes[0]); i++)
 					channelVolumes[i] = 1;
@@ -296,9 +296,9 @@ namespace cage
 					CAGE_THROW_ERROR(soundError, "no supported format available", 0);
 
 				checkSoundIoError(soundio_outstream_open(stream));
-				CAGE_LOG_CONTINUE(severityEnum::Note, "sound", string() + "speaker uses " + stream->layout.channel_count + " channels and " + stream->sample_rate + " samples per second per channel");
-				CAGE_LOG_CONTINUE(severityEnum::Note, "sound", string() + "device id: '" + device->id + "'");
-				CAGE_LOG_CONTINUE(severityEnum::Note, "sound", string() + "device name: '" + device->name + "'");
+				CAGE_LOG_CONTINUE(severityEnum::Note, "sound", stringizer() + "speaker uses " + stream->layout.channel_count + " channels and " + stream->sample_rate + " samples per second per channel");
+				CAGE_LOG_CONTINUE(severityEnum::Note, "sound", stringizer() + "device id: '" + device->id + "'");
+				CAGE_LOG_CONTINUE(severityEnum::Note, "sound", stringizer() + "device name: '" + device->name + "'");
 				channelMapping.resize(stream->layout.channel_count);
 				remapChannels(stream->layout.channel_count, stream->layout.channels, channelMapping.data());
 				data.init(sio, min(stream->layout.channel_count, 8), stream->sample_rate);
@@ -311,7 +311,7 @@ namespace cage
 				soundio_outstream_destroy(stream);
 				soundio_device_unref(device);
 				if (errorCountUnderflow || errorCountExceptions || errorCountNoData)
-					CAGE_LOG(severityEnum::Warning, "sound", string() + "there has been " + errorCountUnderflow + " underflows, " + errorCountExceptions + " exceptions and " + errorCountNoData + " times no data in audio speaker: '" + name + "'");
+					CAGE_LOG(severityEnum::Warning, "sound", stringizer() + "there has been " + errorCountUnderflow + " underflows, " + errorCountExceptions + " exceptions and " + errorCountNoData + " times no data in audio speaker: '" + name + "'");
 			}
 
 			void update(uint64 currentTime)

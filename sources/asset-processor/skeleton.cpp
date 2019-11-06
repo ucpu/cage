@@ -28,7 +28,7 @@ namespace
 				detail += ", ";
 			aiBone *b = skeleton->bone(n);
 			if (b)
-				detail += string() + "weights: " + b->mNumWeights;
+				detail += stringizer() + "weights: " + b->mNumWeights;
 			else
 				detail += string("no bone");
 		}
@@ -85,9 +85,9 @@ void processSkeleton()
 	// inverted rest matrices
 	ser.write(is.data(), s.bonesCount * sizeof(mat4));
 
-	CAGE_LOG(severityEnum::Info, logComponentName, string() + "buffer size (before compression): " + buff.size());
+	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
 	memoryBuffer comp = detail::compress(buff);
-	CAGE_LOG(severityEnum::Info, logComponentName, string() + "buffer size (after compression): " + comp.size());
+	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + comp.size());
 
 	assetHeader h = initializeAssetHeaderStruct();
 	h.originalSize = numeric_cast<uint32>(buff.size());
