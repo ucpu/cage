@@ -1,6 +1,10 @@
 #include <vector>
 #include <algorithm>
 #include <cctype> // std::isspace
+#include <cerrno>
+#include <cstring>
+#include <cstdlib>
+#include <cstdio>
 
 #define CAGE_EXPORT
 #include <cage-core/core.h>
@@ -11,22 +15,22 @@ namespace cage
 	{
 		void *memset(void *ptr, int value, uintPtr num)
 		{
-			return ::memset(ptr, value, num);
+			return std::memset(ptr, value, num);
 		}
 
 		void *memcpy(void *destination, const void *source, uintPtr num)
 		{
-			return ::memcpy(destination, source, num);
+			return std::memcpy(destination, source, num);
 		}
 
 		void *memmove(void *destination, const void *source, uintPtr num)
 		{
-			return ::memmove(destination, source, num);
+			return std::memmove(destination, source, num);
 		}
 
 		int memcmp(const void *ptr1, const void *ptr2, uintPtr num)
 		{
-			return ::memcmp(ptr1, ptr2, num);
+			return std::memcmp(ptr1, ptr2, num);
 		}
 	}
 
@@ -41,14 +45,14 @@ namespace cage
 				char *e = nullptr;
 				if (detail::numeric_limits<T>::is_signed)
 				{
-					sint64 v = strtoll(s, &e, 10);
+					sint64 v = std::strtoll(s, &e, 10);
 					value = (T)v;
 					if (v < detail::numeric_limits<T>::min() || v > detail::numeric_limits<T>::max())
 						e = nullptr;
 				}
 				else
 				{
-					uint64 v = strtoull(s, &e, 10);
+					uint64 v = std::strtoull(s, &e, 10);
 					value = (T)v;
 					if (*s == '-' || v < detail::numeric_limits<T>::min() || v > detail::numeric_limits<T>::max())
 						e = nullptr;
@@ -65,7 +69,7 @@ namespace cage
 			{
 				errno = 0;
 				char *e = nullptr;
-				value = strtoll(s, &e, 10);
+				value = std::strtoll(s, &e, 10);
 				if (!*s || !e || *e != 0 || std::isspace(*s) || errno != 0)
 				{
 					CAGE_LOG(severityEnum::Note, "exception", string() + "input string: '" + s + "'");
@@ -78,7 +82,7 @@ namespace cage
 			{
 				errno = 0;
 				char *e = nullptr;
-				value = strtoull(s, &e, 10);
+				value = std::strtoull(s, &e, 10);
 				if (!*s || !e || *s == '-' || *e != 0 || std::isspace(*s) || errno != 0)
 				{
 					CAGE_LOG(severityEnum::Note, "exception", string() + "input string: '" + s + "'");
@@ -91,7 +95,7 @@ namespace cage
 			{
 				errno = 0;
 				char *e = nullptr;
-				double v = strtod(s, &e);
+				double v = std::strtod(s, &e);
 				if (!*s || !e || *e != 0 || std::isspace(*s) || errno != 0)
 				{
 					CAGE_LOG(severityEnum::Note, "exception", string() + "input string: '" + s + "'");
@@ -116,7 +120,7 @@ namespace cage
 
 #define GCHL_GENERATE(TYPE, SPEC) \
 		uint32 toString(char *s, TYPE value) \
-		{ sint32 ret = sprintf(s, CAGE_STRINGIZE(SPEC), value); if (ret < 0) CAGE_THROW_ERROR(exception, "toString failed"); return ret; } \
+		{ sint32 ret = std::sprintf(s, CAGE_STRINGIZE(SPEC), value); if (ret < 0) CAGE_THROW_ERROR(exception, "toString failed"); return ret; } \
 		void fromString(const char *s, TYPE &value) \
 		{ return genericScan(s, value); }
 		GCHL_GENERATE(sint8, %hhd);
@@ -141,7 +145,7 @@ namespace cage
 			auto l = std::strlen(src);
 			if (l > dstLen)
 				CAGE_THROW_ERROR(exception, "string truncation");
-			memcpy(dst, src, l);
+			std::memcpy(dst, src, l);
 			return numeric_cast<uint32>(l);
 		}
 
@@ -241,7 +245,7 @@ namespace cage
 			uint32 len = encodeUrlBase(tmp, dataIn, currentIn);
 			if (len > maxLength)
 				CAGE_THROW_ERROR(exception, "string truncation");
-			detail::memcpy(dataOut, tmp, len);
+			std::memcpy(dataOut, tmp, len);
 			currentOut = len;
 		}
 
@@ -251,7 +255,7 @@ namespace cage
 			uint32 len = decodeUrlBase(tmp, dataIn, currentIn);
 			if (len > maxLength)
 				CAGE_THROW_ERROR(exception, "string truncation");
-			detail::memcpy(dataOut, tmp, len);
+			std::memcpy(dataOut, tmp, len);
 			currentOut = len;
 		}
 
@@ -271,7 +275,7 @@ namespace cage
 				stringSortAndUnique(data2.data(), current2);
 				if (current2 != current)
 					return false;
-				return detail::memcmp(data, data2.data(), current) == 0;
+				return std::memcmp(data, data2.data(), current) == 0;
 			}
 
 			bool stringContains(const char *data, uint32 current, char what)
@@ -293,8 +297,8 @@ namespace cage
 					break;
 				if (current + withLen - whatLen > maxLength)
 					CAGE_THROW_ERROR(exception, "string truncation");
-				detail::memmove(data + pos + withLen, data + pos + whatLen, current - pos - whatLen);
-				detail::memcpy(data + pos, with, withLen);
+				std::memmove(data + pos + withLen, data + pos + whatLen, current - pos - whatLen);
+				std::memcpy(data + pos, with, withLen);
 				current += withLen - whatLen;
 				pos += withLen - whatLen + 1;
 			}
@@ -321,7 +325,7 @@ namespace cage
 					p++;
 				current -= p;
 				if (p > 0)
-					detail::memmove(data, data + p, current);
+					std::memmove(data, data + p, current);
 			}
 		}
 
@@ -335,14 +339,14 @@ namespace cage
 			{
 				if (stringContains(what, whatLen, data[i]))
 				{
-					detail::memcpy(ret, data, i);
-					detail::memmove(data, data + i + 1, current - i - 1);
+					std::memcpy(ret, data, i);
+					std::memmove(data, data + i + 1, current - i - 1);
 					retLen = i;
 					current -= i + 1;
 					return;
 				}
 			}
-			detail::memcpy(ret, data, current);
+			std::memcpy(ret, data, current);
 			std::swap(current, retLen);
 		}
 
@@ -352,7 +356,7 @@ namespace cage
 				return m;
 			uint32 end = current - whatLen + 1;
 			for (uint32 i = offset; i < end; i++)
-				if (detail::memcmp(data + i, what, whatLen) == 0)
+				if (std::memcmp(data + i, what, whatLen) == 0)
 					return i;
 			return m;
 		}
@@ -361,9 +365,9 @@ namespace cage
 		{
 			if (dataLen < prefixLen + infixLen + suffixLen)
 				return false;
-			if (memcmp(data, prefix, prefixLen) != 0)
+			if (std::memcmp(data, prefix, prefixLen) != 0)
 				return false;
-			if (memcmp(data + dataLen - suffixLen, suffix, suffixLen) != 0)
+			if (std::memcmp(data + dataLen - suffixLen, suffix, suffixLen) != 0)
 				return false;
 			if (infixLen == 0)
 				return true;
@@ -374,7 +378,7 @@ namespace cage
 		int stringComparison(const char *ad, uint32 al, const char *bd, uint32 bl)
 		{
 			uint32 l = al < bl ? al : bl;
-			int c = detail::memcmp(ad, bd, l);
+			int c = std::memcmp(ad, bd, l);
 			if (c == 0)
 				return al == bl ? 0 : al < bl ? -1 : 1;
 			return c;
