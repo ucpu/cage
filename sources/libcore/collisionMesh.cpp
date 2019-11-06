@@ -234,7 +234,8 @@ namespace cage
 	namespace
 	{
 		static const uint16 currentVersion = 2;
-		static const char *const currentMagic = "colid";
+		static const char currentMagic[] = "colid";
+
 		struct collisionObjectHeader
 		{
 			char magic[6]; // colid\0
@@ -263,7 +264,7 @@ namespace cage
 		const collisionObjectImpl *impl = (collisionObjectImpl*)this;
 		collisionObjectHeader header;
 		detail::memset(&header, 0, sizeof(header));
-		detail::strcpy(header.magic, currentMagic);
+		detail::memcpy(header.magic, currentMagic, sizeof(currentMagic));
 		header.version = currentVersion;
 		header.trisCount = numeric_cast<uint32>(impl->tris.size());
 		header.nodesCount = numeric_cast<uint32>(impl->nodes.size());
@@ -283,7 +284,7 @@ namespace cage
 		deserializer des(buffer);
 		collisionObjectHeader header;
 		des >> header;
-		if (detail::memcmp(header.magic, currentMagic, detail::strlen(currentMagic)) != 0)
+		if (detail::memcmp(header.magic, currentMagic, sizeof(currentMagic)) != 0)
 			CAGE_THROW_ERROR(exception, "Cannot deserialize collision object: wrong magic");
 		if (header.version != currentVersion)
 			CAGE_THROW_ERROR(exception, "Cannot deserialize collision object: wrong version");

@@ -1,5 +1,6 @@
 #include <map>
 #include <cstdlib>
+#include <cstring>
 
 #include <cage-core/core.h>
 #include <cage-core/math.h>
@@ -88,13 +89,13 @@ namespace cage
 			}
 
 			CAGE_LOG(cageSevr, "graphics", "debug message:");
-			holder<lineReader> lrb = newLineReader((char*)message, detail::strlen(message));
+			holder<lineReader> lrb = newLineReader((char*)message, std::strlen(message));
 			for (string line; lrb->readLine(line);)
 				CAGE_LOG_CONTINUE(cageSevr, "graphics", line);
 			CAGE_LOG_CONTINUE(severityEnum::Note, "graphics", string() + "source: " + src + ", type: " + tp + ", severity: " + sevr + ", id: " + id);
 
 			if (id == 131218 && severity == GL_DEBUG_SEVERITY_MEDIUM && type == GL_DEBUG_TYPE_PERFORMANCE)
-				return; // do not break on messages that shader is beeing recompiled based on opengl state
+				return; // do not break on messages that shader is being recompiled based on opengl state
 
 			if (cageSevr > severityEnum::Info)
 				detail::debugBreakpoint();

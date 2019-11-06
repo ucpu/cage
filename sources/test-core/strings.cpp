@@ -39,6 +39,10 @@ namespace
 			CAGE_TEST(string(f) == "5.000000");
 			double d = 5;
 			CAGE_TEST(string(d) == "5.000000");
+			const char arr[] = "array";
+			CAGE_TEST(string(arr) == "array");
+			char arr2[] = "array";
+			CAGE_TEST(string(arr2) == "array");
 		}
 		{
 			CAGE_TESTCASE("comparisons == and != and length");

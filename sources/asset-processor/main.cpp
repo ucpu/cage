@@ -1,5 +1,6 @@
 #include <exception>
 #include <map>
+#include <cstring>
 
 #include "processor.h"
 #include <cage-core/logger.h>
@@ -45,7 +46,7 @@ namespace
 		char buf[string::MaxLength];
 		if (fgets(buf, string::MaxLength, stdin) == nullptr)
 			CAGE_THROW_ERROR(systemError, "fgets", ferror(stdin));
-		return string(buf, numeric_cast<uint32>(detail::strlen(buf) - 1));
+		return string(buf, numeric_cast<uint32>(std::strlen(buf) - 1));
 	}
 
 	void derivedProperties()

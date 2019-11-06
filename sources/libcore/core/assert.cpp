@@ -13,6 +13,7 @@
 #include <limits>
 #include <exception>
 #include <atomic>
+#include <cstring>
 
 namespace cage
 {
@@ -150,16 +151,16 @@ namespace cage
 			{
 				char buffer[2048];
 				buffer[0] = 0;
-				detail::strcat(buffer, "assert '");
-				detail::strcat(buffer, expt);
-				detail::strcat(buffer, "' failed");
+				std::strcat(buffer, "assert '");
+				std::strcat(buffer, expt);
+				std::strcat(buffer, "' failed");
 				assertOutputLine(buffer, false);
 				buffer[0] = 0;
-				detail::strcat(buffer, file);
-				detail::strcat(buffer, "(");
-				detail::strcat(buffer, line);
-				detail::strcat(buffer, ") - ");
-				detail::strcat(buffer, function);
+				std::strcat(buffer, file);
+				std::strcat(buffer, "(");
+				std::strcat(buffer, line);
+				std::strcat(buffer, ") - ");
+				std::strcat(buffer, function);
 				assertOutputLine(buffer);
 			}
 		}
@@ -181,7 +182,7 @@ namespace cage
 			if (!valid)\
 			{\
 				char buffer [50];\
-				privat::sprint1(buffer, var);\
+				privat::toString(buffer, var);\
 				format(name, buffer);\
 			}\
 			return *this;\
@@ -219,10 +220,10 @@ namespace cage
 		{
 			char buffer[2048];
 			buffer[0] = 0;
-			detail::strcat(buffer, " > ");
-			detail::strcat(buffer, name);
-			detail::strcat(buffer, ": ");
-			detail::strcat(buffer, var);
+			std::strcat(buffer, " > ");
+			std::strcat(buffer, name);
+			std::strcat(buffer, ": ");
+			std::strcat(buffer, var);
 			assertOutputLine(buffer);
 		}
 	}
