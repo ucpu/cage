@@ -27,9 +27,6 @@ namespace cage
 		CAGE_API int memcmp(const void *ptr1, const void *ptr2, uintPtr num);
 
 		template<uint32 N>
-		struct stringizerBase;
-
-		template<uint32 N>
 		struct stringBase
 		{
 			// constructors
@@ -43,9 +40,6 @@ namespace cage
 				detail::memcpy(data, other.data, current);
 				data[current] = 0;
 			}
-
-			template<uint32 M>
-			stringBase(const stringizerBase<M> &other);
 
 			template<uint32 M>
 			stringBase(const stringBase<M> &other)
@@ -408,6 +402,17 @@ namespace cage
 		struct stringizerBase
 		{
 			stringBase<N> value;
+
+			operator const stringBase<N> & () const
+			{
+				return value;
+			}
+
+			template<uint32 M>
+			operator const stringBase<M> () const
+			{
+				return value;
+			}
 		};
 
 		template<uint32 N, uint32 M>
@@ -454,16 +459,11 @@ namespace cage
 #undef GCHL_GENERATE
 
 		template<uint32 N, class T>
-		inline stringizerBase<N> &operator + (stringizerBase<N> &&str, T &&other)
+		inline stringizerBase<N> &operator + (stringizerBase<N> &&str, const T &other)
 		{
-			stringizerBase<N> &r = str; // allow to use l-value-reference operator overloads with r-value-reference stringizer
+			// allow to use l-value-reference operator overloads with r-value-reference stringizer
 			return str + other;
 		}
-
-		template<uint32 N>
-		template<uint32 M>
-		inline stringBase<N>::stringBase(const stringizerBase<M> &other) : stringBase(other.value)
-		{}
 
 		template<uint32 N>
 		struct stringComparatorFast

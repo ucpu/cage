@@ -251,7 +251,7 @@ namespace cage
 				}
 			}
 
-			void read(void *data, uint64 size) override
+			void read(void *data, uintPtr size) override
 			{
 				LOCK;
 				CAGE_ASSERT(f);
@@ -259,12 +259,12 @@ namespace cage
 					CAGE_THROW_ERROR(exception, "zip_fread");
 			}
 
-			void write(const void *data, uint64 size) override
+			void write(const void *data, uintPtr size) override
 			{
 				CAGE_THROW_CRITICAL(notImplemented, "calling write on read-only zip file");
 			}
 
-			void seek(uint64 position) override
+			void seek(uintPtr position) override
 			{
 				LOCK;
 				CAGE_ASSERT(f);
@@ -287,17 +287,17 @@ namespace cage
 					CAGE_THROW_ERROR(exception, "zip_fclose");
 			}
 
-			uint64 tell() const override
+			uintPtr tell() const override
 			{
 				LOCK;
 				CAGE_ASSERT(f);
 				auto r = zip_ftell(f);
 				if (r < 0)
 					CAGE_THROW_ERROR(exception, "zip_ftell");
-				return r;
+				return numeric_cast<uintPtr>(r);
 			}
 
-			uint64 size() const override
+			uintPtr size() const override
 			{
 				LOCK;
 				CAGE_ASSERT(f);
@@ -306,7 +306,7 @@ namespace cage
 					CAGE_THROW_ERROR(exception, "zip_stat");
 				if ((st.valid & ZIP_STAT_SIZE) == 0)
 					CAGE_THROW_ERROR(exception, "zip_stat");
-				return st.size;
+				return numeric_cast<uintPtr>(st.size);
 			}
 		};
 
@@ -335,18 +335,18 @@ namespace cage
 				}
 			}
 
-			void read(void *data, uint64 size) override
+			void read(void *data, uintPtr size) override
 			{
 				CAGE_THROW_CRITICAL(notImplemented, "calling read on write-only zip file");
 			}
 
-			void write(const void *data, uint64 size) override
+			void write(const void *data, uintPtr size) override
 			{
 				CAGE_ASSERT(!closed);
 				s.write(data, size);
 			}
 
-			void seek(uint64 position) override
+			void seek(uintPtr position) override
 			{
 				CAGE_THROW_CRITICAL(notImplemented, "calling seek on write-only zip file");
 			}
@@ -375,13 +375,13 @@ namespace cage
 					CAGE_THROW_ERROR(exception, "zip_set_file_compression");
 			}
 
-			uint64 tell() const override
+			uintPtr tell() const override
 			{
 				CAGE_ASSERT(!closed);
 				return m.size();
 			}
 
-			uint64 size() const override
+			uintPtr size() const override
 			{
 				CAGE_ASSERT(!closed);
 				return m.size();

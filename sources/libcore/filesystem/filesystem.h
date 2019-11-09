@@ -13,13 +13,13 @@ namespace cage
 		const string myPath; // full name as seen by the application
 		fileMode mode;
 		fileVirtual(const string &path, const fileMode &mode);
-		virtual void read(void *data, uint64 size) = 0;
-		virtual void write(const void *data, uint64 size) = 0;
-		virtual void seek(uint64 position) = 0;
+		virtual void read(void *data, uintPtr size) = 0;
+		virtual void write(const void *data, uintPtr size) = 0;
+		virtual void seek(uintPtr position) = 0;
 		virtual void flush() = 0;
 		virtual void close() = 0;
-		virtual uint64 tell() const = 0;
-		virtual uint64 size() const = 0;
+		virtual uintPtr tell() const = 0;
+		virtual uintPtr size() const = 0;
 	};
 
 	class directoryListVirtual : public directoryList

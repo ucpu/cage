@@ -57,7 +57,7 @@ namespace cage
 		return md;
 	}
 
-	void fileHandle::read(void *data, uint64 size)
+	void fileHandle::read(void *data, uintPtr size)
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		impl->read(data, size);
@@ -67,14 +67,14 @@ namespace cage
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 
-		const uint64 origPos = tell();
-		const uint64 origSize = size();
-		const uint64 origLeft = origSize - origPos;
+		const uintPtr origPos = tell();
+		const uintPtr origSize = size();
+		const uintPtr origLeft = origSize - origPos;
 		if (origLeft == 0)
 			return false;
 
 		char buffer[string::MaxLength + 1];
-		uintPtr s = numeric_cast<uint32>(min(origLeft, (uint64)string::MaxLength));
+		uintPtr s = numeric_cast<uint32>(min(origLeft, (uintPtr)string::MaxLength));
 		read(buffer, s);
 		const char *b = buffer;
 		if (!detail::readLine(line, b, s, origLeft >= string::MaxLength))
@@ -95,7 +95,7 @@ namespace cage
 		return r;
 	}
 
-	void fileHandle::write(const void *data, uint64 size)
+	void fileHandle::write(const void *data, uintPtr size)
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		impl->write(data, size);
@@ -112,7 +112,7 @@ namespace cage
 		write(buffer.data(), buffer.size());
 	}
 
-	void fileHandle::seek(uint64 position)
+	void fileHandle::seek(uintPtr position)
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		impl->seek(position);
@@ -130,13 +130,13 @@ namespace cage
 		impl->close();
 	}
 
-	uint64 fileHandle::tell() const
+	uintPtr fileHandle::tell() const
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		return impl->tell();
 	}
 
-	uint64 fileHandle::size() const
+	uintPtr fileHandle::size() const
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		return impl->size();
@@ -180,34 +180,34 @@ namespace cage
 					{
 						close();
 					}
-					catch (...)
+					catch (const cage::exception &)
 					{
 						// do nothing
 					}
 				}
 			}
 
-			void read(void *data, uint64 size) override
+			void read(void *data, uintPtr size) override
 			{
 				CAGE_ASSERT(f, "file closed");
 				CAGE_ASSERT(mode.read);
 				if (size == 0)
 					return;
-				if (fread(data, (size_t)size, 1, f) != 1)
+				if (fread(data, size, 1, f) != 1)
 					CAGE_THROW_ERROR(systemError, "fread", errno);
 			}
 
-			void write(const void *data, uint64 size) override
+			void write(const void *data, uintPtr size) override
 			{
 				CAGE_ASSERT(f, "file closed");
 				CAGE_ASSERT(mode.write);
 				if (size == 0)
 					return;
-				if (fwrite(data, (size_t)size, 1, f) != 1)
+				if (fwrite(data, size, 1, f) != 1)
 					CAGE_THROW_ERROR(systemError, "fwrite", errno);
 			}
 
-			void seek(uint64 position) override
+			void seek(uintPtr position) override
 			{
 				CAGE_ASSERT(f, "file closed");
 				if (fseek(f, position, 0) != 0)
@@ -230,20 +230,20 @@ namespace cage
 					CAGE_THROW_ERROR(systemError, "fclose", errno);
 			}
 
-			uint64 tell() const override
+			uintPtr tell() const override
 			{
 				CAGE_ASSERT(f, "file closed");
-				return ftell(f);
+				return numeric_cast<uintPtr>(ftell(f));
 			}
 
-			uint64 size() const override
+			uintPtr size() const override
 			{
 				CAGE_ASSERT(f, "file closed");
-				uint64 pos = ftell(f);
+				auto pos = ftell(f);
 				fseek(f, 0, 2);
-				uint64 siz = ftell(f);
+				auto siz = ftell(f);
 				fseek(f, pos, 0);
-				return siz;
+				return numeric_cast<uintPtr>(siz);
 			}
 		};
 	}

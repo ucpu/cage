@@ -27,8 +27,8 @@ namespace cage
 	std::streamsize bufferOStream::xsputn(const char* s, std::streamsize n)
 	{
 		uintPtr origSize = buffer.size();
-		buffer.resizeSmart(origSize + n);
-		detail::memcpy(buffer.data() + origSize, s, n);
+		buffer.resizeSmart(numeric_cast<uintPtr>(origSize + n));
+		detail::memcpy(buffer.data() + origSize, s, numeric_cast<uintPtr>(n));
 		return n;
 	};
 
