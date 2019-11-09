@@ -52,14 +52,14 @@ namespace cage
 
 	// general serialization
 
-	template <class T>
+	template<class T>
 	serializer &operator << (serializer &s, const T &v)
 	{
 		s.write(&v, sizeof(v));
 		return s;
 	}
 
-	template <class T>
+	template<class T>
 	deserializer &operator >> (deserializer &s, T &v)
 	{
 		s.read(&v, sizeof(v));
@@ -68,7 +68,7 @@ namespace cage
 
 	// specialization for strings
 
-	template <uint32 N>
+	template<uint32 N>
 	serializer &operator << (serializer &s, const detail::stringBase<N> &v)
 	{
 		serializer ss = s.placeholder(sizeof(v.length()) + v.length()); // write all or nothing
@@ -77,7 +77,7 @@ namespace cage
 		return s;
 	}
 
-	template <uint32 N>
+	template<uint32 N>
 	deserializer &operator >> (deserializer &s, detail::stringBase<N> &v)
 	{
 		decltype(v.length()) size;
@@ -88,16 +88,16 @@ namespace cage
 
 	// disable serialization of raw pointers and holders
 
-	template <class T>
+	template<class T>
 	serializer &operator << (serializer &s, const T *v) = delete;
 
-	template <class T>
+	template<class T>
 	serializer &operator << (serializer &s, const holder<T> &v) = delete;
 
-	template <class T>
+	template<class T>
 	deserializer &operator >> (deserializer &s, T *v) = delete;
 
-	template <class T>
+	template<class T>
 	deserializer &operator >> (deserializer &s, holder<T> &v) = delete;
 }
 

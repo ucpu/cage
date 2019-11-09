@@ -109,7 +109,7 @@ namespace cage
 		if (path.empty())
 			return pathWorkingDir();
 		if (pathIsAbs(path))
-			return path;
+			return pathSimplify(path);
 		return pathJoin(pathWorkingDir(), path);
 	}
 

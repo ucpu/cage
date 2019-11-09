@@ -69,6 +69,7 @@ namespace cage
 
 		std::shared_ptr<archiveVirtual> recursiveFind(const string &path, bool matchExact, string &insidePath)
 		{
+			CAGE_ASSERT(path == pathSimplify(path), path, pathSimplify(path));
 			if (matchExact)
 			{
 				pathTypeFlags t = realType(path);
