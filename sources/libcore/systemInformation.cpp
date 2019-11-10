@@ -8,6 +8,8 @@
 #include <intrin.h>
 #include <powerbase.h> // is there any better way than using CallNtPowerInformation?
 #pragma comment(lib, "PowrProf.lib")
+#elif defined(CAGE_SYSTEM_LINUX)
+#include <cage-core/process.h>
 #else
 // todo
 #endif
@@ -16,8 +18,34 @@ namespace cage
 {
 	string systemName()
 	{
+#ifdef CAGE_SYSTEM_WINDOWS
 		// todo
 		return "";
+#elif defined(CAGE_SYSTEM_LINUX)
+		holder<processHandle> prg = newProcess(string("lsb_release -d"));
+		string newName = prg->readLine();
+		if (!newName.isPattern("Description", "", ""))
+		{
+			// lsb_release is not installed, let's at least return full uname
+			prg = newProcess(string("uname -a"));
+			return prg->readLine();
+		}
+
+		newName = newName.remove(0, string("Description:").length());
+		string systemName = newName.trim();
+
+		prg = newProcess(string("lsb_release -r"));
+		newName = prg->readLine().remove(0, string("Release:").length());
+		systemName = systemName + " " + newName.trim();
+
+		prg = newProcess(string("uname -r"));
+		systemName = systemName + ", kernel " + prg->readLine();
+
+		return systemName;
+#else
+		// todo
+		return "";
+#endif
 	}
 
 	string userName()
@@ -29,6 +57,9 @@ namespace cage
 		if (!GetUserName(buf, &siz))
 			CAGE_THROW_ERROR(systemError, "GetUserName", GetLastError());
 		return buf;
+#elif defined(CAGE_SYSTEM_LINUX)
+		holder<processHandle> prg = newProcess(string("whoami"));
+		return prg->readLine();
 #else
 		// todo
 		return "";
@@ -44,6 +75,9 @@ namespace cage
 		if (!GetComputerName(buf, &siz))
 			CAGE_THROW_ERROR(systemError, "GetComputerName", GetLastError());
 		return buf;
+#elif defined(CAGE_SYSTEM_LINUX)
+		holder<processHandle> prg = newProcess(string("hostname"));
+		return prg->readLine();
 #else
 		// todo
 		return "";
@@ -67,6 +101,9 @@ namespace cage
 			memcpy(CPUBrandString + (16 * i), CPUInfo, sizeof(CPUInfo));
 		}
 		return CPUBrandString;
+#elif defined(CAGE_SYSTEM_LINUX)
+		holder<processHandle> prg = newProcess(string("cat /proc/cpuinfo | grep -m 1 'model name' | cut -d: -f2-"));
+		return prg->readLine().trim();
 #else
 		// todo
 		return "";
@@ -90,6 +127,19 @@ namespace cage
 		if (ret != 0)
 			CAGE_THROW_ERROR(systemError, "CallNtPowerInformation", ret);
 		return ppi[0].MaxMhz * 1000000;
+#elif defined(CAGE_SYSTEM_LINUX)
+		try
+		{
+			holder<processHandle> prg = newProcess(string("cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq"));
+			return prg->readLine().toUint32() * 1000;
+		}
+		catch(const cage::exception &)
+		{
+			// When the cpufreq driver is not loaded (file above does not exist), the CPU should be running on full speed
+		}
+
+		holder<processHandle> prg = newProcess(string("cat /proc/cpuinfo | grep -m 1 'cpu MHz' | cut -d: -f2-"));
+		return prg->readLine().trim().toFloat() * 1000000;
 #else
 		// todo
 		return 0;
@@ -104,6 +154,9 @@ namespace cage
 		if (!GlobalMemoryStatusEx(&m))
 			CAGE_THROW_ERROR(systemError, "GlobalMemoryStatusEx", GetLastError());
 		return m.ullTotalPhys;
+#elif defined(CAGE_SYSTEM_LINUX)
+		holder<processHandle> prg = newProcess(string("cat /proc/meminfo | grep -m 1 'MemTotal' | awk '{print $2}'"));
+		return prg->readLine().toUint64() * 1024;
 #else
 		// todo
 		return 0;
@@ -118,6 +171,19 @@ namespace cage
 		if (!GlobalMemoryStatusEx(&m))
 			CAGE_THROW_ERROR(systemError, "GlobalMemoryStatusEx", GetLastError());
 		return m.ullAvailPhys;
+#elif defined(CAGE_SYSTEM_LINUX)
+		try
+		{
+			holder<processHandle> prg = newProcess(string("cat /proc/meminfo | grep -m 1 'MemAvailable' | awk '{print $2}'"));
+			return prg->readLine().toUint64() * 1024;
+		}
+		catch (const cage::exception &)
+		{
+			// On some systems the "MemAvailable" is not present, in which case continue to look for "MemFree"
+		}
+
+		holder<processHandle> prg = newProcess(string("cat /proc/meminfo | grep -m 1 'MemFree' | awk '{print $2}'"));
+		return prg->readLine().toUint64() * 1024;
 #else
 		// todo
 		return 0;
