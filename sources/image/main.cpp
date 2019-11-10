@@ -12,29 +12,10 @@ void separate(holder<configIni> &cmd)
 {
 	string names[4] = { "1.png", "2.png", "3.png", "4.png" };
 	string input = "input.png";
-	for (const string &option : cmd->sections())
-	{
-		if (option == "1" || option == "2" || option == "3" || option == "4")
-		{
-			if (cmd->itemsCount(option) != 1)
-			{
-				CAGE_LOG(severityEnum::Note, "exception", string() + "option: '" + option + "'");
-				CAGE_THROW_ERROR(exception, "option expects one argument");
-			}
-			uint32 index = option.toUint32() - 1;
-			string name = cmd->get(option, "0");
-			names[index] = name;
-		}
-		else if (option == "i" || option == "input")
-		{
-			if (cmd->itemsCount(option) != 1)
-			{
-				CAGE_LOG(severityEnum::Note, "exception", string() + "option: '" + option + "'");
-				CAGE_THROW_ERROR(exception, "option expects one argument");
-			}
-			input = cmd->get(option, "0");
-		}
-	}
+	for (uint32 i = 0; i < 4; i++)
+		names[i] = cmd->cmdString(0, string(i + 1), names[i]);
+	input = cmd->cmdString('i', "input", input);
+	cmd->checkUnused();
 
 	CAGE_LOG(severityEnum::Info, "image", string() + "loading image: '" + input + "'");
 	holder<image> in = newImage();
@@ -62,21 +43,21 @@ void separate(holder<configIni> &cmd)
 
 void combine(holder<configIni> &cmd)
 {
+	string names[4] = { "", "", "", "" };
+	string output = "output.png";
+	for (uint32 i = 0; i < 4; i++)
+		names[i] = cmd->cmdString(0, string(i + 1), names[i]);
+	output = cmd->cmdString('o', "output", output);
+	cmd->checkUnused();
+
 	holder<image> pngs[4];
 	uint32 width = 0, height = 0;
 	uint32 channels = 0;
-	string output = "combined.png";
-	for (const string &option : cmd->sections())
+	for (uint32 index = 0; index < 4; index++)
 	{
-		if (option == "1" || option == "2" || option == "3" || option == "4")
+		string name = names[index];
+		if (!name.empty())
 		{
-			if (cmd->itemsCount(option) != 1)
-			{
-				CAGE_LOG(severityEnum::Note, "exception", string() + "option: '" + option + "'");
-				CAGE_THROW_ERROR(exception, "option expects one argument");
-			}
-			uint32 index = option.toUint32() - 1;
-			string name = cmd->get(option, "0");
 			CAGE_LOG(severityEnum::Info, "image", string() + "loading image: '" + name + "' for " + (index + 1) + "th channel");
 			holder<image> p = newImage();
 			p->decodeFile(name);
@@ -95,20 +76,6 @@ void combine(holder<configIni> &cmd)
 				CAGE_THROW_ERROR(exception, "the image has to be mono channel");
 			channels = max(channels, index + 1u);
 			pngs[index] = templates::move(p);
-		}
-		else if (option == "o" || option == "output")
-		{
-			if (cmd->itemsCount(option) != 1)
-			{
-				CAGE_LOG(severityEnum::Note, "exception", string() + "option: '" + option + "'");
-				CAGE_THROW_ERROR(exception, "option expects one argument");
-			}
-			output = cmd->get(option, "0");
-		}
-		else
-		{
-			CAGE_LOG(severityEnum::Note, "exception", string() + "option: '" + option + "'");
-			CAGE_THROW_ERROR(exception, "unknown option");
 		}
 	}
 	if (channels == 0)
@@ -144,25 +111,10 @@ int main(int argc, const char *args[])
 
 		holder<configIni> cmd = newConfigIni();
 		cmd->parseCmd(argc, args);
-
-		for (const string &option : cmd->sections())
-		{
-			if (option == "s" || option == "separate")
-			{
-				if (cmd->itemsCount(option) != 1)
-				{
-					CAGE_LOG(severityEnum::Note, "exception", string() + "option: '" + option + "'");
-					CAGE_THROW_ERROR(exception, "option expects one argument");
-				}
-				if (cmd->get(option, "0").toBool())
-				{
-					separate(cmd);
-					return 0;
-				}
-			}
-		}
-
-		combine(cmd);
+		if (cmd->cmdBool('s', "separate", false))
+			separate(cmd);
+		else
+			combine(cmd);
 		return 0;
 	}
 	catch (const cage::exception &)

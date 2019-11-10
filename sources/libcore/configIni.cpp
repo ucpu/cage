@@ -226,6 +226,16 @@ namespace cage
 		return false;
 	}
 
+	void configIni::checkUnused() const
+	{
+		string section, item, value;
+		if (anyUnused(section, item, value))
+		{
+			CAGE_LOG(severityEnum::Note, "exception", string() + "section: '" + section + "', item: '" + item + "', " + "value: '" + value + "'");
+			CAGE_THROW_ERROR(exception, "unknown cmd option");
+		}
+	}
+
 	void configIni::clear()
 	{
 		iniImpl *impl = (iniImpl*)this;
@@ -374,6 +384,108 @@ namespace cage
 			for (const auto &j : i.second->items)
 				file->writeLine(string() + j.first + "=" + j.second.value);
 		}
+	}
+
+	namespace
+	{
+		string toShortName(char c)
+		{
+			if (c == 0)
+				return "";
+			return string(&c, 1);
+		}
+
+		string getCmd(const configIni *ini, string shortName, const string &longName)
+		{
+			uint32 cnt = ini->itemsCount(shortName) + ini->itemsCount(longName);
+			if (cnt > 1)
+				CAGE_THROW_ERROR(exception, "cmd option contains multiple values");
+			if (cnt == 0)
+				return "";
+			string a = ini->get(shortName, "0");
+			string b = ini->get(longName, "0");
+			bool ae = a.empty();
+			bool be = b.empty();
+			if (ae && be)
+				CAGE_THROW_ERROR(exception, "invalid item names for cmd options");
+			CAGE_ASSERT(ae != be);
+			if (!ae) const_cast<configIni*>(ini)->markUsed(shortName, "0");
+			if (!be) const_cast<configIni*>(ini)->markUsed(longName, "0");
+			if (ae)
+				return b;
+			return a;
+		}
+	}
+
+#define GCHL_GENERATE(TYPE, NAME, TO) \
+	void configIni::CAGE_JOIN(set, NAME) (const string &section, const string &item, const TYPE &value) \
+	{ \
+		set(section, item, string(value)); \
+	}; \
+	TYPE configIni::CAGE_JOIN(get, NAME) (const string &section, const string &item, const TYPE &defaul) const \
+	{ \
+		string tmp = get(section, item); \
+		if (tmp.empty()) \
+			return defaul; \
+		const_cast<configIni*>(this)->markUsed(section, item); \
+		return tmp TO; \
+	} \
+	TYPE configIni::CAGE_JOIN(cmd, NAME) (char shortName, const string &longName, const TYPE &defaul) const \
+	{ \
+		string sn = toShortName(shortName); \
+		try \
+		{ \
+			string tmp = getCmd(this, sn, longName); \
+			if (tmp.empty()) \
+				return defaul; \
+			return tmp TO; \
+		} \
+		catch (const exception &) \
+		{ \
+			CAGE_LOG(severityEnum::Note, "exception", string() + "cmd option: '" + longName + "' (" + sn + ")"); \
+			throw; \
+		} \
+	} \
+	TYPE configIni::CAGE_JOIN(cmd, NAME) (char shortName, const string &longName) const \
+	{ \
+		string sn = toShortName(shortName); \
+		try \
+		{ \
+			string tmp = getCmd(this, sn, longName); \
+			if (tmp.empty()) \
+				CAGE_THROW_ERROR(exception, "missing required cmd option"); \
+			return tmp TO; \
+		} \
+		catch (const exception &) \
+		{ \
+			CAGE_LOG(severityEnum::Note, "exception", string() + "cmd option: '" + longName + "' (" + sn + ")"); \
+			throw; \
+		} \
+	}
+	GCHL_GENERATE(bool, Bool, .toBool());
+	GCHL_GENERATE(sint32, Sint32, .toSint32());
+	GCHL_GENERATE(uint32, Uint32, .toUint32());
+	GCHL_GENERATE(sint64, Sint64, .toSint64());
+	GCHL_GENERATE(uint64, Uint64, .toUint64());
+	GCHL_GENERATE(float, Float, .toFloat());
+	GCHL_GENERATE(double, Double, .toDouble());
+	GCHL_GENERATE(string, String, );
+#undef GCHL_GENERATE
+
+	holder<pointerRange<string>> configIni::cmdArray(char shortName, const string &longName) const
+	{
+		const string sn = toShortName(shortName);
+		const auto s = values(sn);
+		const auto l = values(longName);
+		for (const string &item : items(sn))
+			const_cast<configIni*>(this)->markUsed(sn, item);
+		for (const string &item : items(longName))
+			const_cast<configIni*>(this)->markUsed(longName, item);
+		pointerRangeHolder<string> tmp;
+		tmp.reserve(s.size() + l.size());
+		tmp.insert(tmp.end(), s.begin(), s.end());
+		tmp.insert(tmp.end(), l.begin(), l.end());
+		return tmp;
 	}
 
 	holder<configIni> newConfigIni()

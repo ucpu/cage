@@ -27,34 +27,10 @@ stringSet configIgnorePaths;
 void configParseCmd(int argc, const char *args[])
 {
 	{
-		holder<configIni> ini = newConfigIni();
-		ini->parseCmd(argc, args);
-		for (const string &option : ini->sections())
-		{
-			if (option == "s" || option == "scratch")
-			{
-				if (ini->itemsCount(option) != 1)
-				{
-					CAGE_LOG(severityEnum::Note, "exception", string() + "option: '" + option + "'");
-					CAGE_THROW_ERROR(exception, "option expects one argument");
-				}
-				configFromScratch = ini->get(option, "0").toBool();
-			}
-			else if (option == "l" || option == "listen")
-			{
-				if (ini->itemsCount(option) != 1)
-				{
-					CAGE_LOG(severityEnum::Note, "exception", string() + "option: '" + option + "'");
-					CAGE_THROW_ERROR(exception, "option expects one argument");
-				}
-				configListening = ini->get(option, "0").toBool();
-			}
-			else
-			{
-				CAGE_LOG(severityEnum::Note, "exception", string() + "option: '" + option + "'");
-				CAGE_THROW_ERROR(exception, "unknown option");
-			}
-		}
+		holder<configIni> ini = newConfigIni(argc, args);
+		configFromScratch = ini->cmdBool('s', "scratch", configFromScratch);
+		configListening = ini->cmdBool('l', "listen", configListening);
+		ini->checkUnused();
 	}
 
 	configIgnoreExtensions.insert(".tmp");

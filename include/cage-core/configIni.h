@@ -54,6 +54,7 @@ namespace cage
 		bool isUsed(const string &section, const string &item) const;
 		bool anyUnused(string &section, string &item) const;
 		bool anyUnused(string &section, string &item, string &value) const;
+		void checkUnused() const;
 
 		void clear();
 		void merge(const configIni *source); // items in this are overridden by items in source
@@ -61,28 +62,22 @@ namespace cage
 		void load(const string &filename); // clears this before loading
 		void save(const string &filename) const;
 
-#define GCHL_GENERATE(TYPE, NAME, DEF, TO) \
-		TYPE CAGE_JOIN(get, NAME) (const string &section, const string &item, const TYPE &defaul = DEF) const \
-		{ \
-			string tmp = get(section, item); \
-			if (tmp.empty()) \
-				return defaul; \
-			const_cast<configIni*>(this)->markUsed(section, item); \
-			return tmp TO; \
-		} \
-		void CAGE_JOIN(set, NAME) (const string &section, const string &item, const TYPE &value) \
-		{ \
-			set(section, item, string(value)); \
-		};
-		GCHL_GENERATE(bool, Bool, false, .toBool());
-		GCHL_GENERATE(sint32, Sint32, 0, .toSint32());
-		GCHL_GENERATE(uint32, Uint32, 0, .toUint32());
-		GCHL_GENERATE(sint64, Sint64, 0, .toSint64());
-		GCHL_GENERATE(uint64, Uint64, 0, .toUint64());
-		GCHL_GENERATE(float, Float, 0, .toFloat());
-		GCHL_GENERATE(double, Double, 0, .toDouble());
-		GCHL_GENERATE(string, String, "", );
+#define GCHL_GENERATE(TYPE, NAME, DEF) \
+		void CAGE_JOIN(set, NAME) (const string &section, const string &item, const TYPE &value); \
+		TYPE CAGE_JOIN(get, NAME) (const string &section, const string &item, const TYPE &defaul = DEF) const; \
+		TYPE CAGE_JOIN(cmd, NAME) (char shortName, const string &longName, const TYPE &defaul) const; \
+		TYPE CAGE_JOIN(cmd, NAME) (char shortName, const string &longName) const;
+		GCHL_GENERATE(bool, Bool, false);
+		GCHL_GENERATE(sint32, Sint32, 0);
+		GCHL_GENERATE(uint32, Uint32, 0);
+		GCHL_GENERATE(sint64, Sint64, 0);
+		GCHL_GENERATE(uint64, Uint64, 0);
+		GCHL_GENERATE(float, Float, 0);
+		GCHL_GENERATE(double, Double, 0);
+		GCHL_GENERATE(string, String, "");
 #undef GCHL_GENERATE
+
+		holder<pointerRange<string>> cmdArray(char shortName, const string &longName) const;
 	};
 
 	CAGE_API holder<configIni> newConfigIni();

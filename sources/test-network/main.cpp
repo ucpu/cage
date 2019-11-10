@@ -88,90 +88,24 @@ int main(int argc, const char *args[])
 			return 0;
 		}
 
-		holder<configIni> cmd = newConfigIni();
-		cmd->parseCmd(argc, args);
-		string name;
+		holder<configIni> cmd = newConfigIni(argc, args);
 		configString address("address", "localhost");
 		configUint32 port("port", 42789);
 		configFloat packetLoss("cage.udp.simulatedPacketLoss");
 		configUint32 confMessages("messages", 150);
-		bool modeServer = false;
-		bool modeClient = false;
-		for (string option : cmd->sections())
-		{
-			if (option == "n" || option == "name")
-			{
-				if (cmd->itemsCount(option) != 1)
-				{
-					CAGE_LOG(severityEnum::Note, "exception", string() + "option: '" + option + "'");
-					CAGE_THROW_ERROR(exception, "option expects one argument");
-				}
-				name = cmd->get(option, "0");
-			}
-			else if (option == "s" || option == "server")
-			{
-				if (cmd->itemsCount(option) != 1)
-				{
-					CAGE_LOG(severityEnum::Note, "exception", string() + "option: '" + option + "'");
-					CAGE_THROW_ERROR(exception, "option expects one argument");
-				}
-				modeServer = cmd->getBool(option, "0");
-			}
-			else if (option == "c" || option == "client")
-			{
-				if (cmd->itemsCount(option) != 1)
-				{
-					CAGE_LOG(severityEnum::Note, "exception", string() + "option: '" + option + "'");
-					CAGE_THROW_ERROR(exception, "option expects one argument");
-				}
-				modeClient = cmd->getBool(option, "0");
-			}
-			else if (option == "a" || option == "address")
-			{
-				if (cmd->itemsCount(option) != 1)
-				{
-					CAGE_LOG(severityEnum::Note, "exception", string() + "option: '" + option + "'");
-					CAGE_THROW_ERROR(exception, "option expects one argument");
-				}
-				address = cmd->get(option, "0");
-			}
-			else if (option == "p" || option == "port")
-			{
-				if (cmd->itemsCount(option) != 1)
-				{
-					CAGE_LOG(severityEnum::Note, "exception", string() + "option: '" + option + "'");
-					CAGE_THROW_ERROR(exception, "option expects one argument");
-				}
-				port = cmd->getUint32(option, "0");
-				if (port <= 1024 || port >= 65536)
-					CAGE_THROW_ERROR(exception, "invalid port");
-			}
-			else if (option == "l" || option == "packetLoss")
-			{
-				if (cmd->itemsCount(option) != 1)
-				{
-					CAGE_LOG(severityEnum::Note, "exception", string() + "option: '" + option + "'");
-					CAGE_THROW_ERROR(exception, "option expects one argument");
-				}
-				packetLoss = cmd->getFloat(option, "0");
-				if (packetLoss < 0 || packetLoss > 1)
-					CAGE_THROW_ERROR(exception, "invalid packet loss");
-			}
-			else if (option == "m" || option == "messages")
-			{
-				if (cmd->itemsCount(option) != 1)
-				{
-					CAGE_LOG(severityEnum::Note, "exception", string() + "option: '" + option + "'");
-					CAGE_THROW_ERROR(exception, "option expects one argument");
-				}
-				confMessages = cmd->getUint32(option, "0");
-			}
-			else
-			{
-				CAGE_LOG(severityEnum::Note, "exception", string() + "option: '" + option + "'");
-				CAGE_THROW_ERROR(exception, "unknown option");
-			}
-		}
+		bool modeServer = cmd->cmdBool('s', "server", false);
+		bool modeClient = cmd->cmdBool('c', "client", false);
+		string name = cmd->cmdString('n', "name", "");
+		address = cmd->cmdString('a', "address", address);
+		port = cmd->cmdUint32('p', "port", port);
+		if (port <= 1024 || port >= 65536)
+			CAGE_THROW_ERROR(exception, "invalid port");
+		packetLoss = cmd->cmdFloat('l', "packetLoss", packetLoss);
+		if (packetLoss < 0 || packetLoss > 1)
+			CAGE_THROW_ERROR(exception, "invalid packet loss");
+		confMessages = cmd->getUint32('m', "messages", confMessages);
+		cmd->checkUnused();
+		cmd.clear();
 
 		if (modeServer == modeClient)
 			CAGE_THROW_ERROR(exception, "invalid mode (exactly one of -s or -c must be set)");
