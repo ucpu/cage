@@ -43,16 +43,17 @@ namespace cage
 
 		~concurrentQueue()
 		{
-			void *tmp = nullptr;
-			while (queue->tryPopNoStop(tmp))
-				queue->arena.deallocate(tmp);
+			T *tmp = nullptr;
+			while (queue->tryPopNoStop((void*&)tmp))
+				queue->arena.destroy<T>(tmp);
 		}
 
 		void push(const T &value)
 		{
-			T *tmp = queue->arena.createObject<T>(value);
+			T *tmp = nullptr;
 			try
 			{
+				tmp = queue->arena.createObject<T>(value);
 				queue->push(tmp);
 			}
 			catch (...)
@@ -64,9 +65,10 @@ namespace cage
 
 		void push(T &&value)
 		{
-			T *tmp = queue->arena.createObject<T>(templates::move(value));
+			T *tmp = nullptr;
 			try
 			{
+				tmp = queue->arena.createObject<T>(templates::move(value));
 				queue->push(tmp);
 			}
 			catch (...)
@@ -78,10 +80,14 @@ namespace cage
 
 		bool tryPush(const T &value)
 		{
-			T *tmp = queue->arena.createObject<T>(value);
+			T *tmp = nullptr;
 			try
 			{
-				return queue->tryPush(tmp);
+				tmp = queue->arena.createObject<T>(value);
+				bool ret = queue->tryPush(tmp);
+				if (!ret)
+					queue->arena.destroy<T>(tmp);
+				return ret;
 			}
 			catch (...)
 			{
@@ -92,10 +98,14 @@ namespace cage
 
 		bool tryPush(T &&value)
 		{
-			T *tmp = queue->arena.createObject<T>(templates::move(value));
+			T *tmp = nullptr;
 			try
 			{
-				return queue->tryPush(tmp);
+				tmp = queue->arena.createObject<T>(templates::move(value));
+				bool ret = queue->tryPush(tmp);
+				if (!ret)
+					queue->arena.destroy<T>(tmp);
+				return ret;
 			}
 			catch (...)
 			{
@@ -106,40 +116,38 @@ namespace cage
 
 		void pop(T &value)
 		{
-			void *tmp = nullptr;
-			queue->pop(tmp);
+			T *tmp = nullptr;
+			queue->pop((void*&)tmp);
 			CAGE_ASSERT(tmp);
 			try
 			{
-				value = *(T*)tmp;
+				value = templates::move(*tmp);
 			}
-			catch(...)
+			catch (...)
 			{
-				queue->arena.deallocate(tmp);
+				queue->arena.destroy<T>(tmp);
 				throw;
 			}
-			queue->arena.deallocate(tmp);
+			queue->arena.destroy<T>(tmp);
 		}
 
 		bool tryPop(T &value)
 		{
-			void *tmp = nullptr;
-			if (queue->tryPop(tmp))
+			T *tmp = nullptr;
+			if (!queue->tryPop((void*&)tmp))
+				return false;
+			CAGE_ASSERT(tmp);
+			try
 			{
-				CAGE_ASSERT(tmp);
-				try
-				{
-					value = *(T*)tmp;
-				}
-				catch(...)
-				{
-					queue->arena.deallocate(tmp);
-					throw;
-				}
-				queue->arena.deallocate(tmp);
-				return true;
+				value = templates::move(*tmp);
 			}
-			return false;
+			catch (...)
+			{
+				queue->arena.destroy<T>(tmp);
+				throw;
+			}
+			queue->arena.destroy<T>(tmp);
+			return true;
 		}
 
 		uint32 estimatedSize() const { return queue->estimatedSize(); }

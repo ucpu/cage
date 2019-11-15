@@ -89,7 +89,7 @@ namespace
 				privat::generateRandomData((uint8*)b.data(), numeric_cast<uint32>(b.size()));
 				sends.push_back(templates::move(b));
 			}
-			udp = newUdpConnection("localhost", 3210, randomChance() < 0.5 ? 3000000 : 0);
+			udp = newUdpConnection("localhost", 3210, randomChance() < 0.5 ? 10000000 : 0);
 		}
 
 		~clientImpl()

@@ -7,10 +7,54 @@
 
 namespace
 {
+	std::atomic<int> itemsCounter;
+
 	class task
 	{
 	public:
-		task(uint32 id, bool final = false) : id(id), final(final) {}
+		task(uint32 id, bool final = false) : id(id), final(final)
+		{
+			itemsCounter++;
+		}
+
+		task(const task &other) : id(other.id), final(other.final)
+		{
+			itemsCounter++;
+		}
+
+		task(task &&other) : id(other.id), final(other.final)
+		{
+			itemsCounter++;
+		}
+
+		task &operator = (const task &other)
+		{
+			id = other.id;
+			final = other.final;
+			// items count does not change
+			return *this;
+		}
+
+		task &operator = (task &&other)
+		{
+			id = other.id;
+			final = other.final;
+			// items count does not change
+			return *this;
+		}
+
+		~task()
+		{
+#ifdef _MSC_VER
+#pragma warning( disable : 4297 ) // function assumed not to throw an exception but does
+#endif // _MSC_VER
+			CAGE_TEST(itemsCounter > 0);
+#ifdef _MSC_VER
+#pragma warning( default : 4297 )
+#endif // _MSC_VER
+			itemsCounter--;
+		}
+
 		uint32 id;
 		bool final;
 	};
@@ -167,7 +211,10 @@ namespace
 					task *tsk = nullptr;
 					queue->pop(tsk);
 					if (tsk->final)
+					{
+						destroy(tsk);
 						break;
+					}
 					else
 						threadSleep(1); // simulate work
 					destroy(tsk);
@@ -187,13 +234,29 @@ namespace
 				{
 					threadSleep(1); // simulate work
 					task *tsk = create(i, false);
-					queue->push(tsk);
+					try
+					{
+						queue->push(tsk);
+					}
+					catch (...)
+					{
+						destroy(tsk);
+						throw;
+					}
 				}
 				for (uint32 i = 0; i < produceFinals; i++)
 				{
 					threadSleep(1); // simulate work
 					task *tsk = create(i + produceItems, true);
-					queue->push(tsk);
+					try
+					{
+						queue->push(tsk);
+					}
+					catch (...)
+					{
+						destroy(tsk);
+						throw;
+					}
 				}
 			}
 			catch (const concurrentQueueTerminated &)
@@ -211,6 +274,7 @@ namespace
 void testConcurrentQueue()
 {
 	CAGE_TESTCASE("concurrentQueue");
+	CAGE_TEST(itemsCounter == 0); // sanity check
 
 	{
 		CAGE_TESTCASE("single producer single consumer (blocking)");
@@ -220,6 +284,7 @@ void testConcurrentQueue()
 		t1->wait();
 		t2->wait();
 	}
+	CAGE_TEST(itemsCounter == 0);
 
 	{
 		CAGE_TESTCASE("single producer single consumer (polling)");
@@ -229,6 +294,7 @@ void testConcurrentQueue()
 		t1->wait();
 		t2->wait();
 	}
+	CAGE_TEST(itemsCounter == 0);
 
 	{
 		CAGE_TESTCASE("single producer single consumer (pointers) (blocking)");
@@ -238,6 +304,7 @@ void testConcurrentQueue()
 		t1->wait();
 		t2->wait();
 	}
+	CAGE_TEST(itemsCounter == 0);
 
 	{
 		CAGE_TESTCASE("multiple producers multiple consumers (blocking)");
@@ -246,6 +313,7 @@ void testConcurrentQueue()
 		t1->function = delegate<void(uint32, uint32)>().bind<tester, &tester::poolBlocking>(&t);
 		t1->run();
 	}
+	CAGE_TEST(itemsCounter == 0);
 
 	{
 		CAGE_TESTCASE("multiple producers multiple consumers (polling)");
@@ -254,6 +322,7 @@ void testConcurrentQueue()
 		t1->function = delegate<void(uint32, uint32)>().bind<tester, &tester::poolPolling>(&t);
 		t1->run();
 	}
+	CAGE_TEST(itemsCounter == 0);
 
 	{
 		CAGE_TESTCASE("termination (blocking)");
@@ -265,6 +334,7 @@ void testConcurrentQueue()
 		t1->wait();
 		t2->wait();
 	}
+	CAGE_TEST(itemsCounter == 0);
 
 	{
 		CAGE_TESTCASE("termination (polling)");
@@ -276,6 +346,7 @@ void testConcurrentQueue()
 		t1->wait();
 		t2->wait();
 	}
+	CAGE_TEST(itemsCounter == 0);
 
 	{
 		CAGE_TESTCASE("termination (pointers) (blocking)");
@@ -287,4 +358,5 @@ void testConcurrentQueue()
 		t1->wait();
 		t2->wait();
 	}
+	CAGE_TEST(itemsCounter == 0);
 }
