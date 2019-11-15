@@ -32,7 +32,7 @@ namespace cage
 	{
 	public:
 #ifdef CAGE_SYSTEM_WINDOWS
-		CRITICAL_SECTION cs;
+		SRWLOCK srw;
 #else
 		pthread_mutex_t mut;
 #endif
@@ -40,7 +40,7 @@ namespace cage
 		mutexImpl()
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
-			InitializeCriticalSection(&cs);
+			InitializeSRWLock(&srw);
 #else
 			pthread_mutex_init(&mut, nullptr);
 #endif
@@ -49,7 +49,7 @@ namespace cage
 		~mutexImpl()
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
-			DeleteCriticalSection(&cs);
+			// nothing
 #else
 			pthread_mutex_destroy(&mut);
 #endif
@@ -60,7 +60,7 @@ namespace cage
 	{
 		mutexImpl *impl = (mutexImpl *)this;
 #ifdef CAGE_SYSTEM_WINDOWS
-		return TryEnterCriticalSection(&impl->cs) != 0;
+		return TryAcquireSRWLockExclusive(&impl->srw) != 0;
 #else
 		int r = pthread_mutex_trylock(&impl->mut);
 		if (r == EBUSY)
@@ -75,7 +75,7 @@ namespace cage
 	{
 		mutexImpl *impl = (mutexImpl *)this;
 #ifdef CAGE_SYSTEM_WINDOWS
-		EnterCriticalSection(&impl->cs);
+		AcquireSRWLockExclusive(&impl->srw);
 #else
 		int r;
 		do
@@ -91,7 +91,7 @@ namespace cage
 	{
 		mutexImpl *impl = (mutexImpl *)this;
 #ifdef CAGE_SYSTEM_WINDOWS
-		LeaveCriticalSection(&impl->cs);
+		ReleaseSRWLockExclusive(&impl->srw);
 #else
 		int r = pthread_mutex_unlock(&impl->mut);
 		if (r != 0)
@@ -369,7 +369,7 @@ namespace cage
 		conditionalBaseImpl *impl = (conditionalBaseImpl *)this;
 		mutexImpl *m = (mutexImpl*)mut;
 #ifdef CAGE_SYSTEM_WINDOWS
-		SleepConditionVariableCS(&impl->cond, &m->cs, INFINITE);
+		SleepConditionVariableSRW(&impl->cond, &m->srw, INFINITE, 0);
 #else
 		pthread_cond_wait(&impl->cond, &m->mut);
 #endif
@@ -451,7 +451,7 @@ namespace cage
 		{
 		public:
 			const string threadName;
-			delegate<void()> function;
+			const delegate<void()> function;
 			std::exception_ptr exptr;
 			uint64 myid;
 
