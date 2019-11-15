@@ -53,9 +53,9 @@ namespace
 		{
 			if (cnt * sizeof(T) > Limit)
 			{
-				CAGE_LOG(severityEnum::Note, "exception", string() + "sizeof(T): " + sizeof(T));
-				CAGE_LOG(severityEnum::Note, "exception", string() + "cnt: " + cnt);
-				CAGE_LOG(severityEnum::Note, "exception", string() + "Limit: " + Limit);
+				CAGE_LOG(severityEnum::Note, "exception", stringizer() + "sizeof(T): " + sizeof(T));
+				CAGE_LOG(severityEnum::Note, "exception", stringizer() + "cnt: " + cnt);
+				CAGE_LOG(severityEnum::Note, "exception", stringizer() + "Limit: " + Limit);
 				CAGE_THROW_CRITICAL(exception, "insufficient atom size for pool allocator");
 			}
 			return (T*)detail::systemArena().allocate(cnt * sizeof(T), alignof(T));
@@ -87,7 +87,7 @@ namespace
 			if (sizeof(ts) != TestStructSize)
 				CAGE_THROW_CRITICAL(exception, "invalid padding is messing up with the test struct");
 
-			CAGE_TESTCASE(string() + "memoryArenaStd sizes, " + sizeof(ts));
+			CAGE_TESTCASE(stringizer() + "memoryArenaStd sizes, " + sizeof(ts));
 			{
 				CAGE_TESTCASE("list");
 				std::list<ts, interceptMemoryArena<sizeof(templates::allocatorSizeList<ts>), ts>> cont;
@@ -107,7 +107,7 @@ namespace
 					cont.insert(ts(i));
 			}
 
-			CAGE_TESTCASE(string() + "memoryArenaStd with pool allocator, " + sizeof(ts));
+			CAGE_TESTCASE(stringizer() + "memoryArenaStd with pool allocator, " + sizeof(ts));
 			{
 				CAGE_TESTCASE("list");
 				memoryArenaFixed<memoryAllocatorPolicyPool<sizeof(templates::allocatorSizeList<ts>)>, memoryConcurrentPolicyNone> arena(1024 * 1024);

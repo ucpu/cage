@@ -119,8 +119,8 @@ namespace cage
 			return a;
 		if (pathIsAbs(b))
 		{
-			CAGE_LOG(severityEnum::Note, "exception", string() + "first path: '" + a + "'");
-			CAGE_LOG(severityEnum::Note, "exception", string() + "second path: '" + b + "'");
+			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "first path: '" + a + "'");
+			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "second path: '" + b + "'");
 			CAGE_THROW_ERROR(exception, "cannot join with absolute path on right side");
 		}
 		if (a.empty())
@@ -374,8 +374,8 @@ namespace cage
 		}
 		catch (const exception &)
 		{
-			CAGE_LOG(severityEnum::Note, "exception", string() + "name: '" + name + "'");
-			CAGE_LOG(severityEnum::Note, "exception", string() + "whereToStart: '" + whereToStart + "'");
+			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "name: '" + name + "'");
+			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "whereToStart: '" + whereToStart + "'");
 			CAGE_THROW_ERROR(exception, "failed to find the path");
 		}
 	}
@@ -429,7 +429,7 @@ namespace cage
 					auto err = GetLastError();
 					if (err != ERROR_ALREADY_EXISTS)
 					{
-						CAGE_LOG(severityEnum::Note, "exception", string() + "path: '" + path + "'");
+						CAGE_LOG(severityEnum::Note, "exception", stringizer() + "path: '" + path + "'");
 						CAGE_THROW_ERROR(systemError, "CreateDirectory", err);
 					}
 				}
@@ -437,7 +437,7 @@ namespace cage
 				static const mode_t mode = 0755;
 				if (mkdir(p.c_str(), mode) != 0 && errno != EEXIST)
 				{
-					CAGE_LOG(severityEnum::Note, "exception", string() + "path: '" + path + "'");
+					CAGE_LOG(severityEnum::Note, "exception", stringizer() + "path: '" + path + "'");
 					CAGE_THROW_ERROR(exception, "mkdir");
 				}
 #endif
@@ -454,7 +454,7 @@ namespace cage
 		auto res = MoveFile(from.c_str(), to.c_str());
 		if (res == 0)
 		{
-			CAGE_LOG(severityEnum::Note, "exception", string() + "path from: '" + from + "'" + ", to: '" + to + "'");
+			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "path from: '" + from + "'" + ", to: '" + to + "'");
 			CAGE_THROW_ERROR(systemError, "pathMove", GetLastError());
 		}
 
@@ -463,7 +463,7 @@ namespace cage
 		auto res = rename(from.c_str(), to.c_str());
 		if (res != 0)
 		{
-			CAGE_LOG(severityEnum::Note, "exception", string() + "path from: '" + from + "'" + ", to: '" + to + "'");
+			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "path from: '" + from + "'" + ", to: '" + to + "'");
 			CAGE_THROW_ERROR(systemError, "pathMove", errno);
 		}
 
@@ -508,13 +508,13 @@ namespace cage
 		HANDLE hFile = CreateFile(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
 		if (hFile == INVALID_HANDLE_VALUE)
 		{
-			CAGE_LOG(severityEnum::Note, "exception", string() + "path: '" + path + "'");
+			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "path: '" + path + "'");
 			CAGE_THROW_ERROR(exception, "path does not exist");
 		}
 		FILETIME ftWrite;
 		if (!GetFileTime(hFile, nullptr, nullptr, &ftWrite))
 		{
-			CAGE_LOG(severityEnum::Note, "exception", string() + "path: '" + path + "'");
+			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "path: '" + path + "'");
 			CAGE_THROW_ERROR(exception, "path does not exist");
 		}
 		ULARGE_INTEGER l;
@@ -528,7 +528,7 @@ namespace cage
 		struct stat st;
 		if (stat(pathToAbs(path).c_str(), &st) == 0)
 			return st.st_mtime;
-		CAGE_LOG(severityEnum::Note, "exception", string() + "path: '" + path + "'");
+		CAGE_LOG(severityEnum::Note, "exception", stringizer() + "path: '" + path + "'");
 		CAGE_THROW_ERROR(systemError, "stat", errno);
 
 #endif

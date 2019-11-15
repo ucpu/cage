@@ -60,7 +60,7 @@ namespace cage
 				allocation a;
 				a.size = size;
 				a.thread = threadId();
-				a.time = CAGE_LOG(severityEnum::Info, "memory", string("allocation at ") + string(ptr) + " of size " + size);
+				a.time = CAGE_LOG(severityEnum::Info, "memory", stringizer() + "allocation at " + ptr + " of size " + size);
 				allocations[ptr] = a;
 			}
 
@@ -68,7 +68,7 @@ namespace cage
 			{
 				CAGE_ASSERT(allocations.find(ptr) != allocations.end(), "deallocation at unknown address");
 				allocations.erase(ptr);
-				CAGE_LOG(severityEnum::Info, "memory", string("deallocation at ") + string(ptr));
+				CAGE_LOG(severityEnum::Info, "memory", stringizer() + "deallocation at " + ptr);
 			}
 
 			void flush()
@@ -81,7 +81,7 @@ namespace cage
 			void reportAllocatins() const
 			{
 				for (std::map <void*, allocation>::const_iterator i = allocations.begin(), e = allocations.end(); i != e; i++)
-					CAGE_LOG_CONTINUE(severityEnum::Note, "memory", string("memory at ") + string(i->first) + " of size " + i->second.size + " allocated in thread " + i->second.thread + " at time " + i->second.time);
+					CAGE_LOG_CONTINUE(severityEnum::Note, "memory", stringizer() + "memory at " + i->first + " of size " + i->second.size + " allocated in thread " + i->second.thread + " at time " + i->second.time);
 			}
 
 			std::map <void*, allocation> allocations;

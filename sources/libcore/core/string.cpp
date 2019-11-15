@@ -1,13 +1,154 @@
 #include <vector>
 #include <algorithm>
+#include <cctype> // std::isspace
+#include <cerrno>
+#include <cstring>
+#include <cstdlib>
+#include <cstdio>
 
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 
 namespace cage
 {
+	namespace detail
+	{
+		void *memset(void *ptr, int value, uintPtr num)
+		{
+			return std::memset(ptr, value, num);
+		}
+
+		void *memcpy(void *destination, const void *source, uintPtr num)
+		{
+			return std::memcpy(destination, source, num);
+		}
+
+		void *memmove(void *destination, const void *source, uintPtr num)
+		{
+			return std::memmove(destination, source, num);
+		}
+
+		int memcmp(const void *ptr1, const void *ptr2, uintPtr num)
+		{
+			return std::memcmp(ptr1, ptr2, num);
+		}
+	}
+
 	namespace privat
 	{
+		namespace
+		{
+			template<class T>
+			void genericScan(const char *s, T &value)
+			{
+				errno = 0;
+				char *e = nullptr;
+				if (detail::numeric_limits<T>::is_signed)
+				{
+					sint64 v = std::strtoll(s, &e, 10);
+					value = (T)v;
+					if (v < detail::numeric_limits<T>::min() || v > detail::numeric_limits<T>::max())
+						e = nullptr;
+				}
+				else
+				{
+					uint64 v = std::strtoull(s, &e, 10);
+					value = (T)v;
+					if (*s == '-' || v < detail::numeric_limits<T>::min() || v > detail::numeric_limits<T>::max())
+						e = nullptr;
+				}
+				if (!*s || !e || *e != 0 || std::isspace(*s) || errno != 0)
+				{
+					CAGE_LOG(severityEnum::Note, "exception", stringizer() + "input string: '" + s + "'");
+					CAGE_THROW_ERROR(exception, "fromString failed");
+				}
+			}
+
+			template<>
+			void genericScan<sint64>(const char *s, sint64 &value)
+			{
+				errno = 0;
+				char *e = nullptr;
+				value = std::strtoll(s, &e, 10);
+				if (!*s || !e || *e != 0 || std::isspace(*s) || errno != 0)
+				{
+					CAGE_LOG(severityEnum::Note, "exception", stringizer() + "input string: '" + s + "'");
+					CAGE_THROW_ERROR(exception, "fromString failed");
+				}
+			}
+
+			template<>
+			void genericScan<uint64>(const char *s, uint64 &value)
+			{
+				errno = 0;
+				char *e = nullptr;
+				value = std::strtoull(s, &e, 10);
+				if (!*s || !e || *s == '-' || *e != 0 || std::isspace(*s) || errno != 0)
+				{
+					CAGE_LOG(severityEnum::Note, "exception", stringizer() + "input string: '" + s + "'");
+					CAGE_THROW_ERROR(exception, "fromString failed");
+				}
+			}
+
+			template<>
+			void genericScan<double>(const char *s, double &value)
+			{
+				errno = 0;
+				char *e = nullptr;
+				double v = std::strtod(s, &e);
+				if (!*s || !e || *e != 0 || std::isspace(*s) || errno != 0)
+				{
+					CAGE_LOG(severityEnum::Note, "exception", stringizer() + "input string: '" + s + "'");
+					CAGE_THROW_ERROR(exception, "fromString failed");
+				}
+				value = v;
+			}
+
+			template<>
+			void genericScan<float>(const char *s, float &value)
+			{
+				double v;
+				genericScan(s, v);
+				if (v < detail::numeric_limits<float>::min() || v > detail::numeric_limits<float>::max())
+				{
+					CAGE_LOG(severityEnum::Note, "exception", stringizer() + "input string: '" + s + "'");
+					CAGE_THROW_ERROR(exception, "fromString failed");
+				}
+				value = (float)v;
+			}
+		}
+
+#define GCHL_GENERATE(TYPE, SPEC) \
+		uint32 toString(char *s, TYPE value) \
+		{ sint32 ret = std::sprintf(s, CAGE_STRINGIZE(SPEC), value); if (ret < 0) CAGE_THROW_ERROR(exception, "toString failed"); return ret; } \
+		void fromString(const char *s, TYPE &value) \
+		{ return genericScan(s, value); }
+		GCHL_GENERATE(sint8, %hhd);
+		GCHL_GENERATE(sint16, %hd);
+		GCHL_GENERATE(sint32, %d);
+		GCHL_GENERATE(uint8, %hhu);
+		GCHL_GENERATE(uint16, %hu);
+		GCHL_GENERATE(uint32, %u);
+#ifdef CAGE_SYSTEM_WINDOWS
+		GCHL_GENERATE(sint64, %lld);
+		GCHL_GENERATE(uint64, %llu);
+#else
+		GCHL_GENERATE(sint64, %ld);
+		GCHL_GENERATE(uint64, %lu);
+#endif
+		GCHL_GENERATE(float, %f);
+		GCHL_GENERATE(double, %lf);
+#undef GCHL_GENERATE
+
+		uint32 toString(char *dst, uint32 dstLen, const char *src)
+		{
+			auto l = std::strlen(src);
+			if (l > dstLen)
+				CAGE_THROW_ERROR(exception, "string truncation");
+			std::memcpy(dst, src, l);
+			return numeric_cast<uint32>(l);
+		}
+
 		uint32 encodeUrlBase(char *pStart, const char *pSrc, uint32 length)
 		{
 			static const bool SAFE[256] =
@@ -98,23 +239,23 @@ namespace cage
 			return numeric_cast<uint32>(pEnd - pStart);
 		}
 
-		void encodeUrl(const char *dataIn, uint32 currentIn, char *dataOut, uint32 &currentOut, uint32 maxLength)
+		void stringEncodeUrl(const char *dataIn, uint32 currentIn, char *dataOut, uint32 &currentOut, uint32 maxLength)
 		{
 			char tmp[4096];
 			uint32 len = encodeUrlBase(tmp, dataIn, currentIn);
 			if (len > maxLength)
 				CAGE_THROW_ERROR(exception, "string truncation");
-			detail::memcpy(dataOut, tmp, len);
+			std::memcpy(dataOut, tmp, len);
 			currentOut = len;
 		}
 
-		void decodeUrl(const char *dataIn, uint32 currentIn, char *dataOut, uint32 &currentOut, uint32 maxLength)
+		void stringDecodeUrl(const char *dataIn, uint32 currentIn, char *dataOut, uint32 &currentOut, uint32 maxLength)
 		{
 			char tmp[4096];
 			uint32 len = decodeUrlBase(tmp, dataIn, currentIn);
 			if (len > maxLength)
 				CAGE_THROW_ERROR(exception, "string truncation");
-			detail::memcpy(dataOut, tmp, len);
+			std::memcpy(dataOut, tmp, len);
 			currentOut = len;
 		}
 
@@ -134,7 +275,7 @@ namespace cage
 				stringSortAndUnique(data2.data(), current2);
 				if (current2 != current)
 					return false;
-				return detail::memcmp(data, data2.data(), current) == 0;
+				return std::memcmp(data, data2.data(), current) == 0;
 			}
 
 			bool stringContains(const char *data, uint32 current, char what)
@@ -156,8 +297,8 @@ namespace cage
 					break;
 				if (current + withLen - whatLen > maxLength)
 					CAGE_THROW_ERROR(exception, "string truncation");
-				detail::memmove(data + pos + withLen, data + pos + whatLen, current - pos - whatLen);
-				detail::memcpy(data + pos, with, withLen);
+				std::memmove(data + pos + withLen, data + pos + whatLen, current - pos - whatLen);
+				std::memcpy(data + pos, with, withLen);
 				current += withLen - whatLen;
 				pos += withLen - whatLen + 1;
 			}
@@ -184,7 +325,7 @@ namespace cage
 					p++;
 				current -= p;
 				if (p > 0)
-					detail::memmove(data, data + p, current);
+					std::memmove(data, data + p, current);
 			}
 		}
 
@@ -198,14 +339,14 @@ namespace cage
 			{
 				if (stringContains(what, whatLen, data[i]))
 				{
-					detail::memcpy(ret, data, i);
-					detail::memmove(data, data + i + 1, current - i - 1);
+					std::memcpy(ret, data, i);
+					std::memmove(data, data + i + 1, current - i - 1);
 					retLen = i;
 					current -= i + 1;
 					return;
 				}
 			}
-			detail::memcpy(ret, data, current);
+			std::memcpy(ret, data, current);
 			std::swap(current, retLen);
 		}
 
@@ -215,18 +356,48 @@ namespace cage
 				return m;
 			uint32 end = current - whatLen + 1;
 			for (uint32 i = offset; i < end; i++)
-				if (detail::memcmp(data + i, what, whatLen) == 0)
+				if (std::memcmp(data + i, what, whatLen) == 0)
 					return i;
 			return m;
+		}
+
+		bool stringIsPattern(const char *data, uint32 dataLen, const char *prefix, uint32 prefixLen, const char *infix, uint32 infixLen, const char *suffix, uint32 suffixLen)
+		{
+			if (dataLen < prefixLen + infixLen + suffixLen)
+				return false;
+			if (std::memcmp(data, prefix, prefixLen) != 0)
+				return false;
+			if (std::memcmp(data + dataLen - suffixLen, suffix, suffixLen) != 0)
+				return false;
+			if (infixLen == 0)
+				return true;
+			uint32 pos = stringFind(data, dataLen, infix, infixLen, prefixLen);
+			return pos != m && pos <= dataLen - infixLen - suffixLen;
 		}
 
 		int stringComparison(const char *ad, uint32 al, const char *bd, uint32 bl)
 		{
 			uint32 l = al < bl ? al : bl;
-			int c = detail::memcmp(ad, bd, l);
+			int c = std::memcmp(ad, bd, l);
 			if (c == 0)
 				return al == bl ? 0 : al < bl ? -1 : 1;
 			return c;
+		}
+
+		uint32 stringToUpper(char *dst, uint32 dstLen, const char *src, uint32 srcLen)
+		{
+			const char *e = src + srcLen;
+			while (src != e)
+				*dst++ = std::toupper(*src++);
+			return srcLen;
+		}
+
+		uint32 stringToLower(char *dst, uint32 dstLen, const char *src, uint32 srcLen)
+		{
+			const char *e = src + srcLen;
+			while (src != e)
+				*dst++ = std::tolower(*src++);
+			return srcLen;
 		}
 	}
 }

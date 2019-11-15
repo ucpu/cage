@@ -1,3 +1,5 @@
+#include <cstring>
+
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/utf.h>
@@ -27,7 +29,7 @@ namespace cage
 
 	bool valid(const char *str)
 	{
-		return valid(str, numeric_cast<uint32>(detail::strlen(str)));
+		return valid(str, numeric_cast<uint32>(std::strlen(str)));
 	}
 
 	bool valid(const char *str, uint32 bytes)
@@ -44,7 +46,7 @@ namespace cage
 
 	uint32 countCharacters(const char *str)
 	{
-		return countCharacters(str, numeric_cast<uint32>(detail::strlen(str)));
+		return countCharacters(str, numeric_cast<uint32>(std::strlen(str)));
 	}
 
 	uint32 countCharacters(const char *str, uint32 bytes)
@@ -61,7 +63,7 @@ namespace cage
 
 	void convert8to32(uint32 *outBuffer, uint32 &outCount, const char *inStr)
 	{
-		convert8to32(outBuffer, outCount, inStr, numeric_cast<uint32>(detail::strlen(inStr)));
+		convert8to32(outBuffer, outCount, inStr, numeric_cast<uint32>(std::strlen(inStr)));
 	}
 
 	void convert8to32(uint32 *outBuffer, uint32 &outCount, const char *inStr, uint32 inBytes)

@@ -222,36 +222,36 @@ void testGeometry()
 			aabb h = c + b;
 			CAGE_TEST(!h.empty());
 			test(h.volume(), 48);
-			CAGE_TEST(aabb::Universe().diagonal() > 100);
-			CAGE_TEST(aabb::Universe().diagonal() == real::Infinity());
+CAGE_TEST(aabb::Universe().diagonal() > 100);
+CAGE_TEST(aabb::Universe().diagonal() == real::Infinity());
 		}
 
 		{
-			CAGE_TESTCASE("intersects, intersections (with aabb)");
-			aabb a(vec3(-5, -6, -3), vec3(-4, -4, -1));
-			aabb b(vec3(1, 3, 4), vec3(4, 7, 8));
-			aabb c(vec3(-10, -10, -10), vec3());
-			aabb d(vec3(), vec3(10, 10, 10));
-			aabb e(vec3(-5, -5, -5), vec3(5, 5, 5));
-			CAGE_TEST(!intersects(a, b));
-			CAGE_TEST(intersection(a, b).empty());
-			CAGE_TEST(intersects(c, d));
-			CAGE_TEST(!intersection(c, d).empty());
-			test(intersection(c, d), aabb(vec3()));
-			CAGE_TEST(intersects(a, c));
-			CAGE_TEST(intersects(b, d));
-			test(intersection(a, c), a);
-			test(intersection(b, d), b);
-			CAGE_TEST(intersects(a, e));
-			CAGE_TEST(intersects(b, e));
-			CAGE_TEST(intersects(c, e));
-			CAGE_TEST(intersects(d, e));
-			CAGE_TEST(intersects(e, e));
-			test(intersection(a, e), aabb(vec3(-5, -5, -3), vec3(-4, -4, -1)));
-			test(intersection(b, e), aabb(vec3(1, 3, 4), vec3(4, 5, 5)));
-			test(intersection(c, e), aabb(vec3(-5, -5, -5), vec3()));
-			test(intersection(d, e), aabb(vec3(5, 5, 5), vec3()));
-			test(intersection(e, e), e);
+		CAGE_TESTCASE("intersects, intersections (with aabb)");
+		aabb a(vec3(-5, -6, -3), vec3(-4, -4, -1));
+		aabb b(vec3(1, 3, 4), vec3(4, 7, 8));
+		aabb c(vec3(-10, -10, -10), vec3());
+		aabb d(vec3(), vec3(10, 10, 10));
+		aabb e(vec3(-5, -5, -5), vec3(5, 5, 5));
+		CAGE_TEST(!intersects(a, b));
+		CAGE_TEST(intersection(a, b).empty());
+		CAGE_TEST(intersects(c, d));
+		CAGE_TEST(!intersection(c, d).empty());
+		test(intersection(c, d), aabb(vec3()));
+		CAGE_TEST(intersects(a, c));
+		CAGE_TEST(intersects(b, d));
+		test(intersection(a, c), a);
+		test(intersection(b, d), b);
+		CAGE_TEST(intersects(a, e));
+		CAGE_TEST(intersects(b, e));
+		CAGE_TEST(intersects(c, e));
+		CAGE_TEST(intersects(d, e));
+		CAGE_TEST(intersects(e, e));
+		test(intersection(a, e), aabb(vec3(-5, -5, -3), vec3(-4, -4, -1)));
+		test(intersection(b, e), aabb(vec3(1, 3, 4), vec3(4, 5, 5)));
+		test(intersection(c, e), aabb(vec3(-5, -5, -5), vec3()));
+		test(intersection(d, e), aabb(vec3(5, 5, 5), vec3()));
+		test(intersection(e, e), e);
 		}
 
 		{
@@ -319,6 +319,11 @@ void testGeometry()
 				CAGE_TEST(intersects(triangle(vec3(0, 0, 5), vec3(0, 5, 0), vec3(5, 0, 0)), box)); // cut a corner
 				CAGE_TEST(intersects(triangle(vec3(-5, 1, 1), vec3(5, 1, 1), vec3(5, 1, 3)), box)); // needle
 			}
+		}
+
+		{
+			CAGE_TESTCASE("stringize");
+			string s = detail::stringizerBase<5432>() + makeSegment(vec3(1, 2, 3), vec3(4, 5, 6)) + ", " + triangle() + ", " + plane() + ", " + sphere() + ", " + aabb();
 		}
 	}
 }

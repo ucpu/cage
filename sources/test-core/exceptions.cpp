@@ -1,3 +1,4 @@
+#include <cstring>
 #include "main.h"
 #include <cage-core/concurrent.h>
 
@@ -25,14 +26,14 @@ void testExceptions()
 			}
 			catch (const exception &e)
 			{
-				CAGE_TEST(detail::strcmp(e.message, "intentional") == 0);
+				CAGE_TEST(std::strcmp(e.message, "intentional") == 0);
 				catches++;
 				throw;
 			}
 		}
 		catch (const systemError &e)
 		{
-			CAGE_TEST(detail::strcmp(e.message, "intentional") == 0);
+			CAGE_TEST(std::strcmp(e.message, "intentional") == 0);
 			CAGE_TEST(e.code == 42);
 			catches++;
 		}

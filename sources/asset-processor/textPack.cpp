@@ -23,7 +23,7 @@ void processTextpack()
 			texts[n] = v;
 		}
 	}
-	CAGE_LOG(severityEnum::Info, logComponentName, string() + "loaded " + texts.size() + " texts");
+	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "loaded " + texts.size() + " texts");
 
 	assetHeader h = initializeAssetHeaderStruct();
 	h.originalSize = sizeof(uint32) + numeric_cast<uint32>(texts.size()) * sizeof(uint32) * 2;

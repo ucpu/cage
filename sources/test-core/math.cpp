@@ -81,9 +81,21 @@ namespace
 				r[i] = b[i];
 			CAGE_TEST(b == b);
 			CAGE_TEST(!(b != b));
-			string s(b);
-			T c = T::parse(s);
-			CAGE_TEST(b == c);
+		}
+
+		{ // stringizer as r-value
+			T a;
+			string s = stringizer() + a;
+			T b = T::parse(s);
+			CAGE_TEST(a == b);
+		}
+
+		{ // stringizer as l-value
+			T a;
+			stringizer s;
+			s + a;
+			T b = T::parse(s);
+			CAGE_TEST(a == b);
 		}
 
 		{
@@ -799,7 +811,7 @@ namespace
 				for (uint32 i = 0; i < 10; i++)
 				{
 					real v = randomRange(-1e5, 1e5);
-					string s = v;
+					string s = stringizer() + v;
 					real r = real::parse(s);
 					test(v, r);
 				}
@@ -809,7 +821,7 @@ namespace
 				for (uint32 i = 0; i < 10; i++)
 				{
 					vec2 v = randomRange2(-1e5, 1e5);
-					string s = v;
+					string s = stringizer() + v;
 					vec2 r = vec2::parse(s);
 					test(v, r);
 				}
@@ -819,7 +831,7 @@ namespace
 				for (uint32 i = 0; i < 10; i++)
 				{
 					vec3 v = randomRange3(-1e5, 1e5);
-					string s = v;
+					string s = stringizer() + v;
 					vec3 r = vec3::parse(s);
 					test(v, r);
 				}
@@ -829,7 +841,7 @@ namespace
 				for (uint32 i = 0; i < 10; i++)
 				{
 					vec4 v = randomRange4(-1e5, 1e5);
-					string s = v;
+					string s = stringizer() + v;
 					vec4 r = vec4::parse(s);
 					test(v, r);
 				}
@@ -839,7 +851,7 @@ namespace
 				for (uint32 i = 0; i < 10; i++)
 				{
 					quat v = randomDirectionQuat();
-					string s = v;
+					string s = stringizer() + v;
 					quat r = quat::parse(s);
 					test(v, r);
 				}
@@ -849,7 +861,7 @@ namespace
 				for (uint32 i = 0; i < 10; i++)
 				{
 					mat3 v = mat3(randomDirectionQuat());
-					string s = v;
+					string s = stringizer() + v;
 					mat3 r = mat3::parse(s);
 					test(v, r);
 				}
@@ -859,25 +871,11 @@ namespace
 				for (uint32 i = 0; i < 10; i++)
 				{
 					mat4 v = mat4(randomDirection3() * 100, randomDirectionQuat(), randomDirection3() * 2);
-					string s = v;
+					string s = stringizer() + v;
 					mat4 r = mat4::parse(s);
 					test(v, r);
 				}
 			}
-			/*
-			{
-				CAGE_TESTCASE("transform");
-				for (uint32 i = 0; i < 10; i++)
-				{
-					transform v = transform(randomDirection3() * 100, randomDirectionQuat(), randomChance() + 0.5);
-					string s = v;
-					transform r = transform::parse(s);
-					test(v.position, r.position);
-					test(v.orientation, r.orientation);
-					test(v.scale, r.scale);
-				}
-			}
-			*/
 			{
 				CAGE_TESTCASE("negative tests");
 				CAGE_TEST_THROWN(real::parse("bla"));
@@ -932,12 +930,12 @@ namespace
 		}
 
 		{
-			CAGE_LOG(severityEnum::Info, "test", string("matrices count: ") + matricesCount);
+			CAGE_LOG(severityEnum::Info, "test", stringizer() + "matrices count: " + matricesCount);
 			mat4 res;
 			holder<timer> tmr = newTimer();
 			for (uint32 i = 0; i < matricesCount; i++)
 				res *= matrices[i];
-			CAGE_LOG(severityEnum::Note, "test", string("duration: ") + tmr->microsSinceStart());
+			CAGE_LOG(severityEnum::Note, "test", stringizer() + "duration: " + tmr->microsSinceStart());
 		}
 	}
 }

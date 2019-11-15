@@ -94,7 +94,7 @@ namespace
 	{
 		CAGE_LOG(severityEnum::Info, logComponentName, "load glyphs");
 		data.glyphCount = numeric_cast<uint32>(face->num_glyphs);
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "font has " + data.glyphCount + " glyphs");
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "font has " + data.glyphCount + " glyphs");
 		glyphs.reserve(data.glyphCount + 10);
 		glyphs.resize(data.glyphCount);
 		uint32 maxPngW = 0, maxPngH = 0;
@@ -132,13 +132,13 @@ namespace
 		}
 		data.firstLineOffset = maxOffTop;
 		data.lineHeight = ((face->height * fontScale / 64.0) + (maxOffTop + maxOffBottom)) / 2;
-		CAGE_LOG(severityEnum::Note, logComponentName, string() + "units per EM: " + face->units_per_EM);
-		CAGE_LOG(severityEnum::Note, logComponentName, string() + "(unused) line height (top + bottom): " + (maxOffTop + maxOffBottom));
-		CAGE_LOG(severityEnum::Note, logComponentName, string() + "(unused) line height (from font): " + (face->height * fontScale / 64.0));
-		CAGE_LOG(severityEnum::Note, logComponentName, string() + "line height: " + data.lineHeight);
-		CAGE_LOG(severityEnum::Note, logComponentName, string() + "first line offset: " + data.firstLineOffset);
-		CAGE_LOG(severityEnum::Note, logComponentName, string() + "max glyph size: " + data.glyphMaxSize);
-		CAGE_LOG(severityEnum::Note, logComponentName, string() + "max glyph image size: " + maxPngW + "*" + maxPngH);
+		CAGE_LOG(severityEnum::Note, logComponentName, stringizer() + "units per EM: " + face->units_per_EM);
+		CAGE_LOG(severityEnum::Note, logComponentName, stringizer() + "(unused) line height (top + bottom): " + (maxOffTop + maxOffBottom));
+		CAGE_LOG(severityEnum::Note, logComponentName, stringizer() + "(unused) line height (from font): " + (face->height * fontScale / 64.0));
+		CAGE_LOG(severityEnum::Note, logComponentName, stringizer() + "line height: " + data.lineHeight);
+		CAGE_LOG(severityEnum::Note, logComponentName, stringizer() + "first line offset: " + data.firstLineOffset);
+		CAGE_LOG(severityEnum::Note, logComponentName, stringizer() + "max glyph size: " + data.glyphMaxSize);
+		CAGE_LOG(severityEnum::Note, logComponentName, stringizer() + "max glyph image size: " + maxPngW + "*" + maxPngH);
 	}
 
 	void loadCharset()
@@ -156,7 +156,7 @@ namespace
 			charcode = FT_Get_Next_Char(face, charcode, &glyphIndex);
 		}
 		data.charCount = numeric_cast<uint32>(charsetChars.size());
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "font has " + data.charCount + " characters");
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "font has " + data.charCount + " characters");
 	}
 
 	void loadKerning()
@@ -212,7 +212,7 @@ namespace
 		}
 		if (!foundReturn)
 		{
-			CAGE_LOG(severityEnum::Warning, logComponentName, string() + "artificially adding return");
+			CAGE_LOG(severityEnum::Warning, logComponentName, stringizer() + "artificially adding return");
 			uint32 idx = 0;
 			while (idx < charsetChars.size() && charsetChars[idx] < '\n')
 				idx++;
@@ -222,7 +222,7 @@ namespace
 		}
 
 		{ // add cursor
-			CAGE_LOG(severityEnum::Warning, logComponentName, string() + "artificially adding cursor glyph");
+			CAGE_LOG(severityEnum::Warning, logComponentName, stringizer() + "artificially adding cursor glyph");
 			data.glyphCount++;
 			glyphs.resize(glyphs.size() + 1);
 			glyphStruct &g = glyphs[glyphs.size() - 1];
@@ -266,7 +266,7 @@ namespace
 		while (res * res < area) res *= 2;
 		while (true)
 		{
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "trying to pack into resolution " + res + "*" + res);
+			CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "trying to pack into resolution " + res + "*" + res);
 			if (packer->solve(res, res))
 				break;
 			res *= 2;
@@ -287,7 +287,7 @@ namespace
 		}
 		data.texWidth = res;
 		data.texHeight = res;
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "texture atlas resolution " + data.texWidth + "*" + data.texHeight);
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "texture atlas resolution " + data.texWidth + "*" + data.texHeight);
 	}
 
 	void createAtlasPixels()
@@ -338,9 +338,9 @@ namespace
 		}
 
 		CAGE_ASSERT(h.originalSize == buf.size());
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "buffer size (before compression): " + buf.size());
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buf.size());
 		buf = detail::compress(buf);
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "buffer size (after compression): " + buf.size());
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + buf.size());
 		h.compressedSize = buf.size();
 
 		holder<fileHandle> f = newFile(outputFileName, fileMode(false, true));
@@ -376,10 +376,10 @@ namespace
 				glyphStruct &g = glyphs[glyphIndex];
 				f->writeLine(
 					string(glyphIndex).fill(10) +
-					(string() + g.data.texUv).fill(60) +
-					(string() + g.data.size).fill(30) +
-					(string() + g.data.bearing).fill(30) +
-					string(g.data.advance)
+					string(stringizer() + g.data.texUv).fill(60) +
+					string(stringizer() + g.data.size).fill(30) +
+					string(stringizer() + g.data.bearing).fill(30) +
+					string(g.data.advance.value)
 				);
 			}
 		}
@@ -432,7 +432,7 @@ namespace
 						f->writeLine(
 							string(x).fill(5) +
 							string(y).fill(5) +
-							string(k)
+							string(k.value)
 						);
 					}
 				}

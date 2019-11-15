@@ -17,12 +17,12 @@ void separate(holder<configIni> &cmd)
 	input = cmd->cmdString('i', "input", input);
 	cmd->checkUnused();
 
-	CAGE_LOG(severityEnum::Info, "image", string() + "loading image: '" + input + "'");
+	CAGE_LOG(severityEnum::Info, "image", stringizer() + "loading image: '" + input + "'");
 	holder<image> in = newImage();
 	in->decodeFile(input);
 	uint32 width = in->width();
 	uint32 height = in->height();
-	CAGE_LOG(severityEnum::Info, "image", string() + "image resolution: " + width + "x" + height + ", channels: " + in->channels());
+	CAGE_LOG(severityEnum::Info, "image", stringizer() + "image resolution: " + width + "x" + height + ", channels: " + in->channels());
 
 	holder<image> out = newImage();
 	for (uint32 ch = 0; ch < in->channels(); ch++)
@@ -35,10 +35,10 @@ void separate(holder<configIni> &cmd)
 			for (uint32 x = 0; x < width; x++)
 				out->value(x, y, 0, in->value(x, y, ch));
 		}
-		CAGE_LOG(severityEnum::Info, "image", string() + "saving image: '" + names[ch] + "'");
+		CAGE_LOG(severityEnum::Info, "image", stringizer() + "saving image: '" + names[ch] + "'");
 		out->encodeFile(names[ch]);
 	}
-	CAGE_LOG(severityEnum::Info, "image", string() + "ok");
+	CAGE_LOG(severityEnum::Info, "image", "ok");
 }
 
 void combine(holder<configIni> &cmd)
@@ -58,10 +58,10 @@ void combine(holder<configIni> &cmd)
 		string name = names[index];
 		if (!name.empty())
 		{
-			CAGE_LOG(severityEnum::Info, "image", string() + "loading image: '" + name + "' for " + (index + 1) + "th channel");
+			CAGE_LOG(severityEnum::Info, "image", stringizer() + "loading image: '" + name + "' for " + (index + 1) + "th channel");
 			holder<image> p = newImage();
 			p->decodeFile(name);
-			CAGE_LOG(severityEnum::Info, "image", string() + "image resolution: " + p->width() + "x" + p->height() + ", channels: " + p->channels());
+			CAGE_LOG(severityEnum::Info, "image", stringizer() + "image resolution: " + p->width() + "x" + p->height() + ", channels: " + p->channels());
 			if (width == 0)
 			{
 				width = p->width();
@@ -81,7 +81,7 @@ void combine(holder<configIni> &cmd)
 	if (channels == 0)
 		CAGE_THROW_ERROR(exception, "no inputs specified");
 
-	CAGE_LOG(severityEnum::Info, "image", string() + "combining image");
+	CAGE_LOG(severityEnum::Info, "image", stringizer() + "combining image");
 	holder<image> res = newImage();
 	res->empty(width, height, channels);
 	for (uint32 i = 0; i < channels; i++)
@@ -96,9 +96,9 @@ void combine(holder<configIni> &cmd)
 		}
 	}
 
-	CAGE_LOG(severityEnum::Info, "image", string() + "saving image: '" + output + "'");
+	CAGE_LOG(severityEnum::Info, "image", stringizer() + "saving image: '" + output + "'");
 	res->encodeFile(output);
-	CAGE_LOG(severityEnum::Info, "image", string() + "ok");
+	CAGE_LOG(severityEnum::Info, "image", "ok");
 }
 
 int main(int argc, const char *args[])
@@ -119,10 +119,11 @@ int main(int argc, const char *args[])
 	}
 	catch (const cage::exception &)
 	{
+		// nothing
 	}
 	catch (const std::exception &e)
 	{
-		CAGE_LOG(severityEnum::Error, "exception", string() + "std exception: " + e.what());
+		CAGE_LOG(severityEnum::Error, "exception", stringizer() + "std exception: " + e.what());
 	}
 	catch (...)
 	{

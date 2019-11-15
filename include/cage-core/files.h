@@ -20,17 +20,17 @@ namespace cage
 	class CAGE_API fileHandle : private immovable
 	{
 	public:
-		void read(void *data, uint64 size);
+		void read(void *data, uintPtr size);
 		bool readLine(string &line);
 		memoryBuffer readBuffer(uintPtr size);
-		void write(const void *data, uint64 size);
+		void write(const void *data, uintPtr size);
 		void writeLine(const string &line);
 		void writeBuffer(const memoryBuffer &buffer);
-		void seek(uint64 position);
+		void seek(uintPtr position);
 		void flush();
 		void close();
-		uint64 tell() const;
-		uint64 size() const;
+		uintPtr tell() const;
+		uintPtr size() const;
 	};
 
 	CAGE_API holder<fileHandle> newFile(const string &path, const fileMode &mode);

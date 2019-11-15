@@ -232,7 +232,7 @@ namespace cage
 		if (anyUnused(section, item, value))
 		{
 			CAGE_LOG(severityEnum::Note, "exception", string() + "section: '" + section + "', item: '" + item + "', " + "value: '" + value + "'");
-			CAGE_THROW_ERROR(exception, "unknown cmd option");
+			CAGE_THROW_ERROR(exception, "unused ini/config item");
 		}
 	}
 
@@ -305,13 +305,13 @@ namespace cage
 						continue;
 					}
 				}
-				set(option, itemsCount(option), s);
+				set(option, string(itemsCount(option)), s);
 			}
 			checkCmdOption(this, option, "--");
 		}
 		catch (...)
 		{
-			CAGE_LOG(severityEnum::Note, "exception", string() + "failed to parse command line arguments:");
+			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "failed to parse command line arguments:");
 			for (uint32 i = 0; i < argc; i++)
 				CAGE_LOG_CONTINUE(severityEnum::Note, "exception", args[i]);
 			throw;
@@ -367,7 +367,7 @@ namespace cage
 		}
 		catch (...)
 		{
-			CAGE_LOG(severityEnum::Note, "exception", string() + "failed to load ini file: '" + filename + "'");
+			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "failed to load ini file: '" + filename + "'");
 			throw;
 		}
 	}

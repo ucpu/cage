@@ -222,6 +222,6 @@ void testSpatial()
 			}
 		}
 
-		CAGE_LOG(severityEnum::Info, "spatial performance", string() + "total time: " + tmr->microsSinceStart() + " us");
+		CAGE_LOG(severityEnum::Info, "spatial performance", stringizer() + "total time: " + tmr->microsSinceStart() + " us");
 	}
 }

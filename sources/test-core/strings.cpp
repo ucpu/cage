@@ -39,6 +39,10 @@ namespace
 			CAGE_TEST(string(f) == "5.000000");
 			double d = 5;
 			CAGE_TEST(string(d) == "5.000000");
+			const char arr[] = "array";
+			CAGE_TEST(string(arr) == "array");
+			char arr2[] = "array";
+			CAGE_TEST(string(arr2) == "array");
 		}
 		{
 			CAGE_TESTCASE("comparisons == and != and length");
@@ -686,6 +690,56 @@ namespace
 #endif // CAGE_SYSTEM_WINDOWS
 		}
 	}
+
+	struct customStruct
+	{
+		int value;
+		explicit customStruct(int value = 0) : value(value)
+		{}
+	};
+
+	template<uint32 N>
+	detail::stringizerBase<N> &operator + (detail::stringizerBase<N> &str, const customStruct &other)
+	{
+		return str + other.value;
+	}
+
+	void functionTakingString(const string &str)
+	{}
+
+	void testStringizer()
+	{
+		CAGE_TESTCASE("stringizer");
+		{
+			CAGE_TESTCASE("r-value stringizer");
+			{
+				string str = stringizer() + 123 + "abc" + 456;
+			}
+			{
+				customStruct custom(42);
+				string str = stringizer() + custom;
+			}
+			{
+				functionTakingString(stringizer() + 123);
+			}
+		}
+		{
+			CAGE_TESTCASE("l-value stringizer");
+			{
+				stringizer s;
+				string str = s + 123 + "abc" + 456;
+			}
+			{
+				customStruct custom(42);
+				stringizer s;
+				string str = s + custom;
+			}
+			{
+				stringizer s;
+				functionTakingString(s + 123);
+			}
+		}
+	}
 }
 
 void testStrings()
@@ -695,4 +749,5 @@ void testStrings()
 	testCopies1();
 	testCopies2();
 	testFilePaths();
+	testStringizer();
 }

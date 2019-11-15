@@ -83,7 +83,7 @@ namespace
 
 		void run(bool repeatedReads, bool repeatedWrites)
 		{
-			CAGE_TESTCASE(string() + "buffers count: " + BuffersCount + ", repeated reads: " + repeatedReads + ", repeated writes: " + repeatedWrites);
+			CAGE_TESTCASE(stringizer() + "buffers count: " + BuffersCount + ", repeated reads: " + repeatedReads + ", repeated writes: " + repeatedWrites);
 			running = true;
 			swapBufferGuardCreateConfig cfg(BuffersCount);
 			cfg.repeatedReads = repeatedReads;
@@ -96,8 +96,8 @@ namespace
 			running = false;
 			t1->wait();
 			t2->wait();
-			CAGE_LOG(severityEnum::Info, "swapBufferController", string() + "generated: " + generated + ", written: " + written + ", skipped: " + skipped);
-			CAGE_LOG(severityEnum::Info, "swapBufferController", string() + "read: " + read + ", reused: " + reused + ", tested: " + tested);
+			CAGE_LOG(severityEnum::Info, "swapBufferController", stringizer() + "generated: " + generated + ", written: " + written + ", skipped: " + skipped);
+			CAGE_LOG(severityEnum::Info, "swapBufferController", stringizer() + "read: " + read + ", reused: " + reused + ", tested: " + tested);
 		}
 	};
 }

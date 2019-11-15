@@ -2,17 +2,30 @@ namespace cage
 {
 	namespace privat
 	{
-		CAGE_API void encodeUrl(const char *dataIn, uint32 currentIn, char *dataOut, uint32 &currentOut, uint32 maxLength);
-		CAGE_API void decodeUrl(const char *dataIn, uint32 currentIn, char *dataOut, uint32 &currentOut, uint32 maxLength);
+#define GCHL_GENERATE(TYPE) CAGE_API uint32 toString(char *s, TYPE value); CAGE_API void fromString(const char *s, TYPE &value);
+		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, float, double));
+#undef GCHL_GENERATE
+		CAGE_API uint32 toString(char *dst, uint32 dstLen, const char *src);
+
+		CAGE_API void stringEncodeUrl(const char *dataIn, uint32 currentIn, char *dataOut, uint32 &currentOut, uint32 maxLength);
+		CAGE_API void stringDecodeUrl(const char *dataIn, uint32 currentIn, char *dataOut, uint32 &currentOut, uint32 maxLength);
 		CAGE_API void stringReplace(char *data, uint32 &current, uint32 maxLength, const char *what, uint32 whatLen, const char *with, uint32 withLen);
 		CAGE_API void stringTrim(char *data, uint32 &current, const char *what, uint32 whatLen, bool left, bool right);
 		CAGE_API void stringSplit(char *data, uint32 &current, char *ret, uint32 &retLen, const char *what, uint32 whatLen);
 		CAGE_API uint32 stringFind(const char *data, uint32 current, const char *what, uint32 whatLen, uint32 offset);
+		CAGE_API bool stringIsPattern(const char *data, uint32 dataLen, const char *prefix, uint32 prefixLen, const char *infix, uint32 infixLen, const char *suffix, uint32 suffixLen);
 		CAGE_API int stringComparison(const char *ad, uint32 al, const char *bd, uint32 bl);
+		CAGE_API uint32 stringToUpper(char *dst, uint32 dstLen, const char *src, uint32 srcLen);
+		CAGE_API uint32 stringToLower(char *dst, uint32 dstLen, const char *src, uint32 srcLen);
 	}
 
 	namespace detail
 	{
+		CAGE_API void *memset(void *destination, int value, uintPtr num);
+		CAGE_API void *memcpy(void *destination, const void *source, uintPtr num);
+		CAGE_API void *memmove(void *destination, const void *source, uintPtr num);
+		CAGE_API int memcmp(const void *ptr1, const void *ptr2, uintPtr num);
+
 		template<uint32 N>
 		struct stringBase
 		{
@@ -38,28 +51,25 @@ namespace cage
 				data[current] = 0;
 			}
 
-			stringBase(bool other)
+			explicit stringBase(bool other)
 			{
 				CAGE_ASSERT_COMPILE(N >= 6, string_too_short);
 				*this = (other ? "true" : "false");
 			}
 
 #define GCHL_GENERATE(TYPE) \
-			stringBase(TYPE other)\
+			explicit stringBase(TYPE other)\
 			{\
 				CAGE_ASSERT_COMPILE(N >= 20, string_too_short);\
-				current = privat::sprint1(data, other);\
+				current = privat::toString(data, other);\
 				data[current] = 0;\
 			}
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, float, double));
 #undef GCHL_GENERATE
 
-			explicit stringBase(void *other)
-			{
-				CAGE_ASSERT_COMPILE(N >= 20, string_too_short);
-				current = privat::sprint1(data, other);
-				data[current] = 0;
-			}
+			template<class T>
+			explicit stringBase(T *other) : stringBase((uintPtr)other)
+			{}
 
 			explicit stringBase(const char *pos, uint32 len)
 			{
@@ -70,13 +80,15 @@ namespace cage
 				data[current] = 0;
 			}
 
+			stringBase(char *other)
+			{
+				current = privat::toString(data, N, other);
+				data[current] = 0;
+			}
+
 			stringBase(const char *other)
 			{
-				uintPtr len = detail::strlen(other);
-				if (len > N)
-					CAGE_THROW_ERROR(exception, "string truncation");
-				current = numeric_cast<uint32>(len);
-				detail::memcpy(data, other, current);
+				current = privat::toString(data, N, other);
 				data[current] = 0;
 			}
 
@@ -124,13 +136,6 @@ namespace cage
 #define GCHL_GENERATE(OPERATOR) bool operator OPERATOR (const stringBase &other) const { return privat::stringComparison(data, current, other.data, other.current) OPERATOR 0; }
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, == , != , <= , >= , <, >));
 #undef GCHL_GENERATE
-
-			bool compareFast(const stringBase &other) const
-			{
-				if (current == other.current)
-					return detail::memcmp(data, other.data, current) < 0;
-				return current < other.current;
-			}
 
 			// methods
 			const char *c_str() const
@@ -199,68 +204,69 @@ namespace cage
 
 			stringBase fill(uint32 size, char c = ' ') const
 			{
+				stringBase cc(&c, 1);
 				stringBase ret = *this;
 				while (ret.length() < size)
-					ret += stringBase(&c, 1);
+					ret += cc;
 				ret.data[ret.current] = 0;
 				return ret;
 			}
 
 			stringBase toUpper() const
 			{
-				stringBase ret(*this);
-				for (char &c : ret)
-					c = detail::toupper(c);
+				stringBase ret;
+				ret.current = privat::stringToUpper(ret.data, N, data, current);
+				ret.data[ret.current] = 0;
 				return ret;
 			}
 
 			stringBase toLower() const
 			{
-				stringBase ret(*this);
-				for (char &c : ret)
-					c = detail::tolower(c);
+				stringBase ret;
+				ret.current = privat::stringToLower(ret.data, N, data, current);
+				ret.data[ret.current] = 0;
 				return ret;
 			}
 
 			float toFloat() const
 			{
 				float i;
-				privat::sscan1(c_str(), i);
+				privat::fromString(data, i);
 				return i;
 			}
 
 			double toDouble() const
 			{
 				double i;
-				privat::sscan1(c_str(), i);
+				privat::fromString(data, i);
 				return i;
 			}
 
 			sint32 toSint32() const
 			{
 				sint32 i;
-				privat::sscan1(c_str(), i);
+				privat::fromString(data, i);
 				return i;
 			}
 
 			uint32 toUint32() const
 			{
 				uint32 i;
-				privat::sscan1(c_str(), i);
+				privat::fromString(data, i);
 				return i;
 			}
 
 			sint64 toSint64() const
 			{
 				sint64 i;
-				privat::sscan1(c_str(), i);
+				privat::fromString(data, i);
 				return i;
 			}
 
 			uint64 toUint64() const
 			{
 				uint64 i;
-				privat::sscan1(c_str(), i);
+				privat::fromString(data, i);
 				return i;
 			}
 
@@ -286,16 +292,7 @@ namespace cage
 
 			bool isPattern(const stringBase &prefix, const stringBase &infix, const stringBase &suffix) const
 			{
-				if (current < prefix.current + infix.current + suffix.current)
-					return false;
-				if (subString(0, prefix.current) != prefix)
-					return false;
-				if (subString(current - suffix.current, suffix.current) != suffix)
-					return false;
-				if (infix.empty())
-					return true;
-				uint32 pos = find(infix, prefix.current);
-				return pos != m && pos <= current - infix.current - suffix.current;
+				return privat::stringIsPattern(data, current, prefix.data, prefix.current, infix.data, infix.current, suffix.data, suffix.current);
 			}
 
 			bool isDigitsOnly() const
@@ -343,7 +340,7 @@ namespace cage
 			stringBase encodeUrl() const
 			{
 				stringBase ret;
-				privat::encodeUrl(data, current, ret.data, ret.current, N);
+				privat::stringEncodeUrl(data, current, ret.data, ret.current, N);
 				ret.data[ret.current] = 0;
 				return ret;
 			}
@@ -351,7 +348,7 @@ namespace cage
 			stringBase decodeUrl() const
 			{
 				stringBase ret;
-				privat::decodeUrl(data, current, ret.data, ret.current, N);
+				privat::stringDecodeUrl(data, current, ret.data, ret.current, N);
 				ret.data[ret.current] = 0;
 				return ret;
 			}
@@ -402,9 +399,70 @@ namespace cage
 		};
 
 		template<uint32 N>
-		inline bool stringCompareFast(const stringBase<N> &a, const stringBase<N> &b) noexcept
+		struct stringizerBase
 		{
-			return a.compareFast(b);
+			stringBase<N> value;
+
+			operator const stringBase<N> & () const
+			{
+				return value;
+			}
+
+			template<uint32 M>
+			operator const stringBase<M> () const
+			{
+				return value;
+			}
+		};
+
+		template<uint32 N, uint32 M>
+		stringizerBase<N> &operator + (stringizerBase<N> &str, const stringizerBase<M> &other)
+		{
+			str.value += other.value;
+			return str;
+		}
+
+		template<uint32 N, uint32 M>
+		stringizerBase<N> &operator + (stringizerBase<N> &str, const stringBase<M> &other)
+		{
+			str.value += other;
+			return str;
+		}
+
+		template<uint32 N>
+		stringizerBase<N> &operator + (stringizerBase<N> &str, const char *other)
+		{
+			str.value += other;
+			return str;
+		}
+
+		template<uint32 N>
+		stringizerBase<N> &operator + (stringizerBase<N> &str, char *other)
+		{
+			str.value += other;
+			return str;
+		}
+
+		template<uint32 N, class T>
+		stringizerBase<N> &operator + (stringizerBase<N> &str, T *other)
+		{
+			return str + (uintPtr)other;
+		}
+
+#define GCHL_GENERATE(TYPE) \
+		template<uint32 N> \
+		inline stringizerBase<N> &operator + (stringizerBase<N> &str, TYPE other) \
+		{ \
+			return str + stringBase<20>(other); \
+		}
+		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, float, double));
+#undef GCHL_GENERATE
+
+		template<uint32 N, class T>
+		inline stringizerBase<N> &operator + (stringizerBase<N> &&str, const T &other)
+		{
+			// allow to use l-value-reference operator overloads with r-value-reference stringizer
+			return str + other;
 		}
 
 		template<uint32 N>
@@ -412,11 +470,14 @@ namespace cage
 		{
 			bool operator () (const stringBase<N> &a, const stringBase<N> &b) const noexcept
 			{
-				return stringCompareFast(a, b);
+				if (a.length() == b.length())
+					return detail::memcmp(a.begin(), b.begin(), a.length()) < 0;
+				return a.length() < b.length();
 			}
 		};
 	}
 
 	typedef detail::stringBase<1000> string;
+	typedef detail::stringizerBase<1000> stringizer;
 	typedef detail::stringComparatorFast<1000> stringComparatorFast;
 }

@@ -108,11 +108,11 @@ namespace cage
 					{
 					case inputTypeEnum::Integer:
 						if (data.value.isInteger(true))
-							data.value = consolidate<sint32>(data.value.toSint32(), data.min.i, data.max.i, data.step.i);
+							data.value = string(consolidate<sint32>(data.value.toSint32(), data.min.i, data.max.i, data.step.i));
 						break;
 					case inputTypeEnum::Real:
 						if (data.value.isReal(true))
-							data.value = consolidate<real>(data.value.toFloat(), data.min.f, data.max.f, data.step.f);
+							data.value = string(consolidate<real>(data.value.toFloat(), data.min.f, data.max.f, data.step.f).value);
 						break;
 					default:
 						break;
@@ -251,13 +251,13 @@ namespace cage
 					{
 						real v = data.value.toFloat();
 						v += data.step.f * sign;
-						data.value = v;
+						data.value = string(v.value);
 					}
 					if (data.type == inputTypeEnum::Integer)
 					{
 						sint32 v = data.value.toSint32();
 						v += data.step.i * sign;
-						data.value = v;
+						data.value = string(v);
 					}
 					consolidate(); // apply min/max
 				}

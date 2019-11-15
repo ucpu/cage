@@ -116,8 +116,8 @@ namespace
 			{
 				if (names.count(n->mName))
 				{ // make the name unique
-					n->mName = (string(n->mName.C_Str()) + "_" + (uintPtr)n).c_str();
-					CAGE_LOG_DEBUG(severityEnum::Warning, logComponentName, string() + "renamed a node: '" + n->mName.C_Str() + "'");
+					n->mName = string(stringizer() + n->mName.C_Str() + "_" + n).c_str();
+					CAGE_LOG_DEBUG(severityEnum::Warning, logComponentName, stringizer() + "renamed a node: '" + n->mName.C_Str() + "'");
 				}
 				names[n->mName] = n;
 			}
@@ -304,7 +304,7 @@ namespace
 					flags |= assimpBakeLoadFlags;
 				flags |= addFlags;
 				flags &= ~removeFlags;
-				CAGE_LOG(severityEnum::Info, logComponentName, cage::string() + "assimp loading flags: " + flags);
+				CAGE_LOG(severityEnum::Info, logComponentName, cage::stringizer() + "assimp loading flags: " + flags);
 
 				imp.SetIOHandler(&this->ioSystem);
 				if (!imp.ReadFile(pathExtractFilename(inputFile).c_str(), flags))
@@ -329,7 +329,7 @@ namespace
 				CAGE_THROW_ERROR(exception, "the scene is incomplete");
 
 			// print meshes
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "found " + scene->mNumMeshes + " meshes");
+			CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "found " + scene->mNumMeshes + " meshes");
 			for (uint32 i = 0; i < scene->mNumMeshes; i++)
 			{
 				const aiMesh *am = scene->mMeshes[i];
@@ -357,15 +357,15 @@ namespace
 					contains += "tangents ";
 				if (am->HasVertexColors(0))
 					contains += "colors ";
-				CAGE_LOG_CONTINUE(severityEnum::Note, logComponentName, string() + "index: " + i + ", object: '" + objname + "', material: '" + matname + "', contains: " + contains);
+				CAGE_LOG_CONTINUE(severityEnum::Note, logComponentName, stringizer() + "index: " + i + ", object: '" + objname + "', material: '" + matname + "', contains: " + contains);
 			}
 
 			// print animations
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "found " + scene->mNumAnimations + " animations");
+			CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "found " + scene->mNumAnimations + " animations");
 			for (uint32 i = 0; i < scene->mNumAnimations; i++)
 			{
 				const aiAnimation *ani = scene->mAnimations[i];
-				CAGE_LOG_CONTINUE(severityEnum::Info, logComponentName, string() + "index: " + i + ", animation: '" + ani->mName.data + "', channels: " + ani->mNumChannels);
+				CAGE_LOG_CONTINUE(severityEnum::Info, logComponentName, stringizer() + "index: " + i + ", animation: '" + ani->mName.data + "', channels: " + ani->mNumChannels);
 			}
 		};
 
@@ -486,7 +486,7 @@ uint32 assimpContextClass::selectMesh() const
 		uint32 n = inputSpec.toUint32();
 		if (n < scene->mNumMeshes)
 		{
-			CAGE_LOG(severityEnum::Note, "selectMesh", string() + "using mesh index " + n + ", because the input specifier is numeric");
+			CAGE_LOG(severityEnum::Note, "selectMesh", stringizer() + "using mesh index " + n + ", because the input specifier is numeric");
 			return n;
 		}
 		else
@@ -503,18 +503,18 @@ uint32 assimpContextClass::selectMesh() const
 		if (cage::string(am->mName.C_Str()) == inputSpec)
 		{
 			candidates.insert(meshIndex);
-			CAGE_LOG(severityEnum::Note, "selectMesh", string() + "considering mesh index " + meshIndex + ", because the mesh name is matching");
+			CAGE_LOG(severityEnum::Note, "selectMesh", stringizer() + "considering mesh index " + meshIndex + ", because the mesh name is matching");
 		}
 		if (cage::string(aiMatName.C_Str()) == inputSpec)
 		{
 			candidates.insert(meshIndex);
-			CAGE_LOG(severityEnum::Note, "selectMesh", string() + "considering mesh index " + meshIndex + ", because the material name matches");
+			CAGE_LOG(severityEnum::Note, "selectMesh", stringizer() + "considering mesh index " + meshIndex + ", because the material name matches");
 		}
 		string comb = cage::string(am->mName.C_Str()) + "_" + cage::string(aiMatName.C_Str());
 		if (comb == inputSpec)
 		{
 			candidates.insert(meshIndex);
-			CAGE_LOG(severityEnum::Note, "selectMesh", string() + "considering mesh index " + meshIndex + ", because the combined name matches");
+			CAGE_LOG(severityEnum::Note, "selectMesh", stringizer() + "considering mesh index " + meshIndex + ", because the combined name matches");
 		}
 	}
 	switch (candidates.size())
@@ -522,7 +522,7 @@ uint32 assimpContextClass::selectMesh() const
 	case 0:
 		CAGE_THROW_ERROR(exception, "file does not contain requested mesh");
 	case 1:
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "using mesh at index " + *candidates.begin());
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "using mesh at index " + *candidates.begin());
 		return *candidates.begin();
 	default:
 		CAGE_THROW_ERROR(exception, "requested name is not unique");
@@ -552,7 +552,7 @@ void analyzeAssimp()
 			if (scene->mNumMeshes == 1)
 			{
 				writeLine("scheme=mesh");
-				writeLine(string() + "asset=" + inputFile);
+				writeLine(stringizer() + "asset=" + inputFile);
 			}
 			else for (uint32 i = 0; i < scene->mNumMeshes; i++)
 			{
@@ -560,7 +560,7 @@ void analyzeAssimp()
 				aiString matName;
 				m->Get(AI_MATKEY_NAME, matName);
 				writeLine("scheme=mesh");
-				writeLine(string() + "asset=" + inputFile + "?" + scene->mMeshes[i]->mName.C_Str() + "_" + matName.C_Str());
+				writeLine(stringizer() + "asset=" + inputFile + "?" + scene->mMeshes[i]->mName.C_Str() + "_" + matName.C_Str());
 			}
 			// skeletons
 			{
@@ -576,7 +576,7 @@ void analyzeAssimp()
 				if (found)
 				{
 					writeLine("scheme=skeleton");
-					writeLine(string() + "asset=" + inputFile + ";skeleton");
+					writeLine(stringizer() + "asset=" + inputFile + ";skeleton");
 				}
 			}
 			// animations
@@ -588,8 +588,8 @@ void analyzeAssimp()
 				writeLine("scheme=animation");
 				string n = a->mName.C_Str();
 				if (n.empty())
-					n = i;
-				writeLine(string() + "asset=" + inputFile + "?" + n);
+					n = string(i);
+				writeLine(stringizer() + "asset=" + inputFile + "?" + n);
 			}
 		}
 		catch (...)
@@ -688,7 +688,7 @@ mat3 axesMatrix()
 	}
 	if (axesUsedCounts[0] != 1 || axesUsedCounts[1] != 1 || axesUsedCounts[2] != 1)
 		CAGE_THROW_ERROR(exception, "wrong axes definition: axes counts (must be in format +x+y+z)");
-	CAGE_LOG(severityEnum::Info, logComponentName, string() + "using axes conversion matrix: " + result);
+	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "using axes conversion matrix: " + result);
 	return result;
 }
 

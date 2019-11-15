@@ -79,7 +79,7 @@ void testConcurrent()
 		{
 			if (auto lock = scopeLock<syncMutex>(mutex, true))
 			{
-				newThread(delegate<void()>().bind<&tryLockTest>(), string() + "try lock");
+				newThread(delegate<void()>().bind<&tryLockTest>(), "try lock");
 			}
 			else
 			{
@@ -92,7 +92,7 @@ void testConcurrent()
 		CAGE_TESTCASE("barrier");
 		holder<threadHandle> thrs[4];
 		for (uint32 i = 0; i < 4; i++)
-			thrs[i] = newThread(delegate<void()>().bind<&threadTest>(), string() + "worker_" + i);
+			thrs[i] = newThread(delegate<void()>().bind<&threadTest>(), stringizer() + "worker_" + i);
 		for (uint32 i = 0; i < 4; i++)
 			thrs[i]->wait();
 	}

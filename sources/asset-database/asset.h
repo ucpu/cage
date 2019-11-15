@@ -23,7 +23,7 @@ struct assetStruct
 	string aliasPath() const;
 	bool operator < (const assetStruct &other) const
 	{
-		return stringCompareFast(name, other.name);
+		return stringComparatorFast()(name, other.name);
 	}
 };
 

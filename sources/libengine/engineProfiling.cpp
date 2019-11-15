@@ -223,9 +223,9 @@ namespace cage
 				{
 					setTextLabel(i * 2 + 0, labelNames[i]);
 					if (labelFlags[i] <= engineProfilingStatsFlags::FrameTime)
-						setTextLabel(i * 2 + 1, string() + (engineProfilingValues(labelFlags[i], profilingMode) / 1000) + " ms");
+						setTextLabel(i * 2 + 1, stringizer() + (engineProfilingValues(labelFlags[i], profilingMode) / 1000) + " ms");
 					else
-						setTextLabel(i * 2 + 1, engineProfilingValues(labelFlags[i], profilingMode));
+						setTextLabel(i * 2 + 1, string(engineProfilingValues(labelFlags[i], profilingMode)));
 				}
 				return false;
 			}

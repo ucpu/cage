@@ -234,10 +234,10 @@ void processSound()
 	else
 		sds.soundType = soundTypeEnum::CompressedRaw;
 
-	CAGE_LOG(severityEnum::Info, logComponentName, string() + "flags: " + (uint32)sds.flags);
-	CAGE_LOG(severityEnum::Info, logComponentName, string() + "frames: " + sds.frames);
-	CAGE_LOG(severityEnum::Info, logComponentName, string() + "channels: " + sds.channels);
-	CAGE_LOG(severityEnum::Info, logComponentName, string() + "samplerate: " + sds.sampleRate);
+	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "flags: " + (uint32)sds.flags);
+	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "frames: " + sds.frames);
+	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "channels: " + sds.channels);
+	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "samplerate: " + sds.sampleRate);
 	switch (sds.soundType)
 	{
 	case soundTypeEnum::RawRaw:
@@ -272,9 +272,9 @@ void processSound()
 		vorbisEncoderStruct ves(f.get());
 		ves.encode();
 		uint32 oggSize = numeric_cast<uint32>(f->size() - sizeof(soundSourceHeader) - sizeof(assetHeader));
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "original size: " + h.originalSize + " bytes");
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "compressed size: " + oggSize + " bytes");
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "compression ratio: " + (oggSize / (float)h.originalSize));
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "original size: " + h.originalSize + " bytes");
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "compressed size: " + oggSize + " bytes");
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "compression ratio: " + (oggSize / (float)h.originalSize));
 		switch (sds.soundType)
 		{
 		case soundTypeEnum::CompressedRaw:

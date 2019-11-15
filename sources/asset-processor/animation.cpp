@@ -44,8 +44,8 @@ void processAnimation()
 	if (ani->mNumChannels == 0 || ani->mNumMeshChannels != 0 || ani->mNumMorphMeshChannels != 0)
 		CAGE_THROW_ERROR(exception, "the animation has unsupported type");
 
-	CAGE_LOG(severityEnum::Info, logComponentName, string() + "duration: " + ani->mDuration + " ticks");
-	CAGE_LOG(severityEnum::Info, logComponentName, string() + "ticks per second: " + ani->mTicksPerSecond);
+	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "duration: " + ani->mDuration + " ticks");
+	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "ticks per second: " + ani->mTicksPerSecond);
 
 	holder<assimpSkeletonClass> skeleton = context->skeleton();
 
@@ -65,7 +65,7 @@ void processAnimation()
 		uint16 idx = skeleton->index(n->mNodeName);
 		if (idx == m)
 		{
-			CAGE_LOG(severityEnum::Warning, logComponentName, string() + "channel index: " + channelIndex + ", name: '" + n->mNodeName.data + "', has no corresponding bone and will be ignored");
+			CAGE_LOG(severityEnum::Warning, logComponentName, stringizer() + "channel index: " + channelIndex + ", name: '" + n->mNodeName.data + "', has no corresponding bone and will be ignored");
 			continue;
 		}
 		boneIndices.push_back(idx);
@@ -106,8 +106,8 @@ void processAnimation()
 		totalKeys += n->mNumScalingKeys;
 	}
 	a.animationBonesCount = numeric_cast<uint32>(bones.size());
-	CAGE_LOG(severityEnum::Info, logComponentName, string() + "animated bones: " + a.animationBonesCount);
-	CAGE_LOG(severityEnum::Info, logComponentName, string() + "total keys: " + totalKeys);
+	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "animated bones: " + a.animationBonesCount);
+	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "total keys: " + totalKeys);
 
 	memoryBuffer buff;
 	serializer ser(buff);
@@ -138,9 +138,9 @@ void processAnimation()
 		ser.write(b.sclVals.data(), b.sclVals.size() * sizeof(vec3));
 	}
 
-	CAGE_LOG(severityEnum::Info, logComponentName, string() + "buffer size (before compression): " + buff.size());
+	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
 	memoryBuffer comp = detail::compress(buff);
-	CAGE_LOG(severityEnum::Info, logComponentName, string() + "buffer size (after compression): " + comp.size());
+	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + comp.size());
 
 	assetHeader h = initializeAssetHeaderStruct();
 	h.originalSize = numeric_cast<uint32>(buff.size());

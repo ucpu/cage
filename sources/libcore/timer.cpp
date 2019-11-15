@@ -137,14 +137,14 @@ namespace cage
 			string fill(uint32 a)
 			{
 				if (a < 10)
-					return string() + "0" + a;
-				return a;
+					return stringizer() + "0" + a;
+				return string(a);
 			}
 		}
 
 		string formatDateTime(uint32 y, uint32 M, uint32 d, uint32 h, uint32 m, uint32 s)
 		{
-			return string() + y + "-" + fill(M) + "-" + fill(d) + " " + fill(h) + ":" + fill(m) + ":" + fill(s);
+			return stringizer() + y + "-" + fill(M) + "-" + fill(d) + " " + fill(h) + ":" + fill(m) + ":" + fill(s);
 		}
 	}
 }

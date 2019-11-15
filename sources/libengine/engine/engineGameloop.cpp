@@ -283,7 +283,7 @@ namespace cage
 				if (timeDelay > soundThread().timePerTick * 2)
 				{
 					uint64 skip = timeDelay / soundThread().timePerTick + 1;
-					CAGE_LOG(severityEnum::Warning, "engine", string() + "skipping " + skip + " sound ticks");
+					CAGE_LOG(severityEnum::Warning, "engine", stringizer() + "skipping " + skip + " sound ticks");
 					currentSoundTime += skip * soundThread().timePerTick;
 				}
 				else
@@ -426,7 +426,7 @@ namespace cage
 				if (timeDelay > controlThread().timePerTick * 2)
 				{
 					uint64 skip = timeDelay / controlThread().timePerTick + 1;
-					CAGE_LOG(severityEnum::Warning, "engine", string() + "skipping " + skip + " control update ticks");
+					CAGE_LOG(severityEnum::Warning, "engine", stringizer() + "skipping " + skip + " control update ticks");
 					currentControlTime += skip * controlThread().timePerTick;
 				}
 				else

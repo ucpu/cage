@@ -1,3 +1,5 @@
+#include <cstring>
+
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/hashString.h>
@@ -25,7 +27,7 @@ namespace cage
 
 		uint32 hashString(const char *str)
 		{
-			return hashBuffer(str, strlen(str));
+			return hashBuffer(str, std::strlen(str));
 		}
 	}
 }

@@ -87,13 +87,13 @@ namespace
 
 		uint64 system = measure<&allocateSystem, &deallocateSystem>();
 		uint64 memory = measure<&allocateMemory, &deallocateMemory>();
-		CAGE_LOG(severityEnum::Info, "performance", string() + "timing: " + system + "\t" + memory + "\t" + (memory < system ? "better" : "worse") + "\t" + ((float)memory / (float)system));
+		CAGE_LOG(severityEnum::Info, "performance", stringizer() + "timing: " + system + "\t" + memory + "\t" + (memory < system ? "better" : "worse") + "\t" + ((float)memory / (float)system));
 	}
 
 	template<uintPtr AllocSize>
 	void measureAllocSize(uintPtr realAllocs)
 	{
-		CAGE_LOG(severityEnum::Info, "performance", string() + "Atom " + AllocSize + ", allocations " + realAllocs + " bytes");
+		CAGE_LOG(severityEnum::Info, "performance", stringizer() + "Atom " + AllocSize + ", allocations " + realAllocs + " bytes");
 		allocSize = realAllocs;
 		CAGE_LOG(severityEnum::Info, "performance", "no concurrency");
 		measureArena<memoryConcurrentPolicyNone, AllocSize>();

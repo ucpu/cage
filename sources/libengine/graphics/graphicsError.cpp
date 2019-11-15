@@ -1,5 +1,6 @@
 #include <map>
 #include <cstdlib>
+#include <cstring>
 
 #include <cage-core/core.h>
 #include <cage-core/math.h>
@@ -88,13 +89,13 @@ namespace cage
 			}
 
 			CAGE_LOG(cageSevr, "graphics", "debug message:");
-			holder<lineReader> lrb = newLineReader((char*)message, detail::strlen(message));
+			holder<lineReader> lrb = newLineReader((char*)message, std::strlen(message));
 			for (string line; lrb->readLine(line);)
 				CAGE_LOG_CONTINUE(cageSevr, "graphics", line);
-			CAGE_LOG_CONTINUE(severityEnum::Note, "graphics", string() + "source: " + src + ", type: " + tp + ", severity: " + sevr + ", id: " + id);
+			CAGE_LOG_CONTINUE(severityEnum::Note, "graphics", stringizer() + "source: " + src + ", type: " + tp + ", severity: " + sevr + ", id: " + id);
 
 			if (id == 131218 && severity == GL_DEBUG_SEVERITY_MEDIUM && type == GL_DEBUG_TYPE_PERFORMANCE)
-				return; // do not break on messages that shader is beeing recompiled based on opengl state
+				return; // do not break on messages that shader is being recompiled based on opengl state
 
 			if (cageSevr > severityEnum::Info)
 				detail::debugBreakpoint();
@@ -110,18 +111,18 @@ namespace cage
 			vendor = glGetString(GL_VENDOR);
 			renderer = glGetString(GL_RENDERER);
 			CAGE_CHECK_GL_ERROR_DEBUG();
-			CAGE_LOG(severityEnum::Info, "systemInfo", string() + "opengl version: " + major + "." + minor);
-			CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", string() + "device vendor: '" + (char*)vendor + "'");
-			CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", string() + "device renderer: '" + (char*)renderer + "'");
+			CAGE_LOG(severityEnum::Info, "systemInfo", stringizer() + "opengl version: " + major + "." + minor);
+			CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", stringizer() + "device vendor: '" + (char*)vendor + "'");
+			CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", stringizer() + "device renderer: '" + (char*)renderer + "'");
 			if (confDetailedInfo)
 			{
-				CAGE_LOG(severityEnum::Info, "systemInfo", string() + "opengl extensions: ");
+				CAGE_LOG(severityEnum::Info, "systemInfo", stringizer() + "opengl extensions: ");
 				GLint num = 0;
 				glGetIntegerv(GL_NUM_EXTENSIONS, &num);
 				for (GLint i = 0; i < num; i++)
 				{
 					const GLubyte *ext = glGetStringi(GL_EXTENSIONS, i);
-					CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", string() + "extension: '" + (char*)ext + "'");
+					CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", stringizer() + "extension: '" + (char*)ext + "'");
 				}
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}

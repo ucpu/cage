@@ -49,7 +49,7 @@ void configParseCmd(int argc, const char *args[])
 			configIgnoreExtensions.insert(list->getString());
 		else if (n.isPattern("cage-asset-database.ignorePaths.", "", ""))
 			configIgnorePaths.insert(pathSimplify(list->getString()));
-		CAGE_LOG(severityEnum::Info, "config", string() + n + ": " + list->getString());
+		CAGE_LOG(severityEnum::Info, "config", stringizer() + n + ": " + list->getString());
 		list->next();
 	}
 

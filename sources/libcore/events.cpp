@@ -54,7 +54,7 @@ namespace cage
 				l = l->p;
 			while (l)
 			{
-				CAGE_LOG(severityEnum::Info, "event-listener", string()+ l->name + " (" + l->order + ")");
+				CAGE_LOG(severityEnum::Info, "event-listener", stringizer() + l->name + " (" + l->order + ")");
 				l = l->n;
 			}
 		}

@@ -21,7 +21,7 @@ namespace
 		if (requested)
 		{
 			flags |= idx;
-			CAGE_LOG(severityEnum::Info, logComponentName, cage::string() + "feature requested: " + name);
+			CAGE_LOG(severityEnum::Info, logComponentName, cage::stringizer() + "feature requested: " + name);
 		}
 	}
 
@@ -34,7 +34,7 @@ namespace
 		n = pathJoin(pathBase, n);
 		dsm.textureNames[usage] = hashString(n.c_str());
 		writeLine(string("ref = ") + n);
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "texture '" + n + "' (" + dsm.textureNames[usage] + ") of type " + type + ", usage " + usage);
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "texture '" + n + "' (" + dsm.textureNames[usage] + ") of type " + type + ", usage " + usage);
 	}
 
 	bool loadTextureAssimp(aiMaterial *m, renderMeshHeader &dsm, aiTextureType tt, uint32 usage)
@@ -44,7 +44,7 @@ namespace
 		if (texCount == 0)
 			return false;
 		if (texCount > 1)
-			CAGE_LOG(severityEnum::Warning, logComponentName, string() + "material has multiple (" + texCount + ") textures of type " + (uint32)tt + ", usage " + usage);
+			CAGE_LOG(severityEnum::Warning, logComponentName, stringizer() + "material has multiple (" + texCount + ") textures of type " + (uint32)tt + ", usage " + usage);
 		aiString texAsName;
 		m->GetTexture(tt, 0, &texAsName, nullptr, nullptr, nullptr, nullptr, nullptr);
 		cage::string tn = texAsName.C_Str();
@@ -53,30 +53,30 @@ namespace
 		cage::string n = pathJoin(pathExtractPath(inputName), tn);
 		dsm.textureNames[usage] = hashString(n.c_str());
 		writeLine(string("ref = ") + n);
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "texture '" + n + "' (" + dsm.textureNames[usage] + ") of type " + (uint32)tt + ", usage " + usage);
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "texture '" + n + "' (" + dsm.textureNames[usage] + ") of type " + (uint32)tt + ", usage " + usage);
 		return true;
 	}
 
 	void printMaterial(const renderMeshHeader &dsm, const renderMeshHeader::materialData &mat)
 	{
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "albedoBase: " + mat.albedoBase);
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "albedoMult: " + mat.albedoMult);
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "specialBase: " + mat.specialBase);
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "specialMult: " + mat.specialMult);
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "opacity texture: " + ((dsm.renderFlags & meshRenderFlags::OpacityTexture) == meshRenderFlags::OpacityTexture));
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "transparency: " + ((dsm.renderFlags & meshRenderFlags::Transparency) == meshRenderFlags::Transparency));
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "translucency: " + ((dsm.renderFlags & meshRenderFlags::Translucency) == meshRenderFlags::Translucency));
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "lighting: " + ((dsm.renderFlags & meshRenderFlags::Lighting) == meshRenderFlags::Lighting));
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "two sides: " + ((dsm.renderFlags & meshRenderFlags::TwoSided) == meshRenderFlags::TwoSided));
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "depth test: " + ((dsm.renderFlags & meshRenderFlags::DepthTest) == meshRenderFlags::DepthTest));
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "depth write: " + ((dsm.renderFlags & meshRenderFlags::DepthWrite) == meshRenderFlags::DepthWrite));
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "velocity write: " + ((dsm.renderFlags & meshRenderFlags::VelocityWrite) == meshRenderFlags::VelocityWrite));
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "shadow cast: " + ((dsm.renderFlags & meshRenderFlags::ShadowCast) == meshRenderFlags::ShadowCast));
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "albedoBase: " + mat.albedoBase);
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "albedoMult: " + mat.albedoMult);
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "specialBase: " + mat.specialBase);
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "specialMult: " + mat.specialMult);
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "opacity texture: " + ((dsm.renderFlags & meshRenderFlags::OpacityTexture) == meshRenderFlags::OpacityTexture));
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "transparency: " + ((dsm.renderFlags & meshRenderFlags::Transparency) == meshRenderFlags::Transparency));
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "translucency: " + ((dsm.renderFlags & meshRenderFlags::Translucency) == meshRenderFlags::Translucency));
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "lighting: " + ((dsm.renderFlags & meshRenderFlags::Lighting) == meshRenderFlags::Lighting));
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "two sides: " + ((dsm.renderFlags & meshRenderFlags::TwoSided) == meshRenderFlags::TwoSided));
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "depth test: " + ((dsm.renderFlags & meshRenderFlags::DepthTest) == meshRenderFlags::DepthTest));
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "depth write: " + ((dsm.renderFlags & meshRenderFlags::DepthWrite) == meshRenderFlags::DepthWrite));
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "velocity write: " + ((dsm.renderFlags & meshRenderFlags::VelocityWrite) == meshRenderFlags::VelocityWrite));
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "shadow cast: " + ((dsm.renderFlags & meshRenderFlags::ShadowCast) == meshRenderFlags::ShadowCast));
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		{
 			if (dsm.textureNames[i] == 0)
 				continue;
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "texture[" + i + "]: " + dsm.textureNames[i]);
+			CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "texture[" + i + "]: " + dsm.textureNames[i]);
 		}
 	}
 
@@ -167,7 +167,7 @@ namespace
 				dsm.renderFlags &= ~meshRenderFlags::ShadowCast;
 				continue;
 			}
-			CAGE_LOG(severityEnum::Note, "exception", string() + "specified flag: '" + v + "'");
+			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "specified flag: '" + v + "'");
 			CAGE_THROW_ERROR(exception, "unknown material flag");
 		}
 
@@ -175,9 +175,9 @@ namespace
 			string s, t, v;
 			if (ini->anyUnused(s, t, v))
 			{
-				CAGE_LOG(severityEnum::Note, "exception", string() + "section: " + s);
-				CAGE_LOG(severityEnum::Note, "exception", string() + "item: " + t);
-				CAGE_LOG(severityEnum::Note, "exception", string() + "value: " + v);
+				CAGE_LOG(severityEnum::Note, "exception", stringizer() + "section: " + s);
+				CAGE_LOG(severityEnum::Note, "exception", stringizer() + "item: " + t);
+				CAGE_LOG(severityEnum::Note, "exception", stringizer() + "value: " + v);
 				CAGE_THROW_ERROR(exception, "unused material property");
 			}
 		}
@@ -195,7 +195,7 @@ namespace
 		aiString matName;
 		m->Get(AI_MATKEY_NAME, matName);
 		if (matName.length > 0)
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "material name: '" + matName.C_Str() + "'");
+			CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "material name: '" + matName.C_Str() + "'");
 
 		// opacity
 		m->Get(AI_MATKEY_OPACITY, mat.albedoBase[3].value);
@@ -291,7 +291,7 @@ namespace
 		}
 		path += ".cpm";
 
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "looking for implicit material at '" + path + "'");
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "looking for implicit material at '" + path + "'");
 
 		if (pathIsFile(pathJoin(inputDirectory, path)))
 		{
@@ -334,7 +334,7 @@ namespace
 			n = inputFile + ";skeleton";
 		else
 			n = pathJoin(pathExtractPath(inputName), n);
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "using skeleton name: '" + n + "'");
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "using skeleton name: '" + n + "'");
 		dsm.skeletonName = hashString(n.c_str());
 		writeLine(string("ref = ") + n);
 	}
@@ -343,7 +343,7 @@ namespace
 	{
 		if (abs(lengthSquared(n) - 1) > 1e-3)
 		{
-			CAGE_LOG(severityEnum::Warning, logComponentName, string() + "fixing denormalized " + name + ": " + n);
+			CAGE_LOG(severityEnum::Warning, logComponentName, stringizer() + "fixing denormalized " + name + ": " + n);
 			n = normalize(n);
 		}
 		if (!n.valid())
@@ -351,7 +351,7 @@ namespace
 			static bool passInvalid = properties("passInvalidNormals").toBool();
 			if (passInvalid)
 			{
-				CAGE_LOG(severityEnum::Warning, logComponentName, string() + "pass invalid " + name + ": " + n);
+				CAGE_LOG(severityEnum::Warning, logComponentName, stringizer() + "pass invalid " + name + ": " + n);
 				n = vec3();
 			}
 			else
@@ -394,9 +394,9 @@ void processMesh()
 	dsm.verticesCount = am->mNumVertices;
 	dsm.indicesCount = am->mNumFaces * indicesPerPrimitive;
 
-	CAGE_LOG(severityEnum::Info, logComponentName, string() + "primitive type: " + dsm.primitiveType + ", indices per primitive: " + indicesPerPrimitive);
-	CAGE_LOG(severityEnum::Info, logComponentName, cage::string() + "vertices count: " + dsm.verticesCount);
-	CAGE_LOG(severityEnum::Info, logComponentName, cage::string() + "indices count: " + dsm.indicesCount);
+	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "primitive type: " + dsm.primitiveType + ", indices per primitive: " + indicesPerPrimitive);
+	CAGE_LOG(severityEnum::Info, logComponentName, cage::stringizer() + "vertices count: " + dsm.verticesCount);
+	CAGE_LOG(severityEnum::Info, logComponentName, cage::stringizer() + "indices count: " + dsm.indicesCount);
 
 	setFlags(dsm.flags, meshDataFlags::Uvs, am->GetNumUVChannels() > 0, "uvs");
 	setFlags(dsm.flags, meshDataFlags::Normals, am->HasNormals(), "normals");
@@ -437,7 +437,7 @@ void processMesh()
 		ser << p;
 		dsm.box += aabb(p);
 	}
-	CAGE_LOG(severityEnum::Info, logComponentName, string() + "bounding box: " + dsm.box);
+	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "bounding box: " + dsm.box);
 
 	if (dsm.normals())
 	{
@@ -471,7 +471,7 @@ void processMesh()
 			vec3 b = dsm.box.b - c;
 			real s = 3;
 			dsm.box = aabb(a * s + c, b * s + c);
-			CAGE_LOG(severityEnum::Info, logComponentName, string() + "enlarged bounding box: " + dsm.box);
+			CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "enlarged bounding box: " + dsm.box);
 		}
 		CAGE_ASSERT(am->mNumBones > 0);
 		holder<assimpSkeletonClass> skeleton = context->skeleton();
@@ -531,7 +531,7 @@ void processMesh()
 			if (cage::abs(sum - 1) > 1e-3 && sum > 1e-3)
 			{
 				float f = 1 / sum;
-				CAGE_LOG(severityEnum::Warning, logComponentName, string() + "renormalizing bone weights for " + i + "th vertex by factor " + f);
+				CAGE_LOG(severityEnum::Warning, logComponentName, stringizer() + "renormalizing bone weights for " + i + "th vertex by factor " + f);
 				for (uint32 j = 0; j < 4; j++)
 					boneWeights[i * 4 + j] *= f;
 			}
@@ -553,7 +553,7 @@ void processMesh()
 			for (uint32 i = 0; i < dsm.verticesCount; i++)
 				ser << vec2(conv(am->mTextureCoords[0][i]));
 		}
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "uv dimensionality: " + dsm.uvDimension);
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "uv dimensionality: " + dsm.uvDimension);
 	}
 
 	for (uint32 i = 0; i < am->mNumFaces; i++)

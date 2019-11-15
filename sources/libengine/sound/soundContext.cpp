@@ -32,7 +32,7 @@ namespace cage
 
 			soundContextImpl(const soundContextCreateConfig &config, const string &name) : name(name.replace(":", "_")), soundio(nullptr), linksMemory(config.linksMemory)
 			{
-				CAGE_LOG(severityEnum::Info, "sound", string() + "creating sound context, name: '" + name + "'");
+				CAGE_LOG(severityEnum::Info, "sound", stringizer() + "creating sound context, name: '" + name + "'");
 				soundio = soundio_create();
 				if (!soundio)
 					CAGE_THROW_ERROR(soundError, "error create soundio", 0);

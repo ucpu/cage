@@ -23,7 +23,7 @@ namespace
 
 		runStruct(uint32 name, const string &cmd) : cmd(cmd), name(name)
 		{
-			thr = newThread(delegate<void()>().bind<runStruct, &runStruct::run>(this), name);
+			thr = newThread(delegate<void()>().bind<runStruct, &runStruct::run>(this), string(name));
 		}
 	
 		~runStruct()
@@ -44,21 +44,21 @@ namespace
 					}
 					if (s.empty())
 						break;
-					CAGE_LOG(severityEnum::Info, "manager", string() + name + ": " + s);
+					CAGE_LOG(severityEnum::Info, "manager", stringizer() + name + ": " + s);
 				}
 			}
 			int res = prg->wait();
 			if (res != 0)
-				CAGE_LOG(severityEnum::Info, "manager", string() + name + ": process ended with code: " + res);
+				CAGE_LOG(severityEnum::Info, "manager", stringizer() + name + ": process ended with code: " + res);
 		}
 	};
 
 	void runManager()
 	{
-		runStruct runnerClient1(1, string() + "cage-test-network -n network-test-1 -c");
-		runStruct runnerClient2(2, string() + "cage-test-network -n network-test-2 -c -l 0.2");
-		runStruct runnerServer0(0, string() + "cage-test-network -n network-test-0 -s");
-		runStruct runnerClient3(3, string() + "cage-test-network -n network-test-3 -c");
+		runStruct runnerClient1(1, "cage-test-network -n network-test-1 -c");
+		runStruct runnerClient2(2, "cage-test-network -n network-test-2 -c -l 0.2");
+		runStruct runnerServer0(0, "cage-test-network -n network-test-0 -s");
+		runStruct runnerClient3(3, "cage-test-network -n network-test-3 -c");
 	}
 
 	void initializeSecondaryLog(const string &path)
@@ -103,7 +103,7 @@ int main(int argc, const char *args[])
 		packetLoss = cmd->cmdFloat('l', "packetLoss", packetLoss);
 		if (packetLoss < 0 || packetLoss > 1)
 			CAGE_THROW_ERROR(exception, "invalid packet loss");
-		confMessages = cmd->getUint32('m', "messages", confMessages);
+		confMessages = cmd->cmdUint32('m', "messages", confMessages);
 		cmd->checkUnused();
 		cmd.clear();
 
@@ -112,7 +112,7 @@ int main(int argc, const char *args[])
 
 		if (!name.empty())
 			initializeSecondaryLog(name + ".log");
-		CAGE_LOG(severityEnum::Info, "config", string() + "packet loss: " + (float)packetLoss);
+		CAGE_LOG(severityEnum::Info, "config", stringizer() + "packet loss: " + (float)packetLoss);
 
 		if (modeServer)
 			runServer();
@@ -126,7 +126,7 @@ int main(int argc, const char *args[])
 	}
 	catch (const std::exception &e)
 	{
-		CAGE_LOG(severityEnum::Error, "exception", string() + "std exception: " + e.what());
+		CAGE_LOG(severityEnum::Error, "exception", stringizer() + "std exception: " + e.what());
 	}
 	catch (...)
 	{

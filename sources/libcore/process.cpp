@@ -35,8 +35,8 @@ namespace cage
 				static holder<syncMutex> mut = newSyncMutex();
 				scopeLock<syncMutex> lock(mut);
 
-				CAGE_LOG(severityEnum::Info, "process", string() + "launching process '" + cmd + "'");
-				CAGE_LOG_CONTINUE(severityEnum::Note, "process", string() + "working directory '" + workingDir + "'");
+				CAGE_LOG(severityEnum::Info, "process", stringizer() + "launching process '" + cmd + "'");
+				CAGE_LOG_CONTINUE(severityEnum::Note, "process", stringizer() + "working directory '" + workingDir + "'");
 
 				SECURITY_ATTRIBUTES saAttr;
 				detail::memset(&saAttr, 0, sizeof(SECURITY_ATTRIBUTES));
@@ -85,7 +85,7 @@ namespace cage
 				closeHandle(hChildStd_OUT_Wr);
 				closeHandle(hChildStd_IN_Rd);
 
-				CAGE_LOG_CONTINUE(severityEnum::Info, "process", string() + "process id: " + templates::underlying_type<DWORD>::type(GetProcessId(hProcess)));
+				CAGE_LOG_CONTINUE(severityEnum::Info, "process", stringizer() + "process id: " + templates::underlying_type<DWORD>::type(GetProcessId(hProcess)));
 			}
 
 			static void closeHandle(HANDLE &h)
@@ -176,8 +176,8 @@ namespace cage
 				static holder<syncMutex> mut = newSyncMutex();
 				scopeLock<syncMutex> lock(mut);
 
-				CAGE_LOG(severityEnum::Info, "process", string() + "launching process '" + cmd + "'");
-				CAGE_LOG_CONTINUE(severityEnum::Note, "process", string() + "working directory '" + workingDir + "'");
+				CAGE_LOG(severityEnum::Info, "process", stringizer() + "launching process '" + cmd + "'");
+				CAGE_LOG_CONTINUE(severityEnum::Note, "process", stringizer() + "working directory '" + workingDir + "'");
 
 				if (pipe(aStdinPipe) < 0)
 					CAGE_THROW_ERROR(exception, "failed to open pipe");
@@ -240,7 +240,7 @@ namespace cage
 					CAGE_THROW_ERROR(exception, "fork failed");
 				}
 
-				CAGE_LOG_CONTINUE(severityEnum::Info, "process", string() + "process id: " + pid);
+				CAGE_LOG_CONTINUE(severityEnum::Info, "process", stringizer() + "process id: " + pid);
 			}
 
 			~programImpl()

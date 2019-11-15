@@ -10,14 +10,12 @@ using namespace cage;
 
 void runClient()
 {
-	CAGE_LOG(severityEnum::Info, "config", string() + "running in client mode");
-
-	//configSetSint32("cage-core.udp.logLevel", 10);
+	CAGE_LOG(severityEnum::Info, "config", stringizer() + "running in client mode");
 
 	configString address("address");
 	configUint32 port("port");
-	CAGE_LOG(severityEnum::Info, "config", string() + "address: '" + address + "'");
-	CAGE_LOG(severityEnum::Info, "config", string() + "port: " + (uint32)port);
+	CAGE_LOG(severityEnum::Info, "config", stringizer() + "address: '" + (string)address + "'");
+	CAGE_LOG(severityEnum::Info, "config", stringizer() + "port: " + (uint32)port);
 
 	holder<connClass> client = newConn(newUdpConnection(address, port, 0));
 	runnerStruct runner;

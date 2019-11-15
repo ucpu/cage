@@ -18,11 +18,11 @@ void processRaw()
 	assetHeader h = initializeAssetHeaderStruct();
 	h.originalSize = numeric_cast<uint32>(data.size());
 
-	CAGE_LOG(severityEnum::Info, logComponentName, string() + "original data size: " + data.size() + " bytes");
+	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "original data size: " + data.size() + " bytes");
 	if (data.size() >= properties("compressThreshold").toUint32())
 	{
 		memoryBuffer data2 = detail::compress(data);
-		CAGE_LOG(severityEnum::Info, logComponentName, string() + "compressed data size: " + data2.size() + " bytes");
+		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "compressed data size: " + data2.size() + " bytes");
 		if (data2.size() < data.size())
 		{
 			std::swap(data, data2);

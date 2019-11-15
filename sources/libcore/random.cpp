@@ -20,7 +20,7 @@ namespace cage
 			s[1] = confDefault2;
 			if (s[0] == 0 && s[1] == 0)
 				privat::generateRandomData((uint8*)s, sizeof(s));
-			CAGE_LOG(severityEnum::Info, "random", string() + "initializing default random generator: " + s[0] + ", " + s[1]);
+			CAGE_LOG(severityEnum::Info, "random", stringizer() + "initializing default random generator: " + s[0] + ", " + s[1]);
 			return randomGenerator(s);
 		}
 	}

@@ -16,7 +16,7 @@ struct schemeFieldStruct
 	bool applyToAssetField(string &val, const string &assetName) const;
 	inline bool operator < (const schemeFieldStruct &other) const
 	{
-		return stringCompareFast(name, other.name);
+		return stringComparatorFast()(name, other.name);
 	}
 };
 
@@ -33,7 +33,7 @@ struct schemeStruct
 	bool applyOnAsset(struct assetStruct &ass);
 	inline bool operator < (const schemeStruct &other) const
 	{
-		return stringCompareFast(name, other.name);
+		return stringComparatorFast()(name, other.name);
 	}
 };
 

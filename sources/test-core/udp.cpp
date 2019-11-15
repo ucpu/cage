@@ -97,7 +97,7 @@ namespace
 			if (udp)
 			{
 				const auto &s = udp->statistics();
-				CAGE_LOG(severityEnum::Info, "udp-stats", string() + "rtt: " + (s.roundTripDuration / 1000) + " ms, received: " + (s.bytesReceivedTotal / 1024) + " KB, " + s.packetsReceivedTotal + " packets");
+				CAGE_LOG(severityEnum::Info, "udp-stats", stringizer() + "rtt: " + (s.roundTripDuration / 1000) + " ms, received: " + (s.bytesReceivedTotal / 1024) + " KB, " + s.packetsReceivedTotal + " packets");
 			}
 			connectionsLeft--;
 		}
@@ -110,7 +110,7 @@ namespace
 				memoryBuffer &b = sends[ri++];
 				CAGE_TEST(r.size() == b.size());
 				CAGE_TEST(detail::memcmp(r.data(), b.data(), b.size()) == 0);
-				CAGE_LOG(severityEnum::Info, "udp-test", string() + "progress: " + ri + " / " + sends.size());
+				CAGE_LOG(severityEnum::Info, "udp-test", stringizer() + "progress: " + ri + " / " + sends.size());
 			}
 			if (si < ri + 2 && si < sends.size())
 			{
@@ -143,7 +143,7 @@ void testUdp()
 	clients.resize(3);
 	uint32 index = 0;
 	for (auto &c : clients)
-		c = newThread(delegate<void()>().bind<&clientImpl::entry>(), string() + "client " + (index++));
+		c = newThread(delegate<void()>().bind<&clientImpl::entry>(), stringizer() + "client " + (index++));
 	server->wait();
 	for (auto &c : clients)
 		c->wait();

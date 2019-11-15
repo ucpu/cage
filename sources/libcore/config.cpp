@@ -80,10 +80,10 @@ namespace cage
 
 		bool loadConfigFile(const string &filename, string prefix)
 		{
-			CAGE_LOG_DEBUG(severityEnum::Info, "config", string() + "trying to load configuration file: '" + filename + "'");
+			CAGE_LOG_DEBUG(severityEnum::Info, "config", stringizer() + "trying to load configuration file: '" + filename + "'");
 			if (pathIsFile(filename))
 			{
-				CAGE_LOG(severityEnum::Info, "config", string() + "loading configuration file: '" + filename + "'");
+				CAGE_LOG(severityEnum::Info, "config", stringizer() + "loading configuration file: '" + filename + "'");
 				if (!prefix.empty())
 					prefix += ".";
 				// the logic of function configLoadIni is replicated here
@@ -129,11 +129,11 @@ namespace cage
 		}
 
 		template<class C>
-		const C cast(const variable *v)
+		C cast(const variable *v)
 		{}
 
 		template<>
-		const bool cast(const variable *v)
+		bool cast(const variable *v)
 		{
 			switch (v->type)
 			{
@@ -150,7 +150,7 @@ namespace cage
 		}
 
 		template<>
-		const sint32 cast(const variable *v)
+		sint32 cast(const variable *v)
 		{
 			switch (v->type)
 			{
@@ -167,7 +167,7 @@ namespace cage
 		}
 
 		template<>
-		const uint32 cast(const variable *v)
+		uint32 cast(const variable *v)
 		{
 			switch (v->type)
 			{
@@ -184,7 +184,7 @@ namespace cage
 		}
 
 		template<>
-		const sint64 cast(const variable *v)
+		sint64 cast(const variable *v)
 		{
 			switch (v->type)
 			{
@@ -201,7 +201,7 @@ namespace cage
 		}
 
 		template<>
-		const uint64 cast(const variable *v)
+		uint64 cast(const variable *v)
 		{
 			switch (v->type)
 			{
@@ -218,7 +218,7 @@ namespace cage
 		}
 
 		template<>
-		const float cast(const variable *v)
+		float cast(const variable *v)
 		{
 			switch (v->type)
 			{
@@ -235,7 +235,7 @@ namespace cage
 		}
 
 		template<>
-		const double cast(const variable *v)
+		double cast(const variable *v)
 		{
 			switch (v->type)
 			{
@@ -252,17 +252,17 @@ namespace cage
 		}
 
 		template<>
-		const string cast(const variable *v)
+		string cast(const variable *v)
 		{
 			switch (v->type)
 			{
-			case configTypeEnum::Bool: return v->b;
-			case configTypeEnum::Sint32: return v->s32;
-			case configTypeEnum::Uint32: return v->u32;
-			case configTypeEnum::Sint64: return v->s64;
-			case configTypeEnum::Uint64: return v->u64;
-			case configTypeEnum::Float: return v->f;
-			case configTypeEnum::Double: return v->d;
+			case configTypeEnum::Bool: return string(v->b);
+			case configTypeEnum::Sint32: return string(v->s32);
+			case configTypeEnum::Uint32: return string(v->u32);
+			case configTypeEnum::Sint64: return string(v->s64);
+			case configTypeEnum::Uint64: return string(v->u64);
+			case configTypeEnum::Float: return string(v->f);
+			case configTypeEnum::Double: return string(v->d);
 			case configTypeEnum::String: CAGE_ASSERT(v->s); return *v->s;
 			default: return "";
 			}
@@ -384,15 +384,15 @@ namespace cage
 	void configApplyIni(const configIni *ini, const string &prefix)
 	{
 		if (prefix.find('.') != m || prefix.empty())
-			CAGE_LOG(severityEnum::Warning, "config", string() + "dangerous config prefix '" + prefix + "'");
+			CAGE_LOG(severityEnum::Warning, "config", stringizer() + "dangerous config prefix '" + prefix + "'");
 		for (const string &section : ini->sections())
 		{
 			if (section.find('.') != m)
-				CAGE_LOG(severityEnum::Warning, "config", string() + "dangerous config section '" + section + "'");
+				CAGE_LOG(severityEnum::Warning, "config", stringizer() + "dangerous config section '" + section + "'");
 			for (const string &name : ini->items(section))
 			{
 				if (name.find('.') != m)
-					CAGE_LOG(severityEnum::Warning, "config", string() + "dangerous config field '" + name + "'");
+					CAGE_LOG(severityEnum::Warning, "config", stringizer() + "dangerous config field '" + name + "'");
 				string value = ini->getString(section, name);
 				configSetDynamic(string() + (prefix.empty() ? "" : prefix + ".") + section + "." + name, value);
 			}
@@ -402,7 +402,7 @@ namespace cage
 	holder<configIni> configGenerateIni(const string &prefix)
 	{
 		if (prefix.find('.') != m || prefix.empty())
-			CAGE_LOG(severityEnum::Warning, "config", string() + "dangerous config prefix '" + prefix + "'");
+			CAGE_LOG(severityEnum::Warning, "config", stringizer() + "dangerous config prefix '" + prefix + "'");
 		holder<configIni> ini = newConfigIni();
 		holder<configList> cnf = newConfigList();
 		while (cnf->valid())

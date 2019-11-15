@@ -225,7 +225,7 @@ namespace cage
 				stopping = false;
 				windowSemaphore = newSyncSemaphore(0, 1);
 				static uint32 threadIndex = 0;
-				windowThread = newThread(delegate<void()>().bind<windowImpl, &windowImpl::threadEntry>(this), string() + "window " + (threadIndex++));
+				windowThread = newThread(delegate<void()>().bind<windowImpl, &windowImpl::threadEntry>(this), stringizer() + "window " + (threadIndex++));
 				windowSemaphore->lock();
 				windowSemaphore.clear();
 				if (stopping)
