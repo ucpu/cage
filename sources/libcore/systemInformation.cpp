@@ -139,7 +139,7 @@ namespace cage
 		}
 
 		holder<processHandle> prg = newProcess(string("cat /proc/cpuinfo | grep -m 1 'cpu MHz' | cut -d: -f2-"));
-		return prg->readLine().trim().toFloat() * 1000000;
+		return numeric_cast<uint64>(prg->readLine().trim().toDouble() * 1e6);
 #else
 		// todo
 		return 0;
