@@ -101,7 +101,7 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void uniformBuffer::writeWhole(void *data, uint32 size, uint32 usage)
+	void uniformBuffer::writeWhole(const void *data, uint32 size, uint32 usage)
 	{
 		uniformBufferImpl *impl = (uniformBufferImpl*)this;
 		if (impl->mapped || impl->config.size)
@@ -121,7 +121,7 @@ namespace cage
 		}
 	}
 
-	void uniformBuffer::writeRange(void *data, uint32 offset, uint32 size)
+	void uniformBuffer::writeRange(const void *data, uint32 offset, uint32 size)
 	{
 		uniformBufferImpl *impl = (uniformBufferImpl*)this;
 		CAGE_ASSERT(offset + size <= impl->size, "insufficient buffer size", offset, size, impl->size);

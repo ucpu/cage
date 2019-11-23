@@ -11,7 +11,7 @@ namespace cage
 		memoryBuffer &operator = (memoryBuffer &&other) noexcept;
 		~memoryBuffer();
 
-		memoryBuffer(const memoryBuffer &) = delete;  // the buffer is non-copyable
+		memoryBuffer(const memoryBuffer &) = delete; // the buffer is non-copyable
 		memoryBuffer &operator = (const memoryBuffer &) = delete;
 
 		memoryBuffer copy() const;

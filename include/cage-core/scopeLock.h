@@ -32,18 +32,14 @@ namespace cage
 		scopeLock(const scopeLock &) = delete;
 		scopeLock &operator = (const scopeLock &) = delete;
 
-		// movable
+		// move constructible
 		scopeLock(scopeLock &&other) noexcept : ptr(other.ptr)
 		{
 			other.ptr = nullptr;
 		}
 
-		scopeLock &operator = (scopeLock &&other)
-		{
-			clear();
-			ptr = other.ptr;
-			other.ptr = nullptr;
-		}
+		// not move assignable (releasing the previous lock would not be atomic)
+		scopeLock &operator = (scopeLock &&) = delete;
 
 		~scopeLock()
 		{

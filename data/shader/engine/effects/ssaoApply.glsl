@@ -1,30 +1,18 @@
 
 $include ../../shaderConventions.h
-
-$define shader vertex
-
-layout(location = CAGE_SHADER_ATTRIB_IN_POSITION) in vec3 inPosition;
-
-void main()
-{
-	gl_Position = vec4(inPosition.xy * 2.0 - 1.0, inPosition.z, 1.0);
-}
+$include vertex.glsl
 
 $define shader fragment
 
 $include ssaoParams.glsl
 
-layout(binding = CAGE_SHADER_TEXTURE_COLOR) uniform sampler2D texColor;
-layout(binding = CAGE_SHADER_TEXTURE_ALBEDO) uniform sampler2D texAlbedo;
 layout(binding = CAGE_SHADER_TEXTURE_EFFECTS) uniform sampler2D texAo;
 
-out vec3 outColor;
+out float outAo;
 
 void main()
 {
-	float ao = textureLod(texAo, gl_FragCoord.xy / textureSize(texColor, 0).xy, 0).x;
-	vec3 albedo = texelFetch(texAlbedo, ivec2(gl_FragCoord.xy), 0).xyz;
-	vec3 color = texelFetch(texColor, ivec2(gl_FragCoord.xy), 0).xyz;
-	ao = pow(ao * params[0] + params[1], params[2]);
-	outColor = color - albedo * vec3(ambientLight) * ao;
+	float ao = texelFetch(texAo, ivec2(gl_FragCoord.xy), 0).x;
+	ao = pow(max(ao + params[1], 0.0), params[2]) * params[0];
+	outAo = clamp(1.0 - ao, 0.0, 1.0);
 }

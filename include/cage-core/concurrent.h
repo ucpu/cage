@@ -46,9 +46,9 @@ namespace cage
 
 	CAGE_API holder<syncConditionalBase> newSyncConditionalBase();
 
+	// this is a compound class containing both mutex and conditional variable
 	class CAGE_API syncConditional : private immovable
 	{
-		// this is a compound class containing both mutex and conditional variable
 	public:
 		void lock(); // lock the mutex
 		void unlock(); // unlock the mutex and signal (or broadcast) the conditional variable

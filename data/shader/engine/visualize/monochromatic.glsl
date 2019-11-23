@@ -11,5 +11,5 @@ out vec4 outColor;
 void main()
 {
 	vec2 uv = gl_FragCoord.xy * uniScale;
-	outColor = textureLod(texColor, uv, 0);
+	outColor = textureLod(texColor, uv, 0).rrra;
 }

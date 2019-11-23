@@ -283,6 +283,12 @@ namespace cage
 		return impl->mem.data();
 	}
 
+	const void *image::bufferData() const
+	{
+		const pngBufferImpl *impl = (const pngBufferImpl*)this;
+		return impl->mem.data();
+	}
+
 	uintPtr image::bufferSize() const
 	{
 		const pngBufferImpl *impl = (const pngBufferImpl*)this;

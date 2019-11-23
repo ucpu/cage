@@ -10,8 +10,8 @@ namespace cage
 		void setDebugName(const string &name);
 
 		void setDataNone();
-		void setDataRaw(uint32 channels, uint32 frames, uint32 sampleRate, float *data);
-		void setDataVorbis(uintPtr size, void *buffer);
+		void setDataRaw(uint32 channels, uint32 frames, uint32 sampleRate, const float *data);
+		void setDataVorbis(uintPtr size, const void *buffer);
 		void setDataTone(uint32 pitch = 440);
 		void setDataNoise();
 

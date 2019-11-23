@@ -20,7 +20,7 @@ namespace cage
 			clear();
 		}
 
-		void vorbisDataStruct::init(void *buffer, uintPtr size)
+		void vorbisDataStruct::init(const void *buffer, uintPtr size)
 		{
 			this->buffer.resize(size);
 			detail::memcpy(&this->buffer[0], buffer, size);

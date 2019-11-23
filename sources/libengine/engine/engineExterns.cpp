@@ -28,7 +28,7 @@ namespace cage
 	lightComponent::lightComponent() : color(1), attenuation(1, 0, 3), spotAngle(degs(40)), spotExponent(80), sceneMask(1), lightType(lightTypeEnum::Point) {}
 	shadowmapComponent::shadowmapComponent() : worldSize(0), resolution(256), sceneMask(1) {}
 	renderTextComponent::renderTextComponent() : color(1), assetName(0), textName(0), font(0), sceneMask(1) {}
-	cameraSsao::cameraSsao() : worldRadius(0.5), strength(1), bias(0), power(0.5), samplesCount(20) {}
+	cameraSsao::cameraSsao() : worldRadius(0.5), strength(3), bias(-0.02), power(1.3), samplesCount(20), blurPasses(3) {}
 	cameraBloom::cameraBloom() : blurPasses(5), threshold(1) {}
 	cameraEyeAdaptation::cameraEyeAdaptation() : key(0.5), strength(1.0), darkerSpeed(0.1), lighterSpeed(1) {} // darker should take at least 5 times longer
 	cameraTonemap::cameraTonemap() : shoulderStrength(0.22), linearStrength(0.30), linearAngle(0.10), toeStrength(0.20), toeNumerator(0.01), toeDenominator(0.30), white(11.2) {}

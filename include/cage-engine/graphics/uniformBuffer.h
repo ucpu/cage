@@ -14,8 +14,8 @@ namespace cage
 		void bind(uint32 bindingPoint) const;
 		void bind(uint32 bindingPoint, uint32 offset, uint32 size) const;
 
-		void writeWhole(void *data, uint32 size, uint32 usage = 0);
-		void writeRange(void *data, uint32 offset, uint32 size);
+		void writeWhole(const void *data, uint32 size, uint32 usage = 0);
+		void writeRange(const void *data, uint32 offset, uint32 size);
 
 		uint32 getSize() const;
 

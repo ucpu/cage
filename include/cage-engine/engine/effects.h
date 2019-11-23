@@ -3,11 +3,12 @@ namespace cage
 	struct CAGE_API cameraSsao
 	{
 		real worldRadius;
-		real strength;
 		real bias;
 		real power;
-		// ao = pow(ao * strength + bias, power)
+		real strength;
+		// ao = pow(ao + bias, power) * strength
 		uint32 samplesCount;
+		uint32 blurPasses;
 		cameraSsao();
 	};
 
