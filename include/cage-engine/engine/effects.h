@@ -6,7 +6,7 @@ namespace cage
 		real bias;
 		real power;
 		real strength;
-		// ao = pow(ao + bias, power) * strength
+		// ao = pow(ao - bias, power) * strength
 		uint32 samplesCount;
 		uint32 blurPasses;
 		cameraSsao();

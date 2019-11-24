@@ -78,7 +78,7 @@ namespace cage
 			mat4 viewProj;
 			mat4 viewProjInv;
 			vec4 params; // strength, bias, power, radius
-			uint32 iparams[4]; // sampleCount
+			uint32 iparams[4]; // sampleCount, frameIndex
 		};
 
 		struct finalScreenShaderStruct
@@ -221,6 +221,7 @@ namespace cage
 			uint32 drawPrimitives;
 
 		private:
+			uint32 frameIndex;
 			uint32 lastGBufferWidth;
 			uint32 lastGBufferHeight;
 			cameraEffectsFlags lastCameraEffects;
@@ -595,6 +596,7 @@ namespace cage
 						s.viewProjInv = inverse(pass->viewProj);
 						s.params = vec4(pass->ssao.strength, pass->ssao.bias, pass->ssao.power, pass->ssao.worldRadius);
 						s.iparams[0] = pass->ssao.samplesCount;
+						s.iparams[1] = frameIndex;
 						useDisposableUbo(CAGE_SHADER_UNIBLOCK_SSAO, s);
 					}
 					{ // generate
@@ -1104,6 +1106,8 @@ namespace cage
 					{
 					}
 				}
+
+				frameIndex++;
 			}
 
 			void swap()
