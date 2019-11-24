@@ -19,8 +19,8 @@ flat in int varInstanceId;
 layout(location = CAGE_SHADER_ATTRIB_OUT_ALBEDO) out vec3 outAlbedo;
 layout(location = CAGE_SHADER_ATTRIB_OUT_SPECIAL) out vec2 outSpecial;
 layout(location = CAGE_SHADER_ATTRIB_OUT_NORMAL) out vec3 outNormal;
-layout(location = CAGE_SHADER_ATTRIB_OUT_COLOR) out vec3 outColor;
 layout(location = CAGE_SHADER_ATTRIB_OUT_VELOCITY) out vec2 outVelocity;
+layout(location = CAGE_SHADER_ATTRIB_OUT_COLOR) out vec3 outColor;
 
 void main()
 {
@@ -33,7 +33,7 @@ void main()
 	if (opacity < 0.5)
 		discard;
 	normalToWorld();
-	outColor = lightAmbientImpl();
+	outColor = lightEmissiveImpl();
 	outAlbedo = albedo;
 	outSpecial = vec2(roughness, metalness);
 	outNormal = normal;

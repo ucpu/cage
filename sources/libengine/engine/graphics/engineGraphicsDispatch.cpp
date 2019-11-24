@@ -388,8 +388,8 @@ namespace cage
 					shr->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, obj->mesh->getSkeletonBones());
 				}
 				obj->mesh->bind();
-				setTwoSided((flags & meshRenderFlags::TwoSided) == meshRenderFlags::TwoSided);
-				setDepthTest((flags & meshRenderFlags::DepthTest) == meshRenderFlags::DepthTest, (flags & meshRenderFlags::DepthWrite) == meshRenderFlags::DepthWrite);
+				setTwoSided(any(flags & meshRenderFlags::TwoSided));
+				setDepthTest(any(flags & meshRenderFlags::DepthTest), any(flags & meshRenderFlags::DepthWrite));
 				{ // bind textures
 					uint32 tius[MaxTexturesCountPerMaterial];
 					renderTexture *texs[MaxTexturesCountPerMaterial];
@@ -477,7 +477,7 @@ namespace cage
 				{
 					{ // render ambient object
 						glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // assume premultiplied alpha
-						uint32 tmp = CAGE_SHADER_ROUTINEPROC_LIGHTAMBIENT;
+						uint32 tmp = CAGE_SHADER_ROUTINEPROC_LIGHTFORWARDBASE;
 						std::swap(tmp, t->object.shaderConfig.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE]);
 						renderObject(&t->object, shr);
 						std::swap(tmp, t->object.shaderConfig.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE]);
@@ -615,6 +615,22 @@ namespace cage
 						renderDispatch(meshSquare, 1);
 					}
 					viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
+				}
+
+				// ambient light
+				if ((pass->shaderViewport.ambientLight + pass->shaderViewport.ambientDirectionalLight) != vec4())
+				{
+					shaderAmbient->bind();
+					if (any(pass->effects & cameraEffectsFlags::AmbientOcclusion))
+					{
+						activeTexture(CAGE_SHADER_TEXTURE_EFFECTS);
+						ambientOcclusionTexture1->bind();
+						activeTexture(CAGE_SHADER_TEXTURE_COLOR);
+						shaderAmbient->uniform(CAGE_SHADER_UNI_AMBIENTOCCLUSION, 1);
+					}
+					else
+						shaderAmbient->uniform(CAGE_SHADER_UNI_AMBIENTOCCLUSION, 0);
+					renderEffect();
 				}
 
 				// motion blur
@@ -949,7 +965,8 @@ namespace cage
 
 				visualizableTextures.clear();
 				visualizableTextures.emplace_back(colorTexture.get(), visualizableTextureModeEnum::Color); // unscaled
-				visualizableTextures.emplace_back(colorTexture.get(), visualizableTextureModeEnum::Color); // scaled
+				if (windowWidth != lastGBufferWidth || windowHeight != lastGBufferHeight)
+					visualizableTextures.emplace_back(colorTexture.get(), visualizableTextureModeEnum::Color); // scaled
 				visualizableTextures.emplace_back(albedoTexture.get(), visualizableTextureModeEnum::Color);
 				visualizableTextures.emplace_back(specialTexture.get(), visualizableTextureModeEnum::Color);
 				visualizableTextures.emplace_back(normalTexture.get(), visualizableTextureModeEnum::Color);

@@ -76,7 +76,7 @@ namespace cage
 	{
 		static entityComponent *component;
 		vec3 ambientLight;
-		//vec3 directionalLight; // affected by ambient occlusion
+		vec3 ambientDirectionalLight; // fake forward light affected by ssao
 		vec2 viewportOrigin; // [0..1]
 		vec2 viewportSize; // [0..1]
 		union CameraUnion
