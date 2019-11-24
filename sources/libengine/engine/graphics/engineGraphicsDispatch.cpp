@@ -610,6 +610,8 @@ namespace cage
 							gaussianBlur(ambientOcclusionTexture1, ambientOcclusionTexture2);
 					}
 					{ // apply
+						renderTarget->colorTexture(0, ambientOcclusionTexture2.get());
+						renderTarget->checkStatus();
 						activeTexture(CAGE_SHADER_TEXTURE_EFFECTS);
 						ambientOcclusionTexture1->bind();
 						activeTexture(CAGE_SHADER_TEXTURE_COLOR);
@@ -626,7 +628,7 @@ namespace cage
 					if (any(pass->effects & cameraEffectsFlags::AmbientOcclusion))
 					{
 						activeTexture(CAGE_SHADER_TEXTURE_EFFECTS);
-						ambientOcclusionTexture1->bind();
+						ambientOcclusionTexture2->bind();
 						activeTexture(CAGE_SHADER_TEXTURE_COLOR);
 						shaderAmbient->uniform(CAGE_SHADER_UNI_AMBIENTOCCLUSION, 1);
 					}
@@ -904,7 +906,7 @@ namespace cage
 			}
 
 		public:
-			graphicsDispatchImpl(const engineCreateConfig &config) : drawCalls(0), drawPrimitives(0), lastGBufferWidth(0), lastGBufferHeight(0), lastCameraEffects(cameraEffectsFlags::None), lastTwoSided(false), lastDepthTest(false)
+			graphicsDispatchImpl(const engineCreateConfig &config) : drawCalls(0), drawPrimitives(0), frameIndex(0), lastGBufferWidth(0), lastGBufferHeight(0), lastCameraEffects(cameraEffectsFlags::None), lastTwoSided(false), lastDepthTest(false)
 			{
 				detail::memset(static_cast<graphicsDispatchStruct*>(this), 0, sizeof(graphicsDispatchStruct));
 			}
@@ -973,8 +975,8 @@ namespace cage
 				visualizableTextures.emplace_back(specialTexture.get(), visualizableTextureModeEnum::Color);
 				visualizableTextures.emplace_back(normalTexture.get(), visualizableTextureModeEnum::Color);
 				visualizableTextures.emplace_back(depthTexture.get(), visualizableTextureModeEnum::Depth2d);
-				if (ambientOcclusionTexture1)
-					visualizableTextures.emplace_back(ambientOcclusionTexture1.get(), visualizableTextureModeEnum::Monochromatic);
+				if (ambientOcclusionTexture2)
+					visualizableTextures.emplace_back(ambientOcclusionTexture2.get(), visualizableTextureModeEnum::Monochromatic);
 				if (bloomTexture1)
 					visualizableTextures.emplace_back(bloomTexture1.get(), visualizableTextureModeEnum::Color);
 				if (velocityTexture)

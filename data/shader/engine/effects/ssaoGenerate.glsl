@@ -33,6 +33,11 @@ int hash(int key)
 	return key;
 }
 
+float sqr(float a)
+{
+	return a * a;
+}
+
 void main()
 {
 	vec2 texelSize = float(CAGE_SHADER_SSAO_DOWNSCALE) / textureSize(texNormal, 0).xy;
@@ -58,12 +63,12 @@ void main()
 	float total = 0.0;
 	for (int i = 0; i < iparams[0]; i++)
 	{
-		vec3 dir = pointsOnSphere[hash(n * 2 + i * 3) % 256].xyz;
+		vec3 dir = pointsOnSphere[hash(n * 2 + i) % 256].xyz;
 		float d = dot(myNormal, dir);
 		if (abs(d) < 0.1)
 			continue; // the direction is close to the surface and susceptible to noise
 		dir = sign(d) * dir; // move the direction into front hemisphere
-		float r = (pointsOnSphere[hash(n * 3 + i * 2) % 256].w * 0.7 + 0.3) * ssaoRadius;
+		float r = (sqr(pointsOnSphere[hash(n * 3 + i) % 256].w) * 0.9 + 0.1) * ssaoRadius;
 		vec3 sw = myPos + dir * r;
 		vec4 s4 = viewProj * vec4(sw, 1.0);
 		vec3 ss = s4.xyz / s4.w;
