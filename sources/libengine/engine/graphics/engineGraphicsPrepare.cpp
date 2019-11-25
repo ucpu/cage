@@ -408,7 +408,9 @@ namespace cage
 				}
 				pass->shaderViewport.vpInv = inverse(pass->viewProj);
 				pass->shaderViewport.eyePos = camera->model * vec4(0, 0, 0, 1);
+				pass->shaderViewport.eyeDir = camera->model * vec4(0, 0, -1, 0);
 				pass->shaderViewport.ambientLight = vec4(camera->camera.ambientLight, 0);
+				pass->shaderViewport.ambientDirectionalLight = vec4(camera->camera.ambientDirectionalLight, 0);
 				pass->shaderViewport.viewport = vec4(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
 				pass->targetTexture = camera->camera.target;
 				pass->clearFlags = ((camera->camera.clear & cameraClearFlags::Color) == cameraClearFlags::Color ? GL_COLOR_BUFFER_BIT : 0) | ((camera->camera.clear & cameraClearFlags::Depth) == cameraClearFlags::Depth ? GL_DEPTH_BUFFER_BIT : 0);
@@ -977,7 +979,9 @@ namespace cage
 					graphicsDispatch->meshCone = ass->get<assetSchemeIndexMesh, renderMesh>(hashString("cage/mesh/cone.obj"));
 					graphicsDispatch->shaderVisualizeColor = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/visualize/color.glsl"));
 					graphicsDispatch->shaderVisualizeDepth = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/visualize/depth.glsl"));
+					graphicsDispatch->shaderVisualizeMonochromatic = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/visualize/monochromatic.glsl"));
 					graphicsDispatch->shaderVisualizeVelocity = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/visualize/velocity.glsl"));
+					graphicsDispatch->shaderAmbient = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/ambient.glsl"));
 					graphicsDispatch->shaderBlit = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/blit.glsl"));
 					graphicsDispatch->shaderDepth = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/depth.glsl"));
 					graphicsDispatch->shaderGBuffer = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/gBuffer.glsl"));

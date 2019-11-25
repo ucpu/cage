@@ -10,7 +10,7 @@ namespace cage
 		{
 			vorbisDataStruct();
 			~vorbisDataStruct();
-			void init(void *buffer, uintPtr size);
+			void init(const void *buffer, uintPtr size);
 			void clear();
 			void read(float *output, uint32 index, uint32 frames);
 			void decode(uint32 &channels, uint32 &frames, uint32 &sampleRate, float *output);

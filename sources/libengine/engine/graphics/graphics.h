@@ -88,8 +88,10 @@ namespace cage
 		{
 			mat4 vpInv;
 			vec4 eyePos;
+			vec4 eyeDir;
 			vec4 viewport;
 			vec4 ambientLight;
+			vec4 ambientDirectionalLight;
 		} shaderViewport;
 		objectsStruct *firstOpaque, *lastOpaque;
 		lightsStruct *firstLight, *lastLight;
@@ -111,8 +113,8 @@ namespace cage
 	struct graphicsDispatchStruct
 	{
 		renderMesh *meshSquare, *meshSphere, *meshCone;
-		shaderProgram *shaderVisualizeColor, *shaderVisualizeDepth, *shaderVisualizeVelocity;
-		shaderProgram *shaderBlit, *shaderDepth, *shaderGBuffer, *shaderLighting, *shaderTranslucent;
+		shaderProgram *shaderVisualizeColor, *shaderVisualizeDepth, *shaderVisualizeMonochromatic, *shaderVisualizeVelocity;
+		shaderProgram *shaderAmbient, *shaderBlit, *shaderDepth, *shaderGBuffer, *shaderLighting, *shaderTranslucent;
 		shaderProgram *shaderGaussianBlur, *shaderSsaoGenerate, *shaderSsaoApply, *shaderMotionBlur, *shaderBloomGenerate, *shaderBloomApply, *shaderLuminanceCollection, *shaderLuminanceCopy, *shaderFinalScreen, *shaderFxaa;
 		shaderProgram *shaderFont;
 		uint32 windowWidth, windowHeight;

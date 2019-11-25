@@ -471,6 +471,7 @@ void processShader()
 			ser << (uint32)shaderType(it.first);
 			ser << numeric_cast<uint32>(it.second.length());
 			ser.write(it.second.c_str(), it.second.length());
+			CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "stage: " + it.first + ", length: " + it.second.size());
 		}
 
 		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());

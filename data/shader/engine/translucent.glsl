@@ -29,5 +29,7 @@ void main()
 	materialLoad();
 	normalToWorld();
 	outColor.rgb = lightType();
+	if (uniRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE] == CAGE_SHADER_ROUTINEPROC_LIGHTFORWARDBASE)
+		outColor.rgb += lightEmissiveImpl();
 	outColor.a = opacity;
 }

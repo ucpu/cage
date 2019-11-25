@@ -23,6 +23,7 @@ namespace cage
 		uint32 bytesPerChannel() const;
 
 		void *bufferData();
+		const void *bufferData() const;
 		uintPtr bufferSize() const;
 
 		float value(uint32 x, uint32 y, uint32 c) const;

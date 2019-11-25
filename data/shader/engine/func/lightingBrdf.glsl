@@ -65,9 +65,6 @@ vec3 lightingBrdfPhong(vec3 light, vec3 L, vec3 V)
 
 vec3 lightingBrdf(vec3 light, vec3 L, vec3 V)
 {
-	if (dot(normal, normal) < 0.5)
-		return vec3(0.0); // lighting is disabled
-
 $if inputSpec=high
 	return lightingBrdfPbr(light, L, V);
 $else

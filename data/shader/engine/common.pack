@@ -2,5 +2,6 @@
 []
 effects/effects.pack
 visualize/visualize.pack
+ambient.glsl
 blit.glsl
 depth.glsl

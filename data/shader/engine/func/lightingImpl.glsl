@@ -1,20 +1,7 @@
 
 $include lightingBrdf.glsl
 
-struct lightStruct
-{
-	mat4 shadowMat;
-	mat4 mvpMat;
-	vec4 color; // + angle
-	vec4 position;
-	vec4 direction;
-	vec4 attenuation; // + exponent
-};
-
-layout(std140, binding = CAGE_SHADER_UNIBLOCK_LIGHTS) uniform Lights
-{
-	lightStruct uniLights[CAGE_SHADER_MAX_INSTANCES];
-};
+$include lightingInstances.glsl
 
 float attenuation(float dist)
 {
@@ -58,7 +45,18 @@ vec3 lightSpotImpl(float shadow)
 	);
 }
 
-vec3 lightAmbientImpl()
+vec3 lightAmbientImpl(float intensity)
 {
-	return albedo * (uniAmbientLight.rgb + emissive);
+	vec3 d = lightingBrdf(
+		uniAmbientDirectionalLight.rgb * intensity,
+		-uniEyeDir.xyz,
+		normalize(uniEyePos.xyz - position)
+	);
+	vec3 a = albedo * uniAmbientLight.rgb * intensity;
+	return a + d;
+}
+
+vec3 lightEmissiveImpl()
+{
+	return albedo * emissive;
 }

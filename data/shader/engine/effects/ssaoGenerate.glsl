@@ -1,18 +1,8 @@
 
 $include ../../shaderConventions.h
-
-$define shader vertex
-
-layout(location = CAGE_SHADER_ATTRIB_IN_POSITION) in vec3 inPosition;
-
-void main()
-{
-	gl_Position = vec4(inPosition.xy * 2.0 - 1.0, inPosition.z, 1.0);
-}
+$include vertex.glsl
 
 $define shader fragment
-
-$include ../func/random.glsl
 
 $include ssaoParams.glsl
 
@@ -31,6 +21,21 @@ vec3 s2w(vec2 p, float d)
 	vec4 p4 = vec4(p, d, 1.0);
 	p4 = viewProjInv * p4;
 	return p4.xyz / p4.w;
+}
+
+int hash(int key)
+{ // integer finalizer hash function
+	key ^= key >> 16;
+	key *= 0x85ebca6b;
+	key ^= key >> 13;
+	key *= 0xc2b2ae35;
+	key ^= key >> 16;
+	return key;
+}
+
+float sqr(float a)
+{
+	return a * a;
 }
 
 void main()
@@ -52,18 +57,18 @@ void main()
 	vec3 myPos = s2w(myUv * 2.0 - 1.0, myDepth);
 
 	// sampling
-	int n = int(randomFunc(myPos * 10.0) * 10000.0);
+	int n = hash(int(gl_FragCoord.x)) + hash(int(gl_FragCoord.y)) + iparams[1];
 	float ssaoRadius = params[3];
 	float occ = 0.0;
 	float total = 0.0;
 	for (int i = 0; i < iparams[0]; i++)
 	{
-		vec3 dir = pointsOnSphere[(n + i) % 256].xyz;
+		vec3 dir = pointsOnSphere[hash(n * 2 + i) % 256].xyz;
 		float d = dot(myNormal, dir);
-		if (abs(d) < 0.3)
+		if (abs(d) < 0.1)
 			continue; // the direction is close to the surface and susceptible to noise
 		dir = sign(d) * dir; // move the direction into front hemisphere
-		float r = (pointsOnSphere[(n * 13 + i * 2) % 256].w) * ssaoRadius;
+		float r = (sqr(pointsOnSphere[hash(n * 3 + i) % 256].w) * 0.9 + 0.1) * ssaoRadius;
 		vec3 sw = myPos + dir * r;
 		vec4 s4 = viewProj * vec4(sw, 1.0);
 		vec3 ss = s4.xyz / s4.w;
@@ -76,5 +81,8 @@ void main()
 		}
 		total += 1.0;
 	}
-	outAo = occ / total;
+	if (total > 0)
+		outAo = occ / total;
+	else
+		outAo = 0;
 }

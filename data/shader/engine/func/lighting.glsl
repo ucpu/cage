@@ -41,13 +41,15 @@ vec3 lightSpotShadow()
 	return lightSpotImpl(sampleShadowMap2d(shadowPos));
 }
 
-vec3 lightAmbient()
+vec3 lightForwardBase()
 {
-	return lightAmbientImpl();
+	return lightAmbientImpl(1);
 }
 
 vec3 lightType()
 {
+	if (dot(normal, normal) < 0.5)
+		return vec3(0.0); // lighting is disabled
 	switch (uniRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE])
 	{
 	case CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONAL: return lightDirectional();
@@ -56,7 +58,7 @@ vec3 lightType()
 	case CAGE_SHADER_ROUTINEPROC_LIGHTPOINTSHADOW: return lightPointShadow();
 	case CAGE_SHADER_ROUTINEPROC_LIGHTSPOT: return lightSpot();
 	case CAGE_SHADER_ROUTINEPROC_LIGHTSPOTSHADOW: return lightSpotShadow();
-	case CAGE_SHADER_ROUTINEPROC_LIGHTAMBIENT: return lightAmbient();
+	case CAGE_SHADER_ROUTINEPROC_LIGHTFORWARDBASE: return lightForwardBase();
 	default: return vec3(191.0, 85.0, 236.0) / 255.0;
 	}
 }

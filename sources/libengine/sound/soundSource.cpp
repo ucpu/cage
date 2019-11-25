@@ -216,7 +216,7 @@ namespace cage
 		impl->clearAllBuffers();
 	}
 
-	void soundSource::setDataRaw(uint32 channels, uint32 frames, uint32 sampleRate, float *data)
+	void soundSource::setDataRaw(uint32 channels, uint32 frames, uint32 sampleRate, const float *data)
 	{
 		CAGE_ASSERT(frames > 0);
 		CAGE_ASSERT(channels > 0);
@@ -232,7 +232,7 @@ namespace cage
 		detail::memcpy(&impl->rawData[0], data, channels * frames * sizeof(float));
 	}
 
-	void soundSource::setDataVorbis(uintPtr size, void *buffer)
+	void soundSource::setDataVorbis(uintPtr size, const void *buffer)
 	{
 		CAGE_ASSERT(size > 0);
 		CAGE_ASSERT(buffer != nullptr);

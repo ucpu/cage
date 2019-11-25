@@ -20,7 +20,7 @@ namespace cage
 		void graphicsFinalize();
 		void graphicsRender();
 
-		//void soundInitialize(soundContext *soundContext);
+		//void soundInitialize();
 		//void soundFinalize();
 		//void soundRender();
 
