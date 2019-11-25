@@ -43,11 +43,13 @@ vec3 lightSpotShadow()
 
 vec3 lightForwardBase()
 {
-	return lightAmbientImpl(1) + lightEmissiveImpl();
+	return lightAmbientImpl(1);
 }
 
 vec3 lightType()
 {
+	if (dot(normal, normal) < 0.5)
+		return vec3(0.0); // lighting is disabled
 	switch (uniRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE])
 	{
 	case CAGE_SHADER_ROUTINEPROC_LIGHTDIRECTIONAL: return lightDirectional();

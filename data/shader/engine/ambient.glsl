@@ -25,9 +25,10 @@ void main()
 	roughness = special.r;
 	metalness = special.g;
 	normal = texelFetch(texGbufferNormal, ivec2(gl_FragCoord.xy), 0).xyz;
-	vec3 color = texelFetch(texColor, ivec2(gl_FragCoord.xy), 0).rgb;
+	outColor = texelFetch(texColor, ivec2(gl_FragCoord.xy), 0).rgb;
 	float intensity = 1;
 	if (uniAmbientOcclusion > 0)
 		intensity = texelFetch(texAmbientOcclusion, ivec2(gl_FragCoord.xy / CAGE_SHADER_SSAO_DOWNSCALE), 0).r;
-	outColor = color + lightAmbientImpl(intensity);
+	if (dot(normal, normal) > 0.5)
+		outColor += lightAmbientImpl(intensity);
 }
