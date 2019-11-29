@@ -20,7 +20,7 @@ namespace cage
 
 	namespace
 	{
-		CAGE_ASSERT_COMPILE(sizeof(GLuint) == sizeof(uint32), incompatible_size_of_gluint);
+		static_assert(sizeof(GLuint) == sizeof(uint32), "incompatible size of GLuint");
 
 		struct sourceHolder
 		{

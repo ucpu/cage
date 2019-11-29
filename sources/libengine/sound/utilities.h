@@ -11,9 +11,7 @@ namespace cage
 		namespace convertSpace
 		{
 			template<class S, class T> struct convertStruct
-			{
-				CAGE_ASSERT_COMPILE(false, invalid_type_conversion);
-			};
+			{};
 
 			template<> struct convertStruct<float, double>
 			{
@@ -51,8 +49,8 @@ namespace cage
 			{
 				void operator ()(T source, float &target)
 				{
-					CAGE_ASSERT_COMPILE(detail::numeric_limits<T>::is_specialized, invalid_conversion_type);
-					CAGE_ASSERT_COMPILE(detail::numeric_limits<T>::is_signed, invalid_conversion_type);
+					static_assert(detail::numeric_limits<T>::is_specialized, "invalid conversion type");
+					static_assert(detail::numeric_limits<T>::is_signed, "invalid conversion type");
 					static const float range = (float)detail::numeric_limits<T>::max() - (float)detail::numeric_limits<T>::min();
 					target = (float)(source) / range * 2.f;
 				}
@@ -62,8 +60,8 @@ namespace cage
 			{
 				void operator ()(float source, T &target)
 				{
-					CAGE_ASSERT_COMPILE(detail::numeric_limits<T>::is_specialized, invalid_conversion_type);
-					CAGE_ASSERT_COMPILE(detail::numeric_limits<T>::is_signed, invalid_conversion_type);
+					static_assert(detail::numeric_limits<T>::is_specialized, "invalid conversion type");
+					static_assert(detail::numeric_limits<T>::is_signed, "invalid conversion type");
 					static const float range = (float)detail::numeric_limits<T>::max() - (float)detail::numeric_limits<T>::min();
 					target = (T)(source * range * 0.5f);
 				}
@@ -73,8 +71,8 @@ namespace cage
 			{
 				void operator ()(T source, double &target)
 				{
-					CAGE_ASSERT_COMPILE(detail::numeric_limits<T>::is_specialized, invalid_conversion_type);
-					CAGE_ASSERT_COMPILE(detail::numeric_limits<T>::is_signed, invalid_conversion_type);
+					static_assert(detail::numeric_limits<T>::is_specialized, "invalid conversion type");
+					static_assert(detail::numeric_limits<T>::is_signed, "invalid conversion type");
 					static const double range = (double)detail::numeric_limits<T>::max() - (double)detail::numeric_limits<T>::min();
 					target = (double)(source) / range * 2.0;
 				}
@@ -84,8 +82,8 @@ namespace cage
 			{
 				void operator ()(double source, T &target)
 				{
-					CAGE_ASSERT_COMPILE(detail::numeric_limits<T>::is_specialized, invalid_conversion_type);
-					CAGE_ASSERT_COMPILE(detail::numeric_limits<T>::is_signed, invalid_conversion_type);
+					static_assert(detail::numeric_limits<T>::is_specialized, "invalid conversion type");
+					static_assert(detail::numeric_limits<T>::is_signed, "invalid conversion type");
 					static const double range = (double)detail::numeric_limits<T>::max() - (double)detail::numeric_limits<T>::min();
 					target = (T)(source * range * 0.5);
 				}

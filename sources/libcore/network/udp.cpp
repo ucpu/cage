@@ -173,14 +173,14 @@ namespace cage
 				|| (a > b && a - b > 32768);
 		}
 
-		CAGE_ASSERT_COMPILE(comp(5, 10), compare_sequence_numbers);
-		CAGE_ASSERT_COMPILE(comp(50000, 60000), compare_sequence_numbers);
-		CAGE_ASSERT_COMPILE(comp(60000, 5), compare_sequence_numbers);
-		CAGE_ASSERT_COMPILE(!comp(10, 5), compare_sequence_numbers);
-		CAGE_ASSERT_COMPILE(!comp(60000, 50000), compare_sequence_numbers);
-		CAGE_ASSERT_COMPILE(!comp(5, 60000), compare_sequence_numbers);
-		CAGE_ASSERT_COMPILE(!comp(5, 5), compare_sequence_numbers);
-		CAGE_ASSERT_COMPILE(!comp(60000, 60000), compare_sequence_numbers);
+		static_assert(comp(5, 10), "compare sequence numbers");
+		static_assert(comp(50000, 60000), "compare sequence numbers");
+		static_assert(comp(60000, 5), "compare sequence numbers");
+		static_assert(!comp(10, 5), "compare sequence numbers");
+		static_assert(!comp(60000, 50000), "compare sequence numbers");
+		static_assert(!comp(5, 60000), "compare sequence numbers");
+		static_assert(!comp(5, 5), "compare sequence numbers");
+		static_assert(!comp(60000, 60000), "compare sequence numbers");
 
 		std::set<uint16> decodeAck(uint16 seqn, uint32 bits)
 		{

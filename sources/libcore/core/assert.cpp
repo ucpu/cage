@@ -226,47 +226,47 @@ namespace cage
 
 	namespace
 	{
-		CAGE_ASSERT_COMPILE(sizeof(uint8) == 1, assert_size_uint8);
-		CAGE_ASSERT_COMPILE(sizeof(uint16) == 2, assert_size_uint16);
-		CAGE_ASSERT_COMPILE(sizeof(uint32) == 4, assert_size_uint32);
-		CAGE_ASSERT_COMPILE(sizeof(uint64) == 8, assert_size_uint64);
-		CAGE_ASSERT_COMPILE(sizeof(uintPtr) == sizeof(void*), assert_size_uintPtr);
-		CAGE_ASSERT_COMPILE(sizeof(sint8) == 1, assert_size_sint8);
-		CAGE_ASSERT_COMPILE(sizeof(sint16) == 2, assert_size_sint16);
-		CAGE_ASSERT_COMPILE(sizeof(sint32) == 4, assert_size_sint32);
-		CAGE_ASSERT_COMPILE(sizeof(sint64) == 8, assert_size_sint64);
-		CAGE_ASSERT_COMPILE(sizeof(sintPtr) == sizeof(void*), assert_size_sintPtr);
+		static_assert(sizeof(uint8) == 1, "assert size uint8");
+		static_assert(sizeof(uint16) == 2, "assert size uint16");
+		static_assert(sizeof(uint32) == 4, "assert size uint32");
+		static_assert(sizeof(uint64) == 8, "assert size uint64");
+		static_assert(sizeof(uintPtr) == sizeof(void*), "assert size uintPtr");
+		static_assert(sizeof(sint8) == 1, "assert size sint8");
+		static_assert(sizeof(sint16) == 2, "assert size sint16");
+		static_assert(sizeof(sint32) == 4, "assert size sint32");
+		static_assert(sizeof(sint64) == 8, "assert size sint64");
+		static_assert(sizeof(sintPtr) == sizeof(void*), "assert size sintPtr");
 
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<char>::min() == std::numeric_limits<char>::min(), assert_numeric_limits);
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<char>::max() == std::numeric_limits<char>::max(), assert_numeric_limits);
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<short>::min() == std::numeric_limits<short>::min(), assert_numeric_limits);
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<short>::max() == std::numeric_limits<short>::max(), assert_numeric_limits);
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<int>::min() == std::numeric_limits<int>::min(), assert_numeric_limits);
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<int>::max() == std::numeric_limits<int>::max(), assert_numeric_limits);
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<long>::min() == std::numeric_limits<long>::min(), assert_numeric_limits);
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<long>::max() == std::numeric_limits<long>::max(), assert_numeric_limits);
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<long long>::min() == std::numeric_limits<long long>::min(), assert_numeric_limits);
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<long long>::max() == std::numeric_limits<long long>::max(), assert_numeric_limits);
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<unsigned char>::min() == std::numeric_limits<unsigned char>::min(), assert_numeric_limits);
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<unsigned char>::max() == std::numeric_limits<unsigned char>::max(), assert_numeric_limits);
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<unsigned short>::min() == std::numeric_limits<unsigned short>::min(), assert_numeric_limits);
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<unsigned short>::max() == std::numeric_limits<unsigned short>::max(), assert_numeric_limits);
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<unsigned int>::min() == std::numeric_limits<unsigned int>::min(), assert_numeric_limits);
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<unsigned int>::max() == std::numeric_limits<unsigned int>::max(), assert_numeric_limits);
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<unsigned long>::min() == std::numeric_limits<unsigned long>::min(), assert_numeric_limits);
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<unsigned long>::max() == std::numeric_limits<unsigned long>::max(), assert_numeric_limits);
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<unsigned long long>::min() == std::numeric_limits<unsigned long long>::min(), assert_numeric_limits);
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<unsigned long long>::max() == std::numeric_limits<unsigned long long>::max(), assert_numeric_limits);
+		static_assert(detail::numeric_limits<char>::min() == std::numeric_limits<char>::min(), "assert numeric limits");
+		static_assert(detail::numeric_limits<char>::max() == std::numeric_limits<char>::max(), "assert numeric limits");
+		static_assert(detail::numeric_limits<short>::min() == std::numeric_limits<short>::min(), "assert numeric limits");
+		static_assert(detail::numeric_limits<short>::max() == std::numeric_limits<short>::max(), "assert numeric limits");
+		static_assert(detail::numeric_limits<int>::min() == std::numeric_limits<int>::min(), "assert numeric limits");
+		static_assert(detail::numeric_limits<int>::max() == std::numeric_limits<int>::max(), "assert numeric limits");
+		static_assert(detail::numeric_limits<long>::min() == std::numeric_limits<long>::min(), "assert numeric limits");
+		static_assert(detail::numeric_limits<long>::max() == std::numeric_limits<long>::max(), "assert numeric limits");
+		static_assert(detail::numeric_limits<long long>::min() == std::numeric_limits<long long>::min(), "assert numeric limits");
+		static_assert(detail::numeric_limits<long long>::max() == std::numeric_limits<long long>::max(), "assert numeric limits");
+		static_assert(detail::numeric_limits<unsigned char>::min() == std::numeric_limits<unsigned char>::min(), "assert numeric limits");
+		static_assert(detail::numeric_limits<unsigned char>::max() == std::numeric_limits<unsigned char>::max(), "assert numeric limits");
+		static_assert(detail::numeric_limits<unsigned short>::min() == std::numeric_limits<unsigned short>::min(), "assert numeric limits");
+		static_assert(detail::numeric_limits<unsigned short>::max() == std::numeric_limits<unsigned short>::max(), "assert numeric limits");
+		static_assert(detail::numeric_limits<unsigned int>::min() == std::numeric_limits<unsigned int>::min(), "assert numeric limits");
+		static_assert(detail::numeric_limits<unsigned int>::max() == std::numeric_limits<unsigned int>::max(), "assert numeric limits");
+		static_assert(detail::numeric_limits<unsigned long>::min() == std::numeric_limits<unsigned long>::min(), "assert numeric limits");
+		static_assert(detail::numeric_limits<unsigned long>::max() == std::numeric_limits<unsigned long>::max(), "assert numeric limits");
+		static_assert(detail::numeric_limits<unsigned long long>::min() == std::numeric_limits<unsigned long long>::min(), "assert numeric limits");
+		static_assert(detail::numeric_limits<unsigned long long>::max() == std::numeric_limits<unsigned long long>::max(), "assert numeric limits");
 
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<uint8>::min() == std::numeric_limits<uint8>::min(), assert_numeric_limits);
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<sint8>::max() == std::numeric_limits<sint8>::max(), assert_numeric_limits);
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<uint16>::min() == std::numeric_limits<uint16>::min(), assert_numeric_limits);
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<sint16>::max() == std::numeric_limits<sint16>::max(), assert_numeric_limits);
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<uint32>::min() == std::numeric_limits<uint32>::min(), assert_numeric_limits);
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<sint32>::max() == std::numeric_limits<sint32>::max(), assert_numeric_limits);
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<uint64>::min() == std::numeric_limits<uint64>::min(), assert_numeric_limits);
-		CAGE_ASSERT_COMPILE(detail::numeric_limits<sint64>::max() == std::numeric_limits<sint64>::max(), assert_numeric_limits);
+		static_assert(detail::numeric_limits<uint8>::min() == std::numeric_limits<uint8>::min(), "assert numeric limits");
+		static_assert(detail::numeric_limits<sint8>::max() == std::numeric_limits<sint8>::max(), "assert numeric limits");
+		static_assert(detail::numeric_limits<uint16>::min() == std::numeric_limits<uint16>::min(), "assert numeric limits");
+		static_assert(detail::numeric_limits<sint16>::max() == std::numeric_limits<sint16>::max(), "assert numeric limits");
+		static_assert(detail::numeric_limits<uint32>::min() == std::numeric_limits<uint32>::min(), "assert numeric limits");
+		static_assert(detail::numeric_limits<sint32>::max() == std::numeric_limits<sint32>::max(), "assert numeric limits");
+		static_assert(detail::numeric_limits<uint64>::min() == std::numeric_limits<uint64>::min(), "assert numeric limits");
+		static_assert(detail::numeric_limits<sint64>::max() == std::numeric_limits<sint64>::max(), "assert numeric limits");
 
-		CAGE_ASSERT_COMPILE(sizeof(bool) == 1, assert_size_bool);
+		static_assert(sizeof(bool) == 1, "assert size bool");
 	}
 }

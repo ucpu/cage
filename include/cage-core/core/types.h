@@ -218,8 +218,10 @@ namespace cage
 		template<class T> struct remove_reference { typedef T type; };
 		template<class T> struct remove_reference<T&> { typedef T type; };
 		template<class T> struct remove_reference<T&&> { typedef T type; };
+		template<typename T> struct is_lvalue_reference { static constexpr const bool value = false; };
+		template<typename T> struct is_lvalue_reference<T&> { static constexpr const bool value = true; };
 		template<class T> inline constexpr T &&forward(typename remove_reference<T>::type  &v) noexcept { return static_cast<T&&>(v); }
-		template<class T> inline constexpr T &&forward(typename remove_reference<T>::type &&v) noexcept { return static_cast<T&&>(v); }
+		template<class T> inline constexpr T &&forward(typename remove_reference<T>::type &&v) noexcept { static_assert(!is_lvalue_reference<T>::value, "invalid rvalue to lvalue conversion"); return static_cast<T&&>(v); }
 		template<class T> inline constexpr typename remove_reference<T>::type &&move(T &&v) noexcept { return static_cast<typename remove_reference<T>::type&&>(v); }
 	}
 

@@ -53,14 +53,14 @@ namespace cage
 
 			explicit stringBase(bool other)
 			{
-				CAGE_ASSERT_COMPILE(N >= 6, string_too_short);
+				static_assert(N >= 6, "string too short");
 				*this = (other ? "true" : "false");
 			}
 
 #define GCHL_GENERATE(TYPE) \
 			explicit stringBase(TYPE other)\
 			{\
-				CAGE_ASSERT_COMPILE(N >= 20, string_too_short);\
+				static_assert(N >= 20, "string too short");\
 				current = privat::toString(data, other);\
 				data[current] = 0;\
 			}

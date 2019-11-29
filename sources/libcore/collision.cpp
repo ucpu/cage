@@ -1,6 +1,5 @@
 #include <vector>
 #include <algorithm>
-#include <robin_hood.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core.h>
@@ -10,6 +9,7 @@
 #include <cage-core/collision.h>
 #include <cage-core/collisionMesh.h>
 #include <cage-core/spatial.h>
+#include <cage-core/ctl/unordered_map.h>
 
 namespace cage
 {
@@ -26,7 +26,7 @@ namespace cage
 		class collisionDataImpl : public collisionData
 		{
 		public:
-			robin_hood::unordered_map<uint32, itemStruct> allItems;
+			cage::unordered_map<uint32, itemStruct> allItems;
 			holder<spatialData> spatial;
 			const uint32 maxCollisionPairs;
 

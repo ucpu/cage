@@ -1,4 +1,5 @@
 #include <atomic>
+#include <exception>
 
 #include <cage-core/core.h>
 #include <cage-core/math.h>
@@ -489,24 +490,28 @@ namespace cage
 			// ENTRY methods
 			//////////////////////////////////////
 
+#define GCHL_GENERATE_CATCH(NAME, STAGE) \
+			catch (const cage::exception &e) { CAGE_LOG(severityEnum::Error, "engine", stringizer() + "caught cage::exception in " CAGE_STRINGIZE(STAGE) " in " CAGE_STRINGIZE(NAME) ": " + e.message); engineStop(); } \
+			catch (const std::exception &e) { CAGE_LOG(severityEnum::Error, "engine", stringizer() + "caught std::exception in " CAGE_STRINGIZE(STAGE) " in " CAGE_STRINGIZE(NAME) ": " + e.what()); engineStop(); } \
+			catch (...) { CAGE_LOG(severityEnum::Error, "engine", "caught unknown exception in " CAGE_STRINGIZE(STAGE) " in " CAGE_STRINGIZE(NAME)); engineStop(); }
 #define GCHL_GENERATE_ENTRY(NAME) \
 			void CAGE_JOIN(NAME, Entry)() \
 			{ \
 				try { CAGE_JOIN(NAME, InitializeStage)(); } \
-				catch (...) { CAGE_LOG(severityEnum::Error, "engine", "exception caught in initialization (engine) in " CAGE_STRINGIZE(NAME)); engineStop(); } \
+				GCHL_GENERATE_CATCH(NAME, initialization (engine)) \
 				{ scopeLock<syncBarrier> l(threadsStateBarier); } \
 				{ scopeLock<syncBarrier> l(threadsStateBarier); } \
 				try { CAGE_JOIN(NAME, Thread)().initialize.dispatch(); } \
-				catch (...) { CAGE_LOG(severityEnum::Error, "engine", "exception caught in initialization (application) in " CAGE_STRINGIZE(NAME)); engineStop(); } \
+				GCHL_GENERATE_CATCH(NAME, initialization (application)) \
 				{ scopeLock<syncBarrier> l(threadsStateBarier); } \
 				try { CAGE_JOIN(NAME, GameloopStage)(); } \
-				catch (...) { CAGE_LOG(severityEnum::Error, "engine", "exception caught in gameloop in " CAGE_STRINGIZE(NAME)); engineStop(); } \
+				GCHL_GENERATE_CATCH(NAME, gameloop) \
 				CAGE_JOIN(NAME, StopStage)(); \
 				{ scopeLock<syncBarrier> l(threadsStateBarier); } \
 				try { CAGE_JOIN(NAME, Thread)().finalize.dispatch(); } \
-				catch (...) { CAGE_LOG(severityEnum::Error, "engine", "exception caught in finalization (application) in " CAGE_STRINGIZE(NAME)); } \
+				GCHL_GENERATE_CATCH(NAME, finalization (application)) \
 				try { CAGE_JOIN(NAME, FinalizeStage)(); } \
-				catch (...) { CAGE_LOG(severityEnum::Error, "engine", "exception caught in finalization (engine) in " CAGE_STRINGIZE(NAME)); } \
+				GCHL_GENERATE_CATCH(NAME, finalization (engine)) \
 			}
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE_ENTRY, graphicsPrepare, graphicsDispatch, sound));
 #undef GCHL_GENERATE_ENTRY
@@ -672,11 +677,7 @@ namespace cage
 				{
 					controlThread().initialize.dispatch();
 				}
-				catch (...)
-				{
-					CAGE_LOG(severityEnum::Error, "engine", "exception caught in initialization (application) in control");
-					engineStop();
-				}
+				GCHL_GENERATE_CATCH(control, initialization (application))
 
 				CAGE_LOG(severityEnum::Info, "engine", "starting engine");
 
@@ -689,11 +690,7 @@ namespace cage
 				{
 					controlGameloopStage();
 				}
-				catch (...)
-				{
-					CAGE_LOG(severityEnum::Error, "engine", "exception caught in gameloop in control");
-					engineStop();
-				}
+				GCHL_GENERATE_CATCH(control, gameloop)
 
 				CAGE_LOG(severityEnum::Info, "engine", "engine stopped");
 
@@ -701,10 +698,7 @@ namespace cage
 				{
 					controlThread().finalize.dispatch();
 				}
-				catch (...)
-				{
-					CAGE_LOG(severityEnum::Error, "engine", "exception caught in finalization (application) in control");
-				}
+				GCHL_GENERATE_CATCH(control, finalization (application))
 
 				CAGE_ASSERT(engineStarted == 3);
 				engineStarted = 4;
@@ -727,10 +721,7 @@ namespace cage
 						{
 							controlThread().assets.dispatch();
 						}
-						catch (...)
-						{
-							CAGE_LOG(severityEnum::Error, "engine", "exception caught in finalization (unloading assets) in control");
-						}
+						GCHL_GENERATE_CATCH(control, finalization (unloading assets))
 						while (assets->processCustomThread(controlThread().threadIndex) || assets->processControlThread());
 						threadSleep(5000);
 					}

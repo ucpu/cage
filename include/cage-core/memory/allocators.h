@@ -106,7 +106,7 @@ namespace cage
 	template<uintPtr AtomSize, class BoundsPolicy = memoryBoundsPolicyDefault, class TaggingPolicy = memoryTagPolicyDefault, class TrackingPolicy = memoryTrackPolicyDefault>
 	struct memoryAllocatorPolicyPool
 	{
-		CAGE_ASSERT_COMPILE(AtomSize > 0, objectsMustBeAtLeastOneByte);
+		static_assert(AtomSize > 0, "objects must be at least one byte");
 
 		static constexpr uintPtr objectSizeInit()
 		{

@@ -2,7 +2,6 @@
 #include <map>
 #include <vector>
 #include <atomic>
-#include <robin_hood.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core.h>
@@ -18,6 +17,7 @@
 #include <cage-core/memory.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/concurrentQueue.h>
+#include <cage-core/ctl/unordered_map.h>
 
 #include <optick.h>
 
@@ -72,7 +72,7 @@ namespace cage
 		public:
 			std::map<uint32, std::set<assetContextPrivateStruct*>> aliasNames;
 			std::vector<assetSchemePrivateStruct> schemes;
-			robin_hood::unordered_map<uint32, assetContextPrivateStruct*> index;
+			cage::unordered_map<uint32, assetContextPrivateStruct*> index;
 			holder<tcpConnection> listener;
 			holder<threadHandle> loadingThread;
 			holder<threadHandle> decompressionThread;

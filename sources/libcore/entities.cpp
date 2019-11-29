@@ -1,6 +1,5 @@
 #include <vector>
 #include <set>
-#include <robin_hood.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core.h>
@@ -8,6 +7,7 @@
 #include <cage-core/entities.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
+#include <cage-core/ctl/unordered_map.h>
 
 namespace cage
 {
@@ -35,9 +35,9 @@ namespace cage
 			std::vector<groupImpl*> groups;
 			groupImpl allEntities;
 			uint32 generateName;
-			robin_hood::unordered_map<uint32, entity*> namedEntities;
+			cage::unordered_map<uint32, entity*> namedEntities;
 
-#if defined (CAGE_SYSTEM_WINDOWS)
+#if defined(CAGE_SYSTEM_WINDOWS)
 #pragma warning (push)
 #pragma warning (disable: 4355) // disable warning that using this in initializer list is dangerous
 #endif
@@ -45,7 +45,7 @@ namespace cage
 			entityManagerImpl(const entityManagerCreateConfig &config) : allEntities(this), generateName(0)
 			{}
 
-#if defined (CAGE_SYSTEM_WINDOWS)
+#if defined(CAGE_SYSTEM_WINDOWS)
 #pragma warning (pop)
 #endif
 

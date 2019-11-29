@@ -9,7 +9,6 @@
 #else
 #define CAGE_ASSERT(EXP, ...)
 #endif
-#define CAGE_ASSERT_COMPILE(COND, MESS) enum { CAGE_JOIN(CAGE_JOIN(gchl_assert_, MESS), CAGE_JOIN(_, __LINE__)) = 1/((int)!!(COND)) }
 
 #define CAGE_THROW_SILENT(EXCEPTION, ...) { EXCEPTION e_(__FILE__, __LINE__, __FUNCTION__, ::cage::severityEnum::Error, __VA_ARGS__); throw e_; }
 #define CAGE_THROW_ERROR(EXCEPTION, ...) { EXCEPTION e_(__FILE__, __LINE__, __FUNCTION__, ::cage::severityEnum::Error, __VA_ARGS__); e_.makeLog(); throw e_; }
@@ -192,17 +191,6 @@ namespace cage
 			static To cast(From from)
 			{
 				return numeric_cast_helper_signed<detail::numeric_limits<To>::is_signed, detail::numeric_limits<From>::is_signed>::template cast<To>(from);
-			}
-		};
-
-		template<>
-		struct numeric_cast_helper_specialized<false>
-		{
-			template<class To, class From>
-			static To cast(From from)
-			{
-				CAGE_ASSERT_COMPILE(false, numeric_cast_is_allowed_for_numbers_only);
-				return 0;
 			}
 		};
 	}

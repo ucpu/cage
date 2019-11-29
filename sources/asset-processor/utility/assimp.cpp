@@ -606,25 +606,25 @@ void analyzeAssimp()
 
 vec3 conv(const aiVector3D &v)
 {
-	CAGE_ASSERT_COMPILE(sizeof(aiVector3D) == sizeof(cage::vec3), assimp_vector3D_is_not_interchangeable_with_vec3);
+	static_assert(sizeof(aiVector3D) == sizeof(cage::vec3), "assimp vector3D is not interchangeable with vec3");
 	return *(vec3*)&v;
 }
 
 vec3 conv(const aiColor3D &v)
 {
-	CAGE_ASSERT_COMPILE(sizeof(aiColor3D) == sizeof(cage::vec3), assimp_color3D_is_not_interchangeable_with_vec3);
+	static_assert(sizeof(aiColor3D) == sizeof(cage::vec3), "assimp color3D is not interchangeable with vec3");
 	return *(vec3*)&v;
 }
 
 vec4 conv(const aiColor4D &v)
 {
-	CAGE_ASSERT_COMPILE(sizeof(aiColor4D) == sizeof(cage::vec4), assimp_color4D_is_not_interchangeable_with_vec4);
+	static_assert(sizeof(aiColor4D) == sizeof(cage::vec4), "assimp color4D is not interchangeable with vec4");
 	return *(vec4*)&v;
 }
 
 mat4 conv(const aiMatrix4x4 &m)
 {
-	CAGE_ASSERT_COMPILE(sizeof(aiMatrix4x4) == sizeof(cage::mat4), assimp_matrix4x4_is_not_interchangeable_with_mat4);
+	static_assert(sizeof(aiMatrix4x4) == sizeof(cage::mat4), "assimp matrix4x4 is not interchangeable with mat4");
 	mat4 r;
 	detail::memcpy(&r, &m, sizeof(mat4));
 	return transpose(r);

@@ -2,7 +2,6 @@
 #include <algorithm>
 #include <atomic>
 #include <array>
-#include <robin_hood.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core.h>
@@ -10,6 +9,7 @@
 #include <cage-core/geometry.h>
 #include <cage-core/memory.h>
 #include <cage-core/spatial.h>
+#include <cage-core/ctl/unordered_map.h>
 
 #include <xsimd/xsimd.hpp>
 
@@ -167,7 +167,7 @@ namespace cage
 		public:
 			memoryArenaGrowing<memoryAllocatorPolicyPool<templates::poolAllocatorAtomSize<itemUnion>::result>, memoryConcurrentPolicyNone> itemsPool;
 			memoryArena itemsArena;
-			robin_hood::unordered_map<uint32, holder<itemBase>> itemsTable;
+			cage::unordered_map<uint32, holder<itemBase>> itemsTable;
 			std::atomic<bool> dirty;
 			std::vector<nodeStruct, memoryArenaStd<nodeStruct>> nodes;
 			std::vector<itemBase*> indices;
