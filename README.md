@@ -40,7 +40,6 @@ It started as a hobby/learning project, but has become fairly feature rich and m
 ## Portable
 
 - runs on Windows and Linux
-  - MacOS does not have required OpenGL version, but is otherwise supported
 - self-contained
   - most dependencies are accessed as git submodules and compiled in
   - there are just few package requirements on linux

@@ -3,7 +3,7 @@
 
 ## Linux (debian or ubuntu)
 
-Install some required packages.
+Install one required package.
 ```bash
 sudo apt install xorg-dev
 ```
