@@ -5,8 +5,8 @@ function(cage_build_configuration)
 	endif()
 
 	set(CMAKE_POSITION_INDEPENDENT_CODE ON PARENT_SCOPE)
+	set(CMAKE_C_STANDARD 11)
 	set(CMAKE_CXX_STANDARD 14)
-	set(CMAKE_CXX_STANDARD ${CMAKE_CXX_STANDARD} PARENT_SCOPE)
 
 	if(CMAKE_COMPILER_IS_GNUCXX)
 		# disable warnings about attributes
@@ -24,6 +24,8 @@ function(cage_build_configuration)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++${CMAKE_CXX_STANDARD}")
 	endif()
 
+	set(CMAKE_C_STANDARD ${CMAKE_C_STANDARD} PARENT_SCOPE)
+	set(CMAKE_CXX_STANDARD ${CMAKE_CXX_STANDARD} PARENT_SCOPE)
 	set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} PARENT_SCOPE)
 	set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} PARENT_SCOPE)
 endfunction(cage_build_configuration)

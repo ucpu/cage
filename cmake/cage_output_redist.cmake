@@ -23,7 +23,7 @@ function(cage_output_redist where)
 	configure_file("${cage_output_redist_source}/../externals/utfcpp/utfcpp/LICENSE" "${where}/redist/licenses/utfcpp" COPYONLY)
 	configure_file("${cage_output_redist_source}/../externals/vorbis/vorbis/COPYING" "${where}/redist/licenses/vorbis" COPYONLY)
 	configure_file("${cage_output_redist_source}/../externals/xsimd/xsimd/LICENSE" "${where}/redist/licenses/xsimd" COPYONLY)
-	configure_file("${cage_output_redist_source}/../externals/zlib/zlib/README" "${where}/redist/licenses/zlib" COPYONLY)
+	configure_file("${cage_output_redist_source}/../externals/zlib-ng/zlib-ng/LICENSE.md" "${where}/redist/licenses/zlib-ng" COPYONLY)
 	configure_file("${cage_output_redist_source}/../LICENSE" "${where}/redist/licenses/cage" COPYONLY)
 endfunction(cage_output_redist)
 
