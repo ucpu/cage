@@ -12,7 +12,7 @@
 	url = https://gitlab.com/libtiff/libtiff.git
 [submodule "freetype/freetype"]
 	path = freetype/freetype
-	url = https://git.savannah.nongnu.org/r/freetype/freetype2.git
+	url = https://github.com/ucpu/freetype.git
 [submodule "glad/glad"]
 	path = glad/glad
 	url = https://github.com/ucpu/glad.git
