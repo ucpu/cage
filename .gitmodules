@@ -43,9 +43,6 @@
 [submodule "devil/devil"]
 	path = devil/devil
 	url = https://github.com/ucpu/devil.git
-[submodule "zlib/zlib"]
-	path = zlib/zlib
-	url = https://github.com/ucpu/zlib.git
 [submodule "msdfgen/msdfgen"]
 	path = msdfgen/msdfgen
 	url = https://github.com/ckohnert/msdfgen.git
@@ -64,3 +61,6 @@
 [submodule "robin-hood-hashing/robin-hood-hashing"]
 	path = robin-hood-hashing/robin-hood-hashing
 	url = https://github.com/martinus/robin-hood-hashing.git
+[submodule "zlib-ng/zlib-ng"]
+	path = zlib-ng/zlib-ng
+	url = https://github.com/zlib-ng/zlib-ng.git

@@ -21,6 +21,9 @@ endif()
 
 add_subdirectory(assimp)
 
+# assimp/contrib/unzip/unzip.c somehow incorrectly detects zlib(-ng) version and tries to use undefined type
+target_compile_definitions(assimp PRIVATE NOUNCRYPT=1)
+
 target_include_directories(assimp INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/assimp/include")
 target_include_directories(assimp INTERFACE "${CMAKE_CURRENT_BINARY_DIR}/assimp/include")
 
