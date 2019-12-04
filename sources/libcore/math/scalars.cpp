@@ -10,7 +10,29 @@ namespace cage
 {
 	real real::parse(const string &str)
 	{
-		return detail::tryRemoveParentheses(str).toFloat();
+		return privat::tryRemoveParentheses(str).toFloat();
+	}
+
+	degs degs::parse(const string &str)
+	{
+		string s = privat::tryRemoveParentheses(str);
+		if (s.isPattern("", "", "degs"))
+			s = s.subString(0, s.length() - 4);
+		else if (s.isPattern("", "", "deg"))
+			s = s.subString(0, s.length() - 3);
+		s = s.trim(true, true, "\t ");
+		return degs(s.toFloat());
+	}
+
+	rads rads::parse(const string &str)
+	{
+		string s = privat::tryRemoveParentheses(str);
+		if (s.isPattern("", "", "rads"))
+			s = s.subString(0, s.length() - 4);
+		else if (s.isPattern("", "", "rad"))
+			s = s.subString(0, s.length() - 3);
+		s = s.trim(true, true, "\t ");
+		return rads(s.toFloat());
 	}
 
 	real sin(rads value)
@@ -59,6 +81,16 @@ namespace cage
 	bool real::valid() const
 	{
 		return !std::isnan(value);
+	}
+
+	bool valid(float a)
+	{
+		return !std::isnan(a);
+	}
+
+	bool valid(double a)
+	{
+		return !std::isnan(a);
 	}
 
 	real sqrt(real x)

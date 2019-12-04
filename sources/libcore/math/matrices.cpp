@@ -10,9 +10,9 @@ namespace cage
 	mat3 mat3::parse(const string &str)
 	{
 		mat3 data;
-		string s = detail::tryRemoveParentheses(str);
+		string s = privat::tryRemoveParentheses(str);
 		for (uint32 i = 0; i < 9; i++)
-			data[i] = detail::mathSplit(s).toFloat();
+			data[i] = privat::mathSplit(s).toFloat();
 		if (!s.empty())
 			CAGE_THROW_ERROR(exception, "error parsing mat3");
 		return data;
@@ -134,9 +134,9 @@ namespace cage
 	mat4 mat4::parse(const string &str)
 	{
 		mat4 data;
-		string s = detail::tryRemoveParentheses(str);
+		string s = privat::tryRemoveParentheses(str);
 		for (uint32 i = 0; i < 16; i++)
-			data[i] = detail::mathSplit(s).toFloat();
+			data[i] = privat::mathSplit(s).toFloat();
 		if (!s.empty())
 			CAGE_THROW_ERROR(exception, "error parsing mat4");
 		return data;

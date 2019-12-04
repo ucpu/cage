@@ -5,25 +5,8 @@ namespace cage
 		ivec2() : x(0), y(0)
 		{}
 
-		ivec2(sint32 x, sint32 y) : x(x), y(y)
+		explicit ivec2(sint32 x, sint32 y) : x(x), y(y)
 		{}
-
-		bool operator == (const ivec2 &other) const
-		{
-			return x == other.x && y == other.y;
-		}
-
-		bool operator != (const ivec2 &other) const
-		{
-			return !(*this == other);
-		}
-
-		bool operator < (const ivec2 &other) const
-		{
-			if (x == other.x)
-				return y < other.y;
-			return x < other.x;
-		}
 
 		sint32 operator [] (uint32 index) const
 		{
@@ -48,4 +31,24 @@ namespace cage
 		sint32 x;
 		sint32 y;
 	};
+
+	inline bool operator == (const ivec2 &l, const ivec2 &r) { return l[0] == r[0] && l[1] == r[1]; };
+	inline bool operator != (const ivec2 &l, const ivec2 &r) { return !(l == r); };
+
+#define GCHL_GENERATE(OPERATOR) \
+	inline ivec2 operator OPERATOR (const ivec2 &r) { return ivec2(OPERATOR r[0], OPERATOR r[1]); }
+	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, -));
+#undef GCHL_GENERATE
+
+#define GCHL_GENERATE(OPERATOR) \
+	inline ivec2 operator OPERATOR (const ivec2 &l, const ivec2 &r) { return ivec2(l[0] OPERATOR r[0], l[1] OPERATOR r[1]); } \
+	inline ivec2 operator OPERATOR (const ivec2 &l, const sint32 &r) { return ivec2(l[0] OPERATOR r, l[1] OPERATOR r); }
+	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, -, *, /));
+#undef GCHL_GENERATE
+
+#define GCHL_GENERATE(OPERATOR) \
+	inline ivec2 &operator OPERATOR##= (ivec2 &l, const ivec2 &r) { return l = l OPERATOR r; } \
+	inline ivec2 &operator OPERATOR##= (ivec2 &l, const sint32 &r) { return l = l OPERATOR r; }
+	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, -, *, /));
+#undef GCHL_GENERATE
 }

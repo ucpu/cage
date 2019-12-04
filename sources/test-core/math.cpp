@@ -158,6 +158,8 @@ namespace
 			test(2 * a, 6);
 			test(a / 2, 1.5);
 			test(2 / a, 2.f / 3.f);
+			CAGE_TEST(valid(3.0));
+			CAGE_TEST(valid(3.0f));
 		}
 
 		{
@@ -724,6 +726,47 @@ namespace
 		CAGE_TESTCASE("transform");
 
 		{
+			CAGE_TESTCASE("basics");
+
+			transform t;
+			real r;
+			vec3 v;
+			quat q;
+			mat4 m;
+
+			// todo check actual values
+
+			t = t + v; // move transform
+			t = t * q; // rotate transform
+			t = t * r; // scale transform
+			t = v + t;
+			t = q * t;
+			t = r * t;
+			t += v;
+			t *= q;
+			t *= r;
+			v = t * v; // transform vertex
+			v = v * t;
+		}
+
+		{
+			CAGE_TESTCASE("apply on vertex");
+
+			for (uint32 round = 0; round < 10; round++)
+			{
+				vec3 p = randomDirection3() * randomRange(-5, 20);
+				quat o = randomDirectionQuat();
+				real s = randomRange(real(0.1), 10);
+				transform t(p, o, s);
+				mat4 m(t);
+				vec3 v = randomDirection3() * 10;
+				vec3 tv = t * v;
+				vec3 mv = vec3(m * vec4(v, 1));
+				test(tv, mv);
+			}
+		}
+
+		{
 			CAGE_TESTCASE("concatenation");
 
 			for (uint32 round = 0; round < 10; round++)
@@ -817,6 +860,26 @@ namespace
 				}
 			}
 			{
+				CAGE_TESTCASE("rads");
+				for (uint32 i = 0; i < 10; i++)
+				{
+					rads v = rads(randomRange(-1e5, 1e5));
+					string s = stringizer() + v;
+					rads r = rads::parse(s);
+					test(v, r);
+				}
+			}
+			{
+				CAGE_TESTCASE("degs");
+				for (uint32 i = 0; i < 10; i++)
+				{
+					degs v = degs(randomRange(-1e5, 1e5));
+					string s = stringizer() + v;
+					degs r = degs::parse(s);
+					test(v, r);
+				}
+			}
+			{
 				CAGE_TESTCASE("vec2");
 				for (uint32 i = 0; i < 10; i++)
 				{
@@ -874,6 +937,17 @@ namespace
 					string s = stringizer() + v;
 					mat4 r = mat4::parse(s);
 					test(v, r);
+				}
+			}
+			{
+				CAGE_TESTCASE("transform");
+				for (uint32 i = 0; i < 10; i++)
+				{
+					transform v = transform(randomDirection3() * 100, randomDirectionQuat(), randomChance() * 2);
+					string s = stringizer() + v;
+					// not yet implemented
+					// transform r = transform::parse(s);
+					// test((mat4)v, (mat4)r);
 				}
 			}
 			{

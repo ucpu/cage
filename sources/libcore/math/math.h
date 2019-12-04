@@ -1,6 +1,6 @@
 namespace cage
 {
-	namespace detail
+	namespace privat
 	{
 		inline string tryRemoveParentheses(const string &str)
 		{
