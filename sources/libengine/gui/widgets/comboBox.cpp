@@ -128,13 +128,14 @@ namespace cage
 			void consolidateSelection()
 			{
 				hierarchyItemStruct *c = hierarchy->firstChild;
+				entityComponent *sel = hierarchy->impl->components.selectedItem;
 				uint32 idx = 0;
 				while (c)
 				{
 					if (selected == idx++)
-						c->ent->add(hierarchy->impl->components.selectedItem);
+						c->ent->add(sel);
 					else
-						c->ent->remove(hierarchy->impl->components.selectedItem);
+						c->ent->remove(sel);
 					c = c->nextSibling;
 				}
 			}
@@ -215,11 +216,13 @@ namespace cage
 				return true;
 			uint32 idx = 0;
 			hierarchyItemStruct *c = combo->hierarchy->firstChild;
+			hierarchyItemStruct *newlySelected = nullptr;
 			while (c)
 			{
 				if (pointInside(c->renderPos, c->renderSize, point))
 				{
 					combo->data.selected = idx;
+					newlySelected = c;
 					hierarchy->impl->focusName = 0; // give up focus (this will close the popup)
 					break;
 				}
@@ -227,7 +230,11 @@ namespace cage
 				c = c->nextSibling;
 			}
 			combo->consolidateSelection();
-			hierarchy->fireWidgetEvent();
+			if (newlySelected)
+			{
+				newlySelected->fireWidgetEvent();
+				hierarchy->fireWidgetEvent();
+			}
 			return true;
 		}
 	}
