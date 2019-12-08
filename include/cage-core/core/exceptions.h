@@ -195,16 +195,20 @@ namespace cage
 		};
 	}
 
+	// with CAGE_ASSERT_ENABLED numeric_cast validates that the value is in range of the target type, preventing overflows
+	// without CAGE_ASSERT_ENABLED numeric_cast is the same as static_cast
 	template<class To, class From>
 	To numeric_cast(From from)
 	{
 		return privat::numeric_cast_helper_specialized<detail::numeric_limits<To>::is_specialized && detail::numeric_limits<From>::is_specialized>::template cast<To>(from);
 	}
 
+	// with CAGE_ASSERT_ENABLED class_cast verifies that dynamic_cast would succeed
+	// without CAGE_ASSERT_ENABLED class_cast is the same as static_cast
 	template<class To, class From>
 	To class_cast(From from)
 	{
-		CAGE_ASSERT(dynamic_cast<To>(from), from);
+		CAGE_ASSERT(!from || dynamic_cast<To>(from), from);
 		return static_cast<To>(from);
 	}
 }
