@@ -8,14 +8,23 @@
 
 using namespace cage;
 
-void separate(holder<configIni> &cmd)
+void doSplit(holder<configIni> &cmd)
 {
-	string names[4] = { "1.png", "2.png", "3.png", "4.png" };
+	string names[4] = { "", "", "", "" };
 	string input = "input.png";
 	for (uint32 i = 0; i < 4; i++)
 		names[i] = cmd->cmdString(0, string(i + 1), names[i]);
 	input = cmd->cmdString('i', "input", input);
 	cmd->checkUnused();
+
+	{
+		uint32 outputs = 0;
+		for (const string &n : names)
+			if (!n.empty())
+				outputs++;
+		if (outputs == 0)
+			CAGE_THROW_ERROR(exception, "no outputs specified");
+	}
 
 	CAGE_LOG(severityEnum::Info, "image", stringizer() + "loading image: '" + input + "'");
 	holder<image> in = newImage();
@@ -41,13 +50,14 @@ void separate(holder<configIni> &cmd)
 	CAGE_LOG(severityEnum::Info, "image", "ok");
 }
 
-void combine(holder<configIni> &cmd)
+void doJoin(holder<configIni> &cmd)
 {
 	string names[4] = { "", "", "", "" };
 	string output = "output.png";
 	for (uint32 i = 0; i < 4; i++)
 		names[i] = cmd->cmdString(0, string(i + 1), names[i]);
 	output = cmd->cmdString('o', "output", output);
+	bool autoMono = cmd->cmdBool('m', "mono", false);
 	cmd->checkUnused();
 
 	holder<image> pngs[4];
@@ -73,7 +83,25 @@ void combine(holder<configIni> &cmd)
 					CAGE_THROW_ERROR(exception, "image resolution does not match");
 			}
 			if (p->channels() != 1)
-				CAGE_THROW_ERROR(exception, "the image has to be mono channel");
+			{
+				if (!autoMono)
+					CAGE_THROW_ERROR(exception, "the image has to be mono channel");
+				CAGE_LOG(severityEnum::Info, "image", stringizer() + "monochromatizing");
+				holder<image> m = newImage();
+				m->empty(width, height, 1);
+				uint32 ch = p->channels();
+				for (uint32 y = 0; y < height; y++)
+				{
+					for (uint32 x = 0; x < width; x++)
+					{
+						float sum = 0;
+						for (uint32 c = 0; c < ch; c++)
+							sum += p->value(x, y, c);
+						m->value(x, y, 0, sum / ch);
+					}
+				}
+				p = templates::move(m);
+			}
 			channels = max(channels, index + 1u);
 			pngs[index] = templates::move(p);
 		}
@@ -81,7 +109,7 @@ void combine(holder<configIni> &cmd)
 	if (channels == 0)
 		CAGE_THROW_ERROR(exception, "no inputs specified");
 
-	CAGE_LOG(severityEnum::Info, "image", stringizer() + "combining image");
+	CAGE_LOG(severityEnum::Info, "image", stringizer() + "joining image");
 	holder<image> res = newImage();
 	res->empty(width, height, channels);
 	for (uint32 i = 0; i < channels; i++)
@@ -111,10 +139,21 @@ int main(int argc, const char *args[])
 
 		holder<configIni> cmd = newConfigIni();
 		cmd->parseCmd(argc, args);
-		if (cmd->cmdBool('s', "separate", false))
-			separate(cmd);
-		else
-			combine(cmd);
+		if (cmd->cmdBool('h', "help", false))
+		{
+			CAGE_LOG(severityEnum::Info, "image", stringizer() + "examples:");
+			CAGE_LOG(severityEnum::Info, "image", stringizer() + args[0] + " -j -1 r.png -2 g.png -o rg.png");
+			CAGE_LOG(severityEnum::Info, "image", stringizer() + args[0] + " -s -i rg.png -1 r.png -2 g.png");
+			return 0;
+		}
+		bool split = cmd->cmdBool('s', "split", false);
+		bool join = cmd->cmdBool('j', "join", false);
+		if (join == split)
+			CAGE_THROW_ERROR(exception, "exactly one of -s (--split) and -j (--join) has to be specified");
+		if (split)
+			doSplit(cmd);
+		if (join)
+			doJoin(cmd);
 		return 0;
 	}
 	catch (const cage::exception &)
