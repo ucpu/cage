@@ -169,12 +169,13 @@ namespace cage
 		template<class U>
 		pointerRange(const pointerRange<U> &other) : begin_(other.begin()), end_(other.end()) {}
 		template<class U>
-		pointerRange(U &other) : begin_(other.data()), end_(other.data() + other.size()) {}
+		pointerRange(U &&other) : begin_(other.data()), end_(other.data() + other.size()) {}
 
 		T *begin() const { return begin_; }
 		T *end() const { return end_; }
 		T *data() const { return begin_; }
 		size_type size() const { return end_ - begin_; }
+		bool empty() const { return size() == 0; }
 		T &operator[] (uint32 idx) const { CAGE_ASSERT(idx < size(), idx, size()); return begin_[idx]; }
 	};
 
@@ -188,6 +189,7 @@ namespace cage
 		T *end() const { return this->data_->end(); }
 		T *data() const { return begin(); }
 		size_type size() const { return end() - begin(); }
+		bool empty() const { return size() == 0; }
 		T &operator[] (uint32 idx) const { CAGE_ASSERT(idx < size(), idx, size()); return begin()[idx]; }
 	};
 

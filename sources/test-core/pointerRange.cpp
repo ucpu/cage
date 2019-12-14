@@ -50,6 +50,16 @@ namespace
 		CAGE_TEST(counter == 4);
 		return pointerRangeHolder<testStruct>(templates::move(tests));
 	}
+
+	void functionTakingMutableRange(pointerRange<uint32> r)
+	{
+		// do nothing
+	}
+
+	void functionTakingConstRange(pointerRange<const uint32> r)
+	{
+		// do nothing
+	}
 }
 
 void testPointerRange()
@@ -67,6 +77,8 @@ void testPointerRange()
 		for (auto it : range)
 			sum += it;
 		CAGE_TEST(sum == 5 + 42 + 13);
+		CAGE_TEST(!range.empty());
+		CAGE_TEST(pointerRange<const uint32>().empty());
 	}
 
 	{
@@ -106,7 +118,15 @@ void testPointerRange()
 		holder<pointerRange<uint32>> range = makeRangeInts();
 		pointerRange<uint32> rng1 = range;
 		pointerRange<const uint32> rng2 = rng1;
-		//pointerRange<uint32> rng3 = rng2; // does not compile
+		//pointerRange<uint32> rng3 = rng2; // must not compile
+		functionTakingConstRange(rng1);
+		functionTakingMutableRange(rng1);
+		functionTakingConstRange(rng2);
+		//functionTakingMutableRange(rng2); // must not compile
+		functionTakingConstRange(range);
+		functionTakingMutableRange(range);
+		functionTakingConstRange(makeRangeInts());
+		functionTakingMutableRange(makeRangeInts());
 	}
 
 	{
