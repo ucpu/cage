@@ -44,9 +44,9 @@ void processTextpack()
 	}
 	f->close();
 
-	if (configGetBool("cage-asset-processor.textpack.preview"))
+	if (configGetBool("cage-asset-processor/textpack/preview"))
 	{
-		string dbgName = pathJoin(configGetString("cage-asset-processor.textpack.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".txt");
+		string dbgName = pathJoin(configGetString("cage-asset-processor/textpack/path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".txt");
 		fileMode fm(false, true);
 		fm.textual = true;
 		holder<fileHandle> f = newFile(dbgName, fm);

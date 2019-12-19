@@ -34,12 +34,12 @@ namespace cage
 
 	namespace
 	{
-		configBool confRenderMissingMeshes("cage.graphics.renderMissingMeshes", false);
-		configBool confRenderSkeletonBones("cage.graphics.renderSkeletonBones", false);
-		configBool confNoAmbientOcclusion("cage.graphics.disableAmbientOcclusion", false);
-		configBool confNoBloom("cage.graphics.disableBloom", false);
-		configBool confNoMotionBlur("cage.graphics.disableMotionBlur", false);
-		configBool confNoNormalMap("cage.graphics.disableNormalMaps", false);
+		configBool confRenderMissingMeshes("cage/graphics/renderMissingMeshes", false);
+		configBool confRenderSkeletonBones("cage/graphics/renderSkeletonBones", false);
+		configBool confNoAmbientOcclusion("cage/graphics/disableAmbientOcclusion", false);
+		configBool confNoBloom("cage/graphics/disableBloom", false);
+		configBool confNoMotionBlur("cage/graphics/disableMotionBlur", false);
+		configBool confNoNormalMap("cage/graphics/disableNormalMaps", false);
 
 		struct shadowmapImpl : public shadowmapComponent
 		{

@@ -675,12 +675,12 @@ void processTexture()
 
 	exportTexture(target);
 
-	if (configGetBool("cage-asset-processor.texture.preview"))
+	if (configGetBool("cage-asset-processor/texture/preview"))
 	{ // preview images
 		uint32 index = 0;
 		for (auto &it : images)
 		{
-			string dbgName = pathJoin(configGetString("cage-asset-processor.texture.path", "asset-preview"), stringizer() + pathReplaceInvalidCharacters(inputName) + "_" + (index++) + ".png");
+			string dbgName = pathJoin(configGetString("cage-asset-processor/texture/path", "asset-preview"), stringizer() + pathReplaceInvalidCharacters(inputName) + "_" + (index++) + ".png");
 			holder<image> png = newImage();
 			png->empty(it.width, it.height, it.bpp);
 			detail::memcpy(png->bufferData(), it.data.data(), png->bufferSize());

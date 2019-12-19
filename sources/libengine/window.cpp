@@ -24,14 +24,14 @@ namespace cage
 {
 	namespace
 	{
-		configBool confDebugContext("cage.graphics.debugContext",
+		configBool confDebugContext("cage/graphics/debugContext",
 #ifdef CAGE_DEBUG
 			true
 #else
 			false
 #endif // CAGE_DEBUG
 			);
-		configBool confNoErrorContext("cage.graphics.noErrorContext", false);
+		configBool confNoErrorContext("cage/graphics/noErrorContext", false);
 
 		void handleGlfwError(int, const char *message)
 		{

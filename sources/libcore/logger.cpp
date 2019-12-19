@@ -13,7 +13,7 @@ namespace cage
 {
 	namespace
 	{
-		configBool confDetailedInfo("cage.system.logVendorInfo", false);
+		configBool confDetailedInfo("cage/system/logVendorInfo", false);
 
 		syncMutex *loggerMutex()
 		{

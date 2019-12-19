@@ -17,7 +17,7 @@ namespace
 	std::map<string, string> defines;
 	std::set<string, stringComparatorFast> onces;
 
-	configBool configShaderPrint("cage-asset-processor.shader.preview");
+	configBool configShaderPrint("cage-asset-processor/shader/preview");
 
 	bool validDefineChar(const char c)
 	{
@@ -491,7 +491,7 @@ void processShader()
 	{
 		for (const auto &it : codes)
 		{
-			string name = pathJoin(configGetString("cage-asset-processor.shader.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + "_" + it.first + ".glsl");
+			string name = pathJoin(configGetString("cage-asset-processor/shader/path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + "_" + it.first + ".glsl");
 			fileMode fm(false, true);
 			fm.textual = true;
 			holder<fileHandle> f = newFile(name, fm);

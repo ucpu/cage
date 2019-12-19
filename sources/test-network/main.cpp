@@ -91,7 +91,7 @@ int main(int argc, const char *args[])
 		holder<configIni> cmd = newConfigIni(argc, args);
 		configString address("address", "localhost");
 		configUint32 port("port", 42789);
-		configFloat packetLoss("cage.udp.simulatedPacketLoss");
+		configFloat packetLoss("cage/udp/simulatedPacketLoss");
 		configUint32 confMessages("messages", 150);
 		bool modeServer = cmd->cmdBool('s', "server", false);
 		bool modeClient = cmd->cmdBool('c', "client", false);

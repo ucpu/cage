@@ -9,18 +9,18 @@ using namespace cage;
 
 #include "config.h"
 
-configString configPathInput("cage-asset-database.path.input", "data");
-configString configPathOutput("cage-asset-database.path.output", "assets");
-configString configPathIntermediate("cage-asset-database.path.intermediate", "assets-tmp");
-configString configPathDatabase("cage-asset-database.path.database", "assets-database");
-configString configPathByHash("cage-asset-database.path.listByHash", "assets-by-hash.txt");
-configString configPathByName("cage-asset-database.path.listByName", "assets-by-name.txt");
-configString configPathSchemes("cage-asset-database.path.schemes", "schemes");
-configSint32 configNotifierPort("cage-asset-database.database.port", 65042);
-configUint64 configArchiveWriteThreshold("cage-asset-database.database.archiveWriteThreshold", 256 * 1024 * 1024);
-configBool configListening("cage-asset-database.database.listening", false);
-configBool configFromScratch("cage-asset-database.database.fromScratch", false);
-configBool configOutputArchive("cage-asset-database.database.outputArchive", false);
+configString configPathInput("cage-asset-database/path/input", "data");
+configString configPathOutput("cage-asset-database/path/output", "assets");
+configString configPathIntermediate("cage-asset-database/path/intermediate", "assets-tmp");
+configString configPathDatabase("cage-asset-database/path/database", "assets-database");
+configString configPathByHash("cage-asset-database/path/listByHash", "assets-by-hash.txt");
+configString configPathByName("cage-asset-database/path/listByName", "assets-by-name.txt");
+configString configPathSchemes("cage-asset-database/path/schemes", "schemes");
+configSint32 configNotifierPort("cage-asset-database/database/port", 65042);
+configUint64 configArchiveWriteThreshold("cage-asset-database/database/archiveWriteThreshold", 256 * 1024 * 1024);
+configBool configListening("cage-asset-database/database/listening", false);
+configBool configFromScratch("cage-asset-database/database/fromScratch", false);
+configBool configOutputArchive("cage-asset-database/database/outputArchive", false);
 stringSet configIgnoreExtensions;
 stringSet configIgnorePaths;
 

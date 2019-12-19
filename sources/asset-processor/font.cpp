@@ -353,17 +353,19 @@ namespace
 	{
 		CAGE_LOG(severityEnum::Info, logComponentName, "print debug data");
 
-		if (configGetBool("cage-asset-processor.font.preview"))
+		configString fontPath("cage-asset-processor/font/path", "asset-preview");
+
+		if (configGetBool("cage-asset-processor/font/preview"))
 		{
 			texels->verticalFlip();
-			texels->encodeFile(pathJoin(configGetString("cage-asset-processor.font.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".png"));
+			texels->encodeFile(pathJoin(fontPath, pathReplaceInvalidCharacters(inputName) + ".png"));
 		}
 
-		if (configGetBool("cage-asset-processor.font.glyphs"))
+		if (configGetBool("cage-asset-processor/font/glyphs"))
 		{ // glyphs
 			fileMode fm(false, true);
 			fm.textual = true;
-			holder<fileHandle> f = newFile(pathJoin(configGetString("cage-asset-processor.font.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".glyphs.txt"), fm);
+			holder<fileHandle> f = newFile(pathJoin(fontPath, pathReplaceInvalidCharacters(inputName) + ".glyphs.txt"), fm);
 			f->writeLine(
 				string("glyph").fill(10) +
 				string("tex coord").fill(60) +
@@ -384,11 +386,11 @@ namespace
 			}
 		}
 
-		if (configGetBool("cage-asset-processor.font.characters"))
+		if (configGetBool("cage-asset-processor/font/characters"))
 		{ // characters
 			fileMode fm(false, true);
 			fm.textual = true;
-			holder<fileHandle> f = newFile(pathJoin(configGetString("cage-asset-processor.font.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".characters.txt"), fm);
+			holder<fileHandle> f = newFile(pathJoin(fontPath, pathReplaceInvalidCharacters(inputName) + ".characters.txt"), fm);
 			f->writeLine(
 				string("code").fill(10) +
 				string("char").fill(5) +
@@ -406,11 +408,11 @@ namespace
 			}
 		}
 
-		if (configGetBool("cage-asset-processor.font.kerning"))
+		if (configGetBool("cage-asset-processor/font/kerning"))
 		{ // kerning
 			fileMode fm(false, true);
 			fm.textual = true;
-			holder<fileHandle> f = newFile(pathJoin(configGetString("cage-asset-processor.font.path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".kerning.txt"), fm);
+			holder<fileHandle> f = newFile(pathJoin(fontPath, pathReplaceInvalidCharacters(inputName) + ".kerning.txt"), fm);
 			f->writeLine(
 				string("g1").fill(5) +
 				string("g2").fill(5) +

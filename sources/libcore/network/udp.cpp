@@ -23,10 +23,10 @@ namespace cage
 	{
 		using namespace privat;
 
-		configUint32 logLevel("cage.udp.logLevel", 0);
-		configFloat confSimulatedPacketLoss("cage.udp.simulatedPacketLoss", 0);
-		configUint32 confMtu("cage.udp.maxTransferUnit", 1450);
-		configUint32 confBufferSize("cage.udp.systemBufferSize", 1024 * 1024);
+		configUint32 logLevel("cage/udp/logLevel", 0);
+		configFloat confSimulatedPacketLoss("cage/udp/simulatedPacketLoss", 0);
+		configUint32 confMtu("cage/udp/maxTransferUnit", 1450);
+		configUint32 confBufferSize("cage/udp/systemBufferSize", 1024 * 1024);
 
 #define UDP_LOG(LEVEL, MSG) { if (logLevel >= (LEVEL)) { CAGE_LOG(severityEnum::Info, "udp", stringizer() + MSG); } }
 

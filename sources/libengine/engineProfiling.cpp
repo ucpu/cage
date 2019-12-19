@@ -31,9 +31,9 @@ namespace cage
 
 	namespace
 	{
-		configSint32 visualizeBuffer("cage.graphics.visualizeBuffer");
-		configBool confRenderMissingMeshes("cage.graphics.renderMissingMeshes");
-		configBool confRenderSkeletonBones("cage.graphics.renderSkeletonBones");
+		configSint32 visualizeBuffer("cage/graphics/visualizeBuffer");
+		configBool confRenderMissingMeshes("cage/graphics/renderMissingMeshes");
+		configBool confRenderSkeletonBones("cage/graphics/renderSkeletonBones");
 
 		class engineProfilingImpl : public engineProfiling
 		{

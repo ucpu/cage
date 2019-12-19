@@ -10,8 +10,8 @@ namespace cage
 {
 	namespace
 	{
-		configUint64 confDefault1("cage.random.seed1", 0);
-		configUint64 confDefault2("cage.random.seed2", 0);
+		configUint64 confDefault1("cage/random/seed1", 0);
+		configUint64 confDefault2("cage/random/seed2", 0);
 
 		randomGenerator initializeDefaultGenerator()
 		{

@@ -1,4 +1,5 @@
 #include <map>
+#include <vector>
 
 #define CAGE_EXPORT
 #include <cage-core/core.h>
@@ -31,18 +32,18 @@ namespace cage
 				float f;
 				double d;
 			};
-			string *s;
+			string *s; // pointer is separate from the union to prevent memory corruption
 
 			variable() : type(configTypeEnum::Undefined), u64(0), s(nullptr) {}
 
-			void set(bool value) { type = configTypeEnum::Bool; b = value; }
-			void set(sint32 value) { type = configTypeEnum::Sint32; s32 = value; }
-			void set(uint32 value) { type = configTypeEnum::Uint32; u32 = value; }
-			void set(sint64 value) { type = configTypeEnum::Sint64; s64 = value; }
-			void set(uint64 value) { type = configTypeEnum::Uint64; u64 = value; }
-			void set(float value) { type = configTypeEnum::Float; f = value; }
-			void set(double value) { type = configTypeEnum::Double; d = value; }
-			void set(const string &value) { if (!s) s = detail::systemArena().createObject<string>(value); else *s = value; type = configTypeEnum::String; }
+			void set(bool value) { setType(configTypeEnum::Bool); b = value; }
+			void set(sint32 value) { setType(configTypeEnum::Sint32); s32 = value; }
+			void set(uint32 value) { setType(configTypeEnum::Uint32); u32 = value; }
+			void set(sint64 value) { setType(configTypeEnum::Sint64); s64 = value; }
+			void set(uint64 value) { setType(configTypeEnum::Uint64); u64 = value; }
+			void set(float value) { setType(configTypeEnum::Float); f = value; }
+			void set(double value) { setType(configTypeEnum::Double); d = value; }
+			void set(const string &value) { if (!s) s = detail::systemArena().createObject<string>(value); else *s = value; setType(configTypeEnum::String); }
 			void setDynamic(const string &value)
 			{
 				if (value.isInteger(false))
@@ -55,6 +56,15 @@ namespace cage
 					set(value.toBool());
 				else
 					set(value);
+			}
+
+		private:
+			void setType(configTypeEnum t)
+			{
+				CAGE_ASSERT(t != configTypeEnum::Undefined);
+				if (t != type && type != configTypeEnum::Undefined)
+					CAGE_LOG(severityEnum::Warning, "config", "changing type of config variable");
+				type = t;
 			}
 		};
 
@@ -69,6 +79,12 @@ namespace cage
 		variable *directVariable(const string &name)
 		{
 			CAGE_ASSERT(!name.empty(), "variable name cannot be empty");
+			if (name.find(".") != m)
+			{
+				CAGE_LOG(severityEnum::Warning, "config", stringizer() + "accessing deprecated config variable '" + name + "'");
+				CAGE_LOG(severityEnum::Note, "config", "new names use slashes instead of dots");
+				detail::debugBreakpoint();
+			}
 			variable *v = directVariables()[name];
 			if (!v)
 			{
@@ -78,15 +94,16 @@ namespace cage
 			return v;
 		}
 
-		bool loadConfigFile(const string &filename, string prefix)
+		void loadConfigFile(const string &filename, const string &prefix)
 		{
 			CAGE_LOG_DEBUG(severityEnum::Info, "config", stringizer() + "trying to load configuration file: '" + filename + "'");
 			if (pathIsFile(filename))
 			{
 				CAGE_LOG(severityEnum::Info, "config", stringizer() + "loading configuration file: '" + filename + "'");
-				if (!prefix.empty())
-					prefix += ".";
-				// the logic of function configLoadIni is replicated here
+				string pref = prefix;
+				if (!pref.empty())
+					pref += "/";
+				// the logic of function configLoadIni is replicated here, but we are inside the mutex already
 				try
 				{
 					holder<configIni> ini = newConfigIni();
@@ -96,7 +113,7 @@ namespace cage
 						for (const string &name : ini->items(section))
 						{
 							string value = ini->getString(section, name);
-							directVariable(prefix + section + "." + name)->setDynamic(value);
+							directVariable(pref + section + "/" + name)->setDynamic(value);
 						}
 					}
 				}
@@ -104,20 +121,21 @@ namespace cage
 				{
 					// do nothing
 				}
-				return true;
 			}
-			return false;
 		}
 
 		int loadGlobalConfiguration()
 		{
-			string en = detail::getConfigAppPrefix();
+			string pr = detail::getConfigAppPrefix();
 			string ep = pathExtractPath(detail::getExecutableFullPath());
 			string wp = pathWorkingDir();
-			if (!loadConfigFile(pathJoin(wp, "cage.ini"), ""))
+			bool same = ep == wp;
+			if (!same)
 				loadConfigFile(pathJoin(ep, "cage.ini"), "");
-			if (!loadConfigFile(pathJoin(wp, en + ".ini"), en))
-				loadConfigFile(pathJoin(ep, en + ".ini"), en);
+			loadConfigFile(pathJoin(wp, "cage.ini"), "");
+			if (!same)
+				loadConfigFile(pathJoin(ep, pr + ".ini"), pr);
+			loadConfigFile(pathJoin(wp, pr + ".ini"), pr);
 			return 0;
 		}
 
@@ -270,23 +288,36 @@ namespace cage
 
 		class configListImpl : public configList
 		{
-			scopeLock<syncMutex> lock;
-
 		public:
-			varsType::iterator it, et;
+			std::vector<string> names;
+			variable *var;
+			uint32 index;
 			bool valid;
 
-			configListImpl() : lock(mut())
+			configListImpl() : var(nullptr), index(0), valid(false)
 			{
-				it = directVariables().begin();
-				et = directVariables().end();
-				valid = it != et;
+				scopeLock<syncMutex> lock(mut());
+				const auto &mp = directVariables();
+				names.reserve(mp.size());
+				for (const auto &it : mp)
+					names.push_back(it.first);
+				valid = !names.empty();
+				if (valid)
+					var = getVar(names[0]);
 			}
 
 			void next()
 			{
 				CAGE_ASSERT(valid, "configList is at invalid location");
-				valid = ++it != et;
+				index++;
+				valid = index < names.size();
+				if (valid)
+				{
+					scopeLock<syncMutex> lock(mut());
+					var = getVar(names[index]);
+				}
+				else
+					var = nullptr;
 			}
 		};
 	}
@@ -327,7 +358,7 @@ namespace cage
 	CAGE_JOIN(config, T)::CAGE_JOIN(config, T)(const string &name, t default_) { scopeLock<syncMutex> lock(mut()); data = getVar(name); variable *v = (variable*)data; if (v->type == configTypeEnum::Undefined) v->set(default_); } \
 	CAGE_JOIN(config, T) &CAGE_JOIN(config, T)::operator = (t value) { ((variable*)data)->set(value); return *this; } \
 	CAGE_JOIN(config, T)::operator t() const { return cast<t>((variable*)data); } \
-	t configList::CAGE_JOIN(get, T)() const { configListImpl *impl = (configListImpl*)this; CAGE_ASSERT(impl->valid, "configList is at invalid location"); return cast<t>(impl->it->second); }
+	t configList::CAGE_JOIN(get, T)() const { configListImpl *impl = (configListImpl*)this; CAGE_ASSERT(impl->valid, "configList is at invalid location"); return cast<t>(impl->var); }
 	GCHL_CONFIG(Bool, bool)
 	GCHL_CONFIG(Sint32, sint32)
 	GCHL_CONFIG(Sint64, sint64)
@@ -343,7 +374,7 @@ namespace cage
 	configString::configString(const string &name, const string &default_) { scopeLock<syncMutex> lock(mut()); data = getVar(name); variable *v = (variable*)data; if (v->type == configTypeEnum::Undefined) v->set(default_); }
 	configString &configString::operator = (const string &value) { ((variable*)data)->set(value); return *this; }
 	configString::operator string() const { return cast<string>((variable*)data); }
-	string configList::getString() const { configListImpl *impl = (configListImpl*)this; CAGE_ASSERT(impl->valid, "configList is at invalid location"); return cast<string>(impl->it->second); }
+	string configList::getString() const { configListImpl *impl = (configListImpl*)this; CAGE_ASSERT(impl->valid, "configList is at invalid location"); return cast<string>(impl->var); }
 
 	bool configList::valid() const
 	{
@@ -355,14 +386,14 @@ namespace cage
 	{
 		configListImpl *impl = (configListImpl*)this;
 		CAGE_ASSERT(impl->valid, "configList is at invalid location");
-		return impl->it->first;
+		return impl->names[impl->index];
 	}
 
 	configTypeEnum configList::type() const
 	{
 		configListImpl *impl = (configListImpl*)this;
 		CAGE_ASSERT(impl->valid, "configList is at invalid location");
-		return impl->it->second->type;
+		return impl->var->type;
 	}
 
 	string configList::typeName() const
@@ -383,36 +414,37 @@ namespace cage
 
 	void configApplyIni(const configIni *ini, const string &prefix)
 	{
-		if (prefix.find('.') != m || prefix.empty())
+		if (prefix.find('/') != m || prefix.empty())
 			CAGE_LOG(severityEnum::Warning, "config", stringizer() + "dangerous config prefix '" + prefix + "'");
+		string pref = prefix.empty() ? "" : prefix + "/";
 		for (const string &section : ini->sections())
 		{
-			if (section.find('.') != m)
+			if (prefix.empty() && section.find('/') != m)
 				CAGE_LOG(severityEnum::Warning, "config", stringizer() + "dangerous config section '" + section + "'");
 			for (const string &name : ini->items(section))
 			{
-				if (name.find('.') != m)
+				if (prefix.empty() && name.find('/') != m)
 					CAGE_LOG(severityEnum::Warning, "config", stringizer() + "dangerous config field '" + name + "'");
 				string value = ini->getString(section, name);
-				configSetDynamic(string() + (prefix.empty() ? "" : prefix + ".") + section + "." + name, value);
+				configSetDynamic(stringizer() + pref + section + "/" + name, value);
 			}
 		}
 	}
 
 	holder<configIni> configGenerateIni(const string &prefix)
 	{
-		if (prefix.find('.') != m || prefix.empty())
+		if (prefix.find('/') != m || prefix.empty())
 			CAGE_LOG(severityEnum::Warning, "config", stringizer() + "dangerous config prefix '" + prefix + "'");
 		holder<configIni> ini = newConfigIni();
 		holder<configList> cnf = newConfigList();
 		while (cnf->valid())
 		{
 			string p = cnf->name().reverse();
-			string n = p.split(".").reverse();
-			string s = p.split(".").reverse();
+			string n = p.split("/").reverse();
+			string s = p.split("/").reverse();
 			p = p.reverse();
 			if (prefix.empty())
-				ini->set(p + "." + s, n, cnf->getString());
+				ini->set(p + "/" + s, n, cnf->getString());
 			else if (p == prefix)
 				ini->set(s, n, cnf->getString());
 			cnf->next();
@@ -443,7 +475,7 @@ namespace cage
 
 	namespace
 	{
-		configBool confAutoSave("cage.config.autoSave", false);
+		configBool confAutoSave("cage/config/autoSave", false);
 
 		struct autoSaveConfig
 		{

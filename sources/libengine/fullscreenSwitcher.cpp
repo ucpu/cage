@@ -19,7 +19,7 @@ namespace cage
 		{
 			if (config.configPrefix.empty())
 				return suffix;
-			return config.configPrefix + "." + suffix;
+			return config.configPrefix + "/" + suffix;
 		}
 
 		class fullscreenSwitcherImpl : public fullscreenSwitcher, public fullscreenSwitcherCreateConfig
@@ -40,16 +40,16 @@ namespace cage
 			configBool confFullscreenEnabled;
 
 			fullscreenSwitcherImpl(const fullscreenSwitcherCreateConfig &config) : window(config.window),
-				confWindowLeft(confName(config, "window.left"), 100),
-				confWindowTop(confName(config, "window.top"), 100),
-				confWindowWidth(confName(config, "window.windowWidth"), 800),
-				confWindowHeight(confName(config, "window.windowHeight"), 600),
-				confWindowMaximized(confName(config, "window.maximized"), true),
-				confFullscreenWidth(confName(config, "window.width"), 0),
-				confFullscreenHeight(confName(config, "window.height"), 0),
-				confFullscreenFrequency(confName(config, "window.refreshRate"), 0),
-				confFullscreenMonitor(confName(config, "window.monitor"), ""),
-				confFullscreenEnabled(confName(config, "window.fullscreen"), config.defaultFullscreen)
+				confWindowLeft(confName(config, "window/left"), 100),
+				confWindowTop(confName(config, "window/top"), 100),
+				confWindowWidth(confName(config, "window/windowWidth"), 800),
+				confWindowHeight(confName(config, "window/windowHeight"), 600),
+				confWindowMaximized(confName(config, "window/maximized"), true),
+				confFullscreenWidth(confName(config, "window/width"), 0),
+				confFullscreenHeight(confName(config, "window/height"), 0),
+				confFullscreenFrequency(confName(config, "window/refreshRate"), 0),
+				confFullscreenMonitor(confName(config, "window/monitor"), ""),
+				confFullscreenEnabled(confName(config, "window/fullscreen"), config.defaultFullscreen)
 			{
 				CAGE_ASSERT(window);
 				listeners.attachAll(window);

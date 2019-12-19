@@ -20,7 +20,7 @@ namespace cage
 {
 	namespace
 	{
-		configBool confDetailedInfo("cage.graphics.logOpenglExtensions", false);
+		configBool confDetailedInfo("cage/graphics/logOpenglExtensions", false);
 	}
 
 	void checkGlError()

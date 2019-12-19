@@ -23,7 +23,7 @@
 
 namespace cage
 {
-	configUint32 logLevel("cage.assets.logLevel", 0);
+	configUint32 logLevel("cage/assets/logLevel", 0);
 #define ASS_LOG(LEVEL, ASS, MSG) { if (logLevel >= (LEVEL)) { CAGE_LOG(severityEnum::Info, "assetManager", stringizer() + "asset '" + (ASS)->textName + "' (" + (ASS)->realName + " / " + (ASS)->aliasName + "): " + MSG); } }
 
 	namespace
