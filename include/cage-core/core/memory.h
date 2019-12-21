@@ -185,6 +185,19 @@ namespace cage
 		using privat::holderBase<pointerRange<T>>::holderBase;
 		typedef typename pointerRange<T>::size_type size_type;
 
+		operator holder<pointerRange<const T>> () &&
+		{
+			holder<pointerRange<const T>> tmp((pointerRange<const T>*)this->data_, this->ptr_, this->deleter_);
+			if (tmp)
+			{
+				this->deleter_.clear();
+				this->ptr_ = nullptr;
+				this->data_ = nullptr;
+				return tmp;
+			}
+			CAGE_THROW_ERROR(exception, "bad cast");
+		}
+
 		T *begin() const { return this->data_->begin(); }
 		T *end() const { return this->data_->end(); }
 		T *data() const { return begin(); }

@@ -114,19 +114,31 @@ void testPointerRange()
 	}
 
 	{
+		CAGE_TESTCASE("empty ranges");
+		functionTakingConstRange({});
+		functionTakingMutableRange({});
+		pointerRange<uint32> empty1 = {};
+		pointerRange<const uint32> empty2 = {};
+		holder<pointerRange<uint32>> empty3 = {};
+		holder<pointerRange<const uint32>> empty4 = {};
+	}
+
+	{
 		CAGE_TESTCASE("implicit const casts");
 		holder<pointerRange<uint32>> range = makeRangeInts();
 		pointerRange<uint32> rng1 = range;
 		pointerRange<const uint32> rng2 = rng1;
-		//pointerRange<uint32> rng3 = rng2; // must not compile
+		//pointerRange<uint32> rng3 = rng2; // must not compile - it would drop the const
 		functionTakingConstRange(rng1);
 		functionTakingMutableRange(rng1);
 		functionTakingConstRange(rng2);
-		//functionTakingMutableRange(rng2); // must not compile
+		//functionTakingMutableRange(rng2); // must not compile - it would drop the const
 		functionTakingConstRange(range);
 		functionTakingMutableRange(range);
 		functionTakingConstRange(makeRangeInts());
 		functionTakingMutableRange(makeRangeInts());
+		holder<pointerRange<const uint32>> crange = templates::move(range);
+		CAGE_TEST(crange->size() == makeRangeInts()->size());
 	}
 
 	{
