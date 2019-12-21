@@ -22,10 +22,14 @@ matrix:
   include:
     - env: COMPILER=g++-8 COMPILERC=gcc-8 CONFIG=relwithdebinfo
     - env: COMPILER=g++-8 COMPILERC=gcc-8 CONFIG=debug
+    - env: COMPILER=g++-8 COMPILERC=gcc-8 CONFIG=relwithdebinfo
+      arch: x86
     - env: COMPILER=g++-7 COMPILERC=gcc-7 CONFIG=relwithdebinfo
     - env: COMPILER=g++-7 COMPILERC=gcc-7 CONFIG=debug
     - env: COMPILER=g++-6 COMPILERC=gcc-6 CONFIG=relwithdebinfo
     - env: COMPILER=g++-6 COMPILERC=gcc-6 CONFIG=debug
+    - env: COMPILER=g++-6 COMPILERC=gcc-6 CONFIG=relwithdebinfo
+      arch: x86
     - env: COMPILER=clang++ COMPILERC=clang CONFIG=relwithdebinfo
     - env: COMPILER=clang++ COMPILERC=clang CONFIG=debug
     - os: windows

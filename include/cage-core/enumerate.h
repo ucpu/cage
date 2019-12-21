@@ -16,7 +16,7 @@ namespace cage
 					It it;
 					Counter cnt;
 
-					pair(It it, Counter cnt) : it(it), cnt(cnt)
+					pair(const It &it, const Counter &cnt) : it(it), cnt(cnt)
 					{}
 
 					auto operator * () const
@@ -24,15 +24,13 @@ namespace cage
 						return *it;
 					}
 
-					auto operator -> () const
+					const auto &operator -> () const
 					{
 						return it;
 					}
 				};
 
-				pair p;
-
-				iterator(It it, Counter cnt) : p(it, cnt)
+				iterator(const It &it, const Counter &cnt) : p(it, cnt)
 				{}
 
 				template<class U>
@@ -66,12 +64,15 @@ namespace cage
 				{
 					return p;
 				}
+
+			private:
+				pair p;
 			};
 
-			auto begin() { return iterator<It1>(it1, start); }
-			auto end() { return iterator<It2>(it2, start); }
+			auto begin() const { return iterator<It1>(it1, start); }
+			auto end() const { return iterator<It2>(it2, start); }
 
-			enumerateStruct(Range &&range, It1 it1, It2 it2, Counter start) : Range(templates::move(range)), it1(it1), it2(it2), start(start)
+			enumerateStruct(Range &&range, const It1 &it1, const It2 &it2, const Counter &start) : Range(templates::move(range)), it1(it1), it2(it2), start(start)
 			{}
 
 		private:
@@ -82,9 +83,9 @@ namespace cage
 
 		// generic
 		template<class Range, class It1, class It2, class Counter>
-		inline auto enumerate(Range &&range, It1 it1, It2 it2, Counter start)
+		inline auto enumerate(Range &&range, const It1 &it1, const It2 &it2, const Counter &start)
 		{
-			return privat::enumerateStruct<Range, It1, It2, Counter>(templates::move(range), it1, it2, start);
+			return enumerateStruct<Range, It1, It2, Counter>(templates::move(range), it1, it2, start);
 		}
 	}
 
@@ -125,7 +126,7 @@ namespace cage
 	inline auto enumerate(T (&range)[N])
 	{
 		struct none {};
-		return privat::enumerate(none(), range, range + N, Counter());
+		return privat::enumerate(none(), range + 0, range + N, Counter());
 	}
 }
 
