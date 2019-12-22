@@ -35,40 +35,40 @@ void testLruCache()
 
 	{
 		CAGE_TESTCASE("basics");
-		lruCache<uint32, uint32, 3> cache;
+		lruCache<uint32, uint32> cache(3);
 		CAGE_TEST(cache.find(13) == nullptr);
 		cache.set(13, 130);
 		CAGE_TEST(cache.find(13));
 		CAGE_TEST(*cache.find(13) == 130);
-		cache.purge();
+		cache.clear();
 		CAGE_TEST(cache.find(13) == nullptr);
 	}
 
 	{
 		CAGE_TESTCASE("with custom types");
-		lruCache<key, value, 3, hasher> cache;
+		lruCache<key, value, hasher> cache(3);
 		CAGE_TEST(cache.find(13) == nullptr);
 		cache.set(13, 130);
 		CAGE_TEST(cache.find(13));
 		CAGE_TEST(cache.find(13)->v == 130);
-		cache.purge();
+		cache.clear();
 		CAGE_TEST(cache.find(13) == nullptr);
 	}
 
 	{
 		CAGE_TESTCASE("with holder");
-		lruCache<uint32, holder<uint32>, 3> cache;
+		lruCache<uint32, holder<uint32>> cache(3);
 		CAGE_TEST(cache.find(13) == nullptr);
 		cache.set(13, detail::systemArena().createHolder<uint32>(13));
 		CAGE_TEST(cache.find(13));
 		CAGE_TEST(**cache.find(13) == 13);
-		cache.purge();
+		cache.clear();
 		CAGE_TEST(cache.find(13) == nullptr);
 	}
 
 	{
 		CAGE_TESTCASE("deleting in order");
-		lruCache<uint32, uint32, 3> cache;
+		lruCache<uint32, uint32> cache(3);
 		cache.set(1, 1);
 		cache.set(2, 2);
 		cache.set(3, 3);
@@ -93,7 +93,7 @@ void testLruCache()
 
 	{
 		CAGE_TESTCASE("deleting in reverse order");
-		lruCache<uint32, uint32, 3> cache;
+		lruCache<uint32, uint32> cache(3);
 		cache.set(1, 1);
 		cache.set(2, 2);
 		cache.set(3, 3);
@@ -114,5 +114,45 @@ void testLruCache()
 		CAGE_TEST(!cache.find(3));
 		CAGE_TEST(cache.find(2));
 		CAGE_TEST(cache.find(1));
+	}
+
+	{
+		CAGE_TESTCASE("erase");
+		lruCache<uint32, uint32> cache(3);
+		cache.set(1, 1);
+		cache.set(2, 2);
+		cache.set(3, 3);
+		CAGE_TEST(cache.find(1));
+		CAGE_TEST(cache.find(2));
+		CAGE_TEST(cache.find(3));
+		CAGE_TEST(!cache.find(4));
+		CAGE_TEST(!cache.find(5));
+		cache.erase(2);
+		cache.set(4, 4);
+		CAGE_TEST(cache.find(1));
+		CAGE_TEST(!cache.find(2));
+		CAGE_TEST(cache.find(3));
+		CAGE_TEST(cache.find(4));
+		CAGE_TEST(!cache.find(5));
+		cache.erase(4);
+		CAGE_TEST(cache.find(1));
+		CAGE_TEST(!cache.find(2));
+		CAGE_TEST(cache.find(3));
+		CAGE_TEST(!cache.find(4));
+		CAGE_TEST(!cache.find(5));
+		cache.erase(1);
+		cache.erase(3);
+		cache.erase(13); // test erasing non-existent item
+		CAGE_TEST(!cache.find(1));
+		CAGE_TEST(!cache.find(2));
+		CAGE_TEST(!cache.find(3));
+		CAGE_TEST(!cache.find(4));
+		CAGE_TEST(!cache.find(5));
+		cache.set(5, 5);
+		CAGE_TEST(!cache.find(1));
+		CAGE_TEST(!cache.find(2));
+		CAGE_TEST(!cache.find(3));
+		CAGE_TEST(!cache.find(4));
+		CAGE_TEST(cache.find(5));
 	}
 }

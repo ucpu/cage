@@ -6,12 +6,10 @@
 
 namespace cage
 {
-	template<class Key, class Value, uint32 Capacity, class Hasher = std::hash<Key>>
-	struct lruCache
+	template<class Key, class Value, class Hasher = std::hash<Key>>
+	struct lruCache : private immovable
 	{
 	private:
-		static_assert(Capacity >= 3, "minimum capacity");
-
 		struct Data
 		{
 			Key key;
@@ -24,11 +22,25 @@ namespace cage
 		std::vector<Data> data;
 		std::unordered_map<Key, uint32, Hasher> indices;
 		uint32 head;
+		const uint32 capacity;
+
+		void move(uint32 which, uint32 where) // moves _which_ before the _where_
+		{
+			Data &d = data[which];
+			Data &h = data[where];
+			data[d.p].n = d.n;
+			data[d.n].p = d.p;
+			d.p = h.p;
+			d.n = where;
+			data[h.p].n = which;
+			h.p = which;
+		}
 
 	public:
-		lruCache() : head(0)
+		explicit lruCache(uint32 capacity) : head(0), capacity(capacity)
 		{
-			purge();
+			CAGE_ASSERT(capacity >= 3);
+			clear();
 		}
 
 		const Value *find(const Key &k)
@@ -42,15 +54,7 @@ namespace cage
 			if (it->second == head)
 				head = d.n;
 			else
-			{
-				Data &h = data[head];
-				data[d.p].n = d.n;
-				data[d.n].p = d.p;
-				d.p = h.p;
-				d.n = head;
-				data[h.p].n = it->second;
-				h.p = it->second;
-			}
+				move(it->second, head);
 			return &d.value;
 		}
 
@@ -82,26 +86,44 @@ namespace cage
 			return &h.value;
 		}
 
-		void purge()
+		void erase(const Key &k)
+		{
+			auto it = indices.find(k);
+			if (it == indices.end())
+				return;
+			Data &d = data[it->second];
+			CAGE_ASSERT(d.valid);
+			d.key = Key();
+			d.value = Value();
+			d.valid = false;
+			if (it->second != head)
+			{
+				move(it->second, head);
+				head = it->second;
+			}
+			indices.erase(it);
+		}
+
+		void clear()
 		{
 			indices.clear();
-			indices.reserve(Capacity);
+			indices.reserve(capacity);
 			data.clear();
-			data.resize(Capacity);
+			data.resize(capacity);
 			{
 				Data &d = data[0];
-				d.p = Capacity - 1;
+				d.p = capacity - 1;
 				d.n = 1;
 			}
-			for (uint32 i = 1; i < Capacity - 1; i++)
+			for (uint32 i = 1; i < capacity - 1; i++)
 			{
 				Data &d = data[i];
 				d.p = i - 1;
 				d.n = i + 1;
 			}
 			{
-				Data &d = data[Capacity - 1];
-				d.p = Capacity - 2;
+				Data &d = data[capacity - 1];
+				d.p = capacity - 2;
 				d.n = 0;
 			}
 			head = 0;
