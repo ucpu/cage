@@ -2,12 +2,15 @@
 #include <cage-core/network.h>
 #include <cage-core/concurrent.h>
 
-void senderThread()
+namespace
 {
-	holder<tcpConnection> sender = newTcpConnection("localhost", 4241);
-	sender->writeLine("ahoj");
-	sender->writeLine("nazdar");
-	sender->writeLine("cau");
+	void senderThread()
+	{
+		holder<tcpConnection> sender = newTcpConnection("localhost", 4241);
+		sender->writeLine("ahoj");
+		sender->writeLine("nazdar");
+		sender->writeLine("cau");
+	}
 }
 
 void testTcp()

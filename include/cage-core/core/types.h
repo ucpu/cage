@@ -334,6 +334,11 @@ namespace cage
 	struct processCreateConfig;
 	class processHandle;
 	struct randomGenerator;
+	enum class scheduleTypeEnum : uint32;
+	struct scheduleCreateConfig;
+	class schedule;
+	struct schedulerCreateConfig;
+	class scheduler;
 	template<class T> struct scopeLock;
 	struct serializer;
 	struct deserializer;
