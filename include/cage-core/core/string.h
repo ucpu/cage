@@ -455,7 +455,7 @@ namespace cage
 		{ \
 			return str + stringBase<20>(other); \
 		}
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, float, double));
+		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, float, double, bool));
 #undef GCHL_GENERATE
 
 		template<uint32 N, class T>

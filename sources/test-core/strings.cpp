@@ -711,6 +711,20 @@ namespace
 	{
 		CAGE_TESTCASE("stringizer");
 		{
+			CAGE_TESTCASE("conversions");
+			uint8  ui8 = 1;
+			uint16 ui16 = 2;
+			uint32 ui32 = 3;
+			uint64 ui64 = 4;
+			sint8  si8 = 5;
+			sint16 si16 = 6;
+			sint32 si32 = 7;
+			sint64 si64 = 8;
+			bool bt = true;
+			bool bf = false;
+			CAGE_TEST(string(stringizer() + "begin" + ui8 + ui16 + ui32 + ui64 + "s" + si8 + si16 + si32 + si64 + "b" + bt + bf + "end") == "begin1234s5678btruefalseend");
+		}
+		{
 			CAGE_TESTCASE("r-value stringizer");
 			{
 				string str = stringizer() + 123 + "abc" + 456;

@@ -38,8 +38,10 @@ matrix:
       env: CONFIG=debug ARCH="x64"
     - os: windows
       env: CONFIG=relwithdebinfo ARCH="Win32"
+      arch: x86
     - os: windows
       env: CONFIG=debug ARCH="Win32"
+      arch: x86
     - os: osx
       compiler: clang
       env: CONFIG=relwithdebinfo
