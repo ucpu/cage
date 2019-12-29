@@ -1,6 +1,6 @@
 namespace cage
 {
-	struct CAGE_API controlThreadClass
+	struct CAGE_API EngineControlThread
 	{
 		EventDispatcher<bool()> initialize;
 		EventDispatcher<bool()> finalize;
@@ -8,71 +8,71 @@ namespace cage
 		EventDispatcher<bool()> assets;
 		uint64 timePerTick;
 		static const uint32 threadIndex = 0;
-		controlThreadClass();
+		EngineControlThread();
 	};
-	CAGE_API controlThreadClass &controlThread();
+	CAGE_API EngineControlThread &controlThread();
 
-	struct CAGE_API graphicsDispatchThreadClass
+	struct CAGE_API EngineGraphicsDispatchThread
 	{
 		EventDispatcher<bool()> initialize;
 		EventDispatcher<bool()> finalize;
 		EventDispatcher<bool()> render;
 		EventDispatcher<bool()> swap;
 		static const uint32 threadIndex = 1;
-		graphicsDispatchThreadClass();
+		EngineGraphicsDispatchThread();
 	};
-	CAGE_API graphicsDispatchThreadClass &graphicsDispatchThread();
+	CAGE_API EngineGraphicsDispatchThread &graphicsDispatchThread();
 
-	struct CAGE_API graphicsPrepareThreadClass
+	struct CAGE_API EngineGraphicsPrepareThread
 	{
 		EventDispatcher<bool()> initialize;
 		EventDispatcher<bool()> finalize;
 		EventDispatcher<bool()> prepare;
 		StereoModeEnum stereoMode;
 		static const uint32 threadIndex = 3;
-		graphicsPrepareThreadClass();
+		EngineGraphicsPrepareThread();
 	};
-	CAGE_API graphicsPrepareThreadClass &graphicsPrepareThread();
+	CAGE_API EngineGraphicsPrepareThread &graphicsPrepareThread();
 
-	struct CAGE_API soundThreadClass
+	struct CAGE_API EngineSoundThread
 	{
 		EventDispatcher<bool()> initialize;
 		EventDispatcher<bool()> finalize;
 		EventDispatcher<bool()> sound;
 		uint64 timePerTick;
 		static const uint32 threadIndex = 4;
-		soundThreadClass();
+		EngineSoundThread();
 	};
-	CAGE_API soundThreadClass &soundThread();
+	CAGE_API EngineSoundThread &soundThread();
 
-	struct CAGE_API engineCreateConfig
+	struct CAGE_API EngineCreateConfig
 	{
 		uintPtr graphicsEmitMemory;
 		uintPtr graphicsDispatchMemory;
 		uintPtr soundEmitMemory;
 		EntityManagerCreateConfig *entities;
 		AssetManagerCreateConfig *assets;
-		guiManagerCreateConfig *gui;
-		soundContextCreateConfig *soundContext;
-		speakerOutputCreateConfig *speaker;
-		engineCreateConfig();
+		GuiCreateConfig *gui;
+		SoundContextCreateConfig *soundContext;
+		SpeakerCreateConfig *speaker;
+		EngineCreateConfig();
 	};
 
-	CAGE_API void engineInitialize(const engineCreateConfig &config);
+	CAGE_API void engineInitialize(const EngineCreateConfig &config);
 	CAGE_API void engineStart();
 	CAGE_API void engineStop();
 	CAGE_API void engineFinalize();
 
-	CAGE_API soundContext *sound();
+	CAGE_API SoundContext *sound();
 	CAGE_API AssetManager *assets();
 	CAGE_API EntityManager *entities();
-	CAGE_API windowHandle *window();
-	CAGE_API guiManager *gui();
-	CAGE_API speakerOutput *speaker();
-	CAGE_API mixingBus *masterMixer();
-	CAGE_API mixingBus *musicMixer();
-	CAGE_API mixingBus *effectsMixer();
-	CAGE_API mixingBus *guiMixer();
+	CAGE_API Window *window();
+	CAGE_API Gui *gui();
+	CAGE_API Speaker *speaker();
+	CAGE_API MixingBus *masterMixer();
+	CAGE_API MixingBus *musicMixer();
+	CAGE_API MixingBus *effectsMixer();
+	CAGE_API MixingBus *guiMixer();
 	CAGE_API uint64 currentControlTime();
 }
 

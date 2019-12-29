@@ -1,73 +1,79 @@
 namespace cage
 {
-	struct CAGE_API parentComponent
+	struct CAGE_API ParentComponent
 	{
 		uint32 parent;
 		sint32 order;
-		parentComponent();
+		ParentComponent();
 	};
 
-	struct CAGE_API imageComponent
+	struct CAGE_API ImageComponent
 	{
 		uint64 animationStart; // -1 will be replaced by current time
 		vec2 textureUvOffset;
 		vec2 textureUvSize;
 		uint32 textureName;
-		imageComponent();
+		ImageComponent();
 	};
 
-	enum class imageModeEnum : uint32
+	enum class ImageModeEnum : uint32
 	{
 		Stretch,
 		// todo
 	};
 
-	struct CAGE_API imageFormatComponent
+	struct CAGE_API ImageFormatComponent
 	{
 		real animationSpeed;
 		real animationOffset;
-		imageModeEnum mode;
-		imageFormatComponent();
+		ImageModeEnum mode;
+		ImageFormatComponent();
 	};
 
-	struct CAGE_API textComponent
+	struct CAGE_API TextComponent
 	{
 		string value; // list of parameters separated by '|' when formatted, otherwise the string as is
 		uint32 assetName;
 		uint32 textName;
-		textComponent();
+		TextComponent();
 	};
 
-	struct CAGE_API textFormatComponent
+	struct CAGE_API TextFormatComponent
 	{
 		vec3 color;
 		uint32 font;
 		real size;
 		real lineSpacing;
-		textAlignEnum align;
-		textFormatComponent();
+		TextAlignEnum align;
+		TextFormatComponent();
 	};
 
-	struct CAGE_API selectionComponent
+	struct CAGE_API SelectionComponent
 	{
 		uint32 start; // unicode characters (not bytes)
 		uint32 length; // unicode characters (not bytes)
-		selectionComponent();
+		SelectionComponent();
 	};
 
-	typedef textComponent tooltipComponent;
+	struct CAGE_API TooltipComponent
+	{
+		string value; // list of parameters separated by '|' when formatted, otherwise the string as is
+		uint32 assetName;
+		uint32 textName;
+		TooltipComponent();
+	};
 
-	struct CAGE_API widgetStateComponent
+	struct CAGE_API WidgetStateComponent
 	{
 		uint32 skinIndex; // -1 = inherit
 		bool disabled;
-		widgetStateComponent();
+		WidgetStateComponent();
 	};
 
-	struct CAGE_API selectedItemComponent
+	struct CAGE_API SelectedItemComponent
 	{};
 
-	enum class overflowModeEnum : uint32
+	enum class OverflowModeEnum : uint32
 	{
 		Auto, // show scrollbar when needed only
 		Always, // always show scrollbar
@@ -75,36 +81,36 @@ namespace cage
 		// overflowing content is hidden irrespective of this setting
 	};
 
-	struct CAGE_API scrollbarsComponent
+	struct CAGE_API ScrollbarsComponent
 	{
 		vec2 alignment; // 0.5 is center
 		vec2 scroll;
-		overflowModeEnum overflow[2];
-		scrollbarsComponent();
+		OverflowModeEnum overflow[2];
+		ScrollbarsComponent();
 	};
 
-	struct CAGE_API explicitSizeComponent
+	struct CAGE_API ExplicitSizeComponent
 	{
 		vec2 size;
-		explicitSizeComponent();
+		ExplicitSizeComponent();
 	};
 
-	struct CAGE_API eventComponent
+	struct CAGE_API EventComponent
 	{
 		Delegate<bool(uint32)> event;
-		eventComponent();
+		EventComponent();
 	};
 
-#define GCHL_GUI_COMMON_COMPONENTS parent, image, imageFormat, text, textFormat, selection, tooltip, widgetState, selectedItem, scrollbars, explicitSize, event
+#define GCHL_GUI_COMMON_COMPONENTS Parent, Image, ImageFormat, Text, TextFormat, Selection, Tooltip, WidgetState, SelectedItem, Scrollbars, ExplicitSize, Event
 
 	namespace privat
 	{
-		struct CAGE_API guiGeneralComponents
+		struct CAGE_API GuiGeneralComponents
 		{
 #define GCHL_GENERATE(T) EntityComponent *T;
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_COMMON_COMPONENTS));
 #undef GCHL_GENERATE
-			guiGeneralComponents(EntityManager *ents);
+			GuiGeneralComponents(EntityManager *ents);
 		};
 	}
 }

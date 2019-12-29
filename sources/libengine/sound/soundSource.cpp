@@ -26,10 +26,10 @@ namespace cage
 			dtNoise,
 		};
 
-		class soundSourceImpl : public soundSource, public busInterfaceStruct
+		class soundSourceImpl : public SoundSource, public busInterfaceStruct
 		{
 		public:
-			std::set<mixingBus*, std::less<mixingBus*>, MemoryArenaStd<mixingBus*>> outputs;
+			std::set<MixingBus*, std::less<MixingBus*>, MemoryArenaStd<MixingBus*>> outputs;
 			std::vector<float> rawData;
 			std::vector<float> temporaryData1;
 			std::vector<float> temporaryData2;
@@ -44,8 +44,8 @@ namespace cage
 
 			soundPrivat::vorbisDataStruct vorbisData;
 
-			soundSourceImpl(soundContext *context) :
-				busInterfaceStruct(Delegate<void(mixingBus*)>().bind<soundSourceImpl, &soundSourceImpl::busDestroyed>(this), Delegate<void(const soundDataBufferStruct&)>().bind<soundSourceImpl, &soundSourceImpl::execute>(this)),
+			soundSourceImpl(SoundContext *context) :
+				busInterfaceStruct(Delegate<void(MixingBus*)>().bind<soundSourceImpl, &soundSourceImpl::busDestroyed>(this), Delegate<void(const SoundDataBuffer&)>().bind<soundSourceImpl, &soundSourceImpl::execute>(this)),
 				outputs(linksArenaFromContext(context)),
 				channels(0), frames(0), sampleRate(0), pitch(0), dataType(dtNone), repeatBeforeStart(false), repeatAfterEnd(false)
 			{}
@@ -87,7 +87,7 @@ namespace cage
 				}
 			}
 
-			void readCheckMargins(const soundDataBufferStruct &buf)
+			void readCheckMargins(const SoundDataBuffer &buf)
 			{
 				// prepare a buffer
 				const uint32 requestFrames = buf.frames * sampleRate / buf.sampleRate + 1;
@@ -142,7 +142,7 @@ namespace cage
 					buf.buffer[i] += temporaryData3[i];
 			}
 
-			void synthesizeTone(const soundDataBufferStruct &buf)
+			void synthesizeTone(const SoundDataBuffer &buf)
 			{
 				static const double twoPi = 3.14159265358979323846264338327950288419716939937510 * 2;
 				double mul = pitch * twoPi;
@@ -156,7 +156,7 @@ namespace cage
 				}
 			}
 
-			void execute(const soundDataBufferStruct &buf)
+			void execute(const SoundDataBuffer &buf)
 			{
 				switch (dataType)
 				{
@@ -182,7 +182,7 @@ namespace cage
 				}
 			}
 
-			void busDestroyed(mixingBus *bus)
+			void busDestroyed(MixingBus *bus)
 			{
 				CAGE_ASSERT(outputs.find(bus) != outputs.end());
 				outputs.erase(bus);
@@ -203,20 +203,20 @@ namespace cage
 		};
 	}
 
-	void soundSource::setDebugName(const string &name)
+	void SoundSource::setDebugName(const string &name)
 	{
 #ifdef CAGE_DEBUG
 		debugName = name;
 #endif // CAGE_DEBUG
 	}
 
-	void soundSource::setDataNone()
+	void SoundSource::setDataNone()
 	{
 		soundSourceImpl *impl = (soundSourceImpl*)this;
 		impl->clearAllBuffers();
 	}
 
-	void soundSource::setDataRaw(uint32 channels, uint32 frames, uint32 sampleRate, const float *data)
+	void SoundSource::setDataRaw(uint32 channels, uint32 frames, uint32 sampleRate, const float *data)
 	{
 		CAGE_ASSERT(frames > 0);
 		CAGE_ASSERT(channels > 0);
@@ -232,7 +232,7 @@ namespace cage
 		detail::memcpy(&impl->rawData[0], data, channels * frames * sizeof(float));
 	}
 
-	void soundSource::setDataVorbis(uintPtr size, const void *buffer)
+	void SoundSource::setDataVorbis(uintPtr size, const void *buffer)
 	{
 		CAGE_ASSERT(size > 0);
 		CAGE_ASSERT(buffer != nullptr);
@@ -243,7 +243,7 @@ namespace cage
 		impl->vorbisData.decode(impl->channels, impl->frames, impl->sampleRate, nullptr);
 	}
 
-	void soundSource::setDataTone(uint32 pitch)
+	void SoundSource::setDataTone(uint32 pitch)
 	{
 		CAGE_ASSERT(pitch > 0);
 		soundSourceImpl *impl = (soundSourceImpl*)this;
@@ -252,54 +252,54 @@ namespace cage
 		impl->pitch = pitch;
 	}
 
-	void soundSource::setDataNoise()
+	void SoundSource::setDataNoise()
 	{
 		soundSourceImpl *impl = (soundSourceImpl*)this;
 		impl->clearAllBuffers();
 		impl->dataType = dtNoise;
 	}
 
-	void soundSource::setDataRepeat(bool repeatBeforeStart, bool repeatAfterEnd)
+	void SoundSource::setDataRepeat(bool repeatBeforeStart, bool repeatAfterEnd)
 	{
 		soundSourceImpl *impl = (soundSourceImpl*)this;
 		impl->repeatBeforeStart = repeatBeforeStart;
 		impl->repeatAfterEnd = repeatAfterEnd;
 	}
 
-	void soundSource::addOutput(mixingBus *bus)
+	void SoundSource::addOutput(MixingBus *bus)
 	{
 		soundSourceImpl *impl = (soundSourceImpl*)this;
 		busAddInput(bus, impl);
 		impl->outputs.insert(bus);
 	}
 
-	void soundSource::removeOutput(mixingBus *bus)
+	void SoundSource::removeOutput(MixingBus *bus)
 	{
 		soundSourceImpl *impl = (soundSourceImpl*)this;
 		busRemoveInput(bus, impl);
 		impl->outputs.erase(bus);
 	}
 
-	uint64 soundSource::getDuration() const
+	uint64 SoundSource::getDuration() const
 	{
 		soundSourceImpl *impl = (soundSourceImpl*)this;
 		return (uint64)1000000 * impl->frames / impl->sampleRate;
 	}
 
-	uint32 soundSource::getChannels() const
+	uint32 SoundSource::getChannels() const
 	{
 		soundSourceImpl *impl = (soundSourceImpl*)this;
 		return impl->channels;
 	}
 
-	uint32 soundSource::getSampleRate() const
+	uint32 SoundSource::getSampleRate() const
 	{
 		soundSourceImpl *impl = (soundSourceImpl*)this;
 		return impl->sampleRate;
 	}
 
-	Holder<soundSource> newSoundSource(soundContext *context)
+	Holder<SoundSource> newSoundSource(SoundContext *context)
 	{
-		return detail::systemArena().createImpl<soundSource, soundSourceImpl>(context);
+		return detail::systemArena().createImpl<SoundSource, soundSourceImpl>(context);
 	}
 }

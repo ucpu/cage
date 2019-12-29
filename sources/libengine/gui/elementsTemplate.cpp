@@ -47,7 +47,7 @@ namespace cage
 					color);
 			}
 
-			void renderRectangle(Image *png, const guiSkinElementLayout::textureUvOiStruct &rects, const vec3 &outerBorder, const vec3 &innerBorder, const vec3 &content)
+			void renderRectangle(Image *png, const GuiSkinElementLayout::TextureUvOi &rects, const vec3 &outerBorder, const vec3 &innerBorder, const vec3 &content)
 			{
 				renderRectangle(png, rects.outer, outerBorder);
 				renderRectangle(png, interpolate(rects.outer, rects.inner, 0.5), innerBorder);
@@ -55,13 +55,13 @@ namespace cage
 			}
 		}
 
-		Holder<Image> guiSkinTemplateExport(const guiSkinConfig &skin, uint32 resolution)
+		Holder<Image> guiSkinTemplateExport(const GuiSkinConfig &skin, uint32 resolution)
 		{
 			Holder<Image> png = newImage();
 			png->empty(resolution, resolution, 4);
-			for (uint32 type = 0; type < (uint32)elementTypeEnum::TotalElements; type++)
+			for (uint32 type = 0; type < (uint32)ElementTypeEnum::TotalElements; type++)
 			{
-				const guiSkinElementLayout::textureUvStruct &element = skin.layouts[type].textureUv;
+				const GuiSkinElementLayout::TextureUv &element = skin.layouts[type].textureUv;
 				renderRectangle(png.get(), element.data[3], vec3(.4, .4, .4), vec3(.5, .5, .5), vec3(.6, .6, .6));
 				renderRectangle(png.get(), element.data[2], vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 1));
 				renderRectangle(png.get(), element.data[1], vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 0.66));

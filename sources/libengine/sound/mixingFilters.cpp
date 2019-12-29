@@ -11,16 +11,16 @@ namespace cage
 {
 	namespace
 	{
-		class volumeFilterImpl : public volumeFilter
+		class volumeFilterImpl : public VolumeFilter
 		{
 		public:
-			volumeFilterImpl(soundContext *context)
+			volumeFilterImpl(SoundContext *context)
 			{
 				filter = newMixingFilter(context);
 				filter->execute.bind<volumeFilterImpl, &volumeFilterImpl::exe>(this);
 			}
 
-			void exe(const mixingFilterApi &api)
+			void exe(const MixingFilterApi &api)
 			{
 				CAGE_ASSERT(volume >= 0, volume.value);
 				if (volume < 1e-7)
@@ -32,8 +32,8 @@ namespace cage
 		};
 	}
 
-	Holder<volumeFilter> newVolumeFilter(soundContext *context)
+	Holder<VolumeFilter> newVolumeFilter(SoundContext *context)
 	{
-		return detail::systemArena().createImpl<volumeFilter, volumeFilterImpl>(context);
+		return detail::systemArena().createImpl<VolumeFilter, volumeFilterImpl>(context);
 	}
 }

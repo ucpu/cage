@@ -47,7 +47,7 @@ void processSkeleton()
 	mat4 axesScale = mat4(axesScaleMatrix());
 	mat4 axesScaleInv = inverse(axesScale);
 
-	skeletonRigHeader s;
+	SkeletonRigHeader s;
 	s.globalInverse = inverse(conv(scene->mRootNode->mTransformation)) * axesScale;
 	s.bonesCount = skeleton->bonesCount();
 

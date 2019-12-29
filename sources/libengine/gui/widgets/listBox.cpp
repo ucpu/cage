@@ -41,7 +41,7 @@ namespace cage
 		};
 	}
 
-	void listBoxCreate(hierarchyItemStruct *item)
+	void ListBoxCreate(hierarchyItemStruct *item)
 	{
 		CAGE_ASSERT(!item->item);
 		item->item = item->impl->itemsMemory.createObject<listBoxImpl>(item);

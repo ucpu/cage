@@ -3,26 +3,26 @@
 
 namespace cage
 {
-	class CAGE_API fullscreenSwitcher : private Immovable
+	class CAGE_API FullscreenSwitcher : private Immovable
 	{
 	public:
 		uint32 keyToggleFullscreen;
-		modifiersFlags keyModifiers;
+		ModifiersFlags keyModifiers;
 
-		fullscreenSwitcher();
+		FullscreenSwitcher();
 		void update(bool fullscreen);
 	};
 
-	struct CAGE_API fullscreenSwitcherCreateConfig
+	struct CAGE_API FullscreenSwitcherCreateConfig
 	{
 		string configPrefix;
-		windowHandle *window;
+		Window *window;
 		bool defaultFullscreen;
 
-		fullscreenSwitcherCreateConfig(bool defaultFullscreen = true);
+		FullscreenSwitcherCreateConfig(bool defaultFullscreen = true);
 	};
 
-	CAGE_API Holder<fullscreenSwitcher> newFullscreenSwitcher(const fullscreenSwitcherCreateConfig &config);
+	CAGE_API Holder<FullscreenSwitcher> newFullscreenSwitcher(const FullscreenSwitcherCreateConfig &config);
 }
 
 #endif // guard_fullscreen_switcher_h_asg5rt44j4kj456fd

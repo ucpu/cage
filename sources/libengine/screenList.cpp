@@ -21,7 +21,7 @@ namespace cage
 			return a.width == b.width && a.height == b.height && a.refreshRate == b.refreshRate;
 		}
 
-		class screenDeviceImpl : public screenDevice
+		class screenDeviceImpl : public ScreenDevice
 		{
 		public:
 			screenDeviceImpl(GLFWmonitor *m) : name_(glfwGetMonitorName(m)), id_(getMonitorId(m)), current_(cage::m)
@@ -32,7 +32,7 @@ namespace cage
 				modes.reserve(cnt);
 				for (uint32 i = 0; i < numeric_cast<uint32>(cnt); i++)
 				{
-					screenMode m;
+					ScreenMode m;
 					m.frequency = ms[i].refreshRate;
 					m.resolution.x = ms[i].width;
 					m.resolution.y = ms[i].height;
@@ -44,11 +44,11 @@ namespace cage
 
 			const string name_;
 			const string id_;
-			std::vector<screenMode> modes;
+			std::vector<ScreenMode> modes;
 			uint32 current_;
 		};
 
-		class screenListImpl : public screenList
+		class screenListImpl : public ScreenList
 		{
 		public:
 			screenListImpl() : primary(m)
@@ -71,75 +71,75 @@ namespace cage
 		};
 	}
 
-	screenMode::screenMode() : frequency(0)
+	ScreenMode::ScreenMode() : frequency(0)
 	{}
 
-	uint32 screenDevice::modesCount() const
+	uint32 ScreenDevice::modesCount() const
 	{
 		screenDeviceImpl *impl = (screenDeviceImpl*)this;
 		return numeric_cast<uint32>(impl->modes.size());
 	}
 
-	uint32 screenDevice::currentMode() const
+	uint32 ScreenDevice::currentMode() const
 	{
 		screenDeviceImpl *impl = (screenDeviceImpl*)this;
 		return impl->current_;
 	}
 
-	const screenMode &screenDevice::mode(uint32 index) const
+	const ScreenMode &ScreenDevice::mode(uint32 index) const
 	{
 		screenDeviceImpl *impl = (screenDeviceImpl*)this;
 		return impl->modes[index];
 	}
 
-	PointerRange<const screenMode> screenDevice::modes() const
+	PointerRange<const ScreenMode> ScreenDevice::modes() const
 	{
 		screenDeviceImpl *impl = (screenDeviceImpl*)this;
 		return impl->modes;
 	}
 
-	string screenDevice::name() const
+	string ScreenDevice::name() const
 	{
 		screenDeviceImpl *impl = (screenDeviceImpl*)this;
 		return impl->name_;
 	}
 
-	string screenDevice::id() const
+	string ScreenDevice::id() const
 	{
 		screenDeviceImpl *impl = (screenDeviceImpl*)this;
 		return impl->id_;
 	}
 
-	uint32 screenList::devicesCount() const
+	uint32 ScreenList::devicesCount() const
 	{
 		screenListImpl *impl = (screenListImpl*)this;
 		return numeric_cast<uint32>(impl->devices.size());
 	}
 
-	uint32 screenList::defaultDevice() const
+	uint32 ScreenList::defaultDevice() const
 	{
 		screenListImpl *impl = (screenListImpl*)this;
 		return impl->primary;
 	}
 
-	const screenDevice *screenList::device(uint32 index) const
+	const ScreenDevice *ScreenList::device(uint32 index) const
 	{
 		screenListImpl *impl = (screenListImpl*)this;
 		return impl->devices[index].get();
 	}
 
-	Holder<PointerRange<const screenDevice*>> screenList::devices() const
+	Holder<PointerRange<const ScreenDevice*>> ScreenList::devices() const
 	{
 		const screenListImpl *impl = (const screenListImpl*)this;
-		PointerRangeHolder<const screenDevice*> prh;
+		PointerRangeHolder<const ScreenDevice*> prh;
 		prh.reserve(impl->devices.size());
 		for (auto &it : impl->devices)
 			prh.push_back(it.get());
 		return prh;
 	}
 
-	Holder<screenList> newScreenList()
+	Holder<ScreenList> newScreenList()
 	{
-		return detail::systemArena().createImpl<screenList, screenListImpl>();
+		return detail::systemArena().createImpl<ScreenList, screenListImpl>();
 	}
 }

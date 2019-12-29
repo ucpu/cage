@@ -13,18 +13,18 @@
 
 namespace cage
 {
-	layoutLineComponent::layoutLineComponent() : vertical(false)
+	LayoutLineComponent::LayoutLineComponent() : vertical(false)
 	{}
 
-	layoutTableComponent::layoutTableComponent() : sections(2), grid(false), vertical(true)
+	LayoutTableComponent::LayoutTableComponent() : sections(2), grid(false), vertical(true)
 	{}
 
-	layoutSplitterComponent::layoutSplitterComponent() : vertical(false), inverse(false)
+	LayoutSplitterComponent::LayoutSplitterComponent() : vertical(false), inverse(false)
 	{}
 
 	namespace privat
 	{
-		guiLayoutsComponents::guiLayoutsComponents(EntityManager *ents)
+		GuiLayoutsComponents::GuiLayoutsComponents(EntityManager *ents)
 		{
 			detail::memset(this, 0, sizeof(*this));
 #define GCHL_GENERATE(T) T = ents->defineComponent<CAGE_JOIN(T, Component)>(CAGE_JOIN(T, Component)(), false);

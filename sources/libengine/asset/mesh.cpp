@@ -16,29 +16,29 @@ namespace cage
 {
 	namespace
 	{
-		constexpr meshDataFlags auxFlag(uint32 i)
+		constexpr MeshDataFlags auxFlag(uint32 i)
 		{
-			return i == 0 ? meshDataFlags::Aux0 : i == 1 ? meshDataFlags::Aux1 : i == 2 ? meshDataFlags::Aux2 : i == 3 ? meshDataFlags::Aux3 : meshDataFlags::None;
+			return i == 0 ? MeshDataFlags::Aux0 : i == 1 ? MeshDataFlags::Aux1 : i == 2 ? MeshDataFlags::Aux2 : i == 3 ? MeshDataFlags::Aux3 : MeshDataFlags::None;
 		}
 
 		void processLoad(const AssetContext *context, void *schemePointer)
 		{
-			renderMesh *msh = nullptr;
+			Mesh *msh = nullptr;
 			if (context->assetHolder)
 			{
-				msh = static_cast<renderMesh*>(context->assetHolder.get());
+				msh = static_cast<Mesh*>(context->assetHolder.get());
 				msh->bind();
 			}
 			else
 			{
 				context->assetHolder = newRenderMesh().cast<void>();
-				msh = static_cast<renderMesh*>(context->assetHolder.get());
+				msh = static_cast<Mesh*>(context->assetHolder.get());
 				msh->setDebugName(context->textName);
 			}
 			context->returnData = msh;
 
 			Deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
-			renderMeshHeader data;
+			MeshHeader data;
 			des >> data;
 
 			msh->setFlags(data.renderFlags);
@@ -112,7 +112,7 @@ namespace cage
 			// aux
 			for (uint32 i = 0; i < 4; i++)
 			{
-				meshDataFlags f = auxFlag(i);
+				MeshDataFlags f = auxFlag(i);
 				if ((data.flags & f) == f)
 				{
 					msh->setAttribute(CAGE_SHADER_ATTRIB_IN_AUX0 + i, data.auxDimensions[i], GL_FLOAT, 0, ptr);
@@ -126,7 +126,7 @@ namespace cage
 		}
 	}
 
-	AssetScheme genAssetSchemeRenderMesh(uint32 threadIndex, windowHandle *memoryContext)
+	AssetScheme genAssetSchemeRenderMesh(uint32 threadIndex, Window *memoryContext)
 	{
 		AssetScheme s;
 		s.threadIndex = threadIndex;
@@ -135,27 +135,27 @@ namespace cage
 		return s;
 	}
 
-	bool renderMeshHeader::normals() const
+	bool MeshHeader::normals() const
 	{
-		return (flags & meshDataFlags::Normals) == meshDataFlags::Normals;
+		return (flags & MeshDataFlags::Normals) == MeshDataFlags::Normals;
 	}
 
-	bool renderMeshHeader::tangents() const
+	bool MeshHeader::tangents() const
 	{
-		return (flags & meshDataFlags::Tangents) == meshDataFlags::Tangents;
+		return (flags & MeshDataFlags::Tangents) == MeshDataFlags::Tangents;
 	}
 
-	bool renderMeshHeader::bones() const
+	bool MeshHeader::bones() const
 	{
-		return (flags & meshDataFlags::Bones) == meshDataFlags::Bones;
+		return (flags & MeshDataFlags::Bones) == MeshDataFlags::Bones;
 	}
 
-	bool renderMeshHeader::uvs() const
+	bool MeshHeader::uvs() const
 	{
-		return (flags & meshDataFlags::Uvs) == meshDataFlags::Uvs;
+		return (flags & MeshDataFlags::Uvs) == MeshDataFlags::Uvs;
 	}
 
-	uint32 renderMeshHeader::vertexSize() const
+	uint32 MeshHeader::vertexSize() const
 	{
 		uint32 p = sizeof(float) * 3;
 		uint32 u = sizeof(float) * (int)uvs() * uvDimension;
@@ -165,7 +165,7 @@ namespace cage
 		uint32 a = 0;
 		for (uint32 i = 0; i < 4; i++)
 		{
-			meshDataFlags f = auxFlag(i);
+			MeshDataFlags f = auxFlag(i);
 			a += sizeof(float) * (int)((flags & f) == f) * auxDimensions[i];
 		}
 		return p + u + n + t + b + a;

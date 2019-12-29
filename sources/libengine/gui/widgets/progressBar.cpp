@@ -36,7 +36,7 @@ namespace cage
 		};
 	}
 
-	void progressBarCreate(hierarchyItemStruct *item)
+	void ProgressBarCreate(hierarchyItemStruct *item)
 	{
 		CAGE_ASSERT(!item->item);
 		item->item = item->impl->itemsMemory.createObject<progressBarImpl>(item);

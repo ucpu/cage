@@ -17,7 +17,7 @@ namespace cage
 	{
 		struct scrollbarsImpl : public widgetItemStruct
 		{
-			scrollbarsComponent &data;
+			ScrollbarsComponent &data;
 
 			struct scrollbarStruct
 			{
@@ -31,7 +31,7 @@ namespace cage
 
 			real wheelFactor;
 
-			scrollbarsImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(scrollbars)), scrollbars{ data.scroll[0], data.scroll[1] }
+			scrollbarsImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(Scrollbars)), scrollbars{ data.scroll[0], data.scroll[1] }
 			{
 				ensureItemHasLayout(hierarchy);
 			}
@@ -56,8 +56,8 @@ namespace cage
 				real scw = skin->defaults.scrollbars.scrollbarSize + skin->defaults.scrollbars.contentPadding;
 				for (uint32 a = 0; a < 2; a++)
 				{
-					bool show = data.overflow[a] == overflowModeEnum::Always;
-					if (data.overflow[a] == overflowModeEnum::Auto && update.renderSize[a] + 1e-7 < hierarchy->requestedSize[a])
+					bool show = data.overflow[a] == OverflowModeEnum::Always;
+					if (data.overflow[a] == OverflowModeEnum::Auto && update.renderSize[a] + 1e-7 < hierarchy->requestedSize[a])
 						show = true;
 					if (show)
 					{ // the content is larger than the available area
@@ -88,13 +88,13 @@ namespace cage
 					const scrollbarStruct &s = scrollbars[a];
 					if (s.position.valid())
 					{
-						emitElement(a == 0 ? elementTypeEnum::ScrollbarHorizontalPanel : elementTypeEnum::ScrollbarVerticalPanel, 0, s.position, s.size);
+						emitElement(a == 0 ? ElementTypeEnum::ScrollbarHorizontalPanel : ElementTypeEnum::ScrollbarVerticalPanel, 0, s.position, s.size);
 						vec2 ds;
 						ds[a] = s.dotSize;
 						ds[1 - a] = s.size[1 - a];
 						vec2 dp = s.position;
 						dp[a] += (s.size[a] - ds[a]) * s.value;
-						emitElement(a == 0 ? elementTypeEnum::ScrollbarHorizontalDot : elementTypeEnum::ScrollbarVerticalDot, mode(s.position, s.size, 1 << (30 + a)), dp, ds);
+						emitElement(a == 0 ? ElementTypeEnum::ScrollbarHorizontalDot : ElementTypeEnum::ScrollbarVerticalDot, mode(s.position, s.size, 1 << (30 + a)), dp, ds);
 					}
 				}
 			}
@@ -126,11 +126,11 @@ namespace cage
 				}
 			}
 
-			bool handleMouse(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point, bool move)
+			bool handleMouse(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point, bool move)
 			{
-				if (buttons != mouseButtonsFlags::Left)
+				if (buttons != MouseButtonsFlags::Left)
 					return true;
-				if (modifiers != modifiersFlags::None)
+				if (modifiers != ModifiersFlags::None)
 					return true;
 				for (uint32 a = 0; a < 2; a++)
 				{
@@ -150,20 +150,20 @@ namespace cage
 				return true;
 			}
 
-			virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
+			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override
 			{
 				makeFocused();
 				return handleMouse(buttons, modifiers, point, false);
 			}
 
-			virtual bool mouseMove(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
+			virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override
 			{
 				return handleMouse(buttons, modifiers, point, true);
 			}
 
-			virtual bool mouseWheel(sint8 wheel, modifiersFlags modifiers, vec2 point) override
+			virtual bool mouseWheel(sint8 wheel, ModifiersFlags modifiers, vec2 point) override
 			{
-				if (modifiers != modifiersFlags::None)
+				if (modifiers != ModifiersFlags::None)
 					return false;
 				const scrollbarStruct &s = scrollbars[1];
 				if (s.position.valid())

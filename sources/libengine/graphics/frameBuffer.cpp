@@ -15,7 +15,7 @@ namespace cage
 		class drawMark;
 		class readMark;
 
-		class frameBufferImpl : public frameBuffer
+		class frameBufferImpl : public FrameBuffer
 		{
 		public:
 			uint32 id;
@@ -65,7 +65,7 @@ namespace cage
 		};
 	}
 
-	void frameBuffer::setDebugName(const string &name)
+	void FrameBuffer::setDebugName(const string &name)
 	{
 #ifdef CAGE_DEBUG
 		debugName = name;
@@ -74,19 +74,19 @@ namespace cage
 		glObjectLabel(GL_FRAMEBUFFER, impl->id, name.length(), name.c_str());
 	}
 
-	uint32 frameBuffer::getId() const
+	uint32 FrameBuffer::getId() const
 	{
 		frameBufferImpl *impl = (frameBufferImpl *)this;
 		return impl->id;
 	}
 
-	uint32 frameBuffer::getTarget() const
+	uint32 FrameBuffer::getTarget() const
 	{
 		frameBufferImpl *impl = (frameBufferImpl *)this;
 		return impl->target;
 	}
 
-	void frameBuffer::bind() const
+	void FrameBuffer::bind() const
 	{
 		frameBufferImpl *impl = (frameBufferImpl *)this;
 		glBindFramebuffer(impl->target, impl->id);
@@ -94,7 +94,7 @@ namespace cage
 		impl->setBinded();
 	}
 
-	void frameBuffer::depthTexture(renderTexture *tex)
+	void FrameBuffer::depthTexture(Texture *tex)
 	{
 		frameBufferImpl *impl = (frameBufferImpl*)this;
 		impl->checkBinded();
@@ -102,7 +102,7 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void frameBuffer::colorTexture(uint32 index, renderTexture *tex, uint32 mipmapLevel)
+	void FrameBuffer::colorTexture(uint32 index, Texture *tex, uint32 mipmapLevel)
 	{
 		frameBufferImpl *impl = (frameBufferImpl*)this;
 		impl->checkBinded();
@@ -110,7 +110,7 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void frameBuffer::activeAttachments(uint32 mask)
+	void FrameBuffer::activeAttachments(uint32 mask)
 	{
 		frameBufferImpl *impl = (frameBufferImpl*)this;
 		impl->checkBinded();
@@ -136,7 +136,7 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void frameBuffer::clear()
+	void FrameBuffer::clear()
 	{
 		depthTexture(nullptr);
 		for (uint32 i = 0; i < 8; i++)
@@ -144,7 +144,7 @@ namespace cage
 		activeAttachments(0);
 	}
 
-	void frameBuffer::checkStatus()
+	void FrameBuffer::checkStatus()
 	{
 		frameBufferImpl *impl = (frameBufferImpl*)this;
 		impl->checkBinded();
@@ -155,25 +155,25 @@ namespace cage
 		case GL_FRAMEBUFFER_COMPLETE:
 			return;
 		case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
-			CAGE_THROW_ERROR(graphicsError, "incomplete frame buffer: attachment", numeric_cast<uint32>(result));
+			CAGE_THROW_ERROR(GraphicsError, "incomplete frame buffer: attachment", numeric_cast<uint32>(result));
 		//case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS: // this is defined for ES only
-		//	CAGE_THROW_ERROR(graphicsError, "incomplete frame buffer: dimensions", numeric_cast<uint32>(result));
+		//	CAGE_THROW_ERROR(GraphicsError, "incomplete frame buffer: dimensions", numeric_cast<uint32>(result));
 		case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-			CAGE_THROW_ERROR(graphicsError, "incomplete frame buffer: missing attachment", numeric_cast<uint32>(result));
+			CAGE_THROW_ERROR(GraphicsError, "incomplete frame buffer: missing attachment", numeric_cast<uint32>(result));
 		case GL_FRAMEBUFFER_UNSUPPORTED:
-			CAGE_THROW_ERROR(graphicsError, "incomplete frame buffer: unsupported", numeric_cast<uint32>(result));
+			CAGE_THROW_ERROR(GraphicsError, "incomplete frame buffer: unsupported", numeric_cast<uint32>(result));
 		default:
-			CAGE_THROW_ERROR(graphicsError, "incomplete frame buffer: unknown error", numeric_cast<uint32>(result));
+			CAGE_THROW_ERROR(GraphicsError, "incomplete frame buffer: unknown error", numeric_cast<uint32>(result));
 		}
 	}
 
-	Holder<frameBuffer> newFrameBufferDraw()
+	Holder<FrameBuffer> newFrameBufferDraw()
 	{
-		return detail::systemArena().createImpl<frameBuffer, frameBufferImpl>(GL_DRAW_FRAMEBUFFER);
+		return detail::systemArena().createImpl<FrameBuffer, frameBufferImpl>(GL_DRAW_FRAMEBUFFER);
 	}
 
-	Holder<frameBuffer> newFrameBufferRead()
+	Holder<FrameBuffer> newFrameBufferRead()
 	{
-		return detail::systemArena().createImpl<frameBuffer, frameBufferImpl>(GL_READ_FRAMEBUFFER);
+		return detail::systemArena().createImpl<FrameBuffer, frameBufferImpl>(GL_READ_FRAMEBUFFER);
 	}
 }

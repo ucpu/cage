@@ -12,7 +12,7 @@ namespace cage
 {
 	namespace
 	{
-		class uniformBufferImpl : public uniformBuffer
+		class uniformBufferImpl : public UniformBuffer
 		{
 		public:
 			const uniformBufferCreateConfig config;
@@ -63,7 +63,7 @@ namespace cage
 		};
 	}
 
-	void uniformBuffer::setDebugName(const string &name)
+	void UniformBuffer::setDebugName(const string &name)
 	{
 #ifdef CAGE_DEBUG
 		debugName = name;
@@ -72,27 +72,27 @@ namespace cage
 		glObjectLabel(GL_BUFFER, impl->id, name.length(), name.c_str());
 	}
 
-	uint32 uniformBuffer::getId() const
+	uint32 UniformBuffer::getId() const
 	{
 		return ((uniformBufferImpl*)this)->id;
 	}
 
-	void uniformBuffer::bind() const
+	void UniformBuffer::bind() const
 	{
 		uniformBufferImpl *impl = (uniformBufferImpl*)this;
 		glBindBuffer(GL_UNIFORM_BUFFER, impl->id);
 		CAGE_CHECK_GL_ERROR_DEBUG();
-		setCurrentObject<uniformBuffer>(impl->id);
+		setCurrentObject<UniformBuffer>(impl->id);
 	}
 
-	void uniformBuffer::bind(uint32 bindingPoint) const
+	void UniformBuffer::bind(uint32 bindingPoint) const
 	{
 		uniformBufferImpl *impl = (uniformBufferImpl*)this;
 		glBindBufferBase(GL_UNIFORM_BUFFER, bindingPoint, impl->id);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void uniformBuffer::bind(uint32 bindingPoint, uint32 offset, uint32 size) const
+	void UniformBuffer::bind(uint32 bindingPoint, uint32 offset, uint32 size) const
 	{
 		uniformBufferImpl *impl = (uniformBufferImpl*)this;
 		CAGE_ASSERT(offset + size <= impl->size, "insufficient buffer size", offset, size, impl->size);
@@ -101,7 +101,7 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void uniformBuffer::writeWhole(const void *data, uint32 size, uint32 usage)
+	void UniformBuffer::writeWhole(const void *data, uint32 size, uint32 usage)
 	{
 		uniformBufferImpl *impl = (uniformBufferImpl*)this;
 		if (impl->mapped || impl->config.size)
@@ -112,7 +112,7 @@ namespace cage
 		}
 		else
 		{
-			CAGE_ASSERT(graphicsPrivat::getCurrentObject<uniformBuffer>() == impl->id);
+			CAGE_ASSERT(graphicsPrivat::getCurrentObject<UniformBuffer>() == impl->id);
 			if (usage == 0)
 				usage = GL_STATIC_DRAW;
 			glBufferData(GL_UNIFORM_BUFFER, size, data, usage);
@@ -121,7 +121,7 @@ namespace cage
 		}
 	}
 
-	void uniformBuffer::writeRange(const void *data, uint32 offset, uint32 size)
+	void UniformBuffer::writeRange(const void *data, uint32 offset, uint32 size)
 	{
 		uniformBufferImpl *impl = (uniformBufferImpl*)this;
 		CAGE_ASSERT(offset + size <= impl->size, "insufficient buffer size", offset, size, impl->size);
@@ -130,20 +130,20 @@ namespace cage
 			detail::memcpy((char*)impl->mapped + offset, data, size);
 			if (impl->config.explicitFlush)
 			{
-				CAGE_ASSERT(graphicsPrivat::getCurrentObject<uniformBuffer>() == impl->id);
+				CAGE_ASSERT(graphicsPrivat::getCurrentObject<UniformBuffer>() == impl->id);
 				glFlushMappedBufferRange(GL_UNIFORM_BUFFER, offset, size);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 		}
 		else
 		{
-			CAGE_ASSERT(graphicsPrivat::getCurrentObject<uniformBuffer>() == impl->id);
+			CAGE_ASSERT(graphicsPrivat::getCurrentObject<UniformBuffer>() == impl->id);
 			glBufferSubData(GL_UNIFORM_BUFFER, offset, size, data);
 			CAGE_CHECK_GL_ERROR_DEBUG();
 		}
 	}
 
-	uint32 uniformBuffer::getSize() const
+	uint32 UniformBuffer::getSize() const
 	{
 		const uniformBufferImpl *impl = (const uniformBufferImpl*)this;
 		return impl->size;
@@ -159,7 +159,7 @@ namespace cage
 		}
 	}
 
-	uint32 uniformBuffer::getAlignmentRequirement()
+	uint32 UniformBuffer::getAlignmentRequirement()
 	{
 		static uint32 alignment = getAlignmentRequirementImpl();
 		return alignment;
@@ -168,8 +168,8 @@ namespace cage
 	uniformBufferCreateConfig::uniformBufferCreateConfig() : size(0), persistentMapped(false), coherentMapped(false), explicitFlush(false)
 	{}
 
-	Holder<uniformBuffer> newUniformBuffer(const uniformBufferCreateConfig &config)
+	Holder<UniformBuffer> newUniformBuffer(const uniformBufferCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<uniformBuffer, uniformBufferImpl>(config);
+		return detail::systemArena().createImpl<UniformBuffer, uniformBufferImpl>(config);
 	}
 }

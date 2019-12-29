@@ -15,19 +15,19 @@ namespace cage
 	{
 		void processDecompress(const AssetContext *context, void *schemePointer)
 		{
-			soundSourceHeader *snd = (soundSourceHeader*)context->compressedData;
+			SoundSourceHeader *snd = (SoundSourceHeader*)context->compressedData;
 			switch (snd->soundType)
 			{
-			case soundTypeEnum::RawRaw:
-			case soundTypeEnum::CompressedCompressed:
+			case SoundTypeEnum::RawRaw:
+			case SoundTypeEnum::CompressedCompressed:
 				return; // do nothing
-			case soundTypeEnum::CompressedRaw:
+			case SoundTypeEnum::CompressedRaw:
 				break; // decode now
 			default:
 				CAGE_THROW_CRITICAL(Exception, "invalid sound type");
 			}
 			soundPrivat::vorbisDataStruct vds;
-			vds.init((char*)context->compressedData + sizeof(soundSourceHeader), numeric_cast<uintPtr>(context->compressedSize - sizeof(soundSourceHeader)));
+			vds.init((char*)context->compressedData + sizeof(SoundSourceHeader), numeric_cast<uintPtr>(context->compressedSize - sizeof(SoundSourceHeader)));
 			uint32 ch = 0, f = 0, r = 0;
 			vds.decode(ch, f, r, (float*)context->originalData);
 			CAGE_ASSERT(snd->channels == ch, snd->channels, ch);
@@ -37,35 +37,35 @@ namespace cage
 
 		void processLoad(const AssetContext *context, void *schemePointer)
 		{
-			soundContext *gm = (soundContext*)schemePointer;
+			SoundContext *gm = (SoundContext*)schemePointer;
 
-			soundSource *source = nullptr;
+			SoundSource *source = nullptr;
 			if (context->assetHolder)
 			{
-				source = static_cast<soundSource*>(context->assetHolder.get());
+				source = static_cast<SoundSource*>(context->assetHolder.get());
 			}
 			else
 			{
 				context->assetHolder = newSoundSource(gm).cast<void>();
-				source = static_cast<soundSource*>(context->assetHolder.get());
+				source = static_cast<SoundSource*>(context->assetHolder.get());
 				source->setDebugName(context->textName);
 			}
 			context->returnData = source;
 
-			soundSourceHeader *snd = (soundSourceHeader*)context->compressedData;
+			SoundSourceHeader *snd = (SoundSourceHeader*)context->compressedData;
 
-			source->setDataRepeat((snd->flags & soundFlags::LoopBeforeStart) == soundFlags::LoopBeforeStart, (snd->flags & soundFlags::LoopAfterEnd) == soundFlags::LoopAfterEnd);
+			source->setDataRepeat((snd->flags & SoundFlags::LoopBeforeStart) == SoundFlags::LoopBeforeStart, (snd->flags & SoundFlags::LoopAfterEnd) == SoundFlags::LoopAfterEnd);
 
 			switch (snd->soundType)
 			{
-			case soundTypeEnum::RawRaw:
-				source->setDataRaw(snd->channels, snd->frames, snd->sampleRate, (float*)((char*)context->originalData + sizeof(soundSourceHeader)));
+			case SoundTypeEnum::RawRaw:
+				source->setDataRaw(snd->channels, snd->frames, snd->sampleRate, (float*)((char*)context->originalData + sizeof(SoundSourceHeader)));
 				break;
-			case soundTypeEnum::CompressedRaw:
+			case SoundTypeEnum::CompressedRaw:
 				source->setDataRaw(snd->channels, snd->frames, snd->sampleRate, (float*)context->originalData);
 				break;
-			case soundTypeEnum::CompressedCompressed:
-				source->setDataVorbis(numeric_cast<uintPtr>(context->compressedSize - sizeof(soundSourceHeader)), ((char*)context->compressedData + sizeof(soundSourceHeader)));
+			case SoundTypeEnum::CompressedCompressed:
+				source->setDataVorbis(numeric_cast<uintPtr>(context->compressedSize - sizeof(SoundSourceHeader)), ((char*)context->compressedData + sizeof(SoundSourceHeader)));
 				break;
 			default:
 				CAGE_THROW_CRITICAL(Exception, "invalid sound type");
@@ -73,7 +73,7 @@ namespace cage
 		}
 	}
 
-	AssetScheme genAssetSchemeSoundSource(uint32 threadIndex, soundContext *memoryContext)
+	AssetScheme genAssetSchemeSoundSource(uint32 threadIndex, SoundContext *memoryContext)
 	{
 		AssetScheme s;
 		s.threadIndex = threadIndex;

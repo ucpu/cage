@@ -15,16 +15,16 @@ namespace cage
 	{
 		void processLoad(const AssetContext *context, void *schemePointer)
 		{
-			shaderProgram *shr = nullptr;
+			ShaderProgram *shr = nullptr;
 			if (context->assetHolder)
 			{
-				shr = static_cast<shaderProgram*>(context->assetHolder.get());
+				shr = static_cast<ShaderProgram*>(context->assetHolder.get());
 				shr->bind();
 			}
 			else
 			{
 				context->assetHolder = newShaderProgram().cast<void>();
-				shr = static_cast<shaderProgram*>(context->assetHolder.get());
+				shr = static_cast<ShaderProgram*>(context->assetHolder.get());
 				shr->setDebugName(context->textName);
 			}
 			context->returnData = shr;
@@ -44,7 +44,7 @@ namespace cage
 		}
 	}
 
-	AssetScheme genAssetSchemeShaderProgram(uint32 threadIndex, windowHandle *memoryContext)
+	AssetScheme genAssetSchemeShaderProgram(uint32 threadIndex, Window *memoryContext)
 	{
 		AssetScheme s;
 		s.threadIndex = threadIndex;

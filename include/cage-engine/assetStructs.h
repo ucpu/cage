@@ -4,7 +4,7 @@
 namespace cage
 {
 	/*
-	struct CAGE_API shaderProgramHeader
+	struct CAGE_API ShaderProgramHeader
 	{
 	// follows:
 	// number of stages, uint32
@@ -16,10 +16,10 @@ namespace cage
 	};
 	*/
 
-	struct CAGE_API renderTextureHeader
+	struct CAGE_API TextureHeader
 	{
 		uint64 animationDuration;
-		textureFlags flags;
+		TextureFlags flags;
 		uint32 target; // GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_2D_ARRAY, GL_TEXTURE_CUBE_MAP, ...
 		uint32 dimX;
 		uint32 dimY;
@@ -40,10 +40,10 @@ namespace cage
 		// array of texels
 	};
 
-	struct CAGE_API renderMeshHeader
+	struct CAGE_API MeshHeader
 	{
 		aabb box;
-		meshDataFlags flags;
+		MeshDataFlags flags;
 		uint32 primitiveType; // one of GL_POINTS, GL_LINES, GL_LINE_LOOP, GL_LINE_STRIP, GL_TRIANGLES, GL_TRIANGLE_STRIP, GL_TRIANGLE_FAN, ...
 		uint32 verticesCount;
 		uint32 indicesCount; // zero for non-indexed draws
@@ -53,7 +53,7 @@ namespace cage
 		uint32 uvDimension;
 		uint8 auxDimensions[4];
 		uint32 instancesLimitHint;
-		meshRenderFlags renderFlags;
+		MeshRenderFlags renderFlags;
 		uint32 materialSize;
 
 		bool normals() const;
@@ -78,11 +78,11 @@ namespace cage
 		// array of bitangents, each vec3, if meshFlags::Tangents
 		// array of bone indices, each 4 * uint16, if meshFlags::Bones
 		// array of bone weights, each 4 * float, if meshFlags::Bones
-		// array of uvs, each vec* (the dimensionality is given in uvDimension), if meshDataFlags::Uvs
-		// array of auxiliary data, each vec*, if meshDataFlags::aux0
-		// array of auxiliary data, each vec*, if meshDataFlags::aux1
-		// array of auxiliary data, each vec*, if meshDataFlags::aux2
-		// array of auxiliary data, each vec*, if meshDataFlags::aux3
+		// array of uvs, each vec* (the dimensionality is given in uvDimension), if MeshDataFlags::Uvs
+		// array of auxiliary data, each vec*, if MeshDataFlags::aux0
+		// array of auxiliary data, each vec*, if MeshDataFlags::aux1
+		// array of auxiliary data, each vec*, if MeshDataFlags::aux2
+		// array of auxiliary data, each vec*, if MeshDataFlags::aux3
 		// array of indices, each uint32
 		// material (may or may not be the materialData)
 
@@ -90,7 +90,7 @@ namespace cage
 		// the four bone weights for each vertex must add to one
 	};
 
-	struct CAGE_API skeletonRigHeader
+	struct CAGE_API SkeletonRigHeader
 	{
 		mat4 globalInverse;
 		uint32 bonesCount;
@@ -101,7 +101,7 @@ namespace cage
 		// array of inverted rest matrices, each mat4
 	};
 
-	struct CAGE_API skeletalAnimationHeader
+	struct CAGE_API SkeletalAnimationHeader
 	{
 		uint64 duration; // microseconds
 		uint32 skeletonBonesCount;
@@ -121,7 +121,7 @@ namespace cage
 		//   array of scale values, each vec3
 	};
 
-	struct CAGE_API renderObjectHeader
+	struct CAGE_API RenderObjectHeader
 	{
 		vec3 color;
 		real opacity;
@@ -143,9 +143,9 @@ namespace cage
 		// array of mesh names, each uint32
 	};
 
-	struct CAGE_API fontFaceHeader
+	struct CAGE_API FontHeader
 	{
-		fontFlags flags;
+		FontFlags flags;
 		vec2 glyphMaxSize; // linear units
 		real lineHeight; // linear units
 		real firstLineOffset; // linear units
@@ -154,7 +154,7 @@ namespace cage
 		uint32 glyphCount;
 		uint32 charCount;
 
-		struct CAGE_API glyphData
+		struct CAGE_API GlyphData
 		{
 			vec4 texUv;
 			vec2 size; // linear units
@@ -164,7 +164,7 @@ namespace cage
 
 		// follows:
 		// texture data
-		// array of glyphData
+		// array of GlyphData
 		// array of kerning, each 1 real
 		// array of charset characters, each uint32
 		// array of charset glyphs, each uint32
@@ -174,10 +174,10 @@ namespace cage
 		// linear units must be multiplied by font size before rendering
 	};
 
-	struct CAGE_API soundSourceHeader
+	struct CAGE_API SoundSourceHeader
 	{
-		soundTypeEnum soundType;
-		soundFlags flags;
+		SoundTypeEnum soundType;
+		SoundFlags flags;
 		uint32 frames;
 		uint32 channels;
 		uint32 sampleRate;

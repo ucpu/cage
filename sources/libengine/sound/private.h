@@ -2,28 +2,28 @@
 
 namespace cage
 {
-	class soundContext;
-	class mixingBus;
-	struct soundDataBufferStruct;
+	class SoundContext;
+	class MixingBus;
+	struct SoundDataBuffer;
 
 	namespace soundPrivat
 	{
 		void checkSoundIoError(int code);
-		SoundIo *soundioFromContext(soundContext *context);
-		MemoryArena linksArenaFromContext(soundContext *context);
+		SoundIo *soundioFromContext(SoundContext *context);
+		MemoryArena linksArenaFromContext(SoundContext *context);
 
 		struct busInterfaceStruct
 		{
-			const Delegate<void(mixingBus*)> busDestroyedDelegate;
-			const Delegate<void(const soundDataBufferStruct&)> busExecuteDelegate;
-			busInterfaceStruct(Delegate<void(mixingBus*)> busDestroyedDelegate, Delegate<void(const soundDataBufferStruct&)> busExecuteDelegate) :
+			const Delegate<void(MixingBus*)> busDestroyedDelegate;
+			const Delegate<void(const SoundDataBuffer&)> busExecuteDelegate;
+			busInterfaceStruct(Delegate<void(MixingBus*)> busDestroyedDelegate, Delegate<void(const SoundDataBuffer&)> busExecuteDelegate) :
 				busDestroyedDelegate(busDestroyedDelegate), busExecuteDelegate(busExecuteDelegate) {}
 		};
 
-		void busAddInput(mixingBus *bus, const busInterfaceStruct *interface);
-		void busRemoveInput(mixingBus *bus, const busInterfaceStruct *interface);
-		void busAddOutput(mixingBus *bus, const busInterfaceStruct *interface);
-		void busRemoveOutput(mixingBus *bus, const busInterfaceStruct *interface);
+		void busAddInput(MixingBus *bus, const busInterfaceStruct *interface);
+		void busRemoveInput(MixingBus *bus, const busInterfaceStruct *interface);
+		void busAddOutput(MixingBus *bus, const busInterfaceStruct *interface);
+		void busRemoveOutput(MixingBus *bus, const busInterfaceStruct *interface);
 	}
 
 	using namespace soundPrivat;

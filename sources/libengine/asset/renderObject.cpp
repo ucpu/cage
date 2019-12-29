@@ -18,13 +18,13 @@ namespace cage
 			if (!context->assetHolder)
 			{
 				context->assetHolder = newRenderObject().cast<void>();
-				static_cast<renderObject*>(context->assetHolder.get())->setDebugName(context->textName);
+				static_cast<RenderObject*>(context->assetHolder.get())->setDebugName(context->textName);
 			}
-			renderObject *obj = static_cast<renderObject*>(context->assetHolder.get());
+			RenderObject *obj = static_cast<RenderObject*>(context->assetHolder.get());
 			context->returnData = obj;
 
 			Deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
-			renderObjectHeader h;
+			RenderObjectHeader h;
 			des >> h;
 			obj->color = h.color;
 			obj->opacity = h.opacity;

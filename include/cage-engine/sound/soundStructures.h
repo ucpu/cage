@@ -1,17 +1,17 @@
 namespace cage
 {
-	struct CAGE_API soundInterleavedBufferStruct
+	struct CAGE_API SoundInterleavedBuffer
 	{
 		float *buffer;
 		uint32 frames;
 		uint32 channels;
 
-		soundInterleavedBufferStruct();
-		soundInterleavedBufferStruct(const soundInterleavedBufferStruct &other); // creates a reference of the original buffer
-		soundInterleavedBufferStruct(soundInterleavedBufferStruct &&) = delete;
-		~soundInterleavedBufferStruct();
-		soundInterleavedBufferStruct &operator = (const soundInterleavedBufferStruct &other); // creates a reference of the original buffer
-		soundInterleavedBufferStruct &operator = (soundInterleavedBufferStruct &&) = delete;
+		SoundInterleavedBuffer();
+		SoundInterleavedBuffer(const SoundInterleavedBuffer &other); // creates a reference of the original buffer
+		SoundInterleavedBuffer(SoundInterleavedBuffer &&) = delete;
+		~SoundInterleavedBuffer();
+		SoundInterleavedBuffer &operator = (const SoundInterleavedBuffer &other); // creates a reference of the original buffer
+		SoundInterleavedBuffer &operator = (SoundInterleavedBuffer &&) = delete;
 
 		void resize(uint32 channels, uint32 frames);
 		void clear();
@@ -20,10 +20,10 @@ namespace cage
 		uint32 allocated;
 	};
 
-	struct CAGE_API soundDataBufferStruct : public soundInterleavedBufferStruct
+	struct CAGE_API SoundDataBuffer : public SoundInterleavedBuffer
 	{
 		sint64 time;
 		uint32 sampleRate;
-		soundDataBufferStruct();
+		SoundDataBuffer();
 	};
 }

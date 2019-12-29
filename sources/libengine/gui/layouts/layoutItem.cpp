@@ -15,42 +15,42 @@ namespace cage
 	layoutItemStruct::layoutItemStruct(hierarchyItemStruct *hierarchy) : baseItemStruct(hierarchy)
 	{}
 
-	bool layoutItemStruct::mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point)
+	bool layoutItemStruct::mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
 	{
 		return false;
 	}
 
-	bool layoutItemStruct::mouseDouble(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point)
+	bool layoutItemStruct::mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
 	{
 		return false;
 	}
 
-	bool layoutItemStruct::mouseRelease(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point)
+	bool layoutItemStruct::mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
 	{
 		return false;
 	}
 
-	bool layoutItemStruct::mouseMove(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point)
+	bool layoutItemStruct::mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
 	{
 		return false;
 	}
 
-	bool layoutItemStruct::mouseWheel(sint8 wheel, modifiersFlags modifiers, vec2 point)
+	bool layoutItemStruct::mouseWheel(sint8 wheel, ModifiersFlags modifiers, vec2 point)
 	{
 		return false;
 	}
 
-	bool layoutItemStruct::keyPress(uint32 key, uint32 scanCode, modifiersFlags modifiers)
+	bool layoutItemStruct::keyPress(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
 	{
 		return false;
 	}
 
-	bool layoutItemStruct::keyRepeat(uint32 key, uint32 scanCode, modifiersFlags modifiers)
+	bool layoutItemStruct::keyRepeat(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
 	{
 		return false;
 	}
 
-	bool layoutItemStruct::keyRelease(uint32 key, uint32 scanCode, modifiersFlags modifiers)
+	bool layoutItemStruct::keyRelease(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
 	{
 		return false;
 	}

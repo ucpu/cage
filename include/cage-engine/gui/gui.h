@@ -1,19 +1,19 @@
 namespace cage
 {
-	struct CAGE_API guiSkinConfig
+	struct CAGE_API GuiSkinConfig
 	{
-		guiSkinElementLayout layouts[(uint32)elementTypeEnum::TotalElements];
-		guiSkinWidgetDefaults defaults;
+		GuiSkinElementLayout layouts[(uint32)ElementTypeEnum::TotalElements];
+		GuiSkinWidgetDefaults defaults;
 		uint32 textureName;
-		guiSkinConfig();
+		GuiSkinConfig();
 	};
 
-	struct CAGE_API guiComponents : public privat::guiGeneralComponents, public privat::guiWidgetsComponents, public privat::guiLayoutsComponents
+	struct CAGE_API GuiComponents : public privat::GuiGeneralComponents, public privat::GuiWidgetsComponents, public privat::GuiLayoutsComponents
 	{
-		guiComponents(EntityManager *ents);
+		GuiComponents(EntityManager *ents);
 	};
 
-	class CAGE_API guiManager : private Immovable
+	class CAGE_API Gui : private Immovable
 	{
 	public:
 		void graphicsInitialize();
@@ -29,52 +29,52 @@ namespace cage
 		ivec2 getOutputResolution() const;
 		real getOutputRetina() const;
 		real getZoom() const;
-		void setOutputSoundBus(mixingBus *bus);
-		mixingBus *getOutputSoundBus() const;
+		void setOutputSoundBus(MixingBus *bus);
+		MixingBus *getOutputSoundBus() const;
 		void setFocus(uint32 widget);
 		uint32 getFocus() const;
 		void controlUpdateStart(); // must be called before processing events
 		void controlUpdateDone(); // accesses asset manager
 
 		bool windowResize(const ivec2 &);
-		bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, const ivec2 &point);
-		bool mouseDouble(mouseButtonsFlags buttons, modifiersFlags modifiers, const ivec2 &point);
-		bool mouseRelease(mouseButtonsFlags buttons, modifiersFlags modifiers, const ivec2 &point);
-		bool mouseMove(mouseButtonsFlags buttons, modifiersFlags modifiers, const ivec2 &point);
-		bool mouseWheel(sint32 wheel, modifiersFlags modifiers, const ivec2 &point);
-		bool keyPress(uint32 key, uint32 scanCode, modifiersFlags modifiers);
-		bool keyRepeat(uint32 key, uint32 scanCode, modifiersFlags modifiers);
-		bool keyRelease(uint32 key, uint32 scanCode, modifiersFlags modifiers);
+		bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, const ivec2 &point);
+		bool mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, const ivec2 &point);
+		bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, const ivec2 &point);
+		bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, const ivec2 &point);
+		bool mouseWheel(sint32 wheel, ModifiersFlags modifiers, const ivec2 &point);
+		bool keyPress(uint32 key, uint32 scanCode, ModifiersFlags modifiers);
+		bool keyRepeat(uint32 key, uint32 scanCode, ModifiersFlags modifiers);
+		bool keyRelease(uint32 key, uint32 scanCode, ModifiersFlags modifiers);
 		bool keyChar(uint32 key);
 
-		void handleWindowEvents(windowHandle *window, sint32 order = 0);
+		void handleWindowEvents(Window *window, sint32 order = 0);
 		void skipAllEventsUntilNextUpdate();
 		ivec2 getInputResolution() const;
 		Delegate<bool(const ivec2&, vec2&)> eventCoordinatesTransformer; // called from controlUpdateStart or from any window events, it should return false to signal that the point is outside the gui, otherwise the point should be converted from window coordinate system to the gui output resolution coordinate system
 		EventDispatcher<bool(uint32)> widgetEvent; // called from controlUpdateStart or window events
 
-		guiSkinConfig &skin(uint32 index = 0);
-		const guiSkinConfig &skin(uint32 index = 0) const;
+		GuiSkinConfig &skin(uint32 index = 0);
+		const GuiSkinConfig &skin(uint32 index = 0) const;
 
-		guiComponents &components();
+		GuiComponents &components();
 		EntityManager *entities();
 		AssetManager *assets();
 	};
 
-	struct CAGE_API guiManagerCreateConfig
+	struct CAGE_API GuiCreateConfig
 	{
 		AssetManager *assetMgr;
 		EntityManagerCreateConfig *entitiesConfig;
 		uintPtr itemsArenaSize;
 		uintPtr emitArenaSize;
 		uint32 skinsCount;
-		guiManagerCreateConfig();
+		GuiCreateConfig();
 	};
 
-	CAGE_API Holder<guiManager> newGuiManager(const guiManagerCreateConfig &config);
+	CAGE_API Holder<Gui> newGuiManager(const GuiCreateConfig &config);
 
 	namespace detail
 	{
-		CAGE_API Holder<Image> guiSkinTemplateExport(const guiSkinConfig &skin, uint32 resolution);
+		CAGE_API Holder<Image> guiSkinTemplateExport(const GuiSkinConfig &skin, uint32 resolution);
 	}
 }

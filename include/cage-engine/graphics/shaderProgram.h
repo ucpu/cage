@@ -1,6 +1,6 @@
 namespace cage
 {
-	class CAGE_API shaderProgram : private Immovable
+	class CAGE_API ShaderProgram : private Immovable
 	{
 #ifdef CAGE_DEBUG
 		detail::StringBase<64> debugName;
@@ -25,8 +25,8 @@ namespace cage
 #undef GCHL_SHADER_UNIFORM
 	};
 
-	CAGE_API Holder<shaderProgram> newShaderProgram();
+	CAGE_API Holder<ShaderProgram> newShaderProgram();
 
-	CAGE_API AssetScheme genAssetSchemeShaderProgram(uint32 threadIndex, windowHandle *memoryContext);
+	CAGE_API AssetScheme genAssetSchemeShaderProgram(uint32 threadIndex, Window *memoryContext);
 	static const uint32 assetSchemeIndexShaderProgram = 10;
 }

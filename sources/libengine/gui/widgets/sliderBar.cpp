@@ -17,13 +17,13 @@ namespace cage
 	{
 		struct sliderBarImpl : public widgetItemStruct
 		{
-			sliderBarComponent &data;
-			guiSkinWidgetDefaults::sliderBarStruct::directionStruct defaults;
-			elementTypeEnum baseElement;
-			elementTypeEnum dotElement;
+			SliderBarComponent &data;
+			GuiSkinWidgetDefaults::SliderBar::Direction defaults;
+			ElementTypeEnum baseElement;
+			ElementTypeEnum dotElement;
 			real normalizedValue;
 
-			sliderBarImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(sliderBar))
+			sliderBarImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(SliderBar))
 			{
 				data.value = clamp(data.value, data.min, data.max);
 			}
@@ -41,8 +41,8 @@ namespace cage
 			virtual void findRequestedSize() override
 			{
 				defaults = data.vertical ? skin->defaults.sliderBar.vertical : skin->defaults.sliderBar.horizontal;
-				baseElement = data.vertical ? elementTypeEnum::SliderVerticalPanel : elementTypeEnum::SliderHorizontalPanel;
-				dotElement = data.vertical ? elementTypeEnum::SliderVerticalDot : elementTypeEnum::SliderHorizontalDot;
+				baseElement = data.vertical ? ElementTypeEnum::SliderVerticalPanel : ElementTypeEnum::SliderHorizontalPanel;
+				dotElement = data.vertical ? ElementTypeEnum::SliderVerticalDot : ElementTypeEnum::SliderHorizontalDot;
 				hierarchy->requestedSize = defaults.size;
 				offsetSize(hierarchy->requestedSize, defaults.margin);
 			}
@@ -99,18 +99,18 @@ namespace cage
 				}
 			}
 
-			virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
+			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override
 			{
 				makeFocused();
-				if (buttons != mouseButtonsFlags::Left)
+				if (buttons != MouseButtonsFlags::Left)
 					return true;
-				if (modifiers != modifiersFlags::None)
+				if (modifiers != ModifiersFlags::None)
 					return true;
 				update(point);
 				return true;
 			}
 
-			virtual bool mouseMove(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
+			virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override
 			{
 				if (hasFocus())
 					return mousePress(buttons, modifiers, point);
@@ -119,7 +119,7 @@ namespace cage
 		};
 	}
 
-	void sliderBarCreate(hierarchyItemStruct *item)
+	void SliderBarCreate(hierarchyItemStruct *item)
 	{
 		CAGE_ASSERT(!item->item);
 		item->item = item->impl->itemsMemory.createObject<sliderBarImpl>(item);

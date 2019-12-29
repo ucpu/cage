@@ -3,7 +3,7 @@
 
 namespace cage
 {
-	class CAGE_API fpsCamera : private Immovable
+	class CAGE_API FpsCamera : private Immovable
 	{
 	public:
 		vec2 turningSpeed;
@@ -11,17 +11,17 @@ namespace cage
 		real movementSpeed;
 		rads pitchLimitUp;
 		rads pitchLimitDown;
-		mouseButtonsFlags mouseButton; // -1 for disabled, 0 for always
+		MouseButtonsFlags mouseButton; // -1 for disabled, 0 for always
 		bool keysEqEnabled;
 		bool keysWsadEnabled;
 		bool keysArrowsEnabled;
 		bool freeMove; // true -> like a space ship (ignores pitch limits), false -> fps (uses pitch limits)
 
-		fpsCamera();
+		FpsCamera();
 		void setEntity(Entity *ent = nullptr);
 	};
 
-	CAGE_API Holder<fpsCamera> newFpsCamera(Entity *ent = nullptr);
+	CAGE_API Holder<FpsCamera> newFpsCamera(Entity *ent = nullptr);
 }
 
 #endif // guard_fps_camera_h_E21CB47685994BD39846DDB714AF034A

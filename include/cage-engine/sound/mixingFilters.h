@@ -1,25 +1,25 @@
 namespace cage
 {
-	struct CAGE_API mixingFilterApi
+	struct CAGE_API MixingFilterApi
 	{
-		soundDataBufferStruct output;
-		Delegate<void(const soundDataBufferStruct&)> input;
+		SoundDataBuffer output;
+		Delegate<void(const SoundDataBuffer&)> input;
 	};
 
-	class CAGE_API mixingFilter : private Immovable
+	class CAGE_API MixingFilter : private Immovable
 	{
 	public:
-		void setBus(mixingBus *bus);
-		Delegate<void(const mixingFilterApi&)> execute;
+		void setBus(MixingBus *bus);
+		Delegate<void(const MixingFilterApi&)> execute;
 	};
 
-	class CAGE_API volumeFilter : private Immovable
+	class CAGE_API VolumeFilter : private Immovable
 	{
 	public:
-		Holder<mixingFilter> filter;
+		Holder<MixingFilter> filter;
 		real volume;
 	};
 
-	CAGE_API Holder<mixingFilter> newMixingFilter(soundContext *context);
-	CAGE_API Holder<volumeFilter> newVolumeFilter(soundContext *context);
+	CAGE_API Holder<MixingFilter> newMixingFilter(SoundContext *context);
+	CAGE_API Holder<VolumeFilter> newVolumeFilter(SoundContext *context);
 }

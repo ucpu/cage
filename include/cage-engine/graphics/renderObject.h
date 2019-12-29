@@ -1,6 +1,6 @@
 namespace cage
 {
-	class CAGE_API renderObject : private Immovable
+	class CAGE_API RenderObject : private Immovable
 	{
 #ifdef CAGE_DEBUG
 		detail::StringBase<64> debugName;
@@ -28,10 +28,10 @@ namespace cage
 		real skelAnimSpeed;
 		real skelAnimOffset;
 
-		renderObject();
+		RenderObject();
 	};
 
-	CAGE_API Holder<renderObject> newRenderObject();
+	CAGE_API Holder<RenderObject> newRenderObject();
 
 	CAGE_API AssetScheme genAssetSchemeRenderObject(uint32 threadIndex);
 	static const uint32 assetSchemeIndexRenderObject = 15;

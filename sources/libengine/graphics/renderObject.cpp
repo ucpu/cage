@@ -14,7 +14,7 @@ namespace cage
 {
 	namespace
 	{
-		class objectImpl : public renderObject
+		class objectImpl : public RenderObject
 		{
 		public:
 			std::vector<float> thresholds;
@@ -23,17 +23,17 @@ namespace cage
 		};
 	}
 
-	renderObject::renderObject() : color(real::Nan()), opacity(real::Nan()), texAnimSpeed(real::Nan()), texAnimOffset(real::Nan()), skelAnimName(0), skelAnimSpeed(real::Nan()), skelAnimOffset(real::Nan())
+	RenderObject::RenderObject() : color(real::Nan()), opacity(real::Nan()), texAnimSpeed(real::Nan()), texAnimOffset(real::Nan()), skelAnimName(0), skelAnimSpeed(real::Nan()), skelAnimOffset(real::Nan())
 	{}
 
-	void renderObject::setDebugName(const string &name)
+	void RenderObject::setDebugName(const string &name)
 	{
 #ifdef CAGE_DEBUG
 		debugName = name;
 #endif // CAGE_DEBUG
 	}
 
-	void renderObject::setLods(uint32 lodsCount, uint32 meshesCount, const float *thresholds, const uint32 *meshIndices, const uint32 *meshNames)
+	void RenderObject::setLods(uint32 lodsCount, uint32 meshesCount, const float *thresholds, const uint32 *meshIndices, const uint32 *meshNames)
 	{
 		CAGE_ASSERT(meshIndices[0] == 0);
 		CAGE_ASSERT(meshIndices[lodsCount] == meshesCount);
@@ -50,13 +50,13 @@ namespace cage
 		detail::memcpy(impl->names.data(), meshNames, sizeof(float) * meshesCount);
 	}
 
-	uint32 renderObject::lodsCount() const
+	uint32 RenderObject::lodsCount() const
 	{
 		objectImpl *impl = (objectImpl*)this;
 		return numeric_cast<uint32>(impl->thresholds.size());
 	}
 
-	uint32 renderObject::lodSelect(float threshold) const
+	uint32 RenderObject::lodSelect(float threshold) const
 	{
 		objectImpl *impl = (objectImpl*)this;
 		// todo rewrite to binary search
@@ -67,15 +67,15 @@ namespace cage
 		return lod;
 	}
 
-	PointerRange<const uint32> renderObject::meshes(uint32 lod) const
+	PointerRange<const uint32> RenderObject::meshes(uint32 lod) const
 	{
 		objectImpl *impl = (objectImpl*)this;
 		CAGE_ASSERT(lod < lodsCount());
 		return { impl->names.data() + impl->indices[lod], impl->names.data() + impl->indices[lod + 1] };
 	}
 
-	Holder<renderObject> newRenderObject()
+	Holder<RenderObject> newRenderObject()
 	{
-		return detail::systemArena().createImpl<renderObject, objectImpl>();
+		return detail::systemArena().createImpl<RenderObject, objectImpl>();
 	}
 }

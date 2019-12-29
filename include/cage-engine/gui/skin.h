@@ -1,166 +1,166 @@
 namespace cage
 {
-	enum class inputButtonsPlacementModeEnum : uint32
+	enum class InputButtonsPlacementModeEnum : uint32
 	{
 		Left,
 		Right,
 		Sides,
 	};
 
-	struct CAGE_API guiSkinWidgetDefaults // all sizes are in points
+	struct CAGE_API GuiSkinWidgetDefaults // all sizes are in points
 	{
-		struct CAGE_API labelStruct
+		struct CAGE_API Label
 		{
-			textFormatComponent textFormat;
-			imageFormatComponent imageFormat;
+			TextFormatComponent textFormat;
+			ImageFormatComponent imageFormat;
 			vec4 margin;
-			labelStruct();
+			Label();
 		} label;
-		struct CAGE_API buttonStruct
+		struct CAGE_API Button
 		{
-			textFormatComponent textFormat;
-			imageFormatComponent imageFormat;
+			TextFormatComponent textFormat;
+			ImageFormatComponent imageFormat;
 			vec4 padding, margin;
 			vec2 size;
-			buttonStruct();
+			Button();
 		} button;
-		struct CAGE_API inputStruct
+		struct CAGE_API Input
 		{
-			textFormatComponent textValidFormat;
-			textFormatComponent textInvalidFormat;
-			textFormatComponent placeholderFormat;
+			TextFormatComponent textValidFormat;
+			TextFormatComponent textInvalidFormat;
+			TextFormatComponent placeholderFormat;
 			vec4 basePadding;
 			vec4 margin;
 			vec2 size;
 			real buttonsSize;
 			real buttonsOffset;
-			inputButtonsPlacementModeEnum buttonsMode;
-			inputStruct();
+			InputButtonsPlacementModeEnum buttonsMode;
+			Input();
 		} inputBox;
-		struct CAGE_API textAreaStruct
+		struct CAGE_API TextArea
 		{
-			textFormatComponent textFormat;
+			TextFormatComponent textFormat;
 			vec4 padding, margin;
 			vec2 size;
-			textAreaStruct();
+			TextArea();
 		} textArea;
-		struct CAGE_API checkBoxStruct
+		struct CAGE_API CheckBox
 		{
-			textFormatComponent textFormat;
+			TextFormatComponent textFormat;
 			vec4 margin;
 			vec2 size;
 			vec2 labelOffset;
-			checkBoxStruct();
+			CheckBox();
 		} checkBox;
-		struct CAGE_API radioBoxStruct
+		struct CAGE_API RadioBox
 		{
-			textFormatComponent textFormat;
+			TextFormatComponent textFormat;
 			vec4 margin;
 			vec2 size;
 			vec2 labelOffset;
-			radioBoxStruct();
+			RadioBox();
 		} radioBox;
-		struct CAGE_API comboBoxStruct
+		struct CAGE_API ComboBox
 		{
-			textFormatComponent placeholderFormat;
-			textFormatComponent itemsFormat;
-			textFormatComponent selectedFormat;
+			TextFormatComponent placeholderFormat;
+			TextFormatComponent itemsFormat;
+			TextFormatComponent selectedFormat;
 			vec4 basePadding, baseMargin;
 			vec4 listPadding, itemPadding;
 			vec2 size;
 			real listOffset, itemSpacing;
-			comboBoxStruct();
+			ComboBox();
 		} comboBox;
-		struct CAGE_API listBoxStruct
+		struct CAGE_API ListBox
 		{
-			textFormatComponent textFormat;
+			TextFormatComponent textFormat;
 			vec4 basePadding, baseMargin;
 			vec4 itemPadding;
 			vec2 size;
 			real itemSpacing;
-			listBoxStruct();
+			ListBox();
 		} listBox;
-		struct CAGE_API progressBarStruct
+		struct CAGE_API ProgressBar
 		{
-			textFormatComponent textFormat;
-			imageFormatComponent backgroundImageFormat;
-			imageFormatComponent fillingImageFormat;
-			imageComponent fillingImage;
+			TextFormatComponent textFormat;
+			ImageFormatComponent backgroundImageFormat;
+			ImageFormatComponent fillingImageFormat;
+			ImageComponent fillingImage;
 			vec4 baseMargin;
 			vec4 textPadding, fillingPadding;
 			vec2 size;
-			progressBarStruct();
+			ProgressBar();
 		} progressBar;
-		struct CAGE_API sliderBarStruct
+		struct CAGE_API SliderBar
 		{
-			struct directionStruct
+			struct Direction
 			{
 				vec4 padding, margin;
 				vec2 size;
 				bool collapsedBar;
 			} horizontal, vertical;
-			sliderBarStruct();
+			SliderBar();
 		} sliderBar;
-		struct CAGE_API colorPickerStruct
+		struct CAGE_API ColorPicker
 		{
 			vec4 margin;
 			vec2 collapsedSize;
 			vec2 fullSize;
 			real hueBarPortion;
 			real resultBarPortion;
-			colorPickerStruct();
+			ColorPicker();
 		} colorPicker;
-		struct CAGE_API panelStruct
+		struct CAGE_API Panel
 		{
-			textFormatComponent textFormat;
-			imageFormatComponent imageFormat;
+			TextFormatComponent textFormat;
+			ImageFormatComponent imageFormat;
 			vec4 baseMargin;
 			vec4 contentPadding;
 			vec4 captionPadding;
 			real captionHeight;
-			panelStruct();
+			Panel();
 		} panel;
-		struct CAGE_API spoilerStruct
+		struct CAGE_API Spoiler
 		{
-			textFormatComponent textFormat;
-			imageFormatComponent imageFormat;
+			TextFormatComponent textFormat;
+			ImageFormatComponent imageFormat;
 			vec4 baseMargin;
 			vec4 contentPadding;
 			vec4 captionPadding;
 			real captionHeight;
-			spoilerStruct();
+			Spoiler();
 		} spoiler;
-		struct CAGE_API scrollbarsStruct
+		struct CAGE_API Scrollbars
 		{
 			real scrollbarSize;
 			real contentPadding;
-			scrollbarsStruct();
+			Scrollbars();
 		} scrollbars;
-		struct CAGE_API tooltipStruct
+		struct CAGE_API Tooltip
 		{
-			textFormatComponent textFormat;
-			tooltipStruct();
+			TextFormatComponent textFormat;
+			Tooltip();
 		} tooltip;
-		guiSkinWidgetDefaults();
+		GuiSkinWidgetDefaults();
 	};
 
-	struct CAGE_API guiSkinElementLayout
+	struct CAGE_API GuiSkinElementLayout
 	{
-		struct CAGE_API textureUvOiStruct
+		struct CAGE_API TextureUvOi
 		{
 			vec4 outer; // 0 .. 1
 			vec4 inner;
 		};
-		struct CAGE_API textureUvStruct
+		struct CAGE_API TextureUv
 		{
-			textureUvOiStruct data[4]; // normal, focus, hover, disabled
-			textureUvStruct();
+			TextureUvOi data[4]; // normal, focus, hover, disabled
+			TextureUv();
 		} textureUv;
 		vec4 border; // left, top, right, bottom; all in points
-		guiSkinElementLayout();
+		GuiSkinElementLayout();
 	};
 
-	enum class elementTypeEnum : uint32
+	enum class ElementTypeEnum : uint32
 	{
 		ScrollbarHorizontalPanel,
 		ScrollbarVerticalPanel,

@@ -16,7 +16,7 @@
 
 namespace cage
 {
-	fontFace::formatStruct::formatStruct() : align(textAlignEnum::Left), size(13), wrapWidth(real::Infinity()), lineSpacing(0)
+	Font::FormatStruct::FormatStruct() : align(TextAlignEnum::Left), size(13), wrapWidth(real::Infinity()), lineSpacing(0)
 	{}
 
 	namespace
@@ -25,7 +25,7 @@ namespace cage
 		{
 			vec2 mousePosition;
 			mutable vec2 outSize;
-			const fontFace::formatStruct *format;
+			const Font::FormatStruct *format;
 			const uint32 *gls;
 			mutable uint32 outCursor;
 			uint32 count;
@@ -36,27 +36,27 @@ namespace cage
 			{}
 		};
 
-		class fontImpl : public fontFace
+		class fontImpl : public Font
 		{
 		public:
-			Holder<renderTexture> tex;
+			Holder<Texture> tex;
 			uint32 texWidth, texHeight;
-			shaderProgram *shr;
-			renderMesh *msh;
+			ShaderProgram *shr;
+			Mesh *msh;
 			uint32 spaceGlyph;
 			uint32 returnGlyph;
 			uint32 cursorGlyph;
 			real lineHeight;
 			real firstLineOffset;
 
-			std::vector<fontFaceHeader::glyphData> glyphsArray;
+			std::vector<FontHeader::GlyphData> glyphsArray;
 			std::vector<real> kerning;
 			std::vector<uint32> charmapChars;
 			std::vector<uint32> charmapGlyphs;
 
-			fontFaceHeader::glyphData getGlyph(uint32 glyphIndex, real size)
+			FontHeader::GlyphData getGlyph(uint32 glyphIndex, real size)
 			{
-				fontFaceHeader::glyphData r(glyphsArray[glyphIndex]);
+				FontHeader::GlyphData r(glyphsArray[glyphIndex]);
 				r.advance *= size;
 				r.bearing *= size;
 				r.size *= size;
@@ -67,7 +67,7 @@ namespace cage
 			{
 				vec4 wrld;
 				vec4 text;
-				InstanceStruct(real x, real y, const fontFaceHeader::glyphData &g)
+				InstanceStruct(real x, real y, const FontHeader::GlyphData &g)
 				{
 					text = g.texUv;
 					wrld[0] = x + g.bearing[0];
@@ -119,7 +119,7 @@ namespace cage
 			{
 				if (data.render && begin == data.gls + data.cursor)
 				{
-					fontFaceHeader::glyphData g = getGlyph(cursorGlyph, data.format->size);
+					FontHeader::GlyphData g = getGlyph(cursorGlyph, data.format->size);
 					instances.emplace_back(x, lineY, g);
 				}
 			}
@@ -129,9 +129,9 @@ namespace cage
 				real x;
 				switch (data.format->align)
 				{
-				case textAlignEnum::Left: break;
-				case textAlignEnum::Right: x = data.format->wrapWidth - lineWidth; break;
-				case textAlignEnum::Center: x = (data.format->wrapWidth - lineWidth) / 2; break;
+				case TextAlignEnum::Left: break;
+				case TextAlignEnum::Right: x = data.format->wrapWidth - lineWidth; break;
+				case TextAlignEnum::Center: x = (data.format->wrapWidth - lineWidth) / 2; break;
 				default: CAGE_THROW_CRITICAL(Exception, "invalid align enum value");
 				}
 
@@ -151,7 +151,7 @@ namespace cage
 				while (begin != end)
 				{
 					processCursor(data, begin, x, lineY);
-					fontFaceHeader::glyphData g = getGlyph(*begin, data.format->size);
+					FontHeader::GlyphData g = getGlyph(*begin, data.format->size);
 					real k = findKerning(prev, *begin, data.format->size);
 					prev = *begin++;
 					if (data.render)
@@ -166,7 +166,7 @@ namespace cage
 			void processText(const processDataStruct &data)
 			{
 				CAGE_ASSERT(!data.render || instances.empty());
-				CAGE_ASSERT(data.format->align <= textAlignEnum::Center, data.format->align);
+				CAGE_ASSERT(data.format->align <= TextAlignEnum::Center, data.format->align);
 				CAGE_ASSERT(data.format->wrapWidth > 0, data.format->wrapWidth);
 				CAGE_ASSERT(data.format->size > 0, data.format->size);
 				const uint32 *totalEnd = data.gls + data.count;
@@ -238,14 +238,14 @@ namespace cage
 					uint32 b = s - a * CAGE_SHADER_MAX_CHARACTERS;
 					for (uint32 i = 0; i < a; i++)
 					{
-						Holder<uniformBuffer> uni = newUniformBuffer();
+						Holder<UniformBuffer> uni = newUniformBuffer();
 						uni->bind(1);
 						uni->writeWhole(&instances[i * CAGE_SHADER_MAX_CHARACTERS], sizeof(InstanceStruct) * CAGE_SHADER_MAX_CHARACTERS, GL_STREAM_DRAW);
 						msh->dispatch(CAGE_SHADER_MAX_CHARACTERS);
 					}
 					if (b)
 					{
-						Holder<uniformBuffer> uni = newUniformBuffer();
+						Holder<UniformBuffer> uni = newUniformBuffer();
 						uni->bind(1);
 						uni->writeWhole(&instances[a * CAGE_SHADER_MAX_CHARACTERS], sizeof(InstanceStruct) * b, GL_STREAM_DRAW);
 						msh->dispatch(b);
@@ -257,7 +257,7 @@ namespace cage
 		};
 	}
 
-	void fontFace::setDebugName(const string &name)
+	void Font::setDebugName(const string &name)
 	{
 #ifdef CAGE_DEBUG
 		debugName = name;
@@ -266,14 +266,14 @@ namespace cage
 		impl->tex->setDebugName(name);
 	}
 
-	void fontFace::setLine(real lineHeight, real firstLineOffset)
+	void Font::setLine(real lineHeight, real firstLineOffset)
 	{
 		fontImpl *impl = (fontImpl*)this;
 		impl->lineHeight = lineHeight;
 		impl->firstLineOffset = -firstLineOffset;
 	}
 
-	void fontFace::setImage(uint32 width, uint32 height, uint32 size, const void *data)
+	void Font::setImage(uint32 width, uint32 height, uint32 size, const void *data)
 	{
 		fontImpl *impl = (fontImpl*)this;
 		impl->texWidth = width;
@@ -309,11 +309,11 @@ namespace cage
 		//impl->tex->generateMipmaps();
 	}
 
-	void fontFace::setGlyphs(uint32 count, const void *data, const real *kerning)
+	void Font::setGlyphs(uint32 count, const void *data, const real *kerning)
 	{
 		fontImpl *impl = (fontImpl*)this;
 		impl->glyphsArray.resize(count);
-		detail::memcpy(impl->glyphsArray.data(), data, sizeof(fontFaceHeader::glyphData) * count);
+		detail::memcpy(impl->glyphsArray.data(), data, sizeof(FontHeader::GlyphData) * count);
 		if (kerning)
 		{
 			impl->kerning.resize(count * count);
@@ -324,7 +324,7 @@ namespace cage
 		impl->cursorGlyph = count - 1; // last glyph
 	}
 
-	void fontFace::setCharmap(uint32 count, const uint32 *chars, const uint32 *glyphs)
+	void Font::setCharmap(uint32 count, const uint32 *chars, const uint32 *glyphs)
 	{
 		fontImpl *impl = (fontImpl*)this;
 		impl->charmapChars.resize(count);
@@ -338,12 +338,12 @@ namespace cage
 		impl->spaceGlyph = impl->findGlyphIndex(' ');
 	}
 
-	void fontFace::transcript(const string &text, uint32 *glyphs, uint32 &count)
+	void Font::transcript(const string &text, uint32 *glyphs, uint32 &count)
 	{
 		transcript(text.c_str(), glyphs, count);
 	}
 
-	void fontFace::transcript(const char *text, uint32 *glyphs, uint32 &count)
+	void Font::transcript(const char *text, uint32 *glyphs, uint32 &count)
 	{
 		fontImpl *impl = (fontImpl*)this;
 		if (glyphs)
@@ -356,14 +356,14 @@ namespace cage
 			count = countCharacters(text);
 	}
 
-	void fontFace::size(const uint32 *glyphs, uint32 count, const formatStruct &format, vec2 &size)
+	void Font::size(const uint32 *glyphs, uint32 count, const FormatStruct &format, vec2 &size)
 	{
 		vec2 mp;
 		uint32 c;
 		this->size(glyphs, count, format, size, mp, c);
 	}
 
-	void fontFace::size(const uint32 *glyphs, uint32 count, const formatStruct &format, vec2 &size, const vec2 &mousePosition, uint32 &cursor)
+	void Font::size(const uint32 *glyphs, uint32 count, const FormatStruct &format, vec2 &size, const vec2 &mousePosition, uint32 &cursor)
 	{
 		processDataStruct data;
 		data.mousePosition = mousePosition;
@@ -376,7 +376,7 @@ namespace cage
 		cursor = data.outCursor;
 	}
 
-	void fontFace::bind(renderMesh *mesh, shaderProgram *shader) const
+	void Font::bind(Mesh *mesh, ShaderProgram *shader) const
 	{
 		fontImpl *impl = (fontImpl*)this;
 		glActiveTexture(GL_TEXTURE0);
@@ -387,7 +387,7 @@ namespace cage
 		impl->shr->bind();
 	}
 
-	void fontFace::render(const uint32 *glyphs, uint32 count, const formatStruct &format, uint32 cursor)
+	void Font::render(const uint32 *glyphs, uint32 count, const FormatStruct &format, uint32 cursor)
 	{
 		processDataStruct data;
 		data.format = &format;
@@ -398,8 +398,8 @@ namespace cage
 		((fontImpl*)this)->processText(data);
 	}
 
-	Holder<fontFace> newFontFace()
+	Holder<Font> newFontFace()
 	{
-		return detail::systemArena().createImpl<fontFace, fontImpl>();
+		return detail::systemArena().createImpl<Font, fontImpl>();
 	}
 }

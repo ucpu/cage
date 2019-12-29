@@ -65,9 +65,9 @@ namespace cage
 			hierarchy->impl->mouseEventReceivers.push_back(e);
 	}
 
-	renderableElementStruct *widgetItemStruct::emitElement(elementTypeEnum element, uint32 mode, vec2 pos, vec2 size) const
+	renderableElementStruct *widgetItemStruct::emitElement(ElementTypeEnum element, uint32 mode, vec2 pos, vec2 size) const
 	{
-		CAGE_ASSERT(element < elementTypeEnum::TotalElements);
+		CAGE_ASSERT(element < ElementTypeEnum::TotalElements);
 		CAGE_ASSERT(mode < 4);
 		CAGE_ASSERT(pos.valid());
 		CAGE_ASSERT(size.valid());
@@ -87,43 +87,43 @@ namespace cage
 		return t;
 	}
 
-	bool widgetItemStruct::mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point)
+	bool widgetItemStruct::mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
 	{
 		makeFocused();
 		return true;
 	}
 
-	bool widgetItemStruct::mouseDouble(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point)
+	bool widgetItemStruct::mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
 	{
 		return true;
 	}
 
-	bool widgetItemStruct::mouseRelease(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point)
+	bool widgetItemStruct::mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
 	{
 		return true;
 	}
 
-	bool widgetItemStruct::mouseMove(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point)
+	bool widgetItemStruct::mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
 	{
 		return true;
 	}
 
-	bool widgetItemStruct::mouseWheel(sint8 wheel, modifiersFlags modifiers, vec2 point)
+	bool widgetItemStruct::mouseWheel(sint8 wheel, ModifiersFlags modifiers, vec2 point)
 	{
 		return true;
 	}
 
-	bool widgetItemStruct::keyPress(uint32 key, uint32 scanCode, modifiersFlags modifiers)
+	bool widgetItemStruct::keyPress(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
 	{
 		return true;
 	}
 
-	bool widgetItemStruct::keyRepeat(uint32 key, uint32 scanCode, modifiersFlags modifiers)
+	bool widgetItemStruct::keyRepeat(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
 	{
 		return true;
 	}
 
-	bool widgetItemStruct::keyRelease(uint32 key, uint32 scanCode, modifiersFlags modifiers)
+	bool widgetItemStruct::keyRelease(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
 	{
 		return true;
 	}

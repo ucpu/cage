@@ -14,7 +14,7 @@ namespace cage
 {
 	namespace
 	{
-		class animationImpl : public skeletalAnimation
+		class animationImpl : public SkeletalAnimation
 		{
 		public:
 			animationImpl() : mem(detail::systemArena())
@@ -106,14 +106,14 @@ namespace cage
 		};
 	}
 
-	void skeletalAnimation::setDebugName(const string &name)
+	void SkeletalAnimation::setDebugName(const string &name)
 	{
 #ifdef CAGE_DEBUG
 		debugName = name;
 #endif // CAGE_DEBUG
 	}
 
-	void skeletalAnimation::allocate(uint64 duration, uint32 bones, const uint16 *indexes, const uint16 *positionFrames, const uint16 *rotationFrames, const uint16 *scaleFrames, const void *data)
+	void SkeletalAnimation::allocate(uint64 duration, uint32 bones, const uint16 *indexes, const uint16 *positionFrames, const uint16 *rotationFrames, const uint16 *scaleFrames, const void *data)
 	{
 		animationImpl *impl = (animationImpl*)this;
 		impl->deallocate();
@@ -227,7 +227,7 @@ namespace cage
 		}
 	}
 
-	mat4 skeletalAnimation::evaluate(uint16 bone, real coef) const
+	mat4 SkeletalAnimation::evaluate(uint16 bone, real coef) const
 	{
 		CAGE_ASSERT(coef >= 0 && coef <= 1, coef);
 		animationImpl *impl = (animationImpl*)this;
@@ -244,20 +244,20 @@ namespace cage
 		return T * R * S;
 	}
 
-	uint64 skeletalAnimation::duration() const
+	uint64 SkeletalAnimation::duration() const
 	{
 		animationImpl *impl = (animationImpl*)this;
 		return impl->duration;
 	}
 
-	Holder<skeletalAnimation> newSkeletalAnimation()
+	Holder<SkeletalAnimation> newSkeletalAnimation()
 	{
-		return detail::systemArena().createImpl<skeletalAnimation, animationImpl>();
+		return detail::systemArena().createImpl<SkeletalAnimation, animationImpl>();
 	}
 
 	namespace detail
 	{
-		real evalCoefficientForSkeletalAnimation(skeletalAnimation *animation, uint64 emitTime, uint64 animationStart, real animationSpeed, real animationOffset)
+		real evalCoefficientForSkeletalAnimation(SkeletalAnimation *animation, uint64 emitTime, uint64 animationStart, real animationSpeed, real animationOffset)
 		{
 			if (!animation)
 				return 0;

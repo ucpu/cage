@@ -30,9 +30,9 @@ namespace cage
 		if (skipInitialize)
 			return;
 		auto *impl = hierarchy->impl;
-		if (GUI_HAS_COMPONENT(imageFormat, hierarchy->ent))
+		if (GUI_HAS_COMPONENT(ImageFormat, hierarchy->ent))
 		{
-			CAGE_COMPONENT_GUI(imageFormat, f, hierarchy->ent);
+			CAGE_COMPONENT_GUI(ImageFormat, f, hierarchy->ent);
 			apply(f);
 		}
 		assign();
@@ -41,17 +41,17 @@ namespace cage
 	void imageItemStruct::assign()
 	{
 		auto *impl = hierarchy->impl;
-		CAGE_COMPONENT_GUI(image, i, hierarchy->ent);
+		CAGE_COMPONENT_GUI(Image, i, hierarchy->ent);
 		assign(i);
 	}
 
-	void imageItemStruct::assign(const imageComponent &value)
+	void imageItemStruct::assign(const ImageComponent &value)
 	{
 		Image = value;
-		texture = hierarchy->impl->assetMgr->tryGet<assetSchemeIndexRenderTexture, renderTexture>(value.textureName);
+		texture = hierarchy->impl->assetMgr->tryGet<assetSchemeIndexRenderTexture, Texture>(value.textureName);
 	}
 
-	void imageItemStruct::apply(const imageFormatComponent &f)
+	void imageItemStruct::apply(const ImageFormatComponent &f)
 	{
 		format = f;
 		// todo inherit only

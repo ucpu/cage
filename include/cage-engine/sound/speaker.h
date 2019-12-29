@@ -1,6 +1,6 @@
 namespace cage
 {
-	class CAGE_API speakerOutput : private Immovable
+	class CAGE_API Speaker : private Immovable
 	{
 	public:
 		string getStreamName() const;
@@ -11,20 +11,20 @@ namespace cage
 		uint32 getChannelsCount() const;
 		uint32 getOutputSampleRate() const;
 
-		void setInput(mixingBus *bus);
+		void setInput(MixingBus *bus);
 		void update(uint64 time);
 
 		float channelVolumes[16];
 	};
 
-	struct CAGE_API speakerOutputCreateConfig
+	struct CAGE_API SpeakerCreateConfig
 	{
 		string deviceId;
 		uint32 sampleRate;
 		//uint32 channelsLayoutIndex;
 		bool deviceRaw;
-		speakerOutputCreateConfig();
+		SpeakerCreateConfig();
 	};
 
-	CAGE_API Holder<speakerOutput> newSpeakerOutput(soundContext *context, const speakerOutputCreateConfig &config, string name = "");
+	CAGE_API Holder<Speaker> newSpeakerOutput(SoundContext *context, const SpeakerCreateConfig &config, string name = "");
 }

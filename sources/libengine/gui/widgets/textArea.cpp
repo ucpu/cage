@@ -41,7 +41,7 @@ namespace cage
 		};
 	}
 
-	void textAreaCreate(hierarchyItemStruct *item)
+	void TextAreaCreate(hierarchyItemStruct *item)
 	{
 		CAGE_ASSERT(!item->item);
 		item->item = item->impl->itemsMemory.createObject<textAreaImpl>(item);

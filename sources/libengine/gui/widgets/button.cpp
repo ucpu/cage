@@ -39,12 +39,12 @@ namespace cage
 					vec2 p = hierarchy->renderPos;
 					vec2 s = hierarchy->renderSize;
 					offset(p, s, -skin->defaults.button.margin);
-					emitElement(elementTypeEnum::Button, mode(), p, s);
+					emitElement(ElementTypeEnum::Button, mode(), p, s);
 				}
 				{
 					vec2 p = hierarchy->renderPos;
 					vec2 s = hierarchy->renderSize;
-					offset(p, s, -skin->defaults.button.margin - skin->layouts[(uint32)elementTypeEnum::Button].border - skin->defaults.button.padding);
+					offset(p, s, -skin->defaults.button.margin - skin->layouts[(uint32)ElementTypeEnum::Button].border - skin->defaults.button.padding);
 					if (hierarchy->Image)
 						hierarchy->Image->emit(p, s);
 					if (hierarchy->text)
@@ -52,12 +52,12 @@ namespace cage
 				}
 			}
 
-			virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
+			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override
 			{
 				makeFocused();
-				if (buttons != mouseButtonsFlags::Left)
+				if (buttons != MouseButtonsFlags::Left)
 					return true;
-				if (modifiers != modifiersFlags::None)
+				if (modifiers != ModifiersFlags::None)
 					return true;
 				hierarchy->fireWidgetEvent();
 				return true;
@@ -65,7 +65,7 @@ namespace cage
 		};
 	}
 
-	void buttonCreate(hierarchyItemStruct *item)
+	void ButtonCreate(hierarchyItemStruct *item)
 	{
 		CAGE_ASSERT(!item->item);
 		item->item = item->impl->itemsMemory.createObject<buttonImpl>(item);

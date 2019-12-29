@@ -9,19 +9,19 @@
 
 namespace cage
 {
-	soundInterleavedBufferStruct::soundInterleavedBufferStruct() : buffer(nullptr), frames(0), channels(0), allocated(0)
+	SoundInterleavedBuffer::SoundInterleavedBuffer() : buffer(nullptr), frames(0), channels(0), allocated(0)
 	{}
 
-	soundInterleavedBufferStruct::~soundInterleavedBufferStruct()
+	SoundInterleavedBuffer::~SoundInterleavedBuffer()
 	{
 		if (allocated)
 			detail::systemArena().deallocate(buffer);
 	};
 
-	soundInterleavedBufferStruct::soundInterleavedBufferStruct(const soundInterleavedBufferStruct &other) : buffer(other.buffer), frames(other.frames), channels(other.channels), allocated(0)
+	SoundInterleavedBuffer::SoundInterleavedBuffer(const SoundInterleavedBuffer &other) : buffer(other.buffer), frames(other.frames), channels(other.channels), allocated(0)
 	{}
 
-	soundInterleavedBufferStruct &soundInterleavedBufferStruct::operator = (const soundInterleavedBufferStruct &other)
+	SoundInterleavedBuffer &SoundInterleavedBuffer::operator = (const SoundInterleavedBuffer &other)
 	{
 		if (this == &other)
 			return *this;
@@ -34,7 +34,7 @@ namespace cage
 		return *this;
 	}
 
-	void soundInterleavedBufferStruct::resize(uint32 channels, uint32 frames)
+	void SoundInterleavedBuffer::resize(uint32 channels, uint32 frames)
 	{
 		CAGE_ASSERT(channels > 0 && frames > 0, channels, frames);
 		CAGE_ASSERT(!!allocated == !!buffer, allocated, buffer);
@@ -51,13 +51,13 @@ namespace cage
 			checkSoundIoError(SoundIoErrorNoMem);
 	}
 
-	void soundInterleavedBufferStruct::clear()
+	void SoundInterleavedBuffer::clear()
 	{
 		if (!buffer)
 			return;
 		detail::memset(buffer, 0, channels * frames * sizeof(float));
 	}
 
-	soundDataBufferStruct::soundDataBufferStruct() : time(0), sampleRate(0)
+	SoundDataBuffer::SoundDataBuffer() : time(0), sampleRate(0)
 	{}
 }

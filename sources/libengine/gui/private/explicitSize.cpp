@@ -17,9 +17,9 @@ namespace cage
 	{
 		struct explicitSizeImpl : public layoutItemStruct
 		{
-			explicitSizeComponent &data;
+			ExplicitSizeComponent &data;
 
-			explicitSizeImpl(hierarchyItemStruct *hierarchy) : layoutItemStruct(hierarchy), data(GUI_REF_COMPONENT(explicitSize))
+			explicitSizeImpl(hierarchyItemStruct *hierarchy) : layoutItemStruct(hierarchy), data(GUI_REF_COMPONENT(ExplicitSize))
 			{}
 
 			virtual void initialize() override

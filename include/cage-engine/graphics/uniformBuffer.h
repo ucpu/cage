@@ -1,6 +1,6 @@
 namespace cage
 {
-	class CAGE_API uniformBuffer : private Immovable
+	class CAGE_API UniformBuffer : private Immovable
 	{
 #ifdef CAGE_DEBUG
 		detail::StringBase<64> debugName;
@@ -30,5 +30,5 @@ namespace cage
 		uniformBufferCreateConfig();
 	};
 
-	CAGE_API Holder<uniformBuffer> newUniformBuffer(const uniformBufferCreateConfig &config = {});
+	CAGE_API Holder<UniformBuffer> newUniformBuffer(const uniformBufferCreateConfig &config = {});
 }

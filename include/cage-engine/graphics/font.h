@@ -1,6 +1,6 @@
 namespace cage
 {
-	class CAGE_API fontFace : private Immovable
+	class CAGE_API Font : private Immovable
 	{
 #ifdef CAGE_DEBUG
 		detail::StringBase<64> debugName;
@@ -14,27 +14,27 @@ namespace cage
 		void setGlyphs(uint32 count, const void *data, const real *kerning);
 		void setCharmap(uint32 count, const uint32 *chars, const uint32 *glyphs);
 
-		struct CAGE_API formatStruct
+		struct CAGE_API FormatStruct
 		{
 			real size;
 			real wrapWidth;
 			real lineSpacing;
-			textAlignEnum align;
-			formatStruct();
+			TextAlignEnum align;
+			FormatStruct();
 		};
 
 		void transcript(const string &text, uint32 *glyphs, uint32 &count);
 		void transcript(const char *text, uint32 *glyphs, uint32 &count);
 
-		void size(const uint32 *glyphs, uint32 count, const formatStruct &format, vec2 &size);
-		void size(const uint32 *glyphs, uint32 count, const formatStruct &format, vec2 &size, const vec2 &mousePosition, uint32 &cursor);
+		void size(const uint32 *glyphs, uint32 count, const FormatStruct &format, vec2 &size);
+		void size(const uint32 *glyphs, uint32 count, const FormatStruct &format, vec2 &size, const vec2 &mousePosition, uint32 &cursor);
 
-		void bind(renderMesh *mesh, shaderProgram *shader) const;
-		void render(const uint32 *glyphs, uint32 count, const formatStruct &format, uint32 cursor = m);
+		void bind(Mesh *mesh, ShaderProgram *shader) const;
+		void render(const uint32 *glyphs, uint32 count, const FormatStruct &format, uint32 cursor = m);
 	};
 
-	CAGE_API Holder<fontFace> newFontFace();
+	CAGE_API Holder<Font> newFontFace();
 
-	CAGE_API AssetScheme genAssetSchemeFontFace(uint32 threadIndex, windowHandle *memoryContext);
+	CAGE_API AssetScheme genAssetSchemeFontFace(uint32 threadIndex, Window *memoryContext);
 	static const uint32 assetSchemeIndexFontFace = 16;
 }

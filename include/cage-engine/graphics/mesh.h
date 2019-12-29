@@ -1,6 +1,6 @@
 namespace cage
 {
-	class CAGE_API renderMesh : private Immovable
+	class CAGE_API Mesh : private Immovable
 	{
 #ifdef CAGE_DEBUG
 		detail::StringBase<64> debugName;
@@ -12,7 +12,7 @@ namespace cage
 		uint32 getId() const;
 		void bind() const;
 
-		void setFlags(meshRenderFlags flags);
+		void setFlags(MeshRenderFlags flags);
 		void setPrimitiveType(uint32 type);
 		void setBoundingBox(const aabb &box);
 		void setTextureNames(const uint32 *textureNames);
@@ -25,7 +25,7 @@ namespace cage
 		uint32 getVerticesCount() const;
 		uint32 getIndicesCount() const;
 		uint32 getPrimitivesCount() const;
-		meshRenderFlags getFlags() const;
+		MeshRenderFlags getFlags() const;
 		aabb getBoundingBox() const;
 		const uint32 *getTextureNames() const;
 		uint32 getTextureName(uint32 texIdx) const;
@@ -37,8 +37,8 @@ namespace cage
 		void dispatch(uint32 instances) const;
 	};
 
-	CAGE_API Holder<renderMesh> newRenderMesh();
+	CAGE_API Holder<Mesh> newRenderMesh();
 
-	CAGE_API AssetScheme genAssetSchemeRenderMesh(uint32 threadIndex, windowHandle *memoryContext);
+	CAGE_API AssetScheme genAssetSchemeRenderMesh(uint32 threadIndex, Window *memoryContext);
 	static const uint32 assetSchemeIndexMesh = 12;
 }

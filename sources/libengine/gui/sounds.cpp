@@ -13,19 +13,19 @@
 namespace cage
 {
 	/*
-	void guiManager::soundInitialize(soundContext *soundContext)
+	void Gui::soundInitialize(SoundContext *soundContext)
 	{
 		guiImpl *impl = (guiImpl*)this;
 		// todo
 	}
 
-	void guiManager::soundFinalize()
+	void Gui::soundFinalize()
 	{
 		guiImpl *impl = (guiImpl*)this;
 		// todo
 	}
 
-	void guiManager::soundRender()
+	void Gui::soundRender()
 	{
 		guiImpl *impl = (guiImpl*)this;
 		// todo

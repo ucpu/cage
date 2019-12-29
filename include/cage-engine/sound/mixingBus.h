@@ -1,14 +1,14 @@
 namespace cage
 {
-	class CAGE_API mixingBus : private Immovable
+	class CAGE_API MixingBus : private Immovable
 	{
 	public:
-		void addInput(mixingBus *bus);
-		void removeInput(mixingBus *bus);
-		void addOutput(mixingBus *bus);
-		void removeOutput(mixingBus *bus);
+		void addInput(MixingBus *bus);
+		void removeInput(MixingBus *bus);
+		void addOutput(MixingBus *bus);
+		void removeOutput(MixingBus *bus);
 		void clear();
 	};
 
-	CAGE_API Holder<mixingBus> newMixingBus(soundContext *context);
+	CAGE_API Holder<MixingBus> newMixingBus(SoundContext *context);
 }

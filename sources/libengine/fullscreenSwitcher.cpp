@@ -15,18 +15,18 @@ namespace cage
 {
 	namespace
 	{
-		string confName(const fullscreenSwitcherCreateConfig &config, const string &suffix)
+		string confName(const FullscreenSwitcherCreateConfig &config, const string &suffix)
 		{
 			if (config.configPrefix.empty())
 				return suffix;
 			return config.configPrefix + "/" + suffix;
 		}
 
-		class fullscreenSwitcherImpl : public fullscreenSwitcher, public fullscreenSwitcherCreateConfig
+		class fullscreenSwitcherImpl : public FullscreenSwitcher, public FullscreenSwitcherCreateConfig
 		{
 		public:
-			windowEventListeners listeners;
-			windowHandle *window;
+			WindowEventListeners listeners;
+			Window *window;
 
 			ConfigUint32 confWindowLeft;
 			ConfigUint32 confWindowTop;
@@ -39,7 +39,7 @@ namespace cage
 			ConfigString confFullscreenMonitor;
 			ConfigBool confFullscreenEnabled;
 
-			fullscreenSwitcherImpl(const fullscreenSwitcherCreateConfig &config) : window(config.window),
+			fullscreenSwitcherImpl(const FullscreenSwitcherCreateConfig &config) : window(config.window),
 				confWindowLeft(confName(config, "window/left"), 100),
 				confWindowTop(confName(config, "window/top"), 100),
 				confWindowWidth(confName(config, "window/windowWidth"), 800),
@@ -114,7 +114,7 @@ namespace cage
 				return false;
 			}
 
-			bool keyRelease(uint32 key, uint32, modifiersFlags modifiers)
+			bool keyRelease(uint32 key, uint32, ModifiersFlags modifiers)
 			{
 				if (modifiers == keyModifiers && key == keyToggleFullscreen)
 				{
@@ -126,25 +126,25 @@ namespace cage
 		};
 	}
 
-	fullscreenSwitcher::fullscreenSwitcher() :
+	FullscreenSwitcher::FullscreenSwitcher() :
 		keyToggleFullscreen(300), // f11
-		keyModifiers(modifiersFlags::None)
+		keyModifiers(ModifiersFlags::None)
 	{}
 
-	void fullscreenSwitcher::update(bool fullscreen)
+	void FullscreenSwitcher::update(bool fullscreen)
 	{
 		fullscreenSwitcherImpl *impl = (fullscreenSwitcherImpl*)this;
 		impl->update(fullscreen);
 	}
 
-	fullscreenSwitcherCreateConfig::fullscreenSwitcherCreateConfig(bool defaultFullscreen) : window(nullptr), defaultFullscreen(defaultFullscreen)
+	FullscreenSwitcherCreateConfig::FullscreenSwitcherCreateConfig(bool defaultFullscreen) : window(nullptr), defaultFullscreen(defaultFullscreen)
 	{
 		configPrefix = detail::getConfigAppPrefix();
 		window = cage::window();
 	}
 
-	Holder<fullscreenSwitcher> newFullscreenSwitcher(const fullscreenSwitcherCreateConfig &config)
+	Holder<FullscreenSwitcher> newFullscreenSwitcher(const FullscreenSwitcherCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<fullscreenSwitcher, fullscreenSwitcherImpl>(config);
+		return detail::systemArena().createImpl<FullscreenSwitcher, fullscreenSwitcherImpl>(config);
 	}
 }

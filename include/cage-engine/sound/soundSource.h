@@ -1,6 +1,6 @@
 namespace cage
 {
-	class CAGE_API soundSource : private Immovable
+	class CAGE_API SoundSource : private Immovable
 	{
 #ifdef CAGE_DEBUG
 		detail::StringBase<64> debugName;
@@ -17,16 +17,16 @@ namespace cage
 
 		void setDataRepeat(bool repeatBeforeStart, bool repeatAfterEnd);
 
-		void addOutput(mixingBus *bus);
-		void removeOutput(mixingBus *bus);
+		void addOutput(MixingBus *bus);
+		void removeOutput(MixingBus *bus);
 
 		uint64 getDuration() const;
 		uint32 getChannels() const;
 		uint32 getSampleRate() const;
 	};
 
-	CAGE_API Holder<soundSource> newSoundSource(soundContext *context);
+	CAGE_API Holder<SoundSource> newSoundSource(SoundContext *context);
 
-	CAGE_API AssetScheme genAssetSchemeSoundSource(uint32 threadIndex, soundContext *memoryContext);
+	CAGE_API AssetScheme genAssetSchemeSoundSource(uint32 threadIndex, SoundContext *memoryContext);
 	static const uint32 assetSchemeIndexSoundSource = 20;
 }

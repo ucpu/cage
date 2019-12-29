@@ -3,7 +3,7 @@
 
 namespace cage
 {
-	enum class engineProfilingStatsFlags
+	enum class EngineProfilingStatsFlags
 	{
 		None = 0,
 		Control = 1 << 0,
@@ -15,18 +15,18 @@ namespace cage
 		DrawPrimitives = 1 << 6,
 		Entities = 1 << 7,
 	};
-	GCHL_ENUM_BITS(engineProfilingStatsFlags);
+	GCHL_ENUM_BITS(EngineProfilingStatsFlags);
 
-	enum class engineProfilingModeEnum
+	enum class EngineProfilingModeEnum
 	{
 		Average,
 		Maximum,
 		Last,
 	};
 
-	CAGE_API uint64 engineProfilingValues(engineProfilingStatsFlags flags, engineProfilingModeEnum mode);
+	CAGE_API uint64 engineProfilingValues(EngineProfilingStatsFlags flags, EngineProfilingModeEnum mode);
 
-	enum class engineProfilingScopeEnum
+	enum class EngineProfilingScopeEnum
 	{
 		Full,
 		Short,
@@ -34,7 +34,7 @@ namespace cage
 		None,
 	};
 
-	class CAGE_API engineProfiling : private Immovable
+	class CAGE_API EngineProfiling : private Immovable
 	{
 	public:
 		vec2 screenPosition;
@@ -45,13 +45,13 @@ namespace cage
 		uint32 keyToggleRenderMissingMeshes;
 		uint32 keyToggleRenderSkeletonBones;
 		uint32 keyToggleStereo;
-		modifiersFlags keyModifiers;
-		engineProfilingScopeEnum profilingScope;
-		engineProfilingModeEnum profilingMode;
-		engineProfiling();
+		ModifiersFlags keyModifiers;
+		EngineProfilingScopeEnum profilingScope;
+		EngineProfilingModeEnum profilingMode;
+		EngineProfiling();
 	};
 
-	CAGE_API Holder<engineProfiling> newEngineProfiling();
+	CAGE_API Holder<EngineProfiling> newEngineProfiling();
 }
 
 #endif // guard_engine_profiling_h_76C3A56EFED14909B79D2CEB55DDC4F2

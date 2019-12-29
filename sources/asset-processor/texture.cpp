@@ -450,8 +450,8 @@ namespace
 
 	void exportTexture(uint32 target)
 	{
-		renderTextureHeader data;
-		detail::memset(&data, 0, sizeof(renderTextureHeader));
+		TextureHeader data;
+		detail::memset(&data, 0, sizeof(TextureHeader));
 		data.target = target;
 		data.filterMin = convertFilter(properties("filterMin"));
 		data.filterMag = convertFilter(properties("filterMag"));
@@ -460,8 +460,8 @@ namespace
 		data.wrapY = convertWrap(properties("wrapY"));
 		data.wrapZ = convertWrap(properties("wrapZ"));
 		data.flags =
-			(requireMipmaps(data.filterMin) ? textureFlags::GenerateMipmaps : textureFlags::None) |
-			(properties("animationLoop").toBool() ? textureFlags::AnimationLoop : textureFlags::None);
+			(requireMipmaps(data.filterMin) ? TextureFlags::GenerateMipmaps : TextureFlags::None) |
+			(properties("animationLoop").toBool() ? TextureFlags::AnimationLoop : TextureFlags::None);
 		data.dimX = images[0].width;
 		data.dimY = images[0].height;
 		data.dimZ = numeric_cast<uint32>(images.size());

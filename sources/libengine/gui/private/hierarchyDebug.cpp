@@ -80,7 +80,7 @@ namespace cage
 		}
 		if (text)
 		{
-			CAGE_COMPONENT_GUI(text, text, ent);
+			CAGE_COMPONENT_GUI(Text, text, ent);
 			CAGE_LOG_CONTINUE(SeverityEnum::Info, "gui-debug", stringizer() + spaces + "  TEXT: '" + text.value + "'");
 		}
 		CAGE_LOG_CONTINUE(SeverityEnum::Info, "gui-debug", stringizer() + spaces + "  requested size: " + requestedSize);

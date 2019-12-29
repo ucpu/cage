@@ -16,7 +16,7 @@ namespace cage
 {
 	aabb getBoxForRenderMesh(uint32 name)
 	{
-		renderMesh *m = assets()->tryGet<assetSchemeIndexMesh, renderMesh>(name);
+		Mesh *m = assets()->tryGet<assetSchemeIndexMesh, Mesh>(name);
 		if (m)
 			return m->getBoundingBox();
 		return aabb();
@@ -24,7 +24,7 @@ namespace cage
 
 	aabb getBoxForRenderObject(uint32 name)
 	{
-		renderObject *o = assets()->tryGet<assetSchemeIndexRenderObject, renderObject>(name);
+		RenderObject *o = assets()->tryGet<assetSchemeIndexRenderObject, RenderObject>(name);
 		if (!o)
 			return aabb();
 		aabb res;
@@ -47,27 +47,27 @@ namespace cage
 
 	aabb getBoxForRenderEntity(Entity *e)
 	{
-		CAGE_ASSERT(e->has(transformComponent::component));
-		CAGE_ASSERT(e->has(renderComponent::component));
-		CAGE_COMPONENT_ENGINE(transform, t, e);
-		CAGE_COMPONENT_ENGINE(render, r, e);
+		CAGE_ASSERT(e->has(TransformComponent::component));
+		CAGE_ASSERT(e->has(RenderComponent::component));
+		CAGE_COMPONENT_ENGINE(Transform, t, e);
+		CAGE_COMPONENT_ENGINE(Render, r, e);
 		aabb b = getBoxForAsset(r.object);
 		return b * t;
 	}
 
 	aabb getBoxForCameraEntity(Entity *e)
 	{
-		CAGE_ASSERT(e->has(transformComponent::component));
-		CAGE_ASSERT(e->has(cameraComponent::component));
+		CAGE_ASSERT(e->has(TransformComponent::component));
+		CAGE_ASSERT(e->has(CameraComponent::component));
 		CAGE_THROW_CRITICAL(NotImplemented, "getBoxForCameraEntity");
 	}
 
 	aabb getBoxForRenderScene(uint32 sceneMask)
 	{
 		aabb res;
-		for (Entity *e : renderComponent::component->entities())
+		for (Entity *e : RenderComponent::component->entities())
 		{
-			CAGE_COMPONENT_ENGINE(render, r, e);
+			CAGE_COMPONENT_ENGINE(Render, r, e);
 			if (r.sceneMask & sceneMask)
 				res += getBoxForRenderEntity(e);
 		}
@@ -78,18 +78,18 @@ namespace cage
 	{
 		bool isEntityDirectionalLightWithShadowmap(Entity *light)
 		{
-			if (!light->has(transformComponent::component) || !light->has(lightComponent::component) || !light->has(shadowmapComponent::component))
+			if (!light->has(TransformComponent::component) || !light->has(LightComponent::component) || !light->has(ShadowmapComponent::component))
 				return false;
-			CAGE_COMPONENT_ENGINE(light, l, light);
-			return l.lightType == lightTypeEnum::Directional;
+			CAGE_COMPONENT_ENGINE(Light, l, light);
+			return l.lightType == LightTypeEnum::Directional;
 		}
 	}
 
 	void fitShadowmapForDirectionalLight(Entity *light, const aabb &scene)
 	{
 		CAGE_ASSERT(isEntityDirectionalLightWithShadowmap(light));
-		CAGE_COMPONENT_ENGINE(transform, t, light);
-		CAGE_COMPONENT_ENGINE(shadowmap, s, light);
+		CAGE_COMPONENT_ENGINE(Transform, t, light);
+		CAGE_COMPONENT_ENGINE(Shadowmap, s, light);
 		if (scene.empty())
 			s.worldSize = vec3(1);
 		else
@@ -108,14 +108,14 @@ namespace cage
 	void fitShadowmapForDirectionalLight(Entity *light, Entity *camera)
 	{
 		CAGE_ASSERT(isEntityDirectionalLightWithShadowmap(light));
-		CAGE_COMPONENT_ENGINE(shadowmap, s, light);
+		CAGE_COMPONENT_ENGINE(Shadowmap, s, light);
 		fitShadowmapForDirectionalLight(light, getBoxForRenderScene(s.sceneMask), camera);
 	}
 
 	void fitShadowmapForDirectionalLight(Entity *light)
 	{
 		CAGE_ASSERT(isEntityDirectionalLightWithShadowmap(light));
-		CAGE_COMPONENT_ENGINE(shadowmap, s, light);
+		CAGE_COMPONENT_ENGINE(Shadowmap, s, light);
 		fitShadowmapForDirectionalLight(light, getBoxForRenderScene(s.sceneMask));
 	}
 }

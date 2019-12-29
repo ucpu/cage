@@ -52,34 +52,34 @@ namespace cage
 					hierarchy->text->emit(p, s);
 			}
 
-			virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
+			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override
 			{
 				return false;
 			}
 
-			virtual bool mouseDouble(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
+			virtual bool mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override
 			{
 				return false;
 			}
 
-			virtual bool mouseRelease(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
+			virtual bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override
 			{
 				return false;
 			}
 
-			virtual bool mouseMove(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
+			virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override
 			{
 				return false;
 			}
 
-			virtual bool mouseWheel(sint8 wheel, modifiersFlags modifiers, vec2 point) override
+			virtual bool mouseWheel(sint8 wheel, ModifiersFlags modifiers, vec2 point) override
 			{
 				return false;
 			}
 		};
 	}
 
-	void labelCreate(hierarchyItemStruct *item)
+	void LabelCreate(hierarchyItemStruct *item)
 	{
 		CAGE_ASSERT(!item->item);
 		item->item = item->impl->itemsMemory.createObject<labelImpl>(item);

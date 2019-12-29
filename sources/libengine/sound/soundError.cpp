@@ -9,7 +9,7 @@
 
 namespace cage
 {
-	soundError::soundError(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message, uint32 code) noexcept : SystemError(file, line, function, severity, message, code)
+	SoundError::SoundError(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message, uint32 code) noexcept : SystemError(file, line, function, severity, message, code)
 	{};
 
 	namespace soundPrivat
@@ -35,10 +35,10 @@ namespace cage
 			case SoundIoErrorInterrupted:
 			case SoundIoErrorUnderflow:
 			case SoundIoErrorEncodingString:
-				CAGE_THROW_ERROR(soundError, soundio_strerror(code), code);
+				CAGE_THROW_ERROR(SoundError, soundio_strerror(code), code);
 				break;
 			default:
-				CAGE_THROW_CRITICAL(soundError, "unknown sound error", code);
+				CAGE_THROW_CRITICAL(SoundError, "unknown sound error", code);
 			}
 		}
 	}

@@ -17,10 +17,10 @@ namespace cage
 	{
 		struct radioBoxImpl : public widgetItemStruct
 		{
-			radioBoxComponent &data;
-			elementTypeEnum element;
+			RadioBoxComponent &data;
+			ElementTypeEnum element;
 
-			radioBoxImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(radioBox)), element(elementTypeEnum::TotalElements)
+			radioBoxImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(RadioBox)), element(ElementTypeEnum::TotalElements)
 			{}
 
 			virtual void initialize() override
@@ -29,7 +29,7 @@ namespace cage
 				CAGE_ASSERT(!hierarchy->Image, "radiobox may not have image");
 				if (hierarchy->text)
 					hierarchy->text->text.apply(skin->defaults.radioBox.textFormat, hierarchy->impl);
-				element = elementTypeEnum((uint32)elementTypeEnum::RadioBoxUnchecked + (uint32)data.state);
+				element = ElementTypeEnum((uint32)ElementTypeEnum::RadioBoxUnchecked + (uint32)data.state);
 			}
 
 			virtual void findRequestedSize() override
@@ -66,19 +66,19 @@ namespace cage
 
 			void update()
 			{
-				if (data.state == checkBoxStateEnum::Checked)
-					data.state = checkBoxStateEnum::Unchecked;
+				if (data.state == CheckBoxStateEnum::Checked)
+					data.state = CheckBoxStateEnum::Unchecked;
 				else
-					data.state = checkBoxStateEnum::Checked;
+					data.state = CheckBoxStateEnum::Checked;
 				hierarchy->fireWidgetEvent();
 			}
 
-			virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
+			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override
 			{
 				makeFocused();
-				if (buttons != mouseButtonsFlags::Left)
+				if (buttons != MouseButtonsFlags::Left)
 					return true;
-				if (modifiers != modifiersFlags::None)
+				if (modifiers != ModifiersFlags::None)
 					return true;
 				update();
 				return true;
@@ -86,7 +86,7 @@ namespace cage
 		};
 	}
 
-	void radioBoxCreate(hierarchyItemStruct *item)
+	void RadioBoxCreate(hierarchyItemStruct *item)
 	{
 		CAGE_ASSERT(!item->item);
 		item->item = item->impl->itemsMemory.createObject<radioBoxImpl>(item);

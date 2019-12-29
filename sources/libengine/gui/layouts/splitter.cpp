@@ -17,9 +17,9 @@ namespace cage
 	{
 		struct layoutSplitterImpl : public layoutItemStruct
 		{
-			layoutSplitterComponent &data;
+			LayoutSplitterComponent &data;
 
-			layoutSplitterImpl(hierarchyItemStruct *hierarchy) : layoutItemStruct(hierarchy), data(GUI_REF_COMPONENT(layoutSplitter))
+			layoutSplitterImpl(hierarchyItemStruct *hierarchy) : layoutItemStruct(hierarchy), data(GUI_REF_COMPONENT(LayoutSplitter))
 			{}
 
 			virtual void initialize() override
@@ -64,7 +64,7 @@ namespace cage
 		};
 	}
 
-	void layoutSplitterCreate(hierarchyItemStruct *item)
+	void LayoutSplitterCreate(hierarchyItemStruct *item)
 	{
 		CAGE_ASSERT(!item->item);
 		item->item = item->impl->itemsMemory.createObject<layoutSplitterImpl>(item);

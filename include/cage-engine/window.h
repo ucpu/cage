@@ -3,17 +3,17 @@
 
 namespace cage
 {
-	class CAGE_API windowHandle : private Immovable
+	class CAGE_API Window : private Immovable
 	{
 	public:
 		struct
 		{
 			EventDispatcher<bool()> windowClose, windowShow, windowHide;
 			EventDispatcher<bool(const ivec2 &)> windowMove, windowResize;
-			EventDispatcher<bool(mouseButtonsFlags, modifiersFlags, const ivec2 &)> mouseMove, mousePress, mouseDouble, mouseRelease;
-			EventDispatcher<bool(sint32, modifiersFlags, const ivec2 &)> mouseWheel;
+			EventDispatcher<bool(MouseButtonsFlags, ModifiersFlags, const ivec2 &)> mouseMove, mousePress, mouseDouble, mouseRelease;
+			EventDispatcher<bool(sint32, ModifiersFlags, const ivec2 &)> mouseWheel;
 			EventDispatcher<bool()> focusGain, focusLose;
-			EventDispatcher<bool(uint32, uint32, modifiersFlags)> keyPress, keyRelease, keyRepeat;
+			EventDispatcher<bool(uint32, uint32, ModifiersFlags)> keyPress, keyRelease, keyRepeat;
 			EventDispatcher<bool(uint32)> keyChar;
 		} events;
 
@@ -32,7 +32,7 @@ namespace cage
 
 		void setFullscreen(const ivec2 &resolution, uint32 frequency = 0, const string &deviceId = "");
 		void setMaximized();
-		void setWindowed(windowFlags flags = windowFlags::Border | windowFlags::Resizeable);
+		void setWindowed(WindowFlags flags = WindowFlags::Border | WindowFlags::Resizeable);
 		void setMinimized();
 		void setHidden();
 
@@ -41,9 +41,9 @@ namespace cage
 
 		ivec2 mousePosition() const;
 		void mousePosition(const ivec2 &);
-		mouseButtonsFlags mouseButtons() const;
+		MouseButtonsFlags mouseButtons() const;
 
-		modifiersFlags keyboardModifiers() const;
+		ModifiersFlags keyboardModifiers() const;
 		bool keyboardKey(uint32 key) const;
 		bool keyboardScanCode(uint32 code) const;
 
@@ -62,19 +62,19 @@ namespace cage
 		Delegate<void(uint32, uint32, uint32, uint32, const char*)> debugOpenglErrorCallback;
 	};
 
-	CAGE_API Holder<windowHandle> newWindow(windowHandle *shareContext = nullptr);
+	CAGE_API Holder<Window> newWindow(Window *shareContext = nullptr);
 
-	struct CAGE_API windowEventListeners
+	struct CAGE_API WindowEventListeners
 	{
 		EventListener<bool()> windowClose, windowShow, windowHide;
 		EventListener<bool(const ivec2 &)> windowMove, windowResize;
-		EventListener<bool(mouseButtonsFlags, modifiersFlags, const ivec2 &)> mouseMove, mousePress, mouseDouble, mouseRelease;
-		EventListener<bool(sint32, modifiersFlags, const ivec2 &)> mouseWheel;
+		EventListener<bool(MouseButtonsFlags, ModifiersFlags, const ivec2 &)> mouseMove, mousePress, mouseDouble, mouseRelease;
+		EventListener<bool(sint32, ModifiersFlags, const ivec2 &)> mouseWheel;
 		EventListener<bool()> focusGain, focusLose;
-		EventListener<bool(uint32, uint32, modifiersFlags)> keyPress, keyRelease, keyRepeat;
+		EventListener<bool(uint32, uint32, ModifiersFlags)> keyPress, keyRelease, keyRepeat;
 		EventListener<bool(uint32)> keyChar;
 
-		void attachAll(windowHandle *window, sint32 order = 0);
+		void attachAll(Window *window, sint32 order = 0);
 	};
 }
 

@@ -48,9 +48,9 @@ namespace cage
 		if (skipInitialize)
 			return;
 		auto *impl = hierarchy->impl;
-		if (GUI_HAS_COMPONENT(textFormat, hierarchy->ent))
+		if (GUI_HAS_COMPONENT(TextFormat, hierarchy->ent))
 		{
-			CAGE_COMPONENT_GUI(textFormat, f, hierarchy->ent);
+			CAGE_COMPONENT_GUI(TextFormat, f, hierarchy->ent);
 			text.apply(f, impl);
 		}
 		transcript();
@@ -61,7 +61,7 @@ namespace cage
 		auto *impl = hierarchy->impl;
 		string value;
 		{
-			CAGE_COMPONENT_GUI(text, t, hierarchy->ent);
+			CAGE_COMPONENT_GUI(Text, t, hierarchy->ent);
 			value = loadInternationalizedText(impl->assetMgr, t.assetName, t.textName, t.value);
 		}
 		transcript(value);
@@ -126,7 +126,7 @@ namespace cage
 		if (!text.font)
 			return;
 		vec2 dummy;
-		fontFace::formatStruct f(text.format);
+		Font::FormatStruct f(text.format);
 		f.wrapWidth = size[0];
 		text.font->size(text.glyphs, text.count, f, dummy, point - position, cursor);
 		text.cursor = cursor;

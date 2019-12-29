@@ -23,19 +23,19 @@ namespace cage
 			static bool fired = rtprioWarningCallbackOnce();
 		}
 
-		class soundContextImpl : public soundContext
+		class soundContextImpl : public SoundContext
 		{
 		public:
 			string name;
 			SoundIo *soundio;
 			memoryArenaGrowing<memoryAllocatorPolicyPool<sizeof(templates::allocatorSizeSet<void*>)>, memoryConcurrentPolicyNone> linksMemory;
 
-			soundContextImpl(const soundContextCreateConfig &config, const string &name) : name(name.replace(":", "_")), soundio(nullptr), linksMemory(config.linksMemory)
+			soundContextImpl(const SoundContextCreateConfig &config, const string &name) : name(name.replace(":", "_")), soundio(nullptr), linksMemory(config.linksMemory)
 			{
 				CAGE_LOG(SeverityEnum::Info, "sound", stringizer() + "creating sound context, name: '" + name + "'");
 				soundio = soundio_create();
 				if (!soundio)
-					CAGE_THROW_ERROR(soundError, "error create soundio", 0);
+					CAGE_THROW_ERROR(SoundError, "error create soundio", 0);
 				soundio->app_name = this->name.c_str();
 				soundio->emit_rtprio_warning = &rtprioWarningCallback;
 				checkSoundIoError(soundio_connect(soundio));
@@ -52,30 +52,30 @@ namespace cage
 
 	namespace soundPrivat
 	{
-		SoundIo *soundioFromContext(soundContext *context)
+		SoundIo *soundioFromContext(SoundContext *context)
 		{
 			soundContextImpl *impl = (soundContextImpl*)context;
 			return impl->soundio;
 		}
 
-		MemoryArena linksArenaFromContext(soundContext *context)
+		MemoryArena linksArenaFromContext(SoundContext *context)
 		{
 			soundContextImpl *impl = (soundContextImpl*)context;
 			return MemoryArena(&impl->linksMemory);
 		}
 	}
 
-	string soundContext::getContextName() const
+	string SoundContext::getContextName() const
 	{
 		soundContextImpl *impl = (soundContextImpl*)this;
 		return impl->name;
 	}
 
-	soundContextCreateConfig::soundContextCreateConfig() : linksMemory(1024 * 1024)
+	SoundContextCreateConfig::SoundContextCreateConfig() : linksMemory(1024 * 1024)
 	{}
 
-	Holder<soundContext> newSoundContext(const soundContextCreateConfig &config, const string &name)
+	Holder<SoundContext> newSoundContext(const SoundContextCreateConfig &config, const string &name)
 	{
-		return detail::systemArena().createImpl<soundContext, soundContextImpl>(config, name);
+		return detail::systemArena().createImpl<SoundContext, soundContextImpl>(config, name);
 	}
 }

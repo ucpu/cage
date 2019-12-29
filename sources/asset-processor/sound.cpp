@@ -9,7 +9,7 @@
 
 namespace
 {
-	soundSourceHeader sds;
+	SoundSourceHeader sds;
 	MemoryBuffer buf1;
 
 	struct vorbisEncoderStruct
@@ -224,15 +224,15 @@ void processSound()
 	decodeAll();
 
 	if (properties("loopBefore").toBool())
-		sds.flags = sds.flags | soundFlags::LoopBeforeStart;
+		sds.flags = sds.flags | SoundFlags::LoopBeforeStart;
 	if (properties("loopAfter").toBool())
-		sds.flags = sds.flags | soundFlags::LoopAfterEnd;
+		sds.flags = sds.flags | SoundFlags::LoopAfterEnd;
 	if (sds.frames * sds.channels * sizeof(float) < properties("compressThreshold").toUint32())
-		sds.soundType = soundTypeEnum::RawRaw;
+		sds.soundType = SoundTypeEnum::RawRaw;
 	else if (properties("stream").toBool())
-		sds.soundType = soundTypeEnum::CompressedCompressed;
+		sds.soundType = SoundTypeEnum::CompressedCompressed;
 	else
-		sds.soundType = soundTypeEnum::CompressedRaw;
+		sds.soundType = SoundTypeEnum::CompressedRaw;
 
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "flags: " + (uint32)sds.flags);
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "frames: " + sds.frames);
@@ -240,13 +240,13 @@ void processSound()
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "samplerate: " + sds.sampleRate);
 	switch (sds.soundType)
 	{
-	case soundTypeEnum::RawRaw:
+	case SoundTypeEnum::RawRaw:
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "sound type: raw file, raw play");
 		break;
-	case soundTypeEnum::CompressedRaw:
+	case SoundTypeEnum::CompressedRaw:
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "sound type: compressed file, raw play");
 		break;
-	case soundTypeEnum::CompressedCompressed:
+	case SoundTypeEnum::CompressedCompressed:
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "sound type: compressed file, compressed play");
 		break;
 	default:
@@ -254,7 +254,7 @@ void processSound()
 	}
 
 	AssetHeader h = initializeAssetHeaderStruct();
-	h.originalSize = sizeof(soundSourceHeader) + sds.frames * sds.channels * sizeof(float);
+	h.originalSize = sizeof(SoundSourceHeader) + sds.frames * sds.channels * sizeof(float);
 
 	Holder<File> f = newFile(outputFileName, FileMode(true, true));
 	f->write(&h, sizeof(h));
@@ -262,29 +262,29 @@ void processSound()
 
 	switch (sds.soundType)
 	{
-	case soundTypeEnum::RawRaw:
+	case SoundTypeEnum::RawRaw:
 	{
 		f->write(buf1.data(), sds.frames * sds.channels * sizeof(float));
 	} break;
-	case soundTypeEnum::CompressedRaw:
-	case soundTypeEnum::CompressedCompressed:
+	case SoundTypeEnum::CompressedRaw:
+	case SoundTypeEnum::CompressedCompressed:
 	{
 		vorbisEncoderStruct ves(f.get());
 		ves.encode();
-		uint32 oggSize = numeric_cast<uint32>(f->size() - sizeof(soundSourceHeader) - sizeof(AssetHeader));
+		uint32 oggSize = numeric_cast<uint32>(f->size() - sizeof(SoundSourceHeader) - sizeof(AssetHeader));
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "original size: " + h.originalSize + " bytes");
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "compressed size: " + oggSize + " bytes");
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "compression ratio: " + (oggSize / (float)h.originalSize));
 		switch (sds.soundType)
 		{
-		case soundTypeEnum::CompressedRaw:
-			h.compressedSize = oggSize + sizeof(soundSourceHeader);
+		case SoundTypeEnum::CompressedRaw:
+			h.compressedSize = oggSize + sizeof(SoundSourceHeader);
 			break;
-		case soundTypeEnum::CompressedCompressed:
-			h.compressedSize = oggSize + sizeof(soundSourceHeader);
+		case SoundTypeEnum::CompressedCompressed:
+			h.compressedSize = oggSize + sizeof(SoundSourceHeader);
 			h.originalSize = 0; // the sound will not be decoded on asset load, so do not allocate space for it
 			break;
-		case soundTypeEnum::RawRaw:
+		case SoundTypeEnum::RawRaw:
 			break; // do nothing here
 		}
 		f->seek(0);
@@ -296,7 +296,7 @@ void processSound()
 			Holder<File> df = newFile(dbgName, FileMode(false, true));
 			void *buf = detail::systemArena().allocate(oggSize, sizeof(uintPtr));
 			f->flush();
-			f->seek(sizeof(AssetHeader) + sizeof(soundSourceHeader));
+			f->seek(sizeof(AssetHeader) + sizeof(SoundSourceHeader));
 			f->read(buf, oggSize);
 			df->write(buf, oggSize);
 			detail::systemArena().deallocate(buf);

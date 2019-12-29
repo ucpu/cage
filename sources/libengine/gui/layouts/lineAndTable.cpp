@@ -17,7 +17,7 @@ namespace cage
 	{
 		struct layoutTableImpl : public layoutItemStruct
 		{
-			layoutTableComponent data; // may not be reference
+			LayoutTableComponent data; // may not be reference
 			real *widths;
 			real *heights;
 			uint32 mws, mhs;
@@ -28,13 +28,13 @@ namespace cage
 				auto impl = hierarchy->impl;
 				if (justLine)
 				{
-					CAGE_COMPONENT_GUI(layoutLine, l, hierarchy->ent);
+					CAGE_COMPONENT_GUI(LayoutLine, l, hierarchy->ent);
 					data.vertical = l.vertical;
 					data.sections = 1;
 				}
 				else
 				{
-					CAGE_COMPONENT_GUI(layoutTable, t, hierarchy->ent);
+					CAGE_COMPONENT_GUI(LayoutTable, t, hierarchy->ent);
 					data = t;
 				}
 			}
@@ -170,13 +170,13 @@ namespace cage
 		};
 	}
 
-	void layoutLineCreate(hierarchyItemStruct *item)
+	void LayoutLineCreate(hierarchyItemStruct *item)
 	{
 		CAGE_ASSERT(!item->item);
 		item->item = item->impl->itemsMemory.createObject<layoutTableImpl>(item, true);
 	}
 
-	void layoutTableCreate(hierarchyItemStruct *item)
+	void LayoutTableCreate(hierarchyItemStruct *item)
 	{
 		CAGE_ASSERT(!item->item);
 		item->item = item->impl->itemsMemory.createObject<layoutTableImpl>(item, false);

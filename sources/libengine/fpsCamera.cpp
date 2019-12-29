@@ -15,10 +15,10 @@ namespace cage
 {
 	namespace
 	{
-		class fpsCameraImpl : public fpsCamera
+		class fpsCameraImpl : public FpsCamera
 		{
 		public:
-			windowEventListeners listeners;
+			WindowEventListeners listeners;
 			EventListener<void()> updateListener;
 			VariableSmoothingBuffer<vec2, 1> mouseSmoother;
 			VariableSmoothingBuffer<vec3, 3> moveSmoother;
@@ -54,19 +54,19 @@ namespace cage
 				return pt2;
 			}
 
-			bool mouseEnabled(mouseButtonsFlags buttons)
+			bool mouseEnabled(MouseButtonsFlags buttons)
 			{
-				return !!ent && window()->isFocused() && (mouseButton == mouseButtonsFlags::None || (buttons & mouseButton) == mouseButton);
+				return !!ent && window()->isFocused() && (mouseButton == MouseButtonsFlags::None || (buttons & mouseButton) == mouseButton);
 			}
 
-			bool mousePress(mouseButtonsFlags buttons, modifiersFlags, const ivec2 &)
+			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags, const ivec2 &)
 			{
 				if (mouseEnabled(buttons))
 					centerMouse();
 				return false;
 			}
 
-			bool mouseMove(mouseButtonsFlags buttons, modifiersFlags, const ivec2 &pt)
+			bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags, const ivec2 &pt)
 			{
 				if (!mouseEnabled(buttons))
 					return false;
@@ -77,7 +77,7 @@ namespace cage
 				return false;
 			}
 
-			bool mouseWheel(sint32 wheel, modifiersFlags, const ivec2 &)
+			bool mouseWheel(sint32 wheel, ModifiersFlags, const ivec2 &)
 			{
 				if (!ent)
 					return false;
@@ -133,12 +133,12 @@ namespace cage
 				return false;
 			}
 
-			bool keyPress(uint32 a, uint32, modifiersFlags)
+			bool keyPress(uint32 a, uint32, ModifiersFlags)
 			{
 				return setKey(a, true);
 			}
 
-			bool keyRelease(uint32 a, uint32, modifiersFlags)
+			bool keyRelease(uint32 a, uint32, ModifiersFlags)
 			{
 				return setKey(a, false);
 			}
@@ -147,7 +147,7 @@ namespace cage
 			{
 				if (!ent)
 					return;
-				CAGE_COMPONENT_ENGINE(transform, t, ent);
+				CAGE_COMPONENT_ENGINE(Transform, t, ent);
 
 				// orientation
 				mouseSmoother.add(mouseMoveAccum);
@@ -196,17 +196,17 @@ namespace cage
 		};
 	}
 
-	fpsCamera::fpsCamera() : movementSpeed(1), wheelSpeed(10), turningSpeed(0.008), pitchLimitUp(degs(80)), pitchLimitDown(degs(-80)), mouseButton(mouseButtonsFlags::None), keysEqEnabled(true), keysWsadEnabled(true), keysArrowsEnabled(true), freeMove(false)
+	FpsCamera::FpsCamera() : movementSpeed(1), wheelSpeed(10), turningSpeed(0.008), pitchLimitUp(degs(80)), pitchLimitDown(degs(-80)), mouseButton(MouseButtonsFlags::None), keysEqEnabled(true), keysWsadEnabled(true), keysArrowsEnabled(true), freeMove(false)
 	{}
 
-	void fpsCamera::setEntity(Entity *ent)
+	void FpsCamera::setEntity(Entity *ent)
 	{
 		fpsCameraImpl *impl = (fpsCameraImpl*)this;
 		impl->ent = ent;
 	}
 
-	Holder<fpsCamera> newFpsCamera(Entity *ent)
+	Holder<FpsCamera> newFpsCamera(Entity *ent)
 	{
-		return detail::systemArena().createImpl<fpsCamera, fpsCameraImpl>(ent);
+		return detail::systemArena().createImpl<FpsCamera, fpsCameraImpl>(ent);
 	}
 }

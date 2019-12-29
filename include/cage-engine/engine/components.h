@@ -1,42 +1,42 @@
 namespace cage
 {
-	struct CAGE_API transformComponent : public transform
+	struct CAGE_API TransformComponent : public transform
 	{
 		static EntityComponent *component;
 		static EntityComponent *componentHistory;
-		transformComponent(const transform &t = transform());
+		TransformComponent(const transform &t = transform());
 	};
 
-	struct CAGE_API renderComponent
+	struct CAGE_API RenderComponent
 	{
 		static EntityComponent *component;
 		vec3 color;
 		real opacity;
 		uint32 object;
 		uint32 sceneMask;
-		renderComponent();
+		RenderComponent();
 	};
 
-	struct CAGE_API textureAnimationComponent
+	struct CAGE_API TextureAnimationComponent
 	{
 		static EntityComponent *component;
 		uint64 startTime;
 		real speed;
 		real offset;
-		textureAnimationComponent();
+		TextureAnimationComponent();
 	};
 
-	struct CAGE_API skeletalAnimationComponent
+	struct CAGE_API SkeletalAnimationComponent
 	{
 		static EntityComponent *component;
 		uint64 startTime;
 		uint32 name;
 		real speed;
 		real offset;
-		skeletalAnimationComponent();
+		SkeletalAnimationComponent();
 	};
 
-	struct CAGE_API lightComponent
+	struct CAGE_API LightComponent
 	{
 		static EntityComponent *component;
 		vec3 color;
@@ -44,11 +44,11 @@ namespace cage
 		rads spotAngle;
 		real spotExponent;
 		uint32 sceneMask;
-		lightTypeEnum lightType;
-		lightComponent();
+		LightTypeEnum lightType;
+		LightComponent();
 	};
 
-	struct CAGE_API shadowmapComponent
+	struct CAGE_API ShadowmapComponent
 	{
 		static EntityComponent *component;
 		// directional: width, height, depth
@@ -56,10 +56,10 @@ namespace cage
 		vec3 worldSize;
 		uint32 resolution;
 		uint32 sceneMask;
-		shadowmapComponent();
+		ShadowmapComponent();
 	};
 
-	struct CAGE_API renderTextComponent
+	struct CAGE_API RenderTextComponent
 	{
 		static EntityComponent *component;
 		string value; // list of parameters separated by '|' when formatted, otherwise the string as is
@@ -69,10 +69,10 @@ namespace cage
 		uint32 textName;
 		uint32 font;
 		uint32 sceneMask;
-		renderTextComponent();
+		RenderTextComponent();
 	};
 
-	struct CAGE_API cameraComponent : public cameraEffects
+	struct CAGE_API CameraComponent : public CameraEffects
 	{
 		static EntityComponent *component;
 		vec3 ambientLight;
@@ -85,35 +85,35 @@ namespace cage
 			rads perspectiveFov;
 			CameraUnion();
 		} camera;
-		renderTexture *target;
+		Texture *target;
 		real near, far;
 		real zeroParallaxDistance;
 		real eyeSeparation;
 		sint32 cameraOrder;
 		uint32 sceneMask;
-		cameraClearFlags clear;
-		cameraTypeEnum cameraType;
-		cameraComponent();
+		CameraClearFlags clear;
+		CameraTypeEnum cameraType;
+		CameraComponent();
 	};
 
-	struct CAGE_API voiceComponent
+	struct CAGE_API SoundComponent
 	{
 		static EntityComponent *component;
 		uint64 startTime;
-		mixingBus *input;
+		MixingBus *input;
 		uint32 name;
 		uint32 sceneMask;
-		voiceComponent();
+		SoundComponent();
 	};
 
-	struct CAGE_API listenerComponent
+	struct CAGE_API ListenerComponent
 	{
 		static EntityComponent *component;
 		vec3 attenuation; // constant, linear, quadratic
-		mixingBus *output;
+		MixingBus *output;
 		uint32 sceneMask;
 		real speedOfSound;
 		bool dopplerEffect;
-		listenerComponent();
+		ListenerComponent();
 	};
 }

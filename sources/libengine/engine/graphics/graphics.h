@@ -29,12 +29,12 @@ namespace cage
 			vec4 aniTexFrames;
 		} *shaderMeshes;
 		mat3x4 *shaderArmatures;
-		renderTexture *textures[MaxTexturesCountPerMaterial];
-		renderMesh *const mesh;
+		Texture *textures[MaxTexturesCountPerMaterial];
+		Mesh *const mesh;
 		objectsStruct *next;
 		uint32 count;
 		const uint32 max;
-		objectsStruct(renderMesh *mesh, uint32 max);
+		objectsStruct(Mesh *mesh, uint32 max);
 	};
 
 	struct lightsStruct
@@ -53,8 +53,8 @@ namespace cage
 		uint32 count;
 		const uint32 max;
 		const sint32 shadowmap;
-		const lightTypeEnum lightType;
-		lightsStruct(lightTypeEnum lightType, sint32 shadowmap, uint32 max);
+		const LightTypeEnum lightType;
+		lightsStruct(LightTypeEnum lightType, sint32 shadowmap, uint32 max);
 	};
 
 	struct translucentStruct
@@ -62,14 +62,14 @@ namespace cage
 		objectsStruct object;
 		lightsStruct *firstLight, *lastLight;
 		translucentStruct *next;
-		translucentStruct(renderMesh *mesh);
+		translucentStruct(Mesh *mesh);
 	};
 
 	struct textsStruct
 	{
 		struct renderStruct
 		{
-			fontFace::formatStruct format;
+			Font::FormatStruct format;
 			mat4 transform;
 			vec3 color;
 			uint32 *glyphs;
@@ -77,12 +77,12 @@ namespace cage
 			renderStruct *next;
 			renderStruct();
 		} *firtsRender, *lastRender;
-		fontFace *font;
+		Font *font;
 		textsStruct *next;
 		textsStruct();
 	};
 
-	struct renderPassStruct : public cameraEffects
+	struct renderPassStruct : public CameraEffects
 	{
 		struct shaderViewportStruct
 		{
@@ -98,7 +98,7 @@ namespace cage
 		translucentStruct *firstTranslucent, *lastTranslucent;
 		textsStruct *firstText, *lastText;
 		renderPassStruct *next;
-		renderTexture *targetTexture;
+		Texture *targetTexture;
 		mat4 view;
 		mat4 proj;
 		mat4 viewProj;
@@ -112,11 +112,11 @@ namespace cage
 
 	struct graphicsDispatchStruct
 	{
-		renderMesh *meshSquare, *meshSphere, *meshCone;
-		shaderProgram *shaderVisualizeColor, *shaderVisualizeDepth, *shaderVisualizeMonochromatic, *shaderVisualizeVelocity;
-		shaderProgram *shaderAmbient, *shaderBlit, *shaderDepth, *shaderGBuffer, *shaderLighting, *shaderTranslucent;
-		shaderProgram *shaderGaussianBlur, *shaderSsaoGenerate, *shaderSsaoApply, *shaderMotionBlur, *shaderBloomGenerate, *shaderBloomApply, *shaderLuminanceCollection, *shaderLuminanceCopy, *shaderFinalScreen, *shaderFxaa;
-		shaderProgram *shaderFont;
+		Mesh *meshSquare, *meshSphere, *meshCone;
+		ShaderProgram *shaderVisualizeColor, *shaderVisualizeDepth, *shaderVisualizeMonochromatic, *shaderVisualizeVelocity;
+		ShaderProgram *shaderAmbient, *shaderBlit, *shaderDepth, *shaderGBuffer, *shaderLighting, *shaderTranslucent;
+		ShaderProgram *shaderGaussianBlur, *shaderSsaoGenerate, *shaderSsaoApply, *shaderMotionBlur, *shaderBloomGenerate, *shaderBloomApply, *shaderLuminanceCollection, *shaderLuminanceCopy, *shaderFinalScreen, *shaderFxaa;
+		ShaderProgram *shaderFont;
 		uint32 windowWidth, windowHeight;
 		renderPassStruct *firstRenderPass, *lastRenderPass;
 	};

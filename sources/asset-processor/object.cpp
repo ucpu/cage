@@ -60,7 +60,7 @@ void processObject()
 		return a.threshold > b.threshold;
 	});
 
-	renderObjectHeader o;
+	RenderObjectHeader o;
 	{
 		detail::memset(&o, 0, sizeof(o));
 		string c = ini->getString("render", "color");
@@ -98,7 +98,7 @@ void processObject()
 
 	AssetHeader h = initializeAssetHeaderStruct();
 	h.dependenciesCount = numeric_cast<uint16>(deps.size());
-	h.originalSize = sizeof(renderObjectHeader);
+	h.originalSize = sizeof(RenderObjectHeader);
 	h.originalSize += numeric_cast<uint32>(lods.size()) * sizeof(uint32);
 	h.originalSize += numeric_cast<uint32>(lods.size() + 1) * sizeof(uint32);
 	h.originalSize += totalMeshes * sizeof(uint32);

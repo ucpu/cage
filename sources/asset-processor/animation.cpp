@@ -49,7 +49,7 @@ void processAnimation()
 
 	Holder<assimpSkeletonClass> skeleton = context->skeleton();
 
-	skeletalAnimationHeader a;
+	SkeletalAnimationHeader a;
 	a.duration = numeric_cast<uint64>(1e6 * ani->mDuration / (ani->mTicksPerSecond > 0 ? ani->mTicksPerSecond : 25.0));
 	a.skeletonBonesCount = skeleton->bonesCount();
 

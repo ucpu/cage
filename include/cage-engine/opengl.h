@@ -3,13 +3,6 @@
 
 #include <glad/glad.h>
 
-#ifdef near
-#undef near
-#undef far
-#undef min
-#undef max
-#endif
-
 namespace cage
 {
 	namespace detail

@@ -14,7 +14,7 @@
 
 namespace cage
 {
-	renderMeshHeader::materialData::materialData()
+	MeshHeader::materialData::materialData()
 	{
 		albedoBase[3] = 1;
 		albedoMult = specialMult = vec4(1);
@@ -22,7 +22,7 @@ namespace cage
 
 	namespace
 	{
-		class meshImpl : public renderMesh
+		class meshImpl : public Mesh
 		{
 		public:
 			aabb box;
@@ -40,9 +40,9 @@ namespace cage
 			uint32 skeletonName;
 			uint32 skeletonBones;
 			uint32 instancesLimitHint;
-			meshRenderFlags flags;
+			MeshRenderFlags flags;
 
-			static const meshRenderFlags defaultFlags = meshRenderFlags::DepthTest | meshRenderFlags::DepthWrite | meshRenderFlags::VelocityWrite | meshRenderFlags::Lighting | meshRenderFlags::ShadowCast;
+			static const MeshRenderFlags defaultFlags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::VelocityWrite | MeshRenderFlags::Lighting | MeshRenderFlags::ShadowCast;
 
 			meshImpl() : box(aabb::Universe()), id(0), vbo(0), verticesCount(0), verticesOffset(0), indicesCount(0), indicesOffset(0), materialSize(0), materialOffset(0), primitiveType(GL_TRIANGLES), primitivesCount(0), skeletonName(0), skeletonBones(0), instancesLimitHint(1), flags(defaultFlags)
 			{
@@ -94,7 +94,7 @@ namespace cage
 		};
 	}
 
-	void renderMesh::setDebugName(const string &name)
+	void Mesh::setDebugName(const string &name)
 	{
 #ifdef CAGE_DEBUG
 		debugName = name;
@@ -103,12 +103,12 @@ namespace cage
 		glObjectLabel(GL_VERTEX_ARRAY, impl->id, name.length(), name.c_str());
 	}
 
-	uint32 renderMesh::getId() const
+	uint32 Mesh::getId() const
 	{
 		return ((meshImpl*)this)->id;
 	}
 
-	void renderMesh::bind() const
+	void Mesh::bind() const
 	{
 		meshImpl *impl = (meshImpl*)this;
 		glBindVertexArray(impl->id);
@@ -118,47 +118,47 @@ namespace cage
 			glBindBufferRange(GL_UNIFORM_BUFFER, CAGE_SHADER_UNIBLOCK_MATERIAL, impl->vbo, impl->materialOffset, impl->materialSize);
 			CAGE_CHECK_GL_ERROR_DEBUG();
 		}
-		setCurrentObject<renderMesh>(impl->id);
-		setCurrentObject<uniformBuffer>(impl->id);
+		setCurrentObject<Mesh>(impl->id);
+		setCurrentObject<UniformBuffer>(impl->id);
 	}
 
-	void renderMesh::setFlags(meshRenderFlags flags)
+	void Mesh::setFlags(MeshRenderFlags flags)
 	{
 		meshImpl *impl = (meshImpl*)this;
 		impl->flags = flags;
 	}
 
-	void renderMesh::setPrimitiveType(uint32 type)
+	void Mesh::setPrimitiveType(uint32 type)
 	{
 		meshImpl *impl = (meshImpl*)this;
 		impl->primitiveType = type;
 		impl->updatePrimitivesCount();
 	}
 
-	void renderMesh::setBoundingBox(const aabb &box)
+	void Mesh::setBoundingBox(const aabb &box)
 	{
 		meshImpl *impl = (meshImpl*)this;
 		impl->box = box;
 	}
 
-	void renderMesh::setTextureNames(const uint32 *textureNames)
+	void Mesh::setTextureNames(const uint32 *textureNames)
 	{
 		meshImpl *impl = (meshImpl*)this;
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 			impl->textures[i] = textureNames[i];
 	}
 
-	void renderMesh::setTextureName(uint32 texIdx, uint32 name)
+	void Mesh::setTextureName(uint32 texIdx, uint32 name)
 	{
 		meshImpl *impl = (meshImpl*)this;
 		CAGE_ASSERT(texIdx < MaxTexturesCountPerMaterial, texIdx, MaxTexturesCountPerMaterial);
 		impl->textures[texIdx] = name;
 	}
 
-	void renderMesh::setBuffers(uint32 verticesCount, uint32 vertexSize, const void *vertexData, uint32 indicesCount, const uint32 *indexData, uint32 materialSize, const void *materialData)
+	void Mesh::setBuffers(uint32 verticesCount, uint32 vertexSize, const void *vertexData, uint32 indicesCount, const uint32 *indexData, uint32 materialSize, const void *materialData)
 	{
 		meshImpl *impl = (meshImpl*)this;
-		CAGE_ASSERT(graphicsPrivat::getCurrentObject<renderMesh>() == impl->id);
+		CAGE_ASSERT(graphicsPrivat::getCurrentObject<Mesh>() == impl->id);
 		{
 			if (impl->vbo)
 			{
@@ -212,10 +212,10 @@ namespace cage
 		impl->updatePrimitivesCount();
 	}
 
-	void renderMesh::setAttribute(uint32 index, uint32 size, uint32 type, uint32 stride, uint32 startOffset)
+	void Mesh::setAttribute(uint32 index, uint32 size, uint32 type, uint32 stride, uint32 startOffset)
 	{
 		meshImpl *impl = (meshImpl*)this;
-		CAGE_ASSERT(graphicsPrivat::getCurrentObject<renderMesh>() == impl->id);
+		CAGE_ASSERT(graphicsPrivat::getCurrentObject<Mesh>() == impl->id);
 		if (type == 0)
 			glDisableVertexAttribArray(index);
 		else
@@ -241,84 +241,84 @@ namespace cage
 		}
 	}
 
-	void renderMesh::setSkeleton(uint32 name, uint32 bones)
+	void Mesh::setSkeleton(uint32 name, uint32 bones)
 	{
 		meshImpl *impl = (meshImpl*)this;
 		impl->skeletonName = name;
 		impl->skeletonBones = bones;
 	}
 
-	void renderMesh::setInstancesLimitHint(uint32 limit)
+	void Mesh::setInstancesLimitHint(uint32 limit)
 	{
 		meshImpl *impl = (meshImpl*)this;
 		impl->instancesLimitHint = limit;
 	}
 
-	uint32 renderMesh::getVerticesCount() const
+	uint32 Mesh::getVerticesCount() const
 	{
 		meshImpl *impl = (meshImpl*)this;
 		return impl->verticesCount;
 	}
 
-	uint32 renderMesh::getIndicesCount() const
+	uint32 Mesh::getIndicesCount() const
 	{
 		meshImpl *impl = (meshImpl*)this;
 		return impl->indicesCount;
 	}
 
-	uint32 renderMesh::getPrimitivesCount() const
+	uint32 Mesh::getPrimitivesCount() const
 	{
 		meshImpl *impl = (meshImpl*)this;
 		return impl->primitivesCount;
 	}
 
-	meshRenderFlags renderMesh::getFlags() const
+	MeshRenderFlags Mesh::getFlags() const
 	{
 		meshImpl *impl = (meshImpl*)this;
 		return impl->flags;
 	}
 
-	aabb renderMesh::getBoundingBox() const
+	aabb Mesh::getBoundingBox() const
 	{
 		meshImpl *impl = (meshImpl*)this;
 		return impl->box;
 	}
 
-	const uint32 *renderMesh::getTextureNames() const
+	const uint32 *Mesh::getTextureNames() const
 	{
 		meshImpl *impl = (meshImpl*)this;
 		return impl->textures;
 	}
 
-	uint32 renderMesh::getTextureName(uint32 texIdx) const
+	uint32 Mesh::getTextureName(uint32 texIdx) const
 	{
 		meshImpl *impl = (meshImpl*)this;
 		CAGE_ASSERT(texIdx < MaxTexturesCountPerMaterial, texIdx, MaxTexturesCountPerMaterial);
 		return impl->textures[texIdx];
 	}
 
-	uint32 renderMesh::getSkeletonName() const
+	uint32 Mesh::getSkeletonName() const
 	{
 		meshImpl *impl = (meshImpl*)this;
 		return impl->skeletonName;
 	}
 
-	uint32 renderMesh::getSkeletonBones() const
+	uint32 Mesh::getSkeletonBones() const
 	{
 		meshImpl *impl = (meshImpl*)this;
 		return impl->skeletonBones;
 	}
 
-	uint32 renderMesh::getInstancesLimitHint() const
+	uint32 Mesh::getInstancesLimitHint() const
 	{
 		meshImpl *impl = (meshImpl*)this;
 		return impl->instancesLimitHint;
 	}
 
-	void renderMesh::dispatch() const
+	void Mesh::dispatch() const
 	{
 		meshImpl *impl = (meshImpl*)this;
-		CAGE_ASSERT(graphicsPrivat::getCurrentObject<renderMesh>() == impl->id);
+		CAGE_ASSERT(graphicsPrivat::getCurrentObject<Mesh>() == impl->id);
 		if (impl->indicesCount)
 			glDrawElements(impl->primitiveType, impl->indicesCount, GL_UNSIGNED_INT, (void*)(uintPtr)impl->indicesOffset);
 		else
@@ -326,10 +326,10 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void renderMesh::dispatch(uint32 instances) const
+	void Mesh::dispatch(uint32 instances) const
 	{
 		meshImpl *impl = (meshImpl*)this;
-		CAGE_ASSERT(graphicsPrivat::getCurrentObject<renderMesh>() == impl->id);
+		CAGE_ASSERT(graphicsPrivat::getCurrentObject<Mesh>() == impl->id);
 		if (impl->indicesCount)
 			glDrawElementsInstanced(impl->primitiveType, impl->indicesCount, GL_UNSIGNED_INT, (void*)(uintPtr)impl->indicesOffset, instances);
 		else
@@ -337,8 +337,8 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	Holder<renderMesh> newRenderMesh()
+	Holder<Mesh> newRenderMesh()
 	{
-		return detail::systemArena().createImpl<renderMesh, meshImpl>();
+		return detail::systemArena().createImpl<Mesh, meshImpl>();
 	}
 }

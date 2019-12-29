@@ -100,7 +100,7 @@ namespace cage
 #endif
 			} type;
 
-			modifiersFlags modifiers;
+			ModifiersFlags modifiers;
 
 			union
 			{
@@ -109,7 +109,7 @@ namespace cage
 					sint32 x, y;
 					union
 					{
-						mouseButtonsFlags buttons;
+						MouseButtonsFlags buttons;
 						sint8 wheel;
 					};
 				} mouse;
@@ -127,41 +127,41 @@ namespace cage
 			};
 		};
 
-		modifiersFlags getKeyModifiers(int mods)
+		ModifiersFlags getKeyModifiers(int mods)
 		{
-			return modifiersFlags::None
-				| ((mods & GLFW_MOD_SHIFT) == GLFW_MOD_SHIFT ? modifiersFlags::Shift : modifiersFlags::None)
-				| ((mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL ? modifiersFlags::Ctrl : modifiersFlags::None)
-				| ((mods & GLFW_MOD_ALT) == GLFW_MOD_ALT ? modifiersFlags::Alt : modifiersFlags::None)
-				| ((mods & GLFW_MOD_SUPER) == GLFW_MOD_SUPER ? modifiersFlags::Super : modifiersFlags::None);
+			return ModifiersFlags::None
+				| ((mods & GLFW_MOD_SHIFT) == GLFW_MOD_SHIFT ? ModifiersFlags::Shift : ModifiersFlags::None)
+				| ((mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL ? ModifiersFlags::Ctrl : ModifiersFlags::None)
+				| ((mods & GLFW_MOD_ALT) == GLFW_MOD_ALT ? ModifiersFlags::Alt : ModifiersFlags::None)
+				| ((mods & GLFW_MOD_SUPER) == GLFW_MOD_SUPER ? ModifiersFlags::Super : ModifiersFlags::None);
 		}
 
-		modifiersFlags getKeyModifiers(GLFWwindow *w)
+		ModifiersFlags getKeyModifiers(GLFWwindow *w)
 		{
-			modifiersFlags r = modifiersFlags::None;
+			ModifiersFlags r = ModifiersFlags::None;
 			if (glfwGetKey(w, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(w, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS)
-				r |= modifiersFlags::Shift;
+				r |= ModifiersFlags::Shift;
 			if (glfwGetKey(w, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS || glfwGetKey(w, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS)
-				r |= modifiersFlags::Ctrl;
+				r |= ModifiersFlags::Ctrl;
 			if (glfwGetKey(w, GLFW_KEY_LEFT_ALT) == GLFW_PRESS || glfwGetKey(w, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS)
-				r |= modifiersFlags::Alt;
+				r |= ModifiersFlags::Alt;
 			if (glfwGetKey(w, GLFW_KEY_LEFT_SUPER) == GLFW_PRESS || glfwGetKey(w, GLFW_KEY_RIGHT_SUPER) == GLFW_PRESS)
-				r |= modifiersFlags::Super;
+				r |= ModifiersFlags::Super;
 			return r;
 		}
 
-		class windowImpl : public windowHandle
+		class windowImpl : public Window
 		{
 		public:
 			uint64 lastMouseButtonPressTimes[5]; // unused, left, right, unused, middle
-			windowHandle *shareContext;
+			Window *shareContext;
 			Holder<Mutex> eventsMutex;
 			std::vector<eventStruct> eventsQueueLocked;
 			std::vector<eventStruct> eventsQueueNoLock;
 			std::set<uint32> stateKeys, stateCodes;
 			ivec2 currentMousePosition;
-			modifiersFlags stateMods;
-			mouseButtonsFlags stateButtons;
+			ModifiersFlags stateMods;
+			MouseButtonsFlags stateButtons;
 			GLFWwindow *window;
 			bool focus;
 
@@ -215,7 +215,7 @@ namespace cage
 			}
 #endif
 
-			windowImpl(windowHandle *shareContext) : lastMouseButtonPressTimes{0,0,0,0,0}, shareContext(shareContext), eventsMutex(newSyncMutex()), stateMods(modifiersFlags::None), stateButtons(mouseButtonsFlags::None), window(nullptr), focus(true)
+			windowImpl(Window *shareContext) : lastMouseButtonPressTimes{0,0,0,0,0}, shareContext(shareContext), eventsMutex(newSyncMutex()), stateMods(ModifiersFlags::None), stateButtons(MouseButtonsFlags::None), window(nullptr), focus(true)
 			{
 				cageGlfwInitializeFunc();
 
@@ -380,11 +380,11 @@ namespace cage
 			e.mouse.x = numeric_cast<sint32>(floor(xpos));
 			e.mouse.y = numeric_cast<sint32>(floor(ypos));
 			if (glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_LEFT))
-				e.mouse.buttons |= mouseButtonsFlags::Left;
+				e.mouse.buttons |= MouseButtonsFlags::Left;
 			if (glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_RIGHT))
-				e.mouse.buttons |= mouseButtonsFlags::Right;
+				e.mouse.buttons |= MouseButtonsFlags::Right;
 			if (glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_MIDDLE))
-				e.mouse.buttons |= mouseButtonsFlags::Middle;
+				e.mouse.buttons |= MouseButtonsFlags::Middle;
 			ScopeLock<Mutex> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
@@ -408,13 +408,13 @@ namespace cage
 			switch (button)
 			{
 			case GLFW_MOUSE_BUTTON_LEFT:
-				e.mouse.buttons = mouseButtonsFlags::Left;
+				e.mouse.buttons = MouseButtonsFlags::Left;
 				break;
 			case GLFW_MOUSE_BUTTON_RIGHT:
-				e.mouse.buttons = mouseButtonsFlags::Right;
+				e.mouse.buttons = MouseButtonsFlags::Right;
 				break;
 			case GLFW_MOUSE_BUTTON_MIDDLE:
-				e.mouse.buttons = mouseButtonsFlags::Middle;
+				e.mouse.buttons = MouseButtonsFlags::Middle;
 				break;
 			default:
 				return; // ignore other keys
@@ -524,13 +524,13 @@ namespace cage
 		}
 	}
 
-	void windowHandle::title(const string &value)
+	void Window::title(const string &value)
 	{
 		windowImpl *impl = (windowImpl*)this;
 		glfwSetWindowTitle(impl->window, value.c_str());
 	}
 
-	bool windowHandle::isFocused() const
+	bool Window::isFocused() const
 	{
 		windowImpl *impl = (windowImpl*)this;
 #ifdef GCHL_WINDOWS_THREAD
@@ -540,43 +540,43 @@ namespace cage
 #endif
 	}
 
-	bool windowHandle::isFullscreen() const
+	bool Window::isFullscreen() const
 	{
 		windowImpl *impl = (windowImpl*)this;
 		return !!glfwGetWindowMonitor(impl->window);
 	}
 
-	bool windowHandle::isMaximized() const
+	bool Window::isMaximized() const
 	{
 		windowImpl *impl = (windowImpl*)this;
 		return !!glfwGetWindowAttrib(impl->window, GLFW_MAXIMIZED);
 	}
 
-	bool windowHandle::isWindowed() const
+	bool Window::isWindowed() const
 	{
 		return !isHidden() && !isMinimized() && !isMaximized() && !isFullscreen();
 	}
 
-	bool windowHandle::isMinimized() const
+	bool Window::isMinimized() const
 	{
 		windowImpl *impl = (windowImpl*)this;
 		return !!glfwGetWindowAttrib(impl->window, GLFW_ICONIFIED);
 	}
 
-	bool windowHandle::isHidden() const
+	bool Window::isHidden() const
 	{
 		windowImpl *impl = (windowImpl*)this;
 		return !glfwGetWindowAttrib(impl->window, GLFW_VISIBLE);
 	}
 
-	bool windowHandle::isVisible() const
+	bool Window::isVisible() const
 	{
 		return !isHidden() && !isMinimized();
 	}
 
 	namespace
 	{
-		void normalizeWindow(windowImpl *impl, windowFlags flags)
+		void normalizeWindow(windowImpl *impl, WindowFlags flags)
 		{
 			if (impl->isFullscreen())
 				glfwSetWindowMonitor(impl->window, nullptr, 100, 100, 800, 600, 0);
@@ -584,15 +584,15 @@ namespace cage
 				glfwShowWindow(impl->window);
 			if (impl->isMinimized() || impl->isMaximized())
 				glfwRestoreWindow(impl->window);
-			glfwSetWindowAttrib(impl->window, GLFW_DECORATED, any(flags & windowFlags::Border));
-			glfwSetWindowAttrib(impl->window, GLFW_RESIZABLE, any(flags & windowFlags::Resizeable));
+			glfwSetWindowAttrib(impl->window, GLFW_DECORATED, any(flags & WindowFlags::Border));
+			glfwSetWindowAttrib(impl->window, GLFW_RESIZABLE, any(flags & WindowFlags::Resizeable));
 		}
 	}
 
-	void windowHandle::setFullscreen(const ivec2 &resolution, uint32 frequency, const string &deviceId)
+	void Window::setFullscreen(const ivec2 &resolution, uint32 frequency, const string &deviceId)
 	{
 		windowImpl *impl = (windowImpl*)this;
-		normalizeWindow(impl, windowFlags::None);
+		normalizeWindow(impl, WindowFlags::None);
 		GLFWmonitor *m = getMonitorById(deviceId);
 		const GLFWvidmode *v = glfwGetVideoMode(m);
 		glfwSetWindowMonitor(impl->window, m, 0, 0,
@@ -601,40 +601,40 @@ namespace cage
 			frequency == 0 ? glfwGetVideoMode(m)->refreshRate : frequency);
 	}
 
-	void windowHandle::setMaximized()
+	void Window::setMaximized()
 	{
 		windowImpl *impl = (windowImpl*)this;
-		normalizeWindow(impl, windowFlags::Border | windowFlags::Resizeable);
+		normalizeWindow(impl, WindowFlags::Border | WindowFlags::Resizeable);
 		glfwMaximizeWindow(impl->window);
 	}
 
-	void windowHandle::setWindowed(windowFlags flags)
+	void Window::setWindowed(WindowFlags flags)
 	{
 		windowImpl *impl = (windowImpl*)this;
 		normalizeWindow(impl, flags);
 	}
 
-	void windowHandle::setMinimized()
+	void Window::setMinimized()
 	{
 		windowImpl *impl = (windowImpl*)this;
-		normalizeWindow(impl, windowFlags::Resizeable);
+		normalizeWindow(impl, WindowFlags::Resizeable);
 		glfwIconifyWindow(impl->window);
 	}
 
-	void windowHandle::setHidden()
+	void Window::setHidden()
 	{
 		windowImpl *impl = (windowImpl*)this;
-		normalizeWindow(impl, windowFlags::None);
+		normalizeWindow(impl, WindowFlags::None);
 		glfwHideWindow(impl->window);
 	}
 
-	bool windowHandle::mouseVisible() const
+	bool Window::mouseVisible() const
 	{
 		windowImpl *impl = (windowImpl*)this;
 		return glfwGetInputMode(impl->window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL;
 	}
 
-	void windowHandle::mouseVisible(bool value)
+	void Window::mouseVisible(bool value)
 	{
 		windowImpl *impl = (windowImpl*)this;
 		if (value)
@@ -643,13 +643,13 @@ namespace cage
 			glfwSetInputMode(impl->window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 	}
 
-	ivec2 windowHandle::mousePosition() const
+	ivec2 Window::mousePosition() const
 	{
 		windowImpl *impl = (windowImpl*)this;
 		return impl->currentMousePosition;
 	}
 
-	void windowHandle::mousePosition(const ivec2 &tmp)
+	void Window::mousePosition(const ivec2 &tmp)
 	{
 		windowImpl *impl = (windowImpl*)this;
 #ifdef GCHL_WINDOWS_THREAD
@@ -662,31 +662,31 @@ namespace cage
 #endif // GCHL_WINDOWS_THREAD
 	}
 
-	mouseButtonsFlags windowHandle::mouseButtons() const
+	MouseButtonsFlags Window::mouseButtons() const
 	{
 		windowImpl *impl = (windowImpl*)this;
 		return impl->stateButtons;
 	}
 
-	modifiersFlags windowHandle::keyboardModifiers() const
+	ModifiersFlags Window::keyboardModifiers() const
 	{
 		windowImpl *impl = (windowImpl*)this;
 		return impl->stateMods;
 	}
 
-	bool windowHandle::keyboardKey(uint32 key) const
+	bool Window::keyboardKey(uint32 key) const
 	{
 		windowImpl *impl = (windowImpl*)this;
 		return impl->stateKeys.count(key);
 	}
 
-	bool windowHandle::keyboardScanCode(uint32 code) const
+	bool Window::keyboardScanCode(uint32 code) const
 	{
 		windowImpl *impl = (windowImpl*)this;
 		return impl->stateCodes.count(code);
 	}
 
-	void windowHandle::processEvents()
+	void Window::processEvents()
 	{
 		windowImpl *impl = (windowImpl*)this;
 #ifndef GCHL_WINDOWS_THREAD
@@ -775,7 +775,7 @@ namespace cage
 		}
 	}
 
-	ivec2 windowHandle::resolution() const
+	ivec2 Window::resolution() const
 	{
 		windowImpl *impl = (windowImpl*)this;
 		int w = 0, h = 0;
@@ -783,7 +783,7 @@ namespace cage
 		return ivec2(w, h);
 	}
 
-	float windowHandle::contentScaling() const
+	float Window::contentScaling() const
 	{
 		windowImpl *impl = (windowImpl*)this;
 		float y = 1;
@@ -791,7 +791,7 @@ namespace cage
 		return y;
 	}
 
-	ivec2 windowHandle::windowedSize() const
+	ivec2 Window::windowedSize() const
 	{
 		windowImpl *impl = (windowImpl*)this;
 		int w = 0, h = 0;
@@ -799,13 +799,13 @@ namespace cage
 		return ivec2(w, h);
 	}
 
-	void windowHandle::windowedSize(const ivec2 &tmp)
+	void Window::windowedSize(const ivec2 &tmp)
 	{
 		windowImpl *impl = (windowImpl*)this;
 		glfwSetWindowSize(impl->window, tmp.x, tmp.y);
 	}
 
-	ivec2 windowHandle::windowedPosition() const
+	ivec2 Window::windowedPosition() const
 	{
 		windowImpl *impl = (windowImpl*)this;
 		int x = 0, y = 0;
@@ -813,37 +813,37 @@ namespace cage
 		return ivec2(x, y);
 	}
 
-	void windowHandle::windowedPosition(const ivec2 &tmp)
+	void Window::windowedPosition(const ivec2 &tmp)
 	{
 		windowImpl *impl = (windowImpl*)this;
 		glfwSetWindowPos(impl->window, tmp.x, tmp.y);
 	}
 
-	void windowHandle::makeCurrent()
+	void Window::makeCurrent()
 	{
 		windowImpl *impl = (windowImpl*)this;
 		glfwMakeContextCurrent(impl->window);
 		setCurrentContext(this);
 	}
 
-	void windowHandle::makeNotCurrent()
+	void Window::makeNotCurrent()
 	{
 		glfwMakeContextCurrent(nullptr);
 		setCurrentContext(nullptr);
 	}
 
-	void windowHandle::swapBuffers()
+	void Window::swapBuffers()
 	{
 		windowImpl *impl = (windowImpl*)this;
 		glfwSwapBuffers(impl->window);
 	}
 
-	Holder<windowHandle> newWindow(windowHandle *shareContext)
+	Holder<Window> newWindow(Window *shareContext)
 	{
-		return detail::systemArena().createImpl<windowHandle, windowImpl>(shareContext);
+		return detail::systemArena().createImpl<Window, windowImpl>(shareContext);
 	}
 
-	void windowEventListeners::attachAll(windowHandle *window, sint32 order)
+	void WindowEventListeners::attachAll(Window *window, sint32 order)
 	{
 #define GCHL_GENERATE(T) if(window) T.attach(window->events.T, order); else T.detach();
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, windowClose, windowShow, windowHide, windowMove, windowResize, mouseMove, mousePress, mouseDouble, mouseRelease, mouseWheel, focusGain, focusLose, keyPress, keyRelease, keyRepeat, keyChar));

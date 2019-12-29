@@ -35,14 +35,14 @@ namespace
 
 	struct glyphStruct
 	{
-		fontFaceHeader::glyphData data;
+		FontHeader::GlyphData data;
 		Holder<Image> png;
 		uint32 pngX, pngY;
 		glyphStruct() : pngX(0), pngY(0)
 		{}
 	};
 
-	fontFaceHeader data;
+	FontHeader data;
 
 	std::vector<glyphStruct> glyphs;
 	std::vector<real> kerning;
@@ -174,7 +174,7 @@ namespace
 					kerning[L * data.glyphCount + R] = fontScale * k.x / 64.0;
 				}
 			}
-			data.flags |= fontFlags::Kerning;
+			data.flags |= FontFlags::Kerning;
 		}
 		else
 			CAGE_LOG(SeverityEnum::Info, logComponentName, "font has no kerning");
@@ -316,7 +316,7 @@ namespace
 
 		AssetHeader h = initializeAssetHeaderStruct();
 		h.originalSize = sizeof(data) + data.texSize +
-			data.glyphCount * sizeof(fontFaceHeader::glyphData) +
+			data.glyphCount * sizeof(FontHeader::GlyphData) +
 			sizeof(real) * numeric_cast<uint32>(kerning.size()) +
 			sizeof(uint32) * numeric_cast<uint32>(charsetChars.size()) +
 			sizeof(uint32) * numeric_cast<uint32>(charsetGlyphs.size());

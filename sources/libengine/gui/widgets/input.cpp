@@ -20,15 +20,15 @@ namespace cage
 	{
 		struct inputImpl : public widgetItemStruct
 		{
-			inputComponent &data;
-			selectionComponent &selection;
+			InputComponent &data;
+			SelectionComponent &selection;
 			bool showArrows;
 
 			vec2 leftPos, rightPos;
 			vec2 mainPos, mainSize;
 			vec2 textPos, textSize;
 
-			inputImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(input)), selection(GUI_REF_COMPONENT(selection)), showArrows(false)
+			inputImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(Input)), selection(GUI_REF_COMPONENT(Selection)), showArrows(false)
 			{}
 
 			virtual void initialize() override
@@ -36,15 +36,15 @@ namespace cage
 				CAGE_ASSERT(!hierarchy->firstChild, "input box may not have children");
 				CAGE_ASSERT(!hierarchy->Image, "input box may not have image");
 
-				showArrows = data.type == inputTypeEnum::Real || data.type == inputTypeEnum::Integer;
+				showArrows = data.type == InputTypeEnum::Real || data.type == InputTypeEnum::Integer;
 
 				switch (data.type)
 				{
-				case inputTypeEnum::Integer:
+				case InputTypeEnum::Integer:
 					CAGE_ASSERT(data.step.i >= 0);
 					CAGE_ASSERT(data.max.i >= data.min.i);
 					break;
-				case inputTypeEnum::Real:
+				case InputTypeEnum::Real:
 					CAGE_ASSERT(data.min.f.valid() && data.step.f.valid() && data.max.f.valid());
 					CAGE_ASSERT(data.step.f >= 0);
 					CAGE_ASSERT(data.max.f >= data.min.f);
@@ -72,7 +72,7 @@ namespace cage
 						hierarchy->text->text.apply(skin->defaults.inputBox.textValidFormat, hierarchy->impl);
 					else
 						hierarchy->text->text.apply(skin->defaults.inputBox.textInvalidFormat, hierarchy->impl);
-					if (data.type == inputTypeEnum::Password)
+					if (data.type == InputTypeEnum::Password)
 					{
 						hierarchy->text->transcript("*");
 						uint32 g = hierarchy->text->text.glyphs[0];
@@ -94,7 +94,7 @@ namespace cage
 			template<class T>
 			T consolidate(T value, T a, T b, T s)
 			{
-				if ((data.style & inputStyleFlags::AlwaysRoundValueToStep) == inputStyleFlags::AlwaysRoundValueToStep && (value % s) != 0)
+				if ((data.style & InputStyleFlags::AlwaysRoundValueToStep) == InputStyleFlags::AlwaysRoundValueToStep && (value % s) != 0)
 					value -= value % s;
 				return clamp(value, a, b);
 			}
@@ -106,11 +106,11 @@ namespace cage
 					detail::OverrideBreakpoint ob;
 					switch (data.type)
 					{
-					case inputTypeEnum::Integer:
+					case InputTypeEnum::Integer:
 						if (data.value.isInteger(true))
 							data.value = string(consolidate<sint32>(data.value.toSint32(), data.min.i, data.max.i, data.step.i));
 						break;
-					case inputTypeEnum::Real:
+					case InputTypeEnum::Real:
 						if (data.value.isReal(true))
 							data.value = string(consolidate<real>(data.value.toFloat(), data.min.f, data.max.f, data.step.f).value);
 						break;
@@ -132,10 +132,10 @@ namespace cage
 					detail::OverrideBreakpoint ob;
 					switch (data.type)
 					{
-					case inputTypeEnum::Text:
+					case InputTypeEnum::Text:
 						data.valid = true;
 						break;
-					case inputTypeEnum::Integer:
+					case InputTypeEnum::Integer:
 					{
 						if (data.value.isInteger(true))
 						{
@@ -146,7 +146,7 @@ namespace cage
 						else
 							data.valid = false;
 					} break;
-					case inputTypeEnum::Real:
+					case InputTypeEnum::Real:
 					{
 						if (data.value.isReal(true))
 						{
@@ -157,10 +157,10 @@ namespace cage
 						else
 							data.valid = false;
 					} break;
-					case inputTypeEnum::Email:
+					case InputTypeEnum::Email:
 						// todo
 						break;
-					case inputTypeEnum::Url:
+					case InputTypeEnum::Url:
 						// todo
 						break;
 					default:
@@ -196,15 +196,15 @@ namespace cage
 					real bwo = bw + off;
 					switch (s.buttonsMode)
 					{
-					case inputButtonsPlacementModeEnum::Left:
+					case InputButtonsPlacementModeEnum::Left:
 						rightPos[0] += bwo;
 						mainPos[0] += bwo * 2;
 						break;
-					case inputButtonsPlacementModeEnum::Right:
+					case InputButtonsPlacementModeEnum::Right:
 						leftPos[0] += mw + off;
 						rightPos[0] += mw + bwo + off;
 						break;
-					case inputButtonsPlacementModeEnum::Sides:
+					case InputButtonsPlacementModeEnum::Sides:
 						mainPos[0] += bwo;
 						rightPos[0] += bwo + mw + off;
 						break;
@@ -214,20 +214,20 @@ namespace cage
 				}
 				textPos = mainPos;
 				textSize = mainSize;
-				offset(textPos, textSize, -skin->layouts[(uint32)elementTypeEnum::Input].border - s.basePadding);
+				offset(textPos, textSize, -skin->layouts[(uint32)ElementTypeEnum::Input].border - s.basePadding);
 			}
 
 			virtual void emit() const override
 			{
 				const auto &s = skin->defaults.inputBox;
-				emitElement(elementTypeEnum::Input, mode(mainPos, mainSize), mainPos, mainSize);
+				emitElement(ElementTypeEnum::Input, mode(mainPos, mainSize), mainPos, mainSize);
 				if (showArrows)
 				{
 					vec2 ss = vec2(s.buttonsSize, mainSize[1]);
 					uint32 m = mode(leftPos, ss);
-					emitElement(elementTypeEnum::InputButtonDecrement, m == 1 ? 0 : m, leftPos, ss);
+					emitElement(ElementTypeEnum::InputButtonDecrement, m == 1 ? 0 : m, leftPos, ss);
 					m = mode(rightPos, ss);
-					emitElement(elementTypeEnum::InputButtonIncrement, m == 1 ? 0 : m, rightPos, ss);
+					emitElement(ElementTypeEnum::InputButtonIncrement, m == 1 ? 0 : m, rightPos, ss);
 				}
 				hierarchy->text->emit(textPos, textSize);
 			}
@@ -247,13 +247,13 @@ namespace cage
 				try
 				{
 					detail::OverrideBreakpoint ob;
-					if (data.type == inputTypeEnum::Real)
+					if (data.type == InputTypeEnum::Real)
 					{
 						real v = data.value.toFloat();
 						v += data.step.f * sign;
 						data.value = string(v.value);
 					}
-					if (data.type == inputTypeEnum::Integer)
+					if (data.type == InputTypeEnum::Integer)
 					{
 						sint32 v = data.value.toSint32();
 						v += data.step.i * sign;
@@ -274,22 +274,22 @@ namespace cage
 				uint32 len = countCharacters(data.value);
 				uint32 &cur = data.cursor;
 				cur = min(cur, len);
-				if ((data.style & inputStyleFlags::GoToEndOnFocusGain) == inputStyleFlags::GoToEndOnFocusGain)
+				if ((data.style & InputStyleFlags::GoToEndOnFocusGain) == InputStyleFlags::GoToEndOnFocusGain)
 					cur = len;
 			}
 
-			virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override
+			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override
 			{
 				if (!hasFocus())
 					gainFocus();
 				makeFocused();
-				if (buttons != mouseButtonsFlags::Left)
+				if (buttons != MouseButtonsFlags::Left)
 					return true;
-				if (modifiers != modifiersFlags::None)
+				if (modifiers != ModifiersFlags::None)
 					return true;
 				
 				// numeric buttons
-				if (data.type == inputTypeEnum::Real || data.type == inputTypeEnum::Integer)
+				if (data.type == InputTypeEnum::Real || data.type == InputTypeEnum::Integer)
 				{
 					if (insideButton(leftPos, point))
 					{
@@ -309,7 +309,7 @@ namespace cage
 				return true;
 			}
 
-			virtual bool keyRepeat(uint32 key, uint32 scanCode, modifiersFlags modifiers) override
+			virtual bool keyRepeat(uint32 key, uint32 scanCode, ModifiersFlags modifiers) override
 			{
 				uint32 &cursor = data.cursor;
 				std::vector<uint32> utf32;
@@ -375,7 +375,7 @@ namespace cage
 		};
 	}
 
-	void inputCreate(hierarchyItemStruct *item)
+	void InputCreate(hierarchyItemStruct *item)
 	{
 		CAGE_ASSERT(!item->item);
 		item->item = item->impl->itemsMemory.createObject<inputImpl>(item);

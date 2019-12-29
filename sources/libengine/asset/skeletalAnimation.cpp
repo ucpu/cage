@@ -15,21 +15,21 @@ namespace cage
 	{
 		void processLoad(const AssetContext *context, void *schemePointer)
 		{
-			skeletalAnimation *ani = nullptr;
+			SkeletalAnimation *ani = nullptr;
 			if (context->assetHolder)
 			{
-				ani = static_cast<skeletalAnimation*>(context->assetHolder.get());
+				ani = static_cast<SkeletalAnimation*>(context->assetHolder.get());
 			}
 			else
 			{
 				context->assetHolder = newSkeletalAnimation().cast<void>();
-				ani = static_cast<skeletalAnimation*>(context->assetHolder.get());
+				ani = static_cast<SkeletalAnimation*>(context->assetHolder.get());
 				ani->setDebugName(context->textName);
 			}
 			context->returnData = ani;
 
 			Deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
-			skeletalAnimationHeader data;
+			SkeletalAnimationHeader data;
 			des >> data;
 			uint16 *indexes = (uint16*)des.advance(data.animationBonesCount * sizeof(uint16));
 			uint16 *positionFrames = (uint16*)des.advance(data.animationBonesCount * sizeof(uint16));

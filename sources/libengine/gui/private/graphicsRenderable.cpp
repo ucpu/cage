@@ -34,15 +34,15 @@ namespace cage
 	renderableTextStruct::textStruct::textStruct() : glyphs(nullptr), font(nullptr), color(vec3::Nan()), cursor(m), count(0)
 	{}
 
-	void renderableTextStruct::textStruct::apply(const textFormatComponent &f, guiImpl *impl)
+	void renderableTextStruct::textStruct::apply(const TextFormatComponent &f, guiImpl *impl)
 	{
 		if (f.font)
-			font = impl->assetMgr->tryGet<assetSchemeIndexFontFace, fontFace>(f.font);
+			font = impl->assetMgr->tryGet<assetSchemeIndexFontFace, Font>(f.font);
 		if (f.size.valid())
 			format.size = f.size;
 		if (f.color.valid())
 			color = f.color;
-		if (f.align != (textAlignEnum)-1)
+		if (f.align != (TextAlignEnum)-1)
 			format.align = f.align;
 		if (f.lineSpacing.valid())
 			format.lineSpacing = f.lineSpacing;

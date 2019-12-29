@@ -19,24 +19,24 @@ namespace cage
 
 		void processLoad(const AssetContext *context, void *schemePointer)
 		{
-			renderTextureHeader *data = (renderTextureHeader*)context->originalData;
+			TextureHeader *data = (TextureHeader*)context->originalData;
 
-			renderTexture *tex = nullptr;
+			Texture *tex = nullptr;
 			if (context->assetHolder)
 			{
-				tex = static_cast<renderTexture*>(context->assetHolder.get());
+				tex = static_cast<Texture*>(context->assetHolder.get());
 				CAGE_ASSERT(tex->getTarget() == data->target, "texture target cannot change");
 				tex->bind();
 			}
 			else
 			{
 				context->assetHolder = newRenderTexture(data->target).cast<void>();
-				tex = static_cast<renderTexture*>(context->assetHolder.get());
+				tex = static_cast<Texture*>(context->assetHolder.get());
 				tex->setDebugName(context->textName);
 			}
 			context->returnData = tex;
 
-			char *values = ((char*)context->originalData) + sizeof(renderTextureHeader);
+			char *values = ((char*)context->originalData) + sizeof(TextureHeader);
 
 			{
 				uint32 bytesSize = data->dimX * data->dimY * data->dimZ * data->bpp;
@@ -51,15 +51,15 @@ namespace cage
 				tex->image2d(data->dimX, data->dimY, data->internalFormat, data->copyFormat, data->copyType, values);
 			tex->filters(data->filterMin, data->filterMag, data->filterAniso);
 			tex->wraps(data->wrapX, data->wrapY, data->wrapZ);
-			if ((data->flags & textureFlags::GenerateMipmaps) == textureFlags::GenerateMipmaps)
+			if ((data->flags & TextureFlags::GenerateMipmaps) == TextureFlags::GenerateMipmaps)
 				tex->generateMipmaps();
 
 			tex->animationDuration = data->animationDuration;
-			tex->animationLoop = (data->flags & textureFlags::AnimationLoop) == textureFlags::AnimationLoop;
+			tex->animationLoop = (data->flags & TextureFlags::AnimationLoop) == TextureFlags::AnimationLoop;
 		}
 	}
 
-	AssetScheme genAssetSchemeRenderTexture(uint32 threadIndex, windowHandle *memoryContext)
+	AssetScheme genAssetSchemeRenderTexture(uint32 threadIndex, Window *memoryContext)
 	{
 		AssetScheme s;
 		s.threadIndex = threadIndex;

@@ -13,10 +13,10 @@ namespace cage
 	class guiImpl;
 	struct hierarchyItemStruct;
 
-	struct skinDataStruct : public guiSkinConfig
+	struct skinDataStruct : public GuiSkinConfig
 	{
-		Holder<uniformBuffer> elementsGpuBuffer;
-		renderTexture *texture;
+		Holder<UniformBuffer> elementsGpuBuffer;
+		Texture *texture;
 	};
 
 	struct renderableBaseStruct
@@ -41,8 +41,8 @@ namespace cage
 			uint32 mode;
 			elementStruct();
 		} data;
-		const uniformBuffer *skinBuffer;
-		const renderTexture *skinTexture;
+		const UniformBuffer *skinBuffer;
+		const Texture *skinTexture;
 
 		renderableElementStruct();
 
@@ -54,14 +54,14 @@ namespace cage
 		struct textStruct
 		{
 			mat4 transform;
-			fontFace::formatStruct format;
+			Font::FormatStruct format;
 			vec3 color;
-			fontFace *font;
+			Font *font;
 			uint32 *glyphs;
 			uint32 cursor;
 			uint32 count;
 			textStruct();
-			void apply(const textFormatComponent &f, guiImpl *impl);
+			void apply(const TextFormatComponent &f, guiImpl *impl);
 		} data;
 
 		virtual void render(guiImpl *impl) override;
@@ -74,7 +74,7 @@ namespace cage
 			vec4 ndcPos;
 			vec4 uvClip;
 			vec4 aniTexFrames;
-			renderTexture *texture;
+			Texture *texture;
 			imageStruct();
 		} data;
 
@@ -145,20 +145,20 @@ namespace cage
 		virtual void emit() const = 0;
 		virtual void generateEventReceivers() = 0;
 
-		virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) = 0;
-		virtual bool mouseDouble(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) = 0;
-		virtual bool mouseRelease(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) = 0;
-		virtual bool mouseMove(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) = 0;
-		virtual bool mouseWheel(sint8 wheel, modifiersFlags modifiers, vec2 point) = 0;
-		virtual bool keyPress(uint32 key, uint32 scanCode, modifiersFlags modifiers) = 0;
-		virtual bool keyRepeat(uint32 key, uint32 scanCode, modifiersFlags modifiers) = 0;
-		virtual bool keyRelease(uint32 key, uint32 scanCode, modifiersFlags modifiers) = 0;
+		virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) = 0;
+		virtual bool mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) = 0;
+		virtual bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) = 0;
+		virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) = 0;
+		virtual bool mouseWheel(sint8 wheel, ModifiersFlags modifiers, vec2 point) = 0;
+		virtual bool keyPress(uint32 key, uint32 scanCode, ModifiersFlags modifiers) = 0;
+		virtual bool keyRepeat(uint32 key, uint32 scanCode, ModifiersFlags modifiers) = 0;
+		virtual bool keyRelease(uint32 key, uint32 scanCode, ModifiersFlags modifiers) = 0;
 		virtual bool keyChar(uint32 key) = 0;
 	};
 
 	struct widgetItemStruct : public baseItemStruct
 	{
-		widgetStateComponent widgetState;
+		WidgetStateComponent widgetState;
 		const skinDataStruct *skin;
 
 		widgetItemStruct(hierarchyItemStruct *hierarchy);
@@ -167,19 +167,19 @@ namespace cage
 		uint32 mode(const vec2 &pos, const vec2 &size, uint32 focusParts = 1) const;
 		bool hasFocus(uint32 part = 1) const;
 		void makeFocused(uint32 part = 1);
-		renderableElementStruct *emitElement(elementTypeEnum element, uint32 mode, vec2 pos, vec2 size) const;
+		renderableElementStruct *emitElement(ElementTypeEnum element, uint32 mode, vec2 pos, vec2 size) const;
 
 		virtual void findFinalPosition(const finalPositionStruct &update) override;
 		virtual void generateEventReceivers() override;
 
-		virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override;
-		virtual bool mouseDouble(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override;
-		virtual bool mouseRelease(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override;
-		virtual bool mouseMove(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override;
-		virtual bool mouseWheel(sint8 wheel, modifiersFlags modifiers, vec2 point) override;
-		virtual bool keyPress(uint32 key, uint32 scanCode, modifiersFlags modifiers) override;
-		virtual bool keyRepeat(uint32 key, uint32 scanCode, modifiersFlags modifiers) override;
-		virtual bool keyRelease(uint32 key, uint32 scanCode, modifiersFlags modifiers) override;
+		virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override;
+		virtual bool mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override;
+		virtual bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override;
+		virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override;
+		virtual bool mouseWheel(sint8 wheel, ModifiersFlags modifiers, vec2 point) override;
+		virtual bool keyPress(uint32 key, uint32 scanCode, ModifiersFlags modifiers) override;
+		virtual bool keyRepeat(uint32 key, uint32 scanCode, ModifiersFlags modifiers) override;
+		virtual bool keyRelease(uint32 key, uint32 scanCode, ModifiersFlags modifiers) override;
 		virtual bool keyChar(uint32 key) override;
 	};
 
@@ -190,14 +190,14 @@ namespace cage
 		virtual void emit() const override;
 		virtual void generateEventReceivers() override;
 
-		virtual bool mousePress(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override;
-		virtual bool mouseDouble(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override;
-		virtual bool mouseRelease(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override;
-		virtual bool mouseMove(mouseButtonsFlags buttons, modifiersFlags modifiers, vec2 point) override;
-		virtual bool mouseWheel(sint8 wheel, modifiersFlags modifiers, vec2 point) override;
-		virtual bool keyPress(uint32 key, uint32 scanCode, modifiersFlags modifiers) override;
-		virtual bool keyRepeat(uint32 key, uint32 scanCode, modifiersFlags modifiers) override;
-		virtual bool keyRelease(uint32 key, uint32 scanCode, modifiersFlags modifiers) override;
+		virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override;
+		virtual bool mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override;
+		virtual bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override;
+		virtual bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override;
+		virtual bool mouseWheel(sint8 wheel, ModifiersFlags modifiers, vec2 point) override;
+		virtual bool keyPress(uint32 key, uint32 scanCode, ModifiersFlags modifiers) override;
+		virtual bool keyRepeat(uint32 key, uint32 scanCode, ModifiersFlags modifiers) override;
+		virtual bool keyRelease(uint32 key, uint32 scanCode, ModifiersFlags modifiers) override;
 		virtual bool keyChar(uint32 key) override;
 	};
 
@@ -225,9 +225,9 @@ namespace cage
 	struct imageItemStruct
 	{
 		hierarchyItemStruct *const hierarchy;
-		imageComponent Image;
-		imageFormatComponent format;
-		renderTexture *texture;
+		ImageComponent Image;
+		ImageFormatComponent format;
+		Texture *texture;
 		bool skipInitialize;
 
 		imageItemStruct(hierarchyItemStruct *hierarchy);
@@ -235,8 +235,8 @@ namespace cage
 		void initialize();
 
 		void assign();
-		void assign(const imageComponent &value);
-		void apply(const imageFormatComponent &f);
+		void assign(const ImageComponent &value);
+		void apply(const ImageFormatComponent &f);
 
 		vec2 findRequestedSize();
 
@@ -254,11 +254,11 @@ namespace cage
 		bool pointInside(vec2 point, uint32 maskRequests = 1) const;
 	};
 
-	class guiImpl : public guiManager
+	class guiImpl : public Gui
 	{
 	public:
 		Holder<EntityManager> entityMgr;
-		guiComponents components;
+		GuiComponents components;
 
 		AssetManager *assetMgr;
 
@@ -278,16 +278,16 @@ namespace cage
 
 		struct graphicsDataStruct
 		{
-			shaderProgram *debugShader;
-			shaderProgram *elementShader;
-			shaderProgram *fontShader;
-			shaderProgram *imageAnimatedShader;
-			shaderProgram *imageStaticShader;
-			shaderProgram *colorPickerShader[3];
-			renderMesh *debugMesh;
-			renderMesh *elementMesh;
-			renderMesh *fontMesh;
-			renderMesh *imageMesh;
+			ShaderProgram *debugShader;
+			ShaderProgram *elementShader;
+			ShaderProgram *fontShader;
+			ShaderProgram *imageAnimatedShader;
+			ShaderProgram *imageStaticShader;
+			ShaderProgram *colorPickerShader[3];
+			Mesh *debugMesh;
+			Mesh *elementMesh;
+			Mesh *fontMesh;
+			Mesh *imageMesh;
 			graphicsDataStruct();
 		} graphicsData;
 
@@ -296,20 +296,20 @@ namespace cage
 			memoryArenaGrowing<memoryAllocatorPolicyLinear<>, memoryConcurrentPolicyNone> arena;
 			MemoryArena memory;
 			renderableBaseStruct *first, *last;
-			emitDataStruct(const guiManagerCreateConfig &config);
+			emitDataStruct(const GuiCreateConfig &config);
 			emitDataStruct(emitDataStruct &&other); // this is not defined, is it? but it is required, is it not?
 			~emitDataStruct();
 			void flush();
 		} emitData[3], *emitControl;
 		Holder<SwapBufferGuard> emitController;
 
-		windowEventListeners listeners;
+		WindowEventListeners listeners;
 		std::vector<eventReceiverStruct> mouseEventReceivers;
 		bool eventsEnabled;
 
 		std::vector<skinDataStruct> skins;
 
-		guiImpl(const guiManagerCreateConfig &config);
+		guiImpl(const GuiCreateConfig &config);
 		~guiImpl();
 
 		void scaling();

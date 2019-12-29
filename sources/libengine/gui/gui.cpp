@@ -12,7 +12,7 @@
 
 namespace cage
 {
-	void guiManager::setOutputResolution(const ivec2 &resolution, real retina)
+	void Gui::setOutputResolution(const ivec2 &resolution, real retina)
 	{
 		guiImpl *impl = (guiImpl*)this;
 		impl->outputResolution = resolution;
@@ -20,112 +20,112 @@ namespace cage
 		impl->scaling();
 	}
 
-	void guiManager::setZoom(real zoom)
+	void Gui::setZoom(real zoom)
 	{
 		guiImpl *impl = (guiImpl*)this;
 		impl->zoom = zoom;
 		impl->scaling();
 	}
 
-	ivec2 guiManager::getOutputResolution() const
+	ivec2 Gui::getOutputResolution() const
 	{
 		guiImpl *impl = (guiImpl*)this;
 		return impl->outputResolution;
 	}
 
-	real guiManager::getOutputRetina() const
+	real Gui::getOutputRetina() const
 	{
 		guiImpl *impl = (guiImpl*)this;
 		return impl->retina;
 	}
 
-	real guiManager::getZoom() const
+	real Gui::getZoom() const
 	{
 		guiImpl *impl = (guiImpl*)this;
 		return impl->zoom;
 	}
 
-	void guiManager::setOutputSoundBus(mixingBus *bus)
+	void Gui::setOutputSoundBus(MixingBus *bus)
 	{
 		guiImpl *impl = (guiImpl*)this;
 		// todo
 	}
 
-	mixingBus *guiManager::getOutputSoundBus() const
+	MixingBus *Gui::getOutputSoundBus() const
 	{
 		guiImpl *impl = (guiImpl*)this;
 		// todo
 		return nullptr;
 	}
 
-	void guiManager::setFocus(uint32 widget)
+	void Gui::setFocus(uint32 widget)
 	{
 		guiImpl *impl = (guiImpl*)this;
 		impl->focusName = widget;
 		impl->focusParts = 1;
 	}
 
-	uint32 guiManager::getFocus() const
+	uint32 Gui::getFocus() const
 	{
 		guiImpl *impl = (guiImpl*)this;
 		return impl->focusName;
 	}
 
-	void guiManager::handleWindowEvents(windowHandle *window, sint32 order)
+	void Gui::handleWindowEvents(Window *window, sint32 order)
 	{
 		guiImpl *impl = (guiImpl*)this;
 		impl->listeners.attachAll(window, order);
 	}
 
-	void guiManager::skipAllEventsUntilNextUpdate()
+	void Gui::skipAllEventsUntilNextUpdate()
 	{
 		guiImpl *impl = (guiImpl*)this;
 		impl->eventsEnabled = false;
 	}
 
-	ivec2 guiManager::getInputResolution() const
+	ivec2 Gui::getInputResolution() const
 	{
 		guiImpl *impl = (guiImpl*)this;
 		return impl->inputResolution;
 	}
 
-	guiSkinConfig &guiManager::skin(uint32 index)
+	GuiSkinConfig &Gui::skin(uint32 index)
 	{
 		guiImpl *impl = (guiImpl*)this;
 		return impl->skins[index];
 	}
 
-	const guiSkinConfig &guiManager::skin(uint32 index) const
+	const GuiSkinConfig &Gui::skin(uint32 index) const
 	{
 		const guiImpl *impl = (const guiImpl*)this;
 		return impl->skins[index];
 	}
 
-	guiComponents &guiManager::components()
+	GuiComponents &Gui::components()
 	{
 		guiImpl *impl = (guiImpl*)this;
 		return impl->components;
 	}
 
-	EntityManager *guiManager::entities()
+	EntityManager *Gui::entities()
 	{
 		guiImpl *impl = (guiImpl*)this;
 		return impl->entityMgr.get();
 	}
 
-	AssetManager *guiManager::assets()
+	AssetManager *Gui::assets()
 	{
 		guiImpl *impl = (guiImpl*)this;
 		return impl->assetMgr;
 	}
 
-	guiManagerCreateConfig::guiManagerCreateConfig() : assetMgr(nullptr), entitiesConfig(nullptr),
+	GuiCreateConfig::GuiCreateConfig() : assetMgr(nullptr), entitiesConfig(nullptr),
 		itemsArenaSize(1024 * 1024 * 16), emitArenaSize(1024 * 1024 * 16),
 		skinsCount(1)
 	{}
 
-	Holder<guiManager> newGuiManager(const guiManagerCreateConfig &config)
+	Holder<Gui> newGuiManager(const GuiCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<guiManager, guiImpl>(config);
+		return detail::systemArena().createImpl<Gui, guiImpl>(config);
 	}
 }

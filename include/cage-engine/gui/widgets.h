@@ -1,20 +1,20 @@
 namespace cage
 {
-	struct CAGE_API labelComponent
+	struct CAGE_API LabelComponent
 	{
-		// textComponent defines foreground of the widget
-		// imageComponent defines background of the widget
-		labelComponent();
+		// TextComponent defines foreground of the widget
+		// ImageComponent defines background of the widget
+		LabelComponent();
 	};
 
-	struct CAGE_API buttonComponent
+	struct CAGE_API ButtonComponent
 	{
-		// textComponent defines foreground
-		// imageComponent defines background
-		buttonComponent();
+		// TextComponent defines foreground
+		// ImageComponent defines background
+		ButtonComponent();
 	};
 
-	enum class inputTypeEnum : uint32
+	enum class InputTypeEnum : uint32
 	{
 		Text,
 		Url,
@@ -24,7 +24,7 @@ namespace cage
 		Password,
 	};
 
-	enum class inputStyleFlags : uint32
+	enum class InputStyleFlags : uint32
 	{
 		// input box and text area
 		None = 0,
@@ -35,9 +35,9 @@ namespace cage
 		AlwaysRoundValueToStep = 1 << 4,
 		//WriteTabs = 1 << 5, // tab key will write tab rather than skip to next widget
 	};
-	GCHL_ENUM_BITS(inputStyleFlags);
+	GCHL_ENUM_BITS(InputStyleFlags);
 
-	struct CAGE_API inputComponent
+	struct CAGE_API InputComponent
 	{
 		string value; // utf-8 encoded string (size is in bytes)
 		union CAGE_API Union
@@ -47,115 +47,115 @@ namespace cage
 			Union();
 		} min, max, step;
 		uint32 cursor; // unicode characters (not bytes)
-		inputTypeEnum type;
-		inputStyleFlags style;
+		InputTypeEnum type;
+		InputStyleFlags style;
 		bool valid;
-		// textComponent defines placeholder
-		// textFormatComponent defines format
-		// selectionComponent defines selected text
-		inputComponent();
+		// TextComponent defines placeholder
+		// TextFormatComponent defines format
+		// SelectionComponent defines selected text
+		InputComponent();
 	};
 
-	struct CAGE_API textAreaComponent
+	struct CAGE_API TextAreaComponent
 	{
 		MemoryBuffer *buffer; // utf-8 encoded string
 		uint32 cursor; // unicode characters (not bytes)
 		uint32 maxLength; // bytes
-		inputStyleFlags style;
-		// selectionComponent defines selected text
-		textAreaComponent();
+		InputStyleFlags style;
+		// SelectionComponent defines selected text
+		TextAreaComponent();
 	};
 
-	enum class checkBoxStateEnum : uint32
+	enum class CheckBoxStateEnum : uint32
 	{
 		Unchecked,
 		Checked,
 		Indeterminate,
 	};
 
-	struct CAGE_API checkBoxComponent
+	struct CAGE_API CheckBoxComponent
 	{
-		checkBoxStateEnum state;
-		// textComponent defines label shown next to the check box
-		checkBoxComponent();
+		CheckBoxStateEnum state;
+		// TextComponent defines label shown next to the check box
+		CheckBoxComponent();
 	};
 
-	struct CAGE_API radioBoxComponent
+	struct CAGE_API RadioBoxComponent
 	{
 		uint32 group; // defines what other radio buttons are unchecked when this becomes checked
-		checkBoxStateEnum state;
-		// textComponent defines label shown next to the radio box
-		radioBoxComponent();
+		CheckBoxStateEnum state;
+		// TextComponent defines label shown next to the radio box
+		RadioBoxComponent();
 	};
 
-	struct CAGE_API comboBoxComponent
+	struct CAGE_API ComboBoxComponent
 	{
 		uint32 selected; // -1 = nothing selected
-		// textComponent defines placeholder
-		// children with textComponent defines individual lines
-		// textFormatComponent applies to all lines, may be overriden by individual childs
-		// selectedItemComponent on childs defines which line is selected (the selected property is authoritative)
-		comboBoxComponent();
+		// TextComponent defines placeholder
+		// children with TextComponent defines individual lines
+		// TextFormatComponent applies to all lines, may be overriden by individual childs
+		// SelectedItemComponent on childs defines which line is selected (the selected property is authoritative)
+		ComboBoxComponent();
 	};
 
-	struct CAGE_API listBoxComponent
+	struct CAGE_API ListBoxComponent
 	{
 		// real scrollbar;
-		// children with textComponent defines individual lines
-		// textFormatComponent applies to all lines, may be overriden by individual childs
-		// selectedItemComponent on childs defines which lines are selected
-		listBoxComponent();
+		// children with TextComponent defines individual lines
+		// TextFormatComponent applies to all lines, may be overriden by individual childs
+		// SelectedItemComponent on childs defines which lines are selected
+		ListBoxComponent();
 	};
 
-	struct CAGE_API progressBarComponent
+	struct CAGE_API ProgressBarComponent
 	{
 		real progress; // 0 .. 1
 		bool showValue; // overrides the text with the value (may use internationalization for formatting)
-		// textComponent defines text shown over the bar
-		progressBarComponent();
+		// TextComponent defines text shown over the bar
+		ProgressBarComponent();
 	};
 
-	struct CAGE_API sliderBarComponent
+	struct CAGE_API SliderBarComponent
 	{
 		real value;
 		real min, max;
 		bool vertical;
-		sliderBarComponent();
+		SliderBarComponent();
 	};
 
-	struct CAGE_API colorPickerComponent
+	struct CAGE_API ColorPickerComponent
 	{
 		vec3 color;
 		bool collapsible;
-		colorPickerComponent();
+		ColorPickerComponent();
 	};
 
-	struct CAGE_API panelComponent
+	struct CAGE_API PanelComponent
 	{
-		panelComponent();
-		// textComponent defines caption
-		// imageComponent defines background
+		PanelComponent();
+		// TextComponent defines caption
+		// ImageComponent defines background
 	};
 
-	struct CAGE_API spoilerComponent
+	struct CAGE_API SpoilerComponent
 	{
 		bool collapsesSiblings;
 		bool collapsed;
-		spoilerComponent();
-		// textComponent defines caption
-		// imageComponent defines background
+		SpoilerComponent();
+		// TextComponent defines caption
+		// ImageComponent defines background
 	};
 
-#define GCHL_GUI_WIDGET_COMPONENTS label, button, input, textArea, checkBox, radioBox, comboBox, listBox, progressBar, sliderBar, colorPicker, panel, spoiler
+#define GCHL_GUI_WIDGET_COMPONENTS Label, Button, Input, TextArea, CheckBox, RadioBox, ComboBox, ListBox, ProgressBar, SliderBar, ColorPicker, Panel, Spoiler
 
 	namespace privat
 	{
-		struct CAGE_API guiWidgetsComponents
+		struct CAGE_API GuiWidgetsComponents
 		{
 #define GCHL_GENERATE(T) EntityComponent *T;
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS));
 #undef GCHL_GENERATE
-			guiWidgetsComponents(EntityManager *ents);
+			GuiWidgetsComponents(EntityManager *ents);
 		};
 	}
 }

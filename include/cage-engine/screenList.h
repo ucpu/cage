@@ -3,15 +3,15 @@
 
 namespace cage
 {
-	struct CAGE_API screenMode
+	struct CAGE_API ScreenMode
 	{
 	public:
 		ivec2 resolution;
 		uint32 frequency;
-		screenMode();
+		ScreenMode();
 	};
 
-	class CAGE_API screenDevice : private Immovable
+	class CAGE_API ScreenDevice : private Immovable
 	{
 	public:
 		string id() const;
@@ -19,20 +19,20 @@ namespace cage
 
 		uint32 modesCount() const;
 		uint32 currentMode() const;
-		const screenMode &mode(uint32 index) const;
-		PointerRange<const screenMode> modes() const;
+		const ScreenMode &mode(uint32 index) const;
+		PointerRange<const ScreenMode> modes() const;
 	};
 
-	class CAGE_API screenList : private Immovable
+	class CAGE_API ScreenList : private Immovable
 	{
 	public:
 		uint32 devicesCount() const;
 		uint32 defaultDevice() const;
-		const screenDevice *device(uint32 index) const;
-		Holder<PointerRange<const screenDevice *>> devices() const;
+		const ScreenDevice *device(uint32 index) const;
+		Holder<PointerRange<const ScreenDevice *>> devices() const;
 	};
 
-	CAGE_API Holder<screenList> newScreenList();
+	CAGE_API Holder<ScreenList> newScreenList();
 }
 
 #endif // guard_screenList_h_q56ew4rk87h64847

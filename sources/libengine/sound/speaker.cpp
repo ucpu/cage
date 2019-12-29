@@ -155,14 +155,14 @@ namespace cage
 		void underflowCallbackHelper(SoundIoOutStream *stream);
 		typedef void(*convertCallbackType)(float source, void *target);
 
-		class soundSpeakerImpl : public speakerOutput, public busInterfaceStruct
+		class soundSpeakerImpl : public Speaker, public busInterfaceStruct
 		{
 		public:
 			string name;
-			soundContext *context;
+			SoundContext *context;
 			SoundIoDevice *device;
 			SoundIoOutStream *stream;
-			mixingBus *inputBus;
+			MixingBus *inputBus;
 			convertCallbackType convertCallback;
 			uint32 errorCountUnderflow;
 			uint32 errorCountExceptions;
@@ -211,7 +211,7 @@ namespace cage
 					SoundIoRingBuffer *buffer;
 				};
 
-				soundDataBufferStruct buffer;
+				SoundDataBuffer buffer;
 				ringBufferStruct ring;
 				bool first;
 				sint64 time;
@@ -226,8 +226,8 @@ namespace cage
 				}
 			} data;
 
-			soundSpeakerImpl(soundContext *context, const speakerOutputCreateConfig &config, string name) :
-				busInterfaceStruct(Delegate<void(mixingBus*)>().bind<soundSpeakerImpl, &soundSpeakerImpl::busDestroyed>(this), Delegate<void(const soundDataBufferStruct&)>()),
+			soundSpeakerImpl(SoundContext *context, const SpeakerCreateConfig &config, string name) :
+				busInterfaceStruct(Delegate<void(MixingBus*)>().bind<soundSpeakerImpl, &soundSpeakerImpl::busDestroyed>(this), Delegate<void(const SoundDataBuffer&)>()),
 				name(name.replace(":", "_")), context(context),
 				device(nullptr), stream(nullptr), inputBus(nullptr), convertCallback(nullptr),
 				errorCountUnderflow(0), errorCountExceptions(0), errorCountNoData(0)
@@ -257,13 +257,13 @@ namespace cage
 
 				device = soundio_get_output_device(sio, deviceIndex);
 				if (!device)
-					CAGE_THROW_ERROR(soundError, "failed to find a speaker device", 0);
+					CAGE_THROW_ERROR(SoundError, "failed to find a speaker device", 0);
 				if (device->probe_error)
-					CAGE_THROW_ERROR(soundError, "speaker device probe error", device->probe_error);
+					CAGE_THROW_ERROR(SoundError, "speaker device probe error", device->probe_error);
 
 				stream = soundio_outstream_create(device);
 				if (!stream)
-					CAGE_THROW_ERROR(soundError, "failed to create a speaker stream", 0);
+					CAGE_THROW_ERROR(SoundError, "failed to create a speaker stream", 0);
 
 				stream->userdata = this;
 				stream->write_callback = &writeCallbackHelper;
@@ -293,7 +293,7 @@ namespace cage
 					CAGE_LOG_CONTINUE(SeverityEnum::Note, "sound", "speaker uses 64 bit double samples");
 				}
 				else
-					CAGE_THROW_ERROR(soundError, "no supported format available", 0);
+					CAGE_THROW_ERROR(SoundError, "no supported format available", 0);
 
 				checkSoundIoError(soundio_outstream_open(stream));
 				CAGE_LOG_CONTINUE(SeverityEnum::Note, "sound", stringizer() + "speaker uses " + stream->layout.channel_count + " channels and " + stream->sample_rate + " samples per second per channel");
@@ -390,7 +390,7 @@ namespace cage
 				}
 			}
 
-			void busDestroyed(mixingBus *bus)
+			void busDestroyed(MixingBus *bus)
 			{
 				CAGE_ASSERT(bus == inputBus);
 				inputBus = nullptr;
@@ -413,49 +413,49 @@ namespace cage
 		{}
 	}
 
-	string speakerOutput::getStreamName() const
+	string Speaker::getStreamName() const
 	{
 		soundSpeakerImpl *impl = (soundSpeakerImpl*)this;
 		return impl->name;
 	}
 
-	string speakerOutput::getDeviceId() const
+	string Speaker::getDeviceId() const
 	{
 		soundSpeakerImpl *impl = (soundSpeakerImpl*)this;
 		return impl->device->id;
 	}
 
-	string speakerOutput::getDeviceName() const
+	string Speaker::getDeviceName() const
 	{
 		soundSpeakerImpl *impl = (soundSpeakerImpl*)this;
 		return impl->device->name;
 	}
 
-	bool speakerOutput::getDeviceRaw() const
+	bool Speaker::getDeviceRaw() const
 	{
 		soundSpeakerImpl *impl = (soundSpeakerImpl*)this;
 		return impl->device->is_raw;
 	}
 
-	string speakerOutput::getLayoutName() const
+	string Speaker::getLayoutName() const
 	{
 		soundSpeakerImpl *impl = (soundSpeakerImpl*)this;
 		return impl->stream->layout.name;
 	}
 
-	uint32 speakerOutput::getChannelsCount() const
+	uint32 Speaker::getChannelsCount() const
 	{
 		soundSpeakerImpl *impl = (soundSpeakerImpl*)this;
 		return impl->stream->layout.channel_count;
 	}
 
-	uint32 speakerOutput::getOutputSampleRate() const
+	uint32 Speaker::getOutputSampleRate() const
 	{
 		soundSpeakerImpl *impl = (soundSpeakerImpl*)this;
 		return impl->stream->sample_rate;
 	}
 
-	void speakerOutput::setInput(mixingBus *bus)
+	void Speaker::setInput(MixingBus *bus)
 	{
 		soundSpeakerImpl *impl = (soundSpeakerImpl*)this;
 		if (impl->inputBus)
@@ -470,17 +470,17 @@ namespace cage
 		}
 	}
 
-	void speakerOutput::update(uint64 time)
+	void Speaker::update(uint64 time)
 	{
 		soundSpeakerImpl *impl = (soundSpeakerImpl*)this;
 		impl->update(time);
 	}
 
-	speakerOutputCreateConfig::speakerOutputCreateConfig() : sampleRate(0), deviceRaw(false)
+	SpeakerCreateConfig::SpeakerCreateConfig() : sampleRate(0), deviceRaw(false)
 	{}
 
-	Holder<speakerOutput> newSpeakerOutput(soundContext *context, const speakerOutputCreateConfig &config, string name)
+	Holder<Speaker> newSpeakerOutput(SoundContext *context, const SpeakerCreateConfig &config, string name)
 	{
-		return detail::systemArena().createImpl<speakerOutput, soundSpeakerImpl>(context, config, name);
+		return detail::systemArena().createImpl<Speaker, soundSpeakerImpl>(context, config, name);
 	}
 }

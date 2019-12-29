@@ -13,36 +13,39 @@
 
 namespace cage
 {
-	parentComponent::parentComponent() : parent(0), order(0)
+	ParentComponent::ParentComponent() : parent(0), order(0)
 	{}
 
-	imageComponent::imageComponent() : animationStart(m), textureName(0), textureUvSize{1, 1}
+	ImageComponent::ImageComponent() : animationStart(m), textureName(0), textureUvSize{1, 1}
 	{}
 
-	imageFormatComponent::imageFormatComponent() : animationSpeed(1), mode(imageModeEnum::Stretch)
+	ImageFormatComponent::ImageFormatComponent() : animationSpeed(1), mode(ImageModeEnum::Stretch)
 	{}
 
-	textComponent::textComponent() : assetName(0), textName(0)
+	TextComponent::TextComponent() : assetName(0), textName(0)
 	{}
 
-	textFormatComponent::textFormatComponent() : color(vec3::Nan()), font(0), size(real::Nan()), lineSpacing(real::Nan()), align((textAlignEnum)-1)
+	TextFormatComponent::TextFormatComponent() : color(vec3::Nan()), font(0), size(real::Nan()), lineSpacing(real::Nan()), align((TextAlignEnum)-1)
 	{}
 
-	selectionComponent::selectionComponent() : start(m), length(0)
+	SelectionComponent::SelectionComponent() : start(m), length(0)
 	{}
 
-	scrollbarsComponent::scrollbarsComponent() : overflow{ overflowModeEnum::Auto, overflowModeEnum::Auto }
+	TooltipComponent::TooltipComponent() : assetName(0), textName(0)
 	{}
 
-	explicitSizeComponent::explicitSizeComponent() : size(vec2::Nan())
+	ScrollbarsComponent::ScrollbarsComponent() : overflow{ OverflowModeEnum::Auto, OverflowModeEnum::Auto }
 	{}
 
-	eventComponent::eventComponent()
+	ExplicitSizeComponent::ExplicitSizeComponent() : size(vec2::Nan())
+	{}
+
+	EventComponent::EventComponent()
 	{}
 
 	namespace privat
 	{
-		guiGeneralComponents::guiGeneralComponents(EntityManager *ents)
+		GuiGeneralComponents::GuiGeneralComponents(EntityManager *ents)
 		{
 			detail::memset(this, 0, sizeof(*this));
 #define GCHL_GENERATE(T) T = ents->defineComponent<CAGE_JOIN(T, Component)>(CAGE_JOIN(T, Component)(), false);

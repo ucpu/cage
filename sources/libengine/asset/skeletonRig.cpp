@@ -15,21 +15,21 @@ namespace cage
 	{
 		void processLoad(const AssetContext *context, void *schemePointer)
 		{
-			skeletonRig *skl = nullptr;
+			SkeletonRig *skl = nullptr;
 			if (context->assetHolder)
 			{
-				skl = static_cast<skeletonRig*>(context->assetHolder.get());
+				skl = static_cast<SkeletonRig*>(context->assetHolder.get());
 			}
 			else
 			{
 				context->assetHolder = newSkeletonRig().cast<void>();
-				skl = static_cast<skeletonRig*>(context->assetHolder.get());
+				skl = static_cast<SkeletonRig*>(context->assetHolder.get());
 				skl->setDebugName(context->textName);
 			}
 			context->returnData = skl;
 
 			Deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
-			skeletonRigHeader data;
+			SkeletonRigHeader data;
 			des >> data;
 			uint16 *boneParents = (uint16*)des.advance(sizeof(uint16) * data.bonesCount);
 			mat4 *baseMatrices = (mat4*)des.advance(sizeof(mat4) * data.bonesCount);
