@@ -29,7 +29,7 @@ namespace cage
 		template<class D, R(*F)(D, Ts...)>
 		delegate &bind(D d)
 		{
-			CAGE_ASSERT(sizeof(d) <= sizeof(inst));
+			static_assert(sizeof(d) <= sizeof(inst), "invalid size of data stored in delegate");
 			union U
 			{
 				void *p;

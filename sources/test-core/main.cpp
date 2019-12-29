@@ -48,6 +48,7 @@ void testVariableInterpolatingBuffer();
 void testVariableSmoothingBufferStruct();
 void testCopyAndMove();
 void testSwapBufferGuard();
+void testScheduler();
 void testTcp();
 void testUdp();
 void testUdpDiscovery();
@@ -102,6 +103,7 @@ int main()
 	testVariableSmoothingBufferStruct();
 	testCopyAndMove();
 	testSwapBufferGuard();
+	testScheduler();
 	testTcp();
 	testUdp();
 	testUdpDiscovery();
