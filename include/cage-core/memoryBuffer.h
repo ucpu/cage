@@ -3,18 +3,18 @@
 
 namespace cage
 {
-	struct CAGE_API memoryBuffer
+	struct CAGE_API MemoryBuffer
 	{
-		memoryBuffer(); // no allocation ctor
-		explicit memoryBuffer(uintPtr size, uintPtr capacity = 0);
-		memoryBuffer(memoryBuffer &&other) noexcept;
-		memoryBuffer &operator = (memoryBuffer &&other) noexcept;
-		~memoryBuffer();
+		MemoryBuffer(); // no allocation ctor
+		explicit MemoryBuffer(uintPtr size, uintPtr capacity = 0);
+		MemoryBuffer(MemoryBuffer &&other) noexcept;
+		MemoryBuffer &operator = (MemoryBuffer &&other) noexcept;
+		~MemoryBuffer();
 
-		memoryBuffer(const memoryBuffer &) = delete; // the buffer is non-copyable
-		memoryBuffer &operator = (const memoryBuffer &) = delete;
+		MemoryBuffer(const MemoryBuffer &) = delete; // the buffer is non-copyable
+		MemoryBuffer &operator = (const MemoryBuffer &) = delete;
 
-		memoryBuffer copy() const;
+		MemoryBuffer copy() const;
 
 		void allocate(uintPtr size, uintPtr cap = 0); // allocates new buffer; sets the size; the data is not preserved nor initialized
 		void reserve(uintPtr cap); // allocates new buffer if needed; size and data is preserved; allows the buffer to grow only
@@ -54,8 +54,8 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_API memoryBuffer compress(const memoryBuffer &input);
-		CAGE_API memoryBuffer decompress(const memoryBuffer &input, uintPtr outputSize);
+		CAGE_API MemoryBuffer compress(const MemoryBuffer &input);
+		CAGE_API MemoryBuffer decompress(const MemoryBuffer &input, uintPtr outputSize);
 	}
 }
 

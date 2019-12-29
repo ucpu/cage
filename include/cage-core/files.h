@@ -3,9 +3,9 @@
 
 namespace cage
 {
-	struct CAGE_API fileMode
+	struct CAGE_API FileMode
 	{
-		explicit fileMode(bool read, bool write) : read(read), write(write), textual(false), append(false)
+		explicit FileMode(bool read, bool write) : read(read), write(write), textual(false), append(false)
 		{}
 
 		bool valid() const;
@@ -17,15 +17,15 @@ namespace cage
 		bool append;
 	};
 
-	class CAGE_API fileHandle : private immovable
+	class CAGE_API File : private Immovable
 	{
 	public:
 		void read(void *data, uintPtr size);
 		bool readLine(string &line);
-		memoryBuffer readBuffer(uintPtr size);
+		MemoryBuffer readBuffer(uintPtr size);
 		void write(const void *data, uintPtr size);
 		void writeLine(const string &line);
-		void writeBuffer(const memoryBuffer &buffer);
+		void writeBuffer(const MemoryBuffer &buffer);
 		void seek(uintPtr position);
 		void flush();
 		void close();
@@ -33,9 +33,9 @@ namespace cage
 		uintPtr size() const;
 	};
 
-	CAGE_API holder<fileHandle> newFile(const string &path, const fileMode &mode);
+	CAGE_API Holder<File> newFile(const string &path, const FileMode &mode);
 
-	enum class pathTypeFlags : uint32
+	enum class PathTypeFlags : uint32
 	{
 		None = 0,
 		Invalid = 1 << 0,
@@ -47,7 +47,7 @@ namespace cage
 		Symlink = 1 << 6,
 		InsideSymlink = 1 << 7,
 	};
-	GCHL_ENUM_BITS(pathTypeFlags);
+	GCHL_ENUM_BITS(PathTypeFlags);
 
 	// string manipulation only (does not touch any hdd)
 
@@ -71,15 +71,15 @@ namespace cage
 
 	// filesystem manipulation
 
-	CAGE_API pathTypeFlags pathType(const string &path);
+	CAGE_API PathTypeFlags pathType(const string &path);
 	CAGE_API bool pathIsFile(const string &path);
 	CAGE_API void pathCreateDirectories(const string &path);
 	CAGE_API void pathCreateArchive(const string &path, const string &options = "");
 	CAGE_API void pathMove(const string &from, const string &to);
 	CAGE_API void pathRemove(const string &path);
 	CAGE_API uint64 pathLastChange(const string &path);
-	CAGE_API string pathSearchTowardsRoot(const string &name, pathTypeFlags type = pathTypeFlags::File);
-	CAGE_API string pathSearchTowardsRoot(const string &name, const string &whereToStart, pathTypeFlags type = pathTypeFlags::File);
+	CAGE_API string pathSearchTowardsRoot(const string &name, PathTypeFlags type = PathTypeFlags::File);
+	CAGE_API string pathSearchTowardsRoot(const string &name, const string &whereToStart, PathTypeFlags type = PathTypeFlags::File);
 
 	CAGE_API string pathWorkingDir();
 

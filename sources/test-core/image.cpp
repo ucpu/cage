@@ -6,7 +6,7 @@
 
 namespace
 {
-	void drawCircle(image *png)
+	void drawCircle(Image *png)
 	{
 		uint32 w = png->width(), h = png->height();
 		vec2 center = vec2(w, h) * 0.5;
@@ -32,7 +32,7 @@ void testImage()
 
 	{
 		CAGE_TESTCASE("circle 8bit");
-		holder<image> png = newImage();
+		Holder<Image> png = newImage();
 		png->empty(400, 300, 3);
 		drawCircle(png.get());
 		png->encodeFile("images/circle1.png");
@@ -49,7 +49,7 @@ void testImage()
 
 	{
 		CAGE_TESTCASE("circle 16bit");
-		holder<image> png = newImage();
+		Holder<Image> png = newImage();
 		png->empty(400, 300, 3, 2);
 		drawCircle(png.get());
 		png->encodeFile("images/circle2.png");

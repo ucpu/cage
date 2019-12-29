@@ -27,7 +27,7 @@ namespace cage
 			currentPosition = 0;
 			int res = ov_open_callbacks(this, &ovf, nullptr, 0, callbacks);
 			if (res < 0)
-				CAGE_THROW_ERROR(systemError, "failed to open vorbis stream", res);
+				CAGE_THROW_ERROR(SystemError, "failed to open vorbis stream", res);
 			CAGE_ASSERT(ovf.links == 1, ovf.links);
 		}
 
@@ -46,7 +46,7 @@ namespace cage
 
 			int res = ov_pcm_seek(&ovf, index);
 			if (res != 0)
-				CAGE_THROW_ERROR(systemError, "failed to seek in vorbis data", res);
+				CAGE_THROW_ERROR(SystemError, "failed to seek in vorbis data", res);
 
 			uint32 indexTarget = 0;
 			while (indexTarget < frames)
@@ -54,9 +54,9 @@ namespace cage
 				float **pcm = nullptr;
 				long res = ov_read_float(&ovf, &pcm, frames - indexTarget, nullptr);
 				if (res < 0)
-					CAGE_THROW_ERROR(systemError, "failed to read vorbis data", res);
+					CAGE_THROW_ERROR(SystemError, "failed to read vorbis data", res);
 				if (res == 0)
-					CAGE_THROW_ERROR(systemError, "vorbis data truncated", res);
+					CAGE_THROW_ERROR(SystemError, "vorbis data truncated", res);
 				for (uint32 f = 0; f < numeric_cast<uint32>(res); f++)
 					for (uint32 ch = 0; ch < numeric_cast<uint32>(ovf.vi->channels); ch++)
 						output[(indexTarget + f) * ovf.vi->channels + ch] = pcm[ch][f];
@@ -77,7 +77,7 @@ namespace cage
 				float **pcm = nullptr;
 				long res = ov_read_float(&ovf, &pcm, 1024, nullptr);
 				if (res < 0)
-					CAGE_THROW_ERROR(systemError, "failed to read vorbis data", res);
+					CAGE_THROW_ERROR(SystemError, "failed to read vorbis data", res);
 				if (res == 0)
 					break;
 				for (uint32 f = 0; f < numeric_cast<uint32>(res); f++)

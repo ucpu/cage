@@ -5,7 +5,7 @@
 #include <cage-core/core.h>
 #include <cage-core/memory.h>
 #include <cage-core/files.h>
-#include <cage-core/configIni.h>
+#include <cage-core/ini.h>
 #include <cage-core/pointerRangeHolder.h>
 
 namespace cage
@@ -13,10 +13,10 @@ namespace cage
 	namespace
 	{
 		template<class Value>
-		struct containerMap : public std::map<string, Value, stringComparatorFast, memoryArenaStd<std::pair<const string, Value>>>
+		struct containerMap : public std::map<string, Value, stringComparatorFast, MemoryArenaStd<std::pair<const string, Value>>>
 		{
 			typedef typename containerMap::map base;
-			containerMap(memoryArena arena) : base(stringComparatorFast(), arena) {}
+			containerMap(MemoryArena arena) : base(stringComparatorFast(), arena) {}
 		};
 
 		struct iniValue
@@ -29,26 +29,26 @@ namespace cage
 
 		struct iniSection
 		{
-			iniSection(memoryArena arena) : items(arena) {}
+			iniSection(MemoryArena arena) : items(arena) {}
 			containerMap<iniValue> items;
 		};
 
-		class iniImpl : public configIni
+		class iniImpl : public Ini
 		{
 		public:
-			iniImpl(memoryArena arena) : arena(arena), sections(arena) {}
-			memoryArena arena;
-			containerMap<holder<iniSection>> sections;
+			iniImpl(MemoryArena arena) : arena(arena), sections(arena) {}
+			MemoryArena arena;
+			containerMap<Holder<iniSection>> sections;
 		};
 	}
 
-	uint32 configIni::sectionsCount() const
+	uint32 Ini::sectionsCount() const
 	{
 		iniImpl *impl = (iniImpl*)this;
 		return numeric_cast<uint32>(impl->sections.size());
 	}
 
-	string configIni::section(uint32 section) const
+	string Ini::section(uint32 section) const
 	{
 		iniImpl *impl = (iniImpl*)this;
 		auto i = impl->sections.cbegin();
@@ -58,34 +58,34 @@ namespace cage
 		}
 		catch (...)
 		{
-			CAGE_THROW_ERROR(exception, "invalid ini section index");
+			CAGE_THROW_ERROR(Exception, "invalid ini section index");
 		}
 		return i->first;
 	}
 
-	bool configIni::sectionExists(const string &section) const
+	bool Ini::sectionExists(const string &section) const
 	{
 		iniImpl *impl = (iniImpl*)this;
 		return impl->sections.count(section);
 	}
 
-	holder<pointerRange<string>> configIni::sections() const
+	Holder<PointerRange<string>> Ini::sections() const
 	{
 		iniImpl *impl = (iniImpl*)this;
-		pointerRangeHolder<string> tmp;
+		PointerRangeHolder<string> tmp;
 		tmp.reserve(impl->sections.size());
 		for (auto &it : impl->sections)
 			tmp.push_back(it.first);
 		return tmp;
 	}
 
-	void configIni::sectionRemove(const string &section)
+	void Ini::sectionRemove(const string &section)
 	{
 		iniImpl *impl = (iniImpl*)this;
 		impl->sections.erase(section);
 	}
 
-	uint32 configIni::itemsCount(const string &section) const
+	uint32 Ini::itemsCount(const string &section) const
 	{
 		if (!sectionExists(section))
 			return 0;
@@ -93,7 +93,7 @@ namespace cage
 		return numeric_cast<uint32>(impl->sections[section]->items.size());
 	}
 
-	string configIni::item(const string &section, uint32 item) const
+	string Ini::item(const string &section, uint32 item) const
 	{
 		if (!sectionExists(section))
 			return "";
@@ -105,12 +105,12 @@ namespace cage
 		}
 		catch (...)
 		{
-			CAGE_THROW_ERROR(exception, "invalid ini item index");
+			CAGE_THROW_ERROR(Exception, "invalid ini item index");
 		}
 		return i->first;
 	}
 
-	bool configIni::itemExists(const string &section, const string &item) const
+	bool Ini::itemExists(const string &section, const string &item) const
 	{
 		if (!sectionExists(section))
 			return false;
@@ -118,10 +118,10 @@ namespace cage
 		return impl->sections[section]->items.count(item);
 	}
 
-	holder<pointerRange<string>> configIni::items(const string &section) const
+	Holder<PointerRange<string>> Ini::items(const string &section) const
 	{
 		iniImpl *impl = (iniImpl*)this;
-		pointerRangeHolder<string> tmp;
+		PointerRangeHolder<string> tmp;
 		if (!sectionExists(section))
 			return tmp;
 		auto &cont = impl->sections[section]->items;
@@ -131,10 +131,10 @@ namespace cage
 		return tmp;
 	}
 
-	holder<pointerRange<string>> configIni::values(const string &section) const
+	Holder<PointerRange<string>> Ini::values(const string &section) const
 	{
 		iniImpl *impl = (iniImpl*)this;
-		pointerRangeHolder<string> tmp;
+		PointerRangeHolder<string> tmp;
 		if (!sectionExists(section))
 			return tmp;
 		auto &cont = impl->sections[section]->items;
@@ -144,14 +144,14 @@ namespace cage
 		return tmp;
 	}
 
-	void configIni::itemRemove(const string &section, const string &item)
+	void Ini::itemRemove(const string &section, const string &item)
 	{
 		iniImpl *impl = (iniImpl*)this;
 		if (sectionExists(section))
 			impl->sections[section]->items.erase(item);
 	}
 
-	string configIni::get(const string &section, const string &item) const
+	string Ini::get(const string &section, const string &item) const
 	{
 		if (!itemExists(section, item))
 			return "";
@@ -164,50 +164,50 @@ namespace cage
 		void validateString(const string &str)
 		{
 			if (str.empty() || str.find('#') != m || str.find('[') != m || str.find(']') != m || str.find('=') != m)
-				CAGE_THROW_ERROR(exception, "invalid name");
+				CAGE_THROW_ERROR(Exception, "invalid name");
 		}
 	}
 
-	void configIni::set(const string &section, const string &item, const string &value)
+	void Ini::set(const string &section, const string &item, const string &value)
 	{
 		validateString(section);
 		validateString(item);
 		if (value.find('#') != m)
-			CAGE_THROW_ERROR(exception, "invalid value");
+			CAGE_THROW_ERROR(Exception, "invalid value");
 		iniImpl *impl = (iniImpl*)this;
 		if (!sectionExists(section))
 			impl->sections[section] = impl->arena.createHolder<iniSection>(impl->arena);
 		impl->sections[section]->items[item] = value;
 	}
 
-	void configIni::markUsed(const string &section, const string &item)
+	void Ini::markUsed(const string &section, const string &item)
 	{
 		CAGE_ASSERT(itemExists(section, item), section, item);
 		iniImpl *impl = (iniImpl*)this;
 		impl->sections[section]->items[item].used = true;
 	}
 
-	void configIni::markUnused(const string &section, const string &item)
+	void Ini::markUnused(const string &section, const string &item)
 	{
 		CAGE_ASSERT(itemExists(section, item), section, item);
 		iniImpl *impl = (iniImpl*)this;
 		impl->sections[section]->items[item].used = false;
 	}
 
-	bool configIni::isUsed(const string &section, const string &item) const
+	bool Ini::isUsed(const string &section, const string &item) const
 	{
 		CAGE_ASSERT(itemExists(section, item), section, item);
 		iniImpl *impl = (iniImpl*)this;
 		return impl->sections[section]->items[item].used;
 	}
 
-	bool configIni::anyUnused(string &section, string &item) const
+	bool Ini::anyUnused(string &section, string &item) const
 	{
 		string value;
 		return anyUnused(section, item, value);
 	}
 
-	bool configIni::anyUnused(string &section, string &item, string &value) const
+	bool Ini::anyUnused(string &section, string &item, string &value) const
 	{
 		iniImpl *impl = (iniImpl*)this;
 		for (const auto &s : impl->sections)
@@ -226,23 +226,23 @@ namespace cage
 		return false;
 	}
 
-	void configIni::checkUnused() const
+	void Ini::checkUnused() const
 	{
 		string section, item, value;
 		if (anyUnused(section, item, value))
 		{
-			CAGE_LOG(severityEnum::Note, "exception", string() + "section: '" + section + "', item: '" + item + "', " + "value: '" + value + "'");
-			CAGE_THROW_ERROR(exception, "unused ini/config item");
+			CAGE_LOG(SeverityEnum::Note, "exception", string() + "section: '" + section + "', item: '" + item + "', " + "value: '" + value + "'");
+			CAGE_THROW_ERROR(Exception, "unused ini/config item");
 		}
 	}
 
-	void configIni::clear()
+	void Ini::clear()
 	{
 		iniImpl *impl = (iniImpl*)this;
 		impl->sections.clear();
 	}
 
-	void configIni::merge(const configIni *source)
+	void Ini::merge(const Ini *source)
 	{
 		for (string s : source->sections())
 		{
@@ -253,7 +253,7 @@ namespace cage
 
 	namespace
 	{
-		void checkCmdOption(configIni *ini, string &prev, const string &current)
+		void checkCmdOption(Ini *ini, string &prev, const string &current)
 		{
 			if (prev != "--")
 			{
@@ -266,7 +266,7 @@ namespace cage
 		}
 	}
 
-	void configIni::parseCmd(uint32 argc, const char *const args[])
+	void Ini::parseCmd(uint32 argc, const char *const args[])
 	{
 		clear();
 		try
@@ -280,9 +280,9 @@ namespace cage
 				if (!argumentsOnly)
 				{
 					if (s.isPattern("---", "", ""))
-						CAGE_THROW_ERROR(exception, "invalid option prefix (---)");
+						CAGE_THROW_ERROR(Exception, "invalid option prefix (---)");
 					if (s == "-")
-						CAGE_THROW_ERROR(exception, "missing option name");
+						CAGE_THROW_ERROR(Exception, "missing option name");
 					if (s == "--")
 					{
 						argumentsOnly = true;
@@ -311,16 +311,16 @@ namespace cage
 		}
 		catch (...)
 		{
-			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "failed to parse command line arguments:");
+			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "failed to parse command line arguments:");
 			for (uint32 i = 0; i < argc; i++)
-				CAGE_LOG_CONTINUE(severityEnum::Note, "exception", args[i]);
+				CAGE_LOG_CONTINUE(SeverityEnum::Note, "exception", args[i]);
 			throw;
 		}
 	}
 
-	void configIni::load(const string &filename)
+	void Ini::load(const string &filename)
 	{
-		holder<fileHandle> file = newFile(filename, fileMode(true, false));
+		Holder<File> file = newFile(filename, FileMode(true, false));
 		clear();
 		try
 		{
@@ -344,11 +344,11 @@ namespace cage
 					if (sec.empty())
 						sec = string(secIndex++);
 					if (sectionExists(sec))
-						CAGE_THROW_ERROR(exception, "duplicate section");
+						CAGE_THROW_ERROR(Exception, "duplicate section");
 					continue;
 				}
 				if (sec.empty())
-					CAGE_THROW_ERROR(exception, "item outside section");
+					CAGE_THROW_ERROR(Exception, "item outside section");
 				pos = line.find('=');
 				string itemName, itemValue;
 				if (pos == m)
@@ -361,23 +361,23 @@ namespace cage
 				if (itemName.empty())
 					itemName = string(itemIndex++);
 				if (itemExists(sec, itemName))
-					CAGE_THROW_ERROR(exception, "duplicate item name");
+					CAGE_THROW_ERROR(Exception, "duplicate item name");
 				set(sec, itemName, itemValue);
 			}
 		}
 		catch (...)
 		{
-			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "failed to load ini file: '" + filename + "'");
+			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "failed to load ini file: '" + filename + "'");
 			throw;
 		}
 	}
 
-	void configIni::save(const string &filename) const
+	void Ini::save(const string &filename) const
 	{
 		iniImpl *impl = (iniImpl*)this;
-		fileMode fm(false, true);
+		FileMode fm(false, true);
 		fm.textual = true;
-		holder<fileHandle> file = newFile(filename, fm);
+		Holder<File> file = newFile(filename, fm);
 		for (const auto &i : impl->sections)
 		{
 			file->writeLine(string() + "[" + i.first + "]");
@@ -395,11 +395,11 @@ namespace cage
 			return string(&c, 1);
 		}
 
-		string getCmd(const configIni *ini, string shortName, const string &longName)
+		string getCmd(const Ini *ini, string shortName, const string &longName)
 		{
 			uint32 cnt = ini->itemsCount(shortName) + ini->itemsCount(longName);
 			if (cnt > 1)
-				CAGE_THROW_ERROR(exception, "cmd option contains multiple values");
+				CAGE_THROW_ERROR(Exception, "cmd option contains multiple values");
 			if (cnt == 0)
 				return "";
 			string a = ini->get(shortName, "0");
@@ -407,10 +407,10 @@ namespace cage
 			bool ae = a.empty();
 			bool be = b.empty();
 			if (ae && be)
-				CAGE_THROW_ERROR(exception, "invalid item names for cmd options");
+				CAGE_THROW_ERROR(Exception, "invalid item names for cmd options");
 			CAGE_ASSERT(ae != be);
-			if (!ae) const_cast<configIni*>(ini)->markUsed(shortName, "0");
-			if (!be) const_cast<configIni*>(ini)->markUsed(longName, "0");
+			if (!ae) const_cast<Ini*>(ini)->markUsed(shortName, "0");
+			if (!be) const_cast<Ini*>(ini)->markUsed(longName, "0");
 			if (ae)
 				return b;
 			return a;
@@ -418,19 +418,19 @@ namespace cage
 	}
 
 #define GCHL_GENERATE(TYPE, NAME, TO) \
-	void configIni::CAGE_JOIN(set, NAME) (const string &section, const string &item, const TYPE &value) \
+	void Ini::CAGE_JOIN(set, NAME) (const string &section, const string &item, const TYPE &value) \
 	{ \
 		set(section, item, string(value)); \
 	}; \
-	TYPE configIni::CAGE_JOIN(get, NAME) (const string &section, const string &item, const TYPE &defaul) const \
+	TYPE Ini::CAGE_JOIN(get, NAME) (const string &section, const string &item, const TYPE &defaul) const \
 	{ \
 		string tmp = get(section, item); \
 		if (tmp.empty()) \
 			return defaul; \
-		const_cast<configIni*>(this)->markUsed(section, item); \
+		const_cast<Ini*>(this)->markUsed(section, item); \
 		return tmp TO; \
 	} \
-	TYPE configIni::CAGE_JOIN(cmd, NAME) (char shortName, const string &longName, const TYPE &defaul) const \
+	TYPE Ini::CAGE_JOIN(cmd, NAME) (char shortName, const string &longName, const TYPE &defaul) const \
 	{ \
 		string sn = toShortName(shortName); \
 		try \
@@ -440,25 +440,25 @@ namespace cage
 				return defaul; \
 			return tmp TO; \
 		} \
-		catch (const exception &) \
+		catch (const Exception &) \
 		{ \
-			CAGE_LOG(severityEnum::Note, "exception", string() + "cmd option: '" + longName + "' (" + sn + ")"); \
+			CAGE_LOG(SeverityEnum::Note, "exception", string() + "cmd option: '" + longName + "' (" + sn + ")"); \
 			throw; \
 		} \
 	} \
-	TYPE configIni::CAGE_JOIN(cmd, NAME) (char shortName, const string &longName) const \
+	TYPE Ini::CAGE_JOIN(cmd, NAME) (char shortName, const string &longName) const \
 	{ \
 		string sn = toShortName(shortName); \
 		try \
 		{ \
 			string tmp = getCmd(this, sn, longName); \
 			if (tmp.empty()) \
-				CAGE_THROW_ERROR(exception, "missing required cmd option"); \
+				CAGE_THROW_ERROR(Exception, "missing required cmd option"); \
 			return tmp TO; \
 		} \
-		catch (const exception &) \
+		catch (const Exception &) \
 		{ \
-			CAGE_LOG(severityEnum::Note, "exception", string() + "cmd option: '" + longName + "' (" + sn + ")"); \
+			CAGE_LOG(SeverityEnum::Note, "exception", string() + "cmd option: '" + longName + "' (" + sn + ")"); \
 			throw; \
 		} \
 	}
@@ -472,52 +472,52 @@ namespace cage
 	GCHL_GENERATE(string, String, );
 #undef GCHL_GENERATE
 
-	holder<pointerRange<string>> configIni::cmdArray(char shortName, const string &longName) const
+	Holder<PointerRange<string>> Ini::cmdArray(char shortName, const string &longName) const
 	{
 		const string sn = toShortName(shortName);
 		const auto s = values(sn);
 		const auto l = values(longName);
 		for (const string &item : items(sn))
-			const_cast<configIni*>(this)->markUsed(sn, item);
+			const_cast<Ini*>(this)->markUsed(sn, item);
 		for (const string &item : items(longName))
-			const_cast<configIni*>(this)->markUsed(longName, item);
-		pointerRangeHolder<string> tmp;
+			const_cast<Ini*>(this)->markUsed(longName, item);
+		PointerRangeHolder<string> tmp;
 		tmp.reserve(s.size() + l.size());
 		tmp.insert(tmp.end(), s.begin(), s.end());
 		tmp.insert(tmp.end(), l.begin(), l.end());
 		return tmp;
 	}
 
-	holder<configIni> newConfigIni()
+	Holder<Ini> newConfigIni()
 	{
 		return newConfigIni(detail::systemArena());
 	}
 
-	holder<configIni> newConfigIni(memoryArena arena)
+	Holder<Ini> newConfigIni(MemoryArena arena)
 	{
-		return detail::systemArena().createImpl<configIni, iniImpl>(arena);
+		return detail::systemArena().createImpl<Ini, iniImpl>(arena);
 	}
 
-	holder<configIni> newConfigIni(const string &filename)
+	Holder<Ini> newConfigIni(const string &filename)
 	{
 		return newConfigIni(detail::systemArena(), filename);
 	}
 
-	holder<configIni> newConfigIni(memoryArena arena, const string &filename)
+	Holder<Ini> newConfigIni(MemoryArena arena, const string &filename)
 	{
-		holder<configIni> ini = newConfigIni(arena);
+		Holder<Ini> ini = newConfigIni(arena);
 		ini->load(filename);
 		return ini;
 	}
 
-	holder<configIni> newConfigIni(uint32 argc, const char *const args[])
+	Holder<Ini> newConfigIni(uint32 argc, const char *const args[])
 	{
 		return newConfigIni(detail::systemArena(), argc, args);
 	}
 
-	holder<configIni> newConfigIni(memoryArena arena, uint32 argc, const char *const args[])
+	Holder<Ini> newConfigIni(MemoryArena arena, uint32 argc, const char *const args[])
 	{
-		holder<configIni> ini = newConfigIni(arena);
+		Holder<Ini> ini = newConfigIni(arena);
 		ini->parseCmd(argc, args);
 		return ini;
 	}

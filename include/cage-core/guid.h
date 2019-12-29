@@ -6,13 +6,13 @@ namespace cage
 	namespace privat
 	{
 		CAGE_API void generateRandomData(uint8 *target, uint32 size);
-		CAGE_API string identifierToString(const uint8 *data, uint32 size);
+		CAGE_API string guidToString(const uint8 *data, uint32 size);
 	}
 
 	template<uint32 N>
-	struct identifier
+	struct Guid
 	{
-		explicit identifier(bool randomize = false)
+		explicit Guid(bool randomize = false)
 		{
 			if (randomize)
 				privat::generateRandomData(data, N);
@@ -22,13 +22,13 @@ namespace cage
 
 		uint8 data[N];
 
-#define GCHL_GENERATE(OPERATOR) bool operator OPERATOR (const identifier &other) const { return detail::memcmp(data, other.data, N) OPERATOR 0; };
+#define GCHL_GENERATE(OPERATOR) bool operator OPERATOR (const Guid &other) const { return detail::memcmp(data, other.data, N) OPERATOR 0; };
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, == , != , <= , >= , <, >));
 #undef GCHL_GENERATE
 
 		operator string() const
 		{
-			return privat::identifierToString(data, N);
+			return privat::guidToString(data, N);
 		}
 	};
 }

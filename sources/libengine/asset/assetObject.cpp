@@ -13,7 +13,7 @@ namespace cage
 {
 	namespace
 	{
-		void processLoad(const assetContext *context, void *schemePointer)
+		void processLoad(const AssetContext *context, void *schemePointer)
 		{
 			if (!context->assetHolder)
 			{
@@ -23,7 +23,7 @@ namespace cage
 			renderObject *obj = static_cast<renderObject*>(context->assetHolder.get());
 			context->returnData = obj;
 
-			deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
+			Deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
 			renderObjectHeader h;
 			des >> h;
 			obj->color = h.color;
@@ -43,9 +43,9 @@ namespace cage
 		}
 	}
 
-	assetScheme genAssetSchemeRenderObject(uint32 threadIndex)
+	AssetScheme genAssetSchemeRenderObject(uint32 threadIndex)
 	{
-		assetScheme s;
+		AssetScheme s;
 		s.threadIndex = threadIndex;
 		s.load.bind<&processLoad>();
 		return s;

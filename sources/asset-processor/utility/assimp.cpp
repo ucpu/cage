@@ -117,7 +117,7 @@ namespace
 				if (names.count(n->mName))
 				{ // make the name unique
 					n->mName = string(stringizer() + n->mName.C_Str() + "_" + n).c_str();
-					CAGE_LOG_DEBUG(severityEnum::Warning, logComponentName, stringizer() + "renamed a node: '" + n->mName.C_Str() + "'");
+					CAGE_LOG_DEBUG(SeverityEnum::Warning, logComponentName, stringizer() + "renamed a node: '" + n->mName.C_Str() + "'");
 				}
 				names[n->mName] = n;
 			}
@@ -145,7 +145,7 @@ namespace
 	class cageIoStream : public Assimp::IOStream
 	{
 	public:
-		cageIoStream(cage::holder<cage::fileHandle> r) : r(templates::move(r))
+		cageIoStream(cage::Holder<cage::File> r) : r(templates::move(r))
 		{}
 
 		virtual ~cageIoStream()
@@ -166,7 +166,7 @@ namespace
 
 		virtual size_t Write(const void* pvBuffer, size_t pSize, size_t pCount)
 		{
-			CAGE_THROW_ERROR(exception, "cageIOStrea::Write is not meant for use");
+			CAGE_THROW_ERROR(Exception, "cageIOStrea::Write is not meant for use");
 		}
 
 		virtual aiReturn Seek(size_t pOffset, aiOrigin pOrigin)
@@ -176,7 +176,7 @@ namespace
 			case aiOrigin_SET: r->seek(pOffset); break;
 			case aiOrigin_CUR: r->seek(r->tell() + pOffset); break;
 			case aiOrigin_END: r->seek(r->size() + pOffset); break;
-			default: CAGE_THROW_CRITICAL(exception, "cageIOStream::Seek: unknown pOrigin");
+			default: CAGE_THROW_CRITICAL(Exception, "cageIOStream::Seek: unknown pOrigin");
 			}
 			return aiReturn_SUCCESS;
 		}
@@ -193,11 +193,11 @@ namespace
 
 		virtual void Flush()
 		{
-			CAGE_THROW_ERROR(exception, "cageIOStream::Flush is not meant for use");
+			CAGE_THROW_ERROR(Exception, "cageIOStream::Flush is not meant for use");
 		}
 
 	private:
-		cage::holder<cage::fileHandle> r;
+		cage::Holder<cage::File> r;
 	};
 
 	class cageIoSystem : public Assimp::IOSystem
@@ -211,7 +211,7 @@ namespace
 
 		virtual bool Exists(const char *pFile) const
 		{
-			return (f->type(pFile) & pathTypeFlags::File) == pathTypeFlags::File;
+			return (f->type(pFile) & PathTypeFlags::File) == PathTypeFlags::File;
 		}
 
 		virtual char getOsSeparator() const
@@ -222,9 +222,9 @@ namespace
 		virtual Assimp::IOStream *Open(const char *pFile, const char *pMode = "rb")
 		{
 			if (::cage::string(pMode) != "rb")
-				CAGE_THROW_ERROR(exception, "cageIoSystem::Open: only support rb mode");
+				CAGE_THROW_ERROR(Exception, "cageIoSystem::Open: only support rb mode");
 			writeLine(cage::string("use = ") + pathJoin(pathExtractPath(inputFile), pFile));
-			return new cageIoStream(f->openFile(pFile, fileMode(true, false)));
+			return new cageIoStream(f->openFile(pFile, FileMode(true, false)));
 		}
 
 		virtual void Close(Assimp::IOStream *pFile)
@@ -234,19 +234,19 @@ namespace
 
 		virtual bool ComparePaths(const char* one, const char* second) const
 		{
-			CAGE_THROW_ERROR(exception, "cageIOsystem::ComparePaths is not meant for use");
+			CAGE_THROW_ERROR(Exception, "cageIOsystem::ComparePaths is not meant for use");
 		}
 
 	private:
 
-		cage::holder<filesystem> f;
+		cage::Holder<Filesystem> f;
 	};
 
 	class cageLogStream : public Assimp::LogStream
 	{
 	public:
-		cage::severityEnum severity;
-		cageLogStream(cage::severityEnum severity) : severity(severity)
+		cage::SeverityEnum severity;
+		cageLogStream(cage::SeverityEnum severity) : severity(severity)
 		{}
 		virtual void write(const char* message)
 		{
@@ -282,7 +282,7 @@ namespace
 			aiProcess_OptimizeGraph |
 			0;
 
-		assimpContextImpl(uint32 addFlags, uint32 removeFlags) : logDebug(severityEnum::Note), logInfo(severityEnum::Info), logWarn(severityEnum::Warning), logError(severityEnum::Error)
+		assimpContextImpl(uint32 addFlags, uint32 removeFlags) : logDebug(SeverityEnum::Note), logInfo(SeverityEnum::Info), logWarn(SeverityEnum::Warning), logError(SeverityEnum::Error)
 		{
 #ifdef CAGE_DEBUG
 			Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
@@ -304,13 +304,13 @@ namespace
 					flags |= assimpBakeLoadFlags;
 				flags |= addFlags;
 				flags &= ~removeFlags;
-				CAGE_LOG(severityEnum::Info, logComponentName, cage::stringizer() + "assimp loading flags: " + flags);
+				CAGE_LOG(SeverityEnum::Info, logComponentName, cage::stringizer() + "assimp loading flags: " + flags);
 
 				imp.SetIOHandler(&this->ioSystem);
 				if (!imp.ReadFile(pathExtractFilename(inputFile).c_str(), flags))
 				{
-					CAGE_LOG(severityEnum::Note, "exception", cage::string(imp.GetErrorString()));
-					CAGE_THROW_ERROR(exception, "assimp loading failed");
+					CAGE_LOG(SeverityEnum::Note, "exception", cage::string(imp.GetErrorString()));
+					CAGE_THROW_ERROR(Exception, "assimp loading failed");
 				}
 				imp.SetIOHandler(nullptr);
 			}
@@ -323,13 +323,13 @@ namespace
 			const aiScene *scene = imp.GetScene();
 
 			if (!scene)
-				CAGE_THROW_ERROR(exception, "scene is null");
+				CAGE_THROW_ERROR(Exception, "scene is null");
 
 			if ((scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) == AI_SCENE_FLAGS_INCOMPLETE)
-				CAGE_THROW_ERROR(exception, "the scene is incomplete");
+				CAGE_THROW_ERROR(Exception, "the scene is incomplete");
 
 			// print meshes
-			CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "found " + scene->mNumMeshes + " meshes");
+			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "found " + scene->mNumMeshes + " meshes");
 			for (uint32 i = 0; i < scene->mNumMeshes; i++)
 			{
 				const aiMesh *am = scene->mMeshes[i];
@@ -357,15 +357,15 @@ namespace
 					contains += "tangents ";
 				if (am->HasVertexColors(0))
 					contains += "colors ";
-				CAGE_LOG_CONTINUE(severityEnum::Note, logComponentName, stringizer() + "index: " + i + ", object: '" + objname + "', material: '" + matname + "', contains: " + contains);
+				CAGE_LOG_CONTINUE(SeverityEnum::Note, logComponentName, stringizer() + "index: " + i + ", object: '" + objname + "', material: '" + matname + "', contains: " + contains);
 			}
 
 			// print animations
-			CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "found " + scene->mNumAnimations + " animations");
+			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "found " + scene->mNumAnimations + " animations");
 			for (uint32 i = 0; i < scene->mNumAnimations; i++)
 			{
 				const aiAnimation *ani = scene->mAnimations[i];
-				CAGE_LOG_CONTINUE(severityEnum::Info, logComponentName, stringizer() + "index: " + i + ", animation: '" + ani->mName.data + "', channels: " + ani->mNumChannels);
+				CAGE_LOG_CONTINUE(SeverityEnum::Info, logComponentName, stringizer() + "index: " + i + ", animation: '" + ani->mName.data + "', channels: " + ani->mNumChannels);
 			}
 		};
 
@@ -478,7 +478,7 @@ uint32 assimpContextClass::selectMesh() const
 	const aiScene *scene = getScene();
 	if (scene->mNumMeshes == 1 && inputSpec.empty())
 	{
-		CAGE_LOG(severityEnum::Note, "selectMesh", "using the first mesh, because it is the only mesh available");
+		CAGE_LOG(SeverityEnum::Note, "selectMesh", "using the first mesh, because it is the only mesh available");
 		return 0;
 	}
 	if (inputSpec.isInteger(false))
@@ -486,11 +486,11 @@ uint32 assimpContextClass::selectMesh() const
 		uint32 n = inputSpec.toUint32();
 		if (n < scene->mNumMeshes)
 		{
-			CAGE_LOG(severityEnum::Note, "selectMesh", stringizer() + "using mesh index " + n + ", because the input specifier is numeric");
+			CAGE_LOG(SeverityEnum::Note, "selectMesh", stringizer() + "using mesh index " + n + ", because the input specifier is numeric");
 			return n;
 		}
 		else
-			CAGE_THROW_ERROR(exception, "the input specifier is numeric, but the index is out of range");
+			CAGE_THROW_ERROR(Exception, "the input specifier is numeric, but the index is out of range");
 	}
 	std::set<uint32> candidates;
 	for (uint32 meshIndex = 0; meshIndex < scene->mNumMeshes; meshIndex++)
@@ -503,38 +503,38 @@ uint32 assimpContextClass::selectMesh() const
 		if (cage::string(am->mName.C_Str()) == inputSpec)
 		{
 			candidates.insert(meshIndex);
-			CAGE_LOG(severityEnum::Note, "selectMesh", stringizer() + "considering mesh index " + meshIndex + ", because the mesh name is matching");
+			CAGE_LOG(SeverityEnum::Note, "selectMesh", stringizer() + "considering mesh index " + meshIndex + ", because the mesh name is matching");
 		}
 		if (cage::string(aiMatName.C_Str()) == inputSpec)
 		{
 			candidates.insert(meshIndex);
-			CAGE_LOG(severityEnum::Note, "selectMesh", stringizer() + "considering mesh index " + meshIndex + ", because the material name matches");
+			CAGE_LOG(SeverityEnum::Note, "selectMesh", stringizer() + "considering mesh index " + meshIndex + ", because the material name matches");
 		}
 		string comb = cage::string(am->mName.C_Str()) + "_" + cage::string(aiMatName.C_Str());
 		if (comb == inputSpec)
 		{
 			candidates.insert(meshIndex);
-			CAGE_LOG(severityEnum::Note, "selectMesh", stringizer() + "considering mesh index " + meshIndex + ", because the combined name matches");
+			CAGE_LOG(SeverityEnum::Note, "selectMesh", stringizer() + "considering mesh index " + meshIndex + ", because the combined name matches");
 		}
 	}
 	switch (candidates.size())
 	{
 	case 0:
-		CAGE_THROW_ERROR(exception, "file does not contain requested mesh");
+		CAGE_THROW_ERROR(Exception, "file does not contain requested mesh");
 	case 1:
-		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "using mesh at index " + *candidates.begin());
+		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "using mesh at index " + *candidates.begin());
 		return *candidates.begin();
 	default:
-		CAGE_THROW_ERROR(exception, "requested name is not unique");
+		CAGE_THROW_ERROR(Exception, "requested name is not unique");
 	}
 }
 
-holder<assimpSkeletonClass> assimpContextClass::skeleton() const
+Holder<assimpSkeletonClass> assimpContextClass::skeleton() const
 {
 	return detail::systemArena().createImpl<assimpSkeletonClass, assimpSkeletonImpl>(getScene());
 }
 
-holder<assimpContextClass> newAssimpContext(uint32 addFlags, uint32 removeFlags)
+Holder<assimpContextClass> newAssimpContext(uint32 addFlags, uint32 removeFlags)
 {
 	return detail::systemArena().createImpl<assimpContextClass, assimpContextImpl>(addFlags, removeFlags);
 }
@@ -543,7 +543,7 @@ void analyzeAssimp()
 {
 	try
 	{
-		holder<assimpContextClass> context = newAssimpContext(0, 0);
+		Holder<assimpContextClass> context = newAssimpContext(0, 0);
 		const aiScene *scene = context->getScene();
 		writeLine("cage-begin");
 		try
@@ -646,7 +646,7 @@ mat3 axesMatrix()
 	if (axes.empty() || axes == "+x+y+z")
 		return mat3();
 	if (axes.length() != 6)
-		CAGE_THROW_ERROR(exception, "wrong axes definition: length (must be in format +x+y+z)");
+		CAGE_THROW_ERROR(Exception, "wrong axes definition: length (must be in format +x+y+z)");
 	mat3 result(0, 0, 0, 0, 00, 0, 0, 0, 0);
 	int sign = 0;
 	uint32 axesUsedCounts[3] = { 0, 0, 0 };
@@ -656,7 +656,7 @@ mat3 axesMatrix()
 		if (i % 2 == 0)
 		{ // signs
 			if (c != '+' && c != '-')
-				CAGE_THROW_ERROR(exception, "wrong axes definition: signs (must be in format +x+y+z)");
+				CAGE_THROW_ERROR(Exception, "wrong axes definition: signs (must be in format +x+y+z)");
 			if (c == '+')
 				sign = 1;
 			else
@@ -681,14 +681,14 @@ mat3 axesMatrix()
 				in = 2;
 				break;
 			default:
-				CAGE_THROW_ERROR(exception, "wrong axes definition: invalid axis (must be in format +x+y+z)");
+				CAGE_THROW_ERROR(Exception, "wrong axes definition: invalid axis (must be in format +x+y+z)");
 			}
 			result[in * 3 + out] = real(sign);
 		}
 	}
 	if (axesUsedCounts[0] != 1 || axesUsedCounts[1] != 1 || axesUsedCounts[2] != 1)
-		CAGE_THROW_ERROR(exception, "wrong axes definition: axes counts (must be in format +x+y+z)");
-	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "using axes conversion matrix: " + result);
+		CAGE_THROW_ERROR(Exception, "wrong axes definition: axes counts (must be in format +x+y+z)");
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "using axes conversion matrix: " + result);
 	return result;
 }
 

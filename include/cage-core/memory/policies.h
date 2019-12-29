@@ -36,13 +36,13 @@ namespace cage
 		void checkFront(void *ptr)
 		{
 			if (*(uint32*)ptr != PatternFront)
-				CAGE_THROW_CRITICAL(exception, "memory corruption detected");
+				CAGE_THROW_CRITICAL(Exception, "memory corruption detected");
 		}
 
 		void checkBack(void *ptr)
 		{
 			if (*(uint32*)ptr != PatternBack)
-				CAGE_THROW_CRITICAL(exception, "memory corruption detected");
+				CAGE_THROW_CRITICAL(Exception, "memory corruption detected");
 		}
 
 	private:
@@ -103,7 +103,7 @@ namespace cage
 		void check(void *ptr)
 		{
 			if (count == 0)
-				CAGE_THROW_CRITICAL(exception, "double deallocation detected");
+				CAGE_THROW_CRITICAL(Exception, "double deallocation detected");
 			count--;
 		}
 
@@ -141,7 +141,7 @@ namespace cage
 		void unlock();
 
 	private:
-		holder<void> mutex;
+		Holder<void> mutex;
 	};
 
 #ifdef CAGE_DEBUG

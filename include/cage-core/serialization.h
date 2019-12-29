@@ -3,47 +3,47 @@
 
 namespace cage
 {
-	struct CAGE_API serializer
+	struct CAGE_API Serializer
 	{
-		explicit serializer(void *data, uintPtr size);
-		explicit serializer(memoryBuffer &buffer, uintPtr size = m);
+		explicit Serializer(void *data, uintPtr size);
+		explicit Serializer(MemoryBuffer &buffer, uintPtr size = m);
 		
-		serializer(serializer &&) = default;
-		serializer(const serializer &) = delete;
-		serializer &operator = (serializer &&) = default;
-		serializer &operator = (const serializer &) = delete;
+		Serializer(Serializer &&) = default;
+		Serializer(const Serializer &) = delete;
+		Serializer &operator = (Serializer &&) = default;
+		Serializer &operator = (const Serializer &) = delete;
 
 		uintPtr available() const; // number of bytes still available in the buffer (valid only if the maximum size was given in the constructor)
-		serializer placeholder(uintPtr s);
+		Serializer placeholder(uintPtr s);
 		void write(const void *d, uintPtr s);
 		void *advance(uintPtr s); // returns the original position
 
 	private:
-		explicit serializer(memoryBuffer *buffer, void *data, uintPtr offset, uintPtr size);
+		explicit Serializer(MemoryBuffer *buffer, void *data, uintPtr offset, uintPtr size);
 
-		memoryBuffer *buffer;
+		MemoryBuffer *buffer;
 		void *data;
 		uintPtr offset; // current position in the buffer
 		uintPtr size; // max size of the buffer
 	};
 
-	struct CAGE_API deserializer
+	struct CAGE_API Deserializer
 	{
-		explicit deserializer(const void *data, uintPtr size);
-		explicit deserializer(const memoryBuffer &buffer);
+		explicit Deserializer(const void *data, uintPtr size);
+		explicit Deserializer(const MemoryBuffer &buffer);
 
-		deserializer(deserializer &&) = default;
-		deserializer(const deserializer &) = delete;
-		deserializer &operator = (deserializer &&) = default;
-		deserializer &operator = (const deserializer &) = delete;
+		Deserializer(Deserializer &&) = default;
+		Deserializer(const Deserializer &) = delete;
+		Deserializer &operator = (Deserializer &&) = default;
+		Deserializer &operator = (const Deserializer &) = delete;
 
 		uintPtr available() const; // number of bytes still available in the buffer
-		deserializer placeholder(uintPtr s);
+		Deserializer placeholder(uintPtr s);
 		void read(void *d, uintPtr s);
 		const void *advance(uintPtr s); // returns the original position
 
 	private:
-		explicit deserializer(const void *data, uintPtr offset, uintPtr size);
+		explicit Deserializer(const void *data, uintPtr offset, uintPtr size);
 
 		const void *data;
 		uintPtr offset; // current position in the buffer
@@ -53,14 +53,14 @@ namespace cage
 	// general serialization
 
 	template<class T>
-	serializer &operator << (serializer &s, const T &v)
+	Serializer &operator << (Serializer &s, const T &v)
 	{
 		s.write(&v, sizeof(v));
 		return s;
 	}
 
 	template<class T>
-	deserializer &operator >> (deserializer &s, T &v)
+	Deserializer &operator >> (Deserializer &s, T &v)
 	{
 		s.read(&v, sizeof(v));
 		return s;
@@ -69,36 +69,36 @@ namespace cage
 	// specialization for strings
 
 	template<uint32 N>
-	serializer &operator << (serializer &s, const detail::stringBase<N> &v)
+	Serializer &operator << (Serializer &s, const detail::StringBase<N> &v)
 	{
-		serializer ss = s.placeholder(sizeof(v.length()) + v.length()); // write all or nothing
+		Serializer ss = s.placeholder(sizeof(v.length()) + v.length()); // write all or nothing
 		ss << v.length();
 		ss.write(v.c_str(), v.length());
 		return s;
 	}
 
 	template<uint32 N>
-	deserializer &operator >> (deserializer &s, detail::stringBase<N> &v)
+	Deserializer &operator >> (Deserializer &s, detail::StringBase<N> &v)
 	{
 		decltype(v.length()) size;
 		s >> size;
-		v = detail::stringBase<N>((const char*)s.advance(size), size);
+		v = detail::StringBase<N>((const char*)s.advance(size), size);
 		return s;
 	}
 
 	// disable serialization of raw pointers and holders
 
 	template<class T>
-	serializer &operator << (serializer &s, const T *v) = delete;
+	Serializer &operator << (Serializer &s, const T *v) = delete;
 
 	template<class T>
-	serializer &operator << (serializer &s, const holder<T> &v) = delete;
+	Serializer &operator << (Serializer &s, const Holder<T> &v) = delete;
 
 	template<class T>
-	deserializer &operator >> (deserializer &s, T *v) = delete;
+	Deserializer &operator >> (Deserializer &s, T *v) = delete;
 
 	template<class T>
-	deserializer &operator >> (deserializer &s, holder<T> &v) = delete;
+	Deserializer &operator >> (Deserializer &s, Holder<T> &v) = delete;
 }
 
 #endif

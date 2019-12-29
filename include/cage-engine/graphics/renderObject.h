@@ -1,9 +1,9 @@
 namespace cage
 {
-	class CAGE_API renderObject : private immovable
+	class CAGE_API renderObject : private Immovable
 	{
 #ifdef CAGE_DEBUG
-		detail::stringBase<64> debugName;
+		detail::StringBase<64> debugName;
 #endif // CAGE_DEBUG
 
 	public:
@@ -16,7 +16,7 @@ namespace cage
 		void setLods(uint32 lodsCount, uint32 meshesCount, const float *thresholds, const uint32 *meshIndices, const uint32 *meshNames);
 		uint32 lodsCount() const;
 		uint32 lodSelect(float threshold) const;
-		pointerRange<const uint32> meshes(uint32 lod) const;
+		PointerRange<const uint32> meshes(uint32 lod) const;
 
 		// default values for rendering
 
@@ -31,8 +31,8 @@ namespace cage
 		renderObject();
 	};
 
-	CAGE_API holder<renderObject> newRenderObject();
+	CAGE_API Holder<renderObject> newRenderObject();
 
-	CAGE_API assetScheme genAssetSchemeRenderObject(uint32 threadIndex);
+	CAGE_API AssetScheme genAssetSchemeRenderObject(uint32 threadIndex);
 	static const uint32 assetSchemeIndexRenderObject = 15;
 }

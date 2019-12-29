@@ -101,7 +101,7 @@ namespace cage
 		return numeric_cast<uint32>(impl->rects.size());
 	}
 
-	holder<binPackingClass> newBinPacking()
+	Holder<binPackingClass> newBinPacking()
 	{
 		return detail::systemArena().createImpl<binPackingClass, binPackingImpl>();
 	}

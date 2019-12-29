@@ -323,7 +323,7 @@ CAGE_TEST(aabb::Universe().diagonal() == real::Infinity());
 
 		{
 			CAGE_TESTCASE("stringize");
-			string s = detail::stringizerBase<5432>() + makeSegment(vec3(1, 2, 3), vec3(4, 5, 6)) + ", " + triangle() + ", " + plane() + ", " + sphere() + ", " + aabb();
+			string s = detail::StringizerBase<5432>() + makeSegment(vec3(1, 2, 3), vec3(4, 5, 6)) + ", " + triangle() + ", " + plane() + ", " + sphere() + ", " + aabb();
 		}
 	}
 }

@@ -101,22 +101,22 @@ namespace cage
 #endif
 		}
 
-		overrideBreakpoint::overrideBreakpoint(bool enable) : original(isLocal().breakpointEnabled)
+		OverrideBreakpoint::OverrideBreakpoint(bool enable) : original(isLocal().breakpointEnabled)
 		{
 			isLocal().breakpointEnabled = enable;
 		}
 
-		overrideBreakpoint::~overrideBreakpoint()
+		OverrideBreakpoint::~OverrideBreakpoint()
 		{
 			isLocal().breakpointEnabled = original;
 		}
 
-		overrideAssert::overrideAssert(bool deadly) : original(isLocal().assertDeadly)
+		OverrideAssert::OverrideAssert(bool deadly) : original(isLocal().assertDeadly)
 		{
 			isLocal().assertDeadly = deadly;
 		}
 
-		overrideAssert::~overrideAssert()
+		OverrideAssert::~OverrideAssert()
 		{
 			isLocal().assertDeadly = original;
 		}
@@ -139,13 +139,13 @@ namespace cage
 			void assertOutputLine(const char *msg, bool continuous = true)
 			{
 				if (continuous)
-					CAGE_LOG_CONTINUE(severityEnum::Critical, "assert", msg);
+					CAGE_LOG_CONTINUE(SeverityEnum::Critical, "assert", msg);
 				else
-					CAGE_LOG(severityEnum::Critical, "assert", msg);
+					CAGE_LOG(SeverityEnum::Critical, "assert", msg);
 			}
 		}
 
-		assertPriv::assertPriv(bool exp, const char *expt, const char *file, const char *line, const char *function) : valid(exp)
+		AssertPriv::AssertPriv(bool exp, const char *expt, const char *file, const char *line, const char *function) : valid(exp)
 		{
 			if (!valid)
 			{
@@ -165,7 +165,7 @@ namespace cage
 			}
 		}
 
-		void assertPriv::operator () () const
+		void AssertPriv::operator () () const
 		{
 			if (valid)
 				return;
@@ -173,11 +173,11 @@ namespace cage
 			if (isLocal().assertDeadly && isGlobalAssertDeadly())
 				detail::terminate();
 			else
-				CAGE_THROW_CRITICAL(exception, "assert failure");
+				CAGE_THROW_CRITICAL(Exception, "assert failure");
 		}
 
 #define GCHL_GENERATE(TYPE) \
-		assertPriv &assertPriv::variable(const char *name, TYPE var)\
+		AssertPriv &AssertPriv::variable(const char *name, TYPE var)\
 		{\
 			if (!valid)\
 			{\
@@ -191,7 +191,7 @@ namespace cage
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(TYPE) \
-		assertPriv &assertPriv::variable(const char *name, TYPE var)\
+		AssertPriv &AssertPriv::variable(const char *name, TYPE var)\
 		{\
 			if (!valid)\
 			{\
@@ -202,21 +202,21 @@ namespace cage
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, real, rads, degs, const vec2&, const vec3&, const vec4&, const quat&, const mat3&, const mat4&));
 #undef GCHL_GENERATE
 
-		assertPriv &assertPriv::variable(const char *name, const string &var)
+		AssertPriv &AssertPriv::variable(const char *name, const string &var)
 		{
 			if (!valid)
 				format(name, var.c_str());
 			return *this;
 		}
 
-		assertPriv &assertPriv::variable(const char *name, const char *var)
+		AssertPriv &AssertPriv::variable(const char *name, const char *var)
 		{
 			if (!valid)
 				format(name, var);
 			return *this;
 		}
 
-		void assertPriv::format(const char *name, const char *var) const
+		void AssertPriv::format(const char *name, const char *var) const
 		{
 			stringizer s;
 			s + " > " + name + ": " + var;

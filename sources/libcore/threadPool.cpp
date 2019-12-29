@@ -10,14 +10,14 @@ namespace cage
 {
 	namespace
 	{
-		class threadPoolImpl : public threadPool
+		class threadPoolImpl : public ThreadPool
 		{
 		public:
-			holder<syncBarrier> barrier1;
-			holder<syncBarrier> barrier2;
-			holder<syncMutex> mutex;
+			Holder<Barrier> barrier1;
+			Holder<Barrier> barrier2;
+			Holder<Mutex> mutex;
 			std::exception_ptr exptr;
-			std::vector<holder<threadHandle>> thrs;
+			std::vector<Holder<Thread>> thrs;
 			uint32 threadIndexInitializer, threadsCount;
 			bool ending;
 
@@ -28,13 +28,13 @@ namespace cage
 				mutex = newSyncMutex();
 				thrs.resize(threadsCount);
 				for (uint32 i = 0; i < threadsCount; i++)
-					thrs[i] = newThread(delegate<void()>().bind<threadPoolImpl, &threadPoolImpl::threadEntryLocal>(this), stringizer() + threadNames + i);
+					thrs[i] = newThread(Delegate<void()>().bind<threadPoolImpl, &threadPoolImpl::threadEntryLocal>(this), stringizer() + threadNames + i);
 			}
 
 			~threadPoolImpl()
 			{
 				ending = true;
-				{ scopeLock<syncBarrier> l(barrier1); }
+				{ ScopeLock<Barrier> l(barrier1); }
 				thrs.clear(); // all threads must be destroyed before any of the barriers are
 			}
 
@@ -42,12 +42,12 @@ namespace cage
 			{
 				uint32 thrIndex = m;
 				{
-					scopeLock<syncMutex> l(mutex);
+					ScopeLock<Mutex> l(mutex);
 					thrIndex = threadIndexInitializer++;
 				}
 				while (true)
 				{
-					{ scopeLock<syncBarrier> l(barrier1); }
+					{ ScopeLock<Barrier> l(barrier1); }
 					if (ending)
 						break;
 					try
@@ -56,13 +56,13 @@ namespace cage
 					}
 					catch (...)
 					{
-						scopeLock<syncMutex> l(mutex);
+						ScopeLock<Mutex> l(mutex);
 						if (exptr)
-							CAGE_LOG(severityEnum::Warning, "threadPool", "discarding an exception caught in a thread pool");
+							CAGE_LOG(SeverityEnum::Warning, "ThreadPool", "discarding an exception caught in a thread pool");
 						else
 							exptr = std::current_exception();
 					}
-					{ scopeLock<syncBarrier> l(barrier2); }
+					{ ScopeLock<Barrier> l(barrier2); }
 				}
 			}
 
@@ -74,23 +74,23 @@ namespace cage
 					return;
 				}
 
-				{ scopeLock<syncBarrier> l(barrier1); }
-				{ scopeLock<syncBarrier> l(barrier2); }
+				{ ScopeLock<Barrier> l(barrier1); }
+				{ ScopeLock<Barrier> l(barrier2); }
 				if (exptr)
 					std::rethrow_exception(exptr);
 			}
 		};
 	}
 
-	void threadPool::run()
+	void ThreadPool::run()
 	{
 		threadPoolImpl *impl = (threadPoolImpl*)this;
 		impl->run();
 	}
 
-	holder<threadPool> newThreadPool(const string &threadNames, uint32 threadsCount)
+	Holder<ThreadPool> newThreadPool(const string &threadNames, uint32 threadsCount)
 	{
-		return detail::systemArena().createImpl<threadPool, threadPoolImpl>(threadNames, threadsCount);
+		return detail::systemArena().createImpl<ThreadPool, threadPoolImpl>(threadNames, threadsCount);
 	}
 
 	void threadPoolTasksSplit(uint32 threadIndex, uint32 threadsCount, uint32 tasksCount, uint32 &begin, uint32 &end)

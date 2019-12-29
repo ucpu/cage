@@ -11,7 +11,7 @@ namespace cage
 		screenMode();
 	};
 
-	class CAGE_API screenDevice : private immovable
+	class CAGE_API screenDevice : private Immovable
 	{
 	public:
 		string id() const;
@@ -20,19 +20,19 @@ namespace cage
 		uint32 modesCount() const;
 		uint32 currentMode() const;
 		const screenMode &mode(uint32 index) const;
-		pointerRange<const screenMode> modes() const;
+		PointerRange<const screenMode> modes() const;
 	};
 
-	class CAGE_API screenList : private immovable
+	class CAGE_API screenList : private Immovable
 	{
 	public:
 		uint32 devicesCount() const;
 		uint32 defaultDevice() const;
 		const screenDevice *device(uint32 index) const;
-		holder<pointerRange<const screenDevice *>> devices() const;
+		Holder<PointerRange<const screenDevice *>> devices() const;
 	};
 
-	CAGE_API holder<screenList> newScreenList();
+	CAGE_API Holder<screenList> newScreenList();
 }
 
 #endif // guard_screenList_h_q56ew4rk87h64847

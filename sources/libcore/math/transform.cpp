@@ -7,7 +7,7 @@ namespace cage
 {
 	transform transform::parse(const string &str)
 	{
-		CAGE_THROW_CRITICAL(notImplemented, "transform::parse");
+		CAGE_THROW_CRITICAL(NotImplemented, "transform::parse");
 	}
 
 	transform operator * (const transform &l, const transform &r)

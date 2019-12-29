@@ -13,20 +13,20 @@ using namespace cage;
 
 namespace
 {
-	configUint32 confMessages("messages");
+	ConfigUint32 confMessages("messages");
 
 	class connImpl : public connClass
 	{
 	public:
-		holder<udpConnection> udp;
-		memoryBuffer b;
+		Holder<UdpConnection> udp;
+		MemoryBuffer b;
 		const uint64 timeStart;
 		uint64 timeStats;
 		uint64 sendSeqn, recvSeqn, recvCnt, recvBytes;
-		variableSmoothingBuffer<uint64, 100> smoothRtt;
-		variableSmoothingBuffer<uint64, 100> smoothThroughput;
+		VariableSmoothingBuffer<uint64, 100> smoothRtt;
+		VariableSmoothingBuffer<uint64, 100> smoothThroughput;
 
-		connImpl(holder<udpConnection> udp) : udp(templates::move(udp)), timeStart(getApplicationTime()), timeStats(timeStart + 1000000), sendSeqn(0), recvSeqn(0), recvCnt(0), recvBytes(0)
+		connImpl(Holder<UdpConnection> udp) : udp(templates::move(udp)), timeStart(getApplicationTime()), timeStats(timeStart + 1000000), sendSeqn(0), recvSeqn(0), recvCnt(0), recvBytes(0)
 		{}
 
 		~connImpl()
@@ -41,7 +41,7 @@ namespace
 			uint64 rtt = smoothRtt.smooth();
 			double lost = 1.0 - (double)recvCnt / (double)recvSeqn;
 			double overhead = 1.0 - (double)recvBytes / (double)udp->statistics().bytesReceivedTotal;
-			CAGE_LOG(severityEnum::Info, "conn", stringizer() + "received: " + (recvBytes / 1024) + " KB, messages: " + recvCnt + ", lost: " + lost + ", overhead: " + overhead + ", throughput total: " + (throughput1 / 1024) + " KB/s, smooth: " + (throughput2 / 1024) + " KB/s, rtt: " + (rtt / 1000) + " ms");
+			CAGE_LOG(SeverityEnum::Info, "conn", stringizer() + "received: " + (recvBytes / 1024) + " KB, messages: " + recvCnt + ", lost: " + lost + ", overhead: " + overhead + ", throughput total: " + (throughput1 / 1024) + " KB/s, smooth: " + (throughput2 / 1024) + " KB/s, rtt: " + (rtt / 1000) + " ms");
 		}
 
 		bool process()
@@ -61,9 +61,9 @@ namespace
 				{ // read
 					while (udp->available())
 					{
-						memoryBuffer b = udp->read();
+						MemoryBuffer b = udp->read();
 						recvBytes += b.size();
-						deserializer d(b);
+						Deserializer d(b);
 						uint64 r;
 						d >> r;
 						recvSeqn = max(r, recvSeqn);
@@ -75,7 +75,7 @@ namespace
 				for (uint32 j = 0; j < cnt; j++)
 				{ // send
 					b.resize(0);
-					serializer s(b);
+					Serializer s(b);
 					s << ++sendSeqn;
 					uint32 bytes = randomRange(10, 2000);
 					if (randomChance() < 0.01)
@@ -111,7 +111,7 @@ bool connClass::process()
 	return impl->process();
 }
 
-holder<connClass> newConn(holder<udpConnection> udp)
+Holder<connClass> newConn(Holder<UdpConnection> udp)
 {
 	return detail::systemArena().createImpl<connClass, connImpl>(templates::move(udp));
 }

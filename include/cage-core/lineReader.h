@@ -11,16 +11,16 @@ namespace cage
 		CAGE_API bool readLine(string &output, const char *&buffer, uintPtr &size, bool lfOnly);
 	}
 
-	class CAGE_API lineReader : private immovable
+	class CAGE_API LineReader : private Immovable
 	{
 	public:
 		bool readLine(string &line);
 		uintPtr left() const; // bytes
 	};
 
-	CAGE_API holder<lineReader> newLineReader(const char *buffer, uintPtr size); // the buffer must outlive the reader
-	CAGE_API holder<lineReader> newLineReader(const memoryBuffer &buffer); // the buffer must outlive the reader
-	CAGE_API holder<lineReader> newLineReader(memoryBuffer &&buffer); // the reader takes over the buffer
+	CAGE_API Holder<LineReader> newLineReader(const char *buffer, uintPtr size); // the buffer must outlive the reader
+	CAGE_API Holder<LineReader> newLineReader(const MemoryBuffer &buffer); // the buffer must outlive the reader
+	CAGE_API Holder<LineReader> newLineReader(MemoryBuffer &&buffer); // the reader takes over the buffer
 }
 
 #endif // guard_lineReader_h_09089ef7_374c_4571_85be_3e7de9acc3aa_

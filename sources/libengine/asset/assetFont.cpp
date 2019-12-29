@@ -13,7 +13,7 @@ namespace cage
 {
 	namespace
 	{
-		void processLoad(const assetContext *context, void *schemePointer)
+		void processLoad(const AssetContext *context, void *schemePointer)
 		{
 			fontFace *font = nullptr;
 			if (context->assetHolder)
@@ -28,10 +28,10 @@ namespace cage
 			}
 			context->returnData = font;
 
-			deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
+			Deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
 			fontFaceHeader data;
 			des >> data;
-			const void *image = des.advance(data.texSize);
+			const void *Image = des.advance(data.texSize);
 			const void *glyphs = des.advance(sizeof(fontFaceHeader::glyphData) * data.glyphCount);
 			const real *kerning = nullptr;
 			if ((data.flags & fontFlags::Kerning) == fontFlags::Kerning)
@@ -41,15 +41,15 @@ namespace cage
 			CAGE_ASSERT(des.available() == 0);
 
 			font->setLine(data.lineHeight, data.firstLineOffset);
-			font->setImage(data.texWidth, data.texHeight, data.texSize, image);
+			font->setImage(data.texWidth, data.texHeight, data.texSize, Image);
 			font->setGlyphs(data.glyphCount, glyphs, kerning);
 			font->setCharmap(data.charCount, charmapChars, charmapGlyphs);
 		}
 	}
 
-	assetScheme genAssetSchemeFontFace(uint32 threadIndex, windowHandle *memoryContext)
+	AssetScheme genAssetSchemeFontFace(uint32 threadIndex, windowHandle *memoryContext)
 	{
-		assetScheme s;
+		AssetScheme s;
 		s.threadIndex = threadIndex;
 		s.schemePointer = memoryContext;
 		s.load.bind<&processLoad>();

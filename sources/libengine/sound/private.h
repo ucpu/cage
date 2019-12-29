@@ -10,13 +10,13 @@ namespace cage
 	{
 		void checkSoundIoError(int code);
 		SoundIo *soundioFromContext(soundContext *context);
-		memoryArena linksArenaFromContext(soundContext *context);
+		MemoryArena linksArenaFromContext(soundContext *context);
 
 		struct busInterfaceStruct
 		{
-			const delegate<void(mixingBus*)> busDestroyedDelegate;
-			const delegate<void(const soundDataBufferStruct&)> busExecuteDelegate;
-			busInterfaceStruct(delegate<void(mixingBus*)> busDestroyedDelegate, delegate<void(const soundDataBufferStruct&)> busExecuteDelegate) :
+			const Delegate<void(mixingBus*)> busDestroyedDelegate;
+			const Delegate<void(const soundDataBufferStruct&)> busExecuteDelegate;
+			busInterfaceStruct(Delegate<void(mixingBus*)> busDestroyedDelegate, Delegate<void(const soundDataBufferStruct&)> busExecuteDelegate) :
 				busDestroyedDelegate(busDestroyedDelegate), busExecuteDelegate(busExecuteDelegate) {}
 		};
 

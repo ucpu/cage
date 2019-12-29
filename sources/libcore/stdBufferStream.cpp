@@ -5,26 +5,26 @@
 
 namespace cage
 {
-	bufferIStream::bufferIStream(const void *data, uintPtr size) : std::istream(this)
+	BufferIStream::BufferIStream(const void *data, uintPtr size) : std::istream(this)
 	{
 		setg((char*)data, (char*)data, (char*)data + size);
 		exceptions(std::istream::badbit | std::istream::failbit);
 	}
 
-	bufferIStream::bufferIStream(const memoryBuffer &buffer) : bufferIStream(buffer.data(), buffer.size())
+	BufferIStream::BufferIStream(const MemoryBuffer &buffer) : BufferIStream(buffer.data(), buffer.size())
 	{}
 
-	uintPtr bufferIStream::position() const
+	uintPtr BufferIStream::position() const
 	{
 		return gptr() - eback();
 	}
 
-	bufferOStream::bufferOStream(memoryBuffer &buffer) : std::ostream(this), buffer(buffer)
+	BufferOStream::BufferOStream(MemoryBuffer &buffer) : std::ostream(this), buffer(buffer)
 	{
 		exceptions(std::istream::badbit | std::istream::failbit);
 	}
 
-	std::streamsize bufferOStream::xsputn(const char* s, std::streamsize n)
+	std::streamsize BufferOStream::xsputn(const char* s, std::streamsize n)
 	{
 		uintPtr origSize = buffer.size();
 		buffer.resizeSmart(numeric_cast<uintPtr>(origSize + n));
@@ -32,7 +32,7 @@ namespace cage
 		return n;
 	};
 
-	bufferOStream::int_type bufferOStream::overflow(int_type ch)
+	BufferOStream::int_type BufferOStream::overflow(int_type ch)
 	{
 		char c = (char)ch;
 		return (int)xsputn(&c, 1);

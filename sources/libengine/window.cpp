@@ -24,18 +24,18 @@ namespace cage
 {
 	namespace
 	{
-		configBool confDebugContext("cage/graphics/debugContext",
+		ConfigBool confDebugContext("cage/graphics/debugContext",
 #ifdef CAGE_DEBUG
 			true
 #else
 			false
 #endif // CAGE_DEBUG
 			);
-		configBool confNoErrorContext("cage/graphics/noErrorContext", false);
+		ConfigBool confNoErrorContext("cage/graphics/noErrorContext", false);
 
 		void handleGlfwError(int, const char *message)
 		{
-			CAGE_LOG(severityEnum::Error, "glfw", message);
+			CAGE_LOG(SeverityEnum::Error, "glfw", message);
 		}
 
 		class cageGlfwInitializerClass
@@ -45,7 +45,7 @@ namespace cage
 			{
 				glfwSetErrorCallback(&handleGlfwError);
 				if (!glfwInit())
-					CAGE_THROW_CRITICAL(exception, "failed to initialize glfw");
+					CAGE_THROW_CRITICAL(Exception, "failed to initialize glfw");
 			}
 
 			~cageGlfwInitializerClass()
@@ -63,9 +63,9 @@ namespace cage
 
 	namespace
 	{
-		syncMutex *windowsMutex()
+		Mutex *windowsMutex()
 		{
-			static holder<syncMutex> *m = new holder<syncMutex>(newSyncMutex()); // intentional leak
+			static Holder<Mutex> *m = new Holder<Mutex>(newSyncMutex()); // intentional leak
 			return m->get();
 		}
 
@@ -155,7 +155,7 @@ namespace cage
 		public:
 			uint64 lastMouseButtonPressTimes[5]; // unused, left, right, unused, middle
 			windowHandle *shareContext;
-			holder<syncMutex> eventsMutex;
+			Holder<Mutex> eventsMutex;
 			std::vector<eventStruct> eventsQueueLocked;
 			std::vector<eventStruct> eventsQueueNoLock;
 			std::set<uint32> stateKeys, stateCodes;
@@ -166,8 +166,8 @@ namespace cage
 			bool focus;
 
 #ifdef GCHL_WINDOWS_THREAD
-			holder<threadHandle> windowThread;
-			holder<syncSemaphore> windowSemaphore;
+			Holder<Thread> windowThread;
+			Holder<Semaphore> windowSemaphore;
 			std::atomic<bool> stopping;
 			std::vector<ivec2> relativeMouseOffsets;
 			std::vector<ivec2> absoluteMouseSets;
@@ -188,12 +188,12 @@ namespace cage
 					try
 					{
 						{
-							scopeLock<syncMutex> l(windowsMutex());
+							ScopeLock<Mutex> l(windowsMutex());
 							glfwPollEvents();
 						}
 						
 						{
-							scopeLock<syncMutex> l(eventsMutex);
+							ScopeLock<Mutex> l(eventsMutex);
 							for (const auto &p : absoluteMouseSets)
 							{
 								eventStruct e;
@@ -207,7 +207,7 @@ namespace cage
 					}
 					catch (...)
 					{
-						CAGE_LOG(severityEnum::Warning, "window", "an exception occured in event processing");
+						CAGE_LOG(SeverityEnum::Warning, "window", "an exception occured in event processing");
 					}
 					threadSleep(2000);
 				}
@@ -219,17 +219,17 @@ namespace cage
 			{
 				cageGlfwInitializeFunc();
 
-				scopeLock<syncMutex> l(windowsMutex());
+				ScopeLock<Mutex> l(windowsMutex());
 
 #ifdef GCHL_WINDOWS_THREAD
 				stopping = false;
 				windowSemaphore = newSyncSemaphore(0, 1);
 				static uint32 threadIndex = 0;
-				windowThread = newThread(delegate<void()>().bind<windowImpl, &windowImpl::threadEntry>(this), stringizer() + "window " + (threadIndex++));
+				windowThread = newThread(Delegate<void()>().bind<windowImpl, &windowImpl::threadEntry>(this), stringizer() + "window " + (threadIndex++));
 				windowSemaphore->lock();
 				windowSemaphore.clear();
 				if (stopping)
-					CAGE_THROW_ERROR(exception, "failed to initialize window");
+					CAGE_THROW_ERROR(Exception, "failed to initialize window");
 #else
 				initializeWindow();
 #endif
@@ -237,7 +237,7 @@ namespace cage
 				// initialize opengl
 				makeCurrent();
 				if (!gladLoadGL())
-					CAGE_THROW_ERROR(exception, "gladLoadGl");
+					CAGE_THROW_ERROR(Exception, "gladLoadGl");
 				openglContextInitializeGeneral(this);
 			}
 
@@ -265,11 +265,11 @@ namespace cage
 				glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
 				glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, confDebugContext ? GLFW_TRUE : GLFW_FALSE);
 				if (confDebugContext)
-					CAGE_LOG(severityEnum::Info, "graphics", "creating DEBUG opengl context");
+					CAGE_LOG(SeverityEnum::Info, "graphics", "creating DEBUG opengl context");
 				bool noErr = confNoErrorContext && !confDebugContext;
 				glfwWindowHint(GLFW_CONTEXT_NO_ERROR, noErr ? GLFW_TRUE : GLFW_FALSE);
 				if (noErr)
-					CAGE_LOG(severityEnum::Info, "graphics", "creating NO ERROR opengl context");
+					CAGE_LOG(SeverityEnum::Info, "graphics", "creating NO ERROR opengl context");
 				glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
 				glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 				glfwWindowHint(GLFW_ALPHA_BITS, 0); // save some gpu memory
@@ -277,7 +277,7 @@ namespace cage
 				glfwWindowHint(GLFW_STENCIL_BITS, 0);
 				window = glfwCreateWindow(1, 1, "Cage Window", NULL, shareContext ? ((windowImpl*)shareContext)->window : NULL);
 				if (!window)
-					CAGE_THROW_ERROR(exception, "failed to create window");
+					CAGE_THROW_ERROR(Exception, "failed to create window");
 				glfwSetWindowUserPointer(window, this);
 				glfwSetWindowSizeLimits(window, 160, 120, GLFW_DONT_CARE, GLFW_DONT_CARE);
 				initializeEvents();
@@ -285,7 +285,7 @@ namespace cage
 
 			void finalizeWindow()
 			{
-				scopeLock<syncMutex> lock(windowsMutex());
+				ScopeLock<Mutex> lock(windowsMutex());
 				glfwDestroyWindow(window);
 				window = nullptr;
 			}
@@ -331,7 +331,7 @@ namespace cage
 			eventStruct e;
 			e.type = eventStruct::eventType::Close;
 			e.modifiers = getKeyModifiers(w);
-			scopeLock<syncMutex> l(impl->eventsMutex);
+			ScopeLock<Mutex> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
 
@@ -351,12 +351,12 @@ namespace cage
 				e.type = eventStruct::eventType::KeyRelease;
 				break;
 			default:
-				CAGE_THROW_CRITICAL(exception, "invalid key action");
+				CAGE_THROW_CRITICAL(Exception, "invalid key action");
 			}
 			e.modifiers = getKeyModifiers(mods);
 			e.key.key = key;
 			e.key.scancode = scancode;
-			scopeLock<syncMutex> l(impl->eventsMutex);
+			ScopeLock<Mutex> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
 
@@ -367,7 +367,7 @@ namespace cage
 			e.type = eventStruct::eventType::KeyChar;
 			e.modifiers = getKeyModifiers(w);
 			e.codepoint = codepoint;
-			scopeLock<syncMutex> l(impl->eventsMutex);
+			ScopeLock<Mutex> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
 
@@ -385,7 +385,7 @@ namespace cage
 				e.mouse.buttons |= mouseButtonsFlags::Right;
 			if (glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_MIDDLE))
 				e.mouse.buttons |= mouseButtonsFlags::Middle;
-			scopeLock<syncMutex> l(impl->eventsMutex);
+			ScopeLock<Mutex> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
 
@@ -402,7 +402,7 @@ namespace cage
 				e.type = eventStruct::eventType::MouseRelease;
 				break;
 			default:
-				CAGE_THROW_CRITICAL(exception, "invalid mouse action");
+				CAGE_THROW_CRITICAL(Exception, "invalid mouse action");
 			}
 			e.modifiers = getKeyModifiers(mods);
 			switch (button)
@@ -424,7 +424,7 @@ namespace cage
 			e.mouse.x = numeric_cast<sint32>(floor(xpos));
 			e.mouse.y = numeric_cast<sint32>(floor(ypos));
 			bool doubleClick = impl->determineMouseDoubleClick(e);
-			scopeLock<syncMutex> l(impl->eventsMutex);
+			ScopeLock<Mutex> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 			if (doubleClick)
 			{
@@ -444,7 +444,7 @@ namespace cage
 			e.mouse.x = numeric_cast<sint32>(floor(xpos));
 			e.mouse.y = numeric_cast<sint32>(floor(ypos));
 			e.mouse.wheel = numeric_cast<sint8>(yoffset);
-			scopeLock<syncMutex> l(impl->eventsMutex);
+			ScopeLock<Mutex> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
 
@@ -456,7 +456,7 @@ namespace cage
 			e.modifiers = getKeyModifiers(w);
 			e.point.x = width;
 			e.point.y = height;
-			scopeLock<syncMutex> l(impl->eventsMutex);
+			ScopeLock<Mutex> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
 
@@ -468,7 +468,7 @@ namespace cage
 			e.modifiers = getKeyModifiers(w);
 			e.point.x = xpos;
 			e.point.y = ypos;
-			scopeLock<syncMutex> l(impl->eventsMutex);
+			ScopeLock<Mutex> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
 
@@ -481,7 +481,7 @@ namespace cage
 			else
 				e.type = eventStruct::eventType::Show;
 			e.modifiers = getKeyModifiers(w);
-			scopeLock<syncMutex> l(impl->eventsMutex);
+			ScopeLock<Mutex> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
 
@@ -491,7 +491,7 @@ namespace cage
 			eventStruct e;
 			e.type = eventStruct::eventType::Show; // window is visible when both maximized or restored
 			e.modifiers = getKeyModifiers(w);
-			scopeLock<syncMutex> l(impl->eventsMutex);
+			ScopeLock<Mutex> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
 
@@ -504,7 +504,7 @@ namespace cage
 			else
 				e.type = eventStruct::eventType::FocusLose;
 			e.modifiers = getKeyModifiers(w);
-			scopeLock<syncMutex> l(impl->eventsMutex);
+			ScopeLock<Mutex> l(impl->eventsMutex);
 			impl->eventsQueueLocked.push_back(e);
 		}
 
@@ -653,7 +653,7 @@ namespace cage
 	{
 		windowImpl *impl = (windowImpl*)this;
 #ifdef GCHL_WINDOWS_THREAD
-		scopeLock<syncMutex> l(impl->eventsMutex);
+		ScopeLock<Mutex> l(impl->eventsMutex);
 		impl->absoluteMouseSets.push_back(tmp);
 		const ivec2 &c = impl->currentMousePosition;
 		impl->relativeMouseOffsets.push_back(ivec2(tmp.x - c.x, tmp.y - c.y));
@@ -691,12 +691,12 @@ namespace cage
 		windowImpl *impl = (windowImpl*)this;
 #ifndef GCHL_WINDOWS_THREAD
 		{
-			scopeLock<syncMutex> l(windowsMutex());
+			ScopeLock<Mutex> l(windowsMutex());
 			glfwPollEvents();
 		}
 #endif
 		{
-			scopeLock<syncMutex> l(impl->eventsMutex);
+			ScopeLock<Mutex> l(impl->eventsMutex);
 			impl->eventsQueueNoLock.insert(impl->eventsQueueNoLock.end(), impl->eventsQueueLocked.begin(), impl->eventsQueueLocked.end());
 			impl->eventsQueueLocked.clear();
 		}
@@ -770,7 +770,7 @@ namespace cage
 				break;
 #endif
 			default:
-				CAGE_THROW_CRITICAL(exception, "invalid event type");
+				CAGE_THROW_CRITICAL(Exception, "invalid event type");
 			}
 		}
 	}
@@ -838,7 +838,7 @@ namespace cage
 		glfwSwapBuffers(impl->window);
 	}
 
-	holder<windowHandle> newWindow(windowHandle *shareContext)
+	Holder<windowHandle> newWindow(windowHandle *shareContext)
 	{
 		return detail::systemArena().createImpl<windowHandle, windowImpl>(shareContext);
 	}

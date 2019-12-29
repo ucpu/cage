@@ -124,7 +124,7 @@ namespace cage
 		}
 		else
 		{
-			//CAGE_LOG_DEBUG(severityEnum::Warning, "gui", "gui is skipping render because control was late");
+			//CAGE_LOG_DEBUG(SeverityEnum::Warning, "gui", "gui is skipping render because control was late");
 		}
 	}
 }

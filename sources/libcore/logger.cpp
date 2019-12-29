@@ -13,17 +13,17 @@ namespace cage
 {
 	namespace
 	{
-		configBool confDetailedInfo("cage/system/logVendorInfo", false);
+		ConfigBool confDetailedInfo("cage/system/logVendorInfo", false);
 
-		syncMutex *loggerMutex()
+		Mutex *loggerMutex()
 		{
-			static holder<syncMutex> *m = new holder<syncMutex>(newSyncMutex()); // this leak is intentional
+			static Holder<Mutex> *m = new Holder<Mutex>(newSyncMutex()); // this leak is intentional
 			return m->get();
 		}
 
-		timer *loggerTimer()
+		Timer *loggerTimer()
 		{
-			static holder<timer> *t = new holder<timer>(newTimer()); // this leak is intentional
+			static Holder<Timer> *t = new Holder<Timer>(newTimer()); // this leak is intentional
 			return t->get();
 		}
 
@@ -33,7 +33,7 @@ namespace cage
 			return l;
 		}
 
-		class loggerImpl : public logger
+		class loggerImpl : public Logger
 		{
 		public:
 			loggerImpl *prev, *next;
@@ -42,7 +42,7 @@ namespace cage
 			loggerImpl() : prev(nullptr), next(nullptr), thread(threadId())
 			{
 				{
-					scopeLock<syncMutex> l(loggerMutex());
+					ScopeLock<Mutex> l(loggerMutex());
 					if (loggerLast())
 					{
 						prev = loggerLast();
@@ -57,7 +57,7 @@ namespace cage
 			~loggerImpl()
 			{
 				{
-					scopeLock<syncMutex> l(loggerMutex());
+					ScopeLock<Mutex> l(loggerMutex());
 					if (prev)
 						prev->next = next;
 					if (next)
@@ -85,13 +85,13 @@ namespace cage
 
 				loggerOutputCentralFile = newLoggerOutputFile(pathExtractFilename(detail::getExecutableFullPathNoExe()) + ".log", false);
 				loggerCentralFile = newLogger();
-				loggerCentralFile->output.bind<loggerOutputFile, &loggerOutputFile::output>(loggerOutputCentralFile.get());
+				loggerCentralFile->output.bind<LoggerOutputFile, &LoggerOutputFile::output>(loggerOutputCentralFile.get());
 				loggerCentralFile->format.bind<&logFormatFileShort>();
 			}
 
-			holder<logger> loggerDebug;
-			holder<loggerOutputFile> loggerOutputCentralFile;
-			holder<logger> loggerCentralFile;
+			Holder<Logger> loggerDebug;
+			Holder<LoggerOutputFile> loggerOutputCentralFile;
+			Holder<Logger> loggerCentralFile;
 		};
 
 		class centralLogStaticInitializerClass
@@ -128,37 +128,37 @@ namespace cage
 					version += ", ";
 					version += "build at: " __DATE__ " " __TIME__;
 
-					CAGE_LOG(severityEnum::Info, "log", stringizer() + "cage version: " + version);
+					CAGE_LOG(SeverityEnum::Info, "log", stringizer() + "cage version: " + version);
 				}
 
 				setCurrentThreadName(pathExtractFilename(detail::getExecutableFullPathNoExe()));
 
-				CAGE_LOG(severityEnum::Info, "log", stringizer() + "process id: " + processId());
+				CAGE_LOG(SeverityEnum::Info, "log", stringizer() + "process id: " + processId());
 
 				{
 					uint32 y, M, d, h, m, s;
 					detail::getSystemDateTime(y, M, d, h, m, s);
-					CAGE_LOG(severityEnum::Info, "log", stringizer() + "current time: " + detail::formatDateTime(y, M, d, h, m, s));
+					CAGE_LOG(SeverityEnum::Info, "log", stringizer() + "current time: " + detail::formatDateTime(y, M, d, h, m, s));
 				}
 
-				CAGE_LOG(severityEnum::Info, "log", stringizer() + "executable path: " + detail::getExecutableFullPath());
-				CAGE_LOG(severityEnum::Info, "log", stringizer() + "working directory: " + pathWorkingDir());
+				CAGE_LOG(SeverityEnum::Info, "log", stringizer() + "executable path: " + detail::getExecutableFullPath());
+				CAGE_LOG(SeverityEnum::Info, "log", stringizer() + "working directory: " + pathWorkingDir());
 
 				if (confDetailedInfo)
 				{
-					CAGE_LOG(severityEnum::Info, "systemInfo", "system information:");
+					CAGE_LOG(SeverityEnum::Info, "systemInfo", "system information:");
 					try
 					{
-						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", stringizer() + "system name: '" + systemName() + "'");
-						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", stringizer() + "user name: '" + userName() + "'");
-						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", stringizer() + "host name: '" + hostName() + "'");
-						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", stringizer() + "processors count: " + processorsCount());
-						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", stringizer() + "processor name: '" + processorName() + "'");
-						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", stringizer() + "processor speed: " + (processorClockSpeed() / 1000000) + " MHz");
-						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", stringizer() + "memory capacity: " + (memoryCapacity() / 1024 / 1024) + " MB");
-						CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", stringizer() + "memory available: " + (memoryAvailable() / 1024 / 1024) + " MB");
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", stringizer() + "system name: '" + systemName() + "'");
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", stringizer() + "user name: '" + userName() + "'");
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", stringizer() + "host name: '" + hostName() + "'");
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", stringizer() + "processors count: " + processorsCount());
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", stringizer() + "processor name: '" + processorName() + "'");
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", stringizer() + "processor speed: " + (processorClockSpeed() / 1000000) + " MHz");
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", stringizer() + "memory capacity: " + (memoryCapacity() / 1024 / 1024) + " MB");
+						CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", stringizer() + "memory available: " + (memoryAvailable() / 1024 / 1024) + " MB");
 					}
-					catch (exception &)
+					catch (Exception &)
 					{
 						// do nothing
 					}
@@ -176,11 +176,11 @@ namespace cage
 				duration /= 60;
 				uint32 hours = numeric_cast<uint32>(duration % 24);
 				duration /= 24;
-				CAGE_LOG(severityEnum::Info, "log", stringizer() + "total duration: " + duration + " days, " + hours + " hours, " + mins + " minutes, " + secs + " seconds and " + micros + " microseconds");
+				CAGE_LOG(SeverityEnum::Info, "log", stringizer() + "total duration: " + duration + " days, " + hours + " hours, " + mins + " minutes, " + secs + " seconds and " + micros + " microseconds");
 			}
 		} centralLogStaticInitializerInstance;
 
-		void logFormatFileImpl(const detail::loggerInfo &info, delegate<void(const string &)> output, bool longer)
+		void logFormatFileImpl(const detail::loggerInfo &info, Delegate<void(const string &)> output, bool longer)
 		{
 			if (info.continuous)
 			{
@@ -207,47 +207,47 @@ namespace cage
 			}
 		}
 
-		class fileOutputImpl : public loggerOutputFile
+		class fileOutputImpl : public LoggerOutputFile
 		{
 		public:
 			fileOutputImpl(const string &path, bool append)
 			{
-				fileMode fm(false, true);
+				FileMode fm(false, true);
 				fm.textual = true;
 				fm.append = append;
 				f = newFile(path, fm);
 			}
 
-			holder<fileHandle> f;
+			Holder<File> f;
 		};
 	}
 
-	holder<logger> newLogger()
+	Holder<Logger> newLogger()
 	{
-		return detail::systemArena().createImpl<logger, loggerImpl>();
+		return detail::systemArena().createImpl<Logger, loggerImpl>();
 	}
 
 	namespace detail
 	{
-		loggerInfo::loggerInfo() : component(""), file(nullptr), function(nullptr), time(0), createThreadId(0), currentThreadId(0), severity(severityEnum::Critical), line(0), continuous(false), debug(false)
+		loggerInfo::loggerInfo() : component(""), file(nullptr), function(nullptr), time(0), createThreadId(0), currentThreadId(0), severity(SeverityEnum::Critical), line(0), continuous(false), debug(false)
 		{}
 
-		logger *getCentralLog()
+		Logger *getCentralLog()
 		{
 			static centralLogClass *centralLogInstance = new centralLogClass(); // this leak is intentional
 			return centralLogInstance->loggerCentralFile.get();
 		}
 
-		string severityToString(severityEnum severity)
+		string severityToString(SeverityEnum severity)
 		{
 			switch (severity)
 			{
-			case severityEnum::Hint: return "hint";
-			case severityEnum::Note: return "note";
-			case severityEnum::Info: return "info";
-			case severityEnum::Warning: return "warn";
-			case severityEnum::Error: return "EROR";
-			case severityEnum::Critical: return "CRIT";
+			case SeverityEnum::Hint: return "hint";
+			case SeverityEnum::Note: return "note";
+			case SeverityEnum::Info: return "info";
+			case SeverityEnum::Warning: return "warn";
+			case SeverityEnum::Error: return "EROR";
+			case SeverityEnum::Critical: return "CRIT";
 			default: return "UNKN";
 			}
 		}
@@ -255,7 +255,7 @@ namespace cage
 
 	namespace privat
 	{
-		uint64 makeLog(const char *file, uint32 line, const char *function, severityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept
+		uint64 makeLog(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept
 		{
 			try
 			{
@@ -273,7 +273,7 @@ namespace cage
 				info.line = line;
 				info.function = function;
 
-				scopeLock<syncMutex> l(loggerMutex());
+				ScopeLock<Mutex> l(loggerMutex());
 				loggerImpl *cur = loggerLast();
 				while (cur)
 				{
@@ -301,17 +301,17 @@ namespace cage
 		}
 	}
 
-	void logFormatConsole(const detail::loggerInfo &info, delegate<void(const string &)> output)
+	void logFormatConsole(const detail::loggerInfo &info, Delegate<void(const string &)> output)
 	{
 		output(info.message);
 	}
 
-	void logFormatFileShort(const detail::loggerInfo &info, delegate<void(const string &)> output)
+	void logFormatFileShort(const detail::loggerInfo &info, Delegate<void(const string &)> output)
 	{
 		logFormatFileImpl(info, output, false);
 	}
 
-	void logFormatFileLong(const detail::loggerInfo &info, delegate<void(const string &)> output)
+	void logFormatFileLong(const detail::loggerInfo &info, Delegate<void(const string &)> output)
 	{
 		logFormatFileImpl(info, output, true);
 	}
@@ -333,16 +333,16 @@ namespace cage
 		fflush(stderr);
 	}
 
-	void loggerOutputFile::output(const string &message)
+	void LoggerOutputFile::output(const string &message)
 	{
 		fileOutputImpl *impl = (fileOutputImpl*)this;
 		impl->f->writeLine(message);
 		impl->f->flush();
 	}
 
-	holder<loggerOutputFile> newLoggerOutputFile(const string &path, bool append)
+	Holder<LoggerOutputFile> newLoggerOutputFile(const string &path, bool append)
 	{
-		return detail::systemArena().createImpl<loggerOutputFile, fileOutputImpl>(path, append);
+		return detail::systemArena().createImpl<LoggerOutputFile, fileOutputImpl>(path, append);
 	}
 
 	uint64 getApplicationTime()

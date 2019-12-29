@@ -22,7 +22,7 @@ namespace cage
 		// todo
 		return "";
 #elif defined(CAGE_SYSTEM_LINUX)
-		holder<processHandle> prg = newProcess(string("lsb_release -d"));
+		Holder<Process> prg = newProcess(string("lsb_release -d"));
 		string newName = prg->readLine();
 		if (!newName.isPattern("Description", "", ""))
 		{
@@ -55,10 +55,10 @@ namespace cage
 		buf[0] = 0;
 		DWORD siz = string::MaxLength - 1;
 		if (!GetUserName(buf, &siz))
-			CAGE_THROW_ERROR(systemError, "GetUserName", GetLastError());
+			CAGE_THROW_ERROR(SystemError, "GetUserName", GetLastError());
 		return buf;
 #elif defined(CAGE_SYSTEM_LINUX)
-		holder<processHandle> prg = newProcess(string("whoami"));
+		Holder<Process> prg = newProcess(string("whoami"));
 		return prg->readLine();
 #else
 		// todo
@@ -73,10 +73,10 @@ namespace cage
 		buf[0] = 0;
 		DWORD siz = string::MaxLength - 1;
 		if (!GetComputerName(buf, &siz))
-			CAGE_THROW_ERROR(systemError, "GetComputerName", GetLastError());
+			CAGE_THROW_ERROR(SystemError, "GetComputerName", GetLastError());
 		return buf;
 #elif defined(CAGE_SYSTEM_LINUX)
-		holder<processHandle> prg = newProcess(string("hostname"));
+		Holder<Process> prg = newProcess(string("hostname"));
 		return prg->readLine();
 #else
 		// todo
@@ -102,7 +102,7 @@ namespace cage
 		}
 		return CPUBrandString;
 #elif defined(CAGE_SYSTEM_LINUX)
-		holder<processHandle> prg = newProcess(string("cat /proc/cpuinfo | grep -m 1 'model name' | cut -d: -f2-"));
+		Holder<Process> prg = newProcess(string("cat /proc/cpuinfo | grep -m 1 'model name' | cut -d: -f2-"));
 		return prg->readLine().trim();
 #else
 		// todo
@@ -125,20 +125,20 @@ namespace cage
 		memset(&ppi, 0, sizeof(ppi));
 		auto ret = CallNtPowerInformation(ProcessorInformation, nullptr, 0, &ppi, sizeof(ppi));
 		if (ret != 0)
-			CAGE_THROW_ERROR(systemError, "CallNtPowerInformation", ret);
+			CAGE_THROW_ERROR(SystemError, "CallNtPowerInformation", ret);
 		return ppi[0].MaxMhz * 1000000;
 #elif defined(CAGE_SYSTEM_LINUX)
 		try
 		{
-			holder<processHandle> prg = newProcess(string("cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq"));
+			Holder<Process> prg = newProcess(string("cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq"));
 			return prg->readLine().toUint32() * 1000;
 		}
-		catch(const cage::exception &)
+		catch(const cage::Exception &)
 		{
 			// When the cpufreq driver is not loaded (file above does not exist), the CPU should be running on full speed
 		}
 
-		holder<processHandle> prg = newProcess(string("cat /proc/cpuinfo | grep -m 1 'cpu MHz' | cut -d: -f2-"));
+		Holder<Process> prg = newProcess(string("cat /proc/cpuinfo | grep -m 1 'cpu MHz' | cut -d: -f2-"));
 		return numeric_cast<uint64>(prg->readLine().trim().toDouble() * 1e6);
 #else
 		// todo
@@ -152,10 +152,10 @@ namespace cage
 		MEMORYSTATUSEX m;
 		m.dwLength = sizeof(m);
 		if (!GlobalMemoryStatusEx(&m))
-			CAGE_THROW_ERROR(systemError, "GlobalMemoryStatusEx", GetLastError());
+			CAGE_THROW_ERROR(SystemError, "GlobalMemoryStatusEx", GetLastError());
 		return m.ullTotalPhys;
 #elif defined(CAGE_SYSTEM_LINUX)
-		holder<processHandle> prg = newProcess(string("cat /proc/meminfo | grep -m 1 'MemTotal' | awk '{print $2}'"));
+		Holder<Process> prg = newProcess(string("cat /proc/meminfo | grep -m 1 'MemTotal' | awk '{print $2}'"));
 		return prg->readLine().toUint64() * 1024;
 #else
 		// todo
@@ -169,20 +169,20 @@ namespace cage
 		MEMORYSTATUSEX m;
 		m.dwLength = sizeof(m);
 		if (!GlobalMemoryStatusEx(&m))
-			CAGE_THROW_ERROR(systemError, "GlobalMemoryStatusEx", GetLastError());
+			CAGE_THROW_ERROR(SystemError, "GlobalMemoryStatusEx", GetLastError());
 		return m.ullAvailPhys;
 #elif defined(CAGE_SYSTEM_LINUX)
 		try
 		{
-			holder<processHandle> prg = newProcess(string("cat /proc/meminfo | grep -m 1 'MemAvailable' | awk '{print $2}'"));
+			Holder<Process> prg = newProcess(string("cat /proc/meminfo | grep -m 1 'MemAvailable' | awk '{print $2}'"));
 			return prg->readLine().toUint64() * 1024;
 		}
-		catch (const cage::exception &)
+		catch (const cage::Exception &)
 		{
 			// On some systems the "MemAvailable" is not present, in which case continue to look for "MemFree"
 		}
 
-		holder<processHandle> prg = newProcess(string("cat /proc/meminfo | grep -m 1 'MemFree' | awk '{print $2}'"));
+		Holder<Process> prg = newProcess(string("cat /proc/meminfo | grep -m 1 'MemFree' | awk '{print $2}'"));
 		return prg->readLine().toUint64() * 1024;
 #else
 		// todo

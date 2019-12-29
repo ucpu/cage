@@ -22,7 +22,7 @@ namespace cage
 			}
 			catch (const std::exception &e)
 			{
-				CAGE_THROW_ERROR(cage::exception, e.what());
+				CAGE_THROW_ERROR(cage::Exception, e.what());
 			}
 		}
 
@@ -34,7 +34,7 @@ namespace cage
 			}
 			catch (const std::exception &e)
 			{
-				CAGE_THROW_ERROR(cage::exception, e.what());
+				CAGE_THROW_ERROR(cage::Exception, e.what());
 			}
 		}
 
@@ -46,7 +46,7 @@ namespace cage
 			}
 			catch (const std::exception &e)
 			{
-				CAGE_THROW_ERROR(cage::exception, e.what());
+				CAGE_THROW_ERROR(cage::Exception, e.what());
 			}
 		}
 
@@ -58,7 +58,7 @@ namespace cage
 			}
 			catch (const std::exception &e)
 			{
-				CAGE_THROW_ERROR(cage::exception, e.what());
+				CAGE_THROW_ERROR(cage::Exception, e.what());
 			}
 		}
 
@@ -70,7 +70,7 @@ namespace cage
 			}
 			catch (const std::exception &e)
 			{
-				CAGE_THROW_ERROR(cage::exception, e.what());
+				CAGE_THROW_ERROR(cage::Exception, e.what());
 			}
 		}
 
@@ -82,7 +82,7 @@ namespace cage
 			}
 			catch (const std::exception &e)
 			{
-				CAGE_THROW_ERROR(cage::exception, e.what());
+				CAGE_THROW_ERROR(cage::Exception, e.what());
 			}
 		}
 
@@ -94,7 +94,7 @@ namespace cage
 			}
 			catch (const std::exception &e)
 			{
-				CAGE_THROW_ERROR(cage::exception, e.what());
+				CAGE_THROW_ERROR(cage::Exception, e.what());
 			}
 		}
 
@@ -106,7 +106,7 @@ namespace cage
 			}
 			catch (const std::exception &e)
 			{
-				CAGE_THROW_ERROR(cage::exception, e.what());
+				CAGE_THROW_ERROR(cage::Exception, e.what());
 			}
 		}
 
@@ -119,7 +119,7 @@ namespace cage
 			}
 			catch (const std::exception &e)
 			{
-				CAGE_THROW_ERROR(cage::exception, e.what());
+				CAGE_THROW_ERROR(cage::Exception, e.what());
 			}
 		}
 
@@ -131,7 +131,7 @@ namespace cage
 			}
 			catch (const std::exception &e)
 			{
-				CAGE_THROW_ERROR(cage::exception, e.what());
+				CAGE_THROW_ERROR(cage::Exception, e.what());
 			}
 		}
 
@@ -143,7 +143,7 @@ namespace cage
 			}
 			catch (const std::exception &e)
 			{
-				CAGE_THROW_ERROR(cage::exception, e.what());
+				CAGE_THROW_ERROR(cage::Exception, e.what());
 			}
 		}
 

@@ -12,13 +12,13 @@ namespace cage
 
 		~memoryArenaFixed()
 		{
-			scopeLock<ConcurrentPolicy> g(&concurrent);
+			ScopeLock<ConcurrentPolicy> g(&concurrent);
 			detail::systemArena().deallocate(origin);
 		}
 
 		void *allocate(uintPtr size, uintPtr alignment)
 		{
-			scopeLock<ConcurrentPolicy> g(&concurrent);
+			ScopeLock<ConcurrentPolicy> g(&concurrent);
 			try
 			{
 				void *tmp = allocator.allocate(size, alignment);
@@ -28,7 +28,7 @@ namespace cage
 			}
 			catch (outOfMemory &e)
 			{
-				e.severity = severityEnum::Error;
+				e.severity = SeverityEnum::Error;
 				e.log();
 				throw;
 			}
@@ -38,13 +38,13 @@ namespace cage
 		{
 			if (ptr == nullptr)
 				return;
-			scopeLock<ConcurrentPolicy> g(&concurrent);
+			ScopeLock<ConcurrentPolicy> g(&concurrent);
 			allocator.deallocate(ptr);
 		}
 
 		void flush()
 		{
-			scopeLock<ConcurrentPolicy> g(&concurrent);
+			ScopeLock<ConcurrentPolicy> g(&concurrent);
 			allocator.flush();
 		}
 
@@ -75,12 +75,12 @@ namespace cage
 
 		~memoryArenaGrowing()
 		{
-			scopeLock<ConcurrentPolicy> g(&concurrent);
+			ScopeLock<ConcurrentPolicy> g(&concurrent);
 		}
 
 		void *allocate(uintPtr size, uintPtr alignment)
 		{
-			scopeLock<ConcurrentPolicy> g(&concurrent);
+			ScopeLock<ConcurrentPolicy> g(&concurrent);
 			try
 			{
 				return alloc(size, alignment);
@@ -99,7 +99,7 @@ namespace cage
 			}
 			catch (outOfMemory &e)
 			{
-				e.severity = severityEnum::Error;
+				e.severity = SeverityEnum::Error;
 				e.makeLog();
 				throw;
 			}
@@ -109,13 +109,13 @@ namespace cage
 		{
 			if (ptr == nullptr)
 				return;
-			scopeLock<ConcurrentPolicy> g(&concurrent);
+			ScopeLock<ConcurrentPolicy> g(&concurrent);
 			allocator.deallocate(ptr);
 		}
 
 		void flush()
 		{
-			scopeLock<ConcurrentPolicy> g(&concurrent);
+			ScopeLock<ConcurrentPolicy> g(&concurrent);
 			allocator.flush();
 		}
 
@@ -124,7 +124,7 @@ namespace cage
 		uintPtr getReservedSize() const { return addressSize; }
 
 	private:
-		holder<virtualMemoryClass> memory;
+		Holder<virtualMemoryClass> memory;
 		AllocatorPolicy allocator;
 		ConcurrentPolicy concurrent;
 		const uintPtr pageSize;
@@ -142,15 +142,15 @@ namespace cage
 	};
 
 	template<class T>
-	struct memoryArenaStd
+	struct MemoryArenaStd
 	{
 		typedef T value_type;
 
-		memoryArenaStd(const memoryArena &other) : a(other) {}
-		memoryArenaStd(const memoryArenaStd &other) : a(other.a) {}
+		MemoryArenaStd(const MemoryArena &other) : a(other) {}
+		MemoryArenaStd(const MemoryArenaStd &other) : a(other.a) {}
 
 		template<class U>
-		explicit memoryArenaStd(const memoryArenaStd<U> &other) : a(other.a) {}
+		explicit MemoryArenaStd(const MemoryArenaStd<U> &other) : a(other.a) {}
 
 		T *allocate(uintPtr cnt)
 		{
@@ -162,20 +162,20 @@ namespace cage
 			a.deallocate(ptr);
 		}
 
-		bool operator == (const memoryArenaStd &other) const noexcept
+		bool operator == (const MemoryArenaStd &other) const noexcept
 		{
 			return a == other.a;
 		}
 
-		bool operator != (const memoryArenaStd &other) const noexcept
+		bool operator != (const MemoryArenaStd &other) const noexcept
 		{
 			return a != other.a;
 		}
 
 	private:
-		memoryArena a;
+		MemoryArena a;
 		template<class U>
-		friend struct memoryArenaStd;
+		friend struct MemoryArenaStd;
 	};
 }
 

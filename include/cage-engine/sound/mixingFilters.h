@@ -3,23 +3,23 @@ namespace cage
 	struct CAGE_API mixingFilterApi
 	{
 		soundDataBufferStruct output;
-		delegate<void(const soundDataBufferStruct&)> input;
+		Delegate<void(const soundDataBufferStruct&)> input;
 	};
 
-	class CAGE_API mixingFilter : private immovable
+	class CAGE_API mixingFilter : private Immovable
 	{
 	public:
 		void setBus(mixingBus *bus);
-		delegate<void(const mixingFilterApi&)> execute;
+		Delegate<void(const mixingFilterApi&)> execute;
 	};
 
-	class CAGE_API volumeFilter : private immovable
+	class CAGE_API volumeFilter : private Immovable
 	{
 	public:
-		holder<mixingFilter> filter;
+		Holder<mixingFilter> filter;
 		real volume;
 	};
 
-	CAGE_API holder<mixingFilter> newMixingFilter(soundContext *context);
-	CAGE_API holder<volumeFilter> newVolumeFilter(soundContext *context);
+	CAGE_API Holder<mixingFilter> newMixingFilter(soundContext *context);
+	CAGE_API Holder<volumeFilter> newVolumeFilter(soundContext *context);
 }

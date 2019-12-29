@@ -21,17 +21,17 @@ namespace
 
 		void accept()
 		{
-			scopeLock<syncMutex> lck(mut);
-			holder<tcpConnection> tmp = server->accept();
+			ScopeLock<Mutex> lck(mut);
+			Holder<TcpConnection> tmp = server->accept();
 			if (tmp)
 				connections.push_back(templates::move(tmp));
 		}
 
 		void notify(const string &str)
 		{
-			detail::overrideBreakpoint overrideBreakpoint;
-			scopeLock<syncMutex> lck(mut);
-			std::list<holder<tcpConnection>>::iterator it = connections.begin();
+			detail::OverrideBreakpoint OverrideBreakpoint;
+			ScopeLock<Mutex> lck(mut);
+			std::list<Holder<TcpConnection>>::iterator it = connections.begin();
 			while (it != connections.end())
 			{
 				try
@@ -39,7 +39,7 @@ namespace
 					(*it)->writeLine(str);
 					it++;
 				}
-				catch (const exception &)
+				catch (const Exception &)
 				{
 					it = connections.erase(it);
 				}
@@ -47,12 +47,12 @@ namespace
 		}
 
 	private:
-		holder<tcpServer> server;
-		std::list<holder<tcpConnection>> connections;
-		holder<syncMutex> mut;
+		Holder<TcpServer> server;
+		std::list<Holder<TcpConnection>> connections;
+		Holder<Mutex> mut;
 	};
 
-	holder<notifierClass> notifierInstance;
+	Holder<notifierClass> notifierInstance;
 }
 
 void notifierInitialize(const uint16 port)

@@ -7,7 +7,7 @@
 namespace cage
 {
 	template<class Key, class Value, class Hasher = std::hash<Key>>
-	struct lruCache : private immovable
+	struct LruCache : private Immovable
 	{
 	private:
 		struct Data
@@ -37,7 +37,7 @@ namespace cage
 		}
 
 	public:
-		explicit lruCache(uint32 capacity) : head(0), capacity(capacity)
+		explicit LruCache(uint32 capacity) : head(0), capacity(capacity)
 		{
 			CAGE_ASSERT(capacity >= 3);
 			clear();

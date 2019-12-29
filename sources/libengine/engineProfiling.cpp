@@ -31,15 +31,15 @@ namespace cage
 
 	namespace
 	{
-		configSint32 visualizeBuffer("cage/graphics/visualizeBuffer");
-		configBool confRenderMissingMeshes("cage/graphics/renderMissingMeshes");
-		configBool confRenderSkeletonBones("cage/graphics/renderSkeletonBones");
+		ConfigSint32 visualizeBuffer("cage/graphics/visualizeBuffer");
+		ConfigBool confRenderMissingMeshes("cage/graphics/renderMissingMeshes");
+		ConfigBool confRenderSkeletonBones("cage/graphics/renderSkeletonBones");
 
 		class engineProfilingImpl : public engineProfiling
 		{
 		public:
-			eventListener<bool(uint32, uint32, modifiersFlags)> keyPressListener;
-			eventListener<bool()> updateListener;
+			EventListener<bool(uint32, uint32, modifiersFlags)> keyPressListener;
+			EventListener<bool()> updateListener;
 
 			uint32 panelIndex;
 			uint32 layoutIndex;
@@ -116,14 +116,14 @@ namespace cage
 
 				clearEntities();
 				profilingModeOld = profilingScope;
-				entityManager *g = gui()->entities();
-				entity *panel = g->createUnique();
+				EntityManager *g = gui()->entities();
+				Entity *panel = g->createUnique();
 				{
 					panelIndex = panel->name();
 					CAGE_COMPONENT_GUI(scrollbars, sc, panel);
 					sc.alignment = screenPosition;
 				}
-				entity *layout = g->createUnique();
+				Entity *layout = g->createUnique();
 				{
 					layoutIndex = layout->name();
 					CAGE_COMPONENT_GUI(panel, c, layout);
@@ -140,7 +140,7 @@ namespace cage
 				labelsCount = labelsPerMode[(uint32)profilingScope];
 				for (uint32 i = 0; i < labelsCount * 2; i++)
 				{
-					entity *e = g->createUnique();
+					Entity *e = g->createUnique();
 					labelIndices[i] = e->name();
 					CAGE_COMPONENT_GUI(label, c, e);
 					CAGE_COMPONENT_GUI(parent, child, e);
@@ -178,7 +178,7 @@ namespace cage
 			{
 				if (name == 0)
 					return;
-				entityManager *g = gui()->entities();
+				EntityManager *g = gui()->entities();
 				if (!g->has(name))
 					return;
 				g->get(name)->destroy();
@@ -195,7 +195,7 @@ namespace cage
 
 			void checkEntities()
 			{
-				entityManager *g = gui()->entities();
+				EntityManager *g = gui()->entities();
 				bool panelPresent = panelIndex != 0 && g->has(panelIndex);
 				bool visible = profilingScope != engineProfilingScopeEnum::None;
 				if (panelPresent != visible || profilingModeOld != profilingScope)
@@ -211,7 +211,7 @@ namespace cage
 				CAGE_ASSERT(index < sizeof(labelIndices) / sizeof(labelIndices[0]), index);
 				if (labelIndices[index] == 0 || !gui()->entities()->has(labelIndices[index]))
 					return;
-				entity *timing = gui()->entities()->get(labelIndices[index]);
+				Entity *timing = gui()->entities()->get(labelIndices[index]);
 				CAGE_COMPONENT_GUI(text, t, timing);
 				t.value = value;
 			}
@@ -236,7 +236,7 @@ namespace cage
 				{
 					try
 					{
-						detail::overrideBreakpoint ob;
+						detail::OverrideBreakpoint ob;
 						window()->setFullscreen(ivec2(0, 0));
 					}
 					catch (...)
@@ -262,7 +262,7 @@ namespace cage
 						case engineProfilingScopeEnum::Short: profilingScope = engineProfilingScopeEnum::Fps; break;
 						case engineProfilingScopeEnum::Fps: profilingScope = engineProfilingScopeEnum::None; break;
 						case engineProfilingScopeEnum::None: profilingScope = engineProfilingScopeEnum::Full; break;
-						default: CAGE_THROW_CRITICAL(exception, "invalid engine profiling scope enum");
+						default: CAGE_THROW_CRITICAL(Exception, "invalid engine profiling scope enum");
 						}
 						return true;
 					}
@@ -273,7 +273,7 @@ namespace cage
 						case engineProfilingModeEnum::Average: profilingMode = engineProfilingModeEnum::Maximum; break;
 						case engineProfilingModeEnum::Maximum: profilingMode = engineProfilingModeEnum::Last; break;
 						case engineProfilingModeEnum::Last: profilingMode = engineProfilingModeEnum::Average; break;
-						default: CAGE_THROW_CRITICAL(exception, "invalid engine profiling mode enum");
+						default: CAGE_THROW_CRITICAL(Exception, "invalid engine profiling mode enum");
 						}
 						return true;
 					}
@@ -291,14 +291,14 @@ namespace cage
 					{
 						switch (graphicsPrepareThread().stereoMode)
 						{
-						case stereoModeEnum::Mono:
-							graphicsPrepareThread().stereoMode = stereoModeEnum::Horizontal;
+						case StereoModeEnum::Mono:
+							graphicsPrepareThread().stereoMode = StereoModeEnum::Horizontal;
 							break;
-						case stereoModeEnum::Horizontal:
-							graphicsPrepareThread().stereoMode = stereoModeEnum::Vertical;
+						case StereoModeEnum::Horizontal:
+							graphicsPrepareThread().stereoMode = StereoModeEnum::Vertical;
 							break;
-						case stereoModeEnum::Vertical:
-							graphicsPrepareThread().stereoMode = stereoModeEnum::Mono;
+						case StereoModeEnum::Vertical:
+							graphicsPrepareThread().stereoMode = StereoModeEnum::Mono;
 							break;
 						}
 						return true;
@@ -319,7 +319,7 @@ namespace cage
 		};
 	}
 
-	holder<engineProfiling> newEngineProfiling()
+	Holder<engineProfiling> newEngineProfiling()
 	{
 		return detail::systemArena().createImpl<engineProfiling, engineProfilingImpl>();
 	}

@@ -3,18 +3,18 @@
 
 namespace cage
 {
-	class CAGE_API windowHandle : private immovable
+	class CAGE_API windowHandle : private Immovable
 	{
 	public:
 		struct
 		{
-			eventDispatcher<bool()> windowClose, windowShow, windowHide;
-			eventDispatcher<bool(const ivec2 &)> windowMove, windowResize;
-			eventDispatcher<bool(mouseButtonsFlags, modifiersFlags, const ivec2 &)> mouseMove, mousePress, mouseDouble, mouseRelease;
-			eventDispatcher<bool(sint32, modifiersFlags, const ivec2 &)> mouseWheel;
-			eventDispatcher<bool()> focusGain, focusLose;
-			eventDispatcher<bool(uint32, uint32, modifiersFlags)> keyPress, keyRelease, keyRepeat;
-			eventDispatcher<bool(uint32)> keyChar;
+			EventDispatcher<bool()> windowClose, windowShow, windowHide;
+			EventDispatcher<bool(const ivec2 &)> windowMove, windowResize;
+			EventDispatcher<bool(mouseButtonsFlags, modifiersFlags, const ivec2 &)> mouseMove, mousePress, mouseDouble, mouseRelease;
+			EventDispatcher<bool(sint32, modifiersFlags, const ivec2 &)> mouseWheel;
+			EventDispatcher<bool()> focusGain, focusLose;
+			EventDispatcher<bool(uint32, uint32, modifiersFlags)> keyPress, keyRelease, keyRepeat;
+			EventDispatcher<bool(uint32)> keyChar;
 		} events;
 
 		void processEvents();
@@ -59,20 +59,20 @@ namespace cage
 		void makeNotCurrent();
 		void swapBuffers();
 
-		delegate<void(uint32, uint32, uint32, uint32, const char*)> debugOpenglErrorCallback;
+		Delegate<void(uint32, uint32, uint32, uint32, const char*)> debugOpenglErrorCallback;
 	};
 
-	CAGE_API holder<windowHandle> newWindow(windowHandle *shareContext = nullptr);
+	CAGE_API Holder<windowHandle> newWindow(windowHandle *shareContext = nullptr);
 
 	struct CAGE_API windowEventListeners
 	{
-		eventListener<bool()> windowClose, windowShow, windowHide;
-		eventListener<bool(const ivec2 &)> windowMove, windowResize;
-		eventListener<bool(mouseButtonsFlags, modifiersFlags, const ivec2 &)> mouseMove, mousePress, mouseDouble, mouseRelease;
-		eventListener<bool(sint32, modifiersFlags, const ivec2 &)> mouseWheel;
-		eventListener<bool()> focusGain, focusLose;
-		eventListener<bool(uint32, uint32, modifiersFlags)> keyPress, keyRelease, keyRepeat;
-		eventListener<bool(uint32)> keyChar;
+		EventListener<bool()> windowClose, windowShow, windowHide;
+		EventListener<bool(const ivec2 &)> windowMove, windowResize;
+		EventListener<bool(mouseButtonsFlags, modifiersFlags, const ivec2 &)> mouseMove, mousePress, mouseDouble, mouseRelease;
+		EventListener<bool(sint32, modifiersFlags, const ivec2 &)> mouseWheel;
+		EventListener<bool()> focusGain, focusLose;
+		EventListener<bool(uint32, uint32, modifiersFlags)> keyPress, keyRelease, keyRepeat;
+		EventListener<bool(uint32)> keyChar;
 
 		void attachAll(windowHandle *window, sint32 order = 0);
 	};

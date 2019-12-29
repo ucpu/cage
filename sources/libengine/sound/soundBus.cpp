@@ -37,8 +37,8 @@ namespace cage
 		class soundBusImpl : public mixingBus, public busInterfaceStruct
 		{
 		public:
-		    typedef std::set<const busInterfaceStruct*, std::less<const busInterfaceStruct*>, memoryArenaStd<const busInterfaceStruct *>> busInteerfaceSet;
-		    typedef std::set<soundFilterImpl*, std::less<soundFilterImpl*>, memoryArenaStd<soundFilterImpl *>> filterSet;
+		    typedef std::set<const busInterfaceStruct*, std::less<const busInterfaceStruct*>, MemoryArenaStd<const busInterfaceStruct *>> busInteerfaceSet;
+		    typedef std::set<soundFilterImpl*, std::less<soundFilterImpl*>, MemoryArenaStd<soundFilterImpl *>> filterSet;
 			busInteerfaceSet inputs;
 			busInteerfaceSet outputs;
 			filterSet filters;
@@ -46,7 +46,7 @@ namespace cage
 			filterSet::iterator currentFilter;
 
 			soundBusImpl(soundContext *context) :
-				busInterfaceStruct(delegate<void(mixingBus*)>().bind<soundBusImpl, &soundBusImpl::busDestroyed>(this), delegate<void(const soundDataBufferStruct&)>().bind<soundBusImpl, &soundBusImpl::execute>(this)),
+				busInterfaceStruct(Delegate<void(mixingBus*)>().bind<soundBusImpl, &soundBusImpl::busDestroyed>(this), Delegate<void(const soundDataBufferStruct&)>().bind<soundBusImpl, &soundBusImpl::execute>(this)),
 				inputs(linksArenaFromContext(context)),
 				outputs(linksArenaFromContext(context)),
 				filters(linksArenaFromContext(context))
@@ -199,12 +199,12 @@ namespace cage
 		impl->outputs.clear();
 	}
 
-	holder<mixingFilter> newMixingFilter(soundContext *context)
+	Holder<mixingFilter> newMixingFilter(soundContext *context)
 	{
 		return detail::systemArena().createImpl<mixingFilter, soundFilterImpl>(context);
 	}
 
-	holder<mixingBus> newMixingBus(soundContext *context)
+	Holder<mixingBus> newMixingBus(soundContext *context)
 	{
 		return detail::systemArena().createImpl<mixingBus, soundBusImpl>(context);
 	}

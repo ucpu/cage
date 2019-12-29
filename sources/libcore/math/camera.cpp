@@ -86,27 +86,27 @@ namespace cage
 
 	bool frustumCulling(const vec3 &shape, const mat4 &mvp)
 	{
-		CAGE_THROW_CRITICAL(notImplemented, "frustumCulling");
+		CAGE_THROW_CRITICAL(NotImplemented, "frustumCulling");
 	}
 
 	bool frustumCulling(const line &shape, const mat4 &mvp)
 	{
-		CAGE_THROW_CRITICAL(notImplemented, "frustumCulling");
+		CAGE_THROW_CRITICAL(NotImplemented, "frustumCulling");
 	}
 
 	bool frustumCulling(const triangle &shape, const mat4 &mvp)
 	{
-		CAGE_THROW_CRITICAL(notImplemented, "frustumCulling");
+		CAGE_THROW_CRITICAL(NotImplemented, "frustumCulling");
 	}
 
 	bool frustumCulling(const plane &shape, const mat4 &mvp)
 	{
-		CAGE_THROW_CRITICAL(notImplemented, "frustumCulling");
+		CAGE_THROW_CRITICAL(NotImplemented, "frustumCulling");
 	}
 
 	bool frustumCulling(const sphere &shape, const mat4 &mvp)
 	{
-		CAGE_THROW_CRITICAL(notImplemented, "frustumCulling");
+		CAGE_THROW_CRITICAL(NotImplemented, "frustumCulling");
 	}
 
 	namespace
@@ -147,30 +147,30 @@ namespace cage
 
 
 
-	stereoModeEnum stringToStereoMode(const string & mode)
+	StereoModeEnum stringToStereoMode(const string & mode)
 	{
 		string m = mode.toLower();
-		if (m == "mono") return stereoModeEnum::Mono;
-		if (m == "horizontal") return stereoModeEnum::Horizontal;
-		if (m == "vertical") return stereoModeEnum::Vertical;
-		CAGE_THROW_ERROR(exception, "invalid stereo mode name");
+		if (m == "mono") return StereoModeEnum::Mono;
+		if (m == "horizontal") return StereoModeEnum::Horizontal;
+		if (m == "vertical") return StereoModeEnum::Vertical;
+		CAGE_THROW_ERROR(Exception, "invalid stereo mode name");
 	}
 
-	string stereoModeToString(stereoModeEnum mode)
+	string stereoModeToString(StereoModeEnum mode)
 	{
 		switch (mode)
 		{
-		case stereoModeEnum::Mono: return "mono";
-		case stereoModeEnum::Horizontal: return "horizontal";
-		case stereoModeEnum::Vertical: return "vertical";
-		default: CAGE_THROW_CRITICAL(exception, "invalid stereo mode enum");
+		case StereoModeEnum::Mono: return "mono";
+		case StereoModeEnum::Horizontal: return "horizontal";
+		case StereoModeEnum::Vertical: return "vertical";
+		default: CAGE_THROW_CRITICAL(Exception, "invalid stereo mode enum");
 		}
 	}
 
-	stereoCameraInput::stereoCameraInput() : viewportSize(1), orthographic(false)
+	StereoCameraInput::StereoCameraInput() : viewportSize(1), orthographic(false)
 	{}
 
-	stereoCameraOutput stereoCamera(const stereoCameraInput &input, stereoModeEnum stereoMode, stereoEyeEnum eye)
+	StereoCameraOutput stereoCamera(const StereoCameraInput &input, StereoModeEnum stereoMode, StereoEyeEnum eye)
 	{
 		real viewportX = input.viewportOrigin[0];
 		real viewportY = input.viewportOrigin[1];
@@ -179,67 +179,67 @@ namespace cage
 		real aspectRatio = input.aspectRatio * viewportWidth / viewportHeight;
 		switch (eye)
 		{
-		case stereoEyeEnum::Mono:
+		case StereoEyeEnum::Mono:
 			break;
-		case stereoEyeEnum::Left:
+		case StereoEyeEnum::Left:
 			switch (stereoMode)
 			{
-			case stereoModeEnum::Mono:
+			case StereoModeEnum::Mono:
 				break;
-			case stereoModeEnum::Horizontal:
+			case StereoModeEnum::Horizontal:
 				viewportWidth *= 0.5;
 				viewportX *= 0.5;
 				break;
-			case stereoModeEnum::Vertical:
+			case StereoModeEnum::Vertical:
 				viewportHeight *= 0.5;
 				viewportY *= 0.5;
 				viewportY += 0.5;
 				break;
 			default:
-				CAGE_THROW_CRITICAL(exception, "invalid stereo mode");
+				CAGE_THROW_CRITICAL(Exception, "invalid stereo mode");
 			}
 			break;
-		case stereoEyeEnum::Right:
+		case StereoEyeEnum::Right:
 			switch (stereoMode)
 			{
-			case stereoModeEnum::Mono:
+			case StereoModeEnum::Mono:
 				break;
-			case stereoModeEnum::Horizontal:
+			case StereoModeEnum::Horizontal:
 				viewportWidth *= 0.5;
 				viewportX *= 0.5;
 				viewportX += 0.5;
 				break;
-			case stereoModeEnum::Vertical:
+			case StereoModeEnum::Vertical:
 				viewportHeight *= 0.5;
 				viewportY *= 0.5;
 				break;
 			default:
-				CAGE_THROW_CRITICAL(exception, "invalid stereo mode");
+				CAGE_THROW_CRITICAL(Exception, "invalid stereo mode");
 			}
 			break;
 		default:
-			CAGE_THROW_CRITICAL(exception, "invalid eye");
+			CAGE_THROW_CRITICAL(Exception, "invalid eye");
 		}
-		stereoCameraOutput out;
+		StereoCameraOutput out;
 		vec3 p = input.position;
 		vec3 forward = input.orientation * vec3(0, 0, -1);
 		vec3 up = input.orientation * vec3(0, 1, 0);
 		switch (eye)
 		{
-		case stereoEyeEnum::Mono:
+		case StereoEyeEnum::Mono:
 			if (input.orthographic)
 				out.projection = orthographicProjection(-1, 1, -1, 1, input.near, input.far);
 			else
 				out.projection = perspectiveProjection(input.fov, aspectRatio, input.near, input.far);
 			break;
-		case stereoEyeEnum::Left:
+		case StereoEyeEnum::Left:
 			if (input.orthographic)
 				out.projection = orthographicProjection(-1, 1, -1, 1, input.near, input.far);
 			else
 				out.projection = perspectiveProjection(input.fov, aspectRatio, input.near, input.far, input.zeroParallaxDistance, -input.eyeSeparation);
 			p -= cross(forward, up) * (input.eyeSeparation * 0.5);
 			break;
-		case stereoEyeEnum::Right:
+		case StereoEyeEnum::Right:
 			if (input.orthographic)
 				out.projection = orthographicProjection(-1, 1, -1, 1, input.near, input.far);
 			else
@@ -247,7 +247,7 @@ namespace cage
 			p += cross(forward, up) * (input.eyeSeparation * 0.5);
 			break;
 		default:
-			CAGE_THROW_CRITICAL(exception, "invalid eye");
+			CAGE_THROW_CRITICAL(Exception, "invalid eye");
 		}
 		out.view = mat4(inverse(transform(p, input.orientation, input.scale)));
 		out.viewportOrigin = vec2(viewportX, viewportY);

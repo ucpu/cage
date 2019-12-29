@@ -4,15 +4,15 @@
 namespace cage
 {
 	template<class T>
-	struct scopeLock
+	struct ScopeLock
 	{
-		explicit scopeLock(holder<T> &ptr, bool tryLock) : scopeLock(ptr.get(), tryLock)
+		explicit ScopeLock(Holder<T> &ptr, bool tryLock) : ScopeLock(ptr.get(), tryLock)
 		{}
 
-		explicit scopeLock(holder<T> &ptr) : scopeLock(ptr.get())
+		explicit ScopeLock(Holder<T> &ptr) : ScopeLock(ptr.get())
 		{}
 
-		explicit scopeLock(T *ptr, bool tryLock) : ptr(ptr)
+		explicit ScopeLock(T *ptr, bool tryLock) : ptr(ptr)
 		{
 			if (tryLock)
 			{
@@ -23,25 +23,25 @@ namespace cage
 				ptr->lock();
 		}
 
-		explicit scopeLock(T *ptr) : ptr(ptr)
+		explicit ScopeLock(T *ptr) : ptr(ptr)
 		{
 			ptr->lock();
 		}
 
 		// non copyable
-		scopeLock(const scopeLock &) = delete;
-		scopeLock &operator = (const scopeLock &) = delete;
+		ScopeLock(const ScopeLock &) = delete;
+		ScopeLock &operator = (const ScopeLock &) = delete;
 
 		// move constructible
-		scopeLock(scopeLock &&other) noexcept : ptr(other.ptr)
+		ScopeLock(ScopeLock &&other) noexcept : ptr(other.ptr)
 		{
 			other.ptr = nullptr;
 		}
 
 		// not move assignable (releasing the previous lock would not be atomic)
-		scopeLock &operator = (scopeLock &&) = delete;
+		ScopeLock &operator = (ScopeLock &&) = delete;
 
-		~scopeLock()
+		~ScopeLock()
 		{
 			clear();
 		}
@@ -63,7 +63,7 @@ namespace cage
 	private:
 		T *ptr;
 
-		friend class syncConditionalBase;
+		friend class ConditionalVariableBase;
 	};
 }
 

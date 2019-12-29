@@ -7,12 +7,12 @@
 
 namespace cage
 {
-	class fileVirtual : public fileHandle
+	class fileVirtual : public File
 	{
 	public:
 		const string myPath; // full name as seen by the application
-		fileMode mode;
-		fileVirtual(const string &path, const fileMode &mode);
+		FileMode mode;
+		fileVirtual(const string &path, const FileMode &mode);
 		virtual void read(void *data, uintPtr size) = 0;
 		virtual void write(const void *data, uintPtr size) = 0;
 		virtual void seek(uintPtr position) = 0;
@@ -22,7 +22,7 @@ namespace cage
 		virtual uintPtr size() const = 0;
 	};
 
-	class directoryListVirtual : public directoryList
+	class directoryListVirtual : public DirectoryList
 	{
 	public:
 		const string myPath;
@@ -38,22 +38,22 @@ namespace cage
 	public:
 		const string myPath;
 		archiveVirtual(const string &path);
-		virtual pathTypeFlags type(const string &path) = 0;
+		virtual PathTypeFlags type(const string &path) = 0;
 		virtual void createDirectories(const string &path) = 0;
 		virtual void move(const string &from, const string &to) = 0;
 		virtual void remove(const string &path) = 0;
 		virtual uint64 lastChange(const string &path) = 0;
-		virtual holder<fileHandle> openFile(const string &path, const fileMode &mode) = 0;
-		virtual holder<directoryList> listDirectory(const string &path) = 0;
+		virtual Holder<File> openFile(const string &path, const FileMode &mode) = 0;
+		virtual Holder<DirectoryList> listDirectory(const string &path) = 0;
 	};
 
-	pathTypeFlags realType(const string &path);
+	PathTypeFlags realType(const string &path);
 	void realCreateDirectories(const string &path);
 	void realMove(const string &from, const string &to);
 	void realRemove(const string &path);
 	uint64 realLastChange(const string &path);
-	holder<fileHandle> realNewFile(const string &path, const fileMode &mode);
-	holder<directoryList> realNewDirectoryList(const string &path);
+	Holder<File> realNewFile(const string &path, const FileMode &mode);
+	Holder<DirectoryList> realNewDirectoryList(const string &path);
 
 	void mixedMove(std::shared_ptr<archiveVirtual> &af, const string &pf, std::shared_ptr<archiveVirtual> &at, const string &pt);
 	std::shared_ptr<archiveVirtual> archiveFindTowardsRoot(const string &path, bool matchExact, string &insidePath);

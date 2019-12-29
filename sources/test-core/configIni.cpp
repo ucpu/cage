@@ -1,6 +1,6 @@
 #include "main.h"
 #include <cage-core/files.h>
-#include <cage-core/configIni.h>
+#include <cage-core/ini.h>
 
 #include <vector>
 #include <algorithm>
@@ -16,7 +16,7 @@ namespace
 			CAGE_TEST(a[i] == b[i]);
 	}
 
-	std::vector<string> vectorize(const holder<pointerRange<string>> &r)
+	std::vector<string> vectorize(const Holder<PointerRange<string>> &r)
 	{
 		return std::vector<string>(r->begin(), r->end());
 	}
@@ -28,7 +28,7 @@ void testConfigIni()
 
 	{
 		CAGE_TESTCASE("basic ini");
-		holder<configIni> ini = newConfigIni();
+		Holder<Ini> ini = newConfigIni();
 		ini->setString("section", "item", "value");
 		CAGE_TEST(ini->getString("section", "item", "default") == "value");
 		CAGE_TEST(ini->getString("section", "non-item", "default") == "default");
@@ -45,7 +45,7 @@ void testConfigIni()
 
 	{
 		CAGE_TESTCASE("save ini");
-		holder<configIni> ini = newConfigIni();
+		Holder<Ini> ini = newConfigIni();
 		for (uint32 s = 3; s < 6; s++)
 			for (uint32 i = 2; i < 7; i++)
 				ini->set(string(s), string(i), string(s + i));
@@ -55,7 +55,7 @@ void testConfigIni()
 
 	{
 		CAGE_TESTCASE("load ini");
-		holder<configIni> ini = newConfigIni();
+		Holder<Ini> ini = newConfigIni();
 		ini->load("testdir/test.ini");
 		for (uint32 s = 3; s < 6; s++)
 			for (uint32 i = 2; i < 7; i++)
@@ -65,7 +65,7 @@ void testConfigIni()
 
 	{
 		CAGE_TESTCASE("parse command line arguments (no positional arguments)");
-		holder<configIni> ini = newConfigIni();
+		Holder<Ini> ini = newConfigIni();
 		const char *const cmd[] = {
 			"appName",
 			"--long",
@@ -82,7 +82,7 @@ void testConfigIni()
 
 	{
 		CAGE_TESTCASE("parse command line arguments (with positional arguments)");
-		holder<configIni> ini = newConfigIni();
+		Holder<Ini> ini = newConfigIni();
 		const char *const cmd[] = {
 			"appName",
 			"pos1",
@@ -104,7 +104,7 @@ void testConfigIni()
 
 	{
 		CAGE_TESTCASE("unused variables");
-		holder<configIni> ini = newConfigIni();
+		Holder<Ini> ini = newConfigIni();
 		ini->set("a", "1", "a1");
 		ini->set("a", "2", "a2");
 		ini->set("b", "1", "b1");
@@ -139,7 +139,7 @@ void testConfigIni()
 
 	{
 		CAGE_TESTCASE("parse command line arguments with helpers");
-		holder<configIni> ini = newConfigIni();
+		Holder<Ini> ini = newConfigIni();
 		const char *const cmd[] = {
 			"appName",
 			"pos1",

@@ -6,20 +6,20 @@ struct holderSet
 {
 	struct comparatorStruct
 	{
-		bool operator() (const holder<T> &a, const holder<T> &b) const
+		bool operator() (const Holder<T> &a, const Holder<T> &b) const
 		{
 			return *a < *b;
 		}
 	};
 
-	typedef std::set<holder<T>, comparatorStruct> type;
+	typedef std::set<Holder<T>, comparatorStruct> type;
 	typedef typename type::iterator iterator;
 
 	iterator find(const string &name) const
 	{
 		T tmp;
 		tmp.name = name;
-		holder<T> tmh(&tmp, nullptr, delegate<void(void*)>());
+		Holder<T> tmh(&tmp, nullptr, Delegate<void(void*)>());
 		return const_cast<holderSet*>(this)->data.find(tmh);
 	}
 
@@ -71,7 +71,7 @@ struct holderSet
 		return numeric_cast<uint32>(data.size());
 	}
 
-	void load(fileHandle *fileName)
+	void load(File *fileName)
 	{
 		uint32 s = 0;
 		read(fileName, s);
@@ -83,7 +83,7 @@ struct holderSet
 		}
 	}
 
-	void save(fileHandle *fileName)
+	void save(File *fileName)
 	{
 		uint32 s = size();
 		write(fileName, s);

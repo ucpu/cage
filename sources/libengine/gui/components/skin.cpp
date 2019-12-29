@@ -22,7 +22,7 @@ namespace cage
 		{
 			textFormatComponent text;
 			text.color = vec3(1, 1, 1);
-			text.font = hashString("cage/font/ubuntu/Ubuntu-R.ttf");
+			text.font = HashString("cage/font/ubuntu/Ubuntu-R.ttf");
 			text.align = textAlignEnum::Left;
 			text.lineSpacing = 0;
 			return text;
@@ -30,11 +30,11 @@ namespace cage
 
 		imageFormatComponent imageFormatComponentInit()
 		{
-			imageFormatComponent image;
-			image.animationOffset = 0;
-			image.animationSpeed = 1;
-			image.mode = imageModeEnum::Stretch;
-			return image;
+			imageFormatComponent Image;
+			Image.animationOffset = 0;
+			Image.animationSpeed = 1;
+			Image.mode = imageModeEnum::Stretch;
+			return Image;
 		}
 
 		const textFormatComponent textInit = textFormatComponentInit();
@@ -97,7 +97,7 @@ namespace cage
 		};
 	}
 
-	guiSkinConfig::guiSkinConfig() : textureName(hashString("cage/texture/gui.psd"))
+	guiSkinConfig::guiSkinConfig() : textureName(HashString("cage/texture/gui.psd"))
 	{
 		std::vector<elementTypeEnum> largeElements = {
 			elementTypeEnum::PanelBase, // overlaps SpoilerBase
@@ -293,7 +293,7 @@ namespace cage
 	guiSkinWidgetDefaults::progressBarStruct::progressBarStruct() : textFormat(textInit), backgroundImageFormat(imageInit), fillingImageFormat(imageInit), baseMargin(1, 1, 1, 1), textPadding(1, 1, 1, 1), fillingPadding(1, 1, 1, 1), size(200, 28)
 	{
 		fillingImage.animationStart = 0;
-		fillingImage.textureName = hashString("todo");
+		fillingImage.textureName = HashString("todo");
 		fillingImage.textureUvOffset = vec2();
 		fillingImage.textureUvSize = vec2(1, 1);
 	}

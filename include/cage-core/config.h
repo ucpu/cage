@@ -3,7 +3,7 @@
 
 namespace cage
 {
-	enum class configTypeEnum : uint32
+	enum class ConfigTypeEnum : uint32
 	{
 		Undefined,
 		Bool,
@@ -13,15 +13,15 @@ namespace cage
 		Uint64,
 		Float,
 		Double,
-		String,
+		string,
 	};
 
-	CAGE_API string configTypeToString(const configTypeEnum type);
+	CAGE_API string configTypeToString(const ConfigTypeEnum type);
 	CAGE_API void configSetDynamic(const string &name, const string &value);
-	CAGE_API configTypeEnum configGetType(const string &name);
+	CAGE_API ConfigTypeEnum configGetType(const string &name);
 
 #define GCHL_CONFIG(T, t) \
-	struct CAGE_API CAGE_JOIN(config, T) { CAGE_JOIN(config, T)(const string &name); CAGE_JOIN(config, T)(const string &name, t default_); operator t() const; CAGE_JOIN(config, T) &operator = (t value); private: void *data; }; \
+	struct CAGE_API CAGE_JOIN(Config, T) { CAGE_JOIN(Config, T)(const string &name); CAGE_JOIN(Config, T)(const string &name, t default_); operator t() const; CAGE_JOIN(Config, T) &operator = (t value); private: void *data; }; \
 	CAGE_API void CAGE_JOIN(configSet, T)(const string &name, t value); \
 	CAGE_API t CAGE_JOIN(configGet, T)(const string &name, t default_ = 0);
 	GCHL_CONFIG(Bool, bool)
@@ -33,24 +33,24 @@ namespace cage
 	GCHL_CONFIG(Double, double)
 #undef GCHL_CONFIG
 
-	struct CAGE_API configString
+	struct CAGE_API ConfigString
 	{
-		configString(const string &name);
-		configString(const string &name, const string &default_);
+		ConfigString(const string &name);
+		ConfigString(const string &name, const string &default_);
 		operator string() const;
-		configString &operator = (const string &value);
+		ConfigString &operator = (const string &value);
 	private:
 		void *data;
 	};
 	CAGE_API void configSetString(const string &name, const string &value);
 	CAGE_API string configGetString(const string &name, const string &default_ = "");
 
-	class CAGE_API configList : private immovable
+	class CAGE_API ConfigList : private Immovable
 	{
 	public:
 		bool valid() const;
 		string name() const;
-		configTypeEnum type() const;
+		ConfigTypeEnum type() const;
 		string typeName() const;
 		bool getBool() const;
 		sint32 getSint32() const;
@@ -63,10 +63,10 @@ namespace cage
 		void next();
 	};
 
-	CAGE_API holder<configList> newConfigList();
+	CAGE_API Holder<ConfigList> newConfigList();
 
-	CAGE_API void configApplyIni(const configIni *ini, const string &prefix);
-	CAGE_API holder<configIni> configGenerateIni(const string &prefix);
+	CAGE_API void configApplyIni(const Ini *ini, const string &prefix);
+	CAGE_API Holder<Ini> configGenerateIni(const string &prefix);
 	CAGE_API void configLoadIni(const string &filename, const string &prefix);
 	CAGE_API void configSaveIni(const string &filename, const string &prefix);
 

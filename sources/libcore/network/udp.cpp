@@ -15,7 +15,7 @@
 namespace cage
 {
 	// nomenclature:
-	// message - udpConnection methods read and write are working with messages
+	// message - UdpConnection methods read and write are working with messages
 	// packet - system functions work with packets
 	// command - messages are fragmented into commands which are grouped into packets
 
@@ -23,29 +23,29 @@ namespace cage
 	{
 		using namespace privat;
 
-		configUint32 logLevel("cage/udp/logLevel", 0);
-		configFloat confSimulatedPacketLoss("cage/udp/simulatedPacketLoss", 0);
-		configUint32 confMtu("cage/udp/maxTransferUnit", 1450);
-		configUint32 confBufferSize("cage/udp/systemBufferSize", 1024 * 1024);
+		ConfigUint32 logLevel("cage/udp/logLevel", 0);
+		ConfigFloat confSimulatedPacketLoss("cage/udp/simulatedPacketLoss", 0);
+		ConfigUint32 confMtu("cage/udp/maxTransferUnit", 1450);
+		ConfigUint32 confBufferSize("cage/udp/systemBufferSize", 1024 * 1024);
 
-#define UDP_LOG(LEVEL, MSG) { if (logLevel >= (LEVEL)) { CAGE_LOG(severityEnum::Info, "udp", stringizer() + MSG); } }
+#define UDP_LOG(LEVEL, MSG) { if (logLevel >= (LEVEL)) { CAGE_LOG(SeverityEnum::Info, "udp", stringizer() + MSG); } }
 
 		struct memView
 		{
 			memView() : offset(0), size(0)
 			{}
 
-			memView(const std::shared_ptr<memoryBuffer> &buffer, uintPtr offset, uintPtr size) : buffer(buffer), offset(offset), size(size)
+			memView(const std::shared_ptr<MemoryBuffer> &buffer, uintPtr offset, uintPtr size) : buffer(buffer), offset(offset), size(size)
 			{}
 
-			deserializer des() const
+			Deserializer des() const
 			{
-				deserializer d(*buffer);
+				Deserializer d(*buffer);
 				d.advance(offset);
 				return d.placeholder(size);
 			}
 
-			std::shared_ptr<memoryBuffer> buffer;
+			std::shared_ptr<MemoryBuffer> buffer;
 			uintPtr offset;
 			uintPtr size;
 		};
@@ -71,7 +71,7 @@ namespace cage
 			std::map<uint32, std::weak_ptr<receiverStruct>> receivers;
 			std::weak_ptr<std::vector<std::shared_ptr<receiverStruct>>> accepting;
 			std::vector<sock> socks;
-			holder<syncMutex> mut;
+			Holder<Mutex> mut;
 
 			void applyBufferSizes()
 			{
@@ -94,7 +94,7 @@ namespace cage
 							auto avail = s.available();
 							if (avail < 8)
 								break;
-							std::shared_ptr<memoryBuffer> buff = std::make_shared<memoryBuffer>();
+							std::shared_ptr<MemoryBuffer> buff = std::make_shared<MemoryBuffer>();
 							buff->resize(avail);
 							uintPtr off = 0;
 							while (avail)
@@ -109,7 +109,7 @@ namespace cage
 									UDP_LOG(7, "received invalid packet (too small)");
 									continue;
 								}
-								deserializer des = mv.des();
+								Deserializer des = mv.des();
 								{ // read signature
 									char c, a, g, e;
 									des >> c >> a >> g >> e;
@@ -265,7 +265,7 @@ namespace cage
 			return totalSize / LongSize + ((totalSize % LongSize) == 0 ? 0 : 1);
 		}
 
-		class udpConnectionImpl : public udpConnection
+		class udpConnectionImpl : public UdpConnection
 		{
 		public:
 			udpConnectionImpl(const string &address, uint16 port, uint64 timeout) : statsLastTimestamp(0), startTime(getApplicationTime()), connId(randomRange(1u, detail::numeric_limits<uint32>::max())), established(false)
@@ -287,7 +287,7 @@ namespace cage
 				}
 				sockGroup->applyBufferSizes();
 				if (sockGroup->socks.empty())
-					CAGE_THROW_ERROR(exception, "failed to connect (no sockets available)");
+					CAGE_THROW_ERROR(Exception, "failed to connect (no sockets available)");
 				UDP_LOG(2, "created " + sockGroup->socks.size() + " sockets");
 				sockReceiver = std::make_shared<sockGroupStruct::receiverStruct>();
 				sockReceiver->connId = connId;
@@ -321,7 +321,7 @@ namespace cage
 				// send connection closed packet
 				if (established)
 				{
-					detail::overrideBreakpoint ob;
+					detail::OverrideBreakpoint ob;
 					try
 					{
 						sending.cmds.clear();
@@ -384,7 +384,7 @@ namespace cage
 			{
 				struct reliableMsgStruct
 				{
-					std::shared_ptr<memoryBuffer> data;
+					std::shared_ptr<MemoryBuffer> data;
 					std::vector<bool> parts; // acked parts
 					uint16 step;
 					uint16 msgSeqn;
@@ -608,7 +608,7 @@ namespace cage
 				}
 			}
 
-			void serializeCommand(const sendingStruct::commandStruct &cmd, serializer &ser)
+			void serializeCommand(const sendingStruct::commandStruct &cmd, Serializer &ser)
 			{
 				ser << cmd.type;
 				switch (cmd.type)
@@ -646,16 +646,16 @@ namespace cage
 					ser << s.a.receivedBytes << s.a.sentBytes << s.a.time << s.b.receivedBytes << s.b.sentBytes << s.b.time << s.a.receivedPackets << s.a.sentPackets << s.b.receivedPackets << s.b.sentPackets << s.step;
 				} break;
 				default:
-					CAGE_THROW_CRITICAL(exception, "invalid udp command type enum");
+					CAGE_THROW_CRITICAL(Exception, "invalid udp command type enum");
 				}
 			}
 
 			void composePackets()
 			{
 				const uint32 mtu = confMtu;
-				memoryBuffer buff;
+				MemoryBuffer buff;
 				buff.reserve(mtu);
-				serializer ser(buff);
+				Serializer ser(buff);
 				uint16 currentPacketSeqn = 0;
 				bool empty = true;
 				for (const sendingStruct::commandStruct &cmd : sending.cmds)
@@ -667,7 +667,7 @@ namespace cage
 					{
 						dispatchPacket(buff.data(), buff.size());
 						buff.resize(0);
-						ser = serializer(buff);
+						ser = Serializer(buff);
 						empty = true;
 					}
 
@@ -717,7 +717,7 @@ namespace cage
 				{
 					composePackets();
 				}
-				catch (const cage::exception &)
+				catch (const cage::Exception &)
 				{
 					// do nothing
 				}
@@ -761,7 +761,7 @@ namespace cage
 			{
 				struct msgStruct
 				{
-					memoryBuffer data;
+					MemoryBuffer data;
 					std::vector<bool> parts; // acked parts
 					uint16 msgSeqn;
 					uint8 channel;
@@ -884,7 +884,7 @@ namespace cage
 
 			void handleStats(sendingStruct::commandUnion::statsStruct &p)
 			{
-				udpConnectionStatistics &s = stats;
+				UdpStatistics &s = stats;
 				statsLastTimestamp = getApplicationTime();
 				if (p.step > 0)
 				{
@@ -912,7 +912,7 @@ namespace cage
 				sending.cmds.push_back(templates::move(cmd));
 			}
 
-			void handleReceivedCommand(deserializer &d)
+			void handleReceivedCommand(Deserializer &d)
 			{
 				cmdTypeEnum type;
 				d >> type;
@@ -936,7 +936,7 @@ namespace cage
 							string a;
 							uint16 p;
 							sockReceiver->address.translate(a, p, true);
-							CAGE_LOG(severityEnum::Info, "udp", stringizer() + "connection established, remote address: '" + a + "', remote port: " + p);
+							CAGE_LOG(SeverityEnum::Info, "udp", stringizer() + "connection established, remote address: '" + a + "', remote port: " + p);
 						}
 						established = true;
 					}
@@ -984,7 +984,7 @@ namespace cage
 					d >> channel >> msgSeqn >> totalSize >> index;
 					uint16 totalCount = longCmdsCount(totalSize);
 					if (index >= totalCount)
-						CAGE_THROW_ERROR(exception, "invalid long message index");
+						CAGE_THROW_ERROR(Exception, "invalid long message index");
 					uint16 size = index + 1 == totalCount ? totalSize - (totalCount - 1) * LongSize : LongSize;
 					if (comp(msgSeqn, receiving.seqnPerChannel[channel]))
 					{ // obsolete
@@ -1001,7 +1001,7 @@ namespace cage
 							msg.parts.resize(totalCount);
 						}
 						else if (msg.data.size() != totalSize)
-							CAGE_THROW_ERROR(exception, "inconsistent message total size");
+							CAGE_THROW_ERROR(Exception, "inconsistent message total size");
 						msg.parts[index] = true;
 						d.read(msg.data.data() + index * LongSize, size);
 					}
@@ -1013,13 +1013,13 @@ namespace cage
 					handleStats(s);
 				} break;
 				default:
-					CAGE_THROW_ERROR(exception, "invalid message type enum");
+					CAGE_THROW_ERROR(Exception, "invalid message type enum");
 				}
 			}
 
 			void handleReceivedPacket(const memView &b)
 			{
-				deserializer d = b.des();
+				Deserializer d = b.des();
 				UDP_LOG(5, "received packet with " + d.available() + " bytes");
 				stats.bytesReceivedTotal += d.available();
 				stats.packetsReceivedTotal++;
@@ -1052,7 +1052,7 @@ namespace cage
 			{
 				std::vector<memView> packets;
 				{
-					scopeLock<syncMutex> lock(sockGroup->mut);
+					ScopeLock<Mutex> lock(sockGroup->mut);
 					sockGroup->readAll();
 					sockReceiver->packets.swap(packets);
 				}
@@ -1065,7 +1065,7 @@ namespace cage
 				{
 					throw;
 				}
-				catch (cage::exception &)
+				catch (cage::Exception &)
 				{
 					// do nothing
 				}
@@ -1075,7 +1075,7 @@ namespace cage
 
 			// COMMON
 
-			udpConnectionStatistics stats;
+			UdpStatistics stats;
 			std::shared_ptr<sockGroupStruct> sockGroup;
 			std::shared_ptr<sockGroupStruct::receiverStruct> sockReceiver;
 			uint64 statsLastTimestamp;
@@ -1092,10 +1092,10 @@ namespace cage
 				return receiving.messages.front().data.size();
 			}
 
-			memoryBuffer read(uint32 &channel, bool &reliable)
+			MemoryBuffer read(uint32 &channel, bool &reliable)
 			{
 				if (receiving.messages.empty())
-					CAGE_THROW_ERROR(exception, "no data available");
+					CAGE_THROW_ERROR(Exception, "no data available");
 				auto tmp = templates::move(receiving.messages.front());
 				receiving.messages.pop_front();
 				channel = tmp.channel & 127; // strip reliability bit
@@ -1103,7 +1103,7 @@ namespace cage
 				return templates::move(tmp.data);
 			}
 
-			void write(const memoryBuffer &buffer, uint32 channel, bool reliable)
+			void write(const MemoryBuffer &buffer, uint32 channel, bool reliable)
 			{
 				CAGE_ASSERT(channel < 128, channel, reliable);
 				CAGE_ASSERT(buffer.size() <= 16 * 1024 * 1024, buffer.size(), channel, reliable);
@@ -1111,7 +1111,7 @@ namespace cage
 					return; // ignore empty messages
 
 				auto msg = std::make_shared<sendingStruct::reliableMsgStruct>();
-				msg->data = std::make_shared<memoryBuffer>(buffer.copy());
+				msg->data = std::make_shared<MemoryBuffer>(buffer.copy());
 				msg->channel = numeric_cast<uint8>(channel + reliable * 128);
 				msg->msgSeqn = sending.seqnPerChannel[msg->channel]++;
 				if (reliable)
@@ -1125,13 +1125,13 @@ namespace cage
 
 			void service()
 			{
-				detail::overrideBreakpoint brk;
+				detail::OverrideBreakpoint brk;
 				serviceReceiving();
 				serviceSending();
 			}
 		};
 
-		class udpServerImpl : public udpServer
+		class udpServerImpl : public UdpServer
 		{
 		public:
 			udpServerImpl(uint16 port)
@@ -1154,7 +1154,7 @@ namespace cage
 				}
 				sockGroup->applyBufferSizes();
 				if (sockGroup->socks.empty())
-					CAGE_THROW_ERROR(exception, "failed to bind (no sockets available)");
+					CAGE_THROW_ERROR(Exception, "failed to bind (no sockets available)");
 				accepting = std::make_shared<std::vector<std::shared_ptr<sockGroupStruct::receiverStruct>>>();
 				sockGroup->accepting = accepting;
 				UDP_LOG(2, "listening on " + sockGroup->socks.size() + " sockets");
@@ -1165,12 +1165,12 @@ namespace cage
 				UDP_LOG(2, "destroying server");
 			}
 
-			holder<udpConnection> accept()
+			Holder<UdpConnection> accept()
 			{
-				detail::overrideBreakpoint brk;
+				detail::OverrideBreakpoint brk;
 				std::shared_ptr<sockGroupStruct::receiverStruct> acc;
 				{
-					scopeLock<syncMutex> lock(sockGroup->mut);
+					ScopeLock<Mutex> lock(sockGroup->mut);
 					sockGroup->readAll();
 					if (accepting->empty())
 						return {};
@@ -1186,7 +1186,7 @@ namespace cage
 						UDP_LOG(2, "received packets failed to initialize new connection");
 						return {};
 					}
-					return c.cast<udpConnection>();
+					return c.cast<UdpConnection>();
 				}
 				catch (...)
 				{
@@ -1199,83 +1199,83 @@ namespace cage
 		};
 	}
 
-	uintPtr udpConnection::available()
+	uintPtr UdpConnection::available()
 	{
 		udpConnectionImpl *impl = (udpConnectionImpl*)this;
 		return impl->available();
 	}
 
-	uintPtr udpConnection::read(void *buffer, uintPtr size, uint32 &channel, bool &reliable)
+	uintPtr UdpConnection::read(void *buffer, uintPtr size, uint32 &channel, bool &reliable)
 	{
-		memoryBuffer b = read(channel, reliable);
+		MemoryBuffer b = read(channel, reliable);
 		if (b.size() > size)
-			CAGE_THROW_ERROR(exception, "buffer is too small");
+			CAGE_THROW_ERROR(Exception, "buffer is too small");
 		detail::memcpy(buffer, b.data(), b.size());
 		return b.size();
 	}
 
-	uintPtr udpConnection::read(void *buffer, uintPtr size)
+	uintPtr UdpConnection::read(void *buffer, uintPtr size)
 	{
 		uint32 channel;
 		bool reliable;
 		return read(buffer, size, channel, reliable);
 	}
 
-	memoryBuffer udpConnection::read(uint32 &channel, bool &reliable)
+	MemoryBuffer UdpConnection::read(uint32 &channel, bool &reliable)
 	{
 		udpConnectionImpl *impl = (udpConnectionImpl*)this;
 		return impl->read(channel, reliable);
 	}
 
-	memoryBuffer udpConnection::read()
+	MemoryBuffer UdpConnection::read()
 	{
 		uint32 channel;
 		bool reliable;
 		return read(channel, reliable);
 	}
 
-	void udpConnection::write(const void *buffer, uintPtr size, uint32 channel, bool reliable)
+	void UdpConnection::write(const void *buffer, uintPtr size, uint32 channel, bool reliable)
 	{
-		memoryBuffer b(size);
+		MemoryBuffer b(size);
 		detail::memcpy(b.data(), buffer, size);
 		write(b, channel, reliable);
 	}
 
-	void udpConnection::write(const memoryBuffer &buffer, uint32 channel, bool reliable)
+	void UdpConnection::write(const MemoryBuffer &buffer, uint32 channel, bool reliable)
 	{
 		udpConnectionImpl *impl = (udpConnectionImpl*)this;
 		impl->write(buffer, channel, reliable);
 	}
 
-	void udpConnection::update()
+	void UdpConnection::update()
 	{
 		udpConnectionImpl *impl = (udpConnectionImpl*)this;
 		impl->service();
 	}
 
-	const udpConnectionStatistics &udpConnection::statistics() const
+	const UdpStatistics &UdpConnection::statistics() const
 	{
 		const udpConnectionImpl *impl = (const udpConnectionImpl*)this;
 		return impl->stats;
 	}
 
-	holder<udpConnection> udpServer::accept()
+	Holder<UdpConnection> UdpServer::accept()
 	{
 		udpServerImpl *impl = (udpServerImpl*)this;
 		return impl->accept();
 	}
 
-	holder<udpConnection> newUdpConnection(const string &address, uint16 port, uint64 timeout)
+	Holder<UdpConnection> newUdpConnection(const string &address, uint16 port, uint64 timeout)
 	{
-		return detail::systemArena().createImpl<udpConnection, udpConnectionImpl>(address, port, timeout);
+		return detail::systemArena().createImpl<UdpConnection, udpConnectionImpl>(address, port, timeout);
 	}
 
-	holder<udpServer> newUdpServer(uint16 port)
+	Holder<UdpServer> newUdpServer(uint16 port)
 	{
-		return detail::systemArena().createImpl<udpServer, udpServerImpl>(port);
+		return detail::systemArena().createImpl<UdpServer, udpServerImpl>(port);
 	}
 
-	udpConnectionStatistics::udpConnectionStatistics()
+	UdpStatistics::UdpStatistics()
 	{
 		detail::memset(this, 0, sizeof(*this));
 	}

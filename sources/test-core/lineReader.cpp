@@ -8,12 +8,12 @@ void testLineReader()
 
 	const string data("abc\ndef\r\nghi\n\nlast");
 	{
-		newFile("testdir/lineReaderTest", fileMode(false, true))->write(data.c_str(), data.length());
+		newFile("testdir/lineReaderTest", FileMode(false, true))->write(data.c_str(), data.length());
 	}
 
 	{
 		CAGE_TESTCASE("line reader from memory");
-		holder<lineReader> lr = newLineReader(data.c_str(), data.length());
+		Holder<LineReader> lr = newLineReader(data.c_str(), data.length());
 		string l;
 		CAGE_TEST(lr->readLine(l));
 		CAGE_TEST(l == "abc");
@@ -30,7 +30,7 @@ void testLineReader()
 
 	{
 		CAGE_TESTCASE("line reading from file (binary)");
-		holder<fileHandle> lr = newFile("testdir/lineReaderTest", fileMode(true, false));
+		Holder<File> lr = newFile("testdir/lineReaderTest", FileMode(true, false));
 		string l;
 		CAGE_TEST(lr->readLine(l));
 		CAGE_TEST(l == "abc");
@@ -48,7 +48,7 @@ void testLineReader()
 	{
 		// reading a file in text mode has been disabled
 		CAGE_TESTCASE("line reading from file (textual)");
-		fileMode fm(true, false);
+		FileMode fm(true, false);
 		fm.textual = true;
 		CAGE_TEST_ASSERTED(newFile("testdir/lineReaderTest", fm));
 	}

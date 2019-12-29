@@ -1,9 +1,9 @@
 namespace cage
 {
-	class CAGE_API soundSource : private immovable
+	class CAGE_API soundSource : private Immovable
 	{
 #ifdef CAGE_DEBUG
-		detail::stringBase<64> debugName;
+		detail::StringBase<64> debugName;
 #endif // CAGE_DEBUG
 
 	public:
@@ -25,8 +25,8 @@ namespace cage
 		uint32 getSampleRate() const;
 	};
 
-	CAGE_API holder<soundSource> newSoundSource(soundContext *context);
+	CAGE_API Holder<soundSource> newSoundSource(soundContext *context);
 
-	CAGE_API assetScheme genAssetSchemeSoundSource(uint32 threadIndex, soundContext *memoryContext);
+	CAGE_API AssetScheme genAssetSchemeSoundSource(uint32 threadIndex, soundContext *memoryContext);
 	static const uint32 assetSchemeIndexSoundSource = 20;
 }

@@ -2,14 +2,14 @@ namespace cage
 {
 	struct CAGE_API transformComponent : public transform
 	{
-		static entityComponent *component;
-		static entityComponent *componentHistory;
+		static EntityComponent *component;
+		static EntityComponent *componentHistory;
 		transformComponent(const transform &t = transform());
 	};
 
 	struct CAGE_API renderComponent
 	{
-		static entityComponent *component;
+		static EntityComponent *component;
 		vec3 color;
 		real opacity;
 		uint32 object;
@@ -19,7 +19,7 @@ namespace cage
 
 	struct CAGE_API textureAnimationComponent
 	{
-		static entityComponent *component;
+		static EntityComponent *component;
 		uint64 startTime;
 		real speed;
 		real offset;
@@ -28,7 +28,7 @@ namespace cage
 
 	struct CAGE_API skeletalAnimationComponent
 	{
-		static entityComponent *component;
+		static EntityComponent *component;
 		uint64 startTime;
 		uint32 name;
 		real speed;
@@ -38,7 +38,7 @@ namespace cage
 
 	struct CAGE_API lightComponent
 	{
-		static entityComponent *component;
+		static EntityComponent *component;
 		vec3 color;
 		vec3 attenuation; // constant, linear, quadratic
 		rads spotAngle;
@@ -50,7 +50,7 @@ namespace cage
 
 	struct CAGE_API shadowmapComponent
 	{
-		static entityComponent *component;
+		static EntityComponent *component;
 		// directional: width, height, depth
 		// spot: near, far, unused
 		vec3 worldSize;
@@ -61,7 +61,7 @@ namespace cage
 
 	struct CAGE_API renderTextComponent
 	{
-		static entityComponent *component;
+		static EntityComponent *component;
 		string value; // list of parameters separated by '|' when formatted, otherwise the string as is
 		vec3 color;
 		//real opacity;
@@ -74,7 +74,7 @@ namespace cage
 
 	struct CAGE_API cameraComponent : public cameraEffects
 	{
-		static entityComponent *component;
+		static EntityComponent *component;
 		vec3 ambientLight;
 		vec3 ambientDirectionalLight; // fake forward light affected by ssao
 		vec2 viewportOrigin; // [0..1]
@@ -98,7 +98,7 @@ namespace cage
 
 	struct CAGE_API voiceComponent
 	{
-		static entityComponent *component;
+		static EntityComponent *component;
 		uint64 startTime;
 		mixingBus *input;
 		uint32 name;
@@ -108,7 +108,7 @@ namespace cage
 
 	struct CAGE_API listenerComponent
 	{
-		static entityComponent *component;
+		static EntityComponent *component;
 		vec3 attenuation; // constant, linear, quadratic
 		mixingBus *output;
 		uint32 sceneMask;

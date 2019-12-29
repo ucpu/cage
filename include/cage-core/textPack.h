@@ -3,7 +3,7 @@
 
 namespace cage
 {
-	class CAGE_API textPack : private immovable
+	class CAGE_API TextPack : private Immovable
 	{
 	public:
 		void set(uint32 name, const string &text);
@@ -16,9 +16,9 @@ namespace cage
 		static string format(const string &format, uint32 paramCount, const string *paramValues);
 	};
 
-	CAGE_API holder<textPack> newTextPack();
+	CAGE_API Holder<TextPack> newTextPack();
 
-	CAGE_API assetScheme genAssetSchemeTextPackage(const uint32 threadIndex);
+	CAGE_API AssetScheme genAssetSchemeTextPackage(const uint32 threadIndex);
 	static const uint32 assetSchemeIndexTextPackage = 2;
 }
 

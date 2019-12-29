@@ -324,25 +324,25 @@ namespace
 		}
 		{
 			CAGE_TESTCASE("different baseString<N>");
-			detail::stringBase<128> a = "ahoj";
+			detail::StringBase<128> a = "ahoj";
 			string b = "nazdar";
-			detail::stringBase<1024> c = "cau";
+			detail::StringBase<1024> c = "cau";
 			string d = a + b + c;
 			CAGE_TEST(d == "ahojnazdarcau");
 		}
 		{
 			CAGE_TESTCASE("hashed string");
-			hashString("");
-			hashString("1");
-			hashString("12");
-			hashString("123");
+			HashString("");
+			HashString("1");
+			HashString("12");
+			HashString("123");
 			string a = "hel";
 			string b = "lo";
-			uint32 compile_time = hashString("hello");
+			uint32 compile_time = HashString("hello");
 			string c = a + b;
-			uint32 run_time = hashString(c.c_str());
+			uint32 run_time = HashString(c.c_str());
 			CAGE_TEST(compile_time == run_time);
-			uint32 different = hashString("different");
+			uint32 different = HashString("different");
 			CAGE_TEST(compile_time != different);
 		}
 	}
@@ -699,7 +699,7 @@ namespace
 	};
 
 	template<uint32 N>
-	detail::stringizerBase<N> &operator + (detail::stringizerBase<N> &str, const customStruct &other)
+	detail::StringizerBase<N> &operator + (detail::StringizerBase<N> &str, const customStruct &other)
 	{
 		return str + other.value;
 	}

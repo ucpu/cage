@@ -46,7 +46,7 @@ namespace cage
 		Divide,
 	};
 
-	class CAGE_API noiseFunction : private immovable
+	class CAGE_API NoiseFunction : private Immovable
 	{
 	public:
 		real evaluate(real position);
@@ -59,7 +59,7 @@ namespace cage
 		void evaluate(uint32 count, const vec4 positions[], real results[]);
 	};
 
-	struct CAGE_API noiseFunctionCreateConfig
+	struct CAGE_API NoiseFunctionCreateConfig
 	{
 		noiseTypeEnum type;
 		noiseInterpolationEnum interpolation;
@@ -73,10 +73,10 @@ namespace cage
 		real frequency;
 		uint8 index0, index1;
 
-		noiseFunctionCreateConfig(uint32 seed = 1337);
+		NoiseFunctionCreateConfig(uint32 seed = 1337);
 	};
 
-	CAGE_API holder<noiseFunction> newNoiseFunction(const noiseFunctionCreateConfig &config);
+	CAGE_API Holder<NoiseFunction> newNoiseFunction(const NoiseFunctionCreateConfig &config);
 }
 
 #endif // guard_noiseFunction_h_189F28C1827941F488646FA87D7913F4

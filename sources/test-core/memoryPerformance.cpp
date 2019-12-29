@@ -42,7 +42,7 @@ namespace
 		::free(read(ptr));
 	}
 
-	memoryArena arena;
+	MemoryArena arena;
 
 	void *allocateMemory()
 	{
@@ -58,7 +58,7 @@ namespace
 	uint64 measure()
 	{
 		detail::memset(allocated, 1, (INPUT_SIZE + 1) * sizeof(void*));
-		holder<timer> tmr = newTimer();
+		Holder<Timer> tmr = newTimer();
 		uint32 allocations = 0;
 		for (uint32 cycle = 0; cycle < CYCLES_COUNT; cycle++)
 		{
@@ -83,21 +83,21 @@ namespace
 	{
 		typedef memoryArenaGrowing<memoryAllocatorPolicyPool<AllocSize>, Concurrent> pool;
 		pool a((INPUT_SIZE + 5) * (AllocSize + sizeof(uintPtr) * 3));
-		arena = memoryArena(&a);
+		arena = MemoryArena(&a);
 
 		uint64 system = measure<&allocateSystem, &deallocateSystem>();
 		uint64 memory = measure<&allocateMemory, &deallocateMemory>();
-		CAGE_LOG(severityEnum::Info, "performance", stringizer() + "timing: " + system + "\t" + memory + "\t" + (memory < system ? "better" : "worse") + "\t" + ((float)memory / (float)system));
+		CAGE_LOG(SeverityEnum::Info, "performance", stringizer() + "timing: " + system + "\t" + memory + "\t" + (memory < system ? "better" : "worse") + "\t" + ((float)memory / (float)system));
 	}
 
 	template<uintPtr AllocSize>
 	void measureAllocSize(uintPtr realAllocs)
 	{
-		CAGE_LOG(severityEnum::Info, "performance", stringizer() + "Atom " + AllocSize + ", allocations " + realAllocs + " bytes");
+		CAGE_LOG(SeverityEnum::Info, "performance", stringizer() + "Atom " + AllocSize + ", allocations " + realAllocs + " bytes");
 		allocSize = realAllocs;
-		CAGE_LOG(severityEnum::Info, "performance", "no concurrency");
+		CAGE_LOG(SeverityEnum::Info, "performance", "no concurrency");
 		measureArena<memoryConcurrentPolicyNone, AllocSize>();
-		CAGE_LOG(severityEnum::Info, "performance", "mutex arena");
+		CAGE_LOG(SeverityEnum::Info, "performance", "mutex arena");
 		measureArena<memoryConcurrentPolicyMutex, AllocSize>();
 	}
 }

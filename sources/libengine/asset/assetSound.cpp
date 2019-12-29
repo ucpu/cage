@@ -13,7 +13,7 @@ namespace cage
 {
 	namespace
 	{
-		void processDecompress(const assetContext *context, void *schemePointer)
+		void processDecompress(const AssetContext *context, void *schemePointer)
 		{
 			soundSourceHeader *snd = (soundSourceHeader*)context->compressedData;
 			switch (snd->soundType)
@@ -24,7 +24,7 @@ namespace cage
 			case soundTypeEnum::CompressedRaw:
 				break; // decode now
 			default:
-				CAGE_THROW_CRITICAL(exception, "invalid sound type");
+				CAGE_THROW_CRITICAL(Exception, "invalid sound type");
 			}
 			soundPrivat::vorbisDataStruct vds;
 			vds.init((char*)context->compressedData + sizeof(soundSourceHeader), numeric_cast<uintPtr>(context->compressedSize - sizeof(soundSourceHeader)));
@@ -35,7 +35,7 @@ namespace cage
 			CAGE_ASSERT(snd->sampleRate == r, snd->sampleRate, r);
 		}
 
-		void processLoad(const assetContext *context, void *schemePointer)
+		void processLoad(const AssetContext *context, void *schemePointer)
 		{
 			soundContext *gm = (soundContext*)schemePointer;
 
@@ -68,14 +68,14 @@ namespace cage
 				source->setDataVorbis(numeric_cast<uintPtr>(context->compressedSize - sizeof(soundSourceHeader)), ((char*)context->compressedData + sizeof(soundSourceHeader)));
 				break;
 			default:
-				CAGE_THROW_CRITICAL(exception, "invalid sound type");
+				CAGE_THROW_CRITICAL(Exception, "invalid sound type");
 			}
 		}
 	}
 
-	assetScheme genAssetSchemeSoundSource(uint32 threadIndex, soundContext *memoryContext)
+	AssetScheme genAssetSchemeSoundSource(uint32 threadIndex, soundContext *memoryContext)
 	{
-		assetScheme s;
+		AssetScheme s;
 		s.threadIndex = threadIndex;
 		s.schemePointer = memoryContext;
 		s.decompress.bind<&processDecompress>();

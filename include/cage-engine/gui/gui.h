@@ -10,10 +10,10 @@ namespace cage
 
 	struct CAGE_API guiComponents : public privat::guiGeneralComponents, public privat::guiWidgetsComponents, public privat::guiLayoutsComponents
 	{
-		guiComponents(entityManager *ents);
+		guiComponents(EntityManager *ents);
 	};
 
-	class CAGE_API guiManager : private immovable
+	class CAGE_API guiManager : private Immovable
 	{
 	public:
 		void graphicsInitialize();
@@ -50,31 +50,31 @@ namespace cage
 		void handleWindowEvents(windowHandle *window, sint32 order = 0);
 		void skipAllEventsUntilNextUpdate();
 		ivec2 getInputResolution() const;
-		delegate<bool(const ivec2&, vec2&)> eventCoordinatesTransformer; // called from controlUpdateStart or from any window events, it should return false to signal that the point is outside the gui, otherwise the point should be converted from window coordinate system to the gui output resolution coordinate system
-		eventDispatcher<bool(uint32)> widgetEvent; // called from controlUpdateStart or window events
+		Delegate<bool(const ivec2&, vec2&)> eventCoordinatesTransformer; // called from controlUpdateStart or from any window events, it should return false to signal that the point is outside the gui, otherwise the point should be converted from window coordinate system to the gui output resolution coordinate system
+		EventDispatcher<bool(uint32)> widgetEvent; // called from controlUpdateStart or window events
 
 		guiSkinConfig &skin(uint32 index = 0);
 		const guiSkinConfig &skin(uint32 index = 0) const;
 
 		guiComponents &components();
-		entityManager *entities();
-		assetManager *assets();
+		EntityManager *entities();
+		AssetManager *assets();
 	};
 
 	struct CAGE_API guiManagerCreateConfig
 	{
-		assetManager *assetMgr;
-		entityManagerCreateConfig *entitiesConfig;
+		AssetManager *assetMgr;
+		EntityManagerCreateConfig *entitiesConfig;
 		uintPtr itemsArenaSize;
 		uintPtr emitArenaSize;
 		uint32 skinsCount;
 		guiManagerCreateConfig();
 	};
 
-	CAGE_API holder<guiManager> newGuiManager(const guiManagerCreateConfig &config);
+	CAGE_API Holder<guiManager> newGuiManager(const guiManagerCreateConfig &config);
 
 	namespace detail
 	{
-		CAGE_API holder<image> guiSkinTemplateExport(const guiSkinConfig &skin, uint32 resolution);
+		CAGE_API Holder<Image> guiSkinTemplateExport(const guiSkinConfig &skin, uint32 resolution);
 	}
 }

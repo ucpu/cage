@@ -39,7 +39,7 @@ namespace cage
 		class fontImpl : public fontFace
 		{
 		public:
-			holder<renderTexture> tex;
+			Holder<renderTexture> tex;
 			uint32 texWidth, texHeight;
 			shaderProgram *shr;
 			renderMesh *msh;
@@ -132,7 +132,7 @@ namespace cage
 				case textAlignEnum::Left: break;
 				case textAlignEnum::Right: x = data.format->wrapWidth - lineWidth; break;
 				case textAlignEnum::Center: x = (data.format->wrapWidth - lineWidth) / 2; break;
-				default: CAGE_THROW_CRITICAL(exception, "invalid align enum value");
+				default: CAGE_THROW_CRITICAL(Exception, "invalid align enum value");
 				}
 
 				vec2 mousePos = data.mousePosition + vec2(-x, lineY + lineHeight * data.format->size);
@@ -238,14 +238,14 @@ namespace cage
 					uint32 b = s - a * CAGE_SHADER_MAX_CHARACTERS;
 					for (uint32 i = 0; i < a; i++)
 					{
-						holder<uniformBuffer> uni = newUniformBuffer();
+						Holder<uniformBuffer> uni = newUniformBuffer();
 						uni->bind(1);
 						uni->writeWhole(&instances[i * CAGE_SHADER_MAX_CHARACTERS], sizeof(InstanceStruct) * CAGE_SHADER_MAX_CHARACTERS, GL_STREAM_DRAW);
 						msh->dispatch(CAGE_SHADER_MAX_CHARACTERS);
 					}
 					if (b)
 					{
-						holder<uniformBuffer> uni = newUniformBuffer();
+						Holder<uniformBuffer> uni = newUniformBuffer();
 						uni->bind(1);
 						uni->writeWhole(&instances[a * CAGE_SHADER_MAX_CHARACTERS], sizeof(InstanceStruct) * b, GL_STREAM_DRAW);
 						msh->dispatch(b);
@@ -302,7 +302,7 @@ namespace cage
 			impl->tex->image2d(width, height, GL_RGB32F, GL_RGB, GL_FLOAT, data);
 			break;
 		default:
-			CAGE_THROW_ERROR(exception, "unsupported bpp");
+			CAGE_THROW_ERROR(Exception, "unsupported bpp");
 		}
 		impl->tex->filters(GL_LINEAR, GL_LINEAR, 0);
 		impl->tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
@@ -398,7 +398,7 @@ namespace cage
 		((fontImpl*)this)->processText(data);
 	}
 
-	holder<fontFace> newFontFace()
+	Holder<fontFace> newFontFace()
 	{
 		return detail::systemArena().createImpl<fontFace, fontImpl>();
 	}

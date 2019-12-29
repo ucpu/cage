@@ -20,7 +20,7 @@ namespace cage
 				return false;
 
 			if (len > detail::numeric_limits<uint32>::max())
-				CAGE_THROW_ERROR(exception, "line too long");
+				CAGE_THROW_ERROR(Exception, "line too long");
 
 			output = string(buffer, numeric_cast<uint32>(len));
 
@@ -39,45 +39,45 @@ namespace cage
 
 	namespace
 	{
-		class lineReaderImpl : public lineReader
+		class lineReaderImpl : public LineReader
 		{
 		public:
 			lineReaderImpl(const char *buff, uintPtr size) : buffer(buff), size(size)
 			{}
 
-			lineReaderImpl(memoryBuffer &&buff) : mb(templates::move(buff)), buffer(mb.data()), size(mb.size())
+			lineReaderImpl(MemoryBuffer &&buff) : mb(templates::move(buff)), buffer(mb.data()), size(mb.size())
 			{}
 
-			memoryBuffer mb;
+			MemoryBuffer mb;
 			const char *buffer;
 			uintPtr size;
 		};
 	}
 
-	bool lineReader::readLine(string &line)
+	bool LineReader::readLine(string &line)
 	{
 		lineReaderImpl *impl = (lineReaderImpl*)this;
 		return detail::readLine(line, impl->buffer, impl->size, false);
 	}
 
-	uintPtr lineReader::left() const
+	uintPtr LineReader::left() const
 	{
 		lineReaderImpl *impl = (lineReaderImpl*)this;
 		return impl->size;
 	}
 
-	holder<lineReader> newLineReader(const char *buffer, uintPtr size)
+	Holder<LineReader> newLineReader(const char *buffer, uintPtr size)
 	{
-		return detail::systemArena().createImpl<lineReader, lineReaderImpl>(buffer, size);
+		return detail::systemArena().createImpl<LineReader, lineReaderImpl>(buffer, size);
 	}
 
-	holder<lineReader> newLineReader(const memoryBuffer &buffer)
+	Holder<LineReader> newLineReader(const MemoryBuffer &buffer)
 	{
-		return detail::systemArena().createImpl<lineReader, lineReaderImpl>(buffer.data(), buffer.size());
+		return detail::systemArena().createImpl<LineReader, lineReaderImpl>(buffer.data(), buffer.size());
 	}
 
-	holder<lineReader> newLineReader(memoryBuffer &&buffer)
+	Holder<LineReader> newLineReader(MemoryBuffer &&buffer)
 	{
-		return detail::systemArena().createImpl<lineReader, lineReaderImpl>(templates::move(buffer));
+		return detail::systemArena().createImpl<LineReader, lineReaderImpl>(templates::move(buffer));
 	}
 }

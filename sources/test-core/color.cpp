@@ -66,7 +66,7 @@ void testColor()
 
 	{
 		CAGE_TESTCASE("color interpolation");
-		holder<image> png = newImage();
+		Holder<Image> png = newImage();
 		png->empty(100, 100, 3);
 		for (uint32 y = 0; y < 100; y++)
 		{

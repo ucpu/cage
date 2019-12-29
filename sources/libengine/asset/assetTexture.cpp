@@ -15,9 +15,9 @@ namespace cage
 {
 	namespace
 	{
-		configUint32 textureDownscale("cage/graphics/textureDownscale", 1);
+		ConfigUint32 textureDownscale("cage/graphics/textureDownscale", 1);
 
-		void processLoad(const assetContext *context, void *schemePointer)
+		void processLoad(const AssetContext *context, void *schemePointer)
 		{
 			renderTextureHeader *data = (renderTextureHeader*)context->originalData;
 
@@ -59,9 +59,9 @@ namespace cage
 		}
 	}
 
-	assetScheme genAssetSchemeRenderTexture(uint32 threadIndex, windowHandle *memoryContext)
+	AssetScheme genAssetSchemeRenderTexture(uint32 threadIndex, windowHandle *memoryContext)
 	{
-		assetScheme s;
+		AssetScheme s;
 		s.threadIndex = threadIndex;
 		s.schemePointer = memoryContext;
 		s.load.bind<&processLoad>();

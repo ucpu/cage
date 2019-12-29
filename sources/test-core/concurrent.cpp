@@ -6,25 +6,25 @@ namespace
 {
 	uint32 counterGlobal;
 	thread_local uint32 counterLocal;
-	syncMutex *mutexGlobal;
-	syncSemaphore *semaphoreGlobal;
-	syncBarrier *barrierGlobal;
+	Mutex *mutexGlobal;
+	Semaphore *semaphoreGlobal;
+	Barrier *barrierGlobal;
 
 	void threadTest()
 	{
 		for (uint32 i = 0; i < 100; i++)
-			scopeLock<syncBarrier> l(barrierGlobal);
+			ScopeLock<Barrier> l(barrierGlobal);
 	}
 
 	void mutexTest(uint32 idx, uint32)
 	{
-		scopeLock<syncMutex> l(mutexGlobal);
+		ScopeLock<Mutex> l(mutexGlobal);
 		counterGlobal += idx;
 	}
 
 	void semaphoreTest(uint32 idx, uint32)
 	{
-		scopeLock<syncSemaphore> l(semaphoreGlobal);
+		ScopeLock<Semaphore> l(semaphoreGlobal);
 		counterGlobal += idx;
 	}
 
@@ -37,7 +37,7 @@ namespace
 	{
 		CAGE_TEST(counterLocal == 100 * idx);
 		{
-			scopeLock<syncMutex> l(mutexGlobal);
+			ScopeLock<Mutex> l(mutexGlobal);
 			counterGlobal += idx;
 		}
 	}
@@ -48,7 +48,7 @@ namespace
 		{
 			threadSleep(2000);
 			{
-				scopeLock<syncMutex> l(mutexGlobal);
+				ScopeLock<Mutex> l(mutexGlobal);
 				counterGlobal += 1;
 			}
 		}
@@ -56,7 +56,7 @@ namespace
 
 	void tryLockTest()
 	{
-		if (scopeLock<syncMutex>(mutexGlobal, true))
+		if (ScopeLock<Mutex>(mutexGlobal, true))
 		{
 			CAGE_TEST(false);
 		}
@@ -66,9 +66,9 @@ namespace
 void testConcurrent()
 {
 	CAGE_TESTCASE("concurrent");
-	holder<syncBarrier> barrier = newSyncBarrier(4);
-	holder<syncMutex> mutex = newSyncMutex();
-	holder<syncSemaphore> semaphore = newSyncSemaphore(1, 1);
+	Holder<Barrier> barrier = newSyncBarrier(4);
+	Holder<Mutex> mutex = newSyncMutex();
+	Holder<Semaphore> semaphore = newSyncSemaphore(1, 1);
 	barrierGlobal = barrier.get();
 	mutexGlobal = mutex.get();
 	semaphoreGlobal = semaphore.get();
@@ -77,9 +77,9 @@ void testConcurrent()
 		CAGE_TESTCASE("try lock mutex");
 		for (uint32 i = 0; i < 3; i++)
 		{
-			if (auto lock = scopeLock<syncMutex>(mutex, true))
+			if (auto lock = ScopeLock<Mutex>(mutex, true))
 			{
-				newThread(delegate<void()>().bind<&tryLockTest>(), "try lock");
+				newThread(Delegate<void()>().bind<&tryLockTest>(), "try lock");
 			}
 			else
 			{
@@ -90,9 +90,9 @@ void testConcurrent()
 
 	{
 		CAGE_TESTCASE("barrier");
-		holder<threadHandle> thrs[4];
+		Holder<Thread> thrs[4];
 		for (uint32 i = 0; i < 4; i++)
-			thrs[i] = newThread(delegate<void()>().bind<&threadTest>(), stringizer() + "worker_" + i);
+			thrs[i] = newThread(Delegate<void()>().bind<&threadTest>(), stringizer() + "worker_" + i);
 		for (uint32 i = 0; i < 4; i++)
 			thrs[i]->wait();
 	}
@@ -102,7 +102,7 @@ void testConcurrent()
 		{
 			CAGE_TESTCASE("global variable (mutex)");
 			counterGlobal = 0;
-			holder<threadPool> thrs = newThreadPool("worker_", 4);
+			Holder<ThreadPool> thrs = newThreadPool("worker_", 4);
 			thrs->function.bind<&mutexTest>();
 			for (uint32 i = 0; i < 100; i++)
 				thrs->run();
@@ -111,7 +111,7 @@ void testConcurrent()
 		{
 			CAGE_TESTCASE("global variable (semaphore)");
 			counterGlobal = 0;
-			holder<threadPool> thrs = newThreadPool("worker_", 4);
+			Holder<ThreadPool> thrs = newThreadPool("worker_", 4);
 			thrs->function.bind<&semaphoreTest>();
 			for (uint32 i = 0; i < 100; i++)
 				thrs->run();
@@ -121,7 +121,7 @@ void testConcurrent()
 			CAGE_TESTCASE("thread local variable");
 			counterGlobal = 0;
 			counterLocal = 0;
-			holder<threadPool> thrs = newThreadPool("worker_", 4);
+			Holder<ThreadPool> thrs = newThreadPool("worker_", 4);
 			thrs->function.bind<&barrierTest>();
 			for (uint32 i = 0; i < 100; i++)
 				thrs->run();
@@ -133,7 +133,7 @@ void testConcurrent()
 		{
 			CAGE_TESTCASE("thread-pool run must block");
 			counterGlobal = 0;
-			holder<threadPool> thrs = newThreadPool("worker_", 4);
+			Holder<ThreadPool> thrs = newThreadPool("worker_", 4);
 			thrs->function.bind<&longTimeTest>();
 			thrs->run();
 			CAGE_TEST(counterGlobal == 40);

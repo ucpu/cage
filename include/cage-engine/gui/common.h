@@ -91,7 +91,7 @@ namespace cage
 
 	struct CAGE_API eventComponent
 	{
-		delegate<bool(uint32)> event;
+		Delegate<bool(uint32)> event;
 		eventComponent();
 	};
 
@@ -101,10 +101,10 @@ namespace cage
 	{
 		struct CAGE_API guiGeneralComponents
 		{
-#define GCHL_GENERATE(T) entityComponent *T;
+#define GCHL_GENERATE(T) EntityComponent *T;
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_COMMON_COMPONENTS));
 #undef GCHL_GENERATE
-			guiGeneralComponents(entityManager *ents);
+			guiGeneralComponents(EntityManager *ents);
 		};
 	}
 }

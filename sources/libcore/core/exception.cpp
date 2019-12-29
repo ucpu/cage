@@ -9,32 +9,32 @@ namespace cage
 
 	namespace
 	{
-		severityEnum &localExceptionSilenceSeverity()
+		SeverityEnum &localExceptionSilenceSeverity()
 		{
-			thread_local severityEnum sev = (severityEnum)0;
+			thread_local SeverityEnum sev = (SeverityEnum)0;
 			return sev;
 		}
 
-		std::atomic<severityEnum> &globalExceptionSilenceSeverity()
+		std::atomic<SeverityEnum> &globalExceptionSilenceSeverity()
 		{
-			static std::atomic<severityEnum> sev = { (severityEnum)0 };
+			static std::atomic<SeverityEnum> sev = { (SeverityEnum)0 };
 			return sev;
 		}
 	}
 
 	namespace detail
 	{
-		overrideException::overrideException(severityEnum severity) : original(localExceptionSilenceSeverity())
+		OverrideException::OverrideException(SeverityEnum severity) : original(localExceptionSilenceSeverity())
 		{
 			localExceptionSilenceSeverity() = severity;
 		}
 
-		overrideException::~overrideException()
+		OverrideException::~OverrideException()
 		{
 			localExceptionSilenceSeverity() = original;
 		}
 
-		void setGlobalExceptionOverride(severityEnum severity)
+		void setGlobalExceptionOverride(SeverityEnum severity)
 		{
 			globalExceptionSilenceSeverity() = severity;
 		}
@@ -42,21 +42,21 @@ namespace cage
 
 	namespace
 	{
-		severityEnum getExceptionSilenceSeverity()
+		SeverityEnum getExceptionSilenceSeverity()
 		{
-			return localExceptionSilenceSeverity() > (severityEnum)globalExceptionSilenceSeverity() ? localExceptionSilenceSeverity() : (severityEnum)globalExceptionSilenceSeverity();
+			return localExceptionSilenceSeverity() > (SeverityEnum)globalExceptionSilenceSeverity() ? localExceptionSilenceSeverity() : (SeverityEnum)globalExceptionSilenceSeverity();
 		}
 	}
 
 	// exception
 
-	exception::exception(const char *file, uint32 line, const char *function, severityEnum severity, const char *message) noexcept : file(file), function(function), line(line), message(message), severity(severity)
+	Exception::Exception(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept : file(file), function(function), line(line), message(message), severity(severity)
 	{};
 
-	exception::~exception() noexcept
+	Exception::~Exception() noexcept
 	{};
 
-	void exception::makeLog()
+	void Exception::makeLog()
 	{
 		if (severity < getExceptionSilenceSeverity())
 			return;
@@ -64,29 +64,29 @@ namespace cage
 		::cage::detail::debugBreakpoint();
 	}
 
-	void exception::log()
+	void Exception::log()
 	{
 		::cage::privat::makeLog(file, line, function, severity, "exception", message, false, false);
 	};
 
-	// notImplemented
+	// NotImplemented
 
-	notImplemented::notImplemented(const char *file, uint32 line, const char *function, severityEnum severity, const char *message) noexcept : exception(file, line, function, severity, message)
+	NotImplemented::NotImplemented(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept : Exception(file, line, function, severity, message)
 	{};
 
-	void notImplemented::log()
+	void NotImplemented::log()
 	{
 		::cage::privat::makeLog(file, line, function, severity, "exception", string() + "not implemented: '" + message + "'", false, false);
 	};
 
-	// systemError
+	// SystemError
 
-	systemError::systemError(const char *file, uint32 line, const char *function, severityEnum severity, const char *message, uint32 code) noexcept : exception(file, line, function, severity, message), code(code)
+	SystemError::SystemError(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message, uint32 code) noexcept : Exception(file, line, function, severity, message), code(code)
 	{};
 
-	void systemError::log()
+	void SystemError::log()
 	{
-		::cage::privat::makeLog(file, line, function, severityEnum::Note, "exception", stringizer() + "code: " + code, false, false);
+		::cage::privat::makeLog(file, line, function, SeverityEnum::Note, "exception", stringizer() + "code: " + code, false, false);
 		::cage::privat::makeLog(file, line, function, severity, "exception", message, false, false);
 	};
 }

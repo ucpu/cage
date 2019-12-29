@@ -67,14 +67,14 @@ namespace cage
 		return lod;
 	}
 
-	pointerRange<const uint32> renderObject::meshes(uint32 lod) const
+	PointerRange<const uint32> renderObject::meshes(uint32 lod) const
 	{
 		objectImpl *impl = (objectImpl*)this;
 		CAGE_ASSERT(lod < lodsCount());
 		return { impl->names.data() + impl->indices[lod], impl->names.data() + impl->indices[lod + 1] };
 	}
 
-	holder<renderObject> newRenderObject()
+	Holder<renderObject> newRenderObject()
 	{
 		return detail::systemArena().createImpl<renderObject, objectImpl>();
 	}

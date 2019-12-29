@@ -4,19 +4,19 @@
 
 void processCollider()
 {
-	holder<assimpContextClass> context = newAssimpContext(0, 0);
+	Holder<assimpContextClass> context = newAssimpContext(0, 0);
 	const aiScene *scene = context->getScene();
 	const aiMesh *am = scene->mMeshes[context->selectMesh()];
 
 	switch (am->mPrimitiveTypes)
 	{
 	case aiPrimitiveType_TRIANGLE: break;
-	default: CAGE_THROW_ERROR(exception, "collider works with triangles only");
+	default: CAGE_THROW_ERROR(Exception, "collider works with triangles only");
 	}
 
-	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "loaded triangles: " + am->mNumFaces);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "loaded triangles: " + am->mNumFaces);
 
-	holder<collisionMesh> collider = newCollisionMesh();
+	Holder<CollisionMesh> collider = newCollisionMesh();
 	mat3 axesScale = axesScaleMatrix();
 	for (uint32 i = 0; i < am->mNumFaces; i++)
 	{
@@ -35,24 +35,24 @@ void processCollider()
 		uint32 deg = numeric_cast<uint32>(am->mNumFaces - collider->triangles().size());
 		if (deg)
 		{
-			CAGE_LOG(severityEnum::Warning, logComponentName, stringizer() + "degenerated triangles: " + deg);
+			CAGE_LOG(SeverityEnum::Warning, logComponentName, stringizer() + "degenerated triangles: " + deg);
 		}
 	}
 
 	collider->rebuild();
 
-	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "aabb: " + collider->box());
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "aabb: " + collider->box());
 
-	memoryBuffer buff = collider->serialize();
+	MemoryBuffer buff = collider->serialize();
 
-	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
-	memoryBuffer comp = detail::compress(buff);
-	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + comp.size());
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
+	MemoryBuffer comp = detail::compress(buff);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + comp.size());
 
-	assetHeader h = initializeAssetHeaderStruct();
+	AssetHeader h = initializeAssetHeaderStruct();
 	h.originalSize = numeric_cast<uint32>(buff.size());
 	h.compressedSize = numeric_cast<uint32>(comp.size());
-	holder<fileHandle> f = newFile(outputFileName, fileMode(false, true));
+	Holder<File> f = newFile(outputFileName, FileMode(false, true));
 	f->write(&h, sizeof(h));
 	f->write(comp.data(), comp.size());
 	f->close();

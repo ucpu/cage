@@ -10,14 +10,14 @@ using namespace cage;
 
 void runClient()
 {
-	CAGE_LOG(severityEnum::Info, "config", stringizer() + "running in client mode");
+	CAGE_LOG(SeverityEnum::Info, "config", stringizer() + "running in client mode");
 
-	configString address("address");
-	configUint32 port("port");
-	CAGE_LOG(severityEnum::Info, "config", stringizer() + "address: '" + (string)address + "'");
-	CAGE_LOG(severityEnum::Info, "config", stringizer() + "port: " + (uint32)port);
+	ConfigString address("address");
+	ConfigUint32 port("port");
+	CAGE_LOG(SeverityEnum::Info, "config", stringizer() + "address: '" + (string)address + "'");
+	CAGE_LOG(SeverityEnum::Info, "config", stringizer() + "port: " + (uint32)port);
 
-	holder<connClass> client = newConn(newUdpConnection(address, port, 0));
+	Holder<connClass> client = newConn(newUdpConnection(address, port, 0));
 	runnerStruct runner;
 	while (!client->process())
 		runner.step();

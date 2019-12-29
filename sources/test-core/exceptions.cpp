@@ -6,14 +6,14 @@ namespace
 {
 	void throwingFunction()
 	{
-		CAGE_THROW_ERROR(exception, "throwing function");
+		CAGE_THROW_ERROR(Exception, "throwing function");
 	}
 }
 
 void testExceptions()
 {
 	CAGE_TESTCASE("exceptions");
-	detail::overrideBreakpoint overrideBreakpoint;
+	detail::OverrideBreakpoint OverrideBreakpoint;
 
 	{
 		uint32 catches = 0;
@@ -22,16 +22,16 @@ void testExceptions()
 		{
 			try
 			{
-				CAGE_THROW_ERROR(systemError, "intentional", 42);
+				CAGE_THROW_ERROR(SystemError, "intentional", 42);
 			}
-			catch (const exception &e)
+			catch (const Exception &e)
 			{
 				CAGE_TEST(std::strcmp(e.message, "intentional") == 0);
 				catches++;
 				throw;
 			}
 		}
-		catch (const systemError &e)
+		catch (const SystemError &e)
 		{
 			CAGE_TEST(std::strcmp(e.message, "intentional") == 0);
 			CAGE_TEST(e.code == 42);
@@ -49,7 +49,7 @@ void testExceptions()
 		try
 		{
 			CAGE_TESTCASE("exception transfer between threads");
-			holder<threadHandle> thr = newThread(delegate<void()>().bind<&throwingFunction>(), "throwing thread");
+			Holder<Thread> thr = newThread(Delegate<void()>().bind<&throwingFunction>(), "throwing thread");
 			CAGE_TEST_THROWN(thr->wait());
 		}
 		catch (...)

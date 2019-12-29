@@ -2,7 +2,7 @@
 
 namespace cage
 {
-	disconnected::disconnected(const char *file, uint32 line, const char *function, severityEnum severity, const char *message) noexcept : exception(file, line, function, severity, message)
+	disconnected::disconnected(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept : Exception(file, line, function, severity, message)
 	{};
 
 	namespace
@@ -13,7 +13,7 @@ namespace cage
 			WSADATA wsaData;
 			int err = WSAStartup(MAKEWORD(2, 2), &wsaData);
 			if (err != 0)
-				CAGE_THROW_CRITICAL(systemError, "WSAStartup", err);
+				CAGE_THROW_CRITICAL(SystemError, "WSAStartup", err);
 			return true;
 		}
 #endif
@@ -38,7 +38,7 @@ namespace cage
 		{
 			char nameBuf[string::MaxLength], portBuf[7];
 			if (getnameinfo((sockaddr*)&storage, addrlen, nameBuf, string::MaxLength - 1, portBuf, 6, NI_NUMERICSERV | (domain ? 0 : NI_NUMERICHOST)) != 0)
-				CAGE_THROW_ERROR(systemError, "translate address to human readable format failed (getnameinfo)", WSAGetLastError());
+				CAGE_THROW_ERROR(SystemError, "translate address to human readable format failed (getnameinfo)", WSAGetLastError());
 			address = string(nameBuf);
 			port = numeric_cast<uint16>(string(portBuf).toUint32());
 		}
@@ -51,7 +51,7 @@ namespace cage
 			networkInitialize();
 			descriptor = socket(family, type, protocol);
 			if (descriptor == INVALID_SOCKET)
-				CAGE_THROW_ERROR(systemError, "socket creation failed (socket)", WSAGetLastError());
+				CAGE_THROW_ERROR(SystemError, "socket creation failed (socket)", WSAGetLastError());
 		}
 
 		sock::sock(int family, int type, int protocol, SOCKET desc, bool connected) : descriptor(desc), family(family), type(type), protocol(protocol), connected(connected)
@@ -85,17 +85,17 @@ namespace cage
 		{
 			u_long b = blocking ? 0 : 1;
 			if (ioctlsocket(descriptor, FIONBIO, &b) != 0)
-				CAGE_THROW_ERROR(systemError, "setting (non)blocking mode (ioctlsocket)", WSAGetLastError());
+				CAGE_THROW_ERROR(SystemError, "setting (non)blocking mode (ioctlsocket)", WSAGetLastError());
 		}
 
 		void sock::setReuseaddr(bool reuse)
 		{
 			int b = reuse ? 1 : 0;
 			if (setsockopt(descriptor, SOL_SOCKET, SO_REUSEADDR, (raw_type*)&b, sizeof(b)) != 0)
-				CAGE_THROW_ERROR(systemError, "setting reuseaddr mode (setsockopt)", WSAGetLastError());
+				CAGE_THROW_ERROR(SystemError, "setting reuseaddr mode (setsockopt)", WSAGetLastError());
 #ifndef CAGE_SYSTEM_WINDOWS
 			if (setsockopt(descriptor, SOL_SOCKET, SO_REUSEPORT, (raw_type*)&b, sizeof(b)) != 0)
-				CAGE_THROW_ERROR(systemError, "setting reuseport mode (setsockopt)", WSAGetLastError());
+				CAGE_THROW_ERROR(SystemError, "setting reuseport mode (setsockopt)", WSAGetLastError());
 #endif
 		}
 
@@ -103,7 +103,7 @@ namespace cage
 		{
 			int broadcastPermission = broadcast ? 1 : 0;
 			if (setsockopt(descriptor, SOL_SOCKET, SO_BROADCAST, (raw_type*)&broadcastPermission, sizeof(broadcastPermission)) != 0)
-				CAGE_THROW_ERROR(systemError, "setting broadcast mode (setsockopt)", WSAGetLastError());
+				CAGE_THROW_ERROR(SystemError, "setting broadcast mode (setsockopt)", WSAGetLastError());
 		}
 
 		void sock::setBufferSize(uint32 sending, uint32 receiving)
@@ -113,7 +113,7 @@ namespace cage
 				socklen_t len = sizeof(sint32);
 				sint32 cur = 0;
 				if (getsockopt(descriptor, SOL_SOCKET, optname, (raw_type*)&cur, &len) != 0)
-					CAGE_THROW_ERROR(systemError, "retrieving buffer size (getsockopt)", WSAGetLastError());
+					CAGE_THROW_ERROR(SystemError, "retrieving buffer size (getsockopt)", WSAGetLastError());
 				CAGE_ASSERT(len == sizeof(sint32));
 				sint32 last = request;
 				sint32 r = request;
@@ -121,13 +121,13 @@ namespace cage
 				{
 					CAGE_ASSERT(r > 0);
 					if (setsockopt(descriptor, SOL_SOCKET, optname, (raw_type*)&r, len) != 0)
-						CAGE_THROW_ERROR(systemError, "setting buffer size (setsockopt)", WSAGetLastError());
+						CAGE_THROW_ERROR(SystemError, "setting buffer size (setsockopt)", WSAGetLastError());
 					last = cur;
 					if (getsockopt(descriptor, SOL_SOCKET, optname, (raw_type*)&cur, &len) != 0)
-						CAGE_THROW_ERROR(systemError, "retrieving buffer size (getsockopt)", WSAGetLastError());
+						CAGE_THROW_ERROR(SystemError, "retrieving buffer size (getsockopt)", WSAGetLastError());
 					r -= 32768;
 				}
-				//CAGE_LOG(severityEnum::Info, "socket", stringizer() + "buffer request: " + request + ", current: " + cur + ", last: " + last);
+				//CAGE_LOG(SeverityEnum::Info, "socket", stringizer() + "buffer request: " + request + ", current: " + cur + ", last: " + last);
 			};
 			fnc(SO_SNDBUF, numeric_cast<sint32>(sending));
 			fnc(SO_RCVBUF, numeric_cast<sint32>(receiving));
@@ -141,20 +141,20 @@ namespace cage
 		void sock::bind(const addr &localAddress)
 		{
 			if (::bind(descriptor, (sockaddr*)&localAddress, localAddress.addrlen) < 0)
-				CAGE_THROW_ERROR(systemError, "setting local address and port failed (bind)", WSAGetLastError());
+				CAGE_THROW_ERROR(SystemError, "setting local address and port failed (bind)", WSAGetLastError());
 		}
 
 		void sock::connect(const addr &remoteAddress)
 		{
 			if (::connect(descriptor, (sockaddr*)&remoteAddress.storage, remoteAddress.addrlen) < 0)
-				CAGE_THROW_SILENT(systemError, "connect failed (connect)", WSAGetLastError());
+				CAGE_THROW_SILENT(SystemError, "connect failed (connect)", WSAGetLastError());
 			connected = true;
 		}
 
 		void sock::listen(int backlog)
 		{
 			if (::listen(descriptor, backlog) < 0)
-				CAGE_THROW_ERROR(systemError, "setting listening socket failed (listen)", WSAGetLastError());
+				CAGE_THROW_ERROR(SystemError, "setting listening socket failed (listen)", WSAGetLastError());
 		}
 
 		sock sock::accept()
@@ -164,7 +164,7 @@ namespace cage
 			{
 				int err = WSAGetLastError();
 				if (err != WSAEWOULDBLOCK)
-					CAGE_THROW_ERROR(systemError, "accept failed (accept)", err);
+					CAGE_THROW_ERROR(SystemError, "accept failed (accept)", err);
 				rtn = INVALID_SOCKET;
 			}
 			return sock(family, type, protocol, rtn, true);
@@ -187,7 +187,7 @@ namespace cage
 			addr a;
 			a.addrlen = sizeof(a.storage);
 			if (getsockname(descriptor, (sockaddr*)&a.storage, (socklen_t*)&a.addrlen) < 0)
-				CAGE_THROW_ERROR(systemError, "fetch of local address failed (getsockname)", WSAGetLastError());
+				CAGE_THROW_ERROR(SystemError, "fetch of local address failed (getsockname)", WSAGetLastError());
 			return a;
 		}
 
@@ -196,7 +196,7 @@ namespace cage
 			addr a;
 			a.addrlen = sizeof(a.storage);
 			if (getpeername(descriptor, (sockaddr*)&a.storage, (socklen_t*)&a.addrlen) < 0)
-				CAGE_THROW_ERROR(systemError, "fetch of foreign address failed (getpeername)", WSAGetLastError());
+				CAGE_THROW_ERROR(SystemError, "fetch of foreign address failed (getpeername)", WSAGetLastError());
 			return a;
 		}
 
@@ -207,7 +207,7 @@ namespace cage
 			{
 				int err = WSAGetLastError();
 				if (err != WSAEWOULDBLOCK)
-					CAGE_THROW_ERROR(systemError, "determine available bytes (ioctlsocket)", err);
+					CAGE_THROW_ERROR(SystemError, "determine available bytes (ioctlsocket)", err);
 			}
 			return res;
 		}
@@ -216,14 +216,14 @@ namespace cage
 		{
 			CAGE_ASSERT(connected);
 			if (::send(descriptor, (raw_type*)buffer, numeric_cast<int>(bufferSize), 0) != bufferSize)
-				CAGE_THROW_ERROR(systemError, "send failed (send)", WSAGetLastError());
+				CAGE_THROW_ERROR(SystemError, "send failed (send)", WSAGetLastError());
 		}
 
 		void sock::sendTo(const void *buffer, uintPtr bufferSize, const addr &remoteAddress)
 		{
 			CAGE_ASSERT(!connected);
 			if (::sendto(descriptor, (raw_type*)buffer, numeric_cast<int>(bufferSize), 0, (sockaddr*)&remoteAddress.storage, remoteAddress.addrlen) != bufferSize)
-				CAGE_THROW_ERROR(systemError, "send failed (sendto)", WSAGetLastError());
+				CAGE_THROW_ERROR(SystemError, "send failed (sendto)", WSAGetLastError());
 		}
 
 		uintPtr sock::recv(void *buffer, uintPtr bufferSize, int flags)
@@ -234,7 +234,7 @@ namespace cage
 			{
 				int err = WSAGetLastError();
 				if (err != WSAEWOULDBLOCK && (err != WSAECONNRESET || protocol != IPPROTO_UDP))
-					CAGE_THROW_ERROR(systemError, "received failed (recv)", err);
+					CAGE_THROW_ERROR(SystemError, "received failed (recv)", err);
 				rtn = 0;
 			}
 			return rtn;
@@ -249,7 +249,7 @@ namespace cage
 			{
 				int err = WSAGetLastError();
 				if (err != WSAEWOULDBLOCK && (err != WSAECONNRESET || protocol != IPPROTO_UDP))
-					CAGE_THROW_ERROR(systemError, "received failed (recvfrom)", err);
+					CAGE_THROW_ERROR(SystemError, "received failed (recvfrom)", err);
 				rtn = 0;
 			}
 			return rtn;
@@ -268,7 +268,7 @@ namespace cage
 			hints.ai_protocol = protocol;
 			hints.ai_flags = flags;
 			if (getaddrinfo(address, string(port).c_str(), &hints, &start) != 0)
-				CAGE_THROW_ERROR(systemError, "list available interfaces failed (getaddrinfo)", WSAGetLastError());
+				CAGE_THROW_ERROR(SystemError, "list available interfaces failed (getaddrinfo)", WSAGetLastError());
 			current = start;
 		}
 

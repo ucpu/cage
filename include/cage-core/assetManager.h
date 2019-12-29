@@ -3,7 +3,7 @@
 
 namespace cage
 {
-	enum class assetStateEnum : uint32
+	enum class AssetStateEnum : uint32
 	{
 		Ready,
 		NotFound,
@@ -11,11 +11,11 @@ namespace cage
 		Unknown,
 	};
 
-	class CAGE_API assetManager : private immovable
+	class CAGE_API AssetManager : private Immovable
 	{
 	public:
 		template<class T>
-		void defineScheme(uint32 index, const assetScheme &value)
+		void defineScheme(uint32 index, const AssetScheme &value)
 		{
 			zScheme(index, value, sizeof(T));
 		}
@@ -24,7 +24,7 @@ namespace cage
 		void fabricate(uint32 scheme, uint32 assetName, const string &textName = "");
 		void remove(uint32 assetName);
 		void reload(uint32 assetName, bool recursive = false);
-		assetStateEnum state(uint32 assetName) const;
+		AssetStateEnum state(uint32 assetName) const;
 		bool ready(uint32 assetName) const;
 		uint32 scheme(uint32 assetName) const;
 		uint32 generateUniqueName();
@@ -78,7 +78,7 @@ namespace cage
 
 		uint32 dependenciesCount(uint32 assetName) const;
 		uint32 dependencyName(uint32 assetName, uint32 index) const;
-		pointerRange<const uint32> dependencies(uint32 assetName) const;
+		PointerRange<const uint32> dependencies(uint32 assetName) const;
 
 		bool processCustomThread(uint32 threadIndex);
 		bool processControlThread();
@@ -88,36 +88,36 @@ namespace cage
 
 		void listen(const string &address, uint16 port);
 
-		eventDispatcher<bool(uint32, memoryBuffer&)> findAssetBuffer; // this event is called from the loading thread
-		eventDispatcher<bool(uint32, string&)> findAssetPath; // this event is called from the loading thread
+		EventDispatcher<bool(uint32, MemoryBuffer&)> findAssetBuffer; // this event is called from the loading thread
+		EventDispatcher<bool(uint32, string&)> findAssetPath; // this event is called from the loading thread
 
 	private:
-		void zScheme(uint32 index, const assetScheme &value, uintPtr typeSize);
+		void zScheme(uint32 index, const AssetScheme &value, uintPtr typeSize);
 		uintPtr zGetTypeSize(uint32 scheme) const;
 		void *zGet(uint32 assetName) const;
 		void zSet(uint32 assetName, void *value);
 	};
 
 	template<>
-	inline void assetManager::defineScheme<void>(uint32 index, const assetScheme &value)
+	inline void AssetManager::defineScheme<void>(uint32 index, const AssetScheme &value)
 	{
 		zScheme(index, value, m);
 	}
 
-	struct CAGE_API assetManagerCreateConfig
+	struct CAGE_API AssetManagerCreateConfig
 	{
 		string assetsFolderName;
 		uint32 threadMaxCount;
 		uint32 schemeMaxCount;
-		assetManagerCreateConfig();
+		AssetManagerCreateConfig();
 	};
 
-	CAGE_API holder<assetManager> newAssetManager(const assetManagerCreateConfig &config);
+	CAGE_API Holder<AssetManager> newAssetManager(const AssetManagerCreateConfig &config);
 
-	CAGE_API assetScheme genAssetSchemePack(const uint32 threadIndex);
+	CAGE_API AssetScheme genAssetSchemePack(const uint32 threadIndex);
 	static const uint32 assetSchemeIndexPack = 0;
 
-	CAGE_API assetScheme genAssetSchemeRaw(const uint32 threadIndex);
+	CAGE_API AssetScheme genAssetSchemeRaw(const uint32 threadIndex);
 	static const uint32 assetSchemeIndexRaw = 1;
 }
 

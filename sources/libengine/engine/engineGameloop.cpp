@@ -36,9 +36,9 @@ namespace cage
 {
 	namespace
 	{
-		configBool confAutoAssetListen("cage/assets/listen", false);
-		configUint32 confOptickFrameMode("cage/profiling/frameMode", 1);
-		configBool confSimpleShaders("cage/graphics/simpleShaders", false);
+		ConfigBool confAutoAssetListen("cage/assets/listen", false);
+		ConfigUint32 confOptickFrameMode("cage/profiling/frameMode", 1);
+		ConfigBool confSimpleShaders("cage/graphics/simpleShaders", false);
 
 		struct graphicsUploadThreadClass
 		{
@@ -51,7 +51,7 @@ namespace cage
 
 		struct scopedSemaphores
 		{
-			scopedSemaphores(holder<syncSemaphore> &lock, holder<syncSemaphore> &unlock) : sem(unlock.get())
+			scopedSemaphores(Holder<Semaphore> &lock, Holder<Semaphore> &unlock) : sem(unlock.get())
 			{
 				lock->lock();
 			}
@@ -62,15 +62,15 @@ namespace cage
 			}
 
 		private:
-			syncSemaphore *sem;
+			Semaphore *sem;
 		};
 
 		struct scopedTimer
 		{
-			variableSmoothingBuffer<uint64, 60> &vsb;
+			VariableSmoothingBuffer<uint64, 60> &vsb;
 			uint64 st;
 
-			scopedTimer(variableSmoothingBuffer<uint64, 60> &vsb) : vsb(vsb), st(getApplicationTime())
+			scopedTimer(VariableSmoothingBuffer<uint64, 60> &vsb) : vsb(vsb), st(getApplicationTime())
 			{}
 
 			~scopedTimer()
@@ -82,41 +82,41 @@ namespace cage
 
 		struct engineDataStruct
 		{
-			variableSmoothingBuffer<uint64, 60> profilingBufferControl;
-			variableSmoothingBuffer<uint64, 60> profilingBufferSound;
-			variableSmoothingBuffer<uint64, 60> profilingBufferGraphicsPrepare;
-			variableSmoothingBuffer<uint64, 60> profilingBufferGraphicsDispatch;
-			variableSmoothingBuffer<uint64, 60> profilingBufferFrameTime;
-			variableSmoothingBuffer<uint64, 60> profilingBufferDrawCalls;
-			variableSmoothingBuffer<uint64, 60> profilingBufferDrawPrimitives;
-			variableSmoothingBuffer<uint64, 60> profilingBufferEntities;
+			VariableSmoothingBuffer<uint64, 60> profilingBufferControl;
+			VariableSmoothingBuffer<uint64, 60> profilingBufferSound;
+			VariableSmoothingBuffer<uint64, 60> profilingBufferGraphicsPrepare;
+			VariableSmoothingBuffer<uint64, 60> profilingBufferGraphicsDispatch;
+			VariableSmoothingBuffer<uint64, 60> profilingBufferFrameTime;
+			VariableSmoothingBuffer<uint64, 60> profilingBufferDrawCalls;
+			VariableSmoothingBuffer<uint64, 60> profilingBufferDrawPrimitives;
+			VariableSmoothingBuffer<uint64, 60> profilingBufferEntities;
 
-			holder<assetManager> assets;
-			holder<windowHandle> window;
+			Holder<AssetManager> assets;
+			Holder<windowHandle> window;
 #ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
-			holder<windowHandle> windowUpload;
+			Holder<windowHandle> windowUpload;
 #endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
-			holder<soundContext> sound;
-			holder<speakerOutput> speaker;
-			holder<mixingBus> masterBus;
-			holder<mixingBus> musicBus;
-			holder<mixingBus> effectsBus;
-			holder<mixingBus> guiBus;
-			holder<guiManager> gui;
-			holder<entityManager> entities;
+			Holder<soundContext> sound;
+			Holder<speakerOutput> speaker;
+			Holder<mixingBus> masterBus;
+			Holder<mixingBus> musicBus;
+			Holder<mixingBus> effectsBus;
+			Holder<mixingBus> guiBus;
+			Holder<guiManager> gui;
+			Holder<EntityManager> entities;
 
-			holder<syncMutex> assetsSoundMutex;
-			holder<syncMutex> assetsGraphicsMutex;
-			holder<syncSemaphore> graphicsSemaphore1;
-			holder<syncSemaphore> graphicsSemaphore2;
-			holder<syncBarrier> threadsStateBarier;
-			holder<threadHandle> graphicsDispatchThreadHolder;
-			holder<threadHandle> graphicsPrepareThreadHolder;
+			Holder<Mutex> assetsSoundMutex;
+			Holder<Mutex> assetsGraphicsMutex;
+			Holder<Semaphore> graphicsSemaphore1;
+			Holder<Semaphore> graphicsSemaphore2;
+			Holder<Barrier> threadsStateBarier;
+			Holder<Thread> graphicsDispatchThreadHolder;
+			Holder<Thread> graphicsPrepareThreadHolder;
 #ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
-			holder<threadHandle> graphicsUploadThreadHolder;
+			Holder<Thread> graphicsUploadThreadHolder;
 #endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
-			holder<threadHandle> soundThreadHolder;
-			holder<threadPool> emitThreadsHolder;
+			Holder<Thread> soundThreadHolder;
+			Holder<ThreadPool> emitThreadsHolder;
 
 			std::atomic<uint32> engineStarted;
 			std::atomic<bool> stopping;
@@ -143,7 +143,7 @@ namespace cage
 					assets->processCustomThread(graphicsPrepareThread().threadIndex);
 				}
 				scopedSemaphores lockGraphics(graphicsSemaphore1, graphicsSemaphore2);
-				scopeLock<syncMutex> lockAssets(assetsGraphicsMutex);
+				ScopeLock<Mutex> lockAssets(assetsGraphicsMutex);
 				scopedTimer timing(profilingBufferGraphicsPrepare);
 				{
 					OPTICK_EVENT("callback");
@@ -217,7 +217,7 @@ namespace cage
 						OPTICK_TAG("drawPrimitives", drawPrimitives);
 					}
 				}
-				if (graphicsPrepareThread().stereoMode == stereoModeEnum::Mono)
+				if (graphicsPrepareThread().stereoMode == StereoModeEnum::Mono)
 				{
 					OPTICK_EVENT("gui render");
 					gui->graphicsRender();
@@ -284,7 +284,7 @@ namespace cage
 				if (timeDelay > soundThread().timePerTick * 2)
 				{
 					uint64 skip = timeDelay / soundThread().timePerTick + 1;
-					CAGE_LOG(severityEnum::Warning, "engine", stringizer() + "skipping " + skip + " sound ticks");
+					CAGE_LOG(SeverityEnum::Warning, "engine", stringizer() + "skipping " + skip + " sound ticks");
 					currentSoundTime += skip * soundThread().timePerTick;
 				}
 				else
@@ -301,7 +301,7 @@ namespace cage
 			void soundStep()
 			{
 				{
-					scopeLock<syncMutex> lockAssets(assetsSoundMutex);
+					ScopeLock<Mutex> lockAssets(assetsSoundMutex);
 					scopedTimer timing(profilingBufferSound);
 					{
 						OPTICK_EVENT("sound callback");
@@ -363,10 +363,10 @@ namespace cage
 				{
 					assetSyncAttempts++;
 					OPTICK_TAG("assetSyncAttempts", assetSyncAttempts);
-					scopeLock<syncMutex> lockGraphics(assetsGraphicsMutex, assetSyncAttempts < 20);
+					ScopeLock<Mutex> lockGraphics(assetsGraphicsMutex, assetSyncAttempts < 20);
 					if (lockGraphics)
 					{
-						scopeLock<syncMutex> lockSound(assetsSoundMutex, assetSyncAttempts < 10);
+						ScopeLock<Mutex> lockSound(assetsSoundMutex, assetSyncAttempts < 10);
 						if (lockSound)
 						{
 							{
@@ -390,7 +390,7 @@ namespace cage
 			void updateHistoryComponents()
 			{
 				OPTICK_EVENT("update history");
-				for (entity *e : transformComponent::component->entities())
+				for (Entity *e : transformComponent::component->entities())
 				{
 					CAGE_COMPONENT_ENGINE(transform, ts, e);
 					transformComponent &hs = e->value<transformComponent>(transformComponent::componentHistory);
@@ -418,7 +418,7 @@ namespace cage
 					graphicsPrepareEmit(currentControlTime);
 				} break;
 				default:
-					CAGE_THROW_CRITICAL(exception, "invalid engine emit thread index");
+					CAGE_THROW_CRITICAL(Exception, "invalid engine emit thread index");
 				}
 			}
 
@@ -427,7 +427,7 @@ namespace cage
 				if (timeDelay > controlThread().timePerTick * 2)
 				{
 					uint64 skip = timeDelay / controlThread().timePerTick + 1;
-					CAGE_LOG(severityEnum::Warning, "engine", stringizer() + "skipping " + skip + " control update ticks");
+					CAGE_LOG(SeverityEnum::Warning, "engine", stringizer() + "skipping " + skip + " control update ticks");
 					currentControlTime += skip * controlThread().timePerTick;
 				}
 				else
@@ -491,23 +491,23 @@ namespace cage
 			//////////////////////////////////////
 
 #define GCHL_GENERATE_CATCH(NAME, STAGE) \
-			catch (const cage::exception &e) { CAGE_LOG(severityEnum::Error, "engine", stringizer() + "caught cage::exception in " CAGE_STRINGIZE(STAGE) " in " CAGE_STRINGIZE(NAME) ": " + e.message); engineStop(); } \
-			catch (const std::exception &e) { CAGE_LOG(severityEnum::Error, "engine", stringizer() + "caught std::exception in " CAGE_STRINGIZE(STAGE) " in " CAGE_STRINGIZE(NAME) ": " + e.what()); engineStop(); } \
-			catch (...) { CAGE_LOG(severityEnum::Error, "engine", "caught unknown exception in " CAGE_STRINGIZE(STAGE) " in " CAGE_STRINGIZE(NAME)); engineStop(); }
+			catch (const cage::Exception &e) { CAGE_LOG(SeverityEnum::Error, "engine", stringizer() + "caught cage::exception in " CAGE_STRINGIZE(STAGE) " in " CAGE_STRINGIZE(NAME) ": " + e.message); engineStop(); } \
+			catch (const std::exception &e) { CAGE_LOG(SeverityEnum::Error, "engine", stringizer() + "caught std::exception in " CAGE_STRINGIZE(STAGE) " in " CAGE_STRINGIZE(NAME) ": " + e.what()); engineStop(); } \
+			catch (...) { CAGE_LOG(SeverityEnum::Error, "engine", "caught unknown exception in " CAGE_STRINGIZE(STAGE) " in " CAGE_STRINGIZE(NAME)); engineStop(); }
 #define GCHL_GENERATE_ENTRY(NAME) \
 			void CAGE_JOIN(NAME, Entry)() \
 			{ \
 				try { CAGE_JOIN(NAME, InitializeStage)(); } \
 				GCHL_GENERATE_CATCH(NAME, initialization (engine)) \
-				{ scopeLock<syncBarrier> l(threadsStateBarier); } \
-				{ scopeLock<syncBarrier> l(threadsStateBarier); } \
+				{ ScopeLock<Barrier> l(threadsStateBarier); } \
+				{ ScopeLock<Barrier> l(threadsStateBarier); } \
 				try { CAGE_JOIN(NAME, Thread)().initialize.dispatch(); } \
 				GCHL_GENERATE_CATCH(NAME, initialization (application)) \
-				{ scopeLock<syncBarrier> l(threadsStateBarier); } \
+				{ ScopeLock<Barrier> l(threadsStateBarier); } \
 				try { CAGE_JOIN(NAME, GameloopStage)(); } \
 				GCHL_GENERATE_CATCH(NAME, gameloop) \
 				CAGE_JOIN(NAME, StopStage)(); \
-				{ scopeLock<syncBarrier> l(threadsStateBarier); } \
+				{ ScopeLock<Barrier> l(threadsStateBarier); } \
 				try { CAGE_JOIN(NAME, Thread)().finalize.dispatch(); } \
 				GCHL_GENERATE_CATCH(NAME, finalization (application)) \
 				try { CAGE_JOIN(NAME, FinalizeStage)(); } \
@@ -539,10 +539,10 @@ namespace cage
 				CAGE_ASSERT(engineStarted == 0);
 				engineStarted = 1;
 
-				CAGE_LOG(severityEnum::Info, "engine", "initializing engine");
+				CAGE_LOG(SeverityEnum::Info, "engine", "initializing engine");
 
 				{ // create assets manager
-					assetManagerCreateConfig c;
+					AssetManagerCreateConfig c;
 					if (config.assets)
 						c = *config.assets;
 					c.schemeMaxCount = max(c.schemeMaxCount, 30u);
@@ -585,7 +585,7 @@ namespace cage
 				}
 
 				{ // create entities
-					entities = newEntityManager(config.entities ? *config.entities : entityManagerCreateConfig());
+					entities = newEntityManager(config.entities ? *config.entities : EntityManagerCreateConfig());
 				}
 
 				{ // create sync objects
@@ -597,12 +597,12 @@ namespace cage
 				}
 
 				{ // create threads
-					graphicsDispatchThreadHolder = newThread(delegate<void()>().bind<engineDataStruct, &engineDataStruct::graphicsDispatchEntry>(this), "engine graphics dispatch");
-					graphicsPrepareThreadHolder = newThread(delegate<void()>().bind<engineDataStruct, &engineDataStruct::graphicsPrepareEntry>(this), "engine graphics prepare");
+					graphicsDispatchThreadHolder = newThread(Delegate<void()>().bind<engineDataStruct, &engineDataStruct::graphicsDispatchEntry>(this), "engine graphics dispatch");
+					graphicsPrepareThreadHolder = newThread(Delegate<void()>().bind<engineDataStruct, &engineDataStruct::graphicsPrepareEntry>(this), "engine graphics prepare");
 #ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
-					graphicsUploadThreadHolder = newThread(delegate<void()>().bind<engineDataStruct, &engineDataStruct::graphicsUploadEntry>(this), "engine graphics upload");
+					graphicsUploadThreadHolder = newThread(Delegate<void()>().bind<engineDataStruct, &engineDataStruct::graphicsUploadEntry>(this), "engine graphics upload");
 #endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
-					soundThreadHolder = newThread(delegate<void()>().bind<engineDataStruct, &engineDataStruct::soundEntry>(this), "engine sound");
+					soundThreadHolder = newThread(Delegate<void()>().bind<engineDataStruct, &engineDataStruct::soundEntry>(this), "engine sound");
 					emitThreadsHolder = newThreadPool("engine emit ", 3);
 					emitThreadsHolder->function.bind<engineDataStruct, &engineDataStruct::emitThreadsEntry>(this);
 				}
@@ -610,9 +610,9 @@ namespace cage
 				{ // initialize asset schemes
 					// core assets
 					assets->defineScheme<void>(assetSchemeIndexPack, genAssetSchemePack(controlThreadClass::threadIndex));
-					assets->defineScheme<memoryBuffer>(assetSchemeIndexRaw, genAssetSchemeRaw(controlThreadClass::threadIndex));
-					assets->defineScheme<textPack>(assetSchemeIndexTextPackage, genAssetSchemeTextPackage(controlThreadClass::threadIndex));
-					assets->defineScheme<collisionMesh>(assetSchemeIndexCollisionMesh, genAssetSchemeCollisionMesh(controlThreadClass::threadIndex));
+					assets->defineScheme<MemoryBuffer>(assetSchemeIndexRaw, genAssetSchemeRaw(controlThreadClass::threadIndex));
+					assets->defineScheme<TextPack>(assetSchemeIndexTextPackage, genAssetSchemeTextPackage(controlThreadClass::threadIndex));
+					assets->defineScheme<CollisionMesh>(assetSchemeIndexCollisionMesh, genAssetSchemeCollisionMesh(controlThreadClass::threadIndex));
 					// client assets
 					assets->defineScheme<shaderProgram>(assetSchemeIndexShaderProgram, genAssetSchemeShaderProgram(graphicsUploadThreadClass::threadIndex, window.get()));
 					assets->defineScheme<renderTexture>(assetSchemeIndexRenderTexture, genAssetSchemeRenderTexture(graphicsUploadThreadClass::threadIndex, window.get()));
@@ -623,30 +623,30 @@ namespace cage
 					assets->defineScheme<fontFace>(assetSchemeIndexFontFace, genAssetSchemeFontFace(graphicsUploadThreadClass::threadIndex, window.get()));
 					assets->defineScheme<soundSource>(assetSchemeIndexSoundSource, genAssetSchemeSoundSource(soundThreadClass::threadIndex, sound.get()));
 					// cage pack
-					assets->add(hashString("cage/cage.pack"));
-					assetShaderTier = confSimpleShaders ? hashString("cage/shader/engine/low.pack") : hashString("cage/shader/engine/high.pack");
+					assets->add(HashString("cage/cage.pack"));
+					assetShaderTier = confSimpleShaders ? HashString("cage/shader/engine/low.pack") : HashString("cage/shader/engine/high.pack");
 					assets->add(assetShaderTier);
 				}
 
 				{ // initialize assets change listening
 					if (confAutoAssetListen)
 					{
-						CAGE_LOG(severityEnum::Info, "assets", "enabling assets updates listening");
-						detail::overrideBreakpoint overrideBreakpoint;
-						detail::overrideException overrideException;
+						CAGE_LOG(SeverityEnum::Info, "assets", "enabling assets updates listening");
+						detail::OverrideBreakpoint OverrideBreakpoint;
+						detail::OverrideException overrideException;
 						try
 						{
 							assets->listen("localhost", 65042);
 						}
-						catch (const exception &)
+						catch (const Exception &)
 						{
-							CAGE_LOG(severityEnum::Warning, "assets", "assets updates failed to connect to the database");
+							CAGE_LOG(SeverityEnum::Warning, "assets", "assets updates failed to connect to the database");
 						}
 					}
 				}
 
 				{ // initialize entity components
-					entityManager *entityMgr = entities.get();
+					EntityManager *entityMgr = entities.get();
 					transformComponent::component = entityMgr->defineComponent(transformComponent(), true);
 					transformComponent::componentHistory = entityMgr->defineComponent(transformComponent(), false);
 					renderComponent::component = entityMgr->defineComponent(renderComponent(), true);
@@ -660,8 +660,8 @@ namespace cage
 					listenerComponent::component = entityMgr->defineComponent(listenerComponent(), true);
 				}
 
-				{ scopeLock<syncBarrier> l(threadsStateBarier); }
-				CAGE_LOG(severityEnum::Info, "engine", "engine initialized");
+				{ ScopeLock<Barrier> l(threadsStateBarier); }
+				CAGE_LOG(SeverityEnum::Info, "engine", "engine initialized");
 
 				CAGE_ASSERT(engineStarted == 1);
 				engineStarted = 2;
@@ -679,12 +679,12 @@ namespace cage
 				}
 				GCHL_GENERATE_CATCH(control, initialization (application))
 
-				CAGE_LOG(severityEnum::Info, "engine", "starting engine");
+				CAGE_LOG(SeverityEnum::Info, "engine", "starting engine");
 
 				currentControlTime = currentSoundTime = getApplicationTime();
 
-				{ scopeLock<syncBarrier> l(threadsStateBarier); }
-				{ scopeLock<syncBarrier> l(threadsStateBarier); }
+				{ ScopeLock<Barrier> l(threadsStateBarier); }
+				{ ScopeLock<Barrier> l(threadsStateBarier); }
 
 				try
 				{
@@ -692,7 +692,7 @@ namespace cage
 				}
 				GCHL_GENERATE_CATCH(control, gameloop)
 
-				CAGE_LOG(severityEnum::Info, "engine", "engine stopped");
+				CAGE_LOG(SeverityEnum::Info, "engine", "engine stopped");
 
 				try
 				{
@@ -709,11 +709,11 @@ namespace cage
 				CAGE_ASSERT(engineStarted == 4);
 				engineStarted = 5;
 
-				CAGE_LOG(severityEnum::Info, "engine", "finalizing engine");
-				{ scopeLock<syncBarrier> l(threadsStateBarier); }
+				CAGE_LOG(SeverityEnum::Info, "engine", "finalizing engine");
+				{ ScopeLock<Barrier> l(threadsStateBarier); }
 
 				{ // unload assets
-					assets->remove(hashString("cage/cage.pack"));
+					assets->remove(HashString("cage/cage.pack"));
 					assets->remove(assetShaderTier);
 					while (assets->countTotal() > 0)
 					{
@@ -768,31 +768,31 @@ namespace cage
 					assets.clear();
 				}
 
-				CAGE_LOG(severityEnum::Info, "engine", "engine finalized");
+				CAGE_LOG(SeverityEnum::Info, "engine", "engine finalized");
 
 				CAGE_ASSERT(engineStarted == 5);
 				engineStarted = 6;
 			}
 		};
 
-		holder<engineDataStruct> engineData;
+		Holder<engineDataStruct> engineData;
 
 		engineDataStruct::engineDataStruct(const engineCreateConfig &config) : engineStarted(0), stopping(false), currentControlTime(0), currentSoundTime(0), assetSyncAttempts(0), assetShaderTier(0)
 		{
-			CAGE_LOG(severityEnum::Info, "engine", "creating engine");
+			CAGE_LOG(SeverityEnum::Info, "engine", "creating engine");
 			graphicsDispatchCreate(config);
 			graphicsPrepareCreate(config);
 			soundCreate(config);
-			CAGE_LOG(severityEnum::Info, "engine", "engine created");
+			CAGE_LOG(SeverityEnum::Info, "engine", "engine created");
 		}
 
 		engineDataStruct::~engineDataStruct()
 		{
-			CAGE_LOG(severityEnum::Info, "engine", "destroying engine");
+			CAGE_LOG(SeverityEnum::Info, "engine", "destroying engine");
 			soundDestroy();
 			graphicsPrepareDestroy();
 			graphicsDispatchDestroy();
-			CAGE_LOG(severityEnum::Info, "engine", "engine destroyed");
+			CAGE_LOG(SeverityEnum::Info, "engine", "engine destroyed");
 		}
 	}
 
@@ -814,7 +814,7 @@ namespace cage
 		CAGE_ASSERT(engineData);
 		if (!engineData->stopping.exchange(true))
 		{
-			CAGE_LOG(severityEnum::Info, "engine", "stopping engine");
+			CAGE_LOG(SeverityEnum::Info, "engine", "stopping engine");
 		}
 	}
 
@@ -830,12 +830,12 @@ namespace cage
 		return engineData->sound.get();
 	}
 
-	assetManager *assets()
+	AssetManager *assets()
 	{
 		return engineData->assets.get();
 	}
 
-	entityManager *entities()
+	EntityManager *entities()
 	{
 		return engineData->entities.get();
 	}
@@ -892,7 +892,7 @@ namespace cage
 			case engineProfilingModeEnum::Average: result += buffer.smooth(); break; \
 			case engineProfilingModeEnum::Maximum: result += buffer.max(); break; \
 			case engineProfilingModeEnum::Last: result += buffer.current(); break; \
-			default: CAGE_THROW_CRITICAL(exception, "invalid profiling mode enum"); \
+			default: CAGE_THROW_CRITICAL(Exception, "invalid profiling mode enum"); \
 			} \
 		}
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE,

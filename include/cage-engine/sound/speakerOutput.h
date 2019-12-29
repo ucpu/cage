@@ -1,6 +1,6 @@
 namespace cage
 {
-	class CAGE_API speakerOutput : private immovable
+	class CAGE_API speakerOutput : private Immovable
 	{
 	public:
 		string getStreamName() const;
@@ -26,5 +26,5 @@ namespace cage
 		speakerOutputCreateConfig();
 	};
 
-	CAGE_API holder<speakerOutput> newSpeakerOutput(soundContext *context, const speakerOutputCreateConfig &config, string name = "");
+	CAGE_API Holder<speakerOutput> newSpeakerOutput(soundContext *context, const speakerOutputCreateConfig &config, string name = "");
 }

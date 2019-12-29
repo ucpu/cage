@@ -30,16 +30,16 @@ namespace
 		{}
 	};
 
-	holder<pointerRange<uint32>> makeRangeInts()
+	Holder<PointerRange<uint32>> makeRangeInts()
 	{
 		std::vector<uint32> numbers;
 		numbers.push_back(5);
 		numbers.push_back(42);
 		numbers.push_back(13);
-		return pointerRangeHolder<uint32>(templates::move(numbers));
+		return PointerRangeHolder<uint32>(templates::move(numbers));
 	}
 
-	holder<pointerRange<testStruct>> makeRangeTests()
+	Holder<PointerRange<testStruct>> makeRangeTests()
 	{
 		std::vector<testStruct> tests;
 		CAGE_TEST(counter == 0);
@@ -48,15 +48,15 @@ namespace
 		tests.emplace_back();
 		tests.emplace_back();
 		CAGE_TEST(counter == 4);
-		return pointerRangeHolder<testStruct>(templates::move(tests));
+		return PointerRangeHolder<testStruct>(templates::move(tests));
 	}
 
-	void functionTakingMutableRange(pointerRange<uint32> r)
+	void functionTakingMutableRange(PointerRange<uint32> r)
 	{
 		// do nothing
 	}
 
-	void functionTakingConstRange(pointerRange<const uint32> r)
+	void functionTakingConstRange(PointerRange<const uint32> r)
 	{
 		// do nothing
 	}
@@ -72,13 +72,13 @@ void testPointerRange()
 		numbers.push_back(5);
 		numbers.push_back(42);
 		numbers.push_back(13);
-		pointerRange<const uint32> range = numbers;
+		PointerRange<const uint32> range = numbers;
 		uint32 sum = 0;
 		for (auto it : range)
 			sum += it;
 		CAGE_TEST(sum == 5 + 42 + 13);
 		CAGE_TEST(!range.empty());
-		CAGE_TEST(pointerRange<const uint32>().empty());
+		CAGE_TEST(PointerRange<const uint32>().empty());
 	}
 
 	{
@@ -106,8 +106,8 @@ void testPointerRange()
 	{
 		CAGE_TESTCASE("direct dereference of a holder with pointer range");
 		uint32 sum = 0;
-		// do not dereference the holder! it would deallocate before iterating
-		// instead iterate over the holder directly
+		// do not dereference the Holder! it would deallocate before iterating
+		// instead iterate over the Holder directly
 		for (auto it : makeRangeInts())
 			sum += it;
 		CAGE_TEST(sum == 5 + 42 + 13);
@@ -117,18 +117,18 @@ void testPointerRange()
 		CAGE_TESTCASE("empty ranges");
 		functionTakingConstRange({});
 		functionTakingMutableRange({});
-		pointerRange<uint32> empty1 = {};
-		pointerRange<const uint32> empty2 = {};
-		holder<pointerRange<uint32>> empty3 = {};
-		holder<pointerRange<const uint32>> empty4 = {};
+		PointerRange<uint32> empty1 = {};
+		PointerRange<const uint32> empty2 = {};
+		Holder<PointerRange<uint32>> empty3 = {};
+		Holder<PointerRange<const uint32>> empty4 = {};
 	}
 
 	{
 		CAGE_TESTCASE("implicit const casts");
-		holder<pointerRange<uint32>> range = makeRangeInts();
-		pointerRange<uint32> rng1 = range;
-		pointerRange<const uint32> rng2 = rng1;
-		//pointerRange<uint32> rng3 = rng2; // must not compile - it would drop the const
+		Holder<PointerRange<uint32>> range = makeRangeInts();
+		PointerRange<uint32> rng1 = range;
+		PointerRange<const uint32> rng2 = rng1;
+		//PointerRange<uint32> rng3 = rng2; // must not compile - it would drop the const
 		functionTakingConstRange(rng1);
 		functionTakingMutableRange(rng1);
 		functionTakingConstRange(rng2);
@@ -137,18 +137,18 @@ void testPointerRange()
 		functionTakingMutableRange(range);
 		functionTakingConstRange(makeRangeInts());
 		functionTakingMutableRange(makeRangeInts());
-		holder<pointerRange<const uint32>> crange = templates::move(range);
+		Holder<PointerRange<const uint32>> crange = templates::move(range);
 		CAGE_TEST(crange->size() == makeRangeInts()->size());
 	}
 
 	{
 		CAGE_TESTCASE("operator []");
-		holder<pointerRange<uint32>> range = makeRangeInts();
+		Holder<PointerRange<uint32>> range = makeRangeInts();
 		CAGE_TEST(range[0] == 5);
 		CAGE_TEST(range[1] == 42);
 		CAGE_TEST(range[2] == 13);
 		CAGE_TEST_ASSERTED(range[3]);
-		pointerRange<uint32> rng1 = range;
+		PointerRange<uint32> rng1 = range;
 		CAGE_TEST(rng1[0] == 5);
 		CAGE_TEST(rng1[1] == 42);
 		CAGE_TEST(rng1[2] == 13);

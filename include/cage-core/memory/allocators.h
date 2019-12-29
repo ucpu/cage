@@ -40,7 +40,7 @@ namespace cage
 
 		void deallocate(void *ptr)
 		{
-			CAGE_THROW_CRITICAL(exception, "not allowed, linear allocator must be flushed");
+			CAGE_THROW_CRITICAL(Exception, "not allowed, linear allocator must be flushed");
 		}
 
 		void flush()
@@ -87,7 +87,7 @@ namespace cage
 
 		void deallocate(void *ptr)
 		{
-			CAGE_THROW_CRITICAL(exception, "not allowed, nFrame allocator must be flushed");
+			CAGE_THROW_CRITICAL(Exception, "not allowed, nFrame allocator must be flushed");
 		}
 
 		void flush()

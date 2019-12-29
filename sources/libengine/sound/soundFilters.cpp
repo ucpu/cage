@@ -32,7 +32,7 @@ namespace cage
 		};
 	}
 
-	holder<volumeFilter> newVolumeFilter(soundContext *context)
+	Holder<volumeFilter> newVolumeFilter(soundContext *context)
 	{
 		return detail::systemArena().createImpl<volumeFilter, volumeFilterImpl>(context);
 	}

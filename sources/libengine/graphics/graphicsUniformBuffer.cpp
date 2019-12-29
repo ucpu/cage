@@ -168,7 +168,7 @@ namespace cage
 	uniformBufferCreateConfig::uniformBufferCreateConfig() : size(0), persistentMapped(false), coherentMapped(false), explicitFlush(false)
 	{}
 
-	holder<uniformBuffer> newUniformBuffer(const uniformBufferCreateConfig &config)
+	Holder<uniformBuffer> newUniformBuffer(const uniformBufferCreateConfig &config)
 	{
 		return detail::systemArena().createImpl<uniformBuffer, uniformBufferImpl>(config);
 	}

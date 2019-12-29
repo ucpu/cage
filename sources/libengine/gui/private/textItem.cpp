@@ -27,11 +27,11 @@ namespace cage
 	{}
 
 	// this is also used in engine
-	string loadInternationalizedText(assetManager *assets, uint32 asset, uint32 text, string params)
+	string loadInternationalizedText(AssetManager *assets, uint32 asset, uint32 text, string params)
 	{
 		if (asset == 0 || text == 0)
 			return params;
-		auto a = assets->tryGet<assetSchemeIndexTextPackage, textPack>(asset);
+		auto a = assets->tryGet<assetSchemeIndexTextPackage, TextPack>(asset);
 		if (a)
 		{
 			std::vector<string> ps;

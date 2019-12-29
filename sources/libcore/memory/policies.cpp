@@ -14,19 +14,19 @@ namespace cage
 
 	void memoryConcurrentPolicyMutex::lock()
 	{
-		((syncMutex*)mutex.get())->lock();
+		((Mutex*)mutex.get())->lock();
 	}
 
 	void memoryConcurrentPolicyMutex::unlock()
 	{
-		((syncMutex*)mutex.get())->unlock();
+		((Mutex*)mutex.get())->unlock();
 	}
 
 	memoryTrackPolicySimple::~memoryTrackPolicySimple()
 	{
 		if (count > 0)
 		{
-			CAGE_LOG(severityEnum::Critical, "memory", "memory leak detected");
+			CAGE_LOG(SeverityEnum::Critical, "memory", "memory leak detected");
 			detail::terminate();
 		}
 	}
@@ -49,7 +49,7 @@ namespace cage
 			{
 				if (allocations.size() == 0)
 					return;
-				CAGE_LOG(severityEnum::Critical, "memory", "memory leak report");
+				CAGE_LOG(SeverityEnum::Critical, "memory", "memory leak report");
 				reportAllocatins();
 				detail::terminate();
 			}
@@ -60,7 +60,7 @@ namespace cage
 				allocation a;
 				a.size = size;
 				a.thread = threadId();
-				a.time = CAGE_LOG(severityEnum::Info, "memory", stringizer() + "allocation at " + ptr + " of size " + size);
+				a.time = CAGE_LOG(SeverityEnum::Info, "memory", stringizer() + "allocation at " + ptr + " of size " + size);
 				allocations[ptr] = a;
 			}
 
@@ -68,12 +68,12 @@ namespace cage
 			{
 				CAGE_ASSERT(allocations.find(ptr) != allocations.end(), "deallocation at unknown address");
 				allocations.erase(ptr);
-				CAGE_LOG(severityEnum::Info, "memory", stringizer() + "deallocation at " + ptr);
+				CAGE_LOG(SeverityEnum::Info, "memory", stringizer() + "deallocation at " + ptr);
 			}
 
 			void flush()
 			{
-				CAGE_LOG(severityEnum::Info, "memory", "flush");
+				CAGE_LOG(SeverityEnum::Info, "memory", "flush");
 				reportAllocatins();
 				allocations.clear();
 			}
@@ -81,7 +81,7 @@ namespace cage
 			void reportAllocatins() const
 			{
 				for (std::map <void*, allocation>::const_iterator i = allocations.begin(), e = allocations.end(); i != e; i++)
-					CAGE_LOG_CONTINUE(severityEnum::Note, "memory", stringizer() + "memory at " + i->first + " of size " + i->second.size + " allocated in thread " + i->second.thread + " at time " + i->second.time);
+					CAGE_LOG_CONTINUE(SeverityEnum::Note, "memory", stringizer() + "memory at " + i->first + " of size " + i->second.size + " allocated in thread " + i->second.thread + " at time " + i->second.time);
 			}
 
 			std::map <void*, allocation> allocations;

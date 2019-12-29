@@ -8,7 +8,7 @@
 #include <cage-core/concurrent.h>
 #include <cage-core/math.h> // random
 #include <cage-core/memoryBuffer.h>
-#include <cage-core/identifier.h> // generateRandomData
+#include <cage-core/guid.h> // generateRandomData
 
 namespace
 {
@@ -17,8 +17,8 @@ namespace
 	class serverImpl
 	{
 	public:
-		holder<udpServer> udp;
-		std::vector<holder<udpConnection>> conns;
+		Holder<UdpServer> udp;
+		std::vector<Holder<UdpConnection>> conns;
 		uint64 lastTime;
 		bool hadConnection;
 
@@ -47,7 +47,7 @@ namespace
 				{
 					uint32 ch;
 					bool r;
-					memoryBuffer b = c->read(ch, r);
+					MemoryBuffer b = c->read(ch, r);
 					c->write(b, ch, r); // just repeat back the same message
 					lastTime = getApplicationTime();
 				}
@@ -75,9 +75,9 @@ namespace
 	class clientImpl
 	{
 	public:
-		holder<udpConnection> udp;
+		Holder<UdpConnection> udp;
 
-		std::vector<memoryBuffer> sends;
+		std::vector<MemoryBuffer> sends;
 		uint32 si, ri;
 
 		clientImpl() : si(0), ri(0)
@@ -85,7 +85,7 @@ namespace
 			connectionsLeft++;
 			for (uint32 i = 0; i < 20; i++)
 			{
-				memoryBuffer b(randomRange(100, 10000));
+				MemoryBuffer b(randomRange(100, 10000));
 				privat::generateRandomData((uint8*)b.data(), numeric_cast<uint32>(b.size()));
 				sends.push_back(templates::move(b));
 			}
@@ -97,7 +97,7 @@ namespace
 			if (udp)
 			{
 				const auto &s = udp->statistics();
-				CAGE_LOG(severityEnum::Info, "udp-stats", stringizer() + "rtt: " + (s.roundTripDuration / 1000) + " ms, received: " + (s.bytesReceivedTotal / 1024) + " KB, " + s.packetsReceivedTotal + " packets");
+				CAGE_LOG(SeverityEnum::Info, "udp-stats", stringizer() + "rtt: " + (s.roundTripDuration / 1000) + " ms, received: " + (s.bytesReceivedTotal / 1024) + " KB, " + s.packetsReceivedTotal + " packets");
 			}
 			connectionsLeft--;
 		}
@@ -106,15 +106,15 @@ namespace
 		{
 			while (udp->available())
 			{
-				memoryBuffer r = udp->read();
-				memoryBuffer &b = sends[ri++];
+				MemoryBuffer r = udp->read();
+				MemoryBuffer &b = sends[ri++];
 				CAGE_TEST(r.size() == b.size());
 				CAGE_TEST(detail::memcmp(r.data(), b.data(), b.size()) == 0);
-				CAGE_LOG(severityEnum::Info, "udp-test", stringizer() + "progress: " + ri + " / " + sends.size());
+				CAGE_LOG(SeverityEnum::Info, "udp-test", stringizer() + "progress: " + ri + " / " + sends.size());
 			}
 			if (si < ri + 2 && si < sends.size())
 			{
-				memoryBuffer &b = sends[si++];
+				MemoryBuffer &b = sends[si++];
 				udp->write(b, 13, true);
 			}
 			udp->update();
@@ -137,12 +137,12 @@ void testUdp()
 	configSetUint32("cage/udp/logLevel", 2);
 	configSetFloat("cage/udp/simulatedPacketLoss", 0.1f);
 
-	holder<threadHandle> server = newThread(delegate<void()>().bind<&serverImpl::entry>(), "server");
-	std::vector<holder<threadHandle>> clients;
+	Holder<Thread> server = newThread(Delegate<void()>().bind<&serverImpl::entry>(), "server");
+	std::vector<Holder<Thread>> clients;
 	clients.resize(3);
 	uint32 index = 0;
 	for (auto &c : clients)
-		c = newThread(delegate<void()>().bind<&clientImpl::entry>(), stringizer() + "client " + (index++));
+		c = newThread(Delegate<void()>().bind<&clientImpl::entry>(), stringizer() + "client " + (index++));
 	server->wait();
 	for (auto &c : clients)
 		c->wait();

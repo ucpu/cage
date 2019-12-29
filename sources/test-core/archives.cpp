@@ -14,37 +14,37 @@ namespace
 		"testdir/archive.zip"
 	};
 
-	void testWriteFile(const string &name, const memoryBuffer &data)
+	void testWriteFile(const string &name, const MemoryBuffer &data)
 	{
 		for (const string &dir : directories)
 		{
-			holder<fileHandle> f = newFile(pathJoin(dir, name), fileMode(false, true));
+			Holder<File> f = newFile(pathJoin(dir, name), FileMode(false, true));
 			f->writeBuffer(data);
 			f->close();
 		}
 	}
 
-	void testReadFile2(const string &name, memoryBuffer &a, memoryBuffer &b)
+	void testReadFile2(const string &name, MemoryBuffer &a, MemoryBuffer &b)
 	{
-		memoryBuffer *p[2] = { &a, &b };
+		MemoryBuffer *p[2] = { &a, &b };
 		uint32 i = 0;
 		for (const string &dir : directories)
 		{
-			holder<fileHandle> f = newFile(pathJoin(dir, name), fileMode(true, false));
+			Holder<File> f = newFile(pathJoin(dir, name), FileMode(true, false));
 			*p[i++] = f->readBuffer(f->size());
 			f->close();
 		}
 	}
 
-	void testBuffers(const memoryBuffer &a, const memoryBuffer &b)
+	void testBuffers(const MemoryBuffer &a, const MemoryBuffer &b)
 	{
 		CAGE_TEST(a.size() == b.size());
 		CAGE_TEST(detail::memcmp(a.data(), b.data(), a.size()) == 0);
 	}
 
-	memoryBuffer testReadFile(const string &name)
+	MemoryBuffer testReadFile(const string &name)
 	{
-		memoryBuffer a, b;
+		MemoryBuffer a, b;
 		testReadFile2(name, a, b);
 		testBuffers(a, b);
 		return a;
@@ -64,7 +64,7 @@ namespace
 		uint32 i = 0;
 		for (const string &dir : directories)
 		{
-			holder<directoryList> f = newDirectoryList(pathJoin(dir, name));
+			Holder<DirectoryList> f = newDirectoryList(pathJoin(dir, name));
 			while (f->valid())
 			{
 				p[i]->insert(std::make_pair<string, bool>(f->name(), f->isDirectory()));
@@ -74,21 +74,21 @@ namespace
 		}
 	}
 
-	pathTypeFlags testPathType(const string &name)
+	PathTypeFlags testPathType(const string &name)
 	{
-		pathTypeFlags a, b;
+		PathTypeFlags a, b;
 		{
-			pathTypeFlags *p[2] = { &a, &b };
+			PathTypeFlags *p[2] = { &a, &b };
 			uint32 i = 0;
 			for (const string &dir : directories)
 				*p[i++] = pathType(pathJoin(dir, name));
 		}
 		{
-			pathTypeFlags m = pathTypeFlags::File | pathTypeFlags::Directory;
+			PathTypeFlags m = PathTypeFlags::File | PathTypeFlags::Directory;
 			CAGE_TEST((a & m) == (b & m));
 		}
-		CAGE_TEST((a & pathTypeFlags::InsideArchive) == pathTypeFlags::None);
-		CAGE_TEST((b & pathTypeFlags::InsideArchive) == pathTypeFlags::InsideArchive);
+		CAGE_TEST((a & PathTypeFlags::InsideArchive) == PathTypeFlags::None);
+		CAGE_TEST((b & PathTypeFlags::InsideArchive) == PathTypeFlags::InsideArchive);
 		return b;
 	}
 
@@ -126,16 +126,16 @@ void testArchives()
 	{
 		CAGE_TESTCASE("create empty archive");
 		pathCreateArchive(directories[1], "");
-		CAGE_TEST(pathType(directories[1]) == (pathTypeFlags::File | pathTypeFlags::Archive));
+		CAGE_TEST(pathType(directories[1]) == (PathTypeFlags::File | PathTypeFlags::Archive));
 		testListDirectory("");
 	}
 
-	memoryBuffer data1, data2, data3;
+	MemoryBuffer data1, data2, data3;
 	{ // generate some random data
-		memoryBuffer *data[3] = { &data1, &data2, &data3 };
-		for (memoryBuffer *d : data)
+		MemoryBuffer *data[3] = { &data1, &data2, &data3 };
+		for (MemoryBuffer *d : data)
 		{
-			serializer ser(*d);
+			Serializer ser(*d);
 			uint32 cnt = randomRange(10, 100);
 			for (uint32 i = 0; i < cnt; i++)
 				ser << randomRange(-1.0, 1.0);
@@ -190,13 +190,13 @@ void testArchives()
 	{
 		CAGE_TESTCASE("multiple write files at once");
 		{
-			holder<fileHandle> ws[] = {
-				newFile(pathJoin(directories[0], "multi/1"), fileMode(false, true)),
-				newFile(pathJoin(directories[1], "multi/1"), fileMode(false, true)),
-				newFile(pathJoin(directories[0], "multi/2"), fileMode(false, true)),
-				newFile(pathJoin(directories[1], "multi/2"), fileMode(false, true)),
-				newFile(pathJoin(directories[0], "multi/3"), fileMode(false, true)),
-				newFile(pathJoin(directories[1], "multi/3"), fileMode(false, true))
+			Holder<File> ws[] = {
+				newFile(pathJoin(directories[0], "multi/1"), FileMode(false, true)),
+				newFile(pathJoin(directories[1], "multi/1"), FileMode(false, true)),
+				newFile(pathJoin(directories[0], "multi/2"), FileMode(false, true)),
+				newFile(pathJoin(directories[1], "multi/2"), FileMode(false, true)),
+				newFile(pathJoin(directories[0], "multi/3"), FileMode(false, true)),
+				newFile(pathJoin(directories[1], "multi/3"), FileMode(false, true))
 			};
 			for (auto &f : ws)
 				f->writeBuffer(data1);
@@ -211,13 +211,13 @@ void testArchives()
 
 	{
 		CAGE_TESTCASE("multiple read files at once");
-		holder<fileHandle> rs[] = {
-			newFile(pathJoin(directories[0], "multi/1"), fileMode(true, false)),
-			newFile(pathJoin(directories[1], "multi/1"), fileMode(true, false)),
-			newFile(pathJoin(directories[0], "multi/2"), fileMode(true, false)),
-			newFile(pathJoin(directories[1], "multi/2"), fileMode(true, false)),
-			newFile(pathJoin(directories[0], "multi/3"), fileMode(true, false)),
-			newFile(pathJoin(directories[1], "multi/3"), fileMode(true, false))
+		Holder<File> rs[] = {
+			newFile(pathJoin(directories[0], "multi/1"), FileMode(true, false)),
+			newFile(pathJoin(directories[1], "multi/1"), FileMode(true, false)),
+			newFile(pathJoin(directories[0], "multi/2"), FileMode(true, false)),
+			newFile(pathJoin(directories[1], "multi/2"), FileMode(true, false)),
+			newFile(pathJoin(directories[0], "multi/3"), FileMode(true, false)),
+			newFile(pathJoin(directories[1], "multi/3"), FileMode(true, false))
 		};
 		for (auto &f : rs)
 			f->readBuffer(data3.size());
@@ -230,22 +230,22 @@ void testArchives()
 	{
 		CAGE_TESTCASE("file seek & tell");
 		string path = pathJoin(directories[1], "multi/1");
-		pathTypeFlags type = pathType(path);
-		CAGE_TEST((type & pathTypeFlags::File) == pathTypeFlags::File);
-		CAGE_TEST((type & pathTypeFlags::Directory) == pathTypeFlags::None);
-		CAGE_TEST((type & pathTypeFlags::InsideArchive) == pathTypeFlags::InsideArchive);
-		CAGE_TEST((type & pathTypeFlags::Archive) == pathTypeFlags::None);
-		holder<fileHandle> f = newFile(path, fileMode(true, false));
+		PathTypeFlags type = pathType(path);
+		CAGE_TEST((type & PathTypeFlags::File) == PathTypeFlags::File);
+		CAGE_TEST((type & PathTypeFlags::Directory) == PathTypeFlags::None);
+		CAGE_TEST((type & PathTypeFlags::InsideArchive) == PathTypeFlags::InsideArchive);
+		CAGE_TEST((type & PathTypeFlags::Archive) == PathTypeFlags::None);
+		Holder<File> f = newFile(path, FileMode(true, false));
 		f->seek(data1.size() + data2.size());
-		memoryBuffer b3 = f->readBuffer(data3.size());
+		MemoryBuffer b3 = f->readBuffer(data3.size());
 		CAGE_TEST(f->tell() == f->size());
 		f->seek(data1.size());
 		CAGE_TEST(f->tell() == data1.size());
-		memoryBuffer b2 = f->readBuffer(data2.size());
+		MemoryBuffer b2 = f->readBuffer(data2.size());
 		CAGE_TEST(f->tell() == data1.size() + data2.size());
 		f->seek(0);
 		CAGE_TEST(f->tell() == 0);
-		memoryBuffer b1 = f->readBuffer(data1.size());
+		MemoryBuffer b1 = f->readBuffer(data1.size());
 		CAGE_TEST(f->tell() == data1.size());
 		f->close();
 		testBuffers(b1, data1);
@@ -256,11 +256,11 @@ void testArchives()
 	{
 		CAGE_TESTCASE("remove a file");
 		{
-			holder<directoryList> list = newDirectoryList(directories[1]); // keep the archive open
+			Holder<DirectoryList> list = newDirectoryList(directories[1]); // keep the archive open
 			for (const string &dir : directories)
 				pathRemove(pathJoin(dir, "multi/2"));
 			testListRecursive(); // listing must work even while the changes to the archive are not yet written out
-			CAGE_TEST((pathType(pathJoin(directories[1], "multi/2")) & pathTypeFlags::NotFound) == pathTypeFlags::NotFound);
+			CAGE_TEST((pathType(pathJoin(directories[1], "multi/2")) & PathTypeFlags::NotFound) == PathTypeFlags::NotFound);
 		}
 		testListRecursive(); // and after they are written too
 	}
@@ -278,7 +278,7 @@ void testArchives()
 			for (const string &dir : directories)
 			{
 				{
-					holder<fileHandle> f = newFile("testdir/tmp", fileMode(false, true));
+					Holder<File> f = newFile("testdir/tmp", FileMode(false, true));
 					f->writeBuffer(data2);
 				}
 				pathMove("testdir/tmp", pathJoin(dir, "moved"));

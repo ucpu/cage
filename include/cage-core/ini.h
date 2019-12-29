@@ -31,19 +31,19 @@
 
 namespace cage
 {
-	class CAGE_API configIni : private immovable
+	class CAGE_API Ini : private Immovable
 	{
 	public:
 		uint32 sectionsCount() const;
 		string section(uint32 section) const;
 		bool sectionExists(const string &section) const;
-		holder<pointerRange<string>> sections() const;
+		Holder<PointerRange<string>> sections() const;
 		void sectionRemove(const string &section);
 		uint32 itemsCount(const string &section) const;
 		string item(const string &section, uint32 item) const;
 		bool itemExists(const string &section, const string &item) const;
-		holder<pointerRange<string>> items(const string &section) const;
-		holder<pointerRange<string>> values(const string &section) const;
+		Holder<PointerRange<string>> items(const string &section) const;
+		Holder<PointerRange<string>> values(const string &section) const;
 		void itemRemove(const string &section, const string &item);
 
 		string get(const string &section, const string &item) const;
@@ -57,7 +57,7 @@ namespace cage
 		void checkUnused() const;
 
 		void clear();
-		void merge(const configIni *source); // items in this are overridden by items in source
+		void merge(const Ini *source); // items in this are overridden by items in source
 		void parseCmd(uint32 argc, const char *const args[]); // clears this before parsing
 		void load(const string &filename); // clears this before loading
 		void save(const string &filename) const;
@@ -77,15 +77,15 @@ namespace cage
 		GCHL_GENERATE(string, String, "");
 #undef GCHL_GENERATE
 
-		holder<pointerRange<string>> cmdArray(char shortName, const string &longName) const;
+		Holder<PointerRange<string>> cmdArray(char shortName, const string &longName) const;
 	};
 
-	CAGE_API holder<configIni> newConfigIni();
-	CAGE_API holder<configIni> newConfigIni(memoryArena arena);
-	CAGE_API holder<configIni> newConfigIni(const string &filename);
-	CAGE_API holder<configIni> newConfigIni(memoryArena arena, const string &filename);
-	CAGE_API holder<configIni> newConfigIni(uint32 argc, const char *const args[]);
-	CAGE_API holder<configIni> newConfigIni(memoryArena arena, uint32 argc, const char *const args[]);
+	CAGE_API Holder<Ini> newConfigIni();
+	CAGE_API Holder<Ini> newConfigIni(MemoryArena arena);
+	CAGE_API Holder<Ini> newConfigIni(const string &filename);
+	CAGE_API Holder<Ini> newConfigIni(MemoryArena arena, const string &filename);
+	CAGE_API Holder<Ini> newConfigIni(uint32 argc, const char *const args[]);
+	CAGE_API Holder<Ini> newConfigIni(MemoryArena arena, uint32 argc, const char *const args[]);
 }
 
 #endif // guard_iniReader_h_c866b123_b27e_4758_ab8e_702ef8f315de_

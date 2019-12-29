@@ -20,7 +20,7 @@ void runnerStruct::step()
 	}
 	else
 	{
-		CAGE_LOG(severityEnum::Warning, "runner", "cannot keep up");
+		CAGE_LOG(SeverityEnum::Warning, "runner", "cannot keep up");
 		time = t;
 	}
 }

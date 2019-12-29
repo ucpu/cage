@@ -15,13 +15,13 @@ void testFiles()
 
 	pathRemove("testdir");
 
-	memoryBuffer data(BLOCK_SIZE);
+	MemoryBuffer data(BLOCK_SIZE);
 	for (uint32 i = 0; i < BLOCK_SIZE; i++)
 		data.data()[i] = (char)(i % 26 + 'A');
 
 	{
 		CAGE_TESTCASE("write to file");
-		holder<fileHandle> f = newFile("testdir/files/1", fileMode(false, true));
+		Holder<File> f = newFile("testdir/files/1", FileMode(false, true));
 		CAGE_TEST(f);
 		for (uint32 i = 0; i < FILE_BLOCKS; i++)
 			f->write(data.data(), BLOCK_SIZE);
@@ -29,10 +29,10 @@ void testFiles()
 
 	{
 		CAGE_TESTCASE("read from file");
-		holder<fileHandle> f = newFile("testdir/files/1", fileMode(true, false));
+		Holder<File> f = newFile("testdir/files/1", FileMode(true, false));
 		CAGE_TEST(f);
 		CAGE_TEST(f->size() == (uint64)FILE_BLOCKS * (uint64)BLOCK_SIZE);
-		memoryBuffer tmp(BLOCK_SIZE);
+		MemoryBuffer tmp(BLOCK_SIZE);
 		for (uint32 i = 0; i < FILE_BLOCKS; i++)
 		{
 			f->read(tmp.data(), BLOCK_SIZE);
@@ -42,16 +42,16 @@ void testFiles()
 
 	{
 		CAGE_TESTCASE("create several files");
-		holder<filesystem> fs = newFilesystem();
+		Holder<Filesystem> fs = newFilesystem();
 		fs->changeDir("testdir/files");
 		CAGE_TEST(fs);
 		for (uint32 i = 2; i <= 32; i++)
-			fs->openFile(string(i), fileMode(false, true));
+			fs->openFile(string(i), FileMode(false, true));
 	}
 
 	{
 		CAGE_TESTCASE("list directory");
-		holder<directoryList> fs = newDirectoryList("testdir/files");
+		Holder<DirectoryList> fs = newDirectoryList("testdir/files");
 		CAGE_TEST(fs);
 		std::set<string> mp;
 		while (fs->valid())
@@ -66,7 +66,7 @@ void testFiles()
 
 	{
 		CAGE_TESTCASE("list directory - test directories");
-		holder<directoryList> fs = newDirectoryList("testdir");
+		Holder<DirectoryList> fs = newDirectoryList("testdir");
 		CAGE_TEST(fs);
 		bool found = false;
 		while (fs->valid())
@@ -83,15 +83,15 @@ void testFiles()
 
 	{
 		CAGE_TESTCASE("list directory - test empty file");
-		newFile("testdir/empty.txt", fileMode(false, true));
-		holder<directoryList> fs = newDirectoryList("testdir");
+		newFile("testdir/empty.txt", FileMode(false, true));
+		Holder<DirectoryList> fs = newDirectoryList("testdir");
 		CAGE_TEST(fs);
 		bool found = false;
 		while (fs->valid())
 		{
 			if (fs->name() == "empty.txt")
 			{
-				CAGE_TEST(any(fs->type() & pathTypeFlags::File));
+				CAGE_TEST(any(fs->type() & PathTypeFlags::File));
 				CAGE_TEST(!fs->isDirectory());
 				found = true;
 			}
@@ -108,31 +108,31 @@ void testFiles()
 			{
 				for (char c = 'a'; c < a; c++)
 				{
-					holder<filesystem> fs = newFilesystem();
+					Holder<Filesystem> fs = newFilesystem();
 					fs->changeDir("testdir/files");
 					fs->changeDir(string(&a, 1));
 					fs->changeDir(string(&b, 1));
-					fs->openFile(string(&c, 1), fileMode(false, true));
+					fs->openFile(string(&c, 1), FileMode(false, true));
 				}
-				holder<filesystem> fs = newFilesystem();
+				Holder<Filesystem> fs = newFilesystem();
 				fs->changeDir("testdir/files");
 				fs->changeDir(string(&a, 1));
 				fs->changeDir(string(&b, 1));
-				fs->openFile("e", fileMode(false, true));
+				fs->openFile("e", FileMode(false, true));
 			}
 			for (char b = 'e'; b < 'h'; b++)
 			{
-				holder<filesystem> fs = newFilesystem();
+				Holder<Filesystem> fs = newFilesystem();
 				fs->changeDir("testdir/files");
 				fs->changeDir(string(&a, 1));
-				fs->openFile(string(&b, 1), fileMode(false, true));
+				fs->openFile(string(&b, 1), FileMode(false, true));
 			}
 		}
 	}
 
 	{
 		CAGE_TESTCASE("list files in subsequent directory");
-		holder<directoryList> fs = newDirectoryList("testdir/files/d/b");
+		Holder<DirectoryList> fs = newDirectoryList("testdir/files/d/b");
 		uint32 cnt = 0;
 		while (fs->valid())
 		{
@@ -144,7 +144,7 @@ void testFiles()
 
 	{
 		CAGE_TESTCASE("non-existing file");
-		CAGE_TEST_THROWN(newFile("testdir/files/non-existing-file", fileMode(true, false)));
+		CAGE_TEST_THROWN(newFile("testdir/files/non-existing-file", FileMode(true, false)));
 	}
 
 	{
@@ -153,14 +153,14 @@ void testFiles()
 		const string bs = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
 
 		{
-			holder<fileHandle> f = newFile("testdir/files/lines", fileMode(false, true));
+			Holder<File> f = newFile("testdir/files/lines", FileMode(false, true));
 			string s = bs;
 			while (!s.empty())
 				f->writeLine(s.split("/"));
 		}
 
 		{
-			holder<fileHandle> f = newFile("testdir/files/lines", fileMode(true, false));
+			Holder<File> f = newFile("testdir/files/lines", FileMode(true, false));
 			string s = bs;
 			for (string line; f->readLine(line);)
 				CAGE_TEST(line == s.split("/"));

@@ -38,10 +38,10 @@ class assimpContextClass
 public:
 	const aiScene *getScene() const;
 	uint32 selectMesh() const;
-	holder<assimpSkeletonClass> skeleton() const;
+	Holder<assimpSkeletonClass> skeleton() const;
 };
 
-holder<assimpContextClass> newAssimpContext(uint32 addFlags, uint32 removeFlags);
+Holder<assimpContextClass> newAssimpContext(uint32 addFlags, uint32 removeFlags);
 
 vec3 conv(const aiVector3D &v);
 vec3 conv(const aiColor3D &v);

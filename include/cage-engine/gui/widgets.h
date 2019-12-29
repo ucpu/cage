@@ -58,7 +58,7 @@ namespace cage
 
 	struct CAGE_API textAreaComponent
 	{
-		memoryBuffer *buffer; // utf-8 encoded string
+		MemoryBuffer *buffer; // utf-8 encoded string
 		uint32 cursor; // unicode characters (not bytes)
 		uint32 maxLength; // bytes
 		inputStyleFlags style;
@@ -152,10 +152,10 @@ namespace cage
 	{
 		struct CAGE_API guiWidgetsComponents
 		{
-#define GCHL_GENERATE(T) entityComponent *T;
+#define GCHL_GENERATE(T) EntityComponent *T;
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS));
 #undef GCHL_GENERATE
-			guiWidgetsComponents(entityManager *ents);
+			guiWidgetsComponents(EntityManager *ents);
 		};
 	}
 }

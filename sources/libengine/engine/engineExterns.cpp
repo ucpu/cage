@@ -9,17 +9,17 @@
 
 namespace cage
 {
-	entityComponent *transformComponent::component;
-	entityComponent *transformComponent::componentHistory;
-	entityComponent *renderComponent::component;
-	entityComponent *skeletalAnimationComponent::component;
-	entityComponent *textureAnimationComponent::component;
-	entityComponent *lightComponent::component;
-	entityComponent *shadowmapComponent::component;
-	entityComponent *renderTextComponent::component;
-	entityComponent *cameraComponent::component;
-	entityComponent *voiceComponent::component;
-	entityComponent *listenerComponent::component;
+	EntityComponent *transformComponent::component;
+	EntityComponent *transformComponent::componentHistory;
+	EntityComponent *renderComponent::component;
+	EntityComponent *skeletalAnimationComponent::component;
+	EntityComponent *textureAnimationComponent::component;
+	EntityComponent *lightComponent::component;
+	EntityComponent *shadowmapComponent::component;
+	EntityComponent *renderTextComponent::component;
+	EntityComponent *cameraComponent::component;
+	EntityComponent *voiceComponent::component;
+	EntityComponent *listenerComponent::component;
 
 	transformComponent::transformComponent(const transform &t) : transform(t) {}
 	renderComponent::renderComponent() : color(real::Nan()), opacity(real::Nan()), object(0), sceneMask(1) {}
@@ -61,7 +61,7 @@ namespace cage
 		return instance;
 	}
 
-	graphicsPrepareThreadClass::graphicsPrepareThreadClass() : stereoMode(stereoModeEnum::Mono)
+	graphicsPrepareThreadClass::graphicsPrepareThreadClass() : stereoMode(StereoModeEnum::Mono)
 	{}
 
 	graphicsPrepareThreadClass &graphicsPrepareThread()

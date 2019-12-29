@@ -29,7 +29,7 @@ namespace cage
 		class soundSourceImpl : public soundSource, public busInterfaceStruct
 		{
 		public:
-			std::set<mixingBus*, std::less<mixingBus*>, memoryArenaStd<mixingBus*>> outputs;
+			std::set<mixingBus*, std::less<mixingBus*>, MemoryArenaStd<mixingBus*>> outputs;
 			std::vector<float> rawData;
 			std::vector<float> temporaryData1;
 			std::vector<float> temporaryData2;
@@ -45,7 +45,7 @@ namespace cage
 			soundPrivat::vorbisDataStruct vorbisData;
 
 			soundSourceImpl(soundContext *context) :
-				busInterfaceStruct(delegate<void(mixingBus*)>().bind<soundSourceImpl, &soundSourceImpl::busDestroyed>(this), delegate<void(const soundDataBufferStruct&)>().bind<soundSourceImpl, &soundSourceImpl::execute>(this)),
+				busInterfaceStruct(Delegate<void(mixingBus*)>().bind<soundSourceImpl, &soundSourceImpl::busDestroyed>(this), Delegate<void(const soundDataBufferStruct&)>().bind<soundSourceImpl, &soundSourceImpl::execute>(this)),
 				outputs(linksArenaFromContext(context)),
 				channels(0), frames(0), sampleRate(0), pitch(0), dataType(dtNone), repeatBeforeStart(false), repeatAfterEnd(false)
 			{}
@@ -68,7 +68,7 @@ namespace cage
 					vorbisData.read(buffer, index, requestFrames);
 					break;
 				default:
-					CAGE_THROW_CRITICAL(exception, "invalid data type");
+					CAGE_THROW_CRITICAL(Exception, "invalid data type");
 				}
 			}
 
@@ -178,7 +178,7 @@ namespace cage
 					}
 					break;
 				default:
-					CAGE_THROW_CRITICAL(exception, "invalid source data type");
+					CAGE_THROW_CRITICAL(Exception, "invalid source data type");
 				}
 			}
 
@@ -298,7 +298,7 @@ namespace cage
 		return impl->sampleRate;
 	}
 
-	holder<soundSource> newSoundSource(soundContext *context)
+	Holder<soundSource> newSoundSource(soundContext *context)
 	{
 		return detail::systemArena().createImpl<soundSource, soundSourceImpl>(context);
 	}

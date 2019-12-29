@@ -462,16 +462,16 @@ namespace cage
 
 	namespace detail
 	{
-		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const real &other) { return str + other.value; }
-		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const degs &other) { return str + other.value.value + "deg"; }
-		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const rads &other) { return str + other.value.value + "rad"; }
-		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const vec2 &other) { return str + "(" + other[0].value + "," + other[1].value + ")"; }
-		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const vec3 &other) { return str + "(" + other[0].value + "," + other[1].value + "," + other[2].value + ")"; }
-		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const vec4 &other) { return str + "(" + other[0].value + "," + other[1].value + "," + other[2].value + "," + other[3].value + ")"; }
-		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const quat &other) { return str + "(" + other[0].value + "," + other[1].value + "," + other[2].value + "," + other[3].value + ")"; }
-		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const mat3 &other) { str + "(" + other[0].value; for (uint32 i = 1; i < 9; i++) str + "," + other[i].value; return str + ")"; }
-		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const mat4 &other) { str + "(" + other[0].value; for (uint32 i = 1; i < 16; i++) str + "," + other[i].value; return str + ")"; }
-		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const transform &other) { return str + "(" + other.position + "," + other.orientation + "," + other.scale + ")"; }
+		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const real &other) { return str + other.value; }
+		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const degs &other) { return str + other.value.value + "deg"; }
+		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const rads &other) { return str + other.value.value + "rad"; }
+		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const vec2 &other) { return str + "(" + other[0].value + "," + other[1].value + ")"; }
+		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const vec3 &other) { return str + "(" + other[0].value + "," + other[1].value + "," + other[2].value + ")"; }
+		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const vec4 &other) { return str + "(" + other[0].value + "," + other[1].value + "," + other[2].value + "," + other[3].value + ")"; }
+		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const quat &other) { return str + "(" + other[0].value + "," + other[1].value + "," + other[2].value + "," + other[3].value + ")"; }
+		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const mat3 &other) { str + "(" + other[0].value; for (uint32 i = 1; i < 9; i++) str + "," + other[i].value; return str + ")"; }
+		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const mat4 &other) { str + "(" + other[0].value; for (uint32 i = 1; i < 16; i++) str + "," + other[i].value; return str + ")"; }
+		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const transform &other) { return str + "(" + other.position + "," + other.orientation + "," + other.scale + ")"; }
 	}
 }
 

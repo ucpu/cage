@@ -147,8 +147,8 @@ namespace cage
 				sm += string(mapping[i] + 1).fill(4);
 				sd += string(device[i]).fill(4);
 			}
-			CAGE_LOG_CONTINUE(severityEnum::Note, "sound", stringizer() + "device channel ids:  " + sd);
-			CAGE_LOG_CONTINUE(severityEnum::Note, "sound", stringizer() + "mapping channel ids: " + sm);
+			CAGE_LOG_CONTINUE(SeverityEnum::Note, "sound", stringizer() + "device channel ids:  " + sd);
+			CAGE_LOG_CONTINUE(SeverityEnum::Note, "sound", stringizer() + "mapping channel ids: " + sm);
 		}
 
 		void writeCallbackHelper(SoundIoOutStream *stream, int frameCountMin, int frameCountMax);
@@ -227,12 +227,12 @@ namespace cage
 			} data;
 
 			soundSpeakerImpl(soundContext *context, const speakerOutputCreateConfig &config, string name) :
-				busInterfaceStruct(delegate<void(mixingBus*)>().bind<soundSpeakerImpl, &soundSpeakerImpl::busDestroyed>(this), delegate<void(const soundDataBufferStruct&)>()),
+				busInterfaceStruct(Delegate<void(mixingBus*)>().bind<soundSpeakerImpl, &soundSpeakerImpl::busDestroyed>(this), Delegate<void(const soundDataBufferStruct&)>()),
 				name(name.replace(":", "_")), context(context),
 				device(nullptr), stream(nullptr), inputBus(nullptr), convertCallback(nullptr),
 				errorCountUnderflow(0), errorCountExceptions(0), errorCountNoData(0)
 			{
-				CAGE_LOG(severityEnum::Info, "sound", stringizer() + "creating speaker, name: '" + name + "'");
+				CAGE_LOG(SeverityEnum::Info, "sound", stringizer() + "creating speaker, name: '" + name + "'");
 
 				for (uint32 i = 0; i < sizeof(channelVolumes) / sizeof(channelVolumes[0]); i++)
 					channelVolumes[i] = 1;
@@ -275,30 +275,30 @@ namespace cage
 				if (soundio_device_supports_format(device, stream->format = SoundIoFormatFloat32NE))
 				{
 					convertCallback = &soundPrivat::convertSingle<float, float>;
-					CAGE_LOG_CONTINUE(severityEnum::Note, "sound", "speaker uses 32 bit float samples");
+					CAGE_LOG_CONTINUE(SeverityEnum::Note, "sound", "speaker uses 32 bit float samples");
 				}
 				else if (soundio_device_supports_format(device, stream->format = SoundIoFormatS32NE))
 				{
 					convertCallback = &soundPrivat::convertSingle<float, sint32>;
-					CAGE_LOG_CONTINUE(severityEnum::Note, "sound", "speaker uses 32 bit integer samples");
+					CAGE_LOG_CONTINUE(SeverityEnum::Note, "sound", "speaker uses 32 bit integer samples");
 				}
 				else if (soundio_device_supports_format(device, stream->format = SoundIoFormatS16NE))
 				{
 					convertCallback = &soundPrivat::convertSingle<float, sint16>;
-					CAGE_LOG_CONTINUE(severityEnum::Note, "sound", "speaker uses 16 bit integer samples");
+					CAGE_LOG_CONTINUE(SeverityEnum::Note, "sound", "speaker uses 16 bit integer samples");
 				}
 				else if (soundio_device_supports_format(device, stream->format = SoundIoFormatFloat64NE))
 				{
 					convertCallback = &soundPrivat::convertSingle<float, double>;
-					CAGE_LOG_CONTINUE(severityEnum::Note, "sound", "speaker uses 64 bit double samples");
+					CAGE_LOG_CONTINUE(SeverityEnum::Note, "sound", "speaker uses 64 bit double samples");
 				}
 				else
 					CAGE_THROW_ERROR(soundError, "no supported format available", 0);
 
 				checkSoundIoError(soundio_outstream_open(stream));
-				CAGE_LOG_CONTINUE(severityEnum::Note, "sound", stringizer() + "speaker uses " + stream->layout.channel_count + " channels and " + stream->sample_rate + " samples per second per channel");
-				CAGE_LOG_CONTINUE(severityEnum::Note, "sound", stringizer() + "device id: '" + device->id + "'");
-				CAGE_LOG_CONTINUE(severityEnum::Note, "sound", stringizer() + "device name: '" + device->name + "'");
+				CAGE_LOG_CONTINUE(SeverityEnum::Note, "sound", stringizer() + "speaker uses " + stream->layout.channel_count + " channels and " + stream->sample_rate + " samples per second per channel");
+				CAGE_LOG_CONTINUE(SeverityEnum::Note, "sound", stringizer() + "device id: '" + device->id + "'");
+				CAGE_LOG_CONTINUE(SeverityEnum::Note, "sound", stringizer() + "device name: '" + device->name + "'");
 				channelMapping.resize(stream->layout.channel_count);
 				remapChannels(stream->layout.channel_count, stream->layout.channels, channelMapping.data());
 				data.init(sio, min(stream->layout.channel_count, 8), stream->sample_rate);
@@ -311,7 +311,7 @@ namespace cage
 				soundio_outstream_destroy(stream);
 				soundio_device_unref(device);
 				if (errorCountUnderflow || errorCountExceptions || errorCountNoData)
-					CAGE_LOG(severityEnum::Warning, "sound", stringizer() + "there has been " + errorCountUnderflow + " underflows, " + errorCountExceptions + " exceptions and " + errorCountNoData + " times no data in audio speaker: '" + name + "'");
+					CAGE_LOG(SeverityEnum::Warning, "sound", stringizer() + "there has been " + errorCountUnderflow + " underflows, " + errorCountExceptions + " exceptions and " + errorCountNoData + " times no data in audio speaker: '" + name + "'");
 			}
 
 			void update(uint64 currentTime)
@@ -479,7 +479,7 @@ namespace cage
 	speakerOutputCreateConfig::speakerOutputCreateConfig() : sampleRate(0), deviceRaw(false)
 	{}
 
-	holder<speakerOutput> newSpeakerOutput(soundContext *context, const speakerOutputCreateConfig &config, string name)
+	Holder<speakerOutput> newSpeakerOutput(soundContext *context, const speakerOutputCreateConfig &config, string name)
 	{
 		return detail::systemArena().createImpl<speakerOutput, soundSpeakerImpl>(context, config, name);
 	}

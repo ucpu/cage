@@ -44,7 +44,7 @@ namespace cage
 					setCurrentObject<readMark>(id);
 					break;
 				default:
-					CAGE_THROW_CRITICAL(exception, "invalid frame buffer target");
+					CAGE_THROW_CRITICAL(Exception, "invalid frame buffer target");
 				}
 			}
 
@@ -59,7 +59,7 @@ namespace cage
 					CAGE_ASSERT(getCurrentObject<readMark>() == id);
 					break;
 				default:
-					CAGE_THROW_CRITICAL(exception, "invalid frame buffer target");
+					CAGE_THROW_CRITICAL(Exception, "invalid frame buffer target");
 				}
 			}
 		};
@@ -131,7 +131,7 @@ namespace cage
 			glReadBuffer(*bufs);
 			break;
 		default:
-			CAGE_THROW_CRITICAL(exception, "invalid frame buffer target");
+			CAGE_THROW_CRITICAL(Exception, "invalid frame buffer target");
 		}
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
@@ -167,12 +167,12 @@ namespace cage
 		}
 	}
 
-	holder<frameBuffer> newFrameBufferDraw()
+	Holder<frameBuffer> newFrameBufferDraw()
 	{
 		return detail::systemArena().createImpl<frameBuffer, frameBufferImpl>(GL_DRAW_FRAMEBUFFER);
 	}
 
-	holder<frameBuffer> newFrameBufferRead()
+	Holder<frameBuffer> newFrameBufferRead()
 	{
 		return detail::systemArena().createImpl<frameBuffer, frameBufferImpl>(GL_READ_FRAMEBUFFER);
 	}

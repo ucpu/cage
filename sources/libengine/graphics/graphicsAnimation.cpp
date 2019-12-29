@@ -77,7 +77,7 @@ namespace cage
 				duration = 0;
 			}
 
-			memoryArena mem;
+			MemoryArena mem;
 
 			uint64 duration;
 			uint32 bones;
@@ -135,7 +135,7 @@ namespace cage
 		detail::memcpy(impl->rotationFrames, rotationFrames, sizeof(uint16) * bones);
 		detail::memcpy(impl->scaleFrames, scaleFrames, sizeof(uint16) * bones);
 
-		deserializer des(data, (char*)-1 - (char*)data);
+		Deserializer des(data, (char*)-1 - (char*)data);
 		for (uint16 b = 0; b < bones; b++)
 		{
 			if (impl->positionFrames[b])
@@ -250,7 +250,7 @@ namespace cage
 		return impl->duration;
 	}
 
-	holder<skeletalAnimation> newSkeletalAnimation()
+	Holder<skeletalAnimation> newSkeletalAnimation()
 	{
 		return detail::systemArena().createImpl<skeletalAnimation, animationImpl>();
 	}

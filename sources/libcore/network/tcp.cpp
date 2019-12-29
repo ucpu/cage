@@ -10,7 +10,7 @@ namespace cage
 
 	namespace
 	{
-		class tcpConnectionImpl : public tcpConnection
+		class tcpConnectionImpl : public TcpConnection
 		{
 		public:
 			sock s;
@@ -21,7 +21,7 @@ namespace cage
 				addrList l(address, port, AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, 0);
 				while (l.valid())
 				{
-					detail::overrideBreakpoint overrideBreakpoint;
+					detail::OverrideBreakpoint OverrideBreakpoint;
 					int family = -1, type = -1, protocol = -1;
 					addr address;
 					l.getAll(address, family, type, protocol);
@@ -31,7 +31,7 @@ namespace cage
 						s.connect(address);
 						break;
 					}
-					catch (const exception &)
+					catch (const Exception &)
 					{
 						s = sock();
 					}
@@ -39,7 +39,7 @@ namespace cage
 				}
 
 				if (!s.isValid())
-					CAGE_THROW_ERROR(exception, "no connection");
+					CAGE_THROW_ERROR(Exception, "no connection");
 
 				s.setBlocking(false);
 			}
@@ -48,7 +48,7 @@ namespace cage
 			{}
 		};
 
-		class tcpServerImpl : public tcpServer
+		class tcpServerImpl : public TcpServer
 		{
 		public:
 			std::vector<sock> socks;
@@ -70,7 +70,7 @@ namespace cage
 						s.listen();
 						socks.push_back(templates::move(s));
 					}
-					catch (const exception &)
+					catch (const Exception &)
 					{
 						// do nothing
 					}
@@ -78,12 +78,12 @@ namespace cage
 				}
 
 				if (socks.empty())
-					CAGE_THROW_ERROR(exception, "no interface");
+					CAGE_THROW_ERROR(Exception, "no interface");
 			}
 		};
 	}
 
-	string tcpConnection::address() const
+	string TcpConnection::address() const
 	{
 		tcpConnectionImpl *impl = (tcpConnectionImpl*)this;
 		string a;
@@ -92,7 +92,7 @@ namespace cage
 		return a;
 	}
 
-	uint16 tcpConnection::port() const
+	uint16 TcpConnection::port() const
 	{
 		tcpConnectionImpl *impl = (tcpConnectionImpl*)this;
 		string a;
@@ -101,7 +101,7 @@ namespace cage
 		return p;
 	}
 
-	uintPtr tcpConnection::available() const
+	uintPtr TcpConnection::available() const
 	{
 		tcpConnectionImpl *impl = (tcpConnectionImpl*)this;
 		uintPtr a = impl->s.available();
@@ -114,7 +114,7 @@ namespace cage
 		return impl->buffer.size();
 	}
 
-	void tcpConnection::read(void *buffer, uintPtr size)
+	void TcpConnection::read(void *buffer, uintPtr size)
 	{
 		tcpConnectionImpl *impl = (tcpConnectionImpl*)this;
 		uintPtr a = available();
@@ -128,32 +128,32 @@ namespace cage
 		impl->buffer.resize(impl->buffer.size() - size);
 	}
 
-	memoryBuffer tcpConnection::read(uintPtr size)
+	MemoryBuffer TcpConnection::read(uintPtr size)
 	{
-		memoryBuffer b(size);
+		MemoryBuffer b(size);
 		read(b.data(), b.size());
 		return b;
 	}
 
-	memoryBuffer tcpConnection::read()
+	MemoryBuffer TcpConnection::read()
 	{
-		memoryBuffer b(available());
+		MemoryBuffer b(available());
 		read(b.data(), b.size());
 		return b;
 	}
 
-	void tcpConnection::write(const void *buffer, uintPtr size)
+	void TcpConnection::write(const void *buffer, uintPtr size)
 	{
 		tcpConnectionImpl *impl = (tcpConnectionImpl*)this;
 		impl->s.send(buffer, size);
 	}
 
-	void tcpConnection::write(const memoryBuffer &buffer)
+	void TcpConnection::write(const MemoryBuffer &buffer)
 	{
 		write(buffer.data(), buffer.size());
 	}
 
-	bool tcpConnection::readLine(string &line)
+	bool TcpConnection::readLine(string &line)
 	{
 		available();
 		tcpConnectionImpl *impl = (tcpConnectionImpl*)this;
@@ -169,13 +169,13 @@ namespace cage
 		return true;
 	}
 
-	void tcpConnection::writeLine(const string &str)
+	void TcpConnection::writeLine(const string &str)
 	{
 		string tmp = str + "\n";
 		write((void*)tmp.c_str(), tmp.length());
 	}
 
-	uint16 tcpServer::port() const
+	uint16 TcpServer::port() const
 	{
 		tcpServerImpl *impl = (tcpServerImpl*)this;
 		string a;
@@ -184,7 +184,7 @@ namespace cage
 		return p;
 	}
 
-	holder<tcpConnection> tcpServer::accept()
+	Holder<TcpConnection> TcpServer::accept()
 	{
 		tcpServerImpl *impl = (tcpServerImpl*)this;
 
@@ -194,24 +194,24 @@ namespace cage
 			{
 				sock s = ss.accept();
 				if (s.isValid())
-					return detail::systemArena().createImpl<tcpConnection, tcpConnectionImpl>(templates::move(s));
+					return detail::systemArena().createImpl<TcpConnection, tcpConnectionImpl>(templates::move(s));
 			}
-			catch (const cage::exception &)
+			catch (const cage::Exception &)
 			{
 				// do nothing
 			}
 		}
 
-		return holder<tcpConnection>();
+		return Holder<TcpConnection>();
 	}
 
-	holder<tcpConnection> newTcpConnection(const string &address, uint16 port)
+	Holder<TcpConnection> newTcpConnection(const string &address, uint16 port)
 	{
-		return detail::systemArena().createImpl<tcpConnection, tcpConnectionImpl>(address, port);
+		return detail::systemArena().createImpl<TcpConnection, tcpConnectionImpl>(address, port);
 	}
 
-	holder<tcpServer> newTcpServer(uint16 port)
+	Holder<TcpServer> newTcpServer(uint16 port)
 	{
-		return detail::systemArena().createImpl<tcpServer, tcpServerImpl>(port);
+		return detail::systemArena().createImpl<TcpServer, tcpServerImpl>(port);
 	}
 }

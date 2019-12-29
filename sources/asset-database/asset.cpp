@@ -13,7 +13,7 @@ using namespace cage;
 assetStruct::assetStruct() : corrupted(true), needNotify(false)
 {}
 
-void assetStruct::load(fileHandle *f)
+void assetStruct::load(File *f)
 {
 	read(f, name);
 	read(f, aliasName);
@@ -45,7 +45,7 @@ void assetStruct::load(fileHandle *f)
 	read(f, corrupted);
 }
 
-void assetStruct::save(fileHandle *f) const
+void assetStruct::save(File *f) const
 {
 	write(f, name);
 	write(f, aliasName);
@@ -68,10 +68,10 @@ void assetStruct::save(fileHandle *f) const
 
 string assetStruct::outputPath() const
 {
-	return string(hashString(name.c_str()));
+	return string(HashString(name.c_str()));
 }
 
 string assetStruct::aliasPath() const
 {
-	return string(hashString(aliasName.c_str()));
+	return string(HashString(aliasName.c_str()));
 }

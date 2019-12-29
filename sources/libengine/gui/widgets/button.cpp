@@ -45,8 +45,8 @@ namespace cage
 					vec2 p = hierarchy->renderPos;
 					vec2 s = hierarchy->renderSize;
 					offset(p, s, -skin->defaults.button.margin - skin->layouts[(uint32)elementTypeEnum::Button].border - skin->defaults.button.padding);
-					if (hierarchy->image)
-						hierarchy->image->emit(p, s);
+					if (hierarchy->Image)
+						hierarchy->Image->emit(p, s);
 					if (hierarchy->text)
 						hierarchy->text->emit(p, s);
 				}

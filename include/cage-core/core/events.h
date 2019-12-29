@@ -3,21 +3,21 @@ namespace cage
 	// delegates
 
 	template<class T>
-	struct delegate;
+	struct Delegate;
 
 	template<class R, class... Ts>
-	struct delegate<R(Ts...)>
+	struct Delegate<R(Ts...)>
 	{
 	private:
 		R(*fnc)(void *, Ts...) = nullptr;
 		void *inst = nullptr;
 
 	public:
-		delegate()
+		Delegate()
 		{}
 
 		template<R(*F)(Ts...)>
-		delegate &bind()
+		Delegate &bind()
 		{
 			fnc = +[](void *inst, Ts... vs) {
 				(void)inst;
@@ -27,7 +27,7 @@ namespace cage
 		}
 
 		template<class D, R(*F)(D, Ts...)>
-		delegate &bind(D d)
+		Delegate &bind(D d)
 		{
 			static_assert(sizeof(d) <= sizeof(inst), "invalid size of data stored in delegate");
 			union U
@@ -47,7 +47,7 @@ namespace cage
 		}
 
 		template<class C, R(C::*F)(Ts...)>
-		delegate &bind(C *i)
+		Delegate &bind(C *i)
 		{
 			fnc = +[](void *inst, Ts... vs) {
 				return (((C*)inst)->*F)(templates::forward<Ts>(vs)...);
@@ -57,7 +57,7 @@ namespace cage
 		}
 
 		template<class C, R(C::*F)(Ts...) const>
-		delegate &bind(const C *i)
+		Delegate &bind(const C *i)
 		{
 			fnc = +[](void *inst, Ts... vs) {
 				return (((const C*)inst)->*F)(templates::forward<Ts>(vs)...);
@@ -87,73 +87,73 @@ namespace cage
 	// events
 
 	template<class>
-	struct eventListener;
+	struct EventListener;
 	template<class>
-	struct eventDispatcher;
+	struct EventDispatcher;
 
 	namespace privat
 	{
-		struct CAGE_API eventLinker : private immovable
+		struct CAGE_API EventLinker : private Immovable
 		{
-			explicit eventLinker(const string &name);
-			~eventLinker();
-			void attach(eventLinker *d, sint32 order);
+			explicit EventLinker(const string &name);
+			~EventLinker();
+			void attach(EventLinker *d, sint32 order);
 			void detach();
 			void logAllNames();
-			eventLinker *p, *n;
+			EventLinker *p, *n;
 		private:
 			void unlink();
 			bool valid() const;
 			sint32 order;
-			const detail::stringBase<32> name;
+			const detail::StringBase<60> name;
 		};
 	}
 
 	template<class... Ts>
-	struct eventListener<bool(Ts...)> : private privat::eventLinker, private delegate<bool(Ts...)>
+	struct EventListener<bool(Ts...)> : private privat::EventLinker, private Delegate<bool(Ts...)>
 	{
-		explicit eventListener(const string &name = "listener") : privat::eventLinker(name)
+		explicit EventListener(const string &name = "listener") : privat::EventLinker(name)
 		{}
 
-		void attach(eventDispatcher<bool(Ts...)> &dispatcher, sint32 order = 0)
+		void attach(EventDispatcher<bool(Ts...)> &dispatcher, sint32 order = 0)
 		{
-			privat::eventLinker::attach(&dispatcher, order);
+			privat::EventLinker::attach(&dispatcher, order);
 		}
 
-		using privat::eventLinker::detach;
-		using delegate<bool(Ts...)>::bind;
-		using delegate<bool(Ts...)>::clear;
+		using privat::EventLinker::detach;
+		using Delegate<bool(Ts...)>::bind;
+		using Delegate<bool(Ts...)>::clear;
 
 	private:
 		bool invoke(Ts... vs) const
 		{
-			auto &d = (delegate<bool(Ts...)>&)*this;
+			auto &d = (Delegate<bool(Ts...)>&)*this;
 			if (d)
 				return d(templates::forward<Ts>(vs)...);
 			return false;
 		}
 
-		using privat::eventLinker::logAllNames;
-		friend struct eventDispatcher<bool(Ts...)>;
+		using privat::EventLinker::logAllNames;
+		friend struct EventDispatcher<bool(Ts...)>;
 	};
 
 	template<class... Ts>
-	struct eventListener<void(Ts...)> : private eventListener<bool(Ts...)>, private delegate<void(Ts...)>
+	struct EventListener<void(Ts...)> : private EventListener<bool(Ts...)>, private Delegate<void(Ts...)>
 	{
-		explicit eventListener(const string &name = "listener") : eventListener<bool(Ts...)>(name)
+		explicit EventListener(const string &name = "listener") : EventListener<bool(Ts...)>(name)
 		{
-			eventListener<bool(Ts...)>::template bind<eventListener, &eventListener::invoke>(this);
+			EventListener<bool(Ts...)>::template bind<EventListener, &EventListener::invoke>(this);
 		}
 
-		using eventListener<bool(Ts...)>::attach;
-		using eventListener<bool(Ts...)>::detach;
-		using delegate<void(Ts...)>::bind;
-		using delegate<void(Ts...)>::clear;
+		using EventListener<bool(Ts...)>::attach;
+		using EventListener<bool(Ts...)>::detach;
+		using Delegate<void(Ts...)>::bind;
+		using Delegate<void(Ts...)>::clear;
 
 	private:
 		bool invoke(Ts... vs) const
 		{
-			auto &d = (delegate<void(Ts...)>&)*this;
+			auto &d = (Delegate<void(Ts...)>&)*this;
 			if (d)
 				d(templates::forward<Ts>(vs)...);
 			return false;
@@ -161,38 +161,38 @@ namespace cage
 	};
 	
 	template<class... Ts>
-	struct eventDispatcher<bool(Ts...)> : private eventListener<bool(Ts...)>
+	struct EventDispatcher<bool(Ts...)> : private EventListener<bool(Ts...)>
 	{
-		explicit eventDispatcher(const string &name = "dispatcher") : eventListener<bool(Ts...)>(name)
+		explicit EventDispatcher(const string &name = "dispatcher") : EventListener<bool(Ts...)>(name)
 		{}
 
 		bool dispatch(Ts... vs) const
 		{
 			CAGE_ASSERT(!this->p);
-			const privat::eventLinker *l = this->n;
+			const privat::EventLinker *l = this->n;
 			while (l)
 			{
-				if (static_cast<const eventListener<bool(Ts...)>*>(l)->invoke(templates::forward<Ts>(vs)...))
+				if (static_cast<const EventListener<bool(Ts...)>*>(l)->invoke(templates::forward<Ts>(vs)...))
 					return true;
 				l = l->n;
 			}
 			return false;
 		}
 
-		void attach(eventListener<bool(Ts...)> &listener, sint32 order = 0)
+		void attach(EventListener<bool(Ts...)> &listener, sint32 order = 0)
 		{
 			listener.attach(*this, order);
 		}
 
-		void attach(eventListener<void(Ts...)> &listener, sint32 order = 0)
+		void attach(EventListener<void(Ts...)> &listener, sint32 order = 0)
 		{
 			listener.attach(*this, order);
 		}
 
-		using eventListener<bool(Ts...)>::detach;
-		using eventListener<bool(Ts...)>::logAllNames;
+		using EventListener<bool(Ts...)>::detach;
+		using EventListener<bool(Ts...)>::logAllNames;
 
 	private:
-		friend struct eventListener<bool(Ts...)>;
+		friend struct EventListener<bool(Ts...)>;
 	};
 }

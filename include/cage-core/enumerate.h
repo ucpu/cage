@@ -6,7 +6,7 @@ namespace cage
 	namespace privat
 	{
 		template<class Range, class It1, class It2, class Counter>
-		struct enumerateStruct : private Range
+		struct Enumerate : private Range
 		{
 			template<class It>
 			struct iterator
@@ -72,7 +72,7 @@ namespace cage
 			auto begin() const { return iterator<It1>(it1, start); }
 			auto end() const { return iterator<It2>(it2, start); }
 
-			enumerateStruct(Range &&range, const It1 &it1, const It2 &it2, const Counter &start) : Range(templates::move(range)), it1(it1), it2(it2), start(start)
+			Enumerate(Range &&range, const It1 &it1, const It2 &it2, const Counter &start) : Range(templates::move(range)), it1(it1), it2(it2), start(start)
 			{}
 
 		private:
@@ -85,7 +85,7 @@ namespace cage
 		template<class Range, class It1, class It2, class Counter>
 		inline auto enumerate(Range &&range, const It1 &it1, const It2 &it2, const Counter &start)
 		{
-			return enumerateStruct<Range, It1, It2, Counter>(templates::move(range), it1, it2, start);
+			return Enumerate<Range, It1, It2, Counter>(templates::move(range), it1, it2, start);
 		}
 	}
 

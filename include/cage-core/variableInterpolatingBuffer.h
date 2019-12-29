@@ -6,7 +6,7 @@ namespace cage
 	namespace privat
 	{
 		template<class T>
-		struct defaultInterpolatorFunctor
+		struct DefaultInterpolatorFunctor
 		{
 			T operator () (const T &a, const T &b, float p) const
 			{
@@ -15,10 +15,10 @@ namespace cage
 		};
 	}
 
-	template<class T, class F = privat::defaultInterpolatorFunctor<T>>
-	struct variableInterpolatingBuffer
+	template<class T, class F = privat::DefaultInterpolatorFunctor<T>>
+	struct VariableInterpolatingBuffer
 	{
-		explicit variableInterpolatingBuffer(F fnc = F()) : fnc(fnc)
+		explicit VariableInterpolatingBuffer(F fnc = F()) : fnc(fnc)
 		{
 			clear();
 		}
@@ -73,7 +73,7 @@ namespace cage
 		{
 			CAGE_ASSERT(current > 0, "zero time is used as special value");
 			if (times[0] == 0)
-				CAGE_THROW_ERROR(exception, "interpolator has no data");
+				CAGE_THROW_ERROR(Exception, "interpolator has no data");
 			if (current <= times[0] || times[1] == 0)
 				return data[0];
 			if (current <= times[1] || times[2] == 0)

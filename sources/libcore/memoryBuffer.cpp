@@ -5,15 +5,15 @@
 
 namespace cage
 {
-	memoryBuffer::memoryBuffer() : data_(nullptr), size_(0), capacity_(0)
+	MemoryBuffer::MemoryBuffer() : data_(nullptr), size_(0), capacity_(0)
 	{}
 
-	memoryBuffer::memoryBuffer(uintPtr size, uintPtr capacity) : data_(nullptr), size_(0), capacity_(0)
+	MemoryBuffer::MemoryBuffer(uintPtr size, uintPtr capacity) : data_(nullptr), size_(0), capacity_(0)
 	{
 		allocate(size, capacity);
 	}
 
-	memoryBuffer::memoryBuffer(memoryBuffer &&other) noexcept
+	MemoryBuffer::MemoryBuffer(MemoryBuffer &&other) noexcept
 	{
 		data_ = other.data_;
 		size_ = other.size_;
@@ -23,7 +23,7 @@ namespace cage
 		other.capacity_ = 0;
 	}
 
-	memoryBuffer &memoryBuffer::operator = (memoryBuffer &&other) noexcept
+	MemoryBuffer &MemoryBuffer::operator = (MemoryBuffer &&other) noexcept
 	{
 		if (&other == this)
 			return *this;
@@ -37,19 +37,19 @@ namespace cage
 		return *this;
 	}
 
-	memoryBuffer::~memoryBuffer()
+	MemoryBuffer::~MemoryBuffer()
 	{
 		free();
 	}
 
-	memoryBuffer memoryBuffer::copy() const
+	MemoryBuffer MemoryBuffer::copy() const
 	{
-		memoryBuffer r(size());
+		MemoryBuffer r(size());
 		detail::memcpy(r.data(), data(), size());
 		return r;
 	}
 
-	void memoryBuffer::allocate(uintPtr size, uintPtr cap)
+	void MemoryBuffer::allocate(uintPtr size, uintPtr cap)
 	{
 		free();
 		if (size > cap)
@@ -59,7 +59,7 @@ namespace cage
 		size_ = size;
 	}
 
-	void memoryBuffer::reserve(uintPtr cap)
+	void MemoryBuffer::reserve(uintPtr cap)
 	{
 		if (cap < capacity_)
 			return;
@@ -68,26 +68,26 @@ namespace cage
 		size_ = s;
 	}
 
-	void memoryBuffer::resizeThrow(uintPtr size)
+	void MemoryBuffer::resizeThrow(uintPtr size)
 	{
 		if (size > capacity_)
 			CAGE_THROW_ERROR(outOfMemory, "size exceeds reserved buffer", size);
 		size_ = size;
 	}
 
-	void memoryBuffer::resize(uintPtr size)
+	void MemoryBuffer::resize(uintPtr size)
 	{
 		if (size <= capacity_)
 		{
 			size_ = size;
 			return;
 		}
-		memoryBuffer c = templates::move(*this);
+		MemoryBuffer c = templates::move(*this);
 		allocate(size);
 		detail::memcpy(data_, c.data(), c.size());
 	}
 
-	void memoryBuffer::resizeSmart(uintPtr size)
+	void MemoryBuffer::resizeSmart(uintPtr size)
 	{
 		if (size <= capacity_)
 		{
@@ -98,27 +98,27 @@ namespace cage
 		size_ = size;
 	}
 
-	void memoryBuffer::shrink()
+	void MemoryBuffer::shrink()
 	{
 		if (capacity_ == size_)
 			return;
 		CAGE_ASSERT(capacity_ > size_);
-		memoryBuffer c = templates::move(*this);
+		MemoryBuffer c = templates::move(*this);
 		allocate(c.size());
 		detail::memcpy(data_, c.data(), c.size());
 	}
 
-	void memoryBuffer::zero()
+	void MemoryBuffer::zero()
 	{
 		detail::memset(data_, 0, size_);
 	}
 
-	void memoryBuffer::clear()
+	void MemoryBuffer::clear()
 	{
 		size_ = 0;
 	}
 
-	void memoryBuffer::free()
+	void MemoryBuffer::free()
 	{
 		detail::systemArena().deallocate(data_);
 		data_ = nullptr;
@@ -127,17 +127,17 @@ namespace cage
 
 	namespace detail
 	{
-		memoryBuffer compress(const memoryBuffer &input)
+		MemoryBuffer compress(const MemoryBuffer &input)
 		{
-			memoryBuffer output(compressionBound(input.size()));
+			MemoryBuffer output(compressionBound(input.size()));
 			uintPtr res = compress(input.data(), input.size(), output.data(), output.size());
 			output.resize(res);
 			return output;
 		}
 
-		memoryBuffer decompress(const memoryBuffer &input, uintPtr outputSize)
+		MemoryBuffer decompress(const MemoryBuffer &input, uintPtr outputSize)
 		{
-			memoryBuffer output(outputSize);
+			MemoryBuffer output(outputSize);
 			uintPtr res = decompress(input.data(), input.size(), output.data(), output.size());
 			output.resize(res);
 			return output;

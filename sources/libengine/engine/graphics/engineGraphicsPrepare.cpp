@@ -30,16 +30,16 @@
 namespace cage
 {
 	// implemented in gui
-	string loadInternationalizedText(assetManager *assets, uint32 asset, uint32 text, string params);
+	string loadInternationalizedText(AssetManager *assets, uint32 asset, uint32 text, string params);
 
 	namespace
 	{
-		configBool confRenderMissingMeshes("cage/graphics/renderMissingMeshes", false);
-		configBool confRenderSkeletonBones("cage/graphics/renderSkeletonBones", false);
-		configBool confNoAmbientOcclusion("cage/graphics/disableAmbientOcclusion", false);
-		configBool confNoBloom("cage/graphics/disableBloom", false);
-		configBool confNoMotionBlur("cage/graphics/disableMotionBlur", false);
-		configBool confNoNormalMap("cage/graphics/disableNormalMaps", false);
+		ConfigBool confRenderMissingMeshes("cage/graphics/renderMissingMeshes", false);
+		ConfigBool confRenderSkeletonBones("cage/graphics/renderSkeletonBones", false);
+		ConfigBool confNoAmbientOcclusion("cage/graphics/disableAmbientOcclusion", false);
+		ConfigBool confNoBloom("cage/graphics/disableBloom", false);
+		ConfigBool confNoMotionBlur("cage/graphics/disableMotionBlur", false);
+		ConfigBool confNoNormalMap("cage/graphics/disableNormalMaps", false);
 
 		struct shadowmapImpl : public shadowmapComponent
 		{
@@ -123,7 +123,7 @@ namespace cage
 		struct emitStruct
 		{
 			memoryArenaGrowing<memoryAllocatorPolicyLinear<>, memoryConcurrentPolicyNone> emitMemory;
-			memoryArena emitArena;
+			MemoryArena emitArena;
 
 			std::vector<emitRenderObjectStruct*> renderableObjects;
 			std::vector<emitRenderTextStruct*> renderableTexts;
@@ -152,13 +152,13 @@ namespace cage
 			emitStruct emitBufferA, emitBufferB, emitBufferC; // this is awfully stupid, damn you c++
 			emitStruct *emitBuffers[3];
 			emitStruct *emitRead, *emitWrite;
-			holder<swapBufferGuard> swapController;
+			Holder<SwapBufferGuard> swapController;
 
 			mat4 tmpArmature[CAGE_SHADER_MAX_BONES];
 			mat4 tmpArmature2[CAGE_SHADER_MAX_BONES];
 
 			memoryArenaGrowing<memoryAllocatorPolicyLinear<>, memoryConcurrentPolicyNone> dispatchMemory;
-			memoryArena dispatchArena;
+			MemoryArena dispatchArena;
 
 			interpolationTimingCorrector itc;
 			uint64 emitTime;
@@ -325,9 +325,9 @@ namespace cage
 				} sorterInstance(pass);
 			}
 
-			static void initializeStereoCamera(renderPassImpl *pass, emitCameraStruct *camera, stereoEyeEnum eye, const mat4 &model)
+			static void initializeStereoCamera(renderPassImpl *pass, emitCameraStruct *camera, StereoEyeEnum eye, const mat4 &model)
 			{
-				stereoCameraInput in;
+				StereoCameraInput in;
 				in.position = vec3(model * vec4(0, 0, 0, 1));
 				in.orientation = quat(mat3(model));
 				in.viewportOrigin = camera->camera.viewportOrigin;
@@ -339,7 +339,7 @@ namespace cage
 				in.zeroParallaxDistance = camera->camera.zeroParallaxDistance;
 				in.eyeSeparation = camera->camera.eyeSeparation;
 				in.orthographic = camera->camera.cameraType == cameraTypeEnum::Orthographic;
-				stereoCameraOutput out = stereoCamera(in, (stereoModeEnum)graphicsPrepareThread().stereoMode, eye);
+				StereoCameraOutput out = stereoCamera(in, (StereoModeEnum)graphicsPrepareThread().stereoMode, eye);
 				pass->view = out.view;
 				pass->proj = out.projection;
 				if (camera->camera.cameraType == cameraTypeEnum::Perspective)
@@ -365,7 +365,7 @@ namespace cage
 				pass->viewProj = pass->proj * pass->view;
 			}
 
-			void initializeRenderPassForCamera(renderPassImpl *pass, emitCameraStruct *camera, stereoEyeEnum eye)
+			void initializeRenderPassForCamera(renderPassImpl *pass, emitCameraStruct *camera, StereoEyeEnum eye)
 			{
 				OPTICK_EVENT("camera pass");
 				if (camera->camera.target)
@@ -374,7 +374,7 @@ namespace cage
 					uint32 w = 0, h = 0;
 					camera->camera.target->getResolution(w, h);
 					if (w == 0 || h == 0)
-						CAGE_THROW_ERROR(exception, "target texture has zero resolution");
+						CAGE_THROW_ERROR(Exception, "target texture has zero resolution");
 					switch (camera->camera.cameraType)
 					{
 					case cameraTypeEnum::Orthographic:
@@ -389,7 +389,7 @@ namespace cage
 						pass->lodSelection = fovToLodSelection(camera->camera.camera.perspectiveFov) * h;
 						break;
 					default:
-						CAGE_THROW_ERROR(exception, "invalid camera type");
+						CAGE_THROW_ERROR(Exception, "invalid camera type");
 					}
 					initializeTargetCamera(pass, camera->modelPrev);
 					pass->viewProjPrev = pass->viewProj;
@@ -451,7 +451,7 @@ namespace cage
 					pass->lodSelection = fovToLodSelection(degs(90)) * light->shadowmap->resolution;
 					break;
 				default:
-					CAGE_THROW_CRITICAL(exception, "invalid light type");
+					CAGE_THROW_CRITICAL(Exception, "invalid light type");
 				}
 				pass->viewProj = pass->proj * pass->view;
 				pass->viewProjPrev = pass->viewProj;
@@ -512,7 +512,7 @@ namespace cage
 						}
 					} break;
 					default:
-						CAGE_LOG(severityEnum::Warning, "engine", stringizer() + "trying to render an asset " + e->render.object + " with unsupported scheme " + schemeIndex);
+						CAGE_LOG(SeverityEnum::Warning, "engine", stringizer() + "trying to render an asset " + e->render.object + " with unsupported scheme " + schemeIndex);
 					}
 				}
 			}
@@ -533,7 +533,7 @@ namespace cage
 					for (uint32 i = 0; i < bonesCount; i++)
 						tmpArmature2[i] = mat4();
 				}
-				renderMesh *mesh = assets()->get<assetSchemeIndexMesh, renderMesh>(hashString("cage/mesh/bone.obj"));
+				renderMesh *mesh = assets()->get<assetSchemeIndexMesh, renderMesh>(HashString("cage/mesh/bone.obj"));
 				CAGE_ASSERT(mesh->getSkeletonName() == 0);
 				for (uint32 i = 0; i < bonesCount; i++)
 				{
@@ -650,7 +650,7 @@ namespace cage
 					if ((e->renderText.sceneMask & pass->sceneMask) == 0)
 						continue;
 					if (!e->renderText.font)
-						e->renderText.font = hashString("cage/font/ubuntu/Ubuntu-R.ttf");
+						e->renderText.font = HashString("cage/font/ubuntu/Ubuntu-R.ttf");
 					if (!assets()->ready(e->renderText.font))
 						continue;
 					string s = loadInternationalizedText(assets(), e->renderText.assetName, e->renderText.textName, e->renderText.value);
@@ -783,7 +783,7 @@ namespace cage
 
 			graphicsPrepareImpl(const engineCreateConfig &config) : emitBufferA(config), emitBufferB(config), emitBufferC(config), emitBuffers{ &emitBufferA, &emitBufferB, &emitBufferC }, emitRead(nullptr), emitWrite(nullptr), dispatchMemory(config.graphicsDispatchMemory), dispatchArena(&dispatchMemory), emitTime(0), dispatchTime(0), lastDispatchTime(0), elapsedDispatchTime(0)
 			{
-				swapBufferGuardCreateConfig cfg(3);
+				SwapBufferGuardCreateConfig cfg(3);
 				cfg.repeatedReads = true;
 				swapController = newSwapBufferGuard(cfg);
 			}
@@ -793,7 +793,7 @@ namespace cage
 				dispatchArena.flush();
 			}
 
-			void emitTransform(emitTransformsStruct *c, entity *e)
+			void emitTransform(emitTransformsStruct *c, Entity *e)
 			{
 				c->current = e->value<transformComponent>(transformComponent::component);
 				if (e->has(transformComponent::componentHistory))
@@ -807,7 +807,7 @@ namespace cage
 				auto lock = swapController->write();
 				if (!lock)
 				{
-					CAGE_LOG_DEBUG(severityEnum::Warning, "engine", "skipping graphics emit");
+					CAGE_LOG_DEBUG(SeverityEnum::Warning, "engine", "skipping graphics emit");
 					return;
 				}
 
@@ -822,7 +822,7 @@ namespace cage
 				emitWrite->fresh = true;
 
 				// emit renderable objects
-				for (entity *e : renderComponent::component->entities())
+				for (Entity *e : renderComponent::component->entities())
 				{
 					emitRenderObjectStruct *c = emitWrite->emitArena.createObject<emitRenderObjectStruct>();
 					emitTransform(c, e);
@@ -835,7 +835,7 @@ namespace cage
 				}
 
 				// emit renderable texts
-				for (entity *e : renderTextComponent::component->entities())
+				for (Entity *e : renderTextComponent::component->entities())
 				{
 					emitRenderTextStruct *c = emitWrite->emitArena.createObject<emitRenderTextStruct>();
 					emitTransform(c, e);
@@ -844,7 +844,7 @@ namespace cage
 				}
 
 				// emit lights
-				for (entity *e : lightComponent::component->entities())
+				for (Entity *e : lightComponent::component->entities())
 				{
 					emitLightStruct *c = emitWrite->emitArena.createObject<emitLightStruct>();
 					emitTransform(c, e);
@@ -864,7 +864,7 @@ namespace cage
 					effectsMask &= ~cameraEffectsFlags::Bloom;
 				if (confNoMotionBlur)
 					effectsMask &= ~cameraEffectsFlags::MotionBlur;
-				for (entity *e : cameraComponent::component->entities())
+				for (Entity *e : cameraComponent::component->entities())
 				{
 					emitCameraStruct *c = emitWrite->emitArena.createObject<emitCameraStruct>();
 					emitTransform(c, e);
@@ -888,7 +888,7 @@ namespace cage
 						e->render.object = 0; // disable rendering further in the pipeline
 						return;
 					}
-					e->render.object = hashString("cage/mesh/fake.obj");
+					e->render.object = HashString("cage/mesh/fake.obj");
 					CAGE_ASSERT(assets()->ready(e->render.object));
 				}
 
@@ -964,40 +964,40 @@ namespace cage
 				auto lock = swapController->read();
 				if (!lock)
 				{
-					CAGE_LOG_DEBUG(severityEnum::Warning, "engine", "skipping graphics prepare");
+					CAGE_LOG_DEBUG(SeverityEnum::Warning, "engine", "skipping graphics prepare");
 					return;
 				}
 
-				assetManager *ass = assets();
-				if (!ass->ready(hashString("cage/cage.pack")) || !ass->ready(hashString("cage/shader/engine/engine.pack")))
+				AssetManager *ass = assets();
+				if (!ass->ready(HashString("cage/cage.pack")) || !ass->ready(HashString("cage/shader/engine/engine.pack")))
 					return;
 
 				if (!graphicsDispatch->shaderBlit)
 				{
-					graphicsDispatch->meshSquare = ass->get<assetSchemeIndexMesh, renderMesh>(hashString("cage/mesh/square.obj"));
-					graphicsDispatch->meshSphere = ass->get<assetSchemeIndexMesh, renderMesh>(hashString("cage/mesh/sphere.obj"));
-					graphicsDispatch->meshCone = ass->get<assetSchemeIndexMesh, renderMesh>(hashString("cage/mesh/cone.obj"));
-					graphicsDispatch->shaderVisualizeColor = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/visualize/color.glsl"));
-					graphicsDispatch->shaderVisualizeDepth = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/visualize/depth.glsl"));
-					graphicsDispatch->shaderVisualizeMonochromatic = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/visualize/monochromatic.glsl"));
-					graphicsDispatch->shaderVisualizeVelocity = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/visualize/velocity.glsl"));
-					graphicsDispatch->shaderAmbient = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/ambient.glsl"));
-					graphicsDispatch->shaderBlit = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/blit.glsl"));
-					graphicsDispatch->shaderDepth = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/depth.glsl"));
-					graphicsDispatch->shaderGBuffer = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/gBuffer.glsl"));
-					graphicsDispatch->shaderLighting = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/lighting.glsl"));
-					graphicsDispatch->shaderTranslucent = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/translucent.glsl"));
-					graphicsDispatch->shaderGaussianBlur = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/effects/gaussianBlur.glsl"));
-					graphicsDispatch->shaderSsaoGenerate = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/effects/ssaoGenerate.glsl"));
-					graphicsDispatch->shaderSsaoApply = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/effects/ssaoApply.glsl"));
-					graphicsDispatch->shaderMotionBlur = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/effects/motionBlur.glsl"));
-					graphicsDispatch->shaderBloomGenerate = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/effects/bloomGenerate.glsl"));
-					graphicsDispatch->shaderBloomApply = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/effects/bloomApply.glsl"));
-					graphicsDispatch->shaderLuminanceCollection = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/effects/luminanceCollection.glsl"));
-					graphicsDispatch->shaderLuminanceCopy = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/effects/luminanceCopy.glsl"));
-					graphicsDispatch->shaderFinalScreen = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/effects/finalScreen.glsl"));
-					graphicsDispatch->shaderFxaa = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/engine/effects/fxaa.glsl"));
-					graphicsDispatch->shaderFont = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(hashString("cage/shader/gui/font.glsl"));
+					graphicsDispatch->meshSquare = ass->get<assetSchemeIndexMesh, renderMesh>(HashString("cage/mesh/square.obj"));
+					graphicsDispatch->meshSphere = ass->get<assetSchemeIndexMesh, renderMesh>(HashString("cage/mesh/sphere.obj"));
+					graphicsDispatch->meshCone = ass->get<assetSchemeIndexMesh, renderMesh>(HashString("cage/mesh/cone.obj"));
+					graphicsDispatch->shaderVisualizeColor = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(HashString("cage/shader/engine/visualize/color.glsl"));
+					graphicsDispatch->shaderVisualizeDepth = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(HashString("cage/shader/engine/visualize/depth.glsl"));
+					graphicsDispatch->shaderVisualizeMonochromatic = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(HashString("cage/shader/engine/visualize/monochromatic.glsl"));
+					graphicsDispatch->shaderVisualizeVelocity = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(HashString("cage/shader/engine/visualize/velocity.glsl"));
+					graphicsDispatch->shaderAmbient = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(HashString("cage/shader/engine/ambient.glsl"));
+					graphicsDispatch->shaderBlit = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(HashString("cage/shader/engine/blit.glsl"));
+					graphicsDispatch->shaderDepth = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(HashString("cage/shader/engine/depth.glsl"));
+					graphicsDispatch->shaderGBuffer = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(HashString("cage/shader/engine/gBuffer.glsl"));
+					graphicsDispatch->shaderLighting = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(HashString("cage/shader/engine/lighting.glsl"));
+					graphicsDispatch->shaderTranslucent = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(HashString("cage/shader/engine/translucent.glsl"));
+					graphicsDispatch->shaderGaussianBlur = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(HashString("cage/shader/engine/effects/gaussianBlur.glsl"));
+					graphicsDispatch->shaderSsaoGenerate = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(HashString("cage/shader/engine/effects/ssaoGenerate.glsl"));
+					graphicsDispatch->shaderSsaoApply = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(HashString("cage/shader/engine/effects/ssaoApply.glsl"));
+					graphicsDispatch->shaderMotionBlur = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(HashString("cage/shader/engine/effects/motionBlur.glsl"));
+					graphicsDispatch->shaderBloomGenerate = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(HashString("cage/shader/engine/effects/bloomGenerate.glsl"));
+					graphicsDispatch->shaderBloomApply = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(HashString("cage/shader/engine/effects/bloomApply.glsl"));
+					graphicsDispatch->shaderLuminanceCollection = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(HashString("cage/shader/engine/effects/luminanceCollection.glsl"));
+					graphicsDispatch->shaderLuminanceCopy = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(HashString("cage/shader/engine/effects/luminanceCopy.glsl"));
+					graphicsDispatch->shaderFinalScreen = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(HashString("cage/shader/engine/effects/finalScreen.glsl"));
+					graphicsDispatch->shaderFxaa = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(HashString("cage/shader/engine/effects/fxaa.glsl"));
+					graphicsDispatch->shaderFont = ass->get<assetSchemeIndexShaderProgram, shaderProgram>(HashString("cage/shader/gui/font.glsl"));
 				}
 
 				emitRead = emitBuffers[lock.index()];
@@ -1056,14 +1056,14 @@ namespace cage
 					});
 					for (auto it : emitRead->cameras)
 					{
-						if (graphicsPrepareThread().stereoMode == stereoModeEnum::Mono || it->camera.target)
+						if (graphicsPrepareThread().stereoMode == StereoModeEnum::Mono || it->camera.target)
 						{ // mono
-							initializeRenderPassForCamera(newRenderPass(), it, stereoEyeEnum::Mono);
+							initializeRenderPassForCamera(newRenderPass(), it, StereoEyeEnum::Mono);
 						}
 						else
 						{ // stereo
-							initializeRenderPassForCamera(newRenderPass(), it, stereoEyeEnum::Left);
-							initializeRenderPassForCamera(newRenderPass(), it, stereoEyeEnum::Right);
+							initializeRenderPassForCamera(newRenderPass(), it, StereoEyeEnum::Left);
+							initializeRenderPassForCamera(newRenderPass(), it, StereoEyeEnum::Right);
 						}
 					}
 				}
@@ -1102,7 +1102,7 @@ namespace cage
 
 	objectsStruct::objectsStruct(renderMesh *mesh, uint32 max) : shaderMeshes(nullptr), shaderArmatures(nullptr), mesh(mesh), next(nullptr), count(0), max(max)
 	{
-		assetManager *ass = assets();
+		AssetManager *ass = assets();
 		shaderMeshes = (shaderMeshStruct*)graphicsPrepare->dispatchArena.allocate(sizeof(shaderMeshStruct) * max, sizeof(uintPtr));
 		if (mesh->getSkeletonBones())
 		{
@@ -1186,7 +1186,7 @@ namespace cage
 			shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE, shadowmap == 0 ? CAGE_SHADER_ROUTINEPROC_LIGHTPOINT : CAGE_SHADER_ROUTINEPROC_LIGHTPOINTSHADOW);
 			break;
 		default:
-			CAGE_THROW_CRITICAL(exception, "invalid light type");
+			CAGE_THROW_CRITICAL(Exception, "invalid light type");
 		}
 	}
 

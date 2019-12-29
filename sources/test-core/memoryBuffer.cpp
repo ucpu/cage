@@ -8,7 +8,7 @@ void testMemoryBuffers()
 
 	{
 		CAGE_TESTCASE("methods & size & capacity");
-		memoryBuffer b(13, 42);
+		MemoryBuffer b(13, 42);
 		CAGE_TEST(b.size() == 13);
 		CAGE_TEST(b.capacity() == 42);
 		b.allocate(20);
@@ -52,21 +52,21 @@ void testMemoryBuffers()
 	{
 		CAGE_TESTCASE("compression");
 		{
-			memoryBuffer b1(1000);
+			MemoryBuffer b1(1000);
 			for (uintPtr i = 0, e = b1.size(); i < e; i++)
 				((uint8*)b1.data())[i] = (uint8)i;
-			memoryBuffer b2 = detail::compress(b1);
+			MemoryBuffer b2 = detail::compress(b1);
 			CAGE_TEST(b2.size() < b1.size());
-			memoryBuffer b3 = detail::decompress(b2, 2000);
+			MemoryBuffer b3 = detail::decompress(b2, 2000);
 			CAGE_TEST(b3.size() == b1.size());
 			CAGE_TEST(detail::memcmp(b3.data(), b1.data(), b1.size()) == 0);
 		}
 		{
-			memoryBuffer b1(128);
+			MemoryBuffer b1(128);
 			for (uintPtr i = 0, e = b1.size(); i < e; i++)
 				((uint8*)b1.data())[i] = (uint8)i;
-			memoryBuffer b2 = detail::compress(b1);
-			memoryBuffer b3 = detail::decompress(b2, 200);
+			MemoryBuffer b2 = detail::compress(b1);
+			MemoryBuffer b3 = detail::decompress(b2, 200);
 			CAGE_TEST(b3.size() == b1.size());
 			CAGE_TEST(detail::memcmp(b3.data(), b1.data(), b1.size()) == 0);
 		}
@@ -76,10 +76,10 @@ void testMemoryBuffers()
 		CAGE_TESTCASE("std buffer streams");
 		{
 			CAGE_TESTCASE("input stream reading uint8 array");
-			memoryBuffer b1(2000);
+			MemoryBuffer b1(2000);
 			for (uintPtr i = 0, e = b1.size(); i < e; i++)
 				((uint8*)b1.data())[i] = (uint8)i;
-			bufferIStream is(b1);
+			BufferIStream is(b1);
 			for (uintPtr i = 0, e = b1.size(); i < e; i++)
 			{
 				uint8 c;
@@ -100,9 +100,9 @@ void testMemoryBuffers()
 				data.arr[i] = (uint8)i;
 			data.u64 = 42424242424242;
 			data.u16 = 42;
-			memoryBuffer b(sizeof(dataStruct));
+			MemoryBuffer b(sizeof(dataStruct));
 			detail::memcpy(b.data(), &data, b.size());
-			bufferIStream is(b);
+			BufferIStream is(b);
 			dataStruct s;
 			detail::memset(&s, 0, sizeof(dataStruct));
 			for (uint32 i = 0; i < 128; i++)
@@ -125,8 +125,8 @@ void testMemoryBuffers()
 				data.arr[i] = (uint8)i;
 			data.u64 = 42424242424242;
 			data.u16 = 42;
-			memoryBuffer b;
-			bufferOStream os(b);
+			MemoryBuffer b;
+			BufferOStream os(b);
 			for (uint32 i = 0; i < 128; i++)
 				os.write((char*)&data.arr[i], 1);
 			os.write((char*)&data.u64, 8);

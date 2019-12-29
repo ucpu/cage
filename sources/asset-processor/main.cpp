@@ -24,15 +24,15 @@ string inputIdentifier; // identifier
 
 const char *logComponentName;
 
-assetHeader initializeAssetHeaderStruct()
+AssetHeader initializeAssetHeaderStruct()
 {
-	assetHeader h = initializeAssetHeader(inputName, numeric_cast<uint16>(schemeIndex));
+	AssetHeader h = initializeAssetHeader(inputName, numeric_cast<uint16>(schemeIndex));
 	string intr = properties("alias");
 	if (!intr.empty())
 	{
 		intr = pathJoin(pathExtractPath(inputName), intr);
 		writeLine(string() + "alias = " + intr);
-		h.aliasName = hashString(intr.c_str());
+		h.aliasName = HashString(intr.c_str());
 	}
 	return h;
 }
@@ -45,7 +45,7 @@ namespace
 	{
 		char buf[string::MaxLength];
 		if (fgets(buf, string::MaxLength, stdin) == nullptr)
-			CAGE_THROW_ERROR(systemError, "fgets", ferror(stdin));
+			CAGE_THROW_ERROR(SystemError, "fgets", ferror(stdin));
 		return string(buf, numeric_cast<uint32>(std::strlen(buf) - 1));
 	}
 
@@ -86,8 +86,8 @@ namespace
 				break;
 			if (value.find('=') == m)
 			{
-				CAGE_LOG(severityEnum::Note, "exception", string("line: ") + value);
-				CAGE_THROW_ERROR(exception, "missing '=' in property line");
+				CAGE_LOG(SeverityEnum::Note, "exception", string("line: ") + value);
+				CAGE_THROW_ERROR(Exception, "missing '=' in property line");
 			}
 			string name = value.split("=");
 			props[name] = value;
@@ -96,25 +96,25 @@ namespace
 
 	void initializeSecondaryLog(const string &path)
 	{
-		static holder<loggerOutputFile> *secondaryLogFile = new holder<loggerOutputFile>(); // intentional leak
-		static holder<logger> *secondaryLog = new holder<logger>(); // intentional leak - this will allow to log to the very end of the application
+		static Holder<LoggerOutputFile> *secondaryLogFile = new Holder<LoggerOutputFile>(); // intentional leak
+		static Holder<Logger> *secondaryLog = new Holder<Logger>(); // intentional leak - this will allow to log to the very end of the application
 		*secondaryLogFile = newLoggerOutputFile(path, false);
 		*secondaryLog = newLogger();
-		(*secondaryLog)->output.bind<loggerOutputFile, &loggerOutputFile::output>(secondaryLogFile->get());
+		(*secondaryLog)->output.bind<LoggerOutputFile, &LoggerOutputFile::output>(secondaryLogFile->get());
 		(*secondaryLog)->format.bind<&logFormatFileShort>();
 	}
 }
 
 void writeLine(const string &other)
 {
-	CAGE_LOG(severityEnum::Info, "asset-processor", stringizer() + "writing: '" + other + "'");
+	CAGE_LOG(SeverityEnum::Info, "asset-processor", stringizer() + "writing: '" + other + "'");
 	{
 		string b = other;
 		if (b.split("=").trim() == "ref")
-			CAGE_LOG(severityEnum::Note, "asset-processor", stringizer() + "reference hash: '" + (uint32)hashString(b.trim().c_str()) + "'");
+			CAGE_LOG(SeverityEnum::Note, "asset-processor", stringizer() + "reference hash: '" + (uint32)HashString(b.trim().c_str()) + "'");
 	}
 	if (fprintf(stdout, "%s\n", other.c_str()) < 0)
-		CAGE_THROW_ERROR(systemError, "fprintf", ferror(stdout));
+		CAGE_THROW_ERROR(SystemError, "fprintf", ferror(stdout));
 }
 
 string properties(const string &name)
@@ -124,8 +124,8 @@ string properties(const string &name)
 		return it->second;
 	else
 	{
-		CAGE_LOG(severityEnum::Note, "exception", stringizer() + "property name: '" + name + "'");
-		CAGE_THROW_ERROR(exception, "property not found");
+		CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "property name: '" + name + "'");
+		CAGE_THROW_ERROR(Exception, "property not found");
 	}
 }
 
@@ -144,19 +144,19 @@ int main(int argc, const char *args[])
 		}
 
 		if (argc != 2)
-			CAGE_THROW_ERROR(exception, "missing asset type parameter");
+			CAGE_THROW_ERROR(Exception, "missing asset type parameter");
 
 		loadProperties();
 		initializeSecondaryLog(pathJoin(configGetString("cage-asset-processor/processLog/path", "process-log"), pathReplaceInvalidCharacters(inputName) + ".log"));
 
-#define GCHL_GENERATE(N) CAGE_LOG(severityEnum::Info, "asset-processor", stringizer() + "input " CAGE_STRINGIZE(N) ": '" + N + "'");
+#define GCHL_GENERATE(N) CAGE_LOG(SeverityEnum::Info, "asset-processor", stringizer() + "input " CAGE_STRINGIZE(N) ": '" + N + "'");
 		CAGE_EVAL_MEDIUM(CAGE_EXPAND_ARGS(GCHL_GENERATE, inputDirectory, inputName, outputDirectory, outputName, assetPath, schemePath, schemeIndex, inputFileName, outputFileName, inputFile, inputSpec, inputIdentifier));
 #undef GCHL_GENERATE
 
 		for (const auto &it : props)
-			CAGE_LOG(severityEnum::Info, "asset-processor", stringizer() + "property '" + it.first + "': '" + it.second + "'");
+			CAGE_LOG(SeverityEnum::Info, "asset-processor", stringizer() + "property '" + it.first + "': '" + it.second + "'");
 
-		delegate<void()> func;
+		Delegate<void()> func;
 		string component = string(args[1]);
 		if (component == "texture")
 			func.bind<&processTexture>();
@@ -183,7 +183,7 @@ int main(int argc, const char *args[])
 		else if (component == "raw")
 			func.bind<&processRaw>();
 		else
-			CAGE_THROW_ERROR(exception, "invalid asset type parameter");
+			CAGE_THROW_ERROR(Exception, "invalid asset type parameter");
 
 		logComponentName = args[1];
 		writeLine("cage-begin");
@@ -191,16 +191,16 @@ int main(int argc, const char *args[])
 		writeLine("cage-end");
 		return 0;
 	}
-	catch (const cage::exception &)
+	catch (const cage::Exception &)
 	{
 	}
 	catch (const std::exception &e)
 	{
-		CAGE_LOG(severityEnum::Error, "exception", stringizer() + "std exception: " + e.what());
+		CAGE_LOG(SeverityEnum::Error, "exception", stringizer() + "std exception: " + e.what());
 	}
 	catch (...)
 	{
-		CAGE_LOG(severityEnum::Error, "exception", "unknown exception");
+		CAGE_LOG(SeverityEnum::Error, "exception", "unknown exception");
 	}
 	writeLine("cage-error");
 	return 1;

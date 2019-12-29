@@ -12,14 +12,14 @@ using namespace cage;
 
 struct thrStruct
 {
-	holder<threadHandle> thr;
-	holder<connClass> conn;
+	Holder<Thread> thr;
+	Holder<connClass> conn;
 	runnerStruct runner;
 	bool done;
 
-	thrStruct(holder<connClass> conn) : conn(templates::move(conn)), done(false)
+	thrStruct(Holder<connClass> conn) : conn(templates::move(conn)), done(false)
 	{
-		thr = newThread(delegate<void()>().bind<thrStruct, &thrStruct::entry>(this), "thr");
+		thr = newThread(Delegate<void()>().bind<thrStruct, &thrStruct::entry>(this), "thr");
 	}
 
 	void entry()
@@ -39,12 +39,12 @@ struct thrStruct
 
 void runServer()
 {
-	CAGE_LOG(severityEnum::Info, "config", stringizer() + "running in server mode");
+	CAGE_LOG(SeverityEnum::Info, "config", stringizer() + "running in server mode");
 
-	configUint32 port("port");
-	CAGE_LOG(severityEnum::Info, "config", stringizer() + "port: " + (uint32)port);
+	ConfigUint32 port("port");
+	CAGE_LOG(SeverityEnum::Info, "config", stringizer() + "port: " + (uint32)port);
 
-	holder<udpServer> server = newUdpServer(numeric_cast<uint16>((uint32)port));
+	Holder<UdpServer> server = newUdpServer(numeric_cast<uint16>((uint32)port));
 	bool hadConnection = false;
 	std::list<thrStruct> thrs;
 	runnerStruct runner;
@@ -55,7 +55,7 @@ void runServer()
 			auto a = server->accept();
 			if (a)
 			{
-				CAGE_LOG(severityEnum::Info, "server", "connection accepted");
+				CAGE_LOG(SeverityEnum::Info, "server", "connection accepted");
 				hadConnection = true;
 				thrs.emplace_back(newConn(templates::move(a)));
 			}
@@ -69,7 +69,7 @@ void runServer()
 			{
 				if (it->done)
 				{
-					CAGE_LOG(severityEnum::Info, "server", "connection finished");
+					CAGE_LOG(SeverityEnum::Info, "server", "connection finished");
 					it = thrs.erase(it);
 				}
 				else

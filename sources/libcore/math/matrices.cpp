@@ -14,7 +14,7 @@ namespace cage
 		for (uint32 i = 0; i < 9; i++)
 			data[i] = privat::mathSplit(s).toFloat();
 		if (!s.empty())
-			CAGE_THROW_ERROR(exception, "error parsing mat3");
+			CAGE_THROW_ERROR(Exception, "error parsing mat3");
 		return data;
 	}
 
@@ -138,7 +138,7 @@ namespace cage
 		for (uint32 i = 0; i < 16; i++)
 			data[i] = privat::mathSplit(s).toFloat();
 		if (!s.empty())
-			CAGE_THROW_ERROR(exception, "error parsing mat4");
+			CAGE_THROW_ERROR(Exception, "error parsing mat4");
 		return data;
 	}
 

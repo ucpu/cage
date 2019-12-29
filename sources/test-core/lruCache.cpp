@@ -31,11 +31,11 @@ namespace
 
 void testLruCache()
 {
-	CAGE_TESTCASE("lruCache");
+	CAGE_TESTCASE("LruCache");
 
 	{
 		CAGE_TESTCASE("basics");
-		lruCache<uint32, uint32> cache(3);
+		LruCache<uint32, uint32> cache(3);
 		CAGE_TEST(cache.find(13) == nullptr);
 		cache.set(13, 130);
 		CAGE_TEST(cache.find(13));
@@ -46,7 +46,7 @@ void testLruCache()
 
 	{
 		CAGE_TESTCASE("with custom types");
-		lruCache<key, value, hasher> cache(3);
+		LruCache<key, value, hasher> cache(3);
 		CAGE_TEST(cache.find(13) == nullptr);
 		cache.set(13, 130);
 		CAGE_TEST(cache.find(13));
@@ -57,7 +57,7 @@ void testLruCache()
 
 	{
 		CAGE_TESTCASE("with holder");
-		lruCache<uint32, holder<uint32>> cache(3);
+		LruCache<uint32, Holder<uint32>> cache(3);
 		CAGE_TEST(cache.find(13) == nullptr);
 		cache.set(13, detail::systemArena().createHolder<uint32>(13));
 		CAGE_TEST(cache.find(13));
@@ -68,7 +68,7 @@ void testLruCache()
 
 	{
 		CAGE_TESTCASE("deleting in order");
-		lruCache<uint32, uint32> cache(3);
+		LruCache<uint32, uint32> cache(3);
 		cache.set(1, 1);
 		cache.set(2, 2);
 		cache.set(3, 3);
@@ -93,7 +93,7 @@ void testLruCache()
 
 	{
 		CAGE_TESTCASE("deleting in reverse order");
-		lruCache<uint32, uint32> cache(3);
+		LruCache<uint32, uint32> cache(3);
 		cache.set(1, 1);
 		cache.set(2, 2);
 		cache.set(3, 3);
@@ -118,7 +118,7 @@ void testLruCache()
 
 	{
 		CAGE_TESTCASE("erase");
-		lruCache<uint32, uint32> cache(3);
+		LruCache<uint32, uint32> cache(3);
 		cache.set(1, 1);
 		cache.set(2, 2);
 		cache.set(3, 3);

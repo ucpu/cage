@@ -13,7 +13,7 @@ namespace cage
 {
 	namespace
 	{
-		void processLoad(const assetContext *context, void *schemePointer)
+		void processLoad(const AssetContext *context, void *schemePointer)
 		{
 			skeletalAnimation *ani = nullptr;
 			if (context->assetHolder)
@@ -28,7 +28,7 @@ namespace cage
 			}
 			context->returnData = ani;
 
-			deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
+			Deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
 			skeletalAnimationHeader data;
 			des >> data;
 			uint16 *indexes = (uint16*)des.advance(data.animationBonesCount * sizeof(uint16));
@@ -39,9 +39,9 @@ namespace cage
 		}
 	}
 
-	assetScheme genAssetSchemeSkeletalAnimation(uint32 threadIndex)
+	AssetScheme genAssetSchemeSkeletalAnimation(uint32 threadIndex)
 	{
-		assetScheme s;
+		AssetScheme s;
 		s.threadIndex = threadIndex;
 		s.load.bind<&processLoad>();
 		return s;

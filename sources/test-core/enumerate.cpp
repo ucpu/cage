@@ -17,14 +17,14 @@ namespace
 		return res;
 	}
 
-	holder<pointerRange<const string>> genRange()
+	Holder<PointerRange<const string>> genRange()
 	{
-		return pointerRangeHolder<const string>(genStrings());
+		return PointerRangeHolder<const string>(genStrings());
 	}
 
-	std::vector<holder<string>> genHolders()
+	std::vector<Holder<string>> genHolders()
 	{
-		std::vector<holder<string>> res;
+		std::vector<Holder<string>> res;
 		res.push_back(detail::systemArena().createHolder<string>("ar"));
 		res.push_back(detail::systemArena().createHolder<string>("ma"));
 		res.push_back({});
@@ -123,7 +123,7 @@ void testEnumerate()
 	{
 		CAGE_TESTCASE("pointer range");
 		uint32 i = 0;
-		for (const auto &it : enumerate(pointerRange<const string>(names)))
+		for (const auto &it : enumerate(PointerRange<const string>(names)))
 		{
 			CAGE_TEST(it.cnt == i++);
 			CAGE_TEST(*it == names[it.cnt]);
@@ -147,8 +147,8 @@ void testEnumerate()
 		uint32 i = 0;
 		for (const auto &it : enumerate(genHolders()))
 		{
-			// unfortunately, we cannot use * (dereference operator), because that would attempt to create a copy of the holder
-			CAGE_TEST((!!it->get()) == (i != 2)); // test that the element at index 2 is empty holder
+			// unfortunately, we cannot use * (dereference operator), because that would attempt to create a copy of the Holder
+			CAGE_TEST((!!it->get()) == (i != 2)); // test that the element at index 2 is empty Holder
 			CAGE_TEST(it.cnt == i++);
 		}
 		CAGE_TEST(i == genHolders().size());

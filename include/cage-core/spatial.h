@@ -3,10 +3,10 @@
 
 namespace cage
 {
-	class CAGE_API spatialQuery : private immovable
+	class CAGE_API SpatialQuery : private Immovable
 	{
 	public:
-		pointerRange<uint32> result() const;
+		PointerRange<uint32> result() const;
 
 		void intersection(const vec3 &shape);
 		void intersection(const line &shape);
@@ -16,7 +16,7 @@ namespace cage
 		void intersection(const aabb &shape);
 	};
 
-	class CAGE_API spatialData : private immovable
+	class CAGE_API SpatialData : private Immovable
 	{
 	public:
 		void update(uint32 name, const vec3 &other);
@@ -29,14 +29,14 @@ namespace cage
 		void rebuild();
 	};
 
-	struct CAGE_API spatialDataCreateConfig
+	struct CAGE_API SpatialDataCreateConfig
 	{
 		uint32 maxItems;
-		spatialDataCreateConfig();
+		SpatialDataCreateConfig();
 	};
 
-	CAGE_API holder<spatialData> newSpatialData(const spatialDataCreateConfig &config);
-	CAGE_API holder<spatialQuery> newSpatialQuery(const spatialData *data);
+	CAGE_API Holder<SpatialData> newSpatialData(const SpatialDataCreateConfig &config);
+	CAGE_API Holder<SpatialQuery> newSpatialQuery(const SpatialData *data);
 }
 
 #endif // guard_spatial_h_9A6D87AF6D4243E990D6E274B56CF578

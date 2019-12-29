@@ -14,7 +14,7 @@ namespace cage
 	{
 		bool rtprioWarningCallbackOnce()
 		{
-			CAGE_LOG(severityEnum::Warning, "sound", "failed to set thread priority for audio");
+			CAGE_LOG(SeverityEnum::Warning, "sound", "failed to set thread priority for audio");
 			return true;
 		}
 
@@ -32,7 +32,7 @@ namespace cage
 
 			soundContextImpl(const soundContextCreateConfig &config, const string &name) : name(name.replace(":", "_")), soundio(nullptr), linksMemory(config.linksMemory)
 			{
-				CAGE_LOG(severityEnum::Info, "sound", stringizer() + "creating sound context, name: '" + name + "'");
+				CAGE_LOG(SeverityEnum::Info, "sound", stringizer() + "creating sound context, name: '" + name + "'");
 				soundio = soundio_create();
 				if (!soundio)
 					CAGE_THROW_ERROR(soundError, "error create soundio", 0);
@@ -58,10 +58,10 @@ namespace cage
 			return impl->soundio;
 		}
 
-		memoryArena linksArenaFromContext(soundContext *context)
+		MemoryArena linksArenaFromContext(soundContext *context)
 		{
 			soundContextImpl *impl = (soundContextImpl*)context;
-			return memoryArena(&impl->linksMemory);
+			return MemoryArena(&impl->linksMemory);
 		}
 	}
 
@@ -74,7 +74,7 @@ namespace cage
 	soundContextCreateConfig::soundContextCreateConfig() : linksMemory(1024 * 1024)
 	{}
 
-	holder<soundContext> newSoundContext(const soundContextCreateConfig &config, const string &name)
+	Holder<soundContext> newSoundContext(const soundContextCreateConfig &config, const string &name)
 	{
 		return detail::systemArena().createImpl<soundContext, soundContextImpl>(config, name);
 	}

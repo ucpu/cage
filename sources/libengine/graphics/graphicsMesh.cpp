@@ -337,7 +337,7 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	holder<renderMesh> newRenderMesh()
+	Holder<renderMesh> newRenderMesh()
 	{
 		return detail::systemArena().createImpl<renderMesh, meshImpl>();
 	}

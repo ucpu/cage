@@ -47,8 +47,8 @@ namespace cage
 
 		struct mixStruct
 		{
-			holder<mixingBus> bus;
-			holder<mixingFilter> filter;
+			Holder<mixingBus> bus;
+			Holder<mixingFilter> filter;
 			soundPrepareImpl *data;
 			emitVoiceStruct *voice;
 			emitListenerStruct *listener;
@@ -77,7 +77,7 @@ namespace cage
 				}
 				else
 				{ // asset input
-					assetManager *ass = assets();
+					AssetManager *ass = assets();
 					if (!ass->ready(voice->voice.name))
 						return;
 					ass->get<assetSchemeIndexSoundSource, soundSource>(voice->voice.name)->addOutput(bus.get());
@@ -95,7 +95,7 @@ namespace cage
 		struct emitStruct
 		{
 			memoryArenaGrowing<memoryAllocatorPolicyLinear<>, memoryConcurrentPolicyNone> emitMemory;
-			memoryArena emitArena;
+			MemoryArena emitArena;
 
 			std::vector<emitVoiceStruct*> voices;
 			std::vector<emitListenerStruct*> listeners;
@@ -120,9 +120,9 @@ namespace cage
 			emitStruct emitBufferA, emitBufferB, emitBufferC; // this is awfully stupid, damn you c++
 			emitStruct *emitBuffers[3];
 			emitStruct *emitRead, *emitWrite;
-			holder<swapBufferGuard> swapController;
+			Holder<SwapBufferGuard> swapController;
 
-			std::vector<holder<mixStruct>> mixers;
+			std::vector<Holder<mixStruct>> mixers;
 			std::vector<float> soundMixBuffer;
 
 			interpolationTimingCorrector itc;
@@ -135,7 +135,7 @@ namespace cage
 				mixers.reserve(256);
 				soundMixBuffer.resize(10000);
 				{
-					swapBufferGuardCreateConfig cfg(3);
+					SwapBufferGuardCreateConfig cfg(3);
 					cfg.repeatedReads = true;
 					swapController = newSwapBufferGuard(cfg);
 				}
@@ -151,7 +151,7 @@ namespace cage
 				auto lock = swapController->write();
 				if (!lock)
 				{
-					CAGE_LOG_DEBUG(severityEnum::Warning, "engine", "skipping sound emit");
+					CAGE_LOG_DEBUG(SeverityEnum::Warning, "engine", "skipping sound emit");
 					return;
 				}
 
@@ -164,7 +164,7 @@ namespace cage
 				emitWrite->time = time;
 
 				// emit voices
-				for (entity *e : voiceComponent::component->entities())
+				for (Entity *e : voiceComponent::component->entities())
 				{
 					emitVoiceStruct *c = emitWrite->emitArena.createObject<emitVoiceStruct>();
 					c->transform = e->value<transformComponent>(transformComponent::component);
@@ -177,7 +177,7 @@ namespace cage
 				}
 
 				// emit listeners
-				for (entity *e : listenerComponent::component->entities())
+				for (Entity *e : listenerComponent::component->entities())
 				{
 					emitListenerStruct *c = emitWrite->emitArena.createObject<emitListenerStruct>();
 					c->transform = e->value<transformComponent>(transformComponent::component);
@@ -218,7 +218,7 @@ namespace cage
 				auto lock = swapController->read();
 				if (!lock)
 				{
-					CAGE_LOG_DEBUG(severityEnum::Warning, "engine", "skipping sound tick");
+					CAGE_LOG_DEBUG(SeverityEnum::Warning, "engine", "skipping sound tick");
 					return;
 				}
 

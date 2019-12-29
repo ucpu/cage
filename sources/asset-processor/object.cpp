@@ -4,7 +4,7 @@
 
 #include "processor.h"
 
-#include <cage-core/configIni.h>
+#include <cage-core/ini.h>
 #include <cage-core/hashString.h>
 
 namespace
@@ -21,7 +21,7 @@ void processObject()
 {
 	writeLine(string("use=") + inputFile);
 
-	holder<configIni> ini = newConfigIni();
+	Holder<Ini> ini = newConfigIni();
 	ini->load(inputFileName);
 
 	string basePath = pathExtractPath(inputFile);
@@ -41,7 +41,7 @@ void processObject()
 			if (!n.isDigitsOnly())
 				continue;
 			v = pathJoin(basePath, v);
-			uint32 h = hashString(v.c_str());
+			uint32 h = HashString(v.c_str());
 			ls.meshes.insert(h);
 			deps.insert(h);
 			writeLine(string("ref=") + v);
@@ -73,7 +73,7 @@ void processObject()
 		if (!s.empty())
 		{
 			s = pathJoin(basePath, s);
-			o.skelAnimName = hashString(s.c_str());
+			o.skelAnimName = HashString(s.c_str());
 			deps.insert(o.skelAnimName);
 			writeLine(string("ref=") + s);
 		}
@@ -89,21 +89,21 @@ void processObject()
 		string s, t, v;
 		if (ini->anyUnused(s, t, v))
 		{
-			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "section: " + s);
-			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "item: " + t);
-			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "value: " + v);
-			CAGE_THROW_ERROR(exception, "unused value");
+			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "section: " + s);
+			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "item: " + t);
+			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "value: " + v);
+			CAGE_THROW_ERROR(Exception, "unused value");
 		}
 	}
 
-	assetHeader h = initializeAssetHeaderStruct();
+	AssetHeader h = initializeAssetHeaderStruct();
 	h.dependenciesCount = numeric_cast<uint16>(deps.size());
 	h.originalSize = sizeof(renderObjectHeader);
 	h.originalSize += numeric_cast<uint32>(lods.size()) * sizeof(uint32);
 	h.originalSize += numeric_cast<uint32>(lods.size() + 1) * sizeof(uint32);
 	h.originalSize += totalMeshes * sizeof(uint32);
 
-	holder<fileHandle> f = newFile(outputFileName, fileMode(false, true));
+	Holder<File> f = newFile(outputFileName, FileMode(false, true));
 	f->write(&h, sizeof(h));
 	for (uint32 it : deps)
 		f->write(&it, sizeof(uint32));

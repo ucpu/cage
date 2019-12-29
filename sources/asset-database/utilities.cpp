@@ -5,50 +5,50 @@ using namespace cage;
 
 #include "utilities.h"
 
-void read(fileHandle *f, uint64 &n)
+void read(File *f, uint64 &n)
 {
 	f->read(&n, sizeof(n));
 }
 
-void read(fileHandle *f, uint32 &n)
+void read(File *f, uint32 &n)
 {
 	f->read(&n, sizeof(n));
 }
 
-void read(fileHandle *f, string &s)
+void read(File *f, string &s)
 {
 	uint32 n = 0;
 	read(f, n);
 	if (n > string::MaxLength)
-		CAGE_THROW_ERROR(exception, "string length too big");
+		CAGE_THROW_ERROR(Exception, "string length too big");
 	char tmp[string::MaxLength];
 	f->read(tmp, n);
 	s = string(tmp, n);
 }
 
-void read(fileHandle *f, bool &n)
+void read(File *f, bool &n)
 {
 	f->read(&n, sizeof(n));
 }
 
-void write(fileHandle *f, const uint64 n)
+void write(File *f, const uint64 n)
 {
 	f->write(&n, sizeof(n));
 }
 
-void write(fileHandle *f, const uint32 n)
+void write(File *f, const uint32 n)
 {
 	f->write(&n, sizeof(n));
 }
 
-void write(fileHandle *f, const string &s)
+void write(File *f, const string &s)
 {
 	uint32 n = s.length();
 	write(f, n);
 	f->write(s.c_str(), n);
 }
 
-void write(fileHandle *f, const bool n)
+void write(File *f, const bool n)
 {
 	f->write(&n, sizeof(n));
 }

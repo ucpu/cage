@@ -6,32 +6,32 @@
 
 namespace cage
 {
-	serializer::serializer(void *data, uintPtr size) : buffer(nullptr), data(data), offset(0), size(size)
+	Serializer::Serializer(void *data, uintPtr size) : buffer(nullptr), data(data), offset(0), size(size)
 	{}
 
-	serializer::serializer(memoryBuffer &buffer, uintPtr size) : buffer(&buffer), data(nullptr), offset(buffer.size()), size(buffer.size() + size)
+	Serializer::Serializer(MemoryBuffer &buffer, uintPtr size) : buffer(&buffer), data(nullptr), offset(buffer.size()), size(buffer.size() + size)
 	{}
 
-	serializer::serializer(memoryBuffer *buffer, void *data, uintPtr offset, uintPtr size) : buffer(buffer), data(data), offset(offset), size(size)
+	Serializer::Serializer(MemoryBuffer *buffer, void *data, uintPtr offset, uintPtr size) : buffer(buffer), data(data), offset(offset), size(size)
 	{}
 
-	serializer serializer::placeholder(uintPtr s)
+	Serializer Serializer::placeholder(uintPtr s)
 	{
 		uintPtr o = offset;
 		advance(s);
-		return serializer(buffer, data, o, offset);
+		return Serializer(buffer, data, o, offset);
 	}
 
-	void serializer::write(const void *d, uintPtr s)
+	void Serializer::write(const void *d, uintPtr s)
 	{
 		void *dst = advance(s);
 		detail::memcpy(dst, d, s);
 	}
 
-	void *serializer::advance(uintPtr s)
+	void *Serializer::advance(uintPtr s)
 	{
 		if (available() < s)
-			CAGE_THROW_ERROR(exception, "serialization beyond available space");
+			CAGE_THROW_ERROR(Exception, "serialization beyond available space");
 		if (!data)
 		{
 			if (buffer->size() < offset + s)
@@ -42,44 +42,44 @@ namespace cage
 		return dst;
 	}
 
-	uintPtr serializer::available() const
+	uintPtr Serializer::available() const
 	{
 		CAGE_ASSERT(size >= offset);
 		return size - offset;
 	}
 
-	deserializer::deserializer(const void *data, uintPtr size) : data(data), offset(0), size(size)
+	Deserializer::Deserializer(const void *data, uintPtr size) : data(data), offset(0), size(size)
 	{}
 
-	deserializer::deserializer(const memoryBuffer &buffer) : data(buffer.data()), offset(0), size(buffer.size())
+	Deserializer::Deserializer(const MemoryBuffer &buffer) : data(buffer.data()), offset(0), size(buffer.size())
 	{}
 
-	deserializer::deserializer(const void *data, uintPtr offset, uintPtr size) : data(data), offset(offset), size(size)
+	Deserializer::Deserializer(const void *data, uintPtr offset, uintPtr size) : data(data), offset(offset), size(size)
 	{}
 
-	deserializer deserializer::placeholder(uintPtr s)
+	Deserializer Deserializer::placeholder(uintPtr s)
 	{
 		uintPtr o = offset;
 		advance(s);
-		return deserializer(data, o, offset);
+		return Deserializer(data, o, offset);
 	}
 
-	void deserializer::read(void *d, uintPtr s)
+	void Deserializer::read(void *d, uintPtr s)
 	{
 		const void *dst = advance(s);
 		detail::memcpy(d, dst, s);
 	}
 
-	const void *deserializer::advance(uintPtr s)
+	const void *Deserializer::advance(uintPtr s)
 	{
 		if (available() < s)
-			CAGE_THROW_ERROR(exception, "deserialization beyond available space");
+			CAGE_THROW_ERROR(Exception, "deserialization beyond available space");
 		const void *dst = (const char*)data + offset;
 		offset += s;
 		return dst;
 	}
 
-	uintPtr deserializer::available() const
+	uintPtr Deserializer::available() const
 	{
 		CAGE_ASSERT(size >= offset);
 		return size - offset;

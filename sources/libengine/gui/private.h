@@ -15,7 +15,7 @@ namespace cage
 
 	struct skinDataStruct : public guiSkinConfig
 	{
-		holder<uniformBuffer> elementsGpuBuffer;
+		Holder<uniformBuffer> elementsGpuBuffer;
 		renderTexture *texture;
 	};
 
@@ -97,7 +97,7 @@ namespace cage
 		vec2 clipPos, clipSize; // clip pos/size are in same coordinate system as render pos/size, they make a rectangle intersection of parents viewport and our render pos/size
 
 		guiImpl *const impl;
-		entity *const ent;
+		Entity *const ent;
 
 		hierarchyItemStruct *parent;
 		hierarchyItemStruct *prevSibling, *nextSibling;
@@ -106,11 +106,11 @@ namespace cage
 
 		struct baseItemStruct *item;
 		struct textItemStruct *text;
-		struct imageItemStruct *image;
+		struct imageItemStruct *Image;
 
 		bool subsidedItem; // prevent use of explicit position
 
-		hierarchyItemStruct(guiImpl *impl, entity *ent);
+		hierarchyItemStruct(guiImpl *impl, Entity *ent);
 
 		// called top->down
 		void initialize(); // initialize and validate widget, layout, text and image, initialize children
@@ -225,7 +225,7 @@ namespace cage
 	struct imageItemStruct
 	{
 		hierarchyItemStruct *const hierarchy;
-		imageComponent image;
+		imageComponent Image;
 		imageFormatComponent format;
 		renderTexture *texture;
 		bool skipInitialize;
@@ -257,10 +257,10 @@ namespace cage
 	class guiImpl : public guiManager
 	{
 	public:
-		holder<entityManager> entityMgr;
+		Holder<EntityManager> entityMgr;
 		guiComponents components;
 
-		assetManager *assetMgr;
+		AssetManager *assetMgr;
 
 		ivec2 inputResolution; // last window resolution (pixels)
 		ivec2 inputMouse; // last position of mouse (pixels)
@@ -273,7 +273,7 @@ namespace cage
 		widgetItemStruct *hover;
 
 		memoryArenaGrowing<memoryAllocatorPolicyLinear<>, memoryConcurrentPolicyNone> itemsArena;
-		memoryArena itemsMemory;
+		MemoryArena itemsMemory;
 		hierarchyItemStruct *root;
 
 		struct graphicsDataStruct
@@ -294,14 +294,14 @@ namespace cage
 		struct emitDataStruct
 		{
 			memoryArenaGrowing<memoryAllocatorPolicyLinear<>, memoryConcurrentPolicyNone> arena;
-			memoryArena memory;
+			MemoryArena memory;
 			renderableBaseStruct *first, *last;
 			emitDataStruct(const guiManagerCreateConfig &config);
 			emitDataStruct(emitDataStruct &&other); // this is not defined, is it? but it is required, is it not?
 			~emitDataStruct();
 			void flush();
 		} emitData[3], *emitControl;
-		holder<swapBufferGuard> emitController;
+		Holder<SwapBufferGuard> emitController;
 
 		windowEventListeners listeners;
 		std::vector<eventReceiverStruct> mouseEventReceivers;
@@ -319,8 +319,8 @@ namespace cage
 
 		void graphicsDispatch();
 
-		uint32 entityWidgetsCount(entity *e);
-		uint32 entityLayoutsCount(entity *e);
+		uint32 entityWidgetsCount(Entity *e);
+		uint32 entityLayoutsCount(Entity *e);
 	};
 
 	void offsetPosition(vec2 &position, const vec4 &offset);

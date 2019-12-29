@@ -1,9 +1,9 @@
 namespace cage
 {
-	class CAGE_API frameBuffer : private immovable
+	class CAGE_API frameBuffer : private Immovable
 	{
 #ifdef CAGE_DEBUG
-		detail::stringBase<64> debugName;
+		detail::StringBase<64> debugName;
 #endif // CAGE_DEBUG
 
 	public:
@@ -20,6 +20,6 @@ namespace cage
 		void checkStatus();
 	};
 
-	CAGE_API holder<frameBuffer> newFrameBufferDraw();
-	CAGE_API holder<frameBuffer> newFrameBufferRead();
+	CAGE_API Holder<frameBuffer> newFrameBufferDraw();
+	CAGE_API Holder<frameBuffer> newFrameBufferRead();
 }

@@ -3,46 +3,46 @@
 
 namespace cage
 {
-	class CAGE_API filesystemWatcher : private immovable
+	class CAGE_API FilesystemWatcher : private Immovable
 	{
 	public:
 		void registerPath(const string &path);
 		string waitForChange(uint64 time = m);
 	};
 
-	CAGE_API holder<filesystemWatcher> newFilesystemWatcher();
+	CAGE_API Holder<FilesystemWatcher> newFilesystemWatcher();
 
-	class CAGE_API directoryList : private immovable
+	class CAGE_API DirectoryList : private Immovable
 	{
 	public:
 		bool valid() const;
 		string name() const;
-		pathTypeFlags type() const;
+		PathTypeFlags type() const;
 		bool isDirectory() const; // directory or archive
 		uint64 lastChange() const;
-		holder<fileHandle> openFile(const fileMode &mode);
-		holder<filesystem> openDirectory();
-		holder<directoryList> listDirectory();
+		Holder<File> openFile(const FileMode &mode);
+		Holder<Filesystem> openDirectory();
+		Holder<DirectoryList> listDirectory();
 		void next();
 	};
 
-	CAGE_API holder<directoryList> newDirectoryList(const string &path);
+	CAGE_API Holder<DirectoryList> newDirectoryList(const string &path);
 
-	class CAGE_API filesystem : private immovable
+	class CAGE_API Filesystem : private Immovable
 	{
 	public:
 		void changeDir(const string &path);
 		string currentDir() const;
-		pathTypeFlags type(const string &path) const;
+		PathTypeFlags type(const string &path) const;
 		uint64 lastChange(const string &path) const;
-		holder<fileHandle> openFile(const string &path, const fileMode &mode);
-		holder<directoryList> listDirectory(const string &path);
-		holder<filesystemWatcher> watchFilesystem(const string &path);
+		Holder<File> openFile(const string &path, const FileMode &mode);
+		Holder<DirectoryList> listDirectory(const string &path);
+		Holder<FilesystemWatcher> watchFilesystem(const string &path);
 		void move(const string &from, const string &to);
 		void remove(const string &path);
 	};
 
-	CAGE_API holder<filesystem> newFilesystem();
+	CAGE_API Holder<Filesystem> newFilesystem();
 }
 
 #endif // guard_fileutils_h_yesxrt92851637ojnuhg

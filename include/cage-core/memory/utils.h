@@ -1,8 +1,8 @@
 namespace cage
 {
-	struct CAGE_API outOfMemory : public exception
+	struct CAGE_API outOfMemory : public Exception
 	{
-		explicit outOfMemory(const char *file, uint32 line, const char *function, severityEnum severity, const char *message, uintPtr memory) noexcept;
+		explicit outOfMemory(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message, uintPtr memory) noexcept;
 		virtual void log();
 		uintPtr memory;
 	};
@@ -96,7 +96,7 @@ namespace cage
 		uintPtr pages() const; // currently allocated pages
 	};
 
-	CAGE_API holder<virtualMemoryClass> newVirtualMemory();
+	CAGE_API Holder<virtualMemoryClass> newVirtualMemory();
 
 	namespace detail
 	{

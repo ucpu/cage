@@ -14,11 +14,11 @@
 
 namespace cage
 {
-	hierarchyItemStruct::hierarchyItemStruct(guiImpl *impl, entity *ent) :
+	hierarchyItemStruct::hierarchyItemStruct(guiImpl *impl, Entity *ent) :
 		requestedSize(vec2::Nan()), renderPos(vec2::Nan()), renderSize(vec2::Nan()), clipPos(vec2::Nan()), clipSize(vec2::Nan()),
 		impl(impl), ent(ent),
 		parent(nullptr), prevSibling(nullptr), nextSibling(nullptr), firstChild(nullptr), lastChild(nullptr),
-		item(nullptr), text(nullptr), image(nullptr),
+		item(nullptr), text(nullptr), Image(nullptr),
 		order(0), subsidedItem(false)
 	{
 		CAGE_ASSERT(impl);
@@ -30,8 +30,8 @@ namespace cage
 			item->initialize();
 		if (text)
 			text->initialize();
-		if (image)
-			image->initialize();
+		if (Image)
+			Image->initialize();
 	}
 
 	void hierarchyItemStruct::findRequestedSize()
@@ -40,8 +40,8 @@ namespace cage
 			item->findRequestedSize();
 		else if (text)
 			requestedSize = text->findRequestedSize();
-		else if (image)
-			requestedSize = image->findRequestedSize();
+		else if (Image)
+			requestedSize = Image->findRequestedSize();
 		else
 		{
 			requestedSize = vec2();

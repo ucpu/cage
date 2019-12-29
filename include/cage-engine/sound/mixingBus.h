@@ -1,6 +1,6 @@
 namespace cage
 {
-	class CAGE_API mixingBus : private immovable
+	class CAGE_API mixingBus : private Immovable
 	{
 	public:
 		void addInput(mixingBus *bus);
@@ -10,5 +10,5 @@ namespace cage
 		void clear();
 	};
 
-	CAGE_API holder<mixingBus> newMixingBus(soundContext *context);
+	CAGE_API Holder<mixingBus> newMixingBus(soundContext *context);
 }

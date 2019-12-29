@@ -3,18 +3,18 @@
 
 typedef std::set<string, stringComparatorFast> stringSet;
 
-extern configString configPathInput;
-extern configString configPathOutput;
-extern configString configPathIntermediate;
-extern configString configPathDatabase;
-extern configString configPathByHash;
-extern configString configPathByName;
-extern configString configPathSchemes;
-extern configSint32 configNotifierPort;
-extern configUint64 configArchiveWriteThreshold;
-extern configBool configFromScratch;
-extern configBool configListening;
-extern configBool configOutputArchive;
+extern ConfigString configPathInput;
+extern ConfigString configPathOutput;
+extern ConfigString configPathIntermediate;
+extern ConfigString configPathDatabase;
+extern ConfigString configPathByHash;
+extern ConfigString configPathByName;
+extern ConfigString configPathSchemes;
+extern ConfigSint32 configNotifierPort;
+extern ConfigUint64 configArchiveWriteThreshold;
+extern ConfigBool configFromScratch;
+extern ConfigBool configListening;
+extern ConfigBool configOutputArchive;
 extern stringSet configIgnoreExtensions;
 extern stringSet configIgnorePaths;
 

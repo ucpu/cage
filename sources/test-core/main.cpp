@@ -58,7 +58,7 @@ void generatePointsOnSphere();
 
 int main()
 {
-	holder<logger> log1 = newLogger();
+	Holder<Logger> log1 = newLogger();
 	log1->format.bind<logFormatConsole>();
 	log1->output.bind<logOutputStdOut>();
 

@@ -9,5 +9,5 @@ namespace cage
 		uint32 count() const;
 	};
 
-	holder<binPackingClass> newBinPacking();
+	Holder<binPackingClass> newBinPacking();
 }

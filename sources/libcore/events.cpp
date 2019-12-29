@@ -5,15 +5,15 @@ namespace cage
 {
 	namespace privat
 	{
-		eventLinker::eventLinker(const string &name) : p(nullptr), n(nullptr), order(detail::numeric_limits<sint32>::min()), name(name)
+		EventLinker::EventLinker(const string &name) : p(nullptr), n(nullptr), order(detail::numeric_limits<sint32>::min()), name(name)
 		{}
 
-		eventLinker::~eventLinker()
+		EventLinker::~EventLinker()
 		{
 			detach();
 		}
 
-		void eventLinker::attach(eventLinker *d, sint32 o)
+		void EventLinker::attach(EventLinker *d, sint32 o)
 		{
 			unlink();
 			order = o;
@@ -42,24 +42,24 @@ namespace cage
 			CAGE_ASSERT(valid(), "multiple events with same order are prohibited (unless zero)");
 		}
 
-		void eventLinker::detach()
+		void EventLinker::detach()
 		{
 			unlink();
 		}
 
-		void eventLinker::logAllNames()
+		void EventLinker::logAllNames()
 		{
-			eventLinker *l = this;
+			EventLinker *l = this;
 			while (l->p)
 				l = l->p;
 			while (l)
 			{
-				CAGE_LOG(severityEnum::Info, "event-listener", stringizer() + l->name + " (" + l->order + ")");
+				CAGE_LOG(SeverityEnum::Info, "event-listener", stringizer() + l->name + " (" + l->order + ")");
 				l = l->n;
 			}
 		}
 
-		void eventLinker::unlink()
+		void EventLinker::unlink()
 		{
 			if (p)
 				p->n = n;
@@ -68,7 +68,7 @@ namespace cage
 			p = n = nullptr;
 		}
 
-		bool eventLinker::valid() const
+		bool EventLinker::valid() const
 		{
 			if (order == 0)
 				return true;

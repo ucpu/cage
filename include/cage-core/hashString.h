@@ -10,11 +10,11 @@ namespace cage
 	{
 		// these functions return values in the full range of uint32
 		CAGE_API uint32 hashBuffer(const char *buffer, uintPtr size);
-		CAGE_API uint32 hashBuffer(const memoryBuffer &buffer);
-		CAGE_API uint32 hashString(const char *str);
+		CAGE_API uint32 hashBuffer(const MemoryBuffer &buffer);
+		CAGE_API uint32 HashString(const char *str);
 
-		// hashCompile returns values in the full range of uint32
-		struct CAGE_API hashCompile
+		// HashCompile returns values in the full range of uint32
+		struct CAGE_API HashCompile
 		{
 		private:
 			uint32 value;
@@ -39,7 +39,7 @@ namespace cage
 
 		public:
 			template<uint32 N>
-			explicit hashCompile(const char(&str)[N]) : value(hash<N, N>()(str))
+			explicit HashCompile(const char(&str)[N]) : value(hash<N, N>()(str))
 			{};
 
 			operator uint32() const
@@ -49,28 +49,28 @@ namespace cage
 		};
 	}
 
-	// hashString returns values in (upper) half of uint32 range
-	struct CAGE_API hashString
+	// HashString returns values in (upper) half of uint32 range
+	struct CAGE_API HashString
 	{
 	private:
-		struct constCharWrapper
+		struct ConstCharWrapper
 		{
-			constCharWrapper(const char *str) : str(str) {};
+			ConstCharWrapper(const char *str) : str(str) {};
 			const char *str;
 		};
 
 		uint32 value;
 
 	public:
-		explicit hashString(const constCharWrapper &wrp) : value(detail::hashString(wrp.str) | ((uint32)1 << 31))
+		explicit HashString(const ConstCharWrapper &wrp) : value(detail::HashString(wrp.str) | ((uint32)1 << 31))
 		{};
 
 		template<uint32 N>
-		explicit hashString(const detail::stringBase<N> &str) : hashString(str.c_str())
+		explicit HashString(const detail::StringBase<N> &str) : HashString(str.c_str())
 		{}
 
 		template<uint32 N>
-		explicit hashString(const char(&str)[N]) : value(detail::hashCompile(str) | ((uint32)1 << 31))
+		explicit HashString(const char(&str)[N]) : value(detail::HashCompile(str) | ((uint32)1 << 31))
 		{};
 
 		operator uint32() const

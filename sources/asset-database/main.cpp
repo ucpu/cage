@@ -11,35 +11,35 @@ using namespace cage;
 
 bool consoleLogFilter(const cage::detail::loggerInfo &info)
 {
-	return info.severity >= severityEnum::Error || string(info.component) == "exception" || string(info.component) == "asset" || string(info.component) == "verdict";
+	return info.severity >= SeverityEnum::Error || string(info.component) == "exception" || string(info.component) == "asset" || string(info.component) == "verdict";
 }
 
 int main(int argc, const char *args[])
 {
-	holder<logger> conLog = newLogger();
+	Holder<Logger> conLog = newLogger();
 	conLog->filter.bind<&consoleLogFilter>();
 	conLog->format.bind<&logFormatConsole>();
 	conLog->output.bind<&logOutputStdOut>();
 
 	configParseCmd(argc, args);
 
-	CAGE_LOG(severityEnum::Info, "database", "start");
+	CAGE_LOG(SeverityEnum::Info, "database", "start");
 	start();
 
 	if (configListening)
 	{
-		CAGE_LOG(severityEnum::Info, "database", "waiting for changes");
+		CAGE_LOG(SeverityEnum::Info, "database", "waiting for changes");
 		try
 		{
 			listen();
 		}
 		catch (...)
 		{
-			CAGE_LOG(severityEnum::Info, "database", "stopped");
+			CAGE_LOG(SeverityEnum::Info, "database", "stopped");
 		}
 	}
 
-	CAGE_LOG(severityEnum::Info, "database", "end");
+	CAGE_LOG(SeverityEnum::Info, "database", "end");
 
 	return verdict() ? 0 : -1;
 }

@@ -11,8 +11,8 @@ void testClassCast()
 {
 	CAGE_TESTCASE("class_cast");
 
-	holder<A> ah = detail::systemArena().createHolder<A>();
-	holder<A> bh = detail::systemArena().createImpl<A, B>();
+	Holder<A> ah = detail::systemArena().createHolder<A>();
+	Holder<A> bh = detail::systemArena().createImpl<A, B>();
 	A *a = ah.get();
 	A *b = bh.get();
 	CAGE_TEST(class_cast<A*>(a));

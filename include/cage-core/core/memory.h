@@ -5,7 +5,7 @@ namespace cage
 	namespace privat
 	{
 		template<class R, class S>
-		struct holderCaster
+		struct HolderCaster
 		{
 			R *operator () (S *p) const
 			{
@@ -14,7 +14,7 @@ namespace cage
 		};
 
 		template<class R>
-		struct holderCaster<R, void>
+		struct HolderCaster<R, void>
 		{
 			R *operator () (void *p) const
 			{
@@ -23,7 +23,7 @@ namespace cage
 		};
 
 		template<class S>
-		struct holderCaster<void, S>
+		struct HolderCaster<void, S>
 		{
 			void *operator () (S *p) const
 			{
@@ -32,7 +32,7 @@ namespace cage
 		};
 
 		template<>
-		struct holderCaster<void, void>
+		struct HolderCaster<void, void>
 		{
 			void *operator () (void *p) const
 			{
@@ -41,25 +41,25 @@ namespace cage
 		};
 
 		template<class T>
-		struct holderDereference
+		struct HolderDereference
 		{
 			typedef T &type;
 		};
 
 		template<>
-		struct holderDereference<void>
+		struct HolderDereference<void>
 		{
 			typedef void type;
 		};
 
 		template<class T>
-		struct holderBase
+		struct HolderBase
 		{
-			holderBase() : ptr_(nullptr), data_(nullptr) {}
-			explicit holderBase(T *data, void *ptr, delegate<void(void*)> deleter) : deleter_(deleter), ptr_(ptr), data_(data) {}
+			HolderBase() : ptr_(nullptr), data_(nullptr) {}
+			explicit HolderBase(T *data, void *ptr, Delegate<void(void*)> deleter) : deleter_(deleter), ptr_(ptr), data_(data) {}
 
-			holderBase(const holderBase &) = delete;
-			holderBase(holderBase &&other) noexcept
+			HolderBase(const HolderBase &) = delete;
+			HolderBase(HolderBase &&other) noexcept
 			{
 				deleter_ = other.deleter_;
 				ptr_ = other.ptr_;
@@ -69,8 +69,8 @@ namespace cage
 				other.data_ = nullptr;
 			}
 
-			holderBase &operator = (const holderBase &) = delete;
-			holderBase &operator = (holderBase &&other) noexcept
+			HolderBase &operator = (const HolderBase &) = delete;
+			HolderBase &operator = (HolderBase &&other) noexcept
 			{
 				if (ptr_ == other.ptr_)
 					return *this;
@@ -85,7 +85,7 @@ namespace cage
 				return *this;
 			}
 
-			~holderBase()
+			~HolderBase()
 			{
 				if (deleter_)
 					deleter_(ptr_);
@@ -102,7 +102,7 @@ namespace cage
 				return data_;
 			}
 
-			typename holderDereference<T>::type operator * () const
+			typename HolderDereference<T>::type operator * () const
 			{
 				CAGE_ASSERT(data_, "data is null");
 				return *data_;
@@ -123,23 +123,23 @@ namespace cage
 			}
 
 		protected:
-			delegate<void(void *)> deleter_;
+			Delegate<void(void *)> deleter_;
 			void *ptr_; // pointer to deallocate
 			T *data_; // pointer to the object (may differ in case of classes with inheritance)
 		};
 	}
 
 	template<class T>
-	struct holder : public privat::holderBase<T>
+	struct Holder : public privat::HolderBase<T>
 	{
-		using privat::holderBase<T>::holderBase;
+		using privat::HolderBase<T>::HolderBase;
 
 		template<class M>
-		holder<M> cast()
+		Holder<M> cast()
 		{
 			if (!*this)
-				return holder<M>();
-			holder<M> tmp(privat::holderCaster<M, T>()(this->data_), this->ptr_, this->deleter_);
+				return Holder<M>();
+			Holder<M> tmp(privat::HolderCaster<M, T>()(this->data_), this->ptr_, this->deleter_);
 			if (tmp)
 			{
 				this->deleter_.clear();
@@ -147,14 +147,14 @@ namespace cage
 				this->data_ = nullptr;
 				return tmp;
 			}
-			CAGE_THROW_ERROR(exception, "bad cast");
+			CAGE_THROW_ERROR(Exception, "bad cast");
 		}
 	};
 
 	// pointer range
 
 	template<class T>
-	struct pointerRange
+	struct PointerRange
 	{
 	private:
 		T *begin_;
@@ -163,13 +163,13 @@ namespace cage
 	public:
 		typedef uintPtr size_type;
 
-		pointerRange() : begin_(nullptr), end_(nullptr) {}
+		PointerRange() : begin_(nullptr), end_(nullptr) {}
 		template<class U>
-		pointerRange(U *begin, U *end) : begin_(begin), end_(end) {}
+		PointerRange(U *begin, U *end) : begin_(begin), end_(end) {}
 		template<class U>
-		pointerRange(const pointerRange<U> &other) : begin_(other.begin()), end_(other.end()) {}
+		PointerRange(const PointerRange<U> &other) : begin_(other.begin()), end_(other.end()) {}
 		template<class U>
-		pointerRange(U &&other) : begin_(other.data()), end_(other.data() + other.size()) {}
+		PointerRange(U &&other) : begin_(other.data()), end_(other.data() + other.size()) {}
 
 		T *begin() const { return begin_; }
 		T *end() const { return end_; }
@@ -180,14 +180,14 @@ namespace cage
 	};
 
 	template<class T>
-	struct holder<pointerRange<T>> : public privat::holderBase<pointerRange<T>>
+	struct Holder<PointerRange<T>> : public privat::HolderBase<PointerRange<T>>
 	{
-		using privat::holderBase<pointerRange<T>>::holderBase;
-		typedef typename pointerRange<T>::size_type size_type;
+		using privat::HolderBase<PointerRange<T>>::HolderBase;
+		typedef typename PointerRange<T>::size_type size_type;
 
-		operator holder<pointerRange<const T>> () &&
+		operator Holder<PointerRange<const T>> () &&
 		{
-			holder<pointerRange<const T>> tmp((pointerRange<const T>*)this->data_, this->ptr_, this->deleter_);
+			Holder<PointerRange<const T>> tmp((PointerRange<const T>*)this->data_, this->ptr_, this->deleter_);
 			if (tmp)
 			{
 				this->deleter_.clear();
@@ -195,7 +195,7 @@ namespace cage
 				this->data_ = nullptr;
 				return tmp;
 			}
-			CAGE_THROW_ERROR(exception, "bad cast");
+			CAGE_THROW_ERROR(Exception, "bad cast");
 		}
 
 		T *begin() const { return this->data_->begin(); }
@@ -210,27 +210,27 @@ namespace cage
 
 	namespace privat
 	{
-		struct cageNewSpecifier
+		struct CageNewTrait
 		{};
 	}
 }
 
-inline void *operator new(cage::uintPtr size, void *ptr, cage::privat::cageNewSpecifier) noexcept
+inline void *operator new(cage::uintPtr size, void *ptr, cage::privat::CageNewTrait) noexcept
 {
 	return ptr;
 }
 
-inline void *operator new[](cage::uintPtr size, void *ptr, cage::privat::cageNewSpecifier) noexcept
+inline void *operator new[](cage::uintPtr size, void *ptr, cage::privat::CageNewTrait) noexcept
 {
 	return ptr;
 }
 
-inline void operator delete(void *ptr, void *ptr2, cage::privat::cageNewSpecifier) noexcept {}
-inline void operator delete[](void *ptr, void *ptr2, cage::privat::cageNewSpecifier) noexcept {}
+inline void operator delete(void *ptr, void *ptr2, cage::privat::CageNewTrait) noexcept {}
+inline void operator delete[](void *ptr, void *ptr2, cage::privat::CageNewTrait) noexcept {}
 
 namespace cage
 {
-	struct CAGE_API memoryArena
+	struct CAGE_API MemoryArena
 	{
 	private:
 		struct Stub
@@ -270,21 +270,21 @@ namespace cage
 		void *inst;
 
 	public:
-		memoryArena() noexcept : stub(nullptr), inst(nullptr)
+		MemoryArena() noexcept : stub(nullptr), inst(nullptr)
 		{}
 
 		template<class A>
-		explicit memoryArena(A *a) noexcept
+		explicit MemoryArena(A *a) noexcept
 		{
 			static Stub stb = Stub::init<A>();
 			this->stub = &stb;
 			inst = a;
 		}
 
-		memoryArena(const memoryArena &) = default;
-		memoryArena(memoryArena &&) = default;
-		memoryArena &operator = (const memoryArena &) = default;
-		memoryArena &operator = (memoryArena &&) = default;
+		MemoryArena(const MemoryArena &) = default;
+		MemoryArena(MemoryArena &&) = default;
+		MemoryArena &operator = (const MemoryArena &) = default;
+		MemoryArena &operator = (MemoryArena &&) = default;
 
 		void *allocate(uintPtr size, uintPtr alignment)
 		{
@@ -309,7 +309,7 @@ namespace cage
 			void *ptr = allocate(sizeof(T), alignof(T));
 			try
 			{
-				return new(ptr, privat::cageNewSpecifier()) T(templates::forward<Ts>(vs)...);
+				return new(ptr, privat::CageNewTrait()) T(templates::forward<Ts>(vs)...);
 			}
 			catch (...)
 			{
@@ -319,18 +319,18 @@ namespace cage
 		}
 
 		template<class T, class... Ts>
-		holder<T> createHolder(Ts... vs)
+		Holder<T> createHolder(Ts... vs)
 		{
-			delegate<void(void*)> d;
-			d.bind<memoryArena, &memoryArena::destroy<T>>(this);
+			Delegate<void(void*)> d;
+			d.bind<MemoryArena, &MemoryArena::destroy<T>>(this);
 			T *p = createObject<T>(templates::forward<Ts>(vs)...);
-			return holder<T>(p, p, d);
+			return Holder<T>(p, p, d);
 		};
 
-		template<class Holder, class Impl, class... Ts>
-		holder<Holder> createImpl(Ts... vs)
+		template<class Interface, class Impl, class... Ts>
+		Holder<Interface> createImpl(Ts... vs)
 		{
-			return createHolder<Impl>(templates::forward<Ts>(vs)...).template cast<Holder>();
+			return createHolder<Impl>(templates::forward<Ts>(vs)...).template cast<Interface>();
 		};
 
 		template<class T>
@@ -350,12 +350,12 @@ namespace cage
 			deallocate(ptr);
 		}
 
-		bool operator == (const memoryArena &other) const noexcept
+		bool operator == (const MemoryArena &other) const noexcept
 		{
 			return inst == other.inst;
 		}
 
-		bool operator != (const memoryArena &other) const noexcept
+		bool operator != (const MemoryArena &other) const noexcept
 		{
 			return !(*this == other);
 		}
@@ -363,6 +363,6 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_API memoryArena &systemArena();
+		CAGE_API MemoryArena &systemArena();
 	}
 }

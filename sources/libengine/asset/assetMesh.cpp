@@ -21,7 +21,7 @@ namespace cage
 			return i == 0 ? meshDataFlags::Aux0 : i == 1 ? meshDataFlags::Aux1 : i == 2 ? meshDataFlags::Aux2 : i == 3 ? meshDataFlags::Aux3 : meshDataFlags::None;
 		}
 
-		void processLoad(const assetContext *context, void *schemePointer)
+		void processLoad(const AssetContext *context, void *schemePointer)
 		{
 			renderMesh *msh = nullptr;
 			if (context->assetHolder)
@@ -37,7 +37,7 @@ namespace cage
 			}
 			context->returnData = msh;
 
-			deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
+			Deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
 			renderMeshHeader data;
 			des >> data;
 
@@ -126,9 +126,9 @@ namespace cage
 		}
 	}
 
-	assetScheme genAssetSchemeRenderMesh(uint32 threadIndex, windowHandle *memoryContext)
+	AssetScheme genAssetSchemeRenderMesh(uint32 threadIndex, windowHandle *memoryContext)
 	{
-		assetScheme s;
+		AssetScheme s;
 		s.threadIndex = threadIndex;
 		s.schemePointer = memoryContext;
 		s.load.bind<&processLoad>();

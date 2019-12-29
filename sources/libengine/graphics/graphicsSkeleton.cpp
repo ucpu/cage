@@ -34,7 +34,7 @@ namespace cage
 				invRestMatrices = nullptr;
 			};
 
-			memoryArena mem;
+			MemoryArena mem;
 			mat4 globalInverse;
 			uint16 totalBones;
 			uint16 *boneParents;
@@ -129,7 +129,7 @@ namespace cage
 		}
 	}
 
-	holder<skeletonRig> newSkeletonRig()
+	Holder<skeletonRig> newSkeletonRig()
 	{
 		return detail::systemArena().createImpl<skeletonRig, skeletonImpl>();
 	}

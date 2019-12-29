@@ -57,7 +57,7 @@ namespace
 		{
 			if (throwing)
 			{
-				CAGE_THROW_ERROR(exception, "throwing class");
+				CAGE_THROW_ERROR(Exception, "throwing class");
 			}
 		}
 
@@ -82,7 +82,7 @@ void testClasses()
 	{
 		CAGE_TESTCASE("memory arena and throwing constructor");
 		Arena arena(1024 * 1024);
-		memoryArena m(&arena);
+		MemoryArena m(&arena);
 		CAGE_TEST(m.createHolder<Throwing>(false));
 		CAGE_TEST_THROWN(m.createHolder<Throwing>(true));
 	}
@@ -90,20 +90,20 @@ void testClasses()
 	{
 		CAGE_TESTCASE("holder and inheritance");
 		Arena arena(1024 * 1024);
-		memoryArena m(&arena);
+		MemoryArena m(&arena);
 		{
 			CAGE_TESTCASE("regular inheritance");
-			holder<Base> h = m.createImpl<Base, Derived>();
+			Holder<Base> h = m.createImpl<Base, Derived>();
 			CAGE_TEST(h.cast<Derived>()->derived == 2);
 		}
 		{
 			CAGE_TESTCASE("virtual inheritance");
-			holder<Base> h = m.createImpl<Base, VirtualDerived>();
+			Holder<Base> h = m.createImpl<Base, VirtualDerived>();
 			CAGE_TEST(h.cast<VirtualDerived>()->virtualDerived == 4);
 		}
 		{
 			CAGE_TESTCASE("virtual destructor");
-			holder<Base> h = m.createImpl<Base, CountingDerived>();
+			Holder<Base> h = m.createImpl<Base, CountingDerived>();
 			CAGE_TEST(CountingDerived::count == 1);
 			CAGE_TEST(h.cast<CountingDerived>()->countingDerived == 5);
 			h.clear();

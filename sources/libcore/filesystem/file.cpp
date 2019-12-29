@@ -20,10 +20,10 @@
 
 namespace cage
 {
-	fileVirtual::fileVirtual(const string &path, const fileMode &mode) : myPath(path), mode(mode)
+	fileVirtual::fileVirtual(const string &path, const FileMode &mode) : myPath(path), mode(mode)
 	{}
 
-	bool fileMode::valid() const
+	bool FileMode::valid() const
 	{
 		if (!read && !write)
 			return false;
@@ -34,7 +34,7 @@ namespace cage
 		return true;
 	}
 
-	string fileMode::mode() const
+	string FileMode::mode() const
 	{
 		string md;
 		if (read && !write)
@@ -57,13 +57,13 @@ namespace cage
 		return md;
 	}
 
-	void fileHandle::read(void *data, uintPtr size)
+	void File::read(void *data, uintPtr size)
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		impl->read(data, size);
 	}
 
-	bool fileHandle::readLine(string &line)
+	bool File::readLine(string &line)
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 
@@ -81,68 +81,68 @@ namespace cage
 		{
 			seek(origPos);
 			if (origLeft >= string::MaxLength)
-				CAGE_THROW_ERROR(exception, "line too long");
+				CAGE_THROW_ERROR(Exception, "line too long");
 			return false;
 		}
 		seek(min(origPos + (b - buffer), origSize));
 		return true;
 	}
 
-	memoryBuffer fileHandle::readBuffer(uintPtr size)
+	MemoryBuffer File::readBuffer(uintPtr size)
 	{
-		memoryBuffer r(size);
+		MemoryBuffer r(size);
 		read(r.data(), r.size());
 		return r;
 	}
 
-	void fileHandle::write(const void *data, uintPtr size)
+	void File::write(const void *data, uintPtr size)
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		impl->write(data, size);
 	}
 
-	void fileHandle::writeLine(const string &data)
+	void File::writeLine(const string &data)
 	{
 		string d = data + "\n";
 		write(d.c_str(), d.length());
 	}
 
-	void fileHandle::writeBuffer(const memoryBuffer &buffer)
+	void File::writeBuffer(const MemoryBuffer &buffer)
 	{
 		write(buffer.data(), buffer.size());
 	}
 
-	void fileHandle::seek(uintPtr position)
+	void File::seek(uintPtr position)
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		impl->seek(position);
 	}
 
-	void fileHandle::flush()
+	void File::flush()
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		impl->flush();
 	}
 
-	void fileHandle::close()
+	void File::close()
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		impl->close();
 	}
 
-	uintPtr fileHandle::tell() const
+	uintPtr File::tell() const
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		return impl->tell();
 	}
 
-	uintPtr fileHandle::size() const
+	uintPtr File::size() const
 	{
 		fileVirtual *impl = (fileVirtual *)this;
 		return impl->size();
 	}
 
-	holder<fileHandle> newFile(const string &path, const fileMode &mode)
+	Holder<File> newFile(const string &path, const FileMode &mode)
 	{
 		string p;
 		auto a = archiveFindTowardsRoot(path, false, p);
@@ -159,16 +159,16 @@ namespace cage
 		public:
 			FILE *f;
 
-			fileReal(const string &path, const fileMode &mode) : fileVirtual(path, mode), f(nullptr)
+			fileReal(const string &path, const FileMode &mode) : fileVirtual(path, mode), f(nullptr)
 			{
 				CAGE_ASSERT(mode.valid(), "invalid file mode", path, mode.read, mode.write, mode.append, mode.textual);
 				realCreateDirectories(pathJoin(path, ".."));
 				f = fopen(path.c_str(), mode.mode().c_str());
 				if (!f)
 				{
-					CAGE_LOG(severityEnum::Note, "exception", stringizer() + "read: " + mode.read + ", write: " + mode.write + ", append: " + mode.append + ", text: " + mode.textual);
-					CAGE_LOG(severityEnum::Note, "exception", stringizer() + "path: " + path);
-					CAGE_THROW_ERROR(systemError, "fopen", errno);
+					CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "read: " + mode.read + ", write: " + mode.write + ", append: " + mode.append + ", text: " + mode.textual);
+					CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "path: " + path);
+					CAGE_THROW_ERROR(SystemError, "fopen", errno);
 				}
 			}
 
@@ -180,7 +180,7 @@ namespace cage
 					{
 						close();
 					}
-					catch (const cage::exception &)
+					catch (const cage::Exception &)
 					{
 						// do nothing
 					}
@@ -194,7 +194,7 @@ namespace cage
 				if (size == 0)
 					return;
 				if (fread(data, size, 1, f) != 1)
-					CAGE_THROW_ERROR(systemError, "fread", errno);
+					CAGE_THROW_ERROR(SystemError, "fread", errno);
 			}
 
 			void write(const void *data, uintPtr size) override
@@ -204,21 +204,21 @@ namespace cage
 				if (size == 0)
 					return;
 				if (fwrite(data, size, 1, f) != 1)
-					CAGE_THROW_ERROR(systemError, "fwrite", errno);
+					CAGE_THROW_ERROR(SystemError, "fwrite", errno);
 			}
 
 			void seek(uintPtr position) override
 			{
 				CAGE_ASSERT(f, "file closed");
 				if (fseek(f, position, 0) != 0)
-					CAGE_THROW_ERROR(systemError, "fseek", errno);
+					CAGE_THROW_ERROR(SystemError, "fseek", errno);
 			}
 
 			void flush() override
 			{
 				CAGE_ASSERT(f, "file closed");
 				if (fflush(f) != 0)
-					CAGE_THROW_ERROR(systemError, "fflush", errno);
+					CAGE_THROW_ERROR(SystemError, "fflush", errno);
 			}
 
 			void close() override
@@ -227,7 +227,7 @@ namespace cage
 				FILE *t = f;
 				f = nullptr;
 				if (fclose(t) != 0)
-					CAGE_THROW_ERROR(systemError, "fclose", errno);
+					CAGE_THROW_ERROR(SystemError, "fclose", errno);
 			}
 
 			uintPtr tell() const override
@@ -248,8 +248,8 @@ namespace cage
 		};
 	}
 
-	holder<fileHandle> realNewFile(const string &path, const fileMode &mode)
+	Holder<File> realNewFile(const string &path, const FileMode &mode)
 	{
-		return detail::systemArena().createImpl<fileHandle, fileReal>(path, mode);
+		return detail::systemArena().createImpl<File, fileReal>(path, mode);
 	}
 }

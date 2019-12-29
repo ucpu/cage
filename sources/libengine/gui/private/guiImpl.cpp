@@ -14,7 +14,7 @@
 
 namespace cage
 {
-	guiComponents::guiComponents(entityManager *ents) : guiGeneralComponents(ents), guiLayoutsComponents(ents), guiWidgetsComponents(ents)
+	guiComponents::guiComponents(EntityManager *ents) : guiGeneralComponents(ents), guiLayoutsComponents(ents), guiWidgetsComponents(ents)
 	{}
 
 	guiImpl::graphicsDataStruct::graphicsDataStruct() :
@@ -39,7 +39,7 @@ namespace cage
 	}
 
 	guiImpl::guiImpl(const guiManagerCreateConfig &config) :
-		entityMgr(newEntityManager(config.entitiesConfig ? *config.entitiesConfig : entityManagerCreateConfig())), components(entityMgr.get()),
+		entityMgr(newEntityManager(config.entitiesConfig ? *config.entitiesConfig : EntityManagerCreateConfig())), components(entityMgr.get()),
 		itemsArena(config.itemsArenaSize), itemsMemory(&itemsArena), root(nullptr),
 		emitData{config, config, config}, emitControl(nullptr),
 		assetMgr(config.assetMgr),
@@ -60,7 +60,7 @@ namespace cage
 		skins.resize(config.skinsCount);
 
 		{
-			swapBufferGuardCreateConfig cfg(3);
+			SwapBufferGuardCreateConfig cfg(3);
 			cfg.repeatedReads = true;
 			emitController = newSwapBufferGuard(cfg);
 		}
@@ -93,7 +93,7 @@ namespace cage
 		return vec4(resPos, resPos + resSiz);
 	}
 
-	uint32 guiImpl::entityWidgetsCount(entity *e)
+	uint32 guiImpl::entityWidgetsCount(Entity *e)
 	{
 		guiImpl *impl = this;
 		uint32 result = 0;
@@ -103,7 +103,7 @@ namespace cage
 		return result;
 	}
 
-	uint32 guiImpl::entityLayoutsCount(entity *e)
+	uint32 guiImpl::entityLayoutsCount(Entity *e)
 	{
 		guiImpl *impl = this;
 		uint32 result = 0;

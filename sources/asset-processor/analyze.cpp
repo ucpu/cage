@@ -2,7 +2,7 @@
 
 int processAnalyze()
 {
-	detail::overrideBreakpoint overrideBreakpoint;
+	detail::OverrideBreakpoint OverrideBreakpoint;
 	analyzeTexture();
 	analyzeAssimp();
 	analyzeFont();

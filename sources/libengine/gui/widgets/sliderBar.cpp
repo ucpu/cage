@@ -32,7 +32,7 @@ namespace cage
 			{
 				CAGE_ASSERT(!hierarchy->firstChild, "slider may not have children");
 				CAGE_ASSERT(!hierarchy->text, "slider may not have text");
-				CAGE_ASSERT(!hierarchy->image, "slider may not have image");
+				CAGE_ASSERT(!hierarchy->Image, "slider may not have image");
 				CAGE_ASSERT(data.value.valid() && data.min.valid() && data.max.valid());
 				CAGE_ASSERT(data.max > data.min);
 				normalizedValue = (data.value - data.min) / (data.max - data.min);

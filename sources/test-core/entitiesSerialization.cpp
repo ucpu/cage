@@ -6,14 +6,14 @@
 
 namespace
 {
-	void defineManager(entityManager *man)
+	void defineManager(EntityManager *man)
 	{
 		man->defineComponent<float>(0, randomChance() < 0.5);
 		man->defineComponent<int>(0, randomChance() < 0.5);
 		man->defineComponent<vec3>(vec3(), randomChance() < 0.5);
 	}
 
-	void generateEntity(entity *e)
+	void generateEntity(Entity *e)
 	{
 		bool a = randomChance() < 0.5;
 		bool b = randomChance() < 0.5;
@@ -26,7 +26,7 @@ namespace
 			e->value<vec3>(e->manager()->componentByIndex(2)) = randomDirection3();
 	}
 
-	void changeEntities(entityManager *man)
+	void changeEntities(EntityManager *man)
 	{
 		for (uint32 round = 0; round < 100; round++)
 		{
@@ -35,38 +35,38 @@ namespace
 				man->get(a)->destroy();
 			else
 			{
-				entity *e = man->create(a);
+				Entity *e = man->create(a);
 				generateEntity(e);
 			}
 		}
 		for (uint32 round = 0; round < 5; round++)
 		{
-			entity *e = man->createAnonymous();
+			Entity *e = man->createAnonymous();
 			generateEntity(e);
 		}
 	}
 
-	void sync(entityManager *a, entityManager *b)
+	void sync(EntityManager *a, EntityManager *b)
 	{
 		for (uint32 i = 0; i < 3; i++)
 		{
-			memoryBuffer buf = entitiesSerialize(a->group(), a->componentByIndex(i));
+			MemoryBuffer buf = entitiesSerialize(a->group(), a->componentByIndex(i));
 			entitiesDeserialize(buf, b);
 		}
 	}
 
-	void check(entityManager *a, entityManager *b)
+	void check(EntityManager *a, EntityManager *b)
 	{
 		uint32 cnt = a->group()->count();
-		entity *const *ents = a->group()->array();
+		Entity *const *ents = a->group()->array();
 		for (uint32 ei = 0; ei < cnt; ei++)
 		{
-			entity *ea = ents[ei];
+			Entity *ea = ents[ei];
 			uint32 aName = ea->name();
 			if (aName == 0)
 				continue;
 			CAGE_TEST(b->has(aName));
-			entity *eb = b->get(aName);
+			Entity *eb = b->get(aName);
 			for (uint32 i = 0; i < 3; i++)
 			{
 				if (ea->has(a->componentByIndex(i)))
@@ -81,12 +81,12 @@ namespace
 
 void testSceneSerialize()
 {
-	CAGE_TESTCASE("serializer");
+	CAGE_TESTCASE("Serializer");
 
-	holder<entityManager> manA = newEntityManager(entityManagerCreateConfig());
+	Holder<EntityManager> manA = newEntityManager(EntityManagerCreateConfig());
 	defineManager(manA.get());
 
-	holder<entityManager> manB = newEntityManager(entityManagerCreateConfig());
+	Holder<EntityManager> manB = newEntityManager(EntityManagerCreateConfig());
 	defineManager(manB.get());
 
 	CAGE_TESTCASE("randomized test");

@@ -3,10 +3,10 @@
 
 namespace cage
 {
-	template<class T, uint32 N = 16>
-	struct variableSmoothingBuffer
+	template<class T, uint32 N>
+	struct VariableSmoothingBuffer
 	{
-		variableSmoothingBuffer() : index(0), sum(T())
+		VariableSmoothingBuffer() : index(0), sum(T())
 		{
 			seed(T());
 		}
@@ -68,9 +68,9 @@ namespace cage
 	}
 
 	template<uint32 N>
-	struct variableSmoothingBuffer<quat, N>
+	struct VariableSmoothingBuffer<quat, N>
 	{
-		variableSmoothingBuffer() : index(0)
+		VariableSmoothingBuffer() : index(0)
 		{}
 
 		void seed(const quat &value)

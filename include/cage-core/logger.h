@@ -16,43 +16,43 @@ namespace cage
 			uint64 createThreadId;
 			uint64 currentThreadId;
 			uint32 line;
-			severityEnum severity;
+			SeverityEnum severity;
 			bool continuous;
 			bool debug;
 			loggerInfo();
 		};
 	}
 
-	class CAGE_API logger : private immovable
+	class CAGE_API Logger : private Immovable
 	{
 	public:
-		delegate<bool(const detail::loggerInfo &)> filter;
-		delegate<void(const detail::loggerInfo &, delegate<void(const string &)>)> format;
-		delegate<void(const string &)> output;
+		Delegate<bool(const detail::loggerInfo &)> filter;
+		Delegate<void(const detail::loggerInfo &, Delegate<void(const string &)>)> format;
+		Delegate<void(const string &)> output;
 	};
 
-	CAGE_API holder<logger> newLogger();
+	CAGE_API Holder<Logger> newLogger();
 
-	CAGE_API void logFormatConsole(const detail::loggerInfo &info, delegate<void(const string &)> output);
-	CAGE_API void logFormatFileShort(const detail::loggerInfo &info, delegate<void(const string &)> output);
-	CAGE_API void logFormatFileLong(const detail::loggerInfo &info, delegate<void(const string &)> output);
+	CAGE_API void logFormatConsole(const detail::loggerInfo &info, Delegate<void(const string &)> output);
+	CAGE_API void logFormatFileShort(const detail::loggerInfo &info, Delegate<void(const string &)> output);
+	CAGE_API void logFormatFileLong(const detail::loggerInfo &info, Delegate<void(const string &)> output);
 
 	CAGE_API void logOutputDebug(const string &message);
 	CAGE_API void logOutputStdOut(const string &message);
 	CAGE_API void logOutputStdErr(const string &message);
 
-	class CAGE_API loggerOutputFile : private immovable
+	class CAGE_API LoggerOutputFile : private Immovable
 	{
 	public:
 		void output(const string &message);
 	};
 
-	CAGE_API holder<loggerOutputFile> newLoggerOutputFile(const string &path, bool append);
+	CAGE_API Holder<LoggerOutputFile> newLoggerOutputFile(const string &path, bool append);
 
 	namespace detail
 	{
-		CAGE_API logger *getCentralLog();
-		CAGE_API string severityToString(const severityEnum severity);
+		CAGE_API Logger *getCentralLog();
+		CAGE_API string severityToString(const SeverityEnum severity);
 	}
 }
 

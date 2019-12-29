@@ -17,8 +17,8 @@ struct assetStruct
 	bool corrupted;
 	bool needNotify;
 
-	void load(fileHandle *fileName);
-	void save(fileHandle *fileName) const;
+	void load(File *fileName);
+	void save(File *fileName) const;
 	string outputPath() const;
 	string aliasPath() const;
 	bool operator < (const assetStruct &other) const

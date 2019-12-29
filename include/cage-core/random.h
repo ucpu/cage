@@ -3,15 +3,15 @@
 
 namespace cage
 {
-	struct CAGE_API randomGenerator
+	struct CAGE_API RandomGenerator
 	{
 		// https://en.wikipedia.org/wiki/Xorshift
 		// xorshift128+
 		uint64 s[2];
 
-		randomGenerator();
-		explicit randomGenerator(uint64 s[2]);
-		explicit randomGenerator(uint64 s1, uint64 s2);
+		RandomGenerator();
+		explicit RandomGenerator(uint64 s[2]);
+		explicit RandomGenerator(uint64 s1, uint64 s2);
 		uint64 next();
 
 		real randomChance();
@@ -24,7 +24,7 @@ namespace cage
 #undef GCHL_GENERATE
 	};
 
-	CAGE_API randomGenerator &currentRandomGenerator();
+	CAGE_API RandomGenerator &currentRandomGenerator();
 }
 
 #endif // guard_random_h_623364ED17804404AAC89652473FEBAC

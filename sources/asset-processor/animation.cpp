@@ -19,11 +19,11 @@ namespace
 
 void processAnimation()
 {
-	holder<assimpContextClass> context = newAssimpContext(0, 0);
+	Holder<assimpContextClass> context = newAssimpContext(0, 0);
 	const aiScene *scene = context->getScene();
 
 	if (scene->mNumAnimations == 0)
-		CAGE_THROW_ERROR(exception, "no animations available");
+		CAGE_THROW_ERROR(Exception, "no animations available");
 	uint32 chosenAnimationIndex = m;
 	if (scene->mNumAnimations > 1 || !inputSpec.empty())
 	{
@@ -39,15 +39,15 @@ void processAnimation()
 	else
 		chosenAnimationIndex = 0;
 	if (chosenAnimationIndex == m)
-		CAGE_THROW_ERROR(exception, "no animation name matches the specifier");
+		CAGE_THROW_ERROR(Exception, "no animation name matches the specifier");
 	aiAnimation *ani = scene->mAnimations[chosenAnimationIndex];
 	if (ani->mNumChannels == 0 || ani->mNumMeshChannels != 0 || ani->mNumMorphMeshChannels != 0)
-		CAGE_THROW_ERROR(exception, "the animation has unsupported type");
+		CAGE_THROW_ERROR(Exception, "the animation has unsupported type");
 
-	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "duration: " + ani->mDuration + " ticks");
-	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "ticks per second: " + ani->mTicksPerSecond);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "duration: " + ani->mDuration + " ticks");
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "ticks per second: " + ani->mTicksPerSecond);
 
-	holder<assimpSkeletonClass> skeleton = context->skeleton();
+	Holder<assimpSkeletonClass> skeleton = context->skeleton();
 
 	skeletalAnimationHeader a;
 	a.duration = numeric_cast<uint64>(1e6 * ani->mDuration / (ani->mTicksPerSecond > 0 ? ani->mTicksPerSecond : 25.0));
@@ -65,7 +65,7 @@ void processAnimation()
 		uint16 idx = skeleton->index(n->mNodeName);
 		if (idx == m)
 		{
-			CAGE_LOG(severityEnum::Warning, logComponentName, stringizer() + "channel index: " + channelIndex + ", name: '" + n->mNodeName.data + "', has no corresponding bone and will be ignored");
+			CAGE_LOG(SeverityEnum::Warning, logComponentName, stringizer() + "channel index: " + channelIndex + ", name: '" + n->mNodeName.data + "', has no corresponding bone and will be ignored");
 			continue;
 		}
 		boneIndices.push_back(idx);
@@ -106,11 +106,11 @@ void processAnimation()
 		totalKeys += n->mNumScalingKeys;
 	}
 	a.animationBonesCount = numeric_cast<uint32>(bones.size());
-	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "animated bones: " + a.animationBonesCount);
-	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "total keys: " + totalKeys);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "animated bones: " + a.animationBonesCount);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "total keys: " + totalKeys);
 
-	memoryBuffer buff;
-	serializer ser(buff);
+	MemoryBuffer buff;
+	Serializer ser(buff);
 	ser << a;
 
 	// bone indices
@@ -138,14 +138,14 @@ void processAnimation()
 		ser.write(b.sclVals.data(), b.sclVals.size() * sizeof(vec3));
 	}
 
-	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
-	memoryBuffer comp = detail::compress(buff);
-	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + comp.size());
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
+	MemoryBuffer comp = detail::compress(buff);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + comp.size());
 
-	assetHeader h = initializeAssetHeaderStruct();
+	AssetHeader h = initializeAssetHeaderStruct();
 	h.originalSize = numeric_cast<uint32>(buff.size());
 	h.compressedSize = numeric_cast<uint32>(comp.size());
-	holder<fileHandle> f = newFile(outputFileName, fileMode(false, true));
+	Holder<File> f = newFile(outputFileName, FileMode(false, true));
 	f->write(&h, sizeof(h));
 	f->write(comp.data(), comp.size());
 	f->close();

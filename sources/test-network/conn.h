@@ -5,4 +5,4 @@ public:
 	bool process();
 };
 
-holder<connClass> newConn(holder<udpConnection> udp);
+Holder<connClass> newConn(Holder<UdpConnection> udp);

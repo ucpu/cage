@@ -3,7 +3,7 @@
 
 namespace cage
 {
-	enum class scheduleTypeEnum : uint32
+	enum class ScheduleTypeEnum : uint32
 	{
 		Once, // this task is run once and is automatically deallocated afterwards
 		SteadyPeriodic, // uses steady clock, maintaining the period from the beginning
@@ -12,19 +12,19 @@ namespace cage
 		Empty, // this task is run when no other tasks are scheduled
 	};
 
-	struct CAGE_API scheduleCreateConfig
+	struct CAGE_API ScheduleCreateConfig
 	{
-		scheduleCreateConfig();
-		detail::stringBase<60> name;
-		delegate<void()> action;
+		ScheduleCreateConfig();
+		detail::StringBase<60> name;
+		Delegate<void()> action;
 		uint64 delay; // used for all types of schedules
 		uint64 period; // used for periodic schedules only
-		scheduleTypeEnum type;
+		ScheduleTypeEnum type;
 		sint32 priority; // higher priority is run earlier or more often
 		uint32 maxSteadyPeriods; // when the schedule is not managing by this many runs, reset its timer (valid for steady periodic schedules only)
 	};
 
-	class CAGE_API schedule : private immovable
+	class CAGE_API Schedule : private Immovable
 	{
 	public:
 		void trigger(); // valid for external schedule only; can be called from any thread (but beware of deallocation)
@@ -51,25 +51,25 @@ namespace cage
 		uint32 runsCount() const;
 	};
 
-	struct CAGE_API schedulerCreateConfig
+	struct CAGE_API SchedulerCreateConfig
 	{
-		schedulerCreateConfig();
+		SchedulerCreateConfig();
 		uint64 maxSleepDuration;
 	};
 
-	class CAGE_API scheduler : private immovable
+	class CAGE_API Scheduler : private Immovable
 	{
 	public:
 		void run();
 		void stop(); // can be called from any thread
 
-		schedule *newSchedule(const scheduleCreateConfig &config);
+		Schedule *newSchedule(const ScheduleCreateConfig &config);
 		void clear(); // removes all schedules from the scheduler (and deallocates them)
 
 		sint32 latestPriority() const;
 	};
 
-	CAGE_API holder<scheduler> newScheduler(const schedulerCreateConfig &config);
+	CAGE_API Holder<Scheduler> newScheduler(const SchedulerCreateConfig &config);
 }
 
 #endif // guard_scheduler_h_dsg54e64hg56fr4jh125vtkj5fd

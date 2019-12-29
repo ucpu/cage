@@ -9,13 +9,13 @@ void testSerialization()
 	{
 		CAGE_TESTCASE("basics");
 		{
-			memoryBuffer b1;
-			serializer s(b1);
+			MemoryBuffer b1;
+			Serializer s(b1);
 			s << 42 << string("hi there") << 13;
 			CAGE_TEST(b1.size() == sizeof(42) + (4 + 8) + sizeof(13));
 			int i42, i13;
 			string hi;
-			deserializer d(b1);
+			Deserializer d(b1);
 			d >> i42 >> hi >> i13;
 			CAGE_TEST(i42 == 42);
 			CAGE_TEST(i13 == 13);
@@ -25,13 +25,13 @@ void testSerialization()
 
 	{
 		CAGE_TESTCASE("placeholders");
-		memoryBuffer b1;
-		serializer s(b1);
-		serializer s1 = s.placeholder(8);
+		MemoryBuffer b1;
+		Serializer s(b1);
+		Serializer s1 = s.placeholder(8);
 		CAGE_TEST(b1.size() == 1 * 8);
-		serializer s2 = s.placeholder(8);
+		Serializer s2 = s.placeholder(8);
 		CAGE_TEST(b1.size() == 2 * 8);
-		serializer s3 = s.placeholder(8);
+		Serializer s3 = s.placeholder(8);
 		CAGE_TEST(b1.size() == 3 * 8);
 		s << 4.0;
 		CAGE_TEST(b1.size() == 4 * 8);
@@ -42,12 +42,12 @@ void testSerialization()
 		s2 << 2.0;
 		CAGE_TEST(b1.size() == 4 * 8);
 		double t;
-		deserializer d(b1);
-		deserializer d1 = d.placeholder(8);
+		Deserializer d(b1);
+		Deserializer d1 = d.placeholder(8);
 		d >> t;
 		CAGE_TEST(t == 2.0);
-		deserializer d3 = d.placeholder(8);
-		deserializer d4 = d.placeholder(8);
+		Deserializer d3 = d.placeholder(8);
+		Deserializer d4 = d.placeholder(8);
 		d1 >> t;
 		CAGE_TEST(t == 1.0);
 		d3 >> t;
@@ -59,12 +59,12 @@ void testSerialization()
 
 	{
 		CAGE_TESTCASE("moving");
-		memoryBuffer b1;
-		serializer s1(b1);
-		deserializer d1(b1);
-		memoryBuffer b2;
-		serializer s2(b2);
-		deserializer d2(b2);
+		MemoryBuffer b1;
+		Serializer s1(b1);
+		Deserializer d1(b1);
+		MemoryBuffer b2;
+		Serializer s2(b2);
+		Deserializer d2(b2);
 		s1 = templates::move(s2);
 		d2 = templates::move(d1);
 	}

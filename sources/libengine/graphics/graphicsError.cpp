@@ -20,7 +20,7 @@ namespace cage
 {
 	namespace
 	{
-		configBool confDetailedInfo("cage/graphics/logOpenglExtensions", false);
+		ConfigBool confDetailedInfo("cage/graphics/logOpenglExtensions", false);
 	}
 
 	void checkGlError()
@@ -38,7 +38,7 @@ namespace cage
 		}
 	}
 
-	graphicsError::graphicsError(const char *file, uint32 line, const char *function, severityEnum severity, const char *message, uint32 code) noexcept : systemError(file, line, function, severity, message, code)
+	graphicsError::graphicsError(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message, uint32 code) noexcept : SystemError(file, line, function, severity, message, code)
 	{}
 
 	namespace
@@ -53,7 +53,7 @@ namespace cage
 			if (ctx->debugOpenglErrorCallback)
 				return ctx->debugOpenglErrorCallback(source, type, id, severity, message);
 
-			severityEnum cageSevr = severityEnum::Error;
+			SeverityEnum cageSevr = SeverityEnum::Error;
 
 			const char *src = nullptr;
 			switch (source)
@@ -73,7 +73,7 @@ namespace cage
 			case GL_DEBUG_TYPE_ERROR: tp = "error"; break;
 			case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: tp = "undefined behavior"; break;
 			case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: tp = "deprecated behavior"; break;
-			case GL_DEBUG_TYPE_PERFORMANCE: tp = "performance"; cageSevr = severityEnum::Warning; break;
+			case GL_DEBUG_TYPE_PERFORMANCE: tp = "performance"; cageSevr = SeverityEnum::Warning; break;
 			case GL_DEBUG_TYPE_OTHER: tp = "other"; break;
 			default: tp = "unknown type";
 			}
@@ -84,20 +84,20 @@ namespace cage
 			case GL_DEBUG_SEVERITY_HIGH: sevr = "high"; break;
 			case GL_DEBUG_SEVERITY_MEDIUM: sevr = "medium"; break;
 			case GL_DEBUG_SEVERITY_LOW: sevr = "low"; break;
-			case GL_DEBUG_SEVERITY_NOTIFICATION: sevr = "notification"; cageSevr = severityEnum::Hint; break;
+			case GL_DEBUG_SEVERITY_NOTIFICATION: sevr = "notification"; cageSevr = SeverityEnum::Hint; break;
 			default: sevr = "unknown severity";
 			}
 
 			CAGE_LOG(cageSevr, "graphics", "debug message:");
-			holder<lineReader> lrb = newLineReader((char*)message, std::strlen(message));
+			Holder<LineReader> lrb = newLineReader((char*)message, std::strlen(message));
 			for (string line; lrb->readLine(line);)
 				CAGE_LOG_CONTINUE(cageSevr, "graphics", line);
-			CAGE_LOG_CONTINUE(severityEnum::Note, "graphics", stringizer() + "source: " + src + ", type: " + tp + ", severity: " + sevr + ", id: " + id);
+			CAGE_LOG_CONTINUE(SeverityEnum::Note, "graphics", stringizer() + "source: " + src + ", type: " + tp + ", severity: " + sevr + ", id: " + id);
 
 			if (id == 131218 && severity == GL_DEBUG_SEVERITY_MEDIUM && type == GL_DEBUG_TYPE_PERFORMANCE)
 				return; // do not break on messages that shader is being recompiled based on opengl state
 
-			if (cageSevr > severityEnum::Info)
+			if (cageSevr > SeverityEnum::Info)
 				detail::debugBreakpoint();
 		}
 
@@ -111,18 +111,18 @@ namespace cage
 			vendor = glGetString(GL_VENDOR);
 			renderer = glGetString(GL_RENDERER);
 			CAGE_CHECK_GL_ERROR_DEBUG();
-			CAGE_LOG(severityEnum::Info, "systemInfo", stringizer() + "opengl version: " + major + "." + minor);
-			CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", stringizer() + "device vendor: '" + (char*)vendor + "'");
-			CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", stringizer() + "device renderer: '" + (char*)renderer + "'");
+			CAGE_LOG(SeverityEnum::Info, "systemInfo", stringizer() + "opengl version: " + major + "." + minor);
+			CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", stringizer() + "device vendor: '" + (char*)vendor + "'");
+			CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", stringizer() + "device renderer: '" + (char*)renderer + "'");
 			if (confDetailedInfo)
 			{
-				CAGE_LOG(severityEnum::Info, "systemInfo", stringizer() + "opengl extensions: ");
+				CAGE_LOG(SeverityEnum::Info, "systemInfo", stringizer() + "opengl extensions: ");
 				GLint num = 0;
 				glGetIntegerv(GL_NUM_EXTENSIONS, &num);
 				for (GLint i = 0; i < num; i++)
 				{
 					const GLubyte *ext = glGetStringi(GL_EXTENSIONS, i);
-					CAGE_LOG_CONTINUE(severityEnum::Info, "systemInfo", stringizer() + "extension: '" + (char*)ext + "'");
+					CAGE_LOG_CONTINUE(SeverityEnum::Info, "systemInfo", stringizer() + "extension: '" + (char*)ext + "'");
 				}
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
@@ -152,7 +152,7 @@ namespace cage
 
 		struct assertContextStruct
 		{
-			holder<syncMutex> mutex;
+			Holder<Mutex> mutex;
 			std::map<windowHandle*, std::map<uint32, uint32>> objects;
 			std::map<uint64, windowHandle*> contexts;
 
@@ -170,7 +170,7 @@ namespace cage
 
 		void setCurrentContext(windowHandle *ctx)
 		{
-			scopeLock<syncMutex> lock(assertContext().mutex);
+			ScopeLock<Mutex> lock(assertContext().mutex);
 			if (ctx)
 				assertContext().contexts[threadId()] = ctx;
 			else
@@ -179,7 +179,7 @@ namespace cage
 
 		windowHandle *getCurrentContext()
 		{
-			scopeLock<syncMutex> lock(assertContext().mutex);
+			ScopeLock<Mutex> lock(assertContext().mutex);
 			auto it = assertContext().contexts.find(threadId());
 			if (it == assertContext().contexts.end())
 				return nullptr;
@@ -189,7 +189,7 @@ namespace cage
 
 		uint32 contextTypeIndexInitializer()
 		{
-			scopeLock<syncMutex> lock(assertContext().mutex);
+			ScopeLock<Mutex> lock(assertContext().mutex);
 			static uint32 index = 0;
 			return index++;
 		}
@@ -197,14 +197,14 @@ namespace cage
 		void contextSetCurrentObjectType(uint32 typeIndex, uint32 id)
 		{
 			auto cc = getCurrentContext();
-			scopeLock<syncMutex> lock(assertContext().mutex);
+			ScopeLock<Mutex> lock(assertContext().mutex);
 			assertContext().objects[cc][typeIndex] = id;
 		}
 
 		uint32 contextGetCurrentObjectType(uint32 typeIndex)
 		{
 			auto cc = getCurrentContext();
-			scopeLock<syncMutex> lock(assertContext().mutex);
+			ScopeLock<Mutex> lock(assertContext().mutex);
 			std::map<uint32, uint32> &m = assertContext().objects[cc];
 			auto it = m.find(typeIndex);
 			if (it == m.end())

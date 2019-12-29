@@ -15,14 +15,14 @@ namespace utf8
 #endif
 
 #define TRY_BEGIN try
-#define TRY_END catch (const std::exception &e) { CAGE_THROW_ERROR(invalidUtfString, e.what()); }
+#define TRY_END catch (const std::exception &e) { CAGE_THROW_ERROR(InvalidUtfString, e.what()); }
 
 namespace cage
 {
-	invalidUtfString::invalidUtfString(const char *file, uint32 line, const char *function, severityEnum severity, const char *message) noexcept : exception(file, line, function, severity, message)
+	InvalidUtfString::InvalidUtfString(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept : Exception(file, line, function, severity, message)
 	{};
 
-	void invalidUtfString::log()
+	void InvalidUtfString::log()
 	{
 		::cage::privat::makeLog(file, line, function, severity, "exception", string() + "utf8 error: '" + message + "'", false, false);
 	};

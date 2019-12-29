@@ -24,7 +24,7 @@ namespace cage
 {
 	namespace
 	{
-		configSint32 visualizeBuffer("cage/graphics/visualizeBuffer", 0);
+		ConfigSint32 visualizeBuffer("cage/graphics/visualizeBuffer", 0);
 
 		struct shadowmapBufferStruct
 		{
@@ -32,7 +32,7 @@ namespace cage
 			uint32 width;
 			uint32 height;
 		public:
-			holder<renderTexture> texture;
+			Holder<renderTexture> texture;
 			void resize(uint32 w, uint32 h)
 			{
 				if (w == width && h == height)
@@ -99,8 +99,8 @@ namespace cage
 
 		struct cameraSpecificDataStruct
 		{
-			holder<renderTexture> luminanceCollectionTexture; // w * h
-			holder<renderTexture> luminanceAccumulationTexture; // 1 * 1
+			Holder<renderTexture> luminanceCollectionTexture; // w * h
+			Holder<renderTexture> luminanceAccumulationTexture; // 1 * 1
 
 			cameraSpecificDataStruct() : width(0), height(0), cameraEffects(cameraEffectsFlags::None)
 			{}
@@ -153,7 +153,7 @@ namespace cage
 		struct uboCacheStruct
 		{
 			// double buffered ring buffer of uniform buffers :D
-			std::vector<holder<uniformBuffer>> data;
+			std::vector<Holder<uniformBuffer>> data;
 			uint32 current, last, prev;
 
 			uboCacheStruct() : current(0), last(0), prev(0)
@@ -167,7 +167,7 @@ namespace cage
 				if ((current + 1) % data.size() == prev)
 				{
 					// grow the buffer
-					data.insert(data.begin() + prev, holder<uniformBuffer>());
+					data.insert(data.begin() + prev, Holder<uniformBuffer>());
 					prev++;
 					if (last > current)
 						last++;
@@ -191,21 +191,21 @@ namespace cage
 
 		struct graphicsDispatchHolders
 		{
-			holder<frameBuffer> gBufferTarget;
-			holder<frameBuffer> renderTarget;
-			holder<renderTexture> albedoTexture;
-			holder<renderTexture> specialTexture;
-			holder<renderTexture> normalTexture;
-			holder<renderTexture> colorTexture;
-			holder<renderTexture> intermediateTexture;
-			holder<renderTexture> velocityTexture;
-			holder<renderTexture> ambientOcclusionTexture1;
-			holder<renderTexture> ambientOcclusionTexture2;
-			holder<renderTexture> bloomTexture1;
-			holder<renderTexture> bloomTexture2;
-			holder<renderTexture> depthTexture;
+			Holder<frameBuffer> gBufferTarget;
+			Holder<frameBuffer> renderTarget;
+			Holder<renderTexture> albedoTexture;
+			Holder<renderTexture> specialTexture;
+			Holder<renderTexture> normalTexture;
+			Holder<renderTexture> colorTexture;
+			Holder<renderTexture> intermediateTexture;
+			Holder<renderTexture> velocityTexture;
+			Holder<renderTexture> ambientOcclusionTexture1;
+			Holder<renderTexture> ambientOcclusionTexture2;
+			Holder<renderTexture> bloomTexture1;
+			Holder<renderTexture> bloomTexture2;
+			Holder<renderTexture> depthTexture;
 
-			holder<uniformBuffer> ssaoPointsBuffer;
+			Holder<uniformBuffer> ssaoPointsBuffer;
 			uboCacheStruct uboCacheLarge;
 			uboCacheStruct uboCacheSmall;
 
@@ -332,11 +332,11 @@ namespace cage
 				}
 			}
 
-			void gaussianBlur(holder<renderTexture> &texData, holder<renderTexture> &texHelper, uint32 mipmapLevel = 0)
+			void gaussianBlur(Holder<renderTexture> &texData, Holder<renderTexture> &texHelper, uint32 mipmapLevel = 0)
 			{
 				shaderGaussianBlur->bind();
 				shaderGaussianBlur->uniform(1, (int)mipmapLevel);
-				auto blur = [&](holder<renderTexture> &tex1, holder<renderTexture> &tex2, const vec2 &direction)
+				auto blur = [&](Holder<renderTexture> &tex1, Holder<renderTexture> &tex2, const vec2 &direction)
 				{
 					tex1->bind();
 					renderTarget->colorTexture(0, tex2.get(), mipmapLevel);
@@ -458,7 +458,7 @@ namespace cage
 						glCullFace(GL_FRONT);
 						break;
 					default:
-						CAGE_THROW_CRITICAL(exception, "invalid light type");
+						CAGE_THROW_CRITICAL(Exception, "invalid light type");
 					}
 					bindShadowmap(l->shadowmap);
 					useDisposableUbo(CAGE_SHADER_UNIBLOCK_LIGHTS, l->shaderLights, sizeof(lightsStruct::shaderLightStruct) * l->count);
@@ -847,7 +847,7 @@ namespace cage
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
-			bool resizeTexture(const string &debugName, holder<renderTexture> &texture, bool enabled, uint32 internalFormat, uint32 downscale = 1)
+			bool resizeTexture(const string &debugName, Holder<renderTexture> &texture, bool enabled, uint32 internalFormat, uint32 downscale = 1)
 			{
 				if (enabled)
 				{

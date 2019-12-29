@@ -8,17 +8,17 @@
 
 namespace cage
 {
-	concurrentQueueCreateConfig::concurrentQueueCreateConfig() : arena(detail::systemArena()), maxElements(m) {}
+	ConcurrentQueueCreateConfig::ConcurrentQueueCreateConfig() : arena(detail::systemArena()), maxElements(m) {}
 
-	concurrentQueueTerminated::concurrentQueueTerminated(const char *file, uint32 line, const char *function, severityEnum severity, const char *message) noexcept : exception(file, line, function, severity, message)
+	ConcurrentQueueTerminated::ConcurrentQueueTerminated(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept : Exception(file, line, function, severity, message)
 	{};
 
 	namespace
 	{
-		class concurrentQueueImpl : public privat::concurrentQueuePriv
+		class concurrentQueueImpl : public privat::ConcurrentQueuePriv
 		{
 		public:
-			concurrentQueueImpl(const concurrentQueueCreateConfig &config) : maxItems(config.maxElements), stop(false)
+			concurrentQueueImpl(const ConcurrentQueueCreateConfig &config) : maxItems(config.maxElements), stop(false)
 			{
 				mut = newSyncMutex();
 				writer = newSyncConditionalBase();
@@ -28,17 +28,17 @@ namespace cage
 
 			~concurrentQueueImpl()
 			{
-				scopeLock<syncMutex> sl(mut);
+				ScopeLock<Mutex> sl(mut);
 				CAGE_ASSERT(items.empty(), "the concurrent queue may not be destroyed before all items are removed");
 			}
 
 			void push(void *value)
 			{
-				scopeLock<syncMutex> sl(mut);
+				ScopeLock<Mutex> sl(mut);
 				while (true)
 				{
 					if (stop)
-						CAGE_THROW_SILENT(concurrentQueueTerminated, "concurrent queue terminated");
+						CAGE_THROW_SILENT(ConcurrentQueueTerminated, "concurrent queue terminated");
 					if (items.size() >= maxItems)
 						writer->wait(sl);
 					else
@@ -52,9 +52,9 @@ namespace cage
 
 			bool tryPush(void *value)
 			{
-				scopeLock<syncMutex> sl(mut);
+				ScopeLock<Mutex> sl(mut);
 				if (stop)
-					CAGE_THROW_SILENT(concurrentQueueTerminated, "concurrent queue terminated");
+					CAGE_THROW_SILENT(ConcurrentQueueTerminated, "concurrent queue terminated");
 				if (items.size() < maxItems)
 				{
 					items.push_back(value);
@@ -66,11 +66,11 @@ namespace cage
 
 			void pop(void *&value)
 			{
-				scopeLock<syncMutex> sl(mut);
+				ScopeLock<Mutex> sl(mut);
 				while (true)
 				{
 					if (stop)
-						CAGE_THROW_SILENT(concurrentQueueTerminated, "concurrent queue terminated");
+						CAGE_THROW_SILENT(ConcurrentQueueTerminated, "concurrent queue terminated");
 					if (items.empty())
 						reader->wait(sl);
 					else
@@ -85,9 +85,9 @@ namespace cage
 
 			bool tryPop(void *&value)
 			{
-				scopeLock<syncMutex> sl(mut);
+				ScopeLock<Mutex> sl(mut);
 				if (stop)
-					CAGE_THROW_SILENT(concurrentQueueTerminated, "concurrent queue terminated");
+					CAGE_THROW_SILENT(ConcurrentQueueTerminated, "concurrent queue terminated");
 				if (!items.empty())
 				{
 					value = items.front();
@@ -100,7 +100,7 @@ namespace cage
 
 			bool tryPopNoStop(void *&value)
 			{
-				scopeLock<syncMutex> sl(mut);
+				ScopeLock<Mutex> sl(mut);
 				if (!items.empty())
 				{
 					value = items.front();
@@ -113,7 +113,7 @@ namespace cage
 			void terminate()
 			{
 				{
-					scopeLock<syncMutex> sl(mut);
+					ScopeLock<Mutex> sl(mut);
 					stop = true;
 				}
 				writer->broadcast();
@@ -122,12 +122,12 @@ namespace cage
 
 			bool stopped() const
 			{
-				scopeLock<syncMutex> sl(mut); // mandate memory barriers
+				ScopeLock<Mutex> sl(mut); // mandate memory barriers
 				return stop;
 			}
 
-			mutable holder<syncMutex> mut;
-			holder<syncConditionalBase> writer, reader;
+			mutable Holder<Mutex> mut;
+			Holder<ConditionalVariableBase> writer, reader;
 			std::list<void*> items;
 			uint32 maxItems;
 			bool stop;
@@ -136,57 +136,57 @@ namespace cage
 
 	namespace privat
 	{
-		void concurrentQueuePriv::push(void *value)
+		void ConcurrentQueuePriv::push(void *value)
 		{
 			concurrentQueueImpl *impl = (concurrentQueueImpl *)this;
 			return impl->push(value);
 		}
 
-		bool concurrentQueuePriv::tryPush(void *value)
+		bool ConcurrentQueuePriv::tryPush(void *value)
 		{
 			concurrentQueueImpl *impl = (concurrentQueueImpl *)this;
 			return impl->tryPush(value);
 		}
 
-		void concurrentQueuePriv::pop(void *&value)
+		void ConcurrentQueuePriv::pop(void *&value)
 		{
 			concurrentQueueImpl *impl = (concurrentQueueImpl *)this;
 			return impl->pop(value);
 		}
 
-		bool concurrentQueuePriv::tryPop(void *&value)
+		bool ConcurrentQueuePriv::tryPop(void *&value)
 		{
 			concurrentQueueImpl *impl = (concurrentQueueImpl *)this;
 			return impl->tryPop(value);
 		}
 
-		bool concurrentQueuePriv::tryPopNoStop(void *&value)
+		bool ConcurrentQueuePriv::tryPopNoStop(void *&value)
 		{
 			concurrentQueueImpl *impl = (concurrentQueueImpl *)this;
 			return impl->tryPopNoStop(value);
 		}
 
-		uint32 concurrentQueuePriv::estimatedSize() const
+		uint32 ConcurrentQueuePriv::estimatedSize() const
 		{
 			concurrentQueueImpl *impl = (concurrentQueueImpl *)this;
 			return numeric_cast<uint32>(impl->items.size());
 		}
 
-		void concurrentQueuePriv::terminate()
+		void ConcurrentQueuePriv::terminate()
 		{
 			concurrentQueueImpl *impl = (concurrentQueueImpl *)this;
 			impl->terminate();
 		}
 
-		bool concurrentQueuePriv::stopped() const
+		bool ConcurrentQueuePriv::stopped() const
 		{
 			concurrentQueueImpl *impl = (concurrentQueueImpl *)this;
 			return impl->stopped();
 		}
 
-		holder<concurrentQueuePriv> newConcurrentQueue(const concurrentQueueCreateConfig &config)
+		Holder<ConcurrentQueuePriv> newConcurrentQueue(const ConcurrentQueueCreateConfig &config)
 		{
-			return detail::systemArena().createImpl<concurrentQueuePriv, concurrentQueueImpl>(config);
+			return detail::systemArena().createImpl<ConcurrentQueuePriv, concurrentQueueImpl>(config);
 		}
 	}
 }

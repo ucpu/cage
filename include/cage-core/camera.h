@@ -17,21 +17,21 @@ namespace cage
 	CAGE_API bool frustumCulling(const sphere &shape, const mat4 &mvp);
 	CAGE_API bool frustumCulling(const aabb &shape, const mat4 &mvp);
 
-	enum class stereoModeEnum : uint32
+	enum class StereoModeEnum : uint32
 	{
 		Mono,
 		Horizontal,
 		Vertical,
 	};
 
-	enum class stereoEyeEnum : uint32
+	enum class StereoEyeEnum : uint32
 	{
 		Mono,
 		Left,
 		Right,
 	};
 
-	struct CAGE_API stereoCameraInput : public transform
+	struct CAGE_API StereoCameraInput : public transform
 	{
 		vec2 viewportOrigin; // 0 .. 1
 		vec2 viewportSize; // 0 .. 1
@@ -42,10 +42,10 @@ namespace cage
 		real zeroParallaxDistance;
 		real eyeSeparation;
 		bool orthographic;
-		stereoCameraInput();
+		StereoCameraInput();
 	};
 
-	struct CAGE_API stereoCameraOutput
+	struct CAGE_API StereoCameraOutput
 	{
 		mat4 view;
 		mat4 projection;
@@ -53,9 +53,9 @@ namespace cage
 		vec2 viewportSize; // 0 .. 1
 	};
 
-	CAGE_API stereoModeEnum stringToStereoMode(const string &mode);
-	CAGE_API string stereoModeToString(stereoModeEnum mode);
-	CAGE_API stereoCameraOutput stereoCamera(const stereoCameraInput &input, stereoModeEnum stereoMode, stereoEyeEnum eye);
+	CAGE_API StereoModeEnum stringToStereoMode(const string &mode);
+	CAGE_API string stereoModeToString(StereoModeEnum mode);
+	CAGE_API StereoCameraOutput stereoCamera(const StereoCameraInput &input, StereoModeEnum stereoMode, StereoEyeEnum eye);
 }
 
 #endif // guard_projections_h_m1nv5e8967gsx856dghzgg

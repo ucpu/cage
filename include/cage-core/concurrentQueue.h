@@ -3,21 +3,21 @@
 
 namespace cage
 {
-	struct CAGE_API concurrentQueueCreateConfig
+	struct CAGE_API ConcurrentQueueCreateConfig
 	{
-		memoryArena arena;
+		MemoryArena arena;
 		uint32 maxElements;
-		concurrentQueueCreateConfig();
+		ConcurrentQueueCreateConfig();
 	};
 
-	struct CAGE_API concurrentQueueTerminated : public exception
+	struct CAGE_API ConcurrentQueueTerminated : public Exception
 	{
-		concurrentQueueTerminated(const char *file, uint32 line, const char *function, severityEnum severity, const char *message) noexcept;
+		ConcurrentQueueTerminated(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept;
 	};
 
 	namespace privat
 	{
-		class CAGE_API concurrentQueuePriv : private immovable
+		class CAGE_API ConcurrentQueuePriv : private Immovable
 		{
 		public:
 			void push(void *value);
@@ -28,20 +28,20 @@ namespace cage
 			uint32 estimatedSize() const;
 			void terminate();
 			bool stopped() const;
-			memoryArena arena;
+			MemoryArena arena;
 		};
 
-		CAGE_API holder<concurrentQueuePriv> newConcurrentQueue(const concurrentQueueCreateConfig &config);
+		CAGE_API Holder<ConcurrentQueuePriv> newConcurrentQueue(const ConcurrentQueueCreateConfig &config);
 	}
 
 	template<class T>
-	class concurrentQueue : private immovable
+	class ConcurrentQueue : private Immovable
 	{
 	public:
-		concurrentQueue(const concurrentQueueCreateConfig &config) : queue(privat::newConcurrentQueue(config))
+		ConcurrentQueue(const ConcurrentQueueCreateConfig &config) : queue(privat::newConcurrentQueue(config))
 		{}
 
-		~concurrentQueue()
+		~ConcurrentQueue()
 		{
 			T *tmp = nullptr;
 			while (queue->tryPopNoStop((void*&)tmp))
@@ -155,17 +155,17 @@ namespace cage
 		bool stopped() const { return queue->stopped(); };
 
 	private:
-		holder<privat::concurrentQueuePriv> queue;
+		Holder<privat::ConcurrentQueuePriv> queue;
 	};
 
 	template<class T>
-	class concurrentQueue<T*> : private immovable
+	class ConcurrentQueue<T*> : private Immovable
 	{
 	public:
-		concurrentQueue(const concurrentQueueCreateConfig &config, delegate<void(T*)> deleter) : queue(privat::newConcurrentQueue(config)), deleter(deleter)
+		ConcurrentQueue(const ConcurrentQueueCreateConfig &config, Delegate<void(T*)> deleter) : queue(privat::newConcurrentQueue(config)), deleter(deleter)
 		{}
 
-		~concurrentQueue()
+		~ConcurrentQueue()
 		{
 			void *tmp = nullptr;
 			while (queue->tryPopNoStop(tmp))
@@ -184,20 +184,20 @@ namespace cage
 		bool stopped() const { return queue->stopped(); };
 
 	private:
-		holder<privat::concurrentQueuePriv> queue;
-		delegate<void(T*)> deleter;
+		Holder<privat::ConcurrentQueuePriv> queue;
+		Delegate<void(T*)> deleter;
 	};
 
 	template<class T>
-	holder<concurrentQueue<T>> newConcurrentQueue(const concurrentQueueCreateConfig &config)
+	Holder<ConcurrentQueue<T>> newConcurrentQueue(const ConcurrentQueueCreateConfig &config)
 	{
-		return detail::systemArena().createHolder<concurrentQueue<T>>(config);
+		return detail::systemArena().createHolder<ConcurrentQueue<T>>(config);
 	}
 
 	template<class T>
-	holder<concurrentQueue<T>> newConcurrentQueue(const concurrentQueueCreateConfig &config, delegate<void(T)> deleter)
+	Holder<ConcurrentQueue<T>> newConcurrentQueue(const ConcurrentQueueCreateConfig &config, Delegate<void(T)> deleter)
 	{
-		return detail::systemArena().createHolder<concurrentQueue<T>>(config, deleter);
+		return detail::systemArena().createHolder<ConcurrentQueue<T>>(config, deleter);
 	}
 }
 

@@ -1004,12 +1004,12 @@ namespace
 		}
 
 		{
-			CAGE_LOG(severityEnum::Info, "test", stringizer() + "matrices count: " + matricesCount);
+			CAGE_LOG(SeverityEnum::Info, "test", stringizer() + "matrices count: " + matricesCount);
 			mat4 res;
-			holder<timer> tmr = newTimer();
+			Holder<Timer> tmr = newTimer();
 			for (uint32 i = 0; i < matricesCount; i++)
 				res *= matrices[i];
-			CAGE_LOG(severityEnum::Note, "test", stringizer() + "duration: " + tmr->microsSinceStart());
+			CAGE_LOG(SeverityEnum::Note, "test", stringizer() + "duration: " + tmr->microsSinceStart());
 		}
 	}
 }

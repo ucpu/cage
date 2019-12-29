@@ -182,7 +182,8 @@ namespace cage
 
 	namespace privat
 	{
-		struct maxStruct
+		// represents the maximum positive value possible in any numeric type
+		struct MaxValue
 		{
 			template<class T>
 			constexpr operator T () const
@@ -191,15 +192,15 @@ namespace cage
 			}
 		};
 
-		template<class T> constexpr bool operator == (T lhs, maxStruct rhs) { return lhs == detail::numeric_limits<T>::max(); }
-		template<class T> constexpr bool operator != (T lhs, maxStruct rhs) { return lhs != detail::numeric_limits<T>::max(); }
-		template<class T> constexpr bool operator <= (T lhs, maxStruct rhs) { return lhs <= detail::numeric_limits<T>::max(); }
-		template<class T> constexpr bool operator >= (T lhs, maxStruct rhs) { return lhs >= detail::numeric_limits<T>::max(); }
-		template<class T> constexpr bool operator < (T lhs, maxStruct rhs) { return lhs < detail::numeric_limits<T>::max(); }
-		template<class T> constexpr bool operator > (T lhs, maxStruct rhs) { return lhs > detail::numeric_limits<T>::max(); }
+		template<class T> constexpr bool operator == (T lhs, MaxValue rhs) { return lhs == detail::numeric_limits<T>::max(); }
+		template<class T> constexpr bool operator != (T lhs, MaxValue rhs) { return lhs != detail::numeric_limits<T>::max(); }
+		template<class T> constexpr bool operator <= (T lhs, MaxValue rhs) { return lhs <= detail::numeric_limits<T>::max(); }
+		template<class T> constexpr bool operator >= (T lhs, MaxValue rhs) { return lhs >= detail::numeric_limits<T>::max(); }
+		template<class T> constexpr bool operator < (T lhs, MaxValue rhs) { return lhs < detail::numeric_limits<T>::max(); }
+		template<class T> constexpr bool operator > (T lhs, MaxValue rhs) { return lhs > detail::numeric_limits<T>::max(); }
 	}
 
-	static constexpr const privat::maxStruct m = privat::maxStruct(); // represents the maximum value possible in any numeric type
+	static constexpr const privat::MaxValue m = privat::MaxValue();
 
 	// template magic
 
@@ -241,74 +242,75 @@ namespace cage
 	// this macro has to be used inside namespace cage
 #define GCHL_ENUM_BITS(TYPE) template<> struct enable_bitmask_operators<TYPE> { static const bool enable = true; };
 
-	// immovable
+	// Immovable
 
-	struct CAGE_API immovable
+	struct CAGE_API Immovable
 	{
-		immovable() = default;
-		immovable(const immovable &) = delete;
-		immovable(immovable &&) = delete;
-		immovable &operator = (const immovable &) = delete;
-		immovable &operator = (immovable &&) = delete;
+		Immovable() = default;
+		Immovable(const Immovable &) = delete;
+		Immovable(Immovable &&) = delete;
+		Immovable &operator = (const Immovable &) = delete;
+		Immovable &operator = (Immovable &&) = delete;
 	};
 
 	// forward declarations
 
-	enum class assetStateEnum : uint32;
-	class assetManager;
-	struct assetManagerCreateConfig;
-	struct assetContext;
-	struct assetScheme;
-	struct assetHeader;
-	class collisionMesh;
-	struct collisionPair;
-	class collisionQuery;
-	class collisionData;
-	struct collisionDataCreateConfig;
-	class syncMutex;
-	class syncBarrier;
-	class syncSemaphore;
-	class syncConditionalBase;
-	class syncConditional;
-	class threadHandle;
-	struct concurrentQueueCreateConfig;
-	template<class T> class concurrentQueue;
-	enum class configTypeEnum : uint32;
-	struct configBool;
-	struct configSint32;
-	struct configSint64;
-	struct configUint32;
-	struct configUint64;
-	struct configFloat;
-	struct configDouble;
-	struct configString;
-	class configList;
-	class configIni;
-	namespace detail { template<uint32 N> struct stringBase; }
-	typedef detail::stringBase<1000> string;
-	struct entityComponentCreateConfig;
-	class entityManager;
-	struct entityManagerCreateConfig;
-	class entity;
-	class entityComponent;
-	class entityGroup;
-	struct fileMode;
-	class fileHandle;
-	enum class pathTypeFlags : uint32;
-	class filesystemWatcher;
-	class directoryList;
-	class filesystem;
+	enum class AssetStateEnum : uint32;
+	class AssetManager;
+	struct AssetManagerCreateConfig;
+	struct AssetContext;
+	struct AssetScheme;
+	struct AssetHeader;
+	struct AssetHeader;
+	class CollisionMesh;
+	struct CollisionPair;
+	class CollisionQuery;
+	class CollisionData;
+	struct CollisionDataCreateConfig;
+	class Mutex;
+	class Barrier;
+	class Semaphore;
+	class ConditionalVariableBase;
+	class ConditionalVariable;
+	class Thread;
+	struct ConcurrentQueueCreateConfig;
+	template<class T> class ConcurrentQueue;
+	enum class ConfigTypeEnum : uint32;
+	struct ConfigBool;
+	struct ConfigSint32;
+	struct ConfigSint64;
+	struct ConfigUint32;
+	struct ConfigUint64;
+	struct ConfigFloat;
+	struct ConfigDouble;
+	struct ConfigString;
+	class ConfigList;
+	class Ini;
+	namespace detail { template<uint32 N> struct StringBase; }
+	typedef detail::StringBase<1000> string;
+	struct EntityComponentCreateConfig;
+	class EntityManager;
+	struct EntityManagerCreateConfig;
+	class Entity;
+	class EntityComponent;
+	class EntityGroup;
+	struct FileMode;
+	class File;
+	enum class PathTypeFlags : uint32;
+	class FilesystemWatcher;
+	class DirectoryList;
+	class Filesystem;
 	struct line;
 	struct triangle;
 	struct plane;
 	struct sphere;
 	struct aabb;
-	struct hashString;
-	template<uint32 N> struct identifier;
-	class image;
-	class lineReader;
-	class logger;
-	class loggerOutputFile;
+	struct HashString;
+	template<uint32 N> struct Guid;
+	class Image;
+	class LineReader;
+	class Logger;
+	class LoggerOutputFile;
 	struct real;
 	struct rads;
 	struct degs;
@@ -319,41 +321,44 @@ namespace cage
 	struct mat3;
 	struct mat4;
 	struct transform;
-	template<class T> struct memoryArenaStd;
-	struct memoryBuffer;
-	class tcpConnection;
-	class tcpServer;
-	struct udpConnectionStatistics;
-	class udpConnection;
-	class udpServer;
-	struct discoveryPeer;
-	class discoveryClient;
-	class discoveryServer;
-	class noiseFunction;
-	struct noiseFunctionCreateConfig;
-	struct processCreateConfig;
-	class processHandle;
-	struct randomGenerator;
-	enum class scheduleTypeEnum : uint32;
-	struct scheduleCreateConfig;
-	class schedule;
-	struct schedulerCreateConfig;
-	class scheduler;
-	template<class T> struct scopeLock;
-	struct serializer;
-	struct deserializer;
-	class spatialQuery;
-	class spatialData;
-	struct spatialDataCreateConfig;
-	class bufferIStream;
-	class bufferOStream;
-	class swapBufferGuard;
-	struct swapBufferGuardCreateConfig;
-	class textPack;
-	class threadPool;
-	class timer;
-	enum class stereoModeEnum : uint32;
-	enum class stereoEyeEnum : uint32;
-	struct stereoCameraInput;
-	struct stereoCameraOutput;
+	template<class T> struct MemoryArenaStd;
+	struct MemoryBuffer;
+	class TcpConnection;
+	class TcpServer;
+	struct UdpStatistics;
+	class UdpConnection;
+	class UdpServer;
+	struct DiscoveryPeer;
+	class DiscoveryClient;
+	class DiscoveryServer;
+	class NoiseFunction;
+	struct NoiseFunctionCreateConfig;
+	template<class T> struct PointerRangeHolder;
+	struct ProcessCreateConfig;
+	class Process;
+	struct RandomGenerator;
+	enum class ScheduleTypeEnum : uint32;
+	struct ScheduleCreateConfig;
+	class Schedule;
+	struct SchedulerCreateConfig;
+	class Scheduler;
+	template<class T> struct ScopeLock;
+	struct Serializer;
+	struct Deserializer;
+	class SpatialQuery;
+	class SpatialData;
+	struct SpatialDataCreateConfig;
+	class BufferIStream;
+	class BufferOStream;
+	class SwapBufferGuard;
+	struct SwapBufferGuardCreateConfig;
+	class TextPack;
+	class ThreadPool;
+	class Timer;
+	struct InvalidUtfString;
+	enum class StereoModeEnum : uint32;
+	enum class StereoEyeEnum : uint32;
+	struct StereoCameraInput;
+	struct StereoCameraOutput;
+	template<class T, uint32 N = 16> struct VariableSmoothingBuffer;
 }

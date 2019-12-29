@@ -51,7 +51,7 @@ namespace cage
 					GCHL_GENERATE(0);
 					CAGE_EVAL_MEDIUM(CAGE_REPEAT(31, GCHL_GENERATE));
 #undef GCHL_GENERATE
-				default: CAGE_THROW_CRITICAL(exception, "active texture index out of range");
+				default: CAGE_THROW_CRITICAL(Exception, "active texture index out of range");
 				}
 			}
 		}
@@ -153,7 +153,7 @@ namespace cage
 			case GL_DEPTH24_STENCIL8:
 			case GL_DEPTH32F_STENCIL8:
 				return GL_DEPTH_STENCIL;
-			default: CAGE_THROW_CRITICAL(exception, "unknown texture internal format");
+			default: CAGE_THROW_CRITICAL(Exception, "unknown texture internal format");
 			}
 		}
 
@@ -326,12 +326,12 @@ namespace cage
 		*/
 	}
 
-	holder<renderTexture> newRenderTexture()
+	Holder<renderTexture> newRenderTexture()
 	{
 		return newRenderTexture(GL_TEXTURE_2D);
 	}
 
-	holder<renderTexture> newRenderTexture(uint32 target)
+	Holder<renderTexture> newRenderTexture(uint32 target)
 	{
 		CAGE_ASSERT(target == GL_TEXTURE_2D || target == GL_TEXTURE_2D_ARRAY || target == GL_TEXTURE_RECTANGLE || target == GL_TEXTURE_3D || target == GL_TEXTURE_CUBE_MAP);
 		return detail::systemArena().createImpl<renderTexture, textureImpl>(target);

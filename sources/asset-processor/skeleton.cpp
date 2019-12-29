@@ -32,7 +32,7 @@ namespace
 			else
 				detail += string("no bone");
 		}
-		CAGE_LOG_CONTINUE(severityEnum::Info, logComponentName, string().fill(offset, '\t') + detail);
+		CAGE_LOG_CONTINUE(SeverityEnum::Info, logComponentName, string().fill(offset, '\t') + detail);
 		for (uint32 i = 0; i < n->mNumChildren; i++)
 			printHierarchy(skeleton, n->mChildren[i], offset + 1);
 	}
@@ -40,9 +40,9 @@ namespace
 
 void processSkeleton()
 {
-	holder<assimpContextClass> context = newAssimpContext(0, 0);
+	Holder<assimpContextClass> context = newAssimpContext(0, 0);
 	const aiScene *scene = context->getScene();
-	holder<assimpSkeletonClass> skeleton = context->skeleton();
+	Holder<assimpSkeletonClass> skeleton = context->skeleton();
 
 	mat4 axesScale = mat4(axesScaleMatrix());
 	mat4 axesScaleInv = inverse(axesScale);
@@ -59,7 +59,7 @@ void processSkeleton()
 	is.reserve(s.bonesCount);
 
 	// print the nodes hierarchy
-	CAGE_LOG(severityEnum::Info, logComponentName, "full node hierarchy:");
+	CAGE_LOG(SeverityEnum::Info, logComponentName, "full node hierarchy:");
 	printHierarchy(skeleton.get(), scene->mRootNode, 0);
 
 	// find parents and matrices
@@ -75,8 +75,8 @@ void processSkeleton()
 		is.push_back(o);
 	}
 
-	memoryBuffer buff;
-	serializer ser(buff);
+	MemoryBuffer buff;
+	Serializer ser(buff);
 	ser << s;
 	// parent bone indices
 	ser.write(ps.data(), s.bonesCount * sizeof(uint16));
@@ -85,14 +85,14 @@ void processSkeleton()
 	// inverted rest matrices
 	ser.write(is.data(), s.bonesCount * sizeof(mat4));
 
-	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
-	memoryBuffer comp = detail::compress(buff);
-	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + comp.size());
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
+	MemoryBuffer comp = detail::compress(buff);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + comp.size());
 
-	assetHeader h = initializeAssetHeaderStruct();
+	AssetHeader h = initializeAssetHeaderStruct();
 	h.originalSize = numeric_cast<uint32>(buff.size());
 	h.compressedSize = numeric_cast<uint32>(comp.size());
-	holder<fileHandle> f = newFile(outputFileName, fileMode(false, true));
+	Holder<File> f = newFile(outputFileName, FileMode(false, true));
 	f->write(&h, sizeof(h));
 	f->write(comp.data(), comp.size());
 	f->close();

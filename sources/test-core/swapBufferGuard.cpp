@@ -11,7 +11,7 @@ namespace
 	{
 	public:
 		static const uint32 elementsCount = 100;
-		holder<swapBufferGuard> controller;
+		Holder<SwapBufferGuard> controller;
 		uint32 buffers[BuffersCount][elementsCount];
 		uint32 sums[BuffersCount];
 		uint32 indices[BuffersCount];
@@ -85,26 +85,26 @@ namespace
 		{
 			CAGE_TESTCASE(stringizer() + "buffers count: " + BuffersCount + ", repeated reads: " + repeatedReads + ", repeated writes: " + repeatedWrites);
 			running = true;
-			swapBufferGuardCreateConfig cfg(BuffersCount);
+			SwapBufferGuardCreateConfig cfg(BuffersCount);
 			cfg.repeatedReads = repeatedReads;
 			cfg.repeatedWrites = repeatedWrites;
 			controller = newSwapBufferGuard(cfg);
-			holder<threadHandle> t1 = newThread(delegate<void()>().bind<swapBufferTester, &swapBufferTester::consumer>(this), "consumer");
-			holder<threadHandle> t2 = newThread(delegate<void()>().bind<swapBufferTester, &swapBufferTester::producer>(this), "producer");
+			Holder<Thread> t1 = newThread(Delegate<void()>().bind<swapBufferTester, &swapBufferTester::consumer>(this), "consumer");
+			Holder<Thread> t2 = newThread(Delegate<void()>().bind<swapBufferTester, &swapBufferTester::producer>(this), "producer");
 			while (read < 2000)
 				threadSleep(1000);
 			running = false;
 			t1->wait();
 			t2->wait();
-			CAGE_LOG(severityEnum::Info, "swapBufferController", stringizer() + "generated: " + generated + ", written: " + written + ", skipped: " + skipped);
-			CAGE_LOG(severityEnum::Info, "swapBufferController", stringizer() + "read: " + read + ", reused: " + reused + ", tested: " + tested);
+			CAGE_LOG(SeverityEnum::Info, "swapBufferController", stringizer() + "generated: " + generated + ", written: " + written + ", skipped: " + skipped);
+			CAGE_LOG(SeverityEnum::Info, "swapBufferController", stringizer() + "read: " + read + ", reused: " + reused + ", tested: " + tested);
 		}
 	};
 }
 
 void testSwapBufferGuard()
 {
-	CAGE_TESTCASE("swapBufferGuard");
+	CAGE_TESTCASE("SwapBufferGuard");
 	swapBufferTester<2>().run(false, false);
 	swapBufferTester<3>().run(false, false);
 	swapBufferTester<3>().run(true, false);

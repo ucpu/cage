@@ -70,12 +70,12 @@ namespace cage
 		class speakerListImpl : public speakerList
 		{
 		public:
-			std::vector<holder<speakerDeviceImpl>> devices;
+			std::vector<Holder<speakerDeviceImpl>> devices;
 			uint32 defaultDevice;
 
 			speakerListImpl(bool inputs) : defaultDevice(m)
 			{
-				holder<soundContext> cnx = newSoundContext(soundContextCreateConfig());
+				Holder<soundContext> cnx = newSoundContext(soundContextCreateConfig());
 				SoundIo *soundio = soundioFromContext(cnx.get());
 				if (inputs)
 				{
@@ -141,7 +141,7 @@ namespace cage
 		return impl->layouts[index];
 	}
 
-	pointerRange<const speakerLayout> speakerDevice::layouts() const
+	PointerRange<const speakerLayout> speakerDevice::layouts() const
 	{
 		const speakerDeviceImpl *impl = (const speakerDeviceImpl *)this;
 		return impl->layouts;
@@ -165,7 +165,7 @@ namespace cage
 		return impl->samplerates[index];
 	}
 
-	pointerRange<const speakerSamplerate> speakerDevice::samplerates() const
+	PointerRange<const speakerSamplerate> speakerDevice::samplerates() const
 	{
 		const speakerDeviceImpl *impl = (const speakerDeviceImpl *)this;
 		return impl->samplerates;
@@ -190,17 +190,17 @@ namespace cage
 		return impl->devices[index].get();
 	}
 
-	holder<pointerRange<const speakerDevice *>> speakerList::devices() const
+	Holder<PointerRange<const speakerDevice *>> speakerList::devices() const
 	{
 		const speakerListImpl *impl = (const speakerListImpl *)this;
-		pointerRangeHolder<const speakerDevice *> prh;
+		PointerRangeHolder<const speakerDevice *> prh;
 		prh.reserve(impl->devices.size());
 		for (auto &it : impl->devices)
 			prh.push_back(it.get());
 		return prh;
 	}
 
-	holder<speakerList> newSpeakerList(bool inputs)
+	Holder<speakerList> newSpeakerList(bool inputs)
 	{
 		return detail::systemArena().createImpl<speakerList, speakerListImpl>(inputs);
 	}

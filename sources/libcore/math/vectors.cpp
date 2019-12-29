@@ -12,7 +12,7 @@ namespace cage
 		for (uint32 i = 0; i < 2; i++)
 			data[i] = privat::mathSplit(s).toFloat();
 		if (!s.empty())
-			CAGE_THROW_ERROR(exception, "error parsing vec2");
+			CAGE_THROW_ERROR(Exception, "error parsing vec2");
 		return data;
 	}
 
@@ -23,7 +23,7 @@ namespace cage
 		for (uint32 i = 0; i < 3; i++)
 			data[i] = privat::mathSplit(s).toFloat();
 		if (!s.empty())
-			CAGE_THROW_ERROR(exception, "error parsing vec3");
+			CAGE_THROW_ERROR(Exception, "error parsing vec3");
 		return data;
 	}
 
@@ -34,7 +34,7 @@ namespace cage
 		for (uint32 i = 0; i < 4; i++)
 			data[i] = privat::mathSplit(s).toFloat();
 		if (!s.empty())
-			CAGE_THROW_ERROR(exception, "error parsing vec4");
+			CAGE_THROW_ERROR(Exception, "error parsing vec4");
 		return data;
 	}
 
@@ -45,7 +45,7 @@ namespace cage
 		for (uint32 i = 0; i < 4; i++)
 			data[i] = privat::mathSplit(s).toFloat();
 		if (!s.empty())
-			CAGE_THROW_ERROR(exception, "error parsing quat");
+			CAGE_THROW_ERROR(Exception, "error parsing quat");
 		return data;
 	}
 

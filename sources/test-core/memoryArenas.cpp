@@ -70,7 +70,7 @@ namespace
 		{
 			ArenaPolicy<memoryAllocatorPolicyPool<templates::poolAllocatorAtomSize<alignmentHelper<Traits::AtomSize>>::result, BoundsPolicy, TagPolicy, TrackPolicy>, memoryConcurrentPolicyNone> pool(Traits::MemoryLimit);
 			PrintTest;
-			memoryArena a(&pool);
+			MemoryArena a(&pool);
 			std::vector<void*> alokace;
 			alokace.reserve(Traits::ObjectsCount);
 			for (uint32 i = 0; i < Traits::ObjectsCount * Traits::Rounds; i++)
@@ -113,7 +113,7 @@ namespace
 		{
 			ArenaPolicy<memoryAllocatorPolicyLinear<BoundsPolicy, TagPolicy, TrackPolicy>, memoryConcurrentPolicyNone> pool(Traits::MemoryLimit);
 			PrintTest;
-			memoryArena a(&pool);
+			MemoryArena a(&pool);
 			typedef alignedTestStruct<Traits::ObjectSize, Alignment> ts;
 			ts::count = 0;
 			for (uint32 i = 0; i < Traits::ObjectsCount; i++)
@@ -135,7 +135,7 @@ namespace
 		{
 			ArenaPolicy<memoryAllocatorPolicyNFrame<Traits::Frames, BoundsPolicy, TagPolicy, TrackPolicy>, memoryConcurrentPolicyNone> pool(Traits::MemoryLimit);
 			PrintTest;
-			memoryArena a(&pool);
+			MemoryArena a(&pool);
 			typedef alignedTestStruct<Traits::ObjectSize, Alignment> ts;
 			ts::count = 0;
 			ts *last[Traits::Frames];
@@ -171,7 +171,7 @@ namespace
 		{
 			ArenaPolicy<memoryAllocatorPolicyQueue<BoundsPolicy, TagPolicy, TrackPolicy>, memoryConcurrentPolicyNone> pool(Traits::MemoryLimit);
 			PrintTest;
-			memoryArena a(&pool);
+			MemoryArena a(&pool);
 			typedef alignedTestStruct<Traits::ObjectSize, Alignment> ts;
 			ts::count = 0;
 			ts *objects[Traits::ObjectsCount];
@@ -208,7 +208,7 @@ namespace
 		{
 			ArenaPolicy<memoryAllocatorPolicyStack<BoundsPolicy, TagPolicy, TrackPolicy>, memoryConcurrentPolicyNone> pool(Traits::MemoryLimit);
 			PrintTest;
-			memoryArena a(&pool);
+			MemoryArena a(&pool);
 			typedef alignedTestStruct<Traits::ObjectSize, Alignment> ts;
 			ts::count = 0;
 			ts *objects[Traits::ObjectsCount];

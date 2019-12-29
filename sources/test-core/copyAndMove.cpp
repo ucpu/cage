@@ -17,8 +17,8 @@ void testCopyAndMove()
 
 	{
 		CAGE_TESTCASE("vector of memory buffers");
-		std::vector<memoryBuffer> vec;
-		vec.emplace_back(memoryBuffer());
-		vec.push_back(memoryBuffer());
+		std::vector<MemoryBuffer> vec;
+		vec.emplace_back(MemoryBuffer());
+		vec.push_back(MemoryBuffer());
 	}
 }

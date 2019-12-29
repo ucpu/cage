@@ -1,11 +1,11 @@
 namespace cage
 {
-	struct soundError : public systemError
+	struct soundError : public SystemError
 	{
-		soundError(const char *file, uint32 line, const char *function, severityEnum severity, const char *message, uint32 code) noexcept;
+		soundError(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message, uint32 code) noexcept;
 	};
 
-	class CAGE_API soundContext : private immovable
+	class CAGE_API soundContext : private Immovable
 	{
 	public:
 		string getContextName() const;
@@ -17,5 +17,5 @@ namespace cage
 		soundContextCreateConfig();
 	};
 
-	CAGE_API holder<soundContext> newSoundContext(const soundContextCreateConfig &config, const string &name = "");
+	CAGE_API Holder<soundContext> newSoundContext(const soundContextCreateConfig &config, const string &name = "");
 }

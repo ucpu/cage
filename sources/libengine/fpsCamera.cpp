@@ -19,17 +19,17 @@ namespace cage
 		{
 		public:
 			windowEventListeners listeners;
-			eventListener<void()> updateListener;
-			variableSmoothingBuffer<vec2, 1> mouseSmoother;
-			variableSmoothingBuffer<vec3, 3> moveSmoother;
-			variableSmoothingBuffer<real, 2> wheelSmoother;
+			EventListener<void()> updateListener;
+			VariableSmoothingBuffer<vec2, 1> mouseSmoother;
+			VariableSmoothingBuffer<vec3, 3> moveSmoother;
+			VariableSmoothingBuffer<real, 2> wheelSmoother;
 			vec2 mouseMoveAccum;
 			real wheelAccum;
 
-			entity *ent;
+			Entity *ent;
 			bool keysPressedArrows[6]; // wsadeq
 
-			fpsCameraImpl(entity *ent) : ent(ent)
+			fpsCameraImpl(Entity *ent) : ent(ent)
 			{
 				for (uint32 i = 0; i < 6; i++)
 					keysPressedArrows[i] = false;
@@ -199,13 +199,13 @@ namespace cage
 	fpsCamera::fpsCamera() : movementSpeed(1), wheelSpeed(10), turningSpeed(0.008), pitchLimitUp(degs(80)), pitchLimitDown(degs(-80)), mouseButton(mouseButtonsFlags::None), keysEqEnabled(true), keysWsadEnabled(true), keysArrowsEnabled(true), freeMove(false)
 	{}
 
-	void fpsCamera::setEntity(entity *ent)
+	void fpsCamera::setEntity(Entity *ent)
 	{
 		fpsCameraImpl *impl = (fpsCameraImpl*)this;
 		impl->ent = ent;
 	}
 
-	holder<fpsCamera> newFpsCamera(entity *ent)
+	Holder<fpsCamera> newFpsCamera(Entity *ent)
 	{
 		return detail::systemArena().createImpl<fpsCamera, fpsCameraImpl>(ent);
 	}

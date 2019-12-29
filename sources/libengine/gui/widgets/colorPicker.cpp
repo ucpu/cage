@@ -59,7 +59,7 @@ namespace cage
 			{
 				CAGE_ASSERT(!hierarchy->firstChild, "color picker may not have children");
 				CAGE_ASSERT(!hierarchy->text, "color picker may not have text");
-				CAGE_ASSERT(!hierarchy->image, "color picker may not have image");
+				CAGE_ASSERT(!hierarchy->Image, "color picker may not have image");
 
 				if (data.collapsible)
 				{

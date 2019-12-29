@@ -3,46 +3,46 @@
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/random.h>
-#include <cage-core/identifier.h>
+#include <cage-core/guid.h>
 #include <cage-core/config.h>
 
 namespace cage
 {
 	namespace
 	{
-		configUint64 confDefault1("cage/random/seed1", 0);
-		configUint64 confDefault2("cage/random/seed2", 0);
+		ConfigUint64 confDefault1("cage/random/seed1", 0);
+		ConfigUint64 confDefault2("cage/random/seed2", 0);
 
-		randomGenerator initializeDefaultGenerator()
+		RandomGenerator initializeDefaultGenerator()
 		{
 			uint64 s[2];
 			s[0] = confDefault1;
 			s[1] = confDefault2;
 			if (s[0] == 0 && s[1] == 0)
 				privat::generateRandomData((uint8*)s, sizeof(s));
-			CAGE_LOG(severityEnum::Info, "random", stringizer() + "initializing default random generator: " + s[0] + ", " + s[1]);
-			return randomGenerator(s);
+			CAGE_LOG(SeverityEnum::Info, "random", stringizer() + "initializing default random generator: " + s[0] + ", " + s[1]);
+			return RandomGenerator(s);
 		}
 	}
 
-	randomGenerator::randomGenerator()
+	RandomGenerator::RandomGenerator()
 	{
 		privat::generateRandomData((uint8*)s, sizeof(s));
 	}
 
-	randomGenerator::randomGenerator(uint64 s[2])
+	RandomGenerator::RandomGenerator(uint64 s[2])
 	{
 		this->s[0] = s[0];
 		this->s[1] = s[1];
 	}
 
-	randomGenerator::randomGenerator(uint64 s1, uint64 s2)
+	RandomGenerator::RandomGenerator(uint64 s1, uint64 s2)
 	{
 		s[0] = s1;
 		s[1] = s2;
 	}
 
-	uint64 randomGenerator::next()
+	uint64 RandomGenerator::next()
 	{
 		uint64 x = s[0];
 		const uint64 y = s[1];
@@ -52,7 +52,7 @@ namespace cage
 		return s[1] + y;
 	}
 
-#define GCHL_GENERATE(TYPE) TYPE randomGenerator::randomRange(TYPE min, TYPE max) \
+#define GCHL_GENERATE(TYPE) TYPE RandomGenerator::randomRange(TYPE min, TYPE max) \
 	{ \
 		if (min == max) \
 			return min; \
@@ -66,7 +66,7 @@ namespace cage
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64));
 #undef GCHL_GENERATE
 
-#define GCHL_GENERATE(TYPE) TYPE randomGenerator::randomRange(TYPE min, TYPE max) \
+#define GCHL_GENERATE(TYPE) TYPE RandomGenerator::randomRange(TYPE min, TYPE max) \
 	{ \
 		CAGE_ASSERT(min <= max, min, max); \
 		TYPE res = interpolate(min, max, this->randomChance()); \
@@ -75,7 +75,7 @@ namespace cage
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, real, rads, degs, float));
 #undef GCHL_GENERATE
 
-	double randomGenerator::randomRange(double min, double max)
+	double RandomGenerator::randomRange(double min, double max)
 	{
 		CAGE_ASSERT(min <= max, min, max);
 		uint64 r = next();
@@ -87,7 +87,7 @@ namespace cage
 		return res;
 	}
 
-	real randomGenerator::randomChance()
+	real RandomGenerator::randomChance()
 	{
 		uint64 r = next();
 		real res = (real)r / (real)detail::numeric_limits<uint64>::max();
@@ -97,18 +97,18 @@ namespace cage
 		return res;
 	}
 
-	rads randomGenerator::randomAngle()
+	rads RandomGenerator::randomAngle()
 	{
 		return rads(randomChance() * real::Pi() * real::Pi());
 	}
 
-	vec2 randomGenerator::randomDirection2()
+	vec2 RandomGenerator::randomDirection2()
 	{
 		rads ang = randomAngle();
 		return vec2(sin(ang), cos(ang));
 	}
 
-	vec3 randomGenerator::randomDirection3()
+	vec3 RandomGenerator::randomDirection3()
 	{
 		real z = randomRange(-1.f, 1.f);
 		vec2 p = randomDirection2() * sqrt(1 - sqr(z));
@@ -117,14 +117,14 @@ namespace cage
 		return r;
 	}
 
-	quat randomGenerator::randomDirectionQuat()
+	quat RandomGenerator::randomDirectionQuat()
 	{
 		return normalize(quat(randomDirection3(), randomAngle()));
 	}
 
-	randomGenerator &currentRandomGenerator()
+	RandomGenerator &currentRandomGenerator()
 	{
-		static randomGenerator rnd = initializeDefaultGenerator();
+		static RandomGenerator rnd = initializeDefaultGenerator();
 		return rnd;
 	}
 

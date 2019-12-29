@@ -18,8 +18,8 @@ namespace cage
 {
 	void imageCreate(hierarchyItemStruct *item)
 	{
-		CAGE_ASSERT(!item->image);
-		item->image = item->impl->itemsMemory.createObject<imageItemStruct>(item);
+		CAGE_ASSERT(!item->Image);
+		item->Image = item->impl->itemsMemory.createObject<imageItemStruct>(item);
 	}
 
 	imageItemStruct::imageItemStruct(hierarchyItemStruct *hierarchy) : hierarchy(hierarchy), skipInitialize(false)
@@ -47,7 +47,7 @@ namespace cage
 
 	void imageItemStruct::assign(const imageComponent &value)
 	{
-		image = value;
+		Image = value;
 		texture = hierarchy->impl->assetMgr->tryGet<assetSchemeIndexRenderTexture, renderTexture>(value.textureName);
 	}
 
@@ -77,9 +77,9 @@ namespace cage
 		t->setClip(hierarchy);
 		t->data.texture = texture;
 		t->data.ndcPos = hierarchy->impl->pointsToNdc(position, size);
-		t->data.uvClip = vec4(image.textureUvOffset, image.textureUvOffset + image.textureUvSize);
+		t->data.uvClip = vec4(Image.textureUvOffset, Image.textureUvOffset + Image.textureUvSize);
 		// todo format mode
-		t->data.aniTexFrames = detail::evalSamplesForTextureAnimation(texture, getApplicationTime(), image.animationStart, format.animationSpeed, format.animationOffset);
+		t->data.aniTexFrames = detail::evalSamplesForTextureAnimation(texture, getApplicationTime(), Image.animationStart, format.animationSpeed, format.animationOffset);
 		e->last->next = t;
 		e->last = t;
 		return t;

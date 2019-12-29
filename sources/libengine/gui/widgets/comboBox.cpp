@@ -43,7 +43,7 @@ namespace cage
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT(!hierarchy->image, "combo box may not have image");
+				CAGE_ASSERT(!hierarchy->Image, "combo box may not have image");
 				CAGE_ASSERT(areChildrenValid(), "combo box children may not have other children, layouts, witgets or images and must have text");
 				if (hierarchy->text)
 					hierarchy->text->text.apply(skin->defaults.comboBox.placeholderFormat, hierarchy->impl);
@@ -116,7 +116,7 @@ namespace cage
 						return false;
 					if (!c->text)
 						return false;
-					if (c->image)
+					if (c->Image)
 						return false;
 					if (c->firstChild)
 						return false;
@@ -128,7 +128,7 @@ namespace cage
 			void consolidateSelection()
 			{
 				hierarchyItemStruct *c = hierarchy->firstChild;
-				entityComponent *sel = hierarchy->impl->components.selectedItem;
+				EntityComponent *sel = hierarchy->impl->components.selectedItem;
 				uint32 idx = 0;
 				while (c)
 				{

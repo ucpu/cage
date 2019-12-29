@@ -14,7 +14,7 @@ namespace cage
 			{
 			case 0: return x;
 			case 1: return y;
-			default: CAGE_THROW_CRITICAL(exception, "index out of range");
+			default: CAGE_THROW_CRITICAL(Exception, "index out of range");
 			}
 		}
 
@@ -24,7 +24,7 @@ namespace cage
 			{
 			case 0: return x;
 			case 1: return y;
-			default: CAGE_THROW_CRITICAL(exception, "index out of range");
+			default: CAGE_THROW_CRITICAL(Exception, "index out of range");
 			}
 		}
 

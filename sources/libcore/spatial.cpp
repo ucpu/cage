@@ -162,14 +162,14 @@ namespace cage
 			sint32 b() const { return box.high.s.i; }
 		};
 
-		class spatialDataImpl : public spatialData
+		class spatialDataImpl : public SpatialData
 		{
 		public:
 			memoryArenaGrowing<memoryAllocatorPolicyPool<templates::poolAllocatorAtomSize<itemUnion>::result>, memoryConcurrentPolicyNone> itemsPool;
-			memoryArena itemsArena;
-			cage::unordered_map<uint32, holder<itemBase>> itemsTable;
+			MemoryArena itemsArena;
+			cage::unordered_map<uint32, Holder<itemBase>> itemsTable;
 			std::atomic<bool> dirty;
-			std::vector<nodeStruct, memoryArenaStd<nodeStruct>> nodes;
+			std::vector<nodeStruct, MemoryArenaStd<nodeStruct>> nodes;
 			std::vector<itemBase*> indices;
 			typedef std::vector<itemBase*>::iterator indicesIterator;
 			static const uint32 binsCount = 10;
@@ -177,7 +177,7 @@ namespace cage
 			std::array<fastBox, binsCount> rightBinBoxes;
 			std::array<uint32, binsCount> leftBinCounts;
 
-			spatialDataImpl(const spatialDataCreateConfig &config) : itemsPool(config.maxItems * sizeof(itemUnion)), itemsArena(&itemsPool), dirty(false), nodes(detail::systemArena())
+			spatialDataImpl(const SpatialDataCreateConfig &config) : itemsPool(config.maxItems * sizeof(itemUnion)), itemsArena(&itemsPool), dirty(false), nodes(detail::systemArena())
 			{
 				CAGE_ASSERT((uintPtr(this) % alignof(fastBox)) == 0, uintPtr(this) % alignof(fastBox), alignof(fastBox));
 				CAGE_ASSERT((uintPtr(leftBinBoxes.data()) % alignof(fastBox)) == 0);
@@ -328,7 +328,7 @@ namespace cage
 			}
 		};
 
-		class spatialQueryImpl : public spatialQuery
+		class spatialQueryImpl : public SpatialQuery
 		{
 		public:
 			const spatialDataImpl *const data;
@@ -396,53 +396,53 @@ namespace cage
 		};
 	}
 
-	pointerRange<uint32> spatialQuery::result() const
+	PointerRange<uint32> SpatialQuery::result() const
 	{
 		spatialQueryImpl *impl = (spatialQueryImpl*)this;
 		return impl->resultNames;
 	}
 
-	void spatialQuery::intersection(const vec3 &shape)
+	void SpatialQuery::intersection(const vec3 &shape)
 	{
 		intersection(aabb(shape, shape));
 	}
 
-	void spatialQuery::intersection(const line &shape)
+	void SpatialQuery::intersection(const line &shape)
 	{
 		spatialQueryImpl *impl = (spatialQueryImpl*)this;
 		impl->intersection(shape);
 	}
 
-	void spatialQuery::intersection(const triangle &shape)
+	void SpatialQuery::intersection(const triangle &shape)
 	{
 		spatialQueryImpl *impl = (spatialQueryImpl*)this;
 		impl->intersection(shape);
 	}
 
-	void spatialQuery::intersection(const plane &shape)
+	void SpatialQuery::intersection(const plane &shape)
 	{
 		spatialQueryImpl *impl = (spatialQueryImpl*)this;
 		impl->intersection(shape);
 	}
 
-	void spatialQuery::intersection(const sphere &shape)
+	void SpatialQuery::intersection(const sphere &shape)
 	{
 		spatialQueryImpl *impl = (spatialQueryImpl*)this;
 		impl->intersection(shape);
 	}
 
-	void spatialQuery::intersection(const aabb &shape)
+	void SpatialQuery::intersection(const aabb &shape)
 	{
 		spatialQueryImpl *impl = (spatialQueryImpl*)this;
 		impl->intersection(shape);
 	}
 
-	void spatialData::update(uint32 name, const vec3 &other)
+	void SpatialData::update(uint32 name, const vec3 &other)
 	{
 		update(name, aabb(other, other));
 	}
 
-	void spatialData::update(uint32 name, const line &other)
+	void SpatialData::update(uint32 name, const line &other)
 	{
 		CAGE_ASSERT(other.valid());
 		CAGE_ASSERT(other.isPoint() || other.isSegment());
@@ -451,7 +451,7 @@ namespace cage
 		impl->itemsTable[name] = impl->itemsArena.createImpl<itemBase, itemShape<line>>(name, other);
 	}
 
-	void spatialData::update(uint32 name, const triangle &other)
+	void SpatialData::update(uint32 name, const triangle &other)
 	{
 		CAGE_ASSERT(other.valid());
 		CAGE_ASSERT(other.area() < real::Infinity());
@@ -460,7 +460,7 @@ namespace cage
 		impl->itemsTable[name] = impl->itemsArena.createImpl<itemBase, itemShape<triangle>>(name, other);
 	}
 
-	void spatialData::update(uint32 name, const sphere &other)
+	void SpatialData::update(uint32 name, const sphere &other)
 	{
 		CAGE_ASSERT(other.valid());
 		CAGE_ASSERT(other.volume() < real::Infinity());
@@ -469,7 +469,7 @@ namespace cage
 		impl->itemsTable[name] = impl->itemsArena.createImpl<itemBase, itemShape<sphere>>(name, other);
 	}
 
-	void spatialData::update(uint32 name, const aabb &other)
+	void SpatialData::update(uint32 name, const aabb &other)
 	{
 		CAGE_ASSERT(other.valid());
 		CAGE_ASSERT(other.volume() < real::Infinity());
@@ -478,36 +478,36 @@ namespace cage
 		impl->itemsTable[name] = impl->itemsArena.createImpl<itemBase, itemShape<aabb>>(name, other);
 	}
 
-	void spatialData::remove(uint32 name)
+	void SpatialData::remove(uint32 name)
 	{
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		impl->dirty = true;
 		impl->itemsTable.erase(name);
 	}
 
-	void spatialData::clear()
+	void SpatialData::clear()
 	{
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		impl->dirty = true;
 		impl->itemsTable.clear();
 	}
 
-	void spatialData::rebuild()
+	void SpatialData::rebuild()
 	{
 		spatialDataImpl *impl = (spatialDataImpl*)this;
 		impl->rebuild();
 	}
 
-	spatialDataCreateConfig::spatialDataCreateConfig() : maxItems(1000 * 100)
+	SpatialDataCreateConfig::SpatialDataCreateConfig() : maxItems(1000 * 100)
 	{}
 
-	holder<spatialData> newSpatialData(const spatialDataCreateConfig &config)
+	Holder<SpatialData> newSpatialData(const SpatialDataCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<spatialData, spatialDataImpl>(config);
+		return detail::systemArena().createImpl<SpatialData, spatialDataImpl>(config);
 	}
 
-	holder<spatialQuery> newSpatialQuery(const spatialData *data)
+	Holder<SpatialQuery> newSpatialQuery(const SpatialData *data)
 	{
-		return detail::systemArena().createImpl<spatialQuery, spatialQueryImpl>((spatialDataImpl*)data);
+		return detail::systemArena().createImpl<SpatialQuery, spatialQueryImpl>((spatialDataImpl*)data);
 	}
 }

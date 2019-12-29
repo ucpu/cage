@@ -34,8 +34,8 @@ void testEvents()
 	{
 		CAGE_TESTCASE("basic events");
 		n = 0;
-		eventDispatcher<bool()> d;
-		eventListener<bool()> l1, l2;
+		EventDispatcher<bool()> d;
+		EventListener<bool()> l1, l2;
 		l1.bind<&simpleCallback>();
 		l2.bind<&simpleCallback>();
 		d.dispatch();
@@ -51,8 +51,8 @@ void testEvents()
 	{
 		CAGE_TESTCASE("void callbacks");
 		n = 0;
-		eventDispatcher<bool()> d;
-		eventListener<void()> l;
+		EventDispatcher<bool()> d;
+		EventListener<void()> l;
 		l.bind<&incrementCallback>();
 		d.dispatch();
 		CAGE_TEST(n == 0);
@@ -65,8 +65,8 @@ void testEvents()
 	{
 		CAGE_TESTCASE("events with two arguments");
 		n = 0;
-		eventDispatcher<bool(int, int)> d;
-		eventListener<bool(int, int)> l1, l2;
+		EventDispatcher<bool(int, int)> d;
+		EventListener<bool(int, int)> l1, l2;
 		l1.bind<&simpleCallback>();
 		l2.bind<&simpleCallback>();
 		d.dispatch(5, 3);
@@ -82,8 +82,8 @@ void testEvents()
 	{
 		CAGE_TESTCASE("sorting callbacks");
 		n = 3;
-		eventDispatcher<bool()> d;
-		eventListener<void()> inc, dbl;
+		EventDispatcher<bool()> d;
+		EventListener<void()> inc, dbl;
 		inc.bind<&incrementCallback>();
 		dbl.bind<&doubleCallback>();
 		d.dispatch();
@@ -133,8 +133,8 @@ void testEvents()
 		CAGE_TESTCASE("attach order");
 		{
 			n = 0;
-			eventDispatcher<bool()> d;
-			eventListener<void()> l;
+			EventDispatcher<bool()> d;
+			EventListener<void()> l;
 			l.bind<&incrementCallback>();
 			CAGE_TEST(n == 0);
 			d.attach(l);
@@ -143,8 +143,8 @@ void testEvents()
 		}
 		{
 			n = 0;
-			eventDispatcher<bool()> d;
-			eventListener<void()> l;
+			EventDispatcher<bool()> d;
+			EventListener<void()> l;
 			l.bind<&incrementCallback>();
 			CAGE_TEST(n == 0);
 			l.attach(d);
@@ -155,8 +155,8 @@ void testEvents()
 
 	{
 		CAGE_TESTCASE("event names");
-		eventDispatcher<bool()> d("dispatcher D");
-		eventListener<bool()> l1("listener L1"), l2("listener L2");
+		EventDispatcher<bool()> d("dispatcher D");
+		EventListener<bool()> l1("listener L1"), l2("listener L2");
 		d.attach(l1, 13);
 		d.attach(l2, 42);
 		d.logAllNames();

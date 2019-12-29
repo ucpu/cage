@@ -1,9 +1,9 @@
 namespace cage
 {
-	class CAGE_API fontFace : private immovable
+	class CAGE_API fontFace : private Immovable
 	{
 #ifdef CAGE_DEBUG
-		detail::stringBase<64> debugName;
+		detail::StringBase<64> debugName;
 #endif // CAGE_DEBUG
 
 	public:
@@ -33,8 +33,8 @@ namespace cage
 		void render(const uint32 *glyphs, uint32 count, const formatStruct &format, uint32 cursor = m);
 	};
 
-	CAGE_API holder<fontFace> newFontFace();
+	CAGE_API Holder<fontFace> newFontFace();
 
-	CAGE_API assetScheme genAssetSchemeFontFace(uint32 threadIndex, windowHandle *memoryContext);
+	CAGE_API AssetScheme genAssetSchemeFontFace(uint32 threadIndex, windowHandle *memoryContext);
 	static const uint32 assetSchemeIndexFontFace = 16;
 }

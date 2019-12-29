@@ -28,16 +28,16 @@ namespace cage
 			windowEventListeners listeners;
 			windowHandle *window;
 
-			configUint32 confWindowLeft;
-			configUint32 confWindowTop;
-			configUint32 confWindowWidth;
-			configUint32 confWindowHeight;
-			configBool confWindowMaximized;
-			configUint32 confFullscreenWidth;
-			configUint32 confFullscreenHeight;
-			configUint32 confFullscreenFrequency;
-			configString confFullscreenMonitor;
-			configBool confFullscreenEnabled;
+			ConfigUint32 confWindowLeft;
+			ConfigUint32 confWindowTop;
+			ConfigUint32 confWindowWidth;
+			ConfigUint32 confWindowHeight;
+			ConfigBool confWindowMaximized;
+			ConfigUint32 confFullscreenWidth;
+			ConfigUint32 confFullscreenHeight;
+			ConfigUint32 confFullscreenFrequency;
+			ConfigString confFullscreenMonitor;
+			ConfigBool confFullscreenEnabled;
 
 			fullscreenSwitcherImpl(const fullscreenSwitcherCreateConfig &config) : window(config.window),
 				confWindowLeft(confName(config, "window/left"), 100),
@@ -70,7 +70,7 @@ namespace cage
 				{
 					try
 					{
-						detail::overrideBreakpoint ob;
+						detail::OverrideBreakpoint ob;
 						window->setFullscreen(ivec2(confFullscreenWidth, confFullscreenHeight), confFullscreenFrequency, confFullscreenMonitor);
 						return;
 					}
@@ -143,7 +143,7 @@ namespace cage
 		window = cage::window();
 	}
 
-	holder<fullscreenSwitcher> newFullscreenSwitcher(const fullscreenSwitcherCreateConfig &config)
+	Holder<fullscreenSwitcher> newFullscreenSwitcher(const fullscreenSwitcherCreateConfig &config)
 	{
 		return detail::systemArena().createImpl<fullscreenSwitcher, fullscreenSwitcherImpl>(config);
 	}

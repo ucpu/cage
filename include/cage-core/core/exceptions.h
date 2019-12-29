@@ -5,14 +5,14 @@
 #endif
 #ifdef CAGE_ASSERT_ENABLED
 #define GCHL_ASSVAR(VAR) .variable(CAGE_STRINGIZE(VAR), VAR)
-#define CAGE_ASSERT(EXP, ...) { ::cage::privat::assertPriv(!!(EXP), CAGE_STRINGIZE(EXP), __FILE__, CAGE_STRINGIZE(__LINE__), __FUNCTION__) GCHL_DEFER(CAGE_EXPAND_ARGS(GCHL_ASSVAR, __VA_ARGS__))(); }
+#define CAGE_ASSERT(EXP, ...) { ::cage::privat::AssertPriv(!!(EXP), CAGE_STRINGIZE(EXP), __FILE__, CAGE_STRINGIZE(__LINE__), __FUNCTION__) GCHL_DEFER(CAGE_EXPAND_ARGS(GCHL_ASSVAR, __VA_ARGS__))(); }
 #else
 #define CAGE_ASSERT(EXP, ...)
 #endif
 
-#define CAGE_THROW_SILENT(EXCEPTION, ...) { EXCEPTION e_(__FILE__, __LINE__, __FUNCTION__, ::cage::severityEnum::Error, __VA_ARGS__); throw e_; }
-#define CAGE_THROW_ERROR(EXCEPTION, ...) { EXCEPTION e_(__FILE__, __LINE__, __FUNCTION__, ::cage::severityEnum::Error, __VA_ARGS__); e_.makeLog(); throw e_; }
-#define CAGE_THROW_CRITICAL(EXCEPTION, ...) { EXCEPTION e_(__FILE__, __LINE__, __FUNCTION__, ::cage::severityEnum::Critical, __VA_ARGS__); e_.makeLog(); throw e_; }
+#define CAGE_THROW_SILENT(EXCEPTION, ...) { EXCEPTION e_(__FILE__, __LINE__, __FUNCTION__, ::cage::SeverityEnum::Error, __VA_ARGS__); throw e_; }
+#define CAGE_THROW_ERROR(EXCEPTION, ...) { EXCEPTION e_(__FILE__, __LINE__, __FUNCTION__, ::cage::SeverityEnum::Error, __VA_ARGS__); e_.makeLog(); throw e_; }
+#define CAGE_THROW_CRITICAL(EXCEPTION, ...) { EXCEPTION e_(__FILE__, __LINE__, __FUNCTION__, ::cage::SeverityEnum::Critical, __VA_ARGS__); e_.makeLog(); throw e_; }
 
 #define CAGE_LOG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FILE__, __LINE__, __FUNCTION__, SEVERITY, COMPONENT, MESSAGE, false, false)
 #define CAGE_LOG_CONTINUE(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FILE__, __LINE__, __FUNCTION__, SEVERITY, COMPONENT, MESSAGE, true, false)
@@ -26,7 +26,7 @@
 
 namespace cage
 {
-	enum class severityEnum
+	enum class SeverityEnum
 	{
 		Note, // details for subsequent log
 		Hint, // possible improvement available
@@ -38,7 +38,7 @@ namespace cage
 
 	namespace privat
 	{
-		CAGE_API uint64 makeLog(const char *file, uint32 line, const char *function, severityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept;
+		CAGE_API uint64 makeLog(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept;
 	}
 
 	namespace detail
@@ -47,58 +47,61 @@ namespace cage
 		CAGE_API void debugOutput(const string &msg);
 		CAGE_API void debugBreakpoint();
 
-		struct CAGE_API overrideBreakpoint
+		// makes all debugBreakpoint calls be ignored
+		struct CAGE_API OverrideBreakpoint
 		{
-			explicit overrideBreakpoint(bool enable = false);
-			~overrideBreakpoint();
+			explicit OverrideBreakpoint(bool enable = false);
+			~OverrideBreakpoint();
 
 		private:
 			bool original;
 		};
 
-		struct CAGE_API overrideAssert
+		// make assert failures throw a critical exception instead of terminating the application
+		struct CAGE_API OverrideAssert
 		{
-			explicit overrideAssert(bool deadly = false);
-			~overrideAssert();
+			explicit OverrideAssert(bool deadly = false);
+			~OverrideAssert();
 
 		private:
 			bool original;
 		};
 
-		struct CAGE_API overrideException
+		// changes threshold for exception severity for logging
+		struct CAGE_API OverrideException
 		{
-			explicit overrideException(severityEnum severity = severityEnum::Critical);
-			~overrideException();
+			explicit OverrideException(SeverityEnum severity = SeverityEnum::Critical);
+			~OverrideException();
 
 		private:
-			severityEnum original;
+			SeverityEnum original;
 		};
 
 		CAGE_API void setGlobalBreakpointOverride(bool enable);
 		CAGE_API void setGlobalAssertOverride(bool enable);
-		CAGE_API void setGlobalExceptionOverride(severityEnum severity);
+		CAGE_API void setGlobalExceptionOverride(SeverityEnum severity);
 	}
 
 	namespace privat
 	{
-		struct CAGE_API assertPriv
+		struct CAGE_API AssertPriv
 		{
-			explicit assertPriv(bool exp, const char *expt, const char *file, const char *line, const char *function);
+			explicit AssertPriv(bool exp, const char *expt, const char *file, const char *line, const char *function);
 			void operator () () const;
 
-#define GCHL_GENERATE(TYPE) assertPriv &variable(const char *name, TYPE var);
+#define GCHL_GENERATE(TYPE) AssertPriv &variable(const char *name, TYPE var);
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, bool, float, double, const char*, \
 				const string&, real, rads, degs, const vec2&, const vec3&, const vec4&, const quat&, const mat3&, const mat4&));
 #undef GCHL_GENERATE
 
 			template<class U>
-			assertPriv &variable(const char *name, U *var)
+			AssertPriv &variable(const char *name, U *var)
 			{
 				return variable(name, (uintPtr)var);
 			}
 
 			template<class U>
-			assertPriv &variable(const char *name, const U &var)
+			AssertPriv &variable(const char *name, const U &var)
 			{
 				if (!valid)
 					format(name, "<unknown variable type>");
@@ -111,10 +114,10 @@ namespace cage
 		};
 	}
 
-	struct CAGE_API exception
+	struct CAGE_API Exception
 	{
-		explicit exception(const char *file, uint32 line, const char *function, severityEnum severity, const char *message) noexcept;
-		virtual ~exception() noexcept;
+		explicit Exception(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept;
+		virtual ~Exception() noexcept;
 
 		void makeLog();
 		virtual void log();
@@ -123,18 +126,18 @@ namespace cage
 		const char *function;
 		const char *message;
 		uint32 line;
-		severityEnum severity;
+		SeverityEnum severity;
 	};
 
-	struct CAGE_API notImplemented : public exception
+	struct CAGE_API NotImplemented : public Exception
 	{
-		explicit notImplemented(const char *file, uint32 line, const char *function, severityEnum severity, const char *message) noexcept;
+		explicit NotImplemented(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept;
 		virtual void log();
 	};
 
-	struct CAGE_API systemError : public exception
+	struct CAGE_API SystemError : public Exception
 	{
-		explicit systemError(const char *file, uint32 line, const char *function, severityEnum severity, const char *message, uint32 code) noexcept;
+		explicit SystemError(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message, uint32 code) noexcept;
 		virtual void log();
 		uint32 code;
 	};

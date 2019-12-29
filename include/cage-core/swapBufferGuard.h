@@ -4,7 +4,7 @@
 namespace cage
 {
 	/*
-	holder<swapBufferGuard> controller = newSwapBufferGuard();
+	Holder<SwapBufferGuard> controller = newSwapBufferGuard();
 
 	// consumer thread
 	while (running)
@@ -39,7 +39,7 @@ namespace cage
 		{
 		public:
 			swapBufferLock();
-			explicit swapBufferLock(swapBufferGuard *controller, uint32 index);
+			explicit swapBufferLock(SwapBufferGuard *controller, uint32 index);
 			swapBufferLock(const swapBufferLock &) = delete; // non-copyable
 			swapBufferLock(swapBufferLock &&other); // movable
 			~swapBufferLock();
@@ -49,27 +49,27 @@ namespace cage
 			uint32 index() const { CAGE_ASSERT(!!controller_); return index_; }
 
 		private:
-			swapBufferGuard *controller_;
+			SwapBufferGuard *controller_;
 			uint32 index_;
 		};
 	}
 
-	class CAGE_API swapBufferGuard : private immovable
+	class CAGE_API SwapBufferGuard : private Immovable
 	{
 	public:
 		privat::swapBufferLock read();
 		privat::swapBufferLock write();
 	};
 
-	struct CAGE_API swapBufferGuardCreateConfig
+	struct CAGE_API SwapBufferGuardCreateConfig
 	{
 		uint32 buffersCount;
 		bool repeatedReads; // allow to read last buffer again (instead of failing) if the producer cannot keep up - this can lead to duplicated data, but it may safe some unnecessary copies
 		bool repeatedWrites; // allow to override last write buffer (instead of failing) if the consumer cannot keep up - this allows to lose some data, but the consumer will get the most up-to-date data
-		swapBufferGuardCreateConfig(uint32 buffersCount);
+		SwapBufferGuardCreateConfig(uint32 buffersCount);
 	};
 
-	CAGE_API holder<swapBufferGuard> newSwapBufferGuard(const swapBufferGuardCreateConfig &config);
+	CAGE_API Holder<SwapBufferGuard> newSwapBufferGuard(const SwapBufferGuardCreateConfig &config);
 }
 
 #endif // guard_swapBufferController_h_rds4jh4jdr64jzdr64

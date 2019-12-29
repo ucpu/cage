@@ -3,7 +3,7 @@
 
 namespace cage
 {
-	struct CAGE_API processCreateConfig
+	struct CAGE_API ProcessCreateConfig
 	{
 		string cmd;
 		string workingDirectory;
@@ -12,10 +12,10 @@ namespace cage
 		// todo bool discardStdOut
 		// todo bool discardStdErr
 
-		processCreateConfig(const string &cmd, const string &workingDirectory = "");
+		ProcessCreateConfig(const string &cmd, const string &workingDirectory = "");
 	};
 
-	class CAGE_API processHandle : private immovable
+	class CAGE_API Process : private Immovable
 	{
 	public:
 		string getCmdString() const;
@@ -30,7 +30,7 @@ namespace cage
 		int wait();
 	};
 
-	CAGE_API holder<processHandle> newProcess(const processCreateConfig &config);
+	CAGE_API Holder<Process> newProcess(const ProcessCreateConfig &config);
 }
 
 #endif // guard_program_h_f16ac3b2_6520_4503_a6ad_f4a582216f67_

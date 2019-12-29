@@ -13,7 +13,7 @@ namespace cage
 {
 	namespace
 	{
-		void processLoad(const assetContext *context, void *schemePointer)
+		void processLoad(const AssetContext *context, void *schemePointer)
 		{
 			shaderProgram *shr = nullptr;
 			if (context->assetHolder)
@@ -29,7 +29,7 @@ namespace cage
 			}
 			context->returnData = shr;
 
-			deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
+			Deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
 			uint32 count;
 			des >> count;
 			for (uint32 i = 0; i < count; i++)
@@ -44,9 +44,9 @@ namespace cage
 		}
 	}
 
-	assetScheme genAssetSchemeShaderProgram(uint32 threadIndex, windowHandle *memoryContext)
+	AssetScheme genAssetSchemeShaderProgram(uint32 threadIndex, windowHandle *memoryContext)
 	{
-		assetScheme s;
+		AssetScheme s;
 		s.threadIndex = threadIndex;
 		s.schemePointer = memoryContext;
 		s.load.bind<&processLoad>();

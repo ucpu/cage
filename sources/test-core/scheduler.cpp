@@ -17,12 +17,12 @@ namespace
 		threadSleep(randomRange(15000, 25000)); // avg 20 ms
 	}
 
-	void trigger(schedule *s)
+	void trigger(Schedule *s)
 	{
 		s->trigger();
 	}
 
-	void stop(scheduler *s)
+	void stop(Scheduler *s)
 	{
 		s->stop();
 	}
@@ -30,32 +30,32 @@ namespace
 
 void testScheduler()
 {
-	CAGE_TESTCASE("scheduler");
+	CAGE_TESTCASE("Scheduler");
 
 	{
 		CAGE_TESTCASE("basics");
-		holder<scheduler> sch = newScheduler({});
+		Holder<Scheduler> sch = newScheduler({});
 		uint32 periodicCount = 0;
 		uint32 emptyCount = 0;
 		{
-			scheduleCreateConfig c;
-			c.type = scheduleTypeEnum::SteadyPeriodic;
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::SteadyPeriodic;
 			c.action.bind<uint32*, &inc>(&periodicCount);
 			c.name = "periodic add one";
 			c.period = 30000;
 			sch->newSchedule(c);
 		}
 		{
-			scheduleCreateConfig c;
-			c.type = scheduleTypeEnum::Empty;
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::Empty;
 			c.action.bind<uint32*, &inc>(&emptyCount);
 			c.name = "empty add one";
 			sch->newSchedule(c);
 		}
 		{
-			scheduleCreateConfig c;
-			c.type = scheduleTypeEnum::Once;
-			c.action.bind<scheduler*, &stop>(sch.get());
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::Once;
+			c.action.bind<Scheduler*, &stop>(sch.get());
 			c.name = "terminator";
 			c.delay = 200000;
 			c.priority = 100;
@@ -64,7 +64,7 @@ void testScheduler()
 		CAGE_TEST(periodicCount == 0);
 		CAGE_TEST(emptyCount == 0);
 		{
-			holder<timer> tmr = newTimer();
+			Holder<Timer> tmr = newTimer();
 			sch->run();
 			uint64 duration = tmr->microsSinceStart();
 			CAGE_TEST(duration > 100000 && duration < 300000);
@@ -75,35 +75,35 @@ void testScheduler()
 
 	{
 		CAGE_TESTCASE("two steady schedules with different periods");
-		holder<scheduler> sch = newScheduler({});
+		Holder<Scheduler> sch = newScheduler({});
 		uint32 cnt1 = 0, cnt2 = 0;
 		{
-			scheduleCreateConfig c;
-			c.type = scheduleTypeEnum::SteadyPeriodic;
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::SteadyPeriodic;
 			c.action.bind<uint32*, &incRandomSleep>(&cnt1);
 			c.name = "frequent";
 			c.period = 30000;
 			sch->newSchedule(c);
 		}
 		{
-			scheduleCreateConfig c;
-			c.type = scheduleTypeEnum::SteadyPeriodic;
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::SteadyPeriodic;
 			c.action.bind<uint32*, &incRandomSleep>(&cnt2);
 			c.name = "infrequent";
 			c.period = 80000;
 			sch->newSchedule(c);
 		}
 		{
-			scheduleCreateConfig c;
-			c.type = scheduleTypeEnum::Once;
-			c.action.bind<scheduler*, &stop>(sch.get());
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::Once;
+			c.action.bind<Scheduler*, &stop>(sch.get());
 			c.name = "terminator";
 			c.delay = 200000;
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
 		{
-			holder<timer> tmr = newTimer();
+			Holder<Timer> tmr = newTimer();
 			sch->run();
 			uint64 duration = tmr->microsSinceStart();
 			CAGE_TEST(duration > 100000 && duration < 300000);
@@ -114,11 +114,11 @@ void testScheduler()
 
 	{
 		CAGE_TESTCASE("two steady schedules with different priorities");
-		holder<scheduler> sch = newScheduler({});
+		Holder<Scheduler> sch = newScheduler({});
 		uint32 cnt1 = 0, cnt2 = 0;
 		{
-			scheduleCreateConfig c;
-			c.type = scheduleTypeEnum::SteadyPeriodic;
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::SteadyPeriodic;
 			c.action.bind<uint32*, &incRandomSleep>(&cnt1);
 			c.name = "low priority";
 			c.period = 30000;
@@ -127,8 +127,8 @@ void testScheduler()
 			sch->newSchedule(c);
 		}
 		{
-			scheduleCreateConfig c;
-			c.type = scheduleTypeEnum::SteadyPeriodic;
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::SteadyPeriodic;
 			c.action.bind<uint32*, &incRandomSleep>(&cnt2);
 			c.name = "high priority";
 			c.period = 30000;
@@ -137,16 +137,16 @@ void testScheduler()
 			sch->newSchedule(c);
 		}
 		{
-			scheduleCreateConfig c;
-			c.type = scheduleTypeEnum::Once;
-			c.action.bind<scheduler*, &stop>(sch.get());
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::Once;
+			c.action.bind<Scheduler*, &stop>(sch.get());
 			c.name = "terminator";
 			c.delay = 200000;
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
 		{
-			holder<timer> tmr = newTimer();
+			Holder<Timer> tmr = newTimer();
 			sch->run();
 			uint64 duration = tmr->microsSinceStart();
 			CAGE_TEST(duration > 100000 && duration < 300000);
@@ -158,35 +158,35 @@ void testScheduler()
 
 	{
 		CAGE_TESTCASE("steady and free periodic schedules");
-		holder<scheduler> sch = newScheduler({});
+		Holder<Scheduler> sch = newScheduler({});
 		uint32 cnt1 = 0, cnt2 = 0;
 		{
-			scheduleCreateConfig c;
-			c.type = scheduleTypeEnum::SteadyPeriodic;
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::SteadyPeriodic;
 			c.action.bind<uint32*, &incRandomSleep>(&cnt1);
 			c.name = "steady";
 			c.period = 50000;
 			sch->newSchedule(c);
 		}
 		{
-			scheduleCreateConfig c;
-			c.type = scheduleTypeEnum::FreePeriodic;
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::FreePeriodic;
 			c.action.bind<uint32*, &incRandomSleep>(&cnt2);
 			c.name = "free";
 			c.period = 30000;
 			sch->newSchedule(c);
 		}
 		{
-			scheduleCreateConfig c;
-			c.type = scheduleTypeEnum::Once;
-			c.action.bind<scheduler*, &stop>(sch.get());
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::Once;
+			c.action.bind<Scheduler*, &stop>(sch.get());
 			c.name = "terminator";
 			c.delay = 200000;
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
 		{
-			holder<timer> tmr = newTimer();
+			Holder<Timer> tmr = newTimer();
 			sch->run();
 			uint64 duration = tmr->microsSinceStart();
 			CAGE_TEST(duration > 100000 && duration < 300000);
@@ -197,44 +197,44 @@ void testScheduler()
 
 	{
 		CAGE_TESTCASE("trigger external schedule");
-		holder<scheduler> sch = newScheduler({});
-		schedule *trig = nullptr;
+		Holder<Scheduler> sch = newScheduler({});
+		Schedule *trig = nullptr;
 		uint32 cnt1 = 0, cnt2 = 0;
 		{
-			scheduleCreateConfig c;
-			c.type = scheduleTypeEnum::SteadyPeriodic;
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::SteadyPeriodic;
 			c.action.bind<uint32*, &inc>(&cnt1);
 			c.name = "steady";
 			c.period = 30000;
 			sch->newSchedule(c);
 		}
 		{
-			scheduleCreateConfig c;
-			c.type = scheduleTypeEnum::External;
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::External;
 			c.action.bind<uint32*, &inc>(&cnt2);
 			c.name = "external";
 			trig = sch->newSchedule(c);
 		}
 		{
-			scheduleCreateConfig c;
-			c.type = scheduleTypeEnum::Once;
-			c.action.bind<schedule*, &trigger>(trig);
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::Once;
+			c.action.bind<Schedule*, &trigger>(trig);
 			c.name = "trigger";
 			c.delay = 100000;
 			c.priority = 50;
 			sch->newSchedule(c);
 		}
 		{
-			scheduleCreateConfig c;
-			c.type = scheduleTypeEnum::Once;
-			c.action.bind<scheduler*, &stop>(sch.get());
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::Once;
+			c.action.bind<Scheduler*, &stop>(sch.get());
 			c.name = "terminator";
 			c.delay = 200000;
 			c.priority = 100;
 			sch->newSchedule(c);
 		}
 		{
-			holder<timer> tmr = newTimer();
+			Holder<Timer> tmr = newTimer();
 			sch->run();
 			uint64 duration = tmr->microsSinceStart();
 			CAGE_TEST(duration > 100000 && duration < 300000);

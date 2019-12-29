@@ -3,7 +3,7 @@
 #include <map>
 
 #include "net.h"
-#include <cage-core/identifier.h>
+#include <cage-core/guid.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 #include <cage-core/pointerRangeHolder.h>
@@ -12,7 +12,7 @@ namespace cage
 {
 	using namespace privat;
 
-	discoveryPeer::discoveryPeer() : port(0)
+	DiscoveryPeer::DiscoveryPeer() : port(0)
 	{}
 
 	namespace
@@ -22,7 +22,7 @@ namespace cage
 		// AF_INET = ipv4 only, AF_INET6 = ipv6 only, AF_UNSPEC = both
 		static const int protocolFamily = AF_UNSPEC;
 
-		struct peerStruct : public discoveryPeer
+		struct peerStruct : public DiscoveryPeer
 		{
 			uint32 ttl;
 		};
@@ -36,10 +36,10 @@ namespace cage
 			{}
 		};
 
-		class discoveryClientImpl : public discoveryClient
+		class discoveryClientImpl : public DiscoveryClient
 		{
 		public:
-			std::map<identifier<idSize>, peerStruct> peers;
+			std::map<Guid<idSize>, peerStruct> peers;
 			std::vector<sockStruct> sockets;
 			uint32 gameId;
 			uint16 sendPort;
@@ -64,7 +64,7 @@ namespace cage
 				{
 					addServer("255.255.255.255", sendPort); // ipv4 broadcast
 				}
-				catch (const cage::exception &)
+				catch (const cage::Exception &)
 				{
 					// nothing
 				}
@@ -110,7 +110,7 @@ namespace cage
 			void receive()
 			{
 				addr a;
-				memoryBuffer buffer;
+				MemoryBuffer buffer;
 				for (auto &s : sockets)
 				{
 					while (true)
@@ -120,7 +120,7 @@ namespace cage
 						{
 							buffer.resize(s.s.recvFrom(buffer.data(), buffer.size(), a, 0));
 						}
-						catch (const cage::exception &)
+						catch (const cage::Exception &)
 						{
 							s.s = sock();
 							break;
@@ -130,9 +130,9 @@ namespace cage
 						try
 						{
 							peerStruct p;
-							identifier<idSize> id;
+							Guid<idSize> id;
 							uint32 gid;
-							deserializer d(buffer);
+							Deserializer d(buffer);
 							d >> gid >> id >> p.port;
 							auto av = numeric_cast<uint32>(d.available());
 							p.message = string((char*)d.advance(av), av);
@@ -150,7 +150,7 @@ namespace cage
 								pit->second.message = p.message;
 							}
 						}
-						catch (const cage::exception &)
+						catch (const cage::Exception &)
 						{
 							// ignore invalid message
 						}
@@ -169,7 +169,7 @@ namespace cage
 						{
 							s.s.sendTo(&gameId, 4, a);
 						}
-						catch (const cage::exception &)
+						catch (const cage::Exception &)
 						{
 							// nothing
 						}
@@ -179,17 +179,17 @@ namespace cage
 
 			void update()
 			{
-				detail::overrideBreakpoint overrideBreakpoint;
+				detail::OverrideBreakpoint OverrideBreakpoint;
 				ttlPeers();
 				receive();
 				send();
 			}
 		};
 
-		class discoveryServerImpl : public discoveryServer
+		class discoveryServerImpl : public DiscoveryServer
 		{
 		public:
-			identifier<idSize> uniId;
+			Guid<idSize> uniId;
 			uint32 gameId;
 			uint16 gamePort;
 			std::vector<sock> sockets;
@@ -226,8 +226,8 @@ namespace cage
 
 			void update()
 			{
-				detail::overrideBreakpoint overrideBreakpoint;
-				memoryBuffer buffer;
+				detail::OverrideBreakpoint OverrideBreakpoint;
+				MemoryBuffer buffer;
 				addr a;
 				for (auto &s : sockets)
 				{
@@ -238,7 +238,7 @@ namespace cage
 						{
 							buffer.resize(s.recvFrom(buffer.data(), buffer.size(), a, 0));
 						}
-						catch (const cage::exception &)
+						catch (const cage::Exception &)
 						{
 							s = sock();
 							break;
@@ -248,7 +248,7 @@ namespace cage
 						try
 						{
 							{ // parse
-								deserializer d(buffer);
+								Deserializer d(buffer);
 								uint32 gid;
 								d >> gid;
 								if (gid != gameId)
@@ -258,13 +258,13 @@ namespace cage
 							}
 							{ // respond
 								buffer.clear();
-								serializer ser(buffer);
+								Serializer ser(buffer);
 								ser << uniId << gameId << gamePort;
 								ser.write(message.c_str(), message.length());
 								s.sendTo(buffer.data(), buffer.size(), a);
 							}
 						}
-						catch (const cage::exception &)
+						catch (const cage::Exception &)
 						{
 							continue; // ignore invalid messages
 						}
@@ -275,25 +275,25 @@ namespace cage
 		};
 	}
 
-	void discoveryClient::update()
+	void DiscoveryClient::update()
 	{
 		discoveryClientImpl *impl = (discoveryClientImpl*)this;
 		impl->update();
 	}
 
-	void discoveryClient::addServer(const string &address, uint16 port)
+	void DiscoveryClient::addServer(const string &address, uint16 port)
 	{
 		discoveryClientImpl *impl = (discoveryClientImpl*)this;
 		impl->addServer(address, port);
 	}
 
-	uint32 discoveryClient::peersCount() const
+	uint32 DiscoveryClient::peersCount() const
 	{
 		discoveryClientImpl *impl = (discoveryClientImpl*)this;
 		return numeric_cast<uint32>(impl->peers.size());
 	}
 
-	discoveryPeer discoveryClient::peerData(uint32 index) const
+	DiscoveryPeer DiscoveryClient::peerData(uint32 index) const
 	{
 		discoveryClientImpl *impl = (discoveryClientImpl*)this;
 		CAGE_ASSERT(index < impl->peers.size());
@@ -302,29 +302,29 @@ namespace cage
 		return it->second;
 	}
 
-	holder<pointerRange<discoveryPeer>> discoveryClient::peers() const
+	Holder<PointerRange<DiscoveryPeer>> DiscoveryClient::peers() const
 	{
 		discoveryClientImpl *impl = (discoveryClientImpl*)this;
-		pointerRangeHolder<discoveryPeer> h;
+		PointerRangeHolder<DiscoveryPeer> h;
 		h.reserve(impl->peers.size());
 		for (const auto &it : impl->peers)
 			h.push_back(it.second);
 		return h;
 	}
 
-	void discoveryServer::update()
+	void DiscoveryServer::update()
 	{
 		discoveryServerImpl *impl = (discoveryServerImpl*)this;
 		impl->update();
 	}
 
-	holder<discoveryClient> newDiscoveryClient(uint16 sendPort, uint32 gameId)
+	Holder<DiscoveryClient> newDiscoveryClient(uint16 sendPort, uint32 gameId)
 	{
-		return detail::systemArena().createImpl<discoveryClient, discoveryClientImpl>(sendPort, gameId);
+		return detail::systemArena().createImpl<DiscoveryClient, discoveryClientImpl>(sendPort, gameId);
 	}
 
-	holder<discoveryServer> newDiscoveryServer(uint16 listenPort, uint16 gamePort, uint32 gameId)
+	Holder<DiscoveryServer> newDiscoveryServer(uint16 listenPort, uint16 gamePort, uint32 gameId)
 	{
-		return detail::systemArena().createImpl<discoveryServer, discoveryServerImpl>(listenPort, gamePort, gameId);
+		return detail::systemArena().createImpl<DiscoveryServer, discoveryServerImpl>(listenPort, gamePort, gameId);
 	}
 }

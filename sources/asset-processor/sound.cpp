@@ -10,11 +10,11 @@
 namespace
 {
 	soundSourceHeader sds;
-	memoryBuffer buf1;
+	MemoryBuffer buf1;
 
 	struct vorbisEncoderStruct
 	{
-		fileHandle *f;
+		File *f;
 
 		ogg_stream_state os;
 		vorbis_info vi;
@@ -25,7 +25,7 @@ namespace
 		ogg_page og;
 		int ret;
 
-		vorbisEncoderStruct(fileHandle *f) : f(f) {}
+		vorbisEncoderStruct(File *f) : f(f) {}
 
 		void processBlock()
 		{
@@ -33,25 +33,25 @@ namespace
 			{
 				int moreBlocks = vorbis_analysis_blockout(&v, &vb);
 				if (moreBlocks < 0)
-					CAGE_THROW_ERROR(systemError, "vorbis_analysis_blockout", moreBlocks);
+					CAGE_THROW_ERROR(SystemError, "vorbis_analysis_blockout", moreBlocks);
 				if (moreBlocks == 0)
 					break;
 				ret = vorbis_analysis(&vb, nullptr);
 				if (ret != 0)
-					CAGE_THROW_ERROR(systemError, "vorbis_analysis", ret);
+					CAGE_THROW_ERROR(SystemError, "vorbis_analysis", ret);
 				ret = vorbis_bitrate_addblock(&vb);
 				if (ret != 0)
-					CAGE_THROW_ERROR(systemError, "vorbis_bitrate_addblock", ret);
+					CAGE_THROW_ERROR(SystemError, "vorbis_bitrate_addblock", ret);
 				while (true)
 				{
 					int morePackets = vorbis_bitrate_flushpacket(&v, &p);
 					if (morePackets < 0)
-						CAGE_THROW_ERROR(systemError, "vorbis_bitrate_flushpacket", morePackets);
+						CAGE_THROW_ERROR(SystemError, "vorbis_bitrate_flushpacket", morePackets);
 					if (morePackets == 0)
 						break;
 					ret = ogg_stream_packetin(&os, &p);
 					if (ret != 0)
-						CAGE_THROW_ERROR(systemError, "ogg_stream_packetin p", ret);
+						CAGE_THROW_ERROR(SystemError, "ogg_stream_packetin p", ret);
 					while (true)
 					{
 						ret = ogg_stream_pageout(&os, &og);
@@ -68,33 +68,33 @@ namespace
 		{
 			ret = ogg_stream_init(&os, 1);
 			if (ret != 0)
-				CAGE_THROW_ERROR(systemError, "ogg_stream_init", ret);
+				CAGE_THROW_ERROR(SystemError, "ogg_stream_init", ret);
 			vorbis_info_init(&vi);
 			ret = vorbis_encode_init_vbr(&vi, sds.channels, sds.sampleRate, properties("compressQuality").toFloat());
 			if (ret != 0)
-				CAGE_THROW_ERROR(systemError, "vorbis_encode_init_vbr", ret);
+				CAGE_THROW_ERROR(SystemError, "vorbis_encode_init_vbr", ret);
 			vorbis_comment_init(&vc);
 			vorbis_comment_add_tag(&vc, "ENCODER", "cage-asset-processor");
 			ret = vorbis_analysis_init(&v, &vi);
 			if (ret != 0)
-				CAGE_THROW_ERROR(systemError, "vorbis_analysis_init", ret);
+				CAGE_THROW_ERROR(SystemError, "vorbis_analysis_init", ret);
 			ret = vorbis_block_init(&v, &vb);
 			if (ret != 0)
-				CAGE_THROW_ERROR(systemError, "vorbis_block_init", ret);
+				CAGE_THROW_ERROR(SystemError, "vorbis_block_init", ret);
 			{
 				ogg_packet a, b, c;
 				ret = vorbis_analysis_headerout(&v, &vc, &a, &b, &c);
 				if (ret != 0)
-					CAGE_THROW_ERROR(systemError, "vorbis_analysis_headerout", ret);
+					CAGE_THROW_ERROR(SystemError, "vorbis_analysis_headerout", ret);
 				ret = ogg_stream_packetin(&os, &a);
 				if (ret != 0)
-					CAGE_THROW_ERROR(systemError, "ogg_stream_packetin a", ret);
+					CAGE_THROW_ERROR(SystemError, "ogg_stream_packetin a", ret);
 				ret = ogg_stream_packetin(&os, &b);
 				if (ret != 0)
-					CAGE_THROW_ERROR(systemError, "ogg_stream_packetin b", ret);
+					CAGE_THROW_ERROR(SystemError, "ogg_stream_packetin b", ret);
 				ret = ogg_stream_packetin(&os, &c);
 				if (ret != 0)
-					CAGE_THROW_ERROR(systemError, "ogg_stream_packetin c", ret);
+					CAGE_THROW_ERROR(SystemError, "ogg_stream_packetin c", ret);
 				while (true)
 				{
 					ret = ogg_stream_flush(&os, &og);
@@ -111,7 +111,7 @@ namespace
 				uint32 wrt = min(frames, 1024u);
 				float **buf2 = vorbis_analysis_buffer(&v, wrt);
 				if (!buf2)
-					CAGE_THROW_ERROR(exception, "vorbis_analysis_buffer");
+					CAGE_THROW_ERROR(Exception, "vorbis_analysis_buffer");
 				for (uint32 f = 0; f < wrt; f++)
 				{
 					for (uint32 c = 0; c < sds.channels; c++)
@@ -119,14 +119,14 @@ namespace
 				}
 				ret = vorbis_analysis_wrote(&v, wrt);
 				if (ret != 0)
-					CAGE_THROW_ERROR(systemError, "vorbis_analysis_wrote 1", ret);
+					CAGE_THROW_ERROR(SystemError, "vorbis_analysis_wrote 1", ret);
 				processBlock();
 				offset += wrt;
 				frames -= wrt;
 			}
 			ret = vorbis_analysis_wrote(&v, 0);
 			if (ret != 0)
-				CAGE_THROW_ERROR(systemError, "vorbis_analysis_wrote 2", ret);
+				CAGE_THROW_ERROR(SystemError, "vorbis_analysis_wrote 2", ret);
 			processBlock();
 			ogg_stream_clear(&os);
 			vorbis_block_clear(&vb);
@@ -143,7 +143,7 @@ namespace
 		drflac_uint64 totalSampleCount;
 		float* pSampleData = drflac_open_file_and_read_pcm_frames_f32(pathJoin(inputDirectory, inputFile).c_str(), &channels, &sampleRate, &totalSampleCount, nullptr);
 		if (!pSampleData)
-			CAGE_THROW_ERROR(exception, "failed to read flac file");
+			CAGE_THROW_ERROR(Exception, "failed to read flac file");
 		sds.channels = channels;
 		sds.frames = numeric_cast<uint32>(totalSampleCount / channels);
 		sds.sampleRate = sampleRate;
@@ -159,7 +159,7 @@ namespace
 		drwav_uint64 totalSampleCount;
 		float* pSampleData = drwav_open_file_and_read_pcm_frames_f32(pathJoin(inputDirectory, inputFile).c_str(), &channels, &sampleRate, &totalSampleCount, nullptr);
 		if (!pSampleData)
-			CAGE_THROW_ERROR(exception, "failed to read wav file");
+			CAGE_THROW_ERROR(Exception, "failed to read wav file");
 		sds.channels = channels;
 		sds.frames = numeric_cast<uint32>(totalSampleCount / channels);
 		sds.sampleRate = sampleRate;
@@ -172,7 +172,7 @@ namespace
 	{
 		OggVorbis_File vf;
 		if (ov_open_callbacks(fopen(pathJoin(inputDirectory, inputFile).c_str(), "rb"), &vf, NULL, 0, OV_CALLBACKS_DEFAULT) < 0)
-			CAGE_THROW_ERROR(exception, "failed to open vorbis stream");
+			CAGE_THROW_ERROR(Exception, "failed to open vorbis stream");
 		try
 		{
 			vorbis_info *vi = ov_info(&vf, -1);
@@ -189,7 +189,7 @@ namespace
 				if (ret == 0)
 					break;
 				if (ret < 0)
-					CAGE_THROW_ERROR(exception, "corrupted vorbis stream");
+					CAGE_THROW_ERROR(Exception, "corrupted vorbis stream");
 				for (uint32 f = 0; f < numeric_cast<unsigned long>(ret); f++)
 				{
 					for (uint32 c = 0; c < sds.channels; c++)
@@ -234,29 +234,29 @@ void processSound()
 	else
 		sds.soundType = soundTypeEnum::CompressedRaw;
 
-	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "flags: " + (uint32)sds.flags);
-	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "frames: " + sds.frames);
-	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "channels: " + sds.channels);
-	CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "samplerate: " + sds.sampleRate);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "flags: " + (uint32)sds.flags);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "frames: " + sds.frames);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "channels: " + sds.channels);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "samplerate: " + sds.sampleRate);
 	switch (sds.soundType)
 	{
 	case soundTypeEnum::RawRaw:
-		CAGE_LOG(severityEnum::Info, logComponentName, "sound type: raw file, raw play");
+		CAGE_LOG(SeverityEnum::Info, logComponentName, "sound type: raw file, raw play");
 		break;
 	case soundTypeEnum::CompressedRaw:
-		CAGE_LOG(severityEnum::Info, logComponentName, "sound type: compressed file, raw play");
+		CAGE_LOG(SeverityEnum::Info, logComponentName, "sound type: compressed file, raw play");
 		break;
 	case soundTypeEnum::CompressedCompressed:
-		CAGE_LOG(severityEnum::Info, logComponentName, "sound type: compressed file, compressed play");
+		CAGE_LOG(SeverityEnum::Info, logComponentName, "sound type: compressed file, compressed play");
 		break;
 	default:
-		CAGE_THROW_CRITICAL(exception, "invalid sound type");
+		CAGE_THROW_CRITICAL(Exception, "invalid sound type");
 	}
 
-	assetHeader h = initializeAssetHeaderStruct();
+	AssetHeader h = initializeAssetHeaderStruct();
 	h.originalSize = sizeof(soundSourceHeader) + sds.frames * sds.channels * sizeof(float);
 
-	holder<fileHandle> f = newFile(outputFileName, fileMode(true, true));
+	Holder<File> f = newFile(outputFileName, FileMode(true, true));
 	f->write(&h, sizeof(h));
 	f->write(&sds, sizeof(sds));
 
@@ -271,10 +271,10 @@ void processSound()
 	{
 		vorbisEncoderStruct ves(f.get());
 		ves.encode();
-		uint32 oggSize = numeric_cast<uint32>(f->size() - sizeof(soundSourceHeader) - sizeof(assetHeader));
-		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "original size: " + h.originalSize + " bytes");
-		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "compressed size: " + oggSize + " bytes");
-		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "compression ratio: " + (oggSize / (float)h.originalSize));
+		uint32 oggSize = numeric_cast<uint32>(f->size() - sizeof(soundSourceHeader) - sizeof(AssetHeader));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "original size: " + h.originalSize + " bytes");
+		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "compressed size: " + oggSize + " bytes");
+		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "compression ratio: " + (oggSize / (float)h.originalSize));
 		switch (sds.soundType)
 		{
 		case soundTypeEnum::CompressedRaw:
@@ -293,10 +293,10 @@ void processSound()
 		if (configGetBool("cage-asset-processor/sound/preview"))
 		{ // preview ogg
 			string dbgName = pathJoin(configGetString("cage-asset-processor/sound/path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".ogg");
-			holder<fileHandle> df = newFile(dbgName, fileMode(false, true));
+			Holder<File> df = newFile(dbgName, FileMode(false, true));
 			void *buf = detail::systemArena().allocate(oggSize, sizeof(uintPtr));
 			f->flush();
-			f->seek(sizeof(assetHeader) + sizeof(soundSourceHeader));
+			f->seek(sizeof(AssetHeader) + sizeof(soundSourceHeader));
 			f->read(buf, oggSize);
 			df->write(buf, oggSize);
 			detail::systemArena().deallocate(buf);
@@ -304,7 +304,7 @@ void processSound()
 		}
 	} break;
 	default:
-		CAGE_THROW_CRITICAL(exception, "invalid sound type");
+		CAGE_THROW_CRITICAL(Exception, "invalid sound type");
 	}
 
 	f->close();

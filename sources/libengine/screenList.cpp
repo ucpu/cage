@@ -66,7 +66,7 @@ namespace cage
 				}
 			}
 
-			std::vector<holder<screenDeviceImpl>> devices;
+			std::vector<Holder<screenDeviceImpl>> devices;
 			uint32 primary;
 		};
 	}
@@ -92,7 +92,7 @@ namespace cage
 		return impl->modes[index];
 	}
 
-	pointerRange<const screenMode> screenDevice::modes() const
+	PointerRange<const screenMode> screenDevice::modes() const
 	{
 		screenDeviceImpl *impl = (screenDeviceImpl*)this;
 		return impl->modes;
@@ -128,17 +128,17 @@ namespace cage
 		return impl->devices[index].get();
 	}
 
-	holder<pointerRange<const screenDevice*>> screenList::devices() const
+	Holder<PointerRange<const screenDevice*>> screenList::devices() const
 	{
 		const screenListImpl *impl = (const screenListImpl*)this;
-		pointerRangeHolder<const screenDevice*> prh;
+		PointerRangeHolder<const screenDevice*> prh;
 		prh.reserve(impl->devices.size());
 		for (auto &it : impl->devices)
 			prh.push_back(it.get());
 		return prh;
 	}
 
-	holder<screenList> newScreenList()
+	Holder<screenList> newScreenList()
 	{
 		return detail::systemArena().createImpl<screenList, screenListImpl>();
 	}

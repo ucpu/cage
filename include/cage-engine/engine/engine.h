@@ -2,10 +2,10 @@ namespace cage
 {
 	struct CAGE_API controlThreadClass
 	{
-		eventDispatcher<bool()> initialize;
-		eventDispatcher<bool()> finalize;
-		eventDispatcher<bool()> update;
-		eventDispatcher<bool()> assets;
+		EventDispatcher<bool()> initialize;
+		EventDispatcher<bool()> finalize;
+		EventDispatcher<bool()> update;
+		EventDispatcher<bool()> assets;
 		uint64 timePerTick;
 		static const uint32 threadIndex = 0;
 		controlThreadClass();
@@ -14,10 +14,10 @@ namespace cage
 
 	struct CAGE_API graphicsDispatchThreadClass
 	{
-		eventDispatcher<bool()> initialize;
-		eventDispatcher<bool()> finalize;
-		eventDispatcher<bool()> render;
-		eventDispatcher<bool()> swap;
+		EventDispatcher<bool()> initialize;
+		EventDispatcher<bool()> finalize;
+		EventDispatcher<bool()> render;
+		EventDispatcher<bool()> swap;
 		static const uint32 threadIndex = 1;
 		graphicsDispatchThreadClass();
 	};
@@ -25,10 +25,10 @@ namespace cage
 
 	struct CAGE_API graphicsPrepareThreadClass
 	{
-		eventDispatcher<bool()> initialize;
-		eventDispatcher<bool()> finalize;
-		eventDispatcher<bool()> prepare;
-		stereoModeEnum stereoMode;
+		EventDispatcher<bool()> initialize;
+		EventDispatcher<bool()> finalize;
+		EventDispatcher<bool()> prepare;
+		StereoModeEnum stereoMode;
 		static const uint32 threadIndex = 3;
 		graphicsPrepareThreadClass();
 	};
@@ -36,9 +36,9 @@ namespace cage
 
 	struct CAGE_API soundThreadClass
 	{
-		eventDispatcher<bool()> initialize;
-		eventDispatcher<bool()> finalize;
-		eventDispatcher<bool()> sound;
+		EventDispatcher<bool()> initialize;
+		EventDispatcher<bool()> finalize;
+		EventDispatcher<bool()> sound;
 		uint64 timePerTick;
 		static const uint32 threadIndex = 4;
 		soundThreadClass();
@@ -50,8 +50,8 @@ namespace cage
 		uintPtr graphicsEmitMemory;
 		uintPtr graphicsDispatchMemory;
 		uintPtr soundEmitMemory;
-		entityManagerCreateConfig *entities;
-		assetManagerCreateConfig *assets;
+		EntityManagerCreateConfig *entities;
+		AssetManagerCreateConfig *assets;
 		guiManagerCreateConfig *gui;
 		soundContextCreateConfig *soundContext;
 		speakerOutputCreateConfig *speaker;
@@ -64,8 +64,8 @@ namespace cage
 	CAGE_API void engineFinalize();
 
 	CAGE_API soundContext *sound();
-	CAGE_API assetManager *assets();
-	CAGE_API entityManager *entities();
+	CAGE_API AssetManager *assets();
+	CAGE_API EntityManager *entities();
 	CAGE_API windowHandle *window();
 	CAGE_API guiManager *gui();
 	CAGE_API speakerOutput *speaker();

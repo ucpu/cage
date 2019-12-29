@@ -3,17 +3,17 @@
 
 namespace cage
 {
-	class CAGE_API collisionQuery : private immovable
+	class CAGE_API CollisionQuery : private Immovable
 	{
 	public:
 		uint32 name() const;
-		void collider(const collisionMesh *&c, transform &t) const;
+		void collider(const CollisionMesh *&c, transform &t) const;
 		real fractionBefore() const;
 		real fractionContact() const;
-		pointerRange<collisionPair> collisionPairs() const;
+		PointerRange<CollisionPair> collisionPairs() const;
 
-		void query(const collisionMesh *collider, const transform &t);
-		void query(const collisionMesh *collider, const transform &t1, const transform &t2);
+		void query(const CollisionMesh *collider, const transform &t);
+		void query(const CollisionMesh *collider, const transform &t1, const transform &t2);
 
 		void query(const line &shape);
 		void query(const triangle &shape);
@@ -22,24 +22,24 @@ namespace cage
 		void query(const aabb &shape);
 	};
 
-	class CAGE_API collisionData : private immovable
+	class CAGE_API CollisionData : private Immovable
 	{
 	public:
-		void update(uint32 name, const collisionMesh *collider, const transform &t);
+		void update(uint32 name, const CollisionMesh *collider, const transform &t);
 		void remove(uint32 name);
 		void clear();
 		void rebuild();
 	};
 
-	struct CAGE_API collisionDataCreateConfig
+	struct CAGE_API CollisionDataCreateConfig
 	{
-		spatialDataCreateConfig *spatialConfig;
+		SpatialDataCreateConfig *spatialConfig;
 		uint32 maxCollisionPairs;
-		collisionDataCreateConfig();
+		CollisionDataCreateConfig();
 	};
 
-	CAGE_API holder<collisionData> newCollisionData(const collisionDataCreateConfig &config);
-	CAGE_API holder<collisionQuery> newCollisionQuery(const collisionData *data);
+	CAGE_API Holder<CollisionData> newCollisionData(const CollisionDataCreateConfig &config);
+	CAGE_API Holder<CollisionQuery> newCollisionQuery(const CollisionData *data);
 }
 
 #endif // guard_collision_h_erthg456ter4h56r1th64rth

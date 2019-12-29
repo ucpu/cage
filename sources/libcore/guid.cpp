@@ -2,7 +2,7 @@
 
 #define CAGE_EXPORT
 #include <cage-core/core.h>
-#include <cage-core/identifier.h>
+#include <cage-core/guid.h>
 
 namespace cage
 {
@@ -15,7 +15,7 @@ namespace cage
 				*target++ = (uint8)rd();
 		}
 
-		string identifierToString(const uint8 *data, uint32 size)
+		string guidToString(const uint8 *data, uint32 size)
 		{
 			string res;
 			for (uint32 i = 0; i < size; i++)

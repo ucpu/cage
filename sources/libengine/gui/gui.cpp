@@ -107,13 +107,13 @@ namespace cage
 		return impl->components;
 	}
 
-	entityManager *guiManager::entities()
+	EntityManager *guiManager::entities()
 	{
 		guiImpl *impl = (guiImpl*)this;
 		return impl->entityMgr.get();
 	}
 
-	assetManager *guiManager::assets()
+	AssetManager *guiManager::assets()
 	{
 		guiImpl *impl = (guiImpl*)this;
 		return impl->assetMgr;
@@ -124,7 +124,7 @@ namespace cage
 		skinsCount(1)
 	{}
 
-	holder<guiManager> newGuiManager(const guiManagerCreateConfig &config)
+	Holder<guiManager> newGuiManager(const guiManagerCreateConfig &config)
 	{
 		return detail::systemArena().createImpl<guiManager, guiImpl>(config);
 	}

@@ -1,9 +1,9 @@
 namespace cage
 {
-	class CAGE_API skeletalAnimation : private immovable
+	class CAGE_API skeletalAnimation : private Immovable
 	{
 #ifdef CAGE_DEBUG
-		detail::stringBase<64> debugName;
+		detail::StringBase<64> debugName;
 #endif // CAGE_DEBUG
 
 	public:
@@ -15,13 +15,13 @@ namespace cage
 		uint64 duration() const;
 	};
 
-	CAGE_API holder<skeletalAnimation> newSkeletalAnimation();
+	CAGE_API Holder<skeletalAnimation> newSkeletalAnimation();
 
 	namespace detail
 	{
 		CAGE_API real evalCoefficientForSkeletalAnimation(skeletalAnimation *animation, uint64 emitTime, uint64 animationStart, real animationSpeed, real animationOffset);
 	}
 
-	CAGE_API assetScheme genAssetSchemeSkeletalAnimation(uint32 threadIndex);
+	CAGE_API AssetScheme genAssetSchemeSkeletalAnimation(uint32 threadIndex);
 	static const uint32 assetSchemeIndexSkeletalAnimation = 14;
 }

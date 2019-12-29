@@ -34,7 +34,7 @@ namespace cage
 			virtual void initialize() override
 			{
 				CAGE_ASSERT(!hierarchy->firstChild, "input box may not have children");
-				CAGE_ASSERT(!hierarchy->image, "input box may not have image");
+				CAGE_ASSERT(!hierarchy->Image, "input box may not have image");
 
 				showArrows = data.type == inputTypeEnum::Real || data.type == inputTypeEnum::Integer;
 
@@ -103,7 +103,7 @@ namespace cage
 			{
 				try
 				{
-					detail::overrideBreakpoint ob;
+					detail::OverrideBreakpoint ob;
 					switch (data.type)
 					{
 					case inputTypeEnum::Integer:
@@ -129,7 +129,7 @@ namespace cage
 			{
 				try
 				{
-					detail::overrideBreakpoint ob;
+					detail::OverrideBreakpoint ob;
 					switch (data.type)
 					{
 					case inputTypeEnum::Text:
@@ -209,7 +209,7 @@ namespace cage
 						rightPos[0] += bwo + mw + off;
 						break;
 					default:
-						CAGE_THROW_CRITICAL(exception, "invalid input buttons placement enum");
+						CAGE_THROW_CRITICAL(Exception, "invalid input buttons placement enum");
 					}
 				}
 				textPos = mainPos;
@@ -246,7 +246,7 @@ namespace cage
 				}
 				try
 				{
-					detail::overrideBreakpoint ob;
+					detail::OverrideBreakpoint ob;
 					if (data.type == inputTypeEnum::Real)
 					{
 						real v = data.value.toFloat();

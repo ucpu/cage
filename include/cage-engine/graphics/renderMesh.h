@@ -1,9 +1,9 @@
 namespace cage
 {
-	class CAGE_API renderMesh : private immovable
+	class CAGE_API renderMesh : private Immovable
 	{
 #ifdef CAGE_DEBUG
-		detail::stringBase<64> debugName;
+		detail::StringBase<64> debugName;
 #endif // CAGE_DEBUG
 
 	public:
@@ -37,8 +37,8 @@ namespace cage
 		void dispatch(uint32 instances) const;
 	};
 
-	CAGE_API holder<renderMesh> newRenderMesh();
+	CAGE_API Holder<renderMesh> newRenderMesh();
 
-	CAGE_API assetScheme genAssetSchemeRenderMesh(uint32 threadIndex, windowHandle *memoryContext);
+	CAGE_API AssetScheme genAssetSchemeRenderMesh(uint32 threadIndex, windowHandle *memoryContext);
 	static const uint32 assetSchemeIndexMesh = 12;
 }

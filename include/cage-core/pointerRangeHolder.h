@@ -6,39 +6,39 @@
 namespace cage
 {
 	template<class T>
-	struct pointerRangeHolder : public std::vector<typename templates::remove_const<T>::type>
+	struct PointerRangeHolder : public std::vector<typename templates::remove_const<T>::type>
 	{
 		typedef typename templates::remove_const<T>::type CT;
 
-		pointerRangeHolder()
+		PointerRangeHolder()
 		{}
 
-		explicit pointerRangeHolder(std::vector<CT> &&other) : std::vector<CT>(templates::move(other))
+		explicit PointerRangeHolder(std::vector<CT> &&other) : std::vector<CT>(templates::move(other))
 		{}
 
 		template<class IT>
-		explicit pointerRangeHolder(IT a, IT b) : std::vector<CT>(a, b)
+		explicit PointerRangeHolder(IT a, IT b) : std::vector<CT>(a, b)
 		{}
 
 		template<class U>
-		explicit pointerRangeHolder(const pointerRange<U> &other) : std::vector<CT>(other.begin(), other.end())
+		explicit PointerRangeHolder(const PointerRange<U> &other) : std::vector<CT>(other.begin(), other.end())
 		{}
 
-		operator holder<pointerRange<T>>()
+		operator Holder<PointerRange<T>>()
 		{
-			delegate<void(void*)> d;
-			d.bind<memoryArena, &memoryArena::destroy<pointerRangeHolder<T>>>(&detail::systemArena());
-			pointerRangeHolder<T> *p = detail::systemArena().createObject<pointerRangeHolder<T>>();
+			Delegate<void(void*)> d;
+			d.bind<MemoryArena, &MemoryArena::destroy<PointerRangeHolder<T>>>(&detail::systemArena());
+			PointerRangeHolder<T> *p = detail::systemArena().createObject<PointerRangeHolder<T>>();
 			p->swap(*this);
-			p->pr = pointerRange<T>(*p);
-			holder<pointerRange<T>> h(&p->pr, p, d);
+			p->pr = PointerRange<T>(*p);
+			Holder<PointerRange<T>> h(&p->pr, p, d);
 			return h;
 		}
 
 	private:
-		pointerRangeHolder(const pointerRangeHolder &) = delete;
-		pointerRangeHolder &operator = (const pointerRangeHolder &) = delete;
-		pointerRange<T> pr;
+		PointerRangeHolder(const PointerRangeHolder &) = delete;
+		PointerRangeHolder &operator = (const PointerRangeHolder &) = delete;
+		PointerRange<T> pr;
 	};
 }
 

@@ -24,7 +24,7 @@ namespace cage
 
 	namespace privat
 	{
-		guiLayoutsComponents::guiLayoutsComponents(entityManager *ents)
+		guiLayoutsComponents::guiLayoutsComponents(EntityManager *ents)
 		{
 			detail::memset(this, 0, sizeof(*this));
 #define GCHL_GENERATE(T) T = ents->defineComponent<CAGE_JOIN(T, Component)>(CAGE_JOIN(T, Component)(), false);

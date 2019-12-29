@@ -8,7 +8,7 @@
 #include <cage-core/files.h>
 #include <cage-core/fileUtils.h>
 #include <cage-core/concurrent.h>
-#include <cage-core/configIni.h>
+#include <cage-core/ini.h>
 #include <cage-core/process.h>
 #include <cage-core/threadPool.h>
 
@@ -22,7 +22,7 @@ using namespace cage;
 #include "scheme.h"
 #include "notifier.h"
 
-#define CAGE_THROW_WARNING(EXCEPTION, ...) { EXCEPTION e(__FILE__, __LINE__, __FUNCTION__, ::cage::severityEnum::Warning, __VA_ARGS__); e.makeLog(); throw e; }
+#define CAGE_THROW_WARNING(EXCEPTION, ...) { EXCEPTION e(__FILE__, __LINE__, __FUNCTION__, ::cage::SeverityEnum::Warning, __VA_ARGS__); e.makeLog(); throw e; }
 
 namespace
 {
@@ -37,12 +37,12 @@ namespace
 		string name;
 		databankStruct(const string &s = "") : name(s) {};
 
-		void load(fileHandle *f)
+		void load(File *f)
 		{
 			read(f, name);
 		}
 
-		void save(fileHandle *f) const
+		void save(File *f) const
 		{
 			write(f, name);
 		}
@@ -60,14 +60,14 @@ namespace
 
 	bool parseDatabank(const string &path)
 	{
-		holder<configIni> ini = newConfigIni();
+		Holder<Ini> ini = newConfigIni();
 		try
 		{
 			ini->load(pathJoin(configPathInput, path));
 		}
-		catch (cage::exception &)
+		catch (cage::Exception &)
 		{
-			CAGE_LOG(severityEnum::Error, "database", stringizer() + "invalid ini file in databank '" + path + "'");
+			CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "invalid ini file in databank '" + path + "'");
 			return false;
 		}
 
@@ -79,14 +79,14 @@ namespace
 			string scheme = ini->getString(section, "scheme");
 			if (scheme.empty())
 			{
-				CAGE_LOG(severityEnum::Error, "database", stringizer() + "undefined scheme in databank '" + path + "' in section '" + section + "'");
+				CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "undefined scheme in databank '" + path + "' in section '" + section + "'");
 				errors++;
 				continue;
 			}
 			schemeStruct *sch = schemes.retrieve(scheme);
 			if (!sch)
 			{
-				CAGE_LOG(severityEnum::Error, "database", stringizer() + "invalid scheme '" + scheme + "' in databank '" + path + "' in section '" + section + "'");
+				CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "invalid scheme '" + scheme + "' in databank '" + path + "' in section '" + section + "'");
 				errors++;
 				continue;
 			}
@@ -101,7 +101,7 @@ namespace
 					continue;
 				if (!sch->schemeFields.exists(prop))
 				{
-					CAGE_LOG(severityEnum::Error, "database", stringizer() + "unknown property '" + prop + "' (value '" + ini->getString(section, prop) + "') in databank '" + path + "' in section '" + section + "'");
+					CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "unknown property '" + prop + "' (value '" + ini->getString(section, prop) + "') in databank '" + path + "' in section '" + section + "'");
 					propertiesOk = false;
 				}
 			}
@@ -128,9 +128,9 @@ namespace
 				// (in case of multiple databanks in one folder)
 				if (assets.exists(ass.name))
 				{
-					CAGE_LOG(severityEnum::Error, "database", stringizer() + "duplicate asset name '" + ass.name + "' in databank '" + path + "' in section '" + section + "'");
+					CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "duplicate asset name '" + ass.name + "' in databank '" + path + "' in section '" + section + "'");
 					assetStruct &ass2 = *const_cast<assetStruct*>(assets.retrieve(ass.name));
-					CAGE_LOG(severityEnum::Note, "database", stringizer() + "with asset in databank '" + ass2.databank + "'");
+					CAGE_LOG(SeverityEnum::Note, "database", stringizer() + "with asset in databank '" + ass2.databank + "'");
 					ass2.corrupted = true;
 					ok = false;
 				}
@@ -141,8 +141,8 @@ namespace
 					assetStruct &ass2 = *it;
 					if (ass2.outputPath() == ass.outputPath())
 					{
-						CAGE_LOG(severityEnum::Error, "database", stringizer() + "asset output path collision '" + ass.name + "' in databank '" + path + "' in section '" + section + "'");
-						CAGE_LOG(severityEnum::Note, "database", stringizer() + "with '" + ass2.name + "' in databank '" + ass2.databank + "'");
+						CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "asset output path collision '" + ass.name + "' in databank '" + path + "' in section '" + section + "'");
+						CAGE_LOG(SeverityEnum::Note, "database", stringizer() + "with '" + ass2.name + "' in databank '" + ass2.databank + "'");
 						ass2.corrupted = true;
 						ok = false;
 					}
@@ -175,7 +175,7 @@ namespace
 			string s, t, v;
 			if (ini->anyUnused(s, t, v))
 			{
-				CAGE_LOG(severityEnum::Error, "database", stringizer() + "unused property/asset '" + t + "' (value '" + v + "') in databank '" + path + "' in section '" + s + "'");
+				CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "unused property/asset '" + t + "' (value '" + v + "') in databank '" + path + "' in section '" + s + "'");
 				errors++;
 			}
 		}
@@ -185,8 +185,8 @@ namespace
 
 	void processAsset(assetStruct &ass)
 	{
-		detail::overrideBreakpoint overrideBreakpoint;
-		CAGE_LOG(severityEnum::Info, "asset", ass.name);
+		detail::OverrideBreakpoint OverrideBreakpoint;
+		CAGE_LOG(SeverityEnum::Info, "asset", ass.name);
 		ass.corrupted = true;
 		ass.needNotify = true;
 		ass.files.clear();
@@ -197,9 +197,9 @@ namespace
 		try
 		{
 			if (!scheme->applyOnAsset(ass))
-				CAGE_THROW_WARNING(exception, "asset has invalid configuration");
+				CAGE_THROW_WARNING(Exception, "asset has invalid configuration");
 
-			holder<processHandle> prg = newProcess(scheme->processor);
+			Holder<Process> prg = newProcess(scheme->processor);
 			prg->writeLine(pathToAbs(configPathInput)); // inputDirectory
 			prg->writeLine(ass.name); // inputName
 			prg->writeLine(pathToAbs(string(configPathIntermediate).empty() ? configPathOutput : configPathIntermediate)); // outputDirectory
@@ -217,18 +217,18 @@ namespace
 				string line = prg->readLine();
 				if (line.empty() || line == "cage-error")
 				{
-					CAGE_THROW_WARNING(exception, "processing thrown an error");
+					CAGE_THROW_WARNING(Exception, "processing thrown an error");
 				}
 				else if (line == "cage-begin")
 				{
 					if (end || begin)
-						CAGE_THROW_WARNING(exception, "unexpected cage-begin");
+						CAGE_THROW_WARNING(Exception, "unexpected cage-begin");
 					begin = true;
 				}
 				else if (line == "cage-end")
 				{
 					if (end || !begin)
-						CAGE_THROW_WARNING(exception, "unexpected cage-end");
+						CAGE_THROW_WARNING(Exception, "unexpected cage-end");
 					end = true;
 					break;
 				}
@@ -245,34 +245,34 @@ namespace
 						if (ass.aliasName.empty())
 							ass.aliasName = line;
 						else
-							CAGE_THROW_WARNING(exception, "assets international name cannot be overridden");
+							CAGE_THROW_WARNING(Exception, "assets international name cannot be overridden");
 					}
 					else
 					{
-						CAGE_LOG(severityEnum::Note, "exception", string("parameter: ") + param);
-						CAGE_LOG(severityEnum::Note, "exception", string("value: ") + line);
-						CAGE_THROW_WARNING(exception, "unknown parameter name");
+						CAGE_LOG(SeverityEnum::Note, "exception", string("parameter: ") + param);
+						CAGE_LOG(SeverityEnum::Note, "exception", string("value: ") + line);
+						CAGE_THROW_WARNING(Exception, "unknown parameter name");
 					}
 				}
 				else
-					CAGE_LOG(severityEnum::Note, "processor", line);
+					CAGE_LOG(SeverityEnum::Note, "processor", line);
 			}
 
 			int ret = prg->wait();
 			if (ret != 0)
-				CAGE_THROW_WARNING(systemError, "process returned error code", ret);
+				CAGE_THROW_WARNING(SystemError, "process returned error code", ret);
 
 			ass.corrupted = false;
 		}
-		catch (const exception &e)
+		catch (const Exception &e)
 		{
-			if (e.severity >= severityEnum::Error)
+			if (e.severity >= SeverityEnum::Error)
 				throw;
-			CAGE_LOG(severityEnum::Error, "database", stringizer() + "processing asset '" + ass.name + "' failed");
+			CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "processing asset '" + ass.name + "' failed");
 		}
 		catch (...)
 		{
-			CAGE_THROW_ERROR(exception, "unknown exception during asset processing");
+			CAGE_THROW_ERROR(Exception, "unknown exception during asset processing");
 		}
 	}
 
@@ -280,26 +280,26 @@ namespace
 	{
 		if (!pathIsFile(configPathDatabase))
 			return;
-		CAGE_LOG(severityEnum::Info, "database", stringizer() + "loading database cache: '" + (string)configPathDatabase + "'");
-		holder<fileHandle> f = newFile(configPathDatabase, fileMode(true, false));
+		CAGE_LOG(SeverityEnum::Info, "database", stringizer() + "loading database cache: '" + (string)configPathDatabase + "'");
+		Holder<File> f = newFile(configPathDatabase, FileMode(true, false));
 		string b;
 		if (!f->readLine(b) || b != databaseBegin)
-			CAGE_THROW_ERROR(exception, "invalid file format");
+			CAGE_THROW_ERROR(Exception, "invalid file format");
 		if (!f->readLine(b) || b != databaseVersion)
 		{
-			CAGE_LOG(severityEnum::Warning, "database", "assets database file version mismatch, database will not be loaded");
+			CAGE_LOG(SeverityEnum::Warning, "database", "assets database file version mismatch, database will not be loaded");
 			return;
 		}
 		f->read(&timestamp, sizeof(timestamp));
 		corruptedDatabanks.load(f.get());
 		assets.load(f.get());
 		if (!f->readLine(b) || b != databaseEnd)
-			CAGE_THROW_ERROR(exception, "wrong file end");
+			CAGE_THROW_ERROR(Exception, "wrong file end");
 		f->close();
-		CAGE_LOG(severityEnum::Info, "database", stringizer() + "loaded " + assets.size() + " asset entries");
+		CAGE_LOG(SeverityEnum::Info, "database", stringizer() + "loaded " + assets.size() + " asset entries");
 	}
 
-	void write(holder<fileHandle> &f, const string &s)
+	void write(Holder<File> &f, const string &s)
 	{
 		f->write(s.c_str(), s.length());
 		f->write(" ", 1);
@@ -310,8 +310,8 @@ namespace
 		// save database
 		if (!((string)configPathDatabase).empty())
 		{
-			CAGE_LOG(severityEnum::Info, "database", stringizer() + "saving database cache: '" + (string)configPathDatabase + "'");
-			holder<fileHandle> f = newFile(configPathDatabase, fileMode(false, true));
+			CAGE_LOG(SeverityEnum::Info, "database", stringizer() + "saving database cache: '" + (string)configPathDatabase + "'");
+			Holder<File> f = newFile(configPathDatabase, FileMode(false, true));
 			f->writeLine(databaseBegin);
 			f->writeLine(databaseVersion);
 			f->write(&timestamp, sizeof(timestamp));
@@ -319,15 +319,15 @@ namespace
 			assets.save(f.get());
 			f->writeLine(databaseEnd);
 			f->close();
-			CAGE_LOG(severityEnum::Info, "database", stringizer() + "saved " + assets.size() + " asset entries");
+			CAGE_LOG(SeverityEnum::Info, "database", stringizer() + "saved " + assets.size() + " asset entries");
 		}
 
 		// save list by hash
 		if (!((string)configPathByHash).empty())
 		{
-			fileMode fm(false, true);
+			FileMode fm(false, true);
 			fm.textual = true;
-			holder<fileHandle> f = newFile(configPathByHash, fm);
+			Holder<File> f = newFile(configPathByHash, fm);
 			std::vector<std::pair<string, const assetStruct*>> items;
 			for (const auto &it : assets)
 			{
@@ -354,9 +354,9 @@ namespace
 		// save list by names
 		if (!((string)configPathByName).empty())
 		{
-			fileMode fm(false, true);
+			FileMode fm(false, true);
 			fm.textual = true;
-			holder<fileHandle> f = newFile(configPathByName, fm);
+			Holder<File> f = newFile(configPathByName, fm);
 			std::vector<std::pair<string, const assetStruct*>> items;
 			for (const auto &it : assets)
 			{
@@ -407,8 +407,8 @@ namespace
 	void findFiles(const string &path)
 	{
 		string pth = pathJoin(configPathInput, path);
-		CAGE_LOG(severityEnum::Info, "database", stringizer() + "checking path '" + pth + "'");
-		holder<directoryList> d = newDirectoryList(pth);
+		CAGE_LOG(SeverityEnum::Info, "database", stringizer() + "checking path '" + pth + "'");
+		Holder<DirectoryList> d = newDirectoryList(pth);
 		while (d->valid())
 		{
 			string p = pathJoin(path, d->name());
@@ -418,7 +418,7 @@ namespace
 			{
 				try
 				{
-					detail::overrideBreakpoint o;
+					detail::OverrideBreakpoint o;
 					uint64 lt = d->lastChange();
 					files[p] = lt;
 				}
@@ -433,8 +433,8 @@ namespace
 
 	void moveIntermediateFiles()
 	{
-		holder<directoryList> listIn = newDirectoryList(configPathIntermediate);
-		holder<directoryList> listOut = newDirectoryList(configPathOutput); // keep the archive open until all files are written (this significantly speeds up the moving process, but it causes the process to keep all the files in memory)
+		Holder<DirectoryList> listIn = newDirectoryList(configPathIntermediate);
+		Holder<DirectoryList> listOut = newDirectoryList(configPathOutput); // keep the archive open until all files are written (this significantly speeds up the moving process, but it causes the process to keep all the files in memory)
 		uint64 movedSize = 0;
 		while (listIn->valid())
 		{
@@ -446,7 +446,7 @@ namespace
 			}
 			string f = pathJoin(configPathIntermediate, listIn->name());
 			string t = pathJoin(configPathOutput, listIn->name());
-			movedSize += newFile(f, fileMode(true, false))->size();
+			movedSize += newFile(f, FileMode(true, false))->size();
 			pathMove(f, t);
 			listIn->next();
 		}
@@ -467,8 +467,8 @@ namespace
 	}
 
 	holderSet<assetStruct>::iterator itg;
-	holder<syncMutex> mut;
-	holder<threadPool> threads;
+	Holder<Mutex> mut;
+	Holder<ThreadPool> threads;
 
 	void threadEntry(uint32, uint32)
 	{
@@ -476,7 +476,7 @@ namespace
 		{
 			assetStruct *ass = nullptr;
 			{
-				scopeLock<syncMutex> m(mut);
+				ScopeLock<Mutex> m(mut);
 				if (itg != assets.end())
 					ass = const_cast<assetStruct*>(itg++->get());
 			}
@@ -488,13 +488,13 @@ namespace
 				{
 					processAsset(*ass);
 				}
-				catch (const cage::exception &)
+				catch (const cage::Exception &)
 				{
 					// do nothing
 				}
 				catch (...)
 				{
-					CAGE_LOG(severityEnum::Error, "exception", "caught unknown exception in asset processing thread");
+					CAGE_LOG(SeverityEnum::Error, "exception", "caught unknown exception in asset processing thread");
 				}
 			}
 		}
@@ -513,7 +513,7 @@ namespace
 
 	void checkAssets()
 	{
-		CAGE_LOG(severityEnum::Info, "database", "looking for assets to process");
+		CAGE_LOG(SeverityEnum::Info, "database", "looking for assets to process");
 		if (!string(configPathIntermediate).empty())
 			pathRemove(configPathIntermediate);
 		verdictValue = false;
@@ -583,7 +583,7 @@ namespace
 			if (!ass.aliasName.empty() && outputHashes.find(ass.aliasPath()) != outputHashes.end())
 			{
 				ass.corrupted = true;
-				CAGE_LOG(severityEnum::Warning, "database", stringizer() + "asset '" + ass.name + "' in databank '" + ass.databank + "' with alias name '" + ass.aliasName + "' collides with another asset");
+				CAGE_LOG(SeverityEnum::Warning, "database", stringizer() + "asset '" + ass.name + "' in databank '" + ass.databank + "' with alias name '" + ass.aliasName + "' collides with another asset");
 			}
 
 			// warn about missing references
@@ -593,7 +593,7 @@ namespace
 				if (!assets.exists(it))
 				{
 					anyMissing = true;
-					CAGE_LOG(severityEnum::Warning, "database", stringizer() + "asset '" + ass.name + "' in databank '" + ass.databank + "' is missing reference '" + it + "'");
+					CAGE_LOG(SeverityEnum::Warning, "database", stringizer() + "asset '" + ass.name + "' in databank '" + ass.databank + "' is missing reference '" + it + "'");
 				}
 			}
 			if (anyMissing)
@@ -611,7 +611,7 @@ namespace
 		save();
 		if (countBadDatabanks || countCorrupted || countMissingReferences)
 		{
-			CAGE_LOG(severityEnum::Warning, "verdict", stringizer() +
+			CAGE_LOG(SeverityEnum::Warning, "verdict", stringizer() +
 				countBadDatabanks + " corrupted databanks, " +
 				countCorrupted + " corrupted assets, " +
 				countMissingReferences + " missing references");
@@ -619,7 +619,7 @@ namespace
 		else
 		{
 			sendAllNotifications();
-			CAGE_LOG(severityEnum::Info, "verdict", "ok");
+			CAGE_LOG(SeverityEnum::Info, "verdict", "ok");
 			verdictValue = true;
 		}
 	}
@@ -627,7 +627,7 @@ namespace
 	void loadSchemesDirectory(const string &dir)
 	{
 		string realpath = pathJoin(configPathSchemes, dir);
-		holder<directoryList> lst = newFilesystem()->listDirectory(realpath);
+		Holder<DirectoryList> lst = newFilesystem()->listDirectory(realpath);
 		for (; lst->valid(); lst->next())
 		{
 			string name = pathJoin(dir, lst->name());
@@ -640,8 +640,8 @@ namespace
 				continue;
 			schemeStruct s;
 			s.name = name.subString(0, name.length() - 7);
-			CAGE_LOG(severityEnum::Info, "database", stringizer() + "loading scheme '" + s.name + "'");
-			holder<configIni> ini = newConfigIni();
+			CAGE_LOG(SeverityEnum::Info, "database", stringizer() + "loading scheme '" + s.name + "'");
+			Holder<Ini> ini = newConfigIni();
 			ini->load(pathJoin(configPathSchemes, name));
 			s.parse(ini.get());
 			schemes.insert(templates::move(s));
@@ -650,10 +650,10 @@ namespace
 
 	void checkOutputDir()
 	{
-		pathTypeFlags t = pathType(configPathOutput);
-		if (configOutputArchive && (t & pathTypeFlags::NotFound) == pathTypeFlags::NotFound)
+		PathTypeFlags t = pathType(configPathOutput);
+		if (configOutputArchive && (t & PathTypeFlags::NotFound) == PathTypeFlags::NotFound)
 			return pathCreateArchive(configPathOutput);
-		if ((t & pathTypeFlags::Archive) == pathTypeFlags::Archive)
+		if ((t & PathTypeFlags::Archive) == PathTypeFlags::Archive)
 			return;
 		// the output is not an archive, output to it directly
 		configPathIntermediate = "";
@@ -664,12 +664,12 @@ void start()
 {
 	// load schemes
 	loadSchemesDirectory("");
-	CAGE_LOG(severityEnum::Info, "database", stringizer() + "loaded " + schemes.size() + " schemes");
+	CAGE_LOG(SeverityEnum::Info, "database", stringizer() + "loaded " + schemes.size() + " schemes");
 
 	// load
 	timestamp = 0;
 	if (configFromScratch)
-		CAGE_LOG(severityEnum::Info, "database", "'from scratch' was defined. Previous cache is ignored.");
+		CAGE_LOG(SeverityEnum::Info, "database", "'from scratch' was defined. Previous cache is ignored.");
 	else
 		load();
 
@@ -680,9 +680,9 @@ void start()
 
 void listen()
 {
-	CAGE_LOG(severityEnum::Info, "database", "initializing listening for changes");
+	CAGE_LOG(SeverityEnum::Info, "database", "initializing listening for changes");
 	notifierInitialize(configNotifierPort);
-	holder<filesystemWatcher> changes = newFilesystemWatcher();
+	Holder<FilesystemWatcher> changes = newFilesystemWatcher();
 	changes->registerPath(configPathInput);
 	uint32 cycles = 0;
 	bool changed = false;

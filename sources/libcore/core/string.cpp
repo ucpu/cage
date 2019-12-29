@@ -59,8 +59,8 @@ namespace cage
 				}
 				if (!*s || !e || *e != 0 || std::isspace(*s) || errno != 0)
 				{
-					CAGE_LOG(severityEnum::Note, "exception", stringizer() + "input string: '" + s + "'");
-					CAGE_THROW_ERROR(exception, "fromString failed");
+					CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "input string: '" + s + "'");
+					CAGE_THROW_ERROR(Exception, "fromString failed");
 				}
 			}
 
@@ -72,8 +72,8 @@ namespace cage
 				value = std::strtoll(s, &e, 10);
 				if (!*s || !e || *e != 0 || std::isspace(*s) || errno != 0)
 				{
-					CAGE_LOG(severityEnum::Note, "exception", stringizer() + "input string: '" + s + "'");
-					CAGE_THROW_ERROR(exception, "fromString failed");
+					CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "input string: '" + s + "'");
+					CAGE_THROW_ERROR(Exception, "fromString failed");
 				}
 			}
 
@@ -85,8 +85,8 @@ namespace cage
 				value = std::strtoull(s, &e, 10);
 				if (!*s || !e || *s == '-' || *e != 0 || std::isspace(*s) || errno != 0)
 				{
-					CAGE_LOG(severityEnum::Note, "exception", stringizer() + "input string: '" + s + "'");
-					CAGE_THROW_ERROR(exception, "fromString failed");
+					CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "input string: '" + s + "'");
+					CAGE_THROW_ERROR(Exception, "fromString failed");
 				}
 			}
 
@@ -98,8 +98,8 @@ namespace cage
 				double v = std::strtod(s, &e);
 				if (!*s || !e || *e != 0 || std::isspace(*s) || errno != 0)
 				{
-					CAGE_LOG(severityEnum::Note, "exception", stringizer() + "input string: '" + s + "'");
-					CAGE_THROW_ERROR(exception, "fromString failed");
+					CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "input string: '" + s + "'");
+					CAGE_THROW_ERROR(Exception, "fromString failed");
 				}
 				value = v;
 			}
@@ -111,8 +111,8 @@ namespace cage
 				genericScan(s, v);
 				if (v < detail::numeric_limits<float>::min() || v > detail::numeric_limits<float>::max())
 				{
-					CAGE_LOG(severityEnum::Note, "exception", stringizer() + "input string: '" + s + "'");
-					CAGE_THROW_ERROR(exception, "fromString failed");
+					CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "input string: '" + s + "'");
+					CAGE_THROW_ERROR(Exception, "fromString failed");
 				}
 				value = (float)v;
 			}
@@ -120,7 +120,7 @@ namespace cage
 
 #define GCHL_GENERATE(TYPE, SPEC) \
 		uint32 toString(char *s, TYPE value) \
-		{ sint32 ret = std::sprintf(s, CAGE_STRINGIZE(SPEC), value); if (ret < 0) CAGE_THROW_ERROR(exception, "toString failed"); return ret; } \
+		{ sint32 ret = std::sprintf(s, CAGE_STRINGIZE(SPEC), value); if (ret < 0) CAGE_THROW_ERROR(Exception, "toString failed"); return ret; } \
 		void fromString(const char *s, TYPE &value) \
 		{ return genericScan(s, value); }
 		GCHL_GENERATE(sint8, %hhd);
@@ -144,7 +144,7 @@ namespace cage
 		{
 			auto l = std::strlen(src);
 			if (l > dstLen)
-				CAGE_THROW_ERROR(exception, "string truncation");
+				CAGE_THROW_ERROR(Exception, "string truncation");
 			std::memcpy(dst, src, l);
 			return numeric_cast<uint32>(l);
 		}
@@ -244,7 +244,7 @@ namespace cage
 			char tmp[4096];
 			uint32 len = encodeUrlBase(tmp, dataIn, currentIn);
 			if (len > maxLength)
-				CAGE_THROW_ERROR(exception, "string truncation");
+				CAGE_THROW_ERROR(Exception, "string truncation");
 			std::memcpy(dataOut, tmp, len);
 			currentOut = len;
 		}
@@ -254,7 +254,7 @@ namespace cage
 			char tmp[4096];
 			uint32 len = decodeUrlBase(tmp, dataIn, currentIn);
 			if (len > maxLength)
-				CAGE_THROW_ERROR(exception, "string truncation");
+				CAGE_THROW_ERROR(Exception, "string truncation");
 			std::memcpy(dataOut, tmp, len);
 			currentOut = len;
 		}
@@ -296,7 +296,7 @@ namespace cage
 				if (pos == m)
 					break;
 				if (current + withLen - whatLen > maxLength)
-					CAGE_THROW_ERROR(exception, "string truncation");
+					CAGE_THROW_ERROR(Exception, "string truncation");
 				std::memmove(data + pos + withLen, data + pos + whatLen, current - pos - whatLen);
 				std::memcpy(data + pos, with, withLen);
 				current += withLen - whatLen;

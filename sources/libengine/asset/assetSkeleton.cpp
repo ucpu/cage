@@ -13,7 +13,7 @@ namespace cage
 {
 	namespace
 	{
-		void processLoad(const assetContext *context, void *schemePointer)
+		void processLoad(const AssetContext *context, void *schemePointer)
 		{
 			skeletonRig *skl = nullptr;
 			if (context->assetHolder)
@@ -28,7 +28,7 @@ namespace cage
 			}
 			context->returnData = skl;
 
-			deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
+			Deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
 			skeletonRigHeader data;
 			des >> data;
 			uint16 *boneParents = (uint16*)des.advance(sizeof(uint16) * data.bonesCount);
@@ -39,9 +39,9 @@ namespace cage
 		}
 	}
 
-	assetScheme genAssetSchemeSkeletonRig(uint32 threadIndex)
+	AssetScheme genAssetSchemeSkeletonRig(uint32 threadIndex)
 	{
-		assetScheme s;
+		AssetScheme s;
 		s.threadIndex = threadIndex;
 		s.load.bind<&processLoad>();
 		return s;

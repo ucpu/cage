@@ -20,12 +20,12 @@ namespace cage
 			return hash;
 		}
 
-		uint32 hashBuffer(const memoryBuffer &buffer)
+		uint32 hashBuffer(const MemoryBuffer &buffer)
 		{
 			return hashBuffer(buffer.data(), buffer.size());
 		}
 
-		uint32 hashString(const char *str)
+		uint32 HashString(const char *str)
 		{
 			return hashBuffer(str, std::strlen(str));
 		}

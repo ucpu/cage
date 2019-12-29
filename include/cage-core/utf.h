@@ -3,9 +3,9 @@
 
 namespace cage
 {
-	struct CAGE_API invalidUtfString : public exception
+	struct CAGE_API InvalidUtfString : public Exception
 	{
-		explicit invalidUtfString(const char *file, uint32 line, const char *function, severityEnum severity, const char *message) noexcept;
+		explicit InvalidUtfString(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept;
 		virtual void log();
 	};
 

@@ -119,9 +119,9 @@ namespace cage
 			return a;
 		if (pathIsAbs(b))
 		{
-			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "first path: '" + a + "'");
-			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "second path: '" + b + "'");
-			CAGE_THROW_ERROR(exception, "cannot join with absolute path on right side");
+			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "first path: '" + a + "'");
+			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "second path: '" + b + "'");
+			CAGE_THROW_ERROR(Exception, "cannot join with absolute path on right side");
 		}
 		if (a.empty())
 			return b;
@@ -151,7 +151,7 @@ namespace cage
 					continue;
 				}
 				if (absolute)
-					CAGE_THROW_ERROR(exception, "path cannot go beyond root");
+					CAGE_THROW_ERROR(Exception, "path cannot go beyond root");
 			}
 			parts.push_back(p);
 		}
@@ -288,17 +288,17 @@ namespace cage
 		return e;
 	}
 
-	pathTypeFlags pathType(const string &path)
+	PathTypeFlags pathType(const string &path)
 	{
 		if (!pathIsValid(path))
-			return pathTypeFlags::Invalid;
+			return PathTypeFlags::Invalid;
 		string p;
 		auto a = archiveFindTowardsRoot(path, true, p);
 		if (a)
 		{
 			if (p.empty())
-				return pathTypeFlags::File | pathTypeFlags::Archive;
-			return a->type(p) | pathTypeFlags::InsideArchive;
+				return PathTypeFlags::File | PathTypeFlags::Archive;
+			return a->type(p) | PathTypeFlags::InsideArchive;
 		}
 		else
 			return realType(path);
@@ -306,7 +306,7 @@ namespace cage
 
 	bool pathIsFile(const string &path)
 	{
-		return (pathType(path) & pathTypeFlags::File) == pathTypeFlags::File;
+		return (pathType(path) & PathTypeFlags::File) == PathTypeFlags::File;
 	}
 
 	void pathCreateDirectories(const string &path)
@@ -351,57 +351,57 @@ namespace cage
 			return realLastChange(path);
 	}
 
-	string pathSearchTowardsRoot(const string &name, pathTypeFlags type)
+	string pathSearchTowardsRoot(const string &name, PathTypeFlags type)
 	{
 		return pathSearchTowardsRoot(name, pathWorkingDir(), type);
 	}
 
-	string pathSearchTowardsRoot(const string &name, const string &whereToStart, pathTypeFlags type)
+	string pathSearchTowardsRoot(const string &name, const string &whereToStart, PathTypeFlags type)
 	{
 		if (name.empty())
-			CAGE_THROW_ERROR(exception, "name cannot be empty");
+			CAGE_THROW_ERROR(Exception, "name cannot be empty");
 		try
 		{
-			detail::overrideException oe;
+			detail::OverrideException oe;
 			string p = whereToStart;
 			while (true)
 			{
 				string s = pathJoin(p, name);
-				if ((pathType(s) & type) != pathTypeFlags::None)
+				if ((pathType(s) & type) != PathTypeFlags::None)
 					return s;
 				p = pathJoin(p, "..");
 			}
 		}
-		catch (const exception &)
+		catch (const Exception &)
 		{
-			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "name: '" + name + "'");
-			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "whereToStart: '" + whereToStart + "'");
-			CAGE_THROW_ERROR(exception, "failed to find the path");
+			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "name: '" + name + "'");
+			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "whereToStart: '" + whereToStart + "'");
+			CAGE_THROW_ERROR(Exception, "failed to find the path");
 		}
 	}
 
-	pathTypeFlags realType(const string &path)
+	PathTypeFlags realType(const string &path)
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
 
 		auto a = GetFileAttributes(path.c_str());
 		if (a == INVALID_FILE_ATTRIBUTES)
-			return pathTypeFlags::NotFound;
+			return PathTypeFlags::NotFound;
 		if ((a & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
-			return pathTypeFlags::Directory;
+			return PathTypeFlags::Directory;
 		else
-			return pathTypeFlags::File;
+			return PathTypeFlags::File;
 
 #else
 
 		struct stat st;
 		if (stat(path.c_str(), &st) != 0)
-			return pathTypeFlags::NotFound;
+			return PathTypeFlags::NotFound;
 		if ((st.st_mode & S_IFDIR) == S_IFDIR)
-			return pathTypeFlags::Directory;
+			return PathTypeFlags::Directory;
 		if ((st.st_mode & S_IFREG) == S_IFREG)
-			return pathTypeFlags::File;
-		return pathTypeFlags::None;
+			return PathTypeFlags::File;
+		return PathTypeFlags::None;
 
 #endif
 	}
@@ -420,7 +420,7 @@ namespace cage
 			if (pos)
 			{
 				const string p = pth.subString(0, pos);
-				if ((realType(p) & pathTypeFlags::Directory) == pathTypeFlags::Directory)
+				if ((realType(p) & PathTypeFlags::Directory) == PathTypeFlags::Directory)
 					continue;
 
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -429,16 +429,16 @@ namespace cage
 					auto err = GetLastError();
 					if (err != ERROR_ALREADY_EXISTS)
 					{
-						CAGE_LOG(severityEnum::Note, "exception", stringizer() + "path: '" + path + "'");
-						CAGE_THROW_ERROR(systemError, "CreateDirectory", err);
+						CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "path: '" + path + "'");
+						CAGE_THROW_ERROR(SystemError, "CreateDirectory", err);
 					}
 				}
 #else
 				static const mode_t mode = 0755;
 				if (mkdir(p.c_str(), mode) != 0 && errno != EEXIST)
 				{
-					CAGE_LOG(severityEnum::Note, "exception", stringizer() + "path: '" + path + "'");
-					CAGE_THROW_ERROR(exception, "mkdir");
+					CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "path: '" + path + "'");
+					CAGE_THROW_ERROR(Exception, "mkdir");
 				}
 #endif
 			}
@@ -454,8 +454,8 @@ namespace cage
 		auto res = MoveFile(from.c_str(), to.c_str());
 		if (res == 0)
 		{
-			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "path from: '" + from + "'" + ", to: '" + to + "'");
-			CAGE_THROW_ERROR(systemError, "pathMove", GetLastError());
+			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "path from: '" + from + "'" + ", to: '" + to + "'");
+			CAGE_THROW_ERROR(SystemError, "pathMove", GetLastError());
 		}
 
 #else
@@ -463,8 +463,8 @@ namespace cage
 		auto res = rename(from.c_str(), to.c_str());
 		if (res != 0)
 		{
-			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "path from: '" + from + "'" + ", to: '" + to + "'");
-			CAGE_THROW_ERROR(systemError, "pathMove", errno);
+			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "path from: '" + from + "'" + ", to: '" + to + "'");
+			CAGE_THROW_ERROR(SystemError, "pathMove", errno);
 		}
 
 #endif
@@ -472,10 +472,10 @@ namespace cage
 
 	void realRemove(const string &path)
 	{
-		pathTypeFlags t = realType(path);
-		if ((t & pathTypeFlags::Directory) == pathTypeFlags::Directory)
+		PathTypeFlags t = realType(path);
+		if ((t & PathTypeFlags::Directory) == PathTypeFlags::Directory)
 		{
-			holder<directoryList> list = newDirectoryList(path);
+			Holder<DirectoryList> list = newDirectoryList(path);
 			while (list->valid())
 			{
 				pathRemove(pathJoin(path, list->name()));
@@ -483,20 +483,20 @@ namespace cage
 			}
 #ifdef CAGE_SYSTEM_WINDOWS
 			if (RemoveDirectory(path.c_str()) == 0)
-				CAGE_THROW_ERROR(systemError, "RemoveDirectory", GetLastError());
+				CAGE_THROW_ERROR(SystemError, "RemoveDirectory", GetLastError());
 #else
 			if (rmdir(path.c_str()) != 0)
-				CAGE_THROW_ERROR(systemError, "rmdir", errno);
+				CAGE_THROW_ERROR(SystemError, "rmdir", errno);
 #endif
 		}
-		else if ((t & pathTypeFlags::NotFound) == pathTypeFlags::None)
+		else if ((t & PathTypeFlags::NotFound) == PathTypeFlags::None)
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
 			if (DeleteFile(path.c_str()) == 0)
-				CAGE_THROW_ERROR(systemError, "DeleteFile", GetLastError());
+				CAGE_THROW_ERROR(SystemError, "DeleteFile", GetLastError());
 #else
 			if (unlink(path.c_str()) != 0)
-				CAGE_THROW_ERROR(systemError, "unlink", errno);
+				CAGE_THROW_ERROR(SystemError, "unlink", errno);
 #endif
 		}
 	}
@@ -508,14 +508,14 @@ namespace cage
 		HANDLE hFile = CreateFile(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
 		if (hFile == INVALID_HANDLE_VALUE)
 		{
-			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "path: '" + path + "'");
-			CAGE_THROW_ERROR(exception, "path does not exist");
+			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "path: '" + path + "'");
+			CAGE_THROW_ERROR(Exception, "path does not exist");
 		}
 		FILETIME ftWrite;
 		if (!GetFileTime(hFile, nullptr, nullptr, &ftWrite))
 		{
-			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "path: '" + path + "'");
-			CAGE_THROW_ERROR(exception, "path does not exist");
+			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "path: '" + path + "'");
+			CAGE_THROW_ERROR(Exception, "path does not exist");
 		}
 		ULARGE_INTEGER l;
 		l.LowPart = ftWrite.dwLowDateTime;
@@ -528,8 +528,8 @@ namespace cage
 		struct stat st;
 		if (stat(pathToAbs(path).c_str(), &st) == 0)
 			return st.st_mtime;
-		CAGE_LOG(severityEnum::Note, "exception", stringizer() + "path: '" + path + "'");
-		CAGE_THROW_ERROR(systemError, "stat", errno);
+		CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "path: '" + path + "'");
+		CAGE_THROW_ERROR(SystemError, "stat", errno);
 
 #endif
 	}
@@ -541,9 +541,9 @@ namespace cage
 		char buffer[string::MaxLength];
 		uint32 len = GetCurrentDirectory(string::MaxLength - 1, buffer);
 		if (len <= 0)
-			CAGE_THROW_ERROR(systemError, "GetCurrentDirectory", GetLastError());
+			CAGE_THROW_ERROR(SystemError, "GetCurrentDirectory", GetLastError());
 		if (len >= string::MaxLength)
-			CAGE_THROW_ERROR(exception, "path too long");
+			CAGE_THROW_ERROR(Exception, "path too long");
 		return pathSimplify(string(buffer, len));
 
 #else
@@ -551,7 +551,7 @@ namespace cage
 		char buffer[string::MaxLength];
 		if (getcwd(buffer, string::MaxLength - 1) != nullptr)
 			return pathSimplify(buffer);
-		CAGE_THROW_ERROR(exception, "getcwd");
+		CAGE_THROW_ERROR(Exception, "getcwd");
 
 #endif
 	}
@@ -566,7 +566,7 @@ namespace cage
 
 			uint32 len = GetModuleFileName(nullptr, (char*)&buffer, string::MaxLength);
 			if (len == 0)
-				CAGE_THROW_ERROR(systemError, "GetModuleFileName", GetLastError());
+				CAGE_THROW_ERROR(SystemError, "GetModuleFileName", GetLastError());
 
 #elif defined(CAGE_SYSTEM_LINUX)
 
@@ -574,13 +574,13 @@ namespace cage
 			sprintf(id, "/proc/%d/exe", getpid());
 			sint32 len = readlink(id, buffer, string::MaxLength);
 			if (len == -1)
-				CAGE_THROW_ERROR(systemError, "readlink", errno);
+				CAGE_THROW_ERROR(SystemError, "readlink", errno);
 
 #elif defined(CAGE_SYSTEM_MAC)
 
 			uint32 len = sizeof(buffer);
 			if (_NSGetExecutablePath(buffer, &len) != 0)
-				CAGE_THROW_ERROR(exception, "_NSGetExecutablePath");
+				CAGE_THROW_ERROR(Exception, "_NSGetExecutablePath");
 			len = detail::strlen(buffer);
 
 #else

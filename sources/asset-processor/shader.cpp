@@ -17,7 +17,7 @@ namespace
 	std::map<string, string> defines;
 	std::set<string, stringComparatorFast> onces;
 
-	configBool configShaderPrint("cage-asset-processor/shader/preview");
+	ConfigBool configShaderPrint("cage-asset-processor/shader/preview");
 
 	bool validDefineChar(const char c)
 	{
@@ -81,8 +81,8 @@ namespace
 			return l.toBool();
 		else
 		{
-			CAGE_LOG(severityEnum::Note, "exception", string("expression: ") + l);
-			CAGE_THROW_ERROR(exception, "expression cannot be converted to bool");
+			CAGE_LOG(SeverityEnum::Note, "exception", string("expression: ") + l);
+			CAGE_THROW_ERROR(Exception, "expression cannot be converted to bool");
 		}
 	}
 
@@ -91,7 +91,7 @@ namespace
 	string evalExp(const string &l)
 	{
 		if (l.empty())
-			CAGE_THROW_ERROR(exception, "unexpected end of line");
+			CAGE_THROW_ERROR(Exception, "unexpected end of line");
 		uint32 p = l.find('|');
 		if (p != m)
 		{
@@ -186,10 +186,10 @@ namespace
 					return string(&left[index], 1);
 			}
 			{
-				CAGE_LOG(severityEnum::Note, "exception", stringizer() + "expression: '" + l + "'");
-				CAGE_LOG(severityEnum::Note, "exception", stringizer() + "string: '" + left + "'");
-				CAGE_LOG(severityEnum::Note, "exception", stringizer() + "index: '" + right + "'");
-				CAGE_THROW_ERROR(exception, "non integer index or out of bounds");
+				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "expression: '" + l + "'");
+				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "string: '" + left + "'");
+				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "index: '" + right + "'");
+				CAGE_THROW_ERROR(Exception, "non integer index or out of bounds");
 			}
 		}
 		if (l[0] == '!')
@@ -215,15 +215,15 @@ namespace
 			uint32 o = l.subString(0, z).reverse().find('(');
 			if (o == m)
 			{
-				CAGE_LOG(severityEnum::Note, "exception", stringizer() + "expression: '" + input + "'");
-				CAGE_THROW_ERROR(exception, "unmatched ')'");
+				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "expression: '" + input + "'");
+				CAGE_THROW_ERROR(Exception, "unmatched ')'");
 			}
 			l = l.replace(z - o - 1, o + 2, evalExp(l.subString(z - o, o)));
 		}
 		if (l.find('(') != m)
 		{
-			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "expression: '" + input + "'");
-			CAGE_THROW_ERROR(exception, "unmatched '('");
+			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "expression: '" + input + "'");
+			CAGE_THROW_ERROR(Exception, "unmatched '('");
 		}
 		return evalExp(l);
 	}
@@ -234,7 +234,7 @@ namespace
 		{
 			if (!s.empty())
 			{
-				CAGE_LOG_DEBUG(severityEnum::Warning, logComponentName, stringizer() + "output to unspecified shader: '" + s + "'");
+				CAGE_LOG_DEBUG(SeverityEnum::Warning, logComponentName, stringizer() + "output to unspecified shader: '" + s + "'");
 			}
 			return;
 		}
@@ -275,7 +275,7 @@ namespace
 
 	void parse(const string &filename)
 	{
-		holder<fileHandle> file = newFile(filename, fileMode(true, false));
+		Holder<File> file = newFile(filename, FileMode(true, false));
 		uint32 lineNumber = 0;
 		std::vector<sint32> stack;
 		for (string line; file->readLine(line);)
@@ -298,13 +298,13 @@ namespace
 					if (cmd == "if")
 					{
 						if (line.empty())
-							CAGE_THROW_ERROR(exception, "'$if' missing parameters");
+							CAGE_THROW_ERROR(Exception, "'$if' missing parameters");
 						stack.push_back(evalExpToBool(eval(line)) ? 1 : 0);
 					}
 					else if (cmd == "once")
 					{
 						if (!line.empty())
-							CAGE_THROW_ERROR(exception, "'$once' cannot have parameters");
+							CAGE_THROW_ERROR(Exception, "'$once' cannot have parameters");
 						string name = stringizer() + filename + ":" + lineNumber;
 						stack.push_back(onces.find(name) == onces.end() ? 1 : 0);
 						onces.insert(name);
@@ -312,9 +312,9 @@ namespace
 					else if (cmd == "else")
 					{
 						if (!line.empty())
-							CAGE_THROW_ERROR(exception, "'$else' cannot have parameters");
+							CAGE_THROW_ERROR(Exception, "'$else' cannot have parameters");
 						if (stack.empty())
-							CAGE_THROW_ERROR(exception, "unexpected '$else'");
+							CAGE_THROW_ERROR(Exception, "unexpected '$else'");
 						sint32 v = stack.back();
 						stack.pop_back();
 						switch (v)
@@ -322,21 +322,21 @@ namespace
 						case 0: stack.push_back(1); break;
 						case 1: stack.push_back(2); break;
 						case 2: stack.push_back(2); break;
-						default: CAGE_THROW_CRITICAL(exception, "invalid stack value");
+						default: CAGE_THROW_CRITICAL(Exception, "invalid stack value");
 						}
 					}
 					else if (cmd == "end" || cmd == "endif")
 					{
 						if (!line.empty())
-							CAGE_THROW_ERROR(exception, "'$end' cannot have parameters");
+							CAGE_THROW_ERROR(Exception, "'$end' cannot have parameters");
 						if (stack.empty())
-							CAGE_THROW_ERROR(exception, "unexpected '$end'");
+							CAGE_THROW_ERROR(Exception, "unexpected '$end'");
 						stack.pop_back();
 					}
 					else if (cmd == "stack")
 					{
 						if (!line.empty())
-							CAGE_THROW_ERROR(exception, "'$stack' cannot have parameters");
+							CAGE_THROW_ERROR(Exception, "'$stack' cannot have parameters");
 						string s("// CAGE: stack:");
 						for (const auto &it : stack)
 							s += stringizer() + " " + it;
@@ -349,26 +349,26 @@ namespace
 							string name = line.split();
 							if (name.empty() || line.empty())
 							{
-								CAGE_LOG(severityEnum::Note, "exception", stringizer() + "name: '" + name + "'");
-								CAGE_THROW_ERROR(exception, "'$define/set' expects two parameters");
+								CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "name: '" + name + "'");
+								CAGE_THROW_ERROR(Exception, "'$define/set' expects two parameters");
 							}
 							if (!validDefine(name))
 							{
-								CAGE_LOG(severityEnum::Note, "exception", stringizer() + "name: '" + name + "', value: '" + line + "'");
-								CAGE_THROW_ERROR(exception, "'$define/set' with invalid name");
+								CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "name: '" + name + "', value: '" + line + "'");
+								CAGE_THROW_ERROR(Exception, "'$define/set' with invalid name");
 							}
 							if (cmd == "set")
 								line = eval(line);
 							if (name == "shader" && shaderType(line) == 0)
-								CAGE_THROW_ERROR(exception, "'$define/set shader ...' must be one of vertex, fragment, geometry, control, evaluation or compute");
+								CAGE_THROW_ERROR(Exception, "'$define/set shader ...' must be one of vertex, fragment, geometry, control, evaluation or compute");
 							defines[name] = line;
 						}
 						else if (cmd == "undef")
 						{
 							if (!validDefine(line))
 							{
-								CAGE_LOG(severityEnum::Note, "exception", stringizer() + "name: '" + line + "'");
-								CAGE_THROW_ERROR(exception, "'$undef' with invalid name");
+								CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "name: '" + line + "'");
+								CAGE_THROW_ERROR(Exception, "'$undef' with invalid name");
 							}
 							defines.erase(line);
 						}
@@ -376,13 +376,13 @@ namespace
 						{
 							if (!validDefine(line))
 							{
-								CAGE_LOG(severityEnum::Note, "exception", stringizer() + "name: '" + line + "'");
-								CAGE_THROW_ERROR(exception, "'$print' with invalid name");
+								CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "name: '" + line + "'");
+								CAGE_THROW_ERROR(Exception, "'$print' with invalid name");
 							}
 							if (defines.find(line) == defines.end())
 							{
-								CAGE_LOG(severityEnum::Note, "exception", stringizer() + "name: '" + line + "'");
-								CAGE_THROW_ERROR(exception, "'$print' with unknown name");
+								CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "name: '" + line + "'");
+								CAGE_THROW_ERROR(Exception, "'$print' with unknown name");
 							}
 							output(defines[line]);
 						}
@@ -393,21 +393,21 @@ namespace
 						else if (cmd == "variables")
 						{
 							if (!line.empty())
-								CAGE_THROW_ERROR(exception, "'$variables' expects no parameters");
+								CAGE_THROW_ERROR(Exception, "'$variables' expects no parameters");
 							for (const auto &it : defines)
 								output(string() + "// CAGE: variable: '" + it.first + "' = '" + it.second + "'");
 						}
 						else if (cmd == "include")
 						{
 							if (line.empty())
-								CAGE_THROW_ERROR(exception, "'$include' expects one parameter");
+								CAGE_THROW_ERROR(Exception, "'$include' expects one parameter");
 							line = pathJoin(pathExtractPath(pathToRel(filename, inputDirectory)), line);
 							writeLine(stringizer() + "use=" + line);
 							string fn = pathJoin(inputDirectory, line);
 							if (!pathIsFile(fn))
 							{
-								CAGE_LOG(severityEnum::Note, "exception", stringizer() + "requested file '" + line + "'");
-								CAGE_THROW_ERROR(exception, "'$include' file not found");
+								CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "requested file '" + line + "'");
+								CAGE_THROW_ERROR(Exception, "'$include' file not found");
 							}
 							if (configShaderPrint)
 								output(stringizer() + "// CAGE: include file: '" + line + "'");
@@ -417,8 +417,8 @@ namespace
 						}
 						else
 						{
-							CAGE_LOG(severityEnum::Note, "exception", stringizer() + "command: '" + cmd + "', params: '" + line + "'");
-							CAGE_THROW_ERROR(exception, "unknown '$' command");
+							CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "command: '" + cmd + "', params: '" + line + "'");
+							CAGE_THROW_ERROR(Exception, "unknown '$' command");
 						}
 					}
 				}
@@ -427,16 +427,16 @@ namespace
 			}
 			catch (...)
 			{
-				CAGE_LOG(severityEnum::Note, "exception", stringizer() + "in file: '" + filename + "':" + lineNumber);
-				CAGE_LOG(severityEnum::Note, "exception", stringizer() + "original line: '" + originalLine + "'");
+				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "in file: '" + filename + "':" + lineNumber);
+				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "original line: '" + originalLine + "'");
 				throw;
 			}
 		}
 
 		if (!stack.empty())
 		{
-			CAGE_LOG(severityEnum::Note, "exception", stringizer() + "in file: '" + filename + "':" + lineNumber);
-			CAGE_THROW_ERROR(exception, "unexpected end of file; expecting '$end'");
+			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "in file: '" + filename + "':" + lineNumber);
+			CAGE_THROW_ERROR(Exception, "unexpected end of file; expecting '$end'");
 		}
 	}
 }
@@ -463,25 +463,25 @@ void processShader()
 	}
 
 	{
-		memoryBuffer buff;
-		serializer ser(buff);
+		MemoryBuffer buff;
+		Serializer ser(buff);
 		ser << numeric_cast<uint32>(codes.size());
 		for (const auto &it : codes)
 		{
 			ser << (uint32)shaderType(it.first);
 			ser << numeric_cast<uint32>(it.second.length());
 			ser.write(it.second.c_str(), it.second.length());
-			CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "stage: " + it.first + ", length: " + it.second.size());
+			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "stage: " + it.first + ", length: " + it.second.size());
 		}
 
-		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
-		memoryBuffer comp = detail::compress(buff);
-		CAGE_LOG(severityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + comp.size());
+		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
+		MemoryBuffer comp = detail::compress(buff);
+		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + comp.size());
 
-		assetHeader h = initializeAssetHeaderStruct();
+		AssetHeader h = initializeAssetHeaderStruct();
 		h.originalSize = numeric_cast<uint32>(buff.size());
 		h.compressedSize = numeric_cast<uint32>(comp.size());
-		holder<fileHandle> f = newFile(outputFileName, fileMode(false, true));
+		Holder<File> f = newFile(outputFileName, FileMode(false, true));
 		f->write(&h, sizeof(h));
 		f->write(comp.data(), comp.size());
 		f->close();
@@ -492,9 +492,9 @@ void processShader()
 		for (const auto &it : codes)
 		{
 			string name = pathJoin(configGetString("cage-asset-processor/shader/path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + "_" + it.first + ".glsl");
-			fileMode fm(false, true);
+			FileMode fm(false, true);
 			fm.textual = true;
-			holder<fileHandle> f = newFile(name, fm);
+			Holder<File> f = newFile(name, fm);
 			f->write(it.second.c_str(), it.second.length());
 		}
 	}

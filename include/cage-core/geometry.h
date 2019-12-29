@@ -180,11 +180,11 @@ namespace cage
 
 	namespace detail
 	{
-		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const line &other) { return str + "(" + other.origin + ", " + other.direction + ", " + other.minimum + ", " + other.maximum + ")"; }
-		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const triangle &other) { return str + "(" + other.vertices[0] + ", " + other.vertices[1] + ", " + other.vertices[2] + ")"; }
-		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const plane &other) { return str + "(" + other.normal + ", " + other.d + ")"; }
-		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const sphere &other) { return str + "(" + other.center + ", " + other.radius + ")"; }
-		template<uint32 N> inline stringizerBase<N> &operator + (stringizerBase<N> &str, const aabb &other) { return str + "(" + other.a + "," + other.b + ")"; }
+		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const line &other) { return str + "(" + other.origin + ", " + other.direction + ", " + other.minimum + ", " + other.maximum + ")"; }
+		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const triangle &other) { return str + "(" + other.vertices[0] + ", " + other.vertices[1] + ", " + other.vertices[2] + ")"; }
+		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const plane &other) { return str + "(" + other.normal + ", " + other.d + ")"; }
+		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const sphere &other) { return str + "(" + other.center + ", " + other.radius + ")"; }
+		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const aabb &other) { return str + "(" + other.a + "," + other.b + ")"; }
 	}
 
 	CAGE_API line makeSegment(const vec3 &a, const vec3 &b);

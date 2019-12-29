@@ -53,10 +53,10 @@ namespace
 		{
 			if (cnt * sizeof(T) > Limit)
 			{
-				CAGE_LOG(severityEnum::Note, "exception", stringizer() + "sizeof(T): " + sizeof(T));
-				CAGE_LOG(severityEnum::Note, "exception", stringizer() + "cnt: " + cnt);
-				CAGE_LOG(severityEnum::Note, "exception", stringizer() + "Limit: " + Limit);
-				CAGE_THROW_CRITICAL(exception, "insufficient atom size for pool allocator");
+				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "sizeof(T): " + sizeof(T));
+				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "cnt: " + cnt);
+				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "Limit: " + Limit);
+				CAGE_THROW_CRITICAL(Exception, "insufficient atom size for pool allocator");
 			}
 			return (T*)detail::systemArena().allocate(cnt * sizeof(T), alignof(T));
 		}
@@ -85,9 +85,9 @@ namespace
 		memoryArenaStdTest()
 		{
 			if (sizeof(ts) != TestStructSize)
-				CAGE_THROW_CRITICAL(exception, "invalid padding is messing up with the test struct");
+				CAGE_THROW_CRITICAL(Exception, "invalid padding is messing up with the test struct");
 
-			CAGE_TESTCASE(stringizer() + "memoryArenaStd sizes, " + sizeof(ts));
+			CAGE_TESTCASE(stringizer() + "MemoryArenaStd sizes, " + sizeof(ts));
 			{
 				CAGE_TESTCASE("list");
 				std::list<ts, interceptMemoryArena<sizeof(templates::allocatorSizeList<ts>), ts>> cont;
@@ -107,25 +107,25 @@ namespace
 					cont.insert(ts(i));
 			}
 
-			CAGE_TESTCASE(stringizer() + "memoryArenaStd with pool allocator, " + sizeof(ts));
+			CAGE_TESTCASE(stringizer() + "MemoryArenaStd with pool allocator, " + sizeof(ts));
 			{
 				CAGE_TESTCASE("list");
 				memoryArenaFixed<memoryAllocatorPolicyPool<sizeof(templates::allocatorSizeList<ts>)>, memoryConcurrentPolicyNone> arena(1024 * 1024);
-				std::list<ts, memoryArenaStd<ts>> cont((memoryArena(&arena)));
+				std::list<ts, MemoryArenaStd<ts>> cont((MemoryArena(&arena)));
 				for (uint32 i = 0; i < 100; i++)
 					cont.push_back(ts(i));
 			}
 			{
 				CAGE_TESTCASE("map");
 				memoryArenaFixed<memoryAllocatorPolicyPool<sizeof(templates::allocatorSizeMap<int, ts>)>, memoryConcurrentPolicyNone> arena(1024 * 1024);
-				std::map<int, ts, std::less<int>, memoryArenaStd<std::pair<const int, ts>>> cont((std::less<int>(), memoryArena(&arena)));
+				std::map<int, ts, std::less<int>, MemoryArenaStd<std::pair<const int, ts>>> cont((std::less<int>(), MemoryArena(&arena)));
 				for (uint32 i = 0; i < 100; i++)
 					cont[i] = ts(i);
 			}
 			{
 				CAGE_TESTCASE("set");
 				memoryArenaFixed<memoryAllocatorPolicyPool<sizeof(templates::allocatorSizeSet<ts>)>, memoryConcurrentPolicyNone> arena(1024 * 1024);
-				std::set<ts, std::less<ts>, memoryArenaStd<ts>> cont((std::less<ts>(), memoryArena(&arena)));
+				std::set<ts, std::less<ts>, MemoryArenaStd<ts>> cont((std::less<ts>(), MemoryArena(&arena)));
 				for (uint32 i = 0; i < 100; i++)
 					cont.insert(ts(i));
 			}
@@ -149,8 +149,8 @@ void testMemoryPools()
 	{
 		CAGE_TESTCASE("createHolder");
 		memoryArenaFixed<memoryAllocatorPolicyPool<32>, memoryConcurrentPolicyNone> pool(1024 * 1024);
-		memoryArena arena((memoryArena(&pool)));
-		std::vector<holder<testStruct<6>>> vecs;
+		MemoryArena arena((MemoryArena(&pool)));
+		std::vector<Holder<testStruct<6>>> vecs;
 		vecs.reserve(100);
 		for (uint32 i = 0; i < 100; i++)
 			vecs.push_back(arena.createHolder<testStruct<6>>(i));
