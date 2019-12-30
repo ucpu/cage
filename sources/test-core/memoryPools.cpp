@@ -1,11 +1,11 @@
+#include "main.h"
+#include <cage-core/memory.h>
+#include <cage-core/math.h>
+
 #include <list>
 #include <map>
 #include <set>
 #include <vector>
-
-#include "main.h"
-#include <cage-core/memory.h>
-#include <cage-core/math.h>
 
 namespace
 {
@@ -17,36 +17,36 @@ namespace
 #ifndef CAGE_SYSTEM_WINDOWS
 		__attribute__((__packed__))
 #endif // !CAGE_SYSTEM_WINDOWS
-		testStruct
+		Test
 	{
 		sint32 a;
 		char dummy[Size - sizeof(sint32)];
-		testStruct(sint32 a = 0) : a(a), dummy{} {}
-		bool operator < (const testStruct &other) const { return a < other.a; }
+		Test(sint32 a = 0) : a(a), dummy{} {}
+		bool operator < (const Test &other) const { return a < other.a; }
 	};
 #ifdef CAGE_SYSTEM_WINDOWS
 #pragma pack(pop)
 #endif
 
 	template<uintPtr Limit, class T>
-	struct interceptMemoryArena
+	struct InterceptMemoryArena
 	{
 		typedef T value_type;
 
-		interceptMemoryArena()
+		InterceptMemoryArena()
 		{}
 
-		interceptMemoryArena(const interceptMemoryArena &other)
+		InterceptMemoryArena(const InterceptMemoryArena &other)
 		{}
 
 		template<class U>
-		explicit interceptMemoryArena(const interceptMemoryArena<Limit, U> &other)
+		explicit InterceptMemoryArena(const InterceptMemoryArena<Limit, U> &other)
 		{}
 
 		template<class U>
 		struct rebind
 		{
-			typedef interceptMemoryArena<Limit, U> other;
+			typedef InterceptMemoryArena<Limit, U> other;
 		};
 
 		T *allocate(uintPtr cnt)
@@ -66,23 +66,23 @@ namespace
 			detail::systemArena().deallocate(ptr);
 		}
 
-		bool operator == (const interceptMemoryArena &other) const
+		bool operator == (const InterceptMemoryArena &other) const
 		{
 			return true;
 		}
 
-		bool operator != (const interceptMemoryArena &other) const
+		bool operator != (const InterceptMemoryArena &other) const
 		{
 			return false;
 		}
 	};
 
 	template<uintPtr TestStructSize>
-	struct memoryArenaStdTest
+	struct MemoryArenaStdTest
 	{
-		typedef testStruct<TestStructSize> ts;
+		typedef Test<TestStructSize> ts;
 
-		memoryArenaStdTest()
+		MemoryArenaStdTest()
 		{
 			if (sizeof(ts) != TestStructSize)
 				CAGE_THROW_CRITICAL(Exception, "invalid padding is messing up with the test struct");
@@ -90,19 +90,19 @@ namespace
 			CAGE_TESTCASE(stringizer() + "MemoryArenaStd sizes, " + sizeof(ts));
 			{
 				CAGE_TESTCASE("list");
-				std::list<ts, interceptMemoryArena<sizeof(templates::AllocatorSizeList<ts>), ts>> cont;
+				std::list<ts, InterceptMemoryArena<sizeof(templates::AllocatorSizeList<ts>), ts>> cont;
 				for (uint32 i = 0; i < 3; i++)
 					cont.push_back(ts(i));
 			}
 			{
 				CAGE_TESTCASE("map");
-				std::map<int, ts, std::less<int>, interceptMemoryArena<sizeof(templates::AllocatorSizeMap<int, ts>), std::pair<const int, ts>>> cont;
+				std::map<int, ts, std::less<int>, InterceptMemoryArena<sizeof(templates::AllocatorSizeMap<int, ts>), std::pair<const int, ts>>> cont;
 				for (uint32 i = 0; i < 3; i++)
 					cont[i] = ts(i);
 			}
 			{
 				CAGE_TESTCASE("set");
-				std::set<ts, std::less<ts>, interceptMemoryArena<sizeof(templates::AllocatorSizeSet<ts>), ts>> cont;
+				std::set<ts, std::less<ts>, InterceptMemoryArena<sizeof(templates::AllocatorSizeSet<ts>), ts>> cont;
 				for (uint32 i = 0; i < 3; i++)
 					cont.insert(ts(i));
 			}
@@ -135,24 +135,24 @@ namespace
 
 void testMemoryPools()
 {
-	memoryArenaStdTest<6>();
-	memoryArenaStdTest<8>();
-	memoryArenaStdTest<10>();
-	memoryArenaStdTest<12>();
-	memoryArenaStdTest<14>();
-	memoryArenaStdTest<16>();
-	memoryArenaStdTest<18>();
-	memoryArenaStdTest<20>();
-	memoryArenaStdTest<123>();
-	memoryArenaStdTest<10000>(); // larger than page size
+	MemoryArenaStdTest<6>();
+	MemoryArenaStdTest<8>();
+	MemoryArenaStdTest<10>();
+	MemoryArenaStdTest<12>();
+	MemoryArenaStdTest<14>();
+	MemoryArenaStdTest<16>();
+	MemoryArenaStdTest<18>();
+	MemoryArenaStdTest<20>();
+	MemoryArenaStdTest<123>();
+	MemoryArenaStdTest<10000>(); // larger than page size
 
 	{
 		CAGE_TESTCASE("createHolder");
 		MemoryArenaFixed<MemoryAllocatorPolicyPool<32>, MemoryConcurrentPolicyNone> pool(1024 * 1024);
 		MemoryArena arena((MemoryArena(&pool)));
-		std::vector<Holder<testStruct<6>>> vecs;
+		std::vector<Holder<Test<6>>> vecs;
 		vecs.reserve(100);
 		for (uint32 i = 0; i < 100; i++)
-			vecs.push_back(arena.createHolder<testStruct<6>>(i));
+			vecs.push_back(arena.createHolder<Test<6>>(i));
 	}
 }

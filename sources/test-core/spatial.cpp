@@ -1,7 +1,3 @@
-#include <set>
-#include <vector>
-#include <algorithm>
-
 #include "main.h"
 
 #include <cage-core/math.h>
@@ -9,6 +5,10 @@
 #include <cage-core/config.h>
 #include <cage-core/timer.h>
 #include <cage-core/spatial.h>
+
+#include <set>
+#include <vector>
+#include <algorithm>
 
 namespace
 {
@@ -38,12 +38,12 @@ namespace
 		return aabb(o + s, o - s);
 	}
 
-	struct checker
+	struct Checker
 	{
 		SpatialData *const data;
 		Holder<SpatialQuery> query;
 
-		checker(SpatialData *data) : data(data)
+		Checker(SpatialData *data) : data(data)
 		{
 			query = newSpatialQuery(data);
 		}
@@ -95,7 +95,7 @@ namespace
 
 	void verifiableQueries(const aabb elData[], const uint32 elCount, SpatialData *data)
 	{
-		checker c(data);
+		Checker c(data);
 		for (uint32 qi = 0; qi < 30; qi++)
 			c.verifiableAabb(elData, elCount);
 		for (uint32 qi = 0; qi < 30; qi++)
@@ -104,7 +104,7 @@ namespace
 
 	void randomQueries(SpatialData *data)
 	{
-		checker c(data);
+		Checker c(data);
 		for (uint32 qi = 0; qi < 30; qi++)
 			c.randomAabb();
 		for (uint32 qi = 0; qi < 30; qi++)

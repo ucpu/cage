@@ -7,7 +7,7 @@
 
 using namespace Assimp;
 
-struct cmpAiStr
+struct CmpAiStr
 {
 	bool operator ()(const aiString &a, const aiString &b) const
 	{
@@ -17,7 +17,7 @@ struct cmpAiStr
 	}
 };
 
-class assimpSkeletonClass
+class AssimpSkeleton
 {
 public:
 	uint16 bonesCount() const;
@@ -33,15 +33,15 @@ public:
 	aiNode *parent(aiNode *node) const; // this may skip some nodes in the original hierarchy - this function returns node that corresponds to another bone
 };
 
-class assimpContextClass
+class AssimpContext
 {
 public:
 	const aiScene *getScene() const;
 	uint32 selectMesh() const;
-	Holder<assimpSkeletonClass> skeleton() const;
+	Holder<AssimpSkeleton> skeleton() const;
 };
 
-Holder<assimpContextClass> newAssimpContext(uint32 addFlags, uint32 removeFlags);
+Holder<AssimpContext> newAssimpContext(uint32 addFlags, uint32 removeFlags);
 
 vec3 conv(const aiVector3D &v);
 vec3 conv(const aiColor3D &v);

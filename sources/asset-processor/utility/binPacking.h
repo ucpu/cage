@@ -1,6 +1,6 @@
 namespace cage
 {
-	class binPackingClass
+	class BinPacking
 	{
 	public:
 		void add(uint32 id, uint32 width, uint32 height);
@@ -9,5 +9,5 @@ namespace cage
 		uint32 count() const;
 	};
 
-	Holder<binPackingClass> newBinPacking();
+	Holder<BinPacking> newBinPacking();
 }

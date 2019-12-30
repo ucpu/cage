@@ -1,15 +1,15 @@
-#include <vector>
-#include <set>
-#include <algorithm>
-
 #include "processor.h"
 
 #include <cage-core/ini.h>
 #include <cage-core/hashString.h>
 
+#include <vector>
+#include <set>
+#include <algorithm>
+
 namespace
 {
-	struct lodStruct
+	struct Lod
 	{
 		uint32 index;
 		float threshold;
@@ -25,14 +25,14 @@ void processObject()
 	ini->load(inputFileName);
 
 	string basePath = pathExtractPath(inputFile);
-	std::vector<lodStruct> lods;
+	std::vector<Lod> lods;
 	std::set<uint32> deps;
 	uint32 totalMeshes = 0;
 	for (const string &section : ini->sections())
 	{
 		if (!section.isDigitsOnly())
 			continue;
-		lodStruct ls;
+		Lod ls;
 		ls.index = section.toUint32();
 		ls.threshold = ini->getFloat(section, "threshold", real::Nan().value);
 		for (const string &n : ini->items(section))
@@ -50,13 +50,13 @@ void processObject()
 		lods.push_back(templates::move(ls));
 	}
 
-	for (lodStruct &ls : lods)
+	for (Lod &ls : lods)
 	{
 		if (!real(ls.threshold).valid())
 			ls.threshold = float(lods.size() - ls.index) / lods.size();
 	}
 
-	std::sort(lods.begin(), lods.end(), [](const lodStruct &a, const lodStruct &b) {
+	std::sort(lods.begin(), lods.end(), [](const Lod &a, const Lod &b) {
 		return a.threshold > b.threshold;
 	});
 
@@ -96,7 +96,7 @@ void processObject()
 		}
 	}
 
-	AssetHeader h = initializeAssetHeaderStruct();
+	AssetHeader h = initializeAssetHeader();
 	h.dependenciesCount = numeric_cast<uint16>(deps.size());
 	h.originalSize = sizeof(RenderObjectHeader);
 	h.originalSize += numeric_cast<uint32>(lods.size()) * sizeof(uint32);

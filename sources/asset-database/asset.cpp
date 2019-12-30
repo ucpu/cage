@@ -1,6 +1,3 @@
-#include <set>
-#include <map>
-
 #include <cage-core/core.h>
 #include <cage-core/files.h>
 #include <cage-core/hashString.h>
@@ -10,10 +7,10 @@ using namespace cage;
 #include "utilities.h"
 #include "asset.h"
 
-assetStruct::assetStruct() : corrupted(true), needNotify(false)
+Asset::Asset() : corrupted(true), needNotify(false)
 {}
 
-void assetStruct::load(File *f)
+void Asset::load(File *f)
 {
 	read(f, name);
 	read(f, aliasName);
@@ -45,7 +42,7 @@ void assetStruct::load(File *f)
 	read(f, corrupted);
 }
 
-void assetStruct::save(File *f) const
+void Asset::save(File *f) const
 {
 	write(f, name);
 	write(f, aliasName);
@@ -66,12 +63,12 @@ void assetStruct::save(File *f) const
 	write(f, corrupted);
 }
 
-string assetStruct::outputPath() const
+string Asset::outputPath() const
 {
 	return string(HashString(name.c_str()));
 }
 
-string assetStruct::aliasPath() const
+string Asset::aliasPath() const
 {
 	return string(HashString(aliasName.c_str()));
 }

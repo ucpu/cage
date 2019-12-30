@@ -1,10 +1,10 @@
-#include <map>
-#include <set>
-
 #include "processor.h"
 
 #include <cage-core/ini.h>
 #include <cage-core/hashString.h>
+
+#include <map>
+#include <set>
 
 void processPack()
 {
@@ -27,7 +27,7 @@ void processPack()
 		}
 	}
 
-	AssetHeader h = initializeAssetHeaderStruct();
+	AssetHeader h = initializeAssetHeader();
 	h.dependenciesCount = numeric_cast<uint16>(assets.size());
 
 	Holder<File> f = newFile(outputFileName, FileMode(false, true));

@@ -1,10 +1,11 @@
-#include <exception>
-#include <map>
-#include <cstring>
-
 #include "processor.h"
 #include <cage-core/logger.h>
 #include <cage-core/hashString.h>
+
+#include <exception>
+#include <map>
+#include <cstdio> // fgets, ferror
+#include <cstring> // strlen
 
 // passed names
 string inputDirectory; // c:/asset
@@ -24,15 +25,15 @@ string inputIdentifier; // identifier
 
 const char *logComponentName;
 
-AssetHeader initializeAssetHeaderStruct()
+AssetHeader initializeAssetHeader()
 {
 	AssetHeader h = initializeAssetHeader(inputName, numeric_cast<uint16>(schemeIndex));
 	string intr = properties("alias");
 	if (!intr.empty())
 	{
 		intr = pathJoin(pathExtractPath(inputName), intr);
-		writeLine(string() + "alias = " + intr);
-		h.aliasName = HashString(intr.c_str());
+		writeLine(stringizer() + "alias = " + intr);
+		h.aliasName = HashString(intr);
 	}
 	return h;
 }
@@ -44,9 +45,9 @@ namespace
 	string readLine()
 	{
 		char buf[string::MaxLength];
-		if (fgets(buf, string::MaxLength, stdin) == nullptr)
-			CAGE_THROW_ERROR(SystemError, "fgets", ferror(stdin));
-		return string(buf, numeric_cast<uint32>(std::strlen(buf) - 1));
+		if (std::fgets(buf, string::MaxLength, stdin) == nullptr)
+			CAGE_THROW_ERROR(SystemError, "fgets", std::ferror(stdin));
+		return string(buf, numeric_cast<uint32>(std::strlen(buf))).trim();
 	}
 
 	void derivedProperties()
@@ -86,7 +87,7 @@ namespace
 				break;
 			if (value.find('=') == m)
 			{
-				CAGE_LOG(SeverityEnum::Note, "exception", string("line: ") + value);
+				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "line: " + value);
 				CAGE_THROW_ERROR(Exception, "missing '=' in property line");
 			}
 			string name = value.split("=");

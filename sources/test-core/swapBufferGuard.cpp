@@ -7,7 +7,7 @@
 namespace
 {
 	template <uint32 BuffersCount>
-	class swapBufferTester
+	class SwapBufferTester
 	{
 	public:
 		static const uint32 elementsCount = 100;
@@ -78,7 +78,7 @@ namespace
 			}
 		}
 
-		swapBufferTester() : readIndex(0), writeIndex(0), written(0), read(0), skipped(0), reused(0), generated(0), tested(0), running(false)
+		SwapBufferTester() : readIndex(0), writeIndex(0), written(0), read(0), skipped(0), reused(0), generated(0), tested(0), running(false)
 		{}
 
 		void run(bool repeatedReads, bool repeatedWrites)
@@ -89,8 +89,8 @@ namespace
 			cfg.repeatedReads = repeatedReads;
 			cfg.repeatedWrites = repeatedWrites;
 			controller = newSwapBufferGuard(cfg);
-			Holder<Thread> t1 = newThread(Delegate<void()>().bind<swapBufferTester, &swapBufferTester::consumer>(this), "consumer");
-			Holder<Thread> t2 = newThread(Delegate<void()>().bind<swapBufferTester, &swapBufferTester::producer>(this), "producer");
+			Holder<Thread> t1 = newThread(Delegate<void()>().bind<SwapBufferTester, &SwapBufferTester::consumer>(this), "consumer");
+			Holder<Thread> t2 = newThread(Delegate<void()>().bind<SwapBufferTester, &SwapBufferTester::producer>(this), "producer");
 			while (read < 2000)
 				threadSleep(1000);
 			running = false;
@@ -105,12 +105,12 @@ namespace
 void testSwapBufferGuard()
 {
 	CAGE_TESTCASE("SwapBufferGuard");
-	swapBufferTester<2>().run(false, false);
-	swapBufferTester<3>().run(false, false);
-	swapBufferTester<3>().run(true, false);
-	swapBufferTester<3>().run(false, true);
-	swapBufferTester<4>().run(false, false);
-	swapBufferTester<4>().run(true, false);
-	swapBufferTester<4>().run(false, true);
-	swapBufferTester<4>().run(true, true);
+	SwapBufferTester<2>().run(false, false);
+	SwapBufferTester<3>().run(false, false);
+	SwapBufferTester<3>().run(true, false);
+	SwapBufferTester<3>().run(false, true);
+	SwapBufferTester<4>().run(false, false);
+	SwapBufferTester<4>().run(true, false);
+	SwapBufferTester<4>().run(false, true);
+	SwapBufferTester<4>().run(true, true);
 }

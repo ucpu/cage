@@ -1,6 +1,3 @@
-#include <set>
-#include <map>
-
 #include <cage-core/core.h>
 #include <cage-core/ini.h>
 
@@ -11,7 +8,7 @@ using namespace cage;
 #include "scheme.h"
 #include "asset.h"
 
-void schemeStruct::parse(Ini *ini)
+void Scheme::parse(Ini *ini)
 {
 	processor = ini->getString("scheme", "processor");
 	if (processor.empty())
@@ -27,7 +24,7 @@ void schemeStruct::parse(Ini *ini)
 	}
 
 	{
-		schemeFieldStruct fld;
+		SchemeField fld;
 		fld.name = "alias";
 		fld.display = "alias";
 		fld.hint = "common name to reference the asset in multipacks";
@@ -40,7 +37,7 @@ void schemeStruct::parse(Ini *ini)
 	{
 		if (section == "scheme")
 			continue;
-		schemeFieldStruct fld;
+		SchemeField fld;
 		fld.name = section;
 #define GCHL_GENERATE(NAME) fld.NAME = ini->getString(section, CAGE_STRINGIZE(NAME));
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, display, hint, type, min, max, values))
@@ -69,7 +66,7 @@ void schemeStruct::parse(Ini *ini)
 	}
 }
 
-void schemeStruct::load(File *f)
+void Scheme::load(File *f)
 {
 	read(f, name);
 	read(f, processor);
@@ -78,7 +75,7 @@ void schemeStruct::load(File *f)
 	read(f, m);
 	for (uint32 j = 0; j < m; j++)
 	{
-		schemeFieldStruct c;
+		SchemeField c;
 		read(f, c.name);
 		read(f, c.type);
 		read(f, c.min);
@@ -89,7 +86,7 @@ void schemeStruct::load(File *f)
 	}
 }
 
-void schemeStruct::save(File *f)
+void Scheme::save(File *f)
 {
 	write(f, name);
 	write(f, processor);
@@ -97,7 +94,7 @@ void schemeStruct::save(File *f)
 	write(f, schemeFields.size());
 	for (const auto &it : schemeFields)
 	{
-		const schemeFieldStruct &c = *it;
+		const SchemeField &c = *it;
 		write(f, c.name);
 		write(f, c.type);
 		write(f, c.min);
@@ -107,7 +104,7 @@ void schemeStruct::save(File *f)
 	}
 }
 
-bool schemeStruct::applyOnAsset(assetStruct &ass)
+bool Scheme::applyOnAsset(Asset &ass)
 {
 	bool ok = true;
 	for (const auto &it : schemeFields)
@@ -128,7 +125,7 @@ namespace
 	}
 }
 
-bool schemeFieldStruct::valid() const
+bool SchemeField::valid() const
 {
 	try
 	{
@@ -223,7 +220,7 @@ bool schemeFieldStruct::valid() const
 	return true;
 }
 
-bool schemeFieldStruct::applyToAssetField(string &val, const string &assetName) const
+bool SchemeField::applyToAssetField(string &val, const string &assetName) const
 {
 	if (val.empty())
 	{

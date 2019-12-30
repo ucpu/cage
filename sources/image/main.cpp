@@ -1,10 +1,10 @@
-#include <exception>
-
 #include <cage-core/core.h>
 #include <cage-core/logger.h>
 #include <cage-core/math.h>
 #include <cage-core/image.h>
 #include <cage-core/ini.h>
+
+#include <exception>
 
 using namespace cage;
 

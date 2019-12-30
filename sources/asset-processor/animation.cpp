@@ -1,12 +1,12 @@
-#include <vector>
-
 #include "utility/assimp.h"
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 
+#include <vector>
+
 namespace
 {
-	struct bone
+	struct Bone
 	{
 		std::vector<float> posTimes;
 		std::vector<vec3> posVals;
@@ -19,7 +19,7 @@ namespace
 
 void processAnimation()
 {
-	Holder<assimpContextClass> context = newAssimpContext(0, 0);
+	Holder<AssimpContext> context = newAssimpContext(0, 0);
 	const aiScene *scene = context->getScene();
 
 	if (scene->mNumAnimations == 0)
@@ -47,7 +47,7 @@ void processAnimation()
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "duration: " + ani->mDuration + " ticks");
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "ticks per second: " + ani->mTicksPerSecond);
 
-	Holder<assimpSkeletonClass> skeleton = context->skeleton();
+	Holder<AssimpSkeleton> skeleton = context->skeleton();
 
 	SkeletalAnimationHeader a;
 	a.duration = numeric_cast<uint64>(1e6 * ani->mDuration / (ani->mTicksPerSecond > 0 ? ani->mTicksPerSecond : 25.0));
@@ -55,7 +55,7 @@ void processAnimation()
 
 	uint32 totalKeys = 0;
 	uint32 size = 0;
-	std::vector<bone> bones;
+	std::vector<Bone> bones;
 	bones.reserve(ani->mNumChannels);
 	std::vector<uint16> boneIndices;
 	boneIndices.reserve(ani->mNumChannels);
@@ -70,7 +70,7 @@ void processAnimation()
 		}
 		boneIndices.push_back(idx);
 		bones.emplace_back();
-		bone &b = *bones.rbegin();
+		Bone &b = *bones.rbegin();
 		// positions
 		b.posTimes.reserve(n->mNumPositionKeys);
 		b.posVals.reserve(n->mNumPositionKeys);
@@ -117,18 +117,18 @@ void processAnimation()
 	ser.write(boneIndices.data(), boneIndices.size() * sizeof(uint16));
 
 	// position frames counts
-	for (bone &b : bones)
+	for (Bone &b : bones)
 		ser << numeric_cast<uint16>(b.posTimes.size());
 
 	// rotation frames counts
-	for (bone &b : bones)
+	for (Bone &b : bones)
 		ser << numeric_cast<uint16>(b.rotTimes.size());
 
 	// scale frames counts
-	for (bone &b : bones)
+	for (Bone &b : bones)
 		ser << numeric_cast<uint16>(b.sclTimes.size());
 
-	for (bone &b : bones)
+	for (Bone &b : bones)
 	{
 		ser.write(b.posTimes.data(), b.posTimes.size() * sizeof(float));
 		ser.write(b.posVals.data(), b.posVals.size() * sizeof(vec3));
@@ -142,7 +142,7 @@ void processAnimation()
 	MemoryBuffer comp = detail::compress(buff);
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + comp.size());
 
-	AssetHeader h = initializeAssetHeaderStruct();
+	AssetHeader h = initializeAssetHeader();
 	h.originalSize = numeric_cast<uint32>(buff.size());
 	h.compressedSize = numeric_cast<uint32>(comp.size());
 	Holder<File> f = newFile(outputFileName, FileMode(false, true));

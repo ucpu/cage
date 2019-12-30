@@ -1,7 +1,3 @@
-#include <set>
-#include <map>
-#include <vector>
-
 #include "assimp.h"
 #include <cage-core/fileUtils.h>
 
@@ -11,29 +7,23 @@
 #include <assimp/LogStream.hpp>
 #include <assimp/DefaultLogger.hpp>
 
+#include <set>
+#include <map>
+#include <vector>
+
 namespace
 {
-	struct cmpAiStr
-	{
-		bool operator ()(const aiString &a, const aiString &b) const
-		{
-			if (a.length == b.length)
-				return cage::detail::memcmp(a.data, b.data, a.length) < 0;
-			return a.length < b.length;
-		}
-	};
-
-	class assimpSkeletonImpl : public assimpSkeletonClass
+	class AssimpSkeletonImpl : public AssimpSkeleton
 	{
 	public:
-		assimpSkeletonImpl(const aiScene *scene)
+		AssimpSkeletonImpl(const aiScene *scene)
 		{
 			// find nodes and parents
 			{
-				std::map<aiString, aiNode*, cmpAiStr> names;
+				std::map<aiString, aiNode*, CmpAiStr> names;
 				// find names
 				traverseNodes1(names, scene->mRootNode);
-				std::set<aiString, cmpAiStr> interested;
+				std::set<aiString, CmpAiStr> interested;
 				// find interested
 				for (uint32 mi = 0; mi < scene->mNumMeshes; mi++)
 				{
@@ -110,7 +100,7 @@ namespace
 			}
 		}
 
-		void traverseNodes1(std::map<aiString, aiNode*, cmpAiStr> &names, aiNode *n)
+		void traverseNodes1(std::map<aiString, aiNode*, CmpAiStr> &names, aiNode *n)
 		{
 			if (n->mName.length)
 			{
@@ -125,7 +115,7 @@ namespace
 				traverseNodes1(names, n->mChildren[i]);
 		}
 
-		void traverseNodes2(const std::set<aiString, cmpAiStr> &interested, aiNode *n, uint16 pi)
+		void traverseNodes2(const std::set<aiString, CmpAiStr> &interested, aiNode *n, uint16 pi)
 		{
 			if (interested.count(n->mName) == 0)
 				return;
@@ -139,16 +129,16 @@ namespace
 		std::vector<aiBone*> bones;
 		std::vector<aiNode*> nodes;
 		std::vector<uint16> parents;
-		std::map<aiString, uint16, cmpAiStr> indices;
+		std::map<aiString, uint16, CmpAiStr> indices;
 	};
 
-	class cageIoStream : public Assimp::IOStream
+	class CageIoStream : public Assimp::IOStream
 	{
 	public:
-		cageIoStream(cage::Holder<cage::File> r) : r(templates::move(r))
+		CageIoStream(cage::Holder<cage::File> r) : r(templates::move(r))
 		{}
 
-		virtual ~cageIoStream()
+		virtual ~CageIoStream()
 		{}
 
 		virtual size_t Read(void* pvBuffer, size_t pSize, size_t pCount)
@@ -200,10 +190,10 @@ namespace
 		cage::Holder<cage::File> r;
 	};
 
-	class cageIoSystem : public Assimp::IOSystem
+	class CageIoSystem : public Assimp::IOSystem
 	{
 	public:
-		cageIoSystem()
+		CageIoSystem()
 		{
 			f = newFilesystem();
 			f->changeDir(pathJoin(inputDirectory, pathExtractPath(inputFile)));
@@ -222,14 +212,14 @@ namespace
 		virtual Assimp::IOStream *Open(const char *pFile, const char *pMode = "rb")
 		{
 			if (::cage::string(pMode) != "rb")
-				CAGE_THROW_ERROR(Exception, "cageIoSystem::Open: only support rb mode");
+				CAGE_THROW_ERROR(Exception, "CageIoSystem::Open: only support rb mode");
 			writeLine(cage::string("use = ") + pathJoin(pathExtractPath(inputFile), pFile));
-			return new cageIoStream(f->openFile(pFile, FileMode(true, false)));
+			return new CageIoStream(f->openFile(pFile, FileMode(true, false)));
 		}
 
 		virtual void Close(Assimp::IOStream *pFile)
 		{
-			delete (cageIoStream*)pFile;
+			delete (CageIoStream*)pFile;
 		}
 
 		virtual bool ComparePaths(const char* one, const char* second) const
@@ -242,11 +232,11 @@ namespace
 		cage::Holder<Filesystem> f;
 	};
 
-	class cageLogStream : public Assimp::LogStream
+	class CageLogStream : public Assimp::LogStream
 	{
 	public:
 		cage::SeverityEnum severity;
-		cageLogStream(cage::SeverityEnum severity) : severity(severity)
+		CageLogStream(cage::SeverityEnum severity) : severity(severity)
 		{}
 		virtual void write(const char* message)
 		{
@@ -257,7 +247,7 @@ namespace
 		}
 	};
 
-	struct assimpContextImpl : public assimpContextClass
+	struct AssimpContextImpl : public AssimpContext
 	{
 		static const uint32 assimpDefaultLoadFlags =
 			aiProcess_JoinIdenticalVertices |
@@ -282,7 +272,7 @@ namespace
 			aiProcess_OptimizeGraph |
 			0;
 
-		assimpContextImpl(uint32 addFlags, uint32 removeFlags) : logDebug(SeverityEnum::Note), logInfo(SeverityEnum::Info), logWarn(SeverityEnum::Warning), logError(SeverityEnum::Error)
+		explicit AssimpContextImpl(uint32 addFlags, uint32 removeFlags) : logDebug(SeverityEnum::Note), logInfo(SeverityEnum::Info), logWarn(SeverityEnum::Warning), logError(SeverityEnum::Error)
 		{
 #ifdef CAGE_DEBUG
 			Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
@@ -369,7 +359,7 @@ namespace
 			}
 		};
 
-		~assimpContextImpl()
+		~AssimpContextImpl()
 		{
 			//imp.FreeScene();
 			//imp.SetIOHandler(nullptr);
@@ -386,49 +376,49 @@ namespace
 		}
 
 	private:
-		cageIoSystem ioSystem;
-		cageLogStream logDebug, logInfo, logWarn, logError;
+		CageIoSystem ioSystem;
+		CageLogStream logDebug, logInfo, logWarn, logError;
 		Assimp::Importer imp;
 	};
 }
 
-uint16 assimpSkeletonClass::bonesCount() const
+uint16 AssimpSkeleton::bonesCount() const
 {
-	const assimpSkeletonImpl *impl = (const assimpSkeletonImpl*)this;
+	const AssimpSkeletonImpl *impl = (const AssimpSkeletonImpl*)this;
 	CAGE_ASSERT(impl->bones.size() == impl->nodes.size());
 	CAGE_ASSERT(impl->parents.size() == impl->nodes.size());
 	return numeric_cast<uint16>(impl->bones.size());
 }
 
-aiNode *assimpSkeletonClass::node(aiBone *bone) const
+aiNode *AssimpSkeleton::node(aiBone *bone) const
 {
 	return node(index(bone));
 }
 
-aiNode *assimpSkeletonClass::node(uint16 index) const
+aiNode *AssimpSkeleton::node(uint16 index) const
 {
-	const assimpSkeletonImpl *impl = (const assimpSkeletonImpl*)this;
+	const AssimpSkeletonImpl *impl = (const AssimpSkeletonImpl*)this;
 	if (index == m)
 		return nullptr;
 	return impl->nodes[index];
 }
 
-aiBone *assimpSkeletonClass::bone(aiNode *node) const
+aiBone *AssimpSkeleton::bone(aiNode *node) const
 {
 	return bone(index(node));
 }
 
-aiBone *assimpSkeletonClass::bone(uint16 index) const
+aiBone *AssimpSkeleton::bone(uint16 index) const
 {
-	const assimpSkeletonImpl *impl = (const assimpSkeletonImpl*)this;
+	const AssimpSkeletonImpl *impl = (const AssimpSkeletonImpl*)this;
 	if (index == m)
 		return nullptr;
 	return impl->bones[index];
 }
 
-uint16 assimpSkeletonClass::index(const aiString &name) const
+uint16 AssimpSkeleton::index(const aiString &name) const
 {
-	const assimpSkeletonImpl *impl = (const assimpSkeletonImpl*)this;
+	const AssimpSkeletonImpl *impl = (const AssimpSkeletonImpl*)this;
 	if (!name.length)
 		return m;
 	if (!impl->indices.count(name))
@@ -436,44 +426,44 @@ uint16 assimpSkeletonClass::index(const aiString &name) const
 	return impl->indices.at(name);
 }
 
-uint16 assimpSkeletonClass::index(aiNode *node) const
+uint16 AssimpSkeleton::index(aiNode *node) const
 {
 	if (!node)
 		return m;
 	return index(node->mName);
 }
 
-uint16 assimpSkeletonClass::index(aiBone *bone) const
+uint16 AssimpSkeleton::index(aiBone *bone) const
 {
 	if (!bone)
 		return m;
 	return index(bone->mName);
 }
 
-uint16 assimpSkeletonClass::parent(uint16 index) const
+uint16 AssimpSkeleton::parent(uint16 index) const
 {
-	const assimpSkeletonImpl *impl = (const assimpSkeletonImpl*)this;
+	const AssimpSkeletonImpl *impl = (const AssimpSkeletonImpl*)this;
 	if (index == m)
 		return m;
 	return impl->parents[index];
 }
 
-aiBone *assimpSkeletonClass::parent(aiBone *bone) const
+aiBone *AssimpSkeleton::parent(aiBone *bone) const
 {
 	return this->bone(parent(index(bone)));
 }
 
-aiNode *assimpSkeletonClass::parent(aiNode *node) const
+aiNode *AssimpSkeleton::parent(aiNode *node) const
 {
 	return this->node(parent(index(node)));
 }
 
-const aiScene *assimpContextClass::getScene() const
+const aiScene *AssimpContext::getScene() const
 {
-	return ((assimpContextImpl*)this)->getScene();
+	return ((AssimpContextImpl*)this)->getScene();
 }
 
-uint32 assimpContextClass::selectMesh() const
+uint32 AssimpContext::selectMesh() const
 {
 	const aiScene *scene = getScene();
 	if (scene->mNumMeshes == 1 && inputSpec.empty())
@@ -529,21 +519,21 @@ uint32 assimpContextClass::selectMesh() const
 	}
 }
 
-Holder<assimpSkeletonClass> assimpContextClass::skeleton() const
+Holder<AssimpSkeleton> AssimpContext::skeleton() const
 {
-	return detail::systemArena().createImpl<assimpSkeletonClass, assimpSkeletonImpl>(getScene());
+	return detail::systemArena().createImpl<AssimpSkeleton, AssimpSkeletonImpl>(getScene());
 }
 
-Holder<assimpContextClass> newAssimpContext(uint32 addFlags, uint32 removeFlags)
+Holder<AssimpContext> newAssimpContext(uint32 addFlags, uint32 removeFlags)
 {
-	return detail::systemArena().createImpl<assimpContextClass, assimpContextImpl>(addFlags, removeFlags);
+	return detail::systemArena().createImpl<AssimpContext, AssimpContextImpl>(addFlags, removeFlags);
 }
 
 void analyzeAssimp()
 {
 	try
 	{
-		Holder<assimpContextClass> context = newAssimpContext(0, 0);
+		Holder<AssimpContext> context = newAssimpContext(0, 0);
 		const aiScene *scene = context->getScene();
 		writeLine("cage-begin");
 		try

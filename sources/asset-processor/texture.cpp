@@ -1,6 +1,3 @@
-#include <vector>
-#include <set>
-
 #include "processor.h"
 
 #include <cage-core/memoryBuffer.h>
@@ -13,6 +10,9 @@
 
 #include <IL/il.h>
 #include <IL/ilu.h>
+
+#include <vector>
+#include <set>
 
 vec2 convertSpecularToSpecial(const vec3 &spec)
 {
@@ -92,7 +92,7 @@ namespace
 		}
 	}
 
-	struct imageLayerStruct
+	struct ImageLayer
 	{
 		std::vector<uint8> data;
 		uint32 width;
@@ -271,11 +271,11 @@ namespace
 		}
 	};
 
-	std::vector<imageLayerStruct> images;
+	std::vector<ImageLayer> images;
 
 	void loadSlice(uint32 index)
 	{
-		imageLayerStruct Image;
+		ImageLayer Image;
 		Image.loadFromDevil(index);
 		images.push_back(Image);
 	}
@@ -324,7 +324,6 @@ namespace
 			ilBindImage(im);
 			iluImageParameter(ILU_FILTER, ILU_BILINEAR);
 			images[0].resizeDevil(numeric_cast<uint32>(images.size()));
-			//for (std::vector<imageLayerStruct>::iterator it = images.begin(), et = images.end(); it != et; it++)
 			for (auto it : enumerate(images))
 				it->saveToDevil(numeric_cast<uint32>(it.cnt));
 			if (!iluScale(max(images[0].width / downscale, 1u), max(images[0].height / downscale, 1u), max(numeric_cast<uint32>(images.size()), 1u)))
@@ -358,7 +357,7 @@ namespace
 	{
 		if (images.size() != 1)
 			CAGE_THROW_ERROR(Exception, "skyboxToCube requires one input image");
-		imageLayerStruct src = templates::move(images[0]);
+		ImageLayer src = templates::move(images[0]);
 		images.clear();
 		images.resize(6);
 		if (src.width * 3 != src.height * 4)
@@ -432,7 +431,7 @@ namespace
 			CAGE_THROW_ERROR(Exception, "cube texture requires exactly 6 images");
 		if (target != GL_TEXTURE_2D && frames == 1)
 			CAGE_LOG(SeverityEnum::Warning, logComponentName, "texture has only one frame. consider setting target to 2d");
-		imageLayerStruct &im0 = images[0];
+		ImageLayer &im0 = images[0];
 		if (im0.width == 0 || im0.height == 0)
 			CAGE_THROW_ERROR(Exception, "image has zero resolution");
 		if (im0.bpp == 0 || im0.bpp > 4)
@@ -510,7 +509,7 @@ namespace
 		data.stride = data.dimX * data.dimY * data.bpp;
 		data.animationDuration = properties("animationDuration").toUint64();
 
-		AssetHeader h = initializeAssetHeaderStruct();
+		AssetHeader h = initializeAssetHeader();
 		h.originalSize = sizeof(data);
 		for (const auto &it : images)
 			h.originalSize += it.data.size();

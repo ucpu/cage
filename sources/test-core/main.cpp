@@ -1,12 +1,10 @@
-#include <cstdlib>
-
 #include "main.h"
 #include <cage-core/files.h>
 #include <cage-core/logger.h>
 
-using namespace cage;
+#include <cstdlib>
 
-uint32 cageTestCaseStruct::counter = 0;
+uint32 CageTestCase::counter = 0;
 
 void testMacros();
 void testEnums();
@@ -42,8 +40,8 @@ void testImage();
 void testNoise();
 void testSpatial();
 void testCollisions();
-void testSceneEntities();
-void testSceneSerialize();
+void testEntities();
+void testEntitiesSerialization();
 void testVariableInterpolatingBuffer();
 void testVariableSmoothingBufferStruct();
 void testCopyAndMove();
@@ -97,8 +95,8 @@ int main()
 	testNoise();
 	testSpatial();
 	testCollisions();
-	testSceneEntities();
-	testSceneSerialize();
+	testEntities();
+	testEntitiesSerialization();
 	testVariableInterpolatingBuffer();
 	testVariableSmoothingBufferStruct();
 	testCopyAndMove();

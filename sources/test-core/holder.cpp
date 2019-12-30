@@ -1,19 +1,19 @@
-#include <vector>
-
 #include "main.h"
+
+#include <vector>
 
 namespace
 {
 	int gCount = 0;
 
-	struct tester
+	struct Tester
 	{
-		tester()
+		Tester()
 		{
 			gCount++;
 		}
 
-		virtual ~tester()
+		virtual ~Tester()
 		{
 			gCount--;
 		}
@@ -24,12 +24,12 @@ namespace
 		}
 	};
 
-	void takeByReference(Holder<tester> &ts)
+	void takeByReference(Holder<Tester> &ts)
 	{
 		ts->test(1);
 	}
 
-	void takeByValue(Holder<tester> ts)
+	void takeByValue(Holder<Tester> ts)
 	{
 		ts->test(1);
 	}
@@ -49,7 +49,7 @@ void testHolder()
 	{
 		CAGE_TESTCASE("takeByReference & takeByValue");
 		CAGE_TEST(gCount == 0);
-		Holder<tester> ts = detail::systemArena().createHolder<tester>();
+		Holder<Tester> ts = detail::systemArena().createHolder<Tester>();
 		CAGE_TEST(gCount == 1);
 		takeByReference(ts);
 		CAGE_TEST(gCount == 1);
@@ -59,13 +59,13 @@ void testHolder()
 	{
 		CAGE_TESTCASE("default ctor & copy ctor & holder<void>");
 		CAGE_TEST(gCount == 0);
-		Holder<tester> a = detail::systemArena().createHolder<tester>();
+		Holder<Tester> a = detail::systemArena().createHolder<Tester>();
 		CAGE_TEST(gCount == 1);
 		Holder<void> b = a.cast<void>();
 		CAGE_TEST(gCount == 1);
 		Holder<void> c(templates::move(b));
 		CAGE_TEST(gCount == 1);
-		Holder<tester> d = c.cast<tester>();
+		Holder<Tester> d = c.cast<Tester>();
 		CAGE_TEST(gCount == 1);
 		d.clear();
 		CAGE_TEST(gCount == 0);
@@ -73,7 +73,7 @@ void testHolder()
 	{
 		CAGE_TESTCASE("function taking holder");
 		CAGE_TEST(gCount == 0);
-		Holder<tester> a = detail::systemArena().createHolder<tester>();
+		Holder<Tester> a = detail::systemArena().createHolder<Tester>();
 		CAGE_TEST(gCount == 1);
 		Holder<void> b = a.cast<void>();
 		CAGE_TEST(gCount == 1);
@@ -83,15 +83,15 @@ void testHolder()
 	{
 		CAGE_TESTCASE("several transfers");
 		CAGE_TEST(gCount == 0);
-		Holder<tester> a = detail::systemArena().createHolder<tester>();
+		Holder<Tester> a = detail::systemArena().createHolder<Tester>();
 		CAGE_TEST(gCount == 1);
 		Holder<void> b = a.cast<void>();
 		CAGE_TEST(gCount == 1);
-		Holder<tester> c = b.cast<tester>();
+		Holder<Tester> c = b.cast<Tester>();
 		CAGE_TEST(gCount == 1);
 		Holder<void> d = c.cast<void>();
 		CAGE_TEST(gCount == 1);
-		Holder<tester> e = d.cast<tester>();
+		Holder<Tester> e = d.cast<Tester>();
 		CAGE_TEST(gCount == 1);
 		e.clear();
 		CAGE_TEST(gCount == 0);
@@ -99,7 +99,7 @@ void testHolder()
 	{
 		CAGE_TESTCASE("bool tests");
 		CAGE_TEST(gCount == 0);
-		Holder<tester> a = detail::systemArena().createHolder<tester>();
+		Holder<Tester> a = detail::systemArena().createHolder<Tester>();
 		CAGE_TEST(gCount == 1);
 		bool b = (bool)a;
 		bool c = !a;
@@ -115,24 +115,24 @@ void testHolder()
 	}
 	{
 		CAGE_TESTCASE("vector of holders");
-		std::vector<Holder<tester> > vec;
+		std::vector<Holder<Tester> > vec;
 		vec.resize(2);
 		CAGE_TEST(gCount == 0);
 		for (uint32 i = 0; i < 2; i++)
-			vec[i] = detail::systemArena().createHolder<tester>();
-		tester *firstTester = vec[0].get();
+			vec[i] = detail::systemArena().createHolder<Tester>();
+		Tester *firstTester = vec[0].get();
 		CAGE_TEST(gCount == 2);
 		vec.resize(20);
 		CAGE_TEST(gCount == 2);
 		for (uint32 i = 2; i < 20; i++)
-			vec[i] = detail::systemArena().createHolder<tester>();
+			vec[i] = detail::systemArena().createHolder<Tester>();
 		CAGE_TEST(gCount == 20);
 		vec.resize(5);
 		CAGE_TEST(gCount == 5);
 		vec.resize(100);
 		CAGE_TEST(gCount == 5);
 		for (uint32 i = 5; i < 100; i++)
-			vec[i] = detail::systemArena().createHolder<tester>();
+			vec[i] = detail::systemArena().createHolder<Tester>();
 		CAGE_TEST(gCount == 100);
 		CAGE_TEST(vec[0].get() == firstTester);
 		vec.clear();

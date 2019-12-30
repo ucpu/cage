@@ -1,5 +1,3 @@
-#include <list>
-
 #include <cage-core/core.h>
 #include <cage-core/network.h>
 #include <cage-core/concurrent.h>
@@ -8,12 +6,14 @@ using namespace cage;
 
 #include "notifier.h"
 
+#include <list>
+
 namespace
 {
-	class notifierClass
+	class Notifier
 	{
 	public:
-		notifierClass(const uint16 port)
+		Notifier(const uint16 port)
 		{
 			server = newTcpServer(port);
 			mut = newMutex();
@@ -31,7 +31,7 @@ namespace
 		{
 			detail::OverrideBreakpoint OverrideBreakpoint;
 			ScopeLock<Mutex> lck(mut);
-			std::list<Holder<TcpConnection>>::iterator it = connections.begin();
+			auto it = connections.begin();
 			while (it != connections.end())
 			{
 				try
@@ -52,12 +52,12 @@ namespace
 		Holder<Mutex> mut;
 	};
 
-	Holder<notifierClass> notifierInstance;
+	Holder<Notifier> notifierInstance;
 }
 
 void notifierInitialize(const uint16 port)
 {
-	notifierInstance = detail::systemArena().createHolder<notifierClass>(port);
+	notifierInstance = detail::systemArena().createHolder<Notifier>(port);
 }
 
 void notifierAccept()

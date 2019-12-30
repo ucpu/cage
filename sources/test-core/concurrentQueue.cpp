@@ -1,9 +1,9 @@
-#include <atomic>
-
 #include "main.h"
 #include <cage-core/concurrent.h>
 #include <cage-core/concurrentQueue.h>
 #include <cage-core/threadPool.h>
+
+#include <atomic>
 
 namespace
 {
@@ -64,10 +64,10 @@ namespace
 		bool final;
 	};
 
-	class tester
+	class Tester
 	{
 	public:
-		tester() : produceItems(1000), produceFinals(1)
+		Tester() : produceItems(1000), produceFinals(1)
 		{
 			ConcurrentQueueCreateConfig cfg;
 			cfg.maxElements = 10;
@@ -187,14 +187,14 @@ namespace
 		Holder<ConcurrentQueue<task>> queue;
 	};
 
-	class testerPtr
+	class TesterPtr
 	{
 	public:
-		testerPtr() : produceItems(1000), produceFinals(1)
+		TesterPtr() : produceItems(1000), produceFinals(1)
 		{
 			ConcurrentQueueCreateConfig cfg;
 			cfg.maxElements = 10;
-			queue = newConcurrentQueue<task*>(cfg, Delegate<void(task*)>().bind<testerPtr, &testerPtr::destroy>(this));
+			queue = newConcurrentQueue<task*>(cfg, Delegate<void(task*)>().bind<TesterPtr, &TesterPtr::destroy>(this));
 		}
 
 		task *create(uint32 i, bool final)
@@ -283,9 +283,9 @@ void testConcurrentQueue()
 
 	{
 		CAGE_TESTCASE("single producer single consumer (blocking)");
-		tester t;
-		Holder<Thread> t1 = newThread(Delegate<void()>().bind<tester, &tester::consumeBlocking>(&t), "consumer");
-		Holder<Thread> t2 = newThread(Delegate<void()>().bind<tester, &tester::produceBlocking>(&t), "producer");
+		Tester t;
+		Holder<Thread> t1 = newThread(Delegate<void()>().bind<Tester, &Tester::consumeBlocking>(&t), "consumer");
+		Holder<Thread> t2 = newThread(Delegate<void()>().bind<Tester, &Tester::produceBlocking>(&t), "producer");
 		t1->wait();
 		t2->wait();
 	}
@@ -293,9 +293,9 @@ void testConcurrentQueue()
 
 	{
 		CAGE_TESTCASE("single producer single consumer (polling)");
-		tester t;
-		Holder<Thread> t1 = newThread(Delegate<void()>().bind<tester, &tester::consumePolling>(&t), "consumer");
-		Holder<Thread> t2 = newThread(Delegate<void()>().bind<tester, &tester::producePolling>(&t), "producer");
+		Tester t;
+		Holder<Thread> t1 = newThread(Delegate<void()>().bind<Tester, &Tester::consumePolling>(&t), "consumer");
+		Holder<Thread> t2 = newThread(Delegate<void()>().bind<Tester, &Tester::producePolling>(&t), "producer");
 		t1->wait();
 		t2->wait();
 	}
@@ -303,9 +303,9 @@ void testConcurrentQueue()
 
 	{
 		CAGE_TESTCASE("single producer single consumer (pointers) (blocking)");
-		testerPtr t;
-		Holder<Thread> t1 = newThread(Delegate<void()>().bind<testerPtr, &testerPtr::consumeBlocking>(&t), "consumer");
-		Holder<Thread> t2 = newThread(Delegate<void()>().bind<testerPtr, &testerPtr::produceBlocking>(&t), "producer");
+		TesterPtr t;
+		Holder<Thread> t1 = newThread(Delegate<void()>().bind<TesterPtr, &TesterPtr::consumeBlocking>(&t), "consumer");
+		Holder<Thread> t2 = newThread(Delegate<void()>().bind<TesterPtr, &TesterPtr::produceBlocking>(&t), "producer");
 		t1->wait();
 		t2->wait();
 	}
@@ -313,27 +313,27 @@ void testConcurrentQueue()
 
 	{
 		CAGE_TESTCASE("multiple producers multiple consumers (blocking)");
-		tester t;
+		Tester t;
 		Holder<ThreadPool> t1 = newThreadPool("pool_", 6);
-		t1->function = Delegate<void(uint32, uint32)>().bind<tester, &tester::poolBlocking>(&t);
+		t1->function = Delegate<void(uint32, uint32)>().bind<Tester, &Tester::poolBlocking>(&t);
 		t1->run();
 	}
 	CAGE_TEST(itemsCounter == 0);
 
 	{
 		CAGE_TESTCASE("multiple producers multiple consumers (polling)");
-		tester t;
+		Tester t;
 		Holder<ThreadPool> t1 = newThreadPool("pool_", 6);
-		t1->function = Delegate<void(uint32, uint32)>().bind<tester, &tester::poolPolling>(&t);
+		t1->function = Delegate<void(uint32, uint32)>().bind<Tester, &Tester::poolPolling>(&t);
 		t1->run();
 	}
 	CAGE_TEST(itemsCounter == 0);
 
 	{
 		CAGE_TESTCASE("termination (blocking)");
-		tester t;
-		Holder<Thread> t1 = newThread(Delegate<void()>().bind<tester, &tester::consumeBlocking>(&t), "consumer");
-		Holder<Thread> t2 = newThread(Delegate<void()>().bind<tester, &tester::produceBlocking>(&t), "producer");
+		Tester t;
+		Holder<Thread> t1 = newThread(Delegate<void()>().bind<Tester, &Tester::consumeBlocking>(&t), "consumer");
+		Holder<Thread> t2 = newThread(Delegate<void()>().bind<Tester, &Tester::produceBlocking>(&t), "producer");
 		threadSleep(10);
 		t.queue->terminate();
 		t1->wait();
@@ -343,9 +343,9 @@ void testConcurrentQueue()
 
 	{
 		CAGE_TESTCASE("termination (polling)");
-		tester t;
-		Holder<Thread> t1 = newThread(Delegate<void()>().bind<tester, &tester::consumePolling>(&t), "consumer");
-		Holder<Thread> t2 = newThread(Delegate<void()>().bind<tester, &tester::producePolling>(&t), "producer");
+		Tester t;
+		Holder<Thread> t1 = newThread(Delegate<void()>().bind<Tester, &Tester::consumePolling>(&t), "consumer");
+		Holder<Thread> t2 = newThread(Delegate<void()>().bind<Tester, &Tester::producePolling>(&t), "producer");
 		threadSleep(10);
 		t.queue->terminate();
 		t1->wait();
@@ -355,9 +355,9 @@ void testConcurrentQueue()
 
 	{
 		CAGE_TESTCASE("termination (pointers) (blocking)");
-		testerPtr t;
-		Holder<Thread> t1 = newThread(Delegate<void()>().bind<testerPtr, &testerPtr::consumeBlocking>(&t), "consumer");
-		Holder<Thread> t2 = newThread(Delegate<void()>().bind<testerPtr, &testerPtr::produceBlocking>(&t), "producer");
+		TesterPtr t;
+		Holder<Thread> t1 = newThread(Delegate<void()>().bind<TesterPtr, &TesterPtr::consumeBlocking>(&t), "consumer");
+		Holder<Thread> t2 = newThread(Delegate<void()>().bind<TesterPtr, &TesterPtr::produceBlocking>(&t), "producer");
 		threadSleep(10);
 		t.queue->terminate();
 		t1->wait();

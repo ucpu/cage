@@ -2,25 +2,25 @@
 
 namespace
 {
-	enum class testEnum
+	enum class TestEnum
 	{
-		testEnum1,
-		testEnum2,
-		testEnum3,
+		TestEnum1,
+		TestEnum2,
+		TestEnum3,
 	};
 
-	enum class testFlags
+	enum class TestFlags
 	{
-		testFlags0 = 0,
-		testFlags1 = 1 << 0,
-		testFlags2 = 1 << 1,
-		testFlags3 = 1 << 2,
+		TestFlags0 = 0,
+		TestFlags1 = 1 << 0,
+		TestFlags2 = 1 << 1,
+		TestFlags3 = 1 << 2,
 	};
 }
 
 namespace cage
 {
-	GCHL_ENUM_BITS(testFlags);
+	GCHL_ENUM_BITS(TestFlags);
 }
 
 void testEnums()
@@ -29,26 +29,26 @@ void testEnums()
 
 	{
 		CAGE_TESTCASE("regular enum class");
-		testEnum a = testEnum::testEnum1;
-		a = testEnum::testEnum2;
-		a = (testEnum)42;
+		TestEnum a = TestEnum::TestEnum1;
+		a = TestEnum::TestEnum2;
+		a = (TestEnum)42;
 	}
 
 	{
 		CAGE_TESTCASE("flags enum class");
-		testFlags a = testFlags::testFlags1;
-		a = testFlags::testFlags2;
-		a = (testFlags)42;
+		TestFlags a = TestFlags::TestFlags1;
+		a = TestFlags::TestFlags2;
+		a = (TestFlags)42;
 
-		testFlags b = testFlags::testFlags1 | testFlags::testFlags3;
-		b |= testFlags::testFlags2;
+		TestFlags b = TestFlags::TestFlags1 | TestFlags::TestFlags3;
+		b |= TestFlags::TestFlags2;
 	}
 
 	{
 		CAGE_TESTCASE("flags functions any and none");
-		CAGE_TEST(any(testFlags::testFlags1 | testFlags::testFlags3));
-		CAGE_TEST(!any(testFlags::testFlags0));
-		CAGE_TEST(!none(testFlags::testFlags1 | testFlags::testFlags3));
-		CAGE_TEST(none(testFlags::testFlags0));
+		CAGE_TEST(any(TestFlags::TestFlags1 | TestFlags::TestFlags3));
+		CAGE_TEST(!any(TestFlags::TestFlags0));
+		CAGE_TEST(!none(TestFlags::TestFlags1 | TestFlags::TestFlags3));
+		CAGE_TEST(none(TestFlags::TestFlags0));
 	}
 }

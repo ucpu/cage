@@ -1,9 +1,9 @@
-#include <cmath>
-
 #include "main.h"
 #include <cage-core/math.h>
 #include <cage-core/camera.h>
 #include <cage-core/timer.h>
+
+#include <cmath>
 
 void test(real a, real b)
 {
@@ -83,14 +83,14 @@ namespace
 			CAGE_TEST(!(b != b));
 		}
 
-		{ // stringizer as r-value
+		{ // stringizer as r-Value
 			T a;
 			string s = stringizer() + a;
 			T b = T::parse(s);
 			CAGE_TEST(a == b);
 		}
 
-		{ // stringizer as l-value
+		{ // stringizer as l-Value
 			T a;
 			stringizer s;
 			s + a;

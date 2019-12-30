@@ -1,10 +1,12 @@
 #ifndef guard_holderSet_h_ewkjbguewnjgoijerjigkjiekbgnkljewnglk
 #define guard_holderSet_h_ewkjbguewnjgoijerjigkjiekbgnkljewnglk
 
+#include <set>
+
 template<class T>
-struct holderSet
+struct HolderSet
 {
-	struct comparatorStruct
+	struct ComparatorStruct
 	{
 		bool operator() (const Holder<T> &a, const Holder<T> &b) const
 		{
@@ -12,20 +14,20 @@ struct holderSet
 		}
 	};
 
-	typedef std::set<Holder<T>, comparatorStruct> type;
-	typedef typename type::iterator iterator;
+	typedef std::set<Holder<T>, ComparatorStruct> Type;
+	typedef typename Type::iterator Iterator;
 
-	iterator find(const string &name) const
+	Iterator find(const string &name) const
 	{
 		T tmp;
 		tmp.name = name;
 		Holder<T> tmh(&tmp, nullptr, Delegate<void(void*)>());
-		return const_cast<holderSet*>(this)->data.find(tmh);
+		return const_cast<HolderSet*>(this)->data.find(tmh);
 	}
 
 	T *retrieve(const string &name)
 	{
-		iterator it = find(name);
+		Iterator it = find(name);
 		if (it == end())
 			return nullptr;
 		return const_cast<T*>(it->get());
@@ -36,12 +38,12 @@ struct holderSet
 		return const_cast<T*>(data.insert(detail::systemArena().createHolder<T>(templates::move(value))).first->get());
 	}
 
-	iterator erase(const iterator &what)
+	Iterator erase(const Iterator &what)
 	{
 		return data.erase(what);
 	}
 
-	iterator erase(const string &name)
+	Iterator erase(const string &name)
 	{
 		return erase(find(name));
 	}
@@ -51,12 +53,12 @@ struct holderSet
 		data.clear();
 	}
 
-	iterator begin()
+	Iterator begin()
 	{
 		return data.begin();
 	}
 
-	iterator end()
+	Iterator end()
 	{
 		return data.end();
 	}
@@ -87,12 +89,12 @@ struct holderSet
 	{
 		uint32 s = size();
 		write(fileName, s);
-		for (iterator it = begin(), et = end(); it != et; it++)
+		for (Iterator it = begin(), et = end(); it != et; it++)
 			(*it)->save(fileName);
 	}
 
 private:
-	type data;
+	Type data;
 };
 
 #endif

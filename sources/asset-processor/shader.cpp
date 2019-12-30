@@ -1,8 +1,3 @@
-#include <map>
-#include <set>
-#include <vector>
-#include <string>
-
 #include "processor.h"
 
 #include <cage-core/timer.h>
@@ -10,6 +5,11 @@
 #include <cage-core/serialization.h>
 #include <cage-core/hashString.h>
 #include <cage-engine/opengl.h>
+
+#include <map>
+#include <set>
+#include <vector>
+#include <string>
 
 namespace
 {
@@ -478,7 +478,7 @@ void processShader()
 		MemoryBuffer comp = detail::compress(buff);
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + comp.size());
 
-		AssetHeader h = initializeAssetHeaderStruct();
+		AssetHeader h = initializeAssetHeader();
 		h.originalSize = numeric_cast<uint32>(buff.size());
 		h.compressedSize = numeric_cast<uint32>(comp.size());
 		Holder<File> f = newFile(outputFileName, FileMode(false, true));

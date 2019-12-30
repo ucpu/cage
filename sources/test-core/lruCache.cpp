@@ -3,29 +3,29 @@
 
 namespace
 {
-	struct key
+	struct Key
 	{
 		uint32 k;
-		key(uint32 k = 0) : k(k) {}
+		Key(uint32 k = 0) : k(k) {}
 	};
 
-	struct hasher
+	struct Hasher
 	{
-		auto operator () (const key &k) const
+		auto operator () (const Key &k) const
 		{
 			return std::hash<uint32>()(k.k);
 		}
 	};
 
-	bool operator == (const key &a, const key &b)
+	bool operator == (const Key &a, const Key &b)
 	{
 		return a.k == b.k;
 	}
 
-	struct value
+	struct Value
 	{
 		uint32 v;
-		value(uint32 v = 0) : v(v) {}
+		Value(uint32 v = 0) : v(v) {}
 	};
 }
 
@@ -46,7 +46,7 @@ void testLruCache()
 
 	{
 		CAGE_TESTCASE("with custom types");
-		LruCache<key, value, hasher> cache(3);
+		LruCache<Key, Value, Hasher> cache(3);
 		CAGE_TEST(cache.find(13) == nullptr);
 		cache.set(13, 130);
 		CAGE_TEST(cache.find(13));

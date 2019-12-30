@@ -1,8 +1,3 @@
-#include <vector>
-#include <map>
-#include <set>
-#include <algorithm>
-
 #include "main.h"
 
 #include <cage-core/math.h>
@@ -10,7 +5,12 @@
 #include <cage-core/timer.h>
 #include <cage-core/hashString.h>
 
-void testSceneEntities()
+#include <vector>
+#include <map>
+#include <set>
+#include <algorithm>
+
+void testEntities()
 {
 	CAGE_TESTCASE("entities");
 
@@ -64,14 +64,14 @@ void testSceneEntities()
 		for (uint32 i = 0; i < 3; i++)
 			manager->defineGroup();
 
-		struct helpStruct
+		struct Help
 		{
 			EntityComponent *c;
 			EventListener<bool(Entity*)> listener;
 
-			helpStruct(EntityComponent *c) : c(c)
+			Help(EntityComponent *c) : c(c)
 			{
-				listener.bind<helpStruct, &helpStruct::entityDestroyed>(this);
+				listener.bind<Help, &Help::entityDestroyed>(this);
 			}
 
 			bool entityDestroyed(Entity *e)

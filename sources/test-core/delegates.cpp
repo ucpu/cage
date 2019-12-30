@@ -13,7 +13,7 @@ namespace
 	int test5(int a, int b, int c) { return a + b + c; };
 	void test6(void *) {};
 
-	struct tester
+	struct Tester
 	{
 		void test11() {}
 		void test12(int, int) {}
@@ -84,77 +84,77 @@ void testDelegates()
 
 	{
 		CAGE_TESTCASE("methods");
-		tester instance;
-		Delegate<void()> d11 = Delegate<void()>().bind<tester, &tester::test11>(&instance);
+		Tester instance;
+		Delegate<void()> d11 = Delegate<void()>().bind<Tester, &Tester::test11>(&instance);
 		d11();
-		Delegate<void(int, int)> d12 = Delegate<void(int, int)>().bind<tester, &tester::test12>(&instance);
+		Delegate<void(int, int)> d12 = Delegate<void(int, int)>().bind<Tester, &Tester::test12>(&instance);
 		d12(4, 5);
-		Delegate<int(int)> d13 = Delegate<int(int)>().bind<tester, &tester::test13>(&instance);
+		Delegate<int(int)> d13 = Delegate<int(int)>().bind<Tester, &Tester::test13>(&instance);
 		d13(6);
 	}
 
 	{
 		CAGE_TESTCASE("method overloads");
-		tester instance;
-		Delegate<int(uint8)> d14 = Delegate<int(uint8)>().bind<tester, &tester::test14>(&instance);
+		Tester instance;
+		Delegate<int(uint8)> d14 = Delegate<int(uint8)>().bind<Tester, &Tester::test14>(&instance);
 		CAGE_TEST(d14(5) == 8);
-		Delegate<int(uint16)> d15 = Delegate<int(uint16)>().bind<tester, &tester::test14>(&instance);
+		Delegate<int(uint16)> d15 = Delegate<int(uint16)>().bind<Tester, &Tester::test14>(&instance);
 		CAGE_TEST(d15(5) == 16);
-		Delegate<int(uint32)> d16 = Delegate<int(uint32)>().bind<tester, &tester::test14>(&instance);
+		Delegate<int(uint32)> d16 = Delegate<int(uint32)>().bind<Tester, &Tester::test14>(&instance);
 		CAGE_TEST(d16(5) == 32);
 	}
 
 	{
 		CAGE_TESTCASE("const methods");
-		const tester instance;
-		Delegate<void()> d21 = Delegate<void()>().bind<tester, &tester::test21>(&instance);
+		const Tester instance;
+		Delegate<void()> d21 = Delegate<void()>().bind<Tester, &Tester::test21>(&instance);
 		d21();
-		Delegate<void(int, int)> d22 = Delegate<void(int, int)>().bind<tester, &tester::test22>(&instance);
+		Delegate<void(int, int)> d22 = Delegate<void(int, int)>().bind<Tester, &Tester::test22>(&instance);
 		d22(4, 5);
-		Delegate<int(int)> d23 = Delegate<int(int)>().bind<tester, &tester::test23>(&instance);
+		Delegate<int(int)> d23 = Delegate<int(int)>().bind<Tester, &Tester::test23>(&instance);
 		d23(6);
 	}
 
 	{
 		CAGE_TESTCASE("const method overloads");
-		const tester instance;
-		Delegate<int(uint8)> d24 = Delegate<int(uint8)>().bind<tester, &tester::test24>(&instance);
+		const Tester instance;
+		Delegate<int(uint8)> d24 = Delegate<int(uint8)>().bind<Tester, &Tester::test24>(&instance);
 		CAGE_TEST(d24(5) == 8);
-		Delegate<int(uint16)> d25 = Delegate<int(uint16)>().bind<tester, &tester::test24>(&instance);
+		Delegate<int(uint16)> d25 = Delegate<int(uint16)>().bind<Tester, &Tester::test24>(&instance);
 		CAGE_TEST(d25(5) == 16);
-		Delegate<int(uint32)> d26 = Delegate<int(uint32)>().bind<tester, &tester::test24>(&instance);
+		Delegate<int(uint32)> d26 = Delegate<int(uint32)>().bind<Tester, &Tester::test24>(&instance);
 		CAGE_TEST(d26(5) == 32);
 	}
 
 	{
 		CAGE_TESTCASE("const vs non-const methods");
-		tester vi;
-		Delegate<int()> d27 = Delegate<int()>().bind<tester, &tester::test25>(&vi);
+		Tester vi;
+		Delegate<int()> d27 = Delegate<int()>().bind<Tester, &Tester::test25>(&vi);
 		CAGE_TEST(d27() == 0);
-		const tester ci;
-		Delegate<int()> d28 = Delegate<int()>().bind<tester, &tester::test25>(&ci);
+		const Tester ci;
+		Delegate<int()> d28 = Delegate<int()>().bind<Tester, &Tester::test25>(&ci);
 		CAGE_TEST(d28() == 1);
 	}
 
 	{
 		CAGE_TESTCASE("static methods");
-		Delegate<int(int)> d41 = Delegate<int(int)>().bind<&tester::test31>();
+		Delegate<int(int)> d41 = Delegate<int(int)>().bind<&Tester::test31>();
 		d41(7);
 	}
 
 	{
 		CAGE_TESTCASE("static method overloads");
-		Delegate<int(uint8)> d44 = Delegate<int(uint8)>().bind<&tester::test32>();
+		Delegate<int(uint8)> d44 = Delegate<int(uint8)>().bind<&Tester::test32>();
 		CAGE_TEST(d44(5) == 8);
-		Delegate<int(uint16)> d45 = Delegate<int(uint16)>().bind<&tester::test32>();
+		Delegate<int(uint16)> d45 = Delegate<int(uint16)>().bind<&Tester::test32>();
 		CAGE_TEST(d45(5) == 16);
-		Delegate<int(uint32)> d46 = Delegate<int(uint32)>().bind<&tester::test32>();
+		Delegate<int(uint32)> d46 = Delegate<int(uint32)>().bind<&Tester::test32>();
 		CAGE_TEST(d46(5) == 32);
 	}
 
 	{
 		CAGE_TESTCASE("static methods with data");
-		Delegate<int()> d47 = Delegate<int()>().bind<int, &tester::test31>(42);
+		Delegate<int()> d47 = Delegate<int()>().bind<int, &Tester::test31>(42);
 		d47();
 	}
 }

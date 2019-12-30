@@ -1,9 +1,9 @@
-#include <cstdlib>
-
 #include "main.h"
 #include <cage-core/math.h>
 #include <cage-core/memory.h>
 #include <cage-core/timer.h>
+
+#include <cstdlib>
 
 #ifdef CAGE_DEBUG
 #define INPUT_SIZE 100

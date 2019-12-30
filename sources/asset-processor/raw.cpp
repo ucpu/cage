@@ -1,8 +1,8 @@
-#include <utility>
-
 #include "processor.h"
 
 #include <cage-core/memoryBuffer.h>
+
+#include <utility>
 
 void processRaw()
 {
@@ -15,7 +15,7 @@ void processRaw()
 		f->read(data.data(), data.size());
 	}
 
-	AssetHeader h = initializeAssetHeaderStruct();
+	AssetHeader h = initializeAssetHeader();
 	h.originalSize = numeric_cast<uint32>(data.size());
 
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "original data size: " + data.size() + " bytes");

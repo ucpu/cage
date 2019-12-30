@@ -53,7 +53,7 @@ namespace
 	class Throwing
 	{
 	public:
-		Throwing(bool throwing)
+		explicit Throwing(bool throwing)
 		{
 			if (throwing)
 			{

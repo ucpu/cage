@@ -1,5 +1,3 @@
-#include <exception>
-
 #include <cage-core/core.h>
 #include <cage-core/logger.h>
 #include <cage-core/math.h>
@@ -8,6 +6,8 @@
 #include <cage-core/concurrent.h>
 #include <cage-core/config.h>
 
+#include <exception>
+
 using namespace cage;
 
 void runServer();
@@ -15,18 +15,18 @@ void runClient();
 
 namespace
 {
-	struct runStruct
+	struct Run
 	{
 		Holder<Thread> thr;
 		string cmd;
 		uint32 name;
 
-		runStruct(uint32 name, const string &cmd) : cmd(cmd), name(name)
+		explicit Run(uint32 name, const string &cmd) : cmd(cmd), name(name)
 		{
-			thr = newThread(Delegate<void()>().bind<runStruct, &runStruct::run>(this), string(name));
+			thr = newThread(Delegate<void()>().bind<Run, &Run::run>(this), string(name));
 		}
 	
-		~runStruct()
+		~Run()
 		{
 			thr->wait();
 		}
@@ -55,10 +55,10 @@ namespace
 
 	void runManager()
 	{
-		runStruct runnerClient1(1, "cage-test-network -n network-test-1 -c");
-		runStruct runnerClient2(2, "cage-test-network -n network-test-2 -c -l 0.2");
-		runStruct runnerServer0(0, "cage-test-network -n network-test-0 -s");
-		runStruct runnerClient3(3, "cage-test-network -n network-test-3 -c");
+		Run runnerClient1(1, "cage-test-network -n network-test-1 -c");
+		Run runnerClient2(2, "cage-test-network -n network-test-2 -c -l 0.2");
+		Run runnerServer0(0, "cage-test-network -n network-test-0 -s");
+		Run runnerClient3(3, "cage-test-network -n network-test-3 -c");
 	}
 
 	void initializeSecondaryLog(const string &path)

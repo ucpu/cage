@@ -1,5 +1,3 @@
-#include <vector>
-
 #include "processor.h"
 
 #include <cage-core/hashString.h>
@@ -16,6 +14,8 @@
 #include FT_GLYPH_H
 #include FT_OUTLINE_H
 
+#include <vector>
+
 #define CALL(FNC, ...) { int err = FNC(__VA_ARGS__); if (err) { CAGE_LOG(SeverityEnum::Note, "exception", translateErrorCode(err)); CAGE_THROW_ERROR(SystemError, "FreeType " CAGE_STRINGIZE(FNC) " error", err); } }
 
 namespace
@@ -24,27 +24,27 @@ namespace
 	{
 		switch (code)
 #undef __FTERRORS_H__
-#define FT_ERRORDEF(E,V,S)  case V: return S;
-#define FT_ERROR_START_LIST     {
-#define FT_ERROR_END_LIST       default: CAGE_THROW_ERROR(Exception, "unknown freetype error code"); };
+#define FT_ERRORDEF(E,V,S) case V: return S;
+#define FT_ERROR_START_LIST {
+#define FT_ERROR_END_LIST default: CAGE_THROW_ERROR(Exception, "unknown freetype error code"); };
 #include FT_ERRORS_H
 	}
 
 	FT_Library library;
 	FT_Face face;
 
-	struct glyphStruct
+	struct Glyph
 	{
 		FontHeader::GlyphData data;
 		Holder<Image> png;
 		uint32 pngX, pngY;
-		glyphStruct() : pngX(0), pngY(0)
+		Glyph() : pngX(0), pngY(0)
 		{}
 	};
 
 	FontHeader data;
 
-	std::vector<glyphStruct> glyphs;
+	std::vector<Glyph> glyphs;
 	std::vector<real> kerning;
 	std::vector<uint32> charsetChars;
 	std::vector<uint32> charsetGlyphs;
@@ -64,7 +64,7 @@ namespace
 	real maxOffTop, maxOffBottom;
 	static const uint32 border = 6;
 
-	void glyphImage(glyphStruct &g, msdfgen::Shape &shape)
+	void glyphImage(Glyph &g, msdfgen::Shape &shape)
 	{
 		shape.normalize();
 		msdfgen::edgeColoringSimple(shape, 3.0);
@@ -100,7 +100,7 @@ namespace
 		uint32 maxPngW = 0, maxPngH = 0;
 		for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
 		{
-			glyphStruct &g = glyphs[glyphIndex];
+			Glyph &g = glyphs[glyphIndex];
 			CALL(FT_Load_Glyph, face, glyphIndex, FT_LOAD_DEFAULT);
 
 			// load glyph metrics
@@ -225,7 +225,7 @@ namespace
 			CAGE_LOG(SeverityEnum::Warning, logComponentName, stringizer() + "artificially adding cursor glyph");
 			data.glyphCount++;
 			glyphs.resize(glyphs.size() + 1);
-			glyphStruct &g = glyphs[glyphs.size() - 1];
+			Glyph &g = glyphs[glyphs.size() - 1];
 			msdfgen::Shape shape = cursorShape();
 			glyphImage(g, shape);
 			g.data.advance = 0;
@@ -249,12 +249,12 @@ namespace
 	void createAtlasCoordinates()
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "create atlas coordinates");
-		Holder<binPackingClass> packer = newBinPacking();
+		Holder<BinPacking> packer = newBinPacking();
 		uint32 area = 0;
 		uint32 mgs = 0;
 		for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
 		{
-			glyphStruct &g = glyphs[glyphIndex];
+			Glyph &g = glyphs[glyphIndex];
 			if (!g.png)
 				continue;
 			area += g.png->width() * g.png->height();
@@ -276,7 +276,7 @@ namespace
 			uint32 glyphIndex = 0, x = 0, y = 0;
 			packer->get(index, glyphIndex, x, y);
 			CAGE_ASSERT(glyphIndex < glyphs.size(), glyphIndex, glyphs.size());
-			glyphStruct &g = glyphs[glyphIndex];
+			Glyph &g = glyphs[glyphIndex];
 			CAGE_ASSERT(x < res, "texture x coordinate out of range", x, res, index, glyphIndex);
 			CAGE_ASSERT(y < res, "texture y coordinate out of range", y, res, index, glyphIndex);
 			g.pngX = x;
@@ -297,7 +297,7 @@ namespace
 		texels->empty(data.texWidth, data.texHeight, 3);
 		for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
 		{
-			glyphStruct &g = glyphs[glyphIndex];
+			Glyph &g = glyphs[glyphIndex];
 			if (!g.png)
 				continue;
 			imageBlit(g.png.get(), texels.get(), 0, 0, g.pngX, g.pngY, g.png->width(), g.png->height());
@@ -314,7 +314,7 @@ namespace
 		CAGE_ASSERT(charsetChars.size() == charsetGlyphs.size(), charsetChars.size(), charsetGlyphs.size());
 		CAGE_ASSERT(kerning.size() == 0 || kerning.size() == data.glyphCount * data.glyphCount, kerning.size(), data.glyphCount * data.glyphCount, data.glyphCount);
 
-		AssetHeader h = initializeAssetHeaderStruct();
+		AssetHeader h = initializeAssetHeader();
 		h.originalSize = sizeof(data) + data.texSize +
 			data.glyphCount * sizeof(FontHeader::GlyphData) +
 			sizeof(real) * numeric_cast<uint32>(kerning.size()) +
@@ -375,7 +375,7 @@ namespace
 			);
 			for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
 			{
-				glyphStruct &g = glyphs[glyphIndex];
+				Glyph &g = glyphs[glyphIndex];
 				f->writeLine(
 					string(glyphIndex).fill(10) +
 					string(stringizer() + g.data.texUv).fill(60) +

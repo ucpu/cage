@@ -1,7 +1,7 @@
 
-struct runnerStruct
+struct Runner
 {
-	runnerStruct();
+	Runner();
 	void step();
 
 private:

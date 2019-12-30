@@ -1,10 +1,10 @@
-#include <cstring>
-#include <map>
-
 #include "main.h"
 #include <cage-core/math.h>
 #include <cage-core/files.h>
 #include <cage-core/hashString.h>
+
+#include <cstring>
+#include <map>
 
 namespace
 {
@@ -691,15 +691,15 @@ namespace
 		}
 	}
 
-	struct customStruct
+	struct Custom
 	{
 		int value;
-		explicit customStruct(int value = 0) : value(value)
+		explicit Custom(int value = 0) : value(value)
 		{}
 	};
 
 	template<uint32 N>
-	detail::StringizerBase<N> &operator + (detail::StringizerBase<N> &str, const customStruct &other)
+	detail::StringizerBase<N> &operator + (detail::StringizerBase<N> &str, const Custom &other)
 	{
 		return str + other.value;
 	}
@@ -730,7 +730,7 @@ namespace
 				string str = stringizer() + 123 + "abc" + 456;
 			}
 			{
-				customStruct custom(42);
+				Custom custom(42);
 				string str = stringizer() + custom;
 			}
 			{
@@ -744,7 +744,7 @@ namespace
 				string str = s + 123 + "abc" + 456;
 			}
 			{
-				customStruct custom(42);
+				Custom custom(42);
 				stringizer s;
 				string str = s + custom;
 			}

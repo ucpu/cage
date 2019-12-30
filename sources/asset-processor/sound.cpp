@@ -12,7 +12,7 @@ namespace
 	SoundSourceHeader sds;
 	MemoryBuffer buf1;
 
-	struct vorbisEncoderStruct
+	struct VorbisEncoder
 	{
 		File *f;
 
@@ -25,7 +25,7 @@ namespace
 		ogg_page og;
 		int ret;
 
-		vorbisEncoderStruct(File *f) : f(f) {}
+		explicit VorbisEncoder(File *f) : f(f) {}
 
 		void processBlock()
 		{
@@ -253,7 +253,7 @@ void processSound()
 		CAGE_THROW_CRITICAL(Exception, "invalid sound type");
 	}
 
-	AssetHeader h = initializeAssetHeaderStruct();
+	AssetHeader h = initializeAssetHeader();
 	h.originalSize = sizeof(SoundSourceHeader) + sds.frames * sds.channels * sizeof(float);
 
 	Holder<File> f = newFile(outputFileName, FileMode(true, true));
@@ -269,7 +269,7 @@ void processSound()
 	case SoundTypeEnum::CompressedRaw:
 	case SoundTypeEnum::CompressedCompressed:
 	{
-		vorbisEncoderStruct ves(f.get());
+		VorbisEncoder ves(f.get());
 		ves.encode();
 		uint32 oggSize = numeric_cast<uint32>(f->size() - sizeof(SoundSourceHeader) - sizeof(AssetHeader));
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "original size: " + h.originalSize + " bytes");

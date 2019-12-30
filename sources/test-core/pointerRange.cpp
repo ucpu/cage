@@ -5,26 +5,26 @@ namespace
 {
 	uint32 counter = 0;
 
-	struct testStruct
+	struct Test
 	{
-		testStruct()
+		Test()
 		{
 			counter++;
 		}
 
-		testStruct(testStruct &&)
+		Test(Test &&)
 		{
 			counter++;
 		}
 
-		~testStruct()
+		~Test()
 		{
 			counter--;
 		}
 
-		testStruct(const testStruct &) = delete;
-		testStruct &operator = (const testStruct &) = delete;
-		testStruct &operator = (testStruct &&) = default;
+		Test(const Test &) = delete;
+		Test &operator = (const Test &) = delete;
+		Test &operator = (Test &&) = default;
 
 		void fnc()
 		{}
@@ -39,16 +39,16 @@ namespace
 		return PointerRangeHolder<uint32>(templates::move(numbers));
 	}
 
-	Holder<PointerRange<testStruct>> makeRangeTests()
+	Holder<PointerRange<Test>> makeRangeTests()
 	{
-		std::vector<testStruct> tests;
+		std::vector<Test> tests;
 		CAGE_TEST(counter == 0);
 		tests.emplace_back();
 		tests.emplace_back();
 		tests.emplace_back();
 		tests.emplace_back();
 		CAGE_TEST(counter == 4);
-		return PointerRangeHolder<testStruct>(templates::move(tests));
+		return PointerRangeHolder<Test>(templates::move(tests));
 	}
 
 	void functionTakingMutableRange(PointerRange<uint32> r)
@@ -91,7 +91,7 @@ void testPointerRange()
 	}
 
 	{
-		CAGE_TESTCASE("holder with pointer range <testStruct>");
+		CAGE_TESTCASE("holder with pointer range <Test>");
 		{
 			CAGE_TEST(counter == 0);
 			auto range = makeRangeTests();

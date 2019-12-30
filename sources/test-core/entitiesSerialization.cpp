@@ -79,9 +79,9 @@ namespace
 	}
 }
 
-void testSceneSerialize()
+void testEntitiesSerialization()
 {
-	CAGE_TESTCASE("Serializer");
+	CAGE_TESTCASE("entities serialization");
 
 	Holder<EntityManager> manA = newEntityManager(EntityManagerCreateConfig());
 	defineManager(manA.get());

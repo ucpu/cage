@@ -1,8 +1,3 @@
-#include <algorithm>
-#include <vector>
-#include <set>
-#include <map>
-
 #include <cage-core/core.h>
 #include <cage-core/config.h>
 #include <cage-core/files.h>
@@ -22,6 +17,9 @@ using namespace cage;
 #include "scheme.h"
 #include "notifier.h"
 
+#include <algorithm>
+#include <vector>
+
 #define CAGE_THROW_WARNING(EXCEPTION, ...) { EXCEPTION e(__FILE__, __LINE__, __FUNCTION__, ::cage::SeverityEnum::Warning, __VA_ARGS__); e.makeLog(); throw e; }
 
 namespace
@@ -32,10 +30,10 @@ namespace
 
 	bool verdictValue = false;
 
-	struct databankStruct
+	struct Databank
 	{
 		string name;
-		databankStruct(const string &s = "") : name(s) {};
+		Databank(const string &s = "") : name(s) {};
 
 		void load(File *f)
 		{
@@ -47,16 +45,16 @@ namespace
 			write(f, name);
 		}
 
-		bool operator < (const databankStruct &other) const
+		bool operator < (const Databank &other) const
 		{
 			return stringComparatorFast()(name, other.name);
 		}
 	};
 
 	uint64 timestamp;
-	holderSet<schemeStruct> schemes;
-	holderSet<assetStruct> assets;
-	holderSet<databankStruct> corruptedDatabanks;
+	HolderSet<Scheme> schemes;
+	HolderSet<Asset> assets;
+	HolderSet<Databank> corruptedDatabanks;
 
 	bool parseDatabank(const string &path)
 	{
@@ -83,7 +81,7 @@ namespace
 				errors++;
 				continue;
 			}
-			schemeStruct *sch = schemes.retrieve(scheme);
+			Scheme *sch = schemes.retrieve(scheme);
 			if (!sch)
 			{
 				CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "invalid scheme '" + scheme + "' in databank '" + path + "' in section '" + section + "'");
@@ -117,7 +115,7 @@ namespace
 				if (!assItem.isDigitsOnly())
 					continue; // not an asset
 
-				assetStruct ass;
+				Asset ass;
 				ass.scheme = scheme;
 				ass.databank = path;
 				ass.name = ini->getString(section, assItem);
@@ -129,7 +127,7 @@ namespace
 				if (assets.exists(ass.name))
 				{
 					CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "duplicate asset name '" + ass.name + "' in databank '" + path + "' in section '" + section + "'");
-					assetStruct &ass2 = *const_cast<assetStruct*>(assets.retrieve(ass.name));
+					Asset &ass2 = *const_cast<Asset*>(assets.retrieve(ass.name));
 					CAGE_LOG(SeverityEnum::Note, "database", stringizer() + "with asset in databank '" + ass2.databank + "'");
 					ass2.corrupted = true;
 					ok = false;
@@ -138,7 +136,7 @@ namespace
 				// check for hash collisions
 				for (const auto &it : assets)
 				{
-					assetStruct &ass2 = *it;
+					Asset &ass2 = *it;
 					if (ass2.outputPath() == ass.outputPath())
 					{
 						CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "asset output path collision '" + ass.name + "' in databank '" + path + "' in section '" + section + "'");
@@ -183,7 +181,7 @@ namespace
 		return errors == 0;
 	}
 
-	void processAsset(assetStruct &ass)
+	void processAsset(Asset &ass)
 	{
 		detail::OverrideBreakpoint OverrideBreakpoint;
 		CAGE_LOG(SeverityEnum::Info, "asset", ass.name);
@@ -192,7 +190,7 @@ namespace
 		ass.files.clear();
 		ass.references.clear();
 		ass.aliasName = "";
-		schemeStruct *scheme = schemes.retrieve(ass.scheme);
+		Scheme *scheme = schemes.retrieve(ass.scheme);
 		CAGE_ASSERT(scheme, "asset has invalid scheme");
 		try
 		{
@@ -328,11 +326,11 @@ namespace
 			FileMode fm(false, true);
 			fm.textual = true;
 			Holder<File> f = newFile(configPathByHash, fm);
-			std::vector<std::pair<string, const assetStruct*>> items;
+			std::vector<std::pair<string, const Asset*>> items;
 			for (const auto &it : assets)
 			{
-				const assetStruct &ass = *it;
-				items.push_back(std::pair<string, const assetStruct*>(ass.outputPath(), &ass));
+				const Asset &ass = *it;
+				items.push_back(std::pair<string, const Asset*>(ass.outputPath(), &ass));
 			}
 			std::sort(items.begin(), items.end(), [](const auto &a, const auto &b) {
 				return a.first < b.first;
@@ -340,7 +338,7 @@ namespace
 			f->writeLine("<hash>     <asset name>                                                                                         <scheme>        <databank>");
 			for (const auto &it : items)
 			{
-				const assetStruct &ass = *it.second;
+				const Asset &ass = *it.second;
 				write(f, it.first.fill(10));
 				if (ass.corrupted)
 					write(f, "CORRUPTED");
@@ -357,11 +355,11 @@ namespace
 			FileMode fm(false, true);
 			fm.textual = true;
 			Holder<File> f = newFile(configPathByName, fm);
-			std::vector<std::pair<string, const assetStruct*>> items;
+			std::vector<std::pair<string, const Asset*>> items;
 			for (const auto &it : assets)
 			{
-				const assetStruct &ass = *it;
-				items.push_back(std::pair<string, const assetStruct*>(ass.name, &ass));
+				const Asset &ass = *it;
+				items.push_back(std::pair<string, const Asset*>(ass.name, &ass));
 			}
 			std::sort(items.begin(), items.end(), [](const auto &a, const auto &b) {
 				return a.first < b.first;
@@ -369,7 +367,7 @@ namespace
 			f->writeLine("<hash>     <asset name>                                                                                         <scheme>        <databank>");
 			for (const auto &it : items)
 			{
-				const assetStruct &ass = *it.second;
+				const Asset &ass = *it.second;
 				write(f, ass.outputPath().fill(10));
 				if (ass.corrupted)
 					write(f, "CORRUPTED");
@@ -401,8 +399,8 @@ namespace
 		return false;
 	}
 
-	typedef std::map<string, uint64, stringComparatorFast> filesMap;
-	filesMap files;
+	typedef std::map<string, uint64, stringComparatorFast> FilesMap;
+	FilesMap files;
 
 	void findFiles(const string &path)
 	{
@@ -461,12 +459,12 @@ namespace
 			{
 				CAGE_ASSERT(!it->corrupted);
 				notifierNotify(it->name);
-				const_cast<assetStruct*>(it.get())->needNotify = false;
+				const_cast<Asset*>(it.get())->needNotify = false;
 			}
 		}
 	}
 
-	holderSet<assetStruct>::iterator itg;
+	HolderSet<Asset>::Iterator itg;
 	Holder<Mutex> mut;
 	Holder<ThreadPool> threads;
 
@@ -474,11 +472,11 @@ namespace
 	{
 		while (true)
 		{
-			assetStruct *ass = nullptr;
+			Asset *ass = nullptr;
 			{
 				ScopeLock<Mutex> m(mut);
 				if (itg != assets.end())
-					ass = const_cast<assetStruct*>(itg++->get());
+					ass = const_cast<Asset*>(itg++->get());
 			}
 			if (!ass)
 				break;
@@ -500,10 +498,10 @@ namespace
 		}
 	}
 
-	static struct threadsInitializerClass
+	static struct ThreadsInitializer
 	{
 	public:
-		threadsInitializerClass()
+		ThreadsInitializer()
 		{
 			mut = newMutex();
 			threads = newThreadPool();
@@ -519,7 +517,7 @@ namespace
 		verdictValue = false;
 		files.clear();
 		findFiles("");
-		holderSet<databankStruct> corruptedDbsCopy;
+		HolderSet<Databank> corruptedDbsCopy;
 		std::swap(corruptedDbsCopy, corruptedDatabanks);
 		corruptedDatabanks.clear();
 		uint32 countBadDatabanks = 0;
@@ -528,7 +526,7 @@ namespace
 
 		for (auto asIt = assets.begin(); asIt != assets.end();)
 		{
-			assetStruct &ass = **asIt;
+			Asset &ass = **asIt;
 
 			// check for deleted, modified or corrupted databank
 			if (files.find(ass.databank) == files.end() || corruptedDbsCopy.find(ass.databank) != corruptedDbsCopy.end() || files[ass.databank] > timestamp)
@@ -565,7 +563,7 @@ namespace
 			}
 		}
 
-		stringSet outputHashes;
+		StringSet outputHashes;
 		for (const auto &it : assets)
 			outputHashes.insert(it->outputPath());
 
@@ -577,7 +575,7 @@ namespace
 
 		for (const auto &it : assets)
 		{
-			assetStruct &ass = *it;
+			Asset &ass = *it;
 
 			// check alias name collisions
 			if (!ass.aliasName.empty() && outputHashes.find(ass.aliasPath()) != outputHashes.end())
@@ -638,7 +636,7 @@ namespace
 			}
 			if (!name.isPattern("", "", ".scheme"))
 				continue;
-			schemeStruct s;
+			Scheme s;
 			s.name = name.subString(0, name.length() - 7);
 			CAGE_LOG(SeverityEnum::Info, "database", stringizer() + "loading scheme '" + s.name + "'");
 			Holder<Ini> ini = newIni();
@@ -717,4 +715,3 @@ bool verdict()
 {
 	return verdictValue;
 }
-

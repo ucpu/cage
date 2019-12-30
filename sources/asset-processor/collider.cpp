@@ -4,7 +4,7 @@
 
 void processCollider()
 {
-	Holder<assimpContextClass> context = newAssimpContext(0, 0);
+	Holder<AssimpContext> context = newAssimpContext(0, 0);
 	const aiScene *scene = context->getScene();
 	const aiMesh *am = scene->mMeshes[context->selectMesh()];
 
@@ -49,7 +49,7 @@ void processCollider()
 	MemoryBuffer comp = detail::compress(buff);
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + comp.size());
 
-	AssetHeader h = initializeAssetHeaderStruct();
+	AssetHeader h = initializeAssetHeader();
 	h.originalSize = numeric_cast<uint32>(buff.size());
 	h.compressedSize = numeric_cast<uint32>(comp.size());
 	Holder<File> f = newFile(outputFileName, FileMode(false, true));

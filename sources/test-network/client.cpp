@@ -17,8 +17,8 @@ void runClient()
 	CAGE_LOG(SeverityEnum::Info, "config", stringizer() + "address: '" + (string)address + "'");
 	CAGE_LOG(SeverityEnum::Info, "config", stringizer() + "port: " + (uint32)port);
 
-	Holder<connClass> client = newConn(newUdpConnection(address, port, 0));
-	runnerStruct runner;
+	Holder<Conn> client = newConn(newUdpConnection(address, port, 0));
+	Runner runner;
 	while (!client->process())
 		runner.step();
 }

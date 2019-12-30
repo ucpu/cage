@@ -1,5 +1,3 @@
-#include <set>
-
 #include <cage-core/core.h>
 #include <cage-core/config.h>
 #include <cage-core/files.h>
@@ -21,8 +19,8 @@ ConfigUint64 configArchiveWriteThreshold("cage-asset-database/database/archiveWr
 ConfigBool configListening("cage-asset-database/database/listening", false);
 ConfigBool configFromScratch("cage-asset-database/database/fromScratch", false);
 ConfigBool configOutputArchive("cage-asset-database/database/outputArchive", false);
-stringSet configIgnoreExtensions;
-stringSet configIgnorePaths;
+StringSet configIgnoreExtensions;
+StringSet configIgnorePaths;
 
 void configParseCmd(int argc, const char *args[])
 {
@@ -61,4 +59,3 @@ void configParseCmd(int argc, const char *args[])
 	configPathByName = pathSimplify(configPathByName);
 	configPathSchemes = pathSimplify(configPathSchemes);
 }
-

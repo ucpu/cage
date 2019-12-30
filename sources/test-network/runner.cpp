@@ -6,10 +6,10 @@ using namespace cage;
 
 #include "runner.h"
 
-runnerStruct::runnerStruct() : time(getApplicationTime()), timeStep(1000000 / (randomRange(25, 35)))
+Runner::Runner() : time(getApplicationTime()), timeStep(1000000 / (randomRange(25, 35)))
 {}
 
-void runnerStruct::step()
+void Runner::step()
 {
 	uint64 t = getApplicationTime();
 	sint64 s = time + timeStep - t;

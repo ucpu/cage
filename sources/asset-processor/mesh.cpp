@@ -363,7 +363,7 @@ namespace
 
 void processMesh()
 {
-	Holder<assimpContextClass> context;
+	Holder<AssimpContext> context;
 	{
 		uint32 addFlags = 0;
 		if (properties("normals").toBool())
@@ -474,7 +474,7 @@ void processMesh()
 			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "enlarged bounding box: " + dsm.box);
 		}
 		CAGE_ASSERT(am->mNumBones > 0);
-		Holder<assimpSkeletonClass> skeleton = context->skeleton();
+		Holder<AssimpSkeleton> skeleton = context->skeleton();
 		dsm.skeletonBones = skeleton->bonesCount();
 		Serializer ser2 = ser.placeholder((sizeof(uint16) + sizeof(float)) * 4 * dsm.verticesCount);
 		uint16 *boneIndices = (uint16*)ser2.advance(sizeof(uint16) * 4 * dsm.verticesCount);
@@ -565,7 +565,7 @@ void processMesh()
 	ser << mat;
 	dsmPlaceholder << dsm;
 
-	AssetHeader h = initializeAssetHeaderStruct();
+	AssetHeader h = initializeAssetHeader();
 	h.originalSize = dataBuffer.size();
 	if (dsm.skeletonName)
 		h.dependenciesCount++;

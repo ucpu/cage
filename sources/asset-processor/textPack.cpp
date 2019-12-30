@@ -1,9 +1,9 @@
-#include <map>
-
 #include "processor.h"
 
 #include <cage-core/ini.h>
 #include <cage-core/hashString.h>
+
+#include <map>
 
 void processTextpack()
 {
@@ -25,7 +25,7 @@ void processTextpack()
 	}
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "loaded " + texts.size() + " texts");
 
-	AssetHeader h = initializeAssetHeaderStruct();
+	AssetHeader h = initializeAssetHeader();
 	h.originalSize = sizeof(uint32) + numeric_cast<uint32>(texts.size()) * sizeof(uint32) * 2;
 	for (auto it : texts)
 		h.originalSize += numeric_cast<uint32>(it.second.length());

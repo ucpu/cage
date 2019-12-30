@@ -1,8 +1,8 @@
 
-class connClass
+class Conn
 {
 public:
 	bool process();
 };
 
-Holder<connClass> newConn(Holder<UdpConnection> udp);
+Holder<Conn> newConn(Holder<UdpConnection> udp);

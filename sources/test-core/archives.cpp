@@ -1,11 +1,11 @@
-#include <set>
-
 #include "main.h"
 #include <cage-core/files.h>
 #include <cage-core/fileUtils.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 #include <cage-core/math.h>
+
+#include <set>
 
 namespace
 {
@@ -296,5 +296,5 @@ void testArchives()
 
 	// todo lastChange
 	// todo concurrent reading/writing from/to multiple (different) files
-	// todo archives inside archives (most likely wont implement)
+	// todo archives inside archives
 }

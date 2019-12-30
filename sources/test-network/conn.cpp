@@ -15,7 +15,7 @@ namespace
 {
 	ConfigUint32 confMessages("messages");
 
-	class connImpl : public connClass
+	class ConnImpl : public Conn
 	{
 	public:
 		Holder<UdpConnection> udp;
@@ -26,10 +26,10 @@ namespace
 		VariableSmoothingBuffer<uint64, 100> smoothRtt;
 		VariableSmoothingBuffer<uint64, 100> smoothThroughput;
 
-		connImpl(Holder<UdpConnection> udp) : udp(templates::move(udp)), timeStart(getApplicationTime()), timeStats(timeStart + 1000000), sendSeqn(0), recvSeqn(0), recvCnt(0), recvBytes(0)
+		ConnImpl(Holder<UdpConnection> udp) : udp(templates::move(udp)), timeStart(getApplicationTime()), timeStats(timeStart + 1000000), sendSeqn(0), recvSeqn(0), recvCnt(0), recvBytes(0)
 		{}
 
-		~connImpl()
+		~ConnImpl()
 		{
 			statistics(getApplicationTime());
 		}
@@ -105,13 +105,13 @@ namespace
 	};
 }
 
-bool connClass::process()
+bool Conn::process()
 {
-	connImpl *impl = (connImpl *)this;
+	ConnImpl *impl = (ConnImpl *)this;
 	return impl->process();
 }
 
-Holder<connClass> newConn(Holder<UdpConnection> udp)
+Holder<Conn> newConn(Holder<UdpConnection> udp)
 {
-	return detail::systemArena().createImpl<connClass, connImpl>(templates::move(udp));
+	return detail::systemArena().createImpl<Conn, ConnImpl>(templates::move(udp));
 }

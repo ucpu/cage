@@ -1,19 +1,22 @@
 #ifndef guard_asset_h_036fe307_7f7d_4620_83af_ab2cda0818b9_
 #define guard_asset_h_036fe307_7f7d_4620_83af_ab2cda0818b9_
 
-typedef std::set<string, stringComparatorFast> stringSet;
-typedef std::map<string, string, stringComparatorFast> stringMap;
+#include <set>
+#include <map>
 
-struct assetStruct
+typedef std::set<string, stringComparatorFast> StringSet;
+typedef std::map<string, string, stringComparatorFast> StringMap;
+
+struct Asset
 {
-	assetStruct();
+	Asset();
 	string name;
 	string aliasName;
 	string scheme;
 	string databank;
-	stringMap fields;
-	stringSet files;
-	stringSet references;
+	StringMap fields;
+	StringSet files;
+	StringSet references;
 	bool corrupted;
 	bool needNotify;
 
@@ -21,7 +24,7 @@ struct assetStruct
 	void save(File *fileName) const;
 	string outputPath() const;
 	string aliasPath() const;
-	bool operator < (const assetStruct &other) const
+	bool operator < (const Asset &other) const
 	{
 		return stringComparatorFast()(name, other.name);
 	}

@@ -1,7 +1,3 @@
-#include <vector>
-#include <algorithm>
-#include <atomic>
-
 #include "main.h"
 #include <cage-core/config.h>
 #include <cage-core/network.h>
@@ -10,11 +6,15 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/guid.h> // generateRandomData
 
+#include <vector>
+#include <algorithm>
+#include <atomic>
+
 namespace
 {
 	std::atomic<uint32> connectionsLeft;
 
-	class serverImpl
+	class ServerImpl
 	{
 	public:
 		Holder<UdpServer> udp;
@@ -22,7 +22,7 @@ namespace
 		uint64 lastTime;
 		bool hadConnection;
 
-		serverImpl() : lastTime(getApplicationTime()), hadConnection(false)
+		ServerImpl() : lastTime(getApplicationTime()), hadConnection(false)
 		{
 			udp = newUdpServer(3210);
 		}
@@ -66,13 +66,13 @@ namespace
 
 		static void entry()
 		{
-			serverImpl srv;
+			ServerImpl srv;
 			while (srv.service())
 				threadSleep(5000);
 		}
 	};
 
-	class clientImpl
+	class ClientImpl
 	{
 	public:
 		Holder<UdpConnection> udp;
@@ -80,7 +80,7 @@ namespace
 		std::vector<MemoryBuffer> sends;
 		uint32 si, ri;
 
-		clientImpl() : si(0), ri(0)
+		ClientImpl() : si(0), ri(0)
 		{
 			connectionsLeft++;
 			for (uint32 i = 0; i < 20; i++)
@@ -92,7 +92,7 @@ namespace
 			udp = newUdpConnection("localhost", 3210, randomChance() < 0.5 ? 10000000 : 0);
 		}
 
-		~clientImpl()
+		~ClientImpl()
 		{
 			if (udp)
 			{
@@ -123,7 +123,7 @@ namespace
 
 		static void entry()
 		{
-			clientImpl cl;
+			ClientImpl cl;
 			while (cl.service())
 				threadSleep(5000);
 		}
@@ -137,12 +137,12 @@ void testUdp()
 	configSetUint32("cage/udp/logLevel", 2);
 	configSetFloat("cage/udp/simulatedPacketLoss", 0.1f);
 
-	Holder<Thread> server = newThread(Delegate<void()>().bind<&serverImpl::entry>(), "server");
+	Holder<Thread> server = newThread(Delegate<void()>().bind<&ServerImpl::entry>(), "server");
 	std::vector<Holder<Thread>> clients;
 	clients.resize(3);
 	uint32 index = 0;
 	for (auto &c : clients)
-		c = newThread(Delegate<void()>().bind<&clientImpl::entry>(), stringizer() + "client " + (index++));
+		c = newThread(Delegate<void()>().bind<&ClientImpl::entry>(), stringizer() + "client " + (index++));
 	server->wait();
 	for (auto &c : clients)
 		c->wait();

@@ -3,23 +3,23 @@
 #include <cage-core/network.h>
 #include <cage-core/concurrent.h>
 
-#include <list>
-
 using namespace cage;
 
 #include "conn.h"
 #include "runner.h"
 
-struct thrStruct
+#include <list>
+
+struct Thr
 {
 	Holder<Thread> thr;
-	Holder<connClass> conn;
-	runnerStruct runner;
+	Holder<Conn> conn;
+	Runner runner;
 	bool done;
 
-	thrStruct(Holder<connClass> conn) : conn(templates::move(conn)), done(false)
+	Thr(Holder<Conn> conn) : conn(templates::move(conn)), done(false)
 	{
-		thr = newThread(Delegate<void()>().bind<thrStruct, &thrStruct::entry>(this), "thr");
+		thr = newThread(Delegate<void()>().bind<Thr, &Thr::entry>(this), "thr");
 	}
 
 	void entry()
@@ -46,8 +46,8 @@ void runServer()
 
 	Holder<UdpServer> server = newUdpServer(numeric_cast<uint16>((uint32)port));
 	bool hadConnection = false;
-	std::list<thrStruct> thrs;
-	runnerStruct runner;
+	std::list<Thr> thrs;
+	Runner runner;
 	while (true)
 	{
 		while (true)
