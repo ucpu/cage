@@ -45,13 +45,13 @@ namespace cage
 		assign(i);
 	}
 
-	void imageItemStruct::assign(const ImageComponent &value)
+	void imageItemStruct::assign(const GuiImageComponent &value)
 	{
 		Image = value;
 		texture = hierarchy->impl->assetMgr->tryGet<assetSchemeIndexTexture, Texture>(value.textureName);
 	}
 
-	void imageItemStruct::apply(const ImageFormatComponent &f)
+	void imageItemStruct::apply(const GuiImageFormatComponent &f)
 	{
 		format = f;
 		// todo inherit only

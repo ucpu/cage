@@ -13,34 +13,34 @@
 
 namespace cage
 {
-	ParentComponent::ParentComponent() : parent(0), order(0)
+	GuiParentComponent::GuiParentComponent() : parent(0), order(0)
 	{}
 
-	ImageComponent::ImageComponent() : animationStart(m), textureName(0), textureUvSize{1, 1}
+	GuiImageComponent::GuiImageComponent() : animationStart(m), textureName(0), textureUvSize{1, 1}
 	{}
 
-	ImageFormatComponent::ImageFormatComponent() : animationSpeed(1), mode(ImageModeEnum::Stretch)
+	GuiImageFormatComponent::GuiImageFormatComponent() : animationSpeed(1), mode(ImageModeEnum::Stretch)
 	{}
 
-	TextComponent::TextComponent() : assetName(0), textName(0)
+	GuiTextComponent::GuiTextComponent() : assetName(0), textName(0)
 	{}
 
-	TextFormatComponent::TextFormatComponent() : color(vec3::Nan()), font(0), size(real::Nan()), lineSpacing(real::Nan()), align((TextAlignEnum)-1)
+	GuiTextFormatComponent::GuiTextFormatComponent() : color(vec3::Nan()), font(0), size(real::Nan()), lineSpacing(real::Nan()), align((TextAlignEnum)-1)
 	{}
 
-	SelectionComponent::SelectionComponent() : start(m), length(0)
+	GuiSelectionComponent::GuiSelectionComponent() : start(m), length(0)
 	{}
 
-	TooltipComponent::TooltipComponent() : assetName(0), textName(0)
+	GuiTooltipComponent::GuiTooltipComponent() : assetName(0), textName(0)
 	{}
 
-	ScrollbarsComponent::ScrollbarsComponent() : overflow{ OverflowModeEnum::Auto, OverflowModeEnum::Auto }
+	GuiScrollbarsComponent::GuiScrollbarsComponent() : overflow{ OverflowModeEnum::Auto, OverflowModeEnum::Auto }
 	{}
 
-	ExplicitSizeComponent::ExplicitSizeComponent() : size(vec2::Nan())
+	GuiExplicitSizeComponent::GuiExplicitSizeComponent() : size(vec2::Nan())
 	{}
 
-	EventComponent::EventComponent()
+	GuiEventComponent::GuiEventComponent()
 	{}
 
 	namespace privat
@@ -48,7 +48,7 @@ namespace cage
 		GuiGeneralComponents::GuiGeneralComponents(EntityManager *ents)
 		{
 			detail::memset(this, 0, sizeof(*this));
-#define GCHL_GENERATE(T) T = ents->defineComponent<CAGE_JOIN(T, Component)>(CAGE_JOIN(T, Component)(), false);
+#define GCHL_GENERATE(T) T = ents->defineComponent<CAGE_JOIN(Gui, CAGE_JOIN(T, Component))>(CAGE_JOIN(Gui, CAGE_JOIN(T, Component))(), false);
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_COMMON_COMPONENTS));
 #undef GCHL_GENERATE
 		}

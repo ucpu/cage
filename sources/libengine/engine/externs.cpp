@@ -16,7 +16,7 @@ namespace cage
 	EntityComponent *TextureAnimationComponent::component;
 	EntityComponent *LightComponent::component;
 	EntityComponent *ShadowmapComponent::component;
-	EntityComponent *RenderTextComponent::component;
+	EntityComponent *TextComponent::component;
 	EntityComponent *CameraComponent::component;
 	EntityComponent *SoundComponent::component;
 	EntityComponent *ListenerComponent::component;
@@ -27,7 +27,7 @@ namespace cage
 	TextureAnimationComponent::TextureAnimationComponent() : startTime(0), speed(real::Nan()), offset(real::Nan()) {}
 	LightComponent::LightComponent() : color(1), attenuation(1, 0, 3), spotAngle(degs(40)), spotExponent(80), sceneMask(1), lightType(LightTypeEnum::Point) {}
 	ShadowmapComponent::ShadowmapComponent() : worldSize(0), resolution(256), sceneMask(1) {}
-	RenderTextComponent::RenderTextComponent() : color(1), assetName(0), textName(0), font(0), sceneMask(1) {}
+	TextComponent::TextComponent() : color(1), assetName(0), textName(0), font(0), sceneMask(1) {}
 	CameraSsao::CameraSsao() : worldRadius(0.5), strength(3), bias(0.03), power(1.3), samplesCount(16), blurPasses(3) {}
 	CameraBloom::CameraBloom() : blurPasses(5), threshold(1) {}
 	CameraEyeAdaptation::CameraEyeAdaptation() : key(0.5), strength(1.0), darkerSpeed(0.1), lighterSpeed(1) {} // darker should take at least 5 times longer

@@ -17,7 +17,7 @@ namespace cage
 	{
 		struct spoilerImpl : public widgetItemStruct
 		{
-			SpoilerComponent &data;
+			GuiSpoilerComponent &data;
 			bool collapsed;
 
 			spoilerImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(Spoiler)), collapsed(false)

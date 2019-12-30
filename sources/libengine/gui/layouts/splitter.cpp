@@ -17,7 +17,7 @@ namespace cage
 	{
 		struct layoutSplitterImpl : public layoutItemStruct
 		{
-			LayoutSplitterComponent &data;
+			GuiLayoutSplitterComponent &data;
 
 			layoutSplitterImpl(hierarchyItemStruct *hierarchy) : layoutItemStruct(hierarchy), data(GUI_REF_COMPONENT(LayoutSplitter))
 			{}

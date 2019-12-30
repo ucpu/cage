@@ -33,7 +33,7 @@ namespace cage
 
 		struct comboBoxImpl : public widgetItemStruct
 		{
-			ComboBoxComponent &data;
+			GuiComboBoxComponent &data;
 			comboListImpl *list;
 			uint32 count;
 			uint32 selected;

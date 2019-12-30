@@ -13,13 +13,13 @@
 
 namespace cage
 {
-	LayoutLineComponent::LayoutLineComponent() : vertical(false)
+	GuiLayoutLineComponent::GuiLayoutLineComponent() : vertical(false)
 	{}
 
-	LayoutTableComponent::LayoutTableComponent() : sections(2), grid(false), vertical(true)
+	GuiLayoutTableComponent::GuiLayoutTableComponent() : sections(2), grid(false), vertical(true)
 	{}
 
-	LayoutSplitterComponent::LayoutSplitterComponent() : vertical(false), inverse(false)
+	GuiLayoutSplitterComponent::GuiLayoutSplitterComponent() : vertical(false), inverse(false)
 	{}
 
 	namespace privat
@@ -27,7 +27,7 @@ namespace cage
 		GuiLayoutsComponents::GuiLayoutsComponents(EntityManager *ents)
 		{
 			detail::memset(this, 0, sizeof(*this));
-#define GCHL_GENERATE(T) T = ents->defineComponent<CAGE_JOIN(T, Component)>(CAGE_JOIN(T, Component)(), false);
+#define GCHL_GENERATE(T) T = ents->defineComponent<CAGE_JOIN(Gui, CAGE_JOIN(T, Component))>(CAGE_JOIN(Gui, CAGE_JOIN(T, Component))(), false);
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_LAYOUT_COMPONENTS));
 #undef GCHL_GENERATE
 		}

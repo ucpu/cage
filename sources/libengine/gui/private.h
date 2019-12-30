@@ -5,8 +5,8 @@
 #include <atomic>
 
 #define GUI_HAS_COMPONENT(T,E) (E)->has(impl->components.T)
-#define GUI_REF_COMPONENT(T) hierarchy->ent->value<CAGE_JOIN(T, Component)>(hierarchy->impl->components.T)
-#define CAGE_COMPONENT_GUI(T,N,E) CAGE_JOIN(T, Component) &N = (E)->value<CAGE_JOIN(T, Component)>(impl->components.T);
+#define GUI_REF_COMPONENT(T) hierarchy->ent->value<CAGE_JOIN(Gui, CAGE_JOIN(T, Component))>(hierarchy->impl->components.T)
+#define CAGE_COMPONENT_GUI(T,N,E) CAGE_JOIN(Gui, CAGE_JOIN(T, Component)) &N = (E)->value<CAGE_JOIN(Gui, CAGE_JOIN(T, Component))>(impl->components.T);
 
 namespace cage
 {
@@ -61,7 +61,7 @@ namespace cage
 			uint32 cursor;
 			uint32 count;
 			textStruct();
-			void apply(const TextFormatComponent &f, guiImpl *impl);
+			void apply(const GuiTextFormatComponent &f, guiImpl *impl);
 		} data;
 
 		virtual void render(guiImpl *impl) override;
@@ -158,7 +158,7 @@ namespace cage
 
 	struct widgetItemStruct : public baseItemStruct
 	{
-		WidgetStateComponent widgetState;
+		GuiWidgetStateComponent widgetState;
 		const skinDataStruct *skin;
 
 		widgetItemStruct(hierarchyItemStruct *hierarchy);
@@ -225,8 +225,8 @@ namespace cage
 	struct imageItemStruct
 	{
 		hierarchyItemStruct *const hierarchy;
-		ImageComponent Image;
-		ImageFormatComponent format;
+		GuiImageComponent Image;
+		GuiImageFormatComponent format;
 		Texture *texture;
 		bool skipInitialize;
 
@@ -235,8 +235,8 @@ namespace cage
 		void initialize();
 
 		void assign();
-		void assign(const ImageComponent &value);
-		void apply(const ImageFormatComponent &f);
+		void assign(const GuiImageComponent &value);
+		void apply(const GuiImageFormatComponent &f);
 
 		vec2 findRequestedSize();
 

@@ -197,7 +197,7 @@ namespace cage
 	{
 		if (ent->has(impl->components.Event))
 		{
-			EventComponent &v = ent->value<EventComponent>(impl->components.Event);
+			GuiEventComponent &v = ent->value<GuiEventComponent>(impl->components.Event);
 			if (v.event)
 			{
 				if (v.event(ent->name()))

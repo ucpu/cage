@@ -17,7 +17,7 @@ namespace cage
 	{
 		struct layoutTableImpl : public layoutItemStruct
 		{
-			LayoutTableComponent data; // may not be reference
+			GuiLayoutTableComponent data; // may not be reference
 			real *widths;
 			real *heights;
 			uint32 mws, mhs;

@@ -17,7 +17,7 @@ namespace cage
 	{
 		struct panelImpl : public widgetItemStruct
 		{
-			PanelComponent &data;
+			GuiPanelComponent &data;
 
 			panelImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(Panel))
 			{

@@ -1,17 +1,17 @@
 namespace cage
 {
-	struct CAGE_API LabelComponent
+	struct CAGE_API GuiLabelComponent
 	{
-		// TextComponent defines foreground of the widget
-		// ImageComponent defines background of the widget
-		LabelComponent();
+		// GuiTextComponent defines foreground of the widget
+		// GuiImageComponent defines background of the widget
+		GuiLabelComponent();
 	};
 
-	struct CAGE_API ButtonComponent
+	struct CAGE_API GuiButtonComponent
 	{
-		// TextComponent defines foreground
-		// ImageComponent defines background
-		ButtonComponent();
+		// GuiTextComponent defines foreground
+		// GuiImageComponent defines background
+		GuiButtonComponent();
 	};
 
 	enum class InputTypeEnum : uint32
@@ -36,7 +36,7 @@ namespace cage
 		//WriteTabs = 1 << 5, // tab key will write tab rather than skip to next widget
 	};
 
-	struct CAGE_API InputComponent
+	struct CAGE_API GuiInputComponent
 	{
 		string value; // utf-8 encoded string (size is in bytes)
 		union CAGE_API Union
@@ -49,20 +49,20 @@ namespace cage
 		InputTypeEnum type;
 		InputStyleFlags style;
 		bool valid;
-		// TextComponent defines placeholder
-		// TextFormatComponent defines format
-		// SelectionComponent defines selected text
-		InputComponent();
+		// GuiTextComponent defines placeholder
+		// GuiTextFormatComponent defines format
+		// GuiSelectionComponent defines selected text
+		GuiInputComponent();
 	};
 
-	struct CAGE_API TextAreaComponent
+	struct CAGE_API GuiTextAreaComponent
 	{
 		MemoryBuffer *buffer; // utf-8 encoded string
 		uint32 cursor; // unicode characters (not bytes)
 		uint32 maxLength; // bytes
 		InputStyleFlags style;
-		// SelectionComponent defines selected text
-		TextAreaComponent();
+		// GuiSelectionComponent defines selected text
+		GuiTextAreaComponent();
 	};
 
 	enum class CheckBoxStateEnum : uint32
@@ -72,77 +72,77 @@ namespace cage
 		Indeterminate,
 	};
 
-	struct CAGE_API CheckBoxComponent
+	struct CAGE_API GuiCheckBoxComponent
 	{
 		CheckBoxStateEnum state;
-		// TextComponent defines label shown next to the check box
-		CheckBoxComponent();
+		// GuiTextComponent defines label shown next to the check box
+		GuiCheckBoxComponent();
 	};
 
-	struct CAGE_API RadioBoxComponent
+	struct CAGE_API GuiRadioBoxComponent
 	{
 		uint32 group; // defines what other radio buttons are unchecked when this becomes checked
 		CheckBoxStateEnum state;
-		// TextComponent defines label shown next to the radio box
-		RadioBoxComponent();
+		// GuiTextComponent defines label shown next to the radio box
+		GuiRadioBoxComponent();
 	};
 
-	struct CAGE_API ComboBoxComponent
+	struct CAGE_API GuiComboBoxComponent
 	{
 		uint32 selected; // -1 = nothing selected
-		// TextComponent defines placeholder
-		// children with TextComponent defines individual lines
-		// TextFormatComponent applies to all lines, may be overriden by individual childs
-		// SelectedItemComponent on childs defines which line is selected (the selected property is authoritative)
-		ComboBoxComponent();
+		// GuiTextComponent defines placeholder
+		// children with GuiTextComponent defines individual lines
+		// GuiTextFormatComponent applies to all lines, may be overriden by individual childs
+		// GuiSelectedItemComponent on childs defines which line is selected (the selected property is authoritative)
+		GuiComboBoxComponent();
 	};
 
-	struct CAGE_API ListBoxComponent
+	struct CAGE_API GuiListBoxComponent
 	{
 		// real scrollbar;
-		// children with TextComponent defines individual lines
-		// TextFormatComponent applies to all lines, may be overriden by individual childs
-		// SelectedItemComponent on childs defines which lines are selected
-		ListBoxComponent();
+		// children with GuiTextComponent defines individual lines
+		// GuiTextFormatComponent applies to all lines, may be overriden by individual childs
+		// GuiSelectedItemComponent on childs defines which lines are selected
+		GuiListBoxComponent();
 	};
 
-	struct CAGE_API ProgressBarComponent
+	struct CAGE_API GuiProgressBarComponent
 	{
 		real progress; // 0 .. 1
 		bool showValue; // overrides the text with the value (may use internationalization for formatting)
-		// TextComponent defines text shown over the bar
-		ProgressBarComponent();
+		// GuiTextComponent defines text shown over the bar
+		GuiProgressBarComponent();
 	};
 
-	struct CAGE_API SliderBarComponent
+	struct CAGE_API GuiSliderBarComponent
 	{
 		real value;
 		real min, max;
 		bool vertical;
-		SliderBarComponent();
+		GuiSliderBarComponent();
 	};
 
-	struct CAGE_API ColorPickerComponent
+	struct CAGE_API GuiColorPickerComponent
 	{
 		vec3 color;
 		bool collapsible;
-		ColorPickerComponent();
+		GuiColorPickerComponent();
 	};
 
-	struct CAGE_API PanelComponent
+	struct CAGE_API GuiPanelComponent
 	{
-		PanelComponent();
-		// TextComponent defines caption
-		// ImageComponent defines background
+		GuiPanelComponent();
+		// GuiTextComponent defines caption
+		// GuiImageComponent defines background
 	};
 
-	struct CAGE_API SpoilerComponent
+	struct CAGE_API GuiSpoilerComponent
 	{
 		bool collapsesSiblings;
 		bool collapsed;
-		SpoilerComponent();
-		// TextComponent defines caption
-		// ImageComponent defines background
+		GuiSpoilerComponent();
+		// GuiTextComponent defines caption
+		// GuiImageComponent defines background
 	};
 
 #define GCHL_GUI_WIDGET_COMPONENTS Label, Button, Input, TextArea, CheckBox, RadioBox, ComboBox, ListBox, ProgressBar, SliderBar, ColorPicker, Panel, Spoiler

@@ -44,7 +44,7 @@ namespace cage
 
 		struct colorPickerImpl : public widgetItemStruct
 		{
-			ColorPickerComponent &data;
+			GuiColorPickerComponent &data;
 			colorPickerImpl *small, *large;
 
 			vec3 color;

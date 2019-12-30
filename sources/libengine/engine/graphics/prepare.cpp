@@ -76,7 +76,7 @@ namespace cage
 
 		struct emitRenderTextStruct : public emitTransformsStruct
 		{
-			RenderTextComponent renderText;
+			TextComponent renderText;
 
 			emitRenderTextStruct()
 			{
@@ -835,11 +835,11 @@ namespace cage
 				}
 
 				// emit renderable texts
-				for (Entity *e : RenderTextComponent::component->entities())
+				for (Entity *e : TextComponent::component->entities())
 				{
 					emitRenderTextStruct *c = emitWrite->emitArena.createObject<emitRenderTextStruct>();
 					emitTransform(c, e);
-					c->renderText = e->value<RenderTextComponent>(RenderTextComponent::component);
+					c->renderText = e->value<TextComponent>(TextComponent::component);
 					emitWrite->renderableTexts.push_back(c);
 				}
 

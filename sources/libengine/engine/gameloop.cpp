@@ -654,7 +654,7 @@ namespace cage
 					SkeletalAnimationComponent::component = entityMgr->defineComponent(SkeletalAnimationComponent(), false);
 					LightComponent::component = entityMgr->defineComponent(LightComponent(), true);
 					ShadowmapComponent::component = entityMgr->defineComponent(ShadowmapComponent(), false);
-					RenderTextComponent::component = entityMgr->defineComponent(RenderTextComponent(), true);
+					TextComponent::component = entityMgr->defineComponent(TextComponent(), true);
 					CameraComponent::component = entityMgr->defineComponent(CameraComponent(), true);
 					SoundComponent::component = entityMgr->defineComponent(SoundComponent(), true);
 					ListenerComponent::component = entityMgr->defineComponent(ListenerComponent(), true);

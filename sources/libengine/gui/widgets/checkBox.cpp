@@ -17,7 +17,7 @@ namespace cage
 	{
 		struct checkBoxImpl : public widgetItemStruct
 		{
-			CheckBoxComponent &data;
+			GuiCheckBoxComponent &data;
 			GuiElementTypeEnum element;
 
 			checkBoxImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(CheckBox)), element(GuiElementTypeEnum::TotalElements)

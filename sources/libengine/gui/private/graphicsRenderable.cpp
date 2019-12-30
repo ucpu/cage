@@ -34,7 +34,7 @@ namespace cage
 	renderableTextStruct::textStruct::textStruct() : glyphs(nullptr), font(nullptr), color(vec3::Nan()), cursor(m), count(0)
 	{}
 
-	void renderableTextStruct::textStruct::apply(const TextFormatComponent &f, guiImpl *impl)
+	void renderableTextStruct::textStruct::apply(const GuiTextFormatComponent &f, guiImpl *impl)
 	{
 		if (f.font)
 			font = impl->assetMgr->tryGet<assetSchemeIndexFont, Font>(f.font);

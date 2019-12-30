@@ -17,7 +17,7 @@ namespace cage
 	{
 		struct scrollbarsImpl : public widgetItemStruct
 		{
-			ScrollbarsComponent &data;
+			GuiScrollbarsComponent &data;
 
 			struct scrollbarStruct
 			{

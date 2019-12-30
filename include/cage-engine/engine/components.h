@@ -66,7 +66,7 @@ namespace cage
 		ShadowmapComponent();
 	};
 
-	struct CAGE_API RenderTextComponent
+	struct CAGE_API TextComponent
 	{
 		static EntityComponent *component;
 		string value; // list of parameters separated by '|' when formatted, otherwise the string as is
@@ -76,7 +76,7 @@ namespace cage
 		uint32 textName;
 		uint32 font;
 		uint32 sceneMask;
-		RenderTextComponent();
+		TextComponent();
 	};
 
 	enum class CameraClearFlags : uint32

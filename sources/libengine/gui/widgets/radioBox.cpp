@@ -17,7 +17,7 @@ namespace cage
 	{
 		struct radioBoxImpl : public widgetItemStruct
 		{
-			RadioBoxComponent &data;
+			GuiRadioBoxComponent &data;
 			GuiElementTypeEnum element;
 
 			radioBoxImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(RadioBox)), element(GuiElementTypeEnum::TotalElements)

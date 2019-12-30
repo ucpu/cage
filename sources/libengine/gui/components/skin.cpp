@@ -18,9 +18,9 @@ namespace cage
 {
 	namespace
 	{
-		TextFormatComponent textFormatComponentInit()
+		GuiTextFormatComponent textFormatComponentInit()
 		{
-			TextFormatComponent text;
+			GuiTextFormatComponent text;
 			text.color = vec3(1, 1, 1);
 			text.font = HashString("cage/font/ubuntu/Ubuntu-R.ttf");
 			text.align = TextAlignEnum::Left;
@@ -28,17 +28,17 @@ namespace cage
 			return text;
 		}
 
-		ImageFormatComponent imageFormatComponentInit()
+		GuiImageFormatComponent imageFormatComponentInit()
 		{
-			ImageFormatComponent Image;
+			GuiImageFormatComponent Image;
 			Image.animationOffset = 0;
 			Image.animationSpeed = 1;
 			Image.mode = ImageModeEnum::Stretch;
 			return Image;
 		}
 
-		const TextFormatComponent textInit = textFormatComponentInit();
-		const ImageFormatComponent imageInit = imageFormatComponentInit();
+		const GuiTextFormatComponent textInit = textFormatComponentInit();
+		const GuiImageFormatComponent imageInit = imageFormatComponentInit();
 	}
 
 	GuiSkinElementLayout::TextureUv::TextureUv()

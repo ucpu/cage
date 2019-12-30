@@ -173,18 +173,18 @@ namespace cage
 				generateItems(item->nextSibling);
 		}
 
-		void propagateWidgetState(const WidgetStateComponent &from, WidgetStateComponent &to)
+		void propagateWidgetState(const GuiWidgetStateComponent &from, GuiWidgetStateComponent &to)
 		{
 			to.disabled = to.disabled || from.disabled;
 			if (from.skinIndex != m)
 				to.skinIndex = from.skinIndex;
 		}
 
-		void propagateWidgetState(hierarchyItemStruct *item, const WidgetStateComponent &wsp)
+		void propagateWidgetState(hierarchyItemStruct *item, const GuiWidgetStateComponent &wsp)
 		{
 			guiImpl *impl = item->impl;
 			{
-				WidgetStateComponent ws(wsp);
+				GuiWidgetStateComponent ws(wsp);
 				if (item->ent && GUI_HAS_COMPONENT(WidgetState, item->ent))
 				{
 					CAGE_COMPONENT_GUI(WidgetState, w, item->ent);
@@ -192,7 +192,7 @@ namespace cage
 				}
 				if (widgetItemStruct *wi = dynamic_cast<widgetItemStruct*>(item->item))
 				{
-					WidgetStateComponent &w = wi->widgetState;
+					GuiWidgetStateComponent &w = wi->widgetState;
 					w = ws;
 					CAGE_ASSERT(w.skinIndex < impl->skins.size(), w.skinIndex, impl->skins.size());
 					wi->skin = &impl->skins[w.skinIndex];
@@ -277,7 +277,7 @@ namespace cage
 		generateItems(impl->root);
 		validateHierarchy(impl);
 		{ // propagate widget state
-			WidgetStateComponent ws;
+			GuiWidgetStateComponent ws;
 			ws.skinIndex = 0;
 			propagateWidgetState(impl->root, ws);
 		}

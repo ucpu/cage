@@ -13,49 +13,49 @@
 
 namespace cage
 {
-	WidgetStateComponent::WidgetStateComponent() : skinIndex(m), disabled(false)
+	GuiWidgetStateComponent::GuiWidgetStateComponent() : skinIndex(m), disabled(false)
 	{}
 
-	LabelComponent::LabelComponent()
+	GuiLabelComponent::GuiLabelComponent()
 	{}
 
-	ButtonComponent::ButtonComponent()
+	GuiButtonComponent::GuiButtonComponent()
 	{}
 
-	InputComponent::Union::Union() : i(0)
+	GuiInputComponent::Union::Union() : i(0)
 	{}
 
-	InputComponent::InputComponent() : cursor(m), type(InputTypeEnum::Text), style(InputStyleFlags::ShowArrowButtons), valid(false)
+	GuiInputComponent::GuiInputComponent() : cursor(m), type(InputTypeEnum::Text), style(InputStyleFlags::ShowArrowButtons), valid(false)
 	{}
 
-	TextAreaComponent::TextAreaComponent() : buffer(nullptr), cursor(m), maxLength(1024 * 1024), style(InputStyleFlags::None)
+	GuiTextAreaComponent::GuiTextAreaComponent() : buffer(nullptr), cursor(m), maxLength(1024 * 1024), style(InputStyleFlags::None)
 	{}
 
-	CheckBoxComponent::CheckBoxComponent() : state(CheckBoxStateEnum::Unchecked)
+	GuiCheckBoxComponent::GuiCheckBoxComponent() : state(CheckBoxStateEnum::Unchecked)
 	{}
 
-	RadioBoxComponent::RadioBoxComponent() : group(0), state(CheckBoxStateEnum::Unchecked)
+	GuiRadioBoxComponent::GuiRadioBoxComponent() : group(0), state(CheckBoxStateEnum::Unchecked)
 	{}
 
-	ComboBoxComponent::ComboBoxComponent() : selected(m)
+	GuiComboBoxComponent::GuiComboBoxComponent() : selected(m)
 	{}
 
-	ListBoxComponent::ListBoxComponent()
+	GuiListBoxComponent::GuiListBoxComponent()
 	{}
 
-	ProgressBarComponent::ProgressBarComponent() : progress(0), showValue(false)
+	GuiProgressBarComponent::GuiProgressBarComponent() : progress(0), showValue(false)
 	{}
 
-	SliderBarComponent::SliderBarComponent() : max(1), vertical(false)
+	GuiSliderBarComponent::GuiSliderBarComponent() : max(1), vertical(false)
 	{}
 
-	ColorPickerComponent::ColorPickerComponent() : collapsible(false), color(vec3(1,0,0))
+	GuiColorPickerComponent::GuiColorPickerComponent() : collapsible(false), color(vec3(1,0,0))
 	{}
 
-	PanelComponent::PanelComponent()
+	GuiPanelComponent::GuiPanelComponent()
 	{}
 
-	SpoilerComponent::SpoilerComponent() : collapsesSiblings(true), collapsed(true)
+	GuiSpoilerComponent::GuiSpoilerComponent() : collapsesSiblings(true), collapsed(true)
 	{}
 
 	namespace privat
@@ -63,7 +63,7 @@ namespace cage
 		GuiWidgetsComponents::GuiWidgetsComponents(EntityManager *ents)
 		{
 			detail::memset(this, 0, sizeof(*this));
-#define GCHL_GENERATE(T) T = ents->defineComponent<CAGE_JOIN(T, Component)>(CAGE_JOIN(T, Component)(), false);
+#define GCHL_GENERATE(T) T = ents->defineComponent<CAGE_JOIN(Gui, CAGE_JOIN(T, Component))>(CAGE_JOIN(Gui, CAGE_JOIN(T, Component))(), false);
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS));
 #undef GCHL_GENERATE
 		}

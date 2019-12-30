@@ -20,8 +20,8 @@ namespace cage
 	{
 		struct inputImpl : public widgetItemStruct
 		{
-			InputComponent &data;
-			SelectionComponent &selection;
+			GuiInputComponent &data;
+			GuiSelectionComponent &selection;
 			bool showArrows;
 
 			vec2 leftPos, rightPos;

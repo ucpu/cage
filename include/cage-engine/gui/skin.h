@@ -11,24 +11,24 @@ namespace cage
 	{
 		struct CAGE_API Label
 		{
-			TextFormatComponent textFormat;
-			ImageFormatComponent imageFormat;
+			GuiTextFormatComponent textFormat;
+			GuiImageFormatComponent imageFormat;
 			vec4 margin;
 			Label();
 		} label;
 		struct CAGE_API Button
 		{
-			TextFormatComponent textFormat;
-			ImageFormatComponent imageFormat;
+			GuiTextFormatComponent textFormat;
+			GuiImageFormatComponent imageFormat;
 			vec4 padding, margin;
 			vec2 size;
 			Button();
 		} button;
 		struct CAGE_API Input
 		{
-			TextFormatComponent textValidFormat;
-			TextFormatComponent textInvalidFormat;
-			TextFormatComponent placeholderFormat;
+			GuiTextFormatComponent textValidFormat;
+			GuiTextFormatComponent textInvalidFormat;
+			GuiTextFormatComponent placeholderFormat;
 			vec4 basePadding;
 			vec4 margin;
 			vec2 size;
@@ -39,14 +39,14 @@ namespace cage
 		} inputBox;
 		struct CAGE_API TextArea
 		{
-			TextFormatComponent textFormat;
+			GuiTextFormatComponent textFormat;
 			vec4 padding, margin;
 			vec2 size;
 			TextArea();
 		} textArea;
 		struct CAGE_API CheckBox
 		{
-			TextFormatComponent textFormat;
+			GuiTextFormatComponent textFormat;
 			vec4 margin;
 			vec2 size;
 			vec2 labelOffset;
@@ -54,7 +54,7 @@ namespace cage
 		} checkBox;
 		struct CAGE_API RadioBox
 		{
-			TextFormatComponent textFormat;
+			GuiTextFormatComponent textFormat;
 			vec4 margin;
 			vec2 size;
 			vec2 labelOffset;
@@ -62,9 +62,9 @@ namespace cage
 		} radioBox;
 		struct CAGE_API ComboBox
 		{
-			TextFormatComponent placeholderFormat;
-			TextFormatComponent itemsFormat;
-			TextFormatComponent selectedFormat;
+			GuiTextFormatComponent placeholderFormat;
+			GuiTextFormatComponent itemsFormat;
+			GuiTextFormatComponent selectedFormat;
 			vec4 basePadding, baseMargin;
 			vec4 listPadding, itemPadding;
 			vec2 size;
@@ -73,7 +73,7 @@ namespace cage
 		} comboBox;
 		struct CAGE_API ListBox
 		{
-			TextFormatComponent textFormat;
+			GuiTextFormatComponent textFormat;
 			vec4 basePadding, baseMargin;
 			vec4 itemPadding;
 			vec2 size;
@@ -82,10 +82,10 @@ namespace cage
 		} listBox;
 		struct CAGE_API ProgressBar
 		{
-			TextFormatComponent textFormat;
-			ImageFormatComponent backgroundImageFormat;
-			ImageFormatComponent fillingImageFormat;
-			ImageComponent fillingImage;
+			GuiTextFormatComponent textFormat;
+			GuiImageFormatComponent backgroundImageFormat;
+			GuiImageFormatComponent fillingImageFormat;
+			GuiImageComponent fillingImage;
 			vec4 baseMargin;
 			vec4 textPadding, fillingPadding;
 			vec2 size;
@@ -112,8 +112,8 @@ namespace cage
 		} colorPicker;
 		struct CAGE_API Panel
 		{
-			TextFormatComponent textFormat;
-			ImageFormatComponent imageFormat;
+			GuiTextFormatComponent textFormat;
+			GuiImageFormatComponent imageFormat;
 			vec4 baseMargin;
 			vec4 contentPadding;
 			vec4 captionPadding;
@@ -122,8 +122,8 @@ namespace cage
 		} panel;
 		struct CAGE_API Spoiler
 		{
-			TextFormatComponent textFormat;
-			ImageFormatComponent imageFormat;
+			GuiTextFormatComponent textFormat;
+			GuiImageFormatComponent imageFormat;
 			vec4 baseMargin;
 			vec4 contentPadding;
 			vec4 captionPadding;
@@ -138,7 +138,7 @@ namespace cage
 		} scrollbars;
 		struct CAGE_API Tooltip
 		{
-			TextFormatComponent textFormat;
+			GuiTextFormatComponent textFormat;
 			Tooltip();
 		} tooltip;
 		GuiSkinWidgetDefaults();

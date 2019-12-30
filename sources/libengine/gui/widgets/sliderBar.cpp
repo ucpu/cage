@@ -17,7 +17,7 @@ namespace cage
 	{
 		struct sliderBarImpl : public widgetItemStruct
 		{
-			SliderBarComponent &data;
+			GuiSliderBarComponent &data;
 			GuiSkinWidgetDefaults::SliderBar::Direction defaults;
 			GuiElementTypeEnum baseElement;
 			GuiElementTypeEnum dotElement;
