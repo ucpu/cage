@@ -15,12 +15,12 @@ namespace cage
 {
 	namespace
 	{
-		struct checkBoxImpl : public widgetItemStruct
+		struct CheckBoxImpl : public WidgetItem
 		{
 			GuiCheckBoxComponent &data;
 			GuiElementTypeEnum element;
 
-			checkBoxImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(CheckBox)), element(GuiElementTypeEnum::TotalElements)
+			CheckBoxImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(CheckBox)), element(GuiElementTypeEnum::TotalElements)
 			{}
 
 			virtual void initialize() override
@@ -86,9 +86,9 @@ namespace cage
 		};
 	}
 
-	void CheckBoxCreate(hierarchyItemStruct *item)
+	void CheckBoxCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<checkBoxImpl>(item);
+		item->item = item->impl->itemsMemory.createObject<CheckBoxImpl>(item);
 	}
 }

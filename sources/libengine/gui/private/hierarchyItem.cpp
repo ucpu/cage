@@ -14,7 +14,7 @@
 
 namespace cage
 {
-	hierarchyItemStruct::hierarchyItemStruct(guiImpl *impl, Entity *ent) :
+	HierarchyItem::HierarchyItem(GuiImpl *impl, Entity *ent) :
 		requestedSize(vec2::Nan()), renderPos(vec2::Nan()), renderSize(vec2::Nan()), clipPos(vec2::Nan()), clipSize(vec2::Nan()),
 		impl(impl), ent(ent),
 		parent(nullptr), prevSibling(nullptr), nextSibling(nullptr), firstChild(nullptr), lastChild(nullptr),
@@ -24,7 +24,7 @@ namespace cage
 		CAGE_ASSERT(impl);
 	}
 
-	void hierarchyItemStruct::initialize()
+	void HierarchyItem::initialize()
 	{
 		if (item)
 			item->initialize();
@@ -34,7 +34,7 @@ namespace cage
 			Image->initialize();
 	}
 
-	void hierarchyItemStruct::findRequestedSize()
+	void HierarchyItem::findRequestedSize()
 	{
 		if (item)
 			item->findRequestedSize();
@@ -45,7 +45,7 @@ namespace cage
 		else
 		{
 			requestedSize = vec2();
-			hierarchyItemStruct *c = firstChild;
+			HierarchyItem *c = firstChild;
 			while (c)
 			{
 				c->findRequestedSize();
@@ -56,7 +56,7 @@ namespace cage
 		CAGE_ASSERT(requestedSize.valid());
 	}
 
-	void hierarchyItemStruct::findFinalPosition(const finalPositionStruct &update)
+	void HierarchyItem::findFinalPosition(const FinalPosition &update)
 	{
 		CAGE_ASSERT(requestedSize.valid());
 		CAGE_ASSERT(update.renderPos.valid());
@@ -67,7 +67,7 @@ namespace cage
 		renderPos = update.renderPos;
 		renderSize = update.renderSize;
 
-		finalPositionStruct u(update);
+		FinalPosition u(update);
 		clip(u.clipPos, u.clipSize, u.renderPos, u.renderSize); // update the clip rect to intersection with the render rect
 		clipPos = u.clipPos;
 		clipSize = u.clipSize;
@@ -76,7 +76,7 @@ namespace cage
 			item->findFinalPosition(u);
 		else
 		{
-			hierarchyItemStruct *c = firstChild;
+			HierarchyItem *c = firstChild;
 			while (c)
 			{
 				c->findFinalPosition(u);
@@ -95,7 +95,7 @@ namespace cage
 		}
 	}
 
-	void hierarchyItemStruct::moveToWindow(bool horizontal, bool vertical)
+	void HierarchyItem::moveToWindow(bool horizontal, bool vertical)
 	{
 		bool enabled[2] = { horizontal, vertical };
 		for (uint32 i = 0; i < 2; i++)
@@ -111,13 +111,13 @@ namespace cage
 		}
 	}
 
-	void hierarchyItemStruct::detachChildren()
+	void HierarchyItem::detachChildren()
 	{
 		while (firstChild)
 			firstChild->detachParent();
 	}
 
-	void hierarchyItemStruct::detachParent()
+	void HierarchyItem::detachParent()
 	{
 		CAGE_ASSERT(parent);
 		if (prevSibling)
@@ -131,7 +131,7 @@ namespace cage
 		parent = nextSibling = prevSibling = nullptr;
 	}
 
-	void hierarchyItemStruct::attachParent(hierarchyItemStruct *newParent)
+	void HierarchyItem::attachParent(HierarchyItem *newParent)
 	{
 		if (parent)
 			detachParent();
@@ -146,9 +146,9 @@ namespace cage
 		parent->lastChild = this;
 	}
 
-	void hierarchyItemStruct::childrenEmit() const
+	void HierarchyItem::childrenEmit() const
 	{
-		hierarchyItemStruct *a = firstChild;
+		HierarchyItem *a = firstChild;
 		while (a)
 		{
 			if (a->item)
@@ -160,7 +160,7 @@ namespace cage
 		}
 	}
 
-	void hierarchyItemStruct::generateEventReceivers() const
+	void HierarchyItem::generateEventReceivers() const
 	{
 		if (nextSibling)
 			nextSibling->generateEventReceivers();

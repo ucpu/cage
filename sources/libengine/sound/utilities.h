@@ -1,3 +1,5 @@
+#include <vector>
+
 namespace cage
 {
 	namespace soundPrivat
@@ -10,10 +12,12 @@ namespace cage
 
 		namespace convertSpace
 		{
-			template<class S, class T> struct convertStruct
+			template<class S, class T>
+			struct Convert
 			{};
 
-			template<> struct convertStruct<float, double>
+			template<>
+			struct Convert<float, double>
 			{
 				void operator ()(float source, double &target)
 				{
@@ -21,7 +25,8 @@ namespace cage
 				}
 			};
 
-			template<> struct convertStruct<double, float>
+			template<>
+			struct Convert<double, float>
 			{
 				void operator ()(double source, float &target)
 				{
@@ -29,7 +34,8 @@ namespace cage
 				}
 			};
 
-			template<> struct convertStruct<float, float>
+			template<>
+			struct Convert<float, float>
 			{
 				void operator ()(float source, float &target)
 				{
@@ -37,7 +43,8 @@ namespace cage
 				}
 			};
 
-			template<> struct convertStruct<double, double>
+			template<>
+			struct Convert<double, double>
 			{
 				void operator ()(double source, double &target)
 				{
@@ -45,7 +52,8 @@ namespace cage
 				}
 			};
 
-			template<class T> struct convertStruct<T, float>
+			template<class T>
+			struct Convert<T, float>
 			{
 				void operator ()(T source, float &target)
 				{
@@ -56,7 +64,8 @@ namespace cage
 				}
 			};
 
-			template<class T> struct convertStruct<float, T>
+			template<class T>
+			struct Convert<float, T>
 			{
 				void operator ()(float source, T &target)
 				{
@@ -67,7 +76,8 @@ namespace cage
 				}
 			};
 
-			template<class T> struct convertStruct<T, double>
+			template<class T>
+			struct Convert<T, double>
 			{
 				void operator ()(T source, double &target)
 				{
@@ -78,7 +88,8 @@ namespace cage
 				}
 			};
 
-			template<class T> struct convertStruct<double, T>
+			template<class T>
+			struct Convert<double, T>
 			{
 				void operator ()(double source, T &target)
 				{
@@ -90,24 +101,28 @@ namespace cage
 			};
 		}
 
-		template<class S, class T> void convertSingle(S source, T &target)
+		template<class S, class T>
+		void convertSingle(S source, T &target)
 		{
-			convertSpace::convertStruct<S, T> c;
+			convertSpace::Convert<S, T> c;
 			c(source, target);
 		}
 
-		template<class S, class T> void convertSingle(S source, void *target)
+		template<class S, class T>
+		void convertSingle(S source, void *target)
 		{
 			convertSingle<S, T>(source, *(T*)target);
 		}
 
-		template<class S, class T> void convertArray(S *source, T *target, uint32 samples)
+		template<class S, class T>
+		void convertArray(S *source, T *target, uint32 samples)
 		{
 			while (samples--)
 				convertSingle<S, T>(*source++, *target++);
 		}
 
-		template<class S, class T> void convertArray(S *source, void *target, uint32 samples)
+		template<class S, class T>
+		void convertArray(S *source, void *target, uint32 samples)
 		{
 			while (samples--)
 				convertSingle<S, T>(*source++, *((T*)target)++);

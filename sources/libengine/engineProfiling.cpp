@@ -35,7 +35,7 @@ namespace cage
 		ConfigBool confRenderMissingMeshes("cage/graphics/renderMissingMeshes");
 		ConfigBool confRenderSkeletonBones("cage/graphics/renderSkeletonBones");
 
-		class engineProfilingImpl : public EngineProfiling
+		class EngineProfilingImpl : public EngineProfiling
 		{
 		public:
 			EventListener<bool(uint32, uint32, ModifiersFlags)> keyPressListener;
@@ -49,12 +49,12 @@ namespace cage
 			uint32 labelsCount;
 			EngineProfilingScopeEnum profilingModeOld;
 
-			engineProfilingImpl() : profilingModeOld(EngineProfilingScopeEnum::Full)
+			EngineProfilingImpl() : profilingModeOld(EngineProfilingScopeEnum::Full)
 			{
 				nullData();
 
-				keyPressListener.bind<engineProfilingImpl, &engineProfilingImpl::keyPress>(this);
-				updateListener.bind<engineProfilingImpl, &engineProfilingImpl::update>(this);
+				keyPressListener.bind<EngineProfilingImpl, &EngineProfilingImpl::keyPress>(this);
+				updateListener.bind<EngineProfilingImpl, &EngineProfilingImpl::update>(this);
 
 				window()->events.keyPress.attach(keyPressListener);
 				controlThread().update.attach(updateListener);
@@ -321,6 +321,6 @@ namespace cage
 
 	Holder<EngineProfiling> newEngineProfiling()
 	{
-		return detail::systemArena().createImpl<EngineProfiling, engineProfilingImpl>();
+		return detail::systemArena().createImpl<EngineProfiling, EngineProfilingImpl>();
 	}
 }

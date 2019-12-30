@@ -11,13 +11,13 @@ namespace cage
 {
 	namespace
 	{
-		class skeletonImpl : public SkeletonRig
+		class SkeletonRigImpl : public SkeletonRig
 		{
 		public:
-			skeletonImpl() : mem(detail::systemArena()), totalBones(0), boneParents(nullptr), baseMatrices(nullptr), invRestMatrices(nullptr)
+			SkeletonRigImpl() : mem(detail::systemArena()), totalBones(0), boneParents(nullptr), baseMatrices(nullptr), invRestMatrices(nullptr)
 			{};
 
-			~skeletonImpl()
+			~SkeletonRigImpl()
 			{
 				deallocate();
 			};
@@ -52,7 +52,7 @@ namespace cage
 
 	void SkeletonRig::allocate(const mat4 &globalInverse, uint32 totalBones, const uint16 *boneParents, const mat4 *baseMatrices, const mat4 *invRestMatrices)
 	{
-		skeletonImpl *impl = (skeletonImpl*)this;
+		SkeletonRigImpl *impl = (SkeletonRigImpl*)this;
 		impl->deallocate();
 
 		impl->globalInverse = globalInverse;
@@ -69,14 +69,14 @@ namespace cage
 
 	uint32 SkeletonRig::bonesCount() const
 	{
-		skeletonImpl *impl = (skeletonImpl*)this;
+		SkeletonRigImpl *impl = (SkeletonRigImpl*)this;
 		return impl->totalBones;
 	}
 
 	void SkeletonRig::animateSkin(const SkeletalAnimation *animation, real coef, mat4 *temporary, mat4 *output) const
 	{
 		CAGE_ASSERT(coef >= 0 && coef <= 1, coef);
-		skeletonImpl *impl = (skeletonImpl*)this;
+		SkeletonRigImpl *impl = (SkeletonRigImpl*)this;
 
 		for (uint32 i = 0; i < impl->totalBones; i++)
 		{
@@ -107,7 +107,7 @@ namespace cage
 	{
 		animateSkin(animation, coef, temporary, output); // compute temporary
 
-		skeletonImpl *impl = (skeletonImpl*)this;
+		SkeletonRigImpl *impl = (SkeletonRigImpl*)this;
 
 		for (uint32 i = 0; i < impl->totalBones; i++)
 		{
@@ -131,6 +131,6 @@ namespace cage
 
 	Holder<SkeletonRig> newSkeletonRig()
 	{
-		return detail::systemArena().createImpl<SkeletonRig, skeletonImpl>();
+		return detail::systemArena().createImpl<SkeletonRig, SkeletonRigImpl>();
 	}
 }

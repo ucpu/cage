@@ -15,7 +15,7 @@ namespace cage
 {
 	namespace
 	{
-		struct layoutTableImpl : public layoutItemStruct
+		struct LayoutTableImpl : public LayoutItem
 		{
 			GuiLayoutTableComponent data; // may not be reference
 			real *widths;
@@ -23,7 +23,7 @@ namespace cage
 			uint32 mws, mhs;
 			uint32 childs;
 
-			layoutTableImpl(hierarchyItemStruct *hierarchy, bool justLine) : layoutItemStruct(hierarchy), widths(nullptr), heights(nullptr), mws(0), mhs(0), childs(0)
+			LayoutTableImpl(HierarchyItem *hierarchy, bool justLine) : LayoutItem(hierarchy), widths(nullptr), heights(nullptr), mws(0), mhs(0), childs(0)
 			{
 				auto impl = hierarchy->impl;
 				if (justLine)
@@ -47,7 +47,7 @@ namespace cage
 				auto impl = hierarchy->impl;
 				{ // count childs
 					childs = 0;
-					hierarchyItemStruct *c = hierarchy->firstChild;
+					HierarchyItem *c = hierarchy->firstChild;
 					while (c)
 					{
 						childs++;
@@ -84,7 +84,7 @@ namespace cage
 				// populate widths & heights
 				vec2 m;
 				{
-					hierarchyItemStruct *c = hierarchy->firstChild;
+					HierarchyItem *c = hierarchy->firstChild;
 					uint32 idx = 0;
 					while (c)
 					{
@@ -121,9 +121,9 @@ namespace cage
 				CAGE_ASSERT(hierarchy->requestedSize.valid());
 			}
 
-			virtual void findFinalPosition(const finalPositionStruct &update) override
+			virtual void findFinalPosition(const FinalPosition &update) override
 			{
-				hierarchyItemStruct *c = hierarchy->firstChild;
+				HierarchyItem *c = hierarchy->firstChild;
 				uint32 idx = 0;
 				vec2 spacing = (update.renderSize - hierarchy->requestedSize) / vec2(mws, mhs);
 				//spacing = max(spacing, vec2());
@@ -136,7 +136,7 @@ namespace cage
 					vec2 s = vec2(widths[wi], heights[hi]);
 
 					{
-						finalPositionStruct u(update);
+						FinalPosition u(update);
 						u.renderPos = pos + vec2(wi, hi) * spacing;
 						u.renderSize = max(s + spacing, 0);
 						c->findFinalPosition(u);
@@ -170,15 +170,15 @@ namespace cage
 		};
 	}
 
-	void LayoutLineCreate(hierarchyItemStruct *item)
+	void LayoutLineCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<layoutTableImpl>(item, true);
+		item->item = item->impl->itemsMemory.createObject<LayoutTableImpl>(item, true);
 	}
 
-	void LayoutTableCreate(hierarchyItemStruct *item)
+	void LayoutTableCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<layoutTableImpl>(item, false);
+		item->item = item->impl->itemsMemory.createObject<LayoutTableImpl>(item, false);
 	}
 }

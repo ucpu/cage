@@ -1,7 +1,3 @@
-#include <map>
-#include <cstdlib>
-#include <cstring>
-
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/concurrent.h>
@@ -15,6 +11,10 @@
 #include <cage-engine/opengl.h>
 #include <cage-engine/window.h>
 #include "private.h"
+
+#include <map>
+#include <cstdlib>
+#include <cstring>
 
 namespace cage
 {
@@ -150,21 +150,21 @@ namespace cage
 
 #ifdef GCHL_ENABLE_CONTEXT_BINDING_CHECKS
 
-		struct assertContextStruct
+		struct AssertContext
 		{
 			Holder<Mutex> mutex;
 			std::map<Window*, std::map<uint32, uint32>> objects;
 			std::map<uint64, Window*> contexts;
 
-			assertContextStruct()
+			AssertContext()
 			{
 				mutex = newMutex();
 			}
 		};
 
-		assertContextStruct &assertContext()
+		AssertContext &assertContext()
 		{
-			static assertContextStruct s;
+			static AssertContext s;
 			return s;
 		}
 

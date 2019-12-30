@@ -1,5 +1,3 @@
-#include <set>
-
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/memory.h>
@@ -13,6 +11,8 @@
 #include <cage-engine/graphics.h>
 #include <cage-engine/window.h>
 #include "../private.h"
+
+#include <set>
 
 namespace cage
 {

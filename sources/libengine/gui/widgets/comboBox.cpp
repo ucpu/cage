@@ -15,30 +15,30 @@ namespace cage
 {
 	namespace
 	{
-		struct comboBoxImpl;
+		struct ComboBoxImpl;
 
-		struct comboListImpl : public widgetItemStruct
+		struct ComboListImpl : public WidgetItem
 		{
-			comboBoxImpl *combo;
+			ComboBoxImpl *combo;
 
-			comboListImpl(hierarchyItemStruct *hierarchy, comboBoxImpl *combo) : widgetItemStruct(hierarchy), combo(combo)
+			ComboListImpl(HierarchyItem *hierarchy, ComboBoxImpl *combo) : WidgetItem(hierarchy), combo(combo)
 			{}
 
 			virtual void initialize() override;
 			virtual void findRequestedSize() override;
-			virtual void findFinalPosition(const finalPositionStruct &update) override;
+			virtual void findFinalPosition(const FinalPosition &update) override;
 			virtual void emit() const override;
 			virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override;
 		};
 
-		struct comboBoxImpl : public widgetItemStruct
+		struct ComboBoxImpl : public WidgetItem
 		{
 			GuiComboBoxComponent &data;
-			comboListImpl *list;
+			ComboListImpl *list;
 			uint32 count;
 			uint32 selected;
 
-			comboBoxImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(ComboBox)), list(nullptr), count(0), selected(m)
+			ComboBoxImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(ComboBox)), list(nullptr), count(0), selected(m)
 			{}
 
 			virtual void initialize() override
@@ -48,7 +48,7 @@ namespace cage
 				if (hierarchy->text)
 					hierarchy->text->text.apply(skin->defaults.comboBox.placeholderFormat, hierarchy->impl);
 				count = 0;
-				hierarchyItemStruct *c = hierarchy->firstChild;
+				HierarchyItem *c = hierarchy->firstChild;
 				while (c)
 				{
 					if (count == data.selected)
@@ -64,9 +64,9 @@ namespace cage
 				consolidateSelection();
 				if (hasFocus())
 				{
-					hierarchyItemStruct *item = hierarchy->impl->itemsMemory.createObject<hierarchyItemStruct>(hierarchy->impl, hierarchy->ent);
+					HierarchyItem *item = hierarchy->impl->itemsMemory.createObject<HierarchyItem>(hierarchy->impl, hierarchy->ent);
 					item->attachParent(hierarchy->impl->root);
-					item->item = list = hierarchy->impl->itemsMemory.createObject<comboListImpl>(item, this);
+					item->item = list = hierarchy->impl->itemsMemory.createObject<ComboListImpl>(item, this);
 					list->widgetState = widgetState;
 				}
 			}
@@ -91,7 +91,7 @@ namespace cage
 				}
 				else
 				{ // emit selected item
-					hierarchyItemStruct *c = hierarchy->firstChild;
+					HierarchyItem *c = hierarchy->firstChild;
 					uint32 idx = 0;
 					while (c)
 					{
@@ -107,7 +107,7 @@ namespace cage
 
 			bool areChildrenValid()
 			{
-				hierarchyItemStruct *c = hierarchy->firstChild;
+				HierarchyItem *c = hierarchy->firstChild;
 				while (c)
 				{
 					if (!c->ent)
@@ -127,7 +127,7 @@ namespace cage
 
 			void consolidateSelection()
 			{
-				hierarchyItemStruct *c = hierarchy->firstChild;
+				HierarchyItem *c = hierarchy->firstChild;
 				EntityComponent *sel = hierarchy->impl->components.SelectedItem;
 				uint32 idx = 0;
 				while (c)
@@ -141,17 +141,17 @@ namespace cage
 			}
 		};
 
-		void comboListImpl::initialize()
+		void ComboListImpl::initialize()
 		{
 			skin = combo->skin;
 		}
 
-		void comboListImpl::findRequestedSize()
+		void ComboListImpl::findRequestedSize()
 		{
 			hierarchy->requestedSize = vec2();
 			offsetSize(hierarchy->requestedSize, skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxList].border + skin->defaults.comboBox.listPadding);
 			vec4 os = skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxItemUnchecked].border + skin->defaults.comboBox.itemPadding;
-			hierarchyItemStruct *c = combo->hierarchy->firstChild;
+			HierarchyItem *c = combo->hierarchy->firstChild;
 			while (c)
 			{
 				// todo limit text wrap width to the combo box item
@@ -165,7 +165,7 @@ namespace cage
 			hierarchy->requestedSize[0] = combo->hierarchy->requestedSize[0] - m[0] - m[2];
 		}
 
-		void comboListImpl::findFinalPosition(const finalPositionStruct &update)
+		void ComboListImpl::findFinalPosition(const FinalPosition &update)
 		{
 			vec4 m = skin->defaults.comboBox.baseMargin;
 			hierarchy->renderSize = hierarchy->requestedSize;
@@ -176,7 +176,7 @@ namespace cage
 			vec2 s = hierarchy->renderSize;
 			offset(p, s, -skin->defaults.comboBox.baseMargin * vec4(1, 0, 1, 0) - skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxList].border - skin->defaults.comboBox.listPadding);
 			real spacing = skin->defaults.comboBox.itemSpacing;
-			hierarchyItemStruct *c = combo->hierarchy->firstChild;
+			HierarchyItem *c = combo->hierarchy->firstChild;
 			while (c)
 			{
 				c->renderPos = p;
@@ -186,11 +186,11 @@ namespace cage
 			}
 		}
 
-		void comboListImpl::emit() const
+		void ComboListImpl::emit() const
 		{
 			emitElement(GuiElementTypeEnum::ComboBoxList, 0, hierarchy->renderPos, hierarchy->renderSize);
 			vec4 itemFrame = -skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxItemUnchecked].border - skin->defaults.comboBox.itemPadding;
-			hierarchyItemStruct *c = combo->hierarchy->firstChild;
+			HierarchyItem *c = combo->hierarchy->firstChild;
 			uint32 idx = 0;
 			bool allowHover = true;
 			while (c)
@@ -207,7 +207,7 @@ namespace cage
 			}
 		}
 
-		bool comboListImpl::mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
+		bool ComboListImpl::mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
 		{
 			makeFocused();
 			if (buttons != MouseButtonsFlags::Left)
@@ -215,8 +215,8 @@ namespace cage
 			if (modifiers != ModifiersFlags::None)
 				return true;
 			uint32 idx = 0;
-			hierarchyItemStruct *c = combo->hierarchy->firstChild;
-			hierarchyItemStruct *newlySelected = nullptr;
+			HierarchyItem *c = combo->hierarchy->firstChild;
+			HierarchyItem *newlySelected = nullptr;
 			while (c)
 			{
 				if (pointInside(c->renderPos, c->renderSize, point))
@@ -239,9 +239,9 @@ namespace cage
 		}
 	}
 
-	void ComboBoxCreate(hierarchyItemStruct *item)
+	void ComboBoxCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<comboBoxImpl>(item);
+		item->item = item->impl->itemsMemory.createObject<ComboBoxImpl>(item);
 	}
 }

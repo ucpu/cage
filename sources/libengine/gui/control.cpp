@@ -18,25 +18,25 @@
 
 namespace cage
 {
-#define GCHL_GENERATE(T) void CAGE_JOIN(T, Create)(hierarchyItemStruct *item);
+#define GCHL_GENERATE(T) void CAGE_JOIN(T, Create)(HierarchyItem *item);
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS, GCHL_GUI_LAYOUT_COMPONENTS));
 #undef GCHL_GENERATE
-	void textCreate(hierarchyItemStruct *item);
-	void imageCreate(hierarchyItemStruct *item);
-	void explicitSizeCreate(hierarchyItemStruct *item);
-	void scrollbarsCreate(hierarchyItemStruct *item);
-	void printDebug(guiImpl *impl);
+	void textCreate(HierarchyItem *item);
+	void imageCreate(HierarchyItem *item);
+	void explicitSizeCreate(HierarchyItem *item);
+	void scrollbarsCreate(HierarchyItem *item);
+	void printDebug(GuiImpl *impl);
 
 	namespace
 	{
-		void sortHierarchy(hierarchyItemStruct *item)
+		void sortHierarchy(HierarchyItem *item)
 		{
 			if (!item->prevSibling)
 				return;
-			hierarchyItemStruct *a = item->prevSibling->prevSibling;
-			hierarchyItemStruct *b = item->prevSibling;
-			hierarchyItemStruct *c = item;
-			hierarchyItemStruct *d = item->nextSibling;
+			HierarchyItem *a = item->prevSibling->prevSibling;
+			HierarchyItem *b = item->prevSibling;
+			HierarchyItem *c = item;
+			HierarchyItem *d = item->nextSibling;
 			sint32 bo = b->order;
 			sint32 co = c->order;
 			if (co > bo)
@@ -52,7 +52,7 @@ namespace cage
 			sortHierarchy(item);
 		}
 
-		void attachHierarchy(hierarchyItemStruct *item, hierarchyItemStruct *parent)
+		void attachHierarchy(HierarchyItem *item, HierarchyItem *parent)
 		{
 			CAGE_ASSERT(item && parent && !item->parent && !item->prevSibling && !item->nextSibling);
 			item->parent = parent;
@@ -75,23 +75,23 @@ namespace cage
 			}
 		}
 
-		void generateHierarchy(guiImpl *impl)
+		void generateHierarchy(GuiImpl *impl)
 		{
-			hierarchyItemStruct *root = impl->itemsMemory.createObject<hierarchyItemStruct>(impl, nullptr);
-			std::unordered_map<uint32, hierarchyItemStruct*> map;
+			HierarchyItem *root = impl->itemsMemory.createObject<HierarchyItem>(impl, nullptr);
+			std::unordered_map<uint32, HierarchyItem*> map;
 			// create all items
 			for (auto e : impl->entityMgr->entities())
 			{
 				uint32 name = e->name();
 				CAGE_ASSERT(name != 0 && name != m, name);
-				hierarchyItemStruct *item = impl->itemsMemory.createObject<hierarchyItemStruct>(impl, e);
+				HierarchyItem *item = impl->itemsMemory.createObject<HierarchyItem>(impl, e);
 				map[name] = item;
 			}
 			// attach all items into the hierarchy
 			for (auto e : impl->entityMgr->entities())
 			{
 				uint32 name = e->name();
-				hierarchyItemStruct *item = map[name];
+				HierarchyItem *item = map[name];
 				if (GUI_HAS_COMPONENT(Parent, e))
 				{
 					CAGE_COMPONENT_GUI(Parent, p, e);
@@ -104,14 +104,14 @@ namespace cage
 					attachHierarchy(item, root);
 			}
 			// create overlays pre-root
-			hierarchyItemStruct *preroot = impl->itemsMemory.createObject<hierarchyItemStruct>(impl, nullptr);
+			HierarchyItem *preroot = impl->itemsMemory.createObject<HierarchyItem>(impl, nullptr);
 			root->attachParent(preroot);
 			impl->root = preroot;
 		}
 
-		void generateItem(hierarchyItemStruct *item)
+		void generateItem(HierarchyItem *item)
 		{
-			guiImpl *impl = item->impl;
+			GuiImpl *impl = item->impl;
 
 			// explicit size
 			if (GUI_HAS_COMPONENT(ExplicitSize, item->ent))
@@ -163,7 +163,7 @@ namespace cage
 			}
 		}
 
-		void generateItems(hierarchyItemStruct *item)
+		void generateItems(HierarchyItem *item)
 		{
 			if (item->ent && !item->subsidedItem)
 				generateItem(item);
@@ -180,9 +180,9 @@ namespace cage
 				to.skinIndex = from.skinIndex;
 		}
 
-		void propagateWidgetState(hierarchyItemStruct *item, const GuiWidgetStateComponent &wsp)
+		void propagateWidgetState(HierarchyItem *item, const GuiWidgetStateComponent &wsp)
 		{
-			guiImpl *impl = item->impl;
+			GuiImpl *impl = item->impl;
 			{
 				GuiWidgetStateComponent ws(wsp);
 				if (item->ent && GUI_HAS_COMPONENT(WidgetState, item->ent))
@@ -190,7 +190,7 @@ namespace cage
 					CAGE_COMPONENT_GUI(WidgetState, w, item->ent);
 					propagateWidgetState(w, ws);
 				}
-				if (widgetItemStruct *wi = dynamic_cast<widgetItemStruct*>(item->item))
+				if (WidgetItem *wi = dynamic_cast<WidgetItem*>(item->item))
 				{
 					GuiWidgetStateComponent &w = wi->widgetState;
 					w = ws;
@@ -204,7 +204,7 @@ namespace cage
 				propagateWidgetState(item->nextSibling, wsp);
 		}
 
-		void callInitialize(hierarchyItemStruct *item)
+		void callInitialize(HierarchyItem *item)
 		{
 			item->initialize();
 			if (item->firstChild)
@@ -213,7 +213,7 @@ namespace cage
 				callInitialize(item->nextSibling);
 		}
 
-		void validateHierarchy(hierarchyItemStruct *item)
+		void validateHierarchy(HierarchyItem *item)
 		{
 			if (item->prevSibling)
 			{
@@ -227,7 +227,7 @@ namespace cage
 			if (item->firstChild)
 			{
 				CAGE_ASSERT(item->firstChild->prevSibling == nullptr);
-				hierarchyItemStruct *it = item->firstChild, *last = item->firstChild;
+				HierarchyItem *it = item->firstChild, *last = item->firstChild;
 				while (it)
 				{
 					CAGE_ASSERT(it->parent == item);
@@ -243,14 +243,14 @@ namespace cage
 			}
 		}
 
-		void validateHierarchy(guiImpl *impl)
+		void validateHierarchy(GuiImpl *impl)
 		{
 #ifdef CAGE_ASSERT_ENABLED
 			validateHierarchy(impl->root);
 #endif // CAGE_ASSERT_ENABLED
 		}
 
-		void findHover(guiImpl *impl)
+		void findHover(GuiImpl *impl)
 		{
 			impl->hover = nullptr;
 			for (const auto &it : impl->mouseEventReceivers)
@@ -266,7 +266,7 @@ namespace cage
 
 	void Gui::controlUpdateStart()
 	{
-		guiImpl *impl = (guiImpl*)this;
+		GuiImpl *impl = (GuiImpl*)this;
 		{ // clearing
 			impl->mouseEventReceivers.clear();
 			impl->root = nullptr;
@@ -285,7 +285,7 @@ namespace cage
 		validateHierarchy(impl);
 		{ // layouting
 			impl->root->findRequestedSize();
-			finalPositionStruct u;
+			FinalPosition u;
 			u.renderPos = u.clipPos = vec2();
 			u.renderSize = u.clipSize = impl->outputSize;
 			impl->root->findFinalPosition(u);
@@ -297,7 +297,7 @@ namespace cage
 
 	void Gui::controlUpdateDone()
 	{
-		guiImpl *impl = (guiImpl*)this;
+		GuiImpl *impl = (GuiImpl*)this;
 
 		if (!impl->eventsEnabled)
 			return;
@@ -331,7 +331,7 @@ namespace cage
 			impl->emitControl = &impl->emitData[lock.index()];
 			auto *e = impl->emitControl;
 			e->flush();
-			e->first = e->last = e->memory.createObject<renderableBaseStruct>(); // create first dummy object
+			e->first = e->last = e->memory.createObject<RenderableBase>(); // create first dummy object
 
 			impl->root->childrenEmit();
 		}

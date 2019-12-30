@@ -1,5 +1,3 @@
-#include <vector>
-
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include "utilities.h"
@@ -8,6 +6,8 @@
 #include <cage-core/core/macro/api.h>
 #include <cage-engine/core.h>
 #include <cage-engine/sound.h>
+
+#include <vector>
 
 namespace cage
 {

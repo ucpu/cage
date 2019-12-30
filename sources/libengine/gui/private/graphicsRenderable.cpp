@@ -13,28 +13,31 @@
 
 namespace cage
 {
-	renderableBaseStruct::renderableBaseStruct() : next(nullptr)
+	RenderableBase::RenderableBase() : next(nullptr)
 	{}
 
-	void renderableBaseStruct::setClip(const hierarchyItemStruct *item)
+	RenderableBase::~RenderableBase()
+	{}
+
+	void RenderableBase::setClip(const HierarchyItem *item)
 	{
 		clipPos = item->clipPos * item->impl->pointsScale;
 		clipSize = item->clipSize * item->impl->pointsScale;
 	}
 
-	void renderableBaseStruct::render(guiImpl *context)
+	void RenderableBase::render(GuiImpl *context)
 	{}
 
-	renderableElementStruct::elementStruct::elementStruct() : element(m), mode(m)
+	RenderableElement::Element::Element() : element(m), mode(m)
 	{}
 
-	renderableElementStruct::renderableElementStruct() : skinBuffer(nullptr), skinTexture(nullptr)
+	RenderableElement::RenderableElement() : skinBuffer(nullptr), skinTexture(nullptr)
 	{}
 
-	renderableTextStruct::textStruct::textStruct() : glyphs(nullptr), font(nullptr), color(vec3::Nan()), cursor(m), count(0)
+	RenderableText::Text::Text() : glyphs(nullptr), font(nullptr), color(vec3::Nan()), cursor(m), count(0)
 	{}
 
-	void renderableTextStruct::textStruct::apply(const GuiTextFormatComponent &f, guiImpl *impl)
+	void RenderableText::Text::apply(const GuiTextFormatComponent &f, GuiImpl *impl)
 	{
 		if (f.font)
 			font = impl->assetMgr->tryGet<assetSchemeIndexFont, Font>(f.font);
@@ -48,6 +51,6 @@ namespace cage
 			format.lineSpacing = f.lineSpacing;
 	}
 
-	renderableImageStruct::imageStruct::imageStruct() : texture(nullptr)
+	RenderableImage::Image::Image() : texture(nullptr)
 	{}
 }

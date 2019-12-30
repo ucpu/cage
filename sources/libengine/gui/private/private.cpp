@@ -15,7 +15,7 @@
 
 namespace cage
 {
-	finalPositionStruct::finalPositionStruct() : renderPos(vec2::Nan()), renderSize(vec2::Nan()), clipPos(vec2::Nan()), clipSize(vec2::Nan())
+	FinalPosition::FinalPosition() : renderPos(vec2::Nan()), renderSize(vec2::Nan()), clipPos(vec2::Nan()), clipSize(vec2::Nan())
 	{}
 
 	void offsetPosition(vec2 &position, const vec4 &offset)
@@ -60,11 +60,11 @@ namespace cage
 		return size[0] > 0 && size[1] > 0;
 	}
 
-	hierarchyItemStruct *subsideItem(hierarchyItemStruct *item)
+	HierarchyItem *subsideItem(HierarchyItem *item)
 	{
-		hierarchyItemStruct *n = item->impl->itemsMemory.createObject<hierarchyItemStruct>(item->impl, item->ent);
+		HierarchyItem *n = item->impl->itemsMemory.createObject<HierarchyItem>(item->impl, item->ent);
 		{
-			hierarchyItemStruct *i = item->firstChild;
+			HierarchyItem *i = item->firstChild;
 			while (i)
 			{
 				CAGE_ASSERT(i->parent == item);
@@ -80,7 +80,7 @@ namespace cage
 		return n;
 	}
 
-	void ensureItemHasLayout(hierarchyItemStruct *hierarchy)
+	void ensureItemHasLayout(HierarchyItem *hierarchy)
 	{
 		if (hierarchy->impl->entityLayoutsCount(hierarchy->ent) == 0)
 		{

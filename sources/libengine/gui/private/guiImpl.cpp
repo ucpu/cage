@@ -20,28 +20,28 @@ namespace cage
 		{}
 	}
 
-	guiImpl::graphicsDataStruct::graphicsDataStruct() :
+	GuiImpl::GraphicsData::GraphicsData() :
 		debugShader(nullptr), elementShader(nullptr), fontShader(nullptr), imageAnimatedShader(nullptr), imageStaticShader(nullptr),
 		colorPickerShader{nullptr, nullptr, nullptr},
 		debugMesh(nullptr), elementMesh(nullptr), fontMesh(nullptr), imageMesh(nullptr)
 	{}
 
-	guiImpl::emitDataStruct::emitDataStruct(const GuiCreateConfig &config) :
+	GuiImpl::EmitData::EmitData(const GuiCreateConfig &config) :
 		arena(config.emitArenaSize), memory(&arena), first(nullptr), last(nullptr)
 	{}
 
-	guiImpl::emitDataStruct::~emitDataStruct()
+	GuiImpl::EmitData::~EmitData()
 	{
 		flush();
 	}
 
-	void guiImpl::emitDataStruct::flush()
+	void GuiImpl::EmitData::flush()
 	{
 		first = last = nullptr;
 		memory.flush();
 	}
 
-	guiImpl::guiImpl(const GuiCreateConfig &config) :
+	GuiImpl::GuiImpl(const GuiCreateConfig &config) :
 		entityMgr(newEntityManager(config.entitiesConfig ? *config.entitiesConfig : EntityManagerCreateConfig())), components(entityMgr.get()),
 		itemsArena(config.itemsArenaSize), itemsMemory(&itemsArena), root(nullptr),
 		emitData{config, config, config}, emitControl(nullptr),
@@ -69,21 +69,21 @@ namespace cage
 		}
 	}
 
-	guiImpl::~guiImpl()
+	GuiImpl::~GuiImpl()
 	{
 		focusName = 0;
 		hover = nullptr;
 		itemsMemory.flush();
 	}
 
-	void guiImpl::scaling()
+	void GuiImpl::scaling()
 	{
 		pointsScale = zoom * retina;
 		outputSize = vec2(outputResolution.x, outputResolution.y) / pointsScale;
 		outputMouse = vec2(inputMouse.x, inputMouse.y) / pointsScale;
 	}
 
-	vec4 guiImpl::pointsToNdc(vec2 position, vec2 size)
+	vec4 GuiImpl::pointsToNdc(vec2 position, vec2 size)
 	{
 		CAGE_ASSERT(size[0] >= 0 && size[1] >= 0);
 		position *= pointsScale;
@@ -96,9 +96,9 @@ namespace cage
 		return vec4(resPos, resPos + resSiz);
 	}
 
-	uint32 guiImpl::entityWidgetsCount(Entity *e)
+	uint32 GuiImpl::entityWidgetsCount(Entity *e)
 	{
-		guiImpl *impl = this;
+		GuiImpl *impl = this;
 		uint32 result = 0;
 #define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, e)) result++;
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS));
@@ -106,9 +106,9 @@ namespace cage
 		return result;
 	}
 
-	uint32 guiImpl::entityLayoutsCount(Entity *e)
+	uint32 GuiImpl::entityLayoutsCount(Entity *e)
 	{
-		guiImpl *impl = this;
+		GuiImpl *impl = this;
 		uint32 result = 0;
 #define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, e)) result++;
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_LAYOUT_COMPONENTS));

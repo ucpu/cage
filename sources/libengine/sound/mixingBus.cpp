@@ -1,5 +1,3 @@
-#include <set>
-
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/memory.h>
@@ -10,19 +8,21 @@
 #include <cage-engine/core.h>
 #include <cage-engine/sound.h>
 
+#include <set>
+
 namespace cage
 {
 	namespace
 	{
-		class soundFilterImpl : public MixingFilter
+		class MixingFilterImpl : public MixingFilter
 		{
 		public:
 			MixingBus *filterBus;
 
-			soundFilterImpl(SoundContext *context) : filterBus(nullptr)
+			explicit MixingFilterImpl(SoundContext *context) : filterBus(nullptr)
 			{}
 
-			~soundFilterImpl()
+			~MixingFilterImpl()
 			{
 				setBus(nullptr);
 			}
@@ -34,35 +34,35 @@ namespace cage
 			}
 		};
 
-		class soundBusImpl : public MixingBus, public busInterfaceStruct
+		class MixingBusImpl : public MixingBus, public BusInterface
 		{
 		public:
-		    typedef std::set<const busInterfaceStruct*, std::less<const busInterfaceStruct*>, MemoryArenaStd<const busInterfaceStruct *>> busInteerfaceSet;
-		    typedef std::set<soundFilterImpl*, std::less<soundFilterImpl*>, MemoryArenaStd<soundFilterImpl *>> filterSet;
-			busInteerfaceSet inputs;
-			busInteerfaceSet outputs;
-			filterSet filters;
+			typedef std::set<const BusInterface*, std::less<const BusInterface*>, MemoryArenaStd<const BusInterface *>> BusInteerfaceSet;
+			typedef std::set<MixingFilterImpl*, std::less<MixingFilterImpl*>, MemoryArenaStd<MixingFilterImpl *>> FilterSet;
+			BusInteerfaceSet inputs;
+			BusInteerfaceSet outputs;
+			FilterSet filters;
 			MixingFilterApi filterApi;
-			filterSet::iterator currentFilter;
+			FilterSet::iterator currentFilter;
 
-			soundBusImpl(SoundContext *context) :
-				busInterfaceStruct(Delegate<void(MixingBus*)>().bind<soundBusImpl, &soundBusImpl::busDestroyed>(this), Delegate<void(const SoundDataBuffer&)>().bind<soundBusImpl, &soundBusImpl::execute>(this)),
+			explicit MixingBusImpl(SoundContext *context) :
+				BusInterface(Delegate<void(MixingBus*)>().bind<MixingBusImpl, &MixingBusImpl::busDestroyed>(this), Delegate<void(const SoundDataBuffer&)>().bind<MixingBusImpl, &MixingBusImpl::execute>(this)),
 				inputs(linksArenaFromContext(context)),
 				outputs(linksArenaFromContext(context)),
 				filters(linksArenaFromContext(context))
 			{
-				filterApi.input.bind<soundBusImpl, &soundBusImpl::filterInput>(this);
+				filterApi.input.bind<MixingBusImpl, &MixingBusImpl::filterInput>(this);
 			}
 
-			~soundBusImpl()
+			~MixingBusImpl()
 			{
 				clear();
 			}
 
 			void busDestroyed(MixingBus *bus)
 			{
-				inputs.erase((soundBusImpl*)bus);
-				outputs.erase((soundBusImpl*)bus);
+				inputs.erase((MixingBusImpl*)bus);
+				outputs.erase((MixingBusImpl*)bus);
 			}
 
 			void filterInput(const SoundDataBuffer &buf)
@@ -80,7 +80,7 @@ namespace cage
 					// provide data from subsequent filter
 					MixingFilterApi api;
 					api.output = buf;
-					api.input.bind<soundBusImpl, &soundBusImpl::filterInput>(this);
+					api.input.bind<MixingBusImpl, &MixingBusImpl::filterInput>(this);
 					(*currentFilter)->execute(api);
 				}
 			}
@@ -119,43 +119,43 @@ namespace cage
 
 	namespace soundPrivat
 	{
-		void busAddInput(MixingBus *bus, const busInterfaceStruct *interface)
+		void busAddInput(MixingBus *bus, const BusInterface *interface)
 		{
-			soundBusImpl *impl = (soundBusImpl*)bus;
+			MixingBusImpl *impl = (MixingBusImpl*)bus;
 			impl->inputs.insert(interface);
 		}
 
-		void busRemoveInput(MixingBus *bus, const busInterfaceStruct *interface)
+		void busRemoveInput(MixingBus *bus, const BusInterface *interface)
 		{
-			soundBusImpl *impl = (soundBusImpl*)bus;
+			MixingBusImpl *impl = (MixingBusImpl*)bus;
 			impl->inputs.erase(interface);
 		}
 
-		void busAddOutput(MixingBus *bus, const busInterfaceStruct *interface)
+		void busAddOutput(MixingBus *bus, const BusInterface *interface)
 		{
-			soundBusImpl *impl = (soundBusImpl*)bus;
+			MixingBusImpl *impl = (MixingBusImpl*)bus;
 			impl->outputs.insert(interface);
 		}
 
-		void busRemoveOutput(MixingBus *bus, const busInterfaceStruct *interface)
+		void busRemoveOutput(MixingBus *bus, const BusInterface *interface)
 		{
-			soundBusImpl *impl = (soundBusImpl*)bus;
+			MixingBusImpl *impl = (MixingBusImpl*)bus;
 			impl->outputs.erase(interface);
 		}
 	}
 
 	void MixingFilter::setBus(MixingBus *bus)
 	{
-		soundFilterImpl *impl = (soundFilterImpl*)this;
+		MixingFilterImpl *impl = (MixingFilterImpl*)this;
 		if (impl->filterBus)
 		{
-			soundBusImpl *b = (soundBusImpl*)impl->filterBus;
+			MixingBusImpl *b = (MixingBusImpl*)impl->filterBus;
 			b->filters.erase(impl);
 			impl->filterBus = nullptr;
 		}
 		if (bus)
 		{
-			soundBusImpl *b = (soundBusImpl*)bus;
+			MixingBusImpl *b = (MixingBusImpl*)bus;
 			b->filters.insert(impl);
 			impl->filterBus = bus;
 		}
@@ -163,31 +163,31 @@ namespace cage
 
 	void MixingBus::addInput(MixingBus *bus)
 	{
-		busAddInput(this, (soundBusImpl*)bus);
-		busAddOutput(bus, (soundBusImpl*)this);
+		busAddInput(this, (MixingBusImpl*)bus);
+		busAddOutput(bus, (MixingBusImpl*)this);
 	}
 
 	void MixingBus::removeInput(MixingBus *bus)
 	{
-		busRemoveInput(this, (soundBusImpl*)bus);
-		busRemoveOutput(bus, (soundBusImpl*)this);
+		busRemoveInput(this, (MixingBusImpl*)bus);
+		busRemoveOutput(bus, (MixingBusImpl*)this);
 	}
 
 	void MixingBus::addOutput(MixingBus *bus)
 	{
-		busAddOutput(this, (soundBusImpl*)bus);
-		busAddInput(bus, (soundBusImpl*)this);
+		busAddOutput(this, (MixingBusImpl*)bus);
+		busAddInput(bus, (MixingBusImpl*)this);
 	}
 
 	void MixingBus::removeOutput(MixingBus *bus)
 	{
-		busRemoveOutput(this, (soundBusImpl*)bus);
-		busRemoveInput(bus, (soundBusImpl*)this);
+		busRemoveOutput(this, (MixingBusImpl*)bus);
+		busRemoveInput(bus, (MixingBusImpl*)this);
 	}
 
 	void MixingBus::clear()
 	{
-		soundBusImpl *impl = (soundBusImpl*)this;
+		MixingBusImpl *impl = (MixingBusImpl*)this;
 		for (auto it = impl->filters.begin(), et = impl->filters.end(); it != et; it++)
 			(*it)->busDestroyed(this);
 		impl->filters.clear();
@@ -201,11 +201,11 @@ namespace cage
 
 	Holder<MixingFilter> newMixingFilter(SoundContext *context)
 	{
-		return detail::systemArena().createImpl<MixingFilter, soundFilterImpl>(context);
+		return detail::systemArena().createImpl<MixingFilter, MixingFilterImpl>(context);
 	}
 
 	Holder<MixingBus> newMixingBus(SoundContext *context)
 	{
-		return detail::systemArena().createImpl<MixingBus, soundBusImpl>(context);
+		return detail::systemArena().createImpl<MixingBus, MixingBusImpl>(context);
 	}
 }

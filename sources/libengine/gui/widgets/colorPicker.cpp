@@ -16,13 +16,13 @@ namespace cage
 {
 	namespace
 	{
-		struct colorPickerRenderableStruct : renderableBaseStruct
+		struct ColorPickerRenderable : RenderableBase
 		{
 			vec4 pos;
 			vec3 rgb;
 			uint32 mode; // 0 = flat, 1 = hue, 2 = saturation & value
 
-			virtual void render(guiImpl *impl) override
+			virtual void render(GuiImpl *impl) override
 			{
 				ShaderProgram *shr = impl->graphicsData.colorPickerShader[mode];
 				shr->bind();
@@ -42,17 +42,17 @@ namespace cage
 			}
 		};
 
-		struct colorPickerImpl : public widgetItemStruct
+		struct ColorPickerImpl : public WidgetItem
 		{
 			GuiColorPickerComponent &data;
-			colorPickerImpl *small, *large;
+			ColorPickerImpl *small, *large;
 
 			vec3 color;
 			vec2 sliderPos, sliderSize;
 			vec2 resultPos, resultSize;
 			vec2 rectPos, rectSize;
 
-			colorPickerImpl(hierarchyItemStruct *hierarchy, colorPickerImpl *small = nullptr) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(ColorPicker)), small(small), large(nullptr)
+			ColorPickerImpl(HierarchyItem *hierarchy, ColorPickerImpl *small = nullptr) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(ColorPicker)), small(small), large(nullptr)
 			{}
 
 			virtual void initialize() override
@@ -72,9 +72,9 @@ namespace cage
 					{ // this is the small base
 						if (hasFocus(1 | 2 | 4))
 						{ // create popup
-							hierarchyItemStruct *item = hierarchy->impl->itemsMemory.createObject<hierarchyItemStruct>(hierarchy->impl, hierarchy->ent);
+							HierarchyItem *item = hierarchy->impl->itemsMemory.createObject<HierarchyItem>(hierarchy->impl, hierarchy->ent);
 							item->attachParent(hierarchy->impl->root);
-							item->item = large = hierarchy->impl->itemsMemory.createObject<colorPickerImpl>(item, this);
+							item->item = large = hierarchy->impl->itemsMemory.createObject<ColorPickerImpl>(item, this);
 							large->widgetState = widgetState;
 							large->skin = skin;
 							small = this;
@@ -106,7 +106,7 @@ namespace cage
 				offsetSize(hierarchy->requestedSize, skin->defaults.colorPicker.margin);
 			}
 
-			virtual void findFinalPosition(const finalPositionStruct &update) override
+			virtual void findFinalPosition(const FinalPosition &update) override
 			{
 				if (this == large && small)
 				{ // this is a popup
@@ -137,7 +137,7 @@ namespace cage
 			void emitColor(vec2 pos, vec2 size, uint32 mode, const vec4 &margin) const
 			{
 				auto *e = hierarchy->impl->emitControl;
-				auto *t = e->memory.createObject<colorPickerRenderableStruct>();
+				auto *t = e->memory.createObject<ColorPickerRenderable>();
 				offset(pos, size, -margin);
 				t->setClip(hierarchy);
 				t->pos = hierarchy->impl->pointsToNdc(pos, size);
@@ -220,9 +220,9 @@ namespace cage
 		};
 	}
 
-	void ColorPickerCreate(hierarchyItemStruct *item)
+	void ColorPickerCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<colorPickerImpl>(item);
+		item->item = item->impl->itemsMemory.createObject<ColorPickerImpl>(item);
 	}
 }

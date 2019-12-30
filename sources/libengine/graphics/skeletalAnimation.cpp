@@ -14,10 +14,10 @@ namespace cage
 {
 	namespace
 	{
-		class animationImpl : public SkeletalAnimation
+		class SkeletalAnimationImpl : public SkeletalAnimation
 		{
 		public:
-			animationImpl() : mem(detail::systemArena())
+			SkeletalAnimationImpl() : mem(detail::systemArena())
 			{
 				indexes = nullptr;
 				positionFrames = nullptr;
@@ -34,7 +34,7 @@ namespace cage
 				duration = 0;
 			}
 
-			~animationImpl()
+			~SkeletalAnimationImpl()
 			{
 				deallocate();
 			}
@@ -115,7 +115,7 @@ namespace cage
 
 	void SkeletalAnimation::allocate(uint64 duration, uint32 bones, const uint16 *indexes, const uint16 *positionFrames, const uint16 *rotationFrames, const uint16 *scaleFrames, const void *data)
 	{
-		animationImpl *impl = (animationImpl*)this;
+		SkeletalAnimationImpl *impl = (SkeletalAnimationImpl*)this;
 		impl->deallocate();
 		impl->duration = duration;
 		impl->bones = bones;
@@ -230,7 +230,7 @@ namespace cage
 	mat4 SkeletalAnimation::evaluate(uint16 bone, real coef) const
 	{
 		CAGE_ASSERT(coef >= 0 && coef <= 1, coef);
-		animationImpl *impl = (animationImpl*)this;
+		SkeletalAnimationImpl *impl = (SkeletalAnimationImpl*)this;
 
 		uint16 b = impl->framesBoneIndex(bone);
 		if (b == m)
@@ -246,13 +246,13 @@ namespace cage
 
 	uint64 SkeletalAnimation::duration() const
 	{
-		animationImpl *impl = (animationImpl*)this;
+		SkeletalAnimationImpl *impl = (SkeletalAnimationImpl*)this;
 		return impl->duration;
 	}
 
 	Holder<SkeletalAnimation> newSkeletalAnimation()
 	{
-		return detail::systemArena().createImpl<SkeletalAnimation, animationImpl>();
+		return detail::systemArena().createImpl<SkeletalAnimation, SkeletalAnimationImpl>();
 	}
 
 	namespace detail

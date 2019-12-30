@@ -1,5 +1,3 @@
-#include <vector>
-
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
@@ -14,6 +12,8 @@
 #include <cage-engine/assetStructs.h>
 #include "private.h"
 
+#include <vector>
+
 namespace cage
 {
 	Font::FormatStruct::FormatStruct() : align(TextAlignEnum::Left), size(13), wrapWidth(real::Infinity()), lineSpacing(0)
@@ -21,7 +21,7 @@ namespace cage
 
 	namespace
 	{
-		struct processDataStruct
+		struct ProcessData
 		{
 			vec2 mousePosition;
 			mutable vec2 outSize;
@@ -31,12 +31,12 @@ namespace cage
 			uint32 count;
 			uint32 cursor;
 			bool render;
-			processDataStruct() : mousePosition(vec2::Nan()), format(nullptr), gls(nullptr),
+			ProcessData() : mousePosition(vec2::Nan()), format(nullptr), gls(nullptr),
 				outCursor(0), count(0), cursor(m), render(false)
 			{}
 		};
 
-		class fontImpl : public Font
+		class FontImpl : public Font
 		{
 		public:
 			Holder<Texture> tex;
@@ -63,11 +63,11 @@ namespace cage
 				return r;
 			}
 
-			struct InstanceStruct
+			struct Instance
 			{
 				vec4 wrld;
 				vec4 text;
-				InstanceStruct(real x, real y, const FontHeader::GlyphData &g)
+				Instance(real x, real y, const FontHeader::GlyphData &g)
 				{
 					text = g.texUv;
 					wrld[0] = x + g.bearing[0];
@@ -76,9 +76,9 @@ namespace cage
 					wrld[3] = g.size[1];
 				}
 			};
-			std::vector<InstanceStruct> instances;
+			std::vector<Instance> instances;
 
-			fontImpl() : texWidth(0), texHeight(0),
+			FontImpl() : texWidth(0), texHeight(0),
 				shr(nullptr), msh(nullptr), spaceGlyph(0), returnGlyph(0), cursorGlyph(m)
 			{
 				tex = newTexture();
@@ -115,7 +115,7 @@ namespace cage
 				return 0;
 			}
 
-			void processCursor(const processDataStruct &data, const uint32 *begin, real x, real lineY)
+			void processCursor(const ProcessData &data, const uint32 *begin, real x, real lineY)
 			{
 				if (data.render && begin == data.gls + data.cursor)
 				{
@@ -124,7 +124,7 @@ namespace cage
 				}
 			}
 
-			void processLine(const processDataStruct &data, const uint32 *begin, const uint32 *end, real lineWidth, real lineY)
+			void processLine(const ProcessData &data, const uint32 *begin, const uint32 *end, real lineWidth, real lineY)
 			{
 				real x;
 				switch (data.format->align)
@@ -163,7 +163,7 @@ namespace cage
 				processCursor(data, begin, x, lineY);
 			}
 
-			void processText(const processDataStruct &data)
+			void processText(const ProcessData &data)
 			{
 				CAGE_ASSERT(!data.render || instances.empty());
 				CAGE_ASSERT(data.format->align <= TextAlignEnum::Center, data.format->align);
@@ -240,14 +240,14 @@ namespace cage
 					{
 						Holder<UniformBuffer> uni = newUniformBuffer();
 						uni->bind(1);
-						uni->writeWhole(&instances[i * CAGE_SHADER_MAX_CHARACTERS], sizeof(InstanceStruct) * CAGE_SHADER_MAX_CHARACTERS, GL_STREAM_DRAW);
+						uni->writeWhole(&instances[i * CAGE_SHADER_MAX_CHARACTERS], sizeof(Instance) * CAGE_SHADER_MAX_CHARACTERS, GL_STREAM_DRAW);
 						msh->dispatch(CAGE_SHADER_MAX_CHARACTERS);
 					}
 					if (b)
 					{
 						Holder<UniformBuffer> uni = newUniformBuffer();
 						uni->bind(1);
-						uni->writeWhole(&instances[a * CAGE_SHADER_MAX_CHARACTERS], sizeof(InstanceStruct) * b, GL_STREAM_DRAW);
+						uni->writeWhole(&instances[a * CAGE_SHADER_MAX_CHARACTERS], sizeof(Instance) * b, GL_STREAM_DRAW);
 						msh->dispatch(b);
 					}
 
@@ -262,20 +262,20 @@ namespace cage
 #ifdef CAGE_DEBUG
 		debugName = name;
 #endif // CAGE_DEBUG
-		fontImpl *impl = (fontImpl*)this;
+		FontImpl *impl = (FontImpl*)this;
 		impl->tex->setDebugName(name);
 	}
 
 	void Font::setLine(real lineHeight, real firstLineOffset)
 	{
-		fontImpl *impl = (fontImpl*)this;
+		FontImpl *impl = (FontImpl*)this;
 		impl->lineHeight = lineHeight;
 		impl->firstLineOffset = -firstLineOffset;
 	}
 
 	void Font::setImage(uint32 width, uint32 height, uint32 size, const void *data)
 	{
-		fontImpl *impl = (fontImpl*)this;
+		FontImpl *impl = (FontImpl*)this;
 		impl->texWidth = width;
 		impl->texHeight = height;
 		impl->tex->bind();
@@ -311,7 +311,7 @@ namespace cage
 
 	void Font::setGlyphs(uint32 count, const void *data, const real *kerning)
 	{
-		fontImpl *impl = (fontImpl*)this;
+		FontImpl *impl = (FontImpl*)this;
 		impl->glyphsArray.resize(count);
 		detail::memcpy(impl->glyphsArray.data(), data, sizeof(FontHeader::GlyphData) * count);
 		if (kerning)
@@ -326,7 +326,7 @@ namespace cage
 
 	void Font::setCharmap(uint32 count, const uint32 *chars, const uint32 *glyphs)
 	{
-		fontImpl *impl = (fontImpl*)this;
+		FontImpl *impl = (FontImpl*)this;
 		impl->charmapChars.resize(count);
 		impl->charmapGlyphs.resize(count);
 		if (count > 0)
@@ -345,7 +345,7 @@ namespace cage
 
 	void Font::transcript(const char *text, uint32 *glyphs, uint32 &count)
 	{
-		fontImpl *impl = (fontImpl*)this;
+		FontImpl *impl = (FontImpl*)this;
 		if (glyphs)
 		{
 			convert8to32(glyphs, count, text);
@@ -365,20 +365,20 @@ namespace cage
 
 	void Font::size(const uint32 *glyphs, uint32 count, const FormatStruct &format, vec2 &size, const vec2 &mousePosition, uint32 &cursor)
 	{
-		processDataStruct data;
+		ProcessData data;
 		data.mousePosition = mousePosition;
 		data.format = &format;
 		data.gls = glyphs;
 		data.count = count;
 		data.outCursor = cursor;
-		((fontImpl*)this)->processText(data);
+		((FontImpl*)this)->processText(data);
 		size = data.outSize;
 		cursor = data.outCursor;
 	}
 
 	void Font::bind(Mesh *mesh, ShaderProgram *shader) const
 	{
-		fontImpl *impl = (fontImpl*)this;
+		FontImpl *impl = (FontImpl*)this;
 		glActiveTexture(GL_TEXTURE0);
 		impl->tex->bind();
 		impl->msh = mesh;
@@ -389,17 +389,17 @@ namespace cage
 
 	void Font::render(const uint32 *glyphs, uint32 count, const FormatStruct &format, uint32 cursor)
 	{
-		processDataStruct data;
+		ProcessData data;
 		data.format = &format;
 		data.gls = glyphs;
 		data.count = count;
 		data.cursor = getApplicationTime() % 1000000 < 300000 ? m : cursor;
 		data.render = true;
-		((fontImpl*)this)->processText(data);
+		((FontImpl*)this)->processText(data);
 	}
 
 	Holder<Font> newFont()
 	{
-		return detail::systemArena().createImpl<Font, fontImpl>();
+		return detail::systemArena().createImpl<Font, FontImpl>();
 	}
 }

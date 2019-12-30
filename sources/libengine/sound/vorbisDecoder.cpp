@@ -6,7 +6,7 @@ namespace cage
 {
 	namespace soundPrivat
 	{
-		vorbisDataStruct::vorbisDataStruct() : currentPosition(m)
+		VorbisData::VorbisData() : currentPosition(m)
 		{
 			callbacks.read_func = &read_func;
 			callbacks.seek_func = &seek_func;
@@ -15,12 +15,12 @@ namespace cage
 			ovf.datasource = nullptr;
 		}
 
-		vorbisDataStruct::~vorbisDataStruct()
+		VorbisData::~VorbisData()
 		{
 			clear();
 		}
 
-		void vorbisDataStruct::init(const void *buffer, uintPtr size)
+		void VorbisData::init(const void *buffer, uintPtr size)
 		{
 			this->buffer.resize(size);
 			detail::memcpy(&this->buffer[0], buffer, size);
@@ -31,7 +31,7 @@ namespace cage
 			CAGE_ASSERT(ovf.links == 1, ovf.links);
 		}
 
-		void vorbisDataStruct::clear()
+		void VorbisData::clear()
 		{
 			if (!ovf.datasource)
 				return;
@@ -40,7 +40,7 @@ namespace cage
 			std::vector<char>().swap(this->buffer);
 		}
 
-		void vorbisDataStruct::read(float *output, uint32 index, uint32 frames)
+		void VorbisData::read(float *output, uint32 index, uint32 frames)
 		{
 			CAGE_ASSERT(index + frames <= ov_pcm_total(&ovf, 0), index, frames, ov_pcm_total(&ovf, 0));
 
@@ -64,7 +64,7 @@ namespace cage
 			}
 		}
 
-		void vorbisDataStruct::decode(uint32 &channels, uint32 &frames, uint32 &sampleRate, float *output)
+		void VorbisData::decode(uint32 &channels, uint32 &frames, uint32 &sampleRate, float *output)
 		{
 			channels = numeric_cast<uint32>(ovf.vi->channels);
 			frames = numeric_cast<uint32>(ov_pcm_total(&ovf, 0));
@@ -87,10 +87,10 @@ namespace cage
 			}
 		}
 
-		size_t vorbisDataStruct::read_func(void *ptr, size_t size, size_t nmemb, void *datasource)
+		size_t VorbisData::read_func(void *ptr, size_t size, size_t nmemb, void *datasource)
 		{
 			CAGE_ASSERT(size == 1 || nmemb == 1, size, nmemb);
-			vorbisDataStruct *impl = (vorbisDataStruct*)datasource;
+			VorbisData *impl = (VorbisData*)datasource;
 			size_t r = size * nmemb;
 			r = min(r, impl->buffer.size() - impl->currentPosition);
 			CAGE_ASSERT(r + impl->currentPosition <= impl->buffer.size(), r, impl->currentPosition, impl->buffer.size());
@@ -100,9 +100,9 @@ namespace cage
 			return r;
 		}
 
-		int vorbisDataStruct::seek_func(void *datasource, ogg_int64_t offset, int whence)
+		int VorbisData::seek_func(void *datasource, ogg_int64_t offset, int whence)
 		{
-			vorbisDataStruct *impl = (vorbisDataStruct*)datasource;
+			VorbisData *impl = (VorbisData*)datasource;
 			switch (whence)
 			{
 			case SEEK_SET:
@@ -118,9 +118,9 @@ namespace cage
 			return 0;
 		}
 
-		long vorbisDataStruct::tell_func(void *datasource)
+		long VorbisData::tell_func(void *datasource)
 		{
-			vorbisDataStruct *impl = (vorbisDataStruct*)datasource;
+			VorbisData *impl = (VorbisData*)datasource;
 			return numeric_cast<long>(impl->currentPosition);
 		}
 	}

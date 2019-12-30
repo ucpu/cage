@@ -1,5 +1,3 @@
-#include <vector>
-
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/concurrent.h>
@@ -10,6 +8,8 @@
 #include <cage-core/core/macro/api.h>
 #include <cage-engine/core.h>
 #include <cage-engine/sound.h>
+
+#include <vector>
 
 namespace cage
 {
@@ -155,7 +155,7 @@ namespace cage
 		void underflowCallbackHelper(SoundIoOutStream *stream);
 		typedef void(*convertCallbackType)(float source, void *target);
 
-		class soundSpeakerImpl : public Speaker, public busInterfaceStruct
+		class soundSpeakerImpl : public Speaker, public BusInterface
 		{
 		public:
 			string name;
@@ -227,7 +227,7 @@ namespace cage
 			} data;
 
 			soundSpeakerImpl(SoundContext *context, const SpeakerCreateConfig &config, string name) :
-				busInterfaceStruct(Delegate<void(MixingBus*)>().bind<soundSpeakerImpl, &soundSpeakerImpl::busDestroyed>(this), Delegate<void(const SoundDataBuffer&)>()),
+				BusInterface(Delegate<void(MixingBus*)>().bind<soundSpeakerImpl, &soundSpeakerImpl::busDestroyed>(this), Delegate<void(const SoundDataBuffer&)>()),
 				name(name.replace(":", "_")), context(context),
 				device(nullptr), stream(nullptr), inputBus(nullptr), convertCallback(nullptr),
 				errorCountUnderflow(0), errorCountExceptions(0), errorCountNoData(0)
@@ -338,7 +338,7 @@ namespace cage
 				data.buffer.clear();
 				data.buffer.time = data.time - (sint32)marginSamples / 2 * 1000000 / (sint32)data.buffer.sampleRate;
 				data.time += (uint64)request * 1000000 / stream->sample_rate;
-				((busInterfaceStruct*)inputBus)->busExecuteDelegate(data.buffer);
+				((BusInterface*)inputBus)->busExecuteDelegate(data.buffer);
 				data.ring.write(data.buffer.buffer + data.buffer.channels * marginSamples / 2, data.buffer.channels * neededFrames);
 			}
 

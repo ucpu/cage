@@ -23,14 +23,14 @@ namespace cage
 			static bool fired = rtprioWarningCallbackOnce();
 		}
 
-		class soundContextImpl : public SoundContext
+		class SoundContextImpl : public SoundContext
 		{
 		public:
 			string name;
 			SoundIo *soundio;
 			MemoryArenaGrowing<MemoryAllocatorPolicyPool<sizeof(templates::AllocatorSizeSet<void*>)>, MemoryConcurrentPolicyNone> linksMemory;
 
-			soundContextImpl(const SoundContextCreateConfig &config, const string &name) : name(name.replace(":", "_")), soundio(nullptr), linksMemory(config.linksMemory)
+			SoundContextImpl(const SoundContextCreateConfig &config, const string &name) : name(name.replace(":", "_")), soundio(nullptr), linksMemory(config.linksMemory)
 			{
 				CAGE_LOG(SeverityEnum::Info, "sound", stringizer() + "creating sound context, name: '" + name + "'");
 				soundio = soundio_create();
@@ -42,7 +42,7 @@ namespace cage
 				soundio_flush_events(soundio);
 			}
 
-			~soundContextImpl()
+			~SoundContextImpl()
 			{
 				soundio_disconnect(soundio);
 				soundio_destroy(soundio);
@@ -54,20 +54,20 @@ namespace cage
 	{
 		SoundIo *soundioFromContext(SoundContext *context)
 		{
-			soundContextImpl *impl = (soundContextImpl*)context;
+			SoundContextImpl *impl = (SoundContextImpl*)context;
 			return impl->soundio;
 		}
 
 		MemoryArena linksArenaFromContext(SoundContext *context)
 		{
-			soundContextImpl *impl = (soundContextImpl*)context;
+			SoundContextImpl *impl = (SoundContextImpl*)context;
 			return MemoryArena(&impl->linksMemory);
 		}
 	}
 
 	string SoundContext::getContextName() const
 	{
-		soundContextImpl *impl = (soundContextImpl*)this;
+		SoundContextImpl *impl = (SoundContextImpl*)this;
 		return impl->name;
 	}
 
@@ -76,6 +76,6 @@ namespace cage
 
 	Holder<SoundContext> newSoundContext(const SoundContextCreateConfig &config, const string &name)
 	{
-		return detail::systemArena().createImpl<SoundContext, soundContextImpl>(config, name);
+		return detail::systemArena().createImpl<SoundContext, SoundContextImpl>(config, name);
 	}
 }

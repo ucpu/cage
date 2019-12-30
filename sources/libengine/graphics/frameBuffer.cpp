@@ -12,23 +12,23 @@ namespace cage
 {
 	namespace
 	{
-		class drawMark;
-		class readMark;
+		class DrawMark;
+		class ReadMark;
 
-		class frameBufferImpl : public FrameBuffer
+		class FrameBufferImpl : public FrameBuffer
 		{
 		public:
 			uint32 id;
 			uint32 target;
 
-			frameBufferImpl(uint32 target) : id(0), target(target)
+			FrameBufferImpl(uint32 target) : id(0), target(target)
 			{
 				glGenFramebuffers(1, &id);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 				bind();
 			}
 
-			~frameBufferImpl()
+			~FrameBufferImpl()
 			{
 				glDeleteFramebuffers(1, &id);
 			}
@@ -38,10 +38,10 @@ namespace cage
 				switch (target)
 				{
 				case GL_DRAW_FRAMEBUFFER:
-					setCurrentObject<drawMark>(id);
+					setCurrentObject<DrawMark>(id);
 					break;
 				case GL_READ_FRAMEBUFFER:
-					setCurrentObject<readMark>(id);
+					setCurrentObject<ReadMark>(id);
 					break;
 				default:
 					CAGE_THROW_CRITICAL(Exception, "invalid frame buffer target");
@@ -53,10 +53,10 @@ namespace cage
 				switch (target)
 				{
 				case GL_DRAW_FRAMEBUFFER:
-					CAGE_ASSERT(getCurrentObject<drawMark>() == id);
+					CAGE_ASSERT(getCurrentObject<DrawMark>() == id);
 					break;
 				case GL_READ_FRAMEBUFFER:
-					CAGE_ASSERT(getCurrentObject<readMark>() == id);
+					CAGE_ASSERT(getCurrentObject<ReadMark>() == id);
 					break;
 				default:
 					CAGE_THROW_CRITICAL(Exception, "invalid frame buffer target");
@@ -70,25 +70,25 @@ namespace cage
 #ifdef CAGE_DEBUG
 		debugName = name;
 #endif // CAGE_DEBUG
-		frameBufferImpl *impl = (frameBufferImpl *)this;
+		FrameBufferImpl *impl = (FrameBufferImpl *)this;
 		glObjectLabel(GL_FRAMEBUFFER, impl->id, name.length(), name.c_str());
 	}
 
 	uint32 FrameBuffer::getId() const
 	{
-		frameBufferImpl *impl = (frameBufferImpl *)this;
+		FrameBufferImpl *impl = (FrameBufferImpl *)this;
 		return impl->id;
 	}
 
 	uint32 FrameBuffer::getTarget() const
 	{
-		frameBufferImpl *impl = (frameBufferImpl *)this;
+		FrameBufferImpl *impl = (FrameBufferImpl *)this;
 		return impl->target;
 	}
 
 	void FrameBuffer::bind() const
 	{
-		frameBufferImpl *impl = (frameBufferImpl *)this;
+		FrameBufferImpl *impl = (FrameBufferImpl *)this;
 		glBindFramebuffer(impl->target, impl->id);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 		impl->setBinded();
@@ -96,7 +96,7 @@ namespace cage
 
 	void FrameBuffer::depthTexture(Texture *tex)
 	{
-		frameBufferImpl *impl = (frameBufferImpl*)this;
+		FrameBufferImpl *impl = (FrameBufferImpl*)this;
 		impl->checkBinded();
 		glFramebufferTexture(impl->target, GL_DEPTH_ATTACHMENT, tex ? tex->getId() : 0, 0);
 		CAGE_CHECK_GL_ERROR_DEBUG();
@@ -104,7 +104,7 @@ namespace cage
 
 	void FrameBuffer::colorTexture(uint32 index, Texture *tex, uint32 mipmapLevel)
 	{
-		frameBufferImpl *impl = (frameBufferImpl*)this;
+		FrameBufferImpl *impl = (FrameBufferImpl*)this;
 		impl->checkBinded();
 		glFramebufferTexture(impl->target, GL_COLOR_ATTACHMENT0 + index, tex ? tex->getId() : 0, mipmapLevel);
 		CAGE_CHECK_GL_ERROR_DEBUG();
@@ -112,7 +112,7 @@ namespace cage
 
 	void FrameBuffer::activeAttachments(uint32 mask)
 	{
-		frameBufferImpl *impl = (frameBufferImpl*)this;
+		FrameBufferImpl *impl = (FrameBufferImpl*)this;
 		impl->checkBinded();
 		uint32 count = 0;
 		GLenum bufs[32];
@@ -146,7 +146,7 @@ namespace cage
 
 	void FrameBuffer::checkStatus()
 	{
-		frameBufferImpl *impl = (frameBufferImpl*)this;
+		FrameBufferImpl *impl = (FrameBufferImpl*)this;
 		impl->checkBinded();
 		GLenum result = glCheckFramebufferStatus(impl->target);
 		CAGE_CHECK_GL_ERROR_DEBUG();
@@ -169,11 +169,11 @@ namespace cage
 
 	Holder<FrameBuffer> newFrameBufferDraw()
 	{
-		return detail::systemArena().createImpl<FrameBuffer, frameBufferImpl>(GL_DRAW_FRAMEBUFFER);
+		return detail::systemArena().createImpl<FrameBuffer, FrameBufferImpl>(GL_DRAW_FRAMEBUFFER);
 	}
 
 	Holder<FrameBuffer> newFrameBufferRead()
 	{
-		return detail::systemArena().createImpl<FrameBuffer, frameBufferImpl>(GL_READ_FRAMEBUFFER);
+		return detail::systemArena().createImpl<FrameBuffer, FrameBufferImpl>(GL_READ_FRAMEBUFFER);
 	}
 }

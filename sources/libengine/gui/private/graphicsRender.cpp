@@ -14,9 +14,9 @@
 
 namespace cage
 {
-	void renderableElementStruct::render(guiImpl *impl)
+	void RenderableElement::render(GuiImpl *impl)
 	{
-		guiImpl::graphicsDataStruct &context = impl->graphicsData;
+		GuiImpl::GraphicsData &context = impl->graphicsData;
 		skinBuffer->bind(0);
 		skinTexture->bind();
 		context.elementShader->bind();
@@ -28,18 +28,18 @@ namespace cage
 		context.elementMesh->dispatch();
 	}
 
-	void renderableTextStruct::render(guiImpl *impl)
+	void RenderableText::render(GuiImpl *impl)
 	{
-		guiImpl::graphicsDataStruct &context = impl->graphicsData;
+		GuiImpl::GraphicsData &context = impl->graphicsData;
 		data.font->bind(context.fontMesh, context.fontShader);
 		context.fontShader->uniform(0, data.transform);
 		context.fontShader->uniform(4, data.color);
 		data.font->render(data.glyphs, data.count, data.format, data.cursor);
 	}
 
-	void renderableImageStruct::render(guiImpl *impl)
+	void RenderableImage::render(GuiImpl *impl)
 	{
-		guiImpl::graphicsDataStruct &context = impl->graphicsData;
+		GuiImpl::GraphicsData &context = impl->graphicsData;
 		data.texture->bind();
 		ShaderProgram *shr = data.texture->getTarget() == GL_TEXTURE_2D_ARRAY ? context.imageAnimatedShader : context.imageStaticShader;
 		shr->bind();
@@ -74,7 +74,7 @@ namespace cage
 		}
 	}
 
-	void guiImpl::graphicsDispatch()
+	void GuiImpl::graphicsDispatch()
 	{
 		CAGE_CHECK_GL_ERROR_DEBUG();
 
@@ -108,7 +108,7 @@ namespace cage
 			glDisable(GL_DEPTH_TEST);
 			glActiveTexture(GL_TEXTURE0);
 			glViewport(0, 0, outputResolution.x, outputResolution.y);
-			renderableBaseStruct *r = emitData[lock.index()].first;
+			RenderableBase *r = emitData[lock.index()].first;
 			while (r)
 			{
 				if (r->clipSize[0] >= 1 && r->clipSize[1] >= 1)

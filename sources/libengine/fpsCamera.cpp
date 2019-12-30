@@ -15,7 +15,7 @@ namespace cage
 {
 	namespace
 	{
-		class fpsCameraImpl : public FpsCamera
+		class FpsCameraImpl : public FpsCamera
 		{
 		public:
 			WindowEventListeners listeners;
@@ -29,18 +29,18 @@ namespace cage
 			Entity *ent;
 			bool keysPressedArrows[6]; // wsadeq
 
-			fpsCameraImpl(Entity *ent) : ent(ent)
+			FpsCameraImpl(Entity *ent) : ent(ent)
 			{
 				for (uint32 i = 0; i < 6; i++)
 					keysPressedArrows[i] = false;
 
-				listeners.mousePress.bind<fpsCameraImpl, &fpsCameraImpl::mousePress>(this);
-				listeners.mouseMove.bind<fpsCameraImpl, &fpsCameraImpl::mouseMove>(this);
-				listeners.mouseWheel.bind<fpsCameraImpl, &fpsCameraImpl::mouseWheel>(this);
-				listeners.keyPress.bind<fpsCameraImpl, &fpsCameraImpl::keyPress>(this);
-				listeners.keyRelease.bind<fpsCameraImpl, &fpsCameraImpl::keyRelease>(this);
+				listeners.mousePress.bind<FpsCameraImpl, &FpsCameraImpl::mousePress>(this);
+				listeners.mouseMove.bind<FpsCameraImpl, &FpsCameraImpl::mouseMove>(this);
+				listeners.mouseWheel.bind<FpsCameraImpl, &FpsCameraImpl::mouseWheel>(this);
+				listeners.keyPress.bind<FpsCameraImpl, &FpsCameraImpl::keyPress>(this);
+				listeners.keyRelease.bind<FpsCameraImpl, &FpsCameraImpl::keyRelease>(this);
 				listeners.attachAll(window());
-				updateListener.bind<fpsCameraImpl, &fpsCameraImpl::update>(this);
+				updateListener.bind<FpsCameraImpl, &FpsCameraImpl::update>(this);
 				controlThread().update.attach(updateListener);
 			}
 
@@ -201,12 +201,12 @@ namespace cage
 
 	void FpsCamera::setEntity(Entity *ent)
 	{
-		fpsCameraImpl *impl = (fpsCameraImpl*)this;
+		FpsCameraImpl *impl = (FpsCameraImpl*)this;
 		impl->ent = ent;
 	}
 
 	Holder<FpsCamera> newFpsCamera(Entity *ent)
 	{
-		return detail::systemArena().createImpl<FpsCamera, fpsCameraImpl>(ent);
+		return detail::systemArena().createImpl<FpsCamera, FpsCameraImpl>(ent);
 	}
 }

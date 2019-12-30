@@ -16,16 +16,16 @@
 
 namespace cage
 {
-	void imageCreate(hierarchyItemStruct *item)
+	void imageCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->Image);
-		item->Image = item->impl->itemsMemory.createObject<imageItemStruct>(item);
+		item->Image = item->impl->itemsMemory.createObject<ImageItem>(item);
 	}
 
-	imageItemStruct::imageItemStruct(hierarchyItemStruct *hierarchy) : hierarchy(hierarchy), skipInitialize(false)
+	ImageItem::ImageItem(HierarchyItem *hierarchy) : hierarchy(hierarchy), skipInitialize(false)
 	{}
 
-	void imageItemStruct::initialize()
+	void ImageItem::initialize()
 	{
 		if (skipInitialize)
 			return;
@@ -38,26 +38,26 @@ namespace cage
 		assign();
 	}
 
-	void imageItemStruct::assign()
+	void ImageItem::assign()
 	{
 		auto *impl = hierarchy->impl;
 		CAGE_COMPONENT_GUI(Image, i, hierarchy->ent);
 		assign(i);
 	}
 
-	void imageItemStruct::assign(const GuiImageComponent &value)
+	void ImageItem::assign(const GuiImageComponent &value)
 	{
 		Image = value;
 		texture = hierarchy->impl->assetMgr->tryGet<assetSchemeIndexTexture, Texture>(value.textureName);
 	}
 
-	void imageItemStruct::apply(const GuiImageFormatComponent &f)
+	void ImageItem::apply(const GuiImageFormatComponent &f)
 	{
 		format = f;
 		// todo inherit only
 	}
 
-	vec2 imageItemStruct::findRequestedSize()
+	vec2 ImageItem::findRequestedSize()
 	{
 		if (texture)
 		{
@@ -68,12 +68,12 @@ namespace cage
 		return vec2();
 	}
 
-	renderableImageStruct *imageItemStruct::emit(vec2 position, vec2 size) const
+	RenderableImage *ImageItem::emit(vec2 position, vec2 size) const
 	{
 		if (!texture)
 			return nullptr;
 		auto *e = hierarchy->impl->emitControl;
-		auto *t = e->memory.createObject<renderableImageStruct>();
+		auto *t = e->memory.createObject<RenderableImage>();
 		t->setClip(hierarchy);
 		t->data.texture = texture;
 		t->data.ndcPos = hierarchy->impl->pointsToNdc(position, size);

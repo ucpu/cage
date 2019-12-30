@@ -12,60 +12,60 @@
 
 namespace cage
 {
-	layoutItemStruct::layoutItemStruct(hierarchyItemStruct *hierarchy) : baseItemStruct(hierarchy)
+	LayoutItem::LayoutItem(HierarchyItem *hierarchy) : BaseItem(hierarchy)
 	{}
 
-	bool layoutItemStruct::mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
+	bool LayoutItem::mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
 	{
 		return false;
 	}
 
-	bool layoutItemStruct::mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
+	bool LayoutItem::mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
 	{
 		return false;
 	}
 
-	bool layoutItemStruct::mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
+	bool LayoutItem::mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
 	{
 		return false;
 	}
 
-	bool layoutItemStruct::mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
+	bool LayoutItem::mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
 	{
 		return false;
 	}
 
-	bool layoutItemStruct::mouseWheel(sint8 wheel, ModifiersFlags modifiers, vec2 point)
+	bool LayoutItem::mouseWheel(sint8 wheel, ModifiersFlags modifiers, vec2 point)
 	{
 		return false;
 	}
 
-	bool layoutItemStruct::keyPress(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
+	bool LayoutItem::keyPress(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
 	{
 		return false;
 	}
 
-	bool layoutItemStruct::keyRepeat(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
+	bool LayoutItem::keyRepeat(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
 	{
 		return false;
 	}
 
-	bool layoutItemStruct::keyRelease(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
+	bool LayoutItem::keyRelease(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
 	{
 		return false;
 	}
 
-	bool layoutItemStruct::keyChar(uint32 key)
+	bool LayoutItem::keyChar(uint32 key)
 	{
 		return false;
 	}
 
-	void layoutItemStruct::emit() const
+	void LayoutItem::emit() const
 	{
 		hierarchy->childrenEmit();
 	}
 
-	void layoutItemStruct::generateEventReceivers()
+	void LayoutItem::generateEventReceivers()
 	{
 		// do nothing
 	}

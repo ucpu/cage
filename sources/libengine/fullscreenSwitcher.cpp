@@ -22,7 +22,7 @@ namespace cage
 			return config.configPrefix + "/" + suffix;
 		}
 
-		class fullscreenSwitcherImpl : public FullscreenSwitcher, public FullscreenSwitcherCreateConfig
+		class FullscreenSwitcherImpl : public FullscreenSwitcher
 		{
 		public:
 			WindowEventListeners listeners;
@@ -39,7 +39,7 @@ namespace cage
 			ConfigString confFullscreenMonitor;
 			ConfigBool confFullscreenEnabled;
 
-			fullscreenSwitcherImpl(const FullscreenSwitcherCreateConfig &config) : window(config.window),
+			explicit FullscreenSwitcherImpl(const FullscreenSwitcherCreateConfig &config) : window(config.window),
 				confWindowLeft(confName(config, "window/left"), 100),
 				confWindowTop(confName(config, "window/top"), 100),
 				confWindowWidth(confName(config, "window/windowWidth"), 800),
@@ -53,9 +53,9 @@ namespace cage
 			{
 				CAGE_ASSERT(window);
 				listeners.attachAll(window);
-				listeners.windowMove.bind<fullscreenSwitcherImpl, &fullscreenSwitcherImpl::windowMove>(this);
-				listeners.windowResize.bind<fullscreenSwitcherImpl, &fullscreenSwitcherImpl::windowResize>(this);
-				listeners.keyRelease.bind<fullscreenSwitcherImpl, &fullscreenSwitcherImpl::keyRelease>(this);
+				listeners.windowMove.bind<FullscreenSwitcherImpl, &FullscreenSwitcherImpl::windowMove>(this);
+				listeners.windowResize.bind<FullscreenSwitcherImpl, &FullscreenSwitcherImpl::windowResize>(this);
+				listeners.keyRelease.bind<FullscreenSwitcherImpl, &FullscreenSwitcherImpl::keyRelease>(this);
 				if (window->isHidden())
 					update(confFullscreenEnabled);
 			}
@@ -133,7 +133,7 @@ namespace cage
 
 	void FullscreenSwitcher::update(bool fullscreen)
 	{
-		fullscreenSwitcherImpl *impl = (fullscreenSwitcherImpl*)this;
+		FullscreenSwitcherImpl *impl = (FullscreenSwitcherImpl*)this;
 		impl->update(fullscreen);
 	}
 
@@ -145,6 +145,6 @@ namespace cage
 
 	Holder<FullscreenSwitcher> newFullscreenSwitcher(const FullscreenSwitcherCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<FullscreenSwitcher, fullscreenSwitcherImpl>(config);
+		return detail::systemArena().createImpl<FullscreenSwitcher, FullscreenSwitcherImpl>(config);
 	}
 }

@@ -15,9 +15,9 @@ namespace cage
 {
 	namespace
 	{
-		struct buttonImpl : public widgetItemStruct
+		struct ButtonImpl : public WidgetItem
 		{
-			buttonImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy)
+			ButtonImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy)
 			{}
 
 			virtual void initialize() override
@@ -65,9 +65,9 @@ namespace cage
 		};
 	}
 
-	void ButtonCreate(hierarchyItemStruct *item)
+	void ButtonCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<buttonImpl>(item);
+		item->item = item->impl->itemsMemory.createObject<ButtonImpl>(item);
 	}
 }

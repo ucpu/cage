@@ -57,7 +57,7 @@ namespace
 		return true;
 	}
 
-	void printMaterial(const MeshHeader &dsm, const MeshHeader::materialData &mat)
+	void printMaterial(const MeshHeader &dsm, const MeshHeader::MaterialData &mat)
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "albedoBase: " + mat.albedoBase);
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "albedoMult: " + mat.albedoMult);
@@ -80,7 +80,7 @@ namespace
 		}
 	}
 
-	void loadMaterialCage(MeshHeader &dsm, MeshHeader::materialData &mat, string path)
+	void loadMaterialCage(MeshHeader &dsm, MeshHeader::MaterialData &mat, string path)
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "using cage (.cpm) material");
 
@@ -183,7 +183,7 @@ namespace
 		}
 	}
 
-	void loadMaterialAssimp(const aiScene *scene, const aiMesh *am, MeshHeader &dsm, MeshHeader::materialData &mat)
+	void loadMaterialAssimp(const aiScene *scene, const aiMesh *am, MeshHeader &dsm, MeshHeader::MaterialData &mat)
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "converting assimp material");
 
@@ -261,7 +261,7 @@ namespace
 		}
 	}
 
-	void loadMaterial(const aiScene *scene, const aiMesh *am, MeshHeader &dsm, MeshHeader::materialData &mat)
+	void loadMaterial(const aiScene *scene, const aiMesh *am, MeshHeader &dsm, MeshHeader::MaterialData &mat)
 	{
 		string path = properties("material");
 		if (!path.empty())
@@ -302,7 +302,7 @@ namespace
 		loadMaterialAssimp(scene, am, dsm, mat);
 	}
 
-	void validateFlags(const MeshHeader &dsm, const MeshHeader::materialData &mat)
+	void validateFlags(const MeshHeader &dsm, const MeshHeader::MaterialData &mat)
 	{
 		if ((dsm.renderFlags & MeshRenderFlags::OpacityTexture) == MeshRenderFlags::OpacityTexture && (dsm.renderFlags & (MeshRenderFlags::Translucency | MeshRenderFlags::Transparency)) == MeshRenderFlags::None)
 			CAGE_THROW_ERROR(Exception, "material flags contains opacity texture, but neither translucency nor transparency is set");
@@ -380,7 +380,7 @@ void processMesh()
 
 	MeshHeader dsm;
 	memset(&dsm, 0, sizeof(dsm));
-	dsm.materialSize = sizeof(MeshHeader::materialData);
+	dsm.materialSize = sizeof(MeshHeader::MaterialData);
 	dsm.renderFlags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::VelocityWrite | MeshRenderFlags::Lighting | MeshRenderFlags::ShadowCast;
 
 	uint32 indicesPerPrimitive = 0;
@@ -407,7 +407,7 @@ void processMesh()
 
 	dsm.instancesLimitHint = properties("instancesLimit").toUint32();
 
-	MeshHeader::materialData mat;
+	MeshHeader::MaterialData mat;
 	memset(&mat, 0, sizeof(mat));
 	mat.albedoBase = vec4(0, 0, 0, 1);
 	mat.specialBase = vec4(0, 0, 0, 0);

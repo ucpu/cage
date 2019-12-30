@@ -14,9 +14,9 @@ namespace cage
 {
 	namespace
 	{
-		struct textAreaImpl : public widgetItemStruct
+		struct TextAreaImpl : public WidgetItem
 		{
-			textAreaImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy)
+			TextAreaImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy)
 			{}
 
 			virtual void initialize() override
@@ -29,7 +29,7 @@ namespace cage
 				hierarchy->requestedSize = vec2(); // todo this is a temporary hack
 			}
 
-			virtual void findFinalPosition(const finalPositionStruct &update) override
+			virtual void findFinalPosition(const FinalPosition &update) override
 			{
 
 			}
@@ -41,9 +41,9 @@ namespace cage
 		};
 	}
 
-	void TextAreaCreate(hierarchyItemStruct *item)
+	void TextAreaCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<textAreaImpl>(item);
+		item->item = item->impl->itemsMemory.createObject<TextAreaImpl>(item);
 	}
 }

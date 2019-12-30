@@ -15,11 +15,11 @@ namespace cage
 {
 	namespace
 	{
-		struct panelImpl : public widgetItemStruct
+		struct PanelImpl : public WidgetItem
 		{
 			GuiPanelComponent &data;
 
-			panelImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(Panel))
+			PanelImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(Panel))
 			{
 				ensureItemHasLayout(hierarchy);
 			}
@@ -48,9 +48,9 @@ namespace cage
 				offsetSize(hierarchy->requestedSize, skin->defaults.panel.baseMargin);
 			}
 
-			virtual void findFinalPosition(const finalPositionStruct &update) override
+			virtual void findFinalPosition(const FinalPosition &update) override
 			{
-				finalPositionStruct u(update);
+				FinalPosition u(update);
 				offset(u.renderPos, u.renderSize, -skin->defaults.panel.baseMargin);
 				offset(u.renderPos, u.renderSize, -skin->layouts[(uint32)GuiElementTypeEnum::PanelBase].border);
 				if (hierarchy->text)
@@ -81,9 +81,9 @@ namespace cage
 		};
 	}
 
-	void PanelCreate(hierarchyItemStruct *item)
+	void PanelCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<panelImpl>(item);
+		item->item = item->impl->itemsMemory.createObject<PanelImpl>(item);
 	}
 }

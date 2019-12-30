@@ -14,9 +14,9 @@ namespace cage
 {
 	namespace
 	{
-		struct progressBarImpl : public widgetItemStruct
+		struct ProgressBarImpl : public WidgetItem
 		{
-			progressBarImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy)
+			ProgressBarImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy)
 			{}
 
 			virtual void initialize() override
@@ -36,9 +36,9 @@ namespace cage
 		};
 	}
 
-	void ProgressBarCreate(hierarchyItemStruct *item)
+	void ProgressBarCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<progressBarImpl>(item);
+		item->item = item->impl->itemsMemory.createObject<ProgressBarImpl>(item);
 	}
 }

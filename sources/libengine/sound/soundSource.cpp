@@ -1,6 +1,3 @@
-#include <set>
-#include <vector>
-
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/memory.h>
@@ -13,20 +10,23 @@
 #include <cage-engine/core.h>
 #include <cage-engine/sound.h>
 
+#include <set>
+#include <vector>
+
 namespace cage
 {
 	namespace
 	{
-		enum dataTypeEnum
+		enum class DataTypeEnum : uint32
 		{
-			dtNone,
-			dtRaw,
-			dtVorbis,
-			dtTone,
-			dtNoise,
+			None = 0,
+			Raw,
+			Vorbis,
+			Tone,
+			Noise,
 		};
 
-		class soundSourceImpl : public SoundSource, public busInterfaceStruct
+		class SoundSourceImpl : public SoundSource, public BusInterface
 		{
 		public:
 			std::set<MixingBus*, std::less<MixingBus*>, MemoryArenaStd<MixingBus*>> outputs;
@@ -38,19 +38,19 @@ namespace cage
 			uint32 frames;
 			uint32 sampleRate;
 			uint32 pitch;
-			dataTypeEnum dataType;
+			DataTypeEnum dataType;
 			bool repeatBeforeStart;
 			bool repeatAfterEnd;
 
-			soundPrivat::vorbisDataStruct vorbisData;
+			soundPrivat::VorbisData vorbisData;
 
-			soundSourceImpl(SoundContext *context) :
-				busInterfaceStruct(Delegate<void(MixingBus*)>().bind<soundSourceImpl, &soundSourceImpl::busDestroyed>(this), Delegate<void(const SoundDataBuffer&)>().bind<soundSourceImpl, &soundSourceImpl::execute>(this)),
+			SoundSourceImpl(SoundContext *context) :
+				BusInterface(Delegate<void(MixingBus*)>().bind<SoundSourceImpl, &SoundSourceImpl::busDestroyed>(this), Delegate<void(const SoundDataBuffer&)>().bind<SoundSourceImpl, &SoundSourceImpl::execute>(this)),
 				outputs(linksArenaFromContext(context)),
-				channels(0), frames(0), sampleRate(0), pitch(0), dataType(dtNone), repeatBeforeStart(false), repeatAfterEnd(false)
+				channels(0), frames(0), sampleRate(0), pitch(0), dataType(DataTypeEnum::None), repeatBeforeStart(false), repeatAfterEnd(false)
 			{}
 
-			~soundSourceImpl()
+			~SoundSourceImpl()
 			{
 				for (auto it = outputs.begin(), et = outputs.end(); it != et; it++)
 					busRemoveInput(*it, this);
@@ -60,11 +60,11 @@ namespace cage
 			{
 				switch (dataType)
 				{
-				case dtRaw:
+				case DataTypeEnum::Raw:
 					CAGE_ASSERT((index + requestFrames) * channels <= rawData.size());
 					detail::memcpy(buffer, rawData.data() + index * channels, requestFrames * channels * sizeof(float));
 					break;
-				case dtVorbis:
+				case DataTypeEnum::Vorbis:
 					vorbisData.read(buffer, index, requestFrames);
 					break;
 				default:
@@ -160,16 +160,16 @@ namespace cage
 			{
 				switch (dataType)
 				{
-				case dtNone:
+				case DataTypeEnum::None:
 					break;
-				case dtRaw:
-				case dtVorbis:
+				case DataTypeEnum::Raw:
+				case DataTypeEnum::Vorbis:
 					readCheckMargins(buf);
 					break;
-				case dtTone:
+				case DataTypeEnum::Tone:
 					synthesizeTone(buf);
 					break;
-				case dtNoise:
+				case DataTypeEnum::Noise:
 					for (uint32 sampleIndex = 0; sampleIndex < buf.frames; sampleIndex++)
 					{
 						real sample = randomChance() * 2 - 1;
@@ -190,7 +190,7 @@ namespace cage
 
 			void clearAllBuffers()
 			{
-				dataType = dtNone;
+				dataType = DataTypeEnum::None;
 				channels = 0;
 				frames = 0;
 				sampleRate = 0;
@@ -212,7 +212,7 @@ namespace cage
 
 	void SoundSource::setDataNone()
 	{
-		soundSourceImpl *impl = (soundSourceImpl*)this;
+		SoundSourceImpl *impl = (SoundSourceImpl*)this;
 		impl->clearAllBuffers();
 	}
 
@@ -222,9 +222,9 @@ namespace cage
 		CAGE_ASSERT(channels > 0);
 		CAGE_ASSERT(sampleRate > 0);
 		CAGE_ASSERT(data != nullptr);
-		soundSourceImpl *impl = (soundSourceImpl*)this;
+		SoundSourceImpl *impl = (SoundSourceImpl*)this;
 		impl->clearAllBuffers();
-		impl->dataType = dtRaw;
+		impl->dataType = DataTypeEnum::Raw;
 		impl->channels = channels;
 		impl->frames = frames;
 		impl->sampleRate = sampleRate;
@@ -236,9 +236,9 @@ namespace cage
 	{
 		CAGE_ASSERT(size > 0);
 		CAGE_ASSERT(buffer != nullptr);
-		soundSourceImpl *impl = (soundSourceImpl*)this;
+		SoundSourceImpl *impl = (SoundSourceImpl*)this;
 		impl->clearAllBuffers();
-		impl->dataType = dtVorbis;
+		impl->dataType = DataTypeEnum::Vorbis;
 		impl->vorbisData.init(buffer, size);
 		impl->vorbisData.decode(impl->channels, impl->frames, impl->sampleRate, nullptr);
 	}
@@ -246,60 +246,60 @@ namespace cage
 	void SoundSource::setDataTone(uint32 pitch)
 	{
 		CAGE_ASSERT(pitch > 0);
-		soundSourceImpl *impl = (soundSourceImpl*)this;
+		SoundSourceImpl *impl = (SoundSourceImpl*)this;
 		impl->clearAllBuffers();
-		impl->dataType = dtTone;
+		impl->dataType = DataTypeEnum::Tone;
 		impl->pitch = pitch;
 	}
 
 	void SoundSource::setDataNoise()
 	{
-		soundSourceImpl *impl = (soundSourceImpl*)this;
+		SoundSourceImpl *impl = (SoundSourceImpl*)this;
 		impl->clearAllBuffers();
-		impl->dataType = dtNoise;
+		impl->dataType = DataTypeEnum::Noise;
 	}
 
 	void SoundSource::setDataRepeat(bool repeatBeforeStart, bool repeatAfterEnd)
 	{
-		soundSourceImpl *impl = (soundSourceImpl*)this;
+		SoundSourceImpl *impl = (SoundSourceImpl*)this;
 		impl->repeatBeforeStart = repeatBeforeStart;
 		impl->repeatAfterEnd = repeatAfterEnd;
 	}
 
 	void SoundSource::addOutput(MixingBus *bus)
 	{
-		soundSourceImpl *impl = (soundSourceImpl*)this;
+		SoundSourceImpl *impl = (SoundSourceImpl*)this;
 		busAddInput(bus, impl);
 		impl->outputs.insert(bus);
 	}
 
 	void SoundSource::removeOutput(MixingBus *bus)
 	{
-		soundSourceImpl *impl = (soundSourceImpl*)this;
+		SoundSourceImpl *impl = (SoundSourceImpl*)this;
 		busRemoveInput(bus, impl);
 		impl->outputs.erase(bus);
 	}
 
 	uint64 SoundSource::getDuration() const
 	{
-		soundSourceImpl *impl = (soundSourceImpl*)this;
+		SoundSourceImpl *impl = (SoundSourceImpl*)this;
 		return (uint64)1000000 * impl->frames / impl->sampleRate;
 	}
 
 	uint32 SoundSource::getChannels() const
 	{
-		soundSourceImpl *impl = (soundSourceImpl*)this;
+		SoundSourceImpl *impl = (SoundSourceImpl*)this;
 		return impl->channels;
 	}
 
 	uint32 SoundSource::getSampleRate() const
 	{
-		soundSourceImpl *impl = (soundSourceImpl*)this;
+		SoundSourceImpl *impl = (SoundSourceImpl*)this;
 		return impl->sampleRate;
 	}
 
 	Holder<SoundSource> newSoundSource(SoundContext *context)
 	{
-		return detail::systemArena().createImpl<SoundSource, soundSourceImpl>(context);
+		return detail::systemArena().createImpl<SoundSource, SoundSourceImpl>(context);
 	}
 }

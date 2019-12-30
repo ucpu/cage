@@ -1,7 +1,3 @@
-#include <algorithm>
-#include <vector>
-#include <unordered_map>
-
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/camera.h>
@@ -27,6 +23,10 @@
 #include "../engine.h"
 #include "graphics.h"
 
+#include <algorithm>
+#include <vector>
+#include <unordered_map>
+
 namespace cage
 {
 	// implemented in gui
@@ -41,15 +41,15 @@ namespace cage
 		ConfigBool confNoMotionBlur("cage/graphics/disableMotionBlur", false);
 		ConfigBool confNoNormalMap("cage/graphics/disableNormalMaps", false);
 
-		struct shadowmapImpl : public ShadowmapComponent
+		struct ShadowmapImpl : public ShadowmapComponent
 		{
 			mat4 shadowMat;
 			sint32 index;
 
-			shadowmapImpl(const ShadowmapComponent &other) : ShadowmapComponent(other), index(0) {}
+			ShadowmapImpl(const ShadowmapComponent &other) : ShadowmapComponent(other), index(0) {}
 		};
 
-		struct emitTransformsStruct
+		struct EmitTransforms
 		{
 			TransformComponent current, history;
 			mat4 model;
@@ -62,78 +62,78 @@ namespace cage
 			}
 		};
 
-		struct emitRenderObjectStruct : public emitTransformsStruct
+		struct EmitRender : public EmitTransforms
 		{
 			RenderComponent render;
 			TextureAnimationComponent *animatedTexture;
 			SkeletalAnimationComponent *animatedSkeleton;
 
-			emitRenderObjectStruct()
+			EmitRender()
 			{
-				detail::memset(this, 0, sizeof(emitRenderObjectStruct));
+				detail::memset(this, 0, sizeof(EmitRender));
 			}
 		};
 
-		struct emitRenderTextStruct : public emitTransformsStruct
+		struct EmitText : public EmitTransforms
 		{
 			TextComponent renderText;
 
-			emitRenderTextStruct()
+			EmitText()
 			{
-				detail::memset(this, 0, sizeof(emitRenderTextStruct));
+				detail::memset(this, 0, sizeof(EmitText));
 			}
 		};
 
-		struct emitLightStruct : public emitTransformsStruct
+		struct EmitLight : public EmitTransforms
 		{
 			LightComponent light;
-			shadowmapImpl *shadowmap;
+			ShadowmapImpl *shadowmap;
 			uintPtr entityId;
 
-			emitLightStruct()
+			EmitLight()
 			{
-				detail::memset(this, 0, sizeof(emitLightStruct));
+				detail::memset(this, 0, sizeof(EmitLight));
 			}
 		};
 
-		struct emitCameraStruct : public emitTransformsStruct
+		struct EmitCamera : public EmitTransforms
 		{
 			CameraComponent camera;
 			uintPtr entityId;
 
-			emitCameraStruct()
+			EmitCamera()
 			{
-				detail::memset(this, 0, sizeof(emitCameraStruct));
+				detail::memset(this, 0, sizeof(EmitCamera));
 			}
 		};
 
-		struct renderPassImpl : public renderPassStruct
+		struct RenderPassImpl : public RenderPass
 		{
 			mat4 viewProjPrev;
 			uint32 sceneMask;
 			real lodSelection; // vertical size of screen, at distance of one world-space-unit from camera, in pixels
 			bool lodOrthographic;
 
-			renderPassImpl()
+			RenderPassImpl()
 			{
-				detail::memset(this, 0, sizeof(renderPassImpl));
+				detail::memset(this, 0, sizeof(RenderPassImpl));
 			}
 		};
 
-		struct emitStruct
+		struct Emit
 		{
 			MemoryArenaGrowing<MemoryAllocatorPolicyLinear<>, MemoryConcurrentPolicyNone> emitMemory;
 			MemoryArena emitArena;
 
-			std::vector<emitRenderObjectStruct*> renderableObjects;
-			std::vector<emitRenderTextStruct*> renderableTexts;
-			std::vector<emitLightStruct*> lights;
-			std::vector<emitCameraStruct*> cameras;
+			std::vector<EmitRender*> renderableObjects;
+			std::vector<EmitText*> renderableTexts;
+			std::vector<EmitLight*> lights;
+			std::vector<EmitCamera*> cameras;
 
 			uint64 time;
 			bool fresh;
 
-			emitStruct(const EngineCreateConfig &config) : emitMemory(config.graphicsEmitMemory), emitArena(&emitMemory), time(0), fresh(false)
+			explicit Emit(const EngineCreateConfig &config) : emitMemory(config.graphicsEmitMemory), emitArena(&emitMemory), time(0), fresh(false)
 			{
 				renderableObjects.reserve(256);
 				renderableTexts.reserve(64);
@@ -141,17 +141,17 @@ namespace cage
 				cameras.reserve(4);
 			}
 
-			~emitStruct()
+			~Emit()
 			{
 				emitArena.flush();
 			}
 		};
 
-		struct graphicsPrepareImpl
+		struct GraphicsPrepareImpl
 		{
-			emitStruct emitBufferA, emitBufferB, emitBufferC; // this is awfully stupid, damn you c++
-			emitStruct *emitBuffers[3];
-			emitStruct *emitRead, *emitWrite;
+			Emit emitBufferA, emitBufferB, emitBufferC; // this is awfully stupid, damn you c++
+			Emit *emitBuffers[3];
+			Emit *emitRead, *emitWrite;
 			Holder<SwapBufferGuard> swapController;
 
 			mat4 tmpArmature[CAGE_SHADER_MAX_BONES];
@@ -160,17 +160,17 @@ namespace cage
 			MemoryArenaGrowing<MemoryAllocatorPolicyLinear<>, MemoryConcurrentPolicyNone> dispatchMemory;
 			MemoryArena dispatchArena;
 
-			interpolationTimingCorrector itc;
+			InterpolationTimingCorrector itc;
 			uint64 emitTime;
 			uint64 dispatchTime;
 			uint64 lastDispatchTime;
 			uint64 elapsedDispatchTime;
 			sint32 shm2d, shmCube;
 
-			typedef std::unordered_map<Mesh*, objectsStruct*> opaqueObjectsMapType;
-			opaqueObjectsMapType opaqueObjectsMap;
-			typedef std::unordered_map<Font*, textsStruct*> textsMapType;
-			textsMapType textsMap;
+			typedef std::unordered_map<Mesh*, Objects*> OpaqueObjectsMap;
+			OpaqueObjectsMap opaqueObjectsMap;
+			typedef std::unordered_map<Font*, Texts*> TextsMap;
+			TextsMap textsMap;
 
 			static real lightRange(const vec3 &color, const vec3 &attenuation)
 			{
@@ -194,11 +194,11 @@ namespace cage
 				return mat4(vec3(), quat(), scale);
 			}
 
-			renderPassImpl *newRenderPass()
+			RenderPassImpl *newRenderPass()
 			{
 				opaqueObjectsMap.clear();
 				textsMap.clear();
-				renderPassImpl *t = dispatchArena.createObject<renderPassImpl>();
+				RenderPassImpl *t = dispatchArena.createObject<RenderPassImpl>();
 				if (graphicsDispatch->firstRenderPass)
 					graphicsDispatch->lastRenderPass->next = t;
 				else
@@ -212,17 +212,17 @@ namespace cage
 				return tan(fov * 0.5) * 2;
 			}
 
-			static void sortTranslucentBackToFront(renderPassImpl *pass)
+			static void sortTranslucentBackToFront(RenderPassImpl *pass)
 			{
 				if (!pass->firstTranslucent)
 					return;
 				OPTICK_EVENT("sort translucent");
 
-				struct sorter
+				struct Sorter
 				{
 					const vec3 center;
 
-					uint32 count(translucentStruct *p)
+					uint32 count(Translucent *p)
 					{
 						uint32 result = 0;
 						while (p)
@@ -233,7 +233,7 @@ namespace cage
 						return result;
 					}
 
-					bool isSorted(translucentStruct *p)
+					bool isSorted(Translucent *p)
 					{
 						if (!p->next)
 							return true;
@@ -242,7 +242,7 @@ namespace cage
 						return isSorted(p->next);
 					}
 
-					sorter(renderPassImpl *pass) : center(pass->shaderViewport.eyePos)
+					explicit Sorter(RenderPassImpl *pass) : center(pass->shaderViewport.eyePos)
 					{
 						uint32 initialCount = count(pass->firstTranslucent);
 						pass->firstTranslucent = sort(pass->firstTranslucent, pass->lastTranslucent);
@@ -252,20 +252,20 @@ namespace cage
 						CAGE_ASSERT(isSorted(pass->firstTranslucent));
 					}
 
-					vec3 position(translucentStruct *p)
+					vec3 position(Translucent *p)
 					{
 						const vec4 *m = p->object.shaderMeshes[0].mMat.data;
 						return vec3(m[0][3], m[1][3], m[2][3]);
 					}
 
-					real distance(translucentStruct *p)
+					real distance(Translucent *p)
 					{
 						return distanceSquared(center, position(p));
 					}
 
-					translucentStruct *partition(translucentStruct *head, translucentStruct *end, translucentStruct *&newHead, translucentStruct *&newEnd)
+					Translucent *partition(Translucent *head, Translucent *end, Translucent *&newHead, Translucent *&newEnd)
 					{
-						translucentStruct *prev = nullptr, *cur = head, *pivot = end, *tail = end;
+						Translucent *prev = nullptr, *cur = head, *pivot = end, *tail = end;
 						while (cur != pivot)
 						{
 							if (distance(cur) > distance(pivot)) // back-to-front
@@ -279,7 +279,7 @@ namespace cage
 							{
 								if (prev)
 									prev->next = cur->next;
-								translucentStruct *tmp = cur->next;
+								Translucent *tmp = cur->next;
 								cur->next = nullptr;
 								tail->next = cur;
 								tail = cur;
@@ -292,7 +292,7 @@ namespace cage
 						return pivot;
 					}
 
-					translucentStruct *getTail(translucentStruct *cur)
+					Translucent *getTail(Translucent *cur)
 					{
 						if (!cur)
 							return nullptr;
@@ -301,17 +301,17 @@ namespace cage
 						return cur;
 					}
 
-					translucentStruct *sort(translucentStruct *head, translucentStruct *end)
+					Translucent *sort(Translucent *head, Translucent *end)
 					{
 						// https://www.geeksforgeeks.org/quicksort-on-singly-linked-list/
 						// modified
 						if (!head || head == end)
 							return head;
-						translucentStruct *newHead = nullptr, *newEnd = nullptr;
-						translucentStruct *pivot = partition(head, end, newHead, newEnd);
+						Translucent *newHead = nullptr, *newEnd = nullptr;
+						Translucent *pivot = partition(head, end, newHead, newEnd);
 						if (newHead != pivot)
 						{
-							translucentStruct *tmp = newHead;
+							Translucent *tmp = newHead;
 							while (tmp->next != pivot)
 								tmp = tmp->next;
 							tmp->next = nullptr;
@@ -325,7 +325,7 @@ namespace cage
 				} sorterInstance(pass);
 			}
 
-			static void initializeStereoCamera(renderPassImpl *pass, emitCameraStruct *camera, StereoEyeEnum eye, const mat4 &model)
+			static void initializeStereoCamera(RenderPassImpl *pass, EmitCamera *camera, StereoEyeEnum eye, const mat4 &model)
 			{
 				StereoCameraInput in;
 				in.position = vec3(model * vec4(0, 0, 0, 1));
@@ -358,14 +358,14 @@ namespace cage
 				pass->vpH = numeric_cast<uint32>(out.viewportSize[1] * real(graphicsDispatch->windowHeight));
 			}
 
-			static void initializeTargetCamera(renderPassImpl *pass, const mat4 &model)
+			static void initializeTargetCamera(RenderPassImpl *pass, const mat4 &model)
 			{
 				vec3 p = vec3(model * vec4(0, 0, 0, 1));
 				pass->view = lookAt(p, p + vec3(model * vec4(0, 0, -1, 0)), vec3(model * vec4(0, 1, 0, 0)));
 				pass->viewProj = pass->proj * pass->view;
 			}
 
-			void initializeRenderPassForCamera(renderPassImpl *pass, emitCameraStruct *camera, StereoEyeEnum eye)
+			void initializeRenderPassForCamera(RenderPassImpl *pass, EmitCamera *camera, StereoEyeEnum eye)
 			{
 				OPTICK_EVENT("camera pass");
 				if (camera->camera.target)
@@ -431,7 +431,7 @@ namespace cage
 				sortTranslucentBackToFront(pass);
 			}
 
-			void initializeRenderPassForShadowmap(renderPassImpl *pass, emitLightStruct *light)
+			void initializeRenderPassForShadowmap(RenderPassImpl *pass, EmitLight *light)
 			{
 				OPTICK_EVENT("shadowmap pass");
 				pass->view = inverse(light->model);
@@ -471,11 +471,11 @@ namespace cage
 				addRenderableObjects(pass);
 			}
 
-			void addRenderableObjects(renderPassImpl *pass)
+			void addRenderableObjects(RenderPassImpl *pass)
 			{
 				OPTICK_EVENT("objects");
 				CAGE_ASSERT(pass->lodSelection > 0);
-				for (emitRenderObjectStruct *e : emitRead->renderableObjects)
+				for (EmitRender *e : emitRead->renderableObjects)
 				{
 					if ((e->render.sceneMask & pass->sceneMask) == 0 || e->render.object == 0)
 						continue;
@@ -517,7 +517,7 @@ namespace cage
 				}
 			}
 
-			void addRenderableSkeleton(renderPassImpl *pass, emitRenderObjectStruct *e, SkeletonRig *s, const mat4 &model, const mat4 &mvp)
+			void addRenderableSkeleton(RenderPassImpl *pass, EmitRender *e, SkeletonRig *s, const mat4 &model, const mat4 &mvp)
 			{
 				uint32 bonesCount = s->bonesCount();
 				if (e->animatedSkeleton && assets()->ready(e->animatedSkeleton->name))
@@ -544,12 +544,12 @@ namespace cage
 				}
 			}
 
-			void addRenderableMesh(renderPassImpl *pass, emitRenderObjectStruct *e, Mesh *m)
+			void addRenderableMesh(RenderPassImpl *pass, EmitRender *e, Mesh *m)
 			{
 				addRenderableMesh(pass, e, m, e->model, pass->viewProj * e->model, pass->viewProjPrev * e->modelPrev);
 			}
 
-			void addRenderableMesh(renderPassImpl *pass, emitRenderObjectStruct *e, Mesh *m, const mat4 &model, const mat4 &mvp, const mat4 &mvpPrev)
+			void addRenderableMesh(RenderPassImpl *pass, EmitRender *e, Mesh *m, const mat4 &model, const mat4 &mvp, const mat4 &mvpPrev)
 			{
 				if (!frustumCulling(m->getBoundingBox(), mvp))
 					return;
@@ -561,10 +561,10 @@ namespace cage
 					addRenderableSkeleton(pass, e, s, model, mvp);
 					return;
 				}
-				objectsStruct *obj = nullptr;
+				Objects *obj = nullptr;
 				if (any(m->getFlags() & MeshRenderFlags::Translucency) || e->render.opacity < 1)
 				{ // translucent
-					translucentStruct *t = dispatchArena.createObject<translucentStruct>(m);
+					Translucent *t = dispatchArena.createObject<Translucent>(m);
 					obj = &t->object;
 					// add at end
 					if (pass->lastTranslucent)
@@ -587,7 +587,7 @@ namespace cage
 						mm = min(mm, m->getInstancesLimitHint());
 						if (m->getSkeletonBones())
 							mm = min(mm, CAGE_SHADER_MAX_BONES / m->getSkeletonBones());
-						obj = dispatchArena.createObject<objectsStruct>(m, mm);
+						obj = dispatchArena.createObject<Objects>(m, mm);
 						// add at end
 						if (pass->lastOpaque)
 							pass->lastOpaque->next = obj;
@@ -605,22 +605,22 @@ namespace cage
 							opaqueObjectsMap.erase(m);
 					}
 				}
-				objectsStruct::shaderMeshStruct *sm = obj->shaderMeshes + obj->count;
+				Objects::ShaderMesh *sm = obj->shaderMeshes + obj->count;
 				sm->color = vec4(e->render.color, e->render.opacity);
-				sm->mMat = model;
+				sm->mMat = Mat3x4(model);
 				sm->mvpMat = mvp;
 				if (any(m->getFlags() & MeshRenderFlags::VelocityWrite))
 					sm->mvpPrevMat = mvpPrev;
 				else
 					sm->mvpPrevMat = mvp;
-				sm->normalMat = inverse(mat3(model));
+				sm->normalMat = Mat3x4(inverse(mat3(model)));
 				sm->normalMat.data[2][3] = any(m->getFlags() & MeshRenderFlags::Lighting) ? 1 : 0; // is lighting enabled
 				if (e->animatedTexture)
 					sm->aniTexFrames = detail::evalSamplesForTextureAnimation(obj->textures[CAGE_SHADER_TEXTURE_ALBEDO], dispatchTime, e->animatedTexture->startTime, e->animatedTexture->speed, e->animatedTexture->offset);
 				if (obj->shaderArmatures)
 				{
 					uint32 bonesCount = m->getSkeletonBones();
-					mat3x4 *sa = obj->shaderArmatures + obj->count * bonesCount;
+					Mat3x4 *sa = obj->shaderArmatures + obj->count * bonesCount;
 					CAGE_ASSERT(!e->animatedSkeleton || e->animatedSkeleton->name);
 					if (e->animatedSkeleton && m->getSkeletonName() && assets()->ready(e->animatedSkeleton->name))
 					{
@@ -631,21 +631,21 @@ namespace cage
 						real c = detail::evalCoefficientForSkeletalAnimation(an, dispatchTime, ba.startTime, ba.speed, ba.offset);
 						skel->animateSkin(an, c, tmpArmature, tmpArmature2);
 						for (uint32 i = 0; i < bonesCount; i++)
-							sa[i] = tmpArmature2[i];
+							sa[i] = Mat3x4(tmpArmature2[i]);
 					}
 					else
 					{
 						for (uint32 i = 0; i < bonesCount; i++)
-							sa[i] = mat4();
+							sa[i] = Mat3x4();
 					}
 				}
 				obj->count++;
 			}
 
-			void addRenderableTexts(renderPassImpl *pass)
+			void addRenderableTexts(RenderPassImpl *pass)
 			{
 				OPTICK_EVENT("texts");
-				for (emitRenderTextStruct *e : emitRead->renderableTexts)
+				for (EmitText *e : emitRead->renderableTexts)
 				{
 					if ((e->renderText.sceneMask & pass->sceneMask) == 0)
 						continue;
@@ -658,7 +658,7 @@ namespace cage
 						continue;
 
 					Font *font = assets()->get<assetSchemeIndexFont, Font>(e->renderText.font);
-					textsStruct::renderStruct *r = dispatchArena.createObject<textsStruct::renderStruct>();
+					Texts::Render *r = dispatchArena.createObject<Texts::Render>();
 					font->transcript(s, nullptr, r->count);
 					r->glyphs = (uint32*)dispatchArena.allocate(r->count * sizeof(uint32), sizeof(uint32));
 					font->transcript(s, r->glyphs, r->count);
@@ -671,12 +671,12 @@ namespace cage
 
 					// todo frustum culling
 
-					textsStruct *tex = nullptr;
+					Texts *tex = nullptr;
 					{
 						auto it = textsMap.find(font);
 						if (it == textsMap.end())
 						{
-							tex = dispatchArena.createObject<textsStruct>();
+							tex = dispatchArena.createObject<Texts>();
 							tex->font = font;
 							// add at end
 							if (pass->lastText)
@@ -699,14 +699,14 @@ namespace cage
 				}
 			}
 
-			void addRenderableLights(renderPassImpl *pass)
+			void addRenderableLights(RenderPassImpl *pass)
 			{
 				OPTICK_EVENT("lights");
 				for (auto it : emitRead->lights)
 					addLight(pass, it);
 			}
 
-			void addLight(renderPassImpl *pass, emitLightStruct *light)
+			void addLight(RenderPassImpl *pass, EmitLight *light)
 			{
 				mat4 mvpMat;
 				switch (light->light.lightType)
@@ -728,18 +728,18 @@ namespace cage
 				addLight(pass->firstLight, pass->lastLight, mvpMat, light);
 			}
 
-			void addLight(translucentStruct *trans, const mat4 &mvpMat, emitLightStruct *light)
+			void addLight(Translucent *trans, const mat4 &mvpMat, EmitLight *light)
 			{
 				// todo test if the mesh is in range of the light
 				addLight(trans->firstLight, trans->lastLight, mvpMat, light);
 			}
 
-			void addLight(lightsStruct *&firstLight, lightsStruct *&lastLight, const mat4 &mvpMat, emitLightStruct *light)
+			void addLight(Lights *&firstLight, Lights *&lastLight, const mat4 &mvpMat, EmitLight *light)
 			{
-				lightsStruct *lig = nullptr;
+				Lights *lig = nullptr;
 				if (light->shadowmap)
 				{
-					lig = dispatchArena.createObject<lightsStruct>(light->light.lightType, light->shadowmap->index, 1);
+					lig = dispatchArena.createObject<Lights>(light->light.lightType, light->shadowmap->index, 1);
 					// add at end
 					if (lastLight)
 						lastLight->next = lig;
@@ -750,7 +750,7 @@ namespace cage
 				}
 				else
 				{
-					for (lightsStruct *it = firstLight; it; it = it->next)
+					for (Lights *it = firstLight; it; it = it->next)
 					{
 						if (it->count == it->max)
 							continue;
@@ -762,7 +762,7 @@ namespace cage
 					}
 					if (!lig)
 					{
-						lig = dispatchArena.createObject<lightsStruct>(light->light.lightType, 0, CAGE_SHADER_MAX_INSTANCES);
+						lig = dispatchArena.createObject<Lights>(light->light.lightType, 0, CAGE_SHADER_MAX_INSTANCES);
 						// add at begin
 						if (firstLight)
 							lig->next = firstLight;
@@ -771,7 +771,7 @@ namespace cage
 						firstLight = lig;
 					}
 				}
-				lightsStruct::shaderLightStruct *sl = lig->shaderLights + lig->count;
+				Lights::ShaderLight *sl = lig->shaderLights + lig->count;
 				// todo this struct could be precomputed
 				sl->mvpMat = mvpMat;
 				sl->color = vec4(light->light.color, cos(light->light.spotAngle * 0.5));
@@ -781,19 +781,19 @@ namespace cage
 				lig->count++;
 			}
 
-			graphicsPrepareImpl(const EngineCreateConfig &config) : emitBufferA(config), emitBufferB(config), emitBufferC(config), emitBuffers{ &emitBufferA, &emitBufferB, &emitBufferC }, emitRead(nullptr), emitWrite(nullptr), dispatchMemory(config.graphicsDispatchMemory), dispatchArena(&dispatchMemory), emitTime(0), dispatchTime(0), lastDispatchTime(0), elapsedDispatchTime(0)
+			GraphicsPrepareImpl(const EngineCreateConfig &config) : emitBufferA(config), emitBufferB(config), emitBufferC(config), emitBuffers{ &emitBufferA, &emitBufferB, &emitBufferC }, emitRead(nullptr), emitWrite(nullptr), dispatchMemory(config.graphicsDispatchMemory), dispatchArena(&dispatchMemory), emitTime(0), dispatchTime(0), lastDispatchTime(0), elapsedDispatchTime(0)
 			{
 				SwapBufferGuardCreateConfig cfg(3);
 				cfg.repeatedReads = true;
 				swapController = newSwapBufferGuard(cfg);
 			}
 
-			~graphicsPrepareImpl()
+			~GraphicsPrepareImpl()
 			{
 				dispatchArena.flush();
 			}
 
-			void emitTransform(emitTransformsStruct *c, Entity *e)
+			void emitTransform(EmitTransforms *c, Entity *e)
 			{
 				c->current = e->value<TransformComponent>(TransformComponent::component);
 				if (e->has(TransformComponent::componentHistory))
@@ -812,7 +812,7 @@ namespace cage
 				}
 
 				emitWrite = emitBuffers[lock.index()];
-				clearOnScopeExit resetEmitWrite(emitWrite);
+				ClearOnScopeExit resetEmitWrite(emitWrite);
 				emitWrite->renderableObjects.clear();
 				emitWrite->renderableTexts.clear();
 				emitWrite->lights.clear();
@@ -824,7 +824,7 @@ namespace cage
 				// emit renderable objects
 				for (Entity *e : RenderComponent::component->entities())
 				{
-					emitRenderObjectStruct *c = emitWrite->emitArena.createObject<emitRenderObjectStruct>();
+					EmitRender *c = emitWrite->emitArena.createObject<EmitRender>();
 					emitTransform(c, e);
 					c->render = e->value<RenderComponent>(RenderComponent::component);
 					if (e->has(TextureAnimationComponent::component))
@@ -837,7 +837,7 @@ namespace cage
 				// emit renderable texts
 				for (Entity *e : TextComponent::component->entities())
 				{
-					emitRenderTextStruct *c = emitWrite->emitArena.createObject<emitRenderTextStruct>();
+					EmitText *c = emitWrite->emitArena.createObject<EmitText>();
 					emitTransform(c, e);
 					c->renderText = e->value<TextComponent>(TextComponent::component);
 					emitWrite->renderableTexts.push_back(c);
@@ -846,12 +846,12 @@ namespace cage
 				// emit lights
 				for (Entity *e : LightComponent::component->entities())
 				{
-					emitLightStruct *c = emitWrite->emitArena.createObject<emitLightStruct>();
+					EmitLight *c = emitWrite->emitArena.createObject<EmitLight>();
 					emitTransform(c, e);
 					c->history.scale = c->current.scale = 1;
 					c->light = e->value<LightComponent>(LightComponent::component);
 					if (e->has(ShadowmapComponent::component))
-						c->shadowmap = emitWrite->emitArena.createObject<shadowmapImpl>(e->value<ShadowmapComponent>(ShadowmapComponent::component));
+						c->shadowmap = emitWrite->emitArena.createObject<ShadowmapImpl>(e->value<ShadowmapComponent>(ShadowmapComponent::component));
 					c->entityId = ((uintPtr)e) ^ e->name();
 					emitWrite->lights.push_back(c);
 				}
@@ -866,7 +866,7 @@ namespace cage
 					effectsMask &= ~CameraEffectsFlags::MotionBlur;
 				for (Entity *e : CameraComponent::component->entities())
 				{
-					emitCameraStruct *c = emitWrite->emitArena.createObject<emitCameraStruct>();
+					EmitCamera *c = emitWrite->emitArena.createObject<EmitCamera>();
 					emitTransform(c, e);
 					c->history.scale = c->current.scale = 1;
 					c->camera = e->value<CameraComponent>(CameraComponent::component);
@@ -876,7 +876,7 @@ namespace cage
 				}
 			}
 
-			void updateDefaultValues(emitRenderObjectStruct *e)
+			void updateDefaultValues(EmitRender *e)
 			{
 				if (!e->render.object)
 					return;
@@ -1001,7 +1001,7 @@ namespace cage
 				}
 
 				emitRead = emitBuffers[lock.index()];
-				clearOnScopeExit resetEmitRead(emitRead);
+				ClearOnScopeExit resetEmitRead(emitRead);
 
 				emitTime = emitRead->time;
 				dispatchTime = itc(emitTime, time, controlThread().timePerTick);
@@ -1049,7 +1049,7 @@ namespace cage
 				}
 
 				{ // generate camera render passes
-					std::sort(emitRead->cameras.begin(), emitRead->cameras.end(), [](const emitCameraStruct *a, const emitCameraStruct *b)
+					std::sort(emitRead->cameras.begin(), emitRead->cameras.end(), [](const EmitCamera *a, const EmitCamera *b)
 					{
 						CAGE_ASSERT(a->camera.cameraOrder != b->camera.cameraOrder, a->camera.cameraOrder);
 						return a->camera.cameraOrder < b->camera.cameraOrder;
@@ -1070,10 +1070,13 @@ namespace cage
 			}
 		};
 
-		graphicsPrepareImpl *graphicsPrepare;
+		GraphicsPrepareImpl *graphicsPrepare;
 	}
 
-	mat3x4::mat3x4(const mat4 &in)
+	Mat3x4::Mat3x4() : Mat3x4(mat4())
+	{}
+
+	Mat3x4::Mat3x4(const mat4 &in)
 	{
 		CAGE_ASSERT(in[3] == 0 && in[7] == 0 && in[11] == 0 && in[15] == 1, in);
 		for (uint32 a = 0; a < 4; a++)
@@ -1081,33 +1084,33 @@ namespace cage
 				data[b][a] = in[a * 4 + b];
 	}
 
-	mat3x4::mat3x4(const mat3 &in)
+	Mat3x4::Mat3x4(const mat3 &in)
 	{
 		for (uint32 a = 0; a < 3; a++)
 			for (uint32 b = 0; b < 3; b++)
 				data[b][a] = in[a * 3 + b];
 	}
 
-	shaderConfigStruct::shaderConfigStruct()
+	ShaderConfig::ShaderConfig()
 	{
 		for (uint32 i = 0; i < CAGE_SHADER_MAX_ROUTINES; i++)
 			shaderRoutines[i] = m;
 	}
 
-	void shaderConfigStruct::set(uint32 name, uint32 value)
+	void ShaderConfig::set(uint32 name, uint32 value)
 	{
 		CAGE_ASSERT(name < CAGE_SHADER_MAX_ROUTINES);
 		shaderRoutines[name] = value;
 	}
 
-	objectsStruct::objectsStruct(Mesh *mesh, uint32 max) : shaderMeshes(nullptr), shaderArmatures(nullptr), mesh(mesh), next(nullptr), count(0), max(max)
+	Objects::Objects(Mesh *mesh, uint32 max) : shaderMeshes(nullptr), shaderArmatures(nullptr), mesh(mesh), next(nullptr), count(0), max(max)
 	{
 		AssetManager *ass = assets();
-		shaderMeshes = (shaderMeshStruct*)graphicsPrepare->dispatchArena.allocate(sizeof(shaderMeshStruct) * max, sizeof(uintPtr));
+		shaderMeshes = (ShaderMesh*)graphicsPrepare->dispatchArena.allocate(sizeof(ShaderMesh) * max, sizeof(uintPtr));
 		if (mesh->getSkeletonBones())
 		{
 			CAGE_ASSERT(mesh->getSkeletonName() == 0 || ass->ready(mesh->getSkeletonName()));
-			shaderArmatures = (mat3x4*)graphicsPrepare->dispatchArena.allocate(sizeof(mat3x4) * mesh->getSkeletonBones() * max, sizeof(uintPtr));
+			shaderArmatures = (Mat3x4*)graphicsPrepare->dispatchArena.allocate(sizeof(Mat3x4) * mesh->getSkeletonBones() * max, sizeof(uintPtr));
 		}
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		{
@@ -1171,9 +1174,9 @@ namespace cage
 			shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_MAPNORMAL, CAGE_SHADER_ROUTINEPROC_MATERIALNOTHING);
 	}
 
-	lightsStruct::lightsStruct(LightTypeEnum lightType, sint32 shadowmap, uint32 max) : shaderLights(nullptr), next(nullptr), count(0), max(max), shadowmap(shadowmap), lightType(lightType)
+	Lights::Lights(LightTypeEnum lightType, sint32 shadowmap, uint32 max) : shaderLights(nullptr), next(nullptr), count(0), max(max), shadowmap(shadowmap), lightType(lightType)
 	{
-		shaderLights = (shaderLightStruct*)graphicsPrepare->dispatchArena.allocate(sizeof(shaderLightStruct) * max, alignof(shaderLightStruct));
+		shaderLights = (ShaderLight*)graphicsPrepare->dispatchArena.allocate(sizeof(ShaderLight) * max, alignof(ShaderLight));
 		switch (lightType)
 		{
 		case LightTypeEnum::Directional:
@@ -1190,28 +1193,28 @@ namespace cage
 		}
 	}
 
-	translucentStruct::translucentStruct(Mesh *mesh) : object(mesh, 1), firstLight(nullptr), lastLight(nullptr), next(nullptr)
+	Translucent::Translucent(Mesh *mesh) : object(mesh, 1), firstLight(nullptr), lastLight(nullptr), next(nullptr)
 	{}
 
-	textsStruct::renderStruct::renderStruct() : glyphs(nullptr), count(0), next(nullptr)
+	Texts::Render::Render() : glyphs(nullptr), count(0), next(nullptr)
 	{}
 
-	textsStruct::textsStruct() : firtsRender(nullptr), lastRender(nullptr), font(nullptr), next(nullptr)
+	Texts::Texts() : firtsRender(nullptr), lastRender(nullptr), font(nullptr), next(nullptr)
 	{}
 
-	renderPassStruct::renderPassStruct()
+	RenderPass::RenderPass()
 	{
-		detail::memset(this, 0, sizeof(renderPassStruct));
+		detail::memset(this, 0, sizeof(RenderPass));
 	}
 
 	void graphicsPrepareCreate(const EngineCreateConfig &config)
 	{
-		graphicsPrepare = detail::systemArena().createObject<graphicsPrepareImpl>(config);
+		graphicsPrepare = detail::systemArena().createObject<GraphicsPrepareImpl>(config);
 	}
 
 	void graphicsPrepareDestroy()
 	{
-		detail::systemArena().destroy<graphicsPrepareImpl>(graphicsPrepare);
+		detail::systemArena().destroy<GraphicsPrepareImpl>(graphicsPrepare);
 		graphicsPrepare = nullptr;
 	}
 

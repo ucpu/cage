@@ -15,7 +15,7 @@ namespace cage
 {
 	void Gui::graphicsInitialize()
 	{
-		guiImpl *impl = (guiImpl*)this;
+		GuiImpl *impl = (GuiImpl*)this;
 
 		// preallocate skins element buffers
 		for (auto &s : impl->skins)
@@ -28,14 +28,14 @@ namespace cage
 
 	void Gui::graphicsFinalize()
 	{
-		guiImpl *impl = (guiImpl*)this;
+		GuiImpl *impl = (GuiImpl*)this;
 		for (auto &it : impl->skins)
 			it.elementsGpuBuffer.clear();
 	}
 
 	void Gui::graphicsRender()
 	{
-		guiImpl *impl = (guiImpl*)this;
+		GuiImpl *impl = (GuiImpl*)this;
 		impl->graphicsDispatch();
 	}
 }

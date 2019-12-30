@@ -6,10 +6,10 @@ namespace cage
 {
 	namespace soundPrivat
 	{
-		struct vorbisDataStruct
+		struct VorbisData
 		{
-			vorbisDataStruct();
-			~vorbisDataStruct();
+			VorbisData();
+			~VorbisData();
 			void init(const void *buffer, uintPtr size);
 			void clear();
 			void read(float *output, uint32 index, uint32 frames);

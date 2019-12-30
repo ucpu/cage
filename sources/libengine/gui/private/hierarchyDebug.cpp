@@ -22,17 +22,17 @@ namespace cage
 		ConfigBool renderDebugConfig("cage/gui/renderHierarchy", false);
 		ConfigBool printDebugConfig("cage/gui/logHierarchy", false);
 
-		struct renderableDebugStruct : public renderableBaseStruct
+		struct RenderableDebug : public RenderableBase
 		{
-			struct elementStruct
+			struct Element
 			{
 				vec4 position;
 				vec4 color;
 			} data;
 
-			virtual void render(guiImpl *impl) override
+			virtual void render(GuiImpl *impl) override
 			{
-				guiImpl::graphicsDataStruct &context = impl->graphicsData;
+				GuiImpl::GraphicsData &context = impl->graphicsData;
 				context.debugShader->bind();
 				context.debugShader->uniform(0, data.position);
 				context.debugShader->uniform(1, data.color);
@@ -41,7 +41,7 @@ namespace cage
 			}
 		};
 
-		void printDebug(hierarchyItemStruct *item, uint32 offset)
+		void printDebug(HierarchyItem *item, uint32 offset)
 		{
 			item->printDebug(offset);
 			if (item->firstChild)
@@ -51,7 +51,7 @@ namespace cage
 		}
 	}
 
-	void hierarchyItemStruct::emitDebug() const
+	void HierarchyItem::emitDebug() const
 	{
 		if (!renderDebugConfig)
 			return;
@@ -59,10 +59,10 @@ namespace cage
 		emitDebug(renderPos, renderSize, vec4(colorHsvToRgb(vec3(h, 1, 1)), 1));
 	}
 
-	void hierarchyItemStruct::emitDebug(vec2 pos, vec2 size, vec4 color) const
+	void HierarchyItem::emitDebug(vec2 pos, vec2 size, vec4 color) const
 	{
 		auto *e = impl->emitControl;
-		auto *t = e->memory.createObject<renderableDebugStruct>();
+		auto *t = e->memory.createObject<RenderableDebug>();
 		t->setClip(this);
 		t->data.position = impl->pointsToNdc(pos, size);
 		t->data.color = color;
@@ -70,7 +70,7 @@ namespace cage
 		e->last = t;
 	}
 
-	void hierarchyItemStruct::printDebug(uint32 offset) const
+	void HierarchyItem::printDebug(uint32 offset) const
 	{
 		string spaces = string().fill(offset * 4);
 		CAGE_LOG_CONTINUE(SeverityEnum::Info, "gui-debug", stringizer() + spaces + "HIERARCHY: entity: " + (ent ? ent->name() : 0u) + ", subsided: " + subsidedItem);
@@ -88,7 +88,7 @@ namespace cage
 		CAGE_LOG_CONTINUE(SeverityEnum::Info, "gui-debug", stringizer() + spaces + "  clip position: " + clipPos + ", size: " + clipSize);
 	}
 
-	void printDebug(guiImpl *impl)
+	void printDebug(GuiImpl *impl)
 	{
 		if (!printDebugConfig)
 			return;

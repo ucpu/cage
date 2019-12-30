@@ -1,6 +1,3 @@
-#include <vector>
-#include <algorithm>
-
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #define CAGE_EXPORT
@@ -10,11 +7,14 @@
 #include <cage-engine/graphics.h>
 #include "private.h"
 
+#include <vector>
+#include <algorithm>
+
 namespace cage
 {
 	namespace
 	{
-		class objectImpl : public RenderObject
+		class RenderObjectImpl : public RenderObject
 		{
 		public:
 			std::vector<float> thresholds;
@@ -41,7 +41,7 @@ namespace cage
 			return b < a;
 		}));
 		CAGE_ASSERT(std::is_sorted(meshIndices, meshIndices + lodsCount + 1));
-		objectImpl *impl = (objectImpl*)this;
+		RenderObjectImpl *impl = (RenderObjectImpl*)this;
 		impl->thresholds.resize(lodsCount);
 		impl->indices.resize(lodsCount + 1);
 		impl->names.resize(meshesCount);
@@ -52,13 +52,13 @@ namespace cage
 
 	uint32 RenderObject::lodsCount() const
 	{
-		objectImpl *impl = (objectImpl*)this;
+		RenderObjectImpl *impl = (RenderObjectImpl*)this;
 		return numeric_cast<uint32>(impl->thresholds.size());
 	}
 
 	uint32 RenderObject::lodSelect(float threshold) const
 	{
-		objectImpl *impl = (objectImpl*)this;
+		RenderObjectImpl *impl = (RenderObjectImpl*)this;
 		// todo rewrite to binary search
 		uint32 cnt = numeric_cast<uint32>(impl->thresholds.size());
 		uint32 lod = 0;
@@ -69,13 +69,13 @@ namespace cage
 
 	PointerRange<const uint32> RenderObject::meshes(uint32 lod) const
 	{
-		objectImpl *impl = (objectImpl*)this;
+		RenderObjectImpl *impl = (RenderObjectImpl*)this;
 		CAGE_ASSERT(lod < lodsCount());
 		return { impl->names.data() + impl->indices[lod], impl->names.data() + impl->indices[lod + 1] };
 	}
 
 	Holder<RenderObject> newRenderObject()
 	{
-		return detail::systemArena().createImpl<RenderObject, objectImpl>();
+		return detail::systemArena().createImpl<RenderObject, RenderObjectImpl>();
 	}
 }

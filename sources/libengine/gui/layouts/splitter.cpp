@@ -15,17 +15,17 @@ namespace cage
 {
 	namespace
 	{
-		struct layoutSplitterImpl : public layoutItemStruct
+		struct LayoutSplitterImpl : public LayoutItem
 		{
 			GuiLayoutSplitterComponent &data;
 
-			layoutSplitterImpl(hierarchyItemStruct *hierarchy) : layoutItemStruct(hierarchy), data(GUI_REF_COMPONENT(LayoutSplitter))
+			LayoutSplitterImpl(HierarchyItem *hierarchy) : LayoutItem(hierarchy), data(GUI_REF_COMPONENT(LayoutSplitter))
 			{}
 
 			virtual void initialize() override
 			{
 				uint32 chc = 0;
-				hierarchyItemStruct *c = hierarchy->firstChild;
+				HierarchyItem *c = hierarchy->firstChild;
 				while (c)
 				{
 					chc++;
@@ -36,7 +36,7 @@ namespace cage
 
 			virtual void findRequestedSize() override
 			{
-				hierarchyItemStruct *c = hierarchy->firstChild;
+				HierarchyItem *c = hierarchy->firstChild;
 				hierarchy->requestedSize = vec2();
 				while (c)
 				{
@@ -48,11 +48,11 @@ namespace cage
 				CAGE_ASSERT(hierarchy->requestedSize.valid());
 			}
 
-			virtual void findFinalPosition(const finalPositionStruct &update) override
+			virtual void findFinalPosition(const FinalPosition &update) override
 			{
-				hierarchyItemStruct *a = hierarchy->firstChild, *b = hierarchy->firstChild->nextSibling;
+				HierarchyItem *a = hierarchy->firstChild, *b = hierarchy->firstChild->nextSibling;
 				uint32 axis = data.vertical ? 1 : 0;
-				finalPositionStruct u(update);
+				FinalPosition u(update);
 				real split = data.inverse ? max(update.renderSize[axis] - b->requestedSize[axis], 0) : a->requestedSize[axis];
 				u.renderPos[axis] += 0;
 				u.renderSize[axis] = split;
@@ -64,9 +64,9 @@ namespace cage
 		};
 	}
 
-	void LayoutSplitterCreate(hierarchyItemStruct *item)
+	void LayoutSplitterCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<layoutSplitterImpl>(item);
+		item->item = item->impl->itemsMemory.createObject<LayoutSplitterImpl>(item);
 	}
 }

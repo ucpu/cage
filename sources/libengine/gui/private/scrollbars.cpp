@@ -15,23 +15,23 @@ namespace cage
 {
 	namespace
 	{
-		struct scrollbarsImpl : public widgetItemStruct
+		struct ScrollbarsImpl : public WidgetItem
 		{
 			GuiScrollbarsComponent &data;
 
-			struct scrollbarStruct
+			struct Scrollbar
 			{
 				vec2 position;
 				vec2 size;
 				real dotSize;
 				real &value;
-				scrollbarStruct(real &value) : position(vec2::Nan()), size(vec2::Nan()), dotSize(real::Nan()), value(value)
+				Scrollbar(real &value) : position(vec2::Nan()), size(vec2::Nan()), dotSize(real::Nan()), value(value)
 				{}
 			} scrollbars[2];
 
 			real wheelFactor;
 
-			scrollbarsImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(Scrollbars)), scrollbars{ data.scroll[0], data.scroll[1] }
+			ScrollbarsImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(Scrollbars)), scrollbars{ data.scroll[0], data.scroll[1] }
 			{
 				ensureItemHasLayout(hierarchy);
 			}
@@ -48,10 +48,10 @@ namespace cage
 				hierarchy->requestedSize = hierarchy->firstChild->requestedSize;
 			}
 
-			virtual void findFinalPosition(const finalPositionStruct &update) override
+			virtual void findFinalPosition(const FinalPosition &update) override
 			{
 				wheelFactor = 70 / (hierarchy->requestedSize[1] - update.renderSize[1]);
-				finalPositionStruct u(update);
+				FinalPosition u(update);
 				u.renderSize = hierarchy->requestedSize;
 				real scw = skin->defaults.scrollbars.scrollbarSize + skin->defaults.scrollbars.contentPadding;
 				for (uint32 a = 0; a < 2; a++)
@@ -61,7 +61,7 @@ namespace cage
 						show = true;
 					if (show)
 					{ // the content is larger than the available area
-						scrollbarStruct &s = scrollbars[a];
+						Scrollbar &s = scrollbars[a];
 						s.size[a] = update.renderSize[a];
 						s.size[1 - a] = skin->defaults.scrollbars.scrollbarSize;
 						s.position[a] = update.renderPos[a];
@@ -85,7 +85,7 @@ namespace cage
 				hierarchy->childrenEmit();
 				for (uint32 a = 0; a < 2; a++)
 				{
-					const scrollbarStruct &s = scrollbars[a];
+					const Scrollbar &s = scrollbars[a];
 					if (s.position.valid())
 					{
 						emitElement(a == 0 ? GuiElementTypeEnum::ScrollbarHorizontalPanel : GuiElementTypeEnum::ScrollbarVerticalPanel, 0, s.position, s.size);
@@ -103,10 +103,10 @@ namespace cage
 			{
 				for (uint32 a = 0; a < 2; a++)
 				{
-					const scrollbarStruct &s = scrollbars[a];
+					const Scrollbar &s = scrollbars[a];
 					if (s.position.valid())
 					{
-						eventReceiverStruct e;
+						EventReceiver e;
 						e.widget = this;
 						e.pos = s.position;
 						e.size = s.size;
@@ -116,7 +116,7 @@ namespace cage
 				}
 
 				{ // event receiver for wheel
-					eventReceiverStruct e;
+					EventReceiver e;
 					e.widget = this;
 					e.pos = hierarchy->renderPos;
 					e.size = hierarchy->renderSize;
@@ -134,7 +134,7 @@ namespace cage
 					return true;
 				for (uint32 a = 0; a < 2; a++)
 				{
-					const scrollbarStruct &s = scrollbars[a];
+					const Scrollbar &s = scrollbars[a];
 					if (s.position.valid())
 					{
 						if (!move && pointInside(s.position, s.size, point))
@@ -165,7 +165,7 @@ namespace cage
 			{
 				if (modifiers != ModifiersFlags::None)
 					return false;
-				const scrollbarStruct &s = scrollbars[1];
+				const Scrollbar &s = scrollbars[1];
 				if (s.position.valid())
 				{
 					s.value -= wheel * wheelFactor;
@@ -177,9 +177,9 @@ namespace cage
 		};
 	}
 
-	void scrollbarsCreate(hierarchyItemStruct *item)
+	void scrollbarsCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<scrollbarsImpl>(item);
+		item->item = item->impl->itemsMemory.createObject<ScrollbarsImpl>(item);
 	}
 }

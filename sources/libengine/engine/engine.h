@@ -18,7 +18,7 @@ namespace cage
 	void soundEmit(uint64 time);
 	void soundTick(uint64 time);
 
-	struct interpolationTimingCorrector
+	struct InterpolationTimingCorrector
 	{
 		uint64 operator() (uint64 emit, uint64 dispatch, uint64 step)
 		{
@@ -32,19 +32,19 @@ namespace cage
 			return max(emit, dispatch + correction);
 		}
 
-		interpolationTimingCorrector() : correction(-70000)
+		InterpolationTimingCorrector() : correction(-70000)
 		{}
 
 		sint64 correction;
 	};
 
-	struct clearOnScopeExit
+	struct ClearOnScopeExit : private Immovable
 	{
 		template<class T>
-		clearOnScopeExit(T *&ptr) : ptr((void*&)ptr)
+		explicit ClearOnScopeExit(T *&ptr) : ptr((void*&)ptr)
 		{}
 
-		~clearOnScopeExit()
+		~ClearOnScopeExit()
 		{
 			ptr = nullptr;
 		}

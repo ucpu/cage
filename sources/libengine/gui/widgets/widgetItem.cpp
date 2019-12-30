@@ -13,13 +13,16 @@
 
 namespace cage
 {
-	baseItemStruct::baseItemStruct(hierarchyItemStruct *hierarchy) : hierarchy(hierarchy)
+	BaseItem::BaseItem(HierarchyItem *hierarchy) : hierarchy(hierarchy)
 	{}
 
-	widgetItemStruct::widgetItemStruct(hierarchyItemStruct *hierarchy) : baseItemStruct(hierarchy), skin(nullptr)
+	BaseItem::~BaseItem()
 	{}
 
-	uint32 widgetItemStruct::mode(bool hover, uint32 focusParts) const
+	WidgetItem::WidgetItem(HierarchyItem *hierarchy) : BaseItem(hierarchy), skin(nullptr)
+	{}
+
+	uint32 WidgetItem::mode(bool hover, uint32 focusParts) const
 	{
 		if (widgetState.disabled)
 			return 3;
@@ -30,18 +33,18 @@ namespace cage
 		return 0;
 	}
 
-	uint32 widgetItemStruct::mode(const vec2 &pos, const vec2 &size, uint32 focusParts) const
+	uint32 WidgetItem::mode(const vec2 &pos, const vec2 &size, uint32 focusParts) const
 	{
 		return mode(pointInside(pos, size, hierarchy->impl->outputMouse), focusParts);
 	}
 
-	bool widgetItemStruct::hasFocus(uint32 parts) const
+	bool WidgetItem::hasFocus(uint32 parts) const
 	{
 		CAGE_ASSERT(hierarchy->ent);
 		return hierarchy->impl->focusName && hierarchy->impl->focusName == hierarchy->ent->name() && (hierarchy->impl->focusParts & parts) > 0;
 	}
 
-	void widgetItemStruct::makeFocused(uint32 parts)
+	void WidgetItem::makeFocused(uint32 parts)
 	{
 		CAGE_ASSERT(parts != 0);
 		CAGE_ASSERT(hierarchy->ent);
@@ -50,14 +53,14 @@ namespace cage
 		hierarchy->impl->focusParts = parts;
 	}
 
-	void widgetItemStruct::findFinalPosition(const finalPositionStruct &update)
+	void WidgetItem::findFinalPosition(const FinalPosition &update)
 	{
 		// do nothing
 	}
 
-	void widgetItemStruct::generateEventReceivers()
+	void WidgetItem::generateEventReceivers()
 	{
-		eventReceiverStruct e;
+		EventReceiver e;
 		e.widget = this;
 		e.pos = hierarchy->renderPos;
 		e.size = hierarchy->renderSize;
@@ -65,14 +68,14 @@ namespace cage
 			hierarchy->impl->mouseEventReceivers.push_back(e);
 	}
 
-	renderableElementStruct *widgetItemStruct::emitElement(GuiElementTypeEnum element, uint32 mode, vec2 pos, vec2 size) const
+	RenderableElement *WidgetItem::emitElement(GuiElementTypeEnum element, uint32 mode, vec2 pos, vec2 size) const
 	{
 		CAGE_ASSERT(element < GuiElementTypeEnum::TotalElements);
 		CAGE_ASSERT(mode < 4);
 		CAGE_ASSERT(pos.valid());
 		CAGE_ASSERT(size.valid());
 		auto *e = hierarchy->impl->emitControl;
-		auto *t = e->memory.createObject<renderableElementStruct>();
+		auto *t = e->memory.createObject<RenderableElement>();
 		t->setClip(hierarchy);
 		t->data.element = (uint32)element;
 		t->data.mode = mode;
@@ -87,48 +90,48 @@ namespace cage
 		return t;
 	}
 
-	bool widgetItemStruct::mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
+	bool WidgetItem::mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
 	{
 		makeFocused();
 		return true;
 	}
 
-	bool widgetItemStruct::mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
+	bool WidgetItem::mouseDouble(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
 	{
 		return true;
 	}
 
-	bool widgetItemStruct::mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
+	bool WidgetItem::mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
 	{
 		return true;
 	}
 
-	bool widgetItemStruct::mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
+	bool WidgetItem::mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point)
 	{
 		return true;
 	}
 
-	bool widgetItemStruct::mouseWheel(sint8 wheel, ModifiersFlags modifiers, vec2 point)
+	bool WidgetItem::mouseWheel(sint8 wheel, ModifiersFlags modifiers, vec2 point)
 	{
 		return true;
 	}
 
-	bool widgetItemStruct::keyPress(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
+	bool WidgetItem::keyPress(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
 	{
 		return true;
 	}
 
-	bool widgetItemStruct::keyRepeat(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
+	bool WidgetItem::keyRepeat(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
 	{
 		return true;
 	}
 
-	bool widgetItemStruct::keyRelease(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
+	bool WidgetItem::keyRelease(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
 	{
 		return true;
 	}
 
-	bool widgetItemStruct::keyChar(uint32 key)
+	bool WidgetItem::keyChar(uint32 key)
 	{
 		return true;
 	}

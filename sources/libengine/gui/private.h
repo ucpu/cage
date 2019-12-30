@@ -10,48 +10,49 @@
 
 namespace cage
 {
-	class guiImpl;
-	struct hierarchyItemStruct;
+	class GuiImpl;
+	struct HierarchyItem;
 
-	struct skinDataStruct : public GuiSkinConfig
+	struct SkinData : public GuiSkinConfig
 	{
 		Holder<UniformBuffer> elementsGpuBuffer;
 		Texture *texture;
 	};
 
-	struct renderableBaseStruct
+	struct RenderableBase
 	{
-		renderableBaseStruct *next;
+		RenderableBase *next;
 		vec2 clipPos, clipSize;
 
-		renderableBaseStruct();
+		RenderableBase();
+		virtual ~RenderableBase();
 
-		void setClip(const hierarchyItemStruct *item);
+		void setClip(const HierarchyItem *item);
 
-		virtual void render(guiImpl *impl);
+		virtual void render(GuiImpl *impl);
 	};
 
-	struct renderableElementStruct : public renderableBaseStruct
+	struct RenderableElement : public RenderableBase
 	{
-		struct elementStruct
+		struct Element
 		{
 			vec4 outer;
 			vec4 inner;
 			uint32 element;
 			uint32 mode;
-			elementStruct();
+			Element();
 		} data;
 		const UniformBuffer *skinBuffer;
 		const Texture *skinTexture;
 
-		renderableElementStruct();
+		RenderableElement();
 
-		virtual void render(guiImpl *impl) override;
+		virtual void render(GuiImpl *impl) override;
 	};
 
-	struct renderableTextStruct : public renderableBaseStruct
+	struct RenderableText : public RenderableBase
 	{
-		struct textStruct
+		struct Text
 		{
 			mat4 transform;
 			Font::FormatStruct format;
@@ -60,62 +61,62 @@ namespace cage
 			uint32 *glyphs;
 			uint32 cursor;
 			uint32 count;
-			textStruct();
-			void apply(const GuiTextFormatComponent &f, guiImpl *impl);
+			Text();
+			void apply(const GuiTextFormatComponent &f, GuiImpl *impl);
 		} data;
 
-		virtual void render(guiImpl *impl) override;
+		virtual void render(GuiImpl *impl) override;
 	};
 
-	struct renderableImageStruct : public renderableBaseStruct
+	struct RenderableImage : public RenderableBase
 	{
-		struct imageStruct
+		struct Image
 		{
 			vec4 ndcPos;
 			vec4 uvClip;
 			vec4 aniTexFrames;
 			Texture *texture;
-			imageStruct();
+			Image();
 		} data;
 
-		virtual void render(guiImpl *impl) override;
+		virtual void render(GuiImpl *impl) override;
 	};
 
-	struct finalPositionStruct
+	struct FinalPosition
 	{
 		vec2 renderPos, renderSize;
 		vec2 clipPos, clipSize;
 
-		finalPositionStruct();
+		FinalPosition();
 	};
 
-	struct hierarchyItemStruct
+	struct HierarchyItem
 	{
 		// size (points) as seen by parent
 		vec2 requestedSize;
 		vec2 renderPos, renderSize;
 		vec2 clipPos, clipSize; // clip pos/size are in same coordinate system as render pos/size, they make a rectangle intersection of parents viewport and our render pos/size
 
-		guiImpl *const impl;
+		GuiImpl *const impl;
 		Entity *const ent;
 
-		hierarchyItemStruct *parent;
-		hierarchyItemStruct *prevSibling, *nextSibling;
-		hierarchyItemStruct *firstChild, *lastChild;
+		HierarchyItem *parent;
+		HierarchyItem *prevSibling, *nextSibling;
+		HierarchyItem *firstChild, *lastChild;
 		sint32 order; // relative ordering of items with same parent
 
-		struct baseItemStruct *item;
-		struct textItemStruct *text;
-		struct imageItemStruct *Image;
+		struct BaseItem *item;
+		struct TextItem *text;
+		struct ImageItem *Image;
 
 		bool subsidedItem; // prevent use of explicit position
 
-		hierarchyItemStruct(guiImpl *impl, Entity *ent);
+		HierarchyItem(GuiImpl *impl, Entity *ent);
 
 		// called top->down
 		void initialize(); // initialize and validate widget, layout, text and image, initialize children
 		void findRequestedSize(); // fills in the requestedSize
-		void findFinalPosition(const finalPositionStruct &update); // given position and available space in the finalPositionStruct, determine actual position and size
+		void findFinalPosition(const FinalPosition &update); // given position and available space in the FinalPosition, determine actual position and size
 		void childrenEmit() const;
 		void generateEventReceivers() const;
 
@@ -123,7 +124,7 @@ namespace cage
 		void moveToWindow(bool horizontal, bool vertical);
 		void detachChildren();
 		void detachParent();
-		void attachParent(hierarchyItemStruct *newParent);
+		void attachParent(HierarchyItem *newParent);
 
 		// debug
 		void emitDebug() const;
@@ -133,15 +134,16 @@ namespace cage
 		void fireWidgetEvent() const;
 	};
 
-	struct baseItemStruct
+	struct BaseItem
 	{
-		hierarchyItemStruct *const hierarchy;
+		HierarchyItem *const hierarchy;
 
-		baseItemStruct(hierarchyItemStruct *hierarchy);
+		BaseItem(HierarchyItem *hierarchy);
+		virtual ~BaseItem();
 
 		virtual void initialize() = 0;
 		virtual void findRequestedSize() = 0;
-		virtual void findFinalPosition(const finalPositionStruct &update) = 0;
+		virtual void findFinalPosition(const FinalPosition &update) = 0;
 		virtual void emit() const = 0;
 		virtual void generateEventReceivers() = 0;
 
@@ -156,20 +158,20 @@ namespace cage
 		virtual bool keyChar(uint32 key) = 0;
 	};
 
-	struct widgetItemStruct : public baseItemStruct
+	struct WidgetItem : public BaseItem
 	{
 		GuiWidgetStateComponent widgetState;
-		const skinDataStruct *skin;
+		const SkinData *skin;
 
-		widgetItemStruct(hierarchyItemStruct *hierarchy);
+		WidgetItem(HierarchyItem *hierarchy);
 
 		uint32 mode(bool hover = true, uint32 focusParts = 1) const;
 		uint32 mode(const vec2 &pos, const vec2 &size, uint32 focusParts = 1) const;
 		bool hasFocus(uint32 part = 1) const;
 		void makeFocused(uint32 part = 1);
-		renderableElementStruct *emitElement(GuiElementTypeEnum element, uint32 mode, vec2 pos, vec2 size) const;
+		RenderableElement *emitElement(GuiElementTypeEnum element, uint32 mode, vec2 pos, vec2 size) const;
 
-		virtual void findFinalPosition(const finalPositionStruct &update) override;
+		virtual void findFinalPosition(const FinalPosition &update) override;
 		virtual void generateEventReceivers() override;
 
 		virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override;
@@ -183,9 +185,9 @@ namespace cage
 		virtual bool keyChar(uint32 key) override;
 	};
 
-	struct layoutItemStruct : public baseItemStruct
+	struct LayoutItem : public BaseItem
 	{
-		layoutItemStruct(hierarchyItemStruct *hierarchy);
+		LayoutItem(HierarchyItem *hierarchy);
 
 		virtual void emit() const override;
 		virtual void generateEventReceivers() override;
@@ -201,13 +203,13 @@ namespace cage
 		virtual bool keyChar(uint32 key) override;
 	};
 
-	struct textItemStruct
+	struct TextItem
 	{
-		hierarchyItemStruct *const hierarchy;
-		renderableTextStruct::textStruct text;
+		HierarchyItem *const hierarchy;
+		RenderableText::Text text;
 		bool skipInitialize;
 
-		textItemStruct(hierarchyItemStruct *hierarchy);
+		TextItem(HierarchyItem *hierarchy);
 
 		void initialize();
 
@@ -217,20 +219,20 @@ namespace cage
 
 		vec2 findRequestedSize();
 
-		renderableTextStruct *emit(vec2 position, vec2 size) const;
+		RenderableText *emit(vec2 position, vec2 size) const;
 
 		void updateCursorPosition(vec2 position, vec2 size, vec2 point, uint32 &cursor);
 	};
 
-	struct imageItemStruct
+	struct ImageItem
 	{
-		hierarchyItemStruct *const hierarchy;
+		HierarchyItem *const hierarchy;
 		GuiImageComponent Image;
 		GuiImageFormatComponent format;
 		Texture *texture;
 		bool skipInitialize;
 
-		imageItemStruct(hierarchyItemStruct *hierarchy);
+		ImageItem(HierarchyItem *hierarchy);
 
 		void initialize();
 
@@ -240,21 +242,21 @@ namespace cage
 
 		vec2 findRequestedSize();
 
-		renderableImageStruct *emit(vec2 position, vec2 size) const;
+		RenderableImage *emit(vec2 position, vec2 size) const;
 	};
 
-	struct eventReceiverStruct
+	struct EventReceiver
 	{
 		vec2 pos, size;
-		widgetItemStruct *widget;
+		WidgetItem *widget;
 		uint32 mask; // bitmask for event classes
 
-		eventReceiverStruct();
+		EventReceiver();
 
 		bool pointInside(vec2 point, uint32 maskRequests = 1) const;
 	};
 
-	class guiImpl : public Gui
+	class GuiImpl : public Gui
 	{
 	public:
 		Holder<EntityManager> entityMgr;
@@ -270,13 +272,13 @@ namespace cage
 		real zoom, retina, pointsScale; // how many pixels per point (1D)
 		uint32 focusName; // focused entity name
 		uint32 focusParts; // bitmask of focused parts of the single widget (bits 30 and 31 are reserved for scrollbars)
-		widgetItemStruct *hover;
+		WidgetItem *hover;
 
 		MemoryArenaGrowing<MemoryAllocatorPolicyLinear<>, MemoryConcurrentPolicyNone> itemsArena;
 		MemoryArena itemsMemory;
-		hierarchyItemStruct *root;
+		HierarchyItem *root;
 
-		struct graphicsDataStruct
+		struct GraphicsData
 		{
 			ShaderProgram *debugShader;
 			ShaderProgram *elementShader;
@@ -288,29 +290,29 @@ namespace cage
 			Mesh *elementMesh;
 			Mesh *fontMesh;
 			Mesh *imageMesh;
-			graphicsDataStruct();
+			GraphicsData();
 		} graphicsData;
 
-		struct emitDataStruct
+		struct EmitData
 		{
 			MemoryArenaGrowing<MemoryAllocatorPolicyLinear<>, MemoryConcurrentPolicyNone> arena;
 			MemoryArena memory;
-			renderableBaseStruct *first, *last;
-			emitDataStruct(const GuiCreateConfig &config);
-			emitDataStruct(emitDataStruct &&other); // this is not defined, is it? but it is required, is it not?
-			~emitDataStruct();
+			RenderableBase *first, *last;
+			EmitData(const GuiCreateConfig &config);
+			EmitData(EmitData &&other); // this is not defined, is it? but it is required, is it not?
+			~EmitData();
 			void flush();
 		} emitData[3], *emitControl;
 		Holder<SwapBufferGuard> emitController;
 
 		WindowEventListeners listeners;
-		std::vector<eventReceiverStruct> mouseEventReceivers;
+		std::vector<EventReceiver> mouseEventReceivers;
 		bool eventsEnabled;
 
-		std::vector<skinDataStruct> skins;
+		std::vector<SkinData> skins;
 
-		guiImpl(const GuiCreateConfig &config);
-		~guiImpl();
+		explicit GuiImpl(const GuiCreateConfig &config);
+		~GuiImpl();
 
 		void scaling();
 
@@ -329,8 +331,8 @@ namespace cage
 	bool pointInside(vec2 pos, vec2 size, vec2 point);
 	bool clip(vec2 &pos, vec2 &size, vec2 clipPos, vec2 clipSize); // return whether the clipped rect has positive area
 
-	hierarchyItemStruct *subsideItem(hierarchyItemStruct *item);
-	void ensureItemHasLayout(hierarchyItemStruct *item); // if the item's entity does not have any layout, subside the item and add default layouter to it
+	HierarchyItem *subsideItem(HierarchyItem *item);
+	void ensureItemHasLayout(HierarchyItem *item); // if the item's entity does not have any layout, subside the item and add default layouter to it
 }
 
 #endif // guard_private_h_BEDE53C63BB74919B9BD171B995FD1A1

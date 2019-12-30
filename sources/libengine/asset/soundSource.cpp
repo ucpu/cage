@@ -2,12 +2,12 @@
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
 #include <cage-core/assetStructs.h>
-#include "../sound/vorbisDecoder.h"
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
 #include <cage-engine/core.h>
 #include <cage-engine/sound.h>
 #include <cage-engine/assetStructs.h>
+#include "../sound/vorbisDecoder.h"
 
 namespace cage
 {
@@ -26,7 +26,7 @@ namespace cage
 			default:
 				CAGE_THROW_CRITICAL(Exception, "invalid sound type");
 			}
-			soundPrivat::vorbisDataStruct vds;
+			soundPrivat::VorbisData vds;
 			vds.init((char*)context->compressedData + sizeof(SoundSourceHeader), numeric_cast<uintPtr>(context->compressedSize - sizeof(SoundSourceHeader)));
 			uint32 ch = 0, f = 0, r = 0;
 			vds.decode(ch, f, r, (float*)context->originalData);

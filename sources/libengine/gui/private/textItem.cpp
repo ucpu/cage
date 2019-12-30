@@ -17,13 +17,13 @@
 
 namespace cage
 {
-	void textCreate(hierarchyItemStruct *item)
+	void textCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->text);
-		item->text = item->impl->itemsMemory.createObject<textItemStruct>(item);
+		item->text = item->impl->itemsMemory.createObject<TextItem>(item);
 	}
 
-	textItemStruct::textItemStruct(hierarchyItemStruct *hierarchy) : hierarchy(hierarchy), skipInitialize(false)
+	TextItem::TextItem(HierarchyItem *hierarchy) : hierarchy(hierarchy), skipInitialize(false)
 	{}
 
 	// this is also used in engine
@@ -43,7 +43,7 @@ namespace cage
 			return "";
 	}
 
-	void textItemStruct::initialize()
+	void TextItem::initialize()
 	{
 		if (skipInitialize)
 			return;
@@ -56,7 +56,7 @@ namespace cage
 		transcript();
 	}
 
-	void textItemStruct::transcript()
+	void TextItem::transcript()
 	{
 		auto *impl = hierarchy->impl;
 		string value;
@@ -67,12 +67,12 @@ namespace cage
 		transcript(value);
 	}
 
-	void textItemStruct::transcript(const string &value)
+	void TextItem::transcript(const string &value)
 	{
 		transcript(value.c_str());
 	}
 
-	void textItemStruct::transcript(const char *value)
+	void TextItem::transcript(const char *value)
 	{
 		if (text.font)
 		{
@@ -82,7 +82,7 @@ namespace cage
 		}
 	}
 
-	vec2 textItemStruct::findRequestedSize()
+	vec2 TextItem::findRequestedSize()
 	{
 		if (text.font)
 		{
@@ -93,7 +93,7 @@ namespace cage
 		return vec2();
 	}
 
-	renderableTextStruct *textItemStruct::emit(vec2 position, vec2 size) const
+	RenderableText *TextItem::emit(vec2 position, vec2 size) const
 	{
 		if (!text.font)
 			return nullptr;
@@ -101,7 +101,7 @@ namespace cage
 			return nullptr; // early exit
 		CAGE_ASSERT(text.color.valid());
 		auto *e = hierarchy->impl->emitControl;
-		auto *t = e->memory.createObject<renderableTextStruct>();
+		auto *t = e->memory.createObject<RenderableText>();
 		t->setClip(hierarchy);
 		t->data = text;
 		t->data.glyphs = (uint32*)e->memory.allocate(t->data.count * sizeof(uint32), sizeof(uintPtr));
@@ -121,7 +121,7 @@ namespace cage
 		return t;
 	}
 
-	void textItemStruct::updateCursorPosition(vec2 position, vec2 size, vec2 point, uint32 &cursor)
+	void TextItem::updateCursorPosition(vec2 position, vec2 size, vec2 point, uint32 &cursor)
 	{
 		if (!text.font)
 			return;

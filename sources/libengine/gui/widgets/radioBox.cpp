@@ -15,12 +15,12 @@ namespace cage
 {
 	namespace
 	{
-		struct radioBoxImpl : public widgetItemStruct
+		struct RadioBoxImpl : public WidgetItem
 		{
 			GuiRadioBoxComponent &data;
 			GuiElementTypeEnum element;
 
-			radioBoxImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(RadioBox)), element(GuiElementTypeEnum::TotalElements)
+			RadioBoxImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(RadioBox)), element(GuiElementTypeEnum::TotalElements)
 			{}
 
 			virtual void initialize() override
@@ -86,9 +86,9 @@ namespace cage
 		};
 	}
 
-	void RadioBoxCreate(hierarchyItemStruct *item)
+	void RadioBoxCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<radioBoxImpl>(item);
+		item->item = item->impl->itemsMemory.createObject<RadioBoxImpl>(item);
 	}
 }

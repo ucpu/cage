@@ -83,13 +83,13 @@ namespace cage
 		bool uvs() const;
 		uint32 vertexSize() const;
 
-		struct CAGE_API materialData
+		struct CAGE_API MaterialData
 		{
 			vec4 albedoBase;
 			vec4 specialBase;
 			vec4 albedoMult;
 			vec4 specialMult;
-			materialData();
+			MaterialData();
 		};
 
 		// follows:
@@ -105,7 +105,7 @@ namespace cage
 		// array of auxiliary data, each vec*, if MeshDataFlags::aux2
 		// array of auxiliary data, each vec*, if MeshDataFlags::aux3
 		// array of indices, each uint32
-		// material (may or may not be the materialData)
+		// material (may or may not be the MaterialData)
 
 		// notes:
 		// the four bone weights for each vertex must add to one

@@ -1,46 +1,47 @@
 namespace cage
 {
-	struct shaderConfigStruct
+	struct ShaderConfig
 	{
 		uint32 shaderRoutines[CAGE_SHADER_MAX_ROUTINES];
 
-		shaderConfigStruct();
+		ShaderConfig();
 		void set(uint32 name, uint32 value);
 	};
 
-	struct mat3x4
+	struct Mat3x4
 	{
 		vec4 data[3];
 
-		mat3x4(const mat3 &in);
-		mat3x4(const mat4 &in);
+		Mat3x4();
+		explicit Mat3x4(const mat3 &in);
+		explicit Mat3x4(const mat4 &in);
 	};
 
-	struct objectsStruct
+	struct Objects
 	{
-		shaderConfigStruct shaderConfig;
-		struct shaderMeshStruct
+		ShaderConfig shaderConfig;
+		struct ShaderMesh
 		{
 			mat4 mvpMat;
 			mat4 mvpPrevMat;
-			mat3x4 normalMat;
-			mat3x4 mMat;
+			Mat3x4 normalMat;
+			Mat3x4 mMat;
 			vec4 color;
 			vec4 aniTexFrames;
 		} *shaderMeshes;
-		mat3x4 *shaderArmatures;
+		Mat3x4 *shaderArmatures;
 		Texture *textures[MaxTexturesCountPerMaterial];
 		Mesh *const mesh;
-		objectsStruct *next;
+		Objects *next;
 		uint32 count;
 		const uint32 max;
-		objectsStruct(Mesh *mesh, uint32 max);
+		Objects(Mesh *mesh, uint32 max);
 	};
 
-	struct lightsStruct
+	struct Lights
 	{
-		shaderConfigStruct shaderConfig;
-		struct shaderLightStruct
+		ShaderConfig shaderConfig;
+		struct ShaderLight
 		{
 			mat4 shadowMat;
 			mat4 mvpMat;
@@ -49,42 +50,42 @@ namespace cage
 			vec4 direction;
 			vec4 attenuation; // + exponent
 		} *shaderLights;
-		lightsStruct *next;
+		Lights *next;
 		uint32 count;
 		const uint32 max;
 		const sint32 shadowmap;
 		const LightTypeEnum lightType;
-		lightsStruct(LightTypeEnum lightType, sint32 shadowmap, uint32 max);
+		Lights(LightTypeEnum lightType, sint32 shadowmap, uint32 max);
 	};
 
-	struct translucentStruct
+	struct Translucent
 	{
-		objectsStruct object;
-		lightsStruct *firstLight, *lastLight;
-		translucentStruct *next;
-		translucentStruct(Mesh *mesh);
+		Objects object;
+		Lights *firstLight, *lastLight;
+		Translucent *next;
+		Translucent(Mesh *mesh);
 	};
 
-	struct textsStruct
+	struct Texts
 	{
-		struct renderStruct
+		struct Render
 		{
 			Font::FormatStruct format;
 			mat4 transform;
 			vec3 color;
 			uint32 *glyphs;
 			uint32 count;
-			renderStruct *next;
-			renderStruct();
+			Render *next;
+			Render();
 		} *firtsRender, *lastRender;
 		Font *font;
-		textsStruct *next;
-		textsStruct();
+		Texts *next;
+		Texts();
 	};
 
-	struct renderPassStruct : public CameraEffects
+	struct RenderPass : public CameraEffects
 	{
-		struct shaderViewportStruct
+		struct ShaderViewport
 		{
 			mat4 vpInv;
 			vec4 eyePos;
@@ -93,11 +94,11 @@ namespace cage
 			vec4 ambientLight;
 			vec4 ambientDirectionalLight;
 		} shaderViewport;
-		objectsStruct *firstOpaque, *lastOpaque;
-		lightsStruct *firstLight, *lastLight;
-		translucentStruct *firstTranslucent, *lastTranslucent;
-		textsStruct *firstText, *lastText;
-		renderPassStruct *next;
+		Objects *firstOpaque, *lastOpaque;
+		Lights *firstLight, *lastLight;
+		Translucent *firstTranslucent, *lastTranslucent;
+		Texts *firstText, *lastText;
+		RenderPass *next;
 		Texture *targetTexture;
 		mat4 view;
 		mat4 proj;
@@ -107,10 +108,10 @@ namespace cage
 		uint32 shadowmapResolution;
 		uint32 clearFlags;
 		uint32 vpX, vpY, vpW, vpH;
-		renderPassStruct();
+		RenderPass();
 	};
 
-	struct graphicsDispatchStruct
+	struct GraphicsDispatch
 	{
 		Mesh *meshSquare, *meshSphere, *meshCone;
 		ShaderProgram *shaderVisualizeColor, *shaderVisualizeDepth, *shaderVisualizeMonochromatic, *shaderVisualizeVelocity;
@@ -118,8 +119,8 @@ namespace cage
 		ShaderProgram *shaderGaussianBlur, *shaderSsaoGenerate, *shaderSsaoApply, *shaderMotionBlur, *shaderBloomGenerate, *shaderBloomApply, *shaderLuminanceCollection, *shaderLuminanceCopy, *shaderFinalScreen, *shaderFxaa;
 		ShaderProgram *shaderFont;
 		uint32 windowWidth, windowHeight;
-		renderPassStruct *firstRenderPass, *lastRenderPass;
+		RenderPass *firstRenderPass, *lastRenderPass;
 	};
 
-	extern graphicsDispatchStruct *graphicsDispatch;
+	extern GraphicsDispatch *graphicsDispatch;
 }

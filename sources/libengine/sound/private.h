@@ -12,18 +12,18 @@ namespace cage
 		SoundIo *soundioFromContext(SoundContext *context);
 		MemoryArena linksArenaFromContext(SoundContext *context);
 
-		struct busInterfaceStruct
+		struct BusInterface
 		{
 			const Delegate<void(MixingBus*)> busDestroyedDelegate;
 			const Delegate<void(const SoundDataBuffer&)> busExecuteDelegate;
-			busInterfaceStruct(Delegate<void(MixingBus*)> busDestroyedDelegate, Delegate<void(const SoundDataBuffer&)> busExecuteDelegate) :
+			BusInterface(Delegate<void(MixingBus*)> busDestroyedDelegate, Delegate<void(const SoundDataBuffer&)> busExecuteDelegate) :
 				busDestroyedDelegate(busDestroyedDelegate), busExecuteDelegate(busExecuteDelegate) {}
 		};
 
-		void busAddInput(MixingBus *bus, const busInterfaceStruct *interface);
-		void busRemoveInput(MixingBus *bus, const busInterfaceStruct *interface);
-		void busAddOutput(MixingBus *bus, const busInterfaceStruct *interface);
-		void busRemoveOutput(MixingBus *bus, const busInterfaceStruct *interface);
+		void busAddInput(MixingBus *bus, const BusInterface *interface);
+		void busRemoveInput(MixingBus *bus, const BusInterface *interface);
+		void busAddOutput(MixingBus *bus, const BusInterface *interface);
+		void busRemoveOutput(MixingBus *bus, const BusInterface *interface);
 	}
 
 	using namespace soundPrivat;

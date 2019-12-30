@@ -50,13 +50,13 @@ namespace cage
 
 			const void *verticesData = des.advance(data.verticesCount * data.vertexSize());
 			uint32 *indicesData = (uint32*)des.advance(data.indicesCount * sizeof(uint32));
-			const void *materialData = des.advance(data.materialSize);
+			const void *MaterialData = des.advance(data.materialSize);
 			CAGE_ASSERT(des.available() == 0);
 
 			msh->setBuffers(
 				data.verticesCount, data.vertexSize(), verticesData,
 				data.indicesCount, indicesData,
-				data.materialSize, materialData
+				data.materialSize, MaterialData
 			);
 
 			uint32 ptr = 0;

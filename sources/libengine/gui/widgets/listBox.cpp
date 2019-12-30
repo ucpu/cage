@@ -14,9 +14,9 @@ namespace cage
 {
 	namespace
 	{
-		struct listBoxImpl : public widgetItemStruct
+		struct ListBoxImpl : public WidgetItem
 		{
-			listBoxImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy)
+			ListBoxImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy)
 			{}
 
 			virtual void initialize() override
@@ -29,7 +29,7 @@ namespace cage
 				hierarchy->requestedSize = vec2(); // todo this is a temporary hack
 			}
 
-			virtual void findFinalPosition(const finalPositionStruct &update) override
+			virtual void findFinalPosition(const FinalPosition &update) override
 			{
 
 			}
@@ -41,9 +41,9 @@ namespace cage
 		};
 	}
 
-	void ListBoxCreate(hierarchyItemStruct *item)
+	void ListBoxCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<listBoxImpl>(item);
+		item->item = item->impl->itemsMemory.createObject<ListBoxImpl>(item);
 	}
 }

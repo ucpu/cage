@@ -12,7 +12,7 @@ namespace cage
 {
 	namespace
 	{
-		class uniformBufferImpl : public UniformBuffer
+		class UniformBufferImpl : public UniformBuffer
 		{
 		public:
 			const UniformBufferCreateConfig config;
@@ -20,7 +20,7 @@ namespace cage
 			uint32 id;
 			uint32 size;
 
-			uniformBufferImpl(const UniformBufferCreateConfig &config) : config(config), mapped(nullptr), id(0), size(0)
+			explicit UniformBufferImpl(const UniformBufferCreateConfig &config) : config(config), mapped(nullptr), id(0), size(0)
 			{
 				CAGE_ASSERT(!config.explicitFlush || config.persistentMapped);
 				CAGE_ASSERT(!config.coherentMapped || config.persistentMapped);
@@ -56,7 +56,7 @@ namespace cage
 				}
 			}
 
-			~uniformBufferImpl()
+			~UniformBufferImpl()
 			{
 				glDeleteBuffers(1, &id);
 			}
@@ -68,18 +68,18 @@ namespace cage
 #ifdef CAGE_DEBUG
 		debugName = name;
 #endif // CAGE_DEBUG
-		uniformBufferImpl *impl = (uniformBufferImpl*)this;
+		UniformBufferImpl *impl = (UniformBufferImpl*)this;
 		glObjectLabel(GL_BUFFER, impl->id, name.length(), name.c_str());
 	}
 
 	uint32 UniformBuffer::getId() const
 	{
-		return ((uniformBufferImpl*)this)->id;
+		return ((UniformBufferImpl*)this)->id;
 	}
 
 	void UniformBuffer::bind() const
 	{
-		uniformBufferImpl *impl = (uniformBufferImpl*)this;
+		UniformBufferImpl *impl = (UniformBufferImpl*)this;
 		glBindBuffer(GL_UNIFORM_BUFFER, impl->id);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 		setCurrentObject<UniformBuffer>(impl->id);
@@ -87,14 +87,14 @@ namespace cage
 
 	void UniformBuffer::bind(uint32 bindingPoint) const
 	{
-		uniformBufferImpl *impl = (uniformBufferImpl*)this;
+		UniformBufferImpl *impl = (UniformBufferImpl*)this;
 		glBindBufferBase(GL_UNIFORM_BUFFER, bindingPoint, impl->id);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
 	void UniformBuffer::bind(uint32 bindingPoint, uint32 offset, uint32 size) const
 	{
-		uniformBufferImpl *impl = (uniformBufferImpl*)this;
+		UniformBufferImpl *impl = (UniformBufferImpl*)this;
 		CAGE_ASSERT(offset + size <= impl->size, "insufficient buffer size", offset, size, impl->size);
 		CAGE_ASSERT((offset % getAlignmentRequirement()) == 0, "the offset must be aligned", offset, getAlignmentRequirement());
 		glBindBufferRange(GL_UNIFORM_BUFFER, bindingPoint, impl->id, offset, size);
@@ -103,7 +103,7 @@ namespace cage
 
 	void UniformBuffer::writeWhole(const void *data, uint32 size, uint32 usage)
 	{
-		uniformBufferImpl *impl = (uniformBufferImpl*)this;
+		UniformBufferImpl *impl = (UniformBufferImpl*)this;
 		if (impl->mapped || impl->config.size)
 		{
 			CAGE_ASSERT(usage == 0, "buffer storage is immutable");
@@ -123,7 +123,7 @@ namespace cage
 
 	void UniformBuffer::writeRange(const void *data, uint32 offset, uint32 size)
 	{
-		uniformBufferImpl *impl = (uniformBufferImpl*)this;
+		UniformBufferImpl *impl = (UniformBufferImpl*)this;
 		CAGE_ASSERT(offset + size <= impl->size, "insufficient buffer size", offset, size, impl->size);
 		if (impl->mapped)
 		{
@@ -145,7 +145,7 @@ namespace cage
 
 	uint32 UniformBuffer::getSize() const
 	{
-		const uniformBufferImpl *impl = (const uniformBufferImpl*)this;
+		const UniformBufferImpl *impl = (const UniformBufferImpl*)this;
 		return impl->size;
 	}
 
@@ -170,6 +170,6 @@ namespace cage
 
 	Holder<UniformBuffer> newUniformBuffer(const UniformBufferCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<UniformBuffer, uniformBufferImpl>(config);
+		return detail::systemArena().createImpl<UniformBuffer, UniformBufferImpl>(config);
 	}
 }

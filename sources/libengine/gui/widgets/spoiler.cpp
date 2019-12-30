@@ -15,12 +15,12 @@ namespace cage
 {
 	namespace
 	{
-		struct spoilerImpl : public widgetItemStruct
+		struct SpoilerImpl : public WidgetItem
 		{
 			GuiSpoilerComponent &data;
 			bool collapsed;
 
-			spoilerImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(Spoiler)), collapsed(false)
+			SpoilerImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(Spoiler)), collapsed(false)
 			{
 				ensureItemHasLayout(hierarchy);
 			}
@@ -52,11 +52,11 @@ namespace cage
 				offsetSize(hierarchy->requestedSize, skin->defaults.spoiler.baseMargin);
 			}
 
-			virtual void findFinalPosition(const finalPositionStruct &update) override
+			virtual void findFinalPosition(const FinalPosition &update) override
 			{
 				if (!hierarchy->firstChild)
 					return;
-				finalPositionStruct u(update);
+				FinalPosition u(update);
 				u.renderPos[1] += skin->defaults.spoiler.captionHeight;
 				u.renderSize[1] -= skin->defaults.spoiler.captionHeight;
 				offset(u.renderPos, u.renderSize, -skin->layouts[(uint32)GuiElementTypeEnum::SpoilerBase].border);
@@ -85,9 +85,9 @@ namespace cage
 				hierarchy->childrenEmit();
 			}
 
-			void collapse(hierarchyItemStruct *item)
+			void collapse(HierarchyItem *item)
 			{
-				spoilerImpl *b = dynamic_cast<spoilerImpl*>(item->item);
+				SpoilerImpl *b = dynamic_cast<SpoilerImpl*>(item->item);
 				if (!b)
 					return;
 				b->data.collapsed = true;
@@ -108,7 +108,7 @@ namespace cage
 					data.collapsed = !data.collapsed;
 					if (data.collapsesSiblings)
 					{
-						hierarchyItemStruct *i = hierarchy->prevSibling;
+						HierarchyItem *i = hierarchy->prevSibling;
 						while (i)
 						{
 							collapse(i);
@@ -127,9 +127,9 @@ namespace cage
 		};
 	}
 
-	void SpoilerCreate(hierarchyItemStruct *item)
+	void SpoilerCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<spoilerImpl>(item);
+		item->item = item->impl->itemsMemory.createObject<SpoilerImpl>(item);
 	}
 }

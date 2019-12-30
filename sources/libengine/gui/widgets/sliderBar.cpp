@@ -15,7 +15,7 @@ namespace cage
 {
 	namespace
 	{
-		struct sliderBarImpl : public widgetItemStruct
+		struct SliderBarImpl : public WidgetItem
 		{
 			GuiSliderBarComponent &data;
 			GuiSkinWidgetDefaults::SliderBar::Direction defaults;
@@ -23,7 +23,7 @@ namespace cage
 			GuiElementTypeEnum dotElement;
 			real normalizedValue;
 
-			sliderBarImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(SliderBar))
+			SliderBarImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(SliderBar))
 			{
 				data.value = clamp(data.value, data.min, data.max);
 			}
@@ -119,9 +119,9 @@ namespace cage
 		};
 	}
 
-	void SliderBarCreate(hierarchyItemStruct *item)
+	void SliderBarCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<sliderBarImpl>(item);
+		item->item = item->impl->itemsMemory.createObject<SliderBarImpl>(item);
 	}
 }

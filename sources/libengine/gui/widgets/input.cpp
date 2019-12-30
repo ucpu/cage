@@ -14,11 +14,11 @@
 
 namespace cage
 {
-	void textCreate(hierarchyItemStruct *item);
+	void textCreate(HierarchyItem *item);
 
 	namespace
 	{
-		struct inputImpl : public widgetItemStruct
+		struct InputImpl : public WidgetItem
 		{
 			GuiInputComponent &data;
 			GuiSelectionComponent &selection;
@@ -28,7 +28,7 @@ namespace cage
 			vec2 mainPos, mainSize;
 			vec2 textPos, textSize;
 
-			inputImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(Input)), selection(GUI_REF_COMPONENT(Selection)), showArrows(false)
+			InputImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(Input)), selection(GUI_REF_COMPONENT(Selection)), showArrows(false)
 			{}
 
 			virtual void initialize() override
@@ -180,7 +180,7 @@ namespace cage
 				offsetSize(hierarchy->requestedSize, skin->defaults.inputBox.margin);
 			}
 
-			virtual void findFinalPosition(const finalPositionStruct &update) override
+			virtual void findFinalPosition(const FinalPosition &update) override
 			{
 				const auto &s = skin->defaults.inputBox;
 				mainPos = hierarchy->renderPos;
@@ -375,9 +375,9 @@ namespace cage
 		};
 	}
 
-	void InputCreate(hierarchyItemStruct *item)
+	void InputCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<inputImpl>(item);
+		item->item = item->impl->itemsMemory.createObject<InputImpl>(item);
 	}
 }
