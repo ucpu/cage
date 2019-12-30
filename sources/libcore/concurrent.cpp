@@ -99,7 +99,7 @@ namespace cage
 #endif
 	}
 
-	Holder<Mutex> newSyncMutex()
+	Holder<Mutex> newMutex()
 	{
 		return detail::systemArena().createImpl<Mutex, mutexImpl>();
 	}
@@ -169,7 +169,7 @@ namespace cage
 #endif
 	}
 
-	Holder<Semaphore> newSyncSemaphore(uint32 value, uint32 max)
+	Holder<Semaphore> newSemaphore(uint32 value, uint32 max)
 	{
 		return detail::systemArena().createImpl<Semaphore, semaphoreImpl>(value, max);
 	}
@@ -252,7 +252,7 @@ namespace cage
 			Holder<Semaphore> sem1, sem2;
 			uint32 total, current;
 
-			barrierImpl(uint32 value) : mut(newSyncMutex()), sem1(newSyncSemaphore(0, value)), sem2(newSyncSemaphore(0, value)), total(value), current(0)
+			barrierImpl(uint32 value) : mut(newMutex()), sem1(newSemaphore(0, value)), sem2(newSemaphore(0, value)), total(value), current(0)
 			{}
 
 			~barrierImpl()
@@ -314,7 +314,7 @@ namespace cage
 		// does nothing
 	}
 
-	Holder<Barrier> newSyncBarrier(uint32 value)
+	Holder<Barrier> newBarrier(uint32 value)
 	{
 		return detail::systemArena().createImpl<Barrier, barrierImpl>(value);
 	}
@@ -358,8 +358,8 @@ namespace cage
 
 			conditionalImpl(bool broadcasting) : broadcasting(broadcasting)
 			{
-				mut = newSyncMutex();
-				cond = newSyncConditionalBase();
+				mut = newMutex();
+				cond = newConditionalVariableBase();
 			}
 		};
 	}
@@ -395,7 +395,7 @@ namespace cage
 #endif
 	}
 
-	Holder<ConditionalVariableBase> newSyncConditionalBase()
+	Holder<ConditionalVariableBase> newConditionalVariableBase()
 	{
 		return detail::systemArena().createImpl<ConditionalVariableBase, conditionalBaseImpl>();
 	}
@@ -434,7 +434,7 @@ namespace cage
 		impl->cond->broadcast();
 	}
 
-	Holder<ConditionalVariable> newSyncConditional(bool broadcast)
+	Holder<ConditionalVariable> newConditionalVariable(bool broadcast)
 	{
 		return detail::systemArena().createImpl<ConditionalVariable, conditionalImpl>(broadcast);
 	}

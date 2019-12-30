@@ -1,5 +1,5 @@
-#ifndef guard_iniReader_h_c866b123_b27e_4758_ab8e_702ef8f315de_
-#define guard_iniReader_h_c866b123_b27e_4758_ab8e_702ef8f315de_
+#ifndef guard_ini_h_c866b123_b27e_4758_ab8e_702ef8f315de_
+#define guard_ini_h_c866b123_b27e_4758_ab8e_702ef8f315de_
 
 /*
 	rules for loading from file:
@@ -80,12 +80,12 @@ namespace cage
 		Holder<PointerRange<string>> cmdArray(char shortName, const string &longName) const;
 	};
 
-	CAGE_API Holder<Ini> newConfigIni();
-	CAGE_API Holder<Ini> newConfigIni(MemoryArena arena);
-	CAGE_API Holder<Ini> newConfigIni(const string &filename);
-	CAGE_API Holder<Ini> newConfigIni(MemoryArena arena, const string &filename);
-	CAGE_API Holder<Ini> newConfigIni(uint32 argc, const char *const args[]);
-	CAGE_API Holder<Ini> newConfigIni(MemoryArena arena, uint32 argc, const char *const args[]);
+	CAGE_API Holder<Ini> newIni();
+	CAGE_API Holder<Ini> newIni(MemoryArena arena);
+	CAGE_API Holder<Ini> newIni(const string &filename);
+	CAGE_API Holder<Ini> newIni(MemoryArena arena, const string &filename);
+	CAGE_API Holder<Ini> newIni(uint32 argc, const char *const args[]);
+	CAGE_API Holder<Ini> newIni(MemoryArena arena, uint32 argc, const char *const args[]);
 }
 
-#endif // guard_iniReader_h_c866b123_b27e_4758_ab8e_702ef8f315de_
+#endif // guard_ini_h_c866b123_b27e_4758_ab8e_702ef8f315de_

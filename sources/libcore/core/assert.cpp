@@ -258,6 +258,15 @@ namespace cage
 		static_assert(detail::numeric_limits<unsigned long long>::min() == std::numeric_limits<unsigned long long>::min(), "assert numeric limits");
 		static_assert(detail::numeric_limits<unsigned long long>::max() == std::numeric_limits<unsigned long long>::max(), "assert numeric limits");
 
+		//static_assert(detail::numeric_limits<float>::min() == std::numeric_limits<float>::min(), "assert numeric limits");
+		//static_assert(detail::numeric_limits<float>::max() == std::numeric_limits<float>::max(), "assert numeric limits");
+		//static_assert(detail::numeric_limits<double>::min() == std::numeric_limits<double>::min(), "assert numeric limits");
+		//static_assert(detail::numeric_limits<double>::max() == std::numeric_limits<double>::max(), "assert numeric limits");
+		static_assert(detail::numeric_limits<float>::min() < -1.f, "assert numeric limits");
+		static_assert(detail::numeric_limits<float>::max() > 1.f, "assert numeric limits");
+		static_assert(detail::numeric_limits<double>::min() < -1.0, "assert numeric limits");
+		static_assert(detail::numeric_limits<double>::max() > 1.0, "assert numeric limits");
+
 		static_assert(detail::numeric_limits<uint8>::min() == std::numeric_limits<uint8>::min(), "assert numeric limits");
 		static_assert(detail::numeric_limits<sint8>::max() == std::numeric_limits<sint8>::max(), "assert numeric limits");
 		static_assert(detail::numeric_limits<uint16>::min() == std::numeric_limits<uint16>::min(), "assert numeric limits");

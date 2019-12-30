@@ -137,7 +137,7 @@ int main(int argc, const char *args[])
 		log1->format.bind<logFormatConsole>();
 		log1->output.bind<logOutputStdOut>();
 
-		Holder<Ini> cmd = newConfigIni();
+		Holder<Ini> cmd = newIni();
 		cmd->parseCmd(argc, args);
 		if (cmd->cmdBool('h', "help", false))
 		{

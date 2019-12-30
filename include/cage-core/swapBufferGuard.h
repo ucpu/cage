@@ -35,16 +35,16 @@ namespace cage
 
 	namespace privat
 	{
-		class CAGE_API swapBufferLock
+		class CAGE_API SwapBufferLock
 		{
 		public:
-			swapBufferLock();
-			explicit swapBufferLock(SwapBufferGuard *controller, uint32 index);
-			swapBufferLock(const swapBufferLock &) = delete; // non-copyable
-			swapBufferLock(swapBufferLock &&other); // movable
-			~swapBufferLock();
-			swapBufferLock &operator = (const swapBufferLock &) = delete; // non-copyable
-			swapBufferLock &operator = (swapBufferLock &&other); // movable
+			SwapBufferLock();
+			explicit SwapBufferLock(SwapBufferGuard *controller, uint32 index);
+			SwapBufferLock(const SwapBufferLock &) = delete; // non-copyable
+			SwapBufferLock(SwapBufferLock &&other); // movable
+			~SwapBufferLock();
+			SwapBufferLock &operator = (const SwapBufferLock &) = delete; // non-copyable
+			SwapBufferLock &operator = (SwapBufferLock &&other); // movable
 			explicit operator bool() const { return !!controller_; }
 			uint32 index() const { CAGE_ASSERT(!!controller_); return index_; }
 
@@ -57,8 +57,8 @@ namespace cage
 	class CAGE_API SwapBufferGuard : private Immovable
 	{
 	public:
-		privat::swapBufferLock read();
-		privat::swapBufferLock write();
+		privat::SwapBufferLock read();
+		privat::SwapBufferLock write();
 	};
 
 	struct CAGE_API SwapBufferGuardCreateConfig

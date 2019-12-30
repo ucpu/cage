@@ -13,6 +13,7 @@ namespace cage
 	CAGE_API bool valid(const char *str, uint32 bytes);
 	CAGE_API bool valid(const string &str);
 
+	// returns number of utf32 characters
 	CAGE_API uint32 countCharacters(const char *str);
 	CAGE_API uint32 countCharacters(const char *str, uint32 bytes);
 	CAGE_API uint32 countCharacters(const string &str);

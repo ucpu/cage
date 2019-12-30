@@ -16,7 +16,7 @@ namespace
 		notifierClass(const uint16 port)
 		{
 			server = newTcpServer(port);
-			mut = newSyncMutex();
+			mut = newMutex();
 		}
 
 		void accept()

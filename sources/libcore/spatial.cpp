@@ -165,7 +165,7 @@ namespace cage
 		class spatialDataImpl : public SpatialData
 		{
 		public:
-			memoryArenaGrowing<memoryAllocatorPolicyPool<templates::poolAllocatorAtomSize<itemUnion>::result>, memoryConcurrentPolicyNone> itemsPool;
+			MemoryArenaGrowing<MemoryAllocatorPolicyPool<templates::PoolAllocatorAtomSize<itemUnion>::result>, MemoryConcurrentPolicyNone> itemsPool;
 			MemoryArena itemsArena;
 			cage::unordered_map<uint32, Holder<itemBase>> itemsTable;
 			std::atomic<bool> dirty;

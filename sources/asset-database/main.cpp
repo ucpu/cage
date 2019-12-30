@@ -9,7 +9,7 @@ using namespace cage;
 #include "config.h"
 #include "processor.h"
 
-bool consoleLogFilter(const cage::detail::loggerInfo &info)
+bool consoleLogFilter(const cage::detail::LoggerInfo &info)
 {
 	return info.severity >= SeverityEnum::Error || string(info.component) == "exception" || string(info.component) == "asset" || string(info.component) == "verdict";
 }

@@ -21,7 +21,7 @@ void processObject()
 {
 	writeLine(string("use=") + inputFile);
 
-	Holder<Ini> ini = newConfigIni();
+	Holder<Ini> ini = newIni();
 	ini->load(inputFileName);
 
 	string basePath = pathExtractPath(inputFile);

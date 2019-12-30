@@ -272,7 +272,7 @@ namespace cage
 		uint32 focusParts; // bitmask of focused parts of the single widget (bits 30 and 31 are reserved for scrollbars)
 		widgetItemStruct *hover;
 
-		memoryArenaGrowing<memoryAllocatorPolicyLinear<>, memoryConcurrentPolicyNone> itemsArena;
+		MemoryArenaGrowing<MemoryAllocatorPolicyLinear<>, MemoryConcurrentPolicyNone> itemsArena;
 		MemoryArena itemsMemory;
 		hierarchyItemStruct *root;
 
@@ -293,7 +293,7 @@ namespace cage
 
 		struct emitDataStruct
 		{
-			memoryArenaGrowing<memoryAllocatorPolicyLinear<>, memoryConcurrentPolicyNone> arena;
+			MemoryArenaGrowing<MemoryAllocatorPolicyLinear<>, MemoryConcurrentPolicyNone> arena;
 			MemoryArena memory;
 			renderableBaseStruct *first, *last;
 			emitDataStruct(const GuiCreateConfig &config);

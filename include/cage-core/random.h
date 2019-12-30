@@ -24,7 +24,10 @@ namespace cage
 #undef GCHL_GENERATE
 	};
 
-	CAGE_API RandomGenerator &currentRandomGenerator();
+	namespace detail
+	{
+		CAGE_API RandomGenerator &getApplicationRandomGenerator();
+	}
 }
 
 #endif // guard_random_h_623364ED17804404AAC89652473FEBAC

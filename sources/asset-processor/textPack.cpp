@@ -9,7 +9,7 @@ void processTextpack()
 {
 	writeLine(string("use=") + inputFile);
 
-	Holder<Ini> ini = newConfigIni();
+	Holder<Ini> ini = newIni();
 	ini->load(inputFileName);
 
 	std::map<string, string> texts;

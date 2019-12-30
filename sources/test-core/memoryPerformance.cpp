@@ -81,7 +81,7 @@ namespace
 	template<class Concurrent, uintPtr AllocSize>
 	void measureArena()
 	{
-		typedef memoryArenaGrowing<memoryAllocatorPolicyPool<AllocSize>, Concurrent> pool;
+		typedef MemoryArenaGrowing<MemoryAllocatorPolicyPool<AllocSize>, Concurrent> pool;
 		pool a((INPUT_SIZE + 5) * (AllocSize + sizeof(uintPtr) * 3));
 		arena = MemoryArena(&a);
 
@@ -96,9 +96,9 @@ namespace
 		CAGE_LOG(SeverityEnum::Info, "performance", stringizer() + "Atom " + AllocSize + ", allocations " + realAllocs + " bytes");
 		allocSize = realAllocs;
 		CAGE_LOG(SeverityEnum::Info, "performance", "no concurrency");
-		measureArena<memoryConcurrentPolicyNone, AllocSize>();
+		measureArena<MemoryConcurrentPolicyNone, AllocSize>();
 		CAGE_LOG(SeverityEnum::Info, "performance", "mutex arena");
-		measureArena<memoryConcurrentPolicyMutex, AllocSize>();
+		measureArena<MemoryConcurrentPolicyMutex, AllocSize>();
 	}
 }
 

@@ -1,5 +1,5 @@
-#ifndef guard_identifier_h_cc82a428_1147_4841_aa4c_4b7784111e63_
-#define guard_identifier_h_cc82a428_1147_4841_aa4c_4b7784111e63_
+#ifndef guard_quid_h_cc82a428_1147_4841_aa4c_4b7784111e63_
+#define guard_quid_h_cc82a428_1147_4841_aa4c_4b7784111e63_
 
 namespace cage
 {
@@ -33,4 +33,4 @@ namespace cage
 	};
 }
 
-#endif // guard_identifier_h_cc82a428_1147_4841_aa4c_4b7784111e63_
+#endif // guard_quid_h_cc82a428_1147_4841_aa4c_4b7784111e63_

@@ -3,9 +3,9 @@
 
 namespace cage
 {
-	struct CAGE_API disconnected : public Exception
+	struct CAGE_API Disconnected : public Exception
 	{
-		explicit disconnected(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept;
+		explicit Disconnected(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept;
 	};
 
 	// tcp
@@ -113,6 +113,8 @@ namespace cage
 		Holder<PointerRange<DiscoveryPeer>> peers() const;
 	};
 
+	CAGE_API Holder<DiscoveryClient> newDiscoveryClient(uint16 listenPort, uint32 gameId);
+
 	class CAGE_API DiscoveryServer : private Immovable
 	{
 	public:
@@ -120,7 +122,6 @@ namespace cage
 		string message;
 	};
 
-	CAGE_API Holder<DiscoveryClient> newDiscoveryClient(uint16 listenPort, uint32 gameId);
 	CAGE_API Holder<DiscoveryServer> newDiscoveryServer(uint16 listenPort, uint16 gamePort, uint32 gameId);
 }
 

@@ -18,8 +18,8 @@ namespace cage
 	{
 		struct schedStats : private Immovable
 		{
-			VariableSmoothingBuffer<uint64, 100> delays;
-			VariableSmoothingBuffer<uint64, 100> durations;
+			VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> delays;
+			VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> durations;
 			uint64 totalDelay;
 			uint64 totalDuration;
 			uint64 maxDelay;
@@ -297,73 +297,45 @@ namespace cage
 		return impl->pri;
 	}
 
-	uint64 Schedule::delayWindowAvg() const
+	const VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> &Schedule::statsDelay() const
 	{
-		scheduleImpl *impl = (scheduleImpl*)this;
-		return impl->stats->delays.smooth();
+		const scheduleImpl *impl = (const scheduleImpl*)this;
+		return impl->stats->delays;
 	}
 
-	uint64 Schedule::delayWindowMax() const
+	const VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> &Schedule::statsDuration() const
 	{
-		scheduleImpl *impl = (scheduleImpl*)this;
-		return impl->stats->delays.max();
+		const scheduleImpl *impl = (const scheduleImpl*)this;
+		return impl->stats->durations;
 	}
 
-	uint64 Schedule::delayTotalAvg() const
+	uint64 Schedule::statsDelayMax() const
 	{
-		scheduleImpl *impl = (scheduleImpl*)this;
-		if (impl->stats->runs)
-			return impl->stats->totalDelay / impl->stats->runs;
-		return 0;
-	}
-
-	uint64 Schedule::delayTotalMax() const
-	{
-		scheduleImpl *impl = (scheduleImpl*)this;
+		const scheduleImpl *impl = (const scheduleImpl*)this;
 		return impl->stats->maxDelay;
 	}
 
-	uint64 Schedule::delayTotalSum() const
+	uint64 Schedule::statsDelaySum() const
 	{
-		scheduleImpl *impl = (scheduleImpl*)this;
+		const scheduleImpl *impl = (const scheduleImpl*)this;
 		return impl->stats->totalDelay;
 	}
 
-	uint64 Schedule::durationWindowAvg() const
+	uint64 Schedule::statsDurationMax() const
 	{
-		scheduleImpl *impl = (scheduleImpl*)this;
-		return impl->stats->durations.smooth();
-	}
-
-	uint64 Schedule::durationWindowMax() const
-	{
-		scheduleImpl *impl = (scheduleImpl*)this;
-		return impl->stats->durations.max();
-	}
-
-	uint64 Schedule::durationTotalAvg() const
-	{
-		scheduleImpl *impl = (scheduleImpl*)this;
-		if (impl->stats->runs)
-			return impl->stats->totalDuration / impl->stats->runs;
-		return 0;
-	}
-
-	uint64 Schedule::durationTotalMax() const
-	{
-		scheduleImpl *impl = (scheduleImpl*)this;
+		const scheduleImpl *impl = (const scheduleImpl*)this;
 		return impl->stats->maxDuration;
 	}
 
-	uint64 Schedule::durationTotalSum() const
+	uint64 Schedule::statsDurationSum() const
 	{
-		scheduleImpl *impl = (scheduleImpl*)this;
+		const scheduleImpl *impl = (const scheduleImpl*)this;
 		return impl->stats->totalDuration;
 	}
 
-	uint32 Schedule::runsCount() const
+	uint32 Schedule::statsRunCount() const
 	{
-		scheduleImpl *impl = (scheduleImpl*)this;
+		const scheduleImpl *impl = (const scheduleImpl*)this;
 		return impl->stats->runs;
 	}
 

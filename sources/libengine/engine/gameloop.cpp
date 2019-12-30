@@ -589,11 +589,11 @@ namespace cage
 				}
 
 				{ // create sync objects
-					threadsStateBarier = newSyncBarrier(4);
-					assetsSoundMutex = newSyncMutex();
-					assetsGraphicsMutex = newSyncMutex();
-					graphicsSemaphore1 = newSyncSemaphore(1, 1);
-					graphicsSemaphore2 = newSyncSemaphore(0, 1);
+					threadsStateBarier = newBarrier(4);
+					assetsSoundMutex = newMutex();
+					assetsGraphicsMutex = newMutex();
+					graphicsSemaphore1 = newSemaphore(1, 1);
+					graphicsSemaphore2 = newSemaphore(0, 1);
 				}
 
 				{ // create threads
@@ -611,7 +611,7 @@ namespace cage
 					// core assets
 					assets->defineScheme<void>(assetSchemeIndexPack, genAssetSchemePack(EngineControlThread::threadIndex));
 					assets->defineScheme<MemoryBuffer>(assetSchemeIndexRaw, genAssetSchemeRaw(EngineControlThread::threadIndex));
-					assets->defineScheme<TextPack>(assetSchemeIndexTextPackage, genAssetSchemeTextPackage(EngineControlThread::threadIndex));
+					assets->defineScheme<TextPack>(assetSchemeIndexTextPack, genAssetSchemeTextPack(EngineControlThread::threadIndex));
 					assets->defineScheme<CollisionMesh>(assetSchemeIndexCollisionMesh, genAssetSchemeCollisionMesh(EngineControlThread::threadIndex));
 					// client assets
 					assets->defineScheme<ShaderProgram>(assetSchemeIndexShaderProgram, genAssetSchemeShaderProgram(graphicsUploadThreadClass::threadIndex, window.get()));

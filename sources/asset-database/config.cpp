@@ -27,7 +27,7 @@ stringSet configIgnorePaths;
 void configParseCmd(int argc, const char *args[])
 {
 	{
-		Holder<Ini> ini = newConfigIni(argc, args);
+		Holder<Ini> ini = newIni(argc, args);
 		configFromScratch = ini->cmdBool('s', "scratch", configFromScratch);
 		configListening = ini->cmdBool('l', "listen", configListening);
 		ini->checkUnused();

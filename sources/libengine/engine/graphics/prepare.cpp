@@ -122,7 +122,7 @@ namespace cage
 
 		struct emitStruct
 		{
-			memoryArenaGrowing<memoryAllocatorPolicyLinear<>, memoryConcurrentPolicyNone> emitMemory;
+			MemoryArenaGrowing<MemoryAllocatorPolicyLinear<>, MemoryConcurrentPolicyNone> emitMemory;
 			MemoryArena emitArena;
 
 			std::vector<emitRenderObjectStruct*> renderableObjects;
@@ -157,7 +157,7 @@ namespace cage
 			mat4 tmpArmature[CAGE_SHADER_MAX_BONES];
 			mat4 tmpArmature2[CAGE_SHADER_MAX_BONES];
 
-			memoryArenaGrowing<memoryAllocatorPolicyLinear<>, memoryConcurrentPolicyNone> dispatchMemory;
+			MemoryArenaGrowing<MemoryAllocatorPolicyLinear<>, MemoryConcurrentPolicyNone> dispatchMemory;
 			MemoryArena dispatchArena;
 
 			interpolationTimingCorrector itc;

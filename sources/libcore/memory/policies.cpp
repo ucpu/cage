@@ -7,22 +7,22 @@
 
 namespace cage
 {
-	memoryConcurrentPolicyMutex::memoryConcurrentPolicyMutex()
+	MemoryConcurrentPolicyMutex::MemoryConcurrentPolicyMutex()
 	{
-		mutex = newSyncMutex().cast<void>();
+		mutex = newMutex().cast<void>();
 	}
 
-	void memoryConcurrentPolicyMutex::lock()
+	void MemoryConcurrentPolicyMutex::lock()
 	{
 		((Mutex*)mutex.get())->lock();
 	}
 
-	void memoryConcurrentPolicyMutex::unlock()
+	void MemoryConcurrentPolicyMutex::unlock()
 	{
 		((Mutex*)mutex.get())->unlock();
 	}
 
-	memoryTrackPolicySimple::~memoryTrackPolicySimple()
+	MemoryTrackPolicySimple::~MemoryTrackPolicySimple()
 	{
 		if (count > 0)
 		{
@@ -88,27 +88,27 @@ namespace cage
 		};
 	}
 
-	memoryTrackPolicyAdvanced::memoryTrackPolicyAdvanced()
+	MemoryTrackPolicyAdvanced::MemoryTrackPolicyAdvanced()
 	{
 		data = new advancedTrackPolicyData();
 	}
 
-	memoryTrackPolicyAdvanced::~memoryTrackPolicyAdvanced()
+	MemoryTrackPolicyAdvanced::~MemoryTrackPolicyAdvanced()
 	{
 		delete (advancedTrackPolicyData*)data;
 	}
 
-	void memoryTrackPolicyAdvanced::set(void *ptr, uintPtr size)
+	void MemoryTrackPolicyAdvanced::set(void *ptr, uintPtr size)
 	{
 		((advancedTrackPolicyData*)data)->set(ptr, size);
 	}
 
-	void memoryTrackPolicyAdvanced::check(void *ptr)
+	void MemoryTrackPolicyAdvanced::check(void *ptr)
 	{
 		((advancedTrackPolicyData*)data)->check(ptr);
 	}
 
-	void memoryTrackPolicyAdvanced::flush()
+	void MemoryTrackPolicyAdvanced::flush()
 	{
 		((advancedTrackPolicyData*)data)->flush();
 	}

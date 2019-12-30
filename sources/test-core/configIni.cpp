@@ -28,7 +28,7 @@ void testConfigIni()
 
 	{
 		CAGE_TESTCASE("basic ini");
-		Holder<Ini> ini = newConfigIni();
+		Holder<Ini> ini = newIni();
 		ini->setString("section", "item", "value");
 		CAGE_TEST(ini->getString("section", "item", "default") == "value");
 		CAGE_TEST(ini->getString("section", "non-item", "default") == "default");
@@ -45,7 +45,7 @@ void testConfigIni()
 
 	{
 		CAGE_TESTCASE("save ini");
-		Holder<Ini> ini = newConfigIni();
+		Holder<Ini> ini = newIni();
 		for (uint32 s = 3; s < 6; s++)
 			for (uint32 i = 2; i < 7; i++)
 				ini->set(string(s), string(i), string(s + i));
@@ -55,7 +55,7 @@ void testConfigIni()
 
 	{
 		CAGE_TESTCASE("load ini");
-		Holder<Ini> ini = newConfigIni();
+		Holder<Ini> ini = newIni();
 		ini->load("testdir/test.ini");
 		for (uint32 s = 3; s < 6; s++)
 			for (uint32 i = 2; i < 7; i++)
@@ -65,7 +65,7 @@ void testConfigIni()
 
 	{
 		CAGE_TESTCASE("parse command line arguments (no positional arguments)");
-		Holder<Ini> ini = newConfigIni();
+		Holder<Ini> ini = newIni();
 		const char *const cmd[] = {
 			"appName",
 			"--long",
@@ -82,7 +82,7 @@ void testConfigIni()
 
 	{
 		CAGE_TESTCASE("parse command line arguments (with positional arguments)");
-		Holder<Ini> ini = newConfigIni();
+		Holder<Ini> ini = newIni();
 		const char *const cmd[] = {
 			"appName",
 			"pos1",
@@ -104,7 +104,7 @@ void testConfigIni()
 
 	{
 		CAGE_TESTCASE("unused variables");
-		Holder<Ini> ini = newConfigIni();
+		Holder<Ini> ini = newIni();
 		ini->set("a", "1", "a1");
 		ini->set("a", "2", "a2");
 		ini->set("b", "1", "b1");
@@ -139,7 +139,7 @@ void testConfigIni()
 
 	{
 		CAGE_TESTCASE("parse command line arguments with helpers");
-		Holder<Ini> ini = newConfigIni();
+		Holder<Ini> ini = newIni();
 		const char *const cmd[] = {
 			"appName",
 			"pos1",

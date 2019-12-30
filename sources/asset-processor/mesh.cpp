@@ -86,7 +86,7 @@ namespace
 
 		writeLine(string("use = ") + path);
 
-		Holder<Ini> ini = newConfigIni();
+		Holder<Ini> ini = newIni();
 		ini->load(pathJoin(inputDirectory, path));
 
 		mat.albedoBase = vec4(

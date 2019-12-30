@@ -48,7 +48,7 @@ void testNoise()
 		for (uint32 oct : {1, 2, 3})
 		{
 			NoiseFunctionCreateConfig config;
-			config.type = noiseTypeEnum::Value;
+			config.type = NoiseTypeEnum::Value;
 			config.octaves = oct;
 			Holder<NoiseFunction> noise = newNoiseFunction(config);
 			generateImage(stringizer() + "images/value_" + oct + ".png", noise);
@@ -60,7 +60,7 @@ void testNoise()
 		for (uint32 oct : {1, 2, 3})
 		{
 			NoiseFunctionCreateConfig config;
-			config.type = noiseTypeEnum::Perlin;
+			config.type = NoiseTypeEnum::Perlin;
 			config.octaves = oct;
 			Holder<NoiseFunction> noise = newNoiseFunction(config);
 			generateImage(stringizer() + "images/perlin_" + oct + ".png", noise);
@@ -72,7 +72,7 @@ void testNoise()
 		for (uint32 oct : {1, 2, 3})
 		{
 			NoiseFunctionCreateConfig config;
-			config.type = noiseTypeEnum::Simplex;
+			config.type = NoiseTypeEnum::Simplex;
 			config.octaves = oct;
 			Holder<NoiseFunction> noise = newNoiseFunction(config);
 			generateImage(stringizer() + "images/simplex_" + oct + ".png", noise);
@@ -83,22 +83,22 @@ void testNoise()
 		CAGE_TESTCASE("cellular");
 		{
 			NoiseFunctionCreateConfig config;
-			config.type = noiseTypeEnum::Cellular;
-			config.operation = noiseOperationEnum::None;
+			config.type = NoiseTypeEnum::Cellular;
+			config.operation = NoiseOperationEnum::None;
 			Holder<NoiseFunction> noise = newNoiseFunction(config);
 			generateImage(stringizer() + "images/cellular_none.png", noise);
 		}
 		{
 			NoiseFunctionCreateConfig config;
-			config.type = noiseTypeEnum::Cellular;
-			config.operation = noiseOperationEnum::Distance;
+			config.type = NoiseTypeEnum::Cellular;
+			config.operation = NoiseOperationEnum::Distance;
 			Holder<NoiseFunction> noise = newNoiseFunction(config);
 			generateImage(stringizer() + "images/cellular_distance.png", noise);
 		}
 		{
 			NoiseFunctionCreateConfig config;
-			config.type = noiseTypeEnum::Cellular;
-			config.operation = noiseOperationEnum::Divide;
+			config.type = NoiseTypeEnum::Cellular;
+			config.operation = NoiseOperationEnum::Divide;
 			Holder<NoiseFunction> noise = newNoiseFunction(config);
 			generateImage(stringizer() + "images/cellular_divide.png", noise);
 		}

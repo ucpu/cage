@@ -94,7 +94,7 @@ namespace cage
 
 		struct emitStruct
 		{
-			memoryArenaGrowing<memoryAllocatorPolicyLinear<>, memoryConcurrentPolicyNone> emitMemory;
+			MemoryArenaGrowing<MemoryAllocatorPolicyLinear<>, MemoryConcurrentPolicyNone> emitMemory;
 			MemoryArena emitArena;
 
 			std::vector<emitVoiceStruct*> voices;

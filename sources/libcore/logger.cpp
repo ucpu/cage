@@ -17,7 +17,7 @@ namespace cage
 
 		Mutex *loggerMutex()
 		{
-			static Holder<Mutex> *m = new Holder<Mutex>(newSyncMutex()); // this leak is intentional
+			static Holder<Mutex> *m = new Holder<Mutex>(newMutex()); // this leak is intentional
 			return m->get();
 		}
 
@@ -68,7 +68,7 @@ namespace cage
 			}
 		};
 
-		bool logFilterNoDebug(const detail::loggerInfo &info)
+		bool logFilterNoDebug(const detail::LoggerInfo &info)
 		{
 			return !info.debug;
 		}
@@ -180,7 +180,7 @@ namespace cage
 			}
 		} centralLogStaticInitializerInstance;
 
-		void logFormatFileImpl(const detail::loggerInfo &info, Delegate<void(const string &)> output, bool longer)
+		void logFormatFileImpl(const detail::LoggerInfo &info, Delegate<void(const string &)> output, bool longer)
 		{
 			if (info.continuous)
 			{
@@ -229,10 +229,10 @@ namespace cage
 
 	namespace detail
 	{
-		loggerInfo::loggerInfo() : component(""), file(nullptr), function(nullptr), time(0), createThreadId(0), currentThreadId(0), severity(SeverityEnum::Critical), line(0), continuous(false), debug(false)
+		LoggerInfo::LoggerInfo() : component(""), file(nullptr), function(nullptr), time(0), createThreadId(0), currentThreadId(0), severity(SeverityEnum::Critical), line(0), continuous(false), debug(false)
 		{}
 
-		Logger *getCentralLog()
+		Logger *getApplicationLog()
 		{
 			static centralLogClass *centralLogInstance = new centralLogClass(); // this leak is intentional
 			return centralLogInstance->loggerCentralFile.get();
@@ -259,8 +259,8 @@ namespace cage
 		{
 			try
 			{
-				detail::getCentralLog();
-				detail::loggerInfo info;
+				detail::getApplicationLog();
+				detail::LoggerInfo info;
 				info.message = message;
 				info.component = component;
 				info.severity = severity;
@@ -301,17 +301,17 @@ namespace cage
 		}
 	}
 
-	void logFormatConsole(const detail::loggerInfo &info, Delegate<void(const string &)> output)
+	void logFormatConsole(const detail::LoggerInfo &info, Delegate<void(const string &)> output)
 	{
 		output(info.message);
 	}
 
-	void logFormatFileShort(const detail::loggerInfo &info, Delegate<void(const string &)> output)
+	void logFormatFileShort(const detail::LoggerInfo &info, Delegate<void(const string &)> output)
 	{
 		logFormatFileImpl(info, output, false);
 	}
 
-	void logFormatFileLong(const detail::loggerInfo &info, Delegate<void(const string &)> output)
+	void logFormatFileLong(const detail::LoggerInfo &info, Delegate<void(const string &)> output)
 	{
 		logFormatFileImpl(info, output, true);
 	}

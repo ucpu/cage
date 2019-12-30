@@ -54,7 +54,7 @@ namespace cage
 		{
 			sockGroupStruct()
 			{
-				mut = newSyncMutex();
+				mut = newMutex();
 			}
 
 			struct receiverStruct
@@ -303,7 +303,7 @@ namespace cage
 							if (established)
 								break;
 							if (getApplicationTime() > startTime + timeout)
-								CAGE_THROW_ERROR(disconnected, "failed to connect (timeout)");
+								CAGE_THROW_ERROR(Disconnected, "failed to connect (timeout)");
 						}
 					}
 				}
@@ -604,7 +604,7 @@ namespace cage
 					if (priority >= 0)
 						generateCommands(msg, priority);
 					if (msg && msg->step++ >= 300)
-						CAGE_THROW_ERROR(disconnected, "too many failed attempts at sending a reliable message");
+						CAGE_THROW_ERROR(Disconnected, "too many failed attempts at sending a reliable message");
 				}
 			}
 
@@ -927,7 +927,7 @@ namespace cage
 					if (longSize != LongSize)
 					{
 						UDP_LOG(3, "the connection has incompatible LongSize: " + longSize + ", my LongSize: " + LongSize);
-						CAGE_THROW_ERROR(disconnected, "incompatible connection (LongSize)");
+						CAGE_THROW_ERROR(Disconnected, "incompatible connection (LongSize)");
 					}
 					if (!established)
 					{
@@ -951,7 +951,7 @@ namespace cage
 				} break;
 				case cmdTypeEnum::connectionFinish:
 				{
-					CAGE_THROW_ERROR(disconnected, "connection closed by other end");
+					CAGE_THROW_ERROR(Disconnected, "connection closed by other end");
 				} break;
 				case cmdTypeEnum::acknowledgement:
 				{
@@ -1061,7 +1061,7 @@ namespace cage
 					for (memView &b : packets)
 						handleReceivedPacket(b);
 				}
-				catch (const disconnected &)
+				catch (const Disconnected &)
 				{
 					throw;
 				}

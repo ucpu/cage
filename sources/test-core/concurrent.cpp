@@ -66,9 +66,9 @@ namespace
 void testConcurrent()
 {
 	CAGE_TESTCASE("concurrent");
-	Holder<Barrier> barrier = newSyncBarrier(4);
-	Holder<Mutex> mutex = newSyncMutex();
-	Holder<Semaphore> semaphore = newSyncSemaphore(1, 1);
+	Holder<Barrier> barrier = newBarrier(4);
+	Holder<Mutex> mutex = newMutex();
+	Holder<Semaphore> semaphore = newSemaphore(1, 1);
 	barrierGlobal = barrier.get();
 	mutexGlobal = mutex.get();
 	semaphoreGlobal = semaphore.get();

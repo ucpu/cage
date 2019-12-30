@@ -3,7 +3,7 @@
 
 namespace cage
 {
-	typedef Delegate<void(const AssetContext *, void *)> assetDelegate;
+	typedef Delegate<void(const AssetContext *, void *)> AssetDelegate;
 
 	struct CAGE_API AssetContext
 	{
@@ -24,9 +24,9 @@ namespace cage
 	struct CAGE_API AssetScheme
 	{
 		AssetScheme();
-		assetDelegate decompress;
-		assetDelegate load;
-		assetDelegate done;
+		AssetDelegate decompress;
+		AssetDelegate load;
+		AssetDelegate done;
 		void *schemePointer;
 		uint32 threadIndex;
 	};

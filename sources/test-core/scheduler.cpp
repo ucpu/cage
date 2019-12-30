@@ -241,6 +241,44 @@ void testScheduler()
 		}
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
 		CAGE_TEST(cnt2 == 1);
-		CAGE_TEST(trig->runsCount() == 1);
+		CAGE_TEST(trig->statsRunCount() == 1);
+	}
+
+	{
+		CAGE_TESTCASE("steady schedule with statistics");
+		Holder<Scheduler> sch = newScheduler({});
+		uint32 cnt1 = 0;
+		Schedule *trig = nullptr;
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::SteadyPeriodic;
+			c.action.bind<uint32*, &incRandomSleep>(&cnt1);
+			c.name = "steady";
+			c.period = 30000;
+			trig = sch->newSchedule(c);
+		}
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::Once;
+			c.action.bind<Scheduler*, &stop>(sch.get());
+			c.name = "terminator";
+			c.delay = 200000;
+			c.priority = 100;
+			sch->newSchedule(c);
+		}
+		{
+			Holder<Timer> tmr = newTimer();
+			sch->run();
+			uint64 duration = tmr->microsSinceStart();
+			CAGE_TEST(duration > 100000 && duration < 300000);
+		}
+		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
+		CAGE_TEST(trig->statsRunCount() == cnt1);
+		CAGE_TEST(trig->statsDurationSum() > 15000 * cnt1);
+		CAGE_TEST(trig->statsDurationSum() < 25000 * cnt1 + 50000);
+		CAGE_TEST(trig->statsDurationMax() > 15000);
+		CAGE_TEST(trig->statsDurationMax() < 50000);
+		CAGE_TEST(trig->statsDelayMax() > 0);
+		CAGE_TEST(trig->statsDelayMax() < 50000);
 	}
 }

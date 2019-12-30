@@ -20,9 +20,9 @@ namespace cage
 		public:
 			concurrentQueueImpl(const ConcurrentQueueCreateConfig &config) : maxItems(config.maxElements), stop(false)
 			{
-				mut = newSyncMutex();
-				writer = newSyncConditionalBase();
-				reader = newSyncConditionalBase();
+				mut = newMutex();
+				writer = newConditionalVariableBase();
+				reader = newConditionalVariableBase();
 				arena = config.arena;
 			}
 

@@ -32,7 +32,7 @@ namespace cage
 		public:
 			programImpl(const ProcessCreateConfig &config) : cmd(config.cmd), workingDir(pathToAbs(config.workingDirectory)), hChildStd_IN_Rd(nullptr), hChildStd_IN_Wr(nullptr), hChildStd_OUT_Rd(nullptr), hChildStd_OUT_Wr(nullptr), /*hChildStd_ERR_Rd (nullptr), hChildStd_ERR_Wr (nullptr),*/ hProcess(nullptr), hThread(nullptr)
 			{
-				static Holder<Mutex> mut = newSyncMutex();
+				static Holder<Mutex> mut = newMutex();
 				ScopeLock<Mutex> lock(mut);
 
 				CAGE_LOG(SeverityEnum::Info, "process", stringizer() + "launching process '" + cmd + "'");
@@ -173,7 +173,7 @@ namespace cage
 
 			programImpl(const ProcessCreateConfig &config) : cmd(config.cmd), workingDir(pathToAbs(config.workingDirectory)), aStdinPipe{0, 0}, aStdoutPipe{0, 0}, pid(0)
 			{
-				static Holder<Mutex> mut = newSyncMutex();
+				static Holder<Mutex> mut = newMutex();
 				ScopeLock<Mutex> lock(mut);
 
 				CAGE_LOG(SeverityEnum::Info, "process", stringizer() + "launching process '" + cmd + "'");

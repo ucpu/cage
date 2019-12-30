@@ -68,7 +68,7 @@ namespace
 
 		memoryArenaTest()
 		{
-			ArenaPolicy<memoryAllocatorPolicyPool<templates::poolAllocatorAtomSize<alignmentHelper<Traits::AtomSize>>::result, BoundsPolicy, TagPolicy, TrackPolicy>, memoryConcurrentPolicyNone> pool(Traits::MemoryLimit);
+			ArenaPolicy<MemoryAllocatorPolicyPool<templates::PoolAllocatorAtomSize<alignmentHelper<Traits::AtomSize>>::result, BoundsPolicy, TagPolicy, TrackPolicy>, MemoryConcurrentPolicyNone> pool(Traits::MemoryLimit);
 			PrintTest;
 			MemoryArena a(&pool);
 			std::vector<void*> alokace;
@@ -111,7 +111,7 @@ namespace
 	{ // linear
 		memoryArenaTest()
 		{
-			ArenaPolicy<memoryAllocatorPolicyLinear<BoundsPolicy, TagPolicy, TrackPolicy>, memoryConcurrentPolicyNone> pool(Traits::MemoryLimit);
+			ArenaPolicy<MemoryAllocatorPolicyLinear<BoundsPolicy, TagPolicy, TrackPolicy>, MemoryConcurrentPolicyNone> pool(Traits::MemoryLimit);
 			PrintTest;
 			MemoryArena a(&pool);
 			typedef alignedTestStruct<Traits::ObjectSize, Alignment> ts;
@@ -133,7 +133,7 @@ namespace
 	{ // nFrame
 		memoryArenaTest()
 		{
-			ArenaPolicy<memoryAllocatorPolicyNFrame<Traits::Frames, BoundsPolicy, TagPolicy, TrackPolicy>, memoryConcurrentPolicyNone> pool(Traits::MemoryLimit);
+			ArenaPolicy<MemoryAllocatorPolicyNFrame<Traits::Frames, BoundsPolicy, TagPolicy, TrackPolicy>, MemoryConcurrentPolicyNone> pool(Traits::MemoryLimit);
 			PrintTest;
 			MemoryArena a(&pool);
 			typedef alignedTestStruct<Traits::ObjectSize, Alignment> ts;
@@ -169,7 +169,7 @@ namespace
 	{ // queue
 		memoryArenaTest()
 		{
-			ArenaPolicy<memoryAllocatorPolicyQueue<BoundsPolicy, TagPolicy, TrackPolicy>, memoryConcurrentPolicyNone> pool(Traits::MemoryLimit);
+			ArenaPolicy<MemoryAllocatorPolicyQueue<BoundsPolicy, TagPolicy, TrackPolicy>, MemoryConcurrentPolicyNone> pool(Traits::MemoryLimit);
 			PrintTest;
 			MemoryArena a(&pool);
 			typedef alignedTestStruct<Traits::ObjectSize, Alignment> ts;
@@ -206,7 +206,7 @@ namespace
 	{ // stack
 		memoryArenaTest()
 		{
-			ArenaPolicy<memoryAllocatorPolicyStack<BoundsPolicy, TagPolicy, TrackPolicy>, memoryConcurrentPolicyNone> pool(Traits::MemoryLimit);
+			ArenaPolicy<MemoryAllocatorPolicyStack<BoundsPolicy, TagPolicy, TrackPolicy>, MemoryConcurrentPolicyNone> pool(Traits::MemoryLimit);
 			PrintTest;
 			MemoryArena a(&pool);
 			typedef alignedTestStruct<Traits::ObjectSize, Alignment> ts;
@@ -247,25 +247,25 @@ void testMemoryArenas()
 {
 	CAGE_TESTCASE("memory arena");
 	// pool
-	{ memoryArenaTest<memoryArenaFixed, memoryBoundsPolicySimple, memoryTagPolicySimple, memoryTrackPolicySimple, 8, 0, Traits<>> a; }
-	{ memoryArenaTest<memoryArenaGrowing, memoryBoundsPolicySimple, memoryTagPolicySimple, memoryTrackPolicySimple, 8, 0, Traits<>> a; }
-	{ memoryArenaTest<memoryArenaGrowing, memoryBoundsPolicyNone, memoryTagPolicyNone, memoryTrackPolicyNone, 8, 0, Traits<>> a; }
-	{ memoryArenaTest<memoryArenaGrowing, memoryBoundsPolicySimple, memoryTagPolicySimple, memoryTrackPolicySimple, 32, 0, Traits<>> a; }
-	{ memoryArenaTest<memoryArenaGrowing, memoryBoundsPolicyNone, memoryTagPolicyNone, memoryTrackPolicyNone, 32, 0, Traits<>> a; }
-	{ memoryArenaTest<memoryArenaGrowing, memoryBoundsPolicySimple, memoryTagPolicySimple, memoryTrackPolicyAdvanced, 8, 0, Traits<42, 42, 2, 2, 30>> a; }
-	{ memoryArenaTest<memoryArenaGrowing, memoryBoundsPolicySimple, memoryTagPolicySimple, memoryTrackPolicySimple, 8, 0, Traits<13>> a; }
-	{ memoryArenaTest<memoryArenaGrowing, memoryBoundsPolicySimple, memoryTagPolicySimple, memoryTrackPolicySimple, 8, 0, Traits<42, 2200, 2, 3>> a; }
+	{ memoryArenaTest<MemoryArenaFixed, MemoryBoundsPolicySimple, MemoryTagPolicySimple, MemoryTrackPolicySimple, 8, 0, Traits<>> a; }
+	{ memoryArenaTest<MemoryArenaGrowing, MemoryBoundsPolicySimple, MemoryTagPolicySimple, MemoryTrackPolicySimple, 8, 0, Traits<>> a; }
+	{ memoryArenaTest<MemoryArenaGrowing, MemoryBoundsPolicyNone, MemoryTagPolicyNone, MemoryTrackPolicyNone, 8, 0, Traits<>> a; }
+	{ memoryArenaTest<MemoryArenaGrowing, MemoryBoundsPolicySimple, MemoryTagPolicySimple, MemoryTrackPolicySimple, 32, 0, Traits<>> a; }
+	{ memoryArenaTest<MemoryArenaGrowing, MemoryBoundsPolicyNone, MemoryTagPolicyNone, MemoryTrackPolicyNone, 32, 0, Traits<>> a; }
+	{ memoryArenaTest<MemoryArenaGrowing, MemoryBoundsPolicySimple, MemoryTagPolicySimple, MemoryTrackPolicyAdvanced, 8, 0, Traits<42, 42, 2, 2, 30>> a; }
+	{ memoryArenaTest<MemoryArenaGrowing, MemoryBoundsPolicySimple, MemoryTagPolicySimple, MemoryTrackPolicySimple, 8, 0, Traits<13>> a; }
+	{ memoryArenaTest<MemoryArenaGrowing, MemoryBoundsPolicySimple, MemoryTagPolicySimple, MemoryTrackPolicySimple, 8, 0, Traits<42, 2200, 2, 3>> a; }
 	// linear
-	{ memoryArenaTest<memoryArenaGrowing, memoryBoundsPolicySimple, memoryTagPolicySimple, memoryTrackPolicySimple, 8, 1, Traits<>> a; }
-	{ memoryArenaTest<memoryArenaGrowing, memoryBoundsPolicySimple, memoryTagPolicySimple, memoryTrackPolicySimple, 32, 1, Traits<>> a; }
-	{ memoryArenaTest<memoryArenaGrowing, memoryBoundsPolicyNone, memoryTagPolicyNone, memoryTrackPolicyNone, 8, 1, Traits<>> a; }
+	{ memoryArenaTest<MemoryArenaGrowing, MemoryBoundsPolicySimple, MemoryTagPolicySimple, MemoryTrackPolicySimple, 8, 1, Traits<>> a; }
+	{ memoryArenaTest<MemoryArenaGrowing, MemoryBoundsPolicySimple, MemoryTagPolicySimple, MemoryTrackPolicySimple, 32, 1, Traits<>> a; }
+	{ memoryArenaTest<MemoryArenaGrowing, MemoryBoundsPolicyNone, MemoryTagPolicyNone, MemoryTrackPolicyNone, 8, 1, Traits<>> a; }
 	// nFrames
-	{ memoryArenaTest<memoryArenaFixed, memoryBoundsPolicySimple, memoryTagPolicySimple, memoryTrackPolicySimple, 8, 2, Traits<>> a; }
-	{ memoryArenaTest<memoryArenaFixed, memoryBoundsPolicySimple, memoryTagPolicySimple, memoryTrackPolicySimple, 32, 2, Traits<>> a; }
-	{ memoryArenaTest<memoryArenaFixed, memoryBoundsPolicySimple, memoryTagPolicySimple, memoryTrackPolicySimple, 32, 2, Traits<13, 42, 3>> a; }
-	{ memoryArenaTest<memoryArenaFixed, memoryBoundsPolicyNone, memoryTagPolicyNone, memoryTrackPolicyNone, 8, 2, Traits<>> a; }
+	{ memoryArenaTest<MemoryArenaFixed, MemoryBoundsPolicySimple, MemoryTagPolicySimple, MemoryTrackPolicySimple, 8, 2, Traits<>> a; }
+	{ memoryArenaTest<MemoryArenaFixed, MemoryBoundsPolicySimple, MemoryTagPolicySimple, MemoryTrackPolicySimple, 32, 2, Traits<>> a; }
+	{ memoryArenaTest<MemoryArenaFixed, MemoryBoundsPolicySimple, MemoryTagPolicySimple, MemoryTrackPolicySimple, 32, 2, Traits<13, 42, 3>> a; }
+	{ memoryArenaTest<MemoryArenaFixed, MemoryBoundsPolicyNone, MemoryTagPolicyNone, MemoryTrackPolicyNone, 8, 2, Traits<>> a; }
 	// queue
-	{ memoryArenaTest<memoryArenaFixed, memoryBoundsPolicySimple, memoryTagPolicySimple, memoryTrackPolicySimple, 8, 3, Traits<>> a; }
+	{ memoryArenaTest<MemoryArenaFixed, MemoryBoundsPolicySimple, MemoryTagPolicySimple, MemoryTrackPolicySimple, 8, 3, Traits<>> a; }
 	// stack
-	{ memoryArenaTest<memoryArenaGrowing, memoryBoundsPolicySimple, memoryTagPolicySimple, memoryTrackPolicySimple, 8, 4, Traits<>> a; }
+	{ memoryArenaTest<MemoryArenaGrowing, MemoryBoundsPolicySimple, MemoryTagPolicySimple, MemoryTrackPolicySimple, 8, 4, Traits<>> a; }
 }

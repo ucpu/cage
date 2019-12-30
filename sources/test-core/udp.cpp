@@ -55,7 +55,7 @@ namespace
 				{
 					c->update();
 				}
-				catch (const disconnected &)
+				catch (const Disconnected &)
 				{
 					// ignore
 				}

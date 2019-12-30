@@ -488,36 +488,36 @@ namespace cage
 		return tmp;
 	}
 
-	Holder<Ini> newConfigIni()
+	Holder<Ini> newIni()
 	{
-		return newConfigIni(detail::systemArena());
+		return newIni(detail::systemArena());
 	}
 
-	Holder<Ini> newConfigIni(MemoryArena arena)
+	Holder<Ini> newIni(MemoryArena arena)
 	{
 		return detail::systemArena().createImpl<Ini, iniImpl>(arena);
 	}
 
-	Holder<Ini> newConfigIni(const string &filename)
+	Holder<Ini> newIni(const string &filename)
 	{
-		return newConfigIni(detail::systemArena(), filename);
+		return newIni(detail::systemArena(), filename);
 	}
 
-	Holder<Ini> newConfigIni(MemoryArena arena, const string &filename)
+	Holder<Ini> newIni(MemoryArena arena, const string &filename)
 	{
-		Holder<Ini> ini = newConfigIni(arena);
+		Holder<Ini> ini = newIni(arena);
 		ini->load(filename);
 		return ini;
 	}
 
-	Holder<Ini> newConfigIni(uint32 argc, const char *const args[])
+	Holder<Ini> newIni(uint32 argc, const char *const args[])
 	{
-		return newConfigIni(detail::systemArena(), argc, args);
+		return newIni(detail::systemArena(), argc, args);
 	}
 
-	Holder<Ini> newConfigIni(MemoryArena arena, uint32 argc, const char *const args[])
+	Holder<Ini> newIni(MemoryArena arena, uint32 argc, const char *const args[])
 	{
-		Holder<Ini> ini = newConfigIni(arena);
+		Holder<Ini> ini = newIni(arena);
 		ini->parseCmd(argc, args);
 		return ini;
 	}

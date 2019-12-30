@@ -2,7 +2,7 @@
 
 namespace cage
 {
-	disconnected::disconnected(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept : Exception(file, line, function, severity, message)
+	Disconnected::Disconnected(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept : Exception(file, line, function, severity, message)
 	{};
 
 	namespace

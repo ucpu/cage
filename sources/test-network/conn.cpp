@@ -80,9 +80,9 @@ namespace
 					uint32 bytes = randomRange(10, 2000);
 					if (randomChance() < 0.01)
 						bytes *= randomRange(10, 20);
-					bytes /= sizeof(decltype(currentRandomGenerator().next()));
+					bytes /= sizeof(decltype(detail::getApplicationRandomGenerator().next()));
 					for (uint32 i = 0; i < bytes; i++)
-						s << currentRandomGenerator().next();
+						s << detail::getApplicationRandomGenerator().next();
 					udp->write(b, randomRange(0, 20), randomChance() < 0.1);
 				}
 

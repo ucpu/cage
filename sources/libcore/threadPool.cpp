@@ -23,9 +23,9 @@ namespace cage
 
 			threadPoolImpl(const string &threadNames, uint32 threads) : threadIndexInitializer(0), threadsCount(threads == m ? processorsCount() : threads), ending(false)
 			{
-				barrier1 = newSyncBarrier(threadsCount + 1);
-				barrier2 = newSyncBarrier(threadsCount + 1);
-				mutex = newSyncMutex();
+				barrier1 = newBarrier(threadsCount + 1);
+				barrier2 = newBarrier(threadsCount + 1);
+				mutex = newMutex();
 				thrs.resize(threadsCount);
 				for (uint32 i = 0; i < threadsCount; i++)
 					thrs[i] = newThread(Delegate<void()>().bind<threadPoolImpl, &threadPoolImpl::threadEntryLocal>(this), stringizer() + threadNames + i);

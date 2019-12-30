@@ -38,7 +38,7 @@ namespace cage
 			other.ptr = nullptr;
 		}
 
-		// not move assignable (releasing the previous lock would not be atomic)
+		// not move assignable (releasing the original lock owned by this would not be atomic)
 		ScopeLock &operator = (ScopeLock &&) = delete;
 
 		~ScopeLock()

@@ -42,7 +42,7 @@ namespace cage
 	{
 		std::shared_ptr<archiveVirtual> archiveTryGet(const string &path)
 		{
-			static Holder<Mutex> *mutex = new Holder<Mutex>(newSyncMutex()); // this leak is intentional
+			static Holder<Mutex> *mutex = new Holder<Mutex>(newMutex()); // this leak is intentional
 			static std::map<string, std::weak_ptr<archiveVirtual>> *map = new std::map<string, std::weak_ptr<archiveVirtual>>(); // this leak is intentional
 			ScopeLock<Mutex> l(*mutex);
 			auto it = map->find(path);
@@ -108,7 +108,7 @@ namespace cage
 			// create archive
 			archiveZip(const string &path, const string &options) : archiveVirtual(path), zip(nullptr)
 			{
-				mutex = newSyncMutex();
+				mutex = newMutex();
 				realCreateDirectories(pathJoin(path, ".."));
 				zip = zip_open(path.c_str(), ZIP_CREATE | ZIP_EXCL, nullptr);
 				if (!zip)
@@ -121,7 +121,7 @@ namespace cage
 			// open archive
 			archiveZip(const string &path) : archiveVirtual(path), zip(nullptr)
 			{
-				mutex = newSyncMutex();
+				mutex = newMutex();
 				//if (newFile(path, FileMode(true, false))->size() == 0)
 				//	CAGE_THROW_ERROR(exception, "empty file"); // this is a temporary workaround until it is improved in the libzip
 				zip = zip_open(path.c_str(), ZIP_CHECKCONS, nullptr);

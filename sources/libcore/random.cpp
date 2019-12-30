@@ -122,38 +122,41 @@ namespace cage
 		return normalize(quat(randomDirection3(), randomAngle()));
 	}
 
-	RandomGenerator &currentRandomGenerator()
+	namespace detail
 	{
-		static RandomGenerator rnd = initializeDefaultGenerator();
-		return rnd;
+		RandomGenerator &getApplicationRandomGenerator()
+		{
+			static RandomGenerator rnd = initializeDefaultGenerator();
+			return rnd;
+		}
 	}
 
 	real randomChance()
 	{
-		return currentRandomGenerator().randomChance();
+		return detail::getApplicationRandomGenerator().randomChance();
 	}
 
 	rads randomAngle()
 	{
-		return currentRandomGenerator().randomAngle();
+		return detail::getApplicationRandomGenerator().randomAngle();
 	}
 
 	vec2 randomDirection2()
 	{
-		return currentRandomGenerator().randomDirection2();
+		return detail::getApplicationRandomGenerator().randomDirection2();
 	}
 
 	vec3 randomDirection3()
 	{
-		return currentRandomGenerator().randomDirection3();
+		return detail::getApplicationRandomGenerator().randomDirection3();
 	}
 
 	quat randomDirectionQuat()
 	{
-		return currentRandomGenerator().randomDirectionQuat();
+		return detail::getApplicationRandomGenerator().randomDirectionQuat();
 	}
 
-#define GCHL_GENERATE(TYPE) TYPE randomRange(TYPE min, TYPE max) { return currentRandomGenerator().randomRange(min, max); }
+#define GCHL_GENERATE(TYPE) TYPE randomRange(TYPE min, TYPE max) { return detail::getApplicationRandomGenerator().randomRange(min, max); }
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, real, rads, degs, float, double));
 #undef GCHL_GENERATE
 }

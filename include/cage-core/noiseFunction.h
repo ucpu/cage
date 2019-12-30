@@ -3,7 +3,7 @@
 
 namespace cage
 {
-	enum class noiseTypeEnum
+	enum class NoiseTypeEnum : uint32
 	{
 		Value,
 		Perlin,
@@ -13,21 +13,21 @@ namespace cage
 		White,
 	};
 
-	enum class noiseInterpolationEnum
+	enum class NoiseInterpolationEnum : uint32
 	{
 		Quintic,
 		Hermite,
 		Linear,
 	};
 
-	enum class noiseFractalTypeEnum
+	enum class NoiseFractalTypeEnum : uint32
 	{
 		Fbm,
 		Billow,
 		RigidMulti,
 	};
 
-	enum class noiseDistanceEnum
+	enum class NoiseDistanceEnum : uint32
 	{
 		Euclidean,
 		Manhattan, // length in axial directions
@@ -36,7 +36,7 @@ namespace cage
 		//Chebychev, // length of the longest axis
 	};
 
-	enum class noiseOperationEnum
+	enum class NoiseOperationEnum : uint32
 	{
 		None,
 		Distance,
@@ -61,11 +61,11 @@ namespace cage
 
 	struct CAGE_API NoiseFunctionCreateConfig
 	{
-		noiseTypeEnum type;
-		noiseInterpolationEnum interpolation;
-		noiseFractalTypeEnum fractalType;
-		noiseDistanceEnum distance;
-		noiseOperationEnum operation;
+		NoiseTypeEnum type;
+		NoiseInterpolationEnum interpolation;
+		NoiseFractalTypeEnum fractalType;
+		NoiseDistanceEnum distance;
+		NoiseOperationEnum operation;
 		uint32 seed;
 		uint32 octaves;
 		real lacunarity;

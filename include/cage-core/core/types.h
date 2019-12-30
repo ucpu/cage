@@ -57,8 +57,8 @@ namespace cage
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = false;
-			static constexpr const uint8 min() { return 0; };
-			static constexpr const uint8 max() { return 255u; };
+			static constexpr uint8 min() noexcept { return 0; };
+			static constexpr uint8 max() noexcept { return 255u; };
 			typedef uint8 make_unsigned;
 		};
 
@@ -67,8 +67,8 @@ namespace cage
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = false;
-			static constexpr const uint16 min() { return 0; };
-			static constexpr const uint16 max() { return 65535u; };
+			static constexpr uint16 min() noexcept { return 0; };
+			static constexpr uint16 max() noexcept { return 65535u; };
 			typedef uint16 make_unsigned;
 		};
 
@@ -77,8 +77,8 @@ namespace cage
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = false;
-			static constexpr const uint32 min() { return 0; };
-			static constexpr const uint32 max() { return 4294967295u; };
+			static constexpr uint32 min() noexcept { return 0; };
+			static constexpr uint32 max() noexcept { return 4294967295u; };
 			typedef uint32 make_unsigned;
 		};
 
@@ -87,8 +87,8 @@ namespace cage
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = false;
-			static constexpr const uint64 min() { return 0; };
-			static constexpr const uint64 max() { return 18446744073709551615LLu; };
+			static constexpr uint64 min() noexcept { return 0; };
+			static constexpr uint64 max() noexcept { return 18446744073709551615LLu; };
 			typedef uint64 make_unsigned;
 		};
 
@@ -107,8 +107,8 @@ namespace cage
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = true;
-			static constexpr const sint8 min() { return -127 - 1; };
-			static constexpr const sint8 max() { return  127; };
+			static constexpr sint8 min() noexcept { return -127 - 1; };
+			static constexpr sint8 max() noexcept { return  127; };
 			typedef uint8 make_unsigned;
 		};
 
@@ -117,8 +117,8 @@ namespace cage
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = true;
-			static constexpr const sint16 min() { return -32767 - 1; };
-			static constexpr const sint16 max() { return  32767; };
+			static constexpr sint16 min() noexcept { return -32767 - 1; };
+			static constexpr sint16 max() noexcept { return  32767; };
 			typedef uint16 make_unsigned;
 		};
 
@@ -127,8 +127,8 @@ namespace cage
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = true;
-			static constexpr const sint32 min() { return -2147483647 - 1; };
-			static constexpr const sint32 max() { return  2147483647; };
+			static constexpr sint32 min() noexcept { return -2147483647 - 1; };
+			static constexpr sint32 max() noexcept { return  2147483647; };
 			typedef uint32 make_unsigned;
 		};
 
@@ -137,8 +137,8 @@ namespace cage
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = true;
-			static constexpr const sint64 min() { return -9223372036854775807LL - 1; };
-			static constexpr const sint64 max() { return  9223372036854775807LL; };
+			static constexpr sint64 min() noexcept { return -9223372036854775807LL - 1; };
+			static constexpr sint64 max() noexcept { return  9223372036854775807LL; };
 			typedef uint64 make_unsigned;
 		};
 
@@ -157,8 +157,8 @@ namespace cage
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = true;
-			static constexpr const float min() { return -1e+37f; };
-			static constexpr const float max() { return  1e+37f; };
+			static constexpr float min() noexcept { return -1e+37f; };
+			static constexpr float max() noexcept { return  1e+37f; };
 			typedef float make_unsigned;
 		};
 
@@ -167,8 +167,8 @@ namespace cage
 		{
 			static const bool is_specialized = true;
 			static const bool is_signed = true;
-			static constexpr const double min() { return -1e+308; };
-			static constexpr const double max() { return  1e+308; };
+			static constexpr double min() noexcept { return -1e+308; };
+			static constexpr double max() noexcept { return  1e+308; };
 			typedef double make_unsigned;
 		};
 
@@ -192,12 +192,12 @@ namespace cage
 			}
 		};
 
-		template<class T> constexpr bool operator == (T lhs, MaxValue rhs) { return lhs == detail::numeric_limits<T>::max(); }
-		template<class T> constexpr bool operator != (T lhs, MaxValue rhs) { return lhs != detail::numeric_limits<T>::max(); }
-		template<class T> constexpr bool operator <= (T lhs, MaxValue rhs) { return lhs <= detail::numeric_limits<T>::max(); }
-		template<class T> constexpr bool operator >= (T lhs, MaxValue rhs) { return lhs >= detail::numeric_limits<T>::max(); }
-		template<class T> constexpr bool operator < (T lhs, MaxValue rhs) { return lhs < detail::numeric_limits<T>::max(); }
-		template<class T> constexpr bool operator > (T lhs, MaxValue rhs) { return lhs > detail::numeric_limits<T>::max(); }
+		template<class T> constexpr bool operator == (T lhs, MaxValue rhs) noexcept { return lhs == detail::numeric_limits<T>::max(); }
+		template<class T> constexpr bool operator != (T lhs, MaxValue rhs) noexcept { return lhs != detail::numeric_limits<T>::max(); }
+		template<class T> constexpr bool operator <= (T lhs, MaxValue rhs) noexcept { return lhs <= detail::numeric_limits<T>::max(); }
+		template<class T> constexpr bool operator >= (T lhs, MaxValue rhs) noexcept { return lhs >= detail::numeric_limits<T>::max(); }
+		template<class T> constexpr bool operator < (T lhs, MaxValue rhs) noexcept { return lhs < detail::numeric_limits<T>::max(); }
+		template<class T> constexpr bool operator > (T lhs, MaxValue rhs) noexcept { return lhs > detail::numeric_limits<T>::max(); }
 	}
 
 	static constexpr const privat::MaxValue m = privat::MaxValue();
@@ -229,15 +229,15 @@ namespace cage
 	// enum class bit operators
 
 	template<class T> struct enable_bitmask_operators { static const bool enable = false; };
-	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator ~ (T lhs) { typedef typename templates::underlying_type<T>::type underlying; return static_cast<T>(~static_cast<underlying>(lhs)); }
-	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator | (T lhs, T rhs) { typedef typename templates::underlying_type<T>::type underlying; return static_cast<T>(static_cast<underlying>(lhs) | static_cast<underlying>(rhs)); }
-	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator & (T lhs, T rhs) { typedef typename templates::underlying_type<T>::type underlying; return static_cast<T>(static_cast<underlying>(lhs) & static_cast<underlying>(rhs)); }
-	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator ^ (T lhs, T rhs) { typedef typename templates::underlying_type<T>::type underlying; return static_cast<T>(static_cast<underlying>(lhs) ^ static_cast<underlying>(rhs)); }
-	template<class T> inline typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator |= (T &lhs, T rhs) { typedef typename templates::underlying_type<T>::type underlying; return lhs = static_cast<T>(static_cast<underlying>(lhs) | static_cast<underlying>(rhs)); }
-	template<class T> inline typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator &= (T &lhs, T rhs) { typedef typename templates::underlying_type<T>::type underlying; return lhs = static_cast<T>(static_cast<underlying>(lhs) & static_cast<underlying>(rhs)); }
-	template<class T> inline typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator ^= (T &lhs, T rhs) { typedef typename templates::underlying_type<T>::type underlying; return lhs = static_cast<T>(static_cast<underlying>(lhs) ^ static_cast<underlying>(rhs)); }
-	template<class T> inline typename templates::enable_if<enable_bitmask_operators<T>::enable, bool>::type any(T lhs) { typedef typename templates::underlying_type<T>::type underlying; return static_cast<underlying>(lhs) != 0; }
-	template<class T> inline typename templates::enable_if<enable_bitmask_operators<T>::enable, bool>::type none(T lhs) { typedef typename templates::underlying_type<T>::type underlying; return static_cast<underlying>(lhs) == 0; }
+	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator ~ (T lhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return static_cast<T>(~static_cast<underlying>(lhs)); }
+	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator | (T lhs, T rhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return static_cast<T>(static_cast<underlying>(lhs) | static_cast<underlying>(rhs)); }
+	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator & (T lhs, T rhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return static_cast<T>(static_cast<underlying>(lhs) & static_cast<underlying>(rhs)); }
+	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator ^ (T lhs, T rhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return static_cast<T>(static_cast<underlying>(lhs) ^ static_cast<underlying>(rhs)); }
+	template<class T> inline typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator |= (T &lhs, T rhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return lhs = static_cast<T>(static_cast<underlying>(lhs) | static_cast<underlying>(rhs)); }
+	template<class T> inline typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator &= (T &lhs, T rhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return lhs = static_cast<T>(static_cast<underlying>(lhs) & static_cast<underlying>(rhs)); }
+	template<class T> inline typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator ^= (T &lhs, T rhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return lhs = static_cast<T>(static_cast<underlying>(lhs) ^ static_cast<underlying>(rhs)); }
+	template<class T> inline typename templates::enable_if<enable_bitmask_operators<T>::enable, bool>::type any(T lhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return static_cast<underlying>(lhs) != 0; }
+	template<class T> inline typename templates::enable_if<enable_bitmask_operators<T>::enable, bool>::type none(T lhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return static_cast<underlying>(lhs) == 0; }
 
 	// this macro has to be used inside namespace cage
 #define GCHL_ENUM_BITS(TYPE) template<> struct enable_bitmask_operators<TYPE> { static const bool enable = true; };
@@ -255,6 +255,24 @@ namespace cage
 
 	// forward declarations
 
+	namespace detail { template<uint32 N> struct StringBase; }
+	typedef detail::StringBase<1000> string;
+	struct real;
+	struct rads;
+	struct degs;
+	struct vec2;
+	struct vec3;
+	struct vec4;
+	struct quat;
+	struct mat3;
+	struct mat4;
+	struct transform;
+	struct line;
+	struct triangle;
+	struct plane;
+	struct sphere;
+	struct aabb;
+
 	enum class AssetStateEnum : uint32;
 	class AssetManager;
 	struct AssetManagerCreateConfig;
@@ -262,6 +280,10 @@ namespace cage
 	struct AssetScheme;
 	struct AssetHeader;
 	struct AssetHeader;
+	enum class StereoModeEnum : uint32;
+	enum class StereoEyeEnum : uint32;
+	struct StereoCameraInput;
+	struct StereoCameraOutput;
 	class CollisionMesh;
 	struct CollisionPair;
 	class CollisionQuery;
@@ -285,9 +307,6 @@ namespace cage
 	struct ConfigDouble;
 	struct ConfigString;
 	class ConfigList;
-	class Ini;
-	namespace detail { template<uint32 N> struct StringBase; }
-	typedef detail::StringBase<1000> string;
 	struct EntityComponentCreateConfig;
 	class EntityManager;
 	struct EntityManagerCreateConfig;
@@ -300,29 +319,35 @@ namespace cage
 	class FilesystemWatcher;
 	class DirectoryList;
 	class Filesystem;
-	struct line;
-	struct triangle;
-	struct plane;
-	struct sphere;
-	struct aabb;
-	struct HashString;
 	template<uint32 N> struct Guid;
+	struct HashString;
 	class Image;
+	class Ini;
 	class LineReader;
 	class Logger;
 	class LoggerOutputFile;
-	struct real;
-	struct rads;
-	struct degs;
-	struct vec2;
-	struct vec3;
-	struct vec4;
-	struct quat;
-	struct mat3;
-	struct mat4;
-	struct transform;
+	template<class Key, class Value, class Hasher> struct LruCache;
+	template<class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyLinear;
+	template<uint8 N, class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyNFrame;
+	template<uintPtr AtomSize, class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyPool;
+	template<class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyQueue;
+	template<class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyStack;
+	template<class AllocatorPolicy, class ConcurrentPolicy> struct MemoryArenaFixed;
+	template<class AllocatorPolicy, class ConcurrentPolicy> struct MemoryArenaGrowing;
 	template<class T> struct MemoryArenaStd;
+	struct MemoryBoundsPolicyNone;
+	struct MemoryBoundsPolicySimple;
+	struct MemoryTagPolicyNone;
+	struct MemoryTagPolicySimple;
+	struct MemoryTrackPolicyNone;
+	struct MemoryTrackPolicySimple;
+	struct MemoryTrackPolicyAdvanced;
+	struct MemoryConcurrentPolicyNone;
+	struct MemoryConcurrentPolicyMutex;
+	struct OutOfMemory;
+	class VirtualMemory;
 	struct MemoryBuffer;
+	struct Disconnected;
 	class TcpConnection;
 	class TcpServer;
 	struct UdpStatistics;
@@ -331,6 +356,11 @@ namespace cage
 	struct DiscoveryPeer;
 	class DiscoveryClient;
 	class DiscoveryServer;
+	enum class NoiseTypeEnum : uint32;
+	enum class NoiseInterpolationEnum : uint32;
+	enum class NoiseFractalTypeEnum : uint32;
+	enum class NoiseDistanceEnum : uint32;
+	enum class NoiseOperationEnum : uint32;
 	class NoiseFunction;
 	struct NoiseFunctionCreateConfig;
 	template<class T> struct PointerRangeHolder;
@@ -356,9 +386,6 @@ namespace cage
 	class ThreadPool;
 	class Timer;
 	struct InvalidUtfString;
-	enum class StereoModeEnum : uint32;
-	enum class StereoEyeEnum : uint32;
-	struct StereoCameraInput;
-	struct StereoCameraOutput;
+	template<class T, class F> struct VariableInterpolatingBuffer;
 	template<class T, uint32 N = 16> struct VariableSmoothingBuffer;
 }

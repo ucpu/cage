@@ -1,9 +1,9 @@
 namespace cage
 {
-	template<class BoundsPolicy = memoryBoundsPolicyDefault, class TaggingPolicy = memoryTagPolicyDefault, class TrackingPolicy = memoryTrackPolicyDefault>
-	struct memoryAllocatorPolicyLinear
+	template<class BoundsPolicy = MemoryBoundsPolicyDefault, class TaggingPolicy = MemoryTagPolicyDefault, class TrackingPolicy = MemoryTrackPolicyDefault>
+	struct MemoryAllocatorPolicyLinear
 	{
-		memoryAllocatorPolicyLinear() : origin(nullptr), current(nullptr), totalSize(0)
+		MemoryAllocatorPolicyLinear() : origin(nullptr), current(nullptr), totalSize(0)
 		{}
 
 		void setOrigin(void *newOrigin)
@@ -24,7 +24,7 @@ namespace cage
 			uintPtr total = alig + BoundsPolicy::SizeFront + size + BoundsPolicy::SizeBack;
 
 			if ((char*)current + total > (char*)origin + totalSize)
-				CAGE_THROW_SILENT(outOfMemory, "out of memory", total);
+				CAGE_THROW_SILENT(OutOfMemory, "out of memory", total);
 
 			void *result = (char*)current + alig + BoundsPolicy::SizeFront;
 			CAGE_ASSERT((uintPtr)result % alignment == 0, "alignment failed", result, total, alignment, current, alig, BoundsPolicy::SizeFront, size, BoundsPolicy::SizeBack);
@@ -58,10 +58,10 @@ namespace cage
 		uintPtr totalSize;
 	};
 
-	template<uint8 N, class BoundsPolicy = memoryBoundsPolicyDefault, class TaggingPolicy = memoryTagPolicyDefault, class TrackingPolicy = memoryTrackPolicyDefault>
-	struct memoryAllocatorPolicyNFrame
+	template<uint8 N, class BoundsPolicy = MemoryBoundsPolicyDefault, class TaggingPolicy = MemoryTagPolicyDefault, class TrackingPolicy = MemoryTrackPolicyDefault>
+	struct MemoryAllocatorPolicyNFrame
 	{
-		memoryAllocatorPolicyNFrame() : origin(nullptr), totalSize(0), current(0) {}
+		MemoryAllocatorPolicyNFrame() : origin(nullptr), totalSize(0), current(0) {}
 
 		void setOrigin(void *newOrigin)
 		{
@@ -97,14 +97,14 @@ namespace cage
 		}
 
 	private:
-		memoryAllocatorPolicyLinear<BoundsPolicy, TaggingPolicy, TrackingPolicy> allocs[N];
+		MemoryAllocatorPolicyLinear<BoundsPolicy, TaggingPolicy, TrackingPolicy> allocs[N];
 		void *origin;
 		uintPtr totalSize;
 		uint8 current;
 	};
 
-	template<uintPtr AtomSize, class BoundsPolicy = memoryBoundsPolicyDefault, class TaggingPolicy = memoryTagPolicyDefault, class TrackingPolicy = memoryTrackPolicyDefault>
-	struct memoryAllocatorPolicyPool
+	template<uintPtr AtomSize, class BoundsPolicy = MemoryBoundsPolicyDefault, class TaggingPolicy = MemoryTagPolicyDefault, class TrackingPolicy = MemoryTrackPolicyDefault>
+	struct MemoryAllocatorPolicyPool
 	{
 		static_assert(AtomSize > 0, "objects must be at least one byte");
 
@@ -116,7 +116,7 @@ namespace cage
 			return res;
 		}
 
-		memoryAllocatorPolicyPool() : origin(nullptr), current(nullptr), totalSize(0), objectSize(objectSizeInit())
+		MemoryAllocatorPolicyPool() : origin(nullptr), current(nullptr), totalSize(0), objectSize(objectSizeInit())
 		{}
 
 		void setOrigin(void *newOrigin)
@@ -152,7 +152,7 @@ namespace cage
 			CAGE_ASSERT(current >= origin && current <= (char*)origin + totalSize, "current is corrupted", current, origin, totalSize);
 
 			if (current >= (char*)origin + totalSize)
-				CAGE_THROW_SILENT(outOfMemory, "out of memory", objectSize);
+				CAGE_THROW_SILENT(OutOfMemory, "out of memory", objectSize);
 
 			void *next = *(void**)current;
 			uintPtr alig = detail::addToAlign((uintPtr)current, alignment);
@@ -203,10 +203,10 @@ namespace cage
 		const uintPtr objectSize;
 	};
 
-	template<class BoundsPolicy = memoryBoundsPolicyDefault, class TaggingPolicy = memoryTagPolicyDefault, class TrackingPolicy = memoryTrackPolicyDefault>
-	struct memoryAllocatorPolicyQueue
+	template<class BoundsPolicy = MemoryBoundsPolicyDefault, class TaggingPolicy = MemoryTagPolicyDefault, class TrackingPolicy = MemoryTrackPolicyDefault>
+	struct MemoryAllocatorPolicyQueue
 	{
-		memoryAllocatorPolicyQueue() : origin(nullptr), front(nullptr), back(nullptr), totalSize(0)
+		MemoryAllocatorPolicyQueue() : origin(nullptr), front(nullptr), back(nullptr), totalSize(0)
 		{}
 
 		void setOrigin(void *newOrigin)
@@ -228,7 +228,7 @@ namespace cage
 
 			if (back < front && (char*)back + total >(char*)front)
 			{
-				CAGE_THROW_SILENT(outOfMemory, "out of memory", total);
+				CAGE_THROW_SILENT(OutOfMemory, "out of memory", total);
 			}
 			else if (back >= front)
 			{
@@ -237,7 +237,7 @@ namespace cage
 					alig = detail::addToAlign((uintPtr)origin + sizeof(uintPtr) + BoundsPolicy::SizeFront, alignment);
 					total = alig + sizeof(uintPtr) + BoundsPolicy::SizeFront + size + BoundsPolicy::SizeBack;
 					if ((char*)origin + total > (char*)front)
-						CAGE_THROW_SILENT(outOfMemory, "out of memory", total);
+						CAGE_THROW_SILENT(OutOfMemory, "out of memory", total);
 					back = origin;
 				}
 			}
@@ -288,10 +288,10 @@ namespace cage
 		uintPtr totalSize;
 	};
 
-	template<class BoundsPolicy = memoryBoundsPolicyDefault, class TaggingPolicy = memoryTagPolicyDefault, class TrackingPolicy = memoryTrackPolicyDefault>
-	struct memoryAllocatorPolicyStack
+	template<class BoundsPolicy = MemoryBoundsPolicyDefault, class TaggingPolicy = MemoryTagPolicyDefault, class TrackingPolicy = MemoryTrackPolicyDefault>
+	struct MemoryAllocatorPolicyStack
 	{
-		memoryAllocatorPolicyStack() : origin(nullptr), current(nullptr), totalSize(0)
+		MemoryAllocatorPolicyStack() : origin(nullptr), current(nullptr), totalSize(0)
 		{}
 
 		void setOrigin(void *newOrigin)
@@ -312,7 +312,7 @@ namespace cage
 			uintPtr total = alig + sizeof(uintPtr) + BoundsPolicy::SizeFront + size + BoundsPolicy::SizeBack;
 
 			if ((char*)current + total > (char*)origin + totalSize)
-				CAGE_THROW_SILENT(outOfMemory, "out of memory", total);
+				CAGE_THROW_SILENT(OutOfMemory, "out of memory", total);
 
 			void *result = (char*)current + alig + sizeof(uintPtr) + BoundsPolicy::SizeFront;
 			CAGE_ASSERT((uintPtr)result % alignment == 0, "alignment failed", result, total, alignment, current, alig, BoundsPolicy::SizeFront, size, BoundsPolicy::SizeBack);

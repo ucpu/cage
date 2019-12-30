@@ -1,6 +1,6 @@
 namespace cage
 {
-	struct CAGE_API memoryBoundsPolicyNone
+	struct CAGE_API MemoryBoundsPolicyNone
 	{
 		static const uintPtr SizeFront = 0;
 		static const uintPtr SizeBack = 0;
@@ -18,7 +18,7 @@ namespace cage
 		{}
 	};
 
-	struct CAGE_API memoryBoundsPolicySimple
+	struct CAGE_API MemoryBoundsPolicySimple
 	{
 		static const uintPtr SizeFront = 4;
 		static const uintPtr SizeBack = 4;
@@ -50,7 +50,7 @@ namespace cage
 		static const uint32 PatternBack = 0xDCDCDCDC;
 	};
 
-	struct CAGE_API memoryTagPolicyNone
+	struct CAGE_API MemoryTagPolicyNone
 	{
 		void set(void *ptr, uintPtr size)
 		{}
@@ -59,7 +59,7 @@ namespace cage
 		{}
 	};
 
-	struct CAGE_API memoryTagPolicySimple
+	struct CAGE_API MemoryTagPolicySimple
 	{
 		void set(void *ptr, uintPtr size)
 		{
@@ -76,7 +76,7 @@ namespace cage
 		}
 	};
 
-	struct CAGE_API memoryTrackPolicyNone
+	struct CAGE_API MemoryTrackPolicyNone
 	{
 		void set(void *ptr, uintPtr size)
 		{}
@@ -88,12 +88,12 @@ namespace cage
 		{}
 	};
 
-	struct CAGE_API memoryTrackPolicySimple
+	struct CAGE_API MemoryTrackPolicySimple
 	{
-		memoryTrackPolicySimple() : count(0)
+		MemoryTrackPolicySimple() : count(0)
 		{}
 
-		~memoryTrackPolicySimple();
+		~MemoryTrackPolicySimple();
 
 		void set(void *ptr, const uintPtr size)
 		{
@@ -116,11 +116,11 @@ namespace cage
 		uint32 count;
 	};
 
-	struct CAGE_API memoryTrackPolicyAdvanced
+	struct CAGE_API MemoryTrackPolicyAdvanced
 	{
 	public:
-		memoryTrackPolicyAdvanced();
-		~memoryTrackPolicyAdvanced();
+		MemoryTrackPolicyAdvanced();
+		~MemoryTrackPolicyAdvanced();
 		void set(void *ptr, uintPtr size);
 		void check(void *ptr);
 		void flush();
@@ -128,15 +128,15 @@ namespace cage
 		void *data;
 	};
 
-	struct CAGE_API memoryConcurrentPolicyNone
+	struct CAGE_API MemoryConcurrentPolicyNone
 	{
 		void lock() {}
 		void unlock() {}
 	};
 
-	struct CAGE_API memoryConcurrentPolicyMutex
+	struct CAGE_API MemoryConcurrentPolicyMutex
 	{
-		memoryConcurrentPolicyMutex();
+		MemoryConcurrentPolicyMutex();
 		void lock();
 		void unlock();
 
@@ -145,12 +145,12 @@ namespace cage
 	};
 
 #ifdef CAGE_DEBUG
-	typedef memoryBoundsPolicySimple memoryBoundsPolicyDefault;
-	typedef memoryTagPolicySimple memoryTagPolicyDefault;
-	typedef memoryTrackPolicySimple memoryTrackPolicyDefault;
+	typedef MemoryBoundsPolicySimple MemoryBoundsPolicyDefault;
+	typedef MemoryTagPolicySimple MemoryTagPolicyDefault;
+	typedef MemoryTrackPolicySimple MemoryTrackPolicyDefault;
 #else
-	typedef memoryBoundsPolicyNone memoryBoundsPolicyDefault;
-	typedef memoryTagPolicyNone memoryTagPolicyDefault;
-	typedef memoryTrackPolicyNone memoryTrackPolicyDefault;
+	typedef MemoryBoundsPolicyNone MemoryBoundsPolicyDefault;
+	typedef MemoryTagPolicyNone MemoryTagPolicyDefault;
+	typedef MemoryTrackPolicyNone MemoryTrackPolicyDefault;
 #endif
 }

@@ -60,7 +60,7 @@ namespace
 
 	bool parseDatabank(const string &path)
 	{
-		Holder<Ini> ini = newConfigIni();
+		Holder<Ini> ini = newIni();
 		try
 		{
 			ini->load(pathJoin(configPathInput, path));
@@ -505,7 +505,7 @@ namespace
 	public:
 		threadsInitializerClass()
 		{
-			mut = newSyncMutex();
+			mut = newMutex();
 			threads = newThreadPool();
 			threads->function.bind<&threadEntry>();
 		}
@@ -641,7 +641,7 @@ namespace
 			schemeStruct s;
 			s.name = name.subString(0, name.length() - 7);
 			CAGE_LOG(SeverityEnum::Info, "database", stringizer() + "loading scheme '" + s.name + "'");
-			Holder<Ini> ini = newConfigIni();
+			Holder<Ini> ini = newIni();
 			ini->load(pathJoin(configPathSchemes, name));
 			s.parse(ini.get());
 			schemes.insert(templates::move(s));

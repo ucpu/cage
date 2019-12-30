@@ -15,7 +15,7 @@ namespace cage
 	{
 		Mutex *mut()
 		{
-			static Holder<Mutex> *m = new Holder<Mutex>(newSyncMutex()); // this leak is intentional
+			static Holder<Mutex> *m = new Holder<Mutex>(newMutex()); // this leak is intentional
 			return m->get();
 		}
 
@@ -106,7 +106,7 @@ namespace cage
 				// the logic of function configLoadIni is replicated here, but we are inside the mutex already
 				try
 				{
-					Holder<Ini> ini = newConfigIni();
+					Holder<Ini> ini = newIni();
 					ini->load(filename);
 					for (const string &section : ini->sections())
 					{
@@ -435,7 +435,7 @@ namespace cage
 	{
 		if (prefix.find('/') != m || prefix.empty())
 			CAGE_LOG(SeverityEnum::Warning, "config", stringizer() + "dangerous config prefix '" + prefix + "'");
-		Holder<Ini> ini = newConfigIni();
+		Holder<Ini> ini = newIni();
 		Holder<ConfigList> cnf = newConfigList();
 		while (cnf->valid())
 		{
@@ -454,7 +454,7 @@ namespace cage
 
 	void configLoadIni(const string &filename, const string &prefix)
 	{
-		Holder<Ini> ini = newConfigIni();
+		Holder<Ini> ini = newIni();
 		ini->load(filename);
 		configApplyIni(ini.get(), prefix);
 	}

@@ -431,7 +431,7 @@ namespace cage
 		return detail::systemArena().createImpl<Image, pngBufferImpl>();
 	}
 
-	void imageBlit(Image *sourcePng, Image *targetPng, uint32 sourceX, uint32 sourceY, uint32 targetX, uint32 targetY, uint32 width, uint32 height)
+	void imageBlit(const Image *sourcePng, Image *targetPng, uint32 sourceX, uint32 sourceY, uint32 targetX, uint32 targetY, uint32 width, uint32 height)
 	{
 		CAGE_ASSERT(sourcePng->channels() == targetPng->channels(), "images are incompatible (different count of channels)", sourcePng->channels(), targetPng->channels());
 		CAGE_ASSERT(sourcePng->bytesPerChannel() == targetPng->bytesPerChannel(), "images are incompatible (different bytes per channel)", sourcePng->bytesPerChannel(), targetPng->bytesPerChannel());

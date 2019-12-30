@@ -10,18 +10,18 @@ namespace cage
 			constexpr const uint32 one = 1;
 		}
 
-		constexpr bool little()
+		constexpr bool little() noexcept
 		{
 			return ((const uint8&)(privat::one) == 1);
 		}
 
-		constexpr bool big() // network
+		constexpr bool big() noexcept // network
 		{
 			return !little();
 		}
 
 		template<class T>
-		constexpr T change(T val)
+		constexpr T change(T val) noexcept
 		{
 			union U
 			{

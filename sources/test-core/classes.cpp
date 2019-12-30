@@ -64,7 +64,7 @@ namespace
 		char data[64];
 	};
 
-	typedef memoryArenaFixed<memoryAllocatorPolicyPool<128, memoryBoundsPolicySimple, memoryTagPolicySimple, memoryTrackPolicyAdvanced>, memoryConcurrentPolicyNone> Arena;
+	typedef MemoryArenaFixed<MemoryAllocatorPolicyPool<128, MemoryBoundsPolicySimple, MemoryTagPolicySimple, MemoryTrackPolicyAdvanced>, MemoryConcurrentPolicyNone> Arena;
 }
 
 void testClasses()

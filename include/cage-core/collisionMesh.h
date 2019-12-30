@@ -39,10 +39,13 @@ namespace cage
 
 	CAGE_API bool collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at, const transform &bt);
 	CAGE_API uint32 collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at, const transform &bt, CollisionPair *outputBuffer, uint32 bufferSize);
+	CAGE_API uint32 collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at, const transform &bt, Holder<PointerRange<CollisionPair>> &outputBuffer);
 	CAGE_API bool collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2);
 	CAGE_API bool collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, real &fractionBefore, real &fractionContact);
 	CAGE_API uint32 collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, CollisionPair *outputBuffer, uint32 bufferSize);
+	CAGE_API uint32 collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, Holder<PointerRange<CollisionPair>> &outputBuffer);
 	CAGE_API uint32 collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, real &fractionBefore, real &fractionContact, CollisionPair *outputBuffer, uint32 bufferSize);
+	CAGE_API uint32 collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, real &fractionBefore, real &fractionContact, Holder<PointerRange<CollisionPair>> &outputBuffer);
 
 	CAGE_API real distance(const line &shape, const CollisionMesh *collider, const transform &t);
 	CAGE_API real distance(const triangle &shape, const CollisionMesh *collider, const transform &t);

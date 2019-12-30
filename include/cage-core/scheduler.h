@@ -38,17 +38,14 @@ namespace cage
 		sint32 priority() const;
 
 		// statistics are not available for schemes of once type
-		uint64 delayWindowAvg() const;
-		uint64 delayWindowMax() const;
-		uint64 delayTotalAvg() const;
-		uint64 delayTotalMax() const;
-		uint64 delayTotalSum() const;
-		uint64 durationWindowAvg() const;
-		uint64 durationWindowMax() const;
-		uint64 durationTotalAvg() const;
-		uint64 durationTotalMax() const;
-		uint64 durationTotalSum() const;
-		uint32 runsCount() const;
+		static const uint32 StatisticsWindowSize = 100;
+		const VariableSmoothingBuffer<uint64, StatisticsWindowSize> &statsDelay() const;
+		const VariableSmoothingBuffer<uint64, StatisticsWindowSize> &statsDuration() const;
+		uint64 statsDelayMax() const;
+		uint64 statsDelaySum() const;
+		uint64 statsDurationMax() const;
+		uint64 statsDurationSum() const;
+		uint32 statsRunCount() const;
 	};
 
 	struct CAGE_API SchedulerCreateConfig

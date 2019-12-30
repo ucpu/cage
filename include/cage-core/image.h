@@ -47,7 +47,7 @@ namespace cage
 
 	CAGE_API Holder<Image> newImage();
 
-	CAGE_API void imageBlit(Image *source, Image *target, uint32 sourceX, uint32 sourceY, uint32 targetX, uint32 targetY, uint32 width, uint32 height);
+	CAGE_API void imageBlit(const Image *source, Image *target, uint32 sourceX, uint32 sourceY, uint32 targetX, uint32 targetY, uint32 width, uint32 height);
 }
 
 #endif // guard_image_h_681DF37FA76B4FA48C656E96AF90EE69

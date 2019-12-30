@@ -65,7 +65,7 @@ namespace cage
 	{
 		Mutex *windowsMutex()
 		{
-			static Holder<Mutex> *m = new Holder<Mutex>(newSyncMutex()); // intentional leak
+			static Holder<Mutex> *m = new Holder<Mutex>(newMutex()); // intentional leak
 			return m->get();
 		}
 
@@ -215,7 +215,7 @@ namespace cage
 			}
 #endif
 
-			windowImpl(Window *shareContext) : lastMouseButtonPressTimes{0,0,0,0,0}, shareContext(shareContext), eventsMutex(newSyncMutex()), stateMods(ModifiersFlags::None), stateButtons(MouseButtonsFlags::None), window(nullptr), focus(true)
+			windowImpl(Window *shareContext) : lastMouseButtonPressTimes{0,0,0,0,0}, shareContext(shareContext), eventsMutex(newMutex()), stateMods(ModifiersFlags::None), stateButtons(MouseButtonsFlags::None), window(nullptr), focus(true)
 			{
 				cageGlfwInitializeFunc();
 
@@ -223,7 +223,7 @@ namespace cage
 
 #ifdef GCHL_WINDOWS_THREAD
 				stopping = false;
-				windowSemaphore = newSyncSemaphore(0, 1);
+				windowSemaphore = newSemaphore(0, 1);
 				static uint32 threadIndex = 0;
 				windowThread = newThread(Delegate<void()>().bind<windowImpl, &windowImpl::threadEntry>(this), stringizer() + "window " + (threadIndex++));
 				windowSemaphore->lock();

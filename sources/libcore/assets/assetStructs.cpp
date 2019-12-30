@@ -71,7 +71,7 @@ namespace cage
 		}
 	}
 
-	AssetScheme genAssetSchemeTextPackage(const uint32 threadIndex)
+	AssetScheme genAssetSchemeTextPack(const uint32 threadIndex)
 	{
 		AssetScheme s;
 		s.threadIndex = threadIndex;

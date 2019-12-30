@@ -1,8 +1,8 @@
 namespace cage
 {
-	struct CAGE_API outOfMemory : public Exception
+	struct CAGE_API OutOfMemory : public Exception
 	{
-		explicit outOfMemory(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message, uintPtr memory) noexcept;
+		explicit OutOfMemory(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message, uintPtr memory) noexcept;
 		virtual void log();
 		uintPtr memory;
 	};
@@ -42,13 +42,13 @@ namespace cage
 	namespace templates
 	{
 		template<class T>
-		struct poolAllocatorAtomSize
+		struct PoolAllocatorAtomSize
 		{
 			static const uintPtr result = sizeof(T) + alignof(T);
 		};
 
 		template<class T>
-		struct allocatorSizeList
+		struct AllocatorSizeList
 		{
 			void *a;
 			void *b;
@@ -56,7 +56,7 @@ namespace cage
 		};
 
 		template<class T>
-		struct allocatorSizeSet
+		struct AllocatorSizeSet
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
 			void *a;
@@ -75,18 +75,18 @@ namespace cage
 		};
 
 		template<class K, class V>
-		struct allocatorSizeMap
+		struct AllocatorSizeMap
 		{
 			struct pair
 			{
 				K k;
 				V v;
 			};
-			allocatorSizeSet<pair> s;
+			AllocatorSizeSet<pair> s;
 		};
 	}
 
-	class CAGE_API virtualMemoryClass
+	class CAGE_API VirtualMemory
 	{
 	public:
 		void *reserve(uintPtr pages); // reserve address space
@@ -96,7 +96,7 @@ namespace cage
 		uintPtr pages() const; // currently allocated pages
 	};
 
-	CAGE_API Holder<virtualMemoryClass> newVirtualMemory();
+	CAGE_API Holder<VirtualMemory> newVirtualMemory();
 
 	namespace detail
 	{

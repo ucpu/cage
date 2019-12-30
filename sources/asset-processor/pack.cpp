@@ -10,7 +10,7 @@ void processPack()
 {
 	writeLine(string("use=") + inputFile);
 
-	Holder<Ini> ini = newConfigIni();
+	Holder<Ini> ini = newIni();
 	ini->load(inputFileName);
 
 	std::set<uint32> assets;

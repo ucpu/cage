@@ -14,7 +14,7 @@ namespace cage
 		void unlock();
 	};
 
-	CAGE_API Holder<Mutex> newSyncMutex();
+	CAGE_API Holder<Mutex> newMutex();
 
 	class CAGE_API Barrier : private Immovable
 	{
@@ -23,7 +23,7 @@ namespace cage
 		void unlock(); // does nothing
 	};
 
-	CAGE_API Holder<Barrier> newSyncBarrier(uint32 value);
+	CAGE_API Holder<Barrier> newBarrier(uint32 value);
 
 	class CAGE_API Semaphore : private Immovable
 	{
@@ -32,7 +32,7 @@ namespace cage
 		void unlock(); // increments value
 	};
 
-	CAGE_API Holder<Semaphore> newSyncSemaphore(uint32 value, uint32 max);
+	CAGE_API Holder<Semaphore> newSemaphore(uint32 value, uint32 max);
 
 	class CAGE_API ConditionalVariableBase : private Immovable
 	{
@@ -44,7 +44,7 @@ namespace cage
 		void broadcast();
 	};
 
-	CAGE_API Holder<ConditionalVariableBase> newSyncConditionalBase();
+	CAGE_API Holder<ConditionalVariableBase> newConditionalVariableBase();
 
 	// this is a compound class containing both mutex and conditional variable
 	class CAGE_API ConditionalVariable : private Immovable
@@ -57,7 +57,7 @@ namespace cage
 		void broadcast(); // broadcast the conditional variable without touching the mutex
 	};
 
-	CAGE_API Holder<ConditionalVariable> newSyncConditional(bool broadcast = false);
+	CAGE_API Holder<ConditionalVariable> newConditionalVariable(bool broadcast = false);
 
 	class CAGE_API Thread : private Immovable
 	{

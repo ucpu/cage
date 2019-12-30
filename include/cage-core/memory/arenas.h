@@ -1,16 +1,16 @@
 namespace cage
 {
 	template<class AllocatorPolicy, class ConcurrentPolicy>
-	struct memoryArenaFixed
+	struct MemoryArenaFixed
 	{
-		explicit memoryArenaFixed(uintPtr size) : size(size)
+		explicit MemoryArenaFixed(uintPtr size) : size(size)
 		{
 			origin = detail::systemArena().allocate(size, sizeof(uintPtr));
 			allocator.setOrigin(origin);
 			allocator.setSize(size);
 		}
 
-		~memoryArenaFixed()
+		~MemoryArenaFixed()
 		{
 			ScopeLock<ConcurrentPolicy> g(&concurrent);
 			detail::systemArena().deallocate(origin);
@@ -26,7 +26,7 @@ namespace cage
 				CAGE_ASSERT(uintPtr(tmp) + size <= uintPtr(origin) + this->size, "allocator corrupted", tmp, origin, size, this->size);
 				return tmp;
 			}
-			catch (outOfMemory &e)
+			catch (OutOfMemory &e)
 			{
 				e.severity = SeverityEnum::Error;
 				e.log();
@@ -60,9 +60,9 @@ namespace cage
 	};
 
 	template<class AllocatorPolicy, class ConcurrentPolicy>
-	struct memoryArenaGrowing
+	struct MemoryArenaGrowing
 	{
-		explicit memoryArenaGrowing(uintPtr addressSize, uintPtr initialSize = 1024 * 1024) : origin(nullptr), pageSize(detail::memoryPageSize()), addressSize(detail::roundUpTo(addressSize, pageSize)), currentSize(0)
+		explicit MemoryArenaGrowing(uintPtr addressSize, uintPtr initialSize = 1024 * 1024) : origin(nullptr), pageSize(detail::memoryPageSize()), addressSize(detail::roundUpTo(addressSize, pageSize)), currentSize(0)
 		{
 			memory = newVirtualMemory();
 			origin = memory->reserve(this->addressSize / pageSize);
@@ -73,7 +73,7 @@ namespace cage
 			allocator.setSize(currentSize);
 		}
 
-		~memoryArenaGrowing()
+		~MemoryArenaGrowing()
 		{
 			ScopeLock<ConcurrentPolicy> g(&concurrent);
 		}
@@ -85,7 +85,7 @@ namespace cage
 			{
 				return alloc(size, alignment);
 			}
-			catch (const outOfMemory &e)
+			catch (const OutOfMemory &e)
 			{
 				// allocate one more third plus some constant
 				uintPtr adding = detail::roundUpTo((memory->pages() + 1) * pageSize / 3 + e.memory, pageSize);
@@ -97,7 +97,7 @@ namespace cage
 			{
 				return alloc(size, alignment);
 			}
-			catch (outOfMemory &e)
+			catch (OutOfMemory &e)
 			{
 				e.severity = SeverityEnum::Error;
 				e.makeLog();
@@ -124,7 +124,7 @@ namespace cage
 		uintPtr getReservedSize() const { return addressSize; }
 
 	private:
-		Holder<virtualMemoryClass> memory;
+		Holder<VirtualMemory> memory;
 		AllocatorPolicy allocator;
 		ConcurrentPolicy concurrent;
 		const uintPtr pageSize;

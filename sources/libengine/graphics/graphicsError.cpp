@@ -158,7 +158,7 @@ namespace cage
 
 			assertContextStruct()
 			{
-				mutex = newSyncMutex();
+				mutex = newMutex();
 			}
 		};
 

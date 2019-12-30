@@ -90,19 +90,19 @@ namespace
 			CAGE_TESTCASE(stringizer() + "MemoryArenaStd sizes, " + sizeof(ts));
 			{
 				CAGE_TESTCASE("list");
-				std::list<ts, interceptMemoryArena<sizeof(templates::allocatorSizeList<ts>), ts>> cont;
+				std::list<ts, interceptMemoryArena<sizeof(templates::AllocatorSizeList<ts>), ts>> cont;
 				for (uint32 i = 0; i < 3; i++)
 					cont.push_back(ts(i));
 			}
 			{
 				CAGE_TESTCASE("map");
-				std::map<int, ts, std::less<int>, interceptMemoryArena<sizeof(templates::allocatorSizeMap<int, ts>), std::pair<const int, ts>>> cont;
+				std::map<int, ts, std::less<int>, interceptMemoryArena<sizeof(templates::AllocatorSizeMap<int, ts>), std::pair<const int, ts>>> cont;
 				for (uint32 i = 0; i < 3; i++)
 					cont[i] = ts(i);
 			}
 			{
 				CAGE_TESTCASE("set");
-				std::set<ts, std::less<ts>, interceptMemoryArena<sizeof(templates::allocatorSizeSet<ts>), ts>> cont;
+				std::set<ts, std::less<ts>, interceptMemoryArena<sizeof(templates::AllocatorSizeSet<ts>), ts>> cont;
 				for (uint32 i = 0; i < 3; i++)
 					cont.insert(ts(i));
 			}
@@ -110,21 +110,21 @@ namespace
 			CAGE_TESTCASE(stringizer() + "MemoryArenaStd with pool allocator, " + sizeof(ts));
 			{
 				CAGE_TESTCASE("list");
-				memoryArenaFixed<memoryAllocatorPolicyPool<sizeof(templates::allocatorSizeList<ts>)>, memoryConcurrentPolicyNone> arena(1024 * 1024);
+				MemoryArenaFixed<MemoryAllocatorPolicyPool<sizeof(templates::AllocatorSizeList<ts>)>, MemoryConcurrentPolicyNone> arena(1024 * 1024);
 				std::list<ts, MemoryArenaStd<ts>> cont((MemoryArena(&arena)));
 				for (uint32 i = 0; i < 100; i++)
 					cont.push_back(ts(i));
 			}
 			{
 				CAGE_TESTCASE("map");
-				memoryArenaFixed<memoryAllocatorPolicyPool<sizeof(templates::allocatorSizeMap<int, ts>)>, memoryConcurrentPolicyNone> arena(1024 * 1024);
+				MemoryArenaFixed<MemoryAllocatorPolicyPool<sizeof(templates::AllocatorSizeMap<int, ts>)>, MemoryConcurrentPolicyNone> arena(1024 * 1024);
 				std::map<int, ts, std::less<int>, MemoryArenaStd<std::pair<const int, ts>>> cont((std::less<int>(), MemoryArena(&arena)));
 				for (uint32 i = 0; i < 100; i++)
 					cont[i] = ts(i);
 			}
 			{
 				CAGE_TESTCASE("set");
-				memoryArenaFixed<memoryAllocatorPolicyPool<sizeof(templates::allocatorSizeSet<ts>)>, memoryConcurrentPolicyNone> arena(1024 * 1024);
+				MemoryArenaFixed<MemoryAllocatorPolicyPool<sizeof(templates::AllocatorSizeSet<ts>)>, MemoryConcurrentPolicyNone> arena(1024 * 1024);
 				std::set<ts, std::less<ts>, MemoryArenaStd<ts>> cont((std::less<ts>(), MemoryArena(&arena)));
 				for (uint32 i = 0; i < 100; i++)
 					cont.insert(ts(i));
@@ -148,7 +148,7 @@ void testMemoryPools()
 
 	{
 		CAGE_TESTCASE("createHolder");
-		memoryArenaFixed<memoryAllocatorPolicyPool<32>, memoryConcurrentPolicyNone> pool(1024 * 1024);
+		MemoryArenaFixed<MemoryAllocatorPolicyPool<32>, MemoryConcurrentPolicyNone> pool(1024 * 1024);
 		MemoryArena arena((MemoryArena(&pool)));
 		std::vector<Holder<testStruct<6>>> vecs;
 		vecs.reserve(100);

@@ -16,10 +16,10 @@
 
 namespace cage
 {
-	outOfMemory::outOfMemory(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message, uintPtr memory) noexcept : Exception(file, line, function, severity, message), memory(memory)
+	OutOfMemory::OutOfMemory(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message, uintPtr memory) noexcept : Exception(file, line, function, severity, message), memory(memory)
 	{};
 
-	void outOfMemory::log()
+	void OutOfMemory::log()
 	{
 		::cage::privat::makeLog(file, line, function, SeverityEnum::Note, "exception", stringizer() + "memory requested: " + memory, false, false);
 		::cage::privat::makeLog(file, line, function, severity, "exception", message, false, false);
@@ -44,7 +44,7 @@ namespace cage
 			case Z_MEM_ERROR: // some allocation failed
 				CAGE_THROW_ERROR(Exception, "compression failed with allocation error");
 			case Z_BUF_ERROR: // output buffer was too small
-				CAGE_THROW_ERROR(outOfMemory, "output buffer for compression is too small", 0);
+				CAGE_THROW_ERROR(OutOfMemory, "output buffer for compression is too small", 0);
 			case Z_STREAM_ERROR:
 				CAGE_THROW_CRITICAL(Exception, "invalid compression level");
 			default:
@@ -63,7 +63,7 @@ namespace cage
 			case Z_MEM_ERROR: // some allocation failed
 				CAGE_THROW_ERROR(Exception, "decompression failed with allocation error");
 			case Z_BUF_ERROR: // output buffer was too small
-				CAGE_THROW_ERROR(outOfMemory, "output buffer for decompression is too small", 0);
+				CAGE_THROW_ERROR(OutOfMemory, "output buffer for decompression is too small", 0);
 			case Z_DATA_ERROR:
 				CAGE_THROW_ERROR(Exception, "input buffer for decompression is corrupted");
 			default:
@@ -114,7 +114,7 @@ namespace cage
 				{
 					void *tmp = malloca(size, alignment);
 					if (!tmp)
-						CAGE_THROW_ERROR(outOfMemory, "out of memory", size);
+						CAGE_THROW_ERROR(OutOfMemory, "out of memory", size);
 					allocations++;
 					return tmp;
 				}
@@ -147,7 +147,7 @@ namespace cage
 
 	namespace
 	{
-		class virtualMemoryImpl : public virtualMemoryClass
+		class virtualMemoryImpl : public VirtualMemory
 		{
 		public:
 			virtualMemoryImpl() : origin(nullptr), pgs(0), total(0), pageSize(detail::memoryPageSize())
@@ -241,39 +241,39 @@ namespace cage
 		};
 	}
 
-	void *virtualMemoryClass::reserve(uintPtr pages)
+	void *VirtualMemory::reserve(uintPtr pages)
 	{
 		virtualMemoryImpl *impl = (virtualMemoryImpl*)this;
 		return impl->reserve(pages);
 	}
 
-	void virtualMemoryClass::free()
+	void VirtualMemory::free()
 	{
 		virtualMemoryImpl *impl = (virtualMemoryImpl*)this;
 		impl->free();
 	}
 
-	void virtualMemoryClass::increase(uintPtr pages)
+	void VirtualMemory::increase(uintPtr pages)
 	{
 		virtualMemoryImpl *impl = (virtualMemoryImpl*)this;
 		impl->increase(pages);
 	}
 
-	void virtualMemoryClass::decrease(uintPtr pages)
+	void VirtualMemory::decrease(uintPtr pages)
 	{
 		virtualMemoryImpl *impl = (virtualMemoryImpl*)this;
 		impl->decrease(pages);
 	}
 
-	uintPtr virtualMemoryClass::pages() const
+	uintPtr VirtualMemory::pages() const
 	{
 		virtualMemoryImpl *impl = (virtualMemoryImpl*)this;
 		return impl->pgs;
 	}
 
-	Holder<virtualMemoryClass> newVirtualMemory()
+	Holder<VirtualMemory> newVirtualMemory()
 	{
-		return detail::systemArena().createImpl<virtualMemoryClass, virtualMemoryImpl>();
+		return detail::systemArena().createImpl<VirtualMemory, virtualMemoryImpl>();
 	}
 
 	namespace detail

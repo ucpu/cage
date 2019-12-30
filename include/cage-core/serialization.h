@@ -52,6 +52,8 @@ namespace cage
 
 	// general serialization
 
+	// todo implement templates::is_trivially_copyable and use it to enable the general serialization methods for those types only
+
 	template<class T>
 	Serializer &operator << (Serializer &s, const T &v)
 	{
@@ -86,19 +88,13 @@ namespace cage
 		return s;
 	}
 
-	// disable serialization of raw pointers and holders
+	// disable serialization of raw pointers
 
 	template<class T>
 	Serializer &operator << (Serializer &s, const T *v) = delete;
 
 	template<class T>
-	Serializer &operator << (Serializer &s, const Holder<T> &v) = delete;
-
-	template<class T>
 	Deserializer &operator >> (Deserializer &s, T *v) = delete;
-
-	template<class T>
-	Deserializer &operator >> (Deserializer &s, Holder<T> &v) = delete;
 }
 
 #endif

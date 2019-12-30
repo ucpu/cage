@@ -36,7 +36,7 @@ namespace cage
 	};
 
 	CAGE_API Holder<SpatialData> newSpatialData(const SpatialDataCreateConfig &config);
-	CAGE_API Holder<SpatialQuery> newSpatialQuery(const SpatialData *data);
+	CAGE_API Holder<SpatialQuery> newSpatialQuery(const SpatialData *data); // the SpatialData must outlive the query
 }
 
 #endif // guard_spatial_h_9A6D87AF6D4243E990D6E274B56CF578
