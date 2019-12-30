@@ -81,7 +81,7 @@ namespace cage
 			fontImpl() : texWidth(0), texHeight(0),
 				shr(nullptr), msh(nullptr), spaceGlyph(0), returnGlyph(0), cursorGlyph(m)
 			{
-				tex = newRenderTexture();
+				tex = newTexture();
 				instances.reserve(1000);
 			}
 
@@ -398,7 +398,7 @@ namespace cage
 		((fontImpl*)this)->processText(data);
 	}
 
-	Holder<Font> newFontFace()
+	Holder<Font> newFont()
 	{
 		return detail::systemArena().createImpl<Font, fontImpl>();
 	}

@@ -1,5 +1,20 @@
 namespace cage
 {
+	enum class CameraEffectsFlags : uint32
+	{
+		None = 0,
+		AmbientOcclusion = 1 << 0,
+		MotionBlur = 1 << 1,
+		Bloom = 1 << 2,
+		EyeAdaptation = 1 << 3,
+		ToneMapping = 1 << 4,
+		GammaCorrection = 1 << 5,
+		AntiAliasing = 1 << 6,
+		GeometryPass = AmbientOcclusion | MotionBlur,
+		ScreenPass = Bloom | ToneMapping | GammaCorrection | AntiAliasing,
+		CombinedPass = GeometryPass | ScreenPass,
+	};
+
 	struct CAGE_API CameraSsao
 	{
 		real worldRadius;

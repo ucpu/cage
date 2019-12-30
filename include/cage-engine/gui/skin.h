@@ -160,7 +160,7 @@ namespace cage
 		GuiSkinElementLayout();
 	};
 
-	enum class ElementTypeEnum : uint32
+	enum class GuiElementTypeEnum : uint32
 	{
 		ScrollbarHorizontalPanel,
 		ScrollbarVerticalPanel,

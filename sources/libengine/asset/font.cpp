@@ -22,7 +22,7 @@ namespace cage
 			}
 			else
 			{
-				context->assetHolder = newFontFace().cast<void>();
+				context->assetHolder = newFont().cast<void>();
 				font = static_cast<Font*>(context->assetHolder.get());
 				font->setDebugName(context->textName);
 			}
@@ -47,7 +47,7 @@ namespace cage
 		}
 	}
 
-	AssetScheme genAssetSchemeFontFace(uint32 threadIndex, Window *memoryContext)
+	AssetScheme genAssetSchemeFont(uint32 threadIndex, Window *memoryContext)
 	{
 		AssetScheme s;
 		s.threadIndex = threadIndex;

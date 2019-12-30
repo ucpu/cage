@@ -22,13 +22,13 @@ namespace cage
 		static uint32 getAlignmentRequirement();
 	};
 
-	struct CAGE_API uniformBufferCreateConfig
+	struct CAGE_API UniformBufferCreateConfig
 	{
 		uint32 size;
 		bool persistentMapped, coherentMapped, explicitFlush;
 
-		uniformBufferCreateConfig();
+		UniformBufferCreateConfig();
 	};
 
-	CAGE_API Holder<UniformBuffer> newUniformBuffer(const uniformBufferCreateConfig &config = {});
+	CAGE_API Holder<UniformBuffer> newUniformBuffer(const UniformBufferCreateConfig &config = {});
 }

@@ -15,7 +15,6 @@ namespace cage
 		DrawPrimitives = 1 << 6,
 		Entities = 1 << 7,
 	};
-	GCHL_ENUM_BITS(EngineProfilingStatsFlags);
 
 	enum class EngineProfilingModeEnum
 	{

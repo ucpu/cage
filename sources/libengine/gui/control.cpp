@@ -308,7 +308,7 @@ namespace cage
 		for (auto &s : impl->skins)
 		{
 			if (impl->assetMgr->ready(s.textureName))
-				s.texture = impl->assetMgr->get<assetSchemeIndexRenderTexture, Texture>(s.textureName);
+				s.texture = impl->assetMgr->get<assetSchemeIndexTexture, Texture>(s.textureName);
 			else
 				s.texture = nullptr;
 		}

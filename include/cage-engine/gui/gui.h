@@ -2,16 +2,19 @@ namespace cage
 {
 	struct CAGE_API GuiSkinConfig
 	{
-		GuiSkinElementLayout layouts[(uint32)ElementTypeEnum::TotalElements];
+		GuiSkinElementLayout layouts[(uint32)GuiElementTypeEnum::TotalElements];
 		GuiSkinWidgetDefaults defaults;
 		uint32 textureName;
 		GuiSkinConfig();
 	};
 
-	struct CAGE_API GuiComponents : public privat::GuiGeneralComponents, public privat::GuiWidgetsComponents, public privat::GuiLayoutsComponents
+	namespace privat
 	{
-		GuiComponents(EntityManager *ents);
-	};
+		struct CAGE_API GuiComponents : public privat::GuiGeneralComponents, public privat::GuiWidgetsComponents, public privat::GuiLayoutsComponents
+		{
+			GuiComponents(EntityManager* ents);
+		};
+	}
 
 	class CAGE_API Gui : private Immovable
 	{
@@ -56,7 +59,7 @@ namespace cage
 		GuiSkinConfig &skin(uint32 index = 0);
 		const GuiSkinConfig &skin(uint32 index = 0) const;
 
-		GuiComponents &components();
+		privat::GuiComponents &components();
 		EntityManager *entities();
 		AssetManager *assets();
 	};
@@ -71,7 +74,7 @@ namespace cage
 		GuiCreateConfig();
 	};
 
-	CAGE_API Holder<Gui> newGuiManager(const GuiCreateConfig &config);
+	CAGE_API Holder<Gui> newGui(const GuiCreateConfig &config);
 
 	namespace detail
 	{

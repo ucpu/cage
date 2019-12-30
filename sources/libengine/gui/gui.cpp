@@ -101,7 +101,7 @@ namespace cage
 		return impl->skins[index];
 	}
 
-	GuiComponents &Gui::components()
+	privat::GuiComponents &Gui::components()
 	{
 		guiImpl *impl = (guiImpl*)this;
 		return impl->components;
@@ -124,7 +124,7 @@ namespace cage
 		skinsCount(1)
 	{}
 
-	Holder<Gui> newGuiManager(const GuiCreateConfig &config)
+	Holder<Gui> newGui(const GuiCreateConfig &config)
 	{
 		return detail::systemArena().createImpl<Gui, guiImpl>(config);
 	}

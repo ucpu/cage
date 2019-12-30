@@ -59,7 +59,7 @@ namespace cage
 		{
 			Holder<Image> png = newImage();
 			png->empty(resolution, resolution, 4);
-			for (uint32 type = 0; type < (uint32)ElementTypeEnum::TotalElements; type++)
+			for (uint32 type = 0; type < (uint32)GuiElementTypeEnum::TotalElements; type++)
 			{
 				const GuiSkinElementLayout::TextureUv &element = skin.layouts[type].textureUv;
 				renderRectangle(png.get(), element.data[3], vec3(.4, .4, .4), vec3(.5, .5, .5), vec3(.6, .6, .6));

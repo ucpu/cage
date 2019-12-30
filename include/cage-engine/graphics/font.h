@@ -33,8 +33,8 @@ namespace cage
 		void render(const uint32 *glyphs, uint32 count, const FormatStruct &format, uint32 cursor = m);
 	};
 
-	CAGE_API Holder<Font> newFontFace();
+	CAGE_API Holder<Font> newFont();
 
-	CAGE_API AssetScheme genAssetSchemeFontFace(uint32 threadIndex, Window *memoryContext);
-	static const uint32 assetSchemeIndexFontFace = 16;
+	CAGE_API AssetScheme genAssetSchemeFont(uint32 threadIndex, Window *memoryContext);
+	static const uint32 assetSchemeIndexFont = 16;
 }

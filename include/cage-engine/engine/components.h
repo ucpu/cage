@@ -36,6 +36,13 @@ namespace cage
 		SkeletalAnimationComponent();
 	};
 
+	enum class LightTypeEnum : uint32
+	{
+		Directional,
+		Point,
+		Spot,
+	};
+
 	struct CAGE_API LightComponent
 	{
 		static EntityComponent *component;
@@ -70,6 +77,20 @@ namespace cage
 		uint32 font;
 		uint32 sceneMask;
 		RenderTextComponent();
+	};
+
+	enum class CameraClearFlags : uint32
+	{
+		None = 0,
+		Depth = 1 << 0,
+		Color = 1 << 1,
+		Stencil = 1 << 2,
+	};
+
+	enum class CameraTypeEnum : uint32
+	{
+		Perspective,
+		Orthographic,
 	};
 
 	struct CAGE_API CameraComponent : public CameraEffects

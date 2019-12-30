@@ -49,7 +49,7 @@ namespace cage
 			shadowmapBufferStruct(uint32 target) : width(0), height(0)
 			{
 				CAGE_ASSERT(target == GL_TEXTURE_CUBE_MAP || target == GL_TEXTURE_2D);
-				texture = newRenderTexture(target);
+				texture = newTexture(target);
 				texture->setDebugName("shadowmap");
 				texture->filters(GL_LINEAR, GL_LINEAR, 16);
 				texture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
@@ -119,7 +119,7 @@ namespace cage
 						luminanceCollectionTexture->bind();
 					else
 					{
-						luminanceCollectionTexture = newRenderTexture();
+						luminanceCollectionTexture = newTexture();
 						luminanceCollectionTexture->setDebugName("luminanceCollectionTexture");
 						luminanceCollectionTexture->filters(GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR, 0);
 						luminanceCollectionTexture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
@@ -129,7 +129,7 @@ namespace cage
 						luminanceAccumulationTexture->bind();
 					else
 					{
-						luminanceAccumulationTexture = newRenderTexture();
+						luminanceAccumulationTexture = newTexture();
 						luminanceAccumulationTexture->setDebugName("luminanceAccumulationTexture");
 						luminanceAccumulationTexture->filters(GL_NEAREST, GL_NEAREST, 0);
 						luminanceAccumulationTexture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
@@ -855,7 +855,7 @@ namespace cage
 						texture->bind();
 					else
 					{
-						texture = newRenderTexture();
+						texture = newTexture();
 						texture->setDebugName(debugName);
 						texture->filters(GL_LINEAR, GL_LINEAR, 0);
 						texture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
@@ -918,7 +918,7 @@ namespace cage
 
 				lastGBufferWidth = lastGBufferHeight = 0;
 
-#define GCHL_GENERATE(NAME) NAME = newRenderTexture(); NAME->setDebugName(CAGE_STRINGIZE(NAME)); NAME->filters(GL_LINEAR, GL_LINEAR, 0); NAME->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+#define GCHL_GENERATE(NAME) NAME = newTexture(); NAME->setDebugName(CAGE_STRINGIZE(NAME)); NAME->filters(GL_LINEAR, GL_LINEAR, 0); NAME->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, albedoTexture, specialTexture, normalTexture, colorTexture, depthTexture, intermediateTexture));
 #undef GCHL_GENERATE
 				CAGE_CHECK_GL_ERROR_DEBUG();

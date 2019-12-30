@@ -15,12 +15,12 @@ namespace cage
 		class uniformBufferImpl : public UniformBuffer
 		{
 		public:
-			const uniformBufferCreateConfig config;
+			const UniformBufferCreateConfig config;
 			void *mapped;
 			uint32 id;
 			uint32 size;
 
-			uniformBufferImpl(const uniformBufferCreateConfig &config) : config(config), mapped(nullptr), id(0), size(0)
+			uniformBufferImpl(const UniformBufferCreateConfig &config) : config(config), mapped(nullptr), id(0), size(0)
 			{
 				CAGE_ASSERT(!config.explicitFlush || config.persistentMapped);
 				CAGE_ASSERT(!config.coherentMapped || config.persistentMapped);
@@ -165,10 +165,10 @@ namespace cage
 		return alignment;
 	}
 
-	uniformBufferCreateConfig::uniformBufferCreateConfig() : size(0), persistentMapped(false), coherentMapped(false), explicitFlush(false)
+	UniformBufferCreateConfig::UniformBufferCreateConfig() : size(0), persistentMapped(false), coherentMapped(false), explicitFlush(false)
 	{}
 
-	Holder<UniformBuffer> newUniformBuffer(const uniformBufferCreateConfig &config)
+	Holder<UniformBuffer> newUniformBuffer(const UniformBufferCreateConfig &config)
 	{
 		return detail::systemArena().createImpl<UniformBuffer, uniformBufferImpl>(config);
 	}

@@ -22,7 +22,7 @@ namespace cage
 		{
 			s.elementsGpuBuffer = newUniformBuffer();
 			s.elementsGpuBuffer->bind();
-			s.elementsGpuBuffer->writeWhole(nullptr, sizeof(GuiSkinElementLayout::TextureUv) * (uint32)ElementTypeEnum::TotalElements, GL_DYNAMIC_DRAW);
+			s.elementsGpuBuffer->writeWhole(nullptr, sizeof(GuiSkinElementLayout::TextureUv) * (uint32)GuiElementTypeEnum::TotalElements, GL_DYNAMIC_DRAW);
 		}
 	}
 

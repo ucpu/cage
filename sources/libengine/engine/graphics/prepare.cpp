@@ -657,7 +657,7 @@ namespace cage
 					if (s.empty())
 						continue;
 
-					Font *font = assets()->get<assetSchemeIndexFontFace, Font>(e->renderText.font);
+					Font *font = assets()->get<assetSchemeIndexFont, Font>(e->renderText.font);
 					textsStruct::renderStruct *r = dispatchArena.createObject<textsStruct::renderStruct>();
 					font->transcript(s, nullptr, r->count);
 					r->glyphs = (uint32*)dispatchArena.allocate(r->count * sizeof(uint32), sizeof(uint32));
@@ -1112,7 +1112,7 @@ namespace cage
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		{
 			uint32 n = mesh->getTextureName(i);
-			textures[i] = n ? ass->get<assetSchemeIndexRenderTexture, Texture>(n) : nullptr;
+			textures[i] = n ? ass->get<assetSchemeIndexTexture, Texture>(n) : nullptr;
 		}
 		shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_SKELETON, mesh->getSkeletonBones() > 0 ? CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION : CAGE_SHADER_ROUTINEPROC_SKELETONNOTHING);
 

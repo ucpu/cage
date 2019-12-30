@@ -37,8 +37,8 @@ namespace cage
 		void dispatch(uint32 instances) const;
 	};
 
-	CAGE_API Holder<Mesh> newRenderMesh();
+	CAGE_API Holder<Mesh> newMesh();
 
-	CAGE_API AssetScheme genAssetSchemeRenderMesh(uint32 threadIndex, Window *memoryContext);
+	CAGE_API AssetScheme genAssetSchemeMesh(uint32 threadIndex, Window *memoryContext);
 	static const uint32 assetSchemeIndexMesh = 12;
 }

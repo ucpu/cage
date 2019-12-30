@@ -118,7 +118,7 @@ namespace cage
 				{
 					vec2 p = hierarchy->renderPos;
 					vec2 s = hierarchy->renderSize;
-					offset(p, s, -skin->defaults.colorPicker.margin - skin->layouts[(uint32)ElementTypeEnum::ColorPickerFull].border);
+					offset(p, s, -skin->defaults.colorPicker.margin - skin->layouts[(uint32)GuiElementTypeEnum::ColorPickerFull].border);
 					sliderPos = p;
 					sliderSize = s;
 					sliderSize[1] *= skin->defaults.colorPicker.hueBarPortion;
@@ -154,19 +154,19 @@ namespace cage
 				offset(p, s, -skin->defaults.colorPicker.margin);
 				if (this == large)
 				{ // large
-					emitElement(ElementTypeEnum::ColorPickerFull, mode(true, 1 | 2 | 4), p, s);
+					emitElement(GuiElementTypeEnum::ColorPickerFull, mode(true, 1 | 2 | 4), p, s);
 					uint32 m = mode(false, 0);
-					emitElement(ElementTypeEnum::ColorPickerHuePanel, m, sliderPos, sliderSize);
-					emitElement(ElementTypeEnum::ColorPickerSatValPanel, m, rectPos, rectSize);
-					emitElement(ElementTypeEnum::ColorPickerPreviewPanel, m, resultPos, resultSize);
-					emitColor(sliderPos, sliderSize, 1, skin->layouts[(uint32)ElementTypeEnum::ColorPickerHuePanel].border);
-					emitColor(rectPos, rectSize, 2, skin->layouts[(uint32)ElementTypeEnum::ColorPickerSatValPanel].border);
-					emitColor(resultPos, resultSize, 0, skin->layouts[(uint32)ElementTypeEnum::ColorPickerPreviewPanel].border);
+					emitElement(GuiElementTypeEnum::ColorPickerHuePanel, m, sliderPos, sliderSize);
+					emitElement(GuiElementTypeEnum::ColorPickerSatValPanel, m, rectPos, rectSize);
+					emitElement(GuiElementTypeEnum::ColorPickerPreviewPanel, m, resultPos, resultSize);
+					emitColor(sliderPos, sliderSize, 1, skin->layouts[(uint32)GuiElementTypeEnum::ColorPickerHuePanel].border);
+					emitColor(rectPos, rectSize, 2, skin->layouts[(uint32)GuiElementTypeEnum::ColorPickerSatValPanel].border);
+					emitColor(resultPos, resultSize, 0, skin->layouts[(uint32)GuiElementTypeEnum::ColorPickerPreviewPanel].border);
 				}
 				else
 				{ // small
-					emitElement(ElementTypeEnum::ColorPickerCompact, mode(true, 1 | 2 | 4), p, s);
-					emitColor(p, s, 0, skin->layouts[(uint32)ElementTypeEnum::ColorPickerCompact].border);
+					emitElement(GuiElementTypeEnum::ColorPickerCompact, mode(true, 1 | 2 | 4), p, s);
+					emitColor(p, s, 0, skin->layouts[(uint32)GuiElementTypeEnum::ColorPickerCompact].border);
 				}
 			}
 

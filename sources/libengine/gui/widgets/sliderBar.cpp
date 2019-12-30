@@ -19,8 +19,8 @@ namespace cage
 		{
 			SliderBarComponent &data;
 			GuiSkinWidgetDefaults::SliderBar::Direction defaults;
-			ElementTypeEnum baseElement;
-			ElementTypeEnum dotElement;
+			GuiElementTypeEnum baseElement;
+			GuiElementTypeEnum dotElement;
 			real normalizedValue;
 
 			sliderBarImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(SliderBar))
@@ -41,8 +41,8 @@ namespace cage
 			virtual void findRequestedSize() override
 			{
 				defaults = data.vertical ? skin->defaults.sliderBar.vertical : skin->defaults.sliderBar.horizontal;
-				baseElement = data.vertical ? ElementTypeEnum::SliderVerticalPanel : ElementTypeEnum::SliderHorizontalPanel;
-				dotElement = data.vertical ? ElementTypeEnum::SliderVerticalDot : ElementTypeEnum::SliderHorizontalDot;
+				baseElement = data.vertical ? GuiElementTypeEnum::SliderVerticalPanel : GuiElementTypeEnum::SliderHorizontalPanel;
+				dotElement = data.vertical ? GuiElementTypeEnum::SliderVerticalDot : GuiElementTypeEnum::SliderHorizontalDot;
 				hierarchy->requestedSize = defaults.size;
 				offsetSize(hierarchy->requestedSize, defaults.margin);
 			}

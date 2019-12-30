@@ -99,101 +99,101 @@ namespace cage
 
 	GuiSkinConfig::GuiSkinConfig() : textureName(HashString("cage/texture/gui.psd"))
 	{
-		std::vector<ElementTypeEnum> largeElements = {
-			ElementTypeEnum::PanelBase, // overlaps SpoilerBase
-			ElementTypeEnum::TextArea,
+		std::vector<GuiElementTypeEnum> largeElements = {
+			GuiElementTypeEnum::PanelBase, // overlaps SpoilerBase
+			GuiElementTypeEnum::TextArea,
 		};
 
-		std::vector<ElementTypeEnum> smallElements = {
-			ElementTypeEnum::ScrollbarHorizontalPanel,
-			ElementTypeEnum::ScrollbarVerticalPanel,
-			ElementTypeEnum::ScrollbarHorizontalDot,
-			ElementTypeEnum::ScrollbarVerticalDot,
-			ElementTypeEnum::InvalidElement,
-			ElementTypeEnum::ToolTip,
-			ElementTypeEnum::InvalidElement,
-			ElementTypeEnum::PanelCaption,
-			ElementTypeEnum::InvalidElement,
-			ElementTypeEnum::SpoilerCaption,
-			ElementTypeEnum::SpoilerIconCollapsed,
-			ElementTypeEnum::SpoilerIconShown,
-			ElementTypeEnum::InvalidElement,
-			ElementTypeEnum::Button,
-			ElementTypeEnum::InvalidElement,
-			ElementTypeEnum::Input,
-			ElementTypeEnum::InputButtonDecrement,
-			ElementTypeEnum::InputButtonIncrement,
-			ElementTypeEnum::InvalidElement,
-			ElementTypeEnum::CheckBoxUnchecked,
-			ElementTypeEnum::CheckBoxChecked,
-			ElementTypeEnum::CheckBoxIndetermined,
-			ElementTypeEnum::InvalidElement,
-			ElementTypeEnum::RadioBoxUnchecked,
-			ElementTypeEnum::RadioBoxChecked,
-			ElementTypeEnum::RadioBoxIndetermined,
-			ElementTypeEnum::InvalidElement,
-			ElementTypeEnum::ComboBoxBase,
-			ElementTypeEnum::ComboBoxList,
-			ElementTypeEnum::InvalidElement,
-			ElementTypeEnum::ListBoxBase,
-			ElementTypeEnum::InvalidElement,
-			ElementTypeEnum::ListBoxItemUnchecked,
-			ElementTypeEnum::ComboBoxItemUnchecked,
-			ElementTypeEnum::InvalidElement,
-			ElementTypeEnum::ListBoxItemChecked,
-			ElementTypeEnum::ComboBoxItemChecked,
-			ElementTypeEnum::InvalidElement,
-			ElementTypeEnum::SliderHorizontalPanel,
-			ElementTypeEnum::SliderVerticalPanel,
-			ElementTypeEnum::SliderHorizontalDot,
-			ElementTypeEnum::SliderVerticalDot,
-			ElementTypeEnum::InvalidElement,
-			ElementTypeEnum::ProgressBar,
-			ElementTypeEnum::InvalidElement,
-			ElementTypeEnum::ColorPickerCompact, // overlaps: ColorPickerFull
-			ElementTypeEnum::ColorPickerPreviewPanel, // overlaps: ColorPickerHuePanel, ColorPickerSatValPanel
+		std::vector<GuiElementTypeEnum> smallElements = {
+			GuiElementTypeEnum::ScrollbarHorizontalPanel,
+			GuiElementTypeEnum::ScrollbarVerticalPanel,
+			GuiElementTypeEnum::ScrollbarHorizontalDot,
+			GuiElementTypeEnum::ScrollbarVerticalDot,
+			GuiElementTypeEnum::InvalidElement,
+			GuiElementTypeEnum::ToolTip,
+			GuiElementTypeEnum::InvalidElement,
+			GuiElementTypeEnum::PanelCaption,
+			GuiElementTypeEnum::InvalidElement,
+			GuiElementTypeEnum::SpoilerCaption,
+			GuiElementTypeEnum::SpoilerIconCollapsed,
+			GuiElementTypeEnum::SpoilerIconShown,
+			GuiElementTypeEnum::InvalidElement,
+			GuiElementTypeEnum::Button,
+			GuiElementTypeEnum::InvalidElement,
+			GuiElementTypeEnum::Input,
+			GuiElementTypeEnum::InputButtonDecrement,
+			GuiElementTypeEnum::InputButtonIncrement,
+			GuiElementTypeEnum::InvalidElement,
+			GuiElementTypeEnum::CheckBoxUnchecked,
+			GuiElementTypeEnum::CheckBoxChecked,
+			GuiElementTypeEnum::CheckBoxIndetermined,
+			GuiElementTypeEnum::InvalidElement,
+			GuiElementTypeEnum::RadioBoxUnchecked,
+			GuiElementTypeEnum::RadioBoxChecked,
+			GuiElementTypeEnum::RadioBoxIndetermined,
+			GuiElementTypeEnum::InvalidElement,
+			GuiElementTypeEnum::ComboBoxBase,
+			GuiElementTypeEnum::ComboBoxList,
+			GuiElementTypeEnum::InvalidElement,
+			GuiElementTypeEnum::ListBoxBase,
+			GuiElementTypeEnum::InvalidElement,
+			GuiElementTypeEnum::ListBoxItemUnchecked,
+			GuiElementTypeEnum::ComboBoxItemUnchecked,
+			GuiElementTypeEnum::InvalidElement,
+			GuiElementTypeEnum::ListBoxItemChecked,
+			GuiElementTypeEnum::ComboBoxItemChecked,
+			GuiElementTypeEnum::InvalidElement,
+			GuiElementTypeEnum::SliderHorizontalPanel,
+			GuiElementTypeEnum::SliderVerticalPanel,
+			GuiElementTypeEnum::SliderHorizontalDot,
+			GuiElementTypeEnum::SliderVerticalDot,
+			GuiElementTypeEnum::InvalidElement,
+			GuiElementTypeEnum::ProgressBar,
+			GuiElementTypeEnum::InvalidElement,
+			GuiElementTypeEnum::ColorPickerCompact, // overlaps: ColorPickerFull
+			GuiElementTypeEnum::ColorPickerPreviewPanel, // overlaps: ColorPickerHuePanel, ColorPickerSatValPanel
 		};
 
-		std::set<ElementTypeEnum> wideElements = {
-			ElementTypeEnum::PanelCaption,
-			ElementTypeEnum::SpoilerCaption,
-			ElementTypeEnum::Button,
-			ElementTypeEnum::Input,
-			ElementTypeEnum::ComboBoxBase,
-			ElementTypeEnum::ComboBoxList,
-			ElementTypeEnum::ListBoxBase,
-			ElementTypeEnum::ListBoxItemUnchecked,
-			ElementTypeEnum::ComboBoxItemUnchecked,
-			ElementTypeEnum::ListBoxItemChecked,
-			ElementTypeEnum::ComboBoxItemChecked,
-			ElementTypeEnum::ToolTip,
-			ElementTypeEnum::ProgressBar,
+		std::set<GuiElementTypeEnum> wideElements = {
+			GuiElementTypeEnum::PanelCaption,
+			GuiElementTypeEnum::SpoilerCaption,
+			GuiElementTypeEnum::Button,
+			GuiElementTypeEnum::Input,
+			GuiElementTypeEnum::ComboBoxBase,
+			GuiElementTypeEnum::ComboBoxList,
+			GuiElementTypeEnum::ListBoxBase,
+			GuiElementTypeEnum::ListBoxItemUnchecked,
+			GuiElementTypeEnum::ComboBoxItemUnchecked,
+			GuiElementTypeEnum::ListBoxItemChecked,
+			GuiElementTypeEnum::ComboBoxItemChecked,
+			GuiElementTypeEnum::ToolTip,
+			GuiElementTypeEnum::ProgressBar,
 		};
 
-		std::set<ElementTypeEnum> noBorder = {
-			//ElementTypeEnum::ScrollbarHorizontalDot, ElementTypeEnum::ScrollbarVerticalDot,
-			ElementTypeEnum::SpoilerIconCollapsed, ElementTypeEnum::SpoilerIconShown,
-			ElementTypeEnum::RadioBoxChecked, ElementTypeEnum::RadioBoxUnchecked, ElementTypeEnum::RadioBoxIndetermined,
-			ElementTypeEnum::SliderHorizontalDot, ElementTypeEnum::SliderVerticalDot,
+		std::set<GuiElementTypeEnum> noBorder = {
+			//GuiElementTypeEnum::ScrollbarHorizontalDot, GuiElementTypeEnum::ScrollbarVerticalDot,
+			GuiElementTypeEnum::SpoilerIconCollapsed, GuiElementTypeEnum::SpoilerIconShown,
+			GuiElementTypeEnum::RadioBoxChecked, GuiElementTypeEnum::RadioBoxUnchecked, GuiElementTypeEnum::RadioBoxIndetermined,
+			GuiElementTypeEnum::SliderHorizontalDot, GuiElementTypeEnum::SliderVerticalDot,
 		};
 
-		std::set<ElementTypeEnum> noFocus = {
-			ElementTypeEnum::PanelBase, ElementTypeEnum::PanelCaption,
-			ElementTypeEnum::SpoilerBase, ElementTypeEnum::SpoilerCaption, ElementTypeEnum::SpoilerIconCollapsed, ElementTypeEnum::SpoilerIconShown,
-			ElementTypeEnum::InputButtonDecrement, ElementTypeEnum::InputButtonIncrement,
-			ElementTypeEnum::ComboBoxList, ElementTypeEnum::ComboBoxItemUnchecked, ElementTypeEnum::ComboBoxItemChecked,
-			ElementTypeEnum::ListBoxItemUnchecked, ElementTypeEnum::ListBoxItemChecked,
-			ElementTypeEnum::ProgressBar,
-			ElementTypeEnum::ColorPickerHuePanel, ElementTypeEnum::ColorPickerPreviewPanel, ElementTypeEnum::ColorPickerSatValPanel,
-			ElementTypeEnum::ToolTip,
+		std::set<GuiElementTypeEnum> noFocus = {
+			GuiElementTypeEnum::PanelBase, GuiElementTypeEnum::PanelCaption,
+			GuiElementTypeEnum::SpoilerBase, GuiElementTypeEnum::SpoilerCaption, GuiElementTypeEnum::SpoilerIconCollapsed, GuiElementTypeEnum::SpoilerIconShown,
+			GuiElementTypeEnum::InputButtonDecrement, GuiElementTypeEnum::InputButtonIncrement,
+			GuiElementTypeEnum::ComboBoxList, GuiElementTypeEnum::ComboBoxItemUnchecked, GuiElementTypeEnum::ComboBoxItemChecked,
+			GuiElementTypeEnum::ListBoxItemUnchecked, GuiElementTypeEnum::ListBoxItemChecked,
+			GuiElementTypeEnum::ProgressBar,
+			GuiElementTypeEnum::ColorPickerHuePanel, GuiElementTypeEnum::ColorPickerPreviewPanel, GuiElementTypeEnum::ColorPickerSatValPanel,
+			GuiElementTypeEnum::ToolTip,
 		};
 
-		std::set<ElementTypeEnum> noHover = {
-			ElementTypeEnum::PanelBase,
-			ElementTypeEnum::SpoilerBase, ElementTypeEnum::SpoilerIconCollapsed, ElementTypeEnum::SpoilerIconShown,
-			ElementTypeEnum::ComboBoxList,
-			ElementTypeEnum::ColorPickerHuePanel, ElementTypeEnum::ColorPickerPreviewPanel, ElementTypeEnum::ColorPickerSatValPanel,
-			ElementTypeEnum::ToolTip,
+		std::set<GuiElementTypeEnum> noHover = {
+			GuiElementTypeEnum::PanelBase,
+			GuiElementTypeEnum::SpoilerBase, GuiElementTypeEnum::SpoilerIconCollapsed, GuiElementTypeEnum::SpoilerIconShown,
+			GuiElementTypeEnum::ComboBoxList,
+			GuiElementTypeEnum::ColorPickerHuePanel, GuiElementTypeEnum::ColorPickerPreviewPanel, GuiElementTypeEnum::ColorPickerSatValPanel,
+			GuiElementTypeEnum::ToolTip,
 		};
 
 		{ // automatic uv construction
@@ -205,7 +205,7 @@ namespace cage
 			packer.size = vec2(5, 5) * 24.f / 1024;
 			for (auto it : largeElements)
 			{
-				if (it == ElementTypeEnum::InvalidElement)
+				if (it == GuiElementTypeEnum::InvalidElement)
 				{
 					packer.newLine();
 					continue;
@@ -223,7 +223,7 @@ namespace cage
 			// small / wide
 			for (auto it : smallElements)
 			{
-				if (it == ElementTypeEnum::InvalidElement)
+				if (it == GuiElementTypeEnum::InvalidElement)
 				{
 					packer.newLine();
 					continue;
@@ -249,10 +249,10 @@ namespace cage
 		}
 
 		{ // overlaps
-			layouts[(uint32)ElementTypeEnum::ColorPickerFull].textureUv = layouts[(uint32)ElementTypeEnum::ColorPickerCompact].textureUv;
-			layouts[(uint32)ElementTypeEnum::ColorPickerHuePanel].textureUv = layouts[(uint32)ElementTypeEnum::ColorPickerPreviewPanel].textureUv;
-			layouts[(uint32)ElementTypeEnum::ColorPickerSatValPanel].textureUv = layouts[(uint32)ElementTypeEnum::ColorPickerPreviewPanel].textureUv;
-			layouts[(uint32)ElementTypeEnum::SpoilerBase].textureUv = layouts[(uint32)ElementTypeEnum::PanelBase].textureUv;
+			layouts[(uint32)GuiElementTypeEnum::ColorPickerFull].textureUv = layouts[(uint32)GuiElementTypeEnum::ColorPickerCompact].textureUv;
+			layouts[(uint32)GuiElementTypeEnum::ColorPickerHuePanel].textureUv = layouts[(uint32)GuiElementTypeEnum::ColorPickerPreviewPanel].textureUv;
+			layouts[(uint32)GuiElementTypeEnum::ColorPickerSatValPanel].textureUv = layouts[(uint32)GuiElementTypeEnum::ColorPickerPreviewPanel].textureUv;
+			layouts[(uint32)GuiElementTypeEnum::SpoilerBase].textureUv = layouts[(uint32)GuiElementTypeEnum::PanelBase].textureUv;
 		}
 	}
 

@@ -93,8 +93,8 @@ namespace cage
 			// write skins uv coordinates
 			for (auto &s : skins)
 			{
-				GuiSkinElementLayout::TextureUv textureUvs[(uint32)ElementTypeEnum::TotalElements];
-				for (uint32 i = 0; i < (uint32)ElementTypeEnum::TotalElements; i++)
+				GuiSkinElementLayout::TextureUv textureUvs[(uint32)GuiElementTypeEnum::TotalElements];
+				for (uint32 i = 0; i < (uint32)GuiElementTypeEnum::TotalElements; i++)
 					copyTextureUv(s.layouts[i].textureUv, textureUvs[i]);
 				s.elementsGpuBuffer->bind();
 				s.elementsGpuBuffer->writeRange(textureUvs, 0, sizeof(textureUvs));

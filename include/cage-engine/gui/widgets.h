@@ -35,7 +35,6 @@ namespace cage
 		AlwaysRoundValueToStep = 1 << 4,
 		//WriteTabs = 1 << 5, // tab key will write tab rather than skip to next widget
 	};
-	GCHL_ENUM_BITS(InputStyleFlags);
 
 	struct CAGE_API InputComponent
 	{

@@ -214,20 +214,20 @@ namespace cage
 				}
 				textPos = mainPos;
 				textSize = mainSize;
-				offset(textPos, textSize, -skin->layouts[(uint32)ElementTypeEnum::Input].border - s.basePadding);
+				offset(textPos, textSize, -skin->layouts[(uint32)GuiElementTypeEnum::Input].border - s.basePadding);
 			}
 
 			virtual void emit() const override
 			{
 				const auto &s = skin->defaults.inputBox;
-				emitElement(ElementTypeEnum::Input, mode(mainPos, mainSize), mainPos, mainSize);
+				emitElement(GuiElementTypeEnum::Input, mode(mainPos, mainSize), mainPos, mainSize);
 				if (showArrows)
 				{
 					vec2 ss = vec2(s.buttonsSize, mainSize[1]);
 					uint32 m = mode(leftPos, ss);
-					emitElement(ElementTypeEnum::InputButtonDecrement, m == 1 ? 0 : m, leftPos, ss);
+					emitElement(GuiElementTypeEnum::InputButtonDecrement, m == 1 ? 0 : m, leftPos, ss);
 					m = mode(rightPos, ss);
-					emitElement(ElementTypeEnum::InputButtonIncrement, m == 1 ? 0 : m, rightPos, ss);
+					emitElement(GuiElementTypeEnum::InputButtonIncrement, m == 1 ? 0 : m, rightPos, ss);
 				}
 				hierarchy->text->emit(textPos, textSize);
 			}

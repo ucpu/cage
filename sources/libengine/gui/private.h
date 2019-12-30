@@ -167,7 +167,7 @@ namespace cage
 		uint32 mode(const vec2 &pos, const vec2 &size, uint32 focusParts = 1) const;
 		bool hasFocus(uint32 part = 1) const;
 		void makeFocused(uint32 part = 1);
-		renderableElementStruct *emitElement(ElementTypeEnum element, uint32 mode, vec2 pos, vec2 size) const;
+		renderableElementStruct *emitElement(GuiElementTypeEnum element, uint32 mode, vec2 pos, vec2 size) const;
 
 		virtual void findFinalPosition(const finalPositionStruct &update) override;
 		virtual void generateEventReceivers() override;
@@ -258,7 +258,7 @@ namespace cage
 	{
 	public:
 		Holder<EntityManager> entityMgr;
-		GuiComponents components;
+		privat::GuiComponents components;
 
 		AssetManager *assetMgr;
 

@@ -44,7 +44,7 @@ namespace cage
 					// it is important to compare (text size + text padding) with (children size + children padding)
 					// and only after that to add border and base margin
 				}
-				offsetSize(hierarchy->requestedSize, skin->layouts[(uint32)ElementTypeEnum::PanelBase].border);
+				offsetSize(hierarchy->requestedSize, skin->layouts[(uint32)GuiElementTypeEnum::PanelBase].border);
 				offsetSize(hierarchy->requestedSize, skin->defaults.panel.baseMargin);
 			}
 
@@ -52,7 +52,7 @@ namespace cage
 			{
 				finalPositionStruct u(update);
 				offset(u.renderPos, u.renderSize, -skin->defaults.panel.baseMargin);
-				offset(u.renderPos, u.renderSize, -skin->layouts[(uint32)ElementTypeEnum::PanelBase].border);
+				offset(u.renderPos, u.renderSize, -skin->layouts[(uint32)GuiElementTypeEnum::PanelBase].border);
 				if (hierarchy->text)
 				{
 					u.renderPos[1] += skin->defaults.panel.captionHeight;
@@ -67,12 +67,12 @@ namespace cage
 				vec2 p = hierarchy->renderPos;
 				vec2 s = hierarchy->renderSize;
 				offset(p, s, -skin->defaults.panel.baseMargin);
-				emitElement(ElementTypeEnum::PanelBase, mode(false, 0), p, s);
+				emitElement(GuiElementTypeEnum::PanelBase, mode(false, 0), p, s);
 				if (hierarchy->text)
 				{
 					s = vec2(s[0], skin->defaults.panel.captionHeight);
-					emitElement(ElementTypeEnum::PanelCaption, mode(false, 0), p, s);
-					offset(p, s, -skin->layouts[(uint32)ElementTypeEnum::PanelCaption].border);
+					emitElement(GuiElementTypeEnum::PanelCaption, mode(false, 0), p, s);
+					offset(p, s, -skin->layouts[(uint32)GuiElementTypeEnum::PanelCaption].border);
 					offset(p, s, -skin->defaults.panel.captionPadding);
 					hierarchy->text->emit(p, s);
 				}

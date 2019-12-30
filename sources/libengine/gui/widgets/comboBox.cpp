@@ -82,8 +82,8 @@ namespace cage
 				vec2 p = hierarchy->renderPos;
 				vec2 s = hierarchy->renderSize;
 				offset(p, s, -skin->defaults.comboBox.baseMargin);
-				emitElement(ElementTypeEnum::ComboBoxBase, mode(), p, s);
-				offset(p, s, -skin->layouts[(uint32)ElementTypeEnum::ComboBoxBase].border - skin->defaults.comboBox.basePadding);
+				emitElement(GuiElementTypeEnum::ComboBoxBase, mode(), p, s);
+				offset(p, s, -skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxBase].border - skin->defaults.comboBox.basePadding);
 				if (selected == m)
 				{ // emit placeholder
 					if (hierarchy->text)
@@ -149,8 +149,8 @@ namespace cage
 		void comboListImpl::findRequestedSize()
 		{
 			hierarchy->requestedSize = vec2();
-			offsetSize(hierarchy->requestedSize, skin->layouts[(uint32)ElementTypeEnum::ComboBoxList].border + skin->defaults.comboBox.listPadding);
-			vec4 os = skin->layouts[(uint32)ElementTypeEnum::ComboBoxItemUnchecked].border + skin->defaults.comboBox.itemPadding;
+			offsetSize(hierarchy->requestedSize, skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxList].border + skin->defaults.comboBox.listPadding);
+			vec4 os = skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxItemUnchecked].border + skin->defaults.comboBox.itemPadding;
 			hierarchyItemStruct *c = combo->hierarchy->firstChild;
 			while (c)
 			{
@@ -174,7 +174,7 @@ namespace cage
 			hierarchy->renderPos[1] += combo->hierarchy->renderSize[1] + skin->defaults.comboBox.listOffset - m[3];
 			vec2 p = hierarchy->renderPos;
 			vec2 s = hierarchy->renderSize;
-			offset(p, s, -skin->defaults.comboBox.baseMargin * vec4(1, 0, 1, 0) - skin->layouts[(uint32)ElementTypeEnum::ComboBoxList].border - skin->defaults.comboBox.listPadding);
+			offset(p, s, -skin->defaults.comboBox.baseMargin * vec4(1, 0, 1, 0) - skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxList].border - skin->defaults.comboBox.listPadding);
 			real spacing = skin->defaults.comboBox.itemSpacing;
 			hierarchyItemStruct *c = combo->hierarchy->firstChild;
 			while (c)
@@ -188,8 +188,8 @@ namespace cage
 
 		void comboListImpl::emit() const
 		{
-			emitElement(ElementTypeEnum::ComboBoxList, 0, hierarchy->renderPos, hierarchy->renderSize);
-			vec4 itemFrame = -skin->layouts[(uint32)ElementTypeEnum::ComboBoxItemUnchecked].border - skin->defaults.comboBox.itemPadding;
+			emitElement(GuiElementTypeEnum::ComboBoxList, 0, hierarchy->renderPos, hierarchy->renderSize);
+			vec4 itemFrame = -skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxItemUnchecked].border - skin->defaults.comboBox.itemPadding;
 			hierarchyItemStruct *c = combo->hierarchy->firstChild;
 			uint32 idx = 0;
 			bool allowHover = true;
@@ -199,7 +199,7 @@ namespace cage
 				vec2 s = c->renderSize;
 				uint32 m = allowHover ? mode(p, s, 0) : 0;
 				allowHover &= !m; // items may have small overlap, this will ensure that only one item has hover
-				emitElement(idx == combo->selected ? ElementTypeEnum::ComboBoxItemChecked : ElementTypeEnum::ComboBoxItemUnchecked, m, p, s);
+				emitElement(idx == combo->selected ? GuiElementTypeEnum::ComboBoxItemChecked : GuiElementTypeEnum::ComboBoxItemUnchecked, m, p, s);
 				offset(p, s, itemFrame);
 				c->text->emit(p, s)->setClip(hierarchy);
 				c = c->nextSibling;

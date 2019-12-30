@@ -88,13 +88,13 @@ namespace cage
 					const scrollbarStruct &s = scrollbars[a];
 					if (s.position.valid())
 					{
-						emitElement(a == 0 ? ElementTypeEnum::ScrollbarHorizontalPanel : ElementTypeEnum::ScrollbarVerticalPanel, 0, s.position, s.size);
+						emitElement(a == 0 ? GuiElementTypeEnum::ScrollbarHorizontalPanel : GuiElementTypeEnum::ScrollbarVerticalPanel, 0, s.position, s.size);
 						vec2 ds;
 						ds[a] = s.dotSize;
 						ds[1 - a] = s.size[1 - a];
 						vec2 dp = s.position;
 						dp[a] += (s.size[a] - ds[a]) * s.value;
-						emitElement(a == 0 ? ElementTypeEnum::ScrollbarHorizontalDot : ElementTypeEnum::ScrollbarVerticalDot, mode(s.position, s.size, 1 << (30 + a)), dp, ds);
+						emitElement(a == 0 ? GuiElementTypeEnum::ScrollbarHorizontalDot : GuiElementTypeEnum::ScrollbarVerticalDot, mode(s.position, s.size, 1 << (30 + a)), dp, ds);
 					}
 				}
 			}

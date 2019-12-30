@@ -18,9 +18,9 @@ namespace cage
 		struct checkBoxImpl : public widgetItemStruct
 		{
 			CheckBoxComponent &data;
-			ElementTypeEnum element;
+			GuiElementTypeEnum element;
 
-			checkBoxImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(CheckBox)), element(ElementTypeEnum::TotalElements)
+			checkBoxImpl(hierarchyItemStruct *hierarchy) : widgetItemStruct(hierarchy), data(GUI_REF_COMPONENT(CheckBox)), element(GuiElementTypeEnum::TotalElements)
 			{}
 
 			virtual void initialize() override
@@ -29,7 +29,7 @@ namespace cage
 				CAGE_ASSERT(!hierarchy->Image, "checkbox may not have image");
 				if (hierarchy->text)
 					hierarchy->text->text.apply(skin->defaults.checkBox.textFormat, hierarchy->impl);
-				element = ElementTypeEnum((uint32)ElementTypeEnum::CheckBoxUnchecked + (uint32)data.state);
+				element = GuiElementTypeEnum((uint32)GuiElementTypeEnum::CheckBoxUnchecked + (uint32)data.state);
 			}
 
 			virtual void findRequestedSize() override

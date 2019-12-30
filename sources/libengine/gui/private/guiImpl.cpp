@@ -14,8 +14,11 @@
 
 namespace cage
 {
-	GuiComponents::GuiComponents(EntityManager *ents) : GuiGeneralComponents(ents), GuiLayoutsComponents(ents), GuiWidgetsComponents(ents)
-	{}
+	namespace privat
+	{
+		GuiComponents::GuiComponents(EntityManager* ents) : GuiGeneralComponents(ents), GuiLayoutsComponents(ents), GuiWidgetsComponents(ents)
+		{}
+	}
 
 	guiImpl::graphicsDataStruct::graphicsDataStruct() :
 		debugShader(nullptr), elementShader(nullptr), fontShader(nullptr), imageAnimatedShader(nullptr), imageStaticShader(nullptr),

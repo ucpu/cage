@@ -579,7 +579,7 @@ namespace cage
 					if (config.gui)
 						c = *config.gui;
 					c.assetMgr = assets.get();
-					gui = newGuiManager(c);
+					gui = newGui(c);
 					gui->handleWindowEvents(window.get());
 					gui->setOutputSoundBus(guiBus.get());
 				}
@@ -615,12 +615,12 @@ namespace cage
 					assets->defineScheme<CollisionMesh>(assetSchemeIndexCollisionMesh, genAssetSchemeCollisionMesh(EngineControlThread::threadIndex));
 					// client assets
 					assets->defineScheme<ShaderProgram>(assetSchemeIndexShaderProgram, genAssetSchemeShaderProgram(graphicsUploadThreadClass::threadIndex, window.get()));
-					assets->defineScheme<Texture>(assetSchemeIndexRenderTexture, genAssetSchemeRenderTexture(graphicsUploadThreadClass::threadIndex, window.get()));
-					assets->defineScheme<Mesh>(assetSchemeIndexMesh, genAssetSchemeRenderMesh(EngineGraphicsDispatchThread::threadIndex, window.get()));
+					assets->defineScheme<Texture>(assetSchemeIndexTexture, genAssetSchemeTexture(graphicsUploadThreadClass::threadIndex, window.get()));
+					assets->defineScheme<Mesh>(assetSchemeIndexMesh, genAssetSchemeMesh(EngineGraphicsDispatchThread::threadIndex, window.get()));
 					assets->defineScheme<SkeletonRig>(assetSchemeIndexSkeletonRig, genAssetSchemeSkeletonRig(EngineGraphicsPrepareThread::threadIndex));
 					assets->defineScheme<SkeletalAnimation>(assetSchemeIndexSkeletalAnimation, genAssetSchemeSkeletalAnimation(EngineGraphicsPrepareThread::threadIndex));
 					assets->defineScheme<RenderObject>(assetSchemeIndexRenderObject, genAssetSchemeRenderObject(EngineGraphicsPrepareThread::threadIndex));
-					assets->defineScheme<Font>(assetSchemeIndexFontFace, genAssetSchemeFontFace(graphicsUploadThreadClass::threadIndex, window.get()));
+					assets->defineScheme<Font>(assetSchemeIndexFont, genAssetSchemeFont(graphicsUploadThreadClass::threadIndex, window.get()));
 					assets->defineScheme<SoundSource>(assetSchemeIndexSoundSource, genAssetSchemeSoundSource(EngineSoundThread::threadIndex, sound.get()));
 					// cage pack
 					assets->add(HashString("cage/cage.pack"));

@@ -3,6 +3,13 @@
 
 namespace cage
 {
+	enum class WindowFlags : uint32
+	{
+		None = 0,
+		Resizeable = 1 << 0,
+		Border = 1 << 1,
+	};
+
 	class CAGE_API Window : private Immovable
 	{
 	public:

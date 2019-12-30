@@ -30,7 +30,7 @@ namespace cage
 			}
 			else
 			{
-				context->assetHolder = newRenderTexture(data->target).cast<void>();
+				context->assetHolder = newTexture(data->target).cast<void>();
 				tex = static_cast<Texture*>(context->assetHolder.get());
 				tex->setDebugName(context->textName);
 			}
@@ -59,7 +59,7 @@ namespace cage
 		}
 	}
 
-	AssetScheme genAssetSchemeRenderTexture(uint32 threadIndex, Window *memoryContext)
+	AssetScheme genAssetSchemeTexture(uint32 threadIndex, Window *memoryContext)
 	{
 		AssetScheme s;
 		s.threadIndex = threadIndex;

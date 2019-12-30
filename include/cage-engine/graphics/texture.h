@@ -32,14 +32,14 @@ namespace cage
 		static void multiBind(uint32 count, const uint32 tius[], const Texture *const texs[]);
 	};
 
-	CAGE_API Holder<Texture> newRenderTexture();
-	CAGE_API Holder<Texture> newRenderTexture(uint32 target);
+	CAGE_API Holder<Texture> newTexture();
+	CAGE_API Holder<Texture> newTexture(uint32 target);
 
 	namespace detail
 	{
 		CAGE_API vec4 evalSamplesForTextureAnimation(const Texture *texture, uint64 emitTime, uint64 animationStart, real animationSpeed, real animationOffset);
 	}
 
-	CAGE_API AssetScheme genAssetSchemeRenderTexture(uint32 threadIndex, Window *memoryContext);
-	static const uint32 assetSchemeIndexRenderTexture = 11;
+	CAGE_API AssetScheme genAssetSchemeTexture(uint32 threadIndex, Window *memoryContext);
+	static const uint32 assetSchemeIndexTexture = 11;
 }

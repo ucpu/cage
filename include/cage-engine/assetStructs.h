@@ -16,6 +16,14 @@ namespace cage
 	};
 	*/
 
+	enum class TextureFlags : uint32
+	{
+		None = 0,
+		GenerateMipmaps = 1 << 0,
+		AnimationLoop = 1 << 1,
+		AllowDownscale = 1 << 2,
+	};
+
 	struct CAGE_API TextureHeader
 	{
 		uint64 animationDuration;
@@ -38,6 +46,19 @@ namespace cage
 
 		// follows:
 		// array of texels
+	};
+
+	enum class MeshDataFlags : uint32
+	{
+		None = 0,
+		Normals = 1 << 0,
+		Tangents = 1 << 1,
+		Bones = 1 << 2,
+		Uvs = 1 << 3,
+		Aux0 = 1 << 4,
+		Aux1 = 1 << 5,
+		Aux2 = 1 << 6,
+		Aux3 = 1 << 7,
 	};
 
 	struct CAGE_API MeshHeader
@@ -143,6 +164,12 @@ namespace cage
 		// array of mesh names, each uint32
 	};
 
+	enum class FontFlags : uint32
+	{
+		None = 0,
+		Kerning = 1 << 0,
+	};
+
 	struct CAGE_API FontHeader
 	{
 		FontFlags flags;
@@ -172,6 +199,20 @@ namespace cage
 		// notes:
 		// linear units are pixels for 1pt-font
 		// linear units must be multiplied by font size before rendering
+	};
+
+	enum class SoundTypeEnum : uint32
+	{
+		RawRaw, // short sounds
+		CompressedRaw, // long sounds, but played many times concurrently
+		CompressedCompressed, // long sounds, usually only played once at any given time
+	};
+
+	enum class SoundFlags : uint32
+	{
+		None = 0,
+		LoopBeforeStart = 1 << 0,
+		LoopAfterEnd = 1 << 1,
 	};
 
 	struct CAGE_API SoundSourceHeader

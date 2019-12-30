@@ -65,9 +65,9 @@ namespace cage
 			hierarchy->impl->mouseEventReceivers.push_back(e);
 	}
 
-	renderableElementStruct *widgetItemStruct::emitElement(ElementTypeEnum element, uint32 mode, vec2 pos, vec2 size) const
+	renderableElementStruct *widgetItemStruct::emitElement(GuiElementTypeEnum element, uint32 mode, vec2 pos, vec2 size) const
 	{
-		CAGE_ASSERT(element < ElementTypeEnum::TotalElements);
+		CAGE_ASSERT(element < GuiElementTypeEnum::TotalElements);
 		CAGE_ASSERT(mode < 4);
 		CAGE_ASSERT(pos.valid());
 		CAGE_ASSERT(size.valid());

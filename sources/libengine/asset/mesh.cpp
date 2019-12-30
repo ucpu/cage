@@ -31,7 +31,7 @@ namespace cage
 			}
 			else
 			{
-				context->assetHolder = newRenderMesh().cast<void>();
+				context->assetHolder = newMesh().cast<void>();
 				msh = static_cast<Mesh*>(context->assetHolder.get());
 				msh->setDebugName(context->textName);
 			}
@@ -126,7 +126,7 @@ namespace cage
 		}
 	}
 
-	AssetScheme genAssetSchemeRenderMesh(uint32 threadIndex, Window *memoryContext)
+	AssetScheme genAssetSchemeMesh(uint32 threadIndex, Window *memoryContext)
 	{
 		AssetScheme s;
 		s.threadIndex = threadIndex;

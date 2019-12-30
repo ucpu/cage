@@ -15,7 +15,7 @@ namespace cage
 	struct CAGE_API ScheduleCreateConfig
 	{
 		ScheduleCreateConfig();
-		detail::StringBase<60> name;
+		detail::StringBase<64> name;
 		Delegate<void()> action;
 		uint64 delay; // used for all types of schedules
 		uint64 period; // used for periodic schedules only

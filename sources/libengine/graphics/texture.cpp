@@ -326,12 +326,12 @@ namespace cage
 		*/
 	}
 
-	Holder<Texture> newRenderTexture()
+	Holder<Texture> newTexture()
 	{
-		return newRenderTexture(GL_TEXTURE_2D);
+		return newTexture(GL_TEXTURE_2D);
 	}
 
-	Holder<Texture> newRenderTexture(uint32 target)
+	Holder<Texture> newTexture(uint32 target)
 	{
 		CAGE_ASSERT(target == GL_TEXTURE_2D || target == GL_TEXTURE_2D_ARRAY || target == GL_TEXTURE_RECTANGLE || target == GL_TEXTURE_3D || target == GL_TEXTURE_CUBE_MAP);
 		return detail::systemArena().createImpl<Texture, textureImpl>(target);
