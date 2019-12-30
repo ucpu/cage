@@ -1,8 +1,8 @@
-#include <map>
-
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/textPack.h>
+
+#include <map>
 
 namespace cage
 {
@@ -31,7 +31,7 @@ namespace cage
 
 	namespace
 	{
-		class textPackImpl : public TextPack
+		class TextPackImpl : public TextPack
 		{
 		public:
 			std::map<uint32, string> texts;
@@ -41,27 +41,27 @@ namespace cage
 	void TextPack::set(uint32 name, const string &text)
 	{
 		CAGE_ASSERT(name != 0);
-		textPackImpl *impl = (textPackImpl*)this;
+		TextPackImpl *impl = (TextPackImpl*)this;
 		impl->texts[name] = text;
 	}
 
 	void TextPack::erase(uint32 name)
 	{
 		CAGE_ASSERT(name != 0);
-		textPackImpl *impl = (textPackImpl*)this;
+		TextPackImpl *impl = (TextPackImpl*)this;
 		impl->texts.erase(name);
 	}
 
 	void TextPack::clear()
 	{
-		textPackImpl *impl = (textPackImpl*)this;
+		TextPackImpl *impl = (TextPackImpl*)this;
 		impl->texts.clear();
 	}
 
 	string TextPack::get(uint32 name) const
 	{
 		CAGE_ASSERT(name != 0);
-		textPackImpl *impl = (textPackImpl*)this;
+		TextPackImpl *impl = (TextPackImpl*)this;
 		auto it = impl->texts.find(name);
 		if (it == impl->texts.end())
 			return "";
@@ -76,6 +76,6 @@ namespace cage
 
 	Holder<TextPack> newTextPack()
 	{
-		return detail::systemArena().createImpl<TextPack, textPackImpl>();
+		return detail::systemArena().createImpl<TextPack, TextPackImpl>();
 	}
 }

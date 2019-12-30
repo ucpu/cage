@@ -1,4 +1,3 @@
-#include <cstring>
 
 #define CAGE_EXPORT
 #include <cage-core/core.h>
@@ -13,6 +12,8 @@ namespace utf8
 	using namespace unchecked;
 }
 #endif
+
+#include <cstring>
 
 #define TRY_BEGIN try
 #define TRY_END catch (const std::exception &e) { CAGE_THROW_ERROR(InvalidUtfString, e.what()); }

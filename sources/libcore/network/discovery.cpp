@@ -1,12 +1,12 @@
-#include <vector>
-#include <set>
-#include <map>
-
 #include "net.h"
 #include <cage-core/guid.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 #include <cage-core/pointerRangeHolder.h>
+
+#include <vector>
+#include <set>
+#include <map>
 
 namespace cage
 {
@@ -27,32 +27,32 @@ namespace cage
 			uint32 ttl;
 		};
 
-		struct sockStruct
+		struct SockAddrs
 		{
-			std::set<addr> addresses;
-			sock s;
+			std::set<Addr> addresses;
+			Sock s;
 
-			sockStruct(int family, int type, int protocol) : s(family, type, protocol)
+			SockAddrs(int family, int type, int protocol) : s(family, type, protocol)
 			{}
 		};
 
-		class discoveryClientImpl : public DiscoveryClient
+		class DiscoveryClientImpl : public DiscoveryClient
 		{
 		public:
 			std::map<Guid<idSize>, peerStruct> peers;
-			std::vector<sockStruct> sockets;
+			std::vector<SockAddrs> sockets;
 			uint32 gameId;
 			uint16 sendPort;
 
-			discoveryClientImpl(uint16 sendPort, uint32 gameId) : gameId(gameId), sendPort(sendPort)
+			DiscoveryClientImpl(uint16 sendPort, uint32 gameId) : gameId(gameId), sendPort(sendPort)
 			{
-				addrList l(nullptr, 0, protocolFamily, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
+				AddrList l(nullptr, 0, protocolFamily, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
 				while (l.valid())
 				{
 					int family = -1, type = -1, protocol = -1;
-					addr address;
+					Addr address;
 					l.getAll(address, family, type, protocol);
-					sockStruct s(family, type, protocol);
+					SockAddrs s(family, type, protocol);
 					s.s.setBlocking(false);
 					s.s.setBroadcast(true);
 					s.s.setReuseaddr(true);
@@ -72,7 +72,7 @@ namespace cage
 
 			void addServer(const string &address, uint16 port)
 			{
-				addrList l(address.c_str(), port, protocolFamily, SOCK_DGRAM, IPPROTO_UDP, 0);
+				AddrList l(address.c_str(), port, protocolFamily, SOCK_DGRAM, IPPROTO_UDP, 0);
 				while (l.valid())
 				{
 					for (auto &it : sockets)
@@ -109,7 +109,7 @@ namespace cage
 
 			void receive()
 			{
-				addr a;
+				Addr a;
 				MemoryBuffer buffer;
 				for (auto &s : sockets)
 				{
@@ -122,7 +122,7 @@ namespace cage
 						}
 						catch (const cage::Exception &)
 						{
-							s.s = sock();
+							s.s = Sock();
 							break;
 						}
 						if (buffer.size() == 0)
@@ -186,23 +186,23 @@ namespace cage
 			}
 		};
 
-		class discoveryServerImpl : public DiscoveryServer
+		class DiscoveryServerImpl : public DiscoveryServer
 		{
 		public:
 			Guid<idSize> uniId;
 			uint32 gameId;
 			uint16 gamePort;
-			std::vector<sock> sockets;
+			std::vector<Sock> sockets;
 
-			discoveryServerImpl(uint16 listenPort, uint16 gamePort, uint32 gameId) : uniId(true), gameId(gameId), gamePort(gamePort)
+			DiscoveryServerImpl(uint16 listenPort, uint16 gamePort, uint32 gameId) : uniId(true), gameId(gameId), gamePort(gamePort)
 			{
-				addrList l(nullptr, listenPort, protocolFamily, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
+				AddrList l(nullptr, listenPort, protocolFamily, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
 				while (l.valid())
 				{
 					int family = -1, type = -1, protocol = -1;
-					addr address;
+					Addr address;
 					l.getAll(address, family, type, protocol);
-					sock s(family, type, protocol);
+					Sock s(family, type, protocol);
 					s.setBlocking(false);
 					s.setBroadcast(true);
 					s.setReuseaddr(true);
@@ -228,7 +228,7 @@ namespace cage
 			{
 				detail::OverrideBreakpoint OverrideBreakpoint;
 				MemoryBuffer buffer;
-				addr a;
+				Addr a;
 				for (auto &s : sockets)
 				{
 					while (true)
@@ -240,7 +240,7 @@ namespace cage
 						}
 						catch (const cage::Exception &)
 						{
-							s = sock();
+							s = Sock();
 							break;
 						}
 						if (buffer.size() == 0)
@@ -277,25 +277,25 @@ namespace cage
 
 	void DiscoveryClient::update()
 	{
-		discoveryClientImpl *impl = (discoveryClientImpl*)this;
+		DiscoveryClientImpl *impl = (DiscoveryClientImpl*)this;
 		impl->update();
 	}
 
 	void DiscoveryClient::addServer(const string &address, uint16 port)
 	{
-		discoveryClientImpl *impl = (discoveryClientImpl*)this;
+		DiscoveryClientImpl *impl = (DiscoveryClientImpl*)this;
 		impl->addServer(address, port);
 	}
 
 	uint32 DiscoveryClient::peersCount() const
 	{
-		discoveryClientImpl *impl = (discoveryClientImpl*)this;
+		DiscoveryClientImpl *impl = (DiscoveryClientImpl*)this;
 		return numeric_cast<uint32>(impl->peers.size());
 	}
 
 	DiscoveryPeer DiscoveryClient::peerData(uint32 index) const
 	{
-		discoveryClientImpl *impl = (discoveryClientImpl*)this;
+		DiscoveryClientImpl *impl = (DiscoveryClientImpl*)this;
 		CAGE_ASSERT(index < impl->peers.size());
 		auto it = impl->peers.begin();
 		std::advance(it, index);
@@ -304,7 +304,7 @@ namespace cage
 
 	Holder<PointerRange<DiscoveryPeer>> DiscoveryClient::peers() const
 	{
-		discoveryClientImpl *impl = (discoveryClientImpl*)this;
+		DiscoveryClientImpl *impl = (DiscoveryClientImpl*)this;
 		PointerRangeHolder<DiscoveryPeer> h;
 		h.reserve(impl->peers.size());
 		for (const auto &it : impl->peers)
@@ -314,17 +314,17 @@ namespace cage
 
 	Holder<DiscoveryClient> newDiscoveryClient(uint16 sendPort, uint32 gameId)
 	{
-		return detail::systemArena().createImpl<DiscoveryClient, discoveryClientImpl>(sendPort, gameId);
+		return detail::systemArena().createImpl<DiscoveryClient, DiscoveryClientImpl>(sendPort, gameId);
 	}
 
 	void DiscoveryServer::update()
 	{
-		discoveryServerImpl *impl = (discoveryServerImpl*)this;
+		DiscoveryServerImpl *impl = (DiscoveryServerImpl*)this;
 		impl->update();
 	}
 
 	Holder<DiscoveryServer> newDiscoveryServer(uint16 listenPort, uint16 gamePort, uint32 gameId)
 	{
-		return detail::systemArena().createImpl<DiscoveryServer, discoveryServerImpl>(listenPort, gamePort, gameId);
+		return detail::systemArena().createImpl<DiscoveryServer, DiscoveryServerImpl>(listenPort, gamePort, gameId);
 	}
 }

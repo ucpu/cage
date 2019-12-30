@@ -1,10 +1,10 @@
-#include <cmath>
-#include <limits>
-
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include "math.h"
+
+#include <cmath>
+#include <limits>
 
 namespace cage
 {

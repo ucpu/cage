@@ -1,8 +1,3 @@
-#include <cerrno>
-#include <cstdio>
-#include <vector>
-#include <initializer_list>
-
 #include "filesystem.h"
 
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -15,6 +10,11 @@
 #ifdef CAGE_SYSTEM_MAC
 #include <mach-o/dyld.h>
 #endif
+
+#include <cerrno>
+#include <cstdio>
+#include <vector>
+#include <initializer_list>
 
 namespace cage
 {

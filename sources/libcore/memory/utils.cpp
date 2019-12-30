@@ -1,8 +1,3 @@
-#include <cstdlib>
-#include <atomic>
-#include <cerrno>
-#include <zlib.h>
-
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/memory.h>
@@ -13,6 +8,12 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #endif
+
+#include <zlib.h>
+
+#include <cstdlib>
+#include <atomic>
+#include <cerrno>
 
 namespace cage
 {
@@ -41,7 +42,7 @@ namespace cage
 			{
 			case Z_OK:
 				return s;
-			case Z_MEM_ERROR: // some allocation failed
+			case Z_MEM_ERROR: // some Allocation failed
 				CAGE_THROW_ERROR(Exception, "compression failed with allocation error");
 			case Z_BUF_ERROR: // output buffer was too small
 				CAGE_THROW_ERROR(OutOfMemory, "output buffer for compression is too small", 0);
@@ -60,7 +61,7 @@ namespace cage
 			{
 			case Z_OK:
 				return s;
-			case Z_MEM_ERROR: // some allocation failed
+			case Z_MEM_ERROR: // some Allocation failed
 				CAGE_THROW_ERROR(Exception, "decompression failed with allocation error");
 			case Z_BUF_ERROR: // output buffer was too small
 				CAGE_THROW_ERROR(OutOfMemory, "output buffer for decompression is too small", 0);
@@ -93,13 +94,13 @@ namespace cage
 				::free(p);
 			}
 
-			class memory1Impl
+			class Memory1Impl
 			{
 			public:
-				memory1Impl() : allocations(0)
+				Memory1Impl() : allocations(0)
 				{}
 
-				~memory1Impl()
+				~Memory1Impl()
 				{
 					try
 					{
@@ -139,7 +140,7 @@ namespace cage
 
 		MemoryArena &systemArena()
 		{
-			static memory1Impl *impl = new memory1Impl(); // intentionally left to leak
+			static Memory1Impl *impl = new Memory1Impl(); // intentionally left to leak
 			static MemoryArena *arena = new MemoryArena(impl);
 			return *arena;
 		}
@@ -147,13 +148,13 @@ namespace cage
 
 	namespace
 	{
-		class virtualMemoryImpl : public VirtualMemory
+		class VirtualMemoryImpl : public VirtualMemory
 		{
 		public:
-			virtualMemoryImpl() : origin(nullptr), pgs(0), total(0), pageSize(detail::memoryPageSize())
+			VirtualMemoryImpl() : origin(nullptr), pgs(0), total(0), pageSize(detail::memoryPageSize())
 			{}
 
-			~virtualMemoryImpl()
+			~VirtualMemoryImpl()
 			{
 				free();
 			}
@@ -243,37 +244,37 @@ namespace cage
 
 	void *VirtualMemory::reserve(uintPtr pages)
 	{
-		virtualMemoryImpl *impl = (virtualMemoryImpl*)this;
+		VirtualMemoryImpl *impl = (VirtualMemoryImpl*)this;
 		return impl->reserve(pages);
 	}
 
 	void VirtualMemory::free()
 	{
-		virtualMemoryImpl *impl = (virtualMemoryImpl*)this;
+		VirtualMemoryImpl *impl = (VirtualMemoryImpl*)this;
 		impl->free();
 	}
 
 	void VirtualMemory::increase(uintPtr pages)
 	{
-		virtualMemoryImpl *impl = (virtualMemoryImpl*)this;
+		VirtualMemoryImpl *impl = (VirtualMemoryImpl*)this;
 		impl->increase(pages);
 	}
 
 	void VirtualMemory::decrease(uintPtr pages)
 	{
-		virtualMemoryImpl *impl = (virtualMemoryImpl*)this;
+		VirtualMemoryImpl *impl = (VirtualMemoryImpl*)this;
 		impl->decrease(pages);
 	}
 
 	uintPtr VirtualMemory::pages() const
 	{
-		virtualMemoryImpl *impl = (virtualMemoryImpl*)this;
+		VirtualMemoryImpl *impl = (VirtualMemoryImpl*)this;
 		return impl->pgs;
 	}
 
 	Holder<VirtualMemory> newVirtualMemory()
 	{
-		return detail::systemArena().createImpl<VirtualMemory, virtualMemoryImpl>();
+		return detail::systemArena().createImpl<VirtualMemory, VirtualMemoryImpl>();
 	}
 
 	namespace detail

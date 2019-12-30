@@ -2,11 +2,6 @@
 #include <cage-core/core.h>
 #include <cage-core/concurrent.h>
 
-#include <thread>
-#include <set>
-#include <exception>
-#include <cerrno>
-
 #ifdef CAGE_SYSTEM_WINDOWS
 #include "incWin.h"
 #else
@@ -26,9 +21,14 @@
 
 #include <optick.h>
 
+#include <thread>
+#include <set>
+#include <exception>
+#include <cerrno>
+
 namespace cage
 {
-	class mutexImpl : public Mutex
+	class MutexImpl : public Mutex
 	{
 	public:
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -37,7 +37,7 @@ namespace cage
 		pthread_mutex_t mut;
 #endif
 
-		mutexImpl()
+		MutexImpl()
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
 			InitializeSRWLock(&srw);
@@ -46,7 +46,7 @@ namespace cage
 #endif
 		}
 
-		~mutexImpl()
+		~MutexImpl()
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
 			// nothing
@@ -58,7 +58,7 @@ namespace cage
 
 	bool Mutex::tryLock()
 	{
-		mutexImpl *impl = (mutexImpl *)this;
+		MutexImpl *impl = (MutexImpl *)this;
 #ifdef CAGE_SYSTEM_WINDOWS
 		return TryAcquireSRWLockExclusive(&impl->srw) != 0;
 #else
@@ -73,7 +73,7 @@ namespace cage
 
 	void Mutex::lock()
 	{
-		mutexImpl *impl = (mutexImpl *)this;
+		MutexImpl *impl = (MutexImpl *)this;
 #ifdef CAGE_SYSTEM_WINDOWS
 		AcquireSRWLockExclusive(&impl->srw);
 #else
@@ -89,7 +89,7 @@ namespace cage
 
 	void Mutex::unlock()
 	{
-		mutexImpl *impl = (mutexImpl *)this;
+		MutexImpl *impl = (MutexImpl *)this;
 #ifdef CAGE_SYSTEM_WINDOWS
 		ReleaseSRWLockExclusive(&impl->srw);
 #else
@@ -101,12 +101,12 @@ namespace cage
 
 	Holder<Mutex> newMutex()
 	{
-		return detail::systemArena().createImpl<Mutex, mutexImpl>();
+		return detail::systemArena().createImpl<Mutex, MutexImpl>();
 	}
 
 	namespace
 	{
-		class semaphoreImpl : public Semaphore
+		class SemaphoreImpl : public Semaphore
 		{
 		public:
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -117,7 +117,7 @@ namespace cage
 			sem_t sem;
 #endif
 
-			semaphoreImpl(uint32 value, uint32 max)
+			SemaphoreImpl(uint32 value, uint32 max)
 			{
 #ifdef CAGE_SYSTEM_WINDOWS
 				sem = CreateSemaphore(nullptr, value, max, nullptr);
@@ -128,7 +128,7 @@ namespace cage
 #endif
 			}
 
-			~semaphoreImpl()
+			~SemaphoreImpl()
 			{
 #ifdef CAGE_SYSTEM_WINDOWS
 				CloseHandle(sem);
@@ -143,7 +143,7 @@ namespace cage
 
 	void Semaphore::lock()
 	{
-		semaphoreImpl *impl = (semaphoreImpl *)this;
+		SemaphoreImpl *impl = (SemaphoreImpl *)this;
 #ifdef CAGE_SYSTEM_WINDOWS
 		WaitForSingleObject(impl->sem, INFINITE);
 #elif defined(CAGE_SYSTEM_MAC)
@@ -159,7 +159,7 @@ namespace cage
 
 	void Semaphore::unlock()
 	{
-		semaphoreImpl *impl = (semaphoreImpl *)this;
+		SemaphoreImpl *impl = (SemaphoreImpl *)this;
 #ifdef CAGE_SYSTEM_WINDOWS
 		ReleaseSemaphore(impl->sem, 1, nullptr);
 #elif defined(CAGE_SYSTEM_MAC)
@@ -171,7 +171,7 @@ namespace cage
 
 	Holder<Semaphore> newSemaphore(uint32 value, uint32 max)
 	{
-		return detail::systemArena().createImpl<Semaphore, semaphoreImpl>(value, max);
+		return detail::systemArena().createImpl<Semaphore, SemaphoreImpl>(value, max);
 	}
 }
 
@@ -243,7 +243,7 @@ namespace cage
 {
 	namespace
 	{
-		class barrierImpl : public Barrier
+		class BarrierImpl : public Barrier
 		{
 		public:
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -252,10 +252,10 @@ namespace cage
 			Holder<Semaphore> sem1, sem2;
 			uint32 total, current;
 
-			barrierImpl(uint32 value) : mut(newMutex()), sem1(newSemaphore(0, value)), sem2(newSemaphore(0, value)), total(value), current(0)
+			explicit BarrierImpl(uint32 value) : mut(newMutex()), sem1(newSemaphore(0, value)), sem2(newSemaphore(0, value)), total(value), current(0)
 			{}
 
-			~barrierImpl()
+			~BarrierImpl()
 			{}
 
 			void lock()
@@ -284,12 +284,12 @@ namespace cage
 
 			pthread_barrier_t bar;
 
-			barrierImpl(uint32 value)
+			BarrierImpl(uint32 value)
 			{
 				pthread_barrier_init(&bar, NULL, value);
 			}
 
-			~barrierImpl()
+			~BarrierImpl()
 			{
 				pthread_barrier_destroy(&bar);
 			}
@@ -305,7 +305,7 @@ namespace cage
 
 	void Barrier::lock()
 	{
-		barrierImpl *impl = (barrierImpl*)this;
+		BarrierImpl *impl = (BarrierImpl*)this;
 		impl->lock();;
 	}
 
@@ -316,12 +316,12 @@ namespace cage
 
 	Holder<Barrier> newBarrier(uint32 value)
 	{
-		return detail::systemArena().createImpl<Barrier, barrierImpl>(value);
+		return detail::systemArena().createImpl<Barrier, BarrierImpl>(value);
 	}
 
 	namespace
 	{
-		class conditionalBaseImpl : public ConditionalVariableBase
+		class ConditionalVariableBaseImpl : public ConditionalVariableBase
 		{
 		public:
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -330,7 +330,7 @@ namespace cage
 			pthread_cond_t cond;
 #endif
 
-			conditionalBaseImpl()
+			ConditionalVariableBaseImpl()
 			{
 #ifdef CAGE_SYSTEM_WINDOWS
 				InitializeConditionVariable(&cond);
@@ -339,7 +339,7 @@ namespace cage
 #endif
 			}
 
-			~conditionalBaseImpl()
+			~ConditionalVariableBaseImpl()
 			{
 #ifdef CAGE_SYSTEM_WINDOWS
 				// do nothing
@@ -349,14 +349,14 @@ namespace cage
 			}
 		};
 
-		class conditionalImpl : public ConditionalVariable
+		class ConditionalVariableImpl : public ConditionalVariable
 		{
 		public:
 			Holder<Mutex> mut;
 			Holder<ConditionalVariableBase> cond;
 			bool broadcasting;
 
-			conditionalImpl(bool broadcasting) : broadcasting(broadcasting)
+			ConditionalVariableImpl(bool broadcasting) : broadcasting(broadcasting)
 			{
 				mut = newMutex();
 				cond = newConditionalVariableBase();
@@ -366,8 +366,8 @@ namespace cage
 
 	void ConditionalVariableBase::wait(Mutex *mut)
 	{
-		conditionalBaseImpl *impl = (conditionalBaseImpl *)this;
-		mutexImpl *m = (mutexImpl*)mut;
+		ConditionalVariableBaseImpl *impl = (ConditionalVariableBaseImpl *)this;
+		MutexImpl *m = (MutexImpl*)mut;
 #ifdef CAGE_SYSTEM_WINDOWS
 		SleepConditionVariableSRW(&impl->cond, &m->srw, INFINITE, 0);
 #else
@@ -377,7 +377,7 @@ namespace cage
 
 	void ConditionalVariableBase::signal()
 	{
-		conditionalBaseImpl *impl = (conditionalBaseImpl *)this;
+		ConditionalVariableBaseImpl *impl = (ConditionalVariableBaseImpl *)this;
 #ifdef CAGE_SYSTEM_WINDOWS
 		WakeConditionVariable(&impl->cond);
 #else
@@ -387,7 +387,7 @@ namespace cage
 
 	void ConditionalVariableBase::broadcast()
 	{
-		conditionalBaseImpl *impl = (conditionalBaseImpl *)this;
+		ConditionalVariableBaseImpl *impl = (ConditionalVariableBaseImpl *)this;
 #ifdef CAGE_SYSTEM_WINDOWS
 		WakeAllConditionVariable(&impl->cond);
 #else
@@ -397,18 +397,18 @@ namespace cage
 
 	Holder<ConditionalVariableBase> newConditionalVariableBase()
 	{
-		return detail::systemArena().createImpl<ConditionalVariableBase, conditionalBaseImpl>();
+		return detail::systemArena().createImpl<ConditionalVariableBase, ConditionalVariableBaseImpl>();
 	}
 
 	void ConditionalVariable::lock()
 	{
-		conditionalImpl *impl = (conditionalImpl *)this;
+		ConditionalVariableImpl *impl = (ConditionalVariableImpl *)this;
 		impl->mut->lock();
 	}
 
 	void ConditionalVariable::unlock()
 	{
-		conditionalImpl *impl = (conditionalImpl *)this;
+		ConditionalVariableImpl *impl = (ConditionalVariableImpl *)this;
 		impl->mut->unlock();
 		if (impl->broadcasting)
 			impl->cond->broadcast();
@@ -418,25 +418,25 @@ namespace cage
 
 	void ConditionalVariable::wait()
 	{
-		conditionalImpl *impl = (conditionalImpl *)this;
+		ConditionalVariableImpl *impl = (ConditionalVariableImpl *)this;
 		impl->cond->wait(impl->mut);
 	}
 
 	void ConditionalVariable::signal()
 	{
-		conditionalImpl *impl = (conditionalImpl *)this;
+		ConditionalVariableImpl *impl = (ConditionalVariableImpl *)this;
 		impl->cond->signal();
 	}
 
 	void ConditionalVariable::broadcast()
 	{
-		conditionalImpl *impl = (conditionalImpl *)this;
+		ConditionalVariableImpl *impl = (ConditionalVariableImpl *)this;
 		impl->cond->broadcast();
 	}
 
 	Holder<ConditionalVariable> newConditionalVariable(bool broadcast)
 	{
-		return detail::systemArena().createImpl<ConditionalVariable, conditionalImpl>(broadcast);
+		return detail::systemArena().createImpl<ConditionalVariable, ConditionalVariableImpl>(broadcast);
 	}
 
 	namespace
@@ -447,7 +447,7 @@ namespace cage
 		void *threadFunctionImpl(void *);
 #endif
 
-		class threadImpl : public Thread
+		class ThreadImpl : public Thread
 		{
 		public:
 			const string threadName;
@@ -461,7 +461,7 @@ namespace cage
 			pthread_t handle;
 #endif
 
-			threadImpl(Delegate<void()> function, const string &threadName) : threadName(threadName), function(function), myid(m)
+			ThreadImpl(Delegate<void()> function, const string &threadName) : threadName(threadName), function(function), myid(m)
 			{
 #ifdef CAGE_SYSTEM_WINDOWS
 
@@ -480,7 +480,7 @@ namespace cage
 #endif
 			}
 
-			~threadImpl()
+			~ThreadImpl()
 			{
 				try
 				{
@@ -504,13 +504,13 @@ namespace cage
 
 	uint64 Thread::id() const
 	{
-		threadImpl *impl = (threadImpl*)this;
+		ThreadImpl *impl = (ThreadImpl*)this;
 		return impl->myid;
 	}
 
 	bool Thread::done() const
 	{
-		threadImpl *impl = (threadImpl*)this;
+		ThreadImpl *impl = (ThreadImpl*)this;
 
 #ifdef CAGE_SYSTEM_WINDOWS
 		return WaitForSingleObject(impl->handle, 0) == WAIT_OBJECT_0;
@@ -537,7 +537,7 @@ namespace cage
 
 	void Thread::wait()
 	{
-		threadImpl *impl = (threadImpl*)this;
+		ThreadImpl *impl = (ThreadImpl*)this;
 
 #ifdef CAGE_SYSTEM_WINDOWS
 		WaitForSingleObject(impl->handle, INFINITE);
@@ -562,7 +562,7 @@ namespace cage
 
 	Holder<Thread> newThread(Delegate<void()> func, const string &threadName)
 	{
-		return detail::systemArena().createImpl<Thread, threadImpl>(func, threadName);
+		return detail::systemArena().createImpl<Thread, ThreadImpl>(func, threadName);
 	}
 
 	namespace
@@ -631,7 +631,7 @@ namespace cage
 		void *threadFunctionImpl(void *params)
 #endif
 		{
-			threadImpl *impl = (threadImpl*)params;
+			ThreadImpl *impl = (ThreadImpl*)params;
 			setCurrentThreadName(impl->threadName);
 			OPTICK_THREAD(impl->threadName.c_str());
 			try

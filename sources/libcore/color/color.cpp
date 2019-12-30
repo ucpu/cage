@@ -1,10 +1,10 @@
-#include <cmath>
-#include "hsluv.h"
-
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/color.h>
+
+#include <cmath>
+#include "hsluv.h"
 
 namespace cage
 {
@@ -47,7 +47,7 @@ namespace cage
 				red = green = blue = 0;
 		}
 
-		union chartoint
+		union CharToInt
 		{
 			struct
 			{
@@ -59,14 +59,14 @@ namespace cage
 
 	uint32 colorRgbToRgbe(const vec3 &color)
 	{
-		chartoint hlp;
+		CharToInt hlp;
 		float2rgbe(hlp.rgbe, color.data[0].value, color.data[1].value, color.data[2].value);
 		return hlp.val;
 	}
 
 	vec3 colorRgbeToRgb(uint32 color)
 	{
-		chartoint hlp;
+		CharToInt hlp;
 		hlp.val = color;
 		vec3 res;
 		rgbe2float(res.data[0].value, res.data[1].value, res.data[2].value, hlp.rgbe);

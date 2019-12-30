@@ -1,3 +1,6 @@
+#define CAGE_EXPORT
+#include <cage-core/core.h>
+
 #include <vector>
 #include <algorithm>
 #include <cctype> // std::isspace
@@ -5,9 +8,6 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
-
-#define CAGE_EXPORT
-#include <cage-core/core.h>
 
 namespace cage
 {

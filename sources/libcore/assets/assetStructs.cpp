@@ -49,7 +49,7 @@ namespace cage
 
 	namespace
 	{
-		void processTextLoad(const AssetContext *context, void *schemePointer)
+		void processTextPackLoad(const AssetContext *context, void *schemePointer)
 		{
 			TextPack *texts = nullptr;
 			if (!context->assetHolder)
@@ -76,13 +76,13 @@ namespace cage
 		AssetScheme s;
 		s.threadIndex = threadIndex;
 		s.schemePointer = nullptr;
-		s.load.bind<&processTextLoad>();
+		s.load.bind<&processTextPackLoad>();
 		return s;
 	}
 
 	namespace
 	{
-		void processColliderLoad(const AssetContext *context, void *schemePointer)
+		void processCollisionMeshLoad(const AssetContext *context, void *schemePointer)
 		{
 			if (!context->assetHolder)
 				context->assetHolder = newCollisionMesh().cast<void>();
@@ -100,7 +100,7 @@ namespace cage
 	{
 		AssetScheme s;
 		s.threadIndex = threadIndex;
-		s.load.bind<&processColliderLoad>();
+		s.load.bind<&processCollisionMeshLoad>();
 		return s;
 	}
 }

@@ -40,18 +40,18 @@ namespace cage
 {
 	namespace privat
 	{
-		struct addr
+		struct Addr
 		{
-			addr();
+			Addr();
 
 			void translate(string &address, uint16 &port, bool domain = false) const;
 
-			bool operator < (const addr &other) const // fast (binary) comparison
+			bool operator < (const Addr &other) const // fast (binary) comparison
 			{
 				return detail::memcmp(&storage, &other.storage, sizeof(storage)) < 0;
 			}
 
-			bool operator == (const addr &other) const // fast (binary) comparison
+			bool operator == (const Addr &other) const // fast (binary) comparison
 			{
 				return detail::memcmp(&storage, &other.storage, sizeof(storage)) == 0;
 			}
@@ -60,21 +60,21 @@ namespace cage
 			sockaddr_storage storage;
 			socklen_t addrlen;
 
-			friend struct sock;
-			friend struct addrList;
+			friend struct Sock;
+			friend struct AddrList;
 		};
 
-		struct sock
+		struct Sock
 		{
-			sock(); // invalid socket
-			sock(int family, int type, int protocol); // create new socket
-			sock(int family, int type, int protocol, SOCKET descriptor, bool connected); // copy socket
-			sock(sock &&other) noexcept;
-			void operator = (sock &&other) noexcept;
-			~sock();
+			Sock(); // invalid socket
+			Sock(int family, int type, int protocol); // create new socket
+			Sock(int family, int type, int protocol, SOCKET descriptor, bool connected); // copy socket
+			Sock(Sock &&other) noexcept;
+			void operator = (Sock &&other) noexcept;
+			~Sock();
 
-			sock(const sock &) = delete;
-			void operator = (const sock &other) = delete;
+			Sock(const Sock &) = delete;
+			void operator = (const Sock &other) = delete;
 
 			void setBlocking(bool blocking);
 			void setReuseaddr(bool reuse);
@@ -82,23 +82,23 @@ namespace cage
 			void setBufferSize(uint32 sending, uint32 receiving);
 			void setBufferSize(uint32 size);
 
-			void bind(const addr &localAddress);
-			void connect(const addr &remoteAddress);
+			void bind(const Addr &localAddress);
+			void connect(const Addr &remoteAddress);
 			void listen(int backlog = 5);
-			sock accept();
+			Sock accept();
 
 			void close();
 			bool isValid() const;
-			addr getLocalAddress() const;
-			addr getRemoteAddress() const;
+			Addr getLocalAddress() const;
+			Addr getRemoteAddress() const;
 
 			uintPtr available() const;
 			void send(const void *buffer, uintPtr bufferSize);
-			void sendTo(const void *buffer, uintPtr bufferSize, const addr &remoteAddress);
+			void sendTo(const void *buffer, uintPtr bufferSize, const Addr &remoteAddress);
 			uintPtr recv(void *buffer, uintPtr bufferSize, int flags = 0);
-			uintPtr recvFrom(void *buffer, uintPtr bufferSize, addr &remoteAddress, int flags = 0);
+			uintPtr recvFrom(void *buffer, uintPtr bufferSize, Addr &remoteAddress, int flags = 0);
 
-			bool operator < (const sock &other) const // fast comparison
+			bool operator < (const Sock &other) const // fast comparison
 			{
 				return descriptor < other.descriptor;
 			}
@@ -114,18 +114,18 @@ namespace cage
 			bool connected;
 		};
 
-		struct addrList
+		struct AddrList
 		{
-			addrList(const string &address, uint16 port, int family, int type, int protocol, int flags);
-			addrList(const char *address, uint16 port, int family, int type, int protocol, int flags);
-			~addrList();
+			AddrList(const string &address, uint16 port, int family, int type, int protocol, int flags);
+			AddrList(const char *address, uint16 port, int family, int type, int protocol, int flags);
+			~AddrList();
 
 			bool valid() const;
-			addr address() const;
+			Addr address() const;
 			int family() const;
 			int type() const;
 			int protocol() const;
-			void getAll(addr &address, int &family, int &type, int &protocol) const;
+			void getAll(Addr &address, int &family, int &type, int &protocol) const;
 			void next();
 
 		private:

@@ -5,7 +5,7 @@ namespace cage
 {
 	struct CAGE_API MemoryBuffer
 	{
-		MemoryBuffer(); // no allocation ctor
+		MemoryBuffer(); // no Allocation ctor
 		explicit MemoryBuffer(uintPtr size, uintPtr capacity = 0);
 		MemoryBuffer(MemoryBuffer &&other) noexcept;
 		MemoryBuffer &operator = (MemoryBuffer &&other) noexcept;

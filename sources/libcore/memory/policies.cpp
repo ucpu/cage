@@ -1,9 +1,9 @@
-#include <map>
-
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/memory.h>
 #include <cage-core/concurrent.h>
+
+#include <map>
 
 namespace cage
 {
@@ -33,19 +33,19 @@ namespace cage
 
 	namespace
 	{
-		struct allocation
+		struct Allocation
 		{
 			uint64 time;
 			uint64 thread;
 			uintPtr size;
 		};
 
-		struct advancedTrackPolicyData
+		struct MemoryTrackPolicyAdvancedImpl
 		{
-			advancedTrackPolicyData()
+			MemoryTrackPolicyAdvancedImpl()
 			{}
 
-			~advancedTrackPolicyData()
+			~MemoryTrackPolicyAdvancedImpl()
 			{
 				if (allocations.size() == 0)
 					return;
@@ -57,7 +57,7 @@ namespace cage
 			void set(void *ptr, uintPtr size)
 			{
 				CAGE_ASSERT(allocations.find(ptr) == allocations.end(), "duplicate allocation at same address");
-				allocation a;
+				Allocation a;
 				a.size = size;
 				a.thread = threadId();
 				a.time = CAGE_LOG(SeverityEnum::Info, "memory", stringizer() + "allocation at " + ptr + " of size " + size);
@@ -80,36 +80,36 @@ namespace cage
 
 			void reportAllocatins() const
 			{
-				for (std::map <void*, allocation>::const_iterator i = allocations.begin(), e = allocations.end(); i != e; i++)
+				for (std::map <void*, Allocation>::const_iterator i = allocations.begin(), e = allocations.end(); i != e; i++)
 					CAGE_LOG_CONTINUE(SeverityEnum::Note, "memory", stringizer() + "memory at " + i->first + " of size " + i->second.size + " allocated in thread " + i->second.thread + " at time " + i->second.time);
 			}
 
-			std::map <void*, allocation> allocations;
+			std::map <void*, Allocation> allocations;
 		};
 	}
 
 	MemoryTrackPolicyAdvanced::MemoryTrackPolicyAdvanced()
 	{
-		data = new advancedTrackPolicyData();
+		data = new MemoryTrackPolicyAdvancedImpl();
 	}
 
 	MemoryTrackPolicyAdvanced::~MemoryTrackPolicyAdvanced()
 	{
-		delete (advancedTrackPolicyData*)data;
+		delete (MemoryTrackPolicyAdvancedImpl*)data;
 	}
 
 	void MemoryTrackPolicyAdvanced::set(void *ptr, uintPtr size)
 	{
-		((advancedTrackPolicyData*)data)->set(ptr, size);
+		((MemoryTrackPolicyAdvancedImpl*)data)->set(ptr, size);
 	}
 
 	void MemoryTrackPolicyAdvanced::check(void *ptr)
 	{
-		((advancedTrackPolicyData*)data)->check(ptr);
+		((MemoryTrackPolicyAdvancedImpl*)data)->check(ptr);
 	}
 
 	void MemoryTrackPolicyAdvanced::flush()
 	{
-		((advancedTrackPolicyData*)data)->flush();
+		((MemoryTrackPolicyAdvancedImpl*)data)->flush();
 	}
 }

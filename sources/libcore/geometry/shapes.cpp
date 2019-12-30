@@ -1,9 +1,9 @@
-#include <utility>
-
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
+
+#include <utility>
 
 namespace cage
 {

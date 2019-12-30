@@ -27,10 +27,10 @@ namespace cage
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
 
-		class programImpl : public Process
+		class ProcessImpl : public Process
 		{
 		public:
-			programImpl(const ProcessCreateConfig &config) : cmd(config.cmd), workingDir(pathToAbs(config.workingDirectory)), hChildStd_IN_Rd(nullptr), hChildStd_IN_Wr(nullptr), hChildStd_OUT_Rd(nullptr), hChildStd_OUT_Wr(nullptr), /*hChildStd_ERR_Rd (nullptr), hChildStd_ERR_Wr (nullptr),*/ hProcess(nullptr), hThread(nullptr)
+			explicit ProcessImpl(const ProcessCreateConfig &config) : cmd(config.cmd), workingDir(pathToAbs(config.workingDirectory)), hChildStd_IN_Rd(nullptr), hChildStd_IN_Wr(nullptr), hChildStd_OUT_Rd(nullptr), hChildStd_OUT_Wr(nullptr), /*hChildStd_ERR_Rd (nullptr), hChildStd_ERR_Wr (nullptr),*/ hProcess(nullptr), hThread(nullptr)
 			{
 				static Holder<Mutex> mut = newMutex();
 				ScopeLock<Mutex> lock(mut);
@@ -107,7 +107,7 @@ namespace cage
 				closeHandle(hThread);
 			}
 
-			~programImpl()
+			~ProcessImpl()
 			{
 				closeAllHandles();
 			}
@@ -144,7 +144,7 @@ namespace cage
 		static const int PIPE_READ = 0;
 		static const int PIPE_WRITE = 1;
 
-		class programImpl : public Process
+		class ProcessImpl : public Process
 		{
 		public:
 			const string cmd;
@@ -171,7 +171,7 @@ namespace cage
 				}
 			};
 
-			programImpl(const ProcessCreateConfig &config) : cmd(config.cmd), workingDir(pathToAbs(config.workingDirectory)), aStdinPipe{0, 0}, aStdoutPipe{0, 0}, pid(0)
+			explicit ProcessImpl(const ProcessCreateConfig &config) : cmd(config.cmd), workingDir(pathToAbs(config.workingDirectory)), aStdinPipe{0, 0}, aStdoutPipe{0, 0}, pid(0)
 			{
 				static Holder<Mutex> mut = newMutex();
 				ScopeLock<Mutex> lock(mut);
@@ -243,7 +243,7 @@ namespace cage
 				CAGE_LOG_CONTINUE(SeverityEnum::Info, "process", stringizer() + "process id: " + pid);
 			}
 
-			~programImpl()
+			~ProcessImpl()
 			{
 				wait();
 				close(aStdinPipe[PIPE_WRITE]);
@@ -291,7 +291,7 @@ namespace cage
 
 	void Process::read(void *data, uint32 size)
 	{
-		programImpl *impl = (programImpl*)this;
+		ProcessImpl *impl = (ProcessImpl*)this;
 		DWORD read = 0;
 		if (!ReadFile(impl->hChildStd_OUT_Rd, data, size, &read, nullptr))
 			CAGE_THROW_ERROR(SystemError, "ReadFile", GetLastError());
@@ -301,7 +301,7 @@ namespace cage
 
 	void Process::write(const void *data, uint32 size)
 	{
-		programImpl *impl = (programImpl*)this;
+		ProcessImpl *impl = (ProcessImpl*)this;
 		DWORD written = 0;
 		if (!WriteFile(impl->hChildStd_IN_Wr, data, size, &written, nullptr))
 			CAGE_THROW_ERROR(SystemError, "WriteFile", GetLastError());
@@ -313,7 +313,7 @@ namespace cage
 
 	void Process::read(void *data, uint32 size)
 	{
-		programImpl *impl = (programImpl*)this;
+		ProcessImpl *impl = (ProcessImpl*)this;
 		auto r = ::read(impl->aStdoutPipe[PIPE_READ], data, size);
 		if (r < 0)
 			CAGE_THROW_ERROR(SystemError, "read", errno);
@@ -323,7 +323,7 @@ namespace cage
 
 	void Process::write(const void *data, uint32 size)
 	{
-		programImpl *impl = (programImpl*)this;
+		ProcessImpl *impl = (ProcessImpl*)this;
 		auto r = ::write(impl->aStdinPipe[PIPE_WRITE], data, size);
 		if (r < 0)
 			CAGE_THROW_ERROR(SystemError, "write", errno);
@@ -357,30 +357,30 @@ namespace cage
 
 	void Process::terminate()
 	{
-		programImpl *impl = (programImpl*)this;
+		ProcessImpl *impl = (ProcessImpl*)this;
 		impl->terminate();
 	}
 
 	int Process::wait()
 	{
-		programImpl *impl = (programImpl*)this;
+		ProcessImpl *impl = (ProcessImpl*)this;
 		return impl->wait();
 	}
 
 	string Process::getCmdString() const
 	{
-		programImpl *impl = (programImpl*)this;
+		ProcessImpl *impl = (ProcessImpl*)this;
 		return impl->cmd;
 	}
 
 	string Process::getWorkingDir() const
 	{
-		programImpl *impl = (programImpl*)this;
+		ProcessImpl *impl = (ProcessImpl*)this;
 		return impl->workingDir;
 	}
 
 	Holder<Process> newProcess(const ProcessCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<Process, programImpl>(config);
+		return detail::systemArena().createImpl<Process, ProcessImpl>(config);
 	}
 }

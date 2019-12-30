@@ -1,8 +1,3 @@
-#include <set>
-#include <map>
-#include <vector>
-#include <atomic>
-
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/math.h>
@@ -20,6 +15,11 @@
 #include <cage-core/ctl/unordered_map.h>
 
 #include <optick.h>
+
+#include <set>
+#include <map>
+#include <vector>
+#include <atomic>
 
 namespace cage
 {
@@ -44,7 +44,7 @@ namespace cage
 			context->returnData = nullptr;
 		}
 
-		struct assetContextPrivateStruct : public AssetContext
+		struct AssetContextPrivate : public AssetContext
 		{
 			std::vector<uint32> dependencies;
 			std::vector<uint32> dependenciesNew;
@@ -52,34 +52,34 @@ namespace cage
 			uint32 scheme;
 			uint32 references;
 			std::atomic<bool> processing, ready, error, dependenciesDoneFlag, fabricated;
-			assetContextPrivateStruct() : aliasPrevious(0), scheme(m), references(0), processing(false), ready(false), error(true), dependenciesDoneFlag(false), fabricated(false) {}
+			AssetContextPrivate() : aliasPrevious(0), scheme(m), references(0), processing(false), ready(false), error(true), dependenciesDoneFlag(false), fabricated(false) {}
 		};
 
-		struct assetSchemePrivateStruct : public AssetScheme
+		struct AssetSchemePrivate : public AssetScheme
 		{
 			uintPtr typeSize;
-			assetSchemePrivateStruct() : typeSize(0) {}
+			AssetSchemePrivate() : typeSize(0) {}
 		};
 
-		void destroy(assetContextPrivateStruct *ptr)
+		void destroy(AssetContextPrivate *ptr)
 		{
 			// these pointers are owned by the hash map, not by the concurrent queues
 			ptr->error = true;
 		}
 
-		class assetManagerImpl : public AssetManager
+		class AssetManagerImpl : public AssetManager
 		{
 		public:
-			std::map<uint32, std::set<assetContextPrivateStruct*>> aliasNames;
-			std::vector<assetSchemePrivateStruct> schemes;
-			cage::unordered_map<uint32, assetContextPrivateStruct*> index;
+			std::map<uint32, std::set<AssetContextPrivate*>> aliasNames;
+			std::vector<AssetSchemePrivate> schemes;
+			cage::unordered_map<uint32, AssetContextPrivate*> index;
 			Holder<TcpConnection> listener;
 			Holder<Thread> loadingThread;
 			Holder<Thread> decompressionThread;
 
-			std::vector<Holder<ConcurrentQueue<assetContextPrivateStruct*>>> queueCustomLoad, queueCustomDone;
-			Holder<ConcurrentQueue<assetContextPrivateStruct*>> queueLoadFile, queueDecompression;
-			Holder<ConcurrentQueue<assetContextPrivateStruct*>> queueAddDependencies, queueWaitDependencies, queueRemoveDependencies;
+			std::vector<Holder<ConcurrentQueue<AssetContextPrivate*>>> queueCustomLoad, queueCustomDone;
+			Holder<ConcurrentQueue<AssetContextPrivate*>> queueLoadFile, queueDecompression;
+			Holder<ConcurrentQueue<AssetContextPrivate*>> queueAddDependencies, queueWaitDependencies, queueRemoveDependencies;
 
 			string path;
 			uint32 countTotal, countProcessing;
@@ -87,12 +87,12 @@ namespace cage
 			uint32 generateName;
 			std::atomic<bool> destroying;
 
-			Holder<ConcurrentQueue<assetContextPrivateStruct*>> createQueue()
+			Holder<ConcurrentQueue<AssetContextPrivate*>> createQueue()
 			{
-				return newConcurrentQueue<assetContextPrivateStruct*>({}, Delegate<void(assetContextPrivateStruct*)>().bind<&destroy>());
+				return newConcurrentQueue<AssetContextPrivate*>({}, Delegate<void(AssetContextPrivate*)>().bind<&destroy>());
 			}
 
-			assetManagerImpl(const AssetManagerCreateConfig &config) : countTotal(0), countProcessing(0), hackQueueWaitCounter(0), generateName(0), destroying(false)
+			AssetManagerImpl(const AssetManagerCreateConfig &config) : countTotal(0), countProcessing(0), hackQueueWaitCounter(0), generateName(0), destroying(false)
 			{
 				try
 				{
@@ -125,11 +125,11 @@ namespace cage
 				queueAddDependencies = createQueue();
 				queueWaitDependencies = createQueue();
 				queueRemoveDependencies = createQueue();
-				loadingThread = newThread(Delegate<void()>().bind<assetManagerImpl, &assetManagerImpl::loadingThreadEntry>(this), "asset disk io");
-				decompressionThread = newThread(Delegate<void()>().bind<assetManagerImpl, &assetManagerImpl::decompressionThreadEntry>(this), "asset decompression");
+				loadingThread = newThread(Delegate<void()>().bind<AssetManagerImpl, &AssetManagerImpl::loadingThreadEntry>(this), "asset disk io");
+				decompressionThread = newThread(Delegate<void()>().bind<AssetManagerImpl, &AssetManagerImpl::decompressionThreadEntry>(this), "asset decompression");
 			}
 
-			~assetManagerImpl()
+			~AssetManagerImpl()
 			{
 				CAGE_ASSERT(countTotal == 0, countTotal);
 				CAGE_ASSERT(countProcessing == 0, countProcessing);
@@ -159,7 +159,7 @@ namespace cage
 
 			bool processLoadingThread()
 			{
-				assetContextPrivateStruct *ass = nullptr;
+				AssetContextPrivate *ass = nullptr;
 				queueLoadFile->pop(ass);
 				if (ass)
 				{
@@ -245,7 +245,7 @@ namespace cage
 
 			bool processDecompressionThread()
 			{
-				assetContextPrivateStruct *ass = nullptr;
+				AssetContextPrivate *ass = nullptr;
 				queueDecompression->pop(ass);
 				if (ass)
 				{
@@ -286,7 +286,7 @@ namespace cage
 				CAGE_ASSERT(threadIndex < queueCustomDone.size(), threadIndex, queueCustomDone.size());
 
 				{ // done
-					assetContextPrivateStruct *ass = nullptr;
+					AssetContextPrivate *ass = nullptr;
 					queueCustomDone[threadIndex]->tryPop(ass);
 					if (ass)
 					{
@@ -314,7 +314,7 @@ namespace cage
 				}
 
 				{ // load
-					assetContextPrivateStruct *ass = nullptr;
+					AssetContextPrivate *ass = nullptr;
 					queueCustomLoad[threadIndex]->tryPop(ass);
 					if (ass)
 					{
@@ -350,7 +350,7 @@ namespace cage
 			bool processControlThread()
 			{
 				{ // remove
-					assetContextPrivateStruct *ass = nullptr;
+					AssetContextPrivate *ass = nullptr;
 					queueRemoveDependencies->tryPop(ass);
 					if (ass)
 					{
@@ -372,7 +372,7 @@ namespace cage
 							ASS_LOG(2, ass, "destroy");
 							interNameClear(ass->aliasName, ass);
 							index.erase(ass->realName);
-							detail::systemArena().destroy<assetContextPrivateStruct>(ass);
+							detail::systemArena().destroy<AssetContextPrivate>(ass);
 							CAGE_ASSERT(countTotal > 0);
 							countTotal--;
 						}
@@ -381,7 +381,7 @@ namespace cage
 				}
 
 				{ // add
-					assetContextPrivateStruct *ass = nullptr;
+					AssetContextPrivate *ass = nullptr;
 					queueAddDependencies->tryPop(ass);
 					if (ass)
 					{
@@ -403,7 +403,7 @@ namespace cage
 				}
 
 				{ // wait
-					assetContextPrivateStruct *ass = nullptr;
+					AssetContextPrivate *ass = nullptr;
 					queueWaitDependencies->tryPop(ass);
 					if (ass)
 					{
@@ -474,7 +474,7 @@ namespace cage
 						{
 							uint32 name = HashString(line.c_str());
 							CAGE_ASSERT(name != 0);
-							assetContextPrivateStruct *ass = nullptr;
+							AssetContextPrivate *ass = nullptr;
 							{
 								auto it = index.find(name);
 								if (it != index.end())
@@ -507,7 +507,7 @@ namespace cage
 				while (processDecompressionThread());
 			}
 
-			void assetStartLoading(assetContextPrivateStruct *ass)
+			void assetStartLoading(AssetContextPrivate *ass)
 			{
 				if (ass->processing || ass->fabricated)
 					return;
@@ -518,7 +518,7 @@ namespace cage
 				queueLoadFile->push(ass);
 			}
 
-			void assetStartRemoving(assetContextPrivateStruct *ass)
+			void assetStartRemoving(AssetContextPrivate *ass)
 			{
 				if (ass->processing)
 					return;
@@ -535,7 +535,7 @@ namespace cage
 				}
 			}
 
-			void interNameSet(uint32 interName, assetContextPrivateStruct *ass)
+			void interNameSet(uint32 interName, AssetContextPrivate *ass)
 			{
 				if (interName == 0)
 					return;
@@ -547,7 +547,7 @@ namespace cage
 					index[interName] = ass;
 			}
 
-			void interNameClear(uint32 interName, assetContextPrivateStruct *ass)
+			void interNameClear(uint32 interName, AssetContextPrivate *ass)
 			{
 				if (interName == 0)
 					return;
@@ -579,64 +579,64 @@ namespace cage
 
 	void AssetManager::listen(const string &address, uint16 port)
 	{
-		assetManagerImpl *impl = (assetManagerImpl*)this;
+		AssetManagerImpl *impl = (AssetManagerImpl*)this;
 		impl->listener = newTcpConnection(address, port);
 	}
 
 	uint32 AssetManager::dependenciesCount(uint32 assetName) const
 	{
 		CAGE_ASSERT(ready(assetName), assetName);
-		assetManagerImpl *impl = (assetManagerImpl*)this;
-		assetContextPrivateStruct *ass = impl->index.at(assetName);
+		AssetManagerImpl *impl = (AssetManagerImpl*)this;
+		AssetContextPrivate *ass = impl->index.at(assetName);
 		return numeric_cast<uint32>(ass->dependencies.size());
 	}
 
 	uint32 AssetManager::dependencyName(uint32 assetName, uint32 index) const
 	{
-		assetManagerImpl *impl = (assetManagerImpl*)this;
-		assetContextPrivateStruct *ass = impl->index.at(assetName);
+		AssetManagerImpl *impl = (AssetManagerImpl*)this;
+		AssetContextPrivate *ass = impl->index.at(assetName);
 		CAGE_ASSERT(index < ass->dependencies.size(), index, ass->dependencies.size(), assetName);
 		return ass->dependencies[index];
 	}
 
 	PointerRange<const uint32> AssetManager::dependencies(uint32 assetName) const
 	{
-		assetManagerImpl *impl = (assetManagerImpl*)this;
-		assetContextPrivateStruct *ass = impl->index.at(assetName);
+		AssetManagerImpl *impl = (AssetManagerImpl*)this;
+		AssetContextPrivate *ass = impl->index.at(assetName);
 		return ass->dependencies;
 	}
 
 	uint32 AssetManager::countTotal() const
 	{
-		assetManagerImpl *impl = (assetManagerImpl*)this;
+		AssetManagerImpl *impl = (AssetManagerImpl*)this;
 		return impl->countTotal;
 	}
 
 	uint32 AssetManager::countProcessing() const
 	{
-		assetManagerImpl *impl = (assetManagerImpl*)this;
+		AssetManagerImpl *impl = (AssetManagerImpl*)this;
 		return impl->countProcessing;
 	}
 
 	bool AssetManager::processControlThread()
 	{
-		assetManagerImpl *impl = (assetManagerImpl*)this;
+		AssetManagerImpl *impl = (AssetManagerImpl*)this;
 		return impl->processControlThread();
 	}
 
 	bool AssetManager::processCustomThread(uint32 threadIndex)
 	{
-		assetManagerImpl *impl = (assetManagerImpl*)this;
+		AssetManagerImpl *impl = (AssetManagerImpl*)this;
 		return impl->processCustomThread(threadIndex);
 	}
 
 	AssetStateEnum AssetManager::state(uint32 assetName) const
 	{
-		assetManagerImpl *impl = (assetManagerImpl*)this;
+		AssetManagerImpl *impl = (AssetManagerImpl*)this;
 		auto it = impl->index.find(assetName);
 		if (it == impl->index.end())
 			return AssetStateEnum::NotFound;
-		assetContextPrivateStruct *ass = it->second;
+		AssetContextPrivate *ass = it->second;
 		if (ass->error)
 			return AssetStateEnum::Error;
 		if (ass->ready)
@@ -646,7 +646,7 @@ namespace cage
 
 	bool AssetManager::ready(uint32 assetName) const
 	{
-		assetManagerImpl *impl = (assetManagerImpl*)this;
+		AssetManagerImpl *impl = (AssetManagerImpl*)this;
 		switch (state(assetName))
 		{
 		case AssetStateEnum::Ready:
@@ -655,7 +655,7 @@ namespace cage
 			return false;
 		case AssetStateEnum::Error:
 		{
-			assetContextPrivateStruct *ass = impl->index.at(assetName);
+			AssetContextPrivate *ass = impl->index.at(assetName);
 			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "asset real name: " + assetName);
 			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "asset text name: '" + ass->textName + "'");
 			CAGE_THROW_ERROR(Exception, "asset has failed to load");
@@ -669,7 +669,7 @@ namespace cage
 
 	uint32 AssetManager::scheme(uint32 assetName) const
 	{
-		assetManagerImpl *impl = (assetManagerImpl*)this;
+		AssetManagerImpl *impl = (AssetManagerImpl*)this;
 		auto it = impl->index.find(assetName);
 		if (it == impl->index.end())
 			return m;
@@ -678,18 +678,18 @@ namespace cage
 
 	uint32 AssetManager::generateUniqueName()
 	{
-		assetManagerImpl *impl = (assetManagerImpl*)this;
+		AssetManagerImpl *impl = (AssetManagerImpl*)this;
 		return impl->generateUniqueName();
 	}
 
 	void AssetManager::add(uint32 assetName)
 	{
-		assetManagerImpl *impl = (assetManagerImpl*)this;
+		AssetManagerImpl *impl = (AssetManagerImpl*)this;
 		CAGE_ASSERT(assetName != 0);
-		assetContextPrivateStruct *ass = nullptr;
+		AssetContextPrivate *ass = nullptr;
 		if (!impl->index.count(assetName))
 		{
-			ass = detail::systemArena().createObject<assetContextPrivateStruct>();
+			ass = detail::systemArena().createObject<AssetContextPrivate>();
 			ass->realName = assetName;
 			ass->textName = stringizer() + "<" + assetName + ">";
 			ASS_LOG(2, ass, "created");
@@ -705,11 +705,11 @@ namespace cage
 
 	void AssetManager::fabricate(uint32 scheme, uint32 assetName, const string &textName)
 	{
-		assetManagerImpl *impl = (assetManagerImpl*)this;
+		AssetManagerImpl *impl = (AssetManagerImpl*)this;
 		CAGE_ASSERT(assetName != 0);
 		CAGE_ASSERT(scheme < impl->schemes.size());
 		CAGE_ASSERT(!impl->index.count(assetName));
-		assetContextPrivateStruct *ass = detail::systemArena().createObject<assetContextPrivateStruct>();
+		AssetContextPrivate *ass = detail::systemArena().createObject<AssetContextPrivate>();
 		ass->fabricated = true;
 		ass->realName = assetName;
 		ass->textName = textName.subString(0, ass->textName.MaxLength - 1);
@@ -724,8 +724,8 @@ namespace cage
 
 	void AssetManager::remove(uint32 assetName)
 	{
-		assetManagerImpl *impl = (assetManagerImpl*)this;
-		assetContextPrivateStruct *ass = impl->index.at(assetName);
+		AssetManagerImpl *impl = (AssetManagerImpl*)this;
+		AssetContextPrivate *ass = impl->index.at(assetName);
 		CAGE_ASSERT(ass->references > 0);
 		CAGE_ASSERT(ass->realName == assetName, "assets cannot be removed by their alias names");
 		ass->references--;
@@ -735,8 +735,8 @@ namespace cage
 
 	void AssetManager::reload(uint32 assetName, bool recursive)
 	{
-		assetManagerImpl *impl = (assetManagerImpl*)this;
-		assetContextPrivateStruct *ass = impl->index.at(assetName);
+		AssetManagerImpl *impl = (AssetManagerImpl*)this;
+		AssetContextPrivate *ass = impl->index.at(assetName);
 		ASS_LOG(2, ass, "reload");
 		impl->assetStartLoading(ass);
 		if (recursive)
@@ -748,7 +748,7 @@ namespace cage
 
 	void AssetManager::zScheme(uint32 index, const AssetScheme &value, uintPtr typeSize)
 	{
-		assetManagerImpl *impl = (assetManagerImpl*)this;
+		AssetManagerImpl *impl = (AssetManagerImpl*)this;
 		CAGE_ASSERT(index < impl->schemes.size());
 		CAGE_ASSERT(value.threadIndex < impl->queueCustomLoad.size());
 		(AssetScheme&)impl->schemes[index] = value;
@@ -757,23 +757,23 @@ namespace cage
 
 	uintPtr AssetManager::zGetTypeSize(uint32 scheme) const
 	{
-		assetManagerImpl *impl = (assetManagerImpl*)this;
+		AssetManagerImpl *impl = (AssetManagerImpl*)this;
 		CAGE_ASSERT(scheme < impl->schemes.size(), scheme, impl->schemes.size());
 		return impl->schemes[scheme].typeSize;
 	}
 
 	void *AssetManager::zGet(uint32 assetName) const
 	{
-		assetManagerImpl *impl = (assetManagerImpl*)this;
-		assetContextPrivateStruct *ass = impl->index.at(assetName);
+		AssetManagerImpl *impl = (AssetManagerImpl*)this;
+		AssetContextPrivate *ass = impl->index.at(assetName);
 		CAGE_ASSERT(ass->ready);
 		return ass->returnData;
 	}
 
 	void AssetManager::zSet(uint32 assetName, void *value)
 	{
-		assetManagerImpl *impl = (assetManagerImpl*)this;
-		assetContextPrivateStruct *ass = impl->index.at(assetName);
+		AssetManagerImpl *impl = (AssetManagerImpl*)this;
+		AssetContextPrivate *ass = impl->index.at(assetName);
 		CAGE_ASSERT(ass->fabricated);
 		ass->returnData = value;
 		ass->ready = !!value;
@@ -784,7 +784,7 @@ namespace cage
 
 	Holder<AssetManager> newAssetManager(const AssetManagerCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<AssetManager, assetManagerImpl>(config);
+		return detail::systemArena().createImpl<AssetManager, AssetManagerImpl>(config);
 	}
 
 	AssetHeader initializeAssetHeader(const string &name_, uint16 schemeIndex)

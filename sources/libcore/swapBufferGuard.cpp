@@ -1,15 +1,15 @@
-#include <utility>
-
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/swapBufferGuard.h>
 
+#include <utility>
+
 namespace cage
 {
 	namespace
 	{
-		enum class stateEnum
+		enum class StateEnum
 		{
 			Nothing,
 			Reading,
@@ -18,10 +18,10 @@ namespace cage
 			Wrote,
 		};
 
-		class swapBufferControllerImpl : public SwapBufferGuard
+		class SwapBufferGuardImpl : public SwapBufferGuard
 		{
 		public:
-			swapBufferControllerImpl(const SwapBufferGuardCreateConfig &config) : states{ stateEnum::Nothing, stateEnum::Nothing, stateEnum::Nothing, stateEnum::Nothing }, ri(0), wi(0), buffersCount(config.buffersCount), repeatedReads(config.repeatedReads), repeatedWrites(config.repeatedWrites)
+			explicit SwapBufferGuardImpl(const SwapBufferGuardCreateConfig &config) : states{ StateEnum::Nothing, StateEnum::Nothing, StateEnum::Nothing, StateEnum::Nothing }, ri(0), wi(0), buffersCount(config.buffersCount), repeatedReads(config.repeatedReads), repeatedWrites(config.repeatedWrites)
 			{
 				CAGE_ASSERT(buffersCount > 1 && buffersCount < 5);
 				CAGE_ASSERT(buffersCount > 1u + repeatedReads + repeatedWrites);
@@ -31,7 +31,7 @@ namespace cage
 			bool readable() const
 			{
 				for (uint32 i = 0; i < buffersCount; i++)
-					if (states[i] == stateEnum::Reading)
+					if (states[i] == StateEnum::Reading)
 						return false;
 				return true;
 			}
@@ -39,7 +39,7 @@ namespace cage
 			bool writeable() const
 			{
 				for (uint32 i = 0; i < buffersCount; i++)
-					if (states[i] == stateEnum::Writing)
+					if (states[i] == StateEnum::Writing)
 						return false;
 				return true;
 			}
@@ -50,24 +50,24 @@ namespace cage
 				CAGE_ASSERT(readable(), "one reading at a time only");
 				if (repeatedReads)
 				{
-					if (next(ri) != wi && states[next(ri)] == stateEnum::Wrote)
+					if (next(ri) != wi && states[next(ri)] == StateEnum::Wrote)
 					{
 						ri = next(ri);
-						states[ri] = stateEnum::Reading;
+						states[ri] = StateEnum::Reading;
 						return privat::SwapBufferLock(this, ri);
 					}
-					if (states[ri] == stateEnum::Read)
+					if (states[ri] == StateEnum::Read)
 					{
-						states[ri] = stateEnum::Reading;
+						states[ri] = StateEnum::Reading;
 						return privat::SwapBufferLock(this, ri);
 					}
 				}
 				else
 				{
-					if (states[next(ri)] == stateEnum::Wrote)
+					if (states[next(ri)] == StateEnum::Wrote)
 					{
 						ri = next(ri);
-						states[ri] = stateEnum::Reading;
+						states[ri] = StateEnum::Reading;
 						return privat::SwapBufferLock(this, ri);
 					}
 				}
@@ -80,24 +80,24 @@ namespace cage
 				CAGE_ASSERT(writeable(), "one writing at a time only");
 				if (repeatedWrites)
 				{
-					if ((next(wi) != ri && states[next(wi)] == stateEnum::Read) || states[next(wi)] == stateEnum::Nothing)
+					if ((next(wi) != ri && states[next(wi)] == StateEnum::Read) || states[next(wi)] == StateEnum::Nothing)
 					{
 						wi = next(wi);
-						states[wi] = stateEnum::Writing;
+						states[wi] = StateEnum::Writing;
 						return privat::SwapBufferLock(this, wi);
 					}
-					if (states[wi] == stateEnum::Wrote)
+					if (states[wi] == StateEnum::Wrote)
 					{
-						states[wi] = stateEnum::Writing;
+						states[wi] = StateEnum::Writing;
 						return privat::SwapBufferLock(this, wi);
 					}
 				}
 				else
 				{
-					if (states[next(wi)] == stateEnum::Read || states[next(wi)] == stateEnum::Nothing)
+					if (states[next(wi)] == StateEnum::Read || states[next(wi)] == StateEnum::Nothing)
 					{
 						wi = next(wi);
-						states[wi] = stateEnum::Writing;
+						states[wi] = StateEnum::Writing;
 						return privat::SwapBufferLock(this, wi);
 					}
 				}
@@ -109,11 +109,11 @@ namespace cage
 				ScopeLock<Mutex> lock(mutex);
 				switch (states[index])
 				{
-				case stateEnum::Reading:
-					states[index] = stateEnum::Read;
+				case StateEnum::Reading:
+					states[index] = StateEnum::Read;
 					break;
-				case stateEnum::Writing:
-					states[index] = stateEnum::Wrote;
+				case StateEnum::Writing:
+					states[index] = StateEnum::Wrote;
 					break;
 				default:
 					CAGE_THROW_CRITICAL(Exception, "invalid swap buffer controller state");
@@ -131,7 +131,7 @@ namespace cage
 			}
 
 			Holder<Mutex> mutex;
-			stateEnum states[4];
+			StateEnum states[4];
 			uint32 ri, wi;
 			const uint32 buffersCount;
 			const bool repeatedReads, repeatedWrites;
@@ -145,11 +145,11 @@ namespace cage
 
 		SwapBufferLock::SwapBufferLock(SwapBufferGuard *controller, uint32 index) : controller_(controller), index_(index)
 		{
-			swapBufferControllerImpl *impl = (swapBufferControllerImpl*)controller_;
-			CAGE_ASSERT(impl->states[index] == stateEnum::Reading || impl->states[index] == stateEnum::Writing);
+			SwapBufferGuardImpl *impl = (SwapBufferGuardImpl*)controller_;
+			CAGE_ASSERT(impl->states[index] == StateEnum::Reading || impl->states[index] == StateEnum::Writing);
 		}
 
-		SwapBufferLock::SwapBufferLock(SwapBufferLock &&other) : controller_(nullptr), index_(m)
+		SwapBufferLock::SwapBufferLock(SwapBufferLock &&other) noexcept : controller_(nullptr), index_(m)
 		{
 			std::swap(controller_, other.controller_);
 			std::swap(index_, other.index_);
@@ -159,15 +159,15 @@ namespace cage
 		{
 			if (!controller_)
 				return;
-			swapBufferControllerImpl *impl = (swapBufferControllerImpl*)controller_;
+			SwapBufferGuardImpl *impl = (SwapBufferGuardImpl*)controller_;
 			impl->finished(index_);
 		}
 
-		SwapBufferLock &SwapBufferLock::operator = (SwapBufferLock &&other)
+		SwapBufferLock &SwapBufferLock::operator = (SwapBufferLock &&other) noexcept
 		{
 			if (controller_)
 			{
-				swapBufferControllerImpl *impl = (swapBufferControllerImpl*)controller_;
+				SwapBufferGuardImpl *impl = (SwapBufferGuardImpl*)controller_;
 				impl->finished(index_);
 				controller_ = nullptr;
 				index_ = m;
@@ -180,13 +180,13 @@ namespace cage
 
 	privat::SwapBufferLock SwapBufferGuard::read()
 	{
-		swapBufferControllerImpl *impl = (swapBufferControllerImpl*)this;
+		SwapBufferGuardImpl *impl = (SwapBufferGuardImpl*)this;
 		return impl->read();
 	}
 
 	privat::SwapBufferLock SwapBufferGuard::write()
 	{
-		swapBufferControllerImpl *impl = (swapBufferControllerImpl*)this;
+		SwapBufferGuardImpl *impl = (SwapBufferGuardImpl*)this;
 		return impl->write();
 	}
 
@@ -195,7 +195,7 @@ namespace cage
 
 	Holder<SwapBufferGuard> newSwapBufferGuard(const SwapBufferGuardCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<SwapBufferGuard, swapBufferControllerImpl>(config);
+		return detail::systemArena().createImpl<SwapBufferGuard, SwapBufferGuardImpl>(config);
 	}
 }
 

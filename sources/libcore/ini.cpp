@@ -1,6 +1,3 @@
-#include <map>
-#include <vector>
-
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/memory.h>
@@ -8,49 +5,52 @@
 #include <cage-core/ini.h>
 #include <cage-core/pointerRangeHolder.h>
 
+#include <map>
+#include <vector>
+
 namespace cage
 {
 	namespace
 	{
 		template<class Value>
-		struct containerMap : public std::map<string, Value, stringComparatorFast, MemoryArenaStd<std::pair<const string, Value>>>
+		struct ContainerMap : public std::map<string, Value, stringComparatorFast, MemoryArenaStd<std::pair<const string, Value>>>
 		{
-			typedef typename containerMap::map base;
-			containerMap(MemoryArena arena) : base(stringComparatorFast(), arena) {}
+			typedef typename ContainerMap::map Base;
+			ContainerMap(MemoryArena arena) : Base(stringComparatorFast(), arena) {}
 		};
 
-		struct iniValue
+		struct IniValue
 		{
 			string value;
 			bool used;
-			iniValue() : used(false) {}
-			iniValue(const string &value) : value(value), used(false) {}
+			IniValue() : used(false) {}
+			IniValue(const string &value) : value(value), used(false) {}
 		};
 
-		struct iniSection
+		struct IniSection
 		{
-			iniSection(MemoryArena arena) : items(arena) {}
-			containerMap<iniValue> items;
+			IniSection(MemoryArena arena) : items(arena) {}
+			ContainerMap<IniValue> items;
 		};
 
-		class iniImpl : public Ini
+		class IniImpl : public Ini
 		{
 		public:
-			iniImpl(MemoryArena arena) : arena(arena), sections(arena) {}
+			IniImpl(MemoryArena arena) : arena(arena), sections(arena) {}
 			MemoryArena arena;
-			containerMap<Holder<iniSection>> sections;
+			ContainerMap<Holder<IniSection>> sections;
 		};
 	}
 
 	uint32 Ini::sectionsCount() const
 	{
-		iniImpl *impl = (iniImpl*)this;
+		IniImpl *impl = (IniImpl*)this;
 		return numeric_cast<uint32>(impl->sections.size());
 	}
 
 	string Ini::section(uint32 section) const
 	{
-		iniImpl *impl = (iniImpl*)this;
+		IniImpl *impl = (IniImpl*)this;
 		auto i = impl->sections.cbegin();
 		try
 		{
@@ -65,13 +65,13 @@ namespace cage
 
 	bool Ini::sectionExists(const string &section) const
 	{
-		iniImpl *impl = (iniImpl*)this;
+		IniImpl *impl = (IniImpl*)this;
 		return impl->sections.count(section);
 	}
 
 	Holder<PointerRange<string>> Ini::sections() const
 	{
-		iniImpl *impl = (iniImpl*)this;
+		IniImpl *impl = (IniImpl*)this;
 		PointerRangeHolder<string> tmp;
 		tmp.reserve(impl->sections.size());
 		for (auto &it : impl->sections)
@@ -81,7 +81,7 @@ namespace cage
 
 	void Ini::sectionRemove(const string &section)
 	{
-		iniImpl *impl = (iniImpl*)this;
+		IniImpl *impl = (IniImpl*)this;
 		impl->sections.erase(section);
 	}
 
@@ -89,7 +89,7 @@ namespace cage
 	{
 		if (!sectionExists(section))
 			return 0;
-		iniImpl *impl = (iniImpl*)this;
+		IniImpl *impl = (IniImpl*)this;
 		return numeric_cast<uint32>(impl->sections[section]->items.size());
 	}
 
@@ -97,7 +97,7 @@ namespace cage
 	{
 		if (!sectionExists(section))
 			return "";
-		iniImpl *impl = (iniImpl*)this;
+		IniImpl *impl = (IniImpl*)this;
 		auto i = impl->sections[section]->items.cbegin();
 		try
 		{
@@ -114,13 +114,13 @@ namespace cage
 	{
 		if (!sectionExists(section))
 			return false;
-		iniImpl *impl = (iniImpl*)this;
+		IniImpl *impl = (IniImpl*)this;
 		return impl->sections[section]->items.count(item);
 	}
 
 	Holder<PointerRange<string>> Ini::items(const string &section) const
 	{
-		iniImpl *impl = (iniImpl*)this;
+		IniImpl *impl = (IniImpl*)this;
 		PointerRangeHolder<string> tmp;
 		if (!sectionExists(section))
 			return tmp;
@@ -133,7 +133,7 @@ namespace cage
 
 	Holder<PointerRange<string>> Ini::values(const string &section) const
 	{
-		iniImpl *impl = (iniImpl*)this;
+		IniImpl *impl = (IniImpl*)this;
 		PointerRangeHolder<string> tmp;
 		if (!sectionExists(section))
 			return tmp;
@@ -146,7 +146,7 @@ namespace cage
 
 	void Ini::itemRemove(const string &section, const string &item)
 	{
-		iniImpl *impl = (iniImpl*)this;
+		IniImpl *impl = (IniImpl*)this;
 		if (sectionExists(section))
 			impl->sections[section]->items.erase(item);
 	}
@@ -155,7 +155,7 @@ namespace cage
 	{
 		if (!itemExists(section, item))
 			return "";
-		iniImpl *impl = (iniImpl*)this;
+		IniImpl *impl = (IniImpl*)this;
 		return impl->sections[section]->items[item].value;
 	}
 
@@ -174,30 +174,30 @@ namespace cage
 		validateString(item);
 		if (value.find('#') != m)
 			CAGE_THROW_ERROR(Exception, "invalid value");
-		iniImpl *impl = (iniImpl*)this;
+		IniImpl *impl = (IniImpl*)this;
 		if (!sectionExists(section))
-			impl->sections[section] = impl->arena.createHolder<iniSection>(impl->arena);
+			impl->sections[section] = impl->arena.createHolder<IniSection>(impl->arena);
 		impl->sections[section]->items[item] = value;
 	}
 
 	void Ini::markUsed(const string &section, const string &item)
 	{
 		CAGE_ASSERT(itemExists(section, item), section, item);
-		iniImpl *impl = (iniImpl*)this;
+		IniImpl *impl = (IniImpl*)this;
 		impl->sections[section]->items[item].used = true;
 	}
 
 	void Ini::markUnused(const string &section, const string &item)
 	{
 		CAGE_ASSERT(itemExists(section, item), section, item);
-		iniImpl *impl = (iniImpl*)this;
+		IniImpl *impl = (IniImpl*)this;
 		impl->sections[section]->items[item].used = false;
 	}
 
 	bool Ini::isUsed(const string &section, const string &item) const
 	{
 		CAGE_ASSERT(itemExists(section, item), section, item);
-		iniImpl *impl = (iniImpl*)this;
+		IniImpl *impl = (IniImpl*)this;
 		return impl->sections[section]->items[item].used;
 	}
 
@@ -209,7 +209,7 @@ namespace cage
 
 	bool Ini::anyUnused(string &section, string &item, string &value) const
 	{
-		iniImpl *impl = (iniImpl*)this;
+		IniImpl *impl = (IniImpl*)this;
 		for (const auto &s : impl->sections)
 		{
 			for (const auto &t : s.second->items)
@@ -238,7 +238,7 @@ namespace cage
 
 	void Ini::clear()
 	{
-		iniImpl *impl = (iniImpl*)this;
+		IniImpl *impl = (IniImpl*)this;
 		impl->sections.clear();
 	}
 
@@ -374,7 +374,7 @@ namespace cage
 
 	void Ini::save(const string &filename) const
 	{
-		iniImpl *impl = (iniImpl*)this;
+		IniImpl *impl = (IniImpl*)this;
 		FileMode fm(false, true);
 		fm.textual = true;
 		Holder<File> file = newFile(filename, fm);
@@ -495,7 +495,7 @@ namespace cage
 
 	Holder<Ini> newIni(MemoryArena arena)
 	{
-		return detail::systemArena().createImpl<Ini, iniImpl>(arena);
+		return detail::systemArena().createImpl<Ini, IniImpl>(arena);
 	}
 
 	Holder<Ini> newIni(const string &filename)

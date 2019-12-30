@@ -6,17 +6,17 @@
 #include <cage-core/concurrent.h> // threadSleep
 #include <cage-core/variableSmoothingBuffer.h>
 
-#include <optick.h>
-
 #include <vector>
 #include <algorithm>
 #include <atomic>
+
+#include <optick.h>
 
 namespace cage
 {
 	namespace
 	{
-		struct schedStats : private Immovable
+		struct SchedStats : private Immovable
 		{
 			VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> delays;
 			VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> durations;
@@ -26,7 +26,7 @@ namespace cage
 			uint64 maxDuration;
 			uint32 runs;
 
-			schedStats() : totalDelay(0), totalDuration(0), maxDelay(0), maxDuration(0), runs(0)
+			SchedStats() : totalDelay(0), totalDuration(0), maxDelay(0), maxDuration(0), runs(0)
 			{}
 
 			void add(uint64 delay, uint64 duration)
@@ -41,37 +41,37 @@ namespace cage
 			}
 		};
 
-		class schedulerImpl;
+		class SchedulerImpl;
 
-		class scheduleImpl : public Schedule
+		class ScheduleImpl : public Schedule
 		{
 		public:
 			const ScheduleCreateConfig conf;
-			schedulerImpl *const schr;
-			Holder<schedStats> stats;
+			SchedulerImpl *const schr;
+			Holder<SchedStats> stats;
 			uint64 sched;
 			sint32 pri;
 			std::atomic<bool> active;
 
-			scheduleImpl(schedulerImpl *schr, const ScheduleCreateConfig &config) : conf(config), schr(schr), sched(m), pri(0), active(false)
+			explicit ScheduleImpl(SchedulerImpl *schr, const ScheduleCreateConfig &config) : conf(config), schr(schr), sched(m), pri(0), active(false)
 			{
 				if (conf.type != ScheduleTypeEnum::Once)
-					stats = detail::systemArena().createHolder<schedStats>();
+					stats = detail::systemArena().createHolder<SchedStats>();
 			}
 		};
 
-		class schedulerImpl : public Scheduler
+		class SchedulerImpl : public Scheduler
 		{
 		public:
 			const SchedulerCreateConfig conf;
-			std::vector<Holder<scheduleImpl>> scheds;
-			std::vector<scheduleImpl*> tmp;
+			std::vector<Holder<ScheduleImpl>> scheds;
+			std::vector<ScheduleImpl*> tmp;
 			Holder<Timer> tmr;
 			uint64 t;
 			sint32 lastPriority;
 			std::atomic<bool> stopping;
 
-			schedulerImpl(const SchedulerCreateConfig &config) : conf(config), t(0), lastPriority(0), stopping(false)
+			explicit SchedulerImpl(const SchedulerCreateConfig &config) : conf(config), t(0), lastPriority(0), stopping(false)
 			{
 				tmr = newTimer();
 			}
@@ -165,14 +165,14 @@ namespace cage
 			{
 				for (const auto &it : tmp)
 					it->pri++;
-				std::stable_sort(tmp.begin(), tmp.end(), [](const scheduleImpl *a, const scheduleImpl *b) {
+				std::stable_sort(tmp.begin(), tmp.end(), [](const ScheduleImpl *a, const ScheduleImpl *b) {
 					return a->pri > b->pri; // higher priority goes first
 				});
 			}
 
 			void runSchedule()
 			{
-				scheduleImpl *s = tmp[0];
+				ScheduleImpl *s = tmp[0];
 				//CAGE_LOG(SeverityEnum::Info, "Scheduler", stringizer() + "running schedule: " + s->conf.name);
 				lastPriority = s->pri;
 				s->pri = s->conf.priority;
@@ -232,7 +232,7 @@ namespace cage
 
 	void Schedule::trigger()
 	{
-		scheduleImpl *impl = (scheduleImpl*)this;
+		ScheduleImpl *impl = (ScheduleImpl*)this;
 		CAGE_ASSERT(impl->conf.type == ScheduleTypeEnum::External);
 		CAGE_ASSERT(impl->sched != m, "cannot trigger schedule before it was initialized");
 		if (!impl->active)
@@ -247,7 +247,7 @@ namespace cage
 	void Schedule::run()
 	{
 		OPTICK_EVENT();
-		scheduleImpl *impl = (scheduleImpl*)this;
+		ScheduleImpl *impl = (ScheduleImpl*)this;
 		OPTICK_TAG("schedule", impl->conf.name.c_str());
 		if (!impl->conf.action)
 			return;
@@ -264,7 +264,7 @@ namespace cage
 
 	void Schedule::destroy()
 	{
-		scheduleImpl *impl = (scheduleImpl*)this;
+		ScheduleImpl *impl = (ScheduleImpl*)this;
 		auto &vec = impl->schr->scheds;
 		auto it = std::find_if(vec.begin(), vec.end(), [&](const auto &a) { return a.get() == impl; });
 		CAGE_ASSERT(it != vec.end());
@@ -273,69 +273,69 @@ namespace cage
 
 	void Schedule::period(uint64 p)
 	{
-		scheduleImpl *impl = (scheduleImpl*)this;
+		ScheduleImpl *impl = (ScheduleImpl*)this;
 		CAGE_ASSERT(impl->conf.type == ScheduleTypeEnum::SteadyPeriodic || impl->conf.type == ScheduleTypeEnum::FreePeriodic);
 		const_cast<ScheduleCreateConfig&>(impl->conf).period = p;
 	}
 
 	uint64 Schedule::period() const
 	{
-		scheduleImpl *impl = (scheduleImpl*)this;
+		ScheduleImpl *impl = (ScheduleImpl*)this;
 		CAGE_ASSERT(impl->conf.type == ScheduleTypeEnum::SteadyPeriodic || impl->conf.type == ScheduleTypeEnum::FreePeriodic);
 		return impl->conf.period;
 	}
 
 	void Schedule::priority(sint32 p)
 	{
-		scheduleImpl *impl = (scheduleImpl*)this;
+		ScheduleImpl *impl = (ScheduleImpl*)this;
 		impl->pri = p;
 	}
 
 	sint32 Schedule::priority() const
 	{
-		scheduleImpl *impl = (scheduleImpl*)this;
+		ScheduleImpl *impl = (ScheduleImpl*)this;
 		return impl->pri;
 	}
 
 	const VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> &Schedule::statsDelay() const
 	{
-		const scheduleImpl *impl = (const scheduleImpl*)this;
+		const ScheduleImpl *impl = (const ScheduleImpl*)this;
 		return impl->stats->delays;
 	}
 
 	const VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> &Schedule::statsDuration() const
 	{
-		const scheduleImpl *impl = (const scheduleImpl*)this;
+		const ScheduleImpl *impl = (const ScheduleImpl*)this;
 		return impl->stats->durations;
 	}
 
 	uint64 Schedule::statsDelayMax() const
 	{
-		const scheduleImpl *impl = (const scheduleImpl*)this;
+		const ScheduleImpl *impl = (const ScheduleImpl*)this;
 		return impl->stats->maxDelay;
 	}
 
 	uint64 Schedule::statsDelaySum() const
 	{
-		const scheduleImpl *impl = (const scheduleImpl*)this;
+		const ScheduleImpl *impl = (const ScheduleImpl*)this;
 		return impl->stats->totalDelay;
 	}
 
 	uint64 Schedule::statsDurationMax() const
 	{
-		const scheduleImpl *impl = (const scheduleImpl*)this;
+		const ScheduleImpl *impl = (const ScheduleImpl*)this;
 		return impl->stats->maxDuration;
 	}
 
 	uint64 Schedule::statsDurationSum() const
 	{
-		const scheduleImpl *impl = (const scheduleImpl*)this;
+		const ScheduleImpl *impl = (const ScheduleImpl*)this;
 		return impl->stats->totalDuration;
 	}
 
 	uint32 Schedule::statsRunCount() const
 	{
-		const scheduleImpl *impl = (const scheduleImpl*)this;
+		const ScheduleImpl *impl = (const ScheduleImpl*)this;
 		return impl->stats->runs;
 	}
 
@@ -344,20 +344,20 @@ namespace cage
 
 	void Scheduler::run()
 	{
-		schedulerImpl *impl = (schedulerImpl*)this;
+		SchedulerImpl *impl = (SchedulerImpl*)this;
 		impl->run();
 	}
 
 	void Scheduler::stop()
 	{
-		schedulerImpl *impl = (schedulerImpl*)this;
+		SchedulerImpl *impl = (SchedulerImpl*)this;
 		impl->stopping = true;
 	}
 
 	Schedule *Scheduler::newSchedule(const ScheduleCreateConfig &config)
 	{
-		schedulerImpl *impl = (schedulerImpl*)this;
-		auto sch = detail::systemArena().createHolder<scheduleImpl>(impl, config);
+		SchedulerImpl *impl = (SchedulerImpl*)this;
+		auto sch = detail::systemArena().createHolder<ScheduleImpl>(impl, config);
 		auto res = sch.get();
 		impl->scheds.push_back(templates::move(sch));
 		return res;
@@ -365,18 +365,18 @@ namespace cage
 
 	void Scheduler::clear()
 	{
-		schedulerImpl *impl = (schedulerImpl*)this;
+		SchedulerImpl *impl = (SchedulerImpl*)this;
 		impl->scheds.clear();
 	}
 
 	sint32 Scheduler::latestPriority() const
 	{
-		schedulerImpl *impl = (schedulerImpl*)this;
+		SchedulerImpl *impl = (SchedulerImpl*)this;
 		return impl->lastPriority;
 	}
 
 	Holder<Scheduler> newScheduler(const SchedulerCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<Scheduler, schedulerImpl>(config);
+		return detail::systemArena().createImpl<Scheduler, SchedulerImpl>(config);
 	}
 }

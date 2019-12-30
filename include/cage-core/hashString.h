@@ -20,18 +20,18 @@ namespace cage
 			uint32 value;
 
 			template<uint32 N, uint32 I>
-			struct hash
+			struct Hash
 			{
-				constexpr uint32 operator ()(const char(&str)[N])
+				constexpr uint32 operator ()(const char(&str)[N]) noexcept
 				{
-					return (hash<N, I - 1>()(str) ^ str[I - 2]) * GCHL_HASH_PRIME;
+					return (Hash<N, I - 1>()(str) ^ str[I - 2]) * GCHL_HASH_PRIME;
 				}
 			};
 
 			template<uint32 N>
-			struct hash<N, 1>
+			struct Hash<N, 1>
 			{
-				constexpr uint32 operator ()(const char(&str)[N])
+				constexpr uint32 operator ()(const char(&str)[N]) noexcept
 				{
 					return GCHL_HASH_OFFSET;
 				}
@@ -39,10 +39,10 @@ namespace cage
 
 		public:
 			template<uint32 N>
-			explicit HashCompile(const char(&str)[N]) : value(hash<N, N>()(str))
+			explicit HashCompile(const char(&str)[N]) noexcept : value(Hash<N, N>()(str))
 			{};
 
-			operator uint32() const
+			operator uint32() const noexcept
 			{
 				return value;
 			}
@@ -70,10 +70,10 @@ namespace cage
 		{}
 
 		template<uint32 N>
-		explicit HashString(const char(&str)[N]) : value(detail::HashCompile(str) | ((uint32)1 << 31))
+		explicit HashString(const char(&str)[N]) noexcept : value(detail::HashCompile(str) | ((uint32)1 << 31))
 		{};
 
-		operator uint32() const
+		operator uint32() const noexcept
 		{
 			return value;
 		}

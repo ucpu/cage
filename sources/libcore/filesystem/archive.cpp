@@ -1,7 +1,3 @@
-#include <vector>
-#include <set>
-#include <map>
-
 #include "filesystem.h"
 #include <cage-core/concurrent.h>
 #include <cage-core/memoryBuffer.h>
@@ -9,9 +5,13 @@
 
 #include <zip.h>
 
+#include <vector>
+#include <set>
+#include <map>
+
 namespace cage
 {
-	archiveVirtual::archiveVirtual(const string &path) : myPath(path)
+	ArchiveAbstract::ArchiveAbstract(const string &path) : myPath(path)
 	{}
 
 	void pathCreateArchive(const string &path, const string &options)
@@ -21,7 +21,7 @@ namespace cage
 		archiveCreateZip(path, options);
 	}
 
-	void mixedMove(std::shared_ptr<archiveVirtual> &af, const string &pf, std::shared_ptr<archiveVirtual> &at, const string &pt)
+	void mixedMove(std::shared_ptr<ArchiveAbstract> &af, const string &pf, std::shared_ptr<ArchiveAbstract> &at, const string &pt)
 	{
 		{
 			Holder<File> f = af ? af->openFile(pf, FileMode(true, false)) : realNewFile(pf, FileMode(true, false));
@@ -40,10 +40,10 @@ namespace cage
 
 	namespace
 	{
-		std::shared_ptr<archiveVirtual> archiveTryGet(const string &path)
+		std::shared_ptr<ArchiveAbstract> archiveTryGet(const string &path)
 		{
 			static Holder<Mutex> *mutex = new Holder<Mutex>(newMutex()); // this leak is intentional
-			static std::map<string, std::weak_ptr<archiveVirtual>> *map = new std::map<string, std::weak_ptr<archiveVirtual>>(); // this leak is intentional
+			static std::map<string, std::weak_ptr<ArchiveAbstract>> *map = new std::map<string, std::weak_ptr<ArchiveAbstract>>(); // this leak is intentional
 			ScopeLock<Mutex> l(*mutex);
 			auto it = map->find(path);
 			if (it != map->end())
@@ -67,7 +67,7 @@ namespace cage
 			}
 		}
 
-		std::shared_ptr<archiveVirtual> recursiveFind(const string &path, bool matchExact, string &insidePath)
+		std::shared_ptr<ArchiveAbstract> recursiveFind(const string &path, bool matchExact, string &insidePath)
 		{
 			CAGE_ASSERT(path == pathSimplify(path), path, pathSimplify(path));
 			if (matchExact)
@@ -88,7 +88,7 @@ namespace cage
 		}
 	}
 
-	std::shared_ptr<archiveVirtual> archiveFindTowardsRoot(const string &path, bool matchExact, string &insidePath)
+	std::shared_ptr<ArchiveAbstract> archiveFindTowardsRoot(const string &path, bool matchExact, string &insidePath)
 	{
 		CAGE_ASSERT(insidePath.empty());
 		return recursiveFind(pathToAbs(path), matchExact, insidePath);
@@ -98,7 +98,7 @@ namespace cage
 	{
 #define LOCK ScopeLock<Mutex> lock(mutex)
 
-		class archiveZip : public archiveVirtual
+		class ArchiveZip : public ArchiveAbstract
 		{
 		public:
 			Holder<Mutex> mutex;
@@ -106,7 +106,7 @@ namespace cage
 			zip_t *zip;
 
 			// create archive
-			archiveZip(const string &path, const string &options) : archiveVirtual(path), zip(nullptr)
+			ArchiveZip(const string &path, const string &options) : ArchiveAbstract(path), zip(nullptr)
 			{
 				mutex = newMutex();
 				realCreateDirectories(pathJoin(path, ".."));
@@ -119,7 +119,7 @@ namespace cage
 			}
 
 			// open archive
-			archiveZip(const string &path) : archiveVirtual(path), zip(nullptr)
+			ArchiveZip(const string &path) : ArchiveAbstract(path), zip(nullptr)
 			{
 				mutex = newMutex();
 				//if (newFile(path, FileMode(true, false))->size() == 0)
@@ -129,7 +129,7 @@ namespace cage
 					CAGE_THROW_ERROR(Exception, "zip_open");
 			}
 
-			~archiveZip()
+			~ArchiveZip()
 			{
 				LOCK;
 				if (zip_close(zip) != 0)
@@ -224,12 +224,12 @@ namespace cage
 #undef LOCK
 #define LOCK ScopeLock<Mutex> lock(a->mutex)
 
-		struct fileZipRead : public fileVirtual
+		struct FileZipRead : public FileAbstract
 		{
-			std::shared_ptr<archiveZip> a;
+			std::shared_ptr<ArchiveZip> a;
 			zip_file_t *f;
 
-			fileZipRead(const std::shared_ptr<archiveZip> &archive, const string &name, FileMode mode) : fileVirtual(name, mode), a(archive), f(nullptr)
+			FileZipRead(const std::shared_ptr<ArchiveZip> &archive, const string &name, FileMode mode) : FileAbstract(name, mode), a(archive), f(nullptr)
 			{
 				LOCK;
 				f = zip_fopen(a->zip, name.c_str(), 0);
@@ -237,7 +237,7 @@ namespace cage
 					CAGE_THROW_ERROR(Exception, "zip_fopen");
 			}
 
-			~fileZipRead()
+			~FileZipRead()
 			{
 				if (f)
 				{
@@ -311,17 +311,17 @@ namespace cage
 			}
 		};
 
-		struct fileZipWrite : public fileVirtual
+		struct FileZipWrite : public FileAbstract
 		{
-			std::shared_ptr<archiveZip> a;
+			std::shared_ptr<ArchiveZip> a;
 			MemoryBuffer m;
 			Serializer s;
 			bool closed;
 
-			fileZipWrite(const std::shared_ptr<archiveZip> &archive, const string &name, FileMode mode) : fileVirtual(name, mode), a(archive), s(m), closed(false)
+			FileZipWrite(const std::shared_ptr<ArchiveZip> &archive, const string &name, FileMode mode) : FileAbstract(name, mode), a(archive), s(m), closed(false)
 			{}
 
-			~fileZipWrite()
+			~FileZipWrite()
 			{
 				if (!closed)
 				{
@@ -389,13 +389,13 @@ namespace cage
 			}
 		};
 
-		struct directoryListZip : public directoryListVirtual
+		struct DirectoryListZip : public DirectoryListAbstract
 		{
-			std::shared_ptr<archiveZip> a;
+			std::shared_ptr<ArchiveZip> a;
 			std::vector<string> names;
 			uint32 index;
 
-			directoryListZip(const std::shared_ptr<archiveZip> &archive, const string &path) : directoryListVirtual(pathJoin(archive->myPath, path)), a(archive), index(0)
+			DirectoryListZip(const std::shared_ptr<ArchiveZip> &archive, const string &path) : DirectoryListAbstract(pathJoin(archive->myPath, path)), a(archive), index(0)
 			{
 				LOCK;
 				auto cnt = zip_get_num_entries(a->zip, 0);
@@ -444,7 +444,7 @@ namespace cage
 			}
 		};
 
-		Holder<File> archiveZip::openFile(const string &path, const FileMode &mode)
+		Holder<File> ArchiveZip::openFile(const string &path, const FileMode &mode)
 		{
 			CAGE_ASSERT(!path.empty());
 			CAGE_ASSERT(mode.valid());
@@ -452,26 +452,26 @@ namespace cage
 			CAGE_ASSERT(!mode.append, "zip archive cannot open file for append");
 			createDirectories(pathJoin(path, ".."));
 			if (mode.read)
-				return detail::systemArena().createImpl<File, fileZipRead>(std::dynamic_pointer_cast<archiveZip>(shared_from_this()), path, mode);
+				return detail::systemArena().createImpl<File, FileZipRead>(std::dynamic_pointer_cast<ArchiveZip>(shared_from_this()), path, mode);
 			else
-				return detail::systemArena().createImpl<File, fileZipWrite>(std::dynamic_pointer_cast<archiveZip>(shared_from_this()), path, mode);
+				return detail::systemArena().createImpl<File, FileZipWrite>(std::dynamic_pointer_cast<ArchiveZip>(shared_from_this()), path, mode);
 		}
 
-		Holder<DirectoryList> archiveZip::listDirectory(const string &path)
+		Holder<DirectoryList> ArchiveZip::listDirectory(const string &path)
 		{
 			createDirectories(path);
-			return detail::systemArena().createImpl<DirectoryList, directoryListZip>(std::dynamic_pointer_cast<archiveZip>(shared_from_this()), path);
+			return detail::systemArena().createImpl<DirectoryList, DirectoryListZip>(std::dynamic_pointer_cast<ArchiveZip>(shared_from_this()), path);
 		}
 	}
 
 	void archiveCreateZip(const string &path, const string &options)
 	{
-		archiveZip a(path, options);
+		ArchiveZip a(path, options);
 	}
 
-	std::shared_ptr<archiveVirtual> archiveOpenZip(const string &path)
+	std::shared_ptr<ArchiveAbstract> archiveOpenZip(const string &path)
 	{
-		return std::make_shared<archiveZip>(path);
+		return std::make_shared<ArchiveZip>(path);
 	}
 }
 

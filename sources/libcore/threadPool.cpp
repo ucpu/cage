@@ -1,16 +1,16 @@
-#include <vector>
-#include <exception>
-
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/threadPool.h>
 
+#include <vector>
+#include <exception>
+
 namespace cage
 {
 	namespace
 	{
-		class threadPoolImpl : public ThreadPool
+		class ThreadPoolImpl : public ThreadPool
 		{
 		public:
 			Holder<Barrier> barrier1;
@@ -21,17 +21,17 @@ namespace cage
 			uint32 threadIndexInitializer, threadsCount;
 			bool ending;
 
-			threadPoolImpl(const string &threadNames, uint32 threads) : threadIndexInitializer(0), threadsCount(threads == m ? processorsCount() : threads), ending(false)
+			explicit ThreadPoolImpl(const string &threadNames, uint32 threads) : threadIndexInitializer(0), threadsCount(threads == m ? processorsCount() : threads), ending(false)
 			{
 				barrier1 = newBarrier(threadsCount + 1);
 				barrier2 = newBarrier(threadsCount + 1);
 				mutex = newMutex();
 				thrs.resize(threadsCount);
 				for (uint32 i = 0; i < threadsCount; i++)
-					thrs[i] = newThread(Delegate<void()>().bind<threadPoolImpl, &threadPoolImpl::threadEntryLocal>(this), stringizer() + threadNames + i);
+					thrs[i] = newThread(Delegate<void()>().bind<ThreadPoolImpl, &ThreadPoolImpl::threadEntryLocal>(this), stringizer() + threadNames + i);
 			}
 
-			~threadPoolImpl()
+			~ThreadPoolImpl()
 			{
 				ending = true;
 				{ ScopeLock<Barrier> l(barrier1); }
@@ -84,13 +84,13 @@ namespace cage
 
 	void ThreadPool::run()
 	{
-		threadPoolImpl *impl = (threadPoolImpl*)this;
+		ThreadPoolImpl *impl = (ThreadPoolImpl*)this;
 		impl->run();
 	}
 
 	Holder<ThreadPool> newThreadPool(const string &threadNames, uint32 threadsCount)
 	{
-		return detail::systemArena().createImpl<ThreadPool, threadPoolImpl>(threadNames, threadsCount);
+		return detail::systemArena().createImpl<ThreadPool, ThreadPoolImpl>(threadNames, threadsCount);
 	}
 
 	void threadPoolTasksSplit(uint32 threadIndex, uint32 threadsCount, uint32 tasksCount, uint32 &begin, uint32 &end)

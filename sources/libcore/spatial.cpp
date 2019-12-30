@@ -1,8 +1,3 @@
-#include <vector>
-#include <algorithm>
-#include <atomic>
-#include <array>
-
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/math.h>
@@ -13,11 +8,16 @@
 
 #include <xsimd/xsimd.hpp>
 
+#include <vector>
+#include <algorithm>
+#include <atomic>
+#include <array>
+
 namespace cage
 {
 	namespace
 	{
-		union alignas(16) fastPoint
+		union alignas(16) FastPoint
 		{
 			xsimd::batch<float, 4> v4;
 			struct
@@ -30,37 +30,37 @@ namespace cage
 				};
 			} s;
 
-			fastPoint() : v4{ 0,0,0,0 }
+			FastPoint() : v4{ 0,0,0,0 }
 			{}
 		};
 
-		struct fastBox
+		struct FastBox
 		{
-			fastPoint low;
-			fastPoint high;
+			FastPoint low;
+			FastPoint high;
 
 			// initialize to negative box
-			fastBox()
+			FastBox()
 			{
 				low.v4 = { real::Infinity().value, real::Infinity().value, real::Infinity().value, 0 };
 				high.v4 = { -real::Infinity().value, -real::Infinity().value, -real::Infinity().value, 0 };
 			}
 
-			explicit fastBox(const aabb &b)
+			explicit FastBox(const aabb &b)
 			{
 				low.s.v3 = b.a;
 				high.s.v3 = b.b;
 			}
 
-			fastBox operator + (const fastBox &other) const
+			FastBox operator + (const FastBox &other) const
 			{
-				fastBox r;
+				FastBox r;
 				r.low.v4 = xsimd::min(low.v4, other.low.v4);
 				r.high.v4 = xsimd::max(high.v4, other.high.v4);
 				return r;
 			}
 
-			fastBox &operator += (const fastBox &other)
+			FastBox &operator += (const FastBox &other)
 			{
 				return *this = *this + other;
 			}
@@ -83,10 +83,10 @@ namespace cage
 			}
 		};
 
-		bool intersects(const fastBox &a, const fastBox &b)
+		bool intersects(const FastBox &a, const FastBox &b)
 		{
-			CAGE_ASSERT(uintPtr(&a) % alignof(fastBox) == 0);
-			CAGE_ASSERT(uintPtr(&b) % alignof(fastBox) == 0);
+			CAGE_ASSERT(uintPtr(&a) % alignof(FastBox) == 0);
+			CAGE_ASSERT(uintPtr(&b) % alignof(FastBox) == 0);
 			if (a.empty() || b.empty())
 				return false;
 			static const xsimd::batch<float, 4> mask = { 1,1,1,0 };
@@ -97,9 +97,9 @@ namespace cage
 			return true;
 		}
 
-		struct itemBase
+		struct ItemBase
 		{
-			fastBox box;
+			FastBox box;
 			vec3 center;
 			const uint32 name;
 			
@@ -110,21 +110,21 @@ namespace cage
 			virtual bool intersects(const sphere &other) = 0;
 			virtual bool intersects(const aabb &other) = 0;
 
-			itemBase(uint32 name) : name(name)
+			ItemBase(uint32 name) : name(name)
 			{}
 
 			void update()
 			{
 				aabb b = getBox();
-				box = fastBox(b);
+				box = FastBox(b);
 				center = b.center();
 			}
 		};
 
 		template<class T>
-		struct itemShape : public itemBase, public T
+		struct ItemShape : public ItemBase, public T
 		{
-			itemShape(uint32 name, const T &other) : itemBase(name), T(other)
+			ItemShape(uint32 name, const T &other) : ItemBase(name), T(other)
 			{
 				update();
 			}
@@ -137,20 +137,20 @@ namespace cage
 			virtual bool intersects(const aabb &other) { return cage::intersects(*this, other); };
 		};
 
-		union itemUnion
+		union ItemUnion
 		{
-			itemShape<line> a;
-			itemShape<triangle> b;
-			itemShape<plane> c;
-			itemShape<sphere> d;
-			itemShape<aabb> e;
+			ItemShape<line> a;
+			ItemShape<triangle> b;
+			ItemShape<plane> c;
+			ItemShape<sphere> d;
+			ItemShape<aabb> e;
 		};
 
-		struct nodeStruct
+		struct Node
 		{
-			fastBox box;
+			FastBox box;
 			
-			nodeStruct(const fastBox &box, sint32 a, sint32 b) : box(box)
+			Node(const FastBox &box, sint32 a, sint32 b) : box(box)
 			{
 				this->a() = a;
 				this->b() = b;
@@ -162,36 +162,36 @@ namespace cage
 			sint32 b() const { return box.high.s.i; }
 		};
 
-		class spatialDataImpl : public SpatialData
+		class SpatialDataImpl : public SpatialData
 		{
 		public:
-			MemoryArenaGrowing<MemoryAllocatorPolicyPool<templates::PoolAllocatorAtomSize<itemUnion>::result>, MemoryConcurrentPolicyNone> itemsPool;
+			MemoryArenaGrowing<MemoryAllocatorPolicyPool<templates::PoolAllocatorAtomSize<ItemUnion>::result>, MemoryConcurrentPolicyNone> itemsPool;
 			MemoryArena itemsArena;
-			cage::unordered_map<uint32, Holder<itemBase>> itemsTable;
+			cage::unordered_map<uint32, Holder<ItemBase>> itemsTable;
 			std::atomic<bool> dirty;
-			std::vector<nodeStruct, MemoryArenaStd<nodeStruct>> nodes;
-			std::vector<itemBase*> indices;
-			typedef std::vector<itemBase*>::iterator indicesIterator;
+			std::vector<Node, MemoryArenaStd<Node>> nodes;
+			std::vector<ItemBase*> indices;
+			typedef std::vector<ItemBase*>::iterator indicesIterator;
 			static const uint32 binsCount = 10;
-			std::array<fastBox, binsCount> leftBinBoxes;
-			std::array<fastBox, binsCount> rightBinBoxes;
+			std::array<FastBox, binsCount> leftBinBoxes;
+			std::array<FastBox, binsCount> rightBinBoxes;
 			std::array<uint32, binsCount> leftBinCounts;
 
-			spatialDataImpl(const SpatialDataCreateConfig &config) : itemsPool(config.maxItems * sizeof(itemUnion)), itemsArena(&itemsPool), dirty(false), nodes(detail::systemArena())
+			SpatialDataImpl(const SpatialDataCreateConfig &config) : itemsPool(config.maxItems * sizeof(ItemUnion)), itemsArena(&itemsPool), dirty(false), nodes(detail::systemArena())
 			{
-				CAGE_ASSERT((uintPtr(this) % alignof(fastBox)) == 0, uintPtr(this) % alignof(fastBox), alignof(fastBox));
-				CAGE_ASSERT((uintPtr(leftBinBoxes.data()) % alignof(fastBox)) == 0);
-				CAGE_ASSERT((uintPtr(rightBinBoxes.data()) % alignof(fastBox)) == 0);
+				CAGE_ASSERT((uintPtr(this) % alignof(FastBox)) == 0, uintPtr(this) % alignof(FastBox), alignof(FastBox));
+				CAGE_ASSERT((uintPtr(leftBinBoxes.data()) % alignof(FastBox)) == 0);
+				CAGE_ASSERT((uintPtr(rightBinBoxes.data()) % alignof(FastBox)) == 0);
 			}
 
-			~spatialDataImpl()
+			~SpatialDataImpl()
 			{
 				clear();
 			}
 
 			void rebuild(uint32 nodeIndex, uint32 nodeDepth, real parentSah)
 			{
-				nodeStruct &node = nodes[nodeIndex];
+				Node &node = nodes[nodeIndex];
 				CAGE_ASSERT(node.a() >= 0 && node.b() >= 0); // is leaf now
 				if (node.b() < 16)
 					return; // leaf node: too few primitives
@@ -199,21 +199,21 @@ namespace cage
 				uint32 bestSplit = m;
 				uint32 bestItemsCount = 0;
 				real bestSah = real::Infinity();
-				fastBox bestBoxLeft;
-				fastBox bestBoxRight;
+				FastBox bestBoxLeft;
+				FastBox bestBoxRight;
 				for (uint32 axis = 0; axis < 3; axis++)
 				{
 					if (node.box.high.v4[axis] - node.box.low.v4[axis] < 1e-7)
 						continue; // the box is flat (along this axis)
-					for (fastBox &b : leftBinBoxes)
-						b = fastBox();
+					for (FastBox &b : leftBinBoxes)
+						b = FastBox();
 					for (uint32 &c : leftBinCounts)
 						c = 0;
 					real binSizeInv = binsCount / (node.box.high.v4[axis] - node.box.low.v4[axis]);
 					real planeOffset = node.box.low.v4[axis];
 					for (sint32 i = node.a(), et = node.a() + node.b(); i != et; i++)
 					{
-						itemBase *item = indices[i];
+						ItemBase *item = indices[i];
 						uint32 binIndex = numeric_cast<uint32>((item->center[axis] - planeOffset) * binSizeInv);
 						CAGE_ASSERT(binIndex <= binsCount);
 						binIndex = min(binIndex, binsCount - 1);
@@ -259,7 +259,7 @@ namespace cage
 				{
 					real binSizeInv = binsCount / (node.box.high.v4[bestAxis] - node.box.low.v4[bestAxis]);
 					real planeOffset = node.box.low.v4[bestAxis];
-					std::partition(indices.begin() + node.a(), indices.begin() + (node.a() + node.b()), [&](itemBase *item) {
+					std::partition(indices.begin() + node.a(), indices.begin() + (node.a() + node.b()), [&](ItemBase *item) {
 						uint32 binIndex = numeric_cast<uint32>((item->center[bestAxis] - planeOffset) * binSizeInv);
 						return binIndex < bestSplit + 1;
 					});
@@ -274,26 +274,26 @@ namespace cage
 				node.b() = -rightNodeIndex;
 			}
 
-			bool similar(const fastBox &a, const fastBox &b)
+			bool similar(const FastBox &a, const FastBox &b)
 			{
 				return (length(a.low.s.v3 - b.low.s.v3) + length(a.high.s.v3 - b.high.s.v3)) < 1e-3;
 			}
 
 			void validate(uint32 nodeIndex)
 			{
-				nodeStruct &node = nodes[nodeIndex];
+				Node &node = nodes[nodeIndex];
 				CAGE_ASSERT((node.a() < 0) == (node.b() < 0));
 				if (node.a() < 0)
 				{ // inner node
-					nodeStruct &l = nodes[-node.a()];
-					nodeStruct &r = nodes[-node.b()];
+					Node &l = nodes[-node.a()];
+					Node &r = nodes[-node.b()];
 					validate(-node.a());
 					validate(-node.b());
 					CAGE_ASSERT(similar(node.box, l.box + r.box));
 				}
 				else
 				{ // leaf node
-					fastBox box;
+					FastBox box;
 					for (uint32 i = node.a(), e = node.a() + node.b(); i < e; i++)
 						box += indices[i]->box;
 					CAGE_ASSERT(similar(node.box, box));
@@ -312,7 +312,7 @@ namespace cage
 				}
 				nodes.reserve(itemsTable.size());
 				indices.reserve(itemsTable.size());
-				fastBox worldBox;
+				FastBox worldBox;
 				for (const auto &it : itemsTable)
 				{
 					indices.push_back(it.second.get());
@@ -320,7 +320,7 @@ namespace cage
 				}
 				nodes.emplace_back(worldBox, 0, numeric_cast<sint32>(itemsTable.size()));
 				rebuild(0, 0, real::Infinity());
-				CAGE_ASSERT(uintPtr(nodes.data()) % alignof(nodeStruct) == 0, uintPtr(nodes.data()) % alignof(nodeStruct), alignof(nodeStruct), alignof(fastBox), sizeof(nodeStruct));
+				CAGE_ASSERT(uintPtr(nodes.data()) % alignof(Node) == 0, uintPtr(nodes.data()) % alignof(Node), alignof(Node), alignof(FastBox), sizeof(Node));
 #ifdef CAGE_ASSERT_ENABLED
 				validate(0);
 #endif // CAGE_ASSERT_ENABLED
@@ -328,13 +328,13 @@ namespace cage
 			}
 		};
 
-		class spatialQueryImpl : public SpatialQuery
+		class SpatialQueryImpl : public SpatialQuery
 		{
 		public:
-			const spatialDataImpl *const data;
+			const SpatialDataImpl *const data;
 			std::vector<uint32> resultNames;
 
-			spatialQueryImpl(const spatialDataImpl *data) : data(data)
+			SpatialQueryImpl(const SpatialDataImpl *data) : data(data)
 			{
 				resultNames.reserve(100);
 			}
@@ -348,21 +348,21 @@ namespace cage
 			template<class T>
 			struct intersectorStruct
 			{
-				const spatialDataImpl *data;
+				const SpatialDataImpl *data;
 				std::vector<uint32> &resultNames;
 				const T &other;
-				const fastBox otherBox;
+				const FastBox otherBox;
 
-				intersectorStruct(const spatialDataImpl *data, std::vector<uint32> &resultNames, const T &other) : data(data), resultNames(resultNames), other(other), otherBox(aabb(other))
+				intersectorStruct(const SpatialDataImpl *data, std::vector<uint32> &resultNames, const T &other) : data(data), resultNames(resultNames), other(other), otherBox(aabb(other))
 				{
-					CAGE_ASSERT((uintPtr(this) % alignof(fastBox)) == 0, uintPtr(this) % alignof(fastBox), alignof(fastBox));
-					CAGE_ASSERT((uintPtr(&otherBox) % alignof(fastBox)) == 0);
+					CAGE_ASSERT((uintPtr(this) % alignof(FastBox)) == 0, uintPtr(this) % alignof(FastBox), alignof(FastBox));
+					CAGE_ASSERT((uintPtr(&otherBox) % alignof(FastBox)) == 0);
 					intersection(0);
 				}
 
 				void intersection(uint32 nodeIndex)
 				{
-					const nodeStruct &node = data->nodes[nodeIndex];
+					const Node &node = data->nodes[nodeIndex];
 					if (!intersects(otherBox, node.box))
 						return;
 					if (!intersects(other, aabb(node.box)))
@@ -376,7 +376,7 @@ namespace cage
 					{ // leaf
 						for (uint32 i = node.a(), e = node.a() + node.b(); i < e; i++)
 						{
-							itemBase *item = data->indices[i];
+							ItemBase *item = data->indices[i];
 							if (item->intersects(other))
 								resultNames.push_back(item->name);
 						}
@@ -398,7 +398,7 @@ namespace cage
 
 	PointerRange<uint32> SpatialQuery::result() const
 	{
-		spatialQueryImpl *impl = (spatialQueryImpl*)this;
+		SpatialQueryImpl *impl = (SpatialQueryImpl*)this;
 		return impl->resultNames;
 	}
 
@@ -409,31 +409,31 @@ namespace cage
 
 	void SpatialQuery::intersection(const line &shape)
 	{
-		spatialQueryImpl *impl = (spatialQueryImpl*)this;
+		SpatialQueryImpl *impl = (SpatialQueryImpl*)this;
 		impl->intersection(shape);
 	}
 
 	void SpatialQuery::intersection(const triangle &shape)
 	{
-		spatialQueryImpl *impl = (spatialQueryImpl*)this;
+		SpatialQueryImpl *impl = (SpatialQueryImpl*)this;
 		impl->intersection(shape);
 	}
 
 	void SpatialQuery::intersection(const plane &shape)
 	{
-		spatialQueryImpl *impl = (spatialQueryImpl*)this;
+		SpatialQueryImpl *impl = (SpatialQueryImpl*)this;
 		impl->intersection(shape);
 	}
 
 	void SpatialQuery::intersection(const sphere &shape)
 	{
-		spatialQueryImpl *impl = (spatialQueryImpl*)this;
+		SpatialQueryImpl *impl = (SpatialQueryImpl*)this;
 		impl->intersection(shape);
 	}
 
 	void SpatialQuery::intersection(const aabb &shape)
 	{
-		spatialQueryImpl *impl = (spatialQueryImpl*)this;
+		SpatialQueryImpl *impl = (SpatialQueryImpl*)this;
 		impl->intersection(shape);
 	}
 
@@ -446,55 +446,55 @@ namespace cage
 	{
 		CAGE_ASSERT(other.valid());
 		CAGE_ASSERT(other.isPoint() || other.isSegment());
-		spatialDataImpl *impl = (spatialDataImpl*)this;
+		SpatialDataImpl *impl = (SpatialDataImpl*)this;
 		remove(name);
-		impl->itemsTable[name] = impl->itemsArena.createImpl<itemBase, itemShape<line>>(name, other);
+		impl->itemsTable[name] = impl->itemsArena.createImpl<ItemBase, ItemShape<line>>(name, other);
 	}
 
 	void SpatialData::update(uint32 name, const triangle &other)
 	{
 		CAGE_ASSERT(other.valid());
 		CAGE_ASSERT(other.area() < real::Infinity());
-		spatialDataImpl *impl = (spatialDataImpl*)this;
+		SpatialDataImpl *impl = (SpatialDataImpl*)this;
 		remove(name);
-		impl->itemsTable[name] = impl->itemsArena.createImpl<itemBase, itemShape<triangle>>(name, other);
+		impl->itemsTable[name] = impl->itemsArena.createImpl<ItemBase, ItemShape<triangle>>(name, other);
 	}
 
 	void SpatialData::update(uint32 name, const sphere &other)
 	{
 		CAGE_ASSERT(other.valid());
 		CAGE_ASSERT(other.volume() < real::Infinity());
-		spatialDataImpl *impl = (spatialDataImpl*)this;
+		SpatialDataImpl *impl = (SpatialDataImpl*)this;
 		remove(name);
-		impl->itemsTable[name] = impl->itemsArena.createImpl<itemBase, itemShape<sphere>>(name, other);
+		impl->itemsTable[name] = impl->itemsArena.createImpl<ItemBase, ItemShape<sphere>>(name, other);
 	}
 
 	void SpatialData::update(uint32 name, const aabb &other)
 	{
 		CAGE_ASSERT(other.valid());
 		CAGE_ASSERT(other.volume() < real::Infinity());
-		spatialDataImpl *impl = (spatialDataImpl*)this;
+		SpatialDataImpl *impl = (SpatialDataImpl*)this;
 		remove(name);
-		impl->itemsTable[name] = impl->itemsArena.createImpl<itemBase, itemShape<aabb>>(name, other);
+		impl->itemsTable[name] = impl->itemsArena.createImpl<ItemBase, ItemShape<aabb>>(name, other);
 	}
 
 	void SpatialData::remove(uint32 name)
 	{
-		spatialDataImpl *impl = (spatialDataImpl*)this;
+		SpatialDataImpl *impl = (SpatialDataImpl*)this;
 		impl->dirty = true;
 		impl->itemsTable.erase(name);
 	}
 
 	void SpatialData::clear()
 	{
-		spatialDataImpl *impl = (spatialDataImpl*)this;
+		SpatialDataImpl *impl = (SpatialDataImpl*)this;
 		impl->dirty = true;
 		impl->itemsTable.clear();
 	}
 
 	void SpatialData::rebuild()
 	{
-		spatialDataImpl *impl = (spatialDataImpl*)this;
+		SpatialDataImpl *impl = (SpatialDataImpl*)this;
 		impl->rebuild();
 	}
 
@@ -503,11 +503,11 @@ namespace cage
 
 	Holder<SpatialData> newSpatialData(const SpatialDataCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<SpatialData, spatialDataImpl>(config);
+		return detail::systemArena().createImpl<SpatialData, SpatialDataImpl>(config);
 	}
 
 	Holder<SpatialQuery> newSpatialQuery(const SpatialData *data)
 	{
-		return detail::systemArena().createImpl<SpatialQuery, spatialQueryImpl>((spatialDataImpl*)data);
+		return detail::systemArena().createImpl<SpatialQuery, SpatialQueryImpl>((SpatialDataImpl*)data);
 	}
 }

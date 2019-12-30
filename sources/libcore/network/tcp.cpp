@@ -1,4 +1,3 @@
-
 #include "net.h"
 #include <cage-core/lineReader.h>
 
@@ -10,30 +9,30 @@ namespace cage
 
 	namespace
 	{
-		class tcpConnectionImpl : public TcpConnection
+		class TcpConnectionImpl : public TcpConnection
 		{
 		public:
-			sock s;
+			Sock s;
 			std::vector<char> buffer;
 
-			tcpConnectionImpl(const string &address, uint16 port)
+			TcpConnectionImpl(const string &address, uint16 port)
 			{
-				addrList l(address, port, AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, 0);
+				AddrList l(address, port, AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, 0);
 				while (l.valid())
 				{
 					detail::OverrideBreakpoint OverrideBreakpoint;
 					int family = -1, type = -1, protocol = -1;
-					addr address;
+					Addr address;
 					l.getAll(address, family, type, protocol);
 					try
 					{
-						s = sock(family, type, protocol);
+						s = Sock(family, type, protocol);
 						s.connect(address);
 						break;
 					}
 					catch (const Exception &)
 					{
-						s = sock();
+						s = Sock();
 					}
 					l.next();
 				}
@@ -44,26 +43,26 @@ namespace cage
 				s.setBlocking(false);
 			}
 
-			tcpConnectionImpl(sock &&s) : s(templates::move(s))
+			TcpConnectionImpl(Sock &&s) : s(templates::move(s))
 			{}
 		};
 
-		class tcpServerImpl : public TcpServer
+		class TcpServerImpl : public TcpServer
 		{
 		public:
-			std::vector<sock> socks;
+			std::vector<Sock> socks;
 
-			tcpServerImpl(uint16 port)
+			TcpServerImpl(uint16 port)
 			{
-				addrList l(nullptr, port, AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, AI_PASSIVE);
+				AddrList l(nullptr, port, AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, AI_PASSIVE);
 				while (l.valid())
 				{
 					int family = -1, type = -1, protocol = -1;
-					addr address;
+					Addr address;
 					l.getAll(address, family, type, protocol);
 					try
 					{
-						sock s(family, type, protocol);
+						Sock s(family, type, protocol);
 						s.setBlocking(false);
 						s.setReuseaddr(true);
 						s.bind(address);
@@ -85,7 +84,7 @@ namespace cage
 
 	string TcpConnection::address() const
 	{
-		tcpConnectionImpl *impl = (tcpConnectionImpl*)this;
+		TcpConnectionImpl *impl = (TcpConnectionImpl*)this;
 		string a;
 		uint16 p;
 		impl->s.getRemoteAddress().translate(a, p);
@@ -94,7 +93,7 @@ namespace cage
 
 	uint16 TcpConnection::port() const
 	{
-		tcpConnectionImpl *impl = (tcpConnectionImpl*)this;
+		TcpConnectionImpl *impl = (TcpConnectionImpl*)this;
 		string a;
 		uint16 p;
 		impl->s.getRemoteAddress().translate(a, p);
@@ -103,7 +102,7 @@ namespace cage
 
 	uintPtr TcpConnection::available() const
 	{
-		tcpConnectionImpl *impl = (tcpConnectionImpl*)this;
+		TcpConnectionImpl *impl = (TcpConnectionImpl*)this;
 		uintPtr a = impl->s.available();
 		if (a > 0)
 		{
@@ -116,7 +115,7 @@ namespace cage
 
 	void TcpConnection::read(void *buffer, uintPtr size)
 	{
-		tcpConnectionImpl *impl = (tcpConnectionImpl*)this;
+		TcpConnectionImpl *impl = (TcpConnectionImpl*)this;
 		uintPtr a = available();
 		if (size > a)
 		{
@@ -144,7 +143,7 @@ namespace cage
 
 	void TcpConnection::write(const void *buffer, uintPtr size)
 	{
-		tcpConnectionImpl *impl = (tcpConnectionImpl*)this;
+		TcpConnectionImpl *impl = (TcpConnectionImpl*)this;
 		impl->s.send(buffer, size);
 	}
 
@@ -156,7 +155,7 @@ namespace cage
 	bool TcpConnection::readLine(string &line)
 	{
 		available();
-		tcpConnectionImpl *impl = (tcpConnectionImpl*)this;
+		TcpConnectionImpl *impl = (TcpConnectionImpl*)this;
 		if (impl->buffer.empty())
 			return false;
 
@@ -177,7 +176,7 @@ namespace cage
 
 	uint16 TcpServer::port() const
 	{
-		tcpServerImpl *impl = (tcpServerImpl*)this;
+		TcpServerImpl *impl = (TcpServerImpl*)this;
 		string a;
 		uint16 p;
 		impl->socks[0].getLocalAddress().translate(a, p);
@@ -186,15 +185,15 @@ namespace cage
 
 	Holder<TcpConnection> TcpServer::accept()
 	{
-		tcpServerImpl *impl = (tcpServerImpl*)this;
+		TcpServerImpl *impl = (TcpServerImpl*)this;
 
-		for (sock &ss : impl->socks)
+		for (Sock &ss : impl->socks)
 		{
 			try
 			{
-				sock s = ss.accept();
+				Sock s = ss.accept();
 				if (s.isValid())
-					return detail::systemArena().createImpl<TcpConnection, tcpConnectionImpl>(templates::move(s));
+					return detail::systemArena().createImpl<TcpConnection, TcpConnectionImpl>(templates::move(s));
 			}
 			catch (const cage::Exception &)
 			{
@@ -207,11 +206,11 @@ namespace cage
 
 	Holder<TcpConnection> newTcpConnection(const string &address, uint16 port)
 	{
-		return detail::systemArena().createImpl<TcpConnection, tcpConnectionImpl>(address, port);
+		return detail::systemArena().createImpl<TcpConnection, TcpConnectionImpl>(address, port);
 	}
 
 	Holder<TcpServer> newTcpServer(uint16 port)
 	{
-		return detail::systemArena().createImpl<TcpServer, tcpServerImpl>(port);
+		return detail::systemArena().createImpl<TcpServer, TcpServerImpl>(port);
 	}
 }

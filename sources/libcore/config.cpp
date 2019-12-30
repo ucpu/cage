@@ -1,6 +1,3 @@
-#include <map>
-#include <vector>
-
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/math.h>
@@ -8,6 +5,9 @@
 #include <cage-core/files.h>
 #include <cage-core/config.h>
 #include <cage-core/ini.h>
+
+#include <map>
+#include <vector>
 
 namespace cage
 {
@@ -68,11 +68,11 @@ namespace cage
 			}
 		};
 
-		typedef std::map<string, Variable*, stringComparatorFast> varsType;
+		typedef std::map<string, Variable*, stringComparatorFast> VarsType;
 
-		varsType &directVariables()
+		VarsType &directVariables()
 		{
-			static varsType *v = new varsType(); // intentionally left to leak
+			static VarsType *v = new VarsType(); // intentionally left to leak
 			return *v;
 		}
 
@@ -286,7 +286,7 @@ namespace cage
 			}
 		}
 
-		class configListImpl : public ConfigList
+		class ConfigListImpl : public ConfigList
 		{
 		public:
 			std::vector<string> names;
@@ -294,7 +294,7 @@ namespace cage
 			uint32 index;
 			bool valid;
 
-			configListImpl() : var(nullptr), index(0), valid(false)
+			ConfigListImpl() : var(nullptr), index(0), valid(false)
 			{
 				ScopeLock<Mutex> lock(mut());
 				const auto &mp = directVariables();
@@ -358,7 +358,7 @@ namespace cage
 	CAGE_JOIN(Config, T)::CAGE_JOIN(Config, T)(const string &name, t default_) { ScopeLock<Mutex> lock(mut()); data = getVar(name); Variable *v = (Variable*)data; if (v->type == ConfigTypeEnum::Undefined) v->set(default_); } \
 	CAGE_JOIN(Config, T) &CAGE_JOIN(Config, T)::operator = (t value) { ((Variable*)data)->set(value); return *this; } \
 	CAGE_JOIN(Config, T)::operator t() const { return cast<t>((Variable*)data); } \
-	t ConfigList::CAGE_JOIN(get, T)() const { configListImpl *impl = (configListImpl*)this; CAGE_ASSERT(impl->valid, "ConfigList is at invalid location"); return cast<t>(impl->var); }
+	t ConfigList::CAGE_JOIN(get, T)() const { ConfigListImpl *impl = (ConfigListImpl*)this; CAGE_ASSERT(impl->valid, "ConfigList is at invalid location"); return cast<t>(impl->var); }
 	GCHL_CONFIG(Bool, bool)
 	GCHL_CONFIG(Sint32, sint32)
 	GCHL_CONFIG(Sint64, sint64)
@@ -374,24 +374,24 @@ namespace cage
 	ConfigString::ConfigString(const string &name, const string &default_) { ScopeLock<Mutex> lock(mut()); data = getVar(name); Variable *v = (Variable*)data; if (v->type == ConfigTypeEnum::Undefined) v->set(default_); }
 	ConfigString &ConfigString::operator = (const string &value) { ((Variable*)data)->set(value); return *this; }
 	ConfigString::operator string() const { return cast<string>((Variable*)data); }
-	string ConfigList::getString() const { configListImpl *impl = (configListImpl*)this; CAGE_ASSERT(impl->valid, "ConfigList is at invalid location"); return cast<string>(impl->var); }
+	string ConfigList::getString() const { ConfigListImpl *impl = (ConfigListImpl*)this; CAGE_ASSERT(impl->valid, "ConfigList is at invalid location"); return cast<string>(impl->var); }
 
 	bool ConfigList::valid() const
 	{
-		configListImpl *impl = (configListImpl*)this;
+		ConfigListImpl *impl = (ConfigListImpl*)this;
 		return impl->valid;
 	}
 
 	string ConfigList::name() const
 	{
-		configListImpl *impl = (configListImpl*)this;
+		ConfigListImpl *impl = (ConfigListImpl*)this;
 		CAGE_ASSERT(impl->valid, "ConfigList is at invalid location");
 		return impl->names[impl->index];
 	}
 
 	ConfigTypeEnum ConfigList::type() const
 	{
-		configListImpl *impl = (configListImpl*)this;
+		ConfigListImpl *impl = (ConfigListImpl*)this;
 		CAGE_ASSERT(impl->valid, "ConfigList is at invalid location");
 		return impl->var->type;
 	}
@@ -403,13 +403,13 @@ namespace cage
 
 	void ConfigList::next()
 	{
-		configListImpl *impl = (configListImpl*)this;
+		ConfigListImpl *impl = (ConfigListImpl*)this;
 		impl->next();
 	}
 
 	Holder<ConfigList> newConfigList()
 	{
-		return detail::systemArena().createImpl<ConfigList, configListImpl>();
+		return detail::systemArena().createImpl<ConfigList, ConfigListImpl>();
 	}
 
 	void configApplyIni(const Ini *ini, const string &prefix)
@@ -477,9 +477,9 @@ namespace cage
 	{
 		ConfigBool confAutoSave("cage/config/autoSave", false);
 
-		struct autoSaveConfig
+		struct AutoSaveConfig
 		{
-			~autoSaveConfig()
+			~AutoSaveConfig()
 			{
 				if (confAutoSave)
 				{

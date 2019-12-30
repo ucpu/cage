@@ -1,6 +1,3 @@
-#include <set>
-#include <FileWatcher/FileWatcher.h>
-
 #include "filesystem.h"
 #include <cage-core/timer.h>
 #include <cage-core/concurrent.h>
@@ -11,18 +8,22 @@
 #include <dirent.h>
 #endif
 
+#include <FileWatcher/FileWatcher.h>
+
+#include <set>
+
 namespace cage
 {
 	namespace
 	{
-		class changeWatcherImpl : public FilesystemWatcher, public FW::FileWatchListener
+		class FilesystemWatcherImpl : public FilesystemWatcher, public FW::FileWatchListener
 		{
 		public:
 			std::set<string, stringComparatorFast> files;
 			Holder<FW::FileWatcher> fw;
 			Holder<Timer> clock;
 
-			changeWatcherImpl()
+			FilesystemWatcherImpl()
 			{
 				fw = detail::systemArena().createHolder<FW::FileWatcher>();
 				clock = newTimer();
@@ -44,7 +45,7 @@ namespace cage
 				return res;
 			}
 
-			virtual void handleFileAction(FW::WatchID watchid, const FW::String &dir, const FW::String &filename, FW::Action action)
+			virtual void handleFileAction(FW::WatchID watchid, const FW::String &dir, const FW::String &filename, FW::Action action) override
 			{
 				files.insert(pathJoin(dir.c_str(), filename.c_str()));
 			}
@@ -53,7 +54,7 @@ namespace cage
 
 	void FilesystemWatcher::registerPath(const string & path)
 	{
-		changeWatcherImpl *impl = (changeWatcherImpl*)this;
+		FilesystemWatcherImpl *impl = (FilesystemWatcherImpl*)this;
 		impl->fw->addWatch(path.c_str(), impl);
 		Holder<DirectoryList> dl = newDirectoryList(path);
 		while (dl->valid())
@@ -66,33 +67,33 @@ namespace cage
 
 	string FilesystemWatcher::waitForChange(uint64 time)
 	{
-		changeWatcherImpl *impl = (changeWatcherImpl*)this;
+		FilesystemWatcherImpl *impl = (FilesystemWatcherImpl*)this;
 		return impl->waitForChange(time);
 	}
 
 	Holder<FilesystemWatcher> newFilesystemWatcher()
 	{
-		return detail::systemArena().createImpl<FilesystemWatcher, changeWatcherImpl>();
+		return detail::systemArena().createImpl<FilesystemWatcher, FilesystemWatcherImpl>();
 	}
 
-	directoryListVirtual::directoryListVirtual(const string &path) : myPath(path)
+	DirectoryListAbstract::DirectoryListAbstract(const string &path) : myPath(path)
 	{}
 
 	bool DirectoryList::valid() const
 	{
-		directoryListVirtual *impl = (directoryListVirtual *)this;
+		DirectoryListAbstract *impl = (DirectoryListAbstract *)this;
 		return impl->valid();
 	}
 
 	string DirectoryList::name() const
 	{
-		directoryListVirtual *impl = (directoryListVirtual *)this;
+		DirectoryListAbstract *impl = (DirectoryListAbstract *)this;
 		return impl->name();
 	}
 
 	PathTypeFlags DirectoryList::type() const
 	{
-		directoryListVirtual *impl = (directoryListVirtual *)this;
+		DirectoryListAbstract *impl = (DirectoryListAbstract *)this;
 		return pathType(impl->fullPath());
 	}
 
@@ -103,19 +104,19 @@ namespace cage
 
 	uint64 DirectoryList::lastChange() const
 	{
-		directoryListVirtual *impl = (directoryListVirtual *)this;
+		DirectoryListAbstract *impl = (DirectoryListAbstract *)this;
 		return pathLastChange(impl->fullPath());
 	}
 
 	Holder<File> DirectoryList::openFile(const FileMode &mode)
 	{
-		directoryListVirtual *impl = (directoryListVirtual *)this;
+		DirectoryListAbstract *impl = (DirectoryListAbstract *)this;
 		return newFile(impl->fullPath(), mode);
 	}
 
 	Holder<Filesystem> DirectoryList::openDirectory()
 	{
-		directoryListVirtual *impl = (directoryListVirtual *)this;
+		DirectoryListAbstract *impl = (DirectoryListAbstract *)this;
 		if (!isDirectory())
 			CAGE_THROW_ERROR(Exception, "is not dir");
 		Holder<Filesystem> fs = newFilesystem();
@@ -125,7 +126,7 @@ namespace cage
 
 	Holder<DirectoryList> DirectoryList::listDirectory()
 	{
-		directoryListVirtual *impl = (directoryListVirtual *)this;
+		DirectoryListAbstract *impl = (DirectoryListAbstract *)this;
 		if (!isDirectory())
 			CAGE_THROW_ERROR(Exception, "is not dir");
 		return newDirectoryList(impl->fullPath());
@@ -133,11 +134,11 @@ namespace cage
 
 	void DirectoryList::next()
 	{
-		directoryListVirtual *impl = (directoryListVirtual *)this;
+		DirectoryListAbstract *impl = (DirectoryListAbstract *)this;
 		impl->next();
 	}
 
-	string directoryListVirtual::fullPath() const
+	string DirectoryListAbstract::fullPath() const
 	{
 		return pathJoin(myPath, name());
 	}
@@ -154,7 +155,7 @@ namespace cage
 
 	namespace
 	{
-		class directoryListReal : public directoryListVirtual
+		class DirectoryListReal : public DirectoryListAbstract
 		{
 		public:
 			bool valid_;
@@ -167,7 +168,7 @@ namespace cage
 			struct dirent *pent;
 #endif
 
-			directoryListReal(const string &path) : directoryListVirtual(path), valid_(false)
+			DirectoryListReal(const string &path) : DirectoryListAbstract(path), valid_(false)
 #ifdef CAGE_SYSTEM_WINDOWS
 				, list(nullptr)
 #else
@@ -206,7 +207,7 @@ namespace cage
 #endif
 			}
 
-			~directoryListReal()
+			~DirectoryListReal()
 			{
 #ifdef CAGE_SYSTEM_WINDOWS
 				if (list)
@@ -262,12 +263,12 @@ namespace cage
 
 	Holder<DirectoryList> realNewDirectoryList(const string &path)
 	{
-		return detail::systemArena().createImpl<DirectoryList, directoryListReal>(path);
+		return detail::systemArena().createImpl<DirectoryList, DirectoryListReal>(path);
 	}
 
 	namespace
 	{
-		class filesystemImpl : public Filesystem
+		class FilesystemImpl : public Filesystem
 		{
 		public:
 			string current;
@@ -284,43 +285,43 @@ namespace cage
 
 	void Filesystem::changeDir(const string &path)
 	{
-		filesystemImpl *impl = (filesystemImpl*)this;
+		FilesystemImpl *impl = (FilesystemImpl*)this;
 		impl->current = impl->makePath(path);
 	}
 
 	string Filesystem::currentDir() const
 	{
-		filesystemImpl *impl = (filesystemImpl*)this;
+		FilesystemImpl *impl = (FilesystemImpl*)this;
 		return impl->current;
 	}
 
 	PathTypeFlags Filesystem::type(const string &path) const
 	{
-		filesystemImpl *impl = (filesystemImpl*)this;
+		FilesystemImpl *impl = (FilesystemImpl*)this;
 		return pathType(impl->makePath(path));
 	}
 
 	uint64 Filesystem::lastChange(const string &path) const
 	{
-		filesystemImpl *impl = (filesystemImpl*)this;
+		FilesystemImpl *impl = (FilesystemImpl*)this;
 		return pathLastChange(impl->makePath(path));
 	}
 
 	Holder<File> Filesystem::openFile(const string &path, const FileMode &mode)
 	{
-		filesystemImpl *impl = (filesystemImpl*)this;
+		FilesystemImpl *impl = (FilesystemImpl*)this;
 		return newFile(impl->makePath(path), mode);
 	}
 
 	Holder<DirectoryList> Filesystem::listDirectory(const string &path)
 	{
-		filesystemImpl *impl = (filesystemImpl*)this;
+		FilesystemImpl *impl = (FilesystemImpl*)this;
 		return newDirectoryList(impl->makePath(path));
 	}
 
 	Holder<FilesystemWatcher> Filesystem::watchFilesystem(const string &path)
 	{
-		filesystemImpl *impl = (filesystemImpl*)this;
+		FilesystemImpl *impl = (FilesystemImpl*)this;
 		Holder<FilesystemWatcher> cw = newFilesystemWatcher();
 		cw->registerPath(impl->makePath(path));
 		return cw;
@@ -328,18 +329,18 @@ namespace cage
 
 	void Filesystem::move(const string &from, const string &to)
 	{
-		filesystemImpl *impl = (filesystemImpl*)this;
+		FilesystemImpl *impl = (FilesystemImpl*)this;
 		return pathMove(impl->makePath(from), impl->makePath(to));
 	}
 
 	void Filesystem::remove(const string &path)
 	{
-		filesystemImpl *impl = (filesystemImpl*)this;
+		FilesystemImpl *impl = (FilesystemImpl*)this;
 		return pathRemove(impl->makePath(path));
 	}
 
 	Holder<Filesystem> newFilesystem()
 	{
-		return detail::systemArena().createImpl<Filesystem, filesystemImpl>();
+		return detail::systemArena().createImpl<Filesystem, FilesystemImpl>();
 	}
 }

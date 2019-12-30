@@ -41,10 +41,10 @@ namespace cage
 			SwapBufferLock();
 			explicit SwapBufferLock(SwapBufferGuard *controller, uint32 index);
 			SwapBufferLock(const SwapBufferLock &) = delete; // non-copyable
-			SwapBufferLock(SwapBufferLock &&other); // movable
+			SwapBufferLock(SwapBufferLock &&other) noexcept; // movable
 			~SwapBufferLock();
 			SwapBufferLock &operator = (const SwapBufferLock &) = delete; // non-copyable
-			SwapBufferLock &operator = (SwapBufferLock &&other); // movable
+			SwapBufferLock &operator = (SwapBufferLock &&other) noexcept; // movable
 			explicit operator bool() const { return !!controller_; }
 			uint32 index() const { CAGE_ASSERT(!!controller_); return index_; }
 

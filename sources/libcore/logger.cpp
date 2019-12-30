@@ -1,5 +1,3 @@
-#include <cstdio>
-
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/logger.h>
@@ -8,6 +6,8 @@
 #include <cage-core/timer.h>
 #include <cage-core/config.h>
 #include <cage-core/systemInformation.h>
+
+#include <cstdio>
 
 namespace cage
 {
@@ -27,19 +27,19 @@ namespace cage
 			return t->get();
 		}
 
-		class loggerImpl *&loggerLast()
+		class LoggerImpl *&loggerLast()
 		{
-			static class loggerImpl *l = nullptr;
+			static class LoggerImpl *l = nullptr;
 			return l;
 		}
 
-		class loggerImpl : public Logger
+		class LoggerImpl : public Logger
 		{
 		public:
-			loggerImpl *prev, *next;
+			LoggerImpl *prev, *next;
 			const uint64 thread;
 
-			loggerImpl() : prev(nullptr), next(nullptr), thread(threadId())
+			LoggerImpl() : prev(nullptr), next(nullptr), thread(threadId())
 			{
 				{
 					ScopeLock<Mutex> l(loggerMutex());
@@ -54,7 +54,7 @@ namespace cage
 				output.bind<&logOutputStdErr>();
 			}
 
-			~loggerImpl()
+			~LoggerImpl()
 			{
 				{
 					ScopeLock<Mutex> l(loggerMutex());
@@ -73,31 +73,31 @@ namespace cage
 			return !info.debug;
 		}
 
-		class centralLogClass
+		class ApplicationLog
 		{
 		public:
-			centralLogClass()
+			ApplicationLog()
 			{
 				loggerDebug = newLogger();
 				loggerDebug->filter.bind<&logFilterNoDebug>();
 				loggerDebug->format.bind<&logFormatConsole>();
 				loggerDebug->output.bind<&logOutputDebug>();
 
-				loggerOutputCentralFile = newLoggerOutputFile(pathExtractFilename(detail::getExecutableFullPathNoExe()) + ".log", false);
-				loggerCentralFile = newLogger();
-				loggerCentralFile->output.bind<LoggerOutputFile, &LoggerOutputFile::output>(loggerOutputCentralFile.get());
-				loggerCentralFile->format.bind<&logFormatFileShort>();
+				loggerOutputFile = newLoggerOutputFile(pathExtractFilename(detail::getExecutableFullPathNoExe()) + ".log", false);
+				loggerFile = newLogger();
+				loggerFile->output.bind<LoggerOutputFile, &LoggerOutputFile::output>(loggerOutputFile.get());
+				loggerFile->format.bind<&logFormatFileShort>();
 			}
 
 			Holder<Logger> loggerDebug;
-			Holder<LoggerOutputFile> loggerOutputCentralFile;
-			Holder<Logger> loggerCentralFile;
+			Holder<LoggerOutputFile> loggerOutputFile;
+			Holder<Logger> loggerFile;
 		};
 
-		class centralLogStaticInitializerClass
+		class ApplicationLogInitializer
 		{
 		public:
-			centralLogStaticInitializerClass()
+			ApplicationLogInitializer()
 			{
 				{
 					string version;
@@ -165,7 +165,7 @@ namespace cage
 				}
 			}
 
-			~centralLogStaticInitializerClass()
+			~ApplicationLogInitializer()
 			{
 				uint64 duration = getApplicationTime();
 				uint32 micros = numeric_cast<uint32>(duration % 1000000);
@@ -178,7 +178,7 @@ namespace cage
 				duration /= 24;
 				CAGE_LOG(SeverityEnum::Info, "log", stringizer() + "total duration: " + duration + " days, " + hours + " hours, " + mins + " minutes, " + secs + " seconds and " + micros + " microseconds");
 			}
-		} centralLogStaticInitializerInstance;
+		} applicationLogInitializerInstance;
 
 		void logFormatFileImpl(const detail::LoggerInfo &info, Delegate<void(const string &)> output, bool longer)
 		{
@@ -207,10 +207,10 @@ namespace cage
 			}
 		}
 
-		class fileOutputImpl : public LoggerOutputFile
+		class LoggerOutputFileImpl : public LoggerOutputFile
 		{
 		public:
-			fileOutputImpl(const string &path, bool append)
+			LoggerOutputFileImpl(const string &path, bool append)
 			{
 				FileMode fm(false, true);
 				fm.textual = true;
@@ -224,7 +224,7 @@ namespace cage
 
 	Holder<Logger> newLogger()
 	{
-		return detail::systemArena().createImpl<Logger, loggerImpl>();
+		return detail::systemArena().createImpl<Logger, LoggerImpl>();
 	}
 
 	namespace detail
@@ -234,8 +234,8 @@ namespace cage
 
 		Logger *getApplicationLog()
 		{
-			static centralLogClass *centralLogInstance = new centralLogClass(); // this leak is intentional
-			return centralLogInstance->loggerCentralFile.get();
+			static ApplicationLog *centralLogInstance = new ApplicationLog(); // this leak is intentional
+			return centralLogInstance->loggerFile.get();
 		}
 
 		string severityToString(SeverityEnum severity)
@@ -274,7 +274,7 @@ namespace cage
 				info.function = function;
 
 				ScopeLock<Mutex> l(loggerMutex());
-				loggerImpl *cur = loggerLast();
+				LoggerImpl *cur = loggerLast();
 				while (cur)
 				{
 					if (cur->output)
@@ -335,14 +335,14 @@ namespace cage
 
 	void LoggerOutputFile::output(const string &message)
 	{
-		fileOutputImpl *impl = (fileOutputImpl*)this;
+		LoggerOutputFileImpl *impl = (LoggerOutputFileImpl*)this;
 		impl->f->writeLine(message);
 		impl->f->flush();
 	}
 
 	Holder<LoggerOutputFile> newLoggerOutputFile(const string &path, bool append)
 	{
-		return detail::systemArena().createImpl<LoggerOutputFile, fileOutputImpl>(path, append);
+		return detail::systemArena().createImpl<LoggerOutputFile, LoggerOutputFileImpl>(path, append);
 	}
 
 	uint64 getApplicationTime()

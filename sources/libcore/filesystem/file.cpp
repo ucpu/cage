@@ -20,7 +20,7 @@
 
 namespace cage
 {
-	fileVirtual::fileVirtual(const string &path, const FileMode &mode) : myPath(path), mode(mode)
+	FileAbstract::FileAbstract(const string &path, const FileMode &mode) : myPath(path), mode(mode)
 	{}
 
 	bool FileMode::valid() const
@@ -59,13 +59,13 @@ namespace cage
 
 	void File::read(void *data, uintPtr size)
 	{
-		fileVirtual *impl = (fileVirtual *)this;
+		FileAbstract *impl = (FileAbstract *)this;
 		impl->read(data, size);
 	}
 
 	bool File::readLine(string &line)
 	{
-		fileVirtual *impl = (fileVirtual *)this;
+		FileAbstract *impl = (FileAbstract *)this;
 
 		const uintPtr origPos = tell();
 		const uintPtr origSize = size();
@@ -97,7 +97,7 @@ namespace cage
 
 	void File::write(const void *data, uintPtr size)
 	{
-		fileVirtual *impl = (fileVirtual *)this;
+		FileAbstract *impl = (FileAbstract *)this;
 		impl->write(data, size);
 	}
 
@@ -114,31 +114,31 @@ namespace cage
 
 	void File::seek(uintPtr position)
 	{
-		fileVirtual *impl = (fileVirtual *)this;
+		FileAbstract *impl = (FileAbstract *)this;
 		impl->seek(position);
 	}
 
 	void File::flush()
 	{
-		fileVirtual *impl = (fileVirtual *)this;
+		FileAbstract *impl = (FileAbstract *)this;
 		impl->flush();
 	}
 
 	void File::close()
 	{
-		fileVirtual *impl = (fileVirtual *)this;
+		FileAbstract *impl = (FileAbstract *)this;
 		impl->close();
 	}
 
 	uintPtr File::tell() const
 	{
-		fileVirtual *impl = (fileVirtual *)this;
+		FileAbstract *impl = (FileAbstract *)this;
 		return impl->tell();
 	}
 
 	uintPtr File::size() const
 	{
-		fileVirtual *impl = (fileVirtual *)this;
+		FileAbstract *impl = (FileAbstract *)this;
 		return impl->size();
 	}
 
@@ -154,12 +154,12 @@ namespace cage
 
 	namespace
 	{
-		class fileReal : public fileVirtual
+		class FileReal : public FileAbstract
 		{
 		public:
 			FILE *f;
 
-			fileReal(const string &path, const FileMode &mode) : fileVirtual(path, mode), f(nullptr)
+			FileReal(const string &path, const FileMode &mode) : FileAbstract(path, mode), f(nullptr)
 			{
 				CAGE_ASSERT(mode.valid(), "invalid file mode", path, mode.read, mode.write, mode.append, mode.textual);
 				realCreateDirectories(pathJoin(path, ".."));
@@ -172,7 +172,7 @@ namespace cage
 				}
 			}
 
-			~fileReal()
+			~FileReal()
 			{
 				if (f)
 				{
@@ -250,6 +250,6 @@ namespace cage
 
 	Holder<File> realNewFile(const string &path, const FileMode &mode)
 	{
-		return detail::systemArena().createImpl<File, fileReal>(path, mode);
+		return detail::systemArena().createImpl<File, FileReal>(path, mode);
 	}
 }

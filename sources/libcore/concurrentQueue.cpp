@@ -1,10 +1,10 @@
-#include <list>
-
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/memory.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/concurrentQueue.h>
+
+#include <list>
 
 namespace cage
 {
@@ -15,10 +15,10 @@ namespace cage
 
 	namespace
 	{
-		class concurrentQueueImpl : public privat::ConcurrentQueuePriv
+		class ConcurrentQueueImpl : public privat::ConcurrentQueuePriv
 		{
 		public:
-			concurrentQueueImpl(const ConcurrentQueueCreateConfig &config) : maxItems(config.maxElements), stop(false)
+			ConcurrentQueueImpl(const ConcurrentQueueCreateConfig &config) : maxItems(config.maxElements), stop(false)
 			{
 				mut = newMutex();
 				writer = newConditionalVariableBase();
@@ -26,7 +26,7 @@ namespace cage
 				arena = config.arena;
 			}
 
-			~concurrentQueueImpl()
+			~ConcurrentQueueImpl()
 			{
 				ScopeLock<Mutex> sl(mut);
 				CAGE_ASSERT(items.empty(), "the concurrent queue may not be destroyed before all items are removed");
@@ -138,55 +138,55 @@ namespace cage
 	{
 		void ConcurrentQueuePriv::push(void *value)
 		{
-			concurrentQueueImpl *impl = (concurrentQueueImpl *)this;
+			ConcurrentQueueImpl *impl = (ConcurrentQueueImpl *)this;
 			return impl->push(value);
 		}
 
 		bool ConcurrentQueuePriv::tryPush(void *value)
 		{
-			concurrentQueueImpl *impl = (concurrentQueueImpl *)this;
+			ConcurrentQueueImpl *impl = (ConcurrentQueueImpl *)this;
 			return impl->tryPush(value);
 		}
 
 		void ConcurrentQueuePriv::pop(void *&value)
 		{
-			concurrentQueueImpl *impl = (concurrentQueueImpl *)this;
+			ConcurrentQueueImpl *impl = (ConcurrentQueueImpl *)this;
 			return impl->pop(value);
 		}
 
 		bool ConcurrentQueuePriv::tryPop(void *&value)
 		{
-			concurrentQueueImpl *impl = (concurrentQueueImpl *)this;
+			ConcurrentQueueImpl *impl = (ConcurrentQueueImpl *)this;
 			return impl->tryPop(value);
 		}
 
 		bool ConcurrentQueuePriv::tryPopNoStop(void *&value)
 		{
-			concurrentQueueImpl *impl = (concurrentQueueImpl *)this;
+			ConcurrentQueueImpl *impl = (ConcurrentQueueImpl *)this;
 			return impl->tryPopNoStop(value);
 		}
 
 		uint32 ConcurrentQueuePriv::estimatedSize() const
 		{
-			concurrentQueueImpl *impl = (concurrentQueueImpl *)this;
+			ConcurrentQueueImpl *impl = (ConcurrentQueueImpl *)this;
 			return numeric_cast<uint32>(impl->items.size());
 		}
 
 		void ConcurrentQueuePriv::terminate()
 		{
-			concurrentQueueImpl *impl = (concurrentQueueImpl *)this;
+			ConcurrentQueueImpl *impl = (ConcurrentQueueImpl *)this;
 			impl->terminate();
 		}
 
 		bool ConcurrentQueuePriv::stopped() const
 		{
-			concurrentQueueImpl *impl = (concurrentQueueImpl *)this;
+			ConcurrentQueueImpl *impl = (ConcurrentQueueImpl *)this;
 			return impl->stopped();
 		}
 
 		Holder<ConcurrentQueuePriv> newConcurrentQueue(const ConcurrentQueueCreateConfig &config)
 		{
-			return detail::systemArena().createImpl<ConcurrentQueuePriv, concurrentQueueImpl>(config);
+			return detail::systemArena().createImpl<ConcurrentQueuePriv, ConcurrentQueueImpl>(config);
 		}
 	}
 }
