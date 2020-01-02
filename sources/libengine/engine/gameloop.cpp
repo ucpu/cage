@@ -825,57 +825,57 @@ namespace cage
 		engineData.clear();
 	}
 
-	SoundContext *sound()
+	SoundContext *engineSound()
 	{
 		return engineData->sound.get();
 	}
 
-	AssetManager *assets()
+	AssetManager *engineAssets()
 	{
 		return engineData->assets.get();
 	}
 
-	EntityManager *entities()
+	EntityManager *engineEntities()
 	{
 		return engineData->entities.get();
 	}
 
-	Window *window()
+	Window *engineWindow()
 	{
 		return engineData->window.get();
 	}
 
-	Gui *gui()
+	Gui *engineGui()
 	{
 		return engineData->gui.get();
 	}
 
-	Speaker *speaker()
+	Speaker *engineSpeaker()
 	{
 		return engineData->speaker.get();
 	}
 
-	MixingBus *masterMixer()
+	MixingBus *engineMasterMixer()
 	{
 		return engineData->masterBus.get();
 	}
 
-	MixingBus *musicMixer()
+	MixingBus *engineMusicMixer()
 	{
 		return engineData->musicBus.get();
 	}
 
-	MixingBus *effectsMixer()
+	MixingBus *engineEffectsMixer()
 	{
 		return engineData->effectsBus.get();
 	}
 
-	MixingBus *guiMixer()
+	MixingBus *engineGuiMixer()
 	{
 		return engineData->guiBus.get();
 	}
 
-	uint64 currentControlTime()
+	uint64 engineControlTime()
 	{
 		return engineData->currentControlTime;
 	}

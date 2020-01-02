@@ -479,18 +479,18 @@ namespace cage
 				{
 					if ((e->render.sceneMask & pass->sceneMask) == 0 || e->render.object == 0)
 						continue;
-					CAGE_ASSERT(assets()->ready(e->render.object));
-					uint32 schemeIndex = assets()->scheme(e->render.object);
+					CAGE_ASSERT(engineAssets()->ready(e->render.object));
+					uint32 schemeIndex = engineAssets()->scheme(e->render.object);
 					switch (schemeIndex)
 					{
 					case assetSchemeIndexMesh:
 					{
-						Mesh *m = assets()->get<assetSchemeIndexMesh, Mesh>(e->render.object);
+						Mesh *m = engineAssets()->get<assetSchemeIndexMesh, Mesh>(e->render.object);
 						addRenderableMesh(pass, e, m);
 					} break;
 					case assetSchemeIndexRenderObject:
 					{
-						RenderObject *o = assets()->get<assetSchemeIndexRenderObject, RenderObject>(e->render.object);
+						RenderObject *o = engineAssets()->get<assetSchemeIndexRenderObject, RenderObject>(e->render.object);
 						if (o->lodsCount() == 0)
 							continue;
 						uint32 lod = 0;
@@ -507,7 +507,7 @@ namespace cage
 						}
 						for (uint32 msh : o->meshes(lod))
 						{
-							Mesh *m = assets()->get<assetSchemeIndexMesh, Mesh>(msh);
+							Mesh *m = engineAssets()->get<assetSchemeIndexMesh, Mesh>(msh);
 							addRenderableMesh(pass, e, m);
 						}
 					} break;
@@ -520,11 +520,11 @@ namespace cage
 			void addRenderableSkeleton(RenderPassImpl *pass, EmitRender *e, SkeletonRig *s, const mat4 &model, const mat4 &mvp)
 			{
 				uint32 bonesCount = s->bonesCount();
-				if (e->animatedSkeleton && assets()->ready(e->animatedSkeleton->name))
+				if (e->animatedSkeleton && engineAssets()->ready(e->animatedSkeleton->name))
 				{
 					CAGE_ASSERT(s->bonesCount() == bonesCount, s->bonesCount(), bonesCount);
 					const auto &ba = *e->animatedSkeleton;
-					SkeletalAnimation *an = assets()->get<assetSchemeIndexSkeletalAnimation, SkeletalAnimation>(ba.name);
+					SkeletalAnimation *an = engineAssets()->get<assetSchemeIndexSkeletalAnimation, SkeletalAnimation>(ba.name);
 					real c = detail::evalCoefficientForSkeletalAnimation(an, dispatchTime, ba.startTime, ba.speed, ba.offset);
 					s->animateSkeleton(an, c, tmpArmature, tmpArmature2);
 				}
@@ -533,7 +533,7 @@ namespace cage
 					for (uint32 i = 0; i < bonesCount; i++)
 						tmpArmature2[i] = mat4();
 				}
-				Mesh *mesh = assets()->get<assetSchemeIndexMesh, Mesh>(HashString("cage/mesh/bone.obj"));
+				Mesh *mesh = engineAssets()->get<assetSchemeIndexMesh, Mesh>(HashString("cage/mesh/bone.obj"));
 				CAGE_ASSERT(mesh->getSkeletonName() == 0);
 				for (uint32 i = 0; i < bonesCount; i++)
 				{
@@ -557,7 +557,7 @@ namespace cage
 					return;
 				if (m->getSkeletonName() && confRenderSkeletonBones)
 				{
-					SkeletonRig *s = assets()->get<assetSchemeIndexSkeletonRig, SkeletonRig>(m->getSkeletonName());
+					SkeletonRig *s = engineAssets()->get<assetSchemeIndexSkeletonRig, SkeletonRig>(m->getSkeletonName());
 					addRenderableSkeleton(pass, e, s, model, mvp);
 					return;
 				}
@@ -622,12 +622,12 @@ namespace cage
 					uint32 bonesCount = m->getSkeletonBones();
 					Mat3x4 *sa = obj->shaderArmatures + obj->count * bonesCount;
 					CAGE_ASSERT(!e->animatedSkeleton || e->animatedSkeleton->name);
-					if (e->animatedSkeleton && m->getSkeletonName() && assets()->ready(e->animatedSkeleton->name))
+					if (e->animatedSkeleton && m->getSkeletonName() && engineAssets()->ready(e->animatedSkeleton->name))
 					{
-						SkeletonRig *skel = assets()->get<assetSchemeIndexSkeletonRig, SkeletonRig>(m->getSkeletonName());
+						SkeletonRig *skel = engineAssets()->get<assetSchemeIndexSkeletonRig, SkeletonRig>(m->getSkeletonName());
 						CAGE_ASSERT(skel->bonesCount() == bonesCount, skel->bonesCount(), bonesCount);
 						const auto &ba = *e->animatedSkeleton;
-						SkeletalAnimation *an = assets()->get<assetSchemeIndexSkeletalAnimation, SkeletalAnimation>(ba.name);
+						SkeletalAnimation *an = engineAssets()->get<assetSchemeIndexSkeletalAnimation, SkeletalAnimation>(ba.name);
 						real c = detail::evalCoefficientForSkeletalAnimation(an, dispatchTime, ba.startTime, ba.speed, ba.offset);
 						skel->animateSkin(an, c, tmpArmature, tmpArmature2);
 						for (uint32 i = 0; i < bonesCount; i++)
@@ -651,13 +651,13 @@ namespace cage
 						continue;
 					if (!e->renderText.font)
 						e->renderText.font = HashString("cage/font/ubuntu/Ubuntu-R.ttf");
-					if (!assets()->ready(e->renderText.font))
+					if (!engineAssets()->ready(e->renderText.font))
 						continue;
-					string s = loadInternationalizedText(assets(), e->renderText.assetName, e->renderText.textName, e->renderText.value);
+					string s = loadInternationalizedText(engineAssets(), e->renderText.assetName, e->renderText.textName, e->renderText.value);
 					if (s.empty())
 						continue;
 
-					Font *font = assets()->get<assetSchemeIndexFont, Font>(e->renderText.font);
+					Font *font = engineAssets()->get<assetSchemeIndexFont, Font>(e->renderText.font);
 					Texts::Render *r = dispatchArena.createObject<Texts::Render>();
 					font->transcript(s, nullptr, r->count);
 					r->glyphs = (uint32*)dispatchArena.allocate(r->count * sizeof(uint32), sizeof(uint32));
@@ -881,7 +881,7 @@ namespace cage
 				if (!e->render.object)
 					return;
 
-				if (!assets()->ready(e->render.object))
+				if (!engineAssets()->ready(e->render.object))
 				{
 					if (!confRenderMissingMeshes)
 					{
@@ -889,12 +889,12 @@ namespace cage
 						return;
 					}
 					e->render.object = HashString("cage/mesh/fake.obj");
-					CAGE_ASSERT(assets()->ready(e->render.object));
+					CAGE_ASSERT(engineAssets()->ready(e->render.object));
 				}
 
-				if (assets()->scheme(e->render.object) == assetSchemeIndexRenderObject)
+				if (engineAssets()->scheme(e->render.object) == assetSchemeIndexRenderObject)
 				{
-					RenderObject *o = assets()->get<assetSchemeIndexRenderObject, RenderObject>(e->render.object);
+					RenderObject *o = engineAssets()->get<assetSchemeIndexRenderObject, RenderObject>(e->render.object);
 
 					if (!e->render.color.valid())
 						e->render.color = o->color;
@@ -968,7 +968,7 @@ namespace cage
 					return;
 				}
 
-				AssetManager *ass = assets();
+				AssetManager *ass = engineAssets();
 				if (!ass->ready(HashString("cage/cage.pack")) || !ass->ready(HashString("cage/shader/engine/engine.pack")))
 					return;
 
@@ -1012,7 +1012,7 @@ namespace cage
 				graphicsDispatch->firstRenderPass = graphicsDispatch->lastRenderPass = nullptr;
 				dispatchArena.flush();
 
-				ivec2 resolution = window()->resolution();
+				ivec2 resolution = engineWindow()->resolution();
 				graphicsDispatch->windowWidth = numeric_cast<uint32>(resolution.x);
 				graphicsDispatch->windowHeight = numeric_cast<uint32>(resolution.y);
 
@@ -1105,7 +1105,7 @@ namespace cage
 
 	Objects::Objects(Mesh *mesh, uint32 max) : shaderMeshes(nullptr), shaderArmatures(nullptr), mesh(mesh), next(nullptr), count(0), max(max)
 	{
-		AssetManager *ass = assets();
+		AssetManager *ass = engineAssets();
 		shaderMeshes = (ShaderMesh*)graphicsPrepare->dispatchArena.allocate(sizeof(ShaderMesh) * max, sizeof(uintPtr));
 		if (mesh->getSkeletonBones())
 		{

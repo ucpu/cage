@@ -1115,7 +1115,7 @@ namespace cage
 			void swap()
 			{
 				CAGE_CHECK_GL_ERROR_DEBUG();
-				window()->swapBuffers();
+				engineWindow()->swapBuffers();
 				glFinish(); // this is where the engine should be waiting for the gpu
 			}
 		};

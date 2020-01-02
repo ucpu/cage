@@ -63,18 +63,18 @@ namespace cage
 	CAGE_API void engineStop();
 	CAGE_API void engineFinalize();
 
-	CAGE_API SoundContext *sound();
-	CAGE_API AssetManager *assets();
-	CAGE_API EntityManager *entities();
-	CAGE_API Window *window();
-	CAGE_API Gui *gui();
-	CAGE_API Speaker *speaker();
-	CAGE_API MixingBus *masterMixer();
-	CAGE_API MixingBus *musicMixer();
-	CAGE_API MixingBus *effectsMixer();
-	CAGE_API MixingBus *guiMixer();
-	CAGE_API uint64 currentControlTime();
+	CAGE_API SoundContext *engineSound();
+	CAGE_API AssetManager *engineAssets();
+	CAGE_API EntityManager *engineEntities();
+	CAGE_API Window *engineWindow();
+	CAGE_API Gui *engineGui();
+	CAGE_API Speaker *engineSpeaker();
+	CAGE_API MixingBus *engineMasterMixer();
+	CAGE_API MixingBus *engineMusicMixer();
+	CAGE_API MixingBus *engineEffectsMixer();
+	CAGE_API MixingBus *engineGuiMixer();
+	CAGE_API uint64 engineControlTime();
 }
 
 #define CAGE_COMPONENT_ENGINE(T,C,E) ::cage::CAGE_JOIN(T, Component) &C = (E)->value<::cage::CAGE_JOIN(T, Component)>(::cage::CAGE_JOIN(T, Component)::component);
-#define CAGE_COMPONENT_GUI(T,C,E) ::cage::CAGE_JOIN(Gui, CAGE_JOIN(T, Component)) &C = (E)->value<::cage::CAGE_JOIN(Gui, CAGE_JOIN(T, Component))>(::cage::gui()->components().T);
+#define CAGE_COMPONENT_GUI(T,C,E) ::cage::CAGE_JOIN(Gui, CAGE_JOIN(T, Component)) &C = (E)->value<::cage::CAGE_JOIN(Gui, CAGE_JOIN(T, Component))>(::cage::engineGui()->components().T);

@@ -62,8 +62,8 @@ namespace cage
 					bus->clear();
 				else
 				{
-					bus = newMixingBus(cage::sound());
-					filter = newMixingFilter(cage::sound());
+					bus = newMixingBus(cage::engineSound());
+					filter = newMixingFilter(cage::engineSound());
 					filter->execute.bind<Mix, &Mix::exe>(this);
 				}
 				this->sound = sound;
@@ -77,7 +77,7 @@ namespace cage
 				}
 				else
 				{ // asset input
-					AssetManager *ass = assets();
+					AssetManager *ass = engineAssets();
 					if (!ass->ready(sound->sound.name))
 						return;
 					ass->get<assetSchemeIndexSoundSource, SoundSource>(sound->sound.name)->addOutput(bus.get());
@@ -85,7 +85,7 @@ namespace cage
 				if (listener->listener.output)
 					bus->addOutput(listener->listener.output);
 				else
-					bus->addOutput(effectsMixer());
+					bus->addOutput(engineEffectsMixer());
 				filter->setBus(bus.get());
 			}
 
@@ -236,7 +236,7 @@ namespace cage
 
 				{
 					OPTICK_EVENT("speaker");
-					speaker()->update(dispatchTime);
+					engineSpeaker()->update(dispatchTime);
 				}
 			}
 		};

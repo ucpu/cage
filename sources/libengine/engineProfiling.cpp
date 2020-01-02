@@ -56,7 +56,7 @@ namespace cage
 				keyPressListener.bind<EngineProfilingImpl, &EngineProfilingImpl::keyPress>(this);
 				updateListener.bind<EngineProfilingImpl, &EngineProfilingImpl::update>(this);
 
-				window()->events.keyPress.attach(keyPressListener);
+				engineWindow()->events.keyPress.attach(keyPressListener);
 				controlThread().update.attach(updateListener);
 			}
 
@@ -116,7 +116,7 @@ namespace cage
 
 				clearEntities();
 				profilingModeOld = profilingScope;
-				EntityManager *g = gui()->entities();
+				EntityManager *g = engineGui()->entities();
 				Entity *panel = g->createUnique();
 				{
 					panelIndex = panel->name();
@@ -178,7 +178,7 @@ namespace cage
 			{
 				if (name == 0)
 					return;
-				EntityManager *g = gui()->entities();
+				EntityManager *g = engineGui()->entities();
 				if (!g->has(name))
 					return;
 				g->get(name)->destroy();
@@ -195,7 +195,7 @@ namespace cage
 
 			void checkEntities()
 			{
-				EntityManager *g = gui()->entities();
+				EntityManager *g = engineGui()->entities();
 				bool panelPresent = panelIndex != 0 && g->has(panelIndex);
 				bool visible = profilingScope != EngineProfilingScopeEnum::None;
 				if (panelPresent != visible || profilingModeOld != profilingScope)
@@ -209,9 +209,9 @@ namespace cage
 			void setTextLabel(uint32 index, const string &value)
 			{
 				CAGE_ASSERT(index < sizeof(labelIndices) / sizeof(labelIndices[0]), index);
-				if (labelIndices[index] == 0 || !gui()->entities()->has(labelIndices[index]))
+				if (labelIndices[index] == 0 || !engineGui()->entities()->has(labelIndices[index]))
 					return;
-				Entity *timing = gui()->entities()->get(labelIndices[index]);
+				Entity *timing = engineGui()->entities()->get(labelIndices[index]);
 				CAGE_COMPONENT_GUI(Text, t, timing);
 				t.value = value;
 			}
@@ -237,7 +237,7 @@ namespace cage
 					try
 					{
 						detail::OverrideBreakpoint ob;
-						window()->setFullscreen(ivec2(0, 0));
+						engineWindow()->setFullscreen(ivec2(0, 0));
 					}
 					catch (...)
 					{
@@ -246,7 +246,7 @@ namespace cage
 				}
 				else
 				{
-					window()->setWindowed(WindowFlags::Resizeable | WindowFlags::Border);
+					engineWindow()->setWindowed(WindowFlags::Resizeable | WindowFlags::Border);
 				}
 			}
 

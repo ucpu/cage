@@ -39,14 +39,14 @@ namespace cage
 				listeners.mouseWheel.bind<FpsCameraImpl, &FpsCameraImpl::mouseWheel>(this);
 				listeners.keyPress.bind<FpsCameraImpl, &FpsCameraImpl::keyPress>(this);
 				listeners.keyRelease.bind<FpsCameraImpl, &FpsCameraImpl::keyRelease>(this);
-				listeners.attachAll(window());
+				listeners.attachAll(engineWindow());
 				updateListener.bind<FpsCameraImpl, &FpsCameraImpl::update>(this);
 				controlThread().update.attach(updateListener);
 			}
 
 			const ivec2 centerMouse()
 			{
-				auto w = window();
+				auto w = engineWindow();
 				ivec2 pt2 = w->resolution();
 				pt2.x /= 2;
 				pt2.y /= 2;
@@ -56,7 +56,7 @@ namespace cage
 
 			bool mouseEnabled(MouseButtonsFlags buttons)
 			{
-				return !!ent && window()->isFocused() && (mouseButton == MouseButtonsFlags::None || (buttons & mouseButton) == mouseButton);
+				return !!ent && engineWindow()->isFocused() && (mouseButton == MouseButtonsFlags::None || (buttons & mouseButton) == mouseButton);
 			}
 
 			bool mousePress(MouseButtonsFlags buttons, ModifiersFlags, const ivec2 &)
