@@ -14,6 +14,7 @@
 #include <cage-core/threadPool.h>
 #include <cage-core/variableSmoothingBuffer.h>
 #include <cage-core/swapBufferGuard.h>
+#include <cage-core/scheduler.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
@@ -124,6 +125,14 @@ namespace cage
 			uint64 currentSoundTime;
 			uint32 assetSyncAttempts;
 			uint32 assetShaderTier;
+
+			Holder<Scheduler> controlScheduler;
+			Schedule *controlUpdateSchedule;
+			Schedule *controlAssetsSchedule;
+			//Schedule *controlInputSchedule;
+			Holder<Scheduler> soundScheduler;
+			Schedule *soundUpdateSchedule;
+			Schedule *soundAssetsSchedule;
 
 			EngineData(const EngineCreateConfig &config);
 
@@ -279,62 +288,44 @@ namespace cage
 				//gui->soundInitialize(sound.get());
 			}
 
-			void soundTiming(uint64 timeDelay)
+			void soundAssets()
 			{
-				if (timeDelay > soundThread().timePerTick * 2)
+				OPTICK_EVENT("assets");
+				assets->processCustomThread(EngineSoundThread::threadIndex);
+			}
+
+			void soundUpdate()
+			{
+				ScopeLock<Mutex> lockAssets(assetsSoundMutex);
+				currentSoundTime += soundUpdateSchedule->period();
+				ScopedTimer timing(profilingBufferSound);
 				{
-					uint64 skip = timeDelay / soundThread().timePerTick + 1;
-					CAGE_LOG(SeverityEnum::Warning, "engine", stringizer() + "skipping " + skip + " sound ticks");
-					currentSoundTime += skip * soundThread().timePerTick;
+					OPTICK_EVENT("sound callback");
+					soundThread().sound.dispatch();
 				}
-				else
 				{
-					if (timeDelay < soundThread().timePerTick)
-					{
-						OPTICK_EVENT("sleep");
-						threadSleep(soundThread().timePerTick - timeDelay);
-					}
-					currentSoundTime += soundThread().timePerTick;
+					OPTICK_EVENT("tick");
+					soundTick(currentSoundTime);
 				}
 			}
 
-			void soundStep()
+			void soundUpdateEntry()
 			{
+				if (confOptickFrameMode == EngineSoundThread::threadIndex)
 				{
-					ScopeLock<Mutex> lockAssets(assetsSoundMutex);
-					ScopedTimer timing(profilingBufferSound);
-					{
-						OPTICK_EVENT("sound callback");
-						soundThread().sound.dispatch();
-					}
-					{
-						OPTICK_EVENT("tick");
-						soundTick(currentSoundTime);
-					}
+					OPTICK_FRAME("engine sound");
+					soundUpdate();
 				}
+				else
 				{
-					OPTICK_EVENT("assets");
-					assets->processCustomThread(EngineSoundThread::threadIndex);
+					OPTICK_EVENT("engine sound");
+					soundUpdate();
 				}
-				uint64 newTime = getApplicationTime();
-				soundTiming(newTime > currentSoundTime ? newTime - currentSoundTime : 0);
 			}
 
 			void soundGameloopStage()
 			{
-				while (!stopping)
-				{
-					if (confOptickFrameMode == EngineSoundThread::threadIndex)
-					{
-						OPTICK_FRAME("engine sound");
-						soundStep();
-					}
-					else
-					{
-						OPTICK_EVENT("engine sound");
-						soundStep();
-					}
-				}
+				soundScheduler->run();
 			}
 
 			void soundStopStage()
@@ -422,27 +413,9 @@ namespace cage
 				}
 			}
 
-			void controlTiming(uint64 timeDelay)
+			void controlUpdate()
 			{
-				if (timeDelay > controlThread().timePerTick * 2)
-				{
-					uint64 skip = timeDelay / controlThread().timePerTick + 1;
-					CAGE_LOG(SeverityEnum::Warning, "engine", stringizer() + "skipping " + skip + " control update ticks");
-					currentControlTime += skip * controlThread().timePerTick;
-				}
-				else
-				{
-					if (timeDelay < controlThread().timePerTick)
-					{
-						OPTICK_EVENT("sleep");
-						threadSleep(controlThread().timePerTick - timeDelay);
-					}
-					currentControlTime += controlThread().timePerTick;
-				}
-			}
-
-			void controlStep()
-			{
+				currentControlTime += controlUpdateSchedule->period();
 				updateHistoryComponents();
 				{
 					OPTICK_EVENT("gui update");
@@ -464,26 +437,25 @@ namespace cage
 					profilingBufferEntities.add(entities->group()->count());
 					emitThreadsHolder->run();
 				}
-				controlAssets();
-				uint64 newTime = getApplicationTime();
-				controlTiming(newTime > currentControlTime ? newTime - currentControlTime : 0);
+			}
+
+			void controlUpdateEntry()
+			{
+				if (confOptickFrameMode == EngineControlThread::threadIndex)
+				{
+					OPTICK_FRAME("engine control");
+					controlUpdate();
+				}
+				else
+				{
+					OPTICK_EVENT("engine control");
+					controlUpdate();
+				}
 			}
 
 			void controlGameloopStage()
 			{
-				while (!stopping)
-				{
-					if (confOptickFrameMode == EngineControlThread::threadIndex)
-					{
-						OPTICK_FRAME("engine control");
-						controlStep();
-					}
-					else
-					{
-						OPTICK_EVENT("engine control");
-						controlStep();
-					}
-				}
+				controlScheduler->run();
 			}
 
 			//////////////////////////////////////
@@ -777,12 +749,51 @@ namespace cage
 
 		Holder<EngineData> engineData;
 
-		EngineData::EngineData(const EngineCreateConfig &config) : engineStarted(0), stopping(false), currentControlTime(0), currentSoundTime(0), assetSyncAttempts(0), assetShaderTier(0)
+		EngineData::EngineData(const EngineCreateConfig &config) : engineStarted(0), stopping(false), currentControlTime(0), currentSoundTime(0), assetSyncAttempts(0), assetShaderTier(0),
+			controlUpdateSchedule(nullptr), controlAssetsSchedule(nullptr) /*, controlInputSchedule(nullptr) */
 		{
 			CAGE_LOG(SeverityEnum::Info, "engine", "creating engine");
+
 			graphicsDispatchCreate(config);
 			graphicsPrepareCreate(config);
 			soundCreate(config);
+
+			controlScheduler = newScheduler({});
+			{
+				ScheduleCreateConfig c;
+				c.name = "engine control update";
+				c.action = Delegate<void()>().bind<EngineData, &EngineData::controlUpdateEntry>(this);
+				c.period = 1000000 / 20;
+				c.type = ScheduleTypeEnum::SteadyPeriodic;
+				controlUpdateSchedule = controlScheduler->newSchedule(c);
+			}
+			{
+				ScheduleCreateConfig c;
+				c.name = "engine control assets";
+				c.action = Delegate<void()>().bind<EngineData, &EngineData::controlAssets>(this);
+				c.period = 1000000 / 10;
+				c.type = ScheduleTypeEnum::FreePeriodic;
+				controlAssetsSchedule = controlScheduler->newSchedule(c);
+			}
+
+			soundScheduler = newScheduler({});
+			{
+				ScheduleCreateConfig c;
+				c.name = "engine sound update";
+				c.action = Delegate<void()>().bind<EngineData, &EngineData::soundUpdateEntry>(this);
+				c.period = 1000000 / 40;
+				c.type = ScheduleTypeEnum::SteadyPeriodic;
+				soundUpdateSchedule = soundScheduler->newSchedule(c);
+			}
+			{
+				ScheduleCreateConfig c;
+				c.name = "engine sound assets";
+				c.action = Delegate<void()>().bind<EngineData, &EngineData::soundAssets>(this);
+				c.period = 1000000 / 10;
+				c.type = ScheduleTypeEnum::FreePeriodic;
+				soundAssetsSchedule = soundScheduler->newSchedule(c);
+			}
+
 			CAGE_LOG(SeverityEnum::Info, "engine", "engine created");
 		}
 
@@ -794,6 +805,56 @@ namespace cage
 			graphicsDispatchDestroy();
 			CAGE_LOG(SeverityEnum::Info, "engine", "engine destroyed");
 		}
+	}
+
+	Scheduler *EngineControlThread::scheduler()
+	{
+		return engineData->controlScheduler.get();
+	}
+
+	uint64 EngineControlThread::updatePeriod() const
+	{
+		return engineData->controlUpdateSchedule->period();
+	}
+
+	void EngineControlThread::updatePeriod(uint64 p)
+	{
+		engineData->controlUpdateSchedule->period(p);
+	}
+
+	uint64 EngineControlThread::assetsPeriod() const
+	{
+		return engineData->controlAssetsSchedule->period();
+	}
+
+	void EngineControlThread::assetsPeriod(uint64 p)
+	{
+		engineData->controlAssetsSchedule->period(p);
+	}
+
+	Scheduler *EngineSoundThread::scheduler()
+	{
+		return engineData->soundScheduler.get();
+	}
+
+	uint64 EngineSoundThread::updatePeriod() const
+	{
+		return engineData->soundUpdateSchedule->period();
+	}
+
+	void EngineSoundThread::updatePeriod(uint64 p)
+	{
+		engineData->soundUpdateSchedule->period(p);
+	}
+
+	uint64 EngineSoundThread::assetsPeriod() const
+	{
+		return engineData->soundAssetsSchedule->period();
+	}
+
+	void EngineSoundThread::assetsPeriod(uint64 p)
+	{
+		engineData->soundAssetsSchedule->period(p);
 	}
 
 	void engineInitialize(const EngineCreateConfig &config)
@@ -815,6 +876,10 @@ namespace cage
 		if (!engineData->stopping.exchange(true))
 		{
 			CAGE_LOG(SeverityEnum::Info, "engine", "stopping engine");
+			if (engineData->controlScheduler)
+				engineData->controlScheduler->stop();
+			if (engineData->soundScheduler)
+				engineData->soundScheduler->stop();
 		}
 	}
 

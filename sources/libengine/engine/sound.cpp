@@ -225,8 +225,8 @@ namespace cage
 				emitRead = emitBuffers[lock.index()];
 				ClearOnScopeExit resetEmitRead(emitRead);
 				emitTime = emitRead->time;
-				dispatchTime = itc(emitTime, time, soundThread().timePerTick);
-				interFactor = clamp(real(dispatchTime - emitTime) / soundThread().timePerTick, 0, 1);
+				dispatchTime = itc(emitTime, time, soundThread().updatePeriod());
+				interFactor = clamp(real(dispatchTime - emitTime) / soundThread().updatePeriod(), 0, 1);
 
 				if (emitRead->fresh)
 				{
@@ -261,7 +261,7 @@ namespace cage
 			s.channels = 1;
 			if (listener->listener.dopplerEffect)
 			{
-				real scale = 1000000 / controlThread().timePerTick;
+				real scale = 1000000 / controlThread().updatePeriod();
 				vec3 velL = scale * (listener->transformHistory.position - listener->transform.position);
 				vec3 velV = scale * (sound->transformHistory.position - sound->transform.position);
 				real vl = dot(velL, dir);

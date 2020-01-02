@@ -6,7 +6,13 @@ namespace cage
 		EventDispatcher<bool()> finalize;
 		EventDispatcher<bool()> update;
 		EventDispatcher<bool()> assets;
-		uint64 timePerTick;
+		Scheduler *scheduler();
+		uint64 updatePeriod() const;
+		void updatePeriod(uint64 p);
+		uint64 assetsPeriod() const;
+		void assetsPeriod(uint64 p);
+		//uint64 inputPeriod() const;
+		//void inputPeriod(uint64 p);
 		static const uint32 threadIndex = 0;
 		EngineControlThread();
 	};
@@ -39,7 +45,11 @@ namespace cage
 		EventDispatcher<bool()> initialize;
 		EventDispatcher<bool()> finalize;
 		EventDispatcher<bool()> sound;
-		uint64 timePerTick;
+		Scheduler *scheduler();
+		uint64 updatePeriod() const;
+		void updatePeriod(uint64 p);
+		uint64 assetsPeriod() const;
+		void assetsPeriod(uint64 p);
 		static const uint32 threadIndex = 4;
 		EngineSoundThread();
 	};

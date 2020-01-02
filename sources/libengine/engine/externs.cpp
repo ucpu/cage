@@ -38,12 +38,7 @@ namespace cage
 	SoundComponent::SoundComponent() : input(nullptr), startTime(0), name(0), sceneMask(1) {}
 	ListenerComponent::ListenerComponent() : output(nullptr), sceneMask(1), speedOfSound(343.3), dopplerEffect(false) {}
 
-	EngineCreateConfig::EngineCreateConfig() :
-		graphicsEmitMemory(1024 * 1024 * 32), graphicsDispatchMemory(1024 * 1024 * 32), soundEmitMemory(1024 * 1024 * 8),
-		entities(nullptr), assets(nullptr), gui(nullptr), soundContext(nullptr), speaker(nullptr)
-	{}
-
-	EngineControlThread::EngineControlThread() : timePerTick(1000000 / 20)
+	EngineControlThread::EngineControlThread()
 	{}
 
 	EngineControlThread &controlThread()
@@ -70,7 +65,7 @@ namespace cage
 		return instance;
 	}
 
-	EngineSoundThread::EngineSoundThread() : timePerTick(1000000 / 40)
+	EngineSoundThread::EngineSoundThread()
 	{}
 
 	EngineSoundThread &soundThread()
@@ -78,4 +73,9 @@ namespace cage
 		static EngineSoundThread instance;
 		return instance;
 	}
+
+	EngineCreateConfig::EngineCreateConfig() :
+		graphicsEmitMemory(1024 * 1024 * 32), graphicsDispatchMemory(1024 * 1024 * 32), soundEmitMemory(1024 * 1024 * 8),
+		entities(nullptr), assets(nullptr), gui(nullptr), soundContext(nullptr), speaker(nullptr)
+	{}
 }

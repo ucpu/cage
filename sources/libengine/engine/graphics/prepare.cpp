@@ -1004,7 +1004,7 @@ namespace cage
 				ClearOnScopeExit resetEmitRead(emitRead);
 
 				emitTime = emitRead->time;
-				dispatchTime = itc(emitTime, time, controlThread().timePerTick);
+				dispatchTime = itc(emitTime, time, controlThread().updatePeriod());
 				elapsedDispatchTime = dispatchTime - lastDispatchTime;
 				lastDispatchTime = dispatchTime;
 				shm2d = shmCube = 0;
@@ -1029,7 +1029,7 @@ namespace cage
 
 				{ // update model matrices
 					OPTICK_EVENT("update model matrices");
-					real interFactor = clamp(real(dispatchTime - emitTime) / controlThread().timePerTick, 0, 1);
+					real interFactor = clamp(real(dispatchTime - emitTime) / controlThread().updatePeriod(), 0, 1);
 					for (auto it : emitRead->renderableObjects)
 						it->updateModelMatrix(interFactor);
 					for (auto it : emitRead->renderableTexts)
