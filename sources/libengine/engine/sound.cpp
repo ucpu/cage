@@ -226,7 +226,7 @@ namespace cage
 				ClearOnScopeExit resetEmitRead(emitRead);
 				emitTime = emitRead->time;
 				dispatchTime = itc(emitTime, time, soundThread().updatePeriod());
-				interFactor = clamp(real(dispatchTime - emitTime) / soundThread().updatePeriod(), 0, 1);
+				interFactor = clamp(real(dispatchTime - emitTime) / controlThread().updatePeriod(), 0, 1);
 
 				if (emitRead->fresh)
 				{

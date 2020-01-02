@@ -118,10 +118,9 @@ namespace cage
 
 			std::atomic<uint32> engineStarted;
 			std::atomic<bool> stopping;
-			uint64 currentControlTime;
-			uint64 currentSoundTime;
+			uint64 controlTime;
 			uint32 assetSyncAttempts;
-			uint32 assetShaderTier;
+			uint32 assetShaderTier; // loaded shader package name
 
 			Holder<Scheduler> controlScheduler;
 			Schedule *controlUpdateSchedule;
@@ -140,7 +139,7 @@ namespace cage
 				while (assets->countTotal() > 0)
 				{
 					while (assets->processCustomThread(threadIndex));
-					threadSleep(1000);
+					threadSleep(2000);
 				}
 			}
 
@@ -275,15 +274,19 @@ namespace cage
 			void soundUpdate()
 			{
 				OPTICK_EVENT("update");
+				if (stopping)
+				{
+					soundScheduler->stop();
+					return;
+				}
 				ScopeLock<Mutex> lockAssets(assetsSoundMutex);
-				currentSoundTime = soundUpdateSchedule->time();
 				{
 					OPTICK_EVENT("sound callback");
 					soundThread().sound.dispatch();
 				}
 				{
 					OPTICK_EVENT("tick");
-					soundTick(currentSoundTime);
+					soundTick(soundUpdateSchedule->time());
 				}
 			}
 
@@ -370,7 +373,12 @@ namespace cage
 			void controlUpdate()
 			{
 				OPTICK_EVENT("update");
-				currentControlTime = controlUpdateSchedule->time();
+				if (stopping)
+				{
+					controlScheduler->stop();
+					return;
+				}
+				controlTime = controlUpdateSchedule->time();
 				updateHistoryComponents();
 				{
 					OPTICK_EVENT("update callback");
@@ -378,11 +386,11 @@ namespace cage
 				}
 				{
 					OPTICK_EVENT("sound emit");
-					soundEmit(currentSoundTime);
+					soundEmit(controlTime);
 				}
 				{
 					OPTICK_EVENT("graphics emit");
-					graphicsPrepareEmit(currentControlTime);
+					graphicsPrepareEmit(controlTime);
 				}
 				OPTICK_TAG("entities count", entities->group()->count());
 				profilingBufferEntities.add(entities->group()->count());
@@ -430,12 +438,12 @@ namespace cage
 				while (!stopping)
 				{
 					while (assets->processCustomThread(EngineGraphicsUploadThread::threadIndex));
-					threadSleep(5000);
+					threadSleep(10000);
 				}
 				while (assets->countTotal() > 0)
 				{
 					while (assets->processCustomThread(EngineGraphicsUploadThread::threadIndex));
-					threadSleep(5000);
+					threadSleep(2000);
 				}
 				windowUpload->makeNotCurrent();
 			}
@@ -626,7 +634,7 @@ namespace cage
 						}
 						GCHL_GENERATE_CATCH(control, finalization (unloading assets))
 						while (assets->processCustomThread(controlThread().threadIndex) || assets->processControlThread());
-						threadSleep(1000);
+						threadSleep(2000);
 					}
 				}
 
@@ -680,7 +688,7 @@ namespace cage
 
 		Holder<EngineData> engineData;
 
-		EngineData::EngineData(const EngineCreateConfig &config) : engineStarted(0), stopping(false), currentControlTime(0), currentSoundTime(0), assetSyncAttempts(0), assetShaderTier(0),
+		EngineData::EngineData(const EngineCreateConfig &config) : engineStarted(0), stopping(false), controlTime(0), assetSyncAttempts(0), assetShaderTier(0),
 			controlUpdateSchedule(nullptr), controlAssetsSchedule(nullptr), controlInputSchedule(nullptr), soundUpdateSchedule(nullptr), soundAssetsSchedule(nullptr)
 		{
 			CAGE_LOG(SeverityEnum::Info, "engine", "creating engine");
@@ -825,10 +833,6 @@ namespace cage
 		if (!engineData->stopping.exchange(true))
 		{
 			CAGE_LOG(SeverityEnum::Info, "engine", "stopping engine");
-			if (engineData->controlScheduler)
-				engineData->controlScheduler->stop();
-			if (engineData->soundScheduler)
-				engineData->soundScheduler->stop();
 		}
 	}
 
@@ -891,7 +895,7 @@ namespace cage
 
 	uint64 engineControlTime()
 	{
-		return engineData->currentControlTime;
+		return engineData->controlTime;
 	}
 
 	uint64 engineProfilingValues(EngineProfilingStatsFlags flags, EngineProfilingModeEnum mode)

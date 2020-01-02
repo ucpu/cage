@@ -1030,6 +1030,7 @@ namespace cage
 				{ // update model matrices
 					OPTICK_EVENT("update model matrices");
 					real interFactor = clamp(real(dispatchTime - emitTime) / controlThread().updatePeriod(), 0, 1);
+					//CAGE_LOG(SeverityEnum::Info, "timing", stringizer() + "emit: " + emitTime + ", current: " + time + ", dispatch: " + dispatchTime + ", interpolate: " + interFactor);
 					for (const auto &it : emitRead->renderableObjects)
 						it->updateModelMatrix(interFactor);
 					for (const auto &it : emitRead->renderableTexts)

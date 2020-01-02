@@ -1,3 +1,5 @@
+#include <cage-core/variableSmoothingBuffer.h>
+
 namespace cage
 {
 	void graphicsPrepareCreate(const EngineCreateConfig &config);
@@ -23,19 +25,12 @@ namespace cage
 		uint64 operator() (uint64 emit, uint64 dispatch, uint64 step)
 		{
 			CAGE_ASSERT(step > 0);
-			CAGE_ASSERT(dispatch > emit);
-			uint64 r = dispatch + correction;
-			if (r > emit + step)
-				correction += sint64(step) / -500;
-			else if (r < emit)
-				correction += sint64(step) / 500;
-			return max(emit, dispatch + correction);
+			corrections.add((sint64)emit - (sint64)dispatch);
+			sint64 c = corrections.smooth();
+			return max(emit, dispatch + c + step / 2);
 		}
 
-		InterpolationTimingCorrector() : correction(-70000)
-		{}
-
-		sint64 correction;
+		VariableSmoothingBuffer<sint64, 100> corrections;
 	};
 
 	struct ClearOnScopeExit : private Immovable
