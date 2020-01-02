@@ -1022,7 +1022,7 @@ namespace cage
 				if (emitRead->fresh)
 				{ // update default values
 					OPTICK_EVENT("update default values");
-					for (auto it : emitRead->renderableObjects)
+					for (const auto &it : emitRead->renderableObjects)
 						updateDefaultValues(it);
 					emitRead->fresh = false;
 				}
@@ -1030,18 +1030,18 @@ namespace cage
 				{ // update model matrices
 					OPTICK_EVENT("update model matrices");
 					real interFactor = clamp(real(dispatchTime - emitTime) / controlThread().updatePeriod(), 0, 1);
-					for (auto it : emitRead->renderableObjects)
+					for (const auto &it : emitRead->renderableObjects)
 						it->updateModelMatrix(interFactor);
-					for (auto it : emitRead->renderableTexts)
+					for (const auto &it : emitRead->renderableTexts)
 						it->updateModelMatrix(interFactor);
-					for (auto it : emitRead->lights)
+					for (const auto &it : emitRead->lights)
 						it->updateModelMatrix(interFactor);
-					for (auto it : emitRead->cameras)
+					for (const auto &it : emitRead->cameras)
 						it->updateModelMatrix(interFactor);
 				}
 
 				// generate shadowmap render passes
-				for (auto it : emitRead->lights)
+				for (const auto &it : emitRead->lights)
 				{
 					if (!it->shadowmap)
 						continue;
@@ -1054,7 +1054,7 @@ namespace cage
 						CAGE_ASSERT(a->camera.cameraOrder != b->camera.cameraOrder, a->camera.cameraOrder);
 						return a->camera.cameraOrder < b->camera.cameraOrder;
 					});
-					for (auto it : emitRead->cameras)
+					for (const auto &it : emitRead->cameras)
 					{
 						if (graphicsPrepareThread().stereoMode == StereoModeEnum::Mono || it->camera.target)
 						{ // mono

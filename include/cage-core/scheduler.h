@@ -37,6 +37,8 @@ namespace cage
 		void priority(sint32 p); // set current priority
 		sint32 priority() const;
 
+		uint64 time() const;
+
 		// statistics are not available for schemes of once type
 		static const uint32 StatisticsWindowSize = 100;
 		const VariableSmoothingBuffer<uint64, StatisticsWindowSize> &statsDelay() const;

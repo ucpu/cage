@@ -11,8 +11,8 @@ namespace cage
 		void updatePeriod(uint64 p);
 		uint64 assetsPeriod() const;
 		void assetsPeriod(uint64 p);
-		//uint64 inputPeriod() const;
-		//void inputPeriod(uint64 p);
+		uint64 inputPeriod() const;
+		void inputPeriod(uint64 p);
 		static const uint32 threadIndex = 0;
 		EngineControlThread();
 	};

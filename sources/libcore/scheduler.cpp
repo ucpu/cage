@@ -152,7 +152,7 @@ namespace cage
 
 			void goSleep()
 			{
-				OPTICK_EVENT();
+				OPTICK_EVENT("scheduler sleep");
 				activateAllEmpty();
 				uint64 s = closestScheduleTime() - t;
 				s = min(s, conf.maxSleepDuration);
@@ -246,7 +246,7 @@ namespace cage
 
 	void Schedule::run()
 	{
-		OPTICK_EVENT();
+		OPTICK_EVENT("schedule run");
 		ScheduleImpl *impl = (ScheduleImpl*)this;
 		OPTICK_TAG("schedule", impl->conf.name.c_str());
 		if (!impl->conf.action)
@@ -295,6 +295,12 @@ namespace cage
 	{
 		ScheduleImpl *impl = (ScheduleImpl*)this;
 		return impl->pri;
+	}
+
+	uint64 Schedule::time() const
+	{
+		ScheduleImpl *impl = (ScheduleImpl*)this;
+		return impl->sched;
 	}
 
 	const VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> &Schedule::statsDelay() const

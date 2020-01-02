@@ -38,7 +38,6 @@ namespace cage
 	namespace
 	{
 		ConfigBool confAutoAssetListen("cage/assets/listen", false);
-		ConfigUint32 confOptickFrameMode("cage/profiling/frameMode", 1);
 		ConfigBool confSimpleShaders("cage/graphics/simpleShaders", false);
 
 		struct EngineGraphicsUploadThread
@@ -54,6 +53,7 @@ namespace cage
 		{
 			explicit ScopedSemaphores(Holder<Semaphore> &lock, Holder<Semaphore> &unlock) : sem(unlock.get())
 			{
+				OPTICK_EVENT("waiting");
 				lock->lock();
 			}
 
@@ -68,10 +68,10 @@ namespace cage
 
 		struct ScopedTimer : private Immovable
 		{
-			VariableSmoothingBuffer<uint64, 60> &vsb;
+			VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> &vsb;
 			uint64 st;
 
-			explicit ScopedTimer(VariableSmoothingBuffer<uint64, 60> &vsb) : vsb(vsb), st(getApplicationTime())
+			explicit ScopedTimer(VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> &vsb) : vsb(vsb), st(getApplicationTime())
 			{}
 
 			~ScopedTimer()
@@ -83,14 +83,12 @@ namespace cage
 
 		struct EngineData
 		{
-			VariableSmoothingBuffer<uint64, 60> profilingBufferControl;
-			VariableSmoothingBuffer<uint64, 60> profilingBufferSound;
-			VariableSmoothingBuffer<uint64, 60> profilingBufferGraphicsPrepare;
-			VariableSmoothingBuffer<uint64, 60> profilingBufferGraphicsDispatch;
-			VariableSmoothingBuffer<uint64, 60> profilingBufferFrameTime;
-			VariableSmoothingBuffer<uint64, 60> profilingBufferDrawCalls;
-			VariableSmoothingBuffer<uint64, 60> profilingBufferDrawPrimitives;
-			VariableSmoothingBuffer<uint64, 60> profilingBufferEntities;
+			VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> profilingBufferGraphicsPrepare;
+			VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> profilingBufferGraphicsDispatch;
+			VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> profilingBufferFrameTime;
+			VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> profilingBufferDrawCalls;
+			VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> profilingBufferDrawPrimitives;
+			VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> profilingBufferEntities;
 
 			Holder<AssetManager> assets;
 			Holder<Window> window;
@@ -117,7 +115,6 @@ namespace cage
 			Holder<Thread> graphicsUploadThreadHolder;
 #endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 			Holder<Thread> soundThreadHolder;
-			Holder<ThreadPool> emitThreadsHolder;
 
 			std::atomic<uint32> engineStarted;
 			std::atomic<bool> stopping;
@@ -129,7 +126,7 @@ namespace cage
 			Holder<Scheduler> controlScheduler;
 			Schedule *controlUpdateSchedule;
 			Schedule *controlAssetsSchedule;
-			//Schedule *controlInputSchedule;
+			Schedule *controlInputSchedule;
 			Holder<Scheduler> soundScheduler;
 			Schedule *soundUpdateSchedule;
 			Schedule *soundAssetsSchedule;
@@ -137,6 +134,15 @@ namespace cage
 			EngineData(const EngineCreateConfig &config);
 
 			~EngineData();
+
+			void waitForAssetsUnload(uint32 threadIndex)
+			{
+				while (assets->countTotal() > 0)
+				{
+					while (assets->processCustomThread(threadIndex));
+					threadSleep(1000);
+				}
+			}
 
 			//////////////////////////////////////
 			// graphics PREPARE
@@ -147,6 +153,7 @@ namespace cage
 
 			void graphicsPrepareStep()
 			{
+				OPTICK_EVENT("prepare");
 				{
 					OPTICK_EVENT("assets");
 					assets->processCustomThread(graphicsPrepareThread().threadIndex);
@@ -155,7 +162,7 @@ namespace cage
 				ScopeLock<Mutex> lockAssets(assetsGraphicsMutex);
 				ScopedTimer timing(profilingBufferGraphicsPrepare);
 				{
-					OPTICK_EVENT("callback");
+					OPTICK_EVENT("prepare callback");
 					graphicsPrepareThread().prepare.dispatch();
 				}
 				{
@@ -167,18 +174,7 @@ namespace cage
 			void graphicsPrepareGameloopStage()
 			{
 				while (!stopping)
-				{
-					if (confOptickFrameMode == EngineGraphicsPrepareThread::threadIndex)
-					{
-						OPTICK_FRAME("engine graphics prepare");
-						graphicsPrepareStep();
-					}
-					else
-					{
-						OPTICK_EVENT("engine graphics prepare");
-						graphicsPrepareStep();
-					}
-				}
+					graphicsPrepareStep();
 			}
 
 			void graphicsPrepareStopStage()
@@ -188,11 +184,7 @@ namespace cage
 
 			void graphicsPrepareFinalizeStage()
 			{
-				while (assets->countTotal() > 0)
-				{
-					while (assets->processCustomThread(graphicsPrepareThread().threadIndex));
-					threadSleep(5000);
-				}
+				waitForAssetsUnload(graphicsPrepareThread().threadIndex);
 			}
 
 			//////////////////////////////////////
@@ -208,6 +200,7 @@ namespace cage
 
 			void graphicsDispatchStep()
 			{
+				OPTICK_FRAME("engine graphics dispatch");
 				ScopedTimer timing(profilingBufferFrameTime);
 				{
 					ScopedSemaphores lockGraphics(graphicsSemaphore2, graphicsSemaphore1);
@@ -222,8 +215,8 @@ namespace cage
 						graphicsDispatchTick(drawCalls, drawPrimitives);
 						profilingBufferDrawCalls.add(drawCalls);
 						profilingBufferDrawPrimitives.add(drawPrimitives);
-						OPTICK_TAG("drawCalls", drawCalls);
-						OPTICK_TAG("drawPrimitives", drawPrimitives);
+						OPTICK_TAG("draw calls", drawCalls);
+						OPTICK_TAG("draw primitives", drawPrimitives);
 					}
 				}
 				if (graphicsPrepareThread().stereoMode == StereoModeEnum::Mono)
@@ -249,18 +242,7 @@ namespace cage
 			void graphicsDispatchGameloopStage()
 			{
 				while (!stopping)
-				{
-					if (confOptickFrameMode == EngineGraphicsDispatchThread::threadIndex)
-					{
-						OPTICK_FRAME("engine graphics dispatch");
-						graphicsDispatchStep();
-					}
-					else
-					{
-						OPTICK_EVENT("engine graphics dispatch");
-						graphicsDispatchStep();
-					}
-				}
+					graphicsDispatchStep();
 			}
 
 			void graphicsDispatchStopStage()
@@ -272,11 +254,7 @@ namespace cage
 			{
 				gui->graphicsFinalize();
 				graphicsDispatchFinalize();
-				while (assets->countTotal() > 0)
-				{
-					while (assets->processCustomThread(graphicsDispatchThread().threadIndex));
-					threadSleep(5000);
-				}
+				waitForAssetsUnload(graphicsDispatchThread().threadIndex);
 			}
 
 			//////////////////////////////////////
@@ -296,9 +274,9 @@ namespace cage
 
 			void soundUpdate()
 			{
+				OPTICK_EVENT("update");
 				ScopeLock<Mutex> lockAssets(assetsSoundMutex);
-				currentSoundTime += soundUpdateSchedule->period();
-				ScopedTimer timing(profilingBufferSound);
+				currentSoundTime = soundUpdateSchedule->time();
 				{
 					OPTICK_EVENT("sound callback");
 					soundThread().sound.dispatch();
@@ -306,20 +284,6 @@ namespace cage
 				{
 					OPTICK_EVENT("tick");
 					soundTick(currentSoundTime);
-				}
-			}
-
-			void soundUpdateEntry()
-			{
-				if (confOptickFrameMode == EngineSoundThread::threadIndex)
-				{
-					OPTICK_FRAME("engine sound");
-					soundUpdate();
-				}
-				else
-				{
-					OPTICK_EVENT("engine sound");
-					soundUpdate();
 				}
 			}
 
@@ -337,11 +301,7 @@ namespace cage
 			{
 				soundFinalize();
 				//gui->soundFinalize();
-				while (assets->countTotal() > 0)
-				{
-					while (assets->processCustomThread(soundThread().threadIndex));
-					threadSleep(5000);
-				}
+				waitForAssetsUnload(soundThread().threadIndex);
 			}
 
 			//////////////////////////////////////
@@ -389,34 +349,9 @@ namespace cage
 				}
 			}
 
-			void emitThreadsEntry(uint32 index, uint32)
+			void controlInputs()
 			{
-				switch (index)
-				{
-				case 0:
-				{
-					OPTICK_EVENT("sound emit");
-					soundEmit(currentSoundTime);
-				} break;
-				case 1:
-				{
-					OPTICK_EVENT("gui emit");
-					gui->controlUpdateDone();
-				} break;
-				case 2:
-				{
-					OPTICK_EVENT("graphics emit");
-					graphicsPrepareEmit(currentControlTime);
-				} break;
-				default:
-					CAGE_THROW_CRITICAL(Exception, "invalid engine emit thread index");
-				}
-			}
-
-			void controlUpdate()
-			{
-				currentControlTime += controlUpdateSchedule->period();
-				updateHistoryComponents();
+				OPTICK_EVENT("inputs");
 				{
 					OPTICK_EVENT("gui update");
 					gui->setOutputResolution(window->resolution());
@@ -427,30 +362,30 @@ namespace cage
 					window->processEvents();
 				}
 				{
-					ScopedTimer timing(profilingBufferControl);
-					OPTICK_EVENT("application update");
-					controlThread().update.dispatch();
-				}
-				{
-					OPTICK_EVENT("emit");
-					OPTICK_TAG("entitiesCount", entities->group()->count());
-					profilingBufferEntities.add(entities->group()->count());
-					emitThreadsHolder->run();
+					OPTICK_EVENT("gui emit");
+					gui->controlUpdateDone();
 				}
 			}
 
-			void controlUpdateEntry()
+			void controlUpdate()
 			{
-				if (confOptickFrameMode == EngineControlThread::threadIndex)
+				OPTICK_EVENT("update");
+				currentControlTime = controlUpdateSchedule->time();
+				updateHistoryComponents();
 				{
-					OPTICK_FRAME("engine control");
-					controlUpdate();
+					OPTICK_EVENT("update callback");
+					controlThread().update.dispatch();
 				}
-				else
 				{
-					OPTICK_EVENT("engine control");
-					controlUpdate();
+					OPTICK_EVENT("sound emit");
+					soundEmit(currentSoundTime);
 				}
+				{
+					OPTICK_EVENT("graphics emit");
+					graphicsPrepareEmit(currentControlTime);
+				}
+				OPTICK_TAG("entities count", entities->group()->count());
+				profilingBufferEntities.add(entities->group()->count());
 			}
 
 			void controlGameloopStage()
@@ -528,7 +463,7 @@ namespace cage
 #ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 					windowUpload = newWindow(window.get());
 					windowUpload->makeNotCurrent();
-					windowUpload->modeSetHidden();
+					windowUpload->setHidden();
 #endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 				}
 
@@ -575,8 +510,6 @@ namespace cage
 					graphicsUploadThreadHolder = newThread(Delegate<void()>().bind<EngineData, &EngineData::graphicsUploadEntry>(this), "engine graphics upload");
 #endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 					soundThreadHolder = newThread(Delegate<void()>().bind<EngineData, &EngineData::soundEntry>(this), "engine sound");
-					emitThreadsHolder = newThreadPool("engine emit ", 3);
-					emitThreadsHolder->function.bind<EngineData, &EngineData::emitThreadsEntry>(this);
 				}
 
 				{ // initialize asset schemes
@@ -585,7 +518,7 @@ namespace cage
 					assets->defineScheme<MemoryBuffer>(assetSchemeIndexRaw, genAssetSchemeRaw(EngineControlThread::threadIndex));
 					assets->defineScheme<TextPack>(assetSchemeIndexTextPack, genAssetSchemeTextPack(EngineControlThread::threadIndex));
 					assets->defineScheme<CollisionMesh>(assetSchemeIndexCollisionMesh, genAssetSchemeCollisionMesh(EngineControlThread::threadIndex));
-					// client assets
+					// engine assets
 					assets->defineScheme<ShaderProgram>(assetSchemeIndexShaderProgram, genAssetSchemeShaderProgram(EngineGraphicsUploadThread::threadIndex, window.get()));
 					assets->defineScheme<Texture>(assetSchemeIndexTexture, genAssetSchemeTexture(EngineGraphicsUploadThread::threadIndex, window.get()));
 					assets->defineScheme<Mesh>(assetSchemeIndexMesh, genAssetSchemeMesh(EngineGraphicsDispatchThread::threadIndex, window.get()));
@@ -653,8 +586,6 @@ namespace cage
 
 				CAGE_LOG(SeverityEnum::Info, "engine", "starting engine");
 
-				currentControlTime = currentSoundTime = getApplicationTime();
-
 				{ ScopeLock<Barrier> l(threadsStateBarier); }
 				{ ScopeLock<Barrier> l(threadsStateBarier); }
 
@@ -695,7 +626,7 @@ namespace cage
 						}
 						GCHL_GENERATE_CATCH(control, finalization (unloading assets))
 						while (assets->processCustomThread(controlThread().threadIndex) || assets->processControlThread());
-						threadSleep(5000);
+						threadSleep(1000);
 					}
 				}
 
@@ -750,7 +681,7 @@ namespace cage
 		Holder<EngineData> engineData;
 
 		EngineData::EngineData(const EngineCreateConfig &config) : engineStarted(0), stopping(false), currentControlTime(0), currentSoundTime(0), assetSyncAttempts(0), assetShaderTier(0),
-			controlUpdateSchedule(nullptr), controlAssetsSchedule(nullptr) /*, controlInputSchedule(nullptr) */
+			controlUpdateSchedule(nullptr), controlAssetsSchedule(nullptr), controlInputSchedule(nullptr), soundUpdateSchedule(nullptr), soundAssetsSchedule(nullptr)
 		{
 			CAGE_LOG(SeverityEnum::Info, "engine", "creating engine");
 
@@ -762,7 +693,7 @@ namespace cage
 			{
 				ScheduleCreateConfig c;
 				c.name = "engine control update";
-				c.action = Delegate<void()>().bind<EngineData, &EngineData::controlUpdateEntry>(this);
+				c.action = Delegate<void()>().bind<EngineData, &EngineData::controlUpdate>(this);
 				c.period = 1000000 / 20;
 				c.type = ScheduleTypeEnum::SteadyPeriodic;
 				controlUpdateSchedule = controlScheduler->newSchedule(c);
@@ -775,12 +706,20 @@ namespace cage
 				c.type = ScheduleTypeEnum::FreePeriodic;
 				controlAssetsSchedule = controlScheduler->newSchedule(c);
 			}
+			{
+				ScheduleCreateConfig c;
+				c.name = "engine control inputs";
+				c.action = Delegate<void()>().bind<EngineData, &EngineData::controlInputs>(this);
+				c.period = 1000000 / 60;
+				c.type = ScheduleTypeEnum::FreePeriodic;
+				controlInputSchedule = controlScheduler->newSchedule(c);
+			}
 
 			soundScheduler = newScheduler({});
 			{
 				ScheduleCreateConfig c;
 				c.name = "engine sound update";
-				c.action = Delegate<void()>().bind<EngineData, &EngineData::soundUpdateEntry>(this);
+				c.action = Delegate<void()>().bind<EngineData, &EngineData::soundUpdate>(this);
 				c.period = 1000000 / 40;
 				c.type = ScheduleTypeEnum::SteadyPeriodic;
 				soundUpdateSchedule = soundScheduler->newSchedule(c);
@@ -830,6 +769,16 @@ namespace cage
 	void EngineControlThread::assetsPeriod(uint64 p)
 	{
 		engineData->controlAssetsSchedule->period(p);
+	}
+
+	uint64 EngineControlThread::inputPeriod() const
+	{
+		return engineData->controlInputSchedule->period();
+	}
+
+	void EngineControlThread::inputPeriod(uint64 p)
+	{
+		engineData->controlInputSchedule->period(p);
 	}
 
 	Scheduler *EngineSoundThread::scheduler()
@@ -948,21 +897,30 @@ namespace cage
 	uint64 engineProfilingValues(EngineProfilingStatsFlags flags, EngineProfilingModeEnum mode)
 	{
 		uint64 result = 0;
+
+		const auto &add = [&](const auto &buffer)
+		{
+			switch (mode)
+			{
+			case EngineProfilingModeEnum::Average: result += buffer.smooth(); break;
+			case EngineProfilingModeEnum::Maximum: result += buffer.max(); break;
+			case EngineProfilingModeEnum::Last: result += buffer.current(); break;
+			default: CAGE_THROW_CRITICAL(Exception, "invalid profiling mode enum");
+			}
+		};
+
+		if (any(flags & EngineProfilingStatsFlags::Control))
+			add(engineData->controlUpdateSchedule->statsDuration());
+		if (any(flags & EngineProfilingStatsFlags::Sound))
+			add(engineData->soundUpdateSchedule->statsDuration());
+
 #define GCHL_GENERATE(NAME) \
-		if ((flags & EngineProfilingStatsFlags::NAME) == EngineProfilingStatsFlags::NAME) \
+		if (any(flags & EngineProfilingStatsFlags::NAME)) \
 		{ \
 			auto &buffer = CAGE_JOIN(engineData->profilingBuffer, NAME); \
-			switch (mode) \
-			{ \
-			case EngineProfilingModeEnum::Average: result += buffer.smooth(); break; \
-			case EngineProfilingModeEnum::Maximum: result += buffer.max(); break; \
-			case EngineProfilingModeEnum::Last: result += buffer.current(); break; \
-			default: CAGE_THROW_CRITICAL(Exception, "invalid profiling mode enum"); \
-			} \
+			add(buffer); \
 		}
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE,
-			Control,
-			Sound,
 			GraphicsPrepare,
 			GraphicsDispatch,
 			FrameTime,
@@ -971,6 +929,7 @@ namespace cage
 			Entities
 		));
 #undef GCHL_GENERATE
+
 		return result;
 	}
 }
