@@ -295,7 +295,7 @@ namespace cage
 	class ConditionalVariableBase;
 	class ConditionalVariable;
 	class Thread;
-	struct ConcurrentQueueCreateConfig;
+	struct ConcurrentQueueTerminated;
 	template<class T> class ConcurrentQueue;
 	enum class ConfigTypeEnum : uint32;
 	struct ConfigBool;

@@ -6,10 +6,10 @@ namespace cage
 	template<class T>
 	struct ScopeLock
 	{
-		explicit ScopeLock(Holder<T> &ptr, bool tryLock) : ScopeLock(ptr.get(), tryLock)
+		explicit ScopeLock(const Holder<T> &ptr, bool tryLock) : ScopeLock(ptr.get(), tryLock)
 		{}
 
-		explicit ScopeLock(Holder<T> &ptr) : ScopeLock(ptr.get())
+		explicit ScopeLock(const Holder<T> &ptr) : ScopeLock(ptr.get())
 		{}
 
 		explicit ScopeLock(T *ptr, bool tryLock) : ptr(ptr)

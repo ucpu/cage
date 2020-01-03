@@ -1,204 +1,155 @@
 #ifndef guard_concurrentQueue_h_F17509C840DB4228AF89C97FCD8EC1E5
 #define guard_concurrentQueue_h_F17509C840DB4228AF89C97FCD8EC1E5
 
+#include <cage-core/concurrent.h>
+
+#include <list>
+
 namespace cage
 {
-	struct CAGE_API ConcurrentQueueCreateConfig
-	{
-		MemoryArena arena;
-		uint32 maxElements;
-		ConcurrentQueueCreateConfig();
-	};
-
 	struct CAGE_API ConcurrentQueueTerminated : public Exception
 	{
-		ConcurrentQueueTerminated(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept;
+		ConcurrentQueueTerminated(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept : Exception(file, line, function, severity, message)
+		{};
 	};
-
-	namespace privat
-	{
-		class CAGE_API ConcurrentQueuePriv : private Immovable
-		{
-		public:
-			void push(void *value);
-			bool tryPush(void *value);
-			void pop(void *&value);
-			bool tryPop(void *&value);
-			bool tryPopNoStop(void *&value);
-			uint32 estimatedSize() const;
-			void terminate();
-			bool stopped() const;
-			MemoryArena arena;
-		};
-
-		CAGE_API Holder<ConcurrentQueuePriv> newConcurrentQueue(const ConcurrentQueueCreateConfig &config);
-	}
 
 	template<class T>
 	class ConcurrentQueue : private Immovable
 	{
 	public:
-		ConcurrentQueue(const ConcurrentQueueCreateConfig &config) : queue(privat::newConcurrentQueue(config))
-		{}
-
-		~ConcurrentQueue()
+		explicit ConcurrentQueue(uint32 maxItems = m) : maxItems(maxItems), stop(false)
 		{
-			T *tmp = nullptr;
-			while (queue->tryPopNoStop((void*&)tmp))
-				queue->arena.destroy<T>(tmp);
+			mut = newMutex();
+			writer = newConditionalVariableBase();
+			reader = newConditionalVariableBase();
 		}
 
 		void push(const T &value)
 		{
-			T *tmp = nullptr;
-			try
+			ScopeLock<Mutex> sl(mut);
+			while (true)
 			{
-				tmp = queue->arena.createObject<T>(value);
-				queue->push(tmp);
-			}
-			catch (...)
-			{
-				queue->arena.destroy<T>(tmp);
-				throw;
+				if (stop)
+					CAGE_THROW_SILENT(ConcurrentQueueTerminated, "concurrent queue terminated");
+				if (items.size() >= maxItems)
+					writer->wait(sl);
+				else
+				{
+					items.push_back(value);
+					reader->signal();
+					return;
+				}
 			}
 		}
 
 		void push(T &&value)
 		{
-			T *tmp = nullptr;
-			try
+			ScopeLock<Mutex> sl(mut);
+			while (true)
 			{
-				tmp = queue->arena.createObject<T>(templates::move(value));
-				queue->push(tmp);
-			}
-			catch (...)
-			{
-				queue->arena.destroy<T>(tmp);
-				throw;
+				if (stop)
+					CAGE_THROW_SILENT(ConcurrentQueueTerminated, "concurrent queue terminated");
+				if (items.size() >= maxItems)
+					writer->wait(sl);
+				else
+				{
+					items.push_back(templates::move(value));
+					reader->signal();
+					return;
+				}
 			}
 		}
 
 		bool tryPush(const T &value)
 		{
-			T *tmp = nullptr;
-			try
+			ScopeLock<Mutex> sl(mut);
+			if (stop)
+				CAGE_THROW_SILENT(ConcurrentQueueTerminated, "concurrent queue terminated");
+			if (items.size() < maxItems)
 			{
-				tmp = queue->arena.createObject<T>(value);
-				bool ret = queue->tryPush(tmp);
-				if (!ret)
-					queue->arena.destroy<T>(tmp);
-				return ret;
+				items.push_back(value);
+				reader->signal();
+				return true;
 			}
-			catch (...)
-			{
-				queue->arena.destroy<T>(tmp);
-				throw;
-			}
+			return false;
 		}
 
 		bool tryPush(T &&value)
 		{
-			T *tmp = nullptr;
-			try
+			ScopeLock<Mutex> sl(mut);
+			if (stop)
+				CAGE_THROW_SILENT(ConcurrentQueueTerminated, "concurrent queue terminated");
+			if (items.size() < maxItems)
 			{
-				tmp = queue->arena.createObject<T>(templates::move(value));
-				bool ret = queue->tryPush(tmp);
-				if (!ret)
-					queue->arena.destroy<T>(tmp);
-				return ret;
+				items.push_back(templates::move(value));
+				reader->signal();
+				return true;
 			}
-			catch (...)
-			{
-				queue->arena.destroy<T>(tmp);
-				throw;
-			}
+			return false;
 		}
 
 		void pop(T &value)
 		{
-			T *tmp = nullptr;
-			queue->pop((void*&)tmp);
-			CAGE_ASSERT(tmp);
-			try
+			ScopeLock<Mutex> sl(mut);
+			while (true)
 			{
-				value = templates::move(*tmp);
+				if (stop)
+					CAGE_THROW_SILENT(ConcurrentQueueTerminated, "concurrent queue terminated");
+				if (items.empty())
+					reader->wait(sl);
+				else
+				{
+					value = templates::move(items.front());
+					items.pop_front();
+					writer->signal();
+					return;
+				}
 			}
-			catch (...)
-			{
-				queue->arena.destroy<T>(tmp);
-				throw;
-			}
-			queue->arena.destroy<T>(tmp);
 		}
 
 		bool tryPop(T &value)
 		{
-			T *tmp = nullptr;
-			if (!queue->tryPop((void*&)tmp))
-				return false;
-			CAGE_ASSERT(tmp);
-			try
+			ScopeLock<Mutex> sl(mut);
+			if (stop)
+				CAGE_THROW_SILENT(ConcurrentQueueTerminated, "concurrent queue terminated");
+			if (!items.empty())
 			{
-				value = templates::move(*tmp);
+				value = templates::move(items.front());
+				items.pop_front();
+				writer->signal();
+				return true;
 			}
-			catch (...)
-			{
-				queue->arena.destroy<T>(tmp);
-				throw;
-			}
-			queue->arena.destroy<T>(tmp);
-			return true;
+			return false;
 		}
 
-		uint32 estimatedSize() const { return queue->estimatedSize(); }
-		void terminate() { queue->terminate(); }
-		bool stopped() const { return queue->stopped(); };
-
-	private:
-		Holder<privat::ConcurrentQueuePriv> queue;
-	};
-
-	template<class T>
-	class ConcurrentQueue<T*> : private Immovable
-	{
-	public:
-		ConcurrentQueue(const ConcurrentQueueCreateConfig &config, Delegate<void(T*)> deleter) : queue(privat::newConcurrentQueue(config)), deleter(deleter)
-		{}
-
-		~ConcurrentQueue()
+		void terminate()
 		{
-			void *tmp = nullptr;
-			while (queue->tryPopNoStop(tmp))
 			{
-				if (deleter)
-					deleter((T*)tmp);
+				ScopeLock<Mutex> sl(mut);
+				stop = true;
 			}
+			writer->broadcast();
+			reader->broadcast();
 		}
 
-		void push(T *value) { queue->push(value); }
-		bool tryPush(T *value) { return queue->tryPush(value); }
-		void pop(T *&value) { void *tmp; queue->pop(tmp); value = (T*)tmp; }
-		bool tryPop(T *&value) { void *tmp; if (queue->tryPop(tmp)) { value = (T*)tmp; return true; } return false; }
-		uint32 estimatedSize() const { return queue->estimatedSize(); }
-		void terminate() { queue->terminate(); }
-		bool stopped() const { return queue->stopped(); };
+		bool stopped() const
+		{
+			ScopeLock<Mutex> sl(mut); // mandate memory barriers
+			return stop;
+		}
+
+		uint32 estimatedSize() const
+		{
+			return numeric_cast<uint32>(items.size());
+		}
 
 	private:
-		Holder<privat::ConcurrentQueuePriv> queue;
-		Delegate<void(T*)> deleter;
+		Holder<Mutex> mut;
+		Holder<ConditionalVariableBase> writer, reader;
+		std::list<T> items;
+		uint32 maxItems;
+		bool stop;
 	};
-
-	template<class T>
-	Holder<ConcurrentQueue<T>> newConcurrentQueue(const ConcurrentQueueCreateConfig &config)
-	{
-		return detail::systemArena().createHolder<ConcurrentQueue<T>>(config);
-	}
-
-	template<class T>
-	Holder<ConcurrentQueue<T>> newConcurrentQueue(const ConcurrentQueueCreateConfig &config, Delegate<void(T)> deleter)
-	{
-		return detail::systemArena().createHolder<ConcurrentQueue<T>>(config, deleter);
-	}
 }
 
 #endif // guard_concurrentQueue_h_F17509C840DB4228AF89C97FCD8EC1E5

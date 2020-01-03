@@ -9,25 +9,25 @@ namespace
 {
 	std::atomic<int> itemsCounter;
 
-	class task
+	class Task
 	{
 	public:
-		task(uint32 id, bool final = false) : id(id), final(final)
+		Task(uint32 id, bool final = false) : id(id), final(final)
 		{
 			itemsCounter++;
 		}
 
-		task(const task &other) : id(other.id), final(other.final)
+		Task(const Task &other) : id(other.id), final(other.final)
 		{
 			itemsCounter++;
 		}
 
-		task(task &&other) : id(other.id), final(other.final)
+		Task(Task &&other) noexcept : id(other.id), final(other.final)
 		{
 			itemsCounter++;
 		}
 
-		task &operator = (const task &other)
+		Task &operator = (const Task &other)
 		{
 			id = other.id;
 			final = other.final;
@@ -35,7 +35,7 @@ namespace
 			return *this;
 		}
 
-		task &operator = (task &&other)
+		Task &operator = (Task &&other) noexcept
 		{
 			id = other.id;
 			final = other.final;
@@ -43,7 +43,7 @@ namespace
 			return *this;
 		}
 
-		~task()
+		~Task()
 		{
 #ifdef _MSC_VER
 #pragma warning( disable : 4297 ) // function assumed not to throw an exception but does
@@ -67,12 +67,8 @@ namespace
 	class Tester
 	{
 	public:
-		Tester() : produceItems(1000), produceFinals(1)
-		{
-			ConcurrentQueueCreateConfig cfg;
-			cfg.maxElements = 10;
-			queue = newConcurrentQueue<task>(cfg);
-		}
+		Tester() : produceItems(1000), produceFinals(1), queue(10)
+		{}
 
 		void consumeBlocking()
 		{
@@ -80,8 +76,8 @@ namespace
 			{
 				while (true)
 				{
-					task tsk(-1);
-					queue->pop(tsk);
+					Task tsk(-1);
+					queue.pop(tsk);
 					if (tsk.final)
 						break;
 					else
@@ -100,8 +96,8 @@ namespace
 			{
 				while (true)
 				{
-					task tsk(-1);
-					if (queue->tryPop(tsk))
+					Task tsk(-1);
+					if (queue.tryPop(tsk))
 					{
 						if (tsk.final)
 							break;
@@ -125,14 +121,14 @@ namespace
 				for (uint32 i = 0; i < produceItems; i++)
 				{
 					threadSleep(1); // simulate work
-					task tsk(i);
-					queue->push(tsk);
+					Task tsk(i);
+					queue.push(tsk);
 				}
 				for (uint32 i = 0; i < produceFinals; i++)
 				{
 					threadSleep(1); // simulate work
-					task tsk(i + produceItems, true);
-					queue->push(tsk);
+					Task tsk(i + produceItems, true);
+					queue.push(tsk);
 				}
 			}
 			catch (const ConcurrentQueueTerminated &)
@@ -148,15 +144,15 @@ namespace
 				for (uint32 i = 0; i < produceItems; i++)
 				{
 					threadSleep(1); // simulate work
-					task tsk(i);
-					while (!queue->tryPush(tsk))
+					Task tsk(i);
+					while (!queue.tryPush(tsk))
 						threadSleep(1);
 				}
 				for (uint32 i = 0; i < produceFinals; i++)
 				{
 					threadSleep(1); // simulate work
-					task tsk(i + produceItems, true);
-					while (!queue->tryPush(tsk))
+					Task tsk(i + produceItems, true);
+					while (!queue.tryPush(tsk))
 						threadSleep(1);
 				}
 			}
@@ -184,95 +180,7 @@ namespace
 
 		const uint32 produceItems;
 		const uint32 produceFinals;
-		Holder<ConcurrentQueue<task>> queue;
-	};
-
-	class TesterPtr
-	{
-	public:
-		TesterPtr() : produceItems(1000), produceFinals(1)
-		{
-			ConcurrentQueueCreateConfig cfg;
-			cfg.maxElements = 10;
-			queue = newConcurrentQueue<task*>(cfg, Delegate<void(task*)>().bind<TesterPtr, &TesterPtr::destroy>(this));
-		}
-
-		task *create(uint32 i, bool final)
-		{
-			return detail::systemArena().createObject<task>(i, final);
-		}
-
-		void destroy(task *t)
-		{
-			detail::systemArena().destroy<task>(t);
-		}
-
-		void consumeBlocking()
-		{
-			try
-			{
-				while (true)
-				{
-					task *tsk = nullptr;
-					queue->pop(tsk);
-					if (tsk->final)
-					{
-						destroy(tsk);
-						break;
-					}
-					else
-						threadSleep(1); // simulate work
-					destroy(tsk);
-				}
-			}
-			catch (const ConcurrentQueueTerminated &)
-			{
-				// nothing
-			}
-		}
-
-		void produceBlocking()
-		{
-			try
-			{
-				for (uint32 i = 0; i < produceItems; i++)
-				{
-					threadSleep(1); // simulate work
-					task *tsk = create(i, false);
-					try
-					{
-						queue->push(tsk);
-					}
-					catch (...)
-					{
-						destroy(tsk);
-						throw;
-					}
-				}
-				for (uint32 i = 0; i < produceFinals; i++)
-				{
-					threadSleep(1); // simulate work
-					task *tsk = create(i + produceItems, true);
-					try
-					{
-						queue->push(tsk);
-					}
-					catch (...)
-					{
-						destroy(tsk);
-						throw;
-					}
-				}
-			}
-			catch (const ConcurrentQueueTerminated &)
-			{
-				// nothing
-			}
-		}
-
-		const uint32 produceItems;
-		const uint32 produceFinals;
-		Holder<ConcurrentQueue<task*>> queue;
+		ConcurrentQueue<Task> queue;
 	};
 }
 
@@ -302,16 +210,6 @@ void testConcurrentQueue()
 	CAGE_TEST(itemsCounter == 0);
 
 	{
-		CAGE_TESTCASE("single producer single consumer (pointers) (blocking)");
-		TesterPtr t;
-		Holder<Thread> t1 = newThread(Delegate<void()>().bind<TesterPtr, &TesterPtr::consumeBlocking>(&t), "consumer");
-		Holder<Thread> t2 = newThread(Delegate<void()>().bind<TesterPtr, &TesterPtr::produceBlocking>(&t), "producer");
-		t1->wait();
-		t2->wait();
-	}
-	CAGE_TEST(itemsCounter == 0);
-
-	{
 		CAGE_TESTCASE("multiple producers multiple consumers (blocking)");
 		Tester t;
 		Holder<ThreadPool> t1 = newThreadPool("pool_", 6);
@@ -335,7 +233,7 @@ void testConcurrentQueue()
 		Holder<Thread> t1 = newThread(Delegate<void()>().bind<Tester, &Tester::consumeBlocking>(&t), "consumer");
 		Holder<Thread> t2 = newThread(Delegate<void()>().bind<Tester, &Tester::produceBlocking>(&t), "producer");
 		threadSleep(10);
-		t.queue->terminate();
+		t.queue.terminate();
 		t1->wait();
 		t2->wait();
 	}
@@ -347,19 +245,7 @@ void testConcurrentQueue()
 		Holder<Thread> t1 = newThread(Delegate<void()>().bind<Tester, &Tester::consumePolling>(&t), "consumer");
 		Holder<Thread> t2 = newThread(Delegate<void()>().bind<Tester, &Tester::producePolling>(&t), "producer");
 		threadSleep(10);
-		t.queue->terminate();
-		t1->wait();
-		t2->wait();
-	}
-	CAGE_TEST(itemsCounter == 0);
-
-	{
-		CAGE_TESTCASE("termination (pointers) (blocking)");
-		TesterPtr t;
-		Holder<Thread> t1 = newThread(Delegate<void()>().bind<TesterPtr, &TesterPtr::consumeBlocking>(&t), "consumer");
-		Holder<Thread> t2 = newThread(Delegate<void()>().bind<TesterPtr, &TesterPtr::produceBlocking>(&t), "producer");
-		threadSleep(10);
-		t.queue->terminate();
+		t.queue.terminate();
 		t1->wait();
 		t2->wait();
 	}

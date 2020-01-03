@@ -51,7 +51,7 @@ namespace cage
 	};
 
 	/*
-	struct CAGE_API TextPackHeaderStruct
+	struct CAGE_API TextPackHeader
 	{
 		// follows:
 		// count, uint32, number of texts
@@ -62,7 +62,7 @@ namespace cage
 		// ...
 	};
 
-	struct CAGE_API ColliderHeaderStruct
+	struct CAGE_API ColliderHeader
 	{
 		// follows:
 		// serialized collider data (possibly compressed)

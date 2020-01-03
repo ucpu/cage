@@ -5,10 +5,10 @@ namespace cage
 {
 	enum class AssetStateEnum : uint32
 	{
-		Ready,
+		Unknown,
 		NotFound,
 		Error,
-		Unknown,
+		Ready,
 	};
 
 	class CAGE_API AssetManager : private Immovable
@@ -107,8 +107,8 @@ namespace cage
 	struct CAGE_API AssetManagerCreateConfig
 	{
 		string assetsFolderName;
-		uint32 threadMaxCount;
-		uint32 schemeMaxCount;
+		uint32 threadsMaxCount;
+		uint32 schemesMaxCount;
 		AssetManagerCreateConfig();
 	};
 

@@ -28,7 +28,7 @@ namespace cage
 
 	namespace
 	{
-		static const uint32 currentAssetVersion = 1;
+		static const uint32 CurrentAssetVersion = 1;
 
 		void defaultDecompress(const AssetContext *context)
 		{
@@ -52,7 +52,9 @@ namespace cage
 			uint32 scheme;
 			uint32 references;
 			std::atomic<bool> processing, ready, error, dependenciesDoneFlag, fabricated;
-			AssetContextPrivate() : aliasPrevious(0), scheme(m), references(0), processing(false), ready(false), error(true), dependenciesDoneFlag(false), fabricated(false) {}
+
+			AssetContextPrivate() : aliasPrevious(0), scheme(m), references(0), processing(false), ready(false), error(true), dependenciesDoneFlag(false), fabricated(false)
+			{}
 		};
 
 		struct AssetSchemePrivate : public AssetScheme
@@ -60,12 +62,6 @@ namespace cage
 			uintPtr typeSize;
 			AssetSchemePrivate() : typeSize(0) {}
 		};
-
-		void destroy(AssetContextPrivate *ptr)
-		{
-			// these pointers are owned by the hash map, not by the concurrent queues
-			ptr->error = true;
-		}
 
 		class AssetManagerImpl : public AssetManager
 		{
@@ -89,7 +85,7 @@ namespace cage
 
 			Holder<ConcurrentQueue<AssetContextPrivate*>> createQueue()
 			{
-				return newConcurrentQueue<AssetContextPrivate*>({}, Delegate<void(AssetContextPrivate*)>().bind<&destroy>());
+				return detail::systemArena().createHolder<ConcurrentQueue<AssetContextPrivate *>>();
 			}
 
 			AssetManagerImpl(const AssetManagerCreateConfig &config) : countTotal(0), countProcessing(0), hackQueueWaitCounter(0), generateName(0), destroying(false)
@@ -112,10 +108,10 @@ namespace cage
 					throw;
 				}
 				CAGE_LOG(SeverityEnum::Info, "assetManager", stringizer() + "using asset path: '" + path + "'");
-				schemes.resize(config.schemeMaxCount);
-				queueCustomLoad.reserve(config.threadMaxCount);
-				queueCustomDone.reserve(config.threadMaxCount);
-				for (uint32 i = 0; i < config.threadMaxCount; i++)
+				schemes.resize(config.schemesMaxCount);
+				queueCustomLoad.reserve(config.threadsMaxCount);
+				queueCustomDone.reserve(config.threadsMaxCount);
+				for (uint32 i = 0; i < config.threadsMaxCount; i++)
 				{
 					queueCustomLoad.push_back(createQueue());
 					queueCustomDone.push_back(createQueue());
@@ -188,7 +184,7 @@ namespace cage
 						AssetHeader *h = (AssetHeader*)buff.data();
 						if (detail::memcmp(h->cageName, "cageAss", 8) != 0)
 							CAGE_THROW_ERROR(Exception, "file is not a cage asset");
-						if (h->version != currentAssetVersion)
+						if (h->version != CurrentAssetVersion)
 							CAGE_THROW_ERROR(Exception, "cage asset version mismatch");
 						if (h->textName[sizeof(h->textName) - 1] != 0)
 							CAGE_THROW_ERROR(Exception, "cage asset text name not bounded");
@@ -649,8 +645,8 @@ namespace cage
 		AssetManagerImpl *impl = (AssetManagerImpl*)this;
 		switch (state(assetName))
 		{
-		case AssetStateEnum::Ready:
-			return true;
+		case AssetStateEnum::Unknown:
+			return false;
 		case AssetStateEnum::NotFound:
 			return false;
 		case AssetStateEnum::Error:
@@ -660,8 +656,8 @@ namespace cage
 			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "asset text name: '" + ass->textName + "'");
 			CAGE_THROW_ERROR(Exception, "asset has failed to load");
 		}
-		case AssetStateEnum::Unknown:
-			return false;
+		case AssetStateEnum::Ready:
+			return true;
 		default:
 			CAGE_THROW_CRITICAL(Exception, "invalid asset state enum");
 		}
@@ -779,7 +775,7 @@ namespace cage
 		ass->ready = !!value;
 	}
 
-	AssetManagerCreateConfig::AssetManagerCreateConfig() : assetsFolderName("assets.zip"), threadMaxCount(5), schemeMaxCount(50)
+	AssetManagerCreateConfig::AssetManagerCreateConfig() : assetsFolderName("assets.zip"), threadsMaxCount(5), schemesMaxCount(50)
 	{}
 
 	Holder<AssetManager> newAssetManager(const AssetManagerCreateConfig &config)
@@ -792,7 +788,7 @@ namespace cage
 		AssetHeader a;
 		detail::memset(&a, 0, sizeof(AssetHeader));
 		detail::memcpy(a.cageName, "cageAss", 7);
-		a.version = currentAssetVersion;
+		a.version = CurrentAssetVersion;
 		string name = name_;
 		static const uint32 maxTexName = sizeof(a.textName);
 		if (name.length() >= maxTexName)
