@@ -26,6 +26,82 @@ namespace cage
 		::cage::privat::makeLog(file, line, function, severity, "exception", message, false, false);
 	};
 
+	MemoryArena::MemoryArena() noexcept : stub(nullptr), inst(nullptr)
+	{}
+
+	void *MemoryArena::allocate(uintPtr size, uintPtr alignment)
+	{
+		void *res = stub->alloc(inst, size, alignment);
+		CAGE_ASSERT((uintPtr(res) % alignment) == 0, size, alignment, res, uintPtr(res) % alignment);
+		return res;
+	}
+
+	void MemoryArena::deallocate(void *ptr) noexcept
+	{
+		stub->dealloc(inst, ptr);
+	}
+
+	void MemoryArena::flush() noexcept
+	{
+		stub->fls(inst);
+	}
+
+	bool MemoryArena::operator == (const MemoryArena &other) const noexcept
+	{
+		return inst == other.inst;
+	}
+
+	bool MemoryArena::operator != (const MemoryArena &other) const noexcept
+	{
+		return !(*this == other);
+	}
+
+	namespace privat
+	{
+		namespace
+		{
+			struct SharedCounter
+			{
+				std::atomic<sint32> cnt = 1;
+				Holder<void> payload;
+
+				void dec()
+				{
+					if (--cnt <= 0)
+					{
+						detail::systemArena().destroy<SharedCounter>(this); // suicide
+					}
+				}
+			};
+
+			void decHolderShareable(void *ptr)
+			{
+				((SharedCounter*)ptr)->dec();
+			}
+		}
+
+		bool isHolderShareable(const Delegate<void(void *)> &deleter)
+		{
+			return deleter == Delegate<void(void *)>().bind<&decHolderShareable>();
+		}
+
+		void incHolderShareable(void *ptr, const Delegate<void(void *)> &deleter)
+		{
+			CAGE_ASSERT(isHolderShareable(deleter));
+			((SharedCounter*)ptr)->cnt++;
+		}
+
+		void makeHolderShareable(void *&ptr, Delegate<void(void *)> &deleter)
+		{
+			if (isHolderShareable(deleter))
+				return;
+			SharedCounter *shr = detail::systemArena().createObject<SharedCounter>();
+			shr->payload = Holder<void>(nullptr, ptr, deleter);
+			ptr = shr;
+			deleter = Delegate<void(void *)>().bind<&decHolderShareable>();
+		}
+	}
+
 	namespace detail
 	{
 		uintPtr compressionBound(uintPtr size)

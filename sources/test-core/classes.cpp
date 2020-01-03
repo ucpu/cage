@@ -73,10 +73,28 @@ void testClasses()
 
 	{
 		CAGE_TESTCASE("class_cast");
-		Derived derived;
-		Base *base = &derived;
-		CAGE_TEST(class_cast<Derived*>(base) != nullptr);
-		CAGE_TEST_ASSERTED(class_cast<OtherDerived*>(base));
+		Holder<Base> ah = detail::systemArena().createHolder<Base>();
+		Holder<Base> bh = detail::systemArena().createImpl<Base, Derived>();
+		Base *a = ah.get();
+		Base *b = bh.get();
+		CAGE_TEST(class_cast<Base*>(a));
+		CAGE_TEST(class_cast<Base*>(b));
+		CAGE_TEST(class_cast<Derived*>(b));
+		CAGE_TEST_ASSERTED(class_cast<OtherDerived*>(b));
+		Base *n = nullptr;
+		CAGE_TEST(class_cast<Base*>(n) == nullptr);
+		CAGE_TEST(class_cast<Derived*>(n) == nullptr);
+	}
+
+	{
+		CAGE_TESTCASE("holder cast");
+		CAGE_TEST((detail::systemArena().createHolder<Base>().cast<Base>()));
+		CAGE_TEST((detail::systemArena().createImpl<Base, Derived>().cast<Base>()));
+		CAGE_TEST((detail::systemArena().createImpl<Base, Derived>().cast<Derived>()));
+		CAGE_TEST_THROWN((detail::systemArena().createImpl<Base, Derived>().cast<OtherDerived>()));
+		CAGE_TEST((Holder<Base>().cast<Derived>().get()) == nullptr);
+		CAGE_TEST((Holder<Derived>().cast<Derived>().get()) == nullptr);
+		CAGE_TEST((Holder<Derived>().cast<Base>().get()) == nullptr);
 	}
 
 	{

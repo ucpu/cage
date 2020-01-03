@@ -13,11 +13,8 @@ namespace cage
 		void *inst = nullptr;
 
 	public:
-		Delegate()
-		{}
-
 		template<R(*F)(Ts...)>
-		Delegate &bind()
+		Delegate &bind() noexcept
 		{
 			fnc = +[](void *inst, Ts... vs) {
 				(void)inst;
@@ -27,7 +24,7 @@ namespace cage
 		}
 
 		template<class D, R(*F)(D, Ts...)>
-		Delegate &bind(D d)
+		Delegate &bind(D d) noexcept
 		{
 			static_assert(sizeof(d) <= sizeof(inst), "invalid size of data stored in delegate");
 			union U
@@ -47,7 +44,7 @@ namespace cage
 		}
 
 		template<class C, R(C::*F)(Ts...)>
-		Delegate &bind(C *i)
+		Delegate &bind(C *i) noexcept
 		{
 			fnc = +[](void *inst, Ts... vs) {
 				return (((C*)inst)->*F)(templates::forward<Ts>(vs)...);
@@ -57,7 +54,7 @@ namespace cage
 		}
 
 		template<class C, R(C::*F)(Ts...) const>
-		Delegate &bind(const C *i)
+		Delegate &bind(const C *i) noexcept
 		{
 			fnc = +[](void *inst, Ts... vs) {
 				return (((const C*)inst)->*F)(templates::forward<Ts>(vs)...);
@@ -81,6 +78,16 @@ namespace cage
 		{
 			CAGE_ASSERT(!!*this, inst, fnc);
 			return fnc(inst, templates::forward<Ts>(vs)...);
+		}
+
+		bool operator == (const Delegate &other) const noexcept
+		{
+			return fnc == other.fnc && inst == other.inst;
+		}
+
+		bool operator != (const Delegate &other) const noexcept
+		{
+			return !(*this == other);
 		}
 	};
 

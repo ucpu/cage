@@ -1,6 +1,7 @@
 namespace cage
 {
 	// holder
+	template<class T> struct Holder;
 
 	namespace privat
 	{
@@ -9,7 +10,12 @@ namespace cage
 		{
 			R *operator () (S *p) const
 			{
-				return dynamic_cast<R*>(p);
+				if (!p)
+					return nullptr;
+				R *r = dynamic_cast<R*>(p);
+				if (!r)
+					CAGE_THROW_ERROR(Exception, "bad cast");
+				return r;
 			}
 		};
 
@@ -51,6 +57,10 @@ namespace cage
 		{
 			typedef void type;
 		};
+
+		CAGE_API bool isHolderShareable(const Delegate<void(void *)> &deleter);
+		CAGE_API void incHolderShareable(void *ptr, const Delegate<void(void *)> &deleter);
+		CAGE_API void makeHolderShareable(void *&ptr, Delegate<void(void *)> &deleter);
 
 		template<class T>
 		struct HolderBase
@@ -122,6 +132,27 @@ namespace cage
 				data_ = nullptr;
 			}
 
+			bool isShareable() const
+			{
+				return isHolderShareable(deleter_);
+			}
+
+			Holder<T> share() const
+			{
+				incHolderShareable(ptr_, deleter_);
+				return Holder<T>(data_, ptr_, deleter_);
+			}
+
+			Holder<T> makeShareable() &&
+			{
+				Holder<T> tmp(data_, ptr_, deleter_);
+				makeHolderShareable(tmp.ptr_, tmp.deleter_);
+				this->deleter_.clear();
+				this->ptr_ = nullptr;
+				this->data_ = nullptr;
+				return tmp;
+			}
+
 		protected:
 			Delegate<void(void *)> deleter_;
 			void *ptr_; // pointer to deallocate
@@ -137,17 +168,11 @@ namespace cage
 		template<class M>
 		Holder<M> cast()
 		{
-			if (!*this)
-				return Holder<M>();
 			Holder<M> tmp(privat::HolderCaster<M, T>()(this->data_), this->ptr_, this->deleter_);
-			if (tmp)
-			{
-				this->deleter_.clear();
-				this->ptr_ = nullptr;
-				this->data_ = nullptr;
-				return tmp;
-			}
-			CAGE_THROW_ERROR(Exception, "bad cast");
+			this->deleter_.clear();
+			this->ptr_ = nullptr;
+			this->data_ = nullptr;
+			return tmp;
 		}
 	};
 
@@ -188,14 +213,10 @@ namespace cage
 		operator Holder<PointerRange<const T>> () &&
 		{
 			Holder<PointerRange<const T>> tmp((PointerRange<const T>*)this->data_, this->ptr_, this->deleter_);
-			if (tmp)
-			{
-				this->deleter_.clear();
-				this->ptr_ = nullptr;
-				this->data_ = nullptr;
-				return tmp;
-			}
-			CAGE_THROW_ERROR(Exception, "bad cast");
+			this->deleter_.clear();
+			this->ptr_ = nullptr;
+			this->data_ = nullptr;
+			return tmp;
 		}
 
 		T *begin() const { return this->data_->begin(); }
@@ -270,8 +291,7 @@ namespace cage
 		void *inst;
 
 	public:
-		MemoryArena() noexcept : stub(nullptr), inst(nullptr)
-		{}
+		MemoryArena() noexcept;
 
 		template<class A>
 		explicit MemoryArena(A *a) noexcept
@@ -286,22 +306,9 @@ namespace cage
 		MemoryArena &operator = (const MemoryArena &) = default;
 		MemoryArena &operator = (MemoryArena &&) = default;
 
-		void *allocate(uintPtr size, uintPtr alignment)
-		{
-			void *res = stub->alloc(inst, size, alignment);
-			CAGE_ASSERT((uintPtr(res) % alignment) == 0, size, alignment, res, uintPtr(res) % alignment);
-			return res;
-		}
-
-		void deallocate(void *ptr) noexcept
-		{
-			stub->dealloc(inst, ptr);
-		}
-
-		void flush() noexcept
-		{
-			stub->fls(inst);
-		}
+		void *allocate(uintPtr size, uintPtr alignment);
+		void deallocate(void *ptr) noexcept;
+		void flush() noexcept;
 
 		template<class T, class... Ts>
 		T *createObject(Ts... vs)
@@ -350,15 +357,8 @@ namespace cage
 			deallocate(ptr);
 		}
 
-		bool operator == (const MemoryArena &other) const noexcept
-		{
-			return inst == other.inst;
-		}
-
-		bool operator != (const MemoryArena &other) const noexcept
-		{
-			return !(*this == other);
-		}
+		bool operator == (const MemoryArena &other) const noexcept;
+		bool operator != (const MemoryArena &other) const noexcept;
 	};
 
 	namespace detail

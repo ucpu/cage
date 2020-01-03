@@ -56,6 +56,7 @@ void testHolder()
 		takeByValue(templates::move(ts));
 		CAGE_TEST(gCount == 0);
 	}
+
 	{
 		CAGE_TESTCASE("default ctor & copy ctor & holder<void>");
 		CAGE_TEST(gCount == 0);
@@ -70,6 +71,7 @@ void testHolder()
 		d.clear();
 		CAGE_TEST(gCount == 0);
 	}
+
 	{
 		CAGE_TESTCASE("function taking holder");
 		CAGE_TEST(gCount == 0);
@@ -80,6 +82,7 @@ void testHolder()
 		functionTakingHolder(templates::move(b));
 		CAGE_TEST(gCount == 0);
 	}
+
 	{
 		CAGE_TESTCASE("several transfers");
 		CAGE_TEST(gCount == 0);
@@ -96,6 +99,7 @@ void testHolder()
 		e.clear();
 		CAGE_TEST(gCount == 0);
 	}
+
 	{
 		CAGE_TESTCASE("bool tests");
 		CAGE_TEST(gCount == 0);
@@ -113,6 +117,7 @@ void testHolder()
 		CAGE_TEST(!b);
 		CAGE_TEST(c);
 	}
+
 	{
 		CAGE_TESTCASE("vector of holders");
 		std::vector<Holder<Tester> > vec;
@@ -137,5 +142,33 @@ void testHolder()
 		CAGE_TEST(vec[0].get() == firstTester);
 		vec.clear();
 		CAGE_TEST(gCount == 0);
+	}
+
+	{
+		CAGE_TESTCASE("shared holder");
+		CAGE_TEST(gCount == 0);
+		Holder<Tester> a = detail::systemArena().createHolder<Tester>();
+		CAGE_TEST(gCount == 1);
+		CAGE_TEST(!a.isShareable());
+		Holder<Tester> b = templates::move(a).makeShareable();
+		CAGE_TEST(gCount == 1);
+		CAGE_TEST(!a);
+		CAGE_TEST(b);
+		CAGE_TEST(b.isShareable());
+		Holder<Tester> c = b.share();
+		CAGE_TEST(gCount == 1);
+		CAGE_TEST(b);
+		CAGE_TEST(c);
+		CAGE_TEST(b.get() == c.get());
+		CAGE_TEST(b.isShareable());
+		CAGE_TEST(c.isShareable());
+		b.clear();
+		CAGE_TEST(gCount == 1);
+		CAGE_TEST(!b);
+		CAGE_TEST(c);
+		CAGE_TEST(c.isShareable());
+		c.clear();
+		CAGE_TEST(gCount == 0);
+		CAGE_TEST(!c);
 	}
 }
