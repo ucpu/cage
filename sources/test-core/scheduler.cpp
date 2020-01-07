@@ -275,7 +275,7 @@ void testScheduler()
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
 		CAGE_TEST(trig->statsRunCount() == cnt1);
 		CAGE_TEST(trig->statsDurationSum() > 15000 * cnt1);
-		CAGE_TEST(trig->statsDurationSum() < 25000 * cnt1 + 50000);
+		CAGE_TEST(trig->statsDurationSum() < 25000 * cnt1 + 100000);
 		CAGE_TEST(trig->statsDurationMax() > 15000);
 		CAGE_TEST(trig->statsDurationMax() < 50000);
 		CAGE_TEST(trig->statsDelayMax() > 0);
