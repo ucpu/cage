@@ -273,7 +273,6 @@ namespace cage
 	struct sphere;
 	struct aabb;
 
-	enum class AssetStateEnum : uint32;
 	class AssetManager;
 	struct AssetManagerCreateConfig;
 	struct AssetContext;

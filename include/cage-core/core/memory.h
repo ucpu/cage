@@ -82,7 +82,7 @@ namespace cage
 			HolderBase &operator = (const HolderBase &) = delete;
 			HolderBase &operator = (HolderBase &&other) noexcept
 			{
-				if (ptr_ == other.ptr_)
+				if (this == &other)
 					return *this;
 				if (deleter_)
 					deleter_(ptr_);
@@ -97,8 +97,14 @@ namespace cage
 
 			~HolderBase()
 			{
-				if (deleter_)
-					deleter_(ptr_);
+				data_ = nullptr;
+				void *tmpPtr = ptr_;
+				Delegate<void(void *)> tmpDeleter = deleter_;
+				ptr_ = nullptr;
+				deleter_.clear();
+				// calling the deleter is purposefully deferred to until this holder is cleared first
+				if (tmpDeleter)
+					tmpDeleter(tmpPtr);
 			}
 
 			explicit operator bool() const noexcept
@@ -147,9 +153,9 @@ namespace cage
 			{
 				Holder<T> tmp(data_, ptr_, deleter_);
 				makeHolderShareable(tmp.ptr_, tmp.deleter_);
-				this->deleter_.clear();
-				this->ptr_ = nullptr;
-				this->data_ = nullptr;
+				deleter_.clear();
+				ptr_ = nullptr;
+				data_ = nullptr;
 				return tmp;
 			}
 
@@ -166,7 +172,7 @@ namespace cage
 		using privat::HolderBase<T>::HolderBase;
 
 		template<class M>
-		Holder<M> cast()
+		Holder<M> cast() &&
 		{
 			Holder<M> tmp(privat::HolderCaster<M, T>()(this->data_), this->ptr_, this->deleter_);
 			this->deleter_.clear();

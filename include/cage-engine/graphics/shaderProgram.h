@@ -28,5 +28,5 @@ namespace cage
 	CAGE_API Holder<ShaderProgram> newShaderProgram();
 
 	CAGE_API AssetScheme genAssetSchemeShaderProgram(uint32 threadIndex, Window *memoryContext);
-	static const uint32 assetSchemeIndexShaderProgram = 10;
+	static const uint32 AssetSchemeIndexShaderProgram = 10;
 }

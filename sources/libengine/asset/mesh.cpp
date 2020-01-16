@@ -23,21 +23,10 @@ namespace cage
 
 		void processLoad(const AssetContext *context, void *schemePointer)
 		{
-			Mesh *msh = nullptr;
-			if (context->assetHolder)
-			{
-				msh = static_cast<Mesh*>(context->assetHolder.get());
-				msh->bind();
-			}
-			else
-			{
-				context->assetHolder = newMesh().cast<void>();
-				msh = static_cast<Mesh*>(context->assetHolder.get());
-				msh->setDebugName(context->textName);
-			}
-			context->returnData = msh;
+			Holder<Mesh> msh = newMesh();
+			msh->setDebugName(context->textName);
 
-			Deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
+			Deserializer des(context->originalData());
 			MeshHeader data;
 			des >> data;
 
@@ -123,6 +112,8 @@ namespace cage
 					msh->setAttribute(CAGE_SHADER_ATTRIB_IN_AUX0 + i, 0, 0, 0, 0);
 				}
 			}
+
+			context->assetHolder = templates::move(msh).cast<void>();
 		}
 	}
 

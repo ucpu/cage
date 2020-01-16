@@ -112,19 +112,18 @@ void testClasses()
 		{
 			CAGE_TESTCASE("regular inheritance");
 			Holder<Base> h = m.createImpl<Base, Derived>();
-			CAGE_TEST(h.cast<Derived>()->derived == 2);
+			CAGE_TEST(templates::move(h).cast<Derived>()->derived == 2);
 		}
 		{
 			CAGE_TESTCASE("virtual inheritance");
 			Holder<Base> h = m.createImpl<Base, VirtualDerived>();
-			CAGE_TEST(h.cast<VirtualDerived>()->virtualDerived == 4);
+			CAGE_TEST(templates::move(h).cast<VirtualDerived>()->virtualDerived == 4);
 		}
 		{
 			CAGE_TESTCASE("virtual destructor");
 			Holder<Base> h = m.createImpl<Base, CountingDerived>();
 			CAGE_TEST(CountingDerived::count == 1);
-			CAGE_TEST(h.cast<CountingDerived>()->countingDerived == 5);
-			h.clear();
+			CAGE_TEST(templates::move(h).cast<CountingDerived>()->countingDerived == 5);
 			CAGE_TEST(CountingDerived::count == 0);
 		}
 	}

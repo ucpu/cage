@@ -10,55 +10,66 @@
 
 namespace cage
 {
-	AssetContext::AssetContext() : compressedSize(0), originalSize(0), assetPointer(nullptr), returnData(nullptr), compressedData(nullptr), originalData(nullptr), realName(0), aliasName(0), assetFlags(0) {}
-	AssetScheme::AssetScheme() : schemePointer(nullptr), threadIndex(0) {}
+	namespace
+	{
+		void defaultDecompress(const AssetContext *context, void *)
+		{
+			if (context->compressedData().size() == 0)
+				return;
+			uintPtr res = detail::decompress(context->compressedData().data(), context->compressedData().size(), context->originalData().data(), context->originalData().size());
+			CAGE_ASSERT(res == context->originalData().size(), res, context->originalData().size());
+		}
+	}
 
-	AssetScheme genAssetSchemePack(uint32 threadIndex)
+	AssetContext::AssetContext(uint32 realName) : realName(realName), aliasName(0), assetFlags(0)
+	{
+		textName = stringizer() + "<" + realName + ">";
+	}
+
+	AssetScheme::AssetScheme() : schemePointer(nullptr), threadIndex(m)
+	{
+		decompress.bind<&defaultDecompress>();
+	}
+
+	namespace
+	{
+		void processAssetPackLoad(const AssetContext *context, void *)
+		{
+			static AssetPack pack;
+			Holder<AssetPack> h = Holder<AssetPack>(&pack, nullptr, {});
+			context->assetHolder = templates::move(h).cast<void>();
+		}
+	}
+
+	AssetScheme genAssetSchemePack()
 	{
 		AssetScheme s;
-		s.threadIndex = threadIndex;
-		s.schemePointer = nullptr;
+		s.load.bind<&processAssetPackLoad>();
 		return s;
 	}
 
 	namespace
 	{
-		Holder<MemoryBuffer> newMemoryBuffer()
+		void processRawLoad(const AssetContext *context, void *)
 		{
-			return detail::systemArena().createHolder<MemoryBuffer>();
-		}
-
-		void processRawLoad(const AssetContext *context, void *schemePointer)
-		{
-			if (!context->assetHolder)
-				context->assetHolder = newMemoryBuffer().cast<void>();
-			MemoryBuffer *mem = static_cast<MemoryBuffer*>(context->assetHolder.get());
-			context->returnData = mem;
-			mem->allocate(numeric_cast<uintPtr>(context->originalSize));
-			detail::memcpy(mem->data(), context->originalData, mem->size());
+			Holder<MemoryBuffer> mem = detail::systemArena().createHolder<MemoryBuffer>(templates::move(context->originalData()));
+			context->assetHolder = templates::move(mem).cast<void>();
 		}
 	}
 
-	AssetScheme genAssetSchemeRaw(uint32 threadIndex)
+	AssetScheme genAssetSchemeRaw()
 	{
 		AssetScheme s;
-		s.threadIndex = threadIndex;
 		s.load.bind<&processRawLoad>();
 		return s;
 	}
 
 	namespace
 	{
-		void processTextPackLoad(const AssetContext *context, void *schemePointer)
+		void processTextPackLoad(const AssetContext *context, void *)
 		{
-			TextPack *texts = nullptr;
-			if (!context->assetHolder)
-				context->assetHolder = newTextPack().cast<void>();
-			texts = static_cast<TextPack*>(context->assetHolder.get());
-			texts->clear();
-			context->returnData = texts;
-
-			Deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
+			Holder<TextPack> texts = newTextPack();
+			Deserializer des(context->originalData());
 			uint32 cnt;
 			des >> cnt;
 			for (uint32 i = 0; i < cnt; i++)
@@ -68,39 +79,40 @@ namespace cage
 				des >> name >> val;
 				texts->set(name, val);
 			}
+			context->assetHolder = templates::move(texts).cast<void>();
 		}
 	}
 
-	AssetScheme genAssetSchemeTextPack(const uint32 threadIndex)
+	AssetScheme genAssetSchemeTextPack()
 	{
 		AssetScheme s;
-		s.threadIndex = threadIndex;
-		s.schemePointer = nullptr;
 		s.load.bind<&processTextPackLoad>();
 		return s;
 	}
 
 	namespace
 	{
-		void processCollisionMeshLoad(const AssetContext *context, void *schemePointer)
+		void processCollisionMeshLoad(const AssetContext *context, void *)
 		{
-			if (!context->assetHolder)
-				context->assetHolder = newCollisionMesh().cast<void>();
-			CollisionMesh *col = static_cast<CollisionMesh*>(context->assetHolder.get());
-			context->returnData = col;
-
-			MemoryBuffer buff(numeric_cast<uintPtr>(context->originalSize));
-			detail::memcpy(buff.data(), context->originalData, numeric_cast<uintPtr>(context->originalSize));
-			col->deserialize(buff);
+			Holder<CollisionMesh> col = newCollisionMesh();
+			col->deserialize(context->originalData());
 			col->rebuild();
+			context->assetHolder = templates::move(col).cast<void>();
 		}
 	}
 
-	AssetScheme genAssetSchemeCollisionMesh(uint32 threadIndex)
+	AssetScheme genAssetSchemeCollisionMesh()
 	{
 		AssetScheme s;
-		s.threadIndex = threadIndex;
 		s.load.bind<&processCollisionMeshLoad>();
 		return s;
+	}
+
+	namespace detail
+	{
+		template<> GCHL_API_EXPORT char assetClassId<AssetPack>;
+		template<> GCHL_API_EXPORT char assetClassId<MemoryBuffer>;
+		template<> GCHL_API_EXPORT char assetClassId<TextPack>;
+		template<> GCHL_API_EXPORT char assetClassId<CollisionMesh>;
 	}
 }

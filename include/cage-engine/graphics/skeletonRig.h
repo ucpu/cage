@@ -18,6 +18,6 @@ namespace cage
 
 	CAGE_API Holder<SkeletonRig> newSkeletonRig();
 
-	CAGE_API AssetScheme genAssetSchemeSkeletonRig(uint32 threadIndex);
-	static const uint32 assetSchemeIndexSkeletonRig = 13;
+	CAGE_API AssetScheme genAssetSchemeSkeletonRig();
+	static const uint32 AssetSchemeIndexSkeletonRig = 13;
 }

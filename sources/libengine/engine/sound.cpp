@@ -78,9 +78,10 @@ namespace cage
 				else
 				{ // asset input
 					AssetManager *ass = engineAssets();
-					if (!ass->ready(sound->sound.name))
+					SoundSource *snd = ass->get<AssetSchemeIndexSoundSource, SoundSource>(sound->sound.name);
+					if (!snd)
 						return;
-					ass->get<assetSchemeIndexSoundSource, SoundSource>(sound->sound.name)->addOutput(bus.get());
+					snd->addOutput(bus.get());
 				}
 				if (listener->listener.output)
 					bus->addOutput(listener->listener.output);

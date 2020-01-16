@@ -104,8 +104,6 @@ namespace cage
 			Holder<Gui> gui;
 			Holder<EntityManager> entities;
 
-			Holder<Mutex> assetsSoundMutex;
-			Holder<Mutex> assetsGraphicsMutex;
 			Holder<Semaphore> graphicsSemaphore1;
 			Holder<Semaphore> graphicsSemaphore2;
 			Holder<Barrier> threadsStateBarier;
@@ -119,29 +117,17 @@ namespace cage
 			std::atomic<uint32> engineStarted;
 			std::atomic<bool> stopping;
 			uint64 controlTime;
-			uint32 assetSyncAttempts;
 			uint32 assetShaderTier; // loaded shader package name
 
 			Holder<Scheduler> controlScheduler;
 			Schedule *controlUpdateSchedule;
-			Schedule *controlAssetsSchedule;
 			Schedule *controlInputSchedule;
 			Holder<Scheduler> soundScheduler;
 			Schedule *soundUpdateSchedule;
-			Schedule *soundAssetsSchedule;
 
 			EngineData(const EngineCreateConfig &config);
 
 			~EngineData();
-
-			void waitForAssetsUnload(uint32 threadIndex)
-			{
-				while (assets->countTotal() > 0)
-				{
-					while (assets->processCustomThread(threadIndex));
-					threadSleep(2000);
-				}
-			}
 
 			//////////////////////////////////////
 			// graphics PREPARE
@@ -154,19 +140,20 @@ namespace cage
 			{
 				OPTICK_EVENT("prepare");
 				{
+					ScopedSemaphores lockGraphics(graphicsSemaphore1, graphicsSemaphore2);
+					ScopedTimer timing(profilingBufferGraphicsPrepare);
+					{
+						OPTICK_EVENT("prepare callback");
+						graphicsPrepareThread().prepare.dispatch();
+					}
+					{
+						OPTICK_EVENT("tick");
+						graphicsPrepareTick(getApplicationTime());
+					}
+				}
+				{
 					OPTICK_EVENT("assets");
 					assets->processCustomThread(graphicsPrepareThread().threadIndex);
-				}
-				ScopedSemaphores lockGraphics(graphicsSemaphore1, graphicsSemaphore2);
-				ScopeLock<Mutex> lockAssets(assetsGraphicsMutex);
-				ScopedTimer timing(profilingBufferGraphicsPrepare);
-				{
-					OPTICK_EVENT("prepare callback");
-					graphicsPrepareThread().prepare.dispatch();
-				}
-				{
-					OPTICK_EVENT("tick");
-					graphicsPrepareTick(getApplicationTime());
 				}
 			}
 
@@ -183,7 +170,7 @@ namespace cage
 
 			void graphicsPrepareFinalizeStage()
 			{
-				waitForAssetsUnload(graphicsPrepareThread().threadIndex);
+				assets->unloadCustomThread(graphicsPrepareThread().threadIndex);
 			}
 
 			//////////////////////////////////////
@@ -205,8 +192,8 @@ namespace cage
 					ScopedSemaphores lockGraphics(graphicsSemaphore2, graphicsSemaphore1);
 					ScopedTimer timing(profilingBufferGraphicsDispatch);
 					{
-						OPTICK_EVENT("render callback");
-						graphicsDispatchThread().render.dispatch();
+						OPTICK_EVENT("dispatch callback");
+						graphicsDispatchThread().dispatch.dispatch();
 					}
 					{
 						OPTICK_EVENT("tick");
@@ -253,7 +240,7 @@ namespace cage
 			{
 				gui->graphicsFinalize();
 				graphicsDispatchFinalize();
-				waitForAssetsUnload(graphicsDispatchThread().threadIndex);
+				assets->unloadCustomThread(graphicsDispatchThread().threadIndex);
 			}
 
 			//////////////////////////////////////
@@ -265,12 +252,6 @@ namespace cage
 				//gui->soundInitialize(sound.get());
 			}
 
-			void soundAssets()
-			{
-				OPTICK_EVENT("assets");
-				assets->processCustomThread(EngineSoundThread::threadIndex);
-			}
-
 			void soundUpdate()
 			{
 				OPTICK_EVENT("update");
@@ -279,7 +260,6 @@ namespace cage
 					soundScheduler->stop();
 					return;
 				}
-				ScopeLock<Mutex> lockAssets(assetsSoundMutex);
 				{
 					OPTICK_EVENT("sound callback");
 					soundThread().sound.dispatch();
@@ -287,6 +267,10 @@ namespace cage
 				{
 					OPTICK_EVENT("tick");
 					soundTick(soundUpdateSchedule->time());
+				}
+				{
+					OPTICK_EVENT("assets");
+					assets->processCustomThread(EngineSoundThread::threadIndex);
 				}
 			}
 
@@ -304,46 +288,15 @@ namespace cage
 			{
 				soundFinalize();
 				//gui->soundFinalize();
-				waitForAssetsUnload(soundThread().threadIndex);
+				assets->unloadCustomThread(soundThread().threadIndex);
 			}
 
 			//////////////////////////////////////
 			// CONTROL
 			//////////////////////////////////////
 
-			void controlAssets()
-			{
-				OPTICK_EVENT("assets");
-				{
-					assetSyncAttempts++;
-					OPTICK_TAG("assetSyncAttempts", assetSyncAttempts);
-					ScopeLock<Mutex> lockGraphics(assetsGraphicsMutex, assetSyncAttempts < 20);
-					if (lockGraphics)
-					{
-						ScopeLock<Mutex> lockSound(assetsSoundMutex, assetSyncAttempts < 10);
-						if (lockSound)
-						{
-							{
-								OPTICK_EVENT("callback");
-								controlThread().assets.dispatch();
-							}
-							{
-								OPTICK_EVENT("control");
-								while (assets->processControlThread());
-							}
-							assetSyncAttempts = 0;
-						}
-					}
-				}
-				{
-					OPTICK_EVENT("assets");
-					while (assets->processCustomThread(EngineControlThread::threadIndex));
-				}
-			}
-
 			void updateHistoryComponents()
 			{
-				OPTICK_EVENT("update history");
 				for (Entity *e : TransformComponent::component->entities())
 				{
 					CAGE_COMPONENT_ENGINE(Transform, ts, e);
@@ -379,7 +332,10 @@ namespace cage
 					return;
 				}
 				controlTime = controlUpdateSchedule->time();
-				updateHistoryComponents();
+				{
+					OPTICK_EVENT("update history components");
+					updateHistoryComponents();
+				}
 				{
 					OPTICK_EVENT("update callback");
 					controlThread().update.dispatch();
@@ -505,8 +461,6 @@ namespace cage
 
 				{ // create sync objects
 					threadsStateBarier = newBarrier(4);
-					assetsSoundMutex = newMutex();
-					assetsGraphicsMutex = newMutex();
 					graphicsSemaphore1 = newSemaphore(1, 1);
 					graphicsSemaphore2 = newSemaphore(0, 1);
 				}
@@ -522,19 +476,19 @@ namespace cage
 
 				{ // initialize asset schemes
 					// core assets
-					assets->defineScheme<void>(assetSchemeIndexPack, genAssetSchemePack(EngineControlThread::threadIndex));
-					assets->defineScheme<MemoryBuffer>(assetSchemeIndexRaw, genAssetSchemeRaw(EngineControlThread::threadIndex));
-					assets->defineScheme<TextPack>(assetSchemeIndexTextPack, genAssetSchemeTextPack(EngineControlThread::threadIndex));
-					assets->defineScheme<CollisionMesh>(assetSchemeIndexCollisionMesh, genAssetSchemeCollisionMesh(EngineControlThread::threadIndex));
+					assets->defineScheme<AssetPack>(AssetSchemeIndexPack, genAssetSchemePack());
+					assets->defineScheme<MemoryBuffer>(AssetSchemeIndexRaw, genAssetSchemeRaw());
+					assets->defineScheme<TextPack>(AssetSchemeIndexTextPack, genAssetSchemeTextPack());
+					assets->defineScheme<CollisionMesh>(AssetSchemeIndexCollisionMesh, genAssetSchemeCollisionMesh());
 					// engine assets
-					assets->defineScheme<ShaderProgram>(assetSchemeIndexShaderProgram, genAssetSchemeShaderProgram(EngineGraphicsUploadThread::threadIndex, window.get()));
-					assets->defineScheme<Texture>(assetSchemeIndexTexture, genAssetSchemeTexture(EngineGraphicsUploadThread::threadIndex, window.get()));
-					assets->defineScheme<Mesh>(assetSchemeIndexMesh, genAssetSchemeMesh(EngineGraphicsDispatchThread::threadIndex, window.get()));
-					assets->defineScheme<SkeletonRig>(assetSchemeIndexSkeletonRig, genAssetSchemeSkeletonRig(EngineGraphicsPrepareThread::threadIndex));
-					assets->defineScheme<SkeletalAnimation>(assetSchemeIndexSkeletalAnimation, genAssetSchemeSkeletalAnimation(EngineGraphicsPrepareThread::threadIndex));
-					assets->defineScheme<RenderObject>(assetSchemeIndexRenderObject, genAssetSchemeRenderObject(EngineGraphicsPrepareThread::threadIndex));
-					assets->defineScheme<Font>(assetSchemeIndexFont, genAssetSchemeFont(EngineGraphicsUploadThread::threadIndex, window.get()));
-					assets->defineScheme<SoundSource>(assetSchemeIndexSoundSource, genAssetSchemeSoundSource(EngineSoundThread::threadIndex, sound.get()));
+					assets->defineScheme<ShaderProgram>(AssetSchemeIndexShaderProgram, genAssetSchemeShaderProgram(EngineGraphicsUploadThread::threadIndex, window.get()));
+					assets->defineScheme<Texture>(AssetSchemeIndexTexture, genAssetSchemeTexture(EngineGraphicsUploadThread::threadIndex, window.get()));
+					assets->defineScheme<Mesh>(AssetSchemeIndexMesh, genAssetSchemeMesh(EngineGraphicsDispatchThread::threadIndex, window.get()));
+					assets->defineScheme<SkeletonRig>(AssetSchemeIndexSkeletonRig, genAssetSchemeSkeletonRig());
+					assets->defineScheme<SkeletalAnimation>(AssetSchemeIndexSkeletalAnimation, genAssetSchemeSkeletalAnimation());
+					assets->defineScheme<RenderObject>(AssetSchemeIndexRenderObject, genAssetSchemeRenderObject());
+					assets->defineScheme<Font>(AssetSchemeIndexFont, genAssetSchemeFont(EngineGraphicsUploadThread::threadIndex, window.get()));
+					assets->defineScheme<SoundSource>(AssetSchemeIndexSoundSource, genAssetSchemeSoundSource(EngineSoundThread::threadIndex, sound.get()));
 					// cage pack
 					assets->add(HashString("cage/cage.pack"));
 					assetShaderTier = confSimpleShaders ? HashString("cage/shader/engine/low.pack") : HashString("cage/shader/engine/high.pack");
@@ -626,16 +580,7 @@ namespace cage
 				{ // unload assets
 					assets->remove(HashString("cage/cage.pack"));
 					assets->remove(assetShaderTier);
-					while (assets->countTotal() > 0)
-					{
-						try
-						{
-							controlThread().assets.dispatch();
-						}
-						GCHL_GENERATE_CATCH(control, finalization (unloading assets))
-						while (assets->processCustomThread(controlThread().threadIndex) || assets->processControlThread());
-						threadSleep(2000);
-					}
+					assets->unloadWait();
 				}
 
 				{ // wait for threads to finish
@@ -688,8 +633,8 @@ namespace cage
 
 		Holder<EngineData> engineData;
 
-		EngineData::EngineData(const EngineCreateConfig &config) : engineStarted(0), stopping(false), controlTime(0), assetSyncAttempts(0), assetShaderTier(0),
-			controlUpdateSchedule(nullptr), controlAssetsSchedule(nullptr), controlInputSchedule(nullptr), soundUpdateSchedule(nullptr), soundAssetsSchedule(nullptr)
+		EngineData::EngineData(const EngineCreateConfig &config) : engineStarted(0), stopping(false), controlTime(0), assetShaderTier(0),
+			controlUpdateSchedule(nullptr), controlInputSchedule(nullptr), soundUpdateSchedule(nullptr)
 		{
 			CAGE_LOG(SeverityEnum::Info, "engine", "creating engine");
 
@@ -708,14 +653,6 @@ namespace cage
 			}
 			{
 				ScheduleCreateConfig c;
-				c.name = "engine control assets";
-				c.action = Delegate<void()>().bind<EngineData, &EngineData::controlAssets>(this);
-				c.period = 1000000 / 10;
-				c.type = ScheduleTypeEnum::FreePeriodic;
-				controlAssetsSchedule = controlScheduler->newSchedule(c);
-			}
-			{
-				ScheduleCreateConfig c;
 				c.name = "engine control inputs";
 				c.action = Delegate<void()>().bind<EngineData, &EngineData::controlInputs>(this);
 				c.period = 1000000 / 60;
@@ -731,14 +668,6 @@ namespace cage
 				c.period = 1000000 / 40;
 				c.type = ScheduleTypeEnum::SteadyPeriodic;
 				soundUpdateSchedule = soundScheduler->newSchedule(c);
-			}
-			{
-				ScheduleCreateConfig c;
-				c.name = "engine sound assets";
-				c.action = Delegate<void()>().bind<EngineData, &EngineData::soundAssets>(this);
-				c.period = 1000000 / 10;
-				c.type = ScheduleTypeEnum::FreePeriodic;
-				soundAssetsSchedule = soundScheduler->newSchedule(c);
 			}
 
 			CAGE_LOG(SeverityEnum::Info, "engine", "engine created");
@@ -769,16 +698,6 @@ namespace cage
 		engineData->controlUpdateSchedule->period(p);
 	}
 
-	uint64 EngineControlThread::assetsPeriod() const
-	{
-		return engineData->controlAssetsSchedule->period();
-	}
-
-	void EngineControlThread::assetsPeriod(uint64 p)
-	{
-		engineData->controlAssetsSchedule->period(p);
-	}
-
 	uint64 EngineControlThread::inputPeriod() const
 	{
 		return engineData->controlInputSchedule->period();
@@ -802,16 +721,6 @@ namespace cage
 	void EngineSoundThread::updatePeriod(uint64 p)
 	{
 		engineData->soundUpdateSchedule->period(p);
-	}
-
-	uint64 EngineSoundThread::assetsPeriod() const
-	{
-		return engineData->soundAssetsSchedule->period();
-	}
-
-	void EngineSoundThread::assetsPeriod(uint64 p)
-	{
-		engineData->soundAssetsSchedule->period(p);
 	}
 
 	void engineInitialize(const EngineCreateConfig &config)

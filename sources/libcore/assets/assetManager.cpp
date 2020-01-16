@@ -1,105 +1,198 @@
 #define CAGE_EXPORT
 #include <cage-core/core.h>
 #include <cage-core/math.h>
-#include <cage-core/geometry.h>
 #include <cage-core/network.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/files.h>
 #include <cage-core/assetStructs.h>
-#include <cage-core/assetManager.h>
 #include <cage-core/config.h>
 #include <cage-core/hashString.h>
-#include <cage-core/memory.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/concurrentQueue.h>
+#include <cage-core/assetManager.h>
 #include <cage-core/ctl/unordered_map.h>
 
 #include <optick.h>
 
-#include <set>
-#include <map>
+#include <unordered_map>
 #include <vector>
 #include <atomic>
+#include <algorithm>
 
 namespace cage
 {
-	ConfigUint32 logLevel("cage/assets/logLevel", 0);
-#define ASS_LOG(LEVEL, ASS, MSG) { if (logLevel >= (LEVEL)) { CAGE_LOG(SeverityEnum::Info, "assetManager", stringizer() + "asset '" + (ASS)->textName + "' (" + (ASS)->realName + " / " + (ASS)->aliasName + "): " + MSG); } }
+	ConfigUint32 logLevel("cage/assets/logLevel", 1);
+#define ASS_LOG(LEVEL, ASS, MSG) \
+	{ \
+		if (logLevel >= (LEVEL)) \
+		{ \
+			if (logLevel > 1) \
+			{ \
+				CAGE_LOG(SeverityEnum::Info, "assetManager", stringizer() + "asset '" + (ASS)->textName + "' (" + (ASS)->realName + " / " + (ASS)->aliasName + ") [" + (ASS)->guid + "]: " + MSG); \
+			} \
+			else \
+			{ \
+				CAGE_LOG(SeverityEnum::Info, "assetManager", stringizer() + "asset '" + (ASS)->textName + "': " + MSG); \
+			} \
+		} \
+	}
 
 	namespace
 	{
 		static const uint32 CurrentAssetVersion = 1;
 
-		void defaultDecompress(const AssetContext *context)
+		struct Scheme : public AssetScheme
 		{
-			if (context->compressedSize == 0)
-				return;
-			uintPtr res = detail::decompress(context->compressedData, numeric_cast<uintPtr>(context->compressedSize), context->originalData, numeric_cast<uintPtr>(context->originalSize));
-			CAGE_ASSERT(res == context->originalSize, res, context->originalSize);
-		}
+			uintPtr typeId;
 
-		void defaultDone(const AssetContext *context)
-		{
-			context->assetHolder.clear();
-			context->returnData = nullptr;
-		}
-
-		struct AssetContextPrivate : public AssetContext
-		{
-			std::vector<uint32> dependencies;
-			std::vector<uint32> dependenciesNew;
-			uint32 aliasPrevious;
-			uint32 scheme;
-			uint32 references;
-			std::atomic<bool> processing, ready, error, dependenciesDoneFlag, fabricated;
-
-			AssetContextPrivate() : aliasPrevious(0), scheme(m), references(0), processing(false), ready(false), error(true), dependenciesDoneFlag(false), fabricated(false)
+			Scheme() : typeId(0)
 			{}
 		};
 
-		struct AssetSchemePrivate : public AssetScheme
+		enum class StateEnum
 		{
-			uintPtr typeSize;
-			AssetSchemePrivate() : typeSize(0) {}
+			Initialized,
+			DiskLoading,
+			Decompressing,
+			Processing,
+			WaitingForDeps,
+			Ready,
+			Error,
+			Unloading,
+			Erasing,
 		};
+
+		// one particular version of an asset
+		struct Asset : public AssetContext
+		{
+			MemoryBuffer origData, compData;
+			std::vector<uint32> dependencies;
+			Holder<void> reference; // the deleter is set to a function that will enqueue this asset version for unloading
+			std::atomic<StateEnum> state;
+			uint32 scheme;
+			const uint32 guid;
+
+			Asset(uint32 realName, uint32 guid) : AssetContext(realName), state(StateEnum::Initialized), scheme(m), guid(guid)
+			{
+				ASS_LOG(3, this, "created");
+			}
+
+			~Asset()
+			{
+				ASS_LOG(3, this, "destroyed");
+			}
+
+			void clearMemory()
+			{
+				origData.free();
+				compData.free();
+			}
+		};
+
+		// container for all versions of a single asset name
+		struct Versions
+		{
+			std::vector<Holder<Asset>> versions;
+			sint32 refCnt;
+			bool fabricated;
+
+			Versions() : refCnt(0), fabricated(false)
+			{}
+		};
+
+		// reference of one version of an asset for use in the public indices
+		struct Reference
+		{
+			Holder<void> ref;
+			uint32 scheme; // m -> error
+
+			Reference() : scheme(m)
+			{}
+
+			explicit Reference(const Holder<Asset> &ass) : scheme(ass->state == StateEnum::Error ? m : ass->scheme)
+			{
+				if (ass->state == StateEnum::Ready)
+					ref = ass->reference.share();
+			}
+		};
+
+		enum class CommandEnum
+		{
+			None,
+			Add,
+			Fabricate,
+			Remove,
+			Reload,
+			WaitDeps,
+			Erasing,
+		};
+
+		struct Command
+		{
+			detail::StringBase<64> textName;
+			Holder<void> holder;
+			uint32 scheme;
+			uint32 realName;
+			CommandEnum type;
+
+			Command() : scheme(m), realName(0), type(CommandEnum::None)
+			{}
+		};
+
+		typedef std::unordered_map<uint32, Versions> PrivateIndex;
+		typedef std::unordered_map<uint32, Reference> PublicIndex;
+		typedef ConcurrentQueue<Asset *> Queue;
 
 		class AssetManagerImpl : public AssetManager
 		{
 		public:
-			std::map<uint32, std::set<AssetContextPrivate*>> aliasNames;
-			std::vector<AssetSchemePrivate> schemes;
-			cage::unordered_map<uint32, AssetContextPrivate*> index;
 			Holder<TcpConnection> listener;
-			Holder<Thread> loadingThread;
-			Holder<Thread> decompressionThread;
+			string listenerAddress;
+			uint16 listenerPort;
 
-			std::vector<Holder<ConcurrentQueue<AssetContextPrivate*>>> queueCustomLoad, queueCustomDone;
-			Holder<ConcurrentQueue<AssetContextPrivate*>> queueLoadFile, queueDecompression;
-			Holder<ConcurrentQueue<AssetContextPrivate*>> queueAddDependencies, queueWaitDependencies, queueRemoveDependencies;
-
-			string path;
-			uint32 countTotal, countProcessing;
-			uint32 hackQueueWaitCounter; // it is desirable to process as many items from the queue in single tick, however, since the items are being pushed back to the same queue, some form of termination mechanism must be provided
+			std::vector<Scheme> schemes;
+			Holder<Mutex> mutex;
+			PrivateIndex privateIndex; // used for owning and managing the assets
+			PublicIndex publicIndices[2];
+			std::atomic<PublicIndex*> publicIndex; // used for accessing the assets from the api
+			std::vector<Asset *> waitingDeps;
+			const string path;
+			const uint64 maintenancePeriod;
+			const uint64 listenerPeriod;
 			uint32 generateName;
-			std::atomic<bool> destroying;
+			uint32 assetGuid;
+			std::atomic<bool> stopping, unloaded;
 
-			Holder<ConcurrentQueue<AssetContextPrivate*>> createQueue()
-			{
-				return detail::systemArena().createHolder<ConcurrentQueue<AssetContextPrivate *>>();
-			}
+			ConcurrentQueue<Command> maintenanceQueue;
+			Queue diskLoadingQueue;
+			Queue decompressionQueue;
+			Queue defaultProcessingQueue;
+			std::vector<Holder<Queue>> customProcessingQueues;
 
-			AssetManagerImpl(const AssetManagerCreateConfig &config) : countTotal(0), countProcessing(0), hackQueueWaitCounter(0), generateName(0), destroying(false)
+			// threads has to be declared at the very end to ensure that they are first to destroy
+			Holder<Thread> listenerThread;
+			Holder<Thread> maintenanceThread;
+			Holder<Thread> diskLoadingThread;
+			Holder<Thread> decompressionThread;
+			Holder<Thread> defaultProcessingThread;
+
+			static string findAssetsFolderPath(const AssetManagerCreateConfig &config)
 			{
 				try
 				{
+					if (pathIsAbs(config.assetsFolderName))
+					{
+						if (any(pathType(config.assetsFolderName) & (PathTypeFlags::Directory | PathTypeFlags::Archive)))
+							return config.assetsFolderName;
+					}
 					try
 					{
 						detail::OverrideException oe;
-						path = pathSearchTowardsRoot(config.assetsFolderName, pathWorkingDir(), PathTypeFlags::Directory | PathTypeFlags::Archive);
+						return pathSearchTowardsRoot(config.assetsFolderName, pathWorkingDir(), PathTypeFlags::Directory | PathTypeFlags::Archive);
 					}
-					catch(const Exception &)
+					catch (const Exception &)
 					{
-						path = pathSearchTowardsRoot(config.assetsFolderName, pathExtractPath(detail::getExecutableFullPath()), PathTypeFlags::Directory | PathTypeFlags::Archive);
+						return pathSearchTowardsRoot(config.assetsFolderName, pathExtractPath(detail::getExecutableFullPath()), PathTypeFlags::Directory | PathTypeFlags::Archive);
 					}
 				}
 				catch (const Exception &)
@@ -107,36 +200,34 @@ namespace cage
 					CAGE_LOG(SeverityEnum::Error, "assetManager", "failed to find the directory with assets");
 					throw;
 				}
+			}
+
+			AssetManagerImpl(const AssetManagerCreateConfig &config) : listenerPort(0), publicIndex(&publicIndices[0]), path(findAssetsFolderPath(config)), maintenancePeriod(config.maintenancePeriod), listenerPeriod(config.listenerPeriod), generateName(0), assetGuid(1), stopping(false), unloaded(false)
+			{
 				CAGE_LOG(SeverityEnum::Info, "assetManager", stringizer() + "using asset path: '" + path + "'");
+				mutex = newMutex();
+				customProcessingQueues.resize(config.threadsMaxCount);
+				for (auto &it : customProcessingQueues)
+					it = detail::systemArena().createHolder<ConcurrentQueue<Asset *>>();
 				schemes.resize(config.schemesMaxCount);
-				queueCustomLoad.reserve(config.threadsMaxCount);
-				queueCustomDone.reserve(config.threadsMaxCount);
-				for (uint32 i = 0; i < config.threadsMaxCount; i++)
-				{
-					queueCustomLoad.push_back(createQueue());
-					queueCustomDone.push_back(createQueue());
-				}
-				queueLoadFile = createQueue();
-				queueDecompression = createQueue();
-				queueAddDependencies = createQueue();
-				queueWaitDependencies = createQueue();
-				queueRemoveDependencies = createQueue();
-				loadingThread = newThread(Delegate<void()>().bind<AssetManagerImpl, &AssetManagerImpl::loadingThreadEntry>(this), "asset disk io");
-				decompressionThread = newThread(Delegate<void()>().bind<AssetManagerImpl, &AssetManagerImpl::decompressionThreadEntry>(this), "asset decompression");
+				maintenanceThread = newThread(Delegate<void()>().bind<AssetManagerImpl, &AssetManagerImpl::maintenanceEntry>(this), "asset maintenance");
+				diskLoadingThread = newThread(Delegate<void()>().bind<AssetManagerImpl, &AssetManagerImpl::diskLoadingEntry>(this), "asset disk loading");
+				decompressionThread = newThread(Delegate<void()>().bind<AssetManagerImpl, &AssetManagerImpl::decompressionEntry>(this), "asset decompression");
+				defaultProcessingThread = newThread(Delegate<void()>().bind<AssetManagerImpl, &AssetManagerImpl::defaultProcessingEntry>(this), "asset processing");
 			}
 
 			~AssetManagerImpl()
 			{
-				CAGE_ASSERT(countTotal == 0, countTotal);
-				CAGE_ASSERT(countProcessing == 0, countProcessing);
-				CAGE_ASSERT(index.size() == 0, index.size());
-				CAGE_ASSERT(aliasNames.size() == 0, aliasNames.size());
-				destroying = true;
-				queueLoadFile->push(nullptr);
-				queueDecompression->push(nullptr);
-				loadingThread->wait();
-				decompressionThread->wait();
+				stopping = true;
+				maintenanceQueue.terminate();
+				diskLoadingQueue.terminate();
+				decompressionQueue.terminate();
+				defaultProcessingQueue.terminate();
+				for (auto &it : customProcessingQueues)
+					it->terminate();
 			}
+
+			// asset methods
 
 			MemoryBuffer findAsset(uint32 name)
 			{
@@ -147,529 +238,644 @@ namespace cage
 				if (!findAssetPath.dispatch(name, pth))
 					pth = pathJoin(path, string(name));
 				Holder<File> f = newFile(pth, FileMode(true, false));
-				auto s = f->size();
-				buff.allocate(numeric_cast<uintPtr>(s));
-				f->read(buff.data(), s);
-				return buff;
+				return f->readBuffer(f->size());
 			}
 
-			bool processLoadingThread()
+			void diskLoadAsset(Asset *ass)
 			{
-				AssetContextPrivate *ass = nullptr;
-				queueLoadFile->pop(ass);
-				if (ass)
+				OPTICK_EVENT("disk load");
+				OPTICK_TAG("realName", ass->realName);
+				ASS_LOG(2, ass, "disk load");
+
+				CAGE_ASSERT(ass->state == StateEnum::DiskLoading);
+				CAGE_ASSERT(!ass->assetHolder);
+				CAGE_ASSERT(!ass->reference);
+				CAGE_ASSERT(ass->scheme == m);
+				CAGE_ASSERT(ass->assetFlags == 0);
+				CAGE_ASSERT(ass->aliasName == 0);
+
+				try
 				{
-					OPTICK_EVENT("loading");
-					ASS_LOG(2, ass, "disk load");
-					CAGE_ASSERT(ass->processing);
-					CAGE_ASSERT(!ass->fabricated);
-					CAGE_ASSERT(ass->originalData == nullptr);
-					CAGE_ASSERT(ass->compressedData == nullptr);
-					CAGE_ASSERT(ass->aliasPrevious == 0);
-					OPTICK_TAG("realName", ass->realName);
-					ass->aliasPrevious = ass->aliasName;
-					ass->scheme = m;
-					ass->assetFlags = 0;
-					ass->compressedSize = ass->originalSize = 0;
-					ass->aliasName = 0;
-					ass->textName = stringizer() + "<" + ass->realName + ">";
-					ass->dependenciesNew.clear();
-					ass->compressedData = ass->originalData = nullptr;
-					try
+					detail::OverrideBreakpoint OverrideBreakpoint;
+					MemoryBuffer buff = findAsset(ass->realName);
+					if (buff.size() < sizeof(AssetHeader))
+						CAGE_THROW_ERROR(Exception, "asset is missing required header");
+					AssetHeader *h = (AssetHeader*)buff.data();
+					if (detail::memcmp(h->cageName, "cageAss", 8) != 0)
+						CAGE_THROW_ERROR(Exception, "file is not a cage asset");
+					if (h->version != CurrentAssetVersion)
+						CAGE_THROW_ERROR(Exception, "cage asset version mismatch");
+					if (h->textName[sizeof(h->textName) - 1] != 0)
+						CAGE_THROW_ERROR(Exception, "cage asset text name not bounded");
+					ass->textName = h->textName;
+					OPTICK_TAG("textName", ass->textName.c_str());
+					if (h->scheme >= schemes.size())
+						CAGE_THROW_ERROR(Exception, "cage asset scheme out of range");
+					ass->scheme = h->scheme;
+					ass->assetFlags = h->flags;
+					ass->aliasName = h->aliasName;
+					uintPtr skip = sizeof(AssetHeader) + h->dependenciesCount * sizeof(uint32);
+					if (buff.size() < skip)
+						CAGE_THROW_ERROR(Exception, "cage asset file dependencies truncated");
+					ass->dependencies.resize(h->dependenciesCount);
+					if (h->dependenciesCount)
+						detail::memcpy(ass->dependencies.data(), buff.data() + sizeof(AssetHeader), h->dependenciesCount * sizeof(uint32));
+					if (buff.size() < skip + (h->compressedSize == 0 ? h->originalSize : h->compressedSize))
+						CAGE_THROW_ERROR(Exception, "cage asset file content truncated");
+					if (h->compressedSize)
+						ass->compData.allocate(h->compressedSize);
+					if (h->originalSize)
+						ass->origData.allocate(h->originalSize);
+					if (h->compressedSize + h->originalSize)
 					{
-						detail::OverrideBreakpoint OverrideBreakpoint;
-						MemoryBuffer buff = findAsset(ass->realName);
-						if (buff.size() < sizeof(AssetHeader))
-							CAGE_THROW_ERROR(Exception, "asset is missing required header");
-						AssetHeader *h = (AssetHeader*)buff.data();
-						if (detail::memcmp(h->cageName, "cageAss", 8) != 0)
-							CAGE_THROW_ERROR(Exception, "file is not a cage asset");
-						if (h->version != CurrentAssetVersion)
-							CAGE_THROW_ERROR(Exception, "cage asset version mismatch");
-						if (h->textName[sizeof(h->textName) - 1] != 0)
-							CAGE_THROW_ERROR(Exception, "cage asset text name not bounded");
-						if (h->scheme >= schemes.size())
-							CAGE_THROW_ERROR(Exception, "cage asset scheme out of range");
-						if (ass->scheme != m && ass->scheme != h->scheme)
-							CAGE_THROW_ERROR(Exception, "cage asset scheme cannot change");
-						if (buff.size() < sizeof(AssetHeader) + h->dependenciesCount * sizeof(uint32))
-							CAGE_THROW_ERROR(Exception, "cage asset file dependencies truncated");
-						ass->scheme = h->scheme;
-						ass->assetFlags = h->flags;
-						ass->compressedSize = h->compressedSize;
-						ass->originalSize = h->originalSize;
-						ass->aliasName = h->aliasName;
-						ass->textName = h->textName;
-						OPTICK_TAG("textName", ass->textName.c_str());
-						ass->dependenciesNew.resize(h->dependenciesCount);
-						if (h->dependenciesCount)
-							detail::memcpy(ass->dependenciesNew.data(), buff.data() + sizeof(AssetHeader), h->dependenciesCount * sizeof(uint32));
-						uintPtr allocSize = numeric_cast<uintPtr>(ass->compressedSize + ass->originalSize);
-						uintPtr readSize = numeric_cast<uintPtr>(h->compressedSize == 0 ? h->originalSize : h->compressedSize);
-						CAGE_ASSERT(readSize <= allocSize, readSize, allocSize);
-						if (buff.size() < readSize + sizeof(AssetHeader) + h->dependenciesCount * sizeof(uint32))
-							CAGE_THROW_ERROR(Exception, "cage asset file content truncated");
-						ass->compressedData = detail::systemArena().allocate(allocSize, sizeof(uintPtr));
-						detail::memcpy(ass->compressedData, buff.data() + sizeof(AssetHeader) + h->dependenciesCount * sizeof(uint32), readSize);
-						ass->originalData = (char*)ass->compressedData + ass->compressedSize;
+						MemoryBuffer &t = h->compressedSize ? ass->compData : ass->origData;
+						CAGE_ASSERT(skip + t.size() == buff.size());
+						detail::memcpy(t.data(), buff.data() + skip, t.size());
 					}
-					catch (...)
+				}
+				catch (const Exception &)
+				{
+					ASS_LOG(1, ass, "disk load failed");
+					ass->clearMemory();
+					ass->dependencies.clear();
+					ass->state = StateEnum::Error;
+				}
+
+				if (ass->state != StateEnum::Error)
+				{
+					for (uint32 n : ass->dependencies)
+						add(n);
+					if (ass->compData.data())
 					{
-						ass->error = true;
-					}
-					if (ass->error)
-					{ // bypass rest of the loading pipeline
-						ass->dependenciesDoneFlag = true;
-						queueWaitDependencies->push(ass);
+						ass->state = StateEnum::Decompressing;
+						decompressionQueue.push(ass);
 					}
 					else
 					{
-						if (ass->compressedSize)
-							queueDecompression->push(ass);
-						else
-						{
-							CAGE_ASSERT(ass->scheme < schemes.size(), ass->scheme, schemes.size());
-							queueCustomLoad[schemes[ass->scheme].threadIndex]->push(ass);
-						}
-						queueAddDependencies->push(ass);
+						ass->state = StateEnum::Processing;
+						enqueueToSchemeQueue(templates::move(ass));
 					}
-					return true;
 				}
-
-				return false;
 			}
 
-			bool processDecompressionThread()
+			void decompressAsset(Asset *ass)
 			{
-				AssetContextPrivate *ass = nullptr;
-				queueDecompression->pop(ass);
-				if (ass)
+				OPTICK_EVENT("decompress");
+				OPTICK_TAG("realName", ass->realName);
+				OPTICK_TAG("textName", ass->textName.c_str());
+				ASS_LOG(2, ass, "decompress");
+
+				CAGE_ASSERT(ass->state == StateEnum::Decompressing);
+				CAGE_ASSERT(!ass->assetHolder);
+				CAGE_ASSERT(!ass->reference);
+				CAGE_ASSERT(ass->scheme < schemes.size(), ass->scheme, schemes.size());
+
+				try
 				{
-					OPTICK_EVENT("decompression");
-					ASS_LOG(2, ass, "decompression");
-					CAGE_ASSERT(ass->processing);
-					CAGE_ASSERT(!ass->fabricated);
-					if (!ass->error)
-					{
-						CAGE_ASSERT(ass->compressedData);
-						CAGE_ASSERT(ass->scheme < schemes.size(), ass->scheme, schemes.size());
-						OPTICK_TAG("realName", ass->realName);
-						OPTICK_TAG("textName", ass->textName.c_str());
-						OPTICK_TAG("originalSize", ass->originalSize);
-						OPTICK_TAG("compressedSize", ass->compressedSize);
-						try
-						{
-							if (schemes[ass->scheme].decompress)
-								schemes[ass->scheme].decompress(ass, schemes[ass->scheme].schemePointer);
-							else
-								defaultDecompress(ass);
-						}
-						catch (...)
-						{
-							ass->error = true;
-						}
-					}
-					CAGE_ASSERT(ass->scheme < schemes.size(), ass->scheme, schemes.size());
-					queueCustomLoad[schemes[ass->scheme].threadIndex]->push(ass);
-					return true;
+					schemes[ass->scheme].decompress(ass, schemes[ass->scheme].schemePointer);
+				}
+				catch (const Exception &)
+				{
+					ASS_LOG(1, ass, "decompression failed");
+					ass->clearMemory();
+					ass->state = StateEnum::Error;
 				}
 
-				return false;
+				if (ass->state != StateEnum::Error)
+				{
+					ass->state = StateEnum::Processing;
+					enqueueToSchemeQueue(ass);
+				}
 			}
 
-			bool processCustomThread(uint32 threadIndex)
+			void processAsset(Asset *ass)
 			{
-				CAGE_ASSERT(threadIndex < queueCustomDone.size(), threadIndex, queueCustomDone.size());
-
-				{ // done
-					AssetContextPrivate *ass = nullptr;
-					queueCustomDone[threadIndex]->tryPop(ass);
-					if (ass)
-					{
-						OPTICK_EVENT("asset done");
-						ASS_LOG(1, ass, "custom done");
-						CAGE_ASSERT(ass->processing);
-						CAGE_ASSERT(!ass->fabricated);
-						CAGE_ASSERT(ass->scheme < schemes.size(), ass->scheme, schemes.size());
-						OPTICK_TAG("realName", ass->realName);
-						OPTICK_TAG("textName", ass->textName.c_str());
-						try
-						{
-							if (schemes[ass->scheme].done)
-								schemes[ass->scheme].done(ass, schemes[ass->scheme].schemePointer);
-							else
-								defaultDone(ass);
-						}
-						catch (...)
-						{
-							ass->error = true;
-						}
-						queueRemoveDependencies->push(ass);
-						return true;
-					}
+				if (ass->state == StateEnum::Unloading)
+				{
+					unloadAsset(ass);
+					return;
 				}
 
-				{ // load
-					AssetContextPrivate *ass = nullptr;
-					queueCustomLoad[threadIndex]->tryPop(ass);
-					if (ass)
-					{
-						OPTICK_EVENT("asset load");
-						ASS_LOG(1, ass, "custom load");
-						CAGE_ASSERT(ass->processing);
-						CAGE_ASSERT(!ass->fabricated);
-						if (!ass->error)
-						{
-							CAGE_ASSERT(ass->originalData);
-							CAGE_ASSERT(ass->scheme < schemes.size(), ass->scheme, schemes.size());
-							OPTICK_TAG("realName", ass->realName);
-							OPTICK_TAG("textName", ass->textName.c_str());
-							OPTICK_TAG("scheme", ass->scheme);
-							try
-							{
-								if (schemes[ass->scheme].load)
-									schemes[ass->scheme].load(ass, schemes[ass->scheme].schemePointer);
-							}
-							catch (...)
-							{
-								ass->error = true;
-							}
-						}
-						queueWaitDependencies->push(ass);
-						return true;
-					}
+				OPTICK_EVENT("processing");
+				OPTICK_TAG("realName", ass->realName);
+				OPTICK_TAG("textName", ass->textName.c_str());
+				ASS_LOG(2, ass, "processing");
+
+				CAGE_ASSERT(ass->state == StateEnum::Processing);
+				CAGE_ASSERT(ass->scheme < schemes.size(), ass->scheme, schemes.size());
+
+				try
+				{
+					schemes[ass->scheme].load(ass, schemes[ass->scheme].schemePointer);
+					CAGE_ASSERT(ass->assetHolder);
+				}
+				catch (const Exception &)
+				{
+					ASS_LOG(1, ass, "processing failed");
+					ass->assetHolder.clear();
+					ass->clearMemory();
+					ass->state = StateEnum::Error;
 				}
 
-				return false;
+				ass->clearMemory();
+
+				if (ass->state != StateEnum::Error)
+				{
+					ass->state = StateEnum::WaitingForDeps;
+					if (!checkDependencies(ass))
+					{
+						Command cmd;
+						cmd.realName = ass->realName;
+						cmd.type = CommandEnum::WaitDeps;
+						cmd.holder = Holder<void>(ass, nullptr, {});
+						maintenanceQueue.push(templates::move(cmd));
+					}
+				}
 			}
 
-			bool processControlThread()
+			void createReference(Asset *ass)
 			{
-				{ // remove
-					AssetContextPrivate *ass = nullptr;
-					queueRemoveDependencies->tryPop(ass);
-					if (ass)
+				CAGE_ASSERT(ass->state == StateEnum::WaitingForDeps);
+				CAGE_ASSERT(ass->assetHolder);
+				CAGE_ASSERT(!ass->reference);
+
+				Holder<void> r(ass->assetHolder.get(), ass, Delegate<void(void*)>().bind<AssetManagerImpl, &AssetManagerImpl::enqueueAssetToUnload>(this));
+				r = templates::move(r).makeShareable();
+				ASS_LOG(2, ass, "ready");
+				ass->reference = templates::move(r);
+				ass->state = StateEnum::Ready;
+			}
+
+			void enqueueToSchemeQueue(Asset *ass)
+			{
+				ASS_LOG(2, ass, "enqueue to scheme specific queue");
+				CAGE_ASSERT(ass->scheme < schemes.size(), ass->scheme, schemes.size());
+				uint32 t = schemes[ass->scheme].threadIndex;
+				CAGE_ASSERT(t == m || t < customProcessingQueues.size(), t, customProcessingQueues.size());
+				if (t == m)
+					defaultProcessingQueue.push(ass);
+				else
+					customProcessingQueues[t]->push(ass);
+			}
+
+			void enqueueAssetToUnload(void *ass_)
+			{
+				Asset *ass = (Asset *)ass_;
+				ASS_LOG(3, ass, "enqueue to unload");
+				ass->state = StateEnum::Unloading;
+				enqueueToSchemeQueue(ass);
+			}
+
+			void unloadAsset(Asset *ass)
+			{
+				OPTICK_EVENT("unloading");
+				OPTICK_TAG("realName", ass->realName);
+				OPTICK_TAG("textName", ass->textName.c_str());
+				ASS_LOG(2, ass, "unloading");
+
+				CAGE_ASSERT(ass->state == StateEnum::Unloading);
+				//CAGE_ASSERT(!ass->reference);
+				CAGE_ASSERT(ass->assetHolder);
+
+				ass->assetHolder.clear();
+
+				for (uint32 n : ass->dependencies)
+					remove(n);
+				ass->dependencies.clear();
+
+				ass->state = StateEnum::Erasing;
+
+				Command cmd;
+				cmd.realName = ass->realName;
+				cmd.type = CommandEnum::Erasing;
+				cmd.holder = Holder<void>(ass, nullptr, {});
+				maintenanceQueue.push(templates::move(cmd));
+			}
+
+			Holder<Asset> newAsset(uint32 realName)
+			{
+				return detail::systemArena().createHolder<Asset>(realName, assetGuid++);
+			}
+
+			bool checkDependencies(Asset *ass)
+			{
+				ASS_LOG(3, ass, "check dependencies");
+				PublicIndex &index = *publicIndex;
+				for (uint32 n : ass->dependencies)
+				{
+					auto it = index.find(n);
+					if (it == index.end())
+						return false;
+					if (it->second.scheme == m)
 					{
-						OPTICK_EVENT("asset remove");
-						ASS_LOG(2, ass, "remove dependencies");
-						CAGE_ASSERT(ass->processing);
-						OPTICK_TAG("realName", ass->realName);
-						OPTICK_TAG("textName", ass->textName.c_str());
-						for (auto it : ass->dependencies)
-							remove(it);
-						ass->dependencies.clear();
-						ass->processing = false;
-						CAGE_ASSERT(countProcessing > 0);
-						countProcessing--;
-						if (ass->references > 0)
-							assetStartLoading(ass);
-						else
+						ASS_LOG(2, ass, "dependencies failed");
+						ass->state = StateEnum::Error;
+						return true;
+					}
+				}
+				createReference(ass);
+				return true;
+			}
+
+			void maintenanceCommand(Command &&cmd)
+			{
+				OPTICK_EVENT("command");
+				OPTICK_TAG("realName", cmd.realName);
+				OPTICK_TAG("type", (uint32)cmd.type);
+				switch (cmd.type)
+				{
+				case CommandEnum::Add:
+				{
+					auto &a = privateIndex[cmd.realName];
+					if (++a.refCnt == 1)
+					{
+						cmd.type = CommandEnum::Reload;
+						maintenanceCommand(templates::move(cmd));
+					}
+				} break;
+				case CommandEnum::Fabricate:
+				{
+					auto &a = privateIndex[cmd.realName];
+					++a.refCnt;
+					a.fabricated = true;
+					Holder<Asset> ass = newAsset(cmd.realName);
+					ass->textName = cmd.textName;
+					ass->scheme = cmd.scheme;
+					ass->assetHolder = templates::move(cmd.holder);
+					ass->state = StateEnum::WaitingForDeps;
+					createReference(ass.get());
+					a.versions.insert(a.versions.begin(), templates::move(ass));
+				} break;
+				case CommandEnum::Remove:
+				{
+					auto &a = privateIndex[cmd.realName];
+					--a.refCnt;
+					CAGE_ASSERT(a.refCnt >= 0);
+				} break;
+				case CommandEnum::Reload:
+				{
+					auto &a = privateIndex[cmd.realName];
+					if (a.fabricated)
+					{
+						CAGE_LOG(SeverityEnum::Warning, "assetManager", stringizer() + "cannot reload asset " + cmd.realName + ", it is fabricated");
+						break; // if an existing asset was replaced with a fabricated one, it must not be reloaded with an asset from disk
+					}
+					Holder<Asset> assh = newAsset(cmd.realName);
+					Asset *assp = assh.get();
+					a.versions.insert(a.versions.begin(), templates::move(assh));
+					assp->state = StateEnum::DiskLoading;
+					diskLoadingQueue.push(assp);
+				} break;
+				case CommandEnum::WaitDeps:
+				{
+					Asset *ass = (Asset*)cmd.holder.get();
+					CAGE_ASSERT(ass);
+					CAGE_ASSERT(ass->state == StateEnum::WaitingForDeps);
+					waitingDeps.push_back(ass);
+				} break;
+				case CommandEnum::Erasing:
+				{
+					Asset *ass = (Asset*)cmd.holder.get();
+					CAGE_ASSERT(ass);
+					CAGE_ASSERT(ass->state == StateEnum::Erasing);
+					auto &a = privateIndex[cmd.realName];
+					a.versions.erase(std::remove_if(a.versions.begin(), a.versions.end(), [&](const auto &it) {
+						if (it.get() == ass)
 						{
-							ASS_LOG(2, ass, "destroy");
-							interNameClear(ass->aliasName, ass);
-							index.erase(ass->realName);
-							detail::systemArena().destroy<AssetContextPrivate>(ass);
-							CAGE_ASSERT(countTotal > 0);
-							countTotal--;
+							CAGE_ASSERT(!it->reference);
+							return true;
 						}
-						return true;
-					}
+						return false;
+						}), a.versions.end());
+				} break;
+				default:
+					CAGE_THROW_CRITICAL(Exception, "invalid command type enum");
+				}
+			}
+
+			void maintenanceConclusion()
+			{
+				OPTICK_EVENT("conclusion");
+				OPTICK_TAG("assetsCount", privateIndex.size());
+
+				while (true)
+				{
+					// cycle to resolve whole chains of dependencies in case they are listed in reverse order
+					auto start = waitingDeps.size();
+					waitingDeps.erase(std::remove_if(waitingDeps.begin(), waitingDeps.end(), [&](Asset *ass) {
+						return checkDependencies(ass);
+						}), waitingDeps.end());
+					if (waitingDeps.size() == start)
+						break;
 				}
 
-				{ // add
-					AssetContextPrivate *ass = nullptr;
-					queueAddDependencies->tryPop(ass);
-					if (ass)
+				PrivateIndex &index = privateIndex;
+				PublicIndex &update = &publicIndices[0] == publicIndex ? publicIndices[1] : publicIndices[0];
+				update.clear();
+				update.reserve(index.size() * 2);
+				auto it = index.begin();
+				while (it != index.end())
+				{
+					auto &a = it->second;
+					CAGE_ASSERT(a.refCnt >= 0);
+					if (a.refCnt == 0)
 					{
-						OPTICK_EVENT("asset add dependencies");
-						ASS_LOG(2, ass, "add dependencies");
-						CAGE_ASSERT(ass->processing);
-						CAGE_ASSERT(!ass->fabricated);
-						OPTICK_TAG("realName", ass->realName);
-						OPTICK_TAG("textName", ass->textName.c_str());
-						for (auto it : ass->dependenciesNew)
-							add(it);
-						for (auto it : ass->dependencies)
-							remove(it);
-						std::vector<uint32>().swap(ass->dependencies);
-						std::swap(ass->dependenciesNew, ass->dependencies);
-						ass->dependenciesDoneFlag = true;
-						return true;
-					}
-				}
-
-				{ // wait
-					AssetContextPrivate *ass = nullptr;
-					queueWaitDependencies->tryPop(ass);
-					if (ass)
-					{
-						OPTICK_EVENT("asset check dependencies");
-						ASS_LOG(3, ass, "check dependencies");
-						CAGE_ASSERT(ass->processing);
-						CAGE_ASSERT(!ass->fabricated);
-						OPTICK_TAG("realName", ass->realName);
-						OPTICK_TAG("textName", ass->textName.c_str());
-						bool wait = !ass->dependenciesDoneFlag;
-						if (!wait)
+						a.versions.erase(std::remove_if(a.versions.begin(), a.versions.end(), [](const auto &it) {
+							it->reference.clear();
+							return it->state == StateEnum::Error;
+							}), a.versions.end());
+						if (a.versions.empty())
 						{
-							for (auto it : ass->dependencies)
+							it = index.erase(it);
+							continue;
+						}
+					}
+					else
+					{
+						bool found = false;
+						for (const auto &v : a.versions)
+						{
+							if (found)
+								v->reference.clear();
+							else if (v->state == StateEnum::Error || v->state == StateEnum::Ready)
 							{
-								switch (state(it))
+								CAGE_ASSERT(update.find(it->first) == update.end());
+								update[it->first] = Reference(v);
+								if (v->aliasName)
 								{
-								case AssetStateEnum::Ready:
-									break;
-								case AssetStateEnum::Error:
-									ass->error = true;
-									break;
-								case AssetStateEnum::Unknown:
-									wait = true;
-									break;
-								default:
-									CAGE_THROW_CRITICAL(Exception, "invalid (or impossible) asset state");
+									CAGE_ASSERT(update.find(v->aliasName) == update.end());
+									update[v->aliasName] = Reference(v);
 								}
+								found = true;
 							}
 						}
-						if (wait)
-						{
-							queueWaitDependencies->push(ass);
-							return (hackQueueWaitCounter++ % queueWaitDependencies->estimatedSize()) != 0;
-						}
-						if (ass->aliasName != ass->aliasPrevious)
-						{
-							interNameSet(ass->aliasName, ass);
-							interNameClear(ass->aliasPrevious, ass);
-						}
-						ass->aliasPrevious = 0;
-						ass->dependenciesDoneFlag = false;
-						detail::systemArena().deallocate(ass->compressedData);
-						ass->compressedData = nullptr;
-						ass->originalData = nullptr;
-						ass->compressedSize = 0;
-						ass->originalSize = 0;
-						ass->processing = false;
-						ass->ready = true;
-						CAGE_ASSERT(countProcessing > 0);
-						countProcessing--;
-						if (ass->error)
-							CAGE_LOG(SeverityEnum::Warning, "assetManager", stringizer() + "asset: '" + ass->textName + "', loading failed");
-						if (ass->references == 0)
-							assetStartRemoving(ass);
-						return true;
 					}
+					++it;
 				}
+				publicIndex = &update;
+				unloaded = privateIndex.empty();
+			}
 
-				// control thread - network updates
-				if (listener)
+			// thread entry points
+
+			void listenerEntry()
+			{
+				try
 				{
-					OPTICK_EVENT("network notifications");
-					try
+					listener = newTcpConnection(listenerAddress, listenerPort);
+					while (!stopping)
 					{
-						uint32 cnt = 0;
+						threadSleep(listenerPeriod);
+						OPTICK_EVENT("assets network notifications");
 						string line;
 						while (listener->readLine(line))
 						{
 							uint32 name = HashString(line.c_str());
-							CAGE_ASSERT(name != 0);
-							AssetContextPrivate *ass = nullptr;
-							{
-								auto it = index.find(name);
-								if (it != index.end())
-									ass = it->second;
-							}
-							if (ass && ass->references > 0)
-							{
-								reload(name);
-								cnt++;
-							}
+							CAGE_LOG(SeverityEnum::Info, "assetManager", stringizer() + "assets network notifications: reloading asset '" + line + "' (" + name + ")");
+							reload(name);
 						}
-						return cnt > 0;
-					}
-					catch (...)
-					{
-						listener.clear();
 					}
 				}
-
-				return false;
-			}
-
-			void loadingThreadEntry()
-			{
-				while (processLoadingThread());
-			}
-
-			void decompressionThreadEntry()
-			{
-				while (processDecompressionThread());
-			}
-
-			void assetStartLoading(AssetContextPrivate *ass)
-			{
-				if (ass->processing || ass->fabricated)
-					return;
-				ASS_LOG(2, ass, "start loading");
-				countProcessing++;
-				ass->processing = true;
-				ass->error = false;
-				queueLoadFile->push(ass);
-			}
-
-			void assetStartRemoving(AssetContextPrivate *ass)
-			{
-				if (ass->processing)
-					return;
-				ASS_LOG(2, ass, "start removing");
-				countProcessing++;
-				ass->processing = true;
-				ass->ready = false;
-				if (ass->scheme == m || ass->fabricated)
-					queueRemoveDependencies->push(ass);
-				else
+				catch (...)
 				{
-					CAGE_ASSERT(ass->scheme < schemes.size(), ass->scheme, schemes.size());
-					queueCustomDone[schemes[ass->scheme].threadIndex]->push(ass);
+					CAGE_LOG(SeverityEnum::Warning, "assetManager", "assets network notifications listener failed");
+					listener.clear();
 				}
 			}
 
-			void interNameSet(uint32 interName, AssetContextPrivate *ass)
+			void diskLoadingEntry()
 			{
-				if (interName == 0)
-					return;
-				CAGE_ASSERT(ass);
-				auto &s = aliasNames[interName];
-				CAGE_ASSERT(s.find(ass) == s.end());
-				s.insert(ass);
-				if (!index.count(interName))
-					index[interName] = ass;
+				auto &que = diskLoadingQueue;
+				try
+				{
+					while (true)
+					{
+						Asset *ass = nullptr;
+						que.pop(ass);
+						diskLoadAsset(ass);
+					}
+				}
+				catch (const ConcurrentQueueTerminated &)
+				{
+					// do nothing
+				}
 			}
 
-			void interNameClear(uint32 interName, AssetContextPrivate *ass)
+			void decompressionEntry()
 			{
-				if (interName == 0)
-					return;
-				CAGE_ASSERT(ass);
-				CAGE_ASSERT(index.count(interName));
-				CAGE_ASSERT(aliasNames.find(interName) != aliasNames.end());
-				auto &s = aliasNames[interName];
-				CAGE_ASSERT(s.find(ass) != s.end());
-				s.erase(ass);
-				index.erase(interName);
-				if (s.empty())
-					aliasNames.erase(interName);
-				else
-					index[interName] = *s.begin();
+				auto &que = decompressionQueue;
+				try
+				{
+					while (true)
+					{
+						Asset *ass = nullptr;
+						que.pop(ass);
+						decompressAsset(ass);
+					}
+				}
+				catch (const ConcurrentQueueTerminated &)
+				{
+					// do nothing
+				}
+			}
+
+			void defaultProcessingEntry()
+			{
+				auto &que = defaultProcessingQueue;
+				try
+				{
+					while (true)
+					{
+						Asset *ass = nullptr;
+						que.pop(ass);
+						processAsset(ass);
+					}
+				}
+				catch (const ConcurrentQueueTerminated &)
+				{
+					// do nothing
+				}
+			}
+
+			void maintenanceEntry()
+			{
+				auto &que = maintenanceQueue;
+				try
+				{
+					while (true)
+					{
+						{
+							ScopeLock<Mutex> lock(mutex);
+							OPTICK_EVENT("maintenance");
+							Command cmd;
+							while (que.tryPop(cmd))
+								maintenanceCommand(templates::move(cmd));
+							maintenanceConclusion();
+						}
+						{
+							OPTICK_EVENT("sleep");
+							threadSleep(maintenancePeriod); // give other threads enough time to stop using the previous publicIndex
+						}
+					}
+				}
+				catch (const ConcurrentQueueTerminated &)
+				{
+					// do nothing
+				}
+			}
+
+			// api methods
+
+			void defineScheme(uint32 scheme, uintPtr typeId, const AssetScheme &value)
+			{
+				CAGE_ASSERT(scheme < schemes.size(), scheme, schemes.size());
+				CAGE_ASSERT(schemes[scheme].typeId == 0, "scheme already defined");
+				CAGE_ASSERT(value.threadIndex == m || value.threadIndex < customProcessingQueues.size(), value.threadIndex, customProcessingQueues.size());
+				(AssetScheme&)schemes[scheme] = value;
+				schemes[scheme].typeId = typeId;
+			}
+
+			void add(uint32 assetName)
+			{
+				unloaded = false;
+				Command cmd;
+				cmd.realName = assetName;
+				cmd.type = CommandEnum::Add;
+				maintenanceQueue.push(templates::move(cmd));
+			}
+
+			void remove(uint32 assetName)
+			{
+				Command cmd;
+				cmd.realName = assetName;
+				cmd.type = CommandEnum::Remove;
+				maintenanceQueue.push(templates::move(cmd));
+			}
+
+			void reload(uint32 assetName)
+			{
+				Command cmd;
+				cmd.realName = assetName;
+				cmd.type = CommandEnum::Reload;
+				maintenanceQueue.push(templates::move(cmd));
 			}
 
 			uint32 generateUniqueName()
 			{
 				static const uint32 a = (uint32)1 << 28;
 				static const uint32 b = (uint32)1 << 30;
+				ScopeLock<Mutex> lock(mutex);
 				if (generateName < a || generateName > b)
 					generateName = a;
-				while (state(generateName) != AssetStateEnum::NotFound)
+				while (privateIndex.find(generateName) != privateIndex.end())
 					generateName = generateName == b ? a : generateName + 1;
 				return generateName++;
+			}
+
+			void fabricate(uint32 assetName, const string &textName, uint32 scheme, uintPtr typeId, Holder<void> &&value)
+			{
+				CAGE_ASSERT(typeId != 0);
+				CAGE_ASSERT(schemes[scheme].typeId == typeId, schemes[scheme].typeId, typeId, "setting asset value with invalid type");
+				unloaded = false;
+				Command cmd;
+				cmd.realName = assetName;
+				cmd.textName = textName;
+				cmd.scheme = scheme;
+				cmd.holder = templates::move(value);
+				cmd.type = CommandEnum::Fabricate;
+				maintenanceQueue.push(templates::move(cmd));
+			}
+
+			Holder<void> get(uint32 assetName, uint32 scheme, uintPtr typeId, bool throwOnInvalidScheme) const
+			{
+				CAGE_ASSERT(typeId != 0);
+				PublicIndex &index = *publicIndex;
+				auto it = index.find(assetName);
+				if (it == index.end())
+					return {}; // not found
+				const auto &a = it->second;
+				if (a.scheme == m)
+				{
+					CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "asset real name: " + assetName);
+					CAGE_THROW_ERROR(Exception, "asset failed to load");
+				}
+				if (!a.ref)
+					return {}; // not yet ready
+				if (a.scheme != scheme)
+				{
+					if (throwOnInvalidScheme)
+					{
+						CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "asset real name: " + assetName);
+						CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "asset loaded scheme: " + a.scheme + ", acessing with: " + scheme);
+						CAGE_THROW_ERROR(Exception, "accessing asset with different scheme");
+					}
+					return {}; // invalid scheme
+				}
+				CAGE_ASSERT(schemes[a.scheme].typeId == typeId, schemes[a.scheme].typeId, typeId, "accessing asset with invalid type");
+				return a.ref.share();
+			}
+
+			bool processCustomThread(uint32 threadIndex)
+			{
+				CAGE_ASSERT(threadIndex < customProcessingQueues.size(), threadIndex, customProcessingQueues.size());
+				auto &que = customProcessingQueues[threadIndex];
+				Asset *ass = nullptr;
+				if (que->tryPop(ass))
+				{
+					processAsset(ass);
+					return true;
+				}
+				return false;
+			}
+
+			void unloadCustomThread(uint32 threadIndex)
+			{
+				CAGE_ASSERT(threadIndex < customProcessingQueues.size(), threadIndex, customProcessingQueues.size());
+				while (!unloaded)
+				{
+					while (processCustomThread(threadIndex));
+					threadSleep(2000);
+				}
+			}
+
+			void unloadWait()
+			{
+				while (!unloaded)
+					threadSleep(2000);
+			}
+
+			void listen(const string &address, uint16 port)
+			{
+				CAGE_ASSERT(!listenerThread);
+				listenerAddress = address;
+				listenerPort = port;
+				listenerThread = newThread(Delegate<void()>().bind<AssetManagerImpl, &AssetManagerImpl::listenerEntry>(this), "assets listener");
 			}
 		};
 	}
 
-	void AssetManager::listen(const string &address, uint16 port)
+	void AssetManager::defineScheme_(uint32 scheme, uintPtr typeId, const AssetScheme &value)
 	{
 		AssetManagerImpl *impl = (AssetManagerImpl*)this;
-		impl->listener = newTcpConnection(address, port);
+		impl->defineScheme(scheme, typeId, value);
 	}
 
-	uint32 AssetManager::dependenciesCount(uint32 assetName) const
+	void AssetManager::add(uint32 assetName)
 	{
-		CAGE_ASSERT(ready(assetName), assetName);
 		AssetManagerImpl *impl = (AssetManagerImpl*)this;
-		AssetContextPrivate *ass = impl->index.at(assetName);
-		return numeric_cast<uint32>(ass->dependencies.size());
+		impl->add(assetName);
 	}
 
-	uint32 AssetManager::dependencyName(uint32 assetName, uint32 index) const
+	void AssetManager::remove(uint32 assetName)
 	{
 		AssetManagerImpl *impl = (AssetManagerImpl*)this;
-		AssetContextPrivate *ass = impl->index.at(assetName);
-		CAGE_ASSERT(index < ass->dependencies.size(), index, ass->dependencies.size(), assetName);
-		return ass->dependencies[index];
+		impl->remove(assetName);
 	}
 
-	PointerRange<const uint32> AssetManager::dependencies(uint32 assetName) const
+	void AssetManager::reload(uint32 assetName)
 	{
 		AssetManagerImpl *impl = (AssetManagerImpl*)this;
-		AssetContextPrivate *ass = impl->index.at(assetName);
-		return ass->dependencies;
-	}
-
-	uint32 AssetManager::countTotal() const
-	{
-		AssetManagerImpl *impl = (AssetManagerImpl*)this;
-		return impl->countTotal;
-	}
-
-	uint32 AssetManager::countProcessing() const
-	{
-		AssetManagerImpl *impl = (AssetManagerImpl*)this;
-		return impl->countProcessing;
-	}
-
-	bool AssetManager::processControlThread()
-	{
-		AssetManagerImpl *impl = (AssetManagerImpl*)this;
-		return impl->processControlThread();
-	}
-
-	bool AssetManager::processCustomThread(uint32 threadIndex)
-	{
-		AssetManagerImpl *impl = (AssetManagerImpl*)this;
-		return impl->processCustomThread(threadIndex);
-	}
-
-	AssetStateEnum AssetManager::state(uint32 assetName) const
-	{
-		AssetManagerImpl *impl = (AssetManagerImpl*)this;
-		auto it = impl->index.find(assetName);
-		if (it == impl->index.end())
-			return AssetStateEnum::NotFound;
-		AssetContextPrivate *ass = it->second;
-		if (ass->error)
-			return AssetStateEnum::Error;
-		if (ass->ready)
-			return AssetStateEnum::Ready;
-		return AssetStateEnum::Unknown;
-	}
-
-	bool AssetManager::ready(uint32 assetName) const
-	{
-		AssetManagerImpl *impl = (AssetManagerImpl*)this;
-		switch (state(assetName))
-		{
-		case AssetStateEnum::Unknown:
-			return false;
-		case AssetStateEnum::NotFound:
-			return false;
-		case AssetStateEnum::Error:
-		{
-			AssetContextPrivate *ass = impl->index.at(assetName);
-			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "asset real name: " + assetName);
-			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "asset text name: '" + ass->textName + "'");
-			CAGE_THROW_ERROR(Exception, "asset has failed to load");
-		}
-		case AssetStateEnum::Ready:
-			return true;
-		default:
-			CAGE_THROW_CRITICAL(Exception, "invalid asset state enum");
-		}
-	}
-
-	uint32 AssetManager::scheme(uint32 assetName) const
-	{
-		AssetManagerImpl *impl = (AssetManagerImpl*)this;
-		auto it = impl->index.find(assetName);
-		if (it == impl->index.end())
-			return m;
-		return it->second->scheme;
+		impl->reload(assetName);
 	}
 
 	uint32 AssetManager::generateUniqueName()
@@ -678,104 +884,43 @@ namespace cage
 		return impl->generateUniqueName();
 	}
 
-	void AssetManager::add(uint32 assetName)
+	void AssetManager::fabricate_(uint32 assetName, const string &textName, uint32 scheme, uintPtr typeId, Holder<void> &&value)
 	{
 		AssetManagerImpl *impl = (AssetManagerImpl*)this;
-		CAGE_ASSERT(assetName != 0);
-		AssetContextPrivate *ass = nullptr;
-		if (!impl->index.count(assetName))
-		{
-			ass = detail::systemArena().createObject<AssetContextPrivate>();
-			ass->realName = assetName;
-			ass->textName = stringizer() + "<" + assetName + ">";
-			ASS_LOG(2, ass, "created");
-			impl->index[ass->realName] = ass;
-			impl->countTotal++;
-			impl->assetStartLoading(ass);
-		}
-		else
-			ass = impl->index.at(assetName);
-		CAGE_ASSERT(ass->references < m);
-		ass->references++;
+		impl->fabricate(assetName, textName, scheme, typeId, templates::move(value));
 	}
 
-	void AssetManager::fabricate(uint32 scheme, uint32 assetName, const string &textName)
+	Holder<void> AssetManager::get_(uint32 assetName, uint32 scheme, uintPtr typeId, bool throwOnInvalidScheme) const
+	{
+		const AssetManagerImpl *impl = (const AssetManagerImpl*)this;
+		return impl->get(assetName, scheme, typeId, throwOnInvalidScheme);
+	}
+
+	bool AssetManager::processCustomThread(uint32 threadIndex)
 	{
 		AssetManagerImpl *impl = (AssetManagerImpl*)this;
-		CAGE_ASSERT(assetName != 0);
-		CAGE_ASSERT(scheme < impl->schemes.size());
-		CAGE_ASSERT(!impl->index.count(assetName));
-		AssetContextPrivate *ass = detail::systemArena().createObject<AssetContextPrivate>();
-		ass->fabricated = true;
-		ass->realName = assetName;
-		ass->textName = textName.subString(0, ass->textName.MaxLength - 1);
-		ass->scheme = scheme;
-		ass->error = false;
-		ASS_LOG(2, ass, "fabricated");
-		impl->index[ass->realName] = ass;
-		impl->countTotal++;
-		impl->assetStartLoading(ass);
-		ass->references++;
+		return impl->processCustomThread(threadIndex);
 	}
 
-	void AssetManager::remove(uint32 assetName)
+	void AssetManager::unloadCustomThread(uint32 threadIndex)
 	{
 		AssetManagerImpl *impl = (AssetManagerImpl*)this;
-		AssetContextPrivate *ass = impl->index.at(assetName);
-		CAGE_ASSERT(ass->references > 0);
-		CAGE_ASSERT(ass->realName == assetName, "assets cannot be removed by their alias names");
-		ass->references--;
-		if (ass->references == 0)
-			impl->assetStartRemoving(ass);
+		impl->unloadCustomThread(threadIndex);
 	}
 
-	void AssetManager::reload(uint32 assetName, bool recursive)
+	void AssetManager::unloadWait()
 	{
 		AssetManagerImpl *impl = (AssetManagerImpl*)this;
-		AssetContextPrivate *ass = impl->index.at(assetName);
-		ASS_LOG(2, ass, "reload");
-		impl->assetStartLoading(ass);
-		if (recursive)
-		{
-			for (auto it = ass->dependencies.begin(), et = ass->dependencies.end(); it != et; it++)
-				reload(*it, true);
-		}
+		impl->unloadWait();
 	}
 
-	void AssetManager::zScheme(uint32 index, const AssetScheme &value, uintPtr typeSize)
+	void AssetManager::listen(const string &address, uint16 port)
 	{
 		AssetManagerImpl *impl = (AssetManagerImpl*)this;
-		CAGE_ASSERT(index < impl->schemes.size());
-		CAGE_ASSERT(value.threadIndex < impl->queueCustomLoad.size());
-		(AssetScheme&)impl->schemes[index] = value;
-		impl->schemes[index].typeSize = typeSize;
+		impl->listen(address, port);
 	}
 
-	uintPtr AssetManager::zGetTypeSize(uint32 scheme) const
-	{
-		AssetManagerImpl *impl = (AssetManagerImpl*)this;
-		CAGE_ASSERT(scheme < impl->schemes.size(), scheme, impl->schemes.size());
-		return impl->schemes[scheme].typeSize;
-	}
-
-	void *AssetManager::zGet(uint32 assetName) const
-	{
-		AssetManagerImpl *impl = (AssetManagerImpl*)this;
-		AssetContextPrivate *ass = impl->index.at(assetName);
-		CAGE_ASSERT(ass->ready);
-		return ass->returnData;
-	}
-
-	void AssetManager::zSet(uint32 assetName, void *value)
-	{
-		AssetManagerImpl *impl = (AssetManagerImpl*)this;
-		AssetContextPrivate *ass = impl->index.at(assetName);
-		CAGE_ASSERT(ass->fabricated);
-		ass->returnData = value;
-		ass->ready = !!value;
-	}
-
-	AssetManagerCreateConfig::AssetManagerCreateConfig() : assetsFolderName("assets.zip"), threadsMaxCount(5), schemesMaxCount(50)
+	AssetManagerCreateConfig::AssetManagerCreateConfig() : assetsFolderName("assets.zip"), maintenancePeriod(25000), listenerPeriod(100000), threadsMaxCount(5), schemesMaxCount(50)
 	{}
 
 	Holder<AssetManager> newAssetManager(const AssetManagerCreateConfig &config)
@@ -797,5 +942,17 @@ namespace cage
 		detail::memcpy(a.textName, name.c_str(), name.length());
 		a.scheme = schemeIndex;
 		return a;
+	}
+
+	MemoryBuffer &AssetContext::compressedData() const
+	{
+		Asset *impl = (Asset *)this;
+		return impl->compData;
+	}
+
+	MemoryBuffer &AssetContext::originalData() const
+	{
+		Asset *impl = (Asset *)this;
+		return impl->origData;
 	}
 }

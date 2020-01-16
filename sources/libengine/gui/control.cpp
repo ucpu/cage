@@ -302,30 +302,25 @@ namespace cage
 		if (!impl->eventsEnabled)
 			return;
 
-		if (!impl->assetMgr->ready(HashString("cage/cage.pack")))
+		if (!impl->assetMgr->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/cage.pack")))
 			return;
 
 		for (auto &s : impl->skins)
-		{
-			if (impl->assetMgr->ready(s.textureName))
-				s.texture = impl->assetMgr->get<assetSchemeIndexTexture, Texture>(s.textureName);
-			else
-				s.texture = nullptr;
-		}
+			s.texture = impl->assetMgr->get<AssetSchemeIndexTexture, Texture>(s.textureName);
 
 		if (auto lock = impl->emitController->write())
 		{
-			impl->graphicsData.debugShader = impl->assetMgr->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/debug.glsl"));
-			impl->graphicsData.elementShader = impl->assetMgr->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/element.glsl"));
-			impl->graphicsData.fontShader = impl->assetMgr->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/font.glsl"));
-			impl->graphicsData.imageAnimatedShader = impl->assetMgr->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/image.glsl?A"));
-			impl->graphicsData.imageStaticShader = impl->assetMgr->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/image.glsl?a"));
-			impl->graphicsData.colorPickerShader[0] = impl->assetMgr->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/colorPicker.glsl?F"));
-			impl->graphicsData.colorPickerShader[1] = impl->assetMgr->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/colorPicker.glsl?H"));
-			impl->graphicsData.colorPickerShader[2] = impl->assetMgr->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/colorPicker.glsl?S"));
-			impl->graphicsData.debugMesh = impl->assetMgr->get<assetSchemeIndexMesh, Mesh>(HashString("cage/mesh/guiWire.obj"));
-			impl->graphicsData.elementMesh = impl->assetMgr->get<assetSchemeIndexMesh, Mesh>(HashString("cage/mesh/guiElement.obj"));
-			impl->graphicsData.fontMesh = impl->assetMgr->get<assetSchemeIndexMesh, Mesh>(HashString("cage/mesh/square.obj"));
+			impl->graphicsData.debugShader = impl->assetMgr->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/debug.glsl"));
+			impl->graphicsData.elementShader = impl->assetMgr->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/element.glsl"));
+			impl->graphicsData.fontShader = impl->assetMgr->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/font.glsl"));
+			impl->graphicsData.imageAnimatedShader = impl->assetMgr->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/image.glsl?A"));
+			impl->graphicsData.imageStaticShader = impl->assetMgr->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/image.glsl?a"));
+			impl->graphicsData.colorPickerShader[0] = impl->assetMgr->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/colorPicker.glsl?F"));
+			impl->graphicsData.colorPickerShader[1] = impl->assetMgr->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/colorPicker.glsl?H"));
+			impl->graphicsData.colorPickerShader[2] = impl->assetMgr->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/colorPicker.glsl?S"));
+			impl->graphicsData.debugMesh = impl->assetMgr->get<AssetSchemeIndexMesh, Mesh>(HashString("cage/mesh/guiWire.obj"));
+			impl->graphicsData.elementMesh = impl->assetMgr->get<AssetSchemeIndexMesh, Mesh>(HashString("cage/mesh/guiElement.obj"));
+			impl->graphicsData.fontMesh = impl->assetMgr->get<AssetSchemeIndexMesh, Mesh>(HashString("cage/mesh/square.obj"));
 			impl->graphicsData.imageMesh = impl->graphicsData.fontMesh;
 
 			impl->emitControl = &impl->emitData[lock.index()];

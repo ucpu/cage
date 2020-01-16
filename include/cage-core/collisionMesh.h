@@ -63,8 +63,8 @@ namespace cage
 
 	CAGE_API vec3 intersection(const line &shape, const CollisionMesh *collider, const transform &t);
 
-	CAGE_API AssetScheme genAssetSchemeCollisionMesh(const uint32 threadIndex);
-	static const uint32 assetSchemeIndexCollisionMesh = 3;
+	CAGE_API AssetScheme genAssetSchemeCollisionMesh();
+	static const uint32 AssetSchemeIndexCollisionMesh = 3;
 }
 
 #endif // guard_colliderMesh_h_qeqwdrwuegfoixwoihediuzerw456

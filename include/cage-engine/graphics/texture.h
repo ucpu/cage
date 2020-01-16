@@ -41,5 +41,5 @@ namespace cage
 	}
 
 	CAGE_API AssetScheme genAssetSchemeTexture(uint32 threadIndex, Window *memoryContext);
-	static const uint32 assetSchemeIndexTexture = 11;
+	static const uint32 AssetSchemeIndexTexture = 11;
 }

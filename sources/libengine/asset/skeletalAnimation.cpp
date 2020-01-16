@@ -15,20 +15,10 @@ namespace cage
 	{
 		void processLoad(const AssetContext *context, void *schemePointer)
 		{
-			SkeletalAnimation *ani = nullptr;
-			if (context->assetHolder)
-			{
-				ani = static_cast<SkeletalAnimation*>(context->assetHolder.get());
-			}
-			else
-			{
-				context->assetHolder = newSkeletalAnimation().cast<void>();
-				ani = static_cast<SkeletalAnimation*>(context->assetHolder.get());
-				ani->setDebugName(context->textName);
-			}
-			context->returnData = ani;
+			Holder<SkeletalAnimation> ani = newSkeletalAnimation();
+			ani->setDebugName(context->textName);
 
-			Deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
+			Deserializer des(context->originalData());
 			SkeletalAnimationHeader data;
 			des >> data;
 			uint16 *indexes = (uint16*)des.advance(data.animationBonesCount * sizeof(uint16));
@@ -36,13 +26,14 @@ namespace cage
 			uint16 *rotationFrames = (uint16*)des.advance(data.animationBonesCount * sizeof(uint16));
 			uint16 *scaleFrames = (uint16*)des.advance(data.animationBonesCount * sizeof(uint16));
 			ani->allocate(data.duration, data.animationBonesCount, indexes, positionFrames, rotationFrames, scaleFrames, des.advance(0));
+
+			context->assetHolder = templates::move(ani).cast<void>();
 		}
 	}
 
-	AssetScheme genAssetSchemeSkeletalAnimation(uint32 threadIndex)
+	AssetScheme genAssetSchemeSkeletalAnimation()
 	{
 		AssetScheme s;
-		s.threadIndex = threadIndex;
 		s.load.bind<&processLoad>();
 		return s;
 	}

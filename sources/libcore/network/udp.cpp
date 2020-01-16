@@ -1186,7 +1186,7 @@ namespace cage
 						UDP_LOG(2, "received packets failed to initialize new connection");
 						return {};
 					}
-					return c.cast<UdpConnection>();
+					return templates::move(c).cast<UdpConnection>();
 				}
 				catch (...)
 				{

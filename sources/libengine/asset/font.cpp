@@ -15,20 +15,10 @@ namespace cage
 	{
 		void processLoad(const AssetContext *context, void *schemePointer)
 		{
-			Font *font = nullptr;
-			if (context->assetHolder)
-			{
-				font = static_cast<Font*>(context->assetHolder.get());
-			}
-			else
-			{
-				context->assetHolder = newFont().cast<void>();
-				font = static_cast<Font*>(context->assetHolder.get());
-				font->setDebugName(context->textName);
-			}
-			context->returnData = font;
+			Holder<Font> font = newFont();
+			font->setDebugName(context->textName);
 
-			Deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
+			Deserializer des(context->originalData());
 			FontHeader data;
 			des >> data;
 			const void *Image = des.advance(data.texSize);
@@ -44,6 +34,8 @@ namespace cage
 			font->setImage(data.texWidth, data.texHeight, data.texSize, Image);
 			font->setGlyphs(data.glyphCount, glyphs, kerning);
 			font->setCharmap(data.charCount, charmapChars, charmapGlyphs);
+
+			context->assetHolder = templates::move(font).cast<void>();
 		}
 	}
 

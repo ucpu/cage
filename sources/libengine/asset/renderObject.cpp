@@ -15,15 +15,10 @@ namespace cage
 	{
 		void processLoad(const AssetContext *context, void *schemePointer)
 		{
-			if (!context->assetHolder)
-			{
-				context->assetHolder = newRenderObject().cast<void>();
-				static_cast<RenderObject*>(context->assetHolder.get())->setDebugName(context->textName);
-			}
-			RenderObject *obj = static_cast<RenderObject*>(context->assetHolder.get());
-			context->returnData = obj;
+			Holder<RenderObject> obj = newRenderObject();
+			obj->setDebugName(context->textName);
 
-			Deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
+			Deserializer des(context->originalData());
 			RenderObjectHeader h;
 			des >> h;
 			obj->color = h.color;
@@ -40,13 +35,14 @@ namespace cage
 			uint32 *indices = (uint32*)des.advance((h.lodsCount + 1) * sizeof(uint32));
 			uint32 *names = (uint32*)des.advance(h.meshesCount * sizeof(uint32));
 			obj->setLods(h.lodsCount, h.meshesCount, thresholds, indices, names);
+
+			context->assetHolder = templates::move(obj).cast<void>();
 		}
 	}
 
-	AssetScheme genAssetSchemeRenderObject(uint32 threadIndex)
+	AssetScheme genAssetSchemeRenderObject()
 	{
 		AssetScheme s;
-		s.threadIndex = threadIndex;
 		s.load.bind<&processLoad>();
 		return s;
 	}

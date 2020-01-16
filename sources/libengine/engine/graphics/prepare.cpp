@@ -479,19 +479,19 @@ namespace cage
 				{
 					if ((e->render.sceneMask & pass->sceneMask) == 0 || e->render.object == 0)
 						continue;
-					CAGE_ASSERT(engineAssets()->ready(e->render.object));
-					uint32 schemeIndex = engineAssets()->scheme(e->render.object);
-					switch (schemeIndex)
+
 					{
-					case assetSchemeIndexMesh:
+						Mesh *m = engineAssets()->tryGet<AssetSchemeIndexMesh, Mesh>(e->render.object);
+						if (m)
+						{
+							addRenderableMesh(pass, e, m);
+							continue;
+						}
+					}
+
 					{
-						Mesh *m = engineAssets()->get<assetSchemeIndexMesh, Mesh>(e->render.object);
-						addRenderableMesh(pass, e, m);
-					} break;
-					case assetSchemeIndexRenderObject:
-					{
-						RenderObject *o = engineAssets()->get<assetSchemeIndexRenderObject, RenderObject>(e->render.object);
-						if (o->lodsCount() == 0)
+						RenderObject *o = engineAssets()->get<AssetSchemeIndexRenderObject, RenderObject>(e->render.object);
+						if (!o || o->lodsCount() == 0)
 							continue;
 						uint32 lod = 0;
 						if (o->lodsCount() > 1)
@@ -507,12 +507,10 @@ namespace cage
 						}
 						for (uint32 msh : o->meshes(lod))
 						{
-							Mesh *m = engineAssets()->get<assetSchemeIndexMesh, Mesh>(msh);
-							addRenderableMesh(pass, e, m);
+							Mesh *m = engineAssets()->get<AssetSchemeIndexMesh, Mesh>(msh);
+							if (m)
+								addRenderableMesh(pass, e, m);
 						}
-					} break;
-					default:
-						CAGE_LOG(SeverityEnum::Warning, "engine", stringizer() + "trying to render an asset " + e->render.object + " with unsupported scheme " + schemeIndex);
 					}
 				}
 			}
@@ -520,20 +518,27 @@ namespace cage
 			void addRenderableSkeleton(RenderPassImpl *pass, EmitRender *e, SkeletonRig *s, const mat4 &model, const mat4 &mvp)
 			{
 				uint32 bonesCount = s->bonesCount();
-				if (e->animatedSkeleton && engineAssets()->ready(e->animatedSkeleton->name))
+				bool initialized = false;
+				if (e->animatedSkeleton)
 				{
-					CAGE_ASSERT(s->bonesCount() == bonesCount, s->bonesCount(), bonesCount);
 					const auto &ba = *e->animatedSkeleton;
-					SkeletalAnimation *an = engineAssets()->get<assetSchemeIndexSkeletalAnimation, SkeletalAnimation>(ba.name);
-					real c = detail::evalCoefficientForSkeletalAnimation(an, dispatchTime, ba.startTime, ba.speed, ba.offset);
-					s->animateSkeleton(an, c, tmpArmature, tmpArmature2);
+					SkeletalAnimation *an = engineAssets()->get<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(ba.name);
+					if (an)
+					{
+						CAGE_ASSERT(s->bonesCount() == bonesCount, s->bonesCount(), bonesCount);
+						real c = detail::evalCoefficientForSkeletalAnimation(an, dispatchTime, ba.startTime, ba.speed, ba.offset);
+						s->animateSkeleton(an, c, tmpArmature, tmpArmature2);
+						initialized = true;
+					}
 				}
-				else
+				if (!initialized)
 				{
 					for (uint32 i = 0; i < bonesCount; i++)
 						tmpArmature2[i] = mat4();
 				}
-				Mesh *mesh = engineAssets()->get<assetSchemeIndexMesh, Mesh>(HashString("cage/mesh/bone.obj"));
+				Mesh *mesh = engineAssets()->get<AssetSchemeIndexMesh, Mesh>(HashString("cage/mesh/bone.obj"));
+				if (!mesh)
+					return;
 				CAGE_ASSERT(mesh->getSkeletonName() == 0);
 				for (uint32 i = 0; i < bonesCount; i++)
 				{
@@ -557,7 +562,7 @@ namespace cage
 					return;
 				if (m->getSkeletonName() && confRenderSkeletonBones)
 				{
-					SkeletonRig *s = engineAssets()->get<assetSchemeIndexSkeletonRig, SkeletonRig>(m->getSkeletonName());
+					SkeletonRig *s = engineAssets()->get<AssetSchemeIndexSkeletonRig, SkeletonRig>(m->getSkeletonName());
 					addRenderableSkeleton(pass, e, s, model, mvp);
 					return;
 				}
@@ -622,18 +627,23 @@ namespace cage
 					uint32 bonesCount = m->getSkeletonBones();
 					Mat3x4 *sa = obj->shaderArmatures + obj->count * bonesCount;
 					CAGE_ASSERT(!e->animatedSkeleton || e->animatedSkeleton->name);
-					if (e->animatedSkeleton && m->getSkeletonName() && engineAssets()->ready(e->animatedSkeleton->name))
+					bool initialized = false;
+					if (e->animatedSkeleton && m->getSkeletonName())
 					{
-						SkeletonRig *skel = engineAssets()->get<assetSchemeIndexSkeletonRig, SkeletonRig>(m->getSkeletonName());
-						CAGE_ASSERT(skel->bonesCount() == bonesCount, skel->bonesCount(), bonesCount);
 						const auto &ba = *e->animatedSkeleton;
-						SkeletalAnimation *an = engineAssets()->get<assetSchemeIndexSkeletalAnimation, SkeletalAnimation>(ba.name);
-						real c = detail::evalCoefficientForSkeletalAnimation(an, dispatchTime, ba.startTime, ba.speed, ba.offset);
-						skel->animateSkin(an, c, tmpArmature, tmpArmature2);
-						for (uint32 i = 0; i < bonesCount; i++)
-							sa[i] = Mat3x4(tmpArmature2[i]);
+						SkeletalAnimation *an = engineAssets()->get<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(ba.name);
+						SkeletonRig *skel = engineAssets()->get<AssetSchemeIndexSkeletonRig, SkeletonRig>(m->getSkeletonName());
+						if (an && skel)
+						{
+							CAGE_ASSERT(skel->bonesCount() == bonesCount, skel->bonesCount(), bonesCount);
+							real c = detail::evalCoefficientForSkeletalAnimation(an, dispatchTime, ba.startTime, ba.speed, ba.offset);
+							skel->animateSkin(an, c, tmpArmature, tmpArmature2);
+							for (uint32 i = 0; i < bonesCount; i++)
+								sa[i] = Mat3x4(tmpArmature2[i]);
+							initialized = true;
+						}
 					}
-					else
+					if (!initialized)
 					{
 						for (uint32 i = 0; i < bonesCount; i++)
 							sa[i] = Mat3x4();
@@ -651,13 +661,13 @@ namespace cage
 						continue;
 					if (!e->renderText.font)
 						e->renderText.font = HashString("cage/font/ubuntu/Ubuntu-R.ttf");
-					if (!engineAssets()->ready(e->renderText.font))
+					Font *font = engineAssets()->get<AssetSchemeIndexFont, Font>(e->renderText.font);
+					if (!font)
 						continue;
 					string s = loadInternationalizedText(engineAssets(), e->renderText.assetName, e->renderText.textName, e->renderText.value);
 					if (s.empty())
 						continue;
 
-					Font *font = engineAssets()->get<assetSchemeIndexFont, Font>(e->renderText.font);
 					Texts::Render *r = dispatchArena.createObject<Texts::Render>();
 					font->transcript(s, nullptr, r->count);
 					r->glyphs = (uint32*)dispatchArena.allocate(r->count * sizeof(uint32), sizeof(uint32));
@@ -881,7 +891,8 @@ namespace cage
 				if (!e->render.object)
 					return;
 
-				if (!engineAssets()->ready(e->render.object))
+				if (!engineAssets()->tryGet<AssetSchemeIndexRenderObject, RenderObject>(e->render.object)
+					&& !engineAssets()->tryGet<AssetSchemeIndexMesh, Mesh>(e->render.object))
 				{
 					if (!confRenderMissingMeshes)
 					{
@@ -889,13 +900,10 @@ namespace cage
 						return;
 					}
 					e->render.object = HashString("cage/mesh/fake.obj");
-					CAGE_ASSERT(engineAssets()->ready(e->render.object));
 				}
 
-				if (engineAssets()->scheme(e->render.object) == assetSchemeIndexRenderObject)
+				if (RenderObject *o = engineAssets()->tryGet<AssetSchemeIndexRenderObject, RenderObject>(e->render.object))
 				{
-					RenderObject *o = engineAssets()->get<assetSchemeIndexRenderObject, RenderObject>(e->render.object);
-
 					if (!e->render.color.valid())
 						e->render.color = o->color;
 					if (!e->render.opacity.valid())
@@ -969,35 +977,35 @@ namespace cage
 				}
 
 				AssetManager *ass = engineAssets();
-				if (!ass->ready(HashString("cage/cage.pack")) || !ass->ready(HashString("cage/shader/engine/engine.pack")))
+				if (!ass->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/cage.pack")) || !ass->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/shader/engine/engine.pack")))
 					return;
 
 				if (!graphicsDispatch->shaderBlit)
 				{
-					graphicsDispatch->meshSquare = ass->get<assetSchemeIndexMesh, Mesh>(HashString("cage/mesh/square.obj"));
-					graphicsDispatch->meshSphere = ass->get<assetSchemeIndexMesh, Mesh>(HashString("cage/mesh/sphere.obj"));
-					graphicsDispatch->meshCone = ass->get<assetSchemeIndexMesh, Mesh>(HashString("cage/mesh/cone.obj"));
-					graphicsDispatch->shaderVisualizeColor = ass->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/visualize/color.glsl"));
-					graphicsDispatch->shaderVisualizeDepth = ass->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/visualize/depth.glsl"));
-					graphicsDispatch->shaderVisualizeMonochromatic = ass->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/visualize/monochromatic.glsl"));
-					graphicsDispatch->shaderVisualizeVelocity = ass->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/visualize/velocity.glsl"));
-					graphicsDispatch->shaderAmbient = ass->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/ambient.glsl"));
-					graphicsDispatch->shaderBlit = ass->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/blit.glsl"));
-					graphicsDispatch->shaderDepth = ass->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/depth.glsl"));
-					graphicsDispatch->shaderGBuffer = ass->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/gBuffer.glsl"));
-					graphicsDispatch->shaderLighting = ass->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/lighting.glsl"));
-					graphicsDispatch->shaderTranslucent = ass->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/translucent.glsl"));
-					graphicsDispatch->shaderGaussianBlur = ass->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/gaussianBlur.glsl"));
-					graphicsDispatch->shaderSsaoGenerate = ass->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/ssaoGenerate.glsl"));
-					graphicsDispatch->shaderSsaoApply = ass->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/ssaoApply.glsl"));
-					graphicsDispatch->shaderMotionBlur = ass->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/motionBlur.glsl"));
-					graphicsDispatch->shaderBloomGenerate = ass->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/bloomGenerate.glsl"));
-					graphicsDispatch->shaderBloomApply = ass->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/bloomApply.glsl"));
-					graphicsDispatch->shaderLuminanceCollection = ass->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/luminanceCollection.glsl"));
-					graphicsDispatch->shaderLuminanceCopy = ass->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/luminanceCopy.glsl"));
-					graphicsDispatch->shaderFinalScreen = ass->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/finalScreen.glsl"));
-					graphicsDispatch->shaderFxaa = ass->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/fxaa.glsl"));
-					graphicsDispatch->shaderFont = ass->get<assetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/font.glsl"));
+					graphicsDispatch->meshSquare = ass->get<AssetSchemeIndexMesh, Mesh>(HashString("cage/mesh/square.obj"));
+					graphicsDispatch->meshSphere = ass->get<AssetSchemeIndexMesh, Mesh>(HashString("cage/mesh/sphere.obj"));
+					graphicsDispatch->meshCone = ass->get<AssetSchemeIndexMesh, Mesh>(HashString("cage/mesh/cone.obj"));
+					graphicsDispatch->shaderVisualizeColor = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/visualize/color.glsl"));
+					graphicsDispatch->shaderVisualizeDepth = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/visualize/depth.glsl"));
+					graphicsDispatch->shaderVisualizeMonochromatic = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/visualize/monochromatic.glsl"));
+					graphicsDispatch->shaderVisualizeVelocity = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/visualize/velocity.glsl"));
+					graphicsDispatch->shaderAmbient = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/ambient.glsl"));
+					graphicsDispatch->shaderBlit = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/blit.glsl"));
+					graphicsDispatch->shaderDepth = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/depth.glsl"));
+					graphicsDispatch->shaderGBuffer = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/gBuffer.glsl"));
+					graphicsDispatch->shaderLighting = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/lighting.glsl"));
+					graphicsDispatch->shaderTranslucent = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/translucent.glsl"));
+					graphicsDispatch->shaderGaussianBlur = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/gaussianBlur.glsl"));
+					graphicsDispatch->shaderSsaoGenerate = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/ssaoGenerate.glsl"));
+					graphicsDispatch->shaderSsaoApply = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/ssaoApply.glsl"));
+					graphicsDispatch->shaderMotionBlur = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/motionBlur.glsl"));
+					graphicsDispatch->shaderBloomGenerate = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/bloomGenerate.glsl"));
+					graphicsDispatch->shaderBloomApply = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/bloomApply.glsl"));
+					graphicsDispatch->shaderLuminanceCollection = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/luminanceCollection.glsl"));
+					graphicsDispatch->shaderLuminanceCopy = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/luminanceCopy.glsl"));
+					graphicsDispatch->shaderFinalScreen = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/finalScreen.glsl"));
+					graphicsDispatch->shaderFxaa = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/fxaa.glsl"));
+					graphicsDispatch->shaderFont = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/font.glsl"));
 				}
 
 				emitRead = emitBuffers[lock.index()];
@@ -1109,14 +1117,11 @@ namespace cage
 		AssetManager *ass = engineAssets();
 		shaderMeshes = (ShaderMesh*)graphicsPrepare->dispatchArena.allocate(sizeof(ShaderMesh) * max, sizeof(uintPtr));
 		if (mesh->getSkeletonBones())
-		{
-			CAGE_ASSERT(mesh->getSkeletonName() == 0 || ass->ready(mesh->getSkeletonName()));
 			shaderArmatures = (Mat3x4*)graphicsPrepare->dispatchArena.allocate(sizeof(Mat3x4) * mesh->getSkeletonBones() * max, sizeof(uintPtr));
-		}
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		{
 			uint32 n = mesh->getTextureName(i);
-			textures[i] = n ? ass->get<assetSchemeIndexTexture, Texture>(n) : nullptr;
+			textures[i] = n ? ass->get<AssetSchemeIndexTexture, Texture>(n) : nullptr;
 		}
 		shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_SKELETON, mesh->getSkeletonBones() > 0 ? CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION : CAGE_SHADER_ROUTINEPROC_SKELETONNOTHING);
 

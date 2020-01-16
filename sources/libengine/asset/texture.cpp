@@ -3,6 +3,7 @@
 #include <cage-core/geometry.h>
 #include <cage-core/config.h>
 #include <cage-core/memory.h>
+#include <cage-core/serialization.h>
 #include <cage-core/assetStructs.h>
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
@@ -19,43 +20,31 @@ namespace cage
 
 		void processLoad(const AssetContext *context, void *schemePointer)
 		{
-			TextureHeader *data = (TextureHeader*)context->originalData;
+			Deserializer des(context->originalData());
+			TextureHeader data;
+			des >> data;
 
-			Texture *tex = nullptr;
-			if (context->assetHolder)
-			{
-				tex = static_cast<Texture*>(context->assetHolder.get());
-				CAGE_ASSERT(tex->getTarget() == data->target, "texture target cannot change");
-				tex->bind();
-			}
+			Holder<Texture> tex = newTexture(data.target);
+			tex->setDebugName(context->textName);
+
+			uint32 bytesSize = data.dimX * data.dimY * data.dimZ * data.bpp;
+			char *values = (char*)des.advance(bytesSize);
+
+			if (data.target == GL_TEXTURE_3D || data.target == GL_TEXTURE_2D_ARRAY)
+				tex->image3d(data.dimX, data.dimY, data.dimZ, data.internalFormat, data.copyFormat, data.copyType, values);
+			else if (data.target == GL_TEXTURE_CUBE_MAP)
+				tex->imageCube(data.dimX, data.dimY, data.internalFormat, data.copyFormat, data.copyType, values, data.stride);
 			else
-			{
-				context->assetHolder = newTexture(data->target).cast<void>();
-				tex = static_cast<Texture*>(context->assetHolder.get());
-				tex->setDebugName(context->textName);
-			}
-			context->returnData = tex;
-
-			char *values = ((char*)context->originalData) + sizeof(TextureHeader);
-
-			{
-				uint32 bytesSize = data->dimX * data->dimY * data->dimZ * data->bpp;
-				CAGE_ASSERT((values + bytesSize) == ((char*)context->originalData + context->originalSize), bytesSize, context->originalSize);
-			}
-
-			if (data->target == GL_TEXTURE_3D || data->target == GL_TEXTURE_2D_ARRAY)
-				tex->image3d(data->dimX, data->dimY, data->dimZ, data->internalFormat, data->copyFormat, data->copyType, values);
-			else if (data->target == GL_TEXTURE_CUBE_MAP)
-				tex->imageCube(data->dimX, data->dimY, data->internalFormat, data->copyFormat, data->copyType, values, data->stride);
-			else
-				tex->image2d(data->dimX, data->dimY, data->internalFormat, data->copyFormat, data->copyType, values);
-			tex->filters(data->filterMin, data->filterMag, data->filterAniso);
-			tex->wraps(data->wrapX, data->wrapY, data->wrapZ);
-			if ((data->flags & TextureFlags::GenerateMipmaps) == TextureFlags::GenerateMipmaps)
+				tex->image2d(data.dimX, data.dimY, data.internalFormat, data.copyFormat, data.copyType, values);
+			tex->filters(data.filterMin, data.filterMag, data.filterAniso);
+			tex->wraps(data.wrapX, data.wrapY, data.wrapZ);
+			if (any(data.flags & TextureFlags::GenerateMipmaps))
 				tex->generateMipmaps();
 
-			tex->animationDuration = data->animationDuration;
-			tex->animationLoop = (data->flags & TextureFlags::AnimationLoop) == TextureFlags::AnimationLoop;
+			tex->animationDuration = data.animationDuration;
+			tex->animationLoop = any(data.flags & TextureFlags::AnimationLoop);
+
+			context->assetHolder = templates::move(tex).cast<void>();
 		}
 	}
 

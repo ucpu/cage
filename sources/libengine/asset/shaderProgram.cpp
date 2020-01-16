@@ -15,21 +15,10 @@ namespace cage
 	{
 		void processLoad(const AssetContext *context, void *schemePointer)
 		{
-			ShaderProgram *shr = nullptr;
-			if (context->assetHolder)
-			{
-				shr = static_cast<ShaderProgram*>(context->assetHolder.get());
-				shr->bind();
-			}
-			else
-			{
-				context->assetHolder = newShaderProgram().cast<void>();
-				shr = static_cast<ShaderProgram*>(context->assetHolder.get());
-				shr->setDebugName(context->textName);
-			}
-			context->returnData = shr;
+			Holder<ShaderProgram> shr = newShaderProgram();
+			shr->setDebugName(context->textName);
 
-			Deserializer des(context->originalData, numeric_cast<uintPtr>(context->originalSize));
+			Deserializer des(context->originalData());
 			uint32 count;
 			des >> count;
 			for (uint32 i = 0; i < count; i++)
@@ -41,6 +30,8 @@ namespace cage
 			}
 			shr->relink();
 			CAGE_ASSERT(des.available() == 0);
+
+			context->assetHolder = templates::move(shr).cast<void>();
 		}
 	}
 

@@ -18,8 +18,8 @@ namespace cage
 
 	CAGE_API Holder<TextPack> newTextPack();
 
-	CAGE_API AssetScheme genAssetSchemeTextPack(const uint32 threadIndex);
-	static const uint32 assetSchemeIndexTextPack = 2;
+	CAGE_API AssetScheme genAssetSchemeTextPack();
+	static const uint32 AssetSchemeIndexTextPack = 2;
 }
 
 #endif // guard_textPack_h_B436B597745C461DAA266CE6FBBE10D1
