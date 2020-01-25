@@ -788,6 +788,8 @@ namespace cage
 
 			Holder<void> get(uint32 assetName, uint32 scheme, uintPtr typeId, bool throwOnInvalidScheme) const
 			{
+				//ScopeLock<Mutex> lock(mutex); // debug
+
 				CAGE_ASSERT(typeId != 0);
 				PublicIndex &index = *publicIndex;
 				auto it = index.find(assetName);

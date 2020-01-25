@@ -15,7 +15,7 @@ namespace cage
 {
 	aabb getBoxForRenderMesh(uint32 name)
 	{
-		Mesh *m = engineAssets()->tryGet<AssetSchemeIndexMesh, Mesh>(name);
+		Holder<Mesh> m = engineAssets()->tryGet<AssetSchemeIndexMesh, Mesh>(name);
 		if (m)
 			return m->getBoundingBox();
 		return aabb();
@@ -23,7 +23,7 @@ namespace cage
 
 	aabb getBoxForRenderObject(uint32 name)
 	{
-		RenderObject *o = engineAssets()->tryGet<AssetSchemeIndexRenderObject, RenderObject>(name);
+		Holder<RenderObject> o = engineAssets()->tryGet<AssetSchemeIndexRenderObject, RenderObject>(name);
 		if (!o)
 			return aabb();
 		aabb res;
@@ -36,12 +36,12 @@ namespace cage
 	{
 		AssetManager *ass = engineAssets();
 		{
-			Mesh *m = ass->tryGet<AssetSchemeIndexMesh, Mesh>(name);
+			Holder<Mesh> m = ass->tryGet<AssetSchemeIndexMesh, Mesh>(name);
 			if (m)
 				return m->getBoundingBox();
 		}
 		{
-			RenderObject *o = ass->tryGet<AssetSchemeIndexRenderObject, RenderObject>(name);
+			Holder<RenderObject> o = ass->tryGet<AssetSchemeIndexRenderObject, RenderObject>(name);
 			if (o)
 				return getBoxForRenderObject(name);
 		}

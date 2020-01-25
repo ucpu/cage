@@ -1,10 +1,11 @@
+#include <vector>
+
 namespace cage
 {
 	struct ShaderConfig
 	{
-		uint32 shaderRoutines[CAGE_SHADER_MAX_ROUTINES];
+		uint32 shaderRoutines[CAGE_SHADER_MAX_ROUTINES] = { m };
 
-		ShaderConfig();
 		void set(uint32 name, uint32 value);
 	};
 
@@ -20,7 +21,7 @@ namespace cage
 	struct Objects
 	{
 		ShaderConfig shaderConfig;
-		struct ShaderMesh
+		struct UniMesh
 		{
 			mat4 mvpMat;
 			mat4 mvpPrevMat;
@@ -28,20 +29,18 @@ namespace cage
 			Mat3x4 mMat;
 			vec4 color;
 			vec4 aniTexFrames;
-		} *shaderMeshes;
-		Mat3x4 *shaderArmatures;
-		Texture *textures[MaxTexturesCountPerMaterial];
-		Mesh *const mesh;
-		Objects *next;
-		uint32 count;
-		const uint32 max;
-		Objects(Mesh *mesh, uint32 max);
+		};
+		std::vector<UniMesh> uniMeshes;
+		std::vector<Mat3x4> uniArmatures;
+		Holder<Texture> textures[MaxTexturesCountPerMaterial];
+		const Holder<Mesh> mesh;
+		Objects(Holder<Mesh> mesh, uint32 max);
 	};
 
 	struct Lights
 	{
 		ShaderConfig shaderConfig;
-		struct ShaderLight
+		struct UniLight
 		{
 			mat4 shadowMat;
 			mat4 mvpMat;
@@ -49,10 +48,8 @@ namespace cage
 			vec4 position;
 			vec4 direction;
 			vec4 attenuation; // + exponent
-		} *shaderLights;
-		Lights *next;
-		uint32 count;
-		const uint32 max;
+		};
+		std::vector<UniLight> uniLights;
 		const sint32 shadowmap;
 		const LightTypeEnum lightType;
 		Lights(LightTypeEnum lightType, sint32 shadowmap, uint32 max);
@@ -61,31 +58,27 @@ namespace cage
 	struct Translucent
 	{
 		Objects object;
-		Lights *firstLight, *lastLight;
-		Translucent *next;
-		Translucent(Mesh *mesh);
+		std::vector<Holder<Lights>> lights;
+		Translucent(Holder<Mesh> mesh);
 	};
 
 	struct Texts
 	{
 		struct Render
 		{
+			std::vector<uint32> glyphs;
 			Font::FormatStruct format;
 			mat4 transform;
 			vec3 color;
-			uint32 *glyphs;
-			uint32 count;
-			Render *next;
-			Render();
-		} *firtsRender, *lastRender;
-		Font *font;
-		Texts *next;
-		Texts();
+		};
+		std::vector<Holder<Render>> renders;
+		const Holder<Font> font;
+		Texts(Holder<Font> font);
 	};
 
 	struct RenderPass : public CameraEffects
 	{
-		struct ShaderViewport
+		struct UniViewport
 		{
 			mat4 vpInv;
 			vec4 eyePos;
@@ -93,33 +86,26 @@ namespace cage
 			vec4 viewport;
 			vec4 ambientLight;
 			vec4 ambientDirectionalLight;
-		} shaderViewport;
-		Objects *firstOpaque, *lastOpaque;
-		Lights *firstLight, *lastLight;
-		Translucent *firstTranslucent, *lastTranslucent;
-		Texts *firstText, *lastText;
-		RenderPass *next;
-		Texture *targetTexture;
+		} uniViewport;
+		std::vector<Holder<Objects>> opaques;
+		std::vector<Holder<Lights>> lights;
+		std::vector<Holder<Translucent>> translucents;
+		std::vector<Holder<Texts>> texts;
+		Texture *targetTexture = nullptr;
 		mat4 view;
 		mat4 proj;
 		mat4 viewProj;
-		uintPtr entityId;
-		sint32 targetShadowmap; // 0 = window (or texture); positive = 2d shadowmap; negative = cube shadowmap
-		uint32 shadowmapResolution;
-		uint32 clearFlags;
-		uint32 vpX, vpY, vpW, vpH;
-		RenderPass();
+		uintPtr entityId = 0;
+		sint32 targetShadowmap = 0; // 0 = window (or texture); positive = 2d shadowmap; negative = cube shadowmap
+		uint32 shadowmapResolution = 0;
+		uint32 clearFlags = 0;
+		uint32 vpX = 0, vpY = 0, vpW = 0, vpH = 0;
 	};
 
 	struct GraphicsDispatch
 	{
-		Mesh *meshSquare, *meshSphere, *meshCone;
-		ShaderProgram *shaderVisualizeColor, *shaderVisualizeDepth, *shaderVisualizeMonochromatic, *shaderVisualizeVelocity;
-		ShaderProgram *shaderAmbient, *shaderBlit, *shaderDepth, *shaderGBuffer, *shaderLighting, *shaderTranslucent;
-		ShaderProgram *shaderGaussianBlur, *shaderSsaoGenerate, *shaderSsaoApply, *shaderMotionBlur, *shaderBloomGenerate, *shaderBloomApply, *shaderLuminanceCollection, *shaderLuminanceCopy, *shaderFinalScreen, *shaderFxaa;
-		ShaderProgram *shaderFont;
-		uint32 windowWidth, windowHeight;
-		RenderPass *firstRenderPass, *lastRenderPass;
+		std::vector<Holder<RenderPass>> renderPasses;
+		uint32 windowWidth = 0, windowHeight = 0;
 	};
 
 	extern GraphicsDispatch *graphicsDispatch;

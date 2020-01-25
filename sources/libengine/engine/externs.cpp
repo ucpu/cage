@@ -75,7 +75,6 @@ namespace cage
 	}
 
 	EngineCreateConfig::EngineCreateConfig() :
-		graphicsEmitMemory(1024 * 1024 * 32), graphicsDispatchMemory(1024 * 1024 * 32), soundEmitMemory(1024 * 1024 * 8),
 		entities(nullptr), assets(nullptr), gui(nullptr), soundContext(nullptr), speaker(nullptr)
 	{}
 }

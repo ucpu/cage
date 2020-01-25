@@ -37,17 +37,27 @@ namespace cage
 		}
 
 		template<uint32 Scheme, class T>
-		T *tryGet(uint32 assetName) const
+		Holder<T> tryGet(uint32 assetName) const
 		{
-			// todo actually return the holder
-			return get_(assetName, Scheme, reinterpret_cast<uintPtr>(&detail::assetClassId<T>), false).template cast<T>().get();
+			return get_(assetName, Scheme, reinterpret_cast<uintPtr>(&detail::assetClassId<T>), false).template cast<T>();
 		}
 
 		template<uint32 Scheme, class T>
-		T *get(uint32 assetName) const
+		[[deprecated]] T *tryGetRaw(uint32 assetName) const
 		{
-			// todo actually return the holder
-			return get_(assetName, Scheme, reinterpret_cast<uintPtr>(&detail::assetClassId<T>), true).template cast<T>().get();
+			return tryGet<Scheme, T>(assetName).get();
+		}
+
+		template<uint32 Scheme, class T>
+		Holder<T> get(uint32 assetName) const
+		{
+			return get_(assetName, Scheme, reinterpret_cast<uintPtr>(&detail::assetClassId<T>), true).template cast<T>();
+		}
+
+		template<uint32 Scheme, class T>
+		[[deprecated]] T *getRaw(uint32 assetName) const
+		{
+			return get<Scheme, T>(assetName).get();
 		}
 
 		// end thread-safe methods

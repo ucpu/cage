@@ -48,7 +48,7 @@ namespace cage
 	void ImageItem::assign(const GuiImageComponent &value)
 	{
 		Image = value;
-		texture = hierarchy->impl->assetMgr->tryGet<AssetSchemeIndexTexture, Texture>(value.textureName);
+		texture = hierarchy->impl->assetMgr->tryGetRaw<AssetSchemeIndexTexture, Texture>(value.textureName);
 	}
 
 	void ImageItem::apply(const GuiImageFormatComponent &f)

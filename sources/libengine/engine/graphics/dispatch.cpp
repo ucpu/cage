@@ -2,6 +2,8 @@
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
 #include <cage-core/config.h>
+#include <cage-core/assetManager.h>
+#include <cage-core/hashString.h>
 
 #define CAGE_EXPORT
 #include <cage-core/core/macro/api.h>
@@ -16,7 +18,6 @@
 #include "graphics.h"
 #include "ssaoPoints.h"
 
-#include <vector>
 #include <map>
 #include <set>
 
@@ -29,10 +30,11 @@ namespace cage
 		struct ShadowmapBuffer
 		{
 		private:
-			uint32 width;
-			uint32 height;
+			uint32 width = 0;
+			uint32 height = 0;
 		public:
 			Holder<Texture> texture;
+
 			void resize(uint32 w, uint32 h)
 			{
 				if (w == width && h == height)
@@ -46,7 +48,8 @@ namespace cage
 					texture->image2d(w, h, GL_DEPTH_COMPONENT16);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
-			ShadowmapBuffer(uint32 target) : width(0), height(0)
+
+			ShadowmapBuffer(uint32 target)
 			{
 				CAGE_ASSERT(target == GL_TEXTURE_CUBE_MAP || target == GL_TEXTURE_2D);
 				texture = newTexture(target);
@@ -68,9 +71,11 @@ namespace cage
 
 		struct VisualizableTexture
 		{
-			Texture *tex;
+			Texture *tex = nullptr;
 			VisualizableTextureModeEnum visualizableTextureMode;
-			VisualizableTexture(Texture *tex, VisualizableTextureModeEnum vtm) : tex(tex), visualizableTextureMode(vtm) {}
+
+			VisualizableTexture(Texture *tex, VisualizableTextureModeEnum vtm) : tex(tex), visualizableTextureMode(vtm)
+			{}
 		};
 
 		struct SsaoShader
@@ -101,9 +106,6 @@ namespace cage
 		{
 			Holder<Texture> luminanceCollectionTexture; // w * h
 			Holder<Texture> luminanceAccumulationTexture; // 1 * 1
-
-			CameraSpecificData() : width(0), height(0), cameraEffects(CameraEffectsFlags::None)
-			{}
 
 			void update(uint32 w, uint32 h, CameraEffectsFlags ce)
 			{
@@ -145,18 +147,18 @@ namespace cage
 			}
 
 		private:
-			uint32 width;
-			uint32 height;
-			CameraEffectsFlags cameraEffects;
+			uint32 width = 0;
+			uint32 height = 0;
+			CameraEffectsFlags cameraEffects = CameraEffectsFlags::None;
 		};
 
 		struct UboCache
 		{
 			// double buffered ring buffer of uniform buffers :D
 			std::vector<Holder<UniformBuffer>> data;
-			uint32 current, last, prev;
+			uint32 current = 0, last = 0, prev = 0;
 
-			UboCache() : current(0), last(0), prev(0)
+			UboCache()
 			{
 				data.reserve(200);
 				data.resize(10);
@@ -191,6 +193,12 @@ namespace cage
 
 		struct GraphicsDispatchHolders
 		{
+			Holder<Mesh> meshSquare, meshSphere, meshCone;
+			Holder<ShaderProgram> shaderVisualizeColor, shaderVisualizeDepth, shaderVisualizeMonochromatic, shaderVisualizeVelocity;
+			Holder<ShaderProgram> shaderAmbient, shaderBlit, shaderDepth, shaderGBuffer, shaderLighting, shaderTranslucent;
+			Holder<ShaderProgram> shaderGaussianBlur, shaderSsaoGenerate, shaderSsaoApply, shaderMotionBlur, shaderBloomGenerate, shaderBloomApply, shaderLuminanceCollection, shaderLuminanceCopy, shaderFinalScreen, shaderFxaa;
+			Holder<ShaderProgram> shaderFont;
+
 			Holder<FrameBuffer> gBufferTarget;
 			Holder<FrameBuffer> renderTarget;
 			Holder<Texture> albedoTexture;
@@ -217,23 +225,23 @@ namespace cage
 		struct GraphicsDispatchImpl : public GraphicsDispatch, private GraphicsDispatchHolders
 		{
 		public:
-			uint32 drawCalls;
-			uint32 drawPrimitives;
+			uint32 drawCalls = 0;
+			uint32 drawPrimitives = 0;
 
 		private:
-			uint32 frameIndex;
-			uint32 lastGBufferWidth;
-			uint32 lastGBufferHeight;
-			CameraEffectsFlags lastCameraEffects;
+			uint32 frameIndex = 0;
+			uint32 lastGBufferWidth = 0;
+			uint32 lastGBufferHeight = 0;
+			CameraEffectsFlags lastCameraEffects = CameraEffectsFlags::None;
 
-			bool lastTwoSided;
-			bool lastDepthTest;
-			bool lastDepthWrite;
+			bool lastTwoSided = false;
+			bool lastDepthTest = false;
+			bool lastDepthWrite = false;
 			
-			Texture *texSource;
-			Texture *texTarget;
+			Texture *texSource = nullptr;
+			Texture *texTarget = nullptr;
 
-			static void applyShaderRoutines(ShaderConfig *c, ShaderProgram *s)
+			static void applyShaderRoutines(const ShaderConfig *c, const Holder<ShaderProgram> &s)
 			{
 				s->uniform(CAGE_SHADER_UNI_ROUTINES, c->shaderRoutines, CAGE_SHADER_MAX_ROUTINES);
 				CAGE_CHECK_GL_ERROR_DEBUG();
@@ -314,6 +322,12 @@ namespace cage
 				useDisposableUbo(bindIndex, &data, sizeof(T));
 			}
 
+			template<class T>
+			void useDisposableUbo(uint32 bindIndex, const std::vector<T> &data)
+			{
+				useDisposableUbo(bindIndex, data.data(), numeric_cast<uint32>(sizeof(T) * data.size()));
+			}
+
 			void bindGBufferTextures()
 			{
 				const uint32 tius[] = { CAGE_SHADER_TEXTURE_ALBEDO, CAGE_SHADER_TEXTURE_SPECIAL, CAGE_SHADER_TEXTURE_NORMAL, CAGE_SHADER_TEXTURE_COLOR, CAGE_SHADER_TEXTURE_DEPTH };
@@ -332,11 +346,11 @@ namespace cage
 				}
 			}
 
-			void gaussianBlur(Holder<Texture> &texData, Holder<Texture> &texHelper, uint32 mipmapLevel = 0)
+			void gaussianBlur(const Holder<Texture> &texData, const Holder<Texture> &texHelper, uint32 mipmapLevel = 0)
 			{
 				shaderGaussianBlur->bind();
 				shaderGaussianBlur->uniform(1, (int)mipmapLevel);
-				auto blur = [&](Holder<Texture> &tex1, Holder<Texture> &tex2, const vec2 &direction)
+				auto blur = [&](const Holder<Texture> &tex1, const Holder<Texture> &tex2, const vec2 &direction)
 				{
 					tex1->bind();
 					renderTarget->colorTexture(0, tex2.get(), mipmapLevel);
@@ -362,30 +376,30 @@ namespace cage
 				std::swap(texSource, texTarget);
 			}
 
-			void renderDispatch(Objects *obj)
+			void renderDispatch(const Objects *obj)
 			{
-				renderDispatch(obj->mesh, obj->count);
+				renderDispatch(obj->mesh, numeric_cast<uint32>(obj->uniMeshes.size()));
 			}
 
-			void renderDispatch(Mesh *mesh, uint32 count)
+			void renderDispatch(const Holder<Mesh> &mesh, uint32 count)
 			{
 				mesh->dispatch(count);
 				drawCalls++;
 				drawPrimitives += count * mesh->getPrimitivesCount();
 			}
 
-			void RenderObject(Objects *obj, ShaderProgram *shr)
+			void RenderObject(const Objects *obj, const Holder<ShaderProgram> &shr)
 			{
 				RenderObject(obj, shr, obj->mesh->getFlags());
 			}
 
-			void RenderObject(Objects *obj, ShaderProgram *shr, MeshRenderFlags flags)
+			void RenderObject(const Objects *obj, const Holder<ShaderProgram> &shr, MeshRenderFlags flags)
 			{
 				applyShaderRoutines(&obj->shaderConfig, shr);
-				useDisposableUbo(CAGE_SHADER_UNIBLOCK_MESHES, obj->shaderMeshes, sizeof(Objects::ShaderMesh) * obj->count);
-				if (obj->shaderArmatures)
+				useDisposableUbo(CAGE_SHADER_UNIBLOCK_MESHES, obj->uniMeshes);
+				if (!obj->uniArmatures.empty())
 				{
-					useDisposableUbo(CAGE_SHADER_UNIBLOCK_ARMATURES, obj->shaderArmatures, sizeof(Mat3x4) * obj->count * obj->mesh->getSkeletonBones());
+					useDisposableUbo(CAGE_SHADER_UNIBLOCK_ARMATURES, obj->uniArmatures);
 					shr->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, obj->mesh->getSkeletonBones());
 				}
 				obj->mesh->bind();
@@ -410,7 +424,7 @@ namespace cage
 								tius[i] = CAGE_SHADER_TEXTURE_ALBEDO + i;
 								break;
 							}
-							texs[i] = obj->textures[i];
+							texs[i] = obj->textures[i].get();
 						}
 						else
 						{
@@ -424,100 +438,101 @@ namespace cage
 				renderDispatch(obj);
 			}
 
-			void renderOpaque(RenderPass *pass)
+			void renderOpaque(const RenderPass *pass)
 			{
 				OPTICK_EVENT("opaque");
-				ShaderProgram *shr = pass->targetShadowmap ? shaderDepth : shaderGBuffer;
+				const Holder<ShaderProgram> &shr = pass->targetShadowmap ? shaderDepth : shaderGBuffer;
 				shr->bind();
-				for (Objects *o = pass->firstOpaque; o; o = o->next)
-					RenderObject(o, shr);
+				for (const Holder<Objects> &o : pass->opaques)
+					RenderObject(o.get(), shr);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
-			void renderLighting(RenderPass *pass)
+			void renderLighting(const RenderPass *pass)
 			{
 				OPTICK_EVENT("lighting");
-				ShaderProgram *shr = shaderLighting;
+				const Holder<ShaderProgram> &shr = shaderLighting;
 				shr->bind();
-				for (Lights *l = pass->firstLight; l; l = l->next)
+				for (const Holder<Lights> &l : pass->lights)
 				{
 					applyShaderRoutines(&l->shaderConfig, shr);
-					Mesh *mesh = nullptr;
+					Holder<Mesh> mesh;
 					switch (l->lightType)
 					{
 					case LightTypeEnum::Directional:
-						mesh = meshSquare;
+						mesh = meshSquare.share();
 						glCullFace(GL_BACK);
 						break;
 					case LightTypeEnum::Spot:
-						mesh = meshCone;
+						mesh = meshCone.share();
 						glCullFace(GL_FRONT);
 						break;
 					case LightTypeEnum::Point:
-						mesh = meshSphere;
+						mesh = meshSphere.share();
 						glCullFace(GL_FRONT);
 						break;
 					default:
 						CAGE_THROW_CRITICAL(Exception, "invalid light type");
 					}
 					bindShadowmap(l->shadowmap);
-					useDisposableUbo(CAGE_SHADER_UNIBLOCK_LIGHTS, l->shaderLights, sizeof(Lights::ShaderLight) * l->count);
+					useDisposableUbo(CAGE_SHADER_UNIBLOCK_LIGHTS, l->uniLights);
 					mesh->bind();
-					renderDispatch(mesh, l->count);
+					renderDispatch(mesh, numeric_cast<uint32>(l->uniLights.size()));
 				}
 				glCullFace(GL_BACK);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
-			void renderTranslucent(RenderPass *pass)
+			void renderTranslucent(const RenderPass *pass)
 			{
 				OPTICK_EVENT("translucent");
-				ShaderProgram *shr = shaderTranslucent;
+				const Holder<ShaderProgram> &shr = shaderTranslucent;
 				shr->bind();
-				for (Translucent *t = pass->firstTranslucent; t; t = t->next)
+				for (const Holder<Translucent> &t : pass->translucents)
 				{
 					{ // render ambient object
 						glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA); // assume premultiplied alpha
 						uint32 tmp = CAGE_SHADER_ROUTINEPROC_LIGHTFORWARDBASE;
-						std::swap(tmp, t->object.shaderConfig.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE]);
+						uint32 &orig = const_cast<uint32&>(t->object.shaderConfig.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE]);
+						std::swap(tmp, orig);
 						RenderObject(&t->object, shr);
-						std::swap(tmp, t->object.shaderConfig.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE]);
+						std::swap(tmp, orig);
 					}
 
-					if (t->firstLight)
+					if (!t->lights.empty())
 					{ // render lights on the object
 						glBlendFunc(GL_ONE, GL_ONE); // assume premultiplied alpha
-						for (Lights *l = t->firstLight; l; l = l->next)
+						for (const Holder<Lights> &l : t->lights)
 						{
 							applyShaderRoutines(&l->shaderConfig, shr);
 							bindShadowmap(l->shadowmap);
-							useDisposableUbo(CAGE_SHADER_UNIBLOCK_LIGHTS, l->shaderLights, sizeof(Lights::ShaderLight) * l->count);
-							renderDispatch(t->object.mesh, l->count);
+							useDisposableUbo(CAGE_SHADER_UNIBLOCK_LIGHTS, l->uniLights);
+							renderDispatch(t->object.mesh, numeric_cast<uint32>(l->uniLights.size()));
 						}
 					}
 				}
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
-			void renderTexts(RenderPass *pass)
+			void renderTexts(const RenderPass *pass)
 			{
 				OPTICK_EVENT("texts");
-				for (Texts *t = pass->firstText; t; t = t->next)
+				for (const Holder<Texts> &t : pass->texts)
 				{
-					t->font->bind(meshSquare, shaderFont);
-					for (Texts::Render *r = t->firtsRender; r; r = r->next)
+					t->font->bind(meshSquare.get(), shaderFont.get());
+					for (const Holder<Texts::Render> &r : t->renders)
 					{
 						shaderFont->uniform(0, r->transform);
 						shaderFont->uniform(4, r->color);
-						t->font->render(r->glyphs, r->count, r->format);
-						drawCalls += (r->count + CAGE_SHADER_MAX_CHARACTERS - 1) / CAGE_SHADER_MAX_CHARACTERS;
-						drawPrimitives += r->count * 2;
+						t->font->render(r->glyphs.data(), numeric_cast<uint32>(r->glyphs.size()), r->format);
+						drawCalls += numeric_cast<uint32>(r->glyphs.size() + CAGE_SHADER_MAX_CHARACTERS - 1) / CAGE_SHADER_MAX_CHARACTERS;
+						drawPrimitives += numeric_cast<uint32>(r->glyphs.size()) * 2;
 					}
 				}
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
-			void renderCameraPass(RenderPass *pass)
+			void renderCameraPass(const RenderPass *pass)
 			{
 				OPTICK_EVENT("camera pass");
 
@@ -539,7 +554,7 @@ namespace cage
 				}
 			}
 
-			void renderCameraOpaque(RenderPass *pass)
+			void renderCameraOpaque(const RenderPass *pass)
 			{
 				OPTICK_EVENT("deferred");
 
@@ -572,7 +587,7 @@ namespace cage
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
-			void renderCameraEffectsOpaque(RenderPass *pass, CameraSpecificData &cs)
+			void renderCameraEffectsOpaque(const RenderPass *pass, CameraSpecificData &cs)
 			{
 				OPTICK_EVENT("effects opaque");
 
@@ -622,7 +637,7 @@ namespace cage
 				}
 
 				// ambient light
-				if ((pass->shaderViewport.ambientLight + pass->shaderViewport.ambientDirectionalLight) != vec4())
+				if ((pass->uniViewport.ambientLight + pass->uniViewport.ambientDirectionalLight) != vec4())
 				{
 					shaderAmbient->bind();
 					if (any(pass->effects & CameraEffectsFlags::AmbientOcclusion))
@@ -684,53 +699,53 @@ namespace cage
 				}
 			}
 
-			void renderCameraTransparencies(RenderPass *pass)
+			void renderCameraTransparencies(const RenderPass *pass)
 			{
 				OPTICK_EVENT("transparencies");
 
-				if (!!pass->firstTranslucent || !!pass->firstText)
+				if (pass->translucents.empty() && pass->texts.empty())
+					return;
+
+				if (texSource != colorTexture.get())
 				{
-					if (texSource != colorTexture.get())
-					{
-						shaderBlit->bind();
-						renderEffect();
-					}
-					CAGE_ASSERT(texSource == colorTexture.get());
-					CAGE_ASSERT(texTarget == intermediateTexture.get());
-
-					renderTarget->colorTexture(0, colorTexture.get());
-					renderTarget->depthTexture(depthTexture.get());
-					renderTarget->activeAttachments(1);
-					renderTarget->checkStatus();
-					CAGE_CHECK_GL_ERROR_DEBUG();
-
-					setDepthTest(true, true);
-					glEnable(GL_BLEND);
-					CAGE_CHECK_GL_ERROR_DEBUG();
-
-					renderTranslucent(pass);
-
-					setDepthTest(true, false);
-					setTwoSided(true);
-					glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-					CAGE_CHECK_GL_ERROR_DEBUG();
-
-					renderTexts(pass);
-
-					setDepthTest(false, false);
-					setTwoSided(false);
-					glDisable(GL_BLEND);
-					activeTexture(CAGE_SHADER_TEXTURE_COLOR);
-					CAGE_CHECK_GL_ERROR_DEBUG();
-
-					renderTarget->depthTexture(nullptr);
-					renderTarget->activeAttachments(1);
-					meshSquare->bind();
-					bindGBufferTextures();
+					shaderBlit->bind();
+					renderEffect();
 				}
+				CAGE_ASSERT(texSource == colorTexture.get());
+				CAGE_ASSERT(texTarget == intermediateTexture.get());
+
+				renderTarget->colorTexture(0, colorTexture.get());
+				renderTarget->depthTexture(depthTexture.get());
+				renderTarget->activeAttachments(1);
+				renderTarget->checkStatus();
+				CAGE_CHECK_GL_ERROR_DEBUG();
+
+				setDepthTest(true, true);
+				glEnable(GL_BLEND);
+				CAGE_CHECK_GL_ERROR_DEBUG();
+
+				renderTranslucent(pass);
+
+				setDepthTest(true, false);
+				setTwoSided(true);
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				CAGE_CHECK_GL_ERROR_DEBUG();
+
+				renderTexts(pass);
+
+				setDepthTest(false, false);
+				setTwoSided(false);
+				glDisable(GL_BLEND);
+				activeTexture(CAGE_SHADER_TEXTURE_COLOR);
+				CAGE_CHECK_GL_ERROR_DEBUG();
+
+				renderTarget->depthTexture(nullptr);
+				renderTarget->activeAttachments(1);
+				meshSquare->bind();
+				bindGBufferTextures();
 			}
 
-			void renderCameraEffectsFinal(RenderPass *pass, CameraSpecificData &cs)
+			void renderCameraEffectsFinal(const RenderPass *pass, CameraSpecificData &cs)
 			{
 				OPTICK_EVENT("effects final");
 
@@ -798,7 +813,7 @@ namespace cage
 				}
 			}
 
-			void renderShadowPass(RenderPass *pass)
+			void renderShadowPass(const RenderPass *pass)
 			{
 				OPTICK_EVENT("shadow pass");
 
@@ -811,20 +826,20 @@ namespace cage
 				glClear(GL_DEPTH_BUFFER_BIT);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
-				ShaderProgram *shr = shaderDepth;
+				const Holder<ShaderProgram> &shr = shaderDepth;
 				shr->bind();
-				for (Objects *o = pass->firstOpaque; o; o = o->next)
-					RenderObject(o, shr, o->mesh->getFlags() | MeshRenderFlags::DepthWrite);
-				for (Translucent *o = pass->firstTranslucent; o; o = o->next)
+				for (const Holder<Objects> &o : pass->opaques)
+					RenderObject(o.get(), shr, o->mesh->getFlags() | MeshRenderFlags::DepthWrite);
+				for (const Holder<Translucent> &o : pass->translucents)
 					RenderObject(&o->object, shr, o->object.mesh->getFlags() | MeshRenderFlags::DepthWrite);
 
 				glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
-			void renderPass(RenderPass *pass)
+			void renderPass(const RenderPass *pass)
 			{
-				useDisposableUbo(CAGE_SHADER_UNIBLOCK_VIEWPORT, pass->shaderViewport);
+				useDisposableUbo(CAGE_SHADER_UNIBLOCK_VIEWPORT, pass->uniViewport);
 				viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
 				glEnable(GL_DEPTH_TEST);
 				glEnable(GL_SCISSOR_TEST);
@@ -906,10 +921,8 @@ namespace cage
 			}
 
 		public:
-			explicit GraphicsDispatchImpl(const EngineCreateConfig &config) : drawCalls(0), drawPrimitives(0), frameIndex(0), lastGBufferWidth(0), lastGBufferHeight(0), lastCameraEffects(CameraEffectsFlags::None), lastTwoSided(false), lastDepthTest(false)
-			{
-				detail::memset(static_cast<GraphicsDispatch*>(this), 0, sizeof(GraphicsDispatch));
-			}
+			explicit GraphicsDispatchImpl(const EngineCreateConfig &config)
+			{}
 
 			void initialize()
 			{
@@ -960,6 +973,35 @@ namespace cage
 				if (windowWidth == 0 || windowHeight == 0)
 					return;
 
+				AssetManager *ass = engineAssets();
+				if (!ass->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/cage.pack")) || !ass->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/shader/engine/engine.pack")))
+					return;
+
+				meshSquare = ass->get<AssetSchemeIndexMesh, Mesh>(HashString("cage/mesh/square.obj"));
+				meshSphere = ass->get<AssetSchemeIndexMesh, Mesh>(HashString("cage/mesh/sphere.obj"));
+				meshCone = ass->get<AssetSchemeIndexMesh, Mesh>(HashString("cage/mesh/cone.obj"));
+				shaderVisualizeColor = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/visualize/color.glsl"));
+				shaderVisualizeDepth = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/visualize/depth.glsl"));
+				shaderVisualizeMonochromatic = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/visualize/monochromatic.glsl"));
+				shaderVisualizeVelocity = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/visualize/velocity.glsl"));
+				shaderAmbient = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/ambient.glsl"));
+				shaderBlit = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/blit.glsl"));
+				shaderDepth = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/depth.glsl"));
+				shaderGBuffer = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/gBuffer.glsl"));
+				shaderLighting = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/lighting.glsl"));
+				shaderTranslucent = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/translucent.glsl"));
+				shaderGaussianBlur = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/gaussianBlur.glsl"));
+				shaderSsaoGenerate = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/ssaoGenerate.glsl"));
+				shaderSsaoApply = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/ssaoApply.glsl"));
+				shaderMotionBlur = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/motionBlur.glsl"));
+				shaderBloomGenerate = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/bloomGenerate.glsl"));
+				shaderBloomApply = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/bloomApply.glsl"));
+				shaderLuminanceCollection = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/luminanceCollection.glsl"));
+				shaderLuminanceCopy = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/luminanceCopy.glsl"));
+				shaderFinalScreen = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/finalScreen.glsl"));
+				shaderFxaa = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/fxaa.glsl"));
+				shaderFont = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/font.glsl"));
+
 				if (!shaderBlit)
 				{
 					glClear(GL_COLOR_BUFFER_BIT);
@@ -985,7 +1027,7 @@ namespace cage
 				{ // prepare all render targets
 					uint32 maxW = windowWidth, maxH = windowHeight;
 					CameraEffectsFlags cameraEffects = CameraEffectsFlags::None;
-					for (RenderPass *renderPass = firstRenderPass; renderPass; renderPass = renderPass->next)
+					for (const Holder<RenderPass> &renderPass : renderPasses)
 					{
 						cameraEffects |= renderPass->effects;
 						if (renderPass->targetTexture)
@@ -1035,9 +1077,9 @@ namespace cage
 					std::set<uintPtr> camerasToDestroy;
 					for (auto &cs : cameras)
 						camerasToDestroy.insert(cs.first);
-					for (RenderPass *pass = firstRenderPass; pass; pass = pass->next)
+					for (const Holder<RenderPass> &pass : renderPasses)
 					{
-						renderPass(pass);
+						renderPass(pass.get());
 						CAGE_CHECK_GL_ERROR_DEBUG();
 						camerasToDestroy.erase(pass->entityId);
 					}

@@ -170,6 +170,7 @@ namespace cage
 
 			void graphicsPrepareFinalizeStage()
 			{
+				graphicsPrepareFinalize();
 				assets->unloadCustomThread(graphicsPrepareThread().threadIndex);
 			}
 

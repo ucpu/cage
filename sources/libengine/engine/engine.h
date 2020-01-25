@@ -4,6 +4,7 @@ namespace cage
 {
 	void graphicsPrepareCreate(const EngineCreateConfig &config);
 	void graphicsPrepareDestroy();
+	void graphicsPrepareFinalize();
 	void graphicsPrepareEmit(uint64 time);
 	void graphicsPrepareTick(uint64 time);
 

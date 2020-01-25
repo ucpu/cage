@@ -51,9 +51,6 @@ namespace cage
 
 	struct CAGE_API EngineCreateConfig
 	{
-		uintPtr graphicsEmitMemory;
-		uintPtr graphicsDispatchMemory;
-		uintPtr soundEmitMemory;
 		EntityManagerCreateConfig *entities;
 		AssetManagerCreateConfig *assets;
 		GuiCreateConfig *gui;

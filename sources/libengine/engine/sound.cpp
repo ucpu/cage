@@ -1,6 +1,5 @@
 #include <cage-core/core.h>
 #include <cage-core/math.h>
-#include <cage-core/memory.h>
 #include <cage-core/entities.h>
 #include <cage-core/assetManager.h>
 #include <cage-core/hashString.h>
@@ -16,6 +15,7 @@
 #include "../sound/utilities.h"
 
 #include <vector>
+#include <map>
 
 namespace cage
 {
@@ -27,6 +27,7 @@ namespace cage
 		{
 			TransformComponent transform, transformHistory;
 			SoundComponent sound;
+			uintPtr id;
 
 			EmitSound()
 			{
@@ -38,6 +39,7 @@ namespace cage
 		{
 			TransformComponent transform, transformHistory;
 			ListenerComponent listener;
+			uintPtr id;
 
 			EmitListener()
 			{
@@ -49,42 +51,37 @@ namespace cage
 		{
 			Holder<MixingBus> bus;
 			Holder<MixingFilter> filter;
-			SoundPrepareImpl *data;
-			EmitSound *sound;
-			EmitListener *listener;
+			Holder<SoundSource> source;
+			SoundPrepareImpl *const data;
+			EmitListener listener;
+			EmitSound sound;
 
-			Mix(SoundPrepareImpl *data) : data(data), sound(nullptr), listener(nullptr) {};
+			explicit Mix(SoundPrepareImpl *data) : data(data)
+			{};
 
-			void prepare(EmitSound *sound, EmitListener *listener)
+			void prepare(const EmitListener &listener, const EmitSound &sound)
 			{
-				CAGE_ASSERT(!!sound == !!listener);
-				if (bus)
-					bus->clear();
-				else
-				{
-					bus = newMixingBus(cage::engineSound());
-					filter = newMixingFilter(cage::engineSound());
-					filter->execute.bind<Mix, &Mix::exe>(this);
-				}
 				this->sound = sound;
 				this->listener = listener;
-				if (!sound)
-					return;
-				CAGE_ASSERT(sound->sound.input == nullptr || sound->sound.name == 0, sound->sound.input, sound->sound.name, "sound may only have one source");
-				if (sound->sound.input)
+				CAGE_ASSERT(sound.sound.input == nullptr || sound.sound.name == 0, sound.sound.input, sound.sound.name, "sound may only have one source");
+				source.clear();
+				bus = newMixingBus(cage::engineSound()); // recreating new bus will ensure that any potential previous connections are removed
+				filter = newMixingFilter(cage::engineSound());
+				filter->execute.bind<Mix, &Mix::exe>(this);
+				if (sound.sound.input)
 				{ // direct bus input
-					sound->sound.input->addOutput(bus.get());
+					sound.sound.input->addOutput(bus.get());
 				}
 				else
 				{ // asset input
 					AssetManager *ass = engineAssets();
-					SoundSource *snd = ass->get<AssetSchemeIndexSoundSource, SoundSource>(sound->sound.name);
-					if (!snd)
+					source = ass->get<AssetSchemeIndexSoundSource, SoundSource>(sound.sound.name);
+					if (!source)
 						return;
-					snd->addOutput(bus.get());
+					source->addOutput(bus.get());
 				}
-				if (listener->listener.output)
-					bus->addOutput(listener->listener.output);
+				if (listener.listener.output)
+					bus->addOutput(listener.listener.output);
 				else
 					bus->addOutput(engineEffectsMixer());
 				filter->setBus(bus.get());
@@ -95,25 +92,20 @@ namespace cage
 
 		struct Emit
 		{
-			MemoryArenaGrowing<MemoryAllocatorPolicyLinear<>, MemoryConcurrentPolicyNone> emitMemory;
-			MemoryArena emitArena;
-
-			std::vector<EmitSound*> voices;
-			std::vector<EmitListener*> listeners;
+			std::vector<EmitListener> listeners;
+			std::vector<EmitSound> voices;
 
 			uint64 time;
 			bool fresh;
 
-			explicit Emit(const EngineCreateConfig &config) : emitMemory(config.soundEmitMemory), emitArena(&emitMemory), time(0), fresh(false)
+			explicit Emit(const EngineCreateConfig &config) : time(0), fresh(false)
 			{
-				voices.reserve(256);
 				listeners.reserve(4);
+				voices.reserve(256);
 			}
 
 			~Emit()
-			{
-				emitArena.flush();
-			}
+			{}
 		};
 
 		struct SoundPrepareImpl
@@ -123,9 +115,11 @@ namespace cage
 			Emit *emitRead, *emitWrite;
 			Holder<SwapBufferGuard> swapController;
 
-			std::vector<Holder<Mix>> mixers;
-			std::vector<float> soundMixBuffer;
+			// listener -> sound -> mix
+			typedef std::map<uintPtr, std::map<uintPtr, Holder<Mix>>> Mixers; // todo use combined key and unordered_map that can be reserved
+			Mixers mixers;
 
+			std::vector<float> soundMixBuffer;
 			InterpolationTimingCorrector itc;
 			uint64 emitTime;
 			uint64 dispatchTime;
@@ -133,7 +127,6 @@ namespace cage
 
 			explicit SoundPrepareImpl(const EngineCreateConfig &config) : emitBufferA(config), emitBufferB(config), emitBufferC(config), emitBuffers{ &emitBufferA, &emitBufferB, &emitBufferC }, emitRead(nullptr), emitWrite(nullptr), emitTime(0), dispatchTime(0)
 			{
-				mixers.reserve(256);
 				soundMixBuffer.resize(10000);
 				{
 					SwapBufferGuardCreateConfig cfg(3);
@@ -159,59 +152,64 @@ namespace cage
 				emitWrite = emitBuffers[lock.index()];
 				ClearOnScopeExit resetEmitWrite(emitWrite);
 				emitWrite->fresh = true;
-				emitWrite->voices.clear();
 				emitWrite->listeners.clear();
-				emitWrite->emitArena.flush();
+				emitWrite->voices.clear();
 				emitWrite->time = time;
-
-				// emit voices
-				for (Entity *e : SoundComponent::component->entities())
-				{
-					EmitSound *c = emitWrite->emitArena.createObject<EmitSound>();
-					c->transform = e->value<TransformComponent>(TransformComponent::component);
-					if (e->has(TransformComponent::componentHistory))
-						c->transformHistory = e->value<TransformComponent>(TransformComponent::componentHistory);
-					else
-						c->transformHistory = c->transform;
-					c->sound = e->value<SoundComponent>(SoundComponent::component);
-					emitWrite->voices.push_back(c);
-				}
 
 				// emit listeners
 				for (Entity *e : ListenerComponent::component->entities())
 				{
-					EmitListener *c = emitWrite->emitArena.createObject<EmitListener>();
-					c->transform = e->value<TransformComponent>(TransformComponent::component);
+					EmitListener c;
+					c.transform = e->value<TransformComponent>(TransformComponent::component);
 					if (e->has(TransformComponent::componentHistory))
-						c->transformHistory = e->value<TransformComponent>(TransformComponent::componentHistory);
+						c.transformHistory = e->value<TransformComponent>(TransformComponent::componentHistory);
 					else
-						c->transformHistory = c->transform;
-					c->listener = e->value<ListenerComponent>(ListenerComponent::component);
+						c.transformHistory = c.transform;
+					c.listener = e->value<ListenerComponent>(ListenerComponent::component);
+					c.id = (uintPtr)e;
 					emitWrite->listeners.push_back(c);
+				}
+
+				// emit voices
+				for (Entity *e : SoundComponent::component->entities())
+				{
+					EmitSound c;
+					c.transform = e->value<TransformComponent>(TransformComponent::component);
+					if (e->has(TransformComponent::componentHistory))
+						c.transformHistory = e->value<TransformComponent>(TransformComponent::componentHistory);
+					else
+						c.transformHistory = c.transform;
+					c.sound = e->value<SoundComponent>(SoundComponent::component);
+					c.id = (uintPtr)e;
+					emitWrite->voices.push_back(c);
 				}
 			}
 
 			void postEmit()
 			{
 				OPTICK_EVENT("post emit");
-				uint32 used = 0;
-				for (auto itL : emitRead->listeners)
+				Mixers ms;
+				for (const auto &itL : emitRead->listeners)
 				{
-					for (auto itV : emitRead->voices)
+					for (const auto &itV : emitRead->voices)
 					{
-						if ((itL->listener.sceneMask & itV->sound.sceneMask) == 0)
+						if ((itL.listener.sceneMask & itV.sound.sceneMask) == 0)
 							continue;
-						if (mixers.size() <= used)
+						auto &old = mixers[itL.id][itV.id];
+						if (old)
 						{
-							mixers.resize(used + 1);
-							mixers[used] = detail::systemArena().createHolder<Mix>(this);
+							old->prepare(itL, itV);
+							ms[itL.id][itV.id] = templates::move(old);
 						}
-						mixers[used]->prepare(itV, itL);
-						used++;
+						else
+						{
+							Holder<Mix> n = detail::systemArena().createHolder<Mix>(this);
+							n->prepare(itL, itV);
+							ms[itL.id][itV.id] = templates::move(n);
+						}
 					}
 				}
-				for (uint32 i = used, e = numeric_cast<uint32>(mixers.size()); i < e; i++)
-					mixers[i]->prepare(nullptr, nullptr);
+				std::swap(ms, mixers);
 			}
 
 			void tick(uint64 time)
@@ -244,13 +242,12 @@ namespace cage
 
 		void Mix::exe(const MixingFilterApi &api)
 		{
-			CAGE_ASSERT(sound && listener);
-			vec3 posVoice = interpolate(sound->transformHistory.position, sound->transform.position, data->interFactor);
-			vec3 posListener = interpolate(listener->transformHistory.position, listener->transform.position, data->interFactor);
+			vec3 posVoice = interpolate(sound.transformHistory.position, sound.transform.position, data->interFactor);
+			vec3 posListener = interpolate(listener.transformHistory.position, listener.transform.position, data->interFactor);
 			vec3 diff = posVoice - posListener;
 			real dist = length(diff);
 			vec3 dir = dist > 1e-7 ? normalize(diff) : vec3();
-			vec3 &a = listener->listener.attenuation;
+			const vec3 &a = listener.listener.attenuation;
 			real vol = min(real(1) / (a[0] + a[1] * dist + a[2] * dist * dist), 1);
 			if (vol < 1e-5)
 				return;
@@ -258,25 +255,28 @@ namespace cage
 			if (data->soundMixBuffer.size() < s.frames)
 				data->soundMixBuffer.resize(s.frames);
 			s.buffer = data->soundMixBuffer.data();
-			s.time -= sound->sound.startTime;
+			s.time -= sound.sound.startTime;
 			s.channels = 1;
-			if (listener->listener.dopplerEffect)
+			if (listener.listener.dopplerEffect)
 			{
+				// the Mix filter is now persistent across frames and can therefore have persistent state
+				// this can probably be used to improve the doppler effect
+
 				real scale = 1000000 / controlThread().updatePeriod();
-				vec3 velL = scale * (listener->transformHistory.position - listener->transform.position);
-				vec3 velV = scale * (sound->transformHistory.position - sound->transform.position);
+				vec3 velL = scale * (listener.transformHistory.position - listener.transform.position);
+				vec3 velV = scale * (sound.transformHistory.position - sound.transform.position);
 				real vl = dot(velL, dir);
 				real vv = dot(velV, dir);
-				real doppler = max((listener->listener.speedOfSound + vl) / (listener->listener.speedOfSound + vv), 0);
+				real doppler = max((listener.listener.speedOfSound + vl) / (listener.listener.speedOfSound + vv), 0);
 				s.sampleRate = numeric_cast<uint32>(real(s.sampleRate) * doppler);
-				sint64 ts = numeric_cast<sint64>(1000000 * dist / listener->listener.speedOfSound);
+				sint64 ts = numeric_cast<sint64>(1000000 * dist / listener.listener.speedOfSound);
 				s.time -= ts;
 			}
 			detail::memset(s.buffer, 0, s.frames * sizeof(float));
 			api.input(s);
 			for (uint32 i = 0; i < s.frames; i++)
 				s.buffer[i] *= vol.value;
-			soundPrivat::channelsDirection(s.buffer, api.output.buffer, api.output.channels, s.frames, dir * conjugate(listener->transform.orientation));
+			soundPrivat::channelsDirection(s.buffer, api.output.buffer, api.output.channels, s.frames, dir * conjugate(listener.transform.orientation));
 		}
 
 		SoundPrepareImpl *soundPrepare;

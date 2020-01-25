@@ -40,7 +40,7 @@ namespace cage
 	void RenderableText::Text::apply(const GuiTextFormatComponent &f, GuiImpl *impl)
 	{
 		if (f.font)
-			font = impl->assetMgr->tryGet<AssetSchemeIndexFont, Font>(f.font);
+			font = impl->assetMgr->tryGetRaw<AssetSchemeIndexFont, Font>(f.font);
 		if (f.size.valid())
 			format.size = f.size;
 		if (f.color.valid())
