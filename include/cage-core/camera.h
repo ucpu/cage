@@ -34,15 +34,14 @@ namespace cage
 	struct CAGE_API StereoCameraInput : public transform
 	{
 		vec2 viewportOrigin; // 0 .. 1
-		vec2 viewportSize; // 0 .. 1
+		vec2 viewportSize = vec2(1); // 0 .. 1
 		real aspectRatio;
 		rads fov;
 		real near;
 		real far;
 		real zeroParallaxDistance;
 		real eyeSeparation;
-		bool orthographic;
-		StereoCameraInput();
+		bool orthographic = false;
 	};
 
 	struct CAGE_API StereoCameraOutput

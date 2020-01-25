@@ -33,9 +33,8 @@ namespace cage
 
 	struct CAGE_API CollisionDataCreateConfig
 	{
-		const SpatialDataCreateConfig *spatialConfig;
-		uint32 maxCollisionPairs;
-		CollisionDataCreateConfig();
+		const SpatialDataCreateConfig *spatialConfig = nullptr;
+		uint32 maxCollisionPairs = 100;
 	};
 
 	CAGE_API Holder<CollisionData> newCollisionData(const CollisionDataCreateConfig &config);

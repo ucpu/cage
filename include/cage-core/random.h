@@ -7,7 +7,7 @@ namespace cage
 	{
 		// https://en.wikipedia.org/wiki/Xorshift
 		// xorshift128+
-		uint64 s[2];
+		uint64 s[2] { 0, 0 };
 
 		RandomGenerator();
 		explicit RandomGenerator(uint64 s[2]);

@@ -17,7 +17,7 @@ namespace cage
 	class ConcurrentQueue : private Immovable
 	{
 	public:
-		explicit ConcurrentQueue(uint32 maxItems = m) : maxItems(maxItems), stop(false)
+		explicit ConcurrentQueue(uint32 maxItems = m) : maxItems(maxItems)
 		{
 			mut = newMutex();
 			writer = newConditionalVariableBase();
@@ -147,8 +147,8 @@ namespace cage
 		Holder<Mutex> mut;
 		Holder<ConditionalVariableBase> writer, reader;
 		std::list<T> items;
-		uint32 maxItems;
-		bool stop;
+		uint32 maxItems = m;
+		bool stop = false;
 	};
 }
 

@@ -238,9 +238,6 @@ namespace cage
 		impl->spatial->rebuild();
 	}
 
-	CollisionDataCreateConfig::CollisionDataCreateConfig() : spatialConfig(nullptr), maxCollisionPairs(100)
-	{}
-
 	Holder<CollisionData> newCollisionData(const CollisionDataCreateConfig &config)
 	{
 		return detail::systemArena().createImpl<CollisionData, CollisionDataImpl>(config);

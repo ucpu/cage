@@ -61,17 +61,17 @@ namespace cage
 
 	struct CAGE_API NoiseFunctionCreateConfig
 	{
-		NoiseTypeEnum type;
-		NoiseInterpolationEnum interpolation;
-		NoiseFractalTypeEnum fractalType;
-		NoiseDistanceEnum distance;
-		NoiseOperationEnum operation;
-		uint32 seed;
-		uint32 octaves;
-		real lacunarity;
-		real gain;
-		real frequency;
-		uint8 index0, index1;
+		NoiseTypeEnum type = NoiseTypeEnum::Simplex;
+		NoiseInterpolationEnum interpolation = NoiseInterpolationEnum::Quintic;
+		NoiseFractalTypeEnum fractalType = NoiseFractalTypeEnum::Fbm;
+		NoiseDistanceEnum distance = NoiseDistanceEnum::Euclidean;
+		NoiseOperationEnum operation = NoiseOperationEnum::None;
+		uint32 seed = 0;
+		uint32 octaves = 0;
+		real lacunarity = 2;
+		real gain = 0.5;
+		real frequency = 1;
+		uint8 index0 = 0, index1 = 1;
 
 		NoiseFunctionCreateConfig(uint32 seed = 1337);
 	};

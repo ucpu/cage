@@ -107,7 +107,7 @@ namespace cage
 			void attach(EventLinker *d, sint32 order);
 			void detach();
 			void logAllNames();
-			EventLinker *p, *n;
+			EventLinker *p = nullptr, *n = nullptr;
 		private:
 			void unlink();
 			bool valid() const;

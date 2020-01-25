@@ -229,9 +229,6 @@ namespace cage
 
 	namespace detail
 	{
-		LoggerInfo::LoggerInfo() : component(""), file(nullptr), function(nullptr), time(0), createThreadId(0), currentThreadId(0), severity(SeverityEnum::Critical), line(0), continuous(false), debug(false)
-		{}
-
 		Logger *getApplicationLog()
 		{
 			static ApplicationLog *centralLogInstance = new ApplicationLog(); // this leak is intentional

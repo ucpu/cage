@@ -5,13 +5,11 @@ namespace cage
 {
 	namespace detail
 	{
-		template<class T>
-#ifdef CAGE_SYSTEM_WINDOWS
-		GCHL_API_IMPORT
+#ifdef _MSC_VER
+		template<class T> GCHL_API_IMPORT char assetClassId;
 #else
-		extern
-#endif
-		char assetClassId;
+		template<class T> extern char assetClassId;
+#endif // _MSC_VER
 	}
 
 	class CAGE_API AssetManager : private Immovable
@@ -79,13 +77,11 @@ namespace cage
 
 	struct CAGE_API AssetManagerCreateConfig
 	{
-		string assetsFolderName;
-		uint64 maintenancePeriod;
-		uint64 listenerPeriod;
-		uint32 threadsMaxCount;
-		uint32 schemesMaxCount;
-
-		AssetManagerCreateConfig();
+		string assetsFolderName = "assets.zip";
+		uint64 maintenancePeriod = 25000;
+		uint64 listenerPeriod = 100000;
+		uint32 threadsMaxCount = 5;
+		uint32 schemesMaxCount = 50;
 	};
 
 	CAGE_API Holder<AssetManager> newAssetManager(const AssetManagerCreateConfig &config);

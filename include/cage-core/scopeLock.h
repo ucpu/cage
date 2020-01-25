@@ -61,7 +61,7 @@ namespace cage
 		}
 
 	private:
-		T *ptr;
+		T *ptr = nullptr;
 
 		friend class ConditionalVariableBase;
 	};

@@ -30,7 +30,7 @@ namespace cage
 		struct StringBase
 		{
 			// constructors
-			StringBase() : current(0)
+			StringBase()
 			{
 				data[current] = 0;
 			}
@@ -392,7 +392,7 @@ namespace cage
 
 		private:
 			char data[N + 1];
-			uint32 current;
+			uint32 current = 0;
 
 			template<uint32 M>
 			friend struct StringBase;

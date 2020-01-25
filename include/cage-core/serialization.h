@@ -21,10 +21,10 @@ namespace cage
 	private:
 		explicit Serializer(MemoryBuffer *buffer, void *data, uintPtr offset, uintPtr size);
 
-		MemoryBuffer *buffer;
-		void *data;
-		uintPtr offset; // current position in the buffer
-		uintPtr size; // max size of the buffer
+		MemoryBuffer *buffer = nullptr;
+		void *data = nullptr;
+		uintPtr offset = 0; // current position in the buffer
+		uintPtr size = 0; // max size of the buffer
 	};
 
 	struct CAGE_API Deserializer
@@ -45,9 +45,9 @@ namespace cage
 	private:
 		explicit Deserializer(const void *data, uintPtr offset, uintPtr size);
 
-		const void *data;
-		uintPtr offset; // current position in the buffer
-		uintPtr size; // max size of the buffer
+		const void *data = nullptr;
+		uintPtr offset = 0; // current position in the buffer
+		uintPtr size = 0; // max size of the buffer
 	};
 
 	// general serialization

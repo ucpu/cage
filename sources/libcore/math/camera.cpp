@@ -167,9 +167,6 @@ namespace cage
 		}
 	}
 
-	StereoCameraInput::StereoCameraInput() : viewportSize(1), orthographic(false)
-	{}
-
 	StereoCameraOutput stereoCamera(const StereoCameraInput &input, StereoModeEnum stereoMode, StereoEyeEnum eye)
 	{
 		real viewportX = input.viewportOrigin[0];

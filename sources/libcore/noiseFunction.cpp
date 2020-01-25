@@ -199,7 +199,7 @@ namespace cage
 		impl->evaluate(count, positions, results);
 	}
 
-	NoiseFunctionCreateConfig::NoiseFunctionCreateConfig(uint32 seed) : seed(seed), type(NoiseTypeEnum::Simplex), interpolation(NoiseInterpolationEnum::Quintic), fractalType(NoiseFractalTypeEnum::Fbm), distance(NoiseDistanceEnum::Euclidean), operation(NoiseOperationEnum::None), octaves(0), lacunarity(2), gain(0.5), frequency(1), index0(0), index1(1)
+	NoiseFunctionCreateConfig::NoiseFunctionCreateConfig(uint32 seed) : seed(seed)
 	{}
 
 	Holder<NoiseFunction> newNoiseFunction(const NoiseFunctionCreateConfig &config)

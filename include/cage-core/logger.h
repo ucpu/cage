@@ -9,17 +9,16 @@ namespace cage
 		{
 			string message;
 			string currentThreadName;
-			const char *component;
-			const char *file;
-			const char *function;
-			uint64 time;
-			uint64 createThreadId;
-			uint64 currentThreadId;
-			uint32 line;
-			SeverityEnum severity;
-			bool continuous;
-			bool debug;
-			LoggerInfo();
+			const char *component = "";
+			const char *file = nullptr;
+			const char *function = nullptr;
+			uint64 time = 0;
+			uint64 createThreadId = 0;
+			uint64 currentThreadId = 0;
+			uint32 line = 0;
+			SeverityEnum severity = SeverityEnum::Critical;
+			bool continuous = false;
+			bool debug = false;
 		};
 	}
 

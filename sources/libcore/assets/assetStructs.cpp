@@ -21,12 +21,12 @@ namespace cage
 		}
 	}
 
-	AssetContext::AssetContext(uint32 realName) : realName(realName), aliasName(0), assetFlags(0)
+	AssetContext::AssetContext(uint32 realName) : realName(realName)
 	{
 		textName = stringizer() + "<" + realName + ">";
 	}
 
-	AssetScheme::AssetScheme() : schemePointer(nullptr), threadIndex(m)
+	AssetScheme::AssetScheme()
 	{
 		decompress.bind<&defaultDecompress>();
 	}

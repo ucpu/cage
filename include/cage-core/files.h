@@ -5,16 +5,16 @@ namespace cage
 {
 	struct CAGE_API FileMode
 	{
-		explicit FileMode(bool read, bool write) : read(read), write(write), textual(false), append(false)
+		explicit FileMode(bool read, bool write) : read(read), write(write)
 		{}
 
 		bool valid() const;
 		string mode() const;
 
-		bool read;
-		bool write;
-		bool textual;
-		bool append;
+		bool read = false;
+		bool write = false;
+		bool textual = false;
+		bool append = false;
 	};
 
 	class CAGE_API File : private Immovable

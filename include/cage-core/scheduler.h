@@ -14,14 +14,13 @@ namespace cage
 
 	struct CAGE_API ScheduleCreateConfig
 	{
-		ScheduleCreateConfig();
-		detail::StringBase<64> name;
+		detail::StringBase<64> name = "<unnamed>";
 		Delegate<void()> action;
-		uint64 delay; // used for all types of schedules
-		uint64 period; // used for periodic schedules only
-		ScheduleTypeEnum type;
-		sint32 priority; // higher priority is run earlier or more often
-		uint32 maxSteadyPeriods; // when the schedule is not managing by this many runs, reset its timer (valid for steady periodic schedules only)
+		uint64 delay = 0; // used for all types of schedules
+		uint64 period = 1000; // used for periodic schedules only
+		ScheduleTypeEnum type = ScheduleTypeEnum::Once;
+		sint32 priority = 0; // higher priority is run earlier or more often
+		uint32 maxSteadyPeriods = 3; // when the schedule is not managing by this many runs, reset its timer (valid for steady periodic schedules only)
 	};
 
 	class CAGE_API Schedule : private Immovable
@@ -52,8 +51,7 @@ namespace cage
 
 	struct CAGE_API SchedulerCreateConfig
 	{
-		SchedulerCreateConfig();
-		uint64 maxSleepDuration;
+		uint64 maxSleepDuration = 1000000;
 	};
 
 	class CAGE_API Scheduler : private Immovable

@@ -28,7 +28,7 @@ namespace cage
 
 	CAGE_API Holder<DirectoryList> newDirectoryList(const string &path);
 
-	class CAGE_API Filesystem : private Immovable
+	class [[deprecated]] CAGE_API Filesystem : private Immovable
 	{
 	public:
 		void changeDir(const string &path);
@@ -42,7 +42,7 @@ namespace cage
 		void remove(const string &path);
 	};
 
-	CAGE_API Holder<Filesystem> newFilesystem();
+	[[deprecated]] CAGE_API Holder<Filesystem> newFilesystem();
 }
 
 #endif // guard_fileutils_h_yesxrt92851637ojnuhg

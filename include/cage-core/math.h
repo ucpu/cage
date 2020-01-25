@@ -14,9 +14,9 @@ namespace cage
 {
 	struct CAGE_API real
 	{
-		float value;
+		float value = 0;
 
-		inline real() : value(0) {}
+		inline real() {}
 #define GCHL_GENERATE(TYPE) inline real (TYPE other) : value((float)other) {}
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, float, double));
 #undef GCHL_GENERATE
@@ -46,8 +46,8 @@ namespace cage
 
 		static rads parse(const string &str);
 		inline bool valid() const { return value.valid(); }
-		inline static rads Full() { return rads(real::Pi().value * 2); };
-		inline static rads Nan() { return rads(real::Nan()); };
+		inline static rads Full() { return rads(real::Pi().value * 2); }
+		inline static rads Nan() { return rads(real::Nan()); }
 		friend struct real;
 		friend struct degs;
 	};
@@ -62,8 +62,8 @@ namespace cage
 
 		static degs parse(const string &str);
 		inline bool valid() const { return value.valid(); }
-		inline static degs Full() { return degs(360); };
-		inline static degs Nan() { return degs(real::Nan()); };
+		inline static degs Full() { return degs(360); }
+		inline static degs Nan() { return degs(real::Nan()); }
 		friend struct real;
 		friend struct rads;
 	};

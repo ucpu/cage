@@ -65,7 +65,7 @@ namespace cage
 		template<class T>
 		struct HolderBase
 		{
-			HolderBase() : ptr_(nullptr), data_(nullptr) {}
+			HolderBase() {}
 			explicit HolderBase(T *data, void *ptr, Delegate<void(void*)> deleter) : deleter_(deleter), ptr_(ptr), data_(data) {}
 
 			HolderBase(const HolderBase &) = delete;
@@ -161,8 +161,8 @@ namespace cage
 
 		protected:
 			Delegate<void(void *)> deleter_;
-			void *ptr_; // pointer to deallocate
-			T *data_; // pointer to the object (may differ in case of classes with inheritance)
+			void *ptr_ = nullptr; // pointer to deallocate
+			T *data_ = nullptr; // pointer to the object (may differ in case of classes with inheritance)
 		};
 	}
 
@@ -293,8 +293,8 @@ namespace cage
 				s.fls = &flush<A>;
 				return s;
 			}
-		} *stub;
-		void *inst;
+		} *stub = nullptr;
+		void *inst = nullptr;
 
 	public:
 		MemoryArena() noexcept;

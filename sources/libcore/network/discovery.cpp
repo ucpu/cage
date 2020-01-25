@@ -12,9 +12,6 @@ namespace cage
 {
 	using namespace privat;
 
-	DiscoveryPeer::DiscoveryPeer() : port(0)
-	{}
-
 	namespace
 	{
 		static const uint32 idSize = 64;

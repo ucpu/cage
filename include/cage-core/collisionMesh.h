@@ -28,8 +28,8 @@ namespace cage
 	struct CAGE_API CollisionPair
 	{
 		// triangle indices
-		uint32 a;
-		uint32 b;
+		uint32 a = m;
+		uint32 b = m;
 
 		CollisionPair();
 		CollisionPair(uint32 a, uint32 b);

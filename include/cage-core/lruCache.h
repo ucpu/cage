@@ -14,15 +14,15 @@ namespace cage
 		{
 			Key key;
 			Value value;
-			uint32 p, n;
-			bool valid;
-			Data() : key(), value(), p(m), n(m), valid(false) {}
+			uint32 p = m, n = m;
+			bool valid = false;
+			Data() : key(), value() {}
 		};
 
 		std::vector<Data> data;
 		std::unordered_map<Key, uint32, Hasher> indices;
-		uint32 head;
-		const uint32 capacity;
+		uint32 head = 0;
+		const uint32 capacity = 0;
 
 		void move(uint32 which, uint32 where) // moves _which_ before the _where_
 		{
@@ -37,7 +37,7 @@ namespace cage
 		}
 
 	public:
-		explicit LruCache(uint32 capacity) : head(0), capacity(capacity)
+		explicit LruCache(uint32 capacity) : capacity(capacity)
 		{
 			CAGE_ASSERT(capacity >= 3);
 			clear();

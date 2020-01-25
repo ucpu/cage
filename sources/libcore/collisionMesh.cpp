@@ -306,7 +306,7 @@ namespace cage
 		return tmp;
 	}
 
-	CollisionPair::CollisionPair() : a(m), b(m)
+	CollisionPair::CollisionPair()
 	{}
 
 	CollisionPair::CollisionPair(uint32 a, uint32 b) : a(a), b(b)

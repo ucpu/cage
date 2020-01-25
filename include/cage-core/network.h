@@ -98,9 +98,7 @@ namespace cage
 	{
 		string message;
 		string address;
-		uint16 port;
-
-		DiscoveryPeer();
+		uint16 port = 0;
 	};
 
 	class CAGE_API DiscoveryClient : private Immovable

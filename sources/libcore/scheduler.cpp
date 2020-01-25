@@ -227,9 +227,6 @@ namespace cage
 		};
 	}
 
-	ScheduleCreateConfig::ScheduleCreateConfig() : name("<unnamed>"), delay(0), period(1000), type(ScheduleTypeEnum::Once), priority(0), maxSteadyPeriods(3)
-	{}
-
 	void Schedule::trigger()
 	{
 		ScheduleImpl *impl = (ScheduleImpl*)this;
@@ -344,9 +341,6 @@ namespace cage
 		const ScheduleImpl *impl = (const ScheduleImpl*)this;
 		return impl->stats->runs;
 	}
-
-	SchedulerCreateConfig::SchedulerCreateConfig() : maxSleepDuration(1000000)
-	{}
 
 	void Scheduler::run()
 	{

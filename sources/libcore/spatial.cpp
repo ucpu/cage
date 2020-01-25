@@ -498,9 +498,6 @@ namespace cage
 		impl->rebuild();
 	}
 
-	SpatialDataCreateConfig::SpatialDataCreateConfig() : maxItems(1000 * 100)
-	{}
-
 	Holder<SpatialData> newSpatialData(const SpatialDataCreateConfig &config)
 	{
 		return detail::systemArena().createImpl<SpatialData, SpatialDataImpl>(config);

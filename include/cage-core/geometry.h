@@ -6,14 +6,14 @@ namespace cage
 	struct CAGE_API line
 	{
 		// data
-		vec3 origin;
-		vec3 direction;
-		real minimum;
-		real maximum;
+		vec3 origin = vec3::Nan();
+		vec3 direction = vec3::Nan();
+		real minimum = real::Nan();
+		real maximum = real::Nan();
 
 		// constructors
-		line() : origin(vec3::Nan()), direction(vec3::Nan()), minimum(real::Nan()), maximum(real::Nan()) {};
-		explicit line(vec3 origin, vec3 direction, real minimum, real maximum) : origin(origin), direction(direction), minimum(minimum), maximum(maximum) {};
+		line() {}
+		explicit line(vec3 origin, vec3 direction, real minimum, real maximum) : origin(origin), direction(direction), minimum(minimum), maximum(maximum) {}
 
 		// compound operators
 		line &operator *= (const mat4 &other) { return *this = *this * other; }
@@ -21,14 +21,14 @@ namespace cage
 
 		// binary operators
 		line operator * (const mat4 &other) const;
-		line operator * (const transform &other) const { return *this * mat4(other); };
+		line operator * (const transform &other) const { return *this * mat4(other); }
 
 		// comparison operators
 		bool operator == (const line &other) const { return origin == other.origin && direction == other.direction && minimum == other.minimum && maximum == other.maximum; }
 		bool operator != (const line &other) const { return !(*this == other); }
 
 		// methods
-		bool valid() const { return origin.valid() && direction.valid() && minimum.valid() && maximum.valid(); };
+		bool valid() const { return origin.valid() && direction.valid() && minimum.valid() && maximum.valid(); }
 		bool isPoint() const { return valid() && minimum == maximum; }
 		bool isLine() const { return valid() && !minimum.finite() && !maximum.finite(); }
 		bool isRay() const { return valid() && (minimum.finite() != maximum.finite()); }
@@ -42,13 +42,13 @@ namespace cage
 	struct CAGE_API triangle
 	{
 		// data
-		vec3 vertices[3];
+		vec3 vertices[3] { vec3::Nan(), vec3::Nan(), vec3::Nan() };
 
 		// constructors
-		triangle() : vertices{ vec3::Nan(), vec3::Nan(), vec3::Nan() } {};
-		explicit triangle(const vec3 vertices[3]) : vertices{ vertices[0], vertices[1], vertices[2] } {};
-		explicit triangle(const vec3 &a, const vec3 &b, const vec3 &c) : vertices{ a, b, c } {};
-		explicit triangle(const real coords[9]) : vertices{ vec3(coords[0], coords[1], coords[2]), vec3(coords[3], coords[4], coords[5]), vec3(coords[6], coords[7], coords[8]) } {};
+		triangle() {}
+		explicit triangle(const vec3 vertices[3]) : vertices{ vertices[0], vertices[1], vertices[2] } {}
+		explicit triangle(const vec3 &a, const vec3 &b, const vec3 &c) : vertices{ a, b, c } {}
+		explicit triangle(const real coords[9]) : vertices{ vec3(coords[0], coords[1], coords[2]), vec3(coords[3], coords[4], coords[5]), vec3(coords[6], coords[7], coords[8]) } {}
 
 		// compound operators
 		triangle &operator *= (const mat4 &other) { return *this = *this * other; }
@@ -56,7 +56,7 @@ namespace cage
 
 		// binary operators
 		triangle operator * (const mat4 &other) const;
-		triangle operator * (const transform &other) const { return *this * mat4(other); };
+		triangle operator * (const transform &other) const { return *this * mat4(other); }
 
 		vec3 operator [] (uint32 idx) const { CAGE_ASSERT(idx < 3, "index out of range", idx); return vertices[idx]; }
 		vec3 &operator [] (uint32 idx) { CAGE_ASSERT(idx < 3, "index out of range", idx); return vertices[idx]; }
@@ -77,12 +77,12 @@ namespace cage
 	struct CAGE_API plane
 	{
 		// data
-		vec3 normal;
-		real d;
+		vec3 normal = vec3::Nan();
+		real d = real::Nan();
 
 		// constructors
-		plane() : normal(vec3::Nan()), d(real::Nan()) {};
-		explicit plane(const vec3 &normal, real d) : normal(normal), d(d) {};
+		plane() {}
+		explicit plane(const vec3 &normal, real d) : normal(normal), d(d) {}
 		explicit plane(const vec3 &point, const vec3 &normal);
 		explicit plane(const vec3 &a, const vec3 &b, const vec3 &c);
 		explicit plane(const triangle &other);
@@ -94,26 +94,26 @@ namespace cage
 
 		// binary operators
 		plane operator * (const mat4 &other) const;
-		plane operator * (const transform &other) const { return *this * mat4(other); };
+		plane operator * (const transform &other) const { return *this * mat4(other); }
 
 		// comparison operators
 		bool operator == (const plane &other) const { return d == other.d && normal == other.normal; }
 		bool operator != (const plane &other) const { return !(*this == other); }
 
 		// methods
-		bool valid() const { return d.valid() && normal.valid(); };
+		bool valid() const { return d.valid() && normal.valid(); }
 		plane normalize() const;
 	};
 
 	struct CAGE_API sphere
 	{
 		// data
-		vec3 center;
-		real radius;
+		vec3 center = vec3::Nan();
+		real radius = real::Nan();
 
 		// constructors
-		sphere() : center(vec3::Nan()), radius(real::Nan()) {};
-		explicit sphere(const vec3 &center, real radius) : center(center), radius(radius) {};
+		sphere() {}
+		explicit sphere(const vec3 &center, real radius) : center(center), radius(radius) {}
 		explicit sphere(const triangle &other);
 		explicit sphere(const aabb &other);
 		explicit sphere(const line &other);
@@ -124,7 +124,7 @@ namespace cage
 
 		// binary operators
 		sphere operator * (const mat4 &other) const;
-		sphere operator * (const transform &other) const { return *this * mat4(other); };
+		sphere operator * (const transform &other) const { return *this * mat4(other); }
 
 		// comparison operators
 		bool operator == (const sphere &other) const { return (empty() == other.empty()) || (center == other.center && radius == other.radius); }
@@ -140,14 +140,14 @@ namespace cage
 	struct CAGE_API aabb
 	{
 		// data
-		vec3 a, b;
+		vec3 a = vec3::Nan(), b = vec3::Nan();
 
 		// constructor
-		aabb() : a(vec3::Nan()), b(vec3::Nan()) {}
+		aabb() {}
 		explicit aabb(const vec3 &point) : a(point), b(point) {}
 		explicit aabb(const vec3 &a, const vec3 &b) : a(min(a, b)), b(max(a, b)) {}
-		explicit aabb(const triangle &other) : a(min(min(other[0], other[1]), other[2])), b(max(max(other[0], other[1]), other[2])) {};
-		explicit aabb(const sphere &other) : a(other.center - other.radius), b(other.center + other.radius) {};
+		explicit aabb(const triangle &other) : a(min(min(other[0], other[1]), other[2])), b(max(max(other[0], other[1]), other[2])) {}
+		explicit aabb(const sphere &other) : a(other.center - other.radius), b(other.center + other.radius) {}
 		explicit aabb(const line &other);
 		explicit aabb(const plane &other);
 
@@ -159,14 +159,14 @@ namespace cage
 		// binary operators
 		aabb operator + (const aabb &other) const;
 		aabb operator * (const mat4 &other) const;
-		aabb operator * (const transform &other) const { return *this * mat4(other); };
+		aabb operator * (const transform &other) const { return *this * mat4(other); }
 
 		// comparison operators
 		bool operator == (const aabb &other) const { return (empty() == other.empty()) && (empty() || (a == other.a && b == other.b)); }
 		bool operator != (const aabb &other) const { return !(*this == other); }
 
 		// methods
-		bool valid() const { return a.valid() && b.valid(); };
+		bool valid() const { return a.valid() && b.valid(); }
 		bool empty() const { return !valid(); }
 		real volume() const;
 		real surface() const;
@@ -191,7 +191,7 @@ namespace cage
 	CAGE_API line makeRay(const vec3 &a, const vec3 &b);
 	CAGE_API line makeLine(const vec3 &a, const vec3 &b);
 
-	inline sphere::sphere(const aabb &other) : center(other.center()), radius(other.diagonal() * 0.5) {};
+	inline sphere::sphere(const aabb &other) : center(other.center()), radius(other.diagonal() * 0.5) {}
 
 	CAGE_API bool parallel(const vec3 &dir1, const vec3 &dir2);
 	CAGE_API bool parallel(const line &a, const line &b);

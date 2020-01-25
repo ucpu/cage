@@ -43,10 +43,7 @@ namespace cage
 
 		struct Scheme : public AssetScheme
 		{
-			uintPtr typeId;
-
-			Scheme() : typeId(0)
-			{}
+			uintPtr typeId = 0;
 		};
 
 		enum class StateEnum
@@ -68,11 +65,11 @@ namespace cage
 			MemoryBuffer origData, compData;
 			std::vector<uint32> dependencies;
 			Holder<void> reference; // the deleter is set to a function that will enqueue this asset version for unloading
-			std::atomic<StateEnum> state;
-			uint32 scheme;
+			std::atomic<StateEnum> state{ StateEnum::Initialized };
+			uint32 scheme = m;
 			const uint32 guid;
 
-			Asset(uint32 realName, uint32 guid) : AssetContext(realName), state(StateEnum::Initialized), scheme(m), guid(guid)
+			Asset(uint32 realName, uint32 guid) : AssetContext(realName), guid(guid)
 			{
 				ASS_LOG(3, this, "created");
 			}
@@ -93,20 +90,17 @@ namespace cage
 		struct Versions
 		{
 			std::vector<Holder<Asset>> versions;
-			sint32 refCnt;
-			bool fabricated;
-
-			Versions() : refCnt(0), fabricated(false)
-			{}
+			sint32 refCnt = 0;
+			bool fabricated = false;
 		};
 
 		// reference of one version of an asset for use in the public indices
 		struct Reference
 		{
 			Holder<void> ref;
-			uint32 scheme; // m -> error
+			uint32 scheme = m; // m -> error
 
-			Reference() : scheme(m)
+			Reference()
 			{}
 
 			explicit Reference(const Holder<Asset> &ass) : scheme(ass->state == StateEnum::Error ? m : ass->scheme)
@@ -131,12 +125,9 @@ namespace cage
 		{
 			detail::StringBase<64> textName;
 			Holder<void> holder;
-			uint32 scheme;
-			uint32 realName;
-			CommandEnum type;
-
-			Command() : scheme(m), realName(0), type(CommandEnum::None)
-			{}
+			uint32 scheme = m;
+			uint32 realName = 0;
+			CommandEnum type = CommandEnum::None;
 		};
 
 		typedef std::unordered_map<uint32, Versions> PrivateIndex;
@@ -148,20 +139,20 @@ namespace cage
 		public:
 			Holder<TcpConnection> listener;
 			string listenerAddress;
-			uint16 listenerPort;
+			uint16 listenerPort = 0;
 
 			std::vector<Scheme> schemes;
 			Holder<Mutex> mutex;
 			PrivateIndex privateIndex; // used for owning and managing the assets
 			PublicIndex publicIndices[2];
-			std::atomic<PublicIndex*> publicIndex; // used for accessing the assets from the api
+			std::atomic<PublicIndex*> publicIndex{ nullptr }; // used for accessing the assets from the api
 			std::vector<Asset *> waitingDeps;
 			const string path;
 			const uint64 maintenancePeriod;
 			const uint64 listenerPeriod;
-			uint32 generateName;
-			uint32 assetGuid;
-			std::atomic<bool> stopping, unloaded;
+			uint32 generateName = 0;
+			uint32 assetGuid = 1;
+			std::atomic<bool> stopping{ false }, unloaded{ false };
 
 			ConcurrentQueue<Command> maintenanceQueue;
 			Queue diskLoadingQueue;
@@ -202,7 +193,7 @@ namespace cage
 				}
 			}
 
-			AssetManagerImpl(const AssetManagerCreateConfig &config) : listenerPort(0), publicIndex(&publicIndices[0]), path(findAssetsFolderPath(config)), maintenancePeriod(config.maintenancePeriod), listenerPeriod(config.listenerPeriod), generateName(0), assetGuid(1), stopping(false), unloaded(false)
+			AssetManagerImpl(const AssetManagerCreateConfig &config) : publicIndex(&publicIndices[0]), path(findAssetsFolderPath(config)), maintenancePeriod(config.maintenancePeriod), listenerPeriod(config.listenerPeriod)
 			{
 				CAGE_LOG(SeverityEnum::Info, "assetManager", stringizer() + "using asset path: '" + path + "'");
 				mutex = newMutex();
@@ -921,9 +912,6 @@ namespace cage
 		AssetManagerImpl *impl = (AssetManagerImpl*)this;
 		impl->listen(address, port);
 	}
-
-	AssetManagerCreateConfig::AssetManagerCreateConfig() : assetsFolderName("assets.zip"), maintenancePeriod(25000), listenerPeriod(100000), threadsMaxCount(5), schemesMaxCount(50)
-	{}
 
 	Holder<AssetManager> newAssetManager(const AssetManagerCreateConfig &config)
 	{

@@ -109,7 +109,7 @@ namespace cage
 			}
 
 		private:
-			const bool valid;
+			const bool valid = false;
 			void format(const char *name, const char *var) const;
 		};
 	}
@@ -122,11 +122,11 @@ namespace cage
 		void makeLog();
 		virtual void log();
 
-		const char *file;
-		const char *function;
-		const char *message;
-		uint32 line;
-		SeverityEnum severity;
+		const char *file = nullptr;
+		const char *function = nullptr;
+		const char *message = nullptr;
+		uint32 line = 0;
+		SeverityEnum severity = SeverityEnum::Critical;
 	};
 
 	struct CAGE_API NotImplemented : public Exception
@@ -139,7 +139,7 @@ namespace cage
 	{
 		explicit SystemError(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message, uint32 code) noexcept;
 		virtual void log();
-		uint32 code;
+		uint32 code = 0;
 	};
 
 	CAGE_API uint64 getApplicationTime();

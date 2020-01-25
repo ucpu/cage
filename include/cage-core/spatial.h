@@ -31,8 +31,7 @@ namespace cage
 
 	struct CAGE_API SpatialDataCreateConfig
 	{
-		uint32 maxItems;
-		SpatialDataCreateConfig();
+		uint32 maxItems = 1000 * 100;
 	};
 
 	CAGE_API Holder<SpatialData> newSpatialData(const SpatialDataCreateConfig &config);

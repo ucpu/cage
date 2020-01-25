@@ -9,9 +9,9 @@ namespace cage
 	{
 		detail::StringBase<64> textName;
 		mutable Holder<void> assetHolder;
-		const uint32 realName;
-		uint32 aliasName;
-		uint32 assetFlags;
+		const uint32 realName = 0;
+		uint32 aliasName = 0;
+		uint32 assetFlags = 0;
 
 		AssetContext(uint32 realName);
 		MemoryBuffer &compressedData() const;
@@ -22,8 +22,8 @@ namespace cage
 	{
 		AssetDelegate decompress;
 		AssetDelegate load;
-		void *schemePointer;
-		uint32 threadIndex;
+		void *schemePointer = nullptr;
+		uint32 threadIndex = m;
 
 		AssetScheme();
 	};

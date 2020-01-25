@@ -140,7 +140,7 @@ namespace cage
 
 	namespace privat
 	{
-		SwapBufferLock::SwapBufferLock() : controller_(nullptr), index_(m)
+		SwapBufferLock::SwapBufferLock()
 		{}
 
 		SwapBufferLock::SwapBufferLock(SwapBufferGuard *controller, uint32 index) : controller_(controller), index_(index)
@@ -190,7 +190,7 @@ namespace cage
 		return impl->write();
 	}
 
-	SwapBufferGuardCreateConfig::SwapBufferGuardCreateConfig(uint32 buffersCount) : buffersCount(buffersCount), repeatedReads(false), repeatedWrites(false)
+	SwapBufferGuardCreateConfig::SwapBufferGuardCreateConfig(uint32 buffersCount) : buffersCount(buffersCount)
 	{}
 
 	Holder<SwapBufferGuard> newSwapBufferGuard(const SwapBufferGuardCreateConfig &config)
