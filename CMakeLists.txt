@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.10)
 
 project(cage LANGUAGES CXX C)
 
@@ -36,13 +36,8 @@ if(WIN32)
 else()
 	target_link_libraries(cage-core PRIVATE m pthread)
 endif()
-set_target_properties(cage-core PROPERTIES CXX_VISIBILITY_PRESET hidden)
 cage_ide_category(cage-core cage)
 cage_ide_sort_files(cage-core)
-if(WIN32)
-	target_compile_definitions(cage-core PRIVATE _CRT_SECURE_NO_WARNINGS)
-	target_compile_options(cage-core PUBLIC /wd4251) # 'identifier' : class 'type' needs to have dll-interface to be used by clients of class 'type2'
-endif()
 
 ########
 # CAGE-TEST-CORE
@@ -75,7 +70,6 @@ add_library(cage-engine SHARED ${cage-engine-sources})
 target_include_directories(cage-engine PUBLIC include)
 target_link_libraries(cage-engine PRIVATE libsoundio_shared ogg vorbis vorbisfile glfw)
 target_link_libraries(cage-engine PUBLIC cage-core glad)
-set_target_properties(cage-engine PROPERTIES CXX_VISIBILITY_PRESET hidden)
 cage_ide_category(cage-engine cage)
 cage_ide_sort_files(cage-engine)
 
@@ -89,9 +83,6 @@ target_link_libraries(cage-asset-processor cage-engine IL ILU assimp freetype dr
 cage_ide_category(cage-asset-processor cage)
 cage_ide_sort_files(cage-asset-processor)
 cage_ide_working_dir_in_place(cage-asset-processor)
-if(WIN32)
-	target_compile_definitions(cage-asset-processor PRIVATE _CRT_SECURE_NO_WARNINGS)
-endif()
 
 ########
 # CAGE-ASSET-DATABASE

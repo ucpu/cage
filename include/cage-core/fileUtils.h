@@ -28,7 +28,11 @@ namespace cage
 
 	CAGE_API Holder<DirectoryList> newDirectoryList(const string &path);
 
-	class [[deprecated]] CAGE_API Filesystem : private Immovable
+	class
+		#ifndef __GNUC__
+			[[deprecated]]
+		#endif
+			CAGE_API Filesystem : private Immovable
 	{
 	public:
 		void changeDir(const string &path);

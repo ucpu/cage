@@ -1,51 +1,43 @@
 
-#ifndef CAGE_DEBUG
-#ifndef NDEBUG
+#if !defined(CAGE_DEBUG) && !defined(NDEBUG)
 #define CAGE_DEBUG
 #endif
-#endif
-
 #if defined(CAGE_DEBUG) && defined(NDEBUG)
 #error CAGE_DEBUG and NDEBUG are incompatible
 #endif
 
-#if defined(_WIN32) || defined(__WIN32__)
+#if defined(_WIN32) || defined(__CYGWIN__)
+#define GCHL_API_EXPORT __declspec(dllexport)
+#define GCHL_API_IMPORT __declspec(dllimport)
+#else
+#define GCHL_API_EXPORT __attribute__((visibility("default")))
+#define GCHL_API_IMPORT __attribute__((visibility("default")))
+#endif
 
+#if defined(_WIN32) || defined(__WIN32__)
 #define CAGE_SYSTEM_WINDOWS
-#define GCHL_API_EXPORT _declspec(dllexport)
-#define GCHL_API_IMPORT _declspec(dllimport)
-#if defined (_WIN64)
+#elif defined(linux) || defined(__linux) || defined(__linux__)
+#define CAGE_SYSTEM_LINUX
+#elif defined(__APPLE__)
+#define CAGE_SYSTEM_MAC
+#else
+#error This operating system is not supported
+#endif
+
+#ifdef CAGE_SYSTEM_WINDOWS
+#define CAGE_API_PRIVATE
+#if defined(_WIN64)
 #define CAGE_ARCHITECTURE_64
 #else
 #define CAGE_ARCHITECTURE_32
 #endif
-
-#elif defined(linux) || defined(__linux) || defined(__linux__)
-
-#define CAGE_SYSTEM_LINUX
-#define CAGE_SYSTEM_UNIX
-
-#elif defined(__APPLE__)
-
-#define CAGE_SYSTEM_MAC
-#define CAGE_SYSTEM_UNIX
-
 #else
-
-#error This operating system is not supported
-
-#endif
-
-#ifdef CAGE_SYSTEM_UNIX
-
-#define GCHL_API_EXPORT __attribute__((visibility("default")))
-#define GCHL_API_IMPORT __attribute__((visibility("default")))
+#define CAGE_API_PRIVATE __attribute__((visibility("hidden")))
 #if __x86_64__ || __ppc64__
 #define CAGE_ARCHITECTURE_64
 #else
 #define CAGE_ARCHITECTURE_32
 #endif
-
 #endif
 
 #include "api.h"
@@ -222,11 +214,11 @@
 #define CAGE_REPEAT(count, macro) GCHL_WHEN(count)(GCHL_OBSTRUCT(GCHL_REPEAT)()(GCHL_NUM_DEC(count), macro) GCHL_OBSTRUCT(macro)(count))
 #define GCHL_REPEAT() CAGE_REPEAT
 
-#define CAGE_LIST(count, prefix) GCHL_WHEN(count)(GCHL_OBSTRUCT(GCHL_LIST)()(CAGE_NUM_DEC(count), prefix) GCHL_OBSTRUCT(CAGE_COMMA)(CAGE_NUM_DEC(count)) GCHL_OBSTRUCT(CAGE_JOIN(prefix, count)))
-#define GCHL_LIST() CAGE_LIST
-#define CAGE_LIST_2(count, prefix1, prefix2) GCHL_WHEN(count)(GCHL_OBSTRUCT(GCHL_LIST_2)()(CAGE_NUM_DEC(count), prefix1, prefix2) GCHL_OBSTRUCT(CAGE_COMMA(CAGE_NUM_DEC(count))) GCHL_OBSTRUCT(CAGE_JOIN)(prefix1, count) GCHL_OBSTRUCT(CAGE_JOIN)(prefix2, count))
-#define GCHL_LIST_2() CAGE_LIST_2
+//#define CAGE_LIST(count, prefix) GCHL_WHEN(count)(GCHL_OBSTRUCT(GCHL_LIST)()(CAGE_NUM_DEC(count), prefix) GCHL_OBSTRUCT(CAGE_COMMA)(CAGE_NUM_DEC(count)) GCHL_OBSTRUCT(CAGE_JOIN(prefix, count)))
+//#define GCHL_LIST() CAGE_LIST
+//#define CAGE_LIST_2(count, prefix1, prefix2) GCHL_WHEN(count)(GCHL_OBSTRUCT(GCHL_LIST_2)()(CAGE_NUM_DEC(count), prefix1, prefix2) GCHL_OBSTRUCT(CAGE_COMMA(CAGE_NUM_DEC(count))) GCHL_OBSTRUCT(CAGE_JOIN)(prefix1, count) GCHL_OBSTRUCT(CAGE_JOIN)(prefix2, count))
+//#define GCHL_LIST_2() CAGE_LIST_2
 
-#define GCHL_COMMA_0
-#define GCHL_COMMA_1 ,
-#define GCHL_COMMA(cond) CAGE_JOIN(GCHL_COMMA_, GCHL_BOOL(cond))
+//#define GCHL_COMMA_0
+//#define GCHL_COMMA_1 ,
+//#define GCHL_COMMA(cond) CAGE_JOIN(GCHL_COMMA_, GCHL_BOOL(cond))
