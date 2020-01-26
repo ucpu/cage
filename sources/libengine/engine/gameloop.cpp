@@ -370,20 +370,20 @@ namespace cage
 			void CAGE_JOIN(NAME, Entry)() \
 			{ \
 				try { CAGE_JOIN(NAME, InitializeStage)(); } \
-				GCHL_GENERATE_CATCH(NAME, initialization (engine)) \
+				GCHL_GENERATE_CATCH(NAME, initialization (engine)); \
 				{ ScopeLock<Barrier> l(threadsStateBarier); } \
 				{ ScopeLock<Barrier> l(threadsStateBarier); } \
 				try { CAGE_JOIN(NAME, Thread)().initialize.dispatch(); } \
-				GCHL_GENERATE_CATCH(NAME, initialization (application)) \
+				GCHL_GENERATE_CATCH(NAME, initialization (application)); \
 				{ ScopeLock<Barrier> l(threadsStateBarier); } \
 				try { CAGE_JOIN(NAME, GameloopStage)(); } \
-				GCHL_GENERATE_CATCH(NAME, gameloop) \
+				GCHL_GENERATE_CATCH(NAME, gameloop); \
 				CAGE_JOIN(NAME, StopStage)(); \
 				{ ScopeLock<Barrier> l(threadsStateBarier); } \
 				try { CAGE_JOIN(NAME, Thread)().finalize.dispatch(); } \
-				GCHL_GENERATE_CATCH(NAME, finalization (application)) \
+				GCHL_GENERATE_CATCH(NAME, finalization (application)); \
 				try { CAGE_JOIN(NAME, FinalizeStage)(); } \
-				GCHL_GENERATE_CATCH(NAME, finalization (engine)) \
+				GCHL_GENERATE_CATCH(NAME, finalization (engine)); \
 			}
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE_ENTRY, graphicsPrepare, graphicsDispatch, sound));
 #undef GCHL_GENERATE_ENTRY
@@ -545,7 +545,7 @@ namespace cage
 				{
 					controlThread().initialize.dispatch();
 				}
-				GCHL_GENERATE_CATCH(control, initialization (application))
+				GCHL_GENERATE_CATCH(control, initialization (application));
 
 				CAGE_LOG(SeverityEnum::Info, "engine", "starting engine");
 
@@ -556,7 +556,7 @@ namespace cage
 				{
 					controlGameloopStage();
 				}
-				GCHL_GENERATE_CATCH(control, gameloop)
+				GCHL_GENERATE_CATCH(control, gameloop);
 
 				CAGE_LOG(SeverityEnum::Info, "engine", "engine stopped");
 
@@ -564,7 +564,7 @@ namespace cage
 				{
 					controlThread().finalize.dispatch();
 				}
-				GCHL_GENERATE_CATCH(control, finalization (application))
+				GCHL_GENERATE_CATCH(control, finalization (application));
 
 				CAGE_ASSERT(engineStarted == 3);
 				engineStarted = 4;
@@ -581,7 +581,15 @@ namespace cage
 				{ // unload assets
 					assets->remove(HashString("cage/cage.pack"));
 					assets->remove(assetShaderTier);
-					assets->unloadWait();
+					while (!assets->unloaded())
+					{
+						try
+						{
+							controlThread().unload.dispatch();
+						}
+						GCHL_GENERATE_CATCH(control, unload);
+						threadSleep(2000);
+					}
 				}
 
 				{ // wait for threads to finish

@@ -907,6 +907,12 @@ namespace cage
 		impl->unloadWait();
 	}
 
+	bool AssetManager::unloaded() const
+	{
+		AssetManagerImpl *impl = (AssetManagerImpl*)this;
+		return impl->unloaded;
+	}
+
 	void AssetManager::listen(const string &address, uint16 port)
 	{
 		AssetManagerImpl *impl = (AssetManagerImpl*)this;

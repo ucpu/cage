@@ -2,9 +2,10 @@ namespace cage
 {
 	struct CAGE_API EngineControlThread
 	{
-		EventDispatcher<bool()> initialize;
-		EventDispatcher<bool()> finalize;
-		EventDispatcher<bool()> update;
+		EventDispatcher<bool()> initialize; // called once from engineStart()
+		EventDispatcher<bool()> finalize; // called once from engineStart()
+		EventDispatcher<bool()> update; // periodically called from engineStart()
+		EventDispatcher<bool()> unload; // periodically called from engineFinalize()
 		Scheduler *scheduler();
 		uint64 updatePeriod() const;
 		void updatePeriod(uint64 p);

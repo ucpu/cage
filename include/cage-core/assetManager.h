@@ -63,6 +63,7 @@ namespace cage
 		bool processCustomThread(uint32 threadIndex);
 		void unloadCustomThread(uint32 threadIndex);
 		void unloadWait();
+		bool unloaded() const;
 
 		void listen(const string &address, uint16 port);
 
