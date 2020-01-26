@@ -495,7 +495,7 @@ namespace cage
 				if (!obj->uniArmatures.empty())
 				{
 					uint32 bonesCount = m->getSkeletonBones();
-					Mat3x4 *sa = &obj->uniArmatures[obj->uniMeshes.size() * bonesCount];
+					Mat3x4 *sa = &obj->uniArmatures[(obj->uniMeshes.size() - 1) * bonesCount];
 					CAGE_ASSERT(!e->animatedSkeleton || e->animatedSkeleton->name);
 					bool initialized = false;
 					if (e->animatedSkeleton && m->getSkeletonName())
