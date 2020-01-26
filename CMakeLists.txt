@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.10)
 
 # make cmake find our own provided libraries
 # the libraries provided here should have higher priority than system libraries
@@ -8,9 +8,10 @@ list(INSERT CMAKE_MODULE_PATH 0 "${CAGE_EXTERNALS_MODULE_PATH}")
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(cmake/cage_gen_module.cmake)
 
-# some config
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-set(CMAKE_CXX_STANDARD 14)
+# unset visibility preset
+unset(CMAKE_C_VISIBILITY_PRESET)
+unset(CMAKE_CXX_VISIBILITY_PRESET)
+unset(CMAKE_VISIBILITY_INLINES_HIDDEN)
 
 # ensure that all libraries are distinguishable from system libraries
 set(CMAKE_IMPORT_LIBRARY_PREFIX "${CMAKE_IMPORT_LIBRARY_PREFIX}cage-")
