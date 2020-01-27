@@ -1,10 +1,13 @@
 #ifndef guard_asset_structs_h_5aade310_996b_42c7_8684_2100f6625d36_
 #define guard_asset_structs_h_5aade310_996b_42c7_8684_2100f6625d36_
 
+#include "core.h"
+#include <cage-core/geometry.h>
+
 namespace cage
 {
 	/*
-	struct CAGE_API ShaderProgramHeader
+	struct CAGE_ENGINE_API ShaderProgramHeader
 	{
 	// follows:
 	// number of stages, uint32
@@ -24,7 +27,7 @@ namespace cage
 		AllowDownscale = 1 << 2,
 	};
 
-	struct CAGE_API TextureHeader
+	struct CAGE_ENGINE_API TextureHeader
 	{
 		uint64 animationDuration;
 		TextureFlags flags;
@@ -61,7 +64,7 @@ namespace cage
 		Aux3 = 1 << 7,
 	};
 
-	struct CAGE_API MeshHeader
+	struct CAGE_ENGINE_API MeshHeader
 	{
 		aabb box;
 		MeshDataFlags flags;
@@ -83,7 +86,7 @@ namespace cage
 		bool uvs() const;
 		uint32 vertexSize() const;
 
-		struct CAGE_API MaterialData
+		struct CAGE_ENGINE_API MaterialData
 		{
 			vec4 albedoBase;
 			vec4 specialBase;
@@ -111,7 +114,7 @@ namespace cage
 		// the four bone weights for each vertex must add to one
 	};
 
-	struct CAGE_API SkeletonRigHeader
+	struct CAGE_ENGINE_API SkeletonRigHeader
 	{
 		mat4 globalInverse;
 		uint32 bonesCount;
@@ -122,7 +125,7 @@ namespace cage
 		// array of inverted rest matrices, each mat4
 	};
 
-	struct CAGE_API SkeletalAnimationHeader
+	struct CAGE_ENGINE_API SkeletalAnimationHeader
 	{
 		uint64 duration; // microseconds
 		uint32 skeletonBonesCount;
@@ -142,7 +145,7 @@ namespace cage
 		//   array of scale values, each vec3
 	};
 
-	struct CAGE_API RenderObjectHeader
+	struct CAGE_ENGINE_API RenderObjectHeader
 	{
 		vec3 color;
 		real opacity;
@@ -170,7 +173,7 @@ namespace cage
 		Kerning = 1 << 0,
 	};
 
-	struct CAGE_API FontHeader
+	struct CAGE_ENGINE_API FontHeader
 	{
 		FontFlags flags;
 		vec2 glyphMaxSize; // linear units
@@ -181,7 +184,7 @@ namespace cage
 		uint32 glyphCount;
 		uint32 charCount;
 
-		struct CAGE_API GlyphData
+		struct CAGE_ENGINE_API GlyphData
 		{
 			vec4 texUv;
 			vec2 size; // linear units
@@ -215,7 +218,7 @@ namespace cage
 		LoopAfterEnd = 1 << 1,
 	};
 
-	struct CAGE_API SoundSourceHeader
+	struct CAGE_ENGINE_API SoundSourceHeader
 	{
 		SoundTypeEnum soundType;
 		SoundFlags flags;

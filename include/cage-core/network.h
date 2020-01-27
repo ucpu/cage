@@ -1,16 +1,18 @@
 #ifndef guard_network_h_f311f15d_426e_4077_8b9b_a5ee12e78b39_
 #define guard_network_h_f311f15d_426e_4077_8b9b_a5ee12e78b39_
 
+#include "core.h"
+
 namespace cage
 {
-	struct CAGE_API Disconnected : public Exception
+	struct CAGE_CORE_API Disconnected : public Exception
 	{
 		explicit Disconnected(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept;
 	};
 
 	// tcp
 
-	class CAGE_API TcpConnection : private Immovable
+	class CAGE_CORE_API TcpConnection : private Immovable
 	{
 	public:
 		string address() const; // remote address
@@ -27,9 +29,9 @@ namespace cage
 		void writeLine(const string &line);
 	};
 
-	CAGE_API Holder<TcpConnection> newTcpConnection(const string &address, uint16 port); // blocking
+	CAGE_CORE_API Holder<TcpConnection> newTcpConnection(const string &address, uint16 port); // blocking
 
-	class CAGE_API TcpServer : private Immovable
+	class CAGE_CORE_API TcpServer : private Immovable
 	{
 	public:
 		uint16 port() const; // local port
@@ -38,11 +40,11 @@ namespace cage
 		Holder<TcpConnection> accept(); // non-blocking
 	};
 
-	CAGE_API Holder<TcpServer> newTcpServer(uint16 port); // non-blocking
+	CAGE_CORE_API Holder<TcpServer> newTcpServer(uint16 port); // non-blocking
 
 	// udp
 
-	struct CAGE_API UdpStatistics
+	struct CAGE_CORE_API UdpStatistics
 	{
 		uint64 roundTripDuration;
 		uint64 bytesReceivedTotal, bytesSentTotal, bytesDeliveredTotal;
@@ -56,7 +58,7 @@ namespace cage
 	};
 
 	// low latency, connection-oriented, sequenced and optionally reliable datagram protocol on top of udp
-	class CAGE_API UdpConnection : private Immovable
+	class CAGE_CORE_API UdpConnection : private Immovable
 	{
 	public:
 		// returns size of the first packet queued for reading, if any, and zero otherwise
@@ -81,27 +83,27 @@ namespace cage
 
 	// non-zero timeout will block the caller for up to the specified time to ensure that the connection is established and throw an exception otherwise
 	// zero timeout will return immediately and the connection will be established progressively as you use it
-	CAGE_API Holder<UdpConnection> newUdpConnection(const string &address, uint16 port, uint64 timeout = 3000000);
+	CAGE_CORE_API Holder<UdpConnection> newUdpConnection(const string &address, uint16 port, uint64 timeout = 3000000);
 
-	class CAGE_API UdpServer : private Immovable
+	class CAGE_CORE_API UdpServer : private Immovable
 	{
 	public:
 		// returns empty Holder if no new peer has connected
 		Holder<UdpConnection> accept(); // non-blocking
 	};
 
-	CAGE_API Holder<UdpServer> newUdpServer(uint16 port); // non-blocking
+	CAGE_CORE_API Holder<UdpServer> newUdpServer(uint16 port); // non-blocking
 
 	// discovery
 
-	struct CAGE_API DiscoveryPeer
+	struct CAGE_CORE_API DiscoveryPeer
 	{
 		string message;
 		string address;
 		uint16 port = 0;
 	};
 
-	class CAGE_API DiscoveryClient : private Immovable
+	class CAGE_CORE_API DiscoveryClient : private Immovable
 	{
 	public:
 		void update();
@@ -111,16 +113,16 @@ namespace cage
 		Holder<PointerRange<DiscoveryPeer>> peers() const;
 	};
 
-	CAGE_API Holder<DiscoveryClient> newDiscoveryClient(uint16 listenPort, uint32 gameId);
+	CAGE_CORE_API Holder<DiscoveryClient> newDiscoveryClient(uint16 listenPort, uint32 gameId);
 
-	class CAGE_API DiscoveryServer : private Immovable
+	class CAGE_CORE_API DiscoveryServer : private Immovable
 	{
 	public:
 		void update();
 		string message;
 	};
 
-	CAGE_API Holder<DiscoveryServer> newDiscoveryServer(uint16 listenPort, uint16 gamePort, uint32 gameId);
+	CAGE_CORE_API Holder<DiscoveryServer> newDiscoveryServer(uint16 listenPort, uint16 gamePort, uint32 gameId);
 }
 
 #endif // guard_network_h_f311f15d_426e_4077_8b9b_a5ee12e78b39_

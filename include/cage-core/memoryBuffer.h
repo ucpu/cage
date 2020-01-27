@@ -1,9 +1,11 @@
 #ifndef guard_memoryBuffer_h_10EAF6AFD8624EA4B9E88ECA618A55DD
 #define guard_memoryBuffer_h_10EAF6AFD8624EA4B9E88ECA618A55DD
 
+#include "core.h"
+
 namespace cage
 {
-	struct CAGE_API MemoryBuffer
+	struct CAGE_CORE_API MemoryBuffer
 	{
 		MemoryBuffer(); // no Allocation ctor
 		explicit MemoryBuffer(uintPtr size, uintPtr capacity = 0);
@@ -54,8 +56,8 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_API MemoryBuffer compress(const MemoryBuffer &input);
-		CAGE_API MemoryBuffer decompress(const MemoryBuffer &input, uintPtr outputSize);
+		CAGE_CORE_API MemoryBuffer compress(const MemoryBuffer &input);
+		CAGE_CORE_API MemoryBuffer decompress(const MemoryBuffer &input, uintPtr outputSize);
 	}
 }
 

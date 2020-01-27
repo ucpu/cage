@@ -1,9 +1,11 @@
 #ifndef guard_random_h_623364ED17804404AAC89652473FEBAC
 #define guard_random_h_623364ED17804404AAC89652473FEBAC
 
+#include "core.h"
+
 namespace cage
 {
-	struct CAGE_API RandomGenerator
+	struct CAGE_CORE_API RandomGenerator
 	{
 		// https://en.wikipedia.org/wiki/Xorshift
 		// xorshift128+
@@ -26,7 +28,7 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_API RandomGenerator &getApplicationRandomGenerator();
+		CAGE_CORE_API RandomGenerator &getApplicationRandomGenerator();
 	}
 }
 

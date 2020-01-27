@@ -1,23 +1,25 @@
 #ifndef guard_speakerList_h_m1n5ewqa7r8fuj4
 #define guard_speakerList_h_m1n5ewqa7r8fuj4
 
+#include "core.h"
+
 namespace cage
 {
-	struct CAGE_API SpeakerLayout
+	struct CAGE_ENGINE_API SpeakerLayout
 	{
 		string name;
 		uint32 channels;
 		SpeakerLayout();
 	};
 
-	struct CAGE_API SpeakerSamplerate
+	struct CAGE_ENGINE_API SpeakerSamplerate
 	{
 		uint32 minimum;
 		uint32 maximum;
 		SpeakerSamplerate();
 	};
 
-	class CAGE_API SpeakerDevice : private Immovable
+	class CAGE_ENGINE_API SpeakerDevice : private Immovable
 	{
 	public:
 		string id() const;
@@ -35,7 +37,7 @@ namespace cage
 		PointerRange<const SpeakerSamplerate> samplerates() const;
 	};
 
-	class CAGE_API SpeakerList : private Immovable
+	class CAGE_ENGINE_API SpeakerList : private Immovable
 	{
 	public:
 		uint32 devicesCount() const;
@@ -44,7 +46,7 @@ namespace cage
 		Holder<PointerRange<const SpeakerDevice *>> devices() const;
 	};
 
-	CAGE_API Holder<SpeakerList> newSpeakerList(bool inputs = false);
+	CAGE_ENGINE_API Holder<SpeakerList> newSpeakerList(bool inputs = false);
 }
 
 #endif // guard_speakerList_h_m1n5ewqa7r8fuj4

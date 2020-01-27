@@ -5,7 +5,7 @@
 
 namespace cage
 {
-	class CAGE_API Mutex : private Immovable
+	class CAGE_CORE_API Mutex : private Immovable
 	{
 	public:
 		// locking the same mutex again in the same thread is implementation defined behavior
@@ -14,27 +14,27 @@ namespace cage
 		void unlock();
 	};
 
-	CAGE_API Holder<Mutex> newMutex();
+	CAGE_CORE_API Holder<Mutex> newMutex();
 
-	class CAGE_API Barrier : private Immovable
+	class CAGE_CORE_API Barrier : private Immovable
 	{
 	public:
 		void lock();
 		void unlock(); // does nothing
 	};
 
-	CAGE_API Holder<Barrier> newBarrier(uint32 value);
+	CAGE_CORE_API Holder<Barrier> newBarrier(uint32 value);
 
-	class CAGE_API Semaphore : private Immovable
+	class CAGE_CORE_API Semaphore : private Immovable
 	{
 	public:
 		void lock(); // decrements value
 		void unlock(); // increments value
 	};
 
-	CAGE_API Holder<Semaphore> newSemaphore(uint32 value, uint32 max);
+	CAGE_CORE_API Holder<Semaphore> newSemaphore(uint32 value, uint32 max);
 
-	class CAGE_API ConditionalVariableBase : private Immovable
+	class CAGE_CORE_API ConditionalVariableBase : private Immovable
 	{
 	public:
 		void wait(Mutex *mut);
@@ -44,10 +44,10 @@ namespace cage
 		void broadcast();
 	};
 
-	CAGE_API Holder<ConditionalVariableBase> newConditionalVariableBase();
+	CAGE_CORE_API Holder<ConditionalVariableBase> newConditionalVariableBase();
 
 	// this is a compound class containing both mutex and conditional variable
-	class CAGE_API ConditionalVariable : private Immovable
+	class CAGE_CORE_API ConditionalVariable : private Immovable
 	{
 	public:
 		void lock(); // lock the mutex
@@ -57,9 +57,9 @@ namespace cage
 		void broadcast(); // broadcast the conditional variable without touching the mutex
 	};
 
-	CAGE_API Holder<ConditionalVariable> newConditionalVariable(bool broadcast = false);
+	CAGE_CORE_API Holder<ConditionalVariable> newConditionalVariable(bool broadcast = false);
 
-	class CAGE_API Thread : private Immovable
+	class CAGE_CORE_API Thread : private Immovable
 	{
 	public:
 		uint64 id() const;
@@ -67,15 +67,15 @@ namespace cage
 		void wait();
 	};
 
-	CAGE_API Holder<Thread> newThread(Delegate<void()> func, const string &threadName);
+	CAGE_CORE_API Holder<Thread> newThread(Delegate<void()> func, const string &threadName);
 
-	CAGE_API void setCurrentThreadName(const string &name);
-	CAGE_API string getCurrentThreadName();
+	CAGE_CORE_API void setCurrentThreadName(const string &name);
+	CAGE_CORE_API string getCurrentThreadName();
 
-	CAGE_API uint32 processorsCount(); // return count of threads, that can physically run simultaneously
-	CAGE_API uint64 threadId(); // return id of current thread
-	CAGE_API uint64 processId(); // return id of current process
-	CAGE_API void threadSleep(uint64 micros);
+	CAGE_CORE_API uint32 processorsCount(); // return count of threads, that can physically run simultaneously
+	CAGE_CORE_API uint64 threadId(); // return id of current thread
+	CAGE_CORE_API uint64 processId(); // return id of current process
+	CAGE_CORE_API void threadSleep(uint64 micros);
 }
 
 #endif // guard_concurrent_h_585972b8_5791_4554_b4fa_29342c539280_

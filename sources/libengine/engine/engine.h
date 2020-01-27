@@ -1,4 +1,15 @@
+#ifndef header_guard_engine_h_saf54g4ds4qaqq56q44olpoiu
+#define header_guard_engine_h_saf54g4ds4qaqq56q44olpoiu
+
+#include <cage-core/entities.h>
+#include <cage-core/assetManager.h>
+#include <cage-core/swapBufferGuard.h>
+#include <cage-core/hashString.h>
 #include <cage-core/variableSmoothingBuffer.h>
+
+#include <cage-engine/engine.h>
+
+#include <optick.h>
 
 namespace cage
 {
@@ -50,4 +61,4 @@ namespace cage
 	};
 }
 
-#include <optick.h>
+#endif

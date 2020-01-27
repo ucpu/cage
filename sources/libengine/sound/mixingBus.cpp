@@ -1,12 +1,5 @@
-#include <cage-core/core.h>
-#include <cage-core/math.h>
 #include <cage-core/memory.h>
 #include "private.h"
-
-#define CAGE_EXPORT
-#include <cage-core/core/macro/api.h>
-#include <cage-engine/core.h>
-#include <cage-engine/sound.h>
 
 #include <set>
 

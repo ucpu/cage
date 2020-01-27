@@ -1,5 +1,3 @@
-#define CAGE_EXPORT
-#include <cage-core/core.h>
 #include <cage-core/memory.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS

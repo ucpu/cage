@@ -1,8 +1,8 @@
 
+#include <cage-core/enumerate.h>
+
 #include <vector>
 #include <unordered_map>
-
-#include <cage-core/enumerate.h>
 
 namespace cage
 {

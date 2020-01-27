@@ -1,29 +1,18 @@
-#include <cage-core/core.h>
-#include <cage-core/math.h>
 #include <cage-core/camera.h>
 #include <cage-core/config.h>
-#include <cage-core/entities.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/files.h> // getExecutableName
 #include <cage-core/assetStructs.h>
-#include <cage-core/assetManager.h>
-#include <cage-core/hashString.h>
 #include <cage-core/collisionMesh.h> // for sizeof in defineScheme
 #include <cage-core/textPack.h> // for sizeof in defineScheme
 #include <cage-core/memoryBuffer.h> // for sizeof in defineScheme
 #include <cage-core/threadPool.h>
-#include <cage-core/variableSmoothingBuffer.h>
-#include <cage-core/swapBufferGuard.h>
 #include <cage-core/scheduler.h>
 
-#define CAGE_EXPORT
-#include <cage-core/core/macro/api.h>
-#include <cage-engine/core.h>
 #include <cage-engine/graphics.h>
 #include <cage-engine/window.h>
 #include <cage-engine/sound.h>
 #include <cage-engine/gui.h>
-#include <cage-engine/engine.h>
 #include <cage-engine/engineProfiling.h>
 
 #include "engine.h"

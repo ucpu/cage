@@ -1,3 +1,5 @@
+#include <cage-core/math.h>
+
 namespace cage
 {
 	namespace privat

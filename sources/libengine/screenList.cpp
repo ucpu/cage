@@ -1,11 +1,8 @@
-#include <cage-core/core.h>
 #include <cage-core/pointerRangeHolder.h>
 
-#define CAGE_EXPORT
-#include <cage-core/core/macro/api.h>
-#include <cage-engine/core.h>
-#include "graphics/private.h" // getMonitorId
 #include <cage-engine/screenList.h>
+#include "graphics/private.h" // getMonitorId
+
 #include <GLFW/glfw3.h>
 
 #include <vector>

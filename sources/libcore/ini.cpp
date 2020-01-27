@@ -1,5 +1,3 @@
-#define CAGE_EXPORT
-#include <cage-core/core.h>
 #include <cage-core/memory.h>
 #include <cage-core/files.h>
 #include <cage-core/ini.h>

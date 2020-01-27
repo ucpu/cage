@@ -1,6 +1,8 @@
 #ifndef guard_ini_h_c866b123_b27e_4758_ab8e_702ef8f315de_
 #define guard_ini_h_c866b123_b27e_4758_ab8e_702ef8f315de_
 
+#include "core.h"
+
 /*
 	rules for loading from file:
 	char '#' denotes a comment (to end of line)
@@ -31,7 +33,7 @@
 
 namespace cage
 {
-	class CAGE_API Ini : private Immovable
+	class CAGE_CORE_API Ini : private Immovable
 	{
 	public:
 		uint32 sectionsCount() const;
@@ -80,12 +82,12 @@ namespace cage
 		Holder<PointerRange<string>> cmdArray(char shortName, const string &longName) const;
 	};
 
-	CAGE_API Holder<Ini> newIni();
-	CAGE_API Holder<Ini> newIni(MemoryArena arena);
-	CAGE_API Holder<Ini> newIni(const string &filename);
-	CAGE_API Holder<Ini> newIni(MemoryArena arena, const string &filename);
-	CAGE_API Holder<Ini> newIni(uint32 argc, const char *const args[]);
-	CAGE_API Holder<Ini> newIni(MemoryArena arena, uint32 argc, const char *const args[]);
+	CAGE_CORE_API Holder<Ini> newIni();
+	CAGE_CORE_API Holder<Ini> newIni(MemoryArena arena);
+	CAGE_CORE_API Holder<Ini> newIni(const string &filename);
+	CAGE_CORE_API Holder<Ini> newIni(MemoryArena arena, const string &filename);
+	CAGE_CORE_API Holder<Ini> newIni(uint32 argc, const char *const args[]);
+	CAGE_CORE_API Holder<Ini> newIni(MemoryArena arena, uint32 argc, const char *const args[]);
 }
 
 #endif // guard_ini_h_c866b123_b27e_4758_ab8e_702ef8f315de_

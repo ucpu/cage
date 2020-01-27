@@ -1,5 +1,3 @@
-#define CAGE_EXPORT
-#include <cage-core/core.h>
 #include <cage-core/lineReader.h>
 #include <cage-core/memoryBuffer.h>
 

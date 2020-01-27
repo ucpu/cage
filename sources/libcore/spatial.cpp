@@ -1,10 +1,7 @@
-#define CAGE_EXPORT
-#include <cage-core/core.h>
-#include <cage-core/math.h>
 #include <cage-core/geometry.h>
 #include <cage-core/memory.h>
 #include <cage-core/spatial.h>
-#include <cage-core/ctl/unordered_map.h>
+#include <cage-core/unordered_map.h>
 
 #include <xsimd/xsimd.hpp>
 

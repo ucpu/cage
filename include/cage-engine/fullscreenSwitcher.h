@@ -1,9 +1,11 @@
 #ifndef guard_fullscreen_switcher_h_asg5rt44j4kj456fd
 #define guard_fullscreen_switcher_h_asg5rt44j4kj456fd
 
+#include "core.h"
+
 namespace cage
 {
-	class CAGE_API FullscreenSwitcher : private Immovable
+	class CAGE_ENGINE_API FullscreenSwitcher : private Immovable
 	{
 	public:
 		uint32 keyToggleFullscreen;
@@ -13,7 +15,7 @@ namespace cage
 		void update(bool fullscreen);
 	};
 
-	struct CAGE_API FullscreenSwitcherCreateConfig
+	struct CAGE_ENGINE_API FullscreenSwitcherCreateConfig
 	{
 		string configPrefix;
 		Window *window;
@@ -22,7 +24,7 @@ namespace cage
 		FullscreenSwitcherCreateConfig(bool defaultFullscreen = true);
 	};
 
-	CAGE_API Holder<FullscreenSwitcher> newFullscreenSwitcher(const FullscreenSwitcherCreateConfig &config);
+	CAGE_ENGINE_API Holder<FullscreenSwitcher> newFullscreenSwitcher(const FullscreenSwitcherCreateConfig &config);
 }
 
 #endif // guard_fullscreen_switcher_h_asg5rt44j4kj456fd

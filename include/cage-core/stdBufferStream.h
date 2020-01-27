@@ -1,11 +1,13 @@
 #ifndef guard_bufferStream_h_sadgDS_gfrdskjhgidsajgoa
 #define guard_bufferStream_h_sadgDS_gfrdskjhgidsajgoa
 
+#include "core.h"
+
 #include <iostream>
 
 namespace cage
 {
-	class CAGE_API BufferIStream : protected std::streambuf, public std::istream
+	class CAGE_CORE_API BufferIStream : protected std::streambuf, public std::istream
 	{
 	public:
 		explicit BufferIStream(const void *data, uintPtr size);
@@ -13,7 +15,7 @@ namespace cage
 		uintPtr position() const;
 	};
 
-	class CAGE_API BufferOStream : protected std::streambuf, public std::ostream
+	class CAGE_CORE_API BufferOStream : protected std::streambuf, public std::ostream
 	{
 	public:
 		explicit BufferOStream(MemoryBuffer &buffer);

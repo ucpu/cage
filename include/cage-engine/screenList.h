@@ -1,9 +1,11 @@
 #ifndef guard_screenList_h_q56ew4rk87h64847
 #define guard_screenList_h_q56ew4rk87h64847
 
+#include "core.h"
+
 namespace cage
 {
-	struct CAGE_API ScreenMode
+	struct CAGE_ENGINE_API ScreenMode
 	{
 	public:
 		ivec2 resolution;
@@ -11,7 +13,7 @@ namespace cage
 		ScreenMode();
 	};
 
-	class CAGE_API ScreenDevice : private Immovable
+	class CAGE_ENGINE_API ScreenDevice : private Immovable
 	{
 	public:
 		string id() const;
@@ -23,7 +25,7 @@ namespace cage
 		PointerRange<const ScreenMode> modes() const;
 	};
 
-	class CAGE_API ScreenList : private Immovable
+	class CAGE_ENGINE_API ScreenList : private Immovable
 	{
 	public:
 		uint32 devicesCount() const;
@@ -32,7 +34,7 @@ namespace cage
 		Holder<PointerRange<const ScreenDevice *>> devices() const;
 	};
 
-	CAGE_API Holder<ScreenList> newScreenList();
+	CAGE_ENGINE_API Holder<ScreenList> newScreenList();
 }
 
 #endif // guard_screenList_h_q56ew4rk87h64847

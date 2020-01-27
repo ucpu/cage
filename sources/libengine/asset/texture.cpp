@@ -1,13 +1,8 @@
-#include <cage-core/core.h>
-#include <cage-core/math.h>
-#include <cage-core/geometry.h>
 #include <cage-core/config.h>
 #include <cage-core/memory.h>
 #include <cage-core/serialization.h>
 #include <cage-core/assetStructs.h>
-#define CAGE_EXPORT
-#include <cage-core/core/macro/api.h>
-#include <cage-engine/core.h>
+
 #include <cage-engine/graphics.h>
 #include <cage-engine/opengl.h>
 #include <cage-engine/assetStructs.h>

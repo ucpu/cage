@@ -1,6 +1,13 @@
 #ifndef guard_private_h_BEDE53C63BB74919B9BD171B995FD1A1
 #define guard_private_h_BEDE53C63BB74919B9BD171B995FD1A1
 
+#include <cage-core/memory.h>
+#include <cage-core/entities.h>
+
+#include <cage-engine/gui.h>
+#include <cage-engine/graphics.h>
+#include <cage-engine/window.h>
+
 #include <vector>
 #include <atomic>
 

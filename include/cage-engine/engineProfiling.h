@@ -1,6 +1,8 @@
 #ifndef guard_engine_profiling_h_76C3A56EFED14909B79D2CEB55DDC4F2
 #define guard_engine_profiling_h_76C3A56EFED14909B79D2CEB55DDC4F2
 
+#include "core.h"
+
 namespace cage
 {
 	enum class EngineProfilingStatsFlags
@@ -23,7 +25,7 @@ namespace cage
 		Last,
 	};
 
-	CAGE_API uint64 engineProfilingValues(EngineProfilingStatsFlags flags, EngineProfilingModeEnum mode);
+	CAGE_ENGINE_API uint64 engineProfilingValues(EngineProfilingStatsFlags flags, EngineProfilingModeEnum mode);
 
 	enum class EngineProfilingScopeEnum
 	{
@@ -33,7 +35,7 @@ namespace cage
 		None,
 	};
 
-	class CAGE_API EngineProfiling : private Immovable
+	class CAGE_ENGINE_API EngineProfiling : private Immovable
 	{
 	public:
 		vec2 screenPosition;
@@ -50,7 +52,7 @@ namespace cage
 		EngineProfiling();
 	};
 
-	CAGE_API Holder<EngineProfiling> newEngineProfiling();
+	CAGE_ENGINE_API Holder<EngineProfiling> newEngineProfiling();
 }
 
 #endif // guard_engine_profiling_h_76C3A56EFED14909B79D2CEB55DDC4F2

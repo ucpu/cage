@@ -1,11 +1,13 @@
 #ifndef guard_assetsStructs_h_k1i71789ds69r787jhg14j
 #define guard_assetsStructs_h_k1i71789ds69r787jhg14j
 
+#include "core.h"
+
 namespace cage
 {
 	typedef Delegate<void(const AssetContext *, void *)> AssetDelegate;
 
-	struct CAGE_API AssetContext : private Immovable
+	struct CAGE_CORE_API AssetContext : private Immovable
 	{
 		detail::StringBase<64> textName;
 		mutable Holder<void> assetHolder;
@@ -18,7 +20,7 @@ namespace cage
 		MemoryBuffer &originalData() const;
 	};
 
-	struct CAGE_API AssetScheme
+	struct CAGE_CORE_API AssetScheme
 	{
 		AssetDelegate decompress;
 		AssetDelegate load;
@@ -28,7 +30,7 @@ namespace cage
 		AssetScheme();
 	};
 
-	struct CAGE_API AssetHeader
+	struct CAGE_CORE_API AssetHeader
 	{
 		// this is the first header found in every asset file
 
@@ -48,7 +50,7 @@ namespace cage
 	};
 
 	/*
-	struct CAGE_API TextPackHeader
+	struct CAGE_CORE_API TextPackHeader
 	{
 		// follows:
 		// count, uint32, number of texts
@@ -59,14 +61,14 @@ namespace cage
 		// ...
 	};
 
-	struct CAGE_API ColliderHeader
+	struct CAGE_CORE_API ColliderHeader
 	{
 		// follows:
 		// serialized collider data (possibly compressed)
 	};
 	*/
 
-	CAGE_API AssetHeader initializeAssetHeader(const string &name, uint16 schemeIndex);
+	CAGE_CORE_API AssetHeader initializeAssetHeader(const string &name, uint16 schemeIndex);
 }
 
 #endif // guard_assetsStructs_h_k1i71789ds69r787jhg14j
