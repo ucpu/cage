@@ -1,5 +1,3 @@
-#define CAGE_EXPORT
-#include <cage-core/core.h>
 #include <cage-core/hashString.h>
 #include <cage-core/memoryBuffer.h>
 

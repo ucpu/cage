@@ -1,13 +1,7 @@
-#include <cage-core/core.h>
-#include <cage-core/math.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/lineReader.h>
 #include <cage-core/config.h>
 
-#define CAGE_EXPORT
-#include <cage-core/core/macro/api.h>
-#include <cage-engine/core.h>
-#include <cage-engine/graphics.h>
 #include <cage-engine/opengl.h>
 #include <cage-engine/window.h>
 #include "private.h"

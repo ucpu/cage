@@ -1,6 +1,8 @@
 #ifndef guard_enumerate_h_spo4ysdsxf41pop13686sa74g
 #define guard_enumerate_h_spo4ysdsxf41pop13686sa74g
 
+#include "core.h"
+
 namespace cage
 {
 	namespace privat

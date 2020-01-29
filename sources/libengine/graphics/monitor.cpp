@@ -1,7 +1,5 @@
 #include <cage-core/core.h>
 
-#define CAGE_EXPORT
-#include <cage-core/core/macro/api.h>
 #include <GLFW/glfw3.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS

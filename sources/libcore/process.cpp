@@ -1,5 +1,3 @@
-#define CAGE_EXPORT
-#include <cage-core/core.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/files.h>
 #include <cage-core/process.h>

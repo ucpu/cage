@@ -1,6 +1,8 @@
 #ifndef guard_hashString_h_b051260b_de9f_4127_a5c7_1c6a0d0b6798_
 #define guard_hashString_h_b051260b_de9f_4127_a5c7_1c6a0d0b6798_
 
+#include "core.h"
+
 #define GCHL_HASH_OFFSET 2166136261u
 #define GCHL_HASH_PRIME 16777619u
 
@@ -9,12 +11,12 @@ namespace cage
 	namespace detail
 	{
 		// these functions return values in the full range of uint32
-		CAGE_API uint32 hashBuffer(const char *buffer, uintPtr size);
-		CAGE_API uint32 hashBuffer(const MemoryBuffer &buffer);
-		CAGE_API uint32 HashString(const char *str);
+		CAGE_CORE_API uint32 hashBuffer(const char *buffer, uintPtr size);
+		CAGE_CORE_API uint32 hashBuffer(const MemoryBuffer &buffer);
+		CAGE_CORE_API uint32 HashString(const char *str);
 
 		// HashCompile returns values in the full range of uint32
-		struct CAGE_API HashCompile
+		struct CAGE_CORE_API HashCompile
 		{
 		private:
 			uint32 value;
@@ -50,7 +52,7 @@ namespace cage
 	}
 
 	// HashString returns values in (upper) half of uint32 range
-	struct CAGE_API HashString
+	struct CAGE_CORE_API HashString
 	{
 	private:
 		struct ConstCharWrapper

@@ -1,6 +1,8 @@
 #ifndef guard_noiseFunction_h_189F28C1827941F488646FA87D7913F4
 #define guard_noiseFunction_h_189F28C1827941F488646FA87D7913F4
 
+#include "math.h"
+
 namespace cage
 {
 	enum class NoiseTypeEnum : uint32
@@ -46,7 +48,7 @@ namespace cage
 		Divide,
 	};
 
-	class CAGE_API NoiseFunction : private Immovable
+	class CAGE_CORE_API NoiseFunction : private Immovable
 	{
 	public:
 		real evaluate(real position);
@@ -59,7 +61,7 @@ namespace cage
 		void evaluate(uint32 count, const vec4 positions[], real results[]);
 	};
 
-	struct CAGE_API NoiseFunctionCreateConfig
+	struct CAGE_CORE_API NoiseFunctionCreateConfig
 	{
 		NoiseTypeEnum type = NoiseTypeEnum::Simplex;
 		NoiseInterpolationEnum interpolation = NoiseInterpolationEnum::Quintic;
@@ -76,7 +78,7 @@ namespace cage
 		NoiseFunctionCreateConfig(uint32 seed = 1337);
 	};
 
-	CAGE_API Holder<NoiseFunction> newNoiseFunction(const NoiseFunctionCreateConfig &config);
+	CAGE_CORE_API Holder<NoiseFunction> newNoiseFunction(const NoiseFunctionCreateConfig &config);
 }
 
 #endif // guard_noiseFunction_h_189F28C1827941F488646FA87D7913F4

@@ -1,5 +1,3 @@
-#define CAGE_EXPORT
-#include <cage-core/core.h>
 #include <cage-core/memory.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
@@ -110,9 +108,9 @@ namespace cage
 
 	namespace detail
 	{
-		template<> GCHL_API_EXPORT char assetClassId<AssetPack>;
-		template<> GCHL_API_EXPORT char assetClassId<MemoryBuffer>;
-		template<> GCHL_API_EXPORT char assetClassId<TextPack>;
-		template<> GCHL_API_EXPORT char assetClassId<CollisionMesh>;
+		template<> CAGE_API_EXPORT char assetClassId<AssetPack>;
+		template<> CAGE_API_EXPORT char assetClassId<MemoryBuffer>;
+		template<> CAGE_API_EXPORT char assetClassId<TextPack>;
+		template<> CAGE_API_EXPORT char assetClassId<CollisionMesh>;
 	}
 }

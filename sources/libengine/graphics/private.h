@@ -1,3 +1,5 @@
+#include <cage-engine/graphics.h>
+
 #ifdef CAGE_ASSERT_ENABLED
 #define GCHL_ENABLE_CONTEXT_BINDING_CHECKS
 #endif

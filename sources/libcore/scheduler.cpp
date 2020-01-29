@@ -1,5 +1,3 @@
-#define CAGE_EXPORT
-#include <cage-core/core.h>
 #include <cage-core/scheduler.h>
 #include <cage-core/timer.h>
 #include <cage-core/math.h> // max

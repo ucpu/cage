@@ -1,18 +1,20 @@
 #ifndef guard_assetsManager_h_s54dhg56sr4ht564fdrsh6t
 #define guard_assetsManager_h_s54dhg56sr4ht564fdrsh6t
 
+#include "core.h"
+
 namespace cage
 {
 	namespace detail
 	{
 #ifdef _MSC_VER
-		template<class T> GCHL_API_IMPORT char assetClassId;
+		template<class T> CAGE_API_IMPORT char assetClassId;
 #else
 		template<class T> extern char assetClassId;
 #endif // _MSC_VER
 	}
 
-	class CAGE_API AssetManager : private Immovable
+	class CAGE_CORE_API AssetManager : private Immovable
 	{
 	public:
 		template<class T>
@@ -78,7 +80,7 @@ namespace cage
 		Holder<void> get_(uint32 assetName, uint32 scheme, uintPtr typeId, bool throwOnInvalidScheme) const;
 	};
 
-	struct CAGE_API AssetManagerCreateConfig
+	struct CAGE_CORE_API AssetManagerCreateConfig
 	{
 		string assetsFolderName = "assets.zip";
 		uint64 maintenancePeriod = 25000;
@@ -87,13 +89,13 @@ namespace cage
 		uint32 schemesMaxCount = 100; // 0..49 for engine and 50..99 for the game
 	};
 
-	CAGE_API Holder<AssetManager> newAssetManager(const AssetManagerCreateConfig &config);
+	CAGE_CORE_API Holder<AssetManager> newAssetManager(const AssetManagerCreateConfig &config);
 
-	struct CAGE_API AssetPack {};
-	CAGE_API AssetScheme genAssetSchemePack();
+	struct CAGE_CORE_API AssetPack {};
+	CAGE_CORE_API AssetScheme genAssetSchemePack();
 	static const uint32 AssetSchemeIndexPack = 0;
 
-	CAGE_API AssetScheme genAssetSchemeRaw();
+	CAGE_CORE_API AssetScheme genAssetSchemeRaw();
 	static const uint32 AssetSchemeIndexRaw = 1;
 }
 

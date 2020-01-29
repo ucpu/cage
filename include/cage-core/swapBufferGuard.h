@@ -1,6 +1,8 @@
 #ifndef guard_swapBufferController_h_rds4jh4jdr64jzdr64
 #define guard_swapBufferController_h_rds4jh4jdr64jzdr64
 
+#include "core.h"
+
 namespace cage
 {
 	/*
@@ -35,7 +37,7 @@ namespace cage
 
 	namespace privat
 	{
-		class CAGE_API SwapBufferLock
+		class CAGE_CORE_API SwapBufferLock
 		{
 		public:
 			SwapBufferLock();
@@ -54,14 +56,14 @@ namespace cage
 		};
 	}
 
-	class CAGE_API SwapBufferGuard : private Immovable
+	class CAGE_CORE_API SwapBufferGuard : private Immovable
 	{
 	public:
 		privat::SwapBufferLock read();
 		privat::SwapBufferLock write();
 	};
 
-	struct CAGE_API SwapBufferGuardCreateConfig
+	struct CAGE_CORE_API SwapBufferGuardCreateConfig
 	{
 		uint32 buffersCount = 0;
 		bool repeatedReads = false; // allow to read last buffer again (instead of failing) if the producer cannot keep up - this can lead to duplicated data, but it may safe some unnecessary copies
@@ -69,7 +71,7 @@ namespace cage
 		SwapBufferGuardCreateConfig(uint32 buffersCount);
 	};
 
-	CAGE_API Holder<SwapBufferGuard> newSwapBufferGuard(const SwapBufferGuardCreateConfig &config);
+	CAGE_CORE_API Holder<SwapBufferGuard> newSwapBufferGuard(const SwapBufferGuardCreateConfig &config);
 }
 
 #endif // guard_swapBufferController_h_rds4jh4jdr64jzdr64

@@ -1,6 +1,8 @@
 #ifndef guard_variableSmoothingBuffer_h_A47863F30E264545882F83741CC64A3F
 #define guard_variableSmoothingBuffer_h_A47863F30E264545882F83741CC64A3F
 
+#include "math.h"
+
 namespace cage
 {
 	template<class T, uint32 N>
@@ -64,7 +66,7 @@ namespace cage
 
 	namespace privat
 	{
-		CAGE_API quat averageQuaternions(const quat *quaternions, uint32 count);
+		CAGE_CORE_API quat averageQuaternions(const quat *quaternions, uint32 count);
 	}
 
 	template<uint32 N>

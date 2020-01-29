@@ -1,22 +1,12 @@
-#include <cage-core/core.h>
-#include <cage-core/math.h>
 #include <cage-core/camera.h>
 #include <cage-core/geometry.h>
 #include <cage-core/config.h>
-#include <cage-core/entities.h>
-#include <cage-core/assetManager.h>
 #include <cage-core/assetStructs.h>
-#include <cage-core/hashString.h>
 #include <cage-core/color.h>
-#include <cage-core/swapBufferGuard.h>
 
-#define CAGE_EXPORT
-#include <cage-core/core/macro/api.h>
-#include <cage-engine/core.h>
 #include <cage-engine/graphics.h>
-#include <cage-engine/engine.h>
 #include <cage-engine/opengl.h>
-#include <cage-engine/graphics/shaderConventions.h>
+#include <cage-engine/shaderConventions.h>
 #include <cage-engine/window.h>
 
 #include "../engine.h"

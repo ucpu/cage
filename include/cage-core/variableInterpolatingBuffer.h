@@ -1,6 +1,8 @@
 #ifndef guard_variableInterpolatingBuffer_h_f4h56fr4h564rdf5h56ea4rz4jwa
 #define guard_variableInterpolatingBuffer_h_f4h56fr4h564rdf5h56ea4rz4jwa
 
+#include "math.h"
+
 namespace cage
 {
 	namespace privat

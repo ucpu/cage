@@ -1,9 +1,11 @@
 #ifndef guard_program_h_f16ac3b2_6520_4503_a6ad_f4a582216f67_
 #define guard_program_h_f16ac3b2_6520_4503_a6ad_f4a582216f67_
 
+#include "core.h"
+
 namespace cage
 {
-	struct CAGE_API ProcessCreateConfig
+	struct CAGE_CORE_API ProcessCreateConfig
 	{
 		string cmd;
 		string workingDirectory;
@@ -15,7 +17,7 @@ namespace cage
 		ProcessCreateConfig(const string &cmd, const string &workingDirectory = "");
 	};
 
-	class CAGE_API Process : private Immovable
+	class CAGE_CORE_API Process : private Immovable
 	{
 	public:
 		string getCmdString() const;
@@ -30,7 +32,7 @@ namespace cage
 		int wait();
 	};
 
-	CAGE_API Holder<Process> newProcess(const ProcessCreateConfig &config);
+	CAGE_CORE_API Holder<Process> newProcess(const ProcessCreateConfig &config);
 }
 
 #endif // guard_program_h_f16ac3b2_6520_4503_a6ad_f4a582216f67_

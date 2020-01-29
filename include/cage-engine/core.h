@@ -1,6 +1,15 @@
 #ifndef guard_core_h_4F3464CEC4474C118E1CEA1EF9DF7632
 #define guard_core_h_4F3464CEC4474C118E1CEA1EF9DF7632
 
+#include <cage-core/core.h>
+#include <cage-core/math.h>
+
+#ifdef CAGE_ENGINE_EXPORT
+#define CAGE_ENGINE_API CAGE_API_EXPORT
+#else
+#define CAGE_ENGINE_API CAGE_API_IMPORT
+#endif
+
 namespace cage
 {
 	// forward declarations
@@ -188,7 +197,7 @@ namespace cage
 
 	// ivec2
 
-	struct CAGE_API ivec2
+	struct CAGE_ENGINE_API ivec2
 	{
 		ivec2() : x(0), y(0)
 		{}

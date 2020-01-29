@@ -1,9 +1,11 @@
 #ifndef guard_image_h_681DF37FA76B4FA48C656E96AF90EE69
 #define guard_image_h_681DF37FA76B4FA48C656E96AF90EE69
 
+#include "core.h"
+
 namespace cage
 {
-	class CAGE_API Image : private Immovable
+	class CAGE_CORE_API Image : private Immovable
 	{
 	public:
 		void empty(uint32 w, uint32 h, uint32 c = 4, uint32 bpc = 1);
@@ -45,9 +47,9 @@ namespace cage
 		void convert(uint32 channels, uint32 bpc);
 	};
 
-	CAGE_API Holder<Image> newImage();
+	CAGE_CORE_API Holder<Image> newImage();
 
-	CAGE_API void imageBlit(const Image *source, Image *target, uint32 sourceX, uint32 sourceY, uint32 targetX, uint32 targetY, uint32 width, uint32 height);
+	CAGE_CORE_API void imageBlit(const Image *source, Image *target, uint32 sourceX, uint32 sourceY, uint32 targetX, uint32 targetY, uint32 width, uint32 height);
 }
 
 #endif // guard_image_h_681DF37FA76B4FA48C656E96AF90EE69

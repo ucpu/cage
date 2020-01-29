@@ -1,3 +1,8 @@
+#ifndef header_guard_sound_private_h_mnb1v859ter8hz
+#define header_guard_sound_private_h_mnb1v859ter8hz
+
+#include <cage-engine/sound.h>
+
 #include <soundio/soundio.h>
 
 namespace cage
@@ -28,3 +33,5 @@ namespace cage
 
 	using namespace soundPrivat;
 }
+
+#endif

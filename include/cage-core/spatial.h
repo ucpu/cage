@@ -1,9 +1,11 @@
 #ifndef guard_spatial_h_9A6D87AF6D4243E990D6E274B56CF578
 #define guard_spatial_h_9A6D87AF6D4243E990D6E274B56CF578
 
+#include "core.h"
+
 namespace cage
 {
-	class CAGE_API SpatialQuery : private Immovable
+	class CAGE_CORE_API SpatialQuery : private Immovable
 	{
 	public:
 		PointerRange<uint32> result() const;
@@ -16,7 +18,7 @@ namespace cage
 		void intersection(const aabb &shape);
 	};
 
-	class CAGE_API SpatialData : private Immovable
+	class CAGE_CORE_API SpatialData : private Immovable
 	{
 	public:
 		void update(uint32 name, const vec3 &other);
@@ -29,13 +31,13 @@ namespace cage
 		void rebuild();
 	};
 
-	struct CAGE_API SpatialDataCreateConfig
+	struct CAGE_CORE_API SpatialDataCreateConfig
 	{
 		uint32 maxItems = 1000 * 100;
 	};
 
-	CAGE_API Holder<SpatialData> newSpatialData(const SpatialDataCreateConfig &config);
-	CAGE_API Holder<SpatialQuery> newSpatialQuery(const SpatialData *data); // the SpatialData must outlive the query
+	CAGE_CORE_API Holder<SpatialData> newSpatialData(const SpatialDataCreateConfig &config);
+	CAGE_CORE_API Holder<SpatialQuery> newSpatialQuery(const SpatialData *data); // the SpatialData must outlive the query
 }
 
 #endif // guard_spatial_h_9A6D87AF6D4243E990D6E274B56CF578

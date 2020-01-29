@@ -1,6 +1,8 @@
-#include <vector>
+#include "cage-core/core.h"
 
 #include <vorbis/vorbisfile.h>
+
+#include <vector>
 
 namespace cage
 {
@@ -18,10 +20,10 @@ namespace cage
 		private:
 			std::vector<char> buffer;
 			ov_callbacks callbacks;
-			size_t currentPosition;
+			std::size_t currentPosition;
 			OggVorbis_File ovf;
 
-			static size_t read_func(void *ptr, size_t size, size_t nmemb, void *datasource);
+			static std::size_t read_func(void *ptr, std::size_t size, std::size_t nmemb, void *datasource);
 			static int seek_func(void *datasource, ogg_int64_t offset, int whence);
 			static long tell_func(void *datasource);
 		};

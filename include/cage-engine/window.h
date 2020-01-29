@@ -1,6 +1,8 @@
 #ifndef guard_window_h_9D2B2359EB7C4009961D1CAFA13BE5FC
 #define guard_window_h_9D2B2359EB7C4009961D1CAFA13BE5FC
 
+#include "core.h"
+
 namespace cage
 {
 	enum class WindowFlags : uint32
@@ -10,7 +12,7 @@ namespace cage
 		Border = 1 << 1,
 	};
 
-	class CAGE_API Window : private Immovable
+	class CAGE_ENGINE_API Window : private Immovable
 	{
 	public:
 		struct
@@ -69,9 +71,9 @@ namespace cage
 		Delegate<void(uint32, uint32, uint32, uint32, const char*)> debugOpenglErrorCallback;
 	};
 
-	CAGE_API Holder<Window> newWindow(Window *shareContext = nullptr);
+	CAGE_ENGINE_API Holder<Window> newWindow(Window *shareContext = nullptr);
 
-	struct CAGE_API WindowEventListeners
+	struct CAGE_ENGINE_API WindowEventListeners
 	{
 		EventListener<bool()> windowClose, windowShow, windowHide;
 		EventListener<bool(const ivec2 &)> windowMove, windowResize;

@@ -1,5 +1,3 @@
-#include <cage-core/core.h>
-#include <cage-core/math.h>
 #include "ssaoPoints.h"
 
 namespace cage

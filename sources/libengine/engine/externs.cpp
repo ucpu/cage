@@ -1,10 +1,5 @@
-#include <cage-core/core.h>
-#include <cage-core/math.h>
 #include <cage-core/camera.h>
 
-#define CAGE_EXPORT
-#include <cage-core/core/macro/api.h>
-#include <cage-engine/core.h>
 #include <cage-engine/engine.h>
 
 namespace cage

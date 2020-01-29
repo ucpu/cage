@@ -1,8 +1,6 @@
 #ifndef guard_net_h_7e42e43f_d30e_43ab_a4e4_a908d0a57f7a_
 #define guard_net_h_7e42e43f_d30e_43ab_a4e4_a908d0a57f7a_
 
-#define CAGE_EXPORT
-#include <cage-core/core.h>
 #include <cage-core/network.h>
 #include <cage-core/memoryBuffer.h>
 

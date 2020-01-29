@@ -1,10 +1,3 @@
-#include <cage-core/core.h>
-#include <cage-core/math.h>
-#define CAGE_EXPORT
-
-#include <cage-core/core/macro/api.h>
-#include <cage-engine/core.h>
-#include <cage-engine/graphics.h>
 #include "private.h"
 
 #include <vector>

@@ -1,9 +1,11 @@
 #ifndef guard_collision_h_erthg456ter4h56r1th64rth
 #define guard_collision_h_erthg456ter4h56r1th64rth
 
+#include "core.h"
+
 namespace cage
 {
-	class CAGE_API CollisionQuery : private Immovable
+	class CAGE_CORE_API CollisionQuery : private Immovable
 	{
 	public:
 		uint32 name() const;
@@ -22,7 +24,7 @@ namespace cage
 		void query(const aabb &shape);
 	};
 
-	class CAGE_API CollisionData : private Immovable
+	class CAGE_CORE_API CollisionData : private Immovable
 	{
 	public:
 		void update(uint32 name, const CollisionMesh *collider, const transform &t);
@@ -31,14 +33,14 @@ namespace cage
 		void rebuild();
 	};
 
-	struct CAGE_API CollisionDataCreateConfig
+	struct CAGE_CORE_API CollisionDataCreateConfig
 	{
 		const SpatialDataCreateConfig *spatialConfig = nullptr;
 		uint32 maxCollisionPairs = 100;
 	};
 
-	CAGE_API Holder<CollisionData> newCollisionData(const CollisionDataCreateConfig &config);
-	CAGE_API Holder<CollisionQuery> newCollisionQuery(const CollisionData *data);
+	CAGE_CORE_API Holder<CollisionData> newCollisionData(const CollisionDataCreateConfig &config);
+	CAGE_CORE_API Holder<CollisionQuery> newCollisionQuery(const CollisionData *data);
 }
 
 #endif // guard_collision_h_erthg456ter4h56r1th64rth

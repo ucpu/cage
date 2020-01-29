@@ -1,18 +1,20 @@
 #ifndef guard_fileutils_h_yesxrt92851637ojnuhg
 #define guard_fileutils_h_yesxrt92851637ojnuhg
 
+#include "core.h"
+
 namespace cage
 {
-	class CAGE_API FilesystemWatcher : private Immovable
+	class CAGE_CORE_API FilesystemWatcher : private Immovable
 	{
 	public:
 		void registerPath(const string &path);
 		string waitForChange(uint64 time = m);
 	};
 
-	CAGE_API Holder<FilesystemWatcher> newFilesystemWatcher();
+	CAGE_CORE_API Holder<FilesystemWatcher> newFilesystemWatcher();
 
-	class CAGE_API DirectoryList : private Immovable
+	class CAGE_CORE_API DirectoryList : private Immovable
 	{
 	public:
 		bool valid() const;
@@ -26,13 +28,13 @@ namespace cage
 		void next();
 	};
 
-	CAGE_API Holder<DirectoryList> newDirectoryList(const string &path);
+	CAGE_CORE_API Holder<DirectoryList> newDirectoryList(const string &path);
 
 	class
 		#ifndef __GNUC__
 			[[deprecated]]
 		#endif
-			CAGE_API Filesystem : private Immovable
+			CAGE_CORE_API Filesystem : private Immovable
 	{
 	public:
 		void changeDir(const string &path);
@@ -46,7 +48,7 @@ namespace cage
 		void remove(const string &path);
 	};
 
-	[[deprecated]] CAGE_API Holder<Filesystem> newFilesystem();
+	[[deprecated]] CAGE_CORE_API Holder<Filesystem> newFilesystem();
 }
 
 #endif // guard_fileutils_h_yesxrt92851637ojnuhg

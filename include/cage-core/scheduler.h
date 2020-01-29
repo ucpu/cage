@@ -1,6 +1,8 @@
 #ifndef guard_scheduler_h_dsg54e64hg56fr4jh125vtkj5fd
 #define guard_scheduler_h_dsg54e64hg56fr4jh125vtkj5fd
 
+#include "core.h"
+
 namespace cage
 {
 	enum class ScheduleTypeEnum : uint32
@@ -12,7 +14,7 @@ namespace cage
 		Empty, // this task is run when no other tasks are scheduled
 	};
 
-	struct CAGE_API ScheduleCreateConfig
+	struct CAGE_CORE_API ScheduleCreateConfig
 	{
 		detail::StringBase<64> name = "<unnamed>";
 		Delegate<void()> action;
@@ -23,7 +25,7 @@ namespace cage
 		uint32 maxSteadyPeriods = 3; // when the schedule is not managing by this many runs, reset its timer (valid for steady periodic schedules only)
 	};
 
-	class CAGE_API Schedule : private Immovable
+	class CAGE_CORE_API Schedule : private Immovable
 	{
 	public:
 		void trigger(); // valid for external schedule only; can be called from any thread (but beware of deallocation)
@@ -49,12 +51,12 @@ namespace cage
 		uint32 statsRunCount() const;
 	};
 
-	struct CAGE_API SchedulerCreateConfig
+	struct CAGE_CORE_API SchedulerCreateConfig
 	{
 		uint64 maxSleepDuration = 1000000;
 	};
 
-	class CAGE_API Scheduler : private Immovable
+	class CAGE_CORE_API Scheduler : private Immovable
 	{
 	public:
 		void run();
@@ -66,7 +68,7 @@ namespace cage
 		sint32 latestPriority() const;
 	};
 
-	CAGE_API Holder<Scheduler> newScheduler(const SchedulerCreateConfig &config);
+	CAGE_CORE_API Holder<Scheduler> newScheduler(const SchedulerCreateConfig &config);
 }
 
 #endif // guard_scheduler_h_dsg54e64hg56fr4jh125vtkj5fd

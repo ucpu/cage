@@ -1,9 +1,11 @@
 #ifndef guard_serialization_h_edsg45df4h654fdr56h4gfd564h
 #define guard_serialization_h_edsg45df4h654fdr56h4gfd564h
 
+#include "core.h"
+
 namespace cage
 {
-	struct CAGE_API Serializer
+	struct CAGE_CORE_API Serializer
 	{
 		explicit Serializer(void *data, uintPtr size);
 		explicit Serializer(MemoryBuffer &buffer, uintPtr size = m);
@@ -27,7 +29,7 @@ namespace cage
 		uintPtr size = 0; // max size of the buffer
 	};
 
-	struct CAGE_API Deserializer
+	struct CAGE_CORE_API Deserializer
 	{
 		explicit Deserializer(const void *data, uintPtr size);
 		explicit Deserializer(const MemoryBuffer &buffer);

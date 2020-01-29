@@ -1,9 +1,11 @@
 #ifndef guard_entities_h_1259B2E89D514872B54F01F42E1EC56A
 #define guard_entities_h_1259B2E89D514872B54F01F42E1EC56A
 
+#include "core.h"
+
 namespace cage
 {
-	struct CAGE_API EntityComponentCreateConfig
+	struct CAGE_CORE_API EntityComponentCreateConfig
 	{
 		bool enumerableEntities;
 
@@ -11,7 +13,7 @@ namespace cage
 		{}
 	};
 
-	class CAGE_API EntityManager : private Immovable
+	class CAGE_CORE_API EntityManager : private Immovable
 	{
 	public:
 		template<class T> EntityComponent *defineComponent(const T &prototype, const EntityComponentCreateConfig &config) { return zPrivateDefineComponent(sizeof(T), alignof(T), (void*)&prototype, config); }
@@ -38,12 +40,12 @@ namespace cage
 		EntityComponent *zPrivateDefineComponent(uintPtr typeSize, uintPtr typeAlignment, void *prototype, const EntityComponentCreateConfig &config);
 	};
 
-	struct CAGE_API EntityManagerCreateConfig
+	struct CAGE_CORE_API EntityManagerCreateConfig
 	{};
 
-	CAGE_API Holder<EntityManager> newEntityManager(const EntityManagerCreateConfig &config);
+	CAGE_CORE_API Holder<EntityManager> newEntityManager(const EntityManagerCreateConfig &config);
 
-	class CAGE_API Entity : private Immovable
+	class CAGE_CORE_API Entity : private Immovable
 	{
 	public:
 		uint32 name() const;
@@ -63,7 +65,7 @@ namespace cage
 		void destroy();
 	};
 
-	class CAGE_API EntityComponent : private Immovable
+	class CAGE_CORE_API EntityComponent : private Immovable
 	{
 	public:
 		EntityManager *manager() const;
@@ -76,7 +78,7 @@ namespace cage
 		void destroy(); // destroy all entities with this component
 	};
 
-	class CAGE_API EntityGroup : private Immovable
+	class CAGE_CORE_API EntityGroup : private Immovable
 	{
 	public:
 		EntityManager *manager() const;
@@ -106,9 +108,9 @@ namespace cage
 	template<class T> inline T &Entity::value(EntityComponent *component) { CAGE_ASSERT(component->typeSize() == sizeof(T), "type is incompatible", component->typeSize(), sizeof(T)); return *(T*)unsafeValue(component); }
 	inline PointerRange<Entity *const> EntityComponent::entities() const { return group()->entities(); }
 
-	CAGE_API MemoryBuffer entitiesSerialize(const EntityGroup *entities, EntityComponent *component);
-	CAGE_API void entitiesDeserialize(const MemoryBuffer &buffer, EntityManager *manager);
-	CAGE_API void entitiesDeserialize(const void *buffer, uintPtr size, EntityManager *manager);
+	CAGE_CORE_API MemoryBuffer entitiesSerialize(const EntityGroup *entities, EntityComponent *component);
+	CAGE_CORE_API void entitiesDeserialize(const MemoryBuffer &buffer, EntityManager *manager);
+	CAGE_CORE_API void entitiesDeserialize(const void *buffer, uintPtr size, EntityManager *manager);
 }
 
 #endif // guard_entities_h_1259B2E89D514872B54F01F42E1EC56A

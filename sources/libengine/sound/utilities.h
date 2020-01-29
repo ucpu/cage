@@ -1,3 +1,5 @@
+#include "private.h"
+
 #include <vector>
 
 namespace cage

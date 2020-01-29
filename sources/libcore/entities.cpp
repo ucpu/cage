@@ -1,10 +1,7 @@
-#define CAGE_EXPORT
-#include <cage-core/core.h>
-#include <cage-core/math.h>
 #include <cage-core/entities.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
-#include <cage-core/ctl/unordered_map.h>
+#include <cage-core/unordered_map.h>
 
 #include <vector>
 #include <set>

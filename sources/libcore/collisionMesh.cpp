@@ -1,6 +1,3 @@
-#define CAGE_EXPORT
-#include <cage-core/core.h>
-#include <cage-core/math.h>
 #include <cage-core/geometry.h>
 #include <cage-core/collisionMesh.h>
 #include <cage-core/memoryBuffer.h>
