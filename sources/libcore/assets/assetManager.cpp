@@ -145,14 +145,14 @@ namespace cage
 			Holder<Mutex> mutex;
 			PrivateIndex privateIndex; // used for owning and managing the assets
 			PublicIndex publicIndices[2];
-			std::atomic<PublicIndex*> publicIndex{ nullptr }; // used for accessing the assets from the api
+			std::atomic<PublicIndex*> publicIndex{nullptr}; // used for accessing the assets from the api
 			std::vector<Asset *> waitingDeps;
 			const string path;
 			const uint64 maintenancePeriod;
 			const uint64 listenerPeriod;
 			uint32 generateName = 0;
 			uint32 assetGuid = 1;
-			std::atomic<bool> stopping{ false }, unloaded{ false };
+			std::atomic<bool> stopping{false}, unloaded{false}, processing{false};
 
 			ConcurrentQueue<Command> maintenanceQueue;
 			Queue diskLoadingQueue;
@@ -605,6 +605,16 @@ namespace cage
 				}
 				publicIndex = &update;
 				unloaded = privateIndex.empty();
+				{
+					uint32 work = 0;
+					work += maintenanceQueue.estimatedSize();
+					work += diskLoadingQueue.estimatedSize();
+					work += decompressionQueue.estimatedSize();
+					work += defaultProcessingQueue.estimatedSize();
+					for (const auto &it : customProcessingQueues)
+						work += it->estimatedSize();
+					processing = work > 0;
+				}
 			}
 
 			// thread entry points
@@ -729,6 +739,7 @@ namespace cage
 			void add(uint32 assetName)
 			{
 				unloaded = false;
+				processing = true;
 				Command cmd;
 				cmd.realName = assetName;
 				cmd.type = CommandEnum::Add;
@@ -737,6 +748,7 @@ namespace cage
 
 			void remove(uint32 assetName)
 			{
+				processing = true;
 				Command cmd;
 				cmd.realName = assetName;
 				cmd.type = CommandEnum::Remove;
@@ -745,6 +757,7 @@ namespace cage
 
 			void reload(uint32 assetName)
 			{
+				processing = true;
 				Command cmd;
 				cmd.realName = assetName;
 				cmd.type = CommandEnum::Reload;
@@ -768,6 +781,7 @@ namespace cage
 				CAGE_ASSERT(typeId != 0);
 				CAGE_ASSERT(schemes[scheme].typeId == typeId, schemes[scheme].typeId, typeId, "setting asset value with invalid type");
 				unloaded = false;
+				processing = true;
 				Command cmd;
 				cmd.realName = assetName;
 				cmd.textName = textName;
@@ -893,6 +907,12 @@ namespace cage
 	{
 		AssetManagerImpl *impl = (AssetManagerImpl*)this;
 		return impl->processCustomThread(threadIndex);
+	}
+
+	bool AssetManager::processing() const
+	{
+		AssetManagerImpl *impl = (AssetManagerImpl*)this;
+		return impl->processing;
 	}
 
 	void AssetManager::unloadCustomThread(uint32 threadIndex)

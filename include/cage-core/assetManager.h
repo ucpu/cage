@@ -61,6 +61,8 @@ namespace cage
 		// end thread-safe methods
 
 		bool processCustomThread(uint32 threadIndex);
+		bool processing() const;
+
 		void unloadCustomThread(uint32 threadIndex);
 		void unloadWait();
 		bool unloaded() const;
@@ -82,7 +84,7 @@ namespace cage
 		uint64 maintenancePeriod = 25000;
 		uint64 listenerPeriod = 100000;
 		uint32 threadsMaxCount = 5;
-		uint32 schemesMaxCount = 50;
+		uint32 schemesMaxCount = 100; // 0..49 for engine and 50..99 for the game
 	};
 
 	CAGE_API Holder<AssetManager> newAssetManager(const AssetManagerCreateConfig &config);
