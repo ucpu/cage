@@ -1,5 +1,4 @@
 #include "assimp.h"
-#include <cage-core/fileUtils.h>
 
 #include <assimp/Exporter.hpp>
 #include <assimp/IOStream.hpp>
@@ -195,13 +194,12 @@ namespace
 	public:
 		CageIoSystem()
 		{
-			f = newFilesystem();
-			f->changeDir(pathJoin(inputDirectory, pathExtractPath(inputFile)));
+			currentDir = pathJoin(inputDirectory, pathExtractPath(inputFile));
 		}
 
 		virtual bool Exists(const char *pFile) const
 		{
-			return (f->type(pFile) & PathTypeFlags::File) == PathTypeFlags::File;
+			return any(pathType(pathJoin(currentDir, pFile)) & PathTypeFlags::File);
 		}
 
 		virtual char getOsSeparator() const
@@ -214,7 +212,7 @@ namespace
 			if (::cage::string(pMode) != "rb")
 				CAGE_THROW_ERROR(Exception, "CageIoSystem::Open: only support rb mode");
 			writeLine(cage::string("use = ") + pathJoin(pathExtractPath(inputFile), pFile));
-			return new CageIoStream(f->openFile(pFile, FileMode(true, false)));
+			return new CageIoStream(newFile(pathJoin(currentDir, pFile), FileMode(true, false)));
 		}
 
 		virtual void Close(Assimp::IOStream *pFile)
@@ -228,8 +226,7 @@ namespace
 		}
 
 	private:
-
-		cage::Holder<Filesystem> f;
+		string currentDir;
 	};
 
 	class CageLogStream : public Assimp::LogStream

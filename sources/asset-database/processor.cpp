@@ -1,7 +1,5 @@
-#include <cage-core/core.h>
 #include <cage-core/config.h>
 #include <cage-core/files.h>
-#include <cage-core/fileUtils.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/ini.h>
 #include <cage-core/process.h>
@@ -625,7 +623,7 @@ namespace
 	void loadSchemesDirectory(const string &dir)
 	{
 		string realpath = pathJoin(configPathSchemes, dir);
-		Holder<DirectoryList> lst = newFilesystem()->listDirectory(realpath);
+		Holder<DirectoryList> lst = newDirectoryList(realpath);
 		for (; lst->valid(); lst->next())
 		{
 			string name = pathJoin(dir, lst->name());

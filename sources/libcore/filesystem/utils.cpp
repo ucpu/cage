@@ -114,16 +114,6 @@ namespace cage
 		return newFile(impl->fullPath(), mode);
 	}
 
-	Holder<Filesystem> DirectoryList::openDirectory()
-	{
-		DirectoryListAbstract *impl = (DirectoryListAbstract *)this;
-		if (!isDirectory())
-			CAGE_THROW_ERROR(Exception, "is not dir");
-		Holder<Filesystem> fs = newFilesystem();
-		fs->changeDir(impl->fullPath());
-		return fs;
-	}
-
 	Holder<DirectoryList> DirectoryList::listDirectory()
 	{
 		DirectoryListAbstract *impl = (DirectoryListAbstract *)this;
@@ -178,18 +168,6 @@ namespace cage
 				realCreateDirectories(path);
 
 #ifdef CAGE_SYSTEM_WINDOWS
-
-				/*
-				HANDLE hFile = CreateFile(path.c_str(), 0, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
-				if (hFile != INVALID_HANDLE_VALUE)
-				{
-					char buffer[string::MaxLength];
-					DWORD len = GetFinalPathNameByHandle(hFile, buffer, string::MaxLength, VOLUME_NAME_DOS);
-					CloseHandle(hFile);
-					if (len < string::MaxLength)
-						const_cast<string&>(myPath) = string(buffer + 4);
-				}
-				*/
 
 				list = FindFirstFile(pathJoin(myPath, "*").c_str(), &ffd);
 				valid_ = list != INVALID_HANDLE_VALUE;
@@ -264,83 +242,5 @@ namespace cage
 	Holder<DirectoryList> realNewDirectoryList(const string &path)
 	{
 		return detail::systemArena().createImpl<DirectoryList, DirectoryListReal>(path);
-	}
-
-	namespace
-	{
-		class FilesystemImpl : public Filesystem
-		{
-		public:
-			string current;
-
-			string makePath(const string &path) const
-			{
-				if (pathIsAbs(path))
-					return pathToRel(path);
-				else
-					return pathToRel(pathJoin(current, path));
-			}
-		};
-	}
-
-	void Filesystem::changeDir(const string &path)
-	{
-		FilesystemImpl *impl = (FilesystemImpl*)this;
-		impl->current = impl->makePath(path);
-	}
-
-	string Filesystem::currentDir() const
-	{
-		FilesystemImpl *impl = (FilesystemImpl*)this;
-		return impl->current;
-	}
-
-	PathTypeFlags Filesystem::type(const string &path) const
-	{
-		FilesystemImpl *impl = (FilesystemImpl*)this;
-		return pathType(impl->makePath(path));
-	}
-
-	uint64 Filesystem::lastChange(const string &path) const
-	{
-		FilesystemImpl *impl = (FilesystemImpl*)this;
-		return pathLastChange(impl->makePath(path));
-	}
-
-	Holder<File> Filesystem::openFile(const string &path, const FileMode &mode)
-	{
-		FilesystemImpl *impl = (FilesystemImpl*)this;
-		return newFile(impl->makePath(path), mode);
-	}
-
-	Holder<DirectoryList> Filesystem::listDirectory(const string &path)
-	{
-		FilesystemImpl *impl = (FilesystemImpl*)this;
-		return newDirectoryList(impl->makePath(path));
-	}
-
-	Holder<FilesystemWatcher> Filesystem::watchFilesystem(const string &path)
-	{
-		FilesystemImpl *impl = (FilesystemImpl*)this;
-		Holder<FilesystemWatcher> cw = newFilesystemWatcher();
-		cw->registerPath(impl->makePath(path));
-		return cw;
-	}
-
-	void Filesystem::move(const string &from, const string &to)
-	{
-		FilesystemImpl *impl = (FilesystemImpl*)this;
-		return pathMove(impl->makePath(from), impl->makePath(to));
-	}
-
-	void Filesystem::remove(const string &path)
-	{
-		FilesystemImpl *impl = (FilesystemImpl*)this;
-		return pathRemove(impl->makePath(path));
-	}
-
-	Holder<Filesystem> newFilesystem()
-	{
-		return detail::systemArena().createImpl<Filesystem, FilesystemImpl>();
 	}
 }

@@ -37,6 +37,30 @@ namespace cage
 
 	CAGE_CORE_API Holder<File> newFile(const string &path, const FileMode &mode);
 
+	class CAGE_CORE_API DirectoryList : private Immovable
+	{
+	public:
+		bool valid() const;
+		string name() const;
+		PathTypeFlags type() const;
+		bool isDirectory() const; // directory or archive
+		uint64 lastChange() const;
+		Holder<File> openFile(const FileMode &mode);
+		Holder<DirectoryList> listDirectory();
+		void next();
+	};
+
+	CAGE_CORE_API Holder<DirectoryList> newDirectoryList(const string &path);
+
+	class CAGE_CORE_API FilesystemWatcher : private Immovable
+	{
+	public:
+		void registerPath(const string &path);
+		string waitForChange(uint64 time = m);
+	};
+
+	CAGE_CORE_API Holder<FilesystemWatcher> newFilesystemWatcher();
+
 	enum class PathTypeFlags : uint32
 	{
 		None = 0,

@@ -1,6 +1,5 @@
 #include "main.h"
 #include <cage-core/files.h>
-#include <cage-core/fileUtils.h>
 #include <cage-core/memoryBuffer.h>
 
 #include <cstdlib>
@@ -42,11 +41,8 @@ void testFiles()
 
 	{
 		CAGE_TESTCASE("create several files");
-		Holder<Filesystem> fs = newFilesystem();
-		fs->changeDir("testdir/files");
-		CAGE_TEST(fs);
 		for (uint32 i = 2; i <= 32; i++)
-			fs->openFile(string(i), FileMode(false, true));
+			newFile(pathJoin("testdir/files", stringizer() + i), FileMode(false, true));
 	}
 
 	{
@@ -107,26 +103,11 @@ void testFiles()
 			for (char b = 'a'; b < 'e'; b++)
 			{
 				for (char c = 'a'; c < a; c++)
-				{
-					Holder<Filesystem> fs = newFilesystem();
-					fs->changeDir("testdir/files");
-					fs->changeDir(string(&a, 1));
-					fs->changeDir(string(&b, 1));
-					fs->openFile(string(&c, 1), FileMode(false, true));
-				}
-				Holder<Filesystem> fs = newFilesystem();
-				fs->changeDir("testdir/files");
-				fs->changeDir(string(&a, 1));
-				fs->changeDir(string(&b, 1));
-				fs->openFile("e", FileMode(false, true));
+					newFile(pathJoin(pathJoin("testdir/files", string(&a, 1)), pathJoin(string(&b, 1), string(&c, 1))), FileMode(false, true));
+				newFile(pathJoin(pathJoin("testdir/files", string(&a, 1)), pathJoin(string(&b, 1), "e")), FileMode(false, true));
 			}
 			for (char b = 'e'; b < 'h'; b++)
-			{
-				Holder<Filesystem> fs = newFilesystem();
-				fs->changeDir("testdir/files");
-				fs->changeDir(string(&a, 1));
-				fs->openFile(string(&b, 1), FileMode(false, true));
-			}
+				newFile(pathJoin(pathJoin("testdir/files", string(&a, 1)), string(&b, 1)), FileMode(false, true));
 		}
 	}
 
