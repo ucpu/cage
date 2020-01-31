@@ -8,6 +8,8 @@
 #include <cage-core/memoryBuffer.h> // for sizeof in defineScheme
 #include <cage-core/threadPool.h>
 #include <cage-core/scheduler.h>
+#include <cage-core/debug.h>
+#include <cage-core/macros.h>
 
 #include <cage-engine/graphics.h>
 #include <cage-engine/window.h>

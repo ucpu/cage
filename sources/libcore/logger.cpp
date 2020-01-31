@@ -4,6 +4,7 @@
 #include <cage-core/timer.h>
 #include <cage-core/config.h>
 #include <cage-core/systemInformation.h>
+#include <cage-core/debug.h>
 
 #include <cstdio>
 

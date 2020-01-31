@@ -1,3 +1,4 @@
+#include <cage-core/macros.h>
 #include <cage-engine/opengl.h>
 #include "private.h"
 

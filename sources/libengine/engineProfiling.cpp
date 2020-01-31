@@ -1,6 +1,7 @@
 #include <cage-core/camera.h>
 #include <cage-core/config.h>
 #include <cage-core/entities.h>
+#include <cage-core/debug.h>
 
 #include <cage-engine/gui.h>
 #include <cage-engine/engine.h>

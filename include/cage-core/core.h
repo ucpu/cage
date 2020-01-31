@@ -48,217 +48,13 @@
 #endif
 #endif
 
-#define CAGE_EVAL_SMALL(...)	GCHL_VL_1(GCHL_VL_1(GCHL_VL_1(__VA_ARGS__)))
-#define GCHL_VL_1(...)			GCHL_VL_2(GCHL_VL_2(GCHL_VL_2(__VA_ARGS__)))
-#define GCHL_VL_2(...)			GCHL_VL_3(GCHL_VL_3(GCHL_VL_3(__VA_ARGS__)))
-#define GCHL_VL_3(...)			__VA_ARGS__
-
-#define CAGE_EVAL_MEDIUM(...)	GCHL_VLL_1(GCHL_VLL_1(GCHL_VLL_1(__VA_ARGS__)))
-#define GCHL_VLL_1(...)			GCHL_VLL_2(GCHL_VLL_2(GCHL_VLL_2(__VA_ARGS__)))
-#define GCHL_VLL_2(...)			GCHL_VLL_3(GCHL_VLL_3(GCHL_VLL_3(__VA_ARGS__)))
-#define GCHL_VLL_3(...)			CAGE_EVAL_SMALL(__VA_ARGS__)
-
-#define CAGE_EVAL_LARGE(...)	GCHL_VLLL_1(GCHL_VLLL_1(GCHL_VLLL_1(__VA_ARGS__)))
-#define GCHL_VLLL_1(...)		GCHL_VLLL_2(GCHL_VLLL_2(GCHL_VLLL_2(__VA_ARGS__)))
-#define GCHL_VLLL_2(...)		GCHL_VLLL_3(GCHL_VLLL_3(GCHL_VLLL_3(__VA_ARGS__)))
-#define GCHL_VLLL_3(...)		CAGE_EVAL_MEDIUM(__VA_ARGS__)
-
-#define GCHL_EMPTY(...)
-#define GCHL_DEFER(...) __VA_ARGS__ GCHL_EMPTY()
-#define GCHL_OBSTRUCT(...) __VA_ARGS__ GCHL_DEFER(GCHL_EMPTY)()
-#define GCHL_EXPAND(...) __VA_ARGS__
-
-#define CAGE_JOIN(a, ...) GCHL_JOIN(a, __VA_ARGS__)
-#define GCHL_JOIN(a, ...) a ## __VA_ARGS__
-
-#define CAGE_STRINGIZE(a) GCHL_STRINGIZE(a)
-#define GCHL_STRINGIZE(a) #a
-
-#define GCHL_NUM_INC(x) CAGE_JOIN(GCHL_NMI_, x)
-#define GCHL_NUM_DEC(x) CAGE_JOIN(GCHL_NMD_, x)
-
-#define GCHL_NMD_1 0
-#define GCHL_NMD_2 1
-#define GCHL_NMD_3 2
-#define GCHL_NMD_4 3
-#define GCHL_NMD_5 4
-#define GCHL_NMD_6 5
-#define GCHL_NMD_7 6
-#define GCHL_NMD_8 7
-#define GCHL_NMD_9 8
-#define GCHL_NMD_10 9
-#define GCHL_NMD_11 10
-#define GCHL_NMD_12 11
-#define GCHL_NMD_13 12
-#define GCHL_NMD_14 13
-#define GCHL_NMD_15 14
-#define GCHL_NMD_16 15
-#define GCHL_NMD_17 16
-#define GCHL_NMD_18 17
-#define GCHL_NMD_19 18
-#define GCHL_NMD_20 19
-#define GCHL_NMD_21 20
-#define GCHL_NMD_22 21
-#define GCHL_NMD_23 22
-#define GCHL_NMD_24 23
-#define GCHL_NMD_25 24
-#define GCHL_NMD_26 25
-#define GCHL_NMD_27 26
-#define GCHL_NMD_28 27
-#define GCHL_NMD_29 28
-#define GCHL_NMD_30 29
-#define GCHL_NMD_31 30
-#define GCHL_NMD_32 31
-#define GCHL_NMD_33 32
-#define GCHL_NMD_34 33
-#define GCHL_NMD_35 34
-#define GCHL_NMD_36 35
-#define GCHL_NMD_37 36
-#define GCHL_NMD_38 37
-#define GCHL_NMD_39 38
-#define GCHL_NMD_40 39
-#define GCHL_NMD_41 40
-#define GCHL_NMD_42 41
-#define GCHL_NMD_43 42
-#define GCHL_NMD_44 43
-#define GCHL_NMD_45 44
-#define GCHL_NMD_46 45
-#define GCHL_NMD_47 46
-#define GCHL_NMD_48 47
-#define GCHL_NMD_49 48
-#define GCHL_NMD_50 49
-
-#define GCHL_NMI_0 1
-#define GCHL_NMI_1 2
-#define GCHL_NMI_2 3
-#define GCHL_NMI_3 4
-#define GCHL_NMI_4 5
-#define GCHL_NMI_5 6
-#define GCHL_NMI_6 7
-#define GCHL_NMI_7 8
-#define GCHL_NMI_8 9
-#define GCHL_NMI_9 10
-#define GCHL_NMI_10 11
-#define GCHL_NMI_11 12
-#define GCHL_NMI_12 13
-#define GCHL_NMI_13 14
-#define GCHL_NMI_14 15
-#define GCHL_NMI_15 16
-#define GCHL_NMI_16 17
-#define GCHL_NMI_17 18
-#define GCHL_NMI_18 19
-#define GCHL_NMI_19 20
-#define GCHL_NMI_20 21
-#define GCHL_NMI_21 22
-#define GCHL_NMI_22 23
-#define GCHL_NMI_23 24
-#define GCHL_NMI_24 25
-#define GCHL_NMI_25 26
-#define GCHL_NMI_26 27
-#define GCHL_NMI_27 28
-#define GCHL_NMI_28 29
-#define GCHL_NMI_29 30
-#define GCHL_NMI_30 31
-#define GCHL_NMI_31 32
-#define GCHL_NMI_32 33
-#define GCHL_NMI_33 34
-#define GCHL_NMI_34 35
-#define GCHL_NMI_35 36
-#define GCHL_NMI_36 37
-#define GCHL_NMI_37 38
-#define GCHL_NMI_38 39
-#define GCHL_NMI_39 40
-#define GCHL_NMI_40 41
-#define GCHL_NMI_41 42
-#define GCHL_NMI_42 43
-#define GCHL_NMI_43 44
-#define GCHL_NMI_44 45
-#define GCHL_NMI_45 46
-#define GCHL_NMI_46 47
-#define GCHL_NMI_47 48
-#define GCHL_NMI_48 49
-#define GCHL_NMI_49 50
-#define GCHL_NMI_50 51
-
-#define GCHL_PARL (
-#define GCHL_PARR )
-#define GCHL_PASS_ARGS(...) GCHL_PARL __VA_ARGS__ GCHL_PARR
-#if defined(_MSC_VER) && !defined(__llvm__)
-#define GCHL_NUM_ARGS(...) GCHL_NMR GCHL_PARL ,##__VA_ARGS__,50,49,48,47,46,45,44,43,42,41,40,39,38,37,36,35,34,33,32,31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0 GCHL_PARR
-#define GCHL_NMR(_0,_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13,_14,_15,_16,_17,_18,_19,_20,_21,_22,_23,_24,_25,_26,_27,_28,_29,_30,_31,_32,_33,_34,_35,_36,_37,_38,_39,_40,_41,_42,_43,_44,_45,_46,_47,_48,_49,_50,N,...) N
-#else
-#define PP_ARG_N(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13,_14,_15,_16,_17,_18,_19,_20,_21,_22,_23,_24,_25,_26,_27,_28,_29,_30,_31,_32,_33,_34,_35,_36,_37,_38,_39,_40,_41,_42,_43,_44,_45,_46,_47,_48,_49,_50,N,...) N
-#define PP_RSEQ_N() 50,49,48,47,46,45,44,43,42,41,40,39,38,37,36,35,34,33,32,31,30,29,28,27,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0
-#define PP_NARG_(...) PP_ARG_N(__VA_ARGS__)
-#define PP_COMMASEQ_N() 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0
-#define PP_COMMA() ,
-#define PP_HASCOMMA(...) PP_NARG_(__VA_ARGS__,PP_COMMASEQ_N())
-#define GCHL_NUM_ARGS(...) PP_NARG_HELPER1(PP_HASCOMMA(__VA_ARGS__),PP_HASCOMMA(PP_COMMA __VA_ARGS__ ()),PP_NARG_(__VA_ARGS__,PP_RSEQ_N()))
-#define PP_NARG_HELPER1(a,b,N) PP_NARG_HELPER2(a,b,N)
-#define PP_NARG_HELPER2(a,b,N) PP_NARG_HELPER3_ ## a ## b(N)
-#define PP_NARG_HELPER3_01(N) 0
-#define PP_NARG_HELPER3_00(N) 1
-#define PP_NARG_HELPER3_11(N) N
-#endif
-
-#define CAGE_EXPAND_ARGS(OP, ...) CAGE_JOIN(GCHL_XPR_, GCHL_NUM_ARGS(__VA_ARGS__)) GCHL_PASS_ARGS(OP, __VA_ARGS__)
-
-#define GCHL_XPR_0(OP, ARG_NOT_USED)
-#define GCHL_XPR_1(OP, ARG1) OP (ARG1)
-#define GCHL_XPR_2(OP, ARG1, ARG2) OP (ARG1) OP (ARG2)
-#define GCHL_XPR_3(OP, ARG1, ARG2, ARG3) OP (ARG1) OP (ARG2) OP (ARG3)
-#define GCHL_XPR_4(OP, ARG1, ARG2, ARG3, ARG4) OP (ARG1) OP (ARG2) OP (ARG3) OP (ARG4)
-#define GCHL_XPR_5(OP, ARG1, ARG2, ARG3, ARG4, ARG5) OP (ARG1) OP (ARG2) OP (ARG3) OP (ARG4) OP (ARG5)
-#define GCHL_XPR_6(OP, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6) OP (ARG1) OP (ARG2) OP (ARG3) OP (ARG4) OP (ARG5) OP (ARG6)
-#define GCHL_XPR_7(OP, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7) OP (ARG1) OP (ARG2) OP (ARG3) OP (ARG4) OP (ARG5) OP (ARG6) OP (ARG7)
-#define GCHL_XPR_8(OP, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8) OP (ARG1) OP (ARG2) OP (ARG3) OP (ARG4) OP (ARG5) OP (ARG6) OP (ARG7) OP (ARG8)
-#define GCHL_XPR_9(OP, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9) OP (ARG1) OP (ARG2) OP (ARG3) OP (ARG4) OP (ARG5) OP (ARG6) OP (ARG7) OP (ARG8) OP (ARG9)
-#define GCHL_XPR_10(OP, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10) OP (ARG1) OP (ARG2) OP (ARG3) OP (ARG4) OP (ARG5) OP (ARG6) OP (ARG7) OP (ARG8) OP (ARG9) OP (ARG10)
-#define GCHL_XPR_11(OP, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11) OP (ARG1) OP (ARG2) OP (ARG3) OP (ARG4) OP (ARG5) OP (ARG6) OP (ARG7) OP (ARG8) OP (ARG9) OP (ARG10) OP (ARG11)
-#define GCHL_XPR_12(OP, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12) OP (ARG1) OP (ARG2) OP (ARG3) OP (ARG4) OP (ARG5) OP (ARG6) OP (ARG7) OP (ARG8) OP (ARG9) OP (ARG10) OP (ARG11) OP (ARG12)
-#define GCHL_XPR_13(OP, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13) OP (ARG1) OP (ARG2) OP (ARG3) OP (ARG4) OP (ARG5) OP (ARG6) OP (ARG7) OP (ARG8) OP (ARG9) OP (ARG10) OP (ARG11) OP (ARG12) OP (ARG13)
-#define GCHL_XPR_14(OP, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14) OP (ARG1) OP (ARG2) OP (ARG3) OP (ARG4) OP (ARG5) OP (ARG6) OP (ARG7) OP (ARG8) OP (ARG9) OP (ARG10) OP (ARG11) OP (ARG12) OP (ARG13) OP (ARG14)
-#define GCHL_XPR_15(OP, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15) OP (ARG1) OP (ARG2) OP (ARG3) OP (ARG4) OP (ARG5) OP (ARG6) OP (ARG7) OP (ARG8) OP (ARG9) OP (ARG10) OP (ARG11) OP (ARG12) OP (ARG13) OP (ARG14) OP (ARG15)
-#define GCHL_XPR_16(OP, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16) OP (ARG1) OP (ARG2) OP (ARG3) OP (ARG4) OP (ARG5) OP (ARG6) OP (ARG7) OP (ARG8) OP (ARG9) OP (ARG10) OP (ARG11) OP (ARG12) OP (ARG13) OP (ARG14) OP (ARG15) OP (ARG16)
-#define GCHL_XPR_17(OP, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17) OP (ARG1) OP (ARG2) OP (ARG3) OP (ARG4) OP (ARG5) OP (ARG6) OP (ARG7) OP (ARG8) OP (ARG9) OP (ARG10) OP (ARG11) OP (ARG12) OP (ARG13) OP (ARG14) OP (ARG15) OP (ARG16) OP (ARG17)
-#define GCHL_XPR_18(OP, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18) OP (ARG1) OP (ARG2) OP (ARG3) OP (ARG4) OP (ARG5) OP (ARG6) OP (ARG7) OP (ARG8) OP (ARG9) OP (ARG10) OP (ARG11) OP (ARG12) OP (ARG13) OP (ARG14) OP (ARG15) OP (ARG16) OP (ARG17) OP (ARG18)
-#define GCHL_XPR_19(OP, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19) OP (ARG1) OP (ARG2) OP (ARG3) OP (ARG4) OP (ARG5) OP (ARG6) OP (ARG7) OP (ARG8) OP (ARG9) OP (ARG10) OP (ARG11) OP (ARG12) OP (ARG13) OP (ARG14) OP (ARG15) OP (ARG16) OP (ARG17) OP (ARG18) OP (ARG19)
-#define GCHL_XPR_20(OP, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20) OP (ARG1) OP (ARG2) OP (ARG3) OP (ARG4) OP (ARG5) OP (ARG6) OP (ARG7) OP (ARG8) OP (ARG9) OP (ARG10) OP (ARG11) OP (ARG12) OP (ARG13) OP (ARG14) OP (ARG15) OP (ARG16) OP (ARG17) OP (ARG18) OP (ARG19) OP (ARG20)
-#define GCHL_XPR_21(OP, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21) OP (ARG1) OP (ARG2) OP (ARG3) OP (ARG4) OP (ARG5) OP (ARG6) OP (ARG7) OP (ARG8) OP (ARG9) OP (ARG10) OP (ARG11) OP (ARG12) OP (ARG13) OP (ARG14) OP (ARG15) OP (ARG16) OP (ARG17) OP (ARG18) OP (ARG19) OP (ARG20) OP (ARG21)
-#define GCHL_XPR_22(OP, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22) OP (ARG1) OP (ARG2) OP (ARG3) OP (ARG4) OP (ARG5) OP (ARG6) OP (ARG7) OP (ARG8) OP (ARG9) OP (ARG10) OP (ARG11) OP (ARG12) OP (ARG13) OP (ARG14) OP (ARG15) OP (ARG16) OP (ARG17) OP (ARG18) OP (ARG19) OP (ARG20) OP (ARG21) OP (ARG22)
-#define GCHL_XPR_23(OP, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23) OP (ARG1) OP (ARG2) OP (ARG3) OP (ARG4) OP (ARG5) OP (ARG6) OP (ARG7) OP (ARG8) OP (ARG9) OP (ARG10) OP (ARG11) OP (ARG12) OP (ARG13) OP (ARG14) OP (ARG15) OP (ARG16) OP (ARG17) OP (ARG18) OP (ARG19) OP (ARG20) OP (ARG21) OP (ARG22) OP (ARG23)
-#define GCHL_XPR_24(OP, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24) OP (ARG1) OP (ARG2) OP (ARG3) OP (ARG4) OP (ARG5) OP (ARG6) OP (ARG7) OP (ARG8) OP (ARG9) OP (ARG10) OP (ARG11) OP (ARG12) OP (ARG13) OP (ARG14) OP (ARG15) OP (ARG16) OP (ARG17) OP (ARG18) OP (ARG19) OP (ARG20) OP (ARG21) OP (ARG22) OP (ARG23) OP (ARG24)
-#define GCHL_XPR_25(OP, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24, ARG25) OP (ARG1) OP (ARG2) OP (ARG3) OP (ARG4) OP (ARG5) OP (ARG6) OP (ARG7) OP (ARG8) OP (ARG9) OP (ARG10) OP (ARG11) OP (ARG12) OP (ARG13) OP (ARG14) OP (ARG15) OP (ARG16) OP (ARG17) OP (ARG18) OP (ARG19) OP (ARG20) OP (ARG21) OP (ARG22) OP (ARG23) OP (ARG24) OP (ARG25)
-#define GCHL_XPR_26(OP, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24, ARG25, ARG26) OP (ARG1) OP (ARG2) OP (ARG3) OP (ARG4) OP (ARG5) OP (ARG6) OP (ARG7) OP (ARG8) OP (ARG9) OP (ARG10) OP (ARG11) OP (ARG12) OP (ARG13) OP (ARG14) OP (ARG15) OP (ARG16) OP (ARG17) OP (ARG18) OP (ARG19) OP (ARG20) OP (ARG21) OP (ARG22) OP (ARG23) OP (ARG24) OP (ARG25) OP (ARG26)
-#define GCHL_XPR_27(OP, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24, ARG25, ARG26, ARG27) OP (ARG1) OP (ARG2) OP (ARG3) OP (ARG4) OP (ARG5) OP (ARG6) OP (ARG7) OP (ARG8) OP (ARG9) OP (ARG10) OP (ARG11) OP (ARG12) OP (ARG13) OP (ARG14) OP (ARG15) OP (ARG16) OP (ARG17) OP (ARG18) OP (ARG19) OP (ARG20) OP (ARG21) OP (ARG22) OP (ARG23) OP (ARG24) OP (ARG25) OP (ARG26) OP (ARG27)
-#define GCHL_XPR_28(OP, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24, ARG25, ARG26, ARG27, ARG28) OP (ARG1) OP (ARG2) OP (ARG3) OP (ARG4) OP (ARG5) OP (ARG6) OP (ARG7) OP (ARG8) OP (ARG9) OP (ARG10) OP (ARG11) OP (ARG12) OP (ARG13) OP (ARG14) OP (ARG15) OP (ARG16) OP (ARG17) OP (ARG18) OP (ARG19) OP (ARG20) OP (ARG21) OP (ARG22) OP (ARG23) OP (ARG24) OP (ARG25) OP (ARG26) OP (ARG27) OP (ARG28)
-#define GCHL_XPR_29(OP, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24, ARG25, ARG26, ARG27, ARG28, ARG29) OP (ARG1) OP (ARG2) OP (ARG3) OP (ARG4) OP (ARG5) OP (ARG6) OP (ARG7) OP (ARG8) OP (ARG9) OP (ARG10) OP (ARG11) OP (ARG12) OP (ARG13) OP (ARG14) OP (ARG15) OP (ARG16) OP (ARG17) OP (ARG18) OP (ARG19) OP (ARG20) OP (ARG21) OP (ARG22) OP (ARG23) OP (ARG24) OP (ARG25) OP (ARG26) OP (ARG27) OP (ARG28) OP (ARG29)
-#define GCHL_XPR_30(OP, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7, ARG8, ARG9, ARG10, ARG11, ARG12, ARG13, ARG14, ARG15, ARG16, ARG17, ARG18, ARG19, ARG20, ARG21, ARG22, ARG23, ARG24, ARG25, ARG26, ARG27, ARG28, ARG29, ARG30) OP (ARG1) OP (ARG2) OP (ARG3) OP (ARG4) OP (ARG5) OP (ARG6) OP (ARG7) OP (ARG8) OP (ARG9) OP (ARG10) OP (ARG11) OP (ARG12) OP (ARG13) OP (ARG14) OP (ARG15) OP (ARG16) OP (ARG17) OP (ARG18) OP (ARG19) OP (ARG20) OP (ARG21) OP (ARG22) OP (ARG23) OP (ARG24) OP (ARG25) OP (ARG26) OP (ARG27) OP (ARG28) OP (ARG29) OP (ARG30)
-
-#define GCHL_CHECK(...) GCHL_NUM_DEC(GCHL_NUM_ARGS(__VA_ARGS__))
-#define GCHL_NOT(x) GCHL_CHECK(CAGE_JOIN(GCHL_NOT_, x))
-#define GCHL_NOT_0 ~, 1
-#define GCHL_COMPL(b) CAGE_JOIN(GCHL_COMPL_, b)
-#define GCHL_COMPL_0 1
-#define GCHL_COMPL_1 0
-#define GCHL_BOOL(x) GCHL_COMPL(GCHL_NOT(x))
-#define GCHL_IIF(c) CAGE_JOIN(GCHL_IIF_, c)
-#define GCHL_IIF_0(t, ...) __VA_ARGS__
-#define GCHL_IIF_1(t, ...) t
-#define GCHL_IF(c) GCHL_IIF(GCHL_BOOL(c))
-#define GCHL_WHEN(c) GCHL_IF(c)(GCHL_EXPAND, GCHL_EMPTY)
-
-#define CAGE_REPEAT(count, macro) GCHL_WHEN(count)(GCHL_OBSTRUCT(GCHL_REPEAT)()(GCHL_NUM_DEC(count), macro) GCHL_OBSTRUCT(macro)(count))
-#define GCHL_REPEAT() CAGE_REPEAT
-
 #ifdef CAGE_DEBUG
 #ifndef CAGE_ASSERT_ENABLED
 #define CAGE_ASSERT_ENABLED
 #endif
 #endif
 #ifdef CAGE_ASSERT_ENABLED
-#define GCHL_ASSVAR(VAR) .variable(CAGE_STRINGIZE(VAR), VAR)
-#define CAGE_ASSERT(EXP, ...) { ::cage::privat::AssertPriv(!!(EXP), CAGE_STRINGIZE(EXP), __FILE__, CAGE_STRINGIZE(__LINE__), __FUNCTION__) GCHL_DEFER(CAGE_EXPAND_ARGS(GCHL_ASSVAR, __VA_ARGS__))(); }
+#define CAGE_ASSERT(EXP, ...) { if (!(EXP)) ::cage::privat::runtimeAssertFailure(#EXP, __FILE__, __LINE__, __FUNCTION__); }
 #else
 #define CAGE_ASSERT(EXP, ...)
 #endif
@@ -302,39 +98,47 @@ namespace cage
 	typedef sint32 sintPtr;
 #endif
 
+	// forward declare string
+
+	namespace detail { template<uint32 N> struct StringBase; }
+	typedef detail::StringBase<1000> string;
+
+	// severity, makeLog, runtimeAssertFailure
+
+	enum class SeverityEnum
+	{
+		Note, // details for subsequent log
+		Hint, // possible improvement available
+		Warning, // deprecated behavior, dangerous actions
+		Info, // we are good, progress report
+		Error, // invalid user input, network connection interrupted, file access denied
+		Critical // not implemented function, exception inside destructor, assert failure
+	};
+
+	namespace privat
+	{
+		CAGE_CORE_API uint64 makeLog(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept;
+		CAGE_CORE_API void runtimeAssertFailure(const char *expt, const char *file, uintPtr line, const char *function);
+	}
+
 	// numeric limits
 
 	namespace privat
 	{
-		template<bool>
-		struct helper_is_char_signed
-		{};
-
-		template<>
-		struct helper_is_char_signed<true>
-		{
-			typedef signed char type;
-		};
-
-		template<>
-		struct helper_is_char_signed<false>
-		{
-			typedef unsigned char type;
-		};
+		template<bool> struct helper_is_char_signed {};
+		template<> struct helper_is_char_signed<true> { typedef signed char type; };
+		template<> struct helper_is_char_signed<false> { typedef unsigned char type; };
 	}
 
 	namespace detail
 	{
 		template<class T>
 		struct numeric_limits
-		{
-			static const bool is_specialized = false;
-		};
+		{};
 
 		template<>
 		struct numeric_limits<unsigned char>
 		{
-			static const bool is_specialized = true;
 			static const bool is_signed = false;
 			static constexpr uint8 min() noexcept { return 0; };
 			static constexpr uint8 max() noexcept { return 255u; };
@@ -344,7 +148,6 @@ namespace cage
 		template<>
 		struct numeric_limits<unsigned short>
 		{
-			static const bool is_specialized = true;
 			static const bool is_signed = false;
 			static constexpr uint16 min() noexcept { return 0; };
 			static constexpr uint16 max() noexcept { return 65535u; };
@@ -354,7 +157,6 @@ namespace cage
 		template<>
 		struct numeric_limits<unsigned int>
 		{
-			static const bool is_specialized = true;
 			static const bool is_signed = false;
 			static constexpr uint32 min() noexcept { return 0; };
 			static constexpr uint32 max() noexcept { return 4294967295u; };
@@ -364,7 +166,6 @@ namespace cage
 		template<>
 		struct numeric_limits<unsigned long long>
 		{
-			static const bool is_specialized = true;
 			static const bool is_signed = false;
 			static constexpr uint64 min() noexcept { return 0; };
 			static constexpr uint64 max() noexcept { return 18446744073709551615LLu; };
@@ -384,7 +185,6 @@ namespace cage
 		template<>
 		struct numeric_limits<signed char>
 		{
-			static const bool is_specialized = true;
 			static const bool is_signed = true;
 			static constexpr sint8 min() noexcept { return -127 - 1; };
 			static constexpr sint8 max() noexcept { return  127; };
@@ -394,7 +194,6 @@ namespace cage
 		template<>
 		struct numeric_limits<signed short>
 		{
-			static const bool is_specialized = true;
 			static const bool is_signed = true;
 			static constexpr sint16 min() noexcept { return -32767 - 1; };
 			static constexpr sint16 max() noexcept { return  32767; };
@@ -404,7 +203,6 @@ namespace cage
 		template<>
 		struct numeric_limits<signed int>
 		{
-			static const bool is_specialized = true;
 			static const bool is_signed = true;
 			static constexpr sint32 min() noexcept { return -2147483647 - 1; };
 			static constexpr sint32 max() noexcept { return  2147483647; };
@@ -414,7 +212,6 @@ namespace cage
 		template<>
 		struct numeric_limits<signed long long>
 		{
-			static const bool is_specialized = true;
 			static const bool is_signed = true;
 			static constexpr sint64 min() noexcept { return -9223372036854775807LL - 1; };
 			static constexpr sint64 max() noexcept { return  9223372036854775807LL; };
@@ -434,7 +231,6 @@ namespace cage
 		template<>
 		struct numeric_limits<float>
 		{
-			static const bool is_specialized = true;
 			static const bool is_signed = true;
 			static constexpr float min() noexcept { return -1e+37f; };
 			static constexpr float max() noexcept { return  1e+37f; };
@@ -444,7 +240,6 @@ namespace cage
 		template<>
 		struct numeric_limits<double>
 		{
-			static const bool is_specialized = true;
 			static const bool is_signed = true;
 			static constexpr double min() noexcept { return -1e+308; };
 			static constexpr double max() noexcept { return  1e+308; };
@@ -457,6 +252,65 @@ namespace cage
 		{};
 	}
 
+	// numeric cast
+
+	namespace privat
+	{
+		template<bool ToSig, bool FromSig>
+		struct numeric_cast_helper_signed
+		{
+			template<class To, class From>
+			static constexpr To cast(From from)
+			{
+				CAGE_ASSERT(from >= detail::numeric_limits<To>::min(), "numeric cast failure", from, detail::numeric_limits<To>::min());
+				CAGE_ASSERT(from <= detail::numeric_limits<To>::max(), "numeric cast failure", from, detail::numeric_limits<To>::max());
+				return static_cast<To>(from);
+			}
+		};
+
+		template<>
+		struct numeric_cast_helper_signed<false, true> // signed -> unsigned
+		{
+			template<class To, class From>
+			static constexpr To cast(From from)
+			{
+				CAGE_ASSERT(from >= 0, "numeric cast failure", from);
+				typedef typename detail::numeric_limits<From>::make_unsigned unsgFrom;
+				CAGE_ASSERT(static_cast<unsgFrom>(from) <= detail::numeric_limits<To>::max(), "numeric cast failure", from, static_cast<unsgFrom>(from), detail::numeric_limits<To>::max());
+				return static_cast<To>(from);
+			}
+		};
+
+		template<>
+		struct numeric_cast_helper_signed<true, false> // unsigned -> signed
+		{
+			template<class To, class From>
+			static constexpr To cast(From from)
+			{
+				typedef typename detail::numeric_limits<To>::make_unsigned unsgTo;
+				CAGE_ASSERT(from <= static_cast<unsgTo>(detail::numeric_limits<To>::max()), "numeric cast failure", from, detail::numeric_limits<To>::max(), static_cast<unsgTo>(detail::numeric_limits<To>::max()));
+				return static_cast<To>(from);
+			}
+		};
+	}
+
+	// with CAGE_ASSERT_ENABLED numeric_cast validates that the value is in range of the target type, preventing overflows
+	// without CAGE_ASSERT_ENABLED numeric_cast is the same as static_cast
+	template<class To, class From>
+	inline constexpr To numeric_cast(From from)
+	{
+		return privat::numeric_cast_helper_signed<detail::numeric_limits<To>::is_signed, detail::numeric_limits<From>::is_signed>::template cast<To>(from);
+	}
+
+	// with CAGE_ASSERT_ENABLED class_cast verifies that dynamic_cast would succeed
+	// without CAGE_ASSERT_ENABLED class_cast is the same as static_cast
+	template<class To, class From>
+	inline constexpr To class_cast(From from)
+	{
+		CAGE_ASSERT(!from || dynamic_cast<To>(from), from);
+		return static_cast<To>(from);
+	}
+
 	// max struct
 
 	namespace privat
@@ -465,18 +319,18 @@ namespace cage
 		struct MaxValue
 		{
 			template<class T>
-			constexpr operator T () const
+			constexpr operator T () const noexcept
 			{
 				return detail::numeric_limits<T>::max();
 			}
 		};
 
-		template<class T> constexpr bool operator == (T lhs, MaxValue rhs) noexcept { return lhs == detail::numeric_limits<T>::max(); }
-		template<class T> constexpr bool operator != (T lhs, MaxValue rhs) noexcept { return lhs != detail::numeric_limits<T>::max(); }
-		template<class T> constexpr bool operator <= (T lhs, MaxValue rhs) noexcept { return lhs <= detail::numeric_limits<T>::max(); }
-		template<class T> constexpr bool operator >= (T lhs, MaxValue rhs) noexcept { return lhs >= detail::numeric_limits<T>::max(); }
-		template<class T> constexpr bool operator < (T lhs, MaxValue rhs) noexcept { return lhs < detail::numeric_limits<T>::max(); }
-		template<class T> constexpr bool operator > (T lhs, MaxValue rhs) noexcept { return lhs > detail::numeric_limits<T>::max(); }
+		template<class T> inline constexpr bool operator == (T lhs, MaxValue rhs) noexcept { return lhs == detail::numeric_limits<T>::max(); }
+		template<class T> inline constexpr bool operator != (T lhs, MaxValue rhs) noexcept { return lhs != detail::numeric_limits<T>::max(); }
+		template<class T> inline constexpr bool operator <= (T lhs, MaxValue rhs) noexcept { return lhs <= detail::numeric_limits<T>::max(); }
+		template<class T> inline constexpr bool operator >= (T lhs, MaxValue rhs) noexcept { return lhs >= detail::numeric_limits<T>::max(); }
+		template<class T> inline constexpr bool operator <  (T lhs, MaxValue rhs) noexcept { return lhs <  detail::numeric_limits<T>::max(); }
+		template<class T> inline constexpr bool operator >  (T lhs, MaxValue rhs) noexcept { return lhs >  detail::numeric_limits<T>::max(); }
 	}
 
 	static constexpr const privat::MaxValue m = privat::MaxValue();
@@ -485,6 +339,16 @@ namespace cage
 
 	namespace templates
 	{
+		template<class T>
+		struct Comparable
+		{
+			friend constexpr bool operator == (const T &lhs, const T &rhs) noexcept { return compare(lhs, rhs) == 0; }
+			friend constexpr bool operator != (const T &lhs, const T &rhs) noexcept { return compare(lhs, rhs) != 0; }
+			friend constexpr bool operator <= (const T &lhs, const T &rhs) noexcept { return compare(lhs, rhs) <= 0; }
+			friend constexpr bool operator >= (const T &lhs, const T &rhs) noexcept { return compare(lhs, rhs) >= 0; }
+			friend constexpr bool operator <  (const T &lhs, const T &rhs) noexcept { return compare(lhs, rhs) <  0; }
+			friend constexpr bool operator >  (const T &lhs, const T &rhs) noexcept { return compare(lhs, rhs) >  0; }
+		};
 		template<bool Cond, class T> struct enable_if {};
 		template<class T> struct enable_if<true, T> { typedef T type; };
 		template<uintPtr Size> struct base_unsigned_type {};
@@ -512,11 +376,11 @@ namespace cage
 	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator | (T lhs, T rhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return static_cast<T>(static_cast<underlying>(lhs) | static_cast<underlying>(rhs)); }
 	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator & (T lhs, T rhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return static_cast<T>(static_cast<underlying>(lhs) & static_cast<underlying>(rhs)); }
 	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator ^ (T lhs, T rhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return static_cast<T>(static_cast<underlying>(lhs) ^ static_cast<underlying>(rhs)); }
-	template<class T> inline typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator |= (T &lhs, T rhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return lhs = static_cast<T>(static_cast<underlying>(lhs) | static_cast<underlying>(rhs)); }
-	template<class T> inline typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator &= (T &lhs, T rhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return lhs = static_cast<T>(static_cast<underlying>(lhs) & static_cast<underlying>(rhs)); }
-	template<class T> inline typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator ^= (T &lhs, T rhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return lhs = static_cast<T>(static_cast<underlying>(lhs) ^ static_cast<underlying>(rhs)); }
-	template<class T> inline typename templates::enable_if<enable_bitmask_operators<T>::enable, bool>::type any(T lhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return static_cast<underlying>(lhs) != 0; }
-	template<class T> inline typename templates::enable_if<enable_bitmask_operators<T>::enable, bool>::type none(T lhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return static_cast<underlying>(lhs) == 0; }
+	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator |= (T &lhs, T rhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return lhs = static_cast<T>(static_cast<underlying>(lhs) | static_cast<underlying>(rhs)); }
+	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator &= (T &lhs, T rhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return lhs = static_cast<T>(static_cast<underlying>(lhs) & static_cast<underlying>(rhs)); }
+	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator ^= (T &lhs, T rhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return lhs = static_cast<T>(static_cast<underlying>(lhs) ^ static_cast<underlying>(rhs)); }
+	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, bool>::type any(T lhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return static_cast<underlying>(lhs) != 0; }
+	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, bool>::type none(T lhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return static_cast<underlying>(lhs) == 0; }
 
 	// this macro has to be used inside namespace cage
 #define GCHL_ENUM_BITS(TYPE) template<> struct enable_bitmask_operators<TYPE> { static const bool enable = true; };
@@ -532,10 +396,38 @@ namespace cage
 		Immovable &operator = (Immovable &&) = delete;
 	};
 
+	// exceptions
+
+	struct CAGE_CORE_API Exception
+	{
+		explicit Exception(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept;
+		virtual ~Exception() noexcept;
+
+		void makeLog();
+		virtual void log();
+
+		const char *file = nullptr;
+		const char *function = nullptr;
+		const char *message = nullptr;
+		uint32 line = 0;
+		SeverityEnum severity = SeverityEnum::Critical;
+	};
+
+	struct CAGE_CORE_API NotImplemented : public Exception
+	{
+		explicit NotImplemented(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept;
+		void log() override;
+	};
+
+	struct CAGE_CORE_API SystemError : public Exception
+	{
+		explicit SystemError(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message, uint32 code) noexcept;
+		void log() override;
+		uint32 code = 0;
+	};
+
 	// forward declarations
 
-	namespace detail { template<uint32 N> struct StringBase; }
-	typedef detail::StringBase<1000> string;
 	struct real;
 	struct rads;
 	struct degs;
@@ -596,7 +488,6 @@ namespace cage
 	enum class PathTypeFlags : uint32;
 	class FilesystemWatcher;
 	class DirectoryList;
-	class Filesystem;
 	template<uint32 N> struct Guid;
 	struct HashString;
 	class Image;
@@ -667,199 +558,23 @@ namespace cage
 	template<class T, class F> struct VariableInterpolatingBuffer;
 	template<class T, uint32 N = 16> struct VariableSmoothingBuffer;
 
-	enum class SeverityEnum
-	{
-		Note, // details for subsequent log
-		Hint, // possible improvement available
-		Warning, // deprecated behavior, dangerous actions
-		Info, // we are good, progress report
-		Error, // invalid user input, network connection interrupted, file access denied
-		Critical // not implemented function, exception inside destructor, assert failure
-	};
+	// string
 
 	namespace privat
 	{
-		CAGE_CORE_API uint64 makeLog(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept;
-	}
-
-	namespace detail
-	{
-		CAGE_CORE_API void terminate();
-		CAGE_CORE_API void debugOutput(const string &msg);
-		CAGE_CORE_API void debugBreakpoint();
-
-		// makes all debugBreakpoint calls be ignored
-		struct CAGE_CORE_API OverrideBreakpoint
-		{
-			explicit OverrideBreakpoint(bool enable = false);
-			~OverrideBreakpoint();
-
-		private:
-			bool original;
-		};
-
-		// make assert failures throw a critical exception instead of terminating the application
-		struct CAGE_CORE_API OverrideAssert
-		{
-			explicit OverrideAssert(bool deadly = false);
-			~OverrideAssert();
-
-		private:
-			bool original;
-		};
-
-		// changes threshold for exception severity for logging
-		struct CAGE_CORE_API OverrideException
-		{
-			explicit OverrideException(SeverityEnum severity = SeverityEnum::Critical);
-			~OverrideException();
-
-		private:
-			SeverityEnum original;
-		};
-
-		CAGE_CORE_API void setGlobalBreakpointOverride(bool enable);
-		CAGE_CORE_API void setGlobalAssertOverride(bool enable);
-		CAGE_CORE_API void setGlobalExceptionOverride(SeverityEnum severity);
-	}
-
-	namespace privat
-	{
-		struct CAGE_CORE_API AssertPriv
-		{
-			explicit AssertPriv(bool exp, const char *expt, const char *file, const char *line, const char *function);
-			void operator () () const;
-
-#define GCHL_GENERATE(TYPE) AssertPriv &variable(const char *name, TYPE var);
-			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, bool, float, double, const char*, \
-				const string&, real, rads, degs, const vec2&, const vec3&, const vec4&, const quat&, const mat3&, const mat4&));
-#undef GCHL_GENERATE
-
-			template<class U>
-			AssertPriv &variable(const char *name, U *var)
-			{
-				return variable(name, (uintPtr)var);
-			}
-
-			template<class U>
-			AssertPriv &variable(const char *name, const U &var)
-			{
-				if (!valid)
-					format(name, "<unknown variable type>");
-				return *this;
-			}
-
-		private:
-			const bool valid = false;
-			void format(const char *name, const char *var) const;
-		};
-	}
-
-	struct CAGE_CORE_API Exception
-	{
-		explicit Exception(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept;
-		virtual ~Exception() noexcept;
-
-		void makeLog();
-		virtual void log();
-
-		const char *file = nullptr;
-		const char *function = nullptr;
-		const char *message = nullptr;
-		uint32 line = 0;
-		SeverityEnum severity = SeverityEnum::Critical;
-	};
-
-	struct CAGE_CORE_API NotImplemented : public Exception
-	{
-		explicit NotImplemented(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept;
-		virtual void log();
-	};
-
-	struct CAGE_CORE_API SystemError : public Exception
-	{
-		explicit SystemError(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message, uint32 code) noexcept;
-		virtual void log();
-		uint32 code = 0;
-	};
-
-	CAGE_CORE_API uint64 getApplicationTime();
-
-	namespace privat
-	{
-		template<bool ToSig, bool FromSig>
-		struct numeric_cast_helper_signed
-		{
-			template<class To, class From>
-			static To cast(From from)
-			{
-				CAGE_ASSERT(from >= detail::numeric_limits<To>::min(), "numeric cast failure", from, detail::numeric_limits<To>::min());
-				CAGE_ASSERT(from <= detail::numeric_limits<To>::max(), "numeric cast failure", from, detail::numeric_limits<To>::max());
-				return static_cast<To>(from);
-			}
-		};
-
-		template<>
-		struct numeric_cast_helper_signed<false, true> // signed -> unsigned
-		{
-			template<class To, class From>
-			static To cast(From from)
-			{
-				CAGE_ASSERT(from >= 0, "numeric cast failure", from);
-				typedef typename detail::numeric_limits<From>::make_unsigned unsgFrom;
-				CAGE_ASSERT(static_cast<unsgFrom>(from) <= detail::numeric_limits<To>::max(), "numeric cast failure", from, static_cast<unsgFrom>(from), detail::numeric_limits<To>::max());
-				return static_cast<To>(from);
-			}
-		};
-
-		template<>
-		struct numeric_cast_helper_signed<true, false> // unsigned -> signed
-		{
-			template<class To, class From>
-			static To cast(From from)
-			{
-				typedef typename detail::numeric_limits<To>::make_unsigned unsgTo;
-				CAGE_ASSERT(from <= static_cast<unsgTo>(detail::numeric_limits<To>::max()), "numeric cast failure", from, detail::numeric_limits<To>::max(), static_cast<unsgTo>(detail::numeric_limits<To>::max()));
-				return static_cast<To>(from);
-			}
-		};
-
-		template<bool Specialized>
-		struct numeric_cast_helper_specialized
-		{};
-
-		template<>
-		struct numeric_cast_helper_specialized<true>
-		{
-			template<class To, class From>
-			static To cast(From from)
-			{
-				return numeric_cast_helper_signed<detail::numeric_limits<To>::is_signed, detail::numeric_limits<From>::is_signed>::template cast<To>(from);
-			}
-		};
-	}
-
-	// with CAGE_ASSERT_ENABLED numeric_cast validates that the value is in range of the target type, preventing overflows
-	// without CAGE_ASSERT_ENABLED numeric_cast is the same as static_cast
-	template<class To, class From>
-	To numeric_cast(From from)
-	{
-		return privat::numeric_cast_helper_specialized<detail::numeric_limits<To>::is_specialized && detail::numeric_limits<From>::is_specialized>::template cast<To>(from);
-	}
-
-	// with CAGE_ASSERT_ENABLED class_cast verifies that dynamic_cast would succeed
-	// without CAGE_ASSERT_ENABLED class_cast is the same as static_cast
-	template<class To, class From>
-	To class_cast(From from)
-	{
-		CAGE_ASSERT(!from || dynamic_cast<To>(from), from);
-		return static_cast<To>(from);
-	}
-
-	namespace privat
-	{
-#define GCHL_GENERATE(TYPE) CAGE_CORE_API uint32 toString(char *s, TYPE value); CAGE_CORE_API void fromString(const char *s, TYPE &value);
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, float, double));
+#define GCHL_GENERATE(TYPE) \
+		CAGE_CORE_API uint32 toString(char *s, TYPE value); \
+		CAGE_CORE_API void fromString(const char *s, TYPE &value);
+		GCHL_GENERATE(sint8);
+		GCHL_GENERATE(sint16);
+		GCHL_GENERATE(sint32);
+		GCHL_GENERATE(sint64);
+		GCHL_GENERATE(uint8);
+		GCHL_GENERATE(uint16);
+		GCHL_GENERATE(uint32);
+		GCHL_GENERATE(uint64);
+		GCHL_GENERATE(float);
+		GCHL_GENERATE(double);
 #undef GCHL_GENERATE
 		CAGE_CORE_API uint32 toString(char *dst, uint32 dstLen, const char *src);
 
@@ -868,22 +583,22 @@ namespace cage
 		CAGE_CORE_API void stringReplace(char *data, uint32 &current, uint32 maxLength, const char *what, uint32 whatLen, const char *with, uint32 withLen);
 		CAGE_CORE_API void stringTrim(char *data, uint32 &current, const char *what, uint32 whatLen, bool left, bool right);
 		CAGE_CORE_API void stringSplit(char *data, uint32 &current, char *ret, uint32 &retLen, const char *what, uint32 whatLen);
-		CAGE_CORE_API uint32 stringFind(const char *data, uint32 current, const char *what, uint32 whatLen, uint32 offset);
-		CAGE_CORE_API bool stringIsPattern(const char *data, uint32 dataLen, const char *prefix, uint32 prefixLen, const char *infix, uint32 infixLen, const char *suffix, uint32 suffixLen);
-		CAGE_CORE_API int stringComparison(const char *ad, uint32 al, const char *bd, uint32 bl);
 		CAGE_CORE_API uint32 stringToUpper(char *dst, uint32 dstLen, const char *src, uint32 srcLen);
 		CAGE_CORE_API uint32 stringToLower(char *dst, uint32 dstLen, const char *src, uint32 srcLen);
+		CAGE_CORE_API uint32 stringFind(const char *data, uint32 current, const char *what, uint32 whatLen, uint32 offset) noexcept;
+		CAGE_CORE_API bool stringIsPattern(const char *data, uint32 dataLen, const char *prefix, uint32 prefixLen, const char *infix, uint32 infixLen, const char *suffix, uint32 suffixLen) noexcept;
+		CAGE_CORE_API int stringComparison(const char *ad, uint32 al, const char *bd, uint32 bl) noexcept;
 	}
 
 	namespace detail
 	{
-		CAGE_CORE_API void *memset(void *destination, int value, uintPtr num);
-		CAGE_CORE_API void *memcpy(void *destination, const void *source, uintPtr num);
-		CAGE_CORE_API void *memmove(void *destination, const void *source, uintPtr num);
-		CAGE_CORE_API int memcmp(const void *ptr1, const void *ptr2, uintPtr num);
+		CAGE_CORE_API void *memset(void *destination, int value, uintPtr num) noexcept;
+		CAGE_CORE_API void *memcpy(void *destination, const void *source, uintPtr num) noexcept;
+		CAGE_CORE_API void *memmove(void *destination, const void *source, uintPtr num) noexcept;
+		CAGE_CORE_API int memcmp(const void *ptr1, const void *ptr2, uintPtr num) noexcept;
 
 		template<uint32 N>
-		struct StringBase
+		struct StringBase : templates::Comparable<StringBase<N>>
 		{
 			// constructors
 			StringBase()
@@ -914,13 +629,21 @@ namespace cage
 			}
 
 #define GCHL_GENERATE(TYPE) \
-			explicit StringBase(TYPE other)\
-			{\
-				static_assert(N >= 20, "string too short");\
-				current = privat::toString(data, other);\
-				data[current] = 0;\
+			explicit StringBase(TYPE other) \
+			{ \
+				static_assert(N >= 20, "string too short"); \
+				current = privat::toString(data, other); \
 			}
-			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, float, double));
+			GCHL_GENERATE(sint8);
+			GCHL_GENERATE(sint16);
+			GCHL_GENERATE(sint32);
+			GCHL_GENERATE(sint64);
+			GCHL_GENERATE(uint8);
+			GCHL_GENERATE(uint16);
+			GCHL_GENERATE(uint32);
+			GCHL_GENERATE(uint64);
+			GCHL_GENERATE(float);
+			GCHL_GENERATE(double);
 #undef GCHL_GENERATE
 
 			template<class T>
@@ -936,16 +659,14 @@ namespace cage
 				data[current] = 0;
 			}
 
-			StringBase(char *other)
+			explicit StringBase(char *other)
 			{
 				current = privat::toString(data, N, other);
-				data[current] = 0;
 			}
 
 			StringBase(const char *other)
 			{
 				current = privat::toString(data, N, other);
-				data[current] = 0;
 			}
 
 			// assignment operators
@@ -987,11 +708,6 @@ namespace cage
 				CAGE_ASSERT(idx < current, "index out of range", idx, current, N);
 				return data[idx];
 			}
-
-			// comparison operators
-#define GCHL_GENERATE(OPERATOR) bool operator OPERATOR (const StringBase &other) const { return privat::stringComparison(data, current, other.data, other.current) OPERATOR 0; }
-			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, == , != , <= , >= , <, >));
-#undef GCHL_GENERATE
 
 			// methods
 			const char *c_str() const
@@ -1252,6 +968,11 @@ namespace cage
 
 			template<uint32 M>
 			friend struct StringBase;
+
+			friend constexpr int compare(const StringBase &a, const StringBase &b)
+			{
+				return privat::stringComparison(a.data, a.current, b.data, b.current);
+			}
 		};
 
 		template<uint32 N>
@@ -1311,7 +1032,17 @@ namespace cage
 		{ \
 			return str + StringBase<20>(other); \
 		}
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, float, double, bool));
+		GCHL_GENERATE(sint8);
+		GCHL_GENERATE(sint16);
+		GCHL_GENERATE(sint32);
+		GCHL_GENERATE(sint64);
+		GCHL_GENERATE(uint8);
+		GCHL_GENERATE(uint16);
+		GCHL_GENERATE(uint32);
+		GCHL_GENERATE(uint64);
+		GCHL_GENERATE(float);
+		GCHL_GENERATE(double);
+		GCHL_GENERATE(bool);
 #undef GCHL_GENERATE
 
 		template<uint32 N, class T>
@@ -1898,8 +1629,7 @@ namespace cage
 			}
 			catch (...)
 			{
-				CAGE_ASSERT(false, "exception thrown in destructor");
-				detail::terminate();
+				privat::runtimeAssertFailure("exception thrown in destructor", __FILE__, __LINE__, __FUNCTION__);
 			}
 			deallocate(ptr);
 		}
@@ -1912,7 +1642,10 @@ namespace cage
 	{
 		CAGE_CORE_API MemoryArena &systemArena();
 	}
-}
 
+	// app time
+
+	CAGE_CORE_API uint64 getApplicationTime();
+}
 
 #endif // guard_core_h_39243ce0_71a5_4900_8898_63fb89591b7b_

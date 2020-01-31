@@ -234,19 +234,26 @@ namespace cage
 
 #define GCHL_GENERATE(OPERATOR) \
 	inline ivec2 operator OPERATOR (const ivec2 &r) { return ivec2(OPERATOR r[0], OPERATOR r[1]); }
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, -));
+	GCHL_GENERATE(+);
+	GCHL_GENERATE(-);
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(OPERATOR) \
 	inline ivec2 operator OPERATOR (const ivec2 &l, const ivec2 &r) { return ivec2(l[0] OPERATOR r[0], l[1] OPERATOR r[1]); } \
 	inline ivec2 operator OPERATOR (const ivec2 &l, const sint32 &r) { return ivec2(l[0] OPERATOR r, l[1] OPERATOR r); }
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, -, *, /));
+	GCHL_GENERATE(+);
+	GCHL_GENERATE(-);
+	GCHL_GENERATE(*);
+	GCHL_GENERATE(/);
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(OPERATOR) \
 	inline ivec2 &operator OPERATOR##= (ivec2 &l, const ivec2 &r) { return l = l OPERATOR r; } \
 	inline ivec2 &operator OPERATOR##= (ivec2 &l, const sint32 &r) { return l = l OPERATOR r; }
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, -, *, /));
+	GCHL_GENERATE(+);
+	GCHL_GENERATE(-);
+	GCHL_GENERATE(*);
+	GCHL_GENERATE(/);
 #undef GCHL_GENERATE
 }
 

@@ -3,13 +3,19 @@
 
 #include <cage-core/memory.h>
 #include <cage-core/entities.h>
+#include <cage-core/macros.h>
 
 #include <cage-engine/gui.h>
+#include <cage-engine/guiSkins.h>
 #include <cage-engine/graphics.h>
 #include <cage-engine/window.h>
 
 #include <vector>
 #include <atomic>
+
+#define GCHL_GUI_COMMON_COMPONENTS Parent, Image, ImageFormat, Text, TextFormat, Selection, Tooltip, WidgetState, SelectedItem, Scrollbars, ExplicitSize, Event
+#define GCHL_GUI_WIDGET_COMPONENTS Label, Button, Input, TextArea, CheckBox, RadioBox, ComboBox, ListBox, ProgressBar, SliderBar, ColorPicker, Panel, Spoiler
+#define GCHL_GUI_LAYOUT_COMPONENTS LayoutLine, LayoutTable, LayoutSplitter
 
 #define GUI_HAS_COMPONENT(T,E) (E)->has(impl->components.T)
 #define GUI_REF_COMPONENT(T) hierarchy->ent->value<CAGE_JOIN(Gui, CAGE_JOIN(T, Component))>(hierarchy->impl->components.T)

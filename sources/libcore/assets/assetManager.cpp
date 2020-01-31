@@ -9,6 +9,7 @@
 #include <cage-core/concurrentQueue.h>
 #include <cage-core/assetManager.h>
 #include <cage-core/unordered_map.h>
+#include <cage-core/debug.h>
 
 #include <optick.h>
 

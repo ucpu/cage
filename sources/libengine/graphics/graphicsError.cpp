@@ -1,6 +1,7 @@
 #include <cage-core/concurrent.h>
 #include <cage-core/lineReader.h>
 #include <cage-core/config.h>
+#include <cage-core/debug.h>
 
 #include <cage-engine/opengl.h>
 #include <cage-engine/window.h>

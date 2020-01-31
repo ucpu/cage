@@ -923,8 +923,13 @@ namespace cage
 
 				lastGBufferWidth = lastGBufferHeight = 0;
 
-#define GCHL_GENERATE(NAME) NAME = newTexture(); NAME->setDebugName(CAGE_STRINGIZE(NAME)); NAME->filters(GL_LINEAR, GL_LINEAR, 0); NAME->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, albedoTexture, specialTexture, normalTexture, colorTexture, depthTexture, intermediateTexture));
+#define GCHL_GENERATE(NAME) NAME = newTexture(); NAME->setDebugName(#NAME); NAME->filters(GL_LINEAR, GL_LINEAR, 0); NAME->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+				GCHL_GENERATE(albedoTexture);
+				GCHL_GENERATE(specialTexture);
+				GCHL_GENERATE(normalTexture);
+				GCHL_GENERATE(colorTexture);
+				GCHL_GENERATE(depthTexture);
+				GCHL_GENERATE(intermediateTexture);
 #undef GCHL_GENERATE
 				CAGE_CHECK_GL_ERROR_DEBUG();
 

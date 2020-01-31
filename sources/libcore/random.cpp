@@ -2,6 +2,7 @@
 #include <cage-core/random.h>
 #include <cage-core/guid.h>
 #include <cage-core/config.h>
+#include <cage-core/macros.h>
 
 namespace cage
 {

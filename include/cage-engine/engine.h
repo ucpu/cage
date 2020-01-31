@@ -293,7 +293,7 @@ namespace cage
 	CAGE_ENGINE_API uint64 engineControlTime();
 }
 
-#define CAGE_COMPONENT_ENGINE(T,C,E) ::cage::CAGE_JOIN(T, Component) &C = (E)->value<::cage::CAGE_JOIN(T, Component)>(::cage::CAGE_JOIN(T, Component)::component);
-#define CAGE_COMPONENT_GUI(T,C,E) ::cage::CAGE_JOIN(Gui, CAGE_JOIN(T, Component)) &C = (E)->value<::cage::CAGE_JOIN(Gui, CAGE_JOIN(T, Component))>(::cage::engineGui()->components().T);
+#define CAGE_COMPONENT_ENGINE(T,C,E) ::cage::T##Component &C = (E)->value<::cage::T##Component>(::cage::T##Component::component);
+#define CAGE_COMPONENT_GUI(T,C,E) ::cage::Gui##T##Component &C = (E)->value<::cage::Gui##T##Component>(::cage::engineGui()->components().T);
 
 #endif // guard_engine_h_73772AB49E6A4E6DB7F99E0D0151468D

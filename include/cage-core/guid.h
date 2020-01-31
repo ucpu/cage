@@ -12,7 +12,7 @@ namespace cage
 	}
 
 	template<uint32 N>
-	struct Guid
+	struct Guid : templates::Comparable<Guid<N>>
 	{
 		explicit Guid(bool randomize = false)
 		{
@@ -24,13 +24,14 @@ namespace cage
 
 		uint8 data[N];
 
-#define GCHL_GENERATE(OPERATOR) bool operator OPERATOR (const Guid &other) const { return detail::memcmp(data, other.data, N) OPERATOR 0; };
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, == , != , <= , >= , <, >));
-#undef GCHL_GENERATE
-
 		operator string() const
 		{
 			return privat::guidToString(data, N);
+		}
+
+		friend constexpr int compare(const Guid &a, const Guid &b) noexcept
+		{
+			return privat::stringComparison((char*)a.data, N, (char*)b.data, N);
 		}
 	};
 }

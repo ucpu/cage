@@ -1,4 +1,5 @@
 #include <cage-core/core.h>
+#include <cage-core/macros.h>
 
 #include <vector>
 #include <algorithm>
@@ -12,22 +13,22 @@ namespace cage
 {
 	namespace detail
 	{
-		void *memset(void *ptr, int value, uintPtr num)
+		void *memset(void *ptr, int value, uintPtr num) noexcept
 		{
 			return std::memset(ptr, value, num);
 		}
 
-		void *memcpy(void *destination, const void *source, uintPtr num)
+		void *memcpy(void *destination, const void *source, uintPtr num) noexcept
 		{
 			return std::memcpy(destination, source, num);
 		}
 
-		void *memmove(void *destination, const void *source, uintPtr num)
+		void *memmove(void *destination, const void *source, uintPtr num) noexcept
 		{
 			return std::memmove(destination, source, num);
 		}
 
-		int memcmp(const void *ptr1, const void *ptr2, uintPtr num)
+		int memcmp(const void *ptr1, const void *ptr2, uintPtr num) noexcept
 		{
 			return std::memcmp(ptr1, ptr2, num);
 		}
@@ -119,7 +120,7 @@ namespace cage
 
 #define GCHL_GENERATE(TYPE, SPEC) \
 		uint32 toString(char *s, TYPE value) \
-		{ sint32 ret = std::sprintf(s, CAGE_STRINGIZE(SPEC), value); if (ret < 0) CAGE_THROW_ERROR(Exception, "toString failed"); return ret; } \
+		{ sint32 ret = std::sprintf(s, CAGE_STRINGIZE(SPEC), value); if (ret < 0) CAGE_THROW_ERROR(Exception, "toString failed"); s[ret] = 0; return ret; } \
 		void fromString(const char *s, TYPE &value) \
 		{ return genericScan(s, value); }
 		GCHL_GENERATE(sint8, %hhd);
@@ -145,6 +146,7 @@ namespace cage
 			if (l > dstLen)
 				CAGE_THROW_ERROR(Exception, "string truncation");
 			std::memcpy(dst, src, l);
+			dst[l] = 0;
 			return numeric_cast<uint32>(l);
 		}
 
@@ -349,40 +351,6 @@ namespace cage
 			std::swap(current, retLen);
 		}
 
-		uint32 stringFind(const char *data, uint32 current, const char *what, uint32 whatLen, uint32 offset)
-		{
-			if (whatLen == 0 || offset + whatLen > current)
-				return m;
-			uint32 end = current - whatLen + 1;
-			for (uint32 i = offset; i < end; i++)
-				if (std::memcmp(data + i, what, whatLen) == 0)
-					return i;
-			return m;
-		}
-
-		bool stringIsPattern(const char *data, uint32 dataLen, const char *prefix, uint32 prefixLen, const char *infix, uint32 infixLen, const char *suffix, uint32 suffixLen)
-		{
-			if (dataLen < prefixLen + infixLen + suffixLen)
-				return false;
-			if (std::memcmp(data, prefix, prefixLen) != 0)
-				return false;
-			if (std::memcmp(data + dataLen - suffixLen, suffix, suffixLen) != 0)
-				return false;
-			if (infixLen == 0)
-				return true;
-			uint32 pos = stringFind(data, dataLen, infix, infixLen, prefixLen);
-			return pos != m && pos <= dataLen - infixLen - suffixLen;
-		}
-
-		int stringComparison(const char *ad, uint32 al, const char *bd, uint32 bl)
-		{
-			uint32 l = al < bl ? al : bl;
-			int c = std::memcmp(ad, bd, l);
-			if (c == 0)
-				return al == bl ? 0 : al < bl ? -1 : 1;
-			return c;
-		}
-
 		uint32 stringToUpper(char *dst, uint32 dstLen, const char *src, uint32 srcLen)
 		{
 			const char *e = src + srcLen;
@@ -397,6 +365,40 @@ namespace cage
 			while (src != e)
 				*dst++ = std::tolower(*src++);
 			return srcLen;
+		}
+
+		uint32 stringFind(const char *data, uint32 current, const char *what, uint32 whatLen, uint32 offset) noexcept
+		{
+			if (whatLen == 0 || offset + whatLen > current)
+				return m;
+			uint32 end = current - whatLen + 1;
+			for (uint32 i = offset; i < end; i++)
+				if (std::memcmp(data + i, what, whatLen) == 0)
+					return i;
+			return m;
+		}
+
+		bool stringIsPattern(const char *data, uint32 dataLen, const char *prefix, uint32 prefixLen, const char *infix, uint32 infixLen, const char *suffix, uint32 suffixLen) noexcept
+		{
+			if (dataLen < prefixLen + infixLen + suffixLen)
+				return false;
+			if (std::memcmp(data, prefix, prefixLen) != 0)
+				return false;
+			if (std::memcmp(data + dataLen - suffixLen, suffix, suffixLen) != 0)
+				return false;
+			if (infixLen == 0)
+				return true;
+			uint32 pos = stringFind(data, dataLen, infix, infixLen, prefixLen);
+			return pos != m && pos <= dataLen - infixLen - suffixLen;
+		}
+
+		int stringComparison(const char *ad, uint32 al, const char *bd, uint32 bl) noexcept
+		{
+			uint32 l = al < bl ? al : bl;
+			int c = std::memcmp(ad, bd, l);
+			if (c == 0)
+				return al == bl ? 0 : al < bl ? -1 : 1;
+			return c;
 		}
 	}
 }

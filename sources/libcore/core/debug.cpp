@@ -1,3 +1,4 @@
+#include <cage-core/debug.h>
 #include <cage-core/math.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -19,10 +20,8 @@ namespace cage
 	{
 		struct IsLocal
 		{
-			bool breakpointEnabled;
-			bool assertDeadly;
-			IsLocal() : breakpointEnabled(true), assertDeadly(true)
-			{}
+			bool breakpointEnabled = true;
+			bool assertDeadly = true;
 		};
 
 		IsLocal &isLocal()
@@ -143,82 +142,29 @@ namespace cage
 			}
 		}
 
-		AssertPriv::AssertPriv(bool exp, const char *expt, const char *file, const char *line, const char *function) : valid(exp)
+		void runtimeAssertFailure(const char *expt, const char *file, uintPtr line, const char *function)
 		{
-			if (!valid)
-			{
-				char buffer[2048];
-				buffer[0] = 0;
-				std::strcat(buffer, "assert '");
-				std::strcat(buffer, expt);
-				std::strcat(buffer, "' failed");
-				assertOutputLine(buffer, false);
-				buffer[0] = 0;
-				std::strcat(buffer, file);
-				std::strcat(buffer, "(");
-				std::strcat(buffer, line);
-				std::strcat(buffer, ") - ");
-				std::strcat(buffer, function);
-				assertOutputLine(buffer);
-			}
-		}
+			char buffer[2048];
+			buffer[0] = 0;
+			std::strcat(buffer, "assert '");
+			std::strcat(buffer, expt);
+			std::strcat(buffer, "' failed");
+			assertOutputLine(buffer, false);
 
-		void AssertPriv::operator () () const
-		{
-			if (valid)
-				return;
+			buffer[0] = 0;
+			std::strcat(buffer, file);
+			std::strcat(buffer, "(");
+			char linebuf[20];
+			toString(linebuf, line);
+			std::strcat(buffer, linebuf);
+			std::strcat(buffer, ") - ");
+			std::strcat(buffer, function);
+			assertOutputLine(buffer);
 
 			if (isLocal().assertDeadly && isGlobalAssertDeadly())
 				detail::terminate();
 			else
 				CAGE_THROW_CRITICAL(Exception, "assert failure");
-		}
-
-#define GCHL_GENERATE(TYPE) \
-		AssertPriv &AssertPriv::variable(const char *name, TYPE var)\
-		{\
-			if (!valid)\
-			{\
-				char buffer [50];\
-				privat::toString(buffer, var);\
-				format(name, buffer);\
-			}\
-			return *this;\
-		}
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, bool, float, double));
-#undef GCHL_GENERATE
-
-#define GCHL_GENERATE(TYPE) \
-		AssertPriv &AssertPriv::variable(const char *name, TYPE var)\
-		{\
-			if (!valid)\
-			{\
-				format(name, (stringizer() + var).value.c_str()); \
-			}\
-			return *this;\
-		}
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, real, rads, degs, const vec2&, const vec3&, const vec4&, const quat&, const mat3&, const mat4&));
-#undef GCHL_GENERATE
-
-		AssertPriv &AssertPriv::variable(const char *name, const string &var)
-		{
-			if (!valid)
-				format(name, var.c_str());
-			return *this;
-		}
-
-		AssertPriv &AssertPriv::variable(const char *name, const char *var)
-		{
-			if (!valid)
-				format(name, var);
-			return *this;
-		}
-
-		void AssertPriv::format(const char *name, const char *var) const
-		{
-			stringizer s;
-			s + " > " + name + ": " + var;
-			assertOutputLine(s.value.c_str());
 		}
 	}
 

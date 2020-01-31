@@ -20,7 +20,16 @@ namespace cage
 
 		inline real() {}
 #define GCHL_GENERATE(TYPE) inline real (TYPE other) : value((float)other) {}
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, float, double));
+		GCHL_GENERATE(sint8);
+		GCHL_GENERATE(sint16);
+		GCHL_GENERATE(sint32);
+		GCHL_GENERATE(sint64);
+		GCHL_GENERATE(uint8);
+		GCHL_GENERATE(uint16);
+		GCHL_GENERATE(uint32);
+		GCHL_GENERATE(uint64);
+		GCHL_GENERATE(float);
+		GCHL_GENERATE(double);
 #undef GCHL_GENERATE
 		explicit real(rads other);
 		explicit real(degs other);
@@ -202,7 +211,11 @@ namespace cage
 	inline bool operator OPERATOR (const vec2 &l, const vec2 &r) { return l.data[0] OPERATOR r.data[0] && l.data[1] OPERATOR r.data[1]; }; \
 	inline bool operator OPERATOR (const vec3 &l, const vec3 &r) { return l.data[0] OPERATOR r.data[0] && l.data[1] OPERATOR r.data[1] && l.data[2] OPERATOR r.data[2]; }; \
 	inline bool operator OPERATOR (const vec4 &l, const vec4 &r) { return l.data[0] OPERATOR r.data[0] && l.data[1] OPERATOR r.data[1] && l.data[2] OPERATOR r.data[2] && l.data[3] OPERATOR r.data[3]; };
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, ==, <, >, <=, >= ));
+	GCHL_GENERATE(==);
+	GCHL_GENERATE(<=);
+	GCHL_GENERATE(>=);
+	GCHL_GENERATE(<);
+	GCHL_GENERATE(>);
 #undef GCHL_GENERATE
 	inline bool operator == (const quat &l, const quat &r) { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2] && l.data[3] == r.data[3]; };
 	inline bool operator == (const mat3 &l, const mat3 &r) { for (uint32 i = 0; i < 9; i++) if (!(l[i] == r[i])) return false; return true; };
@@ -210,7 +223,15 @@ namespace cage
 	inline bool operator == (const transform &l, const transform &r) { return l.orientation == r.orientation && l.position == r.position && l.scale == r.scale; };
 #define GCHL_GENERATE(TYPE) \
 	inline bool operator != (const TYPE &l, const TYPE &r) { return !(l == r); };
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, real, rads, degs, vec2, vec3, vec4, quat, mat3, mat4));
+	GCHL_GENERATE(real);
+	GCHL_GENERATE(rads);
+	GCHL_GENERATE(degs);
+	GCHL_GENERATE(vec2);
+	GCHL_GENERATE(vec3);
+	GCHL_GENERATE(vec4);
+	GCHL_GENERATE(quat);
+	GCHL_GENERATE(mat3);
+	GCHL_GENERATE(mat4);
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(OPERATOR) \
@@ -221,12 +242,16 @@ namespace cage
 	inline vec3 operator OPERATOR (const vec3 &r) { return vec3(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2]); } \
 	inline vec4 operator OPERATOR (const vec4 &r) { return vec4(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2], OPERATOR r[3]); } \
 	inline quat operator OPERATOR (const quat &r) { return quat(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2], OPERATOR r[3]); }
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, - ));
+	GCHL_GENERATE(+);
+	GCHL_GENERATE(-);
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(OPERATOR) \
 	inline real operator OPERATOR (const real &l, const real &r) { return l.value OPERATOR r.value; }
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, -, *, / ));
+	GCHL_GENERATE(+);
+	GCHL_GENERATE(-);
+	GCHL_GENERATE(*);
+	GCHL_GENERATE(/);
 #undef GCHL_GENERATE
 	inline real operator % (const real &l, const real &r) { CAGE_ASSERT(r.value != 0); return l - (r * (sint32)(l / r).value); }
 #define GCHL_GENERATE(OPERATOR) \
@@ -247,13 +272,19 @@ namespace cage
 	inline vec4 operator OPERATOR (const vec4 &l, const vec4 &r) { return vec4(l[0] OPERATOR r[0], l[1] OPERATOR r[1], l[2] OPERATOR r[2], l[3] OPERATOR r[3]); } \
 	inline vec4 operator OPERATOR (const vec4 &l, const real &r) { return vec4(l[0] OPERATOR r, l[1] OPERATOR r, l[2] OPERATOR r, l[3] OPERATOR r); } \
 	inline vec4 operator OPERATOR (const real &l, const vec4 &r) { return vec4(l OPERATOR r[0], l OPERATOR r[1], l OPERATOR r[2], l OPERATOR r[3]); }
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, -, *, /, % ));
+	GCHL_GENERATE(+);
+	GCHL_GENERATE(-);
+	GCHL_GENERATE(*);
+	GCHL_GENERATE(/);
+	GCHL_GENERATE(%);
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(OPERATOR) \
 	inline quat operator OPERATOR (const quat &l, const quat &r) { return quat(l[0] OPERATOR r[0], l[1] OPERATOR r[1], l[2] OPERATOR r[2], l[3] OPERATOR r[3]); } \
 	inline quat operator OPERATOR (const real &l, const quat &r) { return quat(l OPERATOR r[0], l OPERATOR r[1], l OPERATOR r[2], l OPERATOR r[3]); } \
 	inline quat operator OPERATOR (const quat &l, const real &r) { return quat(l[0] OPERATOR r, l[1] OPERATOR r, l[2] OPERATOR r, l[3] OPERATOR r); }
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, -, / ));
+	GCHL_GENERATE(+);
+	GCHL_GENERATE(-);
+	GCHL_GENERATE(/);
 #undef GCHL_GENERATE
 	CAGE_CORE_API quat operator * (const quat &l, const quat &r);
 	inline quat operator * (const real &l, const quat &r) { return quat(l * r[0], l * r[1], l * r[2], l * r[3]); }
@@ -265,7 +296,8 @@ namespace cage
 	CAGE_CORE_API mat4 operator OPERATOR (const mat4 &l, const mat4 &r); \
 	inline mat4 operator OPERATOR (const mat4 &l, const real &r) { mat4 res; for (uint32 i = 0; i < 16; i++) res[i] = l[i] OPERATOR r; return res; } \
 	inline mat4 operator OPERATOR (const real &l, const mat4 &r) { mat4 res; for (uint32 i = 0; i < 16; i++) res[i] = l OPERATOR r[i]; return res; }
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, * ));
+	GCHL_GENERATE(+);
+	GCHL_GENERATE(*);
 #undef GCHL_GENERATE
 	CAGE_CORE_API vec3 operator * (const transform &l, const vec3 &r);
 	CAGE_CORE_API vec3 operator * (const vec3 &l, const transform &r);
@@ -295,19 +327,27 @@ namespace cage
 	inline vec3 &operator OPERATOR##= (vec3 &l, const real &r) { return l = l OPERATOR r; } \
 	inline vec4 &operator OPERATOR##= (vec4 &l, const vec4 &r) { return l = l OPERATOR r; } \
 	inline vec4 &operator OPERATOR##= (vec4 &l, const real &r) { return l = l OPERATOR r; }
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, -, *, /, % ));
+	GCHL_GENERATE(+);
+	GCHL_GENERATE(-);
+	GCHL_GENERATE(*);
+	GCHL_GENERATE(/);
+	GCHL_GENERATE(%);
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(OPERATOR) \
 	inline quat &operator OPERATOR##= (quat &l, const quat &r) { return l = l OPERATOR r; } \
 	inline quat &operator OPERATOR##= (quat &l, const real &r) { return l = l OPERATOR r; }
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, -, *, / ));
+	GCHL_GENERATE(+);
+	GCHL_GENERATE(-);
+	GCHL_GENERATE(*);
+	GCHL_GENERATE(/);
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(OPERATOR) \
 	inline mat3 &operator OPERATOR##= (mat3 &l, const mat3 &r) { return l = l OPERATOR r; } \
 	inline mat3 &operator OPERATOR##= (mat3 &l, const real &r) { return l = l OPERATOR r; } \
 	inline mat4 &operator OPERATOR##= (mat4 &l, const mat4 &r) { return l = l OPERATOR r; } \
 	inline mat4 &operator OPERATOR##= (mat4 &l, const real &r) { return l = l OPERATOR r; }
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, * ));
+	GCHL_GENERATE(+);
+	GCHL_GENERATE(*);
 #undef GCHL_GENERATE
 	inline vec3 &operator *= (vec3 &l, const mat3 &r) { return l = l *= r; }
 	inline vec3 &operator *= (vec3 &l, const quat &r) { return l = l *= r; }
@@ -369,7 +409,9 @@ namespace cage
 	inline real distance(const TYPE &l, const TYPE &r) { return sqrt(distanceSquared(l, r)); } \
 	inline TYPE normalize(const TYPE &x) { return x / length(x); } \
 	inline TYPE abs(const TYPE &x) { return x < TYPE() ? -x : x; }
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, vec2, vec3, vec4));
+	GCHL_GENERATE(vec2);
+	GCHL_GENERATE(vec3);
+	GCHL_GENERATE(vec4);
 #undef GCHL_GENERATE
 	inline real dot(const quat &l, const quat &r) { return dot((vec4&)l, (vec4&)r); }
 	inline real lengthSquared(const quat &x) { return dot(x, x); }
@@ -399,14 +441,34 @@ namespace cage
 	CAGE_CORE_API bool valid(double a);
 #define GCHL_GENERATE(TYPE) \
 	inline bool valid(const TYPE &a) { return a.valid(); }
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, real, rads, degs, vec2, vec3, vec4, quat, mat3, mat4));
+	GCHL_GENERATE(real);
+	GCHL_GENERATE(rads);
+	GCHL_GENERATE(degs);
+	GCHL_GENERATE(vec2);
+	GCHL_GENERATE(vec3);
+	GCHL_GENERATE(vec4);
+	GCHL_GENERATE(quat);
+	GCHL_GENERATE(mat3);
+	GCHL_GENERATE(mat4);
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(TYPE) \
 	inline TYPE min(TYPE a, TYPE b) { return a < b ? a : b; } \
 	inline TYPE max(TYPE a, TYPE b) { return a > b ? a : b; } \
 	inline TYPE clamp(TYPE v, TYPE a, TYPE b) { CAGE_ASSERT(a <= b); return min(max(v, a), b); }
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, float, double, real, rads, degs));
+	GCHL_GENERATE(sint8);
+	GCHL_GENERATE(sint16);
+	GCHL_GENERATE(sint32);
+	GCHL_GENERATE(sint64);
+	GCHL_GENERATE(uint8);
+	GCHL_GENERATE(uint16);
+	GCHL_GENERATE(uint32);
+	GCHL_GENERATE(uint64);
+	GCHL_GENERATE(float);
+	GCHL_GENERATE(double);
+	GCHL_GENERATE(real);
+	GCHL_GENERATE(rads);
+	GCHL_GENERATE(degs);
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(TYPE) \
 	inline TYPE min(const TYPE &l, const TYPE &r) { TYPE res; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) res[i] = min(l[i], r[i]); return res; } \
@@ -417,16 +479,32 @@ namespace cage
 	inline TYPE max(real l, const TYPE &r) { return max(TYPE(l), r); } \
 	inline TYPE clamp(const TYPE &v, const TYPE &a, const TYPE &b) { TYPE res; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) res[i] = clamp(v[i], a[i], b[i]); return res; } \
 	inline TYPE clamp(const TYPE &v, real a, real b) { return clamp(v, TYPE(a), TYPE(b)); }
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, vec2, vec3, vec4));
+	GCHL_GENERATE(vec2);
+	GCHL_GENERATE(vec3);
+	GCHL_GENERATE(vec4);
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(TYPE) \
 	inline TYPE interpolate(TYPE a, TYPE b, real f) { return (TYPE)(a * (1 - f.value) + b * f.value); }
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64));
+	GCHL_GENERATE(sint8);
+	GCHL_GENERATE(sint16);
+	GCHL_GENERATE(sint32);
+	GCHL_GENERATE(sint64);
+	GCHL_GENERATE(uint8);
+	GCHL_GENERATE(uint16);
+	GCHL_GENERATE(uint32);
+	GCHL_GENERATE(uint64);
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(TYPE) \
 	inline TYPE interpolate(TYPE a, TYPE b, real f) { return (TYPE)(a + (b - a) * f.value); }
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, float, double, real, rads, degs, vec2, vec3, vec4));
+	GCHL_GENERATE(float);
+	GCHL_GENERATE(double);
+	GCHL_GENERATE(real);
+	GCHL_GENERATE(rads);
+	GCHL_GENERATE(degs);
+	GCHL_GENERATE(vec2);
+	GCHL_GENERATE(vec3);
+	GCHL_GENERATE(vec4);
 #undef GCHL_GENERATE
 	inline quat interpolate(const quat &a, const quat &b, real f) { return slerp(a, b, f); }
 	inline transform interpolate(const transform &a, const transform &b, real f) { return transform(interpolate(a.position, b.position, f), interpolate(a.orientation, b.orientation, f), interpolate(a.scale, b.scale, f)); }
@@ -436,7 +514,19 @@ namespace cage
 	CAGE_CORE_API real randomChance(); // 0 to 1; including 0, excluding 1
 #define GCHL_GENERATE(TYPE) \
 	CAGE_CORE_API TYPE randomRange(TYPE min, TYPE max);
-	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64, float, double, real, rads, degs));
+	GCHL_GENERATE(sint8);
+	GCHL_GENERATE(sint16);
+	GCHL_GENERATE(sint32);
+	GCHL_GENERATE(sint64);
+	GCHL_GENERATE(uint8);
+	GCHL_GENERATE(uint16);
+	GCHL_GENERATE(uint32);
+	GCHL_GENERATE(uint64);
+	GCHL_GENERATE(float);
+	GCHL_GENERATE(double);
+	GCHL_GENERATE(real);
+	GCHL_GENERATE(rads);
+	GCHL_GENERATE(degs);
 #undef GCHL_GENERATE
 	CAGE_CORE_API rads randomAngle();
 	inline vec2 randomChance2() { return vec2(randomChance(), randomChance()); }
@@ -454,12 +544,14 @@ namespace cage
 	namespace detail
 	{
 		template<>
-		struct numeric_limits<real> : public numeric_limits<decltype(real::value)> {};
+		struct numeric_limits<real> : public numeric_limits<decltype(real::value)>
+		{};
 	}
+
 	template<class To>
 	To numeric_cast(real from)
 	{
-		return privat::numeric_cast_helper_specialized<detail::numeric_limits<To>::is_specialized>::template cast<To>(from.value);
+		return numeric_cast<To>(from.value);
 	};
 
 	namespace detail

@@ -1,5 +1,6 @@
 #include <cage-core/core.h>
 #include <cage-core/ini.h>
+#include <cage-core/macros.h>
 
 using namespace cage;
 

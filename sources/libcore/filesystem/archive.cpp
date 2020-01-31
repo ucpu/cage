@@ -2,6 +2,7 @@
 #include <cage-core/concurrent.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
+#include <cage-core/debug.h>
 
 #include <zip.h>
 

@@ -2,6 +2,7 @@
 #include <cage-core/files.h>
 #include <cage-core/ini.h>
 #include <cage-core/pointerRangeHolder.h>
+#include <cage-core/macros.h>
 
 #include <map>
 #include <vector>

@@ -150,8 +150,19 @@ int main(int argc, const char *args[])
 		loadProperties();
 		initializeSecondaryLog(pathJoin(configGetString("cage-asset-processor/processLog/path", "process-log"), pathReplaceInvalidCharacters(inputName) + ".log"));
 
-#define GCHL_GENERATE(N) CAGE_LOG(SeverityEnum::Info, "asset-processor", stringizer() + "input " CAGE_STRINGIZE(N) ": '" + N + "'");
-		CAGE_EVAL_MEDIUM(CAGE_EXPAND_ARGS(GCHL_GENERATE, inputDirectory, inputName, outputDirectory, outputName, assetPath, schemePath, schemeIndex, inputFileName, outputFileName, inputFile, inputSpec, inputIdentifier));
+#define GCHL_GENERATE(N) CAGE_LOG(SeverityEnum::Info, "asset-processor", stringizer() + "input " #N ": '" + N + "'");
+		GCHL_GENERATE(inputDirectory);
+		GCHL_GENERATE(inputName);
+		GCHL_GENERATE(outputDirectory);
+		GCHL_GENERATE(outputName);
+		GCHL_GENERATE(assetPath);
+		GCHL_GENERATE(schemePath);
+		GCHL_GENERATE(schemeIndex);
+		GCHL_GENERATE(inputFileName);
+		GCHL_GENERATE(outputFileName);
+		GCHL_GENERATE(inputFile);
+		GCHL_GENERATE(inputSpec);
+		GCHL_GENERATE(inputIdentifier);
 #undef GCHL_GENERATE
 
 		for (const auto &it : props)

@@ -3,6 +3,7 @@
 
 #include <cage-core/network.h>
 #include <cage-core/memoryBuffer.h>
+#include <cage-core/debug.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
 

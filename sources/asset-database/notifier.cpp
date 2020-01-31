@@ -1,6 +1,7 @@
 #include <cage-core/core.h>
 #include <cage-core/network.h>
 #include <cage-core/concurrent.h>
+#include <cage-core/debug.h>
 
 using namespace cage;
 

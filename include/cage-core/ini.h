@@ -65,10 +65,10 @@ namespace cage
 		void save(const string &filename) const;
 
 #define GCHL_GENERATE(TYPE, NAME, DEF) \
-		void CAGE_JOIN(set, NAME) (const string &section, const string &item, const TYPE &value); \
-		TYPE CAGE_JOIN(get, NAME) (const string &section, const string &item, const TYPE &defaul = DEF) const; \
-		TYPE CAGE_JOIN(cmd, NAME) (char shortName, const string &longName, const TYPE &defaul) const; \
-		TYPE CAGE_JOIN(cmd, NAME) (char shortName, const string &longName) const;
+		void set##NAME (const string &section, const string &item, const TYPE &value); \
+		TYPE get##NAME (const string &section, const string &item, const TYPE &defaul = DEF) const; \
+		TYPE cmd##NAME (char shortName, const string &longName, const TYPE &defaul) const; \
+		TYPE cmd##NAME (char shortName, const string &longName) const;
 		GCHL_GENERATE(bool, Bool, false);
 		GCHL_GENERATE(sint32, Sint32, 0);
 		GCHL_GENERATE(uint32, Uint32, 0);

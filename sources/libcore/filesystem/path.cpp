@@ -1,4 +1,5 @@
 #include "filesystem.h"
+#include <cage-core/debug.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
 #include "../incWin.h"

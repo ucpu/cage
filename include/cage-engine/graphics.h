@@ -8,7 +8,7 @@ namespace cage
 	CAGE_ENGINE_API void checkGlError();
 
 #ifdef CAGE_DEBUG
-#define CAGE_CHECK_GL_ERROR_DEBUG() { try { checkGlError(); } catch (const ::cage::GraphicsError &) { CAGE_LOG(SeverityEnum::Error, "exception", "opengl error cought in file '" __FILE__ "' at line " CAGE_STRINGIZE(__LINE__) ); } }
+#define CAGE_CHECK_GL_ERROR_DEBUG() { try { checkGlError(); } catch (const ::cage::GraphicsError &) { CAGE_LOG(::cage::SeverityEnum::Error, "exception", ::cage::stringizer() + "opengl error caught in file '" + __FILE__ + "' at line " + __LINE__); } }
 #else
 #define CAGE_CHECK_GL_ERROR_DEBUG()
 #endif
@@ -105,13 +105,19 @@ namespace cage
 		void relink();
 		void validate();
 
-#define GCHL_SHADER_UNIFORM(TYPE) void uniform (uint32 name, const TYPE &value);
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_SHADER_UNIFORM, sint32, uint32, real, vec2, vec3, vec4, quat, mat3, mat4));
-#undef GCHL_SHADER_UNIFORM
-
-#define GCHL_SHADER_UNIFORM(TYPE) void uniform (uint32 name, const TYPE *values, uint32 count);
-		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_SHADER_UNIFORM, sint32, uint32, real, vec2, vec3, vec4, quat, mat3, mat4));
-#undef GCHL_SHADER_UNIFORM
+#define GCHL_GENERATE(TYPE) \
+		void uniform(uint32 name, const TYPE &value); \
+		void uniform(uint32 name, const TYPE *values, uint32 count);
+		GCHL_GENERATE(sint32);
+		GCHL_GENERATE(uint32);
+		GCHL_GENERATE(real);
+		GCHL_GENERATE(vec2);
+		GCHL_GENERATE(vec3);
+		GCHL_GENERATE(vec4);
+		GCHL_GENERATE(quat);
+		GCHL_GENERATE(mat3);
+		GCHL_GENERATE(mat4);
+#undef GCHL_GENERATE
 	};
 
 	CAGE_ENGINE_API Holder<ShaderProgram> newShaderProgram();

@@ -4,6 +4,7 @@
 #include <cage-core/ini.h>
 #include <cage-core/process.h>
 #include <cage-core/threadPool.h>
+#include <cage-core/debug.h>
 
 using namespace cage;
 

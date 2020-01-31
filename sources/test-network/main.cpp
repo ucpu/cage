@@ -1,10 +1,10 @@
-#include <cage-core/core.h>
 #include <cage-core/logger.h>
 #include <cage-core/math.h>
 #include <cage-core/ini.h>
 #include <cage-core/process.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/config.h>
+#include <cage-core/debug.h>
 
 #include <exception>
 

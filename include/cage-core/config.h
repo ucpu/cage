@@ -23,9 +23,16 @@ namespace cage
 	CAGE_CORE_API ConfigTypeEnum configGetType(const string &name);
 
 #define GCHL_CONFIG(T, t) \
-	struct CAGE_CORE_API CAGE_JOIN(Config, T) { CAGE_JOIN(Config, T)(const string &name); CAGE_JOIN(Config, T)(const string &name, t default_); operator t() const; CAGE_JOIN(Config, T) &operator = (t value); private: void *data; }; \
-	CAGE_CORE_API void CAGE_JOIN(configSet, T)(const string &name, t value); \
-	CAGE_CORE_API t CAGE_JOIN(configGet, T)(const string &name, t default_ = 0);
+	struct CAGE_CORE_API Config##T \
+	{ \
+		Config##T(const string &name); \
+		Config##T(const string &name, t default_); \
+		operator t() const; \
+		Config##T &operator = (t value); \
+		private: void *data; \
+	}; \
+	CAGE_CORE_API void configSet##T(const string &name, t value); \
+	CAGE_CORE_API t configGet##T(const string &name, t default_ = 0);
 	GCHL_CONFIG(Bool, bool)
 	GCHL_CONFIG(Sint32, sint32)
 	GCHL_CONFIG(Sint64, sint64)
