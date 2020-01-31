@@ -88,13 +88,13 @@ void testClasses()
 
 	{
 		CAGE_TESTCASE("holder cast");
-		CAGE_TEST((detail::systemArena().createHolder<Base>().cast<Base>()));
-		CAGE_TEST((detail::systemArena().createImpl<Base, Derived>().cast<Base>()));
-		CAGE_TEST((detail::systemArena().createImpl<Base, Derived>().cast<Derived>()));
-		CAGE_TEST_THROWN((detail::systemArena().createImpl<Base, Derived>().cast<OtherDerived>()));
-		CAGE_TEST((Holder<Base>().cast<Derived>().get()) == nullptr);
-		CAGE_TEST((Holder<Derived>().cast<Derived>().get()) == nullptr);
-		CAGE_TEST((Holder<Derived>().cast<Base>().get()) == nullptr);
+		CAGE_TEST((detail::systemArena().createHolder<Base>().dynCast<Base>()));
+		CAGE_TEST((detail::systemArena().createImpl<Base, Derived>().dynCast<Base>()));
+		CAGE_TEST((detail::systemArena().createImpl<Base, Derived>().dynCast<Derived>()));
+		CAGE_TEST_THROWN((detail::systemArena().createImpl<Base, Derived>().dynCast<OtherDerived>()));
+		CAGE_TEST((Holder<Base>().dynCast<Derived>().get()) == nullptr);
+		CAGE_TEST((Holder<Derived>().dynCast<Derived>().get()) == nullptr);
+		CAGE_TEST((Holder<Derived>().dynCast<Base>().get()) == nullptr);
 	}
 
 	{
@@ -112,18 +112,18 @@ void testClasses()
 		{
 			CAGE_TESTCASE("regular inheritance");
 			Holder<Base> h = m.createImpl<Base, Derived>();
-			CAGE_TEST(templates::move(h).cast<Derived>()->derived == 2);
+			CAGE_TEST(templates::move(h).dynCast<Derived>()->derived == 2);
 		}
 		{
 			CAGE_TESTCASE("virtual inheritance");
 			Holder<Base> h = m.createImpl<Base, VirtualDerived>();
-			CAGE_TEST(templates::move(h).cast<VirtualDerived>()->virtualDerived == 4);
+			CAGE_TEST(templates::move(h).dynCast<VirtualDerived>()->virtualDerived == 4);
 		}
 		{
 			CAGE_TESTCASE("virtual destructor");
 			Holder<Base> h = m.createImpl<Base, CountingDerived>();
 			CAGE_TEST(CountingDerived::count == 1);
-			CAGE_TEST(templates::move(h).cast<CountingDerived>()->countingDerived == 5);
+			CAGE_TEST(templates::move(h).dynCast<CountingDerived>()->countingDerived == 5);
 			CAGE_TEST(CountingDerived::count == 0);
 		}
 	}

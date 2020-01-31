@@ -1277,47 +1277,6 @@ namespace cage
 
 	namespace privat
 	{
-		template<class R, class S>
-		struct HolderCaster
-		{
-			R *operator () (S *p) const
-			{
-				if (!p)
-					return nullptr;
-				R *r = dynamic_cast<R*>(p);
-				if (!r)
-					CAGE_THROW_ERROR(Exception, "bad cast");
-				return r;
-			}
-		};
-
-		template<class R>
-		struct HolderCaster<R, void>
-		{
-			R *operator () (void *p) const
-			{
-				return (R*)p;
-			}
-		};
-
-		template<class S>
-		struct HolderCaster<void, S>
-		{
-			void *operator () (S *p) const
-			{
-				return (void*)p;
-			}
-		};
-
-		template<>
-		struct HolderCaster<void, void>
-		{
-			void *operator () (void *p) const
-			{
-				return p;
-			}
-		};
-
 		template<class T>
 		struct HolderDereference
 		{
@@ -1444,13 +1403,30 @@ namespace cage
 		using privat::HolderBase<T>::HolderBase;
 
 		template<class M>
+		Holder<M> dynCast() &&
+		{
+			M *m = dynamic_cast<M*>(this->data_);
+			if (!m && this->data_)
+				CAGE_THROW_ERROR(Exception, "bad dynamic cast");
+			Holder<M> tmp(m, this->ptr_, this->deleter_);
+			erase();
+			return tmp;
+		}
+
+		template<class M>
 		Holder<M> cast() &&
 		{
-			Holder<M> tmp(privat::HolderCaster<M, T>()(this->data_), this->ptr_, this->deleter_);
+			Holder<M> tmp(static_cast<M*>(this->data_), this->ptr_, this->deleter_);
+			erase();
+			return tmp;
+		}
+
+	private:
+		void erase()
+		{
 			this->deleter_.clear();
 			this->ptr_ = nullptr;
 			this->data_ = nullptr;
-			return tmp;
 		}
 	};
 
