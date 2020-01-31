@@ -29,7 +29,7 @@ namespace cage
 			return privat::guidToString(data, N);
 		}
 
-		friend constexpr int compare(const Guid &a, const Guid &b) noexcept
+		friend int compare(const Guid &a, const Guid &b) noexcept
 		{
 			return privat::stringComparison((char*)a.data, N, (char*)b.data, N);
 		}

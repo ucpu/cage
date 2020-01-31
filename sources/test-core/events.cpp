@@ -1,3 +1,5 @@
+#include <cage-core/events.h>
+
 #include "main.h"
 
 namespace

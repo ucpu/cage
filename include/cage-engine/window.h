@@ -1,6 +1,8 @@
 #ifndef guard_window_h_9D2B2359EB7C4009961D1CAFA13BE5FC
 #define guard_window_h_9D2B2359EB7C4009961D1CAFA13BE5FC
 
+#include <cage-core/events.h>
+
 #include "core.h"
 
 namespace cage

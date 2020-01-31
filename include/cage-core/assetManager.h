@@ -1,7 +1,7 @@
 #ifndef guard_assetsManager_h_s54dhg56sr4ht564fdrsh6t
 #define guard_assetsManager_h_s54dhg56sr4ht564fdrsh6t
 
-#include "core.h"
+#include "events.h"
 
 namespace cage
 {

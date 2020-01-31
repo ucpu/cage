@@ -1,6 +1,8 @@
 #ifndef guard_engine_h_73772AB49E6A4E6DB7F99E0D0151468D
 #define guard_engine_h_73772AB49E6A4E6DB7F99E0D0151468D
 
+#include <cage-core/events.h>
+
 #include "core.h"
 
 namespace cage
