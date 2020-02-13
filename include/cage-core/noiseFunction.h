@@ -34,8 +34,6 @@ namespace cage
 		Euclidean,
 		Manhattan, // length in axial directions
 		Natural, // blend of euclidean and manhattan
-		//EuclideanSquared,
-		//Chebychev, // length of the longest axis
 	};
 
 	enum class NoiseOperationEnum : uint32
@@ -46,6 +44,7 @@ namespace cage
 		Subtract,
 		Multiply,
 		Divide,
+		NoiseLookup,
 	};
 
 	class CAGE_CORE_API NoiseFunction : private Immovable
@@ -78,7 +77,7 @@ namespace cage
 		NoiseFunctionCreateConfig(uint32 seed = 1337);
 	};
 
-	CAGE_CORE_API Holder<NoiseFunction> newNoiseFunction(const NoiseFunctionCreateConfig &config);
+	CAGE_CORE_API Holder<NoiseFunction> newNoiseFunction(const NoiseFunctionCreateConfig &config, Holder<NoiseFunction> &&lookupNoise = {});
 }
 
 #endif // guard_noiseFunction_h_189F28C1827941F488646FA87D7913F4

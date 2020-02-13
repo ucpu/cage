@@ -307,6 +307,17 @@ namespace
 				rads r = wrap(atan2(x, y));
 				test(a, r);
 			}
+
+			for (uint32 i = 0; i < 10; i++)
+			{
+				rads a = randomAngle();
+				real d = randomRange(0.1, 10.0);
+				real x = cos(a) * d;
+				real y = sin(a) * d;
+				rads c = atan2(x, y);
+				rads s = rads(std::atan2(y.value, x.value));
+				test(c, s);
+			}
 		}
 	}
 

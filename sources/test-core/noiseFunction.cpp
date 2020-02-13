@@ -14,7 +14,7 @@ namespace
 	const sint32 resolution = 1024;
 #endif // CAGE_DEBUG
 
-	void generateImage(const string &fileName, Holder<NoiseFunction> &noise)
+	void generateImage(const string &fileName, const Holder<NoiseFunction> &noise)
 	{
 		std::vector<vec2> positions;
 		std::vector<real> results;
@@ -101,6 +101,17 @@ void testNoise()
 			config.operation = NoiseOperationEnum::Divide;
 			Holder<NoiseFunction> noise = newNoiseFunction(config);
 			generateImage(stringizer() + "images/cellular_divide.png", noise);
+		}
+		{
+			NoiseFunctionCreateConfig config2;
+			config2.type = NoiseTypeEnum::Value;
+			config2.octaves = 2;
+			Holder<NoiseFunction> noise2 = newNoiseFunction(config2);
+			NoiseFunctionCreateConfig config;
+			config.type = NoiseTypeEnum::Cellular;
+			config.operation = NoiseOperationEnum::NoiseLookup;
+			Holder<NoiseFunction> noise = newNoiseFunction(config, templates::move(noise2));
+			generateImage(stringizer() + "images/cellular_lookup.png", noise);
 		}
 	}
 }

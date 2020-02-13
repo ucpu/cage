@@ -49,21 +49,23 @@ namespace cage
 
 	rads asin(real value)
 	{
-		return (rads) std::asin(value.value);
+		return (rads)std::asin(value.value);
 	}
 
 	rads acos(real value)
 	{
-		return (rads) std::acos(value.value);
+		return (rads)std::acos(value.value);
 	}
 
 	rads atan(real value)
 	{
-		return (rads) std::atan(value.value);
+		return (rads)std::atan(value.value);
 	}
 
 	rads atan2(real x, real y)
 	{
+		return (rads)std::atan2(y.value, x.value);
+		/*
 		if (x > 0) return atan(y / x);
 		if (x < 0)
 		{
@@ -73,6 +75,7 @@ namespace cage
 		if (y < 0) return rads(-real::Pi() / 2);
 		if (y > 0) return rads(real::Pi() / 2);
 		return rads::Nan();
+		*/
 	}
 
 	bool real::valid() const

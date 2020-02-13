@@ -84,8 +84,9 @@ namespace cage
 		{
 		public:
 			FastNoise n;
+			Holder<NoiseFunction> lookupNoise;
 
-			explicit NoiseFunctionImpl(const NoiseFunctionCreateConfig &config) : n(config.seed)
+			explicit NoiseFunctionImpl(const NoiseFunctionCreateConfig &config, Holder<NoiseFunction> &&lookupNoise) : n(config.seed), lookupNoise(templates::move(lookupNoise))
 			{
 				n.SetCellularDistanceFunction(convert(config.distance));
 				switch (config.operation)
@@ -102,6 +103,9 @@ namespace cage
 						n.SetCellularReturnType(FastNoise::Distance2);
 					}
 					break;
+				case NoiseOperationEnum::NoiseLookup:
+					n.SetCellularReturnType(FastNoise::NoiseLookup);
+					break;
 				default:
 					n.SetCellularDistance2Indices(config.index0, config.index1);
 					n.SetCellularReturnType(convert(config.operation));
@@ -114,6 +118,8 @@ namespace cage
 				n.SetFrequency(config.frequency.value);
 				n.SetInterp(convert(config.interpolation));
 				n.SetNoiseType(convert(config.type, config.octaves));
+				if (this->lookupNoise)
+					n.SetCellularNoiseLookup(&((NoiseFunctionImpl *)this->lookupNoise.get())->n);
 			}
 
 			void evaluate(uint32 count, const real positions[], real results[])
@@ -200,8 +206,8 @@ namespace cage
 	NoiseFunctionCreateConfig::NoiseFunctionCreateConfig(uint32 seed) : seed(seed)
 	{}
 
-	Holder<NoiseFunction> newNoiseFunction(const NoiseFunctionCreateConfig &config)
+	Holder<NoiseFunction> newNoiseFunction(const NoiseFunctionCreateConfig &config, Holder<NoiseFunction> &&lookupNoise)
 	{
-		return detail::systemArena().createImpl<NoiseFunction, NoiseFunctionImpl>(config);
+		return detail::systemArena().createImpl<NoiseFunction, NoiseFunctionImpl>(config, templates::move(lookupNoise));
 	}
 }
