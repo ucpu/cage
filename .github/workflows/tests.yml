@@ -1,0 +1,121 @@
+name: Tests
+on: [push, pull_request]
+
+jobs:
+  Windows:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        build-config: [debug, release]
+        build-arch: [Win32, x64]
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Checkout submodules
+      shell: bash
+      run: |
+        export MSYS=winsymlinks:nativestrict
+        git config --global core.symlinks true
+        git submodule update --init --recursive
+
+    - name: Configure
+      shell: bash
+      run: |
+        mkdir build
+        cd build
+        cmake -A${{ matrix.build-arch }} -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} ..
+
+    - name: Build
+      shell: bash
+      run: |
+        cd build
+        cmake --build . --config ${{ matrix.build-config }}
+
+    - name: Tests
+      shell: bash
+      run: |
+        cd build/result/${{ matrix.build-config }}
+        ./cage-test-core
+
+    - name: Assets
+      shell: bash
+      run: |
+        cd build/result/${{ matrix.build-config }}
+        ./cage-asset-database
+
+
+  Ubuntu:
+    runs-on: ubuntu-latest
+    env:
+      CC: ${{ matrix.compiler.cc }}
+      CXX: ${{ matrix.compiler.cxx }}
+    strategy:
+      fail-fast: false
+      matrix:
+        build-config: [debug, release]
+        compiler:
+        - {
+            cc: gcc-6,
+            cxx: g++-6,
+            install: gcc-6 g++-6
+          }
+        - {
+            cc: gcc-7,
+            cxx: g++-7,
+            install: gcc-7 g++-7
+          }
+        - {
+            cc: gcc-8,
+            cxx: g++-8,
+            install: gcc-8 g++-8
+          }
+        - {
+            cc: clang,
+            cxx: clang++,
+            install: clang
+          }
+
+    steps:
+    - name: Install packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y xorg-dev ${{ matrix.compiler.install }}
+
+    - name: Versions
+      run: |
+        cmake --version
+        ${{ matrix.compiler.cc }} --version
+        ${{ matrix.compiler.cxx }} --version
+        git --version
+
+    - uses: actions/checkout@v1
+
+    - name: Checkout submodules
+      run: |
+        git submodule update --init --recursive
+
+    - name: Configure
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-config }} ..
+
+    - name: Build
+      run: |
+        cd build
+        cmake --build . --config ${{ matrix.build-config }} -- -j3
+
+    - name: Tests
+      shell: bash
+      run: |
+        cd build/result/${{ matrix.build-config }}
+        ./cage-test-core
+
+    - name: Assets
+      shell: bash
+      run: |
+        cd build/result/${{ matrix.build-config }}
+        ./cage-asset-database
+
