@@ -304,6 +304,7 @@ namespace cage
 		// default values for rendering
 
 		vec3 color;
+		real intensity;
 		real opacity;
 		real texAnimSpeed;
 		real texAnimOffset;

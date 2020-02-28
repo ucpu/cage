@@ -17,6 +17,7 @@ namespace cage
 			RenderObjectHeader h;
 			des >> h;
 			obj->color = h.color;
+			obj->intensity = h.intensity;
 			obj->opacity = h.opacity;
 			obj->texAnimSpeed = h.texAnimSpeed;
 			obj->texAnimOffset = h.texAnimOffset;

@@ -3,6 +3,7 @@
 #include <cage-core/ini.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
+#include <cage-core/color.h>
 #include <cage-engine/shaderConventions.h>
 #include <cage-engine/opengl.h>
 
@@ -90,9 +91,10 @@ namespace
 		ini->load(pathJoin(inputDirectory, path));
 
 		mat.albedoBase = vec4(
-			vec3::parse(ini->getString("base", "albedo", "0, 0, 0")),
+			colorGammaToLinear(vec3::parse(ini->getString("base", "albedo", "0, 0, 0"))) * ini->getFloat("base", "intensity", 1),
 			ini->getFloat("base", "opacity", 1)
 		);
+
 		if (mat.albedoBase[3] <= 1e-7)
 			dsm.renderFlags |= MeshRenderFlags::Transparency;
 		else if (mat.albedoBase[3] < 1)
@@ -105,7 +107,10 @@ namespace
 			ini->getFloat("base", "mask", 0)
 		);
 
-		mat.albedoMult = vec4(vec3::parse(ini->getString("mult", "albedo", "1, 1, 1")), 1);
+		mat.albedoMult = vec4(
+			colorGammaToLinear(vec3::parse(ini->getString("mult", "albedo", "1, 1, 1"))) * ini->getFloat("mult", "intensity", 1),
+			1
+		);
 
 		mat.specialMult = vec4(
 			ini->getFloat("mult", "roughness", 1),
@@ -212,7 +217,7 @@ namespace
 			if ((flg & aiTextureFlags_UseAlpha) == aiTextureFlags_UseAlpha || mat.albedoBase[3] <= 1e-7)
 			{
 				dsm.renderFlags |= MeshRenderFlags::OpacityTexture;
-				if ((dsm.renderFlags & MeshRenderFlags::Transparency) == MeshRenderFlags::None)
+				if (none(dsm.renderFlags & MeshRenderFlags::Transparency))
 					dsm.renderFlags |= MeshRenderFlags::Translucency;
 			}
 		}
@@ -220,7 +225,7 @@ namespace
 		{
 			aiColor3D color = aiColor3D(1);
 			m->Get(AI_MATKEY_COLOR_DIFFUSE, color);
-			mat.albedoBase = vec4(conv(color), mat.albedoBase[3]);
+			mat.albedoBase = vec4(colorGammaToLinear(conv(color)), mat.albedoBase[3]);
 
 			if (mat.albedoBase[3] < 1e-7)
 				dsm.renderFlags |= MeshRenderFlags::Transparency;

@@ -53,10 +53,16 @@ namespace cage
 			};
 			uint32 val;
 		};
+
+		bool colorInRange(const vec3 &color)
+		{
+			return clamp(color, 0, 1) == color;
+		}
 	}
 
 	uint32 colorRgbToRgbe(const vec3 &color)
 	{
+		CAGE_ASSERT(colorInRange(color));
 		CharToInt hlp;
 		float2rgbe(hlp.rgbe, color.data[0].value, color.data[1].value, color.data[2].value);
 		return hlp.val;
@@ -73,6 +79,7 @@ namespace cage
 
 	vec3 colorRgbToHsv(const vec3 &inColor)
 	{
+		CAGE_ASSERT(colorInRange(inColor));
 		vec3 outColor;
 		real minColor = inColor[0] < inColor[1] ? inColor[0] : inColor[1];
 		minColor = minColor < inColor[2] ? minColor : inColor[2];
@@ -101,6 +108,7 @@ namespace cage
 
 	vec3 colorHsvToRgb(const vec3 &inColor)
 	{
+		CAGE_ASSERT(colorInRange(inColor));
 		vec3 outColor;
 		if (inColor[1] <= 0)
 		{
@@ -157,6 +165,7 @@ namespace cage
 
 	vec3 colorRgbToHsluv(const vec3 &rgb)
 	{
+		CAGE_ASSERT(colorInRange(rgb));
 		double h, s, l;
 		double r = rgb[0].value, g = rgb[1].value, b = rgb[2].value;
 		rgb2hsluv(r, g, b, &h, &s, &l);
@@ -165,6 +174,7 @@ namespace cage
 
 	vec3 colorHsluvToRgb(const vec3 &hsluv)
 	{
+		CAGE_ASSERT(colorInRange(hsluv));
 		double h = hsluv[0].value * 360, s = hsluv[1].value * 100, l = hsluv[2].value * 100;
 		double r, g, b;
 		hsluv2rgb(h, s, l, &r, &g, &b);
@@ -209,18 +219,32 @@ namespace cage
 		return result;
 	}
 
+	vec3 colorGammaToLinear(const vec3 &rgb)
+	{
+		CAGE_ASSERT(colorInRange(rgb));
+		vec3 c2 = rgb * rgb;
+		vec3 c3 = c2 * rgb;
+		return 0.755 * c2 + 0.245 * c3;
+	}
+
 	vec3 colorGammaToLinear(const vec3 &rgb, real gamma)
 	{
+		CAGE_ASSERT(colorInRange(rgb));
+		CAGE_ASSERT(gamma > 0);
 		return vec3(pow(rgb[0], gamma), pow(rgb[1], gamma), pow(rgb[2], gamma));
 	}
 
 	vec3 colorLinearToGamma(const vec3 &rgb, real gamma)
 	{
+		CAGE_ASSERT(colorInRange(rgb));
+		CAGE_ASSERT(gamma > 0);
 		return colorGammaToLinear(rgb, 1 / gamma);
 	}
 
 	real distanceColor(const vec3 &rgb1, const vec3 &rgb2)
 	{
+		CAGE_ASSERT(colorInRange(rgb1));
+		CAGE_ASSERT(colorInRange(rgb2));
 		vec3 hsluv1 = colorRgbToHsluv(rgb1);
 		vec3 hsluv2 = colorRgbToHsluv(rgb2);
 		real h1 = hsluv1[0];
@@ -237,6 +261,8 @@ namespace cage
 
 	vec3 interpolateColor(const vec3 &rgb1, const vec3 &rgb2, real factor)
 	{
+		CAGE_ASSERT(colorInRange(rgb1));
+		CAGE_ASSERT(colorInRange(rgb2));
 		vec3 hsluv1 = colorRgbToHsluv(rgb1);
 		vec3 hsluv2 = colorRgbToHsluv(rgb2);
 		real h1 = hsluv1[0];

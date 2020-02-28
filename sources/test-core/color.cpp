@@ -9,14 +9,28 @@ void testColor()
 	CAGE_TESTCASE("color");
 
 	{
-		CAGE_TESTCASE("(de)gamma");
+		CAGE_TESTCASE("exact (de)gamma");
+		for (uint32 i = 0; i < 20; i++)
+		{
+			vec3 a = randomChance3();
+			vec3 b = colorGammaToLinear(a, 2.2);
+			CAGE_TEST(b <= a);
+			vec3 c = colorLinearToGamma(b);
+			test(a, c);
+		}
+	}
+
+	{
+		CAGE_TESTCASE("fast (de)gamma");
 		for (uint32 i = 0; i < 20; i++)
 		{
 			vec3 a = randomChance3();
 			vec3 b = colorGammaToLinear(a);
 			CAGE_TEST(b <= a);
 			vec3 c = colorLinearToGamma(b);
-			test(a, c);
+			vec3 d3 = abs(c - a);
+			real d = max(d3[0], max(d3[1], d3[2]));
+			CAGE_TEST(255 * d < 3);
 		}
 	}
 

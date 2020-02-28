@@ -7,7 +7,8 @@
 
 void test(real a, real b)
 {
-	CAGE_TEST(abs(a - b) < 1e-4);
+	real d = abs(a - b);
+	CAGE_TEST(d < 1e-4);
 }
 void test(const mat4 &a, const mat4 &b)
 {

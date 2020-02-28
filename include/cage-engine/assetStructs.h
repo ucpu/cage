@@ -148,6 +148,7 @@ namespace cage
 	struct CAGE_ENGINE_API RenderObjectHeader
 	{
 		vec3 color;
+		real intensity;
 		real opacity;
 		
 		real texAnimSpeed;

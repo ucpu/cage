@@ -186,7 +186,7 @@ namespace cage
 					}
 				}
 				std::sort(order.begin(), order.end(), [&](uint32 a, uint32 b) {
-					return distances[a] < distances[b];
+					return distances[a] > distances[b];
 					});
 				std::vector<Holder<Translucent>> result;
 				result.reserve(pass->translucents.size());
@@ -279,8 +279,8 @@ namespace cage
 				pass->uniViewport.vpInv = inverse(pass->viewProj);
 				pass->uniViewport.eyePos = camera->model * vec4(0, 0, 0, 1);
 				pass->uniViewport.eyeDir = camera->model * vec4(0, 0, -1, 0);
-				pass->uniViewport.ambientLight = vec4(camera->camera.ambientLight, 0);
-				pass->uniViewport.ambientDirectionalLight = vec4(camera->camera.ambientDirectionalLight, 0);
+				pass->uniViewport.ambientLight = vec4(colorGammaToLinear(camera->camera.ambientColor) * camera->camera.ambientIntensity, 0);
+				pass->uniViewport.ambientDirectionalLight = vec4(colorGammaToLinear(camera->camera.ambientDirectionalColor) * camera->camera.ambientDirectionalIntensity, 0);
 				pass->uniViewport.viewport = vec4(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
 				pass->targetTexture = camera->camera.target;
 				pass->clearFlags = ((camera->camera.clear & CameraClearFlags::Color) == CameraClearFlags::Color ? GL_COLOR_BUFFER_BIT : 0) | ((camera->camera.clear & CameraClearFlags::Depth) == CameraClearFlags::Depth ? GL_DEPTH_BUFFER_BIT : 0);
@@ -412,7 +412,7 @@ namespace cage
 				CAGE_ASSERT(mesh->getSkeletonName() == 0);
 				for (uint32 i = 0; i < bonesCount; i++)
 				{
-					e->render.color = colorHsvToRgb(vec3(real(i) / real(bonesCount), 1, 1));
+					e->render.color = colorGammaToLinear(colorHsvToRgb(vec3(real(i) / real(bonesCount), 1, 1)));
 					mat4 m = model * tmpArmature2[i];
 					mat4 mvp = pass->viewProj * m;
 					addRenderableMesh(pass, e, mesh.share(), m, mvp, mvp);
@@ -471,7 +471,7 @@ namespace cage
 				}
 				obj->uniMeshes.emplace_back();
 				Objects::UniMesh *sm = &obj->uniMeshes.back();
-				sm->color = vec4(e->render.color, e->render.opacity);
+				sm->color = vec4(colorGammaToLinear(e->render.color) * e->render.intensity, e->render.opacity);
 				sm->mMat = Mat3x4(model);
 				sm->mvpMat = mvp;
 				if (any(m->getFlags() & MeshRenderFlags::VelocityWrite))
@@ -532,7 +532,7 @@ namespace cage
 					font->transcript(s, nullptr, count);
 					r->glyphs.resize(count);
 					font->transcript(s, r->glyphs.data(), count);
-					r->color = e.renderText.color;
+					r->color = colorGammaToLinear(e.renderText.color) * e.renderText.intensity;
 					r->format.size = 1;
 					vec2 size;
 					font->size(r->glyphs.data(), count, r->format, size);
@@ -625,7 +625,7 @@ namespace cage
 				Lights::UniLight *sl = &lig->uniLights.back();
 				// todo this struct could be precomputed
 				sl->mvpMat = mvpMat;
-				sl->color = vec4(light->light.color, cos(light->light.spotAngle * 0.5));
+				sl->color = vec4(colorGammaToLinear(light->light.color) * light->light.intensity, cos(light->light.spotAngle * 0.5));
 				sl->attenuation = vec4(light->light.attenuation, light->light.spotExponent);
 				sl->direction = vec4(normalize(vec3(light->model * vec4(0, 0, -1, 0))), 0);
 				sl->position = light->model * vec4(0, 0, 0, 1);
@@ -750,6 +750,8 @@ namespace cage
 				{
 					if (!e->render.color.valid())
 						e->render.color = o->color;
+					if (!e->render.intensity.valid())
+						e->render.intensity = o->intensity;
 					if (!e->render.opacity.valid())
 						e->render.opacity = o->opacity;
 
@@ -784,6 +786,8 @@ namespace cage
 
 				if (!e->render.color.valid())
 					e->render.color = vec3(0);
+				if (!e->render.intensity.valid())
+					e->render.intensity = 1;
 				if (!e->render.opacity.valid())
 					e->render.opacity = 1;
 

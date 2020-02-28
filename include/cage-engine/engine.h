@@ -24,14 +24,13 @@ namespace cage
 
 	struct CAGE_ENGINE_API CameraSsao
 	{
-		real worldRadius;
-		real bias;
-		real power;
-		real strength;
+		real worldRadius = 0.5;
+		real bias = 0.03;
+		real power = 1.3;
+		real strength = 3;
 		// ao = pow(ao - bias, power) * strength
-		uint32 samplesCount;
-		uint32 blurPasses;
-		CameraSsao();
+		uint32 samplesCount = 16;
+		uint32 blurPasses = 3;
 	};
 
 	struct CAGE_ENGINE_API CameraMotionBlur
@@ -41,30 +40,28 @@ namespace cage
 
 	struct CAGE_ENGINE_API CameraBloom
 	{
-		uint32 blurPasses;
-		real threshold;
-		CameraBloom();
+		uint32 blurPasses = 5;
+		real threshold = 1;
 	};
 
 	struct CAGE_ENGINE_API CameraEyeAdaptation
 	{
-		real key;
-		real strength;
-		real darkerSpeed;
-		real lighterSpeed;
-		CameraEyeAdaptation();
+		real key = 0.5;
+		real strength = 1.0;
+		real darkerSpeed = 0.1;
+		real lighterSpeed = 1;
+		// darker should take at least 5 times longer
 	};
 
 	struct CAGE_ENGINE_API CameraTonemap
 	{
-		real shoulderStrength;
-		real linearStrength;
-		real linearAngle;
-		real toeStrength;
-		real toeNumerator;
-		real toeDenominator;
-		real white;
-		CameraTonemap();
+		real shoulderStrength = 0.22;
+		real linearStrength = 0.3;
+		real linearAngle = 0.1;
+		real toeStrength = 0.2;
+		real toeNumerator = 0.01;
+		real toeDenominator = 0.3;
+		real white = 11.2;
 	};
 
 	struct CAGE_ENGINE_API CameraEffects
@@ -74,9 +71,8 @@ namespace cage
 		CameraBloom bloom;
 		CameraEyeAdaptation eyeAdaptation;
 		CameraTonemap tonemap;
-		real gamma;
-		CameraEffectsFlags effects;
-		CameraEffects();
+		real gamma = 2.2;
+		CameraEffectsFlags effects = CameraEffectsFlags::None;
 	};
 
 	struct CAGE_ENGINE_API TransformComponent : public transform
@@ -89,30 +85,28 @@ namespace cage
 	struct CAGE_ENGINE_API RenderComponent
 	{
 		static EntityComponent *component;
-		vec3 color;
-		real opacity;
-		uint32 object;
-		uint32 sceneMask;
-		RenderComponent();
+		vec3 color = vec3::Nan();
+		real intensity = real::Nan();
+		real opacity = real::Nan();
+		uint32 object = 0;
+		uint32 sceneMask = 1;
 	};
 
 	struct CAGE_ENGINE_API TextureAnimationComponent
 	{
 		static EntityComponent *component;
-		uint64 startTime;
-		real speed;
-		real offset;
-		TextureAnimationComponent();
+		uint64 startTime = 0;
+		real speed = real::Nan();
+		real offset = real::Nan();
 	};
 
 	struct CAGE_ENGINE_API SkeletalAnimationComponent
 	{
 		static EntityComponent *component;
-		uint64 startTime;
-		uint32 name;
-		real speed;
-		real offset;
-		SkeletalAnimationComponent();
+		uint64 startTime = 0;
+		uint32 name = 0;
+		real speed = real::Nan();
+		real offset = real::Nan();
 	};
 
 	enum class LightTypeEnum : uint32
@@ -125,13 +119,13 @@ namespace cage
 	struct CAGE_ENGINE_API LightComponent
 	{
 		static EntityComponent *component;
-		vec3 color;
-		vec3 attenuation; // constant, linear, quadratic
-		rads spotAngle;
-		real spotExponent;
-		uint32 sceneMask;
-		LightTypeEnum lightType;
-		LightComponent();
+		vec3 color = vec3(1);
+		vec3 attenuation = vec3(0, 0, 1); // constant, linear, quadratic
+		real intensity = 1;
+		rads spotAngle = degs(40);
+		real spotExponent = 80;
+		uint32 sceneMask = 1;
+		LightTypeEnum lightType = LightTypeEnum::Point;
 	};
 
 	struct CAGE_ENGINE_API ShadowmapComponent
@@ -139,23 +133,22 @@ namespace cage
 		static EntityComponent *component;
 		// directional: width, height, depth
 		// spot: near, far, unused
-		vec3 worldSize;
-		uint32 resolution;
-		uint32 sceneMask;
-		ShadowmapComponent();
+		vec3 worldSize = vec3();
+		uint32 resolution = 256;
+		uint32 sceneMask = 1;
 	};
 
 	struct CAGE_ENGINE_API TextComponent
 	{
 		static EntityComponent *component;
 		string value; // list of parameters separated by '|' when formatted, otherwise the string as is
-		vec3 color;
-		//real opacity;
-		uint32 assetName;
-		uint32 textName;
-		uint32 font;
-		uint32 sceneMask;
-		TextComponent();
+		vec3 color = vec3(1);
+		// real opacity; // todo
+		real intensity = 1;
+		uint32 assetName = 0;
+		uint32 textName = 0;
+		uint32 font = 0;
+		uint32 sceneMask = 1;
 	};
 
 	enum class CameraClearFlags : uint32
@@ -175,46 +168,46 @@ namespace cage
 	struct CAGE_ENGINE_API CameraComponent : public CameraEffects
 	{
 		static EntityComponent *component;
-		vec3 ambientLight;
-		vec3 ambientDirectionalLight; // fake forward light affected by ssao
-		vec2 viewportOrigin; // [0..1]
-		vec2 viewportSize; // [0..1]
+		vec3 ambientColor = vec3();
+		vec3 ambientDirectionalColor = vec3(); // fake forward light affected by ssao
+		vec2 viewportOrigin = vec2(0);
+		vec2 viewportSize = vec2(1);
 		union CameraUnion
 		{
 			vec2 orthographicSize;
-			rads perspectiveFov;
-			CameraUnion();
+			rads perspectiveFov = degs(60);
+			CameraUnion() {}
+			~CameraUnion() {}
 		} camera;
-		Texture *target;
-		real near, far;
-		real zeroParallaxDistance;
-		real eyeSeparation;
-		sint32 cameraOrder;
-		uint32 sceneMask;
-		CameraClearFlags clear;
-		CameraTypeEnum cameraType;
-		CameraComponent();
+		Texture *target = nullptr;
+		real ambientIntensity = 1;
+		real ambientDirectionalIntensity = 1;
+		real near = 1, far = 100;
+		real zeroParallaxDistance = 10;
+		real eyeSeparation = 0.3;
+		sint32 cameraOrder = 0;
+		uint32 sceneMask = 1;
+		CameraClearFlags clear = CameraClearFlags::Depth | CameraClearFlags::Color;
+		CameraTypeEnum cameraType = CameraTypeEnum::Perspective;
 	};
 
 	struct CAGE_ENGINE_API SoundComponent
 	{
 		static EntityComponent *component;
-		uint64 startTime;
-		MixingBus *input;
-		uint32 name;
-		uint32 sceneMask;
-		SoundComponent();
+		uint64 startTime = 0;
+		MixingBus *input = nullptr;
+		uint32 name = 0;
+		uint32 sceneMask = 1;
 	};
 
 	struct CAGE_ENGINE_API ListenerComponent
 	{
 		static EntityComponent *component;
-		vec3 attenuation; // constant, linear, quadratic
-		MixingBus *output;
-		uint32 sceneMask;
-		real speedOfSound;
-		bool dopplerEffect;
-		ListenerComponent();
+		vec3 attenuation = vec3(); // constant, linear, quadratic
+		MixingBus *output = nullptr;
+		uint32 sceneMask = 1;
+		real speedOfSound = 343.3;
+		bool dopplerEffect = false;
 	};
 
 	struct CAGE_ENGINE_API EngineControlThread
@@ -228,7 +221,6 @@ namespace cage
 		void updatePeriod(uint64 p);
 		uint64 inputPeriod() const;
 		void inputPeriod(uint64 p);
-		EngineControlThread();
 	};
 	CAGE_ENGINE_API EngineControlThread &controlThread();
 
@@ -239,7 +231,6 @@ namespace cage
 		EventDispatcher<bool()> dispatch;
 		EventDispatcher<bool()> swap;
 		static const uint32 threadIndex = 1;
-		EngineGraphicsDispatchThread();
 	};
 	CAGE_ENGINE_API EngineGraphicsDispatchThread &graphicsDispatchThread();
 
@@ -263,18 +254,16 @@ namespace cage
 		uint64 updatePeriod() const;
 		void updatePeriod(uint64 p);
 		static const uint32 threadIndex = 4;
-		EngineSoundThread();
 	};
 	CAGE_ENGINE_API EngineSoundThread &soundThread();
 
 	struct CAGE_ENGINE_API EngineCreateConfig
 	{
-		EntityManagerCreateConfig *entities;
-		AssetManagerCreateConfig *assets;
-		GuiCreateConfig *gui;
-		SoundContextCreateConfig *soundContext;
-		SpeakerCreateConfig *speaker;
-		EngineCreateConfig();
+		EntityManagerCreateConfig *entities = nullptr;
+		AssetManagerCreateConfig *assets = nullptr;
+		GuiCreateConfig *gui = nullptr;
+		SoundContextCreateConfig *soundContext = nullptr;
+		SpeakerCreateConfig *speaker = nullptr;
 	};
 
 	CAGE_ENGINE_API void engineInitialize(const EngineCreateConfig &config);

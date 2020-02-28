@@ -199,7 +199,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API ivec2
 	{
-		ivec2() : x(0), y(0)
+		ivec2()
 		{}
 
 		explicit ivec2(sint32 x, sint32 y) : x(x), y(y)
@@ -225,8 +225,8 @@ namespace cage
 			}
 		}
 
-		sint32 x;
-		sint32 y;
+		sint32 x = 0;
+		sint32 y = 0;
 	};
 
 	inline bool operator == (const ivec2 &l, const ivec2 &r) { return l[0] == r[0] && l[1] == r[1]; };

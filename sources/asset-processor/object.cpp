@@ -68,6 +68,7 @@ void processObject()
 			o.color = vec3::parse(c);
 		else
 			o.color = vec3::Nan();
+		o.intensity = ini->getFloat("render", "intensity", real::Nan().value);
 		o.opacity = ini->getFloat("render", "opacity", real::Nan().value);
 		string s = ini->getString("skeletalAnimation", "name");
 		if (!s.empty())

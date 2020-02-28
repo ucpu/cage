@@ -16,7 +16,8 @@ namespace cage
 
 	CAGE_CORE_API vec3 colorValueToHeatmapRgb(real value); // 0 < blue < green < red < 1
 
-	CAGE_CORE_API vec3 colorGammaToLinear(const vec3 &rgb, real gamma = 2.2);
+	CAGE_CORE_API vec3 colorGammaToLinear(const vec3 &rgb); // fast approximate for gamma = 2.2
+	CAGE_CORE_API vec3 colorGammaToLinear(const vec3 &rgb, real gamma);
 	CAGE_CORE_API vec3 colorLinearToGamma(const vec3 &rgb, real gamma = 2.2);
 
 	CAGE_CORE_API real distanceColor(const vec3 &rgb1, const vec3 &rgb2);
