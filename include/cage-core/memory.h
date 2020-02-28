@@ -320,6 +320,7 @@ namespace cage
 		uintPtr totalSize;
 	};
 
+	/*
 	template<uint8 N, class BoundsPolicy = MemoryBoundsPolicyDefault, class TaggingPolicy = MemoryTagPolicyDefault, class TrackingPolicy = MemoryTrackPolicyDefault>
 	struct MemoryAllocatorPolicyNFrame
 	{
@@ -364,6 +365,7 @@ namespace cage
 		uintPtr totalSize;
 		uint8 current;
 	};
+	*/
 
 	template<uintPtr AtomSize, class BoundsPolicy = MemoryBoundsPolicyDefault, class TaggingPolicy = MemoryTagPolicyDefault, class TrackingPolicy = MemoryTrackPolicyDefault>
 	struct MemoryAllocatorPolicyPool

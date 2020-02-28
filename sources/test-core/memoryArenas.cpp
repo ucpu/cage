@@ -260,10 +260,10 @@ void testMemoryArenas()
 	{ MemoryArenaTest<MemoryArenaGrowing, MemoryBoundsPolicySimple, MemoryTagPolicySimple, MemoryTrackPolicySimple, 32, 1, Traits<>> a; }
 	{ MemoryArenaTest<MemoryArenaGrowing, MemoryBoundsPolicyNone, MemoryTagPolicyNone, MemoryTrackPolicyNone, 8, 1, Traits<>> a; }
 	// nFrames
-	{ MemoryArenaTest<MemoryArenaFixed, MemoryBoundsPolicySimple, MemoryTagPolicySimple, MemoryTrackPolicySimple, 8, 2, Traits<>> a; }
-	{ MemoryArenaTest<MemoryArenaFixed, MemoryBoundsPolicySimple, MemoryTagPolicySimple, MemoryTrackPolicySimple, 32, 2, Traits<>> a; }
-	{ MemoryArenaTest<MemoryArenaFixed, MemoryBoundsPolicySimple, MemoryTagPolicySimple, MemoryTrackPolicySimple, 32, 2, Traits<13, 42, 3>> a; }
-	{ MemoryArenaTest<MemoryArenaFixed, MemoryBoundsPolicyNone, MemoryTagPolicyNone, MemoryTrackPolicyNone, 8, 2, Traits<>> a; }
+	//{ MemoryArenaTest<MemoryArenaFixed, MemoryBoundsPolicySimple, MemoryTagPolicySimple, MemoryTrackPolicySimple, 8, 2, Traits<>> a; }
+	//{ MemoryArenaTest<MemoryArenaFixed, MemoryBoundsPolicySimple, MemoryTagPolicySimple, MemoryTrackPolicySimple, 32, 2, Traits<>> a; }
+	//{ MemoryArenaTest<MemoryArenaFixed, MemoryBoundsPolicySimple, MemoryTagPolicySimple, MemoryTrackPolicySimple, 32, 2, Traits<13, 42, 3>> a; }
+	//{ MemoryArenaTest<MemoryArenaFixed, MemoryBoundsPolicyNone, MemoryTagPolicyNone, MemoryTrackPolicyNone, 8, 2, Traits<>> a; }
 	// queue
 	{ MemoryArenaTest<MemoryArenaFixed, MemoryBoundsPolicySimple, MemoryTagPolicySimple, MemoryTrackPolicySimple, 8, 3, Traits<>> a; }
 	// stack
