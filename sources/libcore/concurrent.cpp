@@ -20,39 +20,42 @@
 #include <optick.h>
 
 #include <thread>
-#include <set>
+#include <atomic>
 #include <exception>
 #include <cerrno>
 
 namespace cage
 {
-	class MutexImpl : public Mutex
+	namespace
 	{
-	public:
+		class MutexImpl : public Mutex
+		{
+		public:
 #ifdef CAGE_SYSTEM_WINDOWS
-		SRWLOCK srw;
+			SRWLOCK srw;
 #else
-		pthread_mutex_t mut;
+			pthread_mutex_t mut;
 #endif
 
-		MutexImpl()
-		{
+			MutexImpl()
+			{
 #ifdef CAGE_SYSTEM_WINDOWS
-			InitializeSRWLock(&srw);
+				InitializeSRWLock(&srw);
 #else
-			pthread_mutex_init(&mut, nullptr);
+				pthread_mutex_init(&mut, nullptr);
 #endif
-		}
+			}
 
-		~MutexImpl()
-		{
+			~MutexImpl()
+			{
 #ifdef CAGE_SYSTEM_WINDOWS
-			// nothing
+				// nothing
 #else
-			pthread_mutex_destroy(&mut);
+				pthread_mutex_destroy(&mut);
 #endif
-		}
-	};
+			}
+		};
+	}
 
 	bool Mutex::tryLock()
 	{
@@ -100,6 +103,72 @@ namespace cage
 	Holder<Mutex> newMutex()
 	{
 		return detail::systemArena().createImpl<Mutex, MutexImpl>();
+	}
+
+	namespace
+	{
+		class RwMutexImpl : public RwMutex
+		{
+		public:
+			std::atomic<uint32> v{0};
+			static const uint32 YieldAfter = 20;
+			static const uint32 Writer = m;
+		};
+	}
+
+	void RwMutex::writeLock()
+	{
+		RwMutexImpl *impl = (RwMutexImpl *)this;
+		uint32 attempt = 0;
+		while (true)
+		{
+			uint32 p = impl->v;
+			if (p == 0)
+			{
+				if (impl->v.compare_exchange_weak(p, RwMutexImpl::Writer))
+					return;
+			}
+			if (++attempt >= RwMutexImpl::YieldAfter)
+			{
+				threadYield();
+				attempt = 0;
+			}
+		}
+	}
+
+	void RwMutex::readLock()
+	{
+		RwMutexImpl *impl = (RwMutexImpl *)this;
+		uint32 attempt = 0;
+		while (true)
+		{
+			uint32 p = impl->v;
+			if (p != RwMutexImpl::Writer)
+			{
+				if (impl->v.compare_exchange_weak(p, p + 1))
+					return;
+			}
+			if (++attempt >= RwMutexImpl::YieldAfter)
+			{
+				threadYield();
+				attempt = 0;
+			}
+		}
+	}
+
+	void RwMutex::unlock()
+	{
+		RwMutexImpl *impl = (RwMutexImpl *)this;
+		uint32 p = impl->v;
+		if (p == RwMutexImpl::Writer)
+			impl->v = 0;
+		else
+			impl->v--;
+	}
+
+	Holder<RwMutex> newRwMutex()
+	{
+		return detail::systemArena().createImpl<RwMutex, RwMutexImpl>();
 	}
 
 	namespace
@@ -677,11 +746,14 @@ namespace cage
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
 		micros /= 1000;
-		//if (micros == 0)
-		//	micros = 1;
-		Sleep((DWORD)micros);
+		Sleep(numeric_cast<DWORD>(micros));
 #else
 		usleep(micros);
 #endif
+	}
+
+	void threadYield()
+	{
+		std::this_thread::yield();
 	}
 }

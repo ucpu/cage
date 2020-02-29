@@ -16,6 +16,17 @@ namespace cage
 
 	CAGE_CORE_API Holder<Mutex> newMutex();
 
+	class CAGE_CORE_API RwMutex : private Immovable
+	{
+	public:
+		// locking the same mutex again in the same thread is undefined behavior
+		void writeLock();
+		void readLock();
+		void unlock();
+	};
+
+	CAGE_CORE_API Holder<RwMutex> newRwMutex();
+
 	class CAGE_CORE_API Barrier : private Immovable
 	{
 	public:
@@ -76,6 +87,7 @@ namespace cage
 	CAGE_CORE_API uint64 threadId(); // return id of current thread
 	CAGE_CORE_API uint64 processId(); // return id of current process
 	CAGE_CORE_API void threadSleep(uint64 micros);
+	CAGE_CORE_API void threadYield();
 }
 
 #endif // guard_concurrent_h_585972b8_5791_4554_b4fa_29342c539280_

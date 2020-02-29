@@ -133,6 +133,16 @@ namespace cage
 		typedef std::unordered_map<uint32, Reference> PublicIndex;
 		typedef ConcurrentQueue<Asset *> Queue;
 
+		struct PublicIndexData
+		{
+			PublicIndex index;
+			mutable Holder<RwMutex> mut;
+			PublicIndexData()
+			{
+				mut = newRwMutex();
+			}
+		};
+
 		class AssetManagerImpl : public AssetManager
 		{
 		public:
@@ -143,8 +153,8 @@ namespace cage
 			std::vector<Scheme> schemes;
 			Holder<Mutex> mutex;
 			PrivateIndex privateIndex; // used for owning and managing the assets
-			PublicIndex publicIndices[2];
-			std::atomic<PublicIndex*> publicIndex{nullptr}; // used for accessing the assets from the api
+			PublicIndexData publicIndices[2]; // used for accessing the assets from the api
+			std::atomic<uint32> publicIndex{0};
 			std::vector<Asset *> waitingDeps;
 			const string path;
 			const uint64 maintenancePeriod;
@@ -192,7 +202,7 @@ namespace cage
 				}
 			}
 
-			AssetManagerImpl(const AssetManagerCreateConfig &config) : publicIndex(&publicIndices[0]), path(findAssetsFolderPath(config)), maintenancePeriod(config.maintenancePeriod), listenerPeriod(config.listenerPeriod)
+			AssetManagerImpl(const AssetManagerCreateConfig &config) : path(findAssetsFolderPath(config)), maintenancePeriod(config.maintenancePeriod), listenerPeriod(config.listenerPeriod)
 			{
 				CAGE_LOG(SeverityEnum::Info, "assetManager", stringizer() + "using asset path: '" + path + "'");
 				mutex = newMutex();
@@ -450,11 +460,12 @@ namespace cage
 			bool checkDependencies(Asset *ass)
 			{
 				ASS_LOG(3, ass, "check dependencies");
-				PublicIndex &index = *publicIndex;
+				PublicIndexData &index = publicIndices[publicIndex];
+				ScopeLock<RwMutex> lock(index.mut, ReadLock());
 				for (uint32 n : ass->dependencies)
 				{
-					auto it = index.find(n);
-					if (it == index.end())
+					auto it = index.index.find(n);
+					if (it == index.index.end())
 						return false;
 					if (it->second.scheme == m)
 					{
@@ -543,24 +554,13 @@ namespace cage
 				}
 			}
 
-			void maintenanceConclusion()
+			void maintenanceUpdatePublicIndex()
 			{
-				OPTICK_EVENT("conclusion");
-				OPTICK_TAG("assetsCount", privateIndex.size());
-
-				while (true)
-				{
-					// cycle to resolve whole chains of dependencies in case they are listed in reverse order
-					auto start = waitingDeps.size();
-					waitingDeps.erase(std::remove_if(waitingDeps.begin(), waitingDeps.end(), [&](Asset *ass) {
-						return checkDependencies(ass);
-						}), waitingDeps.end());
-					if (waitingDeps.size() == start)
-						break;
-				}
-
+				uint32 nextIndex = (publicIndex + 1) % 2;
 				PrivateIndex &index = privateIndex;
-				PublicIndex &update = &publicIndices[0] == publicIndex ? publicIndices[1] : publicIndices[0];
+				PublicIndexData &updating = publicIndices[nextIndex];
+				ScopeLock<RwMutex> lock(updating.mut, WriteLock());
+				PublicIndex &update = updating.index;
 				update.clear();
 				update.reserve(index.size() * 2);
 				auto it = index.begin();
@@ -602,7 +602,27 @@ namespace cage
 					}
 					++it;
 				}
-				publicIndex = &update;
+				publicIndex = nextIndex;
+			}
+
+			void maintenanceConclusion()
+			{
+				OPTICK_EVENT("conclusion");
+				OPTICK_TAG("assetsCount", privateIndex.size());
+
+				while (true)
+				{
+					// cycle to resolve whole chains of dependencies in case they are listed in reverse order
+					auto start = waitingDeps.size();
+					waitingDeps.erase(std::remove_if(waitingDeps.begin(), waitingDeps.end(), [&](Asset *ass) {
+						return checkDependencies(ass);
+						}), waitingDeps.end());
+					if (waitingDeps.size() == start)
+						break;
+				}
+
+				maintenanceUpdatePublicIndex();
+
 				unloaded = privateIndex.empty();
 				{
 					uint32 work = 0;
@@ -792,10 +812,10 @@ namespace cage
 
 			Holder<void> get(uint32 assetName, uint32 scheme, uintPtr typeId, bool throwOnInvalidScheme) const
 			{
-				//ScopeLock<Mutex> lock(mutex); // debug
-
 				CAGE_ASSERT(typeId != 0);
-				PublicIndex &index = *publicIndex;
+				const PublicIndexData &data = publicIndices[publicIndex];
+				ScopeLock<RwMutex> lock(data.mut, ReadLock());
+				const PublicIndex &index = data.index;
 				auto it = index.find(assetName);
 				if (it == index.end())
 					return {}; // not found
@@ -812,7 +832,7 @@ namespace cage
 					if (throwOnInvalidScheme)
 					{
 						CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "asset real name: " + assetName);
-						CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "asset loaded scheme: " + a.scheme + ", acessing with: " + scheme);
+						CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "asset loaded scheme: " + a.scheme + ", accessing with: " + scheme);
 						CAGE_THROW_ERROR(Exception, "accessing asset with different scheme");
 					}
 					return {}; // invalid scheme

@@ -460,6 +460,7 @@ namespace cage
 	class CollisionData;
 	struct CollisionDataCreateConfig;
 	class Mutex;
+	class RwMutex;
 	class Barrier;
 	class Semaphore;
 	class ConditionalVariableBase;

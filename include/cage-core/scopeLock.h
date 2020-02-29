@@ -5,24 +5,39 @@
 
 namespace cage
 {
+	struct TryLock {};
+	struct ReadLock {};
+	struct WriteLock {};
+
 	template<class T>
 	struct ScopeLock
 	{
-		explicit ScopeLock(const Holder<T> &ptr, bool tryLock) : ScopeLock(ptr.get(), tryLock)
+		explicit ScopeLock(const Holder<T> &ptr, TryLock) : ScopeLock(ptr.get(), TryLock())
+		{}
+
+		explicit ScopeLock(const Holder<T> &ptr, ReadLock) : ScopeLock(ptr.get(), ReadLock())
+		{}
+
+		explicit ScopeLock(const Holder<T> &ptr, WriteLock) : ScopeLock(ptr.get(), WriteLock())
 		{}
 
 		explicit ScopeLock(const Holder<T> &ptr) : ScopeLock(ptr.get())
 		{}
 
-		explicit ScopeLock(T *ptr, bool tryLock) : ptr(ptr)
+		explicit ScopeLock(T *ptr, TryLock) : ptr(ptr)
 		{
-			if (tryLock)
-			{
-				if (!ptr->tryLock())
-					this->ptr = nullptr;
-			}
-			else
-				ptr->lock();
+			if (!ptr->tryLock())
+				this->ptr = nullptr;
+		}
+
+		explicit ScopeLock(T *ptr, ReadLock) : ptr(ptr)
+		{
+			ptr->readLock();
+		}
+
+		explicit ScopeLock(T *ptr, WriteLock) : ptr(ptr)
+		{
+			ptr->writeLock();
 		}
 
 		explicit ScopeLock(T *ptr) : ptr(ptr)
