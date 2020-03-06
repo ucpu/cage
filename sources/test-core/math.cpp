@@ -376,8 +376,13 @@ namespace
 		CAGE_TEST(!(vec3(1, 5, 4) != vec3(1, 5, 4)));
 		CAGE_TEST(vec3(3, 5, 4) != vec3(1, 5, 4));
 
-		CAGE_TEST(clamp(vec3(1, 3, 5), vec3(2, 2, 2), vec3(4, 4, 4)) == vec3(2, 3, 4));
+		CAGE_TEST(clamp(vec3(1, 3, 5), vec3(2), vec3(4)) == vec3(2, 3, 4));
 		CAGE_TEST(clamp(vec3(1, 3, 5), 2, 4) == vec3(2, 3, 4));
+
+		CAGE_TEST(abs(vec3(1, 3, 5)) == vec3(1, 3, 5));
+		CAGE_TEST(abs(vec3(1, -3, 5)) == vec3(1, 3, 5));
+		CAGE_TEST(abs(vec3(-1, 3, -5)) == vec3(1, 3, 5));
+		CAGE_TEST(abs(vec3(-1, -3, -5)) == vec3(1, 3, 5));
 
 		test(dominantAxis(vec3(13, -4, 1)), vec3(1, 0, 0));
 		test(dominantAxis(vec3(-3, -15, 4)), vec3(0, -1, 0));

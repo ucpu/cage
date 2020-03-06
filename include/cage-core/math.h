@@ -207,16 +207,16 @@ namespace cage
 	inline bool operator OPERATOR (const rads &l, const rads &r) { return l.value OPERATOR r.value; }; \
 	inline bool operator OPERATOR (const degs &l, const degs &r) { return l.value OPERATOR r.value; }; \
 	inline bool operator OPERATOR (const rads &l, const degs &r) { return l OPERATOR rads(r); }; \
-	inline bool operator OPERATOR (const degs &l, const rads &r) { return rads(l) OPERATOR r; }; \
-	inline bool operator OPERATOR (const vec2 &l, const vec2 &r) { return l.data[0] OPERATOR r.data[0] && l.data[1] OPERATOR r.data[1]; }; \
-	inline bool operator OPERATOR (const vec3 &l, const vec3 &r) { return l.data[0] OPERATOR r.data[0] && l.data[1] OPERATOR r.data[1] && l.data[2] OPERATOR r.data[2]; }; \
-	inline bool operator OPERATOR (const vec4 &l, const vec4 &r) { return l.data[0] OPERATOR r.data[0] && l.data[1] OPERATOR r.data[1] && l.data[2] OPERATOR r.data[2] && l.data[3] OPERATOR r.data[3]; };
+	inline bool operator OPERATOR (const degs &l, const rads &r) { return rads(l) OPERATOR r; };
 	GCHL_GENERATE(==);
 	GCHL_GENERATE(<=);
 	GCHL_GENERATE(>=);
 	GCHL_GENERATE(<);
 	GCHL_GENERATE(>);
 #undef GCHL_GENERATE
+	inline bool operator == (const vec2 &l, const vec2 &r) { return l.data[0] == r.data[0] && l.data[1] == r.data[1]; };
+	inline bool operator == (const vec3 &l, const vec3 &r) { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2]; };
+	inline bool operator == (const vec4 &l, const vec4 &r) { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2] && l.data[3] == r.data[3]; };
 	inline bool operator == (const quat &l, const quat &r) { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2] && l.data[3] == r.data[3]; };
 	inline bool operator == (const mat3 &l, const mat3 &r) { for (uint32 i = 0; i < 9; i++) if (!(l[i] == r[i])) return false; return true; };
 	inline bool operator == (const mat4 &l, const mat4 &r) { for (uint32 i = 0; i < 16; i++) if (!(l[i] == r[i])) return false; return true; };
@@ -408,7 +408,7 @@ namespace cage
 	inline real distanceSquared(const TYPE &l, const TYPE &r) { return lengthSquared(l - r); } \
 	inline real distance(const TYPE &l, const TYPE &r) { return sqrt(distanceSquared(l, r)); } \
 	inline TYPE normalize(const TYPE &x) { return x / length(x); } \
-	inline TYPE abs(const TYPE &x) { return x < TYPE() ? -x : x; }
+	inline TYPE abs(const TYPE &x) { TYPE res; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) res[i] = abs(x[i]); return res; }
 	GCHL_GENERATE(vec2);
 	GCHL_GENERATE(vec3);
 	GCHL_GENERATE(vec4);

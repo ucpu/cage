@@ -14,7 +14,9 @@ void testColor()
 		{
 			vec3 a = randomChance3();
 			vec3 b = colorGammaToLinear(a, 2.2);
-			CAGE_TEST(b <= a);
+			CAGE_TEST(b[0] <= a[0]);
+			CAGE_TEST(b[1] <= a[1]);
+			CAGE_TEST(b[2] <= a[2]);
 			vec3 c = colorLinearToGamma(b);
 			test(a, c);
 		}
@@ -26,7 +28,9 @@ void testColor()
 		{
 			vec3 a = randomChance3();
 			vec3 b = colorGammaToLinear(a);
-			CAGE_TEST(b <= a);
+			CAGE_TEST(b[0] <= a[0]);
+			CAGE_TEST(b[1] <= a[1]);
+			CAGE_TEST(b[2] <= a[2]);
 			vec3 c = colorLinearToGamma(b);
 			vec3 d3 = abs(c - a);
 			real d = max(d3[0], max(d3[1], d3[2]));
