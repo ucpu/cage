@@ -18,4 +18,7 @@ option(webp "use libwebp (required for WEBP compression)" OFF)
 
 add_subdirectory(libtiff)
 
-cage_gen_module(TIFF "$<TARGET_LINKER_FILE:tiff>;$<TARGET_LINKER_FILE:zlib>" "${CMAKE_CURRENT_SOURCE_DIR}/libtiff/libtiff;${CMAKE_CURRENT_BINARY_DIR}/libtiff/libtiff")
+target_include_directories(tiff INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/libtiff/libtiff")
+target_include_directories(tiff INTERFACE "${CMAKE_CURRENT_BINARY_DIR}/libtiff/libtiff")
+
+cage_gen_module(TIFF "$<TARGET_LINKER_FILE:tiff>;$<TARGET_LINKER_FILE:zlib>" $<TARGET_PROPERTY:tiff,INTERFACE_INCLUDE_DIRECTORIES>)

@@ -14,4 +14,4 @@ add_subdirectory(ogg)
 target_include_directories(ogg PUBLIC "${CMAKE_CURRENT_BINARY_DIR}/ogg/include")
 target_include_directories(ogg INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/ogg/include")
 
-cage_gen_module(OGG $<TARGET_LINKER_FILE:ogg> "${CMAKE_CURRENT_SOURCE_DIR}/ogg/include;${CMAKE_CURRENT_BINARY_DIR}/ogg/include")
+cage_gen_module(OGG $<TARGET_LINKER_FILE:ogg> $<TARGET_PROPERTY:ogg,INTERFACE_INCLUDE_DIRECTORIES>)
