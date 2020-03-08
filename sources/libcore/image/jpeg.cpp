@@ -112,9 +112,6 @@ namespace cage
 				case 3:
 					info.in_color_space = JCS_RGB;
 					break;
-				case 4:
-					info.in_color_space = JCS_EXT_RGBA;
-					break;
 				}
 				jpeg_set_defaults(&info);
 				jpeg_start_compress(&info, true);
@@ -138,14 +135,13 @@ namespace cage
 
 	void jpegDecode(const char *inBuffer, uintPtr inSize, ImageImpl *impl)
 	{
-		impl->format = ImageFormatEnum::Default; // reset in case of error
 		jpegDecode(inBuffer, inSize, impl->mem, impl->width, impl->height, impl->channels);
 		impl->format = ImageFormatEnum::U8;
 	}
 
 	MemoryBuffer jpegEncode(ImageImpl *impl)
 	{
-		if (impl->channels == 2 || impl->channels > 4)
+		if (impl->channels != 1 && impl->channels != 3)
 			CAGE_THROW_ERROR(Exception, "unsupported channels count for jpeg encoding");
 		MemoryBuffer res;
 		switch (impl->format)

@@ -5,30 +5,14 @@
 
 namespace cage
 {
-	// all formats except FloatLinear store the image in gamma space
 	enum class ImageFormatEnum : uint32
 	{
 		U8 = 1, // 8 bit normalized
 		U16 = 2, // 16 bit normalized (native endianness)
-		Float,
-		FloatLinear,
-		Rgbe, // requires 3 channels exactly, each pixel encoded as one uint32
+		Rgbe = 3, // requires 3 channels exactly, each pixel encoded as one uint32
+		Float = 4,
 
 		Default = m, // used only for decoding an image, it will use the original format from the image
-	};
-
-	struct CAGE_CORE_API ImageOperationsConfig
-	{
-		// number of channels that will be converted to linear space before resizing and back to gamma space afterwards
-		// set to 0 to skip all gamma conversions
-		// this config is ignored if the format is FloatLinear
-		uint32 gammaSpaceChannelsCount = 3;
-
-		// index of a channel to use as alpha source, it will be premultiplied to all other channels before resizing and reverted afterwards
-		// use -1 to ignore any alpha
-		uint32 alphaChannelIndex = 3;
-
-		float gamma = 2.2f;
 	};
 
 	class CAGE_CORE_API Image : private Immovable
@@ -80,21 +64,7 @@ namespace cage
 		PointerRange<const float> rawViewFloat() const;
 
 		void verticalFlip();
-
-		void premultiplyAlpha(const ImageOperationsConfig &config = {});
-		void demultiplyAlpha(const ImageOperationsConfig &config = {});
-
-		void gammaToLinear(const ImageOperationsConfig &config = {});
-		void linearToGamma(const ImageOperationsConfig &config = {});
-
-		void resize(uint32 width, uint32 height, const ImageOperationsConfig &config = {});
-
-		// add new channels (filled with zeros) or remove channels from the end
-		// this conversion does not modify channels that are not added or removed
 		void convert(uint32 channels);
-
-		// conversions to and from FloatLinear applies corresponding gamma corrections
-		// other conversions do not change the values other than encoding them in the desired format
 		void convert(ImageFormatEnum format);
 	};
 

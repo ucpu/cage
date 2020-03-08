@@ -194,7 +194,6 @@ namespace cage
 
 	void pngDecode(const char *inBuffer, uintPtr inSize, ImageImpl *impl)
 	{
-		impl->format = ImageFormatEnum::Default; // reset in case of error
 		uint32 bpp = 0;
 		pngDecode(inBuffer, inSize, impl->mem, impl->width, impl->height, impl->channels, bpp);
 		switch (bpp)

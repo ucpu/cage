@@ -15,7 +15,6 @@ namespace cage
 		case ImageFormatEnum::U16: return sizeof(uint16);
 		case ImageFormatEnum::Rgbe: return sizeof(uint32);
 		case ImageFormatEnum::Float: return sizeof(float);
-		case ImageFormatEnum::FloatLinear: return sizeof(float);
 		default: CAGE_THROW_CRITICAL(Exception, "invalid image format");
 		}
 	}
@@ -86,7 +85,6 @@ namespace cage
 		case ImageFormatEnum::Rgbe:
 			return colorRgbeToRgb(((uint32 *)impl->mem.data())[offset])[c].value;
 		case ImageFormatEnum::Float:
-		case ImageFormatEnum::FloatLinear:
 			return ((float *)impl->mem.data())[offset + c];
 		default:
 			CAGE_THROW_CRITICAL(Exception, "invalid image format");
@@ -116,7 +114,6 @@ namespace cage
 			p = colorRgbToRgbe(s);
 		} break;
 		case ImageFormatEnum::Float:
-		case ImageFormatEnum::FloatLinear:
 			((float *)impl->mem.data())[offset + c] = v;
 			break;
 		default:
@@ -151,7 +148,6 @@ namespace cage
 			return vec2(p[0], p[1]) / 65535;
 		}
 		case ImageFormatEnum::Float:
-		case ImageFormatEnum::FloatLinear:
 		{
 			float *p = ((float *)impl->mem.data()) + offset;
 			return vec2(p[0], p[1]);
@@ -185,7 +181,6 @@ namespace cage
 			return colorRgbeToRgb(p);
 		}
 		case ImageFormatEnum::Float:
-		case ImageFormatEnum::FloatLinear:
 		{
 			float *p = ((float *)impl->mem.data()) + offset;
 			return vec3(p[0], p[1], p[2]);
@@ -214,7 +209,6 @@ namespace cage
 			return vec4(p[0], p[1], p[2], p[3]) / 65535;
 		}
 		case ImageFormatEnum::Float:
-		case ImageFormatEnum::FloatLinear:
 		{
 			float *p = ((float *)impl->mem.data()) + offset;
 			return vec4(p[0], p[1], p[2], p[3]);
@@ -258,7 +252,6 @@ namespace cage
 				p[i] = numeric_cast<uint16>(vv[i]);
 		} break;
 		case ImageFormatEnum::Float:
-		case ImageFormatEnum::FloatLinear:
 		{
 			float *p = ((float *)impl->mem.data()) + offset;
 			*(vec2 *)p = v;
@@ -296,7 +289,6 @@ namespace cage
 			p = colorRgbToRgbe(v);
 		} break;
 		case ImageFormatEnum::Float:
-		case ImageFormatEnum::FloatLinear:
 		{
 			float *p = ((float *)impl->mem.data()) + offset;
 			*(vec3 *)p = v;
@@ -329,7 +321,6 @@ namespace cage
 				p[i] = numeric_cast<uint16>(vv[i]);
 		} break;
 		case ImageFormatEnum::Float:
-		case ImageFormatEnum::FloatLinear:
 		{
 			float *p = ((float *)impl->mem.data()) + offset;
 			*(vec4 *)p = v;
@@ -349,7 +340,7 @@ namespace cage
 	PointerRange<const float> Image::rawViewFloat() const
 	{
 		ImageImpl *impl = (ImageImpl*)this;
-		CAGE_ASSERT(impl->format == ImageFormatEnum::Float || impl->format == ImageFormatEnum::FloatLinear);
+		CAGE_ASSERT(impl->format == ImageFormatEnum::Float);
 		return { (float*)impl->mem.data(), (float*)(impl->mem.data() + impl->mem.size()) };
 	}
 
@@ -368,41 +359,36 @@ namespace cage
 		}
 	}
 
-	void Image::premultiplyAlpha(const ImageOperationsConfig &config)
+	namespace
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "image premultiplyAlpha");
-	}
-
-	void Image::demultiplyAlpha(const ImageOperationsConfig &config)
-	{
-		CAGE_THROW_CRITICAL(NotImplemented, "image demultiplyAlpha");
-	}
-
-	void Image::gammaToLinear(const ImageOperationsConfig &config)
-	{
-		CAGE_THROW_CRITICAL(NotImplemented, "image gammaToLinear");
-	}
-
-	void Image::linearToGamma(const ImageOperationsConfig &config)
-	{
-		CAGE_THROW_CRITICAL(NotImplemented, "image linearToGamma");
-	}
-
-	void Image::resize(uint32 width, uint32 height, const ImageOperationsConfig &config)
-	{
-		CAGE_THROW_CRITICAL(NotImplemented, "image resize");
+		void slice(const ImageImpl *source, ImageImpl *target)
+		{
+			uint32 copyChannels = min(source->channels, target->channels);
+			for (uint32 y = 0; y < source->height; y++)
+				for (uint32 x = 0; x < source->width; x++)
+					for (uint32 c = 0; c < copyChannels; c++)
+						target->value(x, y, c, source->value(x, y, c));
+		}
 	}
 
 	void Image::convert(uint32 channels)
 	{
+		CAGE_ASSERT(channels > 0);
 		ImageImpl *impl = (ImageImpl*)this;
 		if (impl->channels == channels)
 			return; // no op
-		CAGE_THROW_CRITICAL(NotImplemented, "image convert");
+		CAGE_ASSERT(impl->format != ImageFormatEnum::Rgbe);
+		Holder<Image> tmp = newImage();
+		tmp->empty(impl->width, impl->height, channels, impl->format);
+		ImageImpl *t = (ImageImpl *)tmp.get();
+		slice(impl, t);
+		std::swap(impl->mem, t->mem);
+		std::swap(impl->channels, t->channels);
 	}
 
 	void Image::convert(ImageFormatEnum format)
 	{
+		CAGE_ASSERT(format != ImageFormatEnum::Default);
 		ImageImpl *impl = (ImageImpl*)this;
 		if (impl->format == format)
 			return; // no op

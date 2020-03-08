@@ -8,6 +8,7 @@ void testMemoryBuffers()
 
 	{
 		CAGE_TESTCASE("methods & size & capacity");
+
 		MemoryBuffer b(13, 42);
 		CAGE_TEST(b.size() == 13);
 		CAGE_TEST(b.capacity() == 42);
@@ -51,6 +52,7 @@ void testMemoryBuffers()
 
 	{
 		CAGE_TESTCASE("compression");
+
 		{
 			MemoryBuffer b1(1000);
 			for (uintPtr i = 0, e = b1.size(); i < e; i++)
@@ -61,6 +63,7 @@ void testMemoryBuffers()
 			CAGE_TEST(b3.size() == b1.size());
 			CAGE_TEST(detail::memcmp(b3.data(), b1.data(), b1.size()) == 0);
 		}
+
 		{
 			MemoryBuffer b1(128);
 			for (uintPtr i = 0, e = b1.size(); i < e; i++)
@@ -74,8 +77,10 @@ void testMemoryBuffers()
 
 	{
 		CAGE_TESTCASE("std buffer streams");
+
 		{
 			CAGE_TESTCASE("input stream reading uint8 array");
+
 			MemoryBuffer b1(2000);
 			for (uintPtr i = 0, e = b1.size(); i < e; i++)
 				((uint8*)b1.data())[i] = (uint8)i;
@@ -87,8 +92,10 @@ void testMemoryBuffers()
 				CAGE_TEST(c == (uint8)i);
 			}
 		}
+
 		{
 			CAGE_TESTCASE("input stream reading several types");
+
 			struct dataStruct
 			{
 				uint8 arr[128];
@@ -107,13 +114,15 @@ void testMemoryBuffers()
 			detail::memset(&s, 0, sizeof(dataStruct));
 			for (uint32 i = 0; i < 128; i++)
 				is.read((char*)&s.arr[i], 1);
-			CAGE_TEST(is.position() == 128);
+			CAGE_TEST(is.tellg() == 128);
 			is.read((char*)&s.u64, 8);
 			is.read((char*)&s.u16, 2);
 			CAGE_TEST(detail::memcmp(&data, &s, sizeof(dataStruct)) == 0);
 		}
+
 		{
 			CAGE_TESTCASE("output stream writing several types");
+
 			struct dataStruct
 			{
 				uint8 arr[128];
@@ -133,6 +142,43 @@ void testMemoryBuffers()
 			os.write((char*)&data.u16, 2);
 			CAGE_TEST(b.size() >= 128 + 8 + 2 && b.size() <= sizeof(dataStruct), b.size(), sizeof(dataStruct));
 			CAGE_TEST(detail::memcmp(&data, b.data(), b.size()) == 0);
+		}
+
+		{
+			CAGE_TESTCASE("input stream with seek");
+
+			string expected = "Hello, World!";
+			BufferIStream in(expected.c_str(), expected.size());
+			std::string word1, word2;
+			CAGE_TEST(in.tellg() == 0);
+			in >> word1;
+			CAGE_TEST(in.tellg() == 6);
+			in.seekg(0);
+			CAGE_TEST(in.tellg() == 0);
+			in >> word2;
+			CAGE_TEST(word1 == "Hello,");
+			CAGE_TEST(word1 == word2);
+		}
+
+		{
+			CAGE_TESTCASE("output stream with seek");
+
+			MemoryBuffer b;
+			BufferOStream os(b);
+			CAGE_TEST(os.tellp() == 0);
+			os << "hello, world";
+			os.seekp(7);
+			CAGE_TEST(os.tellp() == 7);
+			os << 'W';
+			os.seekp(0, std::ios_base::end);
+			os << '!';
+			os.seekp(0);
+			os << 'H';
+			CAGE_TEST(os.tellp() == 1);
+
+			string expected = "Hello, World!";
+			CAGE_TEST(b.size() == expected.size());
+			CAGE_TEST(detail::memcmp(b.data(), expected.c_str(), b.size()) == 0);
 		}
 	}
 }

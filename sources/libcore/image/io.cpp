@@ -6,21 +6,40 @@ namespace cage
 {
 	void pngDecode(const char *inBuffer, uintPtr inSize, ImageImpl *impl);
 	void jpegDecode(const char *inBuffer, uintPtr inSize, ImageImpl *impl);
+	void tiffDecode(const char *inBuffer, uintPtr inSize, ImageImpl *impl);
 	MemoryBuffer pngEncode(ImageImpl *impl);
 	MemoryBuffer jpegEncode(ImageImpl *impl);
+	MemoryBuffer tiffEncode(ImageImpl *impl);
 
 	void Image::decodeMemory(const void *buffer, uintPtr size, uint32 channels, ImageFormatEnum format)
 	{
-		if (size < 8)
-			CAGE_THROW_ERROR(Exception, "insufficient data to determine image format");
-		static const unsigned char pngSignature[] = { 137, 80, 78, 71, 13, 10, 26, 10 };
-		static const unsigned char jpegSignature[] = { 0xFF, 0xD8, 0xFF };
-		if (detail::memcmp(buffer, pngSignature, sizeof(pngSignature)) == 0)
-			pngDecode((char*)buffer, size, (ImageImpl*)this);
-		else if (detail::memcmp(buffer, jpegSignature, sizeof(jpegSignature)) == 0)
-			jpegDecode((char*)buffer, size, (ImageImpl*)this);
-		else
-			CAGE_THROW_ERROR(Exception, "image data do not match any known signature");
+		ImageImpl *impl = (ImageImpl*)this;
+		try
+		{
+			if (size < 8)
+				CAGE_THROW_ERROR(Exception, "insufficient data to determine image format");
+			static const unsigned char pngSignature[] = { 137, 80, 78, 71, 13, 10, 26, 10 };
+			static const unsigned char jpegSignature[] = { 0xFF, 0xD8, 0xFF };
+			static const unsigned char tiffSignature[] = { 0x49, 0x49, 0x2A, 0x00 };
+			if (detail::memcmp(buffer, pngSignature, sizeof(pngSignature)) == 0)
+				pngDecode((char*)buffer, size, impl);
+			else if (detail::memcmp(buffer, jpegSignature, sizeof(jpegSignature)) == 0)
+				jpegDecode((char*)buffer, size, impl);
+			else if (detail::memcmp(buffer, tiffSignature, sizeof(tiffSignature)) == 0)
+				tiffDecode((char*)buffer, size, impl);
+			else
+				CAGE_THROW_ERROR(Exception, "image data do not match any known signature");
+			if (channels != m)
+				convert(channels);
+			if (format != ImageFormatEnum::Default)
+				convert(format);
+		}
+		catch (...)
+		{
+			impl->format = ImageFormatEnum::Default;
+			impl->channels = 0;
+			throw;
+		}
 	}
 
 	void Image::decodeBuffer(const MemoryBuffer &buffer, uint32 channels, ImageFormatEnum format)
@@ -43,6 +62,8 @@ namespace cage
 			return pngEncode((ImageImpl *)this);
 		if (ext == ".jpeg" || ext == ".jpg")
 			return jpegEncode((ImageImpl *)this);
+		if (ext == ".tiff")
+			return tiffEncode((ImageImpl *)this);
 		CAGE_THROW_ERROR(Exception, "unrecognized file extension for image encoding");
 	}
 
