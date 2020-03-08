@@ -10,7 +10,7 @@ set(SKIP_TEST 1)
 set(SKIP_DOC 1)
 set(SKIP_CONTRIB 1)
 
-option(jpeg "use libjpeg (required for JPEG compression)" OFF)
+option(jpeg "use libjpeg (required for JPEG compression)" ON)
 option(old-jpeg "support for Old JPEG compression (read-only)" OFF)
 option(jbig "use ISO JBIG compression (requires JBIT-KIT library)" OFF)
 option(lzma "use liblzma (required for LZMA2 compression)" OFF)
