@@ -1,5 +1,8 @@
+#ifndef guard_unordered_map_h_78F89260_333B_4CB4_B862_890F43681639
+#define guard_unordered_map_h_78F89260_333B_4CB4_B862_890F43681639
 
 #include "core.h"
+
 #include <robin_hood.h>
 
 namespace cage
@@ -164,3 +167,5 @@ namespace cage
 		using base::cend;
 	};
 }
+
+#endif // guard_unordered_map_h_78F89260_333B_4CB4_B862_890F43681639

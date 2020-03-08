@@ -491,6 +491,8 @@ namespace cage
 	class DirectoryList;
 	template<uint32 N> struct Guid;
 	struct HashString;
+	enum class ImageFormatEnum : uint32;
+	struct ImageOperationsConfig;
 	class Image;
 	class Ini;
 	class LineReader;

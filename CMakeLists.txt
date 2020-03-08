@@ -30,7 +30,7 @@ file(GLOB_RECURSE cage-core-sources "sources/libcore/*" "include/cage-core/*")
 add_library(cage-core SHARED ${cage-core-sources})
 target_include_directories(cage-core PUBLIC include)
 target_compile_definitions(cage-core PRIVATE CAGE_CORE_EXPORT)
-target_link_libraries(cage-core PRIVATE zlib simplefilewatcher png_static utfcpp xsimd fastnoise zip)
+target_link_libraries(cage-core PRIVATE zlib simplefilewatcher png_static jpeg-static tiff utfcpp xsimd fastnoise zip)
 target_link_libraries(cage-core PUBLIC OptickCore robin-hood-hashing)
 if(WIN32)
 	target_link_libraries(cage-core PRIVATE Ws2_32 Winmm)
@@ -99,15 +99,26 @@ cage_ide_sort_files(cage-asset-database)
 cage_ide_working_dir_in_place(cage-asset-database)
 
 ########
-# CAGE-IMAGE
+# CAGE-IMAGE-CHANNELS
 ########
 
-file(GLOB_RECURSE cage-image-sources "sources/image/*")
-add_executable(cage-image ${cage-image-sources})
-target_link_libraries(cage-image cage-core)
-cage_ide_category(cage-image cage/tools)
-cage_ide_sort_files(cage-image)
-cage_ide_working_dir_in_place(cage-image)
+file(GLOB_RECURSE cage-image-channels-sources "sources/image-channels/*")
+add_executable(cage-image-channels ${cage-image-channels-sources})
+target_link_libraries(cage-image-channels cage-core)
+cage_ide_category(cage-image-channels cage/tools)
+cage_ide_sort_files(cage-image-channels)
+cage_ide_working_dir_in_place(cage-image-channels)
+
+########
+# CAGE-IMAGE-ATLAS
+########
+
+file(GLOB_RECURSE cage-image-atlas-sources "sources/image-atlas/*")
+add_executable(cage-image-atlas ${cage-image-atlas-sources})
+target_link_libraries(cage-image-atlas cage-core)
+cage_ide_category(cage-image-atlas cage/tools)
+cage_ide_sort_files(cage-image-atlas)
+cage_ide_working_dir_in_place(cage-image-atlas)
 
 ########
 # FINALIZATION

@@ -29,6 +29,8 @@ void doSplit(Holder<Ini> &cmd)
 	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "loading image: '" + input + "'");
 	Holder<Image> in = newImage();
 	in->decodeFile(input);
+	if (in->format() == ImageFormatEnum::Rgbe)
+		CAGE_THROW_ERROR(Exception, "input image uses Rgbe format, which cannot be split");
 	uint32 width = in->width();
 	uint32 height = in->height();
 	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "image resolution: " + width + "x" + height + ", channels: " + in->channels());
@@ -38,7 +40,7 @@ void doSplit(Holder<Ini> &cmd)
 	{
 		if (names[ch].empty())
 			continue;
-		out->empty(width, height, 1);
+		out->empty(width, height, 1, in->format());
 		for (uint32 y = 0; y < height; y++)
 		{
 			for (uint32 x = 0; x < width; x++)
@@ -139,7 +141,7 @@ int main(int argc, const char *args[])
 
 		Holder<Ini> cmd = newIni();
 		cmd->parseCmd(argc, args);
-		if (cmd->cmdBool('h', "help", false))
+		if (cmd->cmdBool('?', "help", false))
 		{
 			CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "examples:");
 			CAGE_LOG(SeverityEnum::Info, "image", stringizer() + args[0] + " -j -1 r.png -2 g.png -o rg.png");

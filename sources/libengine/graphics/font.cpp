@@ -273,9 +273,9 @@ namespace cage
 		impl->texWidth = width;
 		impl->texHeight = height;
 		impl->tex->bind();
-		uint32 bpp = size / (width * height);
-		CAGE_ASSERT(width * height * bpp == size, "rounding error", width, height, bpp, size);
-		switch (bpp)
+		uint32 channels = size / (width * height);
+		CAGE_ASSERT(width * height * channels == size, "rounding error", width, height, channels, size);
+		switch (channels)
 		{
 		case 1:
 			impl->tex->image2d(width, height, GL_R8, GL_RED, GL_UNSIGNED_BYTE, data);

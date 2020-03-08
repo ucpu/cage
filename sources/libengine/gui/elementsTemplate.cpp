@@ -10,22 +10,12 @@ namespace cage
 		{
 			void renderRectangle(Image *png, uint32 x1, uint32 y1, uint32 x2, uint32 y2, const vec3 &color)
 			{
-				uint8 c[3] = { numeric_cast<uint8>(color[0] * 255), numeric_cast<uint8>(color[1] * 255), numeric_cast<uint8>(color[2] * 255) };
+				vec4 c = vec4(color, 1);
 				CAGE_ASSERT(x1 <= x2 && y1 <= y2);
 				CAGE_ASSERT(x2 < png->width() && y2 < png->height());
-				uint8 *colors = (uint8*)png->bufferData();
-				uint32 w = png->width();
 				for (uint32 y = y1; y < y2; y++)
-				{
 					for (uint32 x = x1; x < x2; x++)
-					{
-						uint8 *d = colors + (y * w + x) * 4;
-						CAGE_ASSERT(d + 4 <= colors + png->bufferSize());
-						for (uint32 i = 0; i < 3; i++)
-							d[i] = c[i];
-						d[3] = 255;
-					}
-				}
+						png->set(x, y, c);
 			}
 
 			void renderRectangle(Image *png, const vec4 &rect, const vec3 &color)

@@ -35,7 +35,7 @@ namespace cage
 		uint32 dimX;
 		uint32 dimY;
 		uint32 dimZ;
-		uint32 bpp; // bytes per pixel
+		uint32 channels;
 		uint32 stride; // only used for GL_TEXTURE_CUBE_MAP, otherwise 0
 		uint32 internalFormat;
 		uint32 copyFormat;

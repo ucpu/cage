@@ -22,7 +22,7 @@ namespace cage
 			Holder<Texture> tex = newTexture(data.target);
 			tex->setDebugName(context->textName);
 
-			uint32 bytesSize = data.dimX * data.dimY * data.dimZ * data.bpp;
+			uint32 bytesSize = data.dimX * data.dimY * data.dimZ * data.channels;
 			char *values = (char*)des.advance(bytesSize);
 
 			if (data.target == GL_TEXTURE_3D || data.target == GL_TEXTURE_2D_ARRAY)

@@ -302,7 +302,7 @@ namespace
 				continue;
 			imageBlit(g.png.get(), texels.get(), 0, 0, g.pngX, g.pngY, g.png->width(), g.png->height());
 		}
-		data.texSize = numeric_cast<uint32>(texels->bufferSize());
+		data.texSize = numeric_cast<uint32>(texels->rawViewU8n().size());
 	}
 
 	void exportData()
@@ -325,8 +325,11 @@ namespace
 		Serializer sr(buf);
 
 		sr << data;
-		CAGE_ASSERT(texels->bufferSize() == data.texSize);
-		sr.write(texels->bufferData(), texels->bufferSize());
+		{
+			const auto &r = texels->rawViewU8n();
+			CAGE_ASSERT(r.size() == data.texSize);
+			sr.write(r.data(), r.size());
+		}
 		for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
 			sr << glyphs[glyphIndex].data;
 		if (kerning.size() > 0)

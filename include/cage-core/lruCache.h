@@ -1,5 +1,7 @@
+#ifndef guard_enumerate_h_E056A761_DF44_43BC_BB2F_ECD68E2D052D
+#define guard_enumerate_h_E056A761_DF44_43BC_BB2F_ECD68E2D052D
 
-#include <cage-core/enumerate.h>
+#include "enumerate.h"
 
 #include <vector>
 #include <unordered_map>
@@ -130,3 +132,5 @@ namespace cage
 		}
 	};
 }
+
+#endif // guard_enumerate_h_E056A761_DF44_43BC_BB2F_ECD68E2D052D

@@ -8,14 +8,15 @@ namespace cage
 {
 	namespace
 	{
-		/* standard conversion from float pixels to rgbe pixels */
-		void float2rgbe(unsigned char rgbe[4], float red, float green, float blue)
+		void float2rgbe(uint8 rgbe[4], float red, float green, float blue)
 		{
 			float v;
 			int e;
 			v = red;
-			if (green > v) v = green;
-			if (blue > v) v = blue;
+			if (green > v)
+				v = green;
+			if (blue > v)
+				v = blue;
 			if (v < 1e-32)
 			{
 				rgbe[0] = rgbe[1] = rgbe[2] = rgbe[3] = 0;
@@ -23,19 +24,18 @@ namespace cage
 			else
 			{
 				v = frexp(v, &e) * 256.0f / v;
-				rgbe[0] = (unsigned char)(red * v);
-				rgbe[1] = (unsigned char)(green * v);
-				rgbe[2] = (unsigned char)(blue * v);
-				rgbe[3] = (unsigned char)(e + 128);
+				rgbe[0] = (uint8)(red * v);
+				rgbe[1] = (uint8)(green * v);
+				rgbe[2] = (uint8)(blue * v);
+				rgbe[3] = (uint8)(e + 128);
 			}
 		}
 
-		/* standard conversion from rgbe to float pixels */
-		void rgbe2float(float &red, float &green, float &blue, const unsigned char rgbe[4])
+		void rgbe2float(float &red, float &green, float &blue, const uint8 rgbe[4])
 		{
 			float f;
 			if (rgbe[3])
-			{   /*nonzero pixel*/
+			{
 				f = ldexp(1.0f, rgbe[3] - (int)(128 + 8));
 				red = rgbe[0] * f;
 				green = rgbe[1] * f;
@@ -49,7 +49,7 @@ namespace cage
 		{
 			struct
 			{
-				unsigned char rgbe[4];
+				uint8 rgbe[4];
 			};
 			uint32 val;
 		};
