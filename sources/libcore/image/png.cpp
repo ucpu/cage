@@ -214,6 +214,7 @@ namespace cage
 		if (impl->channels > 4)
 			CAGE_THROW_ERROR(Exception, "unsupported channels count for png encoding");
 		MemoryBuffer res;
+		res.reserve(impl->width * impl->height * impl->channels * formatBytes(impl->format) + 100);
 		switch (impl->format)
 		{
 		case ImageFormatEnum::U8:

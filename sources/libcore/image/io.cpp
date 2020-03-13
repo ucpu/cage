@@ -8,10 +8,12 @@ namespace cage
 	void jpegDecode(const char *inBuffer, uintPtr inSize, ImageImpl *impl);
 	void tiffDecode(const char *inBuffer, uintPtr inSize, ImageImpl *impl);
 	void tgaDecode(const char *inBuffer, uintPtr inSize, ImageImpl *impl);
+	void psdDecode(const char *inBuffer, uintPtr inSize, ImageImpl *impl);
 	MemoryBuffer pngEncode(ImageImpl *impl);
 	MemoryBuffer jpegEncode(ImageImpl *impl);
 	MemoryBuffer tiffEncode(ImageImpl *impl);
 	MemoryBuffer tgaEncode(ImageImpl *impl);
+	MemoryBuffer psdEncode(ImageImpl *impl);
 
 	void Image::decodeMemory(const void *buffer, uintPtr size, uint32 channels, ImageFormatEnum format)
 	{
@@ -24,6 +26,7 @@ namespace cage
 			static const unsigned char jpegSignature[3] = { 0xFF, 0xD8, 0xFF };
 			static const unsigned char tiffSignature[4] = { 0x49, 0x49, 0x2A, 0x00 };
 			static const unsigned char tgaSignature[18] = "TRUEVISION-XFILE.";
+			static const unsigned char psdSignature[4] = { '8', 'B', 'P', 'S' };
 			if (detail::memcmp(buffer, pngSignature, sizeof(pngSignature)) == 0)
 				pngDecode((char*)buffer, size, impl);
 			else if (detail::memcmp(buffer, jpegSignature, sizeof(jpegSignature)) == 0)
@@ -32,6 +35,8 @@ namespace cage
 				tiffDecode((char*)buffer, size, impl);
 			else if (detail::memcmp((char*)buffer + size - sizeof(tgaSignature), tgaSignature, sizeof(tgaSignature)) == 0)
 				tgaDecode((char*)buffer, size, impl);
+			else if (detail::memcmp(buffer, psdSignature, sizeof(psdSignature)) == 0)
+				psdDecode((char*)buffer, size, impl);
 			else
 				CAGE_THROW_ERROR(Exception, "image data do not match any known signature");
 			if (channels != m)
@@ -71,6 +76,8 @@ namespace cage
 			return tiffEncode((ImageImpl *)this);
 		if (ext == ".tga")
 			return tgaEncode((ImageImpl *)this);
+		if (ext == ".psd" || ext == ".psb")
+			return psdEncode((ImageImpl *)this);
 		CAGE_THROW_ERROR(Exception, "unrecognized file extension for image encoding");
 	}
 

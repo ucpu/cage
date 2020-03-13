@@ -302,7 +302,7 @@ namespace
 				continue;
 			imageBlit(g.png.get(), texels.get(), 0, 0, g.pngX, g.pngY, g.png->width(), g.png->height());
 		}
-		data.texSize = numeric_cast<uint32>(texels->rawViewU8n().size());
+		data.texSize = numeric_cast<uint32>(texels->rawViewU8().size());
 	}
 
 	void exportData()
@@ -326,7 +326,7 @@ namespace
 
 		sr << data;
 		{
-			const auto &r = texels->rawViewU8n();
+			const auto &r = texels->rawViewU8();
 			CAGE_ASSERT(r.size() == data.texSize);
 			sr.write(r.data(), r.size());
 		}

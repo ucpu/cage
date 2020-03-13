@@ -330,11 +330,18 @@ namespace cage
 		}
 	}
 
-	PointerRange<const uint8> Image::rawViewU8n() const
+	PointerRange<const uint8> Image::rawViewU8() const
 	{
 		ImageImpl *impl = (ImageImpl*)this;
 		CAGE_ASSERT(impl->format == ImageFormatEnum::U8);
 		return { (uint8*)impl->mem.data(), (uint8*)(impl->mem.data() + impl->mem.size()) };
+	}
+
+	PointerRange<const uint16> Image::rawViewU16() const
+	{
+		ImageImpl *impl = (ImageImpl*)this;
+		CAGE_ASSERT(impl->format == ImageFormatEnum::U16);
+		return { (uint16*)impl->mem.data(), (uint16*)(impl->mem.data() + impl->mem.size()) };
 	}
 
 	PointerRange<const float> Image::rawViewFloat() const

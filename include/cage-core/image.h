@@ -60,7 +60,8 @@ namespace cage
 
 		// the format must match
 		// the image must outlive the view
-		PointerRange<const uint8> rawViewU8n() const;
+		PointerRange<const uint8> rawViewU8() const;
+		PointerRange<const uint16> rawViewU16() const;
 		PointerRange<const float> rawViewFloat() const;
 
 		void verticalFlip();

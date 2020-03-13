@@ -67,7 +67,7 @@ namespace cage
 				else
 					CAGE_THROW_ERROR(Exception, "unsupported format in tiff decoding");
 			}
-			uint32 stride = TIFFScanlineSize(t);
+			uint32 stride = numeric_cast<uint32>(TIFFScanlineSize(t));
 			CAGE_ASSERT(stride == impl->width * impl->channels * formatBytes(impl->format));
 			impl->mem.resize(impl->height * stride);
 			for (uint32 row = 0; row < impl->height; row++)
@@ -92,6 +92,7 @@ namespace cage
 		try
 		{
 			MemoryBuffer res;
+			res.reserve(impl->width * impl->height * impl->channels * formatBytes(impl->format) + 100);
 			BufferOStream stream(res);
 			t = TIFFStreamOpen("MemTIFF", &stream);
 			if (!t)
@@ -129,7 +130,7 @@ namespace cage
 				break;
 			}
 			TIFFSetField(t, TIFFTAG_SOFTWARE, "CageEngine");
-			uint32 stride = TIFFScanlineSize(t);
+			uint32 stride = numeric_cast<uint32>(TIFFScanlineSize(t));
 			CAGE_ASSERT(stride == impl->width * impl->channels * formatBytes(impl->format));
 			for (uint32 row = 0; row < impl->height; row++)
 			{
