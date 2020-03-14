@@ -149,15 +149,19 @@ void testMemoryBuffers()
 
 			string expected = "Hello, World!";
 			BufferIStream in(expected.c_str(), expected.size());
-			std::string word1, word2;
+			char c;
 			CAGE_TEST(in.tellg() == 0);
-			in >> word1;
-			CAGE_TEST(in.tellg() == 6);
+			in >> c;
+			CAGE_TEST(c == 'H');
+			CAGE_TEST(in.tellg() == 1);
+			in.seekg(8);
+			in >> c;
+			CAGE_TEST(c == 'o');
+			CAGE_TEST(in.tellg() == 9);
 			in.seekg(0);
-			CAGE_TEST(in.tellg() == 0);
-			in >> word2;
-			CAGE_TEST(word1 == "Hello,");
-			CAGE_TEST(word1 == word2);
+			in >> c;
+			CAGE_TEST(c == 'H');
+			CAGE_TEST(in.tellg() == 1);
 		}
 
 		{
