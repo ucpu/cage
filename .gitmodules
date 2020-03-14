@@ -40,9 +40,6 @@
 [submodule "jpeg/jpeg"]
 	path = jpeg/jpeg
 	url = https://github.com/libjpeg-turbo/libjpeg-turbo.git
-[submodule "devil/devil"]
-	path = devil/devil
-	url = https://github.com/ucpu/devil.git
 [submodule "msdfgen/msdfgen"]
 	path = msdfgen/msdfgen
 	url = https://github.com/ckohnert/msdfgen.git
