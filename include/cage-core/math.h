@@ -470,6 +470,19 @@ namespace cage
 	GCHL_GENERATE(rads);
 	GCHL_GENERATE(degs);
 #undef GCHL_GENERATE
+
+#define GCHL_GENERATE(TYPE) \
+	inline TYPE saturate(TYPE v) { return clamp(v, TYPE(0), TYPE(1)); }
+	GCHL_GENERATE(float);
+	GCHL_GENERATE(double);
+	GCHL_GENERATE(real);
+#undef GCHL_GENERATE
+#define GCHL_GENERATE(TYPE) \
+	inline TYPE saturate(TYPE v) { return clamp(v, TYPE(0), TYPE::Full()); }
+	GCHL_GENERATE(rads);
+	GCHL_GENERATE(degs);
+#undef GCHL_GENERATE
+
 #define GCHL_GENERATE(TYPE) \
 	inline TYPE min(const TYPE &l, const TYPE &r) { TYPE res; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) res[i] = min(l[i], r[i]); return res; } \
 	inline TYPE max(const TYPE &l, const TYPE &r) { TYPE res; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) res[i] = max(l[i], r[i]); return res; } \
@@ -478,7 +491,8 @@ namespace cage
 	inline TYPE min(real l, const TYPE &r) { return min(TYPE(l), r); } \
 	inline TYPE max(real l, const TYPE &r) { return max(TYPE(l), r); } \
 	inline TYPE clamp(const TYPE &v, const TYPE &a, const TYPE &b) { TYPE res; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) res[i] = clamp(v[i], a[i], b[i]); return res; } \
-	inline TYPE clamp(const TYPE &v, real a, real b) { return clamp(v, TYPE(a), TYPE(b)); }
+	inline TYPE clamp(const TYPE &v, real a, real b) { return clamp(v, TYPE(a), TYPE(b)); } \
+	inline TYPE saturate(const TYPE &v) { return clamp(v, 0, 1); }
 	GCHL_GENERATE(vec2);
 	GCHL_GENERATE(vec3);
 	GCHL_GENERATE(vec4);

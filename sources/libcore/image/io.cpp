@@ -20,6 +20,7 @@ namespace cage
 		ImageImpl *impl = (ImageImpl*)this;
 		try
 		{
+			impl->reset();
 			if (size < 32)
 				CAGE_THROW_ERROR(Exception, "insufficient data to determine image format");
 			static const unsigned char pngSignature[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
@@ -46,8 +47,7 @@ namespace cage
 		}
 		catch (...)
 		{
-			impl->format = ImageFormatEnum::Default;
-			impl->channels = 0;
+			impl->reset();
 			throw;
 		}
 	}
@@ -61,6 +61,7 @@ namespace cage
 	{
 		Holder<File> f = newFile(filename, FileMode(true, false));
 		MemoryBuffer buffer = f->readBuffer(f->size());
+		f->close();
 		decodeBuffer(buffer, channels, format);
 	}
 
@@ -83,6 +84,7 @@ namespace cage
 
 	void Image::encodeFile(const string &filename)
 	{
-		newFile(filename, FileMode(false, true))->writeBuffer(encodeBuffer(filename));
+		MemoryBuffer buf = encodeBuffer(filename);
+		newFile(filename, FileMode(false, true))->writeBuffer(buf);
 	}
 }

@@ -137,6 +137,10 @@ namespace cage
 	{
 		jpegDecode(inBuffer, inSize, impl->mem, impl->width, impl->height, impl->channels);
 		impl->format = ImageFormatEnum::U8;
+		auto &c = impl->colorConfig;
+		c.colorChannelsCount = impl->channels;
+		c.alphaChannelIndex = m;
+		c.alphaMode = AlphaModeEnum::None;
 	}
 
 	MemoryBuffer jpegEncode(ImageImpl *impl)

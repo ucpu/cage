@@ -25,12 +25,24 @@ namespace cage
 		CAGE_ASSERT(c > 0);
 		CAGE_ASSERT(c == 3 || f != ImageFormatEnum::Rgbe);
 		ImageImpl *impl = (ImageImpl*)this;
+		reset();
 		impl->width = w;
 		impl->height = h;
 		impl->channels = c;
 		impl->format = f;
-		impl->mem.allocate(w * h * c * formatBytes(f));
+		impl->mem.resize(w * h * c * formatBytes(f));
 		impl->mem.zero();
+	}
+
+	void Image::reset()
+	{
+		ImageImpl *impl = (ImageImpl*)this;
+		impl->width = 0;
+		impl->height = 0;
+		impl->channels = 0;
+		impl->format = ImageFormatEnum::Default;
+		impl->colorConfig = ImageColorConfig();
+		impl->mem.resize(0);
 	}
 
 	void Image::loadBuffer(const MemoryBuffer &buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format)
@@ -351,6 +363,13 @@ namespace cage
 		return { (float*)impl->mem.data(), (float*)(impl->mem.data() + impl->mem.size()) };
 	}
 
+	Holder<Image> Image::copy() const
+	{
+		Holder<Image> img = newImage();
+		imageBlit(this, img.get(), 0, 0, 0, 0, width(), height());
+		return img;
+	}
+
 	void Image::verticalFlip()
 	{
 		ImageImpl *impl = (ImageImpl*)this;
@@ -407,6 +426,110 @@ namespace cage
 		std::swap(impl->format, t->format);
 	}
 
+	void Image::convert(GammaSpaceEnum gammaSpace)
+	{
+		ImageImpl *impl = (ImageImpl*)this;
+		if (gammaSpace == colorConfig.gammaSpace || colorConfig.colorChannelsCount == 0)
+			return; // no op
+		real p;
+		if (gammaSpace == GammaSpaceEnum::Gamma && colorConfig.gammaSpace == GammaSpaceEnum::Linear)
+			p = 1.0 / 2.2;
+		else if (gammaSpace == GammaSpaceEnum::Linear && colorConfig.gammaSpace == GammaSpaceEnum::Gamma)
+			p = 2.2;
+		else
+			CAGE_THROW_ERROR(Exception, "invalid image gamma conversion");
+		const uint32 apply = min(impl->channels, colorConfig.colorChannelsCount);
+		for (uint32 y = 0; y < impl->height; y++)
+		{
+			for (uint32 x = 0; x < impl->width; x++)
+			{
+				for (uint32 c = 0; c < apply; c++)
+					value(x, y, c, pow(value(x, y, c), p));
+			}
+		}
+		colorConfig.gammaSpace = gammaSpace;
+	}
+
+	void Image::convert(AlphaModeEnum alphaMode)
+	{
+		ImageImpl *impl = (ImageImpl*)this;
+		if (alphaMode == colorConfig.alphaMode || colorConfig.colorChannelsCount == 0)
+			return; // no op
+		if (colorConfig.alphaChannelIndex >= impl->channels)
+			CAGE_THROW_ERROR(Exception, "invalid alpha source channel index");
+		if (colorConfig.alphaChannelIndex < colorConfig.colorChannelsCount)
+			CAGE_THROW_ERROR(Exception, "alpha channel cannot overlap with color channels");
+		const uint32 apply = colorConfig.colorChannelsCount;
+		if (alphaMode == AlphaModeEnum::Opacity && colorConfig.alphaMode == AlphaModeEnum::PremultipliedOpacity)
+		{
+			for (uint32 y = 0; y < impl->height; y++)
+			{
+				for (uint32 x = 0; x < impl->width; x++)
+				{
+					real a = value(x, y, colorConfig.alphaChannelIndex);
+					if (abs(a) < 1e-7)
+					{
+						for (uint32 c = 0; c < apply; c++)
+							value(x, y, c, 0);
+					}
+					else
+					{
+						a = 1 / a;
+						for (uint32 c = 0; c < apply; c++)
+							value(x, y, c, value(x, y, c) * a);
+					}
+				}
+			}
+		}
+		else if (alphaMode == AlphaModeEnum::PremultipliedOpacity && colorConfig.alphaMode == AlphaModeEnum::Opacity)
+		{
+			for (uint32 y = 0; y < impl->height; y++)
+			{
+				for (uint32 x = 0; x < impl->width; x++)
+				{
+					real a = value(x, y, colorConfig.alphaChannelIndex);
+					for (uint32 c = 0; c < apply; c++)
+						value(x, y, c, value(x, y, c) * a);
+				}
+			}
+		}
+		else
+			CAGE_THROW_ERROR(Exception, "invalid image alpha conversion");
+		colorConfig.alphaMode = alphaMode;
+	}
+
+	void Image::resize(uint32 w, uint32 h, bool useColorConfig)
+	{
+		ImageImpl *impl = (ImageImpl*)this;
+		if (w == impl->width && h == impl->height)
+			return; // no op
+
+		ImageFormatEnum originalFormat = impl->format;
+		ImageColorConfig originalColor = colorConfig;
+
+		convert(ImageFormatEnum::Float);
+		if (useColorConfig)
+		{
+			if (colorConfig.gammaSpace != GammaSpaceEnum::None)
+				convert(GammaSpaceEnum::Linear);
+			if (colorConfig.alphaMode != AlphaModeEnum::None)
+				convert(AlphaModeEnum::PremultipliedOpacity);
+		}
+
+		{
+			MemoryBuffer buff;
+			buff.allocate(w * h * impl->channels * sizeof(float));
+			detail::imageResize((float *)impl->mem.data(), impl->width, impl->height, 1, (float *)buff.data(), w, h, 1, impl->channels);
+			std::swap(impl->mem, buff);
+			impl->width = w;
+			impl->height = h;
+		}
+
+		convert(originalColor.alphaMode);
+		convert(originalColor.gammaSpace);
+		convert(originalFormat);
+	}
+
 	Holder<Image> newImage()
 	{
 		return detail::systemArena().createImpl<Image, ImageImpl>();
@@ -436,7 +559,10 @@ namespace cage
 		CAGE_ASSERT(s->format != ImageFormatEnum::Default && s->channels > 0);
 		CAGE_ASSERT(s != t || !overlaps(sourceX, sourceY, targetX, targetY, width, height));
 		if (t->format == ImageFormatEnum::Default && targetX == 0 && targetY == 0)
+		{
 			t->empty(width, height, s->channels, s->format);
+			t->colorConfig = s->colorConfig;
+		}
 		CAGE_ASSERT(s->channels == t->channels);
 		CAGE_ASSERT(sourceX + width <= s->width);
 		CAGE_ASSERT(sourceY + height <= s->height);

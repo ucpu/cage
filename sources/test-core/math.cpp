@@ -113,6 +113,7 @@ namespace
 			max(0.5, a);
 			clamp(a, b, b);
 			clamp(a, 0.1, 0.9);
+			saturate(a);
 			length(a);
 			lengthSquared(a);
 			dot(a, b);
@@ -250,6 +251,13 @@ namespace
 			CAGE_TEST(clamp(5.f, 3.f, 7.f) == 5.f);
 			CAGE_TEST(clamp(1.f, 3.f, 7.f) == 3.f);
 			CAGE_TEST(clamp(9.f, 3.f, 7.f) == 7.f);
+		}
+
+		{
+			CAGE_TESTCASE("saturate");
+			test(saturate(1.5), 1);
+			test(saturate(0.55), 0.55);
+			test(saturate(-0.55), 0);
 		}
 
 		{

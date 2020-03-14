@@ -15,10 +15,33 @@ namespace cage
 		Default = m, // used only for decoding an image, it will use the original format from the image
 	};
 
+	enum class GammaSpaceEnum : uint32
+	{
+		None = 0,
+		Gamma,
+		Linear,
+	};
+
+	enum class AlphaModeEnum : uint32
+	{
+		None = 0,
+		Opacity,
+		PremultipliedOpacity,
+	};
+
+	struct CAGE_CORE_API ImageColorConfig
+	{
+		uint32 colorChannelsCount = 3; // number of channels affected by the gamma and/or alpha
+		uint32 alphaChannelIndex = 3; // index of the channel to use as a source of opacity
+		GammaSpaceEnum gammaSpace = GammaSpaceEnum::Gamma;
+		AlphaModeEnum alphaMode = AlphaModeEnum::Opacity;
+	};
+
 	class CAGE_CORE_API Image : private Immovable
 	{
 	public:
 		void empty(uint32 width, uint32 height, uint32 channels = 4, ImageFormatEnum format = ImageFormatEnum::U8);
+		void reset();
 
 		// load from raw memory
 		void loadBuffer(const MemoryBuffer &buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format);
@@ -64,9 +87,16 @@ namespace cage
 		PointerRange<const uint16> rawViewU16() const;
 		PointerRange<const float> rawViewFloat() const;
 
+		Holder<Image> copy() const;
+
 		void verticalFlip();
 		void convert(uint32 channels);
 		void convert(ImageFormatEnum format);
+		void convert(GammaSpaceEnum gammaSpace);
+		void convert(AlphaModeEnum alphaMode);
+		void resize(uint32 width, uint32 height, bool useColorConfig = true);
+
+		ImageColorConfig colorConfig;
 	};
 
 	CAGE_CORE_API Holder<Image> newImage();
@@ -76,7 +106,16 @@ namespace cage
 	// if the target image is not initialized and the targetX and targetY are both zero, it will be initialized with channels and format of the source image
 	// if the images have different format, transferred pixels will be converted to the target format
 	// both images must have same number of channels
+	// colorConfig is ignored (except when initializing the image)
 	CAGE_CORE_API void imageBlit(const Image *source, Image *target, uint32 sourceX, uint32 sourceY, uint32 targetX, uint32 targetY, uint32 width, uint32 height);
+
+	namespace detail
+	{
+		CAGE_CORE_API void imageResize(
+			const float *sourceData, uint32 sourceWidth, uint32 sourceHeight, uint32 sourceDepth,
+			      float *targetData, uint32 targetWidth, uint32 targetHeight, uint32 targetDepth,
+			uint32 channels);
+	}
 }
 
 #endif // guard_image_h_681DF37FA76B4FA48C656E96AF90EE69

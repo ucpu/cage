@@ -27,6 +27,19 @@ namespace
 			}
 		}
 	}
+
+	void drawStripes(Image *img)
+	{
+		uint32 w = img->width(), h = img->height(), cc = img->channels();
+		for (uint32 y = 0; y < h; y++)
+		{
+			for (uint32 x = 0; x < w; x++)
+			{
+				for (uint32 c = 0; c <cc; c++)
+					img->value(x, y, c, ((x + y + c * 10) % 256) / 255.f);
+			}
+		}
+	}
 }
 
 void testImage()
@@ -128,6 +141,58 @@ void testImage()
 	}
 
 	{
+		CAGE_TESTCASE("linearize (degamma) and back");
+		Holder<Image> img = newImage();
+		img->decodeFile("images/formats/circle8.png");
+		img->convert(GammaSpaceEnum::Linear);
+		img->encodeFile("images/formats/circle_linear.png");
+		img->convert(GammaSpaceEnum::Gamma);
+		img->encodeFile("images/formats/circle_linear_2.png");
+	}
+
+	{
+		CAGE_TESTCASE("premultiply alpha and back");
+		Holder<Image> img = newImage();
+		img->decodeFile("images/formats/circle8.png");
+		img->convert(AlphaModeEnum::PremultipliedOpacity);
+		img->encodeFile("images/formats/circle_premultiplied.png");
+		img->convert(AlphaModeEnum::Opacity);
+		img->encodeFile("images/formats/circle_premultiplied_2.png");
+	}
+
+	/*
+	{
+		CAGE_TESTCASE("upscale");
+		Holder<Image> img = newImage();
+		img->decodeFile("images/formats/circle8.png");
+		img->resize(600, 450, true);
+		img->encodeFile("images/formats/circle_upscaled_colorconfig.png");
+		img->decodeFile("images/formats/circle8.png");
+		img->resize(600, 450, false);
+		img->encodeFile("images/formats/circle_upscaled_raw.png");
+	}
+
+	{
+		CAGE_TESTCASE("downscale");
+		Holder<Image> img = newImage();
+		img->decodeFile("images/formats/circle8.png");
+		img->resize(200, 150, true);
+		img->encodeFile("images/formats/circle_downscaled_colorconfig.png");
+		img->decodeFile("images/formats/circle8.png");
+		img->resize(200, 150, false);
+		img->encodeFile("images/formats/circle_downscaled_raw.png");
+	}
+
+	{
+		CAGE_TESTCASE("stretch");
+		Holder<Image> img = newImage();
+		img->decodeFile("images/formats/circle8.png");
+		img->resize(300, 500);
+		img->encodeFile("images/formats/circle_stretched.png");
+	}
+	*/
+
+	{
 		CAGE_TESTCASE("store different channels counts in different formats");
 		Holder<Image> img = newImage();
 		img->empty(400, 300, 4);
@@ -181,14 +246,7 @@ void testImage()
 		CAGE_TESTCASE("tiff with 6 channels");
 		Holder<Image> img = newImage();
 		img->empty(256, 256, 6, ImageFormatEnum::U8);
-		for (uint32 y = 0; y < 256; y++)
-		{
-			for (uint32 x = 0; x < 256; x++)
-			{
-				for (uint32 c = 0; c < 6; c++)
-					img->value(x, y, c, ((x + y + c * 10) % 256) / 255.f);
-			}
-		}
+		drawStripes(img.get());
 		img->encodeFile("images/formats/6_channels.tiff");
 		img = newImage();
 		img->decodeFile("images/formats/6_channels.tiff");
@@ -203,14 +261,7 @@ void testImage()
 		CAGE_TESTCASE("psd with 6 channels");
 		Holder<Image> img = newImage();
 		img->empty(256, 256, 6, ImageFormatEnum::U8);
-		for (uint32 y = 0; y < 256; y++)
-		{
-			for (uint32 x = 0; x < 256; x++)
-			{
-				for (uint32 c = 0; c < 6; c++)
-					img->value(x, y, c, ((x + y + c * 10) % 256) / 255.f);
-			}
-		}
+		drawStripes(img.get());
 		img->encodeFile("images/formats/6_channels.psd");
 		img = newImage();
 		img->decodeFile("images/formats/6_channels.psd");
@@ -220,6 +271,4 @@ void testImage()
 		CAGE_TEST(img->format() == ImageFormatEnum::U8);
 		img->encodeFile("images/formats/6_channels_2.psd");
 	}
-
-	// todo resizing
 }

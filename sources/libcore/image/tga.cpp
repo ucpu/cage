@@ -238,6 +238,13 @@ namespace cage
 	{
 		tgaDecodeImpl(inBuffer, inSize, impl);
 		impl->verticalFlip();
+		auto &c = impl->colorConfig;
+		if (impl->channels < 4)
+		{
+			c.colorChannelsCount = impl->channels;
+			c.alphaChannelIndex = m;
+			c.alphaMode = AlphaModeEnum::None;
+		}
 	}
 
 	MemoryBuffer tgaEncode(ImageImpl *impl)

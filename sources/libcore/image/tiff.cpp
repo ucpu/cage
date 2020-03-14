@@ -77,6 +77,14 @@ namespace cage
 					CAGE_THROW_ERROR(Exception, "failed scanline reading in tiff decoding");
 			}
 			TIFFClose(t);
+
+			// color config
+			auto &c = impl->colorConfig;
+			// todo actually read these info from the file
+			c.alphaChannelIndex = m;
+			c.alphaMode = AlphaModeEnum::None;
+			c.colorChannelsCount = 0;
+			c.gammaSpace = GammaSpaceEnum::None;
 		}
 		catch (...)
 		{

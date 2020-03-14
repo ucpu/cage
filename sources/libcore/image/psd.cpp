@@ -233,6 +233,14 @@ namespace cage
 		default:
 			CAGE_THROW_ERROR(Exception, "unsupported compression method (unknown) in psd decoding");
 		}
+
+		// color config
+		auto &c = impl->colorConfig;
+		// todo actually read these info from the file
+		c.alphaChannelIndex = m;
+		c.alphaMode = AlphaModeEnum::None;
+		c.colorChannelsCount = 0;
+		c.gammaSpace = GammaSpaceEnum::None;
 	}
 
 	MemoryBuffer psdEncode(ImageImpl *impl)
