@@ -73,7 +73,7 @@ namespace cage
 			return pngEncode((ImageImpl *)this);
 		if (ext == ".jpeg" || ext == ".jpg")
 			return jpegEncode((ImageImpl *)this);
-		if (ext == ".tiff")
+		if (ext == ".tiff" || ext == ".tif")
 			return tiffEncode((ImageImpl *)this);
 		if (ext == ".tga")
 			return tgaEncode((ImageImpl *)this);

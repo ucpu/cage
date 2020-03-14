@@ -3,7 +3,6 @@ set(cage_output_redist_source "${CMAKE_CURRENT_LIST_DIR}")
 
 function(cage_output_redist where)
 	configure_file("${cage_output_redist_source}/../externals/assimp/assimp/LICENSE" "${where}/redist/licenses/assimp" COPYONLY)
-	configure_file("${cage_output_redist_source}/../externals/devil/devil/LICENSE" "${where}/redist/licenses/devil" COPYONLY)
 	configure_file("${cage_output_redist_source}/../externals/dr_libs/dr_libs/README.md" "${where}/redist/licenses/dr_libs" COPYONLY)
 	configure_file("${cage_output_redist_source}/../externals/fastnoise/fastnoise/LICENSE" "${where}/redist/licenses/fastnoise" COPYONLY)
 	configure_file("${cage_output_redist_source}/../externals/freetype/freetype/docs/LICENSE.TXT" "${where}/redist/licenses/freetype" COPYONLY)

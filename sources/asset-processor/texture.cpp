@@ -8,9 +8,6 @@
 
 #include <cage-engine/opengl.h>
 
-#include <IL/il.h>
-#include <IL/ilu.h>
-
 #include <vector>
 #include <set>
 
@@ -79,123 +76,74 @@ namespace
 		return 0;
 	}
 
-	ILenum convertBppToFormat(uint32 channels)
-	{
-		switch (channels)
-		{
-		case 1: return IL_LUMINANCE;
-		case 2: return IL_LUMINANCE_ALPHA;
-		case 3: return IL_RGB;
-		case 4: return IL_RGBA;
-		default:
-			CAGE_THROW_ERROR(Exception, "unsupported bpp");
-		}
-	}
-
 	struct ImageLayer
 	{
-		std::vector<uint8> data;
-		uint32 width;
-		uint32 height;
-		uint32 channels; // bytes per pixel
-
-		void resizeDevil(uint32 depth = 1)
-		{
-			ilTexImage(width, height, depth, channels, convertBppToFormat(channels), IL_UNSIGNED_BYTE, nullptr);
-		}
-
-		void saveToDevil(uint32 depth = 0)
-		{
-			ilSetPixels(0, 0, depth, width, height, 1, convertBppToFormat(channels), IL_UNSIGNED_BYTE, data.data());
-		}
-
-		void loadFromDevil(uint32 depth = 0)
-		{
-			width = ilGetInteger(IL_IMAGE_WIDTH);
-			height = ilGetInteger(IL_IMAGE_HEIGHT);
-			channels = ilGetInteger(IL_IMAGE_BPP);
-			data.resize(width * height * channels);
-			ilCopyPixels(0, 0, depth, width, height, 1, convertBppToFormat(channels), IL_UNSIGNED_BYTE, data.data());
-		}
-
-		void performFlipV()
-		{
-			std::vector<uint8> tmp;
-			uint32 line = width * channels;
-			tmp.resize(line);
-			for (uint32 y = 0, yy = height / 2; y < yy; y++)
-			{
-				uint8 *a = data.data() + y * line;
-				uint8 *b = data.data() + (height - 1 - y) * line;
-				detail::memcpy(tmp.data(), a, line);
-				detail::memcpy(a, b, line);
-				detail::memcpy(b, tmp.data(), line);
-			}
-		}
+		Holder<Image> data;
 
 		void convertHeightToNormal(float strength)
 		{
 			strength = 1.f / strength;
-			std::vector<uint8> result;
-			result.resize(width * height * 3);
-			uint32 pos = 0;
-			for (sint32 y = 0; (uint32)y < height; y++)
+			uint32 w = data->width();
+			uint32 h = data->height();
+			Holder<Image> res = newImage();
+			res->empty(w, h, 3, data->format());
+			for (sint32 y = 0; (uint32)y < h; y++)
 			{
-				for (sint32 x = 0; (uint32)x < width; x++)
+				for (sint32 x = 0; (uint32)x < w; x++)
 				{
-					const float tl = convertToNormalIntensity(x - 1, y - 1);
-					const float tc = convertToNormalIntensity(x + 0, y - 1);
-					const float tr = convertToNormalIntensity(x + 1, y - 1);
-					const float rc = convertToNormalIntensity(x + 1, y + 0);
-					const float br = convertToNormalIntensity(x + 1, y + 1);
-					const float bc = convertToNormalIntensity(x + 0, y + 1);
-					const float bl = convertToNormalIntensity(x - 1, y + 1);
-					const float lc = convertToNormalIntensity(x - 1, y + 0);
-					const float dX = (tr + 2.f * rc + br) - (tl + 2.f * lc + bl);
-					const float dY = (bl + 2.f * bc + br) - (tl + 2.f * tc + tr);
+					const real tl = convertToNormalIntensity(x - 1, y - 1);
+					const real tc = convertToNormalIntensity(x + 0, y - 1);
+					const real tr = convertToNormalIntensity(x + 1, y - 1);
+					const real rc = convertToNormalIntensity(x + 1, y + 0);
+					const real br = convertToNormalIntensity(x + 1, y + 1);
+					const real bc = convertToNormalIntensity(x + 0, y + 1);
+					const real bl = convertToNormalIntensity(x - 1, y + 1);
+					const real lc = convertToNormalIntensity(x - 1, y + 0);
+					const real dX = (tr + 2.f * rc + br) - (tl + 2.f * lc + bl);
+					const real dY = (bl + 2.f * bc + br) - (tl + 2.f * tc + tr);
 					vec3 v(-dX, -dY, strength);
 					v = normalize(v);
 					v += 1;
 					v *= 0.5;
-					v *= 255;
-					result[pos + 0] = numeric_cast<uint8>(v[0]);
-					result[pos + 1] = numeric_cast<uint8>(v[1]);
-					result[pos + 2] = numeric_cast<uint8>(v[2]);
-					pos += 3;
+					res->set(x, y, v);
 				}
 			}
-			std::swap(data, result);
-			channels = 3;
+			std::swap(data, res);
 		}
 
 		void convertSpecularToSpecial()
 		{
-			uint32 pixels = width * height;
-			switch (channels)
+			uint32 w = data->width();
+			uint32 h = data->height();
+			switch (data->channels())
 			{
 			case 1:
 			{
-				for (uint32 i = 0; i < pixels; i++)
+				for (uint32 y = 0; y < h; y++)
 				{
-					vec3 color = vec3(real(data[i]) / 255);
-					vec2 special = ::convertSpecularToSpecial(color);
-					CAGE_ASSERT(special[1] < 1e-7);
-					data[i] = numeric_cast<uint8>(special[0] * 255);
+					for (uint32 x = 0; x < w; x++)
+					{
+						vec3 color = vec3(data->get1(x, y));
+						vec2 special = ::convertSpecularToSpecial(color);
+						CAGE_ASSERT(special[1] < 1e-7);
+						data->set(x, y, special[0]);
+					}
 				}
 			} break;
 			case 3:
 			{
-				std::vector<uint8> res;
-				res.resize(pixels * 2);
-				for (uint32 i = 0; i < pixels; i++)
+				Holder<Image> res = newImage();
+				res->empty(w, h, 2, data->format());
+				for (uint32 y = 0; y < h; y++)
 				{
-					vec3 color = vec3(data[i * 3 + 0], data[i * 3 + 1], data[i * 3 + 2]) / 255;
-					vec2 special = ::convertSpecularToSpecial(color);
-					res[i * 2 + 0] = numeric_cast<uint8>(special[0] * 255);
-					res[i * 2 + 1] = numeric_cast<uint8>(special[1] * 255);
+					for (uint32 x = 0; x < w; x++)
+					{
+						vec3 color = data->get3(x, y);
+						vec2 special = ::convertSpecularToSpecial(color);
+						res->set(x, y, special);
+					}
 				}
 				std::swap(res, data);
-				channels = 2;
 			} break;
 			default:
 				CAGE_THROW_ERROR(Exception, "exactly 1 or 3 channels are required for conversion of specular color to special material");
@@ -204,152 +152,79 @@ namespace
 
 		void invert(uint32 channelIndex)
 		{
-			if (channelIndex >= channels)
+			if (channelIndex >= data->channels())
 				CAGE_THROW_ERROR(Exception, "texture does not have that channel");
-			uint32 pixels = width * height;
-			for (uint32 i = 0; i < pixels; i++)
-				data[i * channels + channelIndex] = 255 - data[i * channels + channelIndex];
+			uint32 w = data->width();
+			uint32 h = data->height();
+			for (uint32 y = 0; y < h; y++)
+			{
+				for (uint32 x = 0; x < w; x++)
+					data->value(x, y, channelIndex, 1 - data->value(x, y, channelIndex));
+			}
 		}
 
 		void premultiplyAlpha()
 		{
-			if (channels != 4)
-				CAGE_THROW_ERROR(Exception, "premultiplied alpha requires 4 components");
+			if (data->channels() != 4)
+				CAGE_THROW_ERROR(Exception, "premultiplied alpha requires 4 channels");
 			if (properties("srgb").toBool())
-				premultiplyAlphaImpl<true>();
+			{
+				ImageFormatEnum origFormat = data->format();
+				GammaSpaceEnum origGamma = data->colorConfig.gammaSpace;
+				data->convert(ImageFormatEnum::Float);
+				data->convert(GammaSpaceEnum::Linear);
+				data->convert(AlphaModeEnum::PremultipliedOpacity);
+				data->convert(origGamma);
+				data->convert(origFormat);
+			}
 			else
-				premultiplyAlphaImpl<false>();
+				data->convert(AlphaModeEnum::PremultipliedOpacity);
 		}
 
 	private:
-
-		template<bool SRGB>
-		void premultiplyAlphaImpl()
+		real convertToNormalIntensity(sint32 x, sint32 y)
 		{
-			// todo depth
-			uint32 line = width * channels;
-			for (uint32 y = 0; y < height; y++)
+			x = min((sint32)data->width() - 1, max(0, x));
+			y = min((sint32)data->height() - 1, max(0, y));
+			real sum = 0;
+			switch (data->channels())
 			{
-				uint8 *l = data.data() + y * line;
-				for (uint32 x = 0; x < width; x++)
-				{
-					uint8 *t = l + x * channels;
-					real a = t[3] / 255.f;
-					for (uint32 i = 0; i < 3; i++)
-					{
-						if (SRGB)
-						{
-							real v = t[i] / 255.f;
-							v = pow(v, 2.2f);
-							v *= a; // alpha premultiplied in linear space
-							v = pow(v, 1.0f / 2.2f);
-							t[i] = numeric_cast<uint8>(v * 255.f);
-						}
-						else
-							t[i] = numeric_cast<uint8>(a * t[i]);
-					}
-				}
-			}
-		}
-
-		float convertToNormalIntensity(sint32 x, sint32 y)
-		{
-			x = min((sint32)width - 1, max(0, x));
-			y = min((sint32)height - 1, max(0, y));
-			uint32 pos = (y * width + x) * channels;
-			uint32 sum = 0;
-			switch (channels)
-			{
-			case 3: sum += data[pos + 2];
-			case 2: sum += data[pos + 1];
-			case 1: sum += data[pos + 0];
+			case 3: sum += data->value(x, y, 2);
+			case 2: sum += data->value(x, y, 1);
+			case 1: sum += data->value(x, y, 0);
 				break;
 			default:
 				CAGE_THROW_CRITICAL(Exception, "invalid bpp");
 			}
-			return sum / 255.f / channels;
+			return sum / data->channels();
 		}
 	};
 
 	std::vector<ImageLayer> images;
 
-	void loadSlice(uint32 index)
-	{
-		ImageLayer Image;
-		Image.loadFromDevil(index);
-		images.push_back(Image);
-	}
-
-	void loadFrame()
-	{
-		uint32 slices = ilGetInteger(IL_IMAGE_DEPTH);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "slices count: " + slices);
-		for (uint32 i = 0; i < slices; i++)
-		{
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "loading slice: " + i);
-			loadSlice(i);
-		}
-	}
-
 	void loadFile(const string &filename)
 	{
 		writeLine(string("use=") + filename);
-		ILuint im = ilGenImage();
-		ilBindImage(im);
-		{
-			string wholeFilename = pathJoin(inputDirectory, filename);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "loading file '" + wholeFilename + "'");
-			if (!ilLoadImage(wholeFilename.c_str()))
-				CAGE_THROW_ERROR(Exception, "image format not supported");
-		}
-		uint32 frames = ilGetInteger(IL_NUM_IMAGES) + 1;
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "frames count: " + frames);
-		for (uint32 i = 0; i < frames; i++)
-		{
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "loading frame: " + i);
-			ilBindImage(im);
-			ilActiveImage(i);
-			loadFrame();
-		}
-		ilBindImage(0);
-		ilDeleteImage(im);
+		string wholeFilename = pathJoin(inputDirectory, filename);
+		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "loading file '" + wholeFilename + "'");
+		ImageLayer l;
+		l.data = newImage();
+		l.data->decodeFile(wholeFilename);
+		images.push_back(templates::move(l));
 	}
 
 	void performDownscale(uint32 downscale, uint32 target)
 	{
 		if (target == GL_TEXTURE_3D)
 		{ // downscale image as a whole
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "downscaling whole image");
-			ILuint im = ilGenImage();
-			ilBindImage(im);
-			iluImageParameter(ILU_FILTER, ILU_BILINEAR);
-			images[0].resizeDevil(numeric_cast<uint32>(images.size()));
-			for (auto it : enumerate(images))
-				it->saveToDevil(numeric_cast<uint32>(it.cnt));
-			if (!iluScale(max(images[0].width / downscale, 1u), max(images[0].height / downscale, 1u), max(numeric_cast<uint32>(images.size()), 1u)))
-				CAGE_THROW_ERROR(Exception, "iluScale");
-			for (auto it : enumerate(images))
-				it->loadFromDevil(numeric_cast<uint32>(it.cnt));
-			ilBindImage(0);
-			ilDeleteImage(im);
+			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "downscaling whole image (3D)");
+			CAGE_THROW_ERROR(NotImplemented, "3D texture downscale");
 		}
 		else
 		{ // downscale each image separately
 			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "downscaling each slice separately");
-			ILuint im = ilGenImage();
-			ilBindImage(im);
-			iluImageParameter(ILU_FILTER, ILU_BILINEAR);
-			images[0].resizeDevil();
-			for (auto it : enumerate(images))
-			{
-				CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "downscaling slice: " + it.cnt);
-				it->saveToDevil();
-				if (!iluScale(max(it->width / downscale, 1u), max(it->height / downscale, 1u), 1))
-					CAGE_THROW_ERROR(Exception, "iluScale");
-				it->loadFromDevil();
-			}
-			ilBindImage(0);
-			ilDeleteImage(im);
+			for (auto &it : images)
+				it.data->resize(max(it.data->width() / downscale, 1u), max(it.data->height() / downscale, 1u));
 		}
 	}
 
@@ -360,15 +235,13 @@ namespace
 		ImageLayer src = templates::move(images[0]);
 		images.clear();
 		images.resize(6);
-		if (src.width * 3 != src.height * 4)
+		if (src.data->width() * 3 != src.data->height() * 4)
 			CAGE_THROW_ERROR(Exception, "skyboxToCube requires source image to be 4:3");
 		uint32 sideIndex = 0;
 		for (auto &m : images)
 		{
-			m.width = src.width / 4;
-			m.height = src.height / 3;
-			m.channels = src.channels;
-			m.data.resize(m.width * m.height * m.channels);
+			m.data = newImage();
+			m.data->empty(src.data->width() / 4, src.data->height() / 3, src.data->channels(), src.data->format());
 			/*
 			     +---+
 			     | 2 |
@@ -406,14 +279,9 @@ namespace
 				yOffset = 1;
 				break;
 			}
-			xOffset *= m.width;
-			yOffset *= m.height;
-			for (uint32 y = 0; y < m.height; y++)
-			{
-				const uint8 *s = src.data.data() + src.width * src.channels * (y + yOffset) + src.channels * xOffset;
-				uint8 *t = m.data.data() + m.width * m.channels * y;
-				detail::memcpy(t, s, m.width * m.channels);
-			}
+			xOffset *= m.data->width();
+			yOffset *= m.data->height();
+			imageBlit(src.data.get(), m.data.get(), xOffset, yOffset, 0, 0, m.data->width(), m.data->height());
 		}
 	}
 
@@ -432,18 +300,18 @@ namespace
 		if (target != GL_TEXTURE_2D && frames == 1)
 			CAGE_LOG(SeverityEnum::Warning, logComponentName, "texture has only one frame. consider setting target to 2d");
 		ImageLayer &im0 = images[0];
-		if (im0.width == 0 || im0.height == 0)
+		if (im0.data->width() == 0 || im0.data->height() == 0)
 			CAGE_THROW_ERROR(Exception, "image has zero resolution");
-		if (im0.channels == 0 || im0.channels > 4)
+		if (im0.data->channels() == 0 || im0.data->channels() > 4)
 			CAGE_THROW_ERROR(Exception, "image has invalid bpp");
 		for (auto &imi : images)
 		{
-			if (imi.width != im0.width || imi.height != im0.height)
+			if (imi.data->width() != im0.data->width() || imi.data->height() != im0.data->height())
 				CAGE_THROW_ERROR(Exception, "frames has inconsistent resolutions");
-			if (imi.channels != im0.channels)
+			if (imi.data->channels() != im0.data->channels())
 				CAGE_THROW_ERROR(Exception, "frames has inconsistent bpp");
 		}
-		if (target == GL_TEXTURE_CUBE_MAP && im0.width != im0.height)
+		if (target == GL_TEXTURE_CUBE_MAP && im0.data->width() != im0.data->height())
 			CAGE_THROW_ERROR(Exception, "cube texture requires square textures");
 	}
 
@@ -461,10 +329,15 @@ namespace
 		data.flags =
 			(requireMipmaps(data.filterMin) ? TextureFlags::GenerateMipmaps : TextureFlags::None) |
 			(properties("animationLoop").toBool() ? TextureFlags::AnimationLoop : TextureFlags::None);
-		data.dimX = images[0].width;
-		data.dimY = images[0].height;
+		data.dimX = images[0].data->width();
+		data.dimY = images[0].data->height();
 		data.dimZ = numeric_cast<uint32>(images.size());
-		data.channels = images[0].channels;
+		data.channels = images[0].data->channels();
+
+		// todo
+		if (images[0].data->format() != ImageFormatEnum::U8)
+			CAGE_THROW_ERROR(NotImplemented, "8-bit precision only");
+
 		if (properties("srgb").toBool())
 		{
 			switch (data.channels)
@@ -512,14 +385,14 @@ namespace
 		AssetHeader h = initializeAssetHeader();
 		h.originalSize = sizeof(data);
 		for (const auto &it : images)
-			h.originalSize += it.data.size();
+			h.originalSize += it.data->rawViewU8().size();
 
 		MemoryBuffer inputBuffer;
 		inputBuffer.reserve(h.originalSize);
 		Serializer ser(inputBuffer);
 		ser << data;
 		for (const auto &it : images)
-			ser.write(it.data.data(), it.data.size());
+			ser.write(it.data->rawViewU8().data(), it.data->rawViewU8().size());
 
 		MemoryBuffer outputBuffer = detail::compress(inputBuffer);
 		h.compressedSize = outputBuffer.size();
@@ -547,11 +420,6 @@ void processTexture()
 		if (c && properties("target") != "cubeMap")
 			CAGE_THROW_ERROR(Exception, "convert skyboxToCube requires target to be cubeMap");
 	}
-
-	ilInit();
-	iluInit();
-	ilEnable(IL_CONV_PAL);
-	ilEnable(IL_FILE_OVERWRITE);
 
 	{ // load all files
 		uint32 firstDollar = inputFile.find('$');
@@ -582,8 +450,8 @@ void processTexture()
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "loading done");
 	}
 
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "input resolution: " + images[0].width + "*" + images[0].height + "*" + numeric_cast<uint32>(images.size()));
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "input channels: " + images[0].channels);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "input resolution: " + images[0].data->width() + "*" + images[0].data->height() + "*" + numeric_cast<uint32>(images.size()));
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "input channels: " + images[0].data->channels());
 
 	{ // convert height map to normal map
 		if (properties("convert") == "heightToNormal")
@@ -629,7 +497,7 @@ void processTexture()
 		if (downscale > 1)
 		{
 			performDownscale(downscale, target);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "downscaled: " + images[0].width + "*" + images[0].height + "*" + numeric_cast<uint32>(images.size()));
+			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "downscaled: " + images[0].data->width() + "*" + images[0].data->height() + "*" + numeric_cast<uint32>(images.size()));
 		}
 	}
 
@@ -637,7 +505,7 @@ void processTexture()
 		if (!properties("flip").toBool())
 		{
 			for (auto &it : images)
-				it.performFlipV();
+				it.data->verticalFlip();
 			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "image vertically flipped (flip was false)");
 		}
 	}
@@ -669,8 +537,8 @@ void processTexture()
 		}
 	}
 
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "output resolution: " + images[0].width + "*" + images[0].height + "*" + numeric_cast<uint32>(images.size()));
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "output channels: " + images[0].channels);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "output resolution: " + images[0].data->width() + "*" + images[0].data->height() + "*" + numeric_cast<uint32>(images.size()));
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "output channels: " + images[0].data->channels());
 
 	exportTexture(target);
 
@@ -680,21 +548,16 @@ void processTexture()
 		for (auto &it : images)
 		{
 			string dbgName = pathJoin(configGetString("cage-asset-processor/texture/path", "asset-preview"), stringizer() + pathReplaceInvalidCharacters(inputName) + "_" + (index++) + ".png");
-			Holder<Image> png = newImage();
-			png->loadMemory(it.data.data(), it.data.size(), it.width, it.height, it.channels, ImageFormatEnum::U8);
-			png->verticalFlip();
-			png->encodeFile(dbgName);
+			it.data->verticalFlip(); // this is after the export, so this operation does not affect the textures
+			it.data->encodeFile(dbgName);
 		}
 	}
-
-	ilShutDown();
 }
 
 void analyzeTexture()
 {
 	try
 	{
-		ilInit();
 		loadFile(inputFile);
 		writeLine("cage-begin");
 		writeLine("scheme=texture");
@@ -706,5 +569,4 @@ void analyzeTexture()
 	{
 		// do nothing
 	}
-	ilShutDown();
 }

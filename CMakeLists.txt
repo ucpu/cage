@@ -81,7 +81,7 @@ cage_ide_sort_files(cage-engine)
 
 file(GLOB_RECURSE cage-asset-processor-sources "sources/asset-processor/*")
 add_executable(cage-asset-processor ${cage-asset-processor-sources})
-target_link_libraries(cage-asset-processor cage-engine IL ILU assimp freetype dr_libs ogg vorbis vorbisfile vorbisenc lib_msdfgen)
+target_link_libraries(cage-asset-processor cage-engine assimp freetype dr_libs ogg vorbis vorbisfile vorbisenc lib_msdfgen)
 cage_ide_category(cage-asset-processor cage/tools)
 cage_ide_sort_files(cage-asset-processor)
 cage_ide_working_dir_in_place(cage-asset-processor)

@@ -137,8 +137,7 @@ It started as a hobby/learning project, but has become fairly feature rich and m
 
 ### Asset processor
 
-- texture loading (via DevIL)
-  - DevIL is planned to be replaced due to license issue (when suitable alternative is found)
+- texture loading (via libpng, libjpeg etc.)
 - mesh loading (via Assimp)
 - sound (via Ogg/Vorbis and dr_libs)
 - shader
