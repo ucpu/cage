@@ -19,19 +19,49 @@ namespace cage
 		}
 	}
 
+	ImageColorConfig defaultConfig(uint32 channels)
+	{
+		ImageColorConfig c;
+		switch (channels)
+		{
+		case 1:
+			c.colorChannelsCount = 1;
+			c.gammaSpace = GammaSpaceEnum::Gamma;
+			break;
+		case 2:
+			c.colorChannelsCount = 1;
+			c.gammaSpace = GammaSpaceEnum::Gamma;
+			c.alphaChannelIndex = 1;
+			c.alphaMode = AlphaModeEnum::Opacity;
+			break;
+		case 3:
+			c.colorChannelsCount = 3;
+			c.gammaSpace = GammaSpaceEnum::Gamma;
+			break;
+		case 4:
+			c.colorChannelsCount = 3;
+			c.gammaSpace = GammaSpaceEnum::Gamma;
+			c.alphaChannelIndex = 3;
+			c.alphaMode = AlphaModeEnum::Opacity;
+			break;
+		}
+		return c;
+	}
+
 	void Image::empty(uint32 w, uint32 h, uint32 c, ImageFormatEnum f)
 	{
 		CAGE_ASSERT(f != ImageFormatEnum::Default);
 		CAGE_ASSERT(c > 0);
 		CAGE_ASSERT(c == 3 || f != ImageFormatEnum::Rgbe);
 		ImageImpl *impl = (ImageImpl*)this;
-		reset();
 		impl->width = w;
 		impl->height = h;
 		impl->channels = c;
 		impl->format = f;
+		impl->mem.resize(0); // avoid unnecessary copies without deallocating the memory
 		impl->mem.resize(w * h * c * formatBytes(f));
 		impl->mem.zero();
+		colorConfig = defaultConfig(c);
 	}
 
 	void Image::reset()
@@ -109,20 +139,19 @@ namespace cage
 		CAGE_ASSERT(impl->channels == 3 || impl->format != ImageFormatEnum::Rgbe);
 		CAGE_ASSERT(x < impl->width && y < impl->height && c < impl->channels);
 		uint32 offset = (y * impl->width + x) * impl->channels;
-		v = clamp(v, 0.f, 1.f);
 		switch (impl->format)
 		{
 		case ImageFormatEnum::U8:
-			((uint8 *)impl->mem.data())[offset + c] = numeric_cast<uint8>(v * 255.f);
+			((uint8 *)impl->mem.data())[offset + c] = numeric_cast<uint8>(saturate(v) * 255.f);
 			break;
 		case ImageFormatEnum::U16:
-			((uint16 *)impl->mem.data())[offset + c] = numeric_cast<uint16>(v * 65535.f);
+			((uint16 *)impl->mem.data())[offset + c] = numeric_cast<uint16>(saturate(v) * 65535.f);
 			break;
 		case ImageFormatEnum::Rgbe:
 		{
 			uint32 &p = ((uint32 *)impl->mem.data())[offset];
 			vec3 s = colorRgbeToRgb(p);
-			s[c] = v;
+			s[c] = saturate(v);
 			p = colorRgbToRgbe(s);
 		} break;
 		case ImageFormatEnum::Float:
@@ -252,14 +281,14 @@ namespace cage
 		case ImageFormatEnum::U8:
 		{
 			uint8 *p = ((uint8 *)impl->mem.data()) + offset;
-			vec2 vv = v * 255;
+			vec2 vv = saturate(v) * 255;
 			for (int i = 0; i < 2; i++)
 				p[i] = numeric_cast<uint8>(vv[i]);
 		} break;
 		case ImageFormatEnum::U16:
 		{
 			uint16 *p = ((uint16 *)impl->mem.data()) + offset;
-			vec2 vv = v * 65535;
+			vec2 vv = saturate(v) * 65535;
 			for (int i = 0; i < 2; i++)
 				p[i] = numeric_cast<uint16>(vv[i]);
 		} break;
@@ -284,21 +313,21 @@ namespace cage
 		case ImageFormatEnum::U8:
 		{
 			uint8 *p = ((uint8 *)impl->mem.data()) + offset;
-			vec3 vv = v * 255;
+			vec3 vv = saturate(v) * 255;
 			for (int i = 0; i < 3; i++)
 				p[i] = numeric_cast<uint8>(vv[i]);
 		} break;
 		case ImageFormatEnum::U16:
 		{
 			uint16 *p = ((uint16 *)impl->mem.data()) + offset;
-			vec3 vv = v * 65535;
+			vec3 vv = saturate(v) * 65535;
 			for (int i = 0; i < 3; i++)
 				p[i] = numeric_cast<uint16>(vv[i]);
 		} break;
 		case ImageFormatEnum::Rgbe:
 		{
 			uint32 &p = ((uint32 *)impl->mem.data())[offset];
-			p = colorRgbToRgbe(v);
+			p = colorRgbToRgbe(saturate(v));
 		} break;
 		case ImageFormatEnum::Float:
 		{
@@ -321,14 +350,14 @@ namespace cage
 		case ImageFormatEnum::U8:
 		{
 			uint8 *p = ((uint8 *)impl->mem.data()) + offset;
-			vec4 vv = v * 255;
+			vec4 vv = saturate(v) * 255;
 			for (int i = 0; i < 4; i++)
 				p[i] = numeric_cast<uint8>(vv[i]);
 		} break;
 		case ImageFormatEnum::U16:
 		{
 			uint16 *p = ((uint16 *)impl->mem.data()) + offset;
-			vec4 vv = v * 65535;
+			vec4 vv = saturate(v) * 65535;
 			for (int i = 0; i < 4; i++)
 				p[i] = numeric_cast<uint16>(vv[i]);
 		} break;

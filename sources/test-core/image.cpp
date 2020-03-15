@@ -47,6 +47,44 @@ void testImage()
 	CAGE_TESTCASE("image");
 
 	{
+		CAGE_TESTCASE("valid values for different formats");
+		Holder<Image> img = newImage();
+		{
+			img->empty(1, 1, 1, ImageFormatEnum::U8);
+			img->value(0, 0, 0, -2.f);
+			test(img->value(0, 0, 0), 0);
+			img->value(0, 0, 0, 0.2f);
+			test(img->value(0, 0, 0), 0.2);
+			img->value(0, 0, 0, 1.55f);
+			test(img->value(0, 0, 0), 1.0);
+			img->value(0, 0, 0, real::Nan());
+			test(img->value(0, 0, 0), 0.0);
+		}
+		{
+			img->empty(1, 1, 1, ImageFormatEnum::U16);
+			img->value(0, 0, 0, -2.f);
+			test(img->value(0, 0, 0), 0);
+			img->value(0, 0, 0, 0.2f);
+			test(img->value(0, 0, 0), 0.2);
+			img->value(0, 0, 0, 1.55f);
+			test(img->value(0, 0, 0), 1.0);
+			img->value(0, 0, 0, real::Nan());
+			test(img->value(0, 0, 0), 0.0);
+		}
+		{
+			img->empty(1, 1, 1, ImageFormatEnum::Float);
+			img->value(0, 0, 0, -2.f);
+			test(img->value(0, 0, 0), -2);
+			img->value(0, 0, 0, 0.2f);
+			test(img->value(0, 0, 0), 0.2);
+			img->value(0, 0, 0, 1.55f);
+			test(img->value(0, 0, 0), 1.55);
+			img->value(0, 0, 0, real::Nan());
+			CAGE_TEST(!valid(img->value(0, 0, 0)));
+		}
+	}
+
+	{
 		CAGE_TESTCASE("circle png 8bit");
 		Holder<Image> img = newImage();
 		img->empty(400, 300, 4);

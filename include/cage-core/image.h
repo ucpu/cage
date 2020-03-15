@@ -31,10 +31,10 @@ namespace cage
 
 	struct CAGE_CORE_API ImageColorConfig
 	{
-		uint32 colorChannelsCount = 3; // number of channels affected by the gamma and/or alpha
-		uint32 alphaChannelIndex = 3; // index of the channel to use as a source of opacity
-		GammaSpaceEnum gammaSpace = GammaSpaceEnum::Gamma;
-		AlphaModeEnum alphaMode = AlphaModeEnum::Opacity;
+		uint32 colorChannelsCount = 0; // number of channels affected by the gamma and/or alpha
+		uint32 alphaChannelIndex = m; // index of the channel to use as a source of opacity
+		GammaSpaceEnum gammaSpace = GammaSpaceEnum::None;
+		AlphaModeEnum alphaMode = AlphaModeEnum::None;
 	};
 
 	class CAGE_CORE_API Image : private Immovable

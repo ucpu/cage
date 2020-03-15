@@ -79,12 +79,7 @@ namespace cage
 			TIFFClose(t);
 
 			// color config
-			auto &c = impl->colorConfig;
-			// todo actually read these info from the file
-			c.alphaChannelIndex = m;
-			c.alphaMode = AlphaModeEnum::None;
-			c.colorChannelsCount = 0;
-			c.gammaSpace = GammaSpaceEnum::None;
+			// todo deduce it from the file
 		}
 		catch (...)
 		{

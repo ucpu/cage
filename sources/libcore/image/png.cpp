@@ -207,18 +207,7 @@ namespace cage
 		default:
 			CAGE_THROW_ERROR(Exception, "unsupported png image bpp");
 		}
-		auto &c = impl->colorConfig;
-		if (impl->channels == 1 || impl->channels == 3)
-		{
-			c.colorChannelsCount = impl->channels;
-			c.alphaChannelIndex = m;
-			c.alphaMode = AlphaModeEnum::None;
-		}
-		else if (impl->channels == 2)
-		{
-			c.colorChannelsCount = 1;
-			c.alphaChannelIndex = 1;
-		}
+		impl->colorConfig = defaultConfig(impl->channels);
 	}
 
 	MemoryBuffer pngEncode(ImageImpl *impl)

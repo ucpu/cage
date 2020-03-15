@@ -12,4 +12,6 @@ namespace cage
 	};
 
 	uint32 formatBytes(ImageFormatEnum format);
+
+	ImageColorConfig defaultConfig(uint32 channels);
 }
