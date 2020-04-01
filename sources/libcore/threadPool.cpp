@@ -95,6 +95,7 @@ namespace cage
 	{
 		if (threadsCount == 0)
 		{
+			CAGE_ASSERT(threadIndex == 0);
 			begin = 0;
 			end = tasksCount;
 			return;
@@ -102,6 +103,13 @@ namespace cage
 		CAGE_ASSERT(threadIndex < threadsCount);
 		uint32 tasksPerThread = tasksCount / threadsCount;
 		begin = threadIndex * tasksPerThread;
-		end = threadIndex + 1 == threadsCount ? tasksCount : begin + tasksPerThread;
+		end = begin + tasksPerThread;
+		uint32 remaining = tasksCount - threadsCount * tasksPerThread;
+		uint32 off = threadsCount - remaining;
+		if (threadIndex >= off)
+		{
+			begin += threadIndex - off;
+			end += threadIndex - off + 1;
+		}
 	}
 }
