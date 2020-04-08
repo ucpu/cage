@@ -176,16 +176,7 @@ namespace
 			CAGE_THROW_ERROR(Exception, "unknown material flag");
 		}
 
-		{
-			string s, t, v;
-			if (ini->anyUnused(s, t, v))
-			{
-				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "section: " + s);
-				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "item: " + t);
-				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "value: " + v);
-				CAGE_THROW_ERROR(Exception, "unused material property");
-			}
-		}
+		ini->checkUnused();
 	}
 
 	void loadMaterialAssimp(const aiScene *scene, const aiMesh *am, MeshHeader &dsm, MeshHeader::MaterialData &mat)

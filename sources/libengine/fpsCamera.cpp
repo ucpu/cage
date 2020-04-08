@@ -21,14 +21,11 @@ namespace cage
 			vec2 mouseMoveAccum;
 			real wheelAccum;
 
-			Entity *ent;
-			bool keysPressedArrows[6]; // wsadeq
+			Entity *ent = nullptr;
+			bool keysPressedArrows[6] = {false, false, false, false, false, false}; // wsadeq
 
 			FpsCameraImpl(Entity *ent) : ent(ent)
 			{
-				for (uint32 i = 0; i < 6; i++)
-					keysPressedArrows[i] = false;
-
 				listeners.mousePress.bind<FpsCameraImpl, &FpsCameraImpl::mousePress>(this);
 				listeners.mouseMove.bind<FpsCameraImpl, &FpsCameraImpl::mouseMove>(this);
 				listeners.mouseWheel.bind<FpsCameraImpl, &FpsCameraImpl::mouseWheel>(this);
