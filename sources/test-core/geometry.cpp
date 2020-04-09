@@ -125,6 +125,16 @@ void testGeometry()
 		}
 
 		{
+			CAGE_TESTCASE("tests");
+
+			triangle t1(vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 2, 0));
+			test(t1.normal(), -t1.flip().normal());
+			CAGE_TEST(!t1.degenerated());
+			CAGE_TEST(triangle(vec3(1, 2, 3), vec3(3, 2, 1), vec3(1, 2, 3)).degenerated()); // two vertices are the same
+			CAGE_TEST(triangle(vec3(1, 2, 3), vec3(2, 4, 6), vec3(3, 6, 9)).degenerated()); // vertices are collinear
+		}
+
+		{
 			CAGE_TESTCASE("intersections with lines");
 
 			triangle t1(vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 2, 0));
@@ -142,12 +152,49 @@ void testGeometry()
 	}
 
 	{
+		CAGE_TESTCASE("planes");
+
+		{
+			CAGE_TESTCASE("origin & normalized");
+
+			for (int i = 0; i < 5; i++)
+			{
+				plane p(randomChance3() * 100, randomDirection3());
+				CAGE_TEST(p.normalized());
+				test(distance(p, p.origin()), 0); // origin is a point on the plane
+			}
+
+			CAGE_TEST(!plane(vec3(), vec3(1, 1, 0)).normalized());
+			CAGE_TEST(plane(vec3(), vec3(1, 1, 0)).normalize().normalized());
+		}
+
+		{
+			CAGE_TESTCASE("distances");
+			// todo
+		}
+
+		{
+			CAGE_TESTCASE("intersects");
+			// todo
+		}
+
+		{
+			CAGE_TESTCASE("intersections");
+
+			test(intersection(plane(vec3(), vec3(0, 1, 0)), makeLine(vec3(0, 1, 0), vec3(0, -1, 0))), vec3());
+			test(intersection(plane(vec3(), vec3(0, 1, 0)), makeLine(vec3(1, 1, 0), vec3(1, -1, 0))), vec3(1, 0, 0));
+			test(intersection(plane(vec3(13, 5, 42), vec3(0, 1, 0)), makeLine(vec3(1, 1, 0), vec3(1, -1, 0))), vec3(1, 5, 0));
+			test(intersection(plane(vec3(), vec3(0, 1, 0)), makeSegment(vec3(1, 1, 0), vec3(1, -1, 0))), vec3(1, 0, 0));
+			CAGE_TEST(!intersection(plane(vec3(), vec3(0, 1, 0)), makeSegment(vec3(1, 1, 0), vec3(1, 2, 0))).valid());
+		}
+	}
+
+	{
 		CAGE_TESTCASE("spheres");
 
 		{
 			CAGE_TESTCASE("distances");
 
-			/*
 			test(distance(makeLine(vec3(1, 10, 20), vec3(1, 10, 25)), sphere(vec3(1, 2, 3), 3)), 5);
 			test(distance(makeLine(vec3(1, 10, -20), vec3(1, 10, 25)), sphere(vec3(1, 2, 3), 3)), 5);
 			test(distance(makeLine(vec3(1, 4, -20), vec3(1, 4, 25)), sphere(vec3(1, 2, 3), 3)), 0);
@@ -162,13 +209,11 @@ void testGeometry()
 			CAGE_TEST(distance(makeSegment(vec3(1, 10, -20), vec3(1, 10, -15)), sphere(vec3(1, 2, 3), 3)) > 5);
 			test(distance(makeSegment(vec3(1, 10, -20), vec3(1, 10, 25)), sphere(vec3(1, 2, 3), 3)), 5);
 			test(distance(makeSegment(vec3(1, 4, -20), vec3(1, 4, 25)), sphere(vec3(1, 2, 3), 3)), 0);
-			*/
 		}
 
 		{
 			CAGE_TESTCASE("intersects");
 
-			/*
 			CAGE_TEST(!intersects(makeLine(vec3(1, 10, 20), vec3(1, 10, 25)), sphere(vec3(1, 2, 3), 3)));
 			CAGE_TEST(!intersects(makeLine(vec3(1, 10, -20), vec3(1, 10, 25)), sphere(vec3(1, 2, 3), 3)));
 			CAGE_TEST(intersects(makeLine(vec3(1, 4, -20), vec3(1, 4, 25)), sphere(vec3(1, 2, 3), 3)));
@@ -183,14 +228,12 @@ void testGeometry()
 			CAGE_TEST(!intersects(makeSegment(vec3(1, 10, -20), vec3(1, 10, -15)), sphere(vec3(1, 2, 3), 3)));
 			CAGE_TEST(!intersects(makeSegment(vec3(1, 10, -20), vec3(1, 10, 25)), sphere(vec3(1, 2, 3), 3)));
 			CAGE_TEST(intersects(makeSegment(vec3(1, 4, -20), vec3(1, 4, 25)), sphere(vec3(1, 2, 3), 3)));
-			*/
 		}
 
 		{
 			CAGE_TESTCASE("intersections");
 			// todo
 		}
-
 	}
 
 	{
@@ -222,36 +265,36 @@ void testGeometry()
 			aabb h = c + b;
 			CAGE_TEST(!h.empty());
 			test(h.volume(), 48);
-CAGE_TEST(aabb::Universe().diagonal() > 100);
-CAGE_TEST(aabb::Universe().diagonal() == real::Infinity());
+			CAGE_TEST(aabb::Universe().diagonal() > 100);
+			CAGE_TEST(aabb::Universe().diagonal() == real::Infinity());
 		}
 
 		{
-		CAGE_TESTCASE("intersects, intersections (with aabb)");
-		aabb a(vec3(-5, -6, -3), vec3(-4, -4, -1));
-		aabb b(vec3(1, 3, 4), vec3(4, 7, 8));
-		aabb c(vec3(-10, -10, -10), vec3());
-		aabb d(vec3(), vec3(10, 10, 10));
-		aabb e(vec3(-5, -5, -5), vec3(5, 5, 5));
-		CAGE_TEST(!intersects(a, b));
-		CAGE_TEST(intersection(a, b).empty());
-		CAGE_TEST(intersects(c, d));
-		CAGE_TEST(!intersection(c, d).empty());
-		test(intersection(c, d), aabb(vec3()));
-		CAGE_TEST(intersects(a, c));
-		CAGE_TEST(intersects(b, d));
-		test(intersection(a, c), a);
-		test(intersection(b, d), b);
-		CAGE_TEST(intersects(a, e));
-		CAGE_TEST(intersects(b, e));
-		CAGE_TEST(intersects(c, e));
-		CAGE_TEST(intersects(d, e));
-		CAGE_TEST(intersects(e, e));
-		test(intersection(a, e), aabb(vec3(-5, -5, -3), vec3(-4, -4, -1)));
-		test(intersection(b, e), aabb(vec3(1, 3, 4), vec3(4, 5, 5)));
-		test(intersection(c, e), aabb(vec3(-5, -5, -5), vec3()));
-		test(intersection(d, e), aabb(vec3(5, 5, 5), vec3()));
-		test(intersection(e, e), e);
+			CAGE_TESTCASE("intersects, intersections (with aabb)");
+			aabb a(vec3(-5, -6, -3), vec3(-4, -4, -1));
+			aabb b(vec3(1, 3, 4), vec3(4, 7, 8));
+			aabb c(vec3(-10, -10, -10), vec3());
+			aabb d(vec3(), vec3(10, 10, 10));
+			aabb e(vec3(-5, -5, -5), vec3(5, 5, 5));
+			CAGE_TEST(!intersects(a, b));
+			CAGE_TEST(intersection(a, b).empty());
+			CAGE_TEST(intersects(c, d));
+			CAGE_TEST(!intersection(c, d).empty());
+			test(intersection(c, d), aabb(vec3()));
+			CAGE_TEST(intersects(a, c));
+			CAGE_TEST(intersects(b, d));
+			test(intersection(a, c), a);
+			test(intersection(b, d), b);
+			CAGE_TEST(intersects(a, e));
+			CAGE_TEST(intersects(b, e));
+			CAGE_TEST(intersects(c, e));
+			CAGE_TEST(intersects(d, e));
+			CAGE_TEST(intersects(e, e));
+			test(intersection(a, e), aabb(vec3(-5, -5, -3), vec3(-4, -4, -1)));
+			test(intersection(b, e), aabb(vec3(1, 3, 4), vec3(4, 5, 5)));
+			test(intersection(c, e), aabb(vec3(-5, -5, -5), vec3()));
+			test(intersection(d, e), aabb(vec3(5, 5, 5), vec3()));
+			test(intersection(e, e), e);
 		}
 
 		{

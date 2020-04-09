@@ -44,8 +44,8 @@ namespace cage
 
 	line line::normalize() const
 	{
-		if (!valid())
-			return line();
+		//if (!valid())
+		//	return line();
 		line r = *this;
 		if (r.isPoint() || lengthSquared(r.direction) < 1e-7)
 		{
@@ -108,6 +108,11 @@ namespace cage
 		return r;
 	}
 
+	bool triangle::degenerated() const
+	{
+		return area() < 1e-7;
+	}
+
 	triangle triangle::flip() const
 	{
 		triangle r(*this);
@@ -135,6 +140,11 @@ namespace cage
 		vec4 p4 = vec4(p3, 1) * other;
 		p3 = vec3(p4) / p4[3];
 		return plane(p3, normal * mat3(other));
+	}
+
+	bool plane::normalized() const
+	{
+		return abs(lengthSquared(normal) - 1) < 1e-6;
 	}
 
 	plane plane::normalize() const
@@ -214,7 +224,7 @@ namespace cage
 
 	aabb::aabb(const plane &other)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "plane to aabb");
+		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
 	}
 
 	aabb aabb::operator + (const aabb &other) const

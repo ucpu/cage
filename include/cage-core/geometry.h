@@ -69,7 +69,7 @@ namespace cage
 
 		// methods
 		bool valid() const { return vertices[0].valid() && vertices[1].valid() && vertices[2].valid(); };
-		bool degenerated() const { return vertices[0] == vertices[1] || vertices[1] == vertices[2] || vertices[2] == vertices[0]; };
+		bool degenerated() const;
 		vec3 normal() const { return normalize(cross((vertices[1] - vertices[0]), (vertices[2] - vertices[0]))); }
 		vec3 center() const { return (vertices[0] + vertices[1] + vertices[2]) / 3; }
 		real area() const { return length(cross((vertices[1] - vertices[0]), (vertices[2] - vertices[0]))) * 0.5; }
@@ -104,7 +104,9 @@ namespace cage
 
 		// methods
 		bool valid() const { return d.valid() && normal.valid(); }
+		bool normalized() const;
 		plane normalize() const;
+		vec3 origin() const { return normal * -d; }
 	};
 
 	struct CAGE_CORE_API sphere
@@ -311,6 +313,7 @@ namespace cage
 	inline   line intersection(const sphere &a, const line &b) { return intersection(b, a); };
 	inline   line intersection(const aabb &a, const line &b) { return intersection(b, a); };
 
+	CAGE_CORE_API vec3 closestPoint(const line &lin, const vec3 &point);
 	CAGE_CORE_API vec3 closestPoint(const triangle &trig, const vec3 &point);
 	CAGE_CORE_API vec3 closestPoint(const plane &pl, const vec3 &point);
 }

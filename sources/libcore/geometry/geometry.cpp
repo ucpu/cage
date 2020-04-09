@@ -245,7 +245,8 @@ namespace cage
 
 	real distance(const vec3 &a, const line &b)
 	{
-		return distance(makeSegment(a, a), b);
+		vec3 p = closestPoint(b, a);
+		return distance(a, p);
 	}
 
 	real distance(const vec3 &a, const triangle &b)
@@ -800,13 +801,26 @@ namespace cage
 
 	vec3 intersection(const line &a, const plane &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_ASSERT(a.normalized());
+		real numer = dot(b.origin() - a.origin, b.normal);
+		real denom = dot(a.direction, b.normal);
+		if (abs(denom) < 1e-7)
+		{
+			// parallel
+			if (abs(numer) < 1e-7)
+				return a.a(); // any point of the line
+			return vec3::Nan(); // no intersection
+		}
+		real d = numer / denom;
+		if (d < a.minimum || d > a.maximum)
+			return vec3::Nan(); // no intersection
+		return a.origin + a.direction * d; // single intersection
 	}
 
 	line intersection(const line &a, const sphere &b)
 	{
-		if (!a.valid() || !b.valid())
-			return line();
+		//if (!a.valid() || !b.valid())
+		//	return line();
 		CAGE_ASSERT(a.normalized());
 		vec3 l = b.center - a.origin;
 		real tca = dot(l, a.direction);
@@ -852,6 +866,14 @@ namespace cage
 
 
 
+
+
+	vec3 closestPoint(const line &l, const vec3 &p)
+	{
+		real d = dot(p - l.origin, l.direction);
+		d = clamp(d, l.minimum, l.maximum);
+		return l.origin + l.direction * d;
+	}
 
 	vec3 closestPoint(const triangle &trig, const vec3 &sourcePosition)
 	{
