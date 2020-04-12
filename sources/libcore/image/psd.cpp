@@ -231,7 +231,7 @@ namespace cage
 			decodeZip(des, impl, true);
 			break;
 		default:
-			CAGE_THROW_ERROR(Exception, "unsupported compression method (unknown) in psd decoding");
+			CAGE_THROW_ERROR(Exception, "unsupported compression method in psd decoding");
 		}
 
 		// color config

@@ -118,6 +118,22 @@ void testImage()
 	}
 
 	{
+		CAGE_TESTCASE("circle dds");
+		Holder<Image> img = newImage();
+		img->empty(400, 300, 4);
+		drawCircle(img.get());
+		img->encodeFile("images/formats/circle.dds");
+		CAGE_TEST(img->width() == 400);
+		img = newImage();
+		CAGE_TEST(img->width() == 0);
+		img->decodeFile("images/formats/circle.dds");
+		CAGE_TEST(img->channels() == 4);
+		CAGE_TEST(img->format() == ImageFormatEnum::U8);
+		CAGE_TEST(img->width() == 400);
+		CAGE_TEST(img->height() == 300);
+	}
+
+	{
 		CAGE_TESTCASE("blit 1");
 		Holder<Image> img = newImage();
 		img->decodeFile("images/formats/circle8.png");

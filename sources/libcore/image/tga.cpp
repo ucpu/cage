@@ -249,7 +249,7 @@ namespace cage
 			CAGE_THROW_ERROR(Exception, "unsupported image resolution for tga encoding");
 
 		MemoryBuffer buf;
-		buf.reserve(impl->width * impl->height * impl->channels * formatBytes(impl->format) + 100);
+		buf.reserve(impl->width * impl->height * impl->channels + 100);
 		Serializer ser(buf);
 
 		Header head;

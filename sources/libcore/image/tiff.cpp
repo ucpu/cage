@@ -99,7 +99,7 @@ namespace cage
 			BufferOStream stream(res);
 			t = TIFFStreamOpen("MemTIFF", &stream);
 			if (!t)
-				CAGE_THROW_ERROR(Exception, "failed to initialize tiff decoding");
+				CAGE_THROW_ERROR(Exception, "failed to initialize tiff encoding");
 			TIFFSetField(t, TIFFTAG_IMAGEWIDTH, impl->width);
 			TIFFSetField(t, TIFFTAG_IMAGELENGTH, impl->height);
 			TIFFSetField(t, TIFFTAG_SAMPLESPERPIXEL, impl->channels);
