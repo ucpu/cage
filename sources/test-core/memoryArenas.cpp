@@ -78,7 +78,7 @@ namespace
 				if (alokace.size() == Traits::ObjectsCount || (alokace.size() > 0 && randomRange(0, 100) < 40))
 				{
 					uint32 index = randomRange((uint32)0, numeric_cast<uint32>(alokace.size()));
-					CAGE_ASSERT(index < alokace.size(), index, alokace.size());
+					CAGE_ASSERT(index < alokace.size());
 					void *tmp = alokace[index];
 					uint16 sz = *(uint16*)tmp;
 					destruct((char*)tmp + 2, sz - 2);

@@ -139,8 +139,8 @@ namespace cage
 
 #else
 
-		static const int PIPE_READ = 0;
-		static const int PIPE_WRITE = 1;
+		static constexpr int PIPE_READ = 0;
+		static constexpr int PIPE_WRITE = 1;
 
 		class ProcessImpl : public Process
 		{

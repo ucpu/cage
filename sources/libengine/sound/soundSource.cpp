@@ -137,7 +137,7 @@ namespace cage
 
 			void synthesizeTone(const SoundDataBuffer &buf)
 			{
-				static const double twoPi = 3.14159265358979323846264338327950288419716939937510 * 2;
+				static constexpr double twoPi = 3.14159265358979323846264338327950288419716939937510 * 2;
 				double mul = pitch * twoPi;
 				for (uint32 sampleIndex = 0; sampleIndex < buf.frames; sampleIndex++)
 				{

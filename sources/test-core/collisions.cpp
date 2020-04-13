@@ -1,6 +1,6 @@
 #include "main.h"
 #include <cage-core/geometry.h>
-#include <cage-core/collision.h>
+#include <cage-core/collisionStructure.h>
 #include <cage-core/collisionMesh.h>
 #include <cage-core/memoryBuffer.h>
 
@@ -8,12 +8,11 @@ void testCollisions()
 {
 	{
 		CAGE_TESTCASE("basic collisions");
-		CollisionPair pairs[10];
 		{
 			CAGE_TESTCASE("empty colliders");
 			Holder<CollisionMesh> c1 = newCollisionMesh();
 			Holder<CollisionMesh> c2 = newCollisionMesh();
-			CAGE_TEST(collisionDetection(c1.get(), c2.get(), transform(), transform(), pairs, 10) == 0);
+			CAGE_TEST(!collisionDetection(c1.get(), c2.get(), transform(), transform()));
 		}
 		{
 			CAGE_TESTCASE("no collision");
@@ -23,7 +22,7 @@ void testCollisions()
 			c2->addTriangle(triangle(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1)));
 			c1->rebuild();
 			c2->rebuild();
-			CAGE_TEST(collisionDetection(c1.get(), c2.get(), transform(), transform(), pairs, 10) == 0);
+			CAGE_TEST(!collisionDetection(c1.get(), c2.get(), transform(), transform()));
 		}
 		{
 			CAGE_TESTCASE("one collision");
@@ -33,7 +32,9 @@ void testCollisions()
 			c2->addTriangle(triangle(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0)));
 			c1->rebuild();
 			c2->rebuild();
-			CAGE_TEST(collisionDetection(c1.get(), c2.get(), transform(), transform(), pairs, 10) == 1);
+			Holder<PointerRange<CollisionPair>> pairs;
+			CAGE_TEST(collisionDetection(c1.get(), c2.get(), transform(), transform(), pairs));
+			CAGE_TEST(pairs.size() == 1);
 			CAGE_TEST(pairs[0].a == 0);
 			CAGE_TEST(pairs[0].b == 0);
 		}
@@ -44,7 +45,7 @@ void testCollisions()
 			c1->addTriangle(triangle(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1)));
 			c1->addTriangle(triangle(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0)));
 			c1->rebuild();
-			CAGE_TEST(collisionDetection(c1.get(), c1.get(), transform(), transform(), pairs, 10) == 7);
+			CAGE_TEST(collisionDetection(c1.get(), c1.get(), transform(), transform()));
 		}
 		{
 			CAGE_TESTCASE("limited buffer");
@@ -53,7 +54,7 @@ void testCollisions()
 			c1->addTriangle(triangle(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1)));
 			c1->addTriangle(triangle(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0)));
 			c1->rebuild();
-			CAGE_TEST(collisionDetection(c1.get(), c1.get(), transform(), transform(), pairs, 3) == 3);
+			CAGE_TEST(collisionDetection(c1.get(), c1.get(), transform(), transform()));
 		}
 		{
 			CAGE_TESTCASE("with transformation (no collision)");
@@ -62,7 +63,7 @@ void testCollisions()
 			c1->addTriangle(triangle(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1)));
 			c1->addTriangle(triangle(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0)));
 			c1->rebuild();
-			CAGE_TEST(collisionDetection(c1.get(), c1.get(), transform(), transform(vec3(20, 0, 0)), pairs, 10) == 0);
+			CAGE_TEST(!collisionDetection(c1.get(), c1.get(), transform(), transform(vec3(20, 0, 0))));
 		}
 		{
 			CAGE_TESTCASE("with transformation (one collision)");
@@ -72,7 +73,7 @@ void testCollisions()
 			c2->addTriangle(triangle(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1)));
 			c2->rebuild();
 			c1->rebuild();
-			CAGE_TEST(collisionDetection(c1.get(), c1.get(), transform(), transform(vec3(), quat(degs(), degs(90), degs())), pairs, 10) == 1);
+			CAGE_TEST(collisionDetection(c1.get(), c1.get(), transform(), transform(vec3(), quat(degs(), degs(90), degs()))));
 		}
 		{
 			CAGE_TESTCASE("serialization");
@@ -91,14 +92,14 @@ void testCollisions()
 			c1->addTriangle(triangle(vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 2, 0)));
 			c1->addTriangle(triangle(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1)));
 			c1->addTriangle(triangle(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0)));
-			CAGE_TEST_ASSERTED(collisionDetection(c1.get(), c1.get(), transform(), transform(), pairs, 3));
+			CAGE_TEST_ASSERTED(collisionDetection(c1.get(), c1.get(), transform(), transform()));
 		}
 	}
 
 	{
 		CAGE_TESTCASE("dynamic collisions");
 		Holder<CollisionMesh> c1 = newCollisionMesh();
-		{ // tetraedr
+		{ // tetrahedron
 			vec3 a(0, -0.7, 1);
 			vec3 b(+0.86603, -0.7, -0.5);
 			vec3 c(-0.86603, -0.7, -0.5);
@@ -117,7 +118,7 @@ void testCollisions()
 		}
 		real fractionBefore, fractionContact;
 		{
-			CAGE_TESTCASE("tetraeders meet in the middle");
+			CAGE_TESTCASE("tetrahedrons meet in the middle");
 			CAGE_TEST(collisionDetection(c1.get(), c1.get(),
 				transform(vec3(-5, 0, 0)), 
 				transform(vec3(5, 0, 0)),
@@ -126,7 +127,7 @@ void testCollisions()
 			CAGE_TEST(fractionContact > 0 && fractionContact < 1);
 		}
 		{
-			CAGE_TESTCASE("tetraeders do not meet");
+			CAGE_TESTCASE("tetrahedrons do not meet");
 			CAGE_TEST(!collisionDetection(c1.get(), c1.get(),
 				transform(vec3(-5, 0, 0)),
 				transform(vec3(5, 0, 0)),
@@ -135,7 +136,7 @@ void testCollisions()
 			CAGE_TEST(!fractionContact.valid());
 		}
 		{
-			CAGE_TESTCASE("tetraeders are very close");
+			CAGE_TESTCASE("tetrahedrons are very close");
 			CAGE_TEST(collisionDetection(c1.get(), c1.get(),
 				transform(vec3(-1, 0, 0)),
 				transform(vec3(1, 0, 0)),
@@ -144,7 +145,7 @@ void testCollisions()
 			CAGE_TEST(fractionContact > 0 && fractionContact < 1);
 		}
 		{
-			CAGE_TESTCASE("tetraeders are far apart");
+			CAGE_TESTCASE("tetrahedrons are far apart");
 			CAGE_TEST(collisionDetection(c1.get(), c1.get(),
 				transform(vec3(-500, 0, 0)),
 				transform(vec3(500, 0, 0)),
@@ -154,7 +155,7 @@ void testCollisions()
 			CAGE_TEST(fractionContact > 0 && fractionContact < 1);
 		}
 		{
-			CAGE_TESTCASE("one tetraedr is very large");
+			CAGE_TESTCASE("one tetrahedron is very large");
 			CAGE_TEST(collisionDetection(c1.get(), c1.get(),
 				transform(vec3(-500, 0, 0), quat(), 50),
 				transform(vec3(5, 0, 0)),
@@ -163,7 +164,7 @@ void testCollisions()
 			CAGE_TEST(fractionContact > 0 && fractionContact < 1);
 		}
 		{
-			CAGE_TESTCASE("one tetraedr is very small");
+			CAGE_TESTCASE("one tetrahedron is very small");
 			CAGE_TEST(collisionDetection(c1.get(), c1.get(),
 				transform(vec3(-5, 0, 0), quat(), 0.01),
 				transform(vec3(5, 0, 0)),
@@ -194,7 +195,7 @@ void testCollisions()
 	{
 		CAGE_TESTCASE("more collisions");
 		Holder<CollisionMesh> c1 = newCollisionMesh();
-		{ // tetraedr 1
+		{ // tetrahedron 1
 			vec3 a(0, -0.7, 1);
 			vec3 b(+0.86603, -0.7, -0.5);
 			vec3 c(-0.86603, -0.7, -0.5);
@@ -207,7 +208,7 @@ void testCollisions()
 			c1->rebuild();
 		}
 		Holder<CollisionMesh> c2 = newCollisionMesh();
-		{ // tetraedr 2
+		{ // tetrahedron 2
 			vec3 a(0, -0.7, 1);
 			vec3 b(+0.86603, -0.7, -0.5);
 			vec3 c(-0.86603, -0.7, -0.5);
@@ -249,7 +250,7 @@ void testCollisions()
 	{
 		CAGE_TESTCASE("collisions grid");
 		Holder<CollisionMesh> c1 = newCollisionMesh();
-		{ // tetraedr 1
+		{ // tetrahedron 1
 			vec3 a(0, -0.7, 1);
 			vec3 b(+0.86603, -0.7, -0.5);
 			vec3 c(-0.86603, -0.7, -0.5);
@@ -262,7 +263,7 @@ void testCollisions()
 			c1->rebuild();
 		}
 		Holder<CollisionMesh> c2 = newCollisionMesh();
-		{ // tetraedr 2
+		{ // tetrahedron 2
 			vec3 a(0, -0.7, 1);
 			vec3 b(+0.86603, -0.7, -0.5);
 			vec3 c(-0.86603, -0.7, -0.5);
@@ -275,7 +276,7 @@ void testCollisions()
 			c2->rebuild();
 		}
 		Holder<CollisionMesh> c3 = newCollisionMesh();
-		{ // tetraedr 3
+		{ // tetrahedron 3
 			vec3 a(0, -0.7, 1);
 			vec3 b(+0.86603, -0.7, -0.5);
 			vec3 c(-0.86603, -0.7, -0.5);
@@ -288,7 +289,7 @@ void testCollisions()
 		}
 		{
 			CAGE_TESTCASE("data without transformations");
-			Holder<CollisionData> data = newCollisionData(CollisionDataCreateConfig());
+			Holder<CollisionStructure> data = newCollisionStructure(CollisionStructureCreateConfig());
 			data->update(1, c1.get(), transform());
 			data->update(2, c2.get(), transform());
 			data->update(3, c3.get(), transform());
@@ -327,7 +328,7 @@ void testCollisions()
 		}
 		{
 			CAGE_TESTCASE("shape-to-collider collision");
-			Holder<CollisionData> data = newCollisionData(CollisionDataCreateConfig());
+			Holder<CollisionStructure> data = newCollisionStructure(CollisionStructureCreateConfig());
 			data->update(1, c1.get(), transform());
 			data->update(2, c2.get(), transform());
 			data->update(3, c3.get(), transform());

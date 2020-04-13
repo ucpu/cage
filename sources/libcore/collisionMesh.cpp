@@ -2,6 +2,7 @@
 #include <cage-core/collisionMesh.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
+#include <cage-core/pointerRangeHolder.h>
 
 #include <vector>
 #include <algorithm>
@@ -66,7 +67,7 @@ namespace cage
 					{
 						if ((b.b[ax] - b.a[ax]) == 0)
 							continue;
-						static const uint32 planesCount = 12;
+						static constexpr uint32 planesCount = 12;
 						aabb boxes[planesCount + 1];
 						uint32 counts[planesCount + 1];
 						for (uint32 i = 0; i < planesCount + 1; i++)
@@ -111,16 +112,16 @@ namespace cage
 								bestSah = sah;
 								axis = ax;
 								split = cl[i];
-								CAGE_ASSERT(axis < 3, axis, split, ts.size());
-								CAGE_ASSERT(split > 0 && split < ts.size(), axis, split, ts.size());
+								CAGE_ASSERT(axis < 3);
+								CAGE_ASSERT(split > 0 && split < ts.size());
 							}
 						}
 					}
 				}
 
 				// actually split the triangles
-				CAGE_ASSERT(axis < 3, axis, split, ts.size());
-				CAGE_ASSERT(split > 0 && split < ts.size(), axis, split, ts.size());
+				CAGE_ASSERT(axis < 3);
+				CAGE_ASSERT(split > 0 && split < ts.size());
 				std::sort(ts.begin(), ts.end(), [axis](const triangle &a, const triangle &b) {
 					return a.center()[axis] < b.center()[axis];
 				});
@@ -138,7 +139,7 @@ namespace cage
 
 			void validate(uint32 idx)
 			{
-				CAGE_ASSERT(idx < nodes.size(), idx, nodes.size());
+				CAGE_ASSERT(idx < nodes.size());
 				const Node &n = nodes[idx];
 				if (n.left == m)
 				{ // node
@@ -165,10 +166,10 @@ namespace cage
 				std::vector<triangle> ts;
 				ts.swap(tris);
 				build(ts, 0);
-				CAGE_ASSERT(tris.size() == trisCount, tris.size(), trisCount);
-				CAGE_ASSERT(boxes.size() == nodes.size(), boxes.size(), nodes.size());
+				CAGE_ASSERT(tris.size() == trisCount);
+				CAGE_ASSERT(boxes.size() == nodes.size());
 #ifdef CAGE_DEBUG
-				//validate(0);
+				validate(0);
 #endif // CAGE_DEBUG
 			}
 		};
@@ -230,8 +231,8 @@ namespace cage
 
 	namespace
 	{
-		static const uint16 currentVersion = 2;
-		static const char currentMagic[] = "colid";
+		static constexpr uint16 currentVersion = 2;
+		static constexpr char currentMagic[] = "colid";
 
 		struct CollisionMeshHeader
 		{
@@ -303,17 +304,11 @@ namespace cage
 		return tmp;
 	}
 
-	CollisionPair::CollisionPair()
-	{}
-
-	CollisionPair::CollisionPair(uint32 a, uint32 b) : a(a), b(b)
-	{}
-
-	bool CollisionPair::operator < (const CollisionPair &other) const
+	bool operator < (const CollisionPair &l, const CollisionPair &r)
 	{
-		if (a == other.a)
-			return b < other.b;
-		return a < b;
+		if (l.a == r.a)
+			return l.b < r.b;
+		return l.a < l.b;
 	}
 
 	namespace
@@ -338,7 +333,7 @@ namespace cage
 
 			const T &operator[] (uint32 idx)
 			{
-				CAGE_ASSERT(idx < data.size(), idx, data.size());
+				CAGE_ASSERT(idx < data.size());
 				if (!flags[idx])
 				{
 					data[idx] = original[idx] * m;
@@ -376,22 +371,21 @@ namespace cage
 
 			const CollisionMeshImpl *ao;
 			const CollisionMeshImpl *bo;
-			CollisionPair *outputBuffer;
-			uint32 bufferSize;
-			uint32 result;
+			Holder<PointerRange<CollisionPair>> &outputBuffer;
+			PointerRangeHolder<CollisionPair> collisions;
 
-			CollisionDetector(const CollisionMeshImpl *ao, const CollisionMeshImpl *bo, const transform &am, const transform &bm, CollisionPair *outputBuffer, uint32 bufferSize) :
+			CollisionDetector(const CollisionMeshImpl *ao, const CollisionMeshImpl *bo, const transform &am, const transform &bm, Holder<PointerRange<CollisionPair>> &outputBuffer) :
 				ats(ao->tris.data(), numeric_cast<uint32>(ao->tris.size()), am), bts(bo->tris.data(), numeric_cast<uint32>(bo->tris.size()), bm),
 				abs(ao->boxes.data(), numeric_cast<uint32>(ao->boxes.size()), am), bbs(bo->boxes.data(), numeric_cast<uint32>(bo->boxes.size()), bm),
-				ao(ao), bo(bo), outputBuffer(outputBuffer), bufferSize(bufferSize), result(0)
+				ao(ao), bo(bo), outputBuffer(outputBuffer)
 			{}
 
 			void process(uint32 a, uint32 b)
 			{
-				CAGE_ASSERT(a < ao->nodes.size(), a, ao->nodes.size());
-				CAGE_ASSERT(b < bo->nodes.size(), b, bo->nodes.size());
+				CAGE_ASSERT(a < ao->nodes.size());
+				CAGE_ASSERT(b < bo->nodes.size());
 
-				if (!intersects(abs[a], bbs[b]) || result == bufferSize)
+				if (!intersects(abs[a], bbs[b]))
 					return;
 
 				const CollisionMeshImpl::Node &an = ao->nodes[a];
@@ -407,11 +401,10 @@ namespace cage
 							const triangle &bt = bts[bi];
 							if (intersects(at, bt))
 							{
-								auto &p = outputBuffer[result++];
+								CollisionPair p;
 								p.a = ai;
 								p.b = bi;
-								if (result == bufferSize)
-									return;
+								collisions.push_back(p);
 							}
 						}
 					}
@@ -440,10 +433,10 @@ namespace cage
 				}
 			}
 
-			const uint32 process()
+			void process()
 			{
 				process(0, 0);
-				return result;
+				outputBuffer = templates::move(collisions);
 			}
 		};
 
@@ -608,24 +601,52 @@ namespace cage
 		};
 	}
 
-	uint32 collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at, const transform &bt, CollisionPair *outputBuffer, uint32 bufferSize)
+
+
+	bool collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at, const transform &bt)
+	{
+		Holder<PointerRange<CollisionPair>> outputBuffer;
+		return collisionDetection(ao, bo, at, bt, outputBuffer);
+	}
+
+	bool collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at, const transform &bt, Holder<PointerRange<CollisionPair>> &outputBuffer)
 	{
 		CAGE_ASSERT(!ao->needsRebuild());
 		CAGE_ASSERT(!bo->needsRebuild());
-		CAGE_ASSERT(bufferSize > 0);
 		if (ao->triangles().size() > bo->triangles().size())
 		{
-			CollisionDetector<false> d((const CollisionMeshImpl*)ao, (const CollisionMeshImpl*)bo, transform(), transform(inverse(at) * bt), outputBuffer, bufferSize);
-			return d.process();
+			CollisionDetector<false> d((const CollisionMeshImpl*)ao, (const CollisionMeshImpl*)bo, transform(), transform(inverse(at) * bt), outputBuffer);
+			d.process();
+			return !outputBuffer.empty();
 		}
 		else
 		{
-			CollisionDetector<true> d((const CollisionMeshImpl*)ao, (const CollisionMeshImpl*)bo, transform(inverse(bt) * at), transform(), outputBuffer, bufferSize);
-			return d.process();
+			CollisionDetector<true> d((const CollisionMeshImpl*)ao, (const CollisionMeshImpl*)bo, transform(inverse(bt) * at), transform(), outputBuffer);
+			d.process();
+			return !outputBuffer.empty();
 		}
 	}
 
-	uint32 collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, real &fractionBefore, real &fractionContact, CollisionPair *outputBuffer, uint32 bufferSize)
+	bool collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2)
+	{
+		real fractionBefore, fractionContact;
+		Holder<PointerRange<CollisionPair>> outputBuffer;
+		return collisionDetection(ao, bo, at1, bt1, at2, bt2, fractionBefore, fractionContact, outputBuffer);
+	}
+
+	bool collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, real &fractionBefore, real &fractionContact)
+	{
+		Holder<PointerRange<CollisionPair>> outputBuffer;
+		return collisionDetection(ao, bo, at1, bt1, at2, bt2, fractionBefore, fractionContact, outputBuffer);
+	}
+
+	bool collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, Holder<PointerRange<CollisionPair>> &outputBuffer)
+	{
+		real fractionBefore, fractionContact;
+		return collisionDetection(ao, bo, at1, bt1, at2, bt2, fractionBefore, fractionContact, outputBuffer);
+	}
+
+	bool collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, real &fractionBefore, real &fractionContact, Holder<PointerRange<CollisionPair>> &outputBuffer)
 	{
 		CAGE_ASSERT(at1.scale == at2.scale);
 		CAGE_ASSERT(bt1.scale == bt2.scale);
@@ -636,19 +657,19 @@ namespace cage
 		// find approximate time range of contact
 		real time1 = timeOfContact(ao, bo, at1, bt1, at2, bt2);
 		if (!time1.valid())
-			return 0;
-		CAGE_ASSERT(time1 >= 0 && time1 <= 1, time1);
+			return false;
+		CAGE_ASSERT(time1 >= 0 && time1 <= 1);
 		real time2 = 1 - timeOfContact(ao, bo, at2, bt2, at1, bt1);
 		CAGE_ASSERT(time2.valid());
-		CAGE_ASSERT(time2 >= 0 && time2 <= 1, time2);
-		CAGE_ASSERT(time2 >= time1, time2, time1);
-		
+		CAGE_ASSERT(time2 >= 0 && time2 <= 1);
+		CAGE_ASSERT(time2 >= time1);
+
 		// find first contact
 		real minSize = min(minSizeObject(ao, at1.scale), minSizeObject(bo, bt1.scale)) * 0.5;
 		real maxDist = max(distance(interpolate(at1.position, at2.position, time1), interpolate(at1.position, at2.position, time2)),
-						   distance(interpolate(bt1.position, bt2.position, time1), interpolate(bt1.position, bt2.position, time2)));
+			distance(interpolate(bt1.position, bt2.position, time1), interpolate(bt1.position, bt2.position, time2)));
 		real maxDiff = (maxDist > minSize ? (minSize / maxDist) : 1) * (time2 - time1);
-		CAGE_ASSERT(maxDiff > 0 && maxDiff <= 1, maxDiff);
+		CAGE_ASSERT(maxDiff > 0 && maxDiff <= 1);
 		maxDiff = min(maxDiff, (time2 - time1) * 0.2);
 		while (time1 <= time2)
 		{
@@ -662,7 +683,7 @@ namespace cage
 				time1 += maxDiff;
 		}
 		if (time1 > time2)
-			return 0;
+			return false;
 
 		// improve collision precision by binary search
 		fractionBefore = time1;
@@ -681,40 +702,14 @@ namespace cage
 				fractionBefore = time;
 			}
 		}
-		CAGE_ASSERT(fractionBefore >= 0 && fractionBefore <= 1, fractionBefore);
-		CAGE_ASSERT(fractionContact >= 0 && fractionContact <= 1, fractionContact);
-		CAGE_ASSERT(fractionBefore <= fractionContact, fractionBefore, fractionContact);
+		CAGE_ASSERT(fractionBefore >= 0 && fractionBefore <= 1);
+		CAGE_ASSERT(fractionContact >= 0 && fractionContact <= 1);
+		CAGE_ASSERT(fractionBefore <= fractionContact);
 
-		// fill the whole output buffer
-		uint32 res = collisionDetection(ao, bo, interpolate(at1, at2, fractionContact), interpolate(bt1, bt2, fractionContact), outputBuffer, bufferSize);
-		CAGE_ASSERT(res > 0);
+		bool res = collisionDetection(ao, bo, interpolate(at1, at2, fractionContact), interpolate(bt1, bt2, fractionContact), outputBuffer);
+		CAGE_ASSERT(res);
 		CAGE_ASSERT(fractionBefore == 0 || !collisionDetection(ao, bo, interpolate(at1, at2, fractionBefore), interpolate(bt1, bt2, fractionBefore)));
 		return res;
-	}
-
-	bool collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at, const transform &bt)
-	{
-		CollisionPair buf;
-		return collisionDetection(ao, bo, at, bt, &buf, 1) > 0;
-	}
-
-	bool collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2)
-	{
-		real fractionBefore, fractionContact;
-		CollisionPair buf;
-		return collisionDetection(ao, bo, at1, bt1, at2, bt2, fractionBefore, fractionContact, &buf, 1) > 0;
-	}
-
-	bool collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, real &fractionBefore, real &fractionContact)
-	{
-		CollisionPair buf;
-		return collisionDetection(ao, bo, at1, bt1, at2, bt2, fractionBefore, fractionContact, &buf, 1) > 0;
-	}
-
-	uint32 collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, CollisionPair *outputBuffer, uint32 bufferSize)
-	{
-		real fractionBefore, fractionContact;
-		return collisionDetection(ao, bo, at1, bt1, at2, bt2, fractionBefore, fractionContact, outputBuffer, bufferSize);
 	}
 
 

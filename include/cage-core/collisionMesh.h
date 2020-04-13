@@ -32,22 +32,21 @@ namespace cage
 		// triangle indices
 		uint32 a = m;
 		uint32 b = m;
-
-		CollisionPair();
-		CollisionPair(uint32 a, uint32 b);
-
-		bool operator < (const CollisionPair &other) const;
 	};
 
+	// ao and bo are the two meshes to test for collision
+	// at1 and at2 are initial and final transformations for the first mesh
+	// bt1 and bt2 are initial and final transformations for the second mesh
+	// fractionBefore is the ratio between initial and final transformations just before the meshes start to collide
+	// fractionContact is the ratio between initial and final transformations just when the meshes are colliding
+	// note that fractionBefore and fractionContact are just approximations
+	// the outputBuffer will contain all of the CollisionPairs corresponding to the fractionContact
 	CAGE_CORE_API bool collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at, const transform &bt);
-	CAGE_CORE_API uint32 collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at, const transform &bt, CollisionPair *outputBuffer, uint32 bufferSize);
-	CAGE_CORE_API uint32 collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at, const transform &bt, Holder<PointerRange<CollisionPair>> &outputBuffer);
+	CAGE_CORE_API bool collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at, const transform &bt, Holder<PointerRange<CollisionPair>> &outputBuffer);
 	CAGE_CORE_API bool collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2);
 	CAGE_CORE_API bool collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, real &fractionBefore, real &fractionContact);
-	CAGE_CORE_API uint32 collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, CollisionPair *outputBuffer, uint32 bufferSize);
-	CAGE_CORE_API uint32 collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, Holder<PointerRange<CollisionPair>> &outputBuffer);
-	CAGE_CORE_API uint32 collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, real &fractionBefore, real &fractionContact, CollisionPair *outputBuffer, uint32 bufferSize);
-	CAGE_CORE_API uint32 collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, real &fractionBefore, real &fractionContact, Holder<PointerRange<CollisionPair>> &outputBuffer);
+	CAGE_CORE_API bool collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, Holder<PointerRange<CollisionPair>> &outputBuffer);
+	CAGE_CORE_API bool collisionDetection(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, real &fractionBefore, real &fractionContact, Holder<PointerRange<CollisionPair>> &outputBuffer);
 
 	CAGE_CORE_API real distance(const line &shape, const CollisionMesh *collider, const transform &t);
 	CAGE_CORE_API real distance(const triangle &shape, const CollisionMesh *collider, const transform &t);
@@ -61,7 +60,7 @@ namespace cage
 	CAGE_CORE_API bool intersects(const plane &shape, const CollisionMesh *collider, const transform &t);
 	CAGE_CORE_API bool intersects(const sphere &shape, const CollisionMesh *collider, const transform &t);
 	CAGE_CORE_API bool intersects(const aabb &shape, const CollisionMesh *collider, const transform &t);
-	inline   bool intersects(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at, const transform &bt) { return collisionDetection(ao, bo, at, bt); }
+	inline        bool intersects(const CollisionMesh *ao, const CollisionMesh *bo, const transform &at, const transform &bt) { return collisionDetection(ao, bo, at, bt); }
 
 	CAGE_CORE_API vec3 intersection(const line &shape, const CollisionMesh *collider, const transform &t);
 

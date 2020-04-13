@@ -9,10 +9,10 @@ namespace cage
 	{
 		string cmd;
 		string workingDirectory;
-		// todo delegate<char *(const char *)> pathModifier;
 		// todo bool discardStdIn
 		// todo bool discardStdOut
 		// todo bool discardStdErr
+		// todo option to modify environment
 
 		ProcessCreateConfig(const string &cmd, const string &workingDirectory = "");
 	};

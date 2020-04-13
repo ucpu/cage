@@ -111,8 +111,8 @@ namespace cage
 		{
 		public:
 			std::atomic<uint32> v{0};
-			static const uint32 YieldAfter = 20;
-			static const uint32 Writer = m;
+			static constexpr uint32 YieldAfter = 50;
+			static constexpr uint32 Writer = m;
 		};
 	}
 
@@ -650,7 +650,7 @@ namespace cage
 		if (!name.empty())
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
-			static const DWORD MS_VC_EXCEPTION = 0x406D1388;
+			static constexpr DWORD MS_VC_EXCEPTION = 0x406D1388;
 #pragma pack(push,8)
 			struct THREADNAME_INFO
 			{

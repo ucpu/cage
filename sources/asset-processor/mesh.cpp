@@ -28,7 +28,7 @@ namespace
 
 	void loadTextureCage(const string &pathBase, MeshHeader &dsm, Ini *ini, const string &type, uint32 usage)
 	{
-		CAGE_ASSERT(usage < MaxTexturesCountPerMaterial, usage, MaxTexturesCountPerMaterial, type);
+		CAGE_ASSERT(usage < MaxTexturesCountPerMaterial);
 		string n = ini->getString("textures", type);
 		if (n.empty())
 			return;
@@ -40,7 +40,7 @@ namespace
 
 	bool loadTextureAssimp(aiMaterial *m, MeshHeader &dsm, aiTextureType tt, uint32 usage)
 	{
-		CAGE_ASSERT(usage < MaxTexturesCountPerMaterial, usage, MaxTexturesCountPerMaterial, tt);
+		CAGE_ASSERT(usage < MaxTexturesCountPerMaterial);
 		uint32 texCount = m->GetTextureCount(tt);
 		if (texCount == 0)
 			return false;
@@ -183,7 +183,7 @@ namespace
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "converting assimp material");
 
-		CAGE_ASSERT(am->mMaterialIndex < scene->mNumMaterials, "material index out of range", am->mMaterialIndex, scene->mNumMaterials);
+		CAGE_ASSERT(am->mMaterialIndex < scene->mNumMaterials);
 		aiMaterial *m = scene->mMaterials[am->mMaterialIndex];
 		if (!m)
 			CAGE_THROW_ERROR(Exception, "material is null");
@@ -505,7 +505,7 @@ void processMesh()
 						break;
 					}
 				}
-				CAGE_ASSERT(ok, "single vertex may not be affected by more than four bones");
+				CAGE_ASSERT(ok);
 			}
 		}
 		// validate
@@ -517,7 +517,7 @@ void processMesh()
 			{
 				if (boneIndices[i * 4 + j] == m)
 				{
-					CAGE_ASSERT(boneWeights[i * 4 + j] == 0, i, j);
+					CAGE_ASSERT(boneWeights[i * 4 + j] == 0);
 					boneIndices[i * 4 + j] = 0; // prevent shader from accessing invalid memory
 				}
 				sum += boneWeights[i * 4 + j];
@@ -532,7 +532,7 @@ void processMesh()
 					boneWeights[i * 4 + j] *= f;
 			}
 		}
-		CAGE_ASSERT(maxBoneId <= dsm.skeletonBones, maxBoneId, dsm.skeletonBones);
+		CAGE_ASSERT(maxBoneId <= dsm.skeletonBones);
 	}
 
 	if (dsm.uvs())

@@ -25,12 +25,12 @@ namespace cage
 			impl->reset();
 			if (size < 32)
 				CAGE_THROW_ERROR(Exception, "insufficient data to determine image format");
-			static const unsigned char pngSignature[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
-			static const unsigned char jpegSignature[3] = { 0xFF, 0xD8, 0xFF };
-			static const unsigned char tiffSignature[4] = { 0x49, 0x49, 0x2A, 0x00 };
-			static const unsigned char tgaSignature[18] = "TRUEVISION-XFILE.";
-			static const unsigned char psdSignature[4] = { '8', 'B', 'P', 'S' };
-			static const unsigned char ddsSignature[4] = { 'D', 'D', 'S', ' ' };
+			static constexpr uint8 pngSignature[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
+			static constexpr uint8 jpegSignature[3] = { 0xFF, 0xD8, 0xFF };
+			static constexpr uint8 tiffSignature[4] = { 0x49, 0x49, 0x2A, 0x00 };
+			static constexpr uint8 tgaSignature[18] = "TRUEVISION-XFILE.";
+			static constexpr uint8 psdSignature[4] = { '8', 'B', 'P', 'S' };
+			static constexpr uint8 ddsSignature[4] = { 'D', 'D', 'S', ' ' };
 			if (detail::memcmp(buffer, pngSignature, sizeof(pngSignature)) == 0)
 				pngDecode((char*)buffer, size, impl);
 			else if (detail::memcmp(buffer, jpegSignature, sizeof(jpegSignature)) == 0)

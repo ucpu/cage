@@ -9,6 +9,7 @@
 #include <vector>
 #include <set>
 #include <map>
+#include <cstring>
 
 namespace cage
 {
@@ -70,7 +71,7 @@ namespace cage
 
 		std::shared_ptr<ArchiveAbstract> recursiveFind(const string &path, bool matchExact, string &insidePath)
 		{
-			CAGE_ASSERT(path == pathSimplify(path), path, pathSimplify(path));
+			CAGE_ASSERT(path == pathSimplify(path));
 			if (matchExact)
 			{
 				PathTypeFlags t = realType(path);
@@ -83,7 +84,7 @@ namespace cage
 				return {}; // do not throw an exception by going beyond root
 			string a = pathJoin(path, "..");
 			string b = path.subString(a.length() + 1, m);
-			CAGE_ASSERT(pathJoin(a, b) == path, a, b, path);
+			CAGE_ASSERT(pathJoin(a, b) == path);
 			insidePath = pathJoin(b, insidePath);
 			return recursiveFind(a, true, insidePath);
 		}
@@ -114,8 +115,8 @@ namespace cage
 				zip = zip_open(path.c_str(), ZIP_CREATE | ZIP_EXCL, nullptr);
 				if (!zip)
 					CAGE_THROW_ERROR(Exception, "zip_open");
-				static const string comment = "Archive created by Cage";
-				zip_set_archive_comment(zip, comment.c_str(), comment.length());
+				static constexpr const char *comment = "Archive created by Cage";
+				zip_set_archive_comment(zip, comment, numeric_cast<uint16>(std::strlen(comment)));
 				zip_dir_add(zip, "", 0);
 			}
 
@@ -449,8 +450,8 @@ namespace cage
 		{
 			CAGE_ASSERT(!path.empty());
 			CAGE_ASSERT(mode.valid());
-			CAGE_ASSERT(mode.read != mode.write, "zip archive cannot open file for both reading and writing simultaneously");
-			CAGE_ASSERT(!mode.append, "zip archive cannot open file for append");
+			CAGE_ASSERT(mode.read != mode.write);
+			CAGE_ASSERT(!mode.append);
 			createDirectories(pathJoin(path, ".."));
 			if (mode.read)
 				return detail::systemArena().createImpl<File, FileZipRead>(std::dynamic_pointer_cast<ArchiveZip>(shared_from_this()), path, mode);

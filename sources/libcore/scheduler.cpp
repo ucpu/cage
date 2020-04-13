@@ -229,7 +229,7 @@ namespace cage
 	{
 		ScheduleImpl *impl = (ScheduleImpl*)this;
 		CAGE_ASSERT(impl->conf.type == ScheduleTypeEnum::External);
-		CAGE_ASSERT(impl->sched != m, "cannot trigger schedule before it was initialized");
+		CAGE_ASSERT(impl->sched != m);
 		if (!impl->active)
 		{
 			// sched is updated to ensure meaningful delay statistics

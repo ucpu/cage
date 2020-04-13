@@ -47,7 +47,7 @@ namespace cage
 				for (std::vector<Rect>::iterator it = rects.begin(), et = rects.end(); it != et; it++)
 				{
 					Rect &r = *it;
-					CAGE_ASSERT(r.w < width && r.h < height, r.w, r.h, width, height, "impossibly large rectangle");
+					CAGE_ASSERT(r.w < width && r.h < height);
 					if (x + r.w < width)
 					{
 						r.x = x;
@@ -88,7 +88,7 @@ namespace cage
 	void BinPacking::get(uint32 index, uint32 &id, uint32 & x, uint32 & y) const
 	{
 		BinPackingImpl *impl = (BinPackingImpl*)this;
-		CAGE_ASSERT(index < impl->rects.size(), index, impl->rects.size());
+		CAGE_ASSERT(index < impl->rects.size());
 		Rect &r = impl->rects[index];
 		id = r.id;
 		x = r.x;

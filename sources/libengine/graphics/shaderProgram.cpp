@@ -315,7 +315,7 @@ namespace cage
 			}
 		}
 
-		static const uint32 shaderLogBufferSize = 1024 * 8;
+		static constexpr uint32 shaderLogBufferSize = 1024 * 8;
 	}
 
 	void ShaderProgram::source(uint32 stage, const char *data, uint32 length)
@@ -395,7 +395,7 @@ namespace cage
 	void ShaderProgram::relink()
 	{
 		ShaderProgramImpl *impl = (ShaderProgramImpl*)this;
-		CAGE_ASSERT(!impl->sources.empty(), "shader has no sources");
+		CAGE_ASSERT(!impl->sources.empty());
 
 		struct sourcesClearer
 		{

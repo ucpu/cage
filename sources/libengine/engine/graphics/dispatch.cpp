@@ -323,7 +323,7 @@ namespace cage
 			void bindGBufferTextures()
 			{
 				const uint32 tius[] = { CAGE_SHADER_TEXTURE_ALBEDO, CAGE_SHADER_TEXTURE_SPECIAL, CAGE_SHADER_TEXTURE_NORMAL, CAGE_SHADER_TEXTURE_COLOR, CAGE_SHADER_TEXTURE_DEPTH };
-				static const uint32 cnt = sizeof(tius) / sizeof(tius[0]);
+				static constexpr uint32 cnt = sizeof(tius) / sizeof(tius[0]);
 				Texture *texs[cnt] = { albedoTexture.get(), specialTexture.get(), normalTexture.get(), colorTexture.get(), depthTexture.get() };
 				Texture::multiBind(cnt, tius, texs);
 			}

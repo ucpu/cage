@@ -38,18 +38,17 @@ namespace cage
 	class CAGE_ENGINE_API EngineProfiling : private Immovable
 	{
 	public:
-		vec2 screenPosition;
-		uint32 keyToggleProfilingScope;
-		uint32 keyToggleProfilingMode;
-		uint32 keyVisualizeBufferPrev;
-		uint32 keyVisualizeBufferNext;
-		uint32 keyToggleRenderMissingMeshes;
-		uint32 keyToggleRenderSkeletonBones;
-		uint32 keyToggleStereo;
-		ModifiersFlags keyModifiers;
-		EngineProfilingScopeEnum profilingScope;
-		EngineProfilingModeEnum profilingMode;
-		EngineProfiling();
+		vec2 screenPosition = vec2(1, 0);
+		uint32 keyToggleProfilingScope = 290; // f1
+		uint32 keyToggleProfilingMode = 291; // f2
+		uint32 keyVisualizeBufferPrev = 292; // f3
+		uint32 keyVisualizeBufferNext = 293; // f4
+		uint32 keyToggleRenderMissingMeshes = 294; // f5
+		uint32 keyToggleRenderSkeletonBones = 295; // f6
+		uint32 keyToggleStereo = 298; // f9
+		ModifiersFlags keyModifiers = ModifiersFlags::Ctrl;
+		EngineProfilingScopeEnum profilingScope = EngineProfilingScopeEnum::Full;
+		EngineProfilingModeEnum profilingMode = EngineProfilingModeEnum::Maximum;
 	};
 
 	CAGE_ENGINE_API Holder<EngineProfiling> newEngineProfiling();

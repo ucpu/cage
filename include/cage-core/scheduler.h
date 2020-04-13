@@ -41,7 +41,7 @@ namespace cage
 		uint64 time() const;
 
 		// statistics are not available for schemes of once type
-		static const uint32 StatisticsWindowSize = 100;
+		static constexpr uint32 StatisticsWindowSize = 100;
 		const VariableSmoothingBuffer<uint64, StatisticsWindowSize> &statsDelay() const;
 		const VariableSmoothingBuffer<uint64, StatisticsWindowSize> &statsDuration() const;
 		uint64 statsDelayMax() const;

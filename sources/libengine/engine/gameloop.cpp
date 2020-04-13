@@ -34,9 +34,9 @@ namespace cage
 		struct EngineGraphicsUploadThread
 		{
 #ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
-			static const uint32 threadIndex = 2;
+			static constexpr uint32 threadIndex = 2;
 #else
-			static const uint32 threadIndex = EngineGraphicsDispatchThread::threadIndex;
+			static constexpr uint32 threadIndex = EngineGraphicsDispatchThread::threadIndex;
 #endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 		};
 

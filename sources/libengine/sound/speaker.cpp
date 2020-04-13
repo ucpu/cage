@@ -131,7 +131,7 @@ namespace cage
 #ifdef CAGE_ASSERT_ENABLED
 			for (uint32 i = 0; i < channels; i++)
 				if (mapping[i] != m)
-					CAGE_ASSERT(mapping[i] < min(8u, channels), mapping[i], device[i], channels, i);
+					CAGE_ASSERT(mapping[i] < min(8u, channels));
 #endif // CAGE_ASSERT_ENABLED
 			string sm, sd;
 			for (uint32 i = 0; i < channels; i++)

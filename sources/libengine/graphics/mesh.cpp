@@ -36,7 +36,7 @@ namespace cage
 			uint32 instancesLimitHint;
 			MeshRenderFlags flags;
 
-			static const MeshRenderFlags defaultFlags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::VelocityWrite | MeshRenderFlags::Lighting | MeshRenderFlags::ShadowCast;
+			static constexpr MeshRenderFlags defaultFlags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::VelocityWrite | MeshRenderFlags::Lighting | MeshRenderFlags::ShadowCast;
 
 			MeshImpl() : box(aabb::Universe()), id(0), vbo(0), verticesCount(0), verticesOffset(0), indicesCount(0), indicesOffset(0), materialSize(0), materialOffset(0), primitiveType(GL_TRIANGLES), primitivesCount(0), skeletonName(0), skeletonBones(0), instancesLimitHint(1), flags(defaultFlags)
 			{
@@ -145,7 +145,7 @@ namespace cage
 	void Mesh::setTextureName(uint32 texIdx, uint32 name)
 	{
 		MeshImpl *impl = (MeshImpl*)this;
-		CAGE_ASSERT(texIdx < MaxTexturesCountPerMaterial, texIdx, MaxTexturesCountPerMaterial);
+		CAGE_ASSERT(texIdx < MaxTexturesCountPerMaterial);
 		impl->textures[texIdx] = name;
 	}
 
@@ -287,7 +287,7 @@ namespace cage
 	uint32 Mesh::getTextureName(uint32 texIdx) const
 	{
 		MeshImpl *impl = (MeshImpl*)this;
-		CAGE_ASSERT(texIdx < MaxTexturesCountPerMaterial, texIdx, MaxTexturesCountPerMaterial);
+		CAGE_ASSERT(texIdx < MaxTexturesCountPerMaterial);
 		return impl->textures[texIdx];
 	}
 

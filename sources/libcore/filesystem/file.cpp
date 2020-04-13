@@ -161,7 +161,7 @@ namespace cage
 
 			FileReal(const string &path, const FileMode &mode) : FileAbstract(path, mode), f(nullptr)
 			{
-				CAGE_ASSERT(mode.valid(), "invalid file mode", path, mode.read, mode.write, mode.append, mode.textual);
+				CAGE_ASSERT(mode.valid());
 				realCreateDirectories(pathJoin(path, ".."));
 				f = fopen(path.c_str(), mode.mode().c_str());
 				if (!f)
@@ -189,7 +189,7 @@ namespace cage
 
 			void read(void *data, uintPtr size) override
 			{
-				CAGE_ASSERT(f, "file closed");
+				CAGE_ASSERT(f);
 				CAGE_ASSERT(mode.read);
 				if (size == 0)
 					return;
@@ -199,7 +199,7 @@ namespace cage
 
 			void write(const void *data, uintPtr size) override
 			{
-				CAGE_ASSERT(f, "file closed");
+				CAGE_ASSERT(f);
 				CAGE_ASSERT(mode.write);
 				if (size == 0)
 					return;
@@ -209,21 +209,21 @@ namespace cage
 
 			void seek(uintPtr position) override
 			{
-				CAGE_ASSERT(f, "file closed");
+				CAGE_ASSERT(f);
 				if (fseek(f, position, 0) != 0)
 					CAGE_THROW_ERROR(SystemError, "fseek", errno);
 			}
 
 			void flush() override
 			{
-				CAGE_ASSERT(f, "file closed");
+				CAGE_ASSERT(f);
 				if (fflush(f) != 0)
 					CAGE_THROW_ERROR(SystemError, "fflush", errno);
 			}
 
 			void close() override
 			{
-				CAGE_ASSERT(f, "file closed");
+				CAGE_ASSERT(f);
 				FILE *t = f;
 				f = nullptr;
 				if (fclose(t) != 0)
@@ -232,13 +232,13 @@ namespace cage
 
 			uintPtr tell() const override
 			{
-				CAGE_ASSERT(f, "file closed");
+				CAGE_ASSERT(f);
 				return numeric_cast<uintPtr>(ftell(f));
 			}
 
 			uintPtr size() const override
 			{
-				CAGE_ASSERT(f, "file closed");
+				CAGE_ASSERT(f);
 				auto pos = ftell(f);
 				fseek(f, 0, 2);
 				auto siz = ftell(f);

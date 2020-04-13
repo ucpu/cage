@@ -11,7 +11,7 @@ namespace cage
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT(!hierarchy->firstChild, "button may not have children");
+				CAGE_ASSERT(!hierarchy->firstChild);
 				if (hierarchy->text)
 					hierarchy->text->text.apply(skin->defaults.button.textFormat, hierarchy->impl);
 			}

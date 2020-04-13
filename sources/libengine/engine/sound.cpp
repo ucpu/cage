@@ -52,7 +52,7 @@ namespace cage
 			{
 				this->sound = sound;
 				this->listener = listener;
-				CAGE_ASSERT(sound.sound.input == nullptr || sound.sound.name == 0, sound.sound.input, sound.sound.name, "sound may only have one source");
+				CAGE_ASSERT(sound.sound.input == nullptr || sound.sound.name == 0);
 				source.clear();
 				bus = newMixingBus(cage::engineSound()); // recreating new bus will ensure that any potential previous connections are removed
 				filter = newMixingFilter(cage::engineSound());

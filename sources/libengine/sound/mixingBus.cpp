@@ -83,7 +83,7 @@ namespace cage
 				if (inputs.empty())
 					return; // shortcut
 
-				CAGE_ASSERT(buf.channels > 0 && buf.frames > 0 && buf.buffer, buf.channels, buf.frames, buf.buffer);
+				CAGE_ASSERT(buf.channels > 0 && buf.frames > 0 && buf.buffer);
 				CAGE_ASSERT(buf.channels <= 8);
 
 				if (filters.empty())

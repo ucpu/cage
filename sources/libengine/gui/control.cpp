@@ -73,7 +73,7 @@ namespace cage
 			for (auto e : impl->entityMgr->entities())
 			{
 				uint32 name = e->name();
-				CAGE_ASSERT(name != 0 && name != m, name);
+				CAGE_ASSERT(name != 0 && name != m);
 				HierarchyItem *item = impl->itemsMemory.createObject<HierarchyItem>(impl, e);
 				map[name] = item;
 			}
@@ -85,8 +85,8 @@ namespace cage
 				if (GUI_HAS_COMPONENT(Parent, e))
 				{
 					CAGE_COMPONENT_GUI(Parent, p, e);
-					CAGE_ASSERT(p.parent != 0 && p.parent != m && p.parent != name, p.parent, name);
-					CAGE_ASSERT(map.find(p.parent) != map.end(), p.parent, name);
+					CAGE_ASSERT(p.parent != 0 && p.parent != m && p.parent != name);
+					CAGE_ASSERT(map.find(p.parent) != map.end());
 					item->order = p.order;
 					attachHierarchy(item, map[p.parent]);
 				}
@@ -120,13 +120,13 @@ namespace cage
 			uint32 wc = impl->entityWidgetsCount(item->ent);
 			bool sc = GUI_HAS_COMPONENT(Scrollbars, item->ent);
 			uint32 lc = impl->entityLayoutsCount(item->ent);
-			CAGE_ASSERT(wc <= 1, item->ent->name());
-			CAGE_ASSERT(lc <= 1, item->ent->name());
+			CAGE_ASSERT(wc <= 1);
+			CAGE_ASSERT(lc <= 1);
 
 			// widget
 			if (wc)
 			{
-#define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, item->ent)) { CAGE_ASSERT(!item->item, item->ent->name()); CAGE_JOIN(T, Create)(item); }
+#define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, item->ent)) { CAGE_ASSERT(!item->item); CAGE_JOIN(T, Create)(item); }
 				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_WIDGET_COMPONENTS));
 #undef GCHL_GENERATE
 				CAGE_ASSERT(item->item);
@@ -146,7 +146,7 @@ namespace cage
 			// layouter
 			if (lc)
 			{
-#define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, item->ent)) { CAGE_ASSERT(!item->item, item->ent->name()); CAGE_JOIN(T, Create)(item); }
+#define GCHL_GENERATE(T) if (GUI_HAS_COMPONENT(T, item->ent)) { CAGE_ASSERT(!item->item); CAGE_JOIN(T, Create)(item); }
 				CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, GCHL_GUI_LAYOUT_COMPONENTS));
 #undef GCHL_GENERATE
 				CAGE_ASSERT(item->item);
@@ -184,7 +184,7 @@ namespace cage
 				{
 					GuiWidgetStateComponent &w = wi->widgetState;
 					w = ws;
-					CAGE_ASSERT(w.skinIndex < impl->skins.size(), w.skinIndex, impl->skins.size());
+					CAGE_ASSERT(w.skinIndex < impl->skins.size());
 					wi->skin = &impl->skins[w.skinIndex];
 				}
 				if (item->firstChild)

@@ -4,7 +4,7 @@
 #include <cage-core/geometry.h>
 #include <cage-core/config.h>
 #include <cage-core/timer.h>
-#include <cage-core/spatial.h>
+#include <cage-core/spatialStructure.h>
 
 #include <set>
 #include <vector>
@@ -40,10 +40,10 @@ namespace
 
 	struct Checker
 	{
-		SpatialData *const data;
+		SpatialStructure *const data;
 		Holder<SpatialQuery> query;
 
-		Checker(SpatialData *data) : data(data)
+		Checker(SpatialStructure *data) : data(data)
 		{
 			query = newSpatialQuery(data);
 		}
@@ -93,7 +93,7 @@ namespace
 		}
 	};
 
-	void verifiableQueries(const aabb elData[], const uint32 elCount, SpatialData *data)
+	void verifiableQueries(const aabb elData[], const uint32 elCount, SpatialStructure *data)
 	{
 		Checker c(data);
 		for (uint32 qi = 0; qi < 30; qi++)
@@ -102,7 +102,7 @@ namespace
 			c.verifiableRange(elData, elCount);
 	}
 
-	void randomQueries(SpatialData *data)
+	void randomQueries(SpatialStructure *data)
 	{
 		Checker c(data);
 		for (uint32 qi = 0; qi < 30; qi++)
@@ -118,7 +118,7 @@ void testSpatial()
 
 	{
 		CAGE_TESTCASE("basic tests");
-		Holder<SpatialData> data = newSpatialData(SpatialDataCreateConfig());
+		Holder<SpatialStructure> data = newSpatialData(SpatialStructureCreateConfig());
 		std::vector<aabb> elements;
 
 		// insertions
@@ -156,7 +156,7 @@ void testSpatial()
 
 	{
 		CAGE_TESTCASE("points");
-		Holder<SpatialData> data = newSpatialData(SpatialDataCreateConfig());
+		Holder<SpatialStructure> data = newSpatialData(SpatialStructureCreateConfig());
 		for (uint32 i = 1; i < 100; i++)
 			data->update(i, aabb(generateRandomPoint()));
 		data->rebuild();
@@ -167,7 +167,7 @@ void testSpatial()
 	{
 		CAGE_TESTCASE("multiple points on same location");
 		static const vec3 pts[3] = { vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 1) };
-		Holder<SpatialData> data = newSpatialData(SpatialDataCreateConfig());
+		Holder<SpatialStructure> data = newSpatialData(SpatialStructureCreateConfig());
 		for (uint32 i = 1; i < 100; i++)
 			data->update(i, aabb(pts[i % 3]));
 		data->rebuild();
@@ -178,7 +178,7 @@ void testSpatial()
 
 	{
 		CAGE_TESTCASE("spheres");
-		Holder<SpatialData> data = newSpatialData(SpatialDataCreateConfig());
+		Holder<SpatialStructure> data = newSpatialData(SpatialStructureCreateConfig());
 		data->update(1, sphere(vec3(), 100));
 		data->rebuild();
 		Holder<SpatialQuery> query = newSpatialQuery(data.get());
@@ -194,7 +194,7 @@ void testSpatial()
 	{
 		CAGE_TESTCASE("multiple spheres on same position");
 		static const vec3 pts[3] = { vec3(3, 0, 0), vec3(0, 7, 0), vec3(0, 0, 13) };
-		Holder<SpatialData> data = newSpatialData(SpatialDataCreateConfig());
+		Holder<SpatialStructure> data = newSpatialData(SpatialStructureCreateConfig());
 		for (uint32 i = 1; i < 100; i++)
 			data->update(i, sphere(pts[i % 3], 1));
 		data->rebuild();
@@ -205,7 +205,7 @@ void testSpatial()
 
 	{
 		CAGE_TESTCASE("performance tests");
-		Holder<SpatialData> data = newSpatialData(SpatialDataCreateConfig());
+		Holder<SpatialStructure> data = newSpatialData(SpatialStructureCreateConfig());
 		Holder<Timer> tmr = newTimer();
 
 		for (uint32 i = 0; i < limit; i++)

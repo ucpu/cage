@@ -136,7 +136,7 @@ namespace cage
 				real x = attenuation[0], y = attenuation[1], z = attenuation[2];
 				if (z < 1e-5)
 				{
-					CAGE_ASSERT(y > 1e-5, "invalid light attenuation", attenuation);
+					CAGE_ASSERT(y > 1e-5);
 					return (e - x) / y;
 				}
 				return (sqrt(y * y - 4 * z * (x - e)) - y) / (2 * z);
@@ -329,7 +329,7 @@ namespace cage
 				pass->sceneMask = 0xffffffff;
 				pass->targetShadowmap = light->light.lightType == LightTypeEnum::Point ? (-shmCube++ - 1) : (shm2d++ + 1);
 				light->shadowmap->index = pass->targetShadowmap;
-				static const mat4 bias = mat4(
+				const mat4 bias = mat4(
 					0.5, 0.0, 0.0, 0.0,
 					0.0, 0.5, 0.0, 0.0,
 					0.0, 0.0, 0.5, 0.0,
@@ -395,7 +395,7 @@ namespace cage
 					Holder<SkeletalAnimation> an = engineAssets()->get<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(ba.name);
 					if (an)
 					{
-						CAGE_ASSERT(s->bonesCount() == bonesCount, s->bonesCount(), bonesCount);
+						CAGE_ASSERT(s->bonesCount() == bonesCount);
 						real c = detail::evalCoefficientForSkeletalAnimation(an.get(), dispatchTime, ba.startTime, ba.speed, ba.offset);
 						s->animateSkeleton(an.get(), c, tmpArmature, tmpArmature2);
 						initialized = true;
@@ -495,7 +495,7 @@ namespace cage
 						Holder<SkeletonRig> skel = engineAssets()->get<AssetSchemeIndexSkeletonRig, SkeletonRig>(m->getSkeletonName());
 						if (an && skel)
 						{
-							CAGE_ASSERT(skel->bonesCount() == bonesCount, skel->bonesCount(), bonesCount);
+							CAGE_ASSERT(skel->bonesCount() == bonesCount);
 							real c = detail::evalCoefficientForSkeletalAnimation(an.get(), dispatchTime, ba.startTime, ba.speed, ba.offset);
 							skel->animateSkin(an.get(), c, tmpArmature, tmpArmature2);
 							for (uint32 i = 0; i < bonesCount; i++)
@@ -881,7 +881,7 @@ namespace cage
 				{ // generate camera render passes
 					std::sort(emitRead->cameras.begin(), emitRead->cameras.end(), [](const EmitCamera &a, const EmitCamera &b)
 					{
-						CAGE_ASSERT(a.camera.cameraOrder != b.camera.cameraOrder, a.camera.cameraOrder);
+						CAGE_ASSERT(a.camera.cameraOrder != b.camera.cameraOrder);
 						return a.camera.cameraOrder < b.camera.cameraOrder;
 					});
 					for (auto &it : emitRead->cameras)
@@ -908,7 +908,7 @@ namespace cage
 
 	Mat3x4::Mat3x4(const mat4 &in)
 	{
-		CAGE_ASSERT(in[3] == 0 && in[7] == 0 && in[11] == 0 && in[15] == 1, in);
+		CAGE_ASSERT(in[3] == 0 && in[7] == 0 && in[11] == 0 && in[15] == 1);
 		for (uint32 a = 0; a < 4; a++)
 			for (uint32 b = 0; b < 3; b++)
 				data[b][a] = in[a * 4 + b];

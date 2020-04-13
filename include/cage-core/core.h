@@ -54,9 +54,9 @@
 #endif
 #endif
 #ifdef CAGE_ASSERT_ENABLED
-#define CAGE_ASSERT(EXP, ...) { if (!(EXP)) ::cage::privat::runtimeAssertFailure(#EXP, __FILE__, __LINE__, __FUNCTION__); }
+#define CAGE_ASSERT(EXPR) { if (!(EXPR)) ::cage::privat::runtimeAssertFailure(#EXPR, __FILE__, __LINE__, __FUNCTION__); }
 #else
-#define CAGE_ASSERT(EXP, ...)
+#define CAGE_ASSERT(EXPR) {}
 #endif
 
 #define CAGE_THROW_SILENT(EXCEPTION, ...) { EXCEPTION e_(__FILE__, __LINE__, __FUNCTION__, ::cage::SeverityEnum::Error, __VA_ARGS__); throw e_; }
@@ -139,7 +139,7 @@ namespace cage
 		template<>
 		struct numeric_limits<unsigned char>
 		{
-			static const bool is_signed = false;
+			static constexpr bool is_signed = false;
 			static constexpr uint8 min() noexcept { return 0; };
 			static constexpr uint8 max() noexcept { return 255u; };
 			typedef uint8 make_unsigned;
@@ -148,7 +148,7 @@ namespace cage
 		template<>
 		struct numeric_limits<unsigned short>
 		{
-			static const bool is_signed = false;
+			static constexpr bool is_signed = false;
 			static constexpr uint16 min() noexcept { return 0; };
 			static constexpr uint16 max() noexcept { return 65535u; };
 			typedef uint16 make_unsigned;
@@ -157,7 +157,7 @@ namespace cage
 		template<>
 		struct numeric_limits<unsigned int>
 		{
-			static const bool is_signed = false;
+			static constexpr bool is_signed = false;
 			static constexpr uint32 min() noexcept { return 0; };
 			static constexpr uint32 max() noexcept { return 4294967295u; };
 			typedef uint32 make_unsigned;
@@ -166,7 +166,7 @@ namespace cage
 		template<>
 		struct numeric_limits<unsigned long long>
 		{
-			static const bool is_signed = false;
+			static constexpr bool is_signed = false;
 			static constexpr uint64 min() noexcept { return 0; };
 			static constexpr uint64 max() noexcept { return 18446744073709551615LLu; };
 			typedef uint64 make_unsigned;
@@ -185,7 +185,7 @@ namespace cage
 		template<>
 		struct numeric_limits<signed char>
 		{
-			static const bool is_signed = true;
+			static constexpr bool is_signed = true;
 			static constexpr sint8 min() noexcept { return -127 - 1; };
 			static constexpr sint8 max() noexcept { return  127; };
 			typedef uint8 make_unsigned;
@@ -194,7 +194,7 @@ namespace cage
 		template<>
 		struct numeric_limits<signed short>
 		{
-			static const bool is_signed = true;
+			static constexpr bool is_signed = true;
 			static constexpr sint16 min() noexcept { return -32767 - 1; };
 			static constexpr sint16 max() noexcept { return  32767; };
 			typedef uint16 make_unsigned;
@@ -203,7 +203,7 @@ namespace cage
 		template<>
 		struct numeric_limits<signed int>
 		{
-			static const bool is_signed = true;
+			static constexpr bool is_signed = true;
 			static constexpr sint32 min() noexcept { return -2147483647 - 1; };
 			static constexpr sint32 max() noexcept { return  2147483647; };
 			typedef uint32 make_unsigned;
@@ -212,7 +212,7 @@ namespace cage
 		template<>
 		struct numeric_limits<signed long long>
 		{
-			static const bool is_signed = true;
+			static constexpr bool is_signed = true;
 			static constexpr sint64 min() noexcept { return -9223372036854775807LL - 1; };
 			static constexpr sint64 max() noexcept { return  9223372036854775807LL; };
 			typedef uint64 make_unsigned;
@@ -231,7 +231,7 @@ namespace cage
 		template<>
 		struct numeric_limits<float>
 		{
-			static const bool is_signed = true;
+			static constexpr bool is_signed = true;
 			static constexpr float min() noexcept { return -1e+37f; };
 			static constexpr float max() noexcept { return  1e+37f; };
 			typedef float make_unsigned;
@@ -240,7 +240,7 @@ namespace cage
 		template<>
 		struct numeric_limits<double>
 		{
-			static const bool is_signed = true;
+			static constexpr bool is_signed = true;
 			static constexpr double min() noexcept { return -1e+308; };
 			static constexpr double max() noexcept { return  1e+308; };
 			typedef double make_unsigned;
@@ -262,8 +262,8 @@ namespace cage
 			template<class To, class From>
 			static constexpr To cast(From from)
 			{
-				CAGE_ASSERT(from >= detail::numeric_limits<To>::min(), "numeric cast failure", from, detail::numeric_limits<To>::min());
-				CAGE_ASSERT(from <= detail::numeric_limits<To>::max(), "numeric cast failure", from, detail::numeric_limits<To>::max());
+				CAGE_ASSERT(from >= detail::numeric_limits<To>::min());
+				CAGE_ASSERT(from <= detail::numeric_limits<To>::max());
 				return static_cast<To>(from);
 			}
 		};
@@ -274,9 +274,9 @@ namespace cage
 			template<class To, class From>
 			static constexpr To cast(From from)
 			{
-				CAGE_ASSERT(from >= 0, "numeric cast failure", from);
+				CAGE_ASSERT(from >= 0);
 				typedef typename detail::numeric_limits<From>::make_unsigned unsgFrom;
-				CAGE_ASSERT(static_cast<unsgFrom>(from) <= detail::numeric_limits<To>::max(), "numeric cast failure", from, static_cast<unsgFrom>(from), detail::numeric_limits<To>::max());
+				CAGE_ASSERT(static_cast<unsgFrom>(from) <= detail::numeric_limits<To>::max());
 				return static_cast<To>(from);
 			}
 		};
@@ -288,7 +288,7 @@ namespace cage
 			static constexpr To cast(From from)
 			{
 				typedef typename detail::numeric_limits<To>::make_unsigned unsgTo;
-				CAGE_ASSERT(from <= static_cast<unsgTo>(detail::numeric_limits<To>::max()), "numeric cast failure", from, detail::numeric_limits<To>::max(), static_cast<unsgTo>(detail::numeric_limits<To>::max()));
+				CAGE_ASSERT(from <= static_cast<unsgTo>(detail::numeric_limits<To>::max()));
 				return static_cast<To>(from);
 			}
 		};
@@ -307,7 +307,7 @@ namespace cage
 	template<class To, class From>
 	inline constexpr To class_cast(From from)
 	{
-		CAGE_ASSERT(!from || dynamic_cast<To>(from), from);
+		CAGE_ASSERT(!from || dynamic_cast<To>(from) == static_cast<To>(from));
 		return static_cast<To>(from);
 	}
 
@@ -333,7 +333,7 @@ namespace cage
 		template<class T> inline constexpr bool operator >  (T lhs, MaxValue rhs) noexcept { return lhs >  detail::numeric_limits<T>::max(); }
 	}
 
-	static constexpr const privat::MaxValue m = privat::MaxValue();
+	static constexpr privat::MaxValue m = privat::MaxValue();
 
 	// template magic
 
@@ -362,8 +362,8 @@ namespace cage
 		template<class T> struct remove_reference { typedef T type; };
 		template<class T> struct remove_reference<T&> { typedef T type; };
 		template<class T> struct remove_reference<T&&> { typedef T type; };
-		template<typename T> struct is_lvalue_reference { static constexpr const bool value = false; };
-		template<typename T> struct is_lvalue_reference<T&> { static constexpr const bool value = true; };
+		template<typename T> struct is_lvalue_reference { static constexpr bool value = false; };
+		template<typename T> struct is_lvalue_reference<T&> { static constexpr bool value = true; };
 		template<class T> inline constexpr T &&forward(typename remove_reference<T>::type  &v) noexcept { return static_cast<T&&>(v); }
 		template<class T> inline constexpr T &&forward(typename remove_reference<T>::type &&v) noexcept { static_assert(!is_lvalue_reference<T>::value, "invalid rvalue to lvalue conversion"); return static_cast<T&&>(v); }
 		template<class T> inline constexpr typename remove_reference<T>::type &&move(T &&v) noexcept { return static_cast<typename remove_reference<T>::type&&>(v); }
@@ -371,7 +371,7 @@ namespace cage
 
 	// enum class bit operators
 
-	template<class T> struct enable_bitmask_operators { static const bool enable = false; };
+	template<class T> struct enable_bitmask_operators { static constexpr bool enable = false; };
 	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator ~ (T lhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return static_cast<T>(~static_cast<underlying>(lhs)); }
 	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator | (T lhs, T rhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return static_cast<T>(static_cast<underlying>(lhs) | static_cast<underlying>(rhs)); }
 	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator & (T lhs, T rhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return static_cast<T>(static_cast<underlying>(lhs) & static_cast<underlying>(rhs)); }
@@ -383,7 +383,7 @@ namespace cage
 	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, bool>::type none(T lhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return static_cast<underlying>(lhs) == 0; }
 
 	// this macro has to be used inside namespace cage
-#define GCHL_ENUM_BITS(TYPE) template<> struct enable_bitmask_operators<TYPE> { static const bool enable = true; };
+#define GCHL_ENUM_BITS(TYPE) template<> struct enable_bitmask_operators<TYPE> { static constexpr bool enable = true; };
 
 	// Immovable
 
@@ -403,7 +403,7 @@ namespace cage
 		explicit Exception(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept;
 		virtual ~Exception() noexcept;
 
-		void makeLog();
+		void makeLog(); // check conditions and call log()
 		virtual void log();
 
 		const char *file = nullptr;
@@ -457,8 +457,8 @@ namespace cage
 	class CollisionMesh;
 	struct CollisionPair;
 	class CollisionQuery;
-	class CollisionData;
-	struct CollisionDataCreateConfig;
+	class CollisionStructure;
+	struct CollisionStructureCreateConfig;
 	class Mutex;
 	class RwMutex;
 	class Barrier;
@@ -550,8 +550,8 @@ namespace cage
 	struct Serializer;
 	struct Deserializer;
 	class SpatialQuery;
-	class SpatialData;
-	struct SpatialDataCreateConfig;
+	class SpatialStructure;
+	struct SpatialStructureCreateConfig;
 	class BufferIStream;
 	class BufferOStream;
 	class SwapBufferGuard;
@@ -580,17 +580,22 @@ namespace cage
 		GCHL_GENERATE(uint64);
 		GCHL_GENERATE(float);
 		GCHL_GENERATE(double);
+		GCHL_GENERATE(bool);
 #undef GCHL_GENERATE
 		CAGE_CORE_API uint32 toString(char *dst, uint32 dstLen, const char *src);
 
-		CAGE_CORE_API void stringEncodeUrl(const char *dataIn, uint32 currentIn, char *dataOut, uint32 &currentOut, uint32 maxLength);
-		CAGE_CORE_API void stringDecodeUrl(const char *dataIn, uint32 currentIn, char *dataOut, uint32 &currentOut, uint32 maxLength);
 		CAGE_CORE_API void stringReplace(char *data, uint32 &current, uint32 maxLength, const char *what, uint32 whatLen, const char *with, uint32 withLen);
 		CAGE_CORE_API void stringTrim(char *data, uint32 &current, const char *what, uint32 whatLen, bool left, bool right);
 		CAGE_CORE_API void stringSplit(char *data, uint32 &current, char *ret, uint32 &retLen, const char *what, uint32 whatLen);
 		CAGE_CORE_API uint32 stringToUpper(char *dst, uint32 dstLen, const char *src, uint32 srcLen);
 		CAGE_CORE_API uint32 stringToLower(char *dst, uint32 dstLen, const char *src, uint32 srcLen);
 		CAGE_CORE_API uint32 stringFind(const char *data, uint32 current, const char *what, uint32 whatLen, uint32 offset) noexcept;
+		CAGE_CORE_API void stringEncodeUrl(const char *dataIn, uint32 currentIn, char *dataOut, uint32 &currentOut, uint32 maxLength);
+		CAGE_CORE_API void stringDecodeUrl(const char *dataIn, uint32 currentIn, char *dataOut, uint32 &currentOut, uint32 maxLength);
+		CAGE_CORE_API bool stringIsDigitsOnly(const char *data, uint32 dataLen) noexcept;
+		CAGE_CORE_API bool stringIsInteger(const char *data, uint32 dataLen, bool allowSign) noexcept;
+		CAGE_CORE_API bool stringIsReal(const char *data, uint32 dataLen, bool allowSign) noexcept;
+		CAGE_CORE_API bool stringIsBool(const char *data, uint32 dataLen) noexcept;
 		CAGE_CORE_API bool stringIsPattern(const char *data, uint32 dataLen, const char *prefix, uint32 prefixLen, const char *infix, uint32 infixLen, const char *suffix, uint32 suffixLen) noexcept;
 		CAGE_CORE_API int stringComparison(const char *ad, uint32 al, const char *bd, uint32 bl) noexcept;
 	}
@@ -627,12 +632,6 @@ namespace cage
 				data[current] = 0;
 			}
 
-			explicit StringBase(bool other)
-			{
-				static_assert(N >= 6, "string too short");
-				*this = (other ? "true" : "false");
-			}
-
 #define GCHL_GENERATE(TYPE) \
 			explicit StringBase(TYPE other) \
 			{ \
@@ -649,11 +648,14 @@ namespace cage
 			GCHL_GENERATE(uint64);
 			GCHL_GENERATE(float);
 			GCHL_GENERATE(double);
+			GCHL_GENERATE(bool);
 #undef GCHL_GENERATE
 
+			/*
 			template<class T>
 			explicit StringBase(T *other) : StringBase((uintPtr)other)
 			{}
+			*/
 
 			explicit StringBase(const char *pos, uint32 len)
 			{
@@ -704,13 +706,13 @@ namespace cage
 
 			char &operator [] (uint32 idx)
 			{
-				CAGE_ASSERT(idx < current, "index out of range", idx, current, N);
+				CAGE_ASSERT(idx < current);
 				return data[idx];
 			}
 
 			char operator [] (uint32 idx) const
 			{
-				CAGE_ASSERT(idx < current, "index out of range", idx, current, N);
+				CAGE_ASSERT(idx < current);
 				return data[idx];
 			}
 
@@ -723,7 +725,7 @@ namespace cage
 
 			StringBase reverse() const
 			{
-				StringBase ret(*this);
+				StringBase ret = *this;
 				for (uint32 i = 0; i < current; i++)
 					ret.data[current - i - 1] = data[i];
 				return ret;
@@ -741,7 +743,7 @@ namespace cage
 
 			StringBase replace(const StringBase &what, const StringBase &with) const
 			{
-				StringBase ret(*this);
+				StringBase ret = *this;
 				privat::stringReplace(ret.data, ret.current, N, what.data, what.current, with.data, with.current);
 				ret.data[ret.current] = 0;
 				return ret;
@@ -764,7 +766,7 @@ namespace cage
 
 			StringBase trim(bool left = true, bool right = true, const StringBase &trimChars = "\t\n ") const
 			{
-				StringBase ret(*this);
+				StringBase ret = *this;
 				privat::stringTrim(ret.data, ret.current, trimChars.data, trimChars.current, left, right);
 				ret.data[ret.current] = 0;
 				return ret;
@@ -785,6 +787,32 @@ namespace cage
 				StringBase ret = *this;
 				while (ret.length() < size)
 					ret += cc;
+				ret.data[ret.current] = 0;
+				return ret;
+			}
+
+			uint32 find(const StringBase &other, uint32 offset = 0) const
+			{
+				return privat::stringFind(data, current, other.data, other.current, offset);
+			}
+
+			uint32 find(char other, uint32 offset = 0) const
+			{
+				return privat::stringFind(data, current, &other, 1, offset);
+			}
+
+			StringBase encodeUrl() const
+			{
+				StringBase ret;
+				privat::stringEncodeUrl(data, current, ret.data, ret.current, N);
+				ret.data[ret.current] = 0;
+				return ret;
+			}
+
+			StringBase decodeUrl() const
+			{
+				StringBase ret;
+				privat::stringDecodeUrl(data, current, ret.data, ret.current, N);
 				ret.data[ret.current] = 0;
 				return ret;
 			}
@@ -849,22 +877,9 @@ namespace cage
 
 			bool toBool() const
 			{
-				StringBase l = toLower();
-				if (l == "false" || l == "f" || l == "no" || l == "n" || l == "off" || l == "0")
-					return false;
-				if (l == "true" || l == "t" || l == "yes" || l == "y" || l == "on" || l == "1")
-					return true;
-				CAGE_THROW_ERROR(Exception, "invalid value");
-			}
-
-			uint32 find(const StringBase &other, uint32 offset = 0) const
-			{
-				return privat::stringFind(data, current, other.data, other.current, offset);
-			}
-
-			uint32 find(char other, uint32 offset = 0) const
-			{
-				return privat::stringFind(data, current, &other, 1, offset);
+				bool i;
+				privat::fromString(data, i);
+				return i;
 			}
 
 			bool isPattern(const StringBase &prefix, const StringBase &infix, const StringBase &suffix) const
@@ -874,60 +889,22 @@ namespace cage
 
 			bool isDigitsOnly() const
 			{
-				for (char c : *this)
-				{
-					if (c < '0' || c > '9')
-						return false;
-				}
-				return true;
+				return privat::stringIsDigitsOnly(data, current);
 			}
 
 			bool isInteger(bool allowSign) const
 			{
-				if (empty())
-					return false;
-				if (allowSign && (data[0] == '-' || data[0] == '+'))
-					return subString(1, current - 1).isDigitsOnly();
-				else
-					return isDigitsOnly();
+				return privat::stringIsInteger(data, current, allowSign);
 			}
 
 			bool isReal(bool allowSign) const
 			{
-				if (empty())
-					return false;
-				uint32 d = find('.');
-				if (d == m)
-					return isInteger(allowSign);
-				StringBase whole = subString(0, d);
-				StringBase part = subString(d + 1, m);
-				return whole.isInteger(allowSign) && part.isDigitsOnly();
+				return privat::stringIsReal(data, current, allowSign);
 			}
 
 			bool isBool() const
 			{
-				StringBase l = toLower();
-				if (l == "false" || l == "f" || l == "no" || l == "n" || l == "off")
-					return true;
-				if (l == "true" || l == "t" || l == "yes" || l == "y" || l == "on")
-					return true;
-				return false;
-			}
-
-			StringBase encodeUrl() const
-			{
-				StringBase ret;
-				privat::stringEncodeUrl(data, current, ret.data, ret.current, N);
-				ret.data[ret.current] = 0;
-				return ret;
-			}
-
-			StringBase decodeUrl() const
-			{
-				StringBase ret;
-				privat::stringDecodeUrl(data, current, ret.data, ret.current, N);
-				ret.data[ret.current] = 0;
-				return ret;
+				return privat::stringIsBool(data, current);
 			}
 
 			bool empty() const
@@ -965,7 +942,7 @@ namespace cage
 				return data + current;
 			}
 
-			static const uint32 MaxLength = N;
+			static constexpr uint32 MaxLength = N;
 
 		private:
 			char data[N + 1];
@@ -1149,7 +1126,7 @@ namespace cage
 
 		R operator ()(Ts... vs) const
 		{
-			CAGE_ASSERT(!!*this, inst, fnc);
+			CAGE_ASSERT(!!*this);
 			return fnc(inst, templates::forward<Ts>(vs)...);
 		}
 
@@ -1238,13 +1215,13 @@ namespace cage
 
 			T *operator -> () const
 			{
-				CAGE_ASSERT(data_, "data is null");
+				CAGE_ASSERT(data_);
 				return data_;
 			}
 
 			typename HolderDereference<T>::type operator * () const
 			{
-				CAGE_ASSERT(data_, "data is null");
+				CAGE_ASSERT(data_);
 				return *data_;
 			}
 
@@ -1284,6 +1261,13 @@ namespace cage
 			}
 
 		protected:
+			void erase()
+			{
+				deleter_.clear();
+				ptr_ = nullptr;
+				data_ = nullptr;
+			}
+
 			Delegate<void(void *)> deleter_;
 			void *ptr_ = nullptr; // pointer to deallocate
 			T *data_ = nullptr; // pointer to the object (may differ in case of classes with inheritance)
@@ -1302,7 +1286,7 @@ namespace cage
 			if (!m && this->data_)
 				CAGE_THROW_ERROR(Exception, "bad dynamic cast");
 			Holder<M> tmp(m, this->ptr_, this->deleter_);
-			erase();
+			this->erase();
 			return tmp;
 		}
 
@@ -1310,16 +1294,8 @@ namespace cage
 		Holder<M> cast() &&
 		{
 			Holder<M> tmp(static_cast<M*>(this->data_), this->ptr_, this->deleter_);
-			erase();
+			this->erase();
 			return tmp;
-		}
-
-	private:
-		void erase()
-		{
-			this->deleter_.clear();
-			this->ptr_ = nullptr;
-			this->data_ = nullptr;
 		}
 	};
 
@@ -1348,7 +1324,7 @@ namespace cage
 		T *data() const { return begin_; }
 		size_type size() const { return end_ - begin_; }
 		bool empty() const { return size() == 0; }
-		T &operator[] (uint32 idx) const { CAGE_ASSERT(idx < size(), idx, size()); return begin_[idx]; }
+		T &operator[] (uint32 idx) const { CAGE_ASSERT(idx < size()); return begin_[idx]; }
 	};
 
 	template<class T>
@@ -1360,9 +1336,7 @@ namespace cage
 		operator Holder<PointerRange<const T>> () &&
 		{
 			Holder<PointerRange<const T>> tmp((PointerRange<const T>*)this->data_, this->ptr_, this->deleter_);
-			this->deleter_.clear();
-			this->ptr_ = nullptr;
-			this->data_ = nullptr;
+			this->erase();
 			return tmp;
 		}
 
@@ -1371,7 +1345,7 @@ namespace cage
 		T *data() const { return begin(); }
 		size_type size() const { return end() - begin(); }
 		bool empty() const { return size() == 0; }
-		T &operator[] (uint32 idx) const { CAGE_ASSERT(idx < size(), idx, size()); return begin()[idx]; }
+		T &operator[] (uint32 idx) const { CAGE_ASSERT(idx < size()); return begin()[idx]; }
 	};
 
 	// memory arena

@@ -29,9 +29,9 @@ namespace cage
 
 	mat4 perspectiveProjection(rads fov, real aspectRatio, real near, real far)
 	{
-		CAGE_ASSERT(fov > rads(0), real(fov).value, aspectRatio.value, near.value, far.value);
-		CAGE_ASSERT(aspectRatio != 0, real(fov).value, aspectRatio.value, near.value, far.value);
-		CAGE_ASSERT(sign(near) == sign(far) && near != far, real(fov).value, aspectRatio.value, near.value, far.value);
+		CAGE_ASSERT(fov > rads(0));
+		CAGE_ASSERT(aspectRatio != 0);
+		CAGE_ASSERT(sign(near) == sign(far) && near != far);
 		real f = 1 / tan(fov / 2);
 		return mat4(
 			f / aspectRatio, 0, 0, 0,
@@ -54,9 +54,9 @@ namespace cage
 
 	mat4 perspectiveProjection(real left, real right, real bottom, real top, real near, real far)
 	{
-		CAGE_ASSERT(left != right, left.value, right.value, bottom.value, top.value, near.value, far.value);
-		CAGE_ASSERT(bottom != top, left.value, right.value, bottom.value, top.value, near.value, far.value);
-		CAGE_ASSERT(sign(near) == sign(far) && near != far, left.value, right.value, bottom.value, top.value, near.value, far.value);
+		CAGE_ASSERT(left != right);
+		CAGE_ASSERT(bottom != top);
+		CAGE_ASSERT(sign(near) == sign(far) && near != far);
 		return mat4(
 			near * 2.0 / (right - left), 0, 0, 0,
 			0, near * 2.0 / (top - bottom), 0, 0,
@@ -67,9 +67,9 @@ namespace cage
 
 	mat4 orthographicProjection(real left, real right, real bottom, real top, real near, real far)
 	{
-		CAGE_ASSERT(left != right, left.value, right.value, bottom.value, top.value, near.value, far.value);
-		CAGE_ASSERT(bottom != top, left.value, right.value, bottom.value, top.value, near.value, far.value);
-		CAGE_ASSERT(near != far, left.value, right.value, bottom.value, top.value, near.value, far.value);
+		CAGE_ASSERT(left != right);
+		CAGE_ASSERT(bottom != top);
+		CAGE_ASSERT(near != far);
 		return transpose(mat4(
 			2 / (right - left), 0, 0, -(right + left) / (right - left),
 			0, 2 / (top - bottom), 0, -(top + bottom) / (top - bottom),

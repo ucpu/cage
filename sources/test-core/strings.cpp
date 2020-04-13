@@ -15,6 +15,8 @@ namespace
 			CAGE_TEST(string("ra") + "ke" + "ta" == "raketa");
 			bool b = true;
 			CAGE_TEST(string(b) == "true");
+			b = false;
+			CAGE_TEST(string(b) == "false");
 			int i1 = -123;
 			CAGE_TEST(string(i1) == "-123");
 			unsigned int i2 = 123;
@@ -161,6 +163,10 @@ namespace
 			CAGE_TEST(string("yES").toBool());
 			CAGE_TEST(string("T").toBool());
 			CAGE_TEST(!string("FALse").toBool());
+			CAGE_TEST(string("yES").isBool());
+			CAGE_TEST(string("T").isBool());
+			CAGE_TEST(string("FALse").isBool());
+			CAGE_TEST(!string("kk").isBool());
 			CAGE_TEST(string().isDigitsOnly());
 			CAGE_TEST(string("157").isDigitsOnly());
 			CAGE_TEST(!string("hola").isDigitsOnly());
@@ -217,6 +223,12 @@ namespace
 				CAGE_TESTCASE("isreal");
 				CAGE_TEST(string("5").isReal(true));
 				CAGE_TEST(!string("pet").isReal(true));
+				CAGE_TEST(string("13.42").isReal(true));
+				CAGE_TEST(!string("13.42k").isReal(true));
+				CAGE_TEST(string("+13.42").isReal(true));
+				CAGE_TEST(string("-13.42").isReal(true));
+				CAGE_TEST(!string("+13.42").isReal(false));
+				CAGE_TEST(!string("-13.42").isReal(false));
 				CAGE_TEST_THROWN(string("ha").toSint32());
 			}
 		}

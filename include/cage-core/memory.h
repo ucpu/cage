@@ -49,7 +49,7 @@ namespace cage
 		template<class T>
 		struct PoolAllocatorAtomSize
 		{
-			static const uintPtr result = sizeof(T) + alignof(T);
+			static constexpr uintPtr result = sizeof(T) + alignof(T);
 		};
 
 		template<class T>
@@ -110,8 +110,8 @@ namespace cage
 
 	struct CAGE_CORE_API MemoryBoundsPolicyNone
 	{
-		static const uintPtr SizeFront = 0;
-		static const uintPtr SizeBack = 0;
+		static constexpr uintPtr SizeFront = 0;
+		static constexpr uintPtr SizeBack = 0;
 
 		void setFront(void *ptr)
 		{}
@@ -128,8 +128,8 @@ namespace cage
 
 	struct CAGE_CORE_API MemoryBoundsPolicySimple
 	{
-		static const uintPtr SizeFront = 4;
-		static const uintPtr SizeBack = 4;
+		static constexpr uintPtr SizeFront = 4;
+		static constexpr uintPtr SizeBack = 4;
 
 		void setFront(void *ptr)
 		{
@@ -154,8 +154,8 @@ namespace cage
 		}
 
 	private:
-		static const uint32 PatternFront = 0xCDCDCDCD;
-		static const uint32 PatternBack = 0xDCDCDCDC;
+		static constexpr uint32 PatternFront = 0xCDCDCDCD;
+		static constexpr uint32 PatternBack = 0xDCDCDCDC;
 	};
 
 	struct CAGE_CORE_API MemoryTagPolicyNone
@@ -270,13 +270,13 @@ namespace cage
 
 		void setOrigin(void *newOrigin)
 		{
-			CAGE_ASSERT(!origin, "can only be set once", origin);
+			CAGE_ASSERT(!origin);
 			current = origin = newOrigin;
 		}
 
 		void setSize(uintPtr size)
 		{
-			CAGE_ASSERT(size >= numeric_cast<uintPtr>((char*)current - (char*)origin), "size can not shrink", size, current, origin, totalSize);
+			CAGE_ASSERT(size >= numeric_cast<uintPtr>((char*)current - (char*)origin));
 			totalSize = size;
 		}
 
@@ -289,7 +289,7 @@ namespace cage
 				CAGE_THROW_SILENT(OutOfMemory, "out of memory", total);
 
 			void *result = (char*)current + alig + BoundsPolicy::SizeFront;
-			CAGE_ASSERT((uintPtr)result % alignment == 0, "alignment failed", result, total, alignment, current, alig, BoundsPolicy::SizeFront, size, BoundsPolicy::SizeBack);
+			CAGE_ASSERT((uintPtr)result % alignment == 0);
 
 			bound.setFront((char*)result - BoundsPolicy::SizeFront);
 			tag.set(result, size);
@@ -328,13 +328,13 @@ namespace cage
 
 		void setOrigin(void *newOrigin)
 		{
-			CAGE_ASSERT(!origin, "nFrameAllocatorPolicy::setOrigin: can only be set once", origin);
+			CAGE_ASSERT(!origin);
 			origin = newOrigin;
 		}
 
 		void setSize(uintPtr size)
 		{
-			CAGE_ASSERT(size > 0 && totalSize == 0, "nFrameAllocatorPolicy::setSize: can only be set once", origin, size, totalSize);
+			CAGE_ASSERT(size > 0 && totalSize == 0);
 			totalSize = size;
 			for (uint8 i = 0; i < N; i++)
 			{
@@ -385,8 +385,8 @@ namespace cage
 
 		void setOrigin(void *newOrigin)
 		{
-			CAGE_ASSERT(!origin, "can only be set once", origin, newOrigin);
-			CAGE_ASSERT(newOrigin > (char*)objectSize, "origin too low", newOrigin, objectSize);
+			CAGE_ASSERT(!origin);
+			CAGE_ASSERT(newOrigin > (char*)objectSize);
 			uintPtr addition = detail::addToAlign((uintPtr)newOrigin, objectSize);
 			if (addition < BoundsPolicy::SizeFront)
 				addition += objectSize;
@@ -397,11 +397,11 @@ namespace cage
 		{
 			if (size == 0 && totalSize == 0)
 				return;
-			CAGE_ASSERT(size >= objectSize, "size must be at least the object size", size, objectSize);
+			CAGE_ASSERT(size >= objectSize);
 			uintPtr s = size - objectSize - detail::subtractToAlign((uintPtr)origin + size, objectSize);
 			if (s == totalSize)
 				return;
-			CAGE_ASSERT(s > totalSize, "size can not shrink", s, totalSize); // can only grow
+			CAGE_ASSERT(s > totalSize); // can only grow
 			void *tmp = (char*)origin + totalSize;
 			totalSize = s;
 			while (tmp < (char*)origin + totalSize)
@@ -413,14 +413,14 @@ namespace cage
 
 		void *allocate(uintPtr size, uintPtr alignment)
 		{
-			CAGE_ASSERT(current >= origin && current <= (char*)origin + totalSize, "current is corrupted", current, origin, totalSize);
+			CAGE_ASSERT(current >= origin && current <= (char*)origin + totalSize);
 
 			if (current >= (char*)origin + totalSize)
 				CAGE_THROW_SILENT(OutOfMemory, "out of memory", objectSize);
 
 			void *next = *(void**)current;
 			uintPtr alig = detail::addToAlign((uintPtr)current, alignment);
-			CAGE_ASSERT(size + alig <= AtomSize, "size with alignment too big", size, alignment, alig, AtomSize);
+			CAGE_ASSERT(size + alig <= AtomSize);
 			void *result = (char*)current + alig;
 
 			bound.setFront((char*)current - BoundsPolicy::SizeFront);
@@ -435,7 +435,7 @@ namespace cage
 		void deallocate(void *ptr)
 		{
 			void *ptrOrig = ptr;
-			CAGE_ASSERT(ptr >= origin && ptr < (char*)origin + totalSize, "ptr must be element", ptr, origin, totalSize);
+			CAGE_ASSERT(ptr >= origin && ptr < (char*)origin + totalSize);
 			ptr = (char*)ptr - detail::subtractToAlign((uintPtr)ptr, objectSize);
 			CAGE_ASSERT((uintPtr)ptr % objectSize == 0);
 
@@ -475,13 +475,13 @@ namespace cage
 
 		void setOrigin(void *newOrigin)
 		{
-			CAGE_ASSERT(!origin, "can only be set once", origin);
+			CAGE_ASSERT(!origin);
 			front = back = origin = newOrigin;
 		}
 
 		void setSize(uintPtr size)
 		{
-			CAGE_ASSERT(size > 0 && totalSize == 0, "can only be set once", origin, size, totalSize);
+			CAGE_ASSERT(size > 0 && totalSize == 0);
 			totalSize = size;
 		}
 
@@ -507,7 +507,7 @@ namespace cage
 			}
 
 			void *result = (char*)back + alig + sizeof(uintPtr) + BoundsPolicy::SizeFront;
-			CAGE_ASSERT((uintPtr)result % alignment == 0, "alignment failed", result, total, alignment, back, front, alig, BoundsPolicy::SizeFront, size, BoundsPolicy::SizeBack);
+			CAGE_ASSERT((uintPtr)result % alignment == 0);
 
 			*(uintPtr*)((char*)result - BoundsPolicy::SizeFront - sizeof(uintPtr)) = size;
 			bound.setFront((char*)result - BoundsPolicy::SizeFront);
@@ -521,7 +521,7 @@ namespace cage
 
 		void deallocate(void *ptr)
 		{
-			CAGE_ASSERT(ptr >= origin && ptr < (char*)origin + totalSize, "ptr must be element", ptr, origin, totalSize);
+			CAGE_ASSERT(ptr >= origin && ptr < (char*)origin + totalSize);
 
 			track.check(ptr);
 
@@ -560,13 +560,13 @@ namespace cage
 
 		void setOrigin(void *newOrigin)
 		{
-			CAGE_ASSERT(!origin, "can only be set once", origin);
+			CAGE_ASSERT(!origin);
 			current = origin = newOrigin;
 		}
 
 		void setSize(uintPtr size)
 		{
-			CAGE_ASSERT(size >= numeric_cast<uintPtr>((char*)current - (char*)origin), "size can not shrink", size, current, origin, totalSize);
+			CAGE_ASSERT(size >= numeric_cast<uintPtr>((char*)current - (char*)origin));
 			totalSize = size;
 		}
 
@@ -579,7 +579,7 @@ namespace cage
 				CAGE_THROW_SILENT(OutOfMemory, "out of memory", total);
 
 			void *result = (char*)current + alig + sizeof(uintPtr) + BoundsPolicy::SizeFront;
-			CAGE_ASSERT((uintPtr)result % alignment == 0, "alignment failed", result, total, alignment, current, alig, BoundsPolicy::SizeFront, size, BoundsPolicy::SizeBack);
+			CAGE_ASSERT((uintPtr)result % alignment == 0);
 
 			*(uintPtr*)((char*)result - BoundsPolicy::SizeFront - sizeof(uintPtr)) = alig;
 			bound.setFront((char*)result - BoundsPolicy::SizeFront);
@@ -593,7 +593,7 @@ namespace cage
 
 		void deallocate(void *ptr)
 		{
-			CAGE_ASSERT(ptr >= origin && ptr < (char*)origin + totalSize, "ptr must be element", ptr, origin, totalSize);
+			CAGE_ASSERT(ptr >= origin && ptr < (char*)origin + totalSize);
 
 			track.check(ptr);
 
@@ -644,8 +644,8 @@ namespace cage
 			try
 			{
 				void *tmp = allocator.allocate(size, alignment);
-				CAGE_ASSERT(uintPtr(tmp) >= uintPtr(origin), "allocator corrupted", tmp, origin, size);
-				CAGE_ASSERT(uintPtr(tmp) + size <= uintPtr(origin) + this->size, "allocator corrupted", tmp, origin, size, this->size);
+				CAGE_ASSERT(uintPtr(tmp) >= uintPtr(origin));
+				CAGE_ASSERT(uintPtr(tmp) + size <= uintPtr(origin) + this->size);
 				return tmp;
 			}
 			catch (OutOfMemory &e)
@@ -757,8 +757,8 @@ namespace cage
 		void *alloc(uintPtr size, uintPtr alignment)
 		{
 			void *tmp = allocator.allocate(size, alignment);
-			CAGE_ASSERT(tmp >= origin, "allocator corrupted", tmp, origin, size);
-			CAGE_ASSERT((char*)tmp + size <= (char*)origin + currentSize, "allocator corrupted", tmp, origin, size, currentSize);
+			CAGE_ASSERT(tmp >= origin);
+			CAGE_ASSERT((char*)tmp + size <= (char*)origin + currentSize);
 			return tmp;
 		}
 	};

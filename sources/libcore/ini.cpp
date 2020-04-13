@@ -181,21 +181,21 @@ namespace cage
 
 	void Ini::markUsed(const string &section, const string &item)
 	{
-		CAGE_ASSERT(itemExists(section, item), section, item);
+		CAGE_ASSERT(itemExists(section, item));
 		IniImpl *impl = (IniImpl*)this;
 		impl->sections[section]->items[item].used = true;
 	}
 
 	void Ini::markUnused(const string &section, const string &item)
 	{
-		CAGE_ASSERT(itemExists(section, item), section, item);
+		CAGE_ASSERT(itemExists(section, item));
 		IniImpl *impl = (IniImpl*)this;
 		impl->sections[section]->items[item].used = false;
 	}
 
 	bool Ini::isUsed(const string &section, const string &item) const
 	{
-		CAGE_ASSERT(itemExists(section, item), section, item);
+		CAGE_ASSERT(itemExists(section, item));
 		IniImpl *impl = (IniImpl*)this;
 		return impl->sections[section]->items[item].used;
 	}

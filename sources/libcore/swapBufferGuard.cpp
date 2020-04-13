@@ -45,7 +45,7 @@ namespace cage
 			privat::SwapBufferLock read()
 			{
 				ScopeLock<Mutex> lock(mutex);
-				CAGE_ASSERT(readable(), "one reading at a time only");
+				CAGE_ASSERT(readable());
 				if (repeatedReads)
 				{
 					if (next(ri) != wi && states[next(ri)] == StateEnum::Wrote)
@@ -75,7 +75,7 @@ namespace cage
 			privat::SwapBufferLock write()
 			{
 				ScopeLock<Mutex> lock(mutex);
-				CAGE_ASSERT(writeable(), "one writing at a time only");
+				CAGE_ASSERT(writeable());
 				if (repeatedWrites)
 				{
 					if ((next(wi) != ri && states[next(wi)] == StateEnum::Read) || states[next(wi)] == StateEnum::Nothing)

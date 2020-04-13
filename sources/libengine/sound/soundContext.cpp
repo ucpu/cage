@@ -14,7 +14,7 @@ namespace cage
 
 		void rtprioWarningCallback()
 		{
-			static bool fired = rtprioWarningCallbackOnce();
+			static const bool fired = rtprioWarningCallbackOnce();
 		}
 
 		class SoundContextImpl : public SoundContext

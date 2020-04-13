@@ -35,8 +35,8 @@ namespace cage
 		explicit real(degs other);
 
 		static real parse(const string &str);
-		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx == 0, "index out of range", idx); return *this; }
-		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx == 0, "index out of range", idx); return *this; }
+		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx == 0); return *this; }
+		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx == 0); return *this; }
 		bool valid() const;
 		inline bool finite() const { return valid() && value != real::Infinity().value && value != -real::Infinity().value; }
 		inline static real Pi() { return 3.141592653589793238; }
@@ -90,8 +90,8 @@ namespace cage
 		inline explicit vec2(const vec4 &v);
 
 		static vec2 parse(const string &str);
-		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 2, "index out of range", idx); return data[idx]; }
-		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 2, "index out of range", idx); return data[idx]; }
+		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 2); return data[idx]; }
+		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 2); return data[idx]; }
 		inline bool valid() const { for (real d : data) if (!d.valid()) return false; return true; }
 		inline static vec2 Nan() { return vec2(real::Nan()); }
 	};
@@ -107,8 +107,8 @@ namespace cage
 		inline explicit vec3(const vec4 &v);
 
 		static vec3 parse(const string &str);
-		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 3, "index out of range", idx); return data[idx]; }
-		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 3, "index out of range", idx); return data[idx]; }
+		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 3); return data[idx]; }
+		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 3); return data[idx]; }
 		inline bool valid() const { for (real d : data) if (!d.valid()) return false; return true; }
 		inline static vec3 Nan() { return vec3(real::Nan()); }
 	};
@@ -125,8 +125,8 @@ namespace cage
 		inline explicit vec4(const vec3 &v, real w) : data{ v[0], v[1], v[2], w } {}
 
 		static vec4 parse(const string &str);
-		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 4, "index out of range", idx); return data[idx]; }
-		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 4, "index out of range", idx); return data[idx]; }
+		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 4); return data[idx]; }
+		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 4); return data[idx]; }
 		inline bool valid() const { for (real d : data) if (!d.valid()) return false; return true; }
 		inline static vec4 Nan() { return vec4(real::Nan()); }
 	};
@@ -143,8 +143,8 @@ namespace cage
 		explicit quat(const vec3 &forward, const vec3 &up, bool keepUp = false);
 
 		static quat parse(const string &str);
-		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 4, "index out of range", idx); return data[idx]; }
-		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 4, "index out of range", idx); return data[idx]; }
+		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 4); return data[idx]; }
+		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 4); return data[idx]; }
 		inline bool valid() const { for (real d : data) if (!d.valid()) return false; return true; }
 		inline static quat Nan() { return quat(real::Nan(), real::Nan(), real::Nan(), real::Nan()); }
 	};
@@ -160,8 +160,8 @@ namespace cage
 		explicit mat3(const mat4 &other);
 
 		static mat3 parse(const string &str);
-		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 9, "index out of range", idx); return data[idx]; }
-		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 9, "index out of range", idx); return data[idx]; }
+		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 9); return data[idx]; }
+		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 9); return data[idx]; }
 		inline bool valid() const { for (real d : data) if (!d.valid()) return false; return true; }
 		inline static mat3 Zero() { return mat3(0, 0, 0, 0, 0, 0, 0, 0, 0); }
 		inline static mat3 Nan() { return mat3(real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan()); }
@@ -182,8 +182,8 @@ namespace cage
 		inline static mat4 scale(real scl) { return scale(vec3(scl)); };
 		inline static mat4 scale(const vec3 &scl) { return mat4(scl[0], 0, 0, 0, 0, scl[1], 0, 0, 0, 0, scl[2], 0, 0, 0, 0, 1); }
 		static mat4 parse(const string &str);
-		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 16, "index out of range", idx); return data[idx]; }
-		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 16, "index out of range", idx); return data[idx]; }
+		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 16); return data[idx]; }
+		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 16); return data[idx]; }
 		inline bool valid() const { for (real d : data) if (!d.valid()) return false; return true; }
 		inline static mat4 Zero() { return mat4(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0); }
 		inline static mat4 Nan() { return mat4(real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan()); }

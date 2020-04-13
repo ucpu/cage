@@ -15,12 +15,14 @@ namespace cage
 #ifdef GCHL_ENABLE_CONTEXT_BINDING_CHECKS
 
 		uint32 contextTypeIndexInitializer();
+
 		template<class T>
 		uint32 contextTypeIndex()
 		{
 			static const uint32 index = contextTypeIndexInitializer();
 			return index;
 		}
+
 		void contextSetCurrentObjectType(uint32 typeIndex, uint32 id);
 		uint32 contextGetCurrentObjectType(uint32 typeIndex);
 

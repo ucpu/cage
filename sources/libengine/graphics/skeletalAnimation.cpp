@@ -177,20 +177,20 @@ namespace cage
 	{
 		real amount(real a, real b, real c)
 		{
-			CAGE_ASSERT(a <= b, a, b, c);
+			CAGE_ASSERT(a <= b);
 			if (c < a)
 				return 0;
 			if (c > b)
 				return 1;
 			real res = (c - a) / (b - a);
-			CAGE_ASSERT(res >= 0 && res <= 1, res, a, b, c);
+			CAGE_ASSERT(res >= 0 && res <= 1);
 			return res;
 		}
 
 		uint16 findFrameIndex(real coef, const real *times, uint16 length)
 		{
-			CAGE_ASSERT(coef >= 0 && coef <= 1, coef);
-			CAGE_ASSERT(length > 0, length);
+			CAGE_ASSERT(coef >= 0 && coef <= 1);
+			CAGE_ASSERT(length > 0);
 			if (coef <= times[0])
 				return 0;
 			if (coef >= times[length - 1])
@@ -223,7 +223,7 @@ namespace cage
 
 	mat4 SkeletalAnimation::evaluate(uint16 bone, real coef) const
 	{
-		CAGE_ASSERT(coef >= 0 && coef <= 1, coef);
+		CAGE_ASSERT(coef >= 0 && coef <= 1);
 		SkeletalAnimationImpl *impl = (SkeletalAnimationImpl*)this;
 
 		uint16 b = impl->framesBoneIndex(bone);

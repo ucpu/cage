@@ -11,7 +11,7 @@ namespace cage
 		// xorshift128+
 		uint64 s[2] { 0, 0 };
 
-		RandomGenerator();
+		RandomGenerator(); // initialize with random seed
 		explicit RandomGenerator(uint64 s[2]);
 		explicit RandomGenerator(uint64 s1, uint64 s2);
 		uint64 next();

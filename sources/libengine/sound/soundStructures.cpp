@@ -29,8 +29,8 @@ namespace cage
 
 	void SoundInterleavedBuffer::resize(uint32 channels, uint32 frames)
 	{
-		CAGE_ASSERT(channels > 0 && frames > 0, channels, frames);
-		CAGE_ASSERT(!!allocated == !!buffer, allocated, buffer);
+		CAGE_ASSERT(channels > 0 && frames > 0);
+		CAGE_ASSERT(!!allocated == !!buffer);
 		this->channels = channels;
 		this->frames = frames;
 		uint32 requested = channels * frames;

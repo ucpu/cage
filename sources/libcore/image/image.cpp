@@ -75,6 +75,16 @@ namespace cage
 		impl->mem.resize(0);
 	}
 
+	void Image::loadBuffer(MemoryBuffer &&buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format)
+	{
+		ImageImpl *impl = (ImageImpl*)this;
+		CAGE_ASSERT(buffer.size() >= width * height * channels * formatBytes(format));
+		empty(0, 0, channels, format);
+		impl->mem = templates::move(buffer);
+		impl->width = width;
+		impl->height = height;
+	}
+
 	void Image::loadBuffer(const MemoryBuffer &buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format)
 	{
 		loadMemory(buffer.data(), buffer.size(), width, height, channels, format);

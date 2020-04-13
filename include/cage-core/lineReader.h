@@ -5,6 +5,9 @@
 
 namespace cage
 {
+	// split first line from the buffer
+	// correctly handles both CRLF and LF
+
 	namespace detail
 	{
 		// lfOnly == true -> returns false when no new line is found

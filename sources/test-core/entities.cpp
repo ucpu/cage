@@ -151,7 +151,7 @@ void testEntities()
 				case 1:
 				case 2:
 				{ // add entity
-					CAGE_ASSERT(reference.find(entName) == reference.end(), entName, reference.size());
+					CAGE_ASSERT(reference.find(entName) == reference.end());
 					Entity *e = manager->create(entName);
 					reference[entName];
 					for (uint32 i = 0; i < totalComponents; i++)

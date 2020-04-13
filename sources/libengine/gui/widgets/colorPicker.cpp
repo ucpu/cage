@@ -47,15 +47,15 @@ namespace cage
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT(!hierarchy->firstChild, "color picker may not have children");
-				CAGE_ASSERT(!hierarchy->text, "color picker may not have text");
-				CAGE_ASSERT(!hierarchy->Image, "color picker may not have image");
+				CAGE_ASSERT(!hierarchy->firstChild);
+				CAGE_ASSERT(!hierarchy->text);
+				CAGE_ASSERT(!hierarchy->Image);
 
 				if (data.collapsible)
 				{
 					if (small)
 					{ // this is the large popup
-						CAGE_ASSERT(small && small != this, small, this, large);
+						CAGE_ASSERT(small && small != this);
 						large = this;
 					}
 					else

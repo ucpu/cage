@@ -190,7 +190,7 @@ namespace
 		ass.references.clear();
 		ass.aliasName = "";
 		Scheme *scheme = schemes.retrieve(ass.scheme);
-		CAGE_ASSERT(scheme, "asset has invalid scheme");
+		CAGE_ASSERT(scheme);
 		try
 		{
 			if (!scheme->applyOnAsset(ass))

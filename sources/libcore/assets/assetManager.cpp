@@ -38,7 +38,7 @@ namespace cage
 
 	namespace
 	{
-		static const uint32 CurrentAssetVersion = 1;
+		static constexpr uint32 CurrentAssetVersion = 1;
 
 		struct Scheme : public AssetScheme
 		{
@@ -328,7 +328,7 @@ namespace cage
 				CAGE_ASSERT(ass->state == StateEnum::Decompressing);
 				CAGE_ASSERT(!ass->assetHolder);
 				CAGE_ASSERT(!ass->reference);
-				CAGE_ASSERT(ass->scheme < schemes.size(), ass->scheme, schemes.size());
+				CAGE_ASSERT(ass->scheme < schemes.size());
 
 				try
 				{
@@ -362,7 +362,7 @@ namespace cage
 				ASS_LOG(2, ass, "processing");
 
 				CAGE_ASSERT(ass->state == StateEnum::Processing);
-				CAGE_ASSERT(ass->scheme < schemes.size(), ass->scheme, schemes.size());
+				CAGE_ASSERT(ass->scheme < schemes.size());
 
 				try
 				{
@@ -409,9 +409,9 @@ namespace cage
 			void enqueueToSchemeQueue(Asset *ass)
 			{
 				ASS_LOG(2, ass, "enqueue to scheme specific queue");
-				CAGE_ASSERT(ass->scheme < schemes.size(), ass->scheme, schemes.size());
+				CAGE_ASSERT(ass->scheme < schemes.size());
 				uint32 t = schemes[ass->scheme].threadIndex;
-				CAGE_ASSERT(t == m || t < customProcessingQueues.size(), t, customProcessingQueues.size());
+				CAGE_ASSERT(t == m || t < customProcessingQueues.size());
 				if (t == m)
 					defaultProcessingQueue.push(ass);
 				else
@@ -748,9 +748,9 @@ namespace cage
 
 			void defineScheme(uint32 scheme, uintPtr typeId, const AssetScheme &value)
 			{
-				CAGE_ASSERT(scheme < schemes.size(), scheme, schemes.size());
-				CAGE_ASSERT(schemes[scheme].typeId == 0, "scheme already defined");
-				CAGE_ASSERT(value.threadIndex == m || value.threadIndex < customProcessingQueues.size(), value.threadIndex, customProcessingQueues.size());
+				CAGE_ASSERT(scheme < schemes.size());
+				CAGE_ASSERT(schemes[scheme].typeId == 0);
+				CAGE_ASSERT(value.threadIndex == m || value.threadIndex < customProcessingQueues.size());
 				(AssetScheme&)schemes[scheme] = value;
 				schemes[scheme].typeId = typeId;
 			}
@@ -785,8 +785,8 @@ namespace cage
 
 			uint32 generateUniqueName()
 			{
-				static const uint32 a = (uint32)1 << 28;
-				static const uint32 b = (uint32)1 << 30;
+				static constexpr uint32 a = (uint32)1 << 28;
+				static constexpr uint32 b = (uint32)1 << 30;
 				ScopeLock<Mutex> lock(mutex);
 				if (generateName < a || generateName > b)
 					generateName = a;
@@ -798,7 +798,7 @@ namespace cage
 			void fabricate(uint32 assetName, const string &textName, uint32 scheme, uintPtr typeId, Holder<void> &&value)
 			{
 				CAGE_ASSERT(typeId != 0);
-				CAGE_ASSERT(schemes[scheme].typeId == typeId, schemes[scheme].typeId, typeId, "setting asset value with invalid type");
+				CAGE_ASSERT(schemes[scheme].typeId == typeId);
 				unloaded = false;
 				processing = true;
 				Command cmd;
@@ -837,13 +837,13 @@ namespace cage
 					}
 					return {}; // invalid scheme
 				}
-				CAGE_ASSERT(schemes[a.scheme].typeId == typeId, schemes[a.scheme].typeId, typeId, "accessing asset with invalid type");
+				CAGE_ASSERT(schemes[a.scheme].typeId == typeId);
 				return a.ref.share();
 			}
 
 			bool processCustomThread(uint32 threadIndex)
 			{
-				CAGE_ASSERT(threadIndex < customProcessingQueues.size(), threadIndex, customProcessingQueues.size());
+				CAGE_ASSERT(threadIndex < customProcessingQueues.size());
 				auto &que = customProcessingQueues[threadIndex];
 				Asset *ass = nullptr;
 				if (que->tryPop(ass))
@@ -856,7 +856,7 @@ namespace cage
 
 			void unloadCustomThread(uint32 threadIndex)
 			{
-				CAGE_ASSERT(threadIndex < customProcessingQueues.size(), threadIndex, customProcessingQueues.size());
+				CAGE_ASSERT(threadIndex < customProcessingQueues.size());
 				while (!unloaded)
 				{
 					while (processCustomThread(threadIndex));
@@ -970,10 +970,10 @@ namespace cage
 		detail::memcpy(a.cageName, "cageAss", 7);
 		a.version = CurrentAssetVersion;
 		string name = name_;
-		static const uint32 maxTexName = sizeof(a.textName);
+		static constexpr uint32 maxTexName = sizeof(a.textName);
 		if (name.length() >= maxTexName)
 			name = string() + ".." + name.subString(name.length() - maxTexName - 3, maxTexName - 3);
-		CAGE_ASSERT(name.length() < sizeof(a.textName), name);
+		CAGE_ASSERT(name.length() < sizeof(a.textName));
 		detail::memcpy(a.textName, name.c_str(), name.length());
 		a.scheme = schemeIndex;
 		return a;

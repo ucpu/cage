@@ -64,7 +64,7 @@ namespace cage
 					if (childs > mws * mhs)
 						mws++;
 				}
-				CAGE_ASSERT(mws * mhs >= childs, mws, mhs, childs);
+				CAGE_ASSERT(mws * mhs >= childs);
 				// allocate widths & heights
 				widths = (real*)impl->itemsMemory.allocate(mws * sizeof(real), sizeof(uintPtr));
 				heights = (real*)impl->itemsMemory.allocate(mhs * sizeof(real), sizeof(uintPtr));
@@ -81,7 +81,7 @@ namespace cage
 						m = max(m, c->requestedSize);
 						uint32 wi = data.vertical ? (idx % data.sections) : (idx / data.sections);
 						uint32 hi = data.vertical ? (idx / data.sections) : (idx % data.sections);
-						CAGE_ASSERT(wi < mws && hi < mhs, wi, hi, mws, mhs, data.sections, data.vertical, idx);
+						CAGE_ASSERT(wi < mws && hi < mhs);
 						real &w = widths[wi];
 						real &h = heights[hi];
 						w = max(w, c->requestedSize[0]);
@@ -121,7 +121,7 @@ namespace cage
 				{
 					uint32 wi = data.vertical ? (idx % data.sections) : (idx / data.sections);
 					uint32 hi = data.vertical ? (idx / data.sections) : (idx % data.sections);
-					CAGE_ASSERT(wi < mws && hi < mhs, wi, hi, mws, mhs, data.sections, data.vertical, idx);
+					CAGE_ASSERT(wi < mws && hi < mhs);
 					vec2 s = vec2(widths[wi], heights[hi]);
 
 					{

@@ -32,8 +32,8 @@ namespace cage
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT(!hierarchy->Image, "combo box may not have image");
-				CAGE_ASSERT(areChildrenValid(), "combo box children may not have other children, layouts, witgets or images and must have text");
+				CAGE_ASSERT(!hierarchy->Image);
+				CAGE_ASSERT(areChildrenValid());
 				if (hierarchy->text)
 					hierarchy->text->text.apply(skin->defaults.comboBox.placeholderFormat, hierarchy->impl);
 				count = 0;

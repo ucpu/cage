@@ -69,7 +69,7 @@ void processSkeleton()
 		aiBone *b = skeleton->bone(i);
 		mat4 t = conv(n->mTransformation);
 		mat4 o = (b ? conv(b->mOffsetMatrix) : mat4()) * axesScaleInv;
-		CAGE_ASSERT(t.valid() && o.valid(), t, o);
+		CAGE_ASSERT(t.valid() && o.valid());
 		ps.push_back(skeleton->parent(i));
 		bs.push_back(t);
 		is.push_back(o);

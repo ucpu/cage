@@ -80,8 +80,8 @@ namespace cage
 		CAGE_ASSERT(clipSize.valid());
 		for (uint32 a = 0; a < 2; a++)
 		{
-			CAGE_ASSERT(clipPos[a] >= u.clipPos[a], clipPos, u.clipPos);
-			CAGE_ASSERT(clipPos[a] + clipSize[a] <= u.clipPos[a] + u.clipSize[a], clipPos, clipSize, u.clipPos, u.clipSize);
+			CAGE_ASSERT(clipPos[a] >= u.clipPos[a]);
+			CAGE_ASSERT(clipPos[a] + clipSize[a] <= u.clipPos[a] + u.clipSize[a]);
 		}
 	}
 

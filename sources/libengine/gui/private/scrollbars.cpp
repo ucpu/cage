@@ -27,8 +27,8 @@ namespace cage
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT(!hierarchy->text, "scrollbars may not have text");
-				CAGE_ASSERT(!hierarchy->Image, "scrollbars may not have image");
+				CAGE_ASSERT(!hierarchy->text);
+				CAGE_ASSERT(!hierarchy->Image);
 			}
 
 			virtual void findRequestedSize() override

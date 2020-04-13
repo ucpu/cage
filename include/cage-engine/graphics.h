@@ -10,7 +10,7 @@ namespace cage
 #ifdef CAGE_DEBUG
 #define CAGE_CHECK_GL_ERROR_DEBUG() { try { checkGlError(); } catch (const ::cage::GraphicsError &) { CAGE_LOG(::cage::SeverityEnum::Error, "exception", ::cage::stringizer() + "opengl error caught in file '" + __FILE__ + "' at line " + __LINE__); } }
 #else
-#define CAGE_CHECK_GL_ERROR_DEBUG()
+#define CAGE_CHECK_GL_ERROR_DEBUG() {}
 #endif
 
 	struct CAGE_ENGINE_API GraphicsError : public SystemError
@@ -64,7 +64,7 @@ namespace cage
 	}
 
 	CAGE_ENGINE_API AssetScheme genAssetSchemeTexture(uint32 threadIndex, Window *memoryContext);
-	static const uint32 AssetSchemeIndexTexture = 11;
+	static constexpr uint32 AssetSchemeIndexTexture = 11;
 
 	class CAGE_ENGINE_API FrameBuffer : private Immovable
 	{
@@ -123,7 +123,7 @@ namespace cage
 	CAGE_ENGINE_API Holder<ShaderProgram> newShaderProgram();
 
 	CAGE_ENGINE_API AssetScheme genAssetSchemeShaderProgram(uint32 threadIndex, Window *memoryContext);
-	static const uint32 AssetSchemeIndexShaderProgram = 10;
+	static constexpr uint32 AssetSchemeIndexShaderProgram = 10;
 
 	class CAGE_ENGINE_API UniformBuffer : private Immovable
 	{
@@ -193,7 +193,7 @@ namespace cage
 	CAGE_ENGINE_API Holder<Font> newFont();
 
 	CAGE_ENGINE_API AssetScheme genAssetSchemeFont(uint32 threadIndex, Window *memoryContext);
-	static const uint32 AssetSchemeIndexFont = 16;
+	static constexpr uint32 AssetSchemeIndexFont = 16;
 
 	class CAGE_ENGINE_API Mesh : private Immovable
 	{
@@ -235,7 +235,7 @@ namespace cage
 	CAGE_ENGINE_API Holder<Mesh> newMesh();
 
 	CAGE_ENGINE_API AssetScheme genAssetSchemeMesh(uint32 threadIndex, Window *memoryContext);
-	static const uint32 AssetSchemeIndexMesh = 12;
+	static constexpr uint32 AssetSchemeIndexMesh = 12;
 
 	class CAGE_ENGINE_API SkeletalAnimation : private Immovable
 	{
@@ -260,7 +260,7 @@ namespace cage
 	}
 
 	CAGE_ENGINE_API AssetScheme genAssetSchemeSkeletalAnimation();
-	static const uint32 AssetSchemeIndexSkeletalAnimation = 14;
+	static constexpr uint32 AssetSchemeIndexSkeletalAnimation = 14;
 
 	class CAGE_ENGINE_API SkeletonRig : private Immovable
 	{
@@ -281,7 +281,7 @@ namespace cage
 	CAGE_ENGINE_API Holder<SkeletonRig> newSkeletonRig();
 
 	CAGE_ENGINE_API AssetScheme genAssetSchemeSkeletonRig();
-	static const uint32 AssetSchemeIndexSkeletonRig = 13;
+	static constexpr uint32 AssetSchemeIndexSkeletonRig = 13;
 
 	class CAGE_ENGINE_API RenderObject : private Immovable
 	{
@@ -318,7 +318,7 @@ namespace cage
 	CAGE_ENGINE_API Holder<RenderObject> newRenderObject();
 
 	CAGE_ENGINE_API AssetScheme genAssetSchemeRenderObject();
-	static const uint32 AssetSchemeIndexRenderObject = 15;
+	static constexpr uint32 AssetSchemeIndexRenderObject = 15;
 }
 
 #endif // guard_graphic_h_d776d3a2_43c7_464d_b721_291294b5b1ef_

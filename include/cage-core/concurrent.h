@@ -5,10 +5,14 @@
 
 namespace cage
 {
+	// all the classes here are for inter-thread synchronization only
+	// do not use for inter-process synchronization
+
+	// fully exclusive lock
+	// locking the same Mutex again in the same thread is implementation defined behavior
 	class CAGE_CORE_API Mutex : private Immovable
 	{
 	public:
-		// locking the same mutex again in the same thread is implementation defined behavior
 		bool tryLock(); // return true on successfully acquiring the lock
 		void lock();
 		void unlock();
@@ -16,10 +20,12 @@ namespace cage
 
 	CAGE_CORE_API Holder<Mutex> newMutex();
 
+	// exclusive writer or multiple readers lock
+	// starts as spinlock and yields after several failed attempts (may cause thread priority inversion if held too long)
+	// locking the same RwMutex again in the same thread is undefined behavior
 	class CAGE_CORE_API RwMutex : private Immovable
 	{
 	public:
-		// locking the same mutex again in the same thread is undefined behavior
 		void writeLock();
 		void readLock();
 		void unlock();
@@ -27,6 +33,7 @@ namespace cage
 
 	CAGE_CORE_API Holder<RwMutex> newRwMutex();
 
+	// blocks all threads until the threshold is reached
 	class CAGE_CORE_API Barrier : private Immovable
 	{
 	public:
@@ -34,8 +41,11 @@ namespace cage
 		void unlock(); // does nothing
 	};
 
-	CAGE_CORE_API Holder<Barrier> newBarrier(uint32 value);
+	CAGE_CORE_API Holder<Barrier> newBarrier(uint32 threshold);
 
+	// fully exclusive lock with counter
+	// values above zero allows that many threads to enter
+	// values below zero blocks further threads
 	class CAGE_CORE_API Semaphore : private Immovable
 	{
 	public:
@@ -45,6 +55,7 @@ namespace cage
 
 	CAGE_CORE_API Holder<Semaphore> newSemaphore(uint32 value, uint32 max);
 
+	// unlock a Mutex and atomically reacquire it when signaled
 	class CAGE_CORE_API ConditionalVariableBase : private Immovable
 	{
 	public:
@@ -57,7 +68,7 @@ namespace cage
 
 	CAGE_CORE_API Holder<ConditionalVariableBase> newConditionalVariableBase();
 
-	// this is a compound class containing both mutex and conditional variable
+	// compound class containing both mutex and conditional variable
 	class CAGE_CORE_API ConditionalVariable : private Immovable
 	{
 	public:
@@ -83,7 +94,7 @@ namespace cage
 	CAGE_CORE_API void setCurrentThreadName(const string &name);
 	CAGE_CORE_API string getCurrentThreadName();
 
-	CAGE_CORE_API uint32 processorsCount(); // return count of threads, that can physically run simultaneously
+	CAGE_CORE_API uint32 processorsCount(); // return count of threads that can physically run simultaneously
 	CAGE_CORE_API uint64 threadId(); // return id of current thread
 	CAGE_CORE_API uint64 processId(); // return id of current process
 	CAGE_CORE_API void threadSleep(uint64 micros);

@@ -7,8 +7,9 @@ namespace cage
 {
 	CAGE_CORE_API mat4 lookAt(const vec3 &eye, const vec3 &target, const vec3 &up);
 
+	// fov is along vertical axis
 	CAGE_CORE_API mat4 perspectiveProjection(rads fov, real aspectRatio, real near, real far);
-	CAGE_CORE_API mat4 perspectiveProjection(rads fov, real aspectRatio, real near, real far, real zeroParallaxDistance, real eyeSeparation);
+	CAGE_CORE_API mat4 perspectiveProjection(rads fov, real aspectRatio, real near, real far, real zeroParallaxDistance, real eyeSeparation); // use negative eyeSeparation for left eye
 	CAGE_CORE_API mat4 perspectiveProjection(real left, real right, real bottom, real top, real near, real far);
 	CAGE_CORE_API mat4 orthographicProjection(real left, real right, real bottom, real top, real near, real far);
 
@@ -24,6 +25,7 @@ namespace cage
 		Mono,
 		Horizontal,
 		Vertical,
+		// todo separate buffers
 	};
 
 	enum class StereoEyeEnum : uint32

@@ -7,7 +7,7 @@
 #endif
 
 #ifndef CAGE_SYSTEM_WINDOWS
-static const clockid_t clockid = CLOCK_REALTIME;
+static constexpr clockid_t clockid = CLOCK_REALTIME;
 #endif
 
 namespace cage
@@ -42,7 +42,7 @@ namespace cage
 
 		LARGE_INTEGER frequency()
 		{
-			static LARGE_INTEGER freq = frequencyInitializer();
+			static const LARGE_INTEGER freq = frequencyInitializer();
 			return freq;
 		}
 

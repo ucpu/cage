@@ -125,7 +125,7 @@ namespace cage
 		void terminate()
 		{
 			{
-				ScopeLock<Mutex> sl(mut);
+				ScopeLock<Mutex> sl(mut); // mandate memory barriers
 				stop = true;
 			}
 			writer->broadcast();

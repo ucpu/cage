@@ -5,6 +5,17 @@
 
 namespace cage
 {
+	// configuration is held in global memory
+	// creating configuration variables is thread safe
+	// modifying configuration variables is _not_ thread safe
+	// configuration variables, once created, cannot be removed
+
+	// structures Config* store a reference to the config variable and are very fast to access, but are not thread safe
+	// functions ConfigSet* and ConfigGet* are simpler to use for one-time access
+
+	// assigning a value to config variable also changes the type of the variable
+	// reading a value from config variable converts the value from the type of the variable to the requested type, and does _not_ change the type of the variable itself
+
 	enum class ConfigTypeEnum : uint32
 	{
 		Undefined,
@@ -19,7 +30,7 @@ namespace cage
 	};
 
 	CAGE_CORE_API string configTypeToString(const ConfigTypeEnum type);
-	CAGE_CORE_API void configSetDynamic(const string &name, const string &value);
+	CAGE_CORE_API void configSetDynamic(const string &name, const string &value); // changes the type of the config variable to the one best suited for the value
 	CAGE_CORE_API ConfigTypeEnum configGetType(const string &name);
 
 #define GCHL_CONFIG(T, t) \
@@ -73,6 +84,8 @@ namespace cage
 	};
 
 	CAGE_CORE_API Holder<ConfigList> newConfigList();
+
+	// ini values are mapped to config variables as 'prefix/section/item = value'
 
 	CAGE_CORE_API void configApplyIni(const Ini *ini, const string &prefix);
 	CAGE_CORE_API Holder<Ini> configGenerateIni(const string &prefix);

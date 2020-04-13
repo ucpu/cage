@@ -54,11 +54,11 @@ namespace cage
 	{ \
 		if (min == max) \
 			return min; \
-		CAGE_ASSERT(min < max, min, max); \
+		CAGE_ASSERT(min < max); \
 		uint64 range = max - min; \
 		uint64 mod = next() % range; \
 		TYPE res = (TYPE)(mod + min); \
-		CAGE_ASSERT(res >= min && res < max, res, min, max); \
+		CAGE_ASSERT(res >= min && res < max); \
 		return res; \
 	}
 	CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, sint8, sint16, sint32, sint64, uint8, uint16, uint32, uint64));
@@ -66,7 +66,7 @@ namespace cage
 
 #define GCHL_GENERATE(TYPE) TYPE RandomGenerator::randomRange(TYPE min, TYPE max) \
 	{ \
-		CAGE_ASSERT(min <= max, min, max); \
+		CAGE_ASSERT(min <= max); \
 		TYPE res = interpolate(min, max, this->randomChance()); \
 		return res; \
 	}
@@ -75,13 +75,13 @@ namespace cage
 
 	double RandomGenerator::randomRange(double min, double max)
 	{
-		CAGE_ASSERT(min <= max, min, max);
+		CAGE_ASSERT(min <= max);
 		uint64 r = next();
 		double f = (double)r / (double)detail::numeric_limits<uint64>::max();
 		if (f >= 1.0)
 			f = 0;
 		double res = (max - min) * f + min;
-		CAGE_ASSERT(res >= min && res < max, res, min, max);
+		CAGE_ASSERT(res >= min && res < max);
 		return res;
 	}
 
@@ -91,7 +91,7 @@ namespace cage
 		real res = (real)r / (real)detail::numeric_limits<uint64>::max();
 		if (res >= 1.0)
 			res = 0;
-		CAGE_ASSERT(res >= 0.f && res < 1.f, res);
+		CAGE_ASSERT(res >= 0.f && res < 1.f);
 		return res;
 	}
 

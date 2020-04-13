@@ -26,9 +26,9 @@ namespace cage
 			vds.init(data, size);
 			uint32 ch = 0, f = 0, r = 0;
 			vds.decode(ch, f, r, (float*)context->originalData().data());
-			CAGE_ASSERT(snd.channels == ch, snd.channels, ch);
-			CAGE_ASSERT(snd.frames == f, snd.frames, f);
-			CAGE_ASSERT(snd.sampleRate == r, snd.sampleRate, r);
+			CAGE_ASSERT(snd.channels == ch);
+			CAGE_ASSERT(snd.frames == f);
+			CAGE_ASSERT(snd.sampleRate == r);
 		}
 
 		void processLoad(const AssetContext *context, void *schemePointer)

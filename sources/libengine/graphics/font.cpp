@@ -81,7 +81,7 @@ namespace cage
 
 			real findKerning(uint32 L, uint32 R, real size) const
 			{
-				CAGE_ASSERT(L < glyphsArray.size() && R < glyphsArray.size(), L, R, glyphsArray.size());
+				CAGE_ASSERT(L < glyphsArray.size() && R < glyphsArray.size());
 				if (kerning.empty() || glyphsArray.empty())
 					return 0;
 				uint32 s = numeric_cast<uint32>(glyphsArray.size());
@@ -160,9 +160,9 @@ namespace cage
 			void processText(const ProcessData &data)
 			{
 				CAGE_ASSERT(!data.render || instances.empty());
-				CAGE_ASSERT(data.format->align <= TextAlignEnum::Center, data.format->align);
-				CAGE_ASSERT(data.format->wrapWidth > 0, data.format->wrapWidth);
-				CAGE_ASSERT(data.format->size > 0, data.format->size);
+				CAGE_ASSERT(data.format->align <= TextAlignEnum::Center);
+				CAGE_ASSERT(data.format->wrapWidth > 0);
+				CAGE_ASSERT(data.format->size > 0);
 				const uint32 *totalEnd = data.gls + data.count;
 				const uint32 *it = data.gls;
 				real actualLineHeight = (lineHeight + data.format->lineSpacing) * data.format->size;
@@ -274,7 +274,7 @@ namespace cage
 		impl->texHeight = height;
 		impl->tex->bind();
 		uint32 channels = size / (width * height);
-		CAGE_ASSERT(width * height * channels == size, "rounding error", width, height, channels, size);
+		CAGE_ASSERT(width * height * channels == size);
 		switch (channels)
 		{
 		case 1:
@@ -342,12 +342,12 @@ namespace cage
 		FontImpl *impl = (FontImpl*)this;
 		if (glyphs)
 		{
-			convert8to32(glyphs, count, text);
+			utf8to32(glyphs, count, text);
 			for (uint32 i = 0; i < count; i++)
 				glyphs[i] = impl->findGlyphIndex(glyphs[i]);
 		}
 		else
-			count = countCharacters(text);
+			count = utfLength(text);
 	}
 
 	void Font::size(const uint32 *glyphs, uint32 count, const FormatStruct &format, vec2 &size)

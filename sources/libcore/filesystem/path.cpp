@@ -127,7 +127,7 @@ namespace cage
 		if (a.empty())
 			return b;
 		string result = pathSimplify(a + "/" + b);
-		CAGE_ASSERT(pathIsAbs(result) == pathIsAbs(a), a, b, result, pathIsAbs(result), pathIsAbs(a));
+		CAGE_ASSERT(pathIsAbs(result) == pathIsAbs(a));
 		return result;
 	}
 
@@ -427,7 +427,7 @@ namespace cage
 #ifdef CAGE_SYSTEM_WINDOWS
 				if (CreateDirectory(p.c_str(), nullptr) == 0)
 				{
-					auto err = GetLastError();
+					const auto err = GetLastError();
 					if (err != ERROR_ALREADY_EXISTS)
 					{
 						CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "path: '" + path + "'");
@@ -435,7 +435,7 @@ namespace cage
 					}
 				}
 #else
-				static const mode_t mode = 0755;
+				static constexpr mode_t mode = 0755;
 				if (mkdir(p.c_str(), mode) != 0 && errno != EEXIST)
 				{
 					CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "path: '" + path + "'");

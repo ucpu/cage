@@ -53,7 +53,7 @@ namespace cage
 			GuiSkinElementLayout::TextureUvOi next(bool allowBorder)
 			{
 				vec2 s = size + frame * 2;
-				CAGE_ASSERT(s[0] < 1, s, frame, border, size);
+				CAGE_ASSERT(s[0] < 1);
 				if (p[0] + s[0] > 1)
 					newLine();
 				GuiSkinElementLayout::TextureUvOi r;
@@ -64,7 +64,7 @@ namespace cage
 				r.inner = r.outer;
 				if (allowBorder)
 				{
-					CAGE_ASSERT(size[0] >= 2 * border && size[1] >= 2 * border, frame, border, size);
+					CAGE_ASSERT(size[0] >= 2 * border && size[1] >= 2 * border);
 					r.inner[0] += border;
 					r.inner[1] += border;
 					r.inner[2] -= border;

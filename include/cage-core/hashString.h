@@ -51,7 +51,7 @@ namespace cage
 		};
 	}
 
-	// HashString returns values in (upper) half of uint32 range
+	// HashString returns values in upper half of uint32 range
 	struct CAGE_CORE_API HashString
 	{
 	private:

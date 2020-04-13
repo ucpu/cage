@@ -78,7 +78,7 @@ namespace cage
 
 		Variable *directVariable(const string &name)
 		{
-			CAGE_ASSERT(!name.empty(), "variable name cannot be empty");
+			CAGE_ASSERT(!name.empty());
 			if (name.find(".") != m)
 			{
 				CAGE_LOG(SeverityEnum::Warning, "config", stringizer() + "accessing deprecated config variable '" + name + "'");
@@ -308,7 +308,7 @@ namespace cage
 
 			void next()
 			{
-				CAGE_ASSERT(valid, "ConfigList is at invalid location");
+				CAGE_ASSERT(valid);
 				index++;
 				valid = index < names.size();
 				if (valid)
@@ -358,7 +358,7 @@ namespace cage
 	CAGE_JOIN(Config, T)::CAGE_JOIN(Config, T)(const string &name, t default_) { ScopeLock<Mutex> lock(mut()); data = getVar(name); Variable *v = (Variable*)data; if (v->type == ConfigTypeEnum::Undefined) v->set(default_); } \
 	CAGE_JOIN(Config, T) &CAGE_JOIN(Config, T)::operator = (t value) { ((Variable*)data)->set(value); return *this; } \
 	CAGE_JOIN(Config, T)::operator t() const { return cast<t>((Variable*)data); } \
-	t ConfigList::CAGE_JOIN(get, T)() const { ConfigListImpl *impl = (ConfigListImpl*)this; CAGE_ASSERT(impl->valid, "ConfigList is at invalid location"); return cast<t>(impl->var); }
+	t ConfigList::CAGE_JOIN(get, T)() const { ConfigListImpl *impl = (ConfigListImpl*)this; CAGE_ASSERT(impl->valid); return cast<t>(impl->var); }
 	GCHL_CONFIG(Bool, bool)
 	GCHL_CONFIG(Sint32, sint32)
 	GCHL_CONFIG(Sint64, sint64)
@@ -374,7 +374,7 @@ namespace cage
 	ConfigString::ConfigString(const string &name, const string &default_) { ScopeLock<Mutex> lock(mut()); data = getVar(name); Variable *v = (Variable*)data; if (v->type == ConfigTypeEnum::Undefined) v->set(default_); }
 	ConfigString &ConfigString::operator = (const string &value) { ((Variable*)data)->set(value); return *this; }
 	ConfigString::operator string() const { return cast<string>((Variable*)data); }
-	string ConfigList::getString() const { ConfigListImpl *impl = (ConfigListImpl*)this; CAGE_ASSERT(impl->valid, "ConfigList is at invalid location"); return cast<string>(impl->var); }
+	string ConfigList::getString() const { ConfigListImpl *impl = (ConfigListImpl*)this; CAGE_ASSERT(impl->valid); return cast<string>(impl->var); }
 
 	bool ConfigList::valid() const
 	{
@@ -385,14 +385,14 @@ namespace cage
 	string ConfigList::name() const
 	{
 		ConfigListImpl *impl = (ConfigListImpl*)this;
-		CAGE_ASSERT(impl->valid, "ConfigList is at invalid location");
+		CAGE_ASSERT(impl->valid);
 		return impl->names[impl->index];
 	}
 
 	ConfigTypeEnum ConfigList::type() const
 	{
 		ConfigListImpl *impl = (ConfigListImpl*)this;
-		CAGE_ASSERT(impl->valid, "ConfigList is at invalid location");
+		CAGE_ASSERT(impl->valid);
 		return impl->var->type;
 	}
 

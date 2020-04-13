@@ -184,7 +184,7 @@ namespace cage
 			std::vector<png_bytep> rows;
 			rows.resize(height);
 			uint32 cols = width * components * bpp;
-			CAGE_ASSERT(cols == png_get_rowbytes(png, info), cols, png_get_rowbytes(png, info));
+			CAGE_ASSERT(cols == png_get_rowbytes(png, info));
 			for (uint32 y = 0; y < height; y++)
 				rows[y] = (png_bytep)in.data() + y * cols;
 			png_write_image(png, rows.data());

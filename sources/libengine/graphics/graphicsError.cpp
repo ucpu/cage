@@ -44,7 +44,7 @@ namespace cage
 				return; // ignore messages like: Buffer detailed info: Buffer object 3 (bound to GL_ELEMENT_ARRAY_BUFFER_ARB, GL_ARRAY_BUFFER_ARB, and GL_UNIFORM_BUFFER_EXT, usage hint is GL_STATIC_DRAW) will use VIDEO memory as the source for buffer object operations.
 
 			Window *ctx = (Window*)userParam;
-			CAGE_ASSERT(ctx, "missing context");
+			CAGE_ASSERT(ctx);
 			if (ctx->debugOpenglErrorCallback)
 				return ctx->debugOpenglErrorCallback(source, type, id, severity, message);
 

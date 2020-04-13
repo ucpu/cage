@@ -11,20 +11,6 @@
 
 namespace cage
 {
-	EngineProfiling::EngineProfiling() :
-		keyToggleProfilingScope(290), // f1
-		keyToggleProfilingMode(291), // f2
-		keyVisualizeBufferPrev(292), // f3
-		keyVisualizeBufferNext(293), // f4
-		keyToggleRenderMissingMeshes(294), // f5
-		keyToggleRenderSkeletonBones(295), // f6
-		keyToggleStereo(298), // f9
-		keyModifiers(ModifiersFlags::Ctrl),
-		profilingScope(EngineProfilingScopeEnum::Full),
-		profilingMode(EngineProfilingModeEnum::Maximum),
-		screenPosition(1, 0)
-	{}
-
 	namespace
 	{
 		ConfigSint32 visualizeBuffer("cage/graphics/visualizeBuffer");
@@ -41,7 +27,7 @@ namespace cage
 			uint32 layoutIndex;
 			uint32 labelIndices[40];
 			const EngineProfilingStatsFlags *labelFlags;
-			const char **labelNames;
+			const char *const *labelNames;
 			uint32 labelsCount;
 			EngineProfilingScopeEnum profilingModeOld;
 
@@ -69,7 +55,7 @@ namespace cage
 
 			void generateEntities()
 			{
-				static const EngineProfilingStatsFlags flagsFull[] = {
+				static constexpr EngineProfilingStatsFlags flagsFull[] = {
 					EngineProfilingStatsFlags::Control,
 					EngineProfilingStatsFlags::Sound,
 					EngineProfilingStatsFlags::GraphicsPrepare,
@@ -79,7 +65,7 @@ namespace cage
 					EngineProfilingStatsFlags::DrawPrimitives,
 					EngineProfilingStatsFlags::Entities,
 				};
-				static const char* namesFull[sizeof(flagsFull) / sizeof(flagsFull[0])] = {
+				static constexpr const char* namesFull[sizeof(flagsFull) / sizeof(flagsFull[0])] = {
 					"Control: ",
 					"Sound: ",
 					"Graphics Prepare: ",
@@ -90,23 +76,23 @@ namespace cage
 					"Entities: ",
 				};
 
-				static const EngineProfilingStatsFlags flagsShort[] = {
+				static constexpr EngineProfilingStatsFlags flagsShort[] = {
 					EngineProfilingStatsFlags::Control,
 					EngineProfilingStatsFlags::Sound,
 					EngineProfilingStatsFlags::GraphicsPrepare,
 					EngineProfilingStatsFlags::FrameTime,
 				};
-				static const char* namesShort[sizeof(flagsShort) / sizeof(flagsShort[0])] = {
+				static constexpr const char* namesShort[sizeof(flagsShort) / sizeof(flagsShort[0])] = {
 					"Control: ",
 					"Sound: ",
 					"Prepare: ",
 					"Frame: ",
 				};
 
-				static const EngineProfilingStatsFlags flagsFps[] = {
+				static constexpr EngineProfilingStatsFlags flagsFps[] = {
 					EngineProfilingStatsFlags::FrameTime,
 				};
-				static const char* namesFps[sizeof(flagsFps) / sizeof(flagsFps[0])] = {
+				static constexpr const char* namesFps[sizeof(flagsFps) / sizeof(flagsFps[0])] = {
 					"Frame Time: ",
 				};
 
@@ -128,7 +114,7 @@ namespace cage
 					child.parent = panel->name();
 				}
 
-				static const uint32 labelsPerMode[] = {
+				static constexpr uint32 labelsPerMode[] = {
 					sizeof(flagsFull) / sizeof(flagsFull[0]),
 					sizeof(flagsShort) / sizeof(flagsShort[0]),
 					sizeof(flagsFps) / sizeof(flagsFps[0]),
@@ -204,7 +190,7 @@ namespace cage
 
 			void setTextLabel(uint32 index, const string &value)
 			{
-				CAGE_ASSERT(index < sizeof(labelIndices) / sizeof(labelIndices[0]), index);
+				CAGE_ASSERT(index < sizeof(labelIndices) / sizeof(labelIndices[0]));
 				if (labelIndices[index] == 0 || !engineGui()->entities()->has(labelIndices[index]))
 					return;
 				Entity *timing = engineGui()->entities()->get(labelIndices[index]);

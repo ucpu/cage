@@ -100,7 +100,7 @@ namespace cage
 							while (avail)
 							{
 								uintPtr siz = s.recvFrom(buff->data() + off, avail, adr);
-								CAGE_ASSERT(siz <= avail, siz, avail, off);
+								CAGE_ASSERT(siz <= avail);
 								MemView mv(buff, off, siz);
 								avail -= siz;
 								off += siz;
@@ -674,7 +674,7 @@ namespace cage
 					// generate packet header
 					if (buff.size() == 0)
 					{
-						static const char c = 'c', a = 'a', g = 'g', e = 'e';
+						static constexpr char c = 'c', a = 'a', g = 'g', e = 'e';
 						ser << c << a << g << e << connId;
 						currentPacketSeqn = sending.packetSeqn++;
 						ser << currentPacketSeqn;
@@ -1105,8 +1105,8 @@ namespace cage
 
 			void write(const MemoryBuffer &buffer, uint32 channel, bool reliable)
 			{
-				CAGE_ASSERT(channel < 128, channel, reliable);
-				CAGE_ASSERT(buffer.size() <= 16 * 1024 * 1024, buffer.size(), channel, reliable);
+				CAGE_ASSERT(channel < 128);
+				CAGE_ASSERT(buffer.size() <= 16 * 1024 * 1024);
 				if (buffer.size() == 0)
 					return; // ignore empty messages
 

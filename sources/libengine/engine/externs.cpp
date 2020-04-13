@@ -16,7 +16,6 @@ namespace cage
 	EntityComponent *SoundComponent::component;
 	EntityComponent *ListenerComponent::component;
 
-	TransformComponent::TransformComponent(const transform &t) : transform(t) {}
 	EngineControlThread &controlThread()
 	{
 		static EngineControlThread instance;

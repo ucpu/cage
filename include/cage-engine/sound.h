@@ -114,7 +114,7 @@ namespace cage
 	CAGE_ENGINE_API Holder<SoundSource> newSoundSource(SoundContext *context);
 
 	CAGE_ENGINE_API AssetScheme genAssetSchemeSoundSource(uint32 threadIndex, SoundContext *memoryContext);
-	static const uint32 AssetSchemeIndexSoundSource = 20;
+	static constexpr uint32 AssetSchemeIndexSoundSource = 20;
 
 	class CAGE_ENGINE_API Speaker : private Immovable
 	{

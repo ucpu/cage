@@ -88,8 +88,8 @@ namespace cage
 	void UniformBuffer::bind(uint32 bindingPoint, uint32 offset, uint32 size) const
 	{
 		UniformBufferImpl *impl = (UniformBufferImpl*)this;
-		CAGE_ASSERT(offset + size <= impl->size, "insufficient buffer size", offset, size, impl->size);
-		CAGE_ASSERT((offset % getAlignmentRequirement()) == 0, "the offset must be aligned", offset, getAlignmentRequirement());
+		CAGE_ASSERT(offset + size <= impl->size);
+		CAGE_ASSERT((offset % getAlignmentRequirement()) == 0);
 		glBindBufferRange(GL_UNIFORM_BUFFER, bindingPoint, impl->id, offset, size);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
@@ -99,8 +99,8 @@ namespace cage
 		UniformBufferImpl *impl = (UniformBufferImpl*)this;
 		if (impl->mapped || impl->config.size)
 		{
-			CAGE_ASSERT(usage == 0, "buffer storage is immutable");
-			CAGE_ASSERT(size == impl->size, "buffer storage is immutable");
+			CAGE_ASSERT(usage == 0);
+			CAGE_ASSERT(size == impl->size);
 			writeRange(data, 0, size);
 		}
 		else
@@ -117,7 +117,7 @@ namespace cage
 	void UniformBuffer::writeRange(const void *data, uint32 offset, uint32 size)
 	{
 		UniformBufferImpl *impl = (UniformBufferImpl*)this;
-		CAGE_ASSERT(offset + size <= impl->size, "insufficient buffer size", offset, size, impl->size);
+		CAGE_ASSERT(offset + size <= impl->size);
 		if (impl->mapped)
 		{
 			detail::memcpy((char*)impl->mapped + offset, data, size);
@@ -154,7 +154,7 @@ namespace cage
 
 	uint32 UniformBuffer::getAlignmentRequirement()
 	{
-		static uint32 alignment = getAlignmentRequirementImpl();
+		static const uint32 alignment = getAlignmentRequirementImpl();
 		return alignment;
 	}
 

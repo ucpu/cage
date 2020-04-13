@@ -24,8 +24,8 @@ namespace cage
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT(!hierarchy->firstChild, "input box may not have children");
-				CAGE_ASSERT(!hierarchy->Image, "input box may not have image");
+				CAGE_ASSERT(!hierarchy->firstChild);
+				CAGE_ASSERT(!hierarchy->Image);
 
 				showArrows = data.type == InputTypeEnum::Real || data.type == InputTypeEnum::Integer;
 
@@ -77,7 +77,7 @@ namespace cage
 
 				if (hasFocus())
 				{
-					data.cursor = min(data.cursor, countCharacters(data.value));
+					data.cursor = min(data.cursor, utfLength(data.value));
 					hierarchy->text->text.cursor = data.cursor;
 				}
 			}
@@ -262,7 +262,7 @@ namespace cage
 			void gainFocus()
 			{
 				// update cursor
-				uint32 len = countCharacters(data.value);
+				uint32 len = utfLength(data.value);
 				uint32 &cur = data.cursor;
 				cur = min(cur, len);
 				if ((data.style & InputStyleFlags::GoToEndOnFocusGain) == InputStyleFlags::GoToEndOnFocusGain)
@@ -304,11 +304,11 @@ namespace cage
 			{
 				uint32 &cursor = data.cursor;
 				std::vector<uint32> utf32;
-				utf32.resize(countCharacters(data.value));
+				utf32.resize(utfLength(data.value));
 				uint32 len;
-				convert8to32(utf32.data(), len, data.value);
-				CAGE_ASSERT(len == utf32.size(), len, utf32.size());
-				CAGE_ASSERT(cursor <= len, cursor, len, data.value);
+				utf8to32(utf32.data(), len, data.value);
+				CAGE_ASSERT(len == utf32.size());
+				CAGE_ASSERT(cursor <= len);
 				switch (key)
 				{
 				case 263: // left
@@ -327,7 +327,7 @@ namespace cage
 						break;
 					cursor--;
 					utf32.erase(utf32.begin() + cursor);
-					data.value = convert32to8(utf32.data(), numeric_cast<uint32>(utf32.size()));
+					data.value = utf32to8(utf32.data(), numeric_cast<uint32>(utf32.size()));
 					validate();
 					hierarchy->fireWidgetEvent();
 				} break;
@@ -336,7 +336,7 @@ namespace cage
 					if (cursor == len)
 						break;
 					utf32.erase(utf32.begin() + cursor);
-					data.value = convert32to8(utf32.data(), numeric_cast<uint32>(utf32.size()));
+					data.value = utf32to8(utf32.data(), numeric_cast<uint32>(utf32.size()));
 					validate();
 					hierarchy->fireWidgetEvent();
 				} break;
@@ -350,14 +350,14 @@ namespace cage
 					return true;
 				uint32 &cursor = data.cursor;
 				std::vector<uint32> utf32;
-				uint32 len = countCharacters(data.value);
+				uint32 len = utfLength(data.value);
 				utf32.reserve(len + 1);
 				utf32.resize(len);
-				convert8to32(utf32.data(), len, data.value);
-				CAGE_ASSERT(len == utf32.size(), len, utf32.size());
-				CAGE_ASSERT(cursor <= len, cursor, len, data.value);
+				utf8to32(utf32.data(), len, data.value);
+				CAGE_ASSERT(len == utf32.size());
+				CAGE_ASSERT(cursor <= len);
 				utf32.insert(utf32.begin() + cursor, key);
-				data.value = convert32to8(utf32.data(), numeric_cast<uint32>(utf32.size()));
+				data.value = utf32to8(utf32.data(), numeric_cast<uint32>(utf32.size()));
 				cursor++;
 				validate();
 				hierarchy->fireWidgetEvent();

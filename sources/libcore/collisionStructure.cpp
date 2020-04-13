@@ -1,11 +1,11 @@
 #include <cage-core/geometry.h>
 #include <cage-core/memory.h>
-#include <cage-core/collision.h>
+#include <cage-core/collisionStructure.h>
 #include <cage-core/collisionMesh.h>
-#include <cage-core/spatial.h>
+#include <cage-core/spatialStructure.h>
 #include <cage-core/unordered_map.h>
+#include <cage-core/pointerRangeHolder.h>
 
-#include <vector>
 #include <algorithm>
 
 namespace cage
@@ -20,23 +20,15 @@ namespace cage
 			{}
 		};
 
-		class CollisionDataImpl : public CollisionData
+		class CollisionDataImpl : public CollisionStructure
 		{
 		public:
 			cage::unordered_map<uint32, Item> allItems;
-			Holder<SpatialData> spatial;
-			const uint32 maxCollisionPairs;
+			Holder<SpatialStructure> spatial;
 
-			static SpatialDataCreateConfig spatialConfig(const CollisionDataCreateConfig &config)
+			CollisionDataImpl(const CollisionStructureCreateConfig &config)
 			{
-				if (config.spatialConfig)
-					return *config.spatialConfig;
-				return SpatialDataCreateConfig();
-			}
-
-			CollisionDataImpl(const CollisionDataCreateConfig &config) : maxCollisionPairs(config.maxCollisionPairs)
-			{
-				spatial = newSpatialData(spatialConfig(config));
+				spatial = newSpatialData(config.spatialConfig ? *config.spatialConfig : SpatialStructureCreateConfig());
 			}
 
 			~CollisionDataImpl()
@@ -53,8 +45,8 @@ namespace cage
 			uint32 resultName;
 			real resultFractionBefore;
 			real resultFractionContact;
-			std::vector<CollisionPair> resultPairs;
-			std::vector<CollisionPair> tmpPairs;
+			Holder<PointerRange<CollisionPair>> resultPairs;
+			Holder<PointerRange<CollisionPair>> tmpPairs;
 
 			CollisionQueryImpl(const CollisionDataImpl *data) : data(data), resultName(0)
 			{
@@ -70,19 +62,18 @@ namespace cage
 				spatial->intersection(collider->box() * t1 + collider->box() * t2);
 				for (uint32 nameIt : spatial->result())
 				{
-					tmpPairs.resize(data->maxCollisionPairs);
 					const Item &item = data->allItems.at(nameIt);
 					real fractBefore, fractContact;
-					uint32 res = collisionDetection(collider, item.collider, t1, item, t2, item, fractBefore, fractContact, tmpPairs.data(), numeric_cast<uint32>(tmpPairs.size()));
-					if (res > 0 && fractContact < best)
+					bool res = collisionDetection(collider, item.collider, t1, item, t2, item, fractBefore, fractContact, tmpPairs);
+					if (res && fractContact < best)
 					{
-						tmpPairs.resize(res);
-						tmpPairs.swap(resultPairs);
+						std::swap(tmpPairs, resultPairs);
 						resultFractionBefore = fractBefore;
 						resultFractionContact = best = fractContact;
 						resultName = nameIt;
 					}
 				}
+				tmpPairs.clear();
 			}
 
 			template<class T>
@@ -116,13 +107,21 @@ namespace cage
 				{
 					const Item &item = data->allItems.at(resultName);
 					uint32 i = 0;
+					PointerRangeHolder<CollisionPair> pairs;
+					pairs.reserve(item.collider->triangles().size());
 					for (const triangle &t : item.collider->triangles())
 					{
 						if (intersects(shape, t * item))
-							resultPairs.emplace_back(m, i);
+						{
+							CollisionPair p;
+							p.a = m;
+							p.b = i;
+							pairs.push_back(p);
+						}
 						i++;
 					}
-					CAGE_ASSERT(!resultPairs.empty());
+					CAGE_ASSERT(!pairs.empty());
+					resultPairs = templates::move(pairs);
 				}
 			}
 		};
@@ -207,7 +206,7 @@ namespace cage
 		impl->query(shape);
 	}
 
-	void CollisionData::update(uint32 name, const CollisionMesh *collider, const transform &t)
+	void CollisionStructure::update(uint32 name, const CollisionMesh *collider, const transform &t)
 	{
 		CollisionDataImpl *impl = (CollisionDataImpl*)this;
 		remove(name);
@@ -215,32 +214,32 @@ namespace cage
 		impl->spatial->update(name, collider->box() * mat4(t));
 	}
 
-	void CollisionData::remove(uint32 name)
+	void CollisionStructure::remove(uint32 name)
 	{
 		CollisionDataImpl *impl = (CollisionDataImpl*)this;
 		impl->spatial->remove(name);
 		impl->allItems.erase(name);
 	}
 
-	void CollisionData::clear()
+	void CollisionStructure::clear()
 	{
 		CollisionDataImpl *impl = (CollisionDataImpl*)this;
 		impl->allItems.clear();
 		impl->spatial->clear();
 	}
 
-	void CollisionData::rebuild()
+	void CollisionStructure::rebuild()
 	{
 		CollisionDataImpl *impl = (CollisionDataImpl*)this;
 		impl->spatial->rebuild();
 	}
 
-	Holder<CollisionData> newCollisionData(const CollisionDataCreateConfig &config)
+	Holder<CollisionStructure> newCollisionStructure(const CollisionStructureCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<CollisionData, CollisionDataImpl>(config);
+		return detail::systemArena().createImpl<CollisionStructure, CollisionDataImpl>(config);
 	}
 
-	Holder<CollisionQuery> newCollisionQuery(const CollisionData *data)
+	Holder<CollisionQuery> newCollisionQuery(const CollisionStructure *data)
 	{
 		return detail::systemArena().createImpl<CollisionQuery, CollisionQueryImpl>((CollisionDataImpl*)data);
 	}

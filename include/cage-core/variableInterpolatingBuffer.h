@@ -33,7 +33,7 @@ namespace cage
 
 		void set(const T &a, uint64 time, uint64 current)
 		{
-			CAGE_ASSERT(time > 0, "zero time is used as special value");
+			CAGE_ASSERT(time > 0);
 			if (current == time || times[0] == 0)
 			{
 				times[0] = time;
@@ -73,7 +73,7 @@ namespace cage
 
 		T operator () (uint64 current) const
 		{
-			CAGE_ASSERT(current > 0, "zero time is used as special value");
+			CAGE_ASSERT(current > 0);
 			if (times[0] == 0)
 				CAGE_THROW_ERROR(Exception, "interpolator has no data");
 			if (current <= times[0] || times[1] == 0)
@@ -95,10 +95,10 @@ namespace cage
 
 		T interp(uint32 i, uint64 current) const
 		{
-			CAGE_ASSERT(i < 2, "invalid parameters", i);
+			CAGE_ASSERT(i < 2);
 			uint64 t1 = times[i];
 			uint64 t2 = times[i + 1];
-			CAGE_ASSERT(t2 > t1, "invalid times in interpolator", times[0], times[1], times[2], i);
+			CAGE_ASSERT(t2 > t1);
 			float p = (current - t1) / (float)(t2 - t1);
 			return fnc(data[i], data[i + 1], p);
 		}

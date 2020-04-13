@@ -79,7 +79,7 @@ namespace cage
 	{
 		static EntityComponent *component;
 		static EntityComponent *componentHistory;
-		TransformComponent(const transform &t = transform());
+		using transform::transform;
 	};
 
 	struct CAGE_ENGINE_API RenderComponent
@@ -230,7 +230,7 @@ namespace cage
 		EventDispatcher<bool()> finalize;
 		EventDispatcher<bool()> dispatch;
 		EventDispatcher<bool()> swap;
-		static const uint32 threadIndex = 1;
+		static constexpr uint32 threadIndex = 1;
 	};
 	CAGE_ENGINE_API EngineGraphicsDispatchThread &graphicsDispatchThread();
 
@@ -240,7 +240,7 @@ namespace cage
 		EventDispatcher<bool()> finalize;
 		EventDispatcher<bool()> prepare;
 		StereoModeEnum stereoMode;
-		static const uint32 threadIndex = 3;
+		static constexpr uint32 threadIndex = 3;
 		EngineGraphicsPrepareThread();
 	};
 	CAGE_ENGINE_API EngineGraphicsPrepareThread &graphicsPrepareThread();
@@ -253,7 +253,7 @@ namespace cage
 		Scheduler *scheduler();
 		uint64 updatePeriod() const;
 		void updatePeriod(uint64 p);
-		static const uint32 threadIndex = 4;
+		static constexpr uint32 threadIndex = 4;
 	};
 	CAGE_ENGINE_API EngineSoundThread &soundThread();
 

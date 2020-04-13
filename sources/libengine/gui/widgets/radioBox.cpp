@@ -14,8 +14,8 @@ namespace cage
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT(!hierarchy->firstChild, "radiobox may not have children");
-				CAGE_ASSERT(!hierarchy->Image, "radiobox may not have image");
+				CAGE_ASSERT(!hierarchy->firstChild);
+				CAGE_ASSERT(!hierarchy->Image);
 				if (hierarchy->text)
 					hierarchy->text->text.apply(skin->defaults.radioBox.textFormat, hierarchy->impl);
 				element = GuiElementTypeEnum((uint32)GuiElementTypeEnum::RadioBoxUnchecked + (uint32)data.state);

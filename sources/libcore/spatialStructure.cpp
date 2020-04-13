@@ -1,6 +1,6 @@
 #include <cage-core/geometry.h>
 #include <cage-core/memory.h>
-#include <cage-core/spatial.h>
+#include <cage-core/spatialStructure.h>
 #include <cage-core/unordered_map.h>
 
 #include <xsimd/xsimd.hpp>
@@ -159,7 +159,7 @@ namespace cage
 			sint32 b() const { return box.high.s.i; }
 		};
 
-		class SpatialDataImpl : public SpatialData
+		class SpatialDataImpl : public SpatialStructure
 		{
 		public:
 			MemoryArenaGrowing<MemoryAllocatorPolicyPool<templates::PoolAllocatorAtomSize<ItemUnion>::result>, MemoryConcurrentPolicyNone> itemsPool;
@@ -169,14 +169,14 @@ namespace cage
 			std::vector<Node, MemoryArenaStd<Node>> nodes;
 			std::vector<ItemBase*> indices;
 			typedef std::vector<ItemBase*>::iterator indicesIterator;
-			static const uint32 binsCount = 10;
+			static constexpr uint32 binsCount = 10;
 			std::array<FastBox, binsCount> leftBinBoxes;
 			std::array<FastBox, binsCount> rightBinBoxes;
 			std::array<uint32, binsCount> leftBinCounts;
 
-			SpatialDataImpl(const SpatialDataCreateConfig &config) : itemsPool(config.maxItems * sizeof(ItemUnion)), itemsArena(&itemsPool), dirty(false), nodes(detail::systemArena())
+			SpatialDataImpl(const SpatialStructureCreateConfig &config) : itemsPool(config.maxItems * sizeof(ItemUnion)), itemsArena(&itemsPool), dirty(false), nodes(detail::systemArena())
 			{
-				CAGE_ASSERT((uintPtr(this) % alignof(FastBox)) == 0, uintPtr(this) % alignof(FastBox), alignof(FastBox));
+				CAGE_ASSERT((uintPtr(this) % alignof(FastBox)) == 0);
 				CAGE_ASSERT((uintPtr(leftBinBoxes.data()) % alignof(FastBox)) == 0);
 				CAGE_ASSERT((uintPtr(rightBinBoxes.data()) % alignof(FastBox)) == 0);
 			}
@@ -317,7 +317,7 @@ namespace cage
 				}
 				nodes.emplace_back(worldBox, 0, numeric_cast<sint32>(itemsTable.size()));
 				rebuild(0, 0, real::Infinity());
-				CAGE_ASSERT(uintPtr(nodes.data()) % alignof(Node) == 0, uintPtr(nodes.data()) % alignof(Node), alignof(Node), alignof(FastBox), sizeof(Node));
+				CAGE_ASSERT(uintPtr(nodes.data()) % alignof(Node) == 0);
 #ifdef CAGE_ASSERT_ENABLED
 				validate(0);
 #endif // CAGE_ASSERT_ENABLED
@@ -352,7 +352,7 @@ namespace cage
 
 				intersectorStruct(const SpatialDataImpl *data, std::vector<uint32> &resultNames, const T &other) : data(data), resultNames(resultNames), other(other), otherBox(aabb(other))
 				{
-					CAGE_ASSERT((uintPtr(this) % alignof(FastBox)) == 0, uintPtr(this) % alignof(FastBox), alignof(FastBox));
+					CAGE_ASSERT((uintPtr(this) % alignof(FastBox)) == 0);
 					CAGE_ASSERT((uintPtr(&otherBox) % alignof(FastBox)) == 0);
 					intersection(0);
 				}
@@ -434,12 +434,12 @@ namespace cage
 		impl->intersection(shape);
 	}
 
-	void SpatialData::update(uint32 name, const vec3 &other)
+	void SpatialStructure::update(uint32 name, const vec3 &other)
 	{
 		update(name, aabb(other, other));
 	}
 
-	void SpatialData::update(uint32 name, const line &other)
+	void SpatialStructure::update(uint32 name, const line &other)
 	{
 		CAGE_ASSERT(other.valid());
 		CAGE_ASSERT(other.isPoint() || other.isSegment());
@@ -448,7 +448,7 @@ namespace cage
 		impl->itemsTable[name] = impl->itemsArena.createImpl<ItemBase, ItemShape<line>>(name, other);
 	}
 
-	void SpatialData::update(uint32 name, const triangle &other)
+	void SpatialStructure::update(uint32 name, const triangle &other)
 	{
 		CAGE_ASSERT(other.valid());
 		CAGE_ASSERT(other.area() < real::Infinity());
@@ -457,7 +457,7 @@ namespace cage
 		impl->itemsTable[name] = impl->itemsArena.createImpl<ItemBase, ItemShape<triangle>>(name, other);
 	}
 
-	void SpatialData::update(uint32 name, const sphere &other)
+	void SpatialStructure::update(uint32 name, const sphere &other)
 	{
 		CAGE_ASSERT(other.valid());
 		CAGE_ASSERT(other.volume() < real::Infinity());
@@ -466,7 +466,7 @@ namespace cage
 		impl->itemsTable[name] = impl->itemsArena.createImpl<ItemBase, ItemShape<sphere>>(name, other);
 	}
 
-	void SpatialData::update(uint32 name, const aabb &other)
+	void SpatialStructure::update(uint32 name, const aabb &other)
 	{
 		CAGE_ASSERT(other.valid());
 		CAGE_ASSERT(other.volume() < real::Infinity());
@@ -475,32 +475,32 @@ namespace cage
 		impl->itemsTable[name] = impl->itemsArena.createImpl<ItemBase, ItemShape<aabb>>(name, other);
 	}
 
-	void SpatialData::remove(uint32 name)
+	void SpatialStructure::remove(uint32 name)
 	{
 		SpatialDataImpl *impl = (SpatialDataImpl*)this;
 		impl->dirty = true;
 		impl->itemsTable.erase(name);
 	}
 
-	void SpatialData::clear()
+	void SpatialStructure::clear()
 	{
 		SpatialDataImpl *impl = (SpatialDataImpl*)this;
 		impl->dirty = true;
 		impl->itemsTable.clear();
 	}
 
-	void SpatialData::rebuild()
+	void SpatialStructure::rebuild()
 	{
 		SpatialDataImpl *impl = (SpatialDataImpl*)this;
 		impl->rebuild();
 	}
 
-	Holder<SpatialData> newSpatialData(const SpatialDataCreateConfig &config)
+	Holder<SpatialStructure> newSpatialData(const SpatialStructureCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<SpatialData, SpatialDataImpl>(config);
+		return detail::systemArena().createImpl<SpatialStructure, SpatialDataImpl>(config);
 	}
 
-	Holder<SpatialQuery> newSpatialQuery(const SpatialData *data)
+	Holder<SpatialQuery> newSpatialQuery(const SpatialStructure *data)
 	{
 		return detail::systemArena().createImpl<SpatialQuery, SpatialQueryImpl>((SpatialDataImpl*)data);
 	}

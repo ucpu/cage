@@ -80,7 +80,7 @@ namespace
 			{
 				if (nodes[i]->mParent)
 				{
-					CAGE_ASSERT(parents[i] < i, parents[i], i);
+					CAGE_ASSERT(parents[i] < i);
 					CAGE_ASSERT(parent(nodes[i]) == nodes[parents[i]]);
 				}
 				else

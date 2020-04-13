@@ -59,7 +59,8 @@ namespace cage
 		Holder<DirectoryList> dl = newDirectoryList(path);
 		while (dl->valid())
 		{
-			if (dl->isDirectory())
+			auto type = dl->type();
+			if (any(type & PathTypeFlags::Directory) && none(type & (PathTypeFlags::Archive | PathTypeFlags::InsideArchive)))
 				registerPath(pathJoin(path, dl->name()));
 			dl->next();
 		}
@@ -212,7 +213,7 @@ namespace cage
 
 			void next() override
 			{
-				CAGE_ASSERT(valid_, "can not advance on invalid list");
+				CAGE_ASSERT(valid_);
 
 #ifdef CAGE_SYSTEM_WINDOWS
 

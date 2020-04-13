@@ -10,13 +10,13 @@ namespace cage
 
 	void offsetPosition(vec2 &position, const vec4 &offset)
 	{
-		CAGE_ASSERT(position.valid() && offset.valid(), position, offset);
+		CAGE_ASSERT(position.valid() && offset.valid());
 		position -= vec2(offset);
 	}
 
 	void offsetSize(vec2 &size, const vec4 &offset)
 	{
-		CAGE_ASSERT(size.valid() && offset.valid(), size, offset);
+		CAGE_ASSERT(size.valid() && offset.valid());
 		size += vec2(offset) + vec2(offset[2], offset[3]);
 		size = max(size, vec2());
 	}
@@ -29,7 +29,7 @@ namespace cage
 
 	bool pointInside(vec2 pos, vec2 size, vec2 point)
 	{
-		CAGE_ASSERT(pos.valid() && size.valid() && point.valid(), pos, size, point);
+		CAGE_ASSERT(pos.valid() && size.valid() && point.valid());
 		if (point[0] < pos[0] || point[1] < pos[1])
 			return false;
 		pos += size;
@@ -41,9 +41,9 @@ namespace cage
 	bool clip(vec2 &pos, vec2 &size, vec2 clipPos, vec2 clipSize)
 	{
 		CAGE_ASSERT(clipPos.valid());
-		CAGE_ASSERT(clipSize.valid() && clipSize[0] >= 0 && clipSize[1] >= 0, clipPos, clipSize);
+		CAGE_ASSERT(clipSize.valid() && clipSize[0] >= 0 && clipSize[1] >= 0);
 		CAGE_ASSERT(pos.valid());
-		CAGE_ASSERT(size.valid() && size[0] >= 0 && size[1] >= 0, pos, size);
+		CAGE_ASSERT(size.valid() && size[0] >= 0 && size[1] >= 0);
 		vec2 e = min(pos + size, clipPos + clipSize);
 		pos = max(pos, clipPos);
 		size = max(e - pos, vec2());

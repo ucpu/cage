@@ -57,8 +57,8 @@ namespace cage
 
 			uint32 generateUniqueName()
 			{
-				static const uint32 a = (uint32)1 << 28;
-				static const uint32 b = (uint32)1 << 30;
+				static constexpr uint32 a = (uint32)1 << 28;
+				static constexpr uint32 b = (uint32)1 << 30;
 				if (generateName < a || generateName > b)
 					generateName = a;
 				while (has(generateName))
@@ -182,7 +182,7 @@ namespace cage
 	{
 		EntityManagerImpl *impl = (EntityManagerImpl *)this;
 		CAGE_ASSERT(name != 0);
-		CAGE_ASSERT(!impl->namedEntities.count(name), "entity name must be unique", name);
+		CAGE_ASSERT(!impl->namedEntities.count(name));
 		return detail::systemArena().createObject<EntityImpl>(impl, name);
 	}
 
@@ -302,7 +302,7 @@ namespace cage
 	bool Entity::has(const EntityGroup *group) const
 	{
 		EntityImpl *impl = (EntityImpl*)this;
-		CAGE_ASSERT(((GroupImpl*)group)->manager == impl->manager, "incompatible group");
+		CAGE_ASSERT(((GroupImpl*)group)->manager == impl->manager);
 		return impl->groups.find(const_cast<EntityGroup*>(group)) != impl->groups.end();
 	}
 
@@ -337,7 +337,7 @@ namespace cage
 	{
 		EntityImpl *impl = (EntityImpl*)this;
 		ComponentImpl *ci = (ComponentImpl *)component;
-		CAGE_ASSERT(ci->manager == impl->manager, "incompatible component");
+		CAGE_ASSERT(ci->manager == impl->manager);
 		if (impl->components.size() > ci->vectorIndex)
 			return impl->components[ci->vectorIndex] != nullptr;
 		return false;

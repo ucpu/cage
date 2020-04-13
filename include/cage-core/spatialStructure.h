@@ -18,7 +18,7 @@ namespace cage
 		void intersection(const aabb &shape);
 	};
 
-	class CAGE_CORE_API SpatialData : private Immovable
+	class CAGE_CORE_API SpatialStructure : private Immovable
 	{
 	public:
 		void update(uint32 name, const vec3 &other);
@@ -31,13 +31,13 @@ namespace cage
 		void rebuild();
 	};
 
-	struct CAGE_CORE_API SpatialDataCreateConfig
+	struct CAGE_CORE_API SpatialStructureCreateConfig
 	{
 		uint32 maxItems = 1000 * 100;
 	};
 
-	CAGE_CORE_API Holder<SpatialData> newSpatialData(const SpatialDataCreateConfig &config);
-	CAGE_CORE_API Holder<SpatialQuery> newSpatialQuery(const SpatialData *data); // the SpatialData must outlive the query
+	CAGE_CORE_API Holder<SpatialStructure> newSpatialData(const SpatialStructureCreateConfig &config);
+	CAGE_CORE_API Holder<SpatialQuery> newSpatialQuery(const SpatialStructure *data); // the SpatialStructure must outlive the query
 }
 
 #endif // guard_spatial_h_9A6D87AF6D4243E990D6E274B56CF578

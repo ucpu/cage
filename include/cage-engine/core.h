@@ -193,7 +193,7 @@ namespace cage
 
 	// constants
 
-	static const uint32 MaxTexturesCountPerMaterial = 4;
+	static constexpr uint32 MaxTexturesCountPerMaterial = 4;
 
 	// ivec2
 

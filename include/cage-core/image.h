@@ -11,6 +11,7 @@ namespace cage
 		U16 = 2, // 16 bit normalized (native endianness)
 		Rgbe = 3, // requires 3 channels exactly, each pixel encoded as one uint32
 		Float = 4,
+		// todo DXT/s3tc
 
 		Default = m, // used only for decoding an image, it will use the original format from the image
 	};
@@ -44,6 +45,7 @@ namespace cage
 		void reset();
 
 		// load from raw memory
+		void loadBuffer(MemoryBuffer &&buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format);
 		void loadBuffer(const MemoryBuffer &buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format);
 		void loadMemory(const void *buffer, uintPtr size, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format);
 

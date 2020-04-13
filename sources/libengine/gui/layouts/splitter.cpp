@@ -20,7 +20,7 @@ namespace cage
 					chc++;
 					c = c->nextSibling;
 				}
-				CAGE_ASSERT(chc == 2, chc, "splitter layout must have exactly two children");
+				CAGE_ASSERT(chc == 2);
 			}
 
 			virtual void findRequestedSize() override

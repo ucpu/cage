@@ -275,10 +275,10 @@ namespace
 		{
 			uint32 glyphIndex = 0, x = 0, y = 0;
 			packer->get(index, glyphIndex, x, y);
-			CAGE_ASSERT(glyphIndex < glyphs.size(), glyphIndex, glyphs.size());
+			CAGE_ASSERT(glyphIndex < glyphs.size());
 			Glyph &g = glyphs[glyphIndex];
-			CAGE_ASSERT(x < res, "texture x coordinate out of range", x, res, index, glyphIndex);
-			CAGE_ASSERT(y < res, "texture y coordinate out of range", y, res, index, glyphIndex);
+			CAGE_ASSERT(x < res);
+			CAGE_ASSERT(y < res);
 			g.pngX = x;
 			g.pngY = y;
 			vec2 to = vec2(g.pngX, g.pngY) / res;
@@ -309,10 +309,10 @@ namespace
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "export data");
 
-		CAGE_ASSERT(glyphs.size() == data.glyphCount, glyphs.size(), data.glyphCount);
-		CAGE_ASSERT(charsetChars.size() == data.charCount, charsetChars.size(), data.charCount);
-		CAGE_ASSERT(charsetChars.size() == charsetGlyphs.size(), charsetChars.size(), charsetGlyphs.size());
-		CAGE_ASSERT(kerning.size() == 0 || kerning.size() == data.glyphCount * data.glyphCount, kerning.size(), data.glyphCount * data.glyphCount, data.glyphCount);
+		CAGE_ASSERT(glyphs.size() == data.glyphCount);
+		CAGE_ASSERT(charsetChars.size() == data.charCount);
+		CAGE_ASSERT(charsetChars.size() == charsetGlyphs.size());
+		CAGE_ASSERT(kerning.size() == 0 || kerning.size() == data.glyphCount * data.glyphCount);
 
 		AssetHeader h = initializeAssetHeader();
 		h.originalSize = sizeof(data) + data.texSize +
@@ -426,7 +426,7 @@ namespace
 			else
 			{
 				uint32 m = data.glyphCount;
-				CAGE_ASSERT(kerning.size() == m * m, kerning.size(), m);
+				CAGE_ASSERT(kerning.size() == m * m);
 				for (uint32 x = 0; x < m; x++)
 				{
 					for (uint32 y = 0; y < m; y++)

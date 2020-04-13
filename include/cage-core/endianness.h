@@ -7,14 +7,10 @@ namespace cage
 {
 	namespace endianness
 	{
-		namespace privat
-		{
-			constexpr const uint32 one = 1;
-		}
-
 		constexpr bool little() noexcept
 		{
-			return ((const uint8&)(privat::one) == 1);
+			const uint32 one = 1;
+			return (const uint8&)one == 1;
 		}
 
 		constexpr bool big() noexcept // network

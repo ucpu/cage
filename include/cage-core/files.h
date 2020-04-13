@@ -52,6 +52,8 @@ namespace cage
 
 	CAGE_CORE_API Holder<DirectoryList> newDirectoryList(const string &path);
 
+	// receive operating system issued notifications about filesystem changes
+	// use registerPath to add a folder (and all of its subdirectories) to the watch list
 	class CAGE_CORE_API FilesystemWatcher : private Immovable
 	{
 	public:
@@ -75,7 +77,7 @@ namespace cage
 	};
 	GCHL_ENUM_BITS(PathTypeFlags);
 
-	// string manipulation only (does not touch any hdd)
+	// string manipulation only (does not touch actual filesystem)
 
 	CAGE_CORE_API bool pathIsValid(const string &path);
 	CAGE_CORE_API bool pathIsAbs(const string &path);
@@ -99,11 +101,31 @@ namespace cage
 
 	CAGE_CORE_API PathTypeFlags pathType(const string &path);
 	CAGE_CORE_API bool pathIsFile(const string &path);
+
+	// create all parent folders for the entire path
 	CAGE_CORE_API void pathCreateDirectories(const string &path);
+
+	// create an empty archive at the specified path, it can be populated afterwards
 	CAGE_CORE_API void pathCreateArchive(const string &path, const string &options = "");
+
+	// moves (renames) the file or directory
+	// moving a directory to different drive may fail
 	CAGE_CORE_API void pathMove(const string &from, const string &to);
+
+	// permanently removes the file or the folder including all sub-folders
 	CAGE_CORE_API void pathRemove(const string &path);
+
+	// path modification time is not related to any other source of time
+	// the only valid operation is to compare it to repeated calls to pathLastChange
 	CAGE_CORE_API uint64 pathLastChange(const string &path);
+
+	// example, name = logo.png, whereToStart = /abc/def/ghi will look for files at these paths (in order):
+	// /abc/def/ghi/logo.png
+	// /abc/def/logo.png
+	// /abc/logo.png
+	// /logo.png
+	// and finally throws an exception if none of the paths existed
+	// if whereToStart is omitted, the search starts in current working directory
 	CAGE_CORE_API string pathSearchTowardsRoot(const string &name, PathTypeFlags type = PathTypeFlags::File);
 	CAGE_CORE_API string pathSearchTowardsRoot(const string &name, const string &whereToStart, PathTypeFlags type = PathTypeFlags::File);
 

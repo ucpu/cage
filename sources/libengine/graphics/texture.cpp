@@ -17,7 +17,7 @@ namespace cage
 				glGetIntegerv(GL_ACTIVE_TEXTURE, &i);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 				i -= GL_TEXTURE0;
-				CAGE_ASSERT(i >= 0 && i < 32, "GL_ACTIVE_TEXTURE out of range", i);
+				CAGE_ASSERT(i >= 0 && i < 32);
 				return i;
 			}
 
@@ -357,7 +357,7 @@ namespace cage
 					sample -= n * frames;
 				}
 			}
-			CAGE_ASSERT(sample >= 0 && sample < frames, sample, frames);
+			CAGE_ASSERT(sample >= 0 && sample < frames);
 			real s = (float)sample;
 			real f = floor(s);
 			if (s < frames - 1)

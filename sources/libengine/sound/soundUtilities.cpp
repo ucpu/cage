@@ -549,7 +549,7 @@ namespace cage
 #ifdef CAGE_ASSERT_ENABLED
 			for (uint32 i = 0; i < channelsOut; i++)
 			{
-				CAGE_ASSERT(channelsOrdering[i] < channelsIn, channelsOrdering[i], i, channelsIn, channelsOut);
+				CAGE_ASSERT(channelsOrdering[i] < channelsIn);
 			}
 #endif // CAGE_ASSERT_ENABLED
 			for (uint32 f = 0; f < frames; f++)
@@ -568,7 +568,7 @@ namespace cage
 				for (uint32 fo = 0; fo < m; fo++)
 				{
 					uint32 fi = fo * rateIn / rateOut;
-					CAGE_ASSERT(fi < framesIn, fi, framesIn, fo, framesOut);
+					CAGE_ASSERT(fi < framesIn);
 					for (uint32 c = 0; c < channels; c++)
 						bufferOut[fo * channels + c] = bufferIn[fi * channels + c];
 				}
@@ -579,8 +579,8 @@ namespace cage
 
 			namespace
 			{
-				static const uint32 lanczosResolution = 512;
-				static const uint32 lanczosA = 2;
+				static constexpr uint32 lanczosResolution = 512;
+				static constexpr uint32 lanczosA = 2;
 				real lanczosTable[lanczosResolution];
 
 				struct lanczosTableStruct
@@ -607,9 +607,9 @@ namespace cage
 
 			void resampleLanczos(float *bufferIn, float *bufferOut, uint32 framesIn, uint32 framesOut, uint32 rateIn, uint32 rateOut, uint32 channels)
 			{
-				CAGE_ASSERT(framesIn > lanczosA * 2 + 1, framesIn);
+				CAGE_ASSERT(framesIn > lanczosA * 2 + 1);
 				uint32 border = (lanczosA + 1) * rateOut / rateIn;
-				CAGE_ASSERT(border < framesOut, border, framesOut, framesIn, rateOut, rateIn);
+				CAGE_ASSERT(border < framesOut);
 				for (uint32 o = border, e = framesOut - border; o < e; o++)
 				{
 					real x = real(o * rateIn) / real(rateOut);
@@ -617,8 +617,8 @@ namespace cage
 					float *output = bufferOut + o * channels;
 					for (uint32 ch = 0; ch < channels; ch++)
 						output[ch] = 0;
-					CAGE_ASSERT((sint32)xf + 1 - (sint32)lanczosA >= 0, xf);
-					CAGE_ASSERT(xf + lanczosA < framesIn, xf, framesIn);
+					CAGE_ASSERT((sint32)xf + 1 - (sint32)lanczosA >= 0);
+					CAGE_ASSERT(xf + lanczosA < framesIn);
 					for (uint32 i = xf + 1 - lanczosA, e = xf + lanczosA + 1; i < e; i++)
 					{
 						real l = lanczos(x - i);
@@ -653,27 +653,27 @@ namespace cage
 
 	void soundSetSpeakerDirections(uint32 channels, const vec3 *directions)
 	{
-		CAGE_ASSERT(channels > 0 && channels < 9, channels);
+		CAGE_ASSERT(channels > 0 && channels < 9);
 		detail::memcpy(soundPrivat::speakerDirections[channels - 1], directions, channels * sizeof(vec3));
 	}
 
 	void soundGetSpeakerDirections(uint32 channels, vec3 *directions)
 	{
-		CAGE_ASSERT(channels > 0 && channels < 9, channels);
+		CAGE_ASSERT(channels > 0 && channels < 9);
 		detail::memcpy(directions, soundPrivat::speakerDirections[channels - 1], channels * sizeof(vec3));
 	}
 
 	void soundSetChannelsMixingMatrix(uint32 channelsIn, uint32 channelsOut, const vec3 *matrix)
 	{
-		CAGE_ASSERT(channelsIn > 0 && channelsIn < 9, channelsIn);
-		CAGE_ASSERT(channelsOut > 0 && channelsOut < 9, channelsOut);
+		CAGE_ASSERT(channelsIn > 0 && channelsIn < 9);
+		CAGE_ASSERT(channelsOut > 0 && channelsOut < 9);
 		detail::memcpy(soundPrivat::mixingMatrices[channelsIn - 1][channelsOut - 1], matrix, 64 * sizeof(vec3));
 	}
 
 	void soundGetChannelsMixingMatrix(uint32 channelsIn, uint32 channelsOut, vec3 *matrix)
 	{
-		CAGE_ASSERT(channelsIn > 0 && channelsIn < 9, channelsIn);
-		CAGE_ASSERT(channelsOut > 0 && channelsOut < 9, channelsOut);
+		CAGE_ASSERT(channelsIn > 0 && channelsIn < 9);
+		CAGE_ASSERT(channelsOut > 0 && channelsOut < 9);
 		detail::memcpy(matrix, soundPrivat::mixingMatrices[channelsIn - 1][channelsOut - 1], 64 * sizeof(vec3));
 	}
 }

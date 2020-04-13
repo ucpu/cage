@@ -11,8 +11,8 @@ namespace cage
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT(!hierarchy->firstChild, "label may not have children");
-				CAGE_ASSERT(!!hierarchy->text || !!hierarchy->Image, "label must have text or image");
+				CAGE_ASSERT(!hierarchy->firstChild);
+				CAGE_ASSERT(!!hierarchy->text || !!hierarchy->Image);
 				if (hierarchy->text)
 					hierarchy->text->text.apply(skin->defaults.label.textFormat, hierarchy->impl);
 				if (hierarchy->Image)
@@ -27,7 +27,9 @@ namespace cage
 				else if (hierarchy->Image)
 					hierarchy->requestedSize = max(hierarchy->requestedSize, hierarchy->Image->findRequestedSize());
 				else
+				{
 					CAGE_ASSERT(false);
+				}
 				offsetSize(hierarchy->requestedSize, skin->defaults.label.margin);
 			}
 

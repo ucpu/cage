@@ -14,8 +14,8 @@ namespace cage
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT(!hierarchy->firstChild, "checkbox may not have children");
-				CAGE_ASSERT(!hierarchy->Image, "checkbox may not have image");
+				CAGE_ASSERT(!hierarchy->firstChild);
+				CAGE_ASSERT(!hierarchy->Image);
 				if (hierarchy->text)
 					hierarchy->text->text.apply(skin->defaults.checkBox.textFormat, hierarchy->impl);
 				element = GuiElementTypeEnum((uint32)GuiElementTypeEnum::CheckBoxUnchecked + (uint32)data.state);
