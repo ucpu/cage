@@ -171,17 +171,9 @@ int main(int argc, const char *args[])
 		CAGE_LOG(SeverityEnum::Info, "analyze", "done");
 		return 0;
 	}
-	catch (const cage::Exception &)
-	{
-		// nothing
-	}
-	catch (const std::exception &e)
-	{
-		CAGE_LOG(SeverityEnum::Error, "exception", stringizer() + "std exception: " + e.what());
-	}
 	catch (...)
 	{
-		CAGE_LOG(SeverityEnum::Error, "exception", "unknown exception");
+		detail::logCurrentCaughtException();
 	}
 	return 1;
 }

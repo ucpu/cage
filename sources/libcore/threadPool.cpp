@@ -1,5 +1,6 @@
 #include <cage-core/concurrent.h>
 #include <cage-core/threadPool.h>
+#include <cage-core/logger.h>
 
 #include <vector>
 #include <exception>
@@ -56,7 +57,10 @@ namespace cage
 					{
 						ScopeLock<Mutex> l(mutex);
 						if (exptr)
-							CAGE_LOG(SeverityEnum::Warning, "ThreadPool", "discarding an exception caught in a thread pool");
+						{
+							CAGE_LOG(SeverityEnum::Warning, "thread", "discarding an exception caught in a thread pool");
+							detail::logCurrentCaughtException();
+						}
 						else
 							exptr = std::current_exception();
 					}

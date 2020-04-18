@@ -1,10 +1,7 @@
-#include <cage-core/core.h>
 #include <cage-core/logger.h>
 #include <cage-core/math.h>
 #include <cage-core/image.h>
 #include <cage-core/ini.h>
-
-#include <exception>
 
 using namespace cage;
 
@@ -158,17 +155,9 @@ int main(int argc, const char *args[])
 			doJoin(cmd);
 		return 0;
 	}
-	catch (const cage::Exception &)
-	{
-		// nothing
-	}
-	catch (const std::exception &e)
-	{
-		CAGE_LOG(SeverityEnum::Error, "exception", stringizer() + "std exception: " + e.what());
-	}
 	catch (...)
 	{
-		CAGE_LOG(SeverityEnum::Error, "exception", "unknown exception");
+		detail::logCurrentCaughtException();
 	}
 	return 1;
 }

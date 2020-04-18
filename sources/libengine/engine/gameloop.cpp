@@ -10,6 +10,7 @@
 #include <cage-core/scheduler.h>
 #include <cage-core/debug.h>
 #include <cage-core/macros.h>
+#include <cage-core/logger.h>
 
 #include <cage-engine/graphics.h>
 #include <cage-engine/window.h>
@@ -354,9 +355,7 @@ namespace cage
 			//////////////////////////////////////
 
 #define GCHL_GENERATE_CATCH(NAME, STAGE) \
-			catch (const cage::Exception &e) { CAGE_LOG(SeverityEnum::Error, "engine", stringizer() + "caught cage::exception in " CAGE_STRINGIZE(STAGE) " in " CAGE_STRINGIZE(NAME) ": " + e.message); engineStop(); } \
-			catch (const std::exception &e) { CAGE_LOG(SeverityEnum::Error, "engine", stringizer() + "caught std::exception in " CAGE_STRINGIZE(STAGE) " in " CAGE_STRINGIZE(NAME) ": " + e.what()); engineStop(); } \
-			catch (...) { CAGE_LOG(SeverityEnum::Error, "engine", "caught unknown exception in " CAGE_STRINGIZE(STAGE) " in " CAGE_STRINGIZE(NAME)); engineStop(); }
+			catch (...) { CAGE_LOG(SeverityEnum::Error, "engine", "unhandled exception in " CAGE_STRINGIZE(STAGE) " in " CAGE_STRINGIZE(NAME)); detail::logCurrentCaughtException(); engineStop(); }
 #define GCHL_GENERATE_ENTRY(NAME) \
 			void CAGE_JOIN(NAME, Entry)() \
 			{ \

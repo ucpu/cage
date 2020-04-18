@@ -7,6 +7,7 @@
 #include <cage-core/debug.h>
 
 #include <cstdio>
+#include <exception>
 
 namespace cage
 {
@@ -99,7 +100,7 @@ namespace cage
 			ApplicationLogInitializer()
 			{
 				{
-					string version;
+					string version = "cage version: ";
 
 #ifdef CAGE_DEBUG
 					version += "debug";
@@ -125,9 +126,9 @@ namespace cage
 					version += "32 bit";
 #endif // CAGE_ARCHITECTURE_64
 					version += ", ";
-					version += "build at: " __DATE__ " " __TIME__;
+					version += "built at: " __DATE__ " " __TIME__;
 
-					CAGE_LOG(SeverityEnum::Info, "log", stringizer() + "cage version: " + version);
+					CAGE_LOG(SeverityEnum::Info, "log", version);
 				}
 
 				setCurrentThreadName(pathExtractFilename(detail::getExecutableFullPathNoExe()));
@@ -245,6 +246,34 @@ namespace cage
 			case SeverityEnum::Error: return "EROR";
 			case SeverityEnum::Critical: return "CRIT";
 			default: return "UNKN";
+			}
+		}
+
+		void logCurrentCaughtException()
+		{
+			try
+			{
+				throw;
+			}
+			catch (const cage::Exception &e)
+			{
+				CAGE_LOG(SeverityEnum::Info, "exception", stringizer() + "cage exception: " + e.message);
+			}
+			catch (const std::exception &e)
+			{
+				CAGE_LOG(SeverityEnum::Info, "exception", stringizer() + "std exception: " + e.what());
+			}
+			catch (const char *e)
+			{
+				CAGE_LOG(SeverityEnum::Info, "exception", stringizer() + "c string exception: " + e);
+			}
+			catch (int e)
+			{
+				CAGE_LOG(SeverityEnum::Info, "exception", stringizer() + "int exception: " + e);
+			}
+			catch (...)
+			{
+				CAGE_LOG(SeverityEnum::Info, "exception", "unknown exception type");
 			}
 		}
 	}

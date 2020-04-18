@@ -14,30 +14,38 @@ bool consoleLogFilter(const cage::detail::LoggerInfo &info)
 
 int main(int argc, const char *args[])
 {
-	Holder<Logger> conLog = newLogger();
-	conLog->filter.bind<&consoleLogFilter>();
-	conLog->format.bind<&logFormatConsole>();
-	conLog->output.bind<&logOutputStdOut>();
-
-	configParseCmd(argc, args);
-
-	CAGE_LOG(SeverityEnum::Info, "database", "start");
-	start();
-
-	if (configListening)
+	try
 	{
-		CAGE_LOG(SeverityEnum::Info, "database", "waiting for changes");
-		try
+		Holder<Logger> conLog = newLogger();
+		conLog->filter.bind<&consoleLogFilter>();
+		conLog->format.bind<&logFormatConsole>();
+		conLog->output.bind<&logOutputStdOut>();
+
+		configParseCmd(argc, args);
+
+		CAGE_LOG(SeverityEnum::Info, "database", "start");
+		start();
+
+		if (configListening)
 		{
-			listen();
+			CAGE_LOG(SeverityEnum::Info, "database", "waiting for changes");
+			try
+			{
+				listen();
+			}
+			catch (...)
+			{
+				CAGE_LOG(SeverityEnum::Info, "database", "stopped");
+			}
 		}
-		catch (...)
-		{
-			CAGE_LOG(SeverityEnum::Info, "database", "stopped");
-		}
+
+		CAGE_LOG(SeverityEnum::Info, "database", "end");
+
+		return verdict() ? 0 : -1;
 	}
-
-	CAGE_LOG(SeverityEnum::Info, "database", "end");
-
-	return verdict() ? 0 : -1;
+	catch (...)
+	{
+		detail::logCurrentCaughtException();
+	}
+	return 1;
 }

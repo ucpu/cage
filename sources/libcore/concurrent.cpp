@@ -1,4 +1,6 @@
 #include <cage-core/concurrent.h>
+#include <cage-core/debug.h>
+#include <cage-core/logger.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
 #include "incWin.h"
@@ -559,7 +561,8 @@ namespace cage
 					CloseHandle(handle);
 #endif
 					CAGE_LOG(SeverityEnum::Critical, "thread", stringizer() + "exception thrown in thread '" + threadName + "' cannot be propagated to the caller thread, terminating now");
-					std::terminate();
+					detail::logCurrentCaughtException();
+					detail::terminate();
 				}
 
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -709,6 +712,7 @@ namespace cage
 			{
 				impl->exptr = std::current_exception();
 				CAGE_LOG(SeverityEnum::Warning, "thread", stringizer() + "unhandled exception in thread '" + getCurrentThreadName() + "'");
+				detail::logCurrentCaughtException();
 			}
 			CAGE_LOG(SeverityEnum::Info, "thread", stringizer() + "thread '" + getCurrentThreadName() + "' ended");
 #ifdef CAGE_SYSTEM_WINDOWS

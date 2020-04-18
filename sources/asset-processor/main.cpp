@@ -2,7 +2,6 @@
 #include <cage-core/logger.h>
 #include <cage-core/hashString.h>
 
-#include <exception>
 #include <map>
 #include <cstdio> // fgets, ferror
 #include <cstring> // strlen
@@ -192,16 +191,9 @@ int main(int argc, const char *args[])
 		writeLine("cage-end");
 		return 0;
 	}
-	catch (const cage::Exception &)
-	{
-	}
-	catch (const std::exception &e)
-	{
-		CAGE_LOG(SeverityEnum::Error, "exception", stringizer() + "std exception: " + e.what());
-	}
 	catch (...)
 	{
-		CAGE_LOG(SeverityEnum::Error, "exception", "unknown exception");
+		detail::logCurrentCaughtException();
 	}
 	writeLine("cage-error");
 	return 1;

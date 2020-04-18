@@ -10,6 +10,12 @@ namespace
 	Semaphore *semaphoreGlobal;
 	Barrier *barrierGlobal;
 
+	void throwingFunction()
+	{
+		detail::OverrideBreakpoint ob;
+		CAGE_THROW_ERROR(Exception, "intentionally thrown exception");
+	}
+
 	void threadTest()
 	{
 		for (uint32 i = 0; i < 100; i++)
@@ -72,6 +78,20 @@ void testConcurrent()
 	barrierGlobal = barrier.get();
 	mutexGlobal = mutex.get();
 	semaphoreGlobal = semaphore.get();
+
+	{
+		CAGE_TESTCASE("thread with unhandled exception");
+		bool ok = false;
+		try
+		{
+			newThread(Delegate<void()>().bind<&throwingFunction>(), "throwing thread")->wait();
+		}
+		catch (const cage::Exception &e)
+		{
+			ok = string(e.message) == "intentionally thrown exception";
+		}
+		CAGE_TEST(ok);
+	}
 
 	{
 		CAGE_TESTCASE("try lock mutex");

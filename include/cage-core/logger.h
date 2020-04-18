@@ -54,6 +54,7 @@ namespace cage
 	{
 		CAGE_CORE_API Logger *getApplicationLog();
 		CAGE_CORE_API string severityToString(const SeverityEnum severity);
+		CAGE_CORE_API void logCurrentCaughtException();
 	}
 }
 

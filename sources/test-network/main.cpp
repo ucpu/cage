@@ -6,8 +6,6 @@
 #include <cage-core/config.h>
 #include <cage-core/debug.h>
 
-#include <exception>
-
 using namespace cage;
 
 void runServer();
@@ -121,16 +119,9 @@ int main(int argc, const char *args[])
 
 		return 0;
 	}
-	catch (const cage::Exception &)
-	{
-	}
-	catch (const std::exception &e)
-	{
-		CAGE_LOG(SeverityEnum::Error, "exception", stringizer() + "std exception: " + e.what());
-	}
 	catch (...)
 	{
-		CAGE_LOG(SeverityEnum::Error, "exception", "unknown exception");
+		detail::logCurrentCaughtException();
 	}
 	return 1;
 }
