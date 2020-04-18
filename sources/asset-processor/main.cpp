@@ -12,8 +12,6 @@ string inputDirectory; // c:/asset
 string inputName; // path/file?specifier;identifier
 string outputDirectory; // c:/data
 string outputName; // 123456789
-string assetPath;
-string schemePath;
 uint32 schemeIndex;
 
 // derived names
@@ -70,16 +68,6 @@ namespace
 
 	void loadProperties()
 	{
-		inputDirectory = readLine();
-		inputName = readLine();
-		outputDirectory = readLine();
-		outputName = readLine();
-		assetPath = readLine();
-		schemePath = readLine();
-		schemeIndex = readLine().toUint32();
-
-		derivedProperties();
-
 		while (true)
 		{
 			string value = readLine();
@@ -93,6 +81,13 @@ namespace
 			string name = value.split("=");
 			props[name] = value;
 		}
+
+		inputDirectory = properties("inputDirectory");
+		inputName = properties("inputName");
+		outputDirectory = properties("outputDirectory");
+		outputName = properties("outputName");
+		schemeIndex = properties("schemeIndex").toUint32();
+		derivedProperties();
 	}
 
 	void initializeSecondaryLog(const string &path)
@@ -137,10 +132,11 @@ int main(int argc, const char *args[])
 		if (argc == 3 && string(args[1]) == "analyze")
 		{
 			logComponentName = "analyze";
+			initializeSecondaryLog(pathJoin(configGetString("cage-asset-processor/analyzeLog/path", "analyze-log"), pathReplaceInvalidCharacters(args[2]) + ".log"));
+			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "analyzing input '" + args[2] + "'");
 			inputDirectory = pathExtractPath(args[2]);
 			inputName = pathExtractFilename(args[2]);
 			derivedProperties();
-			initializeSecondaryLog(pathJoin(configGetString("cage-asset-processor/analyzeLog/path", "analyze-log"), pathReplaceInvalidCharacters(inputName) + ".log"));
 			return processAnalyze();
 		}
 
@@ -150,23 +146,16 @@ int main(int argc, const char *args[])
 		loadProperties();
 		initializeSecondaryLog(pathJoin(configGetString("cage-asset-processor/processLog/path", "process-log"), pathReplaceInvalidCharacters(inputName) + ".log"));
 
+		for (const auto &it : props)
+			CAGE_LOG(SeverityEnum::Info, "asset-processor", stringizer() + "property '" + it.first + "': '" + it.second + "'");
+
 #define GCHL_GENERATE(N) CAGE_LOG(SeverityEnum::Info, "asset-processor", stringizer() + "input " #N ": '" + N + "'");
-		GCHL_GENERATE(inputDirectory);
-		GCHL_GENERATE(inputName);
-		GCHL_GENERATE(outputDirectory);
-		GCHL_GENERATE(outputName);
-		GCHL_GENERATE(assetPath);
-		GCHL_GENERATE(schemePath);
-		GCHL_GENERATE(schemeIndex);
 		GCHL_GENERATE(inputFileName);
 		GCHL_GENERATE(outputFileName);
 		GCHL_GENERATE(inputFile);
 		GCHL_GENERATE(inputSpec);
 		GCHL_GENERATE(inputIdentifier);
 #undef GCHL_GENERATE
-
-		for (const auto &it : props)
-			CAGE_LOG(SeverityEnum::Info, "asset-processor", stringizer() + "property '" + it.first + "': '" + it.second + "'");
 
 		Delegate<void()> func;
 		string component = string(args[1]);

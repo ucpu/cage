@@ -197,15 +197,13 @@ namespace
 				CAGE_THROW_WARNING(Exception, "asset has invalid configuration");
 
 			Holder<Process> prg = newProcess(scheme->processor);
-			prg->writeLine(pathToAbs(configPathInput)); // inputDirectory
-			prg->writeLine(ass.name); // inputName
-			prg->writeLine(pathToAbs(string(configPathIntermediate).empty() ? configPathOutput : configPathIntermediate)); // outputDirectory
-			prg->writeLine(ass.outputPath()); // outputName
-			prg->writeLine(ass.databank); // assetPath
-			prg->writeLine(pathJoin(configPathSchemes, ass.scheme)); // schemePath
-			prg->writeLine(string(scheme->schemeIndex)); // schemeIndex
+			prg->writeLine(stringizer() + "inputDirectory=" + pathToAbs(configPathInput)); // inputDirectory
+			prg->writeLine(stringizer() + "inputName=" + ass.name); // inputName
+			prg->writeLine(stringizer() + "outputDirectory=" + pathToAbs(string(configPathIntermediate).empty() ? configPathOutput : configPathIntermediate)); // outputDirectory
+			prg->writeLine(stringizer() + "outputName=" + ass.outputPath()); // outputName
+			prg->writeLine(stringizer() + "schemeIndex=" + scheme->schemeIndex); // schemeIndex
 			for (const auto &it : ass.fields)
-				prg->writeLine(string() + it.first + "=" + it.second);
+				prg->writeLine(stringizer() + it.first + "=" + it.second);
 			prg->writeLine("cage-end");
 
 			bool begin = false, end = false;

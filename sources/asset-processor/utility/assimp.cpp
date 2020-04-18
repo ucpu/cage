@@ -244,9 +244,9 @@ namespace
 		}
 	};
 
-	struct AssimpContextImpl : public AssimpContext
+	struct AssimpContextImpl : public AssimpContext, Immovable
 	{
-		static const uint32 assimpDefaultLoadFlags =
+		static constexpr uint32 assimpDefaultLoadFlags =
 			aiProcess_JoinIdenticalVertices |
 			aiProcess_Triangulate |
 			aiProcess_LimitBoneWeights |
@@ -262,7 +262,7 @@ namespace
 			//aiProcess_SplitLargeMeshes |
 			0;
 
-		static const uint32 assimpBakeLoadFlags =
+		static constexpr uint32 assimpBakeLoadFlags =
 			aiProcess_RemoveRedundantMaterials |
 			//aiProcess_FindInstances |
 			aiProcess_OptimizeMeshes |
@@ -283,12 +283,16 @@ namespace
 			Assimp::DefaultLogger::get()->attachStream(&logError, Assimp::Logger::Err);
 
 			//imp.SetPropertyBool(AI_CONFIG_PP_DB_ALL_OR_NONE, true);
+			imp.SetPropertyFloat(AI_CONFIG_PP_GSN_MAX_SMOOTHING_ANGLE, 30);
 
 			try
 			{
 				uint32 flags = assimpDefaultLoadFlags;
-				if (properties("bakeModel").toBool())
-					flags |= assimpBakeLoadFlags;
+				if (string(logComponentName) != "analyze")
+				{
+					if (properties("bakeModel").toBool())
+						flags |= assimpBakeLoadFlags;
+				}
 				flags |= addFlags;
 				flags &= ~removeFlags;
 				CAGE_LOG(SeverityEnum::Info, logComponentName, cage::stringizer() + "assimp loading flags: " + flags);
@@ -580,9 +584,7 @@ void analyzeAssimp()
 			}
 		}
 		catch (...)
-		{
-			writeLine("cage-end");
-		}
+		{}
 		writeLine("cage-end");
 	}
 	catch (...)

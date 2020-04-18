@@ -14,9 +14,6 @@ extern string inputDirectory;
 extern string inputName;
 extern string outputDirectory;
 extern string outputName;
-extern string assetPath;
-extern string schemePath;
-extern string cachePath;
 
 extern string inputFileName;
 extern string outputFileName;

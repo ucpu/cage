@@ -99,6 +99,18 @@ cage_ide_sort_files(cage-asset-database)
 cage_ide_working_dir_in_place(cage-asset-database)
 
 ########
+# CAGE-ASSET-ANALYZE
+########
+
+file(GLOB_RECURSE cage-asset-analyze-sources "sources/asset-analyze/*")
+add_executable(cage-asset-analyze ${cage-asset-analyze-sources})
+target_link_libraries(cage-asset-analyze cage-core)
+add_dependencies(cage-asset-analyze cage-asset-processor)
+cage_ide_category(cage-asset-analyze cage/tools)
+cage_ide_sort_files(cage-asset-analyze)
+cage_ide_working_dir_in_place(cage-asset-analyze)
+
+########
 # CAGE-IMAGE-CHANNELS
 ########
 
