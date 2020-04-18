@@ -58,6 +58,8 @@ namespace cage
 				TIFFGetField(t, TIFFTAG_BITSPERSAMPLE, &bpp);
 				uint16 sampleformat = 0;
 				TIFFGetField(t, TIFFTAG_SAMPLEFORMAT, &sampleformat);
+				if (sampleformat == 0)
+					sampleformat = SAMPLEFORMAT_UINT;
 				if (bpp == 8 && sampleformat == SAMPLEFORMAT_UINT)
 					impl->format = ImageFormatEnum::U8;
 				else if (bpp == 16 && sampleformat == SAMPLEFORMAT_UINT)

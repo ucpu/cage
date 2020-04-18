@@ -37,7 +37,8 @@ namespace cage
 				jpegDecode((char*)buffer, size, impl);
 			else if (detail::memcmp(buffer, tiffSignature, sizeof(tiffSignature)) == 0)
 				tiffDecode((char*)buffer, size, impl);
-			else if (detail::memcmp((char*)buffer + size - sizeof(tgaSignature), tgaSignature, sizeof(tgaSignature)) == 0)
+			else if (detail::memcmp((char*)buffer + size - sizeof(tgaSignature), tgaSignature, sizeof(tgaSignature)) == 0
+				|| detail::memcmp((char*)buffer + size - sizeof(tgaSignature) + 1, tgaSignature, sizeof(tgaSignature) - 1) == 0)
 				tgaDecode((char*)buffer, size, impl);
 			else if (detail::memcmp(buffer, psdSignature, sizeof(psdSignature)) == 0)
 				psdDecode((char*)buffer, size, impl);
