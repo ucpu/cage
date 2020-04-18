@@ -140,9 +140,9 @@ int main(int argc, const char *args[])
 		cmd->parseCmd(argc, args);
 		if (cmd->cmdBool('?', "help", false))
 		{
-			CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "examples:");
-			CAGE_LOG(SeverityEnum::Info, "image", stringizer() + args[0] + " -j -1 r.png -2 g.png -o rg.png");
-			CAGE_LOG(SeverityEnum::Info, "image", stringizer() + args[0] + " -s -i rg.png -1 r.png -2 g.png");
+			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + "examples:");
+			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + args[0] + " -j -1 r.png -2 g.png -o rg.png");
+			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + args[0] + " -s -i rg.png -1 r.png -2 g.png");
 			return 0;
 		}
 		bool split = cmd->cmdBool('s', "split", false);

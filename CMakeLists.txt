@@ -23,7 +23,7 @@ endif()
 add_subdirectory(externals EXCLUDE_FROM_ALL)
 
 ########
-# CAGE-CORE
+# LIBS
 ########
 
 file(GLOB_RECURSE cage-core-sources "sources/libcore/*" "include/cage-core/*")
@@ -40,32 +40,6 @@ endif()
 cage_ide_category(cage-core cage/libs)
 cage_ide_sort_files(cage-core)
 
-########
-# CAGE-TEST-CORE
-########
-
-file(GLOB_RECURSE cage-test-core-sources "sources/test-core/*")
-add_executable(cage-test-core ${cage-test-core-sources})
-target_link_libraries(cage-test-core cage-core glm)
-cage_ide_category(cage-test-core cage/tests)
-cage_ide_sort_files(cage-test-core)
-cage_ide_working_dir_in_place(cage-test-core)
-
-########
-# CAGE-TEST-NETWORK
-########
-
-file(GLOB_RECURSE cage-test-network-sources "sources/test-network/*")
-add_executable(cage-test-network ${cage-test-network-sources})
-target_link_libraries(cage-test-network cage-core)
-cage_ide_category(cage-test-network cage/tests)
-cage_ide_sort_files(cage-test-network)
-cage_ide_working_dir_in_place(cage-test-network)
-
-########
-# CAGE-ENGINE
-########
-
 file(GLOB_RECURSE cage-engine-sources "sources/libengine/*" "include/cage-engine/*")
 add_library(cage-engine SHARED ${cage-engine-sources})
 target_include_directories(cage-engine PUBLIC include)
@@ -76,61 +50,47 @@ cage_ide_category(cage-engine cage/libs)
 cage_ide_sort_files(cage-engine)
 
 ########
-# CAGE-ASSET-PROCESSOR
+# TESTS
 ########
 
-file(GLOB_RECURSE cage-asset-processor-sources "sources/asset-processor/*")
-add_executable(cage-asset-processor ${cage-asset-processor-sources})
+file(GLOB_RECURSE cage-test-core-sources "sources/test-core/*")
+add_executable(cage-test-core ${cage-test-core-sources})
+target_link_libraries(cage-test-core cage-core glm)
+cage_ide_category(cage-test-core cage/tests)
+cage_ide_sort_files(cage-test-core)
+cage_ide_working_dir_in_place(cage-test-core)
+
+file(GLOB_RECURSE cage-test-network-sources "sources/test-network/*")
+add_executable(cage-test-network ${cage-test-network-sources})
+target_link_libraries(cage-test-network cage-core)
+cage_ide_category(cage-test-network cage/tests)
+cage_ide_sort_files(cage-test-network)
+cage_ide_working_dir_in_place(cage-test-network)
+
+########
+# TOOLS
+########
+
+macro(cage_define_tool target sourcePattern)
+	file(GLOB_RECURSE ${target}-sources ${sourcePattern})
+	add_executable(${target} ${${target}-sources})
+	target_link_libraries(${target} cage-core)
+	cage_ide_category(${target} cage/tools)
+	cage_ide_sort_files(${target})
+	cage_ide_working_dir_in_place(${target})
+endmacro()
+
+cage_define_tool(cage-asset-processor "sources/asset-processor/*")
+cage_define_tool(cage-asset-database "sources/asset-database/*")
+cage_define_tool(cage-asset-analyze "sources/asset-analyze/*")
+cage_define_tool(cage-image-channels "sources/image-channels/*")
+cage_define_tool(cage-image-atlas "sources/image-atlas/*")
+cage_define_tool(cage-image-convert "sources/image-convert/*")
+
 target_link_libraries(cage-asset-processor cage-engine assimp freetype dr_libs ogg vorbis vorbisfile vorbisenc lib_msdfgen)
-cage_ide_category(cage-asset-processor cage/tools)
-cage_ide_sort_files(cage-asset-processor)
-cage_ide_working_dir_in_place(cage-asset-processor)
 
-########
-# CAGE-ASSET-DATABASE
-########
-
-file(GLOB_RECURSE cage-asset-database-sources "sources/asset-database/*")
-add_executable(cage-asset-database ${cage-asset-database-sources})
-target_link_libraries(cage-asset-database cage-core)
 add_dependencies(cage-asset-database cage-asset-processor)
-cage_ide_category(cage-asset-database cage/tools)
-cage_ide_sort_files(cage-asset-database)
-cage_ide_working_dir_in_place(cage-asset-database)
-
-########
-# CAGE-ASSET-ANALYZE
-########
-
-file(GLOB_RECURSE cage-asset-analyze-sources "sources/asset-analyze/*")
-add_executable(cage-asset-analyze ${cage-asset-analyze-sources})
-target_link_libraries(cage-asset-analyze cage-core)
 add_dependencies(cage-asset-analyze cage-asset-processor)
-cage_ide_category(cage-asset-analyze cage/tools)
-cage_ide_sort_files(cage-asset-analyze)
-cage_ide_working_dir_in_place(cage-asset-analyze)
-
-########
-# CAGE-IMAGE-CHANNELS
-########
-
-file(GLOB_RECURSE cage-image-channels-sources "sources/image-channels/*")
-add_executable(cage-image-channels ${cage-image-channels-sources})
-target_link_libraries(cage-image-channels cage-core)
-cage_ide_category(cage-image-channels cage/tools)
-cage_ide_sort_files(cage-image-channels)
-cage_ide_working_dir_in_place(cage-image-channels)
-
-########
-# CAGE-IMAGE-ATLAS
-########
-
-file(GLOB_RECURSE cage-image-atlas-sources "sources/image-atlas/*")
-add_executable(cage-image-atlas ${cage-image-atlas-sources})
-target_link_libraries(cage-image-atlas cage-core)
-cage_ide_category(cage-image-atlas cage/tools)
-cage_ide_sort_files(cage-image-atlas)
-cage_ide_working_dir_in_place(cage-image-atlas)
 
 ########
 # FINALIZATION

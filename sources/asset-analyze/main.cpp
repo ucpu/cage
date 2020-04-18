@@ -155,11 +155,11 @@ int main(int argc, const char *args[])
 		const auto &paths = cmd->cmdArray(0, "--");
 		if (cmd->cmdBool('?', "help", false) || paths.empty())
 		{
-			CAGE_LOG(SeverityEnum::Info, "analyze", stringizer() + "examples:");
-			CAGE_LOG(SeverityEnum::Info, "analyze", stringizer() + args[0] + " path1 path2 path3");
-			CAGE_LOG(SeverityEnum::Info, "analyze", stringizer() + args[0] + " --recursive path");
-			CAGE_LOG(SeverityEnum::Info, "analyze", stringizer() + args[0] + " --objects path");
-			CAGE_LOG(SeverityEnum::Info, "analyze", stringizer() + args[0] + " --packs path");
+			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + "examples:");
+			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + args[0] + " path1 path2 path3");
+			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + args[0] + " --recursive path");
+			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + args[0] + " --objects path");
+			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + args[0] + " --packs path");
 			return 0;
 		}
 		recursive = cmd->cmdBool('r', "recursive", false);

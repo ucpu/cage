@@ -29,7 +29,7 @@ namespace cage
 		return vec3(x, y, z) * vec3(1.0 / 31, 1.0 / 63, 1.0 / 31);
 	}
 
-	/*
+#ifdef CAGE_DEBUG
 	struct PackTest
 	{
 		PackTest()
@@ -43,7 +43,7 @@ namespace cage
 			CAGE_ASSERT(pack565(unpack565(4679)) == 4679);
 		}
 	} packTest;
-	*/
+#endif // CAGE_DEBUG
 
 	TexelBlock dxtDecompress(const Dxt1Block &block)
 	{

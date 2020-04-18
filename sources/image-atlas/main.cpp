@@ -95,8 +95,8 @@ int main(int argc, const char *args[])
 		cmd->parseCmd(argc, args);
 		if (cmd->cmdBool('?', "help", false))
 		{
-			CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "examples:");
-			CAGE_LOG(SeverityEnum::Info, "image", stringizer() + args[0] + " -i atlas.png -x 13 -y 42 -w 32 -h 32 -o frame-$$.png");
+			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + "examples:");
+			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + args[0] + " -i atlas.png -x 13 -y 42 -w 32 -h 32 -o frame-$$.png");
 			return 0;
 		}
 		doAtlas(cmd);
