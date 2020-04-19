@@ -499,6 +499,9 @@ namespace cage
 		CAGE_CORE_API int memcmp(const void *ptr1, const void *ptr2, uintPtr num) noexcept;
 
 		template<uint32 N>
+		struct StringizerBase;
+
+		template<uint32 N>
 		struct StringBase : templates::Comparable<StringBase<N>>
 		{
 			// constructors
@@ -516,6 +519,9 @@ namespace cage
 				detail::memcpy(data, other.data, current);
 				data[current] = 0;
 			}
+
+			template<uint32 M>
+			StringBase(const StringizerBase<M> &other);
 
 #define GCHL_GENERATE(TYPE) \
 			explicit StringBase(TYPE other) \
@@ -829,18 +835,11 @@ namespace cage
 		struct StringizerBase
 		{
 			StringBase<N> value;
-
-			operator const StringBase<N> & () const
-			{
-				return value;
-			}
-
-			template<uint32 M>
-			operator const StringBase<M> () const
-			{
-				return value;
-			}
 		};
+
+		template<uint32 N> template<uint32 M>
+		inline StringBase<N>::StringBase(const StringizerBase<M> &other) : StringBase(other.value)
+		{}
 
 		template<uint32 N, uint32 M>
 		StringizerBase<N> &operator + (StringizerBase<N> &str, const StringizerBase<M> &other)

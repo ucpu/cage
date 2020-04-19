@@ -12,6 +12,12 @@ jobs:
         build-arch: [Win32, x64]
 
     steps:
+    - name: Versions
+      shell: bash
+      run: |
+        cmake --version
+        git --version
+
     - uses: actions/checkout@v1
 
     - name: Checkout submodules
@@ -19,7 +25,7 @@ jobs:
       run: |
         export MSYS=winsymlinks:nativestrict
         git config --global core.symlinks true
-        git submodule update --init --recursive
+        git submodule update --init --recursive #--depth 1
 
     - name: Configure
       shell: bash
@@ -95,7 +101,7 @@ jobs:
 
     - name: Checkout submodules
       run: |
-        git submodule update --init --recursive
+        git submodule update --init --recursive --depth 1
 
     - name: Configure
       run: |
