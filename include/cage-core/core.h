@@ -1,6 +1,10 @@
 #ifndef guard_core_h_39243ce0_71a5_4900_8898_63fb89591b7b_
 #define guard_core_h_39243ce0_71a5_4900_8898_63fb89591b7b_
 
+#include <cstdint>
+#include <limits>
+#include <type_traits>
+
 #if !defined(CAGE_DEBUG) && !defined(NDEBUG)
 #define CAGE_DEBUG
 #endif
@@ -77,25 +81,21 @@ namespace cage
 {
 	// numeric types
 
-	typedef unsigned char uint8;
-	typedef signed char sint8;
-	typedef unsigned short uint16;
-	typedef signed short sint16;
-	typedef unsigned int uint32;
-	typedef signed int sint32;
-#ifdef CAGE_SYSTEM_WINDOWS
-	typedef unsigned long long uint64;
-	typedef signed long long sint64;
-#else
-	typedef unsigned long uint64;
-	typedef signed long sint64;
-#endif
+	using uint8 =  std::uint8_t;
+	using uint16 = std::uint16_t;
+	using uint32 = std::uint32_t;
+	using uint64 = std::uint64_t;
+	using sint8 =  std::int8_t;
+	using sint16 = std::int16_t;
+	using sint32 = std::int32_t;
+	using sint64 = std::int64_t;
+
 #ifdef CAGE_ARCHITECTURE_64
-	typedef uint64 uintPtr;
-	typedef sint64 sintPtr;
+	using uintPtr = uint64;
+	using sintPtr = sint64;
 #else
-	typedef uint32 uintPtr;
-	typedef sint32 sintPtr;
+	using uintPtr = uint32;
+	using sintPtr = sint32;
 #endif
 
 	// forward declare string
@@ -121,175 +121,61 @@ namespace cage
 		CAGE_CORE_API void runtimeAssertFailure(const char *expt, const char *file, uintPtr line, const char *function);
 	}
 
-	// numeric limits
-
-	namespace privat
-	{
-		template<bool> struct helper_is_char_signed {};
-		template<> struct helper_is_char_signed<true> { typedef signed char type; };
-		template<> struct helper_is_char_signed<false> { typedef unsigned char type; };
-	}
-
 	namespace detail
 	{
-		template<class T>
-		struct numeric_limits
-		{};
-
-		template<>
-		struct numeric_limits<unsigned char>
-		{
-			static constexpr bool is_signed = false;
-			static constexpr uint8 min() noexcept { return 0; };
-			static constexpr uint8 max() noexcept { return 255u; };
-			typedef uint8 make_unsigned;
-		};
-
-		template<>
-		struct numeric_limits<unsigned short>
-		{
-			static constexpr bool is_signed = false;
-			static constexpr uint16 min() noexcept { return 0; };
-			static constexpr uint16 max() noexcept { return 65535u; };
-			typedef uint16 make_unsigned;
-		};
-
-		template<>
-		struct numeric_limits<unsigned int>
-		{
-			static constexpr bool is_signed = false;
-			static constexpr uint32 min() noexcept { return 0; };
-			static constexpr uint32 max() noexcept { return 4294967295u; };
-			typedef uint32 make_unsigned;
-		};
-
-		template<>
-		struct numeric_limits<unsigned long long>
-		{
-			static constexpr bool is_signed = false;
-			static constexpr uint64 min() noexcept { return 0; };
-			static constexpr uint64 max() noexcept { return 18446744073709551615LLu; };
-			typedef uint64 make_unsigned;
-		};
-
-#ifdef CAGE_SYSTEM_WINDOWS
-		template<>
-		struct numeric_limits<unsigned long> : public numeric_limits<unsigned int>
-		{};
-#else
-		template<>
-		struct numeric_limits<unsigned long> : public numeric_limits<unsigned long long>
-		{};
-#endif
-
-		template<>
-		struct numeric_limits<signed char>
-		{
-			static constexpr bool is_signed = true;
-			static constexpr sint8 min() noexcept { return -127 - 1; };
-			static constexpr sint8 max() noexcept { return  127; };
-			typedef uint8 make_unsigned;
-		};
-
-		template<>
-		struct numeric_limits<signed short>
-		{
-			static constexpr bool is_signed = true;
-			static constexpr sint16 min() noexcept { return -32767 - 1; };
-			static constexpr sint16 max() noexcept { return  32767; };
-			typedef uint16 make_unsigned;
-		};
-
-		template<>
-		struct numeric_limits<signed int>
-		{
-			static constexpr bool is_signed = true;
-			static constexpr sint32 min() noexcept { return -2147483647 - 1; };
-			static constexpr sint32 max() noexcept { return  2147483647; };
-			typedef uint32 make_unsigned;
-		};
-
-		template<>
-		struct numeric_limits<signed long long>
-		{
-			static constexpr bool is_signed = true;
-			static constexpr sint64 min() noexcept { return -9223372036854775807LL - 1; };
-			static constexpr sint64 max() noexcept { return  9223372036854775807LL; };
-			typedef uint64 make_unsigned;
-		};
-
-#ifdef CAGE_SYSTEM_WINDOWS
-		template<>
-		struct numeric_limits<signed long> : public numeric_limits<signed int>
-		{};
-#else
-		template<>
-		struct numeric_limits<signed long> : public numeric_limits<signed long long>
-		{};
-#endif
-
-		template<>
-		struct numeric_limits<float>
-		{
-			static constexpr bool is_signed = true;
-			static constexpr float min() noexcept { return -1e+37f; };
-			static constexpr float max() noexcept { return  1e+37f; };
-			typedef float make_unsigned;
-		};
-
-		template<>
-		struct numeric_limits<double>
-		{
-			static constexpr bool is_signed = true;
-			static constexpr double min() noexcept { return -1e+308; };
-			static constexpr double max() noexcept { return  1e+308; };
-			typedef double make_unsigned;
-		};
-
-		// char is distinct type from both unsigned char and signed char
-		template<>
-		struct numeric_limits<char> : public numeric_limits<privat::helper_is_char_signed<(char)-1 < (char)0>::type>
-		{};
+		CAGE_CORE_API void logCurrentCaughtException();
 	}
 
 	// numeric cast
 
 	namespace privat
 	{
-		template<bool ToSig, bool FromSig>
-		struct numeric_cast_helper_signed
+		template<class To, class From>
+		struct numeric_cast_helper
 		{
-			template<class To, class From>
-			static constexpr To cast(From from)
+			template<bool ToSig = std::numeric_limits<To>::is_signed, bool FromSig = std::numeric_limits<From>::is_signed>
+			static constexpr To signCast(From from)
 			{
-				CAGE_ASSERT(from >= detail::numeric_limits<To>::min());
-				CAGE_ASSERT(from <= detail::numeric_limits<To>::max());
+				CAGE_ASSERT(from >= std::numeric_limits<To>::lowest());
+				CAGE_ASSERT(from <= std::numeric_limits<To>::max());
 				return static_cast<To>(from);
 			}
-		};
 
-		template<>
-		struct numeric_cast_helper_signed<false, true> // signed -> unsigned
-		{
-			template<class To, class From>
-			static constexpr To cast(From from)
+			template<>
+			static constexpr To signCast<false, true>(From from)
 			{
 				CAGE_ASSERT(from >= 0);
-				typedef typename detail::numeric_limits<From>::make_unsigned unsgFrom;
-				CAGE_ASSERT(static_cast<unsgFrom>(from) <= detail::numeric_limits<To>::max());
+				typedef typename std::make_unsigned<From>::type unsgFrom;
+				CAGE_ASSERT(static_cast<unsgFrom>(from) <= std::numeric_limits<To>::max());
 				return static_cast<To>(from);
 			}
-		};
 
-		template<>
-		struct numeric_cast_helper_signed<true, false> // unsigned -> signed
-		{
-			template<class To, class From>
-			static constexpr To cast(From from)
+			template<>
+			static constexpr To signCast<true, false>(From from)
 			{
-				typedef typename detail::numeric_limits<To>::make_unsigned unsgTo;
-				CAGE_ASSERT(from <= static_cast<unsgTo>(detail::numeric_limits<To>::max()));
+				typedef typename std::make_unsigned<To>::type unsgTo;
+				CAGE_ASSERT(from <= static_cast<unsgTo>(std::numeric_limits<To>::max()));
 				return static_cast<To>(from);
+			}
+
+			template<bool ToFloat = std::is_floating_point<To>::value, bool FromFloat = std::is_floating_point<From>::value>
+			static constexpr To floatCast(From from)
+			{
+				return static_cast<To>(from);
+			}
+
+			template<>
+			static constexpr To floatCast<false, true>(From from) // float -> (u)int
+			{
+				CAGE_ASSERT(from >= (From)std::numeric_limits<To>::min());
+				CAGE_ASSERT(from <= (From)std::numeric_limits<To>::max());
+				return static_cast<To>(from);
+			}
+
+			template<>
+			static constexpr To floatCast<false, false>(From from)
+			{
+				return signCast(from);
 			}
 		};
 	}
@@ -299,7 +185,7 @@ namespace cage
 	template<class To, class From>
 	inline constexpr To numeric_cast(From from)
 	{
-		return privat::numeric_cast_helper_signed<detail::numeric_limits<To>::is_signed, detail::numeric_limits<From>::is_signed>::template cast<To>(from);
+		return privat::numeric_cast_helper<To, From>::floatCast(from);
 	}
 
 	// with CAGE_ASSERT_ENABLED class_cast verifies that dynamic_cast would succeed
@@ -321,16 +207,16 @@ namespace cage
 			template<class T>
 			constexpr operator T () const noexcept
 			{
-				return detail::numeric_limits<T>::max();
+				return std::numeric_limits<T>::max();
 			}
 		};
 
-		template<class T> inline constexpr bool operator == (T lhs, MaxValue rhs) noexcept { return lhs == detail::numeric_limits<T>::max(); }
-		template<class T> inline constexpr bool operator != (T lhs, MaxValue rhs) noexcept { return lhs != detail::numeric_limits<T>::max(); }
-		template<class T> inline constexpr bool operator <= (T lhs, MaxValue rhs) noexcept { return lhs <= detail::numeric_limits<T>::max(); }
-		template<class T> inline constexpr bool operator >= (T lhs, MaxValue rhs) noexcept { return lhs >= detail::numeric_limits<T>::max(); }
-		template<class T> inline constexpr bool operator <  (T lhs, MaxValue rhs) noexcept { return lhs <  detail::numeric_limits<T>::max(); }
-		template<class T> inline constexpr bool operator >  (T lhs, MaxValue rhs) noexcept { return lhs >  detail::numeric_limits<T>::max(); }
+		template<class T> inline constexpr bool operator == (T lhs, MaxValue rhs) noexcept { return lhs == std::numeric_limits<T>::max(); }
+		template<class T> inline constexpr bool operator != (T lhs, MaxValue rhs) noexcept { return lhs != std::numeric_limits<T>::max(); }
+		template<class T> inline constexpr bool operator <= (T lhs, MaxValue rhs) noexcept { return lhs <= std::numeric_limits<T>::max(); }
+		template<class T> inline constexpr bool operator >= (T lhs, MaxValue rhs) noexcept { return lhs >= std::numeric_limits<T>::max(); }
+		template<class T> inline constexpr bool operator <  (T lhs, MaxValue rhs) noexcept { return lhs <  std::numeric_limits<T>::max(); }
+		template<class T> inline constexpr bool operator >  (T lhs, MaxValue rhs) noexcept { return lhs >  std::numeric_limits<T>::max(); }
 	}
 
 	static constexpr privat::MaxValue m = privat::MaxValue();
@@ -349,38 +235,23 @@ namespace cage
 			friend bool operator <  (const T &lhs, const T &rhs) noexcept { return compare(lhs, rhs) <  0; }
 			friend bool operator >  (const T &lhs, const T &rhs) noexcept { return compare(lhs, rhs) >  0; }
 		};
-		template<bool Cond, class T> struct enable_if {};
-		template<class T> struct enable_if<true, T> { typedef T type; };
-		template<uintPtr Size> struct base_unsigned_type {};
-		template<> struct base_unsigned_type<1> { typedef uint8 type; };
-		template<> struct base_unsigned_type<2> { typedef uint16 type; };
-		template<> struct base_unsigned_type<4> { typedef uint32 type; };
-		template<> struct base_unsigned_type<8> { typedef uint64 type; };
-		template<class T> struct underlying_type { typedef typename base_unsigned_type<sizeof(T)>::type type; };
-		template<class T> struct remove_const { typedef T type; };
-		template<class T> struct remove_const<const T> { typedef T type; };
-		template<class T> struct remove_reference { typedef T type; };
-		template<class T> struct remove_reference<T&> { typedef T type; };
-		template<class T> struct remove_reference<T&&> { typedef T type; };
-		template<typename T> struct is_lvalue_reference { static constexpr bool value = false; };
-		template<typename T> struct is_lvalue_reference<T&> { static constexpr bool value = true; };
-		template<class T> inline constexpr T &&forward(typename remove_reference<T>::type  &v) noexcept { return static_cast<T&&>(v); }
-		template<class T> inline constexpr T &&forward(typename remove_reference<T>::type &&v) noexcept { static_assert(!is_lvalue_reference<T>::value, "invalid rvalue to lvalue conversion"); return static_cast<T&&>(v); }
-		template<class T> inline constexpr typename remove_reference<T>::type &&move(T &&v) noexcept { return static_cast<typename remove_reference<T>::type&&>(v); }
+		template<class T> inline constexpr T &&forward(typename std::remove_reference<T>::type  &v) noexcept { return static_cast<T&&>(v); }
+		template<class T> inline constexpr T &&forward(typename std::remove_reference<T>::type &&v) noexcept { static_assert(!std::is_lvalue_reference<T>::value, "invalid rvalue to lvalue conversion"); return static_cast<T&&>(v); }
+		template<class T> inline constexpr typename std::remove_reference<T>::type &&move(T &&v) noexcept { return static_cast<typename std::remove_reference<T>::type&&>(v); }
 	}
 
 	// enum class bit operators
 
 	template<class T> struct enable_bitmask_operators { static constexpr bool enable = false; };
-	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator ~ (T lhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return static_cast<T>(~static_cast<underlying>(lhs)); }
-	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator | (T lhs, T rhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return static_cast<T>(static_cast<underlying>(lhs) | static_cast<underlying>(rhs)); }
-	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator & (T lhs, T rhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return static_cast<T>(static_cast<underlying>(lhs) & static_cast<underlying>(rhs)); }
-	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator ^ (T lhs, T rhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return static_cast<T>(static_cast<underlying>(lhs) ^ static_cast<underlying>(rhs)); }
-	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator |= (T &lhs, T rhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return lhs = static_cast<T>(static_cast<underlying>(lhs) | static_cast<underlying>(rhs)); }
-	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator &= (T &lhs, T rhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return lhs = static_cast<T>(static_cast<underlying>(lhs) & static_cast<underlying>(rhs)); }
-	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, T>::type operator ^= (T &lhs, T rhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return lhs = static_cast<T>(static_cast<underlying>(lhs) ^ static_cast<underlying>(rhs)); }
-	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, bool>::type any(T lhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return static_cast<underlying>(lhs) != 0; }
-	template<class T> inline constexpr typename templates::enable_if<enable_bitmask_operators<T>::enable, bool>::type none(T lhs) noexcept { typedef typename templates::underlying_type<T>::type underlying; return static_cast<underlying>(lhs) == 0; }
+	template<class T> inline constexpr typename std::enable_if<enable_bitmask_operators<T>::enable, T>::type operator ~ (T lhs) noexcept { typedef typename std::underlying_type<T>::type underlying; return static_cast<T>(~static_cast<underlying>(lhs)); }
+	template<class T> inline constexpr typename std::enable_if<enable_bitmask_operators<T>::enable, T>::type operator | (T lhs, T rhs) noexcept { typedef typename std::underlying_type<T>::type underlying; return static_cast<T>(static_cast<underlying>(lhs) | static_cast<underlying>(rhs)); }
+	template<class T> inline constexpr typename std::enable_if<enable_bitmask_operators<T>::enable, T>::type operator & (T lhs, T rhs) noexcept { typedef typename std::underlying_type<T>::type underlying; return static_cast<T>(static_cast<underlying>(lhs) & static_cast<underlying>(rhs)); }
+	template<class T> inline constexpr typename std::enable_if<enable_bitmask_operators<T>::enable, T>::type operator ^ (T lhs, T rhs) noexcept { typedef typename std::underlying_type<T>::type underlying; return static_cast<T>(static_cast<underlying>(lhs) ^ static_cast<underlying>(rhs)); }
+	template<class T> inline constexpr typename std::enable_if<enable_bitmask_operators<T>::enable, T>::type operator |= (T &lhs, T rhs) noexcept { typedef typename std::underlying_type<T>::type underlying; return lhs = static_cast<T>(static_cast<underlying>(lhs) | static_cast<underlying>(rhs)); }
+	template<class T> inline constexpr typename std::enable_if<enable_bitmask_operators<T>::enable, T>::type operator &= (T &lhs, T rhs) noexcept { typedef typename std::underlying_type<T>::type underlying; return lhs = static_cast<T>(static_cast<underlying>(lhs) & static_cast<underlying>(rhs)); }
+	template<class T> inline constexpr typename std::enable_if<enable_bitmask_operators<T>::enable, T>::type operator ^= (T &lhs, T rhs) noexcept { typedef typename std::underlying_type<T>::type underlying; return lhs = static_cast<T>(static_cast<underlying>(lhs) ^ static_cast<underlying>(rhs)); }
+	template<class T> inline constexpr typename std::enable_if<enable_bitmask_operators<T>::enable, bool>::type any(T lhs) noexcept { typedef typename std::underlying_type<T>::type underlying; return static_cast<underlying>(lhs) != 0; }
+	template<class T> inline constexpr typename std::enable_if<enable_bitmask_operators<T>::enable, bool>::type none(T lhs) noexcept { typedef typename std::underlying_type<T>::type underlying; return static_cast<underlying>(lhs) == 0; }
 
 	// this macro has to be used inside namespace cage
 #define GCHL_ENUM_BITS(TYPE) template<> struct enable_bitmask_operators<TYPE> { static constexpr bool enable = true; };
@@ -589,14 +460,14 @@ namespace cage
 		CAGE_CORE_API void stringSplit(char *data, uint32 &current, char *ret, uint32 &retLen, const char *what, uint32 whatLen);
 		CAGE_CORE_API uint32 stringToUpper(char *dst, uint32 dstLen, const char *src, uint32 srcLen);
 		CAGE_CORE_API uint32 stringToLower(char *dst, uint32 dstLen, const char *src, uint32 srcLen);
-		CAGE_CORE_API uint32 stringFind(const char *data, uint32 current, const char *what, uint32 whatLen, uint32 offset) noexcept;
+		CAGE_CORE_API uint32 stringFind(const char *data, uint32 current, const char *what, uint32 whatLen, uint32 offset);
 		CAGE_CORE_API void stringEncodeUrl(const char *dataIn, uint32 currentIn, char *dataOut, uint32 &currentOut, uint32 maxLength);
 		CAGE_CORE_API void stringDecodeUrl(const char *dataIn, uint32 currentIn, char *dataOut, uint32 &currentOut, uint32 maxLength);
-		CAGE_CORE_API bool stringIsDigitsOnly(const char *data, uint32 dataLen) noexcept;
-		CAGE_CORE_API bool stringIsInteger(const char *data, uint32 dataLen, bool allowSign) noexcept;
-		CAGE_CORE_API bool stringIsReal(const char *data, uint32 dataLen, bool allowSign) noexcept;
-		CAGE_CORE_API bool stringIsBool(const char *data, uint32 dataLen) noexcept;
-		CAGE_CORE_API bool stringIsPattern(const char *data, uint32 dataLen, const char *prefix, uint32 prefixLen, const char *infix, uint32 infixLen, const char *suffix, uint32 suffixLen) noexcept;
+		CAGE_CORE_API bool stringIsDigitsOnly(const char *data, uint32 dataLen);
+		CAGE_CORE_API bool stringIsInteger(const char *data, uint32 dataLen, bool allowSign);
+		CAGE_CORE_API bool stringIsReal(const char *data, uint32 dataLen, bool allowSign);
+		CAGE_CORE_API bool stringIsBool(const char *data, uint32 dataLen);
+		CAGE_CORE_API bool stringIsPattern(const char *data, uint32 dataLen, const char *prefix, uint32 prefixLen, const char *infix, uint32 infixLen, const char *suffix, uint32 suffixLen);
 		CAGE_CORE_API int stringComparison(const char *ad, uint32 al, const char *bd, uint32 bl) noexcept;
 	}
 
@@ -611,14 +482,8 @@ namespace cage
 		struct StringBase : templates::Comparable<StringBase<N>>
 		{
 			// constructors
-			constexpr StringBase() noexcept
+			StringBase() noexcept
 			{
-				data[current] = 0;
-			}
-
-			StringBase(const StringBase &other) noexcept : current(other.current)
-			{
-				detail::memcpy(data, other.data, current);
 				data[current] = 0;
 			}
 
@@ -668,17 +533,6 @@ namespace cage
 			StringBase(const char *other)
 			{
 				current = privat::toString(data, N, other);
-			}
-
-			// assignment operators
-			StringBase &operator = (const StringBase &other) noexcept
-			{
-				if (this == &other)
-					return *this;
-				current = other.current;
-				detail::memcpy(data, other.data, current);
-				data[current] = 0;
-				return *this;
 			}
 
 			// compound operators
@@ -901,37 +755,37 @@ namespace cage
 				return privat::stringIsBool(data, current);
 			}
 
-			constexpr bool empty() const noexcept
+			bool empty() const noexcept
 			{
 				return current == 0;
 			}
 
-			constexpr uint32 length() const noexcept
+			uint32 length() const noexcept
 			{
 				return current;
 			}
 
-			constexpr uint32 size() const noexcept
+			uint32 size() const noexcept
 			{
 				return current;
 			}
 
-			constexpr char *begin() noexcept
+			char *begin() noexcept
 			{
 				return data;
 			}
 
-			constexpr char *end() noexcept
+			char *end() noexcept
 			{
 				return data + current;
 			}
 
-			constexpr const char *begin() const noexcept
+			const char *begin() const noexcept
 			{
 				return data;
 			}
 
-			constexpr const char *end() const noexcept
+			const char *end() const noexcept
 			{
 				return data + current;
 			}
@@ -956,7 +810,7 @@ namespace cage
 		{
 			StringBase<N> value;
 
-			operator const StringBase<N> & () const noexcept
+			operator const StringBase<N> & () const
 			{
 				return value;
 			}
@@ -1056,19 +910,26 @@ namespace cage
 		R(*fnc)(void *, Ts...) = nullptr;
 		void *inst = nullptr;
 
+		template<R(*F)(Ts...)>
+		static constexpr R freeFnc(void *, Ts... vs)
+		{
+			return F(templates::forward<Ts>(vs)...);
+		}
+
 	public:
 		template<R(*F)(Ts...)>
-		Delegate &bind() noexcept
+		constexpr Delegate &bind()
 		{
-			fnc = +[](void *inst, Ts... vs) {
-				(void)inst;
-				return F(templates::forward<Ts>(vs)...);
-			};
+			fnc = &freeFnc<F>;
+			//fnc = +[](void *inst, Ts... vs) {
+			//	(void)inst;
+			//	return F(templates::forward<Ts>(vs)...);
+			//};
 			return *this;
 		}
 
 		template<class D, R(*F)(D, Ts...)>
-		Delegate &bind(D d) noexcept
+		Delegate &bind(D d)
 		{
 			static_assert(sizeof(d) <= sizeof(inst), "invalid size of data stored in delegate");
 			union U
@@ -1088,7 +949,7 @@ namespace cage
 		}
 
 		template<class C, R(C::*F)(Ts...)>
-		Delegate &bind(C *i) noexcept
+		Delegate &bind(C *i)
 		{
 			fnc = +[](void *inst, Ts... vs) {
 				return (((C*)inst)->*F)(templates::forward<Ts>(vs)...);
@@ -1098,7 +959,7 @@ namespace cage
 		}
 
 		template<class C, R(C::*F)(Ts...) const>
-		Delegate &bind(const C *i) noexcept
+		Delegate &bind(const C *i)
 		{
 			fnc = +[](void *inst, Ts... vs) {
 				return (((const C*)inst)->*F)(templates::forward<Ts>(vs)...);
@@ -1118,7 +979,7 @@ namespace cage
 			fnc = nullptr;
 		}
 
-		R operator ()(Ts... vs) const
+		constexpr R operator ()(Ts... vs) const
 		{
 			CAGE_ASSERT(!!*this);
 			return fnc(inst, templates::forward<Ts>(vs)...);
@@ -1153,7 +1014,7 @@ namespace cage
 			typedef void type;
 		};
 
-		CAGE_CORE_API bool isHolderShareable(const Delegate<void(void *)> &deleter) noexcept;
+		CAGE_CORE_API bool isHolderShareable(const Delegate<void(void *)> &deleter);
 		CAGE_CORE_API void incHolderShareable(void *ptr, const Delegate<void(void *)> &deleter);
 		CAGE_CORE_API void makeHolderShareable(void *&ptr, Delegate<void(void *)> &deleter);
 
@@ -1309,16 +1170,16 @@ namespace cage
 		template<class U>
 		constexpr PointerRange(U *begin, U *end) noexcept : begin_(begin), end_(end) {}
 		template<class U>
-		constexpr PointerRange(const PointerRange<U> &other) noexcept : begin_(other.begin()), end_(other.end()) {}
+		constexpr PointerRange(const PointerRange<U> &other) : begin_(other.begin()), end_(other.end()) {}
 		template<class U>
-		constexpr PointerRange(U &&other) noexcept : begin_(other.data()), end_(other.data() + other.size()) {}
+		constexpr PointerRange(U &&other) : begin_(other.data()), end_(other.data() + other.size()) {}
 
 		constexpr T *begin() const noexcept { return begin_; }
 		constexpr T *end() const noexcept { return end_; }
 		constexpr T *data() const noexcept { return begin_; }
 		constexpr size_type size() const noexcept { return end_ - begin_; }
 		constexpr bool empty() const noexcept { return size() == 0; }
-		T &operator[] (uint32 idx) const { CAGE_ASSERT(idx < size()); return begin_[idx]; }
+		constexpr T &operator[] (uint32 idx) const { CAGE_ASSERT(idx < size()); return begin_[idx]; }
 	};
 
 	template<class T>
@@ -1466,7 +1327,8 @@ namespace cage
 			}
 			catch (...)
 			{
-				privat::runtimeAssertFailure("exception thrown in destructor", __FILE__, __LINE__, __FUNCTION__);
+				detail::logCurrentCaughtException();
+				CAGE_ASSERT(!"exception thrown in destructor");
 			}
 			deallocate(ptr);
 		}

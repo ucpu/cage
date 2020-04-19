@@ -17,7 +17,7 @@ namespace cage
 			if (lfOnly && len == size)
 				return false;
 
-			if (len > detail::numeric_limits<uint32>::max())
+			if (len > std::numeric_limits<uint32>::max())
 				CAGE_THROW_ERROR(Exception, "line too long");
 
 			output = string(buffer, numeric_cast<uint32>(len));

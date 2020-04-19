@@ -45,7 +45,7 @@ namespace cage
 	{
 		if (!renderDebugConfig)
 			return;
-		real h = real(hash(ent ? ent->name() : 0)) / real(detail::numeric_limits<uint32>().max());
+		real h = real(hash(ent ? ent->name() : 0)) / real(std::numeric_limits<uint32>().max());
 		emitDebug(renderPos, renderSize, vec4(colorHsvToRgb(vec3(h, 1, 1)), 1));
 	}
 

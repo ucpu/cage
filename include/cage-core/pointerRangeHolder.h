@@ -9,9 +9,9 @@ namespace cage
 {
 	// utility struct to simplify creating Holder<PointerRange<T>>
 	template<class T>
-	struct PointerRangeHolder : public std::vector<typename templates::remove_const<T>::type>, Immovable
+	struct PointerRangeHolder : public std::vector<typename std::remove_const<T>::type>, Immovable
 	{
-		typedef typename templates::remove_const<T>::type CT;
+		typedef typename std::remove_const<T>::type CT;
 
 		PointerRangeHolder()
 		{}

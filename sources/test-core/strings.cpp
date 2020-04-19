@@ -6,6 +6,8 @@
 #include <cstring>
 #include <map>
 
+void test(real a, real b);
+
 namespace
 {
 	void testBasics()
@@ -147,9 +149,9 @@ namespace
 		}
 		{
 			CAGE_TESTCASE("conversions");
-			CAGE_TEST(real(string("0.5").toFloat()) == (real)0.5f);
-			CAGE_TEST(real(string("-45.123").toFloat()) == (real)-45.123f);
-			CAGE_TEST(real(string("-3.8e9").toFloat()) == (real)-3.8e9f);
+			test(string("0.5").toFloat(), 0.5f);
+			test(string("-45.123").toFloat(), -45.123f);
+			test(string("-3.8e9").toFloat(), -3.8e9f);
 			CAGE_TEST(string("157").toUint32() == 157);
 			CAGE_TEST(string("+157").toUint32() == 157);
 			CAGE_TEST(string("157").toSint32() == 157);

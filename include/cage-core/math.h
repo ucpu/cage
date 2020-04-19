@@ -16,7 +16,9 @@ namespace cage
 {
 	struct CAGE_CORE_API real
 	{
-		float value = 0;
+		using value_type = float;
+
+		value_type value = 0;
 
 		inline real() {}
 #define GCHL_GENERATE(TYPE) inline real (TYPE other) : value((float)other) {}
@@ -38,13 +40,13 @@ namespace cage
 		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx == 0); return *this; }
 		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx == 0); return *this; }
 		bool valid() const;
-		inline bool finite() const { return valid() && value != real::Infinity().value && value != -real::Infinity().value; }
-		inline static real Pi() { return 3.141592653589793238; }
-		inline static real E() { return 2.718281828459045235; }
-		inline static real Log2() { return 0.693147180559945309; }
-		inline static real Log10() { return 2.302585092994045684; }
-		static real Infinity();
-		static real Nan();
+		inline bool finite() const { return valid() && value != real::Infinity() && value != -real::Infinity(); }
+		static constexpr value_type Pi() { return (value_type)3.141592653589793238; }
+		static constexpr value_type E() { return (value_type)2.718281828459045235; }
+		static constexpr value_type Log2() { return (value_type)0.693147180559945309; }
+		static constexpr value_type Log10() { return (value_type)2.302585092994045684; }
+		static constexpr value_type Infinity() { return std::numeric_limits<value_type>::infinity(); };
+		static constexpr value_type Nan() { return std::numeric_limits<value_type>::quiet_NaN(); };
 	};
 
 	struct CAGE_CORE_API rads
@@ -57,7 +59,7 @@ namespace cage
 
 		static rads parse(const string &str);
 		inline bool valid() const { return value.valid(); }
-		inline static rads Full() { return rads(real::Pi().value * 2); }
+		inline static rads Full() { return rads(real::Pi() * 2); }
 		inline static rads Nan() { return rads(real::Nan()); }
 		friend struct real;
 		friend struct degs;
@@ -554,14 +556,17 @@ namespace cage
 	CAGE_CORE_API quat randomDirectionQuat();
 
 	CAGE_CORE_API uint32 hash(uint32 key);
+}
 
-	namespace detail
-	{
-		template<>
-		struct numeric_limits<real> : public numeric_limits<decltype(real::value)>
-		{};
-	}
+namespace std
+{
+	template<>
+	struct numeric_limits<cage::real> : public std::numeric_limits<cage::real::value_type>
+	{};
+}
 
+namespace cage
+{
 	template<class To>
 	To numeric_cast(real from)
 	{

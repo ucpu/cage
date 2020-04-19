@@ -43,18 +43,18 @@ namespace cage
 			{
 				errno = 0;
 				char *e = nullptr;
-				if (detail::numeric_limits<T>::is_signed)
+				if (std::numeric_limits<T>::is_signed)
 				{
 					sint64 v = std::strtoll(s, &e, 10);
 					value = (T)v;
-					if (v < detail::numeric_limits<T>::min() || v > detail::numeric_limits<T>::max())
+					if (v < std::numeric_limits<T>::min() || v > std::numeric_limits<T>::max())
 						e = nullptr;
 				}
 				else
 				{
 					uint64 v = std::strtoull(s, &e, 10);
 					value = (T)v;
-					if (*s == '-' || v < detail::numeric_limits<T>::min() || v > detail::numeric_limits<T>::max())
+					if (*s == '-' || v < std::numeric_limits<T>::min() || v > std::numeric_limits<T>::max())
 						e = nullptr;
 				}
 				if (!*s || !e || *e != 0 || std::isspace(*s) || errno != 0)
@@ -109,7 +109,7 @@ namespace cage
 			{
 				double v;
 				genericScan(s, v);
-				if (v < detail::numeric_limits<float>::min() || v > detail::numeric_limits<float>::max())
+				if (v < std::numeric_limits<float>::lowest() || v > std::numeric_limits<float>::max())
 				{
 					CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "input string: '" + s + "'");
 					CAGE_THROW_ERROR(Exception, "fromString failed");
@@ -367,7 +367,7 @@ namespace cage
 			return srcLen;
 		}
 
-		uint32 stringFind(const char *data, uint32 current, const char *what, uint32 whatLen, uint32 offset) noexcept
+		uint32 stringFind(const char *data, uint32 current, const char *what, uint32 whatLen, uint32 offset)
 		{
 			if (whatLen == 0 || offset + whatLen > current)
 				return m;
@@ -398,7 +398,7 @@ namespace cage
 			currentOut = len;
 		}
 
-		bool stringIsDigitsOnly(const char *data, uint32 dataLen) noexcept
+		bool stringIsDigitsOnly(const char *data, uint32 dataLen)
 		{
 			for (char c : PointerRange<const char>(data, data + dataLen))
 			{
@@ -408,7 +408,7 @@ namespace cage
 			return true;
 		}
 
-		bool stringIsInteger(const char *data, uint32 dataLen, bool allowSign) noexcept
+		bool stringIsInteger(const char *data, uint32 dataLen, bool allowSign)
 		{
 			if (dataLen == 0)
 				return false;
@@ -418,7 +418,7 @@ namespace cage
 				return stringIsDigitsOnly(data, dataLen);
 		}
 
-		bool stringIsReal(const char *data, uint32 dataLen, bool allowSign) noexcept
+		bool stringIsReal(const char *data, uint32 dataLen, bool allowSign)
 		{
 			if (dataLen == 0)
 				return false;
@@ -428,7 +428,7 @@ namespace cage
 			return stringIsInteger(data, d, allowSign) && stringIsDigitsOnly(data + d + 1, dataLen - d - 1);
 		}
 
-		bool stringIsBool(const char *data, uint32 dataLen) noexcept
+		bool stringIsBool(const char *data, uint32 dataLen)
 		{
 			if (dataLen > 10)
 				return false;
@@ -440,7 +440,7 @@ namespace cage
 			return false;
 		}
 
-		bool stringIsPattern(const char *data, uint32 dataLen, const char *prefix, uint32 prefixLen, const char *infix, uint32 infixLen, const char *suffix, uint32 suffixLen) noexcept
+		bool stringIsPattern(const char *data, uint32 dataLen, const char *prefix, uint32 prefixLen, const char *infix, uint32 infixLen, const char *suffix, uint32 suffixLen)
 		{
 			if (dataLen < prefixLen + infixLen + suffixLen)
 				return false;

@@ -268,7 +268,7 @@ namespace cage
 		class UdpConnectionImpl : public UdpConnection
 		{
 		public:
-			UdpConnectionImpl(const string &address, uint16 port, uint64 timeout) : statsLastTimestamp(0), startTime(getApplicationTime()), connId(randomRange(1u, detail::numeric_limits<uint32>::max())), established(false)
+			UdpConnectionImpl(const string &address, uint16 port, uint64 timeout) : statsLastTimestamp(0), startTime(getApplicationTime()), connId(randomRange(1u, std::numeric_limits<uint32>::max())), established(false)
 			{
 				UDP_LOG(1, "creating new connection to address: '" + address + "', port: " + port + ", timeout: " + timeout);
 				sockGroup = std::make_shared<SockGroup>();

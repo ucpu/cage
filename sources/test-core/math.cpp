@@ -143,11 +143,11 @@ namespace
 			CAGE_TESTCASE("basics");
 			CAGE_TEST(real::Pi() > 3.1 && real::Pi() < 3.2);
 			CAGE_TEST(real::E() > 2.7 && real::E() < 2.8);
-			CAGE_TEST(real::Infinity().valid());
-			CAGE_TEST(!real::Nan().valid());
-			CAGE_TEST(!real::Infinity().finite());
-			CAGE_TEST(!real::Nan().finite());
-			CAGE_TEST(real::Pi().finite());
+			CAGE_TEST(real(real::Infinity()).valid());
+			CAGE_TEST(!real(real::Nan()).valid());
+			CAGE_TEST(!real(real::Infinity()).finite());
+			CAGE_TEST(!real(real::Nan()).finite());
+			CAGE_TEST(real(real::Pi()).finite());
 			CAGE_TEST(real(0).finite());
 			CAGE_TEST(real(42).finite());
 			CAGE_TEST(real(42).valid());
@@ -832,11 +832,11 @@ namespace
 		{
 			CAGE_TESTCASE("sin");
 			test(sin(rads(0)), 0);
-			test(sin(rads(real::Pi() / 6)), ::sin(real::Pi().value / 6));
-			test(sin(rads(real::Pi() / 4)), ::sin(real::Pi().value / 4));
-			test(sin(rads(real::Pi() / 2)), ::sin(real::Pi().value / 2));
-			test(sin(rads(real::Pi() * 1)), ::sin(real::Pi().value * 1));
-			test(sin(rads(real::Pi() * 2)), ::sin(real::Pi().value * 2));
+			test(sin(rads(real::Pi() / 6)), ::sin(real::Pi() / 6));
+			test(sin(rads(real::Pi() / 4)), ::sin(real::Pi() / 4));
+			test(sin(rads(real::Pi() / 2)), ::sin(real::Pi() / 2));
+			test(sin(rads(real::Pi() * 1)), ::sin(real::Pi() * 1));
+			test(sin(rads(real::Pi() * 2)), ::sin(real::Pi() * 2));
 		}
 
 		{

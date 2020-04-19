@@ -177,7 +177,6 @@ namespace cage
 			vec2 orthographicSize;
 			rads perspectiveFov = degs(60);
 			CameraUnion() {}
-			~CameraUnion() {}
 		} camera;
 		Texture *target = nullptr;
 		real ambientIntensity = 1;

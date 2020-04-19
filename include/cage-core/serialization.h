@@ -54,11 +54,10 @@ namespace cage
 
 	// general serialization
 
-	// todo implement templates::is_trivially_copyable and use it to enable the general serialization methods for those types only
-
 	template<class T>
 	Serializer &operator << (Serializer &s, const T &v)
 	{
+		static_assert(std::is_trivially_copyable<T>::value, "type not trivial");
 		s.write(&v, sizeof(v));
 		return s;
 	}
@@ -66,6 +65,7 @@ namespace cage
 	template<class T>
 	Deserializer &operator >> (Deserializer &s, T &v)
 	{
+		static_assert(std::is_trivially_copyable<T>::value, "type not trivial");
 		s.read(&v, sizeof(v));
 		return s;
 	}

@@ -40,6 +40,17 @@ namespace
 		static int test32(uint16) { return 16; }
 		static int test32(uint32) { return 32; }
 	};
+
+	constexpr int constexprSum(int a, int b)
+	{
+		return a + b;
+	}
+
+	constexpr int constexprTest()
+	{
+		constexpr auto del = Delegate<int(int, int)>().bind<&constexprSum>();
+		return del(2, 3);
+	}
 }
 
 void testDelegates()
@@ -156,6 +167,12 @@ void testDelegates()
 		CAGE_TESTCASE("static methods with data");
 		Delegate<int()> d47 = Delegate<int()>().bind<int, &Tester::test31>(42);
 		d47();
+	}
+
+	{
+		CAGE_TESTCASE("constexpr delegate");
+		constexpr auto val = constexprTest();
+		CAGE_TEST(val == 5);
 	}
 }
 

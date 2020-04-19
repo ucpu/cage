@@ -18,36 +18,36 @@ namespace cage
 					It it;
 					Counter cnt;
 
-					pair(const It &it, const Counter &cnt) : it(it), cnt(cnt)
+					constexpr pair(const It &it, const Counter &cnt) : it(it), cnt(cnt)
 					{}
 
-					auto operator * () const
+					constexpr auto operator * () const
 					{
 						return *it;
 					}
 
-					const auto &operator -> () const
+					constexpr const auto &operator -> () const
 					{
 						return it;
 					}
 				};
 
-				iterator(const It &it, const Counter &cnt) : p(it, cnt)
+				constexpr iterator(const It &it, const Counter &cnt) : p(it, cnt)
 				{}
 
 				template<class U>
-				bool operator == (const iterator<U> &other) const
+				constexpr bool operator == (const iterator<U> &other) const
 				{
 					return p.it == other.p.it;
 				}
 
 				template<class U>
-				bool operator != (const iterator<U> &other) const
+				constexpr bool operator != (const iterator<U> &other) const
 				{
 					return p.it != other.p.it;
 				}
 
-				iterator operator ++ ()
+				constexpr iterator operator ++ ()
 				{
 					auto r(*this);
 					p.it++;
@@ -55,14 +55,14 @@ namespace cage
 					return r;
 				}
 
-				iterator &operator ++ (int)
+				constexpr iterator &operator ++ (int)
 				{
 					++p.it;
 					++p.cnt;
 					return *this;
 				}
 
-				const pair &operator * () const
+				constexpr const pair &operator * () const
 				{
 					return p;
 				}
@@ -71,10 +71,10 @@ namespace cage
 				pair p;
 			};
 
-			auto begin() const { return iterator<It1>(it1, start); }
-			auto end() const { return iterator<It2>(it2, start); }
+			constexpr auto begin() const { return iterator<It1>(it1, start); }
+			constexpr auto end() const { return iterator<It2>(it2, start); }
 
-			Enumerate(Range &&range, const It1 &it1, const It2 &it2, const Counter &start) : Range(templates::move(range)), it1(it1), it2(it2), start(start)
+			constexpr Enumerate(Range &&range, const It1 &it1, const It2 &it2, const Counter &start) : Range(templates::move(range)), it1(it1), it2(it2), start(start)
 			{}
 
 		private:
@@ -85,39 +85,39 @@ namespace cage
 
 		// generic
 		template<class Range, class It1, class It2, class Counter>
-		inline auto enumerate(Range &&range, const It1 &it1, const It2 &it2, const Counter &start)
+		inline constexpr auto enumerate(Range &&range, const It1 &it1, const It2 &it2, const Counter &start)
 		{
 			return Enumerate<Range, It1, It2, Counter>(templates::move(range), it1, it2, start);
 		}
+
+		struct None
+		{};
 	}
 
 	// two iterators
 	template<class It1, class It2, class Counter = uintPtr>
-	inline auto enumerate(It1 it1, It2 it2, Counter start = Counter())
+	inline constexpr auto enumerate(It1 it1, It2 it2, Counter start = Counter())
 	{
-		struct none {};
-		return privat::enumerate(none(), it1, it2, start);
+		return privat::enumerate(privat::None(), it1, it2, start);
 	}
 
 	// l-value range
 	template<class Range, class Counter = typename Range::size_type>
-	inline auto enumerate(Range &range)
+	inline constexpr auto enumerate(Range &range)
 	{
-		struct none {};
-		return privat::enumerate(none(), range.begin(), range.end(), Counter());
+		return privat::enumerate(privat::None(), range.begin(), range.end(), Counter());
 	}
 
 	// const range
 	template<class Range, class Counter = typename Range::size_type>
-	inline auto enumerate(const Range &range)
+	inline constexpr auto enumerate(const Range &range)
 	{
-		struct none {};
-		return privat::enumerate(none(), range.begin(), range.end(), Counter());
+		return privat::enumerate(privat::None(), range.begin(), range.end(), Counter());
 	}
 
 	// r-value range
 	template<class Range, class Counter = typename Range::size_type>
-	inline auto enumerate(Range &&range)
+	inline constexpr auto enumerate(Range &&range)
 	{
 		// we need to extend lifetime of the temporary (we take ownership of the variable)
 		return privat::enumerate(templates::move(range), range.begin(), range.end(), Counter());
@@ -125,10 +125,9 @@ namespace cage
 
 	// c array
 	template<class T, uintPtr N, class Counter = uintPtr>
-	inline auto enumerate(T (&range)[N])
+	inline constexpr auto enumerate(T (&range)[N])
 	{
-		struct none {};
-		return privat::enumerate(none(), range + 0, range + N, Counter());
+		return privat::enumerate(privat::None(), range + 0, range + N, Counter());
 	}
 }
 

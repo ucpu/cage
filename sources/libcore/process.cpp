@@ -83,7 +83,7 @@ namespace cage
 				closeHandle(hChildStd_OUT_Wr);
 				closeHandle(hChildStd_IN_Rd);
 
-				CAGE_LOG_CONTINUE(SeverityEnum::Info, "process", stringizer() + "process id: " + templates::underlying_type<DWORD>::type(GetProcessId(hProcess)));
+				CAGE_LOG_CONTINUE(SeverityEnum::Info, "process", stringizer() + "process id: " + (uint32)GetProcessId(hProcess));
 			}
 
 			static void closeHandle(HANDLE &h)

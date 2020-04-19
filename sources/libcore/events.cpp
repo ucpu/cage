@@ -4,7 +4,7 @@ namespace cage
 {
 	namespace privat
 	{
-		EventLinker::EventLinker(const string &name) : order(detail::numeric_limits<sint32>::min()), name(name)
+		EventLinker::EventLinker(const string &name) : order(std::numeric_limits<sint32>::min()), name(name)
 		{}
 
 		EventLinker::~EventLinker()

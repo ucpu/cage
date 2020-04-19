@@ -77,7 +77,7 @@ namespace cage
 	{
 		CAGE_ASSERT(min <= max);
 		uint64 r = next();
-		double f = (double)r / (double)detail::numeric_limits<uint64>::max();
+		double f = (double)r / (double)std::numeric_limits<uint64>::max();
 		if (f >= 1.0)
 			f = 0;
 		double res = (max - min) * f + min;
@@ -88,7 +88,7 @@ namespace cage
 	real RandomGenerator::randomChance()
 	{
 		uint64 r = next();
-		real res = (real)r / (real)detail::numeric_limits<uint64>::max();
+		real res = (real)r / (real)std::numeric_limits<uint64>::max();
 		if (res >= 1.0)
 			res = 0;
 		CAGE_ASSERT(res >= 0.f && res < 1.f);

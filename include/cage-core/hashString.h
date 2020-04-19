@@ -57,7 +57,7 @@ namespace cage
 	private:
 		struct ConstCharWrapper
 		{
-			constexpr ConstCharWrapper(const char *str) noexcept : str(str) {}
+			ConstCharWrapper(const char *str) noexcept : str(str) {}
 			const char *str;
 		};
 

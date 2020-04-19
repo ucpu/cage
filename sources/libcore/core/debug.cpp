@@ -180,46 +180,13 @@ namespace cage
 		static_assert(sizeof(sint32) == 4, "assert size sint32");
 		static_assert(sizeof(sint64) == 8, "assert size sint64");
 		static_assert(sizeof(sintPtr) == sizeof(void*), "assert size sintPtr");
-
-		static_assert(detail::numeric_limits<char>::min() == std::numeric_limits<char>::min(), "assert numeric limits");
-		static_assert(detail::numeric_limits<char>::max() == std::numeric_limits<char>::max(), "assert numeric limits");
-		static_assert(detail::numeric_limits<short>::min() == std::numeric_limits<short>::min(), "assert numeric limits");
-		static_assert(detail::numeric_limits<short>::max() == std::numeric_limits<short>::max(), "assert numeric limits");
-		static_assert(detail::numeric_limits<int>::min() == std::numeric_limits<int>::min(), "assert numeric limits");
-		static_assert(detail::numeric_limits<int>::max() == std::numeric_limits<int>::max(), "assert numeric limits");
-		static_assert(detail::numeric_limits<long>::min() == std::numeric_limits<long>::min(), "assert numeric limits");
-		static_assert(detail::numeric_limits<long>::max() == std::numeric_limits<long>::max(), "assert numeric limits");
-		static_assert(detail::numeric_limits<long long>::min() == std::numeric_limits<long long>::min(), "assert numeric limits");
-		static_assert(detail::numeric_limits<long long>::max() == std::numeric_limits<long long>::max(), "assert numeric limits");
-		static_assert(detail::numeric_limits<unsigned char>::min() == std::numeric_limits<unsigned char>::min(), "assert numeric limits");
-		static_assert(detail::numeric_limits<unsigned char>::max() == std::numeric_limits<unsigned char>::max(), "assert numeric limits");
-		static_assert(detail::numeric_limits<unsigned short>::min() == std::numeric_limits<unsigned short>::min(), "assert numeric limits");
-		static_assert(detail::numeric_limits<unsigned short>::max() == std::numeric_limits<unsigned short>::max(), "assert numeric limits");
-		static_assert(detail::numeric_limits<unsigned int>::min() == std::numeric_limits<unsigned int>::min(), "assert numeric limits");
-		static_assert(detail::numeric_limits<unsigned int>::max() == std::numeric_limits<unsigned int>::max(), "assert numeric limits");
-		static_assert(detail::numeric_limits<unsigned long>::min() == std::numeric_limits<unsigned long>::min(), "assert numeric limits");
-		static_assert(detail::numeric_limits<unsigned long>::max() == std::numeric_limits<unsigned long>::max(), "assert numeric limits");
-		static_assert(detail::numeric_limits<unsigned long long>::min() == std::numeric_limits<unsigned long long>::min(), "assert numeric limits");
-		static_assert(detail::numeric_limits<unsigned long long>::max() == std::numeric_limits<unsigned long long>::max(), "assert numeric limits");
-
-		//static_assert(detail::numeric_limits<float>::min() == std::numeric_limits<float>::min(), "assert numeric limits");
-		//static_assert(detail::numeric_limits<float>::max() == std::numeric_limits<float>::max(), "assert numeric limits");
-		//static_assert(detail::numeric_limits<double>::min() == std::numeric_limits<double>::min(), "assert numeric limits");
-		//static_assert(detail::numeric_limits<double>::max() == std::numeric_limits<double>::max(), "assert numeric limits");
-		static_assert(detail::numeric_limits<float>::min() < -1.f, "assert numeric limits");
-		static_assert(detail::numeric_limits<float>::max() > 1.f, "assert numeric limits");
-		static_assert(detail::numeric_limits<double>::min() < -1.0, "assert numeric limits");
-		static_assert(detail::numeric_limits<double>::max() > 1.0, "assert numeric limits");
-
-		static_assert(detail::numeric_limits<uint8>::min() == std::numeric_limits<uint8>::min(), "assert numeric limits");
-		static_assert(detail::numeric_limits<sint8>::max() == std::numeric_limits<sint8>::max(), "assert numeric limits");
-		static_assert(detail::numeric_limits<uint16>::min() == std::numeric_limits<uint16>::min(), "assert numeric limits");
-		static_assert(detail::numeric_limits<sint16>::max() == std::numeric_limits<sint16>::max(), "assert numeric limits");
-		static_assert(detail::numeric_limits<uint32>::min() == std::numeric_limits<uint32>::min(), "assert numeric limits");
-		static_assert(detail::numeric_limits<sint32>::max() == std::numeric_limits<sint32>::max(), "assert numeric limits");
-		static_assert(detail::numeric_limits<uint64>::min() == std::numeric_limits<uint64>::min(), "assert numeric limits");
-		static_assert(detail::numeric_limits<sint64>::max() == std::numeric_limits<sint64>::max(), "assert numeric limits");
-
 		static_assert(sizeof(bool) == 1, "assert size bool");
+
+		static_assert(std::is_trivially_copy_constructible<string>::value, "string not trivial");
+		static_assert(std::is_trivially_move_constructible<string>::value, "string not trivial");
+		static_assert(std::is_trivially_copy_assignable<string>::value, "string not trivial");
+		static_assert(std::is_trivially_move_assignable<string>::value, "string not trivial");
+		static_assert(std::is_trivially_copyable<string>::value, "string not trivial");
+		static_assert(std::is_trivially_destructible<string>::value, "string not trivial");
 	}
 }

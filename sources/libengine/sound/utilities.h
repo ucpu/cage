@@ -59,8 +59,8 @@ namespace cage
 			{
 				void operator ()(T source, float &target)
 				{
-					static_assert(detail::numeric_limits<T>::is_signed, "invalid conversion type");
-					static constexpr float range = (float)detail::numeric_limits<T>::max() - (float)detail::numeric_limits<T>::min();
+					static_assert(std::numeric_limits<T>::is_signed, "invalid conversion type");
+					static constexpr float range = (float)std::numeric_limits<T>::max() - (float)std::numeric_limits<T>::min();
 					target = (float)(source) / range * 2.f;
 				}
 			};
@@ -70,8 +70,8 @@ namespace cage
 			{
 				void operator ()(float source, T &target)
 				{
-					static_assert(detail::numeric_limits<T>::is_signed, "invalid conversion type");
-					static constexpr float range = (float)detail::numeric_limits<T>::max() - (float)detail::numeric_limits<T>::min();
+					static_assert(std::numeric_limits<T>::is_signed, "invalid conversion type");
+					static constexpr float range = (float)std::numeric_limits<T>::max() - (float)std::numeric_limits<T>::min();
 					target = (T)(source * range * 0.5f);
 				}
 			};
@@ -81,8 +81,8 @@ namespace cage
 			{
 				void operator ()(T source, double &target)
 				{
-					static_assert(detail::numeric_limits<T>::is_signed, "invalid conversion type");
-					static constexpr double range = (double)detail::numeric_limits<T>::max() - (double)detail::numeric_limits<T>::min();
+					static_assert(std::numeric_limits<T>::is_signed, "invalid conversion type");
+					static constexpr double range = (double)std::numeric_limits<T>::max() - (double)std::numeric_limits<T>::min();
 					target = (double)(source) / range * 2.0;
 				}
 			};
@@ -92,8 +92,8 @@ namespace cage
 			{
 				void operator ()(double source, T &target)
 				{
-					static_assert(detail::numeric_limits<T>::is_signed, "invalid conversion type");
-					static constexpr double range = (double)detail::numeric_limits<T>::max() - (double)detail::numeric_limits<T>::min();
+					static_assert(std::numeric_limits<T>::is_signed, "invalid conversion type");
+					static constexpr double range = (double)std::numeric_limits<T>::max() - (double)std::numeric_limits<T>::min();
 					target = (T)(source * range * 0.5);
 				}
 			};

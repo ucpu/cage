@@ -16,7 +16,13 @@ namespace cage
 	class CAGE_CORE_API EntityManager : private Immovable
 	{
 	public:
-		template<class T> EntityComponent *defineComponent(const T &prototype, const EntityComponentCreateConfig &config) { return zPrivateDefineComponent(sizeof(T), alignof(T), (void*)&prototype, config); }
+		template<class T>
+		EntityComponent *defineComponent(const T &prototype, const EntityComponentCreateConfig &config)
+		{
+			static_assert(std::is_trivially_copyable<T>::value && std::is_trivially_destructible<T>::value, "type not trivial");
+			return zPrivateDefineComponent(sizeof(T), alignof(T), (void *)&prototype, config);
+		}
+
 		EntityComponent *componentByIndex(uint32 index) const;
 		uint32 componentsCount() const;
 

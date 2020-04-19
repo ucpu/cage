@@ -70,7 +70,7 @@ namespace
 		msdfgen::edgeColoringSimple(shape, 3.0);
 		if (!shape.validate())
 			CAGE_THROW_ERROR(Exception, "shape validation failed");
-		double l = real::Infinity().value, b = real::Infinity().value, r = -real::Infinity().value, t = -real::Infinity().value;
+		double l = real::Infinity(), b = real::Infinity(), r = -real::Infinity(), t = -real::Infinity();
 		shape.bounds(l, b, r, t);
 
 		// generate glyph image

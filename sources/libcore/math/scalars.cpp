@@ -1,7 +1,6 @@
 #include "math.h"
 
 #include <cmath>
-#include <limits>
 
 namespace cage
 {
@@ -173,9 +172,6 @@ namespace cage
 			b += 1;
 		return wrap(interpolate(a, b, f));
 	}
-
-	real real::Infinity() { return std::numeric_limits<float>::infinity(); }
-	real real::Nan() { return std::numeric_limits<float>::quiet_NaN(); }
 
 	uint32 hash(uint32 key)
 	{ // integer finalizer hash function
