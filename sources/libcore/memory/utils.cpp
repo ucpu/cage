@@ -78,7 +78,7 @@ namespace cage
 			}
 		}
 
-		bool isHolderShareable(const Delegate<void(void *)> &deleter)
+		bool isHolderShareable(const Delegate<void(void *)> &deleter) noexcept
 		{
 			return deleter == Delegate<void(void *)>().bind<&decHolderShareable>();
 		}

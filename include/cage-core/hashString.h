@@ -3,17 +3,14 @@
 
 #include "core.h"
 
-#define GCHL_HASH_OFFSET 2166136261u
-#define GCHL_HASH_PRIME 16777619u
-
 namespace cage
 {
 	namespace detail
 	{
 		// these functions return values in the full range of uint32
-		CAGE_CORE_API uint32 hashBuffer(const char *buffer, uintPtr size);
-		CAGE_CORE_API uint32 hashBuffer(const MemoryBuffer &buffer);
-		CAGE_CORE_API uint32 HashString(const char *str);
+		CAGE_CORE_API uint32 hashBuffer(const char *buffer, uintPtr size) noexcept;
+		CAGE_CORE_API uint32 hashBuffer(const MemoryBuffer &buffer) noexcept;
+		CAGE_CORE_API uint32 hashString(const char *str) noexcept;
 
 		// HashCompile returns values in the full range of uint32
 		struct CAGE_CORE_API HashCompile
@@ -24,30 +21,33 @@ namespace cage
 			template<uint32 N, uint32 I>
 			struct Hash
 			{
-				constexpr uint32 operator ()(const char(&str)[N]) noexcept
+				constexpr uint32 operator ()(const char(&str)[N]) const noexcept
 				{
-					return (Hash<N, I - 1>()(str) ^ str[I - 2]) * GCHL_HASH_PRIME;
+					return (Hash<N, I - 1>()(str) ^ str[I - 2]) * Prime;
 				}
 			};
 
 			template<uint32 N>
 			struct Hash<N, 1>
 			{
-				constexpr uint32 operator ()(const char(&str)[N]) noexcept
+				constexpr uint32 operator ()(const char(&str)[N]) const noexcept
 				{
-					return GCHL_HASH_OFFSET;
+					return Offset;
 				}
 			};
 
 		public:
 			template<uint32 N>
-			explicit HashCompile(const char(&str)[N]) noexcept : value(Hash<N, N>()(str))
+			constexpr explicit HashCompile(const char(&str)[N]) noexcept : value(Hash<N, N>()(str))
 			{};
 
-			operator uint32() const noexcept
+			constexpr operator uint32() const noexcept
 			{
 				return value;
 			}
+
+			static constexpr uint32 Offset = 2166136261u;
+			static constexpr uint32 Prime = 16777619u;
 		};
 	}
 
@@ -57,25 +57,25 @@ namespace cage
 	private:
 		struct ConstCharWrapper
 		{
-			ConstCharWrapper(const char *str) : str(str) {}
+			constexpr ConstCharWrapper(const char *str) noexcept : str(str) {}
 			const char *str;
 		};
 
 		uint32 value;
 
 	public:
-		explicit HashString(const ConstCharWrapper &wrp) : value(detail::HashString(wrp.str) | ((uint32)1 << 31))
+		explicit HashString(const ConstCharWrapper &wrp) noexcept : value(detail::hashString(wrp.str) | ((uint32)1 << 31))
 		{}
 
 		template<uint32 N>
-		explicit HashString(const detail::StringBase<N> &str) : HashString(str.c_str())
+		explicit HashString(const detail::StringBase<N> &str) noexcept : HashString(str.c_str())
 		{}
 
 		template<uint32 N>
-		explicit HashString(const char(&str)[N]) noexcept : value(detail::HashCompile(str) | ((uint32)1 << 31))
+		constexpr explicit HashString(const char(&str)[N]) noexcept : value(detail::HashCompile(str) | ((uint32)1 << 31))
 		{}
 
-		operator uint32() const noexcept
+		constexpr operator uint32() const noexcept
 		{
 			return value;
 		}

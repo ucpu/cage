@@ -60,6 +60,12 @@ namespace
 	{
 		// do nothing
 	}
+
+	constexpr auto constexprFunction()
+	{
+		const char text[] = "ahoj";
+		return PointerRange<const char>(text, text + sizeof(text)).size();
+	}
 }
 
 void testPointerRange()
@@ -153,5 +159,11 @@ void testPointerRange()
 		CAGE_TEST(rng1[1] == 42);
 		CAGE_TEST(rng1[2] == 13);
 		CAGE_TEST_ASSERTED(rng1[3]);
+	}
+
+	{
+		CAGE_TESTCASE("constexpr pointerRange");
+		constexpr auto len = constexprFunction();
+		CAGE_TEST(len == 5);
 	}
 }

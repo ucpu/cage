@@ -611,7 +611,7 @@ namespace cage
 		struct StringBase : templates::Comparable<StringBase<N>>
 		{
 			// constructors
-			StringBase()
+			constexpr StringBase() noexcept
 			{
 				data[current] = 0;
 			}
@@ -650,12 +650,6 @@ namespace cage
 			GCHL_GENERATE(double);
 			GCHL_GENERATE(bool);
 #undef GCHL_GENERATE
-
-			/*
-			template<class T>
-			explicit StringBase(T *other) : StringBase((uintPtr)other)
-			{}
-			*/
 
 			explicit StringBase(const char *pos, uint32 len)
 			{
@@ -887,57 +881,57 @@ namespace cage
 				return privat::stringIsPattern(data, current, prefix.data, prefix.current, infix.data, infix.current, suffix.data, suffix.current);
 			}
 
-			bool isDigitsOnly() const
+			bool isDigitsOnly() const noexcept
 			{
 				return privat::stringIsDigitsOnly(data, current);
 			}
 
-			bool isInteger(bool allowSign) const
+			bool isInteger(bool allowSign) const noexcept
 			{
 				return privat::stringIsInteger(data, current, allowSign);
 			}
 
-			bool isReal(bool allowSign) const
+			bool isReal(bool allowSign) const noexcept
 			{
 				return privat::stringIsReal(data, current, allowSign);
 			}
 
-			bool isBool() const
+			bool isBool() const noexcept
 			{
 				return privat::stringIsBool(data, current);
 			}
 
-			bool empty() const
+			constexpr bool empty() const noexcept
 			{
 				return current == 0;
 			}
 
-			uint32 length() const
+			constexpr uint32 length() const noexcept
 			{
 				return current;
 			}
 
-			uint32 size() const
+			constexpr uint32 size() const noexcept
 			{
 				return current;
 			}
 
-			char *begin()
+			constexpr char *begin() noexcept
 			{
 				return data;
 			}
 
-			char *end()
+			constexpr char *end() noexcept
 			{
 				return data + current;
 			}
 
-			const char *begin() const
+			constexpr const char *begin() const noexcept
 			{
 				return data;
 			}
 
-			const char *end() const
+			constexpr const char *end() const noexcept
 			{
 				return data + current;
 			}
@@ -951,7 +945,7 @@ namespace cage
 			template<uint32 M>
 			friend struct StringBase;
 
-			friend int compare(const StringBase &a, const StringBase &b)
+			friend int compare(const StringBase &a, const StringBase &b) noexcept
 			{
 				return privat::stringComparison(a.data, a.current, b.data, b.current);
 			}
@@ -962,7 +956,7 @@ namespace cage
 		{
 			StringBase<N> value;
 
-			operator const StringBase<N> & () const
+			operator const StringBase<N> & () const noexcept
 			{
 				return value;
 			}
@@ -1113,12 +1107,12 @@ namespace cage
 			return *this;
 		}
 
-		explicit operator bool() const noexcept
+		constexpr explicit operator bool() const noexcept
 		{
 			return !!fnc;
 		}
 
-		void clear() noexcept
+		constexpr void clear() noexcept
 		{
 			inst = nullptr;
 			fnc = nullptr;
@@ -1130,12 +1124,12 @@ namespace cage
 			return fnc(inst, templates::forward<Ts>(vs)...);
 		}
 
-		bool operator == (const Delegate &other) const noexcept
+		constexpr bool operator == (const Delegate &other) const noexcept
 		{
 			return fnc == other.fnc && inst == other.inst;
 		}
 
-		bool operator != (const Delegate &other) const noexcept
+		constexpr bool operator != (const Delegate &other) const noexcept
 		{
 			return !(*this == other);
 		}
@@ -1159,15 +1153,15 @@ namespace cage
 			typedef void type;
 		};
 
-		CAGE_CORE_API bool isHolderShareable(const Delegate<void(void *)> &deleter);
+		CAGE_CORE_API bool isHolderShareable(const Delegate<void(void *)> &deleter) noexcept;
 		CAGE_CORE_API void incHolderShareable(void *ptr, const Delegate<void(void *)> &deleter);
 		CAGE_CORE_API void makeHolderShareable(void *&ptr, Delegate<void(void *)> &deleter);
 
 		template<class T>
 		struct HolderBase
 		{
-			HolderBase() {}
-			explicit HolderBase(T *data, void *ptr, Delegate<void(void*)> deleter) : deleter_(deleter), ptr_(ptr), data_(data) {}
+			HolderBase() noexcept {}
+			explicit HolderBase(T *data, void *ptr, Delegate<void(void*)> deleter) noexcept : deleter_(deleter), ptr_(ptr), data_(data) {}
 
 			HolderBase(const HolderBase &) = delete;
 			HolderBase(HolderBase &&other) noexcept
@@ -1181,7 +1175,7 @@ namespace cage
 			}
 
 			HolderBase &operator = (const HolderBase &) = delete;
-			HolderBase &operator = (HolderBase &&other) noexcept
+			HolderBase &operator = (HolderBase &&other)
 			{
 				if (this == &other)
 					return *this;
@@ -1225,7 +1219,7 @@ namespace cage
 				return *data_;
 			}
 
-			T *get() const
+			T *get() const noexcept
 			{
 				return data_;
 			}
@@ -1261,7 +1255,7 @@ namespace cage
 			}
 
 		protected:
-			void erase()
+			void erase() noexcept
 			{
 				deleter_.clear();
 				ptr_ = nullptr;
@@ -1311,19 +1305,19 @@ namespace cage
 	public:
 		typedef uintPtr size_type;
 
-		PointerRange() : begin_(nullptr), end_(nullptr) {}
+		constexpr PointerRange() noexcept : begin_(nullptr), end_(nullptr) {}
 		template<class U>
-		PointerRange(U *begin, U *end) : begin_(begin), end_(end) {}
+		constexpr PointerRange(U *begin, U *end) noexcept : begin_(begin), end_(end) {}
 		template<class U>
-		PointerRange(const PointerRange<U> &other) : begin_(other.begin()), end_(other.end()) {}
+		constexpr PointerRange(const PointerRange<U> &other) noexcept : begin_(other.begin()), end_(other.end()) {}
 		template<class U>
-		PointerRange(U &&other) : begin_(other.data()), end_(other.data() + other.size()) {}
+		constexpr PointerRange(U &&other) noexcept : begin_(other.data()), end_(other.data() + other.size()) {}
 
-		T *begin() const { return begin_; }
-		T *end() const { return end_; }
-		T *data() const { return begin_; }
-		size_type size() const { return end_ - begin_; }
-		bool empty() const { return size() == 0; }
+		constexpr T *begin() const noexcept { return begin_; }
+		constexpr T *end() const noexcept { return end_; }
+		constexpr T *data() const noexcept { return begin_; }
+		constexpr size_type size() const noexcept { return end_ - begin_; }
+		constexpr bool empty() const noexcept { return size() == 0; }
 		T &operator[] (uint32 idx) const { CAGE_ASSERT(idx < size()); return begin_[idx]; }
 	};
 
@@ -1340,11 +1334,11 @@ namespace cage
 			return tmp;
 		}
 
-		T *begin() const { return this->data_->begin(); }
-		T *end() const { return this->data_->end(); }
-		T *data() const { return begin(); }
-		size_type size() const { return end() - begin(); }
-		bool empty() const { return size() == 0; }
+		T *begin() const noexcept { return this->data_->begin(); }
+		T *end() const noexcept { return this->data_->end(); }
+		T *data() const noexcept { return begin(); }
+		size_type size() const noexcept { return end() - begin(); }
+		bool empty() const noexcept { return size() == 0; }
 		T &operator[] (uint32 idx) const { CAGE_ASSERT(idx < size()); return begin()[idx]; }
 	};
 

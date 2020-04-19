@@ -350,11 +350,11 @@ namespace
 			HashString("123");
 			string a = "hel";
 			string b = "lo";
-			uint32 compile_time = HashString("hello");
+			constexpr uint32 compile_time = HashString("hello");
 			string c = a + b;
 			uint32 run_time = HashString(c.c_str());
 			CAGE_TEST(compile_time == run_time);
-			uint32 different = HashString("different");
+			constexpr uint32 different = HashString("different");
 			CAGE_TEST(compile_time != different);
 		}
 	}
