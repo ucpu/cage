@@ -8,6 +8,10 @@ option(PNG_SHARED "Build shared lib" OFF)
 option(PNG_TESTS  "Build libpng tests" OFF)
 set(SKIP_INSTALL_ALL ON)
 
+# prevent using awk for configuration - it causes spurious rebuilds of the entire build
+find_program(AWK NAMES gawk awk)
+set(AWK "")
+
 add_subdirectory(libpng)
 
 target_include_directories(png_static INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/libpng")
