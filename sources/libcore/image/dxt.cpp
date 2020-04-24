@@ -1,13 +1,11 @@
 #include "dxt.h"
 #include <utility>
 
+#include "stb_dxt.h"
+
 // inspiration taken from:
 // https://github.com/g-truc/gli/blob/8e43030b3e12bb58a4663d85adc5c752f89099c0/gli/core/workaround.hpp
 // https://github.com/g-truc/gli/blob/master/gli/core/s3tc.inl
-// https://github.com/nothings/stb/blob/master/stb_dxt.h
-
-#define STB_DXT_IMPLEMENTATION
-#include "stb_dxt.h"
 
 namespace cage
 {

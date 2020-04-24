@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 
 # make cmake find our own provided libraries
-# the libraries provided here should have higher priority than system libraries
+# the libraries provided here have higher priority than system libraries
 set(CAGE_EXTERNALS_MODULE_PATH "${CMAKE_CURRENT_BINARY_DIR}/cmake-modules")
 set(CAGE_EXTERNALS_MODULE_PATH "${CAGE_EXTERNALS_MODULE_PATH}" PARENT_SCOPE)
 list(INSERT CMAKE_MODULE_PATH 0 "${CAGE_EXTERNALS_MODULE_PATH}")
@@ -53,6 +53,8 @@ add_subdirectory(fastnoise)
 add_subdirectory(libzip)
 add_subdirectory(optick)
 add_subdirectory(robin-hood-hashing)
+add_subdirectory(hsluv)
+add_subdirectory(stb_dxt)
 
 add_dependencies(png_static zlib)
 add_dependencies(jpeg-static zlib)
@@ -92,5 +94,7 @@ if(TARGET OptickGui)
 	set_target_properties(OptickGui PROPERTIES FOLDER cage/utility EXCLUDE_FROM_ALL false)
 endif()
 set_target_properties(robin-hood-hashing PROPERTIES FOLDER cage/externals)
+set_target_properties(hsluv PROPERTIES FOLDER cage/externals)
+set_target_properties(stb_dxt PROPERTIES FOLDER cage/externals)
 
 
