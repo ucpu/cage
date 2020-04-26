@@ -80,6 +80,7 @@ namespace cage
 		static EntityComponent *component;
 		static EntityComponent *componentHistory;
 		using transform::transform;
+		using transform::operator =;
 	};
 
 	struct CAGE_ENGINE_API RenderComponent

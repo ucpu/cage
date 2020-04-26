@@ -118,46 +118,45 @@ void testSpatial()
 
 	{
 		CAGE_TESTCASE("basic tests");
-		Holder<SpatialStructure> data = newSpatialData(SpatialStructureCreateConfig());
+		Holder<SpatialStructure> data = newSpatialStructure(SpatialStructureCreateConfig());
 		std::vector<aabb> elements;
 
 		// insertions
-		elements.push_back(aabb());
-		for (uint32 k = 1; k < limit / 2; k++)
+		for (uint32 k = 0; k < limit / 2; k++)
 		{
 			aabb b = generateRandomBox();
 			elements.push_back(b);
 			data->update(k, b);
 		}
 		data->rebuild();
-		verifiableQueries(&elements[0], numeric_cast<uint32>(elements.size()), data.get());
+		verifiableQueries(elements.data(), numeric_cast<uint32>(elements.size()), data.get());
 
 		// updates
 		for (uint32 i = 0; i < limit / 5; i++)
 		{
-			uint32 k = randomRange((uint32)1, numeric_cast<uint32>(elements.size()));
+			uint32 k = randomRange(0u, numeric_cast<uint32>(elements.size()));
 			aabb b = generateRandomBox();
 			elements[k] = b;
 			data->update(k, b);
 		}
 		data->rebuild();
-		verifiableQueries(&elements[0], numeric_cast<uint32>(elements.size()), data.get());
+		verifiableQueries(elements.data(), numeric_cast<uint32>(elements.size()), data.get());
 
 		// removes
 		for (uint32 i = 0; i < limit / 5; i++)
 		{
-			uint32 k = randomRange((uint32)1, numeric_cast<uint32>(elements.size()));
+			uint32 k = randomRange(0u, numeric_cast<uint32>(elements.size()));
 			elements[k] = aabb();
 			data->remove(k);
 		}
 		data->rebuild();
-		verifiableQueries(&elements[0], numeric_cast<uint32>(elements.size()), data.get());
+		verifiableQueries(elements.data(), numeric_cast<uint32>(elements.size()), data.get());
 	}
 
 	{
 		CAGE_TESTCASE("points");
-		Holder<SpatialStructure> data = newSpatialData(SpatialStructureCreateConfig());
-		for (uint32 i = 1; i < 100; i++)
+		Holder<SpatialStructure> data = newSpatialStructure(SpatialStructureCreateConfig());
+		for (uint32 i = 0; i < 100; i++)
 			data->update(i, aabb(generateRandomPoint()));
 		data->rebuild();
 		Holder<SpatialQuery> query = newSpatialQuery(data.get());
@@ -167,19 +166,19 @@ void testSpatial()
 	{
 		CAGE_TESTCASE("multiple points on same location");
 		static const vec3 pts[3] = { vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 1) };
-		Holder<SpatialStructure> data = newSpatialData(SpatialStructureCreateConfig());
-		for (uint32 i = 1; i < 100; i++)
+		Holder<SpatialStructure> data = newSpatialStructure(SpatialStructureCreateConfig());
+		for (uint32 i = 0; i < 100; i++)
 			data->update(i, aabb(pts[i % 3]));
 		data->rebuild();
 		Holder<SpatialQuery> query = newSpatialQuery(data.get());
 		query->intersection(sphere(vec3(0, 0, 0), 5));
-		CAGE_TEST(query->result().size() == 99);
+		CAGE_TEST(query->result().size() == 100);
 	}
 
 	{
 		CAGE_TESTCASE("spheres");
-		Holder<SpatialStructure> data = newSpatialData(SpatialStructureCreateConfig());
-		data->update(1, sphere(vec3(), 100));
+		Holder<SpatialStructure> data = newSpatialStructure(SpatialStructureCreateConfig());
+		data->update(0, sphere(vec3(), 100));
 		data->rebuild();
 		Holder<SpatialQuery> query = newSpatialQuery(data.get());
 		query->intersection(sphere(vec3(50, 0, 0), 100));
@@ -194,18 +193,18 @@ void testSpatial()
 	{
 		CAGE_TESTCASE("multiple spheres on same position");
 		static const vec3 pts[3] = { vec3(3, 0, 0), vec3(0, 7, 0), vec3(0, 0, 13) };
-		Holder<SpatialStructure> data = newSpatialData(SpatialStructureCreateConfig());
-		for (uint32 i = 1; i < 100; i++)
+		Holder<SpatialStructure> data = newSpatialStructure(SpatialStructureCreateConfig());
+		for (uint32 i = 0; i < 100; i++)
 			data->update(i, sphere(pts[i % 3], 1));
 		data->rebuild();
 		Holder<SpatialQuery> query = newSpatialQuery(data.get());
 		query->intersection(sphere(vec3(0, 0, 0), 5));
-		CAGE_TEST(query->result().size() == 33);
+		CAGE_TEST(query->result().size() == 34);
 	}
 
 	{
 		CAGE_TESTCASE("performance tests");
-		Holder<SpatialStructure> data = newSpatialData(SpatialStructureCreateConfig());
+		Holder<SpatialStructure> data = newSpatialStructure(SpatialStructureCreateConfig());
 		Holder<Timer> tmr = newTimer();
 
 		for (uint32 i = 0; i < limit; i++)

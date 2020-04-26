@@ -28,7 +28,7 @@ namespace cage
 
 			CollisionDataImpl(const CollisionStructureCreateConfig &config)
 			{
-				spatial = newSpatialData(config.spatialConfig ? *config.spatialConfig : SpatialStructureCreateConfig());
+				spatial = newSpatialStructure(config.spatialConfig ? *config.spatialConfig : SpatialStructureCreateConfig());
 			}
 
 			~CollisionDataImpl()

@@ -495,7 +495,7 @@ namespace cage
 		impl->rebuild();
 	}
 
-	Holder<SpatialStructure> newSpatialData(const SpatialStructureCreateConfig &config)
+	Holder<SpatialStructure> newSpatialStructure(const SpatialStructureCreateConfig &config)
 	{
 		return detail::systemArena().createImpl<SpatialStructure, SpatialDataImpl>(config);
 	}
