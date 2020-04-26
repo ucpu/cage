@@ -1,12 +1,40 @@
-Strategy games focused 3D game engine.
+Cage is game engine/framework designed for programmers with focus on strategy games.
+
 It started as a hobby/learning project, but has become fairly feature rich and mature over the years.
+
+# Features
+
+## Designed for programmers
+
+- Cage is a collection of libraries and tools, not yet another editor.
+- No visual programming - use c++ for the engine and for the game.
+- All tools and assets are configured with simple ini-like text files, which is suitable for version control systems.
+
+## Ease of use
+
+- Cage is programming framework that creates a consistent basis for engine, tools and game development.
+- It encourages readable, maintainable and safe code while also allowing for quick prototyping.
+- Performance optimizations are generally added as needed only, usually hidden from the application.
+
+## Portable
+
+- Cage runs on Windows and Linux.
+- It is mostly self-contained.
+  - Most dependencies are accessed as git submodules and compiled in.
+  - There are just few packages required on linux.
+- The Core library has no dependencies on graphics or sound and is suitable to run on headless servers.
+
+## Friendly licensing
+
+- MIT license lets you use Cage for personal and commercial products alike, for free, forever.
+- All 3rd-party licenses are copied to single redistributable directory during build configuration.
 
 # Examples
 
 ## Degrid
 
 ![Degrid](https://raw.githubusercontent.com/ucpu/degrid/master/screenshots/3.png)
-[Degrid](https://github.com/ucpu/degrid) - simple but complete game
+[Degrid](https://github.com/ucpu/degrid) - simple but mostly complete game with birds-eye-view of a spaceship fighting against hundreds of geometrical enemies.
 
 ## Cragsman
 
@@ -23,143 +51,56 @@ It started as a hobby/learning project, but has become fairly feature rich and m
 ![Cage-examples](https://raw.githubusercontent.com/ucpu/cage-examples/master/screenshots/3.png)
 [Cage-examples](https://github.com/ucpu/cage-examples) - a collection of test scenes and applications
 
-# Features
+# Contents
 
-## Ease of Use
+## Core library
 
-- ease of use here refers to single, easy to understand API
-  - the engine depends on several 3rd-party libraries, but they are all abstracted away
-    - consistent types for all uses
-  - the API consists of both functions and classes, whichever is more convenient
-  - the API is not polluted by any unnecessary includes (not even the standard libraries)
-    - FAST compilations - fast debug-fix-compile-run iterations
-  - consistent naming scheme
-- performance is greatly appreciated, but good API is always preferred
+- Framework stuff (strings, logging, configuration, events)
+- Operating system abstraction (memory, filesystems, threading, networks)
+- GLSL-like math and geometry primitives
+- Entity systems
+- Assets management
+- Extensive tests
 
-
-## Portable
-
-- runs on Windows and Linux
-- self-contained
-  - most dependencies are accessed as git submodules and compiled in
-  - there are just few package requirements on linux
-- the Core library has no dependencies on graphics or sound and is suitable to run on headless servers
-
-## Friendly Licensing
-
-- MIT license is short and easy to understand
-- commercial or not, closed source or open source, ... whatever :D
-- all 3rd-party licenses are copied to single redistributable directory during build configuration
-
-## Notes
-
-- Cage is NOT an IDE or editor
-  - when developing with Cage, you use your preferred editor
-  - all interaction with Cage is with c++ code, INI configuration files and CLI tools
-
-# Modules
-
-## Core Library
-
-- Operating system abstraction
-  - memory management
-  - threads & synchronization
-  - filesystem
-  - networking
-- Math & geometry
-  - glsl like: real, vec3, quat, mat4, degs, rads, ...
-  - shapes: line (ray, segment), triangle, plane, aabb, sphere, ...
-  - no templates, all is float
-  - intersections & collisions
-  - spatial acceleration structures
-- Entities
-  - this is the heart of all Cage's higher-level APIs
-  - entities are identified by pointer and, optionally, by a 32bit number
-  - entities may be aggregated into groups for easier processing
-  - entities may have any number of components
-    - single entity may not have multiple instances of the same component
-  - simple serialization
-    - components are treated as byte-buffers
-- Assets
-  - thread-aware loading
-  - transparent on-demand hot-reloading
-  - automatic dependencies
-- Utilities
-  - strings & utf & hashes
-  - configuration
-  - events & delegates
-  - timers
-  - logging
-  - noise functions
-  - images
-  - ...
-
-## Engine Library
+## Engine library
 
 ### Low-level API
 
-- window management & events (via GLFW)
-- graphics
-  - currently OpenGL 4.4
-    - the plan is to switch to Vulkan only (when there is enough time)
-  - object abstraction of most OpenGL objects
-    - semi-debugging layer that validates that objects are correctly bound
-- sound (via soundio)
-  - support for spatial sound (multiple channels)
-- gui
-  - API by entities
-  - flexible automatic layouting
-  - flexible skinning
-  - no custom (application defined) widgets, this allows fairly efficient implementation
+- Window and input management
+- Objective layer on top of OpenGL
+  - Long term plan is to switch to Vulkan only
+- Sound processing
+- Gui
 
 ### High-level API
 
-- the scene is defined entirely by entities
-  - transform (vec3 position, quaternion orientation, uniform scale)
-  - cameras, renderables, lights
-  - listeners, voices
-- pipeline-like processing using multiple threads
+- Game scene provided with entities
+- Pipeline-like processing using multiple threads
   - *50 000 objects* at 30 fps (cpu-bound)
-  - all rendering is through automatic instancing to reduce draw call overhead
-- graphics effects
-  - hdr, tonemapping, gamma correction
+  - All objects goes through automatic instancing
+- Rich graphics effects:
+  - hdr, bloom, tonemapping, gamma correction
   - motion blur (per object)
   - ssao
   - fxaa
-  - bloom
-  - normal mapping
-- directional, spot and point lights
-  - automatic shadow maps
-- roughness/metallic workflow
-- stereoscopic rendering
+- Roughness/metallic workflow
+- Automatic shadowmaps
+- Stereoscopic rendering
 
 ## Tools
 
-### Asset processor
-
-- texture loading (via libpng, libjpeg etc.)
-- mesh loading (via Assimp)
-- sound (via Ogg/Vorbis and dr_libs)
-- shader
-  - custom $preprocessor with support for includes, conditional composition, token replacements etc...
-- font (via freetype and msdfgen)
-  - multi-distance-field scalable font textures
-
-### Asset database
-
-- manages automatic asset processing
-- only processes assets that are out-of-date
-- can be set to listen to changes and act immediately
-  - notifies all connected games whenever an asset has changed so that the engine can reload it
-- assets are configured in simple ini-like files (good for version-control-systems)
-- easily extensible to any custom formats
+- Asset processor - converts assets from wide variety of interchange formats to Cage specific formats
+- Asset database - manages automatic asset processing
+- Asset analyze - automatically generates basic configuration for most files
+- Image channels - lets you split or join multiple channels to/from single image
+- Image convert - easy mass image format conversion
+- Image atlas - slices a single image atlas into a sequence of individual images
 
 # Building
 
-- see [BUILDING](BUILDING.md).
+- See [BUILDING](BUILDING.md).
 
 # Contributing
 
 - Contributions are welcome!
-- Questions, bug reports and feature requests are best done on github issue tracker.
-Create a pull request for code change proposals.
+- Questions, bug reports and feature requests are best done on github issues tracker and pull requests.
