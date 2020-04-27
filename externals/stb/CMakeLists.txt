@@ -1,7 +1,8 @@
 
 message(STATUS "----------------------------------------------------------------")
-message(STATUS "stb_dxt")
+message(STATUS "stb")
 message(STATUS "----------------------------------------------------------------")
 
-add_library(stb_dxt STATIC stb_dxt.c stb_dxt.h)
-target_include_directories(stb_dxt PUBLIC .)
+file(GLOB stb-sources "stb/*.h")
+add_library(stb STATIC stb.c ${stb-sources})
+target_include_directories(stb PUBLIC stb)

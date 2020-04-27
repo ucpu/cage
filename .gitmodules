@@ -61,3 +61,6 @@
 [submodule "zlib-ng/zlib-ng"]
 	path = externals/zlib-ng/zlib-ng
 	url = https://github.com/zlib-ng/zlib-ng.git
+[submodule "externals/stb/stb"]
+	path = externals/stb/stb
+	url = https://github.com/nothings/stb.git

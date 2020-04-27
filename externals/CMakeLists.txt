@@ -54,7 +54,7 @@ add_subdirectory(libzip)
 add_subdirectory(optick)
 add_subdirectory(robin-hood-hashing)
 add_subdirectory(hsluv)
-add_subdirectory(stb_dxt)
+add_subdirectory(stb)
 
 add_dependencies(png_static zlib)
 add_dependencies(jpeg-static zlib)
@@ -95,6 +95,6 @@ if(TARGET OptickGui)
 endif()
 set_target_properties(robin-hood-hashing PROPERTIES FOLDER cage/externals)
 set_target_properties(hsluv PROPERTIES FOLDER cage/externals)
-set_target_properties(stb_dxt PROPERTIES FOLDER cage/externals)
+set_target_properties(stb PROPERTIES FOLDER cage/externals)
 
 
