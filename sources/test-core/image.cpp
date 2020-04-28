@@ -214,7 +214,6 @@ void testImage()
 		img->encodeFile("images/formats/circle_premultiplied_2.png");
 	}
 
-	/*
 	{
 		CAGE_TESTCASE("upscale");
 		Holder<Image> img = newImage();
@@ -244,7 +243,6 @@ void testImage()
 		img->resize(300, 500);
 		img->encodeFile("images/formats/circle_stretched.png");
 	}
-	*/
 
 	{
 		CAGE_TESTCASE("store different channels counts in different formats");
