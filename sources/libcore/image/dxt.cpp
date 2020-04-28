@@ -1,7 +1,7 @@
 #include "dxt.h"
 #include <utility>
 
-#include "stb_dxt.h"
+#include <stb_dxt.h>
 
 // inspiration taken from:
 // https://github.com/g-truc/gli/blob/8e43030b3e12bb58a4663d85adc5c752f89099c0/gli/core/workaround.hpp

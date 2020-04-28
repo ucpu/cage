@@ -4,7 +4,7 @@
 #include <cage-core/image.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
-#include "utility/binPacking.h"
+#include <cage-core/rectPacking.h>
 
 #include <msdfgen.h>
 #include <msdfgen-ext.h>
@@ -249,7 +249,9 @@ namespace
 	void createAtlasCoordinates()
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "create atlas coordinates");
-		Holder<BinPacking> packer = newBinPacking();
+		RectPackingCreateConfig packingCfg;
+		packingCfg.margin = 2;
+		Holder<RectPacking> packer = newRectPacking(packingCfg);
 		uint32 area = 0;
 		uint32 mgs = 0;
 		for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)

@@ -37,6 +37,7 @@ void testConfig();
 void testColor();
 void testImage();
 void testNoise();
+void testRectPacking();
 void testSpatial();
 void testCollisions();
 void testEntities();
@@ -91,6 +92,7 @@ int main()
 	testColor();
 	testImage();
 	testNoise();
+	testRectPacking();
 	testSpatial();
 	testCollisions();
 	testEntities();

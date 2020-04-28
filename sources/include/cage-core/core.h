@@ -432,6 +432,8 @@ namespace cage
 	struct ProcessCreateConfig;
 	class Process;
 	struct RandomGenerator;
+	class RectPacking;
+	struct RectPackingCreateConfig;
 	enum class ScheduleTypeEnum : uint32;
 	struct ScheduleCreateConfig;
 	class Schedule;
