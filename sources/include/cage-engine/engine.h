@@ -120,8 +120,8 @@ namespace cage
 	struct CAGE_ENGINE_API LightComponent
 	{
 		static EntityComponent *component;
-		vec3 color = vec3(1);
 		vec3 attenuation = vec3(0, 0, 1); // constant, linear, quadratic
+		vec3 color = vec3(1);
 		real intensity = 1;
 		rads spotAngle = degs(40);
 		real spotExponent = 80;
@@ -136,7 +136,6 @@ namespace cage
 		// spot: near, far, unused
 		vec3 worldSize = vec3();
 		uint32 resolution = 256;
-		uint32 sceneMask = 1;
 	};
 
 	struct CAGE_ENGINE_API TextComponent
@@ -144,8 +143,8 @@ namespace cage
 		static EntityComponent *component;
 		string value; // list of parameters separated by '|' when formatted, otherwise the string as is
 		vec3 color = vec3(1);
-		// real opacity; // todo
 		real intensity = 1;
+		// real opacity; // todo
 		uint32 assetName = 0;
 		uint32 textName = 0;
 		uint32 font = 0;
