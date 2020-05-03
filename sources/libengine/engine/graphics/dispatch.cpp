@@ -529,6 +529,7 @@ namespace cage
 				OPTICK_EVENT("camera pass");
 
 				// camera specific data
+				CAGE_ASSERT(pass->entityId != 0);
 				CameraSpecificData &cs = cameras[pass->entityId];
 				cs.update(pass->vpW, pass->vpH, pass->effects);
 

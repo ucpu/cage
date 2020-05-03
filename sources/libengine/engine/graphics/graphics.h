@@ -36,6 +36,7 @@ namespace cage
 		std::vector<Mat3x4> uniArmatures;
 		Holder<Texture> textures[MaxTexturesCountPerMaterial];
 		const Holder<Mesh> mesh;
+
 		Objects(Holder<Mesh> mesh, uint32 max);
 	};
 
@@ -54,6 +55,7 @@ namespace cage
 		std::vector<UniLight> uniLights;
 		const sint32 shadowmap;
 		const LightTypeEnum lightType;
+
 		Lights(LightTypeEnum lightType, sint32 shadowmap, uint32 max);
 	};
 
@@ -61,6 +63,7 @@ namespace cage
 	{
 		Objects object;
 		std::vector<Holder<Lights>> lights;
+
 		Translucent(Holder<Mesh> mesh);
 	};
 
@@ -75,6 +78,7 @@ namespace cage
 		};
 		std::vector<Holder<Render>> renders;
 		const Holder<Font> font;
+
 		Texts(Holder<Font> font);
 	};
 

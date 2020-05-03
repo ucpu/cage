@@ -29,15 +29,6 @@ namespace cage
 		ConfigBool confNoMotionBlur("cage/graphics/disableMotionBlur", false);
 		ConfigBool confNoNormalMap("cage/graphics/disableNormalMaps", false);
 
-		struct ShadowmapImpl : public ShadowmapComponent
-		{
-			mat4 shadowMat;
-			sint32 index = 0;
-
-			explicit ShadowmapImpl(const ShadowmapComponent &other) : ShadowmapComponent(other)
-			{}
-		};
-
 		struct EmitTransforms
 		{
 			TransformComponent current, history;
@@ -51,23 +42,38 @@ namespace cage
 			}
 		};
 
-		struct EmitRender : public EmitTransforms
+		/*
+		struct SkeletalAnimationImpl : public SkeletalAnimationComponent
 		{
-			RenderComponent render;
+			std::vector<Mat3x4> armature;
+		};
+		*/
+
+		struct EmitObject : public EmitTransforms
+		{
+			RenderComponent object;
 			Holder<TextureAnimationComponent> animatedTexture;
 			Holder<SkeletalAnimationComponent> animatedSkeleton;
 		};
 
 		struct EmitText : public EmitTransforms
 		{
-			TextComponent renderText;
+			TextComponent text;
+			//Texts::Render render;
+		};
+
+		struct ShadowmapImpl
+		{
+			mat4 shadowMat;
+			sint32 index = 0;
 		};
 
 		struct EmitLight : public EmitTransforms
 		{
 			LightComponent light;
-			Holder<ShadowmapImpl> shadowmap;
-			uintPtr entityId = 0;
+			//Lights::UniLight uniLight;
+			Holder<ShadowmapComponent> shadowmap;
+			std::unordered_map<struct EmitCamera *, ShadowmapImpl> shadowmaps;
 		};
 
 		struct EmitCamera : public EmitTransforms
@@ -76,28 +82,61 @@ namespace cage
 			uintPtr entityId = 0;
 		};
 
+		struct LodSelection
+		{
+			vec3 center;
+			real screenSize = 0; // vertical size of screen in pixels, at distance of one meter from camera
+			bool orthographic = false;
+		};
+
 		struct RenderPassImpl : public RenderPass
 		{
 			mat4 viewProjPrev;
-			uint32 sceneMask = 0;
-			real lodSelection = 0; // vertical size of screen, at distance of one world-space-unit from camera, in pixels
-			bool lodOrthographic = false;
+			LodSelection lodSelection;
+			EmitCamera *const camera;
+
+			explicit RenderPassImpl(EmitCamera *camera) : camera(camera)
+			{
+				uint32 h = 0;
+				if (camera->camera.target)
+				{
+					uint32 w;
+					camera->camera.target->getResolution(w, h);
+				}
+				else
+					h = graphicsDispatch->windowHeight;
+				switch (camera->camera.cameraType)
+				{
+				case CameraTypeEnum::Orthographic:
+				{
+					const vec2 &os = camera->camera.camera.orthographicSize;
+					lodSelection.screenSize = os[1] * h;
+					lodSelection.orthographic = true;
+				} break;
+				case CameraTypeEnum::Perspective:
+					lodSelection.screenSize = tan(camera->camera.camera.perspectiveFov * 0.5) * 2 * h;
+					break;
+				default:
+					CAGE_THROW_ERROR(Exception, "invalid camera type");
+				}
+				lodSelection.center = vec3(camera->model * vec4(0, 0, 0, 1));
+			}
 		};
 
 		struct Emit
 		{
-			std::vector<EmitRender> renderableObjects;
-			std::vector<EmitText> renderableTexts;
+			std::vector<EmitObject> objects;
+			std::vector<EmitText> texts;
 			std::vector<EmitLight> lights;
 			std::vector<EmitCamera> cameras;
 
 			uint64 time = 0;
 			bool fresh = false;
 
-			explicit Emit(const EngineCreateConfig &config)
+			Emit()
 			{
-				renderableObjects.reserve(256);
-				renderableTexts.reserve(64);
+				objects.reserve(256);
+				texts.reserve(64);
 				lights.reserve(32);
 				cameras.reserve(4);
 			}
@@ -105,8 +144,7 @@ namespace cage
 
 		struct GraphicsPrepareImpl
 		{
-			Emit emitBufferA, emitBufferB, emitBufferC; // this is awfully stupid, damn you c++
-			Emit *emitBuffers[3] = { nullptr };
+			Emit emitBuffers[3];
 			Emit *emitRead = nullptr, *emitWrite = nullptr;
 			Holder<SwapBufferGuard> swapController;
 
@@ -120,10 +158,8 @@ namespace cage
 			uint64 elapsedDispatchTime = 0;
 			sint32 shm2d = 0, shmCube = 0;
 
-			typedef std::unordered_map<Mesh*, Objects*> OpaqueObjectsMap;
-			OpaqueObjectsMap opaqueObjectsMap;
-			typedef std::unordered_map<Font*, Texts*> TextsMap;
-			TextsMap textsMap;
+			std::unordered_map<Mesh*, Objects*> opaqueObjectsMap;
+			std::unordered_map<Font*, Texts*> textsMap;
 
 			Holder<Mesh> meshSphere, meshCone;
 
@@ -149,19 +185,14 @@ namespace cage
 				return mat4(vec3(), quat(), scale);
 			}
 
-			RenderPassImpl *newRenderPass()
+			RenderPassImpl *newRenderPass(EmitCamera *camera)
 			{
 				opaqueObjectsMap.clear();
 				textsMap.clear();
-				Holder<RenderPassImpl> t = detail::systemArena().createHolder<RenderPassImpl>();
+				Holder<RenderPassImpl> t = detail::systemArena().createHolder<RenderPassImpl>(camera);
 				RenderPassImpl *r = t.get();
 				graphicsDispatch->renderPasses.push_back(templates::move(t).cast<RenderPass>());
 				return r;
-			}
-
-			static real fovToLodSelection(rads fov)
-			{
-				return tan(fov * 0.5) * 2;
 			}
 
 			static void sortTranslucentBackToFront(RenderPassImpl *pass)
@@ -195,8 +226,9 @@ namespace cage
 				std::swap(result, pass->translucents);
 			}
 
-			static void initializeStereoCamera(RenderPassImpl *pass, EmitCamera *camera, StereoEyeEnum eye, const mat4 &model)
+			static void initializeStereoCamera(RenderPassImpl *pass, StereoEyeEnum eye, const mat4 &model)
 			{
+				EmitCamera *camera = pass->camera;
 				StereoCameraInput in;
 				in.position = vec3(model * vec4(0, 0, 0, 1));
 				in.orientation = quat(mat3(model));
@@ -212,14 +244,10 @@ namespace cage
 				StereoCameraOutput out = stereoCamera(in, (StereoModeEnum)graphicsPrepareThread().stereoMode, eye);
 				pass->view = out.view;
 				pass->proj = out.projection;
-				if (camera->camera.cameraType == CameraTypeEnum::Perspective)
-					pass->lodSelection = fovToLodSelection(camera->camera.camera.perspectiveFov) * graphicsDispatch->windowHeight;
-				else
+				if (camera->camera.cameraType == CameraTypeEnum::Orthographic)
 				{
 					const vec2 &os = camera->camera.camera.orthographicSize;
 					pass->proj = orthographicProjection(-os[0], os[0], -os[1], os[1], camera->camera.near, camera->camera.far);
-					pass->lodSelection = os[1] * graphicsDispatch->windowHeight;
-					pass->lodOrthographic = true;
 				}
 				pass->viewProj = pass->proj * pass->view;
 				pass->vpX = numeric_cast<uint32>(out.viewportOrigin[0] * real(graphicsDispatch->windowWidth));
@@ -235,9 +263,10 @@ namespace cage
 				pass->viewProj = pass->proj * pass->view;
 			}
 
-			void initializeRenderPassForCamera(RenderPassImpl *pass, EmitCamera *camera, StereoEyeEnum eye)
+			void initializeRenderPassForCamera(RenderPassImpl *pass, StereoEyeEnum eye)
 			{
 				OPTICK_EVENT("camera pass");
+				EmitCamera *camera = pass->camera;
 				if (camera->camera.target)
 				{
 					OPTICK_TAG("target", (uintPtr)camera->camera.target);
@@ -251,12 +280,9 @@ namespace cage
 					{
 						const vec2 &os = camera->camera.camera.orthographicSize;
 						pass->proj = orthographicProjection(-os[0], os[0], -os[1], os[1], camera->camera.near, camera->camera.far);
-						pass->lodSelection = os[1] * h;
-						pass->lodOrthographic = true;
 					} break;
 					case CameraTypeEnum::Perspective:
 						pass->proj = perspectiveProjection(camera->camera.camera.perspectiveFov, real(w) / real(h), camera->camera.near, camera->camera.far);
-						pass->lodSelection = fovToLodSelection(camera->camera.camera.perspectiveFov) * h;
 						break;
 					default:
 						CAGE_THROW_ERROR(Exception, "invalid camera type");
@@ -272,9 +298,9 @@ namespace cage
 				else
 				{
 					OPTICK_TAG("eye", (int)eye);
-					initializeStereoCamera(pass, camera, eye, camera->modelPrev);
+					initializeStereoCamera(pass, eye, camera->modelPrev);
 					pass->viewProjPrev = pass->viewProj;
-					initializeStereoCamera(pass, camera, eye, camera->model);
+					initializeStereoCamera(pass, eye, camera->model);
 				}
 				pass->uniViewport.vpInv = inverse(pass->viewProj);
 				pass->uniViewport.eyePos = camera->model * vec4(0, 0, 0, 1);
@@ -284,7 +310,6 @@ namespace cage
 				pass->uniViewport.viewport = vec4(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
 				pass->targetTexture = camera->camera.target;
 				pass->clearFlags = ((camera->camera.clear & CameraClearFlags::Color) == CameraClearFlags::Color ? GL_COLOR_BUFFER_BIT : 0) | ((camera->camera.clear & CameraClearFlags::Depth) == CameraClearFlags::Depth ? GL_DEPTH_BUFFER_BIT : 0);
-				pass->sceneMask = camera->camera.sceneMask;
 				pass->entityId = camera->entityId;
 				(CameraEffects&)*pass = (CameraEffects&)camera->camera;
 				real eyeAdaptationSpeed = real(elapsedDispatchTime) * 1e-6;
@@ -294,7 +319,7 @@ namespace cage
 				OPTICK_TAG("y", pass->vpY);
 				OPTICK_TAG("width", pass->vpW);
 				OPTICK_TAG("height", pass->vpH);
-				OPTICK_TAG("sceneMask", pass->sceneMask);
+				OPTICK_TAG("sceneMask", camera->camera.sceneMask);
 				addRenderableObjects(pass);
 				addRenderableLights(pass);
 				addRenderableTexts(pass);
@@ -309,16 +334,12 @@ namespace cage
 				{
 				case LightTypeEnum::Directional:
 					pass->proj = orthographicProjection(-light->shadowmap->worldSize[0], light->shadowmap->worldSize[0], -light->shadowmap->worldSize[1], light->shadowmap->worldSize[1], -light->shadowmap->worldSize[2], light->shadowmap->worldSize[2]);
-					pass->lodSelection = light->shadowmap->worldSize[1] * 2;
-					pass->lodOrthographic = true;
 					break;
 				case LightTypeEnum::Spot:
 					pass->proj = perspectiveProjection(light->light.spotAngle, 1, light->shadowmap->worldSize[0], light->shadowmap->worldSize[1]);
-					pass->lodSelection = fovToLodSelection(light->light.spotAngle) * light->shadowmap->resolution;
 					break;
 				case LightTypeEnum::Point:
 					pass->proj = perspectiveProjection(degs(90), 1, light->shadowmap->worldSize[0], light->shadowmap->worldSize[1]);
-					pass->lodSelection = fovToLodSelection(degs(90)) * light->shadowmap->resolution;
 					break;
 				default:
 					CAGE_THROW_CRITICAL(Exception, "invalid light type");
@@ -326,32 +347,31 @@ namespace cage
 				pass->viewProj = pass->proj * pass->view;
 				pass->viewProjPrev = pass->viewProj;
 				pass->shadowmapResolution = pass->vpW = pass->vpH = light->shadowmap->resolution;
-				pass->sceneMask = 0xffffffff;
 				pass->targetShadowmap = light->light.lightType == LightTypeEnum::Point ? (-shmCube++ - 1) : (shm2d++ + 1);
-				light->shadowmap->index = pass->targetShadowmap;
+				auto &shm = light->shadowmaps[pass->camera];
+				shm.index = pass->targetShadowmap;
 				const mat4 bias = mat4(
 					0.5, 0.0, 0.0, 0.0,
 					0.0, 0.5, 0.0, 0.0,
 					0.0, 0.0, 0.5, 0.0,
 					0.5, 0.5, 0.5, 1.0);
-				light->shadowmap->shadowMat = bias * pass->viewProj;
-				pass->entityId = light->entityId;
+				shm.shadowMat = bias * pass->viewProj;
 				OPTICK_TAG("resolution", pass->shadowmapResolution);
-				OPTICK_TAG("sceneMask", pass->sceneMask);
+				OPTICK_TAG("sceneMask", pass->camera->camera.sceneMask);
 				addRenderableObjects(pass);
 			}
 
 			void addRenderableObjects(RenderPassImpl *pass)
 			{
 				OPTICK_EVENT("objects");
-				CAGE_ASSERT(pass->lodSelection > 0);
-				for (EmitRender &e : emitRead->renderableObjects)
+				CAGE_ASSERT(pass->lodSelection.screenSize > 0);
+				for (EmitObject &e : emitRead->objects)
 				{
-					if ((e.render.sceneMask & pass->sceneMask) == 0 || e.render.object == 0)
+					if ((e.object.sceneMask & pass->camera->camera.sceneMask) == 0 || e.object.object == 0)
 						continue;
 
 					{
-						Holder<Mesh> m = engineAssets()->tryGet<AssetSchemeIndexMesh, Mesh>(e.render.object);
+						Holder<Mesh> m = engineAssets()->tryGet<AssetSchemeIndexMesh, Mesh>(e.object.object);
 						if (m)
 						{
 							addRenderableMesh(pass, &e, templates::move(m));
@@ -360,19 +380,20 @@ namespace cage
 					}
 
 					{
-						Holder<RenderObject> o = engineAssets()->get<AssetSchemeIndexRenderObject, RenderObject>(e.render.object);
+						Holder<RenderObject> o = engineAssets()->get<AssetSchemeIndexRenderObject, RenderObject>(e.object.object);
 						if (!o || o->lodsCount() == 0)
 							continue;
 						uint32 lod = 0;
 						if (o->lodsCount() > 1)
 						{
 							real d = 1;
-							if (!pass->lodOrthographic)
+							if (!pass->lodSelection.orthographic)
 							{
 								vec4 ep4 = e.model * vec4(0, 0, 0, 1);
-								d = distance(vec3(ep4) / ep4[3], vec3(pass->uniViewport.eyePos));
+								CAGE_ASSERT(abs(ep4[3] - 1) < 1e-4);
+								d = distance(vec3(ep4), pass->lodSelection.center);
 							}
-							real f = pass->lodSelection * o->worldSize / (d * o->pixelsSize);
+							real f = pass->lodSelection.screenSize * o->worldSize / (d * o->pixelsSize);
 							lod = o->lodSelect(f.value);
 						}
 						for (uint32 msh : o->meshes(lod))
@@ -385,7 +406,7 @@ namespace cage
 				}
 			}
 
-			void addRenderableSkeleton(RenderPassImpl *pass, EmitRender *e, Holder<SkeletonRig> s, const mat4 &model, const mat4 &mvp)
+			void addRenderableSkeleton(RenderPassImpl *pass, EmitObject *e, Holder<SkeletonRig> s, const mat4 &model, const mat4 &mvp)
 			{
 				uint32 bonesCount = s->bonesCount();
 				bool initialized = false;
@@ -412,19 +433,19 @@ namespace cage
 				CAGE_ASSERT(mesh->getSkeletonName() == 0);
 				for (uint32 i = 0; i < bonesCount; i++)
 				{
-					e->render.color = colorGammaToLinear(colorHsvToRgb(vec3(real(i) / real(bonesCount), 1, 1)));
+					e->object.color = colorGammaToLinear(colorHsvToRgb(vec3(real(i) / real(bonesCount), 1, 1)));
 					mat4 m = model * tmpArmature2[i];
 					mat4 mvp = pass->viewProj * m;
 					addRenderableMesh(pass, e, mesh.share(), m, mvp, mvp);
 				}
 			}
 
-			void addRenderableMesh(RenderPassImpl *pass, EmitRender *e, Holder<Mesh> m)
+			void addRenderableMesh(RenderPassImpl *pass, EmitObject *e, Holder<Mesh> m)
 			{
 				addRenderableMesh(pass, e, templates::move(m), e->model, pass->viewProj * e->model, pass->viewProjPrev * e->modelPrev);
 			}
 
-			void addRenderableMesh(RenderPassImpl *pass, EmitRender *e, Holder<Mesh> m, const mat4 &model, const mat4 &mvp, const mat4 &mvpPrev)
+			void addRenderableMesh(RenderPassImpl *pass, EmitObject *e, Holder<Mesh> m, const mat4 &model, const mat4 &mvp, const mat4 &mvpPrev)
 			{
 				if (!frustumCulling(m->getBoundingBox(), mvp))
 					return;
@@ -437,7 +458,7 @@ namespace cage
 					return;
 				}
 				Objects *obj = nullptr;
-				if (any(m->getFlags() & MeshRenderFlags::Translucency) || e->render.opacity < 1)
+				if (any(m->getFlags() & MeshRenderFlags::Translucency) || e->object.opacity < 1)
 				{ // translucent
 					pass->translucents.push_back(detail::systemArena().createHolder<Translucent>(m.share()));
 					Translucent *t = pass->translucents.back().get();
@@ -445,7 +466,7 @@ namespace cage
 					if (any(m->getFlags() & MeshRenderFlags::Lighting))
 					{
 						for (EmitLight &it : emitRead->lights)
-							addLight(t, mvp, &it); // todo pass other parameters needed for the intersection tests
+							addLight(pass, t->lights, mvp, &it); // todo pass other parameters needed for the intersection tests
 					}
 				}
 				else
@@ -471,7 +492,7 @@ namespace cage
 				}
 				obj->uniMeshes.emplace_back();
 				Objects::UniMesh *sm = &obj->uniMeshes.back();
-				sm->color = vec4(colorGammaToLinear(e->render.color) * e->render.intensity, e->render.opacity);
+				sm->color = vec4(colorGammaToLinear(e->object.color) * e->object.intensity, e->object.opacity);
 				sm->mMat = Mat3x4(model);
 				sm->mvpMat = mvp;
 				if (any(m->getFlags() & MeshRenderFlags::VelocityWrite))
@@ -514,16 +535,16 @@ namespace cage
 			void addRenderableTexts(RenderPassImpl *pass)
 			{
 				OPTICK_EVENT("texts");
-				for (EmitText &e : emitRead->renderableTexts)
+				for (EmitText &e : emitRead->texts)
 				{
-					if ((e.renderText.sceneMask & pass->sceneMask) == 0)
+					if ((e.text.sceneMask & pass->camera->camera.sceneMask) == 0)
 						continue;
-					if (!e.renderText.font)
-						e.renderText.font = HashString("cage/font/ubuntu/Ubuntu-R.ttf");
-					Holder<Font> font = engineAssets()->get<AssetSchemeIndexFont, Font>(e.renderText.font);
+					if (!e.text.font)
+						e.text.font = HashString("cage/font/ubuntu/Ubuntu-R.ttf");
+					Holder<Font> font = engineAssets()->get<AssetSchemeIndexFont, Font>(e.text.font);
 					if (!font)
 						continue;
-					string s = loadInternationalizedText(engineAssets(), e.renderText.assetName, e.renderText.textName, e.renderText.value);
+					string s = loadInternationalizedText(engineAssets(), e.text.assetName, e.text.textName, e.text.value);
 					if (s.empty())
 						continue;
 
@@ -532,7 +553,7 @@ namespace cage
 					font->transcript(s, nullptr, count);
 					r->glyphs.resize(count);
 					font->transcript(s, r->glyphs.data(), count);
-					r->color = colorGammaToLinear(e.renderText.color) * e.renderText.intensity;
+					r->color = colorGammaToLinear(e.text.color) * e.text.intensity;
 					r->format.size = 1;
 					vec2 size;
 					font->size(r->glyphs.data(), count, r->format, size);
@@ -585,21 +606,18 @@ namespace cage
 						return; // this light's volume is outside view frustum
 					break;
 				}
-				addLight(pass->lights, mvpMat, light);
+				addLight(pass, pass->lights, mvpMat, light);
 			}
 
-			void addLight(Translucent *trans, const mat4 &mvpMat, EmitLight *light)
+			void addLight(RenderPassImpl *pass, std::vector<Holder<Lights>> &lights, const mat4 &mvpMat, EmitLight *light)
 			{
-				// todo test if the mesh is in range of the light
-				addLight(trans->lights, mvpMat, light);
-			}
-
-			void addLight(std::vector<Holder<Lights>> &lights, const mat4 &mvpMat, EmitLight *light)
-			{
+				if ((light->light.sceneMask & pass->camera->camera.sceneMask) == 0)
+					return;
+				CAGE_ASSERT(!!light->shadowmaps.count(pass->camera) == !!light->shadowmap);
 				Lights *lig = nullptr;
 				if (light->shadowmap)
 				{
-					lights.push_back(detail::systemArena().createHolder<Lights>(light->light.lightType, light->shadowmap->index, 1));
+					lights.push_back(detail::systemArena().createHolder<Lights>(light->light.lightType, light->shadowmaps[pass->camera].index, 1));
 					lig = lights.back().get();
 				}
 				else
@@ -630,10 +648,10 @@ namespace cage
 				sl->direction = vec4(normalize(vec3(light->model * vec4(0, 0, -1, 0))), 0);
 				sl->position = light->model * vec4(0, 0, 0, 1);
 				if (light->shadowmap)
-					sl->shadowMat = light->shadowmap->shadowMat;
+					sl->shadowMat = light->shadowmaps[pass->camera].shadowMat;
 			}
 
-			explicit GraphicsPrepareImpl(const EngineCreateConfig &config) : emitBufferA(config), emitBufferB(config), emitBufferC(config), emitBuffers{ &emitBufferA, &emitBufferB, &emitBufferC }
+			explicit GraphicsPrepareImpl(const EngineCreateConfig &config)
 			{
 				SwapBufferGuardCreateConfig cfg(3);
 				cfg.repeatedReads = true;
@@ -665,10 +683,10 @@ namespace cage
 					return;
 				}
 
-				emitWrite = emitBuffers[lock.index()];
+				emitWrite = &emitBuffers[lock.index()];
 				ClearOnScopeExit resetEmitWrite(emitWrite);
-				emitWrite->renderableObjects.clear();
-				emitWrite->renderableTexts.clear();
+				emitWrite->objects.clear();
+				emitWrite->texts.clear();
 				emitWrite->lights.clear();
 				emitWrite->cameras.clear();
 				emitWrite->time = time;
@@ -677,14 +695,14 @@ namespace cage
 				// emit renderable objects
 				for (Entity *e : RenderComponent::component->entities())
 				{
-					EmitRender c;
+					EmitObject c;
 					emitTransform(&c, e);
-					c.render = e->value<RenderComponent>(RenderComponent::component);
+					c.object = e->value<RenderComponent>(RenderComponent::component);
 					if (e->has(TextureAnimationComponent::component))
 						c.animatedTexture = detail::systemArena().createHolder<TextureAnimationComponent>(e->value<TextureAnimationComponent>(TextureAnimationComponent::component));
 					if (e->has(SkeletalAnimationComponent::component))
 						c.animatedSkeleton = detail::systemArena().createHolder<SkeletalAnimationComponent>(e->value<SkeletalAnimationComponent>(SkeletalAnimationComponent::component));
-					emitWrite->renderableObjects.push_back(templates::move(c));
+					emitWrite->objects.push_back(templates::move(c));
 				}
 
 				// emit renderable texts
@@ -692,8 +710,8 @@ namespace cage
 				{
 					EmitText c;
 					emitTransform(&c, e);
-					c.renderText = e->value<TextComponent>(TextComponent::component);
-					emitWrite->renderableTexts.push_back(templates::move(c));
+					c.text = e->value<TextComponent>(TextComponent::component);
+					emitWrite->texts.push_back(templates::move(c));
 				}
 
 				// emit lights
@@ -704,8 +722,7 @@ namespace cage
 					c.history.scale = c.current.scale = 1;
 					c.light = e->value<LightComponent>(LightComponent::component);
 					if (e->has(ShadowmapComponent::component))
-						c.shadowmap = detail::systemArena().createHolder<ShadowmapImpl>(e->value<ShadowmapComponent>(ShadowmapComponent::component));
-					c.entityId = ((uintPtr)e) ^ e->name();
+						c.shadowmap = detail::systemArena().createHolder<ShadowmapComponent>(e->value<ShadowmapComponent>(ShadowmapComponent::component));
 					emitWrite->lights.push_back(templates::move(c));
 				}
 
@@ -729,31 +746,31 @@ namespace cage
 				}
 			}
 
-			void updateDefaultValues(EmitRender *e)
+			void updateDefaultValues(EmitObject *e)
 			{
-				if (!e->render.object)
+				if (!e->object.object)
 					return;
 
-				Holder<RenderObject> o = engineAssets()->tryGet<AssetSchemeIndexRenderObject, RenderObject>(e->render.object);
+				Holder<RenderObject> o = engineAssets()->tryGet<AssetSchemeIndexRenderObject, RenderObject>(e->object.object);
 
-				if (!o && !engineAssets()->tryGet<AssetSchemeIndexMesh, Mesh>(e->render.object))
+				if (!o && !engineAssets()->tryGet<AssetSchemeIndexMesh, Mesh>(e->object.object))
 				{
 					if (!confRenderMissingMeshes)
 					{
-						e->render.object = 0; // disable rendering further in the pipeline
+						e->object.object = 0; // disable rendering further in the pipeline
 						return;
 					}
-					e->render.object = HashString("cage/mesh/fake.obj");
+					e->object.object = HashString("cage/mesh/fake.obj");
 				}
 
 				if (o)
 				{
-					if (!e->render.color.valid())
-						e->render.color = o->color;
-					if (!e->render.intensity.valid())
-						e->render.intensity = o->intensity;
-					if (!e->render.opacity.valid())
-						e->render.opacity = o->opacity;
+					if (!e->object.color.valid())
+						e->object.color = o->color;
+					if (!e->object.intensity.valid())
+						e->object.intensity = o->intensity;
+					if (!e->object.opacity.valid())
+						e->object.opacity = o->opacity;
 
 					{
 						Holder<TextureAnimationComponent> &c = e->animatedTexture;
@@ -784,12 +801,12 @@ namespace cage
 					}
 				}
 
-				if (!e->render.color.valid())
-					e->render.color = vec3(0);
-				if (!e->render.intensity.valid())
-					e->render.intensity = 1;
-				if (!e->render.opacity.valid())
-					e->render.opacity = 1;
+				if (!e->object.color.valid())
+					e->object.color = vec3(0);
+				if (!e->object.intensity.valid())
+					e->object.intensity = 1;
+				if (!e->object.opacity.valid())
+					e->object.opacity = 1;
 
 				if (e->animatedTexture)
 				{
@@ -831,7 +848,7 @@ namespace cage
 				meshSphere = ass->get<AssetSchemeIndexMesh, Mesh>(HashString("cage/mesh/sphere.obj"));
 				meshCone = ass->get<AssetSchemeIndexMesh, Mesh>(HashString("cage/mesh/cone.obj"));
 
-				emitRead = emitBuffers[lock.index()];
+				emitRead = &emitBuffers[lock.index()];
 				ClearOnScopeExit resetEmitRead(emitRead);
 
 				emitTime = emitRead->time;
@@ -851,7 +868,7 @@ namespace cage
 				if (emitRead->fresh)
 				{ // update default values
 					OPTICK_EVENT("update default values");
-					for (EmitRender &it : emitRead->renderableObjects)
+					for (EmitObject &it : emitRead->objects)
 						updateDefaultValues(&it);
 					emitRead->fresh = false;
 				}
@@ -860,9 +877,9 @@ namespace cage
 					OPTICK_EVENT("update model matrices");
 					real interFactor = clamp(real(dispatchTime - emitTime) / controlThread().updatePeriod(), 0, 1);
 					//CAGE_LOG(SeverityEnum::Info, "timing", stringizer() + "emit: " + emitTime + ", current: " + time + ", dispatch: " + dispatchTime + ", interpolate: " + interFactor);
-					for (auto &it : emitRead->renderableObjects)
+					for (auto &it : emitRead->objects)
 						it.updateModelMatrix(interFactor);
-					for (auto &it : emitRead->renderableTexts)
+					for (auto &it : emitRead->texts)
 						it.updateModelMatrix(interFactor);
 					for (auto &it : emitRead->lights)
 						it.updateModelMatrix(interFactor);
@@ -870,31 +887,38 @@ namespace cage
 						it.updateModelMatrix(interFactor);
 				}
 
-				// generate shadowmap render passes
-				for (auto &it : emitRead->lights)
+				// sort cameras
+				std::sort(emitRead->cameras.begin(), emitRead->cameras.end(), [](const EmitCamera &a, const EmitCamera &b)
 				{
-					if (!it.shadowmap)
+					CAGE_ASSERT(a.camera.cameraOrder != b.camera.cameraOrder);
+					return a.camera.cameraOrder < b.camera.cameraOrder;
+				});
+
+				// generate shadowmap render passes
+				for (auto &lig : emitRead->lights)
+				{
+					if (!lig.shadowmap)
 						continue;
-					initializeRenderPassForShadowmap(newRenderPass(), &it);
+					for (auto &cam : emitRead->cameras)
+					{
+						if ((cam.camera.sceneMask & lig.light.sceneMask) == 0)
+							continue;
+						// todo frustum culling
+						initializeRenderPassForShadowmap(newRenderPass(&cam), &lig);
+					}
 				}
 
-				{ // generate camera render passes
-					std::sort(emitRead->cameras.begin(), emitRead->cameras.end(), [](const EmitCamera &a, const EmitCamera &b)
-					{
-						CAGE_ASSERT(a.camera.cameraOrder != b.camera.cameraOrder);
-						return a.camera.cameraOrder < b.camera.cameraOrder;
-					});
-					for (auto &it : emitRead->cameras)
-					{
-						if (graphicsPrepareThread().stereoMode == StereoModeEnum::Mono || it.camera.target)
-						{ // mono
-							initializeRenderPassForCamera(newRenderPass(), &it, StereoEyeEnum::Mono);
-						}
-						else
-						{ // stereo
-							initializeRenderPassForCamera(newRenderPass(), &it, StereoEyeEnum::Left);
-							initializeRenderPassForCamera(newRenderPass(), &it, StereoEyeEnum::Right);
-						}
+				// generate camera render passes
+				for (auto &cam : emitRead->cameras)
+				{
+					if (graphicsPrepareThread().stereoMode == StereoModeEnum::Mono || cam.camera.target)
+					{ // mono
+						initializeRenderPassForCamera(newRenderPass(&cam), StereoEyeEnum::Mono);
+					}
+					else
+					{ // stereo
+						initializeRenderPassForCamera(newRenderPass(&cam), StereoEyeEnum::Left);
+						initializeRenderPassForCamera(newRenderPass(&cam), StereoEyeEnum::Right);
 					}
 				}
 			}
