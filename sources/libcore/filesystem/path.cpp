@@ -79,10 +79,10 @@ namespace cage
 
 	string pathToRel(const string &path, const string &ref)
 	{
-		if (path.empty())
-			return "";
+		if (!pathIsAbs(path))
+			return pathSimplify(path);
 		string r = pathToAbs(ref);
-		string p = pathToAbs(path);
+		string p = pathSimplify(path);
 		while (!r.empty() || !p.empty())
 		{
 			string r2 = r;

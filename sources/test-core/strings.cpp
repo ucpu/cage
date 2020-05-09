@@ -600,6 +600,9 @@ namespace
 			CAGE_TEST(!pathIsAbs("."));
 			CAGE_TEST(!pathIsAbs(".."));
 			CAGE_TEST(!pathIsAbs("../.."));
+			CAGE_TEST(!pathIsAbs("../."));
+			CAGE_TEST(!pathIsAbs("./.."));
+			CAGE_TEST(!pathIsAbs("abc/def/ghi"));
 		}
 		{
 			CAGE_TESTCASE("path simplifications");
@@ -613,6 +616,7 @@ namespace
 			CAGE_TEST(pathSimplify("//") == "/");
 			CAGE_TEST(pathSimplify("///") == "/");
 			CAGE_TEST(pathSimplify("u:/") == "u:/");
+			CAGE_TEST(pathSimplify("u:/.") == "u:/");
 			CAGE_TEST(pathSimplify("u:") == "u:/");
 			CAGE_TEST(pathSimplify("u:/abc") == "u:/abc");
 			CAGE_TEST(pathSimplify(":") == "/");
@@ -633,6 +637,8 @@ namespace
 			CAGE_TEST_THROWN(pathSimplify("/.."));
 			CAGE_TEST_THROWN(pathSimplify("/./.."));
 			CAGE_TEST_THROWN(pathSimplify("/a/../.."));
+			CAGE_TEST_THROWN(pathSimplify("omg://a/../.."));
+			CAGE_TEST_THROWN(pathSimplify("omg:/.."));
 		}
 		{
 			CAGE_TESTCASE("path joins");
@@ -679,6 +685,7 @@ namespace
 		{
 			CAGE_TESTCASE("path to relative");
 			CAGE_TEST(pathToRel("") == "");
+			CAGE_TEST(pathToRel(".") == "");
 			CAGE_TEST(pathToRel("abc") == "abc");
 			CAGE_TEST(pathToRel("..") == "..");
 			CAGE_TEST(pathToRel("lol:/omg") == "lol:/omg");
@@ -686,6 +693,10 @@ namespace
 			CAGE_TEST(pathToRel(pathWorkingDir()) == "");
 			CAGE_TEST(pathToRel(pathJoin(pathWorkingDir(), "abc")) == "abc");
 			CAGE_TEST(pathToRel(pathJoin(pathWorkingDir(), "abc"), pathJoin(pathWorkingDir(), "abc")) == "");
+			CAGE_TEST(pathToRel("abc", "def") == "abc");
+			CAGE_TEST(pathToRel("abc/.", "def") == "abc");
+			CAGE_TEST(pathToRel("./abc", "def") == "abc");
+			CAGE_TEST(pathToRel("abc/./def", "juj") == "abc/def");
 		}
 		{
 			CAGE_TESTCASE("path validity");
