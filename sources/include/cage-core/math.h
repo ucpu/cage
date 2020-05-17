@@ -501,7 +501,7 @@ namespace cage
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(TYPE) \
-	inline TYPE interpolate(TYPE a, TYPE b, real f) { return (TYPE)(a * (1 - f.value) + b * f.value); }
+	inline TYPE interpolate(const TYPE &a, const TYPE &b, real f) { return (TYPE)(a * (1 - f.value) + b * f.value); }
 	GCHL_GENERATE(sint8);
 	GCHL_GENERATE(sint16);
 	GCHL_GENERATE(sint32);
@@ -512,7 +512,7 @@ namespace cage
 	GCHL_GENERATE(uint64);
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(TYPE) \
-	inline TYPE interpolate(TYPE a, TYPE b, real f) { return (TYPE)(a + (b - a) * f.value); }
+	inline TYPE interpolate(const TYPE &a, const TYPE &b, real f) { return (TYPE)(a + (b - a) * f.value); }
 	GCHL_GENERATE(float);
 	GCHL_GENERATE(double);
 	GCHL_GENERATE(real);

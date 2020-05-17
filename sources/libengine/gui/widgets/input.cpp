@@ -102,7 +102,7 @@ namespace cage
 							data.value = string(consolidate<sint32>(data.value.toSint32(), data.min.i, data.max.i, data.step.i));
 						break;
 					case InputTypeEnum::Real:
-						if (data.value.isReal(true))
+						if (data.value.isReal())
 							data.value = string(consolidate<real>(data.value.toFloat(), data.min.f, data.max.f, data.step.f).value);
 						break;
 					default:
@@ -139,7 +139,7 @@ namespace cage
 					} break;
 					case InputTypeEnum::Real:
 					{
-						if (data.value.isReal(true))
+						if (data.value.isReal())
 						{
 							real v = data.value.toFloat();
 							real r = consolidate<real>(v, data.min.f, data.max.f, data.step.f);

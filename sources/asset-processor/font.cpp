@@ -26,8 +26,9 @@ namespace
 #undef __FTERRORS_H__
 #define FT_ERRORDEF(E,V,S) case V: return S;
 #define FT_ERROR_START_LIST {
-#define FT_ERROR_END_LIST default: CAGE_THROW_ERROR(Exception, "unknown freetype error code"); };
+#define FT_ERROR_END_LIST };
 #include FT_ERRORS_H
+		CAGE_THROW_ERROR(Exception, "unknown freetype error code");
 	}
 
 	FT_Library library;

@@ -286,7 +286,7 @@ namespace cage
 						ass->compData.allocate(h->compressedSize);
 					if (h->originalSize)
 						ass->origData.allocate(h->originalSize);
-					if (h->compressedSize + h->originalSize)
+					if (h->compressedSize || h->originalSize)
 					{
 						MemoryBuffer &t = h->compressedSize ? ass->compData : ass->origData;
 						CAGE_ASSERT(skip + t.size() == buff.size());

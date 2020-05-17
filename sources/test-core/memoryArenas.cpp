@@ -126,6 +126,7 @@ namespace
 		}
 	};
 
+	/*
 	template<template<class...> class ArenaPolicy,
 		class BoundsPolicy, class TagPolicy, class TrackPolicy,
 		uintPtr Alignment, class Traits>
@@ -161,6 +162,7 @@ namespace
 				a.flush();
 		}
 	};
+	*/
 
 	template<template<class...> class ArenaPolicy,
 		class BoundsPolicy, class TagPolicy, class TrackPolicy,

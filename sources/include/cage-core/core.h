@@ -393,7 +393,7 @@ namespace cage
 	class LoggerOutputFile;
 	template<class Key, class Value, class Hasher> struct LruCache;
 	template<class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyLinear;
-	template<uint8 N, class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyNFrame;
+	//template<uint8 N, class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyNFrame;
 	template<uintPtr AtomSize, class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyPool;
 	template<class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyQueue;
 	template<class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyStack;
@@ -487,7 +487,7 @@ namespace cage
 		CAGE_CORE_API void stringDecodeUrl(const char *dataIn, uint32 currentIn, char *dataOut, uint32 &currentOut, uint32 maxLength);
 		CAGE_CORE_API bool stringIsDigitsOnly(const char *data, uint32 dataLen);
 		CAGE_CORE_API bool stringIsInteger(const char *data, uint32 dataLen, bool allowSign);
-		CAGE_CORE_API bool stringIsReal(const char *data, uint32 dataLen, bool allowSign);
+		CAGE_CORE_API bool stringIsReal(const char *data, uint32 dataLen);
 		CAGE_CORE_API bool stringIsBool(const char *data, uint32 dataLen);
 		CAGE_CORE_API bool stringIsPattern(const char *data, uint32 dataLen, const char *prefix, uint32 prefixLen, const char *infix, uint32 infixLen, const char *suffix, uint32 suffixLen);
 		CAGE_CORE_API int stringComparison(const char *ad, uint32 al, const char *bd, uint32 bl) noexcept;
@@ -773,9 +773,9 @@ namespace cage
 				return privat::stringIsInteger(data, current, allowSign);
 			}
 
-			bool isReal(bool allowSign) const noexcept
+			bool isReal() const noexcept
 			{
-				return privat::stringIsReal(data, current, allowSign);
+				return privat::stringIsReal(data, current);
 			}
 
 			bool isBool() const noexcept
@@ -1200,7 +1200,7 @@ namespace cage
 		constexpr T *data() const noexcept { return begin_; }
 		constexpr size_type size() const noexcept { return end_ - begin_; }
 		constexpr bool empty() const noexcept { return size() == 0; }
-		constexpr T &operator[] (uint32 idx) const { CAGE_ASSERT(idx < size()); return begin_[idx]; }
+		constexpr T &operator[] (size_type idx) const { CAGE_ASSERT(idx < size()); return begin_[idx]; }
 	};
 
 	template<class T>
@@ -1221,7 +1221,7 @@ namespace cage
 		T *data() const noexcept { return begin(); }
 		size_type size() const noexcept { return end() - begin(); }
 		bool empty() const noexcept { return size() == 0; }
-		T &operator[] (uint32 idx) const { CAGE_ASSERT(idx < size()); return begin()[idx]; }
+		T &operator[] (size_type idx) const { CAGE_ASSERT(idx < size()); return begin()[idx]; }
 	};
 
 	// memory arena
@@ -1264,19 +1264,19 @@ namespace cage
 			}
 
 			template<class A>
-			static void deallocate(void *inst, void *ptr) noexcept
+			static void deallocate(void *inst, void *ptr)
 			{
 				((A*)inst)->deallocate(ptr);
 			}
 
 			template<class A>
-			static void flush(void *inst) noexcept
+			static void flush(void *inst)
 			{
 				((A*)inst)->flush();
 			}
 
 			template<class A>
-			static Stub init() noexcept
+			static Stub init()
 			{
 				Stub s;
 				s.alloc = &allocate<A>;
@@ -1288,10 +1288,10 @@ namespace cage
 		void *inst = nullptr;
 
 	public:
-		MemoryArena() noexcept;
+		MemoryArena();
 
 		template<class A>
-		explicit MemoryArena(A *a) noexcept
+		explicit MemoryArena(A *a)
 		{
 			static Stub stb = Stub::init<A>();
 			this->stub = &stb;
@@ -1304,8 +1304,8 @@ namespace cage
 		MemoryArena &operator = (MemoryArena &&) = default;
 
 		void *allocate(uintPtr size, uintPtr alignment);
-		void deallocate(void *ptr) noexcept;
-		void flush() noexcept;
+		void deallocate(void *ptr);
+		void flush();
 
 		template<class T, class... Ts>
 		T *createObject(Ts... vs)
@@ -1338,7 +1338,7 @@ namespace cage
 		};
 
 		template<class T>
-		void destroy(void *ptr) noexcept
+		void destroy(void *ptr)
 		{
 			if (!ptr)
 				return;

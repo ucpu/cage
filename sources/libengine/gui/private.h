@@ -239,11 +239,11 @@ namespace cage
 
 	struct ImageItem
 	{
-		HierarchyItem *const hierarchy;
 		GuiImageComponent Image;
 		GuiImageFormatComponent format;
-		Texture *texture;
-		bool skipInitialize;
+		HierarchyItem *const hierarchy = nullptr;
+		Texture *texture = nullptr;
+		bool skipInitialize = false;
 
 		ImageItem(HierarchyItem *hierarchy);
 
@@ -310,9 +310,10 @@ namespace cage
 		{
 			MemoryArenaGrowing<MemoryAllocatorPolicyLinear<>, MemoryConcurrentPolicyNone> arena;
 			MemoryArena memory;
-			RenderableBase *first, *last;
+			RenderableBase *first = nullptr, *last = nullptr;
+
 			EmitData(const GuiCreateConfig &config);
-			EmitData(EmitData &&other); // this is not defined, is it? but it is required, is it not?
+			EmitData(EmitData &&other); // this is not defined but it is required - some stupid weird issue with gcc.
 			~EmitData();
 			void flush();
 		} emitData[3], *emitControl;

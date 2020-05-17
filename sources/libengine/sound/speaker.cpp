@@ -165,8 +165,7 @@ namespace cage
 			{
 				struct ringBufferStruct
 				{
-					ringBufferStruct() : buffer(nullptr)
-					{}
+					ringBufferStruct() = default;
 
 					~ringBufferStruct()
 					{
@@ -180,12 +179,12 @@ namespace cage
 							checkSoundIoError(SoundIoErrorNoMem);
 					}
 
-					const uint32 space() const
+					uint32 space() const
 					{
 						return soundio_ring_buffer_free_count(buffer) / sizeof(float);
 					}
 
-					const uint32 available() const
+					uint32 available() const
 					{
 						return soundio_ring_buffer_fill_count(buffer) / sizeof(float);
 					}
@@ -200,15 +199,14 @@ namespace cage
 						soundio_ring_buffer_advance_write_ptr(buffer, count * sizeof(float));
 					}
 
-					SoundIoRingBuffer *buffer;
+					SoundIoRingBuffer *buffer = nullptr;
 				};
 
 				SoundDataBuffer buffer;
 				ringBufferStruct ring;
-				bool first;
-				sint64 time;
+				bool first = true;
+				sint64 time = 0;
 
-				dataStruct() : first(true) {}
 				void init(SoundIo *context, uint32 channels, uint32 sampleRate)
 				{
 					CAGE_ASSERT(channels <= 8);

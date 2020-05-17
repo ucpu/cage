@@ -164,17 +164,15 @@ bool SchemeField::valid() const
 		{
 			if (!values.empty())
 				return false;
-			if (!min.empty() && !min.isReal(true))
+			if (!min.empty() && !min.isReal())
 				return false;
-			if (!max.empty() && !max.isReal(true))
-				return false;
-			if (!max.empty() && !max.isReal(true))
+			if (!max.empty() && !max.isReal())
 				return false;
 			if (!min.empty() && !max.empty() && min.toDouble() > max.toDouble())
 				return false;
 			if (!defaul.empty())
 			{
-				if (!defaul.isReal(true))
+				if (!defaul.isReal())
 					return false;
 				if (!min.empty() && defaul.toDouble() < min.toDouble())
 					return false;
@@ -263,7 +261,7 @@ bool SchemeField::applyToAssetField(string &val, const string &assetName) const
 	}
 	else if (type == "real")
 	{
-		if (!val.isReal(true))
+		if (!val.isReal())
 		{
 			CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is not real");
 			return false;

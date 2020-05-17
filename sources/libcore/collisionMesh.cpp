@@ -42,7 +42,7 @@ namespace cage
 			{
 				// find the total bounding box
 				aabb b;
-				for (auto &it : ts)
+				for (const auto &it : ts)
 					b += aabb(it);
 				boxes.push_back(b);
 
@@ -67,8 +67,8 @@ namespace cage
 					{
 						if ((b.b[ax] - b.a[ax]) == 0)
 							continue;
-						static constexpr uint32 planesCount = 12;
-						aabb boxes[planesCount + 1];
+						constexpr uint32 planesCount = 12;
+						aabb interPlanes[planesCount + 1];
 						uint32 counts[planesCount + 1];
 						for (uint32 i = 0; i < planesCount + 1; i++)
 							counts[i] = 0;
@@ -81,26 +81,26 @@ namespace cage
 							d = clamp(d, 0, planesCount);
 							uint32 j = numeric_cast<uint32>(d);
 							CAGE_ASSERT(j < planesCount + 1);
-							boxes[j] += aabb(ts[i]);
+							interPlanes[j] += aabb(ts[i]);
 							counts[j]++;
 						}
 
 						aabb bl[planesCount];
 						uint32 cl[planesCount];
-						bl[0] = boxes[0];
+						bl[0] = interPlanes[0];
 						cl[0] = counts[0];
 						for (uint32 i = 1; i < planesCount; i++)
 						{
-							bl[i] = bl[i - 1] + boxes[i];
+							bl[i] = bl[i - 1] + interPlanes[i];
 							cl[i] = cl[i - 1] + counts[i];
 						}
 						aabb br[planesCount];
 						uint32 cr[planesCount];
-						br[planesCount - 1] = boxes[planesCount];
+						br[planesCount - 1] = interPlanes[planesCount];
 						cr[planesCount - 1] = counts[planesCount];
-						for (uint32 i = planesCount - 2; i < planesCount; i--) // the iterator will overflow at the edge
+						for (uint32 i = planesCount - 2; i != m; i--) // the iterator will overflow at the edge
 						{
-							br[i] = br[i + 1] + boxes[i + 1];
+							br[i] = br[i + 1] + interPlanes[i + 1];
 							cr[i] = cr[i + 1] + counts[i + 1];
 						}
 

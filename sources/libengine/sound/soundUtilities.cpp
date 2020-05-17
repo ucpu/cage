@@ -11,7 +11,7 @@ namespace cage
 #pragma warning (disable: 4838) // disable warning about converting double to float
 #pragma warning (disable: 4305) // disable warning about truncating double to float
 #endif
-			float mixingMatrices[8][8][64] = {
+			real mixingMatrices[8][8][64] = {
 				{ // from 1
 					{ // to 1
 						1, 0, 0, 0, 0, 0, 0, 0,
@@ -507,7 +507,7 @@ namespace cage
 
 		void channelsMixing(float *bufferIn, float *bufferOut, uint32 channelsIn, uint32 channelsOut, uint32 frames)
 		{
-			const float *m = mixingMatrices[channelsIn - 1][channelsOut - 1];
+			const real *m = mixingMatrices[channelsIn - 1][channelsOut - 1];
 			for (uint32 f = 0; f < frames; f++)
 			{
 				const float *in = bufferIn + f * channelsIn;
@@ -516,7 +516,7 @@ namespace cage
 				{
 					float res = 0;
 					for (uint32 cin = 0; cin < channelsIn; cin++)
-						res += m[cout * 8 + cin] * in[cin];
+						res += m[cout * 8 + cin].value * in[cin];
 					out[cout] = res;
 				}
 			}
@@ -663,17 +663,17 @@ namespace cage
 		detail::memcpy(directions, soundPrivat::speakerDirections[channels - 1], channels * sizeof(vec3));
 	}
 
-	void soundSetChannelsMixingMatrix(uint32 channelsIn, uint32 channelsOut, const vec3 *matrix)
+	void soundSetChannelsMixingMatrix(uint32 channelsIn, uint32 channelsOut, const real *matrix)
 	{
 		CAGE_ASSERT(channelsIn > 0 && channelsIn < 9);
 		CAGE_ASSERT(channelsOut > 0 && channelsOut < 9);
-		detail::memcpy(soundPrivat::mixingMatrices[channelsIn - 1][channelsOut - 1], matrix, 64 * sizeof(vec3));
+		detail::memcpy(soundPrivat::mixingMatrices[channelsIn - 1][channelsOut - 1], matrix, 64 * sizeof(real));
 	}
 
-	void soundGetChannelsMixingMatrix(uint32 channelsIn, uint32 channelsOut, vec3 *matrix)
+	void soundGetChannelsMixingMatrix(uint32 channelsIn, uint32 channelsOut, real *matrix)
 	{
 		CAGE_ASSERT(channelsIn > 0 && channelsIn < 9);
 		CAGE_ASSERT(channelsOut > 0 && channelsOut < 9);
-		detail::memcpy(matrix, soundPrivat::mixingMatrices[channelsIn - 1][channelsOut - 1], 64 * sizeof(vec3));
+		detail::memcpy(matrix, soundPrivat::mixingMatrices[channelsIn - 1][channelsOut - 1], 64 * sizeof(real));
 	}
 }

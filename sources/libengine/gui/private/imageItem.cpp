@@ -12,7 +12,7 @@ namespace cage
 		item->Image = item->impl->itemsMemory.createObject<ImageItem>(item);
 	}
 
-	ImageItem::ImageItem(HierarchyItem *hierarchy) : hierarchy(hierarchy), skipInitialize(false)
+	ImageItem::ImageItem(HierarchyItem *hierarchy) : hierarchy(hierarchy)
 	{}
 
 	void ImageItem::initialize()

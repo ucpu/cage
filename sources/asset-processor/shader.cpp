@@ -75,7 +75,7 @@ namespace
 
 	bool evalExpToBool(const string &l)
 	{
-		if (l.isReal(true))
+		if (l.isReal())
 			return l.toFloat() != 0;
 		else if (l.isBool())
 			return l.toBool();
@@ -111,7 +111,7 @@ namespace
 		{
 			string left = evalExp(l.subString(0, p));
 			string right = evalExp(l.subString(p + 1, m));
-			if (left.isReal(true) && right.isReal(true))
+			if (left.isReal() && right.isReal())
 				return string(left.toFloat() < right.toFloat());
 			else
 				return string(left < right);
@@ -121,7 +121,7 @@ namespace
 		{
 			string left = evalExp(l.subString(0, p));
 			string right = evalExp(l.subString(p + 1, m));
-			if (left.isReal(true) && right.isReal(true))
+			if (left.isReal() && right.isReal())
 				return string(left.toFloat() > right.toFloat());
 			else
 				return string(left > right);

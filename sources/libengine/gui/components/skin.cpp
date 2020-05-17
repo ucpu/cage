@@ -288,16 +288,13 @@ namespace cage
 		fillingImage.textureUvSize = vec2(1, 1);
 	}
 
+	GuiSkinWidgetDefaults::SliderBar::Direction::Direction() : padding(1), margin(1), collapsedBar(true)
+	{}
+
 	GuiSkinWidgetDefaults::SliderBar::SliderBar()
 	{
-		horizontal.padding = vec4(1, 1, 1, 1);
-		horizontal.margin = vec4(1, 1, 1, 1);
 		horizontal.size = vec2(150, 28);
-		horizontal.collapsedBar = true;
-		vertical.padding = vec4(1, 1, 1, 1);
-		vertical.margin = vec4(1, 1, 1, 1);
 		vertical.size = vec2(28, 150);
-		vertical.collapsedBar = true;
 	}
 
 	GuiSkinWidgetDefaults::ColorPicker::ColorPicker() : margin(1, 1, 1, 1), collapsedSize(40, 32), fullSize(250, 180), hueBarPortion(0.18), resultBarPortion(0.35)

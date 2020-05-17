@@ -45,18 +45,15 @@ namespace
 
 		~Task()
 		{
-#ifdef _MSC_VER
-#pragma warning( disable : 4297 ) // function assumed not to throw an exception but does
-#else
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wterminate"
-#endif // _MSC_VER
-			CAGE_TEST(itemsCounter > 0);
-#ifdef _MSC_VER
-#pragma warning( default : 4297 )
-#else
-#pragma GCC diagnostic pop
-#endif // _MSC_VER
+			try
+			{
+				CAGE_TEST(itemsCounter > 0);
+			}
+			catch (...)
+			{
+				// an exception cannot be raised in a destructor
+				detail::terminate();
+			}
 			itemsCounter--;
 		}
 

@@ -418,14 +418,14 @@ namespace cage
 				return stringIsDigitsOnly(data, dataLen);
 		}
 
-		bool stringIsReal(const char *data, uint32 dataLen, bool allowSign)
+		bool stringIsReal(const char *data, uint32 dataLen)
 		{
 			if (dataLen == 0)
 				return false;
 			uint32 d = stringFind(data, dataLen, ".", 1, 0);
 			if (d == m)
-				return stringIsInteger(data, dataLen, allowSign);
-			return stringIsInteger(data, d, allowSign) && stringIsDigitsOnly(data + d + 1, dataLen - d - 1);
+				return stringIsInteger(data, dataLen, true);
+			return stringIsInteger(data, d, true) && stringIsDigitsOnly(data + d + 1, dataLen - d - 1);
 		}
 
 		bool stringIsBool(const char *data, uint32 dataLen)

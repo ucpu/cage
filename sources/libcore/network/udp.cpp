@@ -32,8 +32,7 @@ namespace cage
 
 		struct MemView
 		{
-			MemView() : offset(0), size(0)
-			{}
+			MemView() = default;
 
 			MemView(const std::shared_ptr<MemoryBuffer> &buffer, uintPtr offset, uintPtr size) : buffer(buffer), offset(offset), size(size)
 			{}
@@ -46,8 +45,8 @@ namespace cage
 			}
 
 			std::shared_ptr<MemoryBuffer> buffer;
-			uintPtr offset;
-			uintPtr size;
+			uintPtr offset = 0;
+			uintPtr size = 0;
 		};
 
 		struct SockGroup
@@ -59,13 +58,10 @@ namespace cage
 
 			struct Receiver
 			{
-				Receiver() : sockIndex(m), connId(0)
-				{}
-
 				Addr address;
 				std::vector<MemView> packets;
-				uint32 sockIndex;
-				uint32 connId;
+				uint32 sockIndex = m;
+				uint32 connId = 0;
 			};
 
 			std::map<uint32, std::weak_ptr<Receiver>> receivers;
@@ -81,7 +77,7 @@ namespace cage
 
 			void readAll()
 			{
-				for (uint32 sockIndex = 0; sockIndex < socks.size(); sockIndex++)
+				for (uint32 sockIndex = 0; sockIndex < numeric_cast<uint32>(socks.size()); sockIndex++)
 				{
 					Sock &s = socks[sockIndex];
 					if (!s.isValid())
@@ -187,7 +183,7 @@ namespace cage
 			std::set<uint16> result;
 			for (uint16 i = 0; i < 32; i++)
 			{
-				uint32 m = 1 << i;
+				uint32 m = uint32(1) << i;
 				if ((bits & m) == m)
 				{
 					uint16 s = seqn - i;
@@ -205,7 +201,7 @@ namespace cage
 				uint16 s = seqn - i;
 				if (bits.count(s))
 				{
-					uint32 m = 1 << i;
+					uint32 m = uint32(1) << i;
 					result |= m;
 				}
 			}
@@ -229,11 +225,10 @@ namespace cage
 
 		struct PackAck
 		{
-			uint32 ackBits;
-			uint16 ackSeqn;
+			uint32 ackBits = 0;
+			uint16 ackSeqn = 0;
 
-			PackAck() : ackBits(0), ackSeqn(0)
-			{}
+			PackAck() = default;
 
 			PackAck(uint16 seqn, uint32 bits) : ackBits(bits), ackSeqn(seqn)
 			{}
@@ -258,7 +253,7 @@ namespace cage
 			mtuDiscovery = 43, // todo
 		};
 
-		const uint16 LongSize = 470; // designed to work well with default mtu (fits 3 long message commands in single packet)
+		constexpr uint16 LongSize = 470; // designed to work well with default mtu (fits 3 long message commands in single packet)
 
 		uint16 longCmdsCount(uint32 totalSize)
 		{
@@ -268,7 +263,7 @@ namespace cage
 		class UdpConnectionImpl : public UdpConnection
 		{
 		public:
-			UdpConnectionImpl(const string &address, uint16 port, uint64 timeout) : statsLastTimestamp(0), startTime(getApplicationTime()), connId(randomRange(1u, std::numeric_limits<uint32>::max())), established(false)
+			UdpConnectionImpl(const string &address, uint16 port, uint64 timeout) : startTime(getApplicationTime()), connId(randomRange(1u, std::numeric_limits<uint32>::max()))
 			{
 				UDP_LOG(1, "creating new connection to address: '" + address + "', port: " + port + ", timeout: " + timeout);
 				sockGroup = std::make_shared<SockGroup>();
@@ -309,7 +304,7 @@ namespace cage
 				}
 			}
 
-			UdpConnectionImpl(std::shared_ptr<SockGroup> sg, std::shared_ptr<SockGroup::Receiver> rec) : statsLastTimestamp(0), sockGroup(sg), sockReceiver(rec), startTime(getApplicationTime()), connId(rec->connId), established(false)
+			UdpConnectionImpl(std::shared_ptr<SockGroup> sg, std::shared_ptr<SockGroup::Receiver> rec) : sockGroup(sg), sockReceiver(rec), startTime(getApplicationTime()), connId(rec->connId)
 			{
 				UDP_LOG(1, "accepting new connection");
 			}
@@ -386,21 +381,15 @@ namespace cage
 				{
 					std::shared_ptr<MemoryBuffer> data;
 					std::vector<bool> parts; // acked parts
-					uint16 step;
-					uint16 msgSeqn;
-					uint8 channel;
-
-					ReliableMsg() : step(0), msgSeqn(0), channel(0)
-					{}
+					uint16 step = 0;
+					uint16 msgSeqn = 0;
+					uint8 channel = 0;
 				};
 
 				struct MsgAck
 				{
 					std::weak_ptr<ReliableMsg> msg;
-					uint16 index;
-
-					MsgAck() : index(0)
-					{}
+					uint16 index = 0;
 				};
 
 				union CommandUnion
@@ -447,25 +436,16 @@ namespace cage
 					CommandUnion data;
 					MsgAck msgAck;
 					MemView msgData;
-					CmdTypeEnum type;
-					sint8 priority;
-
-					Command() : type(CmdTypeEnum::invalid), priority(0)
-					{}
+					CmdTypeEnum type = CmdTypeEnum::invalid;
+					sint8 priority = 0;
 				};
 
 				std::list<std::shared_ptr<ReliableMsg>> relMsgs;
 				std::list<Command> cmds;
 				std::map<uint16, std::vector<MsgAck>> ackMap; // mapping packet seqn to message parts
-				std::array<uint16, 256> seqnPerChannel; // next message seqn to be used
+				std::array<uint16, 256> seqnPerChannel = {}; // next message seqn to be used
 				std::set<uint16> seqnToAck; // packets seqn to be acked
-				uint16 packetSeqn; // next packet seqn to be used
-
-				Sending() : packetSeqn(0)
-				{
-					for (uint16 &s : seqnPerChannel)
-						s = 0;
-				}
+				uint16 packetSeqn = 0; // next packet seqn to be used
 			} sending;
 
 			void generateCommands(std::shared_ptr<Sending::ReliableMsg> &msg, sint8 priority)
@@ -660,7 +640,7 @@ namespace cage
 				bool empty = true;
 				for (const Sending::Command &cmd : sending.cmds)
 				{
-					uint32 cmdSize = numeric_cast<uint32>(cmd.msgData.size) + 10;
+					const uint32 cmdSize = numeric_cast<uint32>(cmd.msgData.size) + 10;
 
 					// send current packet
 					if (!empty && buff.size() + cmdSize > mtu)
@@ -668,13 +648,13 @@ namespace cage
 						dispatchPacket(buff.data(), buff.size());
 						buff.resize(0);
 						ser = Serializer(buff);
-						empty = true;
+						//empty = true;
 					}
 
 					// generate packet header
 					if (buff.size() == 0)
 					{
-						static constexpr char c = 'c', a = 'a', g = 'g', e = 'e';
+						constexpr char c = 'c', a = 'a', g = 'g', e = 'e';
 						ser << c << a << g << e << connId;
 						currentPacketSeqn = sending.packetSeqn++;
 						ser << currentPacketSeqn;
@@ -763,24 +743,15 @@ namespace cage
 				{
 					MemoryBuffer data;
 					std::vector<bool> parts; // acked parts
-					uint16 msgSeqn;
-					uint8 channel;
-
-					Msg() : msgSeqn(0), channel(0)
-					{}
+					uint16 msgSeqn = 0;
+					uint8 channel = 0;
 				};
 
-				std::array<std::map<uint16, Msg>, 256> staging;
-				std::array<uint16, 256> seqnPerChannel; // minimum expected message seqn
+				std::array<std::map<uint16, Msg>, 256> staging = {};
+				std::array<uint16, 256> seqnPerChannel = {}; // minimum expected message seqn
 				std::list<Msg> messages;
 				std::set<PackAck> ackPacks;
-				uint16 packetSeqn; // minimum expected packet seqn
-
-				Receiving() : packetSeqn(0)
-				{
-					for (uint16 &s : seqnPerChannel)
-						s = 0;
-				}
+				uint16 packetSeqn = 0; // minimum expected packet seqn
 			} receiving;
 
 			void processAcks()
@@ -1078,10 +1049,10 @@ namespace cage
 			UdpStatistics stats;
 			std::shared_ptr<SockGroup> sockGroup;
 			std::shared_ptr<SockGroup::Receiver> sockReceiver;
-			uint64 statsLastTimestamp;
+			uint64 statsLastTimestamp = 0;
 			const uint64 startTime;
 			const uint32 connId;
-			bool established;
+			bool established = false;
 
 			// API
 

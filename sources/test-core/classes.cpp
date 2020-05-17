@@ -61,7 +61,7 @@ namespace
 			}
 		}
 
-		char data[64];
+		char data[64] = {};
 	};
 
 	typedef MemoryArenaFixed<MemoryAllocatorPolicyPool<128, MemoryBoundsPolicySimple, MemoryTagPolicySimple, MemoryTrackPolicyAdvanced>, MemoryConcurrentPolicyNone> Arena;

@@ -22,7 +22,7 @@ namespace cage
 	{}
 
 	GuiImpl::EmitData::EmitData(const GuiCreateConfig &config) :
-		arena(config.emitArenaSize), memory(&arena), first(nullptr), last(nullptr)
+		arena(config.emitArenaSize), memory(&arena)
 	{}
 
 	GuiImpl::EmitData::~EmitData()

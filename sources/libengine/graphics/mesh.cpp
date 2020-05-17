@@ -60,20 +60,16 @@ namespace cage
 				switch (primitiveType)
 				{
 				case GL_POINTS:
+				case GL_LINE_LOOP:
 					primitivesCount = cnt;
 					break;
 				case GL_LINE_STRIP:
 					primitivesCount = cnt - 1;
 					break;
-				case GL_LINE_LOOP:
-					primitivesCount = cnt;
-					break;
 				case GL_LINES:
 					primitivesCount = cnt / 2;
 					break;
 				case GL_TRIANGLE_STRIP:
-					primitivesCount = cnt - 2;
-					break;
 				case GL_TRIANGLE_FAN:
 					primitivesCount = cnt - 2;
 					break;
@@ -215,7 +211,7 @@ namespace cage
 		else
 		{
 			glEnableVertexAttribArray(index);
-			void *data = (void*)(uintPtr)(startOffset + numeric_cast<uint32>(impl->verticesOffset));
+			void *data = (void*)((uintPtr)startOffset + numeric_cast<uint32>(impl->verticesOffset));
 			switch (type)
 			{
 			case GL_BYTE:

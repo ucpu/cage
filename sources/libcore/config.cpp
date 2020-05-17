@@ -50,7 +50,7 @@ namespace cage
 					set(value.toUint64());
 				else if (value.isInteger(true))
 					set(value.toSint64());
-				else if (value.isReal(true))
+				else if (value.isReal())
 					set(value.toFloat());
 				else if (value.isBool())
 					set(value.toBool());

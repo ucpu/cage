@@ -24,7 +24,7 @@ namespace cage
 		::cage::privat::makeLog(file, line, function, severity, "exception", message, false, false);
 	};
 
-	MemoryArena::MemoryArena() noexcept : stub(nullptr), inst(nullptr)
+	MemoryArena::MemoryArena() : stub(nullptr), inst(nullptr)
 	{}
 
 	void *MemoryArena::allocate(uintPtr size, uintPtr alignment)
@@ -34,12 +34,12 @@ namespace cage
 		return res;
 	}
 
-	void MemoryArena::deallocate(void *ptr) noexcept
+	void MemoryArena::deallocate(void *ptr)
 	{
 		stub->dealloc(inst, ptr);
 	}
 
-	void MemoryArena::flush() noexcept
+	void MemoryArena::flush()
 	{
 		stub->fls(inst);
 	}

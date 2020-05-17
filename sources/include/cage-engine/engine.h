@@ -202,8 +202,8 @@ namespace cage
 	struct CAGE_ENGINE_API ListenerComponent
 	{
 		static EntityComponent *component;
-		vec3 attenuation = vec3(); // constant, linear, quadratic
 		MixingBus *output = nullptr;
+		vec3 attenuation = vec3(); // constant, linear, quadratic
 		uint32 sceneMask = 1;
 		real speedOfSound = 343.3;
 		bool dopplerEffect = false;

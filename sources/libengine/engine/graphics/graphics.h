@@ -6,7 +6,7 @@ namespace cage
 {
 	struct ShaderConfig
 	{
-		uint32 shaderRoutines[CAGE_SHADER_MAX_ROUTINES] = { m };
+		uint32 shaderRoutines[CAGE_SHADER_MAX_ROUTINES] = {};
 
 		void set(uint32 name, uint32 value);
 	};

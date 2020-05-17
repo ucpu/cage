@@ -15,11 +15,12 @@ namespace cage
 
 		struct PngInfoCtx
 		{
-			png_structp png;
-			png_infop info;
-			bool writing;
+			png_structp png = nullptr;
+			png_infop info = nullptr;
+			bool writing = false;
 
-			PngInfoCtx() : png(nullptr), info(nullptr), writing(false) {}
+			PngInfoCtx() = default;
+
 			~PngInfoCtx()
 			{
 				if (info)
@@ -126,6 +127,7 @@ namespace cage
 		{
 			MemoryBuffer &buf;
 			uintPtr off = 0;
+
 			PngWriteCtx(MemoryBuffer &buf) : buf(buf)
 			{
 				buf.resize(0);

@@ -769,17 +769,20 @@ namespace cage
 		typedef T value_type;
 
 		MemoryArenaStd(const MemoryArena &other) : a(other) {}
-		MemoryArenaStd(const MemoryArenaStd &other) : a(other.a) {}
-
 		template<class U>
 		explicit MemoryArenaStd(const MemoryArenaStd<U> &other) : a(other.a) {}
+
+		MemoryArenaStd(const MemoryArenaStd &) = default;
+		MemoryArenaStd(MemoryArenaStd &&) = default;
+		MemoryArenaStd &operator = (const MemoryArenaStd &) = default;
+		MemoryArenaStd &operator = (MemoryArenaStd &&) = default;
 
 		T *allocate(uintPtr cnt)
 		{
 			return (T*)a.allocate(cnt * sizeof(T), alignof(T));
 		}
 
-		void deallocate(T *ptr, uintPtr) noexcept
+		void deallocate(T *ptr, uintPtr)
 		{
 			a.deallocate(ptr);
 		}

@@ -146,8 +146,8 @@ namespace cage
 
 	CAGE_ENGINE_API void soundSetSpeakerDirections(uint32 channels, const vec3 *directions);
 	CAGE_ENGINE_API void soundGetSpeakerDirections(uint32 channels, vec3 *directions);
-	CAGE_ENGINE_API void soundSetChannelsMixingMatrix(uint32 channelsIn, uint32 channelsOut, const vec3 *matrix);
-	CAGE_ENGINE_API void soundGetChannelsMixingMatrix(uint32 channelsIn, uint32 channelsOut, vec3 *matrix);
+	CAGE_ENGINE_API void soundSetChannelsMixingMatrix(uint32 channelsIn, uint32 channelsOut, const real *matrix);
+	CAGE_ENGINE_API void soundGetChannelsMixingMatrix(uint32 channelsIn, uint32 channelsOut, real *matrix);
 }
 
 #endif // guard_sound_h_8EF0985E04CD4714B530EA7D605E92EC

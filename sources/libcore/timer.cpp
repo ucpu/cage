@@ -17,12 +17,12 @@ namespace cage
 		class TimerImpl : public Timer
 		{
 		public:
-			uint64 last; // in micros
+			uint64 last = 0; // in micros
 
 #ifdef CAGE_SYSTEM_WINDOWS
-			LARGE_INTEGER begin; // in counts
+			LARGE_INTEGER begin = {}; // in counts
 #else
-			struct timespec begin;
+			struct timespec begin = {};
 #endif
 
 			TimerImpl()

@@ -217,20 +217,20 @@ namespace
 			CAGE_TEST_THROWN(string("50000000000").toUint32());
 
 			{
-				CAGE_TESTCASE("long long numbers and toInt64()");
+				CAGE_TESTCASE("long long numbers and toSint64()");
 				CAGE_TEST(string("-1099511627776").toSint64() == -1099511627776);
 				CAGE_TEST(string("1152921504606846976").toSint64() == 1152921504606846976);
 			}
 			{
 				CAGE_TESTCASE("isreal");
-				CAGE_TEST(string("5").isReal(true));
-				CAGE_TEST(!string("pet").isReal(true));
-				CAGE_TEST(string("13.42").isReal(true));
-				CAGE_TEST(!string("13.42k").isReal(true));
-				CAGE_TEST(string("+13.42").isReal(true));
-				CAGE_TEST(string("-13.42").isReal(true));
-				CAGE_TEST(!string("+13.42").isReal(false));
-				CAGE_TEST(!string("-13.42").isReal(false));
+				CAGE_TEST(!string("").isReal());
+				CAGE_TEST(string("5").isReal());
+				CAGE_TEST(!string("pet").isReal());
+				CAGE_TEST(string("13.42").isReal());
+				CAGE_TEST(!string("13,42").isReal());
+				CAGE_TEST(!string("13.42k").isReal());
+				CAGE_TEST(string("+13.42").isReal());
+				CAGE_TEST(string("-13.42").isReal());
 				CAGE_TEST_THROWN(string("ha").toSint32());
 			}
 		}
@@ -281,7 +281,7 @@ namespace
 				CAGE_TEST(s.find("a", 100) == m);
 				CAGE_TEST(s.find("abcdefghijklmnopq", 0) == m);
 				CAGE_TEST(s.find("") == m);
-				CAGE_TEST(s.find(s) == 0);
+				CAGE_TEST(s.find(string(s)) == 0);
 				CAGE_TEST(string("h").find('h') == 0);
 			}
 		}

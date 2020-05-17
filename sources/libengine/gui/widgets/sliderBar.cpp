@@ -8,8 +8,8 @@ namespace cage
 		{
 			GuiSliderBarComponent &data;
 			GuiSkinWidgetDefaults::SliderBar::Direction defaults;
-			GuiElementTypeEnum baseElement;
-			GuiElementTypeEnum dotElement;
+			GuiElementTypeEnum baseElement = GuiElementTypeEnum::InvalidElement;
+			GuiElementTypeEnum dotElement = GuiElementTypeEnum::InvalidElement;
 			real normalizedValue;
 
 			SliderBarImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(SliderBar))

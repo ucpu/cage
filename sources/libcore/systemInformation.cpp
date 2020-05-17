@@ -124,7 +124,7 @@ namespace cage
 		auto ret = CallNtPowerInformation(ProcessorInformation, nullptr, 0, &ppi, sizeof(ppi));
 		if (ret != 0)
 			CAGE_THROW_ERROR(SystemError, "CallNtPowerInformation", ret);
-		return ppi[0].MaxMhz * 1000000;
+		return ppi[0].MaxMhz * uint64(1000000);
 #elif defined(CAGE_SYSTEM_LINUX)
 		try
 		{

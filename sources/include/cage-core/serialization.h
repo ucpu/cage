@@ -75,7 +75,7 @@ namespace cage
 	template<uint32 N>
 	Serializer &operator << (Serializer &s, const detail::StringBase<N> &v)
 	{
-		Serializer ss = s.placeholder(sizeof(v.length()) + v.length()); // write all or nothing
+		Serializer ss = s.placeholder(sizeof(uint32) + v.length()); // write all or nothing
 		ss << v.length();
 		ss.write(v.c_str(), v.length());
 		return s;

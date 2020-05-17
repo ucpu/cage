@@ -103,6 +103,7 @@ namespace cage
 				vec4 padding, margin;
 				vec2 size;
 				bool collapsedBar;
+				Direction();
 			} horizontal, vertical;
 			SliderBar();
 		} sliderBar;

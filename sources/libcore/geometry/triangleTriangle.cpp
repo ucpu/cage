@@ -135,11 +135,12 @@ pp. 199-202 */
 		short i0, i1;
 		/* first project onto an axis-aligned plane, that maximizes the area */
 		/* of the triangles, compute indices: i0,i1. */
+#pragma warning( push )
 #pragma warning( disable : 4244 )
 		A[0] = fabs(N[0]);
 		A[1] = fabs(N[1]);
 		A[2] = fabs(N[2]);
-#pragma warning( default : 4244 )
+#pragma warning( pop )
 		if (A[0] > A[1])
 		{
 			if (A[0] > A[2])
@@ -245,12 +246,13 @@ pp. 199-202 */
 		CROSS(D, N1, N2);
 
 		/* compute and index to the largest component of D */
+#pragma warning( push )
 #pragma warning( disable : 4244 )
 		max = fabs(D[0]);
 		index = 0;
 		b = fabs(D[1]);
 		c = fabs(D[2]);
-#pragma warning( default : 4244 )
+#pragma warning( pop )
 		if (b > max) max = b, index = 1;
 		if (c > max) max = c, index = 2;
 

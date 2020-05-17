@@ -165,16 +165,16 @@ namespace cage
 			MemoryArenaGrowing<MemoryAllocatorPolicyPool<templates::PoolAllocatorAtomSize<ItemUnion>::result>, MemoryConcurrentPolicyNone> itemsPool;
 			MemoryArena itemsArena;
 			cage::unordered_map<uint32, Holder<ItemBase>> itemsTable;
-			std::atomic<bool> dirty;
+			std::atomic<bool> dirty {false};
 			std::vector<Node, MemoryArenaStd<Node>> nodes;
 			std::vector<ItemBase*> indices;
 			typedef std::vector<ItemBase*>::iterator indicesIterator;
 			static constexpr uint32 binsCount = 10;
-			std::array<FastBox, binsCount> leftBinBoxes;
-			std::array<FastBox, binsCount> rightBinBoxes;
-			std::array<uint32, binsCount> leftBinCounts;
+			std::array<FastBox, binsCount> leftBinBoxes = {};
+			std::array<FastBox, binsCount> rightBinBoxes = {};
+			std::array<uint32, binsCount> leftBinCounts = {};
 
-			SpatialDataImpl(const SpatialStructureCreateConfig &config) : itemsPool(config.maxItems * sizeof(ItemUnion)), itemsArena(&itemsPool), dirty(false), nodes(detail::systemArena())
+			SpatialDataImpl(const SpatialStructureCreateConfig &config) : itemsPool(config.maxItems * sizeof(ItemUnion)), itemsArena(&itemsPool), nodes(detail::systemArena())
 			{
 				CAGE_ASSERT((uintPtr(this) % alignof(FastBox)) == 0);
 				CAGE_ASSERT((uintPtr(leftBinBoxes.data()) % alignof(FastBox)) == 0);
@@ -256,7 +256,7 @@ namespace cage
 				{
 					real binSizeInv = binsCount / (node.box.high.v4[bestAxis] - node.box.low.v4[bestAxis]);
 					real planeOffset = node.box.low.v4[bestAxis];
-					std::partition(indices.begin() + node.a(), indices.begin() + (node.a() + node.b()), [&](ItemBase *item) {
+					std::partition(indices.begin() + node.a(), indices.begin() + (node.a() + node.b()), [&](const ItemBase *item) {
 						uint32 binIndex = numeric_cast<uint32>((item->center[bestAxis] - planeOffset) * binSizeInv);
 						return binIndex < bestSplit + 1;
 					});
