@@ -36,6 +36,7 @@ void testConfigIni();
 void testConfig();
 void testColor();
 void testImage();
+void testPolyhedron();
 void testNoise();
 void testRectPacking();
 void testSpatial();
@@ -91,6 +92,7 @@ int main()
 	testConfig();
 	testColor();
 	testImage();
+	testPolyhedron();
 	testNoise();
 	testRectPacking();
 	testSpatial();

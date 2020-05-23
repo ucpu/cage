@@ -61,6 +61,12 @@
 [submodule "zlib-ng/zlib-ng"]
 	path = externals/zlib-ng/zlib-ng
 	url = https://github.com/zlib-ng/zlib-ng.git
-[submodule "externals/stb/stb"]
+[submodule "stb/stb"]
 	path = externals/stb/stb
 	url = https://github.com/nothings/stb.git
+[submodule "xatlas/xatlas"]
+	path = externals/xatlas/xatlas
+	url = https://github.com/jpcy/xatlas.git
+[submodule "pmp/pmp"]
+	path = externals/pmp/pmp
+	url = https://github.com/pmp-library/pmp-library.git

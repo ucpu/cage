@@ -55,6 +55,8 @@ add_subdirectory(optick)
 add_subdirectory(robin-hood-hashing)
 add_subdirectory(hsluv)
 add_subdirectory(stb)
+add_subdirectory(xatlas)
+add_subdirectory(pmp)
 
 add_dependencies(png_static zlib)
 add_dependencies(jpeg-static zlib)
@@ -96,5 +98,7 @@ endif()
 set_target_properties(robin-hood-hashing PROPERTIES FOLDER cage/externals)
 set_target_properties(hsluv PROPERTIES FOLDER cage/externals)
 set_target_properties(stb PROPERTIES FOLDER cage/externals)
+set_target_properties(xatlas PROPERTIES FOLDER cage/externals)
+set_target_properties(pmp PROPERTIES FOLDER cage/externals)
 
 

@@ -429,6 +429,7 @@ namespace cage
 	class NoiseFunction;
 	struct NoiseFunctionCreateConfig;
 	template<class T> struct PointerRangeHolder;
+	class Polyhedron;
 	struct ProcessCreateConfig;
 	class Process;
 	struct RandomGenerator;
