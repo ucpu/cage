@@ -87,8 +87,8 @@ namespace cage
 			{
 				if (window->isWindowed())
 				{
-					confWindowLeft = pos.x;
-					confWindowTop = pos.y;
+					confWindowLeft = pos[0];
+					confWindowTop = pos[1];
 				}
 				return false;
 			}
@@ -97,14 +97,14 @@ namespace cage
 			{
 				if (confFullscreenEnabled = window->isFullscreen())
 				{
-					confFullscreenWidth = size.x;
-					confFullscreenHeight = size.y;
+					confFullscreenWidth = size[0];
+					confFullscreenHeight = size[1];
 					return false;
 				}
 				if (window->isWindowed())
 				{
-					confWindowWidth = size.x;
-					confWindowHeight = size.y;
+					confWindowWidth = size[0];
+					confWindowHeight = size[1];
 				}
 				confWindowMaximized = window->isMaximized();
 				return false;

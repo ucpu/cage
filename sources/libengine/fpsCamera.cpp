@@ -40,8 +40,8 @@ namespace cage
 			{
 				auto w = engineWindow();
 				ivec2 pt2 = w->resolution();
-				pt2.x /= 2;
-				pt2.y /= 2;
+				pt2[0] /= 2;
+				pt2[1] /= 2;
 				w->mousePosition(pt2);
 				return pt2;
 			}
@@ -63,8 +63,8 @@ namespace cage
 				if (!mouseEnabled(buttons))
 					return false;
 				ivec2 pt2 = centerMouse();
-				sint32 dx = pt2.x - pt.x;
-				sint32 dy = pt2.y - pt.y;
+				sint32 dx = pt2[0] - pt[0];
+				sint32 dy = pt2[1] - pt[1];
 				mouseMoveAccum += vec2(dx, dy);
 				return false;
 			}

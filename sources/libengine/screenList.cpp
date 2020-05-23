@@ -31,8 +31,8 @@ namespace cage
 				{
 					ScreenMode m;
 					m.frequency = ms[i].refreshRate;
-					m.resolution.x = ms[i].width;
-					m.resolution.y = ms[i].height;
+					m.resolution[0] = ms[i].width;
+					m.resolution[1] = ms[i].height;
 					modes.push_back(m);
 					if (ms[i] == *cur)
 						current_ = i;

@@ -187,8 +187,8 @@ namespace cage
 					{
 						double x, y;
 						glfwGetCursorPos(window, &x, &y);
-						x += d.x;
-						y += d.y;
+						x += d[0];
+						y += d[1];
 						glfwSetCursorPos(window, x, y);
 						Event e;
 						e.type = Event::TypeEnum::MouseOffsetAdd;
@@ -358,8 +358,8 @@ namespace cage
 			Event e;
 			e.type = Event::TypeEnum::MouseMove;
 			e.modifiers = getKeyModifiers(w);
-			e.mouse.point.x = numeric_cast<sint32>(floor(xpos));
-			e.mouse.point.y = numeric_cast<sint32>(floor(ypos));
+			e.mouse.point[0] = numeric_cast<sint32>(floor(xpos));
+			e.mouse.point[1] = numeric_cast<sint32>(floor(ypos));
 			if (glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_LEFT))
 				e.mouse.buttons |= MouseButtonsFlags::Left;
 			if (glfwGetMouseButton(w, GLFW_MOUSE_BUTTON_RIGHT))
@@ -401,8 +401,8 @@ namespace cage
 			}
 			double xpos, ypos;
 			glfwGetCursorPos(w, &xpos, &ypos);
-			e.mouse.point.x = numeric_cast<sint32>(floor(xpos));
-			e.mouse.point.y = numeric_cast<sint32>(floor(ypos));
+			e.mouse.point[0] = numeric_cast<sint32>(floor(xpos));
+			e.mouse.point[1] = numeric_cast<sint32>(floor(ypos));
 			bool doubleClick = impl->determineMouseDoubleClick(e);
 			impl->eventsQueue.push(e);
 			if (doubleClick)
@@ -420,8 +420,8 @@ namespace cage
 			e.modifiers = getKeyModifiers(w);
 			double xpos, ypos;
 			glfwGetCursorPos(w, &xpos, &ypos);
-			e.mouse.point.x = numeric_cast<sint32>(floor(xpos));
-			e.mouse.point.y = numeric_cast<sint32>(floor(ypos));
+			e.mouse.point[0] = numeric_cast<sint32>(floor(xpos));
+			e.mouse.point[1] = numeric_cast<sint32>(floor(ypos));
 			e.mouse.wheel = numeric_cast<sint8>(yoffset);
 			impl->eventsQueue.push(e);
 		}
@@ -432,8 +432,8 @@ namespace cage
 			Event e;
 			e.type = Event::TypeEnum::Resize;
 			e.modifiers = getKeyModifiers(w);
-			e.point.x = width;
-			e.point.y = height;
+			e.point[0] = width;
+			e.point[1] = height;
 			impl->eventsQueue.push(e);
 		}
 
@@ -443,8 +443,8 @@ namespace cage
 			Event e;
 			e.type = Event::TypeEnum::Move;
 			e.modifiers = getKeyModifiers(w);
-			e.point.x = xpos;
-			e.point.y = ypos;
+			e.point[0] = xpos;
+			e.point[1] = ypos;
 			impl->eventsQueue.push(e);
 		}
 
@@ -569,8 +569,8 @@ namespace cage
 		GLFWmonitor *m = getMonitorById(deviceId);
 		const GLFWvidmode *v = glfwGetVideoMode(m);
 		glfwSetWindowMonitor(impl->window, m, 0, 0,
-			resolution.x == 0 ? v->width : resolution.x,
-			resolution.y == 0 ? v->height : resolution.y,
+			resolution[0] == 0 ? v->width : resolution[0],
+			resolution[1] == 0 ? v->height : resolution[1],
 			frequency == 0 ? glfwGetVideoMode(m)->refreshRate : frequency);
 	}
 
@@ -631,7 +631,7 @@ namespace cage
 		impl->mouseOffsetApi += d;
 		impl->mouseOffsetsThr.push(d);
 #else
-		glfwSetCursorPos(impl->window, p.x, p.y);
+		glfwSetCursorPos(impl->window, p[0], p[1]);
 #endif // GCHL_WINDOWS_THREAD
 	}
 
@@ -769,7 +769,7 @@ namespace cage
 	void Window::windowedSize(const ivec2 &tmp)
 	{
 		WindowImpl *impl = (WindowImpl*)this;
-		glfwSetWindowSize(impl->window, tmp.x, tmp.y);
+		glfwSetWindowSize(impl->window, tmp[0], tmp[1]);
 	}
 
 	ivec2 Window::windowedPosition() const
@@ -783,7 +783,7 @@ namespace cage
 	void Window::windowedPosition(const ivec2 &tmp)
 	{
 		WindowImpl *impl = (WindowImpl*)this;
-		glfwSetWindowPos(impl->window, tmp.x, tmp.y);
+		glfwSetWindowPos(impl->window, tmp[0], tmp[1]);
 	}
 
 	void Window::makeCurrent()

@@ -334,6 +334,9 @@ namespace cage
 	struct plane;
 	struct sphere;
 	struct aabb;
+	struct ivec2;
+	struct ivec3;
+	struct ivec4;
 
 	class AssetManager;
 	struct AssetManagerCreateConfig;

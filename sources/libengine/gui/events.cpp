@@ -96,7 +96,7 @@ namespace cage
 				outputMouse = ptOut / pointsScale;
 			return ret;
 		}
-		outputMouse = ptOut = vec2(ptIn.x, ptIn.y) / pointsScale;
+		outputMouse = ptOut = vec2(ptIn[0], ptIn[1]) / pointsScale;
 		return true;
 	}
 

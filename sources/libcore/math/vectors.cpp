@@ -35,6 +35,39 @@ namespace cage
 		return data;
 	}
 
+	ivec2 ivec2::parse(const string &str)
+	{
+		ivec2 data;
+		string s = privat::tryRemoveParentheses(str);
+		for (uint32 i = 0; i < 2; i++)
+			data[i] = privat::mathSplit(s).toSint32();
+		if (!s.empty())
+			CAGE_THROW_ERROR(Exception, "error parsing ivec2");
+		return data;
+	}
+
+	ivec3 ivec3::parse(const string &str)
+	{
+		ivec3 data;
+		string s = privat::tryRemoveParentheses(str);
+		for (uint32 i = 0; i < 3; i++)
+			data[i] = privat::mathSplit(s).toSint32();
+		if (!s.empty())
+			CAGE_THROW_ERROR(Exception, "error parsing ivec3");
+		return data;
+	}
+
+	ivec4 ivec4::parse(const string &str)
+	{
+		ivec4 data;
+		string s = privat::tryRemoveParentheses(str);
+		for (uint32 i = 0; i < 4; i++)
+			data[i] = privat::mathSplit(s).toSint32();
+		if (!s.empty())
+			CAGE_THROW_ERROR(Exception, "error parsing ivec4");
+		return data;
+	}
+
 	quat quat::parse(const string &str)
 	{
 		quat data;

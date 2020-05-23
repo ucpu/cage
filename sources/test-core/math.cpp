@@ -10,6 +10,10 @@ void test(real a, real b)
 	real d = abs(a - b);
 	CAGE_TEST(d < 1e-4);
 }
+void test(sint32 a, sint32 b)
+{
+	CAGE_TEST(a == b);
+}
 void test(const mat4 &a, const mat4 &b)
 {
 	for (uint32 i = 0; i < 16; i++)
@@ -35,6 +39,21 @@ void test(const vec2 &a, const vec2 &b)
 	for (uint32 i = 0; i < 2; i++)
 		test(a[i], b[i]);
 }
+void test(const ivec4 &a, const ivec4 &b)
+{
+	for (uint32 i = 0; i < 4; i++)
+		test(a[i], b[i]);
+}
+void test(const ivec3 &a, const ivec3 &b)
+{
+	for (uint32 i = 0; i < 3; i++)
+		test(a[i], b[i]);
+}
+void test(const ivec2 &a, const ivec2 &b)
+{
+	for (uint32 i = 0; i < 2; i++)
+		test(a[i], b[i]);
+}
 void test(const quat &a, const quat &b)
 {
 	test(abs(dot(a, b)), 1);
@@ -51,29 +70,23 @@ void test(rads a, rads b)
 namespace
 {
 	template<class T, uint32 N>
-	void checkVectors()
+	void checkVectorsCommon()
 	{
 		{
 			T r;
 			T a;
-			const T b;
+			const T b = T(42);
 			r = a;
 			r = b;
 #define GCHL_GENERATE(OPERATOR) \
 			r = b OPERATOR b; \
 			r = b OPERATOR 5; \
-			r = 5 OPERATOR b; \
-			r = b OPERATOR 5.5f; \
-			r = 5.5f OPERATOR b; \
-			r = b OPERATOR 5.5; \
-			r = 5.5 OPERATOR b;
+			r = 5 OPERATOR b;
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, -, *, / ));
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(OPERATOR) \
 			r = a OPERATOR b; \
-			r = a OPERATOR 5; \
-			r = a OPERATOR 5.5f; \
-			r = a OPERATOR 5.f;
+			r = a OPERATOR 5;
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +=, -=, *=, /=));
 #undef GCHL_GENERATE
 			-b;
@@ -102,16 +115,56 @@ namespace
 		{
 			const T a;
 			const T b;
+
+			min(a, b);
+			max(a, b);
+			min(a, 5);
+			max(a, 5);
+			min(5, a);
+			max(5, a);
+			clamp(a, b, b);
+			clamp(a, 1, 9);
+			abs(a);
+		}
+
+		T t(42);
+	}
+
+	template<class T, uint32 N>
+	void checkVectorsReal()
+	{
+		checkVectorsCommon<T, N>();
+
+		{
+			T r;
+			T a;
+			const T b;
+			r = a;
+			r = b;
+#define GCHL_GENERATE(OPERATOR) \
+			r = b OPERATOR 5.5f; \
+			r = 5.5f OPERATOR b; \
+			r = b OPERATOR 5.5; \
+			r = 5.5 OPERATOR b;
+			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, -, *, / ));
+#undef GCHL_GENERATE
+#define GCHL_GENERATE(OPERATOR) \
+			r = a OPERATOR 5.5f; \
+			r = a OPERATOR 5.f;
+			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +=, -=, *=, /=));
+#undef GCHL_GENERATE
+		}
+
+		{
+			const T a;
+			const T b;
 			a.valid();
 
 			normalize(a);
-			min(a, b);
-			max(a, b);
 			min(a, 0.5);
 			max(a, 0.5);
 			min(0.5, a);
 			max(0.5, a);
-			clamp(a, b, b);
 			clamp(a, 0.1, 0.9);
 			saturate(a);
 			length(a);
@@ -119,7 +172,6 @@ namespace
 			dot(a, b);
 			valid(a);
 			interpolate(a, b, 0.5);
-			abs(a);
 			distance(a, b);
 			distanceSquared(a, b);
 		}
@@ -130,9 +182,12 @@ namespace
 	void testMathCompiles()
 	{
 		CAGE_TESTCASE("compile tests");
-		checkVectors<vec2, 2>();
-		checkVectors<vec3, 3>();
-		checkVectors<vec4, 4>();
+		checkVectorsReal<vec2, 2>();
+		checkVectorsReal<vec3, 3>();
+		checkVectorsReal<vec4, 4>();
+		checkVectorsCommon<ivec2, 2>();
+		checkVectorsCommon<ivec3, 3>();
+		checkVectorsCommon<ivec4, 4>();
 	}
 
 	void testMathReal()
@@ -415,6 +470,86 @@ namespace
 		test(a + b, vec4(4, 4, 7, 5));
 		test(a + b, c);
 		test(a * b, vec4(3, 4, 12, 4));
+	}
+
+	void testMathIVec2()
+	{
+		CAGE_TESTCASE("ivec2");
+		ivec2 a(3, 5);
+		test(a[0], 3);
+		test(a[1], 5);
+		ivec2 b(2, 1);
+		ivec2 c(5, 2);
+		test(a, ivec2(3, 5));
+		CAGE_TEST(a != b);
+		test(a + b, ivec2(5, 6));
+		test(a * b, ivec2(6, 5));
+		test(a + b, b + a);
+		test(a * b, b * a);
+		test(max(a, c), ivec2(5, 5));
+		test(min(a, c), ivec2(3, 2));
+		ivec2 d = a + c;
+		test(d, ivec2(8, 7));
+
+		test(ivec2(1, 5), ivec2(1, 5));
+		CAGE_TEST(!(ivec2(1, 5) != ivec2(1, 5)));
+		CAGE_TEST(ivec2(3, 5) != ivec2(1, 5));
+	}
+
+	void testMathIVec3()
+	{
+		CAGE_TESTCASE("ivec3");
+		ivec3 a(3, 5, 1);
+		ivec3 b(1, 1, 4);
+		test(a[0], 3);
+		test(a[1], 5);
+		test(a[2], 1);
+		test(a, ivec3(3, 5, 1));
+		test(ivec3(1, 1, 4), b);
+		CAGE_TEST(a != b);
+		test(a, a);
+		test(a + b, ivec3(4, 6, 5));
+		test(a * b, ivec3(3, 5, 4));
+		test(a + b, b + a);
+		test(a * b, b * a);
+		test(max(a, b), ivec3(3, 5, 4));
+		test(min(a, b), ivec3(1, 1, 1));
+		ivec3 c = a + b;
+		test(c, ivec3(4, 6, 5));
+		test(a / b, ivec3(3, 5, 0));
+		test(8 / b, ivec3(8, 8, 2));
+		test(a / 2, ivec3(1, 2, 0));
+
+		test(ivec3(1, 5, 4), ivec3(1, 5, 4));
+		CAGE_TEST(!(ivec3(1, 5, 4) != ivec3(1, 5, 4)));
+		CAGE_TEST(ivec3(3, 5, 4) != ivec3(1, 5, 4));
+
+		CAGE_TEST(clamp(ivec3(1, 3, 5), ivec3(2), ivec3(4)) == ivec3(2, 3, 4));
+		CAGE_TEST(clamp(ivec3(1, 3, 5), 2, 4) == ivec3(2, 3, 4));
+
+		CAGE_TEST(abs(ivec3(1, 3, 5)) == ivec3(1, 3, 5));
+		CAGE_TEST(abs(ivec3(1, -3, 5)) == ivec3(1, 3, 5));
+		CAGE_TEST(abs(ivec3(-1, 3, -5)) == ivec3(1, 3, 5));
+		CAGE_TEST(abs(ivec3(-1, -3, -5)) == ivec3(1, 3, 5));
+
+	}
+
+	void testMathIVec4()
+	{
+		CAGE_TESTCASE("ivec4");
+		ivec4 a(1, 2, 3, 4);
+		test(a[0], 1);
+		test(a[1], 2);
+		test(a[2], 3);
+		test(a[3], 4);
+		ivec4 b(3, 2, 4, 1);
+		test(a, ivec4(1, 2, 3, 4));
+		test(ivec4(3, 2, 4, 1), b);
+		CAGE_TEST(a != b);
+		ivec4 c = a + b;
+		test(a + b, ivec4(4, 4, 7, 5));
+		test(a + b, c);
+		test(a * b, ivec4(3, 4, 12, 4));
 	}
 
 	void testMathQuat()
@@ -935,6 +1070,36 @@ namespace
 				}
 			}
 			{
+				CAGE_TESTCASE("ivec2");
+				for (uint32 i = 0; i < 10; i++)
+				{
+					ivec2 v = randomRange2i(-1e5, 1e5);
+					string s = stringizer() + v;
+					ivec2 r = ivec2::parse(s);
+					test(v, r);
+				}
+			}
+			{
+				CAGE_TESTCASE("ivec3");
+				for (uint32 i = 0; i < 10; i++)
+				{
+					ivec3 v = randomRange3i(-1e5, 1e5);
+					string s = stringizer() + v;
+					ivec3 r = ivec3::parse(s);
+					test(v, r);
+				}
+			}
+			{
+				CAGE_TESTCASE("ivec4");
+				for (uint32 i = 0; i < 10; i++)
+				{
+					ivec4 v = randomRange4i(-1e5, 1e5);
+					string s = stringizer() + v;
+					ivec4 r = ivec4::parse(s);
+					test(v, r);
+				}
+			}
+			{
 				CAGE_TESTCASE("quat");
 				for (uint32 i = 0; i < 10; i++)
 				{
@@ -1007,6 +1172,25 @@ namespace
 				CAGE_TEST_THROWN(vec3::parse("4 , , 4"));
 				CAGE_TEST_THROWN(vec3::parse("4, ,5"));
 				CAGE_TEST_THROWN(vec3::parse("(4, ,5)"));
+				CAGE_TEST_THROWN(ivec3::parse("bla"));
+				CAGE_TEST_THROWN(ivec3::parse("(bla)"));
+				CAGE_TEST_THROWN(ivec3::parse(""));
+				CAGE_TEST_THROWN(ivec3::parse("()"));
+				CAGE_TEST_THROWN(ivec3::parse("-"));
+				CAGE_TEST_THROWN(ivec3::parse("+"));
+				CAGE_TEST_THROWN(ivec3::parse("(3"));
+				CAGE_TEST_THROWN(ivec3::parse("3)"));
+				CAGE_TEST_THROWN(ivec3::parse("3,5"));
+				CAGE_TEST_THROWN(ivec3::parse("3,"));
+				CAGE_TEST_THROWN(ivec3::parse(",3"));
+				CAGE_TEST_THROWN(ivec3::parse(",3,3"));
+				CAGE_TEST_THROWN(ivec3::parse("3,3,"));
+				CAGE_TEST_THROWN(ivec3::parse("3,3, "));
+				CAGE_TEST_THROWN(ivec3::parse(" ,3, 4"));
+				CAGE_TEST_THROWN(ivec3::parse("4 ,, 4"));
+				CAGE_TEST_THROWN(ivec3::parse("4 , , 4"));
+				CAGE_TEST_THROWN(ivec3::parse("4, ,5"));
+				CAGE_TEST_THROWN(ivec3::parse("(4, ,5)"));
 			}
 		}
 	}
@@ -1048,6 +1232,9 @@ void testMath()
 	testMathVec2();
 	testMathVec3();
 	testMathVec4();
+	testMathIVec2();
+	testMathIVec3();
+	testMathIVec4();
 	testMathQuat();
 	testMathMat3();
 	testMathMat4();

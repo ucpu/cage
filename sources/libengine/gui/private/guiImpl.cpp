@@ -74,8 +74,8 @@ namespace cage
 	void GuiImpl::scaling()
 	{
 		pointsScale = zoom * retina;
-		outputSize = vec2(outputResolution.x, outputResolution.y) / pointsScale;
-		outputMouse = vec2(inputMouse.x, inputMouse.y) / pointsScale;
+		outputSize = vec2(outputResolution[0], outputResolution[1]) / pointsScale;
+		outputMouse = vec2(inputMouse[0], inputMouse[1]) / pointsScale;
 	}
 
 	vec4 GuiImpl::pointsToNdc(vec2 position, vec2 size)

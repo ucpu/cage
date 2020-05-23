@@ -194,67 +194,6 @@ namespace cage
 	// constants
 
 	static constexpr uint32 MaxTexturesCountPerMaterial = 4;
-
-	// ivec2
-
-	struct CAGE_ENGINE_API ivec2
-	{
-		ivec2()
-		{}
-
-		explicit ivec2(sint32 x, sint32 y) : x(x), y(y)
-		{}
-
-		sint32 operator [] (uint32 index) const
-		{
-			switch (index)
-			{
-			case 0: return x;
-			case 1: return y;
-			default: CAGE_THROW_CRITICAL(Exception, "index out of range");
-			}
-		}
-
-		sint32 &operator [] (uint32 index)
-		{
-			switch (index)
-			{
-			case 0: return x;
-			case 1: return y;
-			default: CAGE_THROW_CRITICAL(Exception, "index out of range");
-			}
-		}
-
-		sint32 x = 0;
-		sint32 y = 0;
-	};
-
-	inline bool operator == (const ivec2 &l, const ivec2 &r) { return l[0] == r[0] && l[1] == r[1]; };
-	inline bool operator != (const ivec2 &l, const ivec2 &r) { return !(l == r); };
-
-#define GCHL_GENERATE(OPERATOR) \
-	inline ivec2 operator OPERATOR (const ivec2 &r) { return ivec2(OPERATOR r[0], OPERATOR r[1]); }
-	GCHL_GENERATE(+);
-	GCHL_GENERATE(-);
-#undef GCHL_GENERATE
-
-#define GCHL_GENERATE(OPERATOR) \
-	inline ivec2 operator OPERATOR (const ivec2 &l, const ivec2 &r) { return ivec2(l[0] OPERATOR r[0], l[1] OPERATOR r[1]); } \
-	inline ivec2 operator OPERATOR (const ivec2 &l, const sint32 &r) { return ivec2(l[0] OPERATOR r, l[1] OPERATOR r); }
-	GCHL_GENERATE(+);
-	GCHL_GENERATE(-);
-	GCHL_GENERATE(*);
-	GCHL_GENERATE(/);
-#undef GCHL_GENERATE
-
-#define GCHL_GENERATE(OPERATOR) \
-	inline ivec2 &operator OPERATOR##= (ivec2 &l, const ivec2 &r) { return l = l OPERATOR r; } \
-	inline ivec2 &operator OPERATOR##= (ivec2 &l, const sint32 &r) { return l = l OPERATOR r; }
-	GCHL_GENERATE(+);
-	GCHL_GENERATE(-);
-	GCHL_GENERATE(*);
-	GCHL_GENERATE(/);
-#undef GCHL_GENERATE
 }
 
 #endif // guard_core_h_4F3464CEC4474C118E1CEA1EF9DF7632

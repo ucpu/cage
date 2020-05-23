@@ -98,6 +98,21 @@ namespace cage
 		inline static vec2 Nan() { return vec2(real::Nan()); }
 	};
 
+	struct CAGE_CORE_API ivec2
+	{
+		sint32 data[2];
+
+		inline ivec2() : ivec2(0) {}
+		inline explicit ivec2(sint32 value) : data{ value, value} {}
+		inline explicit ivec2(sint32 x, sint32 y) : data{ x, y } {}
+		inline explicit ivec2(const ivec3 &v);
+		inline explicit ivec2(const ivec4 &v);
+
+		static ivec2 parse(const string &str);
+		inline sint32 &operator [] (uint32 idx) { CAGE_ASSERT(idx < 2); return data[idx]; }
+		inline sint32 operator [] (uint32 idx) const { CAGE_ASSERT(idx < 2); return data[idx]; }
+	};
+
 	struct CAGE_CORE_API vec3
 	{
 		real data[3];
@@ -113,6 +128,21 @@ namespace cage
 		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 3); return data[idx]; }
 		inline bool valid() const { for (real d : data) if (!d.valid()) return false; return true; }
 		inline static vec3 Nan() { return vec3(real::Nan()); }
+	};
+
+	struct CAGE_CORE_API ivec3
+	{
+		sint32 data[3];
+
+		inline ivec3() : ivec3(0) {}
+		inline explicit ivec3(sint32 value) : data{ value, value, value } {}
+		inline explicit ivec3(sint32 x, sint32 y, sint32 z) : data{ x, y, z } {}
+		inline explicit ivec3(const ivec2 &v, sint32 z) : data{ v[0], v[1], z } {}
+		inline explicit ivec3(const ivec4 &v);
+
+		static ivec3 parse(const string &str);
+		inline sint32 &operator [] (uint32 idx) { CAGE_ASSERT(idx < 3); return data[idx]; }
+		inline sint32 operator [] (uint32 idx) const { CAGE_ASSERT(idx < 3); return data[idx]; }
 	};
 
 	struct CAGE_CORE_API vec4
@@ -131,6 +161,22 @@ namespace cage
 		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 4); return data[idx]; }
 		inline bool valid() const { for (real d : data) if (!d.valid()) return false; return true; }
 		inline static vec4 Nan() { return vec4(real::Nan()); }
+	};
+
+	struct CAGE_CORE_API ivec4
+	{
+		sint32 data[4];
+
+		inline ivec4() : ivec4(0) {}
+		inline explicit ivec4(sint32 value) : data{ value, value, value, value } {}
+		inline explicit ivec4(sint32 x, sint32 y, sint32 z, sint32 w) : data{ x, y, z, w } {}
+		inline explicit ivec4(const ivec2 &v, sint32 z, sint32 w) : data{ v[0], v[1], z, w } {}
+		inline explicit ivec4(const ivec2 &v, const ivec2 &w) : data{ v[0], v[1], w[0], w[1] } {}
+		inline explicit ivec4(const ivec3 &v, sint32 w) : data{ v[0], v[1], v[2], w } {}
+
+		static ivec4 parse(const string &str);
+		inline sint32 &operator [] (uint32 idx) { CAGE_ASSERT(idx < 4); return data[idx]; }
+		inline sint32 operator [] (uint32 idx) const { CAGE_ASSERT(idx < 4); return data[idx]; }
 	};
 
 	struct CAGE_CORE_API quat
@@ -222,7 +268,10 @@ namespace cage
 	inline bool operator == (const quat &l, const quat &r) { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2] && l.data[3] == r.data[3]; };
 	inline bool operator == (const mat3 &l, const mat3 &r) { for (uint32 i = 0; i < 9; i++) if (!(l[i] == r[i])) return false; return true; };
 	inline bool operator == (const mat4 &l, const mat4 &r) { for (uint32 i = 0; i < 16; i++) if (!(l[i] == r[i])) return false; return true; };
-	inline bool operator == (const transform &l, const transform &r) { return l.orientation == r.orientation && l.position == r.position && l.scale == r.scale; };
+	inline bool operator == (const transform &l, const transform &r) { return l.orientation == r.orientation && l.position == r.position && l.scale == r.scale; }; \
+	inline bool operator == (const ivec2 &l, const ivec2 &r) { return l.data[0] == r.data[0] && l.data[1] == r.data[1]; };
+	inline bool operator == (const ivec3 &l, const ivec3 &r) { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2]; };
+	inline bool operator == (const ivec4 &l, const ivec4 &r) { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2] && l.data[3] == r.data[3]; };
 #define GCHL_GENERATE(TYPE) \
 	inline bool operator != (const TYPE &l, const TYPE &r) { return !(l == r); };
 	GCHL_GENERATE(real);
@@ -234,6 +283,9 @@ namespace cage
 	GCHL_GENERATE(quat);
 	GCHL_GENERATE(mat3);
 	GCHL_GENERATE(mat4);
+	GCHL_GENERATE(ivec2);
+	GCHL_GENERATE(ivec3);
+	GCHL_GENERATE(ivec4);
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(OPERATOR) \
@@ -243,7 +295,10 @@ namespace cage
 	inline vec2 operator OPERATOR (const vec2 &r) { return vec2(OPERATOR r[0], OPERATOR r[1]); } \
 	inline vec3 operator OPERATOR (const vec3 &r) { return vec3(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2]); } \
 	inline vec4 operator OPERATOR (const vec4 &r) { return vec4(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2], OPERATOR r[3]); } \
-	inline quat operator OPERATOR (const quat &r) { return quat(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2], OPERATOR r[3]); }
+	inline quat operator OPERATOR (const quat &r) { return quat(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2], OPERATOR r[3]); } \
+	inline ivec2 operator OPERATOR (const ivec2 &r) { return ivec2(OPERATOR r[0], OPERATOR r[1]); } \
+	inline ivec3 operator OPERATOR (const ivec3 &r) { return ivec3(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2]); } \
+	inline ivec4 operator OPERATOR (const ivec4 &r) { return ivec4(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2], OPERATOR r[3]); }
 	GCHL_GENERATE(+);
 	GCHL_GENERATE(-);
 #undef GCHL_GENERATE
@@ -273,7 +328,16 @@ namespace cage
 	inline vec3 operator OPERATOR (const real &l, const vec3 &r) { return vec3(l OPERATOR r[0], l OPERATOR r[1], l OPERATOR r[2]); } \
 	inline vec4 operator OPERATOR (const vec4 &l, const vec4 &r) { return vec4(l[0] OPERATOR r[0], l[1] OPERATOR r[1], l[2] OPERATOR r[2], l[3] OPERATOR r[3]); } \
 	inline vec4 operator OPERATOR (const vec4 &l, const real &r) { return vec4(l[0] OPERATOR r, l[1] OPERATOR r, l[2] OPERATOR r, l[3] OPERATOR r); } \
-	inline vec4 operator OPERATOR (const real &l, const vec4 &r) { return vec4(l OPERATOR r[0], l OPERATOR r[1], l OPERATOR r[2], l OPERATOR r[3]); }
+	inline vec4 operator OPERATOR (const real &l, const vec4 &r) { return vec4(l OPERATOR r[0], l OPERATOR r[1], l OPERATOR r[2], l OPERATOR r[3]); } \
+	inline ivec2 operator OPERATOR (const ivec2 &l, const ivec2 &r) { return ivec2(l[0] OPERATOR r[0], l[1] OPERATOR r[1]); } \
+	inline ivec2 operator OPERATOR (const ivec2 &l, const sint32 &r) { return ivec2(l[0] OPERATOR r, l[1] OPERATOR r); } \
+	inline ivec2 operator OPERATOR (const sint32 &l, const ivec2 &r) { return ivec2(l OPERATOR r[0], l OPERATOR r[1]); } \
+	inline ivec3 operator OPERATOR (const ivec3 &l, const ivec3 &r) { return ivec3(l[0] OPERATOR r[0], l[1] OPERATOR r[1], l[2] OPERATOR r[2]); } \
+	inline ivec3 operator OPERATOR (const ivec3 &l, const sint32 &r) { return ivec3(l[0] OPERATOR r, l[1] OPERATOR r, l[2] OPERATOR r); } \
+	inline ivec3 operator OPERATOR (const sint32 &l, const ivec3 &r) { return ivec3(l OPERATOR r[0], l OPERATOR r[1], l OPERATOR r[2]); } \
+	inline ivec4 operator OPERATOR (const ivec4 &l, const ivec4 &r) { return ivec4(l[0] OPERATOR r[0], l[1] OPERATOR r[1], l[2] OPERATOR r[2], l[3] OPERATOR r[3]); } \
+	inline ivec4 operator OPERATOR (const ivec4 &l, const sint32 &r) { return ivec4(l[0] OPERATOR r, l[1] OPERATOR r, l[2] OPERATOR r, l[3] OPERATOR r); } \
+	inline ivec4 operator OPERATOR (const sint32 &l, const ivec4 &r) { return ivec4(l OPERATOR r[0], l OPERATOR r[1], l OPERATOR r[2], l OPERATOR r[3]); }
 	GCHL_GENERATE(+);
 	GCHL_GENERATE(-);
 	GCHL_GENERATE(*);
@@ -328,7 +392,13 @@ namespace cage
 	inline vec3 &operator OPERATOR##= (vec3 &l, const vec3 &r) { return l = l OPERATOR r; } \
 	inline vec3 &operator OPERATOR##= (vec3 &l, const real &r) { return l = l OPERATOR r; } \
 	inline vec4 &operator OPERATOR##= (vec4 &l, const vec4 &r) { return l = l OPERATOR r; } \
-	inline vec4 &operator OPERATOR##= (vec4 &l, const real &r) { return l = l OPERATOR r; }
+	inline vec4 &operator OPERATOR##= (vec4 &l, const real &r) { return l = l OPERATOR r; } \
+	inline ivec2 &operator OPERATOR##= (ivec2 &l, const ivec2 &r) { return l = l OPERATOR r; } \
+	inline ivec2 &operator OPERATOR##= (ivec2 &l, const sint32 &r) { return l = l OPERATOR r; } \
+	inline ivec3 &operator OPERATOR##= (ivec3 &l, const ivec3 &r) { return l = l OPERATOR r; } \
+	inline ivec3 &operator OPERATOR##= (ivec3 &l, const sint32 &r) { return l = l OPERATOR r; } \
+	inline ivec4 &operator OPERATOR##= (ivec4 &l, const ivec4 &r) { return l = l OPERATOR r; } \
+	inline ivec4 &operator OPERATOR##= (ivec4 &l, const sint32 &r) { return l = l OPERATOR r; }
 	GCHL_GENERATE(+);
 	GCHL_GENERATE(-);
 	GCHL_GENERATE(*);
@@ -372,13 +442,10 @@ namespace cage
 
 	inline real smoothstep(real x) { return x * x * (3 - 2 * x); }
 	inline real smootherstep(real x) { return x * x * x * (x * (x * 6 - 15) + 10); }
-	inline real abs(real x) { return x < 0 ? -x : x; }
 	inline sint32 sign(real x) { return x < 0 ? -1 : x > 0 ? 1 : 0; }
 	inline real wrap(real x) { if (x < 0) return 1 - -x % 1; else return x % 1; }
 	inline rads wrap(rads x) { if (x < rads()) return rads::Full() - -x % rads::Full(); else return x % rads::Full(); }
 	inline degs wrap(degs x) { if (x < degs()) return degs::Full() - -x % degs::Full(); else return x % degs::Full(); }
-	inline rads abs(rads x) { return rads(abs(x.value)); }
-	inline degs abs(degs x) { return degs(abs(x.value)); }
 	inline sint32 sign(rads x) { return sign(x.value); }
 	inline sint32 sign(degs x) { return sign(x.value); }
 	inline real sqr(real x) { return x * x; }
@@ -403,14 +470,31 @@ namespace cage
 	CAGE_CORE_API real distanceWrap(real a, real b);
 	inline rads distanceAngle(rads a, rads b) { return distanceWrap((a / rads::Full()).value, (b / rads::Full()).value) * rads::Full(); }
 
+#define GCHL_GENERATE(TYPE) inline TYPE abs(TYPE a) { return a < 0 ? -a : a; }
+	GCHL_GENERATE(sint8);
+	GCHL_GENERATE(sint16);
+	GCHL_GENERATE(sint32);
+	GCHL_GENERATE(sint64);
+	GCHL_GENERATE(float);
+	GCHL_GENERATE(double);
+	GCHL_GENERATE(real);
+#undef GCHL_GENERATE
+#define GCHL_GENERATE(TYPE) inline TYPE abs(TYPE a) { return a; }
+	GCHL_GENERATE(uint8);
+	GCHL_GENERATE(uint16);
+	GCHL_GENERATE(uint32);
+	GCHL_GENERATE(uint64);
+#undef GCHL_GENERATE
+	inline rads abs(rads x) { return rads(abs(x.value)); }
+	inline degs abs(degs x) { return degs(abs(x.value)); }
+
 #define GCHL_GENERATE(TYPE) \
 	inline real dot(const TYPE &l, const TYPE &r) { TYPE m = l * r; real sum = 0; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) sum += m[i]; return sum; } \
 	inline real lengthSquared(const TYPE &x) { return dot(x, x); } \
 	inline real length(const TYPE &x) { return sqrt(lengthSquared(x)); } \
 	inline real distanceSquared(const TYPE &l, const TYPE &r) { return lengthSquared(l - r); } \
 	inline real distance(const TYPE &l, const TYPE &r) { return sqrt(distanceSquared(l, r)); } \
-	inline TYPE normalize(const TYPE &x) { return x / length(x); } \
-	inline TYPE abs(const TYPE &x) { TYPE res; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) res[i] = abs(x[i]); return res; }
+	inline TYPE normalize(const TYPE &x) { return x / length(x); }
 	GCHL_GENERATE(vec2);
 	GCHL_GENERATE(vec3);
 	GCHL_GENERATE(vec4);
@@ -486,18 +570,37 @@ namespace cage
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(TYPE) \
+	inline TYPE abs(const TYPE &x) { TYPE res; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) res[i] = abs(x[i]); return res; } \
 	inline TYPE min(const TYPE &l, const TYPE &r) { TYPE res; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) res[i] = min(l[i], r[i]); return res; } \
 	inline TYPE max(const TYPE &l, const TYPE &r) { TYPE res; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) res[i] = max(l[i], r[i]); return res; } \
+	inline TYPE clamp(const TYPE &v, const TYPE &a, const TYPE &b) { TYPE res; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) res[i] = clamp(v[i], a[i], b[i]); return res; }
+	GCHL_GENERATE(vec2);
+	GCHL_GENERATE(vec3);
+	GCHL_GENERATE(vec4);
+	GCHL_GENERATE(ivec2);
+	GCHL_GENERATE(ivec3);
+	GCHL_GENERATE(ivec4);
+#undef GCHL_GENERATE
+#define GCHL_GENERATE(TYPE) \
 	inline TYPE min(const TYPE &l, real r) { return min(l, TYPE(r)); } \
 	inline TYPE max(const TYPE &l, real r) { return max(l, TYPE(r)); } \
 	inline TYPE min(real l, const TYPE &r) { return min(TYPE(l), r); } \
 	inline TYPE max(real l, const TYPE &r) { return max(TYPE(l), r); } \
-	inline TYPE clamp(const TYPE &v, const TYPE &a, const TYPE &b) { TYPE res; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) res[i] = clamp(v[i], a[i], b[i]); return res; } \
 	inline TYPE clamp(const TYPE &v, real a, real b) { return clamp(v, TYPE(a), TYPE(b)); } \
 	inline TYPE saturate(const TYPE &v) { return clamp(v, 0, 1); }
 	GCHL_GENERATE(vec2);
 	GCHL_GENERATE(vec3);
 	GCHL_GENERATE(vec4);
+#undef GCHL_GENERATE
+#define GCHL_GENERATE(TYPE) \
+	inline TYPE min(const TYPE &l, sint32 r) { return min(l, TYPE(r)); } \
+	inline TYPE max(const TYPE &l, sint32 r) { return max(l, TYPE(r)); } \
+	inline TYPE min(sint32 l, const TYPE &r) { return min(TYPE(l), r); } \
+	inline TYPE max(sint32 l, const TYPE &r) { return max(TYPE(l), r); } \
+	inline TYPE clamp(const TYPE &v, sint32 a, sint32 b) { return clamp(v, TYPE(a), TYPE(b)); }
+	GCHL_GENERATE(ivec2);
+	GCHL_GENERATE(ivec3);
+	GCHL_GENERATE(ivec4);
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(TYPE) \
@@ -548,12 +651,15 @@ namespace cage
 	inline vec2 randomChance2() { return vec2(randomChance(), randomChance()); }
 	inline vec2 randomRange2(real a, real b) { return vec2(randomRange(a, b), randomRange(a, b)); }
 	CAGE_CORE_API vec2 randomDirection2();
+	inline ivec2 randomRange2i(sint32 a, sint32 b) { return ivec2(randomRange(a, b), randomRange(a, b)); }
 	inline vec3 randomChance3() { return vec3(randomChance(), randomChance(), randomChance()); }
 	inline vec3 randomRange3(real a, real b) { return vec3(randomRange(a, b), randomRange(a, b), randomRange(a, b)); }
 	CAGE_CORE_API vec3 randomDirection3();
+	inline ivec3 randomRange3i(sint32 a, sint32 b) { return ivec3(randomRange(a, b), randomRange(a, b), randomRange(a, b)); }
 	inline vec4 randomChance4() { return vec4(randomChance(), randomChance(), randomChance(), randomChance()); }
 	inline vec4 randomRange4(real a, real b) { return vec4(randomRange(a, b), randomRange(a, b), randomRange(a, b), randomRange(a, b)); }
 	CAGE_CORE_API quat randomDirectionQuat();
+	inline ivec4 randomRange4i(sint32 a, sint32 b) { return ivec4(randomRange(a, b), randomRange(a, b), randomRange(a, b), randomRange(a, b)); }
 
 	CAGE_CORE_API uint32 hash(uint32 key);
 }
@@ -585,6 +691,9 @@ namespace cage
 		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const mat3 &other) { str + "(" + other[0].value; for (uint32 i = 1; i < 9; i++) str + "," + other[i].value; return str + ")"; }
 		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const mat4 &other) { str + "(" + other[0].value; for (uint32 i = 1; i < 16; i++) str + "," + other[i].value; return str + ")"; }
 		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const transform &other) { return str + "(" + other.position + "," + other.orientation + "," + other.scale + ")"; }
+		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const ivec2 &other) { return str + "(" + other[0] + "," + other[1] + ")"; }
+		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const ivec3 &other) { return str + "(" + other[0] + "," + other[1] + "," + other[2] + ")"; }
+		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const ivec4 &other) { return str + "(" + other[0] + "," + other[1] + "," + other[2] + "," + other[3] + ")"; }
 	}
 }
 

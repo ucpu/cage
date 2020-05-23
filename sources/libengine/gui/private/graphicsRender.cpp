@@ -71,7 +71,7 @@ namespace cage
 
 		if (auto lock = emitController->read())
 		{
-			if (outputResolution.x <= 0 || outputResolution.y <= 0)
+			if (outputResolution[0] <= 0 || outputResolution[1] <= 0)
 				return;
 
 			// check skins textures
@@ -98,13 +98,13 @@ namespace cage
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			glDisable(GL_DEPTH_TEST);
 			glActiveTexture(GL_TEXTURE0);
-			glViewport(0, 0, outputResolution.x, outputResolution.y);
+			glViewport(0, 0, outputResolution[0], outputResolution[1]);
 			RenderableBase *r = emitData[lock.index()].first;
 			while (r)
 			{
 				if (r->clipSize[0] >= 1 && r->clipSize[1] >= 1)
 				{
-					glScissor(numeric_cast<sint32>(r->clipPos[0]), numeric_cast<sint32>(real(outputResolution.y) - r->clipPos[1] - r->clipSize[1]), numeric_cast<uint32>(r->clipSize[0]), numeric_cast<uint32>(r->clipSize[1]));
+					glScissor(numeric_cast<sint32>(r->clipPos[0]), numeric_cast<sint32>(real(outputResolution[1]) - r->clipPos[1] - r->clipSize[1]), numeric_cast<uint32>(r->clipSize[0]), numeric_cast<uint32>(r->clipSize[1]));
 					r->render(this);
 				}
 				r = r->next;

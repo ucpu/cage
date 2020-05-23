@@ -860,8 +860,8 @@ namespace cage
 				graphicsDispatch->renderPasses.clear();
 
 				ivec2 resolution = engineWindow()->resolution();
-				graphicsDispatch->windowWidth = numeric_cast<uint32>(resolution.x);
-				graphicsDispatch->windowHeight = numeric_cast<uint32>(resolution.y);
+				graphicsDispatch->windowWidth = numeric_cast<uint32>(resolution[0]);
+				graphicsDispatch->windowHeight = numeric_cast<uint32>(resolution[1]);
 				if (graphicsDispatch->windowWidth == 0 || graphicsDispatch->windowHeight == 0)
 					return;
 
