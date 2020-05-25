@@ -6,6 +6,9 @@
 #include <initializer_list>
 
 void test(real, real);
+void test(const vec2 &, const vec2 &);
+void test(const vec3 &, const vec3 &);
+void test(const vec4 &, const vec4 &);
 
 namespace
 {
@@ -82,6 +85,25 @@ void testImage()
 			img->value(0, 0, 0, real::Nan());
 			CAGE_TEST(!valid(img->value(0, 0, 0)));
 		}
+	}
+
+	{
+		CAGE_TESTCASE("fill");
+		Holder<Image> img = newImage();
+		img->empty(150, 40, 1);
+		img->fill(0.4);
+		test(img->get1(42, 13), 0.4);
+		img->empty(150, 40, 2);
+		img->fill(vec2(0.1, 0.2));
+		test(img->get2(42, 13) / 100, vec2(0.1, 0.2) / 100);
+		img->empty(150, 40, 3);
+		img->fill(vec3(0.1, 0.2, 0.3));
+		test(img->get3(42, 13) / 100, vec3(0.1, 0.2, 0.3) / 100);
+		img->empty(150, 40, 4);
+		img->fill(vec4(0.1, 0.2, 0.3, 0.4));
+		test(img->get4(42, 13) / 100, vec4(0.1, 0.2, 0.3, 0.4) / 100);
+		img->fill(2, 0.5);
+		test(img->get4(42, 13) / 100, vec4(0.1, 0.2, 0.5, 0.4) / 100);
 	}
 
 	{
@@ -322,5 +344,61 @@ void testImage()
 		CAGE_TEST(img->channels() == 6);
 		CAGE_TEST(img->format() == ImageFormatEnum::U8);
 		img->encodeFile("images/formats/6_channels_2.psd");
+	}
+
+	{
+		CAGE_TESTCASE("inpaint without transparency");
+		Holder<Image> img = newImage();
+		img->empty(400, 300, 4);
+		drawCircle(img.get());
+		img->convert(3);
+		img->inpaint(1);
+		img->encodeFile("images/inpaint/3_1.png");
+		CAGE_TEST(img->value(50 - 1, 150, 0) < 0.1);
+		CAGE_TEST(img->value(50 - 1, 150, 1) > 0.9);
+		CAGE_TEST(img->value(50 - 1, 150, 2) > 0.9);
+		img->empty(400, 300, 4);
+		drawCircle(img.get());
+		img->convert(3);
+		img->inpaint(5);
+		img->encodeFile("images/inpaint/3_5.png");
+		CAGE_TEST(img->value(50 - 5, 150, 0) < 0.1);
+		CAGE_TEST(img->value(50 - 5, 150, 1) > 0.9);
+		CAGE_TEST(img->value(50 - 5, 150, 2) > 0.9);
+	}
+
+	{
+		CAGE_TESTCASE("inpaint with transparency");
+		Holder<Image> img = newImage();
+		img->empty(400, 300, 4);
+		drawCircle(img.get());
+		img->inpaint(1);
+		img->encodeFile("images/inpaint/4_1.png");
+		CAGE_TEST(img->value(50 - 1, 150, 0) < 0.1);
+		CAGE_TEST(img->value(50 - 1, 150, 1) > 0.9);
+		CAGE_TEST(img->value(50 - 1, 150, 2) > 0.9);
+		CAGE_TEST(img->value(50 - 1, 150, 3) > 0.9);
+		img->empty(400, 300, 4);
+		drawCircle(img.get());
+		img->inpaint(5);
+		img->encodeFile("images/inpaint/4_5.png");
+		CAGE_TEST(img->value(50 - 5, 150, 0) < 0.1);
+		CAGE_TEST(img->value(50 - 5, 150, 1) > 0.9);
+		CAGE_TEST(img->value(50 - 5, 150, 2) > 0.9);
+		CAGE_TEST(img->value(50 - 5, 150, 3) > 0.9);
+	}
+
+	{
+		CAGE_TESTCASE("inpaint nan");
+		Holder<Image> img = newImage();
+		img->empty(400, 300, 4, ImageFormatEnum::Float);
+		drawCircle(img.get());
+		for (uint32 y = 0; y < 300; y++)
+			for (uint32 x = 0; x < 400; x++)
+				if (randomChance() < 0.3)
+					img->set(x, y, vec4::Nan());
+		img->inpaint(1, true);
+		img->convert(ImageFormatEnum::U8);
+		img->encodeFile("images/inpaint/nan.png");
 	}
 }

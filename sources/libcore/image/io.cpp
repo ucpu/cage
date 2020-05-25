@@ -22,7 +22,7 @@ namespace cage
 		ImageImpl *impl = (ImageImpl*)this;
 		try
 		{
-			impl->reset();
+			impl->clear();
 			if (size < 32)
 				CAGE_THROW_ERROR(Exception, "insufficient data to determine image format");
 			static constexpr uint8 pngSignature[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
@@ -53,7 +53,7 @@ namespace cage
 		}
 		catch (...)
 		{
-			impl->reset();
+			impl->clear();
 			throw;
 		}
 	}

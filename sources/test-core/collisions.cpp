@@ -1,7 +1,7 @@
 #include "main.h"
 #include <cage-core/geometry.h>
 #include <cage-core/collisionStructure.h>
-#include <cage-core/collisionMesh.h>
+#include <cage-core/collider.h>
 #include <cage-core/memoryBuffer.h>
 
 void testCollisions()
@@ -10,14 +10,14 @@ void testCollisions()
 		CAGE_TESTCASE("basic collisions");
 		{
 			CAGE_TESTCASE("empty colliders");
-			Holder<CollisionMesh> c1 = newCollisionMesh();
-			Holder<CollisionMesh> c2 = newCollisionMesh();
+			Holder<Collider> c1 = newCollider();
+			Holder<Collider> c2 = newCollider();
 			CAGE_TEST(!collisionDetection(c1.get(), c2.get(), transform(), transform()));
 		}
 		{
 			CAGE_TESTCASE("no collision");
-			Holder<CollisionMesh> c1 = newCollisionMesh();
-			Holder<CollisionMesh> c2 = newCollisionMesh();
+			Holder<Collider> c1 = newCollider();
+			Holder<Collider> c2 = newCollider();
 			c1->addTriangle(triangle(vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 2, 0)));
 			c2->addTriangle(triangle(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1)));
 			c1->rebuild();
@@ -26,8 +26,8 @@ void testCollisions()
 		}
 		{
 			CAGE_TESTCASE("one collision");
-			Holder<CollisionMesh> c1 = newCollisionMesh();
-			Holder<CollisionMesh> c2 = newCollisionMesh();
+			Holder<Collider> c1 = newCollider();
+			Holder<Collider> c2 = newCollider();
 			c1->addTriangle(triangle(vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 2, 0)));
 			c2->addTriangle(triangle(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0)));
 			c1->rebuild();
@@ -40,7 +40,7 @@ void testCollisions()
 		}
 		{
 			CAGE_TESTCASE("self collision");
-			Holder<CollisionMesh> c1 = newCollisionMesh();
+			Holder<Collider> c1 = newCollider();
 			c1->addTriangle(triangle(vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 2, 0)));
 			c1->addTriangle(triangle(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1)));
 			c1->addTriangle(triangle(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0)));
@@ -49,7 +49,7 @@ void testCollisions()
 		}
 		{
 			CAGE_TESTCASE("limited buffer");
-			Holder<CollisionMesh> c1 = newCollisionMesh();
+			Holder<Collider> c1 = newCollider();
 			c1->addTriangle(triangle(vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 2, 0)));
 			c1->addTriangle(triangle(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1)));
 			c1->addTriangle(triangle(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0)));
@@ -58,7 +58,7 @@ void testCollisions()
 		}
 		{
 			CAGE_TESTCASE("with transformation (no collision)");
-			Holder<CollisionMesh> c1 = newCollisionMesh();
+			Holder<Collider> c1 = newCollider();
 			c1->addTriangle(triangle(vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 2, 0)));
 			c1->addTriangle(triangle(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1)));
 			c1->addTriangle(triangle(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0)));
@@ -67,8 +67,8 @@ void testCollisions()
 		}
 		{
 			CAGE_TESTCASE("with transformation (one collision)");
-			Holder<CollisionMesh> c1 = newCollisionMesh();
-			Holder<CollisionMesh> c2 = newCollisionMesh();
+			Holder<Collider> c1 = newCollider();
+			Holder<Collider> c2 = newCollider();
 			c1->addTriangle(triangle(vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 2, 0)));
 			c2->addTriangle(triangle(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1)));
 			c2->rebuild();
@@ -77,18 +77,18 @@ void testCollisions()
 		}
 		{
 			CAGE_TESTCASE("serialization");
-			Holder<CollisionMesh> c1 = newCollisionMesh();
+			Holder<Collider> c1 = newCollider();
 			c1->addTriangle(triangle(vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 2, 0)));
 			c1->addTriangle(triangle(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1)));
 			c1->addTriangle(triangle(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0)));
 			MemoryBuffer buff = c1->serialize();
-			Holder<CollisionMesh> c2 = newCollisionMesh(buff);
+			Holder<Collider> c2 = newCollider(buff);
 			CAGE_TEST(c2->triangles().size() == 3);
 			CAGE_TEST(c2->triangles()[2] == c1->triangles()[2]);
 		}
 		{
 			CAGE_TESTCASE("forgot rebuilt");
-			Holder<CollisionMesh> c1 = newCollisionMesh();
+			Holder<Collider> c1 = newCollider();
 			c1->addTriangle(triangle(vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 2, 0)));
 			c1->addTriangle(triangle(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1)));
 			c1->addTriangle(triangle(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0)));
@@ -98,7 +98,7 @@ void testCollisions()
 
 	{
 		CAGE_TESTCASE("dynamic collisions");
-		Holder<CollisionMesh> c1 = newCollisionMesh();
+		Holder<Collider> c1 = newCollider();
 		{ // tetrahedron
 			vec3 a(0, -0.7, 1);
 			vec3 b(+0.86603, -0.7, -0.5);
@@ -194,7 +194,7 @@ void testCollisions()
 
 	{
 		CAGE_TESTCASE("more collisions");
-		Holder<CollisionMesh> c1 = newCollisionMesh();
+		Holder<Collider> c1 = newCollider();
 		{ // tetrahedron 1
 			vec3 a(0, -0.7, 1);
 			vec3 b(+0.86603, -0.7, -0.5);
@@ -207,7 +207,7 @@ void testCollisions()
 			c1->addTriangle(triangle(c, a, d) * off);
 			c1->rebuild();
 		}
-		Holder<CollisionMesh> c2 = newCollisionMesh();
+		Holder<Collider> c2 = newCollider();
 		{ // tetrahedron 2
 			vec3 a(0, -0.7, 1);
 			vec3 b(+0.86603, -0.7, -0.5);
@@ -249,7 +249,7 @@ void testCollisions()
 
 	{
 		CAGE_TESTCASE("collisions grid");
-		Holder<CollisionMesh> c1 = newCollisionMesh();
+		Holder<Collider> c1 = newCollider();
 		{ // tetrahedron 1
 			vec3 a(0, -0.7, 1);
 			vec3 b(+0.86603, -0.7, -0.5);
@@ -262,7 +262,7 @@ void testCollisions()
 			c1->addTriangle(triangle(c, a, d) * off);
 			c1->rebuild();
 		}
-		Holder<CollisionMesh> c2 = newCollisionMesh();
+		Holder<Collider> c2 = newCollider();
 		{ // tetrahedron 2
 			vec3 a(0, -0.7, 1);
 			vec3 b(+0.86603, -0.7, -0.5);
@@ -275,7 +275,7 @@ void testCollisions()
 			c2->addTriangle(triangle(c, a, d) * off);
 			c2->rebuild();
 		}
-		Holder<CollisionMesh> c3 = newCollisionMesh();
+		Holder<Collider> c3 = newCollider();
 		{ // tetrahedron 3
 			vec3 a(0, -0.7, 1);
 			vec3 b(+0.86603, -0.7, -0.5);

@@ -27,6 +27,7 @@ function(cage_output_redist where)
 	configure_file("${cage_output_redist_source}/../externals/pmp/pmp/external/eigen/COPYING.MPL2" "${where}/redist/licenses/pmp_eigen" COPYONLY)
 	configure_file("${cage_output_redist_source}/../externals/pmp/pmp/external/rply/LICENSE" "${where}/licenses/pmp_rply" COPYONLY)
 	configure_file("${cage_output_redist_source}/../externals/pmp/pmp/LICENSE.txt" "${where}/redist/licenses/pmp" COPYONLY)
+	configure_file("${cage_output_redist_source}/../externals/dualmc/dualmc/LICENSE" "${where}/redist/licenses/dualmc" COPYONLY)
 	configure_file("${cage_output_redist_source}/../LICENSE" "${where}/redist/licenses/cage" COPYONLY)
 endfunction(cage_output_redist)
 

@@ -1,7 +1,7 @@
 #include <cage-core/geometry.h>
 #include <cage-core/memory.h>
 #include <cage-core/collisionStructure.h>
-#include <cage-core/collisionMesh.h>
+#include <cage-core/collider.h>
 #include <cage-core/spatialStructure.h>
 #include <cage-core/unordered_map.h>
 #include <cage-core/pointerRangeHolder.h>
@@ -14,9 +14,9 @@ namespace cage
 	{
 		struct Item : public transform
 		{
-			const CollisionMesh *collider;
+			const Collider *collider;
 
-			Item(const CollisionMesh *collider, const transform &t) : transform(t), collider(collider)
+			Item(const Collider *collider, const transform &t) : transform(t), collider(collider)
 			{}
 		};
 
@@ -53,7 +53,7 @@ namespace cage
 				spatial = newSpatialQuery(data->spatial.get());
 			}
 
-			void query(const CollisionMesh *collider, const transform &t1, const transform &t2)
+			void query(const Collider *collider, const transform &t1, const transform &t2)
 			{
 				resultName = 0;
 				resultFractionBefore = resultFractionContact = real::Nan();
@@ -157,7 +157,7 @@ namespace cage
 		return impl->resultPairs;
 	}
 
-	void CollisionQuery::collider(const CollisionMesh *&c, transform &t) const
+	void CollisionQuery::collider(const Collider *&c, transform &t) const
 	{
 		CollisionQueryImpl *impl = (CollisionQueryImpl*)this;
 		auto r = impl->data->allItems.at(impl->resultName);
@@ -165,12 +165,12 @@ namespace cage
 		t = r;
 	}
 
-	void CollisionQuery::query(const CollisionMesh *collider, const transform &t)
+	void CollisionQuery::query(const Collider *collider, const transform &t)
 	{
 		query(collider, t, t);
 	}
 
-	void CollisionQuery::query(const CollisionMesh *collider, const transform &t1, const transform &t2)
+	void CollisionQuery::query(const Collider *collider, const transform &t1, const transform &t2)
 	{
 		CollisionQueryImpl *impl = (CollisionQueryImpl*)this;
 		impl->query(collider, t1, t2);
@@ -206,7 +206,7 @@ namespace cage
 		impl->query(shape);
 	}
 
-	void CollisionStructure::update(uint32 name, const CollisionMesh *collider, const transform &t)
+	void CollisionStructure::update(uint32 name, const Collider *collider, const transform &t)
 	{
 		CollisionDataImpl *impl = (CollisionDataImpl*)this;
 		remove(name);

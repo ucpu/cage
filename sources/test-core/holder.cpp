@@ -40,11 +40,30 @@ namespace
 		hld.clear();
 		CAGE_TEST(gCount == 0);
 	}
+
+	struct ForwardDeclared; // does not have full declaration
+
+	Holder<ForwardDeclared> functionReturningForwardDeclared()
+	{
+		return {};
+	}
+	
+	void functionTakingForwardDeclared(Holder<ForwardDeclared> &&param)
+	{
+		Holder<ForwardDeclared> local = templates::move(param);
+		(void)local;
+	}
 }
 
 void testHolder()
 {
 	CAGE_TESTCASE("holder");
+
+	{
+		CAGE_TESTCASE("forward declared only");
+		Holder<ForwardDeclared> h = functionReturningForwardDeclared();
+		functionTakingForwardDeclared(templates::move(h));
+	}
 
 	{
 		CAGE_TESTCASE("takeByReference & takeByValue");

@@ -9,13 +9,13 @@ namespace cage
 	{
 	public:
 		uint32 name() const;
-		void collider(const CollisionMesh *&c, transform &t) const;
+		void collider(const Collider *&c, transform &t) const;
 		real fractionBefore() const; // the ratio between initial and final transformations just before the meshes start to collide
 		real fractionContact() const; // the ratio between initial and final transformations just when the meshes are colliding
 		PointerRange<CollisionPair> collisionPairs() const;
 
-		void query(const CollisionMesh *collider, const transform &t);
-		void query(const CollisionMesh *collider, const transform &t1, const transform &t2); // t1 and t2 are initial and final transformations
+		void query(const Collider *collider, const transform &t);
+		void query(const Collider *collider, const transform &t1, const transform &t2); // t1 and t2 are initial and final transformations
 
 		void query(const line &shape);
 		void query(const triangle &shape);
@@ -27,7 +27,7 @@ namespace cage
 	class CAGE_CORE_API CollisionStructure : private Immovable
 	{
 	public:
-		void update(uint32 name, const CollisionMesh *collider, const transform &t);
+		void update(uint32 name, const Collider *collider, const transform &t);
 		void remove(uint32 name);
 		void clear();
 		void rebuild();

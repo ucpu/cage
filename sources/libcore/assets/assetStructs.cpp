@@ -2,7 +2,7 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 #include <cage-core/textPack.h>
-#include <cage-core/collisionMesh.h>
+#include <cage-core/collider.h>
 #include <cage-core/assetStructs.h>
 #include <cage-core/assetManager.h>
 
@@ -92,14 +92,14 @@ namespace cage
 	{
 		void processCollisionMeshLoad(const AssetContext *context, void *)
 		{
-			Holder<CollisionMesh> col = newCollisionMesh();
+			Holder<Collider> col = newCollider();
 			col->deserialize(context->originalData());
 			col->rebuild();
 			context->assetHolder = templates::move(col).cast<void>();
 		}
 	}
 
-	AssetScheme genAssetSchemeCollisionMesh()
+	AssetScheme genAssetSchemeCollider()
 	{
 		AssetScheme s;
 		s.load.bind<&processCollisionMeshLoad>();
@@ -111,6 +111,6 @@ namespace cage
 		template<> CAGE_API_EXPORT char assetClassId<AssetPack>;
 		template<> CAGE_API_EXPORT char assetClassId<MemoryBuffer>;
 		template<> CAGE_API_EXPORT char assetClassId<TextPack>;
-		template<> CAGE_API_EXPORT char assetClassId<CollisionMesh>;
+		template<> CAGE_API_EXPORT char assetClassId<Collider>;
 	}
 }

@@ -1,5 +1,5 @@
 #include "utility/assimp.h"
-#include <cage-core/collisionMesh.h>
+#include <cage-core/collider.h>
 #include <cage-core/memoryBuffer.h>
 
 void processCollider()
@@ -16,7 +16,7 @@ void processCollider()
 
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "loaded triangles: " + am->mNumFaces);
 
-	Holder<CollisionMesh> collider = newCollisionMesh();
+	Holder<Collider> collider = newCollider();
 	mat3 axesScale = axesScaleMatrix();
 	for (uint32 i = 0; i < am->mNumFaces; i++)
 	{

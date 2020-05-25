@@ -3,7 +3,7 @@
 #include <cage-core/concurrent.h>
 #include <cage-core/files.h> // getExecutableName
 #include <cage-core/assetStructs.h>
-#include <cage-core/collisionMesh.h> // for sizeof in defineScheme
+#include <cage-core/collider.h> // for sizeof in defineScheme
 #include <cage-core/textPack.h> // for sizeof in defineScheme
 #include <cage-core/memoryBuffer.h> // for sizeof in defineScheme
 #include <cage-core/threadPool.h>
@@ -470,7 +470,7 @@ namespace cage
 					assets->defineScheme<AssetPack>(AssetSchemeIndexPack, genAssetSchemePack());
 					assets->defineScheme<MemoryBuffer>(AssetSchemeIndexRaw, genAssetSchemeRaw());
 					assets->defineScheme<TextPack>(AssetSchemeIndexTextPack, genAssetSchemeTextPack());
-					assets->defineScheme<CollisionMesh>(AssetSchemeIndexCollisionMesh, genAssetSchemeCollisionMesh());
+					assets->defineScheme<Collider>(AssetSchemeIndexCollider, genAssetSchemeCollider());
 					// engine assets
 					assets->defineScheme<ShaderProgram>(AssetSchemeIndexShaderProgram, genAssetSchemeShaderProgram(EngineGraphicsUploadThread::threadIndex, window.get()));
 					assets->defineScheme<Texture>(AssetSchemeIndexTexture, genAssetSchemeTexture(EngineGraphicsUploadThread::threadIndex, window.get()));

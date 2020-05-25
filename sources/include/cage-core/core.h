@@ -348,7 +348,7 @@ namespace cage
 	enum class StereoEyeEnum : uint32;
 	struct StereoCameraInput;
 	struct StereoCameraOutput;
-	class CollisionMesh;
+	class Collider;
 	struct CollisionPair;
 	class CollisionQuery;
 	class CollisionStructure;
@@ -395,6 +395,8 @@ namespace cage
 	class Logger;
 	class LoggerOutputFile;
 	template<class Key, class Value, class Hasher> struct LruCache;
+	class MarchingCubes;
+	struct MarchingCubesCreateConfig;
 	template<class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyLinear;
 	//template<uint8 N, class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyNFrame;
 	template<uintPtr AtomSize, class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyPool;
@@ -432,6 +434,13 @@ namespace cage
 	class NoiseFunction;
 	struct NoiseFunctionCreateConfig;
 	template<class T> struct PointerRangeHolder;
+	enum class PolyhedronTypeEnum;
+	struct PolyhedronSimplificationConfig;
+	struct PolyhedronRegularizationConfig;
+	struct PolyhedronUnwrapConfig;
+	struct PolyhedronTextureGenerationConfig;
+	struct PolyhedronNormalsGenerationConfig;
+	struct PolyhedronTangentsGenerationConfig;
 	class Polyhedron;
 	struct ProcessCreateConfig;
 	class Process;

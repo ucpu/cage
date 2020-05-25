@@ -48,7 +48,7 @@ void testNoise()
 			config.type = NoiseTypeEnum::Value;
 			config.octaves = oct;
 			Holder<NoiseFunction> noise = newNoiseFunction(config);
-			generateImage(stringizer() + "images/value_" + oct + ".png", noise);
+			generateImage(stringizer() + "images/noises/value_" + oct + ".png", noise);
 		}
 	}
 
@@ -60,7 +60,7 @@ void testNoise()
 			config.type = NoiseTypeEnum::Perlin;
 			config.octaves = oct;
 			Holder<NoiseFunction> noise = newNoiseFunction(config);
-			generateImage(stringizer() + "images/perlin_" + oct + ".png", noise);
+			generateImage(stringizer() + "images/noises/perlin_" + oct + ".png", noise);
 		}
 	}
 
@@ -72,7 +72,7 @@ void testNoise()
 			config.type = NoiseTypeEnum::Simplex;
 			config.octaves = oct;
 			Holder<NoiseFunction> noise = newNoiseFunction(config);
-			generateImage(stringizer() + "images/simplex_" + oct + ".png", noise);
+			generateImage(stringizer() + "images/noises/simplex_" + oct + ".png", noise);
 		}
 	}
 
@@ -83,21 +83,21 @@ void testNoise()
 			config.type = NoiseTypeEnum::Cellular;
 			config.operation = NoiseOperationEnum::None;
 			Holder<NoiseFunction> noise = newNoiseFunction(config);
-			generateImage(stringizer() + "images/cellular_none.png", noise);
+			generateImage(stringizer() + "images/noises/cellular_none.png", noise);
 		}
 		{
 			NoiseFunctionCreateConfig config;
 			config.type = NoiseTypeEnum::Cellular;
 			config.operation = NoiseOperationEnum::Distance;
 			Holder<NoiseFunction> noise = newNoiseFunction(config);
-			generateImage(stringizer() + "images/cellular_distance.png", noise);
+			generateImage(stringizer() + "images/noises/cellular_distance.png", noise);
 		}
 		{
 			NoiseFunctionCreateConfig config;
 			config.type = NoiseTypeEnum::Cellular;
 			config.operation = NoiseOperationEnum::Divide;
 			Holder<NoiseFunction> noise = newNoiseFunction(config);
-			generateImage(stringizer() + "images/cellular_divide.png", noise);
+			generateImage(stringizer() + "images/noises/cellular_divide.png", noise);
 		}
 		{
 			NoiseFunctionCreateConfig config2;
@@ -108,7 +108,7 @@ void testNoise()
 			config.type = NoiseTypeEnum::Cellular;
 			config.operation = NoiseOperationEnum::NoiseLookup;
 			Holder<NoiseFunction> noise = newNoiseFunction(config, templates::move(noise2));
-			generateImage(stringizer() + "images/cellular_lookup.png", noise);
+			generateImage(stringizer() + "images/noises/cellular_lookup.png", noise);
 		}
 	}
 }

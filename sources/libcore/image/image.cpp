@@ -48,6 +48,17 @@ namespace cage
 		return c;
 	}
 
+	void Image::clear()
+	{
+		ImageImpl *impl = (ImageImpl*)this;
+		impl->width = 0;
+		impl->height = 0;
+		impl->channels = 0;
+		impl->format = ImageFormatEnum::Default;
+		impl->colorConfig = ImageColorConfig();
+		impl->mem.resize(0);
+	}
+
 	void Image::empty(uint32 w, uint32 h, uint32 c, ImageFormatEnum f)
 	{
 		CAGE_ASSERT(f != ImageFormatEnum::Default);
@@ -64,15 +75,52 @@ namespace cage
 		colorConfig = defaultConfig(c);
 	}
 
-	void Image::reset()
+	void Image::fill(const real &value)
 	{
 		ImageImpl *impl = (ImageImpl*)this;
-		impl->width = 0;
-		impl->height = 0;
-		impl->channels = 0;
-		impl->format = ImageFormatEnum::Default;
-		impl->colorConfig = ImageColorConfig();
-		impl->mem.resize(0);
+		for (uint32 y = 0; y < impl->height; y++)
+			for (uint32 x = 0; x < impl->width; x++)
+				set(x, y, value);
+	}
+
+	void Image::fill(const vec2 &value)
+	{
+		ImageImpl *impl = (ImageImpl*)this;
+		for (uint32 y = 0; y < impl->height; y++)
+			for (uint32 x = 0; x < impl->width; x++)
+				set(x, y, value);
+	}
+
+	void Image::fill(const vec3 &value)
+	{
+		ImageImpl *impl = (ImageImpl*)this;
+		for (uint32 y = 0; y < impl->height; y++)
+			for (uint32 x = 0; x < impl->width; x++)
+				set(x, y, value);
+	}
+
+	void Image::fill(const vec4 &value)
+	{
+		ImageImpl *impl = (ImageImpl*)this;
+		for (uint32 y = 0; y < impl->height; y++)
+			for (uint32 x = 0; x < impl->width; x++)
+				set(x, y, value);
+	}
+
+	void Image::fill(uint32 ch, float val)
+	{
+		ImageImpl *impl = (ImageImpl*)this;
+		for (uint32 y = 0; y < impl->height; y++)
+			for (uint32 x = 0; x < impl->width; x++)
+				value(x, y, ch, val);
+	}
+
+	void Image::fill(uint32 ch, const real &val)
+	{
+		ImageImpl *impl = (ImageImpl*)this;
+		for (uint32 y = 0; y < impl->height; y++)
+			for (uint32 x = 0; x < impl->width; x++)
+				value(x, y, ch, val);
 	}
 
 	void Image::loadBuffer(MemoryBuffer &&buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format)
@@ -566,6 +614,106 @@ namespace cage
 
 		convert(originalColor.alphaMode);
 		convert(originalColor.gammaSpace);
+		convert(originalFormat);
+	}
+
+	namespace
+	{
+		template<class T, bool InpaintNan>
+		bool valid(const T &v)
+		{
+			if (InpaintNan)
+				return valid(v);
+			return v != T();
+		}
+
+		template<class T, bool InpaintNan>
+		void inpaintProcess(Image *src, Image *dst)
+		{
+			const uint32 w = src->width();
+			const uint32 h = src->height();
+			for (uint32 y = 0; y < h; y++)
+			{
+				for (uint32 x = 0; x < w; x++)
+				{
+					T m;
+					src->get(x, y, m);
+					if (!valid<T, InpaintNan>(m))
+					{
+						m = T();
+						uint32 cnt = 0;
+						uint32 sy = numeric_cast<uint32>(clamp(sint32(y) - 1, 0, sint32(h) - 1));
+						uint32 ey = numeric_cast<uint32>(clamp(sint32(y) + 1, 0, sint32(h) - 1));
+						uint32 sx = numeric_cast<uint32>(clamp(sint32(x) - 1, 0, sint32(w) - 1));
+						uint32 ex = numeric_cast<uint32>(clamp(sint32(x) + 1, 0, sint32(w) - 1));
+						for (uint32 yy = sy; yy <= ey; yy++)
+						{
+							for (uint32 xx = sx; xx <= ex; xx++)
+							{
+								T a;
+								src->get(xx, yy, a);
+								if (valid<T, InpaintNan>(a))
+								{
+									m += a;
+									cnt++;
+								}
+							}
+						}
+						if (cnt > 0)
+							dst->set(x, y, m / cnt);
+					}
+					else
+						dst->set(x, y, m);
+				}
+			}
+		}
+
+		template<class T, bool InpaintNan>
+		void inpaintProcess(Image *img, uint32 rounds)
+		{
+			CAGE_ASSERT(img);
+			CAGE_ASSERT(img->format() == ImageFormatEnum::Float);
+
+			Holder<Image> tmp = newImage();
+			tmp->empty(img->width(), img->height(), img->channels(), img->format());
+			if (InpaintNan)
+				tmp->fill(T::Nan());
+
+			Image *src = img;
+			Image *dst = tmp.get();
+
+			for (uint32 r = 0; r < rounds; r++)
+			{
+				inpaintProcess<T, InpaintNan>(src, dst);
+				std::swap(src, dst);
+			}
+
+			if (src != img)
+				imageBlit(src, img, 0, 0, 0, 0, img->width(), img->height());
+		}
+
+		template<class T>
+		void inpaintProcess(Image *img, uint32 rounds, bool inpaintNan)
+		{
+			if (inpaintNan)
+				inpaintProcess<T, true>(img, rounds);
+			else
+				inpaintProcess<T, false>(img, rounds);
+		}
+	}
+
+	void Image::inpaint(uint32 rounds, bool inpaintNan)
+	{
+		const ImageFormatEnum originalFormat = format();
+		convert(ImageFormatEnum::Float);
+		switch (channels())
+		{
+		case 1: inpaintProcess<real>(this, rounds, inpaintNan); break;
+		case 2: inpaintProcess<vec2>(this, rounds, inpaintNan); break;
+		case 3: inpaintProcess<vec3>(this, rounds, inpaintNan); break;
+		case 4: inpaintProcess<vec4>(this, rounds, inpaintNan); break;
+		default: CAGE_THROW_CRITICAL(NotImplemented, "image inpaint with more than 4 channels");
+		}
 		convert(originalFormat);
 	}
 

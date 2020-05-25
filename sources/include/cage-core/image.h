@@ -41,8 +41,15 @@ namespace cage
 	class CAGE_CORE_API Image : private Immovable
 	{
 	public:
+		void clear();
 		void empty(uint32 width, uint32 height, uint32 channels = 4, ImageFormatEnum format = ImageFormatEnum::U8);
-		void reset();
+
+		void fill(const real &value);
+		void fill(const vec2 &value);
+		void fill(const vec3 &value);
+		void fill(const vec4 &value);
+		void fill(uint32 channel, float value);
+		void fill(uint32 channel, const real &value);
 
 		// load from raw memory
 		void loadBuffer(MemoryBuffer &&buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format);
@@ -97,6 +104,7 @@ namespace cage
 		void convert(GammaSpaceEnum gammaSpace);
 		void convert(AlphaModeEnum alphaMode);
 		void resize(uint32 width, uint32 height, bool useColorConfig = true);
+		void inpaint(uint32 rounds, bool inpaintNan = false);
 
 		ImageColorConfig colorConfig;
 	};
