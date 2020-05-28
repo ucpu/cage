@@ -85,8 +85,10 @@ namespace
 			connectionsLeft++;
 			for (uint32 i = 0; i < 20; i++)
 			{
-				MemoryBuffer b(randomRange(100, 10000));
-				privat::generateRandomData((uint8*)b.data(), numeric_cast<uint32>(b.size()));
+				uint32 cnt = randomRange(100, 10000);
+				MemoryBuffer b(cnt);
+				for (uint32 i = 0; i < cnt; i++)
+					b.data()[i] = (char)randomRange(0u, 256u);
 				sends.push_back(templates::move(b));
 			}
 			udp = newUdpConnection("localhost", 3210, randomChance() < 0.5 ? 10000000 : 0);
