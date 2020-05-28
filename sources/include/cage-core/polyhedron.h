@@ -64,12 +64,18 @@ namespace cage
 		// todo
 	};
 
+	struct CAGE_CORE_API PolyhedronObjExportConfig
+	{
+		string materialLibraryName;
+		string materialName;
+		string objectName;
+	};
+
 	// aka a mesh but stored in cpu memory
 	class CAGE_CORE_API Polyhedron : private Immovable
 	{
 	public:
 		void clear();
-		void empty(uint32 vertices, uint32 indices, PolyhedronTypeEnum type = PolyhedronTypeEnum::Triangles);
 
 		void load(const MemoryBuffer &buffer);
 		void load(const void *buffer, uintPtr size);
@@ -169,11 +175,15 @@ namespace cage
 		void clip(const aabb &box);
 		void clip(const plane &pln);
 		Holder<Polyhedron> cut(const plane &pln);
+		void discardDisconnected();
 		Holder<PointerRange<Holder<Polyhedron>>> separateDisconnected();
 
 		Holder<Polyhedron> copy() const;
 
 		Holder<Collider> createCollider() const;
+
+		MemoryBuffer exportToObjBuffer(const PolyhedronObjExportConfig &config) const;
+		void exportToObjFile(const PolyhedronObjExportConfig &config, const string &filename) const;
 	};
 
 	CAGE_CORE_API Holder<Polyhedron> newPolyhedron();

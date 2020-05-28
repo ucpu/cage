@@ -17,8 +17,6 @@ namespace cage
 		void updateByCoordinates(const Delegate<real(uint32, uint32, uint32)> &generator);
 		void updateByPosition(const Delegate<real(const vec3 &)> &generator);
 
-		void generateSurface();
-
 		Holder<Collider> makeCollider() const;
 		Holder<Polyhedron> makePolyhedron() const;
 	};
@@ -29,8 +27,10 @@ namespace cage
 		uint32 resolutionX = 20;
 		uint32 resolutionY = 20;
 		uint32 resolutionZ = 20;
+		bool clip = true;
 
 		vec3 position(uint32 x, uint32 y, uint32 z) const;
+		uint32 index(uint32 x, uint32 y, uint32 z) const;
 	};
 
 	CAGE_CORE_API Holder<MarchingCubes> newMarchingCubes(const MarchingCubesCreateConfig &config);

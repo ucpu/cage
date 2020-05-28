@@ -11,6 +11,7 @@ namespace utf8
 #endif
 
 #include <cstring>
+#include <exception>
 
 #define TRY_BEGIN try
 #define TRY_END catch (const std::exception &e) { CAGE_THROW_ERROR(InvalidUtfString, e.what()); }

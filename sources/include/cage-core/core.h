@@ -441,6 +441,7 @@ namespace cage
 	struct PolyhedronTextureGenerationConfig;
 	struct PolyhedronNormalsGenerationConfig;
 	struct PolyhedronTangentsGenerationConfig;
+	struct PolyhedronObjExportConfig;
 	class Polyhedron;
 	struct ProcessCreateConfig;
 	class Process;

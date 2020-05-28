@@ -3,6 +3,7 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 #include <cage-core/pointerRangeHolder.h>
+#include <cage-core/polyhedron.h>
 
 #include <vector>
 #include <algorithm>
@@ -231,8 +232,8 @@ namespace cage
 
 	namespace
 	{
-		static constexpr uint16 currentVersion = 2;
-		static constexpr char currentMagic[] = "colid";
+		constexpr uint16 currentVersion = 2;
+		constexpr char currentMagic[] = "colid";
 
 		struct CollisionMeshHeader
 		{
@@ -290,6 +291,17 @@ namespace cage
 		readVector(des, impl->tris, header.trisCount);
 		readVector(des, impl->boxes, header.nodesCount);
 		readVector(des, impl->nodes, header.nodesCount);
+	}
+
+	Holder<Polyhedron> Collider::createPolyhedron() const
+	{
+		const ColliderImpl *impl = (const ColliderImpl*)this;
+		Holder<Polyhedron> result = newPolyhedron();
+		CAGE_ASSERT(sizeof(triangle) == sizeof(vec3) * 3);
+		const vec3 *a = (vec3*)impl->tris.data();
+		const vec3 *b = a + impl->tris.size() * 3;
+		result->positions(PointerRange<const vec3>(a, b));
+		return result;
 	}
 
 	Holder<Collider> newCollider()

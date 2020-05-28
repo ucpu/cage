@@ -5,5 +5,9 @@
 
 namespace cage
 {
-
+	void Polyhedron::unwrap(const PolyhedronUnwrapConfig &config)
+	{
+		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		CAGE_THROW_CRITICAL(NotImplemented, "unwrap");
+	}
 }
