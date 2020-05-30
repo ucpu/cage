@@ -45,6 +45,8 @@ namespace cage
 		uint32 padding = 2;
 		uint32 targetResolution = 0;
 		real texelsPerUnit = 0;
+
+		bool logProgress = false;
 	};
 
 	struct CAGE_CORE_API PolyhedronTextureGenerationConfig
@@ -166,7 +168,7 @@ namespace cage
 		void convertToExpanded();
 		void simplify(const PolyhedronSimplificationConfig &config);
 		void regularize(const PolyhedronRegularizationConfig &config);
-		void unwrap(const PolyhedronUnwrapConfig &config);
+		uint32 unwrap(const PolyhedronUnwrapConfig &config);
 		void generateTexture(const PolyhedronTextureGenerationConfig &config);
 		void generateNormals(const PolyhedronNormalsGenerationConfig &config);
 		void generateTangents(const PolyhedronTangentsGenerationConfig &config);

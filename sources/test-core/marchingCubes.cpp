@@ -12,7 +12,7 @@ namespace
 
 	real density(const vec3 &pos)
 	{
-		return densityTorus(pos - 5, 5, 2);
+		return densityTorus(pos, 5, 2);
 	}
 }
 
