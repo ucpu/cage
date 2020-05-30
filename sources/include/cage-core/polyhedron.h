@@ -169,7 +169,7 @@ namespace cage
 		void simplify(const PolyhedronSimplificationConfig &config);
 		void regularize(const PolyhedronRegularizationConfig &config);
 		uint32 unwrap(const PolyhedronUnwrapConfig &config);
-		void generateTexture(const PolyhedronTextureGenerationConfig &config);
+		void generateTexture(const PolyhedronTextureGenerationConfig &config) const;
 		void generateNormals(const PolyhedronNormalsGenerationConfig &config);
 		void generateTangents(const PolyhedronTangentsGenerationConfig &config);
 		void applyTransform(const transform &t);

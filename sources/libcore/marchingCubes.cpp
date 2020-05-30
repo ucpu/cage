@@ -107,7 +107,7 @@ namespace cage
 		std::vector<uint32> indices;
 		positions.reserve(mcVertices.size());
 		normals.resize(mcVertices.size());
-		indices.reserve(mcIndices.size() * 6 / 4);
+		indices.reserve(mcIndices.size() * 3 / 2);
 		const vec3 posMult = (impl->config.box.b - impl->config.box.a) / vec3(impl->config.resolutionX - 1, impl->config.resolutionY - 1, impl->config.resolutionZ - 1);
 		for (const dualmc::Vertex &v : mcVertices)
 			positions.push_back(vec3(v.x, v.y, v.z) * posMult + impl->config.box.a);

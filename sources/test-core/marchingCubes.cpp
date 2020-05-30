@@ -21,7 +21,6 @@ void testMarchingCubes()
 	CAGE_TESTCASE("marching cubes");
 
 	MarchingCubesCreateConfig config;
-	config.clip = false; // todo temporarily disable
 	config.box = aabb(vec3(-5), vec3(15));
 #ifdef CAGE_DEBUG
 	config.resolutionX = config.resolutionY = config.resolutionZ = 10;
