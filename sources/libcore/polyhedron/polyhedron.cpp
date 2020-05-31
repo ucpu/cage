@@ -207,13 +207,13 @@ namespace cage
 	{
 		const PolyhedronImpl *impl = (const PolyhedronImpl *)this;
 		Holder<Polyhedron> result = newPolyhedron();
+		result->type(impl->type);
 
 #define GCHL_GENERATE(NAME) result->NAME(impl->NAME);
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
 #undef GCHL_GENERATE
 
 		result->indices(impl->indices);
-		result->type(impl->type);
 		return result;
 	}
 

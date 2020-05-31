@@ -23,7 +23,7 @@ void testMarchingCubes()
 	MarchingCubesCreateConfig config;
 	config.box = aabb(vec3(-5), vec3(15));
 #ifdef CAGE_DEBUG
-	config.resolutionX = config.resolutionY = config.resolutionZ = 10;
+	config.resolutionX = config.resolutionY = config.resolutionZ = 20;
 #else
 	config.resolutionX = config.resolutionY = config.resolutionZ = 30;
 #endif // CAGE_DEBUG

@@ -108,9 +108,9 @@ namespace cage
 		positions.reserve(mcVertices.size());
 		normals.resize(mcVertices.size());
 		indices.reserve(mcIndices.size() * 3 / 2);
-		const vec3 posMult = (impl->config.box.b - impl->config.box.a) / vec3(impl->config.resolutionX - 1, impl->config.resolutionY - 1, impl->config.resolutionZ - 1);
+		const vec3 posMult = (impl->config.box.b - impl->config.box.a) / (vec3(impl->config.resolutionX, impl->config.resolutionY, impl->config.resolutionZ) - 3);
 		for (const dualmc::Vertex &v : mcVertices)
-			positions.push_back(vec3(v.x, v.y, v.z) * posMult + impl->config.box.a);
+			positions.push_back((vec3(v.x, v.y, v.z) - 1) * posMult + impl->config.box.a);
 		for (const auto &q : mcIndices)
 		{
 			const uint32 is[4] = { numeric_cast<uint32>(q.i0), numeric_cast<uint32>(q.i1), numeric_cast<uint32>(q.i2), numeric_cast<uint32>(q.i3) };
@@ -149,7 +149,7 @@ namespace cage
 		CAGE_ASSERT(x < resolutionX);
 		CAGE_ASSERT(y < resolutionY);
 		CAGE_ASSERT(z < resolutionZ);
-		vec3 f = vec3(x, y, z) / vec3(resolutionX - 1, resolutionY - 1, resolutionZ - 1);
+		vec3 f = (vec3(x, y, z) - 1) / (vec3(resolutionX, resolutionY, resolutionZ) - 3);
 		return (box.b - box.a) * f + box.a;
 	}
 
