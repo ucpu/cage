@@ -19,7 +19,7 @@ namespace cage
 			if (s[0] == 0 && s[1] == 0)
 				privat::generateRandomData((uint8*)s, sizeof(s));
 			CAGE_LOG(SeverityEnum::Info, "random", stringizer() + "initializing default random generator: " + s[0] + ", " + s[1]);
-			return RandomGenerator(s);
+			return RandomGenerator(s[0], s[1]);
 		}
 	}
 
@@ -28,17 +28,8 @@ namespace cage
 		privat::generateRandomData((uint8*)s, sizeof(s));
 	}
 
-	RandomGenerator::RandomGenerator(uint64 s[2])
-	{
-		this->s[0] = s[0];
-		this->s[1] = s[1];
-	}
-
-	RandomGenerator::RandomGenerator(uint64 s1, uint64 s2)
-	{
-		s[0] = s1;
-		s[1] = s2;
-	}
+	RandomGenerator::RandomGenerator(uint64 s1, uint64 s2) : s{s1, s2}
+	{}
 
 	uint64 RandomGenerator::next()
 	{
