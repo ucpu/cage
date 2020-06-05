@@ -59,7 +59,7 @@ namespace cage
 		impl->mem.resize(0);
 	}
 
-	void Image::empty(uint32 w, uint32 h, uint32 c, ImageFormatEnum f)
+	void Image::initialize(uint32 w, uint32 h, uint32 c, ImageFormatEnum f)
 	{
 		CAGE_ASSERT(f != ImageFormatEnum::Default);
 		CAGE_ASSERT(c > 0);
@@ -123,27 +123,22 @@ namespace cage
 				value(x, y, ch, val);
 	}
 
-	void Image::loadBuffer(MemoryBuffer &&buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format)
+	void Image::importRaw(MemoryBuffer &&buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format)
 	{
 		ImageImpl *impl = (ImageImpl*)this;
 		CAGE_ASSERT(buffer.size() >= width * height * channels * formatBytes(format));
-		empty(0, 0, channels, format);
+		initialize(0, 0, channels, format);
 		impl->mem = templates::move(buffer);
 		impl->width = width;
 		impl->height = height;
 	}
 
-	void Image::loadBuffer(const MemoryBuffer &buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format)
-	{
-		loadMemory(buffer.data(), buffer.size(), width, height, channels, format);
-	}
-
-	void Image::loadMemory(const void *buffer, uintPtr size, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format)
+	void Image::importRaw(const MemoryBuffer &buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format)
 	{
 		ImageImpl *impl = (ImageImpl*)this;
-		CAGE_ASSERT(size >= width * height * channels * formatBytes(format));
-		empty(width, height, channels, format);
-		detail::memcpy(impl->mem.data(), buffer, impl->mem.size());
+		CAGE_ASSERT(buffer.size() >= width * height * channels * formatBytes(format));
+		initialize(width, height, channels, format);
+		detail::memcpy(impl->mem.data(), buffer.data(), impl->mem.size());
 	}
 
 	uint32 Image::width() const
@@ -492,7 +487,7 @@ namespace cage
 			return; // no op
 		CAGE_ASSERT(impl->format != ImageFormatEnum::Rgbe);
 		Holder<Image> tmp = newImage();
-		tmp->empty(impl->width, impl->height, channels, impl->format);
+		tmp->initialize(impl->width, impl->height, channels, impl->format);
 		ImageImpl *t = (ImageImpl *)tmp.get();
 		slice(impl, t);
 		std::swap(impl->mem, t->mem);
@@ -506,7 +501,7 @@ namespace cage
 		if (impl->format == format)
 			return; // no op
 		Holder<Image> tmp = newImage();
-		tmp->empty(impl->width, impl->height, impl->channels, format);
+		tmp->initialize(impl->width, impl->height, impl->channels, format);
 		imageBlit(this, tmp.get(), 0, 0, 0, 0, impl->width, impl->height);
 		ImageImpl *t = (ImageImpl *)tmp.get();
 		std::swap(impl->mem, t->mem);
@@ -675,7 +670,7 @@ namespace cage
 			CAGE_ASSERT(img->format() == ImageFormatEnum::Float);
 
 			Holder<Image> tmp = newImage();
-			tmp->empty(img->width(), img->height(), img->channels(), img->format());
+			tmp->initialize(img->width(), img->height(), img->channels(), img->format());
 			if (InpaintNan)
 				tmp->fill(T::Nan());
 
@@ -747,7 +742,7 @@ namespace cage
 		CAGE_ASSERT(s != t || !overlaps(sourceX, sourceY, targetX, targetY, width, height));
 		if (t->format == ImageFormatEnum::Default && targetX == 0 && targetY == 0)
 		{
-			t->empty(width, height, s->channels, s->format);
+			t->initialize(width, height, s->channels, s->format);
 			t->colorConfig = s->colorConfig;
 		}
 		CAGE_ASSERT(s->channels == t->channels);

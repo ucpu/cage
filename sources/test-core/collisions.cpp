@@ -82,7 +82,8 @@ void testCollisions()
 			c1->addTriangle(triangle(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1)));
 			c1->addTriangle(triangle(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0)));
 			MemoryBuffer buff = c1->serialize();
-			Holder<Collider> c2 = newCollider(buff);
+			Holder<Collider> c2 = newCollider();
+			c2->deserialize(buff);
 			CAGE_TEST(c2->triangles().size() == 3);
 			CAGE_TEST(c2->triangles()[2] == c1->triangles()[2]);
 		}

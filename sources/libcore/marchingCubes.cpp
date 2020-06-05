@@ -1,7 +1,12 @@
+#ifdef _MSC_VER
+#pragma warning(push, 0)
+#endif
+
 #include <dualmc.h>
 
 #include <cage-core/marchingCubes.h>
 #include <cage-core/polyhedron.h>
+#include <cage-core/collider.h>
 
 namespace cage
 {
@@ -90,7 +95,10 @@ namespace cage
 	Holder<Collider> MarchingCubes::makeCollider() const
 	{
 		// todo optimized path
-		return makePolyhedron()->createCollider();
+		Holder<Polyhedron> p = makePolyhedron();
+		Holder<Collider> c = newCollider();
+		c->importPolyhedron(p.get());
+		return c;
 	}
 
 	Holder<Polyhedron> MarchingCubes::makePolyhedron() const
@@ -101,7 +109,7 @@ namespace cage
 		std::vector<dualmc::Vertex> mcVertices;
 		std::vector<dualmc::Quad> mcIndices;
 		mc.build((float*)impl->dens.data(), impl->config.resolutionX, impl->config.resolutionY, impl->config.resolutionZ, 0, true, false, mcVertices, mcIndices);
-		
+
 		std::vector<vec3> positions;
 		std::vector<vec3> normals;
 		std::vector<uint32> indices;
@@ -166,3 +174,7 @@ namespace cage
 		return detail::systemArena().createImpl<MarchingCubes, MarchingCubesImpl>(config);
 	}
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif

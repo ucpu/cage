@@ -1,10 +1,14 @@
 #include <cage-core/geometry.h>
+#include <cage-core/polyhedron.h>
+#include <cage-core/memoryBuffer.h>
 #include <cage-core/memory.h> // addToAlign
 
 #include <cage-engine/shaderConventions.h>
 #include <cage-engine/opengl.h>
 #include <cage-engine/assetStructs.h>
 #include "private.h"
+
+#include <vector>
 
 namespace cage
 {
@@ -18,27 +22,26 @@ namespace cage
 	{
 		class MeshImpl : public Mesh
 		{
-		public:
-			aabb box;
-			uint32 textures[MaxTexturesCountPerMaterial];
-			uint32 id;
-			uint32 vbo;
-			uint32 verticesCount;
-			uint32 verticesOffset;
-			uint32 indicesCount;
-			uint32 indicesOffset;
-			uint32 materialSize;
-			uint32 materialOffset;
-			uint32 primitiveType;
-			uint32 primitivesCount;
-			uint32 skeletonName;
-			uint32 skeletonBones;
-			uint32 instancesLimitHint;
-			MeshRenderFlags flags;
-
 			static constexpr MeshRenderFlags defaultFlags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::VelocityWrite | MeshRenderFlags::Lighting | MeshRenderFlags::ShadowCast;
 
-			MeshImpl() : box(aabb::Universe()), id(0), vbo(0), verticesCount(0), verticesOffset(0), indicesCount(0), indicesOffset(0), materialSize(0), materialOffset(0), primitiveType(GL_TRIANGLES), primitivesCount(0), skeletonName(0), skeletonBones(0), instancesLimitHint(1), flags(defaultFlags)
+		public:
+			aabb box = aabb::Universe();
+			uint32 textures[MaxTexturesCountPerMaterial];
+			uint32 id = 0;
+			uint32 vbo = 0;
+			uint32 verticesCount = 0;
+			uint32 indicesCount = 0;
+			uint32 indicesOffset = 0;
+			uint32 materialSize = 0;
+			uint32 materialOffset = 0;
+			uint32 primitiveType = GL_TRIANGLES;
+			uint32 primitivesCount = 0;
+			uint32 skeletonName = 0;
+			uint32 skeletonBones = 0;
+			uint32 instancesLimitHint = 1;
+			MeshRenderFlags flags = defaultFlags;
+
+			MeshImpl()
 			{
 				for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 					textures[i] = 0;
@@ -112,6 +115,132 @@ namespace cage
 		setCurrentObject<UniformBuffer>(impl->id);
 	}
 
+	void Mesh::importPolyhedron(const Polyhedron *poly, PointerRange<char> materialBuffer)
+	{
+		const uint32 verticesCount = poly->verticesCount();
+		uint32 vertexSize = 0;
+		uint32 offset = 0;
+		MemoryBuffer vts;
+		vts.reserve(verticesCount * 32);
+
+		struct Attr
+		{
+			uint32 i;
+			uint32 c;
+			uint32 t;
+			uint32 s;
+			uint32 o;
+
+			Attr(uint32 i, uint32 c, uint32 t, uint32 s, uint32 o) : i(i), c(c), t(t), s(s), o(o)
+			{}
+		};
+		std::vector<Attr> attrs;
+
+		if (!poly->positions().empty())
+		{
+			constexpr uint32 attrSize = sizeof(vec3);
+			const uint32 bufSize = attrSize * verticesCount;
+			vts.resize(offset + bufSize);
+			detail::memcpy(vts.data() + offset, poly->positions().data(), bufSize);
+			attrs.emplace_back(CAGE_SHADER_ATTRIB_IN_POSITION, 3, GL_FLOAT, attrSize, offset);
+			vertexSize += attrSize;
+			offset += bufSize;
+		}
+
+		if (!poly->normals().empty())
+		{
+			constexpr uint32 attrSize = sizeof(vec3);
+			const uint32 bufSize = attrSize * verticesCount;
+			vts.resize(offset + bufSize);
+			detail::memcpy(vts.data() + offset, poly->normals().data(), bufSize);
+			attrs.emplace_back(CAGE_SHADER_ATTRIB_IN_NORMAL, 3, GL_FLOAT, attrSize, offset);
+			vertexSize += attrSize;
+			offset += bufSize;
+		}
+
+		if (!poly->uvs().empty())
+		{
+			constexpr uint32 attrSize = sizeof(vec2);
+			const uint32 bufSize = attrSize * verticesCount;
+			vts.resize(offset + bufSize);
+			detail::memcpy(vts.data() + offset, poly->uvs().data(), bufSize);
+			attrs.emplace_back(CAGE_SHADER_ATTRIB_IN_UV, 2, GL_FLOAT, attrSize, offset);
+			vertexSize += attrSize;
+			offset += bufSize;
+		}
+
+		if (!poly->uvs3().empty())
+		{
+			constexpr uint32 attrSize = sizeof(vec3);
+			const uint32 bufSize = attrSize * verticesCount;
+			vts.resize(offset + bufSize);
+			detail::memcpy(vts.data() + offset, poly->uvs3().data(), bufSize);
+			attrs.emplace_back(CAGE_SHADER_ATTRIB_IN_UV, 3, GL_FLOAT, attrSize, offset);
+			vertexSize += attrSize;
+			offset += bufSize;
+		}
+
+		if (!poly->tangents().empty())
+		{
+			constexpr uint32 attrSize = sizeof(vec3);
+			const uint32 bufSize = attrSize * verticesCount;
+			vts.resize(offset + bufSize);
+			detail::memcpy(vts.data() + offset, poly->tangents().data(), bufSize);
+			attrs.emplace_back(CAGE_SHADER_ATTRIB_IN_TANGENT, 3, GL_FLOAT, attrSize, offset);
+			vertexSize += attrSize;
+			offset += bufSize;
+		}
+
+		if (!poly->bitangents().empty())
+		{
+			constexpr uint32 attrSize = sizeof(vec3);
+			const uint32 bufSize = attrSize * verticesCount;
+			vts.resize(offset + bufSize);
+			detail::memcpy(vts.data() + offset, poly->bitangents().data(), bufSize);
+			attrs.emplace_back(CAGE_SHADER_ATTRIB_IN_BITANGENT, 3, GL_FLOAT, attrSize, offset);
+			vertexSize += attrSize;
+			offset += bufSize;
+		}
+
+		if (!poly->boneIndices().empty())
+		{
+			constexpr uint32 attrSize = sizeof(ivec4);
+			const uint32 bufSize = attrSize * verticesCount;
+			vts.resize(offset + bufSize);
+			detail::memcpy(vts.data() + offset, poly->boneIndices().data(), bufSize);
+			attrs.emplace_back(CAGE_SHADER_ATTRIB_IN_BONEINDEX, 4, GL_UNSIGNED_INT, attrSize, offset);
+			vertexSize += attrSize;
+			offset += bufSize;
+		}
+
+		if (!poly->boneWeights().empty())
+		{
+			constexpr uint32 attrSize = sizeof(vec4);
+			const uint32 bufSize = attrSize * verticesCount;
+			vts.resize(offset + bufSize);
+			detail::memcpy(vts.data() + offset, poly->boneWeights().data(), bufSize);
+			attrs.emplace_back(CAGE_SHADER_ATTRIB_IN_BONEWEIGHT, 4, GL_FLOAT, attrSize, offset);
+			vertexSize += attrSize;
+			offset += bufSize;
+		}
+
+		CAGE_ASSERT(vts.size() == verticesCount * vertexSize);
+		setBuffers(verticesCount, vertexSize, vts.data(), poly->indicesCount(), poly->indices().data(), numeric_cast<uint32>(materialBuffer.size()), materialBuffer.data());
+
+		switch (poly->type())
+		{
+		case PolyhedronTypeEnum::Points: setPrimitiveType(GL_POINTS); break;
+		case PolyhedronTypeEnum::Lines: setPrimitiveType(GL_LINES); break;
+		case PolyhedronTypeEnum::Triangles: setPrimitiveType(GL_TRIANGLES); break;
+		default: CAGE_THROW_CRITICAL(Exception, "invalid polyhedron type");
+		}
+
+		for (const Attr &a : attrs)
+			setAttribute(a.i, a.c, a.t, a.s, a.o);
+
+		setBoundingBox(poly->boundingBox());
+	}
+
 	void Mesh::setFlags(MeshRenderFlags flags)
 	{
 		MeshImpl *impl = (MeshImpl*)this;
@@ -165,13 +294,13 @@ namespace cage
 		impl->indicesCount = indicesCount;
 		impl->materialSize = materialSize;
 
-		uint32 BufferAlignment = 256;
-		glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, (GLint*)&BufferAlignment);
+		uint32 bufferAlignment = 256;
+		glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, (GLint*)&bufferAlignment);
 
-		uint32 bufferSize = numeric_cast<uint32>(
-			verticesCount * vertexSize + detail::addToAlign(verticesCount * vertexSize, BufferAlignment) +
-			indicesCount * sizeof(uint32) + detail::addToAlign(indicesCount * sizeof(uint32), BufferAlignment) +
-			materialSize + detail::addToAlign(materialSize, BufferAlignment)
+		const uint32 bufferSize = numeric_cast<uint32>(
+			verticesCount * vertexSize + detail::addToAlign(verticesCount * vertexSize, bufferAlignment) +
+			indicesCount * sizeof(uint32) + detail::addToAlign(indicesCount * sizeof(uint32), bufferAlignment) +
+			materialSize + detail::addToAlign(materialSize, bufferAlignment)
 			);
 		glBufferData(GL_ARRAY_BUFFER, bufferSize, nullptr, GL_STATIC_DRAW);
 		CAGE_CHECK_GL_ERROR_DEBUG();
@@ -179,24 +308,23 @@ namespace cage
 		uint32 offset = 0;
 
 		{ // vertices
-			impl->verticesOffset = offset;
 			glBufferSubData(GL_ARRAY_BUFFER, offset, verticesCount * vertexSize, vertexData);
 			CAGE_CHECK_GL_ERROR_DEBUG();
-			offset += verticesCount * vertexSize + numeric_cast<uint32>(detail::addToAlign(verticesCount * vertexSize, BufferAlignment));
+			offset += verticesCount * vertexSize + numeric_cast<uint32>(detail::addToAlign(verticesCount * vertexSize, bufferAlignment));
 		}
 
 		{ // indices
 			impl->indicesOffset = offset;
 			glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, indicesCount * sizeof(uint32), indexData);
 			CAGE_CHECK_GL_ERROR_DEBUG();
-			offset += indicesCount * sizeof(uint32) + numeric_cast<uint32>(detail::addToAlign(indicesCount * sizeof(uint32), BufferAlignment));
+			offset += indicesCount * sizeof(uint32) + numeric_cast<uint32>(detail::addToAlign(indicesCount * sizeof(uint32), bufferAlignment));
 		}
 
 		{ // material
 			impl->materialOffset = offset;
 			glBufferSubData(GL_UNIFORM_BUFFER, offset, materialSize, MaterialData);
 			CAGE_CHECK_GL_ERROR_DEBUG();
-			offset += materialSize + numeric_cast<uint32>(detail::addToAlign(materialSize, BufferAlignment));
+			offset += materialSize + numeric_cast<uint32>(detail::addToAlign(materialSize, bufferAlignment));
 		}
 
 		impl->updatePrimitivesCount();
@@ -211,7 +339,7 @@ namespace cage
 		else
 		{
 			glEnableVertexAttribArray(index);
-			void *data = (void*)((uintPtr)startOffset + numeric_cast<uint32>(impl->verticesOffset));
+			void *data = (void*)(uintPtr)startOffset;
 			switch (type)
 			{
 			case GL_BYTE:

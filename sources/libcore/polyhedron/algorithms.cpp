@@ -115,7 +115,14 @@ namespace cage
 	void Polyhedron::applyTransform(const mat4 &t)
 	{
 		PolyhedronImpl *impl = (PolyhedronImpl *)this;
-		CAGE_THROW_CRITICAL(NotImplemented, "applyTransform");
+		for (vec3 &it : impl->positions)
+			it = vec3(t * vec4(it, 1));
+		for (vec3 &it : impl->normals)
+			it = vec3(t * vec4(it, 0));
+		for (vec3 &it : impl->tangents)
+			it = vec3(t * vec4(it, 0));
+		for (vec3 &it : impl->bitangents)
+			it = vec3(t * vec4(it, 0));
 	}
 
 	namespace

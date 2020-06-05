@@ -41,6 +41,7 @@ namespace cage
 		void getResolution(uint32 &width, uint32 &height, uint32 &depth) const;
 		void bind() const;
 
+		void importImage(const Image *img);
 		void image2d(uint32 w, uint32 h, uint32 internalFormat);
 		void image2d(uint32 w, uint32 h, uint32 internalFormat, uint32 format, uint32 type, const void *data);
 		void imageCube(uint32 w, uint32 h, uint32 internalFormat);
@@ -206,6 +207,8 @@ namespace cage
 
 		uint32 getId() const;
 		void bind() const;
+
+		void importPolyhedron(const Polyhedron *poly, PointerRange<char> materialBuffer);
 
 		void setFlags(MeshRenderFlags flags);
 		void setPrimitiveType(uint32 type);

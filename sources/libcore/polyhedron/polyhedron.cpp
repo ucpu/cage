@@ -91,6 +91,14 @@ namespace cage
 		}
 	}
 
+	aabb Polyhedron::boundingBox() const
+	{
+		aabb result;
+		for (const vec3 &it : positions())
+			result += aabb(it);
+		return result;
+	}
+
 	uint32 Polyhedron::indicesCount() const
 	{
 		const PolyhedronImpl *impl = (const PolyhedronImpl *)this;
@@ -217,32 +225,11 @@ namespace cage
 		return result;
 	}
 
-	Holder<Collider> Polyhedron::createCollider() const
+	void Polyhedron::importCollider(const Collider *collider)
 	{
-		const PolyhedronImpl *impl = (const PolyhedronImpl *)this;
-		CAGE_ASSERT(type() == PolyhedronTypeEnum::Triangles);
-		Holder<Collider> result = newCollider();
-		if (impl->indices.empty())
-		{
-			CAGE_ASSERT(impl->positions.size() % 3 == 0);
-			const uint32 cnt = numeric_cast<uint32>(impl->positions.size()) / 3;
-			CAGE_ASSERT(sizeof(triangle) == 3 * sizeof(vec3));
-			result->addTriangles((triangle *)impl->positions.data(), cnt);
-		}
-		else
-		{
-			CAGE_ASSERT(impl->indices.size() % 3 == 0);
-			const uint32 cnt = numeric_cast<uint32>(impl->indices.size()) / 3;
-			for (uint32 i = 0; i < cnt; i++)
-			{
-				triangle t;
-				t[0] = impl->positions[impl->indices[i * 3 + 0]];
-				t[1] = impl->positions[impl->indices[i * 3 + 1]];
-				t[2] = impl->positions[impl->indices[i * 3 + 2]];
-				result->addTriangle(t);
-			}
-		}
-		return result;
+		clear();
+		CAGE_ASSERT(sizeof(triangle) == sizeof(vec3) * 3);
+		positions({ (vec3*)collider->triangles().begin(), (vec3*)collider->triangles().end() });
 	}
 
 	Holder<Polyhedron> newPolyhedron()

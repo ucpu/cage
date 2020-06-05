@@ -4,21 +4,15 @@
 
 namespace cage
 {
-	void Polyhedron::load(const MemoryBuffer &buffer)
+	void Polyhedron::deserialize(const MemoryBuffer &buffer)
 	{
 		PolyhedronImpl *impl = (PolyhedronImpl *)this;
-		CAGE_THROW_CRITICAL(NotImplemented, "load");
+		CAGE_THROW_CRITICAL(NotImplemented, "deserialize");
 	}
 
-	void Polyhedron::load(const void *buffer, uintPtr size)
-	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
-		CAGE_THROW_CRITICAL(NotImplemented, "load");
-	}
-
-	MemoryBuffer Polyhedron::save() const
+	MemoryBuffer Polyhedron::serialize() const
 	{
 		const PolyhedronImpl *impl = (const PolyhedronImpl *)this;
-		CAGE_THROW_CRITICAL(NotImplemented, "save");
+		CAGE_THROW_CRITICAL(NotImplemented, "serialize");
 	}
 }

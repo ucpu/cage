@@ -1,12 +1,9 @@
 #ifdef _MSC_VER
 #pragma warning(push, 0)
-#include <pmp/SurfaceMesh.h>
-#include <pmp/algorithms/SurfaceRemeshing.h>
-#pragma warning(pop)
-#else
-#include <pmp/SurfaceMesh.h>
-#include <pmp/algorithms/SurfaceRemeshing.h>
 #endif
+
+#include <pmp/SurfaceMesh.h>
+#include <pmp/algorithms/SurfaceRemeshing.h>
 
 #include "polyhedron.h"
 
@@ -78,7 +75,7 @@ namespace cage
 	{
 		Holder<pmp::SurfaceMesh> pm = toPmp(this);
 		pmp::SurfaceRemeshing rms(*pm);
-		rms.adaptive_remeshing(config.minEdgeLength.value, config.maxEdgeLength.value, config.approximateError.value, config.iterations, config.useProjection);
+		rms.adaptive_remeshing(config.minEdgeLength.value, config.maxEdgeLength.value, config.approximateError.value, config.iterations, true);
 		fromPmp(this, pm);
 	}
 
@@ -90,3 +87,7 @@ namespace cage
 		fromPmp(this, pm);
 	}
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
