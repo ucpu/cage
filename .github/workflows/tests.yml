@@ -3,6 +3,7 @@ on: [push, pull_request]
 
 jobs:
   Windows:
+    name: windows-${{ matrix.os-version }}-${{ matrix.build-config }}-${{ matrix.build-arch }}
     runs-on: windows-${{ matrix.os-version }}
     strategy:
       fail-fast: false
@@ -54,29 +55,26 @@ jobs:
 
 
   Ubuntu:
-    runs-on: ubuntu-latest
+    name: ubuntu-${{ matrix.os-version }}-${{ matrix.build-config }}-${{ matrix.compiler.cc }}
+    runs-on: ubuntu-${{ matrix.os-version }}.04
     env:
       CC: ${{ matrix.compiler.cc }}
       CXX: ${{ matrix.compiler.cxx }}
     strategy:
       fail-fast: false
       matrix:
+        os-version: [18, 20]
         build-config: [debug, release]
         compiler:
-        - {
-            cc: gcc-6,
-            cxx: g++-6,
-            install: gcc-6 g++-6
-          }
         - {
             cc: gcc-7,
             cxx: g++-7,
             install: gcc-7 g++-7
           }
         - {
-            cc: gcc-8,
-            cxx: g++-8,
-            install: gcc-8 g++-8
+            cc: gcc-9,
+            cxx: g++-9,
+            install: gcc-9 g++-9
           }
         - {
             cc: clang,
