@@ -39,7 +39,7 @@ namespace cage
 		Holder<Image> guiSkinTemplateExport(const GuiSkinConfig &skin, uint32 resolution)
 		{
 			Holder<Image> png = newImage();
-			png->empty(resolution, resolution, 4);
+			png->initialize(resolution, resolution, 4);
 			for (uint32 type = 0; type < (uint32)GuiElementTypeEnum::TotalElements; type++)
 			{
 				const GuiSkinElementLayout::TextureUv &element = skin.layouts[type].textureUv;

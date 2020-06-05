@@ -84,7 +84,7 @@ void testColor()
 	{
 		CAGE_TESTCASE("color interpolation");
 		Holder<Image> png = newImage();
-		png->empty(100, 100, 3);
+		png->initialize(100, 100, 3);
 		for (uint32 y = 0; y < 100; y++)
 		{
 			vec3 a = colorHsvToRgb(randomChance3());
@@ -94,7 +94,7 @@ void testColor()
 				png->set(x, y, interpolateColor(a, b, real(x) / 99));
 			png->set(99, y, b);
 		}
-		png->encodeFile("images/color-interpolation.png");
+		png->exportFile("images/color-interpolation.png");
 	}
 
 	{

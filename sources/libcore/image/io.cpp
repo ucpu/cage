@@ -17,11 +17,13 @@ namespace cage
 	MemoryBuffer psdEncode(ImageImpl *impl);
 	MemoryBuffer ddsEncode(ImageImpl *impl);
 
-	void Image::decodeMemory(const void *buffer, uintPtr size, uint32 channels, ImageFormatEnum format)
+	void Image::importBuffer(const MemoryBuffer &buffer_, uint32 channels, ImageFormatEnum format)
 	{
 		ImageImpl *impl = (ImageImpl*)this;
 		try
 		{
+			const uintPtr size = buffer_.size();
+			const char *buffer = buffer_.data();
 			impl->clear();
 			if (size < 32)
 				CAGE_THROW_ERROR(Exception, "insufficient data to determine image format");
@@ -58,20 +60,15 @@ namespace cage
 		}
 	}
 
-	void Image::decodeBuffer(const MemoryBuffer &buffer, uint32 channels, ImageFormatEnum format)
-	{
-		decodeMemory(buffer.data(), buffer.size(), channels, format);
-	}
-
-	void Image::decodeFile(const string &filename, uint32 channels, ImageFormatEnum format)
+	void Image::importFile(const string &filename, uint32 channels, ImageFormatEnum format)
 	{
 		Holder<File> f = newFile(filename, FileMode(true, false));
 		MemoryBuffer buffer = f->readBuffer(f->size());
 		f->close();
-		decodeBuffer(buffer, channels, format);
+		importBuffer(buffer, channels, format);
 	}
 
-	MemoryBuffer Image::encodeBuffer(const string &format)
+	MemoryBuffer Image::exportBuffer(const string &format)
 	{
 		CAGE_ASSERT(channels() > 0);
 		string ext = pathExtractExtension(format).toLower();
@@ -90,9 +87,9 @@ namespace cage
 		CAGE_THROW_ERROR(Exception, "unrecognized file extension for image encoding");
 	}
 
-	void Image::encodeFile(const string &filename)
+	void Image::exportFile(const string &filename)
 	{
-		MemoryBuffer buf = encodeBuffer(filename);
+		MemoryBuffer buf = exportBuffer(filename);
 		newFile(filename, FileMode(false, true))->writeBuffer(buf);
 	}
 }

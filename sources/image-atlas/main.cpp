@@ -13,7 +13,7 @@ void cutImage(const Holder<Image> &in, uint32 x, uint32 y, uint32 w, uint32 h, c
 	Holder<Image> out = newImage();
 	imageBlit(in.get(), out.get(), x, y, 0, 0, w, h);
 	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "saving to: '" + name + "'");
-	out->encodeFile(name);
+	out->exportFile(name);
 }
 
 void doAtlas(Holder<Ini> &cmd)
@@ -32,7 +32,7 @@ void doAtlas(Holder<Ini> &cmd)
 
 	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "loading image: '" + input + "'");
 	Holder<Image> in = newImage();
-	in->decodeFile(input);
+	in->importFile(input);
 	uint32 inw = in->width();
 	uint32 inh = in->height();
 	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "image resolution: " + inw + "x" + inh + ", channels: " + in->channels());

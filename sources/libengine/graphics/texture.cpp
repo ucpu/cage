@@ -1,4 +1,5 @@
 #include <cage-core/macros.h>
+#include <cage-core/image.h>
 #include <cage-engine/opengl.h>
 #include "private.h"
 
@@ -200,6 +201,63 @@ namespace cage
 #ifdef CAGE_ASSERT_ENABLED
 		privat::setCurrentTexture(impl->id);
 #endif // CAGE_ASSERT_ENABLED
+	}
+
+	void Texture::importImage(const Image *img)
+	{
+		const uint32 w = img->width();
+		const uint32 h = img->height();
+		if (img->colorConfig.gammaSpace == GammaSpaceEnum::Gamma)
+		{
+			switch (img->format())
+			{
+			case ImageFormatEnum::U8:
+			{
+				switch (img->channels())
+				{
+				case 3: return image2d(w, h, GL_SRGB8, GL_RGB, GL_UNSIGNED_BYTE, img->rawViewU8().data());
+				case 4: return image2d(w, h, GL_SRGB8_ALPHA8, GL_RGBA, GL_UNSIGNED_BYTE, img->rawViewU8().data());
+				}
+			} break;
+			}
+		}
+		else
+		{
+			switch (img->format())
+			{
+			case ImageFormatEnum::U8:
+			{
+				switch (img->channels())
+				{
+				case 1: return image2d(w, h, GL_R8, GL_RED, GL_UNSIGNED_BYTE, img->rawViewU8().data());
+				case 2: return image2d(w, h, GL_RG8, GL_RG, GL_UNSIGNED_BYTE, img->rawViewU8().data());
+				case 3: return image2d(w, h, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, img->rawViewU8().data());
+				case 4: return image2d(w, h, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, img->rawViewU8().data());
+				}
+			} break;
+			case ImageFormatEnum::U16:
+			{
+				switch (img->channels())
+				{
+				case 1: return image2d(w, h, GL_R16, GL_RED, GL_UNSIGNED_SHORT, img->rawViewU16().data());
+				case 2: return image2d(w, h, GL_RG16, GL_RG, GL_UNSIGNED_SHORT, img->rawViewU16().data());
+				case 3: return image2d(w, h, GL_RGB16, GL_RGB, GL_UNSIGNED_SHORT, img->rawViewU16().data());
+				case 4: return image2d(w, h, GL_RGBA16, GL_RGBA, GL_UNSIGNED_SHORT, img->rawViewU16().data());
+				}
+			} break;
+			case ImageFormatEnum::Float:
+			{
+				switch (img->channels())
+				{
+				case 1: return image2d(w, h, GL_R32F, GL_RED, GL_FLOAT, img->rawViewFloat().data());
+				case 2: return image2d(w, h, GL_RG32F, GL_RG, GL_FLOAT, img->rawViewFloat().data());
+				case 3: return image2d(w, h, GL_RGB32F, GL_RGB, GL_FLOAT, img->rawViewFloat().data());
+				case 4: return image2d(w, h, GL_RGBA32F, GL_RGBA, GL_FLOAT, img->rawViewFloat().data());
+				}
+			} break;
+			}
+		}
+		CAGE_THROW_ERROR(Exception, "image has a combination of format, channels count and color configuration that cannot be imported into texture");
 	}
 
 	void Texture::image2d(uint32 w, uint32 h, uint32 internalFormat)

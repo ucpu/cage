@@ -76,7 +76,7 @@ namespace
 
 		// generate glyph image
 		g.png = newImage();
-		g.png->empty(numeric_cast<uint32>(r - l) + border * 2, numeric_cast<uint32>(t - b) + border * 2, 3);
+		g.png->initialize(numeric_cast<uint32>(r - l) + border * 2, numeric_cast<uint32>(t - b) + border * 2, 3);
 		msdfgen::Bitmap<msdfgen::FloatRGB> msdf(g.png->width(), g.png->height());
 		msdfgen::generateMSDF(msdf, shape, 4.0, 1.0, from(-vec2(l, b) + border));
 		for (uint32 y = 0; y < g.png->height(); y++)
@@ -297,7 +297,7 @@ namespace
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "create atlas pixels");
 		texels = newImage();
-		texels->empty(data.texWidth, data.texHeight, 3);
+		texels->initialize(data.texWidth, data.texHeight, 3);
 		for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
 		{
 			Glyph &g = glyphs[glyphIndex];
@@ -364,7 +364,7 @@ namespace
 		if (configGetBool("cage-asset-processor/font/preview"))
 		{
 			texels->verticalFlip();
-			texels->encodeFile(pathJoin(fontPath, pathReplaceInvalidCharacters(inputName) + ".png"));
+			texels->exportFile(pathJoin(fontPath, pathReplaceInvalidCharacters(inputName) + ".png"));
 		}
 
 		if (configGetBool("cage-asset-processor/font/glyphs"))

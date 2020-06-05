@@ -310,9 +310,12 @@ namespace
 
 		{
 			CAGE_TESTCASE("saturate");
-			test(saturate(1.5), 1);
-			test(saturate(0.55), 0.55);
-			test(saturate(-0.55), 0);
+			test(saturate(4.5), 1.0);
+			test(saturate(1.5), 1.0);
+			test(saturate(0.65), 0.65);
+			test(saturate(0.25), 0.25);
+			test(saturate(-0.55), 0.0);
+			test(saturate(-3.55), 0.0);
 		}
 
 		{
@@ -1073,7 +1076,7 @@ namespace
 				CAGE_TESTCASE("ivec2");
 				for (uint32 i = 0; i < 10; i++)
 				{
-					ivec2 v = randomRange2i(-1e5, 1e5);
+					ivec2 v = randomRange2i(-100000, 100000);
 					string s = stringizer() + v;
 					ivec2 r = ivec2::parse(s);
 					test(v, r);
@@ -1083,7 +1086,7 @@ namespace
 				CAGE_TESTCASE("ivec3");
 				for (uint32 i = 0; i < 10; i++)
 				{
-					ivec3 v = randomRange3i(-1e5, 1e5);
+					ivec3 v = randomRange3i(-100000, 100000);
 					string s = stringizer() + v;
 					ivec3 r = ivec3::parse(s);
 					test(v, r);
@@ -1093,7 +1096,7 @@ namespace
 				CAGE_TESTCASE("ivec4");
 				for (uint32 i = 0; i < 10; i++)
 				{
-					ivec4 v = randomRange4i(-1e5, 1e5);
+					ivec4 v = randomRange4i(-100000, 100000);
 					string s = stringizer() + v;
 					ivec4 r = ivec4::parse(s);
 					test(v, r);

@@ -124,7 +124,7 @@ namespace cage
 			if (useNormals)
 				ns.reserve(m->vertexCount);
 			us.reserve(m->vertexCount);
-			const vec2 whInv = 1 / vec2(atlas->width - 1, atlas->height - 1);
+			const vec2 whInv = 1 / vec2(atlas->width, atlas->height);
 			for (uint32 i = 0; i < m->vertexCount; i++)
 			{
 				const xatlas::Vertex &a = m->vertexArray[i];

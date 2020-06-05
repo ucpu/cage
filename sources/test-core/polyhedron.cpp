@@ -33,6 +33,11 @@ namespace
 
 		return poly;
 	}
+
+	void approxEqual(const vec3 &a, const vec3 &b)
+	{
+		CAGE_TEST(distance(a, b) < 1);
+	}
 }
 
 void testPolyhedron()
@@ -45,7 +50,21 @@ void testPolyhedron()
 	Holder<Polyhedron> poly = makeUvSphere(10, 32, 16);
 #endif // CAGE_DEBUG
 
-	poly->exportToObjFile({}, "meshes/sphere_base.obj");
+	poly->exportObjFile({}, "meshes/sphere_base.obj");
+	{
+		CAGE_TESTCASE("bounding box");
+		aabb box = poly->boundingBox();
+		approxEqual(box.a, vec3(-10));
+		approxEqual(box.b, vec3(10));
+	}
+	{
+		CAGE_TESTCASE("apply transformation");
+		auto p = poly->copy();
+		p->applyTransform(transform(vec3(0, 5, 0)));
+		aabb box = p->boundingBox();
+		approxEqual(box.a, vec3(-10, -5, -10));
+		approxEqual(box.b, vec3(10, 15, 10));
+	}
 	{
 		CAGE_TESTCASE("simplify");
 		auto p = poly->copy();
@@ -57,7 +76,7 @@ void testPolyhedron()
 		cfg.approximateError = 0.5;
 #endif
 		p->simplify(cfg);
-		p->exportToObjFile({}, "meshes/sphere_simplified.obj");
+		p->exportObjFile({}, "meshes/sphere_simplified.obj");
 	}
 	{
 		CAGE_TESTCASE("regularize");
@@ -68,7 +87,7 @@ void testPolyhedron()
 		cfg.targetEdgeLength = 3;
 #endif
 		p->regularize(cfg);
-		p->exportToObjFile({}, "meshes/sphere_regularized.obj");
+		p->exportObjFile({}, "meshes/sphere_regularized.obj");
 	}
 	{
 		CAGE_TESTCASE("unwrap");
@@ -76,18 +95,21 @@ void testPolyhedron()
 		PolyhedronUnwrapConfig cfg;
 		cfg.targetResolution = 256;
 		p->unwrap(cfg);
-		p->exportToObjFile({}, "meshes/sphere_unwrap.obj");
+		p->exportObjFile({}, "meshes/sphere_unwrap.obj");
 	}
 	{
 		CAGE_TESTCASE("clip");
 		auto p = poly->copy();
 		p->clip(aabb(vec3(-6, -6, -10), vec3(6, 6, 10)));
-		p->exportToObjFile({}, "meshes/sphere_clipped.obj");
+		p->exportObjFile({}, "meshes/sphere_clipped.obj");
 	}
 	{
 		CAGE_TESTCASE("collider");
-		auto c = poly->createCollider();
-		auto p = c->createPolyhedron();
+		Holder<Collider> c = newCollider();
+		c->importPolyhedron(poly.get());
+		CAGE_TEST(c->triangles().size() > 10);
+		Holder<Polyhedron> p = newPolyhedron();
+		p->importCollider(c.get());
 		CAGE_TEST(p->positions().size() > 10);
 	}
 }

@@ -86,7 +86,7 @@ namespace
 			uint32 w = data->width();
 			uint32 h = data->height();
 			Holder<Image> res = newImage();
-			res->empty(w, h, 3, data->format());
+			res->initialize(w, h, 3, data->format());
 			for (sint32 y = 0; (uint32)y < h; y++)
 			{
 				for (sint32 x = 0; (uint32)x < w; x++)
@@ -133,7 +133,7 @@ namespace
 			case 3:
 			{
 				Holder<Image> res = newImage();
-				res->empty(w, h, 2, data->format());
+				res->initialize(w, h, 2, data->format());
 				for (uint32 y = 0; y < h; y++)
 				{
 					for (uint32 x = 0; x < w; x++)
@@ -209,7 +209,7 @@ namespace
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "loading file '" + wholeFilename + "'");
 		ImageLayer l;
 		l.data = newImage();
-		l.data->decodeFile(wholeFilename);
+		l.data->importFile(wholeFilename);
 		images.push_back(templates::move(l));
 	}
 
@@ -241,7 +241,7 @@ namespace
 		for (auto &m : images)
 		{
 			m.data = newImage();
-			m.data->empty(src.data->width() / 4, src.data->height() / 3, src.data->channels(), src.data->format());
+			m.data->initialize(src.data->width() / 4, src.data->height() / 3, src.data->channels(), src.data->format());
 			/*
 			     +---+
 			     | 2 |
@@ -549,7 +549,7 @@ void processTexture()
 		{
 			string dbgName = pathJoin(configGetString("cage-asset-processor/texture/path", "asset-preview"), stringizer() + pathReplaceInvalidCharacters(inputName) + "_" + (index++) + ".png");
 			it.data->verticalFlip(); // this is after the export, so this operation does not affect the textures
-			it.data->encodeFile(dbgName);
+			it.data->exportFile(dbgName);
 		}
 	}
 }

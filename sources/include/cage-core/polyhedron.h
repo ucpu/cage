@@ -18,7 +18,6 @@ namespace cage
 		real maxEdgeLength = 10;
 		real approximateError = 0.05;
 		uint32 iterations = 10;
-		bool useProjection = true;
 	};
 
 	struct CAGE_CORE_API PolyhedronRegularizationConfig
@@ -78,10 +77,15 @@ namespace cage
 	{
 	public:
 		void clear();
+		Holder<Polyhedron> copy() const;
 
-		void load(const MemoryBuffer &buffer);
-		void load(const void *buffer, uintPtr size);
-		MemoryBuffer save() const;
+		MemoryBuffer serialize() const;
+		void deserialize(const MemoryBuffer &buffer);
+
+		void importCollider(const Collider *collider);
+
+		MemoryBuffer exportObjBuffer(const PolyhedronObjExportConfig &config) const;
+		void exportObjFile(const PolyhedronObjExportConfig &config, const string &filename) const;
 
 		uint32 verticesCount() const;
 
@@ -146,6 +150,8 @@ namespace cage
 		void addVertex(const vec3 &position, const vec2 &uv);
 		void addVertex(const vec3 &position, const vec3 &normal, const vec2 &uv);
 
+		aabb boundingBox() const;
+
 		uint32 indicesCount() const;
 
 		PointerRange<const uint32> indices() const;
@@ -179,13 +185,6 @@ namespace cage
 		Holder<Polyhedron> cut(const plane &pln);
 		void discardDisconnected();
 		Holder<PointerRange<Holder<Polyhedron>>> separateDisconnected();
-
-		Holder<Polyhedron> copy() const;
-
-		Holder<Collider> createCollider() const;
-
-		MemoryBuffer exportToObjBuffer(const PolyhedronObjExportConfig &config) const;
-		void exportToObjFile(const PolyhedronObjExportConfig &config, const string &filename) const;
 	};
 
 	CAGE_CORE_API Holder<Polyhedron> newPolyhedron();

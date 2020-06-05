@@ -84,7 +84,7 @@ namespace cage
 		}
 	}
 
-	MemoryBuffer Polyhedron::exportToObjBuffer(const PolyhedronObjExportConfig &config) const
+	MemoryBuffer Polyhedron::exportObjBuffer(const PolyhedronObjExportConfig &config) const
 	{
 		PolyhedronImpl *impl = (PolyhedronImpl *)this;
 		CAGE_ASSERT(impl->uvs.empty() || impl->uvs3.empty());
@@ -166,12 +166,10 @@ namespace cage
 		return buffer;
 	}
 
-	void Polyhedron::exportToObjFile(const PolyhedronObjExportConfig &config, const string &filename) const
+	void Polyhedron::exportObjFile(const PolyhedronObjExportConfig &config, const string &filename) const
 	{
 		PolyhedronImpl *impl = (PolyhedronImpl *)this;
-		MemoryBuffer buff = exportToObjBuffer(config);
-		Holder<File> f = newFile(filename, FileMode(false, true));
-		f->writeBuffer(buff);
-		f->close();
+		MemoryBuffer buff = exportObjBuffer(config);
+		newFile(filename, FileMode(false, true))->writeBuffer(buff);
 	}
 }

@@ -8,26 +8,23 @@ namespace cage
 	class CAGE_CORE_API Collider : private Immovable
 	{
 	public:
+		void clear();
+		MemoryBuffer serialize(bool includeAdditionalData = true) const;
+		void deserialize(const MemoryBuffer &buffer);
+		void importPolyhedron(const Polyhedron *polyhedron);
+
 		PointerRange<const triangle> triangles() const;
 
 		void addTriangle(const triangle &t);
-		void addTriangles(const triangle *data, uint32 count);
-		void addTriangles(const PointerRange<const triangle> &tris);
-		void clear();
+		void addTriangles(PointerRange<const triangle> tris);
 
 		void rebuild();
 		bool needsRebuild() const;
 
 		const aabb &box() const;
-
-		MemoryBuffer serialize(bool includeAdditionalData = true) const;
-		void deserialize(const MemoryBuffer &buffer);
-
-		Holder<Polyhedron> createPolyhedron() const;
 	};
 
 	CAGE_CORE_API Holder<Collider> newCollider();
-	CAGE_CORE_API Holder<Collider> newCollider(const MemoryBuffer &buffer);
 
 	struct CAGE_CORE_API CollisionPair
 	{

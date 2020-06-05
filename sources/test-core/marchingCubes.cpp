@@ -32,5 +32,5 @@ void testMarchingCubes()
 	Holder<Polyhedron> poly = cubes->makePolyhedron();
 	CAGE_TEST(poly->verticesCount() > 10);
 	CAGE_TEST(poly->indicesCount() > 10);
-	poly->exportToObjFile({}, "meshes/marchingCubesTorus.obj");
+	poly->exportObjFile({}, "meshes/marchingCubesTorus.obj");
 }

@@ -21,13 +21,13 @@ void convert(string src, const string &format)
 		return;
 	}
 	Holder<Image> img = newImage();
-	img->decodeFile(src);
+	img->importFile(src);
 	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "width: " + img->width());
 	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "height: " + img->height());
 	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "channels: " + img->channels());
 	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "format: " + (uint32)img->format());
 	{ // encode to buffer first to verify that the conversion is possible
-		MemoryBuffer buf = img->encodeBuffer(format);
+		MemoryBuffer buf = img->exportBuffer(format);
 		Holder<File> f = newFile(dst, FileMode(false, true));
 		f->writeBuffer(buf);
 		f->close();

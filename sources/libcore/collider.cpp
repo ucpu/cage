@@ -189,16 +189,11 @@ namespace cage
 		impl->dirty = true;
 	}
 
-	void Collider::addTriangles(const triangle *data, uint32 count)
+	void Collider::addTriangles(PointerRange<const triangle> tris)
 	{
 		ColliderImpl *impl = (ColliderImpl*)this;
-		impl->tris.insert(impl->tris.end(), data, data + count);
+		impl->tris.insert(impl->tris.end(), tris.begin(), tris.end());
 		impl->dirty = true;
-	}
-
-	void Collider::addTriangles(const PointerRange<const triangle> &tris)
-	{
-		addTriangles(tris.data(), numeric_cast<uint32>(tris.size()));
 	}
 
 	void Collider::clear()
@@ -293,15 +288,32 @@ namespace cage
 		readVector(des, impl->nodes, header.nodesCount);
 	}
 
-	Holder<Polyhedron> Collider::createPolyhedron() const
+	void Collider::importPolyhedron(const Polyhedron *poly)
 	{
-		const ColliderImpl *impl = (const ColliderImpl*)this;
-		Holder<Polyhedron> result = newPolyhedron();
-		CAGE_ASSERT(sizeof(triangle) == sizeof(vec3) * 3);
-		const vec3 *a = (vec3*)impl->tris.data();
-		const vec3 *b = a + impl->tris.size() * 3;
-		result->positions(PointerRange<const vec3>(a, b));
-		return result;
+		clear();
+		CAGE_ASSERT(poly->type() == PolyhedronTypeEnum::Triangles);
+		if (poly->indices().empty())
+		{
+			CAGE_ASSERT(poly->positions().size() % 3 == 0);
+			const uint32 cnt = poly->verticesCount() / 3;
+			CAGE_ASSERT(sizeof(triangle) == 3 * sizeof(vec3));
+			addTriangles({ (triangle*)poly->positions().begin(), (triangle*)poly->positions().end() });
+		}
+		else
+		{
+			CAGE_ASSERT(poly->indices().size() % 3 == 0);
+			const uint32 cnt = numeric_cast<uint32>(poly->indices().size()) / 3;
+			const auto pos = poly->positions();
+			const auto ind = poly->indices();
+			for (uint32 i = 0; i < cnt; i++)
+			{
+				triangle t;
+				t[0] = pos[ind[i * 3 + 0]];
+				t[1] = pos[ind[i * 3 + 1]];
+				t[2] = pos[ind[i * 3 + 2]];
+				addTriangle(t);
+			}
+		}
 	}
 
 	Holder<Collider> newCollider()

@@ -27,12 +27,12 @@ namespace
 		}
 		noise->evaluate(resolution * resolution, positions.data(), results.data());
 		Holder<Image> png = newImage();
-		png->empty(resolution, resolution, 1);
+		png->initialize(resolution, resolution, 1);
 		uint32 index = 0;
 		for (sint32 y = 0; y < resolution; y++)
 			for (sint32 x = 0; x < resolution; x++)
 				png->set(x, y, results[index++]);
-		png->encodeFile(fileName);
+		png->exportFile(fileName);
 	}
 }
 

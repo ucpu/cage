@@ -25,7 +25,7 @@ void doSplit(Holder<Ini> &cmd)
 
 	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "loading image: '" + input + "'");
 	Holder<Image> in = newImage();
-	in->decodeFile(input);
+	in->importFile(input);
 	if (in->format() == ImageFormatEnum::Rgbe)
 		CAGE_THROW_ERROR(Exception, "input image uses Rgbe format, which cannot be split");
 	uint32 width = in->width();
@@ -37,14 +37,14 @@ void doSplit(Holder<Ini> &cmd)
 	{
 		if (names[ch].empty())
 			continue;
-		out->empty(width, height, 1, in->format());
+		out->initialize(width, height, 1, in->format());
 		for (uint32 y = 0; y < height; y++)
 		{
 			for (uint32 x = 0; x < width; x++)
 				out->value(x, y, 0, in->value(x, y, ch));
 		}
 		CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "saving image: '" + names[ch] + "'");
-		out->encodeFile(names[ch]);
+		out->exportFile(names[ch]);
 	}
 	CAGE_LOG(SeverityEnum::Info, "image", "ok");
 }
@@ -69,7 +69,7 @@ void doJoin(Holder<Ini> &cmd)
 		{
 			CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "loading image: '" + name + "' for " + (index + 1) + "th channel");
 			Holder<Image> p = newImage();
-			p->decodeFile(name);
+			p->importFile(name);
 			CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "image resolution: " + p->width() + "x" + p->height() + ", channels: " + p->channels());
 			if (width == 0)
 			{
@@ -87,7 +87,7 @@ void doJoin(Holder<Ini> &cmd)
 					CAGE_THROW_ERROR(Exception, "the image has to be mono channel");
 				CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "monochromatizing");
 				Holder<Image> m = newImage();
-				m->empty(width, height, 1);
+				m->initialize(width, height, 1);
 				uint32 ch = p->channels();
 				for (uint32 y = 0; y < height; y++)
 				{
@@ -110,7 +110,7 @@ void doJoin(Holder<Ini> &cmd)
 
 	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "joining image");
 	Holder<Image> res = newImage();
-	res->empty(width, height, channels);
+	res->initialize(width, height, channels);
 	for (uint32 i = 0; i < channels; i++)
 	{
 		Holder<Image> &src = pngs[i];
@@ -124,7 +124,7 @@ void doJoin(Holder<Ini> &cmd)
 	}
 
 	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "saving image: '" + output + "'");
-	res->encodeFile(output);
+	res->exportFile(output);
 	CAGE_LOG(SeverityEnum::Info, "image", "ok");
 }
 
