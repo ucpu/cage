@@ -1,11 +1,6 @@
-#include <cage-core/core.h>
-#include <cage-core/config.h>
-#include <cage-core/files.h>
 #include <cage-core/ini.h>
 
-using namespace cage;
-
-#include "config.h"
+#include "database.h"
 
 ConfigString configPathInput("cage-asset-database/path/input", "data");
 ConfigString configPathOutput("cage-asset-database/path/output", "assets");
@@ -25,7 +20,8 @@ StringSet configIgnorePaths;
 void configParseCmd(int argc, const char *args[])
 {
 	{
-		Holder<Ini> ini = newIni(argc, args);
+		Holder<Ini> ini = newIni();
+		ini->parseCmd(argc, args);
 		configFromScratch = ini->cmdBool('s', "scratch", configFromScratch);
 		configListening = ini->cmdBool('l', "listen", configListening);
 		ini->checkUnused();

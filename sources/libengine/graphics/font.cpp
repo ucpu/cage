@@ -342,12 +342,14 @@ namespace cage
 		FontImpl *impl = (FontImpl*)this;
 		if (glyphs)
 		{
-			utf8to32(glyphs, count, text);
+			PointerRange<uint32> pr(glyphs, glyphs + count);
+			utf8to32(pr, text);
+			CAGE_ASSERT(pr.size() == count);
 			for (uint32 i = 0; i < count; i++)
 				glyphs[i] = impl->findGlyphIndex(glyphs[i]);
 		}
 		else
-			count = utfLength(text);
+			count = utf32Length(text);
 	}
 
 	void Font::size(const uint32 *glyphs, uint32 count, const FormatStruct &format, vec2 &size)

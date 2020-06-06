@@ -272,7 +272,7 @@ namespace cage
 		return buffer;
 	}
 
-	void Collider::deserialize(const MemoryBuffer &buffer)
+	void Collider::deserialize(PointerRange<const char> buffer)
 	{
 		ColliderImpl *impl = (ColliderImpl*)this;
 		Deserializer des(buffer);

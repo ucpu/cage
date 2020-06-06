@@ -1,8 +1,6 @@
 #include "utility/assimp.h"
 #include <cage-core/hashString.h>
 #include <cage-core/ini.h>
-#include <cage-core/memoryBuffer.h>
-#include <cage-core/serialization.h>
 #include <cage-core/color.h>
 #include <cage-engine/shaderConventions.h>
 #include <cage-engine/opengl.h>
@@ -88,7 +86,7 @@ namespace
 		writeLine(string("use = ") + path);
 
 		Holder<Ini> ini = newIni();
-		ini->load(pathJoin(inputDirectory, path));
+		ini->importFile(pathJoin(inputDirectory, path));
 
 		mat.albedoBase = vec4(
 			colorGammaToLinear(vec3::parse(ini->getString("base", "albedo", "0, 0, 0"))) * ini->getFloat("base", "intensity", 1),
@@ -573,12 +571,12 @@ void processMesh()
 	h.compressedSize = compressed.size();
 
 	Holder<File> f = newFile(outputFileName, FileMode(false, true));
-	f->write(&h, sizeof(h));
+	f->write(bytesView(h));
 	if (dsm.skeletonName)
-		f->write(&dsm.skeletonName, sizeof(uint32));
+		f->write(bytesView(dsm.skeletonName));
 	for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		if (dsm.textureNames[i])
-			f->write(&dsm.textureNames[i], sizeof(uint32));
-	f->write(compressed.data(), compressed.size());
+			f->write(bytesView(dsm.textureNames[i]));
+	f->write(compressed);
 	f->close();
 }

@@ -70,9 +70,6 @@ namespace cage
 
 	// NotImplemented
 
-	NotImplemented::NotImplemented(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept : Exception(file, line, function, severity, message)
-	{};
-
 	void NotImplemented::log()
 	{
 		::cage::privat::makeLog(file, line, function, severity, "exception", string() + "not implemented: '" + message + "'", false, false);

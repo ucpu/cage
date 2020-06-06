@@ -7,7 +7,7 @@ namespace cage
 {
 	struct CAGE_CORE_API EntityComponentCreateConfig
 	{
-		bool enumerableEntities;
+		bool enumerableEntities = false;
 
 		EntityComponentCreateConfig(bool enumerableEntities) : enumerableEntities(enumerableEntities)
 		{}
@@ -115,8 +115,7 @@ namespace cage
 	inline PointerRange<Entity *const> EntityComponent::entities() const { return group()->entities(); }
 
 	CAGE_CORE_API MemoryBuffer entitiesSerialize(const EntityGroup *entities, EntityComponent *component);
-	CAGE_CORE_API void entitiesDeserialize(const MemoryBuffer &buffer, EntityManager *manager);
-	CAGE_CORE_API void entitiesDeserialize(const void *buffer, uintPtr size, EntityManager *manager);
+	CAGE_CORE_API void entitiesDeserialize(PointerRange<const char> buffer, EntityManager *manager);
 }
 
 #endif // guard_entities_h_1259B2E89D514872B54F01F42E1EC56A

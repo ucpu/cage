@@ -194,10 +194,10 @@ namespace cage
 		}
 	}
 
-	void pngDecode(const char *inBuffer, uintPtr inSize, ImageImpl *impl)
+	void pngDecode(PointerRange<const char> inBuffer, ImageImpl *impl)
 	{
 		uint32 bpp = 0;
-		pngDecode(inBuffer, inSize, impl->mem, impl->width, impl->height, impl->channels, bpp);
+		pngDecode(inBuffer.data(), inBuffer.size(), impl->mem, impl->width, impl->height, impl->channels, bpp);
 		switch (bpp)
 		{
 		case 1:

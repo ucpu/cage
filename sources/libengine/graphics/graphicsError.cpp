@@ -84,7 +84,7 @@ namespace cage
 			}
 
 			CAGE_LOG(cageSevr, "graphics", "debug message:");
-			Holder<LineReader> lrb = newLineReader((char*)message, std::strlen(message));
+			Holder<LineReader> lrb = newLineReader({ message, message + std::strlen(message) });
 			for (string line; lrb->readLine(line);)
 				CAGE_LOG_CONTINUE(cageSevr, "graphics", line);
 			CAGE_LOG_CONTINUE(SeverityEnum::Note, "graphics", stringizer() + "source: " + src + ", type: " + tp + ", severity: " + sevr + ", id: " + id);

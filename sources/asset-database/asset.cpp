@@ -1,14 +1,6 @@
-#include <cage-core/core.h>
-#include <cage-core/files.h>
 #include <cage-core/hashString.h>
 
-using namespace cage;
-
-#include "utilities.h"
-#include "asset.h"
-
-Asset::Asset() : corrupted(true), needNotify(false)
-{}
+#include "database.h"
 
 void Asset::load(File *f)
 {
@@ -17,7 +9,7 @@ void Asset::load(File *f)
 	read(f, scheme);
 	read(f, databank);
 	uint32 m = 0;
-	read(f, m);
+	f->read(bytesView(m));
 	for (uint32 j = 0; j < m; j++)
 	{
 		string t1, t2;
@@ -25,21 +17,21 @@ void Asset::load(File *f)
 		read(f, t2);
 		fields[t1] = t2;
 	}
-	read(f, m);
+	f->read(bytesView(m));
 	for (uint32 j = 0; j < m; j++)
 	{
 		string t;
 		read(f, t);
 		files.insert(t);
 	}
-	read(f, m);
+	f->read(bytesView(m));
 	for (uint32 j = 0; j < m; j++)
 	{
 		string t;
 		read(f, t);
 		references.insert(t);
 	}
-	read(f, corrupted);
+	f->read(bytesView(corrupted));
 }
 
 void Asset::save(File *f) const
@@ -48,19 +40,22 @@ void Asset::save(File *f) const
 	write(f, aliasName);
 	write(f, scheme);
 	write(f, databank);
-	write(f, numeric_cast<uint32>(fields.size()));
+	uint32 m = numeric_cast<uint32>(fields.size());
+	f->write(bytesView(m));
 	for (auto it : fields)
 	{
 		write(f, it.first);
 		write(f, it.second);
 	}
-	write(f, numeric_cast<uint32>(files.size()));
+	m = numeric_cast<uint32>(files.size());
+	f->write(bytesView(m));
 	for (const string &it : files)
 		write(f, it);
-	write(f, numeric_cast<uint32>(references.size()));
+	m = numeric_cast<uint32>(references.size());
+	f->write(bytesView(m));
 	for (const string &it : references)
 		write(f, it);
-	write(f, corrupted);
+	f->write(bytesView(corrupted));
 }
 
 string Asset::outputPath() const

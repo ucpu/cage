@@ -1,5 +1,6 @@
 #include <cage-core/assetStructs.h>
 #include <cage-core/serialization.h>
+#include <cage-core/memoryBuffer.h>
 
 #include <cage-engine/graphics.h>
 #include <cage-engine/assetStructs.h>
@@ -8,7 +9,7 @@ namespace cage
 {
 	namespace
 	{
-		void processLoad(const AssetContext *context, void *schemePointer)
+		void processLoad(const AssetContext *context)
 		{
 			Holder<ShaderProgram> shr = newShaderProgram();
 			shr->setDebugName(context->textName);
@@ -30,11 +31,10 @@ namespace cage
 		}
 	}
 
-	AssetScheme genAssetSchemeShaderProgram(uint32 threadIndex, Window *memoryContext)
+	AssetScheme genAssetSchemeShaderProgram(uint32 threadIndex)
 	{
 		AssetScheme s;
 		s.threadIndex = threadIndex;
-		s.schemePointer = memoryContext;
 		s.load.bind<&processLoad>();
 		return s;
 	}

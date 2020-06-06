@@ -1,6 +1,7 @@
 #include <cage-core/assetStructs.h>
-#include <cage-core/color.h>
 #include <cage-core/serialization.h>
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/color.h>
 
 #include <cage-engine/graphics.h>
 #include <cage-engine/opengl.h>
@@ -16,7 +17,7 @@ namespace cage
 			return i == 0 ? MeshDataFlags::Aux0 : i == 1 ? MeshDataFlags::Aux1 : i == 2 ? MeshDataFlags::Aux2 : i == 3 ? MeshDataFlags::Aux3 : MeshDataFlags::None;
 		}
 
-		void processLoad(const AssetContext *context, void *schemePointer)
+		void processLoad(const AssetContext *context)
 		{
 			Holder<Mesh> msh = newMesh();
 			msh->setDebugName(context->textName);
@@ -112,11 +113,10 @@ namespace cage
 		}
 	}
 
-	AssetScheme genAssetSchemeMesh(uint32 threadIndex, Window *memoryContext)
+	AssetScheme genAssetSchemeMesh(uint32 threadIndex)
 	{
 		AssetScheme s;
 		s.threadIndex = threadIndex;
-		s.schemePointer = memoryContext;
 		s.load.bind<&processLoad>();
 		return s;
 	}

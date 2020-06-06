@@ -8,12 +8,12 @@ void testLineReader()
 
 	const string data("abc\ndef\r\nghi\n\nlast");
 	{
-		newFile("testdir/lineReaderTest", FileMode(false, true))->write(data.c_str(), data.length());
+		writeFile("testdir/lineReaderTest")->write({ data.c_str(), data.c_str() + data.length() });
 	}
 
 	{
 		CAGE_TESTCASE("line reader from memory");
-		Holder<LineReader> lr = newLineReader(data.c_str(), data.length());
+		Holder<LineReader> lr = newLineReader({ data.c_str(), data.c_str() + data.length() });
 		string l;
 		CAGE_TEST(lr->readLine(l));
 		CAGE_TEST(l == "abc");
@@ -30,7 +30,7 @@ void testLineReader()
 
 	{
 		CAGE_TESTCASE("line reading from file (binary)");
-		Holder<File> lr = newFile("testdir/lineReaderTest", FileMode(true, false));
+		Holder<File> lr = readFile("testdir/lineReaderTest");
 		string l;
 		CAGE_TEST(lr->readLine(l));
 		CAGE_TEST(l == "abc");

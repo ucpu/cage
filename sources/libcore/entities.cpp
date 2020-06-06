@@ -465,7 +465,8 @@ namespace cage
 				continue;
 			cnt++;
 			ser << name;
-			ser.write(e->unsafeValue(component), typeSize);
+			const char *u = (const char *)e->unsafeValue(component);
+			ser.write({ u, u + typeSize });
 		}
 		if (cnt == 0)
 			return {};
@@ -473,11 +474,11 @@ namespace cage
 		return buffer;
 	}
 
-	void entitiesDeserialize(const void *buffer, uintPtr size, EntityManager *manager)
+	void entitiesDeserialize(PointerRange<const char> buffer, EntityManager *manager)
 	{
-		if (size == 0)
+		if (buffer.empty())
 			return;
-		Deserializer des(buffer, size);
+		Deserializer des(buffer);
 		uint32 componentIndex;
 		des >> componentIndex;
 		if (componentIndex >= manager->componentsCount())
@@ -496,12 +497,8 @@ namespace cage
 			if (name == 0)
 				CAGE_THROW_ERROR(Exception, "anonymous entity");
 			Entity *e = manager->getOrCreate(name);
-			des.read(e->unsafeValue(component), numeric_cast<uintPtr>(typeSize));
+			char *u = (char *)e->unsafeValue(component);
+			des.read({ u, u + typeSize });
 		}
-	}
-
-	void entitiesDeserialize(const MemoryBuffer &buffer, EntityManager *manager)
-	{
-		entitiesDeserialize(buffer.data(), buffer.size(), manager);
 	}
 }

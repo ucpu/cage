@@ -2,6 +2,7 @@
 #include <cage-core/files.h>
 #include <cage-core/process.h>
 #include <cage-core/lineReader.h>
+#include <cage-core/memoryBuffer.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
 #include "incWin.h"
@@ -127,6 +128,24 @@ namespace cage
 				return ret;
 			}
 
+			void read(void *data, uint32 size)
+			{
+				DWORD read = 0;
+				if (!ReadFile(hChildStd_OUT_Rd, data, size, &read, nullptr))
+					CAGE_THROW_ERROR(SystemError, "ReadFile", GetLastError());
+				if (read != size)
+					CAGE_THROW_ERROR(Exception, "insufficient data");
+			}
+
+			void write(const void *data, uint32 size)
+			{
+				DWORD written = 0;
+				if (!WriteFile(hChildStd_IN_Wr, data, size, &written, nullptr))
+					CAGE_THROW_ERROR(SystemError, "WriteFile", GetLastError());
+				if (written != size)
+					CAGE_THROW_ERROR(Exception, "data truncated");
+			}
+
 			const string cmd;
 			const string workingDir;
 			HANDLE hChildStd_IN_Rd;
@@ -139,8 +158,8 @@ namespace cage
 
 #else
 
-		static constexpr int PIPE_READ = 0;
-		static constexpr int PIPE_WRITE = 1;
+		constexpr int PIPE_READ = 0;
+		constexpr int PIPE_WRITE = 1;
 
 		class ProcessImpl : public Process
 		{
@@ -280,65 +299,51 @@ namespace cage
 				pid = 0;
 				return status;
 			}
+
+			void read(void *data, uint32 size)
+			{
+				auto r = ::read(aStdoutPipe[PIPE_READ], data, size);
+				if (r < 0)
+					CAGE_THROW_ERROR(SystemError, "read", errno);
+				if (r != size)
+					CAGE_THROW_ERROR(Exception, "insufficient data");
+			}
+
+			void write(const void *data, uint32 size)
+			{
+				auto r = ::write(aStdinPipe[PIPE_WRITE], data, size);
+				if (r < 0)
+					CAGE_THROW_ERROR(SystemError, "write", errno);
+				if (r != size)
+					CAGE_THROW_ERROR(Exception, "data truncated");
+			}
 		};
 
 #endif
 	}
 
-#ifdef CAGE_SYSTEM_WINDOWS
-
-	void Process::read(void *data, uint32 size)
+	void Process::read(PointerRange<char> buffer)
 	{
 		ProcessImpl *impl = (ProcessImpl*)this;
-		DWORD read = 0;
-		if (!ReadFile(impl->hChildStd_OUT_Rd, data, size, &read, nullptr))
-			CAGE_THROW_ERROR(SystemError, "ReadFile", GetLastError());
-		if (read != size)
-			CAGE_THROW_ERROR(Exception, "insufficient data");
+		impl->read(buffer.data(), numeric_cast<uint32>(buffer.size()));
 	}
 
-	void Process::write(const void *data, uint32 size)
+	MemoryBuffer Process::read(uintPtr size)
 	{
-		ProcessImpl *impl = (ProcessImpl*)this;
-		DWORD written = 0;
-		if (!WriteFile(impl->hChildStd_IN_Wr, data, size, &written, nullptr))
-			CAGE_THROW_ERROR(SystemError, "WriteFile", GetLastError());
-		if (written != size)
-			CAGE_THROW_ERROR(Exception, "data truncated");
+		MemoryBuffer buf(size);
+		read(buf);
+		return buf;
 	}
-
-#else
-
-	void Process::read(void *data, uint32 size)
-	{
-		ProcessImpl *impl = (ProcessImpl*)this;
-		auto r = ::read(impl->aStdoutPipe[PIPE_READ], data, size);
-		if (r < 0)
-			CAGE_THROW_ERROR(SystemError, "read", errno);
-		if (r != size)
-			CAGE_THROW_ERROR(Exception, "insufficient data");
-	}
-
-	void Process::write(const void *data, uint32 size)
-	{
-		ProcessImpl *impl = (ProcessImpl*)this;
-		auto r = ::write(impl->aStdinPipe[PIPE_WRITE], data, size);
-		if (r < 0)
-			CAGE_THROW_ERROR(SystemError, "write", errno);
-		if (r != size)
-			CAGE_THROW_ERROR(Exception, "data truncated");
-	}
-
-#endif
 
 	string Process::readLine()
 	{
+		ProcessImpl *impl = (ProcessImpl*)this;
 		string out;
 		char buffer[string::MaxLength + 1];
 		uintPtr size = 0;
 		while (size < string::MaxLength)
 		{
-			read(buffer + size, 1);
+			impl->read(buffer + size, 1);
 			size++;
 			const char *b = buffer;
 			if (detail::readLine(out, b, size, true))
@@ -347,10 +352,18 @@ namespace cage
 		CAGE_THROW_ERROR(Exception, "line too long");
 	}
 
-	void Process::writeLine(const string &data)
+	void Process::write(PointerRange<const char> buffer)
 	{
-		string d = data + "\n";
-		write(d.c_str(), d.length());
+		ProcessImpl *impl = (ProcessImpl*)this;
+		impl->write(buffer.data(), numeric_cast<uint32>(buffer.size()));
+	}
+
+	void Process::writeLine(const string &line)
+	{
+		ProcessImpl *impl = (ProcessImpl*)this;
+		write({ line.c_str(), line.c_str() + line.length() });
+		const char eol[2] = "\n";
+		write({ eol, eol + 1, });
 	}
 
 	void Process::terminate()

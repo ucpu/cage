@@ -80,7 +80,7 @@ namespace cage
 		Holder<Polyhedron> copy() const;
 
 		MemoryBuffer serialize() const;
-		void deserialize(const MemoryBuffer &buffer);
+		void deserialize(PointerRange<const char> buffer);
 
 		void importCollider(const Collider *collider);
 

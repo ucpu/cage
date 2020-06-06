@@ -36,8 +36,8 @@ namespace cage
 #define GCHL_CONFIG(T, t) \
 	struct CAGE_CORE_API Config##T \
 	{ \
-		Config##T(const string &name); \
-		Config##T(const string &name, t default_); \
+		explicit Config##T(const string &name); \
+		explicit Config##T(const string &name, t default_); \
 		operator t() const; \
 		Config##T &operator = (t value); \
 		private: void *data; \
@@ -55,8 +55,8 @@ namespace cage
 
 	struct CAGE_CORE_API ConfigString
 	{
-		ConfigString(const string &name);
-		ConfigString(const string &name, const string &default_);
+		explicit ConfigString(const string &name);
+		explicit ConfigString(const string &name, const string &default_);
 		operator string() const;
 		ConfigString &operator = (const string &value);
 	private:
@@ -89,8 +89,8 @@ namespace cage
 
 	CAGE_CORE_API void configApplyIni(const Ini *ini, const string &prefix);
 	CAGE_CORE_API Holder<Ini> configGenerateIni(const string &prefix);
-	CAGE_CORE_API void configLoadIni(const string &filename, const string &prefix);
-	CAGE_CORE_API void configSaveIni(const string &filename, const string &prefix);
+	CAGE_CORE_API void configImportIni(const string &filename, const string &prefix);
+	CAGE_CORE_API void configExportIni(const string &filename, const string &prefix);
 
 	namespace detail
 	{

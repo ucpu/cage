@@ -4,7 +4,7 @@
 
 namespace cage
 {
-	string TextPack::format(const string &format, uint32 paramCount, const string *paramValues)
+	string TextPack::format(const string &format, PointerRange<const string> params)
 	{
 		string res = format;
 		while (true)
@@ -16,8 +16,8 @@ namespace cage
 			if (mid.isDigitsOnly())
 			{
 				uint32 idx = mid.toUint32();
-				if (idx < paramCount)
-					mid = paramValues[idx];
+				if (idx < params.size())
+					mid = params[idx];
 				else
 					mid = "";
 			}
@@ -66,10 +66,10 @@ namespace cage
 		return it->second;
 	}
 
-	string TextPack::format(uint32 name, uint32 paramCount, const string *paramValues) const
+	string TextPack::format(uint32 name, PointerRange<const string> params) const
 	{
 		CAGE_ASSERT(name != 0);
-		return format(get(name), paramCount, paramValues);
+		return format(get(name), params);
 	}
 
 	Holder<TextPack> newTextPack()

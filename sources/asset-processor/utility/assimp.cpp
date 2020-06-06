@@ -140,7 +140,7 @@ namespace
 		virtual ~CageIoStream()
 		{}
 
-		virtual size_t Read(void* pvBuffer, size_t pSize, size_t pCount)
+		virtual size_t Read(void *pvBuffer, size_t pSize, size_t pCount)
 		{
 			uint64 avail = r->size() - r->tell();
 			uint64 size = pSize * pCount;
@@ -149,13 +149,13 @@ namespace
 				size -= pSize;
 				pCount--;
 			}
-			r->read(pvBuffer, size);
+			r->read({ (char*)pvBuffer, (char*)pvBuffer + size });
 			return pCount;
 		}
 
-		virtual size_t Write(const void* pvBuffer, size_t pSize, size_t pCount)
+		virtual size_t Write(const void *pvBuffer, size_t pSize, size_t pCount)
 		{
-			CAGE_THROW_ERROR(Exception, "cageIOStrea::Write is not meant for use");
+			CAGE_THROW_ERROR(Exception, "cageIOStream::Write is not meant for use");
 		}
 
 		virtual aiReturn Seek(size_t pOffset, aiOrigin pOrigin)
@@ -220,7 +220,7 @@ namespace
 			delete (CageIoStream*)pFile;
 		}
 
-		virtual bool ComparePaths(const char* one, const char* second) const
+		virtual bool ComparePaths(const char *one, const char *second) const
 		{
 			CAGE_THROW_ERROR(Exception, "cageIOsystem::ComparePaths is not meant for use");
 		}

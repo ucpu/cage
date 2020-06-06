@@ -5,7 +5,7 @@
 
 namespace cage
 {
-	typedef Delegate<void(const AssetContext *, void *)> AssetDelegate;
+	typedef Delegate<void(const AssetContext *)> AssetDelegate;
 
 	struct CAGE_CORE_API AssetContext : private Immovable
 	{
@@ -24,7 +24,6 @@ namespace cage
 	{
 		AssetDelegate decompress;
 		AssetDelegate load;
-		void *schemePointer = nullptr;
 		uint32 threadIndex = m;
 
 		AssetScheme();

@@ -133,9 +133,9 @@ namespace cage
 		}
 	}
 
-	void jpegDecode(const char *inBuffer, uintPtr inSize, ImageImpl *impl)
+	void jpegDecode(PointerRange<const char> inBuffer, ImageImpl *impl)
 	{
-		jpegDecode(inBuffer, inSize, impl->mem, impl->width, impl->height, impl->channels);
+		jpegDecode(inBuffer.data(), inBuffer.size(), impl->mem, impl->width, impl->height, impl->channels);
 		impl->format = ImageFormatEnum::U8;
 		impl->colorConfig = defaultConfig(impl->channels);
 	}

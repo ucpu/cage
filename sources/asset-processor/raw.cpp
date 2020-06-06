@@ -12,7 +12,7 @@ void processRaw()
 	{ // load file
 		Holder<File> f = newFile(inputFile, FileMode(true, false));
 		data.allocate(numeric_cast<uintPtr>(f->size()));
-		f->read(data.data(), data.size());
+		f->read(data);
 	}
 
 	AssetHeader h = initializeAssetHeader();
@@ -36,7 +36,7 @@ void processRaw()
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "data are under compression threshold");
 
 	Holder<File> f = newFile(outputFileName, FileMode(false, true));
-	f->write(&h, sizeof(h));
-	f->write(data.data(), data.size());
+	f->write(bytesView(h));
+	f->write(data);
 	f->close();
 }

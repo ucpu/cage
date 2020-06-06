@@ -148,7 +148,7 @@ void testMemoryBuffers()
 			CAGE_TESTCASE("input stream with seek");
 
 			string expected = "Hello, World!";
-			BufferIStream in(expected.c_str(), expected.size());
+			BufferIStream in({ expected.c_str(), expected.c_str() + expected.size() });
 			char c;
 			CAGE_TEST(in.tellg() == 0);
 			in >> c;

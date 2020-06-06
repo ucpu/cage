@@ -4,14 +4,11 @@
 
 namespace cage
 {
-	BufferIStream::BufferIStream(const void *data, uintPtr size) : std::istream(this)
+	BufferIStream::BufferIStream(PointerRange<const char> buffer) : std::istream(this)
 	{
-		setg((char*)data, (char*)data, (char*)data + size);
+		setg((char*)buffer.begin(), (char*)buffer.begin(), (char*)buffer.end());
 		exceptions(std::istream::badbit | std::istream::failbit);
 	}
-
-	BufferIStream::BufferIStream(const MemoryBuffer &buffer) : BufferIStream(buffer.data(), buffer.size())
-	{}
 
 	BufferIStream::pos_type BufferIStream::seekpos(pos_type pos, std::ios_base::openmode which)
 	{

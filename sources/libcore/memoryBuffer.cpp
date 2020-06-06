@@ -50,6 +50,8 @@ namespace cage
 	void MemoryBuffer::allocate(uintPtr size, uintPtr cap)
 	{
 		free();
+		if (size + cap == 0)
+			return;
 		if (size > cap)
 			cap = size;
 		data_ = (char*)detail::systemArena().allocate(cap, sizeof(uintPtr));
@@ -125,7 +127,7 @@ namespace cage
 
 	namespace detail
 	{
-		MemoryBuffer compress(const MemoryBuffer &input)
+		MemoryBuffer compress(PointerRange<const char> input)
 		{
 			MemoryBuffer output(compressionBound(input.size()));
 			uintPtr res = compress(input.data(), input.size(), output.data(), output.size());
@@ -133,7 +135,7 @@ namespace cage
 			return output;
 		}
 
-		MemoryBuffer decompress(const MemoryBuffer &input, uintPtr outputSize)
+		MemoryBuffer decompress(PointerRange<const char> input, uintPtr outputSize)
 		{
 			MemoryBuffer output(outputSize);
 			uintPtr res = decompress(input.data(), input.size(), output.data(), output.size());

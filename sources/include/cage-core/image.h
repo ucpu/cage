@@ -47,7 +47,7 @@ namespace cage
 
 		// import from raw memory
 		void importRaw(MemoryBuffer &&buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format);
-		void importRaw(const MemoryBuffer &buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format);
+		void importRaw(PointerRange<const char> buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format);
 
 		// the format must match
 		// the image must outlive the view
@@ -56,7 +56,7 @@ namespace cage
 		PointerRange<const float> rawViewFloat() const;
 
 		// image decode
-		void importBuffer(const MemoryBuffer &buffer, uint32 channels = m, ImageFormatEnum requestedFormat = ImageFormatEnum::Default);
+		void importBuffer(PointerRange<const char> buffer, uint32 channels = m, ImageFormatEnum requestedFormat = ImageFormatEnum::Default);
 		void importFile(const string &filename, uint32 channels = m, ImageFormatEnum requestedFormat = ImageFormatEnum::Default);
 
 		// image encode

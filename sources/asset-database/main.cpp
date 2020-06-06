@@ -1,11 +1,6 @@
-#include <cage-core/core.h>
 #include <cage-core/logger.h>
-#include <cage-core/config.h>
 
-using namespace cage;
-
-#include "config.h"
-#include "processor.h"
+#include "database.h"
 
 bool consoleLogFilter(const cage::detail::LoggerInfo &info)
 {

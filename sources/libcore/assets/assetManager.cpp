@@ -237,8 +237,7 @@ namespace cage
 				string pth;
 				if (!findAssetPath.dispatch(name, pth))
 					pth = pathJoin(path, string(name));
-				Holder<File> f = newFile(pth, FileMode(true, false));
-				return f->readBuffer(f->size());
+				return readFile(pth)->readAll();
 			}
 
 			void diskLoadAsset(Asset *ass)
@@ -332,7 +331,7 @@ namespace cage
 
 				try
 				{
-					schemes[ass->scheme].decompress(ass, schemes[ass->scheme].schemePointer);
+					schemes[ass->scheme].decompress(ass);
 				}
 				catch (const Exception &)
 				{
@@ -366,7 +365,7 @@ namespace cage
 
 				try
 				{
-					schemes[ass->scheme].load(ass, schemes[ass->scheme].schemePointer);
+					schemes[ass->scheme].load(ass);
 					CAGE_ASSERT(ass->assetHolder);
 				}
 				catch (const Exception &)

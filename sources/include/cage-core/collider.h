@@ -10,7 +10,7 @@ namespace cage
 	public:
 		void clear();
 		MemoryBuffer serialize(bool includeAdditionalData = true) const;
-		void deserialize(const MemoryBuffer &buffer);
+		void deserialize(PointerRange<const char> buffer);
 		void importPolyhedron(const Polyhedron *polyhedron);
 
 		PointerRange<const triangle> triangles() const;

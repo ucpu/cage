@@ -133,7 +133,7 @@ namespace cage
 		impl->height = height;
 	}
 
-	void Image::importRaw(const MemoryBuffer &buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format)
+	void Image::importRaw(PointerRange<const char> buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format)
 	{
 		ImageImpl *impl = (ImageImpl*)this;
 		CAGE_ASSERT(buffer.size() >= width * height * channels * formatBytes(format));

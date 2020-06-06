@@ -57,10 +57,25 @@ namespace cage
 		return md;
 	}
 
-	void File::read(void *data, uintPtr size)
+	void File::read(PointerRange<char> buffer)
 	{
 		FileAbstract *impl = (FileAbstract *)this;
-		impl->read(data, size);
+		impl->read(buffer.data(), buffer.size());
+	}
+
+	MemoryBuffer File::read(uintPtr size)
+	{
+		MemoryBuffer r(size);
+		read(r);
+		return r;
+	}
+
+	MemoryBuffer File::readAll()
+	{
+		CAGE_ASSERT(tell() == 0);
+		MemoryBuffer r(size());
+		read(r);
+		return r;
 	}
 
 	bool File::readLine(string &line)
@@ -75,7 +90,7 @@ namespace cage
 
 		char buffer[string::MaxLength + 1];
 		uintPtr s = numeric_cast<uint32>(min(origLeft, (uintPtr)string::MaxLength));
-		read(buffer, s);
+		read({ buffer, buffer + s });
 		const char *b = buffer;
 		if (!detail::readLine(line, b, s, origLeft >= string::MaxLength))
 		{
@@ -88,28 +103,16 @@ namespace cage
 		return true;
 	}
 
-	MemoryBuffer File::readBuffer(uintPtr size)
-	{
-		MemoryBuffer r(size);
-		read(r.data(), r.size());
-		return r;
-	}
-
-	void File::write(const void *data, uintPtr size)
+	void File::write(PointerRange<const char> buffer)
 	{
 		FileAbstract *impl = (FileAbstract *)this;
-		impl->write(data, size);
+		impl->write(buffer.data(), buffer.size());
 	}
 
-	void File::writeLine(const string &data)
+	void File::writeLine(const string &line)
 	{
-		string d = data + "\n";
-		write(d.c_str(), d.length());
-	}
-
-	void File::writeBuffer(const MemoryBuffer &buffer)
-	{
-		write(buffer.data(), buffer.size());
+		string d = line + "\n";
+		write({ d.c_str(), d.c_str() + d.length() });
 	}
 
 	void File::seek(uintPtr position)
@@ -150,6 +153,16 @@ namespace cage
 			return a->openFile(p, mode);
 		else
 			return realNewFile(path, mode);
+	}
+
+	Holder<File> readFile(const string &path)
+	{
+		return newFile(path, FileMode(true, false));
+	}
+
+	Holder<File> writeFile(const string &path)
+	{
+		return newFile(path, FileMode(false, true));
 	}
 
 	namespace

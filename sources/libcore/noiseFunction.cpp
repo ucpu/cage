@@ -179,28 +179,32 @@ namespace cage
 		return result;
 	}
 
-	void NoiseFunction::evaluate(uint32 count, const real positions[], real results[])
+	void NoiseFunction::evaluate(PointerRange<const real> positions, PointerRange<real> results)
 	{
+		CAGE_ASSERT(positions.size() == results.size());
 		NoiseFunctionImpl *impl = (NoiseFunctionImpl*)this;
-		impl->evaluate(count, positions, results);
+		impl->evaluate(numeric_cast<uint32>(positions.size()), positions.data(), results.data());
 	}
 
-	void NoiseFunction::evaluate(uint32 count, const vec2 positions[], real results[])
+	void NoiseFunction::evaluate(PointerRange<const vec2> positions, PointerRange<real> results)
 	{
+		CAGE_ASSERT(positions.size() == results.size());
 		NoiseFunctionImpl *impl = (NoiseFunctionImpl*)this;
-		impl->evaluate(count, positions, results);
+		impl->evaluate(numeric_cast<uint32>(positions.size()), positions.data(), results.data());
 	}
 
-	void NoiseFunction::evaluate(uint32 count, const vec3 positions[], real results[])
+	void NoiseFunction::evaluate(PointerRange<const vec3> positions, PointerRange<real> results)
 	{
+		CAGE_ASSERT(positions.size() == results.size());
 		NoiseFunctionImpl *impl = (NoiseFunctionImpl*)this;
-		impl->evaluate(count, positions, results);
+		impl->evaluate(numeric_cast<uint32>(positions.size()), positions.data(), results.data());
 	}
 
-	void NoiseFunction::evaluate(uint32 count, const vec4 positions[], real results[])
+	void NoiseFunction::evaluate(PointerRange<const vec4> positions, PointerRange<real> results)
 	{
+		CAGE_ASSERT(positions.size() == results.size());
 		NoiseFunctionImpl *impl = (NoiseFunctionImpl*)this;
-		impl->evaluate(count, positions, results);
+		impl->evaluate(numeric_cast<uint32>(positions.size()), positions.data(), results.data());
 	}
 
 	NoiseFunctionCreateConfig::NoiseFunctionCreateConfig(uint32 seed) : seed(seed)

@@ -4,7 +4,7 @@
 
 namespace cage
 {
-	void Polyhedron::deserialize(const MemoryBuffer &buffer)
+	void Polyhedron::deserialize(PointerRange<const char> buffer)
 	{
 		PolyhedronImpl *impl = (PolyhedronImpl *)this;
 		CAGE_THROW_CRITICAL(NotImplemented, "deserialize");

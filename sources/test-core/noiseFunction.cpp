@@ -25,7 +25,7 @@ namespace
 			for (sint32 x = 0; x < resolution; x++)
 				positions.push_back(vec2(x - resolution / 2, y - resolution / 2) * 0.01);
 		}
-		noise->evaluate(resolution * resolution, positions.data(), results.data());
+		noise->evaluate(PointerRange<const vec2>(positions), results);
 		Holder<Image> png = newImage();
 		png->initialize(resolution, resolution, 1);
 		uint32 index = 0;

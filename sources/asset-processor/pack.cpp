@@ -11,7 +11,7 @@ void processPack()
 	writeLine(string("use=") + inputFile);
 
 	Holder<Ini> ini = newIni();
-	ini->load(inputFileName);
+	ini->importFile(inputFileName);
 
 	std::set<uint32> assets;
 	for (const string &section : ini->sections())
@@ -31,8 +31,8 @@ void processPack()
 	h.dependenciesCount = numeric_cast<uint16>(assets.size());
 
 	Holder<File> f = newFile(outputFileName, FileMode(false, true));
-	f->write(&h, sizeof(h));
+	f->write(bytesView(h));
 	for (uint32 it : assets)
-		f->write(&it, sizeof(uint32));
+		f->write(bytesView(it));
 	f->close();
 }

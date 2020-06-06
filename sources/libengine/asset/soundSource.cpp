@@ -1,6 +1,6 @@
+#include <cage-core/assetStructs.h>
 #include <cage-core/serialization.h>
 #include <cage-core/memoryBuffer.h>
-#include <cage-core/assetStructs.h>
 
 #include <cage-engine/sound.h>
 #include <cage-engine/assetStructs.h>
@@ -11,7 +11,7 @@ namespace cage
 {
 	namespace
 	{
-		void processDecompress(const AssetContext *context, void *schemePointer)
+		void processDecompress(const AssetContext *context)
 		{
 			CAGE_ASSERT(context->compressedData().data());
 			Deserializer des(context->compressedData());
@@ -31,10 +31,8 @@ namespace cage
 			CAGE_ASSERT(snd.sampleRate == r);
 		}
 
-		void processLoad(const AssetContext *context, void *schemePointer)
+		void processLoad(SoundContext *gm, const AssetContext *context)
 		{
-			SoundContext *gm = (SoundContext*)schemePointer;
-
 			Holder<SoundSource> source = newSoundSource(gm);
 			source->setDebugName(context->textName);
 
@@ -71,9 +69,8 @@ namespace cage
 	{
 		AssetScheme s;
 		s.threadIndex = threadIndex;
-		s.schemePointer = memoryContext;
 		s.decompress.bind<&processDecompress>();
-		s.load.bind<&processLoad>();
+		s.load.bind<SoundContext*, &processLoad>(memoryContext);
 		return s;
 	}
 }

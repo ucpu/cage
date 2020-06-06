@@ -23,10 +23,12 @@ namespace cage
 		string getCmdString() const;
 		string getWorkingDir() const;
 
-		void read(void *data, uint32 size);
+		void read(PointerRange<char> buffer);
+		MemoryBuffer read(uintPtr size);
 		string readLine();
-		void write(const void *data, uint32 size);
-		void writeLine(const string &data);
+
+		void write(PointerRange<const char> buffer);
+		void writeLine(const string &line);
 
 		void terminate();
 		int wait();

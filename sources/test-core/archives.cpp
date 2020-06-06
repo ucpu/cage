@@ -18,7 +18,7 @@ namespace
 		for (const string &dir : directories)
 		{
 			Holder<File> f = newFile(pathJoin(dir, name), FileMode(false, true));
-			f->writeBuffer(data);
+			f->write(data);
 			f->close();
 		}
 	}
@@ -30,7 +30,7 @@ namespace
 		for (const string &dir : directories)
 		{
 			Holder<File> f = newFile(pathJoin(dir, name), FileMode(true, false));
-			*p[i++] = f->readBuffer(f->size());
+			*p[i++] = f->read(f->size());
 			f->close();
 		}
 	}
@@ -198,11 +198,11 @@ void testArchives()
 				newFile(pathJoin(directories[1], "multi/3"), FileMode(false, true))
 			};
 			for (auto &f : ws)
-				f->writeBuffer(data1);
+				f->write(data1);
 			for (auto &f : ws)
-				f->writeBuffer(data2);
+				f->write(data2);
 			for (auto &f : ws)
-				f->writeBuffer(data3);
+				f->write(data3);
 		}
 		testReadFile("multi/1");
 		testListRecursive();
@@ -219,11 +219,11 @@ void testArchives()
 			newFile(pathJoin(directories[1], "multi/3"), FileMode(true, false))
 		};
 		for (auto &f : rs)
-			f->readBuffer(data3.size());
+			f->read(data3.size());
 		for (auto &f : rs)
-			f->readBuffer(data2.size());
+			f->read(data2.size());
 		for (auto &f : rs)
-			f->readBuffer(data1.size());
+			f->read(data1.size());
 	}
 
 	{
@@ -236,15 +236,15 @@ void testArchives()
 		CAGE_TEST((type & PathTypeFlags::Archive) == PathTypeFlags::None);
 		Holder<File> f = newFile(path, FileMode(true, false));
 		f->seek(data1.size() + data2.size());
-		MemoryBuffer b3 = f->readBuffer(data3.size());
+		MemoryBuffer b3 = f->read(data3.size());
 		CAGE_TEST(f->tell() == f->size());
 		f->seek(data1.size());
 		CAGE_TEST(f->tell() == data1.size());
-		MemoryBuffer b2 = f->readBuffer(data2.size());
+		MemoryBuffer b2 = f->read(data2.size());
 		CAGE_TEST(f->tell() == data1.size() + data2.size());
 		f->seek(0);
 		CAGE_TEST(f->tell() == 0);
-		MemoryBuffer b1 = f->readBuffer(data1.size());
+		MemoryBuffer b1 = f->read(data1.size());
 		CAGE_TEST(f->tell() == data1.size());
 		f->close();
 		testBuffers(b1, data1);
@@ -278,7 +278,7 @@ void testArchives()
 			{
 				{
 					Holder<File> f = newFile("testdir/tmp", FileMode(false, true));
-					f->writeBuffer(data2);
+					f->write(data2);
 				}
 				pathMove("testdir/tmp", pathJoin(dir, "moved"));
 			}

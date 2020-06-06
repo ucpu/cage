@@ -1,20 +1,10 @@
-#include <cage-core/config.h>
-#include <cage-core/files.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/ini.h>
 #include <cage-core/process.h>
 #include <cage-core/threadPool.h>
 #include <cage-core/debug.h>
 
-using namespace cage;
-
-#include "utilities.h"
-#include "holderSet.h"
-#include "processor.h"
-#include "config.h"
-#include "asset.h"
-#include "scheme.h"
-#include "notifier.h"
+#include "database.h"
 
 #include <algorithm>
 #include <vector>
@@ -32,7 +22,9 @@ namespace
 	struct Databank
 	{
 		string name;
-		Databank(const string &s = "") : name(s) {};
+
+		explicit Databank(const string &s = "") : name(s)
+		{};
 
 		void load(File *f)
 		{
@@ -60,7 +52,7 @@ namespace
 		Holder<Ini> ini = newIni();
 		try
 		{
-			ini->load(pathJoin(configPathInput, path));
+			ini->importFile(pathJoin(configPathInput, path));
 		}
 		catch (cage::Exception &)
 		{
@@ -285,19 +277,13 @@ namespace
 			CAGE_LOG(SeverityEnum::Warning, "database", "assets database file version mismatch, database will not be loaded");
 			return;
 		}
-		f->read(&timestamp, sizeof(timestamp));
+		f->read(bytesView(timestamp));
 		corruptedDatabanks.load(f.get());
 		assets.load(f.get());
 		if (!f->readLine(b) || b != databaseEnd)
 			CAGE_THROW_ERROR(Exception, "wrong file end");
 		f->close();
 		CAGE_LOG(SeverityEnum::Info, "database", stringizer() + "loaded " + assets.size() + " asset entries");
-	}
-
-	void write(Holder<File> &f, const string &s)
-	{
-		f->write(s.c_str(), s.length());
-		f->write(" ", 1);
 	}
 
 	void save()
@@ -309,7 +295,7 @@ namespace
 			Holder<File> f = newFile(configPathDatabase, FileMode(false, true));
 			f->writeLine(databaseBegin);
 			f->writeLine(databaseVersion);
-			f->write(&timestamp, sizeof(timestamp));
+			f->write(bytesView(timestamp));
 			corruptedDatabanks.save(f.get());
 			assets.save(f.get());
 			f->writeLine(databaseEnd);
@@ -336,13 +322,7 @@ namespace
 			for (const auto &it : items)
 			{
 				const Asset &ass = *it.second;
-				write(f, it.first.fill(10));
-				if (ass.corrupted)
-					write(f, "CORRUPTED");
-				write(f, ass.name.fill(100));
-				write(f, ass.scheme.fill(15));
-				write(f, ass.databank.fill(30));
-				f->writeLine("");
+				f->writeLine(stringizer() + it.first.fill(11) + (ass.corrupted ? "CORRUPTED " : "") + ass.name.fill(101) + ass.scheme.fill(16) + ass.databank.fill(31));
 			}
 		}
 
@@ -365,13 +345,7 @@ namespace
 			for (const auto &it : items)
 			{
 				const Asset &ass = *it.second;
-				write(f, ass.outputPath().fill(10));
-				if (ass.corrupted)
-					write(f, "CORRUPTED");
-				write(f, ass.name.fill(100));
-				write(f, ass.scheme.fill(15));
-				write(f, ass.databank.fill(30));
-				f->writeLine("");
+				f->writeLine(stringizer() + it.second->outputPath().fill(11) + (ass.corrupted ? "CORRUPTED " : "") + ass.name.fill(101) + ass.scheme.fill(16) + ass.databank.fill(31));
 			}
 		}
 	}
@@ -554,7 +528,7 @@ namespace
 				{
 					bool corrupted = !parseDatabank(f.first);
 					if (corrupted)
-						corruptedDatabanks.insert(f.first);
+						corruptedDatabanks.insert(Databank(f.first));
 					countBadDatabanks += corrupted;
 				}
 			}
@@ -637,7 +611,7 @@ namespace
 			s.name = name.subString(0, name.length() - 7);
 			CAGE_LOG(SeverityEnum::Info, "database", stringizer() + "loading scheme '" + s.name + "'");
 			Holder<Ini> ini = newIni();
-			ini->load(pathJoin(configPathSchemes, name));
+			ini->importFile(pathJoin(configPathSchemes, name));
 			s.parse(ini.get());
 			schemes.insert(templates::move(s));
 		}

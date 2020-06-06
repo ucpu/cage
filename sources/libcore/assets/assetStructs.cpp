@@ -10,7 +10,7 @@ namespace cage
 {
 	namespace
 	{
-		void defaultDecompress(const AssetContext *context, void *)
+		void defaultDecompress(const AssetContext *context)
 		{
 			if (context->compressedData().size() == 0)
 				return;
@@ -31,7 +31,7 @@ namespace cage
 
 	namespace
 	{
-		void processAssetPackLoad(const AssetContext *context, void *)
+		void processAssetPackLoad(const AssetContext *context)
 		{
 			static AssetPack pack;
 			Holder<AssetPack> h = Holder<AssetPack>(&pack, nullptr, {});
@@ -48,7 +48,7 @@ namespace cage
 
 	namespace
 	{
-		void processRawLoad(const AssetContext *context, void *)
+		void processRawLoad(const AssetContext *context)
 		{
 			Holder<MemoryBuffer> mem = detail::systemArena().createHolder<MemoryBuffer>(templates::move(context->originalData()));
 			context->assetHolder = templates::move(mem).cast<void>();
@@ -64,7 +64,7 @@ namespace cage
 
 	namespace
 	{
-		void processTextPackLoad(const AssetContext *context, void *)
+		void processTextPackLoad(const AssetContext *context)
 		{
 			Holder<TextPack> texts = newTextPack();
 			Deserializer des(context->originalData());
@@ -90,7 +90,7 @@ namespace cage
 
 	namespace
 	{
-		void processCollisionMeshLoad(const AssetContext *context, void *)
+		void processCollisionMeshLoad(const AssetContext *context)
 		{
 			Holder<Collider> col = newCollider();
 			col->deserialize(context->originalData());

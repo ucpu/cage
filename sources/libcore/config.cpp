@@ -107,7 +107,7 @@ namespace cage
 				try
 				{
 					Holder<Ini> ini = newIni();
-					ini->load(filename);
+					ini->importFile(filename);
 					for (const string &section : ini->sections())
 					{
 						for (const string &name : ini->items(section))
@@ -452,17 +452,17 @@ namespace cage
 		return ini;
 	}
 
-	void configLoadIni(const string &filename, const string &prefix)
+	void configImportIni(const string &filename, const string &prefix)
 	{
 		Holder<Ini> ini = newIni();
-		ini->load(filename);
+		ini->importFile(filename);
 		configApplyIni(ini.get(), prefix);
 	}
 
-	void configSaveIni(const string &filename, const string &prefix)
+	void configExportIni(const string &filename, const string &prefix)
 	{
 		Holder<Ini> ini = configGenerateIni(prefix);
-		ini->save(filename);
+		ini->exportFile(filename);
 	}
 
 	namespace detail
@@ -485,7 +485,7 @@ namespace cage
 				{
 					try
 					{
-						configSaveIni(pathExtractFilename(detail::getExecutableFullPathNoExe()) + ".ini", detail::getConfigAppPrefix());
+						configExportIni(pathExtractFilename(detail::getExecutableFullPathNoExe()) + ".ini", detail::getConfigAppPrefix());
 					}
 					catch (...)
 					{

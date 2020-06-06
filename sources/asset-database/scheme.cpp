@@ -1,13 +1,7 @@
-#include <cage-core/core.h>
 #include <cage-core/ini.h>
 #include <cage-core/macros.h>
 
-using namespace cage;
-
-#include "utilities.h"
-#include "holderSet.h"
-#include "scheme.h"
-#include "asset.h"
+#include "database.h"
 
 void Scheme::parse(Ini *ini)
 {
@@ -71,9 +65,9 @@ void Scheme::load(File *f)
 {
 	read(f, name);
 	read(f, processor);
-	read(f, schemeIndex);
+	f->read(bytesView(schemeIndex));
 	uint32 m = 0;
-	read(f, m);
+	f->read(bytesView(m));
 	for (uint32 j = 0; j < m; j++)
 	{
 		SchemeField c;
@@ -91,8 +85,9 @@ void Scheme::save(File *f)
 {
 	write(f, name);
 	write(f, processor);
-	write(f, schemeIndex);
-	write(f, schemeFields.size());
+	f->write(bytesView(schemeIndex));
+	uint32 m = schemeFields.size();
+	f->write(bytesView(m));
 	for (const auto &it : schemeFields)
 	{
 		const SchemeField &c = *it;

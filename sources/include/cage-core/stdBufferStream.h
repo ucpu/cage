@@ -10,8 +10,7 @@ namespace cage
 	class CAGE_CORE_API BufferIStream : protected std::streambuf, public std::istream
 	{
 	public:
-		explicit BufferIStream(const void *data, uintPtr size);
-		explicit BufferIStream(const MemoryBuffer &buffer);
+		explicit BufferIStream(PointerRange<const char> buffer);
 
 	protected:
 		using std::streambuf::traits_type;

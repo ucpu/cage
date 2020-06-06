@@ -8,8 +8,7 @@ namespace cage
 	namespace detail
 	{
 		// these functions return values in the full range of uint32
-		CAGE_CORE_API uint32 hashBuffer(const char *buffer, uintPtr size) noexcept;
-		CAGE_CORE_API uint32 hashBuffer(const MemoryBuffer &buffer) noexcept;
+		CAGE_CORE_API uint32 hashBuffer(PointerRange<const char> buffer) noexcept;
 		CAGE_CORE_API uint32 hashString(const char *str) noexcept;
 
 		// HashCompile returns values in the full range of uint32

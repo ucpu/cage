@@ -1,7 +1,5 @@
 #include "processor.h"
 
-#include <cage-core/memoryBuffer.h>
-
 #include <dr_libs/dr_flac.h>
 #include <dr_libs/dr_wav.h>
 #include <vorbis/vorbisfile.h>
@@ -57,8 +55,8 @@ namespace
 						ret = ogg_stream_pageout(&os, &og);
 						if (ret == 0)
 							break;
-						f->write(og.header, og.header_len);
-						f->write(og.body, og.body_len);
+						f->write({ (char*)og.header, (char*)og.header + og.header_len });
+						f->write({ (char*)og.body, (char*)og.body + og.body_len });
 					}
 				}
 			}
@@ -100,8 +98,8 @@ namespace
 					ret = ogg_stream_flush(&os, &og);
 					if (ret == 0)
 						break;
-					f->write(og.header, og.header_len);
-					f->write(og.body, og.body_len);
+					f->write({ (char*)og.header, (char*)og.header + og.header_len });
+					f->write({ (char*)og.body, (char*)og.body + og.body_len });
 				}
 			}
 			uint32 offset = 0;
@@ -257,14 +255,14 @@ void processSound()
 	h.originalSize = sizeof(SoundSourceHeader) + sds.frames * sds.channels * sizeof(float);
 
 	Holder<File> f = newFile(outputFileName, FileMode(true, true));
-	f->write(&h, sizeof(h));
-	f->write(&sds, sizeof(sds));
+	f->write(bytesView(h));
+	f->write(bytesView(sds));
 
 	switch (sds.soundType)
 	{
 	case SoundTypeEnum::RawRaw:
 	{
-		f->write(buf1.data(), sds.frames * sds.channels * sizeof(float));
+		f->write({ buf1.data(), buf1.data() + sds.frames * sds.channels * sizeof(float) });
 	} break;
 	case SoundTypeEnum::CompressedRaw:
 	case SoundTypeEnum::CompressedCompressed:
@@ -288,18 +286,15 @@ void processSound()
 			break; // do nothing here
 		}
 		f->seek(0);
-		f->write(&h, sizeof(h));
+		f->write(bytesView(h));
 
 		if (configGetBool("cage-asset-processor/sound/preview"))
 		{ // preview ogg
 			string dbgName = pathJoin(configGetString("cage-asset-processor/sound/path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".ogg");
 			Holder<File> df = newFile(dbgName, FileMode(false, true));
-			void *buf = detail::systemArena().allocate(oggSize, sizeof(uintPtr));
 			f->flush();
 			f->seek(sizeof(AssetHeader) + sizeof(SoundSourceHeader));
-			f->read(buf, oggSize);
-			df->write(buf, oggSize);
-			detail::systemArena().deallocate(buf);
+			df->write(f->read(oggSize));
 			df->close();
 		}
 	} break;

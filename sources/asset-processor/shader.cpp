@@ -470,7 +470,7 @@ void processShader()
 		{
 			ser << (uint32)shaderType(it.first);
 			ser << numeric_cast<uint32>(it.second.length());
-			ser.write(it.second.c_str(), it.second.length());
+			ser.write({ it.second.c_str(), it.second.c_str() + it.second.length() });
 			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "stage: " + it.first + ", length: " + it.second.size());
 		}
 
@@ -482,8 +482,8 @@ void processShader()
 		h.originalSize = numeric_cast<uint32>(buff.size());
 		h.compressedSize = numeric_cast<uint32>(comp.size());
 		Holder<File> f = newFile(outputFileName, FileMode(false, true));
-		f->write(&h, sizeof(h));
-		f->write(comp.data(), comp.size());
+		f->write(bytesView(h));
+		f->write(comp);
 		f->close();
 	}
 
@@ -495,7 +495,7 @@ void processShader()
 			FileMode fm(false, true);
 			fm.textual = true;
 			Holder<File> f = newFile(name, fm);
-			f->write(it.second.c_str(), it.second.length());
+			f->write({ it.second.c_str(), it.second.c_str() + it.second.length() });
 		}
 	}
 }

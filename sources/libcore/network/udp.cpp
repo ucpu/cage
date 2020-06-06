@@ -1074,7 +1074,7 @@ namespace cage
 				return templates::move(tmp.data);
 			}
 
-			void write(const MemoryBuffer &buffer, uint32 channel, bool reliable)
+			void write(MemoryBuffer &&buffer, uint32 channel, bool reliable)
 			{
 				CAGE_ASSERT(channel < 128);
 				CAGE_ASSERT(buffer.size() <= 16 * 1024 * 1024);
@@ -1082,7 +1082,7 @@ namespace cage
 					return; // ignore empty messages
 
 				auto msg = std::make_shared<Sending::ReliableMsg>();
-				msg->data = std::make_shared<MemoryBuffer>(buffer.copy());
+				msg->data = std::make_shared<MemoryBuffer>(templates::move(buffer));
 				msg->channel = numeric_cast<uint8>(channel + reliable * 128);
 				msg->msgSeqn = sending.seqnPerChannel[msg->channel]++;
 				if (reliable)
@@ -1176,20 +1176,19 @@ namespace cage
 		return impl->available();
 	}
 
-	uintPtr UdpConnection::read(void *buffer, uintPtr size, uint32 &channel, bool &reliable)
+	void UdpConnection::read(PointerRange<char> &buffer, uint32 &channel, bool &reliable)
 	{
 		MemoryBuffer b = read(channel, reliable);
-		if (b.size() > size)
-			CAGE_THROW_ERROR(Exception, "buffer is too small");
-		detail::memcpy(buffer, b.data(), b.size());
-		return b.size();
+		CAGE_ASSERT(buffer.size() >= b.size());
+		detail::memcpy(buffer.data(), b.data(), b.size());
+		buffer = { buffer.data(), buffer.data() + b.size() };
 	}
 
-	uintPtr UdpConnection::read(void *buffer, uintPtr size)
+	void UdpConnection::read(PointerRange<char> &buffer)
 	{
 		uint32 channel;
 		bool reliable;
-		return read(buffer, size, channel, reliable);
+		read(buffer, channel, reliable);
 	}
 
 	MemoryBuffer UdpConnection::read(uint32 &channel, bool &reliable)
@@ -1205,17 +1204,12 @@ namespace cage
 		return read(channel, reliable);
 	}
 
-	void UdpConnection::write(const void *buffer, uintPtr size, uint32 channel, bool reliable)
-	{
-		MemoryBuffer b(size);
-		detail::memcpy(b.data(), buffer, size);
-		write(b, channel, reliable);
-	}
-
-	void UdpConnection::write(const MemoryBuffer &buffer, uint32 channel, bool reliable)
+	void UdpConnection::write(PointerRange<const char> buffer, uint32 channel, bool reliable)
 	{
 		UdpConnectionImpl *impl = (UdpConnectionImpl*)this;
-		impl->write(buffer, channel, reliable);
+		MemoryBuffer b(buffer.size());
+		detail::memcpy(b.data(), buffer.data(), b.size());
+		impl->write(templates::move(b), channel, reliable);
 	}
 
 	void UdpConnection::update()

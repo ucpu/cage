@@ -1,9 +1,7 @@
 #include "processor.h"
 
-#include <cage-core/memoryBuffer.h>
 #include <cage-core/image.h>
 #include <cage-core/color.h>
-#include <cage-core/serialization.h>
 #include <cage-core/enumerate.h>
 
 #include <cage-engine/opengl.h>
@@ -399,8 +397,8 @@ namespace
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "final size: " + h.originalSize + ", compressed size: " + h.compressedSize + ", ratio: " + h.compressedSize / (float)h.originalSize);
 
 		Holder<File> f = newFile(outputFileName, FileMode(false, true));
-		f->write(&h, sizeof(h));
-		f->write(outputBuffer.data(), outputBuffer.size());
+		f->write(bytesView(h));
+		f->write(outputBuffer);
 		f->close();
 	}
 }

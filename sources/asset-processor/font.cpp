@@ -2,8 +2,6 @@
 
 #include <cage-core/hashString.h>
 #include <cage-core/image.h>
-#include <cage-core/memoryBuffer.h>
-#include <cage-core/serialization.h>
 #include <cage-core/rectPacking.h>
 
 #include <msdfgen.h>
@@ -349,9 +347,9 @@ namespace
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + buf.size());
 		h.compressedSize = buf.size();
 
-		Holder<File> f = newFile(outputFileName, FileMode(false, true));
-		f->write(&h, sizeof(h));
-		f->writeBuffer(buf);
+		Holder<File> f = writeFile(outputFileName);
+		f->write(bytesView(h));
+		f->write(buf);
 		f->close();
 	}
 

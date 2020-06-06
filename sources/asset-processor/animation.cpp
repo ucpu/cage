@@ -1,6 +1,4 @@
 #include "utility/assimp.h"
-#include <cage-core/memoryBuffer.h>
-#include <cage-core/serialization.h>
 
 #include <vector>
 
@@ -146,7 +144,7 @@ void processAnimation()
 	h.originalSize = numeric_cast<uint32>(buff.size());
 	h.compressedSize = numeric_cast<uint32>(comp.size());
 	Holder<File> f = newFile(outputFileName, FileMode(false, true));
-	f->write(&h, sizeof(h));
-	f->write(comp.data(), comp.size());
+	f->write(bytesView(h));
+	f->write(comp);
 	f->close();
 }

@@ -129,7 +129,7 @@ namespace cage
 		detail::memcpy(impl->rotationFrames, rotationFrames, sizeof(uint16) * bones);
 		detail::memcpy(impl->scaleFrames, scaleFrames, sizeof(uint16) * bones);
 
-		Deserializer des(data, (char*)-1 - (char*)data);
+		Deserializer des({ (const char *)data, (const char *)m }); // wtf
 		for (uint16 b = 0; b < bones; b++)
 		{
 			if (impl->positionFrames[b])

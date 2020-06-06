@@ -52,7 +52,8 @@ namespace cage
 
 			for (uint32 line = 0; line < scanlines; line++)
 			{
-				Serializer ser2(ser.advance(linewidth), linewidth);
+				char *ser2Start = ser.advance(linewidth);
+				Serializer ser2({ ser2Start, ser2Start + linewidth });
 				while (ser2.available())
 				{
 					sint32 rl;
@@ -113,9 +114,9 @@ namespace cage
 		}
 	}
 
-	void psdDecode(const char *inBuffer, uintPtr inSize, ImageImpl *impl)
+	void psdDecode(PointerRange<const char> inBuffer, ImageImpl *impl)
 	{
-		Deserializer des(inBuffer, inSize);
+		Deserializer des(inBuffer);
 
 		// file header section
 

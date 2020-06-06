@@ -7,7 +7,7 @@ namespace cage
 {
 	struct CAGE_CORE_API MemoryBuffer
 	{
-		MemoryBuffer(); // no Allocation ctor
+		MemoryBuffer(); // no allocation ctor
 		explicit MemoryBuffer(uintPtr size, uintPtr capacity = 0);
 		MemoryBuffer(MemoryBuffer &&other) noexcept;
 		MemoryBuffer &operator = (MemoryBuffer &&other) noexcept;
@@ -48,6 +48,16 @@ namespace cage
 			return capacity_;
 		}
 
+		operator PointerRange<char>() noexcept
+		{
+			return { data_, data_ + size_ };
+		}
+
+		operator PointerRange<const char>() const noexcept
+		{
+			return { data_, data_ + size_ };
+		}
+
 	private:
 		char *data_;
 		uintPtr size_;
@@ -56,8 +66,8 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_CORE_API MemoryBuffer compress(const MemoryBuffer &input);
-		CAGE_CORE_API MemoryBuffer decompress(const MemoryBuffer &input, uintPtr outputSize);
+		CAGE_CORE_API MemoryBuffer compress(PointerRange<const char> input);
+		CAGE_CORE_API MemoryBuffer decompress(PointerRange<const char> input, uintPtr outputSize);
 	}
 }
 

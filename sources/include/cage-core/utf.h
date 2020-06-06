@@ -7,25 +7,32 @@ namespace cage
 {
 	struct CAGE_CORE_API InvalidUtfString : public Exception
 	{
-		explicit InvalidUtfString(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept;
+		using Exception::Exception;
 		virtual void log();
 	};
 
-	CAGE_CORE_API bool utfValid(const char *str);
-	CAGE_CORE_API bool utfValid(const char *str, uint32 bytes);
+	CAGE_CORE_API bool utfValid(PointerRange<const char> buffer);
 	CAGE_CORE_API bool utfValid(const string &str);
+	CAGE_CORE_API bool utfValid(const char *str);
 
-	// returns number of utf32 characters
-	CAGE_CORE_API uint32 utfLength(const char *str);
-	CAGE_CORE_API uint32 utfLength(const char *str, uint32 bytes);
-	CAGE_CORE_API uint32 utfLength(const string &str);
+	// returns number of utf32 characters the string would have after conversion
+	CAGE_CORE_API uint32 utf32Length(PointerRange<const char> buffer);
+	CAGE_CORE_API uint32 utf32Length(const string &str);
+	CAGE_CORE_API uint32 utf32Length(const char *str);
 
-	CAGE_CORE_API void utf8to32(uint32 *outBuffer, uint32 &outCount, const char *inStr);
-	CAGE_CORE_API void utf8to32(uint32 *outBuffer, uint32 &outCount, const char *inStr, uint32 inBytes);
-	CAGE_CORE_API void utf8to32(uint32 *outBuffer, uint32 &outCount, const string &inStr);
+	// returns number of bytes the string would have after converting to utf8
+	CAGE_CORE_API uint32 utf8Length(PointerRange<const uint32> buffer);
 
-	CAGE_CORE_API void utf32to8(char *outBuffer, uint32 &outBytes, const uint32 *inBuffer, uint32 inCount);
-	CAGE_CORE_API string utf32to8(const uint32 *inBuffer, uint32 inCount);
+	CAGE_CORE_API Holder<PointerRange<uint32>> utf8to32(PointerRange<const char> buffer);
+	CAGE_CORE_API Holder<PointerRange<uint32>> utf8to32(const string &str);
+	CAGE_CORE_API Holder<PointerRange<uint32>> utf8to32(const char *str);
+	CAGE_CORE_API void utf8to32(PointerRange<uint32> &outBuffer, PointerRange<const char> inBuffer);
+	CAGE_CORE_API void utf8to32(PointerRange<uint32> &outBuffer, const string &inStr);
+	CAGE_CORE_API void utf8to32(PointerRange<uint32> &outBuffer, const char *inStr);
+
+	CAGE_CORE_API Holder<PointerRange<char>> utf32to8(PointerRange<const uint32> buffer);
+	CAGE_CORE_API void utf32to8(PointerRange<char> &outBuffer, PointerRange<const uint32> inBuffer);
+	CAGE_CORE_API string utf32to8string(PointerRange<const uint32> str);
 }
 
 #endif // guard_utf_h_C5D02E44A78446C9AAB8A83E5B27BC60

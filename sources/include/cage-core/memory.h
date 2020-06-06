@@ -40,8 +40,10 @@ namespace cage
 		}
 
 		CAGE_CORE_API uintPtr compressionBound(uintPtr size);
-		CAGE_CORE_API uintPtr compress(const void *inputBuffer, uintPtr inputSize, void *outputBuffer, uintPtr outputSize);
-		CAGE_CORE_API uintPtr decompress(const void *inputBuffer, uintPtr inputSize, void *outputBuffer, uintPtr outputSize);
+		CAGE_CORE_API [[deprecated]] uintPtr compress(const void *inputBuffer, uintPtr inputSize, void *outputBuffer, uintPtr outputSize);
+		CAGE_CORE_API [[deprecated]] uintPtr decompress(const void *inputBuffer, uintPtr inputSize, void *outputBuffer, uintPtr outputSize);
+		CAGE_CORE_API void compress(PointerRange<const char> input, PointerRange<char> &output);
+		CAGE_CORE_API void decompress(PointerRange<const char> input, PointerRange<char> &output);
 	}
 
 	namespace templates

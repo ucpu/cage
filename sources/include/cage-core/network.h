@@ -7,7 +7,7 @@ namespace cage
 {
 	struct CAGE_CORE_API Disconnected : public Exception
 	{
-		explicit Disconnected(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept;
+		using Exception::Exception;
 	};
 
 	// tcp
@@ -19,13 +19,15 @@ namespace cage
 		uint16 port() const; // remote port
 
 		uintPtr available() const; // non-blocking
-		void read(void *buffer, uintPtr size); // blocking
-		MemoryBuffer read(uintPtr size); // blocking
-		MemoryBuffer read(); // non-blocking
-		void write(const void *buffer, uintPtr size);
-		void write(const MemoryBuffer &buffer);
 
-		bool readLine(string &line); // non-blocking
+		void readWait(PointerRange<char> buffer);
+		void read(PointerRange<char> &buffer);
+		MemoryBuffer readWait(uintPtr size);
+		MemoryBuffer read();
+		string readLineWait();
+		bool readLine(string &line);
+
+		void write(PointerRange<const char> buffer);
 		void writeLine(const string &line);
 	};
 
@@ -61,18 +63,17 @@ namespace cage
 	class CAGE_CORE_API UdpConnection : private Immovable
 	{
 	public:
-		// returns size of the first packet queued for reading, if any, and zero otherwise
+		// returns size of the first message queued for reading, if any, and zero otherwise
 		uintPtr available();
 
 		// reading throws an exception when nothing is available or the buffer is too small
-		// you should call available first to determine if any packets are ready and what is the required buffer size
-		uintPtr read(void *buffer, uintPtr maxSize, uint32 &channel, bool &reliable);
-		uintPtr read(void *buffer, uintPtr maxSize);
+		// you should call available first to determine if any messages are ready and what is the required buffer size
+		void read(PointerRange<char> &buffer, uint32 &channel, bool &reliable);
+		void read(PointerRange<char> &buffer);
 		MemoryBuffer read(uint32 &channel, bool &reliable);
 		MemoryBuffer read();
 
-		void write(const void *buffer, uintPtr size, uint32 channel, bool reliable);
-		void write(const MemoryBuffer &buffer, uint32 channel, bool reliable);
+		void write(PointerRange<const char> buffer, uint32 channel, bool reliable);
 
 		// update will check for received packets and flush packets pending for send
 		// update also manages timeouts and resending, therefore it should be called periodically even if you wrote nothing
@@ -83,12 +84,12 @@ namespace cage
 
 	// non-zero timeout will block the caller for up to the specified time to ensure that the connection is established and throw an exception otherwise
 	// zero timeout will return immediately and the connection will be established progressively as you use it
-	CAGE_CORE_API Holder<UdpConnection> newUdpConnection(const string &address, uint16 port, uint64 timeout = 3000000);
+	CAGE_CORE_API Holder<UdpConnection> newUdpConnection(const string &address, uint16 port, uint64 timeout);
 
 	class CAGE_CORE_API UdpServer : private Immovable
 	{
 	public:
-		// returns empty Holder if no new peer has connected
+		// returns empty holder if no new peer has connected
 		Holder<UdpConnection> accept(); // non-blocking
 	};
 

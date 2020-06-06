@@ -22,7 +22,7 @@ void processObject()
 	writeLine(string("use=") + inputFile);
 
 	Holder<Ini> ini = newIni();
-	ini->load(inputFileName);
+	ini->importFile(inputFileName);
 
 	string basePath = pathExtractPath(inputFile);
 	std::vector<Lod> lods;
@@ -104,26 +104,27 @@ void processObject()
 	h.originalSize += numeric_cast<uint32>(lods.size() + 1) * sizeof(uint32);
 	h.originalSize += totalMeshes * sizeof(uint32);
 
-	Holder<File> f = newFile(outputFileName, FileMode(false, true));
-	f->write(&h, sizeof(h));
+	MemoryBuffer buffer;
+	Serializer ser(buffer);
+	ser << h;
 	for (uint32 it : deps)
-		f->write(&it, sizeof(uint32));
+		ser << it;
 	o.lodsCount = numeric_cast<uint32>(lods.size());
 	o.meshesCount = totalMeshes;
-	f->write(&o, sizeof(o));
+	ser << o;
 	for (const auto &ls : lods)
-		f->write(&ls.threshold, sizeof(ls.threshold));
+		ser << ls.threshold;
 	uint32 accum = 0;
 	for (const auto &ls : lods)
 	{
-		f->write(&accum, sizeof(accum));
+		ser << accum;
 		accum += numeric_cast<uint32>(ls.meshes.size());
 	}
-	f->write(&accum, sizeof(accum));
+	ser << accum;
 	for (const auto &ls : lods)
 	{
 		for (auto msh : ls.meshes)
-			f->write(&msh, sizeof(msh));
+			ser << msh;
 	}
-	f->close();
+	writeFile(outputFileName)->write(buffer);
 }

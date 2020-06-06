@@ -317,7 +317,7 @@ namespace cage
 		}
 	}
 
-	void Ini::load(const string &filename)
+	void Ini::importFile(const string &filename)
 	{
 		Holder<File> file = newFile(filename, FileMode(true, false));
 		clear();
@@ -371,7 +371,7 @@ namespace cage
 		}
 	}
 
-	void Ini::save(const string &filename) const
+	void Ini::exportFile(const string &filename) const
 	{
 		IniImpl *impl = (IniImpl*)this;
 		FileMode fm(false, true);
@@ -489,35 +489,6 @@ namespace cage
 
 	Holder<Ini> newIni()
 	{
-		return newIni(detail::systemArena());
-	}
-
-	Holder<Ini> newIni(MemoryArena arena)
-	{
-		return detail::systemArena().createImpl<Ini, IniImpl>(arena);
-	}
-
-	Holder<Ini> newIni(const string &filename)
-	{
-		return newIni(detail::systemArena(), filename);
-	}
-
-	Holder<Ini> newIni(MemoryArena arena, const string &filename)
-	{
-		Holder<Ini> ini = newIni(arena);
-		ini->load(filename);
-		return ini;
-	}
-
-	Holder<Ini> newIni(uint32 argc, const char *const args[])
-	{
-		return newIni(detail::systemArena(), argc, args);
-	}
-
-	Holder<Ini> newIni(MemoryArena arena, uint32 argc, const char *const args[])
-	{
-		Holder<Ini> ini = newIni(arena);
-		ini->parseCmd(argc, args);
-		return ini;
+		return detail::systemArena().createImpl<Ini, IniImpl>(detail::systemArena());
 	}
 }

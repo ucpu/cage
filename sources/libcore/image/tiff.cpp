@@ -31,12 +31,12 @@ namespace cage
 		} initializer;
 	}
 
-	void tiffDecode(const char *inBuffer, uintPtr inSize, ImageImpl *impl)
+	void tiffDecode(PointerRange<const char> inBuffer, ImageImpl *impl)
 	{
 		TIFF *t = nullptr;
 		try
 		{
-			BufferIStream stream(inBuffer, inSize);
+			BufferIStream stream(inBuffer);
 			t = TIFFStreamOpen("MemTIFF", &stream);
 			if (!t)
 				CAGE_THROW_ERROR(Exception, "failed to initialize tiff decoding");

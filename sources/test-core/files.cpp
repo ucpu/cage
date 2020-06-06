@@ -23,7 +23,7 @@ void testFiles()
 		Holder<File> f = newFile("testdir/files/1", FileMode(false, true));
 		CAGE_TEST(f);
 		for (uint32 i = 0; i < FILE_BLOCKS; i++)
-			f->write(data.data(), BLOCK_SIZE);
+			f->write(data);
 	}
 
 	{
@@ -34,7 +34,7 @@ void testFiles()
 		MemoryBuffer tmp(BLOCK_SIZE);
 		for (uint32 i = 0; i < FILE_BLOCKS; i++)
 		{
-			f->read(tmp.data(), BLOCK_SIZE);
+			f->read(tmp);
 			CAGE_TEST(detail::memcmp(tmp.data(), data.data(), BLOCK_SIZE) == 0);
 		}
 	}

@@ -9,8 +9,7 @@ namespace cage
 {
 	struct CAGE_CORE_API ConcurrentQueueTerminated : public Exception
 	{
-		ConcurrentQueueTerminated(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept : Exception(file, line, function, severity, message)
-		{};
+		using Exception::Exception;
 	};
 
 	template<class T>

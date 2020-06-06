@@ -143,9 +143,9 @@ namespace cage
 			uint8 imageDescriptor;
 		};
 
-		void tgaDecodeImpl(const char *inBuffer, uintPtr inSize, ImageImpl *impl)
+		void tgaDecodeImpl(PointerRange<const char> inBuffer, ImageImpl *impl)
 		{
-			Deserializer des(inBuffer, inSize);
+			Deserializer des(inBuffer);
 
 			Header head;
 			des >> head.idLength;
@@ -234,9 +234,9 @@ namespace cage
 		}
 	}
 
-	void tgaDecode(const char *inBuffer, uintPtr inSize, ImageImpl *impl)
+	void tgaDecode(PointerRange<const char> inBuffer, ImageImpl *impl)
 	{
-		tgaDecodeImpl(inBuffer, inSize, impl);
+		tgaDecodeImpl(inBuffer, impl);
 		impl->verticalFlip();
 		impl->colorConfig = defaultConfig(impl->channels);
 	}

@@ -29,9 +29,9 @@ namespace cage
 			Holder<File> f = af ? af->openFile(pf, FileMode(true, false)) : realNewFile(pf, FileMode(true, false));
 			Holder<File> t = at ? at->openFile(pt, FileMode(false, true)) : realNewFile(pt, FileMode(false, true));
 			// todo split big files into multiple smaller steps
-			MemoryBuffer b = f->readBuffer(f->size());
+			MemoryBuffer b = f->read(f->size());
 			f->close();
-			t->writeBuffer(b);
+			t->write(b);
 			t->close();
 		}
 		if (af)

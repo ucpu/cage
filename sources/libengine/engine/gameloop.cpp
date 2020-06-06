@@ -472,13 +472,13 @@ namespace cage
 					assets->defineScheme<TextPack>(AssetSchemeIndexTextPack, genAssetSchemeTextPack());
 					assets->defineScheme<Collider>(AssetSchemeIndexCollider, genAssetSchemeCollider());
 					// engine assets
-					assets->defineScheme<ShaderProgram>(AssetSchemeIndexShaderProgram, genAssetSchemeShaderProgram(EngineGraphicsUploadThread::threadIndex, window.get()));
-					assets->defineScheme<Texture>(AssetSchemeIndexTexture, genAssetSchemeTexture(EngineGraphicsUploadThread::threadIndex, window.get()));
-					assets->defineScheme<Mesh>(AssetSchemeIndexMesh, genAssetSchemeMesh(EngineGraphicsDispatchThread::threadIndex, window.get()));
+					assets->defineScheme<ShaderProgram>(AssetSchemeIndexShaderProgram, genAssetSchemeShaderProgram(EngineGraphicsUploadThread::threadIndex));
+					assets->defineScheme<Texture>(AssetSchemeIndexTexture, genAssetSchemeTexture(EngineGraphicsUploadThread::threadIndex));
+					assets->defineScheme<Mesh>(AssetSchemeIndexMesh, genAssetSchemeMesh(EngineGraphicsDispatchThread::threadIndex));
 					assets->defineScheme<SkeletonRig>(AssetSchemeIndexSkeletonRig, genAssetSchemeSkeletonRig());
 					assets->defineScheme<SkeletalAnimation>(AssetSchemeIndexSkeletalAnimation, genAssetSchemeSkeletalAnimation());
 					assets->defineScheme<RenderObject>(AssetSchemeIndexRenderObject, genAssetSchemeRenderObject());
-					assets->defineScheme<Font>(AssetSchemeIndexFont, genAssetSchemeFont(EngineGraphicsUploadThread::threadIndex, window.get()));
+					assets->defineScheme<Font>(AssetSchemeIndexFont, genAssetSchemeFont(EngineGraphicsUploadThread::threadIndex));
 					assets->defineScheme<SoundSource>(AssetSchemeIndexSoundSource, genAssetSchemeSoundSource(EngineSoundThread::threadIndex, sound.get()));
 					// cage pack
 					assets->add(HashString("cage/cage.pack"));

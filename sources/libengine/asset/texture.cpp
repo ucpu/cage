@@ -1,7 +1,8 @@
+#include <cage-core/assetStructs.h>
+#include <cage-core/serialization.h>
+#include <cage-core/memoryBuffer.h>
 #include <cage-core/config.h>
 #include <cage-core/memory.h>
-#include <cage-core/serialization.h>
-#include <cage-core/assetStructs.h>
 
 #include <cage-engine/graphics.h>
 #include <cage-engine/opengl.h>
@@ -13,7 +14,7 @@ namespace cage
 	{
 		ConfigUint32 textureDownscale("cage/graphics/textureDownscale", 1);
 
-		void processLoad(const AssetContext *context, void *schemePointer)
+		void processLoad(const AssetContext *context)
 		{
 			Deserializer des(context->originalData());
 			TextureHeader data;
@@ -43,11 +44,10 @@ namespace cage
 		}
 	}
 
-	AssetScheme genAssetSchemeTexture(uint32 threadIndex, Window *memoryContext)
+	AssetScheme genAssetSchemeTexture(uint32 threadIndex)
 	{
 		AssetScheme s;
 		s.threadIndex = threadIndex;
-		s.schemePointer = memoryContext;
 		s.load.bind<&processLoad>();
 		return s;
 	}

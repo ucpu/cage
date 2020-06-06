@@ -2,9 +2,6 @@
 
 namespace cage
 {
-	Disconnected::Disconnected(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept : Exception(file, line, function, severity, message)
-	{};
-
 	namespace
 	{
 #ifdef CAGE_SYSTEM_WINDOWS

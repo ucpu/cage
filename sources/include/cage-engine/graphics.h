@@ -64,7 +64,7 @@ namespace cage
 		CAGE_ENGINE_API vec4 evalSamplesForTextureAnimation(const Texture *texture, uint64 emitTime, uint64 animationStart, real animationSpeed, real animationOffset);
 	}
 
-	CAGE_ENGINE_API AssetScheme genAssetSchemeTexture(uint32 threadIndex, Window *memoryContext);
+	CAGE_ENGINE_API AssetScheme genAssetSchemeTexture(uint32 threadIndex);
 	static constexpr uint32 AssetSchemeIndexTexture = 11;
 
 	class CAGE_ENGINE_API FrameBuffer : private Immovable
@@ -123,7 +123,7 @@ namespace cage
 
 	CAGE_ENGINE_API Holder<ShaderProgram> newShaderProgram();
 
-	CAGE_ENGINE_API AssetScheme genAssetSchemeShaderProgram(uint32 threadIndex, Window *memoryContext);
+	CAGE_ENGINE_API AssetScheme genAssetSchemeShaderProgram(uint32 threadIndex);
 	static constexpr uint32 AssetSchemeIndexShaderProgram = 10;
 
 	class CAGE_ENGINE_API UniformBuffer : private Immovable
@@ -193,7 +193,7 @@ namespace cage
 
 	CAGE_ENGINE_API Holder<Font> newFont();
 
-	CAGE_ENGINE_API AssetScheme genAssetSchemeFont(uint32 threadIndex, Window *memoryContext);
+	CAGE_ENGINE_API AssetScheme genAssetSchemeFont(uint32 threadIndex);
 	static constexpr uint32 AssetSchemeIndexFont = 16;
 
 	class CAGE_ENGINE_API Mesh : private Immovable
@@ -237,7 +237,7 @@ namespace cage
 
 	CAGE_ENGINE_API Holder<Mesh> newMesh();
 
-	CAGE_ENGINE_API AssetScheme genAssetSchemeMesh(uint32 threadIndex, Window *memoryContext);
+	CAGE_ENGINE_API AssetScheme genAssetSchemeMesh(uint32 threadIndex);
 	static constexpr uint32 AssetSchemeIndexMesh = 12;
 
 	class CAGE_ENGINE_API SkeletalAnimation : private Immovable

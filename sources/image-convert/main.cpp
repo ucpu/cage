@@ -29,7 +29,7 @@ void convert(string src, const string &format)
 	{ // encode to buffer first to verify that the conversion is possible
 		MemoryBuffer buf = img->exportBuffer(format);
 		Holder<File> f = newFile(dst, FileMode(false, true));
-		f->writeBuffer(buf);
+		f->write(buf);
 		f->close();
 	}
 	if (!preserveOriginal)

@@ -4,12 +4,12 @@
 
 namespace cage
 {
-	void pngDecode(const char *inBuffer, uintPtr inSize, ImageImpl *impl);
-	void jpegDecode(const char *inBuffer, uintPtr inSize, ImageImpl *impl);
-	void tiffDecode(const char *inBuffer, uintPtr inSize, ImageImpl *impl);
-	void tgaDecode(const char *inBuffer, uintPtr inSize, ImageImpl *impl);
-	void psdDecode(const char *inBuffer, uintPtr inSize, ImageImpl *impl);
-	void ddsDecode(const char *inBuffer, uintPtr inSize, ImageImpl *impl);
+	void pngDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
+	void jpegDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
+	void tiffDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
+	void tgaDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
+	void psdDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
+	void ddsDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
 	MemoryBuffer pngEncode(ImageImpl *impl);
 	MemoryBuffer jpegEncode(ImageImpl *impl);
 	MemoryBuffer tiffEncode(ImageImpl *impl);
@@ -17,15 +17,13 @@ namespace cage
 	MemoryBuffer psdEncode(ImageImpl *impl);
 	MemoryBuffer ddsEncode(ImageImpl *impl);
 
-	void Image::importBuffer(const MemoryBuffer &buffer_, uint32 channels, ImageFormatEnum format)
+	void Image::importBuffer(PointerRange<const char> buffer, uint32 channels, ImageFormatEnum format)
 	{
 		ImageImpl *impl = (ImageImpl*)this;
 		try
 		{
-			const uintPtr size = buffer_.size();
-			const char *buffer = buffer_.data();
 			impl->clear();
-			if (size < 32)
+			if (buffer.size() < 32)
 				CAGE_THROW_ERROR(Exception, "insufficient data to determine image format");
 			static constexpr uint8 pngSignature[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
 			static constexpr uint8 jpegSignature[3] = { 0xFF, 0xD8, 0xFF };
@@ -33,19 +31,19 @@ namespace cage
 			static constexpr uint8 tgaSignature[18] = "TRUEVISION-XFILE.";
 			static constexpr uint8 psdSignature[4] = { '8', 'B', 'P', 'S' };
 			static constexpr uint8 ddsSignature[4] = { 'D', 'D', 'S', ' ' };
-			if (detail::memcmp(buffer, pngSignature, sizeof(pngSignature)) == 0)
-				pngDecode((char*)buffer, size, impl);
-			else if (detail::memcmp(buffer, jpegSignature, sizeof(jpegSignature)) == 0)
-				jpegDecode((char*)buffer, size, impl);
-			else if (detail::memcmp(buffer, tiffSignature, sizeof(tiffSignature)) == 0)
-				tiffDecode((char*)buffer, size, impl);
-			else if (detail::memcmp((char*)buffer + size - sizeof(tgaSignature), tgaSignature, sizeof(tgaSignature)) == 0
-				|| detail::memcmp((char*)buffer + size - sizeof(tgaSignature) + 1, tgaSignature, sizeof(tgaSignature) - 1) == 0)
-				tgaDecode((char*)buffer, size, impl);
-			else if (detail::memcmp(buffer, psdSignature, sizeof(psdSignature)) == 0)
-				psdDecode((char*)buffer, size, impl);
-			else if (detail::memcmp(buffer, ddsSignature, sizeof(ddsSignature)) == 0)
-				ddsDecode((char*)buffer, size, impl);
+			if (detail::memcmp(buffer.data(), pngSignature, sizeof(pngSignature)) == 0)
+				pngDecode(buffer, impl);
+			else if (detail::memcmp(buffer.data(), jpegSignature, sizeof(jpegSignature)) == 0)
+				jpegDecode(buffer, impl);
+			else if (detail::memcmp(buffer.data(), tiffSignature, sizeof(tiffSignature)) == 0)
+				tiffDecode(buffer, impl);
+			else if (detail::memcmp(buffer.end() - sizeof(tgaSignature), tgaSignature, sizeof(tgaSignature)) == 0
+				|| detail::memcmp(buffer.end() - sizeof(tgaSignature) + 1, tgaSignature, sizeof(tgaSignature) - 1) == 0)
+				tgaDecode(buffer, impl);
+			else if (detail::memcmp(buffer.data(), psdSignature, sizeof(psdSignature)) == 0)
+				psdDecode(buffer, impl);
+			else if (detail::memcmp(buffer.data(), ddsSignature, sizeof(ddsSignature)) == 0)
+				ddsDecode(buffer, impl);
 			else
 				CAGE_THROW_ERROR(Exception, "image data do not match any known signature");
 			if (channels != m)
@@ -63,7 +61,7 @@ namespace cage
 	void Image::importFile(const string &filename, uint32 channels, ImageFormatEnum format)
 	{
 		Holder<File> f = newFile(filename, FileMode(true, false));
-		MemoryBuffer buffer = f->readBuffer(f->size());
+		MemoryBuffer buffer = f->read(f->size());
 		f->close();
 		importBuffer(buffer, channels, format);
 	}
@@ -90,6 +88,6 @@ namespace cage
 	void Image::exportFile(const string &filename)
 	{
 		MemoryBuffer buf = exportBuffer(filename);
-		newFile(filename, FileMode(false, true))->writeBuffer(buf);
+		writeFile(filename)->write(buf);
 	}
 }

@@ -27,7 +27,7 @@ namespace cage
 			std::vector<string> ps;
 			while (!params.empty())
 				ps.push_back(params.split("|"));
-			return a->format(text, numeric_cast<uint32>(ps.size()), ps.data());
+			return a->format(text, ps);
 		}
 		else
 			return "";

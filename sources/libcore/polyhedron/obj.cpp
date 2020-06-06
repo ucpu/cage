@@ -13,8 +13,9 @@ namespace cage
 	{
 		void writeLine(Serializer &ser, const string &s)
 		{
-			ser.write(s.c_str(), s.length());
-			ser.write("\n", 1);
+			ser.write({ s.c_str(), s.c_str() + s.length() });
+			const char eol[2] = "\n";
+			ser.write({ eol, eol + 1, });
 		}
 
 		stringizer writeAttr(const vec3 &v)
@@ -170,6 +171,6 @@ namespace cage
 	{
 		PolyhedronImpl *impl = (PolyhedronImpl *)this;
 		MemoryBuffer buff = exportObjBuffer(config);
-		newFile(filename, FileMode(false, true))->writeBuffer(buff);
+		writeFile(filename)->write(buff);
 	}
 }

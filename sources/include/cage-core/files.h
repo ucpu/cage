@@ -22,20 +22,25 @@ namespace cage
 	class CAGE_CORE_API File : private Immovable
 	{
 	public:
-		void read(void *data, uintPtr size);
+		void read(PointerRange<char> buffer);
+		MemoryBuffer read(uintPtr size);
+		MemoryBuffer readAll();
 		bool readLine(string &line);
-		MemoryBuffer readBuffer(uintPtr size);
-		void write(const void *data, uintPtr size);
+
+		void write(PointerRange<const char> buffer);
 		void writeLine(const string &line);
-		void writeBuffer(const MemoryBuffer &buffer);
+
 		void seek(uintPtr position);
 		void flush();
 		void close();
+
 		uintPtr tell() const;
 		uintPtr size() const;
 	};
 
 	CAGE_CORE_API Holder<File> newFile(const string &path, const FileMode &mode);
+	CAGE_CORE_API Holder<File> readFile(const string &path);
+	CAGE_CORE_API Holder<File> writeFile(const string &path);
 
 	class CAGE_CORE_API DirectoryList : private Immovable
 	{

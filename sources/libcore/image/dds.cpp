@@ -17,7 +17,7 @@ namespace cage
 		template<class Block>
 		void decompress(Deserializer &des, ImageImpl *impl)
 		{
-			Serializer masterSer(impl->mem.data(), impl->mem.size());
+			Serializer masterSer(impl->mem);
 			const uint32 cols = impl->width / 4; // blocks count
 			const uint32 rows = impl->height / 4; // blocks count
 			const uint32 lineSize = impl->width * 4; // bytes count
@@ -108,9 +108,9 @@ namespace cage
 		}
 	}
 
-	void ddsDecode(const char *inBuffer, uintPtr inSize, ImageImpl *impl)
+	void ddsDecode(PointerRange<const char> inBuffer, ImageImpl *impl)
 	{
-		Deserializer des(inBuffer, inSize);
+		Deserializer des(inBuffer);
 
 		Header header;
 		des >> header;

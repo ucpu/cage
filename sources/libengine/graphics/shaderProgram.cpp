@@ -338,7 +338,7 @@ namespace cage
 		if (shaderIntrospection)
 		{
 			Holder<File> f = newFile(stringizer() + "shaderIntrospection/" + impl->id + "/" + stageName + ".glsl", FileMode(false, true));
-			f->write(data, length);
+			f->write({ data, data + length });
 		}
 
 		SourceHolder shader = SourceHolder(glCreateShader(stage));
@@ -363,13 +363,13 @@ namespace cage
 			if (shaderIntrospection)
 			{
 				Holder<File> f = newFile(stringizer() + "shaderIntrospection/" + impl->id + "/" + stageName + "_compile.log", FileMode(false, true));
-				f->write(buf, len);
+				f->write({ buf, buf + len });
 			}
 #ifdef CAGE_DEBUG
 			CAGE_LOG(SeverityEnum::Note, "shader", stringizer() + "shader name: " + debugName);
 #endif // CAGE_DEBUG
 			CAGE_LOG(SeverityEnum::Warning, "shader", stringizer() + "shader compilation log (id: " + impl->id + ", stage: " + stageName + "):");
-			Holder<LineReader> lrb = newLineReader(buf, len);
+			Holder<LineReader> lrb = newLineReader({ buf, buf + len });
 			for (string line; lrb->readLine(line);)
 				CAGE_LOG_CONTINUE(SeverityEnum::Warning, "shader", line);
 		}
@@ -422,13 +422,13 @@ namespace cage
 			if (shaderIntrospection)
 			{
 				Holder<File> f = newFile(stringizer() + "shaderIntrospection/" + impl->id + "/linking.log", FileMode(false, true));
-				f->write(buf, len);
+				f->write({ buf, buf + len });
 			}
 #ifdef CAGE_DEBUG
 			CAGE_LOG(SeverityEnum::Note, "shader", stringizer() + "shader name: " + debugName);
 #endif // CAGE_DEBUG
 			CAGE_LOG(SeverityEnum::Warning, "shader", stringizer() + "shader linking log (id: " + impl->id + "):");
-			Holder<LineReader> lrb = newLineReader(buf, len);
+			Holder<LineReader> lrb = newLineReader({ buf, buf + len });
 			for (string line; lrb->readLine(line);)
 				CAGE_LOG_CONTINUE(SeverityEnum::Warning, "shader", line);
 		}
@@ -573,13 +573,13 @@ namespace cage
 			if (shaderIntrospection)
 			{
 				Holder<File> f = newFile(stringizer() + "shaderIntrospection/" + impl->id + "/validation.log", FileMode(false, true));
-				f->write(buf, len);
+				f->write({ buf, buf + len });
 			}
 #ifdef CAGE_DEBUG
 			CAGE_LOG(SeverityEnum::Note, "shader", stringizer() + "shader name: " + debugName);
 #endif // CAGE_DEBUG
 			CAGE_LOG(SeverityEnum::Warning, "shader", stringizer() + "shader validation log (id: " + impl->id + "):");
-			Holder<LineReader> lrb = newLineReader(buf, len);
+			Holder<LineReader> lrb = newLineReader({ buf, buf + len });
 			for (string line; lrb->readLine(line);)
 				CAGE_LOG_CONTINUE(SeverityEnum::Warning, "shader", line);
 		}

@@ -146,6 +146,18 @@ namespace cage
 			}
 		}
 
+		void compress(PointerRange<const char> input, PointerRange<char> &output)
+		{
+			uintPtr s = compress(input.data(), input.size(), output.data(), output.size());
+			output = { output.data(), output.data() + s };
+		}
+
+		void decompress(PointerRange<const char> input, PointerRange<char> &output)
+		{
+			uintPtr s = decompress(input.data(), input.size(), output.data(), output.size());
+			output = { output.data(), output.data() + s };
+		}
+
 		namespace
 		{
 			void *malloca(uintPtr size, uintPtr alignment)

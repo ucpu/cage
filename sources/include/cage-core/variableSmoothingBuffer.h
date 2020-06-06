@@ -8,11 +8,6 @@ namespace cage
 	template<class T, uint32 N>
 	struct VariableSmoothingBuffer
 	{
-		VariableSmoothingBuffer() : index(0), sum(T())
-		{
-			seed(T());
-		}
-
 		void seed(const T &value)
 		{
 			for (uint32 i = 0; i < N; i++)
@@ -59,9 +54,9 @@ namespace cage
 		}
 
 	private:
-		uint32 index;
-		T buffer[N];
-		T sum;
+		uint32 index = 0;
+		T buffer[N] = {};
+		T sum = T();
 	};
 
 	namespace privat
@@ -72,9 +67,6 @@ namespace cage
 	template<uint32 N>
 	struct VariableSmoothingBuffer<quat, N>
 	{
-		VariableSmoothingBuffer() : index(0)
-		{}
-
 		void seed(const quat &value)
 		{
 			for (uint32 i = 0; i < N; i++)
@@ -105,7 +97,7 @@ namespace cage
 		}
 
 	private:
-		uint32 index;
+		uint32 index = 0;
 		quat buffer[N];
 		quat avg;
 	};

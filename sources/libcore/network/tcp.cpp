@@ -1,5 +1,6 @@
 #include "net.h"
 #include <cage-core/lineReader.h>
+#include <cage-core/math.h> // min
 
 #include <vector>
 
@@ -45,6 +46,20 @@ namespace cage
 
 			TcpConnectionImpl(Sock &&s) : s(templates::move(s))
 			{}
+
+			void waitForBytes(uintPtr size)
+			{
+				while (true)
+				{
+					uintPtr a = available();
+					if (a >= size)
+						break;
+					// an ugly hack here, using the reserved capacity of a vector as a temporary storage
+					if (buffer.capacity() < size)
+						buffer.reserve(size);
+					s.recv(buffer.data() + buffer.size(), size - a, MSG_WAITALL | MSG_PEEK); // blocking wait
+				}
+			}
 		};
 
 		class TcpServerImpl : public TcpServer
@@ -113,6 +128,74 @@ namespace cage
 		return impl->buffer.size();
 	}
 
+	void TcpConnection::readWait(PointerRange<char> buffer)
+	{
+		TcpConnectionImpl *impl = (TcpConnectionImpl*)this;
+		impl->waitForBytes(buffer.size());
+		detail::memcpy(buffer.data(), impl->buffer.data(), buffer.size());
+		detail::memmove(impl->buffer.data(), impl->buffer.data() + (buffer.size() + 1), impl->buffer.size() - buffer.size());
+		impl->buffer.resize(impl->buffer.size() - buffer.size());
+	}
+
+	void TcpConnection::read(PointerRange<char> &buffer)
+	{
+		uintPtr s = min(buffer.size(), available());
+		buffer = { buffer.data(), buffer.data() + s };
+		readWait(buffer);
+	}
+
+	MemoryBuffer TcpConnection::readWait(uintPtr size)
+	{
+		MemoryBuffer b(size);
+		readWait(b);
+		return b;
+	}
+
+	MemoryBuffer TcpConnection::read()
+	{
+		MemoryBuffer b(available());
+		readWait(b);
+		return b;
+	}
+
+	string TcpConnection::readLineWait()
+	{
+		TcpConnectionImpl *impl = (TcpConnectionImpl*)this;
+		string line;
+		while (!readLine(line))
+			impl->waitForBytes(impl->buffer.size() + 1);
+		return line;
+	}
+
+	bool TcpConnection::readLine(string &line)
+	{
+		available();
+		TcpConnectionImpl *impl = (TcpConnectionImpl*)this;
+		if (impl->buffer.empty())
+			return false;
+
+		const char *b = impl->buffer.data();
+		uintPtr s = impl->buffer.size();
+		if (!detail::readLine(line, b, s, true))
+			return false;
+		detail::memmove(impl->buffer.data(), b, s);
+		impl->buffer.resize(s);
+		return true;
+	}
+
+	void TcpConnection::write(PointerRange<const char> buffer)
+	{
+		TcpConnectionImpl *impl = (TcpConnectionImpl*)this;
+		impl->s.send(buffer.data(), buffer.size());
+	}
+
+	void TcpConnection::writeLine(const string &str)
+	{
+		string tmp = str + "\n";
+		write({ tmp.c_str(), tmp.c_str() + tmp.length() });
+	}
+
+	/*
 	void TcpConnection::read(void *buffer, uintPtr size)
 	{
 		TcpConnectionImpl *impl = (TcpConnectionImpl*)this;
@@ -173,6 +256,7 @@ namespace cage
 		string tmp = str + "\n";
 		write((void*)tmp.c_str(), tmp.length());
 	}
+	*/
 
 	uint16 TcpServer::port() const
 	{

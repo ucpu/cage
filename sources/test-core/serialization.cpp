@@ -2,6 +2,8 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 
+#include <vector>
+
 void testSerialization()
 {
 	CAGE_TESTCASE("serialization");
@@ -68,4 +70,16 @@ void testSerialization()
 		s1 = templates::move(s2);
 		d2 = templates::move(d1);
 	}
+
+	/*
+	{
+		CAGE_TESTCASE("vectors");
+		std::vector<uint32> vec;
+		vec.resize(13);
+		MemoryBuffer b;
+		Serializer s(b);
+		s << vec;
+		CAGE_TEST(b.size() == vec.size() * sizeof(vec[0]));
+	}
+	*/
 }

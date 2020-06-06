@@ -13,9 +13,9 @@ namespace cage
 		void clear();
 
 		string get(uint32 name) const;
-		string format(uint32 name, uint32 paramCount, const string *paramValues) const;
+		string format(uint32 name, PointerRange<const string> params) const;
 
-		static string format(const string &format, uint32 paramCount, const string *paramValues);
+		static string format(const string &format, PointerRange<const string> params);
 	};
 
 	CAGE_CORE_API Holder<TextPack> newTextPack();

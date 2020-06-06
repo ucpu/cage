@@ -4,6 +4,8 @@
 #include <cage-core/files.h>
 #include <cage-core/config.h>
 #include <cage-core/assetStructs.h>
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/serialization.h>
 
 #include <cage-engine/core.h>
 #include <cage-engine/assetStructs.h>

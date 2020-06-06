@@ -33,6 +33,15 @@ namespace cage
 			buffer += len + 1;
 			return true;
 		}
+
+		bool readLine(string &output, PointerRange<const char> &buffer, bool lfOnly)
+		{
+			const char *b = buffer.begin();
+			uintPtr s = buffer.size();
+			bool res = readLine(output, b, s, lfOnly);
+			buffer = { b, b + s };
+			return res;
+		}
 	}
 
 	namespace
@@ -58,18 +67,13 @@ namespace cage
 		return detail::readLine(line, impl->buffer, impl->size, false);
 	}
 
-	uintPtr LineReader::left() const
+	uintPtr LineReader::remaining() const
 	{
 		LineReaderImpl *impl = (LineReaderImpl*)this;
 		return impl->size;
 	}
 
-	Holder<LineReader> newLineReader(const char *buffer, uintPtr size)
-	{
-		return detail::systemArena().createImpl<LineReader, LineReaderImpl>(buffer, size);
-	}
-
-	Holder<LineReader> newLineReader(const MemoryBuffer &buffer)
+	Holder<LineReader> newLineReader(PointerRange<const char> buffer)
 	{
 		return detail::systemArena().createImpl<LineReader, LineReaderImpl>(buffer.data(), buffer.size());
 	}

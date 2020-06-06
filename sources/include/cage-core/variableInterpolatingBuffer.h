@@ -8,7 +8,7 @@ namespace cage
 	namespace privat
 	{
 		template<class T>
-		struct DefaultInterpolatorFunctor
+		struct DefaultInterpolator
 		{
 			T operator () (const T &a, const T &b, float p) const
 			{
@@ -17,13 +17,11 @@ namespace cage
 		};
 	}
 
-	template<class T, class F = privat::DefaultInterpolatorFunctor<T>>
+	template<class T, class F = privat::DefaultInterpolator<T>>
 	struct VariableInterpolatingBuffer
 	{
 		explicit VariableInterpolatingBuffer(F fnc = F()) : fnc(fnc)
-		{
-			clear();
-		}
+		{}
 
 		void clear()
 		{
@@ -89,8 +87,8 @@ namespace cage
 		}
 
 	private:
-		T data[3];
-		uint64 times[3];
+		T data[3] = {};
+		uint64 times[3] = {};
 		F fnc;
 
 		T interp(uint32 i, uint64 current) const

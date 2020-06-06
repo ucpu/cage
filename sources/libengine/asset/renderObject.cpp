@@ -1,5 +1,6 @@
 #include <cage-core/assetStructs.h>
 #include <cage-core/serialization.h>
+#include <cage-core/memoryBuffer.h>
 
 #include <cage-engine/graphics.h>
 #include <cage-engine/assetStructs.h>
@@ -8,7 +9,7 @@ namespace cage
 {
 	namespace
 	{
-		void processLoad(const AssetContext *context, void *schemePointer)
+		void processLoad(const AssetContext *context)
 		{
 			Holder<RenderObject> obj = newRenderObject();
 			obj->setDebugName(context->textName);

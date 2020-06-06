@@ -54,10 +54,10 @@ namespace cage
 		real evaluate(vec2 position);
 		real evaluate(vec3 position);
 		real evaluate(vec4 position);
-		void evaluate(uint32 count, const real positions[], real results[]);
-		void evaluate(uint32 count, const vec2 positions[], real results[]);
-		void evaluate(uint32 count, const vec3 positions[], real results[]);
-		void evaluate(uint32 count, const vec4 positions[], real results[]);
+		void evaluate(PointerRange<const real> positions, PointerRange<real> results);
+		void evaluate(PointerRange<const vec2> positions, PointerRange<real> results);
+		void evaluate(PointerRange<const vec3> positions, PointerRange<real> results);
+		void evaluate(PointerRange<const vec4> positions, PointerRange<real> results);
 	};
 
 	struct CAGE_CORE_API NoiseFunctionCreateConfig

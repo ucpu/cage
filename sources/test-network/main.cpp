@@ -86,7 +86,8 @@ int main(int argc, const char *args[])
 			return 0;
 		}
 
-		Holder<Ini> cmd = newIni(argc, args);
+		Holder<Ini> cmd = newIni();
+		cmd->parseCmd(argc, args);
 		ConfigString address("address", "localhost");
 		ConfigUint32 port("port", 42789);
 		ConfigFloat packetLoss("cage/udp/simulatedPacketLoss");

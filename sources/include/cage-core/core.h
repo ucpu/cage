@@ -12,12 +12,14 @@
 #error CAGE_DEBUG and NDEBUG are incompatible
 #endif
 
-#if defined(_WIN32)
+#if defined(_MSC_VER)
 #define CAGE_API_EXPORT __declspec(dllexport)
 #define CAGE_API_IMPORT __declspec(dllimport)
+#define CAGE_API_PRIVATE
 #else
 #define CAGE_API_EXPORT __attribute__((visibility("default")))
 #define CAGE_API_IMPORT __attribute__((visibility("default")))
+#define CAGE_API_PRIVATE __attribute__((visibility("hidden")))
 #endif
 
 #ifdef CAGE_CORE_EXPORT
@@ -37,14 +39,12 @@
 #endif
 
 #ifdef CAGE_SYSTEM_WINDOWS
-#define CAGE_API_PRIVATE
 #if defined(_WIN64)
 #define CAGE_ARCHITECTURE_64
 #else
 #define CAGE_ARCHITECTURE_32
 #endif
 #else
-#define CAGE_API_PRIVATE __attribute__((visibility("hidden")))
 #if __x86_64__ || __ppc64__
 #define CAGE_ARCHITECTURE_64
 #else
@@ -245,6 +245,7 @@ namespace cage
 
 	namespace templates
 	{
+		// todo replace with spaceship operator (c++20)
 		template<class T>
 		struct Comparable
 		{
@@ -255,6 +256,7 @@ namespace cage
 			friend bool operator <  (const T &lhs, const T &rhs) noexcept { return compare(lhs, rhs) <  0; }
 			friend bool operator >  (const T &lhs, const T &rhs) noexcept { return compare(lhs, rhs) >  0; }
 		};
+
 		template<class T> inline constexpr T &&forward(typename std::remove_reference<T>::type  &v) noexcept { return static_cast<T&&>(v); }
 		template<class T> inline constexpr T &&forward(typename std::remove_reference<T>::type &&v) noexcept { static_assert(!std::is_lvalue_reference<T>::value, "invalid rvalue to lvalue conversion"); return static_cast<T&&>(v); }
 		template<class T> inline constexpr typename std::remove_reference<T>::type &&move(T &&v) noexcept { return static_cast<typename std::remove_reference<T>::type&&>(v); }
@@ -306,7 +308,7 @@ namespace cage
 
 	struct CAGE_CORE_API NotImplemented : public Exception
 	{
-		explicit NotImplemented(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept;
+		using Exception::Exception;
 		void log() override;
 	};
 
@@ -558,6 +560,7 @@ namespace cage
 			GCHL_GENERATE(bool);
 #undef GCHL_GENERATE
 
+			// todo replace with PointerRange<const char>
 			explicit StringBase(const char *pos, uint32 len)
 			{
 				if (len > N)
@@ -975,7 +978,7 @@ namespace cage
 			fnc = +[](void *inst, Ts... vs) {
 				U u;
 				u.p = inst;
-				return F(u.d , templates::forward<Ts>(vs)...);
+				return F(u.d, templates::forward<Ts>(vs)...);
 			};
 			U u;
 			u.d = d;

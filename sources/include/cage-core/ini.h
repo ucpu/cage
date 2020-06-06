@@ -36,6 +36,12 @@ namespace cage
 	class CAGE_CORE_API Ini : private Immovable
 	{
 	public:
+		void clear();
+		void merge(const Ini *source); // items in this are overridden by items in source
+		void parseCmd(uint32 argc, const char *const args[]); // clears this before parsing
+		void importFile(const string &filename); // clears this before loading
+		void exportFile(const string &filename) const;
+
 		uint32 sectionsCount() const;
 		string section(uint32 section) const;
 		bool sectionExists(const string &section) const;
@@ -58,12 +64,6 @@ namespace cage
 		bool anyUnused(string &section, string &item, string &value) const;
 		void checkUnused() const;
 
-		void clear();
-		void merge(const Ini *source); // items in this are overridden by items in source
-		void parseCmd(uint32 argc, const char *const args[]); // clears this before parsing
-		void load(const string &filename); // clears this before loading
-		void save(const string &filename) const;
-
 #define GCHL_GENERATE(TYPE, NAME, DEF) \
 		void set##NAME (const string &section, const string &item, const TYPE &value); \
 		TYPE get##NAME (const string &section, const string &item, const TYPE &defaul = DEF) const; \
@@ -83,11 +83,6 @@ namespace cage
 	};
 
 	CAGE_CORE_API Holder<Ini> newIni();
-	CAGE_CORE_API Holder<Ini> newIni(MemoryArena arena);
-	CAGE_CORE_API Holder<Ini> newIni(const string &filename);
-	CAGE_CORE_API Holder<Ini> newIni(MemoryArena arena, const string &filename);
-	CAGE_CORE_API Holder<Ini> newIni(uint32 argc, const char *const args[]);
-	CAGE_CORE_API Holder<Ini> newIni(MemoryArena arena, uint32 argc, const char *const args[]);
 }
 
 #endif // guard_ini_h_c866b123_b27e_4758_ab8e_702ef8f315de_
