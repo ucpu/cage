@@ -1,4 +1,5 @@
 #include <cage-core/geometry.h>
+#include <cage-core/macros.h>
 
 #include "polyhedron.h"
 
@@ -32,10 +33,14 @@ namespace cage
 			const real d11 = dot(v1, v1);
 			const real d20 = dot(v2, v0);
 			const real d21 = dot(v2, v1);
-			const real invDenom = 1.0 / (d00 * d11 - d01 * d01);
+			const real denom = d00 * d11 - d01 * d01;
+			if (abs(denom) < 1e-7)
+				return vec2(); // the triangle is too small or degenerated, just return anything valid
+			const real invDenom = 1.0 / denom;
 			const real v = (d11 * d20 - d01 * d21) * invDenom;
 			const real w = (d00 * d21 - d01 * d20) * invDenom;
 			const real u = 1 - v - w;
+			CAGE_ASSERT(u.valid() && v.valid());
 			return vec2(u, v);
 		}
 
@@ -50,7 +55,7 @@ namespace cage
 		CAGE_ASSERT(type() == PolyhedronTypeEnum::Triangles);
 		CAGE_ASSERT(!uvs().empty());
 
-		const uint32 triCount = (indices().empty() ? numeric_cast<uint32>(positions().size()) : numeric_cast<uint32>(indices().size())) / 3;
+		const uint32 triCount = facesCount();
 		const vec2 scale = vec2(config.width - 1, config.height - 1);
 		for (uint32 triIdx = 0; triIdx < triCount; triIdx++)
 		{
@@ -87,7 +92,6 @@ namespace cage
 					const sint32 y = t0[1] + i;
 					const vec2 uv = vec2(x, y);
 					const vec2 b = barycoord(vertUvs[0], vertUvs[1], vertUvs[2], uv);
-					CAGE_ASSERT(b.valid());
 					config.generator(x, y, idx, vec3(b, 1 - b[0] - b[1]));
 				}
 			}
@@ -108,8 +112,15 @@ namespace cage
 
 	void Polyhedron::applyTransform(const transform &t)
 	{
-		// todo optimized code
-		applyTransform(mat4(t));
+		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		for (vec3 &it : impl->positions)
+			it = t * it;
+		for (vec3 &it : impl->normals)
+			it = t.orientation * it;
+		for (vec3 &it : impl->tangents)
+			it = t.orientation * it;
+		for (vec3 &it : impl->bitangents)
+			it = t.orientation * it;
 	}
 
 	void Polyhedron::applyTransform(const mat4 &t)
@@ -131,8 +142,14 @@ namespace cage
 		{
 			const vec3 a = impl->positions[ai];
 			const vec3 b = impl->positions[bi];
+			if (abs(b[axis] - a[axis]) < 1e-5)
+				return ai; // the edge is very short or degenerated
 			const real pu = (value - a[axis]) / (b[axis] - a[axis]);
 			CAGE_ASSERT(pu >= 0 && pu <= 1);
+			if (pu < 1e-5)
+				return ai; // the cut is very close to the beginning of the line
+			if (pu > 1 - 1e-5)
+				return bi; // the cut is very close to the end of the line
 			impl->positions.push_back(interpolate(a, b, pu));
 			if (!impl->normals.empty())
 				impl->normals.push_back(normalize(interpolate(impl->normals[ai], impl->normals[bi], pu)));
@@ -250,6 +267,60 @@ namespace cage
 				}
 			}
 		}
+
+		template<class T>
+		void vectorEraseIf(std::vector<T> &v, const std::vector<bool> &toRemove)
+		{
+			CAGE_ASSERT(v.size() == toRemove.size());
+			auto flagit = toRemove.begin();
+			v.erase(std::remove_if(v.begin(), v.end(), [&](T&) {
+				return *flagit++;
+				}), v.end());
+			CAGE_ASSERT(flagit == toRemove.end());
+		}
+
+		void removeVertices(PolyhedronImpl *impl, const std::vector<bool> &verticesToRemove)
+		{
+			CAGE_ASSERT(impl->verticesCount() == verticesToRemove.size());
+
+			if (!impl->indices.empty())
+			{
+				std::vector<uint32> mapping; // mapping[original_index] = new_index
+				mapping.reserve(verticesToRemove.size());
+				{
+					uint32 removed = 0;
+					uint32 index = 0;
+					for (bool b : verticesToRemove)
+					{
+						CAGE_ASSERT(removed <= index);
+						mapping.push_back(index - removed);
+						index++;
+						removed += b;
+					}
+				}
+				for (uint32 &i : impl->indices)
+				{
+					CAGE_ASSERT(i < verticesToRemove.size());
+					CAGE_ASSERT(!verticesToRemove[i]);
+					i = mapping[i];
+				}
+			}
+
+#define GCHL_GENERATE(NAME) if (!impl->NAME.empty()) vectorEraseIf(impl->NAME, verticesToRemove);
+			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
+#undef GCHL_GENERATE
+		}
+
+		void removeUnusedVertices(PolyhedronImpl *impl)
+		{
+			if (impl->indices.empty())
+				return;
+			std::vector<bool> verticesToRemove;
+			verticesToRemove.resize(impl->positions.size(), true);
+			for (uint32 i : impl->indices)
+				verticesToRemove[i] = false;
+			removeVertices(impl, verticesToRemove);
+		}
 	}
 
 	void Polyhedron::clip(const aabb &clipBox)
@@ -297,13 +368,13 @@ namespace cage
 				impl->indices.push_back(i);
 			tmp.clear();
 		}
-		// todo remove unused vertices
+		removeUnusedVertices(impl);
 	}
 
 	void Polyhedron::clip(const plane &pln)
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
-		CAGE_THROW_CRITICAL(NotImplemented, "clip");
+		// todo optimized code without constructing the other polyhedron
+		cut(pln);
 	}
 
 	Holder<Polyhedron> Polyhedron::cut(const plane &pln)
@@ -312,13 +383,179 @@ namespace cage
 		CAGE_THROW_CRITICAL(NotImplemented, "cut");
 	}
 
-	void Polyhedron::discardDisconnected()
+	namespace
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
-		CAGE_THROW_CRITICAL(NotImplemented, "discardDisconnected");
+		// mark entire triplet (triangles) or pair (lines) if any one of them is marked
+		void markFacesWithInvalidVertices(PolyhedronTypeEnum type, std::vector<bool> &marks)
+		{
+			switch (type)
+			{
+			case PolyhedronTypeEnum::Points:
+				break;
+			case PolyhedronTypeEnum::Lines:
+			{
+				const uint32 cnt = numeric_cast<uint32>(marks.size()) / 2;
+				for (uint32 i = 0; i < cnt; i++)
+				{
+					if (marks[i * 2 + 0] || marks[i * 2 + 1])
+						marks[i * 2 + 0] = marks[i * 2 + 1] = true;
+				}
+			} break;
+			case PolyhedronTypeEnum::Triangles:
+			{
+				const uint32 cnt = numeric_cast<uint32>(marks.size()) / 3;
+				for (uint32 i = 0; i < cnt; i++)
+				{
+					if (marks[i * 3 + 0] || marks[i * 3 + 1] || marks[i * 3 + 2])
+						marks[i * 3 + 0] = marks[i * 3 + 1] = marks[i * 3 + 2] = true;
+				}
+			} break;
+			default:
+				CAGE_THROW_CRITICAL(Exception, "invalid polyhedron type");
+			}
+		}
+
+		void discardInvalidVertices(PolyhedronImpl *impl)
+		{
+			std::vector<bool> verticesToRemove;
+			verticesToRemove.resize(impl->positions.size(), false);
+			{
+				auto r = verticesToRemove.begin();
+				for (const vec3 &v : impl->positions)
+				{
+					*r = *r || !valid(v);
+					r++;
+				}
+				CAGE_ASSERT(r == verticesToRemove.end());
+			}
+			{
+				auto r = verticesToRemove.begin();
+				for (const vec2 &v : impl->uvs)
+				{
+					*r = *r || !valid(v);
+					r++;
+				}
+			}
+			{
+				auto r = verticesToRemove.begin();
+				for (const vec3 &v : impl->uvs3)
+				{
+					*r = *r || !valid(v);
+					r++;
+				}
+			}
+			{
+				auto r = verticesToRemove.begin();
+				for (const vec3 &v : impl->normals)
+				{
+					*r = *r || !valid(v) || abs(lengthSquared(v) - 1) > 1e-5;
+					r++;
+				}
+			}
+			if (impl->indices.empty())
+			{
+				markFacesWithInvalidVertices(impl->type, verticesToRemove);
+			}
+			else
+			{
+				std::vector<bool> invalidIndices;
+				invalidIndices.reserve(impl->indices.size());
+				for (uint32 i : impl->indices)
+					invalidIndices.push_back(verticesToRemove[i]);
+				markFacesWithInvalidVertices(impl->type, invalidIndices);
+				vectorEraseIf(impl->indices, invalidIndices);
+			}
+			removeVertices(impl, verticesToRemove);
+		}
+
+		void discardInvalidLines(PolyhedronImpl *impl)
+		{
+			// todo
+		}
+
+		void discardInvalidTriangles(PolyhedronImpl *impl)
+		{
+			const uint32 tris = impl->facesCount();
+			PointerRange<const vec3> ps = impl->positions;
+			if (impl->indices.empty())
+			{
+				std::vector<bool> verticesToRemove;
+				verticesToRemove.reserve(tris * 3);
+				for (uint32 i = 0; i < tris; i++)
+				{
+					triangle t(ps[i * 3 + 0], ps[i * 3 + 1], ps[i * 3 + 2]);
+					bool d = t.degenerated();
+					verticesToRemove.push_back(d);
+					verticesToRemove.push_back(d);
+					verticesToRemove.push_back(d);
+				}
+				removeVertices(impl, verticesToRemove);
+				CAGE_ASSERT(impl->positions.size() % 3 == 0);
+			}
+			else
+			{
+				PointerRange<const uint32> is = impl->indices;
+				std::vector<bool> indicesToRemove;
+				indicesToRemove.reserve(tris * 3);
+				for (uint32 i = 0; i < tris; i++)
+				{
+					triangle t(ps[is[i * 3 + 0]], ps[is[i * 3 + 1]], ps[is[i * 3 + 2]]);
+					bool d = t.degenerated();
+					indicesToRemove.push_back(d);
+					indicesToRemove.push_back(d);
+					indicesToRemove.push_back(d);
+				}
+				vectorEraseIf(impl->indices, indicesToRemove);
+				removeUnusedVertices(impl);
+				CAGE_ASSERT(impl->indices.size() % 3 == 0);
+			}
+		}
 	}
 
-	Holder<PointerRange<Holder<Polyhedron>>> Polyhedron::separateDisconnected()
+	void Polyhedron::discardInvalid()
+	{
+		CAGE_ASSERT(verticesCount() + 1); // assert that vertices are consistent
+		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		discardInvalidVertices(impl);
+		switch (impl->type)
+		{
+		case PolyhedronTypeEnum::Points:
+			break;
+		case PolyhedronTypeEnum::Lines:
+			discardInvalidLines(impl);
+			break;
+		case PolyhedronTypeEnum::Triangles:
+			discardInvalidTriangles(impl);
+			break;
+		default:
+			CAGE_THROW_CRITICAL(Exception, "invalid polyhedron type");
+		}
+		CAGE_ASSERT(verticesCount() + 1); // assert that vertices are consistent
+	}
+
+	void Polyhedron::discardDisconnected()
+	{
+		if (facesCount() == 0)
+			return;
+		// todo optimized code without separateDisconnected
+		auto vec = separateDisconnected();
+		uint32 largestIndex = 0;
+		uint32 largestFaces = vec[0]->facesCount();
+		for (uint32 i = 1; i < vec.size(); i++)
+		{
+			uint32 f = vec[i]->facesCount();
+			if (f > largestFaces)
+			{
+				largestFaces = f;
+				largestIndex = i;
+			}
+		}
+		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		PolyhedronImpl *src = (PolyhedronImpl *)vec[largestIndex].get();
+		impl->swap(*src);
+	}
+
+	Holder<PointerRange<Holder<Polyhedron>>> Polyhedron::separateDisconnected() const
 	{
 		PolyhedronImpl *impl = (PolyhedronImpl *)this;
 		CAGE_THROW_CRITICAL(NotImplemented, "separateDisconnected");

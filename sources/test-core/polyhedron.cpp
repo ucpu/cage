@@ -38,6 +38,12 @@ namespace
 	{
 		CAGE_TEST(distance(a, b) < 1);
 	}
+
+	void approxEqual(const aabb &a, const aabb &b)
+	{
+		approxEqual(a.a, b.a);
+		approxEqual(a.b, b.b);
+	}
 }
 
 void testPolyhedron()
@@ -45,26 +51,38 @@ void testPolyhedron()
 	CAGE_TESTCASE("polyhedron");
 
 #ifdef CAGE_DEBUG
-	Holder<Polyhedron> poly = makeUvSphere(10, 16, 8);
+	const Holder<const Polyhedron> poly = makeUvSphere(10, 16, 8).cast<const Polyhedron>();
 #else
-	Holder<Polyhedron> poly = makeUvSphere(10, 32, 16);
+	const Holder<const Polyhedron> poly = makeUvSphere(10, 32, 16).cast<const Polyhedron>();
 #endif // CAGE_DEBUG
 
 	poly->exportObjFile({}, "meshes/sphere_base.obj");
+	CAGE_TEST(poly->verticesCount() > 10);
+	CAGE_TEST(poly->indicesCount() > 10);
+	CAGE_TEST(poly->indicesCount() == poly->facesCount() * 3);
+
 	{
 		CAGE_TESTCASE("bounding box");
-		aabb box = poly->boundingBox();
-		approxEqual(box.a, vec3(-10));
-		approxEqual(box.b, vec3(10));
+		approxEqual(poly->boundingBox(), aabb(vec3(-10), vec3(10)));
 	}
+
 	{
 		CAGE_TESTCASE("apply transformation");
 		auto p = poly->copy();
 		p->applyTransform(transform(vec3(0, 5, 0)));
-		aabb box = p->boundingBox();
-		approxEqual(box.a, vec3(-10, -5, -10));
-		approxEqual(box.b, vec3(10, 15, 10));
+		approxEqual(p->boundingBox(), aabb(vec3(-10, -5, -10), vec3(10, 15, 10)));
 	}
+
+	{
+		CAGE_TESTCASE("discard invalid");
+		auto p = poly->copy();
+		p->position(42, vec3::Nan()); // intentionally corrupt one vertex
+		p->discardInvalid();
+		const uint32 f = p->facesCount();
+		CAGE_TEST(f > 10 && f < poly->facesCount());
+		p->exportObjFile({}, "meshes/sphere_corrupted.obj");
+	}
+
 	{
 		CAGE_TESTCASE("simplify");
 		auto p = poly->copy();
@@ -78,6 +96,7 @@ void testPolyhedron()
 		p->simplify(cfg);
 		p->exportObjFile({}, "meshes/sphere_simplified.obj");
 	}
+
 	{
 		CAGE_TESTCASE("regularize");
 		auto p = poly->copy();
@@ -89,6 +108,7 @@ void testPolyhedron()
 		p->regularize(cfg);
 		p->exportObjFile({}, "meshes/sphere_regularized.obj");
 	}
+
 	{
 		CAGE_TESTCASE("unwrap");
 		auto p = poly->copy();
@@ -97,12 +117,14 @@ void testPolyhedron()
 		p->unwrap(cfg);
 		p->exportObjFile({}, "meshes/sphere_unwrap.obj");
 	}
+
 	{
 		CAGE_TESTCASE("clip");
 		auto p = poly->copy();
 		p->clip(aabb(vec3(-6, -6, -10), vec3(6, 6, 10)));
 		p->exportObjFile({}, "meshes/sphere_clipped.obj");
 	}
+
 	{
 		CAGE_TESTCASE("collider");
 		Holder<Collider> c = newCollider();
@@ -111,5 +133,6 @@ void testPolyhedron()
 		Holder<Polyhedron> p = newPolyhedron();
 		p->importCollider(c.get());
 		CAGE_TEST(p->positions().size() > 10);
+		CAGE_TEST(p->facesCount() == poly->facesCount());
 	}
 }

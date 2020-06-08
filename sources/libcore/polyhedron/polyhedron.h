@@ -23,6 +23,8 @@ namespace cage
 		std::vector<uint32> indices;
 
 		PolyhedronTypeEnum type = PolyhedronTypeEnum::Triangles;
+
+		void swap(PolyhedronImpl &other);
 	};
 }
 
