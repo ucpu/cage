@@ -80,7 +80,16 @@ void testPolyhedron()
 		p->discardInvalid();
 		const uint32 f = p->facesCount();
 		CAGE_TEST(f > 10 && f < poly->facesCount());
-		p->exportObjFile({}, "meshes/sphere_corrupted.obj");
+		p->exportObjFile({}, "meshes/sphere_discardInvalid.obj");
+	}
+
+	{
+		CAGE_TESTCASE("merge close vertices");
+		auto p = poly->copy();
+		p->mergeCloseVertices(1e-3);
+		const uint32 f = p->facesCount();
+		CAGE_TEST(f > 10 && f < poly->facesCount());
+		p->exportObjFile({}, "meshes/sphere_mergeCloseVertices.obj");
 	}
 
 	{
@@ -94,7 +103,7 @@ void testPolyhedron()
 		cfg.approximateError = 0.5;
 #endif
 		p->simplify(cfg);
-		p->exportObjFile({}, "meshes/sphere_simplified.obj");
+		p->exportObjFile({}, "meshes/sphere_simplify.obj");
 	}
 
 	{
@@ -106,7 +115,7 @@ void testPolyhedron()
 		cfg.targetEdgeLength = 3;
 #endif
 		p->regularize(cfg);
-		p->exportObjFile({}, "meshes/sphere_regularized.obj");
+		p->exportObjFile({}, "meshes/sphere_regularize.obj");
 	}
 
 	{
@@ -122,7 +131,7 @@ void testPolyhedron()
 		CAGE_TESTCASE("clip");
 		auto p = poly->copy();
 		p->clip(aabb(vec3(-6, -6, -10), vec3(6, 6, 10)));
-		p->exportObjFile({}, "meshes/sphere_clipped.obj");
+		p->exportObjFile({}, "meshes/sphere_clip.obj");
 	}
 
 	{

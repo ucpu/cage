@@ -174,6 +174,7 @@ namespace cage
 
 		void convertToIndexed();
 		void convertToExpanded();
+		void mergeCloseVertices(real dist);
 		void simplify(const PolyhedronSimplificationConfig &config);
 		void regularize(const PolyhedronRegularizationConfig &config);
 		uint32 unwrap(const PolyhedronUnwrapConfig &config);
