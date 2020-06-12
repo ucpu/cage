@@ -341,7 +341,10 @@ namespace cage
 					indicesToRemove.push_back(d);
 				}
 				vectorEraseIf(impl->indices, indicesToRemove);
-				removeUnusedVertices(impl);
+				if (impl->indices.empty())
+					impl->clear();
+				else
+					removeUnusedVertices(impl);
 				CAGE_ASSERT(impl->indices.size() % 3 == 0);
 			}
 		}
@@ -349,7 +352,7 @@ namespace cage
 
 	void Polyhedron::convertToIndexed()
 	{
-		if (!indices().empty())
+		if (!indices().empty() || positions().empty())
 			return;
 		PolyhedronImpl *impl = (PolyhedronImpl *)this;
 		CAGE_THROW_CRITICAL(NotImplemented, "convertToIndexed");
@@ -551,7 +554,10 @@ namespace cage
 				impl->indices.push_back(i);
 			tmp.clear();
 		}
-		removeUnusedVertices(impl);
+		if (impl->indices.empty())
+			clear();
+		else
+			removeUnusedVertices(impl);
 	}
 
 	void Polyhedron::clip(const plane &pln)

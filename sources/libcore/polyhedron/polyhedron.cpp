@@ -120,10 +120,16 @@ namespace cage
 		const uint32 i = (indices().empty() ? numeric_cast<uint32>(positions().size()) : numeric_cast<uint32>(indices().size()));
 		switch (type())
 		{
-		case PolyhedronTypeEnum::Points: return i;
-		case PolyhedronTypeEnum::Lines: return i / 2;
-		case PolyhedronTypeEnum::Triangles: return i / 3;
-		default: CAGE_THROW_CRITICAL(Exception, "invalid polyhedron type");
+		case PolyhedronTypeEnum::Points:
+			return i;
+		case PolyhedronTypeEnum::Lines:
+			CAGE_ASSERT(i % 2 == 0);
+			return i / 2;
+		case PolyhedronTypeEnum::Triangles:
+			CAGE_ASSERT(i % 3 == 0);
+			return i / 3;
+		default:
+			CAGE_THROW_CRITICAL(Exception, "invalid polyhedron type");
 		}
 	}
 

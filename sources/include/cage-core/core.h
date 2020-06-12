@@ -1071,7 +1071,7 @@ namespace cage
 			}
 
 			HolderBase &operator = (const HolderBase &) = delete;
-			HolderBase &operator = (HolderBase &&other)
+			HolderBase &operator = (HolderBase &&other) noexcept
 			{
 				if (this == &other)
 					return *this;
