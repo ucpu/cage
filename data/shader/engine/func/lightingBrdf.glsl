@@ -3,7 +3,7 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 {
 	return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
-float DistributionGGX(float NoH)
+float distributionGGX(float NoH)
 {
 	float a = roughness * roughness;
 	float a2 = a * a;
@@ -12,17 +12,17 @@ float DistributionGGX(float NoH)
 	denom = 3.14159265359 * denom * denom;
 	return a2 / denom;
 }
-float GeometrySchlickGGX(float NoV)
+float geometrySchlickGGX(float NoV)
 {
 	float r = roughness + 1.0;
 	float k = r * r / 8.0;
 	float denom = NoV * (1.0 - k) + k;
 	return NoV / denom;
 }
-float GeometrySmith(float NoL, float NoV)
+float geometrySmith(float NoL, float NoV)
 {
-	float ggx1 = GeometrySchlickGGX(NoL);
-	float ggx2 = GeometrySchlickGGX(NoV);
+	float ggx1 = geometrySchlickGGX(NoL);
+	float ggx2 = geometrySchlickGGX(NoV);
 	return ggx1 * ggx2;
 }
 
@@ -43,12 +43,12 @@ vec3 lightingBrdfPbr(vec3 light, vec3 L, vec3 V)
 	vec3 kD = vec3(1.0) - kS;
 	kD *= 1.0 - metalness;
 
-	float NDF = DistributionGGX(NoH);
-	float G = GeometrySmith(NoL, NoV);
+	float NDF = distributionGGX(NoH);
+	float G = geometrySmith(NoL, NoV);
 
 	vec3 nominator = NDF * G * F;
 	float denominator = 4.0 * NoV * NoL + 0.001;
-	return min(kD * albedo / 3.14159265359 + nominator / denominator, 100.0) * light * NoL;
+	return min(kD * albedo / 3.14159265359 + nominator / denominator, 1.0) * light * NoL;
 }
 
 vec3 lightingBrdfPhong(vec3 light, vec3 L, vec3 V)
