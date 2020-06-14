@@ -110,7 +110,7 @@ namespace cage
 
 	bool triangle::degenerated() const
 	{
-		return area() < 1e-7;
+		return area() < 1e-5;
 	}
 
 	triangle triangle::flip() const

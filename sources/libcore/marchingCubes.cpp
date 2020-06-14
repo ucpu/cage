@@ -116,9 +116,11 @@ namespace cage
 		positions.reserve(mcVertices.size());
 		normals.resize(mcVertices.size());
 		indices.reserve(mcIndices.size() * 3 / 2);
-		const vec3 posMult = (impl->config.box.b - impl->config.box.a) / (vec3(impl->config.resolutionX, impl->config.resolutionY, impl->config.resolutionZ) - 3);
+		const vec3 res = vec3(impl->config.resolutionX, impl->config.resolutionY, impl->config.resolutionZ);
+		const vec3 posMult = (impl->config.box.b - impl->config.box.a) / (res - 5);
+		const vec3 posAdd = impl->config.box.a - 1.5 * posMult;
 		for (const dualmc::Vertex &v : mcVertices)
-			positions.push_back((vec3(v.x, v.y, v.z) - 1) * posMult + impl->config.box.a);
+			positions.push_back(vec3(v.x, v.y, v.z) * posMult + posAdd);
 		for (const auto &q : mcIndices)
 		{
 			const uint32 is[4] = { numeric_cast<uint32>(q.i0), numeric_cast<uint32>(q.i1), numeric_cast<uint32>(q.i2), numeric_cast<uint32>(q.i3) };
@@ -151,13 +153,13 @@ namespace cage
 
 	vec3 MarchingCubesCreateConfig::position(uint32 x, uint32 y, uint32 z) const
 	{
-		CAGE_ASSERT(resolutionX > 1);
-		CAGE_ASSERT(resolutionY > 1);
-		CAGE_ASSERT(resolutionZ > 1);
+		CAGE_ASSERT(resolutionX > 5);
+		CAGE_ASSERT(resolutionY > 5);
+		CAGE_ASSERT(resolutionZ > 5);
 		CAGE_ASSERT(x < resolutionX);
 		CAGE_ASSERT(y < resolutionY);
 		CAGE_ASSERT(z < resolutionZ);
-		vec3 f = (vec3(x, y, z) - 1) / (vec3(resolutionX, resolutionY, resolutionZ) - 3);
+		vec3 f = (vec3(x, y, z) - 2) / (vec3(resolutionX, resolutionY, resolutionZ) - 5);
 		return (box.b - box.a) * f + box.a;
 	}
 

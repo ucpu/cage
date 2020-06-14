@@ -75,7 +75,7 @@ namespace cage
 	{
 		Holder<pmp::SurfaceMesh> pm = toPmp(this);
 		pmp::SurfaceRemeshing rms(*pm);
-		rms.adaptive_remeshing(config.minEdgeLength.value, config.maxEdgeLength.value, config.approximateError.value, config.iterations, true);
+		rms.adaptive_remeshing(config.minEdgeLength.value, config.maxEdgeLength.value, config.approximateError.value, config.iterations, config.useProjection);
 		fromPmp(this, pm);
 	}
 

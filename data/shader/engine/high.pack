@@ -1,5 +1,6 @@
 
 []
+ambient.glsl?high
 lighting.glsl?high
 gBuffer.glsl?high
 translucent.glsl?high

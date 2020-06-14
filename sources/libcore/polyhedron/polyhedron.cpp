@@ -5,6 +5,16 @@
 
 namespace cage
 {
+	void PolyhedronImpl::swap(PolyhedronImpl &other)
+	{
+#define GCHL_GENERATE(NAME) std::swap(NAME, other.NAME);
+		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
+#undef GCHL_GENERATE
+
+		std::swap(indices, other.indices);
+		std::swap(type, other.type);
+	}
+
 	void Polyhedron::clear()
 	{
 		PolyhedronImpl *impl = (PolyhedronImpl *)this;
@@ -103,6 +113,24 @@ namespace cage
 	{
 		const PolyhedronImpl *impl = (const PolyhedronImpl *)this;
 		return numeric_cast<uint32>(impl->indices.size());
+	}
+
+	uint32 Polyhedron::facesCount() const
+	{
+		const uint32 i = (indices().empty() ? numeric_cast<uint32>(positions().size()) : numeric_cast<uint32>(indices().size()));
+		switch (type())
+		{
+		case PolyhedronTypeEnum::Points:
+			return i;
+		case PolyhedronTypeEnum::Lines:
+			CAGE_ASSERT(i % 2 == 0);
+			return i / 2;
+		case PolyhedronTypeEnum::Triangles:
+			CAGE_ASSERT(i % 3 == 0);
+			return i / 3;
+		default:
+			CAGE_THROW_CRITICAL(Exception, "invalid polyhedron type");
+		}
 	}
 
 	PointerRange<const uint32> Polyhedron::indices() const

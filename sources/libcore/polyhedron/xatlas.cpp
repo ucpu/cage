@@ -61,7 +61,9 @@ namespace cage
 		CAGE_ASSERT(type() == PolyhedronTypeEnum::Triangles);
 		CAGE_ASSERT((config.targetResolution == 0) != (config.texelsPerUnit == 0));
 
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		if (facesCount() == 0)
+			return 0;
+
 		const bool useNormals = !normals().empty();
 		Holder<xatlas::Atlas> atlas = newAtlas(config.logProgress);
 

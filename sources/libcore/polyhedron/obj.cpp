@@ -45,6 +45,7 @@ namespace cage
 
 			uint32 index(const T &a) const
 			{
+				CAGE_ASSERT(valid(a));
 				auto it = std::lower_bound(vec.begin(), vec.end(), a, Cmp());
 				CAGE_ASSERT(it != vec.end());
 				CAGE_ASSERT(*it == a);

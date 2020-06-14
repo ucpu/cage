@@ -11,9 +11,14 @@ high.pack
 
 []
 scheme = shader
-ambient.glsl
 blit.glsl
 depth.glsl
+
+[]
+scheme = shader
+alias = ambient.glsl
+ambient.glsl?high
+ambient.glsl?low
 
 []
 scheme = shader

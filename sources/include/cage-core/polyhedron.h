@@ -18,6 +18,7 @@ namespace cage
 		real maxEdgeLength = 10;
 		real approximateError = 0.05;
 		uint32 iterations = 10;
+		bool useProjection = true;
 	};
 
 	struct CAGE_CORE_API PolyhedronRegularizationConfig
@@ -153,6 +154,7 @@ namespace cage
 		aabb boundingBox() const;
 
 		uint32 indicesCount() const;
+		uint32 facesCount() const;
 
 		PointerRange<const uint32> indices() const;
 		PointerRange<uint32> indices();
@@ -172,6 +174,7 @@ namespace cage
 
 		void convertToIndexed();
 		void convertToExpanded();
+		void mergeCloseVertices(real dist);
 		void simplify(const PolyhedronSimplificationConfig &config);
 		void regularize(const PolyhedronRegularizationConfig &config);
 		uint32 unwrap(const PolyhedronUnwrapConfig &config);
@@ -183,8 +186,9 @@ namespace cage
 		void clip(const aabb &box);
 		void clip(const plane &pln);
 		Holder<Polyhedron> cut(const plane &pln);
+		void discardInvalid();
 		void discardDisconnected();
-		Holder<PointerRange<Holder<Polyhedron>>> separateDisconnected();
+		Holder<PointerRange<Holder<Polyhedron>>> separateDisconnected() const;
 	};
 
 	CAGE_CORE_API Holder<Polyhedron> newPolyhedron();

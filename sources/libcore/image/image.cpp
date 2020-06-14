@@ -752,9 +752,9 @@ namespace cage
 		CAGE_ASSERT(targetY + height <= t->height);
 		if (s->format == t->format)
 		{
-			uint32 ps = formatBytes(s->format) * s->channels;
-			uint32 sl = s->width * ps;
-			uint32 tl = t->width * ps;
+			const uint32 ps = formatBytes(s->format) * s->channels;
+			const uint32 sl = s->width * ps;
+			const uint32 tl = t->width * ps;
 			char *ss = s->mem.data();
 			char *tt = t->mem.data();
 			for (uint32 y = 0; y < height; y++)
