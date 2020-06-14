@@ -1,5 +1,6 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
+#include <cage-core/lineReader.h>
 
 namespace cage
 {
@@ -22,6 +23,12 @@ namespace cage
 	void Serializer::write(PointerRange<const char> buffer)
 	{
 		write(buffer.data(), buffer.size());
+	}
+
+	void Serializer::writeLine(const string &line)
+	{
+		string d = line + "\n";
+		write({ d.c_str(), d.c_str() + d.length() });
 	}
 
 	void Serializer::write(const void *d, uintPtr s)
@@ -72,6 +79,18 @@ namespace cage
 	void Deserializer::read(PointerRange<char> buffer)
 	{
 		read(buffer.data(), buffer.size());
+	}
+
+	bool Deserializer::readLine(string &line)
+	{
+		uintPtr a = available();
+		const char *p = data + offset;
+		if (detail::readLine(line, p, a, false))
+		{
+			offset = p - data;
+			return true;
+		}
+		return false;
 	}
 
 	void Deserializer::read(void *d, uintPtr s)

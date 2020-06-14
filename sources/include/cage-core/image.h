@@ -60,8 +60,8 @@ namespace cage
 		void importFile(const string &filename, uint32 channels = m, ImageFormatEnum requestedFormat = ImageFormatEnum::Default);
 
 		// image encode
-		MemoryBuffer exportBuffer(const string &format = ".png");
-		void exportFile(const string &filename);
+		MemoryBuffer exportBuffer(const string &format = ".png") const;
+		void exportFile(const string &filename) const;
 
 		void fill(const real &value);
 		void fill(const vec2 &value);

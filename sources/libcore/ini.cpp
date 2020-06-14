@@ -3,6 +3,8 @@
 #include <cage-core/ini.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/macros.h>
+#include <cage-core/memoryBuffer.h>
+#include <cage-core/serialization.h>
 
 #include <map>
 #include <vector>
@@ -317,52 +319,59 @@ namespace cage
 		}
 	}
 
+	void Ini::importBuffer(PointerRange<const char> buffer)
+	{
+		clear();
+		Deserializer des(buffer);
+		string sec = "";
+		uint32 secIndex = 0;
+		uint32 itemIndex = 0;
+		for (string line; des.readLine(line);)
+		{
+			if (line.empty())
+				continue;
+			uint32 pos = line.find('#');
+			if (pos != m)
+				line = line.subString(0, pos);
+			line = line.trim();
+			if (line.empty())
+				continue;
+			if (line[0] == '[' && line[line.length() - 1] == ']')
+			{
+				itemIndex = 0;
+				sec = line.subString(1, line.length() - 2).trim();
+				if (sec.empty())
+					sec = string(secIndex++);
+				if (sectionExists(sec))
+					CAGE_THROW_ERROR(Exception, "duplicate section");
+				continue;
+			}
+			if (sec.empty())
+				CAGE_THROW_ERROR(Exception, "item outside section");
+			pos = line.find('=');
+			string itemName, itemValue;
+			if (pos == m)
+				itemValue = line;
+			else
+			{
+				itemName = line.subString(0, pos).trim();
+				itemValue = line.subString(pos + 1, m).trim();
+			}
+			if (itemName.empty())
+				itemName = string(itemIndex++);
+			if (itemExists(sec, itemName))
+				CAGE_THROW_ERROR(Exception, "duplicate item name");
+			set(sec, itemName, itemValue);
+		}
+	}
+
 	void Ini::importFile(const string &filename)
 	{
-		Holder<File> file = newFile(filename, FileMode(true, false));
-		clear();
+		Holder<File> file = readFile(filename);
 		try
 		{
-			string sec = "";
-			uint32 secIndex = 0;
-			uint32 itemIndex = 0;
-			for (string line; file->readLine(line);)
-			{
-				if (line.empty())
-					continue;
-				uint32 pos = line.find('#');
-				if (pos != m)
-					line = line.subString(0, pos);
-				line = line.trim();
-				if (line.empty())
-					continue;
-				if (line[0] == '[' && line[line.length() - 1] == ']')
-				{
-					itemIndex = 0;
-					sec = line.subString(1, line.length() - 2).trim();
-					if (sec.empty())
-						sec = string(secIndex++);
-					if (sectionExists(sec))
-						CAGE_THROW_ERROR(Exception, "duplicate section");
-					continue;
-				}
-				if (sec.empty())
-					CAGE_THROW_ERROR(Exception, "item outside section");
-				pos = line.find('=');
-				string itemName, itemValue;
-				if (pos == m)
-					itemValue = line;
-				else
-				{
-					itemName = line.subString(0, pos).trim();
-					itemValue = line.subString(pos + 1, m).trim();
-				}
-				if (itemName.empty())
-					itemName = string(itemIndex++);
-				if (itemExists(sec, itemName))
-					CAGE_THROW_ERROR(Exception, "duplicate item name");
-				set(sec, itemName, itemValue);
-			}
+			MemoryBuffer buff = file->readAll();
+			importBuffer(buff);
 		}
 		catch (...)
 		{
@@ -371,18 +380,28 @@ namespace cage
 		}
 	}
 
+	MemoryBuffer Ini::exportBuffer() const
+	{
+		const IniImpl *impl = (const IniImpl*)this;
+		MemoryBuffer buff(0, 100000);
+		Serializer ser(buff);
+		for (const auto &i : impl->sections)
+		{
+			ser.writeLine(string() + "[" + i.first + "]");
+			for (const auto &j : i.second->items)
+				ser.writeLine(string() + j.first + "=" + j.second.value);
+		}
+		return buff;
+	}
+
 	void Ini::exportFile(const string &filename) const
 	{
-		IniImpl *impl = (IniImpl*)this;
+		MemoryBuffer buff = exportBuffer();
 		FileMode fm(false, true);
 		fm.textual = true;
 		Holder<File> file = newFile(filename, fm);
-		for (const auto &i : impl->sections)
-		{
-			file->writeLine(string() + "[" + i.first + "]");
-			for (const auto &j : i.second->items)
-				file->writeLine(string() + j.first + "=" + j.second.value);
-		}
+		file->write(buff);
+		file->close();
 	}
 
 	namespace

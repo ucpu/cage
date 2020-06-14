@@ -66,7 +66,7 @@ namespace cage
 		importBuffer(buffer, channels, format);
 	}
 
-	MemoryBuffer Image::exportBuffer(const string &format)
+	MemoryBuffer Image::exportBuffer(const string &format) const
 	{
 		CAGE_ASSERT(channels() > 0);
 		string ext = pathExtractExtension(format).toLower();
@@ -85,7 +85,7 @@ namespace cage
 		CAGE_THROW_ERROR(Exception, "unrecognized file extension for image encoding");
 	}
 
-	void Image::exportFile(const string &filename)
+	void Image::exportFile(const string &filename) const
 	{
 		MemoryBuffer buf = exportBuffer(filename);
 		writeFile(filename)->write(buf);

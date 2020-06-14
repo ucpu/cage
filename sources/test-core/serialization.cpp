@@ -10,19 +10,17 @@ void testSerialization()
 
 	{
 		CAGE_TESTCASE("basics");
-		{
-			MemoryBuffer b1;
-			Serializer s(b1);
-			s << 42 << string("hi there") << 13;
-			CAGE_TEST(b1.size() == sizeof(42) + (4 + 8) + sizeof(13));
-			int i42, i13;
-			string hi;
-			Deserializer d(b1);
-			d >> i42 >> hi >> i13;
-			CAGE_TEST(i42 == 42);
-			CAGE_TEST(i13 == 13);
-			CAGE_TEST(hi == "hi there");
-		}
+		MemoryBuffer b1;
+		Serializer s(b1);
+		s << 42 << string("hi there") << 13;
+		CAGE_TEST(b1.size() == sizeof(42) + (4 + 8) + sizeof(13));
+		int i42, i13;
+		string hi;
+		Deserializer d(b1);
+		d >> i42 >> hi >> i13;
+		CAGE_TEST(i42 == 42);
+		CAGE_TEST(i13 == 13);
+		CAGE_TEST(hi == "hi there");
 	}
 
 	{
@@ -57,6 +55,21 @@ void testSerialization()
 		d4 >> t;
 		CAGE_TEST(t == 4.0);
 		CAGE_TEST(b1.size() == 4 * 8);
+	}
+
+	{
+		CAGE_TESTCASE("lines");
+		MemoryBuffer b1;
+		Serializer s(b1);
+		s.writeLine("hello there");
+		s.writeLine("how are you?");
+		Deserializer d(b1);
+		string l;
+		CAGE_TEST(d.readLine(l));
+		CAGE_TEST(l == "hello there");
+		CAGE_TEST(d.readLine(l));
+		CAGE_TEST(l == "how are you?");
+		CAGE_TEST(!d.readLine(l));
 	}
 
 	{

@@ -18,6 +18,7 @@ namespace cage
 		uintPtr available() const; // number of bytes still available in the buffer (valid only if the maximum size was given in the constructor)
 		Serializer placeholder(uintPtr s);
 		void write(PointerRange<const char> buffer);
+		void writeLine(const string &line);
 		[[deprecated]] void write(const void *d, uintPtr s);
 		[[deprecated]] void write(const char *d, uintPtr s);
 		char *advance(uintPtr s); // returns the original position
@@ -43,6 +44,7 @@ namespace cage
 		uintPtr available() const; // number of bytes still available in the buffer
 		Deserializer placeholder(uintPtr s);
 		void read(PointerRange<char> buffer);
+		bool readLine(string &line);
 		[[deprecated]] void read(void *d, uintPtr s);
 		[[deprecated]] void read(char *d, uintPtr s);
 		const char *advance(uintPtr s); // returns the original position
