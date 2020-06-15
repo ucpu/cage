@@ -53,7 +53,7 @@ namespace cage
 	{
 		real value;
 
-		inline explicit rads() {}
+		inline rads() {}
 		inline explicit rads(real value) : value(value) {}
 		rads(degs other);
 
@@ -85,8 +85,8 @@ namespace cage
 	{
 		real data[2];
 
-		inline vec2() : vec2(0) {}
-		inline explicit vec2(real value) : data{ value, value} {}
+		inline vec2() {}
+		inline explicit vec2(real value) : data{ value, value } {}
 		inline explicit vec2(real x, real y) : data{ x, y } {}
 		inline explicit vec2(const vec3 &v);
 		inline explicit vec2(const vec4 &v);
@@ -103,7 +103,7 @@ namespace cage
 		sint32 data[2];
 
 		inline ivec2() : ivec2(0) {}
-		inline explicit ivec2(sint32 value) : data{ value, value} {}
+		inline explicit ivec2(sint32 value) : data{ value, value } {}
 		inline explicit ivec2(sint32 x, sint32 y) : data{ x, y } {}
 		inline explicit ivec2(const ivec3 &v);
 		inline explicit ivec2(const ivec4 &v);
@@ -117,7 +117,7 @@ namespace cage
 	{
 		real data[3];
 
-		inline vec3() : vec3(0) {}
+		inline vec3() {}
 		inline explicit vec3(real value) : data{ value, value, value } {}
 		inline explicit vec3(real x, real y, real z) : data{ x, y, z } {}
 		inline explicit vec3(const vec2 &v, real z) : data{ v[0], v[1], z } {}
@@ -149,7 +149,7 @@ namespace cage
 	{
 		real data[4];
 
-		inline vec4() : vec4(0) {}
+		inline vec4() {}
 		inline explicit vec4(real value) : data{ value, value, value, value } {}
 		inline explicit vec4(real x, real y, real z, real w) : data{ x, y, z, w } {}
 		inline explicit vec4(const vec2 &v, real z, real w) : data{ v[0], v[1], z, w } {}
@@ -241,9 +241,9 @@ namespace cage
 	{
 		quat orientation;
 		vec3 position;
-		real scale;
+		real scale = 1;
 
-		inline transform() : scale(1) {}
+		inline transform() {}
 		inline explicit transform(const vec3 &position, const quat &orientation = quat(), real scale = 1) : orientation(orientation), position(position), scale(scale) {}
 
 		static transform parse(const string &str);
