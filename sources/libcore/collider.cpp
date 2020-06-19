@@ -490,9 +490,8 @@ namespace cage
 
 		real dist(const line &l, const vec3 &p)
 		{
-			if (!l.isLine())
-				return distance(l.a(), p);
-			CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+			CAGE_ASSERT(l.normalized());
+			return dot(p - l.origin, l.direction);
 		}
 
 		class IntersectionDetector

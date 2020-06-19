@@ -37,8 +37,8 @@ namespace cage
 		bool isSegment() const { return valid() && minimum.finite() && maximum.finite(); }
 		bool normalized() const;
 		line normalize() const;
-		vec3 a() const { return origin + direction * minimum; }
-		vec3 b() const { return origin + direction * maximum; }
+		vec3 a() const { CAGE_ASSERT(minimum.finite()); return origin + direction * minimum; }
+		vec3 b() const { CAGE_ASSERT(maximum.finite()); return origin + direction * maximum; }
 	};
 
 	struct CAGE_CORE_API triangle

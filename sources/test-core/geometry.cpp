@@ -18,6 +18,27 @@ void test(const aabb &a, const aabb &b)
 	test(a.b, b.b);
 }
 
+namespace
+{
+	void testEx(real a, real b)
+	{
+		if (!a.finite() || !b.finite())
+		{
+			// test without epsilon
+			CAGE_TEST(a == b);
+		}
+		else
+			test(a, b);
+	}
+
+	void testEx(const vec3 &a, const vec3 &b)
+	{
+		testEx(a[0], b[0]);
+		testEx(a[1], b[1]);
+		testEx(a[2], b[2]);
+	}
+}
+
 void testGeometry()
 {
 	CAGE_TESTCASE("geometry");
@@ -68,7 +89,8 @@ void testGeometry()
 		}
 
 		{
-			CAGE_TESTCASE("distances");
+			CAGE_TESTCASE("distances (segments)");
+
 			line a = makeSegment(vec3(0, -1, 0), vec3(0, 1, 0));
 			line b = makeSegment(vec3(1, -2, 0), vec3(1, 2, 0));
 			line c = makeSegment(vec3(0, 0, 0), vec3(0, 0, 1));
@@ -81,7 +103,17 @@ void testGeometry()
 		}
 
 		{
+			CAGE_TESTCASE("distances (lines)");
+
+			test(distance(makeLine(vec3(), vec3(0, 0, 1)), makeLine(vec3(0, 0, 1), vec3())), 0);
+			test(distance(makeLine(vec3(), vec3(0, 0, 1)), makeLine(vec3(), vec3(0, 1, 0))), 0);
+			test(distance(makeLine(vec3(), vec3(0, 0, 1)), makeLine(vec3(1, 0, 1), vec3(1, 0, 0))), 1);
+			test(distance(makeLine(vec3(), vec3(0, 0, 1)), makeLine(vec3(1, 0, 0), vec3(1, 1, 0))), 1);
+		}
+
+		{
 			CAGE_TESTCASE("angles");
+
 			line a = makeSegment(vec3(0, -1, 1), vec3(0, 1, 1));
 			line b = makeSegment(vec3(-1, 0, 2), vec3(1, 0, 2));
 			line c = makeSegment(vec3(0, 0, 0), vec3(1, 1, 1));
@@ -99,8 +131,34 @@ void testGeometry()
 		}
 
 		{
-			CAGE_TESTCASE("intersects");
-			// todo
+			CAGE_TESTCASE("randomized intersects");
+
+			for (uint32 round = 0; round < 10; round++)
+			{
+				const line l = makeLine(randomDirection3() * 10, randomDirection3() * 10);
+				CAGE_TEST(intersects(l, l.origin));
+				CAGE_TEST(intersects(l, l.origin + l.direction));
+				CAGE_TEST(intersects(l, l.origin - l.direction));
+				CAGE_TEST(!intersects(l, l.origin + vec3(1, 0, 0)));
+			}
+		}
+
+		{
+			CAGE_TESTCASE("randomized transformations");
+
+			for (uint32 round = 0; round < 5; round++)
+			{
+				const line l = makeLine(randomDirection3() * 10, randomDirection3() * 10);
+				const vec3 p = l.origin + l.direction * (randomChance() + 1);
+				CAGE_TEST(intersects(l, p));
+				for (uint32 round2 = 0; round2 < 5; round2++)
+				{
+					const transform tr = transform(randomDirection3() * randomChance() * 10, randomDirectionQuat(), randomChance() + 1);
+					const line lt = l * tr;
+					const vec3 pt = p * tr;
+					CAGE_TEST(intersects(lt, pt));
+				}
+			}
 		}
 	}
 
@@ -135,7 +193,7 @@ void testGeometry()
 		}
 
 		{
-			CAGE_TESTCASE("intersections with lines");
+			CAGE_TESTCASE("intersections (with lines)");
 
 			triangle t1(vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 2, 0));
 			triangle t2(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1));
@@ -148,6 +206,53 @@ void testGeometry()
 			CAGE_TEST(intersects(makeSegment(vec3(2, 5, 0), vec3(2, -5, 0)), t3));
 			CAGE_TEST(!intersection(makeSegment(vec3(2, 0, 0), vec3(2, -5, 0)), t3).valid());
 			CAGE_TEST(!intersects(makeSegment(vec3(2, 0, 0), vec3(2, -5, 0)), t3));
+		}
+
+		{
+			CAGE_TESTCASE("distances (with lines)");
+
+			test(distance(triangle(vec3(-2, -2, 0), vec3(-2, 2, 0), vec3(2, -2, 0)), makeSegment(vec3(-1, -1, -2), vec3(-1, -1, 2))), 0);
+			test(distance(triangle(vec3(-2, -2, 0), vec3(-2, 2, 0), vec3(2, -2, 0)), makeSegment(vec3(1, 1, -2), vec3(1, 1, 2))), cage::sqrt(2));
+			test(distance(triangle(vec3(-2, -2, 0), vec3(-2, 2, 0), vec3(2, -2, 0)), makeSegment(vec3(-5, 0, 1), vec3(5, 0, 1))), 1);
+			test(distance(triangle(vec3(-2, -2, 0), vec3(-2, 2, 0), vec3(2, -2, 0)), makeSegment(vec3(-1.5, 0, 1), vec3(-0.5, 0, 1))), 1);
+			test(distance(triangle(vec3(-2, -2, 0), vec3(-2, 2, 0), vec3(2, -2, 0)), makeSegment(vec3(-1.5, -6, 3), vec3(-0.5, -6, 3))), 5);
+		}
+
+		{
+			CAGE_TESTCASE("distances (with triangles)");
+
+			test(distance(triangle(vec3(-2, -2, 0), vec3(-2, 2, 0), vec3(2, -2, 0)), triangle(vec3(-1, -1, -2), vec3(-1, -1, 2), vec3(2, 2, 0))), 0);
+			test(distance(triangle(vec3(-2, -2, 0), vec3(-2, 4, 0), vec3(4, -2, 0)), triangle(vec3(-2, -2, 1), vec3(-2, 4, 1), vec3(4, -2, 1))), 1);
+			test(distance(triangle(vec3(-2, -2, 0), vec3(-2, 4, 0), vec3(4, -2, 0)), triangle(vec3(0, 0, 0.5), vec3(0, 0, 2), vec3(0, 1, 2))), 0.5);
+			test(distance(triangle(vec3(-2, -2, 0), vec3(-2, 2, 0), vec3(2, -2, 0)), triangle(vec3(1, 1, -2), vec3(1, 1, 2), vec3(2, 2, 0))), cage::sqrt(2));
+		}
+
+		{
+			CAGE_TESTCASE("randomized intersections (with lines)");
+
+			for (uint32 round = 0; round < 10; round++)
+			{
+				const transform tr = transform(randomDirection3() *randomChance() * 10, randomDirectionQuat(), randomChance() * 10 + 1);
+				const line l = makeLine(randomDirection3() * 10, randomDirection3() * 10);
+				const triangle t = triangle(randomDirection3() * 10, randomDirection3() * 10, randomDirection3() * 10);
+				CAGE_TEST(intersects(l * tr, t * tr) == intersects(l, t));
+				CAGE_TEST(intersects(l, t * tr) == intersects(l * inverse(tr), t));
+				CAGE_TEST(intersects(l * tr, t) == intersects(l, t * inverse(tr)));
+			}
+		}
+
+		{
+			CAGE_TESTCASE("randomized intersections (with triangles)");
+
+			for (uint32 round = 0; round < 10; round++)
+			{
+				const transform tr = transform(randomDirection3() *randomChance() * 10, randomDirectionQuat(), randomChance() * 10 + 1);
+				const triangle t1 = triangle(randomDirection3() * 10, randomDirection3() * 10, randomDirection3() * 10);
+				const triangle t2 = triangle(randomDirection3() * 10, randomDirection3() * 10, randomDirection3() * 10);
+				CAGE_TEST(intersects(t1 * tr, t2 * tr) == intersects(t1, t2));
+				CAGE_TEST(intersects(t1, t2 * tr) == intersects(t1 * inverse(tr), t2));
+				CAGE_TEST(intersects(t1 * tr, t2) == intersects(t1, t2 * inverse(tr)));
+			}
 		}
 	}
 
@@ -169,13 +274,35 @@ void testGeometry()
 		}
 
 		{
-			CAGE_TESTCASE("distances");
-			// todo
+			CAGE_TESTCASE("closest point");
+
+			test(closestPoint(plane(vec3(13, 42, -5), vec3(0, 0, 1)), vec3(123, 456, 1)), vec3(123, 456, -5));
+			CAGE_TEST_ASSERTED(closestPoint(plane(vec3(13, 42, -5), vec3(0, 0, 2)), vec3(123, 456, 1)));
+		}
+
+		{
+			CAGE_TESTCASE("distances (with points)");
+
+			test(distance(plane(vec3(13, 42, -5), vec3(0, 0, 1)), vec3(123, 456, 1)), 6);
+			test(distance(plane(vec3(13, 42, -5), vec3(0, 0, -1)), vec3(123, 456, 1)), 6);
+			test(distance(plane(vec3(13, 42, 5), vec3(0, 0, -1)), vec3(123, 456, 1)), 4);
+			test(distance(plane(vec3(13, 42, 5), vec3(0, 1, 0)), vec3(123, 40, 541)), 2);
+		}
+
+		{
+			CAGE_TESTCASE("distances (with segments)");
+
+			test(distance(plane(vec3(13, 42, 1), vec3(0, 0, 1)), makeSegment(vec3(123, 456, 7), vec3(890, 123, -4))), 0);
+			test(distance(plane(vec3(13, 42, 1), vec3(0, 0, 1)), makeSegment(vec3(123, 456, 7), vec3(890, 123, 1))), 0);
+			test(distance(plane(vec3(13, 42, -5), vec3(0, 0, 1)), makeSegment(vec3(123, 456, 1), vec3(890, 123, 1))), 6);
 		}
 
 		{
 			CAGE_TESTCASE("intersects");
-			// todo
+
+			CAGE_TEST(intersects(plane(vec3(13, 42, 1), vec3(0, 0, 1)), makeSegment(vec3(123, 456, 7), vec3(890, 123, -4))));
+			CAGE_TEST(intersects(plane(vec3(13, 42, 1), vec3(0, 0, 1)), makeSegment(vec3(123, 456, 7), vec3(890, 123, 1))));
+			CAGE_TEST(!intersects(plane(vec3(13, 42, -5), vec3(0, 0, 1)), makeSegment(vec3(123, 456, 7), vec3(890, 123, 1))));
 		}
 
 		{
@@ -267,6 +394,19 @@ void testGeometry()
 			test(h.volume(), 48);
 			CAGE_TEST(aabb::Universe().diagonal() > 100);
 			CAGE_TEST(aabb::Universe().diagonal() == real::Infinity());
+		}
+
+		{
+			CAGE_TESTCASE("construct from plane");
+			aabb a = aabb(plane(vec3(123, 456, 789), vec3(0, 1, 0)));
+			testEx(a.a, vec3(-real::Infinity(), 456, -real::Infinity()));
+			testEx(a.b, vec3(real::Infinity(), 456, real::Infinity()));
+			aabb b = aabb(plane(vec3(123, 456, 789), vec3(0, 0, -1)));
+			testEx(b.a, vec3(-real::Infinity(), -real::Infinity(), 789));
+			testEx(b.b, vec3(real::Infinity(), real::Infinity(), 789));
+			aabb c = aabb(plane(vec3(123, 456, 789), normalize(vec3(1, 2, -1))));
+			testEx(c.a, vec3(-real::Infinity()));
+			testEx(c.b, vec3(real::Infinity()));
 		}
 
 		{

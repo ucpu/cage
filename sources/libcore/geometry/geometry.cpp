@@ -25,7 +25,7 @@ namespace cage
 			real    e = dot(v, w);
 			real    D = a*c - b*b;
 			real    sc, tc;
-			if (D < 1e-6)
+			if (D < 1e-5)
 			{
 				sc = 0.0;
 				tc = (b > c ? d / b : e / c);
@@ -61,7 +61,7 @@ namespace cage
 			real D = a*c - b*b;
 			real sc, sN, sD = D;
 			real tc, tN, tD = D;
-			if (D < 1e-6)
+			if (D < 1e-5)
 			{
 				sN = 0.0;
 				sD = 1.0;
@@ -109,8 +109,8 @@ namespace cage
 					sD = a;
 				}
 			}
-			sc = (abs(sN) < 1e-6 ? 0.0 : sN / sD);
-			tc = (abs(tN) < 1e-6 ? 0.0 : tN / tD);
+			sc = (abs(sN) < 1e-5 ? 0.0 : sN / sD);
+			tc = (abs(tN) < 1e-5 ? 0.0 : tN / tD);
 			vec3 dP = w + (sc * u) - (tc * v);
 			return length(dP);
 		}
@@ -124,7 +124,7 @@ namespace cage
 
 	bool parallel(const vec3 &dir1, const vec3 &dir2)
 	{
-		return abs(dot(dir1, dir2)) >= 1 - 1e-7;
+		return abs(dot(dir1, dir2)) >= 1 - 1e-5;
 	}
 
 	bool parallel(const line &a, const line &b)
@@ -159,7 +159,7 @@ namespace cage
 
 	bool perpendicular(const vec3 &dir1, const vec3 &dir2)
 	{
-		return abs(dot(dir1, dir2)) <= 1e-7;
+		return abs(dot(dir1, dir2)) <= 1e-5;
 	}
 
 	bool perpendicular(const line &a, const line &b)
@@ -245,8 +245,8 @@ namespace cage
 
 	real distance(const vec3 &a, const line &b)
 	{
-		vec3 p = closestPoint(b, a);
-		return distance(a, p);
+		CAGE_ASSERT(b.normalized());
+		return distance(closestPoint(b, a), a);
 	}
 
 	real distance(const vec3 &a, const triangle &b)
@@ -273,25 +273,40 @@ namespace cage
 	real distance(const line &a, const line &b)
 	{
 		if (a.isLine() && b.isLine())
-			return distanceLines(a.a(), a.b(), b.a(), b.b());
+			return distanceLines(a.origin, a.origin + a.direction, b.origin, b.origin + b.direction);
 		if (a.isSegment() && b.isSegment())
 			return distanceSegments(a.a(), a.b(), b.a(), b.b());
+		if (a.isPoint())
+			return distance(a.a(), b);
+		if (b.isPoint())
+			return distance(a, b.a());
 		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
 	}
 
 	real distance(const line &a, const triangle &b)
 	{
-		if (intersects(a, b))
-			return 0;
-		return min(min(distance(a, makeSegment(b[0], b[1])),
-			distance(a, makeSegment(b[1], b[2]))),
-			distance(a, makeSegment(b[2], b[0])));
+		real d = real::Infinity();
+		if (a.isSegment() || a.isRay() || a.isPoint())
+			d = min(d, distance(a.a(), b));
+		if (a.isSegment())
+			d = min(d, distance(a.b(), b));
+
+		vec3 p = intersection(plane(b), makeLine(a.origin, a.origin + a.direction));
+		if (!p.valid())
+		{
+			CAGE_ASSERT(parallel(a, b));
+			for (uint32 i = 0; i < 3; i++)
+				d = min(d, distance(a, makeSegment(b[i], b[(i + 1) % 3])));
+			return d;
+		}
+		vec3 q = closestPoint(b, p);
+		return min(distance(q, a), d);
 	}
 
 	real distance(const line &a, const plane &b)
 	{
-		if (parallel(a, b))
-			return distance(a.a(), b);
+		if (intersects(a, b))
+			return 0;
 		return min(distance(a.a(), b), distance(a.b(), b));
 	}
 
@@ -312,8 +327,8 @@ namespace cage
 		real d = real::Infinity();
 		for (uint32 i = 0; i < 3; i++)
 		{
-			d = min(d, distance(a[i], b));
-			d = min(d, distance(a, b[i]));
+			d = min(d, distance(makeSegment(a[i], a[(i + 1) % 3]), b));
+			d = min(d, distance(a, makeSegment(b[i], b[(i + 1) % 3])));
 		}
 		return d;
 	}
@@ -377,8 +392,9 @@ namespace cage
 
 	real distance(const plane &a, const plane &b)
 	{
+		CAGE_ASSERT(a.normalized() && b.normalized());
 		if (parallel(a, b))
-			return a.d / length(a.normal) - b.d / length(b.normal);
+			return abs(a.d - b.d);
 		return 0;
 	}
 
@@ -415,17 +431,17 @@ namespace cage
 
 	bool intersects(const vec3 &point, const line &other)
 	{
-		return distance(point, other) <= 1e-7;
+		return distance(point, other) <= 1e-5;
 	}
 
 	bool intersects(const vec3 &point, const triangle &other)
 	{
-		return distance(point, other) <= 1e-7;
+		return distance(point, other) <= 1e-5;
 	}
 
 	bool intersects(const vec3 &point, const plane &other)
 	{
-		return distance(point, other) <= 1e-7;
+		return distance(point, other) <= 1e-5;
 	}
 
 	bool intersects(const vec3 &point, const sphere &other)
@@ -445,7 +461,7 @@ namespace cage
 
 	bool intersects(const line &a, const line &b)
 	{
-		return distance(a, b) <= 1e-7;
+		return distance(a, b) <= 1e-5;
 	}
 
 	bool intersects(const line &ray, const triangle &tri)
@@ -457,7 +473,7 @@ namespace cage
 		vec3 edge2 = v2 - v0;
 		vec3 pvec = cross(ray.direction, edge2);
 		real det = dot(edge1, pvec);
-		if (abs(det) < 1e-7)
+		if (abs(det) < 1e-5)
 			return false;
 		real invDet = 1 / det;
 		vec3 tvec = ray.origin - v0;
@@ -476,7 +492,26 @@ namespace cage
 
 	bool intersects(const line &a, const plane &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		if (a.isLine())
+		{
+			if (parallel(a, b))
+				return distance(a.origin, b) < 1e-5;
+			return true;
+		}
+		else if (a.isRay())
+		{
+			if (parallel(a, b))
+				return distance(a.origin, b) < 1e-5;
+			real x = dot(a.origin - b.origin(), b.normal);
+			real y = dot(a.direction, b.normal);
+			return x < 0 != y < 0;
+		}
+		else
+		{
+			real x = dot(a.a() - b.origin(), b.normal);
+			real y = dot(a.b() - b.origin(), b.normal);
+			return x == 0 || y == 0 || (x < 0 != y < 0);
+		}
 	}
 
 	bool intersects(const line &a, const sphere &b)
@@ -726,8 +761,9 @@ namespace cage
 
 	bool intersects(const plane &a, const plane &b)
 	{
+		CAGE_ASSERT(a.normalized() && b.normalized());
 		if (parallel(a, b))
-			return abs(a.d - b.d) < 1e-7;
+			return abs(a.d - b.d) < 1e-5;
 		return true;
 	}
 
@@ -782,7 +818,7 @@ namespace cage
 		vec3 edge2 = v2 - v0;
 		vec3 pvec = cross(ray.direction, edge2);
 		real det = dot(edge1, pvec);
-		if (abs(det) < 1e-7)
+		if (abs(det) < 1e-5)
 			return vec3::Nan();
 		real invDet = 1 / det;
 		vec3 tvec = ray.origin - v0;
@@ -804,10 +840,10 @@ namespace cage
 		CAGE_ASSERT(a.normalized());
 		real numer = dot(b.origin() - a.origin, b.normal);
 		real denom = dot(a.direction, b.normal);
-		if (abs(denom) < 1e-7)
+		if (abs(denom) < 1e-5)
 		{
 			// parallel
-			if (abs(numer) < 1e-7)
+			if (abs(numer) < 1e-5)
 				return a.a(); // any point of the line
 			return vec3::Nan(); // no intersection
 		}
@@ -970,6 +1006,7 @@ namespace cage
 
 	vec3 closestPoint(const plane &pl, const vec3 &pt)
 	{
-		return dot(pt, pl.normal) / dot(pl.normal, pl.normal) * pl.normal;
+		CAGE_ASSERT(pl.normalized());
+		return pt - dot(pl.normal, pt - pl.origin()) * pl.normal;
 	}
 }

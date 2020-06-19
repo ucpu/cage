@@ -12,7 +12,7 @@ namespace
 			counter++;
 		}
 
-		Test(Test &&)
+		Test(Test &&) noexcept
 		{
 			counter++;
 		}
@@ -123,10 +123,26 @@ void testPointerRange()
 		CAGE_TESTCASE("empty ranges");
 		functionTakingConstRange({});
 		functionTakingMutableRange({});
-		PointerRange<uint32> empty1 = {};
-		PointerRange<const uint32> empty2 = {};
-		Holder<PointerRange<uint32>> empty3 = {};
-		Holder<PointerRange<const uint32>> empty4 = {};
+		{
+			PointerRange<uint32> empty1;
+			CAGE_TEST(empty1.empty());
+			PointerRange<const uint32> empty2;
+			CAGE_TEST(empty2.empty());
+			Holder<PointerRange<uint32>> empty3;
+			CAGE_TEST(empty3.empty());
+			Holder<PointerRange<const uint32>> empty4;
+			CAGE_TEST(empty4.empty());
+		}
+		{
+			PointerRange<uint32> empty1 = {};
+			CAGE_TEST(empty1.empty());
+			PointerRange<const uint32> empty2 = {};
+			CAGE_TEST(empty2.empty());
+			Holder<PointerRange<uint32>> empty3 = {};
+			CAGE_TEST(empty3.empty());
+			Holder<PointerRange<const uint32>> empty4 = {};
+			CAGE_TEST(empty4.empty());
+		}
 	}
 
 	{

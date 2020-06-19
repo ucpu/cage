@@ -14,14 +14,20 @@ namespace cage
 		real fractionContact() const; // the ratio between initial and final transformations just when the meshes are colliding
 		PointerRange<CollisionPair> collisionPairs() const;
 
-		void query(const Collider *collider, const transform &t);
-		void query(const Collider *collider, const transform &t1, const transform &t2); // t1 and t2 are initial and final transformations
+		// finds arbitrary collision, if any
+		bool query(const Collider *collider, const transform &t);
 
-		void query(const line &shape);
-		void query(const triangle &shape);
-		void query(const plane &shape);
-		void query(const sphere &shape);
-		void query(const aabb &shape);
+		// finds a collision that is first in time, if any
+		bool query(const Collider *collider, const transform &t1, const transform &t2); // t1 and t2 are initial and final transformations
+
+		// finds a collision that is first along the line, if any
+		bool query(const line &shape);
+
+		// finds arbitrary collision, if any
+		bool query(const triangle &shape);
+		bool query(const plane &shape);
+		bool query(const sphere &shape);
+		bool query(const aabb &shape);
 	};
 
 	class CAGE_CORE_API CollisionStructure : private Immovable

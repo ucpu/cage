@@ -3,7 +3,7 @@
 #include <cage-core/math.h>
 #include <cage-core/variableSmoothingBuffer.h>
 
-void testVariableSmoothingBufferStruct()
+void testVariableSmoothingBuffer()
 {
 	CAGE_TESTCASE("VariableSmoothingBuffer");
 

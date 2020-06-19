@@ -12,11 +12,12 @@ namespace cage
 {
 	namespace
 	{
-		struct Item : public transform
+		struct Item
 		{
-			const Collider *collider;
+			const Collider *c = nullptr;
+			const transform t;
 
-			Item(const Collider *collider, const transform &t) : transform(t), collider(collider)
+			Item(const Collider *c, const transform &t) : c(c), t(t)
 			{}
 		};
 
@@ -42,168 +43,221 @@ namespace cage
 		public:
 			const CollisionDataImpl *const data;
 			Holder<SpatialQuery> spatial;
-			uint32 resultName;
-			real resultFractionBefore;
-			real resultFractionContact;
+			uint32 resultName = m;
+			real resultFractionBefore = real::Nan();
+			real resultFractionContact = real::Nan();
 			Holder<PointerRange<CollisionPair>> resultPairs;
-			Holder<PointerRange<CollisionPair>> tmpPairs;
 
-			CollisionQueryImpl(const CollisionDataImpl *data) : data(data), resultName(0)
+			CollisionQueryImpl(const CollisionDataImpl *data) : data(data)
 			{
 				spatial = newSpatialQuery(data->spatial.get());
 			}
 
-			void query(const Collider *collider, const transform &t1, const transform &t2)
+			void clear()
 			{
-				resultName = 0;
+				resultName = m;
 				resultFractionBefore = resultFractionContact = real::Nan();
 				resultPairs.clear();
+			}
+
+			bool query(const Collider *collider, const transform &t)
+			{
+				clear();
+				spatial->intersection(collider->box() * t); // broad phase
+				for (uint32 nameIt : spatial->result())
+				{
+					const Item &item = data->allItems.at(nameIt);
+					Holder<PointerRange<CollisionPair>> tmpPairs;
+					if (collisionDetection(collider, item.c, t, item.t, tmpPairs)) // exact phase
+					{
+						CAGE_ASSERT(!tmpPairs.empty());
+						std::swap(tmpPairs, resultPairs);
+						resultName = nameIt;
+						break;
+					}
+				}
+				CAGE_ASSERT(resultPairs.empty() != (resultName != m));
+				return !resultPairs.empty();
+			}
+
+			bool query(const Collider *collider, const transform &t1, const transform &t2)
+			{
+				clear();
 				real best = real::Infinity();
-				spatial->intersection(collider->box() * t1 + collider->box() * t2);
+				spatial->intersection(collider->box() * t1 + collider->box() * t2); // broad phase
 				for (uint32 nameIt : spatial->result())
 				{
 					const Item &item = data->allItems.at(nameIt);
 					real fractBefore, fractContact;
-					bool res = collisionDetection(collider, item.collider, t1, item, t2, item, fractBefore, fractContact, tmpPairs);
-					if (res && fractContact < best)
+					Holder<PointerRange<CollisionPair>> tmpPairs;
+					if (!collisionDetection(collider, item.c, t1, item.t, t2, item.t, fractBefore, fractContact, tmpPairs)) // exact phase
+						continue;
+					if (fractContact < best)
 					{
+						CAGE_ASSERT(!tmpPairs.empty());
 						std::swap(tmpPairs, resultPairs);
 						resultFractionBefore = fractBefore;
 						resultFractionContact = best = fractContact;
 						resultName = nameIt;
 					}
 				}
-				tmpPairs.clear();
+				CAGE_ASSERT(resultPairs.empty() != resultFractionContact.valid());
+				CAGE_ASSERT(resultPairs.empty() != (resultName != m));
+				return !resultPairs.empty();
 			}
 
 			template<class T>
-			void spatialIntersection(const T &shape)
+			void findPairs(const T &shape)
 			{
-				spatial->intersection(aabb(shape));
+				const Item &item = data->allItems.at(resultName);
+				uint32 i = 0;
+				PointerRangeHolder<CollisionPair> pairs;
+				for (const triangle &t : item.c->triangles())
+				{
+					if (intersects(shape, t * item.t))
+					{
+						CollisionPair p;
+						p.a = m;
+						p.b = i;
+						pairs.push_back(p);
+					}
+					i++;
+				}
+				CAGE_ASSERT(!pairs.empty());
+				resultPairs = templates::move(pairs);
 			}
 
 			template<class T>
-			void query(const T &shape)
+			bool query(const T &shape)
 			{
-				resultName = 0;
-				resultFractionBefore = resultFractionContact = real::Nan();
-				resultPairs.clear();
-				real best = real::Infinity();
-				spatialIntersection(shape);
+				clear();
+				spatial->intersection(aabb(shape)); // broad phase
+				bool found = false;
 				for (uint32 nameIt : spatial->result())
 				{
 					const Item &item = data->allItems.at(nameIt);
-					if (intersects(shape, item.collider, item))
+					if (intersects(shape, item.c, item.t)) // exact phase
 					{
-						real d = distance(shape, item.collider, item);
-						if (d < best)
-						{
-							best = d;
-							resultName = nameIt;
-						}
+						resultName = nameIt;
+						found = true;
+						break;
 					}
 				}
-				if (resultName)
+				if (found)
 				{
-					const Item &item = data->allItems.at(resultName);
-					uint32 i = 0;
-					PointerRangeHolder<CollisionPair> pairs;
-					pairs.reserve(item.collider->triangles().size());
-					for (const triangle &t : item.collider->triangles())
-					{
-						if (intersects(shape, t * item))
-						{
-							CollisionPair p;
-							p.a = m;
-							p.b = i;
-							pairs.push_back(p);
-						}
-						i++;
-					}
-					CAGE_ASSERT(!pairs.empty());
-					resultPairs = templates::move(pairs);
+					findPairs(shape);
+					return true;
 				}
+				return false;
 			}
 		};
 
 		template<>
-		void CollisionQueryImpl::spatialIntersection(const plane &shape)
+		bool CollisionQueryImpl::query(const line &shape)
 		{
-			spatial->intersection(aabb::Universe());
+			CAGE_ASSERT(shape.normalized());
+			clear();
+			spatial->intersection(aabb(shape)); // broad phase
+			real best = real::Infinity();
+			for (uint32 nameIt : spatial->result())
+			{
+				const Item &item = data->allItems.at(nameIt);
+				vec3 p = intersection(shape, item.c, item.t); // exact phase
+				//CAGE_ASSERT(intersects(shape, item.c, item.t) == p.valid());
+				if (!p.valid())
+					continue;
+				real d = dot(p - shape.origin, shape.direction);
+				if (d < best)
+				{
+					best = d;
+					resultName = nameIt;
+				}
+			}
+			if (best.finite())
+			{
+				findPairs(shape);
+				return true;
+			}
+			return false;
 		}
 	}
 
 	uint32 CollisionQuery::name() const
 	{
-		CollisionQueryImpl *impl = (CollisionQueryImpl*)this;
+		const CollisionQueryImpl *impl = (const CollisionQueryImpl*)this;
+		CAGE_ASSERT(!impl->resultPairs.empty());
 		return impl->resultName;
 	}
 
 	real CollisionQuery::fractionBefore() const
 	{
-		CollisionQueryImpl *impl = (CollisionQueryImpl*)this;
+		const CollisionQueryImpl *impl = (const CollisionQueryImpl*)this;
+		CAGE_ASSERT(!impl->resultPairs.empty());
 		return impl->resultFractionBefore;
 	}
 
 	real CollisionQuery::fractionContact() const
 	{
-		CollisionQueryImpl *impl = (CollisionQueryImpl*)this;
+		const CollisionQueryImpl *impl = (const CollisionQueryImpl*)this;
+		CAGE_ASSERT(!impl->resultPairs.empty());
 		return impl->resultFractionContact;
 	}
 
 	PointerRange<CollisionPair> CollisionQuery::collisionPairs() const
 	{
-		CollisionQueryImpl *impl = (CollisionQueryImpl*)this;
+		const CollisionQueryImpl *impl = (const CollisionQueryImpl*)this;
 		return impl->resultPairs;
 	}
 
 	void CollisionQuery::collider(const Collider *&c, transform &t) const
 	{
-		CollisionQueryImpl *impl = (CollisionQueryImpl*)this;
+		const CollisionQueryImpl *impl = (const CollisionQueryImpl*)this;
+		CAGE_ASSERT(!impl->resultPairs.empty());
 		auto r = impl->data->allItems.at(impl->resultName);
-		c = r.collider;
-		t = r;
+		c = r.c;
+		t = r.t;
 	}
 
-	void CollisionQuery::query(const Collider *collider, const transform &t)
-	{
-		query(collider, t, t);
-	}
-
-	void CollisionQuery::query(const Collider *collider, const transform &t1, const transform &t2)
+	bool CollisionQuery::query(const Collider *collider, const transform &t)
 	{
 		CollisionQueryImpl *impl = (CollisionQueryImpl*)this;
-		impl->query(collider, t1, t2);
+		return impl->query(collider, t);
 	}
 
-	void CollisionQuery::query(const line &shape)
+	bool CollisionQuery::query(const Collider *collider, const transform &t1, const transform &t2)
 	{
 		CollisionQueryImpl *impl = (CollisionQueryImpl*)this;
-		impl->query(shape);
+		return impl->query(collider, t1, t2);
 	}
 
-	void CollisionQuery::query(const triangle &shape)
+	bool CollisionQuery::query(const line &shape)
 	{
 		CollisionQueryImpl *impl = (CollisionQueryImpl*)this;
-		impl->query(shape);
+		return impl->query(shape);
 	}
 
-	void CollisionQuery::query(const plane &shape)
+	bool CollisionQuery::query(const triangle &shape)
 	{
 		CollisionQueryImpl *impl = (CollisionQueryImpl*)this;
-		impl->query(shape);
+		return impl->query(shape);
 	}
 
-	void CollisionQuery::query(const sphere &shape)
+	bool CollisionQuery::query(const plane &shape)
 	{
 		CollisionQueryImpl *impl = (CollisionQueryImpl*)this;
-		impl->query(shape);
+		return impl->query(shape);
 	}
 
-	void CollisionQuery::query(const aabb &shape)
+	bool CollisionQuery::query(const sphere &shape)
 	{
 		CollisionQueryImpl *impl = (CollisionQueryImpl*)this;
-		impl->query(shape);
+		return impl->query(shape);
+	}
+
+	bool CollisionQuery::query(const aabb &shape)
+	{
+		CollisionQueryImpl *impl = (CollisionQueryImpl*)this;
+		return impl->query(shape);
 	}
 
 	void CollisionStructure::update(uint32 name, const Collider *collider, const transform &t)
@@ -211,11 +265,12 @@ namespace cage
 		CollisionDataImpl *impl = (CollisionDataImpl*)this;
 		remove(name);
 		impl->allItems.emplace(name, Item(collider, t));
-		impl->spatial->update(name, collider->box() * mat4(t));
+		impl->spatial->update(name, collider->box() * t);
 	}
 
 	void CollisionStructure::remove(uint32 name)
 	{
+		CAGE_ASSERT(name != m);
 		CollisionDataImpl *impl = (CollisionDataImpl*)this;
 		impl->spatial->remove(name);
 		impl->allItems.erase(name);

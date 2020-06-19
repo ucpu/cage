@@ -1237,7 +1237,7 @@ namespace cage
 		T *end() const noexcept { return this->data_->end(); }
 		T *data() const noexcept { return begin(); }
 		size_type size() const noexcept { return end() - begin(); }
-		bool empty() const noexcept { return size() == 0; }
+		bool empty() const noexcept { return !this->data_ || size() == 0; }
 		T &operator[] (size_type idx) const { CAGE_ASSERT(idx < size()); return begin()[idx]; }
 	};
 

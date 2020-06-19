@@ -1,11 +1,12 @@
 #include "main.h"
 #include <cage-core/geometry.h>
-#include <cage-core/collisionStructure.h>
 #include <cage-core/collider.h>
 #include <cage-core/memoryBuffer.h>
 
-void testCollisions()
+void testColliders()
 {
+	CAGE_TESTCASE("colliders");
+
 	{
 		CAGE_TESTCASE("basic collisions");
 		{
@@ -101,10 +102,10 @@ void testCollisions()
 		CAGE_TESTCASE("dynamic collisions");
 		Holder<Collider> c1 = newCollider();
 		{ // tetrahedron
-			vec3 a(0, -0.7, 1);
-			vec3 b(+0.86603, -0.7, -0.5);
-			vec3 c(-0.86603, -0.7, -0.5);
-			vec3 d(0, 0.7, 0);
+			const vec3 a(0, -0.7, 1);
+			const vec3 b(+0.86603, -0.7, -0.5);
+			const vec3 c(-0.86603, -0.7, -0.5);
+			const vec3 d(0, 0.7, 0);
 			c1->addTriangle(triangle(c, b, a));
 			c1->addTriangle(triangle(a, b, d));
 			c1->addTriangle(triangle(b, c, d));
@@ -197,11 +198,11 @@ void testCollisions()
 		CAGE_TESTCASE("more collisions");
 		Holder<Collider> c1 = newCollider();
 		{ // tetrahedron 1
-			vec3 a(0, -0.7, 1);
-			vec3 b(+0.86603, -0.7, -0.5);
-			vec3 c(-0.86603, -0.7, -0.5);
-			vec3 d(0, 0.7, 0);
-			mat4 off = mat4(vec3(10, 0, 0));
+			const vec3 a(0, -0.7, 1);
+			const vec3 b(+0.86603, -0.7, -0.5);
+			const vec3 c(-0.86603, -0.7, -0.5);
+			const vec3 d(0, 0.7, 0);
+			const mat4 off = mat4(vec3(10, 0, 0));
 			c1->addTriangle(triangle(c, b, a) * off);
 			c1->addTriangle(triangle(a, b, d) * off);
 			c1->addTriangle(triangle(b, c, d) * off);
@@ -210,11 +211,11 @@ void testCollisions()
 		}
 		Holder<Collider> c2 = newCollider();
 		{ // tetrahedron 2
-			vec3 a(0, -0.7, 1);
-			vec3 b(+0.86603, -0.7, -0.5);
-			vec3 c(-0.86603, -0.7, -0.5);
-			vec3 d(0, 0.7, 0);
-			mat4 off = mat4(vec3(0, 10, 0));
+			const vec3 a(0, -0.7, 1);
+			const vec3 b(+0.86603, -0.7, -0.5);
+			const vec3 c(-0.86603, -0.7, -0.5);
+			const vec3 d(0, 0.7, 0);
+			const mat4 off = mat4(vec3(0, 10, 0));
 			c2->addTriangle(triangle(c, b, a) * off);
 			c2->addTriangle(triangle(a, b, d) * off);
 			c2->addTriangle(triangle(b, c, d) * off);
@@ -249,121 +250,99 @@ void testCollisions()
 	}
 
 	{
-		CAGE_TESTCASE("collisions grid");
-		Holder<Collider> c1 = newCollider();
-		{ // tetrahedron 1
-			vec3 a(0, -0.7, 1);
-			vec3 b(+0.86603, -0.7, -0.5);
-			vec3 c(-0.86603, -0.7, -0.5);
-			vec3 d(0, 0.7, 0);
-			mat4 off = mat4(vec3(10, 0, 0));
-			c1->addTriangle(triangle(c, b, a) * off);
-			c1->addTriangle(triangle(a, b, d) * off);
-			c1->addTriangle(triangle(b, c, d) * off);
-			c1->addTriangle(triangle(c, a, d) * off);
-			c1->rebuild();
-		}
-		Holder<Collider> c2 = newCollider();
-		{ // tetrahedron 2
-			vec3 a(0, -0.7, 1);
-			vec3 b(+0.86603, -0.7, -0.5);
-			vec3 c(-0.86603, -0.7, -0.5);
-			vec3 d(0, 0.7, 0);
-			mat4 off = mat4(vec3(0, 10, 0));
-			c2->addTriangle(triangle(c, b, a) * off);
-			c2->addTriangle(triangle(a, b, d) * off);
-			c2->addTriangle(triangle(b, c, d) * off);
-			c2->addTriangle(triangle(c, a, d) * off);
-			c2->rebuild();
-		}
-		Holder<Collider> c3 = newCollider();
-		{ // tetrahedron 3
-			vec3 a(0, -0.7, 1);
-			vec3 b(+0.86603, -0.7, -0.5);
-			vec3 c(-0.86603, -0.7, -0.5);
-			vec3 d(0, 0.7, 0);
-			c3->addTriangle(triangle(c, b, a));
-			c3->addTriangle(triangle(a, b, d));
-			c3->addTriangle(triangle(b, c, d));
-			c3->addTriangle(triangle(c, a, d));
-			c3->rebuild();
-		}
+		CAGE_TESTCASE("randomized tests with triangles");
+
+		Holder<Collider> tet = newCollider();
 		{
-			CAGE_TESTCASE("data without transformations");
-			Holder<CollisionStructure> data = newCollisionStructure(CollisionStructureCreateConfig());
-			data->update(1, c1.get(), transform());
-			data->update(2, c2.get(), transform());
-			data->update(3, c3.get(), transform());
-			data->rebuild();
-			Holder<CollisionQuery> query = newCollisionQuery(data.get());
+			const vec3 a(0, -0.7, 1);
+			const vec3 b(+0.86603, -0.7, -0.5);
+			const vec3 c(-0.86603, -0.7, -0.5);
+			const vec3 d(0, 0.7, 0);
+			tet->addTriangle(triangle(c, b, a));
+			tet->addTriangle(triangle(a, b, d));
+			tet->addTriangle(triangle(b, c, d));
+			tet->addTriangle(triangle(c, a, d));
+			tet->rebuild();
+		}
+
+		uint32 attemptsA = 0, attemptsB = 0;
+		while (attemptsA < 5 || attemptsB < 5)
+		{
+			if (attemptsA + attemptsB > 1000)
 			{
-				CAGE_TESTCASE("1");
-				query->query(c1.get(), transform());
-				CAGE_TEST(query->name() == 1);
-				CAGE_TEST(query->fractionContact() == 0);
+				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "A: " + attemptsA + ", B: " + attemptsB);
+				CAGE_THROW_ERROR(Exception, "too many test attempts");
 			}
+
+			const transform t1 = transform(randomDirection3() * randomChance() * 10, randomDirectionQuat(), randomChance() * 10 + 1);
+
+			const auto &trisTest = [&](const triangle &l)
 			{
-				CAGE_TESTCASE("2");
-				query->query(c2.get(), transform());
-				CAGE_TEST(query->name() == 2);
-				CAGE_TEST(query->fractionContact() == 0);
-			}
+				bool res = false;
+				for (const triangle t : tet->triangles())
+					res = res || intersects(l, t * t1);
+				return res;
+			};
+
+			for (uint32 round = 0; round < 10; round++)
 			{
-				CAGE_TESTCASE("3");
-				query->query(c3.get(), transform());
-				CAGE_TEST(query->name() == 3);
-				CAGE_TEST(query->fractionContact() == 0);
-			}
-			{
-				CAGE_TESTCASE("none");
-				query->query(c3.get(), transform(vec3(-10, 0, 0)));
-				CAGE_TEST(query->name() == 0);
-				CAGE_TEST(!query->fractionContact().valid());
-			}
-			{
-				CAGE_TESTCASE("31");
-				query->query(c3.get(), transform(vec3(9.5, 0, 0)));
-				CAGE_TEST(query->name() == 1);
-				CAGE_TEST(query->fractionContact() == 0);
+				const triangle l = triangle(randomDirection3() * 10, randomDirection3() * 10, randomDirection3() * 10);
+				const bool whole = intersects(l, tet.get(), t1);
+				const bool individual = trisTest(l);
+				CAGE_TEST(whole == individual);
+				if (whole)
+					attemptsA++;
+				else
+					attemptsB++;
 			}
 		}
+	}
+
+	{
+		CAGE_TESTCASE("randomized tests with lines");
+
+		Holder<Collider> tet = newCollider();
 		{
-			CAGE_TESTCASE("shape-to-collider collision");
-			Holder<CollisionStructure> data = newCollisionStructure(CollisionStructureCreateConfig());
-			data->update(1, c1.get(), transform());
-			data->update(2, c2.get(), transform());
-			data->update(3, c3.get(), transform());
-			data->rebuild();
-			Holder<CollisionQuery> query = newCollisionQuery(data.get());
+			const vec3 a(0, -0.7, 1);
+			const vec3 b(+0.86603, -0.7, -0.5);
+			const vec3 c(-0.86603, -0.7, -0.5);
+			const vec3 d(0, 0.7, 0);
+			tet->addTriangle(triangle(c, b, a));
+			tet->addTriangle(triangle(a, b, d));
+			tet->addTriangle(triangle(b, c, d));
+			tet->addTriangle(triangle(c, a, d));
+			tet->rebuild();
+		}
+
+		uint32 attemptsA = 0, attemptsB = 0;
+		while (attemptsA < 5 || attemptsB < 5)
+		{
+			if (attemptsA + attemptsB > 1000)
 			{
-				CAGE_TESTCASE("line 1");
-				query->query(makeSegment(vec3(-10, 0, 0), vec3(10, 0, 0)));
-				CAGE_TEST(query->name() == 1 || query->name() == 3);
+				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "A: " + attemptsA + ", B: " + attemptsB);
+				CAGE_THROW_ERROR(Exception, "too many test attempts");
 			}
+
+			const transform t1 = transform(randomDirection3() * randomChance() * 10, randomDirectionQuat(), randomChance() * 10 + 1);
+
+			const auto &trisTest = [&](const line &l)
 			{
-				CAGE_TESTCASE("triangle 1");
-				query->query(triangle(vec3(10, -1, 1), vec3(10, 1, 1), vec3(10, 0, -2)));
-				CAGE_TEST(query->name() == 1);
-			}
+				bool res = false;
+				for (const triangle t : tet->triangles())
+					res = res || intersects(l, t * t1);
+				return res;
+			};
+
+			for (uint32 round = 0; round < 10; round++)
 			{
-				CAGE_TESTCASE("triangle 2");
-				query->query(triangle(vec3(0, -1, 1), vec3(0, 1, 1), vec3(0, 0, -2)));
-				CAGE_TEST(query->name() == 3);
-			}
-			{
-				CAGE_TESTCASE("plane");
-				query->query(plane(vec3(0,0,0), vec3(0, 1, 0)));
-				CAGE_TEST(query->name() == 1 || query->name() == 3);
-			}
-			{
-				CAGE_TESTCASE("sphere");
-				query->query(sphere(vec3(0, 10, 0), 2));
-				CAGE_TEST(query->name() == 2);
-			}
-			{
-				CAGE_TESTCASE("aabb");
-				query->query(aabb(vec3(-1, 9, -1), vec3(1, 11, 1)));
-				CAGE_TEST(query->name() == 2);
+				const line l = makeLine(randomDirection3() * 10, randomDirection3() * 10);
+				const bool whole = intersects(l, tet.get(), t1);
+				const bool individual = trisTest(l);
+				CAGE_TEST(whole == individual);
+				if (whole)
+					attemptsA++;
+				else
+					attemptsB++;
 			}
 		}
 	}

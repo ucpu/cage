@@ -112,7 +112,7 @@ namespace
 	}
 }
 
-void testSpatial()
+void testSpatialStructure()
 {
 	CAGE_TESTCASE("spatial");
 

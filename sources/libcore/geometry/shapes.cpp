@@ -6,11 +6,23 @@ namespace cage
 {
 	line line::operator * (const mat4 &other) const
 	{
-		vec4 tmp = vec4(origin, 1) * other;
-		vec3 o = vec3(tmp) / tmp[3];
-		tmp = vec4(direction, 0) * other;
-		vec3 d = vec3(tmp);
-		return line(o, d, minimum, maximum).normalize();
+		CAGE_ASSERT(normalized());
+
+		const auto &tr = [&](const vec3 &p)
+		{
+			vec4 t = other * vec4(p, 1);
+			return vec3(t) / t[3];
+		};
+
+		if (isPoint())
+			return line(tr(a()), vec3(1, 0, 0), 0, 0);
+		if (isLine())
+			return makeLine(tr(origin), tr(origin + direction));
+		if (isRay())
+			return makeRay(tr(origin), tr(origin + direction));
+		if (isSegment())
+			return makeSegment(tr(a()), tr(b()));
+		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
 	}
 
 	bool line::normalized() const
@@ -39,15 +51,13 @@ namespace cage
 		}
 		else
 			return false;
-		return abs(lengthSquared(direction) - 1) < 1e-6;
+		return abs(lengthSquared(direction) - 1) < 1e-5;
 	}
 
 	line line::normalize() const
 	{
-		//if (!valid())
-		//	return line();
 		line r = *this;
-		if (r.isPoint() || lengthSquared(r.direction) < 1e-7)
+		if (r.isPoint() || lengthSquared(r.direction) < 1e-5)
 		{
 			r.origin = r.a();
 			r.direction = vec3(1, 0, 0);
@@ -144,7 +154,7 @@ namespace cage
 
 	bool plane::normalized() const
 	{
-		return abs(lengthSquared(normal) - 1) < 1e-6;
+		return abs(lengthSquared(normal) - 1) < 1e-5;
 	}
 
 	plane plane::normalize() const
@@ -163,7 +173,7 @@ namespace cage
 		real dotACAC = dot(c - a, c - a);
 		real d = 2.0f*(dotABAB*dotACAC - dotABAC*dotABAC);
 		vec3 referencePt = a;
-		if (abs(d) <= 1e-7)
+		if (abs(d) <= 1e-5)
 		{
 			aabb bbox = aabb(other);
 			center = bbox.center();
@@ -212,7 +222,7 @@ namespace cage
 
 	aabb::aabb(const line &other)
 	{
-		if (other.isSegment())
+		if (other.isSegment() || other.isPoint())
 		{
 			vec3 a = other.a();
 			vec3 b = other.b();
@@ -224,7 +234,14 @@ namespace cage
 
 	aabb::aabb(const plane &other)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		CAGE_ASSERT(other.normalized());
+		*this = aabb::Universe();
+		const vec3 o = other.origin();
+		for (uint32 a = 0; a < 3; a++)
+		{
+			if (abs(abs(other.normal[a]) - 1) < 1e-5)
+				this->a[a] = this->b[a] = o[a];
+		}
 	}
 
 	aabb aabb::operator + (const aabb &other) const

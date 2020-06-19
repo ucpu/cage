@@ -343,14 +343,14 @@ namespace cage
 			}
 
 			template<class T>
-			struct intersectorStruct
+			struct Intersector
 			{
-				const SpatialDataImpl *data;
+				const SpatialDataImpl *const data;
 				std::vector<uint32> &resultNames;
 				const T &other;
 				const FastBox otherBox;
 
-				intersectorStruct(const SpatialDataImpl *data, std::vector<uint32> &resultNames, const T &other) : data(data), resultNames(resultNames), other(other), otherBox(aabb(other))
+				Intersector(const SpatialDataImpl *data, std::vector<uint32> &resultNames, const T &other) : data(data), resultNames(resultNames), other(other), otherBox(aabb(other))
 				{
 					CAGE_ASSERT((uintPtr(this) % alignof(FastBox)) == 0);
 					CAGE_ASSERT((uintPtr(&otherBox) % alignof(FastBox)) == 0);
@@ -382,13 +382,14 @@ namespace cage
 			};
 
 			template<class T>
-			void intersection(const T &other)
+			bool intersection(const T &other)
 			{
 				CAGE_ASSERT(!data->dirty);
 				clear();
 				if (data->nodes.empty())
-					return;
-				intersectorStruct<T> i(data, resultNames, other);
+					return false;
+				Intersector<T> i(data, resultNames, other);
+				return !resultNames.empty();
 			}
 		};
 	}
@@ -399,39 +400,39 @@ namespace cage
 		return impl->resultNames;
 	}
 
-	void SpatialQuery::intersection(const vec3 &shape)
+	bool SpatialQuery::intersection(const vec3 &shape)
 	{
-		intersection(aabb(shape, shape));
+		return intersection(aabb(shape, shape));
 	}
 
-	void SpatialQuery::intersection(const line &shape)
+	bool SpatialQuery::intersection(const line &shape)
 	{
 		SpatialQueryImpl *impl = (SpatialQueryImpl*)this;
-		impl->intersection(shape);
+		return impl->intersection(shape);
 	}
 
-	void SpatialQuery::intersection(const triangle &shape)
+	bool SpatialQuery::intersection(const triangle &shape)
 	{
 		SpatialQueryImpl *impl = (SpatialQueryImpl*)this;
-		impl->intersection(shape);
+		return impl->intersection(shape);
 	}
 
-	void SpatialQuery::intersection(const plane &shape)
+	bool SpatialQuery::intersection(const plane &shape)
 	{
 		SpatialQueryImpl *impl = (SpatialQueryImpl*)this;
-		impl->intersection(shape);
+		return impl->intersection(shape);
 	}
 
-	void SpatialQuery::intersection(const sphere &shape)
+	bool SpatialQuery::intersection(const sphere &shape)
 	{
 		SpatialQueryImpl *impl = (SpatialQueryImpl*)this;
-		impl->intersection(shape);
+		return impl->intersection(shape);
 	}
 
-	void SpatialQuery::intersection(const aabb &shape)
+	bool SpatialQuery::intersection(const aabb &shape)
 	{
 		SpatialQueryImpl *impl = (SpatialQueryImpl*)this;
-		impl->intersection(shape);
+		return impl->intersection(shape);
 	}
 
 	void SpatialStructure::update(uint32 name, const vec3 &other)
@@ -477,6 +478,7 @@ namespace cage
 
 	void SpatialStructure::remove(uint32 name)
 	{
+		CAGE_ASSERT(name != m);
 		SpatialDataImpl *impl = (SpatialDataImpl*)this;
 		impl->dirty = true;
 		impl->itemsTable.erase(name);
