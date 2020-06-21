@@ -29,19 +29,17 @@ namespace cage
 			return (alignment - addToAlign(ptr, alignment)) % alignment;
 		}
 
-		inline uintPtr roundDownTo(uintPtr val, uintPtr size)
+		inline uintPtr roundDownTo(uintPtr ptr, uintPtr alignment)
 		{
-			return (val / size) * size;
+			return (ptr / alignment) * alignment;
 		}
 
-		inline uintPtr roundUpTo(uintPtr val, uintPtr size)
+		inline uintPtr roundUpTo(uintPtr ptr, uintPtr alignment)
 		{
-			return roundDownTo(val + size - 1, size);
+			return roundDownTo(ptr + alignment - 1, alignment);
 		}
 
 		CAGE_CORE_API uintPtr compressionBound(uintPtr size);
-		CAGE_CORE_API [[deprecated]] uintPtr compress(const void *inputBuffer, uintPtr inputSize, void *outputBuffer, uintPtr outputSize);
-		CAGE_CORE_API [[deprecated]] uintPtr decompress(const void *inputBuffer, uintPtr inputSize, void *outputBuffer, uintPtr outputSize);
 		CAGE_CORE_API void compress(PointerRange<const char> input, PointerRange<char> &output);
 		CAGE_CORE_API void decompress(PointerRange<const char> input, PointerRange<char> &output);
 	}

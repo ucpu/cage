@@ -129,18 +129,20 @@ namespace cage
 	{
 		MemoryBuffer compress(PointerRange<const char> input)
 		{
-			MemoryBuffer output(compressionBound(input.size()));
-			uintPtr res = compress(input.data(), input.size(), output.data(), output.size());
-			output.resize(res);
-			return output;
+			MemoryBuffer result(compressionBound(input.size()));
+			PointerRange<char> output = result;
+			compress(input, output);
+			result.resize(output.size());
+			return result;
 		}
 
 		MemoryBuffer decompress(PointerRange<const char> input, uintPtr outputSize)
 		{
-			MemoryBuffer output(outputSize);
-			uintPtr res = decompress(input.data(), input.size(), output.data(), output.size());
-			output.resize(res);
-			return output;
+			MemoryBuffer result(outputSize);
+			PointerRange<char> output = result;
+			decompress(input, output);
+			result.resize(output.size());
+			return result;
 		}
 	}
 }

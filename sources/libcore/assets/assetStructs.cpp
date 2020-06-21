@@ -14,8 +14,9 @@ namespace cage
 		{
 			if (context->compressedData().size() == 0)
 				return;
-			uintPtr res = detail::decompress(context->compressedData().data(), context->compressedData().size(), context->originalData().data(), context->originalData().size());
-			CAGE_ASSERT(res == context->originalData().size());
+			PointerRange<char> orig = context->originalData();
+			detail::decompress(context->compressedData(), orig);
+			CAGE_ASSERT(orig.size() == context->originalData().size());
 		}
 	}
 

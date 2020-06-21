@@ -107,16 +107,17 @@ namespace cage
 			return ::compressBound(numeric_cast<uLong>(size));
 		}
 
-		uintPtr compress(const void *inputBuffer, uintPtr inputSize, void *outputBuffer, uintPtr outputSize)
+		void compress(PointerRange<const char> input, PointerRange<char> &output)
 		{
-			uLongf s = numeric_cast<uLongf>(outputSize);
-			int level = numeric_cast<int>(Z_BEST_COMPRESSION);
-			int res = ::compress2((Bytef*)outputBuffer, &s, (const Bytef*)inputBuffer, numeric_cast<uLong>(inputSize), level);
+			uLongf s = numeric_cast<uLongf>(output.size());
+			constexpr int level = numeric_cast<int>(Z_BEST_COMPRESSION);
+			int res = ::compress2((Bytef*)output.data(), &s, (const Bytef*)input.data(), numeric_cast<uLong>(input.size()), level);
 			switch (res)
 			{
 			case Z_OK:
-				return s;
-			case Z_MEM_ERROR: // some Allocation failed
+				output = { output.data(), output.data() + s };
+				return;
+			case Z_MEM_ERROR: // some allocation failed
 				CAGE_THROW_ERROR(Exception, "compression failed with allocation error");
 			case Z_BUF_ERROR: // output buffer was too small
 				CAGE_THROW_ERROR(OutOfMemory, "output buffer for compression is too small", 0);
@@ -127,15 +128,16 @@ namespace cage
 			}
 		}
 
-		uintPtr decompress(const void *inputBuffer, uintPtr inputSize, void *outputBuffer, uintPtr outputSize)
+		void decompress(PointerRange<const char> input, PointerRange<char> &output)
 		{
-			uLongf s = numeric_cast<uLongf>(outputSize);
-			int res = ::uncompress((Bytef*)outputBuffer, &s, (const Bytef*)inputBuffer, numeric_cast<uLong>(inputSize));
+			uLongf s = numeric_cast<uLongf>(output.size());
+			int res = ::uncompress((Bytef*)output.data(), &s, (const Bytef*)input.data(), numeric_cast<uLong>(input.size()));
 			switch (res)
 			{
 			case Z_OK:
-				return s;
-			case Z_MEM_ERROR: // some Allocation failed
+				output = { output.data(), output.data() + s };
+				return;
+			case Z_MEM_ERROR: // some allocation failed
 				CAGE_THROW_ERROR(Exception, "decompression failed with allocation error");
 			case Z_BUF_ERROR: // output buffer was too small
 				CAGE_THROW_ERROR(OutOfMemory, "output buffer for decompression is too small", 0);
@@ -144,18 +146,6 @@ namespace cage
 			default:
 				CAGE_THROW_CRITICAL(Exception, "decompression failed with unknown status");
 			}
-		}
-
-		void compress(PointerRange<const char> input, PointerRange<char> &output)
-		{
-			uintPtr s = compress(input.data(), input.size(), output.data(), output.size());
-			output = { output.data(), output.data() + s };
-		}
-
-		void decompress(PointerRange<const char> input, PointerRange<char> &output)
-		{
-			uintPtr s = decompress(input.data(), input.size(), output.data(), output.size());
-			output = { output.data(), output.data() + s };
 		}
 
 		namespace
@@ -183,25 +173,11 @@ namespace cage
 			class Memory1Impl
 			{
 			public:
-				Memory1Impl() : allocations(0)
-				{}
-
-				~Memory1Impl()
-				{
-					try
-					{
-						if (allocations != 0)
-							CAGE_THROW_CRITICAL(Exception, "memory corruption - memory leak detected");
-					}
-					catch (...)
-					{}
-				}
-
 				void *allocate(uintPtr size, uintPtr alignment)
 				{
 					void *tmp = malloca(size, alignment);
 					if (!tmp)
-						CAGE_THROW_ERROR(OutOfMemory, "out of memory", size);
+						CAGE_THROW_ERROR(OutOfMemory, "system arena out of memory", size);
 					allocations++;
 					return tmp;
 				}
@@ -220,7 +196,7 @@ namespace cage
 					CAGE_THROW_CRITICAL(Exception, "invalid operation - deallocate must be used");
 				}
 
-				std::atomic<uint32> allocations;
+				std::atomic<uint32> allocations {0};
 			};
 		}
 
@@ -236,7 +212,7 @@ namespace cage
 		class VirtualMemoryImpl : public VirtualMemory
 		{
 		public:
-			VirtualMemoryImpl() : origin(nullptr), pgs(0), total(0), pageSize(detail::memoryPageSize())
+			VirtualMemoryImpl()
 			{}
 
 			~VirtualMemoryImpl()
@@ -321,9 +297,9 @@ namespace cage
 				pgs -= pages;
 			}
 
-			void *origin;
-			uintPtr pgs, total;
-			const uintPtr pageSize;
+			void *origin = nullptr;
+			uintPtr pgs = 0, total = 0;
+			const uintPtr pageSize = detail::memoryPageSize();
 		};
 	}
 
@@ -364,25 +340,18 @@ namespace cage
 
 	namespace detail
 	{
-		namespace
+		uintPtr memoryPageSize()
 		{
-			uintPtr pageSizeInitializer()
+			static const uintPtr pagesize = []()
 			{
 #ifdef CAGE_SYSTEM_WINDOWS
-
 				SYSTEM_INFO info;
 				GetSystemInfo(&info);
 				return info.dwPageSize;
-
 #else
 				return sysconf(_SC_PAGE_SIZE);
 #endif
-			}
-		}
-
-		uintPtr memoryPageSize()
-		{
-			static const uintPtr pagesize = pageSizeInitializer();
+			}();
 			return pagesize;
 		}
 	}

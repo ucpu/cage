@@ -37,7 +37,7 @@ namespace cage
 				if (texture->getTarget() == GL_TEXTURE_CUBE_MAP)
 					texture->imageCube(w, h, GL_DEPTH_COMPONENT16);
 				else
-					texture->image2d(w, h, GL_DEPTH_COMPONENT16);
+					texture->image2d(w, h, GL_DEPTH_COMPONENT24);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
