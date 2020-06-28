@@ -21,8 +21,8 @@ namespace cage
 			{
 				uint32 type, len;
 				des >> type >> len;
-				const char *pos = (const char *)des.advance(len);
-				shr->source(type, pos, len);
+				PointerRange<const char> pos = des.advance(len);
+				shr->source(type, pos);
 			}
 			shr->relink();
 			CAGE_ASSERT(des.available() == 0);

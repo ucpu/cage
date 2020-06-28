@@ -1,5 +1,8 @@
 #include "main.h"
 #include <cage-core/pointerRangeHolder.h>
+#include <cage-core/serialization.h>
+
+#include <vector>
 
 namespace
 {
@@ -28,6 +31,9 @@ namespace
 
 		void fnc()
 		{}
+
+	private:
+		uint32 data_[5] = {};
 	};
 
 	Holder<PointerRange<uint32>> makeRangeInts()
@@ -41,30 +47,41 @@ namespace
 
 	Holder<PointerRange<Test>> makeRangeTests()
 	{
+		const uint32 init = counter;
 		std::vector<Test> tests;
-		CAGE_TEST(counter == 0);
+		CAGE_TEST(counter == init);
 		tests.emplace_back();
 		tests.emplace_back();
 		tests.emplace_back();
 		tests.emplace_back();
-		CAGE_TEST(counter == 4);
+		CAGE_TEST(counter == init + 4);
 		return PointerRangeHolder<Test>(templates::move(tests));
 	}
 
-	void functionTakingMutableRange(PointerRange<uint32> r)
+	void functionTakingMutableRange(PointerRange<Test> r)
 	{
 		// do nothing
 	}
 
-	void functionTakingConstRange(PointerRange<const uint32> r)
+	void functionTakingConstRange(PointerRange<const Test> r)
 	{
 		// do nothing
+	}
+
+	void functionTakingMutableRangeReference(PointerRange<Test> &r, uintPtr newSize)
+	{
+		r = { r.begin(), r.begin() + newSize };
+	}
+
+	void functionTakingConstRangeReference(PointerRange<const Test> &r, uintPtr newSize)
+	{
+		r = { r.begin(), r.begin() + newSize };
 	}
 
 	constexpr auto constexprFunction()
 	{
 		const char text[] = "ahoj";
-		return PointerRange<const char>(text, text + sizeof(text)).size();
+		return PointerRange<const char>(text).size();
 	}
 }
 
@@ -147,20 +164,78 @@ void testPointerRange()
 
 	{
 		CAGE_TESTCASE("implicit const casts");
-		Holder<PointerRange<uint32>> range = makeRangeInts();
-		PointerRange<uint32> rng1 = range;
-		PointerRange<const uint32> rng2 = rng1;
-		//PointerRange<uint32> rng3 = rng2; // must not compile - it would drop the const
-		functionTakingConstRange(rng1);
-		functionTakingMutableRange(rng1);
-		functionTakingConstRange(rng2);
-		//functionTakingMutableRange(rng2); // must not compile - it would drop the const
-		functionTakingConstRange(range);
-		functionTakingMutableRange(range);
-		functionTakingConstRange(makeRangeInts());
-		functionTakingMutableRange(makeRangeInts());
-		Holder<PointerRange<const uint32>> crange = templates::move(range);
-		CAGE_TEST(crange->size() == makeRangeInts()->size());
+		{
+			Holder<PointerRange<Test>> range = makeRangeTests();
+			PointerRange<Test> rng1 = range;
+			PointerRange<const Test> rng2 = rng1;
+			//PointerRange<Test> rng3 = rng2; // must not compile - it would drop the const
+			functionTakingConstRange(rng1);
+			functionTakingMutableRange(rng1);
+			functionTakingConstRange(rng2);
+			//functionTakingMutableRange(rng2); // must not compile - it would drop the const
+			functionTakingConstRange(range);
+			functionTakingMutableRange(range);
+			functionTakingConstRange(makeRangeTests());
+			functionTakingMutableRange(makeRangeTests());
+			Holder<PointerRange<const Test>> crange = templates::move(range);
+			CAGE_TEST(crange->size() == 4);
+			CAGE_TEST(counter == 4);
+		}
+		CAGE_TEST(counter == 0);
+	}
+
+	{
+		CAGE_TESTCASE("views");
+		{
+			Test testsArray[5];
+			CAGE_TEST(counter == 5);
+			PointerRange<Test> mutView = testsArray;
+			PointerRange<const Test> constView = mutView;
+			CAGE_TEST(counter == 5);
+			CAGE_TEST(mutView.size() == 5);
+			CAGE_TEST(constView.size() == 5);
+			functionTakingMutableRange(mutView);
+			//functionTakingMutableRange(constView); // must not compile - it would drop the const
+			functionTakingConstRange(mutView);
+			functionTakingConstRange(constView);
+			CAGE_TEST(mutView.size() == 5);
+			CAGE_TEST(constView.size() == 5);
+			functionTakingMutableRangeReference(mutView, 1);
+			CAGE_TEST(mutView.size() == 1);
+			//functionTakingMutableRangeReference(constView, 2); // must not compile - it would drop the const
+			//functionTakingConstRangeReference(mutView, 3); // must not compile - it would drop the const
+			functionTakingConstRangeReference(constView, 4);
+			CAGE_TEST(constView.size() == 4);
+			CAGE_TEST(counter == 5);
+		}
+		CAGE_TEST(counter == 0);
+	}
+
+	{
+		CAGE_TESTCASE("bufferCast");
+		struct Item
+		{
+			char dummy[42] = {};
+		};
+		Item testsArray[5];
+		PointerRange<Item> mutView = testsArray;
+		PointerRange<const char> charView = bufferCast(mutView);
+		PointerRange<const char> charViewExplicit = bufferCast<const char>(mutView);
+		CAGE_TEST(charView.size() == 5 * sizeof(Item));
+		PointerRange<const Item> constView = bufferCast<const Item>(charView);
+		CAGE_TEST(constView.size() == 5);
+	}
+
+	{
+		CAGE_TESTCASE("vector");
+		struct Item
+		{
+			char dummy[42] = {};
+		};
+		std::vector<Item> vec;
+		vec.resize(13);
+		PointerRange<Item> mutView = vec;
+		CAGE_TEST(mutView.size() == 13);
 	}
 
 	{

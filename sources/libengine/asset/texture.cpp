@@ -24,7 +24,7 @@ namespace cage
 			tex->setDebugName(context->textName);
 
 			uint32 bytesSize = data.dimX * data.dimY * data.dimZ * data.channels;
-			char *values = (char*)des.advance(bytesSize);
+			PointerRange<const char> values = des.advance(bytesSize);
 
 			if (data.target == GL_TEXTURE_3D || data.target == GL_TEXTURE_2D_ARRAY)
 				tex->image3d(data.dimX, data.dimY, data.dimZ, data.internalFormat, data.copyFormat, data.copyType, values);

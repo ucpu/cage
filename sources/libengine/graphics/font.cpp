@@ -1,5 +1,6 @@
 #include <cage-core/geometry.h>
 #include <cage-core/utf.h>
+#include <cage-core/serialization.h>
 
 #include <cage-engine/shaderConventions.h>
 #include <cage-engine/opengl.h>
@@ -10,9 +11,6 @@
 
 namespace cage
 {
-	Font::FormatStruct::FormatStruct() : align(TextAlignEnum::Left), size(13), wrapWidth(real::Infinity()), lineSpacing(0)
-	{}
-
 	namespace
 	{
 		struct ProcessData
@@ -234,14 +232,18 @@ namespace cage
 					{
 						Holder<UniformBuffer> uni = newUniformBuffer();
 						uni->bind(1);
-						uni->writeWhole(&instances[i * CAGE_SHADER_MAX_CHARACTERS], sizeof(Instance) * CAGE_SHADER_MAX_CHARACTERS, GL_STREAM_DRAW);
+						auto p = instances.data() + i * CAGE_SHADER_MAX_CHARACTERS;
+						PointerRange<Instance> r = { p, p + sizeof(Instance) * CAGE_SHADER_MAX_CHARACTERS };
+						uni->writeWhole(bufferCast(r), GL_STREAM_DRAW);
 						msh->dispatch(CAGE_SHADER_MAX_CHARACTERS);
 					}
 					if (b)
 					{
 						Holder<UniformBuffer> uni = newUniformBuffer();
 						uni->bind(1);
-						uni->writeWhole(&instances[a * CAGE_SHADER_MAX_CHARACTERS], sizeof(Instance) * b, GL_STREAM_DRAW);
+						auto p = instances.data() + a * CAGE_SHADER_MAX_CHARACTERS;
+						PointerRange<Instance> r = { p, p + b * sizeof(Instance) };
+						uni->writeWhole(bufferCast(r), GL_STREAM_DRAW);
 						msh->dispatch(b);
 					}
 
@@ -267,109 +269,124 @@ namespace cage
 		impl->firstLineOffset = -firstLineOffset;
 	}
 
-	void Font::setImage(uint32 width, uint32 height, uint32 size, const void *data)
+	void Font::setImage(uint32 width, uint32 height, PointerRange<const char> buffer)
 	{
 		FontImpl *impl = (FontImpl*)this;
 		impl->texWidth = width;
 		impl->texHeight = height;
 		impl->tex->bind();
-		uint32 channels = size / (width * height);
-		CAGE_ASSERT(width * height * channels == size);
+		const uint32 channels = numeric_cast<uint32>(buffer.size() / (width * height));
+		CAGE_ASSERT(width * height * channels == buffer.size());
 		switch (channels)
 		{
 		case 1:
-			impl->tex->image2d(width, height, GL_R8, GL_RED, GL_UNSIGNED_BYTE, data);
+			impl->tex->image2d(width, height, GL_R8, GL_RED, GL_UNSIGNED_BYTE, buffer);
 			break;
 		case 2:
-			impl->tex->image2d(width, height, GL_R16, GL_RED, GL_UNSIGNED_SHORT, data);
+			impl->tex->image2d(width, height, GL_R16, GL_RED, GL_UNSIGNED_SHORT, buffer);
 			break;
 		case 3:
-			impl->tex->image2d(width, height, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, data);
+			impl->tex->image2d(width, height, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, buffer);
 			break;
 		case 4:
-			impl->tex->image2d(width, height, GL_R32F, GL_RED, GL_FLOAT, data);
+			impl->tex->image2d(width, height, GL_R32F, GL_RED, GL_FLOAT, buffer);
 			break;
 		case 6:
-			impl->tex->image2d(width, height, GL_RGB16, GL_RGB, GL_UNSIGNED_SHORT, data);
+			impl->tex->image2d(width, height, GL_RGB16, GL_RGB, GL_UNSIGNED_SHORT, buffer);
 			break;
 		case 12:
-			impl->tex->image2d(width, height, GL_RGB32F, GL_RGB, GL_FLOAT, data);
+			impl->tex->image2d(width, height, GL_RGB32F, GL_RGB, GL_FLOAT, buffer);
 			break;
 		default:
-			CAGE_THROW_ERROR(Exception, "unsupported bpp");
+			CAGE_THROW_ERROR(Exception, "font: unsupported image bpp");
 		}
 		impl->tex->filters(GL_LINEAR, GL_LINEAR, 0);
 		impl->tex->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 		//impl->tex->generateMipmaps();
 	}
 
-	void Font::setGlyphs(uint32 count, const void *data, const real *kerning)
+	void Font::setGlyphs(PointerRange<const char> buffer, PointerRange<const real> kerning)
 	{
 		FontImpl *impl = (FontImpl*)this;
+		const uint32 count = numeric_cast<uint32>(buffer.size() / sizeof(FontHeader::GlyphData));
+		CAGE_ASSERT(buffer.size() == count * sizeof(FontHeader::GlyphData));
 		impl->glyphsArray.resize(count);
-		detail::memcpy(impl->glyphsArray.data(), data, sizeof(FontHeader::GlyphData) * count);
-		if (kerning)
+		detail::memcpy(impl->glyphsArray.data(), buffer.data(), buffer.size());
+		if (!kerning.empty())
 		{
+			CAGE_ASSERT(kerning.size() == count * count);
 			impl->kerning.resize(count * count);
-			detail::memcpy(impl->kerning.data(), kerning, count * count * sizeof(real));
+			detail::memcpy(impl->kerning.data(), kerning.data(), kerning.size() * sizeof(real));
 		}
 		else
 			impl->kerning.clear();
 		impl->cursorGlyph = count - 1; // last glyph
 	}
 
-	void Font::setCharmap(uint32 count, const uint32 *chars, const uint32 *glyphs)
+	void Font::setCharmap(PointerRange<const uint32> chars, PointerRange<const uint32> glyphs)
 	{
 		FontImpl *impl = (FontImpl*)this;
-		impl->charmapChars.resize(count);
-		impl->charmapGlyphs.resize(count);
-		if (count > 0)
-		{
-			detail::memcpy(impl->charmapChars.data(), chars, sizeof(uint32) * count);
-			detail::memcpy(impl->charmapGlyphs.data(), glyphs, sizeof(uint32) * count);
-		}
+		CAGE_ASSERT(chars.size() == glyphs.size());
+		impl->charmapChars.resize(chars.size());
+		impl->charmapGlyphs.resize(chars.size());
+		detail::memcpy(impl->charmapChars.data(), chars.data(), chars.size() * sizeof(uint32));
+		detail::memcpy(impl->charmapGlyphs.data(), glyphs.data(), glyphs.size() * sizeof(uint32));
 		impl->returnGlyph = impl->findGlyphIndex('\n');
 		impl->spaceGlyph = impl->findGlyphIndex(' ');
 	}
 
-	void Font::transcript(const string &text, uint32 *glyphs, uint32 &count)
+	uint32 Font::glyphsCount(const string &text)
 	{
-		transcript(text.c_str(), glyphs, count);
+		return utf32Length(text);
 	}
 
-	void Font::transcript(const char *text, uint32 *glyphs, uint32 &count)
+	uint32 Font::glyphsCount(const char *text)
+	{
+		return utf32Length(text);
+	}
+
+	uint32 Font::glyphsCount(PointerRange<const char> text)
+	{
+		return utf32Length(text);
+	}
+
+	void Font::transcript(const string &text, PointerRange<uint32> glyphs)
+	{
+		transcript({ text.begin(), text.end() }, glyphs);
+	}
+
+	void Font::transcript(const char *text, PointerRange<uint32> glyphs)
+	{
+		uint32 s = numeric_cast<uint32>(std::strlen(text));
+		transcript({ text, text + s }, glyphs);
+	}
+
+	void Font::transcript(PointerRange<const char> text, PointerRange<uint32> glyphs)
 	{
 		FontImpl *impl = (FontImpl*)this;
-		if (glyphs)
-		{
-			PointerRange<uint32> pr(glyphs, glyphs + count);
-			utf8to32(pr, text);
-			CAGE_ASSERT(pr.size() == count);
-			for (uint32 i = 0; i < count; i++)
-				glyphs[i] = impl->findGlyphIndex(glyphs[i]);
-		}
-		else
-			count = utf32Length(text);
+		utf8to32(glyphs, text);
+		for (uint32 &i : glyphs)
+			i = impl->findGlyphIndex(i);
 	}
 
-	void Font::size(const uint32 *glyphs, uint32 count, const FormatStruct &format, vec2 &size)
+	vec2 Font::size(PointerRange<const uint32> glyphs, const FormatStruct &format)
 	{
 		vec2 mp;
 		uint32 c;
-		this->size(glyphs, count, format, size, mp, c);
+		return this->size(glyphs, format, mp, c);
 	}
 
-	void Font::size(const uint32 *glyphs, uint32 count, const FormatStruct &format, vec2 &size, const vec2 &mousePosition, uint32 &cursor)
+	vec2 Font::size(PointerRange<const uint32> glyphs, const FormatStruct &format, const vec2 &mousePosition, uint32 &cursor)
 	{
 		ProcessData data;
 		data.mousePosition = mousePosition;
 		data.format = &format;
-		data.gls = glyphs;
-		data.count = count;
+		data.gls = glyphs.data();
+		data.count = numeric_cast<uint32>(glyphs.size());
 		data.outCursor = cursor;
 		((FontImpl*)this)->processText(data);
-		size = data.outSize;
 		cursor = data.outCursor;
+		return data.outSize;
 	}
 
 	void Font::bind(Mesh *mesh, ShaderProgram *shader) const
@@ -383,12 +400,12 @@ namespace cage
 		impl->shr->bind();
 	}
 
-	void Font::render(const uint32 *glyphs, uint32 count, const FormatStruct &format, uint32 cursor)
+	void Font::render(PointerRange<const uint32> glyphs, const FormatStruct &format, uint32 cursor)
 	{
 		ProcessData data;
 		data.format = &format;
-		data.gls = glyphs;
-		data.count = count;
+		data.gls = glyphs.data();
+		data.count = numeric_cast<uint32>(glyphs.size());
 		data.cursor = getApplicationTime() % 1000000 < 300000 ? m : cursor;
 		data.render = true;
 		((FontImpl*)this)->processText(data);

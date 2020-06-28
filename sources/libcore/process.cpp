@@ -345,8 +345,8 @@ namespace cage
 		{
 			impl->read(buffer + size, 1);
 			size++;
-			const char *b = buffer;
-			if (detail::readLine(out, b, size, true))
+			PointerRange<const char> pr = { buffer, buffer + size };
+			if (detail::readLine(out, pr, true))
 				return out;
 		}
 		CAGE_THROW_ERROR(Exception, "line too long");

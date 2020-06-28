@@ -68,25 +68,10 @@ namespace cage
 		};
 	}
 
-	ScreenMode::ScreenMode() : frequency(0)
-	{}
-
-	uint32 ScreenDevice::modesCount() const
-	{
-		ScreenDeviceImpl *impl = (ScreenDeviceImpl*)this;
-		return numeric_cast<uint32>(impl->modes.size());
-	}
-
 	uint32 ScreenDevice::currentMode() const
 	{
 		ScreenDeviceImpl *impl = (ScreenDeviceImpl*)this;
 		return impl->current_;
-	}
-
-	const ScreenMode &ScreenDevice::mode(uint32 index) const
-	{
-		ScreenDeviceImpl *impl = (ScreenDeviceImpl*)this;
-		return impl->modes[index];
 	}
 
 	PointerRange<const ScreenMode> ScreenDevice::modes() const
@@ -107,22 +92,10 @@ namespace cage
 		return impl->id_;
 	}
 
-	uint32 ScreenList::devicesCount() const
-	{
-		ScreenListImpl *impl = (ScreenListImpl*)this;
-		return numeric_cast<uint32>(impl->devices.size());
-	}
-
 	uint32 ScreenList::defaultDevice() const
 	{
 		ScreenListImpl *impl = (ScreenListImpl*)this;
 		return impl->primary;
-	}
-
-	const ScreenDevice *ScreenList::device(uint32 index) const
-	{
-		ScreenListImpl *impl = (ScreenListImpl*)this;
-		return impl->devices[index].get();
 	}
 
 	Holder<PointerRange<const ScreenDevice*>> ScreenList::devices() const

@@ -1,6 +1,6 @@
 #include <cage-core/hashString.h>
 
-#include "../private.h"
+#include "private.h"
 
 #include <set>
 
@@ -11,7 +11,7 @@ namespace cage
 		GuiTextFormatComponent textFormatComponentInit()
 		{
 			GuiTextFormatComponent text;
-			text.color = vec3(1, 1, 1);
+			text.color = vec3(1);
 			text.font = HashString("cage/font/ubuntu/Ubuntu-R.ttf");
 			text.align = TextAlignEnum::Left;
 			text.lineSpacing = 0;
@@ -30,17 +30,6 @@ namespace cage
 		const GuiTextFormatComponent textInit = textFormatComponentInit();
 		const GuiImageFormatComponent imageInit = imageFormatComponentInit();
 	}
-
-	GuiSkinElementLayout::TextureUv::TextureUv()
-	{
-		detail::memset(this, 0, sizeof(*this));
-	}
-
-	GuiSkinElementLayout::GuiSkinElementLayout() : border(5, 5, 5, 5)
-	{}
-
-	GuiSkinWidgetDefaults::GuiSkinWidgetDefaults()
-	{}
 
 	namespace
 	{
@@ -246,30 +235,30 @@ namespace cage
 		}
 	}
 
-	GuiSkinWidgetDefaults::Label::Label() : textFormat(textInit), imageFormat(imageInit), margin(1, 2, 1, 2)
+	GuiSkinWidgetDefaults::Label::Label() : textFormat(textInit), imageFormat(imageInit)
 	{}
 
-	GuiSkinWidgetDefaults::Button::Button() : textFormat(textInit), imageFormat(imageInit), padding(1, 1, 1, 1), margin(1, 1, 1, 1), size(150, 32)
+	GuiSkinWidgetDefaults::Button::Button() : textFormat(textInit), imageFormat(imageInit)
 	{
 		textFormat.align = TextAlignEnum::Center;
 	}
 
-	GuiSkinWidgetDefaults::Input::Input() : textValidFormat(textInit), textInvalidFormat(textInit), placeholderFormat(textInit), basePadding(2, 2, 2, 2), margin(1, 1, 1, 1), size(300, 32), buttonsSize(32), buttonsOffset(2), buttonsMode(InputButtonsPlacementModeEnum::Sides)
+	GuiSkinWidgetDefaults::Input::Input() : textValidFormat(textInit), textInvalidFormat(textInit), placeholderFormat(textInit)
 	{
 		textInvalidFormat.color = vec3(1,0,0);
 		placeholderFormat.color = vec3(0.5,0.5,0.5);
 	}
 
-	GuiSkinWidgetDefaults::TextArea::TextArea() : textFormat(textInit), padding(3, 3, 3, 3), margin(1, 1, 1, 1), size(450, 200)
+	GuiSkinWidgetDefaults::TextArea::TextArea() : textFormat(textInit)
 	{}
 
-	GuiSkinWidgetDefaults::CheckBox::CheckBox() : textFormat(textInit), margin(1, 1, 1, 1), size(28, 28), labelOffset(3, 5)
+	GuiSkinWidgetDefaults::CheckBox::CheckBox() : textFormat(textInit)
 	{}
 
-	GuiSkinWidgetDefaults::RadioBox::RadioBox() : textFormat(textInit), margin(1, 1, 1, 1), size(28, 28), labelOffset(3, 5)
+	GuiSkinWidgetDefaults::RadioBox::RadioBox() : textFormat(textInit)
 	{}
 
-	GuiSkinWidgetDefaults::ComboBox::ComboBox() : placeholderFormat(textInit), itemsFormat(textInit), selectedFormat(textInit), basePadding(1, 1, 1, 1), baseMargin(1, 1, 1, 1), listPadding(0, 0, 0, 0), itemPadding(1, 2, 1, 2), size(250, 32), listOffset(-6), itemSpacing(-2)
+	GuiSkinWidgetDefaults::ComboBox::ComboBox() : placeholderFormat(textInit), itemsFormat(textInit), selectedFormat(textInit)
 	{
 		placeholderFormat.color = vec3(0.5, 0.5, 0.5);
 		placeholderFormat.align = TextAlignEnum::Center;
@@ -277,19 +266,16 @@ namespace cage
 		selectedFormat.align = TextAlignEnum::Center;
 	}
 
-	GuiSkinWidgetDefaults::ListBox::ListBox() : textFormat(textInit), basePadding(0, 0, 0, 0), baseMargin(1, 1, 1, 1), itemPadding(1, 1, 1, 1), size(250, 32), itemSpacing(0)
+	GuiSkinWidgetDefaults::ListBox::ListBox() : textFormat(textInit)
 	{}
 
-	GuiSkinWidgetDefaults::ProgressBar::ProgressBar() : textFormat(textInit), backgroundImageFormat(imageInit), fillingImageFormat(imageInit), baseMargin(1, 1, 1, 1), textPadding(1, 1, 1, 1), fillingPadding(1, 1, 1, 1), size(200, 28)
+	GuiSkinWidgetDefaults::ProgressBar::ProgressBar() : textFormat(textInit), backgroundImageFormat(imageInit), fillingImageFormat(imageInit)
 	{
 		fillingImage.animationStart = 0;
-		fillingImage.textureName = HashString("todo");
+		fillingImage.textureName = HashString("todo"); // todo
 		fillingImage.textureUvOffset = vec2();
-		fillingImage.textureUvSize = vec2(1, 1);
+		fillingImage.textureUvSize = vec2(1);
 	}
-
-	GuiSkinWidgetDefaults::SliderBar::Direction::Direction() : padding(1), margin(1), collapsedBar(true)
-	{}
 
 	GuiSkinWidgetDefaults::SliderBar::SliderBar()
 	{
@@ -297,21 +283,15 @@ namespace cage
 		vertical.size = vec2(28, 150);
 	}
 
-	GuiSkinWidgetDefaults::ColorPicker::ColorPicker() : margin(1, 1, 1, 1), collapsedSize(40, 32), fullSize(250, 180), hueBarPortion(0.18), resultBarPortion(0.35)
-	{}
-
-	GuiSkinWidgetDefaults::Panel::Panel() : textFormat(textInit), imageFormat(imageInit), contentPadding(2, 2, 2, 2), baseMargin(1, 1, 1, 1), captionPadding(3, 1, 3, 1), captionHeight(28)
+	GuiSkinWidgetDefaults::Panel::Panel() : textFormat(textInit), imageFormat(imageInit)
 	{
 		textFormat.align = TextAlignEnum::Center;
 	}
 
-	GuiSkinWidgetDefaults::Spoiler::Spoiler() : textFormat(textInit), imageFormat(imageInit), contentPadding(2, 2, 2, 2), baseMargin(1, 1, 1, 1), captionPadding(3, 1, 3, 1), captionHeight(28)
+	GuiSkinWidgetDefaults::Spoiler::Spoiler() : textFormat(textInit), imageFormat(imageInit)
 	{
 		textFormat.align = TextAlignEnum::Center;
 	}
-
-	GuiSkinWidgetDefaults::Scrollbars::Scrollbars() : scrollbarSize(15), contentPadding(4)
-	{}
 
 	GuiSkinWidgetDefaults::Tooltip::Tooltip() : textFormat(textInit)
 	{}

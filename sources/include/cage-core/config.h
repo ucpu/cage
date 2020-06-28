@@ -14,7 +14,7 @@ namespace cage
 	// functions ConfigSet* and ConfigGet* are simpler to use for one-time access
 
 	// assigning a value to config variable also changes the type of the variable
-	// reading a value from config variable converts the value from the type of the variable to the requested type, and does _not_ change the type of the variable itself
+	// reading a value from config variable converts the value from the type of the variable to the requested type, and does not change the type of the variable itself
 
 	enum class ConfigTypeEnum : uint32
 	{
@@ -26,7 +26,7 @@ namespace cage
 		Uint64,
 		Float,
 		Double,
-		string,
+		String,
 	};
 
 	CAGE_CORE_API string configTypeToString(const ConfigTypeEnum type);

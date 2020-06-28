@@ -390,14 +390,14 @@ namespace
 		Serializer ser(inputBuffer);
 		ser << data;
 		for (const auto &it : images)
-			ser.write(it.data->rawViewU8().data(), it.data->rawViewU8().size());
+			ser.write(bufferCast(it.data->rawViewU8()));
 
 		MemoryBuffer outputBuffer = detail::compress(inputBuffer);
 		h.compressedSize = outputBuffer.size();
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "final size: " + h.originalSize + ", compressed size: " + h.compressedSize + ", ratio: " + h.compressedSize / (float)h.originalSize);
 
 		Holder<File> f = newFile(outputFileName, FileMode(false, true));
-		f->write(bytesView(h));
+		f->write(bufferView(h));
 		f->write(outputBuffer);
 		f->close();
 	}

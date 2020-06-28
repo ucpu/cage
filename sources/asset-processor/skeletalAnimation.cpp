@@ -112,7 +112,7 @@ void processAnimation()
 	ser << a;
 
 	// bone indices
-	ser.write(boneIndices.data(), boneIndices.size() * sizeof(uint16));
+	ser.write(bufferCast<char, uint16>(boneIndices));
 
 	// position frames counts
 	for (Bone &b : bones)
@@ -128,12 +128,12 @@ void processAnimation()
 
 	for (Bone &b : bones)
 	{
-		ser.write(b.posTimes.data(), b.posTimes.size() * sizeof(float));
-		ser.write(b.posVals.data(), b.posVals.size() * sizeof(vec3));
-		ser.write(b.rotTimes.data(), b.rotTimes.size() * sizeof(float));
-		ser.write(b.rotVals.data(), b.rotVals.size() * sizeof(quat));
-		ser.write(b.sclTimes.data(), b.sclTimes.size() * sizeof(float));
-		ser.write(b.sclVals.data(), b.sclVals.size() * sizeof(vec3));
+		ser.write(bufferCast<char, float>(b.posTimes));
+		ser.write(bufferCast<char, vec3>(b.posVals));
+		ser.write(bufferCast<char, float>(b.rotTimes));
+		ser.write(bufferCast<char, quat>(b.rotVals));
+		ser.write(bufferCast<char, float>(b.sclTimes));
+		ser.write(bufferCast<char, vec3>(b.sclVals));
 	}
 
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
@@ -144,7 +144,7 @@ void processAnimation()
 	h.originalSize = numeric_cast<uint32>(buff.size());
 	h.compressedSize = numeric_cast<uint32>(comp.size());
 	Holder<File> f = newFile(outputFileName, FileMode(false, true));
-	f->write(bytesView(h));
+	f->write(bufferView(h));
 	f->write(comp);
 	f->close();
 }

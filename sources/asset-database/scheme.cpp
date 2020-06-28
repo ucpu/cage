@@ -65,9 +65,9 @@ void Scheme::load(File *f)
 {
 	read(f, name);
 	read(f, processor);
-	f->read(bytesView(schemeIndex));
+	f->read(bufferView<char>(schemeIndex));
 	uint32 m = 0;
-	f->read(bytesView(m));
+	f->read(bufferView<char>(m));
 	for (uint32 j = 0; j < m; j++)
 	{
 		SchemeField c;
@@ -85,9 +85,9 @@ void Scheme::save(File *f)
 {
 	write(f, name);
 	write(f, processor);
-	f->write(bytesView(schemeIndex));
+	f->write(bufferView(schemeIndex));
 	uint32 m = schemeFields.size();
-	f->write(bytesView(m));
+	f->write(bufferView(m));
 	for (const auto &it : schemeFields)
 	{
 		const SchemeField &c = *it;

@@ -48,25 +48,6 @@ namespace cage
 		// any other asset-specific data
 	};
 
-	/*
-	struct CAGE_CORE_API TextPackHeader
-	{
-		// follows:
-		// count, uint32, number of texts
-		// name, uint32
-		// length, uint32
-		// array of chars
-		// name, uint32
-		// ...
-	};
-
-	struct CAGE_CORE_API ColliderHeader
-	{
-		// follows:
-		// serialized collider data (possibly compressed)
-	};
-	*/
-
 	CAGE_CORE_API AssetHeader initializeAssetHeader(const string &name, uint16 schemeIndex);
 }
 

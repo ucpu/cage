@@ -115,7 +115,7 @@ namespace cage
 		setCurrentObject<UniformBuffer>(impl->id);
 	}
 
-	void Mesh::importPolyhedron(const Polyhedron *poly, PointerRange<char> materialBuffer)
+	void Mesh::importPolyhedron(const Polyhedron *poly, PointerRange<const char> materialBuffer)
 	{
 		const uint32 verticesCount = poly->verticesCount();
 		uint32 vertexSize = 0;
@@ -225,7 +225,7 @@ namespace cage
 		}
 
 		CAGE_ASSERT(vts.size() == verticesCount * vertexSize);
-		setBuffers(verticesCount, vertexSize, vts.data(), poly->indicesCount(), poly->indices().data(), numeric_cast<uint32>(materialBuffer.size()), materialBuffer.data());
+		setBuffers(vertexSize, vts, poly->indices(), materialBuffer);
 
 		switch (poly->type())
 		{
@@ -260,7 +260,7 @@ namespace cage
 		impl->box = box;
 	}
 
-	void Mesh::setTextureNames(const uint32 *textureNames)
+	void Mesh::setTextureNames(PointerRange<const uint32> textureNames)
 	{
 		MeshImpl *impl = (MeshImpl*)this;
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
@@ -274,7 +274,7 @@ namespace cage
 		impl->textures[texIdx] = name;
 	}
 
-	void Mesh::setBuffers(uint32 verticesCount, uint32 vertexSize, const void *vertexData, uint32 indicesCount, const uint32 *indexData, uint32 materialSize, const void *MaterialData)
+	void Mesh::setBuffers(uint32 vertexSize, PointerRange<const char> vertexData, PointerRange<const uint32> indexData, PointerRange<const char> materialBuffer)
 	{
 		MeshImpl *impl = (MeshImpl*)this;
 		CAGE_ASSERT(graphicsPrivat::getCurrentObject<Mesh>() == impl->id);
@@ -290,17 +290,18 @@ namespace cage
 			glBindBuffer(GL_ARRAY_BUFFER, impl->vbo);
 			CAGE_CHECK_GL_ERROR_DEBUG();
 		}
-		impl->verticesCount = verticesCount;
-		impl->indicesCount = indicesCount;
-		impl->materialSize = materialSize;
+		impl->verticesCount = numeric_cast<uint32>(vertexData.size() / vertexSize);
+		impl->indicesCount = numeric_cast<uint32>(indexData.size());
+		impl->materialSize = numeric_cast<uint32>(materialBuffer.size());
+		CAGE_ASSERT(vertexData.size() == vertexSize * impl->verticesCount);
 
 		uint32 bufferAlignment = 256;
 		glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, (GLint*)&bufferAlignment);
 
 		const uint32 bufferSize = numeric_cast<uint32>(
-			verticesCount * vertexSize + detail::addToAlign(verticesCount * vertexSize, bufferAlignment) +
-			indicesCount * sizeof(uint32) + detail::addToAlign(indicesCount * sizeof(uint32), bufferAlignment) +
-			materialSize + detail::addToAlign(materialSize, bufferAlignment)
+			impl->verticesCount * vertexSize + detail::addToAlign(impl->verticesCount * vertexSize, bufferAlignment) +
+			impl->indicesCount * sizeof(uint32) + detail::addToAlign(impl->indicesCount * sizeof(uint32), bufferAlignment) +
+			impl->materialSize + detail::addToAlign(materialBuffer.size(), bufferAlignment)
 			);
 		glBufferData(GL_ARRAY_BUFFER, bufferSize, nullptr, GL_STATIC_DRAW);
 		CAGE_CHECK_GL_ERROR_DEBUG();
@@ -308,23 +309,23 @@ namespace cage
 		uint32 offset = 0;
 
 		{ // vertices
-			glBufferSubData(GL_ARRAY_BUFFER, offset, verticesCount * vertexSize, vertexData);
+			glBufferSubData(GL_ARRAY_BUFFER, offset, impl->verticesCount * vertexSize, vertexData.data());
 			CAGE_CHECK_GL_ERROR_DEBUG();
-			offset += verticesCount * vertexSize + numeric_cast<uint32>(detail::addToAlign(verticesCount * vertexSize, bufferAlignment));
+			offset += impl->verticesCount * vertexSize + numeric_cast<uint32>(detail::addToAlign(impl->verticesCount * vertexSize, bufferAlignment));
 		}
 
 		{ // indices
 			impl->indicesOffset = offset;
-			glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, indicesCount * sizeof(uint32), indexData);
+			glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset, impl->indicesCount * sizeof(uint32), indexData.data());
 			CAGE_CHECK_GL_ERROR_DEBUG();
-			offset += indicesCount * sizeof(uint32) + numeric_cast<uint32>(detail::addToAlign(indicesCount * sizeof(uint32), bufferAlignment));
+			offset += impl->indicesCount * sizeof(uint32) + numeric_cast<uint32>(detail::addToAlign(impl->indicesCount * sizeof(uint32), bufferAlignment));
 		}
 
 		{ // material
 			impl->materialOffset = offset;
-			glBufferSubData(GL_UNIFORM_BUFFER, offset, materialSize, MaterialData);
+			glBufferSubData(GL_UNIFORM_BUFFER, offset, materialBuffer.size(), materialBuffer.data());
 			CAGE_CHECK_GL_ERROR_DEBUG();
-			offset += materialSize + numeric_cast<uint32>(detail::addToAlign(materialSize, bufferAlignment));
+			offset += numeric_cast<uint32>(materialBuffer.size() + detail::addToAlign(materialBuffer.size(), bufferAlignment));
 		}
 
 		impl->updatePrimitivesCount();
@@ -402,7 +403,7 @@ namespace cage
 		return impl->box;
 	}
 
-	const uint32 *Mesh::getTextureNames() const
+	PointerRange<const uint32> Mesh::getTextureNames() const
 	{
 		MeshImpl *impl = (MeshImpl*)this;
 		return impl->textures;

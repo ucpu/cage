@@ -471,8 +471,8 @@ void processMesh()
 		Holder<AssimpSkeleton> skeleton = context->skeleton();
 		dsm.skeletonBones = skeleton->bonesCount();
 		Serializer ser2 = ser.placeholder((sizeof(uint16) + sizeof(float)) * 4 * dsm.verticesCount);
-		uint16 *boneIndices = (uint16*)ser2.advance(sizeof(uint16) * 4 * dsm.verticesCount);
-		float *boneWeights = (float*)ser2.advance(sizeof(float) * 4 * dsm.verticesCount);
+		PointerRange<uint16> boneIndices = bufferCast<uint16>(ser2.advance(sizeof(uint16) * 4 * dsm.verticesCount));
+		PointerRange<float> boneWeights = bufferCast<float>(ser2.advance(sizeof(float) * 4 * dsm.verticesCount));
 		// initialize with empty values
 		for (uint32 i = 0; i < dsm.verticesCount; i++)
 		{
@@ -571,12 +571,12 @@ void processMesh()
 	h.compressedSize = compressed.size();
 
 	Holder<File> f = newFile(outputFileName, FileMode(false, true));
-	f->write(bytesView(h));
+	f->write(bufferView(h));
 	if (dsm.skeletonName)
-		f->write(bytesView(dsm.skeletonName));
+		f->write(bufferView(dsm.skeletonName));
 	for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		if (dsm.textureNames[i])
-			f->write(bytesView(dsm.textureNames[i]));
+			f->write(bufferView(dsm.textureNames[i]));
 	f->write(compressed);
 	f->close();
 }

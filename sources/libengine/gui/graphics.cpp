@@ -12,7 +12,8 @@ namespace cage
 		{
 			s.elementsGpuBuffer = newUniformBuffer();
 			s.elementsGpuBuffer->bind();
-			s.elementsGpuBuffer->writeWhole(nullptr, sizeof(GuiSkinElementLayout::TextureUv) * (uint32)GuiElementTypeEnum::TotalElements, GL_DYNAMIC_DRAW);
+			PointerRange<const char> pr = { (char*)0, (char*)0 + sizeof(GuiSkinElementLayout::TextureUv) * (uint32)GuiElementTypeEnum::TotalElements };
+			s.elementsGpuBuffer->writeWhole(pr, GL_DYNAMIC_DRAW);
 		}
 	}
 

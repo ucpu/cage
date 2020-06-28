@@ -33,16 +33,12 @@ namespace cage
 			msh->setSkeleton(data.skeletonName, data.skeletonBones);
 			msh->setInstancesLimitHint(data.instancesLimitHint);
 
-			const void *verticesData = des.advance(data.verticesCount * data.vertexSize());
-			uint32 *indicesData = (uint32*)des.advance(data.indicesCount * sizeof(uint32));
-			const void *MaterialData = des.advance(data.materialSize);
+			PointerRange<const char> verticesData = des.advance(data.verticesCount * data.vertexSize());
+			PointerRange<const uint32> indicesData = bufferCast<const uint32>(des.advance(data.indicesCount * sizeof(uint32)));
+			PointerRange<const char> materialData = des.advance(data.materialSize);
 			CAGE_ASSERT(des.available() == 0);
 
-			msh->setBuffers(
-				data.verticesCount, data.vertexSize(), verticesData,
-				data.indicesCount, indicesData,
-				data.materialSize, MaterialData
-			);
+			msh->setBuffers(data.vertexSize(), verticesData, indicesData, materialData);
 
 			uint32 ptr = 0;
 			msh->setAttribute(CAGE_SHADER_ATTRIB_IN_POSITION, 3, GL_FLOAT, 0, ptr);

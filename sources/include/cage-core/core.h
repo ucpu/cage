@@ -1198,18 +1198,21 @@ namespace cage
 	struct PointerRange
 	{
 	private:
-		T *begin_;
-		T *end_;
+		T *begin_ = nullptr;
+		T *end_ = nullptr;
 
 	public:
 		typedef uintPtr size_type;
+		typedef T value_type;
 
-		constexpr PointerRange() noexcept : begin_(nullptr), end_(nullptr) {}
-		template<class U>
-		constexpr PointerRange(U *begin, U *end) noexcept : begin_(begin), end_(end) {}
-		template<class U>
-		constexpr PointerRange(const PointerRange<U> &other) : begin_(other.begin()), end_(other.end()) {}
-		template<class U>
+		constexpr PointerRange() noexcept = default;
+		constexpr PointerRange(const PointerRange<T> &other) noexcept = default;
+		constexpr PointerRange(T *begin, T *end) noexcept : begin_(begin), end_(end) {}
+		template<uint32 N>
+		constexpr PointerRange(T (&arr)[N]) noexcept : begin_(arr), end_(arr + N) {}
+		template<class U, std::enable_if_t<std::is_same_v<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>, int> = 0>
+		constexpr PointerRange(U &other) : begin_(other.data()), end_(other.data() + other.size()) {}
+		template<class U, std::enable_if_t<std::is_same_v<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>, int> = 0>
 		constexpr PointerRange(U &&other) : begin_(other.data()), end_(other.data() + other.size()) {}
 
 		constexpr T *begin() const noexcept { return begin_; }
@@ -1225,6 +1228,7 @@ namespace cage
 	{
 		using privat::HolderBase<PointerRange<T>>::HolderBase;
 		typedef typename PointerRange<T>::size_type size_type;
+		typedef typename PointerRange<T>::value_type value_type;
 
 		operator Holder<PointerRange<const T>> () &&
 		{

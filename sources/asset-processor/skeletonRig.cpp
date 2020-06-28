@@ -79,11 +79,11 @@ void processSkeleton()
 	Serializer ser(buff);
 	ser << s;
 	// parent bone indices
-	ser.write(ps.data(), s.bonesCount * sizeof(uint16));
+	ser.write(bufferCast<char, uint16>(ps));
 	// base transformation matrices
-	ser.write(bs.data(), s.bonesCount * sizeof(mat4));
+	ser.write(bufferCast<char, mat4>(bs));
 	// inverted rest matrices
-	ser.write(is.data(), s.bonesCount * sizeof(mat4));
+	ser.write(bufferCast<char, mat4>(is));
 
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
 	MemoryBuffer comp = detail::compress(buff);
@@ -93,7 +93,7 @@ void processSkeleton()
 	h.originalSize = numeric_cast<uint32>(buff.size());
 	h.compressedSize = numeric_cast<uint32>(comp.size());
 	Holder<File> f = newFile(outputFileName, FileMode(false, true));
-	f->write(bytesView(h));
+	f->write(bufferView(h));
 	f->write(comp);
 	f->close();
 }

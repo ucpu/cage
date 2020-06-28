@@ -2,7 +2,7 @@
 
 namespace cage
 {
-	SoundInterleavedBuffer::SoundInterleavedBuffer() : buffer(nullptr), frames(0), channels(0), allocated(0)
+	SoundInterleavedBuffer::SoundInterleavedBuffer()
 	{}
 
 	SoundInterleavedBuffer::~SoundInterleavedBuffer()
@@ -50,7 +50,4 @@ namespace cage
 			return;
 		detail::memset(buffer, 0, channels * frames * sizeof(float));
 	}
-
-	SoundDataBuffer::SoundDataBuffer() : time(0), sampleRate(0)
-	{}
 }

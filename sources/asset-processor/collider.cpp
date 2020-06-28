@@ -52,7 +52,7 @@ void processCollider()
 	h.originalSize = numeric_cast<uint32>(buff.size());
 	h.compressedSize = numeric_cast<uint32>(comp.size());
 	Holder<File> f = newFile(outputFileName, FileMode(false, true));
-	f->write(bytesView(h));
+	f->write(bufferView(h));
 	f->write(comp);
 	f->close();
 }

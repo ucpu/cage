@@ -44,6 +44,16 @@ void testGeometry()
 	CAGE_TESTCASE("geometry");
 
 	{
+		CAGE_TESTCASE("points");
+
+		CAGE_TEST(intersects(vec3(1, 2, 3), vec3(1, 2, 3)));
+		CAGE_TEST(!intersects(vec3(1, 2, 3), vec3(3, 2, 1)));
+
+		test(distance(vec3(1, 2, 3), vec3(1, 2, 3)), 0);
+		test(distance(vec3(1, 2, 3), vec3(3, 2, 1)), sqrt(8));
+	}
+
+	{
 		CAGE_TESTCASE("lines");
 
 		{
@@ -476,16 +486,16 @@ void testGeometry()
 			aabb a(vec3(1, 1, -7), vec3(3, 5, -1));
 			mat4 proj = perspectiveProjection(degs(90), 1, 2, 10);
 			// varying distance along z-axis
-			CAGE_TEST(frustumCulling(a, proj * inverse(mat4(vec3(2, 3, -10)))) == false);
-			CAGE_TEST(frustumCulling(a, proj * inverse(mat4(vec3(2, 3, -5)))) == true);
-			CAGE_TEST(frustumCulling(a, proj * inverse(mat4(vec3(2, 3, 0)))) == true);
-			CAGE_TEST(frustumCulling(a, proj * inverse(mat4(vec3(2, 3, 3)))) == true);
-			CAGE_TEST(frustumCulling(a, proj * inverse(mat4(vec3(2, 3, 10)))) == false);
+			CAGE_TEST(intersectsFrustum(a, proj * inverse(mat4(vec3(2, 3, -10)))) == false);
+			CAGE_TEST(intersectsFrustum(a, proj * inverse(mat4(vec3(2, 3, -5)))) == true);
+			CAGE_TEST(intersectsFrustum(a, proj * inverse(mat4(vec3(2, 3, 0)))) == true);
+			CAGE_TEST(intersectsFrustum(a, proj * inverse(mat4(vec3(2, 3, 3)))) == true);
+			CAGE_TEST(intersectsFrustum(a, proj * inverse(mat4(vec3(2, 3, 10)))) == false);
 			// box moved left and right
-			CAGE_TEST(frustumCulling(a, proj * inverse(mat4(vec3(-10, 3, 0)))) == false);
-			CAGE_TEST(frustumCulling(a, proj * inverse(mat4(vec3(0, 3, 0)))) == true);
-			CAGE_TEST(frustumCulling(a, proj * inverse(mat4(vec3(5, 3, 0)))) == true);
-			CAGE_TEST(frustumCulling(a, proj * inverse(mat4(vec3(15, 3, 0)))) == false);
+			CAGE_TEST(intersectsFrustum(a, proj * inverse(mat4(vec3(-10, 3, 0)))) == false);
+			CAGE_TEST(intersectsFrustum(a, proj * inverse(mat4(vec3(0, 3, 0)))) == true);
+			CAGE_TEST(intersectsFrustum(a, proj * inverse(mat4(vec3(5, 3, 0)))) == true);
+			CAGE_TEST(intersectsFrustum(a, proj * inverse(mat4(vec3(15, 3, 0)))) == false);
 		}
 
 		{

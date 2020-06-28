@@ -149,7 +149,7 @@ namespace cage
 				vec2 r = mouseSmoother.smooth() * turningSpeed;
 				if (freeMove)
 				{
-					t.orientation = t.orientation * quat(rads(r[1]), rads(r[0]), degs(wheelSmoother.smooth() * wheelSpeed));
+					t.orientation = t.orientation * quat(rads(r[1]), rads(r[0]), degs(wheelSmoother.smooth() * rollSpeed));
 				}
 				else
 				{ // limit pitch
@@ -187,9 +187,6 @@ namespace cage
 			}
 		};
 	}
-
-	FpsCamera::FpsCamera() : movementSpeed(1), wheelSpeed(10), turningSpeed(0.008), pitchLimitUp(degs(80)), pitchLimitDown(degs(-80)), mouseButton(MouseButtonsFlags::None), keysEqEnabled(true), keysWsadEnabled(true), keysArrowsEnabled(true), freeMove(false)
-	{}
 
 	void FpsCamera::setEntity(Entity *ent)
 	{

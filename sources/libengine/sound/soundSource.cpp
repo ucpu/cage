@@ -209,12 +209,12 @@ namespace cage
 		impl->clearAllBuffers();
 	}
 
-	void SoundSource::setDataRaw(uint32 channels, uint32 frames, uint32 sampleRate, const float *data)
+	void SoundSource::setDataRaw(uint32 channels, uint32 frames, uint32 sampleRate, PointerRange<const float> data)
 	{
 		CAGE_ASSERT(frames > 0);
 		CAGE_ASSERT(channels > 0);
 		CAGE_ASSERT(sampleRate > 0);
-		CAGE_ASSERT(data != nullptr);
+		CAGE_ASSERT(!data.empty());
 		SoundSourceImpl *impl = (SoundSourceImpl*)this;
 		impl->clearAllBuffers();
 		impl->dataType = DataTypeEnum::Raw;
@@ -222,17 +222,17 @@ namespace cage
 		impl->frames = frames;
 		impl->sampleRate = sampleRate;
 		impl->rawData.resize(channels * frames);
-		detail::memcpy(&impl->rawData[0], data, channels * frames * sizeof(float));
+		detail::memcpy(&impl->rawData[0], data.data(), channels * frames * sizeof(float));
 	}
 
-	void SoundSource::setDataVorbis(uintPtr size, const void *buffer)
+	void SoundSource::setDataVorbis(PointerRange<const char> buffer)
 	{
-		CAGE_ASSERT(size > 0);
-		CAGE_ASSERT(buffer != nullptr);
+		CAGE_ASSERT(buffer.size() > 0);
+		CAGE_ASSERT(!buffer.empty());
 		SoundSourceImpl *impl = (SoundSourceImpl*)this;
 		impl->clearAllBuffers();
 		impl->dataType = DataTypeEnum::Vorbis;
-		impl->vorbisData.init(buffer, size);
+		impl->vorbisData.init(buffer.data(), buffer.size());
 		impl->vorbisData.decode(impl->channels, impl->frames, impl->sampleRate, nullptr);
 	}
 

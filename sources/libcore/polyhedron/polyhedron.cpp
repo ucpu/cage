@@ -1,5 +1,6 @@
 #include <cage-core/geometry.h>
 #include <cage-core/collider.h>
+#include <cage-core/serialization.h>
 #include <cage-core/macros.h>
 #include "polyhedron.h"
 
@@ -257,7 +258,7 @@ namespace cage
 	{
 		clear();
 		CAGE_ASSERT(sizeof(triangle) == sizeof(vec3) * 3);
-		positions({ (vec3*)collider->triangles().begin(), (vec3*)collider->triangles().end() });
+		positions(bufferCast<const vec3>(collider->triangles()));
 	}
 
 	Holder<Polyhedron> newPolyhedron()

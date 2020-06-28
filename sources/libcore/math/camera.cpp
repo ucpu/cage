@@ -81,29 +81,29 @@ namespace cage
 
 
 
-	bool frustumCulling(const vec3 &shape, const mat4 &mvp)
+	bool intersectsFrustum(const vec3 &shape, const mat4 &mvp)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "frustumCulling");
+		CAGE_THROW_CRITICAL(NotImplemented, "intersectsFrustum");
 	}
 
-	bool frustumCulling(const line &shape, const mat4 &mvp)
+	bool intersectsFrustum(const line &shape, const mat4 &mvp)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "frustumCulling");
+		CAGE_THROW_CRITICAL(NotImplemented, "intersectsFrustum");
 	}
 
-	bool frustumCulling(const triangle &shape, const mat4 &mvp)
+	bool intersectsFrustum(const triangle &shape, const mat4 &mvp)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "frustumCulling");
+		CAGE_THROW_CRITICAL(NotImplemented, "intersectsFrustum");
 	}
 
-	bool frustumCulling(const plane &shape, const mat4 &mvp)
+	bool intersectsFrustum(const plane &shape, const mat4 &mvp)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "frustumCulling");
+		CAGE_THROW_CRITICAL(NotImplemented, "intersectsFrustum");
 	}
 
-	bool frustumCulling(const sphere &shape, const mat4 &mvp)
+	bool intersectsFrustum(const sphere &shape, const mat4 &mvp)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "frustumCulling");
+		CAGE_THROW_CRITICAL(NotImplemented, "intersectsFrustum");
 	}
 
 	namespace
@@ -114,9 +114,9 @@ namespace cage
 		}
 	}
 
-	bool frustumCulling(const aabb &box, const mat4 &mvp)
+	bool intersectsFrustum(const aabb &box, const mat4 &mvp)
 	{
-		vec4 planes[6] = {
+		const vec4 planes[6] = {
 			column(mvp, 3) + column(mvp, 0),
 			column(mvp, 3) - column(mvp, 0),
 			column(mvp, 3) + column(mvp, 1),

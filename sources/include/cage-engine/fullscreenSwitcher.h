@@ -8,18 +8,17 @@ namespace cage
 	class CAGE_ENGINE_API FullscreenSwitcher : private Immovable
 	{
 	public:
-		uint32 keyToggleFullscreen;
-		ModifiersFlags keyModifiers;
+		uint32 keyToggleFullscreen = 300; // f11
+		ModifiersFlags keyModifiers = ModifiersFlags::None;
 
-		FullscreenSwitcher();
 		void update(bool fullscreen);
 	};
 
 	struct CAGE_ENGINE_API FullscreenSwitcherCreateConfig
 	{
 		string configPrefix;
-		Window *window;
-		bool defaultFullscreen;
+		Window *window = nullptr;
+		bool defaultFullscreen = true;
 
 		FullscreenSwitcherCreateConfig(bool defaultFullscreen = true);
 	};

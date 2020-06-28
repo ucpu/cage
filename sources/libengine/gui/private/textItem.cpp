@@ -66,20 +66,16 @@ namespace cage
 	{
 		if (text.font)
 		{
-			text.font->transcript(value, nullptr, text.count);
+			text.count = text.font->glyphsCount(value);
 			text.glyphs = (uint32*)hierarchy->impl->itemsMemory.allocate(text.count * sizeof(uint32), sizeof(uintPtr));
-			text.font->transcript(value, text.glyphs, text.count);
+			text.font->transcript(value, { text.glyphs, text.glyphs + text.count });
 		}
 	}
 
 	vec2 TextItem::findRequestedSize()
 	{
 		if (text.font)
-		{
-			vec2 size;
-			text.font->size(text.glyphs, text.count, text.format, size);
-			return size;
-		}
+			return text.font->size({ text.glyphs, text.glyphs + text.count }, text.format);
 		return vec2();
 	}
 
@@ -115,10 +111,9 @@ namespace cage
 	{
 		if (!text.font)
 			return;
-		vec2 dummy;
 		Font::FormatStruct f(text.format);
 		f.wrapWidth = size[0];
-		text.font->size(text.glyphs, text.count, f, dummy, point - position, cursor);
+		text.font->size({ text.glyphs, text.glyphs + text.count }, f, point - position, cursor);
 		text.cursor = cursor;
 	}
 }

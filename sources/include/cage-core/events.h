@@ -23,7 +23,7 @@ namespace cage
 		private:
 			void unlink();
 			bool valid() const;
-			sint32 order;
+			sint32 order = 0;
 			const detail::StringBase<60> name;
 		};
 	}

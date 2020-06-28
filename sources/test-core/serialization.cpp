@@ -2,7 +2,22 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 
-#include <vector>
+namespace
+{
+	struct Item
+	{
+		uint64 a = 42;
+		uint32 b = 13;
+	};
+
+	void functionTakingSingleItem(Item &data) {}
+	void functionTakingPointerRangeOfItems(PointerRange<Item> data) {}
+	void functionTakingPointerRangeBuffer(PointerRange<char> buffer) {}
+
+	void functionTakingRawArrayOfItems(Item *data, uint32 cnt) {}
+	void functionTakingVoidPointer(void *data, uintPtr bytes) {}
+	void functionTakingCharPointer(char *data, uintPtr bytes) {}
+}
 
 void testSerialization()
 {
@@ -84,15 +99,48 @@ void testSerialization()
 		d2 = templates::move(d1);
 	}
 
-	/*
 	{
-		CAGE_TESTCASE("vectors");
-		std::vector<uint32> vec;
-		vec.resize(13);
-		MemoryBuffer b;
-		Serializer s(b);
-		s << vec;
-		CAGE_TEST(b.size() == vec.size() * sizeof(vec[0]));
+		CAGE_TESTCASE("buffer casts");
+
+		{
+			CAGE_TESTCASE("from single item");
+			Item item;
+
+			functionTakingSingleItem(item);
+			functionTakingPointerRangeOfItems({ &item, &item + 1 });
+			functionTakingPointerRangeBuffer(bufferCast<char, Item>({ &item, &item + 1 }));
+
+			functionTakingRawArrayOfItems(&item, 1);
+			functionTakingVoidPointer(&item, sizeof(Item));
+			functionTakingCharPointer((char *)&item, sizeof(Item));
+		}
+
+		{
+			CAGE_TESTCASE("from items array");
+			Item itemsArray[10];
+			PointerRange<Item> items = itemsArray;
+
+			functionTakingSingleItem(items[0]);
+			functionTakingPointerRangeOfItems(items);
+			functionTakingPointerRangeBuffer(bufferCast<char>(items));
+
+			functionTakingRawArrayOfItems(items.data(), numeric_cast<uint32>(items.size()));
+			functionTakingVoidPointer(items.data(), items.size() * sizeof(Item));
+			functionTakingCharPointer((char *)items.data(), items.size() * sizeof(Item));
+		}
+
+		{
+			CAGE_TESTCASE("from char buffer");
+			Item itemsArray[10];
+			PointerRange<char> items = bufferCast<char, Item>(itemsArray);
+
+			functionTakingSingleItem(bufferCast<Item>(items)[0]);
+			functionTakingPointerRangeOfItems(bufferCast<Item>(items));
+			functionTakingPointerRangeBuffer(items);
+
+			functionTakingRawArrayOfItems((Item*)items.data(), numeric_cast<uint32>(items.size()));
+			functionTakingVoidPointer(items.data(), items.size());
+			functionTakingCharPointer(items.data(), items.size());
+		}
 	}
-	*/
 }

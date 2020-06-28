@@ -87,7 +87,7 @@ struct HolderSet
 	{
 		CAGE_ASSERT(size() == 0);
 		uint32 s = 0;
-		f->read(bytesView(s));
+		f->read(bufferView<char>(s));
 		for (uint32 i = 0; i < s; i++)
 		{
 			T tmp;
@@ -99,7 +99,7 @@ struct HolderSet
 	void save(File *f)
 	{
 		uint32 s = size();
-		f->write(bytesView(s));
+		f->write(bufferView(s));
 		for (auto &it : data)
 			it->save(f);
 	}
@@ -194,7 +194,7 @@ bool verdict();
 inline void read(File *f, string &s)
 {
 	uint32 l = 0;
-	f->read(bytesView(l));
+	f->read(bufferView<char>(l));
 	if (l >= string::MaxLength)
 		CAGE_THROW_ERROR(Exception, "string too long");
 	char buffer[string::MaxLength];
@@ -205,7 +205,7 @@ inline void read(File *f, string &s)
 inline void write(File *f, const string &s)
 {
 	uint32 l = s.length();
-	f->write(bytesView(l));
+	f->write(bufferView(l));
 	f->write({ s.c_str(), s.c_str() + l });
 }
 

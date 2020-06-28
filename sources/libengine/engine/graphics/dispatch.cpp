@@ -1,5 +1,6 @@
 #include <cage-core/geometry.h>
 #include <cage-core/config.h>
+#include <cage-core/serialization.h>
 
 #include <cage-engine/graphics.h>
 #include <cage-engine/opengl.h>
@@ -235,7 +236,7 @@ namespace cage
 
 			static void applyShaderRoutines(const ShaderConfig *c, const Holder<ShaderProgram> &s)
 			{
-				s->uniform(CAGE_SHADER_UNI_ROUTINES, c->shaderRoutines, CAGE_SHADER_MAX_ROUTINES);
+				s->uniform(CAGE_SHADER_UNI_ROUTINES, c->shaderRoutines);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
@@ -297,35 +298,35 @@ namespace cage
 				}
 			}
 
-			void useDisposableUbo(uint32 bindIndex, const void *data, uint32 size)
+			void useDisposableUbo(uint32 bindIndex, PointerRange<const char> data)
 			{
-				UniformBuffer *ubo = size > 256 ? uboCacheLarge.get() : uboCacheSmall.get();
+				UniformBuffer *ubo = data.size() > 256 ? uboCacheLarge.get() : uboCacheSmall.get();
 				ubo->bind();
-				if (ubo->getSize() < size)
-					ubo->writeWhole(data, size, GL_DYNAMIC_DRAW);
+				if (ubo->getSize() < data.size())
+					ubo->writeWhole(data, GL_DYNAMIC_DRAW);
 				else
-					ubo->writeRange(data, 0, size);
+					ubo->writeRange(data, 0);
 				ubo->bind(bindIndex);
 			}
 
 			template<class T>
 			void useDisposableUbo(uint32 bindIndex, const T &data)
 			{
-				useDisposableUbo(bindIndex, &data, sizeof(T));
+				PointerRange<const T> r = { &data, &data + 1 };
+				useDisposableUbo(bindIndex, bufferCast<const char>(r));
 			}
 
 			template<class T>
 			void useDisposableUbo(uint32 bindIndex, const std::vector<T> &data)
 			{
-				useDisposableUbo(bindIndex, data.data(), numeric_cast<uint32>(sizeof(T) * data.size()));
+				useDisposableUbo(bindIndex, bufferCast<const char, const T>(data));
 			}
 
 			void bindGBufferTextures()
 			{
 				const uint32 tius[] = { CAGE_SHADER_TEXTURE_ALBEDO, CAGE_SHADER_TEXTURE_SPECIAL, CAGE_SHADER_TEXTURE_NORMAL, CAGE_SHADER_TEXTURE_COLOR, CAGE_SHADER_TEXTURE_DEPTH };
-				static constexpr uint32 cnt = sizeof(tius) / sizeof(tius[0]);
-				Texture *texs[cnt] = { albedoTexture.get(), specialTexture.get(), normalTexture.get(), colorTexture.get(), depthTexture.get() };
-				Texture::multiBind(cnt, tius, texs);
+				const Texture *texs[] = { albedoTexture.get(), specialTexture.get(), normalTexture.get(), colorTexture.get(), depthTexture.get() };
+				Texture::multiBind(tius, texs);
 			}
 
 			void bindShadowmap(sint32 shadowmap)
@@ -399,7 +400,7 @@ namespace cage
 				setDepthTest(any(flags & MeshRenderFlags::DepthTest), any(flags & MeshRenderFlags::DepthWrite));
 				{ // bind textures
 					uint32 tius[MaxTexturesCountPerMaterial];
-					Texture *texs[MaxTexturesCountPerMaterial];
+					const Texture *texs[MaxTexturesCountPerMaterial];
 					for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 					{
 						if (obj->textures[i])
@@ -424,7 +425,7 @@ namespace cage
 							texs[i] = nullptr;
 						}
 					}
-					Texture::multiBind(MaxTexturesCountPerMaterial, tius, texs);
+					Texture::multiBind(tius, texs);
 				}
 				CAGE_CHECK_GL_ERROR_DEBUG();
 				renderDispatch(obj);
@@ -516,7 +517,7 @@ namespace cage
 					{
 						shaderFont->uniform(0, r->transform);
 						shaderFont->uniform(4, r->color);
-						t->font->render(r->glyphs.data(), numeric_cast<uint32>(r->glyphs.size()), r->format);
+						t->font->render(r->glyphs, r->format);
 						drawCalls += numeric_cast<uint32>(r->glyphs.size() + CAGE_SHADER_MAX_CHARACTERS - 1) / CAGE_SHADER_MAX_CHARACTERS;
 						drawPrimitives += numeric_cast<uint32>(r->glyphs.size()) * 2;
 					}
@@ -949,7 +950,8 @@ namespace cage
 					const vec4 *points = nullptr;
 					uint32 count = 0;
 					pointsForSsaoShader(points, count);
-					ssaoPointsBuffer->writeWhole((void*)points, count * sizeof(vec4), GL_STATIC_DRAW);
+					PointerRange<const vec4> r = { points, points + count };
+					ssaoPointsBuffer->writeWhole(bufferCast<const char>(r), GL_STATIC_DRAW);
 				}
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}

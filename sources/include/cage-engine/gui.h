@@ -9,18 +9,16 @@ namespace cage
 {
 	struct CAGE_ENGINE_API GuiParentComponent
 	{
-		uint32 parent;
-		sint32 order;
-		GuiParentComponent();
+		uint32 parent = 0;
+		sint32 order = 0;
 	};
 
 	struct CAGE_ENGINE_API GuiImageComponent
 	{
-		uint64 animationStart; // -1 will be replaced by current time
+		uint64 animationStart = m; // -1 will be replaced by current time
 		vec2 textureUvOffset;
-		vec2 textureUvSize;
-		uint32 textureName;
-		GuiImageComponent();
+		vec2 textureUvSize = vec2(1);
+		uint32 textureName = 0;
 	};
 
 	enum class ImageModeEnum : uint32
@@ -31,50 +29,44 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiImageFormatComponent
 	{
-		real animationSpeed;
+		real animationSpeed = 1;
 		real animationOffset;
-		ImageModeEnum mode;
-		GuiImageFormatComponent();
+		ImageModeEnum mode = ImageModeEnum::Stretch;
 	};
 
 	struct CAGE_ENGINE_API GuiTextComponent
 	{
 		string value; // list of parameters separated by '|' when formatted, otherwise the string as is
-		uint32 assetName;
-		uint32 textName;
-		GuiTextComponent();
+		uint32 assetName = 0;
+		uint32 textName = 0;
 	};
 
 	struct CAGE_ENGINE_API GuiTextFormatComponent
 	{
-		vec3 color;
-		uint32 font;
-		real size;
-		real lineSpacing;
-		TextAlignEnum align;
-		GuiTextFormatComponent();
+		vec3 color = vec3::Nan();
+		uint32 font = 0;
+		real size = real::Nan();
+		real lineSpacing = real::Nan();
+		TextAlignEnum align = (TextAlignEnum)-1;
 	};
 
 	struct CAGE_ENGINE_API GuiSelectionComponent
 	{
-		uint32 start; // unicode characters (not bytes)
-		uint32 length; // unicode characters (not bytes)
-		GuiSelectionComponent();
+		uint32 start = m; // utf32 characters (not bytes)
+		uint32 length = 0; // utf32 characters (not bytes)
 	};
 
 	struct CAGE_ENGINE_API GuiTooltipComponent
 	{
 		string value; // list of parameters separated by '|' when formatted, otherwise the string as is
-		uint32 assetName;
-		uint32 textName;
-		GuiTooltipComponent();
+		uint32 assetName = 0;
+		uint32 textName = 0;
 	};
 
 	struct CAGE_ENGINE_API GuiWidgetStateComponent
 	{
-		uint32 skinIndex; // -1 = inherit
-		bool disabled;
-		GuiWidgetStateComponent();
+		uint32 skinIndex = m; // -1 = inherit
+		bool disabled = false;
 	};
 
 	struct CAGE_ENGINE_API GuiSelectedItemComponent
@@ -92,56 +84,48 @@ namespace cage
 	{
 		vec2 alignment; // 0.5 is center
 		vec2 scroll;
-		OverflowModeEnum overflow[2];
-		GuiScrollbarsComponent();
+		OverflowModeEnum overflow[2] = { OverflowModeEnum::Auto, OverflowModeEnum::Auto };
 	};
 
 	struct CAGE_ENGINE_API GuiExplicitSizeComponent
 	{
-		vec2 size;
-		GuiExplicitSizeComponent();
+		vec2 size = vec2::Nan();
 	};
 
 	struct CAGE_ENGINE_API GuiEventComponent
 	{
 		Delegate<bool(uint32)> event;
-		GuiEventComponent();
 	};
 
 	struct CAGE_ENGINE_API GuiLayoutLineComponent
 	{
-		bool vertical; // false -> items are next to each other, true -> items are above/under each other
-		GuiLayoutLineComponent();
+		bool vertical = false; // false -> items are next to each other, true -> items are above/under each other
 	};
 
 	struct CAGE_ENGINE_API GuiLayoutTableComponent
 	{
-		uint32 sections; // set sections to 0 to make it square-ish
-		bool grid; // false -> each column and row sizes are independent; true -> all columns and rows have same sizes
-		bool vertical; // false -> fills entire row; true -> fills entire column
-		GuiLayoutTableComponent();
+		uint32 sections = 2; // set sections to 0 to make it square-ish
+		bool grid = false; // false -> each column and row sizes are independent; true -> all columns and rows have same sizes
+		bool vertical = true; // false -> fills entire row; true -> fills entire column
 	};
 
 	// must have exactly two children
 	struct CAGE_ENGINE_API GuiLayoutSplitterComponent
 	{
-		bool vertical; // false -> left sub-area, right sub-area; true -> top, bottom
-		bool inverse; // false -> first item is fixed size, second item fills the remaining space; true -> second item is fixed size, first item fills the remaining space
-		GuiLayoutSplitterComponent();
+		bool vertical = false; // false -> left sub-area, right sub-area; true -> top, bottom
+		bool inverse = false; // false -> first item is fixed size, second item fills the remaining space; true -> second item is fixed size, first item fills the remaining space
 	};
 
 	struct CAGE_ENGINE_API GuiLabelComponent
 	{
 		// GuiTextComponent defines foreground of the widget
 		// GuiImageComponent defines background of the widget
-		GuiLabelComponent();
 	};
 
 	struct CAGE_ENGINE_API GuiButtonComponent
 	{
 		// GuiTextComponent defines foreground
 		// GuiImageComponent defines background
-		GuiButtonComponent();
 	};
 
 	enum class InputTypeEnum : uint32
@@ -168,31 +152,29 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiInputComponent
 	{
-		string value; // utf-8 encoded string (size is in bytes)
+		string value; // utf8 encoded string (size is in bytes)
 		union CAGE_ENGINE_API Union
 		{
 			real f;
-			sint32 i;
-			Union();
+			sint32 i = 0;
+			Union() {};
 		} min, max, step;
-		uint32 cursor; // unicode characters (not bytes)
-		InputTypeEnum type;
-		InputStyleFlags style;
-		bool valid;
+		uint32 cursor = m; // utf32 characters (not bytes)
+		InputTypeEnum type = InputTypeEnum::Text;
+		InputStyleFlags style = InputStyleFlags::ShowArrowButtons;
+		bool valid = false;
 		// GuiTextComponent defines placeholder
 		// GuiTextFormatComponent defines format
 		// GuiSelectionComponent defines selected text
-		GuiInputComponent();
 	};
 
 	struct CAGE_ENGINE_API GuiTextAreaComponent
 	{
-		MemoryBuffer *buffer; // utf-8 encoded string
-		uint32 cursor; // unicode characters (not bytes)
-		uint32 maxLength; // bytes
-		InputStyleFlags style;
+		MemoryBuffer *buffer = nullptr; // utf8 encoded string
+		uint32 cursor = m; // utf32 characters (not bytes)
+		uint32 maxLength = 1024 * 1024; // bytes
+		InputStyleFlags style = InputStyleFlags::None;
 		// GuiSelectionComponent defines selected text
-		GuiTextAreaComponent();
 	};
 
 	enum class CheckBoxStateEnum : uint32
@@ -204,73 +186,64 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiCheckBoxComponent
 	{
-		CheckBoxStateEnum state;
+		CheckBoxStateEnum state = CheckBoxStateEnum::Unchecked;
 		// GuiTextComponent defines label shown next to the check box
-		GuiCheckBoxComponent();
 	};
 
 	struct CAGE_ENGINE_API GuiRadioBoxComponent
 	{
-		uint32 group; // defines what other radio buttons are unchecked when this becomes checked
-		CheckBoxStateEnum state;
+		uint32 group = 0; // defines what other radio buttons are unchecked when this becomes checked
+		CheckBoxStateEnum state = CheckBoxStateEnum::Unchecked;
 		// GuiTextComponent defines label shown next to the radio box
-		GuiRadioBoxComponent();
 	};
 
 	struct CAGE_ENGINE_API GuiComboBoxComponent
 	{
-		uint32 selected; // -1 = nothing selected
+		uint32 selected = m; // -1 = nothing selected
 		// GuiTextComponent defines placeholder
 		// children with GuiTextComponent defines individual lines
-		// GuiTextFormatComponent applies to all lines, may be overriden by individual childs
+		// GuiTextFormatComponent applies to all lines, may be overridden by individual childs
 		// GuiSelectedItemComponent on childs defines which line is selected (the selected property is authoritative)
-		GuiComboBoxComponent();
 	};
 
 	struct CAGE_ENGINE_API GuiListBoxComponent
 	{
 		// real scrollbar;
 		// children with GuiTextComponent defines individual lines
-		// GuiTextFormatComponent applies to all lines, may be overriden by individual childs
+		// GuiTextFormatComponent applies to all lines, may be overridden by individual childs
 		// GuiSelectedItemComponent on childs defines which lines are selected
-		GuiListBoxComponent();
 	};
 
 	struct CAGE_ENGINE_API GuiProgressBarComponent
 	{
 		real progress; // 0 .. 1
-		bool showValue; // overrides the text with the value (may use internationalization for formatting)
+		bool showValue = false; // overrides the text with the value (may use internationalization for formatting)
 		// GuiTextComponent defines text shown over the bar
-		GuiProgressBarComponent();
 	};
 
 	struct CAGE_ENGINE_API GuiSliderBarComponent
 	{
 		real value;
-		real min, max;
-		bool vertical;
-		GuiSliderBarComponent();
+		real min = 0, max = 1;
+		bool vertical = false;
 	};
 
 	struct CAGE_ENGINE_API GuiColorPickerComponent
 	{
-		vec3 color;
-		bool collapsible;
-		GuiColorPickerComponent();
+		vec3 color = vec3(1, 0, 0);
+		bool collapsible = false;
 	};
 
 	struct CAGE_ENGINE_API GuiPanelComponent
 	{
-		GuiPanelComponent();
 		// GuiTextComponent defines caption
 		// GuiImageComponent defines background
 	};
 
 	struct CAGE_ENGINE_API GuiSpoilerComponent
 	{
-		bool collapsesSiblings;
-		bool collapsed;
-		GuiSpoilerComponent();
+		bool collapsesSiblings = true;
+		bool collapsed = true;
 		// GuiTextComponent defines caption
 		// GuiImageComponent defines background
 	};
@@ -362,12 +335,11 @@ namespace cage
 
 	struct CAGE_ENGINE_API GuiCreateConfig
 	{
-		AssetManager *assetMgr;
-		EntityManagerCreateConfig *entitiesConfig;
-		uintPtr itemsArenaSize;
-		uintPtr emitArenaSize;
-		uint32 skinsCount;
-		GuiCreateConfig();
+		AssetManager *assetMgr = nullptr;
+		EntityManagerCreateConfig *entitiesConfig = nullptr;
+		uintPtr itemsArenaSize = 1024 * 1024 * 16;
+		uintPtr emitArenaSize = 1024 * 1024 * 16;
+		uint32 skinsCount = 1;
 	};
 
 	CAGE_ENGINE_API Holder<Gui> newGui(const GuiCreateConfig &config);

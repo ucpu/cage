@@ -31,15 +31,15 @@ void processTextpack()
 		h.originalSize += numeric_cast<uint32>(it.second.length());
 
 	Holder<File> f = newFile(outputFileName, FileMode(false, true));
-	f->write(bytesView(h));
+	f->write(bufferView(h));
 	uint32 count = numeric_cast<uint32>(texts.size());
-	f->write(bytesView(count));
+	f->write(bufferView(count));
 	for (auto it : texts)
 	{
 		uint32 name = HashString(it.first.c_str());
-		f->write(bytesView(name));
+		f->write(bufferView(name));
 		uint32 len = it.second.length();
-		f->write(bytesView(len));
+		f->write(bufferView(len));
 		f->write({ it.second.c_str(), it.second.c_str() + len });
 	}
 	f->close();

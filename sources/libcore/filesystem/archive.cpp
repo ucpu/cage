@@ -346,7 +346,7 @@ namespace cage
 			void write(const void *data, uintPtr size) override
 			{
 				CAGE_ASSERT(!closed);
-				s.write(data, size);
+				s.write({ (const char *)data, (const char *)data + size });
 			}
 
 			void seek(uintPtr position) override

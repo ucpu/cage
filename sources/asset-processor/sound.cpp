@@ -255,8 +255,8 @@ void processSound()
 	h.originalSize = sizeof(SoundSourceHeader) + sds.frames * sds.channels * sizeof(float);
 
 	Holder<File> f = newFile(outputFileName, FileMode(true, true));
-	f->write(bytesView(h));
-	f->write(bytesView(sds));
+	f->write(bufferView(h));
+	f->write(bufferView(sds));
 
 	switch (sds.soundType)
 	{
@@ -286,7 +286,7 @@ void processSound()
 			break; // do nothing here
 		}
 		f->seek(0);
-		f->write(bytesView(h));
+		f->write(bufferView(h));
 
 		if (configGetBool("cage-asset-processor/sound/preview"))
 		{ // preview ogg

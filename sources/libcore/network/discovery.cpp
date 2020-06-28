@@ -132,7 +132,7 @@ namespace cage
 							Deserializer d(buffer);
 							d >> gid >> id >> p.port;
 							auto av = numeric_cast<uint32>(d.available());
-							p.message = string((char*)d.advance(av), av);
+							p.message = string(d.advance(av).data(), av);
 							auto pit = peers.find(id);
 							if (pit == peers.end())
 							{
@@ -257,7 +257,7 @@ namespace cage
 								buffer.clear();
 								Serializer ser(buffer);
 								ser << uniId << gameId << gamePort;
-								ser.write(message.c_str(), message.length());
+								ser.write({ message.c_str(), message.c_str() + message.length() });
 								s.sendTo(buffer.data(), buffer.size(), a);
 							}
 						}

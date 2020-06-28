@@ -174,12 +174,11 @@ namespace cage
 		if (impl->buffer.empty())
 			return false;
 
-		const char *b = impl->buffer.data();
-		uintPtr s = impl->buffer.size();
-		if (!detail::readLine(line, b, s, true))
+		PointerRange<const char> pr = impl->buffer;
+		if (!detail::readLine(line, pr, true))
 			return false;
-		detail::memmove(impl->buffer.data(), b, s);
-		impl->buffer.resize(s);
+		detail::memmove(impl->buffer.data(), pr.data(), pr.size());
+		impl->buffer.resize(pr.size());
 		return true;
 	}
 

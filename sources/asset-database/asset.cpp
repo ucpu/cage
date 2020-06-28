@@ -9,7 +9,7 @@ void Asset::load(File *f)
 	read(f, scheme);
 	read(f, databank);
 	uint32 m = 0;
-	f->read(bytesView(m));
+	f->read(bufferView<char>(m));
 	for (uint32 j = 0; j < m; j++)
 	{
 		string t1, t2;
@@ -17,21 +17,21 @@ void Asset::load(File *f)
 		read(f, t2);
 		fields[t1] = t2;
 	}
-	f->read(bytesView(m));
+	f->read(bufferView<char>(m));
 	for (uint32 j = 0; j < m; j++)
 	{
 		string t;
 		read(f, t);
 		files.insert(t);
 	}
-	f->read(bytesView(m));
+	f->read(bufferView<char>(m));
 	for (uint32 j = 0; j < m; j++)
 	{
 		string t;
 		read(f, t);
 		references.insert(t);
 	}
-	f->read(bytesView(corrupted));
+	f->read(bufferView<char>(corrupted));
 }
 
 void Asset::save(File *f) const
@@ -41,21 +41,21 @@ void Asset::save(File *f) const
 	write(f, scheme);
 	write(f, databank);
 	uint32 m = numeric_cast<uint32>(fields.size());
-	f->write(bytesView(m));
+	f->write(bufferView(m));
 	for (auto it : fields)
 	{
 		write(f, it.first);
 		write(f, it.second);
 	}
 	m = numeric_cast<uint32>(files.size());
-	f->write(bytesView(m));
+	f->write(bufferView(m));
 	for (const string &it : files)
 		write(f, it);
 	m = numeric_cast<uint32>(references.size());
-	f->write(bytesView(m));
+	f->write(bufferView(m));
 	for (const string &it : references)
 		write(f, it);
-	f->write(bytesView(corrupted));
+	f->write(bufferView(corrupted));
 }
 
 string Asset::outputPath() const

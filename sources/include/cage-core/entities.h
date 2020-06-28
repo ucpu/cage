@@ -20,7 +20,7 @@ namespace cage
 		EntityComponent *defineComponent(const T &prototype, const EntityComponentCreateConfig &config)
 		{
 			static_assert(std::is_trivially_copyable<T>::value && std::is_trivially_destructible<T>::value, "type not trivial");
-			return zPrivateDefineComponent(sizeof(T), alignof(T), (void *)&prototype, config);
+			return defineComponent_(sizeof(T), alignof(T), (void *)&prototype, config);
 		}
 
 		EntityComponent *componentByIndex(uint32 index) const;
@@ -43,7 +43,7 @@ namespace cage
 		void destroy(); // destroy all entities
 
 	private:
-		EntityComponent *zPrivateDefineComponent(uintPtr typeSize, uintPtr typeAlignment, void *prototype, const EntityComponentCreateConfig &config);
+		EntityComponent *defineComponent_(uintPtr typeSize, uintPtr typeAlignment, void *prototype, const EntityComponentCreateConfig &config);
 	};
 
 	struct CAGE_CORE_API EntityManagerCreateConfig

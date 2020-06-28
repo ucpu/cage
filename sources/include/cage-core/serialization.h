@@ -16,12 +16,10 @@ namespace cage
 		Serializer &operator = (const Serializer &) = delete;
 
 		uintPtr available() const; // number of bytes still available in the buffer (valid only if the maximum size was given in the constructor)
-		Serializer placeholder(uintPtr s);
 		void write(PointerRange<const char> buffer);
 		void writeLine(const string &line);
-		[[deprecated]] void write(const void *d, uintPtr s);
-		[[deprecated]] void write(const char *d, uintPtr s);
-		char *advance(uintPtr s); // returns the original position
+		Serializer placeholder(uintPtr s);
+		PointerRange<char> advance(uintPtr s); // returns the original position
 
 	private:
 		explicit Serializer(MemoryBuffer *buffer, char *data, uintPtr offset, uintPtr size);
@@ -42,12 +40,10 @@ namespace cage
 		Deserializer &operator = (const Deserializer &) = delete;
 
 		uintPtr available() const; // number of bytes still available in the buffer
-		Deserializer placeholder(uintPtr s);
 		void read(PointerRange<char> buffer);
 		bool readLine(string &line);
-		[[deprecated]] void read(void *d, uintPtr s);
-		[[deprecated]] void read(char *d, uintPtr s);
-		const char *advance(uintPtr s); // returns the original position
+		Deserializer placeholder(uintPtr s);
+		PointerRange<const char> advance(uintPtr s); // returns the original position
 
 	private:
 		explicit Deserializer(const char *data, uintPtr offset, uintPtr size);
@@ -59,18 +55,24 @@ namespace cage
 
 	// helpers
 
-	template<class T>
-	constexpr PointerRange<char> bytesView(T &value)
+	template<class Dst = const char, class Src>
+	constexpr PointerRange<Dst> bufferCast(const PointerRange<Src> src)
 	{
-		static_assert(std::is_trivially_copyable<T>::value, "type not trivial");
-		return PointerRange<char>(reinterpret_cast<char *>(&value), reinterpret_cast<char *>(&value + 1));
+		static_assert(std::is_trivially_copyable<Dst>::value, "type not trivial");
+		static_assert(std::is_trivially_copyable<Src>::value, "type not trivial");
+		return { reinterpret_cast<Dst*>(src.begin()), reinterpret_cast<Dst*>(src.end()) };
 	}
 
 	template<class T>
-	constexpr PointerRange<const char> bytesView(const T &value)
+	constexpr PointerRange<T> rangeView(T &object)
 	{
-		static_assert(std::is_trivially_copyable<T>::value, "type not trivial");
-		return PointerRange<const char>(reinterpret_cast<const char *>(&value), reinterpret_cast<const char *>(&value + 1));
+		return { &object, &object + 1 };
+	}
+
+	template<class Dst = const char, class Src>
+	constexpr PointerRange<Dst> bufferView(Src &object)
+	{
+		return bufferCast<Dst, Src>(rangeView<Src>(object));
 	}
 
 	// general serialization
@@ -78,14 +80,14 @@ namespace cage
 	template<class T>
 	Serializer &operator << (Serializer &s, const T &v)
 	{
-		s.write(bytesView(v));
+		s.write(bufferView<const char>(v));
 		return s;
 	}
 
 	template<class T>
 	Deserializer &operator >> (Deserializer &s, T &v)
 	{
-		s.read(bytesView(v));
+		s.read(bufferView<char>(v));
 		return s;
 	}
 
@@ -105,7 +107,7 @@ namespace cage
 	{
 		decltype(v.length()) size;
 		s >> size;
-		v = detail::StringBase<N>((const char*)s.advance(size), size);
+		v = detail::StringBase<N>(s.advance(size).data(), size);
 		return s;
 	}
 

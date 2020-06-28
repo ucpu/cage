@@ -8,18 +8,17 @@ namespace cage
 	class CAGE_ENGINE_API FpsCamera : private Immovable
 	{
 	public:
-		vec2 turningSpeed;
-		real wheelSpeed;
-		real movementSpeed;
-		rads pitchLimitUp;
-		rads pitchLimitDown;
-		MouseButtonsFlags mouseButton; // -1 for disabled, 0 for always
-		bool keysEqEnabled;
-		bool keysWsadEnabled;
-		bool keysArrowsEnabled;
-		bool freeMove; // true -> like a space ship (ignores pitch limits), false -> fps (uses pitch limits)
+		vec2 turningSpeed = vec2(0.008);
+		real rollSpeed = 10;
+		real movementSpeed = 1;
+		rads pitchLimitUp = degs(80);
+		rads pitchLimitDown = degs(-80);
+		MouseButtonsFlags mouseButton = MouseButtonsFlags::None; // -1 for disabled, 0 for always
+		bool keysEqEnabled = true;
+		bool keysWsadEnabled = true;
+		bool keysArrowsEnabled = true;
+		bool freeMove = false; // true -> like a space ship (ignores pitch limits), false -> fps (uses pitch limits)
 
-		FpsCamera();
 		void setEntity(Entity *ent = nullptr);
 	};
 

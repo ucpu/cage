@@ -18,17 +18,16 @@ namespace cage
 
 	struct CAGE_ENGINE_API SoundContextCreateConfig
 	{
-		uintPtr linksMemory;
-		SoundContextCreateConfig();
+		uintPtr linksMemory = 1024 * 1024;
 	};
 
 	CAGE_ENGINE_API Holder<SoundContext> newSoundContext(const SoundContextCreateConfig &config, const string &name = "");
 
 	struct CAGE_ENGINE_API SoundInterleavedBuffer
 	{
-		float *buffer;
-		uint32 frames;
-		uint32 channels;
+		float *buffer = nullptr;
+		uint32 frames = 0;
+		uint32 channels = 0;
 
 		SoundInterleavedBuffer();
 		SoundInterleavedBuffer(const SoundInterleavedBuffer &other); // creates a reference of the original buffer
@@ -41,14 +40,13 @@ namespace cage
 		void clear();
 
 	private:
-		uint32 allocated;
+		uint32 allocated = 0;
 	};
 
 	struct CAGE_ENGINE_API SoundDataBuffer : public SoundInterleavedBuffer
 	{
-		sint64 time;
-		uint32 sampleRate;
-		SoundDataBuffer();
+		sint64 time = 0;
+		uint32 sampleRate = 0;
 	};
 
 	class CAGE_ENGINE_API MixingBus : private Immovable
@@ -96,8 +94,8 @@ namespace cage
 		void setDebugName(const string &name);
 
 		void setDataNone();
-		void setDataRaw(uint32 channels, uint32 frames, uint32 sampleRate, const float *data);
-		void setDataVorbis(uintPtr size, const void *buffer);
+		void setDataRaw(uint32 channels, uint32 frames, uint32 sampleRate, PointerRange<const float> data);
+		void setDataVorbis(PointerRange<const char> buffer);
 		void setDataTone(uint32 pitch = 440);
 		void setDataNoise();
 
@@ -136,10 +134,8 @@ namespace cage
 	struct CAGE_ENGINE_API SpeakerCreateConfig
 	{
 		string deviceId;
-		uint32 sampleRate;
-		//uint32 channelsLayoutIndex;
-		bool deviceRaw;
-		SpeakerCreateConfig();
+		uint32 sampleRate = 0;
+		bool deviceRaw = false;
 	};
 
 	CAGE_ENGINE_API Holder<Speaker> newSpeakerOutput(SoundContext *context, const SpeakerCreateConfig &config, string name = "");

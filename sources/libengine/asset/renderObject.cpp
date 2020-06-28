@@ -28,10 +28,10 @@ namespace cage
 			obj->worldSize = h.worldSize;
 			obj->pixelsSize = h.pixelsSize;
 
-			float *thresholds = (float*)des.advance(h.lodsCount * sizeof(uint32));
-			uint32 *indices = (uint32*)des.advance((h.lodsCount + 1) * sizeof(uint32));
-			uint32 *names = (uint32*)des.advance(h.meshesCount * sizeof(uint32));
-			obj->setLods(h.lodsCount, h.meshesCount, thresholds, indices, names);
+			PointerRange<const real> thresholds = bufferCast<const real>(des.advance(h.lodsCount * sizeof(real)));
+			PointerRange<const uint32> indices = bufferCast<const uint32>(des.advance((h.lodsCount + 1) * sizeof(uint32)));
+			PointerRange<const uint32> names = bufferCast<const uint32>(des.advance(h.meshesCount * sizeof(uint32)));
+			obj->setLods(thresholds, indices, names);
 
 			context->assetHolder = templates::move(obj).cast<void>();
 		}

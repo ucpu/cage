@@ -1,5 +1,6 @@
 #include <cage-core/macros.h>
 #include <cage-core/image.h>
+#include <cage-core/serialization.h>
 #include <cage-engine/opengl.h>
 #include "private.h"
 
@@ -57,14 +58,12 @@ namespace cage
 		class TextureImpl : public Texture
 		{
 		public:
-			const uint32 target;
-			uint32 id;
-			uint32 width, height, depth;
+			const uint32 target = 0;
+			uint32 id = 0;
+			uint32 width = 0, height = 0, depth = 0;
 
-			TextureImpl(uint32 target) : id(0), target(target), width(0), height(0), depth(0)
+			TextureImpl(uint32 target) : target(target)
 			{
-				animationDuration = 0;
-				animationLoop = false;
 				glGenTextures(1, &id);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 				bind();
@@ -215,8 +214,8 @@ namespace cage
 			{
 				switch (img->channels())
 				{
-				case 3: return image2d(w, h, GL_SRGB8, GL_RGB, GL_UNSIGNED_BYTE, img->rawViewU8().data());
-				case 4: return image2d(w, h, GL_SRGB8_ALPHA8, GL_RGBA, GL_UNSIGNED_BYTE, img->rawViewU8().data());
+				case 3: return image2d(w, h, GL_SRGB8, GL_RGB, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
+				case 4: return image2d(w, h, GL_SRGB8_ALPHA8, GL_RGBA, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
 				}
 			} break;
 			}
@@ -229,30 +228,30 @@ namespace cage
 			{
 				switch (img->channels())
 				{
-				case 1: return image2d(w, h, GL_R8, GL_RED, GL_UNSIGNED_BYTE, img->rawViewU8().data());
-				case 2: return image2d(w, h, GL_RG8, GL_RG, GL_UNSIGNED_BYTE, img->rawViewU8().data());
-				case 3: return image2d(w, h, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, img->rawViewU8().data());
-				case 4: return image2d(w, h, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, img->rawViewU8().data());
+				case 1: return image2d(w, h, GL_R8, GL_RED, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
+				case 2: return image2d(w, h, GL_RG8, GL_RG, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
+				case 3: return image2d(w, h, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
+				case 4: return image2d(w, h, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
 				}
 			} break;
 			case ImageFormatEnum::U16:
 			{
 				switch (img->channels())
 				{
-				case 1: return image2d(w, h, GL_R16, GL_RED, GL_UNSIGNED_SHORT, img->rawViewU16().data());
-				case 2: return image2d(w, h, GL_RG16, GL_RG, GL_UNSIGNED_SHORT, img->rawViewU16().data());
-				case 3: return image2d(w, h, GL_RGB16, GL_RGB, GL_UNSIGNED_SHORT, img->rawViewU16().data());
-				case 4: return image2d(w, h, GL_RGBA16, GL_RGBA, GL_UNSIGNED_SHORT, img->rawViewU16().data());
+				case 1: return image2d(w, h, GL_R16, GL_RED, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16()));
+				case 2: return image2d(w, h, GL_RG16, GL_RG, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16()));
+				case 3: return image2d(w, h, GL_RGB16, GL_RGB, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16()));
+				case 4: return image2d(w, h, GL_RGBA16, GL_RGBA, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16()));
 				}
 			} break;
 			case ImageFormatEnum::Float:
 			{
 				switch (img->channels())
 				{
-				case 1: return image2d(w, h, GL_R32F, GL_RED, GL_FLOAT, img->rawViewFloat().data());
-				case 2: return image2d(w, h, GL_RG32F, GL_RG, GL_FLOAT, img->rawViewFloat().data());
-				case 3: return image2d(w, h, GL_RGB32F, GL_RGB, GL_FLOAT, img->rawViewFloat().data());
-				case 4: return image2d(w, h, GL_RGBA32F, GL_RGBA, GL_FLOAT, img->rawViewFloat().data());
+				case 1: return image2d(w, h, GL_R32F, GL_RED, GL_FLOAT, bufferCast<const char>(img->rawViewFloat()));
+				case 2: return image2d(w, h, GL_RG32F, GL_RG, GL_FLOAT, bufferCast<const char>(img->rawViewFloat()));
+				case 3: return image2d(w, h, GL_RGB32F, GL_RGB, GL_FLOAT, bufferCast<const char>(img->rawViewFloat()));
+				case 4: return image2d(w, h, GL_RGBA32F, GL_RGBA, GL_FLOAT, bufferCast<const char>(img->rawViewFloat()));
 				}
 			} break;
 			}
@@ -262,15 +261,15 @@ namespace cage
 
 	void Texture::image2d(uint32 w, uint32 h, uint32 internalFormat)
 	{
-		image2d(w, h, internalFormat, textureFormat(internalFormat), textureType(internalFormat), nullptr);
+		image2d(w, h, internalFormat, textureFormat(internalFormat), textureType(internalFormat), {});
 	}
 
-	void Texture::image2d(uint32 w, uint32 h, uint32 internalFormat, uint32 format, uint32 type, const void *data)
+	void Texture::image2d(uint32 w, uint32 h, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer)
 	{
 		TextureImpl *impl = (TextureImpl*)this;
 		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
 		CAGE_ASSERT(impl->target == GL_TEXTURE_2D || impl->target == GL_TEXTURE_RECTANGLE);
-		glTexImage2D(impl->target, 0, internalFormat, w, h, 0, format, type, data);
+		glTexImage2D(impl->target, 0, internalFormat, w, h, 0, format, type, buffer.data());
 		impl->width = w;
 		impl->height = h;
 		impl->depth = 1;
@@ -279,16 +278,16 @@ namespace cage
 
 	void Texture::imageCube(uint32 w, uint32 h, uint32 internalFormat)
 	{
-		imageCube(w, h, internalFormat, textureFormat(internalFormat), textureType(internalFormat), nullptr, 0);
+		imageCube(w, h, internalFormat, textureFormat(internalFormat), textureType(internalFormat), {}, 0);
 	}
 
-	void Texture::imageCube(uint32 w, uint32 h, uint32 internalFormat, uint32 format, uint32 type, const void *data, uintPtr stride)
+	void Texture::imageCube(uint32 w, uint32 h, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer, uintPtr stride)
 	{
 		TextureImpl *impl = (TextureImpl*)this;
 		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
 		CAGE_ASSERT(impl->target == GL_TEXTURE_CUBE_MAP);
 		for (uint32 i = 0; i < 6; i++)
-			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, w, h, 0, format, type, (char*)data + i * stride);
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, w, h, 0, format, type, buffer.data() + i * stride);
 		impl->width = w;
 		impl->height = h;
 		impl->depth = 1;
@@ -297,15 +296,15 @@ namespace cage
 
 	void Texture::image3d(uint32 w, uint32 h, uint32 d, uint32 internalFormat)
 	{
-		image3d(w, h, d, internalFormat, textureFormat(internalFormat), textureType(internalFormat), nullptr);
+		image3d(w, h, d, internalFormat, textureFormat(internalFormat), textureType(internalFormat), {});
 	}
 
-	void Texture::image3d(uint32 w, uint32 h, uint32 d, uint32 internalFormat, uint32 format, uint32 type, const void *data)
+	void Texture::image3d(uint32 w, uint32 h, uint32 d, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer)
 	{
 		TextureImpl *impl = (TextureImpl*)this;
 		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
 		CAGE_ASSERT(impl->target == GL_TEXTURE_3D || impl->target == GL_TEXTURE_2D_ARRAY);
-		glTexImage3D(impl->target, 0, internalFormat, w, h, d, 0, format, type, data);
+		glTexImage3D(impl->target, 0, internalFormat, w, h, d, 0, format, type, buffer.data());
 		impl->width = w;
 		impl->height = h;
 		impl->depth = d;
@@ -376,6 +375,12 @@ namespace cage
 		for (uint32 i = 0; i < 32; i++)
 			privat::setSpecificTexture(i, textures[i]);
 		*/
+	}
+
+	void Texture::multiBind(PointerRange<const uint32> tius, PointerRange<const Texture *const> texs)
+	{
+		CAGE_ASSERT(tius.size() == texs.size());
+		multiBind(numeric_cast<uint32>(tius.size()), tius.data(), texs.data());
 	}
 
 	Holder<Texture> newTexture()

@@ -43,7 +43,7 @@ namespace cage
 			void set(uint64 value) { setType(ConfigTypeEnum::Uint64); u64 = value; }
 			void set(float value) { setType(ConfigTypeEnum::Float); f = value; }
 			void set(double value) { setType(ConfigTypeEnum::Double); d = value; }
-			void set(const string &value) { if (!s) s = detail::systemArena().createObject<string>(value); else *s = value; setType(ConfigTypeEnum::string); }
+			void set(const string &value) { if (!s) s = detail::systemArena().createObject<string>(value); else *s = value; setType(ConfigTypeEnum::String); }
 			void setDynamic(const string &value)
 			{
 				if (value.isInteger(false))
@@ -162,7 +162,7 @@ namespace cage
 			case ConfigTypeEnum::Uint64: return v->u64 != 0;
 			case ConfigTypeEnum::Float: return real(v->f) != real(0);
 			case ConfigTypeEnum::Double: return real(v->d) != real(0);
-			case ConfigTypeEnum::string: CAGE_ASSERT(v->s); return v->s->toBool();
+			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return v->s->toBool();
 			default: return false;
 			}
 		}
@@ -179,7 +179,7 @@ namespace cage
 			case ConfigTypeEnum::Uint64: return numeric_cast<sint32>(v->u64);
 			case ConfigTypeEnum::Float:  return numeric_cast<sint32>(v->f);
 			case ConfigTypeEnum::Double: return numeric_cast<sint32>(v->d);
-			case ConfigTypeEnum::string: CAGE_ASSERT(v->s); return v->s->toSint32();
+			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return v->s->toSint32();
 			default: return 0;
 			}
 		}
@@ -196,7 +196,7 @@ namespace cage
 			case ConfigTypeEnum::Uint64: return numeric_cast<uint32>(v->u64);
 			case ConfigTypeEnum::Float:  return numeric_cast<uint32>(v->f);
 			case ConfigTypeEnum::Double: return numeric_cast<uint32>(v->d);
-			case ConfigTypeEnum::string: CAGE_ASSERT(v->s); return v->s->toUint32();
+			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return v->s->toUint32();
 			default: return 0;
 			}
 		}
@@ -213,7 +213,7 @@ namespace cage
 			case ConfigTypeEnum::Uint64: return numeric_cast<sint64>(v->u64);
 			case ConfigTypeEnum::Float:  return numeric_cast<sint64>(v->f);
 			case ConfigTypeEnum::Double: return numeric_cast<sint64>(v->d);
-			case ConfigTypeEnum::string: CAGE_ASSERT(v->s); return v->s->toSint64();
+			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return v->s->toSint64();
 			default: return 0;
 			}
 		}
@@ -230,7 +230,7 @@ namespace cage
 			case ConfigTypeEnum::Uint64: return numeric_cast<uint64>(v->u64);
 			case ConfigTypeEnum::Float:  return numeric_cast<uint64>(v->f);
 			case ConfigTypeEnum::Double: return numeric_cast<uint64>(v->d);
-			case ConfigTypeEnum::string: CAGE_ASSERT(v->s); return v->s->toUint64();
+			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return v->s->toUint64();
 			default: return 0;
 			}
 		}
@@ -247,7 +247,7 @@ namespace cage
 			case ConfigTypeEnum::Uint64: return numeric_cast<float>(v->u64);
 			case ConfigTypeEnum::Float:  return numeric_cast<float>(v->f);
 			case ConfigTypeEnum::Double: return numeric_cast<float>(v->d);
-			case ConfigTypeEnum::string: CAGE_ASSERT(v->s); return v->s->toFloat();
+			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return v->s->toFloat();
 			default: return 0;
 			}
 		}
@@ -264,7 +264,7 @@ namespace cage
 			case ConfigTypeEnum::Uint64: return numeric_cast<double>(v->u64);
 			case ConfigTypeEnum::Float:  return numeric_cast<double>(v->f);
 			case ConfigTypeEnum::Double: return numeric_cast<double>(v->d);
-			case ConfigTypeEnum::string: CAGE_ASSERT(v->s); return v->s->toDouble();
+			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return v->s->toDouble();
 			default: return 0;
 			}
 		}
@@ -281,7 +281,7 @@ namespace cage
 			case ConfigTypeEnum::Uint64: return string(v->u64);
 			case ConfigTypeEnum::Float: return string(v->f);
 			case ConfigTypeEnum::Double: return string(v->d);
-			case ConfigTypeEnum::string: CAGE_ASSERT(v->s); return *v->s;
+			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return *v->s;
 			default: return "";
 			}
 		}
@@ -333,7 +333,7 @@ namespace cage
 		case ConfigTypeEnum::Uint64: return "uint64";
 		case ConfigTypeEnum::Float: return "float";
 		case ConfigTypeEnum::Double: return "double";
-		case ConfigTypeEnum::string: return "string";
+		case ConfigTypeEnum::String: return "string";
 		case ConfigTypeEnum::Undefined: return "undefined";
 		default: CAGE_THROW_CRITICAL(Exception, "invalid config type enum");
 		}

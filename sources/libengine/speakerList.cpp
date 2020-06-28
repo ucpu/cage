@@ -8,12 +8,6 @@
 
 namespace cage
 {
-	SpeakerLayout::SpeakerLayout() : channels(0)
-	{}
-
-	SpeakerSamplerate::SpeakerSamplerate() : minimum(0), maximum(0)
-	{}
-
 	namespace
 	{
 		struct SpeakerDeviceImpl : public SpeakerDevice
@@ -118,22 +112,10 @@ namespace cage
 		return impl->raw;
 	}
 
-	uint32 SpeakerDevice::layoutsCount() const
-	{
-		const SpeakerDeviceImpl *impl = (const SpeakerDeviceImpl *)this;
-		return numeric_cast<uint32>(impl->layouts.size());
-	}
-
 	uint32 SpeakerDevice::currentLayout() const
 	{
 		const SpeakerDeviceImpl *impl = (const SpeakerDeviceImpl *)this;
 		return impl->layoutCurrent;
-	}
-
-	const SpeakerLayout &SpeakerDevice::layout(uint32 index) const
-	{
-		const SpeakerDeviceImpl *impl = (const SpeakerDeviceImpl *)this;
-		return impl->layouts[index];
 	}
 
 	PointerRange<const SpeakerLayout> SpeakerDevice::layouts() const
@@ -142,22 +124,10 @@ namespace cage
 		return impl->layouts;
 	}
 
-	uint32 SpeakerDevice::sampleratesCount() const
-	{
-		const SpeakerDeviceImpl *impl = (const SpeakerDeviceImpl *)this;
-		return numeric_cast<uint32>(impl->samplerates.size());
-	}
-
 	uint32 SpeakerDevice::currentSamplerate() const
 	{
 		const SpeakerDeviceImpl *impl = (const SpeakerDeviceImpl *)this;
 		return impl->samplerateCurrent;
-	}
-
-	const SpeakerSamplerate &SpeakerDevice::samplerate(uint32 index) const
-	{
-		const SpeakerDeviceImpl *impl = (const SpeakerDeviceImpl *)this;
-		return impl->samplerates[index];
 	}
 
 	PointerRange<const SpeakerSamplerate> SpeakerDevice::samplerates() const
@@ -166,23 +136,10 @@ namespace cage
 		return impl->samplerates;
 	}
 
-
-	uint32 SpeakerList::devicesCount() const
-	{
-		const SpeakerListImpl *impl = (const SpeakerListImpl *)this;
-		return numeric_cast<uint32>(impl->devices.size());
-	}
-
 	uint32 SpeakerList::defaultDevice() const
 	{
 		const SpeakerListImpl *impl = (const SpeakerListImpl *)this;
 		return impl->defaultDevice;
-	}
-
-	const SpeakerDevice *SpeakerList::device(uint32 index) const
-	{
-		const SpeakerListImpl *impl = (const SpeakerListImpl *)this;
-		return impl->devices[index].get();
 	}
 
 	Holder<PointerRange<const SpeakerDevice *>> SpeakerList::devices() const

@@ -90,7 +90,7 @@ namespace cage
 			return Enumerate<Range, It1, It2, Counter>(templates::move(range), it1, it2, start);
 		}
 
-		struct None
+		struct EnumerateNone
 		{};
 	}
 
@@ -98,21 +98,21 @@ namespace cage
 	template<class It1, class It2, class Counter = uintPtr>
 	inline constexpr auto enumerate(It1 it1, It2 it2, Counter start = Counter())
 	{
-		return privat::enumerate(privat::None(), it1, it2, start);
+		return privat::enumerate(privat::EnumerateNone(), it1, it2, start);
 	}
 
 	// l-value range
 	template<class Range, class Counter = typename Range::size_type>
 	inline constexpr auto enumerate(Range &range)
 	{
-		return privat::enumerate(privat::None(), range.begin(), range.end(), Counter());
+		return privat::enumerate(privat::EnumerateNone(), range.begin(), range.end(), Counter());
 	}
 
 	// const range
 	template<class Range, class Counter = typename Range::size_type>
 	inline constexpr auto enumerate(const Range &range)
 	{
-		return privat::enumerate(privat::None(), range.begin(), range.end(), Counter());
+		return privat::enumerate(privat::EnumerateNone(), range.begin(), range.end(), Counter());
 	}
 
 	// r-value range
@@ -127,7 +127,7 @@ namespace cage
 	template<class T, uintPtr N, class Counter = uintPtr>
 	inline constexpr auto enumerate(T (&range)[N])
 	{
-		return privat::enumerate(privat::None(), range + 0, range + N, Counter());
+		return privat::enumerate(privat::EnumerateNone(), range + 0, range + N, Counter());
 	}
 }
 

@@ -223,7 +223,7 @@ namespace cage
 		impl->allEntities.destroy();
 	}
 
-	EntityComponent *EntityManager::zPrivateDefineComponent(uintPtr typeSize, uintPtr typeAlignment, void *prototype, const EntityComponentCreateConfig &config)
+	EntityComponent *EntityManager::defineComponent_(uintPtr typeSize, uintPtr typeAlignment, void *prototype, const EntityComponentCreateConfig &config)
 	{
 		EntityManagerImpl *impl = (EntityManagerImpl *)this;
 		ComponentImpl *c = detail::systemArena().createObject<ComponentImpl>(impl, typeSize, typeAlignment, prototype, config);

@@ -38,12 +38,12 @@ namespace cage
 	{
 	public:
 		void lock();
-		void unlock(); // does nothing
+		void unlock() {}; // does nothing
 	};
 
 	CAGE_CORE_API Holder<Barrier> newBarrier(uint32 threshold);
 
-	// fully exclusive lock with counter
+	// exclusive lock with counter
 	// values above zero allows that many threads to enter
 	// values below zero blocks further threads
 	class CAGE_CORE_API Semaphore : private Immovable
@@ -55,7 +55,7 @@ namespace cage
 
 	CAGE_CORE_API Holder<Semaphore> newSemaphore(uint32 value, uint32 max);
 
-	// unlock a Mutex and atomically reacquire it when signaled
+	// unlock a mutex and atomically reacquire it when signaled
 	class CAGE_CORE_API ConditionalVariableBase : private Immovable
 	{
 	public:

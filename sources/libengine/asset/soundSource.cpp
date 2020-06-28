@@ -22,8 +22,7 @@ namespace cage
 
 			soundPrivat::VorbisData vds;
 			uintPtr size = des.available();
-			char *data = (char*)des.advance(size);
-			vds.init(data, size);
+			vds.init(des.advance(size).data(), size);
 			uint32 ch = 0, f = 0, r = 0;
 			vds.decode(ch, f, r, (float*)context->originalData().data());
 			CAGE_ASSERT(snd.channels == ch);
@@ -47,15 +46,15 @@ namespace cage
 			{
 				Deserializer ori(context->originalData());
 				ori >> snd;
-				source->setDataRaw(snd.channels, snd.frames, snd.sampleRate, (float*)ori.advance(ori.available()));
+				source->setDataRaw(snd.channels, snd.frames, snd.sampleRate, bufferCast<const float>(ori.advance(ori.available())));
 			} break;
 			case SoundTypeEnum::CompressedRaw:
-				source->setDataRaw(snd.channels, snd.frames, snd.sampleRate, (float*)context->originalData().data());
+				source->setDataRaw(snd.channels, snd.frames, snd.sampleRate, bufferCast<const float, char>(context->originalData()));
 				break;
 			case SoundTypeEnum::CompressedCompressed:
 			{
 				uintPtr size = des.available();
-				source->setDataVorbis(size, des.advance(size));
+				source->setDataVorbis(des.advance(size));
 			} break;
 			default:
 				CAGE_THROW_ERROR(Exception, "invalid sound type");

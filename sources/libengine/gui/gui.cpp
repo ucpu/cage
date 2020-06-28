@@ -109,11 +109,6 @@ namespace cage
 		return impl->assetMgr;
 	}
 
-	GuiCreateConfig::GuiCreateConfig() : assetMgr(nullptr), entitiesConfig(nullptr),
-		itemsArenaSize(1024 * 1024 * 16), emitArenaSize(1024 * 1024 * 16),
-		skinsCount(1)
-	{}
-
 	Holder<Gui> newGui(const GuiCreateConfig &config)
 	{
 		return detail::systemArena().createImpl<Gui, GuiImpl>(config);

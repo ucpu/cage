@@ -52,8 +52,7 @@ namespace cage
 
 			for (uint32 line = 0; line < scanlines; line++)
 			{
-				char *ser2Start = ser.advance(linewidth);
-				Serializer ser2({ ser2Start, ser2Start + linewidth });
+				Serializer ser2 = ser.placeholder(linewidth);
 				while (ser2.available())
 				{
 					sint32 rl;
@@ -68,13 +67,13 @@ namespace cage
 						rl = rl * -1 + 1;
 						uint8 v;
 						des >> v;
-						detail::memset(ser2.advance(rl), v, rl);
+						detail::memset(ser2.advance(rl).data(), v, rl);
 					}
 					else
 					{
 						// copy many bytes as is
 						rl += 1;
-						ser2.write(des.advance(rl), rl);
+						ser2.write(des.advance(rl));
 					}
 				}
 			}

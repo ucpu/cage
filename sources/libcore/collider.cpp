@@ -242,14 +242,14 @@ namespace cage
 		template<class T>
 		void writeVector(Serializer &ser, const std::vector<T> &v)
 		{
-			ser.write(v.data(), sizeof(T) * v.size());
+			ser.write(bufferCast<const char, const T>(v));
 		}
 
 		template<class T>
 		void readVector(Deserializer &des, std::vector<T> &v, uint32 count)
 		{
 			v.resize(count);
-			des.read(v.data(), sizeof(T) * count);
+			des.read(bufferCast<char, T>(v));
 		}
 	}
 
@@ -297,7 +297,7 @@ namespace cage
 			CAGE_ASSERT(poly->positions().size() % 3 == 0);
 			const uint32 cnt = poly->verticesCount() / 3;
 			CAGE_ASSERT(sizeof(triangle) == 3 * sizeof(vec3));
-			addTriangles({ (triangle*)poly->positions().begin(), (triangle*)poly->positions().end() });
+			addTriangles(bufferCast<const triangle>(poly->positions()));
 		}
 		else
 		{

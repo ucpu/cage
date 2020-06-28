@@ -3,6 +3,7 @@
 #include "private.h"
 
 #include <algorithm>
+#include <vector>
 
 namespace cage
 {
@@ -11,83 +12,34 @@ namespace cage
 		class SkeletalAnimationImpl : public SkeletalAnimation
 		{
 		public:
-			SkeletalAnimationImpl() : mem(detail::systemArena())
-			{
-				indexes = nullptr;
-				positionFrames = nullptr;
-				positionTimes = nullptr;
-				positionValues = nullptr;
-				rotationFrames = nullptr;
-				rotationTimes = nullptr;
-				rotationValues = nullptr;
-				scaleFrames = nullptr;
-				scaleTimes = nullptr;
-				scaleValues = nullptr;
-
-				bones = 0;
-				duration = 0;
-			}
-
-			~SkeletalAnimationImpl()
-			{
-				deallocate();
-			}
-
 			void deallocate()
 			{
-				for (uint16 b = 0; b < bones; b++)
-				{
-					mem.deallocate(positionTimes[b]);
-					mem.deallocate(positionValues[b]);
-					mem.deallocate(rotationTimes[b]);
-					mem.deallocate(rotationValues[b]);
-					mem.deallocate(scaleTimes[b]);
-					mem.deallocate(scaleValues[b]);
-				}
-
-				mem.deallocate(indexes);
-				mem.deallocate(positionFrames);
-				mem.deallocate(positionTimes);
-				mem.deallocate(positionValues);
-				mem.deallocate(rotationFrames);
-				mem.deallocate(rotationTimes);
-				mem.deallocate(rotationValues);
-				mem.deallocate(scaleFrames);
-				mem.deallocate(scaleTimes);
-				mem.deallocate(scaleValues);
-
-				indexes = nullptr;
-				positionFrames = nullptr;
-				positionTimes = nullptr;
-				positionValues = nullptr;
-				rotationFrames = nullptr;
-				rotationTimes = nullptr;
-				rotationValues = nullptr;
-				scaleFrames = nullptr;
-				scaleTimes = nullptr;
-				scaleValues = nullptr;
-
-				bones = 0;
-				duration = 0;
+				indexes.clear();
+				positionFrames.clear();
+				positionTimes.clear();
+				positionValues.clear();
+				rotationFrames.clear();
+				rotationTimes.clear();
+				rotationValues.clear();
+				scaleFrames.clear();
+				scaleTimes.clear();
+				scaleValues.clear();
 			}
 
-			MemoryArena mem;
+			uint32 bones = 0;
+			std::vector<uint16> indexes;
 
-			uint64 duration;
-			uint32 bones;
-			uint16 *indexes;
+			std::vector<uint16> positionFrames;
+			std::vector<std::vector<real>> positionTimes;
+			std::vector<std::vector<vec3>> positionValues;
 
-			uint16 *positionFrames;
-			real **positionTimes;
-			vec3 **positionValues;
+			std::vector<uint16> rotationFrames;
+			std::vector<std::vector<real>> rotationTimes;
+			std::vector<std::vector<quat>> rotationValues;
 
-			uint16 *rotationFrames;
-			real **rotationTimes;
-			quat **rotationValues;
-
-			uint16 *scaleFrames;
-			real **scaleTimes;
-			vec3 **scaleValues;
+			std::vector<uint16> scaleFrames;
+			std::vector<std::vector<real>> scaleTimes;
+			std::vector<std::vector<vec3>> scaleValues;
 
 			uint16 framesBoneIndex(uint16 boneIndex) const
 			{
@@ -107,70 +59,56 @@ namespace cage
 #endif // CAGE_DEBUG
 	}
 
-	void SkeletalAnimation::allocate(uint64 duration, uint32 bones, const uint16 *indexes, const uint16 *positionFrames, const uint16 *rotationFrames, const uint16 *scaleFrames, const void *data)
+	void SkeletalAnimation::deserialize(uint32 bonesCount, PointerRange<const char> buffer)
 	{
 		SkeletalAnimationImpl *impl = (SkeletalAnimationImpl*)this;
 		impl->deallocate();
-		impl->duration = duration;
-		impl->bones = bones;
-		impl->indexes = (uint16*)impl->mem.allocate(sizeof(uint16) * bones, sizeof(uintPtr));
-		impl->positionFrames = (uint16*)impl->mem.allocate(sizeof(uint16) * bones, sizeof(uintPtr));
-		impl->positionTimes = (real**)impl->mem.allocate(sizeof(real*) * bones, sizeof(uintPtr));
-		impl->positionValues = (vec3**)impl->mem.allocate(sizeof(vec3*) * bones, sizeof(uintPtr));
-		impl->rotationFrames = (uint16*)impl->mem.allocate(sizeof(uint16) * bones, sizeof(uintPtr));
-		impl->rotationTimes = (real**)impl->mem.allocate(sizeof(real*) * bones, sizeof(uintPtr));
-		impl->rotationValues = (quat**)impl->mem.allocate(sizeof(quat*) * bones, sizeof(uintPtr));
-		impl->scaleFrames = (uint16*)impl->mem.allocate(sizeof(uint16) * bones, sizeof(uintPtr));
-		impl->scaleTimes = (real**)impl->mem.allocate(sizeof(real*) * bones, sizeof(uintPtr));
-		impl->scaleValues = (vec3**)impl->mem.allocate(sizeof(vec3*) * bones, sizeof(uintPtr));
 
-		detail::memcpy(impl->indexes, indexes, sizeof(uint16) * bones);
-		detail::memcpy(impl->positionFrames, positionFrames, sizeof(uint16) * bones);
-		detail::memcpy(impl->rotationFrames, rotationFrames, sizeof(uint16) * bones);
-		detail::memcpy(impl->scaleFrames, scaleFrames, sizeof(uint16) * bones);
+		impl->indexes.resize(bonesCount);
+		impl->positionFrames.resize(bonesCount);
+		impl->rotationFrames.resize(bonesCount);
+		impl->scaleFrames.resize(bonesCount);
+		impl->positionTimes.resize(bonesCount);
+		impl->positionValues.resize(bonesCount);
+		impl->rotationTimes.resize(bonesCount);
+		impl->rotationValues.resize(bonesCount);
+		impl->scaleTimes.resize(bonesCount);
+		impl->scaleValues.resize(bonesCount);
 
-		Deserializer des({ (const char *)data, (const char *)m }); // wtf
-		for (uint16 b = 0; b < bones; b++)
+		Deserializer des(buffer);
+		des.read(bufferCast<char, uint16>(impl->indexes));
+		des.read(bufferCast<char, uint16>(impl->positionFrames));
+		des.read(bufferCast<char, uint16>(impl->rotationFrames));
+		des.read(bufferCast<char, uint16>(impl->scaleFrames));
+
+		for (uint16 b = 0; b < bonesCount; b++)
 		{
 			if (impl->positionFrames[b])
 			{
-				impl->positionTimes[b] = (real*)impl->mem.allocate(sizeof(real) * impl->positionFrames[b], sizeof(uintPtr));
-				des.read(impl->positionTimes[b], positionFrames[b] * sizeof(float));
-				impl->positionValues[b] = (vec3*)impl->mem.allocate(sizeof(vec3) * impl->positionFrames[b], sizeof(uintPtr));
-				des.read(impl->positionValues[b], positionFrames[b] * sizeof(vec3));
-			}
-			else
-			{
-				impl->positionTimes[b] = nullptr;
-				impl->positionValues[b] = nullptr;
+				impl->positionTimes[b].resize(impl->positionFrames[b]);
+				impl->positionValues[b].resize(impl->positionFrames[b]);
+				des.read(bufferCast<char, real>(impl->positionTimes[b]));
+				des.read(bufferCast<char, vec3>(impl->positionValues[b]));
 			}
 
 			if (impl->rotationFrames[b])
 			{
-				impl->rotationTimes[b] = (real*)impl->mem.allocate(sizeof(real) * impl->rotationFrames[b], sizeof(uintPtr));
-				des.read(impl->rotationTimes[b], rotationFrames[b] * sizeof(float));
-				impl->rotationValues[b] = (quat*)impl->mem.allocate(sizeof(quat) * impl->rotationFrames[b], sizeof(uintPtr));
-				des.read(impl->rotationValues[b], rotationFrames[b] * sizeof(quat));
-			}
-			else
-			{
-				impl->rotationTimes[b] = nullptr;
-				impl->rotationValues[b] = nullptr;
+				impl->rotationTimes[b].resize(impl->rotationFrames[b]);
+				impl->rotationValues[b].resize(impl->rotationFrames[b]);
+				des.read(bufferCast<char, real>(impl->rotationTimes[b]));
+				des.read(bufferCast<char, quat>(impl->rotationValues[b]));
 			}
 
 			if (impl->scaleFrames[b])
 			{
-				impl->scaleTimes[b] = (real*)impl->mem.allocate(sizeof(real) * impl->scaleFrames[b], sizeof(uintPtr));
-				des.read(impl->scaleTimes[b], scaleFrames[b] * sizeof(float));
-				impl->scaleValues[b] = (vec3*)impl->mem.allocate(sizeof(vec3) * impl->scaleFrames[b], sizeof(uintPtr));
-				des.read(impl->scaleValues[b], scaleFrames[b] * sizeof(vec3));
-			}
-			else
-			{
-				impl->scaleTimes[b] = nullptr;
-				impl->scaleValues[b] = nullptr;
+				impl->scaleTimes[b].resize(impl->scaleFrames[b]);
+				impl->scaleValues[b].resize(impl->scaleFrames[b]);
+				des.read(bufferCast<char, real>(impl->scaleTimes[b]));
+				des.read(bufferCast<char, vec3>(impl->scaleValues[b]));
 			}
 		}
+
+		CAGE_ASSERT(des.available() == 0);
 	}
 
 	namespace
@@ -187,28 +125,29 @@ namespace cage
 			return res;
 		}
 
-		uint16 findFrameIndex(real coef, const real *times, uint16 length)
+		uint16 findFrameIndex(real coef, const std::vector<real> &times)
 		{
 			CAGE_ASSERT(coef >= 0 && coef <= 1);
-			CAGE_ASSERT(length > 0);
+			CAGE_ASSERT(!times.empty());
 			if (coef <= times[0])
 				return 0;
-			if (coef >= times[length - 1])
-				return length - 1;
-			auto it = std::lower_bound(times, times + length, coef);
-			return numeric_cast<uint16>(it - times - 1);
+			if (coef >= times[times.size() - 1])
+				return numeric_cast<uint16>(times.size() - 1);
+			auto it = std::lower_bound(times.begin(), times.end(), coef);
+			return numeric_cast<uint16>(it - times.begin() - 1);
 		}
 
 		template<class Type>
-		Type evaluateMatrix(real coef, uint16 frames, const real *times, const Type *values)
+		Type evaluateMatrix(real coef, uint16 frames, const std::vector<real> &times, const std::vector<Type> &values)
 		{
+			CAGE_ASSERT(frames == times.size());
 			switch (frames)
 			{
 			case 0: return Type();
 			case 1: return values[0];
 			default:
 			{
-				uint16 frameIndex = findFrameIndex(coef, times, frames);
+				uint16 frameIndex = findFrameIndex(coef, times);
 				if (frameIndex + 1 == frames)
 					return values[frameIndex];
 				else
@@ -238,12 +177,6 @@ namespace cage
 		return T * R * S;
 	}
 
-	uint64 SkeletalAnimation::duration() const
-	{
-		SkeletalAnimationImpl *impl = (SkeletalAnimationImpl*)this;
-		return impl->duration;
-	}
-
 	Holder<SkeletalAnimation> newSkeletalAnimation()
 	{
 		return detail::systemArena().createImpl<SkeletalAnimation, SkeletalAnimationImpl>();
@@ -255,7 +188,7 @@ namespace cage
 		{
 			if (!animation)
 				return 0;
-			uint64 duration = animation->duration();
+			uint64 duration = animation->duration;
 			if (duration <= 1)
 				return 0;
 			double sample = ((double)((sint64)emitTime - (sint64)animationStart) * (double)animationSpeed.value + (double)animationOffset.value) / (double)duration;

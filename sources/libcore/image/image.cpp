@@ -2,6 +2,7 @@
 
 #include <cage-core/math.h>
 #include <cage-core/color.h>
+#include <cage-core/serialization.h>
 
 #include <utility>
 
@@ -428,21 +429,21 @@ namespace cage
 	{
 		ImageImpl *impl = (ImageImpl*)this;
 		CAGE_ASSERT(impl->format == ImageFormatEnum::U8);
-		return { (uint8*)impl->mem.data(), (uint8*)(impl->mem.data() + impl->mem.size()) };
+		return bufferCast<uint8, char>(impl->mem);
 	}
 
 	PointerRange<const uint16> Image::rawViewU16() const
 	{
 		ImageImpl *impl = (ImageImpl*)this;
 		CAGE_ASSERT(impl->format == ImageFormatEnum::U16);
-		return { (uint16*)impl->mem.data(), (uint16*)(impl->mem.data() + impl->mem.size()) };
+		return bufferCast<uint16, char>(impl->mem);
 	}
 
 	PointerRange<const float> Image::rawViewFloat() const
 	{
 		ImageImpl *impl = (ImageImpl*)this;
 		CAGE_ASSERT(impl->format == ImageFormatEnum::Float);
-		return { (float*)impl->mem.data(), (float*)(impl->mem.data() + impl->mem.size()) };
+		return bufferCast<float, char>(impl->mem);
 	}
 
 	Holder<Image> Image::copy() const

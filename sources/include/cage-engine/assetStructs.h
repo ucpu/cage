@@ -9,13 +9,13 @@ namespace cage
 	/*
 	struct CAGE_ENGINE_API ShaderProgramHeader
 	{
-	// follows:
-	// number of stages, uint32
-	// stage name, uint32
-	// length, uint32
-	// stage code, array of chars
-	// stage name, uint32
-	// ...
+		// follows:
+		// number of stages, uint32
+		// stage name, uint32
+		// length, uint32
+		// stage code, array of chars
+		// stage name, uint32
+		// ...
 	};
 	*/
 

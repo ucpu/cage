@@ -89,17 +89,17 @@ namespace cage
 			return false;
 
 		char buffer[string::MaxLength + 1];
-		uintPtr s = numeric_cast<uint32>(min(origLeft, (uintPtr)string::MaxLength));
-		read({ buffer, buffer + s });
-		const char *b = buffer;
-		if (!detail::readLine(line, b, s, origLeft >= string::MaxLength))
+		PointerRange<char> pr1 = { buffer, buffer + numeric_cast<uint32>(min(origLeft, (uintPtr)string::MaxLength)) };
+		read(pr1);
+		PointerRange<const char> pr2 = pr1;
+		if (!detail::readLine(line, pr2, origLeft >= string::MaxLength))
 		{
 			seek(origPos);
 			if (origLeft >= string::MaxLength)
 				CAGE_THROW_ERROR(Exception, "line too long");
 			return false;
 		}
-		seek(min(origPos + (b - buffer), origSize));
+		seek(min(origPos + (pr2.begin() - pr1.begin()), origSize));
 		return true;
 	}
 

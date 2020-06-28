@@ -36,7 +36,7 @@ void processRaw()
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "data are under compression threshold");
 
 	Holder<File> f = newFile(outputFileName, FileMode(false, true));
-	f->write(bytesView(h));
+	f->write(bufferView(h));
 	f->write(data);
 	f->close();
 }

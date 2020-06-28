@@ -149,7 +149,6 @@ namespace cage
 			Holder<SwapBufferGuard> swapController;
 
 			mat4 tmpArmature[CAGE_SHADER_MAX_BONES];
-			mat4 tmpArmature2[CAGE_SHADER_MAX_BONES];
 
 			InterpolationTimingCorrector itc;
 			uint64 emitTime = 0;
@@ -418,14 +417,14 @@ namespace cage
 					{
 						CAGE_ASSERT(s->bonesCount() == bonesCount);
 						real c = detail::evalCoefficientForSkeletalAnimation(an.get(), dispatchTime, ba.startTime, ba.speed, ba.offset);
-						s->animateSkeleton(an.get(), c, tmpArmature, tmpArmature2);
+						s->animateSkeleton(an.get(), c, tmpArmature);
 						initialized = true;
 					}
 				}
 				if (!initialized)
 				{
 					for (uint32 i = 0; i < bonesCount; i++)
-						tmpArmature2[i] = mat4();
+						tmpArmature[i] = mat4();
 				}
 				Holder<Mesh> mesh = engineAssets()->get<AssetSchemeIndexMesh, Mesh>(HashString("cage/mesh/bone.obj"));
 				if (!mesh)
@@ -434,7 +433,7 @@ namespace cage
 				for (uint32 i = 0; i < bonesCount; i++)
 				{
 					e->object.color = colorGammaToLinear(colorHsvToRgb(vec3(real(i) / real(bonesCount), 1, 1)));
-					mat4 m = model * tmpArmature2[i];
+					mat4 m = model * tmpArmature[i];
 					mat4 mvp = pass->viewProj * m;
 					addRenderableMesh(pass, e, mesh.share(), m, mvp, mvp);
 				}
@@ -447,7 +446,7 @@ namespace cage
 
 			void addRenderableMesh(RenderPassImpl *pass, EmitObject *e, Holder<Mesh> m, const mat4 &model, const mat4 &mvp, const mat4 &mvpPrev)
 			{
-				if (!frustumCulling(m->getBoundingBox(), mvp))
+				if (!intersectsFrustum(m->getBoundingBox(), mvp))
 					return;
 				if (pass->targetShadowmap != 0 && none(m->getFlags() & MeshRenderFlags::ShadowCast))
 					return;
@@ -518,9 +517,9 @@ namespace cage
 						{
 							CAGE_ASSERT(skel->bonesCount() == bonesCount);
 							real c = detail::evalCoefficientForSkeletalAnimation(an.get(), dispatchTime, ba.startTime, ba.speed, ba.offset);
-							skel->animateSkin(an.get(), c, tmpArmature, tmpArmature2);
+							skel->animateSkin(an.get(), c, tmpArmature);
 							for (uint32 i = 0; i < bonesCount; i++)
-								sa[i] = Mat3x4(tmpArmature2[i]);
+								sa[i] = Mat3x4(tmpArmature[i]);
 							initialized = true;
 						}
 					}
@@ -549,14 +548,12 @@ namespace cage
 						continue;
 
 					Holder<Texts::Render> r = detail::systemArena().createHolder<Texts::Render>();
-					uint32 count = 0;
-					font->transcript(s, nullptr, count);
+					uint32 count = font->glyphsCount(s);
 					r->glyphs.resize(count);
-					font->transcript(s, r->glyphs.data(), count);
+					font->transcript(s, r->glyphs);
 					r->color = colorGammaToLinear(e.text.color) * e.text.intensity;
 					r->format.size = 1;
-					vec2 size;
-					font->size(r->glyphs.data(), count, r->format, size);
+					vec2 size = font->size(r->glyphs, r->format);
 					r->format.wrapWidth = size[0];
 					r->transform = pass->viewProj * e.model * mat4(vec3(size * vec2(-0.5, 0.5), 0));
 
@@ -597,12 +594,12 @@ namespace cage
 					break;
 				case LightTypeEnum::Spot:
 					mvpMat = pass->viewProj * light->model * lightSpotCone(lightRange(light->light.color, light->light.attenuation), light->light.spotAngle);
-					if (!frustumCulling(meshCone->getBoundingBox(), mvpMat))
+					if (!intersectsFrustum(meshCone->getBoundingBox(), mvpMat))
 						return; // this light's volume is outside view frustum
 					break;
 				case LightTypeEnum::Point:
 					mvpMat = pass->viewProj * light->model * mat4::scale(lightRange(light->light.color, light->light.attenuation));
-					if (!frustumCulling(meshSphere->getBoundingBox(), mvpMat))
+					if (!intersectsFrustum(meshSphere->getBoundingBox(), mvpMat))
 						return; // this light's volume is outside view frustum
 					break;
 				}

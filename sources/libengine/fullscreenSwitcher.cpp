@@ -122,18 +122,13 @@ namespace cage
 		};
 	}
 
-	FullscreenSwitcher::FullscreenSwitcher() :
-		keyToggleFullscreen(300), // f11
-		keyModifiers(ModifiersFlags::None)
-	{}
-
 	void FullscreenSwitcher::update(bool fullscreen)
 	{
 		FullscreenSwitcherImpl *impl = (FullscreenSwitcherImpl*)this;
 		impl->update(fullscreen);
 	}
 
-	FullscreenSwitcherCreateConfig::FullscreenSwitcherCreateConfig(bool defaultFullscreen) : window(nullptr), defaultFullscreen(defaultFullscreen)
+	FullscreenSwitcherCreateConfig::FullscreenSwitcherCreateConfig(bool defaultFullscreen) : defaultFullscreen(defaultFullscreen)
 	{
 		configPrefix = detail::getConfigAppPrefix();
 		window = cage::engineWindow();

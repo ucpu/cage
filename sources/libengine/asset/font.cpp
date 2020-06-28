@@ -17,19 +17,19 @@ namespace cage
 			Deserializer des(context->originalData());
 			FontHeader data;
 			des >> data;
-			const void *Image = des.advance(data.texSize);
-			const void *glyphs = des.advance(sizeof(FontHeader::GlyphData) * data.glyphCount);
-			const real *kerning = nullptr;
+			PointerRange<const char> image = des.advance(data.texSize);
+			PointerRange<const char> glyphs = des.advance(sizeof(FontHeader::GlyphData) * data.glyphCount);
+			PointerRange<const char> kerning;
 			if ((data.flags & FontFlags::Kerning) == FontFlags::Kerning)
-				kerning = (const real*)des.advance(data.glyphCount * data.glyphCount * sizeof(real));
-			const uint32 *charmapChars = (const uint32*)des.advance(sizeof(uint32) * data.charCount);
-			const uint32 *charmapGlyphs = (const uint32*)des.advance(sizeof(uint32) * data.charCount);
+				kerning = des.advance(data.glyphCount * data.glyphCount * sizeof(real));
+			PointerRange<const char> charmapChars = des.advance(sizeof(uint32) * data.charCount);
+			PointerRange<const char> charmapGlyphs = des.advance(sizeof(uint32) * data.charCount);
 			CAGE_ASSERT(des.available() == 0);
 
 			font->setLine(data.lineHeight, data.firstLineOffset);
-			font->setImage(data.texWidth, data.texHeight, data.texSize, Image);
-			font->setGlyphs(data.glyphCount, glyphs, kerning);
-			font->setCharmap(data.charCount, charmapChars, charmapGlyphs);
+			font->setImage(data.texWidth, data.texHeight, image);
+			font->setGlyphs(glyphs, bufferCast<const real>(kerning));
+			font->setCharmap(bufferCast<const uint32>(charmapChars), bufferCast<const uint32>(charmapGlyphs));
 
 			context->assetHolder = templates::move(font).cast<void>();
 		}

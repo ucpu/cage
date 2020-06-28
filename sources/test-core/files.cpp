@@ -134,14 +134,14 @@ void testFiles()
 		const string bs = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
 
 		{
-			Holder<File> f = newFile("testdir/files/lines", FileMode(false, true));
+			Holder<File> f = writeFile("testdir/files/lines");
 			string s = bs;
 			while (!s.empty())
 				f->writeLine(s.split("/"));
 		}
 
 		{
-			Holder<File> f = newFile("testdir/files/lines", FileMode(true, false));
+			Holder<File> f = readFile("testdir/files/lines");
 			string s = bs;
 			for (string line; f->readLine(line);)
 				CAGE_TEST(line == s.split("/"));

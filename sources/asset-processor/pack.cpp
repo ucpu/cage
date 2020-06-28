@@ -31,8 +31,8 @@ void processPack()
 	h.dependenciesCount = numeric_cast<uint16>(assets.size());
 
 	Holder<File> f = newFile(outputFileName, FileMode(false, true));
-	f->write(bytesView(h));
+	f->write(bufferView(h));
 	for (uint32 it : assets)
-		f->write(bytesView(it));
+		f->write(bufferView(it));
 	f->close();
 }

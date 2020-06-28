@@ -13,9 +13,7 @@ namespace cage
 	{
 		void writeLine(Serializer &ser, const string &s)
 		{
-			ser.write({ s.c_str(), s.c_str() + s.length() });
-			const char eol[2] = "\n";
-			ser.write({ eol, eol + 1, });
+			ser.writeLine(s);
 		}
 
 		stringizer writeAttr(const vec3 &v)

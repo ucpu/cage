@@ -1,4 +1,5 @@
 #include <cage-core/swapBufferGuard.h>
+#include <cage-core/serialization.h>
 
 #include <cage-engine/opengl.h>
 #include "../private.h"
@@ -25,7 +26,7 @@ namespace cage
 		data.font->bind(context.fontMesh, context.fontShader);
 		context.fontShader->uniform(0, data.transform);
 		context.fontShader->uniform(4, data.color);
-		data.font->render(data.glyphs, data.count, data.format, data.cursor);
+		data.font->render({ data.glyphs, data.glyphs + data.count }, data.format, data.cursor);
 	}
 
 	void RenderableImage::render(GuiImpl *impl)
@@ -88,7 +89,7 @@ namespace cage
 				for (uint32 i = 0; i < (uint32)GuiElementTypeEnum::TotalElements; i++)
 					copyTextureUv(s.layouts[i].textureUv, textureUvs[i]);
 				s.elementsGpuBuffer->bind();
-				s.elementsGpuBuffer->writeRange(textureUvs, 0, sizeof(textureUvs));
+				s.elementsGpuBuffer->writeRange(bufferCast<const char, GuiSkinElementLayout::TextureUv>(textureUvs), 0);
 			}
 
 			// render all

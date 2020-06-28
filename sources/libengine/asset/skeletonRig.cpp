@@ -17,11 +17,7 @@ namespace cage
 			Deserializer des(context->originalData());
 			SkeletonRigHeader data;
 			des >> data;
-			uint16 *boneParents = (uint16*)des.advance(sizeof(uint16) * data.bonesCount);
-			mat4 *baseMatrices = (mat4*)des.advance(sizeof(mat4) * data.bonesCount);
-			mat4 *invRestMatrices = (mat4*)des.advance(sizeof(mat4) * data.bonesCount);
-			skl->allocate(data.globalInverse, data.bonesCount, boneParents, baseMatrices, invRestMatrices);
-			CAGE_ASSERT(des.available() == 0);
+			skl->deserialize(data.globalInverse, data.bonesCount, des.advance(des.available()));
 
 			context->assetHolder = templates::move(skl).cast<void>();
 		}

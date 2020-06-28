@@ -277,7 +277,7 @@ namespace
 			CAGE_LOG(SeverityEnum::Warning, "database", "assets database file version mismatch, database will not be loaded");
 			return;
 		}
-		f->read(bytesView(timestamp));
+		f->read(bufferView<char>(timestamp));
 		corruptedDatabanks.load(f.get());
 		assets.load(f.get());
 		if (!f->readLine(b) || b != databaseEnd)
@@ -295,7 +295,7 @@ namespace
 			Holder<File> f = newFile(configPathDatabase, FileMode(false, true));
 			f->writeLine(databaseBegin);
 			f->writeLine(databaseVersion);
-			f->write(bytesView(timestamp));
+			f->write(bufferView(timestamp));
 			corruptedDatabanks.save(f.get());
 			assets.save(f.get());
 			f->writeLine(databaseEnd);

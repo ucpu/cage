@@ -428,6 +428,10 @@ namespace cage
 
 
 
+	bool intersects(const vec3 &a, const vec3 &b)
+	{
+		return distance(a, b) <= 1e-5;
+	}
 
 	bool intersects(const vec3 &point, const line &other)
 	{

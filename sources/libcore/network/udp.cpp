@@ -610,7 +610,7 @@ namespace cage
 					ser << cmd.data.msg.channel << cmd.data.msg.msgSeqn;
 					uint16 size = numeric_cast<uint16>(cmd.msgData.size);
 					ser << size;
-					ser.write(cmd.msgData.buffer->data(), size);
+					ser.write({ cmd.msgData.buffer->data(), cmd.msgData.buffer->data() + cmd.msgData.size });
 				} break;
 				case CmdTypeEnum::longMessage:
 				{
@@ -618,7 +618,7 @@ namespace cage
 					uint32 totalSize = numeric_cast<uint32>(cmd.msgData.buffer->size());
 					uint16 index = numeric_cast<uint16>(cmd.msgData.offset / LongSize);
 					ser << totalSize << index;
-					ser.write(cmd.msgData.buffer->data() + cmd.msgData.offset, cmd.msgData.size);
+					ser.write({ cmd.msgData.buffer->data() + cmd.msgData.offset, cmd.msgData.buffer->data() + cmd.msgData.offset + cmd.msgData.size });
 				} break;
 				case CmdTypeEnum::statsDiscovery:
 				{
@@ -942,7 +942,7 @@ namespace cage
 					else
 					{
 						msg.data.resize(size);
-						d.read(msg.data.data(), size);
+						d.read(msg.data);
 						receiving.staging[msg.channel][msg.msgSeqn] = templates::move(msg);
 					}
 				} break;
@@ -974,7 +974,7 @@ namespace cage
 						else if (msg.data.size() != totalSize)
 							CAGE_THROW_ERROR(Exception, "inconsistent message total size");
 						msg.parts[index] = true;
-						d.read(msg.data.data() + index * LongSize, size);
+						d.read({ msg.data.data() + index * LongSize, msg.data.data() + index * LongSize + size });
 					}
 				} break;
 				case CmdTypeEnum::statsDiscovery:

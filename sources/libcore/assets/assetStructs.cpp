@@ -8,6 +8,25 @@
 
 namespace cage
 {
+	/*
+	struct CAGE_CORE_API TextPackHeader
+	{
+		// follows:
+		// count, uint32, number of texts
+		// name, uint32
+		// length, uint32
+		// array of chars
+		// name, uint32
+		// ...
+	};
+
+	struct CAGE_CORE_API ColliderHeader
+	{
+		// follows:
+		// serialized collider data (possibly compressed)
+	};
+	*/
+
 	namespace
 	{
 		void defaultDecompress(const AssetContext *context)

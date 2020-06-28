@@ -65,9 +65,6 @@ namespace cage
 		return impl->name;
 	}
 
-	SoundContextCreateConfig::SoundContextCreateConfig() : linksMemory(1024 * 1024)
-	{}
-
 	Holder<SoundContext> newSoundContext(const SoundContextCreateConfig &config, const string &name)
 	{
 		return detail::systemArena().createImpl<SoundContext, SoundContextImpl>(config, name);

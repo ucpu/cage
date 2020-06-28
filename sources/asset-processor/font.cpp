@@ -329,16 +329,16 @@ namespace
 		{
 			const auto &r = texels->rawViewU8();
 			CAGE_ASSERT(r.size() == data.texSize);
-			sr.write(r.data(), r.size());
+			sr.write(bufferCast(r));
 		}
 		for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
 			sr << glyphs[glyphIndex].data;
 		if (kerning.size() > 0)
-			sr.write(&kerning[0], sizeof(kerning[0]) * kerning.size());
+			sr.write(bufferCast<char, real>(kerning));
 		if (charsetChars.size() > 0)
 		{
-			sr.write(&charsetChars[0], sizeof(charsetChars[0]) * charsetChars.size());
-			sr.write(&charsetGlyphs[0], sizeof(charsetGlyphs[0]) * charsetGlyphs.size());
+			sr.write(bufferCast<char, uint32>(charsetChars));
+			sr.write(bufferCast<char, uint32>(charsetGlyphs));
 		}
 
 		CAGE_ASSERT(h.originalSize == buf.size());
@@ -348,7 +348,7 @@ namespace
 		h.compressedSize = buf.size();
 
 		Holder<File> f = writeFile(outputFileName);
-		f->write(bytesView(h));
+		f->write(bufferView(h));
 		f->write(buf);
 		f->close();
 	}

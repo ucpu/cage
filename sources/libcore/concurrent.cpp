@@ -377,11 +377,6 @@ namespace cage
 		impl->lock();;
 	}
 
-	void Barrier::unlock()
-	{
-		// does nothing
-	}
-
 	Holder<Barrier> newBarrier(uint32 value)
 	{
 		return detail::systemArena().createImpl<Barrier, BarrierImpl>(value);

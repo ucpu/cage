@@ -171,7 +171,7 @@ namespace cage
 			const uint32 colorMapSize = head.colorMapLength * colorMapElementSize;
 			const uint8 *colorMap = nullptr;
 			if (head.colorMapType == 1)
-				colorMap = (uint8*)des.advance(colorMapSize);
+				colorMap = (uint8*)des.advance(colorMapSize).data();
 
 			impl->width = head.width;
 			impl->height = head.height;
@@ -206,14 +206,14 @@ namespace cage
 			{
 				if (head.bits == 24 || head.bits == 32)
 				{
-					ser.write(des.advance(imageSize), imageSize);
+					ser.write(des.advance(imageSize));
 					swapRB((uint8*)impl->mem.data(), pixelsCount, pixelSize);
 					return;
 				}
 			} break;
 			case 3: // uncompressed mono
 			{
-				return ser.write(des.advance(imageSize), imageSize);
+				return ser.write(des.advance(imageSize));
 			} break;
 			case 10: // compressed color
 			{
@@ -289,7 +289,7 @@ namespace cage
 
 		const uint32 scanline = impl->width * impl->channels;
 		const uint32 size = scanline * impl->height;
-		uint8 *pixels = (uint8*)ser.advance(size);
+		uint8 *pixels = (uint8*)ser.advance(size).data();
 		for (uint32 i = 0; i < impl->height; i++)
 			detail::memcpy(pixels + (impl->height - i - 1) * scanline, impl->mem.data() + i * scanline, scanline);
 		if (impl->channels > 1)
@@ -297,7 +297,8 @@ namespace cage
 
 		const uint32 dummy = 0;
 		ser << dummy << dummy;
-		ser.write("TRUEVISION-XFILE.", 18);
+		constexpr const char signature[18] = "TRUEVISION-XFILE.";
+		ser.write(signature);
 
 		return buf;
 	}

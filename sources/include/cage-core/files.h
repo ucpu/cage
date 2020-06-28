@@ -117,7 +117,7 @@ namespace cage
 	// moving a directory to different drive may fail
 	CAGE_CORE_API void pathMove(const string &from, const string &to);
 
-	// permanently removes the file or the folder including all sub-folders
+	// permanently removes the file or folder including all sub-folders
 	CAGE_CORE_API void pathRemove(const string &path);
 
 	// path modification time is not related to any other source of time

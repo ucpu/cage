@@ -466,9 +466,6 @@ namespace cage
 		impl->update(time);
 	}
 
-	SpeakerCreateConfig::SpeakerCreateConfig() : sampleRate(0), deviceRaw(false)
-	{}
-
 	Holder<Speaker> newSpeakerOutput(SoundContext *context, const SpeakerCreateConfig &config, string name)
 	{
 		return detail::systemArena().createImpl<Speaker, soundSpeakerImpl>(context, config, name);
