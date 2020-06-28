@@ -26,7 +26,6 @@ namespace cage
 				scaleValues.clear();
 			}
 
-			uint32 bones = 0;
 			std::vector<uint16> indexes;
 
 			std::vector<uint16> positionFrames;
@@ -43,10 +42,9 @@ namespace cage
 
 			uint16 framesBoneIndex(uint16 boneIndex) const
 			{
-				// todo rewrite as binary search
-				for (uint32 i = 0; i < bones; i++)
-					if (indexes[i] == boneIndex)
-						return i;
+				auto a = std::lower_bound(indexes.begin(), indexes.end(), boneIndex);
+				if (*a == boneIndex)
+					return a - indexes.begin();
 				return m;
 			}
 		};

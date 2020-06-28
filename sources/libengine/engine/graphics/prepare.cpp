@@ -610,7 +610,7 @@ namespace cage
 			{
 				if ((light->light.sceneMask & pass->camera->camera.sceneMask) == 0)
 					return;
-				CAGE_ASSERT(!!light->shadowmaps.count(pass->camera) == !!light->shadowmap);
+				//CAGE_ASSERT(!!light->shadowmaps.count(pass->camera) == !!light->shadowmap);
 				Lights *lig = nullptr;
 				if (light->shadowmap)
 				{

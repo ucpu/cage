@@ -58,7 +58,7 @@
 #endif
 #endif
 #ifdef CAGE_ASSERT_ENABLED
-#define CAGE_ASSERT(EXPR) { if (!(EXPR)) ::cage::privat::runtimeAssertFailure(#EXPR, __FILE__, __LINE__, __FUNCTION__); }
+#define CAGE_ASSERT(EXPR) { if (!(EXPR)) { ::cage::privat::runtimeAssertFailure(#EXPR, __FILE__, __LINE__, __FUNCTION__); int i_ = 42; } }
 #else
 #define CAGE_ASSERT(EXPR) {}
 #endif

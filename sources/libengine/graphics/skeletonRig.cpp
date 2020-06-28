@@ -13,7 +13,6 @@ namespace cage
 		public:
 			void deallocate()
 			{
-				totalBones = 0;
 				boneParents.clear();
 				baseMatrices.clear();
 				invRestMatrices.clear();
@@ -24,7 +23,6 @@ namespace cage
 			std::vector<mat4> baseMatrices;
 			std::vector<mat4> invRestMatrices;
 			std::vector<mat4> temporary;
-			uint16 totalBones = 0;
 		};
 	}
 
@@ -41,7 +39,6 @@ namespace cage
 		impl->deallocate();
 
 		impl->globalInverse = globalInverse;
-		impl->totalBones = bonesCount;
 
 		impl->boneParents.resize(bonesCount);
 		impl->baseMatrices.resize(bonesCount);
@@ -59,7 +56,7 @@ namespace cage
 	uint32 SkeletonRig::bonesCount() const
 	{
 		SkeletonRigImpl *impl = (SkeletonRigImpl*)this;
-		return impl->totalBones;
+		return numeric_cast<uint32>(impl->boneParents.size());
 	}
 
 	void SkeletonRig::animateSkin(const SkeletalAnimation *animation, real coef, PointerRange<mat4> output) const
@@ -67,9 +64,10 @@ namespace cage
 		CAGE_ASSERT(coef >= 0 && coef <= 1);
 		SkeletonRigImpl *impl = (SkeletonRigImpl*)this;
 
-		for (uint32 i = 0; i < impl->totalBones; i++)
+		const uint32 totalBones = numeric_cast<uint32>(impl->boneParents.size());
+		for (uint32 i = 0; i < totalBones; i++)
 		{
-			uint16 p = impl->boneParents[i];
+			const uint16 p = impl->boneParents[i];
 			if (p == m)
 				impl->temporary[i] = mat4();
 			else
@@ -77,30 +75,27 @@ namespace cage
 				CAGE_ASSERT(p < i);
 				impl->temporary[i] = impl->temporary[p];
 			}
-			mat4 anim = animation->evaluate(i, coef);
+			const mat4 anim = animation->evaluate(i, coef);
 			impl->temporary[i] = impl->temporary[i] * (anim.valid() ? anim : impl->baseMatrices[i]);
 			output[i] = impl->globalInverse * impl->temporary[i] * impl->invRestMatrices[i];
 			CAGE_ASSERT(output[i].valid());
 		}
 	}
 
-	namespace
-	{
-		vec3 pos(const mat4 &m)
-		{
-			return vec3(m * vec4(0, 0, 0, 1));
-		}
-	}
-
 	void SkeletonRig::animateSkeleton(const SkeletalAnimation *animation, real coef, PointerRange<mat4> output) const
 	{
+		SkeletonRigImpl *impl = (SkeletonRigImpl*)this;
 		animateSkin(animation, coef, output); // compute temporary
 
-		SkeletonRigImpl *impl = (SkeletonRigImpl*)this;
-
-		for (uint32 i = 0; i < impl->totalBones; i++)
+		const auto &pos = [](const mat4 &m)
 		{
-			uint16 p = impl->boneParents[i];
+			return vec3(m * vec4(0, 0, 0, 1));
+		};
+
+		const uint32 totalBones = numeric_cast<uint32>(impl->boneParents.size());
+		for (uint32 i = 0; i < totalBones; i++)
+		{
+			const uint16 p = impl->boneParents[i];
 			if (p == m)
 				output[i] = mat4::scale(0); // degenerate
 			else
@@ -111,10 +106,17 @@ namespace cage
 				tr.position = a;
 				tr.scale = distance(a, b);
 				if (tr.scale > 0)
-					tr.orientation = quat(b - a, vec3(0, 1, 0));
+				{
+					vec3 q = abs(dominantAxis(b - a));
+					if (distanceSquared(q, vec3(0, 1, 0)) < 0.8)
+						q = vec3(1, 0, 0);
+					else
+						q = vec3(0, 1, 0);
+					tr.orientation = quat(b - a, q);
+				}
 				output[i] = impl->globalInverse * mat4(tr);
+				CAGE_ASSERT(output[i].valid());
 			}
-			CAGE_ASSERT(output[i].valid());
 		}
 	}
 
