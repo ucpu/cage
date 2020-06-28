@@ -1210,9 +1210,9 @@ namespace cage
 		constexpr PointerRange(T *begin, T *end) noexcept : begin_(begin), end_(end) {}
 		template<uint32 N>
 		constexpr PointerRange(T (&arr)[N]) noexcept : begin_(arr), end_(arr + N) {}
-		template<class U, std::enable_if_t<std::is_same_v<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>, int> = 0>
+		template<class U, std::enable_if_t<std::is_same<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>::value, int> = 0>
 		constexpr PointerRange(U &other) : begin_(other.data()), end_(other.data() + other.size()) {}
-		template<class U, std::enable_if_t<std::is_same_v<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>, int> = 0>
+		template<class U, std::enable_if_t<std::is_same<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>::value, int> = 0>
 		constexpr PointerRange(U &&other) : begin_(other.data()), end_(other.data() + other.size()) {}
 
 		constexpr T *begin() const noexcept { return begin_; }

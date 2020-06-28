@@ -8,6 +8,7 @@
 #include "private.h"
 
 #include <vector>
+#include <cstring>
 
 namespace cage
 {
