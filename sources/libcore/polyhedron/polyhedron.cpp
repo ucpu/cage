@@ -40,7 +40,7 @@ namespace cage
 
 	void Polyhedron::addVertex(const vec3 &position)
 	{
-		CAGE_ASSERT(verticesCount() || true);
+		verticesCount(); // validate vertices
 		PolyhedronImpl *impl = (PolyhedronImpl *)this;
 		if (impl->positions.empty())
 		{

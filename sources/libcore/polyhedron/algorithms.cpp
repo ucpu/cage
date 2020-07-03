@@ -1,5 +1,6 @@
 #include <cage-core/geometry.h>
 #include <cage-core/macros.h>
+#include <cage-core/pointerRangeHolder.h>
 
 #include "polyhedron.h"
 
@@ -348,6 +349,62 @@ namespace cage
 				CAGE_ASSERT(impl->indices.size() % 3 == 0);
 			}
 		}
+
+		uint32 componentsRoot(std::vector<uint32> &c, uint32 a)
+		{
+			if (c[a] == a)
+				return a;
+			uint32 r = componentsRoot(c, c[a]);
+			c[a] = r;
+			return r;
+		}
+
+		void componentsMerge(std::vector<uint32> &c, uint32 a, uint32 b)
+		{
+			uint32 aa = componentsRoot(c, a), bb = componentsRoot(c, b);
+			uint32 r = min(aa, bb);
+			c[aa] = c[bb] = r;
+			c[a] = c[b] = r;
+		}
+
+		Holder<PointerRange<Holder<Polyhedron>>> splitComponentsTriangles(const PolyhedronImpl *src)
+		{
+			std::vector<uint32> components; // components[vertexIndex] = vertexIndex
+			components.resize(src->positions.size());
+			std::iota(components.begin(), components.end(), (uint32)0);
+
+			const uint32 trisCnt = numeric_cast<uint32>(src->indices.size() / 3);
+			for (uint32 t = 0; t < trisCnt; t++)
+			{
+				componentsMerge(components, src->indices[t * 3 + 0], src->indices[t * 3 + 1]);
+				componentsMerge(components, src->indices[t * 3 + 1], src->indices[t * 3 + 2]);
+			}
+
+			const uint32 compsCount = numeric_cast<uint32>(components.size());
+			for (uint32 i = 0; i < compsCount; i++)
+				components[i] = componentsRoot(components, i);
+
+			const uint32 indsCount = numeric_cast<uint32>(src->indices.size());
+			std::vector<uint32> inds;
+			inds.reserve(indsCount);
+			PointerRangeHolder<Holder<Polyhedron>> result;
+			for (uint32 c = 0; c < compsCount; c++)
+			{
+				if (components[c] != c)
+					continue;
+				Holder<Polyhedron> p = src->copy();
+				for (uint32 i = 0; i < indsCount; i++)
+				{
+					if (components[src->index(i)] == c)
+						inds.push_back(src->index(i));
+				}
+				p->indices(inds);
+				removeUnusedVertices((PolyhedronImpl *)p.get());
+				inds.clear();
+				result.push_back(templates::move(p));
+			}
+			return result;
+		}
 	}
 
 	void Polyhedron::convertToIndexed()
@@ -574,7 +631,7 @@ namespace cage
 
 	void Polyhedron::discardInvalid()
 	{
-		CAGE_ASSERT(verticesCount() + 1); // assert that vertices are consistent
+		verticesCount(); // validate vertices
 		PolyhedronImpl *impl = (PolyhedronImpl *)this;
 		discardInvalidVertices(impl);
 		switch (impl->type)
@@ -590,7 +647,7 @@ namespace cage
 		default:
 			CAGE_THROW_CRITICAL(Exception, "invalid polyhedron type");
 		}
-		CAGE_ASSERT(verticesCount() + 1); // assert that vertices are consistent
+		verticesCount(); // validate vertices
 	}
 
 	void Polyhedron::discardDisconnected()
@@ -617,7 +674,29 @@ namespace cage
 
 	Holder<PointerRange<Holder<Polyhedron>>> Polyhedron::separateDisconnected() const
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
-		CAGE_THROW_CRITICAL(NotImplemented, "separateDisconnected");
+		verticesCount(); // validate vertices
+		if (facesCount() == 0)
+			return {};
+		const PolyhedronImpl *impl = (const PolyhedronImpl *)this;
+		Holder<Polyhedron> srcCopy;
+		if (indicesCount() == 0)
+		{
+			srcCopy = copy();
+			srcCopy->convertToIndexed();
+			impl = (const PolyhedronImpl *)srcCopy.get();
+		}
+		CAGE_ASSERT(!impl->indices.empty());
+
+		switch (impl->type)
+		{
+		case PolyhedronTypeEnum::Points:
+			CAGE_THROW_CRITICAL(NotImplemented, "separateDisconnected");
+		case PolyhedronTypeEnum::Lines:
+			CAGE_THROW_CRITICAL(NotImplemented, "separateDisconnected");
+		case PolyhedronTypeEnum::Triangles:
+			return splitComponentsTriangles(impl);
+		default:
+			CAGE_THROW_CRITICAL(Exception, "invalid polyhedron type");
+		}
 	}
 }

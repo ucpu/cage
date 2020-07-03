@@ -10,12 +10,24 @@ namespace cage
 	}
 
 	template<>
-	ivec4 attrAt(const PolyhedronAttribute<ivec4> &attribute, const ivec3 &ids, const vec3 &weights)
+	ivec4 attrAt<ivec4>(const PolyhedronAttribute<ivec4> &attribute, const ivec3 &ids, const vec3 &weights)
 	{
 		CAGE_THROW_ERROR(Exception, "cannot interpolate integer attributes");
 	}
 
-#define GCHL_GENERATE(TYPE, SINGULAR, PLURAL) \
+	template<class T, bool Normalize>
+	T attrNormalize(const T &v)
+	{
+		return v;
+	}
+
+	template<>
+	vec3 attrNormalize<vec3, true>(const vec3 &v)
+	{
+		return normalize(v);
+	}
+
+#define GCHL_GENERATE(NORMALIZED, TYPE, SINGULAR, PLURAL) \
 	PointerRange<const TYPE> Polyhedron::PLURAL() const \
 	{ \
 		const PolyhedronImpl *impl = (const PolyhedronImpl *)this; \
@@ -45,16 +57,16 @@ namespace cage
 	TYPE Polyhedron::CAGE_JOIN(SINGULAR, At)(const ivec3 &ids, const vec3 &weights) const \
 	{ \
 		const PolyhedronImpl *impl = (const PolyhedronImpl *)this; \
-		return attrAt<TYPE>(impl->PLURAL, ids, weights); \
+		return attrNormalize<TYPE, NORMALIZED>(attrAt<TYPE>(impl->PLURAL, ids, weights)); \
 	}
 
-	GCHL_GENERATE(vec3, position, positions);
-	GCHL_GENERATE(vec3, normal, normals);
-	GCHL_GENERATE(vec3, tangent, tangents);
-	GCHL_GENERATE(vec3, bitangent, bitangents);
-	GCHL_GENERATE(vec2, uv, uvs);
-	GCHL_GENERATE(vec3, uv3, uvs3);
-	GCHL_GENERATE(ivec4, boneIndices, boneIndices);
-	GCHL_GENERATE(vec4, boneWeights, boneWeights);
+	GCHL_GENERATE(false, vec3, position, positions);
+	GCHL_GENERATE(true, vec3, normal, normals);
+	GCHL_GENERATE(true, vec3, tangent, tangents);
+	GCHL_GENERATE(true, vec3, bitangent, bitangents);
+	GCHL_GENERATE(false, vec2, uv, uvs);
+	GCHL_GENERATE(false, vec3, uv3, uvs3);
+	GCHL_GENERATE(false, ivec4, boneIndices, boneIndices);
+	GCHL_GENERATE(false, vec4, boneWeights, boneWeights);
 #undef GCHL_GENERATE
 }

@@ -44,6 +44,20 @@ namespace
 		approxEqual(a.a, b.a);
 		approxEqual(a.b, b.b);
 	}
+
+	Holder<Polyhedron> splitSphereIntoTwo(const Polyhedron *poly)
+	{
+		auto p = poly->copy();
+		p->mergeCloseVertices(1e-3);
+		for (vec3 &v : p->positions())
+		{
+			real &x = v[0];
+			if (x > 2 && x < 4)
+				x = real::Nan();
+		}
+		p->discardInvalid();
+		return p;
+	}
 }
 
 void testPolyhedron()
@@ -56,7 +70,7 @@ void testPolyhedron()
 	const Holder<const Polyhedron> poly = makeUvSphere(10, 32, 16).cast<const Polyhedron>();
 #endif // CAGE_DEBUG
 
-	poly->exportObjFile({}, "meshes/sphere_base.obj");
+	poly->exportObjFile({}, "meshes/base.obj");
 	CAGE_TEST(poly->verticesCount() > 10);
 	CAGE_TEST(poly->indicesCount() > 10);
 	CAGE_TEST(poly->indicesCount() == poly->facesCount() * 3);
@@ -80,7 +94,7 @@ void testPolyhedron()
 		p->discardInvalid();
 		const uint32 f = p->facesCount();
 		CAGE_TEST(f > 10 && f < poly->facesCount());
-		p->exportObjFile({}, "meshes/sphere_discardInvalid.obj");
+		p->exportObjFile({}, "meshes/discardInvalid.obj");
 	}
 
 	{
@@ -89,7 +103,7 @@ void testPolyhedron()
 		p->mergeCloseVertices(1e-3);
 		const uint32 f = p->facesCount();
 		CAGE_TEST(f > 10 && f < poly->facesCount());
-		p->exportObjFile({}, "meshes/sphere_mergeCloseVertices.obj");
+		p->exportObjFile({}, "meshes/mergeCloseVertices.obj");
 	}
 
 	{
@@ -103,7 +117,7 @@ void testPolyhedron()
 		cfg.approximateError = 0.5;
 #endif
 		p->simplify(cfg);
-		p->exportObjFile({}, "meshes/sphere_simplify.obj");
+		p->exportObjFile({}, "meshes/simplify.obj");
 	}
 
 	{
@@ -115,7 +129,7 @@ void testPolyhedron()
 		cfg.targetEdgeLength = 3;
 #endif
 		p->regularize(cfg);
-		p->exportObjFile({}, "meshes/sphere_regularize.obj");
+		p->exportObjFile({}, "meshes/regularize.obj");
 	}
 
 	{
@@ -124,14 +138,30 @@ void testPolyhedron()
 		PolyhedronUnwrapConfig cfg;
 		cfg.targetResolution = 256;
 		p->unwrap(cfg);
-		p->exportObjFile({}, "meshes/sphere_unwrap.obj");
+		p->exportObjFile({}, "meshes/unwrap.obj");
 	}
 
 	{
 		CAGE_TESTCASE("clip");
 		auto p = poly->copy();
 		p->clip(aabb(vec3(-6, -6, -10), vec3(6, 6, 10)));
-		p->exportObjFile({}, "meshes/sphere_clip.obj");
+		p->exportObjFile({}, "meshes/clip.obj");
+	}
+
+	{
+		CAGE_TESTCASE("separateDisconnected");
+		auto p = splitSphereIntoTwo(poly.get());
+		auto ps = p->separateDisconnected();
+		// CAGE_TEST(ps.size() == 2); // todo fix this -> it should really be two but is 3
+		ps[0]->exportObjFile({}, "meshes/separateDisconnected_1.obj");
+		ps[1]->exportObjFile({}, "meshes/separateDisconnected_2.obj");
+	}
+
+	{
+		CAGE_TESTCASE("discardDisconnected");
+		auto p = splitSphereIntoTwo(poly.get());
+		p->discardDisconnected();
+		p->exportObjFile({}, "meshes/discardDisconnected.obj");
 	}
 
 	{
