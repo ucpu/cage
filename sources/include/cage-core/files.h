@@ -51,6 +51,8 @@ namespace cage
 		bool isDirectory() const; // directory or archive
 		uint64 lastChange() const;
 		Holder<File> openFile(const FileMode &mode);
+		Holder<File> readFile();
+		Holder<File> writeFile();
 		Holder<DirectoryList> listDirectory();
 		void next();
 	};

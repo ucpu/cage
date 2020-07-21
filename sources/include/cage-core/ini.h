@@ -21,7 +21,7 @@
 	rules for parsing command line parameters:
 	strings starting with one dash (-o) are parsed as short options and may be grouped together (-abc are three options)
 	strings starting with two dashes (--option) are parsed as long options and cannot be grouped
-	string containing only two dashes (--) is parsed as an end of options and all remaining string are treated as positional arguments
+	string containing only two dashes (--) is parsed as an end of options and all remaining strings are treated as positional arguments
 	strings that do not start with a dash (value) are added as arguments to last preceding option, if any, and to positional arguments otherwise
 	strings -o and --o are considered same option
 	last option is used when multiple same options exists

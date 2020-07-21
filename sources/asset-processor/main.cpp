@@ -44,7 +44,7 @@ namespace
 		char buf[string::MaxLength];
 		if (std::fgets(buf, string::MaxLength, stdin) == nullptr)
 			CAGE_THROW_ERROR(SystemError, "fgets", std::ferror(stdin));
-		return string(buf, numeric_cast<uint32>(std::strlen(buf))).trim();
+		return string(buf).trim();
 	}
 
 	void derivedProperties()

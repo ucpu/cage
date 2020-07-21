@@ -115,6 +115,16 @@ namespace cage
 		return newFile(impl->fullPath(), mode);
 	}
 
+	Holder<File> DirectoryList::readFile()
+	{
+		return openFile(FileMode(true, false));
+	}
+
+	Holder<File> DirectoryList::writeFile()
+	{
+		return openFile(FileMode(false, true));
+	}
+
 	Holder<DirectoryList> DirectoryList::listDirectory()
 	{
 		DirectoryListAbstract *impl = (DirectoryListAbstract *)this;

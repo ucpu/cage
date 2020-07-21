@@ -44,7 +44,7 @@ namespace cage
 			{
 				auto a = std::lower_bound(indexes.begin(), indexes.end(), boneIndex);
 				if (*a == boneIndex)
-					return a - indexes.begin();
+					return numeric_cast<uint32>(a - indexes.begin());
 				return m;
 			}
 		};
