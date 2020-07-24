@@ -1,15 +1,17 @@
+#include <cage-core/math.h>
 #include <cage-core/memory.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 #include <cage-core/textPack.h>
 #include <cage-core/collider.h>
-#include <cage-core/assetStructs.h>
+#include <cage-core/skeletalAnimation.h>
+#include <cage-core/assetContext.h>
 #include <cage-core/assetManager.h>
 
 namespace cage
 {
 	/*
-	struct CAGE_CORE_API TextPackHeader
+	struct TextPackHeader
 	{
 		// follows:
 		// count, uint32, number of texts
@@ -20,10 +22,41 @@ namespace cage
 		// ...
 	};
 
-	struct CAGE_CORE_API ColliderHeader
+	struct ColliderHeader
 	{
 		// follows:
 		// serialized collider data (possibly compressed)
+	};
+
+	struct SkeletalAnimationHeader
+	{
+		uint64 duration; // microseconds
+		uint32 skeletonBonesCount;
+		uint32 animationBonesCount;
+
+		// follows:
+		// array of indices, each uint16
+		// array of position frames counts, each uint16
+		// array of rotation frames counts, each uint16
+		// array of scale frames counts, each uint16
+		// array of bones, each:
+		//   array of position times, each float
+		//   array of position values, each vec3
+		//   array of rotation times, each float
+		//   array of rotation values, each quat
+		//   array of scale times, each float
+		//   array of scale values, each vec3
+	};
+
+	struct SkeletonRigHeader
+	{
+		mat4 globalInverse;
+		uint32 bonesCount;
+
+		// follows:
+		// array of parent bone indices, each uint16, (uint16)-1 for the root
+		// array of base transformation matrices, each mat4
+		// array of inverted rest matrices, each mat4
 	};
 	*/
 
@@ -110,7 +143,7 @@ namespace cage
 
 	namespace
 	{
-		void processCollisionMeshLoad(const AssetContext *context)
+		void processColliderLoad(const AssetContext *context)
 		{
 			Holder<Collider> col = newCollider();
 			col->deserialize(context->originalData());
@@ -122,7 +155,52 @@ namespace cage
 	AssetScheme genAssetSchemeCollider()
 	{
 		AssetScheme s;
-		s.load.bind<&processCollisionMeshLoad>();
+		s.load.bind<&processColliderLoad>();
+		return s;
+	}
+
+	namespace
+	{
+		void processSkeletalAnimationLoad(const AssetContext *context)
+		{
+			Holder<SkeletalAnimation> ani = newSkeletalAnimation();
+			Deserializer des(context->originalData());
+			uint32 skeletonBonesCount;
+			uint32 animationBonesCount;
+			des >> ani->duration;
+			des >> skeletonBonesCount;
+			des >> animationBonesCount;
+			ani->deserialize(animationBonesCount, des.advance(des.available()));
+			context->assetHolder = templates::move(ani).cast<void>();
+		}
+	}
+
+	AssetScheme genAssetSchemeSkeletalAnimation()
+	{
+		AssetScheme s;
+		s.load.bind<&processSkeletalAnimationLoad>();
+		return s;
+	}
+
+	namespace
+	{
+		void processSkeletonRigLoad(const AssetContext *context)
+		{
+			Holder<SkeletonRig> skl = newSkeletonRig();
+			Deserializer des(context->originalData());
+			mat4 globalInverse;
+			uint32 bonesCount;
+			des >> globalInverse;
+			des >> bonesCount;
+			skl->deserialize(globalInverse, bonesCount, des.advance(des.available()));
+			context->assetHolder = templates::move(skl).cast<void>();
+		}
+	}
+
+	AssetScheme genAssetSchemeSkeletonRig()
+	{
+		AssetScheme s;
+		s.load.bind<&processSkeletonRigLoad>();
 		return s;
 	}
 
@@ -132,5 +210,7 @@ namespace cage
 		template<> CAGE_API_EXPORT char assetClassId<MemoryBuffer>;
 		template<> CAGE_API_EXPORT char assetClassId<TextPack>;
 		template<> CAGE_API_EXPORT char assetClassId<Collider>;
+		template<> CAGE_API_EXPORT char assetClassId<SkeletalAnimation>;
+		template<> CAGE_API_EXPORT char assetClassId<SkeletonRig>;
 	}
 }

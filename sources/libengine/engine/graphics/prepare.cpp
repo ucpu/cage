@@ -1,7 +1,7 @@
 #include <cage-core/camera.h>
 #include <cage-core/geometry.h>
 #include <cage-core/config.h>
-#include <cage-core/assetStructs.h>
+#include <cage-core/skeletalAnimation.h>
 #include <cage-core/color.h>
 
 #include <cage-engine/graphics.h>

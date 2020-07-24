@@ -1,6 +1,7 @@
-#include "utility/assimp.h"
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
+
+#include "utility/assimp.h"
 
 #include <vector>
 #include <map>
@@ -44,31 +45,30 @@ void processSkeleton()
 	const aiScene *scene = context->getScene();
 	Holder<AssimpSkeleton> skeleton = context->skeleton();
 
-	mat4 axesScale = mat4(axesScaleMatrix());
-	mat4 axesScaleInv = inverse(axesScale);
+	const mat4 axesScale = mat4(axesScaleMatrix());
+	const mat4 axesScaleInv = inverse(axesScale);
 
-	SkeletonRigHeader s;
-	s.globalInverse = inverse(conv(scene->mRootNode->mTransformation)) * axesScale;
-	s.bonesCount = skeleton->bonesCount();
+	const mat4 globalInverse = inverse(conv(scene->mRootNode->mTransformation)) * axesScale;
+	const uint32 bonesCount = skeleton->bonesCount();
 
 	std::vector<uint16> ps;
 	std::vector<mat4> bs;
 	std::vector<mat4> is;
-	ps.reserve(s.bonesCount);
-	bs.reserve(s.bonesCount);
-	is.reserve(s.bonesCount);
+	ps.reserve(bonesCount);
+	bs.reserve(bonesCount);
+	is.reserve(bonesCount);
 
 	// print the nodes hierarchy
 	CAGE_LOG(SeverityEnum::Info, logComponentName, "full node hierarchy:");
 	printHierarchy(skeleton.get(), scene->mRootNode, 0);
 
 	// find parents and matrices
-	for (uint32 i = 0; i < s.bonesCount; i++)
+	for (uint32 i = 0; i < bonesCount; i++)
 	{
-		aiNode *n = skeleton->node(i);
-		aiBone *b = skeleton->bone(i);
-		mat4 t = conv(n->mTransformation);
-		mat4 o = (b ? conv(b->mOffsetMatrix) : mat4()) * axesScaleInv;
+		const aiNode *n = skeleton->node(i);
+		const aiBone *b = skeleton->bone(i);
+		const mat4 t = conv(n->mTransformation);
+		const mat4 o = (b ? conv(b->mOffsetMatrix) : mat4()) * axesScaleInv;
 		CAGE_ASSERT(t.valid() && o.valid());
 		ps.push_back(skeleton->parent(i));
 		bs.push_back(t);
@@ -77,7 +77,8 @@ void processSkeleton()
 
 	MemoryBuffer buff;
 	Serializer ser(buff);
-	ser << s;
+	ser << globalInverse;
+	ser << bonesCount;
 	// parent bone indices
 	ser.write(bufferCast<char, uint16>(ps));
 	// base transformation matrices

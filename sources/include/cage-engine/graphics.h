@@ -197,7 +197,7 @@ namespace cage
 	CAGE_ENGINE_API Holder<Font> newFont();
 
 	CAGE_ENGINE_API AssetScheme genAssetSchemeFont(uint32 threadIndex);
-	static constexpr uint32 AssetSchemeIndexFont = 16;
+	static constexpr uint32 AssetSchemeIndexFont = 14;
 
 	class CAGE_ENGINE_API Mesh : private Immovable
 	{
@@ -243,53 +243,6 @@ namespace cage
 	CAGE_ENGINE_API AssetScheme genAssetSchemeMesh(uint32 threadIndex);
 	static constexpr uint32 AssetSchemeIndexMesh = 12;
 
-	class CAGE_ENGINE_API SkeletalAnimation : private Immovable
-	{
-#ifdef CAGE_DEBUG
-		detail::StringBase<64> debugName;
-#endif // CAGE_DEBUG
-
-	public:
-		void setDebugName(const string &name);
-
-		uint64 duration = 0;
-
-		void deserialize(uint32 bonesCount, PointerRange<const char> buffer);
-
-		mat4 evaluate(uint16 bone, real coef) const;
-	};
-
-	CAGE_ENGINE_API Holder<SkeletalAnimation> newSkeletalAnimation();
-
-	namespace detail
-	{
-		CAGE_ENGINE_API real evalCoefficientForSkeletalAnimation(SkeletalAnimation *animation, uint64 emitTime, uint64 animationStart, real animationSpeed, real animationOffset);
-	}
-
-	CAGE_ENGINE_API AssetScheme genAssetSchemeSkeletalAnimation();
-	static constexpr uint32 AssetSchemeIndexSkeletalAnimation = 14;
-
-	class CAGE_ENGINE_API SkeletonRig : private Immovable
-	{
-#ifdef CAGE_DEBUG
-		detail::StringBase<64> debugName;
-#endif // CAGE_DEBUG
-
-	public:
-		void setDebugName(const string &name);
-
-		void deserialize(const mat4 &globalInverse, uint32 bonesCount, PointerRange<const char> buffer);
-
-		uint32 bonesCount() const;
-		void animateSkin(const SkeletalAnimation *animation, real coef, PointerRange<mat4> output) const;
-		void animateSkeleton(const SkeletalAnimation *animation, real coef, PointerRange<mat4> output) const;
-	};
-
-	CAGE_ENGINE_API Holder<SkeletonRig> newSkeletonRig();
-
-	CAGE_ENGINE_API AssetScheme genAssetSchemeSkeletonRig();
-	static constexpr uint32 AssetSchemeIndexSkeletonRig = 13;
-
 	class CAGE_ENGINE_API RenderObject : private Immovable
 	{
 #ifdef CAGE_DEBUG
@@ -323,7 +276,7 @@ namespace cage
 	CAGE_ENGINE_API Holder<RenderObject> newRenderObject();
 
 	CAGE_ENGINE_API AssetScheme genAssetSchemeRenderObject();
-	static constexpr uint32 AssetSchemeIndexRenderObject = 15;
+	static constexpr uint32 AssetSchemeIndexRenderObject = 13;
 }
 
 #endif // guard_graphic_h_d776d3a2_43c7_464d_b721_291294b5b1ef_

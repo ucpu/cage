@@ -10,7 +10,7 @@ namespace cage
 		constexpr bool little() noexcept
 		{
 			const uint32 one = 1;
-			return (const uint8&)one == 1;
+			return (const uint8 &)one == 1;
 		}
 
 		constexpr bool big() noexcept // network

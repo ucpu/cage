@@ -1,11 +1,32 @@
-#include "utility/assimp.h"
 #include <cage-core/hashString.h>
 #include <cage-core/ini.h>
 #include <cage-core/color.h>
+#include <cage-core/polyhedron.h>
 #include <cage-engine/shaderConventions.h>
-#include <cage-engine/opengl.h>
+
+#include "utility/assimp.h"
+
+#include <vector>
 
 vec2 convertSpecularToSpecial(const vec3 &spec);
+
+namespace
+{
+	enum class MeshDataFlags : uint32
+	{
+		None = 0,
+		Normals = 1 << 0,
+		Tangents = 1 << 1,
+		Bones = 1 << 2,
+		Uvs2 = 1 << 3,
+		Uvs3 = 1 << 4,
+	};
+}
+
+namespace cage
+{
+	GCHL_ENUM_BITS(MeshDataFlags);
+}
 
 namespace
 {
@@ -296,29 +317,36 @@ namespace
 		loadMaterialAssimp(scene, am, dsm, mat);
 	}
 
-	void validateFlags(const MeshHeader &dsm, const MeshHeader::MaterialData &mat)
+	void validateFlags(const MeshHeader &dsm, const MeshDataFlags flags, const MeshHeader::MaterialData &mat)
 	{
-		if ((dsm.renderFlags & MeshRenderFlags::OpacityTexture) == MeshRenderFlags::OpacityTexture && (dsm.renderFlags & (MeshRenderFlags::Translucency | MeshRenderFlags::Transparency)) == MeshRenderFlags::None)
+		if (any(dsm.renderFlags & MeshRenderFlags::OpacityTexture) && none(dsm.renderFlags & (MeshRenderFlags::Translucency | MeshRenderFlags::Transparency)))
 			CAGE_THROW_ERROR(Exception, "material flags contains opacity texture, but neither translucency nor transparency is set");
-		if ((dsm.renderFlags & MeshRenderFlags::Translucency) == MeshRenderFlags::Translucency && (dsm.renderFlags & MeshRenderFlags::Transparency) == MeshRenderFlags::Transparency)
+		if (any(dsm.renderFlags & MeshRenderFlags::Translucency) && any(dsm.renderFlags & MeshRenderFlags::Transparency))
 			CAGE_THROW_ERROR(Exception, "material flags transparency and translucency are mutually exclusive");
+
 		{
 			uint32 texCount = 0;
 			for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 				texCount += dsm.textureNames[i] == 0 ? 0 : 1;
-			if (texCount && (dsm.flags & MeshDataFlags::Uvs) == MeshDataFlags::None)
-				CAGE_THROW_ERROR(Exception, "material has textures, but uvs are missing");
+			if (texCount && none(flags & (MeshDataFlags::Uvs2 | MeshDataFlags::Uvs3)))
+				CAGE_THROW_ERROR(Exception, "material has a texture and no uvs");
 		}
-		if ((dsm.flags & MeshDataFlags::Tangents) == MeshDataFlags::Tangents && (dsm.flags & MeshDataFlags::Uvs) == MeshDataFlags::None)
+
+		if (any(flags & MeshDataFlags::Tangents) && none(flags & MeshDataFlags::Uvs2))
 			CAGE_THROW_ERROR(Exception, "tangents are exported, but uvs are missing");
-		if ((dsm.flags & MeshDataFlags::Tangents) == MeshDataFlags::Tangents && (dsm.flags & MeshDataFlags::Normals) == MeshDataFlags::None)
+		if (any(flags & MeshDataFlags::Tangents) && none(flags & MeshDataFlags::Normals))
 			CAGE_THROW_ERROR(Exception, "tangents are exported, but normals are missing");
+
+		if (dsm.textureNames[CAGE_SHADER_TEXTURE_NORMAL] != 0 && none(flags & MeshDataFlags::Normals))
+			CAGE_THROW_ERROR(Exception, "mesh uses normal map texture but has no normals");
+		if (dsm.textureNames[CAGE_SHADER_TEXTURE_NORMAL] != 0 && none(flags & MeshDataFlags::Tangents))
+			CAGE_THROW_ERROR(Exception, "mesh uses normal map texture but has no tangents");
 	}
 
-	void loadSkeletonName(MeshHeader &dsm)
+	void loadSkeletonName(MeshHeader &dsm, const MeshDataFlags flags)
 	{
 		string n = properties("skeleton");
-		if (!dsm.bones())
+		if (none(flags & MeshDataFlags::Bones))
 		{
 			if (!n.empty())
 				CAGE_THROW_ERROR(Exception, "cannot override skeleton for a mesh that has no bones");
@@ -353,6 +381,28 @@ namespace
 		}
 		return n;
 	}
+
+	uint32 convertPrimitiveType(int primitiveTypes)
+	{
+		switch (primitiveTypes)
+		{
+		case aiPrimitiveType_POINT: return 1;
+		case aiPrimitiveType_LINE: return 2;
+		case aiPrimitiveType_TRIANGLE: return 3;
+		default: CAGE_THROW_ERROR(Exception, "mesh has invalid primitive type");
+		}
+	}
+
+	uint32 computeVertexSize(MeshDataFlags flags)
+	{
+		uint32 p = sizeof(float) * 3;
+		uint32 u2 = sizeof(float) * (int)any(flags & MeshDataFlags::Uvs2) * 2;
+		uint32 u3 = sizeof(float) * (int)any(flags & MeshDataFlags::Uvs3) * 3;
+		uint32 n = sizeof(float) * (int)any(flags & MeshDataFlags::Normals) * 3;
+		uint32 t = sizeof(float) * (int)any(flags & MeshDataFlags::Tangents) * 6;
+		uint32 b = (int)any(flags & MeshDataFlags::Bones) * (sizeof(uint16) + sizeof(float)) * 4;
+		return p + u2 + u3 + n + t + b;
+	}
 }
 
 void processMesh()
@@ -373,90 +423,97 @@ void processMesh()
 		CAGE_LOG(SeverityEnum::Warning, logComponentName, "multiple uv channels are not supported - using only the first");
 
 	MeshHeader dsm;
+	MeshDataFlags flags = MeshDataFlags::None;
 	memset(&dsm, 0, sizeof(dsm));
 	dsm.materialSize = sizeof(MeshHeader::MaterialData);
 	dsm.renderFlags = MeshRenderFlags::DepthTest | MeshRenderFlags::DepthWrite | MeshRenderFlags::VelocityWrite | MeshRenderFlags::Lighting | MeshRenderFlags::ShadowCast;
 
-	uint32 indicesPerPrimitive = 0;
-	switch (am->mPrimitiveTypes)
+	const uint32 indicesPerPrimitive = convertPrimitiveType(am->mPrimitiveTypes);
+	const uint32 verticesCount = am->mNumVertices;
+	const uint32 indicesCount = am->mNumFaces * indicesPerPrimitive;
+
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "indices per primitive: " + indicesPerPrimitive);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, cage::stringizer() + "vertices count: " + verticesCount);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, cage::stringizer() + "indices count: " + indicesCount);
+
+	setFlags(flags, MeshDataFlags::Uvs2, am->GetNumUVChannels() > 0, "uvs");
+	setFlags(flags, MeshDataFlags::Normals, am->HasNormals(), "normals");
+	setFlags(flags, MeshDataFlags::Tangents, am->HasTangentsAndBitangents(), "tangents");
+	setFlags(flags, MeshDataFlags::Bones, am->HasBones(), "bones");
+
+	if (am->GetNumUVChannels() == 3)
 	{
-	case aiPrimitiveType_POINT: dsm.primitiveType = GL_POINTS; indicesPerPrimitive = 1; break;
-	case aiPrimitiveType_LINE: dsm.primitiveType = GL_LINES; indicesPerPrimitive = 2; break;
-	case aiPrimitiveType_TRIANGLE: dsm.primitiveType = GL_TRIANGLES; indicesPerPrimitive = 3; break;
-	default: CAGE_THROW_ERROR(Exception, "mesh has invalid primitive type");
+		flags &= ~MeshDataFlags::Uvs2;
+		flags |= ~MeshDataFlags::Uvs3;
 	}
-	dsm.verticesCount = am->mNumVertices;
-	dsm.indicesCount = am->mNumFaces * indicesPerPrimitive;
 
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "primitive type: " + dsm.primitiveType + ", indices per primitive: " + indicesPerPrimitive);
-	CAGE_LOG(SeverityEnum::Info, logComponentName, cage::stringizer() + "vertices count: " + dsm.verticesCount);
-	CAGE_LOG(SeverityEnum::Info, logComponentName, cage::stringizer() + "indices count: " + dsm.indicesCount);
-
-	setFlags(dsm.flags, MeshDataFlags::Uvs, am->GetNumUVChannels() > 0, "uvs");
-	setFlags(dsm.flags, MeshDataFlags::Normals, am->HasNormals(), "normals");
-	setFlags(dsm.flags, MeshDataFlags::Tangents, am->HasTangentsAndBitangents(), "tangents");
-	setFlags(dsm.flags, MeshDataFlags::Bones, am->HasBones(), "bones");
-
-	loadSkeletonName(dsm);
+	loadSkeletonName(dsm, flags);
 
 	dsm.instancesLimitHint = properties("instancesLimit").toUint32();
 
 	MeshHeader::MaterialData mat;
-	memset(&mat, 0, sizeof(mat));
-	mat.albedoBase = vec4(0, 0, 0, 1);
-	mat.specialBase = vec4(0, 0, 0, 0);
-	mat.albedoMult = vec4(1, 1, 1, 1);
-	mat.specialMult = vec4(1, 1, 1, 1);
-
 	loadMaterial(scene, am, dsm, mat);
 	printMaterial(dsm, mat);
-	validateFlags(dsm, mat);
-
-	if (dsm.textureNames[CAGE_SHADER_TEXTURE_NORMAL] != 0 && !dsm.normals())
-		CAGE_THROW_ERROR(Exception, "mesh uses normal map texture but has no normals");
-	if (dsm.textureNames[CAGE_SHADER_TEXTURE_NORMAL] != 0 && !dsm.tangents())
-		CAGE_THROW_ERROR(Exception, "mesh uses normal map texture but has no tangents");
-
-	cage::MemoryBuffer dataBuffer;
-	dataBuffer.reserve(dsm.vertexSize() * dsm.verticesCount);
-	cage::Serializer ser(dataBuffer);
-	cage::Serializer dsmPlaceholder = ser.placeholder(sizeof(dsm));
+	validateFlags(dsm, flags, mat);
 
 	dsm.box = aabb();
-	mat3 axes = axesMatrix();
-	mat3 axesScale = axesScaleMatrix();
-	for (uint32 i = 0; i < dsm.verticesCount; i++)
-	{
-		vec3 p = axesScale * conv(am->mVertices[i]);
-		ser << p;
-		dsm.box += aabb(p);
-	}
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "bounding box: " + dsm.box);
+	const mat3 axes = axesMatrix();
+	const mat3 axesScale = axesScaleMatrix();
 
-	if (dsm.normals())
+	Holder<Polyhedron> poly = newPolyhedron();
+	switch (indicesPerPrimitive)
 	{
-		for (uint32 i = 0; i < dsm.verticesCount; i++)
+	case 1: poly->type(PolyhedronTypeEnum::Points); break;
+	case 2: poly->type(PolyhedronTypeEnum::Lines); break;
+	case 3: poly->type(PolyhedronTypeEnum::Triangles); break;
+	default: CAGE_THROW_CRITICAL(Exception, "invalid polyhedron type enum");
+	}
+
+	{
+		std::vector<vec3> ps;
+		ps.reserve(verticesCount);
+		for (uint32 i = 0; i < verticesCount; i++)
+		{
+			vec3 p = axesScale * conv(am->mVertices[i]);
+			dsm.box += aabb(p);
+			ps.push_back(p);
+		}
+		poly->positions(ps);
+		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "bounding box: " + dsm.box);
+	}
+
+	if (any(flags & MeshDataFlags::Normals))
+	{
+		std::vector<vec3> ps;
+		ps.reserve(verticesCount);
+		for (uint32 i = 0; i < verticesCount; i++)
 		{
 			vec3 n = axes * conv(am->mNormals[i]);
-			ser << fixUnitVector(n, "normal");
+			ps.push_back(fixUnitVector(n, "normal"));
 		}
+		poly->normals(ps);
 	}
 
-	if (dsm.tangents())
+	if (any(flags & MeshDataFlags::Tangents))
 	{
-		for (uint32 i = 0; i < dsm.verticesCount; i++)
+		std::vector<vec3> ts, bs;
+		ts.reserve(verticesCount);
+		bs.reserve(verticesCount);
+		for (uint32 i = 0; i < verticesCount; i++)
 		{
 			vec3 n = axes * conv(am->mTangents[i]);
-			ser << fixUnitVector(n, "tangent");
+			ts.push_back(fixUnitVector(n, "tangent"));
 		}
-		for (uint32 i = 0; i < dsm.verticesCount; i++)
+		for (uint32 i = 0; i < verticesCount; i++)
 		{
 			vec3 n = axes * conv(am->mBitangents[i]);
-			ser << fixUnitVector(n, "bitangent");
+			bs.push_back(fixUnitVector(n, "bitangent"));
 		}
+		poly->tangents(ts);
+		poly->bitangents(bs);
 	}
 
-	if (dsm.bones())
+	if (any(flags & MeshDataFlags::Bones))
 	{
 		// enlarge bounding box
 		{
@@ -470,18 +527,10 @@ void processMesh()
 		CAGE_ASSERT(am->mNumBones > 0);
 		Holder<AssimpSkeleton> skeleton = context->skeleton();
 		dsm.skeletonBones = skeleton->bonesCount();
-		Serializer ser2 = ser.placeholder((sizeof(uint16) + sizeof(float)) * 4 * dsm.verticesCount);
-		PointerRange<uint16> boneIndices = bufferCast<uint16>(ser2.advance(sizeof(uint16) * 4 * dsm.verticesCount));
-		PointerRange<float> boneWeights = bufferCast<float>(ser2.advance(sizeof(float) * 4 * dsm.verticesCount));
-		// initialize with empty values
-		for (uint32 i = 0; i < dsm.verticesCount; i++)
-		{
-			for (uint32 j = 0; j < 4; j++)
-			{
-				boneIndices[i * 4 + j] = m;
-				boneWeights[i * 4 + j] = 0;
-			}
-		}
+		std::vector<ivec4> boneIndices;
+		boneIndices.resize(verticesCount, ivec4((sint32)m));
+		std::vector<vec4> boneWeights;
+		boneWeights.resize(verticesCount);
 		// copy the values from assimp
 		for (uint32 boneIndex = 0; boneIndex < am->mNumBones; boneIndex++)
 		{
@@ -495,10 +544,10 @@ void processMesh()
 				bool ok = false;
 				for (uint32 i = 0; i < 4; i++)
 				{
-					if (boneIndices[w->mVertexId * 4 + i] == m)
+					if (boneIndices[w->mVertexId][i] == m)
 					{
-						boneIndices[w->mVertexId * 4 + i] = boneId;
-						boneWeights[w->mVertexId * 4 + i] = w->mWeight;
+						boneIndices[w->mVertexId][i] = boneId;
+						boneWeights[w->mVertexId][i] = w->mWeight;
 						ok = true;
 						break;
 					}
@@ -508,69 +557,79 @@ void processMesh()
 		}
 		// validate
 		uint32 maxBoneId = 0;
-		for (uint32 i = 0; i < dsm.verticesCount; i++)
+		for (uint32 i = 0; i < verticesCount; i++)
 		{
-			float sum = 0;
+			real sum = 0;
 			for (uint32 j = 0; j < 4; j++)
 			{
-				if (boneIndices[i * 4 + j] == m)
+				if (boneIndices[i][j] == m)
 				{
-					CAGE_ASSERT(boneWeights[i * 4 + j] == 0);
-					boneIndices[i * 4 + j] = 0; // prevent shader from accessing invalid memory
+					CAGE_ASSERT(boneWeights[i][j] == 0);
+					boneIndices[i][j] = 0; // prevent shader from accessing invalid memory
 				}
-				sum += boneWeights[i * 4 + j];
-				maxBoneId = max(maxBoneId, boneIndices[i * 4 + j] + 1u);
+				sum += boneWeights[i][j];
+				maxBoneId = max(maxBoneId, boneIndices[i][j] + 1u);
 			}
 			// renormalize weights
 			if (cage::abs(sum - 1) > 1e-3 && sum > 1e-3)
 			{
-				float f = 1 / sum;
+				const real f = 1 / sum;
 				CAGE_LOG(SeverityEnum::Warning, logComponentName, stringizer() + "renormalizing bone weights for " + i + "th vertex by factor " + f);
 				for (uint32 j = 0; j < 4; j++)
-					boneWeights[i * 4 + j] *= f;
+					boneWeights[i][j] *= f;
 			}
 		}
 		CAGE_ASSERT(maxBoneId <= dsm.skeletonBones);
+		poly->boneIndices(boneIndices);
+		poly->boneWeights(boneWeights);
 	}
 
-	if (dsm.uvs())
+	if (any(flags & MeshDataFlags::Uvs3))
 	{
-		if (am->mNumUVComponents[0] == 3)
-		{
-			dsm.uvDimension = 3;
-			for (uint32 i = 0; i < dsm.verticesCount; i++)
-				ser << conv(am->mTextureCoords[0][i]);
-		}
-		else
-		{
-			dsm.uvDimension = 2;
-			for (uint32 i = 0; i < dsm.verticesCount; i++)
-				ser << vec2(conv(am->mTextureCoords[0][i]));
-		}
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "uv dimensionality: " + dsm.uvDimension);
+		std::vector<vec3> ts;
+		ts.reserve(verticesCount);
+		for (uint32 i = 0; i < verticesCount; i++)
+			ts.push_back(conv(am->mTextureCoords[0][i]));
+		poly->uvs3(ts);
 	}
 
-	for (uint32 i = 0; i < am->mNumFaces; i++)
+	if (any(flags & MeshDataFlags::Uvs2))
 	{
-		for (uint32 j = 0; j < indicesPerPrimitive; j++)
-			ser << numeric_cast<uint32>(am->mFaces[i].mIndices[j]);
+		std::vector<vec2> ts;
+		ts.reserve(verticesCount);
+		for (uint32 i = 0; i < verticesCount; i++)
+			ts.push_back(vec2(conv(am->mTextureCoords[0][i])));
+		poly->uvs(ts);
 	}
 
-	ser << mat;
-	dsmPlaceholder << dsm;
+	{
+		std::vector<uint32> inds;
+		inds.reserve(indicesCount);
+		for (uint32 i = 0; i < am->mNumFaces; i++)
+		{
+			for (uint32 j = 0; j < indicesPerPrimitive; j++)
+				inds.push_back(numeric_cast<uint32>(am->mFaces[i].mIndices[j]));
+		}
+		poly->indices(inds);
+	}
 
 	AssetHeader h = initializeAssetHeader();
-	h.originalSize = dataBuffer.size();
 	if (dsm.skeletonName)
 		h.dependenciesCount++;
 	for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		if (dsm.textureNames[i])
 			h.dependenciesCount++;
 
-	cage::MemoryBuffer compressed = detail::compress(dataBuffer);
+	cage::MemoryBuffer buffer;
+	Serializer ser(buffer);
+	ser << dsm;
+	ser << mat;
+	ser.write(poly->serialize());
+	h.originalSize = buffer.size();
+	cage::MemoryBuffer compressed = detail::compress(buffer);
 	h.compressedSize = compressed.size();
 
-	Holder<File> f = newFile(outputFileName, FileMode(false, true));
+	Holder<File> f = writeFile(outputFileName);
 	f->write(bufferView(h));
 	if (dsm.skeletonName)
 		f->write(bufferView(dsm.skeletonName));

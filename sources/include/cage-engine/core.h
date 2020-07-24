@@ -1,7 +1,6 @@
 #ifndef guard_core_h_4F3464CEC4474C118E1CEA1EF9DF7632
 #define guard_core_h_4F3464CEC4474C118E1CEA1EF9DF7632
 
-#include <cage-core/core.h>
 #include <cage-core/math.h>
 
 #ifdef CAGE_ENGINE_EXPORT
@@ -48,8 +47,6 @@ namespace cage
 	class Mesh;
 	class RenderObject;
 	class ShaderProgram;
-	class SkeletalAnimation;
-	class SkeletonRig;
 	class Texture;
 	class UniformBuffer;
 	struct UniformBufferCreateConfig;
@@ -110,7 +107,6 @@ namespace cage
 
 	enum class TextureFlags : uint32;
 	struct TextureHeader;
-	enum class MeshDataFlags : uint32;
 	struct MeshHeader;
 	struct SkeletonRigHeader;
 	struct SkeletalAnimationHeader;
@@ -182,7 +178,6 @@ namespace cage
 	GCHL_ENUM_BITS(CameraEffectsFlags);
 	GCHL_ENUM_BITS(InputStyleFlags);
 	GCHL_ENUM_BITS(TextureFlags);
-	GCHL_ENUM_BITS(MeshDataFlags);
 	GCHL_ENUM_BITS(FontFlags);
 	GCHL_ENUM_BITS(SoundFlags);
 	GCHL_ENUM_BITS(EngineProfilingStatsFlags);
@@ -193,7 +188,7 @@ namespace cage
 
 	// constants
 
-	static constexpr uint32 MaxTexturesCountPerMaterial = 4;
+	constexpr uint32 MaxTexturesCountPerMaterial = 4;
 }
 
 #endif // guard_core_h_4F3464CEC4474C118E1CEA1EF9DF7632

@@ -64,7 +64,7 @@ namespace cage
 	CAGE_CORE_API vec3 intersection(const line &shape, const Collider *collider, const transform &t);
 
 	CAGE_CORE_API AssetScheme genAssetSchemeCollider();
-	static const uint32 AssetSchemeIndexCollider = 3;
+	constexpr uint32 AssetSchemeIndexCollider = 3;
 }
 
 #endif // guard_collider_h_qeqwdrwuegfoixwoihediuzerw456

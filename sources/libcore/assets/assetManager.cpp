@@ -2,7 +2,8 @@
 #include <cage-core/network.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/files.h>
-#include <cage-core/assetStructs.h>
+#include <cage-core/assetContext.h>
+#include <cage-core/assetHeader.h>
 #include <cage-core/config.h>
 #include <cage-core/hashString.h>
 #include <cage-core/memoryBuffer.h>
@@ -38,7 +39,7 @@ namespace cage
 
 	namespace
 	{
-		static constexpr uint32 CurrentAssetVersion = 1;
+		constexpr uint32 CurrentAssetVersion = 1;
 
 		struct Scheme : public AssetScheme
 		{
@@ -969,7 +970,7 @@ namespace cage
 		detail::memcpy(a.cageName, "cageAss", 7);
 		a.version = CurrentAssetVersion;
 		string name = name_;
-		static constexpr uint32 maxTexName = sizeof(a.textName);
+		constexpr uint32 maxTexName = sizeof(a.textName);
 		if (name.length() >= maxTexName)
 			name = string() + ".." + name.subString(name.length() - maxTexName - 3, maxTexName - 3);
 		CAGE_ASSERT(name.length() < sizeof(a.textName));

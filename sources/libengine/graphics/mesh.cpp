@@ -12,12 +12,6 @@
 
 namespace cage
 {
-	MeshHeader::MaterialData::MaterialData()
-	{
-		albedoBase[3] = 1;
-		albedoMult = specialMult = vec4(1);
-	}
-
 	namespace
 	{
 		class MeshImpl : public Mesh

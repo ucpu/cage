@@ -1,8 +1,8 @@
-#include "processor.h"
-
 #include <cage-core/hashString.h>
 #include <cage-core/image.h>
 #include <cage-core/rectPacking.h>
+
+#include "processor.h"
 
 #include <msdfgen.h>
 #include <msdfgen-ext.h>

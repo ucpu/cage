@@ -38,7 +38,7 @@ void processAnimation()
 		chosenAnimationIndex = 0;
 	if (chosenAnimationIndex == m)
 		CAGE_THROW_ERROR(Exception, "no animation name matches the specifier");
-	aiAnimation *ani = scene->mAnimations[chosenAnimationIndex];
+	const aiAnimation *ani = scene->mAnimations[chosenAnimationIndex];
 	if (ani->mNumChannels == 0 || ani->mNumMeshChannels != 0 || ani->mNumMorphMeshChannels != 0)
 		CAGE_THROW_ERROR(Exception, "the animation has unsupported type");
 
@@ -47,9 +47,8 @@ void processAnimation()
 
 	Holder<AssimpSkeleton> skeleton = context->skeleton();
 
-	SkeletalAnimationHeader a;
-	a.duration = numeric_cast<uint64>(1e6 * ani->mDuration / (ani->mTicksPerSecond > 0 ? ani->mTicksPerSecond : 25.0));
-	a.skeletonBonesCount = skeleton->bonesCount();
+	const uint64 duration = numeric_cast<uint64>(1e6 * ani->mDuration / (ani->mTicksPerSecond > 0 ? ani->mTicksPerSecond : 25.0));
+	const uint32 skeletonBonesCount = skeleton->bonesCount();
 
 	uint32 totalKeys = 0;
 	uint32 size = 0;
@@ -103,13 +102,15 @@ void processAnimation()
 		size += n->mNumScalingKeys * (sizeof(float) + sizeof(vec3));
 		totalKeys += n->mNumScalingKeys;
 	}
-	a.animationBonesCount = numeric_cast<uint32>(bones.size());
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "animated bones: " + a.animationBonesCount);
+	const uint32 animationBonesCount = numeric_cast<uint32>(bones.size());
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "animated bones: " + animationBonesCount);
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "total keys: " + totalKeys);
 
 	MemoryBuffer buff;
 	Serializer ser(buff);
-	ser << a;
+	ser << duration;
+	ser << skeletonBonesCount;
+	ser << animationBonesCount;
 
 	// bone indices
 	ser.write(bufferCast<char, uint16>(boneIndices));

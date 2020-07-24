@@ -1,6 +1,6 @@
 [scheme]
 processor = cage-asset-processor font
-index = 16
+index = 14
 
 [resolution]
 display = nominal resolution of one glyph

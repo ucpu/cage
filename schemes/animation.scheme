@@ -1,6 +1,6 @@
 [scheme]
 processor = cage-asset-processor animation
-index = 14
+index = 6
 
 [bakeModel]
 display = bake model

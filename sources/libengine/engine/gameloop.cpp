@@ -2,7 +2,7 @@
 #include <cage-core/config.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/files.h> // getExecutableName
-#include <cage-core/assetStructs.h>
+#include <cage-core/skeletalAnimation.h> // for sizeof in defineScheme
 #include <cage-core/collider.h> // for sizeof in defineScheme
 #include <cage-core/textPack.h> // for sizeof in defineScheme
 #include <cage-core/memoryBuffer.h> // for sizeof in defineScheme
@@ -11,6 +11,7 @@
 #include <cage-core/debug.h>
 #include <cage-core/macros.h>
 #include <cage-core/logger.h>
+#include <cage-core/assetContext.h>
 
 #include <cage-engine/graphics.h>
 #include <cage-engine/window.h>

@@ -1,6 +1,6 @@
-#include "processor.h"
-
 #include <cage-core/memoryBuffer.h>
+
+#include "processor.h"
 
 #include <utility>
 

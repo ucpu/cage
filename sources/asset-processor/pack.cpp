@@ -1,7 +1,7 @@
-#include "processor.h"
-
 #include <cage-core/ini.h>
 #include <cage-core/hashString.h>
+
+#include "processor.h"
 
 #include <map>
 #include <set>

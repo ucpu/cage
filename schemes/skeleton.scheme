@@ -1,6 +1,6 @@
 [scheme]
 processor = cage-asset-processor skeleton
-index = 13
+index = 5
 
 [bakeModel]
 display = bake model

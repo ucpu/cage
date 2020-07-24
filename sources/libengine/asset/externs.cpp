@@ -11,8 +11,6 @@ namespace cage
 		template<> CAGE_API_EXPORT char assetClassId<Mesh>;
 		template<> CAGE_API_EXPORT char assetClassId<RenderObject>;
 		template<> CAGE_API_EXPORT char assetClassId<ShaderProgram>;
-		template<> CAGE_API_EXPORT char assetClassId<SkeletalAnimation>;
-		template<> CAGE_API_EXPORT char assetClassId<SkeletonRig>;
 		template<> CAGE_API_EXPORT char assetClassId<SoundSource>;
 		template<> CAGE_API_EXPORT char assetClassId<Texture>;
 	}

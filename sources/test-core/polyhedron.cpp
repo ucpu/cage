@@ -2,6 +2,7 @@
 #include <cage-core/geometry.h>
 #include <cage-core/polyhedron.h>
 #include <cage-core/collider.h>
+#include <cage-core/memoryBuffer.h>
 
 namespace
 {
@@ -162,6 +163,22 @@ void testPolyhedron()
 		auto p = splitSphereIntoTwo(poly.get());
 		p->discardDisconnected();
 		p->exportObjFile({}, "meshes/discardDisconnected.obj");
+	}
+
+	{
+		CAGE_TESTCASE("serialize");
+		MemoryBuffer buff = poly->serialize();
+		CAGE_TEST(buff.size() > 10);
+		Holder<Polyhedron> p = newPolyhedron();
+		p->deserialize(buff);
+		CAGE_TEST(p->verticesCount() == poly->verticesCount());
+		CAGE_TEST(p->indicesCount() == poly->indicesCount());
+		CAGE_TEST(p->positions().size() == poly->positions().size());
+		CAGE_TEST(p->normals().size() == poly->normals().size());
+		CAGE_TEST(p->uvs().size() == poly->uvs().size());
+		CAGE_TEST(p->uvs3().size() == poly->uvs3().size());
+		CAGE_TEST(p->tangents().size() == poly->tangents().size());
+		CAGE_TEST(p->boneIndices().size() == poly->boneIndices().size());
 	}
 
 	{

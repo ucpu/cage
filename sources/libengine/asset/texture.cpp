@@ -1,4 +1,4 @@
-#include <cage-core/assetStructs.h>
+#include <cage-core/assetContext.h>
 #include <cage-core/serialization.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/config.h>

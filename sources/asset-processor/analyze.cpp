@@ -1,5 +1,6 @@
-#include "processor.h"
 #include <cage-core/debug.h>
+
+#include "processor.h"
 
 int processAnalyze()
 {

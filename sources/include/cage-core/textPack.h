@@ -21,7 +21,7 @@ namespace cage
 	CAGE_CORE_API Holder<TextPack> newTextPack();
 
 	CAGE_CORE_API AssetScheme genAssetSchemeTextPack();
-	static constexpr uint32 AssetSchemeIndexTextPack = 2;
+	constexpr uint32 AssetSchemeIndexTextPack = 2;
 }
 
 #endif // guard_textPack_h_B436B597745C461DAA266CE6FBBE10D1

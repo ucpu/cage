@@ -239,7 +239,7 @@ namespace cage
 		template<class T> inline constexpr bool operator >  (T lhs, MaxValue rhs) noexcept { return lhs >  std::numeric_limits<T>::max(); }
 	}
 
-	static constexpr privat::MaxValue m = privat::MaxValue();
+	constexpr privat::MaxValue m = privat::MaxValue();
 
 	// template magic
 
@@ -458,6 +458,8 @@ namespace cage
 	template<class T> struct ScopeLock;
 	struct Serializer;
 	struct Deserializer;
+	class SkeletalAnimation;
+	class SkeletonRig;
 	class SpatialQuery;
 	class SpatialStructure;
 	struct SpatialStructureCreateConfig;

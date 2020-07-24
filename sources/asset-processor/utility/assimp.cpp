@@ -1,10 +1,10 @@
-#include "assimp.h"
-
 #include <assimp/Exporter.hpp>
 #include <assimp/IOStream.hpp>
 #include <assimp/IOSystem.hpp>
 #include <assimp/LogStream.hpp>
 #include <assimp/DefaultLogger.hpp>
+
+#include "assimp.h"
 
 #include <set>
 #include <map>

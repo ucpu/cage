@@ -1,10 +1,9 @@
-#include "processor.h"
-
 #include <cage-core/image.h>
 #include <cage-core/color.h>
 #include <cage-core/enumerate.h>
-
 #include <cage-engine/opengl.h>
+
+#include "processor.h"
 
 #include <vector>
 #include <set>

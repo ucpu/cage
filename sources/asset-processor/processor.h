@@ -1,13 +1,11 @@
-#include <cage-core/core.h>
 #include <cage-core/math.h>
 #include <cage-core/geometry.h>
 #include <cage-core/files.h>
 #include <cage-core/config.h>
-#include <cage-core/assetStructs.h>
+#include <cage-core/assetHeader.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 
-#include <cage-engine/core.h>
 #include <cage-engine/assetStructs.h>
 
 using namespace cage;
