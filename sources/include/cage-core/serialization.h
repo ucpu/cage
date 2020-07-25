@@ -44,6 +44,7 @@ namespace cage
 		bool readLine(string &line);
 		Deserializer placeholder(uintPtr s);
 		PointerRange<const char> advance(uintPtr s); // returns the original position
+		Deserializer copy() const;
 
 	private:
 		explicit Deserializer(const char *data, uintPtr offset, uintPtr size);
@@ -80,6 +81,7 @@ namespace cage
 	template<class T>
 	Serializer &operator << (Serializer &s, const T &v)
 	{
+		static_assert(!std::is_pointer<T>::value, "pointer serialization is forbidden");
 		s.write(bufferView<const char>(v));
 		return s;
 	}
@@ -87,7 +89,33 @@ namespace cage
 	template<class T>
 	Deserializer &operator >> (Deserializer &s, T &v)
 	{
+		static_assert(!std::is_pointer<T>::value, "pointer serialization is forbidden");
 		s.read(bufferView<char>(v));
+		return s;
+	}
+
+	template<class T>
+	Deserializer &&operator >> (Deserializer &&s, T &v)
+	{
+		s >> v;
+		return templates::move(s);
+	}
+
+	// c array serialization
+
+	template<class T, uintPtr N>
+	Serializer &operator << (Serializer &s, const T (&v)[N])
+	{
+		for (auto &it : v)
+			s << it;
+		return s;
+	}
+
+	template<class T, uintPtr N>
+	Deserializer &operator >> (Deserializer &s, T (&v)[N])
+	{
+		for (auto &it : v)
+			s >> it;
 		return s;
 	}
 
@@ -110,14 +138,6 @@ namespace cage
 		v = detail::StringBase<N>(s.advance(size).data(), size);
 		return s;
 	}
-
-	// disable serialization of raw pointers
-
-	template<class T>
-	Serializer &operator << (Serializer &, const T *) = delete;
-
-	template<class T>
-	Deserializer &operator >> (Deserializer &, T *) = delete;
 }
 
 #endif

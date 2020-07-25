@@ -97,4 +97,9 @@ namespace cage
 		offset += s;
 		return { dst, dst + s };
 	}
+
+	Deserializer Deserializer::copy() const
+	{
+		return Deserializer(data, offset, size);
+	}
 }

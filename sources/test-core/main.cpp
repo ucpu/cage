@@ -1,8 +1,7 @@
-#include "main.h"
 #include <cage-core/files.h>
 #include <cage-core/logger.h>
 
-#include <cstdlib>
+#include "main.h"
 
 uint32 CageTestCase::counter = 0;
 

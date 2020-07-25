@@ -73,6 +73,41 @@ void testSerialization()
 	}
 
 	{
+		CAGE_TESTCASE("deserializer copy");
+		MemoryBuffer b1;
+		Serializer ser(b1);
+		ser << (int)13 << (int)42;
+		int a = 0, b = 0;
+		Deserializer des1(b1);
+		Deserializer des2 = des1.copy();
+		des1 >> a >> b;
+		CAGE_TEST(a == 13 && b == 42);
+		CAGE_TEST(des1.available() == 0);
+		CAGE_TEST(des2.available() > 0);
+		a = b = 0;
+		des2 >> a >> b;
+		CAGE_TEST(a == 13 && b == 42);
+		CAGE_TEST(des1.available() == 0);
+		CAGE_TEST(des2.available() == 0);
+	}
+
+	{
+		CAGE_TESTCASE("deserializer r-value");
+		MemoryBuffer b1;
+		Serializer ser(b1);
+		ser << (int)13 << (int)42;
+		int a = 0, b = 0;
+		Deserializer des(b1);
+		des.copy() >> a >> b;
+		CAGE_TEST(a == 13 && b == 42);
+		CAGE_TEST(des.available() > 0);
+		a = b = 0;
+		des >> a >> b;
+		CAGE_TEST(a == 13 && b == 42);
+		CAGE_TEST(des.available() == 0);
+	}
+
+	{
 		CAGE_TESTCASE("lines");
 		MemoryBuffer b1;
 		Serializer s(b1);
@@ -97,6 +132,18 @@ void testSerialization()
 		Deserializer d2(b2);
 		s1 = templates::move(s2);
 		d2 = templates::move(d1);
+	}
+
+	{
+		CAGE_TESTCASE("c arrays");
+		MemoryBuffer b1;
+		Serializer ser(b1);
+		int arr[3] = { 1, 2, 3 };
+		ser << arr;
+		arr[0] = arr[1] = arr[2] = 0;
+		Deserializer des(b1);
+		des >> arr;
+		CAGE_TEST(arr[0] == 1 && arr[1] == 2 && arr[2] == 3);
 	}
 
 	{
