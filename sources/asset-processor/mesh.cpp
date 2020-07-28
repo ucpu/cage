@@ -441,10 +441,10 @@ void processMesh()
 	setFlags(flags, MeshDataFlags::Tangents, am->HasTangentsAndBitangents(), "tangents");
 	setFlags(flags, MeshDataFlags::Bones, am->HasBones(), "bones");
 
-	if (am->GetNumUVChannels() == 3)
+	if (am->mNumUVComponents[0] == 3)
 	{
 		flags &= ~MeshDataFlags::Uvs2;
-		flags |= ~MeshDataFlags::Uvs3;
+		flags |= MeshDataFlags::Uvs3;
 	}
 
 	loadSkeletonName(dsm, flags);
@@ -470,6 +470,7 @@ void processMesh()
 	}
 
 	{
+		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying vertex positions");;
 		std::vector<vec3> ps;
 		ps.reserve(verticesCount);
 		for (uint32 i = 0; i < verticesCount; i++)
@@ -484,6 +485,7 @@ void processMesh()
 
 	if (any(flags & MeshDataFlags::Normals))
 	{
+		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying normals");;
 		std::vector<vec3> ps;
 		ps.reserve(verticesCount);
 		for (uint32 i = 0; i < verticesCount; i++)
@@ -496,6 +498,7 @@ void processMesh()
 
 	if (any(flags & MeshDataFlags::Tangents))
 	{
+		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying tangents");;
 		std::vector<vec3> ts, bs;
 		ts.reserve(verticesCount);
 		bs.reserve(verticesCount);
@@ -515,6 +518,7 @@ void processMesh()
 
 	if (any(flags & MeshDataFlags::Bones))
 	{
+		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying bones");;
 		// enlarge bounding box
 		{
 			vec3 c = dsm.box.center();
@@ -586,6 +590,7 @@ void processMesh()
 
 	if (any(flags & MeshDataFlags::Uvs3))
 	{
+		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying 3D uvs");;
 		std::vector<vec3> ts;
 		ts.reserve(verticesCount);
 		for (uint32 i = 0; i < verticesCount; i++)
@@ -595,6 +600,7 @@ void processMesh()
 
 	if (any(flags & MeshDataFlags::Uvs2))
 	{
+		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying uvs");;
 		std::vector<vec2> ts;
 		ts.reserve(verticesCount);
 		for (uint32 i = 0; i < verticesCount; i++)
@@ -603,6 +609,7 @@ void processMesh()
 	}
 
 	{
+		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying indices");;
 		std::vector<uint32> inds;
 		inds.reserve(indicesCount);
 		for (uint32 i = 0; i < am->mNumFaces; i++)
@@ -613,6 +620,7 @@ void processMesh()
 		poly->indices(inds);
 	}
 
+	CAGE_LOG(SeverityEnum::Info, logComponentName, "serializing");;
 	AssetHeader h = initializeAssetHeader();
 	if (dsm.skeletonName)
 		h.dependenciesCount++;
