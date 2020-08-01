@@ -7,6 +7,7 @@
 #include <cage-core/config.h>
 #include <cage-core/hashString.h>
 #include <cage-core/memoryBuffer.h>
+#include <cage-core/serialization.h>
 #include <cage-core/concurrentQueue.h>
 #include <cage-core/assetManager.h>
 #include <cage-core/unordered_map.h>
@@ -100,8 +101,7 @@ namespace cage
 			Holder<void> ref;
 			uint32 scheme = m; // m -> error
 
-			Reference()
-			{}
+			Reference() = default;
 
 			explicit Reference(const Holder<Asset> &ass) : scheme(ass->state == StateEnum::Error ? m : ass->scheme)
 			{
@@ -137,11 +137,7 @@ namespace cage
 		struct PublicIndexData
 		{
 			PublicIndex index;
-			mutable Holder<RwMutex> mut;
-			PublicIndexData()
-			{
-				mut = newRwMutex();
-			}
+			mutable Holder<RwMutex> mut = newRwMutex();
 		};
 
 		class AssetManagerImpl : public AssetManager
@@ -230,15 +226,12 @@ namespace cage
 
 			// asset methods
 
-			MemoryBuffer findAsset(uint32 name)
+			Holder<File> openAsset(uint32 name)
 			{
-				MemoryBuffer buff;
-				if (findAssetBuffer.dispatch(name, buff))
-					return buff;
-				string pth;
-				if (!findAssetPath.dispatch(name, pth))
-					pth = pathJoin(path, string(name));
-				return readFile(pth)->readAll();
+				Holder<File> file;
+				if (!findAsset.dispatch(name, file))
+					file = readFile(pathJoin(path, stringizer() + name));
+				return file;
 			}
 
 			void diskLoadAsset(Asset *ass)
@@ -257,41 +250,47 @@ namespace cage
 				try
 				{
 					detail::OverrideBreakpoint OverrideBreakpoint;
-					MemoryBuffer buff = findAsset(ass->realName);
-					if (buff.size() < sizeof(AssetHeader))
-						CAGE_THROW_ERROR(Exception, "asset is missing required header");
-					AssetHeader *h = (AssetHeader*)buff.data();
-					if (detail::memcmp(h->cageName, "cageAss", 8) != 0)
+					Holder<File> file = openAsset(ass->realName);
+
+					AssetHeader h;
+					file->read(bufferView<char>(h));
+					if (detail::memcmp(h.cageName, "cageAss", 8) != 0)
 						CAGE_THROW_ERROR(Exception, "file is not a cage asset");
-					if (h->version != CurrentAssetVersion)
+					if (h.version != CurrentAssetVersion)
 						CAGE_THROW_ERROR(Exception, "cage asset version mismatch");
-					if (h->textName[sizeof(h->textName) - 1] != 0)
+					if (h.textName[sizeof(h.textName) - 1] != 0)
 						CAGE_THROW_ERROR(Exception, "cage asset text name not bounded");
-					ass->textName = h->textName;
+					ass->textName = h.textName;
 					OPTICK_TAG("textName", ass->textName.c_str());
-					if (h->scheme >= schemes.size())
+					if (h.scheme >= schemes.size())
 						CAGE_THROW_ERROR(Exception, "cage asset scheme out of range");
-					ass->scheme = h->scheme;
-					ass->assetFlags = h->flags;
-					ass->aliasName = h->aliasName;
-					uintPtr skip = sizeof(AssetHeader) + h->dependenciesCount * sizeof(uint32);
-					if (buff.size() < skip)
-						CAGE_THROW_ERROR(Exception, "cage asset file dependencies truncated");
-					ass->dependencies.resize(h->dependenciesCount);
-					if (h->dependenciesCount)
-						detail::memcpy(ass->dependencies.data(), buff.data() + sizeof(AssetHeader), h->dependenciesCount * sizeof(uint32));
-					if (buff.size() < skip + (h->compressedSize == 0 ? h->originalSize : h->compressedSize))
-						CAGE_THROW_ERROR(Exception, "cage asset file content truncated");
-					if (h->compressedSize)
-						ass->compData.allocate(h->compressedSize);
-					if (h->originalSize)
-						ass->origData.allocate(h->originalSize);
-					if (h->compressedSize || h->originalSize)
+					ass->scheme = h.scheme;
+					ass->assetFlags = h.flags;
+					ass->aliasName = h.aliasName;
+
+					if (!schemes[ass->scheme].load)
 					{
-						MemoryBuffer &t = h->compressedSize ? ass->compData : ass->origData;
-						CAGE_ASSERT(skip + t.size() == buff.size());
-						detail::memcpy(t.data(), buff.data() + skip, t.size());
+						ASS_LOG(1, ass, "no loading procedure");
+						ass->assetHolder = Holder<void>((void *)1, nullptr, {});
+						ass->state = StateEnum::WaitingForDeps;
+						createReference(ass);
+						return;
 					}
+
+					ass->dependencies.resize(h.dependenciesCount);
+					file->read(bufferCast<char, uint32>(ass->dependencies));
+
+					if (h.compressedSize)
+						ass->compData.allocate(h.compressedSize);
+					if (h.originalSize)
+						ass->origData.allocate(h.originalSize);
+					if (h.compressedSize || h.originalSize)
+					{
+						MemoryBuffer &t = h.compressedSize ? ass->compData : ass->origData;
+						file->read(t);
+					}
+
+					CAGE_ASSERT(file->tell() == file->size());
 				}
 				catch (const Exception &)
 				{
@@ -305,7 +304,7 @@ namespace cage
 				{
 					for (uint32 n : ass->dependencies)
 						add(n);
-					if (ass->compData.data())
+					if (ass->compData.size())
 					{
 						ass->state = StateEnum::Decompressing;
 						decompressionQueue.push(ass);
@@ -519,7 +518,7 @@ namespace cage
 					if (a.fabricated)
 					{
 						CAGE_LOG(SeverityEnum::Warning, "assetManager", stringizer() + "cannot reload asset " + cmd.realName + ", it is fabricated");
-						break; // if an existing asset was replaced with a fabricated one, it must not be reloaded with an asset from disk
+						break; // if an existing asset was replaced with a fabricated one, it may not be reloaded with an asset from disk
 					}
 					Holder<Asset> assh = newAsset(cmd.realName);
 					Asset *assp = assh.get();

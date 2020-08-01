@@ -29,7 +29,7 @@ namespace cage
 			Holder<File> f = af ? af->openFile(pf, FileMode(true, false)) : realNewFile(pf, FileMode(true, false));
 			Holder<File> t = at ? at->openFile(pt, FileMode(false, true)) : realNewFile(pt, FileMode(false, true));
 			// todo split big files into multiple smaller steps
-			MemoryBuffer b = f->read(f->size());
+			MemoryBuffer b = f->readAll();
 			f->close();
 			t->write(b);
 			t->close();
@@ -100,35 +100,51 @@ namespace cage
 	{
 #define LOCK ScopeLock<Mutex> lock(mutex)
 
+		string zipErr(int code)
+		{
+			zip_error_t t;
+			zip_error_init_with_code(&t, code);
+			string s = zip_error_strerror(&t);
+			zip_error_fini(&t);
+			return s;
+		}
+
 		class ArchiveZip : public ArchiveAbstract
 		{
 		public:
-			Holder<Mutex> mutex;
+			Holder<Mutex> mutex = newMutex();
 			std::vector<MemoryBuffer> writtenBuffers;
-			zip_t *zip;
+			zip_t *zip = nullptr;
 
 			// create archive
-			ArchiveZip(const string &path, const string &options) : ArchiveAbstract(path), zip(nullptr)
+			ArchiveZip(const string &path, const string &options) : ArchiveAbstract(path)
 			{
-				mutex = newMutex();
 				realCreateDirectories(pathJoin(path, ".."));
-				zip = zip_open(path.c_str(), ZIP_CREATE | ZIP_EXCL, nullptr);
+				int err = 0;
+				zip = zip_open(path.c_str(), ZIP_CREATE | ZIP_EXCL, &err);
 				if (!zip)
-					CAGE_THROW_ERROR(Exception, "zip_open");
+				{
+					//CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "error: '" + zipErr(err) + "'");
+					//CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "path: '" + path + "'");
+					//CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "options: '" + options + "'");
+					CAGE_THROW_ERROR(Exception, "failed to create a zip archive");
+				}
 				static constexpr const char *comment = "Archive created by Cage";
 				zip_set_archive_comment(zip, comment, numeric_cast<uint16>(std::strlen(comment)));
 				zip_dir_add(zip, "", 0);
 			}
 
 			// open archive
-			ArchiveZip(const string &path) : ArchiveAbstract(path), zip(nullptr)
+			ArchiveZip(const string &path) : ArchiveAbstract(path)
 			{
-				mutex = newMutex();
-				//if (newFile(path, FileMode(true, false))->size() == 0)
-				//	CAGE_THROW_ERROR(exception, "empty file"); // this is a temporary workaround until it is improved in the libzip
-				zip = zip_open(path.c_str(), ZIP_CHECKCONS, nullptr);
+				int err = 0;
+				zip = zip_open(path.c_str(), ZIP_CHECKCONS, &err);
 				if (!zip)
-					CAGE_THROW_ERROR(Exception, "zip_open");
+				{
+					//CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "path: '" + path + "'");
+					//CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "error: '" + zipErr(err) + "'");
+					CAGE_THROW_ERROR(Exception, "failed to open a zip archive");
+				}
 			}
 
 			~ArchiveZip()
@@ -136,6 +152,7 @@ namespace cage
 				LOCK;
 				if (zip_close(zip) != 0)
 				{
+					//CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "error: " + zip_strerror(zip));
 					CAGE_LOG(SeverityEnum::Error, "exception", "failed to close zip archive. all changes may have been lost");
 					zip_discard(zip); // free the memory
 				}
@@ -236,7 +253,12 @@ namespace cage
 				LOCK;
 				f = zip_fopen(a->zip, name.c_str(), 0);
 				if (!f)
-					CAGE_THROW_ERROR(Exception, "zip_fopen");
+				{
+					//CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "error: " + zip_strerror(a->zip));
+					//CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "file path: '" + name + "'");
+					//CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "archive path: '" + a->myPath + "'");
+					CAGE_THROW_ERROR(Exception, "failed to open a file inside zip archive");
+				}
 			}
 
 			~FileZipRead()
@@ -286,8 +308,14 @@ namespace cage
 				CAGE_ASSERT(f);
 				auto ff = f;
 				f = nullptr;
-				if (zip_fclose(ff) != 0)
-					CAGE_THROW_ERROR(Exception, "zip_fclose");
+				int err = zip_fclose(ff);
+				if (err != 0)
+				{
+					//CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "error: " + zipErr(err));
+					//CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "file path: '" + myPath + "'");
+					//CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "archive path: '" + a->myPath + "'");
+					CAGE_THROW_ERROR(Exception, "failed to close a file inside zip archive");
+				}
 			}
 
 			uintPtr tell() const override

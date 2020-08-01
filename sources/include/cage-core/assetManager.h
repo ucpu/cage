@@ -71,8 +71,7 @@ namespace cage
 
 		void listen(const string &address, uint16 port);
 
-		EventDispatcher<bool(uint32, MemoryBuffer&)> findAssetBuffer; // this event is called from the loading thread
-		EventDispatcher<bool(uint32, string&)> findAssetPath; // this event is called from the loading thread
+		EventDispatcher<bool(uint32 name, Holder<File> &file)> findAsset; // this event is called from the loading thread
 
 	private:
 		void defineScheme_(uint32 scheme, uintPtr typeId, const AssetScheme &value);
