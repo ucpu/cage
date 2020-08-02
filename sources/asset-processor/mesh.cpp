@@ -447,6 +447,11 @@ void processMesh()
 		flags |= MeshDataFlags::Uvs3;
 	}
 
+	if (any(flags & MeshDataFlags::Uvs2))
+		CAGE_LOG(SeverityEnum::Info, logComponentName, "using 2D uvs");
+	if (any(flags & MeshDataFlags::Uvs3))
+		CAGE_LOG(SeverityEnum::Info, logComponentName, "using 3D uvs");
+
 	loadSkeletonName(dsm, flags);
 
 	dsm.instancesLimitHint = properties("instancesLimit").toUint32();
