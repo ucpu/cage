@@ -17,8 +17,6 @@ namespace cage
 		uint32 minSamplerate;
 		uint32 maxSamplerate;
 		uint32 defaultSamplerate;
-		uint32 minLatency;
-		uint32 maxLatency;
 	};
 
 	class CAGE_ENGINE_API SpeakerList : private Immovable

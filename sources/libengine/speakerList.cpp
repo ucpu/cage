@@ -38,8 +38,6 @@ namespace cage
 					s.minSamplerate = d.min_rate;
 					s.maxSamplerate = d.max_rate;
 					s.defaultSamplerate = d.default_rate;
-					s.minLatency = d.latency_lo;
-					s.maxLatency = d.latency_hi;
 					devices.push_back(s);
 				}
 

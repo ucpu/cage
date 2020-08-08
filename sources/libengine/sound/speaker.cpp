@@ -53,6 +53,11 @@ namespace cage
 
 				ring = detail::systemArena().createHolder<lock_free_audio_ring_buffer<float>>(buffer.channels, buffer.sampleRate / 2);
 
+				CAGE_LOG(SeverityEnum::Info, "sound", stringizer() + "using device: '" + getDeviceId() + "'");
+				CAGE_LOG(SeverityEnum::Info, "sound", stringizer() + "using channels: " + buffer.channels);
+				CAGE_LOG(SeverityEnum::Info, "sound", stringizer() + "using sample rate: " + buffer.sampleRate);
+				CAGE_LOG(SeverityEnum::Info, "sound", stringizer() + "using latency: " + latency);
+
 				checkSoundIoError(cubeb_stream_start(stream));
 			}
 
@@ -154,7 +159,7 @@ namespace cage
 	uint32 Speaker::getSamplerate() const
 	{
 		const SpeakerImpl *impl = (const SpeakerImpl *)this;
-		return impl->buffer.channels;
+		return impl->buffer.sampleRate;
 	}
 
 	uint32 Speaker::getLatency() const

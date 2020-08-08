@@ -3,15 +3,20 @@
 #include "private.h"
 
 #include <cubeb/cubeb.h>
-#include <cstdarg>
 #ifdef CAGE_SYSTEM_WINDOWS
 #include <Objbase.h>
 #endif // CAGE_SYSTEM_WINDOWS
+
+//#define GCHL_CUBEB_LOGGING
+#ifdef GCHL_CUBEB_LOGGING
+#include <cstdarg>
+#endif
 
 namespace cage
 {
 	namespace
 	{
+#ifdef GCHL_CUBEB_LOGGING
 		void soundLogCallback(const char *fmt, ...)
 		{
 			char buffer[512];
@@ -26,9 +31,10 @@ namespace cage
 		{
 			SoundLogInit()
 			{
-				//checkSoundIoError(cubeb_set_log_callback(CUBEB_LOG_VERBOSE, &soundLogCallback));
+				checkSoundIoError(cubeb_set_log_callback(CUBEB_LOG_VERBOSE, &soundLogCallback));
 			}
 		} soundLogInit;
+#endif
 
 		class SoundContextImpl : public SoundContext
 		{
@@ -45,6 +51,7 @@ namespace cage
 				CAGE_LOG(SeverityEnum::Info, "sound", stringizer() + "creating sound context, name: '" + name + "'");
 				checkSoundIoError(cubeb_init(&soundio, name.c_str(), nullptr));
 				CAGE_ASSERT(soundio);
+				CAGE_LOG(SeverityEnum::Info, "sound", stringizer() + "using backend: '" + getBackendName() + "'");
 			}
 
 			~SoundContextImpl()
