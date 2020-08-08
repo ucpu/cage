@@ -14,7 +14,7 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
 
 add_library(cubeb STATIC
-	${CMAKE_BINARY_DIR}/cubeb/exports/cubeb_export.h
+	${CMAKE_CURRENT_BINARY_DIR}/cubeb/exports/cubeb_export.h
 	cubeb/include/cubeb/cubeb.h
 	cubeb/src/cubeb.c
 	cubeb/src/cubeb_mixer.cpp
@@ -24,14 +24,14 @@ add_library(cubeb STATIC
 	cubeb/src/cubeb_utils.cpp
 	cubeb/src/speex/resample.c
 )
-target_include_directories(cubeb PUBLIC cubeb/include ${CMAKE_BINARY_DIR}/cubeb/exports PRIVATE cubeb/src)
+target_include_directories(cubeb PUBLIC cubeb/include ${CMAKE_CURRENT_BINARY_DIR}/cubeb/exports PRIVATE cubeb/src)
 target_compile_definitions(cubeb PRIVATE OUTSIDE_SPEEX FLOATING_POINT EXPORT= RANDOM_PREFIX=speex)
 if(UNIX)
 	target_link_libraries(cubeb PRIVATE pthread ${CMAKE_DL_LIBS})
 endif()
 
 include(GenerateExportHeader)
-generate_export_header(cubeb EXPORT_FILE_NAME ${CMAKE_BINARY_DIR}/cubeb/exports/cubeb_export.h)
+generate_export_header(cubeb EXPORT_FILE_NAME ${CMAKE_CURRENT_BINARY_DIR}/cubeb/exports/cubeb_export.h)
 
 # backends
 
