@@ -150,23 +150,15 @@ namespace cage
 		*this = quat(mat3(forward, up, keepUp));
 	}
 
-	vec3 operator * (const quat &l, const vec3 &r)
+	vec3 operator * (const quat &l, const vec3 &r) noexcept
 	{
 		vec3 t = cross(vec3(l[0], l[1], l[2]), r) * 2;
 		return r + t * l[3] + cross(vec3(l[0], l[1], l[2]), t);
 	}
 
-	vec3 operator * (const vec3 &l, const quat &r)
+	vec3 operator * (const vec3 &l, const quat &r) noexcept
 	{
 		return r * l;
-	}
-
-	quat operator * (const quat &l, const quat &r)
-	{
-		return quat(l[3] * r[0] + l[0] * r[3] + l[1] * r[2] - l[2] * r[1],
-			l[3] * r[1] + l[1] * r[3] + l[2] * r[0] - l[0] * r[2],
-			l[3] * r[2] + l[2] * r[3] + l[0] * r[1] - l[1] * r[0],
-			l[3] * r[3] - l[0] * r[0] - l[1] * r[1] - l[2] * r[2]);
 	}
 
 	quat lerp(const quat &a, const quat &b, real f)

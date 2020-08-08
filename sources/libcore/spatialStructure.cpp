@@ -39,8 +39,8 @@ namespace cage
 			// initialize to negative box
 			FastBox()
 			{
-				low.v4 = xsimd::batch<float, 4>(real::Infinity(), real::Infinity(), real::Infinity(), 0.0f);
-				high.v4 = xsimd::batch<float, 4>(-real::Infinity(), -real::Infinity(), -real::Infinity(), 0.0f);
+				low.v4 = xsimd::batch<float, 4>(real::Infinity().value, real::Infinity().value, real::Infinity().value, 0.0f);
+				high.v4 = xsimd::batch<float, 4>(-real::Infinity().value, -real::Infinity().value, -real::Infinity().value, 0.0f);
 			}
 
 			explicit FastBox(const aabb &b)

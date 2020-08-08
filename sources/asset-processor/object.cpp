@@ -34,7 +34,7 @@ void processObject()
 			continue;
 		Lod ls;
 		ls.index = section.toUint32();
-		ls.threshold = ini->getFloat(section, "threshold", real::Nan());
+		ls.threshold = ini->getFloat(section, "threshold", real::Nan().value);
 		for (const string &n : ini->items(section))
 		{
 			string v = ini->getString(section, n);
@@ -68,8 +68,8 @@ void processObject()
 			o.color = vec3::parse(c);
 		else
 			o.color = vec3::Nan();
-		o.intensity = ini->getFloat("render", "intensity", real::Nan());
-		o.opacity = ini->getFloat("render", "opacity", real::Nan());
+		o.intensity = ini->getFloat("render", "intensity", real::Nan().value);
+		o.opacity = ini->getFloat("render", "opacity", real::Nan().value);
 		string s = ini->getString("skeletalAnimation", "name");
 		if (!s.empty())
 		{
@@ -78,10 +78,10 @@ void processObject()
 			deps.insert(o.skelAnimName);
 			writeLine(string("ref=") + s);
 		}
-		o.skelAnimSpeed = ini->getFloat("skeletalAnimation", "speed", real::Nan());
-		o.skelAnimOffset = ini->getFloat("skeletalAnimation", "offset", real::Nan());
-		o.texAnimSpeed = ini->getFloat("textureAnimation", "speed", real::Nan());
-		o.texAnimOffset = ini->getFloat("textureAnimation", "offset", real::Nan());
+		o.skelAnimSpeed = ini->getFloat("skeletalAnimation", "speed", real::Nan().value);
+		o.skelAnimOffset = ini->getFloat("skeletalAnimation", "offset", real::Nan().value);
+		o.texAnimSpeed = ini->getFloat("textureAnimation", "speed", real::Nan().value);
+		o.texAnimOffset = ini->getFloat("textureAnimation", "offset", real::Nan().value);
 		o.worldSize = ini->getFloat("size", "world");
 		o.pixelsSize = ini->getFloat("size", "pixels");
 	}

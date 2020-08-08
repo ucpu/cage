@@ -20,8 +20,8 @@ namespace cage
 
 		value_type value = 0;
 
-		inline real() {}
-#define GCHL_GENERATE(TYPE) inline real (TYPE other) : value((float)other) {}
+		inline constexpr real() noexcept {}
+#define GCHL_GENERATE(TYPE) inline constexpr real (TYPE other) noexcept : value((value_type)other) {}
 		GCHL_GENERATE(sint8);
 		GCHL_GENERATE(sint16);
 		GCHL_GENERATE(sint32);
@@ -33,34 +33,34 @@ namespace cage
 		GCHL_GENERATE(float);
 		GCHL_GENERATE(double);
 #undef GCHL_GENERATE
-		explicit real(rads other);
-		explicit real(degs other);
+		explicit constexpr real(rads other) noexcept;
+		explicit constexpr real(degs other) noexcept;
 
 		static real parse(const string &str);
-		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx == 0); return *this; }
-		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx == 0); return *this; }
-		bool valid() const;
-		inline bool finite() const { return valid() && value != real::Infinity() && value != -real::Infinity(); }
-		static constexpr value_type Pi() { return (value_type)3.141592653589793238; }
-		static constexpr value_type E() { return (value_type)2.718281828459045235; }
-		static constexpr value_type Log2() { return (value_type)0.693147180559945309; }
-		static constexpr value_type Log10() { return (value_type)2.302585092994045684; }
-		static constexpr value_type Infinity() { return std::numeric_limits<value_type>::infinity(); };
-		static constexpr value_type Nan() { return std::numeric_limits<value_type>::quiet_NaN(); };
+		inline constexpr real &operator [] (uint32 idx) { CAGE_ASSERT(idx == 0); return *this; }
+		inline constexpr real operator [] (uint32 idx) const { CAGE_ASSERT(idx == 0); return *this; }
+		bool valid() const noexcept;
+		bool finite() const noexcept;
+		static constexpr real Pi() noexcept { return (real)3.141592653589793238; }
+		static constexpr real E() noexcept { return (real)2.718281828459045235; }
+		static constexpr real Log2() noexcept { return (real)0.693147180559945309; }
+		static constexpr real Log10() noexcept { return (real)2.302585092994045684; }
+		static constexpr real Infinity() noexcept { return std::numeric_limits<value_type>::infinity(); };
+		static constexpr real Nan() noexcept { return std::numeric_limits<value_type>::quiet_NaN(); };
 	};
 
 	struct CAGE_CORE_API rads
 	{
 		real value;
 
-		inline rads() {}
-		inline explicit rads(real value) : value(value) {}
-		rads(degs other);
+		inline constexpr rads() noexcept {}
+		inline explicit constexpr rads(real value) noexcept : value(value) {}
+		constexpr rads(degs other) noexcept;
 
 		static rads parse(const string &str);
-		inline bool valid() const { return value.valid(); }
-		inline static rads Full() { return rads(real::Pi() * 2); }
-		inline static rads Nan() { return rads(real::Nan()); }
+		inline bool valid() const noexcept { return value.valid(); }
+		inline static constexpr rads Full() noexcept { return rads(real::Pi().value * 2); }
+		inline static constexpr rads Nan() noexcept { return rads(real::Nan()); }
 		friend struct real;
 		friend struct degs;
 	};
@@ -69,14 +69,14 @@ namespace cage
 	{
 		real value;
 
-		inline degs() {}
-		inline explicit degs(real value) : value(value) {}
-		degs(rads other);
+		inline constexpr degs() noexcept {}
+		inline explicit constexpr degs(real value) noexcept : value(value) {}
+		constexpr degs(rads other) noexcept;
 
 		static degs parse(const string &str);
-		inline bool valid() const { return value.valid(); }
-		inline static degs Full() { return degs(360); }
-		inline static degs Nan() { return degs(real::Nan()); }
+		inline bool valid() const noexcept { return value.valid(); }
+		inline static constexpr degs Full() noexcept { return degs(360); }
+		inline static constexpr degs Nan() noexcept { return degs(real::Nan()); }
 		friend struct real;
 		friend struct rads;
 	};
@@ -85,156 +85,156 @@ namespace cage
 	{
 		real data[2];
 
-		inline vec2() {}
-		inline explicit vec2(real value) : data{ value, value } {}
-		inline explicit vec2(real x, real y) : data{ x, y } {}
-		inline explicit vec2(const vec3 &v);
-		inline explicit vec2(const vec4 &v);
+		inline constexpr vec2() noexcept {}
+		inline explicit constexpr vec2(real value) noexcept : data{ value, value } {}
+		inline explicit constexpr vec2(real x, real y) noexcept : data{ x, y } {}
+		inline explicit constexpr vec2(const vec3 &v) noexcept;
+		inline explicit constexpr vec2(const vec4 &v) noexcept;
 
 		static vec2 parse(const string &str);
-		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 2); return data[idx]; }
-		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 2); return data[idx]; }
-		inline bool valid() const { for (real d : data) if (!d.valid()) return false; return true; }
-		inline static vec2 Nan() { return vec2(real::Nan()); }
+		inline constexpr real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 2); return data[idx]; }
+		inline constexpr real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 2); return data[idx]; }
+		inline bool valid() const noexcept { for (real d : data) if (!d.valid()) return false; return true; }
+		inline static constexpr vec2 Nan() noexcept { return vec2(real::Nan()); }
 	};
 
 	struct CAGE_CORE_API ivec2
 	{
-		sint32 data[2];
+		sint32 data[2] = {};
 
-		inline ivec2() : ivec2(0) {}
-		inline explicit ivec2(sint32 value) : data{ value, value } {}
-		inline explicit ivec2(sint32 x, sint32 y) : data{ x, y } {}
-		inline explicit ivec2(const ivec3 &v);
-		inline explicit ivec2(const ivec4 &v);
+		inline constexpr ivec2() noexcept {}
+		inline explicit constexpr ivec2(sint32 value) noexcept : data{ value, value } {}
+		inline explicit constexpr ivec2(sint32 x, sint32 y) noexcept : data{ x, y } {}
+		inline explicit constexpr ivec2(const ivec3 &v) noexcept;
+		inline explicit constexpr ivec2(const ivec4 &v) noexcept;
 
 		static ivec2 parse(const string &str);
-		inline sint32 &operator [] (uint32 idx) { CAGE_ASSERT(idx < 2); return data[idx]; }
-		inline sint32 operator [] (uint32 idx) const { CAGE_ASSERT(idx < 2); return data[idx]; }
+		inline constexpr sint32 &operator [] (uint32 idx) { CAGE_ASSERT(idx < 2); return data[idx]; }
+		inline constexpr sint32 operator [] (uint32 idx) const { CAGE_ASSERT(idx < 2); return data[idx]; }
 	};
 
 	struct CAGE_CORE_API vec3
 	{
 		real data[3];
 
-		inline vec3() {}
-		inline explicit vec3(real value) : data{ value, value, value } {}
-		inline explicit vec3(real x, real y, real z) : data{ x, y, z } {}
-		inline explicit vec3(const vec2 &v, real z) : data{ v[0], v[1], z } {}
-		inline explicit vec3(const vec4 &v);
+		inline constexpr vec3() noexcept {}
+		inline explicit constexpr vec3(real value) noexcept : data{ value, value, value } {}
+		inline explicit constexpr vec3(real x, real y, real z) noexcept : data{ x, y, z } {}
+		inline explicit constexpr vec3(const vec2 &v, real z) noexcept : data{ v[0], v[1], z } {}
+		inline explicit constexpr vec3(const vec4 &v) noexcept;
 
 		static vec3 parse(const string &str);
-		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 3); return data[idx]; }
-		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 3); return data[idx]; }
-		inline bool valid() const { for (real d : data) if (!d.valid()) return false; return true; }
-		inline static vec3 Nan() { return vec3(real::Nan()); }
+		inline constexpr real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 3); return data[idx]; }
+		inline constexpr real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 3); return data[idx]; }
+		inline bool valid() const noexcept { for (real d : data) if (!d.valid()) return false; return true; }
+		inline static constexpr vec3 Nan() noexcept { return vec3(real::Nan()); }
 	};
 
 	struct CAGE_CORE_API ivec3
 	{
-		sint32 data[3];
+		sint32 data[3] = {};
 
-		inline ivec3() : ivec3(0) {}
-		inline explicit ivec3(sint32 value) : data{ value, value, value } {}
-		inline explicit ivec3(sint32 x, sint32 y, sint32 z) : data{ x, y, z } {}
-		inline explicit ivec3(const ivec2 &v, sint32 z) : data{ v[0], v[1], z } {}
-		inline explicit ivec3(const ivec4 &v);
+		inline constexpr ivec3() noexcept {}
+		inline explicit constexpr ivec3(sint32 value) noexcept : data{ value, value, value } {}
+		inline explicit constexpr ivec3(sint32 x, sint32 y, sint32 z) noexcept : data{ x, y, z } {}
+		inline explicit constexpr ivec3(const ivec2 &v, sint32 z) noexcept : data{ v[0], v[1], z } {}
+		inline explicit constexpr ivec3(const ivec4 &v) noexcept;
 
 		static ivec3 parse(const string &str);
-		inline sint32 &operator [] (uint32 idx) { CAGE_ASSERT(idx < 3); return data[idx]; }
-		inline sint32 operator [] (uint32 idx) const { CAGE_ASSERT(idx < 3); return data[idx]; }
+		inline constexpr sint32 &operator [] (uint32 idx) { CAGE_ASSERT(idx < 3); return data[idx]; }
+		inline constexpr sint32 operator [] (uint32 idx) const { CAGE_ASSERT(idx < 3); return data[idx]; }
 	};
 
 	struct CAGE_CORE_API vec4
 	{
 		real data[4];
 
-		inline vec4() {}
-		inline explicit vec4(real value) : data{ value, value, value, value } {}
-		inline explicit vec4(real x, real y, real z, real w) : data{ x, y, z, w } {}
-		inline explicit vec4(const vec2 &v, real z, real w) : data{ v[0], v[1], z, w } {}
-		inline explicit vec4(const vec2 &v, const vec2 &w) : data{ v[0], v[1], w[0], w[1] } {}
-		inline explicit vec4(const vec3 &v, real w) : data{ v[0], v[1], v[2], w } {}
+		inline constexpr vec4() noexcept {}
+		inline explicit constexpr vec4(real value) noexcept : data{ value, value, value, value } {}
+		inline explicit constexpr vec4(real x, real y, real z, real w) noexcept : data{ x, y, z, w } {}
+		inline explicit constexpr vec4(const vec2 &v, real z, real w) noexcept : data{ v[0], v[1], z, w } {}
+		inline explicit constexpr vec4(const vec2 &v, const vec2 &w) noexcept : data{ v[0], v[1], w[0], w[1] } {}
+		inline explicit constexpr vec4(const vec3 &v, real w) noexcept : data{ v[0], v[1], v[2], w } {}
 
 		static vec4 parse(const string &str);
-		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 4); return data[idx]; }
-		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 4); return data[idx]; }
-		inline bool valid() const { for (real d : data) if (!d.valid()) return false; return true; }
-		inline static vec4 Nan() { return vec4(real::Nan()); }
+		inline constexpr real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 4); return data[idx]; }
+		inline constexpr real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 4); return data[idx]; }
+		inline bool valid() const noexcept { for (real d : data) if (!d.valid()) return false; return true; }
+		inline static constexpr vec4 Nan() noexcept { return vec4(real::Nan()); }
 	};
 
 	struct CAGE_CORE_API ivec4
 	{
-		sint32 data[4];
+		sint32 data[4] = {};
 
-		inline ivec4() : ivec4(0) {}
-		inline explicit ivec4(sint32 value) : data{ value, value, value, value } {}
-		inline explicit ivec4(sint32 x, sint32 y, sint32 z, sint32 w) : data{ x, y, z, w } {}
-		inline explicit ivec4(const ivec2 &v, sint32 z, sint32 w) : data{ v[0], v[1], z, w } {}
-		inline explicit ivec4(const ivec2 &v, const ivec2 &w) : data{ v[0], v[1], w[0], w[1] } {}
-		inline explicit ivec4(const ivec3 &v, sint32 w) : data{ v[0], v[1], v[2], w } {}
+		inline constexpr ivec4() noexcept {}
+		inline explicit constexpr ivec4(sint32 value) noexcept : data{ value, value, value, value } {}
+		inline explicit constexpr ivec4(sint32 x, sint32 y, sint32 z, sint32 w) noexcept : data{ x, y, z, w } {}
+		inline explicit constexpr ivec4(const ivec2 &v, sint32 z, sint32 w) noexcept : data{ v[0], v[1], z, w } {}
+		inline explicit constexpr ivec4(const ivec2 &v, const ivec2 &w) noexcept : data{ v[0], v[1], w[0], w[1] } {}
+		inline explicit constexpr ivec4(const ivec3 &v, sint32 w) noexcept : data{ v[0], v[1], v[2], w } {}
 
 		static ivec4 parse(const string &str);
-		inline sint32 &operator [] (uint32 idx) { CAGE_ASSERT(idx < 4); return data[idx]; }
-		inline sint32 operator [] (uint32 idx) const { CAGE_ASSERT(idx < 4); return data[idx]; }
+		inline constexpr sint32 &operator [] (uint32 idx) { CAGE_ASSERT(idx < 4); return data[idx]; }
+		inline constexpr sint32 operator [] (uint32 idx) const { CAGE_ASSERT(idx < 4); return data[idx]; }
 	};
 
 	struct CAGE_CORE_API quat
 	{
-		real data[4]; // x, y, z, w
+		real data[4] = { 0, 0, 0, 1 }; // x, y, z, w
 
-		inline quat() : quat(0, 0, 0, 1) {}
-		inline explicit quat(real x, real y, real z, real w) : data{ x, y, z, w } {}
+		inline constexpr quat() noexcept {}
+		inline explicit constexpr quat(real x, real y, real z, real w) noexcept : data{ x, y, z, w } {}
 		explicit quat(rads pitch, rads yaw, rads roll);
 		explicit quat(const vec3 &axis, rads angle);
 		explicit quat(const mat3 &rot);
 		explicit quat(const vec3 &forward, const vec3 &up, bool keepUp = false);
 
 		static quat parse(const string &str);
-		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 4); return data[idx]; }
-		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 4); return data[idx]; }
-		inline bool valid() const { for (real d : data) if (!d.valid()) return false; return true; }
-		inline static quat Nan() { return quat(real::Nan(), real::Nan(), real::Nan(), real::Nan()); }
+		inline constexpr real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 4); return data[idx]; }
+		inline constexpr real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 4); return data[idx]; }
+		inline bool valid() const noexcept { for (real d : data) if (!d.valid()) return false; return true; }
+		inline static constexpr quat Nan() noexcept { return quat(real::Nan(), real::Nan(), real::Nan(), real::Nan()); }
 	};
 
 	struct CAGE_CORE_API mat3
 	{
-		real data[9];
+		real data[9] = { 1, 0, 0, 0, 1, 0, 0, 0, 1 };
 
-		inline mat3() : mat3(1, 0, 0, 0, 1, 0, 0, 0, 1) {}
-		inline explicit mat3(real a, real b, real c, real d, real e, real f, real g, real h, real i) : data{ a, b, c, d, e, f, g, h, i } {}
+		inline constexpr mat3() noexcept {}
+		inline explicit constexpr mat3(real a, real b, real c, real d, real e, real f, real g, real h, real i) noexcept : data{ a, b, c, d, e, f, g, h, i } {}
 		explicit mat3(const vec3 &forward, const vec3 &up, bool keepUp = false);
-		explicit mat3(const quat &other);
-		explicit mat3(const mat4 &other);
+		explicit mat3(const quat &other) noexcept;
+		explicit constexpr mat3(const mat4 &other) noexcept;
 
 		static mat3 parse(const string &str);
-		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 9); return data[idx]; }
-		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 9); return data[idx]; }
-		inline bool valid() const { for (real d : data) if (!d.valid()) return false; return true; }
-		inline static mat3 Zero() { return mat3(0, 0, 0, 0, 0, 0, 0, 0, 0); }
-		inline static mat3 Nan() { return mat3(real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan()); }
+		inline constexpr real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 9); return data[idx]; }
+		inline constexpr real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 9); return data[idx]; }
+		inline bool valid() const noexcept { for (real d : data) if (!d.valid()) return false; return true; }
+		inline static constexpr mat3 Zero() noexcept { return mat3(0, 0, 0, 0, 0, 0, 0, 0, 0); }
+		inline static constexpr mat3 Nan() noexcept { return mat3(real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan()); }
 	};
 
 	struct CAGE_CORE_API mat4
 	{
-		real data[16]; // SRR0 RSR0 RRS0 TTT1
+		real data[16]  = { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 }; // SRR0 RSR0 RRS0 TTT1
 
-		inline mat4() : data{ 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 } {}
-		inline explicit mat4(real a, real b, real c, real d, real e, real f, real g, real h, real i, real j, real k, real l, real m, real n, real o, real p) : data{ a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p } {}
-		inline explicit mat4(const mat3 &other) : data{ other[0], other[1], other[2], 0, other[3], other[4], other[5], 0, other[6], other[7], other[8], 0, 0, 0, 0, 1 } {}
-		inline explicit mat4(const vec3 &position) : data{ 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, position[0], position[1], position[2], 1 } {}
-		explicit mat4(const vec3 &position, const quat &orientation, const vec3 &scale = vec3(1));
-		inline explicit mat4(const quat &orientation) : mat4(mat3(orientation)) {}
-		explicit mat4(const transform &other);
+		inline constexpr mat4() noexcept {}
+		inline explicit constexpr mat4(real a, real b, real c, real d, real e, real f, real g, real h, real i, real j, real k, real l, real m, real n, real o, real p) noexcept : data{ a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p } {}
+		inline explicit constexpr mat4(const mat3 &other) noexcept : data{ other[0], other[1], other[2], 0, other[3], other[4], other[5], 0, other[6], other[7], other[8], 0, 0, 0, 0, 1 } {}
+		inline explicit constexpr mat4(const vec3 &position) noexcept : data{ 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, position[0], position[1], position[2], 1 } {}
+		explicit mat4(const vec3 &position, const quat &orientation, const vec3 &scale = vec3(1)) noexcept;
+		inline explicit mat4(const quat &orientation) noexcept : mat4(mat3(orientation)) {}
+		explicit mat4(const transform &other) noexcept;
 
-		inline static mat4 scale(real scl) { return scale(vec3(scl)); };
-		inline static mat4 scale(const vec3 &scl) { return mat4(scl[0], 0, 0, 0, 0, scl[1], 0, 0, 0, 0, scl[2], 0, 0, 0, 0, 1); }
+		inline static constexpr mat4 scale(real scl) noexcept { return scale(vec3(scl)); };
+		inline static constexpr mat4 scale(const vec3 &scl) noexcept { return mat4(scl[0], 0, 0, 0, 0, scl[1], 0, 0, 0, 0, scl[2], 0, 0, 0, 0, 1); }
 		static mat4 parse(const string &str);
-		inline real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 16); return data[idx]; }
-		inline real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 16); return data[idx]; }
-		inline bool valid() const { for (real d : data) if (!d.valid()) return false; return true; }
-		inline static mat4 Zero() { return mat4(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0); }
-		inline static mat4 Nan() { return mat4(real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan()); }
+		inline constexpr real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 16); return data[idx]; }
+		inline constexpr real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 16); return data[idx]; }
+		inline bool valid() const noexcept { for (real d : data) if (!d.valid()) return false; return true; }
+		inline static constexpr mat4 Zero() noexcept { return mat4(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0); }
+		inline static constexpr mat4 Nan() noexcept { return mat4(real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan(), real::Nan()); }
 	};
 
 	struct CAGE_CORE_API transform
@@ -243,37 +243,37 @@ namespace cage
 		vec3 position;
 		real scale = 1;
 
-		inline transform() {}
-		inline explicit transform(const vec3 &position, const quat &orientation = quat(), real scale = 1) : orientation(orientation), position(position), scale(scale) {}
+		inline constexpr transform() noexcept {}
+		inline explicit constexpr transform(const vec3 &position, const quat &orientation = quat(), real scale = 1) noexcept : orientation(orientation), position(position), scale(scale) {}
 
 		static transform parse(const string &str);
-		inline bool valid() const { return orientation.valid() && position.valid() && scale.valid(); }
+		inline bool valid() const noexcept { return orientation.valid() && position.valid() && scale.valid(); }
 	};
 
 #define GCHL_GENERATE(OPERATOR) \
-	inline bool operator OPERATOR (const real &l, const real &r) { return l.value OPERATOR r.value; }; \
-	inline bool operator OPERATOR (const rads &l, const rads &r) { return l.value OPERATOR r.value; }; \
-	inline bool operator OPERATOR (const degs &l, const degs &r) { return l.value OPERATOR r.value; }; \
-	inline bool operator OPERATOR (const rads &l, const degs &r) { return l OPERATOR rads(r); }; \
-	inline bool operator OPERATOR (const degs &l, const rads &r) { return rads(l) OPERATOR r; };
+	inline constexpr bool operator OPERATOR (const real &l, const real &r) noexcept { return l.value OPERATOR r.value; }; \
+	inline constexpr bool operator OPERATOR (const rads &l, const rads &r) noexcept { return l.value OPERATOR r.value; }; \
+	inline constexpr bool operator OPERATOR (const degs &l, const degs &r) noexcept { return l.value OPERATOR r.value; }; \
+	inline constexpr bool operator OPERATOR (const rads &l, const degs &r) noexcept { return l OPERATOR rads(r); }; \
+	inline constexpr bool operator OPERATOR (const degs &l, const rads &r) noexcept { return rads(l) OPERATOR r; };
 	GCHL_GENERATE(==);
 	GCHL_GENERATE(<=);
 	GCHL_GENERATE(>=);
 	GCHL_GENERATE(<);
 	GCHL_GENERATE(>);
 #undef GCHL_GENERATE
-	inline bool operator == (const vec2 &l, const vec2 &r) { return l.data[0] == r.data[0] && l.data[1] == r.data[1]; };
-	inline bool operator == (const vec3 &l, const vec3 &r) { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2]; };
-	inline bool operator == (const vec4 &l, const vec4 &r) { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2] && l.data[3] == r.data[3]; };
-	inline bool operator == (const quat &l, const quat &r) { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2] && l.data[3] == r.data[3]; };
-	inline bool operator == (const mat3 &l, const mat3 &r) { for (uint32 i = 0; i < 9; i++) if (!(l[i] == r[i])) return false; return true; };
-	inline bool operator == (const mat4 &l, const mat4 &r) { for (uint32 i = 0; i < 16; i++) if (!(l[i] == r[i])) return false; return true; };
-	inline bool operator == (const transform &l, const transform &r) { return l.orientation == r.orientation && l.position == r.position && l.scale == r.scale; }; \
-	inline bool operator == (const ivec2 &l, const ivec2 &r) { return l.data[0] == r.data[0] && l.data[1] == r.data[1]; };
-	inline bool operator == (const ivec3 &l, const ivec3 &r) { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2]; };
-	inline bool operator == (const ivec4 &l, const ivec4 &r) { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2] && l.data[3] == r.data[3]; };
+	inline constexpr bool operator == (const vec2 &l, const vec2 &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1]; };
+	inline constexpr bool operator == (const vec3 &l, const vec3 &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2]; };
+	inline constexpr bool operator == (const vec4 &l, const vec4 &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2] && l.data[3] == r.data[3]; };
+	inline constexpr bool operator == (const quat &l, const quat &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2] && l.data[3] == r.data[3]; };
+	inline constexpr bool operator == (const mat3 &l, const mat3 &r) noexcept { for (uint32 i = 0; i < 9; i++) if (!(l[i] == r[i])) return false; return true; };
+	inline constexpr bool operator == (const mat4 &l, const mat4 &r) noexcept { for (uint32 i = 0; i < 16; i++) if (!(l[i] == r[i])) return false; return true; };
+	inline constexpr bool operator == (const transform &l, const transform &r) noexcept { return l.orientation == r.orientation && l.position == r.position && l.scale == r.scale; }; \
+	inline constexpr bool operator == (const ivec2 &l, const ivec2 &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1]; };
+	inline constexpr bool operator == (const ivec3 &l, const ivec3 &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2]; };
+	inline constexpr bool operator == (const ivec4 &l, const ivec4 &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2] && l.data[3] == r.data[3]; };
 #define GCHL_GENERATE(TYPE) \
-	inline bool operator != (const TYPE &l, const TYPE &r) { return !(l == r); };
+	inline constexpr bool operator != (const TYPE &l, const TYPE &r) noexcept { return !(l == r); };
 	GCHL_GENERATE(real);
 	GCHL_GENERATE(rads);
 	GCHL_GENERATE(degs);
@@ -289,55 +289,55 @@ namespace cage
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(OPERATOR) \
-	inline real operator OPERATOR (const real &r) { return OPERATOR r.value; } \
-	inline rads operator OPERATOR (const rads &r) { return rads(OPERATOR r.value); } \
-	inline degs operator OPERATOR (const degs &r) { return degs(OPERATOR r.value); } \
-	inline vec2 operator OPERATOR (const vec2 &r) { return vec2(OPERATOR r[0], OPERATOR r[1]); } \
-	inline vec3 operator OPERATOR (const vec3 &r) { return vec3(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2]); } \
-	inline vec4 operator OPERATOR (const vec4 &r) { return vec4(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2], OPERATOR r[3]); } \
-	inline quat operator OPERATOR (const quat &r) { return quat(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2], OPERATOR r[3]); } \
-	inline ivec2 operator OPERATOR (const ivec2 &r) { return ivec2(OPERATOR r[0], OPERATOR r[1]); } \
-	inline ivec3 operator OPERATOR (const ivec3 &r) { return ivec3(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2]); } \
-	inline ivec4 operator OPERATOR (const ivec4 &r) { return ivec4(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2], OPERATOR r[3]); }
+	inline constexpr real operator OPERATOR (const real &r) noexcept { return OPERATOR r.value; } \
+	inline constexpr rads operator OPERATOR (const rads &r) noexcept { return rads(OPERATOR r.value); } \
+	inline constexpr degs operator OPERATOR (const degs &r) noexcept { return degs(OPERATOR r.value); } \
+	inline constexpr vec2 operator OPERATOR (const vec2 &r) noexcept { return vec2(OPERATOR r[0], OPERATOR r[1]); } \
+	inline constexpr vec3 operator OPERATOR (const vec3 &r) noexcept { return vec3(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2]); } \
+	inline constexpr vec4 operator OPERATOR (const vec4 &r) noexcept { return vec4(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2], OPERATOR r[3]); } \
+	inline constexpr quat operator OPERATOR (const quat &r) noexcept { return quat(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2], OPERATOR r[3]); } \
+	inline constexpr ivec2 operator OPERATOR (const ivec2 &r) noexcept { return ivec2(OPERATOR r[0], OPERATOR r[1]); } \
+	inline constexpr ivec3 operator OPERATOR (const ivec3 &r) noexcept { return ivec3(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2]); } \
+	inline constexpr ivec4 operator OPERATOR (const ivec4 &r) noexcept { return ivec4(OPERATOR r[0], OPERATOR r[1], OPERATOR r[2], OPERATOR r[3]); }
 	GCHL_GENERATE(+);
 	GCHL_GENERATE(-);
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(OPERATOR) \
-	inline real operator OPERATOR (const real &l, const real &r) { return l.value OPERATOR r.value; }
+	inline constexpr real operator OPERATOR (const real &l, const real &r) noexcept { return l.value OPERATOR r.value; }
 	GCHL_GENERATE(+);
 	GCHL_GENERATE(-);
 	GCHL_GENERATE(*);
 	GCHL_GENERATE(/);
 #undef GCHL_GENERATE
-	inline real operator % (const real &l, const real &r) { CAGE_ASSERT(r.value != 0); return l - (r * (sint32)(l / r).value); }
+	inline constexpr real operator % (const real &l, const real &r) noexcept { CAGE_ASSERT(r.value != 0); return l - (r * (sint32)(l / r).value); }
 #define GCHL_GENERATE(OPERATOR) \
-	inline rads operator OPERATOR (const rads &l, const rads &r) { return rads(l.value OPERATOR r.value); } \
-	inline rads operator OPERATOR (const rads &l, const real &r) { return rads(l.value OPERATOR r); } \
-	inline rads operator OPERATOR (const real &l, const rads &r) { return rads(l OPERATOR r.value); } \
-	inline degs operator OPERATOR (const degs &l, const degs &r) { return degs(l.value OPERATOR r.value); } \
-	inline degs operator OPERATOR (const degs &l, const real &r) { return degs(l.value OPERATOR r); } \
-	inline degs operator OPERATOR (const real &l, const degs &r) { return degs(l OPERATOR r.value); } \
-	inline rads operator OPERATOR (const rads &l, const degs &r) { return l OPERATOR rads(r); } \
-	inline rads operator OPERATOR (const degs &l, const rads &r) { return rads(l) OPERATOR r; } \
-	inline vec2 operator OPERATOR (const vec2 &l, const vec2 &r) { return vec2(l[0] OPERATOR r[0], l[1] OPERATOR r[1]); } \
-	inline vec2 operator OPERATOR (const vec2 &l, const real &r) { return vec2(l[0] OPERATOR r, l[1] OPERATOR r); } \
-	inline vec2 operator OPERATOR (const real &l, const vec2 &r) { return vec2(l OPERATOR r[0], l OPERATOR r[1]); } \
-	inline vec3 operator OPERATOR (const vec3 &l, const vec3 &r) { return vec3(l[0] OPERATOR r[0], l[1] OPERATOR r[1], l[2] OPERATOR r[2]); } \
-	inline vec3 operator OPERATOR (const vec3 &l, const real &r) { return vec3(l[0] OPERATOR r, l[1] OPERATOR r, l[2] OPERATOR r); } \
-	inline vec3 operator OPERATOR (const real &l, const vec3 &r) { return vec3(l OPERATOR r[0], l OPERATOR r[1], l OPERATOR r[2]); } \
-	inline vec4 operator OPERATOR (const vec4 &l, const vec4 &r) { return vec4(l[0] OPERATOR r[0], l[1] OPERATOR r[1], l[2] OPERATOR r[2], l[3] OPERATOR r[3]); } \
-	inline vec4 operator OPERATOR (const vec4 &l, const real &r) { return vec4(l[0] OPERATOR r, l[1] OPERATOR r, l[2] OPERATOR r, l[3] OPERATOR r); } \
-	inline vec4 operator OPERATOR (const real &l, const vec4 &r) { return vec4(l OPERATOR r[0], l OPERATOR r[1], l OPERATOR r[2], l OPERATOR r[3]); } \
-	inline ivec2 operator OPERATOR (const ivec2 &l, const ivec2 &r) { return ivec2(l[0] OPERATOR r[0], l[1] OPERATOR r[1]); } \
-	inline ivec2 operator OPERATOR (const ivec2 &l, const sint32 &r) { return ivec2(l[0] OPERATOR r, l[1] OPERATOR r); } \
-	inline ivec2 operator OPERATOR (const sint32 &l, const ivec2 &r) { return ivec2(l OPERATOR r[0], l OPERATOR r[1]); } \
-	inline ivec3 operator OPERATOR (const ivec3 &l, const ivec3 &r) { return ivec3(l[0] OPERATOR r[0], l[1] OPERATOR r[1], l[2] OPERATOR r[2]); } \
-	inline ivec3 operator OPERATOR (const ivec3 &l, const sint32 &r) { return ivec3(l[0] OPERATOR r, l[1] OPERATOR r, l[2] OPERATOR r); } \
-	inline ivec3 operator OPERATOR (const sint32 &l, const ivec3 &r) { return ivec3(l OPERATOR r[0], l OPERATOR r[1], l OPERATOR r[2]); } \
-	inline ivec4 operator OPERATOR (const ivec4 &l, const ivec4 &r) { return ivec4(l[0] OPERATOR r[0], l[1] OPERATOR r[1], l[2] OPERATOR r[2], l[3] OPERATOR r[3]); } \
-	inline ivec4 operator OPERATOR (const ivec4 &l, const sint32 &r) { return ivec4(l[0] OPERATOR r, l[1] OPERATOR r, l[2] OPERATOR r, l[3] OPERATOR r); } \
-	inline ivec4 operator OPERATOR (const sint32 &l, const ivec4 &r) { return ivec4(l OPERATOR r[0], l OPERATOR r[1], l OPERATOR r[2], l OPERATOR r[3]); }
+	inline constexpr rads operator OPERATOR (const rads &l, const rads &r) noexcept { return rads(l.value OPERATOR r.value); } \
+	inline constexpr rads operator OPERATOR (const rads &l, const real &r) noexcept { return rads(l.value OPERATOR r); } \
+	inline constexpr rads operator OPERATOR (const real &l, const rads &r) noexcept { return rads(l OPERATOR r.value); } \
+	inline constexpr degs operator OPERATOR (const degs &l, const degs &r) noexcept { return degs(l.value OPERATOR r.value); } \
+	inline constexpr degs operator OPERATOR (const degs &l, const real &r) noexcept { return degs(l.value OPERATOR r); } \
+	inline constexpr degs operator OPERATOR (const real &l, const degs &r) noexcept { return degs(l OPERATOR r.value); } \
+	inline constexpr rads operator OPERATOR (const rads &l, const degs &r) noexcept { return l OPERATOR rads(r); } \
+	inline constexpr rads operator OPERATOR (const degs &l, const rads &r) noexcept { return rads(l) OPERATOR r; } \
+	inline constexpr vec2 operator OPERATOR (const vec2 &l, const vec2 &r) noexcept { return vec2(l[0] OPERATOR r[0], l[1] OPERATOR r[1]); } \
+	inline constexpr vec2 operator OPERATOR (const vec2 &l, const real &r) noexcept { return vec2(l[0] OPERATOR r, l[1] OPERATOR r); } \
+	inline constexpr vec2 operator OPERATOR (const real &l, const vec2 &r) noexcept { return vec2(l OPERATOR r[0], l OPERATOR r[1]); } \
+	inline constexpr vec3 operator OPERATOR (const vec3 &l, const vec3 &r) noexcept { return vec3(l[0] OPERATOR r[0], l[1] OPERATOR r[1], l[2] OPERATOR r[2]); } \
+	inline constexpr vec3 operator OPERATOR (const vec3 &l, const real &r) noexcept { return vec3(l[0] OPERATOR r, l[1] OPERATOR r, l[2] OPERATOR r); } \
+	inline constexpr vec3 operator OPERATOR (const real &l, const vec3 &r) noexcept { return vec3(l OPERATOR r[0], l OPERATOR r[1], l OPERATOR r[2]); } \
+	inline constexpr vec4 operator OPERATOR (const vec4 &l, const vec4 &r) noexcept { return vec4(l[0] OPERATOR r[0], l[1] OPERATOR r[1], l[2] OPERATOR r[2], l[3] OPERATOR r[3]); } \
+	inline constexpr vec4 operator OPERATOR (const vec4 &l, const real &r) noexcept { return vec4(l[0] OPERATOR r, l[1] OPERATOR r, l[2] OPERATOR r, l[3] OPERATOR r); } \
+	inline constexpr vec4 operator OPERATOR (const real &l, const vec4 &r) noexcept { return vec4(l OPERATOR r[0], l OPERATOR r[1], l OPERATOR r[2], l OPERATOR r[3]); } \
+	inline constexpr ivec2 operator OPERATOR (const ivec2 &l, const ivec2 &r) noexcept { return ivec2(l[0] OPERATOR r[0], l[1] OPERATOR r[1]); } \
+	inline constexpr ivec2 operator OPERATOR (const ivec2 &l, const sint32 &r) noexcept { return ivec2(l[0] OPERATOR r, l[1] OPERATOR r); } \
+	inline constexpr ivec2 operator OPERATOR (const sint32 &l, const ivec2 &r) noexcept { return ivec2(l OPERATOR r[0], l OPERATOR r[1]); } \
+	inline constexpr ivec3 operator OPERATOR (const ivec3 &l, const ivec3 &r) noexcept { return ivec3(l[0] OPERATOR r[0], l[1] OPERATOR r[1], l[2] OPERATOR r[2]); } \
+	inline constexpr ivec3 operator OPERATOR (const ivec3 &l, const sint32 &r) noexcept { return ivec3(l[0] OPERATOR r, l[1] OPERATOR r, l[2] OPERATOR r); } \
+	inline constexpr ivec3 operator OPERATOR (const sint32 &l, const ivec3 &r) noexcept { return ivec3(l OPERATOR r[0], l OPERATOR r[1], l OPERATOR r[2]); } \
+	inline constexpr ivec4 operator OPERATOR (const ivec4 &l, const ivec4 &r) noexcept { return ivec4(l[0] OPERATOR r[0], l[1] OPERATOR r[1], l[2] OPERATOR r[2], l[3] OPERATOR r[3]); } \
+	inline constexpr ivec4 operator OPERATOR (const ivec4 &l, const sint32 &r) noexcept { return ivec4(l[0] OPERATOR r, l[1] OPERATOR r, l[2] OPERATOR r, l[3] OPERATOR r); } \
+	inline constexpr ivec4 operator OPERATOR (const sint32 &l, const ivec4 &r) noexcept { return ivec4(l OPERATOR r[0], l OPERATOR r[1], l OPERATOR r[2], l OPERATOR r[3]); }
 	GCHL_GENERATE(+);
 	GCHL_GENERATE(-);
 	GCHL_GENERATE(*);
@@ -345,60 +345,60 @@ namespace cage
 	GCHL_GENERATE(%);
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(OPERATOR) \
-	inline quat operator OPERATOR (const quat &l, const quat &r) { return quat(l[0] OPERATOR r[0], l[1] OPERATOR r[1], l[2] OPERATOR r[2], l[3] OPERATOR r[3]); } \
-	inline quat operator OPERATOR (const real &l, const quat &r) { return quat(l OPERATOR r[0], l OPERATOR r[1], l OPERATOR r[2], l OPERATOR r[3]); } \
-	inline quat operator OPERATOR (const quat &l, const real &r) { return quat(l[0] OPERATOR r, l[1] OPERATOR r, l[2] OPERATOR r, l[3] OPERATOR r); }
+	inline constexpr quat operator OPERATOR (const quat &l, const quat &r) noexcept { return quat(l[0] OPERATOR r[0], l[1] OPERATOR r[1], l[2] OPERATOR r[2], l[3] OPERATOR r[3]); } \
+	inline constexpr quat operator OPERATOR (const real &l, const quat &r) noexcept { return quat(l OPERATOR r[0], l OPERATOR r[1], l OPERATOR r[2], l OPERATOR r[3]); } \
+	inline constexpr quat operator OPERATOR (const quat &l, const real &r) noexcept { return quat(l[0] OPERATOR r, l[1] OPERATOR r, l[2] OPERATOR r, l[3] OPERATOR r); }
 	GCHL_GENERATE(+);
 	GCHL_GENERATE(-);
 	GCHL_GENERATE(/);
 #undef GCHL_GENERATE
-	CAGE_CORE_API quat operator * (const quat &l, const quat &r);
-	inline quat operator * (const real &l, const quat &r) { return quat(l * r[0], l * r[1], l * r[2], l * r[3]); }
-	inline quat operator * (const quat &l, const real &r) { return quat(l[0] * r, l[1] * r, l[2] * r, l[3] * r); }
+	inline constexpr quat operator * (const quat &l, const quat &r) noexcept { return quat(l[3] * r[0] + l[0] * r[3] + l[1] * r[2] - l[2] * r[1], l[3] * r[1] + l[1] * r[3] + l[2] * r[0] - l[0] * r[2], l[3] * r[2] + l[2] * r[3] + l[0] * r[1] - l[1] * r[0], l[3] * r[3] - l[0] * r[0] - l[1] * r[1] - l[2] * r[2]); }
+	inline constexpr quat operator * (const real &l, const quat &r) noexcept { return quat(l * r[0], l * r[1], l * r[2], l * r[3]); }
+	inline constexpr quat operator * (const quat &l, const real &r) noexcept { return quat(l[0] * r, l[1] * r, l[2] * r, l[3] * r); }
 #define GCHL_GENERATE(OPERATOR) \
-	CAGE_CORE_API mat3 operator OPERATOR (const mat3 &l, const mat3 &r); \
-	inline mat3 operator OPERATOR (const mat3 &l, const real &r) { mat3 res; for (uint32 i = 0; i < 9; i++) res[i] = l[i] OPERATOR r; return res; } \
-	inline mat3 operator OPERATOR (const real &l, const mat3 &r) { mat3 res; for (uint32 i = 0; i < 9; i++) res[i] = l OPERATOR r[i]; return res; } \
-	CAGE_CORE_API mat4 operator OPERATOR (const mat4 &l, const mat4 &r); \
-	inline mat4 operator OPERATOR (const mat4 &l, const real &r) { mat4 res; for (uint32 i = 0; i < 16; i++) res[i] = l[i] OPERATOR r; return res; } \
-	inline mat4 operator OPERATOR (const real &l, const mat4 &r) { mat4 res; for (uint32 i = 0; i < 16; i++) res[i] = l OPERATOR r[i]; return res; }
+	CAGE_CORE_API mat3 operator OPERATOR (const mat3 &l, const mat3 &r) noexcept; \
+	inline constexpr mat3 operator OPERATOR (const mat3 &l, const real &r) noexcept { mat3 res; for (uint32 i = 0; i < 9; i++) res[i] = l[i] OPERATOR r; return res; } \
+	inline constexpr mat3 operator OPERATOR (const real &l, const mat3 &r) noexcept { mat3 res; for (uint32 i = 0; i < 9; i++) res[i] = l OPERATOR r[i]; return res; } \
+	CAGE_CORE_API mat4 operator OPERATOR (const mat4 &l, const mat4 &r) noexcept; \
+	inline constexpr mat4 operator OPERATOR (const mat4 &l, const real &r) noexcept { mat4 res; for (uint32 i = 0; i < 16; i++) res[i] = l[i] OPERATOR r; return res; } \
+	inline constexpr mat4 operator OPERATOR (const real &l, const mat4 &r) noexcept { mat4 res; for (uint32 i = 0; i < 16; i++) res[i] = l OPERATOR r[i]; return res; }
 	GCHL_GENERATE(+);
 	GCHL_GENERATE(*);
 #undef GCHL_GENERATE
-	CAGE_CORE_API vec3 operator * (const transform &l, const vec3 &r);
-	CAGE_CORE_API vec3 operator * (const vec3 &l, const transform &r);
-	CAGE_CORE_API vec3 operator * (const vec3 &l, const quat &r);
-	CAGE_CORE_API vec3 operator * (const quat &l, const vec3 &r);
-	CAGE_CORE_API vec3 operator * (const vec3 &l, const mat3 &r);
-	CAGE_CORE_API vec3 operator * (const mat3 &l, const vec3 &r);
-	CAGE_CORE_API vec4 operator * (const vec4 &l, const mat4 &r);
-	CAGE_CORE_API vec4 operator * (const mat4 &l, const vec4 &r);
-	CAGE_CORE_API transform operator * (const transform &l, const transform &r);
-	CAGE_CORE_API transform operator * (const transform &l, const quat &r);
-	CAGE_CORE_API transform operator * (const quat &l, const transform &r);
-	CAGE_CORE_API transform operator * (const transform &l, const real &r);
-	CAGE_CORE_API transform operator * (const real &l, const transform &r);
-	CAGE_CORE_API transform operator + (const transform &l, const vec3 &r);
-	CAGE_CORE_API transform operator + (const vec3 &l, const transform &r);
+	CAGE_CORE_API vec3 operator * (const transform &l, const vec3 &r) noexcept;
+	CAGE_CORE_API vec3 operator * (const vec3 &l, const transform &r) noexcept;
+	CAGE_CORE_API vec3 operator * (const vec3 &l, const quat &r) noexcept;
+	CAGE_CORE_API vec3 operator * (const quat &l, const vec3 &r) noexcept;
+	CAGE_CORE_API vec3 operator * (const vec3 &l, const mat3 &r) noexcept;
+	CAGE_CORE_API vec3 operator * (const mat3 &l, const vec3 &r) noexcept;
+	CAGE_CORE_API vec4 operator * (const vec4 &l, const mat4 &r) noexcept;
+	CAGE_CORE_API vec4 operator * (const mat4 &l, const vec4 &r) noexcept;
+	CAGE_CORE_API transform operator * (const transform &l, const transform &r) noexcept;
+	CAGE_CORE_API transform operator * (const transform &l, const quat &r) noexcept;
+	CAGE_CORE_API transform operator * (const quat &l, const transform &r) noexcept;
+	CAGE_CORE_API transform operator * (const transform &l, const real &r) noexcept;
+	CAGE_CORE_API transform operator * (const real &l, const transform &r) noexcept;
+	CAGE_CORE_API transform operator + (const transform &l, const vec3 &r) noexcept;
+	CAGE_CORE_API transform operator + (const vec3 &l, const transform &r) noexcept;
 
 #define GCHL_GENERATE(OPERATOR) \
-	inline real &operator OPERATOR##= (real &l, const real &r) { return l = l OPERATOR r; } \
-	inline rads &operator OPERATOR##= (rads &l, const rads &r) { return l = l OPERATOR r; } \
-	inline rads &operator OPERATOR##= (rads &l, const real &r) { return l = l OPERATOR r; } \
-	inline degs &operator OPERATOR##= (degs &l, const degs &r) { return l = l OPERATOR r; } \
-	inline degs &operator OPERATOR##= (degs &l, const real &r) { return l = l OPERATOR r; } \
-	inline vec2 &operator OPERATOR##= (vec2 &l, const vec2 &r) { return l = l OPERATOR r; } \
-	inline vec2 &operator OPERATOR##= (vec2 &l, const real &r) { return l = l OPERATOR r; } \
-	inline vec3 &operator OPERATOR##= (vec3 &l, const vec3 &r) { return l = l OPERATOR r; } \
-	inline vec3 &operator OPERATOR##= (vec3 &l, const real &r) { return l = l OPERATOR r; } \
-	inline vec4 &operator OPERATOR##= (vec4 &l, const vec4 &r) { return l = l OPERATOR r; } \
-	inline vec4 &operator OPERATOR##= (vec4 &l, const real &r) { return l = l OPERATOR r; } \
-	inline ivec2 &operator OPERATOR##= (ivec2 &l, const ivec2 &r) { return l = l OPERATOR r; } \
-	inline ivec2 &operator OPERATOR##= (ivec2 &l, const sint32 &r) { return l = l OPERATOR r; } \
-	inline ivec3 &operator OPERATOR##= (ivec3 &l, const ivec3 &r) { return l = l OPERATOR r; } \
-	inline ivec3 &operator OPERATOR##= (ivec3 &l, const sint32 &r) { return l = l OPERATOR r; } \
-	inline ivec4 &operator OPERATOR##= (ivec4 &l, const ivec4 &r) { return l = l OPERATOR r; } \
-	inline ivec4 &operator OPERATOR##= (ivec4 &l, const sint32 &r) { return l = l OPERATOR r; }
+	inline constexpr real &operator OPERATOR##= (real &l, const real &r) noexcept { return l = l OPERATOR r; } \
+	inline constexpr rads &operator OPERATOR##= (rads &l, const rads &r) noexcept { return l = l OPERATOR r; } \
+	inline constexpr rads &operator OPERATOR##= (rads &l, const real &r) noexcept { return l = l OPERATOR r; } \
+	inline constexpr degs &operator OPERATOR##= (degs &l, const degs &r) noexcept { return l = l OPERATOR r; } \
+	inline constexpr degs &operator OPERATOR##= (degs &l, const real &r) noexcept { return l = l OPERATOR r; } \
+	inline constexpr vec2 &operator OPERATOR##= (vec2 &l, const vec2 &r) noexcept { return l = l OPERATOR r; } \
+	inline constexpr vec2 &operator OPERATOR##= (vec2 &l, const real &r) noexcept { return l = l OPERATOR r; } \
+	inline constexpr vec3 &operator OPERATOR##= (vec3 &l, const vec3 &r) noexcept { return l = l OPERATOR r; } \
+	inline constexpr vec3 &operator OPERATOR##= (vec3 &l, const real &r) noexcept { return l = l OPERATOR r; } \
+	inline constexpr vec4 &operator OPERATOR##= (vec4 &l, const vec4 &r) noexcept { return l = l OPERATOR r; } \
+	inline constexpr vec4 &operator OPERATOR##= (vec4 &l, const real &r) noexcept { return l = l OPERATOR r; } \
+	inline constexpr ivec2 &operator OPERATOR##= (ivec2 &l, const ivec2 &r) noexcept { return l = l OPERATOR r; } \
+	inline constexpr ivec2 &operator OPERATOR##= (ivec2 &l, const sint32 &r) noexcept { return l = l OPERATOR r; } \
+	inline constexpr ivec3 &operator OPERATOR##= (ivec3 &l, const ivec3 &r) noexcept { return l = l OPERATOR r; } \
+	inline constexpr ivec3 &operator OPERATOR##= (ivec3 &l, const sint32 &r) noexcept { return l = l OPERATOR r; } \
+	inline constexpr ivec4 &operator OPERATOR##= (ivec4 &l, const ivec4 &r) noexcept { return l = l OPERATOR r; } \
+	inline constexpr ivec4 &operator OPERATOR##= (ivec4 &l, const sint32 &r) noexcept { return l = l OPERATOR r; }
 	GCHL_GENERATE(+);
 	GCHL_GENERATE(-);
 	GCHL_GENERATE(*);
@@ -406,49 +406,49 @@ namespace cage
 	GCHL_GENERATE(%);
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(OPERATOR) \
-	inline quat &operator OPERATOR##= (quat &l, const quat &r) { return l = l OPERATOR r; } \
-	inline quat &operator OPERATOR##= (quat &l, const real &r) { return l = l OPERATOR r; }
+	inline constexpr quat &operator OPERATOR##= (quat &l, const quat &r) noexcept { return l = l OPERATOR r; } \
+	inline constexpr quat &operator OPERATOR##= (quat &l, const real &r) noexcept { return l = l OPERATOR r; }
 	GCHL_GENERATE(+);
 	GCHL_GENERATE(-);
 	GCHL_GENERATE(*);
 	GCHL_GENERATE(/);
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(OPERATOR) \
-	inline mat3 &operator OPERATOR##= (mat3 &l, const mat3 &r) { return l = l OPERATOR r; } \
-	inline mat3 &operator OPERATOR##= (mat3 &l, const real &r) { return l = l OPERATOR r; } \
-	inline mat4 &operator OPERATOR##= (mat4 &l, const mat4 &r) { return l = l OPERATOR r; } \
-	inline mat4 &operator OPERATOR##= (mat4 &l, const real &r) { return l = l OPERATOR r; }
+	inline mat3 &operator OPERATOR##= (mat3 &l, const mat3 &r) noexcept { return l = l OPERATOR r; } \
+	inline mat4 &operator OPERATOR##= (mat4 &l, const mat4 &r) noexcept { return l = l OPERATOR r; } \
+	inline constexpr mat3 &operator OPERATOR##= (mat3 &l, const real &r) noexcept { return l = l OPERATOR r; } \
+	inline constexpr mat4 &operator OPERATOR##= (mat4 &l, const real &r) noexcept { return l = l OPERATOR r; }
 	GCHL_GENERATE(+);
 	GCHL_GENERATE(*);
 #undef GCHL_GENERATE
-	inline vec3 &operator *= (vec3 &l, const mat3 &r) { return l = l *= r; }
-	inline vec3 &operator *= (vec3 &l, const quat &r) { return l = l *= r; }
-	inline vec3 &operator *= (vec3 &l, const transform &r) { return l = l * r; }
-	inline vec4 &operator *= (vec4 &l, const mat4 &r) { return l = l *= r; }
-	inline transform &operator *= (transform &l, const transform &r) { return l = l * r; }
-	inline transform &operator *= (transform &l, const quat &r) { return l = l * r; }
-	inline transform &operator *= (transform &l, const real &r) { return l = l * r; }
-	inline transform &operator += (transform &l, const vec3 &r) { return l = l + r; }
+	inline vec3 &operator *= (vec3 &l, const mat3 &r) noexcept { return l = l *= r; }
+	inline vec3 &operator *= (vec3 &l, const quat &r) noexcept { return l = l *= r; }
+	inline vec3 &operator *= (vec3 &l, const transform &r) noexcept { return l = l * r; }
+	inline vec4 &operator *= (vec4 &l, const mat4 &r) noexcept { return l = l *= r; }
+	inline transform &operator *= (transform &l, const transform &r) noexcept { return l = l * r; }
+	inline transform &operator *= (transform &l, const quat &r) noexcept { return l = l * r; }
+	inline transform &operator *= (transform &l, const real &r) noexcept { return l = l * r; }
+	inline transform &operator += (transform &l, const vec3 &r) noexcept { return l = l + r; }
 
-	inline real::real(rads other) : value(other.value.value) {}
-	inline real::real(degs other) : value(other.value.value) {}
-	inline rads::rads(degs other) : value(other.value * real::Pi() / 180) {}
-	inline degs::degs(rads other) : value(other.value * 180 / real::Pi()) {}
-	inline vec2::vec2(const vec3 &other) : data{ other.data[0], other.data[1] } {}
-	inline vec2::vec2(const vec4 &other) : data{ other.data[0], other.data[1] } {}
-	inline vec3::vec3(const vec4 &other) : data{ other.data[0], other.data[1], other.data[2] } {}
-	inline mat3::mat3(const mat4 &other) : data{ other[0], other[1], other[2], other[4], other[5], other[6], other[8], other[9], other[10] } {}
-	inline mat4::mat4(const transform &other) : mat4(other.position, other.orientation, vec3(other.scale)) {}
+	inline constexpr real::real(rads other) noexcept : value(other.value.value) {}
+	inline constexpr real::real(degs other) noexcept : value(other.value.value) {}
+	inline constexpr rads::rads(degs other) noexcept : value(other.value * real::Pi() / 180) {}
+	inline constexpr degs::degs(rads other) noexcept : value(other.value * 180 / real::Pi()) {}
+	inline constexpr vec2::vec2(const vec3 &other) noexcept : data{ other.data[0], other.data[1] } {}
+	inline constexpr vec2::vec2(const vec4 &other) noexcept : data{ other.data[0], other.data[1] } {}
+	inline constexpr vec3::vec3(const vec4 &other) noexcept : data{ other.data[0], other.data[1], other.data[2] } {}
+	inline constexpr mat3::mat3(const mat4 &other) noexcept : data{ other[0], other[1], other[2], other[4], other[5], other[6], other[8], other[9], other[10] } {}
+	inline mat4::mat4(const transform &other) noexcept : mat4(other.position, other.orientation, vec3(other.scale)) {}
 
-	inline real smoothstep(real x) { return x * x * (3 - 2 * x); }
-	inline real smootherstep(real x) { return x * x * x * (x * (x * 6 - 15) + 10); }
-	inline sint32 sign(real x) { return x < 0 ? -1 : x > 0 ? 1 : 0; }
-	inline real wrap(real x) { if (x < 0) return 1 - -x % 1; else return x % 1; }
-	inline rads wrap(rads x) { if (x < rads()) return rads::Full() - -x % rads::Full(); else return x % rads::Full(); }
-	inline degs wrap(degs x) { if (x < degs()) return degs::Full() - -x % degs::Full(); else return x % degs::Full(); }
-	inline sint32 sign(rads x) { return sign(x.value); }
-	inline sint32 sign(degs x) { return sign(x.value); }
-	inline real sqr(real x) { return x * x; }
+	inline constexpr real smoothstep(real x) noexcept { return x * x * (3 - 2 * x); }
+	inline constexpr real smootherstep(real x) noexcept { return x * x * x * (x * (x * 6 - 15) + 10); }
+	inline constexpr sint32 sign(real x) noexcept { return x < 0 ? -1 : x > 0 ? 1 : 0; }
+	inline constexpr real wrap(real x) noexcept { if (x < 0) return 1 - -x % 1; else return x % 1; }
+	inline constexpr rads wrap(rads x) noexcept { if (x < rads()) return rads::Full() - -x % rads::Full(); else return x % rads::Full(); }
+	inline constexpr degs wrap(degs x) noexcept { if (x < degs()) return degs::Full() - -x % degs::Full(); else return x % degs::Full(); }
+	inline constexpr sint32 sign(rads x) noexcept { return sign(x.value); }
+	inline constexpr sint32 sign(degs x) noexcept { return sign(x.value); }
+	inline constexpr real sqr(real x) noexcept { return x * x; }
 	CAGE_CORE_API real sqrt(real x);
 	CAGE_CORE_API real pow(real base, real exponent); // base ^ exponent
 	CAGE_CORE_API real powE(real x); // e ^ x
@@ -470,7 +470,7 @@ namespace cage
 	CAGE_CORE_API real distanceWrap(real a, real b);
 	inline rads distanceAngle(rads a, rads b) { return distanceWrap((a / rads::Full()).value, (b / rads::Full()).value) * rads::Full(); }
 
-#define GCHL_GENERATE(TYPE) inline TYPE abs(TYPE a) { return a < 0 ? -a : a; }
+#define GCHL_GENERATE(TYPE) inline constexpr TYPE abs(TYPE a) noexcept { return a < 0 ? -a : a; }
 	GCHL_GENERATE(sint8);
 	GCHL_GENERATE(sint16);
 	GCHL_GENERATE(sint32);
@@ -479,33 +479,33 @@ namespace cage
 	GCHL_GENERATE(double);
 	GCHL_GENERATE(real);
 #undef GCHL_GENERATE
-#define GCHL_GENERATE(TYPE) inline TYPE abs(TYPE a) { return a; }
+#define GCHL_GENERATE(TYPE) inline constexpr TYPE abs(TYPE a) noexcept { return a; }
 	GCHL_GENERATE(uint8);
 	GCHL_GENERATE(uint16);
 	GCHL_GENERATE(uint32);
 	GCHL_GENERATE(uint64);
 #undef GCHL_GENERATE
-	inline rads abs(rads x) { return rads(abs(x.value)); }
-	inline degs abs(degs x) { return degs(abs(x.value)); }
+	inline constexpr rads abs(rads x) noexcept { return rads(abs(x.value)); }
+	inline constexpr degs abs(degs x) noexcept { return degs(abs(x.value)); }
 
 #define GCHL_GENERATE(TYPE) \
-	inline real dot(const TYPE &l, const TYPE &r) { TYPE m = l * r; real sum = 0; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) sum += m[i]; return sum; } \
-	inline real lengthSquared(const TYPE &x) { return dot(x, x); } \
+	inline constexpr real dot(const TYPE &l, const TYPE &r) noexcept { TYPE m = l * r; real sum = 0; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) sum += m[i]; return sum; } \
+	inline constexpr real lengthSquared(const TYPE &x) noexcept { return dot(x, x); } \
 	inline real length(const TYPE &x) { return sqrt(lengthSquared(x)); } \
-	inline real distanceSquared(const TYPE &l, const TYPE &r) { return lengthSquared(l - r); } \
+	inline constexpr real distanceSquared(const TYPE &l, const TYPE &r) noexcept { return lengthSquared(l - r); } \
 	inline real distance(const TYPE &l, const TYPE &r) { return sqrt(distanceSquared(l, r)); } \
 	inline TYPE normalize(const TYPE &x) { return x / length(x); }
 	GCHL_GENERATE(vec2);
 	GCHL_GENERATE(vec3);
 	GCHL_GENERATE(vec4);
 #undef GCHL_GENERATE
-	inline real dot(const quat &l, const quat &r) { return dot((vec4&)l, (vec4&)r); }
-	inline real lengthSquared(const quat &x) { return dot(x, x); }
-	inline real length(const quat &x) { return sqrt(lengthSquared(x)); }
-	inline quat normalize(const quat &x) { return x / length(x); }
-	inline quat conjugate(const quat &x) { return quat(-x[0], -x[1], -x[2], x[3]); }
-	inline real cross(const vec2 &l, const vec2 &r) { return l[0] * r[1] - l[1] * r[0]; }
-	inline vec3 cross(const vec3 &l, const vec3 &r) { return vec3(l[1] * r[2] - l[2] * r[1], l[2] * r[0] - l[0] * r[2], l[0] * r[1] - l[1] * r[0]); }
+	inline constexpr real dot(const quat &l, const quat &r) noexcept { return dot((vec4&)l, (vec4&)r); }
+	inline constexpr real lengthSquared(const quat &x) noexcept { return dot(x, x); }
+	inline real length(const quat &x) noexcept { return sqrt(lengthSquared(x)); }
+	inline quat normalize(const quat &x) noexcept { return x / length(x); }
+	inline constexpr quat conjugate(const quat &x) noexcept { return quat(-x[0], -x[1], -x[2], x[3]); }
+	inline constexpr real cross(const vec2 &l, const vec2 &r) noexcept { return l[0] * r[1] - l[1] * r[0]; }
+	inline constexpr vec3 cross(const vec3 &l, const vec3 &r) noexcept { return vec3(l[1] * r[2] - l[2] * r[1], l[2] * r[0] - l[0] * r[2], l[0] * r[1] - l[1] * r[0]); }
 	CAGE_CORE_API vec3 dominantAxis(const vec3 &x);
 	CAGE_CORE_API void toAxisAngle(const quat &x, vec3 &axis, rads &angle);
 	CAGE_CORE_API quat lerp(const quat &a, const quat &b, real f);
@@ -514,19 +514,19 @@ namespace cage
 	CAGE_CORE_API quat rotate(const quat &from, const quat &toward, rads maxTurn);
 
 	CAGE_CORE_API mat3 inverse(const mat3 &x);
-	CAGE_CORE_API mat3 transpose(const mat3 &x);
+	CAGE_CORE_API mat3 transpose(const mat3 &x) noexcept;
 	CAGE_CORE_API mat3 normalize(const mat3 &x);
 	CAGE_CORE_API real determinant(const mat3 &x);
 	CAGE_CORE_API mat4 inverse(const mat4 &x);
-	CAGE_CORE_API mat4 transpose(const mat4 &x);
+	CAGE_CORE_API mat4 transpose(const mat4 &x) noexcept;
 	CAGE_CORE_API mat4 normalize(const mat4 &x);
 	CAGE_CORE_API real determinant(const mat4 &x);
 	CAGE_CORE_API transform inverse(const transform &x);
 
-	CAGE_CORE_API bool valid(float a);
-	CAGE_CORE_API bool valid(double a);
+	CAGE_CORE_API bool valid(float a) noexcept;
+	CAGE_CORE_API bool valid(double a) noexcept;
 #define GCHL_GENERATE(TYPE) \
-	inline bool valid(const TYPE &a) { return a.valid(); }
+	inline bool valid(const TYPE &a) noexcept { return a.valid(); }
 	GCHL_GENERATE(real);
 	GCHL_GENERATE(rads);
 	GCHL_GENERATE(degs);
@@ -539,9 +539,9 @@ namespace cage
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(TYPE) \
-	inline TYPE min(TYPE a, TYPE b) { return a < b ? a : b; } \
-	inline TYPE max(TYPE a, TYPE b) { return a > b ? a : b; } \
-	inline TYPE clamp(TYPE v, TYPE a, TYPE b) { CAGE_ASSERT(a <= b); return min(max(v, a), b); }
+	inline constexpr TYPE min(TYPE a, TYPE b) noexcept { return a < b ? a : b; } \
+	inline constexpr TYPE max(TYPE a, TYPE b) noexcept { return a > b ? a : b; } \
+	inline constexpr TYPE clamp(TYPE v, TYPE a, TYPE b) { CAGE_ASSERT(a <= b); return min(max(v, a), b); }
 	GCHL_GENERATE(sint8);
 	GCHL_GENERATE(sint16);
 	GCHL_GENERATE(sint32);
@@ -558,22 +558,22 @@ namespace cage
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(TYPE) \
-	inline TYPE saturate(TYPE v) { return clamp(v, TYPE(0), TYPE(1)); }
+	inline constexpr TYPE saturate(TYPE v) noexcept { return clamp(v, TYPE(0), TYPE(1)); }
 	GCHL_GENERATE(float);
 	GCHL_GENERATE(double);
 	GCHL_GENERATE(real);
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(TYPE) \
-	inline TYPE saturate(TYPE v) { return clamp(v, TYPE(0), TYPE::Full()); }
+	inline constexpr TYPE saturate(TYPE v) noexcept { return clamp(v, TYPE(0), TYPE::Full()); }
 	GCHL_GENERATE(rads);
 	GCHL_GENERATE(degs);
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(TYPE) \
-	inline TYPE abs(const TYPE &x) { TYPE res; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) res[i] = abs(x[i]); return res; } \
-	inline TYPE min(const TYPE &l, const TYPE &r) { TYPE res; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) res[i] = min(l[i], r[i]); return res; } \
-	inline TYPE max(const TYPE &l, const TYPE &r) { TYPE res; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) res[i] = max(l[i], r[i]); return res; } \
-	inline TYPE clamp(const TYPE &v, const TYPE &a, const TYPE &b) { TYPE res; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) res[i] = clamp(v[i], a[i], b[i]); return res; }
+	inline constexpr TYPE abs(const TYPE &x) noexcept { TYPE res; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) res[i] = abs(x[i]); return res; } \
+	inline constexpr TYPE min(const TYPE &l, const TYPE &r) noexcept { TYPE res; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) res[i] = min(l[i], r[i]); return res; } \
+	inline constexpr TYPE max(const TYPE &l, const TYPE &r) noexcept { TYPE res; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) res[i] = max(l[i], r[i]); return res; } \
+	inline constexpr TYPE clamp(const TYPE &v, const TYPE &a, const TYPE &b) noexcept { TYPE res; for (uint32 i = 0; i < GCHL_DIMENSION(TYPE); i++) res[i] = clamp(v[i], a[i], b[i]); return res; }
 	GCHL_GENERATE(vec2);
 	GCHL_GENERATE(vec3);
 	GCHL_GENERATE(vec4);
@@ -582,29 +582,29 @@ namespace cage
 	GCHL_GENERATE(ivec4);
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(TYPE) \
-	inline TYPE min(const TYPE &l, real r) { return min(l, TYPE(r)); } \
-	inline TYPE max(const TYPE &l, real r) { return max(l, TYPE(r)); } \
-	inline TYPE min(real l, const TYPE &r) { return min(TYPE(l), r); } \
-	inline TYPE max(real l, const TYPE &r) { return max(TYPE(l), r); } \
-	inline TYPE clamp(const TYPE &v, real a, real b) { return clamp(v, TYPE(a), TYPE(b)); } \
-	inline TYPE saturate(const TYPE &v) { return clamp(v, 0, 1); }
+	inline constexpr TYPE min(const TYPE &l, real r) noexcept { return min(l, TYPE(r)); } \
+	inline constexpr TYPE max(const TYPE &l, real r) noexcept { return max(l, TYPE(r)); } \
+	inline constexpr TYPE min(real l, const TYPE &r) noexcept { return min(TYPE(l), r); } \
+	inline constexpr TYPE max(real l, const TYPE &r) noexcept { return max(TYPE(l), r); } \
+	inline constexpr TYPE clamp(const TYPE &v, real a, real b) noexcept { return clamp(v, TYPE(a), TYPE(b)); } \
+	inline constexpr TYPE saturate(const TYPE &v) noexcept { return clamp(v, 0, 1); }
 	GCHL_GENERATE(vec2);
 	GCHL_GENERATE(vec3);
 	GCHL_GENERATE(vec4);
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(TYPE) \
-	inline TYPE min(const TYPE &l, sint32 r) { return min(l, TYPE(r)); } \
-	inline TYPE max(const TYPE &l, sint32 r) { return max(l, TYPE(r)); } \
-	inline TYPE min(sint32 l, const TYPE &r) { return min(TYPE(l), r); } \
-	inline TYPE max(sint32 l, const TYPE &r) { return max(TYPE(l), r); } \
-	inline TYPE clamp(const TYPE &v, sint32 a, sint32 b) { return clamp(v, TYPE(a), TYPE(b)); }
+	inline constexpr TYPE min(const TYPE &l, sint32 r) noexcept { return min(l, TYPE(r)); } \
+	inline constexpr TYPE max(const TYPE &l, sint32 r) noexcept { return max(l, TYPE(r)); } \
+	inline constexpr TYPE min(sint32 l, const TYPE &r) noexcept { return min(TYPE(l), r); } \
+	inline constexpr TYPE max(sint32 l, const TYPE &r) noexcept { return max(TYPE(l), r); } \
+	inline constexpr TYPE clamp(const TYPE &v, sint32 a, sint32 b) noexcept { return clamp(v, TYPE(a), TYPE(b)); }
 	GCHL_GENERATE(ivec2);
 	GCHL_GENERATE(ivec3);
 	GCHL_GENERATE(ivec4);
 #undef GCHL_GENERATE
 
 #define GCHL_GENERATE(TYPE) \
-	inline TYPE interpolate(const TYPE &a, const TYPE &b, real f) { return (TYPE)(a * (1 - f.value) + b * f.value); }
+	inline constexpr TYPE interpolate(const TYPE &a, const TYPE &b, real f) noexcept { return (TYPE)(a * (1 - f.value) + b * f.value); }
 	GCHL_GENERATE(sint8);
 	GCHL_GENERATE(sint16);
 	GCHL_GENERATE(sint32);
@@ -615,7 +615,7 @@ namespace cage
 	GCHL_GENERATE(uint64);
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(TYPE) \
-	inline TYPE interpolate(const TYPE &a, const TYPE &b, real f) { return (TYPE)(a + (b - a) * f.value); }
+	inline constexpr TYPE interpolate(const TYPE &a, const TYPE &b, real f) noexcept { return (TYPE)(a + (b - a) * f.value); }
 	GCHL_GENERATE(float);
 	GCHL_GENERATE(double);
 	GCHL_GENERATE(real);
@@ -626,7 +626,7 @@ namespace cage
 	GCHL_GENERATE(vec4);
 #undef GCHL_GENERATE
 	inline quat interpolate(const quat &a, const quat &b, real f) { return slerp(a, b, f); }
-	inline transform interpolate(const transform &a, const transform &b, real f) { return transform(interpolate(a.position, b.position, f), interpolate(a.orientation, b.orientation, f), interpolate(a.scale, b.scale, f)); }
+	inline constexpr transform interpolate(const transform &a, const transform &b, real f) noexcept { return transform(interpolate(a.position, b.position, f), interpolate(a.orientation, b.orientation, f), interpolate(a.scale, b.scale, f)); }
 	CAGE_CORE_API real interpolateWrap(real a, real b, real f);
 	inline rads interpolateAngle(rads a, rads b, real f) { return interpolateWrap((a / rads::Full()).value, (b / rads::Full()).value, f) * rads::Full(); }
 
@@ -661,7 +661,7 @@ namespace cage
 	CAGE_CORE_API quat randomDirectionQuat();
 	inline ivec4 randomRange4i(sint32 a, sint32 b) { return ivec4(randomRange(a, b), randomRange(a, b), randomRange(a, b), randomRange(a, b)); }
 
-	CAGE_CORE_API uint32 hash(uint32 key);
+	CAGE_CORE_API uint32 hash(uint32 key) noexcept;
 }
 
 namespace std

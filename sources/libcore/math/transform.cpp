@@ -7,7 +7,7 @@ namespace cage
 		CAGE_THROW_CRITICAL(NotImplemented, "transform::parse");
 	}
 
-	transform operator * (const transform &l, const transform &r)
+	transform operator * (const transform &l, const transform &r) noexcept
 	{
 		transform res;
 		res.orientation = l.orientation * r.orientation;
@@ -16,50 +16,50 @@ namespace cage
 		return res;
 	}
 
-	transform operator * (const transform &l, const quat &r)
+	transform operator * (const transform &l, const quat &r) noexcept
 	{
 		transform res = l;
 		res.orientation = l.orientation * r; // not commutative
 		return res;
 	}
 
-	transform operator * (const quat &l, const transform &r)
+	transform operator * (const quat &l, const transform &r) noexcept
 	{
 		transform res = r;
 		res.orientation = l * r.orientation; // not commutative
 		return res;
 	}
 
-	transform operator + (const transform &l, const vec3 &r)
+	transform operator + (const transform &l, const vec3 &r) noexcept
 	{
 		transform res = l;
 		res.position += r;
 		return res;
 	}
 
-	transform operator + (const vec3 &l, const transform &r)
+	transform operator + (const vec3 &l, const transform &r) noexcept
 	{
 		return r + l;
 	}
 
-	transform operator * (const transform &l, const real &r)
+	transform operator * (const transform &l, const real &r) noexcept
 	{
 		transform res = l;
 		res.scale *= r;
 		return res;
 	}
 
-	transform operator * (const real &l, const transform &r)
+	transform operator * (const real &l, const transform &r) noexcept
 	{
 		return r * l;
 	}
 
-	vec3 operator * (const transform &l, const vec3 &r)
+	vec3 operator * (const transform &l, const vec3 &r) noexcept
 	{
 		return (l.orientation * r) * l.scale + l.position;
 	}
 
-	vec3 operator * (const vec3 &l, const transform &r)
+	vec3 operator * (const vec3 &l, const transform &r) noexcept
 	{
 		return r * l;
 	}

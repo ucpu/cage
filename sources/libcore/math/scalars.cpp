@@ -77,17 +77,22 @@ namespace cage
 		*/
 	}
 
-	bool real::valid() const
+	bool real::valid() const noexcept
 	{
 		return !std::isnan(value);
 	}
 
-	bool valid(float a)
+	bool real::finite() const noexcept
+	{
+		return std::isfinite(value);
+	}
+
+	bool valid(float a) noexcept
 	{
 		return !std::isnan(a);
 	}
 
-	bool valid(double a)
+	bool valid(double a) noexcept
 	{
 		return !std::isnan(a);
 	}
@@ -173,7 +178,7 @@ namespace cage
 		return wrap(interpolate(a, b, f));
 	}
 
-	uint32 hash(uint32 key)
+	uint32 hash(uint32 key) noexcept
 	{ // integer finalizer hash function
 		key ^= key >> 16;
 		key *= 0x85ebca6b;

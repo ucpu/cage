@@ -75,7 +75,7 @@ namespace
 		{
 			T r;
 			T a;
-			const T b = T(42);
+			constexpr T b = T(42);
 			r = a;
 			r = b;
 #define GCHL_GENERATE(OPERATOR) \
@@ -113,18 +113,18 @@ namespace
 		}
 
 		{
-			const T a;
-			const T b;
+			constexpr T a;
+			constexpr T b;
 
-			min(a, b);
-			max(a, b);
-			min(a, 5);
-			max(a, 5);
-			min(5, a);
-			max(5, a);
-			clamp(a, b, b);
-			clamp(a, 1, 9);
-			abs(a);
+			constexpr T k1 = min(a, b);
+			constexpr T k2 = max(a, b);
+			constexpr T k3 = min(a, 5);
+			constexpr T k4 = max(a, 5);
+			constexpr T k5 = min(5, a);
+			constexpr T k6 = max(5, a);
+			constexpr T k7 = clamp(a, b, b);
+			constexpr T k8 = clamp(a, 1, 9);
+			constexpr T k9 = abs(a);
 		}
 
 		T t(42);
@@ -138,7 +138,7 @@ namespace
 		{
 			T r;
 			T a;
-			const T b;
+			constexpr T b;
 			r = a;
 			r = b;
 #define GCHL_GENERATE(OPERATOR) \
@@ -146,7 +146,7 @@ namespace
 			r = 5.5f OPERATOR b; \
 			r = b OPERATOR 5.5; \
 			r = 5.5 OPERATOR b;
-			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, -, *, / ));
+			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, +, -, *, /));
 #undef GCHL_GENERATE
 #define GCHL_GENERATE(OPERATOR) \
 			r = a OPERATOR 5.5f; \
@@ -156,22 +156,22 @@ namespace
 		}
 
 		{
-			const T a;
-			const T b;
+			constexpr T a;
+			constexpr T b;
 			a.valid();
 
 			normalize(a);
-			min(a, 0.5);
-			max(a, 0.5);
-			min(0.5, a);
-			max(0.5, a);
-			clamp(a, 0.1, 0.9);
-			saturate(a);
+			constexpr T k1 = min(a, 0.5);
+			constexpr T k2 = max(a, 0.5);
+			constexpr T k3 = min(0.5, a);
+			constexpr T k4 = max(0.5, a);
+			constexpr T k5 = clamp(a, 0.1, 0.9);
+			constexpr T k6 = saturate(a);
 			length(a);
 			lengthSquared(a);
-			dot(a, b);
+			constexpr real k7 = dot(a, b);
 			valid(a);
-			interpolate(a, b, 0.5);
+			constexpr T k8 = interpolate(a, b, 0.5);
 			distance(a, b);
 			distanceSquared(a, b);
 		}
@@ -310,12 +310,12 @@ namespace
 
 		{
 			CAGE_TESTCASE("saturate");
-			test(saturate(4.5), 1.0);
-			test(saturate(1.5), 1.0);
-			test(saturate(0.65), 0.65);
-			test(saturate(0.25), 0.25);
-			test(saturate(-0.55), 0.0);
-			test(saturate(-3.55), 0.0);
+			test(saturate(4.5), (real)1.0);
+			test(saturate(1.5), (real)1.0);
+			test(saturate(0.65), (real)0.65);
+			test(saturate(0.25), (real)0.25);
+			test(saturate(-0.55), (real)0.0);
+			test(saturate(-3.55), (real)0.0);
 		}
 
 		{
@@ -970,11 +970,11 @@ namespace
 		{
 			CAGE_TESTCASE("sin");
 			test(sin(rads(0)), 0);
-			test(sin(rads(real::Pi() / 6)), ::sin(real::Pi() / 6));
-			test(sin(rads(real::Pi() / 4)), ::sin(real::Pi() / 4));
-			test(sin(rads(real::Pi() / 2)), ::sin(real::Pi() / 2));
-			test(sin(rads(real::Pi() * 1)), ::sin(real::Pi() * 1));
-			test(sin(rads(real::Pi() * 2)), ::sin(real::Pi() * 2));
+			test(sin(rads(real::Pi() / 6)), ::sin(real::Pi().value / 6));
+			test(sin(rads(real::Pi() / 4)), ::sin(real::Pi().value / 4));
+			test(sin(rads(real::Pi() / 2)), ::sin(real::Pi().value / 2));
+			test(sin(rads(real::Pi() * 1)), ::sin(real::Pi().value * 1));
+			test(sin(rads(real::Pi() * 2)), ::sin(real::Pi().value * 2));
 		}
 
 		{

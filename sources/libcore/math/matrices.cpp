@@ -15,7 +15,7 @@ namespace cage
 		return data;
 	}
 
-	mat3::mat3(const quat &other)
+	mat3::mat3(const quat &other) noexcept
 	{
 		real x2 = other[0] * other[0];
 		real y2 = other[1] * other[1];
@@ -26,15 +26,15 @@ namespace cage
 		real wx = other[3] * other[0];
 		real wy = other[3] * other[1];
 		real wz = other[3] * other[2];
-		data[0] = (real)1.0 - (real)2.0 * (y2 + z2);
-		data[1] = (real)2.0 * (xy + wz);
-		data[2] = (real)2.0 * (xz - wy);
-		data[3] = (real)2.0 * (xy - wz);
-		data[4] = (real)1.0 - (real)2.0 * (x2 + z2);
-		data[5] = (real)2.0 * (yz + wx);
-		data[6] = (real)2.0 * (xz + wy);
-		data[7] = (real)2.0 * (yz - wx);
-		data[8] = (real)1.0 - (real)2.0 * (x2 + y2);
+		data[0] = 1.0 - 2.0 * (y2 + z2);
+		data[1] = 2.0 * (xy + wz);
+		data[2] = 2.0 * (xz - wy);
+		data[3] = 2.0 * (xy - wz);
+		data[4] = 1.0 - 2.0 * (x2 + z2);
+		data[5] = 2.0 * (yz + wx);
+		data[6] = 2.0 * (xz + wy);
+		data[7] = 2.0 * (yz - wx);
+		data[8] = 1.0 - 2.0 * (x2 + y2);
 	}
 
 	mat3::mat3(const vec3 &forward_, const vec3 &up_, bool keepUp)
@@ -56,7 +56,7 @@ namespace cage
 		);
 	}
 
-	vec3 operator * (const mat3 &l, const vec3 &r)
+	vec3 operator * (const mat3 &l, const vec3 &r) noexcept
 	{
 		vec3 res;
 		for (uint8 i = 0; i < 3; i++)
@@ -67,12 +67,12 @@ namespace cage
 		return res;
 	}
 
-	vec3 operator * (const vec3 &l, const mat3 &r)
+	vec3 operator * (const vec3 &l, const mat3 &r) noexcept
 	{
 		return transpose(r) * l;
 	}
 
-	mat3 operator * (const mat3 &l, const mat3 &r)
+	mat3 operator * (const mat3 &l, const mat3 &r) noexcept
 	{
 		mat3 res = mat3::Zero();
 		for (uint8 x = 0; x < 3; x++)
@@ -86,7 +86,7 @@ namespace cage
 		return res;
 	}
 
-	mat3 transpose(const mat3 &x)
+	mat3 transpose(const mat3 &x) noexcept
 	{
 		mat3 tmp;
 		for (uint8 a = 0; a < 3; a++)
@@ -139,7 +139,7 @@ namespace cage
 		return data;
 	}
 
-	mat4::mat4(const vec3 &p, const quat &q, const vec3 &s)
+	mat4::mat4(const vec3 &p, const quat &q, const vec3 &s) noexcept
 	{
 		// this = T * R * S
 		mat3 r(q);
@@ -151,7 +151,7 @@ namespace cage
 		);
 	}
 
-	vec4 operator * (const mat4 &l, const vec4 &r)
+	vec4 operator * (const mat4 &l, const vec4 &r) noexcept
 	{
 		vec4 res;
 		for (uint8 i = 0; i < 4; i++)
@@ -162,12 +162,12 @@ namespace cage
 		return res;
 	}
 
-	vec4 operator * (const vec4 &l, const mat4 &r)
+	vec4 operator * (const vec4 &l, const mat4 &r) noexcept
 	{
 		return transpose(r) * l;
 	}
 
-	mat4 operator + (const mat4 &l, const mat4 &r)
+	mat4 operator + (const mat4 &l, const mat4 &r) noexcept
 	{
 		mat4 res;
 		for (uint8 i = 0; i < 16; i++)
@@ -175,7 +175,7 @@ namespace cage
 		return res;
 	}
 
-	mat4 operator * (const mat4 &l, const mat4 &r)
+	mat4 operator * (const mat4 &l, const mat4 &r) noexcept
 	{
 		mat4 res = mat4::Zero();
 		typedef xsimd::batch<float, 4> batch;
@@ -236,7 +236,7 @@ namespace cage
 			x[4] * x[1] * x[10] * x[15] + x[0] * x[5] * x[10] * x[15];
 	}
 
-	mat4 transpose(const mat4 &x)
+	mat4 transpose(const mat4 &x) noexcept
 	{
 		mat4 tmp;
 		for (uint8 a = 0; a < 4; a++)
