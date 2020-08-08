@@ -1,4 +1,5 @@
 #include <cage-core/memory.h>
+
 #include "private.h"
 
 #include <set>

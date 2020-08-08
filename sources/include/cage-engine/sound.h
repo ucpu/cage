@@ -14,6 +14,7 @@ namespace cage
 	{
 	public:
 		string getContextName() const;
+		string getBackendName() const;
 	};
 
 	struct CAGE_ENGINE_API SoundContextCreateConfig
@@ -64,14 +65,14 @@ namespace cage
 	struct CAGE_ENGINE_API MixingFilterApi
 	{
 		SoundDataBuffer output;
-		Delegate<void(const SoundDataBuffer&)> input;
+		Delegate<void(const SoundDataBuffer &)> input;
 	};
 
 	class CAGE_ENGINE_API MixingFilter : private Immovable
 	{
 	public:
 		void setBus(MixingBus *bus);
-		Delegate<void(const MixingFilterApi&)> execute;
+		Delegate<void(const MixingFilterApi &)> execute;
 	};
 
 	class CAGE_ENGINE_API VolumeFilter : private Immovable
@@ -119,26 +120,21 @@ namespace cage
 	public:
 		string getStreamName() const;
 		string getDeviceId() const;
-		string getDeviceName() const;
-		bool getDeviceRaw() const;
-		string getLayoutName() const;
-		uint32 getChannelsCount() const;
-		uint32 getOutputSampleRate() const;
+		uint32 getChannels() const;
+		uint32 getSamplerate() const;
+		uint32 getLatency() const;
 
 		void setInput(MixingBus *bus);
 		void update(uint64 time);
-
-		float channelVolumes[16];
 	};
 
 	struct CAGE_ENGINE_API SpeakerCreateConfig
 	{
 		string deviceId;
 		uint32 sampleRate = 0;
-		bool deviceRaw = false;
 	};
 
-	CAGE_ENGINE_API Holder<Speaker> newSpeakerOutput(SoundContext *context, const SpeakerCreateConfig &config, string name = "");
+	CAGE_ENGINE_API Holder<Speaker> newSpeakerOutput(SoundContext *context, const SpeakerCreateConfig &config, const string &name = "");
 
 	CAGE_ENGINE_API void soundSetSpeakerDirections(uint32 channels, const vec3 *directions);
 	CAGE_ENGINE_API void soundGetSpeakerDirections(uint32 channels, vec3 *directions);

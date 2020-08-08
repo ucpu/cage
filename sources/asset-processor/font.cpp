@@ -170,7 +170,7 @@ namespace
 				{
 					FT_Vector k;
 					CALL(FT_Get_Kerning, face, L, R, FT_KERNING_DEFAULT, &k);
-					kerning[L * data.glyphCount + R] = fontScale * k.x / 64.0;
+					kerning[L * data.glyphCount + R] = fontScale * (double)k.x / 64.0;
 				}
 			}
 			data.flags |= FontFlags::Kerning;

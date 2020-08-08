@@ -2,51 +2,64 @@
 
 #include "private.h"
 
+#include <cubeb/cubeb.h>
+#include <cstdarg>
+#ifdef CAGE_SYSTEM_WINDOWS
+#include <Objbase.h>
+#endif // CAGE_SYSTEM_WINDOWS
+
 namespace cage
 {
 	namespace
 	{
-		bool rtprioWarningCallbackOnce()
+		void soundLogCallback(const char *fmt, ...)
 		{
-			CAGE_LOG(SeverityEnum::Warning, "sound", "failed to set thread priority for audio");
-			return true;
+			char buffer[512];
+			va_list args;
+			va_start(args, fmt);
+			vsnprintf(buffer, 500, fmt, args);
+			va_end(args);
+			CAGE_LOG(SeverityEnum::Info, "cubeb", buffer);
 		}
 
-		void rtprioWarningCallback()
+		struct SoundLogInit
 		{
-			static const bool fired = rtprioWarningCallbackOnce();
-		}
+			SoundLogInit()
+			{
+				//checkSoundIoError(cubeb_set_log_callback(CUBEB_LOG_VERBOSE, &soundLogCallback));
+			}
+		} soundLogInit;
 
 		class SoundContextImpl : public SoundContext
 		{
 		public:
 			string name;
-			SoundIo *soundio;
+			cubeb *soundio = nullptr;
 			MemoryArenaGrowing<MemoryAllocatorPolicyPool<sizeof(templates::AllocatorSizeSet<void*>)>, MemoryConcurrentPolicyNone> linksMemory;
 
-			SoundContextImpl(const SoundContextCreateConfig &config, const string &name) : name(name.replace(":", "_")), soundio(nullptr), linksMemory(config.linksMemory)
+			SoundContextImpl(const SoundContextCreateConfig &config, const string &name) : name(name.replace(":", "_")), linksMemory(config.linksMemory)
 			{
+#ifdef CAGE_SYSTEM_WINDOWS
+				CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+#endif // CAGE_SYSTEM_WINDOWS
 				CAGE_LOG(SeverityEnum::Info, "sound", stringizer() + "creating sound context, name: '" + name + "'");
-				soundio = soundio_create();
-				if (!soundio)
-					CAGE_THROW_ERROR(SoundError, "error create soundio", 0);
-				soundio->app_name = this->name.c_str();
-				soundio->emit_rtprio_warning = &rtprioWarningCallback;
-				checkSoundIoError(soundio_connect(soundio));
-				soundio_flush_events(soundio);
+				checkSoundIoError(cubeb_init(&soundio, name.c_str(), nullptr));
+				CAGE_ASSERT(soundio);
 			}
 
 			~SoundContextImpl()
 			{
-				soundio_disconnect(soundio);
-				soundio_destroy(soundio);
+				cubeb_destroy(soundio);
+#ifdef CAGE_SYSTEM_WINDOWS
+				CoUninitialize();
+#endif // CAGE_SYSTEM_WINDOWS
 			}
 		};
 	}
 
 	namespace soundPrivat
 	{
-		SoundIo *soundioFromContext(SoundContext *context)
+		cubeb *soundioFromContext(SoundContext *context)
 		{
 			SoundContextImpl *impl = (SoundContextImpl*)context;
 			return impl->soundio;
@@ -61,8 +74,14 @@ namespace cage
 
 	string SoundContext::getContextName() const
 	{
-		SoundContextImpl *impl = (SoundContextImpl*)this;
+		const SoundContextImpl *impl = (const SoundContextImpl*)this;
 		return impl->name;
+	}
+
+	string SoundContext::getBackendName() const
+	{
+		const SoundContextImpl *impl = (const SoundContextImpl *)this;
+		return cubeb_get_backend_id(impl->soundio);
 	}
 
 	Holder<SoundContext> newSoundContext(const SoundContextCreateConfig &config, const string &name)

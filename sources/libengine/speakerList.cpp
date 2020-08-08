@@ -1,139 +1,51 @@
 #include <cage-core/pointerRangeHolder.h>
-
 #include <cage-engine/sound.h>
 #include <cage-engine/speakerList.h>
 #include "sound/private.h"
 
 #include <vector>
+#include <cubeb/cubeb.h>
 
 namespace cage
 {
 	namespace
 	{
-		struct SpeakerDeviceImpl : public SpeakerDevice
-		{
-			string deviceId;
-			string deviceName;
-			bool raw;
-
-			std::vector<SpeakerLayout> layouts;
-			uint32 layoutCurrent;
-
-			std::vector<SpeakerSamplerate> samplerates;
-			uint32 samplerateCurrent;
-
-			string formatCurrent;
-			real latencyMin, latencyMax, latencyCurrent;
-
-			SpeakerDeviceImpl(SoundIoDevice *device) : raw(false), layoutCurrent(m), samplerateCurrent(0)
-			{
-				// device
-				deviceId = device->id;
-				deviceName = device->name;
-				raw = device->is_raw;
-				formatCurrent = soundio_format_string(device->current_format);
-
-				// layouts
-				uint32 lc = device->layout_count;
-				layouts.resize(lc);
-				for (uint32 i = 0; i < lc; i++)
-				{
-					layouts[i].name = device->layouts[i].name;
-					layouts[i].channels = device->layouts[i].channel_count;
-					if (soundio_channel_layout_equal(&device->layouts[i], &device->current_layout))
-						layoutCurrent = i;
-				}
-
-				// sample rates
-				uint32 sc = device->sample_rate_count;
-				samplerates.resize(sc);
-				for (uint32 i = 0; i < sc; i++)
-				{
-					samplerates[i].minimum = device->sample_rates[i].min;
-					samplerates[i].maximum = device->sample_rates[i].max;
-				}
-				samplerateCurrent = device->sample_rate_current;
-			}
-		};
-
 		class SpeakerListImpl : public SpeakerList
 		{
 		public:
-			std::vector<Holder<SpeakerDeviceImpl>> devices;
-			uint32 defaultDevice;
+			std::vector<SpeakerDevice> devices;
+			uint32 defaultDevice = m;
 
-			SpeakerListImpl(bool inputs) : defaultDevice(m)
+			SpeakerListImpl()
 			{
 				Holder<SoundContext> cnx = newSoundContext(SoundContextCreateConfig());
-				SoundIo *soundio = soundioFromContext(cnx.get());
-				if (inputs)
+				cubeb *snd = soundioFromContext(cnx.get());
+				cubeb_device_collection collection = {};
+				checkSoundIoError(cubeb_enumerate_devices(snd, CUBEB_DEVICE_TYPE_OUTPUT , &collection));
+
+				devices.reserve(collection.count);
+				for (uint32 index = 0; index < collection.count; index++)
 				{
-					uint32 count = soundio_input_device_count(soundio);
-					devices.reserve(count);
-					for (uint32 i = 0; i < count; i++)
-					{
-						SoundIoDevice *device = soundio_get_input_device(soundio, i);
-						devices.push_back(detail::systemArena().createHolder<SpeakerDeviceImpl>(device));
-						soundio_device_unref(device);
-					}
-					defaultDevice = soundio_default_input_device_index(soundio);
+					const cubeb_device_info &d = collection.device[index];
+					if (d.preferred)
+						defaultDevice = numeric_cast<uint32>(devices.size());
+					SpeakerDevice s;
+					s.id = d.device_id ? d.device_id : "";
+					s.name = d.friendly_name ? d.friendly_name : "";
+					s.group = d.group_id ? d.group_id : "";
+					s.vendor = d.vendor_name ? d.vendor_name : "";
+					s.channels = d.max_channels;
+					s.minSamplerate = d.min_rate;
+					s.maxSamplerate = d.max_rate;
+					s.defaultSamplerate = d.default_rate;
+					s.minLatency = d.latency_lo;
+					s.maxLatency = d.latency_hi;
+					devices.push_back(s);
 				}
-				else
-				{
-					int count = soundio_output_device_count(soundio);
-					devices.reserve(count);
-					for (int i = 0; i < count; i++)
-					{
-						SoundIoDevice *device = soundio_get_output_device(soundio, i);
-						devices.push_back(detail::systemArena().createHolder<SpeakerDeviceImpl>(device));
-						soundio_device_unref(device);
-					}
-					defaultDevice = soundio_default_output_device_index(soundio);
-				}
+
+				cubeb_device_collection_destroy(snd, &collection);
 			}
 		};
-	}
-
-	string SpeakerDevice::id() const
-	{
-		const SpeakerDeviceImpl *impl = (const SpeakerDeviceImpl *)this;
-		return impl->deviceId;
-	}
-
-	string SpeakerDevice::name() const
-	{
-		const SpeakerDeviceImpl *impl = (const SpeakerDeviceImpl *)this;
-		return impl->deviceName;
-	}
-
-	bool SpeakerDevice::raw() const
-	{
-		const SpeakerDeviceImpl *impl = (const SpeakerDeviceImpl *)this;
-		return impl->raw;
-	}
-
-	uint32 SpeakerDevice::currentLayout() const
-	{
-		const SpeakerDeviceImpl *impl = (const SpeakerDeviceImpl *)this;
-		return impl->layoutCurrent;
-	}
-
-	PointerRange<const SpeakerLayout> SpeakerDevice::layouts() const
-	{
-		const SpeakerDeviceImpl *impl = (const SpeakerDeviceImpl *)this;
-		return impl->layouts;
-	}
-
-	uint32 SpeakerDevice::currentSamplerate() const
-	{
-		const SpeakerDeviceImpl *impl = (const SpeakerDeviceImpl *)this;
-		return impl->samplerateCurrent;
-	}
-
-	PointerRange<const SpeakerSamplerate> SpeakerDevice::samplerates() const
-	{
-		const SpeakerDeviceImpl *impl = (const SpeakerDeviceImpl *)this;
-		return impl->samplerates;
 	}
 
 	uint32 SpeakerList::defaultDevice() const
@@ -142,18 +54,14 @@ namespace cage
 		return impl->defaultDevice;
 	}
 
-	Holder<PointerRange<const SpeakerDevice *>> SpeakerList::devices() const
+	PointerRange<const SpeakerDevice> SpeakerList::devices() const
 	{
 		const SpeakerListImpl *impl = (const SpeakerListImpl *)this;
-		PointerRangeHolder<const SpeakerDevice *> prh;
-		prh.reserve(impl->devices.size());
-		for (auto &it : impl->devices)
-			prh.push_back(it.get());
-		return prh;
+		return impl->devices;
 	}
 
-	Holder<SpeakerList> newSpeakerList(bool inputs)
+	Holder<SpeakerList> newSpeakerList()
 	{
-		return detail::systemArena().createImpl<SpeakerList, SpeakerListImpl>(inputs);
+		return detail::systemArena().createImpl<SpeakerList, SpeakerListImpl>();
 	}
 }

@@ -41,7 +41,7 @@ namespace cage
 		allocated = requested;
 		buffer = (float*)detail::systemArena().allocate(allocated * sizeof(float), sizeof(uintPtr));
 		if (!buffer)
-			checkSoundIoError(SoundIoErrorNoMem);
+			CAGE_THROW_ERROR(Exception, "no memory for sound buffer");
 	}
 
 	void SoundInterleavedBuffer::clear()

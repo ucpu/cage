@@ -1,5 +1,7 @@
 #include "private.h"
 
+#include <cubeb/cubeb.h>
+
 namespace cage
 {
 	SoundError::SoundError(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message, uint32 code) noexcept : SystemError(file, line, function, severity, message, code)
@@ -11,24 +13,22 @@ namespace cage
 		{
 			switch (code)
 			{
-			case SoundIoErrorNone:
+			case CUBEB_OK:
 				return;
-			case SoundIoErrorNoMem:
-			case SoundIoErrorInitAudioBackend:
-			case SoundIoErrorSystemResources:
-			case SoundIoErrorOpeningDevice:
-			case SoundIoErrorNoSuchDevice:
-			case SoundIoErrorInvalid:
-			case SoundIoErrorBackendUnavailable:
-			case SoundIoErrorStreaming:
-			case SoundIoErrorIncompatibleDevice:
-			case SoundIoErrorNoSuchClient:
-			case SoundIoErrorIncompatibleBackend:
-			case SoundIoErrorBackendDisconnected:
-			case SoundIoErrorInterrupted:
-			case SoundIoErrorUnderflow:
-			case SoundIoErrorEncodingString:
-				CAGE_THROW_ERROR(SoundError, soundio_strerror(code), code);
+			case CUBEB_ERROR:
+				CAGE_THROW_ERROR(SoundError, "generic sound error", code);
+				break;
+			case CUBEB_ERROR_INVALID_FORMAT:
+				CAGE_THROW_ERROR(SoundError, "invalid sound format", code);
+				break;
+			case CUBEB_ERROR_INVALID_PARAMETER:
+				CAGE_THROW_ERROR(SoundError, "invalid sound parameter", code);
+				break;
+			case CUBEB_ERROR_NOT_SUPPORTED:
+				CAGE_THROW_ERROR(SoundError, "sound not supported error", code);
+				break;
+			case CUBEB_ERROR_DEVICE_UNAVAILABLE:
+				CAGE_THROW_ERROR(SoundError, "sound device unavailable", code);
 				break;
 			default:
 				CAGE_THROW_CRITICAL(SoundError, "unknown sound error", code);

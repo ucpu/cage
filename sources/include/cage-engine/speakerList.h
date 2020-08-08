@@ -5,40 +5,30 @@
 
 namespace cage
 {
-	struct CAGE_ENGINE_API SpeakerLayout
-	{
-		string name;
-		uint32 channels = 0;
-	};
-
-	struct CAGE_ENGINE_API SpeakerSamplerate
-	{
-		uint32 minimum = 0;
-		uint32 maximum = 0;
-	};
-
-	class CAGE_ENGINE_API SpeakerDevice : private Immovable
+	class CAGE_ENGINE_API SpeakerDevice
 	{
 	public:
-		string id() const;
-		string name() const;
-		bool raw() const;
+		string id;
+		string name;
+		string group;
+		string vendor;
 
-		uint32 currentLayout() const; // layout index
-		PointerRange<const SpeakerLayout> layouts() const;
-
-		uint32 currentSamplerate() const; // actual sample rate
-		PointerRange<const SpeakerSamplerate> samplerates() const;
+		uint32 channels;
+		uint32 minSamplerate;
+		uint32 maxSamplerate;
+		uint32 defaultSamplerate;
+		uint32 minLatency;
+		uint32 maxLatency;
 	};
 
 	class CAGE_ENGINE_API SpeakerList : private Immovable
 	{
 	public:
 		uint32 defaultDevice() const;
-		Holder<PointerRange<const SpeakerDevice *>> devices() const;
+		PointerRange<const SpeakerDevice> devices() const;
 	};
 
-	CAGE_ENGINE_API Holder<SpeakerList> newSpeakerList(bool inputs = false);
+	CAGE_ENGINE_API Holder<SpeakerList> newSpeakerList();
 }
 
 #endif // guard_speakerList_h_m1n5ewqa7r8fuj4
