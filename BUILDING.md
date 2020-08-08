@@ -3,14 +3,13 @@
 
 ## Linux (debian or ubuntu)
 
-Install one required package.
+Install required packages.
 ```bash
-sudo apt install xorg-dev
+sudo apt install xorg-dev nasm
 ```
 
 Optional sound backend (choose one).
 ```bash
-sudo apt install libjack-jackd2-dev
 sudo apt install libpulse-dev
 sudo apt install libasound2-dev
 ```
