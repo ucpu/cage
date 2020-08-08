@@ -499,7 +499,7 @@ namespace cage
 	GCHL_GENERATE(vec3);
 	GCHL_GENERATE(vec4);
 #undef GCHL_GENERATE
-	inline constexpr real dot(const quat &l, const quat &r) noexcept { return dot((vec4&)l, (vec4&)r); }
+	inline constexpr real dot(const quat &l, const quat &r) noexcept { real sum = 0; for (uint32 i = 0; i < 4; i++) sum += l[i] * r[i]; return sum; }
 	inline constexpr real lengthSquared(const quat &x) noexcept { return dot(x, x); }
 	inline real length(const quat &x) noexcept { return sqrt(lengthSquared(x)); }
 	inline quat normalize(const quat &x) noexcept { return x / length(x); }

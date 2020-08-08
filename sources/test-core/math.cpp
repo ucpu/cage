@@ -113,8 +113,8 @@ namespace
 		}
 
 		{
-			constexpr T a;
-			constexpr T b;
+			constexpr T a = T(0);
+			constexpr T b = T(0);
 
 			constexpr T k1 = min(a, b);
 			constexpr T k2 = max(a, b);
@@ -133,12 +133,8 @@ namespace
 	template<class T, uint32 N>
 	void checkVectorsReal()
 	{
-		checkVectorsCommon<T, N>();
-
 		{
-			T r;
-			T a;
-			constexpr T b;
+			T r, a, b;
 			r = a;
 			r = b;
 #define GCHL_GENERATE(OPERATOR) \
@@ -156,8 +152,8 @@ namespace
 		}
 
 		{
-			constexpr T a;
-			constexpr T b;
+			constexpr T a = T(0);
+			constexpr T b = T(0);
 			a.valid();
 
 			normalize(a);
@@ -168,12 +164,12 @@ namespace
 			constexpr T k5 = clamp(a, 0.1, 0.9);
 			constexpr T k6 = saturate(a);
 			length(a);
-			lengthSquared(a);
-			constexpr real k7 = dot(a, b);
+			constexpr real k7 = lengthSquared(a);
+			constexpr real k8 = dot(a, b);
 			valid(a);
-			constexpr T k8 = interpolate(a, b, 0.5);
+			constexpr T k9 = interpolate(a, b, 0.5);
 			distance(a, b);
-			distanceSquared(a, b);
+			constexpr real k10 = distanceSquared(a, b);
 		}
 
 		T t(3.5);
@@ -182,12 +178,15 @@ namespace
 	void testMathCompiles()
 	{
 		CAGE_TESTCASE("compile tests");
-		checkVectorsReal<vec2, 2>();
-		checkVectorsReal<vec3, 3>();
-		checkVectorsReal<vec4, 4>();
+		checkVectorsCommon<vec2, 2>();
+		checkVectorsCommon<vec3, 3>();
+		checkVectorsCommon<vec4, 4>();
 		checkVectorsCommon<ivec2, 2>();
 		checkVectorsCommon<ivec3, 3>();
 		checkVectorsCommon<ivec4, 4>();
+		checkVectorsReal<vec2, 2>();
+		checkVectorsReal<vec3, 3>();
+		checkVectorsReal<vec4, 4>();
 	}
 
 	void testMathReal()
@@ -206,7 +205,7 @@ namespace
 			CAGE_TEST(real(0).finite());
 			CAGE_TEST(real(42).finite());
 			CAGE_TEST(real(42).valid());
-			real a = 3;
+			constexpr real a = 3;
 			test(a + 2, 5);
 			test(2 + a, 5);
 			test(a - 2, 1);
@@ -391,11 +390,11 @@ namespace
 	void testMathVec2()
 	{
 		CAGE_TESTCASE("vec2");
-		vec2 a(3, 5);
+		constexpr vec2 a(3, 5);
 		test(a[0], 3);
 		test(a[1], 5);
-		vec2 b(2, 1);
-		vec2 c(5, 2);
+		constexpr vec2 b(2, 1);
+		constexpr vec2 c(5, 2);
 		test(a, vec2(3, 5));
 		CAGE_TEST(a != b);
 		test(a + b, vec2(5, 6));
@@ -404,7 +403,7 @@ namespace
 		test(a * b, b * a);
 		test(max(a, c), vec2(5, 5));
 		test(min(a, c), vec2(3, 2));
-		vec2 d = a + c;
+		constexpr vec2 d = a + c;
 		test(d, vec2(8, 7));
 
 		test(vec2(1, 5), vec2(1, 5));
@@ -415,8 +414,8 @@ namespace
 	void testMathVec3()
 	{
 		CAGE_TESTCASE("vec3");
-		vec3 a(3, 5, 1);
-		vec3 b(1, 1, 4);
+		constexpr vec3 a(3, 5, 1);
+		constexpr vec3 b(1, 1, 4);
 		test(a[0], 3);
 		test(a[1], 5);
 		test(a[2], 1);
@@ -430,7 +429,7 @@ namespace
 		test(a * b, b * a);
 		test(max(a, b), vec3(3, 5, 4));
 		test(min(a, b), vec3(1, 1, 1));
-		vec3 c = a + b;
+		constexpr vec3 c = a + b;
 		test(c, vec3(4, 6, 5));
 		test(cross(a, b), vec3(19, -11, -2));
 		test(dot(a, b), 12);
@@ -460,16 +459,16 @@ namespace
 	void testMathVec4()
 	{
 		CAGE_TESTCASE("vec4");
-		vec4 a(1, 2, 3, 4);
+		constexpr vec4 a(1, 2, 3, 4);
 		test(a[0], 1);
 		test(a[1], 2);
 		test(a[2], 3);
 		test(a[3], 4);
-		vec4 b(3, 2, 4, 1);
+		constexpr vec4 b(3, 2, 4, 1);
 		test(a, vec4(1, 2, 3, 4));
 		test(vec4(3, 2, 4, 1), b);
 		CAGE_TEST(a != b);
-		vec4 c = a + b;
+		constexpr vec4 c = a + b;
 		test(a + b, vec4(4, 4, 7, 5));
 		test(a + b, c);
 		test(a * b, vec4(3, 4, 12, 4));
@@ -478,11 +477,11 @@ namespace
 	void testMathIVec2()
 	{
 		CAGE_TESTCASE("ivec2");
-		ivec2 a(3, 5);
+		constexpr ivec2 a(3, 5);
 		test(a[0], 3);
 		test(a[1], 5);
-		ivec2 b(2, 1);
-		ivec2 c(5, 2);
+		constexpr ivec2 b(2, 1);
+		constexpr ivec2 c(5, 2);
 		test(a, ivec2(3, 5));
 		CAGE_TEST(a != b);
 		test(a + b, ivec2(5, 6));
@@ -491,7 +490,7 @@ namespace
 		test(a * b, b * a);
 		test(max(a, c), ivec2(5, 5));
 		test(min(a, c), ivec2(3, 2));
-		ivec2 d = a + c;
+		constexpr ivec2 d = a + c;
 		test(d, ivec2(8, 7));
 
 		test(ivec2(1, 5), ivec2(1, 5));
@@ -502,8 +501,8 @@ namespace
 	void testMathIVec3()
 	{
 		CAGE_TESTCASE("ivec3");
-		ivec3 a(3, 5, 1);
-		ivec3 b(1, 1, 4);
+		constexpr ivec3 a(3, 5, 1);
+		constexpr ivec3 b(1, 1, 4);
 		test(a[0], 3);
 		test(a[1], 5);
 		test(a[2], 1);
@@ -517,7 +516,7 @@ namespace
 		test(a * b, b * a);
 		test(max(a, b), ivec3(3, 5, 4));
 		test(min(a, b), ivec3(1, 1, 1));
-		ivec3 c = a + b;
+		constexpr ivec3 c = a + b;
 		test(c, ivec3(4, 6, 5));
 		test(a / b, ivec3(3, 5, 0));
 		test(8 / b, ivec3(8, 8, 2));
@@ -540,16 +539,16 @@ namespace
 	void testMathIVec4()
 	{
 		CAGE_TESTCASE("ivec4");
-		ivec4 a(1, 2, 3, 4);
+		constexpr ivec4 a(1, 2, 3, 4);
 		test(a[0], 1);
 		test(a[1], 2);
 		test(a[2], 3);
 		test(a[3], 4);
-		ivec4 b(3, 2, 4, 1);
+		constexpr ivec4 b(3, 2, 4, 1);
 		test(a, ivec4(1, 2, 3, 4));
 		test(ivec4(3, 2, 4, 1), b);
 		CAGE_TEST(a != b);
-		ivec4 c = a + b;
+		constexpr ivec4 c = a + b;
 		test(a + b, ivec4(4, 4, 7, 5));
 		test(a + b, c);
 		test(a * b, ivec4(3, 4, 12, 4));
@@ -561,7 +560,7 @@ namespace
 
 		{
 			CAGE_TESTCASE("basic constructor");
-			quat q(1, 2, 3, 4);
+			constexpr quat q(1, 2, 3, 4);
 			test(q[0], 1);
 			test(q[1], 2);
 			test(q[2], 3);
@@ -629,7 +628,7 @@ namespace
 		{
 			CAGE_TESTCASE("rotating vector");
 
-			const vec3 vforward(0, 0, -10), vleft(-10, 0, 0), vright(10, 0, 0), vup(0, 10, 0), vdown(0, -10, 0), vback(0, 0, 10);
+			constexpr vec3 vforward(0, 0, -10), vleft(-10, 0, 0), vright(10, 0, 0), vup(0, 10, 0), vdown(0, -10, 0), vback(0, 0, 10);
 
 			{
 				CAGE_TESTCASE("pitch");
@@ -833,9 +832,9 @@ namespace
 		{
 			CAGE_TESTCASE("multiplication");
 
-			mat4 a(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 4, 5, 6, 1);
-			mat4 b(0, 0, 5, 0, 0, 1, 0, 0, -5, 0, 0, 0, 0, 0, 0, 1);
-			mat4 c(0, 0, 5, 0, 0, 1, 0, 0, -5, 0, 0, 0, -30, 5, 20, 1);
+			constexpr mat4 a(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 4, 5, 6, 1);
+			constexpr mat4 b(0, 0, 5, 0, 0, 1, 0, 0, -5, 0, 0, 0, 0, 0, 0, 1);
+			constexpr mat4 c(0, 0, 5, 0, 0, 1, 0, 0, -5, 0, 0, 0, -30, 5, 20, 1);
 			mat4 d = b * a;
 			test(d, c);
 		}
@@ -844,9 +843,9 @@ namespace
 			CAGE_TESTCASE("compose mat4 from position, rotation and scale");
 
 			{
-				vec3 pos(5, 4, 3);
+				constexpr vec3 pos(5, 4, 3);
 				quat rot(degs(), degs(90), degs());
-				vec3 scale(1, 1, 1);
+				constexpr vec3 scale(1, 1, 1);
 				mat4 m(pos, rot, scale);
 				test(m * vec4(0, 0, 0, 1), vec4(5, 4, 3, 1));
 				test(m * vec4(2, 0, 0, 1), vec4(5, 4, 1, 1));
@@ -854,9 +853,9 @@ namespace
 			}
 
 			{
-				vec3 pos(5, 4, 3);
+				constexpr vec3 pos(5, 4, 3);
 				quat rot(degs(), degs(90), degs());
-				vec3 scale(2, 2, 2);
+				constexpr vec3 scale(2, 2, 2);
 				mat4 m(pos, rot, scale);
 				test(m * vec4(0, 0, 0, 1), vec4(5, 4, 3, 1));
 				test(m * vec4(2, 0, 0, 1), vec4(5, 4, -1, 1));
@@ -877,9 +876,9 @@ namespace
 		{
 			CAGE_TESTCASE("inverse");
 
-			mat4 a(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 50, -20, 9, 1);
+			constexpr mat4 a(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 50, -20, 9, 1);
 			mat4 b = inverse(a);
-			mat4 c(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -50, 20, -9, 1);
+			constexpr mat4 c(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -50, 20, -9, 1);
 			test(b, c);
 		}
 	}
@@ -1203,9 +1202,9 @@ namespace
 		CAGE_TESTCASE("matrix multiplication - performance");
 
 #if defined (CAGE_DEBUG)
-		static const uint32 matricesCount = 100;
+		constexpr uint32 matricesCount = 100;
 #else
-		static const uint32 matricesCount = 10000;
+		constexpr uint32 matricesCount = 10000;
 #endif
 
 		mat4 matrices[matricesCount];
