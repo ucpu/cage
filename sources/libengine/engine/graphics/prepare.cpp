@@ -349,7 +349,7 @@ namespace cage
 				pass->targetShadowmap = light->light.lightType == LightTypeEnum::Point ? (-shmCube++ - 1) : (shm2d++ + 1);
 				auto &shm = light->shadowmaps[pass->camera];
 				shm.index = pass->targetShadowmap;
-				const mat4 bias = mat4(
+				constexpr mat4 bias = mat4(
 					0.5, 0.0, 0.0, 0.0,
 					0.0, 0.5, 0.0, 0.0,
 					0.0, 0.0, 0.5, 0.0,

@@ -45,8 +45,8 @@ namespace cage
 		static constexpr real E() noexcept { return (real)2.718281828459045235; }
 		static constexpr real Log2() noexcept { return (real)0.693147180559945309; }
 		static constexpr real Log10() noexcept { return (real)2.302585092994045684; }
-		static constexpr real Infinity() noexcept { return std::numeric_limits<value_type>::infinity(); };
-		static constexpr real Nan() noexcept { return std::numeric_limits<value_type>::quiet_NaN(); };
+		static constexpr real Infinity() noexcept { return std::numeric_limits<value_type>::infinity(); }
+		static constexpr real Nan() noexcept { return std::numeric_limits<value_type>::quiet_NaN(); }
 	};
 
 	struct CAGE_CORE_API rads
@@ -227,7 +227,7 @@ namespace cage
 		inline explicit mat4(const quat &orientation) noexcept : mat4(mat3(orientation)) {}
 		explicit mat4(const transform &other) noexcept;
 
-		inline static constexpr mat4 scale(real scl) noexcept { return scale(vec3(scl)); };
+		inline static constexpr mat4 scale(real scl) noexcept { return scale(vec3(scl)); }
 		inline static constexpr mat4 scale(const vec3 &scl) noexcept { return mat4(scl[0], 0, 0, 0, 0, scl[1], 0, 0, 0, 0, scl[2], 0, 0, 0, 0, 1); }
 		static mat4 parse(const string &str);
 		inline constexpr real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 16); return data[idx]; }
@@ -262,16 +262,16 @@ namespace cage
 	GCHL_GENERATE(<);
 	GCHL_GENERATE(>);
 #undef GCHL_GENERATE
-	inline constexpr bool operator == (const vec2 &l, const vec2 &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1]; };
-	inline constexpr bool operator == (const vec3 &l, const vec3 &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2]; };
-	inline constexpr bool operator == (const vec4 &l, const vec4 &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2] && l.data[3] == r.data[3]; };
-	inline constexpr bool operator == (const quat &l, const quat &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2] && l.data[3] == r.data[3]; };
-	inline constexpr bool operator == (const mat3 &l, const mat3 &r) noexcept { for (uint32 i = 0; i < 9; i++) if (!(l[i] == r[i])) return false; return true; };
-	inline constexpr bool operator == (const mat4 &l, const mat4 &r) noexcept { for (uint32 i = 0; i < 16; i++) if (!(l[i] == r[i])) return false; return true; };
-	inline constexpr bool operator == (const transform &l, const transform &r) noexcept { return l.orientation == r.orientation && l.position == r.position && l.scale == r.scale; }; \
-	inline constexpr bool operator == (const ivec2 &l, const ivec2 &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1]; };
-	inline constexpr bool operator == (const ivec3 &l, const ivec3 &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2]; };
-	inline constexpr bool operator == (const ivec4 &l, const ivec4 &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2] && l.data[3] == r.data[3]; };
+	inline constexpr bool operator == (const vec2 &l, const vec2 &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1]; }
+	inline constexpr bool operator == (const vec3 &l, const vec3 &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2]; }
+	inline constexpr bool operator == (const vec4 &l, const vec4 &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2] && l.data[3] == r.data[3]; }
+	inline constexpr bool operator == (const quat &l, const quat &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2] && l.data[3] == r.data[3]; }
+	inline constexpr bool operator == (const mat3 &l, const mat3 &r) noexcept { for (uint32 i = 0; i < 9; i++) if (!(l[i] == r[i])) return false; return true; }
+	inline constexpr bool operator == (const mat4 &l, const mat4 &r) noexcept { for (uint32 i = 0; i < 16; i++) if (!(l[i] == r[i])) return false; return true; }
+	inline constexpr bool operator == (const transform &l, const transform &r) noexcept { return l.orientation == r.orientation && l.position == r.position && l.scale == r.scale; }
+	inline constexpr bool operator == (const ivec2 &l, const ivec2 &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1]; }
+	inline constexpr bool operator == (const ivec3 &l, const ivec3 &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2]; }
+	inline constexpr bool operator == (const ivec4 &l, const ivec4 &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2] && l.data[3] == r.data[3]; }
 #define GCHL_GENERATE(TYPE) \
 	inline constexpr bool operator != (const TYPE &l, const TYPE &r) noexcept { return !(l == r); };
 	GCHL_GENERATE(real);
@@ -626,7 +626,7 @@ namespace cage
 	GCHL_GENERATE(vec4);
 #undef GCHL_GENERATE
 	inline quat interpolate(const quat &a, const quat &b, real f) { return slerp(a, b, f); }
-	inline constexpr transform interpolate(const transform &a, const transform &b, real f) noexcept { return transform(interpolate(a.position, b.position, f), interpolate(a.orientation, b.orientation, f), interpolate(a.scale, b.scale, f)); }
+	inline transform interpolate(const transform &a, const transform &b, real f) noexcept { return transform(interpolate(a.position, b.position, f), interpolate(a.orientation, b.orientation, f), interpolate(a.scale, b.scale, f)); }
 	CAGE_CORE_API real interpolateWrap(real a, real b, real f);
 	inline rads interpolateAngle(rads a, rads b, real f) { return interpolateWrap((a / rads::Full()).value, (b / rads::Full()).value, f) * rads::Full(); }
 
@@ -661,7 +661,15 @@ namespace cage
 	CAGE_CORE_API quat randomDirectionQuat();
 	inline ivec4 randomRange4i(sint32 a, sint32 b) { return ivec4(randomRange(a, b), randomRange(a, b), randomRange(a, b), randomRange(a, b)); }
 
-	CAGE_CORE_API uint32 hash(uint32 key) noexcept;
+	inline constexpr uint32 hash(uint32 key) noexcept
+	{ // integer finalizer hash function
+		key ^= key >> 16;
+		key *= 0x85ebca6b;
+		key ^= key >> 13;
+		key *= 0xc2b2ae35;
+		key ^= key >> 16;
+		return key;
+	}
 }
 
 namespace std
@@ -677,7 +685,7 @@ namespace cage
 	To numeric_cast(real from)
 	{
 		return numeric_cast<To>(from.value);
-	};
+	}
 
 	namespace detail
 	{

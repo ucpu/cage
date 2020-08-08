@@ -177,14 +177,4 @@ namespace cage
 			b += 1;
 		return wrap(interpolate(a, b, f));
 	}
-
-	uint32 hash(uint32 key) noexcept
-	{ // integer finalizer hash function
-		key ^= key >> 16;
-		key *= 0x85ebca6b;
-		key ^= key >> 13;
-		key *= 0xc2b2ae35;
-		key ^= key >> 16;
-		return key;
-	}
 }
