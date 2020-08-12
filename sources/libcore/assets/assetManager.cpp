@@ -47,6 +47,70 @@ namespace cage
 			uintPtr typeId = 0;
 		};
 
+		template<class T>
+		struct CounterValueWrapper
+		{
+			CounterValueWrapper() = default;
+			explicit CounterValueWrapper(T &v, std::atomic<sint32> *c) : counter(c)
+			{
+				CAGE_ASSERT(c);
+				std::swap(v, value);
+				(*counter)++;
+			}
+			CounterValueWrapper(CounterValueWrapper &&other)
+			{
+				std::swap(value, other.value);
+				std::swap(counter, other.counter);
+			}
+			CounterValueWrapper &operator = (CounterValueWrapper &&other)
+			{
+				std::swap(value, other.value);
+				std::swap(counter, other.counter);
+				return *this;
+			}
+			~CounterValueWrapper()
+			{
+				if (counter)
+					(*counter)--;
+			}
+			CounterValueWrapper(const CounterValueWrapper &) = delete;
+			CounterValueWrapper &operator = (const CounterValueWrapper &) = delete;
+
+			T value = T();
+		private:
+			std::atomic<sint32> *counter = nullptr;
+		};
+
+		template<>
+		struct CounterValueWrapper<void>
+		{
+			CounterValueWrapper() = default;
+			explicit CounterValueWrapper(std::atomic<sint32> *c) : counter(c)
+			{
+				CAGE_ASSERT(c);
+				(*counter)++;
+			}
+			CounterValueWrapper(CounterValueWrapper &&other)
+			{
+				std::swap(counter, other.counter);
+			}
+			CounterValueWrapper &operator = (CounterValueWrapper &&other)
+			{
+				std::swap(counter, other.counter);
+				return *this;
+			}
+			~CounterValueWrapper()
+			{
+				if (counter)
+					(*counter)--;
+			}
+			CounterValueWrapper(const CounterValueWrapper &) = delete;
+			CounterValueWrapper &operator = (const CounterValueWrapper &) = delete;
+
+		private:
+			std::atomic<sint32> *counter = nullptr;
+		};
+
 		enum class StateEnum
 		{
 			Initialized,
@@ -54,6 +118,7 @@ namespace cage
 			Decompressing,
 			Processing,
 			WaitingForDeps,
+			Presenting,
 			Ready,
 			Error,
 			Unloading,
@@ -66,6 +131,7 @@ namespace cage
 			MemoryBuffer origData, compData;
 			std::vector<uint32> dependencies;
 			Holder<void> reference; // the deleter is set to a function that will enqueue this asset version for unloading
+			CounterValueWrapper<void> waitingForPublish;
 			std::atomic<StateEnum> state{ StateEnum::Initialized };
 			uint32 scheme = m;
 			const uint32 guid;
@@ -128,40 +194,6 @@ namespace cage
 			uint32 scheme = m;
 			uint32 realName = 0;
 			CommandEnum type = CommandEnum::None;
-		};
-
-		template<class T>
-		struct CounterValueWrapper
-		{
-			CounterValueWrapper() = default;
-			explicit CounterValueWrapper(T &v, std::atomic<sint32> *c) : counter(c)
-			{
-				CAGE_ASSERT(c);
-				std::swap(v, value);
-				(*counter)++;
-			}
-			CounterValueWrapper(CounterValueWrapper &&other)
-			{
-				std::swap(value, other.value);
-				std::swap(counter, other.counter);
-			}
-			CounterValueWrapper &operator = (CounterValueWrapper &&other)
-			{
-				std::swap(value, other.value);
-				std::swap(counter, other.counter);
-				return *this;
-			}
-			~CounterValueWrapper()
-			{
-				if (counter)
-					(*counter)--;
-			}
-			CounterValueWrapper(const CounterValueWrapper &) = delete;
-			CounterValueWrapper &operator = (const CounterValueWrapper &) = delete;
-
-			T value = T();
-		private:
-			std::atomic<sint32> *counter = nullptr;
 		};
 
 		typedef std::unordered_map<uint32, Versions> PrivateIndex;
@@ -257,6 +289,7 @@ namespace cage
 				defaultProcessingQueue.terminate();
 				for (auto &it : customProcessingQueues)
 					it->terminate();
+				CAGE_ASSERT(privateIndex.empty());
 			}
 
 			// asset methods
@@ -334,22 +367,22 @@ namespace cage
 					ass->clearMemory();
 					ass->dependencies.clear();
 					ass->state = StateEnum::Error;
+					createReferenceForError(ass);
+					return;
 				}
 
-				if (ass->state != StateEnum::Error)
+				CAGE_ASSERT(ass->state == StateEnum::DiskLoading);
+				for (uint32 n : ass->dependencies)
+					add(n);
+				if (ass->compData.size())
 				{
-					for (uint32 n : ass->dependencies)
-						add(n);
-					if (ass->compData.size())
-					{
-						ass->state = StateEnum::Decompressing;
-						decompressionQueue.push(CounterValueWrapper<Asset *>(ass, &working));
-					}
-					else
-					{
-						ass->state = StateEnum::Processing;
-						enqueueToSchemeQueue(ass);
-					}
+					ass->state = StateEnum::Decompressing;
+					decompressionQueue.push(CounterValueWrapper<Asset *>(ass, &working));
+				}
+				else
+				{
+					ass->state = StateEnum::Processing;
+					enqueueToSchemeQueue(ass);
 				}
 			}
 
@@ -375,13 +408,13 @@ namespace cage
 					ASS_LOG(1, ass, "decompression failed");
 					ass->clearMemory();
 					ass->state = StateEnum::Error;
+					createReferenceForError(ass);
+					return;
 				}
 
-				if (ass->state != StateEnum::Error)
-				{
-					ass->state = StateEnum::Processing;
-					enqueueToSchemeQueue(ass);
-				}
+				CAGE_ASSERT(ass->state == StateEnum::Decompressing);
+				ass->state = StateEnum::Processing;
+				enqueueToSchemeQueue(ass);
 			}
 
 			void processAsset(Asset *ass)
@@ -412,21 +445,34 @@ namespace cage
 					ass->assetHolder.clear();
 					ass->clearMemory();
 					ass->state = StateEnum::Error;
+					createReferenceForError(ass);
+					return;
 				}
 
+				CAGE_ASSERT(ass->state == StateEnum::Processing);
+				ass->state = StateEnum::WaitingForDeps;
 				ass->clearMemory();
-
-				if (ass->state != StateEnum::Error)
+				if (!checkDependencies(ass))
 				{
-					ass->state = StateEnum::WaitingForDeps;
-					if (!checkDependencies(ass))
-					{
-						Command cmd;
-						cmd.realName = ass->realName;
-						cmd.type = CommandEnum::WaitDeps;
-						cmd.holder = Holder<void>(ass, nullptr, {});
-						maintenanceQueue.push(CounterValueWrapper<Command>(cmd, &working));
-					}
+					Command cmd;
+					cmd.realName = ass->realName;
+					cmd.type = CommandEnum::WaitDeps;
+					cmd.holder = Holder<void>(ass, nullptr, {});
+					maintenanceQueue.push(CounterValueWrapper<Command>(cmd, &working));
+				}
+			}
+
+			void createReferenceForError(Asset *ass)
+			{
+				CAGE_ASSERT(ass->state == StateEnum::Error);
+				CAGE_ASSERT(!ass->reference);
+
+				Holder<void> r(ass->assetHolder.get(), ass, Delegate<void(void*)>().bind<AssetManagerImpl, &AssetManagerImpl::enqueueAssetToUnloadForError>(this));
+				r = templates::move(r).makeShareable();
+				ass->reference = templates::move(r);
+				{
+					CounterValueWrapper<void> w(&working);
+					std::swap(ass->waitingForPublish, w);
 				}
 			}
 
@@ -440,6 +486,10 @@ namespace cage
 				r = templates::move(r).makeShareable();
 				ASS_LOG(2, ass, "ready");
 				ass->reference = templates::move(r);
+				{
+					CounterValueWrapper<void> w(&working);
+					std::swap(ass->waitingForPublish, w);
+				}
 				ass->state = StateEnum::Ready;
 			}
 
@@ -453,6 +503,14 @@ namespace cage
 					defaultProcessingQueue.push(CounterValueWrapper<Asset *>(ass, &working));
 				else
 					customProcessingQueues[t]->push(CounterValueWrapper<Asset *>(ass, &working));
+			}
+
+			void enqueueAssetToUnloadForError(void *ass_)
+			{
+				Asset *ass = (Asset *)ass_;
+				ASS_LOG(3, ass, "enqueue to unload (after error)");
+				ass->state = StateEnum::Unloading;
+				defaultProcessingQueue.push(CounterValueWrapper<Asset *>(ass, &working));
 			}
 
 			void enqueueAssetToUnload(void *ass_)
@@ -471,7 +529,6 @@ namespace cage
 				ASS_LOG(2, ass, "unloading");
 
 				CAGE_ASSERT(ass->state == StateEnum::Unloading);
-				CAGE_ASSERT(ass->assetHolder);
 				CAGE_ASSERT(working > 0);
 
 				ass->assetHolder.clear();
@@ -593,7 +650,8 @@ namespace cage
 
 			void maintenanceUpdatePublicIndex()
 			{
-				uint32 nextIndex = (publicIndex + 1) % 2;
+				CounterValueWrapper<void> w;
+				const uint32 nextIndex = (publicIndex + 1) % 2;
 				PrivateIndex &index = privateIndex;
 				PublicIndexData &updating = publicIndices[nextIndex];
 				ScopeLock<RwMutex> lock(updating.mut, WriteLock());
@@ -633,6 +691,7 @@ namespace cage
 									CAGE_ASSERT(update.find(v->aliasName) == update.end());
 									update[v->aliasName] = Reference(v);
 								}
+								std::swap(v->waitingForPublish, w); // make sure that working counter is not zero until the asset is accessible in public index
 								found = true;
 							}
 						}
@@ -753,6 +812,8 @@ namespace cage
 						{
 							ScopeLock<Mutex> lock(mutex);
 							OPTICK_EVENT("maintenance");
+							//int dummy;
+							//CounterValueWrapper<int> extendTheCount(dummy, &working); // extend the working counter so that processing is only done after the assets are presented in the public index
 							{
 								CounterValueWrapper<Command> cmd;
 								while (que.tryPop(cmd))
@@ -837,6 +898,7 @@ namespace cage
 			Holder<void> get(uint32 assetName, uint32 scheme, uintPtr typeId, bool throwOnInvalidScheme) const
 			{
 				CAGE_ASSERT(typeId != 0);
+				CAGE_ASSERT(schemes[scheme].typeId == typeId);
 				const PublicIndexData &data = publicIndices[publicIndex];
 				ScopeLock<RwMutex> lock(data.mut, ReadLock());
 				const PublicIndex &index = data.index;
@@ -861,7 +923,6 @@ namespace cage
 					}
 					return {}; // invalid scheme
 				}
-				CAGE_ASSERT(schemes[a.scheme].typeId == typeId);
 				return a.ref.share();
 			}
 
@@ -956,7 +1017,7 @@ namespace cage
 	{
 		AssetManagerImpl *impl = (AssetManagerImpl*)this;
 		CAGE_ASSERT(impl->working >= 0);
-		return impl->working == 0;
+		return impl->working > 0;
 	}
 
 	void AssetManager::unloadCustomThread(uint32 threadIndex)

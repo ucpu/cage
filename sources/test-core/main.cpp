@@ -47,6 +47,7 @@ void testEntitiesSerialization();
 void testVariableInterpolatingBuffer();
 void testVariableSmoothingBuffer();
 void testCopyAndMove();
+void testAssetManager();
 void testSwapBufferGuard();
 void testScheduler();
 void testTcp();
@@ -62,6 +63,7 @@ int main()
 	log1->format.bind<logFormatConsole>();
 	log1->output.bind<logOutputStdOut>();
 
+	//testAssetManager(); // todo remove
 	//generatePointsOnSphere();
 	testMacros();
 	testEnums();
@@ -105,6 +107,7 @@ int main()
 	testVariableInterpolatingBuffer();
 	testVariableSmoothingBuffer();
 	testCopyAndMove();
+	testAssetManager();
 	testSwapBufferGuard();
 	testScheduler();
 	testTcp();
