@@ -5,19 +5,17 @@
 
 namespace cage
 {
-	typedef Delegate<void(const AssetContext *)> AssetDelegate;
+	typedef Delegate<void(AssetContext *)> AssetDelegate;
 
 	struct CAGE_CORE_API AssetContext : private Immovable
 	{
-		detail::StringBase<64> textName;
-		mutable Holder<void> assetHolder;
+		const detail::StringBase<64> &textName;
+		MemoryBuffer &compressedData;
+		MemoryBuffer &originalData;
+		Holder<void> &assetHolder;
 		const uint32 realName = 0;
-		uint32 aliasName = 0;
-		uint32 assetFlags = 0;
 
-		AssetContext(uint32 realName);
-		MemoryBuffer &compressedData() const;
-		MemoryBuffer &originalData() const;
+		explicit AssetContext(const detail::StringBase<64> &textName, MemoryBuffer &compressedData, MemoryBuffer &originalData, Holder<void> &assetHolder, uint32 realName);
 	};
 
 	struct CAGE_CORE_API AssetScheme

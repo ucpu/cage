@@ -62,20 +62,18 @@ namespace cage
 
 	namespace
 	{
-		void defaultDecompress(const AssetContext *context)
+		void defaultDecompress(AssetContext *context)
 		{
-			if (context->compressedData().size() == 0)
+			if (context->compressedData.size() == 0)
 				return;
-			PointerRange<char> orig = context->originalData();
-			detail::decompress(context->compressedData(), orig);
-			CAGE_ASSERT(orig.size() == context->originalData().size());
+			PointerRange<char> orig = context->originalData;
+			detail::decompress(context->compressedData, orig);
+			CAGE_ASSERT(orig.size() == context->originalData.size());
 		}
 	}
 
-	AssetContext::AssetContext(uint32 realName) : realName(realName)
-	{
-		textName = stringizer() + "<" + realName + ">";
-	}
+	AssetContext::AssetContext(const detail::StringBase<64> &textName, MemoryBuffer &compressedData, MemoryBuffer &originalData, Holder<void> &assetHolder, uint32 realName) : textName(textName), compressedData(compressedData), originalData(originalData), assetHolder(assetHolder), realName(realName)
+	{}
 
 	AssetScheme::AssetScheme()
 	{
@@ -84,7 +82,7 @@ namespace cage
 
 	namespace
 	{
-		void processAssetPackLoad(const AssetContext *context)
+		void processAssetPackLoad(AssetContext *context)
 		{
 			static AssetPack pack;
 			Holder<AssetPack> h = Holder<AssetPack>(&pack, nullptr, {});
@@ -101,9 +99,9 @@ namespace cage
 
 	namespace
 	{
-		void processRawLoad(const AssetContext *context)
+		void processRawLoad(AssetContext *context)
 		{
-			Holder<MemoryBuffer> mem = detail::systemArena().createHolder<MemoryBuffer>(templates::move(context->originalData()));
+			Holder<MemoryBuffer> mem = detail::systemArena().createHolder<MemoryBuffer>(templates::move(context->originalData));
 			context->assetHolder = templates::move(mem).cast<void>();
 		}
 	}
@@ -117,10 +115,10 @@ namespace cage
 
 	namespace
 	{
-		void processTextPackLoad(const AssetContext *context)
+		void processTextPackLoad(AssetContext *context)
 		{
 			Holder<TextPack> texts = newTextPack();
-			Deserializer des(context->originalData());
+			Deserializer des(context->originalData);
 			uint32 cnt;
 			des >> cnt;
 			for (uint32 i = 0; i < cnt; i++)
@@ -143,10 +141,10 @@ namespace cage
 
 	namespace
 	{
-		void processColliderLoad(const AssetContext *context)
+		void processColliderLoad(AssetContext *context)
 		{
 			Holder<Collider> col = newCollider();
-			col->deserialize(context->originalData());
+			col->deserialize(context->originalData);
 			col->rebuild();
 			context->assetHolder = templates::move(col).cast<void>();
 		}
@@ -161,10 +159,10 @@ namespace cage
 
 	namespace
 	{
-		void processSkeletalAnimationLoad(const AssetContext *context)
+		void processSkeletalAnimationLoad(AssetContext *context)
 		{
 			Holder<SkeletalAnimation> ani = newSkeletalAnimation();
-			Deserializer des(context->originalData());
+			Deserializer des(context->originalData);
 			uint32 skeletonBonesCount;
 			uint32 animationBonesCount;
 			des >> ani->duration;
@@ -184,10 +182,10 @@ namespace cage
 
 	namespace
 	{
-		void processSkeletonRigLoad(const AssetContext *context)
+		void processSkeletonRigLoad(AssetContext *context)
 		{
 			Holder<SkeletonRig> skl = newSkeletonRig();
-			Deserializer des(context->originalData());
+			Deserializer des(context->originalData);
 			mat4 globalInverse;
 			uint32 bonesCount;
 			des >> globalInverse;

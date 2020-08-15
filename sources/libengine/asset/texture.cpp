@@ -14,9 +14,9 @@ namespace cage
 	{
 		ConfigUint32 textureDownscale("cage/graphics/textureDownscale", 1);
 
-		void processLoad(const AssetContext *context)
+		void processLoad(AssetContext *context)
 		{
-			Deserializer des(context->originalData());
+			Deserializer des(context->originalData);
 			TextureHeader data;
 			des >> data;
 

@@ -63,7 +63,6 @@ int main()
 	log1->format.bind<logFormatConsole>();
 	log1->output.bind<logOutputStdOut>();
 
-	//testAssetManager(); // todo remove
 	//generatePointsOnSphere();
 	testMacros();
 	testEnums();

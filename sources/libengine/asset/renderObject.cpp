@@ -9,12 +9,12 @@ namespace cage
 {
 	namespace
 	{
-		void processLoad(const AssetContext *context)
+		void processLoad(AssetContext *context)
 		{
 			Holder<RenderObject> obj = newRenderObject();
 			obj->setDebugName(context->textName);
 
-			Deserializer des(context->originalData());
+			Deserializer des(context->originalData);
 			RenderObjectHeader h;
 			des >> h;
 			obj->color = h.color;

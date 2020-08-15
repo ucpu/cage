@@ -13,12 +13,12 @@ namespace cage
 {
 	namespace
 	{
-		void processLoad(const AssetContext *context)
+		void processLoad(AssetContext *context)
 		{
 			Holder<Mesh> msh = newMesh();
 			msh->setDebugName(context->textName);
 
-			Deserializer des(context->originalData());
+			Deserializer des(context->originalData);
 			MeshHeader data;
 			des >> data;
 

@@ -11,10 +11,10 @@ namespace cage
 {
 	namespace
 	{
-		void processDecompress(const AssetContext *context)
+		void processDecompress(AssetContext *context)
 		{
-			CAGE_ASSERT(context->compressedData().data());
-			Deserializer des(context->compressedData());
+			CAGE_ASSERT(context->compressedData.data());
+			Deserializer des(context->compressedData);
 			SoundSourceHeader snd;
 			des >> snd;
 			if (snd.soundType != SoundTypeEnum::CompressedRaw)
@@ -24,18 +24,18 @@ namespace cage
 			uintPtr size = des.available();
 			vds.init(des.advance(size).data(), size);
 			uint32 ch = 0, f = 0, r = 0;
-			vds.decode(ch, f, r, (float*)context->originalData().data());
+			vds.decode(ch, f, r, (float*)context->originalData.data());
 			CAGE_ASSERT(snd.channels == ch);
 			CAGE_ASSERT(snd.frames == f);
 			CAGE_ASSERT(snd.sampleRate == r);
 		}
 
-		void processLoad(SoundContext *gm, const AssetContext *context)
+		void processLoad(SoundContext *gm, AssetContext *context)
 		{
 			Holder<SoundSource> source = newSoundSource(gm);
 			source->setDebugName(context->textName);
 
-			Deserializer des(context->compressedData().data() ? context->compressedData() : context->originalData());
+			Deserializer des(context->compressedData.data() ? context->compressedData : context->originalData);
 			SoundSourceHeader snd;
 			des >> snd;
 			source->setDataRepeat(any(snd.flags & SoundFlags::LoopBeforeStart), any(snd.flags & SoundFlags::LoopAfterEnd));
@@ -44,12 +44,12 @@ namespace cage
 			{
 			case SoundTypeEnum::RawRaw:
 			{
-				Deserializer ori(context->originalData());
+				Deserializer ori(context->originalData);
 				ori >> snd;
 				source->setDataRaw(snd.channels, snd.frames, snd.sampleRate, bufferCast<const float>(ori.advance(ori.available())));
 			} break;
 			case SoundTypeEnum::CompressedRaw:
-				source->setDataRaw(snd.channels, snd.frames, snd.sampleRate, bufferCast<const float, char>(context->originalData()));
+				source->setDataRaw(snd.channels, snd.frames, snd.sampleRate, bufferCast<const float, char>(context->originalData));
 				break;
 			case SoundTypeEnum::CompressedCompressed:
 			{

@@ -8,12 +8,12 @@ namespace cage
 {
 	namespace
 	{
-		void processLoad(const AssetContext *context)
+		void processLoad(AssetContext *context)
 		{
 			Holder<Font> font = newFont();
 			font->setDebugName(context->textName);
 
-			Deserializer des(context->originalData());
+			Deserializer des(context->originalData);
 			FontHeader data;
 			des >> data;
 			PointerRange<const char> image = des.advance(data.texSize);

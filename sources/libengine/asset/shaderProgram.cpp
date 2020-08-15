@@ -9,12 +9,12 @@ namespace cage
 {
 	namespace
 	{
-		void processLoad(const AssetContext *context)
+		void processLoad(AssetContext *context)
 		{
 			Holder<ShaderProgram> shr = newShaderProgram();
 			shr->setDebugName(context->textName);
 
-			Deserializer des(context->originalData());
+			Deserializer des(context->originalData);
 			uint32 count;
 			des >> count;
 			for (uint32 i = 0; i < count; i++)

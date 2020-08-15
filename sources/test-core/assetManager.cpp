@@ -35,9 +35,9 @@ namespace
 
 	std::atomic<sint32> AssetCounter::counter{0};
 
-	void processAssetCounterLoad(const AssetContext *context)
+	void processAssetCounterLoad(AssetContext *context)
 	{
-		if (context->realName == 5000)
+		if (context->realName >= 5000)
 			CAGE_THROW_ERROR(Exception, "intentionally failed asset processing");
 		Holder<AssetCounter> h = detail::systemArena().createHolder<AssetCounter>();
 		context->assetHolder = templates::move(h).cast<void>();
@@ -50,7 +50,7 @@ namespace
 		return s;
 	}
 
-	void makeAssetPack(uint32 name, PointerRange<uint32> deps)
+	void makeAssetPack(uint32 name, PointerRange<const uint32> deps)
 	{
 		AssetHeader hdr = initializeAssetHeader(stringizer() + name, AssetSchemeIndexPack);
 		hdr.dependenciesCount = numeric_cast<uint16>(deps.size());
@@ -70,12 +70,19 @@ namespace
 		f->close();
 	}
 
-	void makeAssetCounter(uint32 name)
+	void makeAssetCounter(uint32 name, PointerRange<const uint32> deps)
 	{
 		AssetHeader hdr = initializeAssetHeader(stringizer() + name, AssetSchemeIndexCounter);
+		hdr.dependenciesCount = numeric_cast<uint16>(deps.size());
 		Holder<File> f = writeFile(pathJoin(AssetsPath, stringizer() + name));
 		f->write(bufferView(hdr));
+		f->write(bufferCast(deps));
 		f->close();
+	}
+
+	void makeAssetCounter(uint32 name)
+	{
+		makeAssetCounter(name, {});
 	}
 
 	Holder<AssetManager> instantiate()
@@ -94,7 +101,6 @@ namespace
 
 	void waitProcessing(Holder<AssetManager> &man)
 	{
-		CAGE_TEST(man->processing());
 		while (man->processing())
 			threadYield();
 	}
@@ -134,7 +140,7 @@ void testAssetManager()
 		man->remove(20);
 		man->remove(30);
 		waitProcessing(man);
-		// todo CAGE_TEST(AssetCounter::counter == 0);
+		CAGE_TEST(AssetCounter::counter == 0);
 		man->unloadWait();
 	}
 
@@ -159,9 +165,69 @@ void testAssetManager()
 		waitProcessing(man);
 		CAGE_TEST(AssetCounter::counter == 1);
 		man->remove(10);
-		CAGE_TEST(man->processing());
 		man->unloadWait();
 		CAGE_TEST(AssetCounter::counter == 0);
+	}
+
+	{
+		CAGE_TESTCASE("dependencies 1");
+		Holder<AssetManager> man = instantiate();
+		makeAssetCounter(10);
+		makeAssetCounter(20);
+		makeAssetCounter(30);
+		makeAssetPack(50, PointerRange<const uint32>({ 10, 20, 30 }));
+		CAGE_TEST(AssetCounter::counter == 0);
+		man->add(50);
+		waitProcessing(man);
+		CAGE_TEST(AssetCounter::counter == 3);
+		man->remove(50);
+		waitProcessing(man);
+		CAGE_TEST(AssetCounter::counter == 0);
+		man->unloadWait();
+	}
+
+	{
+		CAGE_TESTCASE("dependencies 2");
+		Holder<AssetManager> man = instantiate();
+		makeAssetCounter(10);
+		makeAssetCounter(20);
+		makeAssetCounter(30);
+		makeAssetCounter(50, PointerRange<const uint32>({ 10, 20, 30 }));
+		CAGE_TEST(AssetCounter::counter == 0);
+		man->add(50);
+		waitProcessing(man);
+		CAGE_TEST(AssetCounter::counter == 4);
+		man->remove(50);
+		waitProcessing(man);
+		CAGE_TEST(AssetCounter::counter == 0);
+		man->unloadWait();
+	}
+
+	{
+		CAGE_TESTCASE("immediate remove");
+		Holder<AssetManager> man = instantiate();
+		makeAssetCounter(10);
+		man->add(10);
+		man->remove(10);
+		waitProcessing(man);
+		CAGE_TEST(AssetCounter::counter == 0);
+		man->unloadWait();
+	}
+
+	{
+		CAGE_TESTCASE("repeated add and remove");
+		Holder<AssetManager> man = instantiate();
+		makeAssetCounter(10);
+		for (uint32 i = 0; i < 10; i++)
+		{
+			man->add(10);
+			man->remove(10);
+			if ((i % 3) == 0)
+				waitProcessing(man);
+		}
+		waitProcessing(man);
+		CAGE_TEST(AssetCounter::counter == 0);
+		man->unloadWait();
 	}
 
 	{
@@ -194,6 +260,40 @@ void testAssetManager()
 	}
 
 	{
+		CAGE_TESTCASE("holding asset after remove");
+		Holder<AssetManager> man = instantiate();
+		makeAssetCounter(10);
+		man->add(10);
+		waitProcessing(man);
+		CAGE_TEST(AssetCounter::counter == 1);
+		{
+			Holder<AssetCounter> a = man->get<AssetSchemeIndexCounter, AssetCounter>(10);
+			man->remove(10);
+			waitProcessing(man);
+			CAGE_TEST(AssetCounter::counter == 1);
+		}
+		waitProcessing(man);
+		CAGE_TEST(AssetCounter::counter == 0);
+		man->unloadWait();
+	}
+
+	{
+		CAGE_TESTCASE("fabricated");
+		Holder<AssetManager> man = instantiate();
+		{
+			Holder<AssetCounter> f = detail::systemArena().createHolder<AssetCounter>();
+			man->fabricate<AssetSchemeIndexCounter, AssetCounter>(10, templates::move(f));
+		}
+		waitProcessing(man);
+		CAGE_TEST(AssetCounter::counter == 1);
+		CAGE_TEST((man->get<AssetSchemeIndexCounter, AssetCounter>(10)));
+		man->remove(10);
+		waitProcessing(man);
+		CAGE_TEST(AssetCounter::counter == 0);
+		man->unloadWait();
+	}
+
+	{
 		CAGE_TESTCASE("non-existent asset");
 		Holder<AssetManager> man = instantiate();
 		Holder<AssetCounter> a = man->get<AssetSchemeIndexCounter, AssetCounter>(5);
@@ -209,7 +309,6 @@ void testAssetManager()
 		waitProcessing(man);
 		CAGE_TEST(AssetCounter::counter == 0);
 		man->remove(10);
-		CAGE_TEST(man->processing());
 		man->unloadWait();
 	}
 
@@ -315,6 +414,50 @@ void testAssetManager()
 		}
 		CAGE_TEST_THROWN((man->get<AssetSchemeIndexCounter, AssetCounter>(5000)));
 		man->remove(5000);
+		man->unloadWait();
+	}
+
+	{
+		CAGE_TESTCASE("fail processing with dependencies 1");
+		Holder<AssetManager> man = instantiate();
+		makeAssetCounter(10);
+		makeAssetCounter(20);
+		makeAssetCounter(5000, PointerRange<const uint32>({ 10, 20 }));
+		{
+			detail::setGlobalBreakpointOverride(false); // the processing thread would stop on breakpoint otherwise
+			man->add(5000);
+			waitProcessing(man);
+			detail::setGlobalBreakpointOverride(true);
+		}
+		CAGE_TEST(AssetCounter::counter == 2);
+		CAGE_TEST((man->get<AssetSchemeIndexCounter, AssetCounter>(10)));
+		CAGE_TEST((man->get<AssetSchemeIndexCounter, AssetCounter>(20)));
+		CAGE_TEST_THROWN((man->get<AssetSchemeIndexCounter, AssetCounter>(5000)));
+		man->remove(5000);
+		waitProcessing(man);
+		CAGE_TEST(AssetCounter::counter == 0);
+		man->unloadWait();
+	}
+
+	{
+		CAGE_TESTCASE("fail processing with dependencies 2");
+		Holder<AssetManager> man = instantiate();
+		makeAssetCounter(10, PointerRange<const uint32>({ 20, 5000 }));
+		makeAssetCounter(20);
+		makeAssetCounter(5000);
+		{
+			detail::setGlobalBreakpointOverride(false); // the processing thread would stop on breakpoint otherwise
+			man->add(10);
+			waitProcessing(man);
+			detail::setGlobalBreakpointOverride(true);
+		}
+		CAGE_TEST(AssetCounter::counter == 2);
+		CAGE_TEST((man->get<AssetSchemeIndexCounter, AssetCounter>(10)));
+		CAGE_TEST((man->get<AssetSchemeIndexCounter, AssetCounter>(20)));
+		CAGE_TEST_THROWN((man->get<AssetSchemeIndexCounter, AssetCounter>(5000)));
+		man->remove(10);
+		waitProcessing(man);
+		CAGE_TEST(AssetCounter::counter == 0);
 		man->unloadWait();
 	}
 }

@@ -82,7 +82,6 @@ namespace cage
 	struct CAGE_CORE_API AssetManagerCreateConfig
 	{
 		string assetsFolderName = "assets.zip";
-		uint64 maintenancePeriod = 25000;
 		uint64 listenerPeriod = 100000;
 		uint32 threadsMaxCount = 5;
 		uint32 schemesMaxCount = 100; // 0..49 for engine and 50..99 for the game
