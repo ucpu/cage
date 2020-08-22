@@ -648,18 +648,18 @@ namespace cage
 	GCHL_GENERATE(degs);
 #undef GCHL_GENERATE
 	CAGE_CORE_API rads randomAngle();
-	inline vec2 randomChance2() { return vec2(randomChance(), randomChance()); }
-	inline vec2 randomRange2(real a, real b) { return vec2(randomRange(a, b), randomRange(a, b)); }
+	CAGE_CORE_API vec2 randomChance2();
+	CAGE_CORE_API vec2 randomRange2(real a, real b);
 	CAGE_CORE_API vec2 randomDirection2();
-	inline ivec2 randomRange2i(sint32 a, sint32 b) { return ivec2(randomRange(a, b), randomRange(a, b)); }
-	inline vec3 randomChance3() { return vec3(randomChance(), randomChance(), randomChance()); }
-	inline vec3 randomRange3(real a, real b) { return vec3(randomRange(a, b), randomRange(a, b), randomRange(a, b)); }
+	CAGE_CORE_API ivec2 randomRange2i(sint32 a, sint32 b);
+	CAGE_CORE_API vec3 randomChance3();
+	CAGE_CORE_API vec3 randomRange3(real a, real b);
 	CAGE_CORE_API vec3 randomDirection3();
-	inline ivec3 randomRange3i(sint32 a, sint32 b) { return ivec3(randomRange(a, b), randomRange(a, b), randomRange(a, b)); }
-	inline vec4 randomChance4() { return vec4(randomChance(), randomChance(), randomChance(), randomChance()); }
-	inline vec4 randomRange4(real a, real b) { return vec4(randomRange(a, b), randomRange(a, b), randomRange(a, b), randomRange(a, b)); }
+	CAGE_CORE_API ivec3 randomRange3i(sint32 a, sint32 b);
+	CAGE_CORE_API vec4 randomChance4();
+	CAGE_CORE_API vec4 randomRange4(real a, real b);
 	CAGE_CORE_API quat randomDirectionQuat();
-	inline ivec4 randomRange4i(sint32 a, sint32 b) { return ivec4(randomRange(a, b), randomRange(a, b), randomRange(a, b), randomRange(a, b)); }
+	CAGE_CORE_API ivec4 randomRange4i(sint32 a, sint32 b);
 
 	inline constexpr uint32 hash(uint32 key) noexcept
 	{ // integer finalizer hash function
