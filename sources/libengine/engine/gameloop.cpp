@@ -491,16 +491,7 @@ namespace cage
 					if (confAutoAssetListen)
 					{
 						CAGE_LOG(SeverityEnum::Info, "assets", "starting assets updates listening");
-						detail::OverrideBreakpoint overrideBreakpoint;
-						detail::OverrideException overrideException;
-						try
-						{
-							assets->listen("localhost", 65042);
-						}
-						catch (const Exception &)
-						{
-							CAGE_LOG(SeverityEnum::Warning, "assets", "assets updates failed to connect to the database");
-						}
+						assets->listen("localhost", 65042);
 					}
 				}
 

@@ -428,7 +428,18 @@ namespace cage
 			{
 				try
 				{
+					detail::OverrideBreakpoint overrideBreakpoint;
+					detail::OverrideException overrideException;
 					listener = newTcpConnection(listenerAddress, listenerPort);
+				}
+				catch (...)
+				{
+					CAGE_LOG(SeverityEnum::Warning, "assetManager", "assets network notifications listener failed to connect to the database");
+					listener.clear();
+					return;
+				}
+				try
+				{
 					while (!stopping)
 					{
 						threadSleep(listenerPeriod);
@@ -441,6 +452,11 @@ namespace cage
 							reload(name);
 						}
 					}
+				}
+				catch (const Disconnected &)
+				{
+					CAGE_LOG(SeverityEnum::Warning, "assetManager", "assets network notifications listener disconnected");
+					listener.clear();
 				}
 				catch (...)
 				{
