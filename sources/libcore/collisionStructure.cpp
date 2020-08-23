@@ -67,11 +67,11 @@ namespace cage
 				for (uint32 nameIt : spatial->result())
 				{
 					const Item &item = data->allItems.at(nameIt);
-					Holder<PointerRange<CollisionPair>> tmpPairs;
-					if (collisionDetection(collider, item.c, t, item.t, tmpPairs)) // exact phase
+					CollisionDetectionParams p(collider, item.c, t, item.t);
+					if (collisionDetection(p)) // exact phase
 					{
-						CAGE_ASSERT(!tmpPairs.empty());
-						std::swap(tmpPairs, resultPairs);
+						CAGE_ASSERT(!p.collisionPairs.empty());
+						std::swap(p.collisionPairs, resultPairs);
 						resultName = nameIt;
 						break;
 					}
@@ -88,16 +88,19 @@ namespace cage
 				for (uint32 nameIt : spatial->result())
 				{
 					const Item &item = data->allItems.at(nameIt);
-					real fractBefore, fractContact;
-					Holder<PointerRange<CollisionPair>> tmpPairs;
-					if (!collisionDetection(collider, item.c, t1, item.t, t2, item.t, fractBefore, fractContact, tmpPairs)) // exact phase
+					CollisionDetectionParams p(collider, item.c);
+					p.at1 = t1;
+					p.at2 = t2;
+					p.bt1 = item.t;
+					p.bt2 = item.t;
+					if (!collisionDetection(p)) // exact phase
 						continue;
-					if (fractContact < best)
+					if (p.fractionContact < best)
 					{
-						CAGE_ASSERT(!tmpPairs.empty());
-						std::swap(tmpPairs, resultPairs);
-						resultFractionBefore = fractBefore;
-						resultFractionContact = best = fractContact;
+						CAGE_ASSERT(!p.collisionPairs.empty());
+						std::swap(p.collisionPairs, resultPairs);
+						resultFractionBefore = p.fractionBefore;
+						resultFractionContact = best = p.fractionContact;
 						resultName = nameIt;
 					}
 				}

@@ -13,7 +13,8 @@ void testColliders()
 			CAGE_TESTCASE("empty colliders");
 			Holder<Collider> c1 = newCollider();
 			Holder<Collider> c2 = newCollider();
-			CAGE_TEST(!collisionDetection(c1.get(), c2.get(), transform(), transform()));
+			CollisionDetectionParams p(c1.get(), c2.get());
+			CAGE_TEST(!collisionDetection(p));
 		}
 		{
 			CAGE_TESTCASE("no collision");
@@ -23,7 +24,8 @@ void testColliders()
 			c2->addTriangle(triangle(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1)));
 			c1->rebuild();
 			c2->rebuild();
-			CAGE_TEST(!collisionDetection(c1.get(), c2.get(), transform(), transform()));
+			CollisionDetectionParams p(c1.get(), c2.get());
+			CAGE_TEST(!collisionDetection(p));
 		}
 		{
 			CAGE_TESTCASE("one collision");
@@ -33,11 +35,11 @@ void testColliders()
 			c2->addTriangle(triangle(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0)));
 			c1->rebuild();
 			c2->rebuild();
-			Holder<PointerRange<CollisionPair>> pairs;
-			CAGE_TEST(collisionDetection(c1.get(), c2.get(), transform(), transform(), pairs));
-			CAGE_TEST(pairs.size() == 1);
-			CAGE_TEST(pairs[0].a == 0);
-			CAGE_TEST(pairs[0].b == 0);
+			CollisionDetectionParams p(c1.get(), c2.get());
+			CAGE_TEST(collisionDetection(p));
+			CAGE_TEST(p.collisionPairs.size() == 1);
+			CAGE_TEST(p.collisionPairs[0].a == 0);
+			CAGE_TEST(p.collisionPairs[0].b == 0);
 		}
 		{
 			CAGE_TESTCASE("self collision");
@@ -46,16 +48,8 @@ void testColliders()
 			c1->addTriangle(triangle(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1)));
 			c1->addTriangle(triangle(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0)));
 			c1->rebuild();
-			CAGE_TEST(collisionDetection(c1.get(), c1.get(), transform(), transform()));
-		}
-		{
-			CAGE_TESTCASE("limited buffer");
-			Holder<Collider> c1 = newCollider();
-			c1->addTriangle(triangle(vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 2, 0)));
-			c1->addTriangle(triangle(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1)));
-			c1->addTriangle(triangle(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0)));
-			c1->rebuild();
-			CAGE_TEST(collisionDetection(c1.get(), c1.get(), transform(), transform()));
+			CollisionDetectionParams p(c1.get(), c1.get());
+			CAGE_TEST(collisionDetection(p));
 		}
 		{
 			CAGE_TESTCASE("with transformation (no collision)");
@@ -64,7 +58,8 @@ void testColliders()
 			c1->addTriangle(triangle(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1)));
 			c1->addTriangle(triangle(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0)));
 			c1->rebuild();
-			CAGE_TEST(!collisionDetection(c1.get(), c1.get(), transform(), transform(vec3(20, 0, 0))));
+			CollisionDetectionParams p(c1.get(), c1.get(), transform(), transform(vec3(20, 0, 0)));
+			CAGE_TEST(!collisionDetection(p));
 		}
 		{
 			CAGE_TESTCASE("with transformation (one collision)");
@@ -72,9 +67,10 @@ void testColliders()
 			Holder<Collider> c2 = newCollider();
 			c1->addTriangle(triangle(vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 2, 0)));
 			c2->addTriangle(triangle(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1)));
-			c2->rebuild();
 			c1->rebuild();
-			CAGE_TEST(collisionDetection(c1.get(), c1.get(), transform(), transform(vec3(), quat(degs(), degs(90), degs()))));
+			c2->rebuild();
+			CollisionDetectionParams p(c1.get(), c2.get(), transform(), transform(vec3(), quat(degs(), degs(90), degs())));
+			CAGE_TEST(collisionDetection(p));
 		}
 		{
 			CAGE_TESTCASE("serialization");
@@ -94,7 +90,8 @@ void testColliders()
 			c1->addTriangle(triangle(vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 2, 0)));
 			c1->addTriangle(triangle(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1)));
 			c1->addTriangle(triangle(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0)));
-			CAGE_TEST_ASSERTED(collisionDetection(c1.get(), c1.get(), transform(), transform()));
+			CollisionDetectionParams p(c1.get(), c1.get());
+			CAGE_TEST_ASSERTED(collisionDetection(p));
 		}
 	}
 
@@ -114,83 +111,103 @@ void testColliders()
 		}
 		{
 			CAGE_TESTCASE("ensure static collision");
-			CAGE_TEST(collisionDetection(c1.get(), c1.get(),
-				transform(vec3(-5, 0, 0), quat(), 7),
-				transform(vec3(5, 0, 0), quat(), 7)));
+			CollisionDetectionParams p(c1.get(), c1.get(), transform(vec3(-5, 0, 0), quat(), 7), transform(vec3(5, 0, 0), quat(), 7));
+			CAGE_TEST(collisionDetection(p));
 		}
-		real fractionBefore, fractionContact;
 		{
 			CAGE_TESTCASE("tetrahedrons meet in the middle");
-			CAGE_TEST(collisionDetection(c1.get(), c1.get(),
-				transform(vec3(-5, 0, 0)), 
-				transform(vec3(5, 0, 0)),
-				transform(),
-				transform(), fractionBefore, fractionContact));
-			CAGE_TEST(fractionContact > 0 && fractionContact < 1);
+			CollisionDetectionParams p(c1.get(), c1.get());
+			p.at1 = transform(vec3(-5, 0, 0));
+			p.bt1 = transform(vec3(5, 0, 0));
+			p.at2 = transform();
+			p.bt2 = transform();
+			CAGE_TEST(collisionDetection(p));
+			CAGE_TEST(p.fractionBefore > 0 && p.fractionBefore < 1);
+			CAGE_TEST(p.fractionContact > 0 && p.fractionContact < 1);
+			CAGE_TEST(p.fractionBefore < p.fractionContact);
+			CAGE_TEST(!p.collisionPairs.empty());
 		}
 		{
 			CAGE_TESTCASE("tetrahedrons do not meet");
-			CAGE_TEST(!collisionDetection(c1.get(), c1.get(),
-				transform(vec3(-5, 0, 0)),
-				transform(vec3(5, 0, 0)),
-				transform(vec3(-5, 10, 0)),
-				transform(vec3(-5, 0, 0)), fractionBefore, fractionContact));
-			CAGE_TEST(!fractionContact.valid());
+			CollisionDetectionParams p(c1.get(), c1.get());
+			p.at1 = transform(vec3(-5, 0, 0));
+			p.bt1 = transform(vec3(5, 0, 0));
+			p.at2 = transform(vec3(-5, 10, 0));
+			p.bt2 = transform(vec3(-5, 0, 0));
+			CAGE_TEST(!collisionDetection(p));
+			CAGE_TEST(!p.fractionBefore.valid());
+			CAGE_TEST(!p.fractionContact.valid());
+			CAGE_TEST(p.collisionPairs.empty());
 		}
 		{
 			CAGE_TESTCASE("tetrahedrons are very close");
-			CAGE_TEST(collisionDetection(c1.get(), c1.get(),
-				transform(vec3(-1, 0, 0)),
-				transform(vec3(1, 0, 0)),
-				transform(),
-				transform(), fractionBefore, fractionContact));
-			CAGE_TEST(fractionContact > 0 && fractionContact < 1);
+			CollisionDetectionParams p(c1.get(), c1.get());
+			p.at1 = transform(vec3(-1, 0, 0));
+			p.bt1 = transform(vec3(1, 0, 0));
+			p.at2 = transform();
+			p.bt2 = transform();
+			CAGE_TEST(collisionDetection(p));
+			CAGE_TEST(p.fractionBefore > 0 && p.fractionBefore < 1);
+			CAGE_TEST(p.fractionContact > 0 && p.fractionContact < 1);
+			CAGE_TEST(p.fractionBefore < p.fractionContact);
+			CAGE_TEST(!p.collisionPairs.empty());
 		}
 		{
 			CAGE_TESTCASE("tetrahedrons are far apart");
-			CAGE_TEST(collisionDetection(c1.get(), c1.get(),
-				transform(vec3(-500, 0, 0)),
-				transform(vec3(500, 0, 0)),
-				transform(),
-				transform(),
-				fractionBefore, fractionContact));
-			CAGE_TEST(fractionContact > 0 && fractionContact < 1);
+			CollisionDetectionParams p(c1.get(), c1.get());
+			p.at1 = transform(vec3(-500, 0, 0));
+			p.bt1 = transform(vec3(500, 0, 0));
+			p.at2 = transform();
+			p.bt2 = transform();
+			CAGE_TEST(collisionDetection(p));
+			CAGE_TEST(p.fractionBefore > 0 && p.fractionBefore < 1);
+			CAGE_TEST(p.fractionContact > 0 && p.fractionContact < 1);
+			CAGE_TEST(p.fractionBefore < p.fractionContact);
+			CAGE_TEST(!p.collisionPairs.empty());
 		}
 		{
 			CAGE_TESTCASE("one tetrahedron is very large");
-			CAGE_TEST(collisionDetection(c1.get(), c1.get(),
-				transform(vec3(-500, 0, 0), quat(), 50),
-				transform(vec3(5, 0, 0)),
-				transform(vec3(), quat(), 50),
-				transform(), fractionBefore, fractionContact));
-			CAGE_TEST(fractionContact > 0 && fractionContact < 1);
+			CollisionDetectionParams p(c1.get(), c1.get());
+			p.at1 = transform(vec3(-500, 0, 0), quat(), 50);
+			p.bt1 = transform(vec3(5, 0, 0));
+			p.at2 = transform(vec3(), quat(), 50);
+			p.bt2 = transform();
+			CAGE_TEST(collisionDetection(p));
+			CAGE_TEST(p.fractionBefore > 0 && p.fractionBefore < 1);
+			CAGE_TEST(p.fractionContact > 0 && p.fractionContact < 1);
+			CAGE_TEST(p.fractionBefore < p.fractionContact);
+			CAGE_TEST(!p.collisionPairs.empty());
 		}
 		{
 			CAGE_TESTCASE("one tetrahedron is very small");
-			CAGE_TEST(collisionDetection(c1.get(), c1.get(),
-				transform(vec3(-5, 0, 0), quat(), 0.01),
-				transform(vec3(5, 0, 0)),
-				transform(vec3(), quat(), 0.01),
-				transform(), fractionBefore, fractionContact));
-			CAGE_TEST(fractionContact > 0 && fractionContact < 1);
+			CollisionDetectionParams p(c1.get(), c1.get());
+			p.at1 = transform(vec3(-5, 0, 0), quat(), 0.01);
+			p.bt1 = transform(vec3(5, 0, 0));
+			p.at2 = transform(vec3(), quat(), 0.01);
+			p.bt2 = transform();
+			CAGE_TEST(collisionDetection(p));
+			CAGE_TEST(p.fractionBefore > 0 && p.fractionBefore < 1);
+			CAGE_TEST(p.fractionContact > 0 && p.fractionContact < 1);
+			CAGE_TEST(p.fractionBefore < p.fractionContact);
+			CAGE_TEST(!p.collisionPairs.empty());
 		}
 		{
 			CAGE_TESTCASE("no dynamic change (no collision)");
-			CAGE_TEST(!collisionDetection(c1.get(), c1.get(),
-				transform(vec3(-5, 0, 0)),
-				transform(vec3(5, 0, 0)),
-				transform(vec3(-5, 0, 0)),
-				transform(vec3(5, 0, 0)), fractionBefore, fractionContact));
-			CAGE_TEST(!fractionContact.valid());
+			CollisionDetectionParams p(c1.get(), c1.get());
+			p.at1 = transform(vec3(-5, 0, 0));
+			p.bt1 = transform(vec3(5, 0, 0));
+			p.at2 = transform(vec3(-5, 0, 0));
+			p.bt2 = transform(vec3(5, 0, 0));
+			CAGE_TEST(!collisionDetection(p));
 		}
 		{
 			CAGE_TESTCASE("no dynamic change (with collision)");
-			CAGE_TEST(collisionDetection(c1.get(), c1.get(), 
-				transform(vec3(-0.5001, 0, 0)),
-				transform(vec3(0.5, 0, 0)), 
-				transform(vec3(-0.5, 0, 0)), 
-				transform(vec3(0.5001, 0, 0)), fractionBefore, fractionContact));
-			CAGE_TEST(fractionContact.valid());
+			CollisionDetectionParams p(c1.get(), c1.get());
+			p.at1 = transform(vec3(-0.5001, 0, 0));
+			p.bt1 = transform(vec3(0.5, 0, 0));
+			p.at2 = transform(vec3(-0.5, 0, 0));
+			p.bt2 = transform(vec3(0.5001, 0, 0));
+			CAGE_TEST(collisionDetection(p));
 		}
 	}
 
@@ -224,28 +241,33 @@ void testColliders()
 		}
 		{
 			CAGE_TESTCASE("ensure static collision");
-			CAGE_TEST(!collisionDetection(c1.get(), c2.get(),
-				transform(), 
-				transform()));
-			CAGE_TEST(collisionDetection(c1.get(), c2.get(), 
-				transform(vec3(0, 9.5, 0)), 
-				transform(vec3(9.5, 0, 0))));
-			CAGE_TEST(collisionDetection(c1.get(), c2.get(), 
-				transform(), 
-				transform(vec3(), quat(degs(), degs(), degs(-90)))));
+			{
+				CollisionDetectionParams p(c1.get(), c2.get());
+				CAGE_TEST(!collisionDetection(p));
+			}
+			{
+				CollisionDetectionParams p(c1.get(), c2.get(), transform(vec3(-10, 9.5, 0)), transform());
+				CAGE_TEST(collisionDetection(p));
+			}
+			{
+				CollisionDetectionParams p(c1.get(), c2.get(), transform(), transform(vec3(), quat(degs(), degs(), degs(-90))));
+				CAGE_TEST(collisionDetection(p));
+			}
 		}
 		{
 			CAGE_TESTCASE("rotations");
-			CAGE_TEST(collisionDetection(c1.get(), c2.get(), 
-				transform(), 
-				transform(vec3(), quat(degs(), degs(), degs(-100))),
-				transform(),
-				transform(vec3(), quat(degs(), degs(), degs(-80)))));
-			CAGE_TEST(collisionDetection(c1.get(), c2.get(),
-				transform(),
-				transform(vec3(0.01, 0, 0), quat(degs(), degs(), degs(-80))), 
-				transform(), 
-				transform(vec3(), quat(degs(), degs(), degs(-100)))));
+			{
+				CollisionDetectionParams p(c1.get(), c2.get());
+				p.bt1 = transform(vec3(), quat(degs(), degs(), degs(-100)));
+				p.bt2 = transform(vec3(), quat(degs(), degs(), degs(-80)));
+				CAGE_TEST(collisionDetection(p));
+			}
+			{
+				CollisionDetectionParams p(c1.get(), c2.get());
+				p.bt1 = transform(vec3(0.01, 0, 0), quat(degs(), degs(), degs(-80)));
+				p.bt2 = transform(vec3(), quat(degs(), degs(), degs(-100)));
+				CAGE_TEST(collisionDetection(p));
+			}
 		}
 	}
 

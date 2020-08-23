@@ -332,7 +332,7 @@ namespace cage
 	{
 		if (l.a == r.a)
 			return l.b < r.b;
-		return l.a < l.b;
+		return l.a < r.a;
 	}
 
 	namespace
@@ -393,8 +393,8 @@ namespace cage
 			LazyData<aabb, Swap> abs;
 			LazyData<aabb, !Swap> bbs;
 
-			const ColliderImpl *ao;
-			const ColliderImpl *bo;
+			const ColliderImpl *const ao;
+			const ColliderImpl *const bo;
 			Holder<PointerRange<CollisionPair>> &outputBuffer;
 			PointerRangeHolder<CollisionPair> collisions;
 
@@ -497,8 +497,8 @@ namespace cage
 		class IntersectionDetector
 		{
 		public:
-			const ColliderImpl *col;
-			transform m;
+			const ColliderImpl *const col;
+			const transform m;
 
 			IntersectionDetector(const ColliderImpl *collider, const transform &m) : col(collider), m(m)
 			{}
@@ -571,168 +571,200 @@ namespace cage
 				return intersects(shape * inverse(m), 0);
 			}
 
-			vec3 intersection(const line &l, uint32 nodeIdx)
+			bool intersection(const line &l, uint32 nodeIdx, vec3 &point, uint32 &triangleIndex)
 			{
-				aabb b = col->boxes[nodeIdx];
+				const aabb b = col->boxes[nodeIdx];
 				if (!cage::intersects(l, b))
-					return vec3::Nan();
+					return false;
 				const auto &n = col->nodes[nodeIdx];
 				if (n.left == cage::m)
 				{ // node
-					vec3 c1 = intersection(l, nodeIdx + 1);
-					vec3 c2 = intersection(l, n.right);
-					if (c1.valid())
+					vec3 c1, c2;
+					uint32 t1 = 0, t2 = 0;
+					const bool r1 = intersection(l, nodeIdx + 1, c1, t1);
+					const bool r2 = intersection(l, n.right, c2, t2);
+					if (r1)
 					{
-						if (c2.valid())
+						if (r2)
 						{
 							if (dist(l, c1) < dist(l, c2))
-								return c1;
-							return c2;
+							{
+								point = c1;
+								triangleIndex = t1;
+								return true;
+							}
+							else
+							{
+								point = c2;
+								triangleIndex = t2;
+								return true;
+							}
 						}
-						return c1;
+						else
+						{
+							point = c1;
+							triangleIndex = t1;
+							return true;
+						}
 					}
-					return c2;
+					else if (r2)
+					{
+						point = c2;
+						triangleIndex = t2;
+						return true;
+					}
+					return false;
 				}
 				else
 				{ // leaf
 					real d = real::Infinity();
-					vec3 r = vec3::Nan();
+					bool res = false;
 					for (uint32 ti = n.left; ti != n.right; ti++)
 					{
 						const triangle &t = col->tris[ti];
-						vec3 p = cage::intersection(l, t);
+						const vec3 p = cage::intersection(l, t);
 						if (p.valid())
 						{
-							real d1 = dist(l, p);
+							const real d1 = dist(l, p);
 							if (d1 < d)
 							{
-								r = p;
+								point = p;
+								triangleIndex = ti;
 								d = d1;
 							}
+							res = true;
 						}
 					}
-					return r;
+					return res;
 				}
 			}
 
-			vec3 intersection(const line &l)
+			bool intersection(const line &l, vec3 &point, uint32 &triangleIndex)
 			{
-				vec3 r3 = intersection(l * inverse(m), 0);
-				vec4 r4 = vec4(r3, 1) * mat4(m);
-				return vec3(r4) / r4[3];
+				vec3 pt;
+				uint32 ti = 0;
+				if (intersection(l * inverse(m), 0, pt, ti))
+				{
+					const vec4 r4 = vec4(pt, 1) * mat4(m);
+					point = vec3(r4) / r4[3];
+					triangleIndex = ti;
+					return true;
+				}
+				return false;
 			}
 		};
 	}
 
 
 
-	bool collisionDetection(const Collider *ao, const Collider *bo, const transform &at, const transform &bt)
+	bool collisionDetection(CollisionDetectionParams &params)
 	{
-		Holder<PointerRange<CollisionPair>> outputBuffer;
-		return collisionDetection(ao, bo, at, bt, outputBuffer);
-	}
+		const ColliderImpl *const ao = (const ColliderImpl*)params.ao;
+		const ColliderImpl *const bo = (const ColliderImpl*)params.bo;
+		const transform &at1 = params.at1;
+		const transform &bt1 = params.bt1;
+		const transform &at2 = params.at2;
+		const transform &bt2 = params.bt2;
+		real &fractionBefore = params.fractionBefore;
+		real &fractionContact = params.fractionContact;
+		Holder<PointerRange<CollisionPair>> &outputBuffer = params.collisionPairs;
 
-	bool collisionDetection(const Collider *ao, const Collider *bo, const transform &at, const transform &bt, Holder<PointerRange<CollisionPair>> &outputBuffer)
-	{
 		CAGE_ASSERT(!ao->needsRebuild());
 		CAGE_ASSERT(!bo->needsRebuild());
-		if (ao->triangles().size() > bo->triangles().size())
+
+		if (at1 == at2 && bt1 == bt2)
 		{
-			CollisionDetector<false> d((const ColliderImpl*)ao, (const ColliderImpl*)bo, transform(), transform(inverse(at) * bt), outputBuffer);
-			d.process();
-			return !outputBuffer.empty();
+			fractionBefore = 0;
+			fractionContact = 0;
+			if (ao->triangles().size() > bo->triangles().size())
+			{
+				CollisionDetector<false> d(ao, bo, transform(), transform(inverse(at1) * bt1), outputBuffer);
+				d.process();
+				return !outputBuffer.empty();
+			}
+			else
+			{
+				CollisionDetector<true> d(ao, bo, transform(inverse(bt1) * at1), transform(), outputBuffer);
+				d.process();
+				return !outputBuffer.empty();
+			}
 		}
 		else
 		{
-			CollisionDetector<true> d((const ColliderImpl*)ao, (const ColliderImpl*)bo, transform(inverse(bt) * at), transform(), outputBuffer);
-			d.process();
-			return !outputBuffer.empty();
-		}
-	}
+			CAGE_ASSERT(at1.scale == at2.scale);
+			CAGE_ASSERT(bt1.scale == bt2.scale);
 
-	bool collisionDetection(const Collider *ao, const Collider *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2)
-	{
-		real fractionBefore, fractionContact;
-		Holder<PointerRange<CollisionPair>> outputBuffer;
-		return collisionDetection(ao, bo, at1, bt1, at2, bt2, fractionBefore, fractionContact, outputBuffer);
-	}
+			// find approximate time range of contact
+			real time1 = timeOfContact(ao, bo, at1, bt1, at2, bt2);
+			if (!time1.valid())
+				return false;
+			CAGE_ASSERT(time1 >= 0 && time1 <= 1);
+			real time2 = 1 - timeOfContact(ao, bo, at2, bt2, at1, bt1);
+			CAGE_ASSERT(time2.valid());
+			CAGE_ASSERT(time2 >= 0 && time2 <= 1);
+			CAGE_ASSERT(time2 >= time1);
 
-	bool collisionDetection(const Collider *ao, const Collider *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, real &fractionBefore, real &fractionContact)
-	{
-		Holder<PointerRange<CollisionPair>> outputBuffer;
-		return collisionDetection(ao, bo, at1, bt1, at2, bt2, fractionBefore, fractionContact, outputBuffer);
-	}
-
-	bool collisionDetection(const Collider *ao, const Collider *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, Holder<PointerRange<CollisionPair>> &outputBuffer)
-	{
-		real fractionBefore, fractionContact;
-		return collisionDetection(ao, bo, at1, bt1, at2, bt2, fractionBefore, fractionContact, outputBuffer);
-	}
-
-	bool collisionDetection(const Collider *ao, const Collider *bo, const transform &at1, const transform &bt1, const transform &at2, const transform &bt2, real &fractionBefore, real &fractionContact, Holder<PointerRange<CollisionPair>> &outputBuffer)
-	{
-		CAGE_ASSERT(at1.scale == at2.scale);
-		CAGE_ASSERT(bt1.scale == bt2.scale);
-
-		fractionBefore = real::Nan();
-		fractionContact = real::Nan();
-
-		// find approximate time range of contact
-		real time1 = timeOfContact(ao, bo, at1, bt1, at2, bt2);
-		if (!time1.valid())
-			return false;
-		CAGE_ASSERT(time1 >= 0 && time1 <= 1);
-		real time2 = 1 - timeOfContact(ao, bo, at2, bt2, at1, bt1);
-		CAGE_ASSERT(time2.valid());
-		CAGE_ASSERT(time2 >= 0 && time2 <= 1);
-		CAGE_ASSERT(time2 >= time1);
-
-		// find first contact
-		real minSize = min(minSizeObject(ao, at1.scale), minSizeObject(bo, bt1.scale)) * 0.5;
-		real maxDist = max(distance(interpolate(at1.position, at2.position, time1), interpolate(at1.position, at2.position, time2)),
-			distance(interpolate(bt1.position, bt2.position, time1), interpolate(bt1.position, bt2.position, time2)));
-		real maxDiff = (maxDist > minSize ? (minSize / maxDist) : 1) * (time2 - time1);
-		CAGE_ASSERT(maxDiff > 0 && maxDiff <= 1);
-		maxDiff = min(maxDiff, (time2 - time1) * 0.2);
-		while (time1 <= time2)
-		{
-			if (collisionDetection(ao, bo, interpolate(at1, at2, time1), interpolate(bt1, bt2, time1)))
+			// find first contact
+			const real minSize = min(minSizeObject(ao, at1.scale), minSizeObject(bo, bt1.scale)) * 0.5;
+			const real maxDist = max(distance(interpolate(at1.position, at2.position, time1), interpolate(at1.position, at2.position, time2)),
+				distance(interpolate(bt1.position, bt2.position, time1), interpolate(bt1.position, bt2.position, time2)));
+			real maxDiff = (maxDist > minSize ? (minSize / maxDist) : 1) * (time2 - time1);
+			CAGE_ASSERT(maxDiff > 0 && maxDiff <= 1);
+			maxDiff = min(maxDiff, (time2 - time1) * 0.2);
+			while (time1 <= time2)
 			{
-				time2 = time1;
-				time1 = max(time1 - maxDiff, 0);
-				break;
+				CollisionDetectionParams p(ao, bo, interpolate(at1, at2, time1), interpolate(bt1, bt2, time1));
+				if (collisionDetection(p))
+				{
+					time2 = time1;
+					time1 = max(time1 - maxDiff, 0);
+					break;
+				}
+				else
+					time1 += maxDiff;
 			}
-			else
-				time1 += maxDiff;
-		}
-		if (time1 > time2)
-			return false;
+			if (time1 > time2)
+				return false;
 
-		// improve collision precision by binary search
-		fractionBefore = time1;
-		fractionContact = time2;
-		for (uint32 i = 0; i < 6; i++)
-		{
-			real time = (time1 + time2) * 0.5;
-			if (collisionDetection(ao, bo, interpolate(at1, at2, time), interpolate(bt1, bt2, time)))
+			// improve collision precision by binary search
+			fractionBefore = time1;
+			fractionContact = time2;
+			for (uint32 i = 0; i < 6; i++)
 			{
-				time2 = time;
-				fractionContact = time;
+				const real time = (time1 + time2) * 0.5;
+				CollisionDetectionParams p(ao, bo, interpolate(at1, at2, time), interpolate(bt1, bt2, time));
+				if (collisionDetection(p))
+				{
+					time2 = time;
+					fractionContact = time;
+				}
+				else
+				{
+					time1 = time;
+					fractionBefore = time;
+				}
 			}
-			else
-			{
-				time1 = time;
-				fractionBefore = time;
-			}
-		}
-		CAGE_ASSERT(fractionBefore >= 0 && fractionBefore <= 1);
-		CAGE_ASSERT(fractionContact >= 0 && fractionContact <= 1);
-		CAGE_ASSERT(fractionBefore <= fractionContact);
+			CAGE_ASSERT(fractionBefore >= 0 && fractionBefore <= 1);
+			CAGE_ASSERT(fractionContact >= 0 && fractionContact <= 1);
+			CAGE_ASSERT(fractionBefore <= fractionContact);
 
-		bool res = collisionDetection(ao, bo, interpolate(at1, at2, fractionContact), interpolate(bt1, bt2, fractionContact), outputBuffer);
-		CAGE_ASSERT(res);
-		CAGE_ASSERT(fractionBefore == 0 || !collisionDetection(ao, bo, interpolate(at1, at2, fractionBefore), interpolate(bt1, bt2, fractionBefore)));
-		return res;
+#ifdef CAGE_ASSERT_ENABLED
+			{
+				// verify that there is no collision at fractionBefore
+				CollisionDetectionParams p(ao, bo, interpolate(at1, at2, fractionBefore), interpolate(bt1, bt2, fractionBefore));
+				CAGE_ASSERT(fractionBefore == 0 || !collisionDetection(p));
+			}
+#endif
+
+			{
+				// find the actual collision at fractionContact
+				CollisionDetectionParams p(ao, bo, interpolate(at1, at2, fractionContact), interpolate(bt1, bt2, fractionContact));
+				bool res = collisionDetection(p);
+				CAGE_ASSERT(res);
+				outputBuffer = templates::move(p.collisionPairs);
+			}
+			return true;
+		}
 	}
 
 
@@ -769,7 +801,7 @@ namespace cage
 
 	real distance(const Collider *ao, const Collider *bo, const transform &at, const transform &bt)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "collisionMesh-collisionMesh distance");
+		CAGE_THROW_CRITICAL(NotImplemented, "Collider-Collider distance");
 	}
 
 
@@ -804,11 +836,26 @@ namespace cage
 		return d.intersects(shape);
 	}
 
+	bool intersects(const Collider *ao, const Collider *bo, const transform &at, const transform &bt)
+	{
+		CollisionDetectionParams p(ao, bo, at, bt);
+		return collisionDetection(p);
+	}
 
 
 	vec3 intersection(const line &shape, const Collider *collider, const transform &t)
 	{
+		uint32 triangleIndex = m;
+		return intersection(shape, collider, t, triangleIndex);
+	}
+
+	vec3 intersection(const line &shape, const Collider *collider, const transform &t, uint32 &triangleIndex)
+	{
+		// todo
 		IntersectionDetector d((const ColliderImpl*)collider, t);
-		return d.intersection(shape);
+		vec3 p;
+		if (d.intersection(shape, p, triangleIndex))
+			return p;
+		return vec3::Nan();
 	}
 }
