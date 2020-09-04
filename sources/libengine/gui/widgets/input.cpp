@@ -98,7 +98,7 @@ namespace cage
 					switch (data.type)
 					{
 					case InputTypeEnum::Integer:
-						if (data.value.isInteger(true))
+						if (data.value.isInteger())
 							data.value = string(consolidate<sint32>(data.value.toSint32(), data.min.i, data.max.i, data.step.i));
 						break;
 					case InputTypeEnum::Real:
@@ -128,7 +128,7 @@ namespace cage
 						break;
 					case InputTypeEnum::Integer:
 					{
-						if (data.value.isInteger(true))
+						if (data.value.isInteger())
 						{
 							sint32 v = data.value.toSint32();
 							sint32 r = consolidate<sint32>(v, data.min.i, data.max.i, data.step.i);

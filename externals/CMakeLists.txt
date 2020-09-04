@@ -8,6 +8,10 @@ list(INSERT CMAKE_MODULE_PATH 0 "${CAGE_EXTERNALS_MODULE_PATH}")
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(cmake/cage_gen_module.cmake)
 
+# unset language standard
+unset(CMAKE_C_STANDARD)
+unset(CMAKE_CXX_STANDARD)
+
 # unset visibility preset
 unset(CMAKE_C_VISIBILITY_PRESET)
 unset(CMAKE_CXX_VISIBILITY_PRESET)

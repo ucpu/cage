@@ -39,10 +39,22 @@ namespace
 			CAGE_TEST(string(i9) == "123");
 			uint64 i10 = 123;
 			CAGE_TEST(string(i10) == "123");
-			float f = 5;
-			CAGE_TEST(string(f) == "5.000000");
-			double d = 5;
-			CAGE_TEST(string(d) == "5.000000");
+			{
+				float f = 5;
+				string fs = string(f);
+				CAGE_TEST(fs == "5" || fs == "5.000000");
+				double d = 5;
+				string ds = string(d);
+				CAGE_TEST(ds == "5" || ds == "5.000000");
+			}
+			{
+				float f = 5.5;
+				string fs = string(f);
+				CAGE_TEST(fs == "5.5" || fs == "5.500000");
+				double d = 5.5;
+				string ds = string(d);
+				CAGE_TEST(ds == "5.5" || ds == "5.500000");
+			}
 			const char arr[] = "array";
 			CAGE_TEST(string(arr) == "array");
 			char arr2[] = "array";
@@ -153,9 +165,7 @@ namespace
 			test(string("-45.123").toFloat(), -45.123f);
 			test(string("-3.8e9").toFloat(), -3.8e9f);
 			CAGE_TEST(string("157").toUint32() == 157);
-			CAGE_TEST(string("+157").toUint32() == 157);
 			CAGE_TEST(string("157").toSint32() == 157);
-			CAGE_TEST(string("+157").toSint32() == 157);
 			CAGE_TEST(string("-157").toSint32() == -157);
 			CAGE_TEST(string("157").toUint64() == 157);
 			CAGE_TEST(string("50000000000").toUint64() == 50000000000);
@@ -219,17 +229,39 @@ namespace
 			{
 				CAGE_TESTCASE("long long numbers and toSint64()");
 				CAGE_TEST(string("-1099511627776").toSint64() == -1099511627776);
+				CAGE_TEST_THROWN(string("-1099511627776").toUint64());
 				CAGE_TEST(string("1152921504606846976").toSint64() == 1152921504606846976);
+				CAGE_TEST(string("1152921504606846976").toUint64() == 1152921504606846976);
 			}
 			{
-				CAGE_TESTCASE("isreal");
+				CAGE_TESTCASE("isInteger");
+				CAGE_TEST(!string("").isInteger());
+				CAGE_TEST(string("").isDigitsOnly());
+				CAGE_TEST(string("5").isInteger());
+				CAGE_TEST(string("5").isDigitsOnly());
+				CAGE_TEST(!string("pet").isInteger());
+				CAGE_TEST(!string("13.42").isInteger());
+				CAGE_TEST(!string("13k").isInteger());
+				CAGE_TEST(!string("k13").isInteger());
+				CAGE_TEST(!string("1k3").isInteger());
+				CAGE_TEST(string("123").isInteger());
+				CAGE_TEST(string("-123").isInteger());
+				CAGE_TEST(!string("-123").isDigitsOnly());
+				CAGE_TEST(!string("-").isInteger());
+				CAGE_TEST(!string("+123").isInteger());
+				CAGE_TEST(!string("+").isInteger());
+			}
+			{
+				CAGE_TESTCASE("isReal");
 				CAGE_TEST(!string("").isReal());
 				CAGE_TEST(string("5").isReal());
 				CAGE_TEST(!string("pet").isReal());
 				CAGE_TEST(string("13.42").isReal());
 				CAGE_TEST(!string("13,42").isReal());
 				CAGE_TEST(!string("13.42k").isReal());
-				CAGE_TEST(string("+13.42").isReal());
+				CAGE_TEST(!string("+13.42").isReal());
+				CAGE_TEST(!string("13.k42").isReal());
+				CAGE_TEST(!string("13k.42").isReal());
 				CAGE_TEST(string("-13.42").isReal());
 				CAGE_TEST_THROWN(string("ha").toSint32());
 			}

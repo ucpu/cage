@@ -38,18 +38,10 @@
 #error This operating system is not supported
 #endif
 
-#ifdef CAGE_SYSTEM_WINDOWS
-#if defined(_WIN64)
+#if defined(_WIN64) || defined(__x86_64__) || defined(__ppc64__)
 #define CAGE_ARCHITECTURE_64
 #else
 #define CAGE_ARCHITECTURE_32
-#endif
-#else
-#if __x86_64__ || __ppc64__
-#define CAGE_ARCHITECTURE_64
-#else
-#define CAGE_ARCHITECTURE_32
-#endif
 #endif
 
 #ifdef CAGE_DEBUG
@@ -231,6 +223,7 @@ namespace cage
 			}
 		};
 
+		// todo replace with spaceship operator (c++20)
 		template<class T> inline constexpr bool operator == (T lhs, MaxValue rhs) noexcept { return lhs == std::numeric_limits<T>::max(); }
 		template<class T> inline constexpr bool operator != (T lhs, MaxValue rhs) noexcept { return lhs != std::numeric_limits<T>::max(); }
 		template<class T> inline constexpr bool operator <= (T lhs, MaxValue rhs) noexcept { return lhs <= std::numeric_limits<T>::max(); }
@@ -479,8 +472,8 @@ namespace cage
 	namespace privat
 	{
 #define GCHL_GENERATE(TYPE) \
-		CAGE_CORE_API uint32 toString(char *s, TYPE value); \
-		CAGE_CORE_API void fromString(const char *s, TYPE &value);
+		CAGE_CORE_API uint32 toString(char *s, uint32 n, TYPE value); \
+		CAGE_CORE_API void fromString(const char *s, uint32 n, TYPE &value);
 		GCHL_GENERATE(sint8);
 		GCHL_GENERATE(sint16);
 		GCHL_GENERATE(sint32);
@@ -493,7 +486,7 @@ namespace cage
 		GCHL_GENERATE(double);
 		GCHL_GENERATE(bool);
 #undef GCHL_GENERATE
-		CAGE_CORE_API uint32 toString(char *dst, uint32 dstLen, const char *src);
+		CAGE_CORE_API uint32 toString(char *s, uint32 n, const char *src);
 
 		CAGE_CORE_API void stringReplace(char *data, uint32 &current, uint32 maxLength, const char *what, uint32 whatLen, const char *with, uint32 withLen);
 		CAGE_CORE_API void stringTrim(char *data, uint32 &current, const char *what, uint32 whatLen, bool left, bool right);
@@ -504,7 +497,7 @@ namespace cage
 		CAGE_CORE_API void stringEncodeUrl(const char *dataIn, uint32 currentIn, char *dataOut, uint32 &currentOut, uint32 maxLength);
 		CAGE_CORE_API void stringDecodeUrl(const char *dataIn, uint32 currentIn, char *dataOut, uint32 &currentOut, uint32 maxLength);
 		CAGE_CORE_API bool stringIsDigitsOnly(const char *data, uint32 dataLen);
-		CAGE_CORE_API bool stringIsInteger(const char *data, uint32 dataLen, bool allowSign);
+		CAGE_CORE_API bool stringIsInteger(const char *data, uint32 dataLen);
 		CAGE_CORE_API bool stringIsReal(const char *data, uint32 dataLen);
 		CAGE_CORE_API bool stringIsBool(const char *data, uint32 dataLen);
 		CAGE_CORE_API bool stringIsPattern(const char *data, uint32 dataLen, const char *prefix, uint32 prefixLen, const char *infix, uint32 infixLen, const char *suffix, uint32 suffixLen);
@@ -547,7 +540,7 @@ namespace cage
 			explicit StringBase(TYPE other) \
 			{ \
 				static_assert(N >= 20, "string too short"); \
-				current = privat::toString(data, other); \
+				current = privat::toString(data, N, other); \
 			}
 			GCHL_GENERATE(sint8);
 			GCHL_GENERATE(sint16);
@@ -731,49 +724,49 @@ namespace cage
 			float toFloat() const
 			{
 				float i;
-				privat::fromString(data, i);
+				privat::fromString(data, current, i);
 				return i;
 			}
 
 			double toDouble() const
 			{
 				double i;
-				privat::fromString(data, i);
+				privat::fromString(data, current, i);
 				return i;
 			}
 
 			sint32 toSint32() const
 			{
 				sint32 i;
-				privat::fromString(data, i);
+				privat::fromString(data, current, i);
 				return i;
 			}
 
 			uint32 toUint32() const
 			{
 				uint32 i;
-				privat::fromString(data, i);
+				privat::fromString(data, current, i);
 				return i;
 			}
 
 			sint64 toSint64() const
 			{
 				sint64 i;
-				privat::fromString(data, i);
+				privat::fromString(data, current, i);
 				return i;
 			}
 
 			uint64 toUint64() const
 			{
 				uint64 i;
-				privat::fromString(data, i);
+				privat::fromString(data, current, i);
 				return i;
 			}
 
 			bool toBool() const
 			{
 				bool i;
-				privat::fromString(data, i);
+				privat::fromString(data, current, i);
 				return i;
 			}
 
@@ -787,9 +780,9 @@ namespace cage
 				return privat::stringIsDigitsOnly(data, current);
 			}
 
-			bool isInteger(bool allowSign) const noexcept
+			bool isInteger() const noexcept
 			{
-				return privat::stringIsInteger(data, current, allowSign);
+				return privat::stringIsInteger(data, current);
 			}
 
 			bool isReal() const noexcept
@@ -971,7 +964,8 @@ namespace cage
 		template<class D, R(*F)(D, Ts...)>
 		Delegate &bind(D d)
 		{
-			static_assert(sizeof(d) <= sizeof(inst), "invalid size of data stored in delegate");
+			static_assert(sizeof(d) <= sizeof(inst));
+			static_assert(std::is_trivially_copyable_v<D> && std::is_trivially_destructible_v<D>);
 			union U
 			{
 				void *p;
