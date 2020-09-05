@@ -304,7 +304,7 @@ namespace cage
 				OPTICK_EVENT("inputs");
 				{
 					OPTICK_EVENT("gui update");
-					gui->setOutputResolution(window->resolution());
+					gui->setOutputResolution(window->resolution(), window->contentScaling());
 					gui->controlUpdateStart();
 				}
 				{

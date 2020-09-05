@@ -59,7 +59,7 @@ namespace cage
 		bool keyboardScanCode(uint32 code) const;
 
 		ivec2 resolution() const;
-		float contentScaling() const;
+		real contentScaling() const;
 
 		ivec2 windowedSize() const;
 		void windowedSize(const ivec2 &);

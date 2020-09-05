@@ -750,12 +750,12 @@ namespace cage
 		return ivec2(w, h);
 	}
 
-	float Window::contentScaling() const
+	real Window::contentScaling() const
 	{
 		WindowImpl *impl = (WindowImpl*)this;
-		float y = 1;
-		glfwGetWindowContentScale(impl->window, nullptr, &y);
-		return y;
+		float x = 1, y = 1;
+		glfwGetWindowContentScale(impl->window, &x, &y);
+		return max(x, y);
 	}
 
 	ivec2 Window::windowedSize() const
