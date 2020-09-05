@@ -131,7 +131,7 @@ namespace
 		{
 			string left = evalExp(l.subString(0, p));
 			string right = evalExp(l.subString(p + 1, m));
-			if (left.isInteger(true) && right.isInteger(true))
+			if (left.isInteger() && right.isInteger())
 				return string(left.toSint32() == right.toSint32());
 			else
 				return string(left == right);
@@ -148,7 +148,7 @@ namespace
 		{
 			string left = evalExp(l.subString(0, p));
 			string right = evalExp(l.subString(p + 1, m));
-			if (left.isInteger(true) && right.isInteger(true))
+			if (left.isInteger() && right.isInteger())
 				return string(left.toSint32() + right.toSint32());
 			else
 				return left + right;
@@ -179,7 +179,7 @@ namespace
 		{
 			string left = evalExp(l.subString(0, p));
 			string right = evalExp(l.subString(p + 1, m));
-			if (right.isInteger(false))
+			if (right.isDigitsOnly() && !right.empty())
 			{
 				uint32 index = right.toUint32();
 				if (index < left.length())

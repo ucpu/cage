@@ -13,6 +13,9 @@ namespace
 	int test5(int a, int b, int c) { return a + b + c; };
 	void test6(void *) {};
 
+	void test7() noexcept
+	{}
+
 	struct Tester
 	{
 		void test11() {}
@@ -39,6 +42,10 @@ namespace
 		static int test32(uint8) { return 8; }
 		static int test32(uint16) { return 16; }
 		static int test32(uint32) { return 32; }
+
+		void test41() const {}
+		void test42() noexcept {}
+		void test43() const noexcept {}
 	};
 
 	constexpr int constexprSum(int a, int b)
@@ -167,6 +174,19 @@ void testDelegates()
 		CAGE_TESTCASE("static methods with data");
 		Delegate<int()> d47 = Delegate<int()>().bind<int, &Tester::test31>(42);
 		d47();
+	}
+
+	{
+		CAGE_TESTCASE("noexcept functions and method");
+		Tester vi;
+		Delegate<void()> d0 = Delegate<void()>().bind<test7>();
+		d0();
+		Delegate<void()> d1 = Delegate<void()>().bind<Tester, &Tester::test41>(&vi);
+		d1();
+		Delegate<void()> d2 = Delegate<void()>().bind<Tester, &Tester::test42>(&vi);
+		d2();
+		Delegate<void()> d3 = Delegate<void()>().bind<Tester, &Tester::test43>(&vi);
+		d3();
 	}
 
 	{

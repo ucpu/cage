@@ -134,24 +134,43 @@ bool SchemeField::valid() const
 			if (!defaul.empty() && !defaul.isBool())
 				return false;
 		}
-		else if (type == "uint32" || type == "sint32")
+		else if (type == "uint32")
 		{
-			bool allowSign = type == "sint32";
 			if (!values.empty())
 				return false;
-			if (!min.empty() && !min.isInteger(allowSign))
+			if (!min.empty() && !min.isDigitsOnly())
 				return false;
-			if (!max.empty() && !max.isInteger(allowSign))
+			if (!max.empty() && !max.isDigitsOnly())
 				return false;
-			if (!min.empty() && !max.empty() && (allowSign ? (min.toSint32() > max.toSint32()) : (min.toUint32() > max.toUint32())))
+			if (!min.empty() && !max.empty() && min.toUint32() > max.toUint32())
 				return false;
 			if (!defaul.empty())
 			{
-				if (!defaul.isInteger(allowSign))
+				if (!defaul.isDigitsOnly())
 					return false;
-				if (!min.empty() && (allowSign ? (defaul.toSint32() < min.toSint32()) : (defaul.toUint32() < min.toUint32())))
+				if (!min.empty() && defaul.toUint32() < min.toUint32())
 					return false;
-				if (!max.empty() && (allowSign ? (defaul.toSint32() > max.toSint32()) : (defaul.toUint32() > max.toUint32())))
+				if (!max.empty() && defaul.toUint32() > max.toUint32())
+					return false;
+			}
+		}
+		else if (type == "sint32")
+		{
+			if (!values.empty())
+				return false;
+			if (!min.empty() && !min.isInteger())
+				return false;
+			if (!max.empty() && !max.isInteger())
+				return false;
+			if (!min.empty() && !max.empty() && min.toSint32() > max.toSint32())
+				return false;
+			if (!defaul.empty())
+			{
+				if (!defaul.isInteger())
+					return false;
+				if (!min.empty() && defaul.toSint32() < min.toSint32())
+					return false;
+				if (!max.empty() && defaul.toSint32() > max.toSint32())
 					return false;
 			}
 		}
@@ -179,9 +198,9 @@ bool SchemeField::valid() const
 		{
 			if (!values.empty())
 				return false;
-			if (!min.empty() && !min.isInteger(false))
+			if (!min.empty() && !min.isDigitsOnly())
 				return false;
-			if (!max.empty() && !max.isInteger(false))
+			if (!max.empty() && !max.isDigitsOnly())
 				return false;
 			if (!min.empty() && !max.empty() && min.toUint32() > max.toUint32())
 				return false;
@@ -235,20 +254,37 @@ bool SchemeField::applyToAssetField(string &val, const string &assetName) const
 		}
 		val = string(val.toBool());
 	}
-	else if (type == "uint32" || type == "sint32")
+	else if (type == "uint32")
 	{
-		bool allowSign = type == "sint32";
-		if (!val.isInteger(allowSign))
+		if (val.empty() || !val.isDigitsOnly())
 		{
 			CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is not integer");
 			return false;
 		}
-		if (!min.empty() && (allowSign ? (val.toSint32() < min.toSint32()) : (val.toUint32() < min.toUint32())))
+		if (!min.empty() && val.toUint32() < min.toUint32())
 		{
 			CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is too small");
 			return false;
 		}
-		if (!max.empty() && (allowSign ? (val.toSint32() > max.toSint32()) : (val.toUint32() > max.toUint32())))
+		if (!max.empty() && val.toUint32() > max.toUint32())
+		{
+			CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is too large");
+			return false;
+		}
+	}
+	else if (type == "sint32")
+	{
+		if (!val.isInteger())
+		{
+			CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is not integer");
+			return false;
+		}
+		if (!min.empty() && val.toSint32() < min.toSint32())
+		{
+			CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is too small");
+			return false;
+		}
+		if (!max.empty() && val.toSint32() > max.toSint32())
 		{
 			CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is too large");
 			return false;

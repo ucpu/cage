@@ -9,6 +9,17 @@
 #include <cstdlib>
 #include <cstdio>
 
+// charconv (with FP) is available since:
+// GCC 11
+// Visual Studio 2017 version 15.8
+#if (defined(_MSC_VER) && _MSC_VER >= 1915) || (defined(_GLIBCXX_RELEASE) && _GLIBCXX_RELEASE >= 11)
+#define GCHL_USE_CHARCONV
+#endif
+
+#ifdef GCHL_USE_CHARCONV
+#include <charconv> // to_chars, from_chars
+#endif
+
 namespace cage
 {
 	namespace detail
@@ -38,6 +49,8 @@ namespace cage
 	{
 		namespace
 		{
+#if not defined(GCHL_USE_CHARCONV)
+
 			template<class T>
 			void genericScan(const char *s, T &value)
 			{
@@ -116,6 +129,8 @@ namespace cage
 				}
 				value = (float)v;
 			}
+
+#endif // GCHL_USE_CHARCONV
 
 			void stringSortAndUnique(char *data, uint32 &current)
 			{
@@ -231,10 +246,12 @@ namespace cage
 			}
 		}
 
+#if not defined(GCHL_USE_CHARCONV)
+
 #define GCHL_GENERATE(TYPE, SPEC) \
-		uint32 toString(char *s, TYPE value) \
+		uint32 toString(char *s, uint32, TYPE value) \
 		{ sint32 ret = std::sprintf(s, CAGE_STRINGIZE(SPEC), value); if (ret < 0) CAGE_THROW_ERROR(Exception, "toString failed"); s[ret] = 0; return ret; } \
-		void fromString(const char *s, TYPE &value) \
+		void fromString(const char *s, uint32, TYPE &value) \
 		{ return genericScan(s, value); }
 		GCHL_GENERATE(sint8, %hhd);
 		GCHL_GENERATE(sint16, %hd);
@@ -253,14 +270,48 @@ namespace cage
 		GCHL_GENERATE(double, %lf);
 #undef GCHL_GENERATE
 
-		uint32 toString(char *s, bool value)
+#else // GCHL_USE_CHARCONV
+
+#define GCHL_GENERATE(TYPE) \
+		CAGE_CORE_API uint32 toString(char *s, uint32 n, TYPE value) \
+		{ \
+			auto [p, ec] = std::to_chars(s, s + n, value); \
+			if (ec != std::errc()) \
+				CAGE_THROW_ERROR(Exception, "failed conversion of " CAGE_STRINGIZE(TYPE) " to string"); \
+			*p = 0; \
+			return numeric_cast<uint32>(p - s); \
+		} \
+		CAGE_CORE_API void fromString(const char *s, uint32 n, TYPE &value) \
+		{ \
+			auto [p, ec] = std::from_chars(s, s + n, value); \
+			if (p != s + n || ec != std::errc()) \
+			{ \
+				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "input string: '" + s + "'"); \
+				CAGE_THROW_ERROR(Exception, "failed conversion of string to " CAGE_STRINGIZE(TYPE)); \
+			} \
+		}
+		GCHL_GENERATE(sint8);
+		GCHL_GENERATE(sint16);
+		GCHL_GENERATE(sint32);
+		GCHL_GENERATE(sint64);
+		GCHL_GENERATE(uint8);
+		GCHL_GENERATE(uint16);
+		GCHL_GENERATE(uint32);
+		GCHL_GENERATE(uint64);
+		GCHL_GENERATE(float);
+		GCHL_GENERATE(double);
+#undef GCHL_GENERATE
+
+#endif // GCHL_USE_CHARCONV
+
+		uint32 toString(char *s, uint32 n, bool value)
 		{
 			const char *src = value ? "true" : "false";
 			std::strcpy(s, src);
 			return numeric_cast<uint32>(strlen(s));
 		}
 
-		void fromString(const char *s, bool &value)
+		void fromString(const char *s, uint32 n, bool &value)
 		{
 			string l = string(s).toLower();
 			if (l == "false" || l == "f" || l == "no" || l == "n" || l == "off" || l == "0")
@@ -276,13 +327,13 @@ namespace cage
 			CAGE_THROW_ERROR(Exception, "invalid value");
 		}
 
-		uint32 toString(char *dst, uint32 dstLen, const char *src)
+		uint32 toString(char *s, uint32 n, const char *src)
 		{
 			auto l = std::strlen(src);
-			if (l > dstLen)
+			if (l > n)
 				CAGE_THROW_ERROR(Exception, "string truncation");
-			std::memcpy(dst, src, l);
-			dst[l] = 0;
+			std::memcpy(s, src, l);
+			s[l] = 0;
 			return numeric_cast<uint32>(l);
 		}
 
@@ -408,11 +459,11 @@ namespace cage
 			return true;
 		}
 
-		bool stringIsInteger(const char *data, uint32 dataLen, bool allowSign)
+		bool stringIsInteger(const char *data, uint32 dataLen)
 		{
 			if (dataLen == 0)
 				return false;
-			if (allowSign && (data[0] == '-' || data[0] == '+'))
+			if (data[0] == '-' && dataLen > 1)
 				return stringIsDigitsOnly(data + 1, dataLen - 1);
 			else
 				return stringIsDigitsOnly(data, dataLen);
@@ -422,10 +473,10 @@ namespace cage
 		{
 			if (dataLen == 0)
 				return false;
-			uint32 d = stringFind(data, dataLen, ".", 1, 0);
+			const uint32 d = stringFind(data, dataLen, ".", 1, 0);
 			if (d == m)
-				return stringIsInteger(data, dataLen, true);
-			return stringIsInteger(data, d, true) && stringIsDigitsOnly(data + d + 1, dataLen - d - 1);
+				return stringIsInteger(data, dataLen);
+			return stringIsInteger(data, d) && stringIsDigitsOnly(data + d + 1, dataLen - d - 1);
 		}
 
 		bool stringIsBool(const char *data, uint32 dataLen)

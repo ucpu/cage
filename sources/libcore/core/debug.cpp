@@ -155,7 +155,7 @@ namespace cage
 			std::strcat(buffer, file);
 			std::strcat(buffer, "(");
 			char linebuf[20];
-			toString(linebuf, line);
+			toString(linebuf, 20, line);
 			std::strcat(buffer, linebuf);
 			std::strcat(buffer, ") - ");
 			std::strcat(buffer, function);

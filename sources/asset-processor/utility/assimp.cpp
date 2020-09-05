@@ -472,7 +472,7 @@ uint32 AssimpContext::selectMesh() const
 		CAGE_LOG(SeverityEnum::Note, "selectMesh", "using the first mesh, because it is the only mesh available");
 		return 0;
 	}
-	if (inputSpec.isInteger(false))
+	if (inputSpec.isDigitsOnly() && !inputSpec.empty())
 	{
 		uint32 n = inputSpec.toUint32();
 		if (n < scene->mNumMeshes)

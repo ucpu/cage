@@ -46,9 +46,9 @@ namespace cage
 			void set(const string &value) { if (!s) s = detail::systemArena().createObject<string>(value); else *s = value; setType(ConfigTypeEnum::String); }
 			void setDynamic(const string &value)
 			{
-				if (value.isInteger(false))
+				if (value.isDigitsOnly())
 					set(value.toUint64());
-				else if (value.isInteger(true))
+				else if (value.isInteger())
 					set(value.toSint64());
 				else if (value.isReal())
 					set(value.toFloat());
