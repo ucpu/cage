@@ -77,7 +77,7 @@ namespace cage
 
 	// SystemError
 
-	SystemError::SystemError(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message, uint32 code) noexcept : Exception(file, line, function, severity, message), code(code)
+	SystemError::SystemError(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message, sint64 code) noexcept : Exception(file, line, function, severity, message), code(code)
 	{};
 
 	void SystemError::log()

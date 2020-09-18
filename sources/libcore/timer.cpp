@@ -136,7 +136,7 @@ namespace cage
 			{
 				if (a < 10)
 					return stringizer() + "0" + a;
-				return string(a);
+				return stringizer() + a;
 			}
 		}
 

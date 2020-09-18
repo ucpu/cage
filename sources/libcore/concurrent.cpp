@@ -682,7 +682,7 @@ namespace cage
 	{
 		string n = currentThreadName();
 		if (n.empty())
-			return string(threadId());
+			return stringizer() + threadId();
 		else
 			return n;
 	}

@@ -1,5 +1,6 @@
 #include <cage-core/config.h>
 #include <cage-core/color.h>
+#include <cage-core/string.h>
 
 #include "../private.h"
 

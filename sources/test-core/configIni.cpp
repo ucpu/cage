@@ -48,7 +48,7 @@ void testConfigIni()
 		Holder<Ini> ini = newIni();
 		for (uint32 s = 3; s < 6; s++)
 			for (uint32 i = 2; i < 7; i++)
-				ini->set(string(s), string(i), string(s + i));
+				ini->set(stringizer() + s, stringizer() + i, stringizer() + s + i);
 		ini->exportFile("testdir/test.ini");
 		CAGE_TEST(pathIsFile("testdir/test.ini"));
 	}
@@ -59,7 +59,7 @@ void testConfigIni()
 		ini->importFile("testdir/test.ini");
 		for (uint32 s = 3; s < 6; s++)
 			for (uint32 i = 2; i < 7; i++)
-				CAGE_TEST(ini->get(string(s), string(i)) == string(s + i));
+				CAGE_TEST(ini->get(stringizer() + s, stringizer() + i) == stringizer() + s + i);
 		CAGE_TEST(ini->get("section", "item") == "");
 	}
 

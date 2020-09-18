@@ -4,6 +4,7 @@
 #include <cage-core/files.h>
 #include <cage-core/serialization.h>
 #include <cage-core/config.h>
+#include <cage-core/string.h>
 
 #include <set>
 #include <map>

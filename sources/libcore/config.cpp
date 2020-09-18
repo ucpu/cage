@@ -1,3 +1,4 @@
+#include <cage-core/string.h>
 #include <cage-core/math.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/files.h>
@@ -274,13 +275,13 @@ namespace cage
 		{
 			switch (v->type)
 			{
-			case ConfigTypeEnum::Bool: return string(v->b);
-			case ConfigTypeEnum::Sint32: return string(v->s32);
-			case ConfigTypeEnum::Uint32: return string(v->u32);
-			case ConfigTypeEnum::Sint64: return string(v->s64);
-			case ConfigTypeEnum::Uint64: return string(v->u64);
-			case ConfigTypeEnum::Float: return string(v->f);
-			case ConfigTypeEnum::Double: return string(v->d);
+			case ConfigTypeEnum::Bool: return stringizer() + v->b;
+			case ConfigTypeEnum::Sint32: return stringizer() + v->s32;
+			case ConfigTypeEnum::Uint32: return stringizer() + v->u32;
+			case ConfigTypeEnum::Sint64: return stringizer() + v->s64;
+			case ConfigTypeEnum::Uint64: return stringizer() + v->u64;
+			case ConfigTypeEnum::Float: return stringizer() + v->f;
+			case ConfigTypeEnum::Double: return stringizer() + v->d;
 			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return *v->s;
 			default: return "";
 			}

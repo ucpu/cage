@@ -93,7 +93,7 @@ namespace cage
 	// forward declare string
 
 	namespace detail { template<uint32 N> struct StringBase; }
-	typedef detail::StringBase<1000> string;
+	using string = detail::StringBase<995>;
 
 	// severity, makeLog, runtimeAssertFailure
 
@@ -307,9 +307,9 @@ namespace cage
 
 	struct CAGE_CORE_API SystemError : public Exception
 	{
-		explicit SystemError(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message, uint32 code) noexcept;
+		explicit SystemError(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message, sint64 code) noexcept;
 		void log() override;
-		uint32 code = 0;
+		sint64 code = 0;
 	};
 
 	// forward declarations
@@ -487,20 +487,6 @@ namespace cage
 		GCHL_GENERATE(bool);
 #undef GCHL_GENERATE
 		CAGE_CORE_API uint32 toString(char *s, uint32 n, const char *src);
-
-		CAGE_CORE_API void stringReplace(char *data, uint32 &current, uint32 maxLength, const char *what, uint32 whatLen, const char *with, uint32 withLen);
-		CAGE_CORE_API void stringTrim(char *data, uint32 &current, const char *what, uint32 whatLen, bool left, bool right);
-		CAGE_CORE_API void stringSplit(char *data, uint32 &current, char *ret, uint32 &retLen, const char *what, uint32 whatLen);
-		CAGE_CORE_API uint32 stringToUpper(char *dst, uint32 dstLen, const char *src, uint32 srcLen);
-		CAGE_CORE_API uint32 stringToLower(char *dst, uint32 dstLen, const char *src, uint32 srcLen);
-		CAGE_CORE_API uint32 stringFind(const char *data, uint32 current, const char *what, uint32 whatLen, uint32 offset);
-		CAGE_CORE_API void stringEncodeUrl(const char *dataIn, uint32 currentIn, char *dataOut, uint32 &currentOut, uint32 maxLength);
-		CAGE_CORE_API void stringDecodeUrl(const char *dataIn, uint32 currentIn, char *dataOut, uint32 &currentOut, uint32 maxLength);
-		CAGE_CORE_API bool stringIsDigitsOnly(const char *data, uint32 dataLen);
-		CAGE_CORE_API bool stringIsInteger(const char *data, uint32 dataLen);
-		CAGE_CORE_API bool stringIsReal(const char *data, uint32 dataLen);
-		CAGE_CORE_API bool stringIsBool(const char *data, uint32 dataLen);
-		CAGE_CORE_API bool stringIsPattern(const char *data, uint32 dataLen, const char *prefix, uint32 prefixLen, const char *infix, uint32 infixLen, const char *suffix, uint32 suffixLen);
 		CAGE_CORE_API int stringComparison(const char *ad, uint32 al, const char *bd, uint32 bl) noexcept;
 	}
 
@@ -535,25 +521,6 @@ namespace cage
 
 			template<uint32 M>
 			StringBase(const StringizerBase<M> &other);
-
-#define GCHL_GENERATE(TYPE) \
-			explicit StringBase(TYPE other) \
-			{ \
-				static_assert(N >= 20, "string too short"); \
-				current = privat::toString(data, N, other); \
-			}
-			GCHL_GENERATE(sint8);
-			GCHL_GENERATE(sint16);
-			GCHL_GENERATE(sint32);
-			GCHL_GENERATE(sint64);
-			GCHL_GENERATE(uint8);
-			GCHL_GENERATE(uint16);
-			GCHL_GENERATE(uint32);
-			GCHL_GENERATE(uint64);
-			GCHL_GENERATE(float);
-			GCHL_GENERATE(double);
-			GCHL_GENERATE(bool);
-#undef GCHL_GENERATE
 
 			// todo replace with PointerRange<const char>
 			explicit StringBase(const char *pos, uint32 len)
@@ -611,189 +578,33 @@ namespace cage
 				return data;
 			}
 
-			StringBase reverse() const
-			{
-				StringBase ret = *this;
-				for (uint32 i = 0; i < current; i++)
-					ret.data[current - i - 1] = data[i];
-				return ret;
-			}
-
-			StringBase subString(uint32 start, uint32 length) const
-			{
-				if (start >= current)
-					return "";
-				uint32 len = length;
-				if (length == m || start + length > current)
-					len = current - start;
-				return StringBase(data + start, len);
-			}
-
-			StringBase replace(const StringBase &what, const StringBase &with) const
-			{
-				StringBase ret = *this;
-				privat::stringReplace(ret.data, ret.current, N, what.data, what.current, with.data, with.current);
-				ret.data[ret.current] = 0;
-				return ret;
-			}
-
-			StringBase replace(uint32 start, uint32 length, const StringBase &with) const
-			{
-				return subString(0, start) + with + subString(start + length, m);
-			}
-
-			StringBase remove(uint32 start, uint32 length) const
-			{
-				return subString(0, start) + subString(start + length, m);
-			}
-
-			StringBase insert(uint32 start, const StringBase &what) const
-			{
-				return subString(0, start) + what + subString(start, m);
-			}
-
-			StringBase trim(bool left = true, bool right = true, const StringBase &trimChars = "\t\n ") const
-			{
-				StringBase ret = *this;
-				privat::stringTrim(ret.data, ret.current, trimChars.data, trimChars.current, left, right);
-				ret.data[ret.current] = 0;
-				return ret;
-			}
-
-			StringBase split(const StringBase &splitChars = "\t\n ")
-			{
-				StringBase ret;
-				privat::stringSplit(data, current, ret.data, ret.current, splitChars.data, splitChars.current);
-				data[current] = 0;
-				ret.data[ret.current] = 0;
-				return ret;
-			}
-
-			StringBase fill(uint32 size, char c = ' ') const
-			{
-				StringBase cc(&c, 1);
-				StringBase ret = *this;
-				while (ret.length() < size)
-					ret += cc;
-				ret.data[ret.current] = 0;
-				return ret;
-			}
-
-			uint32 find(const StringBase &other, uint32 offset = 0) const
-			{
-				return privat::stringFind(data, current, other.data, other.current, offset);
-			}
-
-			uint32 find(char other, uint32 offset = 0) const
-			{
-				return privat::stringFind(data, current, &other, 1, offset);
-			}
-
-			StringBase encodeUrl() const
-			{
-				StringBase ret;
-				privat::stringEncodeUrl(data, current, ret.data, ret.current, N);
-				ret.data[ret.current] = 0;
-				return ret;
-			}
-
-			StringBase decodeUrl() const
-			{
-				StringBase ret;
-				privat::stringDecodeUrl(data, current, ret.data, ret.current, N);
-				ret.data[ret.current] = 0;
-				return ret;
-			}
-
-			StringBase toUpper() const
-			{
-				StringBase ret;
-				ret.current = privat::stringToUpper(ret.data, N, data, current);
-				ret.data[ret.current] = 0;
-				return ret;
-			}
-
-			StringBase toLower() const
-			{
-				StringBase ret;
-				ret.current = privat::stringToLower(ret.data, N, data, current);
-				ret.data[ret.current] = 0;
-				return ret;
-			}
-
-			float toFloat() const
-			{
-				float i;
-				privat::fromString(data, current, i);
-				return i;
-			}
-
-			double toDouble() const
-			{
-				double i;
-				privat::fromString(data, current, i);
-				return i;
-			}
-
-			sint32 toSint32() const
-			{
-				sint32 i;
-				privat::fromString(data, current, i);
-				return i;
-			}
-
-			uint32 toUint32() const
-			{
-				uint32 i;
-				privat::fromString(data, current, i);
-				return i;
-			}
-
-			sint64 toSint64() const
-			{
-				sint64 i;
-				privat::fromString(data, current, i);
-				return i;
-			}
-
-			uint64 toUint64() const
-			{
-				uint64 i;
-				privat::fromString(data, current, i);
-				return i;
-			}
-
-			bool toBool() const
-			{
-				bool i;
-				privat::fromString(data, current, i);
-				return i;
-			}
-
-			bool isPattern(const StringBase &prefix, const StringBase &infix, const StringBase &suffix) const
-			{
-				return privat::stringIsPattern(data, current, prefix.data, prefix.current, infix.data, infix.current, suffix.data, suffix.current);
-			}
-
-			bool isDigitsOnly() const noexcept
-			{
-				return privat::stringIsDigitsOnly(data, current);
-			}
-
-			bool isInteger() const noexcept
-			{
-				return privat::stringIsInteger(data, current);
-			}
-
-			bool isReal() const noexcept
-			{
-				return privat::stringIsReal(data, current);
-			}
-
-			bool isBool() const noexcept
-			{
-				return privat::stringIsBool(data, current);
-			}
+			StringBase reverse() const;
+			StringBase subString(uint32 start, uint32 length) const;
+			StringBase replace(const StringBase &what, const StringBase &with) const;
+			StringBase replace(uint32 start, uint32 length, const StringBase &with) const;
+			StringBase remove(uint32 start, uint32 length) const;
+			StringBase insert(uint32 start, const StringBase &what) const;
+			StringBase trim(bool left = true, bool right = true, const StringBase &trimChars = "\t\n ") const;
+			StringBase split(const StringBase &splitChars = "\t\n ");
+			StringBase fill(uint32 size, char c = ' ') const;
+			uint32 find(const StringBase &other, uint32 offset = 0) const;
+			uint32 find(char other, uint32 offset = 0) const;
+			StringBase encodeUrl() const;
+			StringBase decodeUrl() const;
+			StringBase toUpper() const;
+			StringBase toLower() const;
+			float toFloat() const;
+			double toDouble() const;
+			sint32 toSint32() const;
+			uint32 toUint32() const;
+			sint64 toSint64() const;
+			uint64 toUint64() const;
+			bool toBool() const;
+			bool isPattern(const StringBase &prefix, const StringBase &infix, const StringBase &suffix) const;
+			bool isDigitsOnly() const noexcept;
+			bool isInteger() const noexcept;
+			bool isReal() const noexcept;
+			bool isBool() const noexcept;
 
 			bool empty() const noexcept
 			{
@@ -838,98 +649,88 @@ namespace cage
 
 			template<uint32 M>
 			friend struct StringBase;
-
-			friend int compare(const StringBase &a, const StringBase &b) noexcept
-			{
-				return privat::stringComparison(a.data, a.current, b.data, b.current);
-			}
+			template<uint32 M>
+			friend struct StringizerBase;
 		};
+
+		template<uint32 Na, uint32 Nb>
+		int compare(const StringBase<Na> &a, const StringBase<Nb> &b) noexcept
+		{
+			return privat::stringComparison(a.c_str(), a.size(), b.c_str(), b.size());
+		}
 
 		template<uint32 N>
 		struct StringizerBase
 		{
 			StringBase<N> value;
+
+			template<uint32 M>
+			StringizerBase<N> &operator + (const StringizerBase<M> &other)
+			{
+				value += other.value;
+				return *this;
+			}
+
+			template<uint32 M>
+			StringizerBase<N> &operator + (const StringBase<M> &other)
+			{
+				value += other;
+				return *this;
+			}
+
+			StringizerBase<N> &operator + (const char *other)
+			{
+				value += other;
+				return *this;
+			}
+
+			StringizerBase<N> &operator + (char *other)
+			{
+				value += other;
+				return *this;
+			}
+
+			template<class T>
+			StringizerBase<N> &operator + (T *other)
+			{
+				return *this + (uintPtr)other;
+			}
+
+#define GCHL_GENERATE(TYPE) \
+			StringizerBase<N> &operator + (TYPE other) \
+			{ \
+				StringBase<20> tmp; \
+				tmp.current = privat::toString(tmp.data, 20, other); \
+				return *this + tmp; \
+			}
+			GCHL_GENERATE(sint8);
+			GCHL_GENERATE(sint16);
+			GCHL_GENERATE(sint32);
+			GCHL_GENERATE(sint64);
+			GCHL_GENERATE(uint8);
+			GCHL_GENERATE(uint16);
+			GCHL_GENERATE(uint32);
+			GCHL_GENERATE(uint64);
+			GCHL_GENERATE(float);
+			GCHL_GENERATE(double);
+			GCHL_GENERATE(bool);
+#undef GCHL_GENERATE
+
+			// allow to use l-value-reference operator overloads with r-value-reference stringizer
+			template<class T>
+			inline StringizerBase<N> &operator + (const T &other) &&
+			{
+				return *this + other;
+			}
 		};
 
 		template<uint32 N> template<uint32 M>
 		inline StringBase<N>::StringBase(const StringizerBase<M> &other) : StringBase(other.value)
 		{}
-
-		template<uint32 N, uint32 M>
-		StringizerBase<N> &operator + (StringizerBase<N> &str, const StringizerBase<M> &other)
-		{
-			str.value += other.value;
-			return str;
-		}
-
-		template<uint32 N, uint32 M>
-		StringizerBase<N> &operator + (StringizerBase<N> &str, const StringBase<M> &other)
-		{
-			str.value += other;
-			return str;
-		}
-
-		template<uint32 N>
-		StringizerBase<N> &operator + (StringizerBase<N> &str, const char *other)
-		{
-			str.value += other;
-			return str;
-		}
-
-		template<uint32 N>
-		StringizerBase<N> &operator + (StringizerBase<N> &str, char *other)
-		{
-			str.value += other;
-			return str;
-		}
-
-		template<uint32 N, class T>
-		StringizerBase<N> &operator + (StringizerBase<N> &str, T *other)
-		{
-			return str + (uintPtr)other;
-		}
-
-#define GCHL_GENERATE(TYPE) \
-		template<uint32 N> \
-		inline StringizerBase<N> &operator + (StringizerBase<N> &str, TYPE other) \
-		{ \
-			return str + StringBase<20>(other); \
-		}
-		GCHL_GENERATE(sint8);
-		GCHL_GENERATE(sint16);
-		GCHL_GENERATE(sint32);
-		GCHL_GENERATE(sint64);
-		GCHL_GENERATE(uint8);
-		GCHL_GENERATE(uint16);
-		GCHL_GENERATE(uint32);
-		GCHL_GENERATE(uint64);
-		GCHL_GENERATE(float);
-		GCHL_GENERATE(double);
-		GCHL_GENERATE(bool);
-#undef GCHL_GENERATE
-
-		template<uint32 N, class T>
-		inline StringizerBase<N> &operator + (StringizerBase<N> &&str, const T &other)
-		{
-			// allow to use l-value-reference operator overloads with r-value-reference stringizer
-			return str + other;
-		}
-
-		template<uint32 N>
-		struct StringComparatorFastBase
-		{
-			bool operator () (const StringBase<N> &a, const StringBase<N> &b) const noexcept
-			{
-				if (a.length() == b.length())
-					return detail::memcmp(a.begin(), b.begin(), a.length()) < 0;
-				return a.length() < b.length();
-			}
-		};
 	}
 
-	typedef detail::StringBase<1000> string;
-	typedef detail::StringizerBase<1000> stringizer;
-	typedef detail::StringComparatorFastBase<1000> stringComparatorFast;
+	using string = detail::StringBase<995>;
+	using stringizer = detail::StringizerBase<995>;
 
 	// delegates
 

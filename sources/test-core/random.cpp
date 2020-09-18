@@ -29,7 +29,7 @@ void testRandom()
 			RandomGenerator g;
 			CAGE_LOG(SeverityEnum::Info, "generator seed", stringizer() + g.s[0] + " " + g.s[1]);
 			for (uint32 i = 0; i < 3; i++)
-				CAGE_LOG_CONTINUE(SeverityEnum::Info, "random sequence", string(g.next()));
+				CAGE_LOG_CONTINUE(SeverityEnum::Info, "random sequence", stringizer() + g.next());
 		}
 	}
 

@@ -1,7 +1,7 @@
 #ifndef guard_quid_h_cc82a428_1147_4841_aa4c_4b7784111e63_
 #define guard_quid_h_cc82a428_1147_4841_aa4c_4b7784111e63_
 
-#include "core.h"
+#include "string.h"
 
 namespace cage
 {

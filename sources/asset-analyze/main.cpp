@@ -4,6 +4,7 @@
 #include <cage-core/ini.h>
 #include <cage-core/process.h>
 #include <cage-core/debug.h>
+#include <cage-core/string.h>
 
 #include <map>
 #include <set>

@@ -21,7 +21,7 @@ namespace
 
 		explicit Run(uint32 name, const string &cmd) : cmd(cmd), name(name)
 		{
-			thr = newThread(Delegate<void()>().bind<Run, &Run::run>(this), string(name));
+			thr = newThread(Delegate<void()>().bind<Run, &Run::run>(this), stringizer() + name);
 		}
 	
 		~Run()

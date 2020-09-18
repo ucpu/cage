@@ -5,6 +5,7 @@
 #include <cage-core/assetHeader.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
+#include <cage-core/string.h>
 
 #include <cage-engine/assetStructs.h>
 

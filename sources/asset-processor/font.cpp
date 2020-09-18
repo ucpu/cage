@@ -381,11 +381,11 @@ namespace
 			{
 				Glyph &g = glyphs[glyphIndex];
 				f->writeLine(
-					string(glyphIndex).fill(10) +
+					string(stringizer() + glyphIndex).fill(10) +
 					string(stringizer() + g.data.texUv).fill(60) +
 					string(stringizer() + g.data.size).fill(30) +
 					string(stringizer() + g.data.bearing).fill(30) +
-					string(g.data.advance.value)
+					string(stringizer() + g.data.advance.value)
 				);
 			}
 		}
@@ -404,10 +404,10 @@ namespace
 			{
 				uint32 c = charsetChars[charIndex];
 				char C = c < 256 ? c : ' ';
-				f->writeLine(
-					string(c).fill(10) +
+				f->writeLine(stringizer() +
+					string(stringizer() + c).fill(10) +
 					string(&C, 1).fill(5) +
-					string(charsetGlyphs[charIndex])
+					charsetGlyphs[charIndex]
 				);
 			}
 		}
@@ -436,9 +436,9 @@ namespace
 						if (k == 0)
 							continue;
 						f->writeLine(
-							string(x).fill(5) +
-							string(y).fill(5) +
-							string(k.value)
+							string(stringizer() + x).fill(5) +
+							string(stringizer() + y).fill(5) +
+							string(stringizer() + k)
 						);
 					}
 				}

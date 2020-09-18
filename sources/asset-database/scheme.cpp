@@ -252,7 +252,7 @@ bool SchemeField::applyToAssetField(string &val, const string &assetName) const
 			CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is not bool");
 			return false;
 		}
-		val = string(val.toBool());
+		val = stringizer() + val.toBool();
 	}
 	else if (type == "uint32")
 	{

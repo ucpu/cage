@@ -2,6 +2,7 @@
 #include <cage-core/math.h>
 #include <cage-core/files.h>
 #include <cage-core/hashString.h>
+#include <cage-core/string.h>
 
 #include <cstring>
 #include <map>
@@ -16,43 +17,43 @@ namespace
 			CAGE_TESTCASE("constructors and operator +");
 			CAGE_TEST(string("ra") + "ke" + "ta" == "raketa");
 			bool b = true;
-			CAGE_TEST(string(b) == "true");
+			CAGE_TEST(string(stringizer() + b) == "true");
 			b = false;
-			CAGE_TEST(string(b) == "false");
+			CAGE_TEST(string(stringizer() + b) == "false");
 			int i1 = -123;
-			CAGE_TEST(string(i1) == "-123");
+			CAGE_TEST(string(stringizer() + i1) == "-123");
 			unsigned int i2 = 123;
-			CAGE_TEST(string(i2) == "123");
+			CAGE_TEST(string(stringizer() + i2) == "123");
 			sint8 i3 = 123;
-			CAGE_TEST(string(i3) == "123");
+			CAGE_TEST(string(stringizer() + i3) == "123");
 			sint16 i4 = 123;
-			CAGE_TEST(string(i4) == "123");
+			CAGE_TEST(string(stringizer() + i4) == "123");
 			sint32 i5 = 123;
-			CAGE_TEST(string(i5) == "123");
+			CAGE_TEST(string(stringizer() + i5) == "123");
 			sint64 i6 = 123;
-			CAGE_TEST(string(i6) == "123");
+			CAGE_TEST(string(stringizer() + i6) == "123");
 			uint8 i7 = 123;
-			CAGE_TEST(string(i7) == "123");
+			CAGE_TEST(string(stringizer() + i7) == "123");
 			uint16 i8 = 123;
-			CAGE_TEST(string(i8) == "123");
+			CAGE_TEST(string(stringizer() + i8) == "123");
 			uint32 i9 = 123;
-			CAGE_TEST(string(i9) == "123");
+			CAGE_TEST(string(stringizer() + i9) == "123");
 			uint64 i10 = 123;
-			CAGE_TEST(string(i10) == "123");
+			CAGE_TEST(string(stringizer() + i10) == "123");
 			{
 				float f = 5;
-				string fs = string(f);
+				string fs = stringizer() + f;
 				CAGE_TEST(fs == "5" || fs == "5.000000");
 				double d = 5;
-				string ds = string(d);
+				string ds = stringizer() + d;
 				CAGE_TEST(ds == "5" || ds == "5.000000");
 			}
 			{
 				float f = 5.5;
-				string fs = string(f);
+				string fs = stringizer() + f;
 				CAGE_TEST(fs == "5.5" || fs == "5.500000");
 				double d = 5.5;
-				string ds = string(d);
+				string ds = stringizer() + d;
 				CAGE_TEST(ds == "5.5" || ds == "5.500000");
 			}
 			const char arr[] = "array";
@@ -809,6 +810,13 @@ namespace
 				stringizer s;
 				functionTakingString(s + 123);
 			}
+		}
+		{
+			CAGE_TESTCASE("pointers");
+			CAGE_TEST(string(stringizer() + "hi") == "hi");
+			int obj = 42;
+			int *ptr = &obj;
+			CAGE_TEST(string(stringizer() + ptr).toUint64() == (uint64)ptr);
 		}
 	}
 }

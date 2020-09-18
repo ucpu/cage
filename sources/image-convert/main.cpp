@@ -4,6 +4,7 @@
 #include <cage-core/ini.h>
 #include <cage-core/files.h>
 #include <cage-core/memoryBuffer.h>
+#include <cage-core/string.h>
 
 using namespace cage;
 

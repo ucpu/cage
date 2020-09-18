@@ -60,10 +60,10 @@ void Asset::save(File *f) const
 
 string Asset::outputPath() const
 {
-	return string(HashString(name.c_str()));
+	return stringizer() + HashString(name);
 }
 
 string Asset::aliasPath() const
 {
-	return string(HashString(aliasName.c_str()));
+	return stringizer() + HashString(aliasName);
 }

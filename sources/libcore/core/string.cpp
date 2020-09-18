@@ -1,4 +1,4 @@
-#include <cage-core/core.h>
+#include <cage-core/string.h>
 #include <cage-core/macros.h>
 
 #include <vector>
@@ -22,6 +22,8 @@
 
 namespace cage
 {
+	static_assert((sizeof(cage::string) % 8) == 0, "size of string is not aligned");
+
 	namespace detail
 	{
 		void *memset(void *ptr, int value, uintPtr num) noexcept

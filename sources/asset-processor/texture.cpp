@@ -436,7 +436,7 @@ void processTexture()
 			uint32 index = 0;
 			while (true)
 			{
-				string name = prefix + string(index).reverse().fill(dollarsCount, '0').reverse() + suffix;
+				string name = prefix + string(stringizer() + index).reverse().fill(dollarsCount, '0').reverse() + suffix;
 				if (!pathIsFile(pathJoin(inputDirectory, name)))
 					break;
 				CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "loading file: '" + name + "'");

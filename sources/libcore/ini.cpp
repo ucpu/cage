@@ -1,3 +1,4 @@
+#include <cage-core/string.h>
 #include <cage-core/memory.h>
 #include <cage-core/files.h>
 #include <cage-core/ini.h>
@@ -306,7 +307,7 @@ namespace cage
 						continue;
 					}
 				}
-				set(option, string(itemsCount(option)), s);
+				set(option, stringizer() + itemsCount(option), s);
 			}
 			checkCmdOption(this, option, "--");
 		}
@@ -341,7 +342,7 @@ namespace cage
 				itemIndex = 0;
 				sec = line.subString(1, line.length() - 2).trim();
 				if (sec.empty())
-					sec = string(secIndex++);
+					sec = stringizer() + secIndex++;
 				if (sectionExists(sec))
 					CAGE_THROW_ERROR(Exception, "duplicate section");
 				continue;
@@ -358,7 +359,7 @@ namespace cage
 				itemValue = line.subString(pos + 1, m).trim();
 			}
 			if (itemName.empty())
-				itemName = string(itemIndex++);
+				itemName = stringizer() + itemIndex++;
 			if (itemExists(sec, itemName))
 				CAGE_THROW_ERROR(Exception, "duplicate item name");
 			set(sec, itemName, itemValue);
@@ -438,7 +439,7 @@ namespace cage
 #define GCHL_GENERATE(TYPE, NAME, TO) \
 	void Ini::CAGE_JOIN(set, NAME) (const string &section, const string &item, const TYPE &value) \
 	{ \
-		set(section, item, string(value)); \
+		set(section, item, stringizer() + value); \
 	}; \
 	TYPE Ini::CAGE_JOIN(get, NAME) (const string &section, const string &item, const TYPE &defaul) const \
 	{ \

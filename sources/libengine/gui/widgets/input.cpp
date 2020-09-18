@@ -1,5 +1,6 @@
 #include <cage-core/utf.h>
 #include <cage-core/debug.h>
+#include <cage-core/string.h>
 
 #include "../private.h"
 
@@ -99,11 +100,11 @@ namespace cage
 					{
 					case InputTypeEnum::Integer:
 						if (data.value.isInteger())
-							data.value = string(consolidate<sint32>(data.value.toSint32(), data.min.i, data.max.i, data.step.i));
+							data.value = stringizer() + consolidate<sint32>(data.value.toSint32(), data.min.i, data.max.i, data.step.i);
 						break;
 					case InputTypeEnum::Real:
 						if (data.value.isReal())
-							data.value = string(consolidate<real>(data.value.toFloat(), data.min.f, data.max.f, data.step.f).value);
+							data.value = stringizer() + consolidate<real>(data.value.toFloat(), data.min.f, data.max.f, data.step.f);
 						break;
 					default:
 						break;
@@ -242,13 +243,13 @@ namespace cage
 					{
 						real v = data.value.toFloat();
 						v += data.step.f * sign;
-						data.value = string(v.value);
+						data.value = stringizer() + v.value;
 					}
 					if (data.type == InputTypeEnum::Integer)
 					{
 						sint32 v = data.value.toSint32();
 						v += data.step.i * sign;
-						data.value = string(v);
+						data.value = stringizer() + v;
 					}
 					consolidate(); // apply min/max
 				}

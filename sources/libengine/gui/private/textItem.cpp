@@ -1,5 +1,6 @@
 #include <cage-core/assetManager.h>
 #include <cage-core/textPack.h>
+#include <cage-core/string.h>
 
 #include "../private.h"
 

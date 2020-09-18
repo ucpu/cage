@@ -2,6 +2,7 @@
 #include <cage-core/math.h>
 #include <cage-core/image.h>
 #include <cage-core/ini.h>
+#include <cage-core/string.h>
 
 using namespace cage;
 
@@ -10,7 +11,7 @@ void doSplit(Holder<Ini> &cmd)
 	string names[4] = { "", "", "", "" };
 	string input = "input.png";
 	for (uint32 i = 0; i < 4; i++)
-		names[i] = cmd->cmdString(0, string(i + 1), names[i]);
+		names[i] = cmd->cmdString(0, stringizer() + (i + 1), names[i]);
 	input = cmd->cmdString('i', "input", input);
 	cmd->checkUnused();
 
@@ -54,7 +55,7 @@ void doJoin(Holder<Ini> &cmd)
 	string names[4] = { "", "", "", "" };
 	string output = "output.png";
 	for (uint32 i = 0; i < 4; i++)
-		names[i] = cmd->cmdString(0, string(i + 1), names[i]);
+		names[i] = cmd->cmdString(0, stringizer() + (i + 1), names[i]);
 	output = cmd->cmdString('o', "output", output);
 	bool autoMono = cmd->cmdBool('m', "mono", false);
 	cmd->checkUnused();

@@ -1,6 +1,7 @@
 #define NOMINMAX
 
 #include <cage-core/concurrent.h>
+#include <cage-core/string.h>
 
 #include "private.h"
 #include "utilities.h"

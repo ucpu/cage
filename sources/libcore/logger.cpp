@@ -5,6 +5,7 @@
 #include <cage-core/config.h>
 #include <cage-core/systemInformation.h>
 #include <cage-core/debug.h>
+#include <cage-core/string.h>
 
 #include <cstdio>
 #include <exception>
@@ -189,14 +190,14 @@ namespace cage
 			else
 			{
 				string res;
-				res += string(info.time).fill(12) + " ";
+				res += string(stringizer() + info.time).fill(12) + " ";
 				res += string(info.currentThreadName).fill(26) + " ";
 				res += detail::severityToString(info.severity) + " ";
 				res += string(info.component).fill(20) + " ";
 				res += info.message;
 				if (longer && info.file)
 				{
-					string flf = string(" ") + string(info.file) + ":" + string(info.line) + " (" + string(info.function) + ")";
+					string flf = stringizer() + " " + info.file + ":" + info.line + " (" + info.function + ")";
 					if (res.length() + flf.length() + 10 < string::MaxLength)
 					{
 						res += string().fill(string::MaxLength - flf.length() - res.length() - 5);

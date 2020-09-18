@@ -177,7 +177,7 @@ void testArchives()
 			string name = "rng";
 			for (uint32 j = 0; j < 10; j++)
 			{
-				name += string(randomRange(0, 9));
+				name += stringizer() + randomRange(0, 9);
 				if (randomChance() < 0.1)
 					name += "/";
 			}

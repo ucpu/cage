@@ -1,3 +1,4 @@
+#include <cage-core/string.h>
 #include <cage-core/timer.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
@@ -97,14 +98,14 @@ namespace
 		{
 			string left = evalExp(l.subString(0, p));
 			string right = evalExp(l.subString(p + 1, m));
-			return string(evalExpToBool(left) || evalExpToBool(right));
+			return stringizer() + (evalExpToBool(left) || evalExpToBool(right));
 		}
 		p = l.find('&');
 		if (p != m)
 		{
 			string left = evalExp(l.subString(0, p));
 			string right = evalExp(l.subString(p + 1, m));
-			return string(evalExpToBool(left) && evalExpToBool(right));
+			return stringizer() + (evalExpToBool(left) && evalExpToBool(right));
 		}
 		p = l.find('<');
 		if (p != m)
@@ -112,9 +113,9 @@ namespace
 			string left = evalExp(l.subString(0, p));
 			string right = evalExp(l.subString(p + 1, m));
 			if (left.isReal() && right.isReal())
-				return string(left.toFloat() < right.toFloat());
+				return stringizer() + (left.toFloat() < right.toFloat());
 			else
-				return string(left < right);
+				return stringizer() + (left < right);
 		}
 		p = l.find('>');
 		if (p != m)
@@ -122,9 +123,9 @@ namespace
 			string left = evalExp(l.subString(0, p));
 			string right = evalExp(l.subString(p + 1, m));
 			if (left.isReal() && right.isReal())
-				return string(left.toFloat() > right.toFloat());
+				return stringizer() + (left.toFloat() > right.toFloat());
 			else
-				return string(left > right);
+				return stringizer() + (left > right);
 		}
 		p = l.find('=');
 		if (p != m)
@@ -132,16 +133,16 @@ namespace
 			string left = evalExp(l.subString(0, p));
 			string right = evalExp(l.subString(p + 1, m));
 			if (left.isInteger() && right.isInteger())
-				return string(left.toSint32() == right.toSint32());
+				return stringizer() + (left.toSint32() == right.toSint32());
 			else
-				return string(left == right);
+				return stringizer() + (left == right);
 		}
 		p = l.find('-');
 		if (p != m)
 		{
 			sint32 left = evalExp(l.subString(0, p)).toSint32();
 			sint32 right = evalExp(l.subString(p + 1, m)).toSint32();
-			return string(left - right);
+			return stringizer() + (left - right);
 		}
 		p = l.find('+');
 		if (p != m)
@@ -149,7 +150,7 @@ namespace
 			string left = evalExp(l.subString(0, p));
 			string right = evalExp(l.subString(p + 1, m));
 			if (left.isInteger() && right.isInteger())
-				return string(left.toSint32() + right.toSint32());
+				return stringizer() + (left.toSint32() + right.toSint32());
 			else
 				return left + right;
 		}
@@ -158,21 +159,21 @@ namespace
 		{
 			sint32 left = evalExp(l.subString(0, p)).toSint32();
 			sint32 right = evalExp(l.subString(p + 1, m)).toSint32();
-			return string(left % right);
+			return stringizer() + (left % right);
 		}
 		p = l.find('/');
 		if (p != m)
 		{
 			sint32 left = evalExp(l.subString(0, p)).toSint32();
 			sint32 right = evalExp(l.subString(p + 1, m)).toSint32();
-			return string(left / right);
+			return stringizer() + (left / right);
 		}
 		p = l.find('*');
 		if (p != m)
 		{
 			sint32 left = evalExp(l.subString(0, p)).toSint32();
 			sint32 right = evalExp(l.subString(p + 1, m)).toSint32();
-			return string(left * right);
+			return stringizer() + (left * right);
 		}
 		p = l.find('^');
 		if (p != m)
@@ -194,7 +195,7 @@ namespace
 		}
 		if (l[0] == '!')
 		{
-			return string(!evalExpToBool(evalExp(l.subString(1, m))));
+			return stringizer() + !evalExpToBool(evalExp(l.subString(1, m)));
 		}
 		if (defines.count(l))
 		{

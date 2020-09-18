@@ -207,7 +207,7 @@ namespace cage
 					if (labelFlags[i] <= EngineProfilingStatsFlags::FrameTime)
 						setTextLabel(i * 2 + 1, stringizer() + (engineProfilingValues(labelFlags[i], profilingMode) / 1000) + " ms");
 					else
-						setTextLabel(i * 2 + 1, string(engineProfilingValues(labelFlags[i], profilingMode)));
+						setTextLabel(i * 2 + 1, stringizer() + (engineProfilingValues(labelFlags[i], profilingMode)));
 				}
 				return false;
 			}

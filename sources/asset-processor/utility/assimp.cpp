@@ -579,7 +579,7 @@ void analyzeAssimp()
 				writeLine("scheme=animation");
 				string n = a->mName.C_Str();
 				if (n.empty())
-					n = string(i);
+					n = stringizer() + i;
 				writeLine(stringizer() + "asset=" + inputFile + "?" + n);
 			}
 		}

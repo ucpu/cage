@@ -57,7 +57,7 @@ void testFiles()
 		}
 		CAGE_TEST(mp.size() == 32);
 		for (uint32 i = 1; i <= 32; i++)
-			CAGE_TEST(mp.count(string(i)));
+			CAGE_TEST(mp.count(stringizer() + i));
 	}
 
 	{

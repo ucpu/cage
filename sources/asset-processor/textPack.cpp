@@ -51,6 +51,6 @@ void processTextpack()
 		fm.textual = true;
 		Holder<File> f = newFile(dbgName, fm);
 		for (auto it : texts)
-			f->writeLine(string(HashString(it.first.c_str())).fill(10) + " " + it.first + " = " + it.second);
+			f->writeLine(string(stringizer() + HashString(it.first)).fill(10) + " " + it.first + " = " + it.second);
 	}
 }
