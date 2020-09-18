@@ -101,10 +101,6 @@ namespace cage
 		}
 
 		{
-			xatlas::ParameterizeCharts(atlas.get());
-		}
-
-		{
 			xatlas::PackOptions pack;
 			pack.bilinear = true;
 			pack.blockAlign = true;
