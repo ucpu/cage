@@ -18,6 +18,4 @@ target_include_directories(zlib INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/zlib-ng")
 # pnglib requires exact paths otherwise its generated files will fail to include zlib
 cage_gen_module(ZLIB $<TARGET_LINKER_FILE:zlib> "${CMAKE_CURRENT_BINARY_DIR}/zlib-ng;${CMAKE_CURRENT_SOURCE_DIR}/zlib-ng")
 
-#cage_gen_module(ZLIB $<TARGET_LINKER_FILE:zlib> $<TARGET_PROPERTY:zlib,INTERFACE_INCLUDE_DIRECTORIES>)
-
-
+add_library(ZLIB::ZLIB ALIAS zlib)

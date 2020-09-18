@@ -140,7 +140,7 @@ namespace
 		virtual ~CageIoStream()
 		{}
 
-		virtual size_t Read(void *pvBuffer, size_t pSize, size_t pCount)
+		size_t Read(void *pvBuffer, size_t pSize, size_t pCount) override
 		{
 			uint64 avail = r->size() - r->tell();
 			uint64 size = pSize * pCount;
@@ -153,12 +153,12 @@ namespace
 			return pCount;
 		}
 
-		virtual size_t Write(const void *pvBuffer, size_t pSize, size_t pCount)
+		size_t Write(const void *pvBuffer, size_t pSize, size_t pCount) override
 		{
 			CAGE_THROW_ERROR(Exception, "cageIOStream::Write is not meant for use");
 		}
 
-		virtual aiReturn Seek(size_t pOffset, aiOrigin pOrigin)
+		aiReturn Seek(size_t pOffset, aiOrigin pOrigin) override
 		{
 			switch (pOrigin)
 			{
@@ -170,17 +170,17 @@ namespace
 			return aiReturn_SUCCESS;
 		}
 
-		virtual size_t Tell() const
+		size_t Tell() const override
 		{
 			return (size_t)r->tell();
 		}
 
-		virtual size_t FileSize() const
+		size_t FileSize() const override
 		{
 			return (size_t)r->size();
 		}
 
-		virtual void Flush()
+		void Flush() override
 		{
 			CAGE_THROW_ERROR(Exception, "cageIOStream::Flush is not meant for use");
 		}
@@ -197,17 +197,17 @@ namespace
 			currentDir = pathJoin(inputDirectory, pathExtractPath(inputFile));
 		}
 
-		virtual bool Exists(const char *pFile) const
+		bool Exists(const char *pFile) const override
 		{
 			return any(pathType(pathJoin(currentDir, pFile)) & PathTypeFlags::File);
 		}
 
-		virtual char getOsSeparator() const
+		char getOsSeparator() const override
 		{
 			return '/';
 		}
 
-		virtual Assimp::IOStream *Open(const char *pFile, const char *pMode = "rb")
+		Assimp::IOStream *Open(const char *pFile, const char *pMode = "rb") override
 		{
 			if (::cage::string(pMode) != "rb")
 				CAGE_THROW_ERROR(Exception, "CageIoSystem::Open: only support rb mode");
@@ -215,12 +215,12 @@ namespace
 			return new CageIoStream(newFile(pathJoin(currentDir, pFile), FileMode(true, false)));
 		}
 
-		virtual void Close(Assimp::IOStream *pFile)
+		void Close(Assimp::IOStream *pFile) override
 		{
 			delete (CageIoStream*)pFile;
 		}
 
-		virtual bool ComparePaths(const char *one, const char *second) const
+		bool ComparePaths(const char *one, const char *second) const override
 		{
 			CAGE_THROW_ERROR(Exception, "cageIOsystem::ComparePaths is not meant for use");
 		}
@@ -233,9 +233,11 @@ namespace
 	{
 	public:
 		cage::SeverityEnum severity;
+
 		CageLogStream(cage::SeverityEnum severity) : severity(severity)
 		{}
-		virtual void write(const char* message)
+
+		void write(const char* message) override
 		{
 			string m = message;
 			if (m.isPattern("", "", "\n"))
@@ -272,9 +274,9 @@ namespace
 		explicit AssimpContextImpl(uint32 addFlags, uint32 removeFlags) : logDebug(SeverityEnum::Note), logInfo(SeverityEnum::Info), logWarn(SeverityEnum::Warning), logError(SeverityEnum::Error)
 		{
 #ifdef CAGE_DEBUG
-			Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
+			constexpr Assimp::Logger::LogSeverity severity = Assimp::Logger::VERBOSE;
 #else
-			Assimp::Logger::LogSeverity severity = Assimp::Logger::NORMAL;
+			constexpr Assimp::Logger::LogSeverity severity = Assimp::Logger::NORMAL;
 #endif
 			Assimp::DefaultLogger::create("", severity, aiDefaultLogStream_FILE);
 			Assimp::DefaultLogger::get()->attachStream(&logDebug, Assimp::Logger::Debugging);
@@ -358,17 +360,6 @@ namespace
 				const aiAnimation *ani = scene->mAnimations[i];
 				CAGE_LOG_CONTINUE(SeverityEnum::Info, logComponentName, stringizer() + "index: " + i + ", animation: '" + ani->mName.data + "', channels: " + ani->mNumChannels);
 			}
-		};
-
-		~AssimpContextImpl()
-		{
-			//imp.FreeScene();
-			//imp.SetIOHandler(nullptr);
-			Assimp::DefaultLogger::get()->detatchStream(&logDebug);
-			Assimp::DefaultLogger::get()->detatchStream(&logInfo);
-			Assimp::DefaultLogger::get()->detatchStream(&logWarn);
-			Assimp::DefaultLogger::get()->detatchStream(&logError);
-			Assimp::DefaultLogger::kill();
 		};
 
 		const aiScene *getScene() const
