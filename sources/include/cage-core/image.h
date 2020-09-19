@@ -49,12 +49,6 @@ namespace cage
 		void importRaw(MemoryBuffer &&buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format);
 		void importRaw(PointerRange<const char> buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format);
 
-		// the format must match
-		// the image must outlive the view
-		PointerRange<const uint8> rawViewU8() const;
-		PointerRange<const uint16> rawViewU16() const;
-		PointerRange<const float> rawViewFloat() const;
-
 		// image decode
 		void importBuffer(PointerRange<const char> buffer, uint32 channels = m, ImageFormatEnum requestedFormat = ImageFormatEnum::Default);
 		void importFile(const string &filename, uint32 channels = m, ImageFormatEnum requestedFormat = ImageFormatEnum::Default);
@@ -63,12 +57,11 @@ namespace cage
 		MemoryBuffer exportBuffer(const string &format = ".png") const;
 		void exportFile(const string &filename) const;
 
-		void fill(const real &value);
-		void fill(const vec2 &value);
-		void fill(const vec3 &value);
-		void fill(const vec4 &value);
-		void fill(uint32 channel, float value);
-		void fill(uint32 channel, const real &value);
+		// the format must match
+		// the image must outlive the view
+		PointerRange<const uint8> rawViewU8() const;
+		PointerRange<const uint16> rawViewU16() const;
+		PointerRange<const float> rawViewFloat() const;
 
 		uint32 width() const;
 		uint32 height() const;
@@ -95,18 +88,29 @@ namespace cage
 		void set(uint32 x, uint32 y, const vec3 &value);
 		void set(uint32 x, uint32 y, const vec4 &value);
 
-		void verticalFlip();
-		void convert(uint32 channels);
-		void convert(ImageFormatEnum format);
-		void convert(GammaSpaceEnum gammaSpace);
-		void convert(AlphaModeEnum alphaMode);
-		void resize(uint32 width, uint32 height, bool useColorConfig = true);
-		void inpaint(uint32 rounds, bool inpaintNan = false);
-
 		ImageColorConfig colorConfig;
 	};
 
 	CAGE_CORE_API Holder<Image> newImage();
+
+	CAGE_CORE_API void imageConvert(Image *img, uint32 channels);
+	CAGE_CORE_API void imageConvert(Image *img, ImageFormatEnum format);
+	CAGE_CORE_API void imageConvert(Image *img, GammaSpaceEnum gammaSpace);
+	CAGE_CORE_API void imageConvert(Image *img, AlphaModeEnum alphaMode);
+
+	// setting a value must match the number of channels
+	CAGE_CORE_API void imageFill(Image *img, const real &value);
+	CAGE_CORE_API void imageFill(Image *img, const vec2 &value);
+	CAGE_CORE_API void imageFill(Image *img, const vec3 &value);
+	CAGE_CORE_API void imageFill(Image *img, const vec4 &value);
+
+	CAGE_CORE_API void imageFill(Image *img, uint32 channel, float value);
+	CAGE_CORE_API void imageFill(Image *img, uint32 channel, const real &value);
+
+	CAGE_CORE_API void imageVerticalFlip(Image *img);
+	CAGE_CORE_API void imageResize(Image *img, uint32 width, uint32 height, bool useColorConfig = true);
+	CAGE_CORE_API void imageBoxBlur(Image *img, uint32 radius, uint32 rounds = 1, bool useColorConfig = true);
+	CAGE_CORE_API void imageDilation(Image *img, uint32 rounds, bool useNan = false);
 
 	// copies part of an image into another image
 	// if the target and source images are the same instance, the source area and target area cannot overlap

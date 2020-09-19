@@ -383,7 +383,7 @@ namespace
 				for (uint32 j = 0, e = randomRange(0, 100); j < e; j++)
 				{
 					char c = randomRange(0, 255);
-					s += string({ &c, &c + 1 });
+					s += string(c);
 				}
 				string sen = encodeUrl(s);
 				string sde = decodeUrl(sen);

@@ -361,7 +361,7 @@ namespace
 
 		if (configGetBool("cage-asset-processor/font/preview"))
 		{
-			texels->verticalFlip();
+			imageVerticalFlip(+texels);
 			texels->exportFile(pathJoin(fontPath, pathReplaceInvalidCharacters(inputName) + ".png"));
 		}
 

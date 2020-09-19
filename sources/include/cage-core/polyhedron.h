@@ -12,60 +12,6 @@ namespace cage
 		Triangles = 3,
 	};
 
-	struct CAGE_CORE_API PolyhedronSimplificationConfig
-	{
-		real minEdgeLength = 0.1;
-		real maxEdgeLength = 10;
-		real approximateError = 0.05;
-		uint32 iterations = 10;
-		bool useProjection = true;
-	};
-
-	struct CAGE_CORE_API PolyhedronRegularizationConfig
-	{
-		real targetEdgeLength = 1;
-		uint32 iterations = 10;
-		bool useProjection = true;
-	};
-
-	struct CAGE_CORE_API PolyhedronUnwrapConfig
-	{
-		// charting determines which triangles will form islands
-		uint32 maxChartIterations = 1;
-		real maxChartArea = 0;
-		real maxChartBoundaryLength = 0;
-		real chartNormalDeviation = 2.0;
-		real chartRoundness = 0.01;
-		real chartStraightness = 6.0;
-		real chartNormalSeam = 4.0;
-		real chartTextureSeam = 0.5;
-		real chartGrowThreshold = 2.0;
-
-		// islands packing
-		uint32 padding = 2;
-		uint32 targetResolution = 0;
-		real texelsPerUnit = 0;
-
-		bool logProgress = false;
-	};
-
-	struct CAGE_CORE_API PolyhedronTextureGenerationConfig
-	{
-		Delegate<void(uint32, uint32, const ivec3 &, const vec3 &)> generator;
-		uint32 width = 0;
-		uint32 height = 0;
-	};
-
-	struct CAGE_CORE_API PolyhedronNormalsGenerationConfig
-	{
-		// todo
-	};
-
-	struct CAGE_CORE_API PolyhedronTangentsGenerationConfig
-	{
-		// todo
-	};
-
 	struct CAGE_CORE_API PolyhedronObjExportConfig
 	{
 		string materialLibraryName;
@@ -171,27 +117,91 @@ namespace cage
 		void addLine(const line &l);
 		void addTriangle(uint32 a, uint32 b, uint32 c);
 		void addTriangle(const triangle &t);
-
-		void convertToIndexed();
-		void convertToExpanded();
-		void mergeCloseVertices(real dist);
-		void simplify(const PolyhedronSimplificationConfig &config);
-		void regularize(const PolyhedronRegularizationConfig &config);
-		uint32 unwrap(const PolyhedronUnwrapConfig &config);
-		void generateTexture(const PolyhedronTextureGenerationConfig &config) const;
-		void generateNormals(const PolyhedronNormalsGenerationConfig &config);
-		void generateTangents(const PolyhedronTangentsGenerationConfig &config);
-		void applyTransform(const transform &t);
-		void applyTransform(const mat4 &t);
-		void clip(const aabb &box);
-		void clip(const plane &pln);
-		Holder<Polyhedron> cut(const plane &pln);
-		void discardInvalid();
-		void discardDisconnected();
-		Holder<PointerRange<Holder<Polyhedron>>> separateDisconnected() const;
 	};
 
 	CAGE_CORE_API Holder<Polyhedron> newPolyhedron();
+
+	CAGE_CORE_API void polyhedronConvertToIndexed(Polyhedron *poly);
+	CAGE_CORE_API void polyhedronConvertToExpanded(Polyhedron *poly);
+
+	CAGE_CORE_API void polyhedronApplyTransform(Polyhedron *poly, const transform &t);
+	CAGE_CORE_API void polyhedronApplyTransform(Polyhedron *poly, const mat4 &t);
+
+	CAGE_CORE_API void polyhedronClip(Polyhedron *poly, const aabb &box);
+	CAGE_CORE_API void polyhedronClip(Polyhedron *poly, const plane &pln);
+	CAGE_CORE_API Holder<Polyhedron> polyhedronCut(Polyhedron *poly, const plane &pln);
+
+	CAGE_CORE_API void polyhedronMergeCloseVertices(Polyhedron *poly, real dist);
+
+	CAGE_CORE_API void polyhedronDiscardInvalid(Polyhedron *poly);
+	CAGE_CORE_API void polyhedronDiscardDisconnected(Polyhedron *poly);
+	CAGE_CORE_API Holder<PointerRange<Holder<Polyhedron>>> polyhedronSeparateDisconnected(const Polyhedron *poly);
+
+	struct CAGE_CORE_API PolyhedronSimplificationConfig
+	{
+		real minEdgeLength = 0.1;
+		real maxEdgeLength = 10;
+		real approximateError = 0.05;
+		uint32 iterations = 10;
+		bool useProjection = true;
+	};
+
+	CAGE_CORE_API void polyhedronSimplify(Polyhedron *poly, const PolyhedronSimplificationConfig &config);
+
+	struct CAGE_CORE_API PolyhedronRegularizationConfig
+	{
+		real targetEdgeLength = 1;
+		uint32 iterations = 10;
+		bool useProjection = true;
+	};
+
+	CAGE_CORE_API void polyhedronRegularize(Polyhedron *poly, const PolyhedronRegularizationConfig &config);
+
+	struct CAGE_CORE_API PolyhedronUnwrapConfig
+	{
+		// charting determines which triangles will form islands
+		uint32 maxChartIterations = 1;
+		real maxChartArea = 0;
+		real maxChartBoundaryLength = 0;
+		real chartNormalDeviation = 2.0;
+		real chartRoundness = 0.01;
+		real chartStraightness = 6.0;
+		real chartNormalSeam = 4.0;
+		real chartTextureSeam = 0.5;
+		real chartGrowThreshold = 2.0;
+
+		// islands packing
+		uint32 padding = 2;
+		uint32 targetResolution = 0;
+		real texelsPerUnit = 0;
+
+		bool logProgress = false;
+	};
+
+	CAGE_CORE_API uint32 polyhedronUnwrap(Polyhedron *poly, const PolyhedronUnwrapConfig &config);
+
+	struct CAGE_CORE_API PolyhedronTextureGenerationConfig
+	{
+		Delegate<void(uint32, uint32, const ivec3 &, const vec3 &)> generator;
+		uint32 width = 0;
+		uint32 height = 0;
+	};
+
+	CAGE_CORE_API void polyhedronGenerateTexture(const Polyhedron *poly, const PolyhedronTextureGenerationConfig &config);
+
+	struct CAGE_CORE_API PolyhedronNormalsGenerationConfig
+	{
+		// todo
+	};
+
+	CAGE_CORE_API void polyhedronGenerateNormals(Polyhedron *poly, const PolyhedronNormalsGenerationConfig &config);
+
+	struct CAGE_CORE_API PolyhedronTangentsGenerationConfig
+	{
+		// todo
+	};
+
+	CAGE_CORE_API void polyhedronGenerateTangents(Polyhedron *poly, const PolyhedronTangentsGenerationConfig &config);
 }
 
 #endif // guard_polyhedron_h_CA052442302D4C3BAA9293200603C20A

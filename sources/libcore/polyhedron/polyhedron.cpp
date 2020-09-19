@@ -189,7 +189,7 @@ namespace cage
 	{
 		PolyhedronImpl *impl = (PolyhedronImpl *)this;
 		CAGE_ASSERT(type() == PolyhedronTypeEnum::Points);
-		convertToExpanded();
+		polyhedronConvertToExpanded(impl);
 		addVertex(p);
 	}
 
@@ -207,7 +207,7 @@ namespace cage
 		CAGE_ASSERT(l.isSegment());
 		PolyhedronImpl *impl = (PolyhedronImpl *)this;
 		CAGE_ASSERT(type() == PolyhedronTypeEnum::Lines);
-		convertToExpanded();
+		polyhedronConvertToExpanded(impl);
 		addVertex(l.a());
 		addVertex(l.b());
 	}
@@ -226,7 +226,7 @@ namespace cage
 	{
 		PolyhedronImpl *impl = (PolyhedronImpl *)this;
 		CAGE_ASSERT(type() == PolyhedronTypeEnum::Triangles);
-		convertToExpanded();
+		polyhedronConvertToExpanded(impl);
 		addVertex(t[0]);
 		addVertex(t[1]);
 		addVertex(t[2]);

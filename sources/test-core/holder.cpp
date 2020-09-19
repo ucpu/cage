@@ -190,4 +190,12 @@ void testHolder()
 		CAGE_TEST(gCount == 0);
 		CAGE_TEST(!c);
 	}
+
+	{
+		CAGE_TESTCASE("get and operator +");
+		auto s = detail::systemArena().createHolder<Tester>();
+		CAGE_TEST(s.get());
+		CAGE_TEST(+s);
+		Tester *raw = +s;
+	}
 }

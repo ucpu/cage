@@ -147,7 +147,7 @@ namespace cage
 		result->normals(normals);
 		result->indices(indices);
 		if (impl->config.clip)
-			result->clip(impl->config.box);
+			polyhedronClip(+result, impl->config.box);
 		return result;
 	}
 

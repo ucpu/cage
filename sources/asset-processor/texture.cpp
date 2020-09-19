@@ -168,14 +168,14 @@ namespace
 			{
 				ImageFormatEnum origFormat = data->format();
 				GammaSpaceEnum origGamma = data->colorConfig.gammaSpace;
-				data->convert(ImageFormatEnum::Float);
-				data->convert(GammaSpaceEnum::Linear);
-				data->convert(AlphaModeEnum::PremultipliedOpacity);
-				data->convert(origGamma);
-				data->convert(origFormat);
+				imageConvert(data.get(), ImageFormatEnum::Float);
+				imageConvert(data.get(), GammaSpaceEnum::Linear);
+				imageConvert(data.get(), AlphaModeEnum::PremultipliedOpacity);
+				imageConvert(data.get(), origGamma);
+				imageConvert(data.get(), origFormat);
 			}
 			else
-				data->convert(AlphaModeEnum::PremultipliedOpacity);
+				imageConvert(data.get(), AlphaModeEnum::PremultipliedOpacity);
 		}
 
 	private:
@@ -221,7 +221,7 @@ namespace
 		{ // downscale each image separately
 			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "downscaling each slice separately");
 			for (auto &it : images)
-				it.data->resize(max(it.data->width() / downscale, 1u), max(it.data->height() / downscale, 1u));
+				imageResize(it.data.get(), max(it.data->width() / downscale, 1u), max(it.data->height() / downscale, 1u));
 		}
 	}
 
@@ -502,7 +502,7 @@ void processTexture()
 		if (!toBool(properties("flip")))
 		{
 			for (auto &it : images)
-				it.data->verticalFlip();
+				imageVerticalFlip(+it.data);
 			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "image vertically flipped (flip was false)");
 		}
 	}
@@ -545,7 +545,7 @@ void processTexture()
 		for (auto &it : images)
 		{
 			string dbgName = pathJoin(configGetString("cage-asset-processor/texture/path", "asset-preview"), stringizer() + pathReplaceInvalidCharacters(inputName) + "_" + (index++) + ".png");
-			it.data->verticalFlip(); // this is after the export, so this operation does not affect the textures
+			imageVerticalFlip(+it.data); // this is after the export, so this operation does not affect the textures
 			it.data->exportFile(dbgName);
 		}
 	}

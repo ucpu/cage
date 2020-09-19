@@ -38,7 +38,7 @@ namespace cage
 	public:
 		uint16 port() const; // local port
 
-		// returns empty Holder if no new peer has connected
+		// returns empty holder if no new peer has connected
 		Holder<TcpConnection> accept(); // non-blocking
 	};
 

@@ -407,28 +407,28 @@ namespace cage
 		}
 	}
 
-	void Polyhedron::convertToIndexed()
+	void polyhedronConvertToIndexed(Polyhedron *poly)
 	{
-		if (!indices().empty() || positions().empty())
+		if (!poly->indices().empty() || poly->positions().empty())
 			return;
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		PolyhedronImpl *impl = (PolyhedronImpl *)poly;
 		CAGE_THROW_CRITICAL(NotImplemented, "convertToIndexed");
 	}
 
-	void Polyhedron::convertToExpanded()
+	void polyhedronConvertToExpanded(Polyhedron *poly)
 	{
-		if (indices().empty())
+		if (poly->indices().empty())
 			return;
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		PolyhedronImpl *impl = (PolyhedronImpl *)poly;
 		CAGE_THROW_CRITICAL(NotImplemented, "convertToExpanded");
 	}
 
-	void Polyhedron::mergeCloseVertices(real epsilon)
+	void polyhedronMergeCloseVertices(Polyhedron *poly, real epsilon)
 	{
-		if (facesCount() == 0)
+		if (poly->facesCount() == 0)
 			return;
 
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		PolyhedronImpl *impl = (PolyhedronImpl *)poly;
 		const uint32 vc = numeric_cast<uint32>(impl->positions.size());
 		std::vector<bool> needsRecenter; // mark vertices that need to reposition
 		needsRecenter.resize(vc, false);
@@ -477,24 +477,24 @@ namespace cage
 		}
 
 		// remove faces that has collapsed
-		discardInvalid();
+		polyhedronDiscardInvalid(poly);
 	}
 
-	void Polyhedron::generateTexture(const PolyhedronTextureGenerationConfig &config) const
+	void polyhedronGenerateTexture(const Polyhedron *poly, const PolyhedronTextureGenerationConfig &config)
 	{
-		CAGE_ASSERT(type() == PolyhedronTypeEnum::Triangles);
-		CAGE_ASSERT(!uvs().empty());
+		CAGE_ASSERT(poly->type() == PolyhedronTypeEnum::Triangles);
+		CAGE_ASSERT(!poly->uvs().empty());
 
-		const uint32 triCount = facesCount();
+		const uint32 triCount = poly->facesCount();
 		const vec2 scale = vec2(config.width - 1, config.height - 1);
 		for (uint32 triIdx = 0; triIdx < triCount; triIdx++)
 		{
 			ivec3 idx;
-			if (indices().empty())
+			if (poly->indices().empty())
 				idx = ivec3(triIdx * 3 + 0, triIdx * 3 + 1, triIdx * 3 + 2);
 			else
-				idx = ivec3(index(triIdx * 3 + 0), index(triIdx * 3 + 1), index(triIdx * 3 + 2));
-			const vec2 vertUvs[3] = { uv(idx[0]) * scale, uv(idx[1]) * scale, uv(idx[2]) * scale };
+				idx = ivec3(poly->index(triIdx * 3 + 0), poly->index(triIdx * 3 + 1), poly->index(triIdx * 3 + 2));
+			const vec2 vertUvs[3] = { poly->uv(idx[0]) * scale, poly->uv(idx[1]) * scale, poly->uv(idx[2]) * scale };
 			ivec2 t0 = ivec2(sint32(vertUvs[0][0].value), sint32(vertUvs[0][1].value));
 			ivec2 t1 = ivec2(sint32(vertUvs[1][0].value), sint32(vertUvs[1][1].value));
 			ivec2 t2 = ivec2(sint32(vertUvs[2][0].value), sint32(vertUvs[2][1].value));
@@ -528,21 +528,21 @@ namespace cage
 		}
 	}
 
-	void Polyhedron::generateNormals(const PolyhedronNormalsGenerationConfig &config)
+	void polyhedronGenerateNormals(Polyhedron *poly, const PolyhedronNormalsGenerationConfig &config)
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		PolyhedronImpl *impl = (PolyhedronImpl *)poly;
 		CAGE_THROW_CRITICAL(NotImplemented, "generateNormals");
 	}
 
-	void Polyhedron::generateTangents(const PolyhedronTangentsGenerationConfig &config)
+	void polyhedronGenerateTangents(Polyhedron *poly, const PolyhedronTangentsGenerationConfig &config)
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		PolyhedronImpl *impl = (PolyhedronImpl *)poly;
 		CAGE_THROW_CRITICAL(NotImplemented, "generateTangents");
 	}
 
-	void Polyhedron::applyTransform(const transform &t)
+	void polyhedronApplyTransform(Polyhedron *poly, const transform &t)
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		PolyhedronImpl *impl = (PolyhedronImpl *)poly;
 		for (vec3 &it : impl->positions)
 			it = t * it;
 		for (vec3 &it : impl->normals)
@@ -553,9 +553,9 @@ namespace cage
 			it = t.orientation * it;
 	}
 
-	void Polyhedron::applyTransform(const mat4 &t)
+	void polyhedronApplyTransform(Polyhedron *poly, const mat4 &t)
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		PolyhedronImpl *impl = (PolyhedronImpl *)poly;
 		for (vec3 &it : impl->positions)
 			it = vec3(t * vec4(it, 1));
 		for (vec3 &it : impl->normals)
@@ -566,10 +566,10 @@ namespace cage
 			it = vec3(t * vec4(it, 0));
 	}
 
-	void Polyhedron::clip(const aabb &clipBox)
+	void polyhedronClip(Polyhedron *poly, const aabb &clipBox)
 	{
-		convertToIndexed();
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		polyhedronConvertToIndexed(poly);
+		PolyhedronImpl *impl = (PolyhedronImpl *)poly;
 		const vec3 clipBoxArr[2] = { clipBox.a, clipBox.b };
 		std::vector<uint32> sourceIndices;
 		sourceIndices.reserve(impl->indices.size());
@@ -612,27 +612,27 @@ namespace cage
 			tmp.clear();
 		}
 		if (impl->indices.empty())
-			clear();
+			poly->clear();
 		else
 			removeUnusedVertices(impl);
 	}
 
-	void Polyhedron::clip(const plane &pln)
+	void polyhedronClip(Polyhedron *poly, const plane &pln)
 	{
 		// todo optimized code without constructing the other polyhedron
-		cut(pln);
+		polyhedronCut(poly, pln);
 	}
 
-	Holder<Polyhedron> Polyhedron::cut(const plane &pln)
+	Holder<Polyhedron> polyhedronCut(Polyhedron *poly, const plane &pln)
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		PolyhedronImpl *impl = (PolyhedronImpl *)poly;
 		CAGE_THROW_CRITICAL(NotImplemented, "cut");
 	}
 
-	void Polyhedron::discardInvalid()
+	void polyhedronDiscardInvalid(Polyhedron *poly)
 	{
-		verticesCount(); // validate vertices
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		poly->verticesCount(); // validate vertices
+		PolyhedronImpl *impl = (PolyhedronImpl *)poly;
 		discardInvalidVertices(impl);
 		switch (impl->type)
 		{
@@ -647,15 +647,15 @@ namespace cage
 		default:
 			CAGE_THROW_CRITICAL(Exception, "invalid polyhedron type");
 		}
-		verticesCount(); // validate vertices
+		poly->verticesCount(); // validate vertices
 	}
 
-	void Polyhedron::discardDisconnected()
+	void polyhedronDiscardDisconnected(Polyhedron *poly)
 	{
-		if (facesCount() == 0)
+		if (poly->facesCount() == 0)
 			return;
 		// todo optimized code without separateDisconnected
-		auto vec = separateDisconnected();
+		auto vec = polyhedronSeparateDisconnected(poly);
 		uint32 largestIndex = 0;
 		uint32 largestFaces = vec[0]->facesCount();
 		for (uint32 i = 1; i < vec.size(); i++)
@@ -667,23 +667,23 @@ namespace cage
 				largestIndex = i;
 			}
 		}
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		PolyhedronImpl *impl = (PolyhedronImpl *)poly;
 		PolyhedronImpl *src = (PolyhedronImpl *)vec[largestIndex].get();
 		impl->swap(*src);
 	}
 
-	Holder<PointerRange<Holder<Polyhedron>>> Polyhedron::separateDisconnected() const
+	Holder<PointerRange<Holder<Polyhedron>>> polyhedronSeparateDisconnected(const Polyhedron *poly)
 	{
-		verticesCount(); // validate vertices
-		if (facesCount() == 0)
+		poly->verticesCount(); // validate vertices
+		if (poly->facesCount() == 0)
 			return {};
-		const PolyhedronImpl *impl = (const PolyhedronImpl *)this;
+		const PolyhedronImpl *impl = (const PolyhedronImpl *)poly;
 		Holder<Polyhedron> srcCopy;
-		if (indicesCount() == 0)
+		if (poly->indicesCount() == 0)
 		{
-			srcCopy = copy();
-			srcCopy->convertToIndexed();
-			impl = (const PolyhedronImpl *)srcCopy.get();
+			srcCopy = poly->copy();
+			polyhedronConvertToIndexed(+srcCopy);
+			impl = (const PolyhedronImpl *)+srcCopy;
 		}
 		CAGE_ASSERT(!impl->indices.empty());
 

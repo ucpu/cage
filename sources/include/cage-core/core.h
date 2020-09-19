@@ -527,6 +527,13 @@ namespace cage
 
 			explicit StringBase(const PointerRange<const char> &range);
 
+			explicit StringBase(char other) noexcept
+			{
+				value[0] = other;
+				value[1] = 0;
+				current = 1;
+			}
+
 			explicit StringBase(char *other)
 			{
 				current = privat::toString(value, N, other);
@@ -802,20 +809,11 @@ namespace cage
 
 	namespace privat
 	{
-		template<class T>
-		struct HolderDereference
-		{
-			typedef T &type;
-		};
-
-		template<>
-		struct HolderDereference<void>
-		{
-			typedef void type;
-		};
+		template<class T> struct HolderDereference { typedef T &type; };
+		template<> struct HolderDereference<void> { typedef void type; };
 
 		CAGE_CORE_API bool isHolderShareable(const Delegate<void(void *)> &deleter);
-		CAGE_CORE_API void incHolderShareable(void *ptr, const Delegate<void(void *)> &deleter);
+		CAGE_CORE_API void incrementHolderShareable(void *ptr, const Delegate<void(void *)> &deleter);
 		CAGE_CORE_API void makeHolderShareable(void *&ptr, Delegate<void(void *)> &deleter);
 
 		template<class T>
@@ -885,6 +883,11 @@ namespace cage
 				return data_;
 			}
 
+			T *operator + () const noexcept
+			{
+				return data_;
+			}
+
 			void clear()
 			{
 				if (deleter_)
@@ -901,7 +904,7 @@ namespace cage
 
 			Holder<T> share() const
 			{
-				incHolderShareable(ptr_, deleter_);
+				incrementHolderShareable(ptr_, deleter_);
 				return Holder<T>(data_, ptr_, deleter_);
 			}
 
@@ -970,8 +973,8 @@ namespace cage
 		T *end_ = nullptr;
 
 	public:
-		typedef uintPtr size_type;
-		typedef T value_type;
+		using size_type = uintPtr;
+		using value_type = T;
 
 		constexpr PointerRange() noexcept = default;
 		constexpr PointerRange(const PointerRange<T> &other) noexcept = default;
@@ -995,8 +998,8 @@ namespace cage
 	struct Holder<PointerRange<T>> : public privat::HolderBase<PointerRange<T>>
 	{
 		using privat::HolderBase<PointerRange<T>>::HolderBase;
-		typedef typename PointerRange<T>::size_type size_type;
-		typedef typename PointerRange<T>::value_type value_type;
+		using size_type = typename PointerRange<T>::size_type;
+		using value_type = typename PointerRange<T>::value_type;
 
 		operator Holder<PointerRange<const T>> () &&
 		{

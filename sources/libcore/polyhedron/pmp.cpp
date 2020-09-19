@@ -71,20 +71,20 @@ namespace cage
 		}
 	}
 
-	void Polyhedron::simplify(const PolyhedronSimplificationConfig &config)
+	void polyhedronSimplify(Polyhedron *poly,  const PolyhedronSimplificationConfig &config)
 	{
-		Holder<pmp::SurfaceMesh> pm = toPmp(this);
+		Holder<pmp::SurfaceMesh> pm = toPmp(poly);
 		pmp::SurfaceRemeshing rms(*pm);
 		rms.adaptive_remeshing(config.minEdgeLength.value, config.maxEdgeLength.value, config.approximateError.value, config.iterations, config.useProjection);
-		fromPmp(this, pm);
+		fromPmp(poly, pm);
 	}
 
-	void Polyhedron::regularize(const PolyhedronRegularizationConfig &config)
+	void polyhedronRegularize(Polyhedron *poly, const PolyhedronRegularizationConfig &config)
 	{
-		Holder<pmp::SurfaceMesh> pm = toPmp(this);
+		Holder<pmp::SurfaceMesh> pm = toPmp(poly);
 		pmp::SurfaceRemeshing rms(*pm);
 		rms.uniform_remeshing(config.targetEdgeLength.value, config.iterations, config.useProjection);
-		fromPmp(this, pm);
+		fromPmp(poly, pm);
 	}
 }
 

@@ -48,9 +48,9 @@ namespace cage
 			else
 				CAGE_THROW_ERROR(Exception, "image data do not match any known signature");
 			if (channels != m)
-				convert(channels);
+				imageConvert(this, channels);
 			if (format != ImageFormatEnum::Default)
-				convert(format);
+				imageConvert(this, format);
 		}
 		catch (...)
 		{

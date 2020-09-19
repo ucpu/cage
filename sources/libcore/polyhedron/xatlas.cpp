@@ -56,32 +56,32 @@ namespace cage
 		}
 	}
 
-	uint32 Polyhedron::unwrap(const PolyhedronUnwrapConfig &config)
+	uint32 polyhedronUnwrap(Polyhedron *poly, const PolyhedronUnwrapConfig &config)
 	{
-		CAGE_ASSERT(type() == PolyhedronTypeEnum::Triangles);
+		CAGE_ASSERT(poly->type() == PolyhedronTypeEnum::Triangles);
 		CAGE_ASSERT((config.targetResolution == 0) != (config.texelsPerUnit == 0));
 
-		if (facesCount() == 0)
+		if (poly->facesCount() == 0)
 			return 0;
 
-		const bool useNormals = !normals().empty();
+		const bool useNormals = !poly->normals().empty();
 		Holder<xatlas::Atlas> atlas = newAtlas(config.logProgress);
 
 		{
 			xatlas::MeshDecl decl;
-			decl.vertexCount = verticesCount();
-			decl.vertexPositionData = positions().data();
+			decl.vertexCount = poly->verticesCount();
+			decl.vertexPositionData = poly->positions().data();
 			decl.vertexPositionStride = sizeof(vec3);
 			if (useNormals)
 			{
-				decl.vertexNormalData = normals().data();
+				decl.vertexNormalData = poly->normals().data();
 				decl.vertexNormalStride = sizeof(vec3);
 			}
-			if (indicesCount())
+			if (poly->indicesCount())
 			{
 				decl.indexFormat = xatlas::IndexFormat::UInt32;
-				decl.indexCount = indicesCount();
-				decl.indexData = indices().data();
+				decl.indexCount = poly->indicesCount();
+				decl.indexData = poly->indices().data();
 			}
 			xatlas::AddMesh(atlas.get(), decl);
 		}
@@ -126,18 +126,18 @@ namespace cage
 			for (uint32 i = 0; i < m->vertexCount; i++)
 			{
 				const xatlas::Vertex &a = m->vertexArray[i];
-				vs.push_back(position(a.xref));
+				vs.push_back(poly->position(a.xref));
 				if (useNormals)
-					ns.push_back(normal(a.xref));
+					ns.push_back(poly->normal(a.xref));
 				us.push_back(vec2(a.uv[0], a.uv[1]) * whInv);
 			}
 
-			clear();
-			positions(vs);
+			poly->clear();
+			poly->positions(vs);
 			if (useNormals)
-				normals(ns);
-			uvs(us);
-			indices({ m->indexArray, m->indexArray + m->indexCount });
+				poly->normals(ns);
+			poly->uvs(us);
+			poly->indices({ m->indexArray, m->indexArray + m->indexCount });
 			return atlas->width;
 		}
 	}

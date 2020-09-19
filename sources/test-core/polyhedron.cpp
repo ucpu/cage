@@ -49,14 +49,14 @@ namespace
 	Holder<Polyhedron> splitSphereIntoTwo(const Polyhedron *poly)
 	{
 		auto p = poly->copy();
-		p->mergeCloseVertices(1e-3);
+		polyhedronMergeCloseVertices(+p, 1e-3);
 		for (vec3 &v : p->positions())
 		{
 			real &x = v[0];
 			if (x > 2 && x < 4)
 				x = real::Nan();
 		}
-		p->discardInvalid();
+		polyhedronDiscardInvalid(+p);
 		return p;
 	}
 }
@@ -84,7 +84,7 @@ void testPolyhedron()
 	{
 		CAGE_TESTCASE("apply transformation");
 		auto p = poly->copy();
-		p->applyTransform(transform(vec3(0, 5, 0)));
+		polyhedronApplyTransform(+p, transform(vec3(0, 5, 0)));
 		approxEqual(p->boundingBox(), aabb(vec3(-10, -5, -10), vec3(10, 15, 10)));
 	}
 
@@ -92,7 +92,7 @@ void testPolyhedron()
 		CAGE_TESTCASE("discard invalid");
 		auto p = poly->copy();
 		p->position(42, vec3::Nan()); // intentionally corrupt one vertex
-		p->discardInvalid();
+		polyhedronDiscardInvalid(+p);
 		const uint32 f = p->facesCount();
 		CAGE_TEST(f > 10 && f < poly->facesCount());
 		p->exportObjFile({}, "meshes/discardInvalid.obj");
@@ -101,7 +101,7 @@ void testPolyhedron()
 	{
 		CAGE_TESTCASE("merge close vertices");
 		auto p = poly->copy();
-		p->mergeCloseVertices(1e-3);
+		polyhedronMergeCloseVertices(+p, 1e-3);
 		const uint32 f = p->facesCount();
 		CAGE_TEST(f > 10 && f < poly->facesCount());
 		p->exportObjFile({}, "meshes/mergeCloseVertices.obj");
@@ -117,7 +117,7 @@ void testPolyhedron()
 		cfg.maxEdgeLength = 2;
 		cfg.approximateError = 0.5;
 #endif
-		p->simplify(cfg);
+		polyhedronSimplify(+p, cfg);
 		p->exportObjFile({}, "meshes/simplify.obj");
 	}
 
@@ -129,7 +129,7 @@ void testPolyhedron()
 		cfg.iterations = 1;
 		cfg.targetEdgeLength = 3;
 #endif
-		p->regularize(cfg);
+		polyhedronRegularize(+p, cfg);
 		p->exportObjFile({}, "meshes/regularize.obj");
 	}
 
@@ -138,21 +138,21 @@ void testPolyhedron()
 		auto p = poly->copy();
 		PolyhedronUnwrapConfig cfg;
 		cfg.targetResolution = 256;
-		p->unwrap(cfg);
+		polyhedronUnwrap(+p, cfg);
 		p->exportObjFile({}, "meshes/unwrap.obj");
 	}
 
 	{
 		CAGE_TESTCASE("clip");
 		auto p = poly->copy();
-		p->clip(aabb(vec3(-6, -6, -10), vec3(6, 6, 10)));
+		polyhedronClip(+p, aabb(vec3(-6, -6, -10), vec3(6, 6, 10)));
 		p->exportObjFile({}, "meshes/clip.obj");
 	}
 
 	{
 		CAGE_TESTCASE("separateDisconnected");
 		auto p = splitSphereIntoTwo(poly.get());
-		auto ps = p->separateDisconnected();
+		auto ps = polyhedronSeparateDisconnected(+p);
 		// CAGE_TEST(ps.size() == 2); // todo fix this -> it should really be two but is 3
 		ps[0]->exportObjFile({}, "meshes/separateDisconnected_1.obj");
 		ps[1]->exportObjFile({}, "meshes/separateDisconnected_2.obj");
@@ -161,7 +161,7 @@ void testPolyhedron()
 	{
 		CAGE_TESTCASE("discardDisconnected");
 		auto p = splitSphereIntoTwo(poly.get());
-		p->discardDisconnected();
+		polyhedronDiscardDisconnected(+p);
 		p->exportObjFile({}, "meshes/discardDisconnected.obj");
 	}
 

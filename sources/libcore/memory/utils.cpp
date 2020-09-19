@@ -83,7 +83,7 @@ namespace cage
 			return deleter == Delegate<void(void *)>().bind<&decHolderShareable>();
 		}
 
-		void incHolderShareable(void *ptr, const Delegate<void(void *)> &deleter)
+		void incrementHolderShareable(void *ptr, const Delegate<void(void *)> &deleter)
 		{
 			CAGE_ASSERT(isHolderShareable(deleter));
 			((SharedCounter*)ptr)->cnt++;

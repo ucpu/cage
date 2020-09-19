@@ -237,7 +237,7 @@ namespace cage
 	void tgaDecode(PointerRange<const char> inBuffer, ImageImpl *impl)
 	{
 		tgaDecodeImpl(inBuffer, impl);
-		impl->verticalFlip();
+		imageVerticalFlip(impl);
 		impl->colorConfig = defaultConfig(impl->channels);
 	}
 
