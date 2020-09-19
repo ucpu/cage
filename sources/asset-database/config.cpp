@@ -39,9 +39,9 @@ void configParseCmd(int argc, const char *args[])
 	while (list->valid())
 	{
 		string n = list->name();
-		if (n.isPattern("cage-asset-database.ignoreExtensions.", "", ""))
+		if (isPattern(n, "cage-asset-database.ignoreExtensions.", "", ""))
 			configIgnoreExtensions.insert(list->getString());
-		else if (n.isPattern("cage-asset-database.ignorePaths.", "", ""))
+		else if (isPattern(n, "cage-asset-database.ignorePaths.", "", ""))
 			configIgnorePaths.insert(pathSimplify(list->getString()));
 		CAGE_LOG(SeverityEnum::Info, "config", stringizer() + n + ": " + list->getString());
 		list->next();

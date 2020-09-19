@@ -255,6 +255,6 @@ void testPointerRange()
 	{
 		CAGE_TESTCASE("constexpr pointerRange");
 		constexpr auto len = constexprFunction();
-		CAGE_TEST(len == 5);
+		CAGE_TEST(len == 4);
 	}
 }

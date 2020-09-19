@@ -44,7 +44,7 @@ namespace cage
 			cubeb *soundio = nullptr;
 			MemoryArenaGrowing<MemoryAllocatorPolicyPool<sizeof(templates::AllocatorSizeSet<void*>)>, MemoryConcurrentPolicyNone> linksMemory;
 
-			SoundContextImpl(const SoundContextCreateConfig &config, const string &name) : name(name.replace(":", "_")), linksMemory(config.linksMemory)
+			SoundContextImpl(const SoundContextCreateConfig &config, const string &name_) : name(replace(name_, ":", "_")), linksMemory(config.linksMemory)
 			{
 #ifdef CAGE_SYSTEM_WINDOWS
 				CoInitializeEx(nullptr, COINIT_MULTITHREADED);

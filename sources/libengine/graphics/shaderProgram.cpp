@@ -465,7 +465,7 @@ namespace cage
 					GLchar name[100];
 					GLint nameLen = 0;
 					glGetProgramResourceName(impl->id, GL_UNIFORM, unif, 99, &nameLen, name);
-					f->writeLine(stringizer() + values[1] + "\t" + glTypeToName(values[2]) + (values[3] > 1 ? stringizer() + "[" + values[3] + "]" : stringizer()) + " " + string(name, nameLen));
+					f->writeLine(stringizer() + values[1] + "\t" + glTypeToName(values[2]) + (values[3] > 1 ? stringizer() + "[" + values[3] + "]" : stringizer()) + " " + string({ name, name + nameLen }));
 				}
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
@@ -485,7 +485,7 @@ namespace cage
 					GLchar name[100];
 					GLint nameLen = 0;
 					glGetProgramResourceName(impl->id, GL_UNIFORM_BLOCK, block, 99, &nameLen, name);
-					f->writeLine(stringizer() + values[0] + "\t" + string(name, nameLen) + " " + values[2] + " " + values[1]);
+					f->writeLine(stringizer() + values[0] + "\t" + string({ name, name + nameLen }) + " " + values[2] + " " + values[1]);
 				}
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
@@ -511,7 +511,7 @@ namespace cage
 						GLchar name[100];
 						GLint nameLen = 0;
 						glGetProgramResourceName(impl->id, stage, routine, 99, &nameLen, name);
-						f->writeLine(stringizer() + stageIndex + "\t" + values[0] + "\t" + string(name, nameLen) + " " + values[1]);
+						f->writeLine(stringizer() + stageIndex + "\t" + values[0] + "\t" + string({ name, name + nameLen }) + " " + values[1]);
 						// enumerate compatible subroutines
 						const GLenum props2[] = { GL_COMPATIBLE_SUBROUTINES };
 						GLint values2[100];
@@ -520,7 +520,7 @@ namespace cage
 						for (GLint compat = 0; compat < numCompatibles; compat++)
 						{
 							glGetActiveSubroutineName(impl->id, stage2, values2[compat], 99, &nameLen, name);
-							f->writeLine(stringizer() + "\t\t\t" + values2[compat] + "\t" + string(name, nameLen));
+							f->writeLine(stringizer() + "\t\t\t" + values2[compat] + "\t" + string({ name, name + nameLen }));
 						}
 					}
 				}
@@ -548,7 +548,7 @@ namespace cage
 						GLchar name[100];
 						GLint nameLen = 0;
 						glGetProgramResourceName(impl->id, stage, var, 99, &nameLen, name);
-						f->writeLine(stringizer() + inoutsNames[stageIndex] + "\t" + values[0] + "\t" + values[3] + "\t" + glTypeToName(values[1]) + (values[2] > 1 ? stringizer() + "[" + values[2] + "]" : stringizer()) + " " + string(name, nameLen));
+						f->writeLine(stringizer() + inoutsNames[stageIndex] + "\t" + values[0] + "\t" + values[3] + "\t" + glTypeToName(values[1]) + (values[2] > 1 ? stringizer() + "[" + values[2] + "]" : stringizer()) + " " + string({ name, name + nameLen }));
 					}
 				}
 				CAGE_CHECK_GL_ERROR_DEBUG();

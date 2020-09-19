@@ -63,7 +63,7 @@ namespace cage
 
 	void HierarchyItem::printDebug(uint32 offset) const
 	{
-		string spaces = string().fill(offset * 4);
+		string spaces = fill(string(), offset * 4);
 		CAGE_LOG_CONTINUE(SeverityEnum::Info, "gui-debug", stringizer() + spaces + "HIERARCHY: entity: " + (ent ? ent->name() : 0u) + ", subsided: " + subsidedItem);
 		if (item)
 		{

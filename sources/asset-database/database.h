@@ -11,8 +11,8 @@
 
 using namespace cage;
 
-typedef std::set<string, stringComparatorFast> StringSet;
-typedef std::map<string, string, stringComparatorFast> StringMap;
+typedef std::set<string, StringComparatorFast> StringSet;
+typedef std::map<string, string, StringComparatorFast> StringMap;
 
 template<class T>
 struct HolderSet
@@ -124,7 +124,7 @@ struct SchemeField
 	bool applyToAssetField(string &val, const string &assetName) const;
 	inline bool operator < (const SchemeField &other) const
 	{
-		return stringComparatorFast()(name, other.name);
+		return StringComparatorFast()(name, other.name);
 	}
 };
 
@@ -141,7 +141,7 @@ struct Scheme
 	bool applyOnAsset(struct Asset &ass);
 	inline bool operator < (const Scheme &other) const
 	{
-		return stringComparatorFast()(name, other.name);
+		return StringComparatorFast()(name, other.name);
 	}
 };
 
@@ -163,7 +163,7 @@ struct Asset
 	string aliasPath() const;
 	bool operator < (const Asset &other) const
 	{
-		return stringComparatorFast()(name, other.name);
+		return StringComparatorFast()(name, other.name);
 	}
 };
 
@@ -200,7 +200,7 @@ inline void read(File *f, string &s)
 		CAGE_THROW_ERROR(Exception, "string too long");
 	char buffer[string::MaxLength];
 	f->read({ buffer, buffer + l });
-	s = string(buffer, l);
+	s = string({ buffer, buffer + l });
 }
 
 inline void write(File *f, const string &s)

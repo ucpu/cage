@@ -38,7 +38,7 @@ namespace
 
 		bool operator < (const Databank &other) const
 		{
-			return stringComparatorFast()(name, other.name);
+			return StringComparatorFast()(name, other.name);
 		}
 	};
 
@@ -86,7 +86,7 @@ namespace
 			bool propertiesOk = true;
 			for (const string &prop : items)
 			{
-				if (prop.isDigitsOnly() || prop == "scheme")
+				if (isDigitsOnly(prop) || prop == "scheme")
 					continue;
 				if (!sch->schemeFields.exists(prop))
 				{
@@ -103,7 +103,7 @@ namespace
 			// find all assets
 			for (const string &assItem : items)
 			{
-				if (!assItem.isDigitsOnly())
+				if (!isDigitsOnly(assItem))
 					continue; // not an asset
 
 				Asset ass;
@@ -142,7 +142,7 @@ namespace
 				{
 					for (const string &prop : items)
 					{
-						if (prop.isDigitsOnly() || prop == "scheme")
+						if (isDigitsOnly(prop) || prop == "scheme")
 							continue;
 						CAGE_ASSERT(sch->schemeFields.exists(prop));
 						ass.fields[prop] = ini->getString(section, prop);
@@ -221,8 +221,8 @@ namespace
 				}
 				else if (begin && !end)
 				{
-					string param = line.split("=").trim();
-					line = line.trim();
+					string param = trim(split(line, "="));
+					line = trim(line);
 					if (param == "use")
 						ass.files.insert(line);
 					else if (param == "ref")
@@ -322,7 +322,7 @@ namespace
 			for (const auto &it : items)
 			{
 				const Asset &ass = *it.second;
-				f->writeLine(stringizer() + it.first.fill(11) + (ass.corrupted ? "CORRUPTED " : "") + ass.name.fill(101) + ass.scheme.fill(16) + ass.databank.fill(31));
+				f->writeLine(stringizer() + fill(it.first, 11) + (ass.corrupted ? "CORRUPTED " : "") + fill(ass.name, 101) + fill(ass.scheme, 16) + fill(ass.databank, 31));
 			}
 		}
 
@@ -345,32 +345,32 @@ namespace
 			for (const auto &it : items)
 			{
 				const Asset &ass = *it.second;
-				f->writeLine(stringizer() + it.second->outputPath().fill(11) + (ass.corrupted ? "CORRUPTED " : "") + ass.name.fill(101) + ass.scheme.fill(16) + ass.databank.fill(31));
+				f->writeLine(stringizer() + fill(it.second->outputPath(), 11) + (ass.corrupted ? "CORRUPTED " : "") + fill(ass.name, 101) + fill(ass.scheme, 16) + fill(ass.databank, 31));
 			}
 		}
 	}
 
 	bool isNameDatabank(const string &name)
 	{
-		return name.isPattern("", "", ".assets");
+		return isPattern(name, "", "", ".assets");
 	}
 
 	bool isNameIgnored(const string &name)
 	{
 		for (const string &it : configIgnoreExtensions)
 		{
-			if (name.isPattern("", "", it))
+			if (isPattern(name, "", "", it))
 				return true;
 		}
 		for (const string &it : configIgnorePaths)
 		{
-			if (name.isPattern(it, "", ""))
+			if (isPattern(name, it, "", ""))
 				return true;
 		}
 		return false;
 	}
 
-	typedef std::map<string, uint64, stringComparatorFast> FilesMap;
+	typedef std::map<string, uint64, StringComparatorFast> FilesMap;
 	FilesMap files;
 
 	void findFiles(const string &path)
@@ -605,10 +605,10 @@ namespace
 				loadSchemesDirectory(name);
 				continue;
 			}
-			if (!name.isPattern("", "", ".scheme"))
+			if (!isPattern(name, "", "", ".scheme"))
 				continue;
 			Scheme s;
-			s.name = name.subString(0, name.length() - 7);
+			s.name = subString(name, 0, name.length() - 7);
 			CAGE_LOG(SeverityEnum::Info, "database", stringizer() + "loading scheme '" + s.name + "'");
 			Holder<Ini> ini = newIni();
 			ini->importFile(pathJoin(configPathSchemes, name));

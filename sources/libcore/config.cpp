@@ -47,14 +47,14 @@ namespace cage
 			void set(const string &value) { if (!s) s = detail::systemArena().createObject<string>(value); else *s = value; setType(ConfigTypeEnum::String); }
 			void setDynamic(const string &value)
 			{
-				if (value.isDigitsOnly())
-					set(value.toUint64());
-				else if (value.isInteger())
-					set(value.toSint64());
-				else if (value.isReal())
-					set(value.toFloat());
-				else if (value.isBool())
-					set(value.toBool());
+				if (isDigitsOnly(value))
+					set(toUint64(value));
+				else if (isInteger(value))
+					set(toSint64(value));
+				else if (isReal(value))
+					set(toFloat(value));
+				else if (isBool(value))
+					set(toBool(value));
 				else
 					set(value);
 			}
@@ -69,7 +69,7 @@ namespace cage
 			}
 		};
 
-		typedef std::map<string, Variable*, stringComparatorFast> VarsType;
+		typedef std::map<string, Variable*, StringComparatorFast> VarsType;
 
 		VarsType &directVariables()
 		{
@@ -80,7 +80,7 @@ namespace cage
 		Variable *directVariable(const string &name)
 		{
 			CAGE_ASSERT(!name.empty());
-			if (name.find(".") != m)
+			if (find(name, ".") != m)
 			{
 				CAGE_LOG(SeverityEnum::Warning, "config", stringizer() + "accessing deprecated config variable '" + name + "'");
 				CAGE_LOG(SeverityEnum::Note, "config", "new names use slashes instead of dots");
@@ -163,7 +163,7 @@ namespace cage
 			case ConfigTypeEnum::Uint64: return v->u64 != 0;
 			case ConfigTypeEnum::Float: return real(v->f) != real(0);
 			case ConfigTypeEnum::Double: return real(v->d) != real(0);
-			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return v->s->toBool();
+			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return toBool(*v->s);
 			default: return false;
 			}
 		}
@@ -180,7 +180,7 @@ namespace cage
 			case ConfigTypeEnum::Uint64: return numeric_cast<sint32>(v->u64);
 			case ConfigTypeEnum::Float:  return numeric_cast<sint32>(v->f);
 			case ConfigTypeEnum::Double: return numeric_cast<sint32>(v->d);
-			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return v->s->toSint32();
+			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return toSint32(*v->s);
 			default: return 0;
 			}
 		}
@@ -197,7 +197,7 @@ namespace cage
 			case ConfigTypeEnum::Uint64: return numeric_cast<uint32>(v->u64);
 			case ConfigTypeEnum::Float:  return numeric_cast<uint32>(v->f);
 			case ConfigTypeEnum::Double: return numeric_cast<uint32>(v->d);
-			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return v->s->toUint32();
+			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return toUint32(*v->s);
 			default: return 0;
 			}
 		}
@@ -214,7 +214,7 @@ namespace cage
 			case ConfigTypeEnum::Uint64: return numeric_cast<sint64>(v->u64);
 			case ConfigTypeEnum::Float:  return numeric_cast<sint64>(v->f);
 			case ConfigTypeEnum::Double: return numeric_cast<sint64>(v->d);
-			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return v->s->toSint64();
+			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return toSint64(*v->s);
 			default: return 0;
 			}
 		}
@@ -231,7 +231,7 @@ namespace cage
 			case ConfigTypeEnum::Uint64: return numeric_cast<uint64>(v->u64);
 			case ConfigTypeEnum::Float:  return numeric_cast<uint64>(v->f);
 			case ConfigTypeEnum::Double: return numeric_cast<uint64>(v->d);
-			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return v->s->toUint64();
+			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return toUint64(*v->s);
 			default: return 0;
 			}
 		}
@@ -248,7 +248,7 @@ namespace cage
 			case ConfigTypeEnum::Uint64: return numeric_cast<float>(v->u64);
 			case ConfigTypeEnum::Float:  return numeric_cast<float>(v->f);
 			case ConfigTypeEnum::Double: return numeric_cast<float>(v->d);
-			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return v->s->toFloat();
+			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return toFloat(*v->s);
 			default: return 0;
 			}
 		}
@@ -265,7 +265,7 @@ namespace cage
 			case ConfigTypeEnum::Uint64: return numeric_cast<double>(v->u64);
 			case ConfigTypeEnum::Float:  return numeric_cast<double>(v->f);
 			case ConfigTypeEnum::Double: return numeric_cast<double>(v->d);
-			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return v->s->toDouble();
+			case ConfigTypeEnum::String: CAGE_ASSERT(v->s); return toDouble(*v->s);
 			default: return 0;
 			}
 		}
@@ -415,16 +415,16 @@ namespace cage
 
 	void configApplyIni(const Ini *ini, const string &prefix)
 	{
-		if (prefix.find('/') != m || prefix.empty())
+		if (find(prefix, '/') != m || prefix.empty())
 			CAGE_LOG(SeverityEnum::Warning, "config", stringizer() + "dangerous config prefix '" + prefix + "'");
 		string pref = prefix.empty() ? "" : prefix + "/";
 		for (const string &section : ini->sections())
 		{
-			if (prefix.empty() && section.find('/') != m)
+			if (prefix.empty() && find(section, '/') != m)
 				CAGE_LOG(SeverityEnum::Warning, "config", stringizer() + "dangerous config section '" + section + "'");
 			for (const string &name : ini->items(section))
 			{
-				if (prefix.empty() && name.find('/') != m)
+				if (prefix.empty() && find(name, '/') != m)
 					CAGE_LOG(SeverityEnum::Warning, "config", stringizer() + "dangerous config field '" + name + "'");
 				string value = ini->getString(section, name);
 				configSetDynamic(stringizer() + pref + section + "/" + name, value);
@@ -434,16 +434,16 @@ namespace cage
 
 	Holder<Ini> configGenerateIni(const string &prefix)
 	{
-		if (prefix.find('/') != m || prefix.empty())
+		if (find(prefix, '/') != m || prefix.empty())
 			CAGE_LOG(SeverityEnum::Warning, "config", stringizer() + "dangerous config prefix '" + prefix + "'");
 		Holder<Ini> ini = newIni();
 		Holder<ConfigList> cnf = newConfigList();
 		while (cnf->valid())
 		{
-			string p = cnf->name().reverse();
-			string n = p.split("/").reverse();
-			string s = p.split("/").reverse();
-			p = p.reverse();
+			string p = reverse(cnf->name());
+			string n = reverse(split(p, "/"));
+			string s = reverse(split(p, "/"));
+			p = reverse(p);
 			if (prefix.empty())
 				ini->set(p + "/" + s, n, cnf->getString());
 			else if (p == prefix)

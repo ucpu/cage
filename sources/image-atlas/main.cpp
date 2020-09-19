@@ -49,21 +49,21 @@ void doAtlas(Holder<Ini> &cmd)
 	string prefix, suffix;
 	uint32 dollarsCount = 0;
 	{ // identify output files name format
-		uint32 firstDollar = output.find('$');
+		uint32 firstDollar = find(output, '$');
 		if (firstDollar == m)
 		{
 			suffix = pathExtractExtension(output);
-			prefix = output.subString(0, output.length() - suffix.length());
+			prefix = subString(output, 0, output.length() - suffix.length());
 		}
 		else
 		{
-			prefix = output.subString(0, firstDollar);
-			suffix = output.subString(firstDollar, m);
+			prefix = subString(output, 0, firstDollar);
+			suffix = subString(output, firstDollar, m);
 			dollarsCount = 0;
 			while (!suffix.empty() && suffix[0] == '$')
 			{
 				dollarsCount++;
-				suffix = suffix.subString(1, m);
+				suffix = subString(suffix, 1, m);
 			}
 		}
 	}
@@ -74,7 +74,7 @@ void doAtlas(Holder<Ini> &cmd)
 		while (index < count)
 		{
 			string n = stringizer() + index;
-			n = n.reverse().fill(dollarsCount, '0').reverse();
+			n = reverse(fill(reverse(n), dollarsCount, '0'));
 			string name = prefix + n + suffix;
 			cutImage(in, x + (index % cx) * w, y + (index / cx) * h, w, h, name);
 			index++;

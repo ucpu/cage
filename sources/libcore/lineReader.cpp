@@ -1,5 +1,6 @@
 #include <cage-core/lineReader.h>
 #include <cage-core/memoryBuffer.h>
+#include <cage-core/string.h>
 
 namespace cage
 {
@@ -20,10 +21,10 @@ namespace cage
 			if (len > std::numeric_limits<uint32>::max())
 				CAGE_THROW_ERROR(Exception, "line too long");
 
-			output = string(buffer, numeric_cast<uint32>(len));
+			output = string({ buffer, buffer + numeric_cast<uint32>(len) });
 
 			if (!output.empty() && output[output.length() - 1] == '\r')
-				output = output.subString(0, output.length() - 1);
+				output = subString(output, 0, output.length() - 1);
 
 			if (len == size)
 				size = 0;

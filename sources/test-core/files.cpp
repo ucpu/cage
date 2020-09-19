@@ -100,14 +100,22 @@ void testFiles()
 		CAGE_TESTCASE("create files in subsequent folders");
 		for (char a = 'a'; a < 'e'; a++)
 		{
+			string sa({ &a, &a + 1 });
 			for (char b = 'a'; b < 'e'; b++)
 			{
+				string sb({ &b, &b + 1 });
 				for (char c = 'a'; c < a; c++)
-					newFile(pathJoin(pathJoin("testdir/files", string(&a, 1)), pathJoin(string(&b, 1), string(&c, 1))), FileMode(false, true));
-				newFile(pathJoin(pathJoin("testdir/files", string(&a, 1)), pathJoin(string(&b, 1), "e")), FileMode(false, true));
+				{
+					string sc({ &c, &c + 1 });
+					newFile(pathJoin(pathJoin("testdir/files", sa), pathJoin(sb, sc)), FileMode(false, true));
+				}
+				newFile(pathJoin(pathJoin("testdir/files", sa), pathJoin(sb, "e")), FileMode(false, true));
 			}
 			for (char b = 'e'; b < 'h'; b++)
-				newFile(pathJoin(pathJoin("testdir/files", string(&a, 1)), string(&b, 1)), FileMode(false, true));
+			{
+				string sb({ &b, &b + 1 });
+				newFile(pathJoin(pathJoin("testdir/files", sa), sb), FileMode(false, true));
+			}
 		}
 	}
 
@@ -137,14 +145,14 @@ void testFiles()
 			Holder<File> f = writeFile("testdir/files/lines");
 			string s = bs;
 			while (!s.empty())
-				f->writeLine(s.split("/"));
+				f->writeLine(split(s, "/"));
 		}
 
 		{
 			Holder<File> f = readFile("testdir/files/lines");
 			string s = bs;
 			for (string line; f->readLine(line);)
-				CAGE_TEST(line == s.split("/"));
+				CAGE_TEST(line == split(s, "/"));
 			CAGE_TEST(s == "");
 		}
 	}

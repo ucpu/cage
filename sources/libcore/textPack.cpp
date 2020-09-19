@@ -1,4 +1,5 @@
 #include <cage-core/textPack.h>
+#include <cage-core/string.h>
 
 #include <map>
 
@@ -9,13 +10,13 @@ namespace cage
 		string res = format;
 		while (true)
 		{
-			string prev = res.split("{");
+			string prev = split(res, "{");
 			if (res == "")
 				return prev + res;
-			string mid = res.split("}");
-			if (mid.isDigitsOnly())
+			string mid = split(res, "}");
+			if (isDigitsOnly(mid))
 			{
-				uint32 idx = mid.toUint32();
+				uint32 idx = toUint32(mid);
 				if (idx < params.size())
 					mid = params[idx];
 				else

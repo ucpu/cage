@@ -1,6 +1,7 @@
 #include "image.h"
 
 #include <cage-core/files.h>
+#include <cage-core/string.h>
 
 namespace cage
 {
@@ -69,7 +70,7 @@ namespace cage
 	MemoryBuffer Image::exportBuffer(const string &format) const
 	{
 		CAGE_ASSERT(channels() > 0);
-		string ext = pathExtractExtension(format).toLower();
+		string ext = toLower(pathExtractExtension(format));
 		if (ext == ".png")
 			return pngEncode((ImageImpl *)this);
 		if (ext == ".jpeg" || ext == ".jpg")

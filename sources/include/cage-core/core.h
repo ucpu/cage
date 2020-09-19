@@ -90,10 +90,170 @@ namespace cage
 	using sintPtr = sint32;
 #endif
 
-	// forward declare string
+	// forward declarations
 
-	namespace detail { template<uint32 N> struct StringBase; }
+	namespace detail
+	{
+		template<uint32 N> struct StringBase;
+		template<uint32 N> struct StringizerBase;
+	}
 	using string = detail::StringBase<995>;
+	using stringizer = detail::StringizerBase<995>;
+
+	template<class T> struct PointerRange;
+
+	struct real;
+	struct rads;
+	struct degs;
+	struct vec2;
+	struct vec3;
+	struct vec4;
+	struct quat;
+	struct mat3;
+	struct mat4;
+	struct transform;
+	struct line;
+	struct triangle;
+	struct plane;
+	struct sphere;
+	struct aabb;
+	struct ivec2;
+	struct ivec3;
+	struct ivec4;
+
+	class AssetManager;
+	struct AssetManagerCreateConfig;
+	struct AssetContext;
+	struct AssetScheme;
+	struct AssetHeader;
+	struct AssetHeader;
+	enum class StereoModeEnum : uint32;
+	enum class StereoEyeEnum : uint32;
+	struct StereoCameraInput;
+	struct StereoCameraOutput;
+	class Collider;
+	struct CollisionPair;
+	class CollisionQuery;
+	class CollisionStructure;
+	struct CollisionStructureCreateConfig;
+	class Mutex;
+	class RwMutex;
+	class Barrier;
+	class Semaphore;
+	class ConditionalVariableBase;
+	class ConditionalVariable;
+	class Thread;
+	struct ConcurrentQueueTerminated;
+	template<class T> class ConcurrentQueue;
+	enum class ConfigTypeEnum : uint32;
+	struct ConfigBool;
+	struct ConfigSint32;
+	struct ConfigSint64;
+	struct ConfigUint32;
+	struct ConfigUint64;
+	struct ConfigFloat;
+	struct ConfigDouble;
+	struct ConfigString;
+	class ConfigList;
+	struct EntityComponentCreateConfig;
+	class EntityManager;
+	struct EntityManagerCreateConfig;
+	class Entity;
+	class EntityComponent;
+	class EntityGroup;
+	struct FileMode;
+	class File;
+	enum class PathTypeFlags : uint32;
+	class FilesystemWatcher;
+	class DirectoryList;
+	template<uint32 N> struct Guid;
+	struct HashString;
+	enum class ImageFormatEnum : uint32;
+	enum class GammaSpaceEnum : uint32;
+	enum class AlphaModeEnum : uint32;
+	struct ImageColorConfig;
+	class Image;
+	class Ini;
+	class LineReader;
+	class Logger;
+	class LoggerOutputFile;
+	template<class Key, class Value, class Hasher> struct LruCache;
+	class MarchingCubes;
+	struct MarchingCubesCreateConfig;
+	template<class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyLinear;
+	//template<uint8 N, class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyNFrame;
+	template<uintPtr AtomSize, class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyPool;
+	template<class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyQueue;
+	template<class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyStack;
+	template<class AllocatorPolicy, class ConcurrentPolicy> struct MemoryArenaFixed;
+	template<class AllocatorPolicy, class ConcurrentPolicy> struct MemoryArenaGrowing;
+	template<class T> struct MemoryArenaStd;
+	struct MemoryBoundsPolicyNone;
+	struct MemoryBoundsPolicySimple;
+	struct MemoryTagPolicyNone;
+	struct MemoryTagPolicySimple;
+	struct MemoryTrackPolicyNone;
+	struct MemoryTrackPolicySimple;
+	struct MemoryTrackPolicyAdvanced;
+	struct MemoryConcurrentPolicyNone;
+	struct MemoryConcurrentPolicyMutex;
+	struct OutOfMemory;
+	class VirtualMemory;
+	struct MemoryBuffer;
+	struct Disconnected;
+	class TcpConnection;
+	class TcpServer;
+	struct UdpStatistics;
+	class UdpConnection;
+	class UdpServer;
+	struct DiscoveryPeer;
+	class DiscoveryClient;
+	class DiscoveryServer;
+	enum class NoiseTypeEnum : uint32;
+	enum class NoiseInterpolationEnum : uint32;
+	enum class NoiseFractalTypeEnum : uint32;
+	enum class NoiseDistanceEnum : uint32;
+	enum class NoiseOperationEnum : uint32;
+	class NoiseFunction;
+	struct NoiseFunctionCreateConfig;
+	template<class T> struct PointerRangeHolder;
+	enum class PolyhedronTypeEnum;
+	struct PolyhedronSimplificationConfig;
+	struct PolyhedronRegularizationConfig;
+	struct PolyhedronUnwrapConfig;
+	struct PolyhedronTextureGenerationConfig;
+	struct PolyhedronNormalsGenerationConfig;
+	struct PolyhedronTangentsGenerationConfig;
+	struct PolyhedronObjExportConfig;
+	class Polyhedron;
+	struct ProcessCreateConfig;
+	class Process;
+	struct RandomGenerator;
+	class RectPacking;
+	struct RectPackingCreateConfig;
+	enum class ScheduleTypeEnum : uint32;
+	struct ScheduleCreateConfig;
+	class Schedule;
+	struct SchedulerCreateConfig;
+	class Scheduler;
+	template<class T> struct ScopeLock;
+	struct Serializer;
+	struct Deserializer;
+	class SkeletalAnimation;
+	class SkeletonRig;
+	class SpatialQuery;
+	class SpatialStructure;
+	struct SpatialStructureCreateConfig;
+	class BufferIStream;
+	class BufferOStream;
+	class SwapBufferGuard;
+	struct SwapBufferGuardCreateConfig;
+	class TextPack;
+	class ThreadPool;
+	class Timer;
+	struct InvalidUtfString;
+	template<class T, class F> struct VariableInterpolatingBuffer;
+	template<class T, uint32 N = 16> struct VariableSmoothingBuffer;
 
 	// severity, makeLog, runtimeAssertFailure
 
@@ -312,168 +472,13 @@ namespace cage
 		sint64 code = 0;
 	};
 
-	// forward declarations
-
-	struct real;
-	struct rads;
-	struct degs;
-	struct vec2;
-	struct vec3;
-	struct vec4;
-	struct quat;
-	struct mat3;
-	struct mat4;
-	struct transform;
-	struct line;
-	struct triangle;
-	struct plane;
-	struct sphere;
-	struct aabb;
-	struct ivec2;
-	struct ivec3;
-	struct ivec4;
-
-	class AssetManager;
-	struct AssetManagerCreateConfig;
-	struct AssetContext;
-	struct AssetScheme;
-	struct AssetHeader;
-	struct AssetHeader;
-	enum class StereoModeEnum : uint32;
-	enum class StereoEyeEnum : uint32;
-	struct StereoCameraInput;
-	struct StereoCameraOutput;
-	class Collider;
-	struct CollisionPair;
-	class CollisionQuery;
-	class CollisionStructure;
-	struct CollisionStructureCreateConfig;
-	class Mutex;
-	class RwMutex;
-	class Barrier;
-	class Semaphore;
-	class ConditionalVariableBase;
-	class ConditionalVariable;
-	class Thread;
-	struct ConcurrentQueueTerminated;
-	template<class T> class ConcurrentQueue;
-	enum class ConfigTypeEnum : uint32;
-	struct ConfigBool;
-	struct ConfigSint32;
-	struct ConfigSint64;
-	struct ConfigUint32;
-	struct ConfigUint64;
-	struct ConfigFloat;
-	struct ConfigDouble;
-	struct ConfigString;
-	class ConfigList;
-	struct EntityComponentCreateConfig;
-	class EntityManager;
-	struct EntityManagerCreateConfig;
-	class Entity;
-	class EntityComponent;
-	class EntityGroup;
-	struct FileMode;
-	class File;
-	enum class PathTypeFlags : uint32;
-	class FilesystemWatcher;
-	class DirectoryList;
-	template<uint32 N> struct Guid;
-	struct HashString;
-	enum class ImageFormatEnum : uint32;
-	enum class GammaSpaceEnum : uint32;
-	enum class AlphaModeEnum : uint32;
-	struct ImageColorConfig;
-	class Image;
-	class Ini;
-	class LineReader;
-	class Logger;
-	class LoggerOutputFile;
-	template<class Key, class Value, class Hasher> struct LruCache;
-	class MarchingCubes;
-	struct MarchingCubesCreateConfig;
-	template<class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyLinear;
-	//template<uint8 N, class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyNFrame;
-	template<uintPtr AtomSize, class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyPool;
-	template<class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyQueue;
-	template<class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyStack;
-	template<class AllocatorPolicy, class ConcurrentPolicy> struct MemoryArenaFixed;
-	template<class AllocatorPolicy, class ConcurrentPolicy> struct MemoryArenaGrowing;
-	template<class T> struct MemoryArenaStd;
-	struct MemoryBoundsPolicyNone;
-	struct MemoryBoundsPolicySimple;
-	struct MemoryTagPolicyNone;
-	struct MemoryTagPolicySimple;
-	struct MemoryTrackPolicyNone;
-	struct MemoryTrackPolicySimple;
-	struct MemoryTrackPolicyAdvanced;
-	struct MemoryConcurrentPolicyNone;
-	struct MemoryConcurrentPolicyMutex;
-	struct OutOfMemory;
-	class VirtualMemory;
-	struct MemoryBuffer;
-	struct Disconnected;
-	class TcpConnection;
-	class TcpServer;
-	struct UdpStatistics;
-	class UdpConnection;
-	class UdpServer;
-	struct DiscoveryPeer;
-	class DiscoveryClient;
-	class DiscoveryServer;
-	enum class NoiseTypeEnum : uint32;
-	enum class NoiseInterpolationEnum : uint32;
-	enum class NoiseFractalTypeEnum : uint32;
-	enum class NoiseDistanceEnum : uint32;
-	enum class NoiseOperationEnum : uint32;
-	class NoiseFunction;
-	struct NoiseFunctionCreateConfig;
-	template<class T> struct PointerRangeHolder;
-	enum class PolyhedronTypeEnum;
-	struct PolyhedronSimplificationConfig;
-	struct PolyhedronRegularizationConfig;
-	struct PolyhedronUnwrapConfig;
-	struct PolyhedronTextureGenerationConfig;
-	struct PolyhedronNormalsGenerationConfig;
-	struct PolyhedronTangentsGenerationConfig;
-	struct PolyhedronObjExportConfig;
-	class Polyhedron;
-	struct ProcessCreateConfig;
-	class Process;
-	struct RandomGenerator;
-	class RectPacking;
-	struct RectPackingCreateConfig;
-	enum class ScheduleTypeEnum : uint32;
-	struct ScheduleCreateConfig;
-	class Schedule;
-	struct SchedulerCreateConfig;
-	class Scheduler;
-	template<class T> struct ScopeLock;
-	struct Serializer;
-	struct Deserializer;
-	class SkeletalAnimation;
-	class SkeletonRig;
-	class SpatialQuery;
-	class SpatialStructure;
-	struct SpatialStructureCreateConfig;
-	class BufferIStream;
-	class BufferOStream;
-	class SwapBufferGuard;
-	struct SwapBufferGuardCreateConfig;
-	class TextPack;
-	class ThreadPool;
-	class Timer;
-	struct InvalidUtfString;
-	template<class T, class F> struct VariableInterpolatingBuffer;
-	template<class T, uint32 N = 16> struct VariableSmoothingBuffer;
-
 	// string
 
 	namespace privat
 	{
 #define GCHL_GENERATE(TYPE) \
 		CAGE_CORE_API uint32 toString(char *s, uint32 n, TYPE value); \
-		CAGE_CORE_API void fromString(const char *s, uint32 n, TYPE &value);
+		CAGE_CORE_API void fromString(const PointerRange<const char> &str, TYPE &value);
 		GCHL_GENERATE(sint8);
 		GCHL_GENERATE(sint16);
 		GCHL_GENERATE(sint32);
@@ -505,41 +510,31 @@ namespace cage
 		{
 			// constructors
 			StringBase() noexcept
-			{
-				data[current] = 0;
-			}
+			{}
 
 			template<uint32 M>
 			StringBase(const StringBase<M> &other)
 			{
-				if (other.current > N)
+				if (other.length() > N)
 					CAGE_THROW_ERROR(Exception, "string truncation");
-				current = other.current;
-				detail::memcpy(data, other.data, current);
-				data[current] = 0;
+				current = other.length();
+				detail::memcpy(value, other.c_str(), current);
+				value[current] = 0;
 			}
 
 			template<uint32 M>
 			StringBase(const StringizerBase<M> &other);
 
-			// todo replace with PointerRange<const char>
-			explicit StringBase(const char *pos, uint32 len)
-			{
-				if (len > N)
-					CAGE_THROW_ERROR(Exception, "string truncation");
-				current = len;
-				detail::memcpy(data, pos, len);
-				data[current] = 0;
-			}
+			explicit StringBase(const PointerRange<const char> &range);
 
 			explicit StringBase(char *other)
 			{
-				current = privat::toString(data, N, other);
+				current = privat::toString(value, N, other);
 			}
 
 			StringBase(const char *other)
 			{
-				current = privat::toString(data, N, other);
+				current = privat::toString(value, N, other);
 			}
 
 			// compound operators
@@ -547,9 +542,9 @@ namespace cage
 			{
 				if (current + other.current > N)
 					CAGE_THROW_ERROR(Exception, "string truncation");
-				detail::memcpy(data + current, other.data, other.current);
+				detail::memcpy(value + current, other.value, other.current);
 				current += other.current;
-				data[current] = 0;
+				value[current] = 0;
 				return *this;
 			}
 
@@ -562,58 +557,35 @@ namespace cage
 			char &operator [] (uint32 idx)
 			{
 				CAGE_ASSERT(idx < current);
-				return data[idx];
+				return value[idx];
 			}
 
 			char operator [] (uint32 idx) const
 			{
 				CAGE_ASSERT(idx < current);
-				return data[idx];
+				return value[idx];
 			}
 
 			// methods
 			const char *c_str() const
 			{
-				CAGE_ASSERT(data[current] == 0);
-				return data;
+				CAGE_ASSERT(value[current] == 0);
+				return value;
 			}
 
-			StringBase reverse() const;
-			StringBase subString(uint32 start, uint32 length) const;
-			StringBase replace(const StringBase &what, const StringBase &with) const;
-			StringBase replace(uint32 start, uint32 length, const StringBase &with) const;
-			StringBase remove(uint32 start, uint32 length) const;
-			StringBase insert(uint32 start, const StringBase &what) const;
-			StringBase trim(bool left = true, bool right = true, const StringBase &trimChars = "\t\n ") const;
-			StringBase split(const StringBase &splitChars = "\t\n ");
-			StringBase fill(uint32 size, char c = ' ') const;
-			uint32 find(const StringBase &other, uint32 offset = 0) const;
-			uint32 find(char other, uint32 offset = 0) const;
-			StringBase encodeUrl() const;
-			StringBase decodeUrl() const;
-			StringBase toUpper() const;
-			StringBase toLower() const;
-			float toFloat() const;
-			double toDouble() const;
-			sint32 toSint32() const;
-			uint32 toUint32() const;
-			sint64 toSint64() const;
-			uint64 toUint64() const;
-			bool toBool() const;
-			bool isPattern(const StringBase &prefix, const StringBase &infix, const StringBase &suffix) const;
-			bool isDigitsOnly() const noexcept;
-			bool isInteger() const noexcept;
-			bool isReal() const noexcept;
-			bool isBool() const noexcept;
-
-			bool empty() const noexcept
+			const char *begin() const noexcept
 			{
-				return current == 0;
+				return value;
 			}
 
-			uint32 length() const noexcept
+			const char *end() const noexcept
 			{
-				return current;
+				return value + current;
+			}
+
+			const char *data() const noexcept
+			{
+				return value;
 			}
 
 			uint32 size() const noexcept
@@ -621,40 +593,36 @@ namespace cage
 				return current;
 			}
 
-			char *begin() noexcept
+			uint32 length() const noexcept
 			{
-				return data;
+				return current;
 			}
 
-			char *end() noexcept
+			bool empty() const noexcept
 			{
-				return data + current;
+				return current == 0;
 			}
 
-			const char *begin() const noexcept
+			char *rawData() noexcept
 			{
-				return data;
+				return value;
 			}
 
-			const char *end() const noexcept
+			uint32 &rawLength() noexcept
 			{
-				return data + current;
+				return current;
 			}
 
 			static constexpr uint32 MaxLength = N;
+			using value_type = char;
 
 		private:
-			char data[N + 1];
+			char value[N + 1] = {};
 			uint32 current = 0;
-
-			template<uint32 M>
-			friend struct StringBase;
-			template<uint32 M>
-			friend struct StringizerBase;
 		};
 
 		template<uint32 Na, uint32 Nb>
-		int compare(const StringBase<Na> &a, const StringBase<Nb> &b) noexcept
+		inline int compare(const StringBase<Na> &a, const StringBase<Nb> &b) noexcept
 		{
 			return privat::stringComparison(a.c_str(), a.size(), b.c_str(), b.size());
 		}
@@ -700,7 +668,7 @@ namespace cage
 			StringizerBase<N> &operator + (TYPE other) \
 			{ \
 				StringBase<20> tmp; \
-				tmp.current = privat::toString(tmp.data, 20, other); \
+				tmp.rawLength() = privat::toString(tmp.rawData(), 20, other); \
 				return *this + tmp; \
 			}
 			GCHL_GENERATE(sint8);
@@ -718,7 +686,7 @@ namespace cage
 
 			// allow to use l-value-reference operator overloads with r-value-reference stringizer
 			template<class T>
-			inline StringizerBase<N> &operator + (const T &other) &&
+			StringizerBase<N> &operator + (const T &other) &&
 			{
 				return *this + other;
 			}
@@ -728,9 +696,6 @@ namespace cage
 		inline StringBase<N>::StringBase(const StringizerBase<M> &other) : StringBase(other.value)
 		{}
 	}
-
-	using string = detail::StringBase<995>;
-	using stringizer = detail::StringizerBase<995>;
 
 	// delegates
 
@@ -991,6 +956,12 @@ namespace cage
 
 	// pointer range
 
+	namespace privat
+	{
+		template<class K> struct TerminalZero { static constexpr int value = 0; };
+		template<> struct TerminalZero<char> { static constexpr int value = -1; };
+	}
+
 	template<class T>
 	struct PointerRange
 	{
@@ -1006,7 +977,7 @@ namespace cage
 		constexpr PointerRange(const PointerRange<T> &other) noexcept = default;
 		constexpr PointerRange(T *begin, T *end) noexcept : begin_(begin), end_(end) {}
 		template<uint32 N>
-		constexpr PointerRange(T (&arr)[N]) noexcept : begin_(arr), end_(arr + N) {}
+		constexpr PointerRange(T (&arr)[N]) noexcept : begin_(arr), end_(arr + N + privat::TerminalZero<std::remove_cv_t<T>>::value) {}
 		template<class U, std::enable_if_t<std::is_same<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>::value, int> = 0>
 		constexpr PointerRange(U &other) : begin_(other.data()), end_(other.data() + other.size()) {}
 		template<class U, std::enable_if_t<std::is_same<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>::value, int> = 0>
@@ -1042,6 +1013,19 @@ namespace cage
 		T &operator[] (size_type idx) const { CAGE_ASSERT(idx < size()); return begin()[idx]; }
 	};
 
+	namespace detail
+	{
+		template<uint32 N>
+		StringBase<N>::StringBase(const PointerRange<const char> &range)
+		{
+			if (range.size() > N)
+				CAGE_THROW_ERROR(Exception, "string truncation");
+			current = numeric_cast<uint32>(range.size());
+			detail::memcpy(value, range.data(), range.size());
+			value[current] = 0;
+		}
+	}
+
 	// memory arena
 
 	namespace privat
@@ -1072,8 +1056,8 @@ namespace cage
 		struct Stub
 		{
 			void *(*alloc)(void *, uintPtr, uintPtr);
-			void(*dealloc)(void *, void *);
-			void(*fls)(void *);
+			void (*dealloc)(void *, void *);
+			void (*fls)(void *);
 
 			template<class A>
 			static void *allocate(void *inst, uintPtr size, uintPtr alignment)

@@ -20,7 +20,7 @@ namespace cage
 		class FilesystemWatcherImpl : public FilesystemWatcher, public FW::FileWatchListener
 		{
 		public:
-			std::set<string, stringComparatorFast> files;
+			std::set<string, StringComparatorFast> files;
 			Holder<FW::FileWatcher> fw;
 			Holder<Timer> clock;
 

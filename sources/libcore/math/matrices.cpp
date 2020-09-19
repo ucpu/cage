@@ -9,7 +9,7 @@ namespace cage
 		mat3 data;
 		string s = privat::tryRemoveParentheses(str);
 		for (uint32 i = 0; i < 9; i++)
-			data[i] = privat::mathSplit(s).toFloat();
+			data[i] = toFloat(privat::mathSplit(s));
 		if (!s.empty())
 			CAGE_THROW_ERROR(Exception, "error parsing mat3");
 		return data;
@@ -133,7 +133,7 @@ namespace cage
 		mat4 data;
 		string s = privat::tryRemoveParentheses(str);
 		for (uint32 i = 0; i < 16; i++)
-			data[i] = privat::mathSplit(s).toFloat();
+			data[i] = toFloat(privat::mathSplit(s));
 		if (!s.empty())
 			CAGE_THROW_ERROR(Exception, "error parsing mat4");
 		return data;

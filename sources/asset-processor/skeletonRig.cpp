@@ -33,7 +33,7 @@ namespace
 			else
 				detail += string("no bone");
 		}
-		CAGE_LOG_CONTINUE(SeverityEnum::Info, logComponentName, string().fill(offset, '\t') + detail);
+		CAGE_LOG_CONTINUE(SeverityEnum::Info, logComponentName, fill(string(), offset, '\t') + detail);
 		for (uint32 i = 0; i < n->mNumChildren; i++)
 			printHierarchy(skeleton, n->mChildren[i], offset + 1);
 	}

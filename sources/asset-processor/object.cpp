@@ -30,15 +30,15 @@ void processObject()
 	uint32 totalMeshes = 0;
 	for (const string &section : ini->sections())
 	{
-		if (!section.isDigitsOnly())
+		if (!isDigitsOnly(section))
 			continue;
 		Lod ls;
-		ls.index = section.toUint32();
+		ls.index = toUint32(section);
 		ls.threshold = ini->getFloat(section, "threshold", real::Nan().value);
 		for (const string &n : ini->items(section))
 		{
 			string v = ini->getString(section, n);
-			if (!n.isDigitsOnly())
+			if (!isDigitsOnly(n))
 				continue;
 			v = pathJoin(basePath, v);
 			uint32 h = HashString(v.c_str());

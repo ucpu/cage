@@ -30,7 +30,7 @@ namespace cage
 
 			SpeakerImpl(SoundContext *context, const SpeakerCreateConfig &config, const string &name_) :
 				BusInterface(Delegate<void(MixingBus *)>().bind<SpeakerImpl, &SpeakerImpl::busDestroyed>(this), {}),
-				name(name_.replace(":", "_")), context(context)
+				name(replace(name_, ":", "_")), context(context)
 			{
 				CAGE_LOG(SeverityEnum::Info, "sound", stringizer() + "creating speaker, name: '" + name + "'");
 				cubeb *snd = soundioFromContext(context);

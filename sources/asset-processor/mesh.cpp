@@ -32,7 +32,7 @@ namespace
 {
 	void setFlags(MeshDataFlags &flags, MeshDataFlags idx, bool available, const char *name)
 	{
-		bool requested = properties(name).toBool();
+		bool requested = toBool(properties(name));
 		if (requested && !available)
 		{
 			CAGE_LOG(SeverityEnum::Note, "exception", cage::string("requested feature: ") + name);
@@ -68,8 +68,8 @@ namespace
 		aiString texAsName;
 		m->GetTexture(tt, 0, &texAsName, nullptr, nullptr, nullptr, nullptr, nullptr);
 		cage::string tn = texAsName.C_Str();
-		if (tn.isPattern("//", "", ""))
-			tn = string() + "./" + tn.subString(2, cage::m);
+		if (isPattern(tn, "//", "", ""))
+			tn = string() + "./" + subString(tn, 2, cage::m);
 		cage::string n = pathJoin(pathExtractPath(inputName), tn);
 		dsm.textureNames[usage] = HashString(n.c_str());
 		writeLine(string("ref = ") + n);
@@ -370,7 +370,7 @@ namespace
 		}
 		if (!n.valid())
 		{
-			static bool passInvalid = properties("passInvalidNormals").toBool();
+			static bool passInvalid = toBool(properties("passInvalidNormals"));
 			if (passInvalid)
 			{
 				CAGE_LOG(SeverityEnum::Warning, logComponentName, stringizer() + "pass invalid " + name + ": " + n);
@@ -410,9 +410,9 @@ void processMesh()
 	Holder<AssimpContext> context;
 	{
 		uint32 addFlags = 0;
-		if (properties("normals").toBool())
+		if (toBool(properties("normals")))
 			addFlags |= aiProcess_GenSmoothNormals;
-		if (properties("tangents").toBool())
+		if (toBool(properties("tangents")))
 			addFlags |= aiProcess_CalcTangentSpace;
 		context = newAssimpContext(addFlags, 0);
 	}
@@ -454,7 +454,7 @@ void processMesh()
 
 	loadSkeletonName(dsm, flags);
 
-	dsm.instancesLimitHint = properties("instancesLimit").toUint32();
+	dsm.instancesLimitHint = toUint32(properties("instancesLimit"));
 
 	MeshHeader::MaterialData mat;
 	loadMaterial(scene, am, dsm, mat);

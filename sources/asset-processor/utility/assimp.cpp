@@ -240,8 +240,8 @@ namespace
 		void write(const char* message) override
 		{
 			string m = message;
-			if (m.isPattern("", "", "\n"))
-				m = m.subString(0, m.length() - 1);
+			if (isPattern(m, "", "", "\n"))
+				m = subString(m, 0, m.length() - 1);
 			CAGE_LOG(severity, "assimp", m);
 		}
 	};
@@ -292,7 +292,7 @@ namespace
 				uint32 flags = assimpDefaultLoadFlags;
 				if (string(logComponentName) != "analyze")
 				{
-					if (properties("bakeModel").toBool())
+					if (toBool(properties("bakeModel")))
 						flags |= assimpBakeLoadFlags;
 				}
 				flags |= addFlags;
@@ -463,9 +463,9 @@ uint32 AssimpContext::selectMesh() const
 		CAGE_LOG(SeverityEnum::Note, "selectMesh", "using the first mesh, because it is the only mesh available");
 		return 0;
 	}
-	if (inputSpec.isDigitsOnly() && !inputSpec.empty())
+	if (isDigitsOnly(inputSpec) && !inputSpec.empty())
 	{
-		uint32 n = inputSpec.toUint32();
+		uint32 n = toUint32(inputSpec);
 		if (n < scene->mNumMeshes)
 		{
 			CAGE_LOG(SeverityEnum::Note, "selectMesh", stringizer() + "using mesh index " + n + ", because the input specifier is numeric");
@@ -622,7 +622,7 @@ quat conv(const aiQuaternion &q)
 
 mat3 axesMatrix()
 {
-	string axes = properties("axes").toLower();
+	string axes = toLower(properties("axes"));
 	if (axes.empty() || axes == "+x+y+z")
 		return mat3();
 	if (axes.length() != 6)
@@ -674,5 +674,5 @@ mat3 axesMatrix()
 
 mat3 axesScaleMatrix()
 {
-	return axesMatrix() * properties("scale").toFloat();
+	return axesMatrix() * toFloat(properties("scale"));
 }

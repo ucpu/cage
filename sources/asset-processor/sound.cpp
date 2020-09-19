@@ -68,7 +68,7 @@ namespace
 			if (ret != 0)
 				CAGE_THROW_ERROR(SystemError, "ogg_stream_init", ret);
 			vorbis_info_init(&vi);
-			ret = vorbis_encode_init_vbr(&vi, sds.channels, sds.sampleRate, properties("compressQuality").toFloat());
+			ret = vorbis_encode_init_vbr(&vi, sds.channels, sds.sampleRate, toFloat(properties("compressQuality")));
 			if (ret != 0)
 				CAGE_THROW_ERROR(SystemError, "vorbis_encode_init_vbr", ret);
 			vorbis_comment_init(&vc);
@@ -206,9 +206,9 @@ namespace
 
 	void decodeAll()
 	{
-		if (inputFile.isPattern("", "", ".flac"))
+		if (isPattern(inputFile, "", "", ".flac"))
 			decodeFlac();
-		else if (inputFile.isPattern("", "", ".wav"))
+		else if (isPattern(inputFile, "", "", ".wav"))
 			decodeWav();
 		else
 			decodeVorbis();
@@ -221,13 +221,13 @@ void processSound()
 
 	decodeAll();
 
-	if (properties("loopBefore").toBool())
+	if (toBool(properties("loopBefore")))
 		sds.flags = sds.flags | SoundFlags::LoopBeforeStart;
-	if (properties("loopAfter").toBool())
+	if (toBool(properties("loopAfter")))
 		sds.flags = sds.flags | SoundFlags::LoopAfterEnd;
-	if (sds.frames * sds.channels * sizeof(float) < properties("compressThreshold").toUint32())
+	if (sds.frames * sds.channels * sizeof(float) < toUint32(properties("compressThreshold")))
 		sds.soundType = SoundTypeEnum::RawRaw;
-	else if (properties("stream").toBool())
+	else if (toBool(properties("stream")))
 		sds.soundType = SoundTypeEnum::CompressedCompressed;
 	else
 		sds.soundType = SoundTypeEnum::CompressedRaw;

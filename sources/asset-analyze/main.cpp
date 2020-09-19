@@ -54,8 +54,8 @@ namespace
 					ignore = true;
 				else if (!ignore)
 				{
-					string a = line.split("=").trim();
-					string b = line.trim();
+					string a = trim(split(line, "="));
+					string b = trim(line);
 					if (a == "scheme")
 						scheme = b;
 					else if (a == "asset")

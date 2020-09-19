@@ -137,11 +137,11 @@ namespace cage
 
 	string utf32to8string(PointerRange<const uint32> inBuffer)
 	{
-		if (utf8Length(inBuffer) >= string::MaxLength)
+		if (utf8Length(inBuffer) > string::MaxLength)
 			CAGE_THROW_ERROR(Exception, "utf string too long");
 		char buff[string::MaxLength];
 		PointerRange<char> pr = { buff, buff + string::MaxLength - 1 };
 		utf32to8(pr, inBuffer);
-		return string(pr.data(), numeric_cast<uint32>(pr.size()));
+		return string(pr);
 	}
 }

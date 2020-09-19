@@ -18,7 +18,7 @@ void processPack()
 	{
 		for (const string &n : ini->items(section))
 		{
-			if (!n.isDigitsOnly())
+			if (!isDigitsOnly(n))
 				CAGE_THROW_ERROR(Exception, "invalid asset pack definition");
 			string v = ini->get(section, n);
 			v = pathJoin(pathExtractPath(inputName), v);

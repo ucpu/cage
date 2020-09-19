@@ -12,6 +12,7 @@
 #include <cage-core/assetManager.h>
 #include <cage-core/unordered_map.h>
 #include <cage-core/debug.h>
+#include <cage-core/string.h>
 
 #include <optick.h>
 
@@ -963,7 +964,7 @@ namespace cage
 		string name = name_;
 		constexpr uint32 maxTexName = sizeof(a.textName);
 		if (name.length() >= maxTexName)
-			name = string() + ".." + name.subString(name.length() - maxTexName - 3, maxTexName - 3);
+			name = string() + ".." + subString(name, name.length() - maxTexName - 3, maxTexName - 3);
 		CAGE_ASSERT(name.length() < sizeof(a.textName));
 		detail::memcpy(a.textName, name.c_str(), name.length());
 		a.scheme = schemeIndex;

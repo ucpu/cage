@@ -2,7 +2,6 @@
 #include <cage-core/math.h>
 #include <cage-core/files.h>
 #include <cage-core/hashString.h>
-#include <cage-core/string.h>
 
 #include <cstring>
 #include <map>
@@ -105,166 +104,200 @@ namespace
 				CAGE_TEST(a[i] == tmp[i]);
 		}
 		{
+			CAGE_TESTCASE("pointer range");
+			{
+				PointerRange<const char> r = "kokos"; // todo fix does not work with constexpr!
+				CAGE_TEST(r.size() == 5); // the terminal zero is automatically removed
+				CAGE_TEST(r[0] == 'k');
+			}
+			{
+				PointerRange<const char> r = "kokos"; // todo fix does not work with constexpr!
+				const string s = string(r);
+				CAGE_TEST(s.size() == 5);
+				CAGE_TEST(s[0] == 'k');
+			}
+			{
+				string s = "kokos";
+				CAGE_TEST(s.size() == 5);
+				CAGE_TEST(s[0] == 'k');
+			}
+			{
+				string s = string("kokos");
+				CAGE_TEST(s.size() == 5);
+				CAGE_TEST(s[0] == 'k');
+			}
+			{
+				const string str = "lorem ipsum";
+				PointerRange<const char> rs = str;
+				CAGE_TEST(rs.size() == str.size());
+				CAGE_TEST(rs.begin() == str.begin());
+			}
+		}
+		{
 			CAGE_TESTCASE("reverse");
-			CAGE_TEST(string().reverse() == "");
-			CAGE_TEST(string("ahoj").reverse() == "joha");
-			CAGE_TEST(string("nazdar").reverse() == "radzan");
-			CAGE_TEST(string("omega").reverse() == "agemo");
+			CAGE_TEST(reverse(string()) == "");
+			CAGE_TEST(reverse(string("ahoj")) == "joha");
+			CAGE_TEST(reverse(string("nazdar")) == "radzan");
+			CAGE_TEST(reverse(string("omega")) == "agemo");
 		}
 		{
 			CAGE_TESTCASE("tolower, toupper");
-			CAGE_TEST(string("AlMachNa").toLower() == "almachna");
-			CAGE_TEST(string("AlMachNa").toUpper() == "ALMACHNA");
+			CAGE_TEST(toLower(string("AlMachNa")) == "almachna");
+			CAGE_TEST(toUpper(string("AlMachNa")) == "ALMACHNA");
 		}
 		{
 			CAGE_TESTCASE("substring, remove, insert");
-			CAGE_TEST(string("almachna").subString(2, 4) == "mach");
-			CAGE_TEST(string("almachna").subString(0, 3) == "alm");
-			CAGE_TEST(string("almachna").subString(5, 3) == "hna");
-			CAGE_TEST(string("almachna").subString(0, 8) == "almachna");
-			CAGE_TEST(string("almachna").remove(2, 4) == "alna");
-			CAGE_TEST(string("almachna").insert(2, "orangutan") == "alorangutanmachna");
-			CAGE_TEST(string(" al ma\nch\tn a\n \t  ").trim() == "al ma\nch\tn a");
+			CAGE_TEST(subString(string("almachna"), 2, 4) == "mach");
+			CAGE_TEST(subString(string("almachna"), 0, 3) == "alm");
+			CAGE_TEST(subString(string("almachna"), 5, 3) == "hna");
+			CAGE_TEST(subString(string("almachna"), 0, 8) == "almachna");
+			CAGE_TEST(subString(string("almachna"), 5, 5) == "hna");
+			CAGE_TEST(subString(string("almachna"), 0, 10) == "almachna");
+			CAGE_TEST(subString(string("almachna"), 5, m) == "hna");
+			CAGE_TEST(subString(string("almachna"), 10, 3) == "");
+			CAGE_TEST(remove(string("almachna"), 2, 4) == "alna");
+			CAGE_TEST(insert(string("almachna"), 2, "orangutan") == "alorangutanmachna");
+			CAGE_TEST(trim(string(" al ma\nch\tn a\n \t  ")) == "al ma\nch\tn a");
 		}
 		{
 			CAGE_TESTCASE("replace");
 			const string c = "ahojnazdar";
-			string d = c.replace(2, 3, "");
+			string d = replace(c, 2, 3, "");
 			CAGE_TEST(d == "ahazdar");
 			CAGE_TEST(d.length() == 7);
-			string e = c.replace(1, 8, "ka");
+			string e = replace(c, 1, 8, "ka");
 			CAGE_TEST(e == "akar");
 			CAGE_TEST(e.length() == 4);
-			CAGE_TEST(c.replace("ahoj", "nazdar") == "nazdarnazdar");
-			CAGE_TEST(c.replace("a", "zu") == "zuhojnzuzdzur");
-			CAGE_TEST(c.replace("nazdar", "ahoj") == "ahojahoj");
-			CAGE_TEST(string("rakokokokodek").replace("ko", "") == "radek");
-			CAGE_TEST(string("rakokokokodek").replace("o", "oo") == "rakookookookoodek");
+			CAGE_TEST(replace(c, "ahoj", "nazdar") == "nazdarnazdar");
+			CAGE_TEST(replace(c, "a", "zu") == "zuhojnzuzdzur");
+			CAGE_TEST(replace(c, "nazdar", "ahoj") == "ahojahoj");
+			CAGE_TEST(replace(string("rakokokokodek"), "ko", "") == "radek");
+			CAGE_TEST(replace(string("rakokokokodek"), "o", "oo") == "rakookookookoodek");
 		}
 		{
 			CAGE_TESTCASE("split");
 			string f = "ab\ne\n\nced\na\n";
-			CAGE_TEST(f.split() == "ab");
+			CAGE_TEST(split(f) == "ab");
 			CAGE_TEST(f == "e\n\nced\na\n");
-			CAGE_TEST(f.split() == "e");
-			CAGE_TEST(f.split() == "");
-			CAGE_TEST(f.split() == "ced");
-			CAGE_TEST(f.split() == "a");
-			CAGE_TEST(f.split() == "");
-			CAGE_TEST(f.split() == "");
+			CAGE_TEST(split(f) == "e");
+			CAGE_TEST(split(f) == "");
+			CAGE_TEST(split(f) == "ced");
+			CAGE_TEST(split(f) == "a");
+			CAGE_TEST(split(f) == "");
+			CAGE_TEST(split(f) == "");
 			f = "kulomet";
-			CAGE_TEST(f.split("eu") == "k");
+			CAGE_TEST(split(f, "eu") == "k");
 			CAGE_TEST(f == "lomet");
 			f = "kulomet";
-			CAGE_TEST(f.split("") == "");
+			CAGE_TEST(split(f, "") == "");
 			CAGE_TEST(f == "kulomet");
-			CAGE_TEST_ASSERTED(f.split("za"));
+			CAGE_TEST_ASSERTED(split(f, "za")); // delimiting characters have to be sorted
 		}
 		{
 			CAGE_TESTCASE("conversions");
-			test(string("0.5").toFloat(), 0.5f);
-			test(string("-45.123").toFloat(), -45.123f);
-			test(string("-3.8e9").toFloat(), -3.8e9f);
-			CAGE_TEST(string("157").toUint32() == 157);
-			CAGE_TEST(string("157").toSint32() == 157);
-			CAGE_TEST(string("-157").toSint32() == -157);
-			CAGE_TEST(string("157").toUint64() == 157);
-			CAGE_TEST(string("50000000000").toUint64() == 50000000000);
-			CAGE_TEST(string("-50000000000").toSint64() == -50000000000);
-			CAGE_TEST(string("157").toSint64() == 157);
-			CAGE_TEST(string("-157").toSint64() == -157);
-			CAGE_TEST(string("yES").toBool());
-			CAGE_TEST(string("T").toBool());
-			CAGE_TEST(!string("FALse").toBool());
-			CAGE_TEST(string("yES").isBool());
-			CAGE_TEST(string("T").isBool());
-			CAGE_TEST(string("FALse").isBool());
-			CAGE_TEST(!string("kk").isBool());
-			CAGE_TEST(string().isDigitsOnly());
-			CAGE_TEST(string("157").isDigitsOnly());
-			CAGE_TEST(!string("hola").isDigitsOnly());
-			CAGE_TEST_THROWN(string("").toBool());
-			CAGE_TEST_THROWN(string("").toFloat());
-			CAGE_TEST_THROWN(string("").toSint32());
-			CAGE_TEST_THROWN(string("").toSint64());
-			CAGE_TEST_THROWN(string("").toUint32());
-			CAGE_TEST_THROWN(string("").toUint64());
-			CAGE_TEST_THROWN(string("hola").toBool());
-			CAGE_TEST_THROWN(string("hola").toFloat());
-			CAGE_TEST_THROWN(string("hola").toSint32());
-			CAGE_TEST_THROWN(string("hola").toSint64());
-			CAGE_TEST_THROWN(string("hola").toUint32());
-			CAGE_TEST_THROWN(string("hola").toUint64());
-			CAGE_TEST_THROWN(string("157hola").toSint32());
-			CAGE_TEST_THROWN(string("157hola").toSint64());
-			CAGE_TEST_THROWN(string("157hola").toUint32());
-			CAGE_TEST_THROWN(string("157hola").toUint64());
-			CAGE_TEST_THROWN(string("15.7").toSint32());
-			CAGE_TEST_THROWN(string("15.7").toSint64());
-			CAGE_TEST_THROWN(string("15.7").toUint32());
-			CAGE_TEST_THROWN(string("15.7").toUint64());
-			CAGE_TEST_THROWN(string("-157").toUint32());
-			CAGE_TEST_THROWN(string("-157").toUint64());
-			CAGE_TEST_THROWN(string("-3.8ha").toFloat());
-			CAGE_TEST_THROWN(string("-3.8e-4ha").toFloat());
-			CAGE_TEST_THROWN(string("0x157").toSint32());
-			CAGE_TEST_THROWN(string("0x157").toSint64());
-			CAGE_TEST_THROWN(string("0x157").toUint32());
-			CAGE_TEST_THROWN(string("0x157").toUint64());
-			CAGE_TEST_THROWN(string(" 157").toSint32());
-			CAGE_TEST_THROWN(string(" 157").toSint64());
-			CAGE_TEST_THROWN(string(" 157").toUint32());
-			CAGE_TEST_THROWN(string(" 157").toUint64());
-			CAGE_TEST_THROWN(string("157 ").toSint32());
-			CAGE_TEST_THROWN(string("157 ").toSint64());
-			CAGE_TEST_THROWN(string("157 ").toUint32());
-			CAGE_TEST_THROWN(string("157 ").toUint64());
-			CAGE_TEST_THROWN(string(" 157").toFloat());
-			CAGE_TEST_THROWN(string("157 ").toFloat());
-			CAGE_TEST_THROWN(string(" true").toBool());
-			CAGE_TEST_THROWN(string("true ").toBool());
-			CAGE_TEST_THROWN(string("tee").toBool());
-			CAGE_TEST_THROWN(string("50000000000").toSint32());
-			CAGE_TEST_THROWN(string("50000000000").toUint32());
+			test(toFloat(string("0.5")), 0.5f);
+			test(toFloat(string("-45.123")), -45.123f);
+			test(toFloat(string("-3.8e9")), -3.8e9f);
+			CAGE_TEST(toUint32(string("157")) == 157);
+			CAGE_TEST(toSint32(string("157")) == 157);
+			CAGE_TEST(toSint32(string("-157")) == -157);
+			CAGE_TEST(toUint64(string("157")) == 157);
+			CAGE_TEST(toUint64(string("50000000000")) == 50000000000);
+			CAGE_TEST(toSint64(string("-50000000000")) == -50000000000);
+			CAGE_TEST(toSint64(string("157")) == 157);
+			CAGE_TEST(toSint64(string("-157")) == -157);
+			CAGE_TEST(toBool(string("yES")));
+			CAGE_TEST(toBool(string("T")));
+			CAGE_TEST(!toBool(string("FALse")));
+			CAGE_TEST(isBool(string("yES")));
+			CAGE_TEST(isBool(string("T")));
+			CAGE_TEST(isBool(string("FALse")));
+			CAGE_TEST(!isBool(string("kk")));
+			CAGE_TEST(isDigitsOnly(string()));
+			CAGE_TEST(isDigitsOnly(string("157")));
+			CAGE_TEST(!isDigitsOnly(string("hola")));
+			CAGE_TEST_THROWN(toBool(string("")));
+			CAGE_TEST_THROWN(toFloat(string("")));
+			CAGE_TEST_THROWN(toSint32(string("")));
+			CAGE_TEST_THROWN(toSint64(string("")));
+			CAGE_TEST_THROWN(toUint32(string("")));
+			CAGE_TEST_THROWN(toUint64(string("")));
+			CAGE_TEST_THROWN(toBool(string("hola")));
+			CAGE_TEST_THROWN(toFloat(string("hola")));
+			CAGE_TEST_THROWN(toSint32(string("hola")));
+			CAGE_TEST_THROWN(toSint64(string("hola")));
+			CAGE_TEST_THROWN(toUint32(string("hola")));
+			CAGE_TEST_THROWN(toUint64(string("hola")));
+			CAGE_TEST_THROWN(toSint32(string("157hola")));
+			CAGE_TEST_THROWN(toSint64(string("157hola")));
+			CAGE_TEST_THROWN(toUint32(string("157hola")));
+			CAGE_TEST_THROWN(toUint64(string("157hola")));
+			CAGE_TEST_THROWN(toSint32(string("15.7")));
+			CAGE_TEST_THROWN(toSint64(string("15.7")));
+			CAGE_TEST_THROWN(toUint32(string("15.7")));
+			CAGE_TEST_THROWN(toUint64(string("15.7")));
+			CAGE_TEST_THROWN(toUint32(string("-157")));
+			CAGE_TEST_THROWN(toUint64(string("-157")));
+			CAGE_TEST_THROWN(toFloat(string("-3.8ha")));
+			CAGE_TEST_THROWN(toFloat(string("-3.8e-4ha")));
+			CAGE_TEST_THROWN(toSint32(string("0x157")));
+			CAGE_TEST_THROWN(toSint64(string("0x157")));
+			CAGE_TEST_THROWN(toUint32(string("0x157")));
+			CAGE_TEST_THROWN(toUint64(string("0x157")));
+			CAGE_TEST_THROWN(toSint32(string(" 157")));
+			CAGE_TEST_THROWN(toSint64(string(" 157")));
+			CAGE_TEST_THROWN(toUint32(string(" 157")));
+			CAGE_TEST_THROWN(toUint64(string(" 157")));
+			CAGE_TEST_THROWN(toFloat(string(" 157")));
+			CAGE_TEST_THROWN(toSint32(string("157 ")));
+			CAGE_TEST_THROWN(toSint64(string("157 ")));
+			CAGE_TEST_THROWN(toUint32(string("157 ")));
+			CAGE_TEST_THROWN(toUint64(string("157 ")));
+			CAGE_TEST_THROWN(toFloat(string("157 ")));
+			CAGE_TEST_THROWN(toBool(string(" true")));
+			CAGE_TEST_THROWN(toBool(string("true ")));
+			CAGE_TEST_THROWN(toBool(string("tee")));
+			CAGE_TEST_THROWN(toSint32(string("50000000000")));
+			CAGE_TEST_THROWN(toUint32(string("50000000000")));
 
 			{
 				CAGE_TESTCASE("long long numbers and toSint64()");
-				CAGE_TEST(string("-1099511627776").toSint64() == -1099511627776);
-				CAGE_TEST_THROWN(string("-1099511627776").toUint64());
-				CAGE_TEST(string("1152921504606846976").toSint64() == 1152921504606846976);
-				CAGE_TEST(string("1152921504606846976").toUint64() == 1152921504606846976);
+				CAGE_TEST(toSint64(string("-1099511627776")) == -1099511627776);
+				CAGE_TEST_THROWN(toUint64(string("-1099511627776")));
+				CAGE_TEST(toSint64(string("1152921504606846976")) == 1152921504606846976);
+				CAGE_TEST(toUint64(string("1152921504606846976")) == 1152921504606846976);
 			}
 			{
 				CAGE_TESTCASE("isInteger");
-				CAGE_TEST(!string("").isInteger());
-				CAGE_TEST(string("").isDigitsOnly());
-				CAGE_TEST(string("5").isInteger());
-				CAGE_TEST(string("5").isDigitsOnly());
-				CAGE_TEST(!string("pet").isInteger());
-				CAGE_TEST(!string("13.42").isInteger());
-				CAGE_TEST(!string("13k").isInteger());
-				CAGE_TEST(!string("k13").isInteger());
-				CAGE_TEST(!string("1k3").isInteger());
-				CAGE_TEST(string("123").isInteger());
-				CAGE_TEST(string("-123").isInteger());
-				CAGE_TEST(!string("-123").isDigitsOnly());
-				CAGE_TEST(!string("-").isInteger());
-				CAGE_TEST(!string("+123").isInteger());
-				CAGE_TEST(!string("+").isInteger());
+				CAGE_TEST(isDigitsOnly(string("")));
+				CAGE_TEST(isInteger(string("5")));
+				CAGE_TEST(isDigitsOnly(string("5")));
+				CAGE_TEST(isInteger(string("123")));
+				CAGE_TEST(isInteger(string("-123")));
+				CAGE_TEST(!isInteger(string("")));
+				CAGE_TEST(!isInteger(string("pet")));
+				CAGE_TEST(!isInteger(string("13.42")));
+				CAGE_TEST(!isInteger(string("13k")));
+				CAGE_TEST(!isInteger(string("k13")));
+				CAGE_TEST(!isInteger(string("1k3")));
+				CAGE_TEST(!isInteger(string("-")));
+				CAGE_TEST(!isInteger(string("+")));
+				CAGE_TEST(!isDigitsOnly(string("-123")));
+				CAGE_TEST(!isInteger(string("+123")));
 			}
 			{
 				CAGE_TESTCASE("isReal");
-				CAGE_TEST(!string("").isReal());
-				CAGE_TEST(string("5").isReal());
-				CAGE_TEST(!string("pet").isReal());
-				CAGE_TEST(string("13.42").isReal());
-				CAGE_TEST(!string("13,42").isReal());
-				CAGE_TEST(!string("13.42k").isReal());
-				CAGE_TEST(!string("+13.42").isReal());
-				CAGE_TEST(!string("13.k42").isReal());
-				CAGE_TEST(!string("13k.42").isReal());
-				CAGE_TEST(string("-13.42").isReal());
-				CAGE_TEST_THROWN(string("ha").toSint32());
+				CAGE_TEST(isReal(string("5")));
+				CAGE_TEST(isReal(string("13.42")));
+				CAGE_TEST(isReal(string("-13.42")));
+				CAGE_TEST(!isReal(string("")));
+				CAGE_TEST(!isReal(string("pet")));
+				CAGE_TEST(!isReal(string("13,42")));
+				CAGE_TEST(!isReal(string("13.42k")));
+				CAGE_TEST(!isReal(string("+13.42")));
+				CAGE_TEST(!isReal(string("13.k42")));
+				CAGE_TEST(!isReal(string("13k.42")));
+				CAGE_TEST_THROWN(toSint32(string("ha")));
 			}
 		}
 		{
@@ -272,88 +305,88 @@ namespace
 			{
 				CAGE_TESTCASE("ratata://omega.alt.com/blah/keee/jojo.armagedon");
 				const string s = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
-				CAGE_TEST(s.find('r', 0) == 0);
-				CAGE_TEST(s.find('a', 1) == 1);
-				CAGE_TEST(s.find('a', 2) == 3);
-				CAGE_TEST(s.find(':', 0) == 6);
-				CAGE_TEST(s.find(':', 3) == 6);
-				CAGE_TEST(s.find(':', 7) == m);
-				CAGE_TEST(s.find("ta", 0) == 2);
-				CAGE_TEST(s.find("://", 0) == 6);
-				CAGE_TEST(s.find("a", 2) == 3);
-				CAGE_TEST(s.find("ra", 0) == 0);
-				CAGE_TEST(s.find("tata", 0) == 2);
-				CAGE_TEST(s.find("tata", 7) == m);
+				CAGE_TEST(find(s, 'r', 0) == 0);
+				CAGE_TEST(find(s, 'a', 1) == 1);
+				CAGE_TEST(find(s, 'a', 2) == 3);
+				CAGE_TEST(find(s, ':', 0) == 6);
+				CAGE_TEST(find(s, ':', 3) == 6);
+				CAGE_TEST(find(s, ':', 7) == m);
+				CAGE_TEST(find(s, "ta", 0) == 2);
+				CAGE_TEST(find(s, "://", 0) == 6);
+				CAGE_TEST(find(s, "a", 2) == 3);
+				CAGE_TEST(find(s, "ra", 0) == 0);
+				CAGE_TEST(find(s, "tata", 0) == 2);
+				CAGE_TEST(find(s, "tata", 7) == m);
 			}
 			{
 				CAGE_TESTCASE("0123456789");
 				const string s = "0123456789";
-				CAGE_TEST(s.find("35", 0) == m);
-				CAGE_TEST(s.find("45", 0) == 4);
-				CAGE_TEST(s.find("34", 0) == 3);
-				CAGE_TEST(s.find("0", 0) == 0);
-				CAGE_TEST(s.find("89", 0) == 8);
-				CAGE_TEST(s.find("9", 0) == 9);
-				CAGE_TEST(s.find("k", 0) == m);
+				CAGE_TEST(find(s, "35", 0) == m);
+				CAGE_TEST(find(s, "45", 0) == 4);
+				CAGE_TEST(find(s, "34", 0) == 3);
+				CAGE_TEST(find(s, "0", 0) == 0);
+				CAGE_TEST(find(s, "89", 0) == 8);
+				CAGE_TEST(find(s, "9", 0) == 9);
+				CAGE_TEST(find(s, "k", 0) == m);
 			}
 			{
 				CAGE_TESTCASE("finding char only");
 				const string s = "0123456789";
-				CAGE_TEST(s.find('j', 0) == m);
-				CAGE_TEST(s.find('4', 0) == 4);
-				CAGE_TEST(s.find('3', 0) == 3);
-				CAGE_TEST(s.find('0', 0) == 0);
-				CAGE_TEST(s.find('8', 0) == 8);
-				CAGE_TEST(s.find('9', 0) == 9);
-				CAGE_TEST(s.find('k', 0) == m);
+				CAGE_TEST(find(s, 'j', 0) == m);
+				CAGE_TEST(find(s, '4', 0) == 4);
+				CAGE_TEST(find(s, '3', 0) == 3);
+				CAGE_TEST(find(s, '0', 0) == 0);
+				CAGE_TEST(find(s, '8', 0) == 8);
+				CAGE_TEST(find(s, '9', 0) == 9);
+				CAGE_TEST(find(s, 'k', 0) == m);
 			}
 			{
 				CAGE_TESTCASE("corner cases");
 				const string s = "0123456789";
-				CAGE_TEST(s.find('a', 100) == m);
-				CAGE_TEST(s.find("a", 100) == m);
-				CAGE_TEST(s.find("abcdefghijklmnopq", 0) == m);
-				CAGE_TEST(s.find("") == m);
-				CAGE_TEST(s.find(string(s)) == 0);
-				CAGE_TEST(string("h").find('h') == 0);
+				CAGE_TEST(find(s, 'a', 100) == m);
+				CAGE_TEST(find(s, "a", 100) == m);
+				CAGE_TEST(find(s, "abcdefghijklmnopq", 0) == m);
+				CAGE_TEST(find(s, "") == m);
+				CAGE_TEST(find(s, string(s)) == 0);
+				CAGE_TEST(find(string("h"), 'h') == 0);
 			}
 		}
 		{
 			CAGE_TESTCASE("trim");
-			CAGE_TEST(string("   ori  ").trim() == "ori");
-			CAGE_TEST(string("   ori  ").trim(false, true) == "   ori");
-			CAGE_TEST(string("   ori  ").trim(true, false) == "ori  ");
-			CAGE_TEST(string("   ori  ").trim(false, false) == "   ori  ");
-			CAGE_TEST(string("   ori  ").trim(true, true, " i") == "or");
-			CAGE_TEST(string("magma").trim(true, true, string("am")) == "g");
-			CAGE_TEST_ASSERTED(string("magma").trim(true, true, "za"));
-			CAGE_TEST(string("magma").trim(true, true, "") == "magma");
+			CAGE_TEST(trim(string("   ori  ")) == "ori");
+			CAGE_TEST(trim(string("   ori  "), false, true) == "   ori");
+			CAGE_TEST(trim(string("   ori  "), true, false) == "ori  ");
+			CAGE_TEST(trim(string("   ori  "), false, false) == "   ori  ");
+			CAGE_TEST(trim(string("   ori  "), true, true, " i") == "or");
+			CAGE_TEST(trim(string("magma"), true, true, string("am")) == "g");
+			CAGE_TEST_ASSERTED(trim(string("magma"), true, true, "za"));
+			CAGE_TEST(trim(string("magma"), true, true, "") == "magma");
 		}
 		{
 			CAGE_TESTCASE("pattern");
-			CAGE_TEST(string("ratata://omega.alt.com/blah/keee/jojo.armagedon").isPattern("", "://", ""));
-			CAGE_TEST(string("ratata://omega.alt.com/blah/keee/jojo.armagedon").isPattern("rat", "alt", "don"));
-			CAGE_TEST(string("ratata://omega.alt.com/blah/keee/jojo.armagedon").isPattern("ratata", "://", "armagedon"));
-			CAGE_TEST(string("ratata://omega.alt.com/blah/keee/jojo.armagedon").isPattern("ratata", "jojo.", "armagedon"));
-			CAGE_TEST(!string("ratata://omega.alt.com/blah/keee/jojo.armagedon").isPattern("", ":///", ""));
-			CAGE_TEST(!string("ratata://omega.alt.com/blah/keee/jojo.armagedon").isPattern("http", "", ""));
-			CAGE_TEST(!string("ratata://omega.alt.com/blah/keee/jojo.armagedon").isPattern("", "", ".cz"));
-			CAGE_TEST(!string("ratata://omega.alt.com/blah/keee/jojo.armagedon").isPattern("rat", "tata", ""));
-			CAGE_TEST(!string("ratata://omega.alt.com/blah/keee/jojo.armagedon").isPattern("", "armag", "gedon"));
+			CAGE_TEST(isPattern(string("ratata://omega.alt.com/blah/keee/jojo.armagedon"), "", "://", ""));
+			CAGE_TEST(isPattern(string("ratata://omega.alt.com/blah/keee/jojo.armagedon"), "rat", "alt", "don"));
+			CAGE_TEST(isPattern(string("ratata://omega.alt.com/blah/keee/jojo.armagedon"), "ratata", "://", "armagedon"));
+			CAGE_TEST(isPattern(string("ratata://omega.alt.com/blah/keee/jojo.armagedon"), "ratata", "jojo.", "armagedon"));
+			CAGE_TEST(!isPattern(string("ratata://omega.alt.com/blah/keee/jojo.armagedon"), "", ":///", ""));
+			CAGE_TEST(!isPattern(string("ratata://omega.alt.com/blah/keee/jojo.armagedon"), "http", "", ""));
+			CAGE_TEST(!isPattern(string("ratata://omega.alt.com/blah/keee/jojo.armagedon"), "", "", ".cz"));
+			CAGE_TEST(!isPattern(string("ratata://omega.alt.com/blah/keee/jojo.armagedon"), "rat", "tata", ""));
+			CAGE_TEST(!isPattern(string("ratata://omega.alt.com/blah/keee/jojo.armagedon"), "", "armag", "gedon"));
 		}
 		{
 			CAGE_TESTCASE("url encode and decode");
-			CAGE_TEST(string("for (uint i = 0; i < sts.size (); i++)").encodeUrl() == "for%20(uint%20i%20%3D%200%3B%20i%20%3C%20sts.size%20()%3B%20i++)");
+			CAGE_TEST(encodeUrl(string("for (uint i = 0; i < sts.size (); i++)")) == "for%20(uint%20i%20%3D%200%3B%20i%20%3C%20sts.size%20()%3B%20i++)");
 			for (uint32 i = 0; i < 1000; i++)
 			{
 				string s;
 				for (uint32 j = 0, e = randomRange(0, 100); j < e; j++)
 				{
 					char c = randomRange(0, 255);
-					s += string(&c, 1);
+					s += string({ &c, &c + 1 });
 				}
-				string sen = s.encodeUrl();
-				string sde = sen.decodeUrl();
+				string sen = encodeUrl(s);
+				string sde = decodeUrl(sen);
 				CAGE_TEST(sde == s);
 			}
 		}
@@ -430,87 +463,95 @@ namespace
 		string d, p, f, e;
 		pathDecompose(a, d, p, f, e);
 		CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-		a.reverse();
+		reverse(a);
 		CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-		a.toLower();
+		toLower(a);
 		CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-		a.toUpper();
+		toUpper(a);
 		CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
 
 		{
 			CAGE_TESTCASE("substring");
-			string sub = a.subString(5, 7);
+			string sub = subString(a, 5, 7);
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-			sub = a.subString(2, 15);
+			sub = subString(a, 2, 15);
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-			sub = a.subString(15, 50);
+			sub = subString(a, 15, 50);
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-			sub = a.subString(0, m);
+			sub = subString(a, 0, m);
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-			sub = a.subString(17, m);
+			sub = subString(a, 17, m);
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-			sub = a.subString(-5, 12);
+			sub = subString(a, -5, 12);
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
 		}
 		{
 			CAGE_TESTCASE("remove");
-			string rem = a.remove(5, 7);
+			string rem = remove(a, 5, 7);
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-			rem = a.remove(2, 15);
+			rem = remove(a, 2, 15);
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-			rem = a.remove(15, 50);
+			rem = remove(a, 15, 50);
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-			rem = a.remove(0, m);
+			rem = remove(a, 0, m);
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-			rem = a.remove(17, m);
+			rem = remove(a, 17, m);
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-			rem = a.remove(-5, 12);
+			rem = remove(a, -5, 12);
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
 		}
 		{
 			CAGE_TESTCASE("insert");
-			string ins = a.insert(5, "pomeranc");
+			string ins = insert(a, 5, "pomeranc");
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-			ins = a.insert(2, "pomeranc");
+			ins = insert(a, 2, "pomeranc");
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-			ins = a.insert(15, "pomeranc");
+			ins = insert(a, 15, "pomeranc");
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-			ins = a.insert(0, "pomeranc");
+			ins = insert(a, 0, "pomeranc");
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-			ins = a.insert(17, "pomeranc");
+			ins = insert(a, 17, "pomeranc");
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-			ins = a.insert(-5, "pomeranc");
+			ins = insert(a, -5, "pomeranc");
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
 		}
 		{
 			CAGE_TESTCASE("replace");
-			string rep = a.replace(5, 12, "pomeranc");
+			string rep = replace(a, 5, 12, "pomeranc");
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-			rep = a.replace(2, 5, "pomeranc");
+			rep = replace(a, 2, 5, "pomeranc");
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-			rep = a.replace(15, -3, "pomeranc");
+			rep = replace(a, 15, -3, "pomeranc");
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-			rep = a.replace("om", "pomeranc");
+			rep = replace(a, "om", "pomeranc");
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-			rep = a.replace("tra", "pomeranc");
+			rep = replace(a, "tra", "pomeranc");
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
-			rep = a.replace("", "pomeranc");
+			rep = replace(a, "", "pomeranc");
 			CAGE_TEST(a == "ratata://omega.alt.com/blah/keee/jojo.armagedon");
+		}
+		{
+			CAGE_TESTCASE("replace is non-recursive");
+			string s = "abacab";
+			string r = replace(s, "a", "aa");
+			CAGE_TEST(r == "aabaacaab");
+			string k = replace(r, "aa", "a");
+			CAGE_TEST(k == s);
 		}
 		{
 			CAGE_TESTCASE("split");
 			string a = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
-			CAGE_TEST(a.split("/") == "ratata:");
+			CAGE_TEST(split(a, "/") == "ratata:");
 			CAGE_TEST(a == "/omega.alt.com/blah/keee/jojo.armagedon");
-			CAGE_TEST(a.split("/") == "");
+			CAGE_TEST(split(a, "/") == "");
 			CAGE_TEST(a == "omega.alt.com/blah/keee/jojo.armagedon");
-			CAGE_TEST(a.split("/") == "omega.alt.com");
+			CAGE_TEST(split(a, "/") == "omega.alt.com");
 			CAGE_TEST(a == "blah/keee/jojo.armagedon");
-			CAGE_TEST(a.split("/") == "blah");
+			CAGE_TEST(split(a, "/") == "blah");
 			CAGE_TEST(a == "keee/jojo.armagedon");
-			CAGE_TEST(a.split("/") == "keee");
+			CAGE_TEST(split(a, "/") == "keee");
 			CAGE_TEST(a == "jojo.armagedon");
-			CAGE_TEST(a.split("/") == "jojo.armagedon");
+			CAGE_TEST(split(a, "/") == "jojo.armagedon");
 			CAGE_TEST(a == "");
 		}
 	}
@@ -816,7 +857,7 @@ namespace
 			CAGE_TEST(string(stringizer() + "hi") == "hi");
 			int obj = 42;
 			int *ptr = &obj;
-			CAGE_TEST(string(stringizer() + ptr).toUint64() == (uint64)ptr);
+			CAGE_TEST(toUint64(string(stringizer() + ptr)) == (uint64)ptr);
 		}
 	}
 }

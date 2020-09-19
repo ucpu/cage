@@ -16,7 +16,7 @@ namespace
 {
 	std::map<string, std::string> codes;
 	std::map<string, string> defines;
-	std::set<string, stringComparatorFast> onces;
+	std::set<string, StringComparatorFast> onces;
 
 	ConfigBool configShaderPrint("cage-asset-processor/shader/preview");
 
@@ -56,9 +56,9 @@ namespace
 					break;
 			if (v > 0)
 			{
-				string token = input.subString(0, v);
-				input = input.remove(0, v);
-				if (token.toUpper() == token)
+				string token = subString(input, 0, v);
+				input = remove(input, 0, v);
+				if (toUpper(token) == token)
 				{
 					if (defines.find(token) != defines.end())
 						token = defines[token];
@@ -67,8 +67,8 @@ namespace
 			}
 			else
 			{
-				result += string(&input[0], 1);
-				input = input.remove(0, 1);
+				result += string({ &input[0], &input[0] + 1 });
+				input = remove(input, 0, 1);
 			}
 		}
 		return result;
@@ -76,10 +76,10 @@ namespace
 
 	bool evalExpToBool(const string &l)
 	{
-		if (l.isReal())
-			return l.toFloat() != 0;
-		else if (l.isBool())
-			return l.toBool();
+		if (isReal(l))
+			return toFloat(l) != 0;
+		else if (isBool(l))
+			return toBool(l);
 		else
 		{
 			CAGE_LOG(SeverityEnum::Note, "exception", string("expression: ") + l);
@@ -93,98 +93,98 @@ namespace
 	{
 		if (l.empty())
 			CAGE_THROW_ERROR(Exception, "unexpected end of line");
-		uint32 p = l.find('|');
+		uint32 p = find(l, '|');
 		if (p != m)
 		{
-			string left = evalExp(l.subString(0, p));
-			string right = evalExp(l.subString(p + 1, m));
+			string left = evalExp(subString(l, 0, p));
+			string right = evalExp(subString(l, p + 1, m));
 			return stringizer() + (evalExpToBool(left) || evalExpToBool(right));
 		}
-		p = l.find('&');
+		p = find(l, '&');
 		if (p != m)
 		{
-			string left = evalExp(l.subString(0, p));
-			string right = evalExp(l.subString(p + 1, m));
+			string left = evalExp(subString(l, 0, p));
+			string right = evalExp(subString(l, p + 1, m));
 			return stringizer() + (evalExpToBool(left) && evalExpToBool(right));
 		}
-		p = l.find('<');
+		p = find(l, '<');
 		if (p != m)
 		{
-			string left = evalExp(l.subString(0, p));
-			string right = evalExp(l.subString(p + 1, m));
-			if (left.isReal() && right.isReal())
-				return stringizer() + (left.toFloat() < right.toFloat());
+			string left = evalExp(subString(l, 0, p));
+			string right = evalExp(subString(l, p + 1, m));
+			if (isReal(left) && isReal(right))
+				return stringizer() + (toFloat(left) < toFloat(right));
 			else
 				return stringizer() + (left < right);
 		}
-		p = l.find('>');
+		p = find(l, '>');
 		if (p != m)
 		{
-			string left = evalExp(l.subString(0, p));
-			string right = evalExp(l.subString(p + 1, m));
-			if (left.isReal() && right.isReal())
-				return stringizer() + (left.toFloat() > right.toFloat());
+			string left = evalExp(subString(l, 0, p));
+			string right = evalExp(subString(l, p + 1, m));
+			if (isReal(left) && isReal(right))
+				return stringizer() + (toFloat(left) > toFloat(right));
 			else
 				return stringizer() + (left > right);
 		}
-		p = l.find('=');
+		p = find(l, '=');
 		if (p != m)
 		{
-			string left = evalExp(l.subString(0, p));
-			string right = evalExp(l.subString(p + 1, m));
-			if (left.isInteger() && right.isInteger())
-				return stringizer() + (left.toSint32() == right.toSint32());
+			string left = evalExp(subString(l, 0, p));
+			string right = evalExp(subString(l, p + 1, m));
+			if (isInteger(left) && isInteger(right))
+				return stringizer() + (toSint32(left) == toSint32(right));
 			else
 				return stringizer() + (left == right);
 		}
-		p = l.find('-');
+		p = find(l, '-');
 		if (p != m)
 		{
-			sint32 left = evalExp(l.subString(0, p)).toSint32();
-			sint32 right = evalExp(l.subString(p + 1, m)).toSint32();
+			sint32 left = toSint32(evalExp(subString(l, 0, p)));
+			sint32 right = toSint32(evalExp(subString(l, p + 1, m)));
 			return stringizer() + (left - right);
 		}
-		p = l.find('+');
+		p = find(l, '+');
 		if (p != m)
 		{
-			string left = evalExp(l.subString(0, p));
-			string right = evalExp(l.subString(p + 1, m));
-			if (left.isInteger() && right.isInteger())
-				return stringizer() + (left.toSint32() + right.toSint32());
+			string left = evalExp(subString(l, 0, p));
+			string right = evalExp(subString(l, p + 1, m));
+			if (isInteger(left) && isInteger(right))
+				return stringizer() + (toSint32(left) + toSint32(right));
 			else
 				return left + right;
 		}
-		p = l.find('%');
+		p = find(l, '%');
 		if (p != m)
 		{
-			sint32 left = evalExp(l.subString(0, p)).toSint32();
-			sint32 right = evalExp(l.subString(p + 1, m)).toSint32();
+			sint32 left = toSint32(evalExp(subString(l, 0, p)));
+			sint32 right = toSint32(evalExp(subString(l, p + 1, m)));
 			return stringizer() + (left % right);
 		}
-		p = l.find('/');
+		p = find(l, '/');
 		if (p != m)
 		{
-			sint32 left = evalExp(l.subString(0, p)).toSint32();
-			sint32 right = evalExp(l.subString(p + 1, m)).toSint32();
+			sint32 left = toSint32(evalExp(subString(l, 0, p)));
+			sint32 right = toSint32(evalExp(subString(l, p + 1, m)));
 			return stringizer() + (left / right);
 		}
-		p = l.find('*');
+		p = find(l, '*');
 		if (p != m)
 		{
-			sint32 left = evalExp(l.subString(0, p)).toSint32();
-			sint32 right = evalExp(l.subString(p + 1, m)).toSint32();
+			sint32 left = toSint32(evalExp(subString(l, 0, p)));
+			sint32 right = toSint32(evalExp(subString(l, p + 1, m)));
 			return stringizer() + (left * right);
 		}
-		p = l.find('^');
+		p = find(l, '^');
 		if (p != m)
 		{
-			string left = evalExp(l.subString(0, p));
-			string right = evalExp(l.subString(p + 1, m));
-			if (right.isDigitsOnly() && !right.empty())
+			string left = evalExp(subString(l, 0, p));
+			string right = evalExp(subString(l, p + 1, m));
+			if (isDigitsOnly(right) && !right.empty())
 			{
-				uint32 index = right.toUint32();
+				uint32 index = toUint32(right);
 				if (index < left.length())
-					return string(&left[index], 1);
+					return string({ &left[index], &left[index] + 1 });
 			}
 			{
 				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "expression: '" + l + "'");
@@ -195,7 +195,7 @@ namespace
 		}
 		if (l[0] == '!')
 		{
-			return stringizer() + !evalExpToBool(evalExp(l.subString(1, m)));
+			return stringizer() + !evalExpToBool(evalExp(subString(l, 1, m)));
 		}
 		if (defines.count(l))
 		{
@@ -207,21 +207,21 @@ namespace
 	string eval(const string &input)
 	{
 		string l = input;
-		l = l.replace(" ", "").replace("\t", "").replace("\n", "");
+		l = replace(replace(replace(l, " ", ""), "\t", ""), "\n", "");
 		while (true)
 		{
-			uint32 z = l.find(')');
+			uint32 z = find(l, ')');
 			if (z == m)
 				break;
-			uint32 o = l.subString(0, z).reverse().find('(');
+			uint32 o = find(reverse(subString(l, 0, z)), '(');
 			if (o == m)
 			{
 				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "expression: '" + input + "'");
 				CAGE_THROW_ERROR(Exception, "unmatched ')'");
 			}
-			l = l.replace(z - o - 1, o + 2, evalExp(l.subString(z - o, o)));
+			l = replace(l, z - o - 1, o + 2, evalExp(subString(l, z - o, o)));
 		}
-		if (l.find('(') != m)
+		if (find(l, '(') != m)
 		{
 			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "expression: '" + input + "'");
 			CAGE_THROW_ERROR(Exception, "unmatched '('");
@@ -271,7 +271,7 @@ namespace
 	{
 		if (defines.count("allowParsingHash") == 0)
 			return false;
-		return defines["allowParsingHash"].toBool();
+		return toBool(defines["allowParsingHash"]);
 	}
 
 	void parse(const string &filename)
@@ -285,7 +285,7 @@ namespace
 			lineNumber++;
 			try
 			{
-				line = line.trim();
+				line = trim(line);
 				if (line.empty())
 				{
 					output("");
@@ -293,9 +293,9 @@ namespace
 				}
 				if (line[0] == '$' || (allowParsingHash() && line[0] == '#'))
 				{
-					line = line.subString(1, m).trim();
-					string cmd = line.split();
-					line = line.trim();
+					line = trim(subString(line, 1, m));
+					string cmd = split(line);
+					line = trim(line);
 					if (cmd == "if")
 					{
 						if (line.empty())
@@ -347,7 +347,7 @@ namespace
 					{
 						if (cmd == "define" || cmd == "set")
 						{
-							string name = line.split();
+							string name = split(line);
 							if (name.empty() || line.empty())
 							{
 								CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "name: '" + name + "'");

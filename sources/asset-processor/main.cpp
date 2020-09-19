@@ -45,20 +45,20 @@ namespace
 		char buf[string::MaxLength];
 		if (std::fgets(buf, string::MaxLength, stdin) == nullptr)
 			CAGE_THROW_ERROR(SystemError, "fgets", std::ferror(stdin));
-		return string(buf).trim();
+		return trim(string(buf));
 	}
 
 	void derivedProperties()
 	{
 		inputFile = inputName;
-		if (inputFile.find(';') != m)
+		if (find(inputFile, ';') != m)
 		{
-			inputIdentifier = inputFile.split(";");
+			inputIdentifier = split(inputFile, ";");
 			std::swap(inputIdentifier, inputFile);
 		}
-		if (inputFile.find('?') != m)
+		if (find(inputFile, '?') != m)
 		{
-			inputSpec = inputFile.split("?");
+			inputSpec = split(inputFile, "?");
 			std::swap(inputSpec, inputFile);
 		}
 
@@ -73,12 +73,12 @@ namespace
 			string value = readLine();
 			if (value == "cage-end")
 				break;
-			if (value.find('=') == m)
+			if (find(value, '=') == m)
 			{
 				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "line: " + value);
 				CAGE_THROW_ERROR(Exception, "missing '=' in property line");
 			}
-			string name = value.split("=");
+			string name = split(value, "=");
 			props[name] = value;
 		}
 
@@ -86,7 +86,7 @@ namespace
 		inputName = properties("inputName");
 		outputDirectory = properties("outputDirectory");
 		outputName = properties("outputName");
-		schemeIndex = properties("schemeIndex").toUint32();
+		schemeIndex = toUint32(properties("schemeIndex"));
 		derivedProperties();
 	}
 
@@ -106,8 +106,8 @@ void writeLine(const string &other)
 	CAGE_LOG(SeverityEnum::Info, "asset-processor", stringizer() + "writing: '" + other + "'");
 	{
 		string b = other;
-		if (b.split("=").trim() == "ref")
-			CAGE_LOG(SeverityEnum::Note, "asset-processor", stringizer() + "reference hash: '" + (uint32)HashString(b.trim().c_str()) + "'");
+		if (trim(split(b, "=")) == "ref")
+			CAGE_LOG(SeverityEnum::Note, "asset-processor", stringizer() + "reference hash: '" + (uint32)HashString(trim(b).c_str()) + "'");
 	}
 	if (fprintf(stdout, "%s\n", other.c_str()) < 0)
 		CAGE_THROW_ERROR(SystemError, "fprintf", ferror(stdout));

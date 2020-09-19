@@ -159,7 +159,7 @@ namespace cage
 
 			uint32 encodeUrlBase(char *pStart, const char *pSrc, uint32 length)
 			{
-				static constexpr bool SAFE[256] =
+				constexpr bool SAFE[256] =
 				{
 					/*      0 1 2 3  4 5 6 7  8 9 A B  C D E F */
 					/* 0 */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
@@ -182,7 +182,7 @@ namespace cage
 					/* E */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
 					/* F */ 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
 				};
-				static constexpr char DEC2HEX[16 + 1] = "0123456789ABCDEF";
+				constexpr char DEC2HEX[16 + 1] = "0123456789ABCDEF";
 				char * pEnd = pStart;
 				const char * const SRC_END = pSrc + length;
 				for (; pSrc < SRC_END; ++pSrc)
@@ -201,7 +201,7 @@ namespace cage
 
 			uint32 decodeUrlBase(char *pStart, const char *pSrc, uint32 length)
 			{
-				static constexpr char HEX2DEC[256] =
+				constexpr char HEX2DEC[256] =
 				{
 					/*       0  1  2  3   4  5  6  7   8  9  A  B   C  D  E  F */
 					/* 0 */ -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1, -1,-1,-1,-1,
@@ -275,7 +275,7 @@ namespace cage
 #else // GCHL_USE_CHARCONV
 
 #define GCHL_GENERATE(TYPE) \
-		CAGE_CORE_API uint32 toString(char *s, uint32 n, TYPE value) \
+		uint32 toString(char *s, uint32 n, TYPE value) \
 		{ \
 			auto [p, ec] = std::to_chars(s, s + n, value); \
 			if (ec != std::errc()) \
@@ -283,7 +283,7 @@ namespace cage
 			*p = 0; \
 			return numeric_cast<uint32>(p - s); \
 		} \
-		CAGE_CORE_API void fromString(const char *s, uint32 n, TYPE &value) \
+		void fromString(const char *s, uint32 n, TYPE &value) \
 		{ \
 			auto [p, ec] = std::from_chars(s, s + n, value); \
 			if (p != s + n || ec != std::errc()) \
@@ -315,7 +315,7 @@ namespace cage
 
 		void fromString(const char *s, uint32 n, bool &value)
 		{
-			string l = string(s).toLower();
+			string l = toLower(string(s));
 			if (l == "false" || l == "f" || l == "no" || l == "n" || l == "off" || l == "0")
 			{
 				value = false;
@@ -339,173 +339,23 @@ namespace cage
 			return numeric_cast<uint32>(l);
 		}
 
-		void stringReplace(char *data, uint32 &current, uint32 maxLength, const char *what, uint32 whatLen, const char *with, uint32 withLen)
-		{
-			if (whatLen == 0)
-				return;
-			uint32 pos = 0;
-			while (true)
-			{
-				pos = stringFind(data, current, what, whatLen, pos);
-				if (pos == m)
-					break;
-				if (current + withLen - whatLen > maxLength)
-					CAGE_THROW_ERROR(Exception, "string truncation");
-				std::memmove(data + pos + withLen, data + pos + whatLen, current - pos - whatLen);
-				std::memcpy(data + pos, with, withLen);
-				current += withLen - whatLen;
-				pos += withLen - whatLen + 1;
-			}
+#define GCHL_GENERATE(TYPE) \
+		void fromString(const PointerRange<const char> &str, TYPE &value) \
+		{ \
+			fromString(str.data(), numeric_cast<uint32>(str.size()), value); \
 		}
-
-		void stringTrim(char *data, uint32 &current, const char *what, uint32 whatLen, bool left, bool right)
-		{
-			CAGE_ASSERT(isOrdered(what, whatLen));
-			if (whatLen == 0)
-				return;
-			if (!left && !right)
-				return;
-			if (right)
-			{
-				uint32 p = 0;
-				while (p < current && stringContains(what, whatLen, data[current - p - 1]))
-					p++;
-				current -= p;
-			}
-			if (left)
-			{
-				uint32 p = 0;
-				while (p < current && stringContains(what, whatLen, data[p]))
-					p++;
-				current -= p;
-				if (p > 0)
-					std::memmove(data, data + p, current);
-			}
-		}
-
-		void stringSplit(char *data, uint32 &current, char *ret, uint32 &retLen, const char *what, uint32 whatLen)
-		{
-			CAGE_ASSERT(retLen == 0);
-			CAGE_ASSERT(isOrdered(what, whatLen));
-			if (whatLen == 0)
-				return;
-			for (uint32 i = 0; i < current; i++)
-			{
-				if (stringContains(what, whatLen, data[i]))
-				{
-					std::memcpy(ret, data, i);
-					std::memmove(data, data + i + 1, current - i - 1);
-					retLen = i;
-					current -= i + 1;
-					return;
-				}
-			}
-			std::memcpy(ret, data, current);
-			std::swap(current, retLen);
-		}
-
-		uint32 stringToUpper(char *dst, uint32 dstLen, const char *src, uint32 srcLen)
-		{
-			const char *e = src + srcLen;
-			while (src != e)
-				*dst++ = std::toupper(*src++);
-			return srcLen;
-		}
-
-		uint32 stringToLower(char *dst, uint32 dstLen, const char *src, uint32 srcLen)
-		{
-			const char *e = src + srcLen;
-			while (src != e)
-				*dst++ = std::tolower(*src++);
-			return srcLen;
-		}
-
-		uint32 stringFind(const char *data, uint32 current, const char *what, uint32 whatLen, uint32 offset)
-		{
-			if (whatLen == 0 || offset + whatLen > current)
-				return m;
-			uint32 end = current - whatLen + 1;
-			for (uint32 i = offset; i < end; i++)
-				if (std::memcmp(data + i, what, whatLen) == 0)
-					return i;
-			return m;
-		}
-
-		void stringEncodeUrl(const char *dataIn, uint32 currentIn, char *dataOut, uint32 &currentOut, uint32 maxLength)
-		{
-			char tmp[4096];
-			uint32 len = encodeUrlBase(tmp, dataIn, currentIn);
-			if (len > maxLength)
-				CAGE_THROW_ERROR(Exception, "string truncation");
-			std::memcpy(dataOut, tmp, len);
-			currentOut = len;
-		}
-
-		void stringDecodeUrl(const char *dataIn, uint32 currentIn, char *dataOut, uint32 &currentOut, uint32 maxLength)
-		{
-			char tmp[4096];
-			uint32 len = decodeUrlBase(tmp, dataIn, currentIn);
-			if (len > maxLength)
-				CAGE_THROW_ERROR(Exception, "string truncation");
-			std::memcpy(dataOut, tmp, len);
-			currentOut = len;
-		}
-
-		bool stringIsDigitsOnly(const char *data, uint32 dataLen)
-		{
-			for (char c : PointerRange<const char>(data, data + dataLen))
-			{
-				if (c < '0' || c > '9')
-					return false;
-			}
-			return true;
-		}
-
-		bool stringIsInteger(const char *data, uint32 dataLen)
-		{
-			if (dataLen == 0)
-				return false;
-			if (data[0] == '-' && dataLen > 1)
-				return stringIsDigitsOnly(data + 1, dataLen - 1);
-			else
-				return stringIsDigitsOnly(data, dataLen);
-		}
-
-		bool stringIsReal(const char *data, uint32 dataLen)
-		{
-			if (dataLen == 0)
-				return false;
-			const uint32 d = stringFind(data, dataLen, ".", 1, 0);
-			if (d == m)
-				return stringIsInteger(data, dataLen);
-			return stringIsInteger(data, d) && stringIsDigitsOnly(data + d + 1, dataLen - d - 1);
-		}
-
-		bool stringIsBool(const char *data, uint32 dataLen)
-		{
-			if (dataLen > 10)
-				return false;
-			string l = string(data, dataLen).toLower();
-			if (l == "false" || l == "f" || l == "no" || l == "n" || l == "off")
-				return true;
-			if (l == "true" || l == "t" || l == "yes" || l == "y" || l == "on")
-				return true;
-			return false;
-		}
-
-		bool stringIsPattern(const char *data, uint32 dataLen, const char *prefix, uint32 prefixLen, const char *infix, uint32 infixLen, const char *suffix, uint32 suffixLen)
-		{
-			if (dataLen < prefixLen + infixLen + suffixLen)
-				return false;
-			if (std::memcmp(data, prefix, prefixLen) != 0)
-				return false;
-			if (std::memcmp(data + dataLen - suffixLen, suffix, suffixLen) != 0)
-				return false;
-			if (infixLen == 0)
-				return true;
-			uint32 pos = stringFind(data, dataLen, infix, infixLen, prefixLen);
-			return pos != m && pos <= dataLen - infixLen - suffixLen;
-		}
+		GCHL_GENERATE(sint8);
+		GCHL_GENERATE(sint16);
+		GCHL_GENERATE(sint32);
+		GCHL_GENERATE(sint64);
+		GCHL_GENERATE(uint8);
+		GCHL_GENERATE(uint16);
+		GCHL_GENERATE(uint32);
+		GCHL_GENERATE(uint64);
+		GCHL_GENERATE(float);
+		GCHL_GENERATE(double);
+		GCHL_GENERATE(bool);
+#undef GCHL_GENERATE
 
 		int stringComparison(const char *ad, uint32 al, const char *bd, uint32 bl) noexcept
 		{
@@ -514,6 +364,176 @@ namespace cage
 			if (c == 0)
 				return al == bl ? 0 : al < bl ? -1 : 1;
 			return c;
+		}
+
+		void stringReplace(char *data, uint32 &current, uint32 maxLength, PointerRange<const char> what, PointerRange<const char> with)
+		{
+			if (what.size() == 0)
+				return;
+			uint32 pos = 0;
+			while (true)
+			{
+				pos = stringFind({ data, data + current }, what, pos);
+				if (pos == m)
+					break;
+				if (current + with.size() - what.size() > maxLength)
+					CAGE_THROW_ERROR(Exception, "string truncation");
+				std::memmove(data + pos + with.size(), data + pos + what.size(), current - pos - what.size());
+				std::memcpy(data + pos, with.data(), with.size());
+				sint32 move = numeric_cast<sint32>(with.size()) - numeric_cast<sint32>(what.size());
+				current += move;
+				pos += move + 1;
+			}
+			data[current] = 0;
+		}
+
+		void stringTrim(char *data, uint32 &current, PointerRange<const char> what, bool left, bool right)
+		{
+			CAGE_ASSERT(isOrdered(what.data(), numeric_cast<uint32>(what.size())));
+			if (what.size() == 0)
+				return;
+			if (!left && !right)
+				return;
+			if (right)
+			{
+				uint32 p = 0;
+				while (p < current && stringContains(what.data(), numeric_cast<uint32>(what.size()), data[current - p - 1]))
+					p++;
+				current -= p;
+			}
+			if (left)
+			{
+				uint32 p = 0;
+				while (p < current && stringContains(what.data(), numeric_cast<uint32>(what.size()), data[p]))
+					p++;
+				current -= p;
+				if (p > 0)
+					std::memmove(data, data + p, current);
+			}
+			data[current] = 0;
+		}
+
+		void stringSplit(char *data, uint32 &current, char *ret, uint32 &retLen, PointerRange<const char> what)
+		{
+			CAGE_ASSERT(retLen == 0);
+			CAGE_ASSERT(isOrdered(what.data(), numeric_cast<uint32>(what.size())));
+			if (what.size() == 0)
+				return;
+			for (uint32 i = 0; i < current; i++)
+			{
+				if (stringContains(what.data(), numeric_cast<uint32>(what.size()), data[i]))
+				{
+					std::memcpy(ret, data, i);
+					std::memmove(data, data + i + 1, current - i - 1);
+					retLen = i;
+					current -= i + 1;
+					data[current] = 0;
+					ret[retLen] = 0;
+					return;
+				}
+			}
+			std::memcpy(ret, data, current);
+			std::swap(current, retLen);
+			data[current] = 0;
+			ret[retLen] = 0;
+		}
+
+		uint32 stringFind(PointerRange<const char> data, PointerRange<const char> what, uint32 offset)
+		{
+			if (what.size() == 0 || offset + what.size() > data.size())
+				return m;
+			uint32 end = numeric_cast<uint32>(data.size() - what.size() + 1);
+			for (uint32 i = offset; i < end; i++)
+				if (std::memcmp(data.data() + i, what.data(), what.size()) == 0)
+					return i;
+			return m;
+		}
+
+		void stringEncodeUrl(char *data, uint32 &current, uint32 maxLength, PointerRange<const char> what)
+		{
+			// todo this can buffer overflow
+			char tmp[4096];
+			uint32 len = encodeUrlBase(tmp, what.data(), numeric_cast<uint32>(what.size()));
+			if (len > maxLength)
+				CAGE_THROW_ERROR(Exception, "string truncation");
+			std::memcpy(data, tmp, len);
+			current = len;
+			data[current] = 0;
+		}
+
+		void stringDecodeUrl(char *data, uint32 &current, uint32 maxLength, PointerRange<const char> what)
+		{
+			CAGE_ASSERT(maxLength >= what.size());
+			current = decodeUrlBase(data, what.data(), numeric_cast<uint32>(what.size()));
+			data[current] = 0;
+		}
+
+		void stringToUpper(PointerRange<char> data)
+		{
+			for (char &c : data)
+				c = std::toupper(c);
+		}
+
+		void stringToLower(PointerRange<char> data)
+		{
+			for (char &c : data)
+				c = std::tolower(c);
+		}
+
+		bool stringIsPattern(PointerRange<const char> data, PointerRange<const char> prefix, PointerRange<const char> infix, PointerRange<const char> suffix)
+		{
+			if (data.size() < prefix.size() + infix.size() + suffix.size())
+				return false;
+			if (std::memcmp(data.data(), prefix.data(), prefix.size()) != 0)
+				return false;
+			if (std::memcmp(data.data() + data.size() - suffix.size(), suffix.data(), suffix.size()) != 0)
+				return false;
+			if (infix.size() == 0)
+				return true;
+			uint32 pos = stringFind(data, infix, numeric_cast<uint32>(prefix.size()));
+			return pos != m && pos <= data.size() - infix.size() - suffix.size();
+		}
+
+		bool stringIsDigitsOnly(PointerRange<const char> data)
+		{
+			for (char c : data)
+			{
+				if (c < '0' || c > '9')
+					return false;
+			}
+			return true;
+		}
+
+		bool stringIsInteger(PointerRange<const char> data)
+		{
+			if (data.size() == 0)
+				return false;
+			if (data[0] == '-' && data.size() > 1)
+				return stringIsDigitsOnly({ data.data() + 1, data.data() + data.size() - 1 });
+			else
+				return stringIsDigitsOnly(data);
+		}
+
+		bool stringIsReal(PointerRange<const char> data)
+		{
+			if (data.size() == 0)
+				return false;
+			const uint32 d = stringFind(data, ".", 0);
+			if (d == m)
+				return stringIsInteger(data);
+			return stringIsInteger({ data.data(), data.data() + d }) && stringIsDigitsOnly({ data.data() + d + 1, data.end() });
+		}
+
+		bool stringIsBool(PointerRange<const char> data)
+		{
+			if (data.size() > 10)
+				return false;
+			string l = toLower(string(data));
+			if (l == "false" || l == "f" || l == "no" || l == "n" || l == "off")
+				return true;
+			if (l == "true" || l == "t" || l == "yes" || l == "y" || l == "on")
+				return true;
+			return false;
 		}
 	}
 }

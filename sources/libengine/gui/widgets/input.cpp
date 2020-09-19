@@ -99,12 +99,12 @@ namespace cage
 					switch (data.type)
 					{
 					case InputTypeEnum::Integer:
-						if (data.value.isInteger())
-							data.value = stringizer() + consolidate<sint32>(data.value.toSint32(), data.min.i, data.max.i, data.step.i);
+						if (isInteger(data.value))
+							data.value = stringizer() + consolidate<sint32>(toSint32(data.value), data.min.i, data.max.i, data.step.i);
 						break;
 					case InputTypeEnum::Real:
-						if (data.value.isReal())
-							data.value = stringizer() + consolidate<real>(data.value.toFloat(), data.min.f, data.max.f, data.step.f);
+						if (isReal(data.value))
+							data.value = stringizer() + consolidate<real>(toFloat(data.value), data.min.f, data.max.f, data.step.f);
 						break;
 					default:
 						break;
@@ -129,9 +129,9 @@ namespace cage
 						break;
 					case InputTypeEnum::Integer:
 					{
-						if (data.value.isInteger())
+						if (isInteger(data.value))
 						{
-							sint32 v = data.value.toSint32();
+							sint32 v = toSint32(data.value);
 							sint32 r = consolidate<sint32>(v, data.min.i, data.max.i, data.step.i);
 							data.valid = v == r;
 						}
@@ -140,9 +140,9 @@ namespace cage
 					} break;
 					case InputTypeEnum::Real:
 					{
-						if (data.value.isReal())
+						if (isReal(data.value))
 						{
-							real v = data.value.toFloat();
+							real v = toFloat(data.value);
 							real r = consolidate<real>(v, data.min.f, data.max.f, data.step.f);
 							data.valid = abs(v - r) < 1e-7;
 						}
@@ -241,13 +241,13 @@ namespace cage
 					detail::OverrideBreakpoint ob;
 					if (data.type == InputTypeEnum::Real)
 					{
-						real v = data.value.toFloat();
+						real v = toFloat(data.value);
 						v += data.step.f * sign;
 						data.value = stringizer() + v.value;
 					}
 					if (data.type == InputTypeEnum::Integer)
 					{
-						sint32 v = data.value.toSint32();
+						sint32 v = toSint32(data.value);
 						v += data.step.i * sign;
 						data.value = stringizer() + v;
 					}

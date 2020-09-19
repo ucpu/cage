@@ -135,7 +135,7 @@ namespace cage
 	{
 		decltype(v.length()) size;
 		s >> size;
-		v = detail::StringBase<N>(s.advance(size).data(), size);
+		v = detail::StringBase<N>(s.advance(size));
 		return s;
 	}
 }

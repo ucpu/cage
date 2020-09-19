@@ -1,5 +1,6 @@
 #include <cage-core/geometry.h>
 #include <cage-core/camera.h>
+#include <cage-core/string.h>
 
 namespace cage
 {
@@ -146,7 +147,7 @@ namespace cage
 
 	StereoModeEnum stringToStereoMode(const string & mode)
 	{
-		string m = mode.toLower();
+		string m = toLower(mode);
 		if (m == "mono") return StereoModeEnum::Mono;
 		if (m == "horizontal") return StereoModeEnum::Horizontal;
 		if (m == "vertical") return StereoModeEnum::Vertical;

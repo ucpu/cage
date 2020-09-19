@@ -18,7 +18,7 @@ void processTextpack()
 		for (string n : ini->items(section))
 		{
 			string v = ini->get(section, n);
-			if (!section.isDigitsOnly())
+			if (!isDigitsOnly(section))
 				n = section + "/" + n;
 			texts[n] = v;
 		}
@@ -51,6 +51,6 @@ void processTextpack()
 		fm.textual = true;
 		Holder<File> f = newFile(dbgName, fm);
 		for (auto it : texts)
-			f->writeLine(string(stringizer() + HashString(it.first)).fill(10) + " " + it.first + " = " + it.second);
+			f->writeLine(fill(string(stringizer() + HashString(it.first)), 10) + " " + it.first + " = " + it.second);
 	}
 }

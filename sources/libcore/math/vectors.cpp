@@ -7,7 +7,7 @@ namespace cage
 		vec2 data;
 		string s = privat::tryRemoveParentheses(str);
 		for (uint32 i = 0; i < 2; i++)
-			data[i] = privat::mathSplit(s).toFloat();
+			data[i] = toFloat(privat::mathSplit(s));
 		if (!s.empty())
 			CAGE_THROW_ERROR(Exception, "error parsing vec2");
 		return data;
@@ -18,7 +18,7 @@ namespace cage
 		vec3 data;
 		string s = privat::tryRemoveParentheses(str);
 		for (uint32 i = 0; i < 3; i++)
-			data[i] = privat::mathSplit(s).toFloat();
+			data[i] = toFloat(privat::mathSplit(s));
 		if (!s.empty())
 			CAGE_THROW_ERROR(Exception, "error parsing vec3");
 		return data;
@@ -29,7 +29,7 @@ namespace cage
 		vec4 data;
 		string s = privat::tryRemoveParentheses(str);
 		for (uint32 i = 0; i < 4; i++)
-			data[i] = privat::mathSplit(s).toFloat();
+			data[i] = toFloat(privat::mathSplit(s));
 		if (!s.empty())
 			CAGE_THROW_ERROR(Exception, "error parsing vec4");
 		return data;
@@ -40,7 +40,7 @@ namespace cage
 		ivec2 data;
 		string s = privat::tryRemoveParentheses(str);
 		for (uint32 i = 0; i < 2; i++)
-			data[i] = privat::mathSplit(s).toSint32();
+			data[i] = toSint32(privat::mathSplit(s));
 		if (!s.empty())
 			CAGE_THROW_ERROR(Exception, "error parsing ivec2");
 		return data;
@@ -51,7 +51,7 @@ namespace cage
 		ivec3 data;
 		string s = privat::tryRemoveParentheses(str);
 		for (uint32 i = 0; i < 3; i++)
-			data[i] = privat::mathSplit(s).toSint32();
+			data[i] = toSint32(privat::mathSplit(s));
 		if (!s.empty())
 			CAGE_THROW_ERROR(Exception, "error parsing ivec3");
 		return data;
@@ -62,7 +62,7 @@ namespace cage
 		ivec4 data;
 		string s = privat::tryRemoveParentheses(str);
 		for (uint32 i = 0; i < 4; i++)
-			data[i] = privat::mathSplit(s).toSint32();
+			data[i] = toSint32(privat::mathSplit(s));
 		if (!s.empty())
 			CAGE_THROW_ERROR(Exception, "error parsing ivec4");
 		return data;
@@ -73,7 +73,7 @@ namespace cage
 		quat data;
 		string s = privat::tryRemoveParentheses(str);
 		for (uint32 i = 0; i < 4; i++)
-			data[i] = privat::mathSplit(s).toFloat();
+			data[i] = toFloat(privat::mathSplit(s));
 		if (!s.empty())
 			CAGE_THROW_ERROR(Exception, "error parsing quat");
 		return data;

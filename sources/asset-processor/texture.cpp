@@ -164,7 +164,7 @@ namespace
 		{
 			if (data->channels() != 4)
 				CAGE_THROW_ERROR(Exception, "premultiplied alpha requires 4 channels");
-			if (properties("srgb").toBool())
+			if (toBool(properties("srgb")))
 			{
 				ImageFormatEnum origFormat = data->format();
 				GammaSpaceEnum origGamma = data->colorConfig.gammaSpace;
@@ -319,13 +319,13 @@ namespace
 		data.target = target;
 		data.filterMin = convertFilter(properties("filterMin"));
 		data.filterMag = convertFilter(properties("filterMag"));
-		data.filterAniso = properties("filterAniso").toUint32();
+		data.filterAniso = toUint32(properties("filterAniso"));
 		data.wrapX = convertWrap(properties("wrapX"));
 		data.wrapY = convertWrap(properties("wrapY"));
 		data.wrapZ = convertWrap(properties("wrapZ"));
 		data.flags =
 			(requireMipmaps(data.filterMin) ? TextureFlags::GenerateMipmaps : TextureFlags::None) |
-			(properties("animationLoop").toBool() ? TextureFlags::AnimationLoop : TextureFlags::None);
+			(toBool(properties("animationLoop")) ? TextureFlags::AnimationLoop : TextureFlags::None);
 		data.dimX = images[0].data->width();
 		data.dimY = images[0].data->height();
 		data.dimZ = numeric_cast<uint32>(images.size());
@@ -335,7 +335,7 @@ namespace
 		if (images[0].data->format() != ImageFormatEnum::U8)
 			CAGE_THROW_ERROR(NotImplemented, "8-bit precision only");
 
-		if (properties("srgb").toBool())
+		if (toBool(properties("srgb")))
 		{
 			switch (data.channels)
 			{
@@ -377,7 +377,7 @@ namespace
 		}
 		data.copyType = GL_UNSIGNED_BYTE;
 		data.stride = data.dimX * data.dimY * data.channels;
-		data.animationDuration = properties("animationDuration").toUint64();
+		data.animationDuration = toUint64(properties("animationDuration"));
 
 		AssetHeader h = initializeAssetHeader();
 		h.originalSize = sizeof(data);
@@ -408,8 +408,8 @@ void processTexture()
 		bool n = properties("convert") == "heightToNormal";
 		bool s = properties("convert") == "specularToSpecial";
 		bool c = properties("convert") == "skyboxToCube";
-		bool a = properties("premultiplyAlpha").toBool();
-		bool g = properties("srgb").toBool();
+		bool a = toBool(properties("premultiplyAlpha"));
+		bool g = toBool(properties("srgb"));
 		if ((n || s) && a)
 			CAGE_THROW_ERROR(Exception, "premultiplied alpha is only for colors");
 		if ((n || s) && g)
@@ -419,24 +419,24 @@ void processTexture()
 	}
 
 	{ // load all files
-		uint32 firstDollar = inputFile.find('$');
+		uint32 firstDollar = find(inputFile, '$');
 		if (firstDollar == m)
 			loadFile(inputFile);
 		else
 		{
 			images.reserve(100);
-			string prefix = inputFile.subString(0, firstDollar);
-			string suffix = inputFile.subString(firstDollar, m);
+			string prefix = subString(inputFile, 0, firstDollar);
+			string suffix = subString(inputFile, firstDollar, m);
 			uint32 dollarsCount = 0;
 			while (!suffix.empty() && suffix[0] == '$')
 			{
 				dollarsCount++;
-				suffix = suffix.subString(1, m);
+				suffix = subString(suffix, 1, m);
 			}
 			uint32 index = 0;
 			while (true)
 			{
-				string name = prefix + string(stringizer() + index).reverse().fill(dollarsCount, '0').reverse() + suffix;
+				string name = prefix + reverse(fill(reverse(string(stringizer() + index)), dollarsCount, '0')) + suffix;
 				if (!pathIsFile(pathJoin(inputDirectory, name)))
 					break;
 				CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "loading file: '" + name + "'");
@@ -453,7 +453,7 @@ void processTexture()
 	{ // convert height map to normal map
 		if (properties("convert") == "heightToNormal")
 		{
-			float strength = properties("normalStrength").toFloat();
+			float strength = toFloat(properties("normalStrength"));
 			for (auto &it : images)
 				it.convertHeightToNormal(strength);
 			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "converted from height map to normal map with strength of " + strength);
@@ -481,7 +481,7 @@ void processTexture()
 	checkConsistency(target);
 
 	{ // premultiply alpha
-		if (properties("premultiplyAlpha").toBool())
+		if (toBool(properties("premultiplyAlpha")))
 		{
 			for (auto &it : images)
 				it.premultiplyAlpha();
@@ -490,7 +490,7 @@ void processTexture()
 	}
 
 	{ // downscale
-		uint32 downscale = properties("downscale").toUint32();
+		uint32 downscale = toUint32(properties("downscale"));
 		if (downscale > 1)
 		{
 			performDownscale(downscale, target);
@@ -499,7 +499,7 @@ void processTexture()
 	}
 
 	{ // vertical flip
-		if (!properties("flip").toBool())
+		if (!toBool(properties("flip")))
 		{
 			for (auto &it : images)
 				it.data->verticalFlip();
@@ -508,25 +508,25 @@ void processTexture()
 	}
 
 	{ // invert
-		if (properties("invertRed").toBool())
+		if (toBool(properties("invertRed")))
 		{
 			for (auto &it : images)
 				it.invert(0);
 			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "red channel inverted");
 		}
-		if (properties("invertGreen").toBool())
+		if (toBool(properties("invertGreen")))
 		{
 			for (auto &it : images)
 				it.invert(1);
 			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "green channel inverted");
 		}
-		if (properties("invertBlue").toBool())
+		if (toBool(properties("invertBlue")))
 		{
 			for (auto &it : images)
 				it.invert(2);
 			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "blue channel inverted");
 		}
-		if (properties("invertAlpha").toBool())
+		if (toBool(properties("invertAlpha")))
 		{
 			for (auto &it : images)
 				it.invert(3);

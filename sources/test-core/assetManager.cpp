@@ -110,8 +110,8 @@ namespace
 	{
 		Holder<MemoryBuffer> a = man->get<AssetSchemeIndexRaw, MemoryBuffer>(10);
 		CAGE_TEST(a);
-		CAGE_TEST(a->size() == Length);
-		CAGE_TEST(detail::memcmp(a->data(), content, Length) == 0);
+		CAGE_TEST(a->size() == Length - 1);
+		CAGE_TEST(detail::memcmp(a->data(), content, Length - 1) == 0);
 	}
 }
 

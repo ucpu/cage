@@ -1,5 +1,6 @@
 #include <cage-core/concurrent.h>
 #include <cage-core/systemInformation.h>
+#include <cage-core/string.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
 #include <Windows.h>
@@ -22,19 +23,19 @@ namespace cage
 #elif defined(CAGE_SYSTEM_LINUX)
 		Holder<Process> prg = newProcess(string("lsb_release -d"));
 		string newName = prg->readLine();
-		if (!newName.isPattern("Description", "", ""))
+		if (!isPattern(newName, "Description", "", ""))
 		{
 			// lsb_release is not installed, let's at least return full uname
 			prg = newProcess(string("uname -a"));
 			return prg->readLine();
 		}
 
-		newName = newName.remove(0, string("Description:").length());
-		string systemName = newName.trim();
+		newName = remove(newName, 0, string("Description:").length());
+		string systemName = trim(newName);
 
 		prg = newProcess(string("lsb_release -r"));
-		newName = prg->readLine().remove(0, string("Release:").length());
-		systemName = systemName + " " + newName.trim();
+		newName = remove(prg->readLine(), 0, string("Release:").length());
+		systemName = systemName + " " + trim(newName);
 
 		prg = newProcess(string("uname -r"));
 		systemName = systemName + ", kernel " + prg->readLine();
@@ -101,7 +102,7 @@ namespace cage
 		return CPUBrandString;
 #elif defined(CAGE_SYSTEM_LINUX)
 		Holder<Process> prg = newProcess(string("cat /proc/cpuinfo | grep -m 1 'model name' | cut -d: -f2-"));
-		return prg->readLine().trim();
+		return trim(prg->readLine());
 #else
 		// todo
 		return "";
@@ -129,7 +130,7 @@ namespace cage
 		try
 		{
 			Holder<Process> prg = newProcess(string("cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq"));
-			return prg->readLine().toUint32() * 1000;
+			return toUint32(prg->readLine()) * 1000;
 		}
 		catch(const cage::Exception &)
 		{
@@ -137,7 +138,7 @@ namespace cage
 		}
 
 		Holder<Process> prg = newProcess(string("cat /proc/cpuinfo | grep -m 1 'cpu MHz' | cut -d: -f2-"));
-		return numeric_cast<uint64>(prg->readLine().trim().toDouble() * 1e6);
+		return numeric_cast<uint64>(toDouble(trim(prg->readLine())) * 1e6);
 #else
 		// todo
 		return 0;
@@ -154,7 +155,7 @@ namespace cage
 		return m.ullTotalPhys;
 #elif defined(CAGE_SYSTEM_LINUX)
 		Holder<Process> prg = newProcess(string("cat /proc/meminfo | grep -m 1 'MemTotal' | awk '{print $2}'"));
-		return prg->readLine().toUint64() * 1024;
+		return toUint64(prg->readLine()) * 1024;
 #else
 		// todo
 		return 0;
@@ -173,7 +174,7 @@ namespace cage
 		try
 		{
 			Holder<Process> prg = newProcess(string("cat /proc/meminfo | grep -m 1 'MemAvailable' | awk '{print $2}'"));
-			return prg->readLine().toUint64() * 1024;
+			return toUint64(prg->readLine()) * 1024;
 		}
 		catch (const cage::Exception &)
 		{
@@ -181,7 +182,7 @@ namespace cage
 		}
 
 		Holder<Process> prg = newProcess(string("cat /proc/meminfo | grep -m 1 'MemFree' | awk '{print $2}'"));
-		return prg->readLine().toUint64() * 1024;
+		return toUint64(prg->readLine()) * 1024;
 #else
 		// todo
 		return 0;

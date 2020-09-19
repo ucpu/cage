@@ -1,4 +1,5 @@
 #include "net.h"
+#include <cage-core/string.h>
 
 namespace cage
 {
@@ -37,7 +38,7 @@ namespace cage
 			if (getnameinfo((sockaddr*)&storage, addrlen, nameBuf, string::MaxLength - 1, portBuf, 6, NI_NUMERICSERV | (domain ? 0 : NI_NUMERICHOST)) != 0)
 				CAGE_THROW_ERROR(SystemError, "translate address to human readable format failed (getnameinfo)", WSAGetLastError());
 			address = string(nameBuf);
-			port = numeric_cast<uint16>(string(portBuf).toUint32());
+			port = numeric_cast<uint16>(toUint32(string(portBuf)));
 		}
 
 		Sock::Sock() : descriptor(INVALID_SOCKET), family(-1), type(-1), protocol(-1), connected(false)

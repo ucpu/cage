@@ -6,29 +6,29 @@ namespace cage
 {
 	real real::parse(const string &str)
 	{
-		return privat::tryRemoveParentheses(str).toFloat();
+		return toFloat(privat::tryRemoveParentheses(str));
 	}
 
 	degs degs::parse(const string &str)
 	{
 		string s = privat::tryRemoveParentheses(str);
-		if (s.isPattern("", "", "degs"))
-			s = s.subString(0, s.length() - 4);
-		else if (s.isPattern("", "", "deg"))
-			s = s.subString(0, s.length() - 3);
-		s = s.trim(true, true, "\t ");
-		return degs(s.toFloat());
+		if (isPattern(s, "", "", "degs"))
+			s = subString(s, 0, s.length() - 4);
+		else if (isPattern(s, "", "", "deg"))
+			s = subString(s, 0, s.length() - 3);
+		s = trim(s, true, true, "\t ");
+		return degs(toFloat(s));
 	}
 
 	rads rads::parse(const string &str)
 	{
 		string s = privat::tryRemoveParentheses(str);
-		if (s.isPattern("", "", "rads"))
-			s = s.subString(0, s.length() - 4);
-		else if (s.isPattern("", "", "rad"))
-			s = s.subString(0, s.length() - 3);
-		s = s.trim(true, true, "\t ");
-		return rads(s.toFloat());
+		if (isPattern(s, "", "", "rads"))
+			s = subString(s, 0, s.length() - 4);
+		else if (isPattern(s, "", "", "rad"))
+			s = subString(s, 0, s.length() - 3);
+		s = trim(s, true, true, "\t ");
+		return rads(toFloat(s));
 	}
 
 	real sin(rads value)
@@ -64,17 +64,6 @@ namespace cage
 	rads atan2(real x, real y)
 	{
 		return (rads)std::atan2(y.value, x.value);
-		/*
-		if (x > 0) return atan(y / x);
-		if (x < 0)
-		{
-			if (y < 0) return atan(y / x) - rads(real::Pi());
-			return atan(y / x) + rads(real::Pi());
-		}
-		if (y < 0) return rads(-real::Pi() / 2);
-		if (y > 0) return rads(real::Pi() / 2);
-		return rads::Nan();
-		*/
 	}
 
 	bool real::valid() const noexcept

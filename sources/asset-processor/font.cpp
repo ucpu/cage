@@ -371,20 +371,20 @@ namespace
 			fm.textual = true;
 			Holder<File> f = newFile(pathJoin(fontPath, pathReplaceInvalidCharacters(inputName) + ".glyphs.txt"), fm);
 			f->writeLine(
-				string("glyph").fill(10) +
-				string("tex coord").fill(60) +
-				string("size").fill(30) +
-				string("bearing").fill(30) +
+				fill(string("glyph"), 10) +
+				fill(string("tex coord"), 60) +
+				fill(string("size"), 30) +
+				fill(string("bearing"), 30) +
 				string("advance")
 			);
 			for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
 			{
 				Glyph &g = glyphs[glyphIndex];
 				f->writeLine(
-					string(stringizer() + glyphIndex).fill(10) +
-					string(stringizer() + g.data.texUv).fill(60) +
-					string(stringizer() + g.data.size).fill(30) +
-					string(stringizer() + g.data.bearing).fill(30) +
+					fill(string(stringizer() + glyphIndex), 10) +
+					fill(string(stringizer() + g.data.texUv), 60) +
+					fill(string(stringizer() + g.data.size), 30) +
+					fill(string(stringizer() + g.data.bearing), 30) +
 					string(stringizer() + g.data.advance.value)
 				);
 			}
@@ -396,8 +396,8 @@ namespace
 			fm.textual = true;
 			Holder<File> f = newFile(pathJoin(fontPath, pathReplaceInvalidCharacters(inputName) + ".characters.txt"), fm);
 			f->writeLine(
-				string("code").fill(10) +
-				string("char").fill(5) +
+				fill(string("code"), 10) +
+				fill(string("char"), 5) +
 				string("glyph")
 			);
 			for (uint32 charIndex = 0; charIndex < data.charCount; charIndex++)
@@ -405,8 +405,8 @@ namespace
 				uint32 c = charsetChars[charIndex];
 				char C = c < 256 ? c : ' ';
 				f->writeLine(stringizer() +
-					string(stringizer() + c).fill(10) +
-					string(&C, 1).fill(5) +
+					fill(string(stringizer() + c), 10) +
+					fill(string({ &C, &C + 1 }), 5) +
 					charsetGlyphs[charIndex]
 				);
 			}
@@ -418,8 +418,8 @@ namespace
 			fm.textual = true;
 			Holder<File> f = newFile(pathJoin(fontPath, pathReplaceInvalidCharacters(inputName) + ".kerning.txt"), fm);
 			f->writeLine(
-				string("g1").fill(5) +
-				string("g2").fill(5) +
+				fill(string("g1"), 5) +
+				fill(string("g2"), 5) +
 				string("kerning")
 			);
 			if (kerning.empty())
@@ -436,8 +436,8 @@ namespace
 						if (k == 0)
 							continue;
 						f->writeLine(
-							string(stringizer() + x).fill(5) +
-							string(stringizer() + y).fill(5) +
+							fill(string(stringizer() + x), 5) +
+							fill(string(stringizer() + y), 5) +
 							string(stringizer() + k)
 						);
 					}
@@ -465,7 +465,7 @@ void processFont()
 	CALL(FT_New_Face, library, inputFileName.c_str(), 0, &face);
 	if (!FT_IS_SCALABLE(face))
 		CAGE_THROW_ERROR(Exception, "font is not scalable");
-	uint32 resolution = properties("resolution").toUint32();
+	uint32 resolution = toUint32(properties("resolution"));
 	CALL(FT_Select_Charmap, face, FT_ENCODING_UNICODE);
 	CALL(FT_Set_Pixel_Sizes, face, resolution, resolution);
 	fontScale = 1.0f / resolution;

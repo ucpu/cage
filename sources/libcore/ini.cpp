@@ -1,5 +1,4 @@
 #include <cage-core/string.h>
-#include <cage-core/memory.h>
 #include <cage-core/files.h>
 #include <cage-core/ini.h>
 #include <cage-core/pointerRangeHolder.h>
@@ -15,10 +14,9 @@ namespace cage
 	namespace
 	{
 		template<class Value>
-		struct ContainerMap : public std::map<string, Value, stringComparatorFast, MemoryArenaStd<std::pair<const string, Value>>>
+		struct ContainerMap : public std::map<string, Value, StringComparatorFast>
 		{
 			typedef typename ContainerMap::map Base;
-			ContainerMap(MemoryArena arena) : Base(stringComparatorFast(), arena) {}
 		};
 
 		struct IniValue
@@ -31,15 +29,12 @@ namespace cage
 
 		struct IniSection
 		{
-			IniSection(MemoryArena arena) : items(arena) {}
 			ContainerMap<IniValue> items;
 		};
 
 		class IniImpl : public Ini
 		{
 		public:
-			IniImpl(MemoryArena arena) : arena(arena), sections(arena) {}
-			MemoryArena arena;
 			ContainerMap<Holder<IniSection>> sections;
 		};
 	}
@@ -165,7 +160,7 @@ namespace cage
 	{
 		void validateString(const string &str)
 		{
-			if (str.empty() || str.find('#') != m || str.find('[') != m || str.find(']') != m || str.find('=') != m)
+			if (str.empty() || find(str, '#') != m || find(str, '[') != m || find(str, ']') != m || find(str, '=') != m)
 				CAGE_THROW_ERROR(Exception, "invalid name");
 		}
 	}
@@ -174,11 +169,11 @@ namespace cage
 	{
 		validateString(section);
 		validateString(item);
-		if (value.find('#') != m)
+		if (find(value, '#') != m)
 			CAGE_THROW_ERROR(Exception, "invalid value");
 		IniImpl *impl = (IniImpl*)this;
 		if (!sectionExists(section))
-			impl->sections[section] = impl->arena.createHolder<IniSection>(impl->arena);
+			impl->sections[section] = detail::systemArena().createHolder<IniSection>();
 		impl->sections[section]->items[item] = value;
 	}
 
@@ -281,7 +276,7 @@ namespace cage
 				CAGE_ASSERT(!s.empty());
 				if (!argumentsOnly)
 				{
-					if (s.isPattern("---", "", ""))
+					if (isPattern(s, "---", "", ""))
 						CAGE_THROW_ERROR(Exception, "invalid option prefix (---)");
 					if (s == "-")
 						CAGE_THROW_ERROR(Exception, "missing option name");
@@ -291,17 +286,17 @@ namespace cage
 						checkCmdOption(this, option, "--");
 						continue;
 					}
-					if (s.isPattern("--", "", ""))
+					if (isPattern(s, "--", "", ""))
 					{
-						string o = s.remove(0, 2);
+						string o = remove(s, 0, 2);
 						checkCmdOption(this, option, o);
 						continue;
 					}
-					if (s.isPattern("-", "", ""))
+					if (isPattern(s, "-", "", ""))
 					{
 						for (uint32 i = 1, e = s.length(); i != e; i++)
 						{
-							string o = string(&s[i], 1);
+							string o = string({ &s[i], &s[i] + 1 });
 							checkCmdOption(this, option, o);
 						}
 						continue;
@@ -331,16 +326,16 @@ namespace cage
 		{
 			if (line.empty())
 				continue;
-			uint32 pos = line.find('#');
+			uint32 pos = find(line, '#');
 			if (pos != m)
-				line = line.subString(0, pos);
-			line = line.trim();
+				line = subString(line, 0, pos);
+			line = trim(line);
 			if (line.empty())
 				continue;
 			if (line[0] == '[' && line[line.length() - 1] == ']')
 			{
 				itemIndex = 0;
-				sec = line.subString(1, line.length() - 2).trim();
+				sec = trim(subString(line, 1, line.length() - 2));
 				if (sec.empty())
 					sec = stringizer() + secIndex++;
 				if (sectionExists(sec))
@@ -349,14 +344,14 @@ namespace cage
 			}
 			if (sec.empty())
 				CAGE_THROW_ERROR(Exception, "item outside section");
-			pos = line.find('=');
+			pos = find(line, '=');
 			string itemName, itemValue;
 			if (pos == m)
 				itemValue = line;
 			else
 			{
-				itemName = line.subString(0, pos).trim();
-				itemValue = line.subString(pos + 1, m).trim();
+				itemName = trim(subString(line, 0, pos));
+				itemValue = trim(subString(line, pos + 1, m));
 			}
 			if (itemName.empty())
 				itemName = stringizer() + itemIndex++;
@@ -411,7 +406,7 @@ namespace cage
 		{
 			if (c == 0)
 				return "";
-			return string(&c, 1);
+			return string({ &c, &c + 1 });
 		}
 
 		string getCmd(const Ini *ini, string shortName, const string &longName)
@@ -447,7 +442,7 @@ namespace cage
 		if (tmp.empty()) \
 			return defaul; \
 		const_cast<Ini*>(this)->markUsed(section, item); \
-		return tmp TO; \
+		return TO(tmp); \
 	} \
 	TYPE Ini::CAGE_JOIN(cmd, NAME) (char shortName, const string &longName, const TYPE &defaul) const \
 	{ \
@@ -457,7 +452,7 @@ namespace cage
 			string tmp = getCmd(this, sn, longName); \
 			if (tmp.empty()) \
 				return defaul; \
-			return tmp TO; \
+			return TO(tmp); \
 		} \
 		catch (const Exception &) \
 		{ \
@@ -473,7 +468,7 @@ namespace cage
 			string tmp = getCmd(this, sn, longName); \
 			if (tmp.empty()) \
 				CAGE_THROW_ERROR(Exception, "missing required cmd option"); \
-			return tmp TO; \
+			return TO(tmp); \
 		} \
 		catch (const Exception &) \
 		{ \
@@ -481,13 +476,13 @@ namespace cage
 			throw; \
 		} \
 	}
-	GCHL_GENERATE(bool, Bool, .toBool());
-	GCHL_GENERATE(sint32, Sint32, .toSint32());
-	GCHL_GENERATE(uint32, Uint32, .toUint32());
-	GCHL_GENERATE(sint64, Sint64, .toSint64());
-	GCHL_GENERATE(uint64, Uint64, .toUint64());
-	GCHL_GENERATE(float, Float, .toFloat());
-	GCHL_GENERATE(double, Double, .toDouble());
+	GCHL_GENERATE(bool, Bool, toBool);
+	GCHL_GENERATE(sint32, Sint32, toSint32);
+	GCHL_GENERATE(uint32, Uint32, toUint32);
+	GCHL_GENERATE(sint64, Sint64, toSint64);
+	GCHL_GENERATE(uint64, Uint64, toUint64);
+	GCHL_GENERATE(float, Float, toFloat);
+	GCHL_GENERATE(double, Double, toDouble);
 	GCHL_GENERATE(string, String, );
 #undef GCHL_GENERATE
 
@@ -509,6 +504,6 @@ namespace cage
 
 	Holder<Ini> newIni()
 	{
-		return detail::systemArena().createImpl<Ini, IniImpl>(detail::systemArena());
+		return detail::systemArena().createImpl<Ini, IniImpl>();
 	}
 }

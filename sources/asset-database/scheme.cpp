@@ -37,7 +37,7 @@ void Scheme::parse(Ini *ini)
 #define GCHL_GENERATE(NAME) fld.NAME = ini->getString(section, CAGE_STRINGIZE(NAME));
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, display, hint, type, min, max, values))
 #undef GCHL_GENERATE
-		fld.defaul = ini->getString(section, "default");
+			fld.defaul = ini->getString(section, "default");
 		if (fld.valid())
 			schemeFields.insert(templates::move(fld));
 		else
@@ -114,7 +114,7 @@ namespace
 	{
 		while (!values.empty())
 		{
-			if (values.split(",").trim() == value)
+			if (trim(split(values, ",")) == value)
 				return true;
 		}
 		return false;
@@ -131,26 +131,26 @@ bool SchemeField::valid() const
 		{
 			if (!values.empty() || !min.empty() || !max.empty())
 				return false;
-			if (!defaul.empty() && !defaul.isBool())
+			if (!defaul.empty() && !isBool(defaul))
 				return false;
 		}
 		else if (type == "uint32")
 		{
 			if (!values.empty())
 				return false;
-			if (!min.empty() && !min.isDigitsOnly())
+			if (!min.empty() && !isDigitsOnly(min))
 				return false;
-			if (!max.empty() && !max.isDigitsOnly())
+			if (!max.empty() && !isDigitsOnly(max))
 				return false;
-			if (!min.empty() && !max.empty() && min.toUint32() > max.toUint32())
+			if (!min.empty() && !max.empty() && toUint32(min) > toUint32(max))
 				return false;
 			if (!defaul.empty())
 			{
-				if (!defaul.isDigitsOnly())
+				if (!isDigitsOnly(defaul))
 					return false;
-				if (!min.empty() && defaul.toUint32() < min.toUint32())
+				if (!min.empty() && toUint32(defaul) < toUint32(min))
 					return false;
-				if (!max.empty() && defaul.toUint32() > max.toUint32())
+				if (!max.empty() && toUint32(defaul) > toUint32(max))
 					return false;
 			}
 		}
@@ -158,19 +158,19 @@ bool SchemeField::valid() const
 		{
 			if (!values.empty())
 				return false;
-			if (!min.empty() && !min.isInteger())
+			if (!min.empty() && !isInteger(min))
 				return false;
-			if (!max.empty() && !max.isInteger())
+			if (!max.empty() && !isInteger(max))
 				return false;
-			if (!min.empty() && !max.empty() && min.toSint32() > max.toSint32())
+			if (!min.empty() && !max.empty() && toSint32(min) > toSint32(max))
 				return false;
 			if (!defaul.empty())
 			{
-				if (!defaul.isInteger())
+				if (!isInteger(defaul))
 					return false;
-				if (!min.empty() && defaul.toSint32() < min.toSint32())
+				if (!min.empty() && toSint32(defaul) < toSint32(min))
 					return false;
-				if (!max.empty() && defaul.toSint32() > max.toSint32())
+				if (!max.empty() && toSint32(defaul) > toSint32(max))
 					return false;
 			}
 		}
@@ -178,19 +178,19 @@ bool SchemeField::valid() const
 		{
 			if (!values.empty())
 				return false;
-			if (!min.empty() && !min.isReal())
+			if (!min.empty() && !isReal(min))
 				return false;
-			if (!max.empty() && !max.isReal())
+			if (!max.empty() && !isReal(max))
 				return false;
-			if (!min.empty() && !max.empty() && min.toDouble() > max.toDouble())
+			if (!min.empty() && !max.empty() && toDouble(min) > toDouble(max))
 				return false;
 			if (!defaul.empty())
 			{
-				if (!defaul.isReal())
+				if (!isReal(defaul))
 					return false;
-				if (!min.empty() && defaul.toDouble() < min.toDouble())
+				if (!min.empty() && toDouble(defaul) < toDouble(min))
 					return false;
-				if (!max.empty() && defaul.toDouble() > max.toDouble())
+				if (!max.empty() && toDouble(defaul) > toDouble(max))
 					return false;
 			}
 		}
@@ -198,17 +198,17 @@ bool SchemeField::valid() const
 		{
 			if (!values.empty())
 				return false;
-			if (!min.empty() && !min.isDigitsOnly())
+			if (!min.empty() && !isDigitsOnly(min))
 				return false;
-			if (!max.empty() && !max.isDigitsOnly())
+			if (!max.empty() && !isDigitsOnly(max))
 				return false;
-			if (!min.empty() && !max.empty() && min.toUint32() > max.toUint32())
+			if (!min.empty() && !max.empty() && toUint32(min) > toUint32(max))
 				return false;
 			if (!defaul.empty())
 			{
-				if (!min.empty() && defaul.length() < min.toUint32())
+				if (!min.empty() && defaul.length() < toUint32(min))
 					return false;
-				if (!max.empty() && defaul.length() > max.toUint32())
+				if (!max.empty() && defaul.length() > toUint32(max))
 					return false;
 			}
 		}
@@ -218,7 +218,7 @@ bool SchemeField::valid() const
 				return false;
 			if (valuesContainsValue(values, ""))
 				return false;
-			if (defaul.find(',') != m)
+			if (find(defaul, ',') != m)
 				return false;
 			if (!defaul.empty() && !valuesContainsValue(values, defaul))
 				return false;
@@ -247,26 +247,26 @@ bool SchemeField::applyToAssetField(string &val, const string &assetName) const
 	}
 	if (type == "bool")
 	{
-		if (!val.isBool())
+		if (!isBool(val))
 		{
 			CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is not bool");
 			return false;
 		}
-		val = stringizer() + val.toBool();
+		val = stringizer() + toBool(val);
 	}
 	else if (type == "uint32")
 	{
-		if (val.empty() || !val.isDigitsOnly())
+		if (val.empty() || !isDigitsOnly(val))
 		{
 			CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is not integer");
 			return false;
 		}
-		if (!min.empty() && val.toUint32() < min.toUint32())
+		if (!min.empty() && toUint32(val) < toUint32(min))
 		{
 			CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is too small");
 			return false;
 		}
-		if (!max.empty() && val.toUint32() > max.toUint32())
+		if (!max.empty() && toUint32(val) > toUint32(max))
 		{
 			CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is too large");
 			return false;
@@ -274,17 +274,17 @@ bool SchemeField::applyToAssetField(string &val, const string &assetName) const
 	}
 	else if (type == "sint32")
 	{
-		if (!val.isInteger())
+		if (!isInteger(val))
 		{
 			CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is not integer");
 			return false;
 		}
-		if (!min.empty() && val.toSint32() < min.toSint32())
+		if (!min.empty() && toSint32(val) < toSint32(min))
 		{
 			CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is too small");
 			return false;
 		}
-		if (!max.empty() && val.toSint32() > max.toSint32())
+		if (!max.empty() && toSint32(val) > toSint32(max))
 		{
 			CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is too large");
 			return false;
@@ -292,17 +292,17 @@ bool SchemeField::applyToAssetField(string &val, const string &assetName) const
 	}
 	else if (type == "real")
 	{
-		if (!val.isReal())
+		if (!isReal(val))
 		{
 			CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is not real");
 			return false;
 		}
-		if (!min.empty() && val.toDouble() < min.toDouble())
+		if (!min.empty() && toDouble(val) < toDouble(min))
 		{
 			CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is too small");
 			return false;
 		}
-		if (!max.empty() && val.toDouble() > max.toDouble())
+		if (!max.empty() && toDouble(val) > toDouble(max))
 		{
 			CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is too large");
 			return false;
@@ -310,12 +310,12 @@ bool SchemeField::applyToAssetField(string &val, const string &assetName) const
 	}
 	else if (type == "string")
 	{
-		if (!min.empty() && val.length() < min.toUint32())
+		if (!min.empty() && val.length() < toUint32(min))
 		{
 			CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is too short");
 			return false;
 		}
-		if (!max.empty() && val.length() > max.toUint32())
+		if (!max.empty() && val.length() > toUint32(max))
 		{
 			CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' is too long");
 			return false;
@@ -323,7 +323,7 @@ bool SchemeField::applyToAssetField(string &val, const string &assetName) const
 	}
 	else if (type == "enum")
 	{
-		if (val.find(',') != m)
+		if (find(val, ',') != m)
 		{
 			CAGE_LOG(SeverityEnum::Error, "database", stringizer() + "asset '" + assetName + "', field '" + this->name + "', value '" + val + "' contains comma");
 			return false;

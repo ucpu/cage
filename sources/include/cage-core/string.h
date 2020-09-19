@@ -7,234 +7,225 @@ namespace cage
 {
 	namespace privat
 	{
-		CAGE_CORE_API void stringReplace(char *data, uint32 &current, uint32 maxLength, const char *what, uint32 whatLen, const char *with, uint32 withLen);
-		CAGE_CORE_API void stringTrim(char *data, uint32 &current, const char *what, uint32 whatLen, bool left, bool right);
-		CAGE_CORE_API void stringSplit(char *data, uint32 &current, char *ret, uint32 &retLen, const char *what, uint32 whatLen);
-		CAGE_CORE_API uint32 stringToUpper(char *dst, uint32 dstLen, const char *src, uint32 srcLen);
-		CAGE_CORE_API uint32 stringToLower(char *dst, uint32 dstLen, const char *src, uint32 srcLen);
-		CAGE_CORE_API uint32 stringFind(const char *data, uint32 current, const char *what, uint32 whatLen, uint32 offset);
-		CAGE_CORE_API void stringEncodeUrl(const char *dataIn, uint32 currentIn, char *dataOut, uint32 &currentOut, uint32 maxLength);
-		CAGE_CORE_API void stringDecodeUrl(const char *dataIn, uint32 currentIn, char *dataOut, uint32 &currentOut, uint32 maxLength);
-		CAGE_CORE_API bool stringIsDigitsOnly(const char *data, uint32 dataLen);
-		CAGE_CORE_API bool stringIsInteger(const char *data, uint32 dataLen);
-		CAGE_CORE_API bool stringIsReal(const char *data, uint32 dataLen);
-		CAGE_CORE_API bool stringIsBool(const char *data, uint32 dataLen);
-		CAGE_CORE_API bool stringIsPattern(const char *data, uint32 dataLen, const char *prefix, uint32 prefixLen, const char *infix, uint32 infixLen, const char *suffix, uint32 suffixLen);
+		CAGE_CORE_API void stringReplace(char *data, uint32 &current, uint32 maxLength, PointerRange<const char> what, PointerRange<const char> with);
+		CAGE_CORE_API void stringTrim(char *data, uint32 &current, PointerRange<const char> what, bool left, bool right);
+		CAGE_CORE_API void stringSplit(char *data, uint32 &current, char *ret, uint32 &retLen, PointerRange<const char> what);
+		CAGE_CORE_API uint32 stringFind(PointerRange<const char> data, PointerRange<const char> what, uint32 offset);
+		CAGE_CORE_API void stringEncodeUrl(char *data, uint32 &current, uint32 maxLength, PointerRange<const char> what);
+		CAGE_CORE_API void stringDecodeUrl(char *data, uint32 &current, uint32 maxLength, PointerRange<const char> what);
+		CAGE_CORE_API void stringToUpper(PointerRange<char> data);
+		CAGE_CORE_API void stringToLower(PointerRange<char> data);
+		CAGE_CORE_API bool stringIsPattern(PointerRange<const char> data, PointerRange<const char> prefix, PointerRange<const char> infix, PointerRange<const char> suffix);
+		CAGE_CORE_API bool stringIsDigitsOnly(PointerRange<const char> data);
+		CAGE_CORE_API bool stringIsInteger(PointerRange<const char> data);
+		CAGE_CORE_API bool stringIsReal(PointerRange<const char> data);
+		CAGE_CORE_API bool stringIsBool(PointerRange<const char> data);
+	}
+
+	template<uint32 N>
+	detail::StringBase<N> reverse(const detail::StringBase<N> &str)
+	{
+		detail::StringBase<N> ret;
+		ret.rawLength() = str.length();
+		for (uint32 i = 0; i < str.length(); i++)
+			ret[str.length() - i - 1] = str[i];
+		return ret;
+	}
+
+	template<uint32 N>
+	detail::StringBase<N> subString(const detail::StringBase<N> &str, uint32 start, uint32 length)
+	{
+		if (start >= str.length())
+			return "";
+		uint32 len = length;
+		if (length == m || start + length > str.length())
+			len = str.length() - start;
+		return detail::StringBase<N>({ str.c_str() + start, str.c_str() + start + len });
+	}
+
+	template<uint32 N>
+	detail::StringBase<N> replace(const detail::StringBase<N> &str, PointerRange<const char> what, PointerRange<const char> with)
+	{
+		detail::StringBase<N> ret = str;
+		privat::stringReplace(ret.rawData(), ret.rawLength(), N, what, with);
+		return ret;
+	}
+
+	template<uint32 N>
+	detail::StringBase<N> replace(const detail::StringBase<N> &str, uint32 start, uint32 length, PointerRange<const char> with)
+	{
+		return subString(str, 0, start) + detail::StringBase<N>(with) + subString(str, start + length, m);
+	}
+
+	template<uint32 N>
+	detail::StringBase<N> remove(const detail::StringBase<N> &str, uint32 start, uint32 length)
+	{
+		return subString(str, 0, start) + subString(str, start + length, m);
+	}
+
+	template<uint32 N>
+	detail::StringBase<N> insert(const detail::StringBase<N> &str, uint32 start, PointerRange<const char> what)
+	{
+		return subString(str, 0, start) + detail::StringBase<N>(what) + subString(str, start, m);
+	}
+
+	template<uint32 N>
+	detail::StringBase<N> trim(const detail::StringBase<N> &str, bool left = true, bool right = true, PointerRange<const char> trimChars = "\t\n ")
+	{
+		detail::StringBase<N> ret = str;
+		privat::stringTrim(ret.rawData(), ret.rawLength(), trimChars, left, right);
+		return ret;
+	}
+
+	template<uint32 N>
+	detail::StringBase<N> split(detail::StringBase<N> &str, PointerRange<const char> splitChars = "\t\n ")
+	{
+		detail::StringBase<N> ret;
+		privat::stringSplit(str.rawData(), str.rawLength(), ret.rawData(), ret.rawLength(), splitChars);
+		return ret;
+	}
+
+	template<uint32 N>
+	detail::StringBase<N> fill(const detail::StringBase<N> &str, uint32 size, char c = ' ')
+	{
+		detail::StringBase<N> ret = str;
+		while (ret.length() < size)
+			ret += detail::StringBase<N>({ &c, &c + 1 });
+		return ret;
+	}
+
+	template<uint32 N>
+	uint32 find(const detail::StringBase<N> &str, PointerRange<const char> what, uint32 offset = 0)
+	{
+		return privat::stringFind(str, what, offset);
+	}
+
+	template<uint32 N>
+	uint32 find(const detail::StringBase<N> &str, char what, uint32 offset = 0)
+	{
+		return privat::stringFind(str, { &what, &what + 1 }, offset);
+	}
+
+	template<uint32 N>
+	detail::StringBase<N> encodeUrl(const detail::StringBase<N> &str)
+	{
+		detail::StringBase<N> ret;
+		privat::stringEncodeUrl(ret.rawData(), ret.rawLength(), N, str);
+		return ret;
+	}
+
+	template<uint32 N>
+	detail::StringBase<N> decodeUrl(const detail::StringBase<N> &str)
+	{
+		detail::StringBase<N> ret;
+		privat::stringDecodeUrl(ret.rawData(), ret.rawLength(), N, str);
+		return ret;
+	}
+
+	template<uint32 N>
+	detail::StringBase<N> toUpper(const detail::StringBase<N> &str)
+	{
+		detail::StringBase<N> ret = str;
+		privat::stringToUpper({ ret.rawData(), ret.rawData() + ret.length() });
+		return ret;
+	}
+
+	template<uint32 N>
+	detail::StringBase<N> toLower(const detail::StringBase<N> &str)
+	{
+		detail::StringBase<N> ret = str;
+		privat::stringToLower({ ret.rawData(), ret.rawData() + ret.length() });
+		return ret;
+	}
+
+	template<uint32 N>
+	float toFloat(const detail::StringBase<N> &str)
+	{
+		float i;
+		privat::fromString(str, i);
+		return i;
+	}
+
+	template<uint32 N>
+	double toDouble(const detail::StringBase<N> &str)
+	{
+		double i;
+		privat::fromString(str, i);
+		return i;
+	}
+
+	template<uint32 N>
+	sint32 toSint32(const detail::StringBase<N> &str)
+	{
+		sint32 i;
+		privat::fromString(str, i);
+		return i;
+	}
+
+	template<uint32 N>
+	uint32 toUint32(const detail::StringBase<N> &str)
+	{
+		uint32 i;
+		privat::fromString(str, i);
+		return i;
+	}
+
+	template<uint32 N>
+	sint64 toSint64(const detail::StringBase<N> &str)
+	{
+		sint64 i;
+		privat::fromString(str, i);
+		return i;
+	}
+
+	template<uint32 N>
+	uint64 toUint64(const detail::StringBase<N> &str)
+	{
+		uint64 i;
+		privat::fromString(str, i);
+		return i;
+	}
+
+	template<uint32 N>
+	bool toBool(const detail::StringBase<N> &str)
+	{
+		bool i;
+		privat::fromString(str, i);
+		return i;
+	}
+
+	template<uint32 N>
+	bool isPattern(const detail::StringBase<N> &str, PointerRange<const char> prefix, PointerRange<const char> infix, PointerRange<const char> suffix)
+	{
+		return privat::stringIsPattern(str, prefix, infix, suffix);
+	}
+
+	template<uint32 N>
+	bool isDigitsOnly(const detail::StringBase<N> &str) noexcept
+	{
+		return privat::stringIsDigitsOnly(str);
+	}
+
+	template<uint32 N>
+	bool isInteger(const detail::StringBase<N> &str) noexcept
+	{
+		return privat::stringIsInteger(str);
+	}
+
+	template<uint32 N>
+	bool isReal(const detail::StringBase<N> &str) noexcept
+	{
+		return privat::stringIsReal(str);
+	}
+
+	template<uint32 N>
+	bool isBool(const detail::StringBase<N> &str) noexcept
+	{
+		return privat::stringIsBool(str);
 	}
 
 	namespace detail
 	{
-		template<uint32 N>
-		StringBase<N> StringBase<N>::reverse() const
-		{
-			StringBase ret = *this;
-			for (uint32 i = 0; i < current; i++)
-				ret.data[current - i - 1] = data[i];
-			return ret;
-		}
-
-		template<uint32 N>
-		StringBase<N> StringBase<N>::subString(uint32 start, uint32 length) const
-		{
-			if (start >= current)
-				return "";
-			uint32 len = length;
-			if (length == m || start + length > current)
-				len = current - start;
-			return StringBase(data + start, len);
-		}
-
-		template<uint32 N>
-		StringBase<N> StringBase<N>::replace(const StringBase &what, const StringBase &with) const
-		{
-			StringBase ret = *this;
-			privat::stringReplace(ret.data, ret.current, N, what.data, what.current, with.data, with.current);
-			ret.data[ret.current] = 0;
-			return ret;
-		}
-
-		template<uint32 N>
-		StringBase<N> StringBase<N>::replace(uint32 start, uint32 length, const StringBase &with) const
-		{
-			return subString(0, start) + with + subString(start + length, m);
-		}
-
-		template<uint32 N>
-		StringBase<N> StringBase<N>::remove(uint32 start, uint32 length) const
-		{
-			return subString(0, start) + subString(start + length, m);
-		}
-
-		template<uint32 N>
-		StringBase<N> StringBase<N>::insert(uint32 start, const StringBase &what) const
-		{
-			return subString(0, start) + what + subString(start, m);
-		}
-
-		template<uint32 N>
-		StringBase<N> StringBase<N>::trim(bool left, bool right, const StringBase &trimChars) const
-		{
-			StringBase ret = *this;
-			privat::stringTrim(ret.data, ret.current, trimChars.data, trimChars.current, left, right);
-			ret.data[ret.current] = 0;
-			return ret;
-		}
-
-		template<uint32 N>
-		StringBase<N> StringBase<N>::split(const StringBase &splitChars)
-		{
-			StringBase ret;
-			privat::stringSplit(data, current, ret.data, ret.current, splitChars.data, splitChars.current);
-			data[current] = 0;
-			ret.data[ret.current] = 0;
-			return ret;
-		}
-
-		template<uint32 N>
-		StringBase<N> StringBase<N>::fill(uint32 size, char c) const
-		{
-			StringBase cc(&c, 1);
-			StringBase ret = *this;
-			while (ret.length() < size)
-				ret += cc;
-			ret.data[ret.current] = 0;
-			return ret;
-		}
-
-		template<uint32 N>
-		uint32 StringBase<N>::find(const StringBase &other, uint32 offset) const
-		{
-			return privat::stringFind(data, current, other.data, other.current, offset);
-		}
-
-		template<uint32 N>
-		uint32 StringBase<N>::find(char other, uint32 offset) const
-		{
-			return privat::stringFind(data, current, &other, 1, offset);
-		}
-
-		template<uint32 N>
-		StringBase<N> StringBase<N>::encodeUrl() const
-		{
-			StringBase ret;
-			privat::stringEncodeUrl(data, current, ret.data, ret.current, N);
-			ret.data[ret.current] = 0;
-			return ret;
-		}
-
-		template<uint32 N>
-		StringBase<N> StringBase<N>::decodeUrl() const
-		{
-			StringBase ret;
-			privat::stringDecodeUrl(data, current, ret.data, ret.current, N);
-			ret.data[ret.current] = 0;
-			return ret;
-		}
-
-		template<uint32 N>
-		StringBase<N> StringBase<N>::toUpper() const
-		{
-			StringBase ret;
-			ret.current = privat::stringToUpper(ret.data, N, data, current);
-			ret.data[ret.current] = 0;
-			return ret;
-		}
-
-		template<uint32 N>
-		StringBase<N> StringBase<N>::toLower() const
-		{
-			StringBase ret;
-			ret.current = privat::stringToLower(ret.data, N, data, current);
-			ret.data[ret.current] = 0;
-			return ret;
-		}
-
-		template<uint32 N>
-		float StringBase<N>::toFloat() const
-		{
-			float i;
-			privat::fromString(data, current, i);
-			return i;
-		}
-
-		template<uint32 N>
-		double StringBase<N>::toDouble() const
-		{
-			double i;
-			privat::fromString(data, current, i);
-			return i;
-		}
-
-		template<uint32 N>
-		sint32 StringBase<N>::toSint32() const
-		{
-			sint32 i;
-			privat::fromString(data, current, i);
-			return i;
-		}
-
-		template<uint32 N>
-		uint32 StringBase<N>::toUint32() const
-		{
-			uint32 i;
-			privat::fromString(data, current, i);
-			return i;
-		}
-
-		template<uint32 N>
-		sint64 StringBase<N>::toSint64() const
-		{
-			sint64 i;
-			privat::fromString(data, current, i);
-			return i;
-		}
-
-		template<uint32 N>
-		uint64 StringBase<N>::toUint64() const
-		{
-			uint64 i;
-			privat::fromString(data, current, i);
-			return i;
-		}
-
-		template<uint32 N>
-		bool StringBase<N>::toBool() const
-		{
-			bool i;
-			privat::fromString(data, current, i);
-			return i;
-		}
-
-		template<uint32 N>
-		bool StringBase<N>::isPattern(const StringBase &prefix, const StringBase &infix, const StringBase &suffix) const
-		{
-			return privat::stringIsPattern(data, current, prefix.data, prefix.current, infix.data, infix.current, suffix.data, suffix.current);
-		}
-
-		template<uint32 N>
-		bool StringBase<N>::isDigitsOnly() const noexcept
-		{
-			return privat::stringIsDigitsOnly(data, current);
-		}
-
-		template<uint32 N>
-		bool StringBase<N>::isInteger() const noexcept
-		{
-			return privat::stringIsInteger(data, current);
-		}
-
-		template<uint32 N>
-		bool StringBase<N>::isReal() const noexcept
-		{
-			return privat::stringIsReal(data, current);
-		}
-
-		template<uint32 N>
-		bool StringBase<N>::isBool() const noexcept
-		{
-			return privat::stringIsBool(data, current);
-		}
-
 		template<uint32 N>
 		struct StringComparatorFastBase
 		{
@@ -247,7 +238,7 @@ namespace cage
 		};
 	}
 
-	using stringComparatorFast = detail::StringComparatorFastBase<995>;
+	using StringComparatorFast = detail::StringComparatorFastBase<995>;
 }
 
 #endif // guard_string_h_sdrgh4s6ert4gzh6r5t4sedg48s9

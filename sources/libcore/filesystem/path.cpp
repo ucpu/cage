@@ -54,7 +54,7 @@ namespace cage
 
 		string normalize(const string &path)
 		{
-			return path.replace("\\", "/");
+			return replace(path, "\\", "/");
 		}
 	}
 
@@ -75,7 +75,7 @@ namespace cage
 
 	bool pathIsAbs(const string &path)
 	{
-		return path.find(':') != m || (path.length() > 0 && path[0] == '/');
+		return find(path, ':') != m || (path.length() > 0 && path[0] == '/');
 	}
 
 	string pathToRel(const string &path, const string &ref)
@@ -88,8 +88,8 @@ namespace cage
 		{
 			string r2 = r;
 			string p2 = p;
-			string r1 = r.split("/");
-			string p1 = p.split("/");
+			string r1 = split(r, "/");
+			string p1 = split(p, "/");
 			if (r1 == p1)
 				continue;
 			r = r2;
@@ -100,7 +100,7 @@ namespace cage
 			return pathSimplify(p);
 		while (!r.empty())
 		{
-			r.split("/");
+			split(r, "/");
 			p = string("../") + p;
 		}
 		return pathSimplify(p);
@@ -142,7 +142,7 @@ namespace cage
 		{
 			if (directory.empty())
 				break;
-			string p = directory.split("/");
+			string p = split(directory, "/");
 			if (p == "" || p == ".")
 				continue;
 			if (p == "..")
@@ -185,7 +185,7 @@ namespace cage
 		for (uint32 i = 0, e = tmp.length(); i < e; i++)
 		{
 			if (validateCharacter(tmp[i], allowDirectories))
-				res += string(&tmp[i], 1);
+				res += string({ &tmp[i], &tmp[i] + 1 });
 			else
 				res += replacement;
 		}
@@ -196,19 +196,19 @@ namespace cage
 	{
 		// find drive
 		string p = normalize(input);
-		uint32 i = p.find(':');
+		uint32 i = find(p, ':');
 		if (i == m)
 			drive = "";
 		else
 		{
-			drive = p.subString(0, i);
-			p = p.subString(i + 1, m);
+			drive = subString(p, 0, i);
+			p = subString(p, i + 1, m);
 			if (p.empty() || p[0] != '/')
 				p = string("/") + p;
 		}
 		// find filename
-		p = p.reverse();
-		i = p.find('/');
+		p = reverse(p);
+		i = find(p, '/');
 		if (i == m)
 		{
 			file = p;
@@ -216,10 +216,10 @@ namespace cage
 		}
 		else
 		{
-			file = p.subString(0, i);
-			directory = p.subString(i, m).reverse();
+			file = subString(p, 0, i);
+			directory = reverse(subString(p, i, m));
 			if (directory.length() > 1)
-				directory = directory.subString(0, directory.length() - 1);
+				directory = subString(directory, 0, directory.length() - 1);
 		}
 		if (file == "." || file == "..")
 		{
@@ -232,16 +232,16 @@ namespace cage
 			file = "";
 		}
 		// find extension
-		i = file.find('.');
+		i = find(file,'.');
 		if (i == m)
 		{
 			extension = "";
-			file = file.reverse();
+			file = reverse(file);
 		}
 		else
 		{
-			extension = file.subString(0, i + 1).reverse();
-			file = file.subString(i + 1, m).reverse();
+			extension = reverse(subString(file, 0, i + 1));
+			file = reverse(subString(file, i + 1, m));
 		}
 	}
 
@@ -414,14 +414,14 @@ namespace cage
 		uint32 off = 0;
 		while (true)
 		{
-			uint32 pos = pth.subString(off, m).find('/');
+			uint32 pos = find(subString(pth, off, m), '/');
 			if (pos == m)
 				return; // done
 			pos += off;
 			off = pos + 1;
 			if (pos)
 			{
-				const string p = pth.subString(0, pos);
+				const string p = subString(pth, 0, pos);
 				if ((realType(p) & PathTypeFlags::Directory) == PathTypeFlags::Directory)
 					continue;
 
@@ -436,7 +436,7 @@ namespace cage
 					}
 				}
 #else
-				static constexpr mode_t mode = 0755;
+				constexpr mode_t mode = 0755;
 				if (mkdir(p.c_str(), mode) != 0 && errno != EEXIST)
 				{
 					CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "path: '" + path + "'");
@@ -546,7 +546,7 @@ namespace cage
 			CAGE_THROW_ERROR(SystemError, "GetCurrentDirectory", GetLastError());
 		if (len >= string::MaxLength)
 			CAGE_THROW_ERROR(Exception, "path too long");
-		return pathSimplify(string(buffer, len));
+		return pathSimplify(string({ buffer, buffer + len }));
 
 #else
 
@@ -558,15 +558,15 @@ namespace cage
 #endif
 	}
 
-	namespace detail
+	namespace
 	{
-		string getExecutableFullPath()
+		string getExecutableFullPathImpl()
 		{
 			char buffer[string::MaxLength];
 
 #ifdef CAGE_SYSTEM_WINDOWS
 
-			uint32 len = GetModuleFileName(nullptr, (char*)&buffer, string::MaxLength);
+			uint32 len = GetModuleFileName(nullptr, (char *)&buffer, string::MaxLength);
 			if (len == 0)
 				CAGE_THROW_ERROR(SystemError, "GetModuleFileName", GetLastError());
 
@@ -591,15 +591,24 @@ namespace cage
 
 #endif
 
-			return pathSimplify(string(buffer, len));
+			return pathSimplify(string({ buffer, buffer + len }));
+		}
+	}
+
+	namespace detail
+	{
+		string getExecutableFullPath()
+		{
+			static string pth = getExecutableFullPathImpl();
+			return pth;
 		}
 
 		string getExecutableFullPathNoExe()
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
 			string p = getExecutableFullPath();
-			CAGE_ASSERT(p.isPattern("", "", ".exe"));
-			return p.subString(0, p.length() - 4);
+			CAGE_ASSERT(isPattern(toLower(p), "", "", ".exe"));
+			return subString(p, 0, p.length() - 4);
 #else
 			return getExecutableFullPath();
 #endif

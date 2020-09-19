@@ -132,7 +132,8 @@ namespace cage
 							Deserializer d(buffer);
 							d >> gid >> id >> p.port;
 							auto av = numeric_cast<uint32>(d.available());
-							p.message = string(d.advance(av).data(), av);
+							auto ap = d.advance(av).data();
+							p.message = string({ ap, ap + av });
 							auto pit = peers.find(id);
 							if (pit == peers.end())
 							{

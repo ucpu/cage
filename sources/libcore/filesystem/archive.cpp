@@ -3,6 +3,7 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 #include <cage-core/debug.h>
+#include <cage-core/string.h>
 
 #include <zip.h>
 
@@ -83,7 +84,7 @@ namespace cage
 			if (pathExtractPathNoDrive(path) == "/")
 				return {}; // do not throw an exception by going beyond root
 			string a = pathJoin(path, "..");
-			string b = path.subString(a.length() + 1, m);
+			string b = subString(path, a.length() + 1, m);
 			CAGE_ASSERT(pathJoin(a, b) == path);
 			insidePath = pathJoin(b, insidePath);
 			return recursiveFind(a, true, insidePath);
@@ -194,14 +195,14 @@ namespace cage
 				uint32 off = 0;
 				while (true)
 				{
-					uint32 pos = pth.subString(off, m).find('/');
+					uint32 pos = find(subString(pth, off, m), '/');
 					if (pos == m)
 						return; // done
 					pos += off;
 					off = pos + 1;
 					if (pos)
 					{
-						const string p = pth.subString(0, pos);
+						const string p = subString(pth, 0, pos);
 						if ((typeNoLock(p) & PathTypeFlags::Directory) == PathTypeFlags::Directory)
 							continue;
 						if (zip_dir_add(zip, p.c_str(), ZIP_FL_ENC_UTF_8) < 0)
@@ -445,7 +446,7 @@ namespace cage
 						continue;
 					string s = n;
 					if (s[s.length() - 1] == '/')
-						s = s.subString(0, s.length() - 1);
+						s = subString(s, 0, s.length() - 1);
 					if (pathExtractPath(s) == path)
 					{
 						s = pathExtractFilename(s);
