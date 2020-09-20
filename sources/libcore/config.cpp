@@ -47,7 +47,9 @@ namespace cage
 			void set(const string &value) { if (!s) s = detail::systemArena().createObject<string>(value); else *s = value; setType(ConfigTypeEnum::String); }
 			void setDynamic(const string &value)
 			{
-				if (isDigitsOnly(value))
+				if (value.empty())
+					set(value);
+				else if (isDigitsOnly(value))
 					set(toUint64(value));
 				else if (isInteger(value))
 					set(toSint64(value));
@@ -148,8 +150,7 @@ namespace cage
 		}
 
 		template<class C>
-		C cast(const Variable *v)
-		{}
+		C cast(const Variable *v);
 
 		template<>
 		bool cast(const Variable *v)

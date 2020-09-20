@@ -27,7 +27,7 @@ namespace cage
 #else
 			false
 #endif // CAGE_DEBUG
-			);
+		);
 		ConfigBool confNoErrorContext("cage/graphics/noErrorContext", false);
 
 		void handleGlfwError(int, const char *message)
@@ -147,7 +147,7 @@ namespace cage
 		class WindowImpl : public Window
 		{
 		public:
-			uint64 lastMouseButtonPressTimes[5] = {0,0,0,0,0}; // unused, left, right, unused, middle
+			uint64 lastMouseButtonPressTimes[5] = { 0,0,0,0,0 }; // unused, left, right, unused, middle
 			ConcurrentQueue<Event> eventsQueue;
 			std::set<uint32> stateKeys, stateCodes; // todo replace with small set
 			ivec2 stateMousePosition;
@@ -263,7 +263,7 @@ namespace cage
 				glfwWindowHint(GLFW_ALPHA_BITS, 0); // save some gpu memory
 				glfwWindowHint(GLFW_DEPTH_BITS, 0);
 				glfwWindowHint(GLFW_STENCIL_BITS, 0);
-				window = glfwCreateWindow(1, 1, "Cage Window", NULL, shareContext ? ((WindowImpl*)shareContext)->window : NULL);
+				window = glfwCreateWindow(1, 1, "Cage Window", NULL, shareContext ? ((WindowImpl *)shareContext)->window : NULL);
 				if (!window)
 					CAGE_THROW_ERROR(Exception, "failed to create window");
 				glfwSetWindowUserPointer(window, this);
@@ -311,7 +311,7 @@ namespace cage
 
 		void windowCloseEvent(GLFWwindow *w)
 		{
-			WindowImpl *impl = (WindowImpl*)glfwGetWindowUserPointer(w);
+			WindowImpl *impl = (WindowImpl *)glfwGetWindowUserPointer(w);
 			Event e;
 			e.type = Event::TypeEnum::Close;
 			e.modifiers = getKeyModifiers(w);
@@ -320,7 +320,7 @@ namespace cage
 
 		void windowKeyCallback(GLFWwindow *w, int key, int scancode, int action, int mods)
 		{
-			WindowImpl *impl = (WindowImpl*)glfwGetWindowUserPointer(w);
+			WindowImpl *impl = (WindowImpl *)glfwGetWindowUserPointer(w);
 			Event e;
 			switch (action)
 			{
@@ -344,7 +344,7 @@ namespace cage
 
 		void windowCharCallback(GLFWwindow *w, unsigned int codepoint)
 		{
-			WindowImpl *impl = (WindowImpl*)glfwGetWindowUserPointer(w);
+			WindowImpl *impl = (WindowImpl *)glfwGetWindowUserPointer(w);
 			Event e;
 			e.type = Event::TypeEnum::KeyChar;
 			e.modifiers = getKeyModifiers(w);
@@ -354,7 +354,7 @@ namespace cage
 
 		void windowMouseMove(GLFWwindow *w, double xpos, double ypos)
 		{
-			WindowImpl *impl = (WindowImpl*)glfwGetWindowUserPointer(w);
+			WindowImpl *impl = (WindowImpl *)glfwGetWindowUserPointer(w);
 			Event e;
 			e.type = Event::TypeEnum::MouseMove;
 			e.modifiers = getKeyModifiers(w);
@@ -371,7 +371,7 @@ namespace cage
 
 		void windowMouseButtonCallback(GLFWwindow *w, int button, int action, int mods)
 		{
-			WindowImpl *impl = (WindowImpl*)glfwGetWindowUserPointer(w);
+			WindowImpl *impl = (WindowImpl *)glfwGetWindowUserPointer(w);
 			Event e;
 			switch (action)
 			{
@@ -414,7 +414,7 @@ namespace cage
 
 		void windowMouseWheel(GLFWwindow *w, double, double yoffset)
 		{
-			WindowImpl *impl = (WindowImpl*)glfwGetWindowUserPointer(w);
+			WindowImpl *impl = (WindowImpl *)glfwGetWindowUserPointer(w);
 			Event e;
 			e.type = Event::TypeEnum::MouseWheel;
 			e.modifiers = getKeyModifiers(w);
@@ -428,7 +428,7 @@ namespace cage
 
 		void windowResizeCallback(GLFWwindow *w, int width, int height)
 		{
-			WindowImpl *impl = (WindowImpl*)glfwGetWindowUserPointer(w);
+			WindowImpl *impl = (WindowImpl *)glfwGetWindowUserPointer(w);
 			Event e;
 			e.type = Event::TypeEnum::Resize;
 			e.modifiers = getKeyModifiers(w);
@@ -439,7 +439,7 @@ namespace cage
 
 		void windowMoveCallback(GLFWwindow *w, int xpos, int ypos)
 		{
-			WindowImpl *impl = (WindowImpl*)glfwGetWindowUserPointer(w);
+			WindowImpl *impl = (WindowImpl *)glfwGetWindowUserPointer(w);
 			Event e;
 			e.type = Event::TypeEnum::Move;
 			e.modifiers = getKeyModifiers(w);
@@ -450,7 +450,7 @@ namespace cage
 
 		void windowIconifiedCallback(GLFWwindow *w, int iconified)
 		{
-			WindowImpl *impl = (WindowImpl*)glfwGetWindowUserPointer(w);
+			WindowImpl *impl = (WindowImpl *)glfwGetWindowUserPointer(w);
 			Event e;
 			if (iconified)
 				e.type = Event::TypeEnum::Hide;
@@ -462,7 +462,7 @@ namespace cage
 
 		void windowMaximizedCallback(GLFWwindow *w, int maximized)
 		{
-			WindowImpl *impl = (WindowImpl*)glfwGetWindowUserPointer(w);
+			WindowImpl *impl = (WindowImpl *)glfwGetWindowUserPointer(w);
 			Event e;
 			e.type = Event::TypeEnum::Show; // window is visible when both maximized or restored
 			e.modifiers = getKeyModifiers(w);
@@ -471,7 +471,7 @@ namespace cage
 
 		void windowFocusCallback(GLFWwindow *w, int focused)
 		{
-			WindowImpl *impl = (WindowImpl*)glfwGetWindowUserPointer(w);
+			WindowImpl *impl = (WindowImpl *)glfwGetWindowUserPointer(w);
 			Event e;
 			if (focused)
 				e.type = Event::TypeEnum::FocusGain;
@@ -499,13 +499,13 @@ namespace cage
 
 	void Window::title(const string &value)
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		WindowImpl *impl = (WindowImpl *)this;
 		glfwSetWindowTitle(impl->window, value.c_str());
 	}
 
 	bool Window::isFocused() const
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		WindowImpl *impl = (WindowImpl *)this;
 #ifdef GCHL_WINDOWS_THREAD
 		return impl->focus;
 #else
@@ -515,13 +515,13 @@ namespace cage
 
 	bool Window::isFullscreen() const
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		WindowImpl *impl = (WindowImpl *)this;
 		return !!glfwGetWindowMonitor(impl->window);
 	}
 
 	bool Window::isMaximized() const
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		WindowImpl *impl = (WindowImpl *)this;
 		return !!glfwGetWindowAttrib(impl->window, GLFW_MAXIMIZED);
 	}
 
@@ -532,13 +532,13 @@ namespace cage
 
 	bool Window::isMinimized() const
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		WindowImpl *impl = (WindowImpl *)this;
 		return !!glfwGetWindowAttrib(impl->window, GLFW_ICONIFIED);
 	}
 
 	bool Window::isHidden() const
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		WindowImpl *impl = (WindowImpl *)this;
 		return !glfwGetWindowAttrib(impl->window, GLFW_VISIBLE);
 	}
 
@@ -564,7 +564,7 @@ namespace cage
 
 	void Window::setFullscreen(const ivec2 &resolution, uint32 frequency, const string &deviceId)
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		WindowImpl *impl = (WindowImpl *)this;
 		normalizeWindow(impl, WindowFlags::None);
 		GLFWmonitor *m = getMonitorById(deviceId);
 		const GLFWvidmode *v = glfwGetVideoMode(m);
@@ -576,40 +576,40 @@ namespace cage
 
 	void Window::setMaximized()
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		WindowImpl *impl = (WindowImpl *)this;
 		normalizeWindow(impl, WindowFlags::Border | WindowFlags::Resizeable);
 		glfwMaximizeWindow(impl->window);
 	}
 
 	void Window::setWindowed(WindowFlags flags)
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		WindowImpl *impl = (WindowImpl *)this;
 		normalizeWindow(impl, flags);
 	}
 
 	void Window::setMinimized()
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		WindowImpl *impl = (WindowImpl *)this;
 		normalizeWindow(impl, WindowFlags::Resizeable);
 		glfwIconifyWindow(impl->window);
 	}
 
 	void Window::setHidden()
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		WindowImpl *impl = (WindowImpl *)this;
 		normalizeWindow(impl, WindowFlags::None);
 		glfwHideWindow(impl->window);
 	}
 
 	bool Window::mouseVisible() const
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		WindowImpl *impl = (WindowImpl *)this;
 		return glfwGetInputMode(impl->window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL;
 	}
 
 	void Window::mouseVisible(bool value)
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		WindowImpl *impl = (WindowImpl *)this;
 		if (value)
 			glfwSetInputMode(impl->window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 		else
@@ -618,13 +618,13 @@ namespace cage
 
 	ivec2 Window::mousePosition() const
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		WindowImpl *impl = (WindowImpl *)this;
 		return impl->stateMousePosition;
 	}
 
 	void Window::mousePosition(const ivec2 &p)
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		WindowImpl *impl = (WindowImpl *)this;
 #ifdef GCHL_WINDOWS_THREAD
 		ivec2 d = p - impl->stateMousePosition;
 		impl->stateMousePosition = p;
@@ -637,31 +637,31 @@ namespace cage
 
 	MouseButtonsFlags Window::mouseButtons() const
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		WindowImpl *impl = (WindowImpl *)this;
 		return impl->stateButtons;
 	}
 
 	ModifiersFlags Window::keyboardModifiers() const
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		WindowImpl *impl = (WindowImpl *)this;
 		return impl->stateMods;
 	}
 
 	bool Window::keyboardKey(uint32 key) const
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		WindowImpl *impl = (WindowImpl *)this;
 		return impl->stateKeys.count(key);
 	}
 
 	bool Window::keyboardScanCode(uint32 code) const
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		WindowImpl *impl = (WindowImpl *)this;
 		return impl->stateCodes.count(code);
 	}
 
 	void Window::processEvents()
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		WindowImpl *impl = (WindowImpl *)this;
 #ifndef GCHL_WINDOWS_THREAD
 		{
 			ScopeLock<Mutex> l(windowsMutex());
@@ -744,7 +744,7 @@ namespace cage
 
 	ivec2 Window::resolution() const
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		WindowImpl *impl = (WindowImpl *)this;
 		int w = 0, h = 0;
 		glfwGetFramebufferSize(impl->window, &w, &h);
 		return ivec2(w, h);
@@ -752,10 +752,39 @@ namespace cage
 
 	real Window::contentScaling() const
 	{
-		WindowImpl *impl = (WindowImpl*)this;
+		WindowImpl *impl = (WindowImpl *)this;
 		float x = 1, y = 1;
 		glfwGetWindowContentScale(impl->window, &x, &y);
 		return max(x, y);
+	}
+
+	string Window::screenId() const
+	{
+		WindowImpl *impl = (WindowImpl *)this;
+		{
+			auto m = glfwGetWindowMonitor(impl->window);
+			if (m)
+				return getMonitorId(m);
+		}
+		const ivec2 centeri = windowedPosition() + windowedSize() / 2;
+		const vec2 center = vec2(centeri[0], centeri[1]);
+		int cnt = 0;
+		GLFWmonitor **ms = glfwGetMonitors(&cnt);
+		uint32 bestIndex = m;
+		real bestDist = real::Infinity();
+		for (uint32 i = 0; i < cnt; i++)
+		{
+			int x, y, w, h;
+			glfwGetMonitorWorkarea(ms[i], &x, &y, &w, &h);
+			const real dist = distance(center, vec2(x, y) + vec2(w, h) / 2);
+			if (dist < bestDist)
+			{
+				bestDist = dist;
+				bestIndex = i;
+			}
+		}
+		CAGE_ASSERT(bestIndex != m);
+		return getMonitorId(ms[bestIndex]);
 	}
 
 	ivec2 Window::windowedSize() const

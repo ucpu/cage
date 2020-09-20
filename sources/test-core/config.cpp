@@ -66,5 +66,10 @@ void testConfig()
 	ConfigSint32 d("test/d"); // undefined
 	CAGE_TEST(d == 0); // reading value from undefined config should return default value
 
+	configSetSint32("test/empty", 42);
+	CAGE_TEST(configGetType("test/empty") == ConfigTypeEnum::Sint32);
+	configSetDynamic("test/empty", "");
+	CAGE_TEST(configGetType("test/empty") == ConfigTypeEnum::String);
+
 	printVariables();
 }

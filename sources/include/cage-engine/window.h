@@ -41,7 +41,7 @@ namespace cage
 		bool isHidden() const;
 		bool isVisible() const; // not hidden and not minimized
 
-		void setFullscreen(const ivec2 &resolution, uint32 frequency = 0, const string &deviceId = "");
+		void setFullscreen(const ivec2 &resolution, uint32 frequency = 0, const string &screenId = "");
 		void setMaximized();
 		void setWindowed(WindowFlags flags = WindowFlags::Border | WindowFlags::Resizeable);
 		void setMinimized();
@@ -60,6 +60,7 @@ namespace cage
 
 		ivec2 resolution() const;
 		real contentScaling() const;
+		string screenId() const;
 
 		ivec2 windowedSize() const;
 		void windowedSize(const ivec2 &);

@@ -24,15 +24,15 @@ namespace cage
 			WindowEventListeners listeners;
 			Window *window;
 
-			ConfigUint32 confWindowLeft;
-			ConfigUint32 confWindowTop;
+			ConfigSint32 confWindowLeft;
+			ConfigSint32 confWindowTop;
 			ConfigUint32 confWindowWidth;
 			ConfigUint32 confWindowHeight;
 			ConfigBool confWindowMaximized;
 			ConfigUint32 confFullscreenWidth;
 			ConfigUint32 confFullscreenHeight;
 			ConfigUint32 confFullscreenFrequency;
-			ConfigString confFullscreenMonitor;
+			ConfigString confScreen;
 			ConfigBool confFullscreenEnabled;
 
 			explicit FullscreenSwitcherImpl(const FullscreenSwitcherCreateConfig &config) : window(config.window),
@@ -41,10 +41,10 @@ namespace cage
 				confWindowWidth(confName(config, "window/windowWidth"), 800),
 				confWindowHeight(confName(config, "window/windowHeight"), 600),
 				confWindowMaximized(confName(config, "window/maximized"), true),
+				confScreen(confName(config, "window/screen"), ""),
 				confFullscreenWidth(confName(config, "window/width"), 0),
 				confFullscreenHeight(confName(config, "window/height"), 0),
 				confFullscreenFrequency(confName(config, "window/refreshRate"), 0),
-				confFullscreenMonitor(confName(config, "window/monitor"), ""),
 				confFullscreenEnabled(confName(config, "window/fullscreen"), config.defaultFullscreen)
 			{
 				CAGE_ASSERT(window);
@@ -58,16 +58,20 @@ namespace cage
 
 			void update(bool fullscreen)
 			{
-				ivec2 p = ivec2(confWindowLeft, confWindowTop);
-				ivec2 s = ivec2(confWindowWidth, confWindowHeight);
-				bool maximize = confWindowMaximized;
+				const ivec2 p = ivec2(confWindowLeft, confWindowTop);
+				const ivec2 s = ivec2(confWindowWidth, confWindowHeight);
+				const bool maximize = confWindowMaximized;
 
 				if (fullscreen)
 				{
+					const ivec2 s = ivec2(confFullscreenWidth, confFullscreenHeight);
+					const uint32 freq = confFullscreenFrequency;
+					const string screen = confScreen;
+					CAGE_LOG(SeverityEnum::Info, "fullscreenSwitcher", stringizer() + "setting fullscreen window " + s + " on screen '" + screen + "'");
 					try
 					{
 						detail::OverrideBreakpoint ob;
-						window->setFullscreen(ivec2(confFullscreenWidth, confFullscreenHeight), confFullscreenFrequency, confFullscreenMonitor);
+						window->setFullscreen(s, freq, screen);
 						return;
 					}
 					catch (...)
@@ -76,6 +80,7 @@ namespace cage
 					}
 				}
 
+				CAGE_LOG(SeverityEnum::Info, "fullscreenSwitcher", stringizer() + "setting windowed window " + s);
 				window->setWindowed();
 				window->windowedPosition(p);
 				window->windowedSize(s);
@@ -85,6 +90,7 @@ namespace cage
 
 			bool windowMove(const ivec2 &pos)
 			{
+				confScreen = window->screenId();
 				if (window->isWindowed())
 				{
 					confWindowLeft = pos[0];
@@ -95,6 +101,7 @@ namespace cage
 
 			bool windowResize(const ivec2 &size)
 			{
+				confScreen = window->screenId();
 				if (confFullscreenEnabled = window->isFullscreen())
 				{
 					confFullscreenWidth = size[0];
