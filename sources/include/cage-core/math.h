@@ -90,6 +90,7 @@ namespace cage
 		inline explicit constexpr vec2(real x, real y) noexcept : data{ x, y } {}
 		inline explicit constexpr vec2(const vec3 &v) noexcept;
 		inline explicit constexpr vec2(const vec4 &v) noexcept;
+		inline explicit constexpr vec2(const ivec2 &v) noexcept;
 
 		static vec2 parse(const string &str);
 		inline constexpr real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 2); return data[idx]; }
@@ -107,6 +108,7 @@ namespace cage
 		inline explicit constexpr ivec2(sint32 x, sint32 y) noexcept : data{ x, y } {}
 		inline explicit constexpr ivec2(const ivec3 &v) noexcept;
 		inline explicit constexpr ivec2(const ivec4 &v) noexcept;
+		inline explicit constexpr ivec2(const vec2 &v) noexcept;
 
 		static ivec2 parse(const string &str);
 		inline constexpr sint32 &operator [] (uint32 idx) { CAGE_ASSERT(idx < 2); return data[idx]; }
@@ -122,6 +124,7 @@ namespace cage
 		inline explicit constexpr vec3(real x, real y, real z) noexcept : data{ x, y, z } {}
 		inline explicit constexpr vec3(const vec2 &v, real z) noexcept : data{ v[0], v[1], z } {}
 		inline explicit constexpr vec3(const vec4 &v) noexcept;
+		inline explicit constexpr vec3(const ivec3 &v) noexcept;
 
 		static vec3 parse(const string &str);
 		inline constexpr real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 3); return data[idx]; }
@@ -139,6 +142,7 @@ namespace cage
 		inline explicit constexpr ivec3(sint32 x, sint32 y, sint32 z) noexcept : data{ x, y, z } {}
 		inline explicit constexpr ivec3(const ivec2 &v, sint32 z) noexcept : data{ v[0], v[1], z } {}
 		inline explicit constexpr ivec3(const ivec4 &v) noexcept;
+		inline explicit constexpr ivec3(const vec3 &v) noexcept;
 
 		static ivec3 parse(const string &str);
 		inline constexpr sint32 &operator [] (uint32 idx) { CAGE_ASSERT(idx < 3); return data[idx]; }
@@ -155,6 +159,7 @@ namespace cage
 		inline explicit constexpr vec4(const vec2 &v, real z, real w) noexcept : data{ v[0], v[1], z, w } {}
 		inline explicit constexpr vec4(const vec2 &v, const vec2 &w) noexcept : data{ v[0], v[1], w[0], w[1] } {}
 		inline explicit constexpr vec4(const vec3 &v, real w) noexcept : data{ v[0], v[1], v[2], w } {}
+		inline explicit constexpr vec4(const ivec4 &v) noexcept;
 
 		static vec4 parse(const string &str);
 		inline constexpr real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 4); return data[idx]; }
@@ -173,6 +178,7 @@ namespace cage
 		inline explicit constexpr ivec4(const ivec2 &v, sint32 z, sint32 w) noexcept : data{ v[0], v[1], z, w } {}
 		inline explicit constexpr ivec4(const ivec2 &v, const ivec2 &w) noexcept : data{ v[0], v[1], w[0], w[1] } {}
 		inline explicit constexpr ivec4(const ivec3 &v, sint32 w) noexcept : data{ v[0], v[1], v[2], w } {}
+		inline explicit constexpr ivec4(const vec4 &v) noexcept;
 
 		static ivec4 parse(const string &str);
 		inline constexpr sint32 &operator [] (uint32 idx) { CAGE_ASSERT(idx < 4); return data[idx]; }
@@ -435,8 +441,14 @@ namespace cage
 	inline constexpr rads::rads(degs other) noexcept : value(other.value * real::Pi() / 180) {}
 	inline constexpr degs::degs(rads other) noexcept : value(other.value * 180 / real::Pi()) {}
 	inline constexpr vec2::vec2(const vec3 &other) noexcept : data{ other.data[0], other.data[1] } {}
+	inline constexpr vec2::vec2(const ivec2 &other) noexcept : data{ numeric_cast<real>(other.data[0]), numeric_cast<real>(other.data[1]) } {}
+	inline constexpr ivec2::ivec2(const vec2 &other) noexcept : data{ numeric_cast<sint32>(other.data[0].value), numeric_cast<sint32>(other.data[1].value) } {}
 	inline constexpr vec2::vec2(const vec4 &other) noexcept : data{ other.data[0], other.data[1] } {}
 	inline constexpr vec3::vec3(const vec4 &other) noexcept : data{ other.data[0], other.data[1], other.data[2] } {}
+	inline constexpr vec3::vec3(const ivec3 &other) noexcept : data{ numeric_cast<real>(other.data[0]), numeric_cast<real>(other.data[1]), numeric_cast<real>(other.data[2]) } {}
+	inline constexpr ivec3::ivec3(const vec3 &other) noexcept : data{ numeric_cast<sint32>(other.data[0].value), numeric_cast<sint32>(other.data[1].value), numeric_cast<sint32>(other.data[2].value) } {}
+	inline constexpr vec4::vec4(const ivec4 &other) noexcept : data{ numeric_cast<real>(other.data[0]), numeric_cast<real>(other.data[1]), numeric_cast<real>(other.data[2]), numeric_cast<real>(other.data[3]) } {}
+	inline constexpr ivec4::ivec4(const vec4 &other) noexcept : data{ numeric_cast<sint32>(other.data[0].value), numeric_cast<sint32>(other.data[1].value), numeric_cast<sint32>(other.data[2].value), numeric_cast<sint32>(other.data[3].value) } {}
 	inline constexpr mat3::mat3(const mat4 &other) noexcept : data{ other[0], other[1], other[2], other[4], other[5], other[6], other[8], other[9], other[10] } {}
 	inline mat4::mat4(const transform &other) noexcept : mat4(other.position, other.orientation, vec3(other.scale)) {}
 

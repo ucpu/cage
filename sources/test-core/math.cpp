@@ -69,6 +69,14 @@ void test(rads a, rads b)
 
 namespace
 {
+	template<class T> struct MakeNotReal {};
+	template<> struct MakeNotReal<vec2> { using type = ivec2; };
+	template<> struct MakeNotReal<vec3> { using type = ivec3; };
+	template<> struct MakeNotReal<vec4> { using type = ivec4; };
+	template<> struct MakeNotReal<ivec2> { using type = vec2; };
+	template<> struct MakeNotReal<ivec3> { using type = vec3; };
+	template<> struct MakeNotReal<ivec4> { using type = vec4; };
+
 	template<class T, uint32 N>
 	void checkVectorsCommon()
 	{
@@ -125,6 +133,10 @@ namespace
 			constexpr T k7 = clamp(a, b, b);
 			constexpr T k8 = clamp(a, 1, 9);
 			constexpr T k9 = abs(a);
+
+			constexpr T other = T(typename MakeNotReal<T>::type(5));
+			test(other[0], 5);
+			test(other[N-1], 5);
 		}
 
 		T t(42);

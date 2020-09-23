@@ -766,13 +766,13 @@ namespace cage
 			if (m)
 				return getMonitorId(m);
 		}
-		const ivec2 centeri = windowedPosition() + windowedSize() / 2;
-		const vec2 center = vec2(centeri[0], centeri[1]);
+		const vec2 center = vec2(windowedPosition() + windowedSize() / 2);
 		int cnt = 0;
 		GLFWmonitor **ms = glfwGetMonitors(&cnt);
+		// todo first filter out monitors that do not overlap with the center of the window
 		uint32 bestIndex = m;
 		real bestDist = real::Infinity();
-		for (uint32 i = 0; i < cnt; i++)
+		for (uint32 i = 0; i < numeric_cast<uint32>(cnt); i++)
 		{
 			int x, y, w, h;
 			glfwGetMonitorWorkarea(ms[i], &x, &y, &w, &h);
