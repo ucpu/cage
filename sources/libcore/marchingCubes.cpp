@@ -127,20 +127,34 @@ namespace cage
 			const bool which = distanceSquared(positions[is[0]], positions[is[2]]) < distanceSquared(positions[is[1]], positions[is[3]]); // split the quad by shorter diagonal
 			constexpr int first[6] = { 0,1,2, 0,2,3 };
 			constexpr int second[6] = { 1,2,3, 1,3,0 };
-			for (uint32 i : (which ? first : second))
-				indices.push_back(is[i]);
+			const int *const selected = (which ? first : second);
 			vec3 n;
+			const auto &tri = [&](const int *inds)
 			{
-				vec3 a = positions[is[0]];
-				vec3 b = positions[is[1]];
-				vec3 c = positions[is[2]];
-				n = normalize(cross(b - a, c - a));
+				triangle t = triangle(positions[is[inds[0]]], positions[is[inds[1]]], positions[is[inds[2]]]);
+				if (!t.degenerated())
+				{
+					indices.push_back(is[inds[0]]);
+					indices.push_back(is[inds[1]]);
+					indices.push_back(is[inds[2]]);
+					n += t.normal();
+				}
+			};
+			tri(selected);
+			tri(selected + 3);
+			if (n != vec3())
+			{
+				n = normalize(n);
+				CAGE_ASSERT(valid(n));
+				for (uint32 i : is)
+					normals[i] += n;
 			}
-			for (uint32 i : is)
-				normals[i] += n;
 		}
-		for (auto &it : normals)
+		for (vec3 &it : normals)
+		{
 			it = normalize(it);
+			CAGE_ASSERT(valid(it));
+		}
 
 		Holder<Polyhedron> result = newPolyhedron();
 		result->positions(positions);
