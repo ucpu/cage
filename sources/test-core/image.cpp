@@ -347,13 +347,13 @@ void testImage()
 	}
 
 	{
-		CAGE_TESTCASE("inpaint without transparency");
+		CAGE_TESTCASE("dilation without transparency");
 		Holder<Image> img = newImage();
 		img->initialize(400, 300, 4);
 		drawCircle(+img);
 		imageConvert(+img, 3);
 		imageDilation(+img, 1);
-		img->exportFile("images/inpaint/3_1.png");
+		img->exportFile("images/dilation/3_1.png");
 		CAGE_TEST(img->value(50 - 1, 150, 0) < 0.1);
 		CAGE_TEST(img->value(50 - 1, 150, 1) > 0.9);
 		CAGE_TEST(img->value(50 - 1, 150, 2) > 0.9);
@@ -361,19 +361,19 @@ void testImage()
 		drawCircle(+img);
 		imageConvert(+img, 3);
 		imageDilation(+img, 5);
-		img->exportFile("images/inpaint/3_5.png");
+		img->exportFile("images/dilation/3_5.png");
 		CAGE_TEST(img->value(50 - 5, 150, 0) < 0.1);
 		CAGE_TEST(img->value(50 - 5, 150, 1) > 0.9);
 		CAGE_TEST(img->value(50 - 5, 150, 2) > 0.9);
 	}
 
 	{
-		CAGE_TESTCASE("inpaint with transparency");
+		CAGE_TESTCASE("dilation with transparency");
 		Holder<Image> img = newImage();
 		img->initialize(400, 300, 4);
 		drawCircle(+img);
 		imageDilation(+img, 1);
-		img->exportFile("images/inpaint/4_1.png");
+		img->exportFile("images/dilation/4_1.png");
 		CAGE_TEST(img->value(50 - 1, 150, 0) < 0.1);
 		CAGE_TEST(img->value(50 - 1, 150, 1) > 0.9);
 		CAGE_TEST(img->value(50 - 1, 150, 2) > 0.9);
@@ -381,7 +381,7 @@ void testImage()
 		img->initialize(400, 300, 4);
 		drawCircle(+img);
 		imageDilation(+img, 5);
-		img->exportFile("images/inpaint/4_5.png");
+		img->exportFile("images/dilation/4_5.png");
 		CAGE_TEST(img->value(50 - 5, 150, 0) < 0.1);
 		CAGE_TEST(img->value(50 - 5, 150, 1) > 0.9);
 		CAGE_TEST(img->value(50 - 5, 150, 2) > 0.9);
@@ -389,7 +389,7 @@ void testImage()
 	}
 
 	{
-		CAGE_TESTCASE("inpaint nan");
+		CAGE_TESTCASE("dilation with nan");
 		Holder<Image> img = newImage();
 		img->initialize(400, 300, 4, ImageFormatEnum::Float);
 		drawCircle(+img);
@@ -399,6 +399,6 @@ void testImage()
 					img->set(x, y, vec4::Nan());
 		imageDilation(+img, 1, true);
 		imageConvert(+img, ImageFormatEnum::U8);
-		img->exportFile("images/inpaint/nan.png");
+		img->exportFile("images/dilation/nan.png");
 	}
 }

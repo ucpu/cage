@@ -48,6 +48,22 @@ namespace cage
 		static constexpr real Infinity() noexcept { return std::numeric_limits<value_type>::infinity(); }
 		static constexpr real Nan() noexcept { return std::numeric_limits<value_type>::quiet_NaN(); }
 	};
+}
+
+namespace std
+{
+	template<>
+	struct numeric_limits<cage::real> : public std::numeric_limits<cage::real::value_type>
+	{};
+}
+
+namespace cage
+{
+	template<class To>
+	inline constexpr To numeric_cast(real from)
+	{
+		return numeric_cast<To>(from.value);
+	}
 
 	struct CAGE_CORE_API rads
 	{
@@ -441,14 +457,17 @@ namespace cage
 	inline constexpr rads::rads(degs other) noexcept : value(other.value * real::Pi() / 180) {}
 	inline constexpr degs::degs(rads other) noexcept : value(other.value * 180 / real::Pi()) {}
 	inline constexpr vec2::vec2(const vec3 &other) noexcept : data{ other.data[0], other.data[1] } {}
-	inline constexpr vec2::vec2(const ivec2 &other) noexcept : data{ numeric_cast<real>(other.data[0]), numeric_cast<real>(other.data[1]) } {}
-	inline constexpr ivec2::ivec2(const vec2 &other) noexcept : data{ numeric_cast<sint32>(other.data[0].value), numeric_cast<sint32>(other.data[1].value) } {}
 	inline constexpr vec2::vec2(const vec4 &other) noexcept : data{ other.data[0], other.data[1] } {}
+	inline constexpr vec2::vec2(const ivec2 &other) noexcept : data{ numeric_cast<real>(other.data[0]), numeric_cast<real>(other.data[1]) } {}
+	inline constexpr ivec2::ivec2(const ivec3 &other) noexcept : data{ other.data[0], other.data[1] } {}
+	inline constexpr ivec2::ivec2(const ivec4 &other) noexcept : data{ other.data[0], other.data[1] } {}
+	inline constexpr ivec2::ivec2(const vec2 &other) noexcept : data{ numeric_cast<sint32>(other.data[0]), numeric_cast<sint32>(other.data[1]) } {}
 	inline constexpr vec3::vec3(const vec4 &other) noexcept : data{ other.data[0], other.data[1], other.data[2] } {}
 	inline constexpr vec3::vec3(const ivec3 &other) noexcept : data{ numeric_cast<real>(other.data[0]), numeric_cast<real>(other.data[1]), numeric_cast<real>(other.data[2]) } {}
-	inline constexpr ivec3::ivec3(const vec3 &other) noexcept : data{ numeric_cast<sint32>(other.data[0].value), numeric_cast<sint32>(other.data[1].value), numeric_cast<sint32>(other.data[2].value) } {}
+	inline constexpr ivec3::ivec3(const ivec4 &other) noexcept : data{ other.data[0], other.data[1], other.data[2] } {}
+	inline constexpr ivec3::ivec3(const vec3 &other) noexcept : data{ numeric_cast<sint32>(other.data[0]), numeric_cast<sint32>(other.data[1]), numeric_cast<sint32>(other.data[2]) } {}
 	inline constexpr vec4::vec4(const ivec4 &other) noexcept : data{ numeric_cast<real>(other.data[0]), numeric_cast<real>(other.data[1]), numeric_cast<real>(other.data[2]), numeric_cast<real>(other.data[3]) } {}
-	inline constexpr ivec4::ivec4(const vec4 &other) noexcept : data{ numeric_cast<sint32>(other.data[0].value), numeric_cast<sint32>(other.data[1].value), numeric_cast<sint32>(other.data[2].value), numeric_cast<sint32>(other.data[3].value) } {}
+	inline constexpr ivec4::ivec4(const vec4 &other) noexcept : data{ numeric_cast<sint32>(other.data[0]), numeric_cast<sint32>(other.data[1]), numeric_cast<sint32>(other.data[2]), numeric_cast<sint32>(other.data[3]) } {}
 	inline constexpr mat3::mat3(const mat4 &other) noexcept : data{ other[0], other[1], other[2], other[4], other[5], other[6], other[8], other[9], other[10] } {}
 	inline mat4::mat4(const transform &other) noexcept : mat4(other.position, other.orientation, vec3(other.scale)) {}
 
@@ -681,22 +700,6 @@ namespace cage
 		key *= 0xc2b2ae35;
 		key ^= key >> 16;
 		return key;
-	}
-}
-
-namespace std
-{
-	template<>
-	struct numeric_limits<cage::real> : public std::numeric_limits<cage::real::value_type>
-	{};
-}
-
-namespace cage
-{
-	template<class To>
-	To numeric_cast(real from)
-	{
-		return numeric_cast<To>(from.value);
 	}
 
 	namespace detail

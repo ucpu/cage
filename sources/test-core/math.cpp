@@ -199,6 +199,15 @@ namespace
 		checkVectorsReal<vec2, 2>();
 		checkVectorsReal<vec3, 3>();
 		checkVectorsReal<vec4, 4>();
+
+		{
+			constexpr vec2 a = vec2(vec3(42));
+			constexpr vec2 b = vec2(vec4(42));
+			constexpr vec3 c = vec3(vec4(42));
+			constexpr ivec2 d = ivec2(ivec3(42));
+			constexpr ivec2 e = ivec2(ivec4(42));
+			constexpr ivec3 f = ivec3(ivec4(42));
+		}
 	}
 
 	void testMathReal()
