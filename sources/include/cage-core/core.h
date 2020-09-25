@@ -278,86 +278,34 @@ namespace cage
 		CAGE_CORE_API void logCurrentCaughtException();
 	}
 
-	// numeric cast
-
-	namespace privat
-	{
-		template<bool ToSig, bool FromSig>
-		struct numeric_cast_helper_signed
-		{
-			template<class To, class From>
-			static constexpr To cast(From from)
-			{
-				CAGE_ASSERT(from >= std::numeric_limits<To>::lowest());
-				CAGE_ASSERT(from <= std::numeric_limits<To>::max());
-				return static_cast<To>(from);
-			}
-		};
-
-		template<>
-		struct numeric_cast_helper_signed<false, true>
-		{
-			template<class To, class From>
-			static constexpr To cast(From from)
-			{
-				CAGE_ASSERT(from >= 0);
-				typedef typename std::make_unsigned<From>::type unsgFrom;
-				CAGE_ASSERT(static_cast<unsgFrom>(from) <= std::numeric_limits<To>::max());
-				return static_cast<To>(from);
-			}
-		};
-
-		template<>
-		struct numeric_cast_helper_signed<true, false>
-		{
-			template<class To, class From>
-			static constexpr To cast(From from)
-			{
-				typedef typename std::make_unsigned<To>::type unsgTo;
-				CAGE_ASSERT(from <= static_cast<unsgTo>(std::numeric_limits<To>::max()));
-				return static_cast<To>(from);
-			}
-		};
-
-		template<bool ToFloat, bool FromFloat>
-		struct numeric_cast_helper_float
-		{
-			template<class To, class From>
-			static constexpr To cast(From from)
-			{
-				return static_cast<To>(from);
-			}
-		};
-
-		template<>
-		struct numeric_cast_helper_float<false, true>
-		{
-			template<class To, class From>
-			static constexpr To cast(From from)
-			{
-				CAGE_ASSERT(from >= (From)std::numeric_limits<To>::min());
-				CAGE_ASSERT(from <= (From)std::numeric_limits<To>::max());
-				return static_cast<To>(from);
-			}
-		};
-
-		template<>
-		struct numeric_cast_helper_float<false, false>
-		{
-			template<class To, class From>
-			static constexpr To cast(From from)
-			{
-				return numeric_cast_helper_signed<std::numeric_limits<To>::is_signed, std::numeric_limits<From>::is_signed>::template cast<To>(from);
-			}
-		};
-	}
-
 	// with CAGE_ASSERT_ENABLED numeric_cast validates that the value is in range of the target type, preventing overflows
 	// without CAGE_ASSERT_ENABLED numeric_cast is the same as static_cast
 	template<class To, class From>
 	inline constexpr To numeric_cast(From from)
 	{
-		return privat::numeric_cast_helper_float<std::is_floating_point<To>::value, std::is_floating_point<From>::value>::template cast<To>(from);
+		if constexpr (!std::is_floating_point<To>::value && std::is_floating_point<From>::value)
+		{
+			CAGE_ASSERT(from >= (From)std::numeric_limits<To>::min());
+			CAGE_ASSERT(from <= (From)std::numeric_limits<To>::max());
+		}
+		else if constexpr (!std::is_floating_point<To>::value && !std::is_floating_point<From>::value)
+		{
+			if constexpr (std::numeric_limits<To>::is_signed && !std::numeric_limits<From>::is_signed)
+			{
+				CAGE_ASSERT(from <= static_cast<typename std::make_unsigned<To>::type>(std::numeric_limits<To>::max()));
+			}
+			else if constexpr (!std::numeric_limits<To>::is_signed && std::numeric_limits<From>::is_signed)
+			{
+				CAGE_ASSERT(from >= 0);
+				CAGE_ASSERT(static_cast<typename std::make_unsigned<From>::type>(from) <= std::numeric_limits<To>::max());
+			}
+			else
+			{
+				CAGE_ASSERT(from >= std::numeric_limits<To>::lowest());
+				CAGE_ASSERT(from <= std::numeric_limits<To>::max());
+			}
+		}
+		return static_cast<To>(from);
 	}
 
 	// with CAGE_ASSERT_ENABLED class_cast verifies that dynamic_cast would succeed
