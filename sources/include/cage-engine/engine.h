@@ -17,8 +17,9 @@ namespace cage
 		ToneMapping = 1 << 4,
 		GammaCorrection = 1 << 5,
 		AntiAliasing = 1 << 6,
+		DepthOfField = 1 << 7,
 		GeometryPass = AmbientOcclusion | MotionBlur,
-		ScreenPass = Bloom | ToneMapping | GammaCorrection | AntiAliasing,
+		ScreenPass = Bloom | ToneMapping | GammaCorrection | AntiAliasing | DepthOfField,
 		CombinedPass = GeometryPass | ScreenPass,
 	};
 
@@ -46,11 +47,10 @@ namespace cage
 
 	struct CAGE_ENGINE_API CameraEyeAdaptation
 	{
-		real key = 0.5;
-		real strength = 1.0;
-		real darkerSpeed = 0.1;
+		real key = 0.15;
+		real strength = 0.5;
+		real darkerSpeed = 0.2;
 		real lighterSpeed = 1;
-		// darker should take at least 5 times longer
 	};
 
 	struct CAGE_ENGINE_API CameraTonemap

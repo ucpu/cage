@@ -58,16 +58,17 @@ void main()
 {
 	vec3 color = texelFetch(texColor, ivec2(gl_FragCoord.xy), 0).xyz;
 
-	// exposure control
+	// eye adaptation (exposure control)
 	if (luminanceParams[1] > 0.0)
 	{
 		float avgLuminance = texelFetch(texLuminance, ivec2(0), 0).x;
 		avgLuminance = exp(avgLuminance);
-		float li = mix(1.0, luminanceParams[0] / avgLuminance, luminanceParams[1]);
-		color *= li;
-		//float night = max((li - 5.0) / li, 0.0);
-		//color = blueShift(color, pow(night, 0.6));
-		//color = desaturate(color, pow(night, 0.3));
+		float li = luminanceParams[0] / avgLuminance;
+		vec3 c = color * li;
+		//float night = max((li - 25.0) / li, 0.0);
+		//c = blueShift(c, night);
+		//c = desaturate(c, night);
+		color = mix(color, c, luminanceParams[1]);
 	}
 
 	// tone mapping

@@ -646,6 +646,8 @@ namespace cage
 					renderEffect();
 				}
 
+				// DoF?
+
 				// motion blur
 				if (any(pass->effects & CameraEffectsFlags::MotionBlur))
 				{
