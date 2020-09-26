@@ -131,11 +131,17 @@ namespace cage
 	CAGE_CORE_API void polyhedronClip(Polyhedron *poly, const plane &pln);
 	CAGE_CORE_API Holder<Polyhedron> polyhedronCut(Polyhedron *poly, const plane &pln);
 
-	CAGE_CORE_API void polyhedronMergeCloseVertices(Polyhedron *poly, real dist);
-
 	CAGE_CORE_API void polyhedronDiscardInvalid(Polyhedron *poly);
 	CAGE_CORE_API void polyhedronDiscardDisconnected(Polyhedron *poly);
 	CAGE_CORE_API Holder<PointerRange<Holder<Polyhedron>>> polyhedronSeparateDisconnected(const Polyhedron *poly);
+
+	struct CAGE_CORE_API PolyhedronCloseVerticesMergingConfig
+	{
+		real distanceThreshold;
+		bool moveVerticesOnly = false; // true -> vertices are moved only (no deduplication) and other attributes are ignored; false -> indices are remapped to other vertices
+	};
+
+	CAGE_CORE_API void polyhedronMergeCloseVertices(Polyhedron *poly, const PolyhedronCloseVerticesMergingConfig &config);
 
 	struct CAGE_CORE_API PolyhedronSimplificationConfig
 	{

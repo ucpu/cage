@@ -6,6 +6,7 @@
 
 #include <algorithm> // std::remove_if
 #include <numeric> // std::iota
+#include <utility> // std::swap
 
 namespace cage
 {
@@ -134,7 +135,7 @@ namespace cage
 				bool as = a[axis] > value;
 				bool bs = b[axis] > value;
 				bool cs = c[axis] > value;
-				uint32 m = as + bs + cs;
+				const uint32 m = as + bs + cs;
 				if ((m == 0 && side) || (m == 3 && !side))
 				{
 					// all passes
@@ -148,16 +149,19 @@ namespace cage
 					// all rejected
 					continue;
 				}
-				while (as || (as == bs))
+				CAGE_ASSERT(m == 1 || m == 2);
+				while (as || !bs)
 				{
 					turnLeft(ids[0], ids[1], ids[2]);
 					turnLeft(a, b, c);
 					turnLeft(as, bs, cs);
 				}
 				CAGE_ASSERT(!as && bs);
-				uint32 pi = clipAddPoint(impl, ids[0], ids[1], axis, value);
+				const uint32 pi = clipAddPoint(impl, ids[0], ids[1], axis, value);
 				if (m == 1)
 				{
+					CAGE_ASSERT(!as);
+					CAGE_ASSERT(bs);
 					CAGE_ASSERT(!cs);
 					/*
 					*         |
@@ -167,7 +171,7 @@ namespace cage
 					*      \ /|
 					*     c + |
 					*/
-					uint32 qi = clipAddPoint(impl, ids[1], ids[2], axis, value);
+					const uint32 qi = clipAddPoint(impl, ids[1], ids[2], axis, value);
 					if (side)
 					{
 						out.push_back(ids[0]);
@@ -185,8 +189,11 @@ namespace cage
 						out.push_back(qi);
 					}
 				}
-				else if (m == 2)
+				else
 				{
+					CAGE_ASSERT(m == 2);
+					CAGE_ASSERT(!as);
+					CAGE_ASSERT(bs);
 					CAGE_ASSERT(cs);
 					/*
 					*     |
@@ -196,7 +203,7 @@ namespace cage
 					*     |\ /
 					*     | + c
 					*/
-					uint32 qi = clipAddPoint(impl, ids[0], ids[2], axis, value);
+					const uint32 qi = clipAddPoint(impl, ids[0], ids[2], axis, value);
 					if (side)
 					{
 						out.push_back(ids[0]);
@@ -214,11 +221,8 @@ namespace cage
 						out.push_back(ids[2]);
 					}
 				}
-				else
-				{
-					CAGE_ASSERT(false);
-				}
 			}
+			CAGE_ASSERT((out.size() % 3) == 0);
 		}
 
 		// mark entire triplet (triangles) or pair (lines) if any one of them is marked
@@ -336,7 +340,7 @@ namespace cage
 				for (uint32 i = 0; i < tris; i++)
 				{
 					triangle t(ps[is[i * 3 + 0]], ps[is[i * 3 + 1]], ps[is[i * 3 + 2]]);
-					bool d = t.degenerated();
+					const bool d = t.degenerated();
 					indicesToRemove.push_back(d);
 					indicesToRemove.push_back(d);
 					indicesToRemove.push_back(d);
@@ -423,10 +427,13 @@ namespace cage
 		CAGE_THROW_CRITICAL(NotImplemented, "convertToExpanded");
 	}
 
-	void polyhedronMergeCloseVertices(Polyhedron *poly, real epsilon)
+	void polyhedronMergeCloseVertices(Polyhedron *poly, const PolyhedronCloseVerticesMergingConfig &config)
 	{
 		if (poly->facesCount() == 0)
 			return;
+
+		if (!config.moveVerticesOnly)
+			polyhedronConvertToIndexed(poly);
 
 		PolyhedronImpl *impl = (PolyhedronImpl *)poly;
 		const uint32 vc = numeric_cast<uint32>(impl->positions.size());
@@ -438,7 +445,7 @@ namespace cage
 		const vec3 *ps = impl->positions.data();
 
 		// find which vertices can be remapped to other vertices
-		const real threashold = epsilon * epsilon;
+		const real threashold = config.distanceThreshold * config.distanceThreshold;
 		for (uint32 i = 0; i < vc; i++)
 		{
 			for (uint32 j = 0; j < i; j++)
@@ -452,28 +459,37 @@ namespace cage
 			}
 		}
 
-		// recenter vertices
-		for (uint32 i = 0; i < vc; i++)
+		if (config.moveVerticesOnly)
 		{
-			if (!needsRecenter[i])
-				continue;
-			vec3 p;
-			uint32 c = 0;
-			for (uint32 j = i; j < vc; j++)
+			// recenter vertices
+			for (uint32 i = 0; i < vc; i++)
 			{
-				if (remap[j] == i)
+				if (!needsRecenter[i])
+					continue;
+				vec3 p;
+				uint32 c = 0;
+				for (uint32 j = i; j < vc; j++)
 				{
-					p += ps[j];
-					c++;
+					if (remap[j] == i)
+					{
+						p += ps[j];
+						c++;
+					}
+				}
+				CAGE_ASSERT(c > 1);
+				p /= c;
+				for (uint32 j = i; j < vc; j++)
+				{
+					if (remap[j] == i)
+						impl->positions[j] = p;
 				}
 			}
-			CAGE_ASSERT(c > 1);
-			p /= c;
-			for (uint32 j = i; j < vc; j++)
-			{
-				if (remap[j] == i)
-					impl->positions[j] = p;
-			}
+		}
+		else
+		{
+			// reassign indices
+			for (uint32 &i : impl->indices)
+				i = remap[i];
 		}
 
 		// remove faces that has collapsed
@@ -482,6 +498,9 @@ namespace cage
 
 	void polyhedronGenerateTexture(const Polyhedron *poly, const PolyhedronTextureGenerationConfig &config)
 	{
+		if (poly->facesCount() == 0)
+			return;
+
 		CAGE_ASSERT(poly->type() == PolyhedronTypeEnum::Triangles);
 		CAGE_ASSERT(!poly->uvs().empty());
 
@@ -568,6 +587,11 @@ namespace cage
 
 	void polyhedronClip(Polyhedron *poly, const aabb &clipBox)
 	{
+		if (poly->facesCount() == 0)
+			return;
+
+		CAGE_ASSERT(poly->type() == PolyhedronTypeEnum::Triangles); // todo other types
+
 		polyhedronConvertToIndexed(poly);
 		PolyhedronImpl *impl = (PolyhedronImpl *)poly;
 		const vec3 clipBoxArr[2] = { clipBox.a, clipBox.b };
@@ -594,6 +618,7 @@ namespace cage
 				if (!intersects(triangle(a, b, c), clipBox))
 					continue; // triangle fully outside
 			}
+			CAGE_ASSERT(tmp.empty());
 			tmp.push_back(ids[0]);
 			tmp.push_back(ids[1]);
 			tmp.push_back(ids[2]);
@@ -615,6 +640,7 @@ namespace cage
 			poly->clear();
 		else
 			removeUnusedVertices(impl);
+		polyhedronDiscardInvalid(impl);
 	}
 
 	void polyhedronClip(Polyhedron *poly, const plane &pln)

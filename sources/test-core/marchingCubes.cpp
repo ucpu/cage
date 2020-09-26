@@ -23,9 +23,9 @@ void testMarchingCubes()
 	MarchingCubesCreateConfig config;
 	config.box = aabb(vec3(-5), vec3(15));
 #ifdef CAGE_DEBUG
-	config.resolutionX = config.resolutionY = config.resolutionZ = 20;
+	config.resolution = ivec3(20);
 #else
-	config.resolutionX = config.resolutionY = config.resolutionZ = 30;
+	config.resolution = ivec3(30);
 #endif // CAGE_DEBUG
 	Holder<MarchingCubes> cubes = newMarchingCubes(config);
 	cubes->updateByPosition(Delegate<real(const vec3 &)>().bind<&density>());

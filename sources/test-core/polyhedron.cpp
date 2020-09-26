@@ -49,7 +49,11 @@ namespace
 	Holder<Polyhedron> splitSphereIntoTwo(const Polyhedron *poly)
 	{
 		auto p = poly->copy();
-		polyhedronMergeCloseVertices(+p, 1e-3);
+		{
+			PolyhedronCloseVerticesMergingConfig cfg;
+			cfg.distanceThreshold = 1e-3;
+			polyhedronMergeCloseVertices(+p, cfg);
+		}
 		for (vec3 &v : p->positions())
 		{
 			real &x = v[0];
@@ -101,7 +105,11 @@ void testPolyhedron()
 	{
 		CAGE_TESTCASE("merge close vertices");
 		auto p = poly->copy();
-		polyhedronMergeCloseVertices(+p, 1e-3);
+		{
+			PolyhedronCloseVerticesMergingConfig cfg;
+			cfg.distanceThreshold = 1e-3;
+			polyhedronMergeCloseVertices(+p, cfg);
+		}
 		const uint32 f = p->facesCount();
 		CAGE_TEST(f > 10 && f < poly->facesCount());
 		p->exportObjFile({}, "meshes/mergeCloseVertices.obj");

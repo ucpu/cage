@@ -19,7 +19,10 @@ namespace cage
 
 			MarchingCubesImpl(const MarchingCubesCreateConfig &config) : config(config)
 			{
-				dens.resize(config.resolutionX * config.resolutionY * config.resolutionZ);
+				CAGE_ASSERT(config.resolution[0] > 5);
+				CAGE_ASSERT(config.resolution[1] > 5);
+				CAGE_ASSERT(config.resolution[2] > 5);
+				dens.resize(config.resolution[0] * config.resolution[1] * config.resolution[2]);
 			}
 		};
 	}
@@ -60,11 +63,11 @@ namespace cage
 	{
 		MarchingCubesImpl *impl = (MarchingCubesImpl*)this;
 		auto it = impl->dens.begin();
-		for (uint32 z = 0; z < impl->config.resolutionZ; z++)
+		for (uint32 z = 0; z < impl->config.resolution[2]; z++)
 		{
-			for (uint32 y = 0; y < impl->config.resolutionY; y++)
+			for (uint32 y = 0; y < impl->config.resolution[1]; y++)
 			{
-				for (uint32 x = 0; x < impl->config.resolutionX; x++)
+				for (uint32 x = 0; x < impl->config.resolution[0]; x++)
 				{
 					real d = generator(x, y, z);
 					CAGE_ASSERT(d.valid());
@@ -78,11 +81,11 @@ namespace cage
 	{
 		MarchingCubesImpl *impl = (MarchingCubesImpl*)this;
 		auto it = impl->dens.begin();
-		for (uint32 z = 0; z < impl->config.resolutionZ; z++)
+		for (uint32 z = 0; z < impl->config.resolution[2]; z++)
 		{
-			for (uint32 y = 0; y < impl->config.resolutionY; y++)
+			for (uint32 y = 0; y < impl->config.resolution[1]; y++)
 			{
-				for (uint32 x = 0; x < impl->config.resolutionX; x++)
+				for (uint32 x = 0; x < impl->config.resolution[0]; x++)
 				{
 					real d = generator(impl->config.position(x, y, z));
 					CAGE_ASSERT(d.valid());
@@ -104,11 +107,12 @@ namespace cage
 	Holder<Polyhedron> MarchingCubes::makePolyhedron() const
 	{
 		const MarchingCubesImpl *impl = (const MarchingCubesImpl*)this;
+		const MarchingCubesCreateConfig &cfg = impl->config;
 
 		dualmc::DualMC<float> mc;
 		std::vector<dualmc::Vertex> mcVertices;
 		std::vector<dualmc::Quad> mcIndices;
-		mc.build((float*)impl->dens.data(), impl->config.resolutionX, impl->config.resolutionY, impl->config.resolutionZ, 0, true, false, mcVertices, mcIndices);
+		mc.build((float*)impl->dens.data(), cfg.resolution[0], cfg.resolution[1], cfg.resolution[2], 0, true, false, mcVertices, mcIndices);
 
 		std::vector<vec3> positions;
 		std::vector<vec3> normals;
@@ -116,9 +120,9 @@ namespace cage
 		positions.reserve(mcVertices.size());
 		normals.resize(mcVertices.size());
 		indices.reserve(mcIndices.size() * 3 / 2);
-		const vec3 res = vec3(impl->config.resolutionX, impl->config.resolutionY, impl->config.resolutionZ);
-		const vec3 posMult = (impl->config.box.b - impl->config.box.a) / (res - 5);
-		const vec3 posAdd = impl->config.box.a - 1.5 * posMult;
+		const vec3 res = vec3(cfg.resolution);
+		const vec3 posMult = (cfg.box.b - cfg.box.a) / (res - 5);
+		const vec3 posAdd = cfg.box.a - 1.5 * posMult;
 		for (const dualmc::Vertex &v : mcVertices)
 			positions.push_back(vec3(v.x, v.y, v.z) * posMult + posAdd);
 		for (const auto &q : mcIndices)
@@ -152,7 +156,8 @@ namespace cage
 		}
 		for (vec3 &it : normals)
 		{
-			it = normalize(it);
+			if (it != vec3())
+				it = normalize(it);
 			CAGE_ASSERT(valid(it));
 		}
 
@@ -160,29 +165,39 @@ namespace cage
 		result->positions(positions);
 		result->normals(normals);
 		result->indices(indices);
-		if (impl->config.clip)
-			polyhedronClip(+result, impl->config.box);
+
+		{ // merge vertices
+			const vec3 cell = cfg.box.size() / vec3(cfg.resolution);
+			const real side = min(cell[0], min(cell[1], cell[2]));
+			PolyhedronCloseVerticesMergingConfig cfg;
+			cfg.distanceThreshold = side * 0.1;
+			polyhedronMergeCloseVertices(+result, cfg);
+		}
+
+		if (cfg.clip)
+			polyhedronClip(+result, cfg.box);
+
 		return result;
 	}
 
 	vec3 MarchingCubesCreateConfig::position(uint32 x, uint32 y, uint32 z) const
 	{
-		CAGE_ASSERT(resolutionX > 5);
-		CAGE_ASSERT(resolutionY > 5);
-		CAGE_ASSERT(resolutionZ > 5);
-		CAGE_ASSERT(x < resolutionX);
-		CAGE_ASSERT(y < resolutionY);
-		CAGE_ASSERT(z < resolutionZ);
-		vec3 f = (vec3(x, y, z) - 2) / (vec3(resolutionX, resolutionY, resolutionZ) - 5);
+		CAGE_ASSERT(resolution[0] > 5);
+		CAGE_ASSERT(resolution[1] > 5);
+		CAGE_ASSERT(resolution[2] > 5);
+		CAGE_ASSERT(x < resolution[0]);
+		CAGE_ASSERT(y < resolution[1]);
+		CAGE_ASSERT(z < resolution[2]);
+		vec3 f = (vec3(x, y, z) - 2) / (vec3(resolution) - 5);
 		return (box.b - box.a) * f + box.a;
 	}
 
 	uint32 MarchingCubesCreateConfig::index(uint32 x, uint32 y, uint32 z) const
 	{
-		CAGE_ASSERT(x < resolutionX);
-		CAGE_ASSERT(y < resolutionY);
-		CAGE_ASSERT(z < resolutionZ);
-		return (z * resolutionY + y) * resolutionX + x;
+		CAGE_ASSERT(x < resolution[0]);
+		CAGE_ASSERT(y < resolution[1]);
+		CAGE_ASSERT(z < resolution[2]);
+		return (z * resolution[1] + y) * resolution[0] + x;
 	}
 
 	Holder<MarchingCubes> newMarchingCubes(const MarchingCubesCreateConfig &config)
