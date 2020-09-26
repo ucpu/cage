@@ -132,7 +132,6 @@ namespace cage
 			constexpr int first[6] = { 0,1,2, 0,2,3 };
 			constexpr int second[6] = { 1,2,3, 1,3,0 };
 			const int *const selected = (which ? first : second);
-			vec3 n;
 			const auto &tri = [&](const int *inds)
 			{
 				triangle t = triangle(positions[is[inds[0]]], positions[is[inds[1]]], positions[is[inds[2]]]);
@@ -141,18 +140,14 @@ namespace cage
 					indices.push_back(is[inds[0]]);
 					indices.push_back(is[inds[1]]);
 					indices.push_back(is[inds[2]]);
-					n += t.normal();
+					const vec3 n = cross((t[1] - t[0]), (t[2] - t[0])); // no normalization here -> area weighted normals
+					normals[is[inds[0]]] += n;
+					normals[is[inds[1]]] += n;
+					normals[is[inds[2]]] += n;
 				}
 			};
 			tri(selected);
 			tri(selected + 3);
-			if (n != vec3())
-			{
-				n = normalize(n);
-				CAGE_ASSERT(valid(n));
-				for (uint32 i : is)
-					normals[i] += n;
-			}
 		}
 		for (vec3 &it : normals)
 		{
