@@ -19,12 +19,10 @@ void main()
 	vec2 uv = gl_FragCoord.xy * texelSize;
 	vec3 color = texelFetch(texColor, ivec2(gl_FragCoord), 0).rgb;
 	float depth = texelFetch(texDepth, ivec2(gl_FragCoord), 0).x;
-	vec3 colorNear = textureLod(texDofNear, uv, dofNear[2]).rgb;
-	vec3 colorFar = textureLod(texDofFar, uv, dofFar[2]).rgb;
+	vec3 colorNear = textureLod(texDofNear, uv, 0).rgb;
+	vec3 colorFar = textureLod(texDofFar, uv, 0).rgb;
 	float near;
 	float far;
 	dofContribution(uv, depth, near, far);
 	outColor = color * (1 - near - far) + colorNear * near + colorFar * far;
 }
-
-

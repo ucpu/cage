@@ -82,8 +82,8 @@ namespace cage
 		struct DofShader
 		{
 			mat4 projInv;
-			vec4 dofNear; // near, far, blur
-			vec4 dofFar; // near, far, blur
+			vec4 dofNear; // near, far
+			vec4 dofFar; // near, far
 		};
 
 		struct FinalScreenShader
@@ -211,6 +211,9 @@ namespace cage
 			Holder<Texture> ambientOcclusionTexture2;
 			Holder<Texture> bloomTexture1;
 			Holder<Texture> bloomTexture2;
+			Holder<Texture> dofTexture1;
+			Holder<Texture> dofTexture2;
+			Holder<Texture> dofTexture3;
 			Holder<Texture> depthTexture;
 
 			Holder<UniformBuffer> ssaoPointsBuffer;
@@ -348,14 +351,14 @@ namespace cage
 				}
 			}
 
-			void gaussianBlur(const Holder<Texture> &texData, const Holder<Texture> &texHelper, uint32 mipmapLevel = 0)
+			void gaussianBlur(Texture *texData, Texture *texHelper, uint32 mipmapLevel = 0)
 			{
 				shaderGaussianBlur->bind();
 				shaderGaussianBlur->uniform(1, (int)mipmapLevel);
-				auto blur = [&](const Holder<Texture> &tex1, const Holder<Texture> &tex2, const vec2 &direction)
+				auto blur = [&](Texture *tex1, Texture *tex2, const vec2 &direction)
 				{
 					tex1->bind();
-					renderTarget->colorTexture(0, tex2.get(), mipmapLevel);
+					renderTarget->colorTexture(0, tex2, mipmapLevel);
 #ifdef CAGE_DEBUG
 					renderTarget->checkStatus();
 #endif // CAGE_DEBUG
@@ -632,7 +635,7 @@ namespace cage
 					}
 					{ // blur
 						for (uint32 i = 0; i < pass->ssao.blurPasses; i++)
-							gaussianBlur(ambientOcclusionTexture1, ambientOcclusionTexture2);
+							gaussianBlur(+ambientOcclusionTexture1, +ambientOcclusionTexture2);
 					}
 					{ // apply
 						renderTarget->colorTexture(0, ambientOcclusionTexture2.get());
@@ -671,36 +674,39 @@ namespace cage
 						const real fd = pass->depthOfField.focusDistance;
 						const real fr = pass->depthOfField.focusRadius;
 						const real br = pass->depthOfField.blendRadius;
-						const real bs = pass->depthOfField.blurStrength;
 						DofShader s;
 						s.projInv = inverse(pass->proj);
-						s.dofNear = vec4(fd - fr - br, fd - fr, bs, 0);
-						s.dofFar = vec4(fd + fr, fd + fr + br, bs, 0);
+						s.dofNear = vec4(fd - fr - br, fd - fr, 0, 0);
+						s.dofFar = vec4(fd + fr, fd + fr + br, 0, 0);
 						useDisposableUbo(CAGE_SHADER_UNIBLOCK_EFFECT_PROPERTIES, s);
 					}
 					texSource->bind();
 					shaderDofCollect->bind();
-					viewportAndScissor(pass->vpX / CAGE_SHADER_BLOOM_DOWNSCALE, pass->vpY / CAGE_SHADER_BLOOM_DOWNSCALE, pass->vpW / CAGE_SHADER_BLOOM_DOWNSCALE, pass->vpH / CAGE_SHADER_BLOOM_DOWNSCALE);
+					viewportAndScissor(pass->vpX / CAGE_SHADER_DOF_DOWNSCALE, pass->vpY / CAGE_SHADER_DOF_DOWNSCALE, pass->vpW / CAGE_SHADER_DOF_DOWNSCALE, pass->vpH / CAGE_SHADER_DOF_DOWNSCALE);
 					{ // collect near
-						renderTarget->colorTexture(0, bloomTexture1.get());
+						renderTarget->colorTexture(0, dofTexture1.get());
 						renderTarget->checkStatus();
 						shaderDofCollect->uniform(0, 0);
 						renderDispatch(meshSquare, 1);
 					}
 					{ // collect far
-						renderTarget->colorTexture(0, bloomTexture2.get());
+						renderTarget->colorTexture(0, dofTexture2.get());
 						renderTarget->checkStatus();
 						shaderDofCollect->uniform(0, 1);
 						renderDispatch(meshSquare, 1);
 					}
+					{ // blur
+						for (uint32 i = 0; i < pass->depthOfField.blurPasses; i++)
+							gaussianBlur(+dofTexture1, +dofTexture3);
+						for (uint32 i = 0; i < pass->depthOfField.blurPasses; i++)
+							gaussianBlur(+dofTexture2, +dofTexture3);
+					}
 					viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
 					{ // apply
 						activeTexture(CAGE_SHADER_TEXTURE_EFFECTS + 0);
-						bloomTexture1->bind();
-						bloomTexture1->generateMipmaps();
+						dofTexture1->bind();
 						activeTexture(CAGE_SHADER_TEXTURE_EFFECTS + 1);
-						bloomTexture2->bind();
-						bloomTexture2->generateMipmaps();
+						dofTexture2->bind();
 						activeTexture(CAGE_SHADER_TEXTURE_COLOR);
 						shaderDofApply->bind();
 						renderEffect();
@@ -827,7 +833,7 @@ namespace cage
 						{
 							uint32 d = CAGE_SHADER_BLOOM_DOWNSCALE + i;
 							viewportAndScissor(pass->vpX / d, pass->vpY / d, pass->vpW / d, pass->vpH / d);
-							gaussianBlur(bloomTexture1, bloomTexture2, i);
+							gaussianBlur(+bloomTexture1, +bloomTexture2, i);
 						}
 					}
 					viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
@@ -966,8 +972,11 @@ namespace cage
 				resizeTexture("velocityTexture", velocityTexture, any(cameraEffects & CameraEffectsFlags::MotionBlur), GL_RG16F);
 				resizeTexture("ambientOcclusionTexture1", ambientOcclusionTexture1, any(cameraEffects & CameraEffectsFlags::AmbientOcclusion), GL_R8, CAGE_SHADER_SSAO_DOWNSCALE);
 				resizeTexture("ambientOcclusionTexture2", ambientOcclusionTexture2, any(cameraEffects & CameraEffectsFlags::AmbientOcclusion), GL_R8, CAGE_SHADER_SSAO_DOWNSCALE);
-				resizeTexture("bloomTexture1", bloomTexture1, any(cameraEffects & (CameraEffectsFlags::Bloom | CameraEffectsFlags::DepthOfField)), GL_RGB16F, CAGE_SHADER_BLOOM_DOWNSCALE, true);
-				resizeTexture("bloomTexture2", bloomTexture2, any(cameraEffects & (CameraEffectsFlags::Bloom | CameraEffectsFlags::DepthOfField)), GL_RGB16F, CAGE_SHADER_BLOOM_DOWNSCALE, true);
+				resizeTexture("bloomTexture1", bloomTexture1, any(cameraEffects & CameraEffectsFlags::Bloom), GL_RGB16F, CAGE_SHADER_BLOOM_DOWNSCALE, true);
+				resizeTexture("bloomTexture2", bloomTexture2, any(cameraEffects & CameraEffectsFlags::Bloom), GL_RGB16F, CAGE_SHADER_BLOOM_DOWNSCALE, true);
+				resizeTexture("dofTexture1", dofTexture1, any(cameraEffects & CameraEffectsFlags::DepthOfField), GL_RGB16F, CAGE_SHADER_DOF_DOWNSCALE);
+				resizeTexture("dofTexture2", dofTexture2, any(cameraEffects & CameraEffectsFlags::DepthOfField), GL_RGB16F, CAGE_SHADER_DOF_DOWNSCALE);
+				resizeTexture("dofTexture3", dofTexture3, any(cameraEffects & CameraEffectsFlags::DepthOfField), GL_RGB16F, CAGE_SHADER_DOF_DOWNSCALE);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
 				gBufferTarget->bind();
@@ -1070,6 +1079,10 @@ namespace cage
 					visualizableTextures.emplace_back(ambientOcclusionTexture2.get(), VisualizableTextureModeEnum::Monochromatic);
 				if (bloomTexture1)
 					visualizableTextures.emplace_back(bloomTexture1.get(), VisualizableTextureModeEnum::Color);
+				if (dofTexture1)
+					visualizableTextures.emplace_back(dofTexture1.get(), VisualizableTextureModeEnum::Color);
+				if (dofTexture2)
+					visualizableTextures.emplace_back(dofTexture2.get(), VisualizableTextureModeEnum::Color);
 				if (velocityTexture)
 					visualizableTextures.emplace_back(velocityTexture.get(), VisualizableTextureModeEnum::Velocity);
 

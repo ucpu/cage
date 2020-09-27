@@ -70,8 +70,8 @@ namespace cage
 		// objects closer than focusDistance - focusRadius - blendRadius are out of focus
 		real focusDistance = 5;
 		real focusRadius = 0;
-		real blendRadius = 10;
-		real blurStrength = 2;
+		real blendRadius = 5;
+		uint32 blurPasses = 3;
 	};
 
 	struct CAGE_ENGINE_API CameraEffects

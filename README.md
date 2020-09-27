@@ -80,6 +80,7 @@ It started as a hobby/learning project, but has become fairly feature rich and m
   - All objects goes through automatic instancing
 - Rich graphics effects:
   - hdr, bloom, tonemapping, gamma correction
+  - depth of field
   - motion blur (per object)
   - ssao
   - fxaa

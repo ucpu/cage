@@ -9,6 +9,7 @@ $define allowParsingHash true
 #define CAGE_SHADER_MAX_ROUTINES 16
 #define CAGE_SHADER_SSAO_DOWNSCALE 3
 #define CAGE_SHADER_BLOOM_DOWNSCALE 3
+#define CAGE_SHADER_DOF_DOWNSCALE 3
 #define CAGE_SHADER_LUMINANCE_DOWNSCALE 4
 
 // attribute in locations

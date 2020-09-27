@@ -2,8 +2,8 @@
 layout(std140, binding = CAGE_SHADER_UNIBLOCK_EFFECT_PROPERTIES) uniform Dof
 {
 	mat4 projInv;
-	vec4 dofNear; // near, far, blur
-	vec4 dofFar; // near, far, blur
+	vec4 dofNear; // near, far
+	vec4 dofFar; // near, far
 };
 
 vec3 s2w(vec2 p, float d)
