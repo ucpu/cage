@@ -7,7 +7,7 @@ $define shader fragment
 layout(binding = CAGE_SHADER_TEXTURE_COLOR) uniform sampler2D texColor;
 layout(binding = CAGE_SHADER_TEXTURE_EFFECTS) uniform sampler2D texLuminance;
 
-layout(std140, binding = CAGE_SHADER_UNIBLOCK_FINALSCREEN) uniform FinalScreen
+layout(std140, binding = CAGE_SHADER_UNIBLOCK_EFFECT_PROPERTIES) uniform FinalScreen
 {
 	vec4 tonemapFirst; // shoulderStrength, linearStrength, linearAngle, toeStrength
 	vec4 tonemapSecond; // toeNumerator, toeDenominator, white, tonemapEnabled

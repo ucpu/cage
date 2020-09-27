@@ -36,6 +36,16 @@ namespace cage
 	GraphicsError::GraphicsError(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message, uint32 code) noexcept : SystemError(file, line, function, severity, message, code)
 	{}
 
+	GraphicsDebugScope::GraphicsDebugScope(const char *name)
+	{
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, name);
+	}
+
+	GraphicsDebugScope::~GraphicsDebugScope()
+	{
+		glPopDebugGroup();
+	}
+
 	namespace
 	{
 		void APIENTRY openglErrorCallbackImpl(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam)

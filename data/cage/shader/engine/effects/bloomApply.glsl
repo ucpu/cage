@@ -13,7 +13,7 @@ out vec3 outColor;
 
 void main()
 {
-	vec3 color = texelFetch(texColor, ivec2(gl_FragCoord), 0).xyz;
+	vec3 color = texelFetch(texColor, ivec2(gl_FragCoord), 0).rgb;
 	vec3 bloom = vec3(0);
 	vec2 uv = vec2(gl_FragCoord) / textureSize(texColor, 0).xy;
 	for (int i = 0; i < uniLodLevel; i++)

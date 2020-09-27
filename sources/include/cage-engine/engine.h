@@ -11,16 +11,15 @@ namespace cage
 	{
 		None = 0,
 		AmbientOcclusion = 1 << 0,
-		MotionBlur = 1 << 1,
-		Bloom = 1 << 2,
-		EyeAdaptation = 1 << 3,
-		ToneMapping = 1 << 4,
-		GammaCorrection = 1 << 5,
-		AntiAliasing = 1 << 6,
-		DepthOfField = 1 << 7,
-		GeometryPass = AmbientOcclusion | MotionBlur,
-		ScreenPass = Bloom | ToneMapping | GammaCorrection | AntiAliasing | DepthOfField,
-		CombinedPass = GeometryPass | ScreenPass,
+		DepthOfField = 1 << 1,
+		MotionBlur = 1 << 2,
+		Bloom = 1 << 3,
+		EyeAdaptation = 1 << 4,
+		ToneMapping = 1 << 5,
+		GammaCorrection = 1 << 6,
+		AntiAliasing = 1 << 7,
+		Default = AmbientOcclusion | MotionBlur | Bloom | ToneMapping | GammaCorrection | AntiAliasing,
+		CombinedPass [[deprecated]] = Default,
 	};
 
 	struct CAGE_ENGINE_API CameraSsao
@@ -64,6 +63,17 @@ namespace cage
 		real white = 11.2;
 	};
 
+	struct CAGE_ENGINE_API CameraDepthOfField
+	{
+		// objects within (focusDistance - focusRadius) and (focusDistance + focusRadius) are in focus
+		// objects further than focusDistance + focusRadius + blendRadius are out of focus
+		// objects closer than focusDistance - focusRadius - blendRadius are out of focus
+		real focusDistance = 5;
+		real focusRadius = 0;
+		real blendRadius = 10;
+		real blurStrength = 2;
+	};
+
 	struct CAGE_ENGINE_API CameraEffects
 	{
 		CameraSsao ssao;
@@ -71,6 +81,7 @@ namespace cage
 		CameraBloom bloom;
 		CameraEyeAdaptation eyeAdaptation;
 		CameraTonemap tonemap;
+		CameraDepthOfField depthOfField;
 		real gamma = 2.2;
 		CameraEffectsFlags effects = CameraEffectsFlags::None;
 	};

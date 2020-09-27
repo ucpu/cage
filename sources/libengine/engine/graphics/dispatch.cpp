@@ -76,7 +76,14 @@ namespace cage
 			mat4 viewProj;
 			mat4 viewProjInv;
 			vec4 params; // strength, bias, power, radius
-			uint32 iparams[4]; // sampleCount, frameIndex
+			ivec4 iparams; // sampleCount, frameIndex
+		};
+
+		struct DofShader
+		{
+			mat4 projInv;
+			vec4 dofNear; // near, far, blur
+			vec4 dofFar; // near, far, blur
 		};
 
 		struct FinalScreenShader
@@ -189,7 +196,7 @@ namespace cage
 			Holder<Mesh> meshSquare, meshSphere, meshCone;
 			Holder<ShaderProgram> shaderVisualizeColor, shaderVisualizeDepth, shaderVisualizeMonochromatic, shaderVisualizeVelocity;
 			Holder<ShaderProgram> shaderAmbient, shaderBlit, shaderDepth, shaderGBuffer, shaderLighting, shaderTranslucent;
-			Holder<ShaderProgram> shaderGaussianBlur, shaderSsaoGenerate, shaderSsaoApply, shaderMotionBlur, shaderBloomGenerate, shaderBloomApply, shaderLuminanceCollection, shaderLuminanceCopy, shaderFinalScreen, shaderFxaa;
+			Holder<ShaderProgram> shaderGaussianBlur, shaderSsaoGenerate, shaderSsaoApply, shaderDofCollect, shaderDofApply, shaderMotionBlur, shaderBloomGenerate, shaderBloomApply, shaderLuminanceCollection, shaderLuminanceCopy, shaderFinalScreen, shaderFxaa;
 			Holder<ShaderProgram> shaderFont;
 
 			Holder<FrameBuffer> gBufferTarget;
@@ -253,6 +260,7 @@ namespace cage
 
 			static void resetAllTextures()
 			{
+				GraphicsDebugScope graphicsDebugScope("reset all textures");
 				for (uint32 i = 0; i < 16; i++)
 				{
 					activeTexture(i);
@@ -324,6 +332,7 @@ namespace cage
 
 			void bindGBufferTextures()
 			{
+				GraphicsDebugScope graphicsDebugScope("bind gBuffer textures");
 				const uint32 tius[] = { CAGE_SHADER_TEXTURE_ALBEDO, CAGE_SHADER_TEXTURE_SPECIAL, CAGE_SHADER_TEXTURE_NORMAL, CAGE_SHADER_TEXTURE_COLOR, CAGE_SHADER_TEXTURE_DEPTH };
 				const Texture *texs[] = { albedoTexture.get(), specialTexture.get(), normalTexture.get(), colorTexture.get(), depthTexture.get() };
 				Texture::multiBind(tius, texs);
@@ -359,13 +368,13 @@ namespace cage
 
 			void renderEffect()
 			{
+				CAGE_CHECK_GL_ERROR_DEBUG();
 				renderTarget->colorTexture(0, texTarget);
 #ifdef CAGE_DEBUG
 				renderTarget->checkStatus();
 #endif // CAGE_DEBUG
 				texSource->bind();
 				renderDispatch(meshSquare, 1);
-				CAGE_CHECK_GL_ERROR_DEBUG();
 				std::swap(texSource, texTarget);
 			}
 
@@ -433,6 +442,7 @@ namespace cage
 
 			void renderOpaque(const RenderPass *pass)
 			{
+				GraphicsDebugScope graphicsDebugScope("opaque");
 				OPTICK_EVENT("opaque");
 				const Holder<ShaderProgram> &shr = pass->targetShadowmap ? shaderDepth : shaderGBuffer;
 				shr->bind();
@@ -443,6 +453,7 @@ namespace cage
 
 			void renderLighting(const RenderPass *pass)
 			{
+				GraphicsDebugScope graphicsDebugScope("lighting");
 				OPTICK_EVENT("lighting");
 				const Holder<ShaderProgram> &shr = shaderLighting;
 				shr->bind();
@@ -478,6 +489,7 @@ namespace cage
 
 			void renderTranslucent(const RenderPass *pass)
 			{
+				GraphicsDebugScope graphicsDebugScope("translucent");
 				OPTICK_EVENT("translucent");
 				const Holder<ShaderProgram> &shr = shaderTranslucent;
 				shr->bind();
@@ -509,6 +521,7 @@ namespace cage
 
 			void renderTexts(const RenderPass *pass)
 			{
+				GraphicsDebugScope graphicsDebugScope("texts");
 				OPTICK_EVENT("texts");
 				for (const Holder<Texts> &t : pass->texts)
 				{
@@ -527,6 +540,7 @@ namespace cage
 
 			void renderCameraPass(const RenderPass *pass)
 			{
+				GraphicsDebugScope graphicsDebugScope("camera pass");
 				OPTICK_EVENT("camera pass");
 
 				// camera specific data
@@ -550,6 +564,7 @@ namespace cage
 
 			void renderCameraOpaque(const RenderPass *pass)
 			{
+				GraphicsDebugScope graphicsDebugScope("deferred");
 				OPTICK_EVENT("deferred");
 
 				// opaque
@@ -598,15 +613,16 @@ namespace cage
 				// ssao
 				if (any(pass->effects & CameraEffectsFlags::AmbientOcclusion))
 				{
+					GraphicsDebugScope graphicsDebugScope("ssao");
 					viewportAndScissor(pass->vpX / CAGE_SHADER_SSAO_DOWNSCALE, pass->vpY / CAGE_SHADER_SSAO_DOWNSCALE, pass->vpW / CAGE_SHADER_SSAO_DOWNSCALE, pass->vpH / CAGE_SHADER_SSAO_DOWNSCALE);
 					{
 						SsaoShader s;
 						s.viewProj = pass->viewProj;
-						s.viewProjInv = inverse(pass->viewProj);
+						s.viewProjInv = pass->uniViewport.vpInv;
 						s.params = vec4(pass->ssao.strength, pass->ssao.bias, pass->ssao.power, pass->ssao.worldRadius);
 						s.iparams[0] = pass->ssao.samplesCount;
 						s.iparams[1] = frameIndex;
-						useDisposableUbo(CAGE_SHADER_UNIBLOCK_SSAO, s);
+						useDisposableUbo(CAGE_SHADER_UNIBLOCK_EFFECT_PROPERTIES, s);
 					}
 					{ // generate
 						renderTarget->colorTexture(0, ambientOcclusionTexture1.get());
@@ -633,6 +649,7 @@ namespace cage
 				// ambient light
 				if ((pass->uniViewport.ambientLight + pass->uniViewport.ambientDirectionalLight) != vec4())
 				{
+					GraphicsDebugScope graphicsDebugScope("ambient light");
 					shaderAmbient->bind();
 					if (any(pass->effects & CameraEffectsFlags::AmbientOcclusion))
 					{
@@ -646,11 +663,54 @@ namespace cage
 					renderEffect();
 				}
 
-				// DoF?
+				// depth of field
+				if (any(pass->effects & CameraEffectsFlags::DepthOfField))
+				{
+					GraphicsDebugScope graphicsDebugScope("depth of field");
+					{
+						const real fd = pass->depthOfField.focusDistance;
+						const real fr = pass->depthOfField.focusRadius;
+						const real br = pass->depthOfField.blendRadius;
+						const real bs = pass->depthOfField.blurStrength;
+						DofShader s;
+						s.projInv = inverse(pass->proj);
+						s.dofNear = vec4(fd - fr - br, fd - fr, bs, 0);
+						s.dofFar = vec4(fd + fr, fd + fr + br, bs, 0);
+						useDisposableUbo(CAGE_SHADER_UNIBLOCK_EFFECT_PROPERTIES, s);
+					}
+					texSource->bind();
+					shaderDofCollect->bind();
+					viewportAndScissor(pass->vpX / CAGE_SHADER_BLOOM_DOWNSCALE, pass->vpY / CAGE_SHADER_BLOOM_DOWNSCALE, pass->vpW / CAGE_SHADER_BLOOM_DOWNSCALE, pass->vpH / CAGE_SHADER_BLOOM_DOWNSCALE);
+					{ // collect near
+						renderTarget->colorTexture(0, bloomTexture1.get());
+						renderTarget->checkStatus();
+						shaderDofCollect->uniform(0, 0);
+						renderDispatch(meshSquare, 1);
+					}
+					{ // collect far
+						renderTarget->colorTexture(0, bloomTexture2.get());
+						renderTarget->checkStatus();
+						shaderDofCollect->uniform(0, 1);
+						renderDispatch(meshSquare, 1);
+					}
+					viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
+					{ // apply
+						activeTexture(CAGE_SHADER_TEXTURE_EFFECTS + 0);
+						bloomTexture1->bind();
+						bloomTexture1->generateMipmaps();
+						activeTexture(CAGE_SHADER_TEXTURE_EFFECTS + 1);
+						bloomTexture2->bind();
+						bloomTexture2->generateMipmaps();
+						activeTexture(CAGE_SHADER_TEXTURE_COLOR);
+						shaderDofApply->bind();
+						renderEffect();
+					}
+				}
 
 				// motion blur
 				if (any(pass->effects & CameraEffectsFlags::MotionBlur))
 				{
+					GraphicsDebugScope graphicsDebugScope("motion blur");
 					activeTexture(CAGE_SHADER_TEXTURE_EFFECTS);
 					velocityTexture->bind();
 					activeTexture(CAGE_SHADER_TEXTURE_COLOR);
@@ -661,6 +721,7 @@ namespace cage
 				// eye adaptation
 				if (any(pass->effects & CameraEffectsFlags::EyeAdaptation))
 				{
+					GraphicsDebugScope graphicsDebugScope("eye adaptation");
 					// bind the luminance texture for use
 					{
 						activeTexture(CAGE_SHADER_TEXTURE_EFFECTS);
@@ -697,6 +758,7 @@ namespace cage
 
 			void renderCameraTransparencies(const RenderPass *pass)
 			{
+				GraphicsDebugScope graphicsDebugScope("transparencies");
 				OPTICK_EVENT("transparencies");
 
 				if (pass->translucents.empty() && pass->texts.empty())
@@ -743,11 +805,13 @@ namespace cage
 
 			void renderCameraEffectsFinal(const RenderPass *pass, CameraSpecificData &cs)
 			{
+				GraphicsDebugScope graphicsDebugScope("effects final");
 				OPTICK_EVENT("effects final");
 
 				// bloom
 				if (any(pass->effects & CameraEffectsFlags::Bloom))
 				{
+					GraphicsDebugScope graphicsDebugScope("bloom");
 					viewportAndScissor(pass->vpX / CAGE_SHADER_BLOOM_DOWNSCALE, pass->vpY / CAGE_SHADER_BLOOM_DOWNSCALE, pass->vpW / CAGE_SHADER_BLOOM_DOWNSCALE, pass->vpH / CAGE_SHADER_BLOOM_DOWNSCALE);
 					{ // generate
 						renderTarget->colorTexture(0, bloomTexture1.get());
@@ -771,7 +835,6 @@ namespace cage
 						activeTexture(CAGE_SHADER_TEXTURE_EFFECTS);
 						bloomTexture1->bind();
 						activeTexture(CAGE_SHADER_TEXTURE_COLOR);
-						CAGE_CHECK_GL_ERROR_DEBUG();
 						shaderBloomApply->bind();
 						shaderBloomApply->uniform(0, (int)pass->bloom.blurPasses);
 						renderEffect();
@@ -781,6 +844,7 @@ namespace cage
 				// final screen effects
 				if (any(pass->effects & (CameraEffectsFlags::EyeAdaptation | CameraEffectsFlags::ToneMapping | CameraEffectsFlags::GammaCorrection)))
 				{
+					GraphicsDebugScope graphicsDebugScope("final screen");
 					FinalScreenShader f;
 					if (any(pass->effects & CameraEffectsFlags::EyeAdaptation))
 					{
@@ -796,7 +860,7 @@ namespace cage
 						f.gamma = 1.0 / pass->gamma;
 					else
 						f.gamma = 1.0;
-					useDisposableUbo(CAGE_SHADER_UNIBLOCK_FINALSCREEN, f);
+					useDisposableUbo(CAGE_SHADER_UNIBLOCK_EFFECT_PROPERTIES, f);
 					shaderFinalScreen->bind();
 					renderEffect();
 				}
@@ -804,6 +868,7 @@ namespace cage
 				// fxaa
 				if (any(pass->effects & CameraEffectsFlags::AntiAliasing))
 				{
+					GraphicsDebugScope graphicsDebugScope("fxaa");
 					shaderFxaa->bind();
 					renderEffect();
 				}
@@ -811,6 +876,7 @@ namespace cage
 
 			void renderShadowPass(const RenderPass *pass)
 			{
+				GraphicsDebugScope graphicsDebugScope("shadow pass");
 				OPTICK_EVENT("shadow pass");
 
 				renderTarget->bind();
@@ -858,7 +924,7 @@ namespace cage
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
-			bool resizeTexture(const string &debugName, Holder<Texture> &texture, bool enabled, uint32 internalFormat, uint32 downscale = 1)
+			bool resizeTexture(const char *debugName, Holder<Texture> &texture, bool enabled, uint32 internalFormat, uint32 downscale = 1, bool mipmaps = false)
 			{
 				if (enabled)
 				{
@@ -868,10 +934,12 @@ namespace cage
 					{
 						texture = newTexture();
 						texture->setDebugName(debugName);
-						texture->filters(GL_LINEAR, GL_LINEAR, 0);
+						texture->filters(mipmaps ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR, GL_LINEAR, 0);
 						texture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 					}
 					texture->image2d(max(lastGBufferWidth / downscale, 1u), max(lastGBufferHeight / downscale, 1u), internalFormat);
+					if (mipmaps)
+						texture->generateMipmaps();
 				}
 				else
 					texture.clear();
@@ -889,30 +957,26 @@ namespace cage
 				lastGBufferHeight = h;
 				lastCameraEffects = cameraEffects;
 
-				albedoTexture->bind(); albedoTexture->image2d(w, h, GL_RGB8);
-				specialTexture->bind(); specialTexture->image2d(w, h, GL_RG8);
-				normalTexture->bind(); normalTexture->image2d(w, h, GL_RGB16F);
-				colorTexture->bind(); colorTexture->image2d(w, h, GL_RGB16F);
-				depthTexture->bind(); depthTexture->image2d(w, h, GL_DEPTH_COMPONENT32);
-				intermediateTexture->bind(); intermediateTexture->image2d(w, h, GL_RGB16F);
-
+				resizeTexture("albedoTexture", albedoTexture, true, GL_RGB8);
+				resizeTexture("specialTexture", specialTexture, true, GL_RG8);
+				resizeTexture("normalTexture", normalTexture, true, GL_RGB16F);
+				resizeTexture("colorTexture", colorTexture, true, GL_RGB16F);
+				resizeTexture("depthTexture", depthTexture, true, GL_DEPTH_COMPONENT32);
+				resizeTexture("intermediateTexture", intermediateTexture, true, GL_RGB16F);
 				resizeTexture("velocityTexture", velocityTexture, any(cameraEffects & CameraEffectsFlags::MotionBlur), GL_RG16F);
 				resizeTexture("ambientOcclusionTexture1", ambientOcclusionTexture1, any(cameraEffects & CameraEffectsFlags::AmbientOcclusion), GL_R8, CAGE_SHADER_SSAO_DOWNSCALE);
 				resizeTexture("ambientOcclusionTexture2", ambientOcclusionTexture2, any(cameraEffects & CameraEffectsFlags::AmbientOcclusion), GL_R8, CAGE_SHADER_SSAO_DOWNSCALE);
-				if (resizeTexture("bloomTexture1", bloomTexture1, any(cameraEffects & CameraEffectsFlags::Bloom), GL_RGB16F, CAGE_SHADER_BLOOM_DOWNSCALE))
-				{
-					bloomTexture1->generateMipmaps();
-					bloomTexture1->filters(GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, 0);
-				}
-				if (resizeTexture("bloomTexture2", bloomTexture2, any(cameraEffects & CameraEffectsFlags::Bloom), GL_RGB16F, CAGE_SHADER_BLOOM_DOWNSCALE))
-				{
-					bloomTexture2->generateMipmaps();
-					bloomTexture2->filters(GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, 0);
-				}
+				resizeTexture("bloomTexture1", bloomTexture1, any(cameraEffects & (CameraEffectsFlags::Bloom | CameraEffectsFlags::DepthOfField)), GL_RGB16F, CAGE_SHADER_BLOOM_DOWNSCALE, true);
+				resizeTexture("bloomTexture2", bloomTexture2, any(cameraEffects & (CameraEffectsFlags::Bloom | CameraEffectsFlags::DepthOfField)), GL_RGB16F, CAGE_SHADER_BLOOM_DOWNSCALE, true);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
 				gBufferTarget->bind();
+				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_ALBEDO, albedoTexture.get());
+				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_SPECIAL, specialTexture.get());
+				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_NORMAL, normalTexture.get());
+				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_COLOR, colorTexture.get());
 				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_VELOCITY, any(cameraEffects & CameraEffectsFlags::MotionBlur) ? velocityTexture.get() : nullptr);
+				gBufferTarget->depthTexture(depthTexture.get());
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
@@ -925,24 +989,7 @@ namespace cage
 				shadowmaps2d.reserve(4);
 				shadowmapsCube.reserve(32);
 
-				lastGBufferWidth = lastGBufferHeight = 0;
-
-#define GCHL_GENERATE(NAME) NAME = newTexture(); NAME->setDebugName(#NAME); NAME->filters(GL_LINEAR, GL_LINEAR, 0); NAME->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-				GCHL_GENERATE(albedoTexture);
-				GCHL_GENERATE(specialTexture);
-				GCHL_GENERATE(normalTexture);
-				GCHL_GENERATE(colorTexture);
-				GCHL_GENERATE(depthTexture);
-				GCHL_GENERATE(intermediateTexture);
-#undef GCHL_GENERATE
-				CAGE_CHECK_GL_ERROR_DEBUG();
-
 				gBufferTarget = newFrameBufferDraw();
-				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_ALBEDO, albedoTexture.get());
-				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_SPECIAL, specialTexture.get());
-				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_NORMAL, normalTexture.get());
-				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_COLOR, colorTexture.get());
-				gBufferTarget->depthTexture(depthTexture.get());
 				renderTarget = newFrameBufferDraw();
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
@@ -966,6 +1013,8 @@ namespace cage
 
 			void tick()
 			{
+				GraphicsDebugScope graphicsDebugScope("engine tick");
+
 				drawCalls = 0;
 				drawPrimitives = 0;
 
@@ -995,6 +1044,8 @@ namespace cage
 				shaderGaussianBlur = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/gaussianBlur.glsl"));
 				shaderSsaoGenerate = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/ssaoGenerate.glsl"));
 				shaderSsaoApply = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/ssaoApply.glsl"));
+				shaderDofCollect = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/dofCollect.glsl"));
+				shaderDofApply = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/dofApply.glsl"));
 				shaderMotionBlur = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/motionBlur.glsl"));
 				shaderBloomGenerate = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/bloomGenerate.glsl"));
 				shaderBloomApply = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/bloomApply.glsl"));
@@ -1005,11 +1056,7 @@ namespace cage
 				shaderFont = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/font.glsl"));
 
 				if (!shaderBlit)
-				{
-					glClear(GL_COLOR_BUFFER_BIT);
-					CAGE_CHECK_GL_ERROR_DEBUG();
 					return;
-				}
 
 				visualizableTextures.clear();
 				visualizableTextures.emplace_back(colorTexture.get(), VisualizableTextureModeEnum::Color); // unscaled
@@ -1070,6 +1117,9 @@ namespace cage
 					CAGE_CHECK_GL_ERROR_DEBUG();
 				}
 
+				if (!visualizableTextures[0].tex)
+					return;
+
 				ssaoPointsBuffer->bind(CAGE_SHADER_UNIBLOCK_SSAO_POINTS);
 				uboCacheLarge.frame();
 				uboCacheSmall.frame();
@@ -1090,15 +1140,15 @@ namespace cage
 				}
 
 				{ // blit to the window
+					GraphicsDebugScope graphicsDebugScope("blit to the window");
 					glBindFramebuffer(GL_FRAMEBUFFER, 0);
 					viewportAndScissor(0, 0, windowWidth, windowHeight);
 					setTwoSided(false);
 					setDepthTest(false, false);
-					sint32 visualizeIndex = visualizeBuffer % numeric_cast<sint32>(visualizableTextures.size());
-					if (visualizeIndex < 0)
-						visualizeIndex += numeric_cast<sint32>(visualizableTextures.size());
-					meshSquare->bind();
+					const sint32 visualizeCount = numeric_cast<sint32>(visualizableTextures.size());
+					const sint32 visualizeIndex = (visualizeBuffer % visualizeCount + visualizeCount) % visualizeCount;
 					VisualizableTexture &v = visualizableTextures[visualizeIndex];
+					meshSquare->bind();
 					v.tex->bind();
 					if (visualizeIndex == 0)
 					{

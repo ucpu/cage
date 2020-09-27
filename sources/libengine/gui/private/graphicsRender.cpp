@@ -4,6 +4,8 @@
 #include <cage-engine/opengl.h>
 #include "../private.h"
 
+#include <optick.h>
+
 namespace cage
 {
 	void RenderableElement::render(GuiImpl *impl)
@@ -68,6 +70,8 @@ namespace cage
 
 	void GuiImpl::graphicsDispatch()
 	{
+		GraphicsDebugScope graphicsDebugScope("render gui");
+		OPTICK_EVENT("render gui");
 		CAGE_CHECK_GL_ERROR_DEBUG();
 
 		if (auto lock = emitController->read())

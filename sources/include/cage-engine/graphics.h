@@ -18,6 +18,12 @@ namespace cage
 		GraphicsError(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message, uint32 code) noexcept;
 	};
 
+	struct CAGE_ENGINE_API GraphicsDebugScope : private Immovable
+	{
+		GraphicsDebugScope(const char *name);
+		~GraphicsDebugScope();
+	};
+
 	namespace detail
 	{
 		CAGE_ENGINE_API void purgeGlShaderCache();

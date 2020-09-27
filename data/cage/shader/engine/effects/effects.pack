@@ -2,6 +2,8 @@
 []
 bloomApply.glsl
 bloomGenerate.glsl
+dofApply.glsl
+dofCollect.glsl
 finalScreen.glsl
 fxaa.glsl
 gaussianBlur.glsl
