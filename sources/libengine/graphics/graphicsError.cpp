@@ -15,7 +15,8 @@ namespace cage
 {
 	namespace
 	{
-		ConfigBool confDetailedInfo("cage/graphics/logOpenglExtensions", false);
+		ConfigBool confDetailedInfo("cage/graphics/openglLogExtensions", false);
+		ConfigBool confLogSynchronous("cage/graphics/openglLogSynchronous", false);
 	}
 
 	void checkGlError()
@@ -50,6 +51,9 @@ namespace cage
 	{
 		void APIENTRY openglErrorCallbackImpl(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam)
 		{
+			if (id == 0 && severity == GL_DEBUG_SEVERITY_NOTIFICATION && (type == GL_DEBUG_TYPE_PUSH_GROUP || type == GL_DEBUG_TYPE_POP_GROUP) && source == GL_DEBUG_SOURCE_APPLICATION)
+				return; // ignore messages from GraphicsDebugScope
+
 			if (id == 131185 && severity == GL_DEBUG_SEVERITY_NOTIFICATION && type == GL_DEBUG_TYPE_OTHER && source == GL_DEBUG_SOURCE_API)
 				return; // ignore messages like: Buffer detailed info: Buffer object 3 (bound to GL_ELEMENT_ARRAY_BUFFER_ARB, GL_ARRAY_BUFFER_ARB, and GL_UNIFORM_BUFFER_EXT, usage hint is GL_STATIC_DRAW) will use VIDEO memory as the source for buffer object operations.
 
@@ -76,9 +80,13 @@ namespace cage
 			switch (type)
 			{
 			case GL_DEBUG_TYPE_ERROR: tp = "error"; break;
-			case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: tp = "undefined behavior"; break;
 			case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: tp = "deprecated behavior"; break;
+			case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR: tp = "undefined behavior"; break;
+			case GL_DEBUG_TYPE_PORTABILITY: tp = "portability"; cageSevr = SeverityEnum::Warning; break;
 			case GL_DEBUG_TYPE_PERFORMANCE: tp = "performance"; cageSevr = SeverityEnum::Warning; break;
+			case GL_DEBUG_TYPE_MARKER: tp = "marker"; cageSevr = SeverityEnum::Info; break;
+			case GL_DEBUG_TYPE_PUSH_GROUP: tp = "push group"; cageSevr = SeverityEnum::Info; break;
+			case GL_DEBUG_TYPE_POP_GROUP: tp = "pop group"; cageSevr = SeverityEnum::Info; break;
 			case GL_DEBUG_TYPE_OTHER: tp = "other"; break;
 			default: tp = "unknown type";
 			}
@@ -141,6 +149,11 @@ namespace cage
 		{
 			// initialize debug messages
 			glDebugMessageCallback(&openglErrorCallbackImpl, w);
+
+			if (confLogSynchronous)
+				glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+			else
+				glDisable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 
 			static bool blah = logOpenglInfo(); // log just once
 
