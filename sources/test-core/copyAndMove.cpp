@@ -13,6 +13,7 @@ void testCopyAndMove()
 		std::vector<string> vec;
 		vec.emplace_back("hi");
 		vec.push_back("hello");
+		std::vector<string> vec2 = std::move(vec);
 	}
 
 	{
@@ -20,5 +21,6 @@ void testCopyAndMove()
 		std::vector<MemoryBuffer> vec;
 		vec.emplace_back(MemoryBuffer());
 		vec.push_back(MemoryBuffer());
+		std::vector<MemoryBuffer> vec2 = std::move(vec);
 	}
 }

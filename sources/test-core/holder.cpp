@@ -139,7 +139,7 @@ void testHolder()
 
 	{
 		CAGE_TESTCASE("vector of holders");
-		std::vector<Holder<Tester> > vec;
+		std::vector<Holder<Tester>> vec;
 		vec.resize(2);
 		CAGE_TEST(gCount == 0);
 		for (uint32 i = 0; i < 2; i++)
@@ -159,7 +159,10 @@ void testHolder()
 			vec[i] = detail::systemArena().createHolder<Tester>();
 		CAGE_TEST(gCount == 100);
 		CAGE_TEST(vec[0].get() == firstTester);
-		vec.clear();
+		std::vector<Holder<Tester>> vec2 = std::move(vec);
+		CAGE_TEST(gCount == 100);
+		CAGE_TEST(vec.empty());
+		vec2.clear();
 		CAGE_TEST(gCount == 0);
 	}
 
