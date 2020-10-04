@@ -33,6 +33,16 @@ namespace
 		return res;
 	}
 
+	Holder<PointerRange<Holder<PointerRange<const string>>>> genRangeOfRanges()
+	{
+		PointerRangeHolder<Holder<PointerRange<const string>>> vec;
+		vec.push_back(genRange());
+		vec.push_back(genRange());
+		vec.push_back(genRange());
+		vec.push_back(genRange());
+		return vec;
+	}
+
 	constexpr auto constexprTestArray()
 	{
 		const int arr[] = { 42, -1, 3 };
@@ -170,6 +180,29 @@ void testEnumerate()
 			CAGE_TEST(it.cnt == i++);
 		}
 		CAGE_TEST(i == genHolders().size());
+	}
+
+	{
+		CAGE_TESTCASE("range of ranges 1");
+		uint32 i = 0;
+		for (const auto &it : enumerate(genRangeOfRanges()))
+		{
+			CAGE_TEST(it->size() == 4);
+			CAGE_TEST(it.cnt == i++);
+		}
+		CAGE_TEST(i == genRangeOfRanges().size());
+	}
+
+	{
+		CAGE_TESTCASE("range of ranges 2");
+		const auto range = genRangeOfRanges();
+		uint32 i = 0;
+		for (const auto &it : enumerate(range))
+		{
+			CAGE_TEST(it->size() == 4);
+			CAGE_TEST(it.cnt == i++);
+		}
+		CAGE_TEST(i == range.size());
 	}
 
 	{

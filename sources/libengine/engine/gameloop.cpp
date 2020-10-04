@@ -491,7 +491,7 @@ namespace cage
 					if (confAutoAssetListen)
 					{
 						CAGE_LOG(SeverityEnum::Info, "assets", "starting assets updates listening");
-						assets->listen("localhost", 65042);
+						assets->listen();
 					}
 				}
 

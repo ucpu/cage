@@ -69,7 +69,7 @@ namespace cage
 		void unloadWait();
 		bool unloaded() const;
 
-		void listen(const string &address, uint16 port);
+		void listen(const string &address = "localhost", uint16 port = 65042);
 
 		EventDispatcher<bool(uint32 name, Holder<File> &file)> findAsset; // this event is called from the loading thread
 

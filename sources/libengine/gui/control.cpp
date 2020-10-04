@@ -86,7 +86,7 @@ namespace cage
 				{
 					CAGE_COMPONENT_GUI(Parent, p, e);
 					CAGE_ASSERT(p.parent != 0 && p.parent != m && p.parent != name);
-					CAGE_ASSERT(map.find(p.parent) != map.end());
+					CAGE_ASSERT(map.count(p.parent));
 					item->order = p.order;
 					attachHierarchy(item, map[p.parent]);
 				}

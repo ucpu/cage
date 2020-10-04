@@ -630,7 +630,7 @@ namespace cage
 
 				if (!impl->schemes[asset->scheme].load)
 				{
-					ASS_LOG(1, asset, "no loading procedure");
+					ASS_LOG(2, asset, "no loading procedure");
 					return;
 				}
 
