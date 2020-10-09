@@ -2,9 +2,11 @@
 $include lightingShadows.glsl
 $include lightingImpl.glsl
 
-vec3 normalOffsetShadows()
+vec4 shadowSamplingPosition4()
 {
-	return position + normal * 0.2;
+	float normalOffsetScale = uniLights[lightIndex].direction[3];
+	vec3 p3 = position + normal * normalOffsetScale;
+	return uniLights[lightIndex].shadowMat * vec4(p3, 1.0);
 }
 
 vec3 lightDirectional()
@@ -14,7 +16,7 @@ vec3 lightDirectional()
 
 vec3 lightDirectionalShadow()
 {
-	vec3 shadowPos = vec3(uniLights[lightIndex].shadowMat * vec4(normalOffsetShadows(), 1.0));
+	vec3 shadowPos = vec3(shadowSamplingPosition4());
 	return lightDirectionalImpl(sampleShadowMap2d(shadowPos));
 }
 
@@ -25,7 +27,7 @@ vec3 lightPoint()
 
 vec3 lightPointShadow()
 {
-	vec3 shadowPos = vec3(uniLights[lightIndex].shadowMat * vec4(normalOffsetShadows(), 1.0));
+	vec3 shadowPos = vec3(shadowSamplingPosition4());
 	return lightPointImpl(sampleShadowMapCube(shadowPos));
 }
 
@@ -36,7 +38,7 @@ vec3 lightSpot()
 
 vec3 lightSpotShadow()
 {
-	vec4 shadowPos4 = uniLights[lightIndex].shadowMat * vec4(normalOffsetShadows(), 1.0);
+	vec4 shadowPos4 = shadowSamplingPosition4();
 	vec3 shadowPos = shadowPos4.xyz / shadowPos4.w;
 	return lightSpotImpl(sampleShadowMap2d(shadowPos));
 }

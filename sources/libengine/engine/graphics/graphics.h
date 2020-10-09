@@ -47,10 +47,10 @@ namespace cage
 		{
 			mat4 shadowMat;
 			mat4 mvpMat;
-			vec4 color; // + angle
+			vec4 color; // + spotAngle
 			vec4 position;
-			vec4 direction;
-			vec4 attenuation; // + exponent
+			vec4 direction; // + normalOffsetScale
+			vec4 attenuation; // + spotExponent
 		};
 		std::vector<UniLight> uniLights;
 		const sint32 shadowmap;

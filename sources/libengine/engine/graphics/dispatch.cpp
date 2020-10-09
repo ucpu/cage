@@ -393,12 +393,12 @@ namespace cage
 				drawPrimitives += count * mesh->getPrimitivesCount();
 			}
 
-			void RenderObject(const Objects *obj, const Holder<ShaderProgram> &shr)
+			void renderObject(const Objects *obj, const Holder<ShaderProgram> &shr)
 			{
-				RenderObject(obj, shr, obj->mesh->getFlags());
+				renderObject(obj, shr, obj->mesh->getFlags());
 			}
 
-			void RenderObject(const Objects *obj, const Holder<ShaderProgram> &shr, MeshRenderFlags flags)
+			void renderObject(const Objects *obj, const Holder<ShaderProgram> &shr, MeshRenderFlags flags)
 			{
 				applyShaderRoutines(&obj->shaderConfig, shr);
 				useDisposableUbo(CAGE_SHADER_UNIBLOCK_MESHES, obj->uniMeshes);
@@ -450,7 +450,7 @@ namespace cage
 				const Holder<ShaderProgram> &shr = pass->targetShadowmap ? shaderDepth : shaderGBuffer;
 				shr->bind();
 				for (const Holder<Objects> &o : pass->opaques)
-					RenderObject(o.get(), shr);
+					renderObject(o.get(), shr);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
@@ -503,7 +503,7 @@ namespace cage
 						uint32 tmp = CAGE_SHADER_ROUTINEPROC_LIGHTFORWARDBASE;
 						uint32 &orig = const_cast<uint32&>(t->object.shaderConfig.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE]);
 						std::swap(tmp, orig);
-						RenderObject(&t->object, shr);
+						renderObject(&t->object, shr);
 						std::swap(tmp, orig);
 					}
 
@@ -897,9 +897,9 @@ namespace cage
 				const Holder<ShaderProgram> &shr = shaderDepth;
 				shr->bind();
 				for (const Holder<Objects> &o : pass->opaques)
-					RenderObject(o.get(), shr, o->mesh->getFlags() | MeshRenderFlags::DepthWrite);
+					renderObject(o.get(), shr, o->mesh->getFlags() | MeshRenderFlags::DepthWrite);
 				for (const Holder<Translucent> &o : pass->translucents)
-					RenderObject(&o->object, shr, o->object.mesh->getFlags() | MeshRenderFlags::DepthWrite);
+					renderObject(&o->object, shr, o->object.mesh->getFlags() | MeshRenderFlags::DepthWrite);
 
 				glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 				CAGE_CHECK_GL_ERROR_DEBUG();

@@ -29,7 +29,7 @@ void convert(string src, const string &format)
 	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "format: " + (uint32)img->format());
 	{ // encode to buffer first to verify that the conversion is possible
 		MemoryBuffer buf = img->exportBuffer(format);
-		Holder<File> f = newFile(dst, FileMode(false, true));
+		Holder<File> f = writeFile(dst);
 		f->write(buf);
 		f->close();
 	}
@@ -50,8 +50,10 @@ int main(int argc, const char *args[])
 		const auto &paths = cmd->cmdArray(0, "--");
 		if (cmd->cmdBool('?', "help", false) || paths.empty())
 		{
-			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + "examples:");
-			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + args[0] + " --preserve --format .jpg a.png b.tiff");
+			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + "example:");
+			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + args[0] + " --preserve --format .jpg -- a.png b.tiff");
+			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + "  to convert a.png to a.jpg and b.tiff to b.jpg");
+			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + "--preserve will keep original files too");
 			return 0;
 		}
 		preserveOriginal = cmd->cmdBool('p', "preserve", false);

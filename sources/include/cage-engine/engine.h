@@ -146,6 +146,7 @@ namespace cage
 		// directional: width, height, depth
 		// spot: near, far, unused
 		vec3 worldSize = vec3();
+		real normalOffsetScale = 0.2;
 		uint32 resolution = 256;
 	};
 

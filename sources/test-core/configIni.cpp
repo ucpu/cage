@@ -38,7 +38,9 @@ void testConfigIni()
 		CAGE_TEST(ini->section(0) == "section");
 		CAGE_TEST(ini->itemExists("section", "item"));
 		CAGE_TEST(!ini->itemExists("section", "non-item"));
+		CAGE_TEST(!ini->itemExists("non-section", "item"));
 		CAGE_TEST(ini->itemsCount("section") == 1);
+		CAGE_TEST(ini->itemsCount("non-section") == 0);
 		CAGE_TEST(ini->item("section", 0) == "item");
 		ini.clear();
 	}

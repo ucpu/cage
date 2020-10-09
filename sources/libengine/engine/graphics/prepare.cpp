@@ -642,7 +642,7 @@ namespace cage
 				sl->mvpMat = mvpMat;
 				sl->color = vec4(colorGammaToLinear(light->light.color) * light->light.intensity, cos(light->light.spotAngle * 0.5));
 				sl->attenuation = vec4(light->light.attenuation, light->light.spotExponent);
-				sl->direction = vec4(normalize(vec3(light->model * vec4(0, 0, -1, 0))), 0);
+				sl->direction = vec4(normalize(vec3(light->model * vec4(0, 0, -1, 0))), light->shadowmap ? light->shadowmap->normalOffsetScale : 0);
 				sl->position = light->model * vec4(0, 0, 0, 1);
 				if (light->shadowmap)
 					sl->shadowMat = light->shadowmaps[pass->camera].shadowMat;
