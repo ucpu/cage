@@ -3,9 +3,9 @@ struct meshStruct
 {
 	mat4 mvpMat;
 	mat4 mvpPrevMat;
-	mat3x4 normalMat;
+	mat3x4 normalMat; // [2][3] is 1 if lighting is enabled and 0 otherwise
 	mat3x4 mMat;
-	vec4 color;
+	vec4 color; // color rgb is linear, and NOT alpha-premultiplied
 	vec4 aniTexFrames;
 };
 

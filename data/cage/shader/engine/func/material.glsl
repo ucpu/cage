@@ -4,6 +4,7 @@ $include blockMeshes.glsl
 
 layout(std140, binding = CAGE_SHADER_UNIBLOCK_MATERIAL) uniform Material
 {
+	// albedo rgb is linear, and NOT alpha-premultiplied
 	vec4 albedoBase;
 	vec4 specialBase;
 	vec4 albedoMult;
@@ -20,121 +21,99 @@ layout(binding = CAGE_SHADER_TEXTURE_NORMAL) uniform sampler2D texMaterialNormal
 layout(binding = CAGE_SHADER_TEXTURE_NORMAL_ARRAY) uniform sampler2DArray texMaterialNormalArray;
 layout(binding = CAGE_SHADER_TEXTURE_NORMAL_CUBE) uniform samplerCube texMaterialNormalCube;
 
-void materialNothing()
-{}
-
-void materialMapAlbedo2d()
+vec4 materialNothing()
 {
-	vec4 a = texture(texMaterialAlbedo2d, uv.xy) * uniMaterial.albedoMult;
-	albedo += a.rgb;
-	opacity = a.a;
+	return vec4(0.0, 0.0, 0.0, 1.0);
 }
 
-void materialMapAlbedoArray()
+vec4 materialMapAlbedo2d()
 {
-	vec4 a = sampleTextureAnimation(texMaterialAlbedoArray, uv.xy, uniMeshes[meshIndex].aniTexFrames) * uniMaterial.albedoMult;
-	albedo += a.rgb;
-	opacity = a.a;
+	return texture(texMaterialAlbedo2d, uv.xy);
 }
 
-void materialMapAlbedoCube()
+vec4 materialMapAlbedoArray()
 {
-	vec4 a = texture(texMaterialAlbedoCube, uv) * uniMaterial.albedoMult;
-	albedo += a.rgb;
-	opacity = a.a;
+	return sampleTextureAnimation(texMaterialAlbedoArray, uv.xy, uniMeshes[meshIndex].aniTexFrames);
 }
 
-void materialMapSpecial2d()
+vec4 materialMapAlbedoCube()
 {
-	vec4 s = texture(texMaterialSpecial2d, uv.xy) * uniMaterial.specialMult;
-	roughness += s.r;
-	metalness += s.g;
-	emissive += s.b;
-	colorMask += 1.0 - s.a;
+	return texture(texMaterialAlbedoCube, uv);
 }
 
-void materialMapSpecialArray()
+vec4 materialMapSpecial2d()
 {
-	vec4 s = sampleTextureAnimation(texMaterialSpecialArray, uv.xy, uniMeshes[meshIndex].aniTexFrames) * uniMaterial.specialMult;
-	roughness += s.r;
-	metalness += s.g;
-	emissive += s.b;
-	colorMask += 1.0 - s.a;
+	return texture(texMaterialSpecial2d, uv.xy);
 }
 
-void materialMapSpecialCube()
+vec4 materialMapSpecialArray()
 {
-	vec4 s = texture(texMaterialSpecialCube, uv) * uniMaterial.specialMult;
-	roughness += s.r;
-	metalness += s.g;
-	emissive += s.b;
-	colorMask += 1.0 - s.a;
+	return sampleTextureAnimation(texMaterialSpecialArray, uv.xy, uniMeshes[meshIndex].aniTexFrames);
 }
 
-void materialMapNormal2d()
+vec4 materialMapSpecialCube()
 {
-	vec3 norm = texture(texMaterialNormal2d, uv.xy).xyz * 2.0 - 1.0;
-	normal = mat3(tangent, bitangent, normal) * norm;
+	return texture(texMaterialSpecialCube, uv);
 }
 
-void materialMapNormalArray()
+vec4 materialMapNormal2d()
 {
-	vec3 norm = sampleTextureAnimation(texMaterialNormalArray, uv.xy, uniMeshes[meshIndex].aniTexFrames).xyz * 2.0 - 1.0;
-	normal = mat3(tangent, bitangent, normal) * norm;
+	return texture(texMaterialNormal2d, uv.xy);
 }
 
-void materialMapNormalCube()
+vec4 materialMapNormalArray()
 {
-	vec3 norm = texture(texMaterialNormalCube, uv).xyz * 2.0 - 1.0;
-	normal = mat3(tangent, bitangent, normal) * norm;
+	return sampleTextureAnimation(texMaterialNormalArray, uv.xy, uniMeshes[meshIndex].aniTexFrames);
 }
 
-void matMapImpl(int index)
+vec4 materialMapNormalCube()
+{
+	return texture(texMaterialNormalCube, uv);
+}
+
+vec4 matMapImpl(int index)
 {
 	switch (uniRoutines[index])
 	{
-		case CAGE_SHADER_ROUTINEPROC_MATERIALNOTHING: materialNothing(); break;
-		case CAGE_SHADER_ROUTINEPROC_MAPALBEDO2D: materialMapAlbedo2d(); break;
-		case CAGE_SHADER_ROUTINEPROC_MAPALBEDOARRAY: materialMapAlbedoArray(); break;
-		case CAGE_SHADER_ROUTINEPROC_MAPALBEDOCUBE: materialMapAlbedoCube(); break;
-		case CAGE_SHADER_ROUTINEPROC_MAPSPECIAL2D: materialMapSpecial2d(); break;
-		case CAGE_SHADER_ROUTINEPROC_MAPSPECIALARRAY: materialMapSpecialArray(); break;
-		case CAGE_SHADER_ROUTINEPROC_MAPSPECIALCUBE: materialMapSpecialCube(); break;
-		case CAGE_SHADER_ROUTINEPROC_MAPNORMAL2D: materialMapNormal2d(); break;
-		case CAGE_SHADER_ROUTINEPROC_MAPNORMALARRAY: materialMapNormalArray(); break;
-		case CAGE_SHADER_ROUTINEPROC_MAPNORMALCUBE: materialMapNormalCube(); break;
+		case CAGE_SHADER_ROUTINEPROC_MATERIALNOTHING: return materialNothing();
+		case CAGE_SHADER_ROUTINEPROC_MAPALBEDO2D: return materialMapAlbedo2d();
+		case CAGE_SHADER_ROUTINEPROC_MAPALBEDOARRAY: return materialMapAlbedoArray();
+		case CAGE_SHADER_ROUTINEPROC_MAPALBEDOCUBE: return materialMapAlbedoCube();
+		case CAGE_SHADER_ROUTINEPROC_MAPSPECIAL2D: return materialMapSpecial2d();
+		case CAGE_SHADER_ROUTINEPROC_MAPSPECIALARRAY: return materialMapSpecialArray();
+		case CAGE_SHADER_ROUTINEPROC_MAPSPECIALCUBE: return materialMapSpecialCube();
+		case CAGE_SHADER_ROUTINEPROC_MAPNORMAL2D: return materialMapNormal2d();
+		case CAGE_SHADER_ROUTINEPROC_MAPNORMALARRAY: return materialMapNormalArray();
+		case CAGE_SHADER_ROUTINEPROC_MAPNORMALCUBE: return materialMapNormalCube();
 	}
-}
-
-void matMapAlbedo()
-{
-	matMapImpl(CAGE_SHADER_ROUTINEUNIF_MAPALBEDO);
-}
-
-void matMapSpecial()
-{
-	matMapImpl(CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL);
-}
-
-void matMapNormal()
-{
-	matMapImpl(CAGE_SHADER_ROUTINEUNIF_MAPNORMAL);
+	return vec4(-100.0);
 }
 
 void materialLoad()
 {
-	albedo = uniMaterial.albedoBase.rgb;
-	opacity = uniMaterial.albedoBase.a;
-	roughness = uniMaterial.specialBase.r;
-	metalness = uniMaterial.specialBase.g;
-	emissive = uniMaterial.specialBase.b;
-	colorMask = uniMaterial.specialBase.a;
-	matMapAlbedo();
-	matMapSpecial();
-	matMapNormal();
-	albedo = mix(albedo, uniMeshes[meshIndex].color.rgb, colorMask);
-	albedo *= uniMeshes[meshIndex].color.a; // premultiplied alpha
+	vec4 specialMap = matMapImpl(CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL);
+	vec4 special4 = uniMaterial.specialBase + specialMap * uniMaterial.specialMult;
+	roughness = special4.r;
+	metalness = special4.g;
+	emissive = special4.b;
+
+	vec4 albedoMap = matMapImpl(CAGE_SHADER_ROUTINEUNIF_MAPALBEDO);
+	if (albedoMap.a > 0.0)
+		albedoMap.rgb /= albedoMap.a; // depremultiply albedo texture
+	vec4 albedo4 = uniMaterial.albedoBase + albedoMap * uniMaterial.albedoMult;
+	albedo = albedo4.rgb;
+	opacity = albedo4.a;
+
+	albedo = mix(uniMeshes[meshIndex].color.rgb, albedo, special4.a);
 	opacity *= uniMeshes[meshIndex].color.a;
+	albedo *= opacity; // premultiplied alpha
+
+	if (uniRoutines[CAGE_SHADER_ROUTINEUNIF_MAPNORMAL] != CAGE_SHADER_ROUTINEPROC_MATERIALNOTHING)
+	{
+		vec4 normalMap = matMapImpl(CAGE_SHADER_ROUTINEUNIF_MAPNORMAL);
+		normal = mat3(tangent, bitangent, normal) * (normalMap.xyz * 2.0 - 1.0);
+	}
+
 	if (!gl_FrontFacing)
 		normal = -normal;
 }

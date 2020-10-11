@@ -19,7 +19,6 @@ namespace cage
 		GammaCorrection = 1 << 6,
 		AntiAliasing = 1 << 7,
 		Default = AmbientOcclusion | MotionBlur | Bloom | ToneMapping | GammaCorrection | AntiAliasing,
-		CombinedPass [[deprecated]] = Default,
 	};
 
 	struct CAGE_ENGINE_API CameraSsao

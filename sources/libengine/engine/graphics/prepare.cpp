@@ -457,7 +457,7 @@ namespace cage
 					return;
 				}
 				Objects *obj = nullptr;
-				if (any(m->getFlags() & MeshRenderFlags::Translucency) || e->object.opacity < 1)
+				if (any(m->getFlags() & MeshRenderFlags::Translucent) || e->object.opacity < 1)
 				{ // translucent
 					pass->translucents.push_back(detail::systemArena().createHolder<Translucent>(m.share()));
 					Translucent *t = pass->translucents.back().get();

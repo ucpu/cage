@@ -83,15 +83,13 @@ namespace
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "albedoMult: " + mat.albedoMult);
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "specialBase: " + mat.specialBase);
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "specialMult: " + mat.specialMult);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "opacity texture: " + ((dsm.renderFlags & MeshRenderFlags::OpacityTexture) == MeshRenderFlags::OpacityTexture));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "transparency: " + ((dsm.renderFlags & MeshRenderFlags::Transparency) == MeshRenderFlags::Transparency));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "translucency: " + ((dsm.renderFlags & MeshRenderFlags::Translucency) == MeshRenderFlags::Translucency));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "lighting: " + ((dsm.renderFlags & MeshRenderFlags::Lighting) == MeshRenderFlags::Lighting));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "two sides: " + ((dsm.renderFlags & MeshRenderFlags::TwoSided) == MeshRenderFlags::TwoSided));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "depth test: " + ((dsm.renderFlags & MeshRenderFlags::DepthTest) == MeshRenderFlags::DepthTest));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "depth write: " + ((dsm.renderFlags & MeshRenderFlags::DepthWrite) == MeshRenderFlags::DepthWrite));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "velocity write: " + ((dsm.renderFlags & MeshRenderFlags::VelocityWrite) == MeshRenderFlags::VelocityWrite));
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "shadow cast: " + ((dsm.renderFlags & MeshRenderFlags::ShadowCast) == MeshRenderFlags::ShadowCast));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "translucency: " + any(dsm.renderFlags & MeshRenderFlags::Translucent));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "lighting: " + any(dsm.renderFlags & MeshRenderFlags::Lighting));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "two sides: " + any(dsm.renderFlags & MeshRenderFlags::TwoSided));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "depth test: " + any(dsm.renderFlags & MeshRenderFlags::DepthTest));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "depth write: " + any(dsm.renderFlags & MeshRenderFlags::DepthWrite));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "velocity write: " + any(dsm.renderFlags & MeshRenderFlags::VelocityWrite));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "shadow cast: " + any(dsm.renderFlags & MeshRenderFlags::ShadowCast));
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		{
 			if (dsm.textureNames[i] == 0)
@@ -111,24 +109,19 @@ namespace
 
 		mat.albedoBase = vec4(
 			colorGammaToLinear(vec3::parse(ini->getString("base", "albedo", "0, 0, 0"))) * ini->getFloat("base", "intensity", 1),
-			ini->getFloat("base", "opacity", 1)
+			0 // ini->getFloat("base", "opacity", 0) // todo temporarily disabled to detect incompatibility
 		);
-
-		if (mat.albedoBase[3] <= 1e-7)
-			dsm.renderFlags |= MeshRenderFlags::Transparency;
-		else if (mat.albedoBase[3] < 1)
-			dsm.renderFlags |= MeshRenderFlags::Translucency;
 
 		mat.specialBase = vec4(
 			ini->getFloat("base", "roughness", 0),
 			ini->getFloat("base", "metallic", 0),
 			ini->getFloat("base", "emission", 0),
-			ini->getFloat("base", "mask", 0)
+			0 // ini->getFloat("base", "mask", 0) // todo temporarily disabled to detect incompatibility
 		);
 
 		mat.albedoMult = vec4(
 			colorGammaToLinear(vec3::parse(ini->getString("mult", "albedo", "1, 1, 1"))) * ini->getFloat("mult", "intensity", 1),
-			1
+			ini->getFloat("mult", "opacity", 1)
 		);
 
 		mat.specialMult = vec4(
@@ -146,24 +139,14 @@ namespace
 		for (const string &n : ini->items("flags"))
 		{
 			string v = ini->getString("flags", n);
-			if (v == "opacityTexture")
-			{
-				dsm.renderFlags |= MeshRenderFlags::OpacityTexture;
-				continue;
-			}
 			if (v == "twoSided")
 			{
 				dsm.renderFlags |= MeshRenderFlags::TwoSided;
 				continue;
 			}
-			if (v == "transparency")
+			if (v == "translucent")
 			{
-				dsm.renderFlags |= MeshRenderFlags::Transparency;
-				continue;
-			}
-			if (v == "translucency")
-			{
-				dsm.renderFlags |= MeshRenderFlags::Translucency;
+				dsm.renderFlags |= MeshRenderFlags::Translucent;
 				continue;
 			}
 			if (v == "noDepthTest")
@@ -213,34 +196,23 @@ namespace
 			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "material name: '" + matName.C_Str() + "'");
 
 		// opacity
-		m->Get(AI_MATKEY_OPACITY, mat.albedoBase[3].value);
-		if (mat.albedoBase[3] <= 1e-7)
-			dsm.renderFlags |= MeshRenderFlags::Transparency;
-		else if (mat.albedoBase[3] < 1)
-			dsm.renderFlags |= MeshRenderFlags::Translucency;
+		m->Get(AI_MATKEY_OPACITY, mat.albedoMult[3].value);
+		if (mat.albedoMult[3] < 1)
+			dsm.renderFlags |= MeshRenderFlags::Translucent;
 
 		// albedo
 		if (loadTextureAssimp(m, dsm, aiTextureType_DIFFUSE, CAGE_SHADER_TEXTURE_ALBEDO))
 		{
 			int flg = 0;
 			m->Get(AI_MATKEY_TEXFLAGS(aiTextureType_DIFFUSE, 0), flg);
-			if ((flg & aiTextureFlags_UseAlpha) == aiTextureFlags_UseAlpha || mat.albedoBase[3] <= 1e-7)
-			{
-				dsm.renderFlags |= MeshRenderFlags::OpacityTexture;
-				if (none(dsm.renderFlags & MeshRenderFlags::Transparency))
-					dsm.renderFlags |= MeshRenderFlags::Translucency;
-			}
+			if ((flg & aiTextureFlags_UseAlpha) == aiTextureFlags_UseAlpha)
+				dsm.renderFlags |= MeshRenderFlags::Translucent;
 		}
 		else
 		{
 			aiColor3D color = aiColor3D(1);
 			m->Get(AI_MATKEY_COLOR_DIFFUSE, color);
 			mat.albedoBase = vec4(colorGammaToLinear(conv(color)), mat.albedoBase[3]);
-
-			if (mat.albedoBase[3] < 1e-7)
-				dsm.renderFlags |= MeshRenderFlags::Transparency;
-			else if (mat.albedoBase[3] < 1 - 1e-7)
-				dsm.renderFlags |= MeshRenderFlags::Translucency;
 		}
 
 		// special
@@ -319,11 +291,6 @@ namespace
 
 	void validateFlags(const MeshHeader &dsm, const MeshDataFlags flags, const MeshHeader::MaterialData &mat)
 	{
-		if (any(dsm.renderFlags & MeshRenderFlags::OpacityTexture) && none(dsm.renderFlags & (MeshRenderFlags::Translucency | MeshRenderFlags::Transparency)))
-			CAGE_THROW_ERROR(Exception, "material flags contains opacity texture, but neither translucency nor transparency is set");
-		if (any(dsm.renderFlags & MeshRenderFlags::Translucency) && any(dsm.renderFlags & MeshRenderFlags::Transparency))
-			CAGE_THROW_ERROR(Exception, "material flags transparency and translucency are mutually exclusive");
-
 		{
 			uint32 texCount = 0;
 			for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)

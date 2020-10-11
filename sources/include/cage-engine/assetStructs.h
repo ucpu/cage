@@ -63,7 +63,8 @@ namespace cage
 
 		struct CAGE_ENGINE_API MaterialData
 		{
-			vec4 albedoBase = vec4(0, 0, 0, 1);
+			// albedo rgb is linear, and NOT alpha-premultiplied
+			vec4 albedoBase = vec4(0);
 			vec4 specialBase = vec4(0);
 			vec4 albedoMult = vec4(1);
 			vec4 specialMult = vec4(1);

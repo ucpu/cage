@@ -140,15 +140,13 @@ namespace cage
 	enum class MeshRenderFlags : uint32
 	{
 		None = 0,
-		OpacityTexture = 1 << 1,
-		Transparency = 1 << 2, // mutually exclusive with Translucency
-		Translucency = 1 << 3, // mutually exclusive with Transparency
-		TwoSided = 1 << 4,
-		DepthTest = 1 << 5,
-		DepthWrite = 1 << 6,
-		VelocityWrite = 1 << 7,
-		ShadowCast = 1 << 8,
-		Lighting = 1 << 9,
+		Translucent = 1 << 1,
+		TwoSided = 1 << 2,
+		DepthTest = 1 << 3,
+		DepthWrite = 1 << 4,
+		VelocityWrite = 1 << 5,
+		ShadowCast = 1 << 6,
+		Lighting = 1 << 7,
 	};
 	enum class TextAlignEnum : uint32
 	{
