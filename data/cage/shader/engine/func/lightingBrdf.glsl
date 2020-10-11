@@ -51,24 +51,8 @@ vec3 lightingBrdfPbr(vec3 light, vec3 L, vec3 V)
 	return min(kD * albedo / 3.14159265359 + nominator / denominator, 1.0) * light * NoL;
 }
 
-vec3 lightingBrdfPhong(vec3 light, vec3 L, vec3 V)
-{
-	vec3 N = normal;
-	vec3 R = reflect(-L, N);
-
-	float shininess = 2.0 / (roughness * roughness) - 2.0 + 0.00001;
-	float d = max(dot(L, N), 0.0);
-	float s = pow(max(dot(R, V), 0.0), shininess);
-
-	return (albedo * d + mix(vec3(0.0), albedo, metalness) * s) * min(light, vec3(1.0));
-}
-
 vec3 lightingBrdf(vec3 light, vec3 L, vec3 V)
 {
-$if inputSpec=high
 	return lightingBrdfPbr(light, L, V);
-$else
-	return lightingBrdfPhong(light, L, V);
-$end
 }
 

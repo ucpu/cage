@@ -31,7 +31,6 @@ namespace cage
 	namespace
 	{
 		ConfigBool confAutoAssetListen("cage/assets/listen", false);
-		ConfigBool confSimpleShaders("cage/graphics/simpleShaders", false);
 
 		struct EngineGraphicsUploadThread
 		{
@@ -107,16 +106,15 @@ namespace cage
 #endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 			Holder<Thread> soundThreadHolder;
 
-			std::atomic<uint32> engineStarted;
-			std::atomic<bool> stopping;
-			uint64 controlTime;
-			uint32 assetShaderTier; // loaded shader package name
+			std::atomic<uint32> engineStarted{0};
+			std::atomic<bool> stopping{false};
+			uint64 controlTime = 0;
 
 			Holder<Scheduler> controlScheduler;
-			Schedule *controlUpdateSchedule;
-			Schedule *controlInputSchedule;
+			Schedule *controlUpdateSchedule = nullptr;
+			Schedule *controlInputSchedule = nullptr;
 			Holder<Scheduler> soundScheduler;
-			Schedule *soundUpdateSchedule;
+			Schedule *soundUpdateSchedule = nullptr;
 
 			EngineData(const EngineCreateConfig &config);
 
@@ -483,8 +481,6 @@ namespace cage
 					assets->defineScheme<SoundSource>(AssetSchemeIndexSoundSource, genAssetSchemeSoundSource(EngineSoundThread::threadIndex, sound.get()));
 					// cage pack
 					assets->add(HashString("cage/cage.pack"));
-					assetShaderTier = confSimpleShaders ? HashString("cage/shader/engine/low.pack") : HashString("cage/shader/engine/high.pack");
-					assets->add(assetShaderTier);
 				}
 
 				{ // initialize assets change listening
@@ -562,7 +558,6 @@ namespace cage
 
 				{ // unload assets
 					assets->remove(HashString("cage/cage.pack"));
-					assets->remove(assetShaderTier);
 					while (!assets->unloaded())
 					{
 						try
@@ -624,8 +619,7 @@ namespace cage
 
 		Holder<EngineData> engineData;
 
-		EngineData::EngineData(const EngineCreateConfig &config) : engineStarted(0), stopping(false), controlTime(0), assetShaderTier(0),
-			controlUpdateSchedule(nullptr), controlInputSchedule(nullptr), soundUpdateSchedule(nullptr)
+		EngineData::EngineData(const EngineCreateConfig &config)
 		{
 			CAGE_LOG(SeverityEnum::Info, "engine", "creating engine");
 

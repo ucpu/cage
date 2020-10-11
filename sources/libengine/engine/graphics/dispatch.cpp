@@ -1034,7 +1034,7 @@ namespace cage
 					return;
 
 				AssetManager *ass = engineAssets();
-				if (!ass->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/cage.pack")) || !ass->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/shader/engine/engine.pack")))
+				if (!ass->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/cage.pack")))
 					return;
 
 				meshSquare = ass->get<AssetSchemeIndexMesh, Mesh>(HashString("cage/mesh/square.obj"));

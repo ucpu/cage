@@ -4,3 +4,8 @@ effects/effects.pack
 visualize/visualize.pack
 blit.glsl
 depth.glsl
+ambient.glsl
+lighting.glsl
+gBuffer.glsl
+translucent.glsl
+

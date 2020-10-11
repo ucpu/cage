@@ -17,7 +17,7 @@ float randomAngle(float freq, vec3 pos)
 	return fract(sin(dt) * 2105.2354) * 6.283285;
 }
 
-float sampleShadowMap2dGood(vec3 shadowPos)
+float sampleShadowMap2d(vec3 shadowPos)
 {
 	vec2 radius = 0.8 / textureSize(texShadow2d, 0).xy;
 	float visibility = 0.0;
@@ -34,7 +34,7 @@ float sampleShadowMap2dGood(vec3 shadowPos)
 
 $else
 
-float sampleShadowMap2dGood(vec3 shadowPos)
+float sampleShadowMap2d(vec3 shadowPos)
 {
 	vec2 res = 1.0 / textureSize(texShadow2d, 0).xy;
 	float visibility = 0.0;
@@ -45,15 +45,6 @@ float sampleShadowMap2dGood(vec3 shadowPos)
 }
 
 $end
-
-float sampleShadowMap2d(vec3 shadowPos)
-{
-$if inputSpec=high
-	return sampleShadowMap2dGood(shadowPos);
-$else
-	return sampleShadowMap2dFast(shadowPos);
-$end
-}
 
 float sampleShadowMapCube(vec3 shadowPos)
 {
