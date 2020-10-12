@@ -83,7 +83,7 @@ namespace
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "albedoMult: " + mat.albedoMult);
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "specialBase: " + mat.specialBase);
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "specialMult: " + mat.specialMult);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "translucency: " + any(dsm.renderFlags & MeshRenderFlags::Translucent));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "translucent: " + any(dsm.renderFlags & MeshRenderFlags::Translucent));
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "lighting: " + any(dsm.renderFlags & MeshRenderFlags::Lighting));
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "two sides: " + any(dsm.renderFlags & MeshRenderFlags::TwoSided));
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "depth test: " + any(dsm.renderFlags & MeshRenderFlags::DepthTest));
@@ -196,17 +196,25 @@ namespace
 			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "material name: '" + matName.C_Str() + "'");
 
 		// opacity
-		m->Get(AI_MATKEY_OPACITY, mat.albedoMult[3].value);
-		if (mat.albedoMult[3] < 1)
+		real opacity = 1;
+		m->Get(AI_MATKEY_OPACITY, opacity.value);
+		CAGE_LOG(SeverityEnum::Info, "material", stringizer() + "assimp loaded opacity: " + opacity);
+		if (opacity > 0 && opacity < 1)
+		{
+			CAGE_LOG(SeverityEnum::Info, "material", "enabling translucent flag due to opacity");
 			dsm.renderFlags |= MeshRenderFlags::Translucent;
+		}
 
 		// albedo
 		if (loadTextureAssimp(m, dsm, aiTextureType_DIFFUSE, CAGE_SHADER_TEXTURE_ALBEDO))
 		{
 			int flg = 0;
 			m->Get(AI_MATKEY_TEXFLAGS(aiTextureType_DIFFUSE, 0), flg);
-			if ((flg & aiTextureFlags_UseAlpha) == aiTextureFlags_UseAlpha)
+			if ((flg & aiTextureFlags_UseAlpha) == aiTextureFlags_UseAlpha && opacity > 0)
+			{
+				CAGE_LOG(SeverityEnum::Info, "material", "enabling translucent flag due to texture flag");
 				dsm.renderFlags |= MeshRenderFlags::Translucent;
+			}
 		}
 		else
 		{
@@ -214,6 +222,9 @@ namespace
 			m->Get(AI_MATKEY_COLOR_DIFFUSE, color);
 			mat.albedoBase = vec4(colorGammaToLinear(conv(color)), mat.albedoBase[3]);
 		}
+
+		if (opacity > 0)
+			mat.albedoMult[3] = opacity;
 
 		// special
 		if (!loadTextureAssimp(m, dsm, aiTextureType_SPECULAR, CAGE_SHADER_TEXTURE_SPECIAL))
