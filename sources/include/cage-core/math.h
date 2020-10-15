@@ -543,6 +543,7 @@ namespace cage
 	CAGE_CORE_API quat slerp(const quat &a, const quat &b, real f);
 	CAGE_CORE_API quat slerpPrecise(const quat &a, const quat &b, real f);
 	CAGE_CORE_API quat rotate(const quat &from, const quat &toward, rads maxTurn);
+	CAGE_CORE_API rads angle(const quat &a, const quat &b);
 
 	CAGE_CORE_API mat3 inverse(const mat3 &x);
 	CAGE_CORE_API mat3 transpose(const mat3 &x) noexcept;

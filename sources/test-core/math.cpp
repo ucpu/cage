@@ -825,6 +825,34 @@ namespace
 				}
 			}
 		}
+
+		{
+			CAGE_TESTCASE("angle");
+			{
+				const quat q1 = quat(vec3(0, 0, -1), vec3(0, 1, 0));
+				const quat q2 = quat(vec3(0, 0, -1), vec3(0, 1, 0));
+				const rads a = angle(q1, q2);
+				test(a, degs(0));
+			}
+			{
+				const quat q1 = quat(vec3(0, 0, -1), vec3(0, 1, 0));
+				const quat q2 = quat(vec3(0, 0, -1), vec3(1, 0, 0));
+				const rads a = angle(q1, q2);
+				test(a, degs(90));
+			}
+			{
+				const quat q1 = quat(vec3(0, 0, -1), vec3(0, 1, 0));
+				const quat q2 = quat(vec3(1, 0, 0), vec3(0, 1, 0));
+				const rads a = angle(q1, q2);
+				test(a, degs(90));
+			}
+			{
+				const quat q1 = quat(vec3(0, 0, -1), vec3(0, 1, 0));
+				const quat q2 = quat(vec3(0, 0, 1), vec3(0, 1, 0));
+				const rads a = angle(q1, q2);
+				test(a, degs(180));
+			}
+		}
 	}
 
 	void testMathMat3()

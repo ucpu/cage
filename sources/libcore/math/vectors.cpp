@@ -210,6 +210,13 @@ namespace cage
 			return toward;
 	}
 
+	rads angle(const quat &a, const quat &b)
+	{
+		quat q = conjugate(a) * b;
+		vec3 v = vec3(q.data[0], q.data[1], q.data[2]);
+		return 2 * atan2(q.data[3], length(v));
+	}
+
 	void toAxisAngle(const quat &x, vec3 &axis, rads &angle)
 	{
 		angle = acos(x[3]) * 2;
