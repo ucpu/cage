@@ -224,7 +224,19 @@ namespace
 					string param = trim(split(line, "="));
 					line = trim(line);
 					if (param == "use")
+					{
+						if (pathIsAbs(line))
+						{
+							CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "path: '" + line + "'");
+							CAGE_THROW_WARNING(Exception, "assets use path must be relative");
+						}
+						if (!pathIsFile(pathJoin(pathToAbs(configPathInput), line)))
+						{
+							CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "path: '" + line + "'");
+							CAGE_THROW_WARNING(Exception, "assets use path does not exist");
+						}
 						ass.files.insert(line);
+					}
 					else if (param == "ref")
 						ass.references.insert(line);
 					else if (param == "alias")
@@ -232,12 +244,16 @@ namespace
 						if (ass.aliasName.empty())
 							ass.aliasName = line;
 						else
-							CAGE_THROW_WARNING(Exception, "assets international name cannot be overridden");
+						{
+							CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "previous: '" + ass.aliasName + "'");
+							CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "current: '" + line + "'");
+							CAGE_THROW_WARNING(Exception, "assets alias name cannot be overridden");
+						}
 					}
 					else
 					{
-						CAGE_LOG(SeverityEnum::Note, "exception", string("parameter: ") + param);
-						CAGE_LOG(SeverityEnum::Note, "exception", string("value: ") + line);
+						CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "parameter: " + param);
+						CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "value: " + line);
 						CAGE_THROW_WARNING(Exception, "unknown parameter name");
 					}
 				}
@@ -249,6 +265,9 @@ namespace
 			if (ret != 0)
 				CAGE_THROW_WARNING(SystemError, "process returned error code", ret);
 
+			if (ass.files.empty())
+				CAGE_THROW_WARNING(Exception, "asset reported no used files");
+
 			ass.corrupted = false;
 		}
 		catch (const Exception &e)
@@ -259,6 +278,7 @@ namespace
 		}
 		catch (...)
 		{
+			detail::logCurrentCaughtException();
 			CAGE_THROW_ERROR(Exception, "unknown exception during asset processing");
 		}
 	}
@@ -463,6 +483,7 @@ namespace
 				}
 				catch (...)
 				{
+					detail::logCurrentCaughtException();
 					CAGE_LOG(SeverityEnum::Error, "exception", "caught unknown exception in asset processing thread");
 				}
 			}
