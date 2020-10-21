@@ -111,7 +111,7 @@ namespace cage
 	};
 
 	inline PointerRange<Entity *const> EntityManager::entities() const { return group()->entities(); }
-	template<class T> inline T &Entity::value(EntityComponent *component) { CAGE_ASSERT(component->typeSize() == sizeof(T)); return *(T*)unsafeValue(component); }
+	template<class T> inline T &Entity::value(EntityComponent *component) { CAGE_ASSERT(component->manager() == manager()); CAGE_ASSERT(component->typeSize() == sizeof(T)); return *(T *)unsafeValue(component); }
 	inline PointerRange<Entity *const> EntityComponent::entities() const { return group()->entities(); }
 
 	CAGE_CORE_API MemoryBuffer entitiesSerialize(const EntityGroup *entities, EntityComponent *component);

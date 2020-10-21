@@ -111,6 +111,28 @@ void testEntities()
 	}
 
 	{
+		CAGE_TESTCASE("multiple managers");
+		Holder<EntityManager> man1 = newEntityManager(EntityManagerCreateConfig());
+		Holder<EntityManager> man2 = newEntityManager(EntityManagerCreateConfig());
+		EntityComponent *com1 = man1->defineComponent(vec3(), true);
+		EntityComponent *com2 = man2->defineComponent(vec3(), true);
+		Entity *ent1 = man1->createAnonymous();
+		Entity *ent2 = man2->createAnonymous();
+		{
+			vec3 &a = ent1->value<vec3>(com1);
+			a = vec3(1, 2, 3);
+		}
+		{
+			vec3 &b = ent2->value<vec3>(com2);
+			b = vec3(4, 5, 6);
+		}
+		{
+			CAGE_TEST_ASSERTED(ent1->value<vec3>(com2));
+			CAGE_TEST_ASSERTED(ent1->value<vec2>(com1));
+		}
+	}
+
+	{
 		CAGE_TESTCASE("randomized test");
 
 #ifdef CAGE_DEBUG
