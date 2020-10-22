@@ -31,16 +31,22 @@ namespace cage
 		void writeLine(const string &line);
 
 		void seek(uintPtr position);
-		void flush();
-		void close();
-
 		uintPtr tell() const;
 		uintPtr size() const;
+
+		void close();
+
+		FileMode mode() const;
 	};
 
 	CAGE_CORE_API Holder<File> newFile(const string &path, const FileMode &mode);
 	CAGE_CORE_API Holder<File> readFile(const string &path);
 	CAGE_CORE_API Holder<File> writeFile(const string &path);
+	CAGE_CORE_API Holder<File> newFileBuffer(MemoryBuffer *buffer, const FileMode &mode = FileMode(true, true)); // the buffer must outlive the file
+	CAGE_CORE_API Holder<File> newFileBuffer(MemoryBuffer &&buffer, const FileMode &mode = FileMode(true, true)); // the file takes ownership of the buffer
+	CAGE_CORE_API Holder<File> newFileBuffer(PointerRange<char> buffer, const FileMode &mode = FileMode(true, false)); // the buffer must outlive the file
+	CAGE_CORE_API Holder<File> newFileBuffer(PointerRange<const char> buffer); // the buffer must outlive the file
+	CAGE_CORE_API Holder<File> newFileBuffer();
 
 	class CAGE_CORE_API DirectoryList : private Immovable
 	{
@@ -115,11 +121,10 @@ namespace cage
 	// create an empty archive at the specified path, it can be populated afterwards
 	CAGE_CORE_API void pathCreateArchive(const string &path, const string &options = "");
 
-	// moves (renames) the file or directory
-	// moving a directory to different drive may fail
+	// moves (renames) a file or directory
 	CAGE_CORE_API void pathMove(const string &from, const string &to);
 
-	// permanently removes the file or folder including all sub-folders
+	// permanently removes a file or folder including all sub-folders
 	CAGE_CORE_API void pathRemove(const string &path);
 
 	// path modification time is not related to any other source of time
@@ -131,7 +136,7 @@ namespace cage
 	// /abc/def/logo.png
 	// /abc/logo.png
 	// /logo.png
-	// and finally throws an exception if none of the paths existed
+	// and throws an exception if none of the paths exists
 	// if whereToStart is omitted, the search starts in current working directory
 	CAGE_CORE_API string pathSearchTowardsRoot(const string &name, PathTypeFlags type = PathTypeFlags::File);
 	CAGE_CORE_API string pathSearchTowardsRoot(const string &name, const string &whereToStart, PathTypeFlags type = PathTypeFlags::File);

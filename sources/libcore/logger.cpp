@@ -363,7 +363,6 @@ namespace cage
 	{
 		LoggerOutputFileImpl *impl = (LoggerOutputFileImpl*)this;
 		impl->f->writeLine(message);
-		impl->f->flush();
 	}
 
 	Holder<LoggerOutputFile> newLoggerOutputFile(const string &path, bool append)

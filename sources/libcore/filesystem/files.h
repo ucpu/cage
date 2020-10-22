@@ -1,3 +1,6 @@
+#ifndef guard_files_h_sdrgds45rfgt
+#define guard_files_h_sdrgds45rfgt
+
 #include <cage-core/files.h>
 
 #include <memory>
@@ -8,13 +11,12 @@ namespace cage
 	{
 	public:
 		const string myPath; // full name as seen by the application
-		FileMode mode;
+		const FileMode mode;
 		FileAbstract(const string &path, const FileMode &mode);
 		virtual ~FileAbstract() {}
-		virtual void read(void *data, uintPtr size) = 0;
-		virtual void write(const void *data, uintPtr size) = 0;
+		virtual void read(void *data, uintPtr size); // error by default
+		virtual void write(const void *data, uintPtr size); // error by default
 		virtual void seek(uintPtr position) = 0;
-		virtual void flush() = 0;
 		virtual void close() = 0;
 		virtual uintPtr tell() const = 0;
 		virtual uintPtr size() const = 0;
@@ -32,7 +34,7 @@ namespace cage
 		string fullPath() const;
 	};
 
-	class ArchiveAbstract : public std::enable_shared_from_this<ArchiveAbstract>
+	class ArchiveAbstract : public std::enable_shared_from_this<ArchiveAbstract>, private Immovable
 	{
 	public:
 		const string myPath;
@@ -55,8 +57,12 @@ namespace cage
 	Holder<File> realNewFile(const string &path, const FileMode &mode);
 	Holder<DirectoryList> realNewDirectoryList(const string &path);
 
-	void mixedMove(std::shared_ptr<ArchiveAbstract> &af, const string &pf, std::shared_ptr<ArchiveAbstract> &at, const string &pt);
+	void mixedMove(std::shared_ptr<ArchiveAbstract> &af, const string &pf, std::shared_ptr<ArchiveAbstract> &at, const string &pt); // leave archives empty to use real filesystem
+	
 	std::shared_ptr<ArchiveAbstract> archiveFindTowardsRoot(const string &path, bool matchExact, string &insidePath);
+
 	void archiveCreateZip(const string &path, const string &options);
 	std::shared_ptr<ArchiveAbstract> archiveOpenZip(const string &path);
 }
+
+#endif // guard_files_h_sdrgds45rfgt

@@ -257,7 +257,6 @@ void processSound()
 	Holder<File> f = newFile(outputFileName, FileMode(true, true));
 	f->write(bufferView(h));
 	f->write(bufferView(sds));
-
 	switch (sds.soundType)
 	{
 	case SoundTypeEnum::RawRaw:
@@ -287,22 +286,17 @@ void processSound()
 		}
 		f->seek(0);
 		f->write(bufferView(h));
-
-		if (configGetBool("cage-asset-processor/sound/preview"))
-		{ // preview ogg
-			string dbgName = pathJoin(configGetString("cage-asset-processor/sound/path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".ogg");
-			Holder<File> df = newFile(dbgName, FileMode(false, true));
-			f->flush();
-			f->seek(sizeof(AssetHeader) + sizeof(SoundSourceHeader));
-			df->write(f->read(oggSize));
-			df->close();
-		}
 	} break;
 	default:
 		CAGE_THROW_CRITICAL(Exception, "invalid sound type");
 	}
-
 	f->close();
+
+	// preview sound
+	if (configGetBool("cage-asset-processor/sound/preview"))
+	{
+		CAGE_THROW_ERROR(NotImplemented, "sound preview is not currently implemented");
+	}
 }
 
 void analyzeSound()
