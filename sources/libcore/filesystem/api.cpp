@@ -13,6 +13,8 @@ namespace cage
 			return false;
 		if (append && !write)
 			return false;
+		if (append && read)
+			return false; // forbid
 		if (textual && read)
 			return false; // forbid reading files in text mode, we will do the line-ending conversions on our own
 		return true;
@@ -20,20 +22,16 @@ namespace cage
 
 	string FileMode::mode() const
 	{
+		CAGE_ASSERT(valid());
 		string md;
-		if (read && !write)
-			md = "r";
-		else if (read && write)
+		if (append)
+			md = "a";
+		else
 		{
-			if (append)
-				md = "a+";
-			else
-				md = "w+";
-		}
-		else if (!read && write)
-		{
-			if (append)
-				md = "a";
+			if (read && write)
+				md = "r+";
+			else if (read)
+				md = "r";
 			else
 				md = "w";
 		}
@@ -44,7 +42,7 @@ namespace cage
 	void File::read(PointerRange<char> buffer)
 	{
 		FileAbstract *impl = (FileAbstract *)this;
-		impl->read(buffer.data(), buffer.size());
+		impl->read(buffer);
 	}
 
 	MemoryBuffer File::read(uintPtr size)
@@ -90,7 +88,7 @@ namespace cage
 	void File::write(PointerRange<const char> buffer)
 	{
 		FileAbstract *impl = (FileAbstract *)this;
-		impl->write(buffer.data(), buffer.size());
+		impl->write(buffer);
 	}
 
 	void File::writeLine(const string &line)
@@ -254,6 +252,8 @@ namespace cage
 
 	void pathCreateArchive(const string &path, const string &options)
 	{
+		if (none(pathType(path) & PathTypeFlags::NotFound))
+			CAGE_THROW_ERROR(Exception, "cannot create an archive - path already exists");
 		// someday, switch based on the options may be implemented here to create different types of archives
 		// the options are passed on to allow for other options (compression, encryption, ...)
 		archiveCreateZip(path, options);

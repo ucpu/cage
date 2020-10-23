@@ -38,7 +38,7 @@ void testFiles()
 
 	{
 		CAGE_TESTCASE("write to file");
-		Holder<File> f = newFile("testdir/files/1", FileMode(false, true));
+		Holder<File> f = writeFile("testdir/files/1");
 		CAGE_TEST(f);
 		for (uint32 i = 0; i < FILE_BLOCKS; i++)
 			f->write(data);
@@ -46,7 +46,7 @@ void testFiles()
 
 	{
 		CAGE_TESTCASE("read from file");
-		Holder<File> f = newFile("testdir/files/1", FileMode(true, false));
+		Holder<File> f = readFile("testdir/files/1");
 		CAGE_TEST(f);
 		CAGE_TEST(f->size() == (uint64)FILE_BLOCKS * (uint64)BLOCK_SIZE);
 		MemoryBuffer tmp(BLOCK_SIZE);
@@ -60,7 +60,7 @@ void testFiles()
 	{
 		CAGE_TESTCASE("create several files");
 		for (uint32 i = 2; i <= 32; i++)
-			newFile(pathJoin("testdir/files", stringizer() + i), FileMode(false, true));
+			writeFile(pathJoin("testdir/files", stringizer() + i));
 	}
 
 	{
@@ -97,7 +97,7 @@ void testFiles()
 
 	{
 		CAGE_TESTCASE("list directory - test empty file");
-		newFile("testdir/empty.txt", FileMode(false, true));
+		writeFile("testdir/empty.txt");
 		Holder<DirectoryList> fs = newDirectoryList("testdir");
 		CAGE_TEST(fs);
 		bool found = false;
@@ -125,14 +125,14 @@ void testFiles()
 				for (char c = 'a'; c < a; c++)
 				{
 					string sc({ &c, &c + 1 });
-					newFile(pathJoin(pathJoin("testdir/files", sa), pathJoin(sb, sc)), FileMode(false, true));
+					writeFile(pathJoin(pathJoin("testdir/files", sa), pathJoin(sb, sc)));
 				}
-				newFile(pathJoin(pathJoin("testdir/files", sa), pathJoin(sb, "e")), FileMode(false, true));
+				writeFile(pathJoin(pathJoin("testdir/files", sa), pathJoin(sb, "e")));
 			}
 			for (char b = 'e'; b < 'h'; b++)
 			{
 				string sb({ &b, &b + 1 });
-				newFile(pathJoin(pathJoin("testdir/files", sa), sb), FileMode(false, true));
+				writeFile(pathJoin(pathJoin("testdir/files", sa), sb));
 			}
 		}
 	}
@@ -151,7 +151,7 @@ void testFiles()
 
 	{
 		CAGE_TESTCASE("non-existing file");
-		CAGE_TEST_THROWN(newFile("testdir/files/non-existing-file", FileMode(true, false)));
+		CAGE_TEST_THROWN(readFile("testdir/files/non-existing-file"));
 	}
 
 	{
@@ -180,8 +180,8 @@ void testFiles()
 
 		{
 			CAGE_TESTCASE("simple move");
-			string source = "testdir/files/1";
-			string dest = "testdir/moved/1";
+			const string source = "testdir/files/1";
+			const string dest = "testdir/moved/1";
 			CAGE_TEST(pathIsFile(source));
 			CAGE_TEST(!pathIsFile(dest));
 			pathMove(source, dest);

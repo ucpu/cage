@@ -27,20 +27,24 @@ namespace cage
 					pos = buf.size();
 			}
 
-			void read(void *data, uintPtr size) override
+			void read(PointerRange<char> buffer) override
 			{
 				if (!mode.read)
 					CAGE_THROW_CRITICAL(NotImplemented, "reading from write-only memory file");
+				char *data = buffer.data();
+				const uintPtr size = buffer.size();
 				if (pos + size > buf.size())
 					CAGE_THROW_ERROR(Exception, "reading beyond buffer");
 				detail::memcpy(data, buf.data() + pos, size);
 				pos += size;
 			}
 
-			void write(const void *data, uintPtr size) override
+			void write(PointerRange<const char> buffer) override
 			{
 				if (!mode.write)
 					CAGE_THROW_CRITICAL(NotImplemented, "writing to read-only memory file");
+				const char *data = buffer.data();
+				const uintPtr size = buffer.size();
 				if (pos + size > buf.size())
 					buf.resizeSmart(pos + size);
 				detail::memcpy(buf.data() + pos, data, size);
@@ -82,20 +86,24 @@ namespace cage
 					pos = buf.size();
 			}
 
-			void read(void *data, uintPtr size) override
+			void read(PointerRange<char> buffer) override
 			{
 				if (!mode.read)
 					CAGE_THROW_CRITICAL(NotImplemented, "reading from write-only memory file");
+				char *data = buffer.data();
+				const uintPtr size = buffer.size();
 				if (pos + size > buf.size())
 					CAGE_THROW_ERROR(Exception, "reading beyond buffer");
 				detail::memcpy(data, buf.data() + pos, size);
 				pos += size;
 			}
 
-			void write(const void *data, uintPtr size) override
+			void write(PointerRange<const char> buffer) override
 			{
 				if (!mode.write)
 					CAGE_THROW_CRITICAL(NotImplemented, "writing to read-only memory file");
+				const char *data = buffer.data();
+				const uintPtr size = buffer.size();
 				if (pos + size > buf.size())
 					CAGE_THROW_ERROR(Exception, "writing beyond buffer");
 				detail::memcpy(buf.data() + pos, data, size);

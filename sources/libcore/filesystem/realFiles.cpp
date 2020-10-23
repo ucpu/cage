@@ -306,23 +306,23 @@ namespace cage
 				}
 			}
 
-			void read(void *data, uintPtr size) override
+			void read(PointerRange<char> buffer) override
 			{
 				CAGE_ASSERT(f);
 				CAGE_ASSERT(mode.read);
-				if (size == 0)
+				if (buffer.size() == 0)
 					return;
-				if (fread(data, size, 1, f) != 1)
+				if (fread(buffer.data(), buffer.size(), 1, f) != 1)
 					CAGE_THROW_ERROR(SystemError, "fread", errno);
 			}
 
-			void write(const void *data, uintPtr size) override
+			void write(PointerRange<const char> buffer) override
 			{
 				CAGE_ASSERT(f);
 				CAGE_ASSERT(mode.write);
-				if (size == 0)
+				if (buffer.size() == 0)
 					return;
-				if (fwrite(data, size, 1, f) != 1)
+				if (fwrite(buffer.data(), buffer.size(), 1, f) != 1)
 					CAGE_THROW_ERROR(SystemError, "fwrite", errno);
 			}
 

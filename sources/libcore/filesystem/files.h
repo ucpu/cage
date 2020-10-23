@@ -14,8 +14,8 @@ namespace cage
 		const FileMode mode;
 		FileAbstract(const string &path, const FileMode &mode);
 		virtual ~FileAbstract() {}
-		virtual void read(void *data, uintPtr size); // error by default
-		virtual void write(const void *data, uintPtr size); // error by default
+		virtual void read(PointerRange<char> buffer); // error by default
+		virtual void write(PointerRange<const char> buffer); // error by default
 		virtual void seek(uintPtr position) = 0;
 		virtual void close() = 0;
 		virtual uintPtr tell() const = 0;
@@ -57,12 +57,16 @@ namespace cage
 	Holder<File> realNewFile(const string &path, const FileMode &mode);
 	Holder<DirectoryList> realNewDirectoryList(const string &path);
 
-	void mixedMove(std::shared_ptr<ArchiveAbstract> &af, const string &pf, std::shared_ptr<ArchiveAbstract> &at, const string &pt); // leave archives empty to use real filesystem
+	// leave archives empty to use real filesystem
+	void mixedMove(std::shared_ptr<ArchiveAbstract> &af, const string &pf, std::shared_ptr<ArchiveAbstract> &at, const string &pt);
 	
-	std::shared_ptr<ArchiveAbstract> archiveFindTowardsRoot(const string &path, bool matchExact, string &insidePath);
+	// allowExactMatch == true -> if the full path is an archive, return it as an archive
+	// allowExactMatch == false -> if the full path is an archive, treat it as a file
+	std::shared_ptr<ArchiveAbstract> archiveFindTowardsRoot(const string &path, bool allowExactMatch, string &insidePath);
 
 	void archiveCreateZip(const string &path, const string &options);
 	std::shared_ptr<ArchiveAbstract> archiveOpenZip(const string &path);
+	std::shared_ptr<ArchiveAbstract> archiveOpenZip(Holder<File> &&f, const string &path);
 }
 
 #endif // guard_files_h_sdrgds45rfgt

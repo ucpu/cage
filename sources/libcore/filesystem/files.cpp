@@ -12,12 +12,12 @@ namespace cage
 	FileAbstract::FileAbstract(const string &path, const FileMode &mode) : myPath(path), mode(mode)
 	{}
 
-	void FileAbstract::read(void *data, uintPtr size)
+	void FileAbstract::read(PointerRange<char> buffer)
 	{
 		CAGE_THROW_CRITICAL(NotImplemented, "reading from write-only file");
 	}
 
-	void FileAbstract::write(const void *data, uintPtr size)
+	void FileAbstract::write(PointerRange<const char> buffer)
 	{
 		CAGE_THROW_CRITICAL(NotImplemented, "writing to read-only file");
 	}
@@ -52,25 +52,35 @@ namespace cage
 
 	namespace
 	{
-		std::shared_ptr<ArchiveAbstract> archiveTryGet(const string &path)
+		struct ArchivesCache
 		{
-			static Holder<Mutex> *mutex = new Holder<Mutex>(newMutex()); // this leak is intentional
-			static std::map<string, std::weak_ptr<ArchiveAbstract>> *map = new std::map<string, std::weak_ptr<ArchiveAbstract>>(); // this leak is intentional
-			ScopeLock<Mutex> l(*mutex);
-			auto it = map->find(path);
-			if (it != map->end())
+			Holder<Mutex> mutex = newMutex();
+			std::map<string, std::weak_ptr<ArchiveAbstract>, StringComparatorFast> map;
+		};
+
+		ArchivesCache &archivesCache()
+		{
+			static ArchivesCache *cache = new ArchivesCache(); // this leak is intentional
+			return *cache;
+		}
+
+		std::shared_ptr<ArchiveAbstract> archiveTryGet(const std::shared_ptr<ArchiveAbstract> &parent, const string &inPath)
+		{
+			const string fullPath = parent ? pathJoin(parent->myPath, inPath) : inPath;
+			ArchivesCache &cache = archivesCache();
+			auto it = cache.map.find(fullPath);
+			if (it != cache.map.end())
 			{
 				auto a = it->second.lock();
 				if (a)
 					return a;
 			}
-			// todo determine archive type of the file
 			try
 			{
 				detail::OverrideException oe;
-				auto a = archiveOpenZip(path);
+				auto a = parent ? archiveOpenZip(parent->openFile(inPath, FileMode(true, true)), fullPath) : archiveOpenZip(fullPath);
 				CAGE_ASSERT(a);
-				(*map)[path] = a;
+				cache.map[fullPath] = a;
 				return a;
 			}
 			catch (const Exception &)
@@ -79,30 +89,88 @@ namespace cage
 			}
 		}
 
-		std::shared_ptr<ArchiveAbstract> recursiveFind(const string &path, bool matchExact, string &insidePath)
+		std::shared_ptr<ArchiveAbstract> archiveTryGet(const string &path)
 		{
-			CAGE_ASSERT(path == pathSimplify(path));
-			if (matchExact)
+			return archiveTryGet({}, path);
+		}
+
+		void walkLeft(string &p, string &i)
+		{
+			const string s = pathJoin(p, "..");
+			i = pathJoin(subString(p, s.length() + 1, m), i);
+			p = s;
+		}
+
+		void walkRight(string &p, string &i)
+		{
+			const string k = split(i, "/");
+			p = pathJoin(p, k);
+		}
+
+#ifdef CAGE_DEBUG
+		class WalkTester
+		{
+		public:
+			WalkTester()
 			{
-				PathTypeFlags t = realType(path);
-				if (any(t & PathTypeFlags::File))
-					return archiveTryGet(path);
-				if (none(t & PathTypeFlags::NotFound))
-					return {}; // the path exists (most likely a directory) and is not an archive
+				{
+					string l = "/abc/def/ghi";
+					string r = "jkl/mno/pqr";
+					walkLeft(l, r);
+					CAGE_ASSERT(l == "/abc/def");
+					CAGE_ASSERT(r == "ghi/jkl/mno/pqr");
+				}
+				{
+					string l = "/abc/def/ghi";
+					string r = "jkl/mno/pqr";
+					walkRight(l, r);
+					CAGE_ASSERT(l == "/abc/def/ghi/jkl");
+					CAGE_ASSERT(r == "mno/pqr");
+				}
 			}
-			if (pathExtractPathNoDrive(path) == "/")
-				return {}; // do not throw an exception by going beyond root
-			const string a = pathJoin(path, "..");
-			const string b = subString(path, a.length() + 1, m);
-			CAGE_ASSERT(pathJoin(a, b) == path);
-			insidePath = pathJoin(b, insidePath);
-			return recursiveFind(a, true, insidePath);
+		} walkTesterInstance;
+#endif // CAGE_DEBUG
+
+		void walkRealPath(string &p, string &inside)
+		{
+			while (any(realType(p) & PathTypeFlags::NotFound))
+				walkLeft(p, inside);
+		}
+
+		string walkImaginaryPath(std::shared_ptr<ArchiveAbstract> &a, bool allowExactMatch, const string &inside)
+		{
+			CAGE_ASSERT(a);
+			string p, i = inside;
+			while (!i.empty())
+			{
+				if (!allowExactMatch && inside.empty())
+					break;
+				walkRight(p, i);
+				std::shared_ptr<ArchiveAbstract> b = archiveTryGet(a, p);
+				if (b)
+				{
+					a = b;
+					return walkImaginaryPath(a, allowExactMatch, i);
+				}
+			}
+			return inside;
 		}
 	}
 
-	std::shared_ptr<ArchiveAbstract> archiveFindTowardsRoot(const string &path, bool matchExact, string &insidePath)
+	std::shared_ptr<ArchiveAbstract> archiveFindTowardsRoot(const string &path_, bool allowExactMatch, string &inside)
 	{
-		CAGE_ASSERT(insidePath.empty());
-		return recursiveFind(pathToAbs(path), matchExact, insidePath);
+		CAGE_ASSERT(inside.empty());
+		string path = pathToAbs(path_);
+		ArchivesCache &cache = archivesCache();
+		ScopeLock<Mutex> l(cache.mutex);
+		CAGE_ASSERT(inside.empty());
+		walkRealPath(path, inside);
+		if (!allowExactMatch && inside.empty())
+			return {}; // exact match is forbidden
+		std::shared_ptr<ArchiveAbstract> a = archiveTryGet(path);
+		if (!a)
+			return {}; // does not exist
+		inside = walkImaginaryPath(a, allowExactMatch, inside);
+		return a;
 	}
 }

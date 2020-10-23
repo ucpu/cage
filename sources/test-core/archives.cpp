@@ -8,7 +8,7 @@
 
 namespace
 {
-	static const string directories[2] = {
+	const string directories[2] = {
 		"testdir/files",
 		"testdir/archive.zip"
 	};
@@ -17,7 +17,7 @@ namespace
 	{
 		for (const string &dir : directories)
 		{
-			Holder<File> f = newFile(pathJoin(dir, name), FileMode(false, true));
+			Holder<File> f = writeFile(pathJoin(dir, name));
 			f->write(data);
 			f->close();
 		}
@@ -29,8 +29,8 @@ namespace
 		uint32 i = 0;
 		for (const string &dir : directories)
 		{
-			Holder<File> f = newFile(pathJoin(dir, name), FileMode(true, false));
-			*p[i++] = f->read(f->size());
+			Holder<File> f = readFile(pathJoin(dir, name));
+			*p[i++] = f->readAll();
 			f->close();
 		}
 	}
@@ -161,6 +161,7 @@ void testArchives()
 		testReadFile("dir/third");
 		testListDirectory("");
 		testListDirectory("dir");
+		testListRecursive();
 	}
 
 	{
@@ -190,12 +191,12 @@ void testArchives()
 		CAGE_TESTCASE("multiple write files at once");
 		{
 			Holder<File> ws[] = {
-				newFile(pathJoin(directories[0], "multi/1"), FileMode(false, true)),
-				newFile(pathJoin(directories[1], "multi/1"), FileMode(false, true)),
-				newFile(pathJoin(directories[0], "multi/2"), FileMode(false, true)),
-				newFile(pathJoin(directories[1], "multi/2"), FileMode(false, true)),
-				newFile(pathJoin(directories[0], "multi/3"), FileMode(false, true)),
-				newFile(pathJoin(directories[1], "multi/3"), FileMode(false, true))
+				writeFile(pathJoin(directories[0], "multi/1")),
+				writeFile(pathJoin(directories[1], "multi/1")),
+				writeFile(pathJoin(directories[0], "multi/2")),
+				writeFile(pathJoin(directories[1], "multi/2")),
+				writeFile(pathJoin(directories[0], "multi/3")),
+				writeFile(pathJoin(directories[1], "multi/3"))
 			};
 			for (auto &f : ws)
 				f->write(data1);
@@ -211,12 +212,12 @@ void testArchives()
 	{
 		CAGE_TESTCASE("multiple read files at once");
 		Holder<File> rs[] = {
-			newFile(pathJoin(directories[0], "multi/1"), FileMode(true, false)),
-			newFile(pathJoin(directories[1], "multi/1"), FileMode(true, false)),
-			newFile(pathJoin(directories[0], "multi/2"), FileMode(true, false)),
-			newFile(pathJoin(directories[1], "multi/2"), FileMode(true, false)),
-			newFile(pathJoin(directories[0], "multi/3"), FileMode(true, false)),
-			newFile(pathJoin(directories[1], "multi/3"), FileMode(true, false))
+			readFile(pathJoin(directories[0], "multi/1")),
+			readFile(pathJoin(directories[1], "multi/1")),
+			readFile(pathJoin(directories[0], "multi/2")),
+			readFile(pathJoin(directories[1], "multi/2")),
+			readFile(pathJoin(directories[0], "multi/3")),
+			readFile(pathJoin(directories[1], "multi/3"))
 		};
 		for (auto &f : rs)
 			f->read(data3.size());
@@ -228,13 +229,13 @@ void testArchives()
 
 	{
 		CAGE_TESTCASE("file seek & tell");
-		string path = pathJoin(directories[1], "multi/1");
-		PathTypeFlags type = pathType(path);
-		CAGE_TEST((type & PathTypeFlags::File) == PathTypeFlags::File);
-		CAGE_TEST((type & PathTypeFlags::Directory) == PathTypeFlags::None);
-		CAGE_TEST((type & PathTypeFlags::InsideArchive) == PathTypeFlags::InsideArchive);
-		CAGE_TEST((type & PathTypeFlags::Archive) == PathTypeFlags::None);
-		Holder<File> f = newFile(path, FileMode(true, false));
+		const string path = pathJoin(directories[1], "multi/1");
+		const PathTypeFlags type = pathType(path);
+		CAGE_TEST(any(type & PathTypeFlags::File));
+		CAGE_TEST(none(type & PathTypeFlags::Directory));
+		CAGE_TEST(any(type & PathTypeFlags::InsideArchive));
+		CAGE_TEST(none(type & PathTypeFlags::Archive));
+		Holder<File> f = readFile(path);
 		f->seek(data1.size() + data2.size());
 		MemoryBuffer b3 = f->read(data3.size());
 		CAGE_TEST(f->tell() == f->size());
@@ -253,13 +254,53 @@ void testArchives()
 	}
 
 	{
+		CAGE_TESTCASE("read-write file");
+		// first create the file
+		for (const string &dir : directories)
+		{
+			Holder<File> f = writeFile(pathJoin(dir, "rw.bin"));
+			f->write(data1);
+			f->close();
+		}
+		// sanity check
+		testListDirectory("");
+		testReadFile("rw.bin");
+		// first modification of the file
+		for (const string &dir : directories)
+		{
+			Holder<File> f = newFile(pathJoin(dir, "rw.bin"), FileMode(true, true));
+			CAGE_TEST(f->size() == data1.size());
+			f->readAll();
+			CAGE_TEST(f->tell() == data1.size());
+			f->write(data2);
+			CAGE_TEST(f->size() == data1.size() + data2.size());
+			CAGE_TEST(f->tell() == data1.size() + data2.size());
+			f->close();
+		}
+		// check
+		testListDirectory("");
+		testReadFile("rw.bin");
+		// second modification of the file (including seek)
+		for (const string &dir : directories)
+		{
+			Holder<File> f = newFile(pathJoin(dir, "rw.bin"), FileMode(true, true));
+			f->seek(data2.size());
+			f->write(data3);
+			f->close();
+		}
+		// check
+		testListDirectory("");
+		testReadFile("rw.bin");
+	}
+
+	{
 		CAGE_TESTCASE("remove a file");
 		{
 			Holder<DirectoryList> list = newDirectoryList(directories[1]); // keep the archive open
 			for (const string &dir : directories)
 				pathRemove(pathJoin(dir, "multi/2"));
 			testListRecursive(); // listing must work even while the changes to the archive are not yet written out
-			CAGE_TEST((pathType(pathJoin(directories[1], "multi/2")) & PathTypeFlags::NotFound) == PathTypeFlags::NotFound);
+			CAGE_TEST(any(pathType(pathJoin(directories[1], "multi/2")) & PathTypeFlags::NotFound));
 		}
 		testListRecursive(); // and after they are written too
 	}
@@ -277,7 +318,7 @@ void testArchives()
 			for (const string &dir : directories)
 			{
 				{
-					Holder<File> f = newFile("testdir/tmp", FileMode(false, true));
+					Holder<File> f = writeFile("testdir/tmp");
 					f->write(data2);
 				}
 				pathMove("testdir/tmp", pathJoin(dir, "moved"));
@@ -295,5 +336,4 @@ void testArchives()
 
 	// todo lastChange
 	// todo concurrent reading/writing from/to multiple (different) files
-	// todo archives inside archives
 }

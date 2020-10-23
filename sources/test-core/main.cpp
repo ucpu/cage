@@ -29,6 +29,7 @@ void testConcurrentQueue();
 void testLruCache();
 void testFiles();
 void testArchives();
+void testArchivesRecursion();
 void testLineReader();
 void testRandom();
 void testConfigIni();
@@ -88,6 +89,7 @@ int main()
 	testLruCache();
 	testFiles();
 	testArchives();
+	//testArchivesRecursion();
 	testLineReader();
 	testRandom();
 	testConfigIni();
