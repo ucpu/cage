@@ -6,7 +6,7 @@ namespace cage
 {
 	namespace detail
 	{
-		bool readLine(string &output, const char *&buffer, uintPtr &size, bool lfOnly)
+		bool readLine(string &output, const char *&buffer, uintPtr &size, bool streaming)
 		{
 			if (size == 0)
 				return false;
@@ -15,7 +15,7 @@ namespace cage
 			while (len < size && buffer[len] != '\n')
 				len++;
 
-			if (lfOnly && len == size)
+			if (streaming && len == size)
 				return false;
 
 			if (len > std::numeric_limits<uint32>::max())
@@ -35,11 +35,11 @@ namespace cage
 			return true;
 		}
 
-		bool readLine(string &output, PointerRange<const char> &buffer, bool lfOnly)
+		bool readLine(string &output, PointerRange<const char> &buffer, bool streaming)
 		{
 			const char *b = buffer.begin();
 			uintPtr s = buffer.size();
-			bool res = readLine(output, b, s, lfOnly);
+			bool res = readLine(output, b, s, streaming);
 			buffer = { b, b + s };
 			return res;
 		}

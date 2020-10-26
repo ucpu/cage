@@ -10,10 +10,10 @@ namespace cage
 
 	namespace detail
 	{
-		// lfOnly == true -> returns false when no new line is found
-		// lfOnly == false -> the rest of the buffer is treated as last line
-		// set lfOnly to true when you may expand the buffer with more data sometime later
-		CAGE_CORE_API bool readLine(string &output, PointerRange<const char> &buffer, bool lfOnly);
+		// streaming == true -> returns false when no new line is found
+		// streaming == false -> the rest of the buffer is treated as last line
+		// set streaming to true if you may expand the buffer with more data later
+		CAGE_CORE_API bool readLine(string &output, PointerRange<const char> &buffer, bool streaming);
 	}
 
 	class CAGE_CORE_API LineReader : private Immovable

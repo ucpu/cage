@@ -5,8 +5,26 @@
 #include <cstdlib>
 #include <set>
 
-#define FILE_BLOCKS (10)
-#define BLOCK_SIZE (8*1024*1024)
+namespace
+{
+	constexpr uintPtr FILE_BLOCKS = 10;
+	constexpr uintPtr BLOCK_SIZE = 8 * 1024 * 1024;
+
+	void readInMemoryFile(Holder<File> &f)
+	{
+		CAGE_TEST(f->size() == BLOCK_SIZE);
+		CAGE_TEST(f->tell() == 0);
+		MemoryBuffer b = f->read(100);
+		CAGE_TEST(f->tell() == 100);
+		CAGE_TEST(b.size() == 100);
+		CAGE_TEST(b.data()[0] == 'A');
+		CAGE_TEST(b.data()[1] == 'B');
+		CAGE_TEST(b.data()[26] == 'A');
+		f->seek(BLOCK_SIZE - 10);
+		CAGE_TEST(f->tell() == BLOCK_SIZE - 10);
+		CAGE_TEST_THROWN(f->read(11));
+	}
+}
 
 void testFiles()
 {
@@ -179,6 +197,25 @@ void testFiles()
 		{
 			CAGE_TESTCASE("move non-existing file");
 			CAGE_TEST_THROWN(pathMove("testdir/moved/non-existing-file", "testdir/moved/1"));
+		}
+	}
+
+	{
+		CAGE_TESTCASE("in-memory files");
+		{
+			Holder<File> f = newFileBuffer(&data, FileMode(true, false));
+			readInMemoryFile(f);
+		}
+		{
+			Holder<File> f = newFileBuffer(PointerRange<char>(data));
+			readInMemoryFile(f);
+		}
+		{
+			Holder<File> f = newFileBuffer();
+			f->write(data);
+			CAGE_TEST(f->tell() == BLOCK_SIZE);
+			f->seek(0);
+			readInMemoryFile(f);
 		}
 	}
 }

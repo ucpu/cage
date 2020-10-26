@@ -433,9 +433,9 @@ namespace
 				listOut = newDirectoryList(configPathOutput); // reopen the archive
 				movedSize = 0;
 			}
-			string f = pathJoin(configPathIntermediate, listIn->name());
-			string t = pathJoin(configPathOutput, listIn->name());
-			movedSize += newFile(f, FileMode(true, false))->size();
+			const string f = pathJoin(configPathIntermediate, listIn->name());
+			const string t = pathJoin(configPathOutput, listIn->name());
+			movedSize += readFile(f)->size();
 			pathMove(f, t);
 			listIn->next();
 		}
