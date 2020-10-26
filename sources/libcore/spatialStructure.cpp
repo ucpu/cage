@@ -1,8 +1,8 @@
 #include <cage-core/geometry.h>
 #include <cage-core/memory.h>
 #include <cage-core/spatialStructure.h>
-#include <cage-core/unordered_map.h>
 
+#include <robin_hood.h>
 #include <xsimd/xsimd.hpp>
 
 #include <vector>
@@ -164,7 +164,7 @@ namespace cage
 		public:
 			MemoryArenaGrowing<MemoryAllocatorPolicyPool<templates::PoolAllocatorAtomSize<ItemUnion>::result>, MemoryConcurrentPolicyNone> itemsPool;
 			MemoryArena itemsArena;
-			cage::unordered_map<uint32, Holder<ItemBase>> itemsTable;
+			robin_hood::unordered_map<uint32, Holder<ItemBase>> itemsTable;
 			std::atomic<bool> dirty {false};
 			std::vector<Node, MemoryArenaStd<Node>> nodes;
 			std::vector<ItemBase*> indices;

@@ -3,8 +3,9 @@
 #include <cage-core/collisionStructure.h>
 #include <cage-core/collider.h>
 #include <cage-core/spatialStructure.h>
-#include <cage-core/unordered_map.h>
 #include <cage-core/pointerRangeHolder.h>
+
+#include <robin_hood.h>
 
 #include <algorithm>
 
@@ -24,7 +25,7 @@ namespace cage
 		class CollisionDataImpl : public CollisionStructure
 		{
 		public:
-			cage::unordered_map<uint32, Item> allItems;
+			robin_hood::unordered_map<uint32, Item> allItems;
 			Holder<SpatialStructure> spatial;
 
 			CollisionDataImpl(const CollisionStructureCreateConfig &config)

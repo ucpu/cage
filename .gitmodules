@@ -73,3 +73,12 @@
 [submodule "externals/cubeb/cubeb"]
 	path = externals/cubeb/cubeb
 	url = https://github.com/kinetiknz/cubeb.git
+[submodule "externals/plf/plf_colony"]
+	path = externals/plf/plf_colony
+	url = https://github.com/mattreecebentley/plf_colony.git
+[submodule "externals/plf/plf_list"]
+	path = externals/plf/plf_list
+	url = https://github.com/mattreecebentley/plf_list.git
+[submodule "externals/plf/plf_stack"]
+	path = externals/plf/plf_stack
+	url = https://github.com/mattreecebentley/plf_stack.git

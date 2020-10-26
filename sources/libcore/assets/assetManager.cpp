@@ -10,10 +10,10 @@
 #include <cage-core/serialization.h>
 #include <cage-core/concurrentQueue.h>
 #include <cage-core/assetManager.h>
-#include <cage-core/unordered_map.h>
 #include <cage-core/debug.h>
 #include <cage-core/string.h>
 
+//#include <robin_hood.h>
 #include <optick.h>
 
 #include <unordered_map>
@@ -168,6 +168,7 @@ namespace cage
 
 			Holder<RwMutex> publicMutex; // protects publicIndex
 			Holder<Mutex> privateMutex; // protects privateIndex, waitingIndex, generateName, assetGuid
+			// for some reason, these do not work with robin hood unordered_map :(
 			std::unordered_map<uint32, Holder<Asset>> publicIndex;
 			std::unordered_map<uint32, Collection> privateIndex;
 			std::unordered_map<uint32, std::vector<Holder<Waiting>>> waitingIndex;

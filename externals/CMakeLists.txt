@@ -59,6 +59,7 @@ add_subdirectory(stb)
 add_subdirectory(xatlas)
 add_subdirectory(pmp)
 add_subdirectory(dualmc)
+add_subdirectory(plf)
 
 add_dependencies(png_static zlib)
 add_dependencies(jpeg-static zlib)
@@ -124,6 +125,7 @@ external_target_properties(stb)
 external_target_properties(xatlas)
 external_target_properties(pmp)
 external_target_properties(dualmc)
+external_target_properties(plf)
 
 # final overrides
 set_target_properties(genfiles PROPERTIES FOLDER cage/externals)

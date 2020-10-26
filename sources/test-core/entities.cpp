@@ -346,7 +346,7 @@ void testEntities()
 						uint32 n = e->name();
 						for (uint32 m = n % totalComponents, me = min(m + usedComponents, totalComponents); m < me; m++)
 						{
-							vec3 &a = e->value <vec3>(components[m]);
+							vec3 &a = e->value<vec3>(components[m]);
 							if (w)
 								a[0] += a[1] += a[2] += 1;
 						}
