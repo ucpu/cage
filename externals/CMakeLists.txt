@@ -35,7 +35,8 @@ endif()
 
 add_subdirectory(zlib-ng)
 add_subdirectory(libpng)
-add_subdirectory(jpeg)
+add_subdirectory(jpeg) # jpeg must go after libpng to ensure that asm compiler is detected and before zstd to ensure that no uninstall target is yet defined
+add_subdirectory(zstd)
 add_subdirectory(libtiff)
 add_subdirectory(freetype)
 add_subdirectory(assimp)
@@ -98,6 +99,7 @@ function(external_target_properties target)
 endfunction()
 
 external_target_properties(zlib)
+external_target_properties(libzstd_static)
 external_target_properties(png_static)
 external_target_properties(jpeg-static)
 external_target_properties(tiff)

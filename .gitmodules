@@ -82,3 +82,6 @@
 [submodule "externals/plf/plf_stack"]
 	path = externals/plf/plf_stack
 	url = https://github.com/mattreecebentley/plf_stack.git
+[submodule "externals/zstd/zstd"]
+	path = externals/zstd/zstd
+	url = https://github.com/facebook/zstd.git
