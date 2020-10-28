@@ -61,6 +61,7 @@ add_subdirectory(xatlas)
 add_subdirectory(pmp)
 add_subdirectory(dualmc)
 add_subdirectory(plf)
+add_subdirectory(tinyexr)
 
 add_dependencies(png_static zlib)
 add_dependencies(jpeg-static zlib)

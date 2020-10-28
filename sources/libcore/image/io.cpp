@@ -11,12 +11,14 @@ namespace cage
 	void tgaDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
 	void psdDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
 	void ddsDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
+	void exrDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
 	MemoryBuffer pngEncode(ImageImpl *impl);
 	MemoryBuffer jpegEncode(ImageImpl *impl);
 	MemoryBuffer tiffEncode(ImageImpl *impl);
 	MemoryBuffer tgaEncode(ImageImpl *impl);
 	MemoryBuffer psdEncode(ImageImpl *impl);
 	MemoryBuffer ddsEncode(ImageImpl *impl);
+	MemoryBuffer exrEncode(ImageImpl *impl);
 
 	void Image::importBuffer(PointerRange<const char> buffer, uint32 channels, ImageFormatEnum format)
 	{
@@ -26,12 +28,13 @@ namespace cage
 			impl->clear();
 			if (buffer.size() < 32)
 				CAGE_THROW_ERROR(Exception, "insufficient data to determine image format");
-			static constexpr uint8 pngSignature[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
-			static constexpr uint8 jpegSignature[3] = { 0xFF, 0xD8, 0xFF };
-			static constexpr uint8 tiffSignature[4] = { 0x49, 0x49, 0x2A, 0x00 };
-			static constexpr uint8 tgaSignature[18] = "TRUEVISION-XFILE.";
-			static constexpr uint8 psdSignature[4] = { '8', 'B', 'P', 'S' };
-			static constexpr uint8 ddsSignature[4] = { 'D', 'D', 'S', ' ' };
+			constexpr const uint8 pngSignature[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
+			constexpr const uint8 jpegSignature[3] = { 0xFF, 0xD8, 0xFF };
+			constexpr const uint8 tiffSignature[4] = { 0x49, 0x49, 0x2A, 0x00 };
+			constexpr const uint8 tgaSignature[18] = "TRUEVISION-XFILE.";
+			constexpr const uint8 psdSignature[4] = { '8', 'B', 'P', 'S' };
+			constexpr const uint8 ddsSignature[4] = { 'D', 'D', 'S', ' ' };
+			constexpr const uint8 exrSignature[4] = { 0x76, 0x2F, 0x31, 0x01 };
 			if (detail::memcmp(buffer.data(), pngSignature, sizeof(pngSignature)) == 0)
 				pngDecode(buffer, impl);
 			else if (detail::memcmp(buffer.data(), jpegSignature, sizeof(jpegSignature)) == 0)
@@ -45,6 +48,12 @@ namespace cage
 				psdDecode(buffer, impl);
 			else if (detail::memcmp(buffer.data(), ddsSignature, sizeof(ddsSignature)) == 0)
 				ddsDecode(buffer, impl);
+			else if (detail::memcmp(buffer.data(), exrSignature, sizeof(exrSignature)) == 0)
+			{
+				if (format != ImageFormatEnum::Default && format != ImageFormatEnum::Float)
+					CAGE_THROW_ERROR(Exception, "exr image must be loaded with float format");
+				exrDecode(buffer, impl);
+			}
 			else
 				CAGE_THROW_ERROR(Exception, "image data do not match any known signature");
 			if (channels != m)
@@ -70,7 +79,7 @@ namespace cage
 	MemoryBuffer Image::exportBuffer(const string &format) const
 	{
 		CAGE_ASSERT(channels() > 0);
-		string ext = toLower(pathExtractExtension(format));
+		const string ext = toLower(pathExtractExtension(format));
 		if (ext == ".png")
 			return pngEncode((ImageImpl *)this);
 		if (ext == ".jpeg" || ext == ".jpg")
@@ -83,6 +92,8 @@ namespace cage
 			return psdEncode((ImageImpl *)this);
 		if (ext == ".dds")
 			return ddsEncode((ImageImpl *)this);
+		if (ext == ".exr")
+			return exrEncode((ImageImpl *)this);
 		CAGE_THROW_ERROR(Exception, "unrecognized file extension for image encoding");
 	}
 

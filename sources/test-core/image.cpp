@@ -282,7 +282,7 @@ void testImage()
 				if (ch == 2 && fmt == ".tga")
 					continue; // unsupported
 				CAGE_TESTCASE(fmt);
-				string name = stringizer() + "images/channels/" + ch + fmt;
+				const string name = stringizer() + "images/channels/" + ch + fmt;
 				img->exportFile(name);
 				Holder<Image> tg = newImage();
 				tg->importFile(name);
@@ -344,6 +344,23 @@ void testImage()
 		CAGE_TEST(img->channels() == 6);
 		CAGE_TEST(img->format() == ImageFormatEnum::U8);
 		img->exportFile("images/formats/6_channels_2.psd");
+	}
+
+	{
+		CAGE_TESTCASE("circle exr");
+		Holder<Image> img = newImage();
+		img->initialize(400, 300, 4, ImageFormatEnum::Float);
+		drawCircle(+img);
+		img->exportFile("images/formats/circleFloat.exr");
+		CAGE_TEST(img->width() == 400);
+		img = newImage();
+		CAGE_TEST(img->width() == 0);
+		img->importFile("images/formats/circleFloat.exr");
+		CAGE_TEST(img->channels() == 4);
+		CAGE_TEST(img->format() == ImageFormatEnum::Float);
+		CAGE_TEST(img->width() == 400);
+		CAGE_TEST(img->height() == 300);
+		img->exportFile("images/formats/circleFloat_2.exr");
 	}
 
 	{

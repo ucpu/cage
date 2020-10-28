@@ -85,3 +85,6 @@
 [submodule "externals/zstd/zstd"]
 	path = externals/zstd/zstd
 	url = https://github.com/facebook/zstd.git
+[submodule "externals/tinyexr/tinyexr"]
+	path = externals/tinyexr/tinyexr
+	url = https://github.com/syoyo/tinyexr.git
