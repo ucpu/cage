@@ -87,7 +87,7 @@ namespace cage
 			CAGE_THROW_ERROR(NotImplemented, "unsupported compression method (zip) in psd decoding");
 		}
 
-		void encodeRaw(Serializer &ser, ImageImpl *impl)
+		void encodeRaw(Serializer &ser, const ImageImpl *impl)
 		{
 			switch (impl->format)
 			{
@@ -238,7 +238,7 @@ namespace cage
 		// todo deduce it from the file
 	}
 
-	MemoryBuffer psdEncode(ImageImpl *impl)
+	MemoryBuffer psdEncode(const ImageImpl *impl)
 	{
 		if (impl->channels > 56)
 			CAGE_THROW_ERROR(Exception, "unsupported image channels count for psd encoding");

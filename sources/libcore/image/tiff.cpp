@@ -91,7 +91,7 @@ namespace cage
 		}
 	}
 
-	MemoryBuffer tiffEncode(ImageImpl *impl)
+	MemoryBuffer tiffEncode(const ImageImpl *impl)
 	{
 		TIFF *t = nullptr;
 		try
@@ -139,8 +139,8 @@ namespace cage
 			CAGE_ASSERT(stride == impl->width * impl->channels * formatBytes(impl->format));
 			for (uint32 row = 0; row < impl->height; row++)
 			{
-				char *src = impl->mem.data() + row * stride;
-				if (TIFFWriteScanline(t, src, row) < 0)
+				const char *src = impl->mem.data() + row * stride;
+				if (TIFFWriteScanline(t, (void *)src, row) < 0)
 					CAGE_THROW_ERROR(Exception, "failed scanline writing in tiff encoding");
 			}
 			TIFFClose(t);

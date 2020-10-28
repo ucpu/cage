@@ -34,6 +34,7 @@ function(cage_copy_redist)
 	cage_copy_redist_license("${cage_copy_redist_current_list_dir}/../externals/dualmc/dualmc/LICENSE" "dualmc" COPYONLY)
 	cage_copy_redist_license("${cage_copy_redist_current_list_dir}/../externals/plf/plf_colony/LICENSE.md" "plf" COPYONLY)
 	cage_copy_redist_license("${cage_copy_redist_current_list_dir}/../externals/zstd/zstd/LICENSE" "zstd" COPYONLY)
+	cage_copy_redist_license("${cage_copy_redist_current_list_dir}/../externals/tinyexr/tinyexr/README.md" "tinyexr" COPYONLY)
 	cage_copy_redist_license("${cage_copy_redist_current_list_dir}/../LICENSE" "cage" COPYONLY)
 endfunction(cage_copy_redist)
 

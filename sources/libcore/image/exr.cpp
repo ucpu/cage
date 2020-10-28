@@ -82,9 +82,10 @@ namespace cage
 		CAGE_ASSERT((char *)out_rgba == impl->mem.data() + impl->mem.size());
 
 		impl->colorConfig = defaultConfig(impl->channels);
+		impl->colorConfig.gammaSpace = exr_header.channels[exr_header.num_channels - 1].p_linear ? GammaSpaceEnum::Linear : GammaSpaceEnum::Gamma;
 	}
 
-	MemoryBuffer exrEncode(ImageImpl *impl)
+	MemoryBuffer exrEncode(const ImageImpl *impl)
 	{
 		if (impl->format != ImageFormatEnum::Float)
 			CAGE_THROW_ERROR(Exception, "saving exr image requires float format");
@@ -109,17 +110,24 @@ namespace cage
 		case 2:
 			channelInfos[0].name[0] = 'A';
 			channelInfos[1].name[0] = 'R';
+			channelInfos[1].p_linear = impl->colorConfig.gammaSpace == GammaSpaceEnum::Linear;
 			break;
 		case 3:
 			channelInfos[0].name[0] = 'B';
 			channelInfos[1].name[0] = 'G';
 			channelInfos[2].name[0] = 'R';
+			channelInfos[0].p_linear = impl->colorConfig.gammaSpace == GammaSpaceEnum::Linear;
+			channelInfos[1].p_linear = impl->colorConfig.gammaSpace == GammaSpaceEnum::Linear;
+			channelInfos[2].p_linear = impl->colorConfig.gammaSpace == GammaSpaceEnum::Linear;
 			break;
 		case 4:
 			channelInfos[0].name[0] = 'A';
 			channelInfos[1].name[0] = 'B';
 			channelInfos[2].name[0] = 'G';
 			channelInfos[3].name[0] = 'R';
+			channelInfos[1].p_linear = impl->colorConfig.gammaSpace == GammaSpaceEnum::Linear;
+			channelInfos[2].p_linear = impl->colorConfig.gammaSpace == GammaSpaceEnum::Linear;
+			channelInfos[3].p_linear = impl->colorConfig.gammaSpace == GammaSpaceEnum::Linear;
 			break;
 		}
 		exr_header.channels = channelInfos.data();

@@ -140,7 +140,7 @@ namespace cage
 		impl->colorConfig = defaultConfig(impl->channels);
 	}
 
-	MemoryBuffer jpegEncode(ImageImpl *impl)
+	MemoryBuffer jpegEncode(const ImageImpl *impl)
 	{
 		if (impl->channels != 1 && impl->channels != 3)
 			CAGE_THROW_ERROR(Exception, "unsupported channels count for jpeg encoding");

@@ -241,7 +241,7 @@ namespace cage
 		impl->colorConfig = defaultConfig(impl->channels);
 	}
 
-	MemoryBuffer tgaEncode(ImageImpl *impl)
+	MemoryBuffer tgaEncode(const ImageImpl *impl)
 	{
 		if (impl->format != ImageFormatEnum::U8)
 			CAGE_THROW_ERROR(Exception, "unsupported image format for tga encoding");

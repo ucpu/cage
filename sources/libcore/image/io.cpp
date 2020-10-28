@@ -12,13 +12,13 @@ namespace cage
 	void psdDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
 	void ddsDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
 	void exrDecode(PointerRange<const char> inBuffer, ImageImpl *impl);
-	MemoryBuffer pngEncode(ImageImpl *impl);
-	MemoryBuffer jpegEncode(ImageImpl *impl);
-	MemoryBuffer tiffEncode(ImageImpl *impl);
-	MemoryBuffer tgaEncode(ImageImpl *impl);
-	MemoryBuffer psdEncode(ImageImpl *impl);
-	MemoryBuffer ddsEncode(ImageImpl *impl);
-	MemoryBuffer exrEncode(ImageImpl *impl);
+	MemoryBuffer pngEncode(const ImageImpl *impl);
+	MemoryBuffer jpegEncode(const ImageImpl *impl);
+	MemoryBuffer tiffEncode(const ImageImpl *impl);
+	MemoryBuffer tgaEncode(const ImageImpl *impl);
+	MemoryBuffer psdEncode(const ImageImpl *impl);
+	MemoryBuffer ddsEncode(const ImageImpl *impl);
+	MemoryBuffer exrEncode(const ImageImpl *impl);
 
 	void Image::importBuffer(PointerRange<const char> buffer, uint32 channels, ImageFormatEnum format)
 	{
@@ -81,19 +81,19 @@ namespace cage
 		CAGE_ASSERT(channels() > 0);
 		const string ext = toLower(pathExtractExtension(format));
 		if (ext == ".png")
-			return pngEncode((ImageImpl *)this);
+			return pngEncode((const ImageImpl *)this);
 		if (ext == ".jpeg" || ext == ".jpg")
-			return jpegEncode((ImageImpl *)this);
+			return jpegEncode((const ImageImpl *)this);
 		if (ext == ".tiff" || ext == ".tif")
-			return tiffEncode((ImageImpl *)this);
+			return tiffEncode((const ImageImpl *)this);
 		if (ext == ".tga")
-			return tgaEncode((ImageImpl *)this);
+			return tgaEncode((const ImageImpl *)this);
 		if (ext == ".psd" || ext == ".psb")
-			return psdEncode((ImageImpl *)this);
+			return psdEncode((const ImageImpl *)this);
 		if (ext == ".dds")
-			return ddsEncode((ImageImpl *)this);
+			return ddsEncode((const ImageImpl *)this);
 		if (ext == ".exr")
-			return exrEncode((ImageImpl *)this);
+			return exrEncode((const ImageImpl *)this);
 		CAGE_THROW_ERROR(Exception, "unrecognized file extension for image encoding");
 	}
 

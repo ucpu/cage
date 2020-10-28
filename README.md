@@ -93,7 +93,7 @@ It started as a hobby/learning project, but has become fairly feature rich and m
 - Asset processor - converts assets from wide variety of interchange formats to Cage specific formats
 - Asset database - manages automatic asset processing
 - Asset analyze - automatically generates basic configuration for most files
-- Image channels - lets you split or join multiple channels to/from single image
+- Image channels - split or join multiple channels to/from single image
 - Image convert - easy mass image format conversion
 - Image atlas - slices a single image atlas into a sequence of individual images
 
