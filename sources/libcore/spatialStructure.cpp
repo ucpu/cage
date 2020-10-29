@@ -1,5 +1,5 @@
 #include <cage-core/geometry.h>
-#include <cage-core/memory.h>
+#include <cage-core/memoryAllocators.h>
 #include <cage-core/spatialStructure.h>
 
 #include <robin_hood.h>
@@ -86,7 +86,7 @@ namespace cage
 			CAGE_ASSERT(uintPtr(&b) % alignof(FastBox) == 0);
 			if (a.empty() || b.empty())
 				return false;
-			static const xsimd::batch<float, 4> mask = { 1,1,1,0 };
+			const xsimd::batch<float, 4> mask = { 1,1,1,0 };
 			if (xsimd::any(a.high.v4 * mask < b.low.v4 * mask))
 				return false;
 			if (xsimd::any(a.low.v4 * mask > b.high.v4 * mask))

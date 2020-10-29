@@ -1,5 +1,5 @@
 #include <cage-core/image.h>
-#include <cage-core/memory.h>
+#include <cage-core/memoryUtils.h>
 
 #include <stb_image_resize.h>
 

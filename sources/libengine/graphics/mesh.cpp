@@ -1,7 +1,7 @@
 #include <cage-core/geometry.h>
 #include <cage-core/polyhedron.h>
 #include <cage-core/memoryBuffer.h>
-#include <cage-core/memory.h> // addToAlign
+#include <cage-core/memoryUtils.h> // addToAlign
 
 #include <cage-engine/shaderConventions.h>
 #include <cage-engine/opengl.h>

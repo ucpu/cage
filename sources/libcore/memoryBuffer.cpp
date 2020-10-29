@@ -1,4 +1,4 @@
-#include <cage-core/memory.h>
+#include <cage-core/memoryUtils.h>
 #include <cage-core/memoryBuffer.h>
 
 namespace cage
@@ -127,11 +127,11 @@ namespace cage
 
 	namespace detail
 	{
-		MemoryBuffer compress(PointerRange<const char> input)
+		MemoryBuffer compress(PointerRange<const char> input, sint32 preference)
 		{
 			MemoryBuffer result(compressionBound(input.size()));
 			PointerRange<char> output = result;
-			compress(input, output);
+			compress(input, output, preference);
 			result.resize(output.size());
 			return result;
 		}

@@ -320,7 +320,7 @@ namespace cage
 				{
 					ass->ref = Holder<void>(ass->assetHolder ? ass->assetHolder.get() : (void*)1, ass.get(), Delegate<void(void *)>().bind<AssetManagerImpl, &AssetManagerImpl::dereference>(this)).makeShareable();
 					{
-						ScopeLock<RwMutex> lock(publicMutex, WriteLock());
+						ScopeLock<RwMutex> lock(publicMutex, WriteLockTag());
 						bool found = false;
 						for (const auto &v : c.versions)
 						{
@@ -535,7 +535,7 @@ namespace cage
 				CAGE_ASSERT(scheme < schemes.size());
 				CAGE_ASSERT(schemes[scheme].typeId == typeId);
 				CAGE_ASSERT(schemes[scheme].load);
-				ScopeLock<RwMutex> lock(publicMutex, ReadLock());
+				ScopeLock<RwMutex> lock(publicMutex, ReadLockTag());
 				auto it = publicIndex.find(assetName);
 				if (it == publicIndex.end())
 					return {}; // not found
@@ -721,7 +721,7 @@ namespace cage
 			{
 				Holder<Waiting> w = detail::systemArena().createHolder<Waiting>(&impl->workingCounter).makeShareable();
 				w->asset = asset.share();
-				ScopeLock<RwMutex> lock(impl->publicMutex, ReadLock());
+				ScopeLock<RwMutex> lock(impl->publicMutex, ReadLockTag());
 				for (uint32 d : asset->dependencies)
 				{
 					if (impl->publicIndex.count(d) == 0)
@@ -816,7 +816,7 @@ namespace cage
 				if (c.references-- == 1)
 				{
 					{
-						ScopeLock<RwMutex> lock(impl->publicMutex, WriteLock());
+						ScopeLock<RwMutex> lock(impl->publicMutex, WriteLockTag());
 						impl->unpublish(realName);
 					}
 					for (auto &a : c.versions)

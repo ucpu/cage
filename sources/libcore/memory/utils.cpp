@@ -1,4 +1,4 @@
-#include <cage-core/memory.h>
+#include <cage-core/memoryUtils.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
 #include "../incWin.h"
@@ -108,9 +108,9 @@ namespace cage
 			return r + r / 100 + 100000; // additional capacity allows faster compression
 		}
 
-		void compress(PointerRange<const char> input, PointerRange<char> &output)
+		void compress(PointerRange<const char> input, PointerRange<char> &output, sint32 preference)
 		{
-			const std::size_t r = ZSTD_compress(output.data(), output.size(), input.data(), input.size(), ZSTD_maxCLevel());
+			const std::size_t r = ZSTD_compress(output.data(), output.size(), input.data(), input.size(), ZSTD_maxCLevel() * preference / 100);
 			if (ZSTD_isError(r))
 				CAGE_THROW_ERROR(Exception, ZSTD_getErrorName(r));
 			CAGE_ASSERT(r <= output.size());

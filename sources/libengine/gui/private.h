@@ -1,7 +1,7 @@
 #ifndef guard_private_h_BEDE53C63BB74919B9BD171B995FD1A1
 #define guard_private_h_BEDE53C63BB74919B9BD171B995FD1A1
 
-#include <cage-core/memory.h>
+#include <cage-core/memoryAllocators.h>
 #include <cage-core/entities.h>
 #include <cage-core/macros.h>
 

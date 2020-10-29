@@ -66,7 +66,9 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_CORE_API MemoryBuffer compress(PointerRange<const char> input);
+		// preference = 100 -> best compression ratio, but very slow
+		// preference = 0 -> full compression speed, but worse compression ratio
+		CAGE_CORE_API MemoryBuffer compress(PointerRange<const char> input, sint32 preference = 100);
 		CAGE_CORE_API MemoryBuffer decompress(PointerRange<const char> input, uintPtr outputSize);
 	}
 }

@@ -8,7 +8,7 @@
 #include <plf_colony.h>
 
 #include <vector>
-#include <set>
+#include <algorithm>
 
 namespace cage
 {
@@ -29,10 +29,47 @@ namespace cage
 			GroupImpl(EntityManagerImpl *manager);
 		};
 
+		class GroupsSet
+		{
+		public:
+			void insert(EntityGroup *grp)
+			{
+				auto it = std::lower_bound(data.begin(), data.end(), grp);
+				if (it != data.end() && *it == grp)
+					return;
+				data.insert(it, grp);
+			}
+
+			void erase(EntityGroup *grp)
+			{
+				auto it = std::lower_bound(data.begin(), data.end(), grp);
+				if (it != data.end() && *it == grp)
+					data.erase(it);
+			}
+
+			std::size_t count(EntityGroup *grp) const
+			{
+				return std::binary_search(data.begin(), data.end(), grp);
+			}
+
+			bool empty() const
+			{
+				return data.empty();
+			}
+
+			auto begin() const
+			{
+				return data.begin();
+			}
+
+		private:
+			std::vector<EntityGroup *> data;
+		};
+
 		class EntityImpl : public Entity
 		{
 		public:
-			std::set<EntityGroup *> groups;
+			GroupsSet groups;
 			std::vector<void *> components;
 			EntityManagerImpl *const manager = nullptr;
 			const uint32 name = m;
@@ -399,7 +436,7 @@ namespace cage
 	{
 		const EntityImpl *impl = (const EntityImpl*)this;
 		CAGE_ASSERT(((GroupImpl*)group)->manager == impl->manager);
-		return impl->groups.find(const_cast<EntityGroup*>(group)) != impl->groups.end();
+		return impl->groups.count(const_cast<EntityGroup*>(group)) != 0;
 	}
 
 	void Entity::add(EntityComponent *component)
