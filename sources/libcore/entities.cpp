@@ -51,7 +51,7 @@ namespace cage
 			GroupImpl allEntities;
 			uint32 generateName = 0;
 
-#if defined(CAGE_SYSTEM_WINDOWS)
+#ifdef _MSC_VER
 #pragma warning (push)
 #pragma warning (disable: 4355) // disable warning that using this in initializer list is dangerous
 #endif
@@ -59,7 +59,7 @@ namespace cage
 			EntityManagerImpl(const EntityManagerCreateConfig &config) : allEntities(this)
 			{}
 
-#if defined(CAGE_SYSTEM_WINDOWS)
+#ifdef _MSC_VER
 #pragma warning (pop)
 #endif
 
@@ -410,9 +410,7 @@ namespace cage
 		ComponentImpl *ci = (ComponentImpl *)component;
 		if (impl->components.size() < ci->vectorIndex + 1)
 			impl->components.resize(ci->vectorIndex + 1);
-		void *c = detail::systemArena().allocate(ci->typeSize, ci->typeAlignment);
-		impl->components[ci->vectorIndex] = c;
-		detail::memcpy(c, ci->prototype, ci->typeSize);
+		impl->components[ci->vectorIndex] = ci->newVal();
 		if (ci->componentEntities)
 			ci->componentEntities->add(this);
 	}
@@ -425,7 +423,7 @@ namespace cage
 		ComponentImpl *ci = (ComponentImpl *)component;
 		if (ci->componentEntities)
 			ci->componentEntities->remove(this);
-		detail::systemArena().deallocate(impl->components[ci->vectorIndex]);
+		ci->values->desVal(impl->components[ci->vectorIndex]);
 		impl->components[ci->vectorIndex] = nullptr;
 	}
 
