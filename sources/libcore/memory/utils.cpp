@@ -1,4 +1,4 @@
-#include <cage-core/memory.h>
+#include <cage-core/memoryUtils.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
 #include "../incWin.h"
@@ -7,7 +7,7 @@
 #include <sys/mman.h>
 #endif
 
-#include <zlib.h>
+#include <zstd.h>
 
 #include <cstdlib>
 #include <atomic>
@@ -104,48 +104,26 @@ namespace cage
 	{
 		uintPtr compressionBound(uintPtr size)
 		{
-			return ::compressBound(numeric_cast<uLong>(size));
+			const std::size_t r = ZSTD_compressBound(size);
+			return r + r / 100 + 100000; // additional capacity allows faster compression
 		}
 
-		void compress(PointerRange<const char> input, PointerRange<char> &output)
+		void compress(PointerRange<const char> input, PointerRange<char> &output, sint32 preference)
 		{
-			uLongf s = numeric_cast<uLongf>(output.size());
-			constexpr int level = numeric_cast<int>(Z_BEST_COMPRESSION);
-			int res = ::compress2((Bytef*)output.data(), &s, (const Bytef*)input.data(), numeric_cast<uLong>(input.size()), level);
-			switch (res)
-			{
-			case Z_OK:
-				output = { output.data(), output.data() + s };
-				return;
-			case Z_MEM_ERROR: // some allocation failed
-				CAGE_THROW_ERROR(Exception, "compression failed with allocation error");
-			case Z_BUF_ERROR: // output buffer was too small
-				CAGE_THROW_ERROR(OutOfMemory, "output buffer for compression is too small", 0);
-			case Z_STREAM_ERROR:
-				CAGE_THROW_CRITICAL(Exception, "invalid compression level");
-			default:
-				CAGE_THROW_CRITICAL(Exception, "compression failed with unknown status");
-			}
+			const std::size_t r = ZSTD_compress(output.data(), output.size(), input.data(), input.size(), ZSTD_maxCLevel() * preference / 100);
+			if (ZSTD_isError(r))
+				CAGE_THROW_ERROR(Exception, ZSTD_getErrorName(r));
+			CAGE_ASSERT(r <= output.size());
+			output = PointerRange<char>(output.data(), output.data() + r);
 		}
 
 		void decompress(PointerRange<const char> input, PointerRange<char> &output)
 		{
-			uLongf s = numeric_cast<uLongf>(output.size());
-			int res = ::uncompress((Bytef*)output.data(), &s, (const Bytef*)input.data(), numeric_cast<uLong>(input.size()));
-			switch (res)
-			{
-			case Z_OK:
-				output = { output.data(), output.data() + s };
-				return;
-			case Z_MEM_ERROR: // some allocation failed
-				CAGE_THROW_ERROR(Exception, "decompression failed with allocation error");
-			case Z_BUF_ERROR: // output buffer was too small
-				CAGE_THROW_ERROR(OutOfMemory, "output buffer for decompression is too small", 0);
-			case Z_DATA_ERROR:
-				CAGE_THROW_ERROR(Exception, "input buffer for decompression is corrupted");
-			default:
-				CAGE_THROW_CRITICAL(Exception, "decompression failed with unknown status");
-			}
+			const std::size_t r = ZSTD_decompress(output.data(), output.size(), input.data(), input.size());
+			if (ZSTD_isError(r))
+				CAGE_THROW_ERROR(Exception, ZSTD_getErrorName(r));
+			CAGE_ASSERT(r <= output.size());
+			output = PointerRange<char>(output.data(), output.data() + r);
 		}
 
 		namespace

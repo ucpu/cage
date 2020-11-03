@@ -207,7 +207,8 @@ void testFiles()
 			readInMemoryFile(f);
 		}
 		{
-			Holder<File> f = newFileBuffer(PointerRange<char>(data));
+			const PointerRange<char> pr = PointerRange<char>(data); // store the range in variable instead of passing it directly - it would trigger an error in visual studio 2017 and crash at runtime
+			Holder<File> f = newFileBuffer(pr);
 			readInMemoryFile(f);
 		}
 		{

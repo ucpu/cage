@@ -1,4 +1,4 @@
-#include <cage-core/memory.h>
+#include <cage-core/memoryAllocators.h>
 
 #include "vorbisDecoder.h"
 #include "private.h"

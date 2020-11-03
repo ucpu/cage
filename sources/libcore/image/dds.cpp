@@ -47,7 +47,7 @@ namespace cage
 			CAGE_ASSERT(masterSer.available() == 0);
 		}
 
-		void compress(Serializer &ser, ImageImpl *impl)
+		void compress(Serializer &ser, const ImageImpl *impl)
 		{
 			const uint32 cols = impl->width / 4;
 			const uint32 rows = impl->height / 4;
@@ -146,7 +146,7 @@ namespace cage
 		impl->colorConfig = defaultConfig(impl->channels);
 	}
 
-	MemoryBuffer ddsEncode(ImageImpl *impl)
+	MemoryBuffer ddsEncode(const ImageImpl *impl)
 	{
 		if (impl->format != ImageFormatEnum::U8)
 			CAGE_THROW_ERROR(Exception, "unsupported image format for dds encoding");

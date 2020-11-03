@@ -26,7 +26,6 @@ void testEntities()
 		EntityGroup *movement = manager->defineGroup();
 
 		Entity *terrain = manager->createAnonymous();
-		(void)terrain;
 		Entity *player = manager->createAnonymous();
 		player->add(position);
 		player->add(velocity);
@@ -67,14 +66,14 @@ void testEntities()
 		struct Help
 		{
 			EntityComponent *c;
-			EventListener<bool(Entity*)> listener;
+			EventListener<void(Entity*)> listener;
 
 			Help(EntityComponent *c) : c(c)
 			{
 				listener.bind<Help, &Help::entityDestroyed>(this);
 			}
 
-			bool entityDestroyed(Entity *e)
+			void entityDestroyed(Entity *e)
 			{
 				uint32 cnt = c->group()->count();
 				if (cnt > 2)
@@ -83,7 +82,6 @@ void testEntities()
 					if (*ents != e)
 						(*ents)->destroy();
 				}
-				return false;
 			}
 		} help(manager->componentByIndex(1));
 
@@ -136,13 +134,13 @@ void testEntities()
 		CAGE_TESTCASE("randomized test");
 
 #ifdef CAGE_DEBUG
-		static const uint32 totalCycles = 30;
-		static const uint32 totalChanges = 50;
-		static const uint32 totalComponents = 5;
+		constexpr uint32 totalCycles = 30;
+		constexpr uint32 totalChanges = 50;
+		constexpr uint32 totalComponents = 5;
 #else
-		static const uint32 totalCycles = 100;
-		static const uint32 totalChanges = 500;
-		static const uint32 totalComponents = 15;
+		constexpr uint32 totalCycles = 100;
+		constexpr uint32 totalChanges = 500;
+		constexpr uint32 totalComponents = 15;
 #endif
 
 		Holder<EntityManager> manager = newEntityManager(EntityManagerCreateConfig());
@@ -159,7 +157,7 @@ void testEntities()
 			// changes
 			for (uint32 change = 0; change < totalChanges; change++)
 			{
-				switch (randomRange(0, 5))
+				switch (randomRange(0, 6))
 				{
 				case 0:
 				{ // remove random entity
@@ -218,6 +216,16 @@ void testEntities()
 						}
 					}
 				} break;
+				case 5:
+				{ // test components
+					if (reference.empty())
+						break;
+					referenceType::iterator it = reference.begin();
+					std::advance(it, randomRange((uint32)0, numeric_cast<uint32>(reference.size())));
+					Entity *e = manager->get(it->first);
+					for (uint32 i = 0; i < totalComponents; i++)
+						CAGE_TEST(!!reference[it->first].count(i) == e->has(manager->componentByIndex(i)));
+				} break;
 				}
 			}
 
@@ -261,19 +269,19 @@ void testEntities()
 		CAGE_TESTCASE("performance test");
 
 #ifdef CAGE_DEBUG
-		static const uint32 totalCycles = 100;
-		static const uint32 totalComponents = 10;
-		static const uint32 totalGroups = 10;
-		static const uint32 usedComponents = 3;
-		static const uint32 usedGroups = 3;
-		static const uint32 initialEntities = 1000;
+		constexpr uint32 totalCycles = 100;
+		constexpr uint32 totalComponents = 10;
+		constexpr uint32 totalGroups = 10;
+		constexpr uint32 usedComponents = 3;
+		constexpr uint32 usedGroups = 3;
+		constexpr uint32 initialEntities = 1000;
 #else
-		static const uint32 totalCycles = 500;
-		static const uint32 totalComponents = 25;
-		static const uint32 totalGroups = 25;
-		static const uint32 usedComponents = 15;
-		static const uint32 usedGroups = 15;
-		static const uint32 initialEntities = 5000;
+		constexpr uint32 totalCycles = 500;
+		constexpr uint32 totalComponents = 25;
+		constexpr uint32 totalGroups = 25;
+		constexpr uint32 usedComponents = 15;
+		constexpr uint32 usedGroups = 15;
+		constexpr uint32 initialEntities = 5000;
 #endif
 
 		Holder<EntityManager> manager = newEntityManager(EntityManagerCreateConfig());
@@ -346,7 +354,7 @@ void testEntities()
 						uint32 n = e->name();
 						for (uint32 m = n % totalComponents, me = min(m + usedComponents, totalComponents); m < me; m++)
 						{
-							vec3 &a = e->value <vec3>(components[m]);
+							vec3 &a = e->value<vec3>(components[m]);
 							if (w)
 								a[0] += a[1] += a[2] += 1;
 						}

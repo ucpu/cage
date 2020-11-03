@@ -1,49 +1,10 @@
-#ifndef guard_memory_h_f1434537_bf7f_4eed_a603_7145ab2f0515_
-#define guard_memory_h_f1434537_bf7f_4eed_a603_7145ab2f0515_
+#ifndef guard_memoryAllocators_h_dsg4hsd564g6s5e1gse5a64fg
+#define guard_memoryAllocators_h_dsg4hsd564g6s5e1gse5a64fg
 
-#include "scopeLock.h"
+#include "memoryUtils.h"
 
 namespace cage
 {
-	struct CAGE_CORE_API OutOfMemory : public Exception
-	{
-		explicit OutOfMemory(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message, uintPtr memory) noexcept;
-		virtual void log();
-		uintPtr memory;
-	};
-
-	namespace detail
-	{
-		inline bool isPowerOf2(uintPtr x)
-		{
-			return x && !(x & (x - 1));
-		}
-
-		inline uintPtr addToAlign(uintPtr ptr, uintPtr alignment)
-		{
-			return (alignment - (ptr % alignment)) % alignment;
-		}
-
-		inline uintPtr subtractToAlign(uintPtr ptr, uintPtr alignment)
-		{
-			return (alignment - addToAlign(ptr, alignment)) % alignment;
-		}
-
-		inline uintPtr roundDownTo(uintPtr ptr, uintPtr alignment)
-		{
-			return (ptr / alignment) * alignment;
-		}
-
-		inline uintPtr roundUpTo(uintPtr ptr, uintPtr alignment)
-		{
-			return roundDownTo(ptr + alignment - 1, alignment);
-		}
-
-		CAGE_CORE_API uintPtr compressionBound(uintPtr size);
-		CAGE_CORE_API void compress(PointerRange<const char> input, PointerRange<char> &output);
-		CAGE_CORE_API void decompress(PointerRange<const char> input, PointerRange<char> &output);
-	}
-
 	namespace templates
 	{
 		template<class T>
@@ -91,39 +52,15 @@ namespace cage
 		};
 	}
 
-	class CAGE_CORE_API VirtualMemory
-	{
-	public:
-		void *reserve(uintPtr pages); // reserve address space
-		void free(); // give up whole address space
-		void increase(uintPtr pages); // allocate pages
-		void decrease(uintPtr pages); // give up pages
-		uintPtr pages() const; // currently allocated pages
-	};
-
-	CAGE_CORE_API Holder<VirtualMemory> newVirtualMemory();
-
-	namespace detail
-	{
-		CAGE_CORE_API uintPtr memoryPageSize();
-	}
-
 	struct CAGE_CORE_API MemoryBoundsPolicyNone
 	{
 		static constexpr uintPtr SizeFront = 0;
 		static constexpr uintPtr SizeBack = 0;
 
-		void setFront(void *ptr)
-		{}
-
-		void setBack(void *ptr)
-		{}
-
-		void checkFront(void *ptr)
-		{}
-
-		void checkBack(void *ptr)
-		{}
+		void setFront(void *ptr) {}
+		void setBack(void *ptr) {}
+		void checkFront(void *ptr) {}
+		void checkBack(void *ptr) {}
 	};
 
 	struct CAGE_CORE_API MemoryBoundsPolicySimple
@@ -160,11 +97,8 @@ namespace cage
 
 	struct CAGE_CORE_API MemoryTagPolicyNone
 	{
-		void set(void *ptr, uintPtr size)
-		{}
-
-		void check(void *ptr, uintPtr size)
-		{}
+		void set(void *ptr, uintPtr size) {}
+		void check(void *ptr, uintPtr size) {}
 	};
 
 	struct CAGE_CORE_API MemoryTagPolicySimple
@@ -186,21 +120,14 @@ namespace cage
 
 	struct CAGE_CORE_API MemoryTrackPolicyNone
 	{
-		void set(void *ptr, uintPtr size)
-		{}
-
-		void check(void *ptr)
-		{}
-
-		void flush()
-		{}
+		void set(void *ptr, uintPtr size) {}
+		void check(void *ptr) {}
+		void flush() {}
 	};
 
 	struct CAGE_CORE_API MemoryTrackPolicySimple
 	{
-		MemoryTrackPolicySimple() : count(0)
-		{}
-
+		MemoryTrackPolicySimple() {}
 		~MemoryTrackPolicySimple();
 
 		void set(void *ptr, const uintPtr size)
@@ -221,7 +148,7 @@ namespace cage
 		}
 
 	private:
-		uint32 count;
+		uint32 count = 0;
 	};
 
 	struct CAGE_CORE_API MemoryTrackPolicyAdvanced
@@ -232,6 +159,7 @@ namespace cage
 		void set(void *ptr, uintPtr size);
 		void check(void *ptr);
 		void flush();
+
 	private:
 		void *data;
 	};
@@ -249,17 +177,17 @@ namespace cage
 		void unlock();
 
 	private:
-		Holder<void> mutex;
+		Holder<Mutex> mutex;
 	};
 
 #ifdef CAGE_DEBUG
-	typedef MemoryBoundsPolicySimple MemoryBoundsPolicyDefault;
-	typedef MemoryTagPolicySimple MemoryTagPolicyDefault;
-	typedef MemoryTrackPolicySimple MemoryTrackPolicyDefault;
+	using MemoryBoundsPolicyDefault = MemoryBoundsPolicySimple;
+	using MemoryTagPolicyDefault = MemoryTagPolicySimple;
+	using MemoryTrackPolicyDefault = MemoryTrackPolicySimple;
 #else
-	typedef MemoryBoundsPolicyNone MemoryBoundsPolicyDefault;
-	typedef MemoryTagPolicyNone MemoryTagPolicyDefault;
-	typedef MemoryTrackPolicyNone MemoryTrackPolicyDefault;
+	using MemoryBoundsPolicyDefault = MemoryBoundsPolicyNone;
+	using MemoryTagPolicyDefault = MemoryTagPolicyNone;
+	using MemoryTrackPolicyDefault = MemoryTrackPolicyNone;
 #endif
 
 	template<class BoundsPolicy = MemoryBoundsPolicyDefault, class TaggingPolicy = MemoryTagPolicyDefault, class TrackingPolicy = MemoryTrackPolicyDefault>
@@ -804,4 +732,4 @@ namespace cage
 	};
 }
 
-#endif // guard_memory_h_f1434537_bf7f_4eed_a603_7145ab2f0515_
+#endif // guard_memoryAllocators_h_dsg4hsd564g6s5e1gse5a64fg

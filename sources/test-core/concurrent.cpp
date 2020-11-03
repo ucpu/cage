@@ -62,7 +62,7 @@ namespace
 
 	void tryLockTest()
 	{
-		if (ScopeLock<Mutex>(mutexGlobal, TryLock()))
+		if (ScopeLock<Mutex>(mutexGlobal, TryLockTag()))
 		{
 			CAGE_TEST(false);
 		}
@@ -97,7 +97,7 @@ void testConcurrent()
 		CAGE_TESTCASE("try lock mutex");
 		for (uint32 i = 0; i < 3; i++)
 		{
-			if (auto lock = ScopeLock<Mutex>(mutex, TryLock()))
+			if (auto lock = ScopeLock<Mutex>(mutex, TryLockTag()))
 			{
 				newThread(Delegate<void()>().bind<&tryLockTest>(), "try lock");
 			}

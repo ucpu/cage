@@ -1,4 +1,4 @@
-#include <cage-core/memory.h>
+#include <cage-core/memoryAllocators.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/debug.h>
 
@@ -8,17 +8,17 @@ namespace cage
 {
 	MemoryConcurrentPolicyMutex::MemoryConcurrentPolicyMutex()
 	{
-		mutex = newMutex().cast<void>();
+		mutex = newMutex();
 	}
 
 	void MemoryConcurrentPolicyMutex::lock()
 	{
-		((Mutex*)mutex.get())->lock();
+		mutex->lock();
 	}
 
 	void MemoryConcurrentPolicyMutex::unlock()
 	{
-		((Mutex*)mutex.get())->unlock();
+		mutex->unlock();
 	}
 
 	MemoryTrackPolicySimple::~MemoryTrackPolicySimple()

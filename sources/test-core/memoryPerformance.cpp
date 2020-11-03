@@ -1,16 +1,16 @@
 #include "main.h"
 #include <cage-core/math.h>
-#include <cage-core/memory.h>
+#include <cage-core/memoryAllocators.h>
 #include <cage-core/timer.h>
 
 #include <cstdlib>
 
 #ifdef CAGE_DEBUG
-#define INPUT_SIZE 100
-#define CYCLES_COUNT 1000
+constexpr uint32 INPUT_SIZE = 100;
+constexpr uint32 CYCLES_COUNT = 1000;
 #else
-#define INPUT_SIZE 1000
-#define CYCLES_COUNT 1000000
+constexpr uint32 INPUT_SIZE = 1000;
+constexpr uint32 CYCLES_COUNT = 1000000;
 #endif
 
 namespace

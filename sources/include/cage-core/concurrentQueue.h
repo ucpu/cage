@@ -146,7 +146,7 @@ namespace cage
 		Holder<Mutex> mut;
 		Holder<ConditionalVariableBase> writer, reader;
 		std::list<T> items;
-		uint32 maxItems = m;
+		const uint32 maxItems = m;
 		bool stop = false;
 	};
 }

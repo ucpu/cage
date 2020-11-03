@@ -1,5 +1,5 @@
 #include <cage-core/math.h>
-#include <cage-core/memory.h>
+#include <cage-core/memoryUtils.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 #include <cage-core/textPack.h>

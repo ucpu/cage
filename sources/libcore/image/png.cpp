@@ -212,7 +212,7 @@ namespace cage
 		impl->colorConfig = defaultConfig(impl->channels);
 	}
 
-	MemoryBuffer pngEncode(ImageImpl *impl)
+	MemoryBuffer pngEncode(const ImageImpl *impl)
 	{
 		if (impl->channels > 4)
 			CAGE_THROW_ERROR(Exception, "unsupported channels count for png encoding");

@@ -8,8 +8,7 @@ namespace cage
 	class CAGE_CORE_API ThreadPool : private Immovable
 	{
 	public:
-		// thread index, threads count
-		Delegate<void(uint32, uint32)> function;
+		Delegate<void(uint32 threadIndex, uint32 threadsCount)> function;
 
 		void run();
 	};
