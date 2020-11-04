@@ -59,6 +59,8 @@
 #define CAGE_THROW_ERROR(EXCEPTION, ...) { EXCEPTION e_(__FILE__, __LINE__, __FUNCTION__, ::cage::SeverityEnum::Error, __VA_ARGS__); e_.makeLog(); throw e_; }
 #define CAGE_THROW_CRITICAL(EXCEPTION, ...) { EXCEPTION e_(__FILE__, __LINE__, __FUNCTION__, ::cage::SeverityEnum::Critical, __VA_ARGS__); e_.makeLog(); throw e_; }
 
+#define CAGE_LOG_THROW(MESSAGE) ::cage::privat::makeLogThrow(__FILE__, __LINE__, __FUNCTION__, MESSAGE)
+
 #define CAGE_LOG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FILE__, __LINE__, __FUNCTION__, SEVERITY, COMPONENT, MESSAGE, false, false)
 #define CAGE_LOG_CONTINUE(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FILE__, __LINE__, __FUNCTION__, SEVERITY, COMPONENT, MESSAGE, true, false)
 #ifdef CAGE_DEBUG
@@ -270,6 +272,7 @@ namespace cage
 	namespace privat
 	{
 		CAGE_CORE_API uint64 makeLog(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept;
+		CAGE_CORE_API void makeLogThrow(const char *file, uint32 line, const char *function, const string &message) noexcept;
 		CAGE_CORE_API void runtimeAssertFailure(const char *expt, const char *file, uintPtr line, const char *function);
 	}
 
@@ -515,7 +518,7 @@ namespace cage
 				return value[idx];
 			}
 
-			char operator [] (uint32 idx) const
+			const char &operator [] (uint32 idx) const
 			{
 				CAGE_ASSERT(idx < current);
 				return value[idx];

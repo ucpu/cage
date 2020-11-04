@@ -35,7 +35,7 @@ namespace
 		bool requested = toBool(properties(name));
 		if (requested && !available)
 		{
-			CAGE_LOG(SeverityEnum::Note, "exception", cage::string("requested feature: ") + name);
+			CAGE_LOG_THROW(cage::string("requested feature: ") + name);
 			CAGE_THROW_ERROR(Exception, "requested feature not available");
 		}
 		if (requested)
@@ -70,7 +70,7 @@ namespace
 		cage::string tn = texAsName.C_Str();
 		if (isPattern(tn, "//", "", ""))
 			tn = string() + "./" + subString(tn, 2, cage::m);
-		cage::string n = pathJoin(pathExtractPath(inputName), tn);
+		cage::string n = pathJoin(pathExtractDirectory(inputName), tn);
 		dsm.textureNames[usage] = HashString(n.c_str());
 		writeLine(string("ref = ") + n);
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "texture '" + n + "' (" + dsm.textureNames[usage] + ") of type " + (uint32)tt + ", usage " + usage);
@@ -131,7 +131,7 @@ namespace
 			ini->getFloat("mult", "mask", 1)
 		);
 
-		string pathBase = pathExtractPath(path);
+		string pathBase = pathExtractDirectory(path);
 		loadTextureCage(pathBase, dsm, ini.get(), "albedo", CAGE_SHADER_TEXTURE_ALBEDO);
 		loadTextureCage(pathBase, dsm, ini.get(), "special", CAGE_SHADER_TEXTURE_SPECIAL);
 		loadTextureCage(pathBase, dsm, ini.get(), "normal", CAGE_SHADER_TEXTURE_NORMAL);
@@ -174,7 +174,7 @@ namespace
 				dsm.renderFlags &= ~MeshRenderFlags::ShadowCast;
 				continue;
 			}
-			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "specified flag: '" + v + "'");
+			CAGE_LOG_THROW(stringizer() + "specified flag: '" + v + "'");
 			CAGE_THROW_ERROR(Exception, "unknown material flag");
 		}
 
@@ -264,7 +264,7 @@ namespace
 		string path = properties("material");
 		if (!path.empty())
 		{
-			path = pathJoin(pathExtractPath(inputFile), path);
+			path = pathJoin(pathExtractDirectory(inputFile), path);
 			if (!pathIsFile(pathJoin(inputDirectory, path)))
 				CAGE_THROW_ERROR(Exception, "explicitly given material path does not exist");
 			loadMaterialCage(dsm, mat, path);
@@ -333,7 +333,7 @@ namespace
 		if (n.empty())
 			n = inputFile + ";skeleton";
 		else
-			n = pathJoin(pathExtractPath(inputName), n);
+			n = pathJoin(pathExtractDirectory(inputName), n);
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "using skeleton name: '" + n + "'");
 		dsm.skeletonName = HashString(n.c_str());
 		writeLine(string("ref = ") + n);

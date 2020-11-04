@@ -647,9 +647,9 @@ namespace
 			CAGE_TEST(f == "file");
 			CAGE_TEST(e == ".ext");
 			s = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
-			CAGE_TEST(pathExtractPath(s) == "ratata://omega.alt.com/blah/keee");
+			CAGE_TEST(pathExtractDirectory(s) == "ratata://omega.alt.com/blah/keee");
 			CAGE_TEST(pathExtractDrive(s) == "ratata");
-			CAGE_TEST(pathExtractPathNoDrive(s) == "/omega.alt.com/blah/keee");
+			CAGE_TEST(pathExtractDirectoryNoDrive(s) == "/omega.alt.com/blah/keee");
 			CAGE_TEST(pathExtractFilename(s) == "jojo.armagedon");
 			CAGE_TEST(pathExtractFilenameNoExtension(s) == "jojo");
 			CAGE_TEST(pathExtractExtension(s) == ".armagedon");

@@ -4,7 +4,7 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "tinyexr")
 message(STATUS "----------------------------------------------------------------")
 
-add_library(tinyexr INTERFACE)
-target_sources(tinyexr INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/tinyexr/tinyexr.h)
-target_include_directories(tinyexr INTERFACE tinyexr)
+add_library(tinyexr STATIC tinyexr/tinyexr.h tinyexr.cpp)
+target_include_directories(tinyexr PUBLIC tinyexr)
+target_link_libraries(tinyexr PRIVATE zlib)
 

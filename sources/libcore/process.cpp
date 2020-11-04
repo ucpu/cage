@@ -178,7 +178,7 @@ namespace cage
 				envAlt()
 				{
 					p = getenv("PATH");
-					std::string n = p + ":" + pathWorkingDir().c_str() + ":" + pathExtractPath(detail::getExecutableFullPath()).c_str();
+					std::string n = p + ":" + pathWorkingDir().c_str() + ":" + pathExtractDirectory(detail::getExecutableFullPath()).c_str();
 					setenv("PATH", n.c_str(), 1);
 				}
 

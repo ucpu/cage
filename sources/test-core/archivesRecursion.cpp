@@ -18,7 +18,6 @@ void testArchivesRecursion()
 		for (uint32 i = 0; i < 5; i++)
 		{
 			p = pathJoin(p, stringizer() + i + ".zip");
-			CAGE_LOG(SeverityEnum::Info, "tests", stringizer() + "create archive: " + p); // todo remove this
 			pathCreateArchive(p);
 		}
 		CAGE_TEST(none(pathType("testdir") & PathTypeFlags::Archive));

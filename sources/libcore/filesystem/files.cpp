@@ -10,7 +10,9 @@
 namespace cage
 {
 	FileAbstract::FileAbstract(const string &path, const FileMode &mode) : myPath(path), mode(mode)
-	{}
+	{
+		CAGE_ASSERT(path == pathSimplify(path));
+	}
 
 	void FileAbstract::read(PointerRange<char> buffer)
 	{
@@ -23,7 +25,9 @@ namespace cage
 	}
 
 	ArchiveAbstract::ArchiveAbstract(const string & path) : myPath(path)
-	{}
+	{
+		CAGE_ASSERT(path == pathSimplify(path));
+	}
 
 	DirectoryListAbstract::DirectoryListAbstract(const string &path) : myPath(path)
 	{}
@@ -78,7 +82,7 @@ namespace cage
 			try
 			{
 				detail::OverrideException oe;
-				auto a = parent ? archiveOpenZip(parent->openFile(inPath, FileMode(true, true)), fullPath) : archiveOpenZip(fullPath);
+				auto a = archiveOpenZip(parent ? parent->openFile(inPath, FileMode(true, true)) : realNewFile(fullPath, FileMode(true, true)));
 				CAGE_ASSERT(a);
 				cache.map[fullPath] = a;
 				return a;

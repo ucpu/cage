@@ -289,7 +289,7 @@ namespace
 			CAGE_THROW_ERROR(Exception, "no images were loaded");
 		if (target == GL_TEXTURE_2D && frames > 1)
 		{
-			CAGE_LOG(SeverityEnum::Note, "exception", "did you forgot to set texture target?");
+			CAGE_LOG_THROW("did you forgot to set texture target?");
 			CAGE_THROW_ERROR(Exception, "images have too many frames for a 2D texture");
 		}
 		if (target == GL_TEXTURE_CUBE_MAP && frames != 6)

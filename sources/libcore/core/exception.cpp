@@ -47,6 +47,16 @@ namespace cage
 		}
 	}
 
+	namespace privat
+	{
+		void makeLogThrow(const char *file, uint32 line, const char *function, const string &message) noexcept
+		{
+			if (SeverityEnum::Note < getExceptionSilenceSeverity())
+				return;
+			makeLog(file, line, function, SeverityEnum::Note, "exception", message, false, false);
+		}
+	}
+
 	// exception
 
 	Exception::Exception(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept : file(file), function(function), line(line), message(message), severity(severity)

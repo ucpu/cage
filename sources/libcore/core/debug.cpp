@@ -52,7 +52,10 @@ namespace cage
 			return false;
 		}
 #endif
+	}
 
+	namespace detail
+	{
 		bool isDebugging()
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -62,10 +65,7 @@ namespace cage
 			return underDebugger;
 #endif
 		}
-	}
 
-	namespace detail
-	{
 		void terminate()
 		{
 			debugOutput("invoking terminate");

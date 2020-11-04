@@ -130,7 +130,7 @@ namespace cage
 		int loadGlobalConfiguration()
 		{
 			string pr = detail::getConfigAppPrefix();
-			string ep = pathExtractPath(detail::getExecutableFullPath());
+			string ep = pathExtractDirectory(detail::getExecutableFullPath());
 			string wp = pathWorkingDir();
 			bool same = ep == wp;
 			if (!same)

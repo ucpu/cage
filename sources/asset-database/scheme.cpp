@@ -8,13 +8,13 @@ void Scheme::parse(Ini *ini)
 	processor = ini->getString("scheme", "processor");
 	if (processor.empty())
 	{
-		CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "scheme: " + name);
+		CAGE_LOG_THROW(stringizer() + "scheme: " + name);
 		CAGE_THROW_ERROR(Exception, "empty scheme processor field");
 	}
 	schemeIndex = ini->getUint32("scheme", "index", m);
 	if (schemeIndex == m)
 	{
-		CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "scheme: " + name);
+		CAGE_LOG_THROW(stringizer() + "scheme: " + name);
 		CAGE_THROW_ERROR(Exception, "empty scheme index field");
 	}
 
@@ -42,8 +42,8 @@ void Scheme::parse(Ini *ini)
 			schemeFields.insert(templates::move(fld));
 		else
 		{
-			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "scheme: " + name);
-			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "field: " + fld.name);
+			CAGE_LOG_THROW(stringizer() + "scheme: " + name);
+			CAGE_LOG_THROW(stringizer() + "field: " + fld.name);
 			CAGE_THROW_ERROR(Exception, "invalid scheme field data");
 		}
 	}
@@ -52,10 +52,10 @@ void Scheme::parse(Ini *ini)
 		string s, t, v;
 		if (ini->anyUnused(s, t, v))
 		{
-			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "scheme: '" + name + "'");
-			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "section: '" + s + "'");
-			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "item: '" + t + "'");
-			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "value: '" + v + "'");
+			CAGE_LOG_THROW(stringizer() + "scheme: '" + name + "'");
+			CAGE_LOG_THROW(stringizer() + "section: '" + s + "'");
+			CAGE_LOG_THROW(stringizer() + "item: '" + t + "'");
+			CAGE_LOG_THROW(stringizer() + "value: '" + v + "'");
 			CAGE_THROW_ERROR(Exception, "unused scheme property");
 		}
 	}

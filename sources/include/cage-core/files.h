@@ -85,8 +85,7 @@ namespace cage
 		File = 1 << 3,
 		Archive = 1 << 4,
 		InsideArchive = 1 << 5,
-		Symlink = 1 << 6,
-		InsideSymlink = 1 << 7,
+		//Symlink = 1 << 6,
 	};
 	GCHL_ENUM_BITS(PathTypeFlags);
 
@@ -104,8 +103,8 @@ namespace cage
 
 	CAGE_CORE_API void pathDecompose(const string &input, string &drive, string &directory, string &file, string &extension);
 	CAGE_CORE_API string pathExtractDrive(const string &input);
-	CAGE_CORE_API string pathExtractPath(const string &input);
-	CAGE_CORE_API string pathExtractPathNoDrive(const string &input);
+	CAGE_CORE_API string pathExtractDirectory(const string &input);
+	CAGE_CORE_API string pathExtractDirectoryNoDrive(const string &input);
 	CAGE_CORE_API string pathExtractFilename(const string &input);
 	CAGE_CORE_API string pathExtractFilenameNoExtension(const string &input);
 	CAGE_CORE_API string pathExtractExtension(const string &input);

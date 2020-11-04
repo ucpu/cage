@@ -77,7 +77,7 @@ namespace cage
 					const auto err = GetLastError();
 					if (err != ERROR_ALREADY_EXISTS)
 					{
-						CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "path: '" + path + "'");
+						CAGE_LOG_THROW(stringizer() + "path: '" + path + "'");
 						CAGE_THROW_ERROR(SystemError, "CreateDirectory", err);
 					}
 				}
@@ -85,7 +85,7 @@ namespace cage
 				constexpr mode_t mode = 0755;
 				if (mkdir(p.c_str(), mode) != 0 && errno != EEXIST)
 				{
-					CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "path: '" + path + "'");
+					CAGE_LOG_THROW(stringizer() + "path: '" + path + "'");
 					CAGE_THROW_ERROR(Exception, "mkdir");
 				}
 #endif
@@ -95,14 +95,14 @@ namespace cage
 
 	void realMove(const string &from, const string &to)
 	{
-		pathCreateDirectories(pathExtractPath(to));
+		pathCreateDirectories(pathExtractDirectory(to));
 
 #ifdef CAGE_SYSTEM_WINDOWS
 
 		auto res = MoveFile(from.c_str(), to.c_str());
 		if (res == 0)
 		{
-			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "path from: '" + from + "'" + ", to: '" + to + "'");
+			CAGE_LOG_THROW(stringizer() + "path from: '" + from + "'" + ", to: '" + to + "'");
 			CAGE_THROW_ERROR(SystemError, "pathMove", GetLastError());
 		}
 
@@ -111,7 +111,7 @@ namespace cage
 		auto res = rename(from.c_str(), to.c_str());
 		if (res != 0)
 		{
-			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "path from: '" + from + "'" + ", to: '" + to + "'");
+			CAGE_LOG_THROW(stringizer() + "path from: '" + from + "'" + ", to: '" + to + "'");
 			CAGE_THROW_ERROR(SystemError, "pathMove", errno);
 		}
 
@@ -120,8 +120,8 @@ namespace cage
 
 	void realRemove(const string &path)
 	{
-		PathTypeFlags t = realType(path);
-		if ((t & PathTypeFlags::Directory) == PathTypeFlags::Directory)
+		const PathTypeFlags t = realType(path);
+		if (any(t & PathTypeFlags::Directory))
 		{
 			Holder<DirectoryList> list = newDirectoryList(path);
 			while (list->valid())
@@ -137,7 +137,7 @@ namespace cage
 				CAGE_THROW_ERROR(SystemError, "rmdir", errno);
 #endif
 		}
-		else if ((t & PathTypeFlags::NotFound) == PathTypeFlags::None)
+		else if (none(t & PathTypeFlags::NotFound))
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
 			if (DeleteFile(path.c_str()) == 0)
@@ -156,13 +156,13 @@ namespace cage
 		HANDLE hFile = CreateFile(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
 		if (hFile == INVALID_HANDLE_VALUE)
 		{
-			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "path: '" + path + "'");
+			CAGE_LOG_THROW(stringizer() + "path: '" + path + "'");
 			CAGE_THROW_ERROR(Exception, "path does not exist");
 		}
 		FILETIME ftWrite;
 		if (!GetFileTime(hFile, nullptr, nullptr, &ftWrite))
 		{
-			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "path: '" + path + "'");
+			CAGE_LOG_THROW(stringizer() + "path: '" + path + "'");
 			CAGE_THROW_ERROR(Exception, "path does not exist");
 		}
 		ULARGE_INTEGER l;
@@ -176,7 +176,7 @@ namespace cage
 		struct stat st;
 		if (stat(pathToAbs(path).c_str(), &st) == 0)
 			return st.st_mtime;
-		CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "path: '" + path + "'");
+		CAGE_LOG_THROW(stringizer() + "path: '" + path + "'");
 		CAGE_THROW_ERROR(SystemError, "stat", errno);
 
 #endif
@@ -281,12 +281,13 @@ namespace cage
 			FileReal(const string &path, const FileMode &mode) : FileAbstract(path, mode)
 			{
 				CAGE_ASSERT(mode.valid());
-				realCreateDirectories(pathJoin(path, ".."));
+				if (mode.write)
+					realCreateDirectories(pathJoin(path, ".."));
 				f = fopen(path.c_str(), mode.mode().c_str());
 				if (!f)
 				{
-					CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "read: " + mode.read + ", write: " + mode.write + ", append: " + mode.append + ", text: " + mode.textual);
-					CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "path: " + path);
+					CAGE_LOG_THROW(stringizer() + "read: " + mode.read + ", write: " + mode.write + ", append: " + mode.append + ", text: " + mode.textual);
+					CAGE_LOG_THROW(stringizer() + "path: " + path);
 					CAGE_THROW_ERROR(SystemError, "fopen", errno);
 				}
 			}

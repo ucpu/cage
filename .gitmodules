@@ -1,73 +1,70 @@
-[submodule "simplefilewatcher/simplefilewatcher"]
+[submodule "externals/simplefilewatcher/simplefilewatcher"]
 	path = externals/simplefilewatcher/simplefilewatcher
 	url = https://github.com/jameswynn/simplefilewatcher.git
-[submodule "dr_libs/dr_libs"]
+[submodule "externals/dr_libs/dr_libs"]
 	path = externals/dr_libs/dr_libs
 	url = https://github.com/mackron/dr_libs.git
-[submodule "libpng/libpng"]
+[submodule "externals/libpng/libpng"]
 	path = externals/libpng/libpng
 	url = https://github.com/glennrp/libpng.git
-[submodule "libtiff/libtiff"]
+[submodule "externals/libtiff/libtiff"]
 	path = externals/libtiff/libtiff
 	url = https://gitlab.com/libtiff/libtiff.git
-[submodule "freetype/freetype"]
+[submodule "externals/freetype/freetype"]
 	path = externals/freetype/freetype
 	url = https://github.com/ucpu/freetype.git
-[submodule "glad/glad"]
+[submodule "externals/glad/glad"]
 	path = externals/glad/glad
 	url = https://github.com/ucpu/glad.git
-[submodule "glm/glm"]
+[submodule "externals/glm/glm"]
 	path = externals/glm/glm
 	url = https://github.com/g-truc/glm.git
-[submodule "ogg/ogg"]
+[submodule "externals/ogg/ogg"]
 	path = externals/ogg/ogg
 	url = https://github.com/xiph/ogg.git
-[submodule "vorbis/vorbis"]
+[submodule "externals/vorbis/vorbis"]
 	path = externals/vorbis/vorbis
 	url = https://github.com/xiph/vorbis.git
-[submodule "assimp/assimp"]
+[submodule "externals/assimp/assimp"]
 	path = externals/assimp/assimp
 	url = https://github.com/assimp/assimp.git
-[submodule "glfw/glfw"]
+[submodule "externals/glfw/glfw"]
 	path = externals/glfw/glfw
 	url = https://github.com/glfw/glfw.git
-[submodule "utfcpp/utfcpp"]
+[submodule "externals/utfcpp/utfcpp"]
 	path = externals/utfcpp/utfcpp
 	url = https://github.com/nemtrif/utfcpp.git
-[submodule "jpeg/jpeg"]
+[submodule "externals/jpeg/jpeg"]
 	path = externals/jpeg/jpeg
 	url = https://github.com/libjpeg-turbo/libjpeg-turbo.git
-[submodule "msdfgen/msdfgen"]
+[submodule "externals/msdfgen/msdfgen"]
 	path = externals/msdfgen/msdfgen
 	url = https://github.com/ckohnert/msdfgen.git
-[submodule "xsimd/xsimd"]
+[submodule "externals/xsimd/xsimd"]
 	path = externals/xsimd/xsimd
 	url = https://github.com/QuantStack/xsimd.git
-[submodule "fastnoise/fastnoise"]
+[submodule "externals/fastnoise/fastnoise"]
 	path = externals/fastnoise/fastnoise
 	url = https://github.com/Auburns/FastNoise.git
-[submodule "libzip/libzip"]
-	path = externals/libzip/libzip
-	url = https://github.com/nih-at/libzip.git
-[submodule "optick/optick"]
+[submodule "externals/optick/optick"]
 	path = externals/optick/optick
 	url = https://github.com/bombomby/optick.git
-[submodule "robin-hood-hashing/robin-hood-hashing"]
+[submodule "externals/robin-hood-hashing/robin-hood-hashing"]
 	path = externals/robin-hood-hashing/robin-hood-hashing
 	url = https://github.com/martinus/robin-hood-hashing.git
-[submodule "zlib-ng/zlib-ng"]
+[submodule "externals/zlib-ng/zlib-ng"]
 	path = externals/zlib-ng/zlib-ng
 	url = https://github.com/zlib-ng/zlib-ng.git
-[submodule "stb/stb"]
+[submodule "externals/stb/stb"]
 	path = externals/stb/stb
 	url = https://github.com/nothings/stb.git
-[submodule "xatlas/xatlas"]
+[submodule "externals/xatlas/xatlas"]
 	path = externals/xatlas/xatlas
 	url = https://github.com/jpcy/xatlas.git
-[submodule "pmp/pmp"]
+[submodule "externals/pmp/pmp"]
 	path = externals/pmp/pmp
 	url = https://github.com/pmp-library/pmp-library.git
-[submodule "dualmc/dualmc"]
+[submodule "externals/dualmc/dualmc"]
 	path = externals/dualmc/dualmc
 	url = https://github.com/dominikwodniok/dualmc.git
 [submodule "externals/cubeb/cubeb"]

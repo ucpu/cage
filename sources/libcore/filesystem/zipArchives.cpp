@@ -1,617 +1,602 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/concurrent.h>
-#include <cage-core/string.h>
-#include <cage-core/serialization.h>
+#include <cage-core/string.h> // StringComparatorFast
+#include <cage-core/serialization.h> // bufferView
+#include <cage-core/math.h> // min
 
 #include "files.h"
 
-#include <cstring>
 #include <vector>
-#include <set>
-
-#include <zip.h>
+#include <algorithm>
 
 namespace cage
 {
 	namespace
 	{
-#define LOCK ScopeLock<Mutex> lock(mutex)
+		// tables taken from https://en.wikipedia.org/wiki/Zip_(file_format)
+		// full description at https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT
+		// example: https://users.cs.jmu.edu/buchhofp/forensics/formats/pkzip.html
 
-		string zipErr(int code)
+#pragma pack(push, 1)
+		struct LocalFileHeader
 		{
-			zip_error_t t;
-			zip_error_init_with_code(&t, code);
-			string s = zip_error_strerror(&t);
-			zip_error_fini(&t);
-			return s;
+			uint32 signature = 0x04034b50;
+			uint16 versionNeededToExtract = 20;
+			uint16 generalPurposeBitFlags = 1 << 11;
+			uint16 compressionMethod = 0;
+			uint16 lastModificationTime = 0;
+			uint16 lastModificationDate = 0;
+			uint32 crc32ofUncompressedData = 0;
+			uint32 compressedSize = 0;
+			uint32 uncompressedSize = 0;
+			uint16 nameLength = 0; // bytes
+			uint16 extraFieldLength = 0; // bytes
+		};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+		struct CDFileHeader
+		{
+			uint32 signature = 0x02014b50;
+			uint16 versionMadeBy = 20;
+			uint16 versionNeededToExtract = 20; // 2.0 support for directories
+			uint16 generalPurposeBitFlags = 1 << 11; // utf8 encoded names
+			uint16 compressionMethod = 0;
+			uint16 lastModificationTime = 0;
+			uint16 lastModificationDate = 0;
+			uint32 crc32ofUncompressedData = 0;
+			uint32 compressedSize = 0;
+			uint32 uncompressedSize = 0;
+			uint16 nameLength = 0; // bytes
+			uint16 extraFieldLength = 0; // bytes
+			uint16 commentLength = 0; // bytes
+			uint16 diskNumberWhereFileStarts = 0;
+			uint16 internalFileAttributes =  0;
+			uint32 externalFileAttributes = 0; // 0x10 for directories or 0x80 for files
+			uint32 relativeOffsetOfLocalFileHeader = 0;
+		};
+#pragma pack(pop)
+
+		struct CDFileHeaderEx : public CDFileHeader
+		{
+			string name;
+			MemoryBuffer newContent;
+			bool locked = false;
+			bool modified = false;
+
+			uintPtr getFileStartOffset() const
+			{
+				CAGE_ASSERT(!modified);
+				return (uintPtr)relativeOffsetOfLocalFileHeader + sizeof(LocalFileHeader) + nameLength + extraFieldLength;
+			}
+		};
+
+		bool operator < (const CDFileHeaderEx &a, const CDFileHeaderEx &b)
+		{
+			return StringComparatorFast()(a.name, b.name);
+		}
+
+		bool operator < (const CDFileHeaderEx &a, const string &b)
+		{
+			return StringComparatorFast()(a.name, b);
+		}
+
+#pragma pack(push, 1)
+		struct EndOfCentralDirectoryRecord
+		{
+			uint32 signature = 0x06054b50;
+			uint16 numberOfThisDisk = 0;
+			uint16 diskWhereCDStarts = 0;
+			uint16 numberOfCDFRecordsOnThisDisk = 0;
+			uint16 totalNumberOfCDFRecords = 0;
+			uint32 sizeOfCD = 0; // bytes
+			uint32 offsetOfCD = 0; // bytes
+			uint16 commentLength = 0; // bytes
+		};
+#pragma pack(pop)
+
+		LocalFileHeader deriveLocal(const CDFileHeaderEx &e)
+		{
+			LocalFileHeader l;
+			l.versionNeededToExtract = e.versionNeededToExtract;
+			l.generalPurposeBitFlags = e.generalPurposeBitFlags;
+			l.compressionMethod = e.compressionMethod;
+			l.lastModificationTime = e.lastModificationTime;
+			l.lastModificationDate = e.lastModificationDate;
+			l.crc32ofUncompressedData = e.crc32ofUncompressedData;
+			l.compressedSize = e.compressedSize;
+			l.uncompressedSize = e.uncompressedSize;
+			l.nameLength = e.nameLength;
+			l.extraFieldLength = e.extraFieldLength;
+			return l;
+		}
+
+		bool isPathSafe(const string &path)
+		{
+			if (pathIsAbs(path))
+				return false;
+			if (!path.empty() && path[0] == '.')
+				return false;
+			return true;
+		}
+
+		bool isPathValid(const string &path)
+		{
+			if (path != pathSimplify(path))
+				return false;
+			return isPathSafe(path);
 		}
 
 		class ArchiveZip : public ArchiveAbstract
 		{
 		public:
+			Holder<File> src;
 			Holder<Mutex> mutex = newMutex();
-			std::vector<MemoryBuffer> writtenBuffers;
-			zip_t *zip = nullptr;
+			std::vector<CDFileHeaderEx> files;
+			bool modified = false;
 
-			ArchiveZip(const string &path) : ArchiveAbstract(path)
-			{}
-
-			void finalize()
+			// create a new empty archive
+			ArchiveZip(const string &path, const string &options) : ArchiveAbstract(path)
 			{
-				LOCK;
-				if (zip_close(zip) != 0)
-				{
-					CAGE_LOG(SeverityEnum::Error, "exception", "failed to close zip archive. all changes may have been lost");
-					zip_discard(zip); // free the memory
+				src = writeFile(path);
+				modified = true;
+			}
+
+			// open existing archive
+			ArchiveZip(Holder<File> &&file) : ArchiveAbstract(((FileAbstract*)+file)->myPath), src(templates::move(file))
+			{
+				CAGE_ASSERT(src->mode().read && src->mode().write && !src->mode().append && !src->mode().textual);
+
+				uint32 totalFiles = m;
+				uint32 cdSize = 0;
+				{ // validate that file is a valid zip archive
+					const uintPtr totalSize = src->size();
+					constexpr uintPtr MaxCommentSize = 0;
+					constexpr uintPtr MaxSize = MaxCommentSize + sizeof(EndOfCentralDirectoryRecord);
+					const uintPtr off = totalSize > MaxSize ? totalSize - MaxSize : 0; // start of the buffer relative to the entire file
+					const uintPtr size = min(totalSize, MaxSize);
+					src->seek(off);
+					const MemoryBuffer b = src->read(size);
+					// search for eocd from the back
+					for (uint32 i = sizeof(EndOfCentralDirectoryRecord); i <= size; i++)
+					{
+						const uintPtr pos = size - i; // position relative to start of the buffer
+						const char *p = b.data() + pos;
+						const EndOfCentralDirectoryRecord &e = *(const EndOfCentralDirectoryRecord *)p;
+						constexpr uint32 Signature = EndOfCentralDirectoryRecord().signature;
+						if (e.signature != Signature)
+							continue; // incorrect signature
+						if ((uintPtr)e.offsetOfCD + e.sizeOfCD != off + pos)
+							continue; // incorrect header offset
+						if (pos + sizeof(EndOfCentralDirectoryRecord) + e.commentLength != size)
+							continue; // incorrect comment size
+						// we assume that we found an actual ZIP archive now
+						if (e.diskWhereCDStarts != 0 || e.numberOfThisDisk != 0 || e.numberOfCDFRecordsOnThisDisk != e.totalNumberOfCDFRecords)
+							CAGE_THROW_ERROR(NotImplemented, "cannot read zip archives that span multiple disks");
+						totalFiles = e.totalNumberOfCDFRecords;
+						cdSize = e.sizeOfCD;
+						src->seek(e.offsetOfCD);
+						break;
+					}
+					if (totalFiles == m)
+						CAGE_THROW_ERROR(Exception, "file is not a zip archive");
 				}
-				zip = nullptr;
-			}
 
-			void initCreated()
-			{
-				CAGE_ASSERT(zip);
-				constexpr const char *comment = "Archive created by Cage";
-				zip_set_archive_comment(zip, comment, numeric_cast<uint16>(std::strlen(comment)));
-				zip_dir_add(zip, "", 0);
-			}
+				{ // read central directory (populate files)
+					files.reserve(totalFiles);
+					MemoryBuffer b = src->read(cdSize);
+					Deserializer d(b);
+					for (uint32 i = 0; i < totalFiles; i++)
+					{
+						CDFileHeaderEx e;
+						d >> (CDFileHeader &)e;
+						constexpr uint32 Signature = CDFileHeader().signature;
+						if (e.signature != Signature)
+							CAGE_THROW_ERROR(Exception, "invalid signature of a central directory file record in zip archive");
+						if (e.diskNumberWhereFileStarts != 0)
+							CAGE_THROW_ERROR(Exception, "central directory file record indicates a different disk in zip archive");
+						if (e.nameLength >= string::MaxLength)
+							CAGE_THROW_ERROR(Exception, "central directory file record name length is too large in zip archive");
+						e.name.rawLength() = e.nameLength;
+						d.read({ e.name.rawData(), e.name.rawData() + e.nameLength });
+						d.advance(e.extraFieldLength);
+						d.advance(e.commentLength);
 
-			PathTypeFlags typeNoLock(const string &path)
-			{
-				// first, try to detect folder
-				if (!path.empty() && path[path.length() - 1] != '/')
-				{
-					PathTypeFlags f = typeNoLock(path + "/");
-					if (any(f & PathTypeFlags::Directory))
-						return f;
+						if (e.externalFileAttributes != 0x80 && e.externalFileAttributes != 0x10)
+						{
+							CAGE_LOG(SeverityEnum::Warning, "zip", "skipping central directory file record with unknown external file attributes");
+							continue;
+						}
+
+						e.name = pathSimplify(e.name);
+						e.nameLength = e.name.length();
+
+						if (!isPathSafe(e.name))
+							CAGE_THROW_ERROR(Exception, "central directory file record name is dangerous in zip archive");
+
+						files.push_back(templates::move(e));
+					}
 				}
-				zip_stat_t st;
-				if (zip_stat(zip, path.c_str(), 0, &st) != 0)
-					return PathTypeFlags::NotFound | PathTypeFlags::InsideArchive;
-				if ((st.valid & ZIP_STAT_NAME) == 0)
-					return PathTypeFlags::NotFound | PathTypeFlags::InsideArchive;
-				string n = st.name;
-				if (n.empty())
-					return PathTypeFlags::NotFound | PathTypeFlags::InsideArchive;
-				if (n[n.length() - 1] == '/')
-					return PathTypeFlags::Directory | PathTypeFlags::InsideArchive;
-				return PathTypeFlags::File | PathTypeFlags::InsideArchive;
+
+				{ // add records for missing directories
+					// todo
+					modified = false; // all modifications so far can be safely discarded
+				}
 			}
 
-			PathTypeFlags type(const string &path) override
+			~ArchiveZip()
 			{
-				LOCK;
+				CAGE_ASSERT(src);
+				if (!modified)
+					return;
+
+				// write modified files and update offsets
+				src->seek(src->size());
+				for (CDFileHeaderEx &f : files)
+				{
+					CAGE_ASSERT(f.name.length() == f.nameLength);
+					CAGE_ASSERT(f.diskNumberWhereFileStarts == 0);
+					CAGE_ASSERT(f.commentLength == 0);
+					CAGE_ASSERT(f.extraFieldLength == 0);
+
+					if (!f.modified)
+						continue;
+
+					CAGE_ASSERT(f.compressionMethod == 0);
+					CAGE_ASSERT(f.uncompressedSize == f.newContent.size());
+					CAGE_ASSERT(f.uncompressedSize == f.compressedSize || f.compressedSize == 0);
+					CAGE_ASSERT(f.externalFileAttributes == 0x10 || f.externalFileAttributes == 0x80);
+					CAGE_ASSERT(f.externalFileAttributes == 0x80 || f.uncompressedSize == 0);
+
+					f.relativeOffsetOfLocalFileHeader = numeric_cast<uint32>(src->tell());
+					{ // write local file header
+						const LocalFileHeader lfh = deriveLocal(f);
+						src->write(bufferView(lfh));
+						src->write(f.name);
+					}
+					src->write(f.newContent);
+				}
+
+				const uint32 startOfCentralDirectory = numeric_cast<uint32>(src->tell());
+				{ // write central directory
+					for (const CDFileHeaderEx &f : files)
+					{
+						src->write(bufferView((CDFileHeader &)f));
+						src->write(f.name);
+					}
+				}
+
+				{ // write end of central directory record
+					EndOfCentralDirectoryRecord e;
+					e.numberOfCDFRecordsOnThisDisk = e.totalNumberOfCDFRecords = numeric_cast<uint16>(files.size());
+					e.offsetOfCD = startOfCentralDirectory;
+					e.sizeOfCD = numeric_cast<uint32>(src->tell() - startOfCentralDirectory);
+					src->write(bufferView(e));
+				}
+			}
+
+			uint32 createRecord(const string &path)
+			{
+				CAGE_ASSERT(isPathValid(path));
+				auto it = std::lower_bound(files.begin(), files.end(), path);
+				it = files.insert(it, CDFileHeaderEx());
+				it->nameLength = path.length();
+				it->name = path;
+				it->modified = true;
+				modified = true;
+				return numeric_cast<uint32>(it - files.begin());
+			}
+
+			uint32 findRecordIndex(const string &path) const
+			{
+				CAGE_ASSERT(isPathValid(path));
+				const auto it = std::lower_bound(files.begin(), files.end(), path);
+				if (it == files.end() || it->name != path)
+					return m;
+				return numeric_cast<uint32>(it - files.begin());
+			}
+
+			void testFileNotLocked(uint32 index) const
+			{
+				if (index != m && files[index].locked)
+					CAGE_THROW_ERROR(Exception, "file is in use");
+			}
+
+			void testFileNotLocked(const string &path) const
+			{
+				const uint32 index = findRecordIndex(path);
+				testFileNotLocked(index);
+			}
+
+			PathTypeFlags typeNoLock(uint32 index) const
+			{
+				if (index == m)
+					return PathTypeFlags::NotFound;
+				const auto &r = files[index];
+				if (r.externalFileAttributes & 0x10)
+					return PathTypeFlags::Directory;
+				return PathTypeFlags::File;
+			}
+
+			PathTypeFlags typeNoLock(const string &path) const
+			{
+				const uint32 index = findRecordIndex(path);
+				return typeNoLock(index);
+			}
+
+			PathTypeFlags type(const string &path) const override
+			{
+				ScopeLock l(mutex);
 				return typeNoLock(path);
+			}
+
+			void createDirectoriesNoLock(const string &path)
+			{
+				if (path.empty())
+					return;
+				{ // check existing records
+					const uint32 index = findRecordIndex(path);
+					switch (typeNoLock(index))
+					{
+					case PathTypeFlags::Directory:
+						return; // directory already exists
+					case PathTypeFlags::NotFound:
+						break; // ok
+					default:
+						CAGE_THROW_ERROR(Exception, "cannot create directory inside zip, file already exists");
+					}
+				}
+				{ // create all parents
+					const string p = pathJoin(path, "..");
+					createDirectoriesNoLock(p);
+				}
+				{ // create this directory
+					const uint32 index = createRecord(path);
+					auto &r = files[index];
+					r.externalFileAttributes = 0x10;
+				}
 			}
 
 			void createDirectories(const string &path) override
 			{
-				if (path.empty())
-					return;
-				LOCK;
-				const string pth = path + "/";
-				uint32 off = 0;
-				while (true)
-				{
-					uint32 pos = find(subString(pth, off, m), '/');
-					if (pos == m)
-						return; // done
-					pos += off;
-					off = pos + 1;
-					if (pos)
-					{
-						const string p = subString(pth, 0, pos);
-						if (any(typeNoLock(p) & PathTypeFlags::Directory))
-							continue;
-						if (zip_dir_add(zip, p.c_str(), ZIP_FL_ENC_UTF_8) < 0)
-							CAGE_THROW_ERROR(Exception, "zip_dir_add");
-					}
-				}
+				ScopeLock l(mutex);
+				createDirectoriesNoLock(path);
 			}
 
 			void move(const string &from, const string &to) override
 			{
-				LOCK;
-				auto i = zip_name_locate(zip, from.c_str(), 0);
-				if (i < 0)
-					CAGE_THROW_ERROR(Exception, "zip_name_locate");
-				if (zip_file_rename(zip, i, to.c_str(), ZIP_FL_ENC_UTF_8) != 0)
-					CAGE_THROW_ERROR(Exception, "zip_file_rename");
+				CAGE_ASSERT(isPathValid(from));
+				CAGE_ASSERT(isPathValid(to));
+
+				ScopeLock l(mutex);
+				uint32 index = findRecordIndex(from);
+				if (any(typeNoLock(index) & PathTypeFlags::NotFound))
+					CAGE_THROW_ERROR(Exception, "source file or directory does not exist");
+				testFileNotLocked(index);
+				if (none(typeNoLock(to) & PathTypeFlags::NotFound))
+				{
+					removeNoLock(to);
+					index = findRecordIndex(from);
+				}
+
+				CAGE_ASSERT(index != m);
+				files[index].name = to;
+				files[index].nameLength = to.length();
+				modified = true;
+			}
+
+			void removeNoLock(const string &path)
+			{
+				const uint32 index = findRecordIndex(path);
+				if (index == m)
+					return;
+				testFileNotLocked(index);
+				files.erase(files.begin() + index);
+				modified = true;
 			}
 
 			void remove(const string &path) override
 			{
-				LOCK;
-				auto i = zip_name_locate(zip, path.c_str(), 0);
-				if (i < 0)
-					CAGE_THROW_ERROR(Exception, "zip_name_locate");
-				if (zip_delete(zip, i) != 0)
-					CAGE_THROW_ERROR(Exception, "zip_delete");
+				ScopeLock l(mutex);
+				removeNoLock(path);
 			}
 
-			uint64 lastChange(const string &path) override
+			uint64 lastChange(const string &path) const override
 			{
-				LOCK;
-				CAGE_THROW_CRITICAL(NotImplemented, "lastChange is not yet implemented for zip archives");
+				CAGE_ASSERT(isPathValid(path));
+				CAGE_THROW_CRITICAL(NotImplemented, "reading last modification time of a file inside zip archive is not yet supported");
 			}
 
 			Holder<File> openFile(const string &path, const FileMode &mode) override;
-			Holder<DirectoryList> listDirectory(const string &path) override;
+			Holder<DirectoryList> listDirectory(const string &path) const override;
 		};
 
-		class ArchiveZipHandle : public ArchiveZip
+		Holder<File> newProxyFile(File *f, uintPtr start, uintPtr size)
 		{
-		public:
-			Holder<File> under;
-			zip_source_t *src = nullptr;
+			// temporarily copy the source into buffer
+			// todo actual proxy file
+			f->seek(start);
+			MemoryBuffer b = f->read(size);
+			return newFileBuffer(std::move(b), FileMode(true, false));
+		}
 
-			zip_int64_t callback(char *data, zip_uint64_t len, zip_source_cmd_t cmd)
-			{
-				//CAGE_LOG(SeverityEnum::Info, "zip-callback", stringizer() + "cmd: " + cmd + ", data: " + (uintPtr)data + ", len: " + len);
-				switch (cmd)
-				{
-				case ZIP_SOURCE_SUPPORTS:
-					return zip_source_make_command_bitmap(
-						ZIP_SOURCE_SUPPORTS,
-						ZIP_SOURCE_STAT,
-						ZIP_SOURCE_ERROR,
-						//ZIP_SOURCE_ACCEPT_EMPTY,
-						ZIP_SOURCE_OPEN,
-						ZIP_SOURCE_BEGIN_WRITE,
-						ZIP_SOURCE_READ,
-						ZIP_SOURCE_WRITE,
-						ZIP_SOURCE_SEEK,
-						ZIP_SOURCE_SEEK_WRITE,
-						ZIP_SOURCE_TELL,
-						ZIP_SOURCE_TELL_WRITE,
-						ZIP_SOURCE_CLOSE,
-						ZIP_SOURCE_COMMIT_WRITE,
-						ZIP_SOURCE_ROLLBACK_WRITE,
-						ZIP_SOURCE_REMOVE,
-						-1
-					);
-
-				case ZIP_SOURCE_STAT:
-				{
-					zip_stat_t &s = *(zip_stat_t *)data;
-					zip_stat_init(&s);
-					s.size = under->size();
-					s.valid |= ZIP_STAT_SIZE;
-					return 0;
-				}
-
-				case ZIP_SOURCE_ERROR:
-					return 0; // 2 * sizeof(int);
-
-				case ZIP_SOURCE_ACCEPT_EMPTY:
-					return 0; // we do not accept empty file as valid zip archive
-
-					// io
-
-				case ZIP_SOURCE_OPEN:
-					return 0;
-
-				case ZIP_SOURCE_BEGIN_WRITE:
-					return 0;
-
-				case ZIP_SOURCE_READ:
-					under->read({ data, data + len });
-					return len;
-
-				case ZIP_SOURCE_WRITE:
-					under->write({ data, data + len });
-					return len;
-
-				case ZIP_SOURCE_SEEK:
-				case ZIP_SOURCE_SEEK_WRITE:
-					under->seek(zip_source_seek_compute_offset(under->tell(), under->size(), data, len, nullptr));
-					return 0;
-
-				case ZIP_SOURCE_TELL:
-				case ZIP_SOURCE_TELL_WRITE:
-					return under->tell();
-
-				case ZIP_SOURCE_CLOSE:
-					return 0;
-
-				case ZIP_SOURCE_COMMIT_WRITE:
-					return 0;
-
-					// required but unsupported
-
-				case ZIP_SOURCE_ROLLBACK_WRITE:
-				case ZIP_SOURCE_REMOVE:
-					break;
-				}
-				return -1; // error
-			}
-
-			static zip_int64_t globalCallback(void *userdata, void *data, zip_uint64_t len, zip_source_cmd_t cmd)
-			{
-				try
-				{
-					return ((ArchiveZipHandle *)userdata)->callback((char*)data, len, cmd);
-				}
-				catch (const Exception &)
-				{
-					return -1; // error
-				}
-				catch (...)
-				{
-					detail::logCurrentCaughtException();
-					CAGE_THROW_CRITICAL(Exception, "unknown exception in zip source callback");
-				}
-			}
-
-			// create archive
-			explicit ArchiveZipHandle(Holder<File> &&f, const string &path, const string &options) : ArchiveZip(path)
-			{
-				pathCreateDirectories(pathJoin(path, ".."));
-				under = templates::move(f);
-				src = zip_source_function_create(&globalCallback, this, nullptr);
-				if (!src)
-					CAGE_THROW_ERROR(Exception, "zip_source_function_create");
-				zip = zip_open_from_source(src, ZIP_CREATE, nullptr);
-				if (!zip)
-				{
-					zip_source_free(src);
-					src = nullptr;
-					CAGE_THROW_ERROR(Exception, "zip_open_from_source");
-				}
-				initCreated();
-			}
-
-			// open archive
-			explicit ArchiveZipHandle(Holder<File> &&f, const string &path) : ArchiveZip(path)
-			{
-				under = templates::move(f);
-				src = zip_source_function_create(&globalCallback, this, nullptr);
-				if (!src)
-					CAGE_THROW_ERROR(Exception, "zip_source_function_create");
-				zip = zip_open_from_source(src, ZIP_CHECKCONS, nullptr);
-				if (!zip)
-				{
-					zip_source_free(src);
-					src = nullptr;
-					CAGE_THROW_ERROR(Exception, "zip_open_from_source");
-				}
-			}
-
-			~ArchiveZipHandle()
-			{
-				// ensure that all changes are applied before any of the local variables goes out of scope
-				finalize();
-			}
-		};
-
-		class ArchiveZipReal : public ArchiveZip
-		{
-		public:
-			// create archive
-			explicit ArchiveZipReal(const string &path, const string &options) : ArchiveZip(path)
-			{
-				realCreateDirectories(pathJoin(path, ".."));
-				int err = 0;
-				zip = zip_open(path.c_str(), ZIP_CREATE | ZIP_EXCL, &err);
-				if (!zip)
-					CAGE_THROW_ERROR(Exception, "failed to create a zip archive");
-				initCreated();
-			}
-
-			// open archive
-			explicit ArchiveZipReal(const string &path) : ArchiveZip(path)
-			{
-				int err = 0;
-				zip = zip_open(path.c_str(), ZIP_CHECKCONS, &err);
-				if (!zip)
-					CAGE_THROW_ERROR(Exception, "failed to open a zip archive");
-			}
-
-			~ArchiveZipReal()
-			{
-				// ensure that all changes are applied before any of the local variables goes out of scope
-				finalize();
-			}
-		};
-
-#undef LOCK
-#define LOCK ScopeLock<Mutex> lock(a->mutex)
-
-		struct FileZipRead : public FileAbstract
+		struct FileZip : public FileAbstract
 		{
 			const std::shared_ptr<ArchiveZip> a;
-			zip_file_t *f = nullptr;
+			const string myName;
+			MemoryBuffer buff;
+			Holder<File> src;
+			bool modified = false;
 
-			FileZipRead(const std::shared_ptr<ArchiveZip> &archive, const string &name, FileMode mode) : FileAbstract(name, mode), a(archive)
+			FileZip(const std::shared_ptr<ArchiveZip> &archive, const string &name, FileMode mode) : FileAbstract(pathJoin(archive->myPath, name), mode), a(archive), myName(name)
 			{
-				CAGE_ASSERT(mode.read && !mode.write);
-				LOCK;
-				f = zip_fopen(a->zip, name.c_str(), 0);
-				if (!f)
-					CAGE_THROW_ERROR(Exception, "failed to open a file inside zip archive");
-			}
+				CAGE_ASSERT(isPathValid(name));
+				CAGE_ASSERT(mode.valid());
+				CAGE_ASSERT(!mode.append);
+				CAGE_ASSERT(!mode.textual);
 
-			~FileZipRead()
-			{
-				if (f)
+				ScopeLock l(a->mutex);
+				uint32 index = a->findRecordIndex(name);
+				if (a->typeNoLock(index) == PathTypeFlags::Directory)
+					CAGE_THROW_ERROR(Exception, "cannot open file in zip archive, the path is a directory");
+				if (index == m)
 				{
-					try
-					{
-						close();
-					}
-					catch (...)
-					{
-						// do nothing
-					}
+					if (mode.read)
+						CAGE_THROW_ERROR(Exception, "cannot open file in zip archive, it does not exist");
+					a->createDirectoriesNoLock(pathJoin(name, ".."));
+					if (index != m)
+						index = a->findRecordIndex(name);
+					index = a->createRecord(name);
+					auto &r = a->files[index];
+					r.externalFileAttributes = 0x80;
 				}
-			}
+				else
+					a->testFileNotLocked(index);
 
-			void read(PointerRange<char> buffer) override
-			{
-				LOCK;
-				CAGE_ASSERT(f);
-				if (zip_fread(f, buffer.data(), buffer.size()) != buffer.size())
-					CAGE_THROW_ERROR(Exception, "zip_fread");
-			}
+				CAGE_ASSERT(index != m);
+				auto &r = a->files[index];
+				CAGE_ASSERT(!r.locked);
+				if (r.compressionMethod != 0 && mode.read)
+					CAGE_THROW_ERROR(NotImplemented, "reading compressed files from zip archives is not yet supported");
+				r.locked = true;
 
-			void seek(uintPtr position) override
-			{
-				LOCK;
-				CAGE_ASSERT(f);
-				if (zip_fseek(f, position, 0) != 0)
-					CAGE_THROW_ERROR(Exception, "zip_fseek");
-			}
-
-			void close() override
-			{
-				LOCK;
-				CAGE_ASSERT(f);
-				auto ff = f;
-				f = nullptr; // avoid double free
-				int err = zip_fclose(ff);
-				if (err != 0)
-				{
-					//CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "error: " + zipErr(err));
-					//CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "file path: '" + myPath + "'");
-					//CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "archive path: '" + a->myPath + "'");
-					CAGE_THROW_ERROR(Exception, "failed to close a file inside zip archive");
+				if (mode.write && !mode.read)
+				{ // write only
+					// truncate file
+					r.newContent.clear();
+					r.uncompressedSize = 0;
+					r.compressedSize = 0;
+					r.modified = true;
+					modified = true;
+					src = newFileBuffer(&buff);
 				}
-			}
-
-			uintPtr tell() const override
-			{
-				LOCK;
-				CAGE_ASSERT(f);
-				auto r = zip_ftell(f);
-				if (r < 0)
-					CAGE_THROW_ERROR(Exception, "zip_ftell");
-				return numeric_cast<uintPtr>(r);
-			}
-
-			uintPtr size() const override
-			{
-				LOCK;
-				CAGE_ASSERT(f);
-				zip_stat_t st;
-				if (zip_stat(a->zip, myPath.c_str(), 0, &st) != 0)
-					CAGE_THROW_ERROR(Exception, "zip_stat");
-				if ((st.valid & ZIP_STAT_SIZE) == 0)
-					CAGE_THROW_ERROR(Exception, "zip_stat");
-				return numeric_cast<uintPtr>(st.size);
-			}
-		};
-
-		struct FileZipWrite : public FileAbstract
-		{
-			const std::shared_ptr<ArchiveZip> a;
-			MemoryBuffer mb;
-			Holder<File> f;
-
-			FileZipWrite(const std::shared_ptr<ArchiveZip> &archive, const string &name, FileMode mode) : FileAbstract(name, mode), a(archive)
-			{
-				CAGE_ASSERT(!mode.read && mode.write);
-				f = newFileBuffer(&mb);
-			}
-
-			~FileZipWrite()
-			{
-				if (f)
-				{
-					try
-					{
-						close();
-					}
-					catch (...)
-					{
-						// do nothing
-					}
-				}
-			}
-
-			void write(PointerRange<const char> buffer) override
-			{
-				CAGE_ASSERT(f);
-				f->write(buffer);
-			}
-
-			void seek(uintPtr position) override
-			{
-				f->seek(position);
-			}
-
-			void close() override
-			{
-				LOCK;
-				CAGE_ASSERT(f);
-				Holder<File> ff;
-				std::swap(f, ff); // ensure close
-				zip_source_t *src = zip_source_buffer(a->zip, mb.data(), mb.size(), 0);
-				if (!src)
-					CAGE_THROW_ERROR(Exception, "zip_source_buffer");
-				a->writtenBuffers.push_back(templates::move(mb)); // the buffer itself must survive until the entire archive is closed
-				auto i = zip_file_add(a->zip, myPath.c_str(), src, ZIP_FL_OVERWRITE | ZIP_FL_ENC_UTF_8);
-				if (i < 0)
-				{
-					zip_source_free(src);
-					CAGE_THROW_ERROR(Exception, "zip_file_add");
-				}
-				if (zip_set_file_compression(a->zip, i, ZIP_CM_STORE, 0) != 0)
-					CAGE_THROW_ERROR(Exception, "zip_set_file_compression");
-			}
-
-			uintPtr tell() const override
-			{
-				CAGE_ASSERT(f);
-				return f->tell();
-			}
-
-			uintPtr size() const override
-			{
-				CAGE_ASSERT(f);
-				return f->size();
-			}
-		};
-
-		struct FileZipRW : public FileAbstract
-		{
-			const string name;
-			const std::shared_ptr<ArchiveZip> a;
-			Holder<File> r;
-			Holder<File> w;
-			uintPtr originalSize = 0;
-			uintPtr position = 0;
-
-			FileZipRW(const std::shared_ptr<ArchiveZip> &archive, const string &name, FileMode mode) : FileAbstract(name, mode), name(name), a(archive)
-			{
-				CAGE_ASSERT(mode.read && mode.write);
-				zip_stat_t st;
-				if (zip_stat(a->zip, name.c_str(), 0, &st) != 0)
-					CAGE_THROW_ERROR(Exception, "zip_stat");
-				CAGE_ASSERT(st.flags & ZIP_STAT_SIZE);
-				originalSize = st.size;
-			}
-
-			void read(PointerRange<char> buffer) override
-			{
-				CAGE_ASSERT(!r || !w);
-				if (w)
-					CAGE_THROW_CRITICAL(Exception, "cannot read from zip archive file after writing to it");
-				if (!r)
-				{
-					r = a->openFile(name, FileMode(true, false));
-					if (position)
-						r->seek(position);
-				}
-				r->read(buffer);
-			}
-
-			void write(PointerRange<const char> buffer) override
-			{
-				CAGE_ASSERT(!r || !w);
-				if (!w)
-				{
-					if (r)
-					{
-						position = r->tell();
-						r->seek(0);
-					}
+				else
+				{ // read or update
+					CAGE_ASSERT(!modified);
+					if (r.modified)
+						src = newFileBuffer(PointerRange<char>(r.newContent), FileMode(true, false));
 					else
-						r = a->openFile(name, FileMode(true, false));
-					w = a->openFile(name, FileMode(false, true));
-					w->write(r->readAll());
-					w->seek(position);
-					r->close();
-					r.clear();
+						src = newProxyFile(+a->src, r.getFileStartOffset(), r.uncompressedSize);
 				}
-				w->write(buffer);
+
+				CAGE_ASSERT(src);
+			}
+
+			~FileZip()
+			{
+				ScopeLock l(a->mutex);
+				if (src && modified)
+				{
+					try
+					{
+						closeNoLock();
+					}
+					catch (const cage::Exception &)
+					{
+						// do nothing
+					}
+				}
+				const uint32 index = a->findRecordIndex(myName);
+				CAGE_ASSERT(index != m);
+				CDFileHeaderEx &h = a->files[index];
+				CAGE_ASSERT(h.locked);
+				h.locked = false;
+			}
+
+			void read(PointerRange<char> buffer) override
+			{
+				CAGE_ASSERT(mode.read);
+				CAGE_ASSERT(src);
+				src->read(buffer);
+			}
+
+			void write(PointerRange<const char> buffer) override
+			{
+				CAGE_ASSERT(mode.write);
+				CAGE_ASSERT(src);
+				if (!modified)
+				{
+					const uintPtr pos = src->tell();
+					src->seek(0);
+					buff = src->readAll();
+					src = newFileBuffer(&buff);
+					src->seek(pos);
+					modified = true;
+				}
+				src->write(buffer);
 			}
 
 			void seek(uintPtr position) override
 			{
-				CAGE_ASSERT(!r || !w);
-				if (w)
-					w->seek(position);
-				else if (r)
-					r->seek(position);
-				else
-					this->position = position;
+				CAGE_ASSERT(src);
+				src->seek(position);
+			}
+
+			void closeNoLock()
+			{
+				CAGE_ASSERT(modified);
+				modified = false; // avoid repeated write from destructor after user's close
+
+				CDFileHeaderEx h;
+				h.uncompressedSize = h.compressedSize = numeric_cast<uint32>(buff.size());
+				h.externalFileAttributes = 0x80;
+				h.name = myName;
+				h.nameLength = myName.length();
+				h.newContent = templates::move(buff);
+				h.locked = true; // unlocked from the destructor only
+				h.modified = true;
+
+				const uint32 index = a->findRecordIndex(myName);
+				CAGE_ASSERT(index != m);
+				CDFileHeaderEx &e = a->files[index];
+				std::swap(e, h);
+
+				a->modified = true;
 			}
 
 			void close() override
 			{
-				CAGE_ASSERT(!r || !w);
-				if (r)
+				CAGE_ASSERT(src);
+				if (modified)
 				{
-					r->close();
-					r.clear();
+					ScopeLock l(a->mutex);
+					closeNoLock();
 				}
-				if (w)
-				{
-					originalSize = w->size();
-					w->close();
-					w.clear();
-				}
-				position = 0;
 			}
 
 			uintPtr tell() const override
 			{
-				CAGE_ASSERT(!r || !w);
-				if (w)
-					return w->tell();
-				else if (r)
-					return r->tell();
-				else
-					return position;
+				CAGE_ASSERT(src);
+				return src->tell();
 			}
 
 			uintPtr size() const override
 			{
-				CAGE_ASSERT(!r || !w);
-				if (w)
-					return w->size();
-				else if (r)
-					return r->size();
-				else
-					return originalSize;
+				CAGE_ASSERT(src);
+				return src->size();
 			}
 		};
 
 		struct DirectoryListZip : public DirectoryListAbstract
 		{
-			const std::shared_ptr<ArchiveZip> a;
+			const std::shared_ptr<const ArchiveZip> a;
 			std::vector<string> names;
 			uint32 index = 0;
 
-			DirectoryListZip(const std::shared_ptr<ArchiveZip> &archive, const string &path) : DirectoryListAbstract(pathJoin(archive->myPath, path)), a(archive)
+			DirectoryListZip(const std::shared_ptr<const ArchiveZip> &archive, const string &path) : DirectoryListAbstract(pathJoin(archive->myPath, path)), a(archive)
 			{
-				LOCK;
-				auto cnt = zip_get_num_entries(a->zip, 0);
-				if (cnt < 0)
-					CAGE_THROW_ERROR(Exception, "zip_get_num_entries");
-				std::set<string> nn;
-				for (uint32 i = 0; i < cnt; i++)
+				CAGE_ASSERT(isPathValid(path));
+				ScopeLock l(a->mutex);
+				names.reserve(a->files.size());
+				for (const auto &it : a->files)
 				{
-					auto n = zip_get_name(a->zip, i, 0);
-					if (!n)
+					const string par = pathJoin(it.name, "..");
+					if (par == path)
 					{
-						if (zip_get_error(a->zip)->zip_err == ZIP_ER_DELETED)
-							continue;
-						CAGE_THROW_ERROR(Exception, "zip_get_name");
-					}
-					if (n[0] == 0)
-						continue;
-					string s = n;
-					if (s[s.length() - 1] == '/')
-						s = subString(s, 0, s.length() - 1);
-					if (pathExtractPath(s) == path)
-					{
-						s = pathExtractFilename(s);
-						if (!s.empty())
-							nn.insert(s);
+						const string name = pathExtractFilename(it.name);
+						names.push_back(name);
 					}
 				}
-				names.reserve(nn.size());
-				names.insert(names.end(), nn.begin(), nn.end());
 			}
 
 			bool valid() const override
@@ -627,55 +612,30 @@ namespace cage
 
 			void next() override
 			{
+				CAGE_ASSERT(valid());
 				index++;
 			}
 		};
 
 		Holder<File> ArchiveZip::openFile(const string &path, const FileMode &mode)
 		{
-			CAGE_ASSERT(!path.empty());
-			CAGE_ASSERT(mode.valid());
-			CAGE_ASSERT(mode.read || mode.write);
-			CAGE_ASSERT(!mode.append);
-			CAGE_ASSERT(!mode.textual);
-			createDirectories(pathJoin(path, ".."));
-			if (mode.read && mode.write)
-				return detail::systemArena().createImpl<File, FileZipRW>(std::static_pointer_cast<ArchiveZip>(shared_from_this()), path, mode);
-			else if (mode.read)
-				return detail::systemArena().createImpl<File, FileZipRead>(std::static_pointer_cast<ArchiveZip>(shared_from_this()), path, mode);
-			else
-				return detail::systemArena().createImpl<File, FileZipWrite>(std::static_pointer_cast<ArchiveZip>(shared_from_this()), path, mode);
+			return detail::systemArena().createImpl<File, FileZip>(std::static_pointer_cast<ArchiveZip>(shared_from_this()), path, mode);
 		}
 
-		Holder<DirectoryList> ArchiveZip::listDirectory(const string &path)
+		Holder<DirectoryList> ArchiveZip::listDirectory(const string &path) const
 		{
-			createDirectories(path);
-			return detail::systemArena().createImpl<DirectoryList, DirectoryListZip>(std::static_pointer_cast<ArchiveZip>(shared_from_this()), path);
+			return detail::systemArena().createImpl<DirectoryList, DirectoryListZip>(std::static_pointer_cast<const ArchiveZip>(shared_from_this()), path);
 		}
 	}
 
 	void archiveCreateZip(const string &path, const string &options)
 	{
-		string p;
-		auto a = archiveFindTowardsRoot(path, false, p);
-		if (a)
-		{
-			ArchiveZipHandle z(a->openFile(p, FileMode(false, true)), path, options);
-		}
-		else
-		{
-			ArchiveZipReal z(path, options);
-		}
+		ArchiveZip z(path, options);
 	}
 
-	std::shared_ptr<ArchiveAbstract> archiveOpenZip(const string &path)
+	std::shared_ptr<ArchiveAbstract> archiveOpenZip(Holder<File> &&f)
 	{
-		return std::make_shared<ArchiveZipReal>(path);
-	}
-
-	std::shared_ptr<ArchiveAbstract> archiveOpenZip(Holder<File> &&f, const string &path)
-	{
-		return std::make_shared<ArchiveZipHandle>(templates::move(f), path);
+		return std::make_shared<ArchiveZip>(templates::move(f));
 	}
 }
 

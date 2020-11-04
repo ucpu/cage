@@ -68,7 +68,7 @@ namespace
 			if (generateObjects && assets.count("mesh") > 0)
 			{
 				string name = pathExtractFilenameNoExtension(path) + ".object";
-				Holder<File> f = newFile(pathJoin(pathExtractPath(path), name), FileMode(false, true));
+				Holder<File> f = newFile(pathJoin(pathExtractDirectory(path), name), FileMode(false, true));
 				f->writeLine("[]");
 				for (const auto &a : assets["mesh"])
 					f->writeLine(a);

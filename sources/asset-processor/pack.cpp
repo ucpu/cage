@@ -21,7 +21,7 @@ void processPack()
 			if (!isDigitsOnly(n))
 				CAGE_THROW_ERROR(Exception, "invalid asset pack definition");
 			string v = ini->get(section, n);
-			v = pathJoin(pathExtractPath(inputName), v);
+			v = pathJoin(pathExtractDirectory(inputName), v);
 			assets.insert(HashString(v.c_str()));
 			writeLine(string("ref=") + v);
 		}

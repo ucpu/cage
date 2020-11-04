@@ -42,6 +42,7 @@ namespace cage
 	void File::read(PointerRange<char> buffer)
 	{
 		FileAbstract *impl = (FileAbstract *)this;
+		CAGE_ASSERT(impl->mode.read);
 		impl->read(buffer);
 	}
 
@@ -63,6 +64,7 @@ namespace cage
 	bool File::readLine(string &line)
 	{
 		FileAbstract *impl = (FileAbstract *)this;
+		CAGE_ASSERT(impl->mode.read);
 
 		const uintPtr origPos = tell();
 		const uintPtr origSize = size();
@@ -88,6 +90,7 @@ namespace cage
 	void File::write(PointerRange<const char> buffer)
 	{
 		FileAbstract *impl = (FileAbstract *)this;
+		CAGE_ASSERT(impl->mode.write);
 		impl->write(buffer);
 	}
 
@@ -197,7 +200,7 @@ namespace cage
 		DirectoryListAbstract *impl = (DirectoryListAbstract *)this;
 		if (!isDirectory())
 		{
-			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "path: '" + impl->fullPath() + "'");
+			CAGE_LOG_THROW(stringizer() + "path: '" + impl->fullPath() + "'");
 			CAGE_THROW_ERROR(Exception, "path is not directory");
 		}
 		return newDirectoryList(impl->fullPath());
@@ -228,7 +231,11 @@ namespace cage
 		if (a)
 		{
 			if (p.empty())
-				return PathTypeFlags::File | PathTypeFlags::Archive;
+			{
+				const PathTypeFlags pf = pathType(pathJoin(path, "..")); // todo optimize this call away
+				const PathTypeFlags fp = any(pf & (PathTypeFlags::Archive | PathTypeFlags::InsideArchive)) ? PathTypeFlags::InsideArchive : PathTypeFlags::None;
+				return PathTypeFlags::File | PathTypeFlags::Archive | fp;
+			}
 			return a->type(p) | PathTypeFlags::InsideArchive;
 		}
 		else
@@ -307,15 +314,15 @@ namespace cage
 			while (true)
 			{
 				string s = pathJoin(p, name);
-				if ((pathType(s) & type) != PathTypeFlags::None)
+				if (any(pathType(s) & type))
 					return s;
 				p = pathJoin(p, "..");
 			}
 		}
 		catch (const Exception &)
 		{
-			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "name: '" + name + "'");
-			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "whereToStart: '" + whereToStart + "'");
+			CAGE_LOG_THROW(stringizer() + "name: '" + name + "'");
+			CAGE_LOG_THROW(stringizer() + "whereToStart: '" + whereToStart + "'");
 			CAGE_THROW_ERROR(Exception, "failed to find the path");
 		}
 	}

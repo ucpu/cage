@@ -89,7 +89,7 @@ int main()
 	testLruCache();
 	testFiles();
 	testArchives();
-	//testArchivesRecursion();
+	testArchivesRecursion();
 	testLineReader();
 	testRandom();
 	testConfigIni();

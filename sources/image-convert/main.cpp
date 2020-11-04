@@ -13,7 +13,7 @@ bool preserveOriginal = false;
 void convert(string src, const string &format)
 {
 	src = pathSimplify(src);
-	string path = pathExtractPath(src);
+	string path = pathExtractDirectory(src);
 	string dst = pathJoin(path, pathExtractFilenameNoExtension(src) + format);
 	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "converting '" + src + "' to '" + dst + "'");
 	if (src == dst)

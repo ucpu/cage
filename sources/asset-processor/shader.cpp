@@ -82,7 +82,7 @@ namespace
 			return toBool(l);
 		else
 		{
-			CAGE_LOG(SeverityEnum::Note, "exception", string("expression: ") + l);
+			CAGE_LOG_THROW(string("expression: ") + l);
 			CAGE_THROW_ERROR(Exception, "expression cannot be converted to bool");
 		}
 	}
@@ -187,9 +187,9 @@ namespace
 					return string({ &left[index], &left[index] + 1 });
 			}
 			{
-				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "expression: '" + l + "'");
-				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "string: '" + left + "'");
-				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "index: '" + right + "'");
+				CAGE_LOG_THROW(stringizer() + "expression: '" + l + "'");
+				CAGE_LOG_THROW(stringizer() + "string: '" + left + "'");
+				CAGE_LOG_THROW(stringizer() + "index: '" + right + "'");
 				CAGE_THROW_ERROR(Exception, "non integer index or out of bounds");
 			}
 		}
@@ -216,14 +216,14 @@ namespace
 			uint32 o = find(reverse(subString(l, 0, z)), '(');
 			if (o == m)
 			{
-				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "expression: '" + input + "'");
+				CAGE_LOG_THROW(stringizer() + "expression: '" + input + "'");
 				CAGE_THROW_ERROR(Exception, "unmatched ')'");
 			}
 			l = replace(l, z - o - 1, o + 2, evalExp(subString(l, z - o, o)));
 		}
 		if (find(l, '(') != m)
 		{
-			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "expression: '" + input + "'");
+			CAGE_LOG_THROW(stringizer() + "expression: '" + input + "'");
 			CAGE_THROW_ERROR(Exception, "unmatched '('");
 		}
 		return evalExp(l);
@@ -350,12 +350,12 @@ namespace
 							string name = split(line);
 							if (name.empty() || line.empty())
 							{
-								CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "name: '" + name + "'");
+								CAGE_LOG_THROW(stringizer() + "name: '" + name + "'");
 								CAGE_THROW_ERROR(Exception, "'$define/set' expects two parameters");
 							}
 							if (!validDefine(name))
 							{
-								CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "name: '" + name + "', value: '" + line + "'");
+								CAGE_LOG_THROW(stringizer() + "name: '" + name + "', value: '" + line + "'");
 								CAGE_THROW_ERROR(Exception, "'$define/set' with invalid name");
 							}
 							if (cmd == "set")
@@ -368,7 +368,7 @@ namespace
 						{
 							if (!validDefine(line))
 							{
-								CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "name: '" + line + "'");
+								CAGE_LOG_THROW(stringizer() + "name: '" + line + "'");
 								CAGE_THROW_ERROR(Exception, "'$undef' with invalid name");
 							}
 							defines.erase(line);
@@ -377,12 +377,12 @@ namespace
 						{
 							if (!validDefine(line))
 							{
-								CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "name: '" + line + "'");
+								CAGE_LOG_THROW(stringizer() + "name: '" + line + "'");
 								CAGE_THROW_ERROR(Exception, "'$print' with invalid name");
 							}
 							if (defines.find(line) == defines.end())
 							{
-								CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "name: '" + line + "'");
+								CAGE_LOG_THROW(stringizer() + "name: '" + line + "'");
 								CAGE_THROW_ERROR(Exception, "'$print' with unknown name");
 							}
 							output(defines[line]);
@@ -402,12 +402,12 @@ namespace
 						{
 							if (line.empty())
 								CAGE_THROW_ERROR(Exception, "'$include' expects one parameter");
-							line = pathJoin(pathExtractPath(pathToRel(filename, inputDirectory)), line);
+							line = pathJoin(pathExtractDirectory(pathToRel(filename, inputDirectory)), line);
 							writeLine(stringizer() + "use=" + line);
 							string fn = pathJoin(inputDirectory, line);
 							if (!pathIsFile(fn))
 							{
-								CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "requested file '" + line + "'");
+								CAGE_LOG_THROW(stringizer() + "requested file '" + line + "'");
 								CAGE_THROW_ERROR(Exception, "'$include' file not found");
 							}
 							if (configShaderPrint)
@@ -418,7 +418,7 @@ namespace
 						}
 						else
 						{
-							CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "command: '" + cmd + "', params: '" + line + "'");
+							CAGE_LOG_THROW(stringizer() + "command: '" + cmd + "', params: '" + line + "'");
 							CAGE_THROW_ERROR(Exception, "unknown '$' command");
 						}
 					}
@@ -428,15 +428,15 @@ namespace
 			}
 			catch (...)
 			{
-				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "in file: '" + filename + "':" + lineNumber);
-				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "original line: '" + originalLine + "'");
+				CAGE_LOG_THROW(stringizer() + "in file: '" + filename + "':" + lineNumber);
+				CAGE_LOG_THROW(stringizer() + "original line: '" + originalLine + "'");
 				throw;
 			}
 		}
 
 		if (!stack.empty())
 		{
-			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "in file: '" + filename + "':" + lineNumber);
+			CAGE_LOG_THROW(stringizer() + "in file: '" + filename + "':" + lineNumber);
 			CAGE_THROW_ERROR(Exception, "unexpected end of file; expecting '$end'");
 		}
 	}

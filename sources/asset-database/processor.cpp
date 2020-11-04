@@ -110,7 +110,7 @@ namespace
 				ass.scheme = scheme;
 				ass.databank = path;
 				ass.name = ini->getString(section, assItem);
-				ass.name = pathJoin(pathExtractPath(ass.databank), ass.name);
+				ass.name = pathJoin(pathExtractDirectory(ass.databank), ass.name);
 				bool ok = true;
 
 				// check for duplicate asset name
@@ -227,12 +227,12 @@ namespace
 					{
 						if (pathIsAbs(line))
 						{
-							CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "path: '" + line + "'");
+							CAGE_LOG_THROW(stringizer() + "path: '" + line + "'");
 							CAGE_THROW_WARNING(Exception, "assets use path must be relative");
 						}
 						if (!pathIsFile(pathJoin(pathToAbs(configPathInput), line)))
 						{
-							CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "path: '" + line + "'");
+							CAGE_LOG_THROW(stringizer() + "path: '" + line + "'");
 							CAGE_THROW_WARNING(Exception, "assets use path does not exist");
 						}
 						ass.files.insert(line);
@@ -245,15 +245,15 @@ namespace
 							ass.aliasName = line;
 						else
 						{
-							CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "previous: '" + ass.aliasName + "'");
-							CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "current: '" + line + "'");
+							CAGE_LOG_THROW(stringizer() + "previous: '" + ass.aliasName + "'");
+							CAGE_LOG_THROW(stringizer() + "current: '" + line + "'");
 							CAGE_THROW_WARNING(Exception, "assets alias name cannot be overridden");
 						}
 					}
 					else
 					{
-						CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "parameter: " + param);
-						CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "value: " + line);
+						CAGE_LOG_THROW(stringizer() + "parameter: " + param);
+						CAGE_LOG_THROW(stringizer() + "value: " + line);
 						CAGE_THROW_WARNING(Exception, "unknown parameter name");
 					}
 				}

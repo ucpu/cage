@@ -48,7 +48,7 @@ namespace cage
 		void output(const string &message);
 	};
 
-	CAGE_CORE_API Holder<LoggerOutputFile> newLoggerOutputFile(const string &path, bool append);
+	CAGE_CORE_API Holder<LoggerOutputFile> newLoggerOutputFile(const string &path, bool append, bool realFilesystemOnly = true);
 
 	namespace detail
 	{

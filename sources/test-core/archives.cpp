@@ -265,6 +265,7 @@ void testArchives()
 		// sanity check
 		testListDirectory("");
 		testReadFile("rw.bin");
+		testReadFile("rw.bin");
 		// first modification of the file
 		for (const string &dir : directories)
 		{

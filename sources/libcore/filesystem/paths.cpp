@@ -107,8 +107,8 @@ namespace cage
 			return a;
 		if (pathIsAbs(b))
 		{
-			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "first path: '" + a + "'");
-			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "second path: '" + b + "'");
+			CAGE_LOG_THROW(stringizer() + "first path: '" + a + "'");
+			CAGE_LOG_THROW(stringizer() + "second path: '" + b + "'");
 			CAGE_THROW_ERROR(Exception, "cannot join with absolute path on right side");
 		}
 		if (a.empty())
@@ -122,13 +122,13 @@ namespace cage
 	{
 		string drive, directory, file, extension;
 		pathDecompose(path, drive, directory, file, extension);
-		bool absolute = !drive.empty() || (!directory.empty() && directory[0] == '/');
+		const bool absolute = !drive.empty() || (!directory.empty() && directory[0] == '/');
 		std::vector<string> parts;
 		while (true)
 		{
 			if (directory.empty())
 				break;
-			string p = split(directory, "/");
+			const string p = split(directory, "/");
 			if (p == "" || p == ".")
 				continue;
 			if (p == "..")
@@ -149,7 +149,7 @@ namespace cage
 		else if (absolute)
 			result += "/";
 		directory = "";
-		for (auto it : parts)
+		for (const string &it : parts)
 		{
 			if (!directory.empty())
 				directory += "/";
@@ -166,7 +166,7 @@ namespace cage
 
 	string pathReplaceInvalidCharacters(const string &path, const string &replacement, bool allowDirectories)
 	{
-		string tmp = normalize(path);
+		const string tmp = normalize(path);
 		string res;
 		for (uint32 i = 0, e = tmp.length(); i < e; i++)
 		{
@@ -238,7 +238,7 @@ namespace cage
 		return d;
 	}
 
-	string pathExtractPath(const string &input)
+	string pathExtractDirectory(const string &input)
 	{
 		string d, p, f, e;
 		pathDecompose(input, d, p, f, e);
@@ -248,7 +248,7 @@ namespace cage
 		return d + ":/" + p;
 	}
 
-	string pathExtractPathNoDrive(const string &input)
+	string pathExtractDirectoryNoDrive(const string &input)
 	{
 		string d, p, f, e;
 		pathDecompose(input, d, p, f, e);

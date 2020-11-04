@@ -252,7 +252,7 @@ namespace cage
 		}
 		catch (...)
 		{
-			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "exception in schedule '" + impl->conf.name + "'");
+			CAGE_LOG_THROW(stringizer() + "exception in schedule '" + impl->conf.name + "'");
 			throw;
 		}
 	}

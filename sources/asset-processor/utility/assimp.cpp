@@ -194,7 +194,7 @@ namespace
 	public:
 		CageIoSystem()
 		{
-			currentDir = pathJoin(inputDirectory, pathExtractPath(inputFile));
+			currentDir = pathJoin(inputDirectory, pathExtractDirectory(inputFile));
 		}
 
 		bool Exists(const char *pFile) const override
@@ -211,7 +211,7 @@ namespace
 		{
 			if (::cage::string(pMode) != "rb")
 				CAGE_THROW_ERROR(Exception, "CageIoSystem::Open: only support rb mode");
-			writeLine(cage::string("use = ") + pathJoin(pathExtractPath(inputFile), pFile));
+			writeLine(cage::string("use = ") + pathJoin(pathExtractDirectory(inputFile), pFile));
 			return new CageIoStream(newFile(pathJoin(currentDir, pFile), FileMode(true, false)));
 		}
 
@@ -302,7 +302,7 @@ namespace
 				imp.SetIOHandler(&this->ioSystem);
 				if (!imp.ReadFile(pathExtractFilename(inputFile).c_str(), flags))
 				{
-					CAGE_LOG(SeverityEnum::Note, "exception", cage::string(imp.GetErrorString()));
+					CAGE_LOG_THROW(cage::string(imp.GetErrorString()));
 					CAGE_THROW_ERROR(Exception, "assimp loading failed");
 				}
 				imp.SetIOHandler(nullptr);

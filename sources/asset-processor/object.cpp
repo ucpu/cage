@@ -24,7 +24,7 @@ void processObject()
 	Holder<Ini> ini = newIni();
 	ini->importFile(inputFileName);
 
-	string basePath = pathExtractPath(inputFile);
+	string basePath = pathExtractDirectory(inputFile);
 	std::vector<Lod> lods;
 	std::set<uint32> deps;
 	uint32 totalMeshes = 0;
@@ -90,9 +90,9 @@ void processObject()
 		string s, t, v;
 		if (ini->anyUnused(s, t, v))
 		{
-			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "section: " + s);
-			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "item: " + t);
-			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "value: " + v);
+			CAGE_LOG_THROW(stringizer() + "section: " + s);
+			CAGE_LOG_THROW(stringizer() + "item: " + t);
+			CAGE_LOG_THROW(stringizer() + "value: " + v);
 			CAGE_THROW_ERROR(Exception, "unused value");
 		}
 	}

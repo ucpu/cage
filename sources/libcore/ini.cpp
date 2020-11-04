@@ -228,7 +228,7 @@ namespace cage
 		string section, item, value;
 		if (anyUnused(section, item, value))
 		{
-			CAGE_LOG(SeverityEnum::Note, "exception", string() + "section: '" + section + "', item: '" + item + "', " + "value: '" + value + "'");
+			CAGE_LOG_THROW(string() + "section: '" + section + "', item: '" + item + "', " + "value: '" + value + "'");
 			CAGE_THROW_ERROR(Exception, "unused ini/config item");
 		}
 	}
@@ -308,7 +308,7 @@ namespace cage
 		}
 		catch (...)
 		{
-			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "failed to parse command line arguments:");
+			CAGE_LOG_THROW(stringizer() + "failed to parse command line arguments:");
 			for (uint32 i = 0; i < argc; i++)
 				CAGE_LOG_CONTINUE(SeverityEnum::Note, "exception", args[i]);
 			throw;
@@ -371,7 +371,7 @@ namespace cage
 		}
 		catch (...)
 		{
-			CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "failed to load ini file: '" + filename + "'");
+			CAGE_LOG_THROW(stringizer() + "failed to load ini file: '" + filename + "'");
 			throw;
 		}
 	}
@@ -456,7 +456,7 @@ namespace cage
 		} \
 		catch (const Exception &) \
 		{ \
-			CAGE_LOG(SeverityEnum::Note, "exception", string() + "cmd option: '" + longName + "' (" + sn + ")"); \
+			CAGE_LOG_THROW(string() + "cmd option: '" + longName + "' (" + sn + ")"); \
 			throw; \
 		} \
 	} \
@@ -472,7 +472,7 @@ namespace cage
 		} \
 		catch (const Exception &) \
 		{ \
-			CAGE_LOG(SeverityEnum::Note, "exception", string() + "cmd option: '" + longName + "' (" + sn + ")"); \
+			CAGE_LOG_THROW(string() + "cmd option: '" + longName + "' (" + sn + ")"); \
 			throw; \
 		} \
 	}

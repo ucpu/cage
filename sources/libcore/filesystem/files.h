@@ -40,13 +40,13 @@ namespace cage
 		const string myPath;
 		ArchiveAbstract(const string &path);
 		virtual ~ArchiveAbstract() {}
-		virtual PathTypeFlags type(const string &path) = 0;
+		virtual PathTypeFlags type(const string &path) const = 0;
 		virtual void createDirectories(const string &path) = 0;
 		virtual void move(const string &from, const string &to) = 0;
 		virtual void remove(const string &path) = 0;
-		virtual uint64 lastChange(const string &path) = 0;
+		virtual uint64 lastChange(const string &path) const = 0;
 		virtual Holder<File> openFile(const string &path, const FileMode &mode) = 0;
-		virtual Holder<DirectoryList> listDirectory(const string &path) = 0;
+		virtual Holder<DirectoryList> listDirectory(const string &path) const = 0;
 	};
 
 	PathTypeFlags realType(const string &path);
@@ -65,8 +65,7 @@ namespace cage
 	std::shared_ptr<ArchiveAbstract> archiveFindTowardsRoot(const string &path, bool allowExactMatch, string &insidePath);
 
 	void archiveCreateZip(const string &path, const string &options);
-	std::shared_ptr<ArchiveAbstract> archiveOpenZip(const string &path);
-	std::shared_ptr<ArchiveAbstract> archiveOpenZip(Holder<File> &&f, const string &path);
+	std::shared_ptr<ArchiveAbstract> archiveOpenZip(Holder<File> &&f);
 }
 
 #endif // guard_files_h_sdrgds45rfgt

@@ -292,7 +292,7 @@ void testColliders()
 		{
 			if (attemptsA + attemptsB > 1000)
 			{
-				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "A: " + attemptsA + ", B: " + attemptsB);
+				CAGE_LOG_THROW(stringizer() + "A: " + attemptsA + ", B: " + attemptsB);
 				CAGE_THROW_ERROR(Exception, "too many test attempts");
 			}
 
@@ -341,7 +341,7 @@ void testColliders()
 		{
 			if (attemptsA + attemptsB > 1000)
 			{
-				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "A: " + attemptsA + ", B: " + attemptsB);
+				CAGE_LOG_THROW(stringizer() + "A: " + attemptsA + ", B: " + attemptsB);
 				CAGE_THROW_ERROR(Exception, "too many test attempts");
 			}
 

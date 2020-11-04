@@ -206,7 +206,7 @@ namespace cage
 					}
 					catch (const Exception &)
 					{
-						return pathSearchTowardsRoot(config.assetsFolderName, pathExtractPath(detail::getExecutableFullPath()), PathTypeFlags::Directory | PathTypeFlags::Archive);
+						return pathSearchTowardsRoot(config.assetsFolderName, pathExtractDirectory(detail::getExecutableFullPath()), PathTypeFlags::Directory | PathTypeFlags::Archive);
 					}
 				}
 				catch (const Exception &)
@@ -542,7 +542,7 @@ namespace cage
 				const auto &a = it->second;
 				if (a->failed)
 				{
-					CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "asset real name: " + assetName);
+					CAGE_LOG_THROW(stringizer() + "asset real name: " + assetName);
 					CAGE_THROW_ERROR(Exception, "asset failed to load");
 				}
 				CAGE_ASSERT(a->ref);
@@ -550,8 +550,8 @@ namespace cage
 				{
 					if (throwOnInvalidScheme)
 					{
-						CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "asset real name: " + assetName);
-						CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "asset loaded scheme: " + a->scheme + ", accessing with: " + scheme);
+						CAGE_LOG_THROW(stringizer() + "asset real name: " + assetName);
+						CAGE_LOG_THROW(stringizer() + "asset loaded scheme: " + a->scheme + ", accessing with: " + scheme);
 						CAGE_THROW_ERROR(Exception, "accessing asset with different scheme");
 					}
 					return {}; // invalid scheme

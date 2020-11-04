@@ -53,9 +53,9 @@ namespace
 		{
 			if (cnt * sizeof(T) > Limit)
 			{
-				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "sizeof(T): " + sizeof(T));
-				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "cnt: " + cnt);
-				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "Limit: " + Limit);
+				CAGE_LOG_THROW(stringizer() + "sizeof(T): " + sizeof(T));
+				CAGE_LOG_THROW(stringizer() + "cnt: " + cnt);
+				CAGE_LOG_THROW(stringizer() + "Limit: " + Limit);
 				CAGE_THROW_CRITICAL(Exception, "insufficient atom size for pool allocator");
 			}
 			return (T*)detail::systemArena().allocate(cnt * sizeof(T), alignof(T));

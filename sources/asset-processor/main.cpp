@@ -29,7 +29,7 @@ AssetHeader initializeAssetHeader()
 	string intr = properties("alias");
 	if (!intr.empty())
 	{
-		intr = pathJoin(pathExtractPath(inputName), intr);
+		intr = pathJoin(pathExtractDirectory(inputName), intr);
 		writeLine(stringizer() + "alias = " + intr);
 		h.aliasName = HashString(intr);
 	}
@@ -75,7 +75,7 @@ namespace
 				break;
 			if (find(value, '=') == m)
 			{
-				CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "line: " + value);
+				CAGE_LOG_THROW(stringizer() + "line: " + value);
 				CAGE_THROW_ERROR(Exception, "missing '=' in property line");
 			}
 			string name = split(value, "=");
@@ -120,7 +120,7 @@ string properties(const string &name)
 		return it->second;
 	else
 	{
-		CAGE_LOG(SeverityEnum::Note, "exception", stringizer() + "property name: '" + name + "'");
+		CAGE_LOG_THROW(stringizer() + "property name: '" + name + "'");
 		CAGE_THROW_ERROR(Exception, "property not found");
 	}
 }
@@ -134,7 +134,7 @@ int main(int argc, const char *args[])
 			logComponentName = "analyze";
 			initializeSecondaryLog(pathJoin(configGetString("cage-asset-processor/analyzeLog/path", "analyze-log"), pathReplaceInvalidCharacters(args[2]) + ".log"));
 			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "analyzing input '" + args[2] + "'");
-			inputDirectory = pathExtractPath(args[2]);
+			inputDirectory = pathExtractDirectory(args[2]);
 			inputName = pathExtractFilename(args[2]);
 			derivedProperties();
 			return processAnalyze();

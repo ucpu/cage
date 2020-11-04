@@ -254,14 +254,14 @@ void processSound()
 	AssetHeader h = initializeAssetHeader();
 	h.originalSize = sizeof(SoundSourceHeader) + sds.frames * sds.channels * sizeof(float);
 
-	Holder<File> f = newFile(outputFileName, FileMode(true, true));
+	Holder<File> f = writeFile(outputFileName);
 	f->write(bufferView(h));
 	f->write(bufferView(sds));
 	switch (sds.soundType)
 	{
 	case SoundTypeEnum::RawRaw:
 	{
-		f->write({ buf1.data(), buf1.data() + sds.frames * sds.channels * sizeof(float) });
+		f->write(buf1);
 	} break;
 	case SoundTypeEnum::CompressedRaw:
 	case SoundTypeEnum::CompressedCompressed:

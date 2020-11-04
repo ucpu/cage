@@ -12,6 +12,8 @@
 
 namespace cage
 {
+	Holder<File> realNewFile(const string &path, const FileMode &mode);
+
 	namespace
 	{
 		ConfigBool confDetailedInfo("cage/system/logVendorInfo", false);
@@ -69,22 +71,19 @@ namespace cage
 			}
 		};
 
-		bool logFilterNoDebug(const detail::LoggerInfo &info)
-		{
-			return !info.debug;
-		}
-
 		class ApplicationLog
 		{
 		public:
 			ApplicationLog()
 			{
-				loggerDebug = newLogger();
-				loggerDebug->filter.bind<&logFilterNoDebug>();
-				loggerDebug->format.bind<&logFormatConsole>();
-				loggerDebug->output.bind<&logOutputDebug>();
+				if (detail::isDebugging())
+				{
+					loggerDebug = newLogger();
+					loggerDebug->format.bind<&logFormatConsole>();
+					loggerDebug->output.bind<&logOutputDebug>();
+				}
 
-				loggerOutputFile = newLoggerOutputFile(pathExtractFilename(detail::getExecutableFullPathNoExe()) + ".log", false);
+				loggerOutputFile = newLoggerOutputFile(pathExtractFilename(detail::getExecutableFullPathNoExe()) + ".log", false, true);
 				loggerFile = newLogger();
 				loggerFile->output.bind<LoggerOutputFile, &LoggerOutputFile::output>(loggerOutputFile.get());
 				loggerFile->format.bind<&logFormatFileShort>();
@@ -211,12 +210,15 @@ namespace cage
 		class LoggerOutputFileImpl : public LoggerOutputFile
 		{
 		public:
-			LoggerOutputFileImpl(const string &path, bool append)
+			LoggerOutputFileImpl(const string &path, bool append, bool realFilesystemOnly)
 			{
 				FileMode fm(false, true);
 				fm.textual = true;
 				fm.append = append;
-				f = newFile(path, fm);
+				if (realFilesystemOnly)
+					f = realNewFile(path, fm);
+				else
+					f = newFile(path, fm);
 			}
 
 			Holder<File> f;
@@ -233,7 +235,7 @@ namespace cage
 		Logger *getApplicationLog()
 		{
 			static ApplicationLog *centralLogInstance = new ApplicationLog(); // this leak is intentional
-			return centralLogInstance->loggerFile.get();
+			return +centralLogInstance->loggerFile;
 		}
 
 		string severityToString(SeverityEnum severity)
@@ -285,7 +287,7 @@ namespace cage
 		{
 			try
 			{
-				detail::getApplicationLog();
+				detail::getApplicationLog(); // ensure application logger was initialized
 				detail::LoggerInfo info;
 				info.message = message;
 				info.component = component;
@@ -365,9 +367,9 @@ namespace cage
 		impl->f->writeLine(message);
 	}
 
-	Holder<LoggerOutputFile> newLoggerOutputFile(const string &path, bool append)
+	Holder<LoggerOutputFile> newLoggerOutputFile(const string &path, bool append, bool realFilesystemOnly)
 	{
-		return detail::systemArena().createImpl<LoggerOutputFile, LoggerOutputFileImpl>(path, append);
+		return detail::systemArena().createImpl<LoggerOutputFile, LoggerOutputFileImpl>(path, append, realFilesystemOnly);
 	}
 
 	uint64 getApplicationTime()
