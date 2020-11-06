@@ -206,6 +206,8 @@ void testArchives()
 				f->write(data3);
 		}
 		testReadFile("multi/1");
+		testReadFile("multi/2");
+		testReadFile("multi/3");
 		testListRecursive();
 	}
 
@@ -330,7 +332,7 @@ void testArchives()
 		{
 			CAGE_TESTCASE("from the archive to real filesystem");
 			for (const string &dir : directories)
-				pathMove(pathJoin(dir, "multi/1"), "testdir/moved");
+				pathMove(pathJoin(dir, "multi/1"), "testdir/moved_up");
 			testListRecursive();
 		}
 	}

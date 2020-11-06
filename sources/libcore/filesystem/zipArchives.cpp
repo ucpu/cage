@@ -9,12 +9,73 @@
 #include <vector>
 #include <algorithm>
 
+#include <zlib.h>
+
 namespace cage
 {
 	namespace
 	{
-		// tables taken from https://en.wikipedia.org/wiki/Zip_(file_format)
-		// full description at https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT
+		// provides a limited section of a file as another file
+		struct ProxyFile : public FileAbstract
+		{
+			Mutex *const mutex = nullptr;
+			File *f = nullptr;
+			const uintPtr start;
+			const uintPtr capacity;
+			uintPtr off = 0;
+
+			ProxyFile(Mutex *mutex, File *f, uintPtr start, uintPtr capacity) : FileAbstract(((FileAbstract *)f)->myPath, FileMode(true, false)), mutex(mutex), f(f), start(start), capacity(capacity)
+			{
+				CAGE_ASSERT(mutex);
+			}
+
+			~ProxyFile()
+			{}
+
+			void read(PointerRange<char> buffer) override
+			{
+				CAGE_ASSERT(f);
+				CAGE_ASSERT(buffer.size() <= capacity - off);
+				ScopeLock l(mutex);
+				f->seek(start + off);
+				f->read(buffer);
+				off += buffer.size();
+			}
+
+			void seek(uintPtr position) override
+			{
+				CAGE_ASSERT(f);
+				CAGE_ASSERT(position <= capacity);
+				off = position;
+			}
+
+			void close() override
+			{
+				f = nullptr;
+			}
+
+			uintPtr tell() const override
+			{
+				return off;
+			}
+
+			uintPtr size() const override
+			{
+				return capacity;
+			}
+		};
+
+		Holder<File> newProxyFile(Mutex *mutex, File *f, uintPtr start, uintPtr size)
+		{
+			return detail::systemArena().createImpl<File, ProxyFile>(mutex, f, start, size);
+		}
+	}
+
+	namespace
+	{
+		// structures: https://en.wikipedia.org/wiki/Zip_(file_format)
+		// full description: https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT
+		// external file attributes: https://docs.microsoft.com/en-us/windows/win32/fileio/file-attribute-constants
 		// example: https://users.cs.jmu.edu/buchhofp/forensics/formats/pkzip.html
 
 #pragma pack(push, 1)
@@ -133,6 +194,8 @@ namespace cage
 			Holder<File> src;
 			Holder<Mutex> mutex = newMutex();
 			std::vector<CDFileHeaderEx> files;
+			uint32 originalCDFilesPosition = 0;
+			uint32 originalEOCDPosition = 0;
 			bool modified = false;
 
 			// create a new empty archive
@@ -175,7 +238,8 @@ namespace cage
 							CAGE_THROW_ERROR(NotImplemented, "cannot read zip archives that span multiple disks");
 						totalFiles = e.totalNumberOfCDFRecords;
 						cdSize = e.sizeOfCD;
-						src->seek(e.offsetOfCD);
+						originalCDFilesPosition = e.offsetOfCD;
+						originalEOCDPosition = e.offsetOfCD + e.sizeOfCD;
 						break;
 					}
 					if (totalFiles == m)
@@ -183,6 +247,7 @@ namespace cage
 				}
 
 				{ // read central directory (populate files)
+					src->seek(originalCDFilesPosition); // seek to where the list of files is
 					files.reserve(totalFiles);
 					MemoryBuffer b = src->read(cdSize);
 					Deserializer d(b);
@@ -192,36 +257,55 @@ namespace cage
 						d >> (CDFileHeader &)e;
 						constexpr uint32 Signature = CDFileHeader().signature;
 						if (e.signature != Signature)
-							CAGE_THROW_ERROR(Exception, "invalid signature of a central directory file record in zip archive");
+							CAGE_THROW_ERROR(Exception, "zip file record has invalid signature");
 						if (e.diskNumberWhereFileStarts != 0)
-							CAGE_THROW_ERROR(Exception, "central directory file record indicates a different disk in zip archive");
+							CAGE_THROW_ERROR(Exception, "zip file record uses a different disk");
 						if (e.nameLength >= string::MaxLength)
-							CAGE_THROW_ERROR(Exception, "central directory file record name length is too large in zip archive");
+							CAGE_THROW_ERROR(Exception, "zip file record name length is too large");
+						if (e.uncompressedSize == m || e.compressedSize == m)
+							CAGE_THROW_ERROR(NotImplemented, "cannot read file, zip64 not yet supported");
 						e.name.rawLength() = e.nameLength;
 						d.read({ e.name.rawData(), e.name.rawData() + e.nameLength });
-						d.advance(e.extraFieldLength);
-						d.advance(e.commentLength);
+						e.name = pathSimplify(e.name);
+						e.nameLength = e.name.length();
+						if (!isPathSafe(e.name))
+							CAGE_THROW_ERROR(Exception, "zip file record name is dangerous");
+						if (e.extraFieldLength)
+						{
+							CAGE_LOG(SeverityEnum::Note, "zip", stringizer() + "name: " + subString(e.name, 0, 100));
+							CAGE_LOG(SeverityEnum::Warning, "zip", "skipping zip file extra fields");
+							d.advance(e.extraFieldLength);
+							e.extraFieldLength = 0;
+						}
+						if (e.commentLength)
+						{
+							CAGE_LOG(SeverityEnum::Note, "zip", stringizer() + "name: " + subString(e.name, 0, 100));
+							CAGE_LOG(SeverityEnum::Warning, "zip", "skipping zip file comment field");
+							d.advance(e.commentLength);
+							e.commentLength = 0;
+						}
 
+						e.externalFileAttributes &= ~0x20; // suppress FILE_ATTRIBUTE_ARCHIVE
+						e.externalFileAttributes &= ~0x800; // suppress FILE_ATTRIBUTE_COMPRESSED
+						if (e.externalFileAttributes == 0)
+							e.externalFileAttributes = 0x80; // make it FILE_ATTRIBUTE_NORMAL
 						if (e.externalFileAttributes != 0x80 && e.externalFileAttributes != 0x10)
 						{
-							CAGE_LOG(SeverityEnum::Warning, "zip", "skipping central directory file record with unknown external file attributes");
+							CAGE_LOG(SeverityEnum::Note, "zip", stringizer() + "name: " + subString(e.name, 0, 100) + ", attributes: " + e.externalFileAttributes);
+							CAGE_LOG(SeverityEnum::Warning, "zip", "skipping zip file record with unknown external file attributes");
 							continue;
 						}
 
-						e.name = pathSimplify(e.name);
-						e.nameLength = e.name.length();
-
-						if (!isPathSafe(e.name))
-							CAGE_THROW_ERROR(Exception, "central directory file record name is dangerous in zip archive");
-
 						files.push_back(templates::move(e));
 					}
+					std::sort(files.begin(), files.end());
 				}
 
 				{ // add records for missing directories
 					// todo
-					modified = false; // all modifications so far can be safely discarded
 				}
+
+				modified = false; // all modifications so far can be safely discarded
 			}
 
 			~ArchiveZip()
@@ -230,8 +314,24 @@ namespace cage
 				if (!modified)
 					return;
 
+				{ // overwrite previous CD files list and EOCD record to reduce confusion of some unzip programs
+					src->seek(originalCDFilesPosition);
+
+					// in case some files were removed, we may not have enough data to fill the file to the end (and no truncate), therefore, we fill some of the space with zeros
+					uint32 expectedToWrite = 0;
+					for (const CDFileHeaderEx &f : files)
+						expectedToWrite += numeric_cast<uint32>(sizeof(CDFileHeader) + f.nameLength + f.newContent.size());
+					const uint32 needToWrite = originalEOCDPosition - originalCDFilesPosition;
+					if (needToWrite > expectedToWrite)
+					{
+						MemoryBuffer buff;
+						buff.resize(needToWrite - expectedToWrite);
+						detail::memset(buff.data(), 0, buff.size());
+						src->write(buff);
+					}
+				}
+
 				// write modified files and update offsets
-				src->seek(src->size());
 				for (CDFileHeaderEx &f : files)
 				{
 					CAGE_ASSERT(f.name.length() == f.nameLength);
@@ -244,7 +344,7 @@ namespace cage
 
 					CAGE_ASSERT(f.compressionMethod == 0);
 					CAGE_ASSERT(f.uncompressedSize == f.newContent.size());
-					CAGE_ASSERT(f.uncompressedSize == f.compressedSize || f.compressedSize == 0);
+					CAGE_ASSERT(f.uncompressedSize == f.compressedSize);
 					CAGE_ASSERT(f.externalFileAttributes == 0x10 || f.externalFileAttributes == 0x80);
 					CAGE_ASSERT(f.externalFileAttributes == 0x80 || f.uncompressedSize == 0);
 
@@ -273,6 +373,9 @@ namespace cage
 					e.sizeOfCD = numeric_cast<uint32>(src->tell() - startOfCentralDirectory);
 					src->write(bufferView(e));
 				}
+
+				// ensure we wrote to the very end of the file
+				CAGE_ASSERT(src->tell() == src->size());
 			}
 
 			uint32 createRecord(const string &path)
@@ -368,21 +471,13 @@ namespace cage
 				CAGE_ASSERT(isPathValid(from));
 				CAGE_ASSERT(isPathValid(to));
 
-				ScopeLock l(mutex);
-				uint32 index = findRecordIndex(from);
-				if (any(typeNoLock(index) & PathTypeFlags::NotFound))
-					CAGE_THROW_ERROR(Exception, "source file or directory does not exist");
-				testFileNotLocked(index);
-				if (none(typeNoLock(to) & PathTypeFlags::NotFound))
-				{
-					removeNoLock(to);
-					index = findRecordIndex(from);
-				}
+				if (from == to)
+					return;
 
-				CAGE_ASSERT(index != m);
-				files[index].name = to;
-				files[index].nameLength = to.length();
-				modified = true;
+				// todo optimize this
+				MemoryBuffer buff = openFile(from, FileMode(true, false))->readAll();
+				openFile(to, FileMode(false, true))->write(buff);
+				remove(from);
 			}
 
 			void removeNoLock(const string &path)
@@ -411,15 +506,7 @@ namespace cage
 			Holder<DirectoryList> listDirectory(const string &path) const override;
 		};
 
-		Holder<File> newProxyFile(File *f, uintPtr start, uintPtr size)
-		{
-			// temporarily copy the source into buffer
-			// todo actual proxy file
-			f->seek(start);
-			MemoryBuffer b = f->read(size);
-			return newFileBuffer(std::move(b), FileMode(true, false));
-		}
-
+		// file contained within the zip archive
 		struct FileZip : public FileAbstract
 		{
 			const std::shared_ptr<ArchiveZip> a;
@@ -476,7 +563,7 @@ namespace cage
 					if (r.modified)
 						src = newFileBuffer(PointerRange<char>(r.newContent), FileMode(true, false));
 					else
-						src = newProxyFile(+a->src, r.getFileStartOffset(), r.uncompressedSize);
+						src = newProxyFile(+a->mutex, +a->src, r.getFileStartOffset(), r.uncompressedSize);
 				}
 
 				CAGE_ASSERT(src);
@@ -543,6 +630,11 @@ namespace cage
 				h.name = myName;
 				h.nameLength = myName.length();
 				h.newContent = templates::move(buff);
+				{
+					uint32 crc = crc32_z(0, nullptr, 0);
+					crc = crc32_z(crc, (unsigned char *)h.newContent.data(), h.newContent.size());
+					h.crc32ofUncompressedData = crc;
+				}
 				h.locked = true; // unlocked from the destructor only
 				h.modified = true;
 
@@ -577,6 +669,7 @@ namespace cage
 			}
 		};
 
+		// listing a directory contained within a zip archive
 		struct DirectoryListZip : public DirectoryListAbstract
 		{
 			const std::shared_ptr<const ArchiveZip> a;

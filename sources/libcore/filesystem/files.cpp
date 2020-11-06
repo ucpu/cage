@@ -71,6 +71,7 @@ namespace cage
 		std::shared_ptr<ArchiveAbstract> archiveTryGet(const std::shared_ptr<ArchiveAbstract> &parent, const string &inPath)
 		{
 			const string fullPath = parent ? pathJoin(parent->myPath, inPath) : inPath;
+			CAGE_ASSERT(fullPath == pathSimplify(fullPath));
 			ArchivesCache &cache = archivesCache();
 			auto it = cache.map.find(fullPath);
 			if (it != cache.map.end())
@@ -141,40 +142,34 @@ namespace cage
 				walkLeft(p, inside);
 		}
 
-		string walkImaginaryPath(std::shared_ptr<ArchiveAbstract> &a, bool allowExactMatch, const string &inside)
+		ArchiveInPath walkImaginaryPath(std::shared_ptr<ArchiveAbstract> &a, const string &path, bool allowExactMatch, bool archiveInsideArchive)
 		{
 			CAGE_ASSERT(a);
-			string p, i = inside;
-			while (!i.empty())
+			string p, i = path;
+			while (true)
 			{
-				if (!allowExactMatch && inside.empty())
-					break;
+				if (i.empty())
+					return { a, path, archiveInsideArchive };
 				walkRight(p, i);
 				std::shared_ptr<ArchiveAbstract> b = archiveTryGet(a, p);
 				if (b)
-				{
-					a = b;
-					return walkImaginaryPath(a, allowExactMatch, i);
-				}
+					return walkImaginaryPath(b, i, allowExactMatch, true);
 			}
-			return inside;
 		}
 	}
 
-	std::shared_ptr<ArchiveAbstract> archiveFindTowardsRoot(const string &path_, bool allowExactMatch, string &inside)
+	ArchiveInPath archiveFindTowardsRoot(const string &path_, bool allowExactMatch)
 	{
-		CAGE_ASSERT(inside.empty());
 		string path = pathToAbs(path_);
 		ArchivesCache &cache = archivesCache();
 		ScopeLock<Mutex> l(cache.mutex);
-		CAGE_ASSERT(inside.empty());
+		string inside;
 		walkRealPath(path, inside);
 		if (!allowExactMatch && inside.empty())
 			return {}; // exact match is forbidden
 		std::shared_ptr<ArchiveAbstract> a = archiveTryGet(path);
 		if (!a)
 			return {}; // does not exist
-		inside = walkImaginaryPath(a, allowExactMatch, inside);
-		return a;
+		return walkImaginaryPath(a, inside, allowExactMatch, false);
 	}
 }

@@ -132,8 +132,7 @@ namespace cage
 
 	Holder<File> newFile(const string &path, const FileMode &mode)
 	{
-		string p;
-		auto a = archiveFindTowardsRoot(path, false, p);
+		auto [a, p, aia] = archiveFindTowardsRoot(path, false);
 		if (a)
 			return a->openFile(p, mode);
 		else
@@ -214,8 +213,7 @@ namespace cage
 
 	Holder<DirectoryList> newDirectoryList(const string &path)
 	{
-		string p;
-		auto a = archiveFindTowardsRoot(path, true, p);
+		auto [a, p, aia] = archiveFindTowardsRoot(path, true);
 		if (a)
 			return a->listDirectory(p);
 		else
@@ -226,14 +224,12 @@ namespace cage
 	{
 		if (!pathIsValid(path))
 			return PathTypeFlags::Invalid;
-		string p;
-		auto a = archiveFindTowardsRoot(path, true, p);
+		auto [a, p, aia] = archiveFindTowardsRoot(path, true);
 		if (a)
 		{
 			if (p.empty())
 			{
-				const PathTypeFlags pf = pathType(pathJoin(path, "..")); // todo optimize this call away
-				const PathTypeFlags fp = any(pf & (PathTypeFlags::Archive | PathTypeFlags::InsideArchive)) ? PathTypeFlags::InsideArchive : PathTypeFlags::None;
+				const PathTypeFlags fp = aia ? PathTypeFlags::InsideArchive : PathTypeFlags::None;
 				return PathTypeFlags::File | PathTypeFlags::Archive | fp;
 			}
 			return a->type(p) | PathTypeFlags::InsideArchive;
@@ -249,8 +245,7 @@ namespace cage
 
 	void pathCreateDirectories(const string &path)
 	{
-		string p;
-		auto a = archiveFindTowardsRoot(path, true, p);
+		auto [a, p, aia] = archiveFindTowardsRoot(path, true);
 		if (a)
 			a->createDirectories(p);
 		else
@@ -268,9 +263,8 @@ namespace cage
 
 	void pathMove(const string &from, const string &to)
 	{
-		string pf, pt;
-		auto af = archiveFindTowardsRoot(from, false, pf);
-		auto at = archiveFindTowardsRoot(to, false, pt);
+		auto [af, pf, aiaf] = archiveFindTowardsRoot(from, false);
+		auto [at, pt, aiat] = archiveFindTowardsRoot(to, false);
 		if (!af && !at)
 			return realMove(from, to);
 		if (af && af == at)
@@ -280,8 +274,7 @@ namespace cage
 
 	void pathRemove(const string &path)
 	{
-		string p;
-		auto a = archiveFindTowardsRoot(path, false, p);
+		auto [a, p, aia] = archiveFindTowardsRoot(path, false);
 		if (a)
 			a->remove(p);
 		else
@@ -290,8 +283,7 @@ namespace cage
 
 	uint64 pathLastChange(const string &path)
 	{
-		string p;
-		auto a = archiveFindTowardsRoot(path, false, p);
+		auto [a, p, aia] = archiveFindTowardsRoot(path, false);
 		if (a)
 			return a->lastChange(p);
 		else
