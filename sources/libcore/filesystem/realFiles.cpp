@@ -307,6 +307,19 @@ namespace cage
 				}
 			}
 
+			void reopenForModification() override
+			{
+				CAGE_ASSERT(mode.read && !mode.write);
+				CAGE_ASSERT(f);
+				mode.write = true;
+				f = freopen(myPath.c_str(), mode.mode().c_str(), f);
+				if (!f)
+				{
+					CAGE_LOG_THROW(stringizer() + "path: " + myPath);
+					CAGE_THROW_ERROR(SystemError, "freopen", errno);
+				}
+			}
+
 			void read(PointerRange<char> buffer) override
 			{
 				CAGE_ASSERT(f);

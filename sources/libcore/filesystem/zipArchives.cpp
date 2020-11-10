@@ -206,9 +206,9 @@ namespace cage
 			}
 
 			// open existing archive
-			ArchiveZip(Holder<File> &&file) : ArchiveAbstract(((FileAbstract*)+file)->myPath), src(templates::move(file))
+			ArchiveZip(Holder<File> &&file) : ArchiveAbstract(((FileAbstract *)+file)->myPath), src(templates::move(file))
 			{
-				CAGE_ASSERT(src->mode().read && src->mode().write && !src->mode().append && !src->mode().textual);
+				CAGE_ASSERT(src->mode().read && !src->mode().write && !src->mode().append && !src->mode().textual);
 
 				uint32 totalFiles = m;
 				uint32 cdSize = 0;
@@ -311,6 +311,7 @@ namespace cage
 			~ArchiveZip()
 			{
 				CAGE_ASSERT(src);
+				CAGE_ASSERT(src->mode().write == modified);
 				if (!modified)
 					return;
 
@@ -376,6 +377,13 @@ namespace cage
 
 				// ensure we wrote to the very end of the file
 				CAGE_ASSERT(src->tell() == src->size());
+			}
+
+			void reopenForModification()
+			{
+				if (src->mode().write)
+					return; // already modifiable
+				((FileAbstract *)+src)->reopenForModification();
 			}
 
 			uint32 createRecord(const string &path)
@@ -463,6 +471,7 @@ namespace cage
 			void createDirectories(const string &path) override
 			{
 				ScopeLock l(mutex);
+				reopenForModification();
 				createDirectoriesNoLock(path);
 			}
 
@@ -493,6 +502,7 @@ namespace cage
 			void remove(const string &path) override
 			{
 				ScopeLock l(mutex);
+				reopenForModification();
 				removeNoLock(path);
 			}
 
@@ -510,20 +520,22 @@ namespace cage
 		struct FileZip : public FileAbstract
 		{
 			const std::shared_ptr<ArchiveZip> a;
-			const string myName;
+			const string myName; // name inside the archive
 			MemoryBuffer buff;
 			Holder<File> src;
 			bool modified = false;
 
 			FileZip(const std::shared_ptr<ArchiveZip> &archive, const string &name, FileMode mode) : FileAbstract(pathJoin(archive->myPath, name), mode), a(archive), myName(name)
 			{
-				CAGE_ASSERT(!name.empty());
+				CAGE_ASSERT(!name.empty()); // empty name would be valid for folder but not for file
 				CAGE_ASSERT(isPathValid(name));
 				CAGE_ASSERT(mode.valid());
 				CAGE_ASSERT(!mode.append);
 				CAGE_ASSERT(!mode.textual);
 
 				ScopeLock l(a->mutex);
+				if (mode.write)
+					a->reopenForModification();
 				uint32 index = a->findRecordIndex(name);
 				if (a->typeNoLock(index) == PathTypeFlags::Directory)
 					CAGE_THROW_ERROR(Exception, "cannot open file in zip archive, the path is a directory");
@@ -591,6 +603,27 @@ namespace cage
 				h.locked = false;
 			}
 
+			void reopenForModificationInternal()
+			{
+				CAGE_ASSERT(!modified);
+				const uintPtr pos = src->tell();
+				src->seek(0);
+				buff = src->readAll();
+				src = newFileBuffer(&buff);
+				src->seek(pos);
+				modified = true;
+			}
+
+			void reopenForModification() override
+			{
+				CAGE_ASSERT(!modified);
+				CAGE_ASSERT(!mode.write);
+				CAGE_ASSERT(src);
+				a->reopenForModification();
+				reopenForModificationInternal();
+				mode.write = true;
+			}
+
 			void read(PointerRange<char> buffer) override
 			{
 				CAGE_ASSERT(mode.read);
@@ -603,14 +636,7 @@ namespace cage
 				CAGE_ASSERT(mode.write);
 				CAGE_ASSERT(src);
 				if (!modified)
-				{
-					const uintPtr pos = src->tell();
-					src->seek(0);
-					buff = src->readAll();
-					src = newFileBuffer(&buff);
-					src->seek(pos);
-					modified = true;
-				}
+					reopenForModificationInternal();
 				src->write(buffer);
 			}
 
@@ -650,6 +676,7 @@ namespace cage
 			void close() override
 			{
 				CAGE_ASSERT(src);
+				src.clear();
 				if (modified)
 				{
 					ScopeLock l(a->mutex);

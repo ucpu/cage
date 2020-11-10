@@ -14,6 +14,11 @@ namespace cage
 		CAGE_ASSERT(path == pathSimplify(path));
 	}
 
+	void FileAbstract::reopenForModification()
+	{
+		CAGE_THROW_CRITICAL(NotImplemented, "reopening for modification a file that does not support it");
+	}
+
 	void FileAbstract::read(PointerRange<char> buffer)
 	{
 		CAGE_THROW_CRITICAL(NotImplemented, "reading from write-only file");
@@ -118,7 +123,7 @@ namespace cage
 				std::shared_ptr<ArchiveAbstract> a;
 				{
 					detail::OverrideException oe;
-					a = archiveOpenZip(parent ? parent->openFile(inPath, FileMode(true, true)) : realNewFile(fullPath, FileMode(true, true)));
+					a = archiveOpenZip(parent ? parent->openFile(inPath, FileMode(true, false)) : realNewFile(fullPath, FileMode(true, false)));
 				}
 				CAGE_ASSERT(a);
 				return cache.assign(a);

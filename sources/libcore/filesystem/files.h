@@ -11,13 +11,14 @@ namespace cage
 	{
 	public:
 		const string myPath; // full name as seen by the application
-		const FileMode mode;
+		FileMode mode;
 
 		FileAbstract(const string &path, const FileMode &mode);
 		virtual ~FileAbstract() {}
 
-		virtual void read(PointerRange<char> buffer); // error by default
-		virtual void write(PointerRange<const char> buffer); // error by default
+		virtual void reopenForModification(); // critical error by default
+		virtual void read(PointerRange<char> buffer); // critical error by default
+		virtual void write(PointerRange<const char> buffer); // critical error by default
 		virtual void seek(uintPtr position) = 0;
 		virtual void close() = 0;
 		virtual uintPtr tell() const = 0;
