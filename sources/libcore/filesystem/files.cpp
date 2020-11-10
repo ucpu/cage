@@ -58,8 +58,43 @@ namespace cage
 	{
 		struct ArchivesCache
 		{
+			std::shared_ptr<ArchiveAbstract> tryGet(const string &path) const
+			{
+				ScopeLock<Mutex> l(mutex);
+				return tryGetNoLock(path);
+			}
+
+			std::shared_ptr<ArchiveAbstract> assign(std::shared_ptr<ArchiveAbstract> a)
+			{
+				// multiple threads might have opened the same archive simultaneously and the first one might already have some changes applied to it,
+				// therefore we need to first check if another archive with the same path already exists
+				// the newly opened archive can be safely discarded (outside lock) again as no changes could possibly be made to it yet
+				ScopeLock<Mutex> l(mutex);
+				auto old = tryGetNoLock(a->myPath);
+				if (old)
+					return old;
+				map[a->myPath] = a;
+				return a;
+			}
+
+		private:
 			Holder<Mutex> mutex = newMutex();
 			std::map<string, std::weak_ptr<ArchiveAbstract>, StringComparatorFast> map;
+
+			std::shared_ptr<ArchiveAbstract> tryGetNoLock(const string &path) const
+			{
+				auto it = map.find(path);
+				if (it != map.end())
+				{
+					auto l = it->second.lock();
+					if (l)
+					{
+						CAGE_ASSERT(l->myPath == path);
+					}
+					return l;
+				}
+				return {};
+			}
 		};
 
 		ArchivesCache &archivesCache()
@@ -73,20 +108,20 @@ namespace cage
 			const string fullPath = parent ? pathJoin(parent->myPath, inPath) : inPath;
 			CAGE_ASSERT(fullPath == pathSimplify(fullPath));
 			ArchivesCache &cache = archivesCache();
-			auto it = cache.map.find(fullPath);
-			if (it != cache.map.end())
 			{
-				auto a = it->second.lock();
+				auto a = cache.tryGet(fullPath);
 				if (a)
 					return a;
 			}
 			try
 			{
-				detail::OverrideException oe;
-				auto a = archiveOpenZip(parent ? parent->openFile(inPath, FileMode(true, true)) : realNewFile(fullPath, FileMode(true, true)));
+				std::shared_ptr<ArchiveAbstract> a;
+				{
+					detail::OverrideException oe;
+					a = archiveOpenZip(parent ? parent->openFile(inPath, FileMode(true, true)) : realNewFile(fullPath, FileMode(true, true)));
+				}
 				CAGE_ASSERT(a);
-				cache.map[fullPath] = a;
-				return a;
+				return cache.assign(a);
 			}
 			catch (const Exception &)
 			{
@@ -161,8 +196,6 @@ namespace cage
 	ArchiveInPath archiveFindTowardsRoot(const string &path_, bool allowExactMatch)
 	{
 		string path = pathToAbs(path_);
-		ArchivesCache &cache = archivesCache();
-		ScopeLock<Mutex> l(cache.mutex);
 		string inside;
 		walkRealPath(path, inside);
 		if (!allowExactMatch && inside.empty())

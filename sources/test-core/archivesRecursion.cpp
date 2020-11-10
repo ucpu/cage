@@ -67,4 +67,28 @@ void testArchivesRecursion()
 		CAGE_TEST(any(pathType("testdir/0.zip/1.zip/2.zip/welcome") & PathTypeFlags::File));
 		CAGE_TEST(any(pathType("testdir/0.zip/1.zip/2.zip/welcome") & PathTypeFlags::InsideArchive));
 	}
+
+	{
+		CAGE_TESTCASE("opening an archive (inside archive) as regular file");
+		{
+			CAGE_TESTCASE("with open archive");
+			string p = "testdir";
+			for (uint32 i = 0; i < 5; i++)
+			{
+				p = pathJoin(p, stringizer() + i + ".zip");
+				Holder<DirectoryList> list = newDirectoryList(p); // ensure the archive is open
+				CAGE_TEST(list->valid()); // sanity check that there is at least one file in the archive
+				CAGE_TEST_THROWN(readFile(p));
+			}
+		}
+		{
+			CAGE_TESTCASE("with closed archive");
+			string p = "testdir";
+			for (uint32 i = 0; i < 5; i++)
+			{
+				p = pathJoin(p, stringizer() + i + ".zip");
+				CAGE_TEST_THROWN(readFile(p));
+			}
+		}
+	}
 }

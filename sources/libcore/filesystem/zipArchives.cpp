@@ -517,6 +517,7 @@ namespace cage
 
 			FileZip(const std::shared_ptr<ArchiveZip> &archive, const string &name, FileMode mode) : FileAbstract(pathJoin(archive->myPath, name), mode), a(archive), myName(name)
 			{
+				CAGE_ASSERT(!name.empty());
 				CAGE_ASSERT(isPathValid(name));
 				CAGE_ASSERT(mode.valid());
 				CAGE_ASSERT(!mode.append);

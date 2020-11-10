@@ -337,6 +337,21 @@ void testArchives()
 		}
 	}
 
+	{
+		CAGE_TESTCASE("opening an archive as regular file");
+		const string arch = directories[1];
+		{
+			CAGE_TESTCASE("with open archive");
+			Holder<DirectoryList> list = newDirectoryList(arch); // ensure the archive is open
+			CAGE_TEST(list->valid()); // sanity check that there is at least one file in the archive
+			CAGE_TEST_THROWN(readFile(arch));
+		}
+		{
+			CAGE_TESTCASE("with closed archive");
+			CAGE_TEST_THROWN(readFile(arch));
+		}
+	}
+
 	// todo lastChange
 	// todo concurrent reading/writing from/to multiple (different) files
 }

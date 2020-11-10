@@ -132,9 +132,13 @@ namespace cage
 
 	Holder<File> newFile(const string &path, const FileMode &mode)
 	{
-		auto [a, p, aia] = archiveFindTowardsRoot(path, false);
+		auto [a, p, aia] = archiveFindTowardsRoot(path, true);
 		if (a)
+		{
+			if (p.empty())
+				CAGE_THROW_ERROR(Exception, "cannot open archive file as regular file");
 			return a->openFile(p, mode);
+		}
 		else
 			return realNewFile(path, mode);
 	}
