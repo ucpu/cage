@@ -352,6 +352,42 @@ void testArchives()
 		}
 	}
 
+	{
+		CAGE_TESTCASE("manipulating a file that is opened as an archive");
+		pathCreateArchive("testdir/arch2.zip");
+		{
+			CAGE_TESTCASE("remove");
+			{
+				Holder<DirectoryList> list = newDirectoryList("testdir/arch2.zip"); // open the archive
+				CAGE_TEST_THROWN(pathRemove("testdir/arch2.zip"));
+			}
+			CAGE_TEST(any(pathType("testdir/arch2.zip") & PathTypeFlags::Archive)); // sanity check
+		}
+		{
+			CAGE_TESTCASE("move from");
+			{
+				Holder<DirectoryList> list = newDirectoryList("testdir/arch2.zip"); // open the archive
+				CAGE_TEST_THROWN(pathMove("testdir/arch2.zip", "testdir/arch3.zip"));
+			}
+			CAGE_TEST(any(pathType("testdir/arch2.zip") & PathTypeFlags::Archive)); // sanity check
+			CAGE_TEST(none(pathType("testdir/arch3.zip") & PathTypeFlags::Archive)); // sanity check
+		}
+		{
+			CAGE_TESTCASE("move to");
+			{
+				Holder<DirectoryList> list = newDirectoryList("testdir/arch2.zip"); // open the archive
+				CAGE_TEST_THROWN(pathMove("testdir/archive.zip", "testdir/arch2.zip"));
+			}
+			CAGE_TEST(any(pathType("testdir/arch2.zip") & PathTypeFlags::Archive)); // sanity check
+			CAGE_TEST(any(pathType("testdir/archive.zip") & PathTypeFlags::Archive)); // sanity check
+		}
+		{
+			CAGE_TESTCASE("allowed remove");
+			pathRemove("testdir/arch2.zip"); // finally try to remove the file
+			CAGE_TEST(none(pathType("testdir/arch2.zip") & PathTypeFlags::File)); // sanity check
+		}
+	}
+
 	// todo lastChange
 	// todo concurrent reading/writing from/to multiple (different) files
 }

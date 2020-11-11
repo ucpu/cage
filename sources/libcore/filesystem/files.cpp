@@ -6,6 +6,7 @@
 #include "files.h"
 
 #include <map>
+#include <atomic>
 
 namespace cage
 {
@@ -61,6 +62,13 @@ namespace cage
 
 	namespace
 	{
+		// is A equal B or is A a parent of B
+		bool isEqualOrParentOf(const string &a, const string &b)
+		{
+			CAGE_ASSERT(pathIsAbs(a) && pathIsAbs(b) && pathSimplify(a) == a && pathSimplify(b) == b);
+			return a == b || isPattern(b, a + "/", "", "");
+		}
+
 		struct ArchivesCache
 		{
 			std::shared_ptr<ArchiveAbstract> tryGet(const string &path) const
@@ -80,6 +88,43 @@ namespace cage
 					return old;
 				map[a->myPath] = a;
 				return a;
+			}
+
+			void closeOrThrow(const string &path)
+			{
+				const string ap = pathToAbs(path);
+				ScopeLock<Mutex> lck(mutex);
+				for (const auto &it : map)
+				{
+					if (!isEqualOrParentOf(ap, it.first))
+						continue;
+					{
+						// first try to close the archive if it was open only for reading
+						auto l = it.second.lock();
+						if (!l)
+							continue;
+						archiveOpenKeeperRemove(l);
+					}
+					if (it.second.lock())
+					{
+						CAGE_LOG_THROW(stringizer() + "path: " + ap);
+						CAGE_LOG_THROW(stringizer() + "archive: " + it.first);
+						CAGE_THROW_ERROR(Exception, "path cannot be manipulated because an archive is opened");
+					}
+				}
+			}
+
+			void cleaning()
+			{
+				ScopeLock<Mutex> l(mutex);
+				auto it = map.begin();
+				while (it != map.end())
+				{
+					if (!it->second.lock())
+						it = map.erase(it);
+					else
+						it++;
+				}
 			}
 
 		private:
@@ -196,18 +241,104 @@ namespace cage
 					return walkImaginaryPath(b, i, allowExactMatch, true);
 			}
 		}
+
+		ArchiveInPath splitArchiveAndInsidePath(const string &path_, bool allowExactMatch)
+		{
+			string path = pathToAbs(path_);
+			string inside;
+			walkRealPath(path, inside);
+			if (!allowExactMatch && inside.empty())
+				return {}; // exact match is forbidden
+			std::shared_ptr<ArchiveAbstract> a = archiveTryGet(path);
+			if (!a)
+				return {}; // does not exist
+			return walkImaginaryPath(a, inside, allowExactMatch, false);
+		}
+
+		struct ArchiveOpenKeeper
+		{
+			~ArchiveOpenKeeper()
+			{
+				stopping = true;
+				maintenanceThread->wait();
+			}
+
+			void add(std::shared_ptr<ArchiveAbstract> a)
+			{
+				ScopeLock<Mutex> l(mutex);
+				archs[a] = 0;
+			}
+
+			void remove(std::shared_ptr<ArchiveAbstract> a)
+			{
+				ScopeLock<Mutex> l(mutex);
+				archs.erase(a);
+			}
+
+		private:
+			void tick()
+			{
+				{
+					std::shared_ptr<ArchiveAbstract> tbr;
+					{
+						ScopeLock<Mutex> l(mutex);
+						for (auto &it : archs)
+						{
+							if (it.second++ > 20)
+							{
+								tbr = it.first;
+								archs.erase(tbr);
+								break;
+							}
+						}
+					}
+					// tbr is destroyed here, outside the lock, to prevent deadlock
+				}
+				archivesCache().cleaning();
+			}
+
+			void threadEntry()
+			{
+				while (!stopping)
+				{
+					try
+					{
+						tick();
+					}
+					catch (const cage::Exception &)
+					{
+						stopping = true;
+					}
+					threadSleep(50 * 1000);
+				}
+			}
+
+			Holder<Mutex> mutex = newMutex();
+			std::map<std::shared_ptr<ArchiveAbstract>, uint32> archs;
+			std::atomic<bool> stopping = false;
+			Holder<Thread> maintenanceThread = newThread(Delegate<void()>().bind<ArchiveOpenKeeper, &ArchiveOpenKeeper::threadEntry>(this), "files-maintenance");
+		} archiveOpenKeeper;
 	}
 
-	ArchiveInPath archiveFindTowardsRoot(const string &path_, bool allowExactMatch)
+	ArchiveInPath archiveFindTowardsRoot(const string &path, bool allowExactMatch)
 	{
-		string path = pathToAbs(path_);
-		string inside;
-		walkRealPath(path, inside);
-		if (!allowExactMatch && inside.empty())
-			return {}; // exact match is forbidden
-		std::shared_ptr<ArchiveAbstract> a = archiveTryGet(path);
-		if (!a)
-			return {}; // does not exist
-		return walkImaginaryPath(a, inside, allowExactMatch, false);
+		if (!allowExactMatch)
+		{
+			// forbid manipulating a file that is opened as an archive
+			archivesCache().closeOrThrow(path);
+		}
+		ArchiveInPath r = splitArchiveAndInsidePath(path, allowExactMatch);
+		CAGE_ASSERT(allowExactMatch || !r.archive != !r.insidePath.empty());
+		return r;
+	}
+
+	void archiveOpenKeeperAdd(std::shared_ptr<ArchiveAbstract> a)
+	{
+		archiveOpenKeeper.add(a);
+	}
+
+	void archiveOpenKeeperRemove(std::shared_ptr<ArchiveAbstract> a)
+	{
+		archiveOpenKeeper.remove(a);
 	}
 }

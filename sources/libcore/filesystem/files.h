@@ -79,6 +79,10 @@ namespace cage
 
 	void archiveCreateZip(const string &path, const string &options);
 	std::shared_ptr<ArchiveAbstract> archiveOpenZip(Holder<File> &&f);
+
+	// while an archive is opened for reading only, it can be added to this list to keep it opened for little longer, in case that it would be accessed again
+	void archiveOpenKeeperAdd(std::shared_ptr<ArchiveAbstract> a);
+	void archiveOpenKeeperRemove(std::shared_ptr<ArchiveAbstract> a);
 }
 
 #endif // guard_files_h_sdrgds45rfgt

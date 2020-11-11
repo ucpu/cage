@@ -384,6 +384,7 @@ namespace cage
 				if (src->mode().write)
 					return; // already modifiable
 				((FileAbstract *)+src)->reopenForModification();
+				archiveOpenKeeperRemove(shared_from_this());
 			}
 
 			uint32 createRecord(const string &path)
@@ -437,6 +438,7 @@ namespace cage
 
 			PathTypeFlags type(const string &path) const override
 			{
+				CAGE_ASSERT(isPathValid(path));
 				ScopeLock l(mutex);
 				return typeNoLock(path);
 			}
@@ -470,6 +472,7 @@ namespace cage
 
 			void createDirectories(const string &path) override
 			{
+				CAGE_ASSERT(isPathValid(path));
 				ScopeLock l(mutex);
 				reopenForModification();
 				createDirectoriesNoLock(path);
@@ -477,6 +480,8 @@ namespace cage
 
 			void move(const string &from, const string &to) override
 			{
+				CAGE_ASSERT(!from.empty());
+				CAGE_ASSERT(!to.empty());
 				CAGE_ASSERT(isPathValid(from));
 				CAGE_ASSERT(isPathValid(to));
 
@@ -501,6 +506,8 @@ namespace cage
 
 			void remove(const string &path) override
 			{
+				CAGE_ASSERT(!path.empty());
+				CAGE_ASSERT(isPathValid(path));
 				ScopeLock l(mutex);
 				reopenForModification();
 				removeNoLock(path);
@@ -508,6 +515,7 @@ namespace cage
 
 			uint64 lastChange(const string &path) const override
 			{
+				CAGE_ASSERT(!path.empty());
 				CAGE_ASSERT(isPathValid(path));
 				CAGE_THROW_CRITICAL(NotImplemented, "reading last modification time of a file inside zip archive is not yet supported");
 			}
@@ -527,7 +535,7 @@ namespace cage
 
 			FileZip(const std::shared_ptr<ArchiveZip> &archive, const string &name, FileMode mode) : FileAbstract(pathJoin(archive->myPath, name), mode), a(archive), myName(name)
 			{
-				CAGE_ASSERT(!name.empty()); // empty name would be valid for folder but not for file
+				CAGE_ASSERT(!name.empty());
 				CAGE_ASSERT(isPathValid(name));
 				CAGE_ASSERT(mode.valid());
 				CAGE_ASSERT(!mode.append);
@@ -601,11 +609,15 @@ namespace cage
 				CDFileHeaderEx &h = a->files[index];
 				CAGE_ASSERT(h.locked);
 				h.locked = false;
+
+				if (!a->modified)
+					archiveOpenKeeperAdd(a);
 			}
 
 			void reopenForModificationInternal()
 			{
 				CAGE_ASSERT(!modified);
+				a->reopenForModification();
 				const uintPtr pos = src->tell();
 				src->seek(0);
 				buff = src->readAll();
@@ -619,7 +631,6 @@ namespace cage
 				CAGE_ASSERT(!modified);
 				CAGE_ASSERT(!mode.write);
 				CAGE_ASSERT(src);
-				a->reopenForModification();
 				reopenForModificationInternal();
 				mode.write = true;
 			}
@@ -756,7 +767,9 @@ namespace cage
 
 	std::shared_ptr<ArchiveAbstract> archiveOpenZip(Holder<File> &&f)
 	{
-		return std::make_shared<ArchiveZip>(templates::move(f));
+		auto a = std::make_shared<ArchiveZip>(templates::move(f));
+		archiveOpenKeeperAdd(a);
+		return a;
 	}
 }
 

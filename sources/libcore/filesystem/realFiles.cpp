@@ -123,12 +123,15 @@ namespace cage
 		const PathTypeFlags t = realType(path);
 		if (any(t & PathTypeFlags::Directory))
 		{
-			Holder<DirectoryList> list = newDirectoryList(path);
-			while (list->valid())
 			{
-				pathRemove(pathJoin(path, list->name()));
-				list->next();
+				Holder<DirectoryList> list = realNewDirectoryList(path);
+				while (list->valid())
+				{
+					pathRemove(pathJoin(path, list->name()));
+					list->next();
+				}
 			}
+
 #ifdef CAGE_SYSTEM_WINDOWS
 			if (RemoveDirectory(path.c_str()) == 0)
 				CAGE_THROW_ERROR(SystemError, "RemoveDirectory", GetLastError());

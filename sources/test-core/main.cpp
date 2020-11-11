@@ -116,7 +116,11 @@ int main()
 	testUdpDiscovery();
 	testProgram();
 	testSystemInformation();
-	pathRemove("testdir");
+
+	{
+		CAGE_TESTCASE("removing testdir");
+		pathRemove("testdir");
+	}
 
 	{
 		CAGE_TESTCASE("all tests done ok");
