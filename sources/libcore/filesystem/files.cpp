@@ -6,6 +6,7 @@
 #include "files.h"
 
 #include <map>
+#include <vector>
 #include <atomic>
 
 namespace cage
@@ -69,7 +70,7 @@ namespace cage
 			return a == b || isPattern(b, a + "/", "", "");
 		}
 
-		struct ArchivesCache
+		struct ArchivesCache : private Immovable
 		{
 			std::shared_ptr<ArchiveAbstract> tryGet(const string &path) const
 			{
@@ -198,7 +199,7 @@ namespace cage
 		}
 
 #ifdef CAGE_DEBUG
-		class WalkTester
+		class WalkTester : private Immovable
 		{
 		public:
 			WalkTester()
@@ -254,70 +255,6 @@ namespace cage
 				return {}; // does not exist
 			return walkImaginaryPath(a, inside, allowExactMatch, false);
 		}
-
-		struct ArchiveOpenKeeper
-		{
-			~ArchiveOpenKeeper()
-			{
-				stopping = true;
-				maintenanceThread->wait();
-			}
-
-			void add(std::shared_ptr<ArchiveAbstract> a)
-			{
-				ScopeLock<Mutex> l(mutex);
-				archs[a] = 0;
-			}
-
-			void remove(std::shared_ptr<ArchiveAbstract> a)
-			{
-				ScopeLock<Mutex> l(mutex);
-				archs.erase(a);
-			}
-
-		private:
-			void tick()
-			{
-				{
-					std::shared_ptr<ArchiveAbstract> tbr;
-					{
-						ScopeLock<Mutex> l(mutex);
-						for (auto &it : archs)
-						{
-							if (it.second++ > 20)
-							{
-								tbr = it.first;
-								archs.erase(tbr);
-								break;
-							}
-						}
-					}
-					// tbr is destroyed here, outside the lock, to prevent deadlock
-				}
-				archivesCache().cleaning();
-			}
-
-			void threadEntry()
-			{
-				while (!stopping)
-				{
-					try
-					{
-						tick();
-					}
-					catch (const cage::Exception &)
-					{
-						stopping = true;
-					}
-					threadSleep(50 * 1000);
-				}
-			}
-
-			Holder<Mutex> mutex = newMutex();
-			std::map<std::shared_ptr<ArchiveAbstract>, uint32> archs;
-			std::atomic<bool> stopping = false;
-			Holder<Thread> maintenanceThread = newThread(Delegate<void()>().bind<ArchiveOpenKeeper, &ArchiveOpenKeeper::threadEntry>(this), "files-maintenance");
-		} archiveOpenKeeper;
 	}
 
 	ArchiveInPath archiveFindTowardsRoot(const string &path, bool allowExactMatch)
@@ -334,11 +271,11 @@ namespace cage
 
 	void archiveOpenKeeperAdd(std::shared_ptr<ArchiveAbstract> a)
 	{
-		archiveOpenKeeper.add(a);
+		// this has been abandoned - it was causing too many troubles
 	}
 
 	void archiveOpenKeeperRemove(std::shared_ptr<ArchiveAbstract> a)
 	{
-		archiveOpenKeeper.remove(a);
+		// this has been abandoned - it was causing too many troubles
 	}
 }

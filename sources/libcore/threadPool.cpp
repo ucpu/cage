@@ -14,17 +14,17 @@ namespace cage
 		public:
 			Holder<Barrier> barrier1;
 			Holder<Barrier> barrier2;
-			Holder<Mutex> mutex;
+			Holder<Mutex> mutex = newMutex();
 			std::exception_ptr exptr;
 			std::vector<Holder<Thread>> thrs;
-			uint32 threadIndexInitializer, threadsCount;
-			bool ending;
+			uint32 threadIndexInitializer = 0;
+			const uint32 threadsCount = 0;
+			bool ending = false;
 
-			explicit ThreadPoolImpl(const string &threadNames, uint32 threads) : threadIndexInitializer(0), threadsCount(threads == m ? processorsCount() : threads), ending(false)
+			explicit ThreadPoolImpl(const string &threadNames, uint32 threads) : threadsCount(threads == m ? processorsCount() : threads)
 			{
 				barrier1 = newBarrier(threadsCount + 1);
 				barrier2 = newBarrier(threadsCount + 1);
-				mutex = newMutex();
 				thrs.resize(threadsCount);
 				for (uint32 i = 0; i < threadsCount; i++)
 					thrs[i] = newThread(Delegate<void()>().bind<ThreadPoolImpl, &ThreadPoolImpl::threadEntryLocal>(this), stringizer() + threadNames + i);
@@ -84,9 +84,15 @@ namespace cage
 		};
 	}
 
+	uint32 ThreadPool::threadsCount() const
+	{
+		const ThreadPoolImpl *impl = (const ThreadPoolImpl *)this;
+		return impl->threadsCount;
+	}
+
 	void ThreadPool::run()
 	{
-		ThreadPoolImpl *impl = (ThreadPoolImpl*)this;
+		ThreadPoolImpl *impl = (ThreadPoolImpl *)this;
 		impl->run();
 	}
 

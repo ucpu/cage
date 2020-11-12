@@ -1,9 +1,71 @@
 #include "main.h"
 #include <cage-core/files.h>
 #include <cage-core/memoryBuffer.h>
+#include <cage-core/serialization.h>
+#include <cage-core/math.h>
+#include <cage-core/concurrent.h>
+#include <cage-core/threadPool.h>
 
 namespace
 {
+	// concurrent access to archives inside same archive is currently not allowed
+	/*
+	struct ConcurrentTester
+	{
+		static constexpr uint32 ThreadsCount = 4;
+
+		Holder<Barrier> barrier = newBarrier(ThreadsCount);
+		Holder<ThreadPool> threadPool = newThreadPool("tester_", ThreadsCount);
+		MemoryBuffer data;
+
+		ConcurrentTester()
+		{
+			threadPool->function.bind<ConcurrentTester, &ConcurrentTester::threadEntry>(this);
+			{ // generate random data
+				Serializer ser(data);
+				uint32 cnt = randomRange(10, 100);
+				for (uint32 i = 0; i < cnt; i++)
+					ser << randomRange(-1.0, 1.0);
+			}
+		}
+
+		void threadEntry(uint32 thrId, uint32)
+		{
+			pathCreateArchive(stringizer() + "testdir/concurrent.zip/" + thrId + ".zip");
+			for (uint32 iter = 0; iter < 20; iter++)
+			{
+				{ ScopeLock lck(barrier); }
+				const string name = stringizer() + "testdir/concurrent.zip/" + ((iter + thrId) % ThreadsCount) + ".zip/" + randomRange(0, 3) + ".bin";
+				//const string name = stringizer() + "testdir/concurrent.zip/" + randomRange(0, 3) + ".zip/" + ((iter + thrId) % ThreadsCount) + ".bin";
+				const PathTypeFlags pf = pathType(name);
+				if (any(pf & PathTypeFlags::File))
+				{
+					if (randomChance() < 0.2)
+						pathRemove(name);
+					else
+					{
+						Holder<File> f = readFile(name);
+						f->readAll();
+					}
+				}
+				if (none(pf & PathTypeFlags::File) || randomChance() < 0.3)
+				{
+					Holder<File> f = writeFile(name);
+					f->seek(randomRange((uintPtr)0, f->size()));
+					f->write(data);
+					f->close();
+				}
+			}
+		}
+
+		void run()
+		{
+			pathRemove("testdir/concurrent.zip");
+			pathCreateArchive("testdir/concurrent.zip");
+			threadPool->run();
+		}
+	};
+	*/
 }
 
 void testArchivesRecursion()
@@ -91,4 +153,16 @@ void testArchivesRecursion()
 			}
 		}
 	}
+
+	/*
+	{
+		CAGE_TESTCASE("concurrent randomized recursive archive files");
+		ConcurrentTester tester;
+		for (uint32 i = 0; i < 5; i++)
+		{
+			CAGE_TESTCASE(stringizer() + "iteration: " + i);
+			tester.run();
+		}
+	}
+	*/
 }

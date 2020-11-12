@@ -10,6 +10,7 @@ namespace cage
 	public:
 		Delegate<void(uint32 threadIndex, uint32 threadsCount)> function;
 
+		uint32 threadsCount() const;
 		void run();
 	};
 
