@@ -1,6 +1,7 @@
 #include <cage-core/concurrent.h>
 #include <cage-core/config.h>
 #include <cage-core/concurrentQueue.h>
+#include <cage-core/flatSet.h>
 
 #include <cage-engine/window.h>
 #include <cage-engine/graphics.h>
@@ -11,7 +12,6 @@
 
 #include <atomic>
 #include <vector>
-#include <set>
 
 #ifdef CAGE_SYSTEM_WINDOWS
 #define GCHL_WINDOWS_THREAD
@@ -149,7 +149,7 @@ namespace cage
 		public:
 			uint64 lastMouseButtonPressTimes[5] = { 0,0,0,0,0 }; // unused, left, right, unused, middle
 			ConcurrentQueue<Event> eventsQueue;
-			std::set<uint32> stateKeys, stateCodes; // todo replace with small set
+			FlatSet<uint32> stateKeys, stateCodes;
 			ivec2 stateMousePosition;
 			MouseButtonsFlags stateButtons = MouseButtonsFlags::None;
 			ModifiersFlags stateMods = ModifiersFlags::None;

@@ -1,6 +1,7 @@
 #include <cage-core/geometry.h>
 #include <cage-core/config.h>
 #include <cage-core/serialization.h>
+#include <cage-core/flatSet.h>
 
 #include <cage-engine/graphics.h>
 #include <cage-engine/opengl.h>
@@ -12,7 +13,6 @@
 #include "ssaoPoints.h"
 
 #include <map>
-#include <set>
 
 namespace cage
 {
@@ -1139,7 +1139,7 @@ namespace cage
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
 				{ // render all passes
-					std::set<uintPtr> camerasToDestroy;
+					FlatSet<uintPtr> camerasToDestroy;
 					for (auto &cs : cameras)
 						camerasToDestroy.insert(cs.first);
 					for (const Holder<RenderPass> &pass : renderPasses)

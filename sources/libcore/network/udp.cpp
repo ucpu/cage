@@ -3,10 +3,10 @@
 #include <cage-core/config.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/serialization.h>
+#include <cage-core/flatSet.h>
 
 #include <array>
 #include <vector>
-#include <set>
 #include <map>
 #include <list>
 #include <memory>
@@ -178,9 +178,10 @@ namespace cage
 		static_assert(!comp(5, 5), "compare sequence numbers");
 		static_assert(!comp(60000, 60000), "compare sequence numbers");
 
-		std::set<uint16> decodeAck(uint16 seqn, uint32 bits)
+		FlatSet<uint16> decodeAck(uint16 seqn, uint32 bits)
 		{
-			std::set<uint16> result;
+			FlatSet<uint16> result;
+			result.reserve(32);
 			for (uint16 i = 0; i < 32; i++)
 			{
 				uint32 m = uint32(1) << i;
@@ -193,7 +194,7 @@ namespace cage
 			return result;
 		}
 
-		uint32 encodeAck(uint16 seqn, const std::set<uint16> &bits)
+		uint32 encodeAck(uint16 seqn, const FlatSet<uint16> &bits)
 		{
 			uint32 result = 0;
 			for (uint16 i = 0; i < 32; i++)
@@ -214,11 +215,11 @@ namespace cage
 		public:
 			AckTester()
 			{
-				CAGE_ASSERT(decodeAck(1000, encodeAck(1000, { 999 })) == std::set<uint16>({ 999 }));
-				CAGE_ASSERT(decodeAck(1000, encodeAck(1000, { 1000 })) == std::set<uint16>({ 1000 }));
-				CAGE_ASSERT(decodeAck(1000, encodeAck(1000, { 1000, 999 })) == std::set<uint16>({ 1000, 999 }));
-				CAGE_ASSERT(decodeAck(1000, encodeAck(1000, { 1000, 999, 990 })) == std::set<uint16>({ 1000, 999, 990 }));
-				CAGE_ASSERT(decodeAck(5, encodeAck(5, { 1, 65533 })) == std::set<uint16>({ 1, 65533 }));
+				CAGE_ASSERT(decodeAck(1000, encodeAck(1000, { 999 })) == FlatSet<uint16>({ 999 }));
+				CAGE_ASSERT(decodeAck(1000, encodeAck(1000, { 1000 })) == FlatSet<uint16>({ 1000 }));
+				CAGE_ASSERT(decodeAck(1000, encodeAck(1000, { 1000, 999 })) == FlatSet<uint16>({ 1000, 999 }));
+				CAGE_ASSERT(decodeAck(1000, encodeAck(1000, { 1000, 999, 990 })) == FlatSet<uint16>({ 1000, 999, 990 }));
+				CAGE_ASSERT(decodeAck(5, encodeAck(5, { 1, 65533 })) == FlatSet<uint16>({ 1, 65533 }));
 			}
 		} ackTesterInstance;
 #endif // CAGE_DEBUG
@@ -444,7 +445,7 @@ namespace cage
 				std::list<Command> cmds;
 				std::map<uint16, std::vector<MsgAck>> ackMap; // mapping packet seqn to message parts
 				std::array<uint16, 256> seqnPerChannel = {}; // next message seqn to be used
-				std::set<uint16> seqnToAck; // packets seqn to be acked
+				FlatSet<uint16> seqnToAck; // packets seqn to be acked
 				uint16 packetSeqn = 0; // next packet seqn to be used
 			} sending;
 
@@ -500,7 +501,7 @@ namespace cage
 				auto it = sending.seqnToAck.rbegin();
 				auto et = sending.seqnToAck.rend();
 				uint16 front = *it++;
-				std::set<uint16> tmp;
+				FlatSet<uint16> tmp;
 				tmp.insert(front);
 				while (it != et)
 				{
@@ -526,10 +527,10 @@ namespace cage
 
 #ifdef CAGE_ASSERT_ENABLED
 				{ // verification
-					std::set<uint16> ver;
+					FlatSet<uint16> ver;
 					for (PackAck pa : acks)
 					{
-						std::set<uint16> c = decodeAck(pa.ackSeqn, pa.ackBits);
+						FlatSet<uint16> c = decodeAck(pa.ackSeqn, pa.ackBits);
 						ver.insert(c.begin(), c.end());
 					}
 					CAGE_ASSERT(ver == sending.seqnToAck);
@@ -750,21 +751,17 @@ namespace cage
 				std::array<std::map<uint16, Msg>, 256> staging = {};
 				std::array<uint16, 256> seqnPerChannel = {}; // minimum expected message seqn
 				std::list<Msg> messages;
-				std::set<PackAck> ackPacks;
+				FlatSet<PackAck> ackPacks;
 				uint16 packetSeqn = 0; // minimum expected packet seqn
 			} receiving;
 
 			void processAcks()
 			{
-				std::set<uint16> acks;
+				FlatSet<uint16> acks;
 				for (const auto &a : receiving.ackPacks)
 				{
-					std::set<uint16> s = decodeAck(a.ackSeqn, a.ackBits);
-#if __cplusplus >= 201703L
-					acks.merge(s);
-#else
+					FlatSet<uint16> s = decodeAck(a.ackSeqn, a.ackBits);
 					acks.insert(s.begin(), s.end());
-#endif
 				}
 				receiving.ackPacks.clear();
 				for (uint16 ack : acks)

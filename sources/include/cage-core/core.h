@@ -168,6 +168,7 @@ namespace cage
 	enum class PathTypeFlags : uint32;
 	class FilesystemWatcher;
 	class DirectoryList;
+	template<class Value, class Compare> struct FlatSet;
 	template<uint32 N> struct Guid;
 	struct HashString;
 	enum class ImageFormatEnum : uint32;
