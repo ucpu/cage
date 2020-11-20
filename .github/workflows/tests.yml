@@ -67,14 +67,14 @@ jobs:
         build-config: [debug, release]
         compiler:
         - {
-            cc: gcc-7,
-            cxx: g++-7,
-            install: gcc-7 g++-7
-          }
-        - {
             cc: gcc-9,
             cxx: g++-9,
             install: gcc-9 g++-9
+          }
+        - {
+            cc: gcc-10,
+            cxx: g++-10,
+            install: gcc-10 g++-10
           }
         - {
             cc: clang,
@@ -113,13 +113,11 @@ jobs:
         cmake --build . --config ${{ matrix.build-config }} -- -j3
 
     - name: Tests
-      shell: bash
       run: |
         cd build/result/${{ matrix.build-config }}
         ./cage-test-core
 
     - name: Assets
-      shell: bash
       run: |
         cd build/result/${{ matrix.build-config }}
         ./cage-asset-database
