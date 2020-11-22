@@ -140,7 +140,7 @@ void testArchivesRecursion()
 			for (uint32 i = 0; i < 5; i++)
 			{
 				p = pathJoin(p, stringizer() + i + ".zip");
-				CAGE_TEST_THROWN(readFile(p));
+				CAGE_TEST(readFile(p));
 			}
 		}
 	}

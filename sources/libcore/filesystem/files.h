@@ -58,14 +58,19 @@ namespace cage
 
 	void mixedMove(std::shared_ptr<ArchiveAbstract> &af, const string &pf, std::shared_ptr<ArchiveAbstract> &at, const string &pt);
 	
-	// allowExactMatch == true -> if the full path is an archive, return it as an archive
-	// allowExactMatch == false -> if the full path is an archive, treat it as a file
-	struct ArchiveInPath
+	enum class ArchiveFindModeEnum
+	{
+		FileExclusiveThrow,
+		ArchiveExclusiveThrow,
+		ArchiveExclusiveNull,
+		ArchiveShared,
+	};
+	struct ArchiveWithPath
 	{
 		std::shared_ptr<ArchiveAbstract> archive;
-		string insidePath;
+		string path;
 	};
-	ArchiveInPath archiveFindTowardsRoot(const string &path, bool allowExactMatch);
+	ArchiveWithPath archiveFindTowardsRoot(const string &path, ArchiveFindModeEnum mode);
 
 	void archiveCreateZip(const string &path, const string &options);
 	std::shared_ptr<ArchiveAbstract> archiveOpenZip(Holder<File> &&f);

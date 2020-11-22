@@ -401,7 +401,7 @@ void testArchives()
 		}
 		{
 			CAGE_TESTCASE("with closed archive");
-			CAGE_TEST_THROWN(readFile(arch));
+			CAGE_TEST(readFile(arch));
 		}
 	}
 

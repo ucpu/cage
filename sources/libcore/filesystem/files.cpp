@@ -96,7 +96,13 @@ namespace cage
 			return *cache;
 		}
 
-		std::shared_ptr<ArchiveAbstract> archiveTryGet(const std::shared_ptr<ArchiveAbstract> &parent, const string &inPath, bool forbidExisting)
+		struct ArchiveWithExisting
+		{
+			std::shared_ptr<ArchiveAbstract> archive;
+			bool existing = false;
+		};
+
+		ArchiveWithExisting archiveTryGet(const std::shared_ptr<ArchiveAbstract> &parent, const string &inPath)
 		{
 			CAGE_ASSERT(parent);
 			const string fullPath = pathJoin(parent->myPath, inPath);
@@ -104,15 +110,7 @@ namespace cage
 			{
 				auto a = archivesCache().tryGet(fullPath);
 				if (a)
-				{
-					if (forbidExisting)
-					{
-						CAGE_LOG_THROW(stringizer() + "path: '" + fullPath + "'");
-						CAGE_LOG_THROW(stringizer() + "archive: " + parent->myPath);
-						CAGE_THROW_ERROR(Exception, "path cannot be manipulated because the archive is open");
-					}
-					return a;
-				}
+					return { a, true };
 			}
 			try
 			{
@@ -122,7 +120,8 @@ namespace cage
 					a = archiveOpenZip(parent->openFile(inPath, FileMode(true, false)));
 				}
 				CAGE_ASSERT(a);
-				return archivesCache().assign(a);
+				a = archivesCache().assign(a);
+				return { a, false };
 			}
 			catch (const Exception &)
 			{
@@ -167,7 +166,7 @@ namespace cage
 		} walkTesterInstance;
 #endif // CAGE_DEBUG
 
-		ArchiveInPath archiveFindIterate(std::shared_ptr<ArchiveAbstract> parent, const string &path, bool allowExactMatch)
+		ArchiveWithPath archiveFindIterate(std::shared_ptr<ArchiveAbstract> parent, const string &path, ArchiveFindModeEnum mode)
 		{
 			CAGE_ASSERT(parent);
 			string p, i = path;
@@ -176,17 +175,45 @@ namespace cage
 				if (i.empty())
 					return { parent, path };
 				walkRight(p, i);
-				if (any(parent->type(p) & PathTypeFlags::File) && (!i.empty() || allowExactMatch))
+				if (any(parent->type(p) & PathTypeFlags::File))
 				{
-					std::shared_ptr<ArchiveAbstract> b = archiveTryGet(parent, p, !allowExactMatch && i.empty());
-					if (b)
-						return archiveFindIterate(b, i, allowExactMatch);
+					ArchiveWithExisting b = archiveTryGet(parent, p);
+					if (b.archive)
+					{
+						if (i.empty())
+						{
+							switch (mode)
+							{
+							case ArchiveFindModeEnum::FileExclusiveThrow:
+								if (b.existing)
+								{
+									CAGE_LOG_THROW(stringizer() + "path: '" + pathJoin(parent->myPath, path) + "'");
+									CAGE_THROW_ERROR(Exception, "file cannot be manipulated, it is opened as archive");
+								}
+								return { parent, path };
+							case ArchiveFindModeEnum::ArchiveExclusiveThrow:
+								if (b.existing)
+								{
+									CAGE_LOG_THROW(stringizer() + "path: '" + pathJoin(parent->myPath, path) + "'");
+									CAGE_THROW_ERROR(Exception, "file cannot be manipulated, it is opened as archive");
+								}
+								return { b.archive };
+							case ArchiveFindModeEnum::ArchiveExclusiveNull:
+								if (b.existing)
+									return {};
+								return { b.archive };
+							case ArchiveFindModeEnum::ArchiveShared:
+								return { b.archive };
+							}
+						}
+						return archiveFindIterate(b.archive, i, mode);
+					}
 				}
 			}
 		}
 	}
 
-	ArchiveInPath archiveFindTowardsRoot(const string &path_, bool allowExactMatch)
+	ArchiveWithPath archiveFindTowardsRoot(const string &path_, ArchiveFindModeEnum mode)
 	{
 		if (!pathIsValid(path_))
 		{
@@ -222,9 +249,22 @@ namespace cage
 			return archivesCache().assign(archiveOpenReal(rootPath));
 		}();
 
-		ArchiveInPath r = archiveFindIterate(root, inside, allowExactMatch);
-		CAGE_ASSERT(r.archive);
-		CAGE_ASSERT(allowExactMatch || !r.insidePath.empty());
+		ArchiveWithPath r = archiveFindIterate(root, inside, mode);
+		switch (mode)
+		{
+		case ArchiveFindModeEnum::FileExclusiveThrow:
+			CAGE_ASSERT(r.archive);
+			CAGE_ASSERT(!r.path.empty());
+			break;
+		case ArchiveFindModeEnum::ArchiveExclusiveThrow:
+			CAGE_ASSERT(r.archive);
+			break;
+		case ArchiveFindModeEnum::ArchiveExclusiveNull:
+			break;
+		case ArchiveFindModeEnum::ArchiveShared:
+			CAGE_ASSERT(r.archive);
+			break;
+		}
 
 		return r;
 	}

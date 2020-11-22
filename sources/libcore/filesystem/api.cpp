@@ -132,9 +132,7 @@ namespace cage
 
 	Holder<File> newFile(const string &path, const FileMode &mode)
 	{
-		auto [a, p] = archiveFindTowardsRoot(path, true);
-		if (p.empty())
-			CAGE_THROW_ERROR(Exception, "cannot open archive file as regular file");
+		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::FileExclusiveThrow);
 		return a->openFile(p, mode);
 	}
 
@@ -212,7 +210,7 @@ namespace cage
 
 	Holder<DirectoryList> newDirectoryList(const string &path)
 	{
-		auto [a, p] = archiveFindTowardsRoot(path, true);
+		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::ArchiveShared);
 		return a->listDirectory(p);
 	}
 
@@ -220,7 +218,7 @@ namespace cage
 	{
 		if (!pathIsValid(path))
 			return PathTypeFlags::Invalid;
-		auto [a, p] = archiveFindTowardsRoot(path, true);
+		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::ArchiveShared);
 		if (p.empty())
 			return PathTypeFlags::File | PathTypeFlags::Archive;
 		return a->type(p);
@@ -233,7 +231,7 @@ namespace cage
 
 	void pathCreateDirectories(const string &path)
 	{
-		auto [a, p] = archiveFindTowardsRoot(path, true);
+		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::ArchiveShared);
 		a->createDirectories(p);
 	}
 
@@ -249,22 +247,22 @@ namespace cage
 
 	void pathMove(const string &from, const string &to)
 	{
-		auto [af, pf] = archiveFindTowardsRoot(from, false);
-		auto [at, pt] = archiveFindTowardsRoot(to, false);
+		auto [af, pf] = archiveFindTowardsRoot(from, ArchiveFindModeEnum::FileExclusiveThrow);
+		auto [at, pt] = archiveFindTowardsRoot(to, ArchiveFindModeEnum::FileExclusiveThrow);
 		if (af == at)
 			return af->move(pf, pt);
-		mixedMove(af, af ? pf : from, at, at ? pt : to);
+		mixedMove(af, pf, at, pt);
 	}
 
 	void pathRemove(const string &path)
 	{
-		auto [a, p] = archiveFindTowardsRoot(path, false);
+		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::FileExclusiveThrow);
 		a->remove(p);
 	}
 
 	uint64 pathLastChange(const string &path)
 	{
-		auto [a, p] = archiveFindTowardsRoot(path, false);
+		auto [a, p] = archiveFindTowardsRoot(path, ArchiveFindModeEnum::ArchiveExclusiveThrow);
 		return a->lastChange(p);
 	}
 
