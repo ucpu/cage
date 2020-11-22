@@ -9,7 +9,7 @@ namespace cage
 	// do not use for inter-process synchronization
 
 	// fully exclusive lock
-	// locking the same Mutex again in the same thread is implementation defined behavior
+	// locking the same Mutex again in the same thread is forbidden
 	class CAGE_CORE_API Mutex : private Immovable
 	{
 	public:
@@ -21,8 +21,8 @@ namespace cage
 	CAGE_CORE_API Holder<Mutex> newMutex();
 
 	// exclusive writer or multiple readers lock
-	// starts as spinlock and yields after several failed attempts (may cause thread priority inversion if held too long)
-	// locking the same RwMutex again in the same thread is undefined behavior
+	// starts as spinlock and yields after several failed attempts
+	// locking the same RwMutex again in the same thread is forbidden
 	class CAGE_CORE_API RwMutex : private Immovable
 	{
 	public:

@@ -62,30 +62,9 @@ namespace cage
 	{
 		struct ArchivesCache : private Immovable
 		{
-			std::shared_ptr<ArchiveAbstract> tryGet(const string &path) const
-			{
-				ScopeLock<Mutex> l(mutex);
-				return tryGetNoLock(path);
-			}
-
-			std::shared_ptr<ArchiveAbstract> assign(std::shared_ptr<ArchiveAbstract> a)
-			{
-				// multiple threads might have opened the same archive simultaneously and the first one might already have some changes applied to it,
-				// therefore we need to first check if another archive with the same path already exists
-				// the newly opened archive can be safely discarded (outside lock) again as no changes could possibly be made to it yet
-				ScopeLock<Mutex> l(mutex);
-				auto old = tryGetNoLock(a->myPath);
-				if (old)
-					return old;
-				map[a->myPath] = a;
-				return a;
-			}
-
-		private:
 			Holder<Mutex> mutex = newMutex();
-			std::map<string, std::weak_ptr<ArchiveAbstract>, StringComparatorFast> map;
 
-			std::shared_ptr<ArchiveAbstract> tryGetNoLock(const string &path) const
+			std::shared_ptr<ArchiveAbstract> tryGet(const string &path) const
 			{
 				auto it = map.find(path);
 				if (it != map.end())
@@ -99,6 +78,16 @@ namespace cage
 				}
 				return {};
 			}
+
+			std::shared_ptr<ArchiveAbstract> assign(std::shared_ptr<ArchiveAbstract> a)
+			{
+				CAGE_ASSERT(!tryGet(a->myPath));
+				map[a->myPath] = a;
+				return a;
+			}
+
+		private:
+			std::map<string, std::weak_ptr<ArchiveAbstract>, StringComparatorFast> map;
 		};
 
 		ArchivesCache &archivesCache()
@@ -107,7 +96,7 @@ namespace cage
 			return *cache;
 		}
 
-		std::shared_ptr<ArchiveAbstract> archiveTryGet(const std::shared_ptr<ArchiveAbstract> &parent, const string &inPath)
+		std::shared_ptr<ArchiveAbstract> archiveTryGet(const std::shared_ptr<ArchiveAbstract> &parent, const string &inPath, bool forbidExisting)
 		{
 			CAGE_ASSERT(parent);
 			const string fullPath = pathJoin(parent->myPath, inPath);
@@ -115,7 +104,15 @@ namespace cage
 			{
 				auto a = archivesCache().tryGet(fullPath);
 				if (a)
+				{
+					if (forbidExisting)
+					{
+						CAGE_LOG_THROW(stringizer() + "path: '" + fullPath + "'");
+						CAGE_LOG_THROW(stringizer() + "archive: " + parent->myPath);
+						CAGE_THROW_ERROR(Exception, "path cannot be manipulated because the archive is open");
+					}
 					return a;
+				}
 			}
 			try
 			{
@@ -181,7 +178,7 @@ namespace cage
 				walkRight(p, i);
 				if (any(parent->type(p) & PathTypeFlags::File) && (!i.empty() || allowExactMatch))
 				{
-					std::shared_ptr<ArchiveAbstract> b = archiveTryGet(parent, p);
+					std::shared_ptr<ArchiveAbstract> b = archiveTryGet(parent, p, !allowExactMatch && i.empty());
 					if (b)
 						return archiveFindIterate(b, i, allowExactMatch);
 				}
@@ -214,6 +211,8 @@ namespace cage
 		}
 		CAGE_ASSERT(pathIsAbs(rootPath));
 		CAGE_ASSERT(pathJoin(rootPath, inside) == path);
+
+		ScopeLock lock(archivesCache().mutex);
 
 		std::shared_ptr<ArchiveAbstract> root = [&]() -> std::shared_ptr<ArchiveAbstract>
 		{
