@@ -84,8 +84,6 @@ namespace cage
 		Directory = 1 << 2,
 		File = 1 << 3,
 		Archive = 1 << 4,
-		InsideArchive = 1 << 5,
-		//Symlink = 1 << 6,
 	};
 	GCHL_ENUM_BITS(PathTypeFlags);
 
@@ -93,7 +91,7 @@ namespace cage
 
 	CAGE_CORE_API bool pathIsValid(const string &path);
 	CAGE_CORE_API bool pathIsAbs(const string &path);
-	CAGE_CORE_API string pathToRel(const string &path, const string &ref = "");
+	CAGE_CORE_API string pathToRel(const string &path, const string &ref = ""); // may return absolute path if it cannot be converted
 	CAGE_CORE_API string pathToAbs(const string &path);
 	CAGE_CORE_API string pathJoin(const string &a, const string &b);
 	CAGE_CORE_API string pathSimplify(const string &path);

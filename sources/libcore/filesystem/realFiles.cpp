@@ -28,6 +28,8 @@
 
 namespace cage
 {
+	Holder<DirectoryList> realNewDirectoryList(const string &path);
+
 	PathTypeFlags realType(const string &path)
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
@@ -476,6 +478,57 @@ namespace cage
 
 	namespace
 	{
+		class ArchiveReal : public ArchiveAbstract
+		{
+		public:
+			ArchiveReal(const string &path) : ArchiveAbstract(path)
+			{}
+
+			PathTypeFlags type(const string &path) const
+			{
+				return realType(pathJoin(myPath, path));
+			}
+
+			void createDirectories(const string &path)
+			{
+				return realCreateDirectories(pathJoin(myPath, path));
+			}
+
+			void move(const string &from, const string &to)
+			{
+				realMove(pathJoin(myPath, from), pathJoin(myPath, to));
+			}
+
+			void remove(const string &path)
+			{
+				realRemove(pathJoin(myPath, path));
+			}
+
+			uint64 lastChange(const string &path) const
+			{
+				return realLastChange(pathJoin(myPath, path));
+			}
+
+			Holder<File> openFile(const string &path, const FileMode &mode)
+			{
+				return realNewFile(pathJoin(myPath, path), mode);
+			}
+
+			Holder<DirectoryList> listDirectory(const string &path) const
+			{
+				return realNewDirectoryList(pathJoin(myPath, path));
+			}
+		};
+	}
+
+	std::shared_ptr<ArchiveAbstract> archiveOpenReal(const string &path)
+	{
+		auto a = std::make_shared<ArchiveReal>(path);
+		return a;
+	}
+
+	namespace
+	{
 		class FilesystemWatcherImpl : public FilesystemWatcher, public FW::FileWatchListener
 		{
 		public:
@@ -520,7 +573,7 @@ namespace cage
 		while (dl->valid())
 		{
 			const auto type = dl->type();
-			if (any(type & PathTypeFlags::Directory) && none(type & (PathTypeFlags::Archive | PathTypeFlags::InsideArchive)))
+			if (any(type & PathTypeFlags::Directory) && none(type & PathTypeFlags::Archive))
 				registerPath(pathJoin(path, dl->name()));
 			dl->next();
 		}

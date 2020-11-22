@@ -384,7 +384,6 @@ namespace cage
 				if (src->mode().write)
 					return; // already modifiable
 				((FileAbstract *)+src)->reopenForModification();
-				archiveOpenKeeperRemove(shared_from_this());
 			}
 
 			uint32 createRecord(const string &path)
@@ -608,9 +607,6 @@ namespace cage
 				CDFileHeaderEx &h = a->files[index];
 				CAGE_ASSERT(h.locked);
 				h.locked = false;
-
-				if (!a->modified)
-					archiveOpenKeeperAdd(a);
 			}
 
 			void reopenForModificationInternal()
@@ -767,7 +763,6 @@ namespace cage
 	std::shared_ptr<ArchiveAbstract> archiveOpenZip(Holder<File> &&f)
 	{
 		auto a = std::make_shared<ArchiveZip>(templates::move(f));
-		archiveOpenKeeperAdd(a);
 		return a;
 	}
 }

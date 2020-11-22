@@ -47,29 +47,19 @@ namespace cage
 	void mixedMove(std::shared_ptr<ArchiveAbstract> &af, const string &pf, std::shared_ptr<ArchiveAbstract> &at, const string &pt)
 	{
 		{
-			Holder<File> f = af ? af->openFile(pf, FileMode(true, false)) : realNewFile(pf, FileMode(true, false));
-			Holder<File> t = at ? at->openFile(pt, FileMode(false, true)) : realNewFile(pt, FileMode(false, true));
+			Holder<File> f = af->openFile(pf, FileMode(true, false));
+			Holder<File> t = at->openFile(pt, FileMode(false, true));
 			// todo split big files into multiple smaller steps
 			const MemoryBuffer b = f->readAll();
 			f->close();
 			t->write(b);
 			t->close();
 		}
-		if (af)
-			af->remove(pf);
-		else
-			realRemove(pf);
+		af->remove(pf);
 	}
 
 	namespace
 	{
-		// is A equal B or is A a parent of B
-		bool isEqualOrParentOf(const string &a, const string &b)
-		{
-			CAGE_ASSERT(pathIsAbs(a) && pathIsAbs(b) && pathSimplify(a) == a && pathSimplify(b) == b);
-			return a == b || isPattern(b, a + "/", "", "");
-		}
-
 		struct ArchivesCache : private Immovable
 		{
 			std::shared_ptr<ArchiveAbstract> tryGet(const string &path) const
@@ -89,43 +79,6 @@ namespace cage
 					return old;
 				map[a->myPath] = a;
 				return a;
-			}
-
-			void closeOrThrow(const string &path)
-			{
-				const string ap = pathToAbs(path);
-				ScopeLock<Mutex> lck(mutex);
-				for (const auto &it : map)
-				{
-					if (!isEqualOrParentOf(ap, it.first))
-						continue;
-					{
-						// first try to close the archive if it was open only for reading
-						auto l = it.second.lock();
-						if (!l)
-							continue;
-						archiveOpenKeeperRemove(l);
-					}
-					if (it.second.lock())
-					{
-						CAGE_LOG_THROW(stringizer() + "path: " + ap);
-						CAGE_LOG_THROW(stringizer() + "archive: " + it.first);
-						CAGE_THROW_ERROR(Exception, "path cannot be manipulated because an archive is opened");
-					}
-				}
-			}
-
-			void cleaning()
-			{
-				ScopeLock<Mutex> l(mutex);
-				auto it = map.begin();
-				while (it != map.end())
-				{
-					if (!it->second.lock())
-						it = map.erase(it);
-					else
-						it++;
-				}
 			}
 
 		private:
@@ -156,11 +109,11 @@ namespace cage
 
 		std::shared_ptr<ArchiveAbstract> archiveTryGet(const std::shared_ptr<ArchiveAbstract> &parent, const string &inPath)
 		{
-			const string fullPath = parent ? pathJoin(parent->myPath, inPath) : inPath;
+			CAGE_ASSERT(parent);
+			const string fullPath = pathJoin(parent->myPath, inPath);
 			CAGE_ASSERT(fullPath == pathSimplify(fullPath));
-			ArchivesCache &cache = archivesCache();
 			{
-				auto a = cache.tryGet(fullPath);
+				auto a = archivesCache().tryGet(fullPath);
 				if (a)
 					return a;
 			}
@@ -169,20 +122,15 @@ namespace cage
 				std::shared_ptr<ArchiveAbstract> a;
 				{
 					detail::OverrideException oe;
-					a = archiveOpenZip(parent ? parent->openFile(inPath, FileMode(true, false)) : realNewFile(fullPath, FileMode(true, false)));
+					a = archiveOpenZip(parent->openFile(inPath, FileMode(true, false)));
 				}
 				CAGE_ASSERT(a);
-				return cache.assign(a);
+				return archivesCache().assign(a);
 			}
 			catch (const Exception &)
 			{
 				return {};
 			}
-		}
-
-		std::shared_ptr<ArchiveAbstract> archiveTryGet(const string &path)
-		{
-			return archiveTryGet({}, path);
 		}
 
 		void walkLeft(string &p, string &i)
@@ -222,60 +170,63 @@ namespace cage
 		} walkTesterInstance;
 #endif // CAGE_DEBUG
 
-		void walkRealPath(string &p, string &inside)
+		ArchiveInPath archiveFindIterate(std::shared_ptr<ArchiveAbstract> parent, const string &path, bool allowExactMatch)
 		{
-			while (any(realType(p) & PathTypeFlags::NotFound))
-				walkLeft(p, inside);
-		}
-
-		ArchiveInPath walkImaginaryPath(std::shared_ptr<ArchiveAbstract> &a, const string &path, bool allowExactMatch, bool archiveInsideArchive)
-		{
-			CAGE_ASSERT(a);
+			CAGE_ASSERT(parent);
 			string p, i = path;
 			while (true)
 			{
 				if (i.empty())
-					return { a, path, archiveInsideArchive };
+					return { parent, path };
 				walkRight(p, i);
-				std::shared_ptr<ArchiveAbstract> b = archiveTryGet(a, p);
-				if (b)
-					return walkImaginaryPath(b, i, allowExactMatch, true);
+				if (any(parent->type(p) & PathTypeFlags::File) && (!i.empty() || allowExactMatch))
+				{
+					std::shared_ptr<ArchiveAbstract> b = archiveTryGet(parent, p);
+					if (b)
+						return archiveFindIterate(b, i, allowExactMatch);
+				}
 			}
 		}
-
-		ArchiveInPath splitArchiveAndInsidePath(const string &path_, bool allowExactMatch)
-		{
-			string path = pathToAbs(path_);
-			string inside;
-			walkRealPath(path, inside);
-			if (!allowExactMatch && inside.empty())
-				return {}; // exact match is forbidden
-			std::shared_ptr<ArchiveAbstract> a = archiveTryGet(path);
-			if (!a)
-				return {}; // does not exist
-			return walkImaginaryPath(a, inside, allowExactMatch, false);
-		}
 	}
 
-	ArchiveInPath archiveFindTowardsRoot(const string &path, bool allowExactMatch)
+	ArchiveInPath archiveFindTowardsRoot(const string &path_, bool allowExactMatch)
 	{
-		if (!allowExactMatch)
+		if (!pathIsValid(path_))
 		{
-			// forbid manipulating a file that is opened as an archive
-			archivesCache().closeOrThrow(path);
+			CAGE_LOG_THROW(stringizer() + "path: '" + path_ + "'");
+			CAGE_THROW_ERROR(Exception, "invalid path");
 		}
-		ArchiveInPath r = splitArchiveAndInsidePath(path, allowExactMatch);
-		CAGE_ASSERT(allowExactMatch || !r.archive != !r.insidePath.empty());
+
+		const string path = pathToAbs(path_);
+		CAGE_ASSERT(pathSimplify(path) == path);
+
+		string rootPath, inside;
+		{
+#ifdef CAGE_SYSTEM_WINDOWS
+			inside = path;
+			rootPath = split(inside, ":") + ":/";
+			if (!inside.empty() && inside[0] == '/')
+				inside = subString(inside, 1, m);
+#else
+			inside = subString(path, 1, m);
+			rootPath = "/";
+#endif // CAGE_SYSTEM_WINDOWS
+		}
+		CAGE_ASSERT(pathIsAbs(rootPath));
+		CAGE_ASSERT(pathJoin(rootPath, inside) == path);
+
+		std::shared_ptr<ArchiveAbstract> root = [&]() -> std::shared_ptr<ArchiveAbstract>
+		{
+			auto a = archivesCache().tryGet(rootPath);
+			if (a)
+				return a;
+			return archivesCache().assign(archiveOpenReal(rootPath));
+		}();
+
+		ArchiveInPath r = archiveFindIterate(root, inside, allowExactMatch);
+		CAGE_ASSERT(r.archive);
+		CAGE_ASSERT(allowExactMatch || !r.insidePath.empty());
+
 		return r;
-	}
-
-	void archiveOpenKeeperAdd(std::shared_ptr<ArchiveAbstract> a)
-	{
-		// this has been abandoned - it was causing too many troubles
-	}
-
-	void archiveOpenKeeperRemove(std::shared_ptr<ArchiveAbstract> a)
-	{
-		// this has been abandoned - it was causing too many troubles
 	}
 }

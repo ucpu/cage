@@ -56,15 +56,6 @@ namespace cage
 		virtual Holder<DirectoryList> listDirectory(const string &path) const = 0;
 	};
 
-	PathTypeFlags realType(const string &path);
-	void realCreateDirectories(const string &path);
-	void realMove(const string &from, const string &to);
-	void realRemove(const string &path);
-	uint64 realLastChange(const string &path);
-	Holder<File> realNewFile(const string &path, const FileMode &mode);
-	Holder<DirectoryList> realNewDirectoryList(const string &path);
-
-	// leave archives empty to use real filesystem
 	void mixedMove(std::shared_ptr<ArchiveAbstract> &af, const string &pf, std::shared_ptr<ArchiveAbstract> &at, const string &pt);
 	
 	// allowExactMatch == true -> if the full path is an archive, return it as an archive
@@ -73,16 +64,13 @@ namespace cage
 	{
 		std::shared_ptr<ArchiveAbstract> archive;
 		string insidePath;
-		bool archiveInsideArchive = false;
 	};
 	ArchiveInPath archiveFindTowardsRoot(const string &path, bool allowExactMatch);
 
 	void archiveCreateZip(const string &path, const string &options);
 	std::shared_ptr<ArchiveAbstract> archiveOpenZip(Holder<File> &&f);
 
-	// while an archive is opened for reading only, it can be added to this list to keep it opened for little longer, in case that it would be accessed again
-	void archiveOpenKeeperAdd(std::shared_ptr<ArchiveAbstract> a);
-	void archiveOpenKeeperRemove(std::shared_ptr<ArchiveAbstract> a);
+	std::shared_ptr<ArchiveAbstract> archiveOpenReal(const string &path);
 }
 
 #endif // guard_files_h_sdrgds45rfgt

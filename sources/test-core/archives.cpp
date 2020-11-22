@@ -57,11 +57,11 @@ namespace
 			pathCreateDirectories(pathJoin(dir, name));
 	}
 
-	typedef std::set<std::pair<string, bool>> listing;
+	typedef std::set<std::pair<string, bool>> Listing;
 
-	void testListDirectory2(const string &name, listing &a, listing &b)
+	void testListDirectory2(const string &name, Listing &a, Listing &b)
 	{
-		listing *p[2] = { &a, &b };
+		Listing *p[2] = { &a, &b };
 		uint32 i = 0;
 		for (const string &dir : directories)
 		{
@@ -85,17 +85,15 @@ namespace
 				*p[i++] = pathType(pathJoin(dir, name));
 		}
 		{
-			PathTypeFlags m = PathTypeFlags::File | PathTypeFlags::Directory;
-			CAGE_TEST((a & m) == (b & m));
+			constexpr PathTypeFlags msk = PathTypeFlags::File | PathTypeFlags::Directory;
+			CAGE_TEST((a & msk) == (b & msk));
 		}
-		CAGE_TEST((a & PathTypeFlags::InsideArchive) == PathTypeFlags::None);
-		CAGE_TEST((b & PathTypeFlags::InsideArchive) == PathTypeFlags::InsideArchive);
 		return b;
 	}
 
-	listing testListDirectory(const string &name)
+	Listing testListDirectory(const string &name)
 	{
-		listing a, b;
+		Listing a, b;
 		testListDirectory2(name, a, b);
 		CAGE_TEST(a.size() == b.size());
 		CAGE_TEST(a == b);
@@ -106,7 +104,7 @@ namespace
 
 	void testListRecursive(const string &name = "")
 	{
-		listing l = testListDirectory(name);
+		Listing l = testListDirectory(name);
 		for (const auto &i : l)
 		{
 			if (i.second)
@@ -291,7 +289,6 @@ void testArchives()
 		const PathTypeFlags type = pathType(path);
 		CAGE_TEST(any(type & PathTypeFlags::File));
 		CAGE_TEST(none(type & PathTypeFlags::Directory));
-		CAGE_TEST(any(type & PathTypeFlags::InsideArchive));
 		CAGE_TEST(none(type & PathTypeFlags::Archive));
 		Holder<File> f = readFile(path);
 		f->seek(data1.size() + data2.size());
@@ -323,7 +320,7 @@ void testArchives()
 		// sanity check
 		testListDirectory("");
 		testReadFile("rw.bin");
-		testReadFile("rw.bin");
+		testReadFile("rw.bin"); // ensure that reading a file does not change it
 		// first modification of the file
 		for (const string &dir : directories)
 		{

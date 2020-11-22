@@ -97,7 +97,17 @@ namespace cage
 		if (path.empty())
 			return pathWorkingDir();
 		if (pathIsAbs(path))
+		{
+#ifdef CAGE_SYSTEM_WINDOWS
+			// windows may have multiple roots, we need to be specific
+			string p = pathSimplify(path);
+			if (p[0] == '/')
+				return pathExtractDrive(pathWorkingDir()) + ":" + p;
+			return p;
+#else
 			return pathSimplify(path);
+#endif // CAGE_SYSTEM_WINDOWS
+		}
 		return pathJoin(pathWorkingDir(), path);
 	}
 

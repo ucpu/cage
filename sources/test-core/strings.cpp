@@ -680,6 +680,7 @@ namespace
 		}
 		{
 			CAGE_TESTCASE("path simplifications");
+			CAGE_TEST(pathSimplify("") == "");
 			CAGE_TEST(pathSimplify("a//b") == "a/b");
 			CAGE_TEST(pathSimplify("a\\b") == "a/b");
 			CAGE_TEST(pathSimplify("a/./b") == "a/b");
@@ -773,10 +774,35 @@ namespace
 			CAGE_TEST(pathToRel("abc/./def", "juj") == "abc/def");
 		}
 		{
+			CAGE_TESTCASE("path to absolute");
+			CAGE_TEST(pathToAbs("") == pathWorkingDir());
+			CAGE_TEST(pathToAbs(".") == pathWorkingDir());
+			CAGE_TEST(pathToAbs("abc") == pathJoin(pathWorkingDir(), "abc"));
+			CAGE_TEST(pathToAbs("lol:/abc") == "lol:/abc");
+			{
+				const string root = [&]() -> string
+				{
+#ifdef CAGE_SYSTEM_WINDOWS
+					return pathExtractDrive(pathWorkingDir()) + ":/";
+#else
+					return "/";
+#endif // CAGE_SYSTEM_WINDOWS
+				}();
+				CAGE_TEST(pathIsValid(root) && pathIsAbs(root) && pathSimplify(root) == root);
+				CAGE_TEST(pathToAbs("/") == root);
+				CAGE_TEST(pathToAbs("/abc/def") == pathJoin(root, "abc/def"));
+			}
+		}
+		{
 			CAGE_TESTCASE("path validity");
 			CAGE_TEST(pathIsValid("hi-Jane"));
 			CAGE_TEST(pathIsValid("/peter/pan"));
 			CAGE_TEST(pathIsValid("proto:/path1/path2/file.ext")); // this path must be considered valid even on windows
+			{
+				string invalidPath = "invalid-name";
+				invalidPath[3] = 0; // ascii character zero is forbidden
+				CAGE_TEST(!pathIsValid(invalidPath));
+			}
 
 #ifdef CAGE_SYSTEM_WINDOWS
 			// these file names are invalid on windows, but are valid on linux

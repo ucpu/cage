@@ -8,8 +8,6 @@
 
 namespace
 {
-	// concurrent access to archives inside same archive is currently not allowed
-	/*
 	struct ConcurrentTester
 	{
 		static constexpr uint32 ThreadsCount = 4;
@@ -65,7 +63,6 @@ namespace
 			threadPool->run();
 		}
 	};
-	*/
 }
 
 void testArchivesRecursion()
@@ -83,16 +80,12 @@ void testArchivesRecursion()
 			pathCreateArchive(p);
 		}
 		CAGE_TEST(none(pathType("testdir") & PathTypeFlags::Archive));
-		CAGE_TEST(none(pathType("testdir") & PathTypeFlags::InsideArchive));
 		CAGE_TEST(any(pathType("testdir") & PathTypeFlags::Directory));
 		CAGE_TEST(any(pathType("testdir/0.zip") & PathTypeFlags::Archive));
-		CAGE_TEST(none(pathType("testdir/0.zip") & PathTypeFlags::InsideArchive));
 		CAGE_TEST(none(pathType("testdir/0.zip") & PathTypeFlags::Directory));
 		CAGE_TEST(any(pathType("testdir/0.zip/1.zip") & PathTypeFlags::Archive));
-		CAGE_TEST(any(pathType("testdir/0.zip/1.zip") & PathTypeFlags::InsideArchive));
 		CAGE_TEST(none(pathType("testdir/0.zip/1.zip") & PathTypeFlags::Directory));
 		CAGE_TEST(any(pathType("testdir/0.zip/1.zip/2.zip") & PathTypeFlags::Archive));
-		CAGE_TEST(any(pathType("testdir/0.zip/1.zip/2.zip") & PathTypeFlags::InsideArchive));
 		CAGE_TEST(none(pathType("testdir/0.zip/1.zip/2.zip") & PathTypeFlags::Directory));
 	}
 
@@ -109,7 +102,6 @@ void testArchivesRecursion()
 		CAGE_TEST(none(pathType("testdir/0.zip/1.zip/2.zip/welcome") & PathTypeFlags::Archive));
 		CAGE_TEST(none(pathType("testdir/0.zip/1.zip/2.zip/welcome") & PathTypeFlags::Directory));
 		CAGE_TEST(any(pathType("testdir/0.zip/1.zip/2.zip/welcome") & PathTypeFlags::File));
-		CAGE_TEST(any(pathType("testdir/0.zip/1.zip/2.zip/welcome") & PathTypeFlags::InsideArchive));
 	}
 
 	{
@@ -127,7 +119,6 @@ void testArchivesRecursion()
 		CAGE_TEST(none(pathType("testdir/0.zip/1.zip/2.zip/welcome") & PathTypeFlags::Archive));
 		CAGE_TEST(none(pathType("testdir/0.zip/1.zip/2.zip/welcome") & PathTypeFlags::Directory));
 		CAGE_TEST(any(pathType("testdir/0.zip/1.zip/2.zip/welcome") & PathTypeFlags::File));
-		CAGE_TEST(any(pathType("testdir/0.zip/1.zip/2.zip/welcome") & PathTypeFlags::InsideArchive));
 	}
 
 	{
@@ -154,7 +145,6 @@ void testArchivesRecursion()
 		}
 	}
 
-	/*
 	{
 		CAGE_TESTCASE("concurrent randomized recursive archive files");
 		ConcurrentTester tester;
@@ -164,5 +154,4 @@ void testArchivesRecursion()
 			tester.run();
 		}
 	}
-	*/
 }

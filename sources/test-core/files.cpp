@@ -219,4 +219,22 @@ void testFiles()
 			readInMemoryFile(f);
 		}
 	}
+
+	{
+		CAGE_TESTCASE("invalid file paths");
+		string invalidPath = "invalid-path";
+		invalidPath[3] = 0;
+		CAGE_TEST(pathType(invalidPath) == PathTypeFlags::Invalid);
+		CAGE_TEST(!pathIsFile(invalidPath));
+		CAGE_TEST_THROWN(pathRemove(invalidPath));
+		CAGE_TEST_THROWN(pathMove(invalidPath, "valid-path"));
+		CAGE_TEST_THROWN(pathMove("valid-path", invalidPath));
+		CAGE_TEST_THROWN(readFile(invalidPath));
+		CAGE_TEST_THROWN(writeFile(invalidPath));
+		CAGE_TEST_THROWN(pathLastChange(invalidPath));
+		CAGE_TEST_THROWN(pathCreateDirectories(invalidPath));
+		CAGE_TEST_THROWN(pathCreateArchive(invalidPath));
+		CAGE_TEST_THROWN(newDirectoryList(invalidPath));
+		CAGE_TEST_THROWN(pathSearchTowardsRoot(invalidPath));
+	}
 }

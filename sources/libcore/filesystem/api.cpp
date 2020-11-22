@@ -132,15 +132,10 @@ namespace cage
 
 	Holder<File> newFile(const string &path, const FileMode &mode)
 	{
-		auto [a, p, aia] = archiveFindTowardsRoot(path, true);
-		if (a)
-		{
-			if (p.empty())
-				CAGE_THROW_ERROR(Exception, "cannot open archive file as regular file");
-			return a->openFile(p, mode);
-		}
-		else
-			return realNewFile(path, mode);
+		auto [a, p] = archiveFindTowardsRoot(path, true);
+		if (p.empty())
+			CAGE_THROW_ERROR(Exception, "cannot open archive file as regular file");
+		return a->openFile(p, mode);
 	}
 
 	Holder<File> readFile(const string &path)
@@ -217,29 +212,18 @@ namespace cage
 
 	Holder<DirectoryList> newDirectoryList(const string &path)
 	{
-		auto [a, p, aia] = archiveFindTowardsRoot(path, true);
-		if (a)
-			return a->listDirectory(p);
-		else
-			return realNewDirectoryList(path);
+		auto [a, p] = archiveFindTowardsRoot(path, true);
+		return a->listDirectory(p);
 	}
 
 	PathTypeFlags pathType(const string &path)
 	{
 		if (!pathIsValid(path))
 			return PathTypeFlags::Invalid;
-		auto [a, p, aia] = archiveFindTowardsRoot(path, true);
-		if (a)
-		{
-			if (p.empty())
-			{
-				const PathTypeFlags fp = aia ? PathTypeFlags::InsideArchive : PathTypeFlags::None;
-				return PathTypeFlags::File | PathTypeFlags::Archive | fp;
-			}
-			return a->type(p) | PathTypeFlags::InsideArchive;
-		}
-		else
-			return realType(path);
+		auto [a, p] = archiveFindTowardsRoot(path, true);
+		if (p.empty())
+			return PathTypeFlags::File | PathTypeFlags::Archive;
+		return a->type(p);
 	}
 
 	bool pathIsFile(const string &path)
@@ -249,49 +233,39 @@ namespace cage
 
 	void pathCreateDirectories(const string &path)
 	{
-		auto [a, p, aia] = archiveFindTowardsRoot(path, true);
-		if (a)
-			a->createDirectories(p);
-		else
-			realCreateDirectories(path);
+		auto [a, p] = archiveFindTowardsRoot(path, true);
+		a->createDirectories(p);
 	}
 
 	void pathCreateArchive(const string &path, const string &options)
 	{
-		if (none(pathType(path) & PathTypeFlags::NotFound))
-			CAGE_THROW_ERROR(Exception, "cannot create an archive - path already exists");
-		// someday, switch based on the options may be implemented here to create different types of archives
-		// the options are passed on to allow for other options (compression, encryption, ...)
+		if (any(pathType(path) & (PathTypeFlags::File | PathTypeFlags::Directory | PathTypeFlags::Archive)))
+		{
+			CAGE_LOG_THROW(stringizer() + "path: '" + path + "'");
+			CAGE_THROW_ERROR(Exception, "cannot create archive, the path already exists");
+		}
 		archiveCreateZip(path, options);
 	}
 
 	void pathMove(const string &from, const string &to)
 	{
-		auto [af, pf, aiaf] = archiveFindTowardsRoot(from, false);
-		auto [at, pt, aiat] = archiveFindTowardsRoot(to, false);
-		if (!af && !at)
-			return realMove(from, to);
-		if (af && af == at)
+		auto [af, pf] = archiveFindTowardsRoot(from, false);
+		auto [at, pt] = archiveFindTowardsRoot(to, false);
+		if (af == at)
 			return af->move(pf, pt);
 		mixedMove(af, af ? pf : from, at, at ? pt : to);
 	}
 
 	void pathRemove(const string &path)
 	{
-		auto [a, p, aia] = archiveFindTowardsRoot(path, false);
-		if (a)
-			a->remove(p);
-		else
-			realRemove(path);
+		auto [a, p] = archiveFindTowardsRoot(path, false);
+		a->remove(p);
 	}
 
 	uint64 pathLastChange(const string &path)
 	{
-		auto [a, p, aia] = archiveFindTowardsRoot(path, false);
-		if (a)
-			return a->lastChange(p);
-		else
-			return realLastChange(path);
+		auto [a, p] = archiveFindTowardsRoot(path, false);
+		return a->lastChange(p);
 	}
 
 	string pathSearchTowardsRoot(const string &name, PathTypeFlags type)
@@ -301,15 +275,20 @@ namespace cage
 
 	string pathSearchTowardsRoot(const string &name, const string &whereToStart, PathTypeFlags type)
 	{
-		if (name.empty())
-			CAGE_THROW_ERROR(Exception, "name cannot be empty");
+		CAGE_ASSERT(any(type & (PathTypeFlags::File | PathTypeFlags::Directory | PathTypeFlags::Archive)));
+		CAGE_ASSERT(none(type & ~(PathTypeFlags::File | PathTypeFlags::Directory | PathTypeFlags::Archive)));
+		if (name.empty() || !pathIsValid(name) || pathIsAbs(name))
+		{
+			CAGE_LOG_THROW(stringizer() + "name: '" + name + "'");
+			CAGE_THROW_ERROR(Exception, "invalid name in pathSearchTowardsRoot");
+		}
 		try
 		{
 			detail::OverrideException oe;
 			string p = whereToStart;
 			while (true)
 			{
-				string s = pathJoin(p, name);
+				const string s = pathJoin(p, name);
 				if (any(pathType(s) & type))
 					return s;
 				p = pathJoin(p, "..");
@@ -319,7 +298,7 @@ namespace cage
 		{
 			CAGE_LOG_THROW(stringizer() + "name: '" + name + "'");
 			CAGE_LOG_THROW(stringizer() + "whereToStart: '" + whereToStart + "'");
-			CAGE_THROW_ERROR(Exception, "failed to find the path");
+			CAGE_THROW_ERROR(Exception, "pathSearchTowardsRoot failed to find the name");
 		}
 	}
 }
