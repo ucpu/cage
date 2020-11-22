@@ -1,6 +1,7 @@
 #include <cage-core/entities.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
+#include <cage-core/flatSet.h>
 #include <cage-core/math.h>
 #include <cage-core/macros.h>
 
@@ -29,42 +30,7 @@ namespace cage
 			GroupImpl(EntityManagerImpl *manager);
 		};
 
-		class GroupsSet
-		{
-		public:
-			void insert(EntityGroup *grp)
-			{
-				auto it = std::lower_bound(data.begin(), data.end(), grp);
-				if (it != data.end() && *it == grp)
-					return;
-				data.insert(it, grp);
-			}
-
-			void erase(EntityGroup *grp)
-			{
-				auto it = std::lower_bound(data.begin(), data.end(), grp);
-				if (it != data.end() && *it == grp)
-					data.erase(it);
-			}
-
-			std::size_t count(EntityGroup *grp) const
-			{
-				return std::binary_search(data.begin(), data.end(), grp);
-			}
-
-			bool empty() const
-			{
-				return data.empty();
-			}
-
-			auto begin() const
-			{
-				return data.begin();
-			}
-
-		private:
-			std::vector<EntityGroup *> data;
-		};
+		using GroupsSet = FlatSet<EntityGroup *>;
 
 		class EntityImpl : public Entity
 		{

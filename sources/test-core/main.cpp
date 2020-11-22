@@ -27,6 +27,7 @@ void testSerialization();
 void testConcurrent();
 void testConcurrentQueue();
 void testLruCache();
+void testFlatSet();
 void testFiles();
 void testArchives();
 void testArchivesRecursion();
@@ -87,6 +88,7 @@ int main()
 	testConcurrent();
 	testConcurrentQueue();
 	testLruCache();
+	testFlatSet();
 	testFiles();
 	testArchives();
 	testArchivesRecursion();

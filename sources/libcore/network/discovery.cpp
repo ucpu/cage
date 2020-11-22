@@ -3,6 +3,7 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 #include <cage-core/pointerRangeHolder.h>
+#include <cage-core/flatSet.h>
 
 #include <vector>
 #include <set>
@@ -14,19 +15,19 @@ namespace cage
 
 	namespace
 	{
-		static constexpr uint32 idSize = 64;
+		constexpr uint32 IdSize = 64;
 
 		// AF_INET = ipv4 only, AF_INET6 = ipv6 only, AF_UNSPEC = both
-		static constexpr int protocolFamily = AF_UNSPEC;
+		constexpr int ProtocolFamily = AF_UNSPEC;
 
-		struct peerStruct : public DiscoveryPeer
+		struct PeerStruct : public DiscoveryPeer
 		{
-			uint32 ttl;
+			uint32 ttl = 0;
 		};
 
 		struct SockAddrs
 		{
-			std::set<Addr> addresses;
+			FlatSet<Addr> addresses;
 			Sock s;
 
 			SockAddrs(int family, int type, int protocol) : s(family, type, protocol)
@@ -36,14 +37,14 @@ namespace cage
 		class DiscoveryClientImpl : public DiscoveryClient
 		{
 		public:
-			std::map<Guid<idSize>, peerStruct> peers;
+			std::map<Guid<IdSize>, PeerStruct> peers;
 			std::vector<SockAddrs> sockets;
-			uint32 gameId;
-			uint16 sendPort;
+			uint32 gameId = 0;
+			uint16 sendPort = 0;
 
 			DiscoveryClientImpl(uint16 sendPort, uint32 gameId) : gameId(gameId), sendPort(sendPort)
 			{
-				AddrList l(nullptr, 0, protocolFamily, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
+				AddrList l(nullptr, 0, ProtocolFamily, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
 				while (l.valid())
 				{
 					int family = -1, type = -1, protocol = -1;
@@ -69,7 +70,7 @@ namespace cage
 
 			void addServer(const string &address, uint16 port)
 			{
-				AddrList l(address.c_str(), port, protocolFamily, SOCK_DGRAM, IPPROTO_UDP, 0);
+				AddrList l(address.c_str(), port, ProtocolFamily, SOCK_DGRAM, IPPROTO_UDP, 0);
 				while (l.valid())
 				{
 					for (auto &it : sockets)
@@ -84,7 +85,7 @@ namespace cage
 				auto it = peers.begin();
 				while (it != peers.end())
 				{
-					peerStruct &p = it->second;
+					PeerStruct &p = it->second;
 					if (p.ttl-- == 0)
 						it = peers.erase(it);
 					else
@@ -126,8 +127,8 @@ namespace cage
 							break;
 						try
 						{
-							peerStruct p;
-							Guid<idSize> id;
+							PeerStruct p;
+							Guid<IdSize> id;
 							uint32 gid;
 							Deserializer d(buffer);
 							d >> gid >> id >> p.port;
@@ -187,14 +188,14 @@ namespace cage
 		class DiscoveryServerImpl : public DiscoveryServer
 		{
 		public:
-			Guid<idSize> uniId;
+			Guid<IdSize> uniId;
 			uint32 gameId;
 			uint16 gamePort;
 			std::vector<Sock> sockets;
 
 			DiscoveryServerImpl(uint16 listenPort, uint16 gamePort, uint32 gameId) : uniId(true), gameId(gameId), gamePort(gamePort)
 			{
-				AddrList l(nullptr, listenPort, protocolFamily, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
+				AddrList l(nullptr, listenPort, ProtocolFamily, SOCK_DGRAM, IPPROTO_UDP, AI_PASSIVE);
 				while (l.valid())
 				{
 					int family = -1, type = -1, protocol = -1;

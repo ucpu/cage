@@ -1,7 +1,5 @@
-#ifndef guard_enumerate_h_E056A761_DF44_43BC_BB2F_ECD68E2D052D
-#define guard_enumerate_h_E056A761_DF44_43BC_BB2F_ECD68E2D052D
-
-#include "enumerate.h"
+#ifndef guard_lruCache_h_ABEDFC7ADD4A
+#define guard_lruCache_h_ABEDFC7ADD4A
 
 #include <vector>
 #include <unordered_map>
@@ -133,4 +131,4 @@ namespace cage
 	};
 }
 
-#endif // guard_enumerate_h_E056A761_DF44_43BC_BB2F_ECD68E2D052D
+#endif // guard_lruCache_h_ABEDFC7ADD4A

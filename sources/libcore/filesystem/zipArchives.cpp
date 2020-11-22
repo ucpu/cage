@@ -539,7 +539,6 @@ namespace cage
 				CAGE_ASSERT(isPathValid(name));
 				CAGE_ASSERT(mode.valid());
 				CAGE_ASSERT(!mode.append);
-				CAGE_ASSERT(!mode.textual);
 
 				ScopeLock l(a->mutex);
 				if (mode.write)
