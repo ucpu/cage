@@ -62,7 +62,7 @@ namespace
 
 	void tryLockTest()
 	{
-		if (ScopeLock(mutexGlobal, TryLockTag()))
+		if (ScopeLock lock = ScopeLock(mutexGlobal, TryLockTag()))
 		{
 			CAGE_TEST(false);
 		}

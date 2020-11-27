@@ -102,7 +102,7 @@ namespace cage
 			bool windowResize(const ivec2 &size)
 			{
 				confScreen = window->screenId();
-				if (confFullscreenEnabled = window->isFullscreen())
+				if ((confFullscreenEnabled = window->isFullscreen()))
 				{
 					confFullscreenWidth = size[0];
 					confFullscreenHeight = size[1];
