@@ -178,7 +178,7 @@ namespace cage
 				while (!stopping)
 				{
 					{
-						ScopeLock<Mutex> l(windowsMutex());
+						ScopeLock l(windowsMutex());
 						glfwPollEvents();
 					}
 
@@ -207,7 +207,7 @@ namespace cage
 			{
 				cageGlfwInitializeFunc();
 
-				ScopeLock<Mutex> l(windowsMutex());
+				ScopeLock l(windowsMutex());
 
 #ifdef GCHL_WINDOWS_THREAD
 				stopping = false;
@@ -273,7 +273,7 @@ namespace cage
 
 			void finalizeWindow()
 			{
-				ScopeLock<Mutex> lock(windowsMutex());
+				ScopeLock lock(windowsMutex());
 				glfwDestroyWindow(window);
 				window = nullptr;
 			}
@@ -664,7 +664,7 @@ namespace cage
 		WindowImpl *impl = (WindowImpl *)this;
 #ifndef GCHL_WINDOWS_THREAD
 		{
-			ScopeLock<Mutex> l(windowsMutex());
+			ScopeLock l(windowsMutex());
 			glfwPollEvents();
 		}
 #endif

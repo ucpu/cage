@@ -1,11 +1,13 @@
 #include <cage-core/string.h>
 #include <cage-core/timer.h>
 #include <cage-core/concurrent.h> // threadSleep
+#include <cage-core/flatSet.h>
 
 #include "files.h"
 
 #ifdef CAGE_SYSTEM_WINDOWS
 #include "../incWin.h"
+#include <io.h> // _get_osfhandle
 #define fseek _fseeki64
 #define ftell _ftelli64
 #else
@@ -21,8 +23,6 @@
 #include <cerrno>
 #include <cstdio>
 #include <cstring>
-
-#include <set>
 
 #include <FileWatcher/FileWatcher.h>
 
@@ -325,6 +325,27 @@ namespace cage
 				}
 			}
 
+			void readAt(PointerRange<char> buffer, uintPtr at) override
+			{
+				CAGE_ASSERT(f);
+				CAGE_ASSERT(mode.read);
+				if (buffer.size() == 0)
+					return;
+
+#ifdef CAGE_SYSTEM_WINDOWS
+				OVERLAPPED o;
+				detail::memset(&o, 0, sizeof(o));
+				o.Offset = (DWORD)at;
+				o.OffsetHigh = (DWORD)((uint64)at >> 32);
+				DWORD r = 0;
+				if (!ReadFile((HANDLE)_get_osfhandle(_fileno(f)), buffer.data(), numeric_cast<DWORD>(buffer.size()), &r, &o) || r != buffer.size())
+					CAGE_THROW_ERROR(SystemError, "ReadFile", GetLastError());
+#else
+				if (pread(fileno(f), buffer.data(), buffer.size(), at) != buffer.size())
+					CAGE_THROW_ERROR(SystemError, "pread", errno);
+#endif
+			}
+
 			void read(PointerRange<char> buffer) override
 			{
 				CAGE_ASSERT(f);
@@ -529,10 +550,10 @@ namespace cage
 
 	namespace
 	{
-		class FilesystemWatcherImpl : public FilesystemWatcher, public FW::FileWatchListener
+		class FilesystemWatcherImpl : public FilesystemWatcher, private FW::FileWatchListener
 		{
 		public:
-			std::set<string, StringComparatorFast> files;
+			FlatSet<string, StringComparatorFast> files;
 			Holder<FW::FileWatcher> fw;
 			Holder<Timer> clock;
 
@@ -542,7 +563,7 @@ namespace cage
 				clock = newTimer();
 			}
 
-			const string waitForChange(uint64 time)
+			string waitForChange(uint64 time)
 			{
 				clock->reset();
 				while (files.empty())
@@ -558,25 +579,38 @@ namespace cage
 				return res;
 			}
 
-			virtual void handleFileAction(FW::WatchID watchid, const FW::String &dir, const FW::String &filename, FW::Action action) override
+			void handleFileAction(FW::WatchID watchid, const FW::String &dir, const FW::String &filename, FW::Action action) override
 			{
 				files.insert(pathJoin(dir.c_str(), filename.c_str()));
+			}
+
+			void registerPath(const string &path)
+			{
+				fw->addWatch(path.c_str(), this);
+				Holder<DirectoryList> dl = newDirectoryList(path);
+				while (dl->valid())
+				{
+					const string p = dl->fullPath();
+					const PathTypeFlags type = realType(p);
+					if (any(type & PathTypeFlags::Directory))
+						registerPath(p);
+					dl->next();
+				}
 			}
 		};
 	}
 
-	void FilesystemWatcher::registerPath(const string &path)
+	void FilesystemWatcher::registerPath(const string &path_)
 	{
 		FilesystemWatcherImpl *impl = (FilesystemWatcherImpl *)this;
-		impl->fw->addWatch(path.c_str(), impl);
-		Holder<DirectoryList> dl = newDirectoryList(path);
-		while (dl->valid())
+		const string path = pathToAbs(path_);
+		const PathTypeFlags type = realType(path); // FilesystemWatcher works with real filesystem only!
+		if (none(type & PathTypeFlags::Directory))
 		{
-			const auto type = dl->type();
-			if (any(type & PathTypeFlags::Directory) && none(type & PathTypeFlags::Archive))
-				registerPath(pathJoin(path, dl->name()));
-			dl->next();
+			CAGE_LOG_THROW(stringizer() + "path: '" + path + "'");
+			CAGE_THROW_ERROR(Exception, "path must be existing folder");
 		}
+		impl->registerPath(path);
 	}
 
 	string FilesystemWatcher::waitForChange(uint64 time)

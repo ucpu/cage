@@ -53,6 +53,7 @@ namespace cage
 	public:
 		bool valid() const;
 		string name() const;
+		string fullPath() const;
 		PathTypeFlags type() const;
 		bool isDirectory() const; // directory or archive
 		uint64 lastChange() const;

@@ -465,7 +465,7 @@ namespace
 		{
 			Asset *ass = nullptr;
 			{
-				ScopeLock<Mutex> m(mut);
+				ScopeLock m(mut);
 				if (itg != assets.end())
 					ass = const_cast<Asset*>(itg++->get());
 			}

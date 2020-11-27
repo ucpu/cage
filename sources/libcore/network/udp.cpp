@@ -1020,7 +1020,7 @@ namespace cage
 			{
 				std::vector<MemView> packets;
 				{
-					ScopeLock<Mutex> lock(sockGroup->mut);
+					ScopeLock lock(sockGroup->mut);
 					sockGroup->readAll();
 					sockReceiver->packets.swap(packets);
 				}

@@ -329,7 +329,7 @@ namespace cage
 			void lock()
 			{
 				{
-					ScopeLock<Mutex> l(mut);
+					ScopeLock l(mut);
 					if (++current == total)
 					{
 						for (uint32 i = 0; i < total; i++)
@@ -338,7 +338,7 @@ namespace cage
 				}
 				sem1->lock();
 				{
-					ScopeLock<Mutex> l(mut);
+					ScopeLock l(mut);
 					if (--current == 0)
 					{
 						for (uint32 i = 0; i < total; i++)

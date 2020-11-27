@@ -27,6 +27,17 @@ namespace cage
 					pos = buf.size();
 			}
 
+			void readAt(PointerRange<char> buffer, uintPtr at) override
+			{
+				if (!mode.read)
+					CAGE_THROW_CRITICAL(NotImplemented, "reading from write-only memory file");
+				char *data = buffer.data();
+				const uintPtr size = buffer.size();
+				if (at + size > buf.size())
+					CAGE_THROW_ERROR(Exception, "reading beyond buffer");
+				detail::memcpy(data, buf.data() + at, size);
+			}
+
 			void read(PointerRange<char> buffer) override
 			{
 				if (!mode.read)
@@ -84,6 +95,17 @@ namespace cage
 				CAGE_ASSERT(mode.valid());
 				if (mode.append)
 					pos = buf.size();
+			}
+
+			void readAt(PointerRange<char> buffer, uintPtr at) override
+			{
+				if (!mode.read)
+					CAGE_THROW_CRITICAL(NotImplemented, "reading from write-only memory file");
+				char *data = buffer.data();
+				const uintPtr size = buffer.size();
+				if (at + size > buf.size())
+					CAGE_THROW_ERROR(Exception, "reading beyond buffer");
+				detail::memcpy(data, buf.data() + at, size);
 			}
 
 			void read(PointerRange<char> buffer) override

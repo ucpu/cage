@@ -25,7 +25,7 @@ namespace cage
 
 		void push(const T &value)
 		{
-			ScopeLock<Mutex> sl(mut);
+			ScopeLock sl(mut);
 			while (true)
 			{
 				if (stop)
@@ -43,7 +43,7 @@ namespace cage
 
 		void push(T &&value)
 		{
-			ScopeLock<Mutex> sl(mut);
+			ScopeLock sl(mut);
 			while (true)
 			{
 				if (stop)
@@ -61,7 +61,7 @@ namespace cage
 
 		bool tryPush(const T &value)
 		{
-			ScopeLock<Mutex> sl(mut);
+			ScopeLock sl(mut);
 			if (stop)
 				CAGE_THROW_SILENT(ConcurrentQueueTerminated, "concurrent queue terminated");
 			if (items.size() < maxItems)
@@ -75,7 +75,7 @@ namespace cage
 
 		bool tryPush(T &&value)
 		{
-			ScopeLock<Mutex> sl(mut);
+			ScopeLock sl(mut);
 			if (stop)
 				CAGE_THROW_SILENT(ConcurrentQueueTerminated, "concurrent queue terminated");
 			if (items.size() < maxItems)
@@ -89,7 +89,7 @@ namespace cage
 
 		void pop(T &value)
 		{
-			ScopeLock<Mutex> sl(mut);
+			ScopeLock sl(mut);
 			while (true)
 			{
 				if (stop)
@@ -108,7 +108,7 @@ namespace cage
 
 		bool tryPop(T &value)
 		{
-			ScopeLock<Mutex> sl(mut);
+			ScopeLock sl(mut);
 			if (stop)
 				CAGE_THROW_SILENT(ConcurrentQueueTerminated, "concurrent queue terminated");
 			if (!items.empty())
@@ -124,7 +124,7 @@ namespace cage
 		void terminate()
 		{
 			{
-				ScopeLock<Mutex> sl(mut); // mandate memory barriers
+				ScopeLock sl(mut); // mandate memory barriers
 				stop = true;
 			}
 			writer->broadcast();
@@ -133,7 +133,7 @@ namespace cage
 
 		bool stopped() const
 		{
-			ScopeLock<Mutex> sl(mut); // mandate memory barriers
+			ScopeLock sl(mut); // mandate memory barriers
 			return stop;
 		}
 

@@ -44,7 +44,7 @@ namespace cage
 
 			privat::SwapBufferLock read()
 			{
-				ScopeLock<Mutex> lock(mutex);
+				ScopeLock lock(mutex);
 				CAGE_ASSERT(readable());
 				if (repeatedReads)
 				{
@@ -74,7 +74,7 @@ namespace cage
 
 			privat::SwapBufferLock write()
 			{
-				ScopeLock<Mutex> lock(mutex);
+				ScopeLock lock(mutex);
 				CAGE_ASSERT(writeable());
 				if (repeatedWrites)
 				{
@@ -104,7 +104,7 @@ namespace cage
 
 			void finished(uint32 index)
 			{
-				ScopeLock<Mutex> lock(mutex);
+				ScopeLock lock(mutex);
 				switch (states[index])
 				{
 				case StateEnum::Reading:

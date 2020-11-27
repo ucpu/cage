@@ -360,15 +360,15 @@ namespace cage
 			{ \
 				try { CAGE_JOIN(NAME, InitializeStage)(); } \
 				GCHL_GENERATE_CATCH(NAME, initialization (engine)); \
-				{ ScopeLock<Barrier> l(threadsStateBarier); } \
-				{ ScopeLock<Barrier> l(threadsStateBarier); } \
+				{ ScopeLock l(threadsStateBarier); } \
+				{ ScopeLock l(threadsStateBarier); } \
 				try { CAGE_JOIN(NAME, Thread)().initialize.dispatch(); } \
 				GCHL_GENERATE_CATCH(NAME, initialization (application)); \
-				{ ScopeLock<Barrier> l(threadsStateBarier); } \
+				{ ScopeLock l(threadsStateBarier); } \
 				try { CAGE_JOIN(NAME, GameloopStage)(); } \
 				GCHL_GENERATE_CATCH(NAME, gameloop); \
 				CAGE_JOIN(NAME, StopStage)(); \
-				{ ScopeLock<Barrier> l(threadsStateBarier); } \
+				{ ScopeLock l(threadsStateBarier); } \
 				try { CAGE_JOIN(NAME, Thread)().finalize.dispatch(); } \
 				GCHL_GENERATE_CATCH(NAME, finalization (application)); \
 				try { CAGE_JOIN(NAME, FinalizeStage)(); } \
@@ -506,7 +506,7 @@ namespace cage
 					ListenerComponent::component = entityMgr->defineComponent(ListenerComponent(), true);
 				}
 
-				{ ScopeLock<Barrier> l(threadsStateBarier); }
+				{ ScopeLock l(threadsStateBarier); }
 				CAGE_LOG(SeverityEnum::Info, "engine", "engine initialized");
 
 				CAGE_ASSERT(engineStarted == 1);
@@ -527,8 +527,8 @@ namespace cage
 
 				CAGE_LOG(SeverityEnum::Info, "engine", "starting engine");
 
-				{ ScopeLock<Barrier> l(threadsStateBarier); }
-				{ ScopeLock<Barrier> l(threadsStateBarier); }
+				{ ScopeLock l(threadsStateBarier); }
+				{ ScopeLock l(threadsStateBarier); }
 
 				try
 				{
@@ -554,7 +554,7 @@ namespace cage
 				engineStarted = 5;
 
 				CAGE_LOG(SeverityEnum::Info, "engine", "finalizing engine");
-				{ ScopeLock<Barrier> l(threadsStateBarier); }
+				{ ScopeLock l(threadsStateBarier); }
 
 				{ // unload assets
 					assets->remove(HashString("cage/cage.pack"));

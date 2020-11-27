@@ -21,6 +21,11 @@ namespace cage
 		CAGE_THROW_CRITICAL(NotImplemented, "reopening for modification a file that does not support it");
 	}
 
+	void FileAbstract::readAt(PointerRange<char> buffer, uintPtr at)
+	{
+		CAGE_THROW_CRITICAL(NotImplemented, "reading from file at offset not supported");
+	}
+
 	void FileAbstract::read(PointerRange<char> buffer)
 	{
 		CAGE_THROW_CRITICAL(NotImplemented, "reading from write-only file");

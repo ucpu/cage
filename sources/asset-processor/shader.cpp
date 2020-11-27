@@ -456,9 +456,6 @@ void processShader()
 		if (!properties("version").empty())
 			prepend += string("#version ") + properties("version") + "\n";
 		prepend += string() + "// " + inputName + "\n";
-		uint32 y, M, d, h, m, s;
-		detail::getSystemDateTime(y, M, d, h, m, s);
-		prepend += string() + "// " + detail::formatDateTime(y, M, d, h, m, s) + "\n";
 		for (auto &it : codes)
 			it.second = std::string(prepend.c_str(), prepend.length()) + it.second;
 	}

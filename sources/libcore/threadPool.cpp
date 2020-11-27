@@ -33,7 +33,7 @@ namespace cage
 			~ThreadPoolImpl()
 			{
 				ending = true;
-				{ ScopeLock<Barrier> l(barrier1); }
+				{ ScopeLock l(barrier1); }
 				thrs.clear(); // all threads must be destroyed before any of the barriers are
 			}
 
@@ -41,12 +41,12 @@ namespace cage
 			{
 				uint32 thrIndex = m;
 				{
-					ScopeLock<Mutex> l(mutex);
+					ScopeLock l(mutex);
 					thrIndex = threadIndexInitializer++;
 				}
 				while (true)
 				{
-					{ ScopeLock<Barrier> l(barrier1); }
+					{ ScopeLock l(barrier1); }
 					if (ending)
 						break;
 					try
@@ -55,7 +55,7 @@ namespace cage
 					}
 					catch (...)
 					{
-						ScopeLock<Mutex> l(mutex);
+						ScopeLock l(mutex);
 						if (exptr)
 						{
 							CAGE_LOG(SeverityEnum::Warning, "thread", "discarding an exception caught in a thread pool");
@@ -64,7 +64,7 @@ namespace cage
 						else
 							exptr = std::current_exception();
 					}
-					{ ScopeLock<Barrier> l(barrier2); }
+					{ ScopeLock l(barrier2); }
 				}
 			}
 
@@ -76,8 +76,8 @@ namespace cage
 					return;
 				}
 
-				{ ScopeLock<Barrier> l(barrier1); }
-				{ ScopeLock<Barrier> l(barrier2); }
+				{ ScopeLock l(barrier1); }
+				{ ScopeLock l(barrier2); }
 				if (exptr)
 					std::rethrow_exception(exptr);
 			}

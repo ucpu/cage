@@ -19,7 +19,7 @@ namespace
 
 		void accept()
 		{
-			ScopeLock<Mutex> lck(mut);
+			ScopeLock lck(mut);
 			Holder<TcpConnection> tmp = server->accept();
 			if (tmp)
 				connections.push_back(templates::move(tmp));
@@ -28,7 +28,7 @@ namespace
 		void notify(const string &str)
 		{
 			detail::OverrideBreakpoint OverrideBreakpoint;
-			ScopeLock<Mutex> lck(mut);
+			ScopeLock lck(mut);
 			auto it = connections.begin();
 			while (it != connections.end())
 			{

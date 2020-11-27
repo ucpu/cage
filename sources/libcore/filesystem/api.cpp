@@ -158,6 +158,12 @@ namespace cage
 		return impl->name();
 	}
 
+	string DirectoryList::fullPath() const
+	{
+		const DirectoryListAbstract *impl = (const DirectoryListAbstract *)this;
+		return impl->fullPath();
+	}
+
 	PathTypeFlags DirectoryList::type() const
 	{
 		const DirectoryListAbstract *impl = (const DirectoryListAbstract *)this;

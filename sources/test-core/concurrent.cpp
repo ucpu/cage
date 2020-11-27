@@ -19,18 +19,18 @@ namespace
 	void threadTest()
 	{
 		for (uint32 i = 0; i < 100; i++)
-			ScopeLock<Barrier> l(barrierGlobal);
+			ScopeLock l(barrierGlobal);
 	}
 
 	void mutexTest(uint32 idx, uint32)
 	{
-		ScopeLock<Mutex> l(mutexGlobal);
+		ScopeLock l(mutexGlobal);
 		counterGlobal += idx;
 	}
 
 	void semaphoreTest(uint32 idx, uint32)
 	{
-		ScopeLock<Semaphore> l(semaphoreGlobal);
+		ScopeLock l(semaphoreGlobal);
 		counterGlobal += idx;
 	}
 
@@ -43,7 +43,7 @@ namespace
 	{
 		CAGE_TEST(counterLocal == 100 * idx);
 		{
-			ScopeLock<Mutex> l(mutexGlobal);
+			ScopeLock l(mutexGlobal);
 			counterGlobal += idx;
 		}
 	}
@@ -54,7 +54,7 @@ namespace
 		{
 			threadSleep(2000);
 			{
-				ScopeLock<Mutex> l(mutexGlobal);
+				ScopeLock l(mutexGlobal);
 				counterGlobal += 1;
 			}
 		}
@@ -62,7 +62,7 @@ namespace
 
 	void tryLockTest()
 	{
-		if (ScopeLock<Mutex>(mutexGlobal, TryLockTag()))
+		if (ScopeLock(mutexGlobal, TryLockTag()))
 		{
 			CAGE_TEST(false);
 		}
@@ -97,7 +97,7 @@ void testConcurrent()
 		CAGE_TESTCASE("try lock mutex");
 		for (uint32 i = 0; i < 3; i++)
 		{
-			if (auto lock = ScopeLock<Mutex>(mutex, TryLockTag()))
+			if (auto lock = ScopeLock(mutex, TryLockTag()))
 			{
 				newThread(Delegate<void()>().bind<&tryLockTest>(), "try lock");
 			}

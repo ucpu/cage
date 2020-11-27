@@ -9,6 +9,8 @@
 
 #include <cstdio>
 #include <exception>
+#include <chrono>
+#include <ctime>
 
 namespace cage
 {
@@ -45,7 +47,7 @@ namespace cage
 			LoggerImpl() : prev(nullptr), next(nullptr), thread(threadId())
 			{
 				{
-					ScopeLock<Mutex> l(loggerMutex());
+					ScopeLock l(loggerMutex());
 					if (loggerLast())
 					{
 						prev = loggerLast();
@@ -60,7 +62,7 @@ namespace cage
 			~LoggerImpl()
 			{
 				{
-					ScopeLock<Mutex> l(loggerMutex());
+					ScopeLock l(loggerMutex());
 					if (prev)
 						prev->next = next;
 					if (next)
@@ -131,14 +133,13 @@ namespace cage
 					CAGE_LOG(SeverityEnum::Info, "log", version);
 				}
 
-				setCurrentThreadName(pathExtractFilename(detail::getExecutableFullPathNoExe()));
-
 				CAGE_LOG(SeverityEnum::Info, "log", stringizer() + "process id: " + processId());
 
 				{
-					uint32 y, M, d, h, m, s;
-					detail::getSystemDateTime(y, M, d, h, m, s);
-					CAGE_LOG(SeverityEnum::Info, "log", stringizer() + "current time: " + detail::formatDateTime(y, M, d, h, m, s));
+					const std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+					char buffer[50];
+					std::strftime(buffer, 50, "%Y-%m-%d %H:%M:%S", std::localtime(&now));
+					CAGE_LOG(SeverityEnum::Info, "log", stringizer() + "current time: " + buffer);
 				}
 
 				CAGE_LOG(SeverityEnum::Info, "log", stringizer() + "executable path: " + detail::getExecutableFullPath());
@@ -163,6 +164,8 @@ namespace cage
 						// do nothing
 					}
 				}
+
+				setCurrentThreadName(pathExtractFilename(detail::getExecutableFullPathNoExe()));
 			}
 
 			~ApplicationLogInitializer()
@@ -301,7 +304,7 @@ namespace cage
 				info.line = line;
 				info.function = function;
 
-				ScopeLock<Mutex> l(loggerMutex());
+				ScopeLock l(loggerMutex());
 				LoggerImpl *cur = loggerLast();
 				while (cur)
 				{

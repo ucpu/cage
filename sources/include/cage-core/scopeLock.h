@@ -12,35 +12,35 @@ namespace cage
 	template<class T>
 	struct ScopeLock
 	{
-		explicit ScopeLock(const Holder<T> &ptr, TryLockTag) : ScopeLock(+ptr, TryLockTag())
+		[[nodiscard]] explicit ScopeLock(const Holder<T> &ptr, TryLockTag) : ScopeLock(+ptr, TryLockTag())
 		{}
 
-		explicit ScopeLock(const Holder<T> &ptr, ReadLockTag) : ScopeLock(+ptr, ReadLockTag())
+		[[nodiscard]] explicit ScopeLock(const Holder<T> &ptr, ReadLockTag) : ScopeLock(+ptr, ReadLockTag())
 		{}
 
-		explicit ScopeLock(const Holder<T> &ptr, WriteLockTag) : ScopeLock(+ptr, WriteLockTag())
+		[[nodiscard]] explicit ScopeLock(const Holder<T> &ptr, WriteLockTag) : ScopeLock(+ptr, WriteLockTag())
 		{}
 
-		explicit ScopeLock(const Holder<T> &ptr) : ScopeLock(+ptr)
+		[[nodiscard]] explicit ScopeLock(const Holder<T> &ptr) : ScopeLock(+ptr)
 		{}
 
-		explicit ScopeLock(T *ptr, TryLockTag) : ptr(ptr)
+		[[nodiscard]] explicit ScopeLock(T *ptr, TryLockTag) : ptr(ptr)
 		{
 			if (!ptr->tryLock())
 				this->ptr = nullptr;
 		}
 
-		explicit ScopeLock(T *ptr, ReadLockTag) : ptr(ptr)
+		[[nodiscard]] explicit ScopeLock(T *ptr, ReadLockTag) : ptr(ptr)
 		{
 			ptr->readLock();
 		}
 
-		explicit ScopeLock(T *ptr, WriteLockTag) : ptr(ptr)
+		[[nodiscard]] explicit ScopeLock(T *ptr, WriteLockTag) : ptr(ptr)
 		{
 			ptr->writeLock();
 		}
 
-		explicit ScopeLock(T *ptr) : ptr(ptr)
+		[[nodiscard]] explicit ScopeLock(T *ptr) : ptr(ptr)
 		{
 			ptr->lock();
 		}

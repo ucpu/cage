@@ -17,6 +17,7 @@ namespace cage
 		virtual ~FileAbstract() {}
 
 		virtual void reopenForModification(); // critical error by default
+		virtual void readAt(PointerRange<char> buffer, uintPtr at); // critical error by default
 		virtual void read(PointerRange<char> buffer); // critical error by default
 		virtual void write(PointerRange<const char> buffer); // critical error by default
 		virtual void seek(uintPtr position) = 0;

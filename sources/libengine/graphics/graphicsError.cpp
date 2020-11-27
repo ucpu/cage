@@ -188,7 +188,7 @@ namespace cage
 
 		void setCurrentContext(Window *ctx)
 		{
-			ScopeLock<Mutex> lock(assertContext().mutex);
+			ScopeLock lock(assertContext().mutex);
 			if (ctx)
 				assertContext().contexts[threadId()] = ctx;
 			else
@@ -197,7 +197,7 @@ namespace cage
 
 		Window *getCurrentContext()
 		{
-			ScopeLock<Mutex> lock(assertContext().mutex);
+			ScopeLock lock(assertContext().mutex);
 			auto it = assertContext().contexts.find(threadId());
 			if (it == assertContext().contexts.end())
 				return nullptr;
@@ -207,7 +207,7 @@ namespace cage
 
 		uint32 contextTypeIndexInitializer()
 		{
-			ScopeLock<Mutex> lock(assertContext().mutex);
+			ScopeLock lock(assertContext().mutex);
 			static uint32 index = 0;
 			return index++;
 		}
@@ -215,14 +215,14 @@ namespace cage
 		void contextSetCurrentObjectType(uint32 typeIndex, uint32 id)
 		{
 			auto cc = getCurrentContext();
-			ScopeLock<Mutex> lock(assertContext().mutex);
+			ScopeLock lock(assertContext().mutex);
 			assertContext().objects[cc][typeIndex] = id;
 		}
 
 		uint32 contextGetCurrentObjectType(uint32 typeIndex)
 		{
 			auto cc = getCurrentContext();
-			ScopeLock<Mutex> lock(assertContext().mutex);
+			ScopeLock lock(assertContext().mutex);
 			std::map<uint32, uint32> &m = assertContext().objects[cc];
 			auto it = m.find(typeIndex);
 			if (it == m.end())

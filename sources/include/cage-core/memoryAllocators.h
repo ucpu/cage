@@ -562,13 +562,13 @@ namespace cage
 
 		~MemoryArenaFixed()
 		{
-			ScopeLock<ConcurrentPolicy> g(&concurrent);
+			ScopeLock g(&concurrent);
 			detail::systemArena().deallocate(origin);
 		}
 
 		void *allocate(uintPtr size, uintPtr alignment)
 		{
-			ScopeLock<ConcurrentPolicy> g(&concurrent);
+			ScopeLock g(&concurrent);
 			try
 			{
 				void *tmp = allocator.allocate(size, alignment);
@@ -588,13 +588,13 @@ namespace cage
 		{
 			if (ptr == nullptr)
 				return;
-			ScopeLock<ConcurrentPolicy> g(&concurrent);
+			ScopeLock g(&concurrent);
 			allocator.deallocate(ptr);
 		}
 
 		void flush()
 		{
-			ScopeLock<ConcurrentPolicy> g(&concurrent);
+			ScopeLock g(&concurrent);
 			allocator.flush();
 		}
 
@@ -625,12 +625,12 @@ namespace cage
 
 		~MemoryArenaGrowing()
 		{
-			ScopeLock<ConcurrentPolicy> g(&concurrent);
+			ScopeLock g(&concurrent);
 		}
 
 		void *allocate(uintPtr size, uintPtr alignment)
 		{
-			ScopeLock<ConcurrentPolicy> g(&concurrent);
+			ScopeLock g(&concurrent);
 			try
 			{
 				return alloc(size, alignment);
@@ -659,13 +659,13 @@ namespace cage
 		{
 			if (ptr == nullptr)
 				return;
-			ScopeLock<ConcurrentPolicy> g(&concurrent);
+			ScopeLock g(&concurrent);
 			allocator.deallocate(ptr);
 		}
 
 		void flush()
 		{
-			ScopeLock<ConcurrentPolicy> g(&concurrent);
+			ScopeLock g(&concurrent);
 			allocator.flush();
 		}
 

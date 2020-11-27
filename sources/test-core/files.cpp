@@ -237,4 +237,18 @@ void testFiles()
 		CAGE_TEST_THROWN(newDirectoryList(invalidPath));
 		CAGE_TEST_THROWN(pathSearchTowardsRoot(invalidPath));
 	}
+
+	{
+		CAGE_TESTCASE("filesystem watcher");
+		Holder<FilesystemWatcher> w = newFilesystemWatcher();
+		pathCreateDirectories("testdir/watch/dir");
+		w->registerPath("testdir/watch");
+		CAGE_TEST(w->waitForChange(0) == "");
+		writeFile("testdir/watch/1");
+		CAGE_TEST(w->waitForChange(0) == pathToAbs("testdir/watch/1"));
+		CAGE_TEST(w->waitForChange(0) == "");
+		writeFile("testdir/watch/dir/2");
+		CAGE_TEST(w->waitForChange(0) == pathToAbs("testdir/watch/dir/2"));
+		CAGE_TEST(w->waitForChange(0) == "");
+	}
 }

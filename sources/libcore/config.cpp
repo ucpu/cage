@@ -354,10 +354,10 @@ namespace cage
 	}
 
 #define GCHL_CONFIG(T, t) \
-	void CAGE_JOIN(configSet, T)(const string &name, t value) { ScopeLock<Mutex> lock(mut()); getVar(name)->set(value); } \
-	t CAGE_JOIN(configGet, T)(const string &name, t default_) { ScopeLock<Mutex> lock(mut()); Variable *v = getVar(name); if (v->type == ConfigTypeEnum::Undefined) return default_; return cast<t>(v); } \
-	CAGE_JOIN(Config, T)::CAGE_JOIN(Config, T)(const string &name) { ScopeLock<Mutex> lock(mut()); data = getVar(name); } \
-	CAGE_JOIN(Config, T)::CAGE_JOIN(Config, T)(const string &name, t default_) { ScopeLock<Mutex> lock(mut()); data = getVar(name); Variable *v = (Variable*)data; if (v->type == ConfigTypeEnum::Undefined) v->set(default_); } \
+	void CAGE_JOIN(configSet, T)(const string &name, t value) { ScopeLock lock(mut()); getVar(name)->set(value); } \
+	t CAGE_JOIN(configGet, T)(const string &name, t default_) { ScopeLock lock(mut()); Variable *v = getVar(name); if (v->type == ConfigTypeEnum::Undefined) return default_; return cast<t>(v); } \
+	CAGE_JOIN(Config, T)::CAGE_JOIN(Config, T)(const string &name) { ScopeLock lock(mut()); data = getVar(name); } \
+	CAGE_JOIN(Config, T)::CAGE_JOIN(Config, T)(const string &name, t default_) { ScopeLock lock(mut()); data = getVar(name); Variable *v = (Variable*)data; if (v->type == ConfigTypeEnum::Undefined) v->set(default_); } \
 	CAGE_JOIN(Config, T) &CAGE_JOIN(Config, T)::operator = (t value) { ((Variable*)data)->set(value); return *this; } \
 	CAGE_JOIN(Config, T)::operator t() const { return cast<t>((Variable*)data); } \
 	t ConfigList::CAGE_JOIN(get, T)() const { ConfigListImpl *impl = (ConfigListImpl*)this; CAGE_ASSERT(impl->valid); return cast<t>(impl->var); }
@@ -370,10 +370,10 @@ namespace cage
 	GCHL_CONFIG(Double, double)
 #undef GCHL_CONFIG
 
-	void configSetString(const string &name, const string &value) { ScopeLock<Mutex> lock(mut()); getVar(name)->set(value); }
-	string configGetString(const string &name, const string &default_) { ScopeLock<Mutex> lock(mut()); Variable *v = getVar(name); if (v->type == ConfigTypeEnum::Undefined) return default_; return cast<string>(v); }
-	ConfigString::ConfigString(const string &name) { ScopeLock<Mutex> lock(mut()); data = getVar(name); }
-	ConfigString::ConfigString(const string &name, const string &default_) { ScopeLock<Mutex> lock(mut()); data = getVar(name); Variable *v = (Variable*)data; if (v->type == ConfigTypeEnum::Undefined) v->set(default_); }
+	void configSetString(const string &name, const string &value) { ScopeLock lock(mut()); getVar(name)->set(value); }
+	string configGetString(const string &name, const string &default_) { ScopeLock lock(mut()); Variable *v = getVar(name); if (v->type == ConfigTypeEnum::Undefined) return default_; return cast<string>(v); }
+	ConfigString::ConfigString(const string &name) { ScopeLock lock(mut()); data = getVar(name); }
+	ConfigString::ConfigString(const string &name, const string &default_) { ScopeLock lock(mut()); data = getVar(name); Variable *v = (Variable*)data; if (v->type == ConfigTypeEnum::Undefined) v->set(default_); }
 	ConfigString &ConfigString::operator = (const string &value) { ((Variable*)data)->set(value); return *this; }
 	ConfigString::operator string() const { return cast<string>((Variable*)data); }
 	string ConfigList::getString() const { ConfigListImpl *impl = (ConfigListImpl*)this; CAGE_ASSERT(impl->valid); return cast<string>(impl->var); }

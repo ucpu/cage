@@ -721,7 +721,7 @@ namespace cage
 			{
 				Holder<Waiting> w = detail::systemArena().createHolder<Waiting>(&impl->workingCounter).makeShareable();
 				w->asset = asset.share();
-				ScopeLock<RwMutex> lock(impl->publicMutex, ReadLockTag());
+				ScopeLock lock(impl->publicMutex, ReadLockTag());
 				for (uint32 d : asset->dependencies)
 				{
 					if (impl->publicIndex.count(d) == 0)

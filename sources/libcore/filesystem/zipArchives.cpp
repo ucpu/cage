@@ -32,11 +32,18 @@ namespace cage
 			~ProxyFile()
 			{}
 
+			void readAt(PointerRange<char> buffer, uintPtr at) override
+			{
+				CAGE_ASSERT(f);
+				CAGE_ASSERT(buffer.size() <= capacity - at);
+				((FileAbstract *)f)->readAt(buffer, start + at);
+			}
+
 			void read(PointerRange<char> buffer) override
 			{
 				CAGE_ASSERT(f);
-				CAGE_ASSERT(buffer.size() <= capacity - off);
 				ScopeLock l(mutex);
+				CAGE_ASSERT(buffer.size() <= capacity - off);
 				f->seek(start + off);
 				f->read(buffer);
 				off += buffer.size();
@@ -628,6 +635,13 @@ namespace cage
 				CAGE_ASSERT(src);
 				reopenForModificationInternal();
 				mode.write = true;
+			}
+
+			void readAt(PointerRange<char> buffer, uintPtr at) override
+			{
+				CAGE_ASSERT(mode.read);
+				CAGE_ASSERT(src);
+				((FileAbstract *)+src)->readAt(buffer, at);
 			}
 
 			void read(PointerRange<char> buffer) override
