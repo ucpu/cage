@@ -8,6 +8,7 @@
 
 namespace
 {
+	template<uint32 Mode>
 	struct ConcurrentTester
 	{
 		static constexpr uint32 ThreadsCount = 4;
@@ -30,11 +31,13 @@ namespace
 		void threadEntry(uint32 thrId, uint32)
 		{
 			pathCreateArchive(stringizer() + "testdir/concurrent.zip/" + thrId + ".zip");
-			for (uint32 iter = 0; iter < 20; iter++)
+			{ ScopeLock lck(barrier); }
+			for (uint32 iter = 0; iter < 10; iter++)
 			{
 				{ ScopeLock lck(barrier); }
-				const string name = stringizer() + "testdir/concurrent.zip/" + ((iter + thrId) % ThreadsCount) + ".zip/" + randomRange(0, 3) + ".bin";
-				//const string name = stringizer() + "testdir/concurrent.zip/" + randomRange(0, 3) + ".zip/" + ((iter + thrId) % ThreadsCount) + ".bin";
+				const string name = Mode == 0
+					? stringizer() + "testdir/concurrent.zip/" + ((iter + thrId) % ThreadsCount) + ".zip/" + randomRange(0, 3) + ".bin"
+					: stringizer() + "testdir/concurrent.zip/" + randomRange(0, 3) + ".zip/" + ((iter + thrId) % ThreadsCount) + ".bin";
 				const PathTypeFlags pf = pathType(name);
 				if (any(pf & PathTypeFlags::File))
 				{
@@ -147,11 +150,21 @@ void testArchivesRecursion()
 
 	{
 		CAGE_TESTCASE("concurrent randomized recursive archive files");
-		ConcurrentTester tester;
-		for (uint32 i = 0; i < 5; i++)
 		{
-			CAGE_TESTCASE(stringizer() + "iteration: " + i);
-			tester.run();
+			ConcurrentTester<0> tester;
+			for (uint32 i = 0; i < 10; i++)
+			{
+				CAGE_TESTCASE(stringizer() + "iteration: " + i);
+				tester.run();
+			}
+		}
+		{
+			ConcurrentTester<1> tester;
+			for (uint32 i = 0; i < 10; i++)
+			{
+				CAGE_TESTCASE(stringizer() + "iteration: " + i);
+				tester.run();
+			}
 		}
 	}
 }
