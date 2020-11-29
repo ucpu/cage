@@ -296,7 +296,15 @@ namespace cage
 	Entity *EntityManager::get(uint32 entityName) const
 	{
 		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
-		return impl->namedEntities.at(entityName);
+		try
+		{
+			return impl->namedEntities.at(entityName);
+		}
+		catch (const std::out_of_range &)
+		{
+			CAGE_LOG_THROW(stringizer() + "name: " + entityName);
+			CAGE_THROW_ERROR(Exception, "entity not found");
+		}
 	}
 
 	Entity *EntityManager::getOrCreate(uint32 entityName)

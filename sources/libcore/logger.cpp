@@ -15,6 +15,7 @@
 namespace cage
 {
 	Holder<File> realNewFile(const string &path, const FileMode &mode);
+	void realTryFlushFile(File *f);
 
 	namespace
 	{
@@ -368,6 +369,7 @@ namespace cage
 	{
 		LoggerOutputFileImpl *impl = (LoggerOutputFileImpl*)this;
 		impl->f->writeLine(message);
+		realTryFlushFile(+impl->f);
 	}
 
 	Holder<LoggerOutputFile> newLoggerOutputFile(const string &path, bool append, bool realFilesystemOnly)

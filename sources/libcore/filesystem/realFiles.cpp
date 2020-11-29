@@ -405,6 +405,13 @@ namespace cage
 		return detail::systemArena().createImpl<File, FileReal>(path, mode);
 	}
 
+	void realTryFlushFile(File *f_)
+	{
+		FileReal *f = dynamic_cast<FileReal *>((FileAbstract *)f_);
+		if (f)
+			fflush(f->f);
+	}
+
 	namespace
 	{
 		class DirectoryListReal : public DirectoryListAbstract
