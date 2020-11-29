@@ -31,7 +31,6 @@ namespace
 		void threadEntry(uint32 thrId, uint32)
 		{
 			pathCreateArchive(stringizer() + "testdir/concurrent.zip/" + thrId + ".zip");
-			{ ScopeLock lck(barrier); }
 			for (uint32 iter = 0; iter < 10; iter++)
 			{
 				{ ScopeLock lck(barrier); }

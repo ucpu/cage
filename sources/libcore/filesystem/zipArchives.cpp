@@ -41,6 +41,19 @@ namespace cage
 
 			void read(PointerRange<char> buffer) override
 			{
+				/*
+				CAGE_ASSERT(f);
+				uintPtr at = 0;
+				{
+					ScopeLock l(mutex);
+					CAGE_ASSERT(buffer.size() <= capacity - off);
+					at = off;
+					off += buffer.size();
+					f->seek(start + off);
+				}
+				readAt(buffer, at);
+				*/
+
 				CAGE_ASSERT(f);
 				ScopeLock l(mutex);
 				CAGE_ASSERT(buffer.size() <= capacity - off);
@@ -52,6 +65,7 @@ namespace cage
 			void seek(uintPtr position) override
 			{
 				CAGE_ASSERT(f);
+				ScopeLock l(mutex); // enforce memory ordering
 				CAGE_ASSERT(position <= capacity);
 				off = position;
 			}
@@ -63,6 +77,7 @@ namespace cage
 
 			uintPtr tell() const override
 			{
+				ScopeLock l(mutex); // enforce memory ordering
 				return off;
 			}
 
@@ -242,7 +257,10 @@ namespace cage
 							continue; // incorrect comment size
 						// we assume that we found an actual ZIP archive now
 						if (e.diskWhereCDStarts != 0 || e.numberOfThisDisk != 0 || e.numberOfCDFRecordsOnThisDisk != e.totalNumberOfCDFRecords)
+						{
+							CAGE_LOG_THROW(stringizer() + "archive path: '" + myPath + "'");
 							CAGE_THROW_ERROR(NotImplemented, "cannot read zip archives that span multiple disks");
+						}
 						totalFiles = e.totalNumberOfCDFRecords;
 						cdSize = e.sizeOfCD;
 						originalCDFilesPosition = e.offsetOfCD;
@@ -250,7 +268,10 @@ namespace cage
 						break;
 					}
 					if (totalFiles == m)
+					{
+						CAGE_LOG_THROW(stringizer() + "archive path: '" + myPath + "'");
 						CAGE_THROW_ERROR(Exception, "file is not a zip archive");
+					}
 				}
 
 				{ // read central directory (populate files)
@@ -264,29 +285,51 @@ namespace cage
 						d >> (CDFileHeader &)e;
 						constexpr uint32 Signature = CDFileHeader().signature;
 						if (e.signature != Signature)
+						{
+							CAGE_LOG_THROW(stringizer() + "archive path: '" + myPath + "'");
+							CAGE_LOG_THROW(stringizer() + "position in archive: " + src->tell());
 							CAGE_THROW_ERROR(Exception, "zip file record has invalid signature");
-						if (e.diskNumberWhereFileStarts != 0)
-							CAGE_THROW_ERROR(Exception, "zip file record uses a different disk");
+						}
 						if (e.nameLength >= string::MaxLength)
+						{
+							CAGE_LOG_THROW(stringizer() + "archive path: '" + myPath + "'");
+							CAGE_LOG_THROW(stringizer() + "position in archive: " + src->tell());
 							CAGE_THROW_ERROR(Exception, "zip file record name length is too large");
-						if (e.uncompressedSize == m || e.compressedSize == m)
-							CAGE_THROW_ERROR(NotImplemented, "cannot read file, zip64 not yet supported");
+						}
 						e.name.rawLength() = e.nameLength;
 						d.read({ e.name.rawData(), e.name.rawData() + e.nameLength });
+						if (e.diskNumberWhereFileStarts != 0)
+						{
+							CAGE_LOG_THROW(stringizer() + "archive path: '" + myPath + "'");
+							CAGE_LOG_THROW(stringizer() + "name: '" + e.name + "'");
+							CAGE_THROW_ERROR(Exception, "zip file record uses a different disk");
+						}
+						if (e.uncompressedSize == m || e.compressedSize == m)
+						{
+							CAGE_LOG_THROW(stringizer() + "archive path: '" + myPath + "'");
+							CAGE_LOG_THROW(stringizer() + "name: '" + e.name + "'");
+							CAGE_THROW_ERROR(NotImplemented, "cannot read file, zip64 not yet supported");
+						}
 						e.name = pathSimplify(e.name);
 						e.nameLength = e.name.length();
 						if (!isPathSafe(e.name))
+						{
+							CAGE_LOG_THROW(stringizer() + "archive path: '" + myPath + "'");
+							CAGE_LOG_THROW(stringizer() + "name: '" + e.name + "'");
 							CAGE_THROW_ERROR(Exception, "zip file record name is dangerous");
+						}
 						if (e.extraFieldLength)
 						{
-							CAGE_LOG(SeverityEnum::Note, "zip", stringizer() + "name: " + subString(e.name, 0, 100));
+							CAGE_LOG(SeverityEnum::Note, "zip", stringizer() + "archive path: '" + myPath + "'");
+							CAGE_LOG(SeverityEnum::Note, "zip", stringizer() + "name: " + e.name);
 							CAGE_LOG(SeverityEnum::Warning, "zip", "skipping zip file extra fields");
 							d.advance(e.extraFieldLength);
 							e.extraFieldLength = 0;
 						}
 						if (e.commentLength)
 						{
-							CAGE_LOG(SeverityEnum::Note, "zip", stringizer() + "name: " + subString(e.name, 0, 100));
+							CAGE_LOG(SeverityEnum::Note, "zip", stringizer() + "archive path: '" + myPath + "'");
+							CAGE_LOG(SeverityEnum::Note, "zip", stringizer() + "name: " + e.name);
 							CAGE_LOG(SeverityEnum::Warning, "zip", "skipping zip file comment field");
 							d.advance(e.commentLength);
 							e.commentLength = 0;
@@ -298,8 +341,9 @@ namespace cage
 							e.externalFileAttributes = 0x80; // make it FILE_ATTRIBUTE_NORMAL
 						if (e.externalFileAttributes != 0x80 && e.externalFileAttributes != 0x10)
 						{
-							CAGE_LOG(SeverityEnum::Note, "zip", stringizer() + "name: " + subString(e.name, 0, 100) + ", attributes: " + e.externalFileAttributes);
-							CAGE_LOG(SeverityEnum::Warning, "zip", "skipping zip file record with unknown external file attributes");
+							CAGE_LOG(SeverityEnum::Note, "zip", stringizer() + "archive path: '" + myPath + "'");
+							CAGE_LOG(SeverityEnum::Note, "zip", stringizer() + "name: '" + e.name + "'");
+							CAGE_LOG(SeverityEnum::Warning, "zip", stringizer() + "skipping zip file record with unknown external file attributes: " + e.externalFileAttributes);
 							continue;
 						}
 
@@ -317,6 +361,8 @@ namespace cage
 
 			~ArchiveZip()
 			{
+				ScopeLock lck(mutex);
+
 				CAGE_ASSERT(src);
 				CAGE_ASSERT(src->mode().write == modified);
 				if (!modified)
@@ -462,7 +508,11 @@ namespace cage
 					case PathTypeFlags::NotFound:
 						break; // ok
 					default:
+					{
+						CAGE_LOG_THROW(stringizer() + "archive path: '" + myPath + "'");
+						CAGE_LOG_THROW(stringizer() + "name: '" + path + "'");
 						CAGE_THROW_ERROR(Exception, "cannot create directory inside zip, file already exists");
+					}
 					}
 				}
 				{ // create all parents

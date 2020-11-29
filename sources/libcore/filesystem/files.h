@@ -44,9 +44,10 @@ namespace cage
 	{
 	public:
 		const string myPath;
+		bool succesfullyMounted = false;
 
 		ArchiveAbstract(const string &path);
-		virtual ~ArchiveAbstract() {}
+		virtual ~ArchiveAbstract();
 
 		virtual PathTypeFlags type(const string &path) const = 0;
 		virtual void createDirectories(const string &path) = 0;

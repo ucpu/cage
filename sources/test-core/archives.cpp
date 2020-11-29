@@ -136,7 +136,6 @@ namespace
 
 		void threadEntry(uint32 thrId, uint32)
 		{
-			{ ScopeLock lck(barrier); }
 			for (uint32 iter = 0; iter < 10; iter++)
 			{
 				{ ScopeLock lck(barrier); }

@@ -129,7 +129,7 @@ namespace cage
 				Holder<DirectoryList> list = realNewDirectoryList(path);
 				while (list->valid())
 				{
-					pathRemove(pathJoin(path, list->name()));
+					realRemove(pathJoin(path, list->name()));
 					list->next();
 				}
 			}

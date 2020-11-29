@@ -239,6 +239,16 @@ void testFiles()
 	}
 
 	{
+		CAGE_TESTCASE("sanitize file path");
+		//const string d = "testdir/dangerous/abc'\"^°`_-:?!%;#~(){}[]<>def.bin";
+		const string d = "testdir/dangerous/abc'\"^°`_-?!%;#~(){}[]<>def.bin";
+		CAGE_TEST_THROWN(writeFile(d));
+		const string s = pathReplaceInvalidCharacters(d, "_", true);
+		CAGE_LOG(SeverityEnum::Info, "tests", stringizer() + "sanitized path: '" + s + "'");
+		CAGE_TEST(writeFile(s));
+	}
+
+	{
 		CAGE_TESTCASE("filesystem watcher");
 		Holder<FilesystemWatcher> w = newFilesystemWatcher();
 		pathCreateDirectories("testdir/watch/dir");

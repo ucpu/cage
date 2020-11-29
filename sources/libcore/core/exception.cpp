@@ -43,7 +43,9 @@ namespace cage
 	{
 		SeverityEnum getExceptionSilenceSeverity()
 		{
-			return localExceptionSilenceSeverity() > (SeverityEnum)globalExceptionSilenceSeverity() ? localExceptionSilenceSeverity() : (SeverityEnum)globalExceptionSilenceSeverity();
+			SeverityEnum l = localExceptionSilenceSeverity();
+			SeverityEnum g = (SeverityEnum)globalExceptionSilenceSeverity();
+			return l > g ? l : g;
 		}
 	}
 

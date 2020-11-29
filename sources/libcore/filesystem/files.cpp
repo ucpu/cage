@@ -65,34 +65,58 @@ namespace cage
 
 	namespace
 	{
+		struct ArchiveWithExisting
+		{
+			std::shared_ptr<ArchiveAbstract> archive;
+			bool existing = false;
+		};
+
 		struct ArchivesCache : private Immovable
 		{
-			Holder<Mutex> mutex = newMutex();
-
-			std::shared_ptr<ArchiveAbstract> tryGet(const string &path) const
+			ArchiveWithExisting getOrCreate(const string &path, Delegate<std::shared_ptr<ArchiveAbstract>(const string &)> ctor)
 			{
-				auto it = map.find(path);
-				if (it != map.end())
+				CAGE_ASSERT(path == pathSimplify(path));
+				CAGE_ASSERT(path == pathToAbs(path));
+				while (true)
 				{
-					auto l = it->second.lock();
-					if (l)
 					{
-						CAGE_ASSERT(l->myPath == path);
+						ScopeLock lock(mutex);
+						auto it = map.find(path);
+						if (it == map.end())
+						{
+							auto a = ctor(path); // this may call _erase_
+							if (!a)
+								return {};
+							map[path] = a;
+							a->succesfullyMounted = true; // enable the lock inside _erase_
+							return { a, false };
+						}
+						else
+						{
+							auto a = it->second.lock();
+							if (a)
+								return { a, true };
+						}
 					}
-					return l;
+					// the archives destructor is still running
+					// release the lock so that the _erase_ can get it and try again later
+					threadYield();
 				}
-				return {};
 			}
 
-			std::shared_ptr<ArchiveAbstract> assign(std::shared_ptr<ArchiveAbstract> a)
+			void erase(ArchiveAbstract *a)
 			{
-				CAGE_ASSERT(!tryGet(a->myPath));
-				map[a->myPath] = a;
-				return a;
+				if (!a->succesfullyMounted)
+					return;
+				ScopeLock lock(mutex);
+				CAGE_ASSERT(map.count(a->myPath));
+				CAGE_ASSERT(!map[a->myPath].lock());
+				map.erase(a->myPath);
 			}
 
 		private:
 			std::map<string, std::weak_ptr<ArchiveAbstract>, StringComparatorFast> map;
+			Holder<Mutex> mutex = newMutex(); // access to map must be serialized because the _erase_ method can be called on any thread and outside the archiveFindTowardsRootMutex
 		};
 
 		ArchivesCache &archivesCache()
@@ -101,32 +125,19 @@ namespace cage
 			return *cache;
 		}
 
-		struct ArchiveWithExisting
+		std::shared_ptr<ArchiveAbstract> archiveCtorReal(const string &path)
 		{
-			std::shared_ptr<ArchiveAbstract> archive;
-			bool existing = false;
-		};
+			return archiveOpenReal(path);
+		}
 
-		ArchiveWithExisting archiveTryGet(const std::shared_ptr<ArchiveAbstract> &parent, const string &inPath)
+		std::shared_ptr<ArchiveAbstract> archiveCtorArchive(ArchiveAbstract *parent, const string &fullPath)
 		{
 			CAGE_ASSERT(parent);
-			const string fullPath = pathJoin(parent->myPath, inPath);
-			CAGE_ASSERT(fullPath == pathSimplify(fullPath));
-			{
-				auto a = archivesCache().tryGet(fullPath);
-				if (a)
-					return { a, true };
-			}
+			const string inPath = pathToRel(fullPath, parent->myPath);
 			try
 			{
-				std::shared_ptr<ArchiveAbstract> a;
-				{
-					detail::OverrideException oe;
-					a = archiveOpenZip(parent->openFile(inPath, FileMode(true, false)));
-				}
-				CAGE_ASSERT(a);
-				a = archivesCache().assign(a);
-				return { a, false };
+				detail::OverrideException oe;
+				return archiveOpenZip(parent->openFile(inPath, FileMode(true, false)));
 			}
 			catch (const Exception &)
 			{
@@ -182,7 +193,8 @@ namespace cage
 				walkRight(p, i);
 				if (any(parent->type(p) & PathTypeFlags::File))
 				{
-					ArchiveWithExisting b = archiveTryGet(parent, p);
+					const string fp = pathJoin(parent->myPath, p);
+					ArchiveWithExisting b = archivesCache().getOrCreate(fp, Delegate<std::shared_ptr<ArchiveAbstract>(const string &)>().bind<ArchiveAbstract *, &archiveCtorArchive>(parent.get()));
 					if (b.archive)
 					{
 						if (i.empty())
@@ -216,6 +228,13 @@ namespace cage
 				}
 			}
 		}
+
+		// archiveFindTowardsRoot must be serialized to prevent situations, where one thread creates an archive while other thread tries to create a directory with the same name
+		Mutex *archiveFindTowardsRootMutex()
+		{
+			static Holder<Mutex> *mut = new Holder<Mutex>(newMutex()); // intentional leak
+			return +*mut;
+		}
 	}
 
 	ArchiveWithPath archiveFindTowardsRoot(const string &path_, ArchiveFindModeEnum mode)
@@ -244,15 +263,9 @@ namespace cage
 		CAGE_ASSERT(pathIsAbs(rootPath));
 		CAGE_ASSERT(pathJoin(rootPath, inside) == path);
 
-		ScopeLock lock(archivesCache().mutex);
+		ScopeLock lock(archiveFindTowardsRootMutex());
 
-		std::shared_ptr<ArchiveAbstract> root = [&]() -> std::shared_ptr<ArchiveAbstract>
-		{
-			auto a = archivesCache().tryGet(rootPath);
-			if (a)
-				return a;
-			return archivesCache().assign(archiveOpenReal(rootPath));
-		}();
+		std::shared_ptr<ArchiveAbstract> root = archivesCache().getOrCreate(rootPath, Delegate<std::shared_ptr<ArchiveAbstract>(const string &)>().bind<&archiveCtorReal>()).archive;
 
 		ArchiveWithPath r = archiveFindIterate(root, inside, mode);
 		switch (mode)
@@ -272,5 +285,10 @@ namespace cage
 		}
 
 		return r;
+	}
+
+	ArchiveAbstract::~ArchiveAbstract()
+	{
+		archivesCache().erase(this);
 	}
 }

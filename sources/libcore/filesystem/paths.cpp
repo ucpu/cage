@@ -174,8 +174,20 @@ namespace cage
 		return result;
 	}
 
+	namespace
+	{
+		bool validateCharacters(const string &name)
+		{
+			for (const char c : name)
+				if (!validateCharacter(c, false))
+					return false;
+			return true;
+		}
+	}
+
 	string pathReplaceInvalidCharacters(const string &path, const string &replacement, bool allowDirectories)
 	{
+		CAGE_ASSERT(validateCharacters(replacement));
 		const string tmp = normalize(path);
 		string res;
 		for (uint32 i = 0, e = tmp.length(); i < e; i++)
