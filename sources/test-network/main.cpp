@@ -13,7 +13,7 @@ void runClient();
 
 namespace
 {
-	struct Run
+	struct Run : private Immovable
 	{
 		Holder<Thread> thr;
 		string cmd;
@@ -103,7 +103,7 @@ int main(int argc, const char *args[])
 		if (packetLoss < 0 || packetLoss > 1)
 			CAGE_THROW_ERROR(Exception, "invalid packet loss");
 		confMessages = cmd->cmdUint32('m', "messages", confMessages);
-		cmd->checkUnused();
+		cmd->checkUnusedWithHelp();
 		cmd.clear();
 
 		if (modeServer == modeClient)

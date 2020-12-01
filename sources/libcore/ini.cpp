@@ -22,9 +22,9 @@ namespace cage
 		struct IniValue
 		{
 			string value;
-			bool used;
-			IniValue() : used(false) {}
-			IniValue(const string &value) : value(value), used(false) {}
+			bool used = false;
+			IniValue() {}
+			IniValue(const string &value) : value(value) {}
 		};
 
 		struct IniSection
@@ -36,6 +36,7 @@ namespace cage
 		{
 		public:
 			ContainerMap<Holder<IniSection>> sections;
+			std::vector<string> helps;
 		};
 	}
 
@@ -228,22 +229,45 @@ namespace cage
 		string section, item, value;
 		if (anyUnused(section, item, value))
 		{
-			CAGE_LOG_THROW(string() + "section: '" + section + "', item: '" + item + "', " + "value: '" + value + "'");
+			CAGE_LOG_THROW(stringizer() + "section: '" + section + "', item: '" + item + "', " + "value: '" + value + "'");
 			CAGE_THROW_ERROR(Exception, "unused ini/config item");
+		}
+	}
+
+	void Ini::logHelp() const
+	{
+		const IniImpl *impl = (const IniImpl *)this;
+		CAGE_LOG(SeverityEnum::Info, "help", "command line options:");
+		for (const string &h : impl->helps)
+			CAGE_LOG_CONTINUE(SeverityEnum::Info, "help", h);
+		CAGE_LOG(SeverityEnum::Note, "help", "note that this list may be incomplete");
+	}
+
+	void Ini::checkUnusedWithHelp() const
+	{
+		try
+		{
+			checkUnused();
+		}
+		catch (const Exception &)
+		{
+			logHelp();
+			throw;
 		}
 	}
 
 	void Ini::clear()
 	{
-		IniImpl *impl = (IniImpl*)this;
+		IniImpl *impl = (IniImpl *)this;
 		impl->sections.clear();
+		impl->helps.clear();
 	}
 
 	void Ini::merge(const Ini *source)
 	{
-		for (string s : source->sections())
+		for (const string &s : source->sections())
 		{
-			for (string i : source->items(s))
+			for (const string &i : source->items(s))
 				set(s, i, source->get(s, i));
 		}
 	}
@@ -339,7 +363,10 @@ namespace cage
 				if (sec.empty())
 					sec = stringizer() + secIndex++;
 				if (sectionExists(sec))
+				{
+					CAGE_LOG_THROW(stringizer() + "section: '" + sec + "'");
 					CAGE_THROW_ERROR(Exception, "duplicate section");
+				}
 				continue;
 			}
 			if (sec.empty())
@@ -356,7 +383,10 @@ namespace cage
 			if (itemName.empty())
 				itemName = stringizer() + itemIndex++;
 			if (itemExists(sec, itemName))
+			{
+				CAGE_LOG_THROW(stringizer() + "section: '" + sec + "', item: '" + itemName + "'");
 				CAGE_THROW_ERROR(Exception, "duplicate item name");
+			}
 			set(sec, itemName, itemValue);
 		}
 	}
@@ -409,19 +439,39 @@ namespace cage
 			return string({ &c, &c + 1 });
 		}
 
-		string getCmd(const Ini *ini, string shortName, const string &longName)
+		string formatOptionNames(const string &shortName, const string &longName)
 		{
-			uint32 cnt = ini->itemsCount(shortName) + ini->itemsCount(longName);
+			return shortName.empty()
+				? stringizer() + "--" + longName
+				: stringizer() + "--" + longName + " (-" + shortName + ")";
+		}
+
+		void addHelp(const Ini *ini, const string &shortName, const string &longName, const char *typeName)
+		{
+			const string h = stringizer() + formatOptionNames(shortName, longName) + ": " + typeName;
+			((IniImpl *)const_cast<Ini *>(ini))->helps.push_back(h);
+		}
+
+		string getCmd(const Ini *ini, const string &shortName, const string &longName, const char *typeName)
+		{
+			addHelp(ini, shortName, longName, typeName);
+			const uint32 cnt = ini->itemsCount(shortName) + ini->itemsCount(longName);
 			if (cnt > 1)
+			{
+				CAGE_LOG_THROW(stringizer() + "option name: " + formatOptionNames(shortName, longName));
 				CAGE_THROW_ERROR(Exception, "cmd option contains multiple values");
+			}
 			if (cnt == 0)
 				return "";
-			string a = ini->get(shortName, "0");
-			string b = ini->get(longName, "0");
-			bool ae = a.empty();
-			bool be = b.empty();
+			const string a = ini->get(shortName, "0");
+			const string b = ini->get(longName, "0");
+			const bool ae = a.empty();
+			const bool be = b.empty();
 			if (ae && be)
+			{
+				CAGE_LOG_THROW(stringizer() + "option name: " + formatOptionNames(shortName, longName));
 				CAGE_THROW_ERROR(Exception, "invalid item names for cmd options");
+			}
 			CAGE_ASSERT(ae != be);
 			if (!ae) const_cast<Ini*>(ini)->markUsed(shortName, "0");
 			if (!be) const_cast<Ini*>(ini)->markUsed(longName, "0");
@@ -438,7 +488,7 @@ namespace cage
 	}; \
 	TYPE Ini::CAGE_JOIN(get, NAME) (const string &section, const string &item, const TYPE &defaul) const \
 	{ \
-		string tmp = get(section, item); \
+		const string tmp = get(section, item); \
 		if (tmp.empty()) \
 			return defaul; \
 		const_cast<Ini*>(this)->markUsed(section, item); \
@@ -446,35 +496,22 @@ namespace cage
 	} \
 	TYPE Ini::CAGE_JOIN(cmd, NAME) (char shortName, const string &longName, const TYPE &defaul) const \
 	{ \
-		string sn = toShortName(shortName); \
-		try \
-		{ \
-			string tmp = getCmd(this, sn, longName); \
-			if (tmp.empty()) \
-				return defaul; \
-			return TO(tmp); \
-		} \
-		catch (const Exception &) \
-		{ \
-			CAGE_LOG_THROW(string() + "cmd option: '" + longName + "' (" + sn + ")"); \
-			throw; \
-		} \
+		const string sn = toShortName(shortName); \
+		const string tmp = getCmd(this, sn, longName, CAGE_STRINGIZE(TYPE)); \
+		if (tmp.empty()) \
+			return defaul; \
+		return TO(tmp); \
 	} \
 	TYPE Ini::CAGE_JOIN(cmd, NAME) (char shortName, const string &longName) const \
 	{ \
-		string sn = toShortName(shortName); \
-		try \
+		const string sn = toShortName(shortName); \
+		const string tmp = getCmd(this, sn, longName, CAGE_STRINGIZE(TYPE)); \
+		if (tmp.empty()) \
 		{ \
-			string tmp = getCmd(this, sn, longName); \
-			if (tmp.empty()) \
-				CAGE_THROW_ERROR(Exception, "missing required cmd option"); \
-			return TO(tmp); \
+			CAGE_LOG_THROW(stringizer() + "option name: " + formatOptionNames(sn, longName)); \
+			CAGE_THROW_ERROR(Exception, "missing required cmd option"); \
 		} \
-		catch (const Exception &) \
-		{ \
-			CAGE_LOG_THROW(string() + "cmd option: '" + longName + "' (" + sn + ")"); \
-			throw; \
-		} \
+		return TO(tmp); \
 	}
 	GCHL_GENERATE(bool, Bool, toBool);
 	GCHL_GENERATE(sint32, Sint32, toSint32);

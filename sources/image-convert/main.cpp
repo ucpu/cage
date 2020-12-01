@@ -8,9 +8,7 @@
 
 using namespace cage;
 
-bool preserveOriginal = false;
-
-void convert(string src, const string &format)
+void convert(string src, const string &format, bool preserveOriginal)
 {
 	src = pathSimplify(src);
 	string path = pathExtractDirectory(src);
@@ -48,19 +46,22 @@ int main(int argc, const char *args[])
 		Holder<Ini> cmd = newIni();
 		cmd->parseCmd(argc, args);
 		const auto &paths = cmd->cmdArray(0, "--");
-		if (cmd->cmdBool('?', "help", false) || paths.empty())
+		const bool preserveOriginal = cmd->cmdBool('p', "preserve", false);
+		const string format = cmd->cmdString('f', "format", ".png");
+		if (cmd->cmdBool('?', "help", false))
 		{
+			cmd->logHelp();
 			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + "example:");
 			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + args[0] + " --preserve --format .jpg -- a.png b.tiff");
 			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + "  to convert a.png to a.jpg and b.tiff to b.jpg");
 			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + "--preserve will keep original files too");
 			return 0;
 		}
-		preserveOriginal = cmd->cmdBool('p', "preserve", false);
-		string format = cmd->cmdString('f', "format");
-		cmd->checkUnused();
+		cmd->checkUnusedWithHelp();
+		if (paths.empty())
+			CAGE_THROW_ERROR(Exception, "no inputs");
 		for (const string &path : paths)
-			convert(path, format);
+			convert(path, format, preserveOriginal);
 		CAGE_LOG(SeverityEnum::Info, "image", "done");
 		return 0;
 	}

@@ -24,7 +24,7 @@ void configParseCmd(int argc, const char *args[])
 		ini->parseCmd(argc, args);
 		configFromScratch = ini->cmdBool('s', "scratch", configFromScratch);
 		configListening = ini->cmdBool('l', "listen", configListening);
-		ini->checkUnused();
+		ini->checkUnusedWithHelp();
 	}
 
 	configIgnoreExtensions.insert(".tmp");

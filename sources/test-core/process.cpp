@@ -47,9 +47,9 @@ void testProcess()
 	{
 		CAGE_TESTCASE("list directory");
 #ifdef CAGE_SYSTEM_WINDOWS
-		const string cmd = "cmd /C dir /Q /R /S";
+		const string cmd = "cmd /C dir /Q";
 #else
-		const string cmd = "ls -lra";
+		const string cmd = "ls -la";
 #endif // CAGE_SYSTEM_WINDOWS
 		Holder<Process> prg = newProcess(cmd);
 		uint32 lines = 0;
@@ -73,9 +73,9 @@ void testProcess()
 	{
 		CAGE_TESTCASE("closed pipes");
 #ifdef CAGE_SYSTEM_WINDOWS
-		const string cmd = "cmd /C dir /Q /R /S";
+		const string cmd = "cmd /C dir /Q";
 #else
-		const string cmd = "ls -lra";
+		const string cmd = "ls -la";
 #endif // CAGE_SYSTEM_WINDOWS
 		ProcessCreateConfig cfg(cmd);
 		cfg.discardStdIn = cfg.discardStdOut = true;

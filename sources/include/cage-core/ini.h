@@ -65,6 +65,8 @@ namespace cage
 		bool anyUnused(string &section, string &item) const;
 		bool anyUnused(string &section, string &item, string &value) const;
 		void checkUnused() const;
+		void logHelp() const; // log help based on all cmd* methods so far
+		void checkUnusedWithHelp() const; // logs help and rethrows the exception, if any
 
 #define GCHL_GENERATE(TYPE, NAME, DEF) \
 		void set##NAME (const string &section, const string &item, const TYPE &value); \

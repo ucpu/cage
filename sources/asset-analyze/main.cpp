@@ -154,8 +154,12 @@ int main(int argc, const char *args[])
 		Holder<Ini> cmd = newIni();
 		cmd->parseCmd(argc, args);
 		const auto &paths = cmd->cmdArray(0, "--");
-		if (cmd->cmdBool('?', "help", false) || paths.empty())
+		recursive = cmd->cmdBool('r', "recursive", false);
+		generateObjects = cmd->cmdBool('o', "objects", false);
+		generatePacks = cmd->cmdBool('p', "packs", false);
+		if (cmd->cmdBool('?', "help", false))
 		{
+			cmd->logHelp();
 			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + "examples:");
 			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + args[0] + " path1 path2 path3");
 			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + args[0] + " --recursive path");
@@ -163,10 +167,9 @@ int main(int argc, const char *args[])
 			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + args[0] + " --packs path");
 			return 0;
 		}
-		recursive = cmd->cmdBool('r', "recursive", false);
-		generateObjects = cmd->cmdBool('o', "objects", false);
-		generatePacks = cmd->cmdBool('p', "packs", false);
-		cmd->checkUnused();
+		cmd->checkUnusedWithHelp();
+		if (paths.empty())
+			CAGE_THROW_ERROR(Exception, "no input");
 		for (const string &path : paths)
 			analyzeFolder(pathToAbs(path));
 		CAGE_LOG(SeverityEnum::Info, "analyze", "done");

@@ -6,19 +6,12 @@
 
 using namespace cage;
 
-void doSplit(Holder<Ini> &cmd)
+void doSplit(const string names[4], const string &input)
 {
-	string names[4] = { "", "", "", "" };
-	string input = "input.png";
-	for (uint32 i = 0; i < 4; i++)
-		names[i] = cmd->cmdString(0, stringizer() + (i + 1), names[i]);
-	input = cmd->cmdString('i', "input", input);
-	cmd->checkUnused();
-
 	{
 		uint32 outputs = 0;
-		for (const string &n : names)
-			if (!n.empty())
+		for (uint32 index = 0; index < 4; index++)
+			if (!names[index].empty())
 				outputs++;
 		if (outputs == 0)
 			CAGE_THROW_ERROR(Exception, "no outputs specified");
@@ -29,8 +22,8 @@ void doSplit(Holder<Ini> &cmd)
 	in->importFile(input);
 	if (in->format() == ImageFormatEnum::Rgbe)
 		CAGE_THROW_ERROR(Exception, "input image uses Rgbe format, which cannot be split");
-	uint32 width = in->width();
-	uint32 height = in->height();
+	const uint32 width = in->width();
+	const uint32 height = in->height();
 	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "image resolution: " + width + "x" + height + ", channels: " + in->channels());
 
 	Holder<Image> out = newImage();
@@ -50,22 +43,14 @@ void doSplit(Holder<Ini> &cmd)
 	CAGE_LOG(SeverityEnum::Info, "image", "ok");
 }
 
-void doJoin(Holder<Ini> &cmd)
+void doJoin(const string names[4], const string &output, const bool mono)
 {
-	string names[4] = { "", "", "", "" };
-	string output = "output.png";
-	for (uint32 i = 0; i < 4; i++)
-		names[i] = cmd->cmdString(0, stringizer() + (i + 1), names[i]);
-	output = cmd->cmdString('o', "output", output);
-	bool autoMono = cmd->cmdBool('m', "mono", false);
-	cmd->checkUnused();
-
 	Holder<Image> pngs[4];
 	uint32 width = 0, height = 0;
 	uint32 channels = 0;
 	for (uint32 index = 0; index < 4; index++)
 	{
-		string name = names[index];
+		const string name = names[index];
 		if (!name.empty())
 		{
 			CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "loading image: '" + name + "' for " + (index + 1) + "th channel");
@@ -84,7 +69,7 @@ void doJoin(Holder<Ini> &cmd)
 			}
 			if (p->channels() != 1)
 			{
-				if (!autoMono)
+				if (!mono)
 					CAGE_THROW_ERROR(Exception, "the image has to be mono channel");
 				CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "monochromatizing");
 				Holder<Image> m = newImage();
@@ -139,21 +124,51 @@ int main(int argc, const char *args[])
 
 		Holder<Ini> cmd = newIni();
 		cmd->parseCmd(argc, args);
-		if (cmd->cmdBool('?', "help", false))
+		const bool split = cmd->cmdBool('s', "split", false);
+		const bool join = cmd->cmdBool('j', "join", false);
+		const bool help = cmd->cmdBool('?', "help", false);
+
+		if (split && !join)
 		{
+			string names[4] = { "", "", "", "" };
+			for (uint32 i = 0; i < 4; i++)
+				names[i] = cmd->cmdString(0, stringizer() + (i + 1), names[i]);
+			string input = cmd->cmdString('i', "input", "input.png");
+
+			if (!help)
+			{
+				cmd->checkUnusedWithHelp();
+				doSplit(names, input);
+			}
+		}
+
+		if (join && !split)
+		{
+			string names[4] = { "", "", "", "" };
+			for (uint32 i = 0; i < 4; i++)
+				names[i] = cmd->cmdString(0, stringizer() + (i + 1), names[i]);
+			const string output = cmd->cmdString('o', "output", "output.png");
+			const bool mono = cmd->cmdBool('m', "mono", false);
+
+			if (!help)
+			{
+				cmd->checkUnusedWithHelp();
+				doJoin(names, output, mono);
+			}
+		}
+
+		if (help)
+		{
+			cmd->logHelp();
 			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + "examples:");
 			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + args[0] + " -j -1 r.png -2 g.png -o rg.png");
 			CAGE_LOG(SeverityEnum::Info, "help", stringizer() + args[0] + " -s -i rg.png -1 r.png -2 g.png");
 			return 0;
 		}
-		bool split = cmd->cmdBool('s', "split", false);
-		bool join = cmd->cmdBool('j', "join", false);
+
 		if (join == split)
-			CAGE_THROW_ERROR(Exception, "exactly one of -s (--split) and -j (--join) has to be specified");
-		if (split)
-			doSplit(cmd);
-		if (join)
-			doJoin(cmd);
+			CAGE_THROW_ERROR(Exception, "exactly one of --split (-s) and --join (-j) has to be specified");
+
 		return 0;
 	}
 	catch (...)

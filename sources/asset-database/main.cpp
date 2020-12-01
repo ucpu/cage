@@ -4,7 +4,7 @@
 
 bool consoleLogFilter(const cage::detail::LoggerInfo &info)
 {
-	return info.severity >= SeverityEnum::Error || string(info.component) == "exception" || string(info.component) == "asset" || string(info.component) == "verdict";
+	return info.severity >= SeverityEnum::Error || string(info.component) == "exception" || string(info.component) == "asset" || string(info.component) == "verdict" || string(info.component) == "help";
 }
 
 int main(int argc, const char *args[])
