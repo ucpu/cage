@@ -174,7 +174,7 @@ namespace
 
 	void processAsset(Asset &ass)
 	{
-		detail::OverrideBreakpoint OverrideBreakpoint;
+		detail::OverrideBreakpoint overrideBreakpoint;
 		CAGE_LOG(SeverityEnum::Info, "asset", ass.name);
 		ass.corrupted = true;
 		ass.needNotify = true;

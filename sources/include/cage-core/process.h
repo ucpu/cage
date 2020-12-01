@@ -5,13 +5,20 @@
 
 namespace cage
 {
+	struct CAGE_CORE_API ProcessPipeEof : public Exception
+	{
+		using Exception::Exception;
+	};
+
 	struct CAGE_CORE_API ProcessCreateConfig
 	{
 		string cmd;
 		string workingDirectory;
-		// todo bool discardStdIn
-		// todo bool discardStdOut
-		// todo bool discardStdErr
+		
+		bool discardStdIn = false;
+		bool discardStdOut = false;
+		bool discardStdErr = false;
+
 		// todo option to modify environment
 
 		ProcessCreateConfig(const string &cmd, const string &workingDirectory = "");

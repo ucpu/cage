@@ -11,6 +11,8 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #endif
 
 #include <cstdlib>
@@ -28,8 +30,27 @@ namespace cage
 
 		class ProcessImpl : public Process
 		{
+			struct AutoHandle : private cage::Immovable
+			{
+				HANDLE handle = 0;
+
+				void close()
+				{
+					if (handle)
+					{
+						::CloseHandle(handle);
+						handle = 0;
+					}
+				}
+
+				~AutoHandle()
+				{
+					close();
+				}
+			};
+
 		public:
-			explicit ProcessImpl(const ProcessCreateConfig &config) : cmd(config.cmd), workingDir(pathToAbs(config.workingDirectory)), hChildStd_IN_Rd(nullptr), hChildStd_IN_Wr(nullptr), hChildStd_OUT_Rd(nullptr), hChildStd_OUT_Wr(nullptr), /*hChildStd_ERR_Rd (nullptr), hChildStd_ERR_Wr (nullptr),*/ hProcess(nullptr), hThread(nullptr)
+			explicit ProcessImpl(const ProcessCreateConfig &config) : cmd(config.cmd), workingDir(pathToAbs(config.workingDirectory))
 			{
 				static Holder<Mutex> mut = newMutex();
 				ScopeLock lock(mut);
@@ -42,11 +63,13 @@ namespace cage
 				saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
 				saAttr.bInheritHandle = true;
 
-				if (!CreatePipe(&hChildStd_OUT_Rd, &hChildStd_OUT_Wr, &saAttr, 0))
+				if (!CreatePipe(&hPipeOutR.handle, &hPipeOutW.handle, &saAttr, 0))
 					CAGE_THROW_ERROR(SystemError, "CreatePipe", GetLastError());
 
-				if (!CreatePipe(&hChildStd_IN_Rd, &hChildStd_IN_Wr, &saAttr, 0))
+				if (!CreatePipe(&hPipeInR.handle, &hPipeInW.handle, &saAttr, 0))
 					CAGE_THROW_ERROR(SystemError, "CreatePipe", GetLastError());
+
+				hFileNull.handle = CreateFile("nul:", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, &saAttr, OPEN_EXISTING, 0, NULL);
 
 				PROCESS_INFORMATION piProcInfo;
 				detail::memset(&piProcInfo, 0, sizeof(PROCESS_INFORMATION));
@@ -54,14 +77,15 @@ namespace cage
 				STARTUPINFO siStartInfo;
 				detail::memset(&siStartInfo, 0, sizeof(STARTUPINFO));
 				siStartInfo.cb = sizeof(STARTUPINFO);
-				siStartInfo.hStdError = hChildStd_OUT_Wr;
-				siStartInfo.hStdOutput = hChildStd_OUT_Wr;
-				siStartInfo.hStdInput = hChildStd_IN_Rd;
+				siStartInfo.hStdError = config.discardStdErr ? hFileNull.handle : hPipeOutW.handle;
+				siStartInfo.hStdOutput = config.discardStdOut ? hFileNull.handle : hPipeOutW.handle;
+				siStartInfo.hStdInput = config.discardStdIn ? hFileNull.handle : hPipeInR.handle;
 				siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
 
 				char cmd2[string::MaxLength];
 				detail::memset(cmd2, 0, string::MaxLength);
 				detail::memcpy(cmd2, cmd.c_str(), cmd.length());
+
 				if (!CreateProcess(
 					nullptr,
 					cmd2,
@@ -78,61 +102,40 @@ namespace cage
 					CAGE_THROW_ERROR(SystemError, "CreateProcess", GetLastError());
 				}
 
-				hProcess = piProcInfo.hProcess;
-				hThread = piProcInfo.hThread;
+				hProcess.handle = piProcInfo.hProcess;
+				hThread.handle = piProcInfo.hThread;
 
-				closeHandle(hChildStd_OUT_Wr);
-				closeHandle(hChildStd_IN_Rd);
+				hPipeOutW.close();
+				hPipeInR.close();
 
-				CAGE_LOG_CONTINUE(SeverityEnum::Info, "process", stringizer() + "process id: " + (uint32)GetProcessId(hProcess));
-			}
-
-			static void closeHandle(HANDLE &h)
-			{
-				if (h)
-				{
-					CloseHandle(h);
-					h = nullptr;
-				}
-			}
-
-			void closeAllHandles()
-			{
-				closeHandle(hChildStd_IN_Rd);
-				closeHandle(hChildStd_IN_Wr);
-				closeHandle(hChildStd_OUT_Rd);
-				closeHandle(hChildStd_OUT_Wr);
-				closeHandle(hProcess);
-				closeHandle(hThread);
-			}
-
-			~ProcessImpl()
-			{
-				closeAllHandles();
+				CAGE_LOG_CONTINUE(SeverityEnum::Info, "process", stringizer() + "process id: " + (uint32)GetProcessId(hProcess.handle));
 			}
 
 			void terminate()
 			{
-				TerminateProcess(hProcess, 1);
-				closeAllHandles();
+				TerminateProcess(hProcess.handle, 1);
 			}
 
 			int wait()
 			{
-				if (WaitForSingleObject(hProcess, INFINITE) != WAIT_OBJECT_0)
+				if (WaitForSingleObject(hProcess.handle, INFINITE) != WAIT_OBJECT_0)
 					CAGE_THROW_ERROR(Exception, "WaitForSingleObject");
 				DWORD ret = 0;
-				if (GetExitCodeProcess(hProcess, &ret) == 0)
+				if (GetExitCodeProcess(hProcess.handle, &ret) == 0)
 					CAGE_THROW_ERROR(SystemError, "GetExitCodeProcess", GetLastError());
-				closeAllHandles();
 				return ret;
 			}
 
 			void read(void *data, uint32 size)
 			{
 				DWORD read = 0;
-				if (!ReadFile(hChildStd_OUT_Rd, data, size, &read, nullptr))
-					CAGE_THROW_ERROR(SystemError, "ReadFile", GetLastError());
+				if (!ReadFile(hPipeOutR.handle, data, size, &read, nullptr))
+				{
+					const DWORD err = GetLastError();
+					if (err == ERROR_BROKEN_PIPE)
+						CAGE_THROW_ERROR(ProcessPipeEof, "pipe eof");
+					CAGE_THROW_ERROR(SystemError, "ReadFile", err);
+				}
 				if (read != size)
 					CAGE_THROW_ERROR(Exception, "insufficient data");
 			}
@@ -140,55 +143,76 @@ namespace cage
 			void write(const void *data, uint32 size)
 			{
 				DWORD written = 0;
-				if (!WriteFile(hChildStd_IN_Wr, data, size, &written, nullptr))
-					CAGE_THROW_ERROR(SystemError, "WriteFile", GetLastError());
+				if (!WriteFile(hPipeInW.handle, data, size, &written, nullptr))
+				{
+					const DWORD err = GetLastError();
+					if (err == ERROR_BROKEN_PIPE)
+						CAGE_THROW_ERROR(ProcessPipeEof, "pipe eof");
+					CAGE_THROW_ERROR(SystemError, "WriteFile", err);
+				}
 				if (written != size)
 					CAGE_THROW_ERROR(Exception, "data truncated");
 			}
 
 			const string cmd;
 			const string workingDir;
-			HANDLE hChildStd_IN_Rd;
-			HANDLE hChildStd_IN_Wr;
-			HANDLE hChildStd_OUT_Rd;
-			HANDLE hChildStd_OUT_Wr;
-			HANDLE hProcess;
-			HANDLE hThread;
+			AutoHandle hPipeInR;
+			AutoHandle hPipeInW;
+			AutoHandle hPipeOutR;
+			AutoHandle hPipeOutW;
+			AutoHandle hFileNull;
+			AutoHandle hProcess;
+			AutoHandle hThread;
 		};
 
 #else
 
-		constexpr int PIPE_READ = 0;
-		constexpr int PIPE_WRITE = 1;
-
 		class ProcessImpl : public Process
 		{
-		public:
-			const string cmd;
-			const string workingDir;
-			int aStdinPipe[2];
-			int aStdoutPipe[2];
-			pid_t pid;
+			constexpr static int PIPE_READ = 0;
+			constexpr static int PIPE_WRITE = 1;
 
-			class envAlt
+			struct AutoPipe : private cage::Immovable
 			{
-				std::string p; // std string has unlimited length
+				int handles[2] = { -1, -1 };
 
-			public:
-				envAlt()
+				void close(int i)
 				{
-					p = getenv("PATH");
-					std::string n = p + ":" + pathWorkingDir().c_str() + ":" + pathExtractDirectory(detail::getExecutableFullPath()).c_str();
-					setenv("PATH", n.c_str(), 1);
+					if (handles[i] >= 0)
+					{
+						::close(handles[i]);
+						handles[i] = -1;
+					}
 				}
 
-				~envAlt()
+				void close()
 				{
-					setenv("PATH", p.c_str(), 1);
+					close(0);
+					close(1);
+				}
+
+				~AutoPipe()
+				{
+					close();
 				}
 			};
 
-			explicit ProcessImpl(const ProcessCreateConfig &config) : cmd(config.cmd), workingDir(pathToAbs(config.workingDirectory)), aStdinPipe{0, 0}, aStdoutPipe{0, 0}, pid(0)
+			static void alterEnvironment()
+			{
+				const std::string p = getenv("PATH");
+				const std::string n = p + ":" + pathWorkingDir().c_str() + ":" + pathExtractDirectory(detail::getExecutableFullPath()).c_str();
+				setenv("PATH", n.c_str(), 1);
+			}
+
+		public:
+			const string cmd;
+			const string workingDir;
+			AutoPipe aStdinPipe;
+			AutoPipe aStdoutPipe;
+			AutoPipe aFileNull;
+			pid_t pid = -1;
+
+			explicit ProcessImpl(const ProcessCreateConfig &config) : cmd(config.cmd), workingDir(pathToAbs(config.workingDirectory))
 			{
 				static Holder<Mutex> mut = newMutex();
 				ScopeLock lock(mut);
@@ -196,14 +220,14 @@ namespace cage
 				CAGE_LOG(SeverityEnum::Info, "process", stringizer() + "launching process '" + cmd + "'");
 				CAGE_LOG_CONTINUE(SeverityEnum::Note, "process", stringizer() + "working directory '" + workingDir + "'");
 
-				if (pipe(aStdinPipe) < 0)
-					CAGE_THROW_ERROR(Exception, "failed to open pipe");
-				if (pipe(aStdoutPipe) < 0)
-				{
-					close(aStdinPipe[PIPE_READ]);
-					close(aStdinPipe[PIPE_WRITE]);
-					CAGE_THROW_ERROR(Exception, "failed to open pipe");
-				}
+				if (pipe(aStdinPipe.handles) < 0)
+					CAGE_THROW_ERROR(SystemError, "failed to create pipe", errno);
+				if (pipe(aStdoutPipe.handles) < 0)
+					CAGE_THROW_ERROR(SystemError, "failed to create pipe", errno);
+
+				aFileNull.handles[0] = open("/dev/null", O_RDWR);
+				if (aFileNull.handles[0] < 0)
+					CAGE_THROW_ERROR(SystemError, "failed to open null device file", errno);
 
 				pid = fork();
 
@@ -212,31 +236,31 @@ namespace cage
 					// child process
 
 					// redirect stdin
-					if (dup2(aStdinPipe[PIPE_READ], STDIN_FILENO) == -1)
-						CAGE_THROW_ERROR(Exception, "failed to duplicate stdin pipe");
+					if (dup2(config.discardStdIn ? aFileNull.handles[0] : aStdinPipe.handles[PIPE_READ], STDIN_FILENO) == -1)
+						CAGE_THROW_ERROR(SystemError, "failed to duplicate stdin pipe", errno);
 
 					// redirect stdout
-					if (dup2(aStdoutPipe[PIPE_WRITE], STDOUT_FILENO) == -1)
-						CAGE_THROW_ERROR(Exception, "failed to duplicate stdout pipe");
+					if (dup2(config.discardStdOut ? aFileNull.handles[0] : aStdoutPipe.handles[PIPE_WRITE], STDOUT_FILENO) == -1)
+						CAGE_THROW_ERROR(SystemError, "failed to duplicate stdout pipe", errno);
 
 					// redirect stderr
-					if (dup2(aStdoutPipe[PIPE_WRITE], STDERR_FILENO) == -1)
-						CAGE_THROW_ERROR(Exception, "failed to duplicate stderr pipe");
+					if (dup2(config.discardStdErr ? aFileNull.handles[0] : aStdoutPipe.handles[PIPE_WRITE], STDERR_FILENO) == -1)
+						CAGE_THROW_ERROR(SystemError, "failed to duplicate stderr pipe", errno);
 
 					// close unused file descriptors
-					close(aStdinPipe[PIPE_READ]);
-					close(aStdinPipe[PIPE_WRITE]);
-					close(aStdoutPipe[PIPE_READ]);
-					close(aStdoutPipe[PIPE_WRITE]);
+					aStdinPipe.close(PIPE_READ);
+					aStdinPipe.close(PIPE_WRITE);
+					aStdoutPipe.close(PIPE_READ);
+					aStdoutPipe.close(PIPE_WRITE);
 
 					// alter environment
-					envAlt envalt;
+					alterEnvironment();
 
 					// run child process image
-					string params = string() + "(cd '" + workingDir + "'; " + cmd + " )";
-					int res = execlp("/bin/sh", "sh", "-c", params.c_str(), nullptr);
+					const string params = string() + "(cd '" + workingDir + "'; " + cmd + " )";
+					const int res = execlp("/bin/sh", "sh", "-c", params.c_str(), nullptr);
 
-					// if we get here at all, an error occurred, but we are in the child process, so just exit
+					// if we get here, an error occurred, but we are in the child process, so just exit
 					exit(res);
 				}
 				else if (pid > 0)
@@ -244,17 +268,13 @@ namespace cage
 					// parent process
 
 					// close unused file descriptors
-					close(aStdinPipe[PIPE_READ]);
-					close(aStdoutPipe[PIPE_WRITE]);
+					aStdinPipe.close(PIPE_READ);
+					aStdoutPipe.close(PIPE_WRITE);
 				}
 				else
 				{
 					// failed to create child
-					close(aStdinPipe[PIPE_READ]);
-					close(aStdinPipe[PIPE_WRITE]);
-					close(aStdoutPipe[PIPE_READ]);
-					close(aStdoutPipe[PIPE_WRITE]);
-					CAGE_THROW_ERROR(Exception, "fork failed");
+					CAGE_THROW_ERROR(SystemError, "fork failed", errno);
 				}
 
 				CAGE_LOG_CONTINUE(SeverityEnum::Info, "process", stringizer() + "process id: " + pid);
@@ -263,8 +283,6 @@ namespace cage
 			~ProcessImpl()
 			{
 				wait();
-				close(aStdinPipe[PIPE_WRITE]);
-				close(aStdoutPipe[PIPE_READ]);
 			}
 
 			void terminate()
@@ -282,8 +300,8 @@ namespace cage
 					while (true)
 					{
 						errno = 0;
-						int res = waitpid(pid, &status, 0);
-						int err = errno;
+						const int res = waitpid(pid, &status, 0);
+						const int err = errno;
 						if (res < 0 && err == EINTR)
 							continue;
 						if (res != pid)
@@ -302,18 +320,26 @@ namespace cage
 
 			void read(void *data, uint32 size)
 			{
-				auto r = ::read(aStdoutPipe[PIPE_READ], data, size);
+				if (size == 0)
+					return;
+				const auto r = ::read(aStdoutPipe.handles[PIPE_READ], data, size);
 				if (r < 0)
 					CAGE_THROW_ERROR(SystemError, "read", errno);
+				if (r == 0)
+					CAGE_THROW_ERROR(ProcessPipeEof, "pipe eof");
 				if (r != size)
 					CAGE_THROW_ERROR(Exception, "insufficient data");
 			}
 
 			void write(const void *data, uint32 size)
 			{
-				auto r = ::write(aStdinPipe[PIPE_WRITE], data, size);
+				if (size == 0)
+					return;
+				const auto r = ::write(aStdinPipe.handles[PIPE_WRITE], data, size);
 				if (r < 0)
 					CAGE_THROW_ERROR(SystemError, "write", errno);
+				if (r == 0)
+					CAGE_THROW_ERROR(ProcessPipeEof, "pipe eof");
 				if (r != size)
 					CAGE_THROW_ERROR(Exception, "data truncated");
 			}
@@ -337,7 +363,7 @@ namespace cage
 
 	string Process::readLine()
 	{
-		ProcessImpl *impl = (ProcessImpl*)this;
+		ProcessImpl *impl = (ProcessImpl *)this;
 		string out;
 		char buffer[string::MaxLength + 1];
 		uintPtr size = 0;
@@ -354,13 +380,13 @@ namespace cage
 
 	void Process::write(PointerRange<const char> buffer)
 	{
-		ProcessImpl *impl = (ProcessImpl*)this;
+		ProcessImpl *impl = (ProcessImpl *)this;
 		impl->write(buffer.data(), numeric_cast<uint32>(buffer.size()));
 	}
 
 	void Process::writeLine(const string &line)
 	{
-		ProcessImpl *impl = (ProcessImpl*)this;
+		ProcessImpl *impl = (ProcessImpl *)this;
 		write({ line.c_str(), line.c_str() + line.length() });
 		const char eol[2] = "\n";
 		write({ eol, eol + 1, });
@@ -368,25 +394,25 @@ namespace cage
 
 	void Process::terminate()
 	{
-		ProcessImpl *impl = (ProcessImpl*)this;
+		ProcessImpl *impl = (ProcessImpl *)this;
 		impl->terminate();
 	}
 
 	int Process::wait()
 	{
-		ProcessImpl *impl = (ProcessImpl*)this;
+		ProcessImpl *impl = (ProcessImpl *)this;
 		return impl->wait();
 	}
 
 	string Process::getCmdString() const
 	{
-		ProcessImpl *impl = (ProcessImpl*)this;
+		ProcessImpl *impl = (ProcessImpl *)this;
 		return impl->cmd;
 	}
 
 	string Process::getWorkingDir() const
 	{
-		ProcessImpl *impl = (ProcessImpl*)this;
+		ProcessImpl *impl = (ProcessImpl *)this;
 		return impl->workingDir;
 	}
 

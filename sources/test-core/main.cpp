@@ -55,7 +55,7 @@ void testScheduler();
 void testTcp();
 void testUdp();
 void testUdpDiscovery();
-void testProgram();
+void testProcess();
 void testSystemInformation();
 void generatePointsOnSphere();
 
@@ -116,7 +116,7 @@ int main()
 	testTcp();
 	testUdp();
 	testUdpDiscovery();
-	testProgram();
+	testProcess();
 	testSystemInformation();
 
 	{
