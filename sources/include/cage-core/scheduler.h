@@ -65,6 +65,10 @@ namespace cage
 		Schedule *newSchedule(const ScheduleCreateConfig &config);
 		void clear(); // removes all schedules from the scheduler (and deallocates them)
 
+		void setLockstep(bool lockstep);
+		bool isLockstep() const;
+
+		uint64 latestTime() const;
 		sint32 latestPriority() const;
 	};
 
