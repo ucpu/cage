@@ -61,21 +61,27 @@ namespace cage
 			const SchedulerCreateConfig conf;
 			std::vector<Holder<ScheduleImpl>> scheds;
 			std::vector<ScheduleImpl*> tmp;
-			Holder<Timer> tmr;
-			uint64 t = 0;
-			uint64 lastTime = 0;
+			Holder<Timer> realTimer;
+			uint64 realDrift = 0; // offset for the real timer, this happens when switching lockstep mode
+			uint64 t = 0; // current time for scheduling events
+			uint64 lastTime = 0; // time at which the last schedule was run
 			sint32 lastPriority = 0;
 			std::atomic<bool> stopping = false;
-			bool lockstep = false;
+			bool lockstepApi = false;
+			bool lockstepEffective = false;
 
 			explicit SchedulerImpl(const SchedulerCreateConfig &config) : conf(config)
 			{
-				tmr = newTimer();
+				realTimer = newTimer();
 			}
 
 			void reset()
 			{
-				tmr->reset();
+				realTimer->reset();
+				realDrift = 0;
+				t = 0;
+				lastTime = 0;
+				lastPriority = 0;
 				for (const auto &it : scheds)
 				{
 					it->sched = m;
@@ -133,7 +139,17 @@ namespace cage
 				}
 			}
 
-			uint64 closestScheduleTime()
+			uint64 adjustedRealTime()
+			{
+				return realTimer->microsSinceStart() + realDrift;
+			}
+
+			uint64 currentTime()
+			{
+				return lockstepEffective ? t : adjustedRealTime();
+			}
+
+			uint64 minimalScheduleTime()
 			{
 				uint64 res = m;
 				for (const auto &it : scheds)
@@ -151,7 +167,7 @@ namespace cage
 			{
 				OPTICK_EVENT("scheduler sleep");
 				activateAllEmpty();
-				uint64 s = closestScheduleTime() - t;
+				uint64 s = minimalScheduleTime() - t;
 				s = min(s, conf.maxSleepDuration);
 				s = max(s, (uint64)1000); // some systems do not have higher precision sleeps; this will prevent busy looping
 				//CAGE_LOG(SeverityEnum::Info, "scheduler", stringizer() + "scheduler is going to sleep for " + s + " us");
@@ -175,10 +191,9 @@ namespace cage
 				lastPriority = s->pri;
 				s->pri = s->conf.priority;
 				s->active = false;
-				const bool locked = lockstep; // running the schedule may change the lockstep mode
-				const uint64 start = locked ? t : tmr->microsSinceStart();
+				const uint64 start = currentTime();
 				s->run(); // likely to throw
-				const uint64 end = locked ? t : tmr->microsSinceStart();
+				const uint64 end = currentTime();
 				if (s->stats)
 					s->stats->add(start - s->sched, end - start);
 				switch (s->conf.type)
@@ -207,7 +222,17 @@ namespace cage
 				CAGE_ASSERT(!scheds.empty());
 				tmp.clear();
 				tmp.reserve(scheds.size());
-				t = lockstep ? closestScheduleTime() : tmr->microsSinceStart();
+				if (lockstepEffective != lockstepApi)
+				{
+					if (!lockstepApi)
+					{
+						realDrift = t;
+						realTimer->reset();
+					}
+					lockstepEffective = lockstepApi;
+				}
+				t = lockstepEffective ? minimalScheduleTime() : adjustedRealTime();
+				//CAGE_LOG_DEBUG(SeverityEnum::Info, "scheduler", stringizer() + "current time: " + t);
 				checkNewSchedules();
 				filterAvailableSchedules();
 				if (tmp.empty())
@@ -235,7 +260,7 @@ namespace cage
 		if (!impl->active)
 		{
 			// sched is updated to ensure meaningful delay statistics
-			impl->sched = max(impl->sched, impl->schr->lockstep ? impl->schr->t : impl->schr->tmr->microsSinceStart()); // the schedule cannot be run before its initial delay is expired
+			impl->sched = max(impl->sched, impl->schr->currentTime()); // the schedule cannot be run before its initial delay is expired
 			// potential race condition here; i think it does not hurt
 			impl->active = true; // the atomic is updated last to commit memory barrier
 		}
@@ -371,16 +396,16 @@ namespace cage
 	void Scheduler::setLockstep(bool lockstep)
 	{
 		SchedulerImpl *impl = (SchedulerImpl *)this;
-		if (impl->lockstep == lockstep)
+		if (impl->lockstepApi == lockstep)
 			return;
-		CAGE_LOG(SeverityEnum::Warning, "scheduler", stringizer() + "enabling scheduler lockstep mode: " + lockstep);
-		impl->lockstep = lockstep;
+		CAGE_LOG(SeverityEnum::Warning, "scheduler", stringizer() + "scheduler lockstep mode: " + lockstep);
+		impl->lockstepApi = lockstep;
 	}
 
 	bool Scheduler::isLockstep() const
 	{
 		const SchedulerImpl *impl = (const SchedulerImpl *)this;
-		return impl->lockstep;
+		return impl->lockstepApi;
 	}
 
 	uint64 Scheduler::latestTime() const
