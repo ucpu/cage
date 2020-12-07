@@ -2,6 +2,7 @@
 #include <cage-core/math.h>
 #include <cage-core/image.h>
 #include <cage-core/color.h>
+#include <cage-core/timer.h>
 
 #include <initializer_list>
 
@@ -275,7 +276,7 @@ void testImage()
 		{
 			CAGE_TESTCASE(stringizer() + ch);
 			imageConvert(+img, ch);
-			for (string fmt : { ".png", ".jpeg", ".tiff", ".tga", ".psd" })
+			for (const string &fmt : { ".png", ".jpeg", ".tiff", ".tga", ".psd" })
 			{
 				if ((ch == 2 || ch == 4) && fmt == ".jpeg")
 					continue; // unsupported
@@ -377,7 +378,11 @@ void testImage()
 		img->initialize(400, 300, 4);
 		drawCircle(+img);
 		imageConvert(+img, 3);
-		imageDilation(+img, 5);
+		{
+			Holder<Timer> timer = newTimer();
+			imageDilation(+img, 5);
+			CAGE_LOG(SeverityEnum::Info, "performance", stringizer() + "duration: " + timer->microsSinceStart());
+		}
 		img->exportFile("images/dilation/3_5.png");
 		CAGE_TEST(img->value(50 - 5, 150, 0) < 0.1);
 		CAGE_TEST(img->value(50 - 5, 150, 1) > 0.9);
@@ -397,7 +402,11 @@ void testImage()
 		CAGE_TEST(img->value(50 - 1, 150, 3) > 0.9);
 		img->initialize(400, 300, 4);
 		drawCircle(+img);
-		imageDilation(+img, 5);
+		{
+			Holder<Timer> timer = newTimer();
+			imageDilation(+img, 5);
+			CAGE_LOG(SeverityEnum::Info, "performance", stringizer() + "duration: " + timer->microsSinceStart());
+		}
 		img->exportFile("images/dilation/4_5.png");
 		CAGE_TEST(img->value(50 - 5, 150, 0) < 0.1);
 		CAGE_TEST(img->value(50 - 5, 150, 1) > 0.9);
@@ -414,7 +423,11 @@ void testImage()
 			for (uint32 x = 0; x < 400; x++)
 				if (randomChance() < 0.3)
 					img->set(x, y, vec4::Nan());
-		imageDilation(+img, 1, true);
+		{
+			Holder<Timer> timer = newTimer();
+			imageDilation(+img, 1, true);
+			CAGE_LOG(SeverityEnum::Info, "performance", stringizer() + "duration: " + timer->microsSinceStart());
+		}
 		imageConvert(+img, ImageFormatEnum::U8);
 		img->exportFile("images/dilation/nan.png");
 	}

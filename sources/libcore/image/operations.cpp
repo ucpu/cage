@@ -221,54 +221,132 @@ namespace cage
 
 	namespace
 	{
-		template<class T, bool UseNan>
-		bool valid(const T &v)
-		{
-			if (UseNan)
-				return valid(v);
-			return v != T();
-		}
+
+#ifndef inline
+#ifdef _MSC_VER
+#define inline __forceinline
+#endif // _MSC_VER
+#endif
 
 		template<class T, bool UseNan>
-		void dilationProcess(Image *src, Image *dst)
+		struct Dilation
 		{
-			const uint32 w = src->width();
-			const uint32 h = src->height();
-			for (uint32 y = 0; y < h; y++)
+			Image *const src;
+			Image *const dst;
+			const uint32 w;
+			const uint32 h;
+
+			Dilation(Image *src, Image *dst) : src(src), dst(dst), w(src->width()), h(src->height())
+			{}
+
+			inline bool valid(const T &v)
+			{
+				if (UseNan)
+					return cage::valid(v);
+				return v != T();
+			}
+
+			inline void update(const T &a, T &m, uint32 &cnt)
+			{
+				const bool v = valid(a);
+				if (UseNan)
+				{
+					if (v)
+					{
+						m += a;
+						cnt++;
+					}
+				}
+				else
+				{
+					m += a * v;
+					cnt += v;
+				}
+			}
+
+			inline void processPixelSimple(uint32 x, uint32 y)
+			{
+				T m;
+				src->get(x, y, m);
+				if (valid(m))
+					dst->set(x, y, m);
+				else
+				{
+					m = T();
+					uint32 cnt = 0;
+					const uint32 sy = numeric_cast<uint32>(clamp(sint32(y) - 1, 0, sint32(h) - 1));
+					const uint32 ey = numeric_cast<uint32>(clamp(sint32(y) + 1, 0, sint32(h) - 1));
+					const uint32 sx = numeric_cast<uint32>(clamp(sint32(x) - 1, 0, sint32(w) - 1));
+					const uint32 ex = numeric_cast<uint32>(clamp(sint32(x) + 1, 0, sint32(w) - 1));
+					for (uint32 yy = sy; yy <= ey; yy++)
+					{
+						for (uint32 xx = sx; xx <= ex; xx++)
+						{
+							T a;
+							src->get(xx, yy, a);
+							update(a, m, cnt);
+						}
+					}
+					if (cnt > 0)
+						dst->set(x, y, m / cnt);
+				}
+			}
+
+			void processRowSimple(uint32 y)
 			{
 				for (uint32 x = 0; x < w; x++)
+					processPixelSimple(x, y);
+			}
+
+			void processRowCenter(uint32 y)
+			{
+				const T *base = (T *)((ImageImpl *)src)->mem.data();
+				const T *topRow = base + (y - 1) * w;
+				const T *centerRow = base + y * w;
+				const T *bottomRow = base + (y + 1) * w;
+
+				T *outputBase = (T *)((ImageImpl *)dst)->mem.data();
+				T *outputRow = outputBase + y * w;
+
+				for (uint32 x = 1; x < w - 1; x++)
 				{
-					T m;
-					src->get(x, y, m);
-					if (!valid<T, UseNan>(m))
+					T m = centerRow[x];
+					if (valid(m))
+						outputRow[x] = m;
+					else
 					{
 						m = T();
 						uint32 cnt = 0;
-						uint32 sy = numeric_cast<uint32>(clamp(sint32(y) - 1, 0, sint32(h) - 1));
-						uint32 ey = numeric_cast<uint32>(clamp(sint32(y) + 1, 0, sint32(h) - 1));
-						uint32 sx = numeric_cast<uint32>(clamp(sint32(x) - 1, 0, sint32(w) - 1));
-						uint32 ex = numeric_cast<uint32>(clamp(sint32(x) + 1, 0, sint32(w) - 1));
-						for (uint32 yy = sy; yy <= ey; yy++)
+						for (const T *row : { topRow, centerRow, bottomRow })
 						{
-							for (uint32 xx = sx; xx <= ex; xx++)
-							{
-								T a;
-								src->get(xx, yy, a);
-								if (valid<T, UseNan>(a))
-								{
-									m += a;
-									cnt++;
-								}
-							}
+							const T *r = row + x - 1;
+							for (uint32 xx = 0; xx < 3; xx++)
+								update(*r++, m, cnt);
 						}
 						if (cnt > 0)
-							dst->set(x, y, m / cnt);
+							outputRow[x] = m / cnt;
 					}
-					else
-						dst->set(x, y, m);
 				}
 			}
-		}
+
+			void process()
+			{
+				if (w < 3 || h < 3)
+				{
+					for (uint32 y = 0; y < h; y++)
+						processRowSimple(y);
+					return;
+				}
+				processRowSimple(0);
+				processRowSimple(h - 1);
+				for (uint32 y = 1; y < h - 1; y++)
+				{
+					processPixelSimple(0, y);
+					processRowCenter(y);
+					processPixelSimple(w - 1, y);
+				}
+			}
+		};
 
 		template<class T, bool UseNan>
 		void dilationProcess(Image *img, uint32 rounds)
@@ -286,7 +364,8 @@ namespace cage
 
 			for (uint32 r = 0; r < rounds; r++)
 			{
-				dilationProcess<T, UseNan>(src, dst);
+				Dilation<T, UseNan> dilation(src, dst);
+				dilation.process();
 				std::swap(src, dst);
 			}
 
@@ -314,7 +393,7 @@ namespace cage
 		case 2: dilationProcess<vec2>(img, rounds, useNan); break;
 		case 3: dilationProcess<vec3>(img, rounds, useNan); break;
 		case 4: dilationProcess<vec4>(img, rounds, useNan); break;
-		default: CAGE_THROW_CRITICAL(NotImplemented, "image inpaint with more than 4 channels");
+		default: CAGE_THROW_CRITICAL(NotImplemented, "image dilation with more than 4 channels");
 		}
 		imageConvert(img, originalFormat);
 	}
