@@ -1,8 +1,12 @@
+// C2338
+// You've instantiated std::aligned_storage<Len, Align> with an extended alignment (in other words, Align > alignof(max_align_t)). Before VS 2017 15.8, the member "type" would non-conformingly have an alignment of only alignof(max_align_t). VS 2017 15.8 was fixed to handle this correctly, but the fix inherently changes layout and breaks binary compatibility (*only* for uses of aligned_storage with extended alignments). Please define either (1) _ENABLE_EXTENDED_ALIGNED_STORAGE to acknowledge that you understand this message and that you actually want a type with an extended alignment, or (2) _DISABLE_EXTENDED_ALIGNED_STORAGE to silence this message and get the old non-conforming behavior.
+#define _ENABLE_EXTENDED_ALIGNED_STORAGE
+
 #include <cage-core/geometry.h>
-#include <cage-core/memoryAllocators.h>
 #include <cage-core/spatialStructure.h>
 
 #include <robin_hood.h>
+#include <plf_colony.h>
 #include <xsimd/xsimd.hpp>
 
 #include <vector>
@@ -134,15 +138,6 @@ namespace cage
 			virtual bool intersects(const aabb &other) { return cage::intersects(*this, other); };
 		};
 
-		union ItemUnion
-		{
-			ItemShape<line> a;
-			ItemShape<triangle> b;
-			ItemShape<plane> c;
-			ItemShape<sphere> d;
-			ItemShape<aabb> e;
-		};
-
 		struct Node
 		{
 			FastBox box;
@@ -159,22 +154,57 @@ namespace cage
 			sint32 b() const { return box.high.s.i; }
 		};
 
+		struct ColonyAsAllocator
+		{
+			union ItemUnion
+			{
+				ItemShape<line> a;
+				ItemShape<triangle> b;
+				ItemShape<plane> c;
+				ItemShape<sphere> d;
+				ItemShape<aabb> e;
+				ItemUnion() {}
+			};
+
+			struct alignas(alignof(ItemUnion)) ItemAlloc
+			{
+				char reserved[sizeof(ItemUnion)];
+			};
+
+			plf::colony<ItemAlloc> colony;
+
+			void *allocate(uintPtr size, uintPtr alignment)
+			{
+				CAGE_ASSERT(size <= sizeof(ItemAlloc));
+				return &*colony.insert(ItemAlloc());
+			}
+
+			void deallocate(void *ptr)
+			{
+				colony.erase(colony.get_iterator_from_pointer((ItemAlloc *)ptr));
+			}
+
+			void flush()
+			{
+				CAGE_THROW_CRITICAL(Exception, "flush may not be used");
+			}
+		};
+
 		class SpatialDataImpl : public SpatialStructure
 		{
 		public:
-			MemoryArenaGrowing<MemoryAllocatorPolicyPool<templates::PoolAllocatorAtomSize<ItemUnion>::result>, MemoryConcurrentPolicyNone> itemsPool;
+			ColonyAsAllocator itemsPool;
 			MemoryArena itemsArena;
 			robin_hood::unordered_map<uint32, Holder<ItemBase>> itemsTable;
-			std::atomic<bool> dirty {false};
-			std::vector<Node, MemoryArenaStd<Node>> nodes;
-			std::vector<ItemBase*> indices;
-			typedef std::vector<ItemBase*>::iterator indicesIterator;
+			std::atomic<bool> dirty = false;
+			std::vector<Node> nodes;
+			std::vector<ItemBase *> indices;
 			static constexpr uint32 binsCount = 10;
 			std::array<FastBox, binsCount> leftBinBoxes = {};
 			std::array<FastBox, binsCount> rightBinBoxes = {};
 			std::array<uint32, binsCount> leftBinCounts = {};
 
-			SpatialDataImpl(const SpatialStructureCreateConfig &config) : itemsPool(config.maxItems * sizeof(ItemUnion)), itemsArena(&itemsPool), nodes(detail::systemArena())
+			SpatialDataImpl(const SpatialStructureCreateConfig &config) : itemsArena(&itemsPool)
 			{
 				CAGE_ASSERT((uintPtr(this) % alignof(FastBox)) == 0);
 				CAGE_ASSERT((uintPtr(leftBinBoxes.data()) % alignof(FastBox)) == 0);

@@ -32,9 +32,7 @@ namespace cage
 	};
 
 	struct CAGE_CORE_API SpatialStructureCreateConfig
-	{
-		uint32 maxItems = 1000 * 100;
-	};
+	{};
 
 	CAGE_CORE_API Holder<SpatialStructure> newSpatialStructure(const SpatialStructureCreateConfig &config);
 	CAGE_CORE_API Holder<SpatialQuery> newSpatialQuery(const SpatialStructure *data); // the SpatialStructure must outlive the query
