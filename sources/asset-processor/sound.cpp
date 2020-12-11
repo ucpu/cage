@@ -2,6 +2,7 @@
 
 #include <dr_libs/dr_flac.h>
 #include <dr_libs/dr_wav.h>
+#include <dr_libs/dr_mp3.h>
 #include <vorbis/vorbisfile.h>
 #include <vorbis/vorbisenc.h>
 
@@ -154,16 +155,31 @@ namespace
 	{
 		unsigned int channels;
 		unsigned int sampleRate;
-		drwav_uint64 totalSampleCount;
-		float* pSampleData = drwav_open_file_and_read_pcm_frames_f32(pathJoin(inputDirectory, inputFile).c_str(), &channels, &sampleRate, &totalSampleCount, nullptr);
+		drwav_uint64 totalFrameCount;
+		float* pSampleData = drwav_open_file_and_read_pcm_frames_f32(pathJoin(inputDirectory, inputFile).c_str(), &channels, &sampleRate, &totalFrameCount, nullptr);
 		if (!pSampleData)
 			CAGE_THROW_ERROR(Exception, "failed to read wav file");
 		sds.channels = channels;
-		sds.frames = numeric_cast<uint32>(totalSampleCount / channels);
+		sds.frames = numeric_cast<uint32>(totalFrameCount / channels);
 		sds.sampleRate = sampleRate;
 		buf1.allocate(sds.channels * sds.frames * sizeof(float));
 		detail::memcpy(buf1.data(), pSampleData, buf1.size());
 		drwav_free(pSampleData, nullptr);
+	}
+
+	void decodeMp3()
+	{
+		drmp3_uint64 totalFrameCount;
+		drmp3_config config;
+		float *pSampleData = drmp3_open_file_and_read_pcm_frames_f32(pathJoin(inputDirectory, inputFile).c_str(), &config, &totalFrameCount, nullptr);
+		if (!pSampleData)
+			CAGE_THROW_ERROR(Exception, "failed to read mp3 file");
+		sds.channels = config.channels;
+		sds.frames = numeric_cast<uint32>(totalFrameCount / config.channels);
+		sds.sampleRate = config.sampleRate;
+		buf1.allocate(sds.channels * sds.frames * sizeof(float));
+		detail::memcpy(buf1.data(), pSampleData, buf1.size());
+		drmp3_free(pSampleData, nullptr);
 	}
 
 	void decodeVorbis()
@@ -210,6 +226,8 @@ namespace
 			decodeFlac();
 		else if (isPattern(inputFile, "", "", ".wav"))
 			decodeWav();
+		else if (isPattern(inputFile, "", "", ".mp3"))
+			decodeMp3();
 		else
 			decodeVorbis();
 	}

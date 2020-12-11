@@ -24,7 +24,7 @@ void processObject()
 	Holder<Ini> ini = newIni();
 	ini->importFile(inputFileName);
 
-	string basePath = pathExtractDirectory(inputFile);
+	//string basePath = pathExtractDirectory(inputFile);
 	std::vector<Lod> lods;
 	std::set<uint32> deps;
 	uint32 totalMeshes = 0;
@@ -40,11 +40,12 @@ void processObject()
 			string v = ini->getString(section, n);
 			if (!isDigitsOnly(n))
 				continue;
-			v = pathJoin(basePath, v);
-			uint32 h = HashString(v.c_str());
+			//v = pathJoin(basePath, v);
+			//writeLine(string("ref=") + v);
+			v = convertAssetPath(v);
+			uint32 h = HashString(v);
 			ls.meshes.insert(h);
 			deps.insert(h);
-			writeLine(string("ref=") + v);
 		}
 		totalMeshes += numeric_cast<uint32>(ls.meshes.size());
 		lods.push_back(templates::move(ls));
@@ -73,10 +74,11 @@ void processObject()
 		string s = ini->getString("skeletalAnimation", "name");
 		if (!s.empty())
 		{
-			s = pathJoin(basePath, s);
-			o.skelAnimName = HashString(s.c_str());
+			//s = pathJoin(basePath, s);
+			//writeLine(string("ref=") + s);
+			s = convertAssetPath(s);
+			o.skelAnimName = HashString(s);
 			deps.insert(o.skelAnimName);
-			writeLine(string("ref=") + s);
 		}
 		o.skelAnimSpeed = ini->getFloat("skeletalAnimation", "speed", real::Nan().value);
 		o.skelAnimOffset = ini->getFloat("skeletalAnimation", "offset", real::Nan().value);

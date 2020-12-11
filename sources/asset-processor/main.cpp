@@ -99,6 +99,42 @@ namespace
 		(*secondaryLog)->output.bind<LoggerOutputFile, &LoggerOutputFile::output>(secondaryLogFile->get());
 		(*secondaryLog)->format.bind<&logFormatFileShort>();
 	}
+
+	string convertGenericPath(const string &input_, const string &relativeTo_)
+	{
+		string input = input_;
+		if (input.empty())
+			CAGE_THROW_ERROR(Exception, "input cannot be empty");
+		if (pathIsAbs(input))
+		{
+			if (input[0] != '/')
+				CAGE_THROW_ERROR(Exception, "absolute path with protocol");
+			while (!input.empty() && input[0] == '/')
+				split(input, "/");
+		}
+		else
+		{
+			const string relativeTo = relativeTo_.empty() ? pathExtractDirectory(inputFile) : relativeTo_;
+			input = pathJoin(relativeTo, input);
+		}
+		return input;
+	}
+}
+
+string convertAssetPath(const string &input, const string &relativeTo, bool markAsReferenced)
+{
+	string p = convertGenericPath(input, relativeTo);
+	if (markAsReferenced)
+		writeLine(string("ref=") + p);
+	return p;
+}
+
+string convertFilePath(const string &input, const string &relativeTo, bool markAsUsed)
+{
+	string p = convertGenericPath(input, relativeTo);
+	if (markAsUsed)
+		writeLine(string("use=") + p);
+	return p;
 }
 
 void writeLine(const string &other)

@@ -47,3 +47,10 @@ void analyzeTexture();
 void analyzeAssimp();
 void analyzeFont();
 void analyzeSound();
+
+
+// relative path is interpreted relative to the input file (unless specified otherwise)
+// absolute path is interpreted as relative to input root path
+string convertAssetPath(const string &input, const string &relativeTo = "", bool markAsReferenced = true);
+string convertFilePath(const string &input, const string &relativeTo = "", bool markAsUsed = true);
+
