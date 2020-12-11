@@ -18,9 +18,7 @@ namespace cage
 	};
 
 	struct CAGE_ENGINE_API SoundContextCreateConfig
-	{
-		uintPtr linksMemory = 1024 * 1024;
-	};
+	{};
 
 	CAGE_ENGINE_API Holder<SoundContext> newSoundContext(const SoundContextCreateConfig &config, const string &name = "");
 
@@ -60,7 +58,7 @@ namespace cage
 		void clear();
 	};
 
-	CAGE_ENGINE_API Holder<MixingBus> newMixingBus(SoundContext *context);
+	CAGE_ENGINE_API Holder<MixingBus> newMixingBus();
 
 	struct CAGE_ENGINE_API MixingFilterApi
 	{
@@ -82,8 +80,8 @@ namespace cage
 		real volume;
 	};
 
-	CAGE_ENGINE_API Holder<MixingFilter> newMixingFilter(SoundContext *context);
-	CAGE_ENGINE_API Holder<VolumeFilter> newVolumeFilter(SoundContext *context);
+	CAGE_ENGINE_API Holder<MixingFilter> newMixingFilter();
+	CAGE_ENGINE_API Holder<VolumeFilter> newVolumeFilter();
 
 	class CAGE_ENGINE_API SoundSource : private Immovable
 	{
@@ -110,9 +108,9 @@ namespace cage
 		uint32 getSampleRate() const;
 	};
 
-	CAGE_ENGINE_API Holder<SoundSource> newSoundSource(SoundContext *context);
+	CAGE_ENGINE_API Holder<SoundSource> newSoundSource();
 
-	CAGE_ENGINE_API AssetScheme genAssetSchemeSoundSource(uint32 threadIndex, SoundContext *memoryContext);
+	CAGE_ENGINE_API AssetScheme genAssetSchemeSoundSource(uint32 threadIndex);
 	static constexpr uint32 AssetSchemeIndexSoundSource = 20;
 
 	class CAGE_ENGINE_API Speaker : private Immovable

@@ -42,9 +42,8 @@ namespace cage
 		public:
 			string name;
 			cubeb *soundio = nullptr;
-			MemoryArenaGrowing<MemoryAllocatorPolicyPool<sizeof(templates::AllocatorSizeSet<void*>)>, MemoryConcurrentPolicyNone> linksMemory;
 
-			SoundContextImpl(const SoundContextCreateConfig &config, const string &name_) : name(replace(name_, ":", "_")), linksMemory(config.linksMemory)
+			SoundContextImpl(const SoundContextCreateConfig &config, const string &name_) : name(replace(name_, ":", "_"))
 			{
 #ifdef CAGE_SYSTEM_WINDOWS
 				CoInitializeEx(nullptr, COINIT_MULTITHREADED);
@@ -71,12 +70,6 @@ namespace cage
 		{
 			SoundContextImpl *impl = (SoundContextImpl*)context;
 			return impl->soundio;
-		}
-
-		MemoryArena linksArenaFromContext(SoundContext *context)
-		{
-			SoundContextImpl *impl = (SoundContextImpl*)context;
-			return MemoryArena(&impl->linksMemory);
 		}
 	}
 

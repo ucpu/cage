@@ -424,25 +424,25 @@ namespace cage
 				{ // create sound
 					string name = pathExtractFilename(detail::getExecutableFullPathNoExe());
 					sound = newSoundContext(config.soundContext ? *config.soundContext : SoundContextCreateConfig(), name);
-					speaker = newSpeakerOutput(sound.get(), config.speaker ? *config.speaker : SpeakerCreateConfig(), name);
-					masterBus = newMixingBus(sound.get());
-					musicBus = newMixingBus(sound.get());
-					effectsBus = newMixingBus(sound.get());
-					guiBus = newMixingBus(sound.get());
-					speaker->setInput(masterBus.get());
-					masterBus->addInput(musicBus.get());
-					masterBus->addInput(effectsBus.get());
-					masterBus->addInput(guiBus.get());
+					speaker = newSpeakerOutput(+sound, config.speaker ? *config.speaker : SpeakerCreateConfig(), name);
+					masterBus = newMixingBus();
+					musicBus = newMixingBus();
+					effectsBus = newMixingBus();
+					guiBus = newMixingBus();
+					speaker->setInput(+masterBus);
+					masterBus->addInput(+musicBus);
+					masterBus->addInput(+effectsBus);
+					masterBus->addInput(+guiBus);
 				}
 
 				{ // create gui
 					GuiCreateConfig c;
 					if (config.gui)
 						c = *config.gui;
-					c.assetMgr = assets.get();
+					c.assetMgr = +assets;
 					gui = newGui(c);
-					gui->handleWindowEvents(window.get());
-					gui->setOutputSoundBus(guiBus.get());
+					gui->handleWindowEvents(+window);
+					gui->setOutputSoundBus(+guiBus);
 				}
 
 				{ // create entities
@@ -478,7 +478,7 @@ namespace cage
 					assets->defineScheme<SkeletalAnimation>(AssetSchemeIndexSkeletalAnimation, genAssetSchemeSkeletalAnimation());
 					assets->defineScheme<RenderObject>(AssetSchemeIndexRenderObject, genAssetSchemeRenderObject());
 					assets->defineScheme<Font>(AssetSchemeIndexFont, genAssetSchemeFont(EngineGraphicsUploadThread::threadIndex));
-					assets->defineScheme<SoundSource>(AssetSchemeIndexSoundSource, genAssetSchemeSoundSource(EngineSoundThread::threadIndex, sound.get()));
+					assets->defineScheme<SoundSource>(AssetSchemeIndexSoundSource, genAssetSchemeSoundSource(EngineSoundThread::threadIndex));
 					// cage pack
 					assets->add(HashString("cage/cage.pack"));
 				}

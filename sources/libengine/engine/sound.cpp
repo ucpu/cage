@@ -54,8 +54,8 @@ namespace cage
 				this->listener = listener;
 				CAGE_ASSERT(sound.sound.input == nullptr || sound.sound.name == 0);
 				source.clear();
-				bus = newMixingBus(cage::engineSound()); // recreating new bus will ensure that any potential previous connections are removed
-				filter = newMixingFilter(cage::engineSound());
+				bus = newMixingBus(); // recreating new bus will ensure that any potential previous connections are removed
+				filter = newMixingFilter();
 				filter->execute.bind<Mix, &Mix::exe>(this);
 				if (sound.sound.input)
 				{ // direct bus input
