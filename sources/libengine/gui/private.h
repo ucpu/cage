@@ -1,7 +1,6 @@
 #ifndef guard_private_h_BEDE53C63BB74919B9BD171B995FD1A1
 #define guard_private_h_BEDE53C63BB74919B9BD171B995FD1A1
 
-#include <cage-core/memoryAllocators.h>
 #include <cage-core/entities.h>
 #include <cage-core/macros.h>
 
@@ -269,6 +268,31 @@ namespace cage
 		bool pointInside(vec2 point, uint32 maskRequests = 1) const;
 	};
 
+	// temporary workaround until the memory management in gui is revisited
+	struct FlushableArena
+	{
+		std::vector<void *> allocations;
+
+		void *allocate(uintPtr size, uintPtr alignment)
+		{
+			void *p = detail::systemArena().allocate(size, alignment);
+			allocations.push_back(p);
+			return p;
+		}
+
+		void deallocate(void *ptr)
+		{
+			CAGE_THROW_CRITICAL(Exception, "deallocation in flushable-only arena");
+		}
+
+		void flush()
+		{
+			for (void *p : allocations)
+				detail::systemArena().deallocate(p);
+			allocations.clear();
+		}
+	};
+
 	class GuiImpl : public Gui
 	{
 	public:
@@ -287,7 +311,7 @@ namespace cage
 		uint32 focusParts; // bitmask of focused parts of the single widget (bits 30 and 31 are reserved for scrollbars)
 		WidgetItem *hover;
 
-		MemoryArenaGrowing<MemoryAllocatorPolicyLinear<>, MemoryConcurrentPolicyNone> itemsArena;
+		FlushableArena itemsArena;
 		MemoryArena itemsMemory;
 		HierarchyItem *root;
 
@@ -308,7 +332,7 @@ namespace cage
 
 		struct EmitData
 		{
-			MemoryArenaGrowing<MemoryAllocatorPolicyLinear<>, MemoryConcurrentPolicyNone> arena;
+			FlushableArena arena;
 			MemoryArena memory;
 			RenderableBase *first = nullptr, *last = nullptr;
 

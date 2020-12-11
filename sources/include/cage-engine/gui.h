@@ -337,8 +337,6 @@ namespace cage
 	{
 		AssetManager *assetMgr = nullptr;
 		EntityManagerCreateConfig *entitiesConfig = nullptr;
-		uintPtr itemsArenaSize = 1024 * 1024 * 16;
-		uintPtr emitArenaSize = 1024 * 1024 * 16;
 		uint32 skinsCount = 1;
 	};
 
