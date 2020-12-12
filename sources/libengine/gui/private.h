@@ -312,7 +312,7 @@ namespace cage
 			RenderableBase *first = nullptr, *last = nullptr;
 
 			EmitData(const GuiCreateConfig &config);
-			//EmitData(EmitData &&other); // this is not defined but it is required - some stupid weird issue with gcc.
+			EmitData(EmitData &&other); // this is not defined but it is required - some stupid weird issue with gcc.
 			~EmitData();
 			void flush();
 		} emitData[3], *emitControl;
