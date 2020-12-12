@@ -1,5 +1,5 @@
-#ifndef guard_memoryAllocators_h_dsg4hsd564g6s5e1gse5a64fg
-#define guard_memoryAllocators_h_dsg4hsd564g6s5e1gse5a64fg
+#ifndef guard_memoryAllocatorsOld_h_dsg4hsd564g6s5e1gse5a64fg
+#define guard_memoryAllocatorsOld_h_dsg4hsd564g6s5e1gse5a64fg
 
 #include "memoryUtils.h"
 
@@ -732,4 +732,4 @@ namespace cage
 	};
 }
 
-#endif // guard_memoryAllocators_h_dsg4hsd564g6s5e1gse5a64fg
+#endif // guard_memoryAllocatorsOld_h_dsg4hsd564g6s5e1gse5a64fg

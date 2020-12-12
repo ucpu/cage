@@ -20,6 +20,7 @@ void testMath();
 void testMathGlm();
 void testGeometry();
 void testMemoryBuffers();
+void testMemoryAllocators();
 void testSerialization();
 void testConcurrent();
 void testConcurrentQueue();
@@ -78,6 +79,7 @@ int main()
 	testMathGlm();
 	testGeometry();
 	testMemoryBuffers();
+	testMemoryAllocators();
 	testSerialization();
 	testConcurrent();
 	testConcurrentQueue();
