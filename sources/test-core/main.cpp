@@ -10,6 +10,7 @@ void testEnums();
 void testExceptions();
 void testNumericTypes();
 void testStrings();
+void testPaths();
 void testDelegates();
 void testHolder();
 void testClasses();
@@ -71,6 +72,7 @@ int main()
 	testExceptions();
 	testNumericTypes();
 	testStrings();
+	testPaths();
 	testDelegates();
 	testHolder();
 	testClasses();

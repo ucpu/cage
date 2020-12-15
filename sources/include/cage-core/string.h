@@ -90,7 +90,7 @@ namespace cage
 	{
 		detail::StringBase<N> ret = str;
 		while (ret.length() < size)
-			ret += detail::StringBase<N>({ &c, &c + 1 });
+			ret += detail::StringBase<N>(c);
 		return ret;
 	}
 

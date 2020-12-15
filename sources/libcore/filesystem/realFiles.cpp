@@ -432,7 +432,8 @@ namespace cage
 				realCreateDirectories(path);
 
 #ifdef CAGE_SYSTEM_WINDOWS
-				list = FindFirstFile(pathJoin(myPath, "*").c_str(), &ffd);
+				CAGE_ASSERT(!myPath.empty());
+				list = FindFirstFile((myPath + "/*").c_str(), &ffd);
 				valid_ = list != INVALID_HANDLE_VALUE;
 				if (!valid_)
 					return;

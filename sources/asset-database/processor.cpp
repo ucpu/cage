@@ -110,7 +110,7 @@ namespace
 				ass.scheme = scheme;
 				ass.databank = path;
 				ass.name = ini->getString(section, assItem);
-				ass.name = pathJoin(pathExtractDirectory(ass.databank), ass.name);
+				ass.name = pathJoinNoCheck(pathExtractDirectory(ass.databank), ass.name); // no check: the name may contain additional specifiers which are not valid in path
 				bool ok = true;
 
 				// check for duplicate asset name
