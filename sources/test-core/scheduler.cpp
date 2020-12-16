@@ -26,6 +26,25 @@ namespace
 	{
 		s->stop();
 	}
+
+	uint64 lastCheckedTime = 0;
+
+	void monotonicTime(Scheduler *s)
+	{
+		const uint64 t = s->latestTime();
+		CAGE_TEST(t >= lastCheckedTime);
+		lastCheckedTime = t;
+	}
+
+	void enableLockstep(Scheduler *s)
+	{
+		s->setLockstep(true);
+	}
+
+	void disableLockstep(Scheduler *s)
+	{
+		s->setLockstep(false);
+	}
 }
 
 void testScheduler()
@@ -55,7 +74,7 @@ void testScheduler()
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::Once;
-			c.action.bind<Scheduler*, &stop>(sch.get());
+			c.action.bind<Scheduler*, &stop>(+sch);
 			c.name = "terminator";
 			c.delay = 200000;
 			c.priority = 100;
@@ -66,11 +85,12 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->microsSinceStart();
 			CAGE_TEST(duration > 100000 && duration < 300000);
 		}
 		CAGE_TEST(periodicCount >= 4 && periodicCount <= 8);
 		CAGE_TEST(emptyCount >= 1 && emptyCount <= 15);
+		CAGE_TEST(sch->latestTime() >= 200000);
 	}
 
 	{
@@ -96,7 +116,7 @@ void testScheduler()
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::Once;
-			c.action.bind<Scheduler*, &stop>(sch.get());
+			c.action.bind<Scheduler*, &stop>(+sch);
 			c.name = "terminator";
 			c.delay = 200000;
 			c.priority = 100;
@@ -105,11 +125,12 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->microsSinceStart();
 			CAGE_TEST(duration > 100000 && duration < 300000);
 		}
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
 		CAGE_TEST(cnt2 >= 1 && cnt2 <= 3);
+		CAGE_TEST(sch->latestTime() >= 200000);
 	}
 
 	{
@@ -139,7 +160,7 @@ void testScheduler()
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::Once;
-			c.action.bind<Scheduler*, &stop>(sch.get());
+			c.action.bind<Scheduler*, &stop>(+sch);
 			c.name = "terminator";
 			c.delay = 200000;
 			c.priority = 100;
@@ -148,12 +169,13 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->microsSinceStart();
 			CAGE_TEST(duration > 100000 && duration < 300000);
 		}
-		uint32 sum = cnt1 + cnt2;
+		const uint32 sum = cnt1 + cnt2;
 		CAGE_TEST(sum >= 6 && sum <= 14);
 		CAGE_TEST(cnt2 > cnt1);
+		CAGE_TEST(sch->latestTime() >= 200000);
 	}
 
 	{
@@ -179,7 +201,7 @@ void testScheduler()
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::Once;
-			c.action.bind<Scheduler*, &stop>(sch.get());
+			c.action.bind<Scheduler*, &stop>(+sch);
 			c.name = "terminator";
 			c.delay = 200000;
 			c.priority = 100;
@@ -188,11 +210,12 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->microsSinceStart();
 			CAGE_TEST(duration > 100000 && duration < 300000);
 		}
 		CAGE_TEST(cnt1 >= 2 && cnt1 <= 6);
 		CAGE_TEST(cnt2 >= 2 && cnt2 <= 6);
+		CAGE_TEST(sch->latestTime() >= 200000);
 	}
 
 	{
@@ -227,7 +250,7 @@ void testScheduler()
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::Once;
-			c.action.bind<Scheduler*, &stop>(sch.get());
+			c.action.bind<Scheduler*, &stop>(+sch);
 			c.name = "terminator";
 			c.delay = 200000;
 			c.priority = 100;
@@ -236,12 +259,13 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->microsSinceStart();
 			CAGE_TEST(duration > 100000 && duration < 300000);
 		}
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
 		CAGE_TEST(cnt2 == 1);
 		CAGE_TEST(trig->statsRunCount() == 1);
+		CAGE_TEST(sch->latestTime() >= 200000);
 	}
 
 	{
@@ -260,7 +284,7 @@ void testScheduler()
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::Once;
-			c.action.bind<Scheduler*, &stop>(sch.get());
+			c.action.bind<Scheduler*, &stop>(+sch);
 			c.name = "terminator";
 			c.delay = 200000;
 			c.priority = 100;
@@ -269,16 +293,380 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->microsSinceStart();
 			CAGE_TEST(duration > 100000 && duration < 300000);
 		}
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
 		CAGE_TEST(trig->statsRunCount() == cnt1);
-		CAGE_TEST(trig->statsDurationSum() > 15000 * cnt1);
-		CAGE_TEST(trig->statsDurationSum() < 25000 * cnt1 + 100000);
+		CAGE_TEST(trig->statsDurationSum() > 15000 * (uint64)cnt1);
+		CAGE_TEST(trig->statsDurationSum() < 25000 * (uint64)cnt1 + 100000);
 		CAGE_TEST(trig->statsDurationMax() > 15000);
 		CAGE_TEST(trig->statsDurationMax() < 50000);
 		CAGE_TEST(trig->statsDelayMax() > 0);
 		CAGE_TEST(trig->statsDelayMax() < 50000);
+		CAGE_TEST(sch->latestTime() >= 200000);
+	}
+
+	{
+		CAGE_TESTCASE("basic lockstep scheduler");
+		Holder<Scheduler> sch = newScheduler({});
+		sch->setLockstep(true);
+		uint32 cnt1 = 0;
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::SteadyPeriodic;
+			c.action.bind<uint32 *, &inc>(&cnt1);
+			c.name = "steady";
+			c.period = 30000;
+			sch->newSchedule(c);
+		}
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::Once;
+			c.action.bind<Scheduler *, &stop>(+sch);
+			c.name = "terminator";
+			c.delay = 200000;
+			c.priority = 100;
+			sch->newSchedule(c);
+		}
+		{
+			Holder<Timer> tmr = newTimer();
+			sch->run();
+			const uint64 duration = tmr->microsSinceStart();
+			CAGE_TEST(duration < 20000);
+		}
+		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
+		CAGE_TEST(sch->latestTime() >= 200000);
+	}
+
+	{
+		CAGE_TESTCASE("two schedules lockstep scheduler");
+		Holder<Scheduler> sch = newScheduler({});
+		sch->setLockstep(true);
+		uint32 cnt1 = 0, cnt2 = 0;
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::SteadyPeriodic;
+			c.action.bind<uint32 *, &inc>(&cnt1);
+			c.name = "longer";
+			c.period = 50000;
+			sch->newSchedule(c);
+		}
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::SteadyPeriodic;
+			c.action.bind<uint32 *, &inc>(&cnt2);
+			c.name = "shorter";
+			c.period = 30000;
+			sch->newSchedule(c);
+		}
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::Once;
+			c.action.bind<Scheduler *, &stop>(+sch);
+			c.name = "terminator";
+			c.delay = 200000;
+			c.priority = 100;
+			sch->newSchedule(c);
+		}
+		{
+			Holder<Timer> tmr = newTimer();
+			sch->run();
+			const uint64 duration = tmr->microsSinceStart();
+			CAGE_TEST(duration < 20000);
+		}
+		CAGE_TEST(cnt1 >= 2 && cnt1 <= 6);
+		CAGE_TEST(cnt2 >= 4 && cnt2 <= 8);
+		CAGE_TEST(sch->latestTime() >= 200000);
+	}
+
+	{
+		CAGE_TESTCASE("sleeping schedule lockstep scheduler");
+		Holder<Scheduler> sch = newScheduler({});
+		sch->setLockstep(true);
+		uint32 cnt1 = 0, cnt2 = 0;
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::SteadyPeriodic;
+			c.action.bind<uint32 *, &inc>(&cnt1);
+			c.name = "quick";
+			c.period = 30000;
+			sch->newSchedule(c);
+		}
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::SteadyPeriodic;
+			c.action.bind<uint32 *, &incRandomSleep>(&cnt2);
+			c.name = "sleepy";
+			c.period = 30000;
+			sch->newSchedule(c);
+		}
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::Once;
+			c.action.bind<Scheduler *, &stop>(+sch);
+			c.name = "terminator";
+			c.delay = 200000;
+			c.priority = 100;
+			sch->newSchedule(c);
+		}
+		{
+			Holder<Timer> tmr = newTimer();
+			sch->run();
+			const uint64 duration = tmr->microsSinceStart();
+			CAGE_TEST(duration > 4 * 30000 && duration < 8 * 30000);
+		}
+		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
+		CAGE_TEST(cnt2 >= 4 && cnt2 <= 8);
+		CAGE_TEST(sch->latestTime() >= 200000);
+	}
+
+	{
+		CAGE_TESTCASE("slower schedule lockstep scheduler");
+		Holder<Scheduler> sch = newScheduler({});
+		sch->setLockstep(true);
+		uint32 cnt1 = 0;
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::SteadyPeriodic;
+			c.action.bind<uint32 *, &incRandomSleep>(&cnt1);
+			c.name = "sleepy";
+			c.period = 10000;
+			sch->newSchedule(c);
+		}
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::Once;
+			c.action.bind<Scheduler *, &stop>(+sch);
+			c.name = "terminator";
+			c.delay = 200000;
+			c.priority = 100;
+			sch->newSchedule(c);
+		}
+		{
+			Holder<Timer> tmr = newTimer();
+			sch->run();
+			const uint64 duration = tmr->microsSinceStart();
+			CAGE_TEST(duration > 200000 && duration < 800000);
+		}
+		CAGE_TEST(cnt1 >= 15 && cnt1 <= 25);
+		CAGE_TEST(sch->latestTime() >= 200000 && sch->latestTime() <= 250000);
+	}
+
+	{
+		CAGE_TESTCASE("trigger external schedule lockstep scheduler");
+		Holder<Scheduler> sch = newScheduler({});
+		sch->setLockstep(true);
+		Schedule *trig = nullptr;
+		uint32 cnt1 = 0, cnt2 = 0;
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::SteadyPeriodic;
+			c.action.bind<uint32 *, &inc>(&cnt1);
+			c.name = "steady";
+			c.period = 30000;
+			sch->newSchedule(c);
+		}
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::External;
+			c.action.bind<uint32 *, &inc>(&cnt2);
+			c.name = "external";
+			trig = sch->newSchedule(c);
+		}
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::Once;
+			c.action.bind<Schedule *, &trigger>(trig);
+			c.name = "trigger";
+			c.delay = 100000;
+			c.priority = 50;
+			sch->newSchedule(c);
+		}
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::Once;
+			c.action.bind<Scheduler *, &stop>(+sch);
+			c.name = "terminator";
+			c.delay = 200000;
+			c.priority = 100;
+			sch->newSchedule(c);
+		}
+		{
+			Holder<Timer> tmr = newTimer();
+			sch->run();
+			const uint64 duration = tmr->microsSinceStart();
+			CAGE_TEST(duration < 20000);
+		}
+		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
+		CAGE_TEST(cnt2 == 1);
+		CAGE_TEST(trig->statsRunCount() == 1);
+		CAGE_TEST(sch->latestTime() >= 200000);
+	}
+
+	{
+		CAGE_TESTCASE("lockstep scheduler monotonic time");
+		Holder<Scheduler> sch = newScheduler({});
+		lastCheckedTime = 0;
+		sch->setLockstep(true);
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::SteadyPeriodic;
+			c.action.bind<Scheduler *, &monotonicTime>(+sch);
+			c.name = "monotonic";
+			c.period = 30000;
+			sch->newSchedule(c);
+		}
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::Once;
+			c.action.bind<Scheduler *, &stop>(+sch);
+			c.name = "terminator";
+			c.delay = 200000;
+			c.priority = 100;
+			sch->newSchedule(c);
+		}
+		{
+			Holder<Timer> tmr = newTimer();
+			sch->run();
+			const uint64 duration = tmr->microsSinceStart();
+			CAGE_TEST(duration < 10000);
+		}
+		CAGE_TEST(sch->latestTime() >= 200000);
+		CAGE_TEST(lastCheckedTime > 150000 && lastCheckedTime < 250000);
+	}
+
+	{
+		CAGE_TESTCASE("enabling lockstep midway");
+		Holder<Scheduler> sch = newScheduler({});
+		lastCheckedTime = 0;
+		sch->setLockstep(false);
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::SteadyPeriodic;
+			c.action.bind<Scheduler *, &monotonicTime>(+sch);
+			c.name = "monotonic";
+			c.period = 30000;
+			sch->newSchedule(c);
+		}
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::Once;
+			c.action.bind<Scheduler *, &enableLockstep>(+sch);
+			c.name = "enabler";
+			c.delay = 100000;
+			c.priority = 50;
+			sch->newSchedule(c);
+		}
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::Once;
+			c.action.bind<Scheduler *, &stop>(+sch);
+			c.name = "terminator";
+			c.delay = 200000;
+			c.priority = 100;
+			sch->newSchedule(c);
+		}
+		{
+			Holder<Timer> tmr = newTimer();
+			sch->run();
+			const uint64 duration = tmr->microsSinceStart();
+			CAGE_TEST(duration > 50000 && duration < 190000);
+		}
+		CAGE_TEST(sch->latestTime() >= 200000);
+		CAGE_TEST(lastCheckedTime > 150000 && lastCheckedTime < 250000);
+	}
+
+	{
+		CAGE_TESTCASE("disabling lockstep midway");
+		Holder<Scheduler> sch = newScheduler({});
+		lastCheckedTime = 0;
+		sch->setLockstep(true);
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::SteadyPeriodic;
+			c.action.bind<Scheduler *, &monotonicTime>(+sch);
+			c.name = "monotonic";
+			c.period = 30000;
+			sch->newSchedule(c);
+		}
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::Once;
+			c.action.bind<Scheduler *, &disableLockstep>(+sch);
+			c.name = "disabler";
+			c.delay = 100000;
+			c.priority = 50;
+			sch->newSchedule(c);
+		}
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::Once;
+			c.action.bind<Scheduler *, &stop>(+sch);
+			c.name = "terminator";
+			c.delay = 200000;
+			c.priority = 100;
+			sch->newSchedule(c);
+		}
+		{
+			Holder<Timer> tmr = newTimer();
+			sch->run();
+			const uint64 duration = tmr->microsSinceStart();
+			CAGE_TEST(duration > 50000 && duration < 190000);
+		}
+		CAGE_TEST(sch->latestTime() >= 200000);
+		CAGE_TEST(lastCheckedTime > 150000 && lastCheckedTime < 250000);
+	}
+
+	{
+		CAGE_TESTCASE("repeatedly switching lockstep");
+		Holder<Scheduler> sch = newScheduler({});
+		lastCheckedTime = 0;
+		sch->setLockstep(false);
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::SteadyPeriodic;
+			c.action.bind<Scheduler *, &monotonicTime>(+sch);
+			c.name = "monotonic";
+			c.period = 5000;
+			sch->newSchedule(c);
+		}
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::SteadyPeriodic;
+			c.action.bind<Scheduler *, &enableLockstep>(+sch);
+			c.name = "enabler";
+			c.delay = 0;
+			c.period = 30000;
+			c.priority = 50;
+			sch->newSchedule(c);
+		}
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::SteadyPeriodic;
+			c.action.bind<Scheduler *, &disableLockstep>(+sch);
+			c.name = "disabler";
+			c.delay = 30000;
+			c.period = 30000;
+			c.priority = 50;
+			sch->newSchedule(c);
+		}
+		{
+			ScheduleCreateConfig c;
+			c.type = ScheduleTypeEnum::Once;
+			c.action.bind<Scheduler *, &stop>(+sch);
+			c.name = "terminator";
+			c.delay = 200000;
+			c.priority = 100;
+			sch->newSchedule(c);
+		}
+		{
+			Holder<Timer> tmr = newTimer();
+			sch->run();
+			const uint64 duration = tmr->microsSinceStart();
+			CAGE_TEST(duration > 50000 && duration < 300000);
+		}
+		CAGE_TEST(sch->latestTime() >= 200000);
+		CAGE_TEST(lastCheckedTime > 150000 && lastCheckedTime < 250000);
 	}
 }
