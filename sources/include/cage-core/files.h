@@ -95,7 +95,7 @@ namespace cage
 	CAGE_CORE_API string pathToRel(const string &path, const string &ref = ""); // may return absolute path if it cannot be converted
 	CAGE_CORE_API string pathToAbs(const string &path);
 	CAGE_CORE_API string pathJoin(const string &a, const string &b);
-	CAGE_CORE_API string pathJoinNoCheck(const string &a, const string &b); // join paths with slash where needed without validating the arguments
+	CAGE_CORE_API string pathJoinUnchecked(const string &a, const string &b); // joins paths with slash where needed, without validating the arguments
 	CAGE_CORE_API string pathSimplify(const string &path);
 	CAGE_CORE_API string pathReplaceInvalidCharacters(const string &path, const string &replacement = "_", bool allowDirectories = false);
 

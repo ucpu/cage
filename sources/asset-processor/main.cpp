@@ -123,7 +123,15 @@ namespace
 
 string convertAssetPath(const string &input, const string &relativeTo, bool markAsReferenced)
 {
-	string p = convertGenericPath(input, relativeTo);
+	string detail;
+	string p = input;
+	const uint32 sep = min(find(p, '?'), find(p, ';'));
+	if (sep != 0)
+	{
+		detail = subString(p, sep, m);
+		p = subString(p, 0, sep);
+	}
+	p = convertGenericPath(p, relativeTo) + detail;
 	if (markAsReferenced)
 		writeLine(string("ref=") + p);
 	return p;

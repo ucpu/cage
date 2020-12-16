@@ -51,9 +51,8 @@ namespace
 		string n = ini->getString("textures", type);
 		if (n.empty())
 			return;
-		n = pathJoin(pathBase, n);
-		dsm.textureNames[usage] = HashString(n.c_str());
-		writeLine(string("ref = ") + n);
+		n = convertAssetPath(n, pathBase);
+		dsm.textureNames[usage] = HashString(n);
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "texture '" + n + "' (" + dsm.textureNames[usage] + ") of type " + type + ", usage " + usage);
 	}
 
@@ -67,12 +66,11 @@ namespace
 			CAGE_LOG(SeverityEnum::Warning, logComponentName, stringizer() + "material has multiple (" + texCount + ") textures of type " + (uint32)tt + ", usage " + usage);
 		aiString texAsName;
 		m->GetTexture(tt, 0, &texAsName, nullptr, nullptr, nullptr, nullptr, nullptr);
-		cage::string tn = texAsName.C_Str();
-		if (isPattern(tn, "//", "", ""))
-			tn = string() + "./" + subString(tn, 2, cage::m);
-		cage::string n = pathJoin(pathExtractDirectory(inputName), tn);
-		dsm.textureNames[usage] = HashString(n.c_str());
-		writeLine(string("ref = ") + n);
+		string n = texAsName.C_Str();
+		if (isPattern(n, "//", "", ""))
+			n = string() + "./" + subString(n, 2, cage::m);
+		n = convertAssetPath(n);
+		dsm.textureNames[usage] = HashString(n);
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "texture '" + n + "' (" + dsm.textureNames[usage] + ") of type " + (uint32)tt + ", usage " + usage);
 		return true;
 	}
@@ -98,7 +96,7 @@ namespace
 		}
 	}
 
-	void loadMaterialCage(MeshHeader &dsm, MeshHeader::MaterialData &mat, string path)
+	void loadMaterialCage(MeshHeader &dsm, MeshHeader::MaterialData &mat, const string &path)
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "using cage (.cpm) material");
 
@@ -131,7 +129,7 @@ namespace
 			ini->getFloat("mult", "mask", 1)
 		);
 
-		string pathBase = pathExtractDirectory(path);
+		const string pathBase = pathExtractDirectory(path);
 		loadTextureCage(pathBase, dsm, ini.get(), "albedo", CAGE_SHADER_TEXTURE_ALBEDO);
 		loadTextureCage(pathBase, dsm, ini.get(), "special", CAGE_SHADER_TEXTURE_SPECIAL);
 		loadTextureCage(pathBase, dsm, ini.get(), "normal", CAGE_SHADER_TEXTURE_NORMAL);

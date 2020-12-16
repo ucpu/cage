@@ -84,7 +84,7 @@ namespace cage
 			}
 			CAGE_ASSERT(s.empty());
 			for (const string &p : parts)
-				s = pathJoinNoCheck(s, p);
+				s = pathJoinUnchecked(s, p);
 			if (absolute)
 				s = string() + "/" + s;
 			return true;
@@ -132,7 +132,7 @@ namespace cage
 					directory = "/";
 				if (s == "..")
 				{
-					directory = pathJoinNoCheck(directory, s);
+					directory = pathJoinUnchecked(directory, s);
 					return true;
 				}
 			}
@@ -202,7 +202,7 @@ namespace cage
 			if (d.empty())
 				d = pathExtractDrive(pathWorkingDir());
 #endif // CAGE_SYSTEM_WINDOWS
-			return joinDrive(d, pathJoinNoCheck(p, f + e));
+			return joinDrive(d, pathJoinUnchecked(p, f + e));
 		}
 
 		if (!d.empty())
@@ -230,11 +230,11 @@ namespace cage
 			CAGE_LOG_THROW(stringizer() + "second path: '" + b + "'");
 			CAGE_THROW_ERROR(Exception, "cannot join with absolute path");
 		}
-		bp = pathJoinNoCheck(bp, bf + be);
+		bp = pathJoinUnchecked(bp, bf + be);
 		string ad, ap, af, ae;
 		pathDecompose(a, ad, ap, af, ae);
-		ap = pathJoinNoCheck(ap, af + ae);
-		string r = pathJoinNoCheck(ap, bp);
+		ap = pathJoinUnchecked(ap, af + ae);
+		string r = pathJoinUnchecked(ap, bp);
 		if (!simplifyImplNoThrow(r))
 		{
 			CAGE_LOG_THROW(stringizer() + "first path: '" + a + "'");
@@ -246,7 +246,7 @@ namespace cage
 		return joinDrive(ad, r);
 	}
 
-	string pathJoinNoCheck(const string &a, const string &b)
+	string pathJoinUnchecked(const string &a, const string &b)
 	{
 		if (a.empty())
 			return b;
@@ -261,7 +261,7 @@ namespace cage
 	{
 		string d, p, f, e;
 		pathDecompose(path, d, p, f, e);
-		return joinDrive(d, pathJoinNoCheck(p, f + e));
+		return joinDrive(d, pathJoinUnchecked(p, f + e));
 	}
 
 	string pathReplaceInvalidCharacters(const string &path, const string &replacement, bool allowDirectories)
