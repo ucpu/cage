@@ -48,22 +48,30 @@ namespace cage
 
 	struct CAGE_CORE_API UdpStatistics
 	{
-		uint64 roundTripDuration;
-		uint64 bytesReceivedTotal, bytesSentTotal, bytesDeliveredTotal;
-		uint64 bytesReceivedLately, bytesSentLately, bytesDeliveredLately;
-		uint32 packetsReceivedTotal, packetsSentTotal, packetsDeliveredTotal;
-		uint32 packetsReceivedLately, packetsSentLately, packetsDeliveredLately;
+		uint64 timestamp = 0;
+		uint64 roundTripDuration = 0;
+		uint64 bytesReceivedTotal = 0, bytesSentTotal = 0, bytesDeliveredTotal = 0;
+		uint64 bytesReceivedLately = 0, bytesSentLately = 0, bytesDeliveredLately = 0;
+		uint32 packetsReceivedTotal = 0, packetsSentTotal = 0, packetsDeliveredTotal = 0;
+		uint32 packetsReceivedLately = 0, packetsSentLately = 0, packetsDeliveredLately = 0;
 
-		UdpStatistics();
+		// bytes per second
+		uint64 bpsReceived() const;
+		uint64 bpsSent() const;
+		uint64 bpsDelivered() const;
 
-		// example: bytesPerSecondDeliveredAverage = 1000000 * bytesDeliveredLately / roundTripDuration;
+		// packets per second
+		uint64 ppsReceived() const;
+		uint64 ppsSent() const;
+		uint64 ppsDelivered() const;
 	};
 
 	// low latency, connection-oriented, sequenced and optionally reliable datagram protocol on top of udp
+	// messages are sequenced within each channel only; reliable and unreliable messages are not sequenced with each other
 	class CAGE_CORE_API UdpConnection : private Immovable
 	{
 	public:
-		// returns size of the first message queued for reading, if any, and zero otherwise
+		// size of the first message queued for reading, if any, and zero otherwise
 		uintPtr available();
 
 		// reading throws an exception when nothing is available or the buffer is too small
@@ -80,6 +88,13 @@ namespace cage
 		void update();
 
 		const UdpStatistics &statistics() const;
+
+		// estimated transmission bandwidth in bytes per second
+		// (it does not increase if you do not write enough data)
+		uint64 bandwidth() const;
+
+		// suggested capacity for writing, in bytes, before calling update, assuming the update is called at regular rate
+		sint64 capacity() const;
 	};
 
 	// non-zero timeout will block the caller for up to the specified time to ensure that the connection is established and throw an exception otherwise
@@ -119,8 +134,9 @@ namespace cage
 	class CAGE_CORE_API DiscoveryServer : private Immovable
 	{
 	public:
-		void update();
 		string message;
+
+		void update();
 	};
 
 	CAGE_CORE_API Holder<DiscoveryServer> newDiscoveryServer(uint16 listenPort, uint16 gamePort, uint32 gameId);

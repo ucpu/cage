@@ -626,8 +626,8 @@ namespace cage
 #define GCHL_GENERATE(TYPE) \
 			StringizerBase<N> &operator + (TYPE other) \
 			{ \
-				StringBase<20> tmp; \
-				tmp.rawLength() = privat::toString(tmp.rawData(), 20, other); \
+				StringBase<30> tmp; \
+				tmp.rawLength() = privat::toString(tmp.rawData(), 30, other); \
 				return *this + tmp; \
 			}
 			GCHL_GENERATE(sint8);

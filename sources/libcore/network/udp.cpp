@@ -8,9 +8,9 @@
 #include <array>
 #include <vector>
 #include <map>
-#include <list>
 #include <memory>
 #include <algorithm>
+#include <plf_list.h>
 
 namespace cage
 {
@@ -441,8 +441,8 @@ namespace cage
 					sint8 priority = 0;
 				};
 
-				std::list<std::shared_ptr<ReliableMsg>> relMsgs;
-				std::list<Command> cmds;
+				plf::list<std::shared_ptr<ReliableMsg>> relMsgs;
+				plf::list<Command> cmds;
 				std::map<uint16, std::vector<MsgAck>> ackMap; // mapping packet seqn to message parts
 				std::array<uint16, 256> seqnPerChannel = {}; // next message seqn to be used
 				FlatSet<uint16> seqnToAck; // packets seqn to be acked
@@ -582,10 +582,10 @@ namespace cage
 						priority = 4;
 						break;
 					}
-					if (priority >= 0)
-						generateCommands(msg, priority);
 					if (msg && msg->step++ >= 300)
 						CAGE_THROW_ERROR(Disconnected, "too many failed attempts at sending a reliable message");
+					if (priority >= 0)
+						generateCommands(msg, priority);
 				}
 			}
 
@@ -681,7 +681,7 @@ namespace cage
 					sending.cmds.push_back(cmd);
 				}
 
-				if (getApplicationTime() > statsLastTimestamp + 1000000)
+				if (getApplicationTime() > stats.timestamp + 100 * 1000)
 				{
 					Sending::CommandUnion::Stats p;
 					handleStats(p);
@@ -750,7 +750,7 @@ namespace cage
 
 				std::array<std::map<uint16, Msg>, 256> staging = {};
 				std::array<uint16, 256> seqnPerChannel = {}; // minimum expected message seqn
-				std::list<Msg> messages;
+				plf::list<Msg> messages;
 				FlatSet<PackAck> ackPacks;
 				uint16 packetSeqn = 0; // minimum expected packet seqn
 			} receiving;
@@ -853,10 +853,10 @@ namespace cage
 			void handleStats(Sending::CommandUnion::Stats &p)
 			{
 				UdpStatistics &s = stats;
-				statsLastTimestamp = getApplicationTime();
+				s.timestamp = getApplicationTime();
 				if (p.step > 0)
 				{
-					s.roundTripDuration = statsLastTimestamp - p.b.time;
+					s.roundTripDuration = s.timestamp - p.b.time;
 					s.bytesReceivedLately = s.bytesReceivedTotal - p.b.receivedBytes;
 					s.bytesSentLately = s.bytesSentTotal - p.b.sentBytes;
 					s.bytesDeliveredLately = p.a.receivedBytes - s.bytesDeliveredTotal;
@@ -871,12 +871,12 @@ namespace cage
 				p.a.receivedPackets = s.packetsReceivedTotal;
 				p.a.sentBytes = s.bytesSentTotal;
 				p.a.sentPackets = s.packetsSentTotal;
-				p.a.time = statsLastTimestamp;
+				p.a.time = s.timestamp;
 				p.step++;
 				Sending::Command cmd;
 				cmd.data.stats = p;
 				cmd.type = CmdTypeEnum::statsDiscovery;
-				cmd.priority = 1;
+				cmd.priority = 10;
 				sending.cmds.push_back(templates::move(cmd));
 			}
 
@@ -1041,14 +1041,60 @@ namespace cage
 				processReceived();
 			}
 
+			// WRITE BANDWIDTH
+
+			struct WriteBandwidth
+			{
+				uint64 updateTimestamp = 0;
+				uint64 statsTimestamp = 0;
+				uint64 bandwidth = 50 * 1024; // start at 50 KBps
+				sint64 capacity = 10 * 1024;
+				sint32 quality = 0;
+			} writeBandwidth;
+
+			void serviceWriteBandwidth()
+			{
+				WriteBandwidth &wb = writeBandwidth;
+				const uint64 currentTimestamp = getApplicationTime();
+				const uint64 deltaTime = currentTimestamp - wb.updateTimestamp;
+				wb.updateTimestamp = currentTimestamp;
+
+				// update quality
+				if (stats.timestamp + 10 * deltaTime < currentTimestamp)
+					wb.quality--;
+				else if (stats.timestamp != wb.statsTimestamp && stats.roundTripDuration > 0)
+				{
+					wb.statsTimestamp = stats.timestamp;
+					if (100 * stats.packetsDeliveredLately < 85 * stats.packetsSentLately && stats.packetsSentLately > 5)
+						wb.quality--;
+					else if (100 * stats.bpsDelivered() > 70 * wb.bandwidth)
+						wb.quality++;
+				}
+
+				// update bandwidth
+				if (wb.quality < -2)
+				{
+					wb.bandwidth = max(70 * wb.bandwidth / 100, uint64(10000));
+					wb.quality = 0;
+				}
+				else if (wb.quality > 2)
+				{
+					wb.bandwidth = 110 * wb.bandwidth / 100;
+					wb.quality = 0;
+				}
+
+				// allow the capacity to accumulate over multiple updates
+				// but restrict the capacity in some reasonable range
+				wb.capacity = clamp(wb.capacity + deltaTime * wb.bandwidth / 1000000, uint64(0), 10 * deltaTime * wb.bandwidth / 1000000);
+			}
+
 			// COMMON
 
 			UdpStatistics stats;
 			std::shared_ptr<SockGroup> sockGroup;
 			std::shared_ptr<SockGroup::Receiver> sockReceiver;
-			uint64 statsLastTimestamp = 0;
-			const uint64 startTime;
-			const uint32 connId;
+			const uint64 startTime = m;
+			const uint32 connId = m;
 			bool established = false;
 
 			// API
@@ -1078,6 +1124,7 @@ namespace cage
 				if (buffer.size() == 0)
 					return; // ignore empty messages
 
+				writeBandwidth.capacity -= buffer.size();
 				auto msg = std::make_shared<Sending::ReliableMsg>();
 				msg->data = std::make_shared<MemoryBuffer>(templates::move(buffer));
 				msg->channel = numeric_cast<uint8>(channel + reliable * 128);
@@ -1096,6 +1143,7 @@ namespace cage
 				detail::OverrideBreakpoint brk;
 				serviceReceiving();
 				serviceSending();
+				serviceWriteBandwidth();
 			}
 		};
 
@@ -1167,6 +1215,48 @@ namespace cage
 		};
 	}
 
+	uint64 UdpStatistics::bpsReceived() const
+	{
+		if (roundTripDuration)
+			return 1000000 * bytesReceivedLately / roundTripDuration;
+		return 0;
+	}
+
+	uint64 UdpStatistics::bpsSent() const
+	{
+		if (roundTripDuration)
+			return 1000000 * bytesSentLately / roundTripDuration;
+		return 0;
+	}
+
+	uint64 UdpStatistics::bpsDelivered() const
+	{
+		if (roundTripDuration)
+			return 1000000 * bytesDeliveredLately / roundTripDuration;
+		return 0;
+	}
+
+	uint64 UdpStatistics::ppsReceived() const
+	{
+		if (roundTripDuration)
+			return uint64(1000000) * packetsReceivedLately / roundTripDuration;
+		return 0;
+	}
+
+	uint64 UdpStatistics::ppsSent() const
+	{
+		if (roundTripDuration)
+			return uint64(1000000) * packetsSentLately / roundTripDuration;
+		return 0;
+	}
+
+	uint64 UdpStatistics::ppsDelivered() const
+	{
+		if (roundTripDuration)
+			return uint64(1000000) * packetsDeliveredLately / roundTripDuration;
+		return 0;
+	}
+
 	uintPtr UdpConnection::available()
 	{
 		UdpConnectionImpl *impl = (UdpConnectionImpl*)this;
@@ -1221,6 +1311,18 @@ namespace cage
 		return impl->stats;
 	}
 
+	uint64 UdpConnection::bandwidth() const
+	{
+		const UdpConnectionImpl *impl = (const UdpConnectionImpl *)this;
+		return impl->writeBandwidth.bandwidth;
+	}
+
+	sint64 UdpConnection::capacity() const
+	{
+		const UdpConnectionImpl *impl = (const UdpConnectionImpl *)this;
+		return impl->writeBandwidth.capacity;
+	}
+
 	Holder<UdpConnection> UdpServer::accept()
 	{
 		UdpServerImpl *impl = (UdpServerImpl*)this;
@@ -1235,10 +1337,5 @@ namespace cage
 	Holder<UdpServer> newUdpServer(uint16 port)
 	{
 		return detail::systemArena().createImpl<UdpServer, UdpServerImpl>(port);
-	}
-
-	UdpStatistics::UdpStatistics()
-	{
-		detail::memset(this, 0, sizeof(*this));
 	}
 }

@@ -15,9 +15,9 @@ struct Thr
 	Holder<Thread> thr;
 	Holder<Conn> conn;
 	Runner runner;
-	bool done;
+	bool done = false;
 
-	Thr(Holder<Conn> conn) : conn(templates::move(conn)), done(false)
+	Thr(Holder<Conn> conn) : conn(templates::move(conn))
 	{
 		thr = newThread(Delegate<void()>().bind<Thr, &Thr::entry>(this), "thr");
 	}
@@ -50,17 +50,11 @@ void runServer()
 	Runner runner;
 	while (true)
 	{
-		while (true)
+		while (auto a = server->accept())
 		{
-			auto a = server->accept();
-			if (a)
-			{
-				CAGE_LOG(SeverityEnum::Info, "server", "connection accepted");
-				hadConnection = true;
-				thrs.emplace_back(newConn(templates::move(a)));
-			}
-			else
-				break;
+			CAGE_LOG(SeverityEnum::Info, "server", "connection accepted");
+			hadConnection = true;
+			thrs.emplace_back(newConn(templates::move(a)));
 		}
 		if (hadConnection)
 		{

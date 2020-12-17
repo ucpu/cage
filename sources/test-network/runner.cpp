@@ -6,12 +6,12 @@ using namespace cage;
 
 #include "runner.h"
 
-Runner::Runner() : time(getApplicationTime()), timeStep(1000000 / (randomRange(25, 35)))
+Runner::Runner() : time(getApplicationTime()), timeStep(1000000 / (randomRange(30, 60)))
 {}
 
 void Runner::step()
 {
-	uint64 t = getApplicationTime();
+	const uint64 t = getApplicationTime();
 	sint64 s = time + timeStep - t;
 	if (s >= 0)
 	{
@@ -21,6 +21,6 @@ void Runner::step()
 	else
 	{
 		CAGE_LOG(SeverityEnum::Warning, "runner", "cannot keep up");
-		time = t;
+		time = t + timeStep;
 	}
 }

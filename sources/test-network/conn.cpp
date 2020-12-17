@@ -4,8 +4,9 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 #include <cage-core/random.h>
-#include <cage-core/config.h>
 #include <cage-core/variableSmoothingBuffer.h>
+#include <cage-core/string.h>
+#include <cage-core/config.h>
 
 using namespace cage;
 
@@ -13,47 +14,62 @@ using namespace cage;
 
 namespace
 {
-	ConfigUint32 confMessages("messages");
-
 	class ConnImpl : public Conn
 	{
 	public:
 		Holder<UdpConnection> udp;
-		MemoryBuffer b;
 		const uint64 timeStart;
-		uint64 timeStats;
-		uint64 sendSeqn, recvSeqn, recvCnt, recvBytes;
+		uint64 timeStats = 0;
+		uint64 lastProcessTime = 0;
+		uint64 sendSeqn = 0, recvSeqn = 0, recvCnt = 0, recvBytes = 0;
+		uint64 lastStatsTimestamp = 0;
+		uint64 maxBytesPerSecond = 0;
 		VariableSmoothingBuffer<uint64, 100> smoothRtt;
 		VariableSmoothingBuffer<uint64, 100> smoothThroughput;
 
-		ConnImpl(Holder<UdpConnection> udp) : udp(templates::move(udp)), timeStart(getApplicationTime()), timeStats(timeStart + 1000000), sendSeqn(0), recvSeqn(0), recvCnt(0), recvBytes(0)
-		{}
+		ConnImpl(Holder<UdpConnection> udp) : udp(templates::move(udp)), timeStart(getApplicationTime())
+		{
+			timeStats = timeStart + 500000;
+			lastProcessTime = timeStart;
+			maxBytesPerSecond = configGetUint64("maxBytesPerSecond");
+			CAGE_LOG(SeverityEnum::Info, "config", stringizer() + "limit: " + (maxBytesPerSecond / 1024) + " KB/s");
+		}
 
 		~ConnImpl()
 		{
 			statistics(getApplicationTime());
 		}
 
+		template<class T>
+		static string leftFill(const T &value, uint32 n = 6)
+		{
+			string s = stringizer() + value;
+			s = subString(s, 0, n);
+			s = reverse(fill(reverse(s), n));
+			return s;
+		}
+
 		void statistics(uint64 t)
 		{
-			uint64 throughput1 = numeric_cast<uint64>(1000000.0 * recvBytes / (t - timeStart));
-			uint64 throughput2 = smoothThroughput.smooth();
-			uint64 rtt = smoothRtt.smooth();
-			double lost = 1.0 - (double)recvCnt / (double)recvSeqn;
-			double overhead = 1.0 - (double)recvBytes / (double)udp->statistics().bytesReceivedTotal;
-			CAGE_LOG(SeverityEnum::Info, "conn", stringizer() + "received: " + (recvBytes / 1024) + " KB, messages: " + recvCnt + ", lost: " + lost + ", overhead: " + overhead + ", throughput total: " + (throughput1 / 1024) + " KB/s, smooth: " + (throughput2 / 1024) + " KB/s, rtt: " + (rtt / 1000) + " ms");
+			const uint64 throughput1 = 1000000 * recvBytes / (t - timeStart);
+			const double lost = 1.0 - (double)recvCnt / (double)recvSeqn;
+			const double overhead = 1.0 - (double)recvBytes / (double)udp->statistics().bytesReceivedTotal;
+			CAGE_LOG(SeverityEnum::Info, "conn", stringizer() + "received: " + leftFill(recvBytes / 1024) + " KB, messages: " + leftFill(recvCnt) + ", lost: " + leftFill(lost) + ", overhead: " + leftFill(overhead) + ", rate: " + leftFill(throughput1 / 1024) + " KB/s, send rate: " + leftFill(smoothThroughput.smooth() / 1024) + " KB/s, estimated bandwidth: " + leftFill(udp->bandwidth() / 1024) + " KB/s, rtt: " + leftFill(smoothRtt.smooth() / 1000) + " ms");
 		}
 
 		bool process()
 		{
+			const uint64 currentTime = getApplicationTime();
+			const uint64 deltaTime = currentTime - lastProcessTime;
+			lastProcessTime = currentTime;
+
+			// show statistics
+			if (currentTime > timeStats)
 			{
-				uint64 t = getApplicationTime();
-				if (t > timeStats)
-				{
-					statistics(t);
-					timeStats = t + 1000000;
-				}
+				statistics(currentTime);
+				timeStats = currentTime + 1000000;
 			}
+
 			try
 			{
 				udp->update();
@@ -71,27 +87,32 @@ namespace
 					}
 				}
 
-				uint32 cnt = confMessages;
-				for (uint32 j = 0; j < cnt; j++)
 				{ // send
-					b.resize(0);
-					Serializer s(b);
-					s << ++sendSeqn;
-					uint32 bytes = randomRange(10, 2000);
-					if (randomChance() < 0.01)
-						bytes *= randomRange(10, 20);
-					bytes /= sizeof(decltype(detail::getApplicationRandomGenerator().next()));
-					for (uint32 i = 0; i < bytes; i++)
-						s << detail::getApplicationRandomGenerator().next();
-					udp->write(b, randomRange(0, 20), randomChance() < 0.1);
+					uint64 total = 0;
+					while (total < deltaTime * maxBytesPerSecond / 1000000)
+					{
+						uint32 bytes = randomRange(10, 2000);
+						if (udp->capacity() < bytes)
+							break;
+						total += bytes;
+						if (randomChance() < 0.001) // spontaneously send much more data to simulate unexpected events
+							bytes *= randomRange(10, 20);
+						MemoryBuffer b;
+						Serializer s(b);
+						s << ++sendSeqn;
+						while (b.size() < bytes)
+							s << detail::getApplicationRandomGenerator().next();
+						udp->write(b, randomRange(0, 20), randomChance() < 0.1);
+					}
 				}
 
-				{ // statistics
+				{ // update statistics
 					const auto &s = udp->statistics();
-					if (s.roundTripDuration)
+					if (s.roundTripDuration > 0 && s.timestamp != lastStatsTimestamp)
 					{
+						lastStatsTimestamp = s.timestamp;
 						smoothRtt.add(s.roundTripDuration);
-						smoothThroughput.add(1000000 * s.bytesDeliveredLately / s.roundTripDuration);
+						smoothThroughput.add(s.bpsDelivered());
 					}
 				}
 
