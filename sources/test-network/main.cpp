@@ -52,9 +52,9 @@ namespace
 	void runManager()
 	{
 		Run runnerClient1("1", "cage-test-network -n network-test-1 -c");
-		Run runnerClient2("2", "cage-test-network -n network-test-2 -c -x 0.05");
 		Run runnerServerS("S", "cage-test-network -n network-test-S -s");
-		Run runnerClient3("3", "cage-test-network -n network-test-3 -c");
+		Run runnerClient2("2", "cage-test-network -n network-test-2 -c");
+		Run runnerClient3("L", "cage-test-network -n network-test-L -c -x 0.02");
 	}
 
 	void initializeSecondaryLog(const string &path)
@@ -70,7 +70,7 @@ namespace
 #ifdef CAGE_DEBUG
 	constexpr uint64 MaxBytesPerSecond = 256 * 1024;
 #else
-	constexpr uint64 MaxBytesPerSecond = 16 * 1024 * 1024;
+	constexpr uint64 MaxBytesPerSecond = 10 * 1024 * 1024;
 #endif // CAGE_DEBUG
 }
 

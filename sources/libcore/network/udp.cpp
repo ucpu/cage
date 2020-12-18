@@ -681,7 +681,8 @@ namespace cage
 					sending.cmds.push_back(cmd);
 				}
 
-				if (getApplicationTime() > stats.timestamp + 100 * 1000)
+				// send new stats
+				if (currentServiceTime > lastStatsSendTime + 100000)
 				{
 					Sending::CommandUnion::Stats p;
 					handleStats(p);
@@ -853,10 +854,12 @@ namespace cage
 			void handleStats(Sending::CommandUnion::Stats &p)
 			{
 				UdpStatistics &s = stats;
-				s.timestamp = getApplicationTime();
-				if (p.step > 0)
+				if (p.step > 1)
 				{
-					s.roundTripDuration = s.timestamp - p.b.time;
+					if (p.b.time <= s.timestamp)
+						return; // discard obsolete stats packet
+					s.timestamp = p.b.time;
+					s.roundTripDuration = currentServiceTime - p.b.time;
 					s.bytesReceivedLately = s.bytesReceivedTotal - p.b.receivedBytes;
 					s.bytesSentLately = s.bytesSentTotal - p.b.sentBytes;
 					s.bytesDeliveredLately = p.a.receivedBytes - s.bytesDeliveredTotal;
@@ -871,13 +874,14 @@ namespace cage
 				p.a.receivedPackets = s.packetsReceivedTotal;
 				p.a.sentBytes = s.bytesSentTotal;
 				p.a.sentPackets = s.packetsSentTotal;
-				p.a.time = s.timestamp;
+				p.a.time = currentServiceTime;
 				p.step++;
 				Sending::Command cmd;
 				cmd.data.stats = p;
 				cmd.type = CmdTypeEnum::statsDiscovery;
-				cmd.priority = 10;
+				cmd.priority = 3;
 				sending.cmds.push_back(templates::move(cmd));
+				lastStatsSendTime = currentServiceTime;
 			}
 
 			void handleReceivedCommand(Deserializer &d)
@@ -1045,29 +1049,27 @@ namespace cage
 
 			struct WriteBandwidth
 			{
-				uint64 updateTimestamp = 0;
 				uint64 statsTimestamp = 0;
 				uint64 bandwidth = 50 * 1024; // start at 50 KBps
-				sint64 capacity = 10 * 1024;
+				sint64 capacity = 5 * 1024;
 				sint32 quality = 0;
 			} writeBandwidth;
 
 			void serviceWriteBandwidth()
 			{
 				WriteBandwidth &wb = writeBandwidth;
-				const uint64 currentTimestamp = getApplicationTime();
-				const uint64 deltaTime = currentTimestamp - wb.updateTimestamp;
-				wb.updateTimestamp = currentTimestamp;
 
 				// update quality
-				if (stats.timestamp + 10 * deltaTime < currentTimestamp)
+				if (currentServiceTime > stats.timestamp + 100 * deltaTime)
+				{
 					wb.quality--;
+				}
 				else if (stats.timestamp != wb.statsTimestamp && stats.roundTripDuration > 0)
 				{
 					wb.statsTimestamp = stats.timestamp;
-					if (100 * stats.packetsDeliveredLately < 85 * stats.packetsSentLately && stats.packetsSentLately > 5)
+					if (100 * stats.packetsDeliveredLately < 95 * stats.packetsSentLately && stats.packetsSentLately > 5)
 						wb.quality--;
-					else if (100 * stats.bpsDelivered() > 70 * wb.bandwidth)
+					else if (100 * stats.bpsDelivered() > 80 * wb.bandwidth)
 						wb.quality++;
 				}
 
@@ -1079,7 +1081,7 @@ namespace cage
 				}
 				else if (wb.quality > 2)
 				{
-					wb.bandwidth = 110 * wb.bandwidth / 100;
+					wb.bandwidth = 115 * wb.bandwidth / 100;
 					wb.quality = 0;
 				}
 
@@ -1095,6 +1097,9 @@ namespace cage
 			std::shared_ptr<SockGroup::Receiver> sockReceiver;
 			const uint64 startTime = m;
 			const uint32 connId = m;
+			uint64 lastStatsSendTime = 0;
+			uint64 currentServiceTime = 0; // time at which this service has started
+			uint64 deltaTime = 0; // time elapsed since last service
 			bool established = false;
 
 			// API
@@ -1140,6 +1145,9 @@ namespace cage
 
 			void service()
 			{
+				const uint64 newTime = getApplicationTime();
+				deltaTime = newTime - currentServiceTime;
+				currentServiceTime = newTime;
 				detail::OverrideBreakpoint brk;
 				serviceReceiving();
 				serviceSending();

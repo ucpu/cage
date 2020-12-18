@@ -6,7 +6,7 @@ using namespace cage;
 
 #include "runner.h"
 
-Runner::Runner() : time(getApplicationTime()), timeStep(1000000 / (randomRange(30, 60)))
+Runner::Runner() : time(getApplicationTime()), timeStep(1000000 / (randomRange(40, 50)))
 {}
 
 void Runner::step()

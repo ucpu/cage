@@ -24,8 +24,8 @@ namespace
 		uint64 sendSeqn = 0, recvSeqn = 0, recvCnt = 0, recvBytes = 0;
 		uint64 lastStatsTimestamp = 0;
 		uint64 maxBytesPerSecond = 0;
-		VariableSmoothingBuffer<uint64, 100> smoothRtt;
-		VariableSmoothingBuffer<uint64, 100> smoothThroughput;
+		VariableSmoothingBuffer<uint64, 20> smoothRtt;
+		VariableSmoothingBuffer<uint64, 20> smoothThroughput;
 
 		ConnImpl(Holder<UdpConnection> udp) : udp(templates::move(udp)), timeStart(getApplicationTime())
 		{
