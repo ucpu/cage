@@ -3,6 +3,7 @@
 #include <cage-core/math.h>
 
 #include <vector>
+#include <list>
 #include <utility>
 
 namespace
@@ -267,6 +268,34 @@ namespace
 			}
 		}
 	}
+
+	void testStd()
+	{
+		CAGE_TESTCASE("std allocator");
+
+		struct alignas(32) Elem
+		{
+			char data[64];
+		};
+
+		{
+			CAGE_TESTCASE("vector");
+			std::vector<Elem, MemoryAllocatorStd<Elem>> vec;
+			for (uint32 i = 0; i < 100; i++)
+				vec.emplace_back();
+			for (const auto &it : vec)
+				CAGE_TEST(((uintPtr)&it % alignof(Elem) == 0));
+		}
+
+		{
+			CAGE_TESTCASE("list");
+			std::list<Elem, MemoryAllocatorStd<Elem>> vec;
+			for (uint32 i = 0; i < 100; i++)
+				vec.emplace_back();
+			for (const auto &it : vec)
+				CAGE_TEST(((uintPtr)&it % alignof(Elem) == 0));
+		}
+	}
 }
 
 void testMemoryAllocators()
@@ -275,4 +304,5 @@ void testMemoryAllocators()
 
 	testLinear();
 	testStream();
+	testStd();
 }

@@ -131,6 +131,26 @@ void testEntities()
 	}
 
 	{
+		CAGE_TESTCASE("components with alignment");
+
+		Holder<EntityManager> manager = newEntityManager(EntityManagerCreateConfig());
+
+		struct alignas(32) S
+		{
+			vec3 data;
+		};
+
+		EntityComponent *c = manager->defineComponent(S(), true);
+
+		for (uint32 i = 0; i < 10000; i++)
+		{
+			Entity *e = manager->createAnonymous();
+			S &s = e->value<S>(c);
+			CAGE_TEST(((uintPtr)&s % alignof(S)) == 0);
+		}
+	}
+
+	{
 		CAGE_TESTCASE("randomized test");
 
 #ifdef CAGE_DEBUG

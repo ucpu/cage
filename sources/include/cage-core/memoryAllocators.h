@@ -28,6 +28,40 @@ namespace cage
 	};
 
 	CAGE_CORE_API Holder<MemoryArena> newMemoryAllocatorStream(const MemoryAllocatorStreamCreateConfig &config);
+
+	// allocator facade for use in std containers
+
+	template<class T>
+	struct MemoryAllocatorStd
+	{
+		using value_type = T;
+
+		MemoryAllocatorStd() : a(detail::systemArena())
+		{}
+
+		explicit MemoryAllocatorStd(const MemoryArena &arena) : a(arena)
+		{}
+
+		template<class TT>
+		explicit MemoryAllocatorStd(const MemoryAllocatorStd<TT> &other) : a(other.a)
+		{}
+
+		T *allocate(uintPtr cnt)
+		{
+			return (T *)a.allocate(cnt * sizeof(T), alignof(T));
+		}
+
+		void deallocate(T *ptr, uintPtr)
+		{
+			a.deallocate(ptr);
+		}
+
+	private:
+		MemoryArena a;
+
+		template<class TT>
+		friend struct MemoryAllocatorStd;
+	};
 }
 
 #endif // guard_memoryAllocators_h_1swf4glmnb9s
