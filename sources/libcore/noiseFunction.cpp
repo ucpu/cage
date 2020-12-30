@@ -1,19 +1,50 @@
 #include <cage-core/math.h>
 #include <cage-core/noiseFunction.h>
 
-#include <fastnoise/FastNoise.h>
+#include <FastNoiseLite.h>
+
+#include <vector>
+
+using FastNoise = FastNoiseLite;
 
 namespace cage
 {
 	namespace
 	{
+		FastNoise::NoiseType convert(NoiseTypeEnum type)
+		{
+			switch (type)
+			{
+			case NoiseTypeEnum::Simplex: return FastNoise::NoiseType_OpenSimplex2;
+			case NoiseTypeEnum::SimplexReduced: return FastNoise::NoiseType_OpenSimplex2S;
+			case NoiseTypeEnum::Cellular: return FastNoise::NoiseType_Cellular;
+			case NoiseTypeEnum::Perlin: return FastNoise::NoiseType_Perlin;
+			case NoiseTypeEnum::ValueCubic: return FastNoise::NoiseType_ValueCubic;
+			case NoiseTypeEnum::Value: return FastNoise::NoiseType_Value;
+			default: CAGE_THROW_CRITICAL(Exception, "invalid noise type enum");
+			}
+		}
+
+		FastNoise::FractalType convert(NoiseFractalTypeEnum type)
+		{
+			switch (type)
+			{
+			case NoiseFractalTypeEnum::None: return FastNoise::FractalType_None;
+			case NoiseFractalTypeEnum::Fbm: return FastNoise::FractalType_FBm;
+			case NoiseFractalTypeEnum::Ridged: return FastNoise::FractalType_Ridged;
+			case NoiseFractalTypeEnum::PingPong: return FastNoise::FractalType_PingPong;
+			default: CAGE_THROW_CRITICAL(Exception, "invalid noise fractal type enum");
+			}
+		}
+
 		FastNoise::CellularDistanceFunction convert(NoiseDistanceEnum distance)
 		{
 			switch (distance)
 			{
-			case NoiseDistanceEnum::Euclidean: return FastNoise::Euclidean;
-			case NoiseDistanceEnum::Manhattan: return FastNoise::Manhattan;
-			case NoiseDistanceEnum::Natural: return FastNoise::Natural;
+			case NoiseDistanceEnum::Euclidean: return FastNoise::CellularDistanceFunction_Euclidean;
+			case NoiseDistanceEnum::EuclideanSq: return FastNoise::CellularDistanceFunction_EuclideanSq;
+			case NoiseDistanceEnum::Manhattan: return FastNoise::CellularDistanceFunction_Manhattan;
+			case NoiseDistanceEnum::Hybrid: return FastNoise::CellularDistanceFunction_Hybrid;
 			default: CAGE_THROW_CRITICAL(Exception, "invalid noise distance enum");
 			}
 		}
@@ -22,61 +53,14 @@ namespace cage
 		{
 			switch (operation)
 			{
-			case NoiseOperationEnum::Add: return FastNoise::Distance2Add;
-			case NoiseOperationEnum::Subtract: return FastNoise::Distance2Sub;
-			case NoiseOperationEnum::Multiply: return FastNoise::Distance2Mul;
-			case NoiseOperationEnum::Divide: return FastNoise::Distance2Div;
+			case NoiseOperationEnum::Cell: return FastNoise::CellularReturnType_CellValue;
+			case NoiseOperationEnum::Distance: return FastNoise::CellularReturnType_Distance;
+			case NoiseOperationEnum::Distance2: return FastNoise::CellularReturnType_Distance2;
+			case NoiseOperationEnum::Add: return FastNoise::CellularReturnType_Distance2Add;
+			case NoiseOperationEnum::Subtract: return FastNoise::CellularReturnType_Distance2Sub;
+			case NoiseOperationEnum::Multiply: return FastNoise::CellularReturnType_Distance2Mul;
+			case NoiseOperationEnum::Divide: return FastNoise::CellularReturnType_Distance2Div;
 			default: CAGE_THROW_CRITICAL(Exception, "invalid noise operation enum");
-			}
-		}
-
-		FastNoise::FractalType convert(NoiseFractalTypeEnum type)
-		{
-			switch (type)
-			{
-			case NoiseFractalTypeEnum::Fbm: return FastNoise::FBM;
-			case NoiseFractalTypeEnum::Billow: return FastNoise::Billow;
-			case NoiseFractalTypeEnum::RigidMulti: return FastNoise::RigidMulti;
-			default: CAGE_THROW_CRITICAL(Exception, "invalid noise fractal type enum");
-			}
-		}
-
-		FastNoise::Interp convert(NoiseInterpolationEnum interpolation)
-		{
-			switch (interpolation)
-			{
-			case NoiseInterpolationEnum::Quintic: return FastNoise::Quintic;
-			case NoiseInterpolationEnum::Hermite: return FastNoise::Hermite;
-			case NoiseInterpolationEnum::Linear: return FastNoise::Linear;
-			default: CAGE_THROW_CRITICAL(Exception, "invalid noise interpolation enum");
-			}
-		}
-
-		FastNoise::NoiseType convert(NoiseTypeEnum type, uint32 octaves)
-		{
-			if (octaves > 1)
-			{
-				switch (type)
-				{
-				case NoiseTypeEnum::Value: return FastNoise::ValueFractal;
-				case NoiseTypeEnum::Perlin: return FastNoise::PerlinFractal;
-				case NoiseTypeEnum::Simplex: return FastNoise::SimplexFractal;
-				case NoiseTypeEnum::Cubic: return FastNoise::CubicFractal;
-				default: CAGE_THROW_CRITICAL(Exception, "invalid noise type enum (or unsupported number of octaves)");
-				}
-			}
-			else
-			{
-				switch (type)
-				{
-				case NoiseTypeEnum::Value: return FastNoise::Value;
-				case NoiseTypeEnum::Perlin: return FastNoise::Perlin;
-				case NoiseTypeEnum::Simplex: return FastNoise::Simplex;
-				case NoiseTypeEnum::Cubic: return FastNoise::Cubic;
-				case NoiseTypeEnum::Cellular: return FastNoise::Cellular;
-				case NoiseTypeEnum::White: return FastNoise::WhiteNoise;
-				default: CAGE_THROW_CRITICAL(Exception, "invalid noise type enum");
-				}
 			}
 		}
 
@@ -84,63 +68,38 @@ namespace cage
 		{
 		public:
 			FastNoise n;
-			Holder<NoiseFunction> lookupNoise;
 
-			explicit NoiseFunctionImpl(const NoiseFunctionCreateConfig &config, Holder<NoiseFunction> &&lookupNoise) : n(config.seed), lookupNoise(templates::move(lookupNoise))
+			explicit NoiseFunctionImpl(const NoiseFunctionCreateConfig &config) : n(config.seed)
 			{
-				n.SetCellularDistanceFunction(convert(config.distance));
-				switch (config.operation)
-				{
-				case NoiseOperationEnum::None:
-					n.SetCellularReturnType(FastNoise::CellValue);
-					break;
-				case NoiseOperationEnum::Distance:
-					if (config.index0 == 0)
-						n.SetCellularReturnType(FastNoise::Distance);
-					else
-					{
-						n.SetCellularDistance2Indices(0, config.index0);
-						n.SetCellularReturnType(FastNoise::Distance2);
-					}
-					break;
-				case NoiseOperationEnum::NoiseLookup:
-					n.SetCellularReturnType(FastNoise::NoiseLookup);
-					break;
-				default:
-					n.SetCellularDistance2Indices(config.index0, config.index1);
-					n.SetCellularReturnType(convert(config.operation));
-					break;
-				}
-				n.SetFractalGain(config.gain.value);
-				n.SetFractalLacunarity(config.lacunarity.value);
-				n.SetFractalOctaves(config.octaves);
-				n.SetFractalType(convert(config.fractalType));
 				n.SetFrequency(config.frequency.value);
-				n.SetInterp(convert(config.interpolation));
-				n.SetNoiseType(convert(config.type, config.octaves));
-				if (this->lookupNoise)
-					n.SetCellularNoiseLookup(&((NoiseFunctionImpl *)this->lookupNoise.get())->n);
+				n.SetNoiseType(convert(config.type));
+				n.SetFractalType(convert(config.fractalType));
+				n.SetFractalOctaves(config.octaves);
+				n.SetFractalLacunarity(config.lacunarity.value);
+				n.SetFractalGain(config.gain.value);
+				n.SetCellularDistanceFunction(convert(config.distance));
+				n.SetCellularReturnType(convert(config.operation));
 			}
 
-			void evaluate(uint32 count, const real positions[], real results[])
+			void evaluate(uint32 count, const real x[], real results[])
 			{
 				for (uint32 i = 0; i < count; i++)
-					results[i] = n.GetNoise(positions[i].value, 0);
+					results[i] = n.GetNoise(x[i].value, float(0));
 			}
 
-			void evaluate(uint32 count, const vec2 positions[], real results[])
+			void evaluate(uint32 count, const real x[], const real y[], real results[])
 			{
 				for (uint32 i = 0; i < count; i++)
-					results[i] = n.GetNoise(positions[i][0].value, positions[i][1].value);
+					results[i] = n.GetNoise(x[i].value, y[i].value);
 			}
 
-			void evaluate(uint32 count, const vec3 positions[], real results[])
+			void evaluate(uint32 count, const real x[], const real y[], const real z[], real results[])
 			{
 				for (uint32 i = 0; i < count; i++)
-					results[i] = n.GetNoise(positions[i][0].value, positions[i][1].value, positions[i][2].value);
+					results[i] = n.GetNoise(x[i].value, y[i].value, z[i].value);
 			}
 
-			void evaluate(uint32 count, const vec4 positions[], real results[])
+			void evaluate(uint32 count, const real x[], const real y[], const real z[], const real w[], real results[])
 			{
 				CAGE_THROW_CRITICAL(NotImplemented, "4D noise functions are not implemented");
 			}
@@ -159,7 +118,7 @@ namespace cage
 	{
 		NoiseFunctionImpl *impl = (NoiseFunctionImpl*)this;
 		real result;
-		impl->evaluate(1, &position, &result);
+		impl->evaluate(1, &position[0], &position[1], &result);
 		return result;
 	}
 
@@ -167,7 +126,7 @@ namespace cage
 	{
 		NoiseFunctionImpl *impl = (NoiseFunctionImpl*)this;
 		real result;
-		impl->evaluate(1, &position, &result);
+		impl->evaluate(1, &position[0], &position[1], &position[2], &result);
 		return result;
 	}
 
@@ -175,43 +134,97 @@ namespace cage
 	{
 		NoiseFunctionImpl *impl = (NoiseFunctionImpl*)this;
 		real result;
-		impl->evaluate(1, &position, &result);
+		impl->evaluate(1, &position[0], &position[1], &position[2], &position[3], &result);
 		return result;
 	}
 
-	void NoiseFunction::evaluate(PointerRange<const real> positions, PointerRange<real> results)
+	void NoiseFunction::evaluate(PointerRange<const real> x, PointerRange<real> results)
 	{
-		CAGE_ASSERT(positions.size() == results.size());
+		CAGE_ASSERT(x.size() == results.size());
 		NoiseFunctionImpl *impl = (NoiseFunctionImpl*)this;
-		impl->evaluate(numeric_cast<uint32>(positions.size()), positions.data(), results.data());
+		impl->evaluate(numeric_cast<uint32>(x.size()), x.data(), results.data());
 	}
 
-	void NoiseFunction::evaluate(PointerRange<const vec2> positions, PointerRange<real> results)
+	void NoiseFunction::evaluate(PointerRange<const real> x, PointerRange<const real> y, PointerRange<real> results)
 	{
-		CAGE_ASSERT(positions.size() == results.size());
-		NoiseFunctionImpl *impl = (NoiseFunctionImpl*)this;
-		impl->evaluate(numeric_cast<uint32>(positions.size()), positions.data(), results.data());
+		CAGE_ASSERT(x.size() == results.size());
+		CAGE_ASSERT(y.size() == results.size());
+		NoiseFunctionImpl *impl = (NoiseFunctionImpl *)this;
+		impl->evaluate(numeric_cast<uint32>(x.size()), x.data(), y.data(), results.data());
 	}
 
-	void NoiseFunction::evaluate(PointerRange<const vec3> positions, PointerRange<real> results)
+	void NoiseFunction::evaluate(PointerRange<const real> x, PointerRange<const real> y, PointerRange<const real> z, PointerRange<real> results)
 	{
-		CAGE_ASSERT(positions.size() == results.size());
-		NoiseFunctionImpl *impl = (NoiseFunctionImpl*)this;
-		impl->evaluate(numeric_cast<uint32>(positions.size()), positions.data(), results.data());
+		CAGE_ASSERT(x.size() == results.size());
+		CAGE_ASSERT(y.size() == results.size());
+		CAGE_ASSERT(z.size() == results.size());
+		NoiseFunctionImpl *impl = (NoiseFunctionImpl *)this;
+		impl->evaluate(numeric_cast<uint32>(x.size()), x.data(), y.data(), z.data(), results.data());
 	}
 
-	void NoiseFunction::evaluate(PointerRange<const vec4> positions, PointerRange<real> results)
+	void NoiseFunction::evaluate(PointerRange<const real> x, PointerRange<const real> y, PointerRange<const real> z, PointerRange<const real> w, PointerRange<real> results)
 	{
-		CAGE_ASSERT(positions.size() == results.size());
-		NoiseFunctionImpl *impl = (NoiseFunctionImpl*)this;
-		impl->evaluate(numeric_cast<uint32>(positions.size()), positions.data(), results.data());
+		CAGE_ASSERT(x.size() == results.size());
+		CAGE_ASSERT(y.size() == results.size());
+		CAGE_ASSERT(z.size() == results.size());
+		CAGE_ASSERT(w.size() == results.size());
+		NoiseFunctionImpl *impl = (NoiseFunctionImpl *)this;
+		impl->evaluate(numeric_cast<uint32>(x.size()), x.data(), y.data(), z.data(), w.data(), results.data());
+	}
+
+	void NoiseFunction::evaluate(PointerRange<const vec2> p, PointerRange<real> results)
+	{
+		CAGE_ASSERT(p.size() == results.size());
+		NoiseFunctionImpl *impl = (NoiseFunctionImpl *)this;
+		std::vector<real> v;
+		v.resize(p.size() * 2);
+		const uint32 cnt = numeric_cast<uint32>(p.size());
+		for (uint32 i = 0; i < cnt; i++)
+		{
+			v[0 * cnt + i] = p[i][0];
+			v[1 * cnt + i] = p[i][1];
+		}
+		impl->evaluate(cnt, v.data() + 0 * cnt, v.data() + 1 * cnt, results.data());
+	}
+
+	void NoiseFunction::evaluate(PointerRange<const vec3> p, PointerRange<real> results)
+	{
+		CAGE_ASSERT(p.size() == results.size());
+		NoiseFunctionImpl *impl = (NoiseFunctionImpl *)this;
+		std::vector<real> v;
+		v.resize(p.size() * 3);
+		const uint32 cnt = numeric_cast<uint32>(v.size());
+		for (uint32 i = 0; i < cnt; i++)
+		{
+			v[0 * cnt + i] = p[i][0];
+			v[1 * cnt + i] = p[i][1];
+			v[2 * cnt + i] = p[i][2];
+		}
+		impl->evaluate(cnt, v.data() + 0 * cnt, v.data() + 1 * cnt, v.data() + 2 * cnt, results.data());
+	}
+
+	void NoiseFunction::evaluate(PointerRange<const vec4> p, PointerRange<real> results)
+	{
+		CAGE_ASSERT(p.size() == results.size());
+		NoiseFunctionImpl *impl = (NoiseFunctionImpl *)this;
+		std::vector<real> v;
+		v.resize(p.size() * 4);
+		const uint32 cnt = numeric_cast<uint32>(v.size());
+		for (uint32 i = 0; i < cnt; i++)
+		{
+			v[0 * cnt + i] = p[i][0];
+			v[1 * cnt + i] = p[i][1];
+			v[2 * cnt + i] = p[i][2];
+			v[3 * cnt + i] = p[i][3];
+		}
+		impl->evaluate(cnt, v.data() + 0 * cnt, v.data() + 1 * cnt, v.data() + 2 * cnt, v.data() + 3 * cnt, results.data());
 	}
 
 	NoiseFunctionCreateConfig::NoiseFunctionCreateConfig(uint32 seed) : seed(seed)
 	{}
 
-	Holder<NoiseFunction> newNoiseFunction(const NoiseFunctionCreateConfig &config, Holder<NoiseFunction> &&lookupNoise)
+	Holder<NoiseFunction> newNoiseFunction(const NoiseFunctionCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<NoiseFunction, NoiseFunctionImpl>(config, templates::move(lookupNoise));
+		return detail::systemArena().createImpl<NoiseFunction, NoiseFunctionImpl>(config);
 	}
 }
