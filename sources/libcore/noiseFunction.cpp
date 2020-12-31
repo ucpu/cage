@@ -19,7 +19,7 @@ namespace cage
 			case NoiseTypeEnum::SimplexReduced: return FastNoise::NoiseType_OpenSimplex2S;
 			case NoiseTypeEnum::Cellular: return FastNoise::NoiseType_Cellular;
 			case NoiseTypeEnum::Perlin: return FastNoise::NoiseType_Perlin;
-			case NoiseTypeEnum::ValueCubic: return FastNoise::NoiseType_ValueCubic;
+			case NoiseTypeEnum::Cubic: return FastNoise::NoiseType_ValueCubic;
 			case NoiseTypeEnum::Value: return FastNoise::NoiseType_Value;
 			default: CAGE_THROW_CRITICAL(Exception, "invalid noise type enum");
 			}

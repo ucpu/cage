@@ -11,7 +11,7 @@ namespace cage
 		SimplexReduced,
 		Cellular,
 		Perlin,
-		ValueCubic,
+		Cubic,
 		Value,
 	};
 

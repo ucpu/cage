@@ -157,6 +157,9 @@ namespace cage
 		}
 
 		Holder<Polyhedron> result = newPolyhedron();
+		if (indices.empty())
+			return result; // if all triangles were degenerated, we would end up with polyhedron with positions and no indices, which is invalid here
+
 		result->positions(positions);
 		result->normals(normals);
 		result->indices(indices);
