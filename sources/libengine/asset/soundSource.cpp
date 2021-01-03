@@ -30,9 +30,9 @@ namespace cage
 			CAGE_ASSERT(snd.sampleRate == r);
 		}
 
-		void processLoad(SoundContext *gm, AssetContext *context)
+		void processLoad(AssetContext *context)
 		{
-			Holder<SoundSource> source = newSoundSource(gm);
+			Holder<SoundSource> source = newSoundSource();
 			source->setDebugName(context->textName);
 
 			Deserializer des(context->compressedData.data() ? context->compressedData : context->originalData);
@@ -64,12 +64,12 @@ namespace cage
 		}
 	}
 
-	AssetScheme genAssetSchemeSoundSource(uint32 threadIndex, SoundContext *memoryContext)
+	AssetScheme genAssetSchemeSoundSource(uint32 threadIndex)
 	{
 		AssetScheme s;
 		s.threadIndex = threadIndex;
 		s.decompress.bind<&processDecompress>();
-		s.load.bind<SoundContext*, &processLoad>(memoryContext);
+		s.load.bind<&processLoad>();
 		return s;
 	}
 }

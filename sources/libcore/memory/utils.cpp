@@ -2,6 +2,7 @@
 
 #ifdef CAGE_SYSTEM_WINDOWS
 #include "../incWin.h"
+#include <malloc.h>
 #else
 #include <unistd.h>
 #include <sys/mman.h>
@@ -130,27 +131,33 @@ namespace cage
 		{
 			void *malloca(uintPtr size, uintPtr alignment)
 			{
+				CAGE_ASSERT(size > 0);
 				CAGE_ASSERT(isPowerOf2(alignment));
-				void *p = ::malloc(size + alignment - 1 + sizeof(void*));
-				if (!p)
-					return nullptr;
-				void *ptr = (void*)((uintPtr(p) + sizeof(void*) + alignment - 1) & ~(alignment - 1));
-				*((void **)ptr - 1) = p;
-				CAGE_ASSERT(uintPtr(ptr) % alignment == 0);
-				return ptr;
+				uintPtr s = roundUpTo(size, alignment);
+#ifdef _MSC_VER
+				void *p = _aligned_malloc(s, alignment);
+#else
+				void *p = std::aligned_alloc(alignment, s);
+#endif // _MSC_VER
+				CAGE_ASSERT(uintPtr(p) % alignment == 0);
+				return p;
 			}
 
 			void freea(void *ptr)
 			{
-				if (!ptr)
-					return;
-				void *p = *((void **)ptr - 1);
-				::free(p);
+#ifdef _MSC_VER
+				_aligned_free(ptr);
+#else
+				::free(ptr);
+#endif // _MSC_VER
 			}
 
-			class Memory1Impl
+			class SystemMemoryArenaImpl : private Immovable
 			{
 			public:
+				SystemMemoryArenaImpl() : arena(this)
+				{}
+
 				void *allocate(uintPtr size, uintPtr alignment)
 				{
 					void *tmp = malloca(size, alignment);
@@ -174,14 +181,16 @@ namespace cage
 					CAGE_THROW_CRITICAL(Exception, "invalid operation - deallocate must be used");
 				}
 
-				std::atomic<uint32> allocations {0};
+				std::atomic<uint32> allocations = 0;
+
+				MemoryArena arena;
 			};
 		}
 
 		MemoryArena &systemArena()
 		{
-			static MemoryArena *arena = new MemoryArena(new Memory1Impl()); // intentionally left to leak
-			return *arena;
+			static SystemMemoryArenaImpl *arena = new SystemMemoryArenaImpl(); // intentionally left to leak
+			return arena->arena;
 		}
 	}
 

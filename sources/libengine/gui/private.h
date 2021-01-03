@@ -1,7 +1,6 @@
 #ifndef guard_private_h_BEDE53C63BB74919B9BD171B995FD1A1
 #define guard_private_h_BEDE53C63BB74919B9BD171B995FD1A1
 
-#include <cage-core/memoryAllocators.h>
 #include <cage-core/entities.h>
 #include <cage-core/macros.h>
 
@@ -287,7 +286,7 @@ namespace cage
 		uint32 focusParts; // bitmask of focused parts of the single widget (bits 30 and 31 are reserved for scrollbars)
 		WidgetItem *hover;
 
-		MemoryArenaGrowing<MemoryAllocatorPolicyLinear<>, MemoryConcurrentPolicyNone> itemsArena;
+		Holder<MemoryArena> itemsArena;
 		MemoryArena itemsMemory;
 		HierarchyItem *root;
 
@@ -308,7 +307,7 @@ namespace cage
 
 		struct EmitData
 		{
-			MemoryArenaGrowing<MemoryAllocatorPolicyLinear<>, MemoryConcurrentPolicyNone> arena;
+			Holder<MemoryArena> arena;
 			MemoryArena memory;
 			RenderableBase *first = nullptr, *last = nullptr;
 

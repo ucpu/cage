@@ -1,5 +1,4 @@
 #include "main.h"
-#include <cage-core/memoryAllocators.h>
 
 namespace
 {
@@ -63,8 +62,6 @@ namespace
 
 		char data[64] = {};
 	};
-
-	typedef MemoryArenaFixed<MemoryAllocatorPolicyPool<128, MemoryBoundsPolicySimple, MemoryTagPolicySimple, MemoryTrackPolicyAdvanced>, MemoryConcurrentPolicyNone> Arena;
 }
 
 void testClasses()
@@ -99,16 +96,14 @@ void testClasses()
 
 	{
 		CAGE_TESTCASE("memory arena and throwing constructor");
-		Arena arena(1024 * 1024);
-		MemoryArena m(&arena);
+		MemoryArena m = detail::systemArena();
 		CAGE_TEST(m.createHolder<Throwing>(false));
 		CAGE_TEST_THROWN(m.createHolder<Throwing>(true));
 	}
 
 	{
 		CAGE_TESTCASE("holder and inheritance");
-		Arena arena(1024 * 1024);
-		MemoryArena m(&arena);
+		MemoryArena m = detail::systemArena();
 		{
 			CAGE_TESTCASE("regular inheritance");
 			Holder<Base> h = m.createImpl<Base, Derived>();

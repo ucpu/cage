@@ -1,5 +1,6 @@
 #include <cage-core/entities.h>
 #include <cage-core/memoryBuffer.h>
+#include <cage-core/memoryAllocators.h>
 #include <cage-core/serialization.h>
 #include <cage-core/flatSet.h>
 #include <cage-core/math.h>
@@ -107,12 +108,12 @@ namespace cage
 		class ValuesImpl : public Values
 		{
 		public:
-			struct Value
+			struct alignas(Size) Value
 			{
 				char data[Size];
 			};
 
-			plf::colony<Value> data;
+			plf::colony<Value, MemoryAllocatorStd<Value>> data;
 
 			void *newVal() override
 			{
@@ -152,7 +153,8 @@ namespace cage
 				return detail::systemArena().createHolder<ValuesFallback>(size, alignment).cast<Values>();
 
 #define GCHL_GENERATE(SIZE) if (s <= SIZE) return detail::systemArena().createHolder<ValuesImpl<SIZE>>().cast<Values>();
-			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, 4, 8, 12, 16, 20, 24, 28, 32, 48, 64, 96, 128));
+			//CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, 4, 8, 12, 16, 20, 24, 28, 32, 48, 64, 96, 128));
+			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, 4, 8, 16, 32, 64, 128));
 #undef GCHL_GENERATE
 
 			CAGE_THROW_CRITICAL(NotImplemented, "impossible entity component size or alignment");

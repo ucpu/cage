@@ -1,5 +1,3 @@
-#include <cage-core/memoryAllocators.h>
-
 #include "vorbisDecoder.h"
 #include "private.h"
 #include "utilities.h"
@@ -22,25 +20,22 @@ namespace cage
 		class SoundSourceImpl : public SoundSource, public BusInterface
 		{
 		public:
-			std::set<MixingBus*, std::less<MixingBus*>, MemoryArenaStd<MixingBus*>> outputs;
+			std::set<MixingBus *> outputs;
 			std::vector<float> rawData;
 			std::vector<float> temporaryData1;
 			std::vector<float> temporaryData2;
 			std::vector<float> temporaryData3;
-			uint32 channels;
-			uint32 frames;
-			uint32 sampleRate;
-			uint32 pitch;
-			DataTypeEnum dataType;
-			bool repeatBeforeStart;
-			bool repeatAfterEnd;
+			uint32 channels = 0;
+			uint32 frames = 0;
+			uint32 sampleRate = 0;
+			uint32 pitch = 0;
+			DataTypeEnum dataType = DataTypeEnum::None;
+			bool repeatBeforeStart = false;
+			bool repeatAfterEnd = false;
 
 			soundPrivat::VorbisData vorbisData;
 
-			SoundSourceImpl(SoundContext *context) :
-				BusInterface(Delegate<void(MixingBus*)>().bind<SoundSourceImpl, &SoundSourceImpl::busDestroyed>(this), Delegate<void(const SoundDataBuffer&)>().bind<SoundSourceImpl, &SoundSourceImpl::execute>(this)),
-				outputs(linksArenaFromContext(context)),
-				channels(0), frames(0), sampleRate(0), pitch(0), dataType(DataTypeEnum::None), repeatBeforeStart(false), repeatAfterEnd(false)
+			SoundSourceImpl() : BusInterface(Delegate<void(MixingBus*)>().bind<SoundSourceImpl, &SoundSourceImpl::busDestroyed>(this), Delegate<void(const SoundDataBuffer&)>().bind<SoundSourceImpl, &SoundSourceImpl::execute>(this))
 			{}
 
 			~SoundSourceImpl()
@@ -291,8 +286,8 @@ namespace cage
 		return impl->sampleRate;
 	}
 
-	Holder<SoundSource> newSoundSource(SoundContext *context)
+	Holder<SoundSource> newSoundSource()
 	{
-		return detail::systemArena().createImpl<SoundSource, SoundSourceImpl>(context);
+		return detail::systemArena().createImpl<SoundSource, SoundSourceImpl>();
 	}
 }

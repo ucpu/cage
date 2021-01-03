@@ -183,23 +183,6 @@ namespace cage
 	template<class Key, class Value, class Hasher> struct LruCache;
 	class MarchingCubes;
 	struct MarchingCubesCreateConfig;
-	template<class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyLinear;
-	//template<uint8 N, class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyNFrame;
-	template<uintPtr AtomSize, class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyPool;
-	template<class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyQueue;
-	template<class BoundsPolicy, class TaggingPolicy, class TrackingPolicy> struct MemoryAllocatorPolicyStack;
-	template<class AllocatorPolicy, class ConcurrentPolicy> struct MemoryArenaFixed;
-	template<class AllocatorPolicy, class ConcurrentPolicy> struct MemoryArenaGrowing;
-	template<class T> struct MemoryArenaStd;
-	struct MemoryBoundsPolicyNone;
-	struct MemoryBoundsPolicySimple;
-	struct MemoryTagPolicyNone;
-	struct MemoryTagPolicySimple;
-	struct MemoryTrackPolicyNone;
-	struct MemoryTrackPolicySimple;
-	struct MemoryTrackPolicyAdvanced;
-	struct MemoryConcurrentPolicyNone;
-	struct MemoryConcurrentPolicyMutex;
 	struct OutOfMemory;
 	class VirtualMemory;
 	struct MemoryBuffer;
@@ -774,6 +757,17 @@ namespace cage
 			HolderBase() noexcept {}
 			explicit HolderBase(T *data, void *ptr, Delegate<void(void*)> deleter) noexcept : deleter_(deleter), ptr_(ptr), data_(data) {}
 
+			template<class U>
+			HolderBase(T *data, HolderBase<U> &&base) noexcept
+			{
+				deleter_ = base.deleter_;
+				ptr_ = base.ptr_;
+				data_ = data;
+				base.deleter_.clear();
+				base.ptr_ = nullptr;
+				base.data_ = nullptr;
+			}
+
 			HolderBase(const HolderBase &) = delete;
 			HolderBase(HolderBase &&other) noexcept
 			{
@@ -881,6 +875,9 @@ namespace cage
 			Delegate<void(void *)> deleter_;
 			void *ptr_ = nullptr; // pointer to deallocate
 			T *data_ = nullptr; // pointer to the object (may differ in case of classes with inheritance)
+
+			template<class U>
+			friend struct HolderBase;
 		};
 	}
 

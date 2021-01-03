@@ -7,9 +7,9 @@ namespace cage
 		class VolumeFilterImpl : public VolumeFilter
 		{
 		public:
-			explicit VolumeFilterImpl(SoundContext *context)
+			explicit VolumeFilterImpl()
 			{
-				filter = newMixingFilter(context);
+				filter = newMixingFilter();
 				filter->execute.bind<VolumeFilterImpl, &VolumeFilterImpl::exe>(this);
 			}
 
@@ -25,8 +25,8 @@ namespace cage
 		};
 	}
 
-	Holder<VolumeFilter> newVolumeFilter(SoundContext *context)
+	Holder<VolumeFilter> newVolumeFilter()
 	{
-		return detail::systemArena().createImpl<VolumeFilter, VolumeFilterImpl>(context);
+		return detail::systemArena().createImpl<VolumeFilter, VolumeFilterImpl>();
 	}
 }

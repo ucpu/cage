@@ -1,8 +1,9 @@
 #include <cage-core/geometry.h>
-#include <cage-core/memoryAllocators.h>
 #include <cage-core/spatialStructure.h>
+#include <cage-core/memoryAllocators.h>
 
 #include <robin_hood.h>
+#include <plf_colony.h>
 #include <xsimd/xsimd.hpp>
 
 #include <vector>
@@ -134,15 +135,6 @@ namespace cage
 			virtual bool intersects(const aabb &other) { return cage::intersects(*this, other); };
 		};
 
-		union ItemUnion
-		{
-			ItemShape<line> a;
-			ItemShape<triangle> b;
-			ItemShape<plane> c;
-			ItemShape<sphere> d;
-			ItemShape<aabb> e;
-		};
-
 		struct Node
 		{
 			FastBox box;
@@ -159,22 +151,57 @@ namespace cage
 			sint32 b() const { return box.high.s.i; }
 		};
 
+		struct ColonyAsAllocator
+		{
+			union ItemUnion
+			{
+				ItemShape<line> a;
+				ItemShape<triangle> b;
+				ItemShape<plane> c;
+				ItemShape<sphere> d;
+				ItemShape<aabb> e;
+				ItemUnion() {}
+			};
+
+			struct alignas(alignof(ItemUnion)) ItemAlloc
+			{
+				char reserved[sizeof(ItemUnion)];
+			};
+
+			plf::colony<ItemAlloc, MemoryAllocatorStd<ItemAlloc>> colony;
+
+			void *allocate(uintPtr size, uintPtr alignment)
+			{
+				CAGE_ASSERT(size <= sizeof(ItemAlloc));
+				return &*colony.insert(ItemAlloc());
+			}
+
+			void deallocate(void *ptr)
+			{
+				colony.erase(colony.get_iterator_from_pointer((ItemAlloc *)ptr));
+			}
+
+			void flush()
+			{
+				CAGE_THROW_CRITICAL(Exception, "flush may not be used");
+			}
+		};
+
 		class SpatialDataImpl : public SpatialStructure
 		{
 		public:
-			MemoryArenaGrowing<MemoryAllocatorPolicyPool<templates::PoolAllocatorAtomSize<ItemUnion>::result>, MemoryConcurrentPolicyNone> itemsPool;
+			ColonyAsAllocator itemsPool;
 			MemoryArena itemsArena;
 			robin_hood::unordered_map<uint32, Holder<ItemBase>> itemsTable;
-			std::atomic<bool> dirty {false};
-			std::vector<Node, MemoryArenaStd<Node>> nodes;
-			std::vector<ItemBase*> indices;
-			typedef std::vector<ItemBase*>::iterator indicesIterator;
+			std::atomic<bool> dirty = false;
+			std::vector<Node> nodes;
+			std::vector<ItemBase *> indices;
 			static constexpr uint32 binsCount = 10;
 			std::array<FastBox, binsCount> leftBinBoxes = {};
 			std::array<FastBox, binsCount> rightBinBoxes = {};
 			std::array<uint32, binsCount> leftBinCounts = {};
 
-			SpatialDataImpl(const SpatialStructureCreateConfig &config) : itemsPool(config.maxItems * sizeof(ItemUnion)), itemsArena(&itemsPool), nodes(detail::systemArena())
+			SpatialDataImpl(const SpatialStructureCreateConfig &config) : itemsArena(&itemsPool)
 			{
 				CAGE_ASSERT((uintPtr(this) % alignof(FastBox)) == 0);
 				CAGE_ASSERT((uintPtr(leftBinBoxes.data()) % alignof(FastBox)) == 0);

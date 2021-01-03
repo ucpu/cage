@@ -13,9 +13,9 @@
 namespace
 {
 #ifdef CAGE_DEBUG
-	static const uint32 limit = 2000;
+	constexpr uint32 limit = 2000;
 #else
-	static const uint32 limit = 20000;
+	constexpr uint32 limit = 20000;
 #endif
 
 	vec3 generateRandomPoint()
@@ -165,7 +165,7 @@ void testSpatialStructure()
 
 	{
 		CAGE_TESTCASE("multiple points on same location");
-		static const vec3 pts[3] = { vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 1) };
+		constexpr const vec3 pts[3] = { vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 1) };
 		Holder<SpatialStructure> data = newSpatialStructure(SpatialStructureCreateConfig());
 		for (uint32 i = 0; i < 100; i++)
 			data->update(i, aabb(pts[i % 3]));
@@ -192,7 +192,7 @@ void testSpatialStructure()
 
 	{
 		CAGE_TESTCASE("multiple spheres on same position");
-		static const vec3 pts[3] = { vec3(3, 0, 0), vec3(0, 7, 0), vec3(0, 0, 13) };
+		constexpr const vec3 pts[3] = { vec3(3, 0, 0), vec3(0, 7, 0), vec3(0, 0, 13) };
 		Holder<SpatialStructure> data = newSpatialStructure(SpatialStructureCreateConfig());
 		for (uint32 i = 0; i < 100; i++)
 			data->update(i, sphere(pts[i % 3], 1));

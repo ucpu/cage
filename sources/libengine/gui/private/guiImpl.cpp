@@ -1,4 +1,5 @@
 #include <cage-core/swapBufferGuard.h>
+#include <cage-core/memoryAllocators.h>
 
 #include "../private.h"
 
@@ -21,8 +22,7 @@ namespace cage
 		debugMesh(nullptr), elementMesh(nullptr), fontMesh(nullptr), imageMesh(nullptr)
 	{}
 
-	GuiImpl::EmitData::EmitData(const GuiCreateConfig &config) :
-		arena(config.emitArenaSize), memory(&arena)
+	GuiImpl::EmitData::EmitData(const GuiCreateConfig &config) : arena(newMemoryAllocatorLinear({})), memory(+arena)
 	{}
 
 	GuiImpl::EmitData::~EmitData()
@@ -38,7 +38,7 @@ namespace cage
 
 	GuiImpl::GuiImpl(const GuiCreateConfig &config) :
 		entityMgr(newEntityManager(config.entitiesConfig ? *config.entitiesConfig : EntityManagerCreateConfig())), components(entityMgr.get()),
-		itemsArena(config.itemsArenaSize), itemsMemory(&itemsArena), root(nullptr),
+		itemsArena(newMemoryAllocatorLinear({})), itemsMemory(+itemsArena), root(nullptr),
 		emitData{config, config, config}, emitControl(nullptr),
 		assetMgr(config.assetMgr),
 		focusName(0), focusParts(0), hover(nullptr), eventsEnabled(false),

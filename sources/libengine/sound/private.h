@@ -15,7 +15,6 @@ namespace cage
 	{
 		void checkSoundIoError(int code);
 		cubeb *soundioFromContext(SoundContext *context);
-		MemoryArena linksArenaFromContext(SoundContext *context);
 
 		struct BusInterface
 		{
