@@ -1,6 +1,7 @@
 #include <cage-core/memoryAllocators.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/memoryUtils.h>
+#include <cage-core/math.h> // max
 
 #include <vector>
 
@@ -31,7 +32,7 @@ namespace cage
 
 			void *allocate(uintPtr size, uintPtr alignment)
 			{
-				CAGE_ASSERT(size > 0);
+				size = max(size, uintPtr(1));
 				CAGE_ASSERT(size + alignment <= config.blockSize);
 				const uintPtr p = detail::roundUpTo(where, alignment);
 				const uintPtr e = p + size;
@@ -90,7 +91,7 @@ namespace cage
 			{
 				if (blocks.empty())
 					blocks.push_back(detail::systemArena().createHolder<Block>(config.blockSize));
-				index = (index + 1) % blocks.size();
+				index = (index + 1) % numeric_cast<uint32>(blocks.size());
 				if (blocks[index]->cnt != 0)
 					blocks.insert(blocks.begin() + index, detail::systemArena().createHolder<Block>(config.blockSize));
 				updatePointers();
@@ -98,7 +99,7 @@ namespace cage
 
 			void *allocate(uintPtr size, uintPtr alignment)
 			{
-				CAGE_ASSERT(size > 0);
+				size = max(size, uintPtr(1));
 				CAGE_ASSERT(size + alignment + sizeof(uintPtr) <= config.blockSize);
 				const uintPtr p = detail::roundUpTo(where + sizeof(uintPtr), alignment);
 				const uintPtr e = p + size;
