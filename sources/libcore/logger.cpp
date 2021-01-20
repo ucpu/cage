@@ -42,10 +42,10 @@ namespace cage
 		class LoggerImpl : public Logger
 		{
 		public:
-			LoggerImpl *prev, *next;
-			const uint64 thread;
+			LoggerImpl *prev = nullptr, *next = nullptr;
+			const uint64 thread = threadId();
 
-			LoggerImpl() : prev(nullptr), next(nullptr), thread(threadId())
+			LoggerImpl()
 			{
 				{
 					ScopeLock l(loggerMutex());
@@ -292,6 +292,7 @@ namespace cage
 			try
 			{
 				detail::getApplicationLog(); // ensure application logger was initialized
+
 				detail::LoggerInfo info;
 				info.message = message;
 				info.component = component;
@@ -305,22 +306,28 @@ namespace cage
 				info.line = line;
 				info.function = function;
 
-				ScopeLock l(loggerMutex());
-				LoggerImpl *cur = loggerLast();
-				while (cur)
 				{
-					if (cur->output)
+					ScopeLock l(loggerMutex());
+					LoggerImpl *cur = loggerLast();
+					while (cur)
 					{
-						info.createThreadId = cur->thread;
-						if (!cur->filter || cur->filter(info))
+						const auto ou = cur->output; // keep a copy in case the configuration changed mid-way
+						if (ou)
 						{
-							if (cur->format)
-								cur->format(info, cur->output);
-							else
-								cur->output(info.message);
+							const auto fi = cur->filter;
+							info.createThreadId = cur->thread;
+							if (!fi || fi(info))
+							{
+								const auto fo = cur->format;
+								if (fo)
+									fo(info, ou);
+								else
+									ou(info.message);
+							}
 						}
+
+						cur = cur->prev;
 					}
-					cur = cur->prev;
 				}
 
 				return info.time;
