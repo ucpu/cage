@@ -100,7 +100,7 @@ namespace cage
 		// todo optimized path
 		Holder<Polyhedron> p = makePolyhedron();
 		Holder<Collider> c = newCollider();
-		c->importPolyhedron(p.get());
+		c->importPolyhedron(+p);
 		return c;
 	}
 
@@ -121,8 +121,8 @@ namespace cage
 		normals.resize(mcVertices.size());
 		indices.reserve(mcIndices.size() * 3 / 2);
 		const vec3 res = vec3(cfg.resolution);
-		const vec3 posMult = (cfg.box.b - cfg.box.a) / (res - 5);
-		const vec3 posAdd = cfg.box.a - 1.5 * posMult;
+		const vec3 posMult = (cfg.box.b - cfg.box.a) / (res - 3);
+		const vec3 posAdd = cfg.box.a - posMult;
 		for (const dualmc::Vertex &v : mcVertices)
 			positions.push_back(vec3(v.x, v.y, v.z) * posMult + posAdd);
 		for (const auto &q : mcIndices)
@@ -186,7 +186,7 @@ namespace cage
 		CAGE_ASSERT(x < resolution[0]);
 		CAGE_ASSERT(y < resolution[1]);
 		CAGE_ASSERT(z < resolution[2]);
-		vec3 f = (vec3(x, y, z) - 2) / (vec3(resolution) - 5);
+		vec3 f = (vec3(x, y, z) - 1) / (vec3(resolution) - 3);
 		return (box.b - box.a) * f + box.a;
 	}
 
