@@ -127,6 +127,8 @@ namespace cage
 	CAGE_CORE_API void polyhedronApplyTransform(Polyhedron *poly, const transform &t);
 	CAGE_CORE_API void polyhedronApplyTransform(Polyhedron *poly, const mat4 &t);
 
+	CAGE_CORE_API void polyhedronFlipNormals(Polyhedron *poly);
+
 	CAGE_CORE_API void polyhedronClip(Polyhedron *poly, const aabb &box);
 	CAGE_CORE_API void polyhedronClip(Polyhedron *poly, const plane &pln);
 	CAGE_CORE_API Holder<Polyhedron> polyhedronCut(Polyhedron *poly, const plane &pln);

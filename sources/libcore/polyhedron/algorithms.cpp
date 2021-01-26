@@ -585,6 +585,22 @@ namespace cage
 			it = vec3(t * vec4(it, 0));
 	}
 
+	void polyhedronFlipNormals(Polyhedron *poly)
+	{
+		PolyhedronImpl *impl = (PolyhedronImpl *)poly;
+		if (impl->type == PolyhedronTypeEnum::Triangles)
+		{
+			// flip triangle winding
+			polyhedronConvertToIndexed(poly);
+			const uint32 cnt = impl->indicesCount();
+			for (uint32 i = 0; i < cnt; i += 3)
+				std::swap(impl->indices[i + 1], impl->indices[i + 2]);
+		}
+		for (vec3 &n : impl->normals)
+			n *= -1;
+		// todo tangents & bitangents ?
+	}
+
 	void polyhedronClip(Polyhedron *poly, const aabb &clipBox)
 	{
 		if (poly->facesCount() == 0)
