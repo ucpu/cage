@@ -280,4 +280,10 @@ void testPointerRange()
 		constexpr auto len = constexprFunction();
 		CAGE_TEST(len == 4);
 	}
+
+	{
+		CAGE_TESTCASE("pointerRange from char array");
+		constexpr const char str[] = "hello world";
+		PointerRange<const char> r = str;
+	}
 }
