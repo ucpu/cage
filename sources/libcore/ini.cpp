@@ -396,7 +396,7 @@ namespace cage
 		Holder<File> file = readFile(filename);
 		try
 		{
-			MemoryBuffer buff = file->readAll();
+			Holder<PointerRange<char>> buff = file->readAll();
 			importBuffer(buff);
 		}
 		catch (...)
@@ -406,7 +406,7 @@ namespace cage
 		}
 	}
 
-	MemoryBuffer Ini::exportBuffer() const
+	Holder<PointerRange<char>> Ini::exportBuffer() const
 	{
 		const IniImpl *impl = (const IniImpl*)this;
 		MemoryBuffer buff(0, 100000);
@@ -417,12 +417,12 @@ namespace cage
 			for (const auto &j : i.second->items)
 				ser.writeLine(string() + j.first + "=" + j.second.value);
 		}
-		return buff;
+		return templates::move(buff);
 	}
 
 	void Ini::exportFile(const string &filename) const
 	{
-		MemoryBuffer buff = exportBuffer();
+		Holder<PointerRange<char>> buff = exportBuffer();
 		FileMode fm(false, true);
 		fm.textual = true;
 		Holder<File> file = newFile(filename, fm);

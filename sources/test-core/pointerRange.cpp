@@ -255,7 +255,7 @@ void testPointerRange()
 	{
 		CAGE_TESTCASE("move Holder<PointerRange<T>>");
 		Holder<PointerRange<uint32>> r1 = makeRangeInts();
-		Holder<PointerRange<uint32>> r2 = std::move(r1);
+		Holder<PointerRange<uint32>> r2 = templates::move(r1);
 		CAGE_TEST(r1.empty());
 		CAGE_TEST(r2.size() == 3);
 	}
@@ -263,9 +263,19 @@ void testPointerRange()
 	{
 		CAGE_TESTCASE("move Holder<PointerRange<const T>>");
 		Holder<PointerRange<const uint32>> r1 = makeRangeInts();
-		Holder<PointerRange<const uint32>> r2 = std::move(r1);
+		Holder<PointerRange<const uint32>> r2 = templates::move(r1);
 		CAGE_TEST(r1.empty());
 		CAGE_TEST(r2.size() == 3);
+	}
+
+	{
+		CAGE_TESTCASE("move PointerRangeHolder<T>");
+		PointerRangeHolder<uint32> r1;
+		r1.emplace_back(13);
+		r1.emplace_back(42);
+		PointerRangeHolder<uint32> r2 = templates::move(r1);
+		CAGE_TEST(r1.empty());
+		CAGE_TEST(r2.size() == 2);
 	}
 
 	{

@@ -343,13 +343,13 @@ namespace
 
 		CAGE_ASSERT(h.originalSize == buf.size());
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buf.size());
-		buf = detail::compress(buf);
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + buf.size());
-		h.compressedSize = buf.size();
+		Holder<PointerRange<char>> buf2 = compress(buf);
+		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + buf2.size());
+		h.compressedSize = buf2.size();
 
 		Holder<File> f = writeFile(outputFileName);
 		f->write(bufferView(h));
-		f->write(buf);
+		f->write(buf2);
 		f->close();
 	}
 

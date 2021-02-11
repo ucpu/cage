@@ -26,12 +26,12 @@ namespace cage
 		void clear();
 		Holder<Polyhedron> copy() const;
 
-		MemoryBuffer serialize() const;
+		Holder<PointerRange<char>> serialize() const;
 		void deserialize(PointerRange<const char> buffer);
 
 		void importCollider(const Collider *collider);
 
-		MemoryBuffer exportObjBuffer(const PolyhedronObjExportConfig &config) const;
+		Holder<PointerRange<char>> exportObjBuffer(const PolyhedronObjExportConfig &config) const;
 		void exportObjFile(const PolyhedronObjExportConfig &config, const string &filename) const;
 
 		uint32 verticesCount() const;

@@ -175,7 +175,7 @@ void testPolyhedron()
 
 	{
 		CAGE_TESTCASE("serialize");
-		MemoryBuffer buff = poly->serialize();
+		Holder<PointerRange<char>> buff = poly->serialize();
 		CAGE_TEST(buff.size() > 10);
 		Holder<Polyhedron> p = newPolyhedron();
 		p->deserialize(buff);

@@ -47,7 +47,7 @@ namespace
 				{
 					uint32 ch;
 					bool r;
-					MemoryBuffer b = c->read(ch, r);
+					Holder<PointerRange<char>> b = c->read(ch, r);
 					c->write(b, ch, r); // just repeat back the same message
 					lastTime = getApplicationTime();
 				}
@@ -108,7 +108,7 @@ namespace
 		{
 			while (udp->available())
 			{
-				MemoryBuffer r = udp->read();
+				Holder<PointerRange<char>> r = udp->read();
 				MemoryBuffer &b = sends[ri++];
 				CAGE_TEST(r.size() == b.size());
 				CAGE_TEST(detail::memcmp(r.data(), b.data(), b.size()) == 0);

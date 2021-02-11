@@ -23,8 +23,8 @@ namespace cage
 	{
 	public:
 		void read(PointerRange<char> buffer);
-		MemoryBuffer read(uintPtr size);
-		MemoryBuffer readAll();
+		Holder<PointerRange<char>> read(uintPtr size);
+		Holder<PointerRange<char>> readAll();
 		bool readLine(string &line);
 
 		void write(PointerRange<const char> buffer);

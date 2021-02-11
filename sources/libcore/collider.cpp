@@ -253,7 +253,7 @@ namespace cage
 		}
 	}
 
-	MemoryBuffer Collider::serialize(bool includeAdditionalData) const
+	Holder<PointerRange<char>> Collider::serialize(bool includeAdditionalData) const
 	{
 		const ColliderImpl *impl = (ColliderImpl*)this;
 		CollisionMeshHeader header;
@@ -269,7 +269,7 @@ namespace cage
 		writeVector(ser, impl->tris);
 		writeVector(ser, impl->boxes);
 		writeVector(ser, impl->nodes);
-		return buffer;
+		return templates::move(buffer);
 	}
 
 	void Collider::deserialize(PointerRange<const char> buffer)

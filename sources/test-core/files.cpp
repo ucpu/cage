@@ -14,7 +14,7 @@ namespace
 	{
 		CAGE_TEST(f->size() == BLOCK_SIZE);
 		CAGE_TEST(f->tell() == 0);
-		MemoryBuffer b = f->read(100);
+		Holder<PointerRange<char>> b = f->read(100);
 		CAGE_TEST(f->tell() == 100);
 		CAGE_TEST(b.size() == 100);
 		CAGE_TEST(b.data()[0] == 'A');

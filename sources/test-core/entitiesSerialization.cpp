@@ -50,7 +50,7 @@ namespace
 	{
 		for (uint32 i = 0; i < 3; i++)
 		{
-			MemoryBuffer buf = entitiesSerialize(a->group(), a->componentByIndex(i));
+			Holder<PointerRange<char>> buf = entitiesSerialize(a->group(), a->componentByIndex(i));
 			entitiesDeserialize(buf, b);
 		}
 	}

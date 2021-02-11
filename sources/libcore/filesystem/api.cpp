@@ -46,19 +46,19 @@ namespace cage
 		impl->read(buffer);
 	}
 
-	MemoryBuffer File::read(uintPtr size)
+	Holder<PointerRange<char>> File::read(uintPtr size)
 	{
 		MemoryBuffer r(size);
 		read(r);
-		return r;
+		return templates::move(r);
 	}
 
-	MemoryBuffer File::readAll()
+	Holder<PointerRange<char>> File::readAll()
 	{
 		CAGE_ASSERT(tell() == 0);
 		MemoryBuffer r(size());
 		read(r);
-		return r;
+		return templates::move(r);
 	}
 
 	bool File::readLine(string &line)

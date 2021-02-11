@@ -22,8 +22,8 @@ namespace cage
 
 		void readWait(PointerRange<char> buffer);
 		void read(PointerRange<char> &buffer);
-		MemoryBuffer readWait(uintPtr size);
-		MemoryBuffer read();
+		Holder<PointerRange<char>> readWait(uintPtr size);
+		Holder<PointerRange<char>> read();
 		string readLineWait();
 		bool readLine(string &line);
 
@@ -78,8 +78,8 @@ namespace cage
 		// you should call available first to determine if any messages are ready and what is the required buffer size
 		void read(PointerRange<char> &buffer, uint32 &channel, bool &reliable);
 		void read(PointerRange<char> &buffer);
-		MemoryBuffer read(uint32 &channel, bool &reliable);
-		MemoryBuffer read();
+		Holder<PointerRange<char>> read(uint32 &channel, bool &reliable);
+		Holder<PointerRange<char>> read();
 
 		void write(PointerRange<const char> buffer, uint32 channel, bool reliable);
 

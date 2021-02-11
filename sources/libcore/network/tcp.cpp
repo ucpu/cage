@@ -144,18 +144,18 @@ namespace cage
 		readWait(buffer);
 	}
 
-	MemoryBuffer TcpConnection::readWait(uintPtr size)
+	Holder<PointerRange<char>> TcpConnection::readWait(uintPtr size)
 	{
 		MemoryBuffer b(size);
 		readWait(b);
-		return b;
+		return templates::move(b);
 	}
 
-	MemoryBuffer TcpConnection::read()
+	Holder<PointerRange<char>> TcpConnection::read()
 	{
 		MemoryBuffer b(available());
 		readWait(b);
-		return b;
+		return templates::move(b);
 	}
 
 	string TcpConnection::readLineWait()

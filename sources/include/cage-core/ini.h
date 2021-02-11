@@ -41,7 +41,7 @@ namespace cage
 		void parseCmd(uint32 argc, const char *const args[]); // clears this before parsing
 		void importBuffer(PointerRange<const char> buffer); // clears this before loading
 		void importFile(const string &filename); // clears this before loading
-		MemoryBuffer exportBuffer() const;
+		Holder<PointerRange<char>> exportBuffer() const;
 		void exportFile(const string &filename) const;
 
 		uint32 sectionsCount() const;

@@ -391,11 +391,11 @@ namespace
 		for (const auto &it : images)
 			ser.write(bufferCast(it.data->rawViewU8()));
 
-		MemoryBuffer outputBuffer = detail::compress(inputBuffer);
+		Holder<PointerRange<char>> outputBuffer = compress(inputBuffer);
 		h.compressedSize = outputBuffer.size();
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "final size: " + h.originalSize + ", compressed size: " + h.compressedSize + ", ratio: " + h.compressedSize / (float)h.originalSize);
 
-		Holder<File> f = newFile(outputFileName, FileMode(false, true));
+		Holder<File> f = writeFile(outputFileName);
 		f->write(bufferView(h));
 		f->write(outputBuffer);
 		f->close();

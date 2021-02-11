@@ -77,7 +77,7 @@ namespace
 				{ // read
 					while (udp->available())
 					{
-						MemoryBuffer b = udp->read();
+						Holder<PointerRange<char>> b = udp->read();
 						recvBytes += b.size();
 						Deserializer d(b);
 						uint64 r;

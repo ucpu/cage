@@ -84,7 +84,7 @@ namespace cage
 		}
 	}
 
-	MemoryBuffer Polyhedron::exportObjBuffer(const PolyhedronObjExportConfig &config) const
+	Holder<PointerRange<char>> Polyhedron::exportObjBuffer(const PolyhedronObjExportConfig &config) const
 	{
 		PolyhedronImpl *impl = (PolyhedronImpl *)this;
 		CAGE_ASSERT(impl->uvs.empty() || impl->uvs3.empty());
@@ -163,13 +163,13 @@ namespace cage
 			CAGE_THROW_CRITICAL(Exception, "invalid polyhedron type enum");
 		}
 
-		return buffer;
+		return templates::move(buffer);
 	}
 
 	void Polyhedron::exportObjFile(const PolyhedronObjExportConfig &config, const string &filename) const
 	{
 		PolyhedronImpl *impl = (PolyhedronImpl *)this;
-		MemoryBuffer buff = exportObjBuffer(config);
+		Holder<PointerRange<char>> buff = exportObjBuffer(config);
 		writeFile(filename)->write(buff);
 	}
 }

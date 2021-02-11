@@ -54,7 +54,7 @@ namespace cage
 		void importFile(const string &filename, uint32 channels = m, ImageFormatEnum requestedFormat = ImageFormatEnum::Default);
 
 		// image encode
-		MemoryBuffer exportBuffer(const string &format = ".png") const;
+		Holder<PointerRange<char>> exportBuffer(const string &format = ".png") const;
 		void exportFile(const string &filename) const;
 
 		// the format must match

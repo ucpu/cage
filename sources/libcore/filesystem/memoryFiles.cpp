@@ -20,7 +20,7 @@ namespace cage
 					pos = buf.size();
 			}
 
-			FileBuffer(MemoryBuffer &&buffer, const FileMode &mode) : FileAbstract(stringizer() + "buffer:/" + uintPtr(&persistent), mode), persistent(std::move(buffer)), buf(persistent)
+			FileBuffer(MemoryBuffer &&buffer, const FileMode &mode) : FileAbstract(stringizer() + "buffer:/" + uintPtr(&persistent), mode), persistent(templates::move(buffer)), buf(persistent)
 			{
 				CAGE_ASSERT(mode.valid());
 				if (mode.append)

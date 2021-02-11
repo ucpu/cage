@@ -554,7 +554,7 @@ namespace cage
 		return impl->manager;
 	}
 
-	MemoryBuffer entitiesSerialize(const EntityGroup *entities, EntityComponent *component)
+	Holder<PointerRange<char>> entitiesSerialize(const EntityGroup *entities, EntityComponent *component)
 	{
 		uintPtr typeSize = component->typeSize();
 		MemoryBuffer buffer;
@@ -578,7 +578,7 @@ namespace cage
 		if (cnt == 0)
 			return {};
 		cntPlaceholder << cnt;
-		return buffer;
+		return templates::move(buffer);
 	}
 
 	void entitiesDeserialize(PointerRange<const char> buffer, EntityManager *manager)

@@ -26,7 +26,7 @@ void convert(string src, const string &format, bool preserveOriginal)
 	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "channels: " + img->channels());
 	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "format: " + (uint32)img->format());
 	{ // encode to buffer first to verify that the conversion is possible
-		MemoryBuffer buf = img->exportBuffer(format);
+		Holder<PointerRange<char>> buf = img->exportBuffer(format);
 		Holder<File> f = writeFile(dst);
 		f->write(buf);
 		f->close();

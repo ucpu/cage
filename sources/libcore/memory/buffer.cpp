@@ -1,11 +1,10 @@
-#include <cage-core/memoryUtils.h>
+#include <cage-core/memoryUtils.h> // OutOfMemory
 #include <cage-core/memoryBuffer.h>
+
+#include <utility> // swap
 
 namespace cage
 {
-	MemoryBuffer::MemoryBuffer() : data_(nullptr), size_(0), capacity_(0)
-	{}
-
 	MemoryBuffer::MemoryBuffer(uintPtr size, uintPtr capacity) : data_(nullptr), size_(0), capacity_(0)
 	{
 		allocate(size, capacity);
@@ -125,24 +124,20 @@ namespace cage
 		capacity_ = size_ = 0;
 	}
 
-	namespace detail
+	MemoryBuffer::operator Holder<PointerRange<char>>() &&
 	{
-		MemoryBuffer compress(PointerRange<const char> input, sint32 preference)
+		struct OwnedBufferRange
 		{
-			MemoryBuffer result(compressionBound(input.size()));
-			PointerRange<char> output = result;
-			compress(input, output, preference);
-			result.resize(output.size());
-			return result;
-		}
+			MemoryBuffer buff;
+			PointerRange<char> range;
+		};
 
-		MemoryBuffer decompress(PointerRange<const char> input, uintPtr outputSize)
-		{
-			MemoryBuffer result(outputSize);
-			PointerRange<char> output = result;
-			decompress(input, output);
-			result.resize(output.size());
-			return result;
-		}
+		Delegate<void(void *)> d;
+		d.bind<MemoryArena, &MemoryArena::destroy<OwnedBufferRange>>(&detail::systemArena());
+		OwnedBufferRange *p = detail::systemArena().createObject<OwnedBufferRange>();
+		std::swap(*this, p->buff);
+		p->range = p->buff;
+		Holder<PointerRange<char>> h(&p->range, p, d);
+		return h;
 	}
 }

@@ -278,7 +278,7 @@ namespace cage
 					s.setBlocking(false);
 					s.connect(adr);
 					if (s.isValid())
-						sockGroup->socks.push_back(std::move(s));
+						sockGroup->socks.push_back(templates::move(s));
 					lst.next();
 				}
 				sockGroup->applyBufferSizes();
@@ -1173,7 +1173,7 @@ namespace cage
 					s.setReuseaddr(true);
 					s.bind(adr);
 					if (s.isValid())
-						sockGroup->socks.push_back(std::move(s));
+						sockGroup->socks.push_back(templates::move(s));
 					lst.next();
 				}
 				sockGroup->applyBufferSizes();
@@ -1273,7 +1273,7 @@ namespace cage
 
 	void UdpConnection::read(PointerRange<char> &buffer, uint32 &channel, bool &reliable)
 	{
-		MemoryBuffer b = read(channel, reliable);
+		Holder<PointerRange<char>> b = read(channel, reliable);
 		CAGE_ASSERT(buffer.size() >= b.size());
 		detail::memcpy(buffer.data(), b.data(), b.size());
 		buffer = { buffer.data(), buffer.data() + b.size() };
@@ -1286,13 +1286,13 @@ namespace cage
 		read(buffer, channel, reliable);
 	}
 
-	MemoryBuffer UdpConnection::read(uint32 &channel, bool &reliable)
+	Holder<PointerRange<char>> UdpConnection::read(uint32 &channel, bool &reliable)
 	{
 		UdpConnectionImpl *impl = (UdpConnectionImpl*)this;
 		return impl->read(channel, reliable);
 	}
 
-	MemoryBuffer UdpConnection::read()
+	Holder<PointerRange<char>> UdpConnection::read()
 	{
 		uint32 channel;
 		bool reliable;

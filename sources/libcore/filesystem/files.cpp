@@ -55,7 +55,7 @@ namespace cage
 			Holder<File> f = af->openFile(pf, FileMode(true, false));
 			Holder<File> t = at->openFile(pt, FileMode(false, true));
 			// todo split big files into multiple smaller steps
-			const MemoryBuffer b = f->readAll();
+			Holder<PointerRange<char>> b = f->readAll();
 			f->close();
 			t->write(b);
 			t->close();

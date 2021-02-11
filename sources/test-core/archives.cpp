@@ -15,7 +15,7 @@ namespace
 		"testdir/archive.zip"
 	};
 
-	void testWriteFile(const string &name, const MemoryBuffer &data)
+	void testWriteFile(const string &name, PointerRange<const char> data)
 	{
 		for (const string &dir : directories)
 		{
@@ -25,9 +25,9 @@ namespace
 		}
 	}
 
-	void testReadFile2(const string &name, MemoryBuffer &a, MemoryBuffer &b)
+	void testReadFile2(const string &name, Holder<PointerRange<char>> &a, Holder<PointerRange<char>> &b)
 	{
-		MemoryBuffer *p[2] = { &a, &b };
+		Holder<PointerRange<char>> *p[2] = { &a, &b };
 		uint32 i = 0;
 		for (const string &dir : directories)
 		{
@@ -37,15 +37,15 @@ namespace
 		}
 	}
 
-	void testBuffers(const MemoryBuffer &a, const MemoryBuffer &b)
+	void testBuffers(PointerRange<const char> a, PointerRange<const char> b)
 	{
 		CAGE_TEST(a.size() == b.size());
 		CAGE_TEST(detail::memcmp(a.data(), b.data(), a.size()) == 0);
 	}
 
-	MemoryBuffer testReadFile(const string &name)
+	Holder<PointerRange<char>> testReadFile(const string &name)
 	{
-		MemoryBuffer a, b;
+		Holder<PointerRange<char>> a, b;
 		testReadFile2(name, a, b);
 		testBuffers(a, b);
 		return a;
@@ -121,16 +121,18 @@ namespace
 
 		Holder<Barrier> barrier = newBarrier(ThreadsCount);
 		Holder<ThreadPool> threadPool = newThreadPool("tester_", ThreadsCount);
-		MemoryBuffer data;
+		Holder<PointerRange<char>> data;
 
 		ConcurrentTester()
 		{
 			threadPool->function.bind<ConcurrentTester, &ConcurrentTester::threadEntry>(this);
 			{ // generate random data
-				Serializer ser(data);
+				MemoryBuffer buff;
+				Serializer ser(buff);
 				uint32 cnt = randomRange(10, 100);
 				for (uint32 i = 0; i < cnt; i++)
 					ser << randomRange(-1.0, 1.0);
+				data = templates::move(buff);
 			}
 		}
 
@@ -183,15 +185,17 @@ void testArchives()
 		testListDirectory("");
 	}
 
-	MemoryBuffer data1, data2, data3;
+	Holder<PointerRange<char>> data1, data2, data3;
 	{ // generate some random data
-		MemoryBuffer *data[3] = { &data1, &data2, &data3 };
-		for (MemoryBuffer *d : data)
+		Holder<PointerRange<char>> *data[3] = { &data1, &data2, &data3 };
+		for (Holder<PointerRange<char>> *d : data)
 		{
-			Serializer ser(*d);
+			MemoryBuffer buff;
+			Serializer ser(buff);
 			uint32 cnt = randomRange(10, 100);
 			for (uint32 i = 0; i < cnt; i++)
 				ser << randomRange(-1.0, 1.0);
+			*d = templates::move(buff);
 		}
 	}
 
@@ -292,15 +296,15 @@ void testArchives()
 		CAGE_TEST(none(type & PathTypeFlags::Archive));
 		Holder<File> f = readFile(path);
 		f->seek(data1.size() + data2.size());
-		MemoryBuffer b3 = f->read(data3.size());
+		Holder<PointerRange<char>> b3 = f->read(data3.size());
 		CAGE_TEST(f->tell() == f->size());
 		f->seek(data1.size());
 		CAGE_TEST(f->tell() == data1.size());
-		MemoryBuffer b2 = f->read(data2.size());
+		Holder<PointerRange<char>> b2 = f->read(data2.size());
 		CAGE_TEST(f->tell() == data1.size() + data2.size());
 		f->seek(0);
 		CAGE_TEST(f->tell() == 0);
-		MemoryBuffer b1 = f->read(data1.size());
+		Holder<PointerRange<char>> b1 = f->read(data1.size());
 		CAGE_TEST(f->tell() == data1.size());
 		f->close();
 		testBuffers(b1, data1);

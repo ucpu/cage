@@ -87,7 +87,7 @@ void processSkeleton()
 	ser.write(bufferCast<char, mat4>(is));
 
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
-	MemoryBuffer comp = detail::compress(buff);
+	Holder<PointerRange<char>> comp = compress(buff);
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + comp.size());
 
 	AssetHeader h = initializeAssetHeader();

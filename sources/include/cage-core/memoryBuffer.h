@@ -7,7 +7,7 @@ namespace cage
 {
 	struct CAGE_CORE_API MemoryBuffer
 	{
-		MemoryBuffer(); // no allocation ctor
+		MemoryBuffer() = default; // no allocation ctor
 		explicit MemoryBuffer(uintPtr size, uintPtr capacity = 0);
 		MemoryBuffer(MemoryBuffer &&other) noexcept;
 		MemoryBuffer &operator = (MemoryBuffer &&other) noexcept;
@@ -58,19 +58,13 @@ namespace cage
 			return { data_, data_ + size_ };
 		}
 
-	private:
-		char *data_;
-		uintPtr size_;
-		uintPtr capacity_;
-	};
+		operator Holder<PointerRange<char>>() &&;
 
-	namespace detail
-	{
-		// preference = 100 -> best compression ratio, but very slow
-		// preference = 0 -> full compression speed, but worse compression ratio
-		CAGE_CORE_API MemoryBuffer compress(PointerRange<const char> input, sint32 preference = 100);
-		CAGE_CORE_API MemoryBuffer decompress(PointerRange<const char> input, uintPtr outputSize);
-	}
+	private:
+		char *data_ = nullptr;
+		uintPtr size_ = 0;
+		uintPtr capacity_ = 0;
+	};
 }
 
 #endif // guard_memoryBuffer_h_10EAF6AFD8624EA4B9E88ECA618A55DD

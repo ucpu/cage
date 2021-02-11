@@ -1,4 +1,4 @@
-#include <cage-core/memoryBuffer.h>
+#include <cage-core/memoryCompression.h>
 
 #include "processor.h"
 
@@ -8,11 +8,10 @@ void processRaw()
 {
 	writeLine(string("use=") + inputFile);
 
-	MemoryBuffer data;
+	Holder<PointerRange<char>> data;
 	{ // load file
-		Holder<File> f = newFile(inputFile, FileMode(true, false));
-		data.allocate(numeric_cast<uintPtr>(f->size()));
-		f->read(data);
+		Holder<File> f = readFile(inputFile);
+		data = f->readAll();
 	}
 
 	AssetHeader h = initializeAssetHeader();
@@ -21,7 +20,7 @@ void processRaw()
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "original data size: " + data.size() + " bytes");
 	if (data.size() >= toUint32(properties("compressThreshold")))
 	{
-		MemoryBuffer data2 = detail::compress(data);
+		Holder<PointerRange<char>> data2 = compress(data);
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "compressed data size: " + data2.size() + " bytes");
 		if (data2.size() < data.size())
 		{

@@ -159,7 +159,7 @@ void testHolder()
 			vec[i] = detail::systemArena().createHolder<Tester>();
 		CAGE_TEST(gCount == 100);
 		CAGE_TEST(vec[0].get() == firstTester);
-		std::vector<Holder<Tester>> vec2 = std::move(vec);
+		std::vector<Holder<Tester>> vec2 = templates::move(vec);
 		CAGE_TEST(gCount == 100);
 		CAGE_TEST(vec.empty());
 		vec2.clear();

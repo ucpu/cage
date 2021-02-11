@@ -1,5 +1,5 @@
-#ifndef guard_projections_h_m1nv5e8967gsx856dghzgg
-#define guard_projections_h_m1nv5e8967gsx856dghzgg
+#ifndef guard_camera_h_m1nv5e8967gsx856dghzgg
+#define guard_camera_h_m1nv5e8967gsx856dghzgg
 
 #include "math.h"
 
@@ -61,4 +61,4 @@ namespace cage
 	CAGE_CORE_API StereoCameraOutput stereoCamera(const StereoCameraInput &input, StereoModeEnum stereoMode, StereoEyeEnum eye);
 }
 
-#endif // guard_projections_h_m1nv5e8967gsx856dghzgg
+#endif // guard_camera_h_m1nv5e8967gsx856dghzgg

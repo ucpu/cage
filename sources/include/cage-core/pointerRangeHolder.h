@@ -9,7 +9,7 @@ namespace cage
 {
 	// utility struct to simplify creating Holder<PointerRange<T>>
 	template<class T>
-	struct PointerRangeHolder : public std::vector<typename std::remove_const<T>::type>, Immovable
+	struct PointerRangeHolder : public std::vector<typename std::remove_const<T>::type>
 	{
 		typedef typename std::remove_const<T>::type CT;
 
@@ -29,17 +29,20 @@ namespace cage
 
 		operator Holder<PointerRange<T>>()
 		{
-			Delegate<void(void*)> d;
-			d.bind<MemoryArena, &MemoryArena::destroy<PointerRangeHolder<T>>>(&detail::systemArena());
-			PointerRangeHolder<T> *p = detail::systemArena().createObject<PointerRangeHolder<T>>();
-			p->swap(*this);
-			p->pr = PointerRange<T>(*p);
-			Holder<PointerRange<T>> h(&p->pr, p, d);
+			struct OwnedVector
+			{
+				std::vector<CT> vec;
+				PointerRange<T> range;
+			};
+
+			Delegate<void(void *)> d;
+			d.bind<MemoryArena, &MemoryArena::destroy<OwnedVector>>(&detail::systemArena());
+			OwnedVector *p = detail::systemArena().createObject<OwnedVector>();
+			std::swap(*this, p->vec);
+			p->range = p->vec;
+			Holder<PointerRange<T>> h(&p->range, p, d);
 			return h;
 		}
-
-	private:
-		PointerRange<T> pr;
 	};
 }
 

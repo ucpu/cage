@@ -354,11 +354,11 @@ namespace cage
 		impl->read(buffer.data(), numeric_cast<uint32>(buffer.size()));
 	}
 
-	MemoryBuffer Process::read(uintPtr size)
+	Holder<PointerRange<char>> Process::read(uintPtr size)
 	{
 		MemoryBuffer buf(size);
 		read(buf);
-		return buf;
+		return templates::move(buf);
 	}
 
 	string Process::readLine()

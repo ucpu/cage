@@ -31,7 +31,7 @@ namespace cage
 		string getWorkingDir() const;
 
 		void read(PointerRange<char> buffer);
-		MemoryBuffer read(uintPtr size);
+		Holder<PointerRange<char>> read(uintPtr size);
 		string readLine();
 
 		void write(PointerRange<const char> buffer);

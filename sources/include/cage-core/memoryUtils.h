@@ -39,12 +39,6 @@ namespace cage
 			return roundDownTo(ptr + alignment - 1, alignment);
 		}
 
-		// preference = 100 -> best compression ratio, but very slow
-		// preference = 0 -> full compression speed, but worse compression ratio
-		CAGE_CORE_API void compress(PointerRange<const char> input, PointerRange<char> &output, sint32 preference = 100);
-		CAGE_CORE_API void decompress(PointerRange<const char> input, PointerRange<char> &output);
-		CAGE_CORE_API uintPtr compressionBound(uintPtr size);
-
 		CAGE_CORE_API uintPtr memoryPageSize();
 	}
 

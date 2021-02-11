@@ -71,12 +71,12 @@ namespace cage
 	void Image::importFile(const string &filename, uint32 channels, ImageFormatEnum format)
 	{
 		Holder<File> f = newFile(filename, FileMode(true, false));
-		MemoryBuffer buffer = f->read(f->size());
+		Holder<PointerRange<char>> buffer = f->read(f->size());
 		f->close();
 		importBuffer(buffer, channels, format);
 	}
 
-	MemoryBuffer Image::exportBuffer(const string &format) const
+	Holder<PointerRange<char>> Image::exportBuffer(const string &format) const
 	{
 		CAGE_ASSERT(channels() > 0);
 		const string ext = toLower(pathExtractExtension(format));
@@ -99,7 +99,7 @@ namespace cage
 
 	void Image::exportFile(const string &filename) const
 	{
-		MemoryBuffer buf = exportBuffer(filename);
+		Holder<PointerRange<char>> buf = exportBuffer(filename);
 		writeFile(filename)->write(buf);
 	}
 }

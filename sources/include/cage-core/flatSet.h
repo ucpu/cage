@@ -55,7 +55,7 @@ namespace cage
 			auto it = std::lower_bound<const_iterator, Value, Compare>(data_.begin(), data_.end(), value, Compare());
 			if (it != data_.end() && equals(*it, value))
 				return { it, false };
-			return { data_.insert(it, std::move(value)), true };
+			return { data_.insert(it, templates::move(value)), true };
 		}
 
 		template< class InputIt >

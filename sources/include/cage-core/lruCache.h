@@ -12,11 +12,10 @@ namespace cage
 	private:
 		struct Data
 		{
-			Key key;
-			Value value;
+			Key key = Key();
+			Value value = Value();
 			uint32 p = m, n = m;
 			bool valid = false;
-			Data() : key(), value() {}
 		};
 
 		std::vector<Data> data;

@@ -241,7 +241,7 @@ namespace cage
 					const uintPtr off = totalSize > MaxSize ? totalSize - MaxSize : 0; // start of the buffer relative to the entire file
 					const uintPtr size = min(totalSize, MaxSize);
 					src->seek(off);
-					const MemoryBuffer b = src->read(size);
+					Holder<PointerRange<char>> b = src->read(size);
 					// search for eocd from the back
 					for (uint32 i = sizeof(EndOfCentralDirectoryRecord); i <= size; i++)
 					{
@@ -277,7 +277,7 @@ namespace cage
 				{ // read central directory (populate files)
 					src->seek(originalCDFilesPosition); // seek to where the list of files is
 					files.reserve(totalFiles);
-					MemoryBuffer b = src->read(cdSize);
+					Holder<PointerRange<char>> b = src->read(cdSize);
 					Deserializer d(b);
 					for (uint32 i = 0; i < totalFiles; i++)
 					{
@@ -545,7 +545,7 @@ namespace cage
 					return;
 
 				// todo optimize this
-				MemoryBuffer buff = openFile(from, FileMode(true, false))->readAll();
+				Holder<PointerRange<char>> buff = openFile(from, FileMode(true, false))->readAll();
 				openFile(to, FileMode(false, true))->write(buff);
 				remove(from);
 			}
@@ -672,7 +672,12 @@ namespace cage
 				a->reopenForModification();
 				const uintPtr pos = src->tell();
 				src->seek(0);
-				buff = src->readAll();
+				{
+					buff.resize(src->size());
+					Holder<PointerRange<char>> tmp = src->readAll();
+					CAGE_ASSERT(tmp.size() == buff.size());
+					detail::memcpy(buff.data(), tmp.data(), buff.size());
+				}
 				src = newFileBuffer(&buff);
 				src->seek(pos);
 				modified = true;

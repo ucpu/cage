@@ -615,7 +615,7 @@ void processMesh()
 	ser << mat;
 	ser.write(poly->serialize());
 	h.originalSize = buffer.size();
-	cage::MemoryBuffer compressed = detail::compress(buffer);
+	Holder<PointerRange<char>> compressed = compress(buffer);
 	h.compressedSize = compressed.size();
 
 	Holder<File> f = writeFile(outputFileName);

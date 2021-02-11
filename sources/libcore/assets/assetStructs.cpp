@@ -1,6 +1,7 @@
 #include <cage-core/math.h>
 #include <cage-core/memoryUtils.h>
 #include <cage-core/memoryBuffer.h>
+#include <cage-core/memoryCompression.h>
 #include <cage-core/serialization.h>
 #include <cage-core/textPack.h>
 #include <cage-core/collider.h>
@@ -67,7 +68,7 @@ namespace cage
 			if (context->compressedData.size() == 0)
 				return;
 			PointerRange<char> orig = context->originalData;
-			detail::decompress(context->compressedData, orig);
+			decompress(context->compressedData, orig);
 			CAGE_ASSERT(orig.size() == context->originalData.size());
 		}
 	}

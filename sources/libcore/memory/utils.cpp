@@ -8,8 +8,6 @@
 #include <sys/mman.h>
 #endif
 
-#include <zstd.h>
-
 #include <cstdlib>
 #include <atomic>
 #include <cerrno>
@@ -103,30 +101,6 @@ namespace cage
 
 	namespace detail
 	{
-		uintPtr compressionBound(uintPtr size)
-		{
-			const std::size_t r = ZSTD_compressBound(size);
-			return r + r / 100 + 100000; // additional capacity allows faster compression
-		}
-
-		void compress(PointerRange<const char> input, PointerRange<char> &output, sint32 preference)
-		{
-			const std::size_t r = ZSTD_compress(output.data(), output.size(), input.data(), input.size(), ZSTD_maxCLevel() * preference / 100);
-			if (ZSTD_isError(r))
-				CAGE_THROW_ERROR(Exception, ZSTD_getErrorName(r));
-			CAGE_ASSERT(r <= output.size());
-			output = PointerRange<char>(output.data(), output.data() + r);
-		}
-
-		void decompress(PointerRange<const char> input, PointerRange<char> &output)
-		{
-			const std::size_t r = ZSTD_decompress(output.data(), output.size(), input.data(), input.size());
-			if (ZSTD_isError(r))
-				CAGE_THROW_ERROR(Exception, ZSTD_getErrorName(r));
-			CAGE_ASSERT(r <= output.size());
-			output = PointerRange<char>(output.data(), output.data() + r);
-		}
-
 		namespace
 		{
 			void *malloca(uintPtr size, uintPtr alignment)
