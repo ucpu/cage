@@ -49,7 +49,7 @@ namespace cage
 
 	void Image::clear()
 	{
-		ImageImpl *impl = (ImageImpl*)this;
+		ImageImpl *impl = (ImageImpl *)this;
 		impl->width = 0;
 		impl->height = 0;
 		impl->channels = 0;
@@ -63,7 +63,7 @@ namespace cage
 		CAGE_ASSERT(f != ImageFormatEnum::Default);
 		CAGE_ASSERT(c > 0);
 		CAGE_ASSERT(c == 3 || f != ImageFormatEnum::Rgbe);
-		ImageImpl *impl = (ImageImpl*)this;
+		ImageImpl *impl = (ImageImpl *)this;
 		impl->width = w;
 		impl->height = h;
 		impl->channels = c;
@@ -74,9 +74,16 @@ namespace cage
 		colorConfig = defaultConfig(c);
 	}
 
+	Holder<Image> Image::copy() const
+	{
+		Holder<Image> img = newImage();
+		imageBlit(this, img.get(), 0, 0, 0, 0, width(), height());
+		return img;
+	}
+
 	void Image::importRaw(MemoryBuffer &&buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format)
 	{
-		ImageImpl *impl = (ImageImpl*)this;
+		ImageImpl *impl = (ImageImpl *)this;
 		CAGE_ASSERT(buffer.size() >= width * height * channels * formatBytes(format));
 		initialize(0, 0, channels, format);
 		impl->mem = templates::move(buffer);
@@ -86,7 +93,7 @@ namespace cage
 
 	void Image::importRaw(PointerRange<const char> buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format)
 	{
-		ImageImpl *impl = (ImageImpl*)this;
+		ImageImpl *impl = (ImageImpl *)this;
 		CAGE_ASSERT(buffer.size() >= width * height * channels * formatBytes(format));
 		initialize(width, height, channels, format);
 		detail::memcpy(impl->mem.data(), buffer.data(), impl->mem.size());
@@ -94,31 +101,31 @@ namespace cage
 
 	uint32 Image::width() const
 	{
-		const ImageImpl *impl = (const ImageImpl*)this;
+		const ImageImpl *impl = (const ImageImpl *)this;
 		return impl->width;
 	}
 
 	uint32 Image::height() const
 	{
-		const ImageImpl *impl = (const ImageImpl*)this;
+		const ImageImpl *impl = (const ImageImpl *)this;
 		return impl->height;
 	}
 
 	uint32 Image::channels() const
 	{
-		const ImageImpl *impl = (const ImageImpl*)this;
+		const ImageImpl *impl = (const ImageImpl *)this;
 		return impl->channels;
 	}
 
 	ImageFormatEnum Image::format() const
 	{
-		const ImageImpl *impl = (const ImageImpl*)this;
+		const ImageImpl *impl = (const ImageImpl *)this;
 		return impl->format;
 	}
 
 	float Image::value(uint32 x, uint32 y, uint32 c) const
 	{
-		const ImageImpl *impl = (const ImageImpl*)this;
+		const ImageImpl *impl = (const ImageImpl *)this;
 		CAGE_ASSERT(impl->channels == 3 || impl->format != ImageFormatEnum::Rgbe);
 		CAGE_ASSERT(x < impl->width && y < impl->height && c < impl->channels);
 		uint32 offset = (y * impl->width + x) * impl->channels;
@@ -139,7 +146,7 @@ namespace cage
 
 	void Image::value(uint32 x, uint32 y, uint32 c, float v)
 	{
-		ImageImpl *impl = (ImageImpl*)this;
+		ImageImpl *impl = (ImageImpl *)this;
 		CAGE_ASSERT(impl->channels == 3 || impl->format != ImageFormatEnum::Rgbe);
 		CAGE_ASSERT(x < impl->width && y < impl->height && c < impl->channels);
 		uint32 offset = (y * impl->width + x) * impl->channels;
@@ -176,7 +183,7 @@ namespace cage
 
 	vec2 Image::get2(uint32 x, uint32 y) const
 	{
-		ImageImpl *impl = (ImageImpl*)this;
+		const ImageImpl *impl = (const ImageImpl *)this;
 		CAGE_ASSERT(impl->channels == 2);
 		CAGE_ASSERT(x < impl->width && y < impl->height);
 		uint32 offset = (y * impl->width + x) * 2;
@@ -204,7 +211,7 @@ namespace cage
 
 	vec3 Image::get3(uint32 x, uint32 y) const
 	{
-		ImageImpl *impl = (ImageImpl*)this;
+		const ImageImpl *impl = (const ImageImpl *)this;
 		CAGE_ASSERT(impl->channels == 3);
 		CAGE_ASSERT(x < impl->width && y < impl->height);
 		uint32 offset = (y * impl->width + x) * 3;
@@ -237,7 +244,7 @@ namespace cage
 
 	vec4 Image::get4(uint32 x, uint32 y) const
 	{
-		ImageImpl *impl = (ImageImpl*)this;
+		const ImageImpl *impl = (const ImageImpl *)this;
 		CAGE_ASSERT(impl->channels == 4);
 		CAGE_ASSERT(x < impl->width && y < impl->height);
 		uint32 offset = (y * impl->width + x) * 4;
@@ -276,7 +283,7 @@ namespace cage
 
 	void Image::set(uint32 x, uint32 y, const vec2 &v)
 	{
-		ImageImpl *impl = (ImageImpl*)this;
+		ImageImpl *impl = (ImageImpl *)this;
 		CAGE_ASSERT(impl->channels == 2);
 		CAGE_ASSERT(x < impl->width && y < impl->height);
 		uint32 offset = (y * impl->width + x) * 2;
@@ -308,7 +315,7 @@ namespace cage
 
 	void Image::set(uint32 x, uint32 y, const vec3 &v)
 	{
-		ImageImpl *impl = (ImageImpl*)this;
+		ImageImpl *impl = (ImageImpl *)this;
 		CAGE_ASSERT(impl->channels == 3);
 		CAGE_ASSERT(x < impl->width && y < impl->height);
 		uint32 offset = (y * impl->width + x) * 3;
@@ -345,7 +352,7 @@ namespace cage
 
 	void Image::set(uint32 x, uint32 y, const vec4 &v)
 	{
-		ImageImpl *impl = (ImageImpl*)this;
+		ImageImpl *impl = (ImageImpl *)this;
 		CAGE_ASSERT(impl->channels == 4);
 		CAGE_ASSERT(x < impl->width && y < impl->height);
 		uint32 offset = (y * impl->width + x) * 4;
@@ -377,30 +384,23 @@ namespace cage
 
 	PointerRange<const uint8> Image::rawViewU8() const
 	{
-		ImageImpl *impl = (ImageImpl*)this;
+		const ImageImpl *impl = (const ImageImpl *)this;
 		CAGE_ASSERT(impl->format == ImageFormatEnum::U8);
-		return bufferCast<uint8, char>(impl->mem);
+		return bufferCast<const uint8, const char>(impl->mem);
 	}
 
 	PointerRange<const uint16> Image::rawViewU16() const
 	{
-		ImageImpl *impl = (ImageImpl*)this;
+		const ImageImpl *impl = (const ImageImpl *)this;
 		CAGE_ASSERT(impl->format == ImageFormatEnum::U16);
-		return bufferCast<uint16, char>(impl->mem);
+		return bufferCast<const uint16, const char>(impl->mem);
 	}
 
 	PointerRange<const float> Image::rawViewFloat() const
 	{
-		ImageImpl *impl = (ImageImpl*)this;
+		const ImageImpl *impl = (const ImageImpl *)this;
 		CAGE_ASSERT(impl->format == ImageFormatEnum::Float);
-		return bufferCast<float, char>(impl->mem);
-	}
-
-	Holder<Image> Image::copy() const
-	{
-		Holder<Image> img = newImage();
-		imageBlit(this, img.get(), 0, 0, 0, 0, width(), height());
-		return img;
+		return bufferCast<const float, const char>(impl->mem);
 	}
 
 	Holder<Image> newImage()

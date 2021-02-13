@@ -70,8 +70,8 @@ namespace cage
 
 	void Image::importFile(const string &filename, uint32 channels, ImageFormatEnum format)
 	{
-		Holder<File> f = newFile(filename, FileMode(true, false));
-		Holder<PointerRange<char>> buffer = f->read(f->size());
+		Holder<File> f = readFile(filename);
+		Holder<PointerRange<char>> buffer = f->readAll();
 		f->close();
 		importBuffer(buffer, channels, format);
 	}

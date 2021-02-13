@@ -13,7 +13,7 @@ namespace cage
 		Float = 4,
 		// todo DXT/s3tc
 
-		Default = m, // used only for decoding an image, it will use the original format from the image
+		Default = m, // used only for decoding an image, it will use original format from the file
 	};
 
 	enum class GammaSpaceEnum : uint32

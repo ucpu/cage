@@ -37,6 +37,7 @@ void testConfig();
 void testColor();
 void testImage();
 void testPolyhedron();
+void testPolytone();
 void testMarchingCubes();
 void testNoise();
 void testRectPacking();
@@ -97,6 +98,7 @@ int main()
 	testColor();
 	testImage();
 	testPolyhedron();
+	testPolytone();
 	testMarchingCubes();
 	testNoise();
 	testRectPacking();

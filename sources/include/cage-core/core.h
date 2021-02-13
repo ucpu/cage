@@ -203,7 +203,7 @@ namespace cage
 	class NoiseFunction;
 	struct NoiseFunctionCreateConfig;
 	template<class T> struct PointerRangeHolder;
-	enum class PolyhedronTypeEnum;
+	enum class PolyhedronTypeEnum : uint32;
 	struct PolyhedronSimplificationConfig;
 	struct PolyhedronRegularizationConfig;
 	struct PolyhedronUnwrapConfig;
@@ -212,6 +212,8 @@ namespace cage
 	struct PolyhedronTangentsGenerationConfig;
 	struct PolyhedronObjExportConfig;
 	class Polyhedron;
+	enum class PolytoneFormatEnum : uint32;
+	class Polytone;
 	struct ProcessCreateConfig;
 	class Process;
 	struct RandomGenerator;

@@ -5,7 +5,7 @@
 
 namespace cage
 {
-	enum class PolyhedronTypeEnum
+	enum class PolyhedronTypeEnum : uint32
 	{
 		Points = 1,
 		Lines = 2,
