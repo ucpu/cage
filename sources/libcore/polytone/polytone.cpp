@@ -212,13 +212,15 @@ namespace cage
 		}
 	}
 
+	Holder<Polytone> vorbisExtract(const PolytoneImpl *snd, uint64 offset, uint64 frames);
+
 	void polytoneBlit(const Polytone *source, Polytone *target, uint64 sourceFrameOffset, uint64 targetFrameOffset, uint64 frames)
 	{
 		const PolytoneImpl *s = (const PolytoneImpl *)source;
 		PolytoneImpl *t = (PolytoneImpl *)target;
 
-		if (s->format == PolytoneFormatEnum::Vorbis || t->format == PolytoneFormatEnum::Vorbis)
-			CAGE_THROW_ERROR(NotImplemented, "polytoneBlit with vorbis"); // todo
+		if (t->format == PolytoneFormatEnum::Vorbis || (t->format == PolytoneFormatEnum::Default && s->format == PolytoneFormatEnum::Vorbis))
+			CAGE_THROW_ERROR(Exception, "polytoneBlit into vorbis is forbidden");
 
 		CAGE_ASSERT(s->format != PolytoneFormatEnum::Default && s->channels > 0);
 		CAGE_ASSERT(s != t || !overlaps(sourceFrameOffset, targetFrameOffset, frames));
@@ -227,8 +229,13 @@ namespace cage
 		CAGE_ASSERT(s->channels == t->channels);
 		CAGE_ASSERT(sourceFrameOffset + frames <= s->frames);
 		CAGE_ASSERT(targetFrameOffset + frames <= t->frames);
-		
-		if (s->format == t->format)
+
+		if (s->format == PolytoneFormatEnum::Vorbis)
+		{
+			Holder<Polytone> tmp = vorbisExtract(s, sourceFrameOffset, frames);
+			polytoneBlit(+tmp, target, 0, targetFrameOffset, frames);
+		}
+		else if (s->format == t->format)
 		{
 			const uint64 fb = s->channels * formatBytes(s->format);
 			detail::memcpy((char *)t->mem.data() + targetFrameOffset * fb, (char *)s->mem.data() + sourceFrameOffset * fb, frames * fb);

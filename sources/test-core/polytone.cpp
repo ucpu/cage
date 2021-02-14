@@ -6,6 +6,8 @@
 #include <initializer_list>
 #include <vector>
 
+void test(real, real);
+
 namespace
 {
 	constexpr double twoPi = 3.14159265358979323846264338327950288419716939937510 * 2;
@@ -68,6 +70,54 @@ void testPolytone()
 		snd->exportFile("sounds/tone_A6_1760_mono.wav");
 		generateMono(+snd, 3520);
 		snd->exportFile("sounds/tone_A7_3520_mono.wav");
+	}
+
+	{
+		CAGE_TESTCASE("mono values");
+		Holder<Polytone> snd = newPolytone();
+		generateMono(+snd, 1, 8, 4);
+		CAGE_TEST(snd->frames() == 8);
+		CAGE_TEST(snd->channels() == 1);
+		CAGE_TEST(snd->sampleRate() == 4);
+		CAGE_TEST(snd->format() == PolytoneFormatEnum::Float);
+		CAGE_TEST(snd->rawViewFloat().size() == 8);
+		test(snd->value(0, 0), 0);
+		test(snd->value(1, 0), 1);
+		test(snd->value(2, 0), 0);
+		test(snd->value(3, 0), -1);
+		test(snd->value(4, 0), 0);
+		test(snd->value(5, 0), 1);
+		test(snd->value(6, 0), 0);
+		test(snd->value(7, 0), -1);
+	}
+
+	{
+		CAGE_TESTCASE("stereo values");
+		Holder<Polytone> snd = newPolytone();
+		generateStereo(+snd, 1, 8, 4);
+		CAGE_TEST(snd->frames() == 8);
+		CAGE_TEST(snd->channels() == 2);
+		CAGE_TEST(snd->sampleRate() == 4);
+		CAGE_TEST(snd->format() == PolytoneFormatEnum::Float);
+		CAGE_TEST(snd->rawViewFloat().size() == 16);
+		// left
+		test(snd->value(0, 0), 0);
+		test(snd->value(1, 0), 0.85355);
+		test(snd->value(2, 0), 0);
+		test(snd->value(3, 0), -0.85355);
+		test(snd->value(4, 0), 0);
+		test(snd->value(5, 0), 0.14644);
+		test(snd->value(6, 0), 0);
+		test(snd->value(7, 0), -0.14644);
+		// right
+		test(snd->value(0, 1), 0);
+		test(snd->value(1, 1), 0.14644);
+		test(snd->value(2, 1), 0);
+		test(snd->value(3, 1), -0.14644);
+		test(snd->value(4, 1), 0);
+		test(snd->value(5, 1), 0.85355);
+		test(snd->value(6, 1), 0);
+		test(snd->value(7, 1), -0.85355);
 	}
 
 	{
@@ -138,5 +188,48 @@ void testPolytone()
 			CAGE_TEST(snd->sampleRate() == 48000);
 			snd->clear();
 		}
+	}
+
+	{
+		CAGE_TESTCASE("blit same format");
+		Holder<Polytone> src = newPolytone();
+		generateStereo(+src, 440, 480000);
+		Holder<Polytone> dst = newPolytone();
+		generateStereo(+dst, 220, 480000);
+		polytoneBlit(+src, +dst, 120000, 120000, 240000);
+		dst->exportFile("sounds/blit_same_format.wav");
+	}
+
+	{
+		CAGE_TESTCASE("blit format s16 to float");
+		Holder<Polytone> src = newPolytone();
+		generateStereo(+src, 440, 480000);
+		polytoneConvertFormat(+src, PolytoneFormatEnum::S16);
+		Holder<Polytone> dst = newPolytone();
+		generateStereo(+dst, 220, 480000);
+		polytoneBlit(+src, +dst, 120000, 120000, 240000);
+		dst->exportFile("sounds/blit_format_s16_float.wav");
+	}
+
+	{
+		CAGE_TESTCASE("blit format vorbis to s16");
+		Holder<Polytone> src = newPolytone();
+		generateStereo(+src, 440, 480000);
+		polytoneConvertFormat(+src, PolytoneFormatEnum::Vorbis);
+		Holder<Polytone> dst = newPolytone();
+		generateStereo(+dst, 220, 480000);
+		polytoneConvertFormat(+dst, PolytoneFormatEnum::S16);
+		polytoneBlit(+src, +dst, 120000, 120000, 240000);
+		dst->exportFile("sounds/blit_format_vorbis_s16.wav");
+	}
+
+	{
+		CAGE_TESTCASE("blit into vorbis");
+		Holder<Polytone> src = newPolytone();
+		generateStereo(+src, 440, 480000);
+		Holder<Polytone> dst = newPolytone();
+		generateStereo(+dst, 220, 480000);
+		polytoneConvertFormat(+dst, PolytoneFormatEnum::Vorbis);
+		CAGE_TEST_THROWN(polytoneBlit(+src, +dst, 120000, 120000, 240000));
 	}
 }

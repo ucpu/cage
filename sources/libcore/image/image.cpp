@@ -76,8 +76,15 @@ namespace cage
 
 	Holder<Image> Image::copy() const
 	{
+		const ImageImpl *src = (const ImageImpl *)this;
 		Holder<Image> img = newImage();
-		imageBlit(this, +img, 0, 0, 0, 0, width(), height());
+		ImageImpl *dst = (ImageImpl *)+img;
+		dst->mem = src->mem.copy();
+		dst->width = src->width;
+		dst->height = src->height;
+		dst->channels = src->channels;
+		dst->format = src->format;
+		dst->colorConfig = src->colorConfig;
 		return img;
 	}
 

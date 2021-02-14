@@ -287,4 +287,17 @@ namespace cage
 			snd->format = PolytoneFormatEnum::Vorbis;
 		}
 	}
+
+	Holder<Polytone> vorbisExtract(const PolytoneImpl *src, uint64 offset, uint64 frames)
+	{
+		CAGE_ASSERT(src->format == PolytoneFormatEnum::Vorbis);
+		CAGE_ASSERT(offset + frames <= src->frames);
+		Holder<Polytone> poly = newPolytone();
+		PolytoneImpl *dst = (PolytoneImpl *)+poly;
+		dst->initialize(frames, src->channels, src->sampleRate, PolytoneFormatEnum::Float);
+		VorbisDecoder dec(newFileBuffer(src->mem));
+		dec.seekFrame(offset);
+		dec.decode(bufferCast<float, char>(dst->mem));
+		return poly;
+	}
 }
