@@ -11,12 +11,7 @@ namespace cage
 			CAGE_THROW_ERROR(Exception, "failed to initialize decoding mp3 sound");
 		try
 		{
-			impl->sampleRate = mp3.sampleRate;
-			impl->frames = drmp3_get_pcm_frame_count(&mp3);
-			impl->channels = mp3.channels;
-			CAGE_ASSERT(impl->format == PolytoneFormatEnum::Default);
-			impl->format = PolytoneFormatEnum::Float;
-			impl->mem.resize(impl->frames * impl->channels * sizeof(float));
+			impl->initialize(drmp3_get_pcm_frame_count(&mp3), mp3.channels, mp3.sampleRate, PolytoneFormatEnum::Float);
 			if (drmp3_read_pcm_frames_f32(&mp3, impl->frames, (float *)impl->mem.data()) != impl->frames)
 				CAGE_THROW_ERROR(Exception, "failed to read samples in decoding mp3 sound");
 		}

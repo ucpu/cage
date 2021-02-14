@@ -11,23 +11,18 @@ namespace cage
 			CAGE_THROW_ERROR(Exception, "failed to initialize decoding wav sound");
 		try
 		{
-			impl->sampleRate = wav.sampleRate;
-			impl->frames = wav.totalPCMFrameCount;
-			impl->channels = wav.channels;
 			CAGE_ASSERT(impl->format == PolytoneFormatEnum::Default);
 			if (wav.translatedFormatTag == DR_WAVE_FORMAT_PCM)
 			{
 				switch (wav.bitsPerSample)
 				{
 				case 16:
-					impl->format = PolytoneFormatEnum::S16;
-					impl->mem.resize(impl->frames * impl->channels * sizeof(sint16));
+					impl->initialize(wav.totalPCMFrameCount, wav.channels, wav.sampleRate, PolytoneFormatEnum::S16);
 					if (drwav_read_pcm_frames_s16(&wav, impl->frames, (sint16 *)impl->mem.data()) != impl->frames)
 						CAGE_THROW_ERROR(Exception, "failed to read s16 samples in decoding wav sound");
 					break;
 				case 32:
-					impl->format = PolytoneFormatEnum::S32;
-					impl->mem.resize(impl->frames * impl->channels * sizeof(sint32));
+					impl->initialize(wav.totalPCMFrameCount, wav.channels, wav.sampleRate, PolytoneFormatEnum::S32);
 					if (drwav_read_pcm_frames_s32(&wav, impl->frames, (sint32 *)impl->mem.data()) != impl->frames)
 						CAGE_THROW_ERROR(Exception, "failed to read s32 samples in decoding wav sound");
 					break;
@@ -35,8 +30,7 @@ namespace cage
 			}
 			if (impl->format == PolytoneFormatEnum::Default)
 			{
-				impl->format = PolytoneFormatEnum::Float;
-				impl->mem.resize(impl->frames * impl->channels * sizeof(float));
+				impl->initialize(wav.totalPCMFrameCount, wav.channels, wav.sampleRate, PolytoneFormatEnum::Float);
 				if (drwav_read_pcm_frames_f32(&wav, impl->frames, (float *)impl->mem.data()) != impl->frames)
 					CAGE_THROW_ERROR(Exception, "failed to read f32 samples in decoding wav sound");
 			}
@@ -51,6 +45,13 @@ namespace cage
 
 	MemoryBuffer wavEncode(const PolytoneImpl *impl)
 	{
+		if (impl->format == PolytoneFormatEnum::Vorbis)
+		{
+			Holder<Polytone> tmp = impl->copy();
+			polytoneConvertFormat(+tmp, PolytoneFormatEnum::Float);
+			return wavEncode((PolytoneImpl *)+tmp);
+		}
+
 		void *buffer = nullptr;
 		std::size_t size = 0;
 		drwav wav = {};

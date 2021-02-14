@@ -8,10 +8,11 @@
 
 namespace
 {
+	constexpr double twoPi = 3.14159265358979323846264338327950288419716939937510 * 2;
+
 	void generateMono(Polytone *snd, uint32 pitch = 440, uint32 frames = 480000, uint32 sampleRate = 48000)
 	{
-		constexpr double twoPi = 3.14159265358979323846264338327950288419716939937510 * 2;
-		double step = twoPi * pitch / (double)sampleRate;
+		const double step = twoPi * pitch / (double)sampleRate;
 		std::vector<real> samples;
 		samples.reserve(frames);
 		for (uint32 index = 0; index < frames; index++)
@@ -25,9 +26,8 @@ namespace
 
 	void generateStereo(Polytone *snd, uint32 pitch = 440, uint32 frames = 480000, uint32 sampleRate = 48000)
 	{
-		constexpr double twoPi = 3.14159265358979323846264338327950288419716939937510 * 2;
-		double stepTone = twoPi * pitch / (double)sampleRate;
-		double stepDir = twoPi * 0.5 / (double)sampleRate;
+		const double stepTone = twoPi * pitch / (double)sampleRate;
+		const double stepDir = twoPi * 0.5 / (double)sampleRate;
 		std::vector<real> samples;
 		samples.reserve(frames * 2);
 		for (uint32 index = 0; index < frames; index++)
@@ -90,6 +90,32 @@ void testPolytone()
 		CAGE_TEST(snd->channels() == 2);
 		CAGE_TEST(snd->sampleRate() == 48000);
 		CAGE_TEST(snd->format() == PolytoneFormatEnum::Float);
+	}
+
+	{
+		CAGE_TESTCASE("format conversions");
+		Holder<Polytone> snd = newPolytone();
+		generateStereo(+snd, 440);
+		CAGE_TEST(snd->frames() == 480000);
+		CAGE_TEST(snd->channels() == 2);
+		CAGE_TEST(snd->sampleRate() == 48000);
+		CAGE_TEST(snd->format() == PolytoneFormatEnum::Float);
+		polytoneConvertFormat(+snd, PolytoneFormatEnum::S16);
+		CAGE_TEST(snd->frames() == 480000);
+		CAGE_TEST(snd->channels() == 2);
+		CAGE_TEST(snd->sampleRate() == 48000);
+		CAGE_TEST(snd->format() == PolytoneFormatEnum::S16);
+		polytoneConvertFormat(+snd, PolytoneFormatEnum::Vorbis);
+		CAGE_TEST(snd->frames() == 480000);
+		CAGE_TEST(snd->channels() == 2);
+		CAGE_TEST(snd->sampleRate() == 48000);
+		CAGE_TEST(snd->format() == PolytoneFormatEnum::Vorbis);
+		polytoneConvertFormat(+snd, PolytoneFormatEnum::Float);
+		CAGE_TEST(snd->frames() == 480000);
+		CAGE_TEST(snd->channels() == 2);
+		CAGE_TEST(snd->sampleRate() == 48000);
+		CAGE_TEST(snd->format() == PolytoneFormatEnum::Float);
+		snd->exportFile("sounds/conversions_440_stereo.wav");
 	}
 
 	{

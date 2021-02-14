@@ -37,19 +37,19 @@ namespace cage
 			impl->clear();
 			if (buffer.size() < 32)
 				CAGE_THROW_ERROR(Exception, "insufficient data to determine sound format");
+			constexpr const uint8 wavSignature[12] = { 0x52, 0x49, 0x46, 0x46, 0,0,0,0, 0x57, 0x41, 0x56, 0x45 };
+			constexpr const uint8 wavSignatureMask[12] = { 1,1,1,1, 0,0,0,0, 1,1,1,1 };
 			constexpr const uint8 flacSignature[4] = { 0x66, 0x4C, 0x61, 0x43 };
 			constexpr const uint8 mp3Signature[3] = { 0x49, 0x44, 0x33 };
 			constexpr const uint8 vorbisSignature[4] = { 0x4F, 0x67, 0x67, 0x53 };
-			constexpr const uint8 wavSignature[12] = { 0x52, 0x49, 0x46, 0x46, 0,0,0,0, 0x57, 0x41, 0x56, 0x45 };
-			constexpr const uint8 wavSignatureMask[12] = { 1,1,1,1, 0,0,0,0, 1,1,1,1 };
-			if (detail::memcmp(buffer.data(), flacSignature, sizeof(flacSignature)) == 0)
+			if (copmpareWithMask(buffer, wavSignature, wavSignatureMask) == 0)
+				wavDecode(buffer, impl);
+			else if (detail::memcmp(buffer.data(), flacSignature, sizeof(flacSignature)) == 0)
 				flacDecode(buffer, impl);
 			else if (detail::memcmp(buffer.data(), mp3Signature, sizeof(mp3Signature)) == 0)
 				mp3Decode(buffer, impl);
 			else if (detail::memcmp(buffer.data(), vorbisSignature, sizeof(vorbisSignature)) == 0)
 				vorbisDecode(buffer, impl);
-			else if (copmpareWithMask(buffer, wavSignature, wavSignatureMask) == 0)
-				wavDecode(buffer, impl);
 			else
 				CAGE_THROW_ERROR(Exception, "sound data do not match any known signature");
 			if (requestedFormat != PolytoneFormatEnum::Default)
@@ -74,14 +74,14 @@ namespace cage
 	{
 		CAGE_ASSERT(channels() > 0);
 		const string ext = toLower(pathExtractExtension(format));
+		if (ext == ".wav")
+			return wavEncode((const PolytoneImpl *)this);
 		if (ext == ".flac")
 			return flacEncode((const PolytoneImpl *)this);
 		if (ext == ".mp3")
 			return mp3Encode((const PolytoneImpl *)this);
 		if (ext == ".ogg")
 			return vorbisEncode((const PolytoneImpl *)this);
-		if (ext == ".wav")
-			return wavEncode((const PolytoneImpl *)this);
 		CAGE_THROW_ERROR(Exception, "unrecognized file extension for sound encoding");
 	}
 

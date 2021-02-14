@@ -7,6 +7,8 @@
 #include <vorbis/vorbisenc.h>
 #include <vorbis/vorbisfile.h>
 
+#include <utility> // std::swap
+
 namespace cage
 {
 	namespace
@@ -238,14 +240,51 @@ namespace cage
 	void vorbisDecode(PointerRange<const char> inBuffer, PolytoneImpl *impl)
 	{
 		VorbisDecoder dec(newFileBuffer(inBuffer));
-		impl->initialize(dec.frames, dec.channels, dec.sampleRate, PolytoneFormatEnum::Float);
-		dec.decode(bufferCast<float, char>(impl->mem));
+		impl->mem.resize(0); // avoid copying
+		impl->mem.resize(inBuffer.size());
+		detail::memcpy(impl->mem.data(), inBuffer.data(), inBuffer.size());
+		impl->frames = dec.frames;
+		impl->channels = dec.channels;
+		impl->sampleRate = dec.sampleRate;
+		impl->format = PolytoneFormatEnum::Vorbis;
 	}
 
 	MemoryBuffer vorbisEncode(const PolytoneImpl *impl)
 	{
-		VorbisEncoder enc(impl);
-		enc.encode();
-		return templates::move(enc.outputBuffer);
+		if (impl->format == PolytoneFormatEnum::Vorbis)
+			return impl->mem.copy();
+		else
+		{
+			VorbisEncoder enc(impl);
+			enc.encode();
+			return templates::move(enc.outputBuffer);
+		}
+	}
+
+	void vorbisConvertFormat(PolytoneImpl *snd, PolytoneFormatEnum format)
+	{
+		CAGE_ASSERT(snd->format != format);
+		CAGE_ASSERT(snd->format == PolytoneFormatEnum::Vorbis || format == PolytoneFormatEnum::Vorbis);
+		if (snd->format == PolytoneFormatEnum::Vorbis)
+		{
+			// vorbis -> float -> format
+			MemoryBuffer tmp;
+			std::swap(tmp, snd->mem);
+			VorbisDecoder dec(newFileBuffer(tmp, FileMode(true, false)));
+			CAGE_ASSERT(dec.frames == snd->frames);
+			CAGE_ASSERT(dec.channels == snd->channels);
+			snd->initialize(dec.frames, dec.channels, dec.sampleRate, PolytoneFormatEnum::Float);
+			dec.decode(bufferCast<float, char>(snd->mem));
+			polytoneConvertFormat(snd, format);
+		}
+		else
+		{
+			// snd->format -> float -> vorbis
+			polytoneConvertFormat(snd, PolytoneFormatEnum::Float);
+			VorbisEncoder enc(snd);
+			enc.encode();
+			std::swap(snd->mem, enc.outputBuffer);
+			snd->format = PolytoneFormatEnum::Vorbis;
+		}
 	}
 }

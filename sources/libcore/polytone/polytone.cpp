@@ -3,6 +3,8 @@
 #include <cage-core/math.h>
 #include <cage-core/serialization.h>
 
+#include <utility> // std::swap
+
 namespace cage
 {
 	uint32 formatBytes(PolytoneFormatEnum format)
@@ -12,7 +14,10 @@ namespace cage
 		case PolytoneFormatEnum::S16: return sizeof(sint16);
 		case PolytoneFormatEnum::S32: return sizeof(sint32);
 		case PolytoneFormatEnum::Float: return sizeof(float);
-		default: CAGE_THROW_CRITICAL(Exception, "invalid polytone format");
+		case PolytoneFormatEnum::Vorbis:
+			CAGE_THROW_ERROR(Exception, "vorbis encoding has variable bitrate");
+		default:
+			CAGE_THROW_CRITICAL(Exception, "invalid polytone format");
 		}
 	}
 
@@ -28,6 +33,7 @@ namespace cage
 
 	void Polytone::initialize(uint64 frames, uint32 channels, uint32 sampleRate, PolytoneFormatEnum format)
 	{
+		CAGE_ASSERT(format != PolytoneFormatEnum::Vorbis);
 		CAGE_ASSERT(format != PolytoneFormatEnum::Default);
 		CAGE_ASSERT(channels > 0);
 		PolytoneImpl *impl = (PolytoneImpl *)this;
@@ -119,6 +125,8 @@ namespace cage
 			return ((sint32 *)impl->mem.data())[offset] / 2147483647.f;
 		case PolytoneFormatEnum::Float:
 			return ((float *)impl->mem.data())[offset];
+		case PolytoneFormatEnum::Vorbis:
+			CAGE_THROW_ERROR(Exception, "cannot directly sample vorbis encoded polytone");
 		default:
 			CAGE_THROW_CRITICAL(Exception, "invalid polytone format");
 		}
@@ -132,14 +140,16 @@ namespace cage
 		switch (impl->format)
 		{
 		case PolytoneFormatEnum::S16:
-			((sint16 *)impl->mem.data())[offset] = numeric_cast<sint16>(saturate(v) * 32767.f);
+			((sint16 *)impl->mem.data())[offset] = numeric_cast<sint16>(clamp(real(v), -1, 1) * 32767.f);
 			break;
 		case PolytoneFormatEnum::S32:
-			((sint32 *)impl->mem.data())[offset] = numeric_cast<sint32>(saturate(v) * 2147483647.f);
+			((sint32 *)impl->mem.data())[offset] = numeric_cast<sint32>(clamp(real(v), -1, 1) * 2147483647.f);
 			break;
 		case PolytoneFormatEnum::Float:
 			((float *)impl->mem.data())[offset] = v;
 			break;
+		case PolytoneFormatEnum::Vorbis:
+			CAGE_THROW_ERROR(Exception, "cannot directly sample vorbis encoded polytone");
 		default:
 			CAGE_THROW_CRITICAL(Exception, "invalid polytone format");
 		}
@@ -163,8 +173,64 @@ namespace cage
 		CAGE_THROW_CRITICAL(NotImplemented, "polytoneConvertChannels");
 	}
 
+	void vorbisConvertFormat(PolytoneImpl *snd, PolytoneFormatEnum format);
+
 	void polytoneConvertFormat(Polytone *snd, PolytoneFormatEnum format)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "polytoneConvertFormat");
+		CAGE_ASSERT(format != PolytoneFormatEnum::Default);
+		PolytoneImpl *impl = (PolytoneImpl *)snd;
+		if (impl->format == format)
+			return; // no op
+		
+		if (impl->format == PolytoneFormatEnum::Vorbis || format == PolytoneFormatEnum::Vorbis)
+			return vorbisConvertFormat(impl, format);
+
+		Holder<Polytone> tmp = newPolytone();
+		tmp->initialize(impl->frames, impl->channels, impl->sampleRate, format);
+		polytoneBlit(impl, +tmp, 0, 0, impl->frames);
+		PolytoneImpl *t = (PolytoneImpl *)+tmp;
+		std::swap(impl->mem, t->mem);
+		std::swap(impl->format, t->format);
+	}
+
+	namespace
+	{
+		bool overlaps(uint64 x1, uint64 y1, uint64 s)
+		{
+			if (x1 > y1)
+				std::swap(x1, y1);
+			uint64 x2 = x1 + s;
+			uint64 y2 = y1 + s;
+			return x1 < y2 && y1 < x2;
+		}
+	}
+
+	void polytoneBlit(const Polytone *source, Polytone *target, uint64 sourceFrameOffset, uint64 targetFrameOffset, uint64 frames)
+	{
+		const PolytoneImpl *s = (const PolytoneImpl *)source;
+		PolytoneImpl *t = (PolytoneImpl *)target;
+
+		if (s->format == PolytoneFormatEnum::Vorbis || t->format == PolytoneFormatEnum::Vorbis)
+			CAGE_THROW_ERROR(NotImplemented, "polytoneBlit with vorbis"); // todo
+
+		CAGE_ASSERT(s->format != PolytoneFormatEnum::Default && s->channels > 0);
+		CAGE_ASSERT(s != t || !overlaps(sourceFrameOffset, targetFrameOffset, frames));
+		if (t->format == PolytoneFormatEnum::Default && targetFrameOffset == 0)
+			t->initialize(s->frames, s->channels, s->sampleRate, s->format);
+		CAGE_ASSERT(s->channels == t->channels);
+		CAGE_ASSERT(sourceFrameOffset + frames <= s->frames);
+		CAGE_ASSERT(targetFrameOffset + frames <= t->frames);
+		
+		if (s->format == t->format)
+		{
+			const uint64 fb = s->channels * formatBytes(s->format);
+			detail::memcpy((char *)t->mem.data() + targetFrameOffset * fb, (char *)s->mem.data() + sourceFrameOffset * fb, frames * fb);
+		}
+		else
+		{
+			for (uint32 f = 0; f < frames; f++)
+				for (uint32 c = 0; c < s->channels; c++)
+					t->value(targetFrameOffset + f, c, s->value(sourceFrameOffset + f, c));
+		}
 	}
 }

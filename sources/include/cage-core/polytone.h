@@ -10,6 +10,7 @@ namespace cage
 		S16 = 1, // 16 bit normalized (native endianness)
 		S32 = 2, // 32 bit normalized (native endianness)
 		Float = 3,
+		Vorbis = 4,
 
 		Default = m, // used only for decoding, it will use original format from the file
 	};
@@ -53,6 +54,14 @@ namespace cage
 	CAGE_CORE_API void polytoneSetSampleRate(Polytone *snd, uint32 sampleRate);
 	CAGE_CORE_API void polytoneConvertChannels(Polytone *snd, uint32 channels);
 	CAGE_CORE_API void polytoneConvertFormat(Polytone *snd, PolytoneFormatEnum format);
+
+	// copies parts of a polytone into another polytone
+	// if the target and source polytones are the same instance, the source range and target range cannot overlap
+	// if the target polytone is not initialized and the targetFrameOffset is zero, it will be initialized with channels and format of the source polytone
+	// if the polytones have different format, transferred samples will be converted to the target format
+	// both polytones must have same number of channels
+	// sample rate is ignored (except when initializing new polytone)
+	CAGE_CORE_API void polytoneBlit(const Polytone *source, Polytone *target, uint64 sourceFrameOffset, uint64 targetFrameOffset, uint64 frames);
 }
 
 #endif // guard_polytone_h_C930FD49904A491DBB9CF3D0AE972EB2

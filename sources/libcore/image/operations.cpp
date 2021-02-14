@@ -104,8 +104,8 @@ namespace cage
 			return; // no op
 		Holder<Image> tmp = newImage();
 		tmp->initialize(impl->width, impl->height, impl->channels, format);
-		imageBlit(img, tmp.get(), 0, 0, 0, 0, impl->width, impl->height);
-		ImageImpl *t = (ImageImpl *)tmp.get();
+		imageBlit(img, +tmp, 0, 0, 0, 0, impl->width, impl->height);
+		ImageImpl *t = (ImageImpl *)+tmp;
 		std::swap(impl->mem, t->mem);
 		std::swap(impl->format, t->format);
 	}
@@ -417,8 +417,8 @@ namespace cage
 
 	void imageBlit(const Image *sourceImg, Image *targetImg, uint32 sourceX, uint32 sourceY, uint32 targetX, uint32 targetY, uint32 width, uint32 height)
 	{
-		ImageImpl *s = (ImageImpl*)sourceImg;
-		ImageImpl *t = (ImageImpl*)targetImg;
+		const ImageImpl *s = (const ImageImpl *)sourceImg;
+		ImageImpl *t = (ImageImpl *)targetImg;
 		CAGE_ASSERT(s->format != ImageFormatEnum::Default && s->channels > 0);
 		CAGE_ASSERT(s != t || !overlaps(sourceX, sourceY, targetX, targetY, width, height));
 		if (t->format == ImageFormatEnum::Default && targetX == 0 && targetY == 0)
@@ -436,7 +436,7 @@ namespace cage
 			const uint32 ps = formatBytes(s->format) * s->channels;
 			const uint32 sl = s->width * ps;
 			const uint32 tl = t->width * ps;
-			char *ss = s->mem.data();
+			const char *ss = s->mem.data();
 			char *tt = t->mem.data();
 			for (uint32 y = 0; y < height; y++)
 				detail::memcpy(tt + (targetY + y) * tl + targetX * ps, ss + (sourceY + y) * sl + sourceX * ps, width * ps);

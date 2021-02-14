@@ -77,7 +77,7 @@ namespace cage
 	Holder<Image> Image::copy() const
 	{
 		Holder<Image> img = newImage();
-		imageBlit(this, img.get(), 0, 0, 0, 0, width(), height());
+		imageBlit(this, +img, 0, 0, 0, 0, width(), height());
 		return img;
 	}
 
