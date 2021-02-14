@@ -92,9 +92,8 @@ namespace cage
 	public:
 		void setDebugName(const string &name);
 
-		void setDataNone();
-		void setDataRaw(uint32 channels, uint32 frames, uint32 sampleRate, PointerRange<const float> data);
-		void setDataVorbis(PointerRange<const char> buffer);
+		void clear();
+		void setData(Holder<Polytone> &&poly);
 		void setDataTone(uint32 pitch = 440);
 		void setDataNoise();
 
@@ -102,10 +101,6 @@ namespace cage
 
 		void addOutput(MixingBus *bus);
 		void removeOutput(MixingBus *bus);
-
-		uint64 getDuration() const;
-		uint32 getChannels() const;
-		uint32 getSampleRate() const;
 	};
 
 	CAGE_ENGINE_API Holder<SoundSource> newSoundSource();
