@@ -38,6 +38,7 @@ namespace cage
 		PointerRange<const sint16> rawViewS16() const;
 		PointerRange<const sint32> rawViewS32() const;
 		PointerRange<const float> rawViewFloat() const;
+		PointerRange<const char> rawViewVorbis() const;
 
 		uint64 frames() const;
 		uint32 channels() const;

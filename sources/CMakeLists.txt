@@ -65,7 +65,7 @@ cage_define_tool(cage-image-channels "image-channels/*")
 cage_define_tool(cage-image-atlas "image-atlas/*")
 cage_define_tool(cage-image-convert "image-convert/*")
 
-target_link_libraries(cage-asset-processor cage-engine assimp freetype dr_libs ogg vorbis vorbisfile vorbisenc lib_msdfgen)
+target_link_libraries(cage-asset-processor cage-engine assimp freetype lib_msdfgen)
 
 add_dependencies(cage-asset-database cage-asset-processor)
 add_dependencies(cage-asset-analyze cage-asset-processor)

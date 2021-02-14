@@ -88,6 +88,13 @@ namespace cage
 		return bufferCast<const float, const char>(impl->mem);
 	}
 
+	PointerRange<const char> Polytone::rawViewVorbis() const
+	{
+		const PolytoneImpl *impl = (const PolytoneImpl *)this;
+		CAGE_ASSERT(impl->format == PolytoneFormatEnum::Vorbis);
+		return impl->mem;
+	}
+
 	uint64 Polytone::frames() const
 	{
 		const PolytoneImpl *impl = (const PolytoneImpl *)this;
