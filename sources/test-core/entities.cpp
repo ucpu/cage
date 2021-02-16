@@ -63,30 +63,6 @@ void testEntities()
 		for (uint32 i = 0; i < 3; i++)
 			manager->defineGroup();
 
-		struct Help
-		{
-			EntityComponent *c;
-			EventListener<void(Entity*)> listener;
-
-			Help(EntityComponent *c) : c(c)
-			{
-				listener.bind<Help, &Help::entityDestroyed>(this);
-			}
-
-			void entityDestroyed(Entity *e)
-			{
-				uint32 cnt = c->group()->count();
-				if (cnt > 2)
-				{
-					Entity *const *ents = c->group()->array();
-					if (*ents != e)
-						(*ents)->destroy();
-				}
-			}
-		} help(manager->componentByIndex(1));
-
-		manager->componentByIndex(1)->group()->entityRemoved.attach(help.listener);
-
 		for (uint32 cycle = 0; cycle < 30; cycle++)
 		{
 			for (uint32 i = 0; i < 100; i++)
@@ -110,6 +86,7 @@ void testEntities()
 
 	{
 		CAGE_TESTCASE("multiple managers");
+
 		Holder<EntityManager> man1 = newEntityManager(EntityManagerCreateConfig());
 		Holder<EntityManager> man2 = newEntityManager(EntityManagerCreateConfig());
 		EntityComponent *com1 = man1->defineComponent(vec3(), true);
@@ -148,6 +125,72 @@ void testEntities()
 			S &s = e->value<S>(c);
 			CAGE_TEST(((uintPtr)&s % alignof(S)) == 0);
 		}
+	}
+
+	{
+		CAGE_TESTCASE("callbacks");
+
+		struct Callbacks
+		{
+			uint32 added = 0;
+			uint32 removed = 0;
+
+			EventListener<void(Entity *)> addListener;
+			EventListener<void(Entity *)> removeListener;
+
+			Callbacks()
+			{
+				addListener.bind<Callbacks, &Callbacks::addEntity>(this);
+				removeListener.bind<Callbacks, &Callbacks::removeEntity>(this);
+			}
+
+			void addEntity(Entity *e)
+			{
+				added++;
+			}
+
+			void removeEntity(Entity *e)
+			{
+				removed++;
+			}
+		} manCbs, posCbs, oriCbs;
+
+		Holder<EntityManager> man = newEntityManager({});
+		man->group()->entityAdded.attach(manCbs.addListener);
+		man->group()->entityRemoved.attach(manCbs.removeListener);
+
+		EntityComponent *pos = man->defineComponent(vec3(), true);
+		pos->group()->entityAdded.attach(posCbs.addListener);
+		pos->group()->entityRemoved.attach(posCbs.removeListener);
+
+		EntityComponent *ori = man->defineComponent(quat(), true);
+		ori->group()->entityAdded.attach(oriCbs.addListener);
+		ori->group()->entityRemoved.attach(oriCbs.removeListener);
+
+		for (uint32 i = 0; i < 100; i++)
+		{
+			Entity *e = man->createUnique();
+			if ((i % 3) == 0)
+				e->add(pos);
+			if ((i % 5) == 0)
+				e->add(ori);
+		}
+
+		CAGE_TEST(manCbs.added == 100);
+		CAGE_TEST(manCbs.removed == 0);
+		CAGE_TEST(posCbs.added == 34);
+		CAGE_TEST(posCbs.removed == 0);
+		CAGE_TEST(oriCbs.added == 20);
+		CAGE_TEST(oriCbs.removed == 0);
+
+		ori->destroy();
+
+		CAGE_TEST(manCbs.added == 100);
+		CAGE_TEST(manCbs.removed == 20);
+		CAGE_TEST(posCbs.added == 34);
+		CAGE_TEST(posCbs.removed == 7);
+		CAGE_TEST(oriCbs.added == 20);
+		CAGE_TEST(oriCbs.removed == 20);
 	}
 
 	{
