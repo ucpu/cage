@@ -63,6 +63,17 @@ namespace cage
 	// both polytones must have same number of channels
 	// sample rate is ignored (except when initializing new polytone)
 	CAGE_CORE_API void polytoneBlit(const Polytone *source, Polytone *target, uint64 sourceFrameOffset, uint64 targetFrameOffset, uint64 frames);
+
+	// stateful decoder
+	class CAGE_CORE_API PolytoneStream : private Immovable
+	{
+	public:
+		const Polytone *source() const;
+
+		void decode(uint64 frame, PointerRange<float> buffer);
+	};
+
+	CAGE_CORE_API Holder<PolytoneStream> newPolytoneStream(Holder<Polytone> &&polytone);
 }
 
 #endif // guard_polytone_h_C930FD49904A491DBB9CF3D0AE972EB2

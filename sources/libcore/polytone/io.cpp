@@ -7,11 +7,11 @@ namespace cage
 {
 	void flacDecode(PointerRange<const char> inBuffer, PolytoneImpl *impl);
 	void mp3Decode(PointerRange<const char> inBuffer, PolytoneImpl *impl);
-	void vorbisDecode(PointerRange<const char> inBuffer, PolytoneImpl *impl);
+	void oggDecode(PointerRange<const char> inBuffer, PolytoneImpl *impl);
 	void wavDecode(PointerRange<const char> inBuffer, PolytoneImpl *impl);
 	MemoryBuffer flacEncode(const PolytoneImpl *impl);
 	MemoryBuffer mp3Encode(const PolytoneImpl *impl);
-	MemoryBuffer vorbisEncode(const PolytoneImpl *impl);
+	MemoryBuffer oggEncode(const PolytoneImpl *impl);
 	MemoryBuffer wavEncode(const PolytoneImpl *impl);
 
 	namespace
@@ -41,15 +41,15 @@ namespace cage
 			constexpr const uint8 wavSignatureMask[12] = { 1,1,1,1, 0,0,0,0, 1,1,1,1 };
 			constexpr const uint8 flacSignature[4] = { 0x66, 0x4C, 0x61, 0x43 };
 			constexpr const uint8 mp3Signature[3] = { 0x49, 0x44, 0x33 };
-			constexpr const uint8 vorbisSignature[4] = { 0x4F, 0x67, 0x67, 0x53 };
+			constexpr const uint8 oggSignature[4] = { 0x4F, 0x67, 0x67, 0x53 };
 			if (copmpareWithMask(buffer, wavSignature, wavSignatureMask) == 0)
 				wavDecode(buffer, impl);
 			else if (detail::memcmp(buffer.data(), flacSignature, sizeof(flacSignature)) == 0)
 				flacDecode(buffer, impl);
 			else if (detail::memcmp(buffer.data(), mp3Signature, sizeof(mp3Signature)) == 0)
 				mp3Decode(buffer, impl);
-			else if (detail::memcmp(buffer.data(), vorbisSignature, sizeof(vorbisSignature)) == 0)
-				vorbisDecode(buffer, impl);
+			else if (detail::memcmp(buffer.data(), oggSignature, sizeof(oggSignature)) == 0)
+				oggDecode(buffer, impl);
 			else
 				CAGE_THROW_ERROR(Exception, "sound data do not match any known signature");
 			if (requestedFormat != PolytoneFormatEnum::Default)
@@ -81,7 +81,7 @@ namespace cage
 		if (ext == ".mp3")
 			return mp3Encode((const PolytoneImpl *)this);
 		if (ext == ".ogg")
-			return vorbisEncode((const PolytoneImpl *)this);
+			return oggEncode((const PolytoneImpl *)this);
 		CAGE_THROW_ERROR(Exception, "unrecognized file extension for sound encoding");
 	}
 

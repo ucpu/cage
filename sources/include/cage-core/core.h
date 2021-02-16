@@ -214,6 +214,7 @@ namespace cage
 	class Polyhedron;
 	enum class PolytoneFormatEnum : uint32;
 	class Polytone;
+	class PolytoneStream;
 	struct ProcessCreateConfig;
 	class Process;
 	struct RandomGenerator;

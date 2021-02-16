@@ -20,7 +20,7 @@ namespace cage
 		class SoundSourceImpl : public SoundSource, public BusInterface
 		{
 		public:
-			Holder<Polytone> poly, polyTmp = newPolytone();
+			Holder<PolytoneStream> poly;
 			std::set<MixingBus *> outputs;
 			std::vector<float> temporaryData1;
 			std::vector<float> temporaryData2;
@@ -41,15 +41,13 @@ namespace cage
 
 			void readSwitchSource(float *buffer, uint64 index, uint64 requestFrames)
 			{
-				polyTmp->initialize(requestFrames, poly->channels(), poly->sampleRate(), PolytoneFormatEnum::Float);
-				polytoneBlit(+poly, +polyTmp, index, 0, requestFrames);
-				detail::memcpy(buffer, polyTmp->rawViewFloat().data(), polyTmp->rawViewFloat().size() * sizeof(float));
+				poly->decode(index, { buffer, buffer + requestFrames * poly->source()->channels() });
 			}
 
 			void readCycle(float *buffer, sint64 index, uint64 requestFrames)
 			{
-				const uint32 channels = poly->channels();
-				const uint64 frames = poly->frames();
+				const uint32 channels = poly->source()->channels();
+				const uint64 frames = poly->source()->frames();
 
 				if (index < 0)
 					index += (-index / frames + 1) * frames;
@@ -66,9 +64,9 @@ namespace cage
 
 			void readCheckMargins(const SoundDataBuffer &buf)
 			{
-				const uint32 channels = poly->channels();
-				const uint32 sampleRate = poly->sampleRate();
-				const uint64 frames = poly->frames();
+				const uint32 channels = poly->source()->channels();
+				const uint32 sampleRate = poly->source()->sampleRate();
+				const uint64 frames = poly->source()->frames();
 
 				// prepare a buffer
 				const uint64 requestFrames = buf.frames * sampleRate / buf.sampleRate + 1;
@@ -202,7 +200,7 @@ namespace cage
 		SoundSourceImpl *impl = (SoundSourceImpl *)this;
 		impl->clearAllBuffers();
 		impl->dataType = DataTypeEnum::Poly;
-		impl->poly = templates::move(poly);
+		impl->poly = newPolytoneStream(templates::move(poly));
 	}
 
 	void SoundSource::setDataTone(uint32 pitch)
