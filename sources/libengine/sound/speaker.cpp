@@ -45,9 +45,26 @@ namespace cage
 				uint32 latency = 0;
 				checkSoundIoError(cubeb_get_min_latency(snd, &params, &latency));
 
-				// todo find the desired device and use it
+				cubeb_devid device = nullptr;
+				if (!config.deviceId.empty())
+				{
+					cubeb_device_collection collection = {};
+					checkSoundIoError(cubeb_enumerate_devices(snd, CUBEB_DEVICE_TYPE_OUTPUT, &collection));
+					for (uint32 index = 0; index < collection.count; index++)
+					{
+						const cubeb_device_info &d = collection.device[index];
+						if (d.device_id == config.deviceId)
+						{
+							device = d.devid;
+							deviceId = d.device_id;
+						}
+					}
+					cubeb_device_collection_destroy(snd, &collection);
+					if (!device)
+						CAGE_THROW_ERROR(Exception, "invalid sound device id");
+				}
 
-				checkSoundIoError(cubeb_stream_init(snd, &stream, name.c_str(), nullptr, nullptr, nullptr, &params, latency, &dataCallbackFree, &stateCallbackFree, this));
+				checkSoundIoError(cubeb_stream_init(snd, &stream, name.c_str(), nullptr, nullptr, device, &params, latency, &dataCallbackFree, &stateCallbackFree, this));
 
 				buffer.channels = params.channels;
 				buffer.sampleRate = params.rate;
@@ -147,8 +164,7 @@ namespace cage
 	string Speaker::getDeviceId() const
 	{
 		const SpeakerImpl *impl = (const SpeakerImpl *)this;
-		// todo
-		return "";
+		return impl->deviceId;
 	}
 
 	uint32 Speaker::getChannels() const

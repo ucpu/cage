@@ -58,7 +58,8 @@ It started as a hobby/learning project, but has become fairly feature rich and m
 - Framework stuff (strings, logging, configuration, events)
 - Operating system abstraction (memory, filesystems, threading, networks)
 - GLSL-like math and geometry primitives
-- Entity systems
+- Image, polygonal meshes and sounds en/decoding and manipulation
+- Entity / components systems
 - Assets management
 - Extensive tests
 
@@ -94,8 +95,8 @@ It started as a hobby/learning project, but has become fairly feature rich and m
 - Asset database - manages automatic asset processing
 - Asset analyze - automatically generates basic configuration for most files
 - Image channels - split or join multiple channels to/from single image
-- Image convert - easy mass image format conversion
-- Image atlas - slices a single image atlas into a sequence of individual images
+- Image convert - simple mass image format conversion
+- Image atlas - slices a single image atlas grid into a sequence of individual images
 
 # Building
 
