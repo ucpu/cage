@@ -17,10 +17,24 @@ namespace cage
 			const SampleRateConverterCreateConfig config;
 			SRC_STATE *state = nullptr;
 
+			static int convType(uint32 quality)
+			{
+				switch (quality)
+				{
+				case 0: return SRC_ZERO_ORDER_HOLD;
+				case 1: return SRC_LINEAR;
+				case 2: return SRC_SINC_FASTEST;
+				case 3: return SRC_SINC_MEDIUM_QUALITY;
+				case 4: return SRC_SINC_BEST_QUALITY;
+				default:
+					CAGE_THROW_CRITICAL(Exception, "invalid sample rate conversion quality option");
+				}
+			}
+
 			SampleRateConverterImpl(const SampleRateConverterCreateConfig &config) : config(config)
 			{
 				int err = 0;
-				state = src_new(SRC_SINC_BEST_QUALITY, config.channels, &err);
+				state = src_new(convType(config.quality), config.channels, &err);
 				if (!state)
 					handleError(err);
 			}
@@ -51,12 +65,25 @@ namespace cage
 				data.src_ratio = ratio;
 				data.end_of_input = 1;
 				handleError(src_process(state, &data));
+				CAGE_ASSERT(data.output_frames_gen == data.output_frames);
 			}
 
 			void convert(PointerRange<const float> src, PointerRange<float> dst, double startRatio, double endRatio)
 			{
-				// todo
-				convert(src, dst, (startRatio + endRatio) * 0.5);
+				CAGE_ASSERT((src.size() % config.channels) == 0);
+				CAGE_ASSERT((dst.size() % config.channels) == 0);
+				handleError(src_reset(state));
+				SRC_DATA data = {};
+				data.data_in = src.data();
+				data.data_out = dst.data();
+				data.input_frames = numeric_cast<long>(src.size() / config.channels); // todo split large buffers into multiple smaller passes
+				data.output_frames = numeric_cast<long>(dst.size() / config.channels);
+				data.src_ratio = startRatio;
+				data.end_of_input = 1;
+				handleError(src_set_ratio(state, startRatio));
+				handleError(src_set_ratio(state, endRatio));
+				handleError(src_process(state, &data));
+				CAGE_ASSERT(data.output_frames_gen == data.output_frames);
 			}
 		};
 	}
@@ -90,22 +117,24 @@ namespace cage
 		impl->sampleRate = sampleRate;
 	}
 
-	void polytoneConvertSampleRate(Polytone *snd, uint32 sampleRate)
+	void polytoneConvertSampleRate(Polytone *snd, uint32 sampleRate, uint32 quality)
 	{
 		const uint64 originalDuration = snd->duration();
-		polytoneConvertFrames(snd, snd->frames() * sampleRate / snd->sampleRate());
+		polytoneConvertFrames(snd, snd->frames() * sampleRate / snd->sampleRate(), quality);
 		CAGE_ASSERT(abs((sint32)(snd->sampleRate() - sampleRate)) < 10);
 		polytoneSetSampleRate(snd, sampleRate); // in case of rounding errors
 		CAGE_ASSERT(abs((sint64)(snd->duration() - originalDuration)) < 100);
 	}
 
-	void polytoneConvertFrames(Polytone *snd, uint64 frames)
+	void polytoneConvertFrames(Polytone *snd, uint64 frames, uint32 quality)
 	{
 		PolytoneImpl *impl = (PolytoneImpl *)snd;
 		polytoneConvertFormat(snd, PolytoneFormatEnum::Float);
 		MemoryBuffer tmp;
 		tmp.resize(frames * snd->channels() * sizeof(float));
-		Holder<SampleRateConverter> cnv = newSampleRateConverter(snd->channels());
+		SampleRateConverterCreateConfig cfg(snd->channels());
+		cfg.quality = quality;
+		Holder<SampleRateConverter> cnv = newSampleRateConverter(cfg);
 		const uint32 targetSampleRate = numeric_cast<uint32>(1000000 * frames / snd->duration());
 		cnv->convert(snd->rawViewFloat(), bufferCast<float, char>(tmp), targetSampleRate / (double)snd->sampleRate());
 		std::swap(impl->mem, tmp);

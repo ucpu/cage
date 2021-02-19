@@ -237,7 +237,7 @@ void testPolytone()
 		CAGE_TESTCASE("sample rate conversion to 44100");
 		Holder<Polytone> snd = newPolytone();
 		generateStereo(+snd, 440);
-		polytoneConvertSampleRate(+snd, 44100);
+		polytoneConvertSampleRate(+snd, 44100, 2);
 		CAGE_TEST(snd->channels() == 2);
 		CAGE_TEST(snd->sampleRate() == 44100);
 		snd->exportFile("sounds/sample_rate_44100.wav");
@@ -247,7 +247,7 @@ void testPolytone()
 		CAGE_TESTCASE("sample rate conversion to 96000");
 		Holder<Polytone> snd = newPolytone();
 		generateStereo(+snd, 440);
-		polytoneConvertSampleRate(+snd, 96000);
+		polytoneConvertSampleRate(+snd, 96000, 2);
 		CAGE_TEST(snd->channels() == 2);
 		CAGE_TEST(snd->sampleRate() == 96000);
 		snd->exportFile("sounds/sample_rate_96000.wav");
@@ -257,7 +257,7 @@ void testPolytone()
 		CAGE_TESTCASE("sample rate conversion half frames");
 		Holder<Polytone> snd = newPolytone();
 		generateStereo(+snd, 440);
-		polytoneConvertFrames(+snd, snd->frames() / 2);
+		polytoneConvertFrames(+snd, snd->frames() / 2, 2);
 		CAGE_TEST(snd->channels() == 2);
 		CAGE_TEST(snd->frames() == 240000);
 		snd->exportFile("sounds/sample_rate_half_frames.wav");
@@ -267,9 +267,21 @@ void testPolytone()
 		CAGE_TESTCASE("sample rate conversion double frames");
 		Holder<Polytone> snd = newPolytone();
 		generateStereo(+snd, 440);
-		polytoneConvertFrames(+snd, snd->frames() * 2);
+		polytoneConvertFrames(+snd, snd->frames() * 2, 2);
 		CAGE_TEST(snd->channels() == 2);
 		CAGE_TEST(snd->frames() == 960000);
 		snd->exportFile("sounds/sample_rate_double_frames.wav");
+	}
+
+	{
+		CAGE_TESTCASE("doppler");
+		Holder<Polytone> src = newPolytone();
+		generateStereo(+src, 440);
+		Holder<Polytone> dst = src->copy();
+		PointerRange<const float> srcb = src->rawViewFloat();
+		PointerRange<float> dstb = { (float *)dst->rawViewFloat().data(), (float *)dst->rawViewFloat().data() + dst->rawViewFloat().size() };
+		Holder<SampleRateConverter> cnv = newSampleRateConverter(src->channels());
+		cnv->convert(srcb, dstb, 2, 0.5);
+		dst->exportFile("sounds/doppler.wav");
 	}
 }

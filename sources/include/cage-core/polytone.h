@@ -54,8 +54,8 @@ namespace cage
 	CAGE_CORE_API Holder<Polytone> newPolytone();
 
 	CAGE_CORE_API void polytoneSetSampleRate(Polytone *snd, uint32 sampleRate); // preserve number of frames and change duration
-	CAGE_CORE_API void polytoneConvertSampleRate(Polytone *snd, uint32 sampleRate); // preserve duration and change number of frames
-	CAGE_CORE_API void polytoneConvertFrames(Polytone *snd, uint64 frames); // preserve duration and change sample rate
+	CAGE_CORE_API void polytoneConvertSampleRate(Polytone *snd, uint32 sampleRate, uint32 quality = 4); // preserve duration and change number of frames
+	CAGE_CORE_API void polytoneConvertFrames(Polytone *snd, uint64 frames, uint32 quality = 4); // preserve duration and change sample rate
 	CAGE_CORE_API void polytoneConvertChannels(Polytone *snd, uint32 channels, PointerRange<float> matrix);
 	CAGE_CORE_API void polytoneConvertFormat(Polytone *snd, PolytoneFormatEnum format);
 
@@ -90,7 +90,7 @@ namespace cage
 	struct SampleRateConverterCreateConfig
 	{
 		uint32 channels = 0;
-		// quality
+		uint32 quality = 2; // 0 = nearest neighbor, 1 = linear, 2 = low, 3 = medium, 4 = high
 
 		SampleRateConverterCreateConfig(uint32 channels) : channels(channels)
 		{}
