@@ -44,6 +44,7 @@ namespace cage
 		uint32 channels() const;
 		uint32 sampleRate() const;
 		PolytoneFormatEnum format() const;
+		uint64 duration() const; // microsecond
 
 		float value(uint64 f, uint32 c) const;
 		void value(uint64 f, uint32 c, float v);
@@ -52,8 +53,10 @@ namespace cage
 
 	CAGE_CORE_API Holder<Polytone> newPolytone();
 
-	CAGE_CORE_API void polytoneSetSampleRate(Polytone *snd, uint32 sampleRate);
-	CAGE_CORE_API void polytoneConvertChannels(Polytone *snd, uint32 channels);
+	CAGE_CORE_API void polytoneSetSampleRate(Polytone *snd, uint32 sampleRate); // preserve number of frames and change duration
+	CAGE_CORE_API void polytoneConvertSampleRate(Polytone *snd, uint32 sampleRate); // preserve duration and change number of frames
+	CAGE_CORE_API void polytoneConvertFrames(Polytone *snd, uint64 frames); // preserve duration and change sample rate
+	CAGE_CORE_API void polytoneConvertChannels(Polytone *snd, uint32 channels, PointerRange<float> matrix);
 	CAGE_CORE_API void polytoneConvertFormat(Polytone *snd, PolytoneFormatEnum format);
 
 	// copies parts of a polytone into another polytone
@@ -74,6 +77,26 @@ namespace cage
 	};
 
 	CAGE_CORE_API Holder<PolytoneStream> newPolytoneStream(Holder<Polytone> &&polytone);
+
+	class CAGE_CORE_API SampleRateConverter : private Immovable
+	{
+	public:
+		uint32 channels() const;
+
+		void convert(PointerRange<const float> src, PointerRange<float> dst, double ratio);
+		void convert(PointerRange<const float> src, PointerRange<float> dst, double startRatio, double endRatio);
+	};
+
+	struct SampleRateConverterCreateConfig
+	{
+		uint32 channels = 0;
+		// quality
+
+		SampleRateConverterCreateConfig(uint32 channels) : channels(channels)
+		{}
+	};
+
+	CAGE_CORE_API Holder<SampleRateConverter> newSampleRateConverter(const SampleRateConverterCreateConfig &config);
 }
 
 #endif // guard_polytone_h_C930FD49904A491DBB9CF3D0AE972EB2

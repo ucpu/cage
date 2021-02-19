@@ -215,6 +215,8 @@ namespace cage
 	enum class PolytoneFormatEnum : uint32;
 	class Polytone;
 	class PolytoneStream;
+	class SampleRateConverter;
+	struct SampleRateConverterCreateConfig;
 	struct ProcessCreateConfig;
 	class Process;
 	struct RandomGenerator;

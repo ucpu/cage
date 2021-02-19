@@ -119,6 +119,11 @@ namespace cage
 		return impl->format;
 	}
 
+	uint64 Polytone::duration() const
+	{
+		return 1000000 * frames() / sampleRate();
+	}
+
 	float Polytone::value(uint64 f, uint32 c) const
 	{
 		const PolytoneImpl *impl = (const PolytoneImpl *)this;
@@ -169,13 +174,7 @@ namespace cage
 		return detail::systemArena().createImpl<Polytone, PolytoneImpl>();
 	}
 
-	void polytoneSetSampleRate(Polytone *snd, uint32 sampleRate)
-	{
-		PolytoneImpl *impl = (PolytoneImpl *)snd;
-		impl->sampleRate = sampleRate;
-	}
-
-	void polytoneConvertChannels(Polytone *snd, uint32 channels)
+	void polytoneConvertChannels(Polytone *snd, uint32 channels, PointerRange<float> matrix)
 	{
 		CAGE_THROW_CRITICAL(NotImplemented, "polytoneConvertChannels");
 	}

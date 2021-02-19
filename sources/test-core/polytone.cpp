@@ -12,7 +12,7 @@ namespace
 {
 	constexpr double twoPi = 3.14159265358979323846264338327950288419716939937510 * 2;
 
-	void generateMono(Polytone *snd, uint32 pitch = 440, uint32 frames = 480000, uint32 sampleRate = 48000)
+	void generateMono(Polytone *snd, uint32 pitch, uint32 frames = 480000, uint32 sampleRate = 48000)
 	{
 		const double step = twoPi * pitch / (double)sampleRate;
 		std::vector<real> samples;
@@ -26,7 +26,7 @@ namespace
 		snd->importRaw(bufferCast<const char, real>(samples), frames, 1, sampleRate, PolytoneFormatEnum::Float);
 	}
 
-	void generateStereo(Polytone *snd, uint32 pitch = 440, uint32 frames = 480000, uint32 sampleRate = 48000)
+	void generateStereo(Polytone *snd, uint32 pitch, uint32 frames = 480000, uint32 sampleRate = 48000)
 	{
 		const double stepTone = twoPi * pitch / (double)sampleRate;
 		const double stepDir = twoPi * 0.5 / (double)sampleRate;
@@ -171,7 +171,7 @@ void testPolytone()
 	{
 		CAGE_TESTCASE("export formats");
 		Holder<Polytone> snd = newPolytone();
-		generateStereo(+snd, 440, 480000, 48000);
+		generateStereo(+snd, 440);
 		// no encoding to mp3 or flac for now
 		for (const string &format : { ".ogg", ".wav" })
 			snd->exportFile(stringizer() + "sounds/formats/sample" + format);
@@ -193,9 +193,9 @@ void testPolytone()
 	{
 		CAGE_TESTCASE("blit same format");
 		Holder<Polytone> src = newPolytone();
-		generateStereo(+src, 440, 480000);
+		generateStereo(+src, 440);
 		Holder<Polytone> dst = newPolytone();
-		generateStereo(+dst, 220, 480000);
+		generateStereo(+dst, 220);
 		polytoneBlit(+src, +dst, 120000, 120000, 240000);
 		dst->exportFile("sounds/blit_same_format.wav");
 	}
@@ -203,10 +203,10 @@ void testPolytone()
 	{
 		CAGE_TESTCASE("blit format s16 to float");
 		Holder<Polytone> src = newPolytone();
-		generateStereo(+src, 440, 480000);
+		generateStereo(+src, 440);
 		polytoneConvertFormat(+src, PolytoneFormatEnum::S16);
 		Holder<Polytone> dst = newPolytone();
-		generateStereo(+dst, 220, 480000);
+		generateStereo(+dst, 220);
 		polytoneBlit(+src, +dst, 120000, 120000, 240000);
 		dst->exportFile("sounds/blit_format_s16_float.wav");
 	}
@@ -214,10 +214,10 @@ void testPolytone()
 	{
 		CAGE_TESTCASE("blit format vorbis to s16");
 		Holder<Polytone> src = newPolytone();
-		generateStereo(+src, 440, 480000);
+		generateStereo(+src, 440);
 		polytoneConvertFormat(+src, PolytoneFormatEnum::Vorbis);
 		Holder<Polytone> dst = newPolytone();
-		generateStereo(+dst, 220, 480000);
+		generateStereo(+dst, 220);
 		polytoneConvertFormat(+dst, PolytoneFormatEnum::S16);
 		polytoneBlit(+src, +dst, 120000, 120000, 240000);
 		dst->exportFile("sounds/blit_format_vorbis_s16.wav");
@@ -226,10 +226,50 @@ void testPolytone()
 	{
 		CAGE_TESTCASE("blit into vorbis");
 		Holder<Polytone> src = newPolytone();
-		generateStereo(+src, 440, 480000);
+		generateStereo(+src, 440);
 		Holder<Polytone> dst = newPolytone();
-		generateStereo(+dst, 220, 480000);
+		generateStereo(+dst, 220);
 		polytoneConvertFormat(+dst, PolytoneFormatEnum::Vorbis);
 		CAGE_TEST_THROWN(polytoneBlit(+src, +dst, 120000, 120000, 240000));
+	}
+
+	{
+		CAGE_TESTCASE("sample rate conversion to 44100");
+		Holder<Polytone> snd = newPolytone();
+		generateStereo(+snd, 440);
+		polytoneConvertSampleRate(+snd, 44100);
+		CAGE_TEST(snd->channels() == 2);
+		CAGE_TEST(snd->sampleRate() == 44100);
+		snd->exportFile("sounds/sample_rate_44100.wav");
+	}
+
+	{
+		CAGE_TESTCASE("sample rate conversion to 96000");
+		Holder<Polytone> snd = newPolytone();
+		generateStereo(+snd, 440);
+		polytoneConvertSampleRate(+snd, 96000);
+		CAGE_TEST(snd->channels() == 2);
+		CAGE_TEST(snd->sampleRate() == 96000);
+		snd->exportFile("sounds/sample_rate_96000.wav");
+	}
+
+	{
+		CAGE_TESTCASE("sample rate conversion half frames");
+		Holder<Polytone> snd = newPolytone();
+		generateStereo(+snd, 440);
+		polytoneConvertFrames(+snd, snd->frames() / 2);
+		CAGE_TEST(snd->channels() == 2);
+		CAGE_TEST(snd->frames() == 240000);
+		snd->exportFile("sounds/sample_rate_half_frames.wav");
+	}
+
+	{
+		CAGE_TESTCASE("sample rate conversion double frames");
+		Holder<Polytone> snd = newPolytone();
+		generateStereo(+snd, 440);
+		polytoneConvertFrames(+snd, snd->frames() * 2);
+		CAGE_TEST(snd->channels() == 2);
+		CAGE_TEST(snd->frames() == 960000);
+		snd->exportFile("sounds/sample_rate_double_frames.wav");
 	}
 }
