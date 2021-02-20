@@ -21,28 +21,29 @@ namespace cage
 		return +impl->poly;
 	}
 
-	void PolytoneStream::decode(uint64 frame, PointerRange<float> buffer)
+	void PolytoneStream::decode(uint64 frameOffset, PointerRange<float> buffer)
 	{
 		PolytoneStreamImpl *impl = (PolytoneStreamImpl *)this;
 		PolytoneImpl *src = (PolytoneImpl *)+impl->poly;
-		const uint32 cs = src->channels;
-		const uint64 fs = buffer.size() / cs;
+		const uint32 channels = src->channels;
+		CAGE_ASSERT((buffer.size() % channels) == 0);
+		const uint64 frames = buffer.size() / channels;
 		switch (impl->poly->format())
 		{
 		case PolytoneFormatEnum::Vorbis:
 		{
-			impl->vorbis->seek(frame);
+			impl->vorbis->seek(frameOffset);
 			impl->vorbis->decode(buffer);
 		} break;
 		case PolytoneFormatEnum::Float:
 		{
-			detail::memcpy(buffer.data(), src->mem.data() + frame * cs, fs * cs * sizeof(float));
+			detail::memcpy(buffer.data(), src->mem.data() + frameOffset * channels * sizeof(float), frames * channels * sizeof(float));
 		} break;
 		default:
 		{
-			for (uint64 f = 0; f < fs; f++)
-				for (uint32 c = 0; c < cs; c++)
-					buffer[f * cs + c] = src->value(frame + f, c);
+			for (uint64 f = 0; f < frames; f++)
+				for (uint32 c = 0; c < channels; c++)
+					buffer[f * channels + c] = src->value(frameOffset + f, c);
 		} break;
 		}
 	}

@@ -21,11 +21,16 @@ namespace cage
 
 			Holder<Polytone> poly = newPolytone();
 			poly->importBuffer(des.advance(des.available()));
+			CAGE_ASSERT(des.available() == 0);
 			CAGE_ASSERT(snd.channels == poly->channels());
 			CAGE_ASSERT(snd.frames == poly->frames());
 			CAGE_ASSERT(snd.sampleRate == poly->sampleRate());
 			polytoneConvertFormat(+poly, PolytoneFormatEnum::Float);
-			detail::memcpy(context->originalData.data(), poly->rawViewFloat().data(), context->originalData.size());
+
+			Serializer ser(context->originalData);
+			ser << snd;
+			ser.write(bufferCast<const char, const float>(poly->rawViewFloat()));
+			CAGE_ASSERT(ser.available() == 0);
 		}
 
 		void processLoad(AssetContext *context)
@@ -33,47 +38,30 @@ namespace cage
 			Holder<SoundSource> source = newSoundSource();
 			source->setDebugName(context->textName);
 
-			Deserializer des(context->compressedData.data() ? context->compressedData : context->originalData);
+			Deserializer des(context->originalData.data() ? context->originalData : context->compressedData);
 			SoundSourceHeader snd;
 			des >> snd;
 			source->setDataRepeat(any(snd.flags & SoundFlags::LoopBeforeStart), any(snd.flags & SoundFlags::LoopAfterEnd));
 
+			Holder<Polytone> poly = newPolytone();
 			switch (snd.soundType)
 			{
 			case SoundTypeEnum::RawRaw:
-			{
-				Deserializer des(context->originalData);
-				des >> snd;
-				Holder<Polytone> poly = newPolytone();
-				poly->importRaw(des.advance(des.available()), snd.frames, snd.channels, snd.sampleRate, PolytoneFormatEnum::Float);
-				CAGE_ASSERT(snd.channels == poly->channels());
-				CAGE_ASSERT(snd.frames == poly->frames());
-				CAGE_ASSERT(snd.sampleRate == poly->sampleRate());
-				source->setData(templates::move(poly));
-			} break;
 			case SoundTypeEnum::CompressedRaw:
-			{
-				Holder<Polytone> poly = newPolytone();
-				poly->importBuffer(context->originalData);
-				CAGE_ASSERT(snd.channels == poly->channels());
-				CAGE_ASSERT(snd.frames == poly->frames());
-				CAGE_ASSERT(snd.sampleRate == poly->sampleRate());
-				polytoneConvertFormat(+poly, PolytoneFormatEnum::Float);
-				source->setData(templates::move(poly));
-			} break;
+				poly->importRaw(des.advance(des.available()), snd.frames, snd.channels, snd.sampleRate, PolytoneFormatEnum::Float);
+				break;
 			case SoundTypeEnum::CompressedCompressed:
-			{
-				Holder<Polytone> poly = newPolytone();
 				poly->importBuffer(des.advance(des.available()));
-				CAGE_ASSERT(snd.channels == poly->channels());
-				CAGE_ASSERT(snd.frames == poly->frames());
-				CAGE_ASSERT(snd.sampleRate == poly->sampleRate());
-				source->setData(templates::move(poly));
-			} break;
+				break;
 			default:
 				CAGE_THROW_ERROR(Exception, "invalid sound type");
 			}
 
+			CAGE_ASSERT(des.available() == 0);
+			CAGE_ASSERT(snd.channels == poly->channels());
+			CAGE_ASSERT(snd.frames == poly->frames());
+			CAGE_ASSERT(snd.sampleRate == poly->sampleRate());
+			source->setData(templates::move(poly));
 			context->assetHolder = templates::move(source).cast<void>();
 		}
 	}

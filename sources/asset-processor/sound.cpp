@@ -13,12 +13,13 @@ void processSound()
 	sds.channels = polytone->channels();
 	sds.frames = polytone->frames();
 	sds.sampleRate = polytone->sampleRate();
+	const uint64 rawSize = sds.frames * sds.channels * sizeof(float);
 
 	if (toBool(properties("loopBefore")))
 		sds.flags = sds.flags | SoundFlags::LoopBeforeStart;
 	if (toBool(properties("loopAfter")))
 		sds.flags = sds.flags | SoundFlags::LoopAfterEnd;
-	if (sds.frames * sds.channels * sizeof(float) < toUint32(properties("compressThreshold")))
+	if (rawSize < toUint32(properties("compressThreshold")))
 		sds.soundType = SoundTypeEnum::RawRaw;
 	else if (toBool(properties("stream")))
 		sds.soundType = SoundTypeEnum::CompressedCompressed;
@@ -28,6 +29,7 @@ void processSound()
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "flags: " + (uint32)sds.flags);
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "frames: " + sds.frames);
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "channels: " + sds.channels);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "raw size: " + rawSize + " bytes");
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "samplerate: " + sds.sampleRate);
 	switch (sds.soundType)
 	{
@@ -44,18 +46,19 @@ void processSound()
 		CAGE_THROW_CRITICAL(Exception, "invalid sound type");
 	}
 
-	AssetHeader h = initializeAssetHeader();
-	h.originalSize = sizeof(SoundSourceHeader) + sds.frames * sds.channels * sizeof(float);
-
 	switch (sds.soundType)
 	{
 	case SoundTypeEnum::RawRaw:
 	{
 		polytoneConvertFormat(+polytone, PolytoneFormatEnum::Float);
 		Holder<File> f = writeFile(outputFileName);
+		AssetHeader h = initializeAssetHeader();
+		h.originalSize = sizeof(SoundSourceHeader) + rawSize;
 		f->write(bufferView(h));
 		f->write(bufferView(sds));
-		f->write(bufferCast<const char, const float>(polytone->rawViewFloat()));
+		PointerRange<const char> buff = bufferCast<const char, const float>(polytone->rawViewFloat());
+		CAGE_ASSERT(buff.size() == rawSize);
+		f->write(buff);
 		f->close();
 	} break;
 	case SoundTypeEnum::CompressedRaw:
@@ -63,20 +66,19 @@ void processSound()
 	{
 		Holder<PointerRange<char>> buff = polytone->exportBuffer(".ogg");
 		const uint64 oggSize = buff.size();
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "original size: " + h.originalSize + " bytes");
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "compressed size: " + oggSize + " bytes");
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "compression ratio: " + (oggSize / (float)h.originalSize));
+		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "compression ratio: " + (oggSize / (float)rawSize));
+		AssetHeader h = initializeAssetHeader();
 		switch (sds.soundType)
 		{
 		case SoundTypeEnum::CompressedRaw:
-			h.compressedSize = oggSize + sizeof(SoundSourceHeader);
+			h.compressedSize = sizeof(SoundSourceHeader) + oggSize;
+			h.originalSize = sizeof(SoundSourceHeader) + rawSize; // same as rawraw, so that loading can use same code
 			break;
 		case SoundTypeEnum::CompressedCompressed:
-			h.compressedSize = oggSize + sizeof(SoundSourceHeader);
+			h.compressedSize = sizeof(SoundSourceHeader) + oggSize;
 			h.originalSize = 0; // the sound will not be decoded on asset load, so do not allocate space for it
 			break;
-		case SoundTypeEnum::RawRaw:
-			break; // do nothing here
 		}
 		Holder<File> f = writeFile(outputFileName);
 		f->write(bufferView(h));
@@ -91,7 +93,8 @@ void processSound()
 	// preview sound
 	if (configGetBool("cage-asset-processor/sound/preview"))
 	{
-		CAGE_THROW_ERROR(NotImplemented, "sound preview is not currently implemented");
+		string dbgName = pathJoin(configGetString("cage-asset-processor/sound/path", "asset-preview"), stringizer() + pathReplaceInvalidCharacters(inputName) + ".ogg");
+		polytone->exportFile(dbgName);
 	}
 }
 
@@ -100,7 +103,7 @@ void analyzeSound()
 	try
 	{
 		Holder<Polytone> polytone = newPolytone();
-		polytone->importFile(inputFile);
+		polytone->importFile(inputFileName);
 		writeLine("cage-begin");
 		writeLine("scheme=sound");
 		writeLine(string() + "asset=" + inputFile);

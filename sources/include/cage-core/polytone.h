@@ -89,8 +89,14 @@ namespace cage
 
 	struct SampleRateConverterCreateConfig
 	{
+#ifdef CAGE_DEBUG
+		static constexpr uint32 DefaultQuality = 2;
+#else
+		static constexpr uint32 DefaultQuality = 3;
+#endif // CAGE_DEBUG
+
 		uint32 channels = 0;
-		uint32 quality = 2; // 0 = nearest neighbor, 1 = linear, 2 = low, 3 = medium, 4 = high
+		uint32 quality = DefaultQuality; // 0 = nearest neighbor, 1 = linear, 2 = low, 3 = medium, 4 = high
 
 		SampleRateConverterCreateConfig(uint32 channels) : channels(channels)
 		{}
