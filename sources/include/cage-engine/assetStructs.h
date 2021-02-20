@@ -151,11 +151,11 @@ namespace cage
 
 	struct CAGE_ENGINE_API SoundSourceHeader
 	{
-		SoundTypeEnum soundType;
-		SoundFlags flags;
-		uint32 frames;
+		uint64 frames;
 		uint32 channels;
 		uint32 sampleRate;
+		SoundTypeEnum soundType;
+		SoundFlags flags;
 
 		// follows (for raw file):
 		// array of frames, each channels * float

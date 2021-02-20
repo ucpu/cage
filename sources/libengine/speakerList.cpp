@@ -19,7 +19,7 @@ namespace cage
 			SpeakerListImpl()
 			{
 				Holder<SoundContext> cnx = newSoundContext(SoundContextCreateConfig());
-				cubeb *snd = soundioFromContext(cnx.get());
+				cubeb *snd = soundioFromContext(+cnx);
 				cubeb_device_collection collection = {};
 				checkSoundIoError(cubeb_enumerate_devices(snd, CUBEB_DEVICE_TYPE_OUTPUT , &collection));
 

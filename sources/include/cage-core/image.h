@@ -13,7 +13,7 @@ namespace cage
 		Float = 4,
 		// todo DXT/s3tc
 
-		Default = m, // used only for decoding an image, it will use the original format from the image
+		Default = m, // used only for decoding an image, it will use original format from the file
 	};
 
 	enum class GammaSpaceEnum : uint32
@@ -112,12 +112,12 @@ namespace cage
 	CAGE_CORE_API void imageBoxBlur(Image *img, uint32 radius, uint32 rounds = 1, bool useColorConfig = true);
 	CAGE_CORE_API void imageDilation(Image *img, uint32 rounds, bool useNan = false);
 
-	// copies part of an image into another image
+	// copies parts of an image into another image
 	// if the target and source images are the same instance, the source area and target area cannot overlap
 	// if the target image is not initialized and the targetX and targetY are both zero, it will be initialized with channels and format of the source image
 	// if the images have different format, transferred pixels will be converted to the target format
 	// both images must have same number of channels
-	// colorConfig is ignored (except when initializing the image)
+	// colorConfig is ignored (except when initializing new image)
 	CAGE_CORE_API void imageBlit(const Image *source, Image *target, uint32 sourceX, uint32 sourceY, uint32 targetX, uint32 targetY, uint32 width, uint32 height);
 
 	namespace detail

@@ -56,6 +56,7 @@ namespace cage
 
 	// helpers
 
+	// reinterpret types of range of elements
 	template<class Dst = const char, class Src>
 	constexpr PointerRange<Dst> bufferCast(const PointerRange<Src> src)
 	{
@@ -64,12 +65,14 @@ namespace cage
 		return { reinterpret_cast<Dst*>(src.begin()), reinterpret_cast<Dst*>(src.end()) };
 	}
 
+	// make range of a single object
 	template<class T>
 	constexpr PointerRange<T> rangeView(T &object)
 	{
 		return { &object, &object + 1 };
 	}
 
+	// reinterpret single object as range of bytes
 	template<class Dst = const char, class Src>
 	constexpr PointerRange<Dst> bufferView(Src &object)
 	{

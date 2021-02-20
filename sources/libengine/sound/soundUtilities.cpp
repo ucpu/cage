@@ -1,5 +1,7 @@
 #include "utilities.h"
 
+#include <cage-core/polytone.h>
+
 namespace cage
 {
 	namespace soundPrivat
@@ -559,88 +561,12 @@ namespace cage
 			}
 		}
 
-		namespace
-		{
-			void resampleNearestNeighbor(float *bufferIn, float *bufferOut, uint32 framesIn, uint32 framesOut, uint32 rateIn, uint32 rateOut, uint32 channels)
-			{
-				uint32 m = framesIn * rateOut / rateIn;
-				m = min(m, framesOut);
-				for (uint32 fo = 0; fo < m; fo++)
-				{
-					uint32 fi = fo * rateIn / rateOut;
-					CAGE_ASSERT(fi < framesIn);
-					for (uint32 c = 0; c < channels; c++)
-						bufferOut[fo * channels + c] = bufferIn[fi * channels + c];
-				}
-				for (uint32 fo = m; fo < framesOut; fo++)
-					for (uint32 c = 0; c < channels; c++)
-						bufferOut[fo * channels + c] = bufferIn[(framesIn - 1) * channels + c];
-			}
-
-			namespace
-			{
-				static constexpr uint32 lanczosResolution = 512;
-				static constexpr uint32 lanczosA = 2;
-				real lanczosTable[lanczosResolution];
-
-				struct lanczosTableStruct
-				{
-					lanczosTableStruct()
-					{
-						lanczosTable[0] = 1;
-						for (uint32 i = 1; i < lanczosResolution; i++)
-						{
-							real x = real(i * lanczosA) / real(lanczosResolution);
-							real px = x * real::Pi();
-							lanczosTable[i] = real(lanczosA) * sin(rads(px)) * sin(rads(px / lanczosA)) / (real::Pi() * real::Pi() * x * x);
-						}
-					}
-				} lanczosTableInitializer;
-
-				const real lanczos(real x)
-				{
-					x = abs(x) * lanczosResolution / lanczosA;
-					sint32 i = clamp(numeric_cast<sint32>(x), 0, (sint32)lanczosResolution - 1);
-					return lanczosTable[i];
-				}
-			}
-
-			void resampleLanczos(float *bufferIn, float *bufferOut, uint32 framesIn, uint32 framesOut, uint32 rateIn, uint32 rateOut, uint32 channels)
-			{
-				CAGE_ASSERT(framesIn > lanczosA * 2 + 1);
-				uint32 border = (lanczosA + 1) * rateOut / rateIn;
-				CAGE_ASSERT(border < framesOut);
-				for (uint32 o = border, e = framesOut - border; o < e; o++)
-				{
-					real x = real(o * rateIn) / real(rateOut);
-					uint32 xf = numeric_cast<uint32>(floor(x));
-					float *output = bufferOut + o * channels;
-					for (uint32 ch = 0; ch < channels; ch++)
-						output[ch] = 0;
-					CAGE_ASSERT((sint32)xf + 1 - (sint32)lanczosA >= 0);
-					CAGE_ASSERT(xf + lanczosA < framesIn);
-					for (uint32 i = xf + 1 - lanczosA, e = xf + lanczosA + 1; i < e; i++)
-					{
-						real l = lanczos(x - i);
-						for (uint32 ch = 0; ch < channels; ch++)
-							output[ch] += (bufferIn[i * channels + ch] * l).value;
-					}
-				}
-				for (uint32 o = 0; o < border; o++)
-					for (uint32 ch = 0; ch < channels; ch++)
-						bufferOut[o * channels + ch] = bufferOut[border * channels + ch];
-				for (uint32 o = framesOut - border; o < framesOut; o++)
-					for (uint32 ch = 0; ch < channels; ch++)
-						bufferOut[o * channels + ch] = bufferOut[(framesOut - border - 1) * channels + ch];
-			}
-		}
-
 		void resample(float *bufferIn, float *bufferOut, uint32 framesIn, uint32 framesOut, uint32 rateIn, uint32 rateOut, uint32 channels)
 		{
-			if (rateOut > rateIn && framesOut > (lanczosA + 1) * rateOut / rateIn && framesIn > lanczosA * 2 + 1)
-				return resampleLanczos(bufferIn, bufferOut, framesIn, framesOut, rateIn, rateOut, channels);
-			else
-				return resampleNearestNeighbor(bufferIn, bufferOut, framesIn, framesOut, rateIn, rateOut, channels);
+			Holder<SampleRateConverter> cnv = newSampleRateConverter(channels);
+			PointerRange<const float> src = { bufferIn, bufferIn + framesIn * channels };
+			PointerRange<float> dst = { bufferOut, bufferOut + framesOut * channels };
+			cnv->convert(src, dst, rateOut / (double)rateIn);
 		}
 
 		void transfer(std::vector<float> &temporary, float *bufferIn, float *bufferOut, uint32 channelsIn, uint32 channelsOut, uint32 framesIn, uint32 framesOut, uint32 rateIn, uint32 rateOut)

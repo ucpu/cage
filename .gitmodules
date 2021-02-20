@@ -85,3 +85,6 @@
 [submodule "externals/tinyexr/tinyexr"]
 	path = externals/tinyexr/tinyexr
 	url = https://github.com/syoyo/tinyexr.git
+[submodule "externals/samplerate/libsamplerate"]
+	path = externals/samplerate/libsamplerate
+	url = https://github.com/libsndfile/libsamplerate.git

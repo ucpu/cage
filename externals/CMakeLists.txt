@@ -61,6 +61,7 @@ add_subdirectory(pmp)
 add_subdirectory(dualmc)
 add_subdirectory(plf)
 add_subdirectory(tinyexr)
+add_subdirectory(samplerate)
 
 add_dependencies(png_static zlib)
 add_dependencies(jpeg-static zlib)
@@ -127,6 +128,7 @@ external_target_properties(pmp)
 external_target_properties(dualmc)
 external_target_properties(plf)
 external_target_properties(tinyexr)
+external_target_properties(samplerate)
 
 # final overrides
 set_target_properties(genfiles PROPERTIES FOLDER cage/externals)
