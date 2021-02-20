@@ -219,6 +219,14 @@ namespace cage
 		impl->dataType = DataTypeEnum::Noise;
 	}
 
+	uint64 SoundSource::getDuration() const
+	{
+		const SoundSourceImpl *impl = (const SoundSourceImpl *)this;
+		if (impl->dataType == DataTypeEnum::Poly)
+			return impl->poly->source()->duration();
+		return 0;
+	}
+
 	void SoundSource::setDataRepeat(bool repeatBeforeStart, bool repeatAfterEnd)
 	{
 		SoundSourceImpl *impl = (SoundSourceImpl*)this;

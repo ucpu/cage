@@ -97,6 +97,8 @@ namespace cage
 		void setDataTone(uint32 pitch = 440);
 		void setDataNoise();
 
+		uint64 getDuration() const;
+
 		void setDataRepeat(bool repeatBeforeStart, bool repeatAfterEnd);
 
 		void addOutput(MixingBus *bus);
