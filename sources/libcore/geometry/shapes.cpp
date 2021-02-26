@@ -109,7 +109,7 @@ namespace cage
 
 	triangle triangle::operator * (const mat4 &other) const
 	{
-		triangle r(*this);
+		triangle r = *this;
 		for (uint32 i = 0; i < 3; i++)
 		{
 			vec4 t = other * vec4(r[i], 1);
@@ -125,7 +125,7 @@ namespace cage
 
 	triangle triangle::flip() const
 	{
-		triangle r(*this);
+		triangle r = *this;
 		std::swap(r[1], r[2]);
 		return r;
 	}

@@ -203,6 +203,59 @@ void testGeometry()
 		}
 
 		{
+			CAGE_TESTCASE("closest point");
+
+			const triangle tri = triangle(vec3(), vec3(2, 0, 0), vec3(0, 2, 0));
+			test(closestPoint(tri, vec3()), vec3());
+			test(closestPoint(tri, vec3(2, 0, 0)), vec3(2, 0, 0));
+			test(closestPoint(tri, vec3(0, 2, 0)), vec3(0, 2, 0));
+			test(closestPoint(tri, vec3(1, 1, 0)), vec3(1, 1, 0));
+			test(closestPoint(tri, vec3(2, 2, 0)), vec3(1, 1, 0));
+			test(closestPoint(tri, vec3(1.5, 1.5, 0)), vec3(1, 1, 0));
+			test(closestPoint(tri, vec3(0.5, 0.5, 0)), vec3(0.5, 0.5, 0));
+			test(closestPoint(tri, vec3(1, 0, 0)), vec3(1, 0, 0));
+			test(closestPoint(tri, vec3(0, 1, 0)), vec3(0, 1, 0));
+			test(closestPoint(tri, vec3(5, 0, 0)), vec3(2, 0, 0));
+			test(closestPoint(tri, vec3(0, 5, 0)), vec3(0, 2, 0));
+			test(closestPoint(tri, vec3(-5, 0, 0)), vec3());
+			test(closestPoint(tri, vec3(0, -5, 0)), vec3());
+			test(closestPoint(tri, vec3(-5, -5, 0)), vec3());
+			test(closestPoint(tri, vec3(5, -5, 0)), vec3(2, 0, 0));
+			test(closestPoint(tri, vec3(-5, 5, 0)), vec3(0, 2, 0));
+			test(closestPoint(tri, vec3(1, -5, 0)), vec3(1, 0, 0));
+			test(closestPoint(tri, vec3(-5, 1, 0)), vec3(0, 1, 0));
+		}
+
+		{
+			CAGE_TESTCASE("randomized closest point");
+
+			for (uint32 round = 0; round < 10; round++)
+			{
+				const transform tr = transform(randomDirection3() * randomChance() * 10, randomDirectionQuat());
+				const triangle tri = triangle(vec3(), vec3(2, 0, 0), vec3(0, 2, 0)) * tr;
+				const real z = randomRange(-100, 100);
+				test(closestPoint(tri, vec3() * tr), vec3() * tr);
+				test(closestPoint(tri, vec3(2, 0, z) * tr), vec3(2, 0, 0) * tr);
+				test(closestPoint(tri, vec3(0, 2, z) * tr), vec3(0, 2, 0) * tr);
+				test(closestPoint(tri, vec3(1, 1, z) * tr), vec3(1, 1, 0) * tr);
+				test(closestPoint(tri, vec3(2, 2, z) * tr), vec3(1, 1, 0) * tr);
+				test(closestPoint(tri, vec3(1.5, 1.5, z) * tr), vec3(1, 1, 0) * tr);
+				test(closestPoint(tri, vec3(0.5, 0.5, z) * tr), vec3(0.5, 0.5, 0) * tr);
+				test(closestPoint(tri, vec3(1, 0, z) * tr), vec3(1, 0, 0) * tr);
+				test(closestPoint(tri, vec3(0, 1, z) * tr), vec3(0, 1, 0) * tr);
+				test(closestPoint(tri, vec3(5, 0, z) * tr), vec3(2, 0, 0) * tr);
+				test(closestPoint(tri, vec3(0, 5, z) * tr), vec3(0, 2, 0) * tr);
+				test(closestPoint(tri, vec3(-5, 0, z) * tr), vec3() * tr);
+				test(closestPoint(tri, vec3(0, -5, z) * tr), vec3() * tr);
+				test(closestPoint(tri, vec3(-5, -5, z) * tr), vec3() * tr);
+				test(closestPoint(tri, vec3(5, -5, z) * tr), vec3(2, 0, 0) * tr);
+				test(closestPoint(tri, vec3(-5, 5, z) * tr), vec3(0, 2, 0) * tr);
+				test(closestPoint(tri, vec3(1, -5, z) * tr), vec3(1, 0, 0) * tr);
+				test(closestPoint(tri, vec3(-5, 1, z) * tr), vec3(0, 1, 0) * tr);
+			}
+		}
+
+		{
 			CAGE_TESTCASE("intersections (with lines)");
 
 			triangle t1(vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 2, 0));

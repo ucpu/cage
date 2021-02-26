@@ -917,95 +917,32 @@ namespace cage
 
 	vec3 closestPoint(const triangle &trig, const vec3 &sourcePosition)
 	{
-		vec3 edge0 = trig[1] - trig[0];
-		vec3 edge1 = trig[2] - trig[0];
-		vec3 v0 = trig[0] - sourcePosition;
-		real a = dot(edge0, edge0);
-		real b = dot(edge0, edge1);
-		real c = dot(edge1, edge1);
-		real d = dot(edge0, v0);
-		real e = dot(edge1, v0);
-		real det = a * c - b * b;
-		real s = b * e - c * d;
-		real t = b * d - a * e;
-		if (s + t < det)
+		const vec3 p = closestPoint(plane(trig), sourcePosition);
 		{
-			if (s < 0.f)
-			{
-				if (t < 0.f)
-				{
-					if (d < 0.f)
-					{
-						s = clamp(-d / a, 0.f, 1.f);
-						t = 0.f;
-					}
-					else
-					{
-						s = 0.f;
-						t = clamp(-e / c, 0.f, 1.f);
-					}
-				}
-				else
-				{
-					s = 0.f;
-					t = clamp(-e / c, 0.f, 1.f);
-				}
-			}
-			else if (t < 0.f)
-			{
-				s = clamp(-d / a, 0.f, 1.f);
-				t = 0.f;
-			}
-			else
-			{
-				real invDet = 1.f / det;
-				s *= invDet;
-				t *= invDet;
-			}
+			const vec3 a = trig[0] - p;
+			const vec3 b = trig[1] - p;
+			const vec3 c = trig[2] - p;
+			const vec3 u = cross(a, b);
+			const vec3 v = cross(b, c);
+			const vec3 w = cross(c, a);
+			if (dot(u, v) > 0 && dot(u, w) > 0)
+				return p; // p is inside the triangle
 		}
-		else
-		{
-			if (s < 0.f)
-			{
-				real tmp0 = b + d;
-				real tmp1 = c + e;
-				if (tmp1 > tmp0)
-				{
-					real numer = tmp1 - tmp0;
-					real denom = a - 2 * b + c;
-					s = clamp(numer / denom, 0.f, 1.f);
-					t = 1 - s;
-				}
-				else
-				{
-					t = clamp(-e / c, 0.f, 1.f);
-					s = 0.f;
-				}
-			}
-			else if (t < 0.f)
-			{
-				if (a + d > b + e)
-				{
-					real numer = c + e - b - d;
-					real denom = a - 2 * b + c;
-					s = clamp(numer / denom, 0.f, 1.f);
-					t = 1 - s;
-				}
-				else
-				{
-					s = clamp(-e / c, 0.f, 1.f);
-					t = 0.f;
-				}
-			}
-			else
-			{
-				real numer = c + e - b - d;
-				real denom = a - 2 * b + c;
-				s = clamp(numer / denom, 0.f, 1.f);
-				t = 1.f - s;
-			}
-		}
-		return trig[0] + s * edge0 + t * edge1;
+		const line ab = makeSegment(trig[0], trig[1]);
+		const line bc = makeSegment(trig[1], trig[2]);
+		const line ca = makeSegment(trig[2], trig[0]);
+		const vec3 pab = closestPoint(ab, p);
+		const vec3 pbc = closestPoint(bc, p);
+		const vec3 pca = closestPoint(ca, p);
+		const real dab = distanceSquared(p, pab);
+		const real dbc = distanceSquared(p, pbc);
+		const real dca = distanceSquared(p, pca);
+		const real dm = min(min(dab, dbc), dca);
+		if (dm == dab)
+			return pab;
+		if (dm == dbc)
+			return pbc;
+		return pca;
 	}
 
 	vec3 closestPoint(const plane &pl, const vec3 &pt)
