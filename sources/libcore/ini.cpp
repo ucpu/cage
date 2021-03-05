@@ -124,7 +124,7 @@ namespace cage
 			return tmp;
 		auto &cont = impl->sections[section]->items;
 		tmp.reserve(cont.size());
-		for (auto it : cont)
+		for (const auto &it : cont)
 			tmp.push_back(it.first);
 		return tmp;
 	}
