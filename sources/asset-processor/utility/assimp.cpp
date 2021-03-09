@@ -326,11 +326,10 @@ namespace
 			for (uint32 i = 0; i < scene->mNumMeshes; i++)
 			{
 				const aiMesh *am = scene->mMeshes[i];
-				string objname = am->mName.C_Str();
-				string matname;
+				const string objname = convStrTruncate(am->mName);
 				aiString aiMatName;
 				scene->mMaterials[am->mMaterialIndex]->Get(AI_MATKEY_NAME, aiMatName);
-				matname = string(aiMatName.C_Str());
+				const string matname = aiMatName.C_Str();
 				string contains;
 				if (am->mPrimitiveTypes & aiPrimitiveType_POINT)
 					contains += "points ";
@@ -371,6 +370,13 @@ namespace
 		CageIoSystem ioSystem;
 		CageLogStream logDebug, logInfo, logWarn, logError;
 		Assimp::Importer imp;
+
+		static string convStrTruncate(const aiString &str, uint32 maxLen = cage::string::MaxLength / 2)
+		{
+			std::string s = str.C_Str();
+			s = s.substr(0, maxLen);
+			return s.c_str();
+		}
 	};
 }
 

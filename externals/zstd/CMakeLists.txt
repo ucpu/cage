@@ -22,3 +22,4 @@ target_include_directories(libzstd_static PUBLIC zstd/lib zstd/lib/common)
 cage_gen_module(Zstd $<TARGET_LINKER_FILE:libzstd_static> $<TARGET_PROPERTY:libzstd_static,INTERFACE_INCLUDE_DIRECTORIES>)
 
 add_library(Zstd::Zstd ALIAS libzstd_static)
+add_library(ZSTD::ZSTD ALIAS libzstd_static)

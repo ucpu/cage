@@ -31,14 +31,13 @@ namespace cage
 		const string xAtlasCategoriesNames[] = {
 			"AddMesh",
 			"ComputeCharts",
-			"ParameterizeCharts",
 			"PackCharts",
 			"BuildOutputMeshes"
 		};
 
-		bool xAtlasProgress(xatlas::ProgressCategory::Enum category, int progress, void *userData)
+		bool xAtlasProgress(xatlas::ProgressCategory category, int progress, void *userData)
 		{
-			CAGE_LOG(SeverityEnum::Info, "xatlas", stringizer() + xAtlasCategoriesNames[category] + ": " + progress + " %");
+			CAGE_LOG(SeverityEnum::Info, "xatlas", stringizer() + xAtlasCategoriesNames[(int)category] + ": " + progress + " %");
 			return true; // continue processing
 		}
 

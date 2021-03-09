@@ -23,7 +23,11 @@ endif()
 
 add_subdirectory(jpeg)
 
-target_include_directories(jpeg-static INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/jpeg")
-target_include_directories(jpeg-static INTERFACE "${CMAKE_CURRENT_BINARY_DIR}/jpeg")
+add_library(cage-jpeg INTERFACE)
+target_link_libraries(cage-jpeg INTERFACE jpeg-static)
+target_include_directories(cage-jpeg INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/jpeg")
+target_include_directories(cage-jpeg INTERFACE "${CMAKE_CURRENT_BINARY_DIR}/jpeg")
 
-cage_gen_module(JPEG $<TARGET_LINKER_FILE:jpeg-static> $<TARGET_PROPERTY:jpeg-static,INTERFACE_INCLUDE_DIRECTORIES>)
+cage_gen_module(JPEG $<TARGET_LINKER_FILE:cage-jpeg> $<TARGET_PROPERTY:cage-jpeg,INTERFACE_INCLUDE_DIRECTORIES>)
+
+add_library(JPEG::JPEG ALIAS cage-jpeg)
