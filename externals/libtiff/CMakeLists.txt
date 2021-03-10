@@ -9,8 +9,7 @@ set(SKIP_TOOLS 1)
 set(SKIP_TEST 1)
 set(SKIP_DOC 1)
 set(SKIP_CONTRIB 1)
-set(ZSTD_RECENT_ENOUGH TRUE)
-set(CMath_HAVE_LIBM_POW TRUE) # temporary workaround, see https://gitlab.com/libtiff/libtiff/-/issues/246
+set(ZSTD_RECENT_ENOUGH TRUE) # fake check that would have errored - we know we have sufficient version of zstd
 
 option(jpeg "use libjpeg (required for JPEG compression)" ON)
 option(old-jpeg "support for Old JPEG compression (read-only)" OFF)
