@@ -73,18 +73,34 @@ namespace cage
 
 	void polyhedronSimplify(Polyhedron *poly,  const PolyhedronSimplificationConfig &config)
 	{
-		Holder<pmp::SurfaceMesh> pm = toPmp(poly);
-		pmp::SurfaceRemeshing rms(*pm);
-		rms.adaptive_remeshing(config.minEdgeLength.value, config.maxEdgeLength.value, config.approximateError.value, config.iterations, config.useProjection);
-		fromPmp(poly, pm);
+		try
+		{
+			Holder<pmp::SurfaceMesh> pm = toPmp(poly);
+			pmp::SurfaceRemeshing rms(*pm);
+			rms.adaptive_remeshing(config.minEdgeLength.value, config.maxEdgeLength.value, config.approximateError.value, config.iterations, config.useProjection);
+			fromPmp(poly, pm);
+		}
+		catch (const std::exception &e)
+		{
+			CAGE_LOG_THROW(e.what());
+			CAGE_THROW_ERROR(Exception, "polyhedron simplification failure");
+		}
 	}
 
 	void polyhedronRegularize(Polyhedron *poly, const PolyhedronRegularizationConfig &config)
 	{
-		Holder<pmp::SurfaceMesh> pm = toPmp(poly);
-		pmp::SurfaceRemeshing rms(*pm);
-		rms.uniform_remeshing(config.targetEdgeLength.value, config.iterations, config.useProjection);
-		fromPmp(poly, pm);
+		try
+		{
+			Holder<pmp::SurfaceMesh> pm = toPmp(poly);
+			pmp::SurfaceRemeshing rms(*pm);
+			rms.uniform_remeshing(config.targetEdgeLength.value, config.iterations, config.useProjection);
+			fromPmp(poly, pm);
+		}
+		catch (const std::exception &e)
+		{
+			CAGE_LOG_THROW(e.what());
+			CAGE_THROW_ERROR(Exception, "polyhedron regularization failure");
+		}
 	}
 }
 
