@@ -10,7 +10,7 @@ namespace cage
 	{
 		void pngErrFunc(png_structp, png_const_charp err)
 		{
-			CAGE_THROW_ERROR(Exception, err);
+			CAGE_THROW_ERROR(Exception, Exception::StringLiteral(err));
 		}
 
 		struct PngInfoCtx

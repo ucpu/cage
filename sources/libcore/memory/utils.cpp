@@ -14,7 +14,7 @@
 
 namespace cage
 {
-	OutOfMemory::OutOfMemory(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message, uintPtr memory) noexcept : Exception(file, line, function, severity, message), memory(memory)
+	OutOfMemory::OutOfMemory(StringLiteral file, uint32 line, StringLiteral function, SeverityEnum severity, StringLiteral message, uintPtr memory) noexcept : Exception(file, line, function, severity, message), memory(memory)
 	{};
 
 	void OutOfMemory::log()

@@ -15,7 +15,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API GraphicsError : public SystemError
 	{
-		GraphicsError(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message, uint32 code) noexcept;
+		using SystemError::SystemError;
 	};
 
 	struct CAGE_ENGINE_API GraphicsDebugScope : private Immovable
