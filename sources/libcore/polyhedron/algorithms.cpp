@@ -92,7 +92,7 @@ namespace cage
 			removeVertices(impl, verticesToRemove);
 		}
 
-		uint32 clipAddPoint(PolyhedronImpl *impl, uint32 ai, uint32 bi, uint32 axis, real value)
+		uint32 clipAddPoint(PolyhedronImpl *impl, const uint32 ai, const uint32 bi, const uint32 axis, const real value)
 		{
 			const vec3 a = impl->positions[ai];
 			const vec3 b = impl->positions[bi];
@@ -121,7 +121,7 @@ namespace cage
 			std::swap(b, c); // bca
 		}
 
-		void clipTriangles(PolyhedronImpl *impl, const std::vector<uint32> &in, std::vector<uint32> &out, uint32 axis, real value, bool side)
+		void clipTriangles(PolyhedronImpl *impl, const std::vector<uint32> &in, std::vector<uint32> &out, const uint32 axis, const real value, const bool side)
 		{
 			CAGE_ASSERT((in.size() % 3) == 0);
 			CAGE_ASSERT(out.size() == 0);
@@ -157,7 +157,7 @@ namespace cage
 					turnLeft(as, bs, cs);
 				}
 				CAGE_ASSERT(!as && bs);
-				const uint32 pi = clipAddPoint(impl, ids[0], ids[1], axis, value);
+				const uint32 ab = clipAddPoint(impl, ids[0], ids[1], axis, value);
 				if (m == 1)
 				{
 					CAGE_ASSERT(!as);
@@ -171,22 +171,22 @@ namespace cage
 					*      \ /|
 					*     c + |
 					*/
-					const uint32 qi = clipAddPoint(impl, ids[1], ids[2], axis, value);
+					const uint32 bc = clipAddPoint(impl, ids[1], ids[2], axis, value);
 					if (side)
 					{
 						out.push_back(ids[0]);
-						out.push_back(pi);
-						out.push_back(qi);
+						out.push_back(ab);
+						out.push_back(bc);
 
 						out.push_back(ids[0]);
-						out.push_back(qi);
+						out.push_back(bc);
 						out.push_back(ids[2]);
 					}
 					else
 					{
-						out.push_back(pi);
+						out.push_back(ab);
 						out.push_back(ids[1]);
-						out.push_back(qi);
+						out.push_back(bc);
 					}
 				}
 				else
@@ -203,20 +203,20 @@ namespace cage
 					*     |\ /
 					*     | + c
 					*/
-					const uint32 qi = clipAddPoint(impl, ids[0], ids[2], axis, value);
+					const uint32 ac = clipAddPoint(impl, ids[0], ids[2], axis, value);
 					if (side)
 					{
 						out.push_back(ids[0]);
-						out.push_back(pi);
-						out.push_back(qi);
+						out.push_back(ab);
+						out.push_back(ac);
 					}
 					else
 					{
-						out.push_back(pi);
+						out.push_back(ab);
 						out.push_back(ids[1]);
-						out.push_back(qi);
+						out.push_back(ac);
 
-						out.push_back(qi);
+						out.push_back(ac);
 						out.push_back(ids[1]);
 						out.push_back(ids[2]);
 					}

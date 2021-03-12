@@ -187,11 +187,12 @@ namespace cage
 		positions.reserve(mcVertices.size());
 		normals.resize(mcVertices.size());
 		indices.reserve(mcIndices.size() * 3 / 2);
-		const vec3 res = vec3(cfg.resolution);
-		const vec3 posMult = (cfg.box.b - cfg.box.a) / (res - 3);
-		const vec3 posAdd = cfg.box.a - posMult;
-		for (const dualmc::Vertex &v : mcVertices)
-			positions.push_back(vec3(v.x, v.y, v.z) * posMult + posAdd);
+		{
+			const vec3 posAdd = cfg.position(0, 0, 0);
+			const vec3 posMult = cfg.box.size() / (vec3(cfg.resolution) - 5);
+			for (const dualmc::Vertex &v : mcVertices)
+				positions.push_back(vec3(v.x, v.y, v.z) * posMult + posAdd);
+		}
 		for (const auto &q : mcIndices)
 		{
 			const uint32 is[4] = { numeric_cast<uint32>(q.i0), numeric_cast<uint32>(q.i1), numeric_cast<uint32>(q.i2), numeric_cast<uint32>(q.i3) };
@@ -255,7 +256,7 @@ namespace cage
 		CAGE_ASSERT(x < numeric_cast<uint32>(resolution[0]));
 		CAGE_ASSERT(y < numeric_cast<uint32>(resolution[1]));
 		CAGE_ASSERT(z < numeric_cast<uint32>(resolution[2]));
-		vec3 f = (vec3(x, y, z) - 1) / (vec3(resolution) - 3);
+		vec3 f = (vec3(x, y, z) - 2) / (vec3(resolution) - 5);
 		return (box.b - box.a) * f + box.a;
 	}
 
