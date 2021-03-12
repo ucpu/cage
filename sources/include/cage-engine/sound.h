@@ -7,7 +7,7 @@ namespace cage
 {
 	struct SoundError : public SystemError
 	{
-		SoundError(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message, uint32 code) noexcept;
+		using SystemError::SystemError;
 	};
 
 	class CAGE_ENGINE_API SoundContext : private Immovable

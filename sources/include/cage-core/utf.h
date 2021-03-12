@@ -8,7 +8,6 @@ namespace cage
 	struct CAGE_CORE_API InvalidUtfString : public Exception
 	{
 		using Exception::Exception;
-		virtual void log();
 	};
 
 	CAGE_CORE_API bool utfValid(PointerRange<const char> buffer);

@@ -4,9 +4,6 @@
 
 namespace cage
 {
-	SoundError::SoundError(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message, uint32 code) noexcept : SystemError(file, line, function, severity, message, code)
-	{};
-
 	namespace soundPrivat
 	{
 		void checkSoundIoError(int code)

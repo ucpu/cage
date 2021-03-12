@@ -159,7 +159,7 @@ void testPolyhedron()
 
 	{
 		CAGE_TESTCASE("separateDisconnected");
-		auto p = splitSphereIntoTwo(poly.get());
+		auto p = splitSphereIntoTwo(+poly);
 		auto ps = polyhedronSeparateDisconnected(+p);
 		// CAGE_TEST(ps.size() == 2); // todo fix this -> it should really be two but is 3
 		ps[0]->exportObjFile({}, "meshes/separateDisconnected_1.obj");
@@ -168,7 +168,7 @@ void testPolyhedron()
 
 	{
 		CAGE_TESTCASE("discardDisconnected");
-		auto p = splitSphereIntoTwo(poly.get());
+		auto p = splitSphereIntoTwo(+poly);
 		polyhedronDiscardDisconnected(+p);
 		p->exportObjFile({}, "meshes/discardDisconnected.obj");
 	}
@@ -192,7 +192,7 @@ void testPolyhedron()
 	{
 		CAGE_TESTCASE("collider");
 		Holder<Collider> c = newCollider();
-		c->importPolyhedron(poly.get());
+		c->importPolyhedron(+poly);
 		CAGE_TEST(c->triangles().size() > 10);
 		Holder<Polyhedron> p = newPolyhedron();
 		p->importCollider(c.get());

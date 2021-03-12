@@ -2,11 +2,14 @@
 #pragma warning(push, 0)
 #endif
 
-#include <dualmc.h>
-
 #include <cage-core/marchingCubes.h>
 #include <cage-core/polyhedron.h>
 #include <cage-core/collider.h>
+
+#include <dualmc.h>
+
+#include <set>
+#include <vector>
 
 namespace cage
 {
@@ -25,6 +28,70 @@ namespace cage
 				dens.resize(config.resolution[0] * config.resolution[1] * config.resolution[2]);
 			}
 		};
+
+		void removeNonManifoldTriangles(Polyhedron *poly)
+		{
+			CAGE_ASSERT(poly->type() == PolyhedronTypeEnum::Triangles);
+			CAGE_ASSERT(poly->indicesCount() > 0);
+			CAGE_ASSERT((poly->indicesCount() % 3) == 0);
+
+			struct EdgeFace
+			{
+				uint32 e1 = m, e2 = m;
+				uint32 f = 0;
+			};
+
+			struct Cmp
+			{
+				bool operator () (const EdgeFace &l, const EdgeFace &r) const
+				{
+					return std::make_pair(l.e1, l.e2) < std::make_pair(r.e1, r.e2);
+				}
+			};
+
+			std::set<EdgeFace, Cmp> edges;
+			std::set<uint32> singularFaces;
+			const uint32 cnt = poly->indicesCount();
+			for (uint32 i = 0; i < cnt; i += 3)
+			{
+				const uint32 a = poly->indices()[i + 0];
+				const uint32 b = poly->indices()[i + 1];
+				const uint32 c = poly->indices()[i + 2];
+				for (const EdgeFace &p : { EdgeFace{a, b, i}, EdgeFace{b, c, i}, EdgeFace{c, a, i} })
+				{
+					auto it = edges.find(p);
+					if (it == edges.end())
+						edges.insert(p);
+					else
+					{
+						singularFaces.insert(p.f);
+						singularFaces.insert(it->f);
+					}
+				}
+			}
+
+			if (singularFaces.empty())
+				return;
+
+			std::vector<uint32> inds;
+			inds.reserve(cnt);
+			for (uint32 i = 0; i < cnt; i += 3)
+			{
+				if (singularFaces.count(i))
+					continue;
+				inds.push_back(poly->indices()[i + 0]);
+				inds.push_back(poly->indices()[i + 1]);
+				inds.push_back(poly->indices()[i + 2]);
+			}
+			poly->indices(inds);
+
+			// todo detect singular vertices
+
+			// todo hole-filling for removed faces
+
+			if (poly->indicesCount() == 0)
+				poly->clear(); // if all triangles were removed, we would end up with polyhedron with positions and no indices, which is invalid here
+		}
 	}
 
 	PointerRange<real> MarchingCubes::densities()
@@ -63,11 +130,11 @@ namespace cage
 	{
 		MarchingCubesImpl *impl = (MarchingCubesImpl*)this;
 		auto it = impl->dens.begin();
-		for (uint32 z = 0; z < impl->config.resolution[2]; z++)
+		for (uint32 z = 0; z < numeric_cast<uint32>(impl->config.resolution[2]); z++)
 		{
-			for (uint32 y = 0; y < impl->config.resolution[1]; y++)
+			for (uint32 y = 0; y < numeric_cast<uint32>(impl->config.resolution[1]); y++)
 			{
-				for (uint32 x = 0; x < impl->config.resolution[0]; x++)
+				for (uint32 x = 0; x < numeric_cast<uint32>(impl->config.resolution[0]); x++)
 				{
 					real d = generator(x, y, z);
 					CAGE_ASSERT(d.valid());
@@ -81,11 +148,11 @@ namespace cage
 	{
 		MarchingCubesImpl *impl = (MarchingCubesImpl*)this;
 		auto it = impl->dens.begin();
-		for (uint32 z = 0; z < impl->config.resolution[2]; z++)
+		for (uint32 z = 0; z < numeric_cast<uint32>(impl->config.resolution[2]); z++)
 		{
-			for (uint32 y = 0; y < impl->config.resolution[1]; y++)
+			for (uint32 y = 0; y < numeric_cast<uint32>(impl->config.resolution[1]); y++)
 			{
-				for (uint32 x = 0; x < impl->config.resolution[0]; x++)
+				for (uint32 x = 0; x < numeric_cast<uint32>(impl->config.resolution[0]); x++)
 				{
 					real d = generator(impl->config.position(x, y, z));
 					CAGE_ASSERT(d.valid());
@@ -120,11 +187,12 @@ namespace cage
 		positions.reserve(mcVertices.size());
 		normals.resize(mcVertices.size());
 		indices.reserve(mcIndices.size() * 3 / 2);
-		const vec3 res = vec3(cfg.resolution);
-		const vec3 posMult = (cfg.box.b - cfg.box.a) / (res - 3);
-		const vec3 posAdd = cfg.box.a - posMult;
-		for (const dualmc::Vertex &v : mcVertices)
-			positions.push_back(vec3(v.x, v.y, v.z) * posMult + posAdd);
+		{
+			const vec3 posAdd = cfg.position(0, 0, 0);
+			const vec3 posMult = cfg.box.size() / (vec3(cfg.resolution) - 5);
+			for (const dualmc::Vertex &v : mcVertices)
+				positions.push_back(vec3(v.x, v.y, v.z) * posMult + posAdd);
+		}
 		for (const auto &q : mcIndices)
 		{
 			const uint32 is[4] = { numeric_cast<uint32>(q.i0), numeric_cast<uint32>(q.i1), numeric_cast<uint32>(q.i2), numeric_cast<uint32>(q.i3) };
@@ -172,6 +240,8 @@ namespace cage
 			polyhedronMergeCloseVertices(+result, cfg);
 		}
 
+		removeNonManifoldTriangles(+result);
+
 		if (cfg.clip)
 			polyhedronClip(+result, cfg.box);
 
@@ -183,18 +253,18 @@ namespace cage
 		CAGE_ASSERT(resolution[0] > 5);
 		CAGE_ASSERT(resolution[1] > 5);
 		CAGE_ASSERT(resolution[2] > 5);
-		CAGE_ASSERT(x < resolution[0]);
-		CAGE_ASSERT(y < resolution[1]);
-		CAGE_ASSERT(z < resolution[2]);
-		vec3 f = (vec3(x, y, z) - 1) / (vec3(resolution) - 3);
+		CAGE_ASSERT(x < numeric_cast<uint32>(resolution[0]));
+		CAGE_ASSERT(y < numeric_cast<uint32>(resolution[1]));
+		CAGE_ASSERT(z < numeric_cast<uint32>(resolution[2]));
+		vec3 f = (vec3(x, y, z) - 2) / (vec3(resolution) - 5);
 		return (box.b - box.a) * f + box.a;
 	}
 
 	uint32 MarchingCubesCreateConfig::index(uint32 x, uint32 y, uint32 z) const
 	{
-		CAGE_ASSERT(x < resolution[0]);
-		CAGE_ASSERT(y < resolution[1]);
-		CAGE_ASSERT(z < resolution[2]);
+		CAGE_ASSERT(x < numeric_cast<uint32>(resolution[0]));
+		CAGE_ASSERT(y < numeric_cast<uint32>(resolution[1]));
+		CAGE_ASSERT(z < numeric_cast<uint32>(resolution[2]));
 		return (z * resolution[1] + y) * resolution[0] + x;
 	}
 

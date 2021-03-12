@@ -386,7 +386,19 @@ namespace cage
 
 	struct CAGE_CORE_API Exception
 	{
-		explicit Exception(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message) noexcept;
+		struct StringLiteral
+		{
+			template<uint32 N>
+			StringLiteral(const char(&str)[N]) : str(str)
+			{}
+
+			explicit StringLiteral(const char *str) : str(str)
+			{}
+
+			const char *str = nullptr;
+		};
+
+		explicit Exception(StringLiteral file, uint32 line, StringLiteral function, SeverityEnum severity, StringLiteral message) noexcept;
 		virtual ~Exception() noexcept;
 
 		void makeLog(); // check conditions and call log()
@@ -407,7 +419,7 @@ namespace cage
 
 	struct CAGE_CORE_API SystemError : public Exception
 	{
-		explicit SystemError(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *message, sint64 code) noexcept;
+		explicit SystemError(StringLiteral file, uint32 line, StringLiteral function, SeverityEnum severity, StringLiteral message, sint64 code) noexcept;
 		void log() override;
 		sint64 code = 0;
 	};
