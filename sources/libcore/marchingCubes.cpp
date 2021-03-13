@@ -3,7 +3,7 @@
 #endif
 
 #include <cage-core/marchingCubes.h>
-#include <cage-core/polyhedron.h>
+#include <cage-core/mesh.h>
 #include <cage-core/collider.h>
 
 #include <dualmc.h>
@@ -29,9 +29,9 @@ namespace cage
 			}
 		};
 
-		void removeNonManifoldTriangles(Polyhedron *poly)
+		void removeNonManifoldTriangles(Mesh *poly)
 		{
-			CAGE_ASSERT(poly->type() == PolyhedronTypeEnum::Triangles);
+			CAGE_ASSERT(poly->type() == MeshTypeEnum::Triangles);
 			CAGE_ASSERT(poly->indicesCount() > 0);
 			CAGE_ASSERT((poly->indicesCount() % 3) == 0);
 
@@ -90,7 +90,7 @@ namespace cage
 			// todo hole-filling for removed faces
 
 			if (poly->indicesCount() == 0)
-				poly->clear(); // if all triangles were removed, we would end up with polyhedron with positions and no indices, which is invalid here
+				poly->clear(); // if all triangles were removed, we would end up with mesh with positions and no indices, which is invalid here
 		}
 	}
 
@@ -165,13 +165,13 @@ namespace cage
 	Holder<Collider> MarchingCubes::makeCollider() const
 	{
 		// todo optimized path
-		Holder<Polyhedron> p = makePolyhedron();
+		Holder<Mesh> p = makeMesh();
 		Holder<Collider> c = newCollider();
-		c->importPolyhedron(+p);
+		c->importMesh(+p);
 		return c;
 	}
 
-	Holder<Polyhedron> MarchingCubes::makePolyhedron() const
+	Holder<Mesh> MarchingCubes::makeMesh() const
 	{
 		const MarchingCubesImpl *impl = (const MarchingCubesImpl*)this;
 		const MarchingCubesCreateConfig &cfg = impl->config;
@@ -224,9 +224,9 @@ namespace cage
 			CAGE_ASSERT(valid(it));
 		}
 
-		Holder<Polyhedron> result = newPolyhedron();
+		Holder<Mesh> result = newMesh();
 		if (indices.empty())
-			return result; // if all triangles were degenerated, we would end up with polyhedron with positions and no indices, which is invalid here
+			return result; // if all triangles were degenerated, we would end up with mesh with positions and no indices, which is invalid here
 
 		result->positions(positions);
 		result->normals(normals);
@@ -235,15 +235,15 @@ namespace cage
 		{ // merge vertices
 			const vec3 cell = cfg.box.size() / vec3(cfg.resolution);
 			const real side = min(cell[0], min(cell[1], cell[2]));
-			PolyhedronCloseVerticesMergingConfig cfg;
+			MeshCloseVerticesMergingConfig cfg;
 			cfg.distanceThreshold = side * 0.1;
-			polyhedronMergeCloseVertices(+result, cfg);
+			meshMergeCloseVertices(+result, cfg);
 		}
 
 		removeNonManifoldTriangles(+result);
 
 		if (cfg.clip)
-			polyhedronClip(+result, cfg.box);
+			meshClip(+result, cfg.box);
 
 		return result;
 	}

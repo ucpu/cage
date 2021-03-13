@@ -1,7 +1,7 @@
 #include <cage-core/files.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
-#include "polyhedron.h"
+#include "mesh.h"
 
 #include <set>
 #include <algorithm> // lower_bound
@@ -84,14 +84,14 @@ namespace cage
 		}
 	}
 
-	Holder<PointerRange<char>> Polyhedron::exportObjBuffer(const PolyhedronObjExportConfig &config) const
+	Holder<PointerRange<char>> Mesh::exportObjBuffer(const MeshObjExportConfig &config) const
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		MeshImpl *impl = (MeshImpl *)this;
 		CAGE_ASSERT(impl->uvs.empty() || impl->uvs3.empty());
 
 		MemoryBuffer buffer;
 		Serializer ser(buffer);
-		writeLine(ser, "# polyhedron exported by Cage");
+		writeLine(ser, "# mesh exported by Cage");
 		if (!config.materialLibraryName.empty())
 			writeLine(ser, stringizer() + "mtllib " + config.materialLibraryName);
 		if (!config.objectName.empty())
@@ -141,34 +141,34 @@ namespace cage
 
 		switch (impl->type)
 		{
-		case PolyhedronTypeEnum::Points:
+		case MeshTypeEnum::Points:
 		{
 			const uint32 faces = numeric_cast<uint32>(pi.size());
 			for (uint32 f = 0; f < faces; f++)
 				writeLine(ser, stringizer() + "f " + str(pi, ni, ti, f));
 		} break;
-		case PolyhedronTypeEnum::Lines:
+		case MeshTypeEnum::Lines:
 		{
 			const uint32 faces = numeric_cast<uint32>(pi.size()) / 2;
 			for (uint32 f = 0; f < faces; f++)
 				writeLine(ser, stringizer() + "f " + str(pi, ni, ti, f * 2 + 0) + " " + str(pi, ni, ti, f * 2 + 1));
 		} break;
-		case PolyhedronTypeEnum::Triangles:
+		case MeshTypeEnum::Triangles:
 		{
 			const uint32 faces = numeric_cast<uint32>(pi.size()) / 3;
 			for (uint32 f = 0; f < faces; f++)
 				writeLine(ser, stringizer() + "f " + str(pi, ni, ti, f * 3 + 0) + " " + str(pi, ni, ti, f * 3 + 1) + " " + str(pi, ni, ti, f * 3 + 2));
 		} break;
 		default:
-			CAGE_THROW_CRITICAL(Exception, "invalid polyhedron type enum");
+			CAGE_THROW_CRITICAL(Exception, "invalid mesh type enum");
 		}
 
 		return templates::move(buffer);
 	}
 
-	void Polyhedron::exportObjFile(const PolyhedronObjExportConfig &config, const string &filename) const
+	void Mesh::exportObjFile(const MeshObjExportConfig &config, const string &filename) const
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		MeshImpl *impl = (MeshImpl *)this;
 		Holder<PointerRange<char>> buff = exportObjBuffer(config);
 		writeFile(filename)->write(buff);
 	}

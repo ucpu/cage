@@ -87,9 +87,9 @@ namespace cage
 		return numeric_cast<long>(impl->file->tell());
 	}
 
-	VorbisEncoder::VorbisEncoder(const PolytoneImpl *src, float compressQuality) : inputBuffer(src->mem), compressQuality(compressQuality)
+	VorbisEncoder::VorbisEncoder(const AudioImpl *src, float compressQuality) : inputBuffer(src->mem), compressQuality(compressQuality)
 	{
-		if (src->format != PolytoneFormatEnum::Float)
+		if (src->format != AudioFormatEnum::Float)
 			CAGE_THROW_ERROR(Exception, "invalid format for encoding vorbis sound stream");
 		frames = src->frames;
 		channels = src->channels;

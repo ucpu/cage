@@ -5,7 +5,7 @@
 
 namespace cage
 {
-	CAGE_ENGINE_API aabb getBoxForMesh(uint32 name);
+	CAGE_ENGINE_API aabb getBoxForModel(uint32 name);
 	CAGE_ENGINE_API aabb getBoxForObject(uint32 name);
 	CAGE_ENGINE_API aabb getBoxForAsset(uint32 name);
 	CAGE_ENGINE_API aabb getBoxForEntity(Entity *e);

@@ -3,7 +3,7 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 #include <cage-core/pointerRangeHolder.h>
-#include <cage-core/polyhedron.h>
+#include <cage-core/mesh.h>
 
 #include <vector>
 #include <algorithm>
@@ -230,7 +230,7 @@ namespace cage
 		constexpr uint16 currentVersion = 2;
 		constexpr char currentMagic[] = "colid";
 
-		struct CollisionMeshHeader
+		struct CollisionModelHeader
 		{
 			char magic[6]; // colid\0
 			uint16 version;
@@ -256,7 +256,7 @@ namespace cage
 	Holder<PointerRange<char>> Collider::serialize(bool includeAdditionalData) const
 	{
 		const ColliderImpl *impl = (ColliderImpl*)this;
-		CollisionMeshHeader header;
+		CollisionModelHeader header;
 		detail::memset(&header, 0, sizeof(header));
 		detail::memcpy(header.magic, currentMagic, sizeof(currentMagic));
 		header.version = currentVersion;
@@ -276,7 +276,7 @@ namespace cage
 	{
 		ColliderImpl *impl = (ColliderImpl*)this;
 		Deserializer des(buffer);
-		CollisionMeshHeader header;
+		CollisionModelHeader header;
 		des >> header;
 		if (detail::memcmp(header.magic, currentMagic, sizeof(currentMagic)) != 0)
 			CAGE_THROW_ERROR(Exception, "Cannot deserialize collision object: wrong magic");
@@ -288,10 +288,10 @@ namespace cage
 		readVector(des, impl->nodes, header.nodesCount);
 	}
 
-	void Collider::importPolyhedron(const Polyhedron *poly)
+	void Collider::importMesh(const Mesh *poly)
 	{
 		clear();
-		CAGE_ASSERT(poly->type() == PolyhedronTypeEnum::Triangles);
+		CAGE_ASSERT(poly->type() == MeshTypeEnum::Triangles);
 		if (poly->indices().empty())
 		{
 			CAGE_ASSERT(poly->positions().size() % 3 == 0);

@@ -18,7 +18,7 @@ namespace cage
 		void updateByPosition(const Delegate<real(const vec3 &)> &generator);
 
 		Holder<Collider> makeCollider() const;
-		Holder<Polyhedron> makePolyhedron() const;
+		Holder<Mesh> makeMesh() const;
 	};
 
 	struct CAGE_CORE_API MarchingCubesCreateConfig

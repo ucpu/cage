@@ -2,7 +2,7 @@
 #include <cage-core/macros.h>
 #include <cage-core/pointerRangeHolder.h>
 
-#include "polyhedron.h"
+#include "mesh.h"
 
 #include <algorithm> // std::remove_if
 #include <numeric> // std::iota
@@ -49,7 +49,7 @@ namespace cage
 			CAGE_ASSERT(flagit == toRemove.end());
 		}
 
-		void removeVertices(PolyhedronImpl *impl, const std::vector<bool> &verticesToRemove)
+		void removeVertices(MeshImpl *impl, const std::vector<bool> &verticesToRemove)
 		{
 			CAGE_ASSERT(impl->verticesCount() == verticesToRemove.size());
 
@@ -81,7 +81,7 @@ namespace cage
 #undef GCHL_GENERATE
 		}
 
-		void removeUnusedVertices(PolyhedronImpl *impl)
+		void removeUnusedVertices(MeshImpl *impl)
 		{
 			if (impl->indices.empty())
 				return;
@@ -92,7 +92,7 @@ namespace cage
 			removeVertices(impl, verticesToRemove);
 		}
 
-		uint32 clipAddPoint(PolyhedronImpl *impl, const uint32 ai, const uint32 bi, const uint32 axis, const real value)
+		uint32 clipAddPoint(MeshImpl *impl, const uint32 ai, const uint32 bi, const uint32 axis, const real value)
 		{
 			const vec3 a = impl->positions[ai];
 			const vec3 b = impl->positions[bi];
@@ -121,7 +121,7 @@ namespace cage
 			std::swap(b, c); // bca
 		}
 
-		void clipTriangles(PolyhedronImpl *impl, const std::vector<uint32> &in, std::vector<uint32> &out, const uint32 axis, const real value, const bool side)
+		void clipTriangles(MeshImpl *impl, const std::vector<uint32> &in, std::vector<uint32> &out, const uint32 axis, const real value, const bool side)
 		{
 			CAGE_ASSERT((in.size() % 3) == 0);
 			CAGE_ASSERT(out.size() == 0);
@@ -226,13 +226,13 @@ namespace cage
 		}
 
 		// mark entire triplet (triangles) or pair (lines) if any one of them is marked
-		void markFacesWithInvalidVertices(PolyhedronTypeEnum type, std::vector<bool> &marks)
+		void markFacesWithInvalidVertices(MeshTypeEnum type, std::vector<bool> &marks)
 		{
 			switch (type)
 			{
-			case PolyhedronTypeEnum::Points:
+			case MeshTypeEnum::Points:
 				break;
-			case PolyhedronTypeEnum::Lines:
+			case MeshTypeEnum::Lines:
 			{
 				const uint32 cnt = numeric_cast<uint32>(marks.size()) / 2;
 				for (uint32 i = 0; i < cnt; i++)
@@ -241,7 +241,7 @@ namespace cage
 						marks[i * 2 + 0] = marks[i * 2 + 1] = true;
 				}
 			} break;
-			case PolyhedronTypeEnum::Triangles:
+			case MeshTypeEnum::Triangles:
 			{
 				const uint32 cnt = numeric_cast<uint32>(marks.size()) / 3;
 				for (uint32 i = 0; i < cnt; i++)
@@ -251,11 +251,11 @@ namespace cage
 				}
 			} break;
 			default:
-				CAGE_THROW_CRITICAL(Exception, "invalid polyhedron type");
+				CAGE_THROW_CRITICAL(Exception, "invalid mesh type");
 			}
 		}
 
-		void discardInvalidVertices(PolyhedronImpl *impl)
+		void discardInvalidVertices(MeshImpl *impl)
 		{
 			std::vector<bool> verticesToRemove;
 			verticesToRemove.resize(impl->positions.size(), false);
@@ -308,12 +308,12 @@ namespace cage
 			removeVertices(impl, verticesToRemove);
 		}
 
-		void discardInvalidLines(PolyhedronImpl *impl)
+		void discardInvalidLines(MeshImpl *impl)
 		{
 			// todo
 		}
 
-		void discardInvalidTriangles(PolyhedronImpl *impl)
+		void discardInvalidTriangles(MeshImpl *impl)
 		{
 			const uint32 tris = impl->facesCount();
 			PointerRange<const vec3> ps = impl->positions;
@@ -371,7 +371,7 @@ namespace cage
 			c[a] = c[b] = r;
 		}
 
-		Holder<PointerRange<Holder<Polyhedron>>> splitComponentsTriangles(const PolyhedronImpl *src)
+		Holder<PointerRange<Holder<Mesh>>> splitComponentsTriangles(const MeshImpl *src)
 		{
 			std::vector<uint32> components; // components[vertexIndex] = vertexIndex
 			components.resize(src->positions.size());
@@ -391,19 +391,19 @@ namespace cage
 			const uint32 indsCount = numeric_cast<uint32>(src->indices.size());
 			std::vector<uint32> inds;
 			inds.reserve(indsCount);
-			PointerRangeHolder<Holder<Polyhedron>> result;
+			PointerRangeHolder<Holder<Mesh>> result;
 			for (uint32 c = 0; c < compsCount; c++)
 			{
 				if (components[c] != c)
 					continue;
-				Holder<Polyhedron> p = src->copy();
+				Holder<Mesh> p = src->copy();
 				for (uint32 i = 0; i < indsCount; i++)
 				{
 					if (components[src->index(i)] == c)
 						inds.push_back(src->index(i));
 				}
 				p->indices(inds);
-				removeUnusedVertices((PolyhedronImpl *)p.get());
+				removeUnusedVertices((MeshImpl *)p.get());
 				inds.clear();
 				result.push_back(templates::move(p));
 			}
@@ -411,31 +411,31 @@ namespace cage
 		}
 	}
 
-	void polyhedronConvertToIndexed(Polyhedron *poly)
+	void meshConvertToIndexed(Mesh *poly)
 	{
 		if (!poly->indices().empty() || poly->positions().empty())
 			return;
-		PolyhedronImpl *impl = (PolyhedronImpl *)poly;
+		MeshImpl *impl = (MeshImpl *)poly;
 		CAGE_THROW_CRITICAL(NotImplemented, "convertToIndexed");
 	}
 
-	void polyhedronConvertToExpanded(Polyhedron *poly)
+	void meshConvertToExpanded(Mesh *poly)
 	{
 		if (poly->indices().empty())
 			return;
-		PolyhedronImpl *impl = (PolyhedronImpl *)poly;
+		MeshImpl *impl = (MeshImpl *)poly;
 		CAGE_THROW_CRITICAL(NotImplemented, "convertToExpanded");
 	}
 
-	void polyhedronMergeCloseVertices(Polyhedron *poly, const PolyhedronCloseVerticesMergingConfig &config)
+	void meshMergeCloseVertices(Mesh *poly, const MeshCloseVerticesMergingConfig &config)
 	{
 		if (poly->facesCount() == 0)
 			return;
 
 		if (!config.moveVerticesOnly)
-			polyhedronConvertToIndexed(poly);
+			meshConvertToIndexed(poly);
 
-		PolyhedronImpl *impl = (PolyhedronImpl *)poly;
+		MeshImpl *impl = (MeshImpl *)poly;
 		const uint32 vc = numeric_cast<uint32>(impl->positions.size());
 		std::vector<bool> needsRecenter; // mark vertices that need to reposition
 		needsRecenter.resize(vc, false);
@@ -493,15 +493,15 @@ namespace cage
 		}
 
 		// remove faces that has collapsed
-		polyhedronDiscardInvalid(poly);
+		meshDiscardInvalid(poly);
 	}
 
-	void polyhedronGenerateTexture(const Polyhedron *poly, const PolyhedronTextureGenerationConfig &config)
+	void meshGenerateTexture(const Mesh *poly, const MeshTextureGenerationConfig &config)
 	{
 		if (poly->facesCount() == 0)
 			return;
 
-		CAGE_ASSERT(poly->type() == PolyhedronTypeEnum::Triangles);
+		CAGE_ASSERT(poly->type() == MeshTypeEnum::Triangles);
 		CAGE_ASSERT(!poly->uvs().empty());
 
 		const uint32 triCount = poly->facesCount();
@@ -547,21 +547,21 @@ namespace cage
 		}
 	}
 
-	void polyhedronGenerateNormals(Polyhedron *poly, const PolyhedronNormalsGenerationConfig &config)
+	void meshGenerateNormals(Mesh *poly, const MeshNormalsGenerationConfig &config)
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)poly;
+		MeshImpl *impl = (MeshImpl *)poly;
 		CAGE_THROW_CRITICAL(NotImplemented, "generateNormals");
 	}
 
-	void polyhedronGenerateTangents(Polyhedron *poly, const PolyhedronTangentsGenerationConfig &config)
+	void meshGenerateTangents(Mesh *poly, const MeshTangentsGenerationConfig &config)
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)poly;
+		MeshImpl *impl = (MeshImpl *)poly;
 		CAGE_THROW_CRITICAL(NotImplemented, "generateTangents");
 	}
 
-	void polyhedronApplyTransform(Polyhedron *poly, const transform &t)
+	void meshApplyTransform(Mesh *poly, const transform &t)
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)poly;
+		MeshImpl *impl = (MeshImpl *)poly;
 		for (vec3 &it : impl->positions)
 			it = t * it;
 		for (vec3 &it : impl->normals)
@@ -572,9 +572,9 @@ namespace cage
 			it = t.orientation * it;
 	}
 
-	void polyhedronApplyTransform(Polyhedron *poly, const mat4 &t)
+	void meshApplyTransform(Mesh *poly, const mat4 &t)
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)poly;
+		MeshImpl *impl = (MeshImpl *)poly;
 		for (vec3 &it : impl->positions)
 			it = vec3(t * vec4(it, 1));
 		for (vec3 &it : impl->normals)
@@ -585,13 +585,13 @@ namespace cage
 			it = vec3(t * vec4(it, 0));
 	}
 
-	void polyhedronFlipNormals(Polyhedron *poly)
+	void meshFlipNormals(Mesh *poly)
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)poly;
-		if (impl->type == PolyhedronTypeEnum::Triangles)
+		MeshImpl *impl = (MeshImpl *)poly;
+		if (impl->type == MeshTypeEnum::Triangles)
 		{
 			// flip triangle winding
-			polyhedronConvertToIndexed(poly);
+			meshConvertToIndexed(poly);
 			const uint32 cnt = impl->indicesCount();
 			for (uint32 i = 0; i < cnt; i += 3)
 				std::swap(impl->indices[i + 1], impl->indices[i + 2]);
@@ -601,15 +601,15 @@ namespace cage
 		// todo tangents & bitangents ?
 	}
 
-	void polyhedronClip(Polyhedron *poly, const aabb &clipBox)
+	void meshClip(Mesh *poly, const aabb &clipBox)
 	{
 		if (poly->facesCount() == 0)
 			return;
 
-		CAGE_ASSERT(poly->type() == PolyhedronTypeEnum::Triangles); // todo other types
+		CAGE_ASSERT(poly->type() == MeshTypeEnum::Triangles); // todo other types
 
-		polyhedronConvertToIndexed(poly);
-		PolyhedronImpl *impl = (PolyhedronImpl *)poly;
+		meshConvertToIndexed(poly);
+		MeshImpl *impl = (MeshImpl *)poly;
 		const vec3 clipBoxArr[2] = { clipBox.a, clipBox.b };
 		std::vector<uint32> sourceIndices;
 		sourceIndices.reserve(impl->indices.size());
@@ -656,48 +656,48 @@ namespace cage
 			poly->clear();
 		else
 			removeUnusedVertices(impl);
-		polyhedronDiscardInvalid(impl);
+		meshDiscardInvalid(impl);
 	}
 
-	void polyhedronClip(Polyhedron *poly, const plane &pln)
+	void meshClip(Mesh *poly, const plane &pln)
 	{
-		// todo optimized code without constructing the other polyhedron
-		polyhedronCut(poly, pln);
+		// todo optimized code without constructing the other mesh
+		meshCut(poly, pln);
 	}
 
-	Holder<Polyhedron> polyhedronCut(Polyhedron *poly, const plane &pln)
+	Holder<Mesh> meshCut(Mesh *poly, const plane &pln)
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)poly;
+		MeshImpl *impl = (MeshImpl *)poly;
 		CAGE_THROW_CRITICAL(NotImplemented, "cut");
 	}
 
-	void polyhedronDiscardInvalid(Polyhedron *poly)
+	void meshDiscardInvalid(Mesh *poly)
 	{
 		poly->verticesCount(); // validate vertices
-		PolyhedronImpl *impl = (PolyhedronImpl *)poly;
+		MeshImpl *impl = (MeshImpl *)poly;
 		discardInvalidVertices(impl);
 		switch (impl->type)
 		{
-		case PolyhedronTypeEnum::Points:
+		case MeshTypeEnum::Points:
 			break;
-		case PolyhedronTypeEnum::Lines:
+		case MeshTypeEnum::Lines:
 			discardInvalidLines(impl);
 			break;
-		case PolyhedronTypeEnum::Triangles:
+		case MeshTypeEnum::Triangles:
 			discardInvalidTriangles(impl);
 			break;
 		default:
-			CAGE_THROW_CRITICAL(Exception, "invalid polyhedron type");
+			CAGE_THROW_CRITICAL(Exception, "invalid mesh type");
 		}
 		poly->verticesCount(); // validate vertices
 	}
 
-	void polyhedronDiscardDisconnected(Polyhedron *poly)
+	void meshDiscardDisconnected(Mesh *poly)
 	{
 		if (poly->facesCount() == 0)
 			return;
 		// todo optimized code without separateDisconnected
-		auto vec = polyhedronSeparateDisconnected(poly);
+		auto vec = meshSeparateDisconnected(poly);
 		uint32 largestIndex = 0;
 		uint32 largestFaces = vec[0]->facesCount();
 		for (uint32 i = 1; i < vec.size(); i++)
@@ -709,36 +709,36 @@ namespace cage
 				largestIndex = i;
 			}
 		}
-		PolyhedronImpl *impl = (PolyhedronImpl *)poly;
-		PolyhedronImpl *src = (PolyhedronImpl *)vec[largestIndex].get();
+		MeshImpl *impl = (MeshImpl *)poly;
+		MeshImpl *src = (MeshImpl *)vec[largestIndex].get();
 		impl->swap(*src);
 	}
 
-	Holder<PointerRange<Holder<Polyhedron>>> polyhedronSeparateDisconnected(const Polyhedron *poly)
+	Holder<PointerRange<Holder<Mesh>>> meshSeparateDisconnected(const Mesh *poly)
 	{
 		poly->verticesCount(); // validate vertices
 		if (poly->facesCount() == 0)
 			return {};
-		const PolyhedronImpl *impl = (const PolyhedronImpl *)poly;
-		Holder<Polyhedron> srcCopy;
+		const MeshImpl *impl = (const MeshImpl *)poly;
+		Holder<Mesh> srcCopy;
 		if (poly->indicesCount() == 0)
 		{
 			srcCopy = poly->copy();
-			polyhedronConvertToIndexed(+srcCopy);
-			impl = (const PolyhedronImpl *)+srcCopy;
+			meshConvertToIndexed(+srcCopy);
+			impl = (const MeshImpl *)+srcCopy;
 		}
 		CAGE_ASSERT(!impl->indices.empty());
 
 		switch (impl->type)
 		{
-		case PolyhedronTypeEnum::Points:
+		case MeshTypeEnum::Points:
 			CAGE_THROW_CRITICAL(NotImplemented, "separateDisconnected");
-		case PolyhedronTypeEnum::Lines:
+		case MeshTypeEnum::Lines:
 			CAGE_THROW_CRITICAL(NotImplemented, "separateDisconnected");
-		case PolyhedronTypeEnum::Triangles:
+		case MeshTypeEnum::Triangles:
 			return splitComponentsTriangles(impl);
 		default:
-			CAGE_THROW_CRITICAL(Exception, "invalid polyhedron type");
+			CAGE_THROW_CRITICAL(Exception, "invalid mesh type");
 		}
 	}
 }

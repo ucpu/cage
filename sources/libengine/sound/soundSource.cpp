@@ -1,7 +1,7 @@
 #include "private.h"
 #include "utilities.h"
 
-#include <cage-core/polytone.h>
+#include <cage-core/audio.h>
 
 #include <set>
 
@@ -20,7 +20,7 @@ namespace cage
 		class SoundSourceImpl : public SoundSource, public BusInterface
 		{
 		public:
-			Holder<PolytoneStream> poly;
+			Holder<AudioStream> poly;
 			std::set<MixingBus *> outputs;
 			std::vector<float> temporaryData1;
 			std::vector<float> temporaryData2;
@@ -195,12 +195,12 @@ namespace cage
 		impl->clearAllBuffers();
 	}
 
-	void SoundSource::setData(Holder<Polytone> &&poly)
+	void SoundSource::setData(Holder<Audio> &&poly)
 	{
 		SoundSourceImpl *impl = (SoundSourceImpl *)this;
 		impl->clearAllBuffers();
 		impl->dataType = DataTypeEnum::Poly;
-		impl->poly = newPolytoneStream(templates::move(poly));
+		impl->poly = newAudioStream(templates::move(poly));
 	}
 
 	void SoundSource::setDataTone(uint32 pitch)

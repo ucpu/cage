@@ -1,5 +1,5 @@
 [scheme]
-processor = cage-asset-processor mesh
+processor = cage-asset-processor model
 index = 12
 
 [bakeModel]

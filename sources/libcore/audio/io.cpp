@@ -1,18 +1,18 @@
-#include "polytone.h"
+#include "audio.h"
 
 #include <cage-core/files.h>
 #include <cage-core/string.h>
 
 namespace cage
 {
-	void flacDecode(PointerRange<const char> inBuffer, PolytoneImpl *impl);
-	void mp3Decode(PointerRange<const char> inBuffer, PolytoneImpl *impl);
-	void oggDecode(PointerRange<const char> inBuffer, PolytoneImpl *impl);
-	void wavDecode(PointerRange<const char> inBuffer, PolytoneImpl *impl);
-	MemoryBuffer flacEncode(const PolytoneImpl *impl);
-	MemoryBuffer mp3Encode(const PolytoneImpl *impl);
-	MemoryBuffer oggEncode(const PolytoneImpl *impl);
-	MemoryBuffer wavEncode(const PolytoneImpl *impl);
+	void flacDecode(PointerRange<const char> inBuffer, AudioImpl *impl);
+	void mp3Decode(PointerRange<const char> inBuffer, AudioImpl *impl);
+	void oggDecode(PointerRange<const char> inBuffer, AudioImpl *impl);
+	void wavDecode(PointerRange<const char> inBuffer, AudioImpl *impl);
+	MemoryBuffer flacEncode(const AudioImpl *impl);
+	MemoryBuffer mp3Encode(const AudioImpl *impl);
+	MemoryBuffer oggEncode(const AudioImpl *impl);
+	MemoryBuffer wavEncode(const AudioImpl *impl);
 
 	namespace
 	{
@@ -29,9 +29,9 @@ namespace cage
 		}
 	}
 
-	void Polytone::importBuffer(PointerRange<const char> buffer, PolytoneFormatEnum requestedFormat)
+	void Audio::importBuffer(PointerRange<const char> buffer, AudioFormatEnum requestedFormat)
 	{
-		PolytoneImpl *impl = (PolytoneImpl *)this;
+		AudioImpl *impl = (AudioImpl *)this;
 		try
 		{
 			impl->clear();
@@ -52,8 +52,8 @@ namespace cage
 				oggDecode(buffer, impl);
 			else
 				CAGE_THROW_ERROR(Exception, "sound data do not match any known signature");
-			if (requestedFormat != PolytoneFormatEnum::Default)
-				polytoneConvertFormat(this, requestedFormat);
+			if (requestedFormat != AudioFormatEnum::Default)
+				audioConvertFormat(this, requestedFormat);
 		}
 		catch (...)
 		{
@@ -62,7 +62,7 @@ namespace cage
 		}
 	}
 
-	void Polytone::importFile(const string &filename, PolytoneFormatEnum requestedFormat)
+	void Audio::importFile(const string &filename, AudioFormatEnum requestedFormat)
 	{
 		Holder<File> f = readFile(filename);
 		Holder<PointerRange<char>> buffer = f->readAll();
@@ -70,22 +70,22 @@ namespace cage
 		importBuffer(buffer, requestedFormat);
 	}
 
-	Holder<PointerRange<char>> Polytone::exportBuffer(const string &format) const
+	Holder<PointerRange<char>> Audio::exportBuffer(const string &format) const
 	{
 		CAGE_ASSERT(channels() > 0);
 		const string ext = toLower(pathExtractExtension(format));
 		if (ext == ".wav")
-			return wavEncode((const PolytoneImpl *)this);
+			return wavEncode((const AudioImpl *)this);
 		if (ext == ".flac")
-			return flacEncode((const PolytoneImpl *)this);
+			return flacEncode((const AudioImpl *)this);
 		if (ext == ".mp3")
-			return mp3Encode((const PolytoneImpl *)this);
+			return mp3Encode((const AudioImpl *)this);
 		if (ext == ".ogg")
-			return oggEncode((const PolytoneImpl *)this);
+			return oggEncode((const AudioImpl *)this);
 		CAGE_THROW_ERROR(Exception, "unrecognized file extension for sound encoding");
 	}
 
-	void Polytone::exportFile(const string &filename) const
+	void Audio::exportFile(const string &filename) const
 	{
 		Holder<PointerRange<char>> buf = exportBuffer(filename);
 		writeFile(filename)->write(buf);

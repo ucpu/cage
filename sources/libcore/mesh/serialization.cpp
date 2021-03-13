@@ -1,7 +1,7 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 #include <cage-core/macros.h>
-#include "polyhedron.h"
+#include "mesh.h"
 
 namespace cage
 {
@@ -20,7 +20,7 @@ namespace cage
 
 	GCHL_ENUM_BITS(AttrFlags);
 
-	AttrFlags attrFlags(const PolyhedronImpl *impl)
+	AttrFlags attrFlags(const MeshImpl *impl)
 	{
 		AttrFlags flags = AttrFlags::none;
 #define GCHL_GENERATE(NAME) if (!impl->NAME.empty()) flags |= AttrFlags::NAME;
@@ -32,16 +32,16 @@ namespace cage
 	constexpr uint32 Magic = uint32('p') + (uint32('o') << 8) + (uint32('l') << 16) + (uint32('y') << 24);
 	constexpr uint32 Version = 1;
 
-	void Polyhedron::deserialize(PointerRange<const char> buffer)
+	void Mesh::deserialize(PointerRange<const char> buffer)
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		MeshImpl *impl = (MeshImpl *)this;
 		impl->clear();
 		Deserializer des(buffer);
 		uint32 magic, ver, flagsi, type, vs, is;
 		des >> magic >> ver >> flagsi >> type >> vs >> is;
 		if (magic != Magic || ver != Version)
-			CAGE_THROW_ERROR(Exception, "invalid magic or version in polyhedron deserialization");
-		impl->type = (PolyhedronTypeEnum)type;
+			CAGE_THROW_ERROR(Exception, "invalid magic or version in mesh deserialization");
+		impl->type = (MeshTypeEnum)type;
 		const AttrFlags flags = (AttrFlags)flagsi;
 #define GCHL_GENERATE(NAME) if (any(flags & AttrFlags::NAME)) { impl->NAME.resize(vs); des.read(bufferCast<char, std::remove_reference<decltype(impl->NAME[0])>::type>(impl->NAME)); }
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
@@ -52,9 +52,9 @@ namespace cage
 			CAGE_THROW_ERROR(Exception, "deserialization left unread data");
 	}
 
-	Holder<PointerRange<char>> Polyhedron::serialize() const
+	Holder<PointerRange<char>> Mesh::serialize() const
 	{
-		const PolyhedronImpl *impl = (const PolyhedronImpl *)this;
+		const MeshImpl *impl = (const MeshImpl *)this;
 		MemoryBuffer buff;
 		Serializer ser(buff);
 		const AttrFlags flags = attrFlags(impl);

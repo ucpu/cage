@@ -23,22 +23,22 @@ namespace cage
 #endif // CAGE_DEBUG
 	}
 
-	void RenderObject::setLods(PointerRange<const real> thresholds, PointerRange<const uint32> meshIndices, PointerRange<const uint32> meshNames)
+	void RenderObject::setLods(PointerRange<const real> thresholds, PointerRange<const uint32> modelIndices, PointerRange<const uint32> modelNames)
 	{
-		CAGE_ASSERT(meshIndices[0] == 0);
-		CAGE_ASSERT(meshIndices.size() == thresholds.size() + 1);
-		CAGE_ASSERT(meshIndices[thresholds.size()] == meshNames.size());
+		CAGE_ASSERT(modelIndices[0] == 0);
+		CAGE_ASSERT(modelIndices.size() == thresholds.size() + 1);
+		CAGE_ASSERT(modelIndices[thresholds.size()] == modelNames.size());
 		CAGE_ASSERT(std::is_sorted(thresholds.begin(), thresholds.end(), [](real a, real b) {
 			return b < a;
 		}));
-		CAGE_ASSERT(std::is_sorted(meshIndices.begin(), meshIndices.end()));
+		CAGE_ASSERT(std::is_sorted(modelIndices.begin(), modelIndices.end()));
 		RenderObjectImpl *impl = (RenderObjectImpl*)this;
 		impl->thresholds.resize(thresholds.size());
 		impl->indices.resize(thresholds.size() + 1);
-		impl->names.resize(meshNames.size());
+		impl->names.resize(modelNames.size());
 		detail::memcpy(impl->thresholds.data(), thresholds.data(), sizeof(uint32) * thresholds.size());
-		detail::memcpy(impl->indices.data(), meshIndices.data(), sizeof(uint32) * (thresholds.size() + 1));
-		detail::memcpy(impl->names.data(), meshNames.data(), sizeof(float) * meshNames.size());
+		detail::memcpy(impl->indices.data(), modelIndices.data(), sizeof(uint32) * (thresholds.size() + 1));
+		detail::memcpy(impl->names.data(), modelNames.data(), sizeof(float) * modelNames.size());
 	}
 
 	uint32 RenderObject::lodsCount() const
@@ -58,7 +58,7 @@ namespace cage
 		return lod;
 	}
 
-	PointerRange<const uint32> RenderObject::meshes(uint32 lod) const
+	PointerRange<const uint32> RenderObject::models(uint32 lod) const
 	{
 		RenderObjectImpl *impl = (RenderObjectImpl*)this;
 		CAGE_ASSERT(lod < lodsCount());

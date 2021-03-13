@@ -193,7 +193,7 @@ namespace cage
 
 		struct GraphicsDispatchHolders
 		{
-			Holder<Mesh> meshSquare, meshSphere, meshCone;
+			Holder<Model> modelSquare, modelSphere, modelCone;
 			Holder<ShaderProgram> shaderVisualizeColor, shaderVisualizeDepth, shaderVisualizeMonochromatic, shaderVisualizeVelocity;
 			Holder<ShaderProgram> shaderAmbient, shaderBlit, shaderDepth, shaderGBuffer, shaderLighting, shaderTranslucent;
 			Holder<ShaderProgram> shaderGaussianBlur, shaderSsaoGenerate, shaderSsaoApply, shaderDofCollect, shaderDofApply, shaderMotionBlur, shaderBloomGenerate, shaderBloomApply, shaderLuminanceCollection, shaderLuminanceCopy, shaderFinalScreen, shaderFxaa;
@@ -363,7 +363,7 @@ namespace cage
 					renderTarget->checkStatus();
 #endif // CAGE_DEBUG
 					shaderGaussianBlur->uniform(0, direction);
-					renderDispatch(meshSquare, 1);
+					renderDispatch(modelSquare, 1);
 				};
 				blur(texData, texHelper, vec2(1, 0));
 				blur(texHelper, texData, vec2(0, 1));
@@ -377,39 +377,39 @@ namespace cage
 				renderTarget->checkStatus();
 #endif // CAGE_DEBUG
 				texSource->bind();
-				renderDispatch(meshSquare, 1);
+				renderDispatch(modelSquare, 1);
 				std::swap(texSource, texTarget);
 			}
 
 			void renderDispatch(const Objects *obj)
 			{
-				renderDispatch(obj->mesh, numeric_cast<uint32>(obj->uniMeshes.size()));
+				renderDispatch(obj->model, numeric_cast<uint32>(obj->uniModeles.size()));
 			}
 
-			void renderDispatch(const Holder<Mesh> &mesh, uint32 count)
+			void renderDispatch(const Holder<Model> &model, uint32 count)
 			{
-				mesh->dispatch(count);
+				model->dispatch(count);
 				drawCalls++;
-				drawPrimitives += count * mesh->getPrimitivesCount();
+				drawPrimitives += count * model->getPrimitivesCount();
 			}
 
 			void renderObject(const Objects *obj, const Holder<ShaderProgram> &shr)
 			{
-				renderObject(obj, shr, obj->mesh->getFlags());
+				renderObject(obj, shr, obj->model->getFlags());
 			}
 
-			void renderObject(const Objects *obj, const Holder<ShaderProgram> &shr, MeshRenderFlags flags)
+			void renderObject(const Objects *obj, const Holder<ShaderProgram> &shr, ModelRenderFlags flags)
 			{
 				applyShaderRoutines(&obj->shaderConfig, shr);
-				useDisposableUbo(CAGE_SHADER_UNIBLOCK_MESHES, obj->uniMeshes);
+				useDisposableUbo(CAGE_SHADER_UNIBLOCK_MESHES, obj->uniModeles);
 				if (!obj->uniArmatures.empty())
 				{
 					useDisposableUbo(CAGE_SHADER_UNIBLOCK_ARMATURES, obj->uniArmatures);
-					shr->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, obj->mesh->getSkeletonBones());
+					shr->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, obj->model->getSkeletonBones());
 				}
-				obj->mesh->bind();
-				setTwoSided(any(flags & MeshRenderFlags::TwoSided));
-				setDepthTest(any(flags & MeshRenderFlags::DepthTest), any(flags & MeshRenderFlags::DepthWrite));
+				obj->model->bind();
+				setTwoSided(any(flags & ModelRenderFlags::TwoSided));
+				setDepthTest(any(flags & ModelRenderFlags::DepthTest), any(flags & ModelRenderFlags::DepthWrite));
 				{ // bind textures
 					uint32 tius[MaxTexturesCountPerMaterial];
 					const Texture *texs[MaxTexturesCountPerMaterial];
@@ -463,19 +463,19 @@ namespace cage
 				for (const Holder<Lights> &l : pass->lights)
 				{
 					applyShaderRoutines(&l->shaderConfig, shr);
-					Holder<Mesh> mesh;
+					Holder<Model> model;
 					switch (l->lightType)
 					{
 					case LightTypeEnum::Directional:
-						mesh = meshSquare.share();
+						model = modelSquare.share();
 						glCullFace(GL_BACK);
 						break;
 					case LightTypeEnum::Spot:
-						mesh = meshCone.share();
+						model = modelCone.share();
 						glCullFace(GL_FRONT);
 						break;
 					case LightTypeEnum::Point:
-						mesh = meshSphere.share();
+						model = modelSphere.share();
 						glCullFace(GL_FRONT);
 						break;
 					default:
@@ -483,8 +483,8 @@ namespace cage
 					}
 					bindShadowmap(l->shadowmap);
 					useDisposableUbo(CAGE_SHADER_UNIBLOCK_LIGHTS, l->uniLights);
-					mesh->bind();
-					renderDispatch(mesh, numeric_cast<uint32>(l->uniLights.size()));
+					model->bind();
+					renderDispatch(model, numeric_cast<uint32>(l->uniLights.size()));
 				}
 				glCullFace(GL_BACK);
 				CAGE_CHECK_GL_ERROR_DEBUG();
@@ -515,7 +515,7 @@ namespace cage
 							applyShaderRoutines(&l->shaderConfig, shr);
 							bindShadowmap(l->shadowmap);
 							useDisposableUbo(CAGE_SHADER_UNIBLOCK_LIGHTS, l->uniLights);
-							renderDispatch(t->object.mesh, numeric_cast<uint32>(l->uniLights.size()));
+							renderDispatch(t->object.model, numeric_cast<uint32>(l->uniLights.size()));
 						}
 					}
 				}
@@ -528,7 +528,7 @@ namespace cage
 				OPTICK_EVENT("texts");
 				for (const Holder<Texts> &t : pass->texts)
 				{
-					t->font->bind(meshSquare.get(), shaderFont.get());
+					t->font->bind(modelSquare.get(), shaderFont.get());
 					for (const Holder<Texts::Render> &r : t->renders)
 					{
 						shaderFont->uniform(0, r->transform);
@@ -608,7 +608,7 @@ namespace cage
 				renderTarget->depthTexture(nullptr);
 				renderTarget->activeAttachments(1);
 				bindGBufferTextures();
-				meshSquare->bind();
+				modelSquare->bind();
 				texSource = colorTexture.get();
 				texTarget = intermediateTexture.get();
 				CAGE_CHECK_GL_ERROR_DEBUG();
@@ -631,7 +631,7 @@ namespace cage
 						renderTarget->colorTexture(0, ambientOcclusionTexture1.get());
 						renderTarget->checkStatus();
 						shaderSsaoGenerate->bind();
-						renderDispatch(meshSquare, 1);
+						renderDispatch(modelSquare, 1);
 					}
 					{ // blur
 						for (uint32 i = 0; i < pass->ssao.blurPasses; i++)
@@ -644,7 +644,7 @@ namespace cage
 						ambientOcclusionTexture1->bind();
 						activeTexture(CAGE_SHADER_TEXTURE_COLOR);
 						shaderSsaoApply->bind();
-						renderDispatch(meshSquare, 1);
+						renderDispatch(modelSquare, 1);
 					}
 					viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
 				}
@@ -687,13 +687,13 @@ namespace cage
 						renderTarget->colorTexture(0, dofTexture1.get());
 						renderTarget->checkStatus();
 						shaderDofCollect->uniform(0, 0);
-						renderDispatch(meshSquare, 1);
+						renderDispatch(modelSquare, 1);
 					}
 					{ // collect far
 						renderTarget->colorTexture(0, dofTexture2.get());
 						renderTarget->checkStatus();
 						shaderDofCollect->uniform(0, 1);
-						renderDispatch(meshSquare, 1);
+						renderDispatch(modelSquare, 1);
 					}
 					{ // blur
 						for (uint32 i = 0; i < pass->depthOfField.blurPasses; i++)
@@ -741,7 +741,7 @@ namespace cage
 						renderTarget->checkStatus();
 						texSource->bind();
 						shaderLuminanceCollection->bind();
-						renderDispatch(meshSquare, 1);
+						renderDispatch(modelSquare, 1);
 					}
 					// downscale
 					{
@@ -755,7 +755,7 @@ namespace cage
 						renderTarget->checkStatus();
 						shaderLuminanceCopy->bind();
 						shaderLuminanceCopy->uniform(0, vec2(pass->eyeAdaptation.darkerSpeed, pass->eyeAdaptation.lighterSpeed));
-						renderDispatch(meshSquare, 1);
+						renderDispatch(modelSquare, 1);
 					}
 					viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
 					texSource->bind();
@@ -805,7 +805,7 @@ namespace cage
 
 				renderTarget->depthTexture(nullptr);
 				renderTarget->activeAttachments(1);
-				meshSquare->bind();
+				modelSquare->bind();
 				bindGBufferTextures();
 			}
 
@@ -824,7 +824,7 @@ namespace cage
 						renderTarget->checkStatus();
 						shaderBloomGenerate->bind();
 						shaderBloomGenerate->uniform(0, vec4(pass->bloom.threshold, 0, 0, 0));
-						renderDispatch(meshSquare, 1);
+						renderDispatch(modelSquare, 1);
 					}
 					{ // blur
 						bloomTexture1->bind();
@@ -897,9 +897,9 @@ namespace cage
 				const Holder<ShaderProgram> &shr = shaderDepth;
 				shr->bind();
 				for (const Holder<Objects> &o : pass->opaques)
-					renderObject(o.get(), shr, o->mesh->getFlags() | MeshRenderFlags::DepthWrite);
+					renderObject(o.get(), shr, o->model->getFlags() | ModelRenderFlags::DepthWrite);
 				for (const Holder<Translucent> &o : pass->translucents)
-					renderObject(&o->object, shr, o->object.mesh->getFlags() | MeshRenderFlags::DepthWrite);
+					renderObject(&o->object, shr, o->object.model->getFlags() | ModelRenderFlags::DepthWrite);
 
 				glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 				CAGE_CHECK_GL_ERROR_DEBUG();
@@ -1037,9 +1037,9 @@ namespace cage
 				if (!ass->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/cage.pack")))
 					return;
 
-				meshSquare = ass->get<AssetSchemeIndexMesh, Mesh>(HashString("cage/mesh/square.obj"));
-				meshSphere = ass->get<AssetSchemeIndexMesh, Mesh>(HashString("cage/mesh/sphere.obj"));
-				meshCone = ass->get<AssetSchemeIndexMesh, Mesh>(HashString("cage/mesh/cone.obj"));
+				modelSquare = ass->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
+				modelSphere = ass->get<AssetSchemeIndexModel, Model>(HashString("cage/model/sphere.obj"));
+				modelCone = ass->get<AssetSchemeIndexModel, Model>(HashString("cage/model/cone.obj"));
 				shaderVisualizeColor = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/visualize/color.glsl"));
 				shaderVisualizeDepth = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/visualize/depth.glsl"));
 				shaderVisualizeMonochromatic = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/visualize/monochromatic.glsl"));
@@ -1161,14 +1161,14 @@ namespace cage
 					const sint32 visualizeCount = numeric_cast<sint32>(visualizableTextures.size());
 					const sint32 visualizeIndex = (visualizeBuffer % visualizeCount + visualizeCount) % visualizeCount;
 					VisualizableTexture &v = visualizableTextures[visualizeIndex];
-					meshSquare->bind();
+					modelSquare->bind();
 					v.tex->bind();
 					if (visualizeIndex == 0)
 					{
 						CAGE_ASSERT(v.visualizableTextureMode == VisualizableTextureModeEnum::Color);
 						shaderVisualizeColor->bind();
 						shaderVisualizeColor->uniform(0, vec2(1.0 / lastGBufferWidth, 1.0 / lastGBufferHeight));
-						renderDispatch(meshSquare, 1);
+						renderDispatch(modelSquare, 1);
 					}
 					else
 					{
@@ -1178,7 +1178,7 @@ namespace cage
 						case VisualizableTextureModeEnum::Color:
 							shaderVisualizeColor->bind();
 							shaderVisualizeColor->uniform(0, scale);
-							renderDispatch(meshSquare, 1);
+							renderDispatch(modelSquare, 1);
 							break;
 						case VisualizableTextureModeEnum::Depth2d:
 						case VisualizableTextureModeEnum::DepthCube:
@@ -1188,18 +1188,18 @@ namespace cage
 							GLint cmpMode = 0;
 							glGetTexParameteriv(v.tex->getTarget(), GL_TEXTURE_COMPARE_MODE, &cmpMode);
 							glTexParameteri(v.tex->getTarget(), GL_TEXTURE_COMPARE_MODE, GL_NONE);
-							renderDispatch(meshSquare, 1);
+							renderDispatch(modelSquare, 1);
 							glTexParameteri(v.tex->getTarget(), GL_TEXTURE_COMPARE_MODE, cmpMode);
 						} break;
 						case VisualizableTextureModeEnum::Monochromatic:
 							shaderVisualizeMonochromatic->bind();
 							shaderVisualizeMonochromatic->uniform(0, scale);
-							renderDispatch(meshSquare, 1);
+							renderDispatch(modelSquare, 1);
 							break;
 						case VisualizableTextureModeEnum::Velocity:
 							shaderVisualizeVelocity->bind();
 							shaderVisualizeVelocity->uniform(0, scale);
-							renderDispatch(meshSquare, 1);
+							renderDispatch(modelSquare, 1);
 							break;
 						}
 					}

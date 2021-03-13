@@ -3,7 +3,7 @@
 #include <cstdio> // vsprintf
 #include <xatlas.h>
 
-#include "polyhedron.h"
+#include "mesh.h"
 
 namespace cage
 {
@@ -29,10 +29,10 @@ namespace cage
 		} initializer;
 
 		const string xAtlasCategoriesNames[] = {
-			"AddMesh",
+			"AddModel",
 			"ComputeCharts",
 			"PackCharts",
-			"BuildOutputMeshes"
+			"BuildOutputModeles"
 		};
 
 		bool xAtlasProgress(xatlas::ProgressCategory category, int progress, void *userData)
@@ -55,9 +55,9 @@ namespace cage
 		}
 	}
 
-	uint32 polyhedronUnwrap(Polyhedron *poly, const PolyhedronUnwrapConfig &config)
+	uint32 meshUnwrap(Mesh *poly, const MeshUnwrapConfig &config)
 	{
-		CAGE_ASSERT(poly->type() == PolyhedronTypeEnum::Triangles);
+		CAGE_ASSERT(poly->type() == MeshTypeEnum::Triangles);
 		CAGE_ASSERT((config.targetResolution == 0) != (config.texelsPerUnit == 0));
 
 		if (poly->facesCount() == 0)

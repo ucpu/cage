@@ -5,56 +5,56 @@
 #include <pmp/SurfaceMesh.h>
 #include <pmp/algorithms/SurfaceRemeshing.h>
 
-#include "polyhedron.h"
+#include "mesh.h"
 
 namespace cage
 {
 	namespace
 	{
-		Holder<pmp::SurfaceMesh> toPmp(const Polyhedron *mesh)
+		Holder<pmp::SurfaceMesh> toPmp(const Mesh *model)
 		{
-			CAGE_ASSERT(mesh->type() == PolyhedronTypeEnum::Triangles);
+			CAGE_ASSERT(model->type() == MeshTypeEnum::Triangles);
 			Holder<pmp::SurfaceMesh> res = detail::systemArena().createHolder<pmp::SurfaceMesh>();
 			{ // vertices
-				for (const vec3 &p : mesh->positions())
+				for (const vec3 &p : model->positions())
 					res->add_vertex(pmp::Point(p[0].value, p[1].value, p[2].value));
-				if (!mesh->normals().empty())
+				if (!model->normals().empty())
 				{
 					pmp::VertexProperty<pmp::Point> normals = res->add_vertex_property<pmp::Point>("v:normal");
-					for (const auto &p : mesh->normals())
+					for (const auto &p : model->normals())
 						normals.vector().push_back(pmp::Point(p[0].value, p[1].value, p[2].value));
 				}
 			}
-			if (mesh->indicesCount() > 0)
+			if (model->indicesCount() > 0)
 			{ // indices
-				const auto &inds = mesh->indices();
+				const auto &inds = model->indices();
 				const uint32 tris = numeric_cast<uint32>(inds.size()) / 3;
 				for (uint32 t = 0; t < tris; t++)
 					res->add_triangle(pmp::Vertex(inds[t * 3 + 0]), pmp::Vertex(inds[t * 3 + 1]), pmp::Vertex(inds[t * 3 + 2]));
 			}
 			else
 			{
-				const uint32 tris = numeric_cast<uint32>(mesh->verticesCount()) / 3;
+				const uint32 tris = numeric_cast<uint32>(model->verticesCount()) / 3;
 				for (uint32 t = 0; t < tris; t++)
 					res->add_triangle(pmp::Vertex(t * 3 + 0), pmp::Vertex(t * 3 + 1), pmp::Vertex(t * 3 + 2));
 			}
 			return res;
 		}
 
-		void fromPmp(Polyhedron *mesh, const Holder<pmp::SurfaceMesh> &pm)
+		void fromPmp(Mesh *model, const Holder<pmp::SurfaceMesh> &pm)
 		{
 			CAGE_ASSERT(pm->is_triangle_mesh());
-			mesh->clear();
+			model->clear();
 			{ // vertices
 				{
 					static_assert(sizeof(pmp::Point) == sizeof(vec3), "pmp point size mismatch");
 					const auto &vs = pm->positions();
-					mesh->positions({ (vec3*)vs.data(), (vec3*)vs.data() + vs.size() });
+					model->positions({ (vec3*)vs.data(), (vec3*)vs.data() + vs.size() });
 				}
 				if (pm->has_vertex_property("v:normal"))
 				{
 					const auto &ns = pm->get_vertex_property<pmp::Point>("v:normal").vector();
-					mesh->normals({ (vec3*)ns.data(), (vec3*)ns.data() + ns.size() });
+					model->normals({ (vec3*)ns.data(), (vec3*)ns.data() + ns.size() });
 				}
 			}
 			// indices
@@ -66,12 +66,12 @@ namespace cage
 				uint32 b = (*v).idx(); ++v;
 				uint32 c = (*v).idx(); ++v;
 				CAGE_ASSERT(v == t.end());
-				mesh->addTriangle(a, b, c);
+				model->addTriangle(a, b, c);
 			}
 		}
 	}
 
-	void polyhedronSimplify(Polyhedron *poly,  const PolyhedronSimplificationConfig &config)
+	void meshSimplify(Mesh *poly,  const MeshSimplificationConfig &config)
 	{
 		try
 		{
@@ -83,11 +83,11 @@ namespace cage
 		catch (const std::exception &e)
 		{
 			CAGE_LOG_THROW(e.what());
-			CAGE_THROW_ERROR(Exception, "polyhedron simplification failure");
+			CAGE_THROW_ERROR(Exception, "mesh simplification failure");
 		}
 	}
 
-	void polyhedronRegularize(Polyhedron *poly, const PolyhedronRegularizationConfig &config)
+	void meshRegularize(Mesh *poly, const MeshRegularizationConfig &config)
 	{
 		try
 		{
@@ -99,7 +99,7 @@ namespace cage
 		catch (const std::exception &e)
 		{
 			CAGE_LOG_THROW(e.what());
-			CAGE_THROW_ERROR(Exception, "polyhedron regularization failure");
+			CAGE_THROW_ERROR(Exception, "mesh regularization failure");
 		}
 	}
 }

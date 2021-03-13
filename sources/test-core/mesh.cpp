@@ -1,14 +1,14 @@
 #include "main.h"
 #include <cage-core/geometry.h>
-#include <cage-core/polyhedron.h>
+#include <cage-core/mesh.h>
 #include <cage-core/collider.h>
 #include <cage-core/memoryBuffer.h>
 
 namespace
 {
-	Holder<Polyhedron> makeUvSphere(real radius, uint32 segments, uint32 rings)
+	Holder<Mesh> makeUvSphere(real radius, uint32 segments, uint32 rings)
 	{
-		Holder<Polyhedron> poly = newPolyhedron();
+		Holder<Mesh> poly = newMesh();
 
 		const vec2 uvScale = 1 / vec2(segments - 1, rings - 1);
 		for (uint32 r = 0; r < rings; r++)
@@ -46,13 +46,13 @@ namespace
 		approxEqual(a.b, b.b);
 	}
 
-	Holder<Polyhedron> splitSphereIntoTwo(const Polyhedron *poly)
+	Holder<Mesh> splitSphereIntoTwo(const Mesh *poly)
 	{
 		auto p = poly->copy();
 		{
-			PolyhedronCloseVerticesMergingConfig cfg;
+			MeshCloseVerticesMergingConfig cfg;
 			cfg.distanceThreshold = 1e-3;
-			polyhedronMergeCloseVertices(+p, cfg);
+			meshMergeCloseVertices(+p, cfg);
 		}
 		for (vec3 &v : p->positions())
 		{
@@ -60,22 +60,22 @@ namespace
 			if (x > 2 && x < 4)
 				x = real::Nan();
 		}
-		polyhedronDiscardInvalid(+p);
+		meshDiscardInvalid(+p);
 		return p;
 	}
 }
 
-void testPolyhedron()
+void testMesh()
 {
-	CAGE_TESTCASE("polyhedron");
+	CAGE_TESTCASE("mesh");
 
 #ifdef CAGE_DEBUG
-	const Holder<const Polyhedron> poly = makeUvSphere(10, 16, 8).cast<const Polyhedron>();
+	const Holder<const Mesh> poly = makeUvSphere(10, 16, 8).cast<const Mesh>();
 #else
-	const Holder<const Polyhedron> poly = makeUvSphere(10, 32, 16).cast<const Polyhedron>();
+	const Holder<const Mesh> poly = makeUvSphere(10, 32, 16).cast<const Mesh>();
 #endif // CAGE_DEBUG
 
-	poly->exportObjFile({}, "meshes/base.obj");
+	poly->exportObjFile({}, "models/base.obj");
 	CAGE_TEST(poly->verticesCount() > 10);
 	CAGE_TEST(poly->indicesCount() > 10);
 	CAGE_TEST(poly->indicesCount() == poly->facesCount() * 3);
@@ -88,7 +88,7 @@ void testPolyhedron()
 	{
 		CAGE_TESTCASE("apply transformation");
 		auto p = poly->copy();
-		polyhedronApplyTransform(+p, transform(vec3(0, 5, 0)));
+		meshApplyTransform(+p, transform(vec3(0, 5, 0)));
 		approxEqual(p->boundingBox(), aabb(vec3(-10, -5, -10), vec3(10, 15, 10)));
 	}
 
@@ -96,88 +96,88 @@ void testPolyhedron()
 		CAGE_TESTCASE("discard invalid");
 		auto p = poly->copy();
 		p->position(42, vec3::Nan()); // intentionally corrupt one vertex
-		polyhedronDiscardInvalid(+p);
+		meshDiscardInvalid(+p);
 		const uint32 f = p->facesCount();
 		CAGE_TEST(f > 10 && f < poly->facesCount());
-		p->exportObjFile({}, "meshes/discardInvalid.obj");
+		p->exportObjFile({}, "models/discardInvalid.obj");
 	}
 
 	{
 		CAGE_TESTCASE("merge close vertices");
 		auto p = poly->copy();
 		{
-			PolyhedronCloseVerticesMergingConfig cfg;
+			MeshCloseVerticesMergingConfig cfg;
 			cfg.distanceThreshold = 1e-3;
-			polyhedronMergeCloseVertices(+p, cfg);
+			meshMergeCloseVertices(+p, cfg);
 		}
 		const uint32 f = p->facesCount();
 		CAGE_TEST(f > 10 && f < poly->facesCount());
-		p->exportObjFile({}, "meshes/mergeCloseVertices.obj");
+		p->exportObjFile({}, "models/mergeCloseVertices.obj");
 	}
 
 	{
 		CAGE_TESTCASE("simplify");
 		auto p = poly->copy();
-		PolyhedronSimplificationConfig cfg;
+		MeshSimplificationConfig cfg;
 #ifdef CAGE_DEBUG
 		cfg.iterations = 1;
 		cfg.minEdgeLength = 0.5;
 		cfg.maxEdgeLength = 2;
 		cfg.approximateError = 0.5;
 #endif
-		polyhedronSimplify(+p, cfg);
-		p->exportObjFile({}, "meshes/simplify.obj");
+		meshSimplify(+p, cfg);
+		p->exportObjFile({}, "models/simplify.obj");
 	}
 
 	{
 		CAGE_TESTCASE("regularize");
 		auto p = poly->copy();
-		PolyhedronRegularizationConfig cfg;
+		MeshRegularizationConfig cfg;
 #ifdef CAGE_DEBUG
 		cfg.iterations = 1;
 		cfg.targetEdgeLength = 3;
 #endif
-		polyhedronRegularize(+p, cfg);
-		p->exportObjFile({}, "meshes/regularize.obj");
+		meshRegularize(+p, cfg);
+		p->exportObjFile({}, "models/regularize.obj");
 	}
 
 	{
 		CAGE_TESTCASE("unwrap");
 		auto p = poly->copy();
-		PolyhedronUnwrapConfig cfg;
+		MeshUnwrapConfig cfg;
 		cfg.targetResolution = 256;
-		polyhedronUnwrap(+p, cfg);
-		p->exportObjFile({}, "meshes/unwrap.obj");
+		meshUnwrap(+p, cfg);
+		p->exportObjFile({}, "models/unwrap.obj");
 	}
 
 	{
 		CAGE_TESTCASE("clip");
 		auto p = poly->copy();
-		polyhedronClip(+p, aabb(vec3(-6, -6, -10), vec3(6, 6, 10)));
-		p->exportObjFile({}, "meshes/clip.obj");
+		meshClip(+p, aabb(vec3(-6, -6, -10), vec3(6, 6, 10)));
+		p->exportObjFile({}, "models/clip.obj");
 	}
 
 	{
 		CAGE_TESTCASE("separateDisconnected");
 		auto p = splitSphereIntoTwo(+poly);
-		auto ps = polyhedronSeparateDisconnected(+p);
+		auto ps = meshSeparateDisconnected(+p);
 		// CAGE_TEST(ps.size() == 2); // todo fix this -> it should really be two but is 3
-		ps[0]->exportObjFile({}, "meshes/separateDisconnected_1.obj");
-		ps[1]->exportObjFile({}, "meshes/separateDisconnected_2.obj");
+		ps[0]->exportObjFile({}, "models/separateDisconnected_1.obj");
+		ps[1]->exportObjFile({}, "models/separateDisconnected_2.obj");
 	}
 
 	{
 		CAGE_TESTCASE("discardDisconnected");
 		auto p = splitSphereIntoTwo(+poly);
-		polyhedronDiscardDisconnected(+p);
-		p->exportObjFile({}, "meshes/discardDisconnected.obj");
+		meshDiscardDisconnected(+p);
+		p->exportObjFile({}, "models/discardDisconnected.obj");
 	}
 
 	{
 		CAGE_TESTCASE("serialize");
 		Holder<PointerRange<char>> buff = poly->serialize();
 		CAGE_TEST(buff.size() > 10);
-		Holder<Polyhedron> p = newPolyhedron();
+		Holder<Mesh> p = newMesh();
 		p->deserialize(buff);
 		CAGE_TEST(p->verticesCount() == poly->verticesCount());
 		CAGE_TEST(p->indicesCount() == poly->indicesCount());
@@ -192,9 +192,9 @@ void testPolyhedron()
 	{
 		CAGE_TESTCASE("collider");
 		Holder<Collider> c = newCollider();
-		c->importPolyhedron(+poly);
+		c->importMesh(+poly);
 		CAGE_TEST(c->triangles().size() > 10);
-		Holder<Polyhedron> p = newPolyhedron();
+		Holder<Mesh> p = newMesh();
 		p->importCollider(c.get());
 		CAGE_TEST(p->positions().size() > 10);
 		CAGE_TEST(p->facesCount() == poly->facesCount());

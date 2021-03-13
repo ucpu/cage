@@ -11,7 +11,7 @@ namespace cage
 		void clear();
 		Holder<PointerRange<char>> serialize(bool includeAdditionalData = true) const;
 		void deserialize(PointerRange<const char> buffer);
-		void importPolyhedron(const Polyhedron *polyhedron);
+		void importMesh(const Mesh *mesh);
 
 		PointerRange<const triangle> triangles() const;
 
@@ -33,11 +33,11 @@ namespace cage
 		uint32 b = m;
 	};
 
-	// ao and bo are the two meshes to test for collision
-	// at1 and at2 are initial and final transformations for the first mesh
-	// bt1 and bt2 are initial and final transformations for the second mesh
-	// fractionBefore is the ratio between initial and final transformations just before the meshes start to collide
-	// fractionContact is the ratio between initial and final transformations just when the meshes are colliding
+	// ao and bo are the two models to test for collision
+	// at1 and at2 are initial and final transformations for the first model
+	// bt1 and bt2 are initial and final transformations for the second model
+	// fractionBefore is the ratio between initial and final transformations just before the models start to collide
+	// fractionContact is the ratio between initial and final transformations just when the models are colliding
 	// note that fractionBefore and fractionContact are just approximations
 	// the collisionPairs will contain all of the CollisionPairs corresponding to the fractionContact
 	struct CAGE_CORE_API CollisionDetectionParams

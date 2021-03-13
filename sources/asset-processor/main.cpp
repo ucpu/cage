@@ -213,8 +213,8 @@ int main(int argc, const char *args[])
 			func.bind<&processObject>();
 		else if (component == "animation")
 			func.bind<&processAnimation>();
-		else if (component == "mesh")
-			func.bind<&processMesh>();
+		else if (component == "model")
+			func.bind<&processModel>();
 		else if (component == "skeleton")
 			func.bind<&processSkeleton>();
 		else if (component == "font")

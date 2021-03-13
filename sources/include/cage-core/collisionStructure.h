@@ -10,8 +10,8 @@ namespace cage
 	public:
 		uint32 name() const;
 		void collider(const Collider *&c, transform &t) const;
-		real fractionBefore() const; // the ratio between initial and final transformations just before the meshes start to collide
-		real fractionContact() const; // the ratio between initial and final transformations just when the meshes are colliding
+		real fractionBefore() const; // the ratio between initial and final transformations just before the models start to collide
+		real fractionContact() const; // the ratio between initial and final transformations just when the models are colliding
 		PointerRange<CollisionPair> collisionPairs() const;
 
 		// finds arbitrary collision, if any

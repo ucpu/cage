@@ -1,6 +1,6 @@
 #include "main.h"
 #include <cage-core/marchingCubes.h>
-#include <cage-core/polyhedron.h>
+#include <cage-core/mesh.h>
 
 void test(real a, real b);
 
@@ -27,7 +27,7 @@ void testMarchingCubes()
 		CAGE_TESTCASE("coordinates of points on configuration grid");
 
 		// the area is internally larger by two cells on each side
-		// this improves clipping of meshes that intersect the edges
+		// this improves clipping of models that intersect the edges
 		// clipping is done by the original box
 
 		{
@@ -97,10 +97,10 @@ void testMarchingCubes()
 		config.resolution = ivec3(25);
 		Holder<MarchingCubes> cubes = newMarchingCubes(config);
 		cubes->updateByPosition(Delegate<real(const vec3 &)>().bind<&sdfSphere>());
-		Holder<Polyhedron> poly = cubes->makePolyhedron();
+		Holder<Mesh> poly = cubes->makeMesh();
 		CAGE_TEST(poly->verticesCount() > 10);
 		CAGE_TEST(poly->indicesCount() > 10);
-		poly->exportObjFile({}, "meshes/marchingCubesSphere.obj");
+		poly->exportObjFile({}, "models/marchingCubesSphere.obj");
 
 		{
 			CAGE_TESTCASE("coordinates of center of the sphere");
@@ -123,20 +123,20 @@ void testMarchingCubes()
 		{
 			CAGE_TESTCASE("clip x");
 			auto p = poly->copy();
-			polyhedronClip(+p, aabb(vec3(-100, 2, 2), vec3(100, 8, 8)));
-			p->exportObjFile({}, "meshes/marchingCubesClipX.obj");
+			meshClip(+p, aabb(vec3(-100, 2, 2), vec3(100, 8, 8)));
+			p->exportObjFile({}, "models/marchingCubesClipX.obj");
 		}
 		{
 			CAGE_TESTCASE("clip y");
 			auto p = poly->copy();
-			polyhedronClip(+p, aabb(vec3(2, -100, 2), vec3(8, 100, 8)));
-			p->exportObjFile({}, "meshes/marchingCubesClipY.obj");
+			meshClip(+p, aabb(vec3(2, -100, 2), vec3(8, 100, 8)));
+			p->exportObjFile({}, "models/marchingCubesClipY.obj");
 		}
 		{
 			CAGE_TESTCASE("clip z");
 			auto p = poly->copy();
-			polyhedronClip(+p, aabb(vec3(2, 2, -100), vec3(8, 8, 100)));
-			p->exportObjFile({}, "meshes/marchingCubesClipZ.obj");
+			meshClip(+p, aabb(vec3(2, 2, -100), vec3(8, 8, 100)));
+			p->exportObjFile({}, "models/marchingCubesClipZ.obj");
 		}
 	}
 
@@ -148,7 +148,7 @@ void testMarchingCubes()
 		config.resolution = ivec3(25);
 		Holder<MarchingCubes> cubes = newMarchingCubes(config);
 		cubes->updateByPosition(Delegate<real(const vec3 &)>().bind<&sdfTiltedPlane>());
-		Holder<Polyhedron> poly = cubes->makePolyhedron();
-		poly->exportObjFile({}, "meshes/marchingCubesHexagon.obj");
+		Holder<Mesh> poly = cubes->makeMesh();
+		poly->exportObjFile({}, "models/marchingCubesHexagon.obj");
 	}
 }

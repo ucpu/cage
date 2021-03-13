@@ -6,7 +6,7 @@ void processCollider()
 {
 	Holder<AssimpContext> context = newAssimpContext(0, 0);
 	const aiScene *scene = context->getScene();
-	const aiMesh *am = scene->mMeshes[context->selectMesh()];
+	const aiMesh *am = scene->mMeshes[context->selectModel()];
 
 	switch (am->mPrimitiveTypes)
 	{

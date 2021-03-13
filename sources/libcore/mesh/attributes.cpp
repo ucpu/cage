@@ -1,16 +1,16 @@
 #include <cage-core/macros.h>
-#include "polyhedron.h"
+#include "mesh.h"
 
 namespace cage
 {
 	template<class T>
-	T attrAt(const PolyhedronAttribute<T> &attribute, const ivec3 &ids, const vec3 &weights)
+	T attrAt(const MeshAttribute<T> &attribute, const ivec3 &ids, const vec3 &weights)
 	{
 		return attribute.at(ids[0]) * weights[0] + attribute.at(ids[1]) * weights[1] + attribute.at(ids[2]) * weights[2];
 	}
 
 	template<>
-	ivec4 attrAt<ivec4>(const PolyhedronAttribute<ivec4> &attribute, const ivec3 &ids, const vec3 &weights)
+	ivec4 attrAt<ivec4>(const MeshAttribute<ivec4> &attribute, const ivec3 &ids, const vec3 &weights)
 	{
 		CAGE_THROW_ERROR(Exception, "cannot interpolate integer attributes");
 	}
@@ -28,35 +28,35 @@ namespace cage
 	}
 
 #define GCHL_GENERATE(NORMALIZED, TYPE, SINGULAR, PLURAL) \
-	PointerRange<const TYPE> Polyhedron::PLURAL() const \
+	PointerRange<const TYPE> Mesh::PLURAL() const \
 	{ \
-		const PolyhedronImpl *impl = (const PolyhedronImpl *)this; \
+		const MeshImpl *impl = (const MeshImpl *)this; \
 		return impl->PLURAL; \
 	} \
-	PointerRange<TYPE> Polyhedron::PLURAL() \
+	PointerRange<TYPE> Mesh::PLURAL() \
 	{ \
-		PolyhedronImpl *impl = (PolyhedronImpl *)this; \
+		MeshImpl *impl = (MeshImpl *)this; \
 		return impl->PLURAL; \
 	} \
-	void Polyhedron::PLURAL(const PointerRange<const TYPE> &values) \
+	void Mesh::PLURAL(const PointerRange<const TYPE> &values) \
 	{ \
-		PolyhedronImpl *impl = (PolyhedronImpl *)this; \
+		MeshImpl *impl = (MeshImpl *)this; \
 		impl->PLURAL.resize(values.size()); \
 		detail::memcpy(impl->PLURAL.data(), values.data(), values.size() * sizeof(TYPE)); \
 	} \
-	TYPE Polyhedron::SINGULAR(uint32 idx) const \
+	TYPE Mesh::SINGULAR(uint32 idx) const \
 	{ \
-		const PolyhedronImpl *impl = (const PolyhedronImpl *)this; \
+		const MeshImpl *impl = (const MeshImpl *)this; \
 		return impl->PLURAL[idx]; \
 	} \
-	void Polyhedron::SINGULAR(uint32 idx, const TYPE &value) \
+	void Mesh::SINGULAR(uint32 idx, const TYPE &value) \
 	{ \
-		PolyhedronImpl *impl = (PolyhedronImpl *)this; \
+		MeshImpl *impl = (MeshImpl *)this; \
 		impl->PLURAL[idx] = value; \
 	} \
-	TYPE Polyhedron::CAGE_JOIN(SINGULAR, At)(const ivec3 &ids, const vec3 &weights) const \
+	TYPE Mesh::CAGE_JOIN(SINGULAR, At)(const ivec3 &ids, const vec3 &weights) const \
 	{ \
-		const PolyhedronImpl *impl = (const PolyhedronImpl *)this; \
+		const MeshImpl *impl = (const MeshImpl *)this; \
 		return attrNormalize<TYPE, NORMALIZED>(attrAt<TYPE>(impl->PLURAL, ids, weights)); \
 	}
 

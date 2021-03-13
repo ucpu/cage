@@ -473,7 +473,7 @@ namespace cage
 					// engine assets
 					assets->defineScheme<ShaderProgram>(AssetSchemeIndexShaderProgram, genAssetSchemeShaderProgram(EngineGraphicsUploadThread::threadIndex));
 					assets->defineScheme<Texture>(AssetSchemeIndexTexture, genAssetSchemeTexture(EngineGraphicsUploadThread::threadIndex));
-					assets->defineScheme<Mesh>(AssetSchemeIndexMesh, genAssetSchemeMesh(EngineGraphicsDispatchThread::threadIndex));
+					assets->defineScheme<Model>(AssetSchemeIndexModel, genAssetSchemeModel(EngineGraphicsDispatchThread::threadIndex));
 					assets->defineScheme<SkeletonRig>(AssetSchemeIndexSkeletonRig, genAssetSchemeSkeletonRig());
 					assets->defineScheme<SkeletalAnimation>(AssetSchemeIndexSkeletalAnimation, genAssetSchemeSkeletalAnimation());
 					assets->defineScheme<RenderObject>(AssetSchemeIndexRenderObject, genAssetSchemeRenderObject());

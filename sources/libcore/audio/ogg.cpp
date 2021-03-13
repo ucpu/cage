@@ -2,7 +2,7 @@
 
 namespace cage
 {
-	void oggDecode(PointerRange<const char> inBuffer, PolytoneImpl *impl)
+	void oggDecode(PointerRange<const char> inBuffer, AudioImpl *impl)
 	{
 		VorbisDecoder dec(newFileBuffer(inBuffer));
 		impl->mem.resize(0); // avoid copying
@@ -11,12 +11,12 @@ namespace cage
 		impl->frames = dec.frames;
 		impl->channels = dec.channels;
 		impl->sampleRate = dec.sampleRate;
-		impl->format = PolytoneFormatEnum::Vorbis;
+		impl->format = AudioFormatEnum::Vorbis;
 	}
 
-	MemoryBuffer oggEncode(const PolytoneImpl *impl)
+	MemoryBuffer oggEncode(const AudioImpl *impl)
 	{
-		if (impl->format == PolytoneFormatEnum::Vorbis)
+		if (impl->format == AudioFormatEnum::Vorbis)
 			return impl->mem.copy();
 		else
 		{

@@ -8,9 +8,9 @@
 
 namespace cage
 {
-	aabb getBoxForMesh(uint32 name)
+	aabb getBoxForModel(uint32 name)
 	{
-		Holder<Mesh> m = engineAssets()->tryGet<AssetSchemeIndexMesh, Mesh>(name);
+		Holder<Model> m = engineAssets()->tryGet<AssetSchemeIndexModel, Model>(name);
 		if (m)
 			return m->getBoundingBox();
 		return aabb();
@@ -22,8 +22,8 @@ namespace cage
 		if (!o)
 			return aabb();
 		aabb res;
-		for (uint32 it : o->meshes(0))
-			res += getBoxForMesh(it);
+		for (uint32 it : o->models(0))
+			res += getBoxForModel(it);
 		return res;
 	}
 
@@ -31,7 +31,7 @@ namespace cage
 	{
 		AssetManager *ass = engineAssets();
 		{
-			Holder<Mesh> m = ass->tryGet<AssetSchemeIndexMesh, Mesh>(name);
+			Holder<Model> m = ass->tryGet<AssetSchemeIndexModel, Model>(name);
 			if (m)
 				return m->getBoundingBox();
 		}

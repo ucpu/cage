@@ -1,4 +1,4 @@
-#include "polytone.h"
+#include "audio.h"
 
 #include <cage-core/serialization.h>
 #include <cage-core/math.h> // abs (in assert)
@@ -49,7 +49,7 @@ namespace cage
 				if (err == 0)
 					return;
 				CAGE_LOG_THROW(src_strerror(err));
-				CAGE_THROW_ERROR(Exception, "polytone sample rate conversion error");
+				CAGE_THROW_ERROR(Exception, "audio sample rate conversion error");
 			}
 
 			void convert(PointerRange<const float> src, PointerRange<float> dst, double ratio)
@@ -111,25 +111,25 @@ namespace cage
 		return detail::systemArena().createImpl<SampleRateConverter, SampleRateConverterImpl>(config);
 	}
 
-	void polytoneSetSampleRate(Polytone *snd, uint32 sampleRate)
+	void audioSetSampleRate(Audio *snd, uint32 sampleRate)
 	{
-		PolytoneImpl *impl = (PolytoneImpl *)snd;
+		AudioImpl *impl = (AudioImpl *)snd;
 		impl->sampleRate = sampleRate;
 	}
 
-	void polytoneConvertSampleRate(Polytone *snd, uint32 sampleRate, uint32 quality)
+	void audioConvertSampleRate(Audio *snd, uint32 sampleRate, uint32 quality)
 	{
 		const uint64 originalDuration = snd->duration();
-		polytoneConvertFrames(snd, snd->frames() * sampleRate / snd->sampleRate(), quality);
+		audioConvertFrames(snd, snd->frames() * sampleRate / snd->sampleRate(), quality);
 		CAGE_ASSERT(abs((sint32)(snd->sampleRate() - sampleRate)) < 10);
-		polytoneSetSampleRate(snd, sampleRate); // in case of rounding errors
+		audioSetSampleRate(snd, sampleRate); // in case of rounding errors
 		CAGE_ASSERT(abs((sint64)(snd->duration() - originalDuration)) < 100);
 	}
 
-	void polytoneConvertFrames(Polytone *snd, uint64 frames, uint32 quality)
+	void audioConvertFrames(Audio *snd, uint64 frames, uint32 quality)
 	{
-		PolytoneImpl *impl = (PolytoneImpl *)snd;
-		polytoneConvertFormat(snd, PolytoneFormatEnum::Float);
+		AudioImpl *impl = (AudioImpl *)snd;
+		audioConvertFormat(snd, AudioFormatEnum::Float);
 		MemoryBuffer tmp;
 		tmp.resize(frames * snd->channels() * sizeof(float));
 		SampleRateConverterCreateConfig cfg(snd->channels());

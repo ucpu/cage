@@ -1,20 +1,20 @@
 
 []
-scheme = mesh
+scheme = model
 fake.obj
 
 []
-scheme = mesh
+scheme = model
 uvs = false
 bone.obj
 
 []
-scheme = mesh
+scheme = model
 normals = false
 square.obj
 
 []
-scheme = mesh
+scheme = model
 uvs = false
 normals = false
 sphere.obj
@@ -24,4 +24,4 @@ guiWire.obj
 
 []
 scheme = pack
-mesh.pack
+model.pack

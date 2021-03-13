@@ -37,7 +37,7 @@ class AssimpContext
 {
 public:
 	const aiScene *getScene() const;
-	uint32 selectMesh() const;
+	uint32 selectModel() const;
 	Holder<AssimpSkeleton> skeleton() const;
 };
 

@@ -261,7 +261,7 @@ namespace
 			aiProcess_FindDegenerates |
 			aiProcess_OptimizeGraph |
 			//aiProcess_Debone | // see https://github.com/assimp/assimp/issues/2547
-			//aiProcess_SplitLargeMeshes |
+			//aiProcess_SplitLargeModeles |
 			0;
 
 		static constexpr uint32 assimpBakeLoadFlags =
@@ -321,8 +321,8 @@ namespace
 			if ((scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) == AI_SCENE_FLAGS_INCOMPLETE)
 				CAGE_THROW_ERROR(Exception, "the scene is incomplete");
 
-			// print meshes
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "found " + scene->mNumMeshes + " meshes");
+			// print models
+			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "found " + scene->mNumMeshes + " models");
 			for (uint32 i = 0; i < scene->mNumMeshes; i++)
 			{
 				const aiMesh *am = scene->mMeshes[i];
@@ -461,12 +461,12 @@ const aiScene *AssimpContext::getScene() const
 	return ((AssimpContextImpl*)this)->getScene();
 }
 
-uint32 AssimpContext::selectMesh() const
+uint32 AssimpContext::selectModel() const
 {
 	const aiScene *scene = getScene();
 	if (scene->mNumMeshes == 1 && inputSpec.empty())
 	{
-		CAGE_LOG(SeverityEnum::Note, "selectMesh", "using the first mesh, because it is the only mesh available");
+		CAGE_LOG(SeverityEnum::Note, "selectModel", "using the first model, because it is the only model available");
 		return 0;
 	}
 	if (isDigitsOnly(inputSpec) && !inputSpec.empty())
@@ -474,43 +474,43 @@ uint32 AssimpContext::selectMesh() const
 		uint32 n = toUint32(inputSpec);
 		if (n < scene->mNumMeshes)
 		{
-			CAGE_LOG(SeverityEnum::Note, "selectMesh", stringizer() + "using mesh index " + n + ", because the input specifier is numeric");
+			CAGE_LOG(SeverityEnum::Note, "selectModel", stringizer() + "using model index " + n + ", because the input specifier is numeric");
 			return n;
 		}
 		else
 			CAGE_THROW_ERROR(Exception, "the input specifier is numeric, but the index is out of range");
 	}
 	std::set<uint32> candidates;
-	for (uint32 meshIndex = 0; meshIndex < scene->mNumMeshes; meshIndex++)
+	for (uint32 modelIndex = 0; modelIndex < scene->mNumMeshes; modelIndex++)
 	{
-		const aiMesh *am = scene->mMeshes[meshIndex];
+		const aiMesh *am = scene->mMeshes[modelIndex];
 		if (!am)
 			continue;
 		aiString aiMatName;
 		scene->mMaterials[am->mMaterialIndex]->Get(AI_MATKEY_NAME, aiMatName);
 		if (cage::string(am->mName.C_Str()) == inputSpec)
 		{
-			candidates.insert(meshIndex);
-			CAGE_LOG(SeverityEnum::Note, "selectMesh", stringizer() + "considering mesh index " + meshIndex + ", because the mesh name is matching");
+			candidates.insert(modelIndex);
+			CAGE_LOG(SeverityEnum::Note, "selectModel", stringizer() + "considering model index " + modelIndex + ", because the model name is matching");
 		}
 		if (cage::string(aiMatName.C_Str()) == inputSpec)
 		{
-			candidates.insert(meshIndex);
-			CAGE_LOG(SeverityEnum::Note, "selectMesh", stringizer() + "considering mesh index " + meshIndex + ", because the material name matches");
+			candidates.insert(modelIndex);
+			CAGE_LOG(SeverityEnum::Note, "selectModel", stringizer() + "considering model index " + modelIndex + ", because the material name matches");
 		}
 		string comb = cage::string(am->mName.C_Str()) + "_" + cage::string(aiMatName.C_Str());
 		if (comb == inputSpec)
 		{
-			candidates.insert(meshIndex);
-			CAGE_LOG(SeverityEnum::Note, "selectMesh", stringizer() + "considering mesh index " + meshIndex + ", because the combined name matches");
+			candidates.insert(modelIndex);
+			CAGE_LOG(SeverityEnum::Note, "selectModel", stringizer() + "considering model index " + modelIndex + ", because the combined name matches");
 		}
 	}
 	switch (candidates.size())
 	{
 	case 0:
-		CAGE_THROW_ERROR(Exception, "file does not contain requested mesh");
+		CAGE_THROW_ERROR(Exception, "file does not contain requested model");
 	case 1:
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "using mesh at index " + *candidates.begin());
+		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "using model at index " + *candidates.begin());
 		return *candidates.begin();
 	default:
 		CAGE_THROW_ERROR(Exception, "requested name is not unique");
@@ -536,10 +536,10 @@ void analyzeAssimp()
 		writeLine("cage-begin");
 		try
 		{
-			// meshes
+			// models
 			if (scene->mNumMeshes == 1)
 			{
-				writeLine("scheme=mesh");
+				writeLine("scheme=model");
 				writeLine(stringizer() + "asset=" + inputFile);
 			}
 			else for (uint32 i = 0; i < scene->mNumMeshes; i++)
@@ -547,7 +547,7 @@ void analyzeAssimp()
 				aiMaterial *m = scene->mMaterials[scene->mMeshes[i]->mMaterialIndex];
 				aiString matName;
 				m->Get(AI_MATKEY_NAME, matName);
-				writeLine("scheme=mesh");
+				writeLine("scheme=model");
 				writeLine(stringizer() + "asset=" + inputFile + "?" + scene->mMeshes[i]->mName.C_Str() + "_" + matName.C_Str());
 			}
 			// skeletons

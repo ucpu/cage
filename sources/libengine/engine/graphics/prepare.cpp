@@ -22,7 +22,7 @@ namespace cage
 
 	namespace
 	{
-		ConfigBool confRenderMissingMeshes("cage/graphics/renderMissingMeshes", false);
+		ConfigBool confRenderMissingModeles("cage/graphics/renderMissingModeles", false);
 		ConfigBool confRenderSkeletonBones("cage/graphics/renderSkeletonBones", false);
 		ConfigBool confNoAmbientOcclusion("cage/graphics/disableAmbientOcclusion", false);
 		ConfigBool confNoBloom("cage/graphics/disableBloom", false);
@@ -157,10 +157,10 @@ namespace cage
 			uint64 elapsedDispatchTime = 0;
 			sint32 shm2d = 0, shmCube = 0;
 
-			std::unordered_map<Mesh*, Objects*> opaqueObjectsMap;
+			std::unordered_map<Model*, Objects*> opaqueObjectsMap;
 			std::unordered_map<Font*, Texts*> textsMap;
 
-			Holder<Mesh> meshSphere, meshCone;
+			Holder<Model> modelSphere, modelCone;
 
 			static real lightRange(const vec3 &color, const vec3 &attenuation)
 			{
@@ -209,7 +209,7 @@ namespace cage
 					uint32 idx = 0;
 					for (const auto &it : pass->translucents)
 					{
-						const vec4 *m = it->object.uniMeshes[0].mMat.data;
+						const vec4 *m = it->object.uniModeles[0].mMat.data;
 						const vec3 p = vec3(m[0][3], m[1][3], m[2][3]);
 						distances.push_back(distanceSquared(center, p));
 						order.push_back(idx++);
@@ -370,10 +370,10 @@ namespace cage
 						continue;
 
 					{
-						Holder<Mesh> m = engineAssets()->tryGet<AssetSchemeIndexMesh, Mesh>(e.object.object);
+						Holder<Model> m = engineAssets()->tryGet<AssetSchemeIndexModel, Model>(e.object.object);
 						if (m)
 						{
-							addRenderableMesh(pass, &e, templates::move(m));
+							addRenderableModel(pass, &e, templates::move(m));
 							continue;
 						}
 					}
@@ -395,11 +395,11 @@ namespace cage
 							real f = pass->lodSelection.screenSize * o->worldSize / (d * o->pixelsSize);
 							lod = o->lodSelect(f.value);
 						}
-						for (uint32 msh : o->meshes(lod))
+						for (uint32 msh : o->models(lod))
 						{
-							Holder<Mesh> m = engineAssets()->get<AssetSchemeIndexMesh, Mesh>(msh);
+							Holder<Model> m = engineAssets()->get<AssetSchemeIndexModel, Model>(msh);
 							if (m)
-								addRenderableMesh(pass, &e, templates::move(m));
+								addRenderableModel(pass, &e, templates::move(m));
 						}
 					}
 				}
@@ -426,29 +426,29 @@ namespace cage
 					for (uint32 i = 0; i < bonesCount; i++)
 						tmpArmature[i] = mat4();
 				}
-				Holder<Mesh> mesh = engineAssets()->get<AssetSchemeIndexMesh, Mesh>(HashString("cage/mesh/bone.obj"));
-				if (!mesh)
+				Holder<Model> bone = engineAssets()->get<AssetSchemeIndexModel, Model>(HashString("cage/model/bone.obj"));
+				if (!bone)
 					return;
-				CAGE_ASSERT(mesh->getSkeletonName() == 0);
+				CAGE_ASSERT(bone->getSkeletonName() == 0);
 				for (uint32 i = 0; i < bonesCount; i++)
 				{
 					e->object.color = colorGammaToLinear(colorHsvToRgb(vec3(real(i) / real(bonesCount), 1, 1)));
 					mat4 m = model * tmpArmature[i];
 					mat4 mvp = pass->viewProj * m;
-					addRenderableMesh(pass, e, mesh.share(), m, mvp, mvp);
+					addRenderableModel(pass, e, bone.share(), m, mvp, mvp);
 				}
 			}
 
-			void addRenderableMesh(RenderPassImpl *pass, EmitObject *e, Holder<Mesh> m)
+			void addRenderableModel(RenderPassImpl *pass, EmitObject *e, Holder<Model> m)
 			{
-				addRenderableMesh(pass, e, templates::move(m), e->model, pass->viewProj * e->model, pass->viewProjPrev * e->modelPrev);
+				addRenderableModel(pass, e, templates::move(m), e->model, pass->viewProj * e->model, pass->viewProjPrev * e->modelPrev);
 			}
 
-			void addRenderableMesh(RenderPassImpl *pass, EmitObject *e, Holder<Mesh> m, const mat4 &model, const mat4 &mvp, const mat4 &mvpPrev)
+			void addRenderableModel(RenderPassImpl *pass, EmitObject *e, Holder<Model> m, const mat4 &model, const mat4 &mvp, const mat4 &mvpPrev)
 			{
 				if (!intersectsFrustum(m->getBoundingBox(), mvp))
 					return;
-				if (pass->targetShadowmap != 0 && none(m->getFlags() & MeshRenderFlags::ShadowCast))
+				if (pass->targetShadowmap != 0 && none(m->getFlags() & ModelRenderFlags::ShadowCast))
 					return;
 				if (m->getSkeletonName() && confRenderSkeletonBones)
 				{
@@ -457,12 +457,12 @@ namespace cage
 					return;
 				}
 				Objects *obj = nullptr;
-				if (any(m->getFlags() & MeshRenderFlags::Translucent) || e->object.opacity < 1)
+				if (any(m->getFlags() & ModelRenderFlags::Translucent) || e->object.opacity < 1)
 				{ // translucent
 					pass->translucents.push_back(detail::systemArena().createHolder<Translucent>(m.share()));
 					Translucent *t = pass->translucents.back().get();
 					obj = &t->object;
-					if (any(m->getFlags() & MeshRenderFlags::Lighting))
+					if (any(m->getFlags() & ModelRenderFlags::Lighting))
 					{
 						for (EmitLight &it : emitRead->lights)
 							addLight(pass, t->lights, mvp, &it); // todo pass other parameters needed for the intersection tests
@@ -485,27 +485,27 @@ namespace cage
 					else
 					{
 						obj = it->second;
-						if (obj->uniMeshes.size() + 1 == obj->uniMeshes.capacity())
+						if (obj->uniModeles.size() + 1 == obj->uniModeles.capacity())
 							opaqueObjectsMap.erase(m.get());
 					}
 				}
-				obj->uniMeshes.emplace_back();
-				Objects::UniMesh *sm = &obj->uniMeshes.back();
+				obj->uniModeles.emplace_back();
+				Objects::UniModel *sm = &obj->uniModeles.back();
 				sm->color = vec4(colorGammaToLinear(e->object.color) * e->object.intensity, e->object.opacity);
 				sm->mMat = Mat3x4(model);
 				sm->mvpMat = mvp;
-				if (any(m->getFlags() & MeshRenderFlags::VelocityWrite))
+				if (any(m->getFlags() & ModelRenderFlags::VelocityWrite))
 					sm->mvpPrevMat = mvpPrev;
 				else
 					sm->mvpPrevMat = mvp;
 				sm->normalMat = Mat3x4(inverse(mat3(model)));
-				sm->normalMat.data[2][3] = any(m->getFlags() & MeshRenderFlags::Lighting) ? 1 : 0; // is lighting enabled
+				sm->normalMat.data[2][3] = any(m->getFlags() & ModelRenderFlags::Lighting) ? 1 : 0; // is lighting enabled
 				if (e->animatedTexture)
 					sm->aniTexFrames = detail::evalSamplesForTextureAnimation(obj->textures[CAGE_SHADER_TEXTURE_ALBEDO].get(), dispatchTime, e->animatedTexture->startTime, e->animatedTexture->speed, e->animatedTexture->offset);
 				if (!obj->uniArmatures.empty())
 				{
 					uint32 bonesCount = m->getSkeletonBones();
-					Mat3x4 *sa = &obj->uniArmatures[(obj->uniMeshes.size() - 1) * bonesCount];
+					Mat3x4 *sa = &obj->uniArmatures[(obj->uniModeles.size() - 1) * bonesCount];
 					CAGE_ASSERT(!e->animatedSkeleton || e->animatedSkeleton->name);
 					bool initialized = false;
 					if (e->animatedSkeleton && m->getSkeletonName())
@@ -594,12 +594,12 @@ namespace cage
 					break;
 				case LightTypeEnum::Spot:
 					mvpMat = pass->viewProj * light->model * lightSpotCone(lightRange(light->light.color, light->light.attenuation), light->light.spotAngle);
-					if (!intersectsFrustum(meshCone->getBoundingBox(), mvpMat))
+					if (!intersectsFrustum(modelCone->getBoundingBox(), mvpMat))
 						return; // this light's volume is outside view frustum
 					break;
 				case LightTypeEnum::Point:
 					mvpMat = pass->viewProj * light->model * mat4::scale(lightRange(light->light.color, light->light.attenuation));
-					if (!intersectsFrustum(meshSphere->getBoundingBox(), mvpMat))
+					if (!intersectsFrustum(modelSphere->getBoundingBox(), mvpMat))
 						return; // this light's volume is outside view frustum
 					break;
 				}
@@ -657,8 +657,8 @@ namespace cage
 
 			void finalize()
 			{
-				meshSphere.clear();
-				meshCone.clear();
+				modelSphere.clear();
+				modelCone.clear();
 				graphicsDispatch->renderPasses.clear();
 			}
 
@@ -750,14 +750,14 @@ namespace cage
 
 				Holder<RenderObject> o = engineAssets()->tryGet<AssetSchemeIndexRenderObject, RenderObject>(e->object.object);
 
-				if (!o && !engineAssets()->tryGet<AssetSchemeIndexMesh, Mesh>(e->object.object))
+				if (!o && !engineAssets()->tryGet<AssetSchemeIndexModel, Model>(e->object.object))
 				{
-					if (!confRenderMissingMeshes)
+					if (!confRenderMissingModeles)
 					{
 						e->object.object = 0; // disable rendering further in the pipeline
 						return;
 					}
-					e->object.object = HashString("cage/mesh/fake.obj");
+					e->object.object = HashString("cage/model/fake.obj");
 				}
 
 				if (o)
@@ -842,8 +842,8 @@ namespace cage
 				if (!ass->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/cage.pack")) || !ass->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/shader/engine/engine.pack")))
 					return;
 
-				meshSphere = ass->get<AssetSchemeIndexMesh, Mesh>(HashString("cage/mesh/sphere.obj"));
-				meshCone = ass->get<AssetSchemeIndexMesh, Mesh>(HashString("cage/mesh/cone.obj"));
+				modelSphere = ass->get<AssetSchemeIndexModel, Model>(HashString("cage/model/sphere.obj"));
+				modelCone = ass->get<AssetSchemeIndexModel, Model>(HashString("cage/model/cone.obj"));
 
 				emitRead = &emitBuffers[lock.index()];
 				ClearOnScopeExit resetEmitRead(emitRead);
@@ -948,18 +948,18 @@ namespace cage
 		shaderRoutines[name] = value;
 	}
 
-	Objects::Objects(Holder<Mesh> mesh_, uint32 max) : mesh(templates::move(mesh_))
+	Objects::Objects(Holder<Model> model_, uint32 max) : model(templates::move(model_))
 	{
 		AssetManager *ass = engineAssets();
-		uniMeshes.reserve(max);
-		if (mesh->getSkeletonBones())
-			uniArmatures.resize(mesh->getSkeletonBones() * max);
+		uniModeles.reserve(max);
+		if (model->getSkeletonBones())
+			uniArmatures.resize(model->getSkeletonBones() * max);
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		{
-			uint32 n = mesh->getTextureName(i);
+			uint32 n = model->getTextureName(i);
 			textures[i] = n ? ass->get<AssetSchemeIndexTexture, Texture>(n) : Holder<Texture>();
 		}
-		shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_SKELETON, mesh->getSkeletonBones() > 0 ? CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION : CAGE_SHADER_ROUTINEPROC_SKELETONNOTHING);
+		shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_SKELETON, model->getSkeletonBones() > 0 ? CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION : CAGE_SHADER_ROUTINEPROC_SKELETONNOTHING);
 
 		if (textures[CAGE_SHADER_TEXTURE_ALBEDO])
 		{
@@ -1035,7 +1035,7 @@ namespace cage
 		}
 	}
 
-	Translucent::Translucent(Holder<Mesh> mesh_) : object(templates::move(mesh_), 1)
+	Translucent::Translucent(Holder<Model> model_) : object(templates::move(model_), 1)
 	{}
 
 	Texts::Texts(Holder<Font> font_) : font(templates::move(font_))

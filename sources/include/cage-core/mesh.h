@@ -1,38 +1,38 @@
-#ifndef guard_polyhedron_h_CA052442302D4C3BAA9293200603C20A
-#define guard_polyhedron_h_CA052442302D4C3BAA9293200603C20A
+#ifndef guard_mesh_h_CA052442302D4C3BAA9293200603C20A
+#define guard_mesh_h_CA052442302D4C3BAA9293200603C20A
 
 #include "math.h"
 
 namespace cage
 {
-	enum class PolyhedronTypeEnum : uint32
+	enum class MeshTypeEnum : uint32
 	{
 		Points = 1,
 		Lines = 2,
 		Triangles = 3,
 	};
 
-	struct CAGE_CORE_API PolyhedronObjExportConfig
+	struct CAGE_CORE_API MeshObjExportConfig
 	{
 		string materialLibraryName;
 		string materialName;
 		string objectName;
 	};
 
-	// aka a mesh but stored in cpu memory
-	class CAGE_CORE_API Polyhedron : private Immovable
+	// aka a model but stored in cpu memory
+	class CAGE_CORE_API Mesh : private Immovable
 	{
 	public:
 		void clear();
-		Holder<Polyhedron> copy() const;
+		Holder<Mesh> copy() const;
 
 		Holder<PointerRange<char>> serialize() const;
 		void deserialize(PointerRange<const char> buffer);
 
 		void importCollider(const Collider *collider);
 
-		Holder<PointerRange<char>> exportObjBuffer(const PolyhedronObjExportConfig &config) const;
-		void exportObjFile(const PolyhedronObjExportConfig &config, const string &filename) const;
+		Holder<PointerRange<char>> exportObjBuffer(const MeshObjExportConfig &config) const;
+		void exportObjFile(const MeshObjExportConfig &config, const string &filename) const;
 
 		uint32 verticesCount() const;
 
@@ -108,8 +108,8 @@ namespace cage
 		uint32 index(uint32 idx) const;
 		void index(uint32 idx, uint32 value);
 
-		PolyhedronTypeEnum type() const;
-		void type(PolyhedronTypeEnum t);
+		MeshTypeEnum type() const;
+		void type(MeshTypeEnum t);
 
 		void addPoint(uint32 a);
 		void addPoint(const vec3 &p);
@@ -119,33 +119,33 @@ namespace cage
 		void addTriangle(const triangle &t);
 	};
 
-	CAGE_CORE_API Holder<Polyhedron> newPolyhedron();
+	CAGE_CORE_API Holder<Mesh> newMesh();
 
-	CAGE_CORE_API void polyhedronConvertToIndexed(Polyhedron *poly);
-	CAGE_CORE_API void polyhedronConvertToExpanded(Polyhedron *poly);
+	CAGE_CORE_API void meshConvertToIndexed(Mesh *poly);
+	CAGE_CORE_API void meshConvertToExpanded(Mesh *poly);
 
-	CAGE_CORE_API void polyhedronApplyTransform(Polyhedron *poly, const transform &t);
-	CAGE_CORE_API void polyhedronApplyTransform(Polyhedron *poly, const mat4 &t);
+	CAGE_CORE_API void meshApplyTransform(Mesh *poly, const transform &t);
+	CAGE_CORE_API void meshApplyTransform(Mesh *poly, const mat4 &t);
 
-	CAGE_CORE_API void polyhedronFlipNormals(Polyhedron *poly);
+	CAGE_CORE_API void meshFlipNormals(Mesh *poly);
 
-	CAGE_CORE_API void polyhedronClip(Polyhedron *poly, const aabb &box);
-	CAGE_CORE_API void polyhedronClip(Polyhedron *poly, const plane &pln);
-	CAGE_CORE_API Holder<Polyhedron> polyhedronCut(Polyhedron *poly, const plane &pln);
+	CAGE_CORE_API void meshClip(Mesh *poly, const aabb &box);
+	CAGE_CORE_API void meshClip(Mesh *poly, const plane &pln);
+	CAGE_CORE_API Holder<Mesh> meshCut(Mesh *poly, const plane &pln);
 
-	CAGE_CORE_API void polyhedronDiscardInvalid(Polyhedron *poly);
-	CAGE_CORE_API void polyhedronDiscardDisconnected(Polyhedron *poly);
-	CAGE_CORE_API Holder<PointerRange<Holder<Polyhedron>>> polyhedronSeparateDisconnected(const Polyhedron *poly);
+	CAGE_CORE_API void meshDiscardInvalid(Mesh *poly);
+	CAGE_CORE_API void meshDiscardDisconnected(Mesh *poly);
+	CAGE_CORE_API Holder<PointerRange<Holder<Mesh>>> meshSeparateDisconnected(const Mesh *poly);
 
-	struct CAGE_CORE_API PolyhedronCloseVerticesMergingConfig
+	struct CAGE_CORE_API MeshCloseVerticesMergingConfig
 	{
 		real distanceThreshold;
 		bool moveVerticesOnly = false; // true -> vertices are moved only (no deduplication) and other attributes are ignored; false -> indices are remapped to other vertices
 	};
 
-	CAGE_CORE_API void polyhedronMergeCloseVertices(Polyhedron *poly, const PolyhedronCloseVerticesMergingConfig &config);
+	CAGE_CORE_API void meshMergeCloseVertices(Mesh *poly, const MeshCloseVerticesMergingConfig &config);
 
-	struct CAGE_CORE_API PolyhedronSimplificationConfig
+	struct CAGE_CORE_API MeshSimplificationConfig
 	{
 		real minEdgeLength = 0.1;
 		real maxEdgeLength = 10;
@@ -154,18 +154,18 @@ namespace cage
 		bool useProjection = true;
 	};
 
-	CAGE_CORE_API void polyhedronSimplify(Polyhedron *poly, const PolyhedronSimplificationConfig &config);
+	CAGE_CORE_API void meshSimplify(Mesh *poly, const MeshSimplificationConfig &config);
 
-	struct CAGE_CORE_API PolyhedronRegularizationConfig
+	struct CAGE_CORE_API MeshRegularizationConfig
 	{
 		real targetEdgeLength = 1;
 		uint32 iterations = 10;
 		bool useProjection = true;
 	};
 
-	CAGE_CORE_API void polyhedronRegularize(Polyhedron *poly, const PolyhedronRegularizationConfig &config);
+	CAGE_CORE_API void meshRegularize(Mesh *poly, const MeshRegularizationConfig &config);
 
-	struct CAGE_CORE_API PolyhedronUnwrapConfig
+	struct CAGE_CORE_API MeshUnwrapConfig
 	{
 		// charting determines which triangles will form islands
 		uint32 maxChartIterations = 1;
@@ -186,30 +186,30 @@ namespace cage
 		bool logProgress = false;
 	};
 
-	CAGE_CORE_API uint32 polyhedronUnwrap(Polyhedron *poly, const PolyhedronUnwrapConfig &config);
+	CAGE_CORE_API uint32 meshUnwrap(Mesh *poly, const MeshUnwrapConfig &config);
 
-	struct CAGE_CORE_API PolyhedronTextureGenerationConfig
+	struct CAGE_CORE_API MeshTextureGenerationConfig
 	{
 		Delegate<void(uint32, uint32, const ivec3 &, const vec3 &)> generator;
 		uint32 width = 0;
 		uint32 height = 0;
 	};
 
-	CAGE_CORE_API void polyhedronGenerateTexture(const Polyhedron *poly, const PolyhedronTextureGenerationConfig &config);
+	CAGE_CORE_API void meshGenerateTexture(const Mesh *poly, const MeshTextureGenerationConfig &config);
 
-	struct CAGE_CORE_API PolyhedronNormalsGenerationConfig
+	struct CAGE_CORE_API MeshNormalsGenerationConfig
 	{
 		// todo
 	};
 
-	CAGE_CORE_API void polyhedronGenerateNormals(Polyhedron *poly, const PolyhedronNormalsGenerationConfig &config);
+	CAGE_CORE_API void meshGenerateNormals(Mesh *poly, const MeshNormalsGenerationConfig &config);
 
-	struct CAGE_CORE_API PolyhedronTangentsGenerationConfig
+	struct CAGE_CORE_API MeshTangentsGenerationConfig
 	{
 		// todo
 	};
 
-	CAGE_CORE_API void polyhedronGenerateTangents(Polyhedron *poly, const PolyhedronTangentsGenerationConfig &config);
+	CAGE_CORE_API void meshGenerateTangents(Mesh *poly, const MeshTangentsGenerationConfig &config);
 }
 
-#endif // guard_polyhedron_h_CA052442302D4C3BAA9293200603C20A
+#endif // guard_mesh_h_CA052442302D4C3BAA9293200603C20A

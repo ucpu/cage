@@ -1,4 +1,4 @@
-#include "polytone.h"
+#include "audio.h"
 
 #include <cage-core/serialization.h>
 #include <cage-core/files.h>
@@ -37,7 +37,7 @@ namespace cage
 		const MemoryBuffer &inputBuffer;
 		MemoryBuffer outputBuffer;
 
-		VorbisEncoder(const PolytoneImpl *src, float compressQuality = 1);
+		VorbisEncoder(const AudioImpl *src, float compressQuality = 1);
 		void encode();
 		~VorbisEncoder();
 

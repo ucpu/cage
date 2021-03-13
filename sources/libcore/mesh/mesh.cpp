@@ -2,11 +2,11 @@
 #include <cage-core/collider.h>
 #include <cage-core/serialization.h>
 #include <cage-core/macros.h>
-#include "polyhedron.h"
+#include "mesh.h"
 
 namespace cage
 {
-	void PolyhedronImpl::swap(PolyhedronImpl &other)
+	void MeshImpl::swap(MeshImpl &other)
 	{
 #define GCHL_GENERATE(NAME) std::swap(NAME, other.NAME);
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
@@ -16,21 +16,21 @@ namespace cage
 		std::swap(type, other.type);
 	}
 
-	void Polyhedron::clear()
+	void Mesh::clear()
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		MeshImpl *impl = (MeshImpl *)this;
 
 #define GCHL_GENERATE(NAME) impl->NAME.clear();
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
 #undef GCHL_GENERATE
 
 		impl->indices.clear();
-		impl->type = PolyhedronTypeEnum::Triangles;
+		impl->type = MeshTypeEnum::Triangles;
 	}
 
-	uint32 Polyhedron::verticesCount() const
+	uint32 Mesh::verticesCount() const
 	{
-		const PolyhedronImpl *impl = (const PolyhedronImpl *)this;
+		const MeshImpl *impl = (const MeshImpl *)this;
 #define GCHL_GENERATE(NAME) CAGE_ASSERT(impl->NAME.empty() || impl->NAME.size() == impl->positions.size());
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
 #undef GCHL_GENERATE
@@ -38,10 +38,10 @@ namespace cage
 		return numeric_cast<uint32>(impl->positions.size());
 	}
 
-	void Polyhedron::addVertex(const vec3 &position)
+	void Mesh::addVertex(const vec3 &position)
 	{
 		verticesCount(); // validate vertices
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		MeshImpl *impl = (MeshImpl *)this;
 		if (impl->positions.empty())
 		{
 			impl->positions.push_back(position);
@@ -55,9 +55,9 @@ namespace cage
 		}
 	}
 
-	void Polyhedron::addVertex(const vec3 &position, const vec3 &normal)
+	void Mesh::addVertex(const vec3 &position, const vec3 &normal)
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		MeshImpl *impl = (MeshImpl *)this;
 		if (impl->positions.empty())
 		{
 			impl->positions.push_back(position);
@@ -70,9 +70,9 @@ namespace cage
 		}
 	}
 
-	void Polyhedron::addVertex(const vec3 &position, const vec2 &uv)
+	void Mesh::addVertex(const vec3 &position, const vec2 &uv)
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		MeshImpl *impl = (MeshImpl *)this;
 		if (impl->positions.empty())
 		{
 			impl->positions.push_back(position);
@@ -85,9 +85,9 @@ namespace cage
 		}
 	}
 
-	void Polyhedron::addVertex(const vec3 &position, const vec3 &normal, const vec2 &uv)
+	void Mesh::addVertex(const vec3 &position, const vec3 &normal, const vec2 &uv)
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		MeshImpl *impl = (MeshImpl *)this;
 		if (impl->positions.empty())
 		{
 			impl->positions.push_back(position);
@@ -102,7 +102,7 @@ namespace cage
 		}
 	}
 
-	aabb Polyhedron::boundingBox() const
+	aabb Mesh::boundingBox() const
 	{
 		aabb result;
 		for (const vec3 &it : positions())
@@ -110,123 +110,123 @@ namespace cage
 		return result;
 	}
 
-	uint32 Polyhedron::indicesCount() const
+	uint32 Mesh::indicesCount() const
 	{
-		const PolyhedronImpl *impl = (const PolyhedronImpl *)this;
+		const MeshImpl *impl = (const MeshImpl *)this;
 		return numeric_cast<uint32>(impl->indices.size());
 	}
 
-	uint32 Polyhedron::facesCount() const
+	uint32 Mesh::facesCount() const
 	{
 		const uint32 i = (indices().empty() ? numeric_cast<uint32>(positions().size()) : numeric_cast<uint32>(indices().size()));
 		switch (type())
 		{
-		case PolyhedronTypeEnum::Points:
+		case MeshTypeEnum::Points:
 			return i;
-		case PolyhedronTypeEnum::Lines:
+		case MeshTypeEnum::Lines:
 			CAGE_ASSERT(i % 2 == 0);
 			return i / 2;
-		case PolyhedronTypeEnum::Triangles:
+		case MeshTypeEnum::Triangles:
 			CAGE_ASSERT(i % 3 == 0);
 			return i / 3;
 		default:
-			CAGE_THROW_CRITICAL(Exception, "invalid polyhedron type");
+			CAGE_THROW_CRITICAL(Exception, "invalid mesh type");
 		}
 	}
 
-	PointerRange<const uint32> Polyhedron::indices() const
+	PointerRange<const uint32> Mesh::indices() const
 	{
-		const PolyhedronImpl *impl = (const PolyhedronImpl *)this;
+		const MeshImpl *impl = (const MeshImpl *)this;
 		return impl->indices;
 	}
 
-	PointerRange<uint32> Polyhedron::indices()
+	PointerRange<uint32> Mesh::indices()
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		MeshImpl *impl = (MeshImpl *)this;
 		return impl->indices;
 	}
 
-	void Polyhedron::indices(const PointerRange<const uint32> &values)
+	void Mesh::indices(const PointerRange<const uint32> &values)
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		MeshImpl *impl = (MeshImpl *)this;
 		impl->indices.resize(values.size());
 		detail::memcpy(impl->indices.data(), values.data(), values.size() * sizeof(uint32));
 	}
 
-	uint32 Polyhedron::index(uint32 idx) const
+	uint32 Mesh::index(uint32 idx) const
 	{
-		const PolyhedronImpl *impl = (const PolyhedronImpl *)this;
+		const MeshImpl *impl = (const MeshImpl *)this;
 		return impl->indices[idx];
 	}
 
-	void Polyhedron::index(uint32 idx, uint32 value)
+	void Mesh::index(uint32 idx, uint32 value)
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		MeshImpl *impl = (MeshImpl *)this;
 		impl->indices[idx] = value;
 	}
 
-	PolyhedronTypeEnum Polyhedron::type() const
+	MeshTypeEnum Mesh::type() const
 	{
-		const PolyhedronImpl *impl = (const PolyhedronImpl *)this;
+		const MeshImpl *impl = (const MeshImpl *)this;
 		return impl->type;
 	}
 
-	void Polyhedron::type(PolyhedronTypeEnum t)
+	void Mesh::type(MeshTypeEnum t)
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
+		MeshImpl *impl = (MeshImpl *)this;
 		CAGE_ASSERT(verticesCount() == 0);
 		impl->type = t;
 	}
 
-	void Polyhedron::addPoint(uint32 a)
+	void Mesh::addPoint(uint32 a)
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
-		CAGE_ASSERT(type() == PolyhedronTypeEnum::Points);
+		MeshImpl *impl = (MeshImpl *)this;
+		CAGE_ASSERT(type() == MeshTypeEnum::Points);
 		impl->indices.push_back(a);
 	}
 
-	void Polyhedron::addPoint(const vec3 &p)
+	void Mesh::addPoint(const vec3 &p)
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
-		CAGE_ASSERT(type() == PolyhedronTypeEnum::Points);
-		polyhedronConvertToExpanded(impl);
+		MeshImpl *impl = (MeshImpl *)this;
+		CAGE_ASSERT(type() == MeshTypeEnum::Points);
+		meshConvertToExpanded(impl);
 		addVertex(p);
 	}
 
-	void Polyhedron::addLine(uint32 a, uint32 b)
+	void Mesh::addLine(uint32 a, uint32 b)
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
-		CAGE_ASSERT(type() == PolyhedronTypeEnum::Lines);
+		MeshImpl *impl = (MeshImpl *)this;
+		CAGE_ASSERT(type() == MeshTypeEnum::Lines);
 		CAGE_ASSERT(impl->indices.size() % 2 == 0);
 		impl->indices.push_back(a);
 		impl->indices.push_back(b);
 	}
 
-	void Polyhedron::addLine(const line &l)
+	void Mesh::addLine(const line &l)
 	{
 		CAGE_ASSERT(l.isSegment());
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
-		CAGE_ASSERT(type() == PolyhedronTypeEnum::Lines);
-		polyhedronConvertToExpanded(impl);
+		MeshImpl *impl = (MeshImpl *)this;
+		CAGE_ASSERT(type() == MeshTypeEnum::Lines);
+		meshConvertToExpanded(impl);
 		addVertex(l.a());
 		addVertex(l.b());
 	}
 
-	void Polyhedron::addTriangle(uint32 a, uint32 b, uint32 c)
+	void Mesh::addTriangle(uint32 a, uint32 b, uint32 c)
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
-		CAGE_ASSERT(type() == PolyhedronTypeEnum::Triangles);
+		MeshImpl *impl = (MeshImpl *)this;
+		CAGE_ASSERT(type() == MeshTypeEnum::Triangles);
 		CAGE_ASSERT(impl->indices.size() % 3 == 0);
 		impl->indices.push_back(a);
 		impl->indices.push_back(b);
 		impl->indices.push_back(c);
 	}
 
-	void Polyhedron::addTriangle(const triangle &t)
+	void Mesh::addTriangle(const triangle &t)
 	{
-		PolyhedronImpl *impl = (PolyhedronImpl *)this;
-		CAGE_ASSERT(type() == PolyhedronTypeEnum::Triangles);
-		polyhedronConvertToExpanded(impl);
+		MeshImpl *impl = (MeshImpl *)this;
+		CAGE_ASSERT(type() == MeshTypeEnum::Triangles);
+		meshConvertToExpanded(impl);
 		addVertex(t[0]);
 		addVertex(t[1]);
 		addVertex(t[2]);
@@ -240,10 +240,10 @@ namespace cage
 		}
 	}
 
-	Holder<Polyhedron> Polyhedron::copy() const
+	Holder<Mesh> Mesh::copy() const
 	{
-		const PolyhedronImpl *impl = (const PolyhedronImpl *)this;
-		Holder<Polyhedron> result = newPolyhedron();
+		const MeshImpl *impl = (const MeshImpl *)this;
+		Holder<Mesh> result = newMesh();
 		result->type(impl->type);
 
 #define GCHL_GENERATE(NAME) result->NAME(impl->NAME);
@@ -254,15 +254,15 @@ namespace cage
 		return result;
 	}
 
-	void Polyhedron::importCollider(const Collider *collider)
+	void Mesh::importCollider(const Collider *collider)
 	{
 		clear();
 		CAGE_ASSERT(sizeof(triangle) == sizeof(vec3) * 3);
 		positions(bufferCast<const vec3>(collider->triangles()));
 	}
 
-	Holder<Polyhedron> newPolyhedron()
+	Holder<Mesh> newMesh()
 	{
-		return detail::systemArena().createImpl<Polyhedron, PolyhedronImpl>();
+		return detail::systemArena().createImpl<Mesh, MeshImpl>();
 	}
 }

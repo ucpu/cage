@@ -1,7 +1,7 @@
 #include <cage-core/assetContext.h>
 #include <cage-core/serialization.h>
 #include <cage-core/memoryBuffer.h>
-#include <cage-core/polytone.h>
+#include <cage-core/audio.h>
 
 #include <cage-engine/sound.h>
 #include <cage-engine/assetStructs.h>
@@ -19,13 +19,13 @@ namespace cage
 			if (snd.soundType != SoundTypeEnum::CompressedRaw)
 				return;
 
-			Holder<Polytone> poly = newPolytone();
+			Holder<Audio> poly = newAudio();
 			poly->importBuffer(des.advance(des.available()));
 			CAGE_ASSERT(des.available() == 0);
 			CAGE_ASSERT(snd.channels == poly->channels());
 			CAGE_ASSERT(snd.frames == poly->frames());
 			CAGE_ASSERT(snd.sampleRate == poly->sampleRate());
-			polytoneConvertFormat(+poly, PolytoneFormatEnum::Float);
+			audioConvertFormat(+poly, AudioFormatEnum::Float);
 
 			Serializer ser(context->originalData);
 			ser << snd;
@@ -43,12 +43,12 @@ namespace cage
 			des >> snd;
 			source->setDataRepeat(any(snd.flags & SoundFlags::LoopBeforeStart), any(snd.flags & SoundFlags::LoopAfterEnd));
 
-			Holder<Polytone> poly = newPolytone();
+			Holder<Audio> poly = newAudio();
 			switch (snd.soundType)
 			{
 			case SoundTypeEnum::RawRaw:
 			case SoundTypeEnum::CompressedRaw:
-				poly->importRaw(des.advance(des.available()), snd.frames, snd.channels, snd.sampleRate, PolytoneFormatEnum::Float);
+				poly->importRaw(des.advance(des.available()), snd.frames, snd.channels, snd.sampleRate, AudioFormatEnum::Float);
 				break;
 			case SoundTypeEnum::CompressedCompressed:
 				poly->importBuffer(des.advance(des.available()));

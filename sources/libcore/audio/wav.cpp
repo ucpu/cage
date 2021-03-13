@@ -1,36 +1,36 @@
-#include "polytone.h"
+#include "audio.h"
 
 #include <dr_libs/dr_wav.h>
 
 namespace cage
 {
-	void wavDecode(PointerRange<const char> inBuffer, PolytoneImpl *impl)
+	void wavDecode(PointerRange<const char> inBuffer, AudioImpl *impl)
 	{
 		drwav wav = {};
 		if (!drwav_init_memory(&wav, inBuffer.data(), inBuffer.size(), nullptr))
 			CAGE_THROW_ERROR(Exception, "failed to initialize decoding wav sound");
 		try
 		{
-			CAGE_ASSERT(impl->format == PolytoneFormatEnum::Default);
+			CAGE_ASSERT(impl->format == AudioFormatEnum::Default);
 			if (wav.translatedFormatTag == DR_WAVE_FORMAT_PCM)
 			{
 				switch (wav.bitsPerSample)
 				{
 				case 16:
-					impl->initialize(wav.totalPCMFrameCount, wav.channels, wav.sampleRate, PolytoneFormatEnum::S16);
+					impl->initialize(wav.totalPCMFrameCount, wav.channels, wav.sampleRate, AudioFormatEnum::S16);
 					if (drwav_read_pcm_frames_s16(&wav, impl->frames, (sint16 *)impl->mem.data()) != impl->frames)
 						CAGE_THROW_ERROR(Exception, "failed to read s16 samples in decoding wav sound");
 					break;
 				case 32:
-					impl->initialize(wav.totalPCMFrameCount, wav.channels, wav.sampleRate, PolytoneFormatEnum::S32);
+					impl->initialize(wav.totalPCMFrameCount, wav.channels, wav.sampleRate, AudioFormatEnum::S32);
 					if (drwav_read_pcm_frames_s32(&wav, impl->frames, (sint32 *)impl->mem.data()) != impl->frames)
 						CAGE_THROW_ERROR(Exception, "failed to read s32 samples in decoding wav sound");
 					break;
 				}
 			}
-			if (impl->format == PolytoneFormatEnum::Default)
+			if (impl->format == AudioFormatEnum::Default)
 			{
-				impl->initialize(wav.totalPCMFrameCount, wav.channels, wav.sampleRate, PolytoneFormatEnum::Float);
+				impl->initialize(wav.totalPCMFrameCount, wav.channels, wav.sampleRate, AudioFormatEnum::Float);
 				if (drwav_read_pcm_frames_f32(&wav, impl->frames, (float *)impl->mem.data()) != impl->frames)
 					CAGE_THROW_ERROR(Exception, "failed to read f32 samples in decoding wav sound");
 			}
@@ -43,13 +43,13 @@ namespace cage
 		drwav_uninit(&wav);
 	}
 
-	MemoryBuffer wavEncode(const PolytoneImpl *impl)
+	MemoryBuffer wavEncode(const AudioImpl *impl)
 	{
-		if (impl->format == PolytoneFormatEnum::Vorbis)
+		if (impl->format == AudioFormatEnum::Vorbis)
 		{
-			Holder<Polytone> tmp = impl->copy();
-			polytoneConvertFormat(+tmp, PolytoneFormatEnum::Float);
-			return wavEncode((PolytoneImpl *)+tmp);
+			Holder<Audio> tmp = impl->copy();
+			audioConvertFormat(+tmp, AudioFormatEnum::Float);
+			return wavEncode((AudioImpl *)+tmp);
 		}
 
 		void *buffer = nullptr;
@@ -59,15 +59,15 @@ namespace cage
 		format.channels = impl->channels;
 		switch (impl->format)
 		{
-		case PolytoneFormatEnum::S16:
+		case AudioFormatEnum::S16:
 			format.format = DR_WAVE_FORMAT_PCM;
 			format.bitsPerSample = 16;
 			break;
-		case PolytoneFormatEnum::S32:
+		case AudioFormatEnum::S32:
 			format.format = DR_WAVE_FORMAT_PCM;
 			format.bitsPerSample = 32;
 			break;
-		case PolytoneFormatEnum::Float:
+		case AudioFormatEnum::Float:
 			format.format = DR_WAVE_FORMAT_IEEE_FLOAT;
 			format.bitsPerSample = 32;
 			break;

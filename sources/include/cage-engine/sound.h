@@ -93,7 +93,7 @@ namespace cage
 		void setDebugName(const string &name);
 
 		void clear();
-		void setData(Holder<Polytone> &&poly);
+		void setData(Holder<Audio> &&poly);
 		void setDataTone(uint32 pitch = 440);
 		void setDataNoise();
 
