@@ -411,31 +411,31 @@ namespace cage
 		}
 	}
 
-	void meshConvertToIndexed(Mesh *poly)
+	void meshConvertToIndexed(Mesh *msh)
 	{
-		if (!poly->indices().empty() || poly->positions().empty())
+		if (!msh->indices().empty() || msh->positions().empty())
 			return;
-		MeshImpl *impl = (MeshImpl *)poly;
+		MeshImpl *impl = (MeshImpl *)msh;
 		CAGE_THROW_CRITICAL(NotImplemented, "convertToIndexed");
 	}
 
-	void meshConvertToExpanded(Mesh *poly)
+	void meshConvertToExpanded(Mesh *msh)
 	{
-		if (poly->indices().empty())
+		if (msh->indices().empty())
 			return;
-		MeshImpl *impl = (MeshImpl *)poly;
+		MeshImpl *impl = (MeshImpl *)msh;
 		CAGE_THROW_CRITICAL(NotImplemented, "convertToExpanded");
 	}
 
-	void meshMergeCloseVertices(Mesh *poly, const MeshCloseVerticesMergingConfig &config)
+	void meshMergeCloseVertices(Mesh *msh, const MeshCloseVerticesMergingConfig &config)
 	{
-		if (poly->facesCount() == 0)
+		if (msh->facesCount() == 0)
 			return;
 
 		if (!config.moveVerticesOnly)
-			meshConvertToIndexed(poly);
+			meshConvertToIndexed(msh);
 
-		MeshImpl *impl = (MeshImpl *)poly;
+		MeshImpl *impl = (MeshImpl *)msh;
 		const uint32 vc = numeric_cast<uint32>(impl->positions.size());
 		std::vector<bool> needsRecenter; // mark vertices that need to reposition
 		needsRecenter.resize(vc, false);
@@ -493,27 +493,27 @@ namespace cage
 		}
 
 		// remove faces that has collapsed
-		meshDiscardInvalid(poly);
+		meshDiscardInvalid(msh);
 	}
 
-	void meshGenerateTexture(const Mesh *poly, const MeshTextureGenerationConfig &config)
+	void meshGenerateTexture(const Mesh *msh, const MeshTextureGenerationConfig &config)
 	{
-		if (poly->facesCount() == 0)
+		if (msh->facesCount() == 0)
 			return;
 
-		CAGE_ASSERT(poly->type() == MeshTypeEnum::Triangles);
-		CAGE_ASSERT(!poly->uvs().empty());
+		CAGE_ASSERT(msh->type() == MeshTypeEnum::Triangles);
+		CAGE_ASSERT(!msh->uvs().empty());
 
-		const uint32 triCount = poly->facesCount();
+		const uint32 triCount = msh->facesCount();
 		const vec2 scale = vec2(config.width - 1, config.height - 1);
 		for (uint32 triIdx = 0; triIdx < triCount; triIdx++)
 		{
 			ivec3 idx;
-			if (poly->indices().empty())
+			if (msh->indices().empty())
 				idx = ivec3(triIdx * 3 + 0, triIdx * 3 + 1, triIdx * 3 + 2);
 			else
-				idx = ivec3(poly->index(triIdx * 3 + 0), poly->index(triIdx * 3 + 1), poly->index(triIdx * 3 + 2));
-			const vec2 vertUvs[3] = { poly->uv(idx[0]) * scale, poly->uv(idx[1]) * scale, poly->uv(idx[2]) * scale };
+				idx = ivec3(msh->index(triIdx * 3 + 0), msh->index(triIdx * 3 + 1), msh->index(triIdx * 3 + 2));
+			const vec2 vertUvs[3] = { msh->uv(idx[0]) * scale, msh->uv(idx[1]) * scale, msh->uv(idx[2]) * scale };
 			ivec2 t0 = ivec2(sint32(vertUvs[0][0].value), sint32(vertUvs[0][1].value));
 			ivec2 t1 = ivec2(sint32(vertUvs[1][0].value), sint32(vertUvs[1][1].value));
 			ivec2 t2 = ivec2(sint32(vertUvs[2][0].value), sint32(vertUvs[2][1].value));
@@ -547,21 +547,21 @@ namespace cage
 		}
 	}
 
-	void meshGenerateNormals(Mesh *poly, const MeshNormalsGenerationConfig &config)
+	void meshGenerateNormals(Mesh *msh, const MeshNormalsGenerationConfig &config)
 	{
-		MeshImpl *impl = (MeshImpl *)poly;
+		MeshImpl *impl = (MeshImpl *)msh;
 		CAGE_THROW_CRITICAL(NotImplemented, "generateNormals");
 	}
 
-	void meshGenerateTangents(Mesh *poly, const MeshTangentsGenerationConfig &config)
+	void meshGenerateTangents(Mesh *msh, const MeshTangentsGenerationConfig &config)
 	{
-		MeshImpl *impl = (MeshImpl *)poly;
+		MeshImpl *impl = (MeshImpl *)msh;
 		CAGE_THROW_CRITICAL(NotImplemented, "generateTangents");
 	}
 
-	void meshApplyTransform(Mesh *poly, const transform &t)
+	void meshApplyTransform(Mesh *msh, const transform &t)
 	{
-		MeshImpl *impl = (MeshImpl *)poly;
+		MeshImpl *impl = (MeshImpl *)msh;
 		for (vec3 &it : impl->positions)
 			it = t * it;
 		for (vec3 &it : impl->normals)
@@ -572,9 +572,9 @@ namespace cage
 			it = t.orientation * it;
 	}
 
-	void meshApplyTransform(Mesh *poly, const mat4 &t)
+	void meshApplyTransform(Mesh *msh, const mat4 &t)
 	{
-		MeshImpl *impl = (MeshImpl *)poly;
+		MeshImpl *impl = (MeshImpl *)msh;
 		for (vec3 &it : impl->positions)
 			it = vec3(t * vec4(it, 1));
 		for (vec3 &it : impl->normals)
@@ -587,16 +587,41 @@ namespace cage
 
 	void meshApplyAnimation(Mesh *msh, PointerRange<const mat4> skinTransformation)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "meshApplyAnimation");
+		MeshImpl *impl = (MeshImpl *)msh;
+		const uint32 cnt = msh->verticesCount();
+		CAGE_ASSERT(impl->boneIndices.size() == cnt);
+		CAGE_ASSERT(impl->boneWeights.size() == cnt);
+		for (uint32 i = 0; i < cnt; i++)
+		{
+			mat4 tr = mat4::scale(0);
+			for (uint32 j = 0; j < 4; j++)
+			{
+				const uint32 b = impl->boneIndices[i][j];
+				const real w = impl->boneWeights[i][j];
+				tr += skinTransformation[b] * w;
+			}
+			CAGE_ASSERT(tr.valid());
+			impl->positions[i] = vec3(tr * vec4(impl->positions[i], 1));
+			mat3 tr3 = mat3(tr);
+			if (!impl->normals.empty())
+				impl->normals[i] = tr3 * impl->normals[i];
+			if (!impl->tangents.empty())
+				impl->tangents[i] = tr3 * impl->tangents[i];
+			if (!impl->bitangents.empty())
+				impl->bitangents[i] = tr3 * impl->bitangents[i];
+		}
+		// erase bone attributes to prevent repeatedly applying animations
+		impl->boneIndices.clear();
+		impl->boneWeights.clear();
 	}
 
-	void meshFlipNormals(Mesh *poly)
+	void meshFlipNormals(Mesh *msh)
 	{
-		MeshImpl *impl = (MeshImpl *)poly;
+		MeshImpl *impl = (MeshImpl *)msh;
 		if (impl->type == MeshTypeEnum::Triangles)
 		{
 			// flip triangle winding
-			meshConvertToIndexed(poly);
+			meshConvertToIndexed(msh);
 			const uint32 cnt = impl->indicesCount();
 			for (uint32 i = 0; i < cnt; i += 3)
 				std::swap(impl->indices[i + 1], impl->indices[i + 2]);
@@ -606,15 +631,15 @@ namespace cage
 		// todo tangents & bitangents ?
 	}
 
-	void meshClip(Mesh *poly, const aabb &clipBox)
+	void meshClip(Mesh *msh, const aabb &clipBox)
 	{
-		if (poly->facesCount() == 0)
+		if (msh->facesCount() == 0)
 			return;
 
-		CAGE_ASSERT(poly->type() == MeshTypeEnum::Triangles); // todo other types
+		CAGE_ASSERT(msh->type() == MeshTypeEnum::Triangles); // todo other types
 
-		meshConvertToIndexed(poly);
-		MeshImpl *impl = (MeshImpl *)poly;
+		meshConvertToIndexed(msh);
+		MeshImpl *impl = (MeshImpl *)msh;
 		const vec3 clipBoxArr[2] = { clipBox.a, clipBox.b };
 		std::vector<uint32> sourceIndices;
 		sourceIndices.reserve(impl->indices.size());
@@ -658,28 +683,28 @@ namespace cage
 			tmp.clear();
 		}
 		if (impl->indices.empty())
-			poly->clear();
+			msh->clear();
 		else
 			removeUnusedVertices(impl);
 		meshDiscardInvalid(impl);
 	}
 
-	void meshClip(Mesh *poly, const plane &pln)
+	void meshClip(Mesh *msh, const plane &pln)
 	{
 		// todo optimized code without constructing the other mesh
-		meshCut(poly, pln);
+		meshCut(msh, pln);
 	}
 
-	Holder<Mesh> meshCut(Mesh *poly, const plane &pln)
+	Holder<Mesh> meshCut(Mesh *msh, const plane &pln)
 	{
-		MeshImpl *impl = (MeshImpl *)poly;
+		MeshImpl *impl = (MeshImpl *)msh;
 		CAGE_THROW_CRITICAL(NotImplemented, "cut");
 	}
 
-	void meshDiscardInvalid(Mesh *poly)
+	void meshDiscardInvalid(Mesh *msh)
 	{
-		poly->verticesCount(); // validate vertices
-		MeshImpl *impl = (MeshImpl *)poly;
+		msh->verticesCount(); // validate vertices
+		MeshImpl *impl = (MeshImpl *)msh;
 		discardInvalidVertices(impl);
 		switch (impl->type)
 		{
@@ -694,15 +719,15 @@ namespace cage
 		default:
 			CAGE_THROW_CRITICAL(Exception, "invalid mesh type");
 		}
-		poly->verticesCount(); // validate vertices
+		msh->verticesCount(); // validate vertices
 	}
 
-	void meshDiscardDisconnected(Mesh *poly)
+	void meshDiscardDisconnected(Mesh *msh)
 	{
-		if (poly->facesCount() == 0)
+		if (msh->facesCount() == 0)
 			return;
 		// todo optimized code without separateDisconnected
-		auto vec = meshSeparateDisconnected(poly);
+		auto vec = meshSeparateDisconnected(msh);
 		uint32 largestIndex = 0;
 		uint32 largestFaces = vec[0]->facesCount();
 		for (uint32 i = 1; i < vec.size(); i++)
@@ -714,21 +739,21 @@ namespace cage
 				largestIndex = i;
 			}
 		}
-		MeshImpl *impl = (MeshImpl *)poly;
+		MeshImpl *impl = (MeshImpl *)msh;
 		MeshImpl *src = (MeshImpl *)vec[largestIndex].get();
 		impl->swap(*src);
 	}
 
-	Holder<PointerRange<Holder<Mesh>>> meshSeparateDisconnected(const Mesh *poly)
+	Holder<PointerRange<Holder<Mesh>>> meshSeparateDisconnected(const Mesh *msh)
 	{
-		poly->verticesCount(); // validate vertices
-		if (poly->facesCount() == 0)
+		msh->verticesCount(); // validate vertices
+		if (msh->facesCount() == 0)
 			return {};
-		const MeshImpl *impl = (const MeshImpl *)poly;
+		const MeshImpl *impl = (const MeshImpl *)msh;
 		Holder<Mesh> srcCopy;
-		if (poly->indicesCount() == 0)
+		if (msh->indicesCount() == 0)
 		{
-			srcCopy = poly->copy();
+			srcCopy = msh->copy();
 			meshConvertToIndexed(+srcCopy);
 			impl = (const MeshImpl *)+srcCopy;
 		}

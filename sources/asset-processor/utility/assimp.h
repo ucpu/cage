@@ -39,6 +39,8 @@ public:
 	const aiScene *getScene() const;
 	uint32 selectModel() const;
 	Holder<AssimpSkeleton> skeleton() const;
+	Holder<SkeletonRig> skeletonRig() const;
+	Holder<SkeletalAnimation> animation(uint32 index) const;
 };
 
 Holder<AssimpContext> newAssimpContext(uint32 addFlags, uint32 removeFlags);

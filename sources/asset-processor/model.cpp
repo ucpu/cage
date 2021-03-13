@@ -2,6 +2,7 @@
 #include <cage-core/ini.h>
 #include <cage-core/color.h>
 #include <cage-core/mesh.h>
+#include <cage-core/skeletalAnimation.h>
 #include <cage-engine/shaderConventions.h>
 
 #include "utility/assimp.h"
@@ -379,6 +380,15 @@ namespace
 		uint32 b = (int)any(flags & ModelDataFlags::Bones) * (sizeof(uint16) + sizeof(float)) * 4;
 		return p + u2 + u3 + n + t + b;
 	}
+
+	aabb enlarge(const aabb &box)
+	{
+		vec3 c = box.center();
+		vec3 a = box.a - c;
+		vec3 b = box.b - c;
+		real s = 1.1;
+		return aabb(a * s + c, b * s + c);
+	}
 }
 
 void processModel()
@@ -500,15 +510,6 @@ void processModel()
 	if (any(flags & ModelDataFlags::Bones))
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "copying bones");;
-		// enlarge bounding box
-		{
-			vec3 c = dsm.box.center();
-			vec3 a = dsm.box.a - c;
-			vec3 b = dsm.box.b - c;
-			real s = 3;
-			dsm.box = aabb(a * s + c, b * s + c);
-			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "enlarged bounding box: " + dsm.box);
-		}
 		CAGE_ASSERT(am->mNumBones > 0);
 		Holder<AssimpSkeleton> skeleton = context->skeleton();
 		dsm.skeletonBones = skeleton->bonesCount();
@@ -599,6 +600,26 @@ void processModel()
 				inds.push_back(numeric_cast<uint32>(am->mFaces[i].mIndices[j]));
 		}
 		poly->indices(inds);
+	}
+
+	if (any(flags & ModelDataFlags::Bones))
+	{
+		// replay all animations and enlarge the bounding box to contain them
+		Holder<SkeletonRig> rig = context->skeletonRig();
+		for (uint32 i = 0; i < scene->mNumAnimations; i++)
+		{
+			Holder<SkeletalAnimation> ani = context->animation(i);
+			for (real t = 0; t <= 1; t += 0.02) // sample the animation at 50 positions
+			{
+				Holder<Mesh> tmp = poly->copy();
+				animateMesh(+rig, +ani, t, +tmp);
+				//tmp->exportObjFile({}, pathReplaceInvalidCharacters(stringizer() + "skellies/" + i + "/" + t + "/" + inputName + ".obj", "_", true));
+				aabb box = tmp->boundingBox();
+				box = enlarge(box);
+				dsm.box += box;
+			}
+		}
+		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "enlarged bounding box: " + dsm.box);
 	}
 
 	CAGE_LOG(SeverityEnum::Info, logComponentName, "serializing");;

@@ -516,7 +516,7 @@ namespace cage
 						if (an && skel)
 						{
 							CAGE_ASSERT(skel->bonesCount() == bonesCount);
-							real c = detail::evalCoefficientForSkeletalAnimation(an.get(), dispatchTime, ba.startTime, ba.speed, ba.offset);
+							real c = detail::evalCoefficientForSkeletalAnimation(+an, dispatchTime, ba.startTime, ba.speed, ba.offset);
 							animateSkin(+skel, +an, c, tmpArmature);
 							for (uint32 i = 0; i < bonesCount; i++)
 								sa[i] = Mat3x4(tmpArmature[i]);
