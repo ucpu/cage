@@ -1,6 +1,6 @@
-#include "processor.h"
-
 #include <cage-core/audio.h>
+
+#include "processor.h"
 
 void processSound()
 {

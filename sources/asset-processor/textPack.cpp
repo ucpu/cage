@@ -1,5 +1,6 @@
 #include <cage-core/ini.h>
 #include <cage-core/hashString.h>
+#include <cage-core/textPack.h>
 
 #include "processor.h"
 
@@ -25,32 +26,30 @@ void processTextpack()
 	}
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "loaded " + texts.size() + " texts");
 
-	AssetHeader h = initializeAssetHeader();
-	h.originalSize = sizeof(uint32) + numeric_cast<uint32>(texts.size()) * sizeof(uint32) * 2;
-	for (auto it : texts)
-		h.originalSize += numeric_cast<uint32>(it.second.length());
-
-	Holder<File> f = newFile(outputFileName, FileMode(false, true));
-	f->write(bufferView(h));
-	uint32 count = numeric_cast<uint32>(texts.size());
-	f->write(bufferView(count));
-	for (auto it : texts)
-	{
-		uint32 name = HashString(it.first.c_str());
-		f->write(bufferView(name));
-		uint32 len = it.second.length();
-		f->write(bufferView(len));
-		f->write({ it.second.c_str(), it.second.c_str() + len });
-	}
-	f->close();
-
 	if (configGetBool("cage-asset-processor/textpack/preview"))
 	{
 		string dbgName = pathJoin(configGetString("cage-asset-processor/textpack/path", "asset-preview"), pathReplaceInvalidCharacters(inputName) + ".txt");
 		FileMode fm(false, true);
 		fm.textual = true;
 		Holder<File> f = newFile(dbgName, fm);
-		for (auto it : texts)
+		for (const auto &it : texts)
 			f->writeLine(fill(string(stringizer() + HashString(it.first)), 10) + " " + it.first + " = " + it.second);
 	}
+
+	Holder<TextPack> pack = newTextPack();
+	for (const auto &it : texts)
+		pack->set(HashString(it.first), it.second);
+
+	Holder<PointerRange<char>> buff = pack->serialize();
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
+	Holder<PointerRange<char>> comp = compress(buff);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + comp.size());
+
+	AssetHeader h = initializeAssetHeader();
+	h.originalSize = buff.size();
+	h.compressedSize = comp.size();
+	Holder<File> f = writeFile(outputFileName);
+	f->write(bufferView(h));
+	f->write(comp);
+	f->close();
 }

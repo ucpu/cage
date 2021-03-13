@@ -9,8 +9,11 @@ namespace cage
 	{
 	public:
 		void clear();
+		Holder<Collider> copy() const;
+
 		Holder<PointerRange<char>> serialize(bool includeAdditionalData = true) const;
 		void deserialize(PointerRange<const char> buffer);
+
 		void importMesh(const Mesh *mesh);
 
 		PointerRange<const triangle> triangles() const;

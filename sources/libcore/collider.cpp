@@ -203,6 +203,13 @@ namespace cage
 		impl->dirty = true;
 	}
 
+	Holder<Collider> Collider::copy() const
+	{
+		Holder<Collider> res = newCollider();
+		res->deserialize(serialize());
+		return res;
+	}
+
 	void Collider::rebuild()
 	{
 		ColliderImpl *impl = (ColliderImpl*)this;

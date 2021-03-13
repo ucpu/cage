@@ -24,7 +24,6 @@ void processObject()
 	Holder<Ini> ini = newIni();
 	ini->importFile(inputFileName);
 
-	//string basePath = pathExtractDirectory(inputFile);
 	std::vector<Lod> lods;
 	std::set<uint32> deps;
 	uint32 totalModeles = 0;
@@ -40,8 +39,6 @@ void processObject()
 			string v = ini->getString(section, n);
 			if (!isDigitsOnly(n))
 				continue;
-			//v = pathJoin(basePath, v);
-			//writeLine(string("ref=") + v);
 			v = convertAssetPath(v);
 			uint32 h = HashString(v);
 			ls.models.insert(h);
@@ -74,8 +71,6 @@ void processObject()
 		string s = ini->getString("skeletalAnimation", "name");
 		if (!s.empty())
 		{
-			//s = pathJoin(basePath, s);
-			//writeLine(string("ref=") + s);
 			s = convertAssetPath(s);
 			o.skelAnimName = HashString(s);
 			deps.insert(o.skelAnimName);
@@ -128,5 +123,7 @@ void processObject()
 		for (auto msh : ls.models)
 			ser << msh;
 	}
-	writeFile(outputFileName)->write(buffer);
+	Holder<File> f = writeFile(outputFileName);
+	f->write(buffer);
+	f->close();
 }

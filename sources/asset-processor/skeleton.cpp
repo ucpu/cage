@@ -1,5 +1,3 @@
-#include <cage-core/memoryBuffer.h>
-#include <cage-core/serialization.h>
 #include <cage-core/skeletalAnimation.h>
 
 #include "utility/assimp.h"
@@ -78,16 +76,16 @@ void processSkeleton()
 
 	Holder<SkeletonRig> rig = newSkeletonRig();
 	rig->skeletonData(globalInverse, ps, bs, is);
-	Holder<PointerRange<char>> buff = rig->serialize();
 
+	Holder<PointerRange<char>> buff = rig->serialize();
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
 	Holder<PointerRange<char>> comp = compress(buff);
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + comp.size());
 
 	AssetHeader h = initializeAssetHeader();
-	h.originalSize = numeric_cast<uint32>(buff.size());
-	h.compressedSize = numeric_cast<uint32>(comp.size());
-	Holder<File> f = newFile(outputFileName, FileMode(false, true));
+	h.originalSize = buff.size();
+	h.compressedSize = comp.size();
+	Holder<File> f = writeFile(outputFileName);
 	f->write(bufferView(h));
 	f->write(comp);
 	f->close();

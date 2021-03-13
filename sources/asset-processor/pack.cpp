@@ -3,7 +3,6 @@
 
 #include "processor.h"
 
-#include <map>
 #include <set>
 
 void processPack()
@@ -21,8 +20,6 @@ void processPack()
 			if (!isDigitsOnly(n))
 				CAGE_THROW_ERROR(Exception, "invalid asset pack definition");
 			string v = ini->get(section, n);
-			//v = pathJoin(pathExtractDirectory(inputName), v);
-			//writeLine(string("ref=") + v);
 			v = convertAssetPath(v);
 			assets.insert(HashString(v));
 		}
@@ -31,7 +28,7 @@ void processPack()
 	AssetHeader h = initializeAssetHeader();
 	h.dependenciesCount = numeric_cast<uint16>(assets.size());
 
-	Holder<File> f = newFile(outputFileName, FileMode(false, true));
+	Holder<File> f = writeFile(outputFileName);
 	f->write(bufferView(h));
 	for (uint32 it : assets)
 		f->write(bufferView(it));

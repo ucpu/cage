@@ -44,15 +44,14 @@ void processCollider()
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "aabb: " + collider->box());
 
 	Holder<PointerRange<char>> buff = collider->serialize();
-
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
 	Holder<PointerRange<char>> comp = compress(buff);
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + comp.size());
 
 	AssetHeader h = initializeAssetHeader();
-	h.originalSize = numeric_cast<uint32>(buff.size());
-	h.compressedSize = numeric_cast<uint32>(comp.size());
-	Holder<File> f = newFile(outputFileName, FileMode(false, true));
+	h.originalSize = buff.size();
+	h.compressedSize = comp.size();
+	Holder<File> f = writeFile(outputFileName);
 	f->write(bufferView(h));
 	f->write(comp);
 	f->close();

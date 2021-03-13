@@ -168,6 +168,7 @@ namespace cage
 		impl->clear();
 		Deserializer des(buffer);
 		cage::serialize(impl, des);
+		CAGE_ASSERT(des.available() == 0);
 	}
 
 	void SkeletalAnimation::channelsMapping(uint16 bones, uint16 channels, PointerRange<const uint16> mapping)
@@ -298,6 +299,7 @@ namespace cage
 		cage::serialize(impl, des);
 		CAGE_ASSERT(impl->boneParents.size() == impl->baseMatrices.size());
 		CAGE_ASSERT(impl->boneParents.size() == impl->invRestMatrices.size());
+		CAGE_ASSERT(des.available() == 0);
 	}
 
 	void SkeletonRig::skeletonData(const mat4 &globalInverse, PointerRange<const uint16> parents, PointerRange<const mat4> bases, PointerRange<const mat4> invRests)
