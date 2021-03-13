@@ -1,3 +1,5 @@
+#include <cage-core/skeletalAnimation.h>
+
 #include "utility/assimp.h"
 
 #include <vector>
@@ -6,11 +8,11 @@ namespace
 {
 	struct Bone
 	{
-		std::vector<float> posTimes;
+		std::vector<real> posTimes;
 		std::vector<vec3> posVals;
-		std::vector<float> rotTimes;
+		std::vector<real> rotTimes;
 		std::vector<quat> rotVals;
-		std::vector<float> sclTimes;
+		std::vector<real> sclTimes;
 		std::vector<vec3> sclVals;
 	};
 }
@@ -51,7 +53,6 @@ void processAnimation()
 	const uint32 skeletonBonesCount = skeleton->bonesCount();
 
 	uint32 totalKeys = 0;
-	uint32 size = 0;
 	std::vector<Bone> bones;
 	bones.reserve(ani->mNumChannels);
 	std::vector<uint16> boneIndices;
@@ -77,7 +78,6 @@ void processAnimation()
 			b.posTimes.push_back(numeric_cast<float>(k.mTime / ani->mDuration));
 			b.posVals.push_back(conv(k.mValue));
 		}
-		size += n->mNumPositionKeys * (sizeof(float) + sizeof(vec3));
 		totalKeys += n->mNumPositionKeys;
 		// rotations
 		b.rotTimes.reserve(n->mNumRotationKeys);
@@ -88,7 +88,6 @@ void processAnimation()
 			b.rotTimes.push_back(numeric_cast<float>(k.mTime / ani->mDuration));
 			b.rotVals.push_back(conv(k.mValue));
 		}
-		size += n->mNumRotationKeys * (sizeof(float) + sizeof(quat));
 		totalKeys += n->mNumRotationKeys;
 		// scales
 		b.sclTimes.reserve(n->mNumScalingKeys);
@@ -99,43 +98,62 @@ void processAnimation()
 			b.sclTimes.push_back(numeric_cast<float>(k.mTime / ani->mDuration));
 			b.sclVals.push_back(conv(k.mValue));
 		}
-		size += n->mNumScalingKeys * (sizeof(float) + sizeof(vec3));
 		totalKeys += n->mNumScalingKeys;
 	}
 	const uint32 animationBonesCount = numeric_cast<uint32>(bones.size());
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "animated bones: " + animationBonesCount);
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "total keys: " + totalKeys);
 
-	MemoryBuffer buff;
-	Serializer ser(buff);
-	ser << duration;
-	ser << skeletonBonesCount;
-	ser << animationBonesCount;
-
-	// bone indices
-	ser.write(bufferCast<char, uint16>(boneIndices));
-
-	// position frames counts
-	for (Bone &b : bones)
-		ser << numeric_cast<uint16>(b.posTimes.size());
-
-	// rotation frames counts
-	for (Bone &b : bones)
-		ser << numeric_cast<uint16>(b.rotTimes.size());
-
-	// scale frames counts
-	for (Bone &b : bones)
-		ser << numeric_cast<uint16>(b.sclTimes.size());
-
-	for (Bone &b : bones)
+	Holder<SkeletalAnimation> anim = newSkeletalAnimation();
+	anim->duration(duration);
 	{
-		ser.write(bufferCast<char, float>(b.posTimes));
-		ser.write(bufferCast<char, vec3>(b.posVals));
-		ser.write(bufferCast<char, float>(b.rotTimes));
-		ser.write(bufferCast<char, quat>(b.rotVals));
-		ser.write(bufferCast<char, float>(b.sclTimes));
-		ser.write(bufferCast<char, vec3>(b.sclVals));
+		std::vector<uint16> mapping;
+		mapping.resize(skeletonBonesCount, m);
+		for (uint16 i = 0; i < bones.size(); i++)
+		{
+			CAGE_ASSERT(mapping[boneIndices[i]] == m);
+			mapping[boneIndices[i]] = i;
+		}
+		anim->channelsMapping(skeletonBonesCount, animationBonesCount, mapping);
 	}
+	{
+		std::vector<PointerRange<const real>> times;
+		times.reserve(animationBonesCount);
+		{
+			std::vector<PointerRange<const vec3>> positions;
+			positions.reserve(animationBonesCount);
+			for (const Bone &b : bones)
+			{
+				times.push_back(b.posTimes);
+				positions.push_back(b.posVals);
+			}
+			anim->positionsData(times, positions);
+			times.clear();
+		}
+		{
+			std::vector<PointerRange<const quat>> rotations;
+			rotations.reserve(animationBonesCount);
+			for (const Bone &b : bones)
+			{
+				times.push_back(b.rotTimes);
+				rotations.push_back(b.rotVals);
+			}
+			anim->rotationsData(times, rotations);
+			times.clear();
+		}
+		{
+			std::vector<PointerRange<const vec3>> scales;
+			scales.reserve(animationBonesCount);
+			for (const Bone &b : bones)
+			{
+				times.push_back(b.sclTimes);
+				scales.push_back(b.sclVals);
+			}
+			anim->scaleData(times, scales);
+			times.clear();
+		}
+	}
+	Holder<PointerRange<char>> buff = anim->serialize();
 
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
 	Holder<PointerRange<char>> comp = compress(buff);

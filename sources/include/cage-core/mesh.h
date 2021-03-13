@@ -19,7 +19,6 @@ namespace cage
 		string objectName;
 	};
 
-	// aka a model but stored in cpu memory
 	class CAGE_CORE_API Mesh : private Immovable
 	{
 	public:
@@ -121,21 +120,23 @@ namespace cage
 
 	CAGE_CORE_API Holder<Mesh> newMesh();
 
-	CAGE_CORE_API void meshConvertToIndexed(Mesh *poly);
-	CAGE_CORE_API void meshConvertToExpanded(Mesh *poly);
+	CAGE_CORE_API void meshConvertToIndexed(Mesh *msh);
+	CAGE_CORE_API void meshConvertToExpanded(Mesh *msh);
 
-	CAGE_CORE_API void meshApplyTransform(Mesh *poly, const transform &t);
-	CAGE_CORE_API void meshApplyTransform(Mesh *poly, const mat4 &t);
+	CAGE_CORE_API void meshApplyTransform(Mesh *msh, const transform &t);
+	CAGE_CORE_API void meshApplyTransform(Mesh *msh, const mat4 &t);
 
-	CAGE_CORE_API void meshFlipNormals(Mesh *poly);
+	CAGE_CORE_API void meshApplyAnimation(Mesh *msh, PointerRange<const mat4> skinTransformation);
 
-	CAGE_CORE_API void meshClip(Mesh *poly, const aabb &box);
-	CAGE_CORE_API void meshClip(Mesh *poly, const plane &pln);
-	CAGE_CORE_API Holder<Mesh> meshCut(Mesh *poly, const plane &pln);
+	CAGE_CORE_API void meshFlipNormals(Mesh *msh);
 
-	CAGE_CORE_API void meshDiscardInvalid(Mesh *poly);
-	CAGE_CORE_API void meshDiscardDisconnected(Mesh *poly);
-	CAGE_CORE_API Holder<PointerRange<Holder<Mesh>>> meshSeparateDisconnected(const Mesh *poly);
+	CAGE_CORE_API void meshClip(Mesh *msh, const aabb &box);
+	CAGE_CORE_API void meshClip(Mesh *msh, const plane &pln);
+	CAGE_CORE_API Holder<Mesh> meshCut(Mesh *msh, const plane &pln);
+
+	CAGE_CORE_API void meshDiscardInvalid(Mesh *msh);
+	CAGE_CORE_API void meshDiscardDisconnected(Mesh *msh);
+	CAGE_CORE_API Holder<PointerRange<Holder<Mesh>>> meshSeparateDisconnected(const Mesh *msh);
 
 	struct CAGE_CORE_API MeshCloseVerticesMergingConfig
 	{
@@ -143,7 +144,7 @@ namespace cage
 		bool moveVerticesOnly = false; // true -> vertices are moved only (no deduplication) and other attributes are ignored; false -> indices are remapped to other vertices
 	};
 
-	CAGE_CORE_API void meshMergeCloseVertices(Mesh *poly, const MeshCloseVerticesMergingConfig &config);
+	CAGE_CORE_API void meshMergeCloseVertices(Mesh *msh, const MeshCloseVerticesMergingConfig &config);
 
 	struct CAGE_CORE_API MeshSimplificationConfig
 	{
@@ -154,7 +155,7 @@ namespace cage
 		bool useProjection = true;
 	};
 
-	CAGE_CORE_API void meshSimplify(Mesh *poly, const MeshSimplificationConfig &config);
+	CAGE_CORE_API void meshSimplify(Mesh *msh, const MeshSimplificationConfig &config);
 
 	struct CAGE_CORE_API MeshRegularizationConfig
 	{
@@ -163,7 +164,7 @@ namespace cage
 		bool useProjection = true;
 	};
 
-	CAGE_CORE_API void meshRegularize(Mesh *poly, const MeshRegularizationConfig &config);
+	CAGE_CORE_API void meshRegularize(Mesh *msh, const MeshRegularizationConfig &config);
 
 	struct CAGE_CORE_API MeshUnwrapConfig
 	{
@@ -186,7 +187,7 @@ namespace cage
 		bool logProgress = false;
 	};
 
-	CAGE_CORE_API uint32 meshUnwrap(Mesh *poly, const MeshUnwrapConfig &config);
+	CAGE_CORE_API uint32 meshUnwrap(Mesh *msh, const MeshUnwrapConfig &config);
 
 	struct CAGE_CORE_API MeshTextureGenerationConfig
 	{
@@ -195,21 +196,21 @@ namespace cage
 		uint32 height = 0;
 	};
 
-	CAGE_CORE_API void meshGenerateTexture(const Mesh *poly, const MeshTextureGenerationConfig &config);
+	CAGE_CORE_API void meshGenerateTexture(const Mesh *msh, const MeshTextureGenerationConfig &config);
 
 	struct CAGE_CORE_API MeshNormalsGenerationConfig
 	{
 		// todo
 	};
 
-	CAGE_CORE_API void meshGenerateNormals(Mesh *poly, const MeshNormalsGenerationConfig &config);
+	CAGE_CORE_API void meshGenerateNormals(Mesh *msh, const MeshNormalsGenerationConfig &config);
 
 	struct CAGE_CORE_API MeshTangentsGenerationConfig
 	{
 		// todo
 	};
 
-	CAGE_CORE_API void meshGenerateTangents(Mesh *poly, const MeshTangentsGenerationConfig &config);
+	CAGE_CORE_API void meshGenerateTangents(Mesh *msh, const MeshTangentsGenerationConfig &config);
 }
 
 #endif // guard_mesh_h_CA052442302D4C3BAA9293200603C20A

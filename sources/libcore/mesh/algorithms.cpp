@@ -585,6 +585,11 @@ namespace cage
 			it = vec3(t * vec4(it, 0));
 	}
 
+	void meshApplyAnimation(Mesh *msh, PointerRange<const mat4> skinTransformation)
+	{
+		CAGE_THROW_CRITICAL(NotImplemented, "meshApplyAnimation");
+	}
+
 	void meshFlipNormals(Mesh *poly)
 	{
 		MeshImpl *impl = (MeshImpl *)poly;

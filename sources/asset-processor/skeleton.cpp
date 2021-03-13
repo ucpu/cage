@@ -1,5 +1,6 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
+#include <cage-core/skeletalAnimation.h>
 
 #include "utility/assimp.h"
 
@@ -75,16 +76,9 @@ void processSkeleton()
 		is.push_back(o);
 	}
 
-	MemoryBuffer buff;
-	Serializer ser(buff);
-	ser << globalInverse;
-	ser << bonesCount;
-	// parent bone indices
-	ser.write(bufferCast<char, uint16>(ps));
-	// base transformation matrices
-	ser.write(bufferCast<char, mat4>(bs));
-	// inverted rest matrices
-	ser.write(bufferCast<char, mat4>(is));
+	Holder<SkeletonRig> rig = newSkeletonRig();
+	rig->skeletonData(globalInverse, ps, bs, is);
+	Holder<PointerRange<char>> buff = rig->serialize();
 
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
 	Holder<PointerRange<char>> comp = compress(buff);

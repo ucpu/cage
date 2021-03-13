@@ -417,7 +417,7 @@ namespace cage
 					{
 						CAGE_ASSERT(s->bonesCount() == bonesCount);
 						real c = detail::evalCoefficientForSkeletalAnimation(an.get(), dispatchTime, ba.startTime, ba.speed, ba.offset);
-						s->animateSkeleton(an.get(), c, tmpArmature);
+						animateSkeleton(+s, +an, c, tmpArmature);
 						initialized = true;
 					}
 				}
@@ -517,7 +517,7 @@ namespace cage
 						{
 							CAGE_ASSERT(skel->bonesCount() == bonesCount);
 							real c = detail::evalCoefficientForSkeletalAnimation(an.get(), dispatchTime, ba.startTime, ba.speed, ba.offset);
-							skel->animateSkin(an.get(), c, tmpArmature);
+							animateSkin(+skel, +an, c, tmpArmature);
 							for (uint32 i = 0; i < bonesCount; i++)
 								sa[i] = Mat3x4(tmpArmature[i]);
 							initialized = true;

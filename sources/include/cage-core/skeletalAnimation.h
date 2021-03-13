@@ -5,19 +5,25 @@
 
 namespace cage
 {
-	namespace detail
-	{
-		CAGE_CORE_API real evalCoefficientForSkeletalAnimation(SkeletalAnimation *animation, uint64 emitTime, uint64 animationStart, real animationSpeed, real animationOffset);
-	}
-
 	class CAGE_CORE_API SkeletalAnimation : private Immovable
 	{
 	public:
-		uint64 duration = 0;
+		void clear();
+		Holder<SkeletalAnimation> copy() const;
 
-		void deserialize(uint32 bonesCount, PointerRange<const char> buffer);
+		Holder<PointerRange<char>> serialize() const;
+		void deserialize(PointerRange<const char> buffer);
 
-		mat4 evaluate(uint16 bone, real coef) const;
+		void channelsMapping(uint16 bones, uint16 channels, PointerRange<const uint16> mapping);
+		void positionsData(PointerRange<const PointerRange<const real>> times, PointerRange<const PointerRange<const vec3>> values);
+		void rotationsData(PointerRange<const PointerRange<const real>> times, PointerRange<const PointerRange<const quat>> values);
+		void scaleData(PointerRange<const PointerRange<const real>> times, PointerRange<const PointerRange<const vec3>> values);
+
+		uint32 bonesCount() const;
+		uint32 channelsCount() const;
+
+		void duration(uint64 duration);
+		uint64 duration() const;
 	};
 
 	CAGE_CORE_API Holder<SkeletalAnimation> newSkeletalAnimation();
@@ -28,17 +34,32 @@ namespace cage
 	class CAGE_CORE_API SkeletonRig : private Immovable
 	{
 	public:
-		void deserialize(const mat4 &globalInverse, uint32 bonesCount, PointerRange<const char> buffer);
+		void clear();
+		Holder<SkeletonRig> copy() const;
+
+		Holder<PointerRange<char>> serialize() const;
+		void deserialize(PointerRange<const char> buffer);
+
+		void skeletonData(const mat4 &globalInverse, PointerRange<const uint16> parents, PointerRange<const mat4> bases, PointerRange<const mat4> invRests);
 
 		uint32 bonesCount() const;
-		void animateSkin(const SkeletalAnimation *animation, real coef, PointerRange<mat4> output) const;
-		void animateSkeleton(const SkeletalAnimation *animation, real coef, PointerRange<mat4> output) const;
+
+		// todo sockets
 	};
 
 	CAGE_CORE_API Holder<SkeletonRig> newSkeletonRig();
 
 	CAGE_CORE_API AssetScheme genAssetSchemeSkeletonRig();
 	constexpr uint32 AssetSchemeIndexSkeletonRig = 5;
+
+	CAGE_CORE_API void animateSkin(const SkeletonRig *skeleton, const SkeletalAnimation *animation, real coef, PointerRange<mat4> output); // provides transformation matrices for skinning meshes
+	CAGE_CORE_API void animateSkeleton(const SkeletonRig *skeleton, const SkeletalAnimation *animation, real coef, PointerRange<mat4> output); // provides transformation matrices for individual bones for debug visualization
+	CAGE_CORE_API void animateMesh(const SkeletonRig *skeleton, const SkeletalAnimation *animation, real coef, Mesh *mesh);
+
+	namespace detail
+	{
+		CAGE_CORE_API real evalCoefficientForSkeletalAnimation(const SkeletalAnimation *animation, uint64 currentTime, uint64 startTime, real animationSpeed, real animationOffset);
+	}
 }
 
 #endif // guard_skeletalAnimation_h_dhg4g56efd4km1n56dstfr
