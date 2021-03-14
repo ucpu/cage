@@ -40,13 +40,15 @@ namespace cage
 		public:
 			CageGlfwInitializer()
 			{
+				CAGE_LOG(SeverityEnum::Info, "glfw", stringizer() + "initializing glfw");
 				glfwSetErrorCallback(&handleGlfwError);
 				if (!glfwInit())
-					CAGE_THROW_CRITICAL(Exception, "failed to initialize glfw");
+					CAGE_THROW_ERROR(Exception, "failed to initialize glfw");
 			}
 
 			~CageGlfwInitializer()
 			{
+				CAGE_LOG(SeverityEnum::Info, "glfw", stringizer() + "terminating glfw");
 				glfwTerminate();
 			}
 		};
@@ -55,7 +57,6 @@ namespace cage
 	void cageGlfwInitializeFunc()
 	{
 		static CageGlfwInitializer *m = new CageGlfwInitializer(); // intentional leak
-		(void)m;
 	}
 
 	namespace

@@ -10,18 +10,6 @@ namespace cage
 		using SystemError::SystemError;
 	};
 
-	class CAGE_ENGINE_API SoundContext : private Immovable
-	{
-	public:
-		string getContextName() const;
-		string getBackendName() const;
-	};
-
-	struct CAGE_ENGINE_API SoundContextCreateConfig
-	{};
-
-	CAGE_ENGINE_API Holder<SoundContext> newSoundContext(const SoundContextCreateConfig &config, const string &name = "");
-
 	struct CAGE_ENGINE_API SoundInterleavedBuffer
 	{
 		float *buffer = nullptr;
@@ -110,7 +98,7 @@ namespace cage
 	CAGE_ENGINE_API AssetScheme genAssetSchemeSoundSource(uint32 threadIndex);
 	static constexpr uint32 AssetSchemeIndexSoundSource = 20;
 
-	class CAGE_ENGINE_API Speaker : private Immovable
+	class CAGE_ENGINE_API [[deprecated]] SpeakerOutput : private Immovable
 	{
 	public:
 		string getStreamName() const;
@@ -123,13 +111,13 @@ namespace cage
 		void update(uint64 time);
 	};
 
-	struct CAGE_ENGINE_API SpeakerCreateConfig
+	struct CAGE_ENGINE_API [[deprecated]] SpeakerOutputCreateConfig
 	{
 		string deviceId;
 		uint32 sampleRate = 0;
 	};
 
-	CAGE_ENGINE_API Holder<Speaker> newSpeakerOutput(SoundContext *context, const SpeakerCreateConfig &config, const string &name = "");
+	[[deprecated]] CAGE_ENGINE_API Holder<SpeakerOutput> newSpeakerOutput(const SpeakerOutputCreateConfig &config, const string &name = "");
 
 	CAGE_ENGINE_API void soundSetSpeakerDirections(uint32 channels, const vec3 *directions);
 	CAGE_ENGINE_API void soundGetSpeakerDirections(uint32 channels, vec3 *directions);

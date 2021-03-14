@@ -97,8 +97,6 @@ namespace cage
 	class MixingFilter;
 	class VolumeFilter;
 	struct SoundError;
-	class SoundContext;
-	struct SoundContextCreateConfig;
 	class SoundSource;
 	struct SoundInterleavedBuffer;
 	struct SoundDataBuffer;

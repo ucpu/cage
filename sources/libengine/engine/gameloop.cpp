@@ -87,8 +87,7 @@ namespace cage
 #ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 			Holder<Window> windowUpload;
 #endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
-			Holder<SoundContext> sound;
-			Holder<Speaker> speaker;
+			Holder<SpeakerOutput> speaker;
 			Holder<MixingBus> masterBus;
 			Holder<MixingBus> musicBus;
 			Holder<MixingBus> effectsBus;
@@ -423,8 +422,7 @@ namespace cage
 
 				{ // create sound
 					string name = pathExtractFilename(detail::getExecutableFullPathNoExe());
-					sound = newSoundContext(config.soundContext ? *config.soundContext : SoundContextCreateConfig(), name);
-					speaker = newSpeakerOutput(+sound, config.speaker ? *config.speaker : SpeakerCreateConfig(), name);
+					speaker = newSpeakerOutput({}, name); // todo use correct config
 					masterBus = newMixingBus();
 					musicBus = newMixingBus();
 					effectsBus = newMixingBus();
@@ -592,7 +590,6 @@ namespace cage
 					guiBus.clear();
 					masterBus.clear();
 					speaker.clear();
-					sound.clear();
 				}
 
 				{ // destroy graphics
@@ -737,11 +734,6 @@ namespace cage
 		engineData.clear();
 	}
 
-	SoundContext *engineSound()
-	{
-		return engineData->sound.get();
-	}
-
 	AssetManager *engineAssets()
 	{
 		return engineData->assets.get();
@@ -762,7 +754,7 @@ namespace cage
 		return engineData->gui.get();
 	}
 
-	Speaker *engineSpeaker()
+	SpeakerOutput *engineSpeaker()
 	{
 		return engineData->speaker.get();
 	}

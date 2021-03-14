@@ -1,96 +1,56 @@
-#define NOMINMAX
-
 #include <cage-core/concurrent.h>
-#include <cage-core/string.h>
+#include <cage-engine/speaker.h>
 
 #include "private.h"
 #include "utilities.h"
 
-#include <cubeb/cubeb.h>
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef VC_EXTRALEAN
+#define VC_EXTRALEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <../src/cubeb_ringbuffer.h>
 
 namespace cage
 {
 	namespace
 	{
-		long dataCallbackFree(cubeb_stream *stream, void *user_ptr, void const *input_buffer, void *output_buffer, long nframes);
-		void stateCallbackFree(cubeb_stream *stream, void *user_ptr, cubeb_state state);
-
-		class SpeakerImpl : public Speaker, public BusInterface
+		class SpeakerImpl : public SpeakerOutput, public BusInterface
 		{
 		public:
-			const string name;
-			string deviceId;
-			SoundContext *const context = nullptr;
-			cubeb_stream *stream = nullptr;
+			Holder<Speaker> spkr;
 			MixingBus *inputBus = nullptr;
 			uint64 lastTime = 0;
 			SoundDataBuffer buffer;
 			Holder<lock_free_audio_ring_buffer<float>> ring;
 
-			SpeakerImpl(SoundContext *context, const SpeakerCreateConfig &config, const string &name_) :
-				BusInterface(Delegate<void(MixingBus *)>().bind<SpeakerImpl, &SpeakerImpl::busDestroyed>(this), {}),
-				name(replace(name_, ":", "_")), context(context)
+			SpeakerImpl(const SpeakerOutputCreateConfig &config, const string &name) :
+				BusInterface(Delegate<void(MixingBus *)>().bind<SpeakerImpl, &SpeakerImpl::busDestroyed>(this), {})
 			{
-				CAGE_LOG(SeverityEnum::Info, "sound", stringizer() + "creating speaker, name: '" + name + "'");
-				cubeb *snd = soundioFromContext(context);
+				SpeakerCreateConfig cfg;
+				cfg.name = name;
+				cfg.deviceId = config.deviceId;
+				cfg.sampleRate = config.sampleRate;
+				spkr = newSpeaker(cfg, Delegate<void(const SpeakerCallbackData &)>().bind<SpeakerImpl, &SpeakerImpl::callback>(this));
 
-				cubeb_stream_params params = {};
-				params.format = CUBEB_SAMPLE_FLOAT32NE;
-				params.channels = 2;
-				if (config.sampleRate)
-					params.rate = config.sampleRate;
-				else
-					checkSoundIoError(cubeb_get_preferred_sample_rate(snd, &params.rate));
-				uint32 latency = 0;
-				checkSoundIoError(cubeb_get_min_latency(snd, &params, &latency));
-
-				cubeb_devid device = nullptr;
-				if (!config.deviceId.empty())
-				{
-					cubeb_device_collection collection = {};
-					checkSoundIoError(cubeb_enumerate_devices(snd, CUBEB_DEVICE_TYPE_OUTPUT, &collection));
-					for (uint32 index = 0; index < collection.count; index++)
-					{
-						const cubeb_device_info &d = collection.device[index];
-						if (d.device_id == config.deviceId)
-						{
-							device = d.devid;
-							deviceId = d.device_id;
-						}
-					}
-					cubeb_device_collection_destroy(snd, &collection);
-					if (!device)
-						CAGE_THROW_ERROR(Exception, "invalid sound device id");
-				}
-
-				checkSoundIoError(cubeb_stream_init(snd, &stream, name.c_str(), nullptr, nullptr, device, &params, latency, &dataCallbackFree, &stateCallbackFree, this));
-
-				buffer.channels = params.channels;
-				buffer.sampleRate = params.rate;
+				buffer.channels = spkr->channels();
+				buffer.sampleRate = spkr->sampleRate();
 
 				ring = detail::systemArena().createHolder<lock_free_audio_ring_buffer<float>>(buffer.channels, buffer.sampleRate / 2);
-
-				CAGE_LOG(SeverityEnum::Info, "sound", stringizer() + "using device: '" + getDeviceId() + "'");
-				CAGE_LOG(SeverityEnum::Info, "sound", stringizer() + "using channels: " + buffer.channels);
-				CAGE_LOG(SeverityEnum::Info, "sound", stringizer() + "using sample rate: " + buffer.sampleRate);
-				CAGE_LOG(SeverityEnum::Info, "sound", stringizer() + "using latency: " + latency);
-
-				checkSoundIoError(cubeb_stream_start(stream));
 			}
 
 			~SpeakerImpl()
 			{
-				if (stream)
-				{
-					cubeb_stream_stop(stream);
-					cubeb_stream_destroy(stream);
-				}
 				setInput(nullptr);
 			}
 
 			void update(uint64 currentTime)
 			{
+				spkr->start();
 				updateImpl(currentTime);
 				lastTime = currentTime;
 			}
@@ -117,24 +77,20 @@ namespace cage
 				ring->enqueue(buffer.buffer, frames);
 			}
 
-			uint32 dataCallback(float *output_buffer, uint32 nframes)
+			void callback(const SpeakerCallbackData &data)
 			{
-				const uint32 n = min(numeric_cast<uint32>(ring->available_read()), nframes);
-				uint32 r = ring->dequeue(output_buffer, n);
+				if (data.frames == 0)
+					return;
+				const uint32 n = min(numeric_cast<uint32>(ring->available_read()), data.frames);
+				uint32 r = ring->dequeue(data.buffer.data(), n);
 				CAGE_ASSERT(r == n);
-				output_buffer += r * buffer.channels;
-				while (r < nframes)
+				float *buff = data.buffer.data() + r * data.channels;
+				while (r < data.frames)
 				{
 					for (uint32 i = 0; i < buffer.channels; i++)
-						*output_buffer++ = 0;
+						*buff++ = 0;
 					r++;
 				}
-				return r;
-			}
-
-			void stateCallback(cubeb_state state)
-			{
-				// nothing
 			}
 
 			void busDestroyed(MixingBus *bus)
@@ -143,51 +99,37 @@ namespace cage
 				inputBus = nullptr;
 			}
 		};
-
-		long dataCallbackFree(cubeb_stream *stream, void *user_ptr, void const *input_buffer, void *output_buffer, long nframes)
-		{
-			return numeric_cast<uint32>(((SpeakerImpl *)user_ptr)->dataCallback((float *)output_buffer, numeric_cast<uint32>(nframes)));
-		}
-
-		void stateCallbackFree(cubeb_stream *stream, void *user_ptr, cubeb_state state)
-		{
-			((SpeakerImpl *)user_ptr)->stateCallback(state);
-		}
 	}
 
-	string Speaker::getStreamName() const
+	string SpeakerOutput::getStreamName() const
+	{
+		return "";
+	}
+
+	string SpeakerOutput::getDeviceId() const
+	{
+		return "";
+	}
+
+	uint32 SpeakerOutput::getChannels() const
 	{
 		const SpeakerImpl *impl = (const SpeakerImpl *)this;
-		return impl->name;
+		return impl->spkr->channels();
 	}
 
-	string Speaker::getDeviceId() const
+	uint32 SpeakerOutput::getSamplerate() const
 	{
 		const SpeakerImpl *impl = (const SpeakerImpl *)this;
-		return impl->deviceId;
+		return impl->spkr->sampleRate();
 	}
 
-	uint32 Speaker::getChannels() const
+	uint32 SpeakerOutput::getLatency() const
 	{
 		const SpeakerImpl *impl = (const SpeakerImpl *)this;
-		return impl->buffer.channels;
+		return impl->spkr->latency();
 	}
 
-	uint32 Speaker::getSamplerate() const
-	{
-		const SpeakerImpl *impl = (const SpeakerImpl *)this;
-		return impl->buffer.sampleRate;
-	}
-
-	uint32 Speaker::getLatency() const
-	{
-		const SpeakerImpl *impl = (const SpeakerImpl *)this;
-		uint32 res = 0;
-		checkSoundIoError(cubeb_stream_get_latency(impl->stream, &res));
-		return res;
-	}
-
-	void Speaker::setInput(MixingBus *bus)
+	void SpeakerOutput::setInput(MixingBus *bus)
 	{
 		SpeakerImpl *impl = (SpeakerImpl *)this;
 		if (impl->inputBus)
@@ -202,14 +144,14 @@ namespace cage
 		}
 	}
 
-	void Speaker::update(uint64 time)
+	void SpeakerOutput::update(uint64 time)
 	{
 		SpeakerImpl *impl = (SpeakerImpl *)this;
 		impl->update(time);
 	}
 
-	Holder<Speaker> newSpeakerOutput(SoundContext *context, const SpeakerCreateConfig &config, const string &name)
+	Holder<SpeakerOutput> newSpeakerOutput(const SpeakerOutputCreateConfig &config, const string &name)
 	{
-		return detail::systemArena().createImpl<Speaker, SpeakerImpl>(context, config, name);
+		return detail::systemArena().createImpl<SpeakerOutput, SpeakerImpl>(config, name);
 	}
 }

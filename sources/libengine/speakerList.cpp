@@ -1,15 +1,31 @@
-#include <cage-core/pointerRangeHolder.h>
-#include <cage-engine/sound.h>
 #include <cage-engine/speakerList.h>
-#include "sound/private.h"
 
 #include <vector>
 #include <cubeb/cubeb.h>
 
 namespace cage
 {
+	void cageCheckCubebError(int code);
+	cubeb *cageCubebInitializeFunc();
+
 	namespace
 	{
+		struct Devices : Immovable, public cubeb_device_collection
+		{
+			Devices()
+			{
+				cageCheckCubebError(cubeb_enumerate_devices(context, CUBEB_DEVICE_TYPE_OUTPUT, this));
+			}
+
+			~Devices()
+			{
+				cubeb_device_collection_destroy(context, this);
+			}
+
+		private:
+			cubeb *context = cageCubebInitializeFunc();
+		};
+
 		class SpeakerListImpl : public SpeakerList
 		{
 		public:
@@ -18,11 +34,7 @@ namespace cage
 
 			SpeakerListImpl()
 			{
-				Holder<SoundContext> cnx = newSoundContext(SoundContextCreateConfig());
-				cubeb *snd = soundioFromContext(+cnx);
-				cubeb_device_collection collection = {};
-				checkSoundIoError(cubeb_enumerate_devices(snd, CUBEB_DEVICE_TYPE_OUTPUT , &collection));
-
+				Devices collection;
 				devices.reserve(collection.count);
 				for (uint32 index = 0; index < collection.count; index++)
 				{
@@ -40,8 +52,6 @@ namespace cage
 					s.defaultSamplerate = d.default_rate;
 					devices.push_back(s);
 				}
-
-				cubeb_device_collection_destroy(snd, &collection);
 			}
 		};
 	}

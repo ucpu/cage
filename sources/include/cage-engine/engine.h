@@ -272,7 +272,6 @@ namespace cage
 		EntityManagerCreateConfig *entities = nullptr;
 		AssetManagerCreateConfig *assets = nullptr;
 		GuiCreateConfig *gui = nullptr;
-		SoundContextCreateConfig *soundContext = nullptr;
 		SpeakerCreateConfig *speaker = nullptr;
 	};
 
@@ -281,12 +280,11 @@ namespace cage
 	CAGE_ENGINE_API void engineStop();
 	CAGE_ENGINE_API void engineFinalize();
 
-	CAGE_ENGINE_API SoundContext *engineSound();
 	CAGE_ENGINE_API AssetManager *engineAssets();
 	CAGE_ENGINE_API EntityManager *engineEntities();
 	CAGE_ENGINE_API Window *engineWindow();
 	CAGE_ENGINE_API Gui *engineGui();
-	CAGE_ENGINE_API Speaker *engineSpeaker();
+	CAGE_ENGINE_API class SpeakerOutput *engineSpeaker();
 	CAGE_ENGINE_API MixingBus *engineMasterMixer();
 	CAGE_ENGINE_API MixingBus *engineMusicMixer();
 	CAGE_ENGINE_API MixingBus *engineEffectsMixer();
