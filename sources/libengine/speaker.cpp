@@ -1,5 +1,6 @@
 #include <cage-core/string.h>
 #include <cage-core/files.h>
+#include <cage-core/concurrent.h>
 #include <cage-engine/speaker.h>
 
 #include <cubeb/cubeb.h>
@@ -182,11 +183,10 @@ namespace cage
 
 			~SpeakerImpl()
 			{
-				if (stream)
-				{
-					cubeb_stream_stop(stream);
-					cubeb_stream_destroy(stream);
-				}
+				if (started)
+					cubeb_stream_stop(stream); // no check for error
+				cubeb_stream_destroy(stream);
+				threadSleep(100); // give enough time for the audio thread to finish
 			}
 
 			void start()

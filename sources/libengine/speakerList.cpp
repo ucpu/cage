@@ -50,6 +50,7 @@ namespace cage
 					s.minSamplerate = d.min_rate;
 					s.maxSamplerate = d.max_rate;
 					s.defaultSamplerate = d.default_rate;
+					s.available = d.state == CUBEB_DEVICE_STATE_ENABLED;
 					devices.push_back(s);
 				}
 			}

@@ -13,10 +13,12 @@ namespace cage
 		string group;
 		string vendor;
 
-		uint32 channels;
-		uint32 minSamplerate;
-		uint32 maxSamplerate;
-		uint32 defaultSamplerate;
+		uint32 channels = 0;
+		uint32 minSamplerate = 0;
+		uint32 maxSamplerate = 0;
+		uint32 defaultSamplerate = 0;
+
+		bool available = false;
 	};
 
 	class CAGE_ENGINE_API SpeakerList : private Immovable

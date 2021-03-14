@@ -101,8 +101,6 @@ namespace cage
 	class CAGE_ENGINE_API [[deprecated]] SpeakerOutput : private Immovable
 	{
 	public:
-		string getStreamName() const;
-		string getDeviceId() const;
 		uint32 getChannels() const;
 		uint32 getSamplerate() const;
 		uint32 getLatency() const;

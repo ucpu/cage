@@ -40,7 +40,9 @@ namespace cage
 				buffer.channels = spkr->channels();
 				buffer.sampleRate = spkr->sampleRate();
 
-				ring = detail::systemArena().createHolder<lock_free_audio_ring_buffer<float>>(buffer.channels, buffer.sampleRate / 2);
+				ring = detail::systemArena().createHolder<lock_free_audio_ring_buffer<float>>(buffer.channels, buffer.sampleRate);
+
+				spkr->start();
 			}
 
 			~SpeakerImpl()
@@ -50,28 +52,29 @@ namespace cage
 
 			void update(uint64 currentTime)
 			{
-				spkr->start();
-				updateImpl(currentTime);
-				lastTime = currentTime;
-			}
-
-			void updateImpl(uint64 currentTime)
-			{
 				if (!inputBus)
 					return;
 				if (lastTime == 0)
+				{
+					lastTime = currentTime;
 					return;
+				}
 				if (currentTime <= lastTime)
+				{
+					lastTime = currentTime;
 					return;
+				}
 
-				const uint64 frames64 = buffer.sampleRate * (currentTime - lastTime) / 1000000;
-				const uint32 frames = numeric_cast<uint32>(min(numeric_cast<uint64>(ring->available_write()), frames64));
+				const uint32 request = numeric_cast<uint32>(min(buffer.sampleRate * (currentTime - lastTime) / 1000000, (uint64)buffer.sampleRate));
+				const uint64 elapsed = (uint64)request * 1000000 / buffer.sampleRate;
+				lastTime += elapsed;
+				const uint32 frames = min(request, numeric_cast<uint32>(ring->available_write()));
 				if (frames == 0)
 					return;
 
 				buffer.resize(buffer.channels, frames);
 				buffer.clear();
-				buffer.time = currentTime;
+				buffer.time = lastTime;
 
 				((BusInterface *)inputBus)->busExecuteDelegate(buffer);
 				ring->enqueue(buffer.buffer, frames);
@@ -99,16 +102,6 @@ namespace cage
 				inputBus = nullptr;
 			}
 		};
-	}
-
-	string SpeakerOutput::getStreamName() const
-	{
-		return "";
-	}
-
-	string SpeakerOutput::getDeviceId() const
-	{
-		return "";
 	}
 
 	uint32 SpeakerOutput::getChannels() const
