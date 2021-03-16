@@ -11,68 +11,73 @@ namespace cage
 		struct Enumerate : private Range
 		{
 			template<class It>
-			struct iterator
+			struct Iterator
 			{
-				struct pair
+				struct Pair
 				{
 					It it;
-					Counter cnt;
+					Counter index;
 
-					constexpr pair(const It &it, const Counter &cnt) : it(it), cnt(cnt)
+					constexpr Pair(const It &it, const Counter &index) : it(it), index(index)
 					{}
 
-					constexpr auto operator * () const
+					constexpr auto &get() const noexcept
 					{
 						return *it;
 					}
 
-					constexpr const auto &operator -> () const
+					constexpr auto &operator * () const noexcept
+					{
+						return *it;
+					}
+
+					constexpr const auto &operator -> () const noexcept
 					{
 						return it;
 					}
 				};
 
-				constexpr iterator(const It &it, const Counter &cnt) : p(it, cnt)
+				constexpr Iterator(const It &it, const Counter &index) : p(it, index)
 				{}
 
 				template<class U>
-				constexpr bool operator == (const iterator<U> &other) const
+				constexpr bool operator == (const Iterator<U> &other) const
 				{
 					return p.it == other.p.it;
 				}
 
 				template<class U>
-				constexpr bool operator != (const iterator<U> &other) const
+				constexpr bool operator != (const Iterator<U> &other) const
 				{
 					return p.it != other.p.it;
 				}
 
-				constexpr iterator operator ++ ()
+				constexpr Iterator operator ++ ()
 				{
 					auto r(*this);
 					p.it++;
-					p.cnt++;
+					p.index++;
 					return r;
 				}
 
-				constexpr iterator &operator ++ (int)
+				constexpr Iterator &operator ++ (int)
 				{
 					++p.it;
-					++p.cnt;
+					++p.index;
 					return *this;
 				}
 
-				constexpr const pair &operator * () const
+				constexpr const Pair &operator * () const
 				{
 					return p;
 				}
 
 			private:
-				pair p;
+				Pair p;
 			};
 
-			constexpr auto begin() const { return iterator<It1>(it1, start); }
-			constexpr auto end() const { return iterator<It2>(it2, start); }
+			constexpr auto begin() const { return Iterator<It1>(it1, start); }
+			constexpr auto end() const { return Iterator<It2>(it2, start); }
 
 			constexpr Enumerate(Range &&range, const It1 &it1, const It2 &it2, const Counter &start) : Range(templates::move(range)), it1(it1), it2(it2), start(start)
 			{}

@@ -1,6 +1,8 @@
 #ifndef guard_flatSet_BDA291015B42
 #define guard_flatSet_BDA291015B42
 
+#include "core.h"
+
 #include <vector>
 #include <algorithm> // lower_bound, binary_search
 #include <utility> // pair
@@ -18,8 +20,8 @@ namespace cage
 		using const_reverse_iterator = typename std::vector<Value>::const_reverse_iterator;
 
 		FlatSet() = default;
-		FlatSet(const FlatSet & other) = default;
-		FlatSet(FlatSet && other) = default;
+		FlatSet(const FlatSet &other) = default;
+		FlatSet(FlatSet &&other) = default;
 		
 		template<class InputIt>
 		FlatSet(InputIt first, InputIt last)
@@ -58,7 +60,7 @@ namespace cage
 			return { data_.insert(it, templates::move(value)), true };
 		}
 
-		template< class InputIt >
+		template<class InputIt>
 		void insert(InputIt first, InputIt last)
 		{
 			while (first != last)

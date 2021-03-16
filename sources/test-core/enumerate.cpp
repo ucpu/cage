@@ -48,7 +48,7 @@ namespace
 		const int arr[] = { 42, -1, 3 };
 		int res = 0;
 		for (const auto &it : enumerate(arr))
-			res += (int)it.cnt * *it;
+			res += (int)it.index * *it;
 		return res;
 	}
 
@@ -57,7 +57,7 @@ namespace
 		const int arr[] = { 42, -1, 3 };
 		int res = 0;
 		for (const auto &it : enumerate(std::begin(arr), std::end(arr)))
-			res += (int)it.cnt * *it;
+			res += (int)it.index * *it;
 		return res;
 	}
 }
@@ -78,9 +78,9 @@ void testEnumerate()
 		uint32 i = 0;
 		for (const auto &it : enumerate(names.begin(), names.end()))
 		{
-			CAGE_TEST(it.cnt == i++);
-			CAGE_TEST(*it == names[it.cnt]);
-			CAGE_TEST(it->size() == names[it.cnt].size());
+			CAGE_TEST(it.index == i++);
+			CAGE_TEST(*it == names[it.index]);
+			CAGE_TEST(it->size() == names[it.index].size());
 		}
 		CAGE_TEST(i == names.size());
 	}
@@ -91,7 +91,7 @@ void testEnumerate()
 		for (const auto &it : enumerate(names.begin(), names.end(), 5))
 		{
 			CAGE_TEST(*it == names[i]);
-			CAGE_TEST(it.cnt == i++ + 5);
+			CAGE_TEST(it.index == i++ + 5);
 		}
 		CAGE_TEST(i == names.size());
 	}
@@ -101,8 +101,8 @@ void testEnumerate()
 		uint32 i = 0;
 		for (const auto &it : enumerate(names))
 		{
-			CAGE_TEST(it.cnt == i++);
-			CAGE_TEST(*it == names[it.cnt]);
+			CAGE_TEST(it.index == i++);
+			CAGE_TEST(*it == names[it.index]);
 		}
 		CAGE_TEST(i == names.size());
 	}
@@ -112,7 +112,7 @@ void testEnumerate()
 		auto range = enumerate(genStrings());
 		uint32 i = 0;
 		for (const auto &it : range)
-			CAGE_TEST(it.cnt == i++);
+			CAGE_TEST(it.index == i++);
 		CAGE_TEST(i == genStrings().size());
 	}
 
@@ -120,7 +120,7 @@ void testEnumerate()
 		CAGE_TESTCASE("temporary vector");
 		uint32 i = 0;
 		for (const auto &it : enumerate(genStrings()))
-			CAGE_TEST(it.cnt == i++);
+			CAGE_TEST(it.index == i++);
 		CAGE_TEST(i == genStrings().size());
 	}
 
@@ -130,8 +130,8 @@ void testEnumerate()
 		uint32 i = 0;
 		for (const auto &it : enumerate(cns))
 		{
-			CAGE_TEST(it.cnt == i++);
-			CAGE_TEST(*it == names[it.cnt]);
+			CAGE_TEST(it.index == i++);
+			CAGE_TEST(*it == names[it.index]);
 		}
 		CAGE_TEST(i == names.size());
 	}
@@ -142,8 +142,8 @@ void testEnumerate()
 		uint32 i = 0;
 		for (const auto &it : enumerate(arr))
 		{
-			CAGE_TEST(it.cnt == i++);
-			CAGE_TEST(*it == arr[it.cnt]);
+			CAGE_TEST(it.index == i++);
+			CAGE_TEST(*it == arr[it.index]);
 		}
 		CAGE_TEST(i == 3);
 	}
@@ -153,8 +153,8 @@ void testEnumerate()
 		uint32 i = 0;
 		for (const auto &it : enumerate(PointerRange<const string>(names)))
 		{
-			CAGE_TEST(it.cnt == i++);
-			CAGE_TEST(*it == names[it.cnt]);
+			CAGE_TEST(it.index == i++);
+			CAGE_TEST(*it == names[it.index]);
 		}
 		CAGE_TEST(i == names.size());
 	}
@@ -164,7 +164,7 @@ void testEnumerate()
 		uint32 i = 0;
 		for (const auto &it : enumerate(genRange()))
 		{
-			CAGE_TEST(it.cnt == i++);
+			CAGE_TEST(it.index == i++);
 			CAGE_TEST(it->length() > 0);
 		}
 		CAGE_TEST(i == genStrings().size());
@@ -177,7 +177,7 @@ void testEnumerate()
 		{
 			// unfortunately, we cannot use * (dereference operator), because that would attempt to create a copy of the Holder
 			CAGE_TEST((!!it->get()) == (i != 2)); // test that the element at index 2 is empty Holder
-			CAGE_TEST(it.cnt == i++);
+			CAGE_TEST(it.index == i++);
 		}
 		CAGE_TEST(i == genHolders().size());
 	}
@@ -188,7 +188,7 @@ void testEnumerate()
 		for (const auto &it : enumerate(genRangeOfRanges()))
 		{
 			CAGE_TEST(it->size() == 4);
-			CAGE_TEST(it.cnt == i++);
+			CAGE_TEST(it.index == i++);
 		}
 		CAGE_TEST(i == genRangeOfRanges().size());
 	}
@@ -200,7 +200,7 @@ void testEnumerate()
 		for (const auto &it : enumerate(range))
 		{
 			CAGE_TEST(it->size() == 4);
-			CAGE_TEST(it.cnt == i++);
+			CAGE_TEST(it.index == i++);
 		}
 		CAGE_TEST(i == range.size());
 	}
@@ -216,7 +216,7 @@ void testEnumerate()
 		uint32 i = 0;
 		for (const auto &it : enumerate(orig))
 		{
-			CAGE_TEST(it.cnt == i++);
+			CAGE_TEST(it.index == i++);
 			test[it->first] = it->second;
 		}
 		CAGE_TEST(i == orig.size());
@@ -224,18 +224,29 @@ void testEnumerate()
 		CAGE_TEST(orig.size() == 4);
 	}
 
+	{
+		CAGE_TESTCASE("modifying values");
+		std::vector<int> vec;
+		vec.push_back(13);
+		vec.push_back(42);
+		for (const auto &it : enumerate(vec))
+			it.get()++;
+		CAGE_TEST(vec[0] == 14);
+		CAGE_TEST(vec[1] == 43);
+	}
+
 	// todo fix these
 	/*
 	{
 		CAGE_TESTCASE("constexpr enumerate array");
-		constexpr auto cnt = constexprTestArray();
-		CAGE_TEST(cnt == 5);
+		constexpr auto index = constexprTestArray();
+		CAGE_TEST(index == 5);
 	}
 
 	{
 		CAGE_TESTCASE("constexpr enumerate iterators");
-		constexpr auto cnt = constexprTestIterator();
-		CAGE_TEST(cnt == 5);
+		constexpr auto index = constexprTestIterator();
+		CAGE_TEST(index == 5);
 	}
 	*/
 }

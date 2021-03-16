@@ -1,6 +1,8 @@
 #ifndef guard_lruCache_h_ABEDFC7ADD4A
 #define guard_lruCache_h_ABEDFC7ADD4A
 
+#include "core.h"
+
 #include <vector>
 #include <unordered_map>
 
