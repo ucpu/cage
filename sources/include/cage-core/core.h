@@ -668,21 +668,13 @@ namespace cage
 		R(*fnc)(void *, Ts...) = nullptr;
 		void *inst = nullptr;
 
-		template<R(*F)(Ts...)>
-		static constexpr R freeFnc(void *, Ts... vs)
-		{
-			return F(templates::forward<Ts>(vs)...);
-		}
-
 	public:
 		template<R(*F)(Ts...)>
 		constexpr Delegate &bind()
 		{
-			fnc = &freeFnc<F>;
-			//fnc = +[](void *inst, Ts... vs) {
-			//	(void)inst;
-			//	return F(templates::forward<Ts>(vs)...);
-			//};
+			fnc = +[](void *inst, Ts... vs) {
+				return F(templates::forward<Ts>(vs)...);
+			};
 			return *this;
 		}
 
