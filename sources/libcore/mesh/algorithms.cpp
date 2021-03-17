@@ -1,6 +1,7 @@
 #include <cage-core/geometry.h>
 #include <cage-core/macros.h>
 #include <cage-core/pointerRangeHolder.h>
+#include <cage-core/spatialStructure.h>
 
 #include "mesh.h"
 
@@ -288,7 +289,7 @@ namespace cage
 				auto r = verticesToRemove.begin();
 				for (const vec3 &v : impl->normals)
 				{
-					*r = *r || !valid(v) || abs(lengthSquared(v) - 1) > 1e-5;
+					*r = *r || !valid(v) || abs(lengthSquared(v) - 1) > 1e-3;
 					r++;
 				}
 			}
@@ -442,19 +443,27 @@ namespace cage
 		std::vector<uint32> remap; // remap[originalVertexIndex] = newVertexIndex
 		remap.resize(vc);
 		std::iota(remap.begin(), remap.end(), (uint32)0);
-		const vec3 *ps = impl->positions.data();
+		PointerRange<const vec3> ps = impl->positions;
 
 		// find which vertices can be remapped to other vertices
-		const real threashold = config.distanceThreshold * config.distanceThreshold;
-		for (uint32 i = 0; i < vc; i++)
 		{
-			for (uint32 j = 0; j < i; j++)
+			const real threashold = config.distanceThreshold * config.distanceThreshold;
+			Holder<SpatialStructure> ss = newSpatialStructure({});
+			for (uint32 i = 0; i < vc; i++)
+				ss->update(i, ps[i]);
+			ss->rebuild();
+			Holder<SpatialQuery> q = newSpatialQuery(+ss);
+			for (uint32 i = 0; i < vc; i++)
 			{
-				if (distanceSquared(ps[i], ps[j]) < threashold)
+				q->intersection(sphere(ps[i], config.distanceThreshold));
+				for (uint32 j : q->result())
 				{
-					remap[i] = remap[j];
-					needsRecenter[remap[i]] = true;
-					break;
+					if (distanceSquared(ps[i], ps[j]) < threashold)
+					{
+						remap[i] = remap[j];
+						needsRecenter[remap[i]] = true;
+						break;
+					}
 				}
 			}
 		}
