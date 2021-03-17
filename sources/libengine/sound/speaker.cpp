@@ -4,17 +4,6 @@
 #include "private.h"
 #include "utilities.h"
 
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#ifndef VC_EXTRALEAN
-#define VC_EXTRALEAN
-#endif
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#include <../src/cubeb_ringbuffer.h>
-
 namespace cage
 {
 	namespace
@@ -24,9 +13,7 @@ namespace cage
 		public:
 			Holder<Speaker> spkr;
 			MixingBus *inputBus = nullptr;
-			uint64 lastTime = 0;
 			SoundDataBuffer buffer;
-			Holder<lock_free_audio_ring_buffer<float>> ring;
 
 			SpeakerImpl(const SpeakerOutputCreateConfig &config, const string &name) :
 				BusInterface(Delegate<void(MixingBus *)>().bind<SpeakerImpl, &SpeakerImpl::busDestroyed>(this), {})
@@ -36,12 +23,6 @@ namespace cage
 				cfg.deviceId = config.deviceId;
 				cfg.sampleRate = config.sampleRate;
 				spkr = newSpeaker(cfg, Delegate<void(const SpeakerCallbackData &)>().bind<SpeakerImpl, &SpeakerImpl::callback>(this));
-
-				buffer.channels = spkr->channels();
-				buffer.sampleRate = spkr->sampleRate();
-
-				ring = detail::systemArena().createHolder<lock_free_audio_ring_buffer<float>>(buffer.channels, buffer.sampleRate);
-
 				spkr->start();
 			}
 
@@ -54,46 +35,17 @@ namespace cage
 			{
 				if (!inputBus)
 					return;
-				if (lastTime == 0)
-				{
-					lastTime = currentTime;
-					return;
-				}
-				if (currentTime <= lastTime)
-				{
-					lastTime = currentTime;
-					return;
-				}
-
-				const uint32 request = numeric_cast<uint32>(min(buffer.sampleRate * (currentTime - lastTime) / 1000000, (uint64)buffer.sampleRate));
-				const uint64 elapsed = (uint64)request * 1000000 / buffer.sampleRate;
-				lastTime += elapsed;
-				const uint32 frames = min(request, numeric_cast<uint32>(ring->available_write()));
-				if (frames == 0)
-					return;
-
-				buffer.resize(buffer.channels, frames);
-				buffer.clear();
-				buffer.time = lastTime;
-
-				((BusInterface *)inputBus)->busExecuteDelegate(buffer);
-				ring->enqueue(buffer.buffer, frames);
+				spkr->update(currentTime);
 			}
 
 			void callback(const SpeakerCallbackData &data)
 			{
-				if (data.frames == 0)
-					return;
-				const uint32 n = min(numeric_cast<uint32>(ring->available_read()), data.frames);
-				uint32 r = ring->dequeue(data.buffer.data(), n);
-				CAGE_ASSERT(r == n);
-				float *buff = data.buffer.data() + r * data.channels;
-				while (r < data.frames)
-				{
-					for (uint32 i = 0; i < buffer.channels; i++)
-						*buff++ = 0;
-					r++;
-				}
+				buffer.resize(data.channels, data.frames);
+				buffer.clear();
+				buffer.sampleRate = data.sampleRate;
+				buffer.time = data.time;
+				((BusInterface *)inputBus)->busExecuteDelegate(buffer);
+				detail::memcpy(data.buffer.data(), buffer.buffer, sizeof(float) * data.channels * data.frames);
 			}
 
 			void busDestroyed(MixingBus *bus)
