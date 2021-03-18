@@ -111,7 +111,7 @@ namespace cage
 		class RwMutexImpl : public RwMutex
 		{
 		public:
-			std::atomic<uint32> v{0};
+			std::atomic<uint32> v = 0;
 			static constexpr uint32 YieldAfter = 50;
 			static constexpr uint32 Writer = m;
 		};
@@ -568,13 +568,13 @@ namespace cage
 
 	uint64 Thread::id() const
 	{
-		ThreadImpl *impl = (ThreadImpl*)this;
+		const ThreadImpl *impl = (const ThreadImpl *)this;
 		return impl->myid;
 	}
 
 	bool Thread::done() const
 	{
-		ThreadImpl *impl = (ThreadImpl*)this;
+		const ThreadImpl *impl = (const ThreadImpl *)this;
 
 #ifdef CAGE_SYSTEM_WINDOWS
 		return WaitForSingleObject(impl->handle, 0) == WAIT_OBJECT_0;
@@ -586,12 +586,12 @@ namespace cage
 		switch (pthread_kill(impl->handle, 0))
 		{
 		case 0: return false;
-		default: const_cast<Thread*>(this)->wait(); return true;
+		default: const_cast<Thread *>(this)->wait(); return true;
 		}
 #else
 		switch (int err = pthread_tryjoin_np(impl->handle, nullptr))
 		{
-		case 0: impl->handle = (pthread_t)nullptr; return true;
+		case 0: const_cast<ThreadImpl *>(impl)->handle = (pthread_t)nullptr; return true;
 		case EBUSY: return false;
 		default: CAGE_THROW_ERROR(SystemError, "pthread_tryjoin_np", err);
 		}
@@ -601,7 +601,7 @@ namespace cage
 
 	void Thread::wait()
 	{
-		ThreadImpl *impl = (ThreadImpl*)this;
+		ThreadImpl *impl = (ThreadImpl *)this;
 
 #ifdef CAGE_SYSTEM_WINDOWS
 		WaitForSingleObject(impl->handle, INFINITE);

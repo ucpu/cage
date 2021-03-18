@@ -11,7 +11,7 @@ namespace cage
 			WSADATA wsaData;
 			int err = WSAStartup(MAKEWORD(2, 2), &wsaData);
 			if (err != 0)
-				CAGE_THROW_CRITICAL(SystemError, "WSAStartup", err);
+				CAGE_THROW_ERROR(SystemError, "WSAStartup", err);
 			return true;
 		}
 #endif

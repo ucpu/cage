@@ -1,7 +1,7 @@
 #include <cage-core/textPack.h>
 #include <cage-core/string.h>
 
-#include <map>
+#include <robin_hood.h>
 
 namespace cage
 {
@@ -33,7 +33,7 @@ namespace cage
 		class TextPackImpl : public TextPack
 		{
 		public:
-			std::map<uint32, string> texts;
+			robin_hood::unordered_map<uint32, string> texts;
 		};
 	}
 

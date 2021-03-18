@@ -18,7 +18,7 @@ namespace cage
 		string address() const; // remote address
 		uint16 port() const; // remote port
 
-		uintPtr available() const; // non-blocking
+		uintPtr available(); // non-blocking
 
 		void readWait(PointerRange<char> buffer);
 		void read(PointerRange<char> &buffer);

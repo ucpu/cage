@@ -6,9 +6,9 @@
 #include <cage-core/polyhedron.h>
 #include <cage-core/collider.h>
 
+#include <robin_hood.h>
 #include <dualmc.h>
 
-#include <set>
 #include <vector>
 
 namespace cage
@@ -41,16 +41,25 @@ namespace cage
 				uint32 f = 0;
 			};
 
-			struct Cmp
+			struct EdgeHash
 			{
-				bool operator () (const EdgeFace &l, const EdgeFace &r) const
+				std::size_t operator () (const EdgeFace &l) const
 				{
-					return std::make_pair(l.e1, l.e2) < std::make_pair(r.e1, r.e2);
+					std::hash<uint32> h;
+					return h(l.e1) ^ h(l.e1 ^ l.e2 + 5641851);
 				}
 			};
 
-			std::set<EdgeFace, Cmp> edges;
-			std::set<uint32> singularFaces;
+			struct EdgeEqual
+			{
+				bool operator () (const EdgeFace &l, const EdgeFace &r) const
+				{
+					return std::make_pair(l.e1, l.e2) == std::make_pair(r.e1, r.e2);
+				}
+			};
+
+			robin_hood::unordered_set<EdgeFace, EdgeHash, EdgeEqual> edges;
+			robin_hood::unordered_set<uint32> singularFaces;
 			const uint32 cnt = poly->indicesCount();
 			for (uint32 i = 0; i < cnt; i += 3)
 			{

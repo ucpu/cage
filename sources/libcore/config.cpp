@@ -145,7 +145,6 @@ namespace cage
 		Variable *getVar(const string &name)
 		{
 			static int cageIni = loadGlobalConfiguration();
-			(void)cageIni;
 			return directVariable(name);
 		}
 

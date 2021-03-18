@@ -36,7 +36,7 @@ namespace cage
 
 			ColliderImpl() : dirty(true)
 			{
-				((Collider*)this)->rebuild();
+				((Collider *)this)->rebuild();
 			}
 
 			void build(std::vector<triangle> &ts, uint32 level)
@@ -178,34 +178,34 @@ namespace cage
 
 	PointerRange<const triangle> Collider::triangles() const
 	{
-		ColliderImpl *impl = (ColliderImpl*)this;
+		const ColliderImpl *impl = (const ColliderImpl *)this;
 		return impl->tris;
 	}
 
 	void Collider::addTriangle(const triangle &t)
 	{
-		ColliderImpl *impl = (ColliderImpl*)this;
+		ColliderImpl *impl = (ColliderImpl *)this;
 		impl->tris.push_back(t);
 		impl->dirty = true;
 	}
 
 	void Collider::addTriangles(PointerRange<const triangle> tris)
 	{
-		ColliderImpl *impl = (ColliderImpl*)this;
+		ColliderImpl *impl = (ColliderImpl *)this;
 		impl->tris.insert(impl->tris.end(), tris.begin(), tris.end());
 		impl->dirty = true;
 	}
 
 	void Collider::clear()
 	{
-		ColliderImpl *impl = (ColliderImpl*)this;
+		ColliderImpl *impl = (ColliderImpl *)this;
 		impl->tris.clear();
 		impl->dirty = true;
 	}
 
 	void Collider::rebuild()
 	{
-		ColliderImpl *impl = (ColliderImpl*)this;
+		ColliderImpl *impl = (ColliderImpl *)this;
 		if (!impl->dirty)
 			return;
 		impl->dirty = false;
@@ -214,14 +214,14 @@ namespace cage
 
 	bool Collider::needsRebuild() const
 	{
-		ColliderImpl *impl = (ColliderImpl*)this;
+		const ColliderImpl *impl = (const ColliderImpl *)this;
 		return impl->dirty;
 	}
 
 	const aabb &Collider::box() const
 	{
 		CAGE_ASSERT(!needsRebuild());
-		ColliderImpl *impl = (ColliderImpl*)this;
+		const ColliderImpl *impl = (const ColliderImpl *)this;
 		return impl->boxes[0];
 	}
 
@@ -255,7 +255,7 @@ namespace cage
 
 	Holder<PointerRange<char>> Collider::serialize(bool includeAdditionalData) const
 	{
-		const ColliderImpl *impl = (ColliderImpl*)this;
+		const ColliderImpl *impl = (const ColliderImpl *)this;
 		CollisionMeshHeader header;
 		detail::memset(&header, 0, sizeof(header));
 		detail::memcpy(header.magic, currentMagic, sizeof(currentMagic));
@@ -274,7 +274,7 @@ namespace cage
 
 	void Collider::deserialize(PointerRange<const char> buffer)
 	{
-		ColliderImpl *impl = (ColliderImpl*)this;
+		ColliderImpl *impl = (ColliderImpl *)this;
 		Deserializer des(buffer);
 		CollisionMeshHeader header;
 		des >> header;
@@ -659,8 +659,8 @@ namespace cage
 
 	bool collisionDetection(CollisionDetectionParams &params)
 	{
-		const ColliderImpl *const ao = (const ColliderImpl*)params.ao;
-		const ColliderImpl *const bo = (const ColliderImpl*)params.bo;
+		const ColliderImpl *const ao = (const ColliderImpl *)params.ao;
+		const ColliderImpl *const bo = (const ColliderImpl *)params.bo;
 		const transform &at1 = params.at1;
 		const transform &bt1 = params.bt1;
 		const transform &at2 = params.at2;
@@ -771,31 +771,31 @@ namespace cage
 
 	real distance(const line &shape, const Collider *collider, const transform &t)
 	{
-		IntersectionDetector d((const ColliderImpl*)collider, t);
+		IntersectionDetector d((const ColliderImpl *)collider, t);
 		return d.distance(shape);
 	}
 
 	real distance(const triangle &shape, const Collider *collider, const transform &t)
 	{
-		IntersectionDetector d((const ColliderImpl*)collider, t);
+		IntersectionDetector d((const ColliderImpl *)collider, t);
 		return d.distance(shape);
 	}
 
 	real distance(const plane &shape, const Collider *collider, const transform &t)
 	{
-		IntersectionDetector d((const ColliderImpl*)collider, t);
+		IntersectionDetector d((const ColliderImpl *)collider, t);
 		return d.distance(shape);
 	}
 
 	real distance(const sphere &shape, const Collider *collider, const transform &t)
 	{
-		IntersectionDetector d((const ColliderImpl*)collider, t);
+		IntersectionDetector d((const ColliderImpl *)collider, t);
 		return d.distance(shape);
 	}
 
 	real distance(const aabb &shape, const Collider *collider, const transform &t)
 	{
-		IntersectionDetector d((const ColliderImpl*)collider, t);
+		IntersectionDetector d((const ColliderImpl *)collider, t);
 		return d.distance(shape);
 	}
 
@@ -808,31 +808,31 @@ namespace cage
 
 	bool intersects(const line &shape, const Collider *collider, const transform &t)
 	{
-		IntersectionDetector d((const ColliderImpl*)collider, t);
+		IntersectionDetector d((const ColliderImpl *)collider, t);
 		return d.intersects(shape);
 	}
 
 	bool intersects(const triangle &shape, const Collider *collider, const transform &t)
 	{
-		IntersectionDetector d((const ColliderImpl*)collider, t);
+		IntersectionDetector d((const ColliderImpl *)collider, t);
 		return d.intersects(shape);
 	}
 
 	bool intersects(const plane &shape, const Collider *collider, const transform &t)
 	{
-		IntersectionDetector d((const ColliderImpl*)collider, t);
+		IntersectionDetector d((const ColliderImpl *)collider, t);
 		return d.intersects(shape);
 	}
 
 	bool intersects(const sphere &shape, const Collider *collider, const transform &t)
 	{
-		IntersectionDetector d((const ColliderImpl*)collider, t);
+		IntersectionDetector d((const ColliderImpl *)collider, t);
 		return d.intersects(shape);
 	}
 
 	bool intersects(const aabb &shape, const Collider *collider, const transform &t)
 	{
-		IntersectionDetector d((const ColliderImpl*)collider, t);
+		IntersectionDetector d((const ColliderImpl *)collider, t);
 		return d.intersects(shape);
 	}
 
@@ -852,7 +852,7 @@ namespace cage
 	vec3 intersection(const line &shape, const Collider *collider, const transform &t, uint32 &triangleIndex)
 	{
 		// todo
-		IntersectionDetector d((const ColliderImpl*)collider, t);
+		IntersectionDetector d((const ColliderImpl *)collider, t);
 		vec3 p;
 		if (d.intersection(shape, p, triangleIndex))
 			return p;

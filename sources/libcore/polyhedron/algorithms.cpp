@@ -455,7 +455,7 @@ namespace cage
 			Holder<SpatialQuery> q = newSpatialQuery(+ss);
 			for (uint32 i = 0; i < vc; i++)
 			{
-				q->intersection(sphere(ps[i], config.distanceThreshold));
+				q->intersection(aabb(ps[i] - config.distanceThreshold, ps[i] + config.distanceThreshold));
 				for (uint32 j : q->result())
 				{
 					if (distanceSquared(ps[i], ps[j]) < threashold)

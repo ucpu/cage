@@ -414,10 +414,10 @@ void testScheduler()
 			Holder<Timer> tmr = newTimer();
 			sch->run();
 			const uint64 duration = tmr->microsSinceStart();
-			CAGE_TEST(duration > 4 * 30000 && duration < 8 * 30000);
+			CAGE_TEST(duration > 4 * 30000 && duration < 9 * 30000);
 		}
-		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
-		CAGE_TEST(cnt2 >= 4 && cnt2 <= 8);
+		CAGE_TEST(cnt1 >= 4 && cnt1 <= 9);
+		CAGE_TEST(cnt2 >= 4 && cnt2 <= 9);
 		CAGE_TEST(sch->latestTime() >= 200000);
 	}
 

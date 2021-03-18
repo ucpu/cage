@@ -135,12 +135,9 @@ pp. 199-202 */
 		short i0, i1;
 		/* first project onto an axis-aligned plane, that maximizes the area */
 		/* of the triangles, compute indices: i0,i1. */
-#pragma warning( push )
-#pragma warning( disable : 4244 )
-		A[0] = fabs(N[0]);
-		A[1] = fabs(N[1]);
-		A[2] = fabs(N[2]);
-#pragma warning( pop )
+		A[0] = std::abs(N[0]);
+		A[1] = std::abs(N[1]);
+		A[2] = std::abs(N[2]);
 		if (A[0] > A[1])
 		{
 			if (A[0] > A[2])
@@ -208,9 +205,9 @@ pp. 199-202 */
 
 		/* coplanarity robustness check */
 #if USE_EPSILON_TEST==TRUE
-		if (fabs(du0) < EPSILON) du0 = 0.0;
-		if (fabs(du1) < EPSILON) du1 = 0.0;
-		if (fabs(du2) < EPSILON) du2 = 0.0;
+		if (std::abs(du0) < EPSILON) du0 = 0.0;
+		if (std::abs(du1) < EPSILON) du1 = 0.0;
+		if (std::abs(du2) < EPSILON) du2 = 0.0;
 #endif
 		du0du1 = du0*du1;
 		du0du2 = du0*du2;
@@ -231,9 +228,9 @@ pp. 199-202 */
 		dv2 = DOT(N2, V2) + d2;
 
 #if USE_EPSILON_TEST==TRUE
-		if (fabs(dv0) < EPSILON) dv0 = 0.0;
-		if (fabs(dv1) < EPSILON) dv1 = 0.0;
-		if (fabs(dv2) < EPSILON) dv2 = 0.0;
+		if (std::abs(dv0) < EPSILON) dv0 = 0.0;
+		if (std::abs(dv1) < EPSILON) dv1 = 0.0;
+		if (std::abs(dv2) < EPSILON) dv2 = 0.0;
 #endif
 
 		dv0dv1 = dv0*dv1;
@@ -246,13 +243,10 @@ pp. 199-202 */
 		CROSS(D, N1, N2);
 
 		/* compute and index to the largest component of D */
-#pragma warning( push )
-#pragma warning( disable : 4244 )
-		max = fabs(D[0]);
+		max = std::abs(D[0]);
 		index = 0;
-		b = fabs(D[1]);
-		c = fabs(D[2]);
-#pragma warning( pop )
+		b = std::abs(D[1]);
+		c = std::abs(D[2]);
 		if (b > max) max = b, index = 1;
 		if (c > max) max = c, index = 2;
 
