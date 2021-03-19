@@ -99,7 +99,7 @@ namespace cage
 
 	string TcpConnection::address() const
 	{
-		TcpConnectionImpl *impl = (TcpConnectionImpl*)this;
+		const TcpConnectionImpl *impl = (const TcpConnectionImpl *)this;
 		string a;
 		uint16 p;
 		impl->s.getRemoteAddress().translate(a, p);
@@ -108,16 +108,16 @@ namespace cage
 
 	uint16 TcpConnection::port() const
 	{
-		TcpConnectionImpl *impl = (TcpConnectionImpl*)this;
+		const TcpConnectionImpl *impl = (const TcpConnectionImpl *)this;
 		string a;
 		uint16 p;
 		impl->s.getRemoteAddress().translate(a, p);
 		return p;
 	}
 
-	uintPtr TcpConnection::available() const
+	uintPtr TcpConnection::available()
 	{
-		TcpConnectionImpl *impl = (TcpConnectionImpl*)this;
+		TcpConnectionImpl *impl = (TcpConnectionImpl *)this;
 		uintPtr a = impl->s.available();
 		if (a > 0)
 		{
@@ -130,7 +130,7 @@ namespace cage
 
 	void TcpConnection::readWait(PointerRange<char> buffer)
 	{
-		TcpConnectionImpl *impl = (TcpConnectionImpl*)this;
+		TcpConnectionImpl *impl = (TcpConnectionImpl *)this;
 		impl->waitForBytes(buffer.size());
 		detail::memcpy(buffer.data(), impl->buffer.data(), buffer.size());
 		detail::memmove(impl->buffer.data(), impl->buffer.data() + (buffer.size() + 1), impl->buffer.size() - buffer.size());
@@ -160,7 +160,7 @@ namespace cage
 
 	string TcpConnection::readLineWait()
 	{
-		TcpConnectionImpl *impl = (TcpConnectionImpl*)this;
+		TcpConnectionImpl *impl = (TcpConnectionImpl *)this;
 		string line;
 		while (!readLine(line))
 			impl->waitForBytes(impl->buffer.size() + 1);
@@ -170,7 +170,7 @@ namespace cage
 	bool TcpConnection::readLine(string &line)
 	{
 		available();
-		TcpConnectionImpl *impl = (TcpConnectionImpl*)this;
+		TcpConnectionImpl *impl = (TcpConnectionImpl *)this;
 		if (impl->buffer.empty())
 			return false;
 
@@ -184,7 +184,7 @@ namespace cage
 
 	void TcpConnection::write(PointerRange<const char> buffer)
 	{
-		TcpConnectionImpl *impl = (TcpConnectionImpl*)this;
+		TcpConnectionImpl *impl = (TcpConnectionImpl *)this;
 		impl->s.send(buffer.data(), buffer.size());
 	}
 
@@ -194,72 +194,9 @@ namespace cage
 		write({ tmp.c_str(), tmp.c_str() + tmp.length() });
 	}
 
-	/*
-	void TcpConnection::read(void *buffer, uintPtr size)
-	{
-		TcpConnectionImpl *impl = (TcpConnectionImpl*)this;
-		uintPtr a = available();
-		if (size > a)
-		{
-			impl->s.recv(buffer, size - a, MSG_WAITALL | MSG_PEEK); // blocking wait
-			return read(buffer, size);
-		}
-		detail::memcpy(buffer, &impl->buffer[0], size);
-		detail::memmove(&impl->buffer[0], &impl->buffer[size + 1], impl->buffer.size() - size);
-		impl->buffer.resize(impl->buffer.size() - size);
-	}
-
-	MemoryBuffer TcpConnection::read(uintPtr size)
-	{
-		MemoryBuffer b(size);
-		read(b.data(), b.size());
-		return b;
-	}
-
-	MemoryBuffer TcpConnection::read()
-	{
-		MemoryBuffer b(available());
-		read(b.data(), b.size());
-		return b;
-	}
-
-	void TcpConnection::write(const void *buffer, uintPtr size)
-	{
-		TcpConnectionImpl *impl = (TcpConnectionImpl*)this;
-		impl->s.send(buffer, size);
-	}
-
-	void TcpConnection::write(const MemoryBuffer &buffer)
-	{
-		write(buffer.data(), buffer.size());
-	}
-
-	bool TcpConnection::readLine(string &line)
-	{
-		available();
-		TcpConnectionImpl *impl = (TcpConnectionImpl*)this;
-		if (impl->buffer.empty())
-			return false;
-
-		const char *b = impl->buffer.data();
-		uintPtr s = impl->buffer.size();
-		if (!detail::readLine(line, b, s, true))
-			return false;
-		detail::memmove(impl->buffer.data(), b, s);
-		impl->buffer.resize(s);
-		return true;
-	}
-
-	void TcpConnection::writeLine(const string &str)
-	{
-		string tmp = str + "\n";
-		write((void*)tmp.c_str(), tmp.length());
-	}
-	*/
-
 	uint16 TcpServer::port() const
 	{
-		TcpServerImpl *impl = (TcpServerImpl*)this;
+		const TcpServerImpl *impl = (const TcpServerImpl *)this;
 		string a;
 		uint16 p;
 		impl->socks[0].getLocalAddress().translate(a, p);
@@ -268,7 +205,7 @@ namespace cage
 
 	Holder<TcpConnection> TcpServer::accept()
 	{
-		TcpServerImpl *impl = (TcpServerImpl*)this;
+		TcpServerImpl *impl = (TcpServerImpl *)this;
 
 		for (Sock &ss : impl->socks)
 		{

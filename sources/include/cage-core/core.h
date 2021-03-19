@@ -17,9 +17,9 @@
 #define CAGE_API_IMPORT __declspec(dllimport)
 #define CAGE_API_PRIVATE
 #else
-#define CAGE_API_EXPORT __attribute__((visibility("default")))
-#define CAGE_API_IMPORT __attribute__((visibility("default")))
-#define CAGE_API_PRIVATE __attribute__((visibility("hidden")))
+#define CAGE_API_EXPORT [[gnu::visibility("default")]]
+#define CAGE_API_IMPORT [[gnu::visibility("default")]]
+#define CAGE_API_PRIVATE [[gnu::visibility("hidden")]]
 #endif
 
 #ifdef CAGE_CORE_EXPORT

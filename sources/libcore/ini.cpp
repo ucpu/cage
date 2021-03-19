@@ -6,8 +6,8 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 
-#include <map>
 #include <vector>
+#include <map>
 
 namespace cage
 {
@@ -63,13 +63,13 @@ namespace cage
 
 	bool Ini::sectionExists(const string &section) const
 	{
-		IniImpl *impl = (IniImpl*)this;
+		const IniImpl *impl = (const IniImpl *)this;
 		return impl->sections.count(section);
 	}
 
 	Holder<PointerRange<string>> Ini::sections() const
 	{
-		IniImpl *impl = (IniImpl*)this;
+		const IniImpl *impl = (const IniImpl *)this;
 		PointerRangeHolder<string> tmp;
 		tmp.reserve(impl->sections.size());
 		for (auto &it : impl->sections)
@@ -79,7 +79,7 @@ namespace cage
 
 	void Ini::sectionRemove(const string &section)
 	{
-		IniImpl *impl = (IniImpl*)this;
+		IniImpl *impl = (IniImpl *)this;
 		impl->sections.erase(section);
 	}
 
@@ -87,16 +87,16 @@ namespace cage
 	{
 		if (!sectionExists(section))
 			return 0;
-		IniImpl *impl = (IniImpl*)this;
-		return numeric_cast<uint32>(impl->sections[section]->items.size());
+		const IniImpl *impl = (const IniImpl *)this;
+		return numeric_cast<uint32>(impl->sections.at(section)->items.size());
 	}
 
 	string Ini::item(const string &section, uint32 item) const
 	{
 		if (!sectionExists(section))
 			return "";
-		IniImpl *impl = (IniImpl*)this;
-		auto i = impl->sections[section]->items.cbegin();
+		const IniImpl *impl = (const IniImpl *)this;
+		auto i = impl->sections.at(section)->items.cbegin();
 		try
 		{
 			std::advance(i, item);
@@ -112,17 +112,17 @@ namespace cage
 	{
 		if (!sectionExists(section))
 			return false;
-		IniImpl *impl = (IniImpl*)this;
-		return impl->sections[section]->items.count(item);
+		const IniImpl *impl = (const IniImpl *)this;
+		return impl->sections.at(section)->items.count(item);
 	}
 
 	Holder<PointerRange<string>> Ini::items(const string &section) const
 	{
-		IniImpl *impl = (IniImpl*)this;
+		const IniImpl *impl = (const IniImpl *)this;
 		PointerRangeHolder<string> tmp;
 		if (!sectionExists(section))
 			return tmp;
-		auto &cont = impl->sections[section]->items;
+		auto &cont = impl->sections.at(section)->items;
 		tmp.reserve(cont.size());
 		for (const auto &it : cont)
 			tmp.push_back(it.first);
@@ -131,11 +131,11 @@ namespace cage
 
 	Holder<PointerRange<string>> Ini::values(const string &section) const
 	{
-		IniImpl *impl = (IniImpl*)this;
+		const IniImpl *impl = (const IniImpl *)this;
 		PointerRangeHolder<string> tmp;
 		if (!sectionExists(section))
 			return tmp;
-		auto &cont = impl->sections[section]->items;
+		auto &cont = impl->sections.at(section)->items;
 		tmp.reserve(cont.size());
 		for (const auto &it : cont)
 			tmp.push_back(it.second.value);
@@ -144,7 +144,7 @@ namespace cage
 
 	void Ini::itemRemove(const string &section, const string &item)
 	{
-		IniImpl *impl = (IniImpl*)this;
+		IniImpl *impl = (IniImpl *)this;
 		if (sectionExists(section))
 			impl->sections[section]->items.erase(item);
 	}
@@ -153,8 +153,8 @@ namespace cage
 	{
 		if (!itemExists(section, item))
 			return "";
-		IniImpl *impl = (IniImpl*)this;
-		return impl->sections[section]->items[item].value;
+		const IniImpl *impl = (const IniImpl *)this;
+		return impl->sections.at(section)->items[item].value;
 	}
 
 	namespace
@@ -172,7 +172,7 @@ namespace cage
 		validateString(item);
 		if (find(value, '#') != m)
 			CAGE_THROW_ERROR(Exception, "invalid value");
-		IniImpl *impl = (IniImpl*)this;
+		IniImpl *impl = (IniImpl *)this;
 		if (!sectionExists(section))
 			impl->sections[section] = detail::systemArena().createHolder<IniSection>();
 		impl->sections[section]->items[item] = value;
@@ -181,22 +181,22 @@ namespace cage
 	void Ini::markUsed(const string &section, const string &item)
 	{
 		CAGE_ASSERT(itemExists(section, item));
-		IniImpl *impl = (IniImpl*)this;
+		IniImpl *impl = (IniImpl *)this;
 		impl->sections[section]->items[item].used = true;
 	}
 
 	void Ini::markUnused(const string &section, const string &item)
 	{
 		CAGE_ASSERT(itemExists(section, item));
-		IniImpl *impl = (IniImpl*)this;
+		IniImpl *impl = (IniImpl *)this;
 		impl->sections[section]->items[item].used = false;
 	}
 
 	bool Ini::isUsed(const string &section, const string &item) const
 	{
 		CAGE_ASSERT(itemExists(section, item));
-		IniImpl *impl = (IniImpl*)this;
-		return impl->sections[section]->items[item].used;
+		const IniImpl *impl = (const IniImpl *)this;
+		return impl->sections.at(section)->items[item].used;
 	}
 
 	bool Ini::anyUnused(string &section, string &item) const
@@ -207,7 +207,7 @@ namespace cage
 
 	bool Ini::anyUnused(string &section, string &item, string &value) const
 	{
-		IniImpl *impl = (IniImpl*)this;
+		const IniImpl *impl = (const IniImpl *)this;
 		for (const auto &s : impl->sections)
 		{
 			for (const auto &t : s.second->items)
@@ -408,7 +408,7 @@ namespace cage
 
 	Holder<PointerRange<char>> Ini::exportBuffer() const
 	{
-		const IniImpl *impl = (const IniImpl*)this;
+		const IniImpl *impl = (const IniImpl *)this;
 		MemoryBuffer buff(0, 100000);
 		Serializer ser(buff);
 		for (const auto &i : impl->sections)

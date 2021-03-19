@@ -36,7 +36,7 @@ namespace cage
 
 	bool RectPacking::solve(uint32 width, uint32 height)
 	{
-		RectPackingImpl *impl = (RectPackingImpl*)this;
+		RectPackingImpl *impl = (RectPackingImpl *)this;
 		stbrp_context ctx;
 		impl->nodes.resize(width);
 		stbrp_init_target(&ctx, width, height, impl->nodes.data(), numeric_cast<int>(impl->nodes.size()));
@@ -45,7 +45,7 @@ namespace cage
 
 	void RectPacking::get(uint32 index, uint32 &id, uint32 &x, uint32 &y) const
 	{
-		RectPackingImpl *impl = (RectPackingImpl*)this;
+		const RectPackingImpl *impl = (const RectPackingImpl *)this;
 		CAGE_ASSERT(index < impl->rects.size());
 		auto &r = impl->rects[index];
 		CAGE_ASSERT(r.was_packed);
@@ -56,7 +56,7 @@ namespace cage
 
 	uint32 RectPacking::count() const
 	{
-		RectPackingImpl *impl = (RectPackingImpl*)this;
+		const RectPackingImpl *impl = (const RectPackingImpl *)this;
 		return numeric_cast<uint32>(impl->rects.size());
 	}
 

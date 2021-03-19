@@ -4,7 +4,7 @@
 #include <cage-core/serialization.h>
 #include <cage-core/pointerRangeHolder.h>
 
-#include <unordered_map>
+#include <robin_hood.h>
 
 namespace cage
 {
@@ -13,7 +13,7 @@ namespace cage
 		class TextPackImpl : public TextPack
 		{
 		public:
-			std::unordered_map<uint32, string> texts;
+			robin_hood::unordered_map<uint32, string> texts;
 		};
 	}
 

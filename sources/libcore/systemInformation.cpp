@@ -7,10 +7,8 @@
 #include <intrin.h>
 #include <powerbase.h> // is there any better way than using CallNtPowerInformation?
 #pragma comment(lib, "PowrProf.lib")
-#elif defined(CAGE_SYSTEM_LINUX)
-#include <cage-core/process.h>
 #else
-// todo
+#include <cage-core/process.h>
 #endif
 
 namespace cage
@@ -20,7 +18,7 @@ namespace cage
 #ifdef CAGE_SYSTEM_WINDOWS
 		// todo
 		return "";
-#elif defined(CAGE_SYSTEM_LINUX)
+#else
 		Holder<Process> prg = newProcess(string("lsb_release -d"));
 		string newName = prg->readLine();
 		if (!isPattern(newName, "Description", "", ""))
@@ -41,9 +39,6 @@ namespace cage
 		systemName = systemName + ", kernel " + prg->readLine();
 
 		return systemName;
-#else
-		// todo
-		return "";
 #endif
 	}
 
@@ -56,12 +51,9 @@ namespace cage
 		if (!GetUserName(buf, &siz))
 			CAGE_THROW_ERROR(SystemError, "GetUserName", GetLastError());
 		return buf;
-#elif defined(CAGE_SYSTEM_LINUX)
+#else
 		Holder<Process> prg = newProcess(string("whoami"));
 		return prg->readLine();
-#else
-		// todo
-		return "";
 #endif
 	}
 
@@ -74,12 +66,9 @@ namespace cage
 		if (!GetComputerName(buf, &siz))
 			CAGE_THROW_ERROR(SystemError, "GetComputerName", GetLastError());
 		return buf;
-#elif defined(CAGE_SYSTEM_LINUX)
+#else
 		Holder<Process> prg = newProcess(string("hostname"));
 		return prg->readLine();
-#else
-		// todo
-		return "";
 #endif
 	}
 
@@ -100,12 +89,9 @@ namespace cage
 			memcpy(CPUBrandString + (16 * i), CPUInfo, sizeof(CPUInfo));
 		}
 		return CPUBrandString;
-#elif defined(CAGE_SYSTEM_LINUX)
+#else
 		Holder<Process> prg = newProcess(string("cat /proc/cpuinfo | grep -m 1 'model name' | cut -d: -f2-"));
 		return trim(prg->readLine());
-#else
-		// todo
-		return "";
 #endif
 	}
 
@@ -126,7 +112,7 @@ namespace cage
 		if (ret != 0)
 			CAGE_THROW_ERROR(SystemError, "CallNtPowerInformation", ret);
 		return ppi[0].MaxMhz * uint64(1000000);
-#elif defined(CAGE_SYSTEM_LINUX)
+#else
 		try
 		{
 			Holder<Process> prg = newProcess(string("cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq"));
@@ -139,9 +125,6 @@ namespace cage
 
 		Holder<Process> prg = newProcess(string("cat /proc/cpuinfo | grep -m 1 'cpu MHz' | cut -d: -f2-"));
 		return numeric_cast<uint64>(toDouble(trim(prg->readLine())) * 1e6);
-#else
-		// todo
-		return 0;
 #endif
 	}
 
@@ -153,12 +136,9 @@ namespace cage
 		if (!GlobalMemoryStatusEx(&m))
 			CAGE_THROW_ERROR(SystemError, "GlobalMemoryStatusEx", GetLastError());
 		return m.ullTotalPhys;
-#elif defined(CAGE_SYSTEM_LINUX)
+#else
 		Holder<Process> prg = newProcess(string("cat /proc/meminfo | grep -m 1 'MemTotal' | awk '{print $2}'"));
 		return toUint64(prg->readLine()) * 1024;
-#else
-		// todo
-		return 0;
 #endif
 	}
 
@@ -170,7 +150,7 @@ namespace cage
 		if (!GlobalMemoryStatusEx(&m))
 			CAGE_THROW_ERROR(SystemError, "GlobalMemoryStatusEx", GetLastError());
 		return m.ullAvailPhys;
-#elif defined(CAGE_SYSTEM_LINUX)
+#else
 		try
 		{
 			Holder<Process> prg = newProcess(string("cat /proc/meminfo | grep -m 1 'MemAvailable' | awk '{print $2}'"));
@@ -183,9 +163,6 @@ namespace cage
 
 		Holder<Process> prg = newProcess(string("cat /proc/meminfo | grep -m 1 'MemFree' | awk '{print $2}'"));
 		return toUint64(prg->readLine()) * 1024;
-#else
-		// todo
-		return 0;
 #endif
 	}
 }

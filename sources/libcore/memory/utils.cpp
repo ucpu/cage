@@ -73,7 +73,7 @@ namespace cage
 
 			void decHolderShareable(void *ptr)
 			{
-				((SharedCounter*)ptr)->dec();
+				((SharedCounter *)ptr)->dec();
 			}
 		}
 
@@ -248,10 +248,10 @@ namespace cage
 				CAGE_ASSERT(pages < pgs);
 
 #ifdef CAGE_SYSTEM_WINDOWS
-				if (!VirtualFree((char*)origin + pageSize * (pgs - pages), pageSize * pages, MEM_DECOMMIT))
+				if (!VirtualFree((char *)origin + pageSize * (pgs - pages), pageSize * pages, MEM_DECOMMIT))
 					CAGE_THROW_ERROR(Exception, "VirtualFree");
 #else
-				if (!mprotect((char*)origin + pageSize * (pgs - pages), pageSize * pages, PROT_NONE))
+				if (!mprotect((char *)origin + pageSize * (pgs - pages), pageSize * pages, PROT_NONE))
 					CAGE_THROW_ERROR(SystemError, "mprotect", errno);
 #endif
 
@@ -266,31 +266,31 @@ namespace cage
 
 	void *VirtualMemory::reserve(uintPtr pages)
 	{
-		VirtualMemoryImpl *impl = (VirtualMemoryImpl*)this;
+		VirtualMemoryImpl *impl = (VirtualMemoryImpl *)this;
 		return impl->reserve(pages);
 	}
 
 	void VirtualMemory::free()
 	{
-		VirtualMemoryImpl *impl = (VirtualMemoryImpl*)this;
+		VirtualMemoryImpl *impl = (VirtualMemoryImpl *)this;
 		impl->free();
 	}
 
 	void VirtualMemory::increase(uintPtr pages)
 	{
-		VirtualMemoryImpl *impl = (VirtualMemoryImpl*)this;
+		VirtualMemoryImpl *impl = (VirtualMemoryImpl *)this;
 		impl->increase(pages);
 	}
 
 	void VirtualMemory::decrease(uintPtr pages)
 	{
-		VirtualMemoryImpl *impl = (VirtualMemoryImpl*)this;
+		VirtualMemoryImpl *impl = (VirtualMemoryImpl *)this;
 		impl->decrease(pages);
 	}
 
 	uintPtr VirtualMemory::pages() const
 	{
-		VirtualMemoryImpl *impl = (VirtualMemoryImpl*)this;
+		VirtualMemoryImpl *impl = (VirtualMemoryImpl *)this;
 		return impl->pgs;
 	}
 

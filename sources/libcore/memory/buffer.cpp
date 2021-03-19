@@ -5,7 +5,7 @@
 
 namespace cage
 {
-	MemoryBuffer::MemoryBuffer(uintPtr size, uintPtr capacity) : data_(nullptr), size_(0), capacity_(0)
+	MemoryBuffer::MemoryBuffer(uintPtr size, uintPtr capacity)
 	{
 		allocate(size, capacity);
 	}

@@ -276,19 +276,19 @@ namespace cage
 
 	void DiscoveryClient::update()
 	{
-		DiscoveryClientImpl *impl = (DiscoveryClientImpl*)this;
+		DiscoveryClientImpl *impl = (DiscoveryClientImpl *)this;
 		impl->update();
 	}
 
 	void DiscoveryClient::addServer(const string &address, uint16 port)
 	{
-		DiscoveryClientImpl *impl = (DiscoveryClientImpl*)this;
+		DiscoveryClientImpl *impl = (DiscoveryClientImpl *)this;
 		impl->addServer(address, port);
 	}
 
 	uint32 DiscoveryClient::peersCount() const
 	{
-		DiscoveryClientImpl *impl = (DiscoveryClientImpl*)this;
+		const DiscoveryClientImpl *impl = (const DiscoveryClientImpl *)this;
 		return numeric_cast<uint32>(impl->peers.size());
 	}
 
@@ -303,7 +303,7 @@ namespace cage
 
 	Holder<PointerRange<DiscoveryPeer>> DiscoveryClient::peers() const
 	{
-		DiscoveryClientImpl *impl = (DiscoveryClientImpl*)this;
+		const DiscoveryClientImpl *impl = (const DiscoveryClientImpl *)this;
 		PointerRangeHolder<DiscoveryPeer> h;
 		h.reserve(impl->peers.size());
 		for (const auto &it : impl->peers)
@@ -318,7 +318,7 @@ namespace cage
 
 	void DiscoveryServer::update()
 	{
-		DiscoveryServerImpl *impl = (DiscoveryServerImpl*)this;
+		DiscoveryServerImpl *impl = (DiscoveryServerImpl *)this;
 		impl->update();
 	}
 

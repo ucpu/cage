@@ -5,12 +5,14 @@
 #include <cage-core/serialization.h>
 #include <cage-core/flatSet.h>
 
+#include <robin_hood.h>
+#include <plf_list.h>
+
 #include <array>
 #include <vector>
 #include <map>
 #include <memory>
 #include <algorithm>
-#include <plf_list.h>
 
 namespace cage
 {
@@ -64,7 +66,7 @@ namespace cage
 				uint32 connId = 0;
 			};
 
-			std::map<uint32, std::weak_ptr<Receiver>> receivers;
+			robin_hood::unordered_map<uint32, std::weak_ptr<Receiver>> receivers;
 			std::weak_ptr<std::vector<std::shared_ptr<Receiver>>> accepting;
 			std::vector<Sock> socks;
 			Holder<Mutex> mut;
@@ -443,7 +445,7 @@ namespace cage
 
 				plf::list<std::shared_ptr<ReliableMsg>> relMsgs;
 				plf::list<Command> cmds;
-				std::map<uint16, std::vector<MsgAck>> ackMap; // mapping packet seqn to message parts
+				robin_hood::unordered_map<uint16, std::vector<MsgAck>> ackMap; // mapping packet seqn to message parts
 				std::array<uint16, 256> seqnPerChannel = {}; // next message seqn to be used
 				FlatSet<uint16> seqnToAck; // packets seqn to be acked
 				uint16 packetSeqn = 0; // next packet seqn to be used
@@ -749,7 +751,7 @@ namespace cage
 					uint8 channel = 0;
 				};
 
-				std::array<std::map<uint16, Msg>, 256> staging = {};
+				std::array<robin_hood::unordered_map<uint16, Msg>, 256> staging = {};
 				std::array<uint16, 256> seqnPerChannel = {}; // minimum expected message seqn
 				plf::list<Msg> messages;
 				FlatSet<PackAck> ackPacks;
@@ -786,7 +788,7 @@ namespace cage
 				{
 					auto &seqnpc = receiving.seqnPerChannel[channel];
 					auto &stage = receiving.staging[channel];
-					std::vector<Receiving::Msg*> msgs;
+					std::vector<Receiving::Msg *> msgs;
 					msgs.reserve(stage.size());
 					for (auto &it : stage)
 						msgs.push_back(&it.second);
@@ -1267,7 +1269,7 @@ namespace cage
 
 	uintPtr UdpConnection::available()
 	{
-		UdpConnectionImpl *impl = (UdpConnectionImpl*)this;
+		UdpConnectionImpl *impl = (UdpConnectionImpl *)this;
 		return impl->available();
 	}
 
@@ -1288,7 +1290,7 @@ namespace cage
 
 	Holder<PointerRange<char>> UdpConnection::read(uint32 &channel, bool &reliable)
 	{
-		UdpConnectionImpl *impl = (UdpConnectionImpl*)this;
+		UdpConnectionImpl *impl = (UdpConnectionImpl *)this;
 		return impl->read(channel, reliable);
 	}
 
@@ -1301,7 +1303,7 @@ namespace cage
 
 	void UdpConnection::write(PointerRange<const char> buffer, uint32 channel, bool reliable)
 	{
-		UdpConnectionImpl *impl = (UdpConnectionImpl*)this;
+		UdpConnectionImpl *impl = (UdpConnectionImpl *)this;
 		MemoryBuffer b(buffer.size());
 		detail::memcpy(b.data(), buffer.data(), b.size());
 		impl->write(templates::move(b), channel, reliable);
@@ -1309,13 +1311,13 @@ namespace cage
 
 	void UdpConnection::update()
 	{
-		UdpConnectionImpl *impl = (UdpConnectionImpl*)this;
+		UdpConnectionImpl *impl = (UdpConnectionImpl *)this;
 		impl->service();
 	}
 
 	const UdpStatistics &UdpConnection::statistics() const
 	{
-		const UdpConnectionImpl *impl = (const UdpConnectionImpl*)this;
+		const UdpConnectionImpl *impl = (const UdpConnectionImpl *)this;
 		return impl->stats;
 	}
 
@@ -1333,7 +1335,7 @@ namespace cage
 
 	Holder<UdpConnection> UdpServer::accept()
 	{
-		UdpServerImpl *impl = (UdpServerImpl*)this;
+		UdpServerImpl *impl = (UdpServerImpl *)this;
 		return impl->accept();
 	}
 
