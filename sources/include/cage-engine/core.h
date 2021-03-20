@@ -14,11 +14,9 @@ namespace cage
 	// forward declarations
 
 	struct TransformComponent;
-	// todo MatrixComponent -> allow for skew, non-uniform scale, etc.
 	struct RenderComponent;
 	struct TextureAnimationComponent;
 	struct SkeletalAnimationComponent;
-	// todo SkeletonPoseComponent -> allow the application to compute the pose itself
 	enum class LightTypeEnum : uint32;
 	struct LightComponent;
 	struct ShadowmapComponent;
@@ -92,16 +90,14 @@ namespace cage
 	struct GuiPanelComponent;
 	struct GuiSpoilerComponent;
 
-	class MixingBus;
-	struct MixingFilterApi;
-	class MixingFilter;
-	class VolumeFilter;
-	struct SoundError;
-	class SoundSource;
-	struct SoundInterleavedBuffer;
-	struct SoundDataBuffer;
+	struct SoundCallbackData;
+	class Sound;
 	class Speaker;
 	struct SpeakerCreateConfig;
+	struct VoiceProperties;
+	struct ListenerProperties;
+	class VoicesMixer;
+	struct VoicesMixerCreateConfig;
 
 	enum class TextureFlags : uint32;
 	struct TextureHeader;

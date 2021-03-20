@@ -205,19 +205,16 @@ namespace cage
 	{
 		static EntityComponent *component;
 		uint64 startTime = 0;
-		MixingBus *input = nullptr;
 		uint32 name = 0;
 		uint32 sceneMask = 1;
+		real intensity = 1;
 	};
 
 	struct CAGE_ENGINE_API ListenerComponent
 	{
 		static EntityComponent *component;
-		MixingBus *output = nullptr;
-		vec3 attenuation = vec3(); // constant, linear, quadratic
 		uint32 sceneMask = 1;
-		real speedOfSound = 343.3;
-		bool dopplerEffect = false;
+		real intensity = 1;
 	};
 
 	struct CAGE_ENGINE_API EngineControlThread
@@ -284,11 +281,12 @@ namespace cage
 	CAGE_ENGINE_API EntityManager *engineEntities();
 	CAGE_ENGINE_API Window *engineWindow();
 	CAGE_ENGINE_API Gui *engineGui();
-	CAGE_ENGINE_API class SpeakerOutput *engineSpeaker();
-	CAGE_ENGINE_API MixingBus *engineMasterMixer();
-	CAGE_ENGINE_API MixingBus *engineMusicMixer();
-	CAGE_ENGINE_API MixingBus *engineEffectsMixer();
-	CAGE_ENGINE_API MixingBus *engineGuiMixer();
+	CAGE_ENGINE_API Speaker *engineSpeaker();
+	CAGE_ENGINE_API VoicesMixer *engineMasterMixer();
+	CAGE_ENGINE_API VoicesMixer *engineMusicMixer();
+	CAGE_ENGINE_API VoicesMixer *engineVoiceOverMixer();
+	CAGE_ENGINE_API VoicesMixer *engineEffectsMixer();
+	CAGE_ENGINE_API VoicesMixer *engineGuiMixer();
 	CAGE_ENGINE_API uint64 engineControlTime();
 }
 

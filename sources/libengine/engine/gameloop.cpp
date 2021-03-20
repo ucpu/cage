@@ -16,6 +16,8 @@
 #include <cage-engine/graphics.h>
 #include <cage-engine/window.h>
 #include <cage-engine/sound.h>
+#include <cage-engine/speaker.h>
+#include <cage-engine/voices.h>
 #include <cage-engine/gui.h>
 #include <cage-engine/engineProfiling.h>
 
@@ -87,11 +89,16 @@ namespace cage
 #ifdef CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 			Holder<Window> windowUpload;
 #endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
-			Holder<SpeakerOutput> speaker;
-			Holder<MixingBus> masterBus;
-			Holder<MixingBus> musicBus;
-			Holder<MixingBus> effectsBus;
-			Holder<MixingBus> guiBus;
+			Holder<Speaker> speaker;
+			Holder<VoicesMixer> masterBus;
+			Holder<VoicesMixer> musicBus;
+			Holder<VoicesMixer> voiceOverBus;
+			Holder<VoicesMixer> effectsBus;
+			Holder<VoicesMixer> guiBus;
+			Holder<VoiceProperties> musicVoice;
+			Holder<VoiceProperties> voiceOverVoice;
+			Holder<VoiceProperties> effectsVoice;
+			Holder<VoiceProperties> guiVoice;
 			Holder<Gui> gui;
 			Holder<EntityManager> entities;
 
@@ -240,7 +247,7 @@ namespace cage
 
 			void soundInitializeStage()
 			{
-				//gui->soundInitialize(sound.get());
+				speaker->start();
 			}
 
 			void soundUpdate()
@@ -272,13 +279,12 @@ namespace cage
 
 			void soundStopStage()
 			{
-				// nothing
+				speaker->stop();
 			}
 
 			void soundFinalizeStage()
 			{
 				soundFinalize();
-				//gui->soundFinalize();
 				assets->unloadCustomThread(soundThread().threadIndex);
 			}
 
@@ -421,16 +427,20 @@ namespace cage
 				}
 
 				{ // create sound
-					string name = pathExtractFilename(detail::getExecutableFullPathNoExe());
-					speaker = newSpeakerOutput({}, name); // todo use correct config
-					masterBus = newMixingBus();
-					musicBus = newMixingBus();
-					effectsBus = newMixingBus();
-					guiBus = newMixingBus();
-					speaker->setInput(+masterBus);
-					masterBus->addInput(+musicBus);
-					masterBus->addInput(+effectsBus);
-					masterBus->addInput(+guiBus);
+					masterBus = newVoicesMixer({});
+					musicBus = newVoicesMixer({});
+					voiceOverBus = newVoicesMixer({});
+					effectsBus = newVoicesMixer({});
+					guiBus = newVoicesMixer({});
+					musicVoice = masterBus->newVoice();
+					voiceOverVoice = masterBus->newVoice();
+					effectsVoice = masterBus->newVoice();
+					guiVoice = masterBus->newVoice();
+					musicVoice->callback.bind<VoicesMixer, &VoicesMixer::process>(+musicBus);
+					voiceOverVoice->callback.bind<VoicesMixer, &VoicesMixer::process>(+voiceOverBus);
+					effectsVoice->callback.bind<VoicesMixer, &VoicesMixer::process>(+effectsBus);
+					guiVoice->callback.bind<VoicesMixer, &VoicesMixer::process>(+guiBus);
+					speaker = newSpeaker(config.speaker ? *config.speaker : SpeakerCreateConfig(), Delegate<void(const SoundCallbackData &)>().bind<VoicesMixer, &VoicesMixer::process>(+masterBus));
 				}
 
 				{ // create gui
@@ -440,7 +450,6 @@ namespace cage
 					c.assetMgr = +assets;
 					gui = newGui(c);
 					gui->handleWindowEvents(+window);
-					gui->setOutputSoundBus(+guiBus);
 				}
 
 				{ // create entities
@@ -476,7 +485,7 @@ namespace cage
 					assets->defineScheme<SkeletalAnimation>(AssetSchemeIndexSkeletalAnimation, genAssetSchemeSkeletalAnimation());
 					assets->defineScheme<RenderObject>(AssetSchemeIndexRenderObject, genAssetSchemeRenderObject());
 					assets->defineScheme<Font>(AssetSchemeIndexFont, genAssetSchemeFont(EngineGraphicsUploadThread::threadIndex));
-					assets->defineScheme<SoundSource>(AssetSchemeIndexSoundSource, genAssetSchemeSoundSource(EngineSoundThread::threadIndex));
+					assets->defineScheme<Sound>(AssetSchemeIndexSound, genAssetSchemeSound(EngineSoundThread::threadIndex));
 					// cage pack
 					assets->add(HashString("cage/cage.pack"));
 				}
@@ -585,11 +594,16 @@ namespace cage
 				}
 
 				{ // destroy sound
-					effectsBus.clear();
-					musicBus.clear();
-					guiBus.clear();
-					masterBus.clear();
 					speaker.clear();
+					musicVoice.clear();
+					voiceOverVoice.clear();
+					effectsVoice.clear();
+					guiVoice.clear();
+					masterBus.clear();
+					musicBus.clear();
+					voiceOverBus.clear();
+					effectsBus.clear();
+					guiBus.clear();
 				}
 
 				{ // destroy graphics
@@ -754,27 +768,32 @@ namespace cage
 		return engineData->gui.get();
 	}
 
-	SpeakerOutput *engineSpeaker()
+	Speaker *engineSpeaker()
 	{
 		return engineData->speaker.get();
 	}
 
-	MixingBus *engineMasterMixer()
+	VoicesMixer *engineMasterMixer()
 	{
 		return engineData->masterBus.get();
 	}
 
-	MixingBus *engineMusicMixer()
+	VoicesMixer *engineMusicMixer()
 	{
 		return engineData->musicBus.get();
 	}
 
-	MixingBus *engineEffectsMixer()
+	VoicesMixer *engineVoiceOverMixer()
+	{
+		return engineData->voiceOverBus.get();
+	}
+
+	VoicesMixer *engineEffectsMixer()
 	{
 		return engineData->effectsBus.get();
 	}
 
-	MixingBus *engineGuiMixer()
+	VoicesMixer *engineGuiMixer()
 	{
 		return engineData->guiBus.get();
 	}

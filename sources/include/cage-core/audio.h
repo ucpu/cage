@@ -56,7 +56,6 @@ namespace cage
 	CAGE_CORE_API void audioSetSampleRate(Audio *snd, uint32 sampleRate); // preserve number of frames and change duration
 	CAGE_CORE_API void audioConvertSampleRate(Audio *snd, uint32 sampleRate, uint32 quality = 4); // preserve duration and change number of frames
 	CAGE_CORE_API void audioConvertFrames(Audio *snd, uint64 frames, uint32 quality = 4); // preserve duration and change sample rate
-	CAGE_CORE_API void audioConvertChannels(Audio *snd, uint32 channels, PointerRange<float> matrix);
 	CAGE_CORE_API void audioConvertFormat(Audio *snd, AudioFormatEnum format);
 
 	// copies parts of an audio into another audio
@@ -77,32 +76,6 @@ namespace cage
 	};
 
 	CAGE_CORE_API Holder<AudioStream> newAudioStream(Holder<Audio> &&audio);
-
-	class CAGE_CORE_API SampleRateConverter : private Immovable
-	{
-	public:
-		uint32 channels() const;
-
-		void convert(PointerRange<const float> src, PointerRange<float> dst, double ratio);
-		void convert(PointerRange<const float> src, PointerRange<float> dst, double startRatio, double endRatio);
-	};
-
-	struct SampleRateConverterCreateConfig
-	{
-#ifdef CAGE_DEBUG
-		static constexpr uint32 DefaultQuality = 2;
-#else
-		static constexpr uint32 DefaultQuality = 3;
-#endif // CAGE_DEBUG
-
-		uint32 channels = 0;
-		uint32 quality = DefaultQuality; // 0 = nearest neighbor, 1 = linear, 2 = low, 3 = medium, 4 = high
-
-		SampleRateConverterCreateConfig(uint32 channels) : channels(channels)
-		{}
-	};
-
-	CAGE_CORE_API Holder<SampleRateConverter> newSampleRateConverter(const SampleRateConverterCreateConfig &config);
 }
 
 #endif // guard_audio_h_C930FD49904A491DBB9CF3D0AE972EB2

@@ -35,19 +35,6 @@ namespace cage
 		return impl->zoom;
 	}
 
-	void Gui::setOutputSoundBus(MixingBus *bus)
-	{
-		GuiImpl *impl = (GuiImpl*)this;
-		// todo
-	}
-
-	MixingBus *Gui::getOutputSoundBus() const
-	{
-		GuiImpl *impl = (GuiImpl*)this;
-		// todo
-		return nullptr;
-	}
-
 	void Gui::setFocus(uint32 widget)
 	{
 		GuiImpl *impl = (GuiImpl*)this;

@@ -11,7 +11,7 @@ namespace cage
 		template<> CAGE_API_EXPORT char assetClassId<Model>;
 		template<> CAGE_API_EXPORT char assetClassId<RenderObject>;
 		template<> CAGE_API_EXPORT char assetClassId<ShaderProgram>;
-		template<> CAGE_API_EXPORT char assetClassId<SoundSource>;
+		template<> CAGE_API_EXPORT char assetClassId<Sound>;
 		template<> CAGE_API_EXPORT char assetClassId<Texture>;
 	}
 }

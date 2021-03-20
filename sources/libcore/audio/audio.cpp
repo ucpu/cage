@@ -1,7 +1,8 @@
-#include "audio.h"
-
 #include <cage-core/math.h>
 #include <cage-core/serialization.h>
+#include <cage-core/sampleRateConverter.h>
+
+#include "audio.h"
 
 #include <utility> // std::swap
 
@@ -174,9 +175,35 @@ namespace cage
 		return detail::systemArena().createImpl<Audio, AudioImpl>();
 	}
 
-	void audioConvertChannels(Audio *snd, uint32 channels, PointerRange<float> matrix)
+	void audioSetSampleRate(Audio *snd, uint32 sampleRate)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "audioConvertChannels");
+		AudioImpl *impl = (AudioImpl *)snd;
+		impl->sampleRate = sampleRate;
+	}
+
+	void audioConvertSampleRate(Audio *snd, uint32 sampleRate, uint32 quality)
+	{
+		const uint64 originalDuration = snd->duration();
+		audioConvertFrames(snd, snd->frames() * sampleRate / snd->sampleRate(), quality);
+		CAGE_ASSERT(abs((sint32)(snd->sampleRate() - sampleRate)) < 10);
+		audioSetSampleRate(snd, sampleRate); // in case of rounding errors
+		CAGE_ASSERT(abs((sint64)(snd->duration() - originalDuration)) < 100);
+	}
+
+	void audioConvertFrames(Audio *snd, uint64 frames, uint32 quality)
+	{
+		AudioImpl *impl = (AudioImpl *)snd;
+		audioConvertFormat(snd, AudioFormatEnum::Float);
+		MemoryBuffer tmp;
+		tmp.resize(frames * snd->channels() * sizeof(float));
+		SampleRateConverterCreateConfig cfg(snd->channels());
+		cfg.quality = quality;
+		Holder<SampleRateConverter> cnv = newSampleRateConverter(cfg);
+		const uint32 targetSampleRate = numeric_cast<uint32>(1000000 * frames / snd->duration());
+		cnv->convert(snd->rawViewFloat(), bufferCast<float, char>(tmp), targetSampleRate / (double)snd->sampleRate());
+		std::swap(impl->mem, tmp);
+		impl->sampleRate = targetSampleRate;
+		impl->frames = frames;
 	}
 
 	void vorbisConvertFormat(AudioImpl *snd, AudioFormatEnum format);

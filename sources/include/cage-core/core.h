@@ -123,6 +123,9 @@ namespace cage
 	struct ivec3;
 	struct ivec4;
 
+	struct AmbisonicsData;
+	class AmbisonicsConverter;
+	struct AmbisonicsConverterCreateConfig;
 	class AssetManager;
 	struct AssetManagerCreateConfig;
 	struct AssetContext;
@@ -222,6 +225,8 @@ namespace cage
 	struct RandomGenerator;
 	class RectPacking;
 	struct RectPackingCreateConfig;
+	class SampleRateConverter;
+	struct SampleRateConverterCreateConfig;
 	enum class ScheduleTypeEnum : uint32;
 	struct ScheduleCreateConfig;
 	class Schedule;

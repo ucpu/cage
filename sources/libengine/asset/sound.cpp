@@ -35,13 +35,9 @@ namespace cage
 
 		void processLoad(AssetContext *context)
 		{
-			Holder<SoundSource> source = newSoundSource();
-			source->setDebugName(context->textName);
-
 			Deserializer des(context->originalData.data() ? context->originalData : context->compressedData);
 			SoundSourceHeader snd;
 			des >> snd;
-			source->setDataRepeat(any(snd.flags & SoundFlags::LoopBeforeStart), any(snd.flags & SoundFlags::LoopAfterEnd));
 
 			Holder<Audio> poly = newAudio();
 			switch (snd.soundType)
@@ -61,12 +57,15 @@ namespace cage
 			CAGE_ASSERT(snd.channels == poly->channels());
 			CAGE_ASSERT(snd.frames == poly->frames());
 			CAGE_ASSERT(snd.sampleRate == poly->sampleRate());
-			source->setData(templates::move(poly));
+			Holder<Sound> source = newSound();
+			source->loopBeforeStart = any(snd.flags & SoundFlags::LoopBeforeStart);
+			source->loopAfterEnd = any(snd.flags & SoundFlags::LoopAfterEnd);
+			source->initialize(templates::move(poly));
 			context->assetHolder = templates::move(source).cast<void>();
 		}
 	}
 
-	AssetScheme genAssetSchemeSoundSource(uint32 threadIndex)
+	AssetScheme genAssetSchemeSound(uint32 threadIndex)
 	{
 		AssetScheme s;
 		s.threadIndex = threadIndex;

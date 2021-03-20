@@ -1,132 +1,84 @@
+#include <cage-core/flatSet.h>
+
 #include <cage-engine/sound.h>
+#include <cage-engine/voices.h>
+#include <cage-engine/speaker.h>
 
 #include "engine.h"
-#include "../sound/utilities.h"
 
 #include <vector>
-#include <map>
+#include <robin_hood.h>
 
 namespace cage
 {
 	namespace
 	{
-		struct SoundPrepareImpl;
+		template<class T>
+		void eraseUnused(T &map, const FlatSet<uintPtr> &used)
+		{
+			auto it = map.begin();
+			while (it != map.end())
+			{
+				if (used.count(it->first))
+					it++;
+				else
+					it = map.erase(it);
+			}
+		}
 
 		struct EmitSound
 		{
 			TransformComponent transform, transformHistory;
-			SoundComponent sound;
-			uintPtr id;
-
-			EmitSound()
-			{
-				detail::memset(this, 0, sizeof(EmitSound));
-			}
+			SoundComponent sound = {};
+			uintPtr id = 0;
 		};
 
 		struct EmitListener
 		{
 			TransformComponent transform, transformHistory;
-			ListenerComponent listener;
-			uintPtr id;
-
-			EmitListener()
-			{
-				detail::memset(this, 0, sizeof(EmitListener));
-			}
-		};
-
-		struct Mix
-		{
-			Holder<MixingBus> bus;
-			Holder<MixingFilter> filter;
-			Holder<SoundSource> source;
-			SoundPrepareImpl *const data;
-			EmitListener listener;
-			EmitSound sound;
-
-			explicit Mix(SoundPrepareImpl *data) : data(data)
-			{};
-
-			void prepare(const EmitListener &listener, const EmitSound &sound)
-			{
-				this->sound = sound;
-				this->listener = listener;
-				CAGE_ASSERT(sound.sound.input == nullptr || sound.sound.name == 0);
-				source.clear();
-				bus = newMixingBus(); // recreating new bus will ensure that any potential previous connections are removed
-				filter = newMixingFilter();
-				filter->execute.bind<Mix, &Mix::exe>(this);
-				if (sound.sound.input)
-				{ // direct bus input
-					sound.sound.input->addOutput(bus.get());
-				}
-				else
-				{ // asset input
-					AssetManager *ass = engineAssets();
-					source = ass->get<AssetSchemeIndexSoundSource, SoundSource>(sound.sound.name);
-					if (!source)
-						return;
-					source->addOutput(bus.get());
-				}
-				if (listener.listener.output)
-					bus->addOutput(listener.listener.output);
-				else
-					bus->addOutput(engineEffectsMixer());
-				filter->setBus(bus.get());
-			}
-
-			void exe(const MixingFilterApi &api);
+			ListenerComponent listener = {};
+			uintPtr id = 0;
 		};
 
 		struct Emit
 		{
 			std::vector<EmitListener> listeners;
-			std::vector<EmitSound> voices;
+			std::vector<EmitSound> sounds;
+			uint64 time = 0;
+		};
 
-			uint64 time;
-			bool fresh;
+		struct Listener
+		{
+			// todo split by sound category (music / voice over / effect)
+			Holder<VoicesMixer> mixer;
+			Holder<VoiceProperties> chaining; // register this mixer in the engine effects mixer
 
-			explicit Emit(const EngineCreateConfig &config) : time(0), fresh(false)
-			{
-				listeners.reserve(4);
-				voices.reserve(256);
-			}
-
-			~Emit()
-			{}
+			robin_hood::unordered_map<uintPtr, Holder<VoiceProperties>> voicesMapping;
 		};
 
 		struct SoundPrepareImpl
 		{
-			Emit emitBufferA, emitBufferB, emitBufferC; // this is awfully stupid, damn you c++
-			Emit *emitBuffers[3];
-			Emit *emitRead, *emitWrite;
+			Emit emitBuffers[3];
+			Emit *emitRead = nullptr, *emitWrite = nullptr;
 			Holder<SwapBufferGuard> swapController;
 
-			// listener -> sound -> mix
-			typedef std::map<uintPtr, std::map<uintPtr, Holder<Mix>>> Mixers; // todo use combined key and unordered_map that can be reserved
-			Mixers mixers;
-
-			std::vector<float> soundMixBuffer;
 			InterpolationTimingCorrector itc;
-			uint64 emitTime;
-			uint64 dispatchTime;
+			uint64 emitTime = 0;
+			uint64 dispatchTime = 0;
 			real interFactor;
 
-			explicit SoundPrepareImpl(const EngineCreateConfig &config) : emitBufferA(config), emitBufferB(config), emitBufferC(config), emitBuffers{ &emitBufferA, &emitBufferB, &emitBufferC }, emitRead(nullptr), emitWrite(nullptr), emitTime(0), dispatchTime(0)
+			robin_hood::unordered_map<uintPtr, Listener> listenersMapping;
+
+			explicit SoundPrepareImpl(const EngineCreateConfig &config)
 			{
-				soundMixBuffer.resize(10000);
-				{
-					SwapBufferGuardCreateConfig cfg(3);
-					cfg.repeatedReads = true;
-					swapController = newSwapBufferGuard(cfg);
-				}
+				SwapBufferGuardCreateConfig cfg(3);
+				cfg.repeatedReads = true;
+				swapController = newSwapBufferGuard(cfg);
 			}
 
 			void finalize()
 			{
-				mixers.clear();
+				listenersMapping.clear();
 			}
 
 			void emit(uint64 time)
@@ -138,11 +90,10 @@ namespace cage
 					return;
 				}
 
-				emitWrite = emitBuffers[lock.index()];
+				emitWrite = &emitBuffers[lock.index()];
 				ClearOnScopeExit resetEmitWrite(emitWrite);
-				emitWrite->fresh = true;
 				emitWrite->listeners.clear();
-				emitWrite->voices.clear();
+				emitWrite->sounds.clear();
 				emitWrite->time = time;
 
 				// emit listeners
@@ -170,35 +121,74 @@ namespace cage
 						c.transformHistory = c.transform;
 					c.sound = e->value<SoundComponent>(SoundComponent::component);
 					c.id = (uintPtr)e;
-					emitWrite->voices.push_back(c);
+					emitWrite->sounds.push_back(c);
 				}
 			}
 
-			void postEmit()
+			void prepare(Listener &l, Holder<VoiceProperties> &v, const EmitSound &e)
 			{
-				OPTICK_EVENT("post emit");
-				Mixers ms;
-				for (const auto &itL : emitRead->listeners)
+				Holder<Sound> s = engineAssets()->get<AssetSchemeIndexSound, Sound>(e.sound.name);
+				if (!s)
 				{
-					for (const auto &itV : emitRead->voices)
-					{
-						if ((itL.listener.sceneMask & itV.sound.sceneMask) == 0)
-							continue;
-						auto &old = mixers[itL.id][itV.id];
-						if (old)
-						{
-							old->prepare(itL, itV);
-							ms[itL.id][itV.id] = templates::move(old);
-						}
-						else
-						{
-							Holder<Mix> n = detail::systemArena().createHolder<Mix>(this);
-							n->prepare(itL, itV);
-							ms[itL.id][itV.id] = templates::move(n);
-						}
-					}
+					v.clear();
+					return;
 				}
-				std::swap(ms, mixers);
+
+				if (!v)
+					v = l.mixer->newVoice();
+
+				const transform t = interpolate(e.transformHistory, e.transform, interFactor);
+				v->position = t.position;
+				v->startTime = e.sound.startTime;
+				v->intensity = e.sound.intensity;
+				v->sound = templates::move(s);
+				v->callback.bind<Sound, &Sound::process>(+v->sound);
+			}
+
+			void prepare(Listener &l, const EmitListener &e)
+			{
+				{ // listener
+					if (!l.mixer)
+					{
+						l.mixer = newVoicesMixer({});
+						l.chaining = engineEffectsMixer()->newVoice();
+						l.chaining->callback.bind<VoicesMixer, &VoicesMixer::process>(+l.mixer);
+					}
+					ListenerProperties &p = l.mixer->listener();
+					p.intensity = e.listener.intensity;
+					const transform t = interpolate(e.transformHistory, e.transform, interFactor);
+					p.position = t.position;
+					p.orientation = t.orientation;
+				}
+
+				{ // remove obsolete
+					FlatSet<uintPtr> used;
+					used.reserve(emitRead->sounds.size());
+					for (const EmitSound &s : emitRead->sounds)
+						if (e.listener.sceneMask & s.sound.sceneMask)
+							used.insert(e.id);
+					eraseUnused(l.voicesMapping, used);
+				}
+
+				for (const EmitSound &s : emitRead->sounds)
+					if (e.listener.sceneMask & s.sound.sceneMask)
+						prepare(l, l.voicesMapping[s.id], s);
+			}
+
+			void prepare()
+			{
+				OPTICK_EVENT("prepare");
+
+				{ // remove obsolete
+					FlatSet<uintPtr> used;
+					used.reserve(emitRead->listeners.size());
+					for (const EmitListener &e : emitRead->listeners)
+						used.insert(e.id);
+					eraseUnused(listenersMapping, used);
+				}
+
+				for (const EmitListener &e : emitRead->listeners)
+					prepare(listenersMapping[e.id], e);
 			}
 
 			void tick(uint64 time)
@@ -210,63 +200,21 @@ namespace cage
 					return;
 				}
 
-				emitRead = emitBuffers[lock.index()];
-				ClearOnScopeExit resetEmitRead(emitRead);
-				emitTime = emitRead->time;
-				dispatchTime = itc(emitTime, time, soundThread().updatePeriod());
-				interFactor = clamp(real(dispatchTime - emitTime) / controlThread().updatePeriod(), 0, 1);
-
-				if (emitRead->fresh)
 				{
-					postEmit();
-					emitRead->fresh = false;
+					emitRead = &emitBuffers[lock.index()];
+					ClearOnScopeExit resetEmitRead(emitRead);
+					emitTime = emitRead->time;
+					dispatchTime = itc(emitTime, time, soundThread().updatePeriod());
+					interFactor = saturate(real(dispatchTime - emitTime) / controlThread().updatePeriod());
+					prepare();
 				}
 
 				{
 					OPTICK_EVENT("speaker");
-					engineSpeaker()->update(dispatchTime);
+					engineSpeaker()->process(dispatchTime);
 				}
 			}
 		};
-
-		void Mix::exe(const MixingFilterApi &api)
-		{
-			vec3 posVoice = interpolate(sound.transformHistory.position, sound.transform.position, data->interFactor);
-			vec3 posListener = interpolate(listener.transformHistory.position, listener.transform.position, data->interFactor);
-			vec3 diff = posVoice - posListener;
-			real dist = length(diff);
-			vec3 dir = dist > 1e-7 ? normalize(diff) : vec3();
-			const vec3 &a = listener.listener.attenuation;
-			real vol = min(real(1) / (a[0] + a[1] * dist + a[2] * dist * dist), 1);
-			if (vol < 1e-5)
-				return;
-			SoundDataBuffer s = api.output;
-			if (data->soundMixBuffer.size() < s.frames)
-				data->soundMixBuffer.resize(s.frames);
-			s.buffer = data->soundMixBuffer.data();
-			s.time -= sound.sound.startTime;
-			s.channels = 1;
-			if (listener.listener.dopplerEffect)
-			{
-				// the Mix filter is now persistent across frames and can therefore have persistent state
-				// this can probably be used to improve the doppler effect
-
-				real scale = 1000000 / controlThread().updatePeriod();
-				vec3 velL = scale * (listener.transformHistory.position - listener.transform.position);
-				vec3 velV = scale * (sound.transformHistory.position - sound.transform.position);
-				real vl = dot(velL, dir);
-				real vv = dot(velV, dir);
-				real doppler = max((listener.listener.speedOfSound + vl) / (listener.listener.speedOfSound + vv), 0);
-				s.sampleRate = numeric_cast<uint32>(real(s.sampleRate) * doppler);
-				sint64 ts = numeric_cast<sint64>(1000000 * dist / listener.listener.speedOfSound);
-				s.time -= ts;
-			}
-			detail::memset(s.buffer, 0, s.frames * sizeof(float));
-			api.input(s);
-			for (uint32 i = 0; i < s.frames; i++)
-				s.buffer[i] *= vol.value;
-			soundPrivat::channelsDirection(s.buffer, api.output.buffer, api.output.channels, s.frames, dir * conjugate(listener.transform.orientation));
-		}
 
 		SoundPrepareImpl *soundPrepare;
 	}

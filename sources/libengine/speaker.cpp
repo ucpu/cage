@@ -1,7 +1,6 @@
 #include <cage-core/string.h>
 #include <cage-core/files.h>
 #include <cage-core/concurrent.h>
-#include <cage-core/memoryBuffer.h>
 
 #include <cage-engine/speaker.h>
 
@@ -25,6 +24,8 @@
 #ifdef GCHL_CUBEB_LOGGING
 #include <cstdarg>
 #endif
+
+#include <vector>
 
 namespace cage
 {
@@ -56,6 +57,16 @@ namespace cage
 
 	namespace
 	{
+		string sanitizeName(const string &name)
+		{
+			return replace(name, ":", "_");
+		}
+
+		string defaultName()
+		{
+			return sanitizeName(pathExtractFilename(detail::getExecutableFullPathNoExe()));
+		}
+
 #ifdef GCHL_CUBEB_LOGGING
 		void soundLogCallback(const char *fmt, ...)
 		{
@@ -81,7 +92,7 @@ namespace cage
 #ifdef CAGE_SYSTEM_WINDOWS
 				CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 #endif // CAGE_SYSTEM_WINDOWS
-				const string name = replace(pathExtractFilename(detail::getExecutableFullPathNoExe()), ":", "_");
+				const string name = defaultName();
 				CAGE_LOG(SeverityEnum::Info, "cubeb", stringizer() + "creating cubeb context, name: '" + name + "'");
 				cageCheckCubebError(cubeb_init(&c, name.c_str(), nullptr));
 				CAGE_ASSERT(c);
@@ -115,46 +126,43 @@ namespace cage
 		struct RingBuffer : Immovable
 		{
 			lock_free_audio_ring_buffer<float> ring;
-			Delegate<void(const SpeakerCallbackData &)> callback;
-			MemoryBuffer buffer;
+			Delegate<void(const SoundCallbackData &)> callback;
+			std::vector<float> buffer;
 			uint64 lastTime = 0;
 			const uint32 channels = 0;
 			const uint32 sampleRate = 0;
 
-			RingBuffer(uint32 channels, uint32 sampleRate, Delegate<void(const SpeakerCallbackData &)> callback) : ring(channels, sampleRate / 2), callback(callback), channels(channels), sampleRate(sampleRate)
+			RingBuffer(uint32 channels, uint32 sampleRate, Delegate<void(const SoundCallbackData &)> callback) : ring(channels, sampleRate / 2), callback(callback), channels(channels), sampleRate(sampleRate)
 			{}
 
-			void update(uint64 currentTime)
+			void process(uint64 currentTime)
 			{
-				if (lastTime == 0)
-				{
-					lastTime = currentTime;
-					return;
-				}
-				if (currentTime <= lastTime)
+				if (lastTime == 0 || currentTime <= lastTime)
 				{
 					lastTime = currentTime;
 					return;
 				}
 
-				const uint32 request = numeric_cast<uint32>(min(sampleRate * (currentTime - lastTime) / 1000000, (uint64)sampleRate));
-				lastTime += (uint64)request * 1000000 / sampleRate;
-				const uint32 frames = min(request, numeric_cast<uint32>(ring.available_write()));
+				const uint64 request = sampleRate * (currentTime - lastTime) / 1000000;
+				lastTime += request * 1000000 / sampleRate;
+				const uint32 frames = numeric_cast<uint32>(min(request, numeric_cast<uint64>(ring.available_write())));
+				if (request > frames)
+					CAGE_LOG_DEBUG(SeverityEnum::Warning, "sound", "sound buffer overflow");
 				if (frames == 0)
 					return;
 
-				buffer.resizeSmart(frames * sizeof(float) * channels);
-				SpeakerCallbackData data;
-				data.buffer = { (float *)buffer.data(), (float *)(buffer.data() + buffer.size()) };
+				buffer.resize(frames * channels);
+				SoundCallbackData data;
+				data.buffer = buffer;
 				data.time = lastTime;
 				data.channels = channels;
 				data.frames = frames;
 				data.sampleRate = sampleRate;
 				callback(data);
-				ring.enqueue(data.buffer.data(), frames);
+				ring.enqueue(buffer.data(), frames);
 			}
 
-			void speaker(const SpeakerCallbackData &data)
+			void speaker(const SoundCallbackData &data)
 			{
 				if (data.frames == 0)
 					return;
@@ -163,6 +171,9 @@ namespace cage
 				const uint32 n = min(numeric_cast<uint32>(ring.available_read()), data.frames);
 				uint32 r = ring.dequeue(data.buffer.data(), n);
 				CAGE_ASSERT(r == n);
+				if (r == data.frames)
+					return;
+				CAGE_LOG_DEBUG(SeverityEnum::Warning, "sound", "sound buffer underflow");
 				float *buff = data.buffer.data() + r * channels;
 				while (r < data.frames)
 				{
@@ -170,6 +181,7 @@ namespace cage
 						*buff++ = 0;
 					r++;
 				}
+				CAGE_ASSERT(buff == data.buffer.end());
 			}
 		};
 
@@ -193,16 +205,16 @@ namespace cage
 		{
 		public:
 			Holder<RingBuffer> ringBuffer;
-			Delegate<void(const SpeakerCallbackData &)> callback;
+			Delegate<void(const SoundCallbackData &)> callback;
 			cubeb_stream *stream = nullptr;
 			uint32 channels = 0;
 			uint32 sampleRate = 0;
 			uint32 latency = 0;
 			bool started = false;
 
-			SpeakerImpl(const SpeakerCreateConfig &config, Delegate<void(const SpeakerCallbackData &)> callback) : channels(config.channels), sampleRate(config.sampleRate)
+			SpeakerImpl(const SpeakerCreateConfig &config, Delegate<void(const SoundCallbackData &)> callback) : channels(config.channels), sampleRate(config.sampleRate)
 			{
-				const string name = replace(config.name, ":", "_");
+				const string name = config.name.empty() ? defaultName() : sanitizeName(config.name);
 				CAGE_LOG(SeverityEnum::Info, "sound", stringizer() + "creating speaker, name: '" + name + "'");
 				cubeb *context = cageCubebInitializeFunc();
 
@@ -248,7 +260,7 @@ namespace cage
 				if (config.ringBuffer)
 				{
 					ringBuffer = detail::systemArena().createHolder<RingBuffer>(channels, sampleRate, callback);
-					this->callback = Delegate<void(const SpeakerCallbackData &)>().bind<RingBuffer, &RingBuffer::speaker>(+ringBuffer);
+					this->callback = Delegate<void(const SoundCallbackData &)>().bind<RingBuffer, &RingBuffer::speaker>(+ringBuffer);
 				}
 				else
 					this->callback = callback;
@@ -288,15 +300,15 @@ namespace cage
 				cageCheckCubebError(cubeb_stream_stop(stream));
 			}
 
-			void update(uint64 time)
+			void process(uint64 currentTime)
 			{
 				if (ringBuffer)
-					ringBuffer->update(time);
+					ringBuffer->process(currentTime);
 			}
 
 			void dataCallback(float *output_buffer, uint32 nframes)
 			{
-				SpeakerCallbackData data;
+				SoundCallbackData data;
 				data.buffer = { output_buffer, output_buffer + channels * nframes };
 				data.channels = channels;
 				data.frames = nframes;
@@ -306,7 +318,7 @@ namespace cage
 
 			void stateCallback(cubeb_state state)
 			{
-				SpeakerCallbackData data;
+				SoundCallbackData data;
 				if (state == CUBEB_STATE_STARTED)
 				{
 					data.channels = channels;
@@ -364,13 +376,13 @@ namespace cage
 		return impl->started;
 	}
 
-	void Speaker::update(uint64 time)
+	void Speaker::process(uint64 timeStamp)
 	{
 		SpeakerImpl *impl = (SpeakerImpl *)this;
-		impl->update(time);
+		impl->process(timeStamp);
 	}
 
-	Holder<Speaker> newSpeaker(const SpeakerCreateConfig &config, Delegate<void(const SpeakerCallbackData &)> callback)
+	Holder<Speaker> newSpeaker(const SpeakerCreateConfig &config, Delegate<void(const SoundCallbackData &)> callback)
 	{
 		return detail::systemArena().createImpl<Speaker, SpeakerImpl>(config, callback);
 	}
