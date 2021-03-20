@@ -8,12 +8,16 @@ namespace cage
 	class CAGE_ENGINE_API Sound : private Immovable
 	{
 	public:
+		real referenceDistance = 1; // minimum distance to apply attenuation
+		real rolloffFactor = 1; // distance multiplier
+		real gain = 1; // linear amplitude multiplier
+
 		bool loopBeforeStart = false;
 		bool loopAfterEnd = false;
 
 		void initialize(Holder<Audio> &&audio);
 
-		void process(const SoundCallbackData &data);
+		void process(const SoundCallbackData &data); // looping is handled here but attenuation and gain are not
 	};
 
 	CAGE_ENGINE_API Holder<Sound> newSound();

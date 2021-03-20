@@ -37,20 +37,37 @@ namespace cage
 				return templates::move(h);
 			}
 
+			real voiceGain(const VoiceImpl &v) const
+			{
+				real gain = listener.gain * v.gain;
+				if (v.position.valid())
+				{
+					const real dist = max(distance(v.position, listener.position), v.referenceDistance);
+					const real att = v.referenceDistance / (v.referenceDistance + v.rolloffFactor * listener.rolloffFactor * (dist - v.referenceDistance));
+					gain *= att;
+				}
+				return gain;
+			}
+
 			void process(const SoundCallbackData &data)
 			{
 				CAGE_ASSERT(data.buffer.size() == data.frames * data.channels);
 
-				buffer.resize(data.buffer.size());
+				for (float &dst : data.buffer)
+					dst = 0;
 
-				for (VoiceImpl &v : voices)
+				buffer.resize(data.buffer.size());
+				for (const VoiceImpl &v : voices)
 				{
+					const real gain = voiceGain(v);
+					if (gain < 1e-6)
+						return;
 					SoundCallbackData d = data;
 					d.buffer = buffer;
 					v.callback(d);
 					auto src = buffer.begin();
 					for (float &dst : data.buffer)
-						dst += *src++;
+						dst += *src++ * gain.value;
 				}
 			}
 		};

@@ -207,14 +207,15 @@ namespace cage
 		uint64 startTime = 0;
 		uint32 name = 0;
 		uint32 sceneMask = 1;
-		real intensity = 1;
+		real gain = 1; // linear amplitude multiplier
 	};
 
 	struct CAGE_ENGINE_API ListenerComponent
 	{
 		static EntityComponent *component;
 		uint32 sceneMask = 1;
-		real intensity = 1;
+		real rolloffFactor = 1; // distance multiplier
+		real gain = 1; // linear amplitude multiplier
 	};
 
 	struct CAGE_ENGINE_API EngineControlThread

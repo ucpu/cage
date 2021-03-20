@@ -154,6 +154,9 @@ namespace cage
 		uint64 frames;
 		uint32 channels;
 		uint32 sampleRate;
+		real referenceDistance;
+		real rolloffFactor;
+		real gain;
 		SoundTypeEnum soundType;
 		SoundFlags flags;
 

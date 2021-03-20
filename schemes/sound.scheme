@@ -2,6 +2,25 @@
 processor = cage-asset-processor sound
 index = 20
 
+[gain]
+display = gain
+type = real
+min = 0
+default = 1.0
+
+[referenceDistance]
+display = minimum distance to apply attenuation
+type = real
+min = 0
+default = 1
+
+[rolloffFactor]
+display = roll off factor
+hint = distance multiplier
+type = real
+min = 0
+default = 1
+
 [loopBefore]
 display = loop before start
 type = bool

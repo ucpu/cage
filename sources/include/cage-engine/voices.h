@@ -10,23 +10,19 @@ namespace cage
 		Holder<Sound> sound; // optional holder
 		Delegate<void(const SoundCallbackData &)> callback;
 		vec3 position = vec3::Nan();
-		//vec3 velocity;
-		//vec3 direction;
 		sint64 startTime = 0;
-		//sint32 priority = 0; // higher priority is less likely to be deactivated
-		//vec3 attenuation = vec3(0, 0, 1); // constant, linear, quadratic
-		//real speedOfSound = 343.3; // meters per second
-		real intensity = 1;
+		real referenceDistance = 1; // minimum distance to apply attenuation
+		real rolloffFactor = 1; // distance multiplier
+		real gain = 1; // linear amplitude multiplier
 	};
 
 	struct CAGE_ENGINE_API ListenerProperties
 	{
 		quat orientation;
 		vec3 position;
-		//vec3 velocity;
-		real intensity = 1;
+		real rolloffFactor = 1; // distance multiplier
+		real gain = 1; // linear amplitude multiplier
 		uint32 maxActiveVoices = 100;
-		//bool dopplerEffect = true;
 	};
 
 	class CAGE_ENGINE_API VoicesMixer : Immovable

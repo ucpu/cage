@@ -137,12 +137,14 @@ namespace cage
 				if (!v)
 					v = l.mixer->newVoice();
 
+				v->sound = s.share();
+				v->callback.bind<Sound, &Sound::process>(+v->sound);
 				const transform t = interpolate(e.transformHistory, e.transform, interFactor);
 				v->position = t.position;
 				v->startTime = e.sound.startTime;
-				v->intensity = e.sound.intensity;
-				v->sound = templates::move(s);
-				v->callback.bind<Sound, &Sound::process>(+v->sound);
+				v->referenceDistance = s->referenceDistance;
+				v->rolloffFactor = s->rolloffFactor;
+				v->gain = e.sound.gain * s->gain;
 			}
 
 			void prepare(Listener &l, const EmitListener &e)
@@ -155,10 +157,11 @@ namespace cage
 						l.chaining->callback.bind<VoicesMixer, &VoicesMixer::process>(+l.mixer);
 					}
 					ListenerProperties &p = l.mixer->listener();
-					p.intensity = e.listener.intensity;
 					const transform t = interpolate(e.transformHistory, e.transform, interFactor);
 					p.position = t.position;
 					p.orientation = t.orientation;
+					p.rolloffFactor = e.listener.rolloffFactor;
+					p.gain = e.listener.gain;
 				}
 
 				{ // remove obsolete

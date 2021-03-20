@@ -58,6 +58,9 @@ namespace cage
 			CAGE_ASSERT(snd.frames == poly->frames());
 			CAGE_ASSERT(snd.sampleRate == poly->sampleRate());
 			Holder<Sound> source = newSound();
+			source->referenceDistance = snd.referenceDistance;
+			source->rolloffFactor = snd.rolloffFactor;
+			source->gain = snd.gain;
 			source->loopBeforeStart = any(snd.flags & SoundFlags::LoopBeforeStart);
 			source->loopAfterEnd = any(snd.flags & SoundFlags::LoopAfterEnd);
 			source->initialize(templates::move(poly));

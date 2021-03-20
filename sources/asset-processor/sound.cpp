@@ -15,6 +15,9 @@ void processSound()
 	sds.sampleRate = audio->sampleRate();
 	const uint64 rawSize = sds.frames * sds.channels * sizeof(float);
 
+	sds.referenceDistance = toFloat(properties("referenceDistance"));
+	sds.rolloffFactor = toFloat(properties("rolloffFactor"));
+	sds.gain = toFloat(properties("gain"));
 	if (toBool(properties("loopBefore")))
 		sds.flags = sds.flags | SoundFlags::LoopBeforeStart;
 	if (toBool(properties("loopAfter")))
