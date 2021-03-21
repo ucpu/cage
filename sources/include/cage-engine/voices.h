@@ -5,18 +5,16 @@
 
 namespace cage
 {
-	struct CAGE_ENGINE_API VoiceProperties
+	struct CAGE_ENGINE_API Voice
 	{
-		Holder<Sound> sound; // optional holder
+		Holder<Sound> sound; // use exactly one of sound or callback
 		Delegate<void(const SoundCallbackData &)> callback;
 		vec3 position = vec3::Nan();
 		sint64 startTime = 0;
-		real referenceDistance = 1; // minimum distance to apply attenuation
-		real rolloffFactor = 1; // distance multiplier
 		real gain = 1; // linear amplitude multiplier
 	};
 
-	struct CAGE_ENGINE_API ListenerProperties
+	struct CAGE_ENGINE_API Listener
 	{
 		quat orientation;
 		vec3 position;
@@ -28,9 +26,9 @@ namespace cage
 	class CAGE_ENGINE_API VoicesMixer : Immovable
 	{
 	public:
-		Holder<VoiceProperties> newVoice();
+		Holder<Voice> newVoice();
 
-		ListenerProperties &listener();
+		Listener &listener();
 
 		void process(const SoundCallbackData &data);
 	};

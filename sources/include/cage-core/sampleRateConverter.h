@@ -17,7 +17,7 @@ namespace cage
 	struct SampleRateConverterCreateConfig
 	{
 #ifdef CAGE_DEBUG
-		static constexpr uint32 DefaultQuality = 2;
+		static constexpr uint32 DefaultQuality = 1;
 #else
 		static constexpr uint32 DefaultQuality = 3;
 #endif // CAGE_DEBUG

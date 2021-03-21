@@ -60,7 +60,7 @@ namespace cage
 				data.src_ratio = ratio;
 				data.end_of_input = 1;
 				handleError(src_process(state, &data));
-				CAGE_ASSERT(data.output_frames_gen == data.output_frames);
+				//CAGE_ASSERT(data.output_frames_gen == data.output_frames);
 			}
 
 			void convert(PointerRange<const float> src, PointerRange<float> dst, double startRatio, double endRatio)

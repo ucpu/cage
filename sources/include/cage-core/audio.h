@@ -72,7 +72,7 @@ namespace cage
 	public:
 		const Audio *source() const;
 
-		void decode(uint64 frame, PointerRange<float> buffer);
+		void decode(uint64 startFrame, PointerRange<float> buffer);
 	};
 
 	CAGE_CORE_API Holder<AudioStream> newAudioStream(Holder<Audio> &&audio);

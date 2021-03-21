@@ -1,10 +1,10 @@
-#include <cage-core/ambisonicsConverter.h>
+#include <cage-core/audioDirectionalConverter.h>
 
 namespace cage
 {
 	namespace
 	{
-		const vec3 defaultSpeakerDirections[8][8] = {
+		const vec3 DefaultSpeakerDirections[8][8] = {
 			{ // mono
 				normalize(vec3(+0, 0, -1)), // C
 			},
@@ -59,27 +59,28 @@ namespace cage
 			},
 		};
 
-		class AmbisonicsConverterImpl : public AmbisonicsConverter
+		class AudioDirectionalConverterImpl : public AudioDirectionalConverter
 		{
 		public:
-			const AmbisonicsConverterCreateConfig config;
+			const AudioDirectionalConverterCreateConfig config;
 
-			AmbisonicsConverterImpl(const AmbisonicsConverterCreateConfig &config) : config(config)
+			AudioDirectionalConverterImpl(const AudioDirectionalConverterCreateConfig &config) : config(config)
 			{
 				CAGE_ASSERT(config.channels > 0 && config.channels <= 8);
 			}
 
-			void process(PointerRange<const float> srcMono, PointerRange<float> dstPoly, const AmbisonicsData &data)
+			void process(PointerRange<const float> srcMono, PointerRange<float> dstPoly, const AudioDirectionalData &data)
 			{
 				CAGE_ASSERT((dstPoly.size() % config.channels) == 0);
 				CAGE_ASSERT(srcMono.size() * config.channels == dstPoly.size());
 
 				real factors[8];
 				{
-					const real mono = 0.7;
+					const vec3 direction = normalize(conjugate(data.listenerOrientation) * (data.sourcePosition - data.listenerPosition));
+					const real mono = 0.3;
 					for (uint32 ch = 0; ch < config.channels; ch++)
 					{
-						factors[ch] = dot(data.direction, defaultSpeakerDirections[ch][config.channels]) * 0.5 + 0.5;
+						factors[ch] = dot(direction, DefaultSpeakerDirections[config.channels][ch]) * 0.5 + 0.5;
 						factors[ch] = mono + factors[ch] * (1 - mono);
 					}
 				}
@@ -95,14 +96,20 @@ namespace cage
 		};
 	}
 
-	void AmbisonicsConverter::process(PointerRange<const float> srcMono, PointerRange<float> dstPoly, const AmbisonicsData &data)
+	uint32 AudioDirectionalConverter::channels() const
 	{
-		AmbisonicsConverterImpl *impl = (AmbisonicsConverterImpl *)this;
+		const AudioDirectionalConverterImpl *impl = (const AudioDirectionalConverterImpl *)this;
+		return impl->config.channels;
+	}
+
+	void AudioDirectionalConverter::process(PointerRange<const float> srcMono, PointerRange<float> dstPoly, const AudioDirectionalData &data)
+	{
+		AudioDirectionalConverterImpl *impl = (AudioDirectionalConverterImpl *)this;
 		impl->process(srcMono, dstPoly, data);
 	}
 
-	Holder<AmbisonicsConverter> newAmbisonicsConverter(const AmbisonicsConverterCreateConfig &config)
+	Holder<AudioDirectionalConverter> newAudioDirectionalConverter(const AudioDirectionalConverterCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<AmbisonicsConverter, AmbisonicsConverterImpl>(config);
+		return detail::systemArena().createImpl<AudioDirectionalConverter, AudioDirectionalConverterImpl>(config);
 	}
 }

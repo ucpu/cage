@@ -95,10 +95,10 @@ namespace cage
 			Holder<VoicesMixer> voiceOverBus;
 			Holder<VoicesMixer> effectsBus;
 			Holder<VoicesMixer> guiBus;
-			Holder<VoiceProperties> musicVoice;
-			Holder<VoiceProperties> voiceOverVoice;
-			Holder<VoiceProperties> effectsVoice;
-			Holder<VoiceProperties> guiVoice;
+			Holder<Voice> musicVoice;
+			Holder<Voice> voiceOverVoice;
+			Holder<Voice> effectsVoice;
+			Holder<Voice> guiVoice;
 			Holder<Gui> gui;
 			Holder<EntityManager> entities;
 

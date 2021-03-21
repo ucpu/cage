@@ -123,9 +123,6 @@ namespace cage
 	struct ivec3;
 	struct ivec4;
 
-	struct AmbisonicsData;
-	class AmbisonicsConverter;
-	struct AmbisonicsConverterCreateConfig;
 	class AssetManager;
 	struct AssetManagerCreateConfig;
 	struct AssetContext;
@@ -135,6 +132,11 @@ namespace cage
 	enum class AudioFormatEnum : uint32;
 	class Audio;
 	class AudioStream;
+	class AudioChannelsConverter;
+	struct AudioChannelsConverterCreateConfig;
+	struct AudioDirectionalData;
+	class AudioDirectionalConverter;
+	struct AudioDirectionalConverterCreateConfig;
 	enum class StereoModeEnum : uint32;
 	enum class StereoEyeEnum : uint32;
 	struct StereoCameraInput;

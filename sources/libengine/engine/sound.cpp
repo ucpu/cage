@@ -47,13 +47,13 @@ namespace cage
 			uint64 time = 0;
 		};
 
-		struct Listener
+		struct PrepareListener
 		{
 			// todo split by sound category (music / voice over / effect)
 			Holder<VoicesMixer> mixer;
-			Holder<VoiceProperties> chaining; // register this mixer in the engine effects mixer
+			Holder<Voice> chaining; // register this mixer in the engine effects mixer
 
-			robin_hood::unordered_map<uintPtr, Holder<VoiceProperties>> voicesMapping;
+			robin_hood::unordered_map<uintPtr, Holder<Voice>> voicesMapping;
 		};
 
 		struct SoundPrepareImpl
@@ -67,7 +67,7 @@ namespace cage
 			uint64 dispatchTime = 0;
 			real interFactor;
 
-			robin_hood::unordered_map<uintPtr, Listener> listenersMapping;
+			robin_hood::unordered_map<uintPtr, PrepareListener> listenersMapping;
 
 			explicit SoundPrepareImpl(const EngineCreateConfig &config)
 			{
@@ -125,7 +125,7 @@ namespace cage
 				}
 			}
 
-			void prepare(Listener &l, Holder<VoiceProperties> &v, const EmitSound &e)
+			void prepare(PrepareListener &l, Holder<Voice> &v, const EmitSound &e)
 			{
 				Holder<Sound> s = engineAssets()->get<AssetSchemeIndexSound, Sound>(e.sound.name);
 				if (!s)
@@ -138,16 +138,13 @@ namespace cage
 					v = l.mixer->newVoice();
 
 				v->sound = s.share();
-				v->callback.bind<Sound, &Sound::process>(+v->sound);
 				const transform t = interpolate(e.transformHistory, e.transform, interFactor);
 				v->position = t.position;
 				v->startTime = e.sound.startTime;
-				v->referenceDistance = s->referenceDistance;
-				v->rolloffFactor = s->rolloffFactor;
-				v->gain = e.sound.gain * s->gain;
+				v->gain = e.sound.gain;
 			}
 
-			void prepare(Listener &l, const EmitListener &e)
+			void prepare(PrepareListener &l, const EmitListener &e)
 			{
 				{ // listener
 					if (!l.mixer)
@@ -156,7 +153,7 @@ namespace cage
 						l.chaining = engineEffectsMixer()->newVoice();
 						l.chaining->callback.bind<VoicesMixer, &VoicesMixer::process>(+l.mixer);
 					}
-					ListenerProperties &p = l.mixer->listener();
+					Listener &p = l.mixer->listener();
 					const transform t = interpolate(e.transformHistory, e.transform, interFactor);
 					p.position = t.position;
 					p.orientation = t.orientation;

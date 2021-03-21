@@ -94,8 +94,8 @@ namespace cage
 	class Sound;
 	class Speaker;
 	struct SpeakerCreateConfig;
-	struct VoiceProperties;
-	struct ListenerProperties;
+	struct Voice;
+	struct Listener;
 	class VoicesMixer;
 	struct VoicesMixerCreateConfig;
 

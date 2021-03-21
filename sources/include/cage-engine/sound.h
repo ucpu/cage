@@ -17,7 +17,17 @@ namespace cage
 
 		void initialize(Holder<Audio> &&audio);
 
-		void process(const SoundCallbackData &data); // looping is handled here but attenuation and gain are not
+		uint64 frames() const;
+		uint32 channels() const;
+		uint32 sampleRate() const;
+		uint64 duration() const; // microseconds
+
+		// looping is handled here but attenuation and gain are not
+		void decode(uint64 startFrame, PointerRange<float> buffer);
+
+		// requires matching sample rate and channels
+		// looping is handled here but attenuation and gain are not
+		void process(const SoundCallbackData &data);
 	};
 
 	CAGE_ENGINE_API Holder<Sound> newSound();
