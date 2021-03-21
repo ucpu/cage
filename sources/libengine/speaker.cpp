@@ -144,22 +144,21 @@ namespace cage
 				}
 
 				const uint64 request = sampleRate * (currentTime - lastTime) / 1000000;
+				SoundCallbackData data;
+				data.frames = numeric_cast<uint32>(min(request, numeric_cast<uint64>(ring.available_write())));
+				data.time = lastTime; // it must correspond to the beginning of the buffer, otherwise varying number of frames would skew it
 				lastTime += request * 1000000 / sampleRate;
-				const uint32 frames = numeric_cast<uint32>(min(request, numeric_cast<uint64>(ring.available_write())));
-				if (request > frames)
+				if (request > data.frames)
 					CAGE_LOG_DEBUG(SeverityEnum::Warning, "sound", "sound buffer overflow");
-				if (frames == 0)
+				if (data.frames == 0)
 					return;
 
-				buffer.resize(frames * channels);
-				SoundCallbackData data;
+				buffer.resize(data.frames * channels);
 				data.buffer = buffer;
-				data.time = lastTime;
 				data.channels = channels;
-				data.frames = frames;
 				data.sampleRate = sampleRate;
 				callback(data);
-				ring.enqueue(buffer.data(), frames);
+				ring.enqueue(buffer.data(), data.frames);
 			}
 
 			void speaker(const SoundCallbackData &data)
