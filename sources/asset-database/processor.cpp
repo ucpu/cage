@@ -3,6 +3,7 @@
 #include <cage-core/process.h>
 #include <cage-core/threadPool.h>
 #include <cage-core/debug.h>
+#include <cage-core/math.h>
 
 #include "database.h"
 
@@ -46,6 +47,31 @@ namespace
 	HolderSet<Scheme> schemes;
 	HolderSet<Asset> assets;
 	HolderSet<Databank> corruptedDatabanks;
+
+	string convertAssetName(const string &name, const string &databank)
+	{
+		string detail;
+		string p = name;
+		{
+			const uint32 sep = min(find(p, '?'), find(p, ';'));
+			detail = subString(p, sep, m);
+			p = subString(p, 0, sep);
+		}
+		if (p.empty())
+			CAGE_THROW_ERROR(Exception, "empty path");
+		if (pathIsAbs(p))
+		{
+			if (p[0] != '/')
+				CAGE_THROW_ERROR(Exception, "absolute path with protocol");
+			while (!p.empty() && p[0] == '/')
+				p = subString(p, 1, m);
+		}
+		else
+			p = pathJoin(pathExtractDirectory(databank), p);
+		if (p.empty())
+			CAGE_THROW_ERROR(Exception, "empty path");
+		return p + detail;
+	}
 
 	bool parseDatabank(const string &path)
 	{
@@ -106,12 +132,19 @@ namespace
 				if (!isDigitsOnly(assItem))
 					continue; // not an asset
 
+				bool ok = true;
 				Asset ass;
 				ass.scheme = scheme;
 				ass.databank = path;
 				ass.name = ini->getString(section, assItem);
-				ass.name = pathJoinUnchecked(pathExtractDirectory(ass.databank), ass.name); // no check: the name may contain additional specifiers which are not valid in path
-				bool ok = true;
+				try
+				{
+					ass.name = convertAssetName(ass.name, path);
+				}
+				catch (const cage::Exception &)
+				{
+					ok = false;
+				}
 
 				// check for duplicate asset name
 				// (in case of multiple databanks in one folder)

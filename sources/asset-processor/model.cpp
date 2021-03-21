@@ -131,9 +131,9 @@ namespace
 		);
 
 		const string pathBase = pathExtractDirectory(path);
-		loadTextureCage(pathBase, dsm, ini.get(), "albedo", CAGE_SHADER_TEXTURE_ALBEDO);
-		loadTextureCage(pathBase, dsm, ini.get(), "special", CAGE_SHADER_TEXTURE_SPECIAL);
-		loadTextureCage(pathBase, dsm, ini.get(), "normal", CAGE_SHADER_TEXTURE_NORMAL);
+		loadTextureCage(pathBase, dsm, +ini, "albedo", CAGE_SHADER_TEXTURE_ALBEDO);
+		loadTextureCage(pathBase, dsm, +ini, "special", CAGE_SHADER_TEXTURE_SPECIAL);
+		loadTextureCage(pathBase, dsm, +ini, "normal", CAGE_SHADER_TEXTURE_NORMAL);
 
 		for (const string &n : ini->items("flags"))
 		{
