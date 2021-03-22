@@ -63,9 +63,7 @@ namespace cage
 				if (!mouseEnabled(buttons))
 					return false;
 				ivec2 pt2 = centerMouse();
-				sint32 dx = pt2[0] - pt[0];
-				sint32 dy = pt2[1] - pt[1];
-				mouseMoveAccum += vec2(dx, dy);
+				mouseMoveAccum += vec2(pt2 - pt);
 				return false;
 			}
 

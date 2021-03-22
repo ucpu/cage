@@ -22,7 +22,7 @@ namespace cage
 			CAGE_ASSERT(mask.size() == signature.size());
 			for (uint32 i = 0; i < signature.size(); i++)
 			{
-				if (buffer[i] * mask[i] != signature[i])
+				if (uint8(buffer[i]) * mask[i] != signature[i])
 					return -1;
 			}
 			return 0;
@@ -40,13 +40,17 @@ namespace cage
 			constexpr const uint8 wavSignature[12] = { 0x52, 0x49, 0x46, 0x46, 0,0,0,0, 0x57, 0x41, 0x56, 0x45 };
 			constexpr const uint8 wavSignatureMask[12] = { 1,1,1,1, 0,0,0,0, 1,1,1,1 };
 			constexpr const uint8 flacSignature[4] = { 0x66, 0x4C, 0x61, 0x43 };
-			constexpr const uint8 mp3Signature[3] = { 0x49, 0x44, 0x33 };
+			constexpr const uint8 mp3Signatures[4][3] = { { 0x49, 0x44, 0x33 }, { 0xFF, 0xFB, 0 }, { 0xFF, 0xF3, 0 }, { 0xFF, 0xF2, 0 } };
+			constexpr const uint8 mp3SignaturesMasks[4][3] = { { 1,1,1 }, { 1,1,0 }, { 1,1,0 }, { 1,1,0 } };
 			constexpr const uint8 oggSignature[4] = { 0x4F, 0x67, 0x67, 0x53 };
 			if (copmpareWithMask(buffer, wavSignature, wavSignatureMask) == 0)
 				wavDecode(buffer, impl);
 			else if (detail::memcmp(buffer.data(), flacSignature, sizeof(flacSignature)) == 0)
 				flacDecode(buffer, impl);
-			else if (detail::memcmp(buffer.data(), mp3Signature, sizeof(mp3Signature)) == 0)
+			else if (copmpareWithMask(buffer, mp3Signatures[0], mp3SignaturesMasks[0]) == 0
+				|| copmpareWithMask(buffer, mp3Signatures[1], mp3SignaturesMasks[1]) == 0
+				|| copmpareWithMask(buffer, mp3Signatures[2], mp3SignaturesMasks[2]) == 0
+				|| copmpareWithMask(buffer, mp3Signatures[3], mp3SignaturesMasks[3]) == 0)
 				mp3Decode(buffer, impl);
 			else if (detail::memcmp(buffer.data(), oggSignature, sizeof(oggSignature)) == 0)
 				oggDecode(buffer, impl);

@@ -18,9 +18,17 @@ namespace cage
 	{
 		if (impl->format == AudioFormatEnum::Vorbis)
 			return impl->mem.copy();
-		else
+		else if (impl->format == AudioFormatEnum::Float)
 		{
 			VorbisEncoder enc(impl);
+			enc.encode();
+			return templates::move(enc.outputBuffer);
+		}
+		else
+		{
+			Holder<Audio> a = impl->copy();
+			audioConvertFormat(+a, AudioFormatEnum::Float);
+			VorbisEncoder enc((AudioImpl *)+a);
 			enc.encode();
 			return templates::move(enc.outputBuffer);
 		}
