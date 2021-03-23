@@ -76,7 +76,7 @@ namespace cage
 				decodeLoop(buffer, bufferOffset, startFrame, frames);
 			}
 
-			void decode(uint64 startFrame, PointerRange<float> buffer)
+			void decode(sint64 startFrame, PointerRange<float> buffer)
 			{
 				CAGE_ASSERT(buffer.size() % channels == 0);
 				resolveLooping(buffer, startFrame, buffer.size() / channels);
@@ -121,7 +121,7 @@ namespace cage
 		return 1000000 * frames() / sampleRate();
 	}
 
-	void Sound::decode(uint64 startFrame, PointerRange<float> buffer)
+	void Sound::decode(sint64 startFrame, PointerRange<float> buffer)
 	{
 		SoundImpl *impl = (SoundImpl *)this;
 		impl->decode(startFrame, buffer);

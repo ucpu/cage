@@ -23,7 +23,7 @@ namespace cage
 		uint64 duration() const; // microseconds
 
 		// looping is handled here but attenuation and gain are not
-		void decode(uint64 startFrame, PointerRange<float> buffer);
+		void decode(sint64 startFrame, PointerRange<float> buffer);
 
 		// requires matching sample rate and channels
 		// looping is handled here but attenuation and gain are not

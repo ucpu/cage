@@ -80,7 +80,7 @@ namespace cage
 				{
 					const uint32 channels = v.sound->channels();
 					const uint32 sampleRate = v.sound->sampleRate();
-					const uint64 startFrame = data.time * sampleRate / 1000000;
+					const uint64 startFrame = (data.time - v.startTime) * sampleRate / 1000000;
 					const uint64 frames = data.frames * sampleRate / data.sampleRate;
 					tmp1.resize(frames * channels);
 					v.sound->decode(startFrame, tmp1);
