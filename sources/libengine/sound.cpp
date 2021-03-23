@@ -10,9 +10,9 @@ namespace cage
 		{
 		public:
 			Holder<AudioStream> stream;
-			uint64 length = 0;
-			uint32 channels = 0;
-			uint32 sampleRate = 0;
+			sint64 length = 0;
+			sint32 channels = 0;
+			sint32 sampleRate = 0;
 
 			void initialize(Holder<Audio> &&audio)
 			{
@@ -22,23 +22,25 @@ namespace cage
 				sampleRate = stream->source()->sampleRate();
 			}
 
-			void decodeOne(PointerRange<float> buffer, uint64 bufferOffset, sint64 streamOffset, uint64 frames)
+			void decodeOne(PointerRange<float> buffer, sint64 bufferOffset, sint64 streamOffset, sint64 frames) const
 			{
-				CAGE_ASSERT(streamOffset >= 0);
-				CAGE_ASSERT(streamOffset + frames <= stream->source()->frames());
-				CAGE_ASSERT((bufferOffset + frames) * channels <= buffer.size());
+				CAGE_ASSERT(bufferOffset >= 0 && streamOffset >= 0 && frames >= 0);
+				CAGE_ASSERT(streamOffset + frames <= length);
+				CAGE_ASSERT((bufferOffset + frames) * channels <= numeric_cast<sint64>(buffer.size()));
 				stream->decode(streamOffset, { buffer.data() + channels * bufferOffset, buffer.data() + channels * (bufferOffset + frames) });
 			}
 
-			void decodeLoop(PointerRange<float> buffer, uint64 bufferOffset, sint64 streamOffset, uint64 frames)
+			void decodeLoop(PointerRange<float> buffer, sint64 bufferOffset, sint64 streamOffset, sint64 frames) const
 			{
+				CAGE_ASSERT(bufferOffset >= 0 && frames >= 0);
+				CAGE_ASSERT((bufferOffset + frames) * channels <= numeric_cast<sint64>(buffer.size()));
 				if (streamOffset < 0)
-					streamOffset += ((length - streamOffset) / length) * length;
+					streamOffset += (-streamOffset / length + 1) * length;
 				while (frames)
 				{
 					CAGE_ASSERT(streamOffset >= 0);
 					streamOffset %= length;
-					const uint64 f = min(streamOffset + frames, length) - streamOffset; // streamOffset + frames > length ? length - frames - streamOffset : frames;
+					const sint64 f = min(streamOffset + frames, length) - streamOffset;
 					CAGE_ASSERT(f > 0 && f <= frames && streamOffset + f <= length);
 					decodeOne(buffer, bufferOffset, streamOffset, f);
 					bufferOffset += f;
@@ -47,33 +49,55 @@ namespace cage
 				}
 			}
 
-			void zeroFill(PointerRange<float> buffer, uint64 bufferOffset, uint64 frames)
+			void zeroFill(PointerRange<float> buffer, sint64 bufferOffset, sint64 frames) const
 			{
-				CAGE_ASSERT((bufferOffset + frames) * channels <= buffer.size());
-				for (uint64 i = 0; i < frames; i++)
-					for (uint32 ch = 0; ch < channels; ch++)
-						buffer[(bufferOffset + i) * channels + ch] = 0;
+				CAGE_ASSERT(bufferOffset >= 0 && frames >= 0);
+				CAGE_ASSERT((bufferOffset + frames) * channels <= numeric_cast<sint64>(buffer.size()));
+				detail::memset(buffer.data() + channels * bufferOffset, 0, channels * frames * sizeof(float));
 			}
 
-			void resolveLooping(PointerRange<float> buffer, sint64 startFrame, uint64 frames)
+			void resolveLooping(PointerRange<float> buffer, sint64 startFrame, sint64 frames) const
 			{
-				CAGE_ASSERT(buffer.size() == frames * channels);
-				uint64 bufferOffset = 0;
-				if (!loopBeforeStart && startFrame < 0)
-				{
-					zeroFill(buffer, 0, -startFrame);
-					bufferOffset += -startFrame;
-					frames -= -startFrame;
-					startFrame = 0;
+				CAGE_ASSERT(frames >= 0);
+				CAGE_ASSERT(frames * channels == numeric_cast<sint64>(buffer.size()));
+
+				sint64 bufferOffset = 0;
+
+				if (startFrame < 0)
+				{ // before start
+					const sint64 r = min(-startFrame, frames);
+					if (loopBeforeStart)
+						decodeLoop(buffer, bufferOffset, startFrame, r);
+					else
+						zeroFill(buffer, bufferOffset, r);
+					bufferOffset += r;
+					frames -= r;
+					startFrame += r;
 				}
-				CAGE_ASSERT((bufferOffset + frames) * channels == buffer.size());
-				if (!loopAfterEnd && startFrame + frames > length)
-				{
-					const uint64 cnt = startFrame + frames - length;
-					zeroFill(buffer, bufferOffset + frames - cnt, cnt);
-					frames -= cnt;
+
+				if (startFrame < length && frames)
+				{ // inside
+					const sint64 r = min(length - startFrame, frames);
+					decodeOne(buffer, bufferOffset, startFrame, r);
+					bufferOffset += r;
+					frames -= r;
+					startFrame += r;
 				}
-				decodeLoop(buffer, bufferOffset, startFrame, frames);
+
+				if (startFrame >= length && frames)
+				{ // after end
+					const sint64 r = frames;
+					if (loopAfterEnd)
+						decodeLoop(buffer, bufferOffset, startFrame, r);
+					else
+						zeroFill(buffer, bufferOffset, r);
+					bufferOffset += r;
+					frames -= r;
+					startFrame += r;
+				}
+
+				CAGE_ASSERT(bufferOffset * channels == numeric_cast<sint64>(buffer.size()));
+				CAGE_ASSERT(frames == 0);
 			}
 
 			void decode(sint64 startFrame, PointerRange<float> buffer)
