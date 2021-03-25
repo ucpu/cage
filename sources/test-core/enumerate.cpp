@@ -1,6 +1,7 @@
 #include "main.h"
 #include <cage-core/enumerate.h>
 #include <cage-core/pointerRangeHolder.h>
+#include <cage-core/flatSet.h>
 
 #include <vector>
 #include <map>
@@ -233,6 +234,19 @@ void testEnumerate()
 			it.get()++;
 		CAGE_TEST(vec[0] == 14);
 		CAGE_TEST(vec[1] == 43);
+	}
+
+	{
+		CAGE_TESTCASE("flat set");
+		FlatSet<uint32> fs;
+		fs.insert(13);
+		fs.insert(42);
+		uint32 i = 0;
+		for (const auto &it : enumerate(fs))
+		{
+			CAGE_TEST(it.index == i++);
+		}
+		CAGE_TEST(i == fs.size());
 	}
 
 	// todo fix these

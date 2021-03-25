@@ -18,6 +18,7 @@ namespace cage
 		using value_type = Value;
 		using const_iterator = typename std::vector<Value>::const_iterator;
 		using const_reverse_iterator = typename std::vector<Value>::const_reverse_iterator;
+		using size_type = typename std::vector<Value>::size_type;
 
 		FlatSet() = default;
 		FlatSet(const FlatSet &other) = default;
