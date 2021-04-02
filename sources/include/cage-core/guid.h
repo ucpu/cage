@@ -12,7 +12,7 @@ namespace cage
 	}
 
 	template<uint32 N>
-	struct Guid : templates::Comparable<Guid<N>>
+	struct Guid
 	{
 		explicit Guid(bool randomize = false)
 		{
@@ -29,10 +29,8 @@ namespace cage
 			return privat::guidToString(data, N);
 		}
 
-		friend int compare(const Guid &a, const Guid &b) noexcept
-		{
-			return privat::stringComparison((char*)a.data, N, (char*)b.data, N);
-		}
+		auto operator <=> (const Guid &) const noexcept = default;
+		bool operator == (const Guid &) const noexcept = default;
 	};
 }
 

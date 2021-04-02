@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <limits>
 #include <type_traits>
+#include <compare>
 
 #if !defined(CAGE_DEBUG) && !defined(NDEBUG)
 #define CAGE_DEBUG
@@ -323,15 +324,19 @@ namespace cage
 			{
 				return std::numeric_limits<T>::max();
 			}
-		};
 
-		// todo replace with spaceship operator (c++20)
-		template<class T> CAGE_FORCE_INLINE constexpr bool operator == (T lhs, MaxValue rhs) noexcept { return lhs == std::numeric_limits<T>::max(); }
-		template<class T> CAGE_FORCE_INLINE constexpr bool operator != (T lhs, MaxValue rhs) noexcept { return lhs != std::numeric_limits<T>::max(); }
-		template<class T> CAGE_FORCE_INLINE constexpr bool operator <= (T lhs, MaxValue rhs) noexcept { return lhs <= std::numeric_limits<T>::max(); }
-		template<class T> CAGE_FORCE_INLINE constexpr bool operator >= (T lhs, MaxValue rhs) noexcept { return lhs >= std::numeric_limits<T>::max(); }
-		template<class T> CAGE_FORCE_INLINE constexpr bool operator <  (T lhs, MaxValue rhs) noexcept { return lhs <  std::numeric_limits<T>::max(); }
-		template<class T> CAGE_FORCE_INLINE constexpr bool operator >  (T lhs, MaxValue rhs) noexcept { return lhs >  std::numeric_limits<T>::max(); }
+			template<class T>
+			CAGE_FORCE_INLINE constexpr auto operator <=> (T rhs) const noexcept
+			{
+				return std::numeric_limits<T>::max() <=> rhs;
+			}
+
+			template<class T>
+			CAGE_FORCE_INLINE constexpr bool operator == (T rhs) const noexcept
+			{
+				return std::numeric_limits<T>::max() == rhs;
+			}
+		};
 	}
 
 	constexpr privat::MaxValue m = privat::MaxValue();
@@ -340,18 +345,6 @@ namespace cage
 
 	namespace templates
 	{
-		// todo replace with spaceship operator (c++20)
-		template<class T>
-		struct Comparable
-		{
-			CAGE_FORCE_INLINE friend bool operator == (const T &lhs, const T &rhs) noexcept { return compare(lhs, rhs) == 0; }
-			CAGE_FORCE_INLINE friend bool operator != (const T &lhs, const T &rhs) noexcept { return compare(lhs, rhs) != 0; }
-			CAGE_FORCE_INLINE friend bool operator <= (const T &lhs, const T &rhs) noexcept { return compare(lhs, rhs) <= 0; }
-			CAGE_FORCE_INLINE friend bool operator >= (const T &lhs, const T &rhs) noexcept { return compare(lhs, rhs) >= 0; }
-			CAGE_FORCE_INLINE friend bool operator <  (const T &lhs, const T &rhs) noexcept { return compare(lhs, rhs) <  0; }
-			CAGE_FORCE_INLINE friend bool operator >  (const T &lhs, const T &rhs) noexcept { return compare(lhs, rhs) >  0; }
-		};
-
 		template<class T> CAGE_FORCE_INLINE constexpr T &&forward(typename std::remove_reference<T>::type  &v) noexcept { return static_cast<T&&>(v); }
 		template<class T> CAGE_FORCE_INLINE constexpr T &&forward(typename std::remove_reference<T>::type &&v) noexcept { static_assert(!std::is_lvalue_reference<T>::value, "invalid rvalue to lvalue conversion"); return static_cast<T&&>(v); }
 		template<class T> CAGE_FORCE_INLINE constexpr typename std::remove_reference<T>::type &&move(T &&v) noexcept { return static_cast<typename std::remove_reference<T>::type&&>(v); }
@@ -360,15 +353,15 @@ namespace cage
 	// enum class bit operators
 
 	template<class T> struct enable_bitmask_operators { static constexpr bool enable = false; };
-	template<class T> CAGE_FORCE_INLINE constexpr typename std::enable_if<enable_bitmask_operators<T>::enable, T>::type operator ~ (T lhs) noexcept { typedef typename std::underlying_type<T>::type underlying; return static_cast<T>(~static_cast<underlying>(lhs)); }
-	template<class T> CAGE_FORCE_INLINE constexpr typename std::enable_if<enable_bitmask_operators<T>::enable, T>::type operator | (T lhs, T rhs) noexcept { typedef typename std::underlying_type<T>::type underlying; return static_cast<T>(static_cast<underlying>(lhs) | static_cast<underlying>(rhs)); }
-	template<class T> CAGE_FORCE_INLINE constexpr typename std::enable_if<enable_bitmask_operators<T>::enable, T>::type operator & (T lhs, T rhs) noexcept { typedef typename std::underlying_type<T>::type underlying; return static_cast<T>(static_cast<underlying>(lhs) & static_cast<underlying>(rhs)); }
-	template<class T> CAGE_FORCE_INLINE constexpr typename std::enable_if<enable_bitmask_operators<T>::enable, T>::type operator ^ (T lhs, T rhs) noexcept { typedef typename std::underlying_type<T>::type underlying; return static_cast<T>(static_cast<underlying>(lhs) ^ static_cast<underlying>(rhs)); }
-	template<class T> CAGE_FORCE_INLINE constexpr typename std::enable_if<enable_bitmask_operators<T>::enable, T>::type operator |= (T &lhs, T rhs) noexcept { typedef typename std::underlying_type<T>::type underlying; return lhs = static_cast<T>(static_cast<underlying>(lhs) | static_cast<underlying>(rhs)); }
-	template<class T> CAGE_FORCE_INLINE constexpr typename std::enable_if<enable_bitmask_operators<T>::enable, T>::type operator &= (T &lhs, T rhs) noexcept { typedef typename std::underlying_type<T>::type underlying; return lhs = static_cast<T>(static_cast<underlying>(lhs) & static_cast<underlying>(rhs)); }
-	template<class T> CAGE_FORCE_INLINE constexpr typename std::enable_if<enable_bitmask_operators<T>::enable, T>::type operator ^= (T &lhs, T rhs) noexcept { typedef typename std::underlying_type<T>::type underlying; return lhs = static_cast<T>(static_cast<underlying>(lhs) ^ static_cast<underlying>(rhs)); }
-	template<class T> CAGE_FORCE_INLINE constexpr typename std::enable_if<enable_bitmask_operators<T>::enable, bool>::type any(T lhs) noexcept { typedef typename std::underlying_type<T>::type underlying; return static_cast<underlying>(lhs) != 0; }
-	template<class T> CAGE_FORCE_INLINE constexpr typename std::enable_if<enable_bitmask_operators<T>::enable, bool>::type none(T lhs) noexcept { typedef typename std::underlying_type<T>::type underlying; return static_cast<underlying>(lhs) == 0; }
+	template<class T> CAGE_FORCE_INLINE constexpr T operator ~ (T lhs) noexcept requires(enable_bitmask_operators<T>::enable) { typedef typename std::underlying_type<T>::type underlying; return static_cast<T>(~static_cast<underlying>(lhs)); }
+	template<class T> CAGE_FORCE_INLINE constexpr T operator | (T lhs, T rhs) noexcept requires(enable_bitmask_operators<T>::enable) { typedef typename std::underlying_type<T>::type underlying; return static_cast<T>(static_cast<underlying>(lhs) | static_cast<underlying>(rhs)); }
+	template<class T> CAGE_FORCE_INLINE constexpr T operator & (T lhs, T rhs) noexcept requires(enable_bitmask_operators<T>::enable) { typedef typename std::underlying_type<T>::type underlying; return static_cast<T>(static_cast<underlying>(lhs) & static_cast<underlying>(rhs)); }
+	template<class T> CAGE_FORCE_INLINE constexpr T operator ^ (T lhs, T rhs) noexcept requires(enable_bitmask_operators<T>::enable) { typedef typename std::underlying_type<T>::type underlying; return static_cast<T>(static_cast<underlying>(lhs) ^ static_cast<underlying>(rhs)); }
+	template<class T> CAGE_FORCE_INLINE constexpr T operator |= (T &lhs, T rhs) noexcept requires(enable_bitmask_operators<T>::enable) { typedef typename std::underlying_type<T>::type underlying; return lhs = static_cast<T>(static_cast<underlying>(lhs) | static_cast<underlying>(rhs)); }
+	template<class T> CAGE_FORCE_INLINE constexpr T operator &= (T &lhs, T rhs) noexcept requires(enable_bitmask_operators<T>::enable) { typedef typename std::underlying_type<T>::type underlying; return lhs = static_cast<T>(static_cast<underlying>(lhs) & static_cast<underlying>(rhs)); }
+	template<class T> CAGE_FORCE_INLINE constexpr T operator ^= (T &lhs, T rhs) noexcept requires(enable_bitmask_operators<T>::enable) { typedef typename std::underlying_type<T>::type underlying; return lhs = static_cast<T>(static_cast<underlying>(lhs) ^ static_cast<underlying>(rhs)); }
+	template<class T> CAGE_FORCE_INLINE constexpr bool any(T lhs) noexcept requires(enable_bitmask_operators<T>::enable) { typedef typename std::underlying_type<T>::type underlying; return static_cast<underlying>(lhs) != 0; }
+	template<class T> CAGE_FORCE_INLINE constexpr bool none(T lhs) noexcept requires(enable_bitmask_operators<T>::enable) { typedef typename std::underlying_type<T>::type underlying; return static_cast<underlying>(lhs) == 0; }
 
 	// this macro has to be used inside namespace cage
 #define GCHL_ENUM_BITS(TYPE) template<> struct enable_bitmask_operators<TYPE> { static constexpr bool enable = true; };
@@ -460,13 +453,22 @@ namespace cage
 		struct StringizerBase;
 
 		template<uint32 N>
-		struct StringBase : templates::Comparable<StringBase<N>>
+		struct StringBase
 		{
 			// constructors
 			StringBase() noexcept = default;
 
 			template<uint32 M>
-			StringBase(const StringBase<M> &other)
+			StringBase(const StringBase<M> &other) noexcept requires(N >= M)
+			{
+				static_assert(N >= M);
+				current = other.length();
+				detail::memcpy(value, other.c_str(), current);
+				value[current] = 0;
+			}
+
+			template<uint32 M>
+			StringBase(const StringBase<M> &other) requires(N < M)
 			{
 				if (other.length() > N)
 					CAGE_THROW_ERROR(Exception, "string truncation");
@@ -526,6 +528,16 @@ namespace cage
 				return value[idx];
 			}
 
+			CAGE_FORCE_INLINE auto operator <=> (const StringBase &other) const noexcept
+			{
+				return privat::stringComparison(c_str(), size(), other.c_str(), other.size()) <=> 0;
+			}
+
+			CAGE_FORCE_INLINE bool operator == (const StringBase &other) const noexcept
+			{
+				return privat::stringComparison(c_str(), size(), other.c_str(), other.size()) == 0;
+			}
+
 			// methods
 			CAGE_FORCE_INLINE const char *c_str() const
 			{
@@ -580,12 +592,6 @@ namespace cage
 			char value[N + 1] = {};
 			uint32 current = 0;
 		};
-
-		template<uint32 Na, uint32 Nb>
-		CAGE_FORCE_INLINE int compare(const StringBase<Na> &a, const StringBase<Nb> &b) noexcept
-		{
-			return privat::stringComparison(a.c_str(), a.size(), b.c_str(), b.size());
-		}
 
 		template<uint32 N>
 		struct StringizerBase
@@ -940,10 +946,10 @@ namespace cage
 		CAGE_FORCE_INLINE constexpr PointerRange(T *begin, T *end) noexcept : begin_(begin), end_(end) {}
 		template<uint32 N>
 		CAGE_FORCE_INLINE constexpr PointerRange(T (&arr)[N]) noexcept : begin_(arr), end_(arr + N + privat::TerminalZero<std::remove_cv_t<T>>::value) {}
-		template<class U, std::enable_if_t<std::is_same<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>::value, int> = 0>
-		CAGE_FORCE_INLINE constexpr PointerRange(U &other) : begin_(other.data()), end_(other.data() + other.size()) {}
-		template<class U, std::enable_if_t<std::is_same<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>::value, int> = 0>
-		CAGE_FORCE_INLINE constexpr PointerRange(U &&other) : begin_(other.data()), end_(other.data() + other.size()) {}
+		template<class U>
+		CAGE_FORCE_INLINE constexpr PointerRange(U &other) requires(std::is_same_v<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>) : begin_(other.data()), end_(other.data() + other.size()) {}
+		template<class U>
+		CAGE_FORCE_INLINE constexpr PointerRange(U &&other) requires(std::is_same_v<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>) : begin_(other.data()), end_(other.data() + other.size()) {}
 
 		CAGE_FORCE_INLINE constexpr T *begin() const noexcept { return begin_; }
 		CAGE_FORCE_INLINE constexpr T *end() const noexcept { return end_; }
@@ -1100,7 +1106,7 @@ namespace cage
 				return;
 			try
 			{
-				((T*)ptr)->~T();
+				((T *)ptr)->~T();
 			}
 			catch (...)
 			{

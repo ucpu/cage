@@ -8,7 +8,7 @@ macro(cage_build_configuration)
 
 	set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 	set(CMAKE_C_STANDARD 11)
-	set(CMAKE_CXX_STANDARD 17)
+	set(CMAKE_CXX_STANDARD 20)
 
 	# default visibility hidden
 	set(CMAKE_C_VISIBILITY_PRESET hidden)
@@ -20,8 +20,10 @@ macro(cage_build_configuration)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 		# conformance to standard
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /permissive-")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive-")
 		# enforce specific c++ standard
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /std:c${CMAKE_C_STANDARD}")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++${CMAKE_CXX_STANDARD}")
 		# disable compiler warnings:
 		# d4251: class A needs to have dll-interface to be used by clients of class B

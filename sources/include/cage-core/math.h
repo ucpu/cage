@@ -29,6 +29,9 @@ namespace cage
 		explicit constexpr real(rads other) noexcept;
 		explicit constexpr real(degs other) noexcept;
 
+		auto operator <=> (const real &) const noexcept = default;
+		bool operator == (const real &) const noexcept = default;
+
 		static real parse(const string &str);
 		CAGE_FORCE_INLINE constexpr real &operator [] (uint32 idx) { CAGE_ASSERT(idx == 0); return *this; }
 		CAGE_FORCE_INLINE constexpr real operator [] (uint32 idx) const { CAGE_ASSERT(idx == 0); return *this; }
@@ -66,6 +69,9 @@ namespace cage
 		CAGE_FORCE_INLINE explicit constexpr rads(real value) noexcept : value(value) {}
 		constexpr rads(degs other) noexcept;
 
+		auto operator <=> (const rads &) const noexcept = default;
+		bool operator == (const rads &) const noexcept = default;
+
 		static rads parse(const string &str);
 		CAGE_FORCE_INLINE bool valid() const noexcept { return value.valid(); }
 		CAGE_FORCE_INLINE static constexpr rads Full() noexcept { return rads(real::Pi().value * 2); }
@@ -81,6 +87,9 @@ namespace cage
 		CAGE_FORCE_INLINE constexpr degs() noexcept {}
 		CAGE_FORCE_INLINE explicit constexpr degs(real value) noexcept : value(value) {}
 		constexpr degs(rads other) noexcept;
+
+		auto operator <=> (const degs &) const noexcept = default;
+		bool operator == (const degs &) const noexcept = default;
 
 		static degs parse(const string &str);
 		CAGE_FORCE_INLINE bool valid() const noexcept { return value.valid(); }
@@ -101,6 +110,8 @@ namespace cage
 		CAGE_FORCE_INLINE explicit constexpr vec2(const vec4 &v) noexcept;
 		CAGE_FORCE_INLINE explicit constexpr vec2(const ivec2 &v) noexcept;
 
+		bool operator == (const vec2 &) const noexcept = default;
+
 		static vec2 parse(const string &str);
 		CAGE_FORCE_INLINE constexpr real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 2); return data[idx]; }
 		CAGE_FORCE_INLINE constexpr real operator [] (uint32 idx) const { CAGE_ASSERT(idx < 2); return data[idx]; }
@@ -119,6 +130,8 @@ namespace cage
 		CAGE_FORCE_INLINE explicit constexpr ivec2(const ivec4 &v) noexcept;
 		CAGE_FORCE_INLINE explicit constexpr ivec2(const vec2 &v) noexcept;
 
+		bool operator == (const ivec2 &) const noexcept = default;
+
 		static ivec2 parse(const string &str);
 		CAGE_FORCE_INLINE constexpr sint32 &operator [] (uint32 idx) { CAGE_ASSERT(idx < 2); return data[idx]; }
 		CAGE_FORCE_INLINE constexpr sint32 operator [] (uint32 idx) const { CAGE_ASSERT(idx < 2); return data[idx]; }
@@ -134,6 +147,8 @@ namespace cage
 		CAGE_FORCE_INLINE explicit constexpr vec3(const vec2 &v, real z) noexcept : data{ v[0], v[1], z } {}
 		CAGE_FORCE_INLINE explicit constexpr vec3(const vec4 &v) noexcept;
 		CAGE_FORCE_INLINE explicit constexpr vec3(const ivec3 &v) noexcept;
+
+		bool operator == (const vec3 &) const noexcept = default;
 
 		static vec3 parse(const string &str);
 		CAGE_FORCE_INLINE constexpr real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 3); return data[idx]; }
@@ -153,6 +168,8 @@ namespace cage
 		CAGE_FORCE_INLINE explicit constexpr ivec3(const ivec4 &v) noexcept;
 		CAGE_FORCE_INLINE explicit constexpr ivec3(const vec3 &v) noexcept;
 
+		bool operator == (const ivec3 &) const noexcept = default;
+
 		static ivec3 parse(const string &str);
 		CAGE_FORCE_INLINE constexpr sint32 &operator [] (uint32 idx) { CAGE_ASSERT(idx < 3); return data[idx]; }
 		CAGE_FORCE_INLINE constexpr sint32 operator [] (uint32 idx) const { CAGE_ASSERT(idx < 3); return data[idx]; }
@@ -169,6 +186,8 @@ namespace cage
 		CAGE_FORCE_INLINE explicit constexpr vec4(const vec2 &v, const vec2 &w) noexcept : data{ v[0], v[1], w[0], w[1] } {}
 		CAGE_FORCE_INLINE explicit constexpr vec4(const vec3 &v, real w) noexcept : data{ v[0], v[1], v[2], w } {}
 		CAGE_FORCE_INLINE explicit constexpr vec4(const ivec4 &v) noexcept;
+
+		bool operator == (const vec4 &) const noexcept = default;
 
 		static vec4 parse(const string &str);
 		CAGE_FORCE_INLINE constexpr real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 4); return data[idx]; }
@@ -189,6 +208,8 @@ namespace cage
 		CAGE_FORCE_INLINE explicit constexpr ivec4(const ivec3 &v, sint32 w) noexcept : data{ v[0], v[1], v[2], w } {}
 		CAGE_FORCE_INLINE explicit constexpr ivec4(const vec4 &v) noexcept;
 
+		bool operator == (const ivec4 &) const noexcept = default;
+
 		static ivec4 parse(const string &str);
 		CAGE_FORCE_INLINE constexpr sint32 &operator [] (uint32 idx) { CAGE_ASSERT(idx < 4); return data[idx]; }
 		CAGE_FORCE_INLINE constexpr sint32 operator [] (uint32 idx) const { CAGE_ASSERT(idx < 4); return data[idx]; }
@@ -204,6 +225,8 @@ namespace cage
 		explicit quat(const vec3 &axis, rads angle);
 		explicit quat(const mat3 &rot);
 		explicit quat(const vec3 &forward, const vec3 &up, bool keepUp = false);
+
+		bool operator == (const quat &) const noexcept = default;
 
 		static quat parse(const string &str);
 		CAGE_FORCE_INLINE constexpr real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 4); return data[idx]; }
@@ -221,6 +244,8 @@ namespace cage
 		explicit mat3(const vec3 &forward, const vec3 &up, bool keepUp = false);
 		explicit mat3(const quat &other) noexcept;
 		explicit constexpr mat3(const mat4 &other) noexcept;
+
+		bool operator == (const mat3 &) const noexcept = default;
 
 		static mat3 parse(const string &str);
 		CAGE_FORCE_INLINE constexpr real &operator [] (uint32 idx) { CAGE_ASSERT(idx < 9); return data[idx]; }
@@ -242,6 +267,8 @@ namespace cage
 		CAGE_FORCE_INLINE explicit mat4(const quat &orientation) noexcept : mat4(mat3(orientation)) {}
 		explicit mat4(const transform &other) noexcept;
 
+		bool operator == (const mat4 &) const noexcept = default;
+
 		CAGE_FORCE_INLINE static constexpr mat4 scale(real scl) noexcept { return scale(vec3(scl)); }
 		CAGE_FORCE_INLINE static constexpr mat4 scale(const vec3 &scl) noexcept { return mat4(scl[0], 0, 0, 0, 0, scl[1], 0, 0, 0, 0, scl[2], 0, 0, 0, 0, 1); }
 		static mat4 parse(const string &str);
@@ -261,47 +288,14 @@ namespace cage
 		CAGE_FORCE_INLINE constexpr transform() noexcept {}
 		CAGE_FORCE_INLINE explicit constexpr transform(const vec3 &position, const quat &orientation = quat(), real scale = 1) noexcept : orientation(orientation), position(position), scale(scale) {}
 
+		bool operator == (const transform &) const noexcept = default;
+
 		static transform parse(const string &str);
 		CAGE_FORCE_INLINE bool valid() const noexcept { return orientation.valid() && position.valid() && scale.valid(); }
 	};
 
-#define GCHL_GENERATE(OPERATOR) \
-	CAGE_FORCE_INLINE constexpr bool operator OPERATOR (const real &l, const real &r) noexcept { return l.value OPERATOR r.value; }; \
-	CAGE_FORCE_INLINE constexpr bool operator OPERATOR (const rads &l, const rads &r) noexcept { return l.value OPERATOR r.value; }; \
-	CAGE_FORCE_INLINE constexpr bool operator OPERATOR (const degs &l, const degs &r) noexcept { return l.value OPERATOR r.value; }; \
-	CAGE_FORCE_INLINE constexpr bool operator OPERATOR (const rads &l, const degs &r) noexcept { return l OPERATOR rads(r); }; \
-	CAGE_FORCE_INLINE constexpr bool operator OPERATOR (const degs &l, const rads &r) noexcept { return rads(l) OPERATOR r; };
-	GCHL_GENERATE(==);
-	GCHL_GENERATE(<=);
-	GCHL_GENERATE(>=);
-	GCHL_GENERATE(<);
-	GCHL_GENERATE(>);
-#undef GCHL_GENERATE
-	CAGE_FORCE_INLINE constexpr bool operator == (const vec2 &l, const vec2 &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1]; }
-	CAGE_FORCE_INLINE constexpr bool operator == (const vec3 &l, const vec3 &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2]; }
-	CAGE_FORCE_INLINE constexpr bool operator == (const vec4 &l, const vec4 &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2] && l.data[3] == r.data[3]; }
-	CAGE_FORCE_INLINE constexpr bool operator == (const quat &l, const quat &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2] && l.data[3] == r.data[3]; }
-	CAGE_FORCE_INLINE constexpr bool operator == (const mat3 &l, const mat3 &r) noexcept { for (uint32 i = 0; i < 9; i++) if (!(l[i] == r[i])) return false; return true; }
-	CAGE_FORCE_INLINE constexpr bool operator == (const mat4 &l, const mat4 &r) noexcept { for (uint32 i = 0; i < 16; i++) if (!(l[i] == r[i])) return false; return true; }
-	CAGE_FORCE_INLINE constexpr bool operator == (const transform &l, const transform &r) noexcept { return l.orientation == r.orientation && l.position == r.position && l.scale == r.scale; }
-	CAGE_FORCE_INLINE constexpr bool operator == (const ivec2 &l, const ivec2 &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1]; }
-	CAGE_FORCE_INLINE constexpr bool operator == (const ivec3 &l, const ivec3 &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2]; }
-	CAGE_FORCE_INLINE constexpr bool operator == (const ivec4 &l, const ivec4 &r) noexcept { return l.data[0] == r.data[0] && l.data[1] == r.data[1] && l.data[2] == r.data[2] && l.data[3] == r.data[3]; }
-#define GCHL_GENERATE(TYPE) \
-	CAGE_FORCE_INLINE constexpr bool operator != (const TYPE &l, const TYPE &r) noexcept { return !(l == r); };
-	GCHL_GENERATE(real);
-	GCHL_GENERATE(rads);
-	GCHL_GENERATE(degs);
-	GCHL_GENERATE(vec2);
-	GCHL_GENERATE(vec3);
-	GCHL_GENERATE(vec4);
-	GCHL_GENERATE(quat);
-	GCHL_GENERATE(mat3);
-	GCHL_GENERATE(mat4);
-	GCHL_GENERATE(ivec2);
-	GCHL_GENERATE(ivec3);
-	GCHL_GENERATE(ivec4);
-#undef GCHL_GENERATE
+	CAGE_FORCE_INLINE constexpr auto operator <=> (const rads &l, const degs &r) noexcept { return l <=> rads(r); };
+	CAGE_FORCE_INLINE constexpr auto operator <=> (const degs &l, const rads &r) noexcept { return rads(l) <=> r; };
 
 #define GCHL_GENERATE(OPERATOR) \
 	CAGE_FORCE_INLINE constexpr real operator OPERATOR (const real &r) noexcept { return OPERATOR r.value; } \
