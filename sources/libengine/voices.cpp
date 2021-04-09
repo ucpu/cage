@@ -25,7 +25,7 @@ namespace cage
 
 			Listener listener;
 			plf::colony<VoiceImpl> voices;
-			Holder<SampleRateConverter> rateConv;
+			Holder<SampleRateConverter> rateConv1, rateConvT;
 			Holder<AudioDirectionalConverter> dirConv;
 			Holder<AudioChannelsConverter> chansConv;
 			std::vector<float> tmp1, tmp2;
@@ -67,10 +67,14 @@ namespace cage
 				const real gain = voiceGain(v);
 				if (gain < 1e-6)
 					return;
+
+				const bool spatial = v.position.valid();
+
+				// decode source
 				if (v.callback)
 				{
 					SoundCallbackData d = data;
-					if (v.position.valid())
+					if (spatial)
 						d.channels = 1;
 					tmp1.resize(d.frames * d.channels);
 					d.buffer = tmp1;
@@ -84,35 +88,41 @@ namespace cage
 					const uint64 frames = data.frames * sampleRate / data.sampleRate;
 					tmp1.resize(frames * channels);
 					v.sound->decode(startFrame, tmp1);
-					if (sampleRate == data.sampleRate)
+
+					// convert to 1 channel for spatial sound and to output channels otherwise
+					if (spatial && channels != 1)
+					{
+						tmp2.resize(frames * 1);
+						chansConv->convert(tmp1, tmp2, channels, 1);
 						std::swap(tmp1, tmp2);
-					else
-					{
-						tmp2.resize(data.frames * channels);
-						rateConv->convert(tmp1, tmp2, data.sampleRate / (double)sampleRate);
 					}
-					if (v.position.valid())
+					if (!spatial && channels != data.channels)
 					{
-						if (channels == 1)
-							std::swap(tmp1, tmp2);
+						tmp2.resize(frames * data.channels);
+						chansConv->convert(tmp1, tmp2, channels, data.channels);
+						std::swap(tmp1, tmp2);
+					}
+					CAGE_ASSERT((tmp1.size() % (v.position.valid() ? 1 : data.channels)) == 0);
+
+					// convert sample rate
+					if (sampleRate != data.sampleRate)
+					{
+						if (spatial)
+						{
+							tmp2.resize(data.frames * 1);
+							rateConv1->convert(tmp1, tmp2, data.sampleRate / (double)sampleRate);
+						}
 						else
 						{
-							tmp1.resize(data.frames);
-							chansConv->convert(tmp2, tmp1, channels, 1);
+							tmp2.resize(data.frames * data.channels);
+							rateConvT->convert(tmp1, tmp2, data.sampleRate / (double)sampleRate);
 						}
-					}
-					else
-					{
-						if (channels == data.channels)
-							std::swap(tmp1, tmp2);
-						else
-						{
-							tmp1.resize(data.frames * data.channels);
-							chansConv->convert(tmp2, tmp1, channels, data.channels);
-						}
+						std::swap(tmp1, tmp2);
 					}
 				}
-				if (v.position.valid())
+
+				// apply spatial conversion
+				if (spatial && data.channels > 1)
 				{
 					CAGE_ASSERT(tmp1.size() == data.frames);
 					tmp2.resize(data.frames * data.channels);
@@ -121,11 +131,12 @@ namespace cage
 					cfg.listenerPosition = listener.position;
 					cfg.sourcePosition = v.position;
 					dirConv->process(tmp1, tmp2, cfg);
-				}
-				else
 					std::swap(tmp1, tmp2);
-				CAGE_ASSERT(tmp2.size() == data.buffer.size());
-				auto src = tmp2.begin();
+				}
+
+				// add the result to accumulation buffer
+				CAGE_ASSERT(tmp1.size() == data.buffer.size());
+				auto src = tmp1.begin();
 				for (float &dst : data.buffer)
 					dst += *src++ * gain.value;
 			}
@@ -134,8 +145,10 @@ namespace cage
 			{
 				CAGE_ASSERT(data.buffer.size() == data.frames * data.channels);
 
-				if (!rateConv || rateConv->channels() != data.channels)
-					rateConv = newSampleRateConverter(data.channels);
+				if (!rateConv1)
+					rateConv1 = newSampleRateConverter(1);
+				if (!rateConvT || rateConvT->channels() != data.channels)
+					rateConvT = newSampleRateConverter(data.channels);
 				if (!dirConv || dirConv->channels() != data.channels)
 					dirConv = newAudioDirectionalConverter(data.channels);
 				if (!chansConv)
