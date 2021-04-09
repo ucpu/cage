@@ -34,6 +34,13 @@ macro(cage_build_configuration)
 		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /ignore:4286")
 		set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} /ignore:4286")
 		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ignore:4286")
+
+		# optionally improve runtime performance in debug builds
+		option(CAGE_FASTER_DEBUG "enable some optimizations to improve performance in debug builds" ON)
+		if(CAGE_FASTER_DEBUG)
+			set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /Ob1")
+			set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Ob1 /D_ITERATOR_DEBUG_LEVEL=0")
+		endif()
 	else()
 		# disable warnings about attributes
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-attributes")
