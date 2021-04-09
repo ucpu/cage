@@ -284,8 +284,6 @@ namespace cage
 	CAGE_ENGINE_API Gui *engineGui();
 	CAGE_ENGINE_API Speaker *engineSpeaker();
 	CAGE_ENGINE_API VoicesMixer *engineMasterMixer();
-	CAGE_ENGINE_API VoicesMixer *engineMusicMixer();
-	CAGE_ENGINE_API VoicesMixer *engineVoiceOverMixer();
 	CAGE_ENGINE_API VoicesMixer *engineEffectsMixer();
 	CAGE_ENGINE_API VoicesMixer *engineGuiMixer();
 	CAGE_ENGINE_API uint64 engineControlTime();

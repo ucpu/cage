@@ -91,12 +91,8 @@ namespace cage
 #endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 			Holder<Speaker> speaker;
 			Holder<VoicesMixer> masterBus;
-			Holder<VoicesMixer> musicBus;
-			Holder<VoicesMixer> voiceOverBus;
 			Holder<VoicesMixer> effectsBus;
 			Holder<VoicesMixer> guiBus;
-			Holder<Voice> musicVoice;
-			Holder<Voice> voiceOverVoice;
 			Holder<Voice> effectsVoice;
 			Holder<Voice> guiVoice;
 			Holder<Gui> gui;
@@ -428,16 +424,10 @@ namespace cage
 
 				{ // create sound
 					masterBus = newVoicesMixer({});
-					musicBus = newVoicesMixer({});
-					voiceOverBus = newVoicesMixer({});
 					effectsBus = newVoicesMixer({});
 					guiBus = newVoicesMixer({});
-					musicVoice = masterBus->newVoice();
-					voiceOverVoice = masterBus->newVoice();
 					effectsVoice = masterBus->newVoice();
 					guiVoice = masterBus->newVoice();
-					musicVoice->callback.bind<VoicesMixer, &VoicesMixer::process>(+musicBus);
-					voiceOverVoice->callback.bind<VoicesMixer, &VoicesMixer::process>(+voiceOverBus);
 					effectsVoice->callback.bind<VoicesMixer, &VoicesMixer::process>(+effectsBus);
 					guiVoice->callback.bind<VoicesMixer, &VoicesMixer::process>(+guiBus);
 					speaker = newSpeaker(config.speaker ? *config.speaker : SpeakerCreateConfig(), Delegate<void(const SoundCallbackData &)>().bind<VoicesMixer, &VoicesMixer::process>(+masterBus));
@@ -595,13 +585,9 @@ namespace cage
 
 				{ // destroy sound
 					speaker.clear();
-					musicVoice.clear();
-					voiceOverVoice.clear();
 					effectsVoice.clear();
 					guiVoice.clear();
 					masterBus.clear();
-					musicBus.clear();
-					voiceOverBus.clear();
 					effectsBus.clear();
 					guiBus.clear();
 				}
@@ -776,16 +762,6 @@ namespace cage
 	VoicesMixer *engineMasterMixer()
 	{
 		return engineData->masterBus.get();
-	}
-
-	VoicesMixer *engineMusicMixer()
-	{
-		return engineData->musicBus.get();
-	}
-
-	VoicesMixer *engineVoiceOverMixer()
-	{
-		return engineData->voiceOverBus.get();
 	}
 
 	VoicesMixer *engineEffectsMixer()
