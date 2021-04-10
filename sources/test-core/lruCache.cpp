@@ -59,7 +59,7 @@ void testLruCache()
 		CAGE_TESTCASE("with holder");
 		LruCache<uint32, Holder<uint32>> cache(3);
 		CAGE_TEST(cache.find(13) == nullptr);
-		cache.set(13, detail::systemArena().createHolder<uint32>(13));
+		cache.set(13, systemArena().createHolder<uint32>(13));
 		CAGE_TEST(cache.find(13));
 		CAGE_TEST(**cache.find(13) == 13);
 		cache.clear();

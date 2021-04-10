@@ -98,6 +98,6 @@ namespace cage
 
 	Holder<Gui> newGui(const GuiCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<Gui, GuiImpl>(config);
+		return systemArena().createImpl<Gui, GuiImpl>(config);
 	}
 }

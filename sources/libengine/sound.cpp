@@ -159,6 +159,6 @@ namespace cage
 
 	Holder<Sound> newSound()
 	{
-		return detail::systemArena().createImpl<Sound, SoundImpl>();
+		return systemArena().createImpl<Sound, SoundImpl>();
 	}
 }

@@ -294,11 +294,11 @@ namespace cage
 
 	Holder<CollisionStructure> newCollisionStructure(const CollisionStructureCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<CollisionStructure, CollisionDataImpl>(config);
+		return systemArena().createImpl<CollisionStructure, CollisionDataImpl>(config);
 	}
 
 	Holder<CollisionQuery> newCollisionQuery(const CollisionStructure *data)
 	{
-		return detail::systemArena().createImpl<CollisionQuery, CollisionQueryImpl>((CollisionDataImpl*)data);
+		return systemArena().createImpl<CollisionQuery, CollisionQueryImpl>((CollisionDataImpl*)data);
 	}
 }

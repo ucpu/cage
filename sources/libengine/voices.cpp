@@ -185,6 +185,6 @@ namespace cage
 
 	Holder<VoicesMixer> newVoicesMixer(const VoicesMixerCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<VoicesMixer, VoicesMixerImpl>(config);
+		return systemArena().createImpl<VoicesMixer, VoicesMixerImpl>(config);
 	}
 }

@@ -110,6 +110,6 @@ namespace cage
 
 	Holder<AudioDirectionalConverter> newAudioDirectionalConverter(const AudioDirectionalConverterCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<AudioDirectionalConverter, AudioDirectionalConverterImpl>(config);
+		return systemArena().createImpl<AudioDirectionalConverter, AudioDirectionalConverterImpl>(config);
 	}
 }

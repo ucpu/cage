@@ -551,7 +551,7 @@ uint32 AssimpContext::selectModel() const
 
 Holder<AssimpSkeleton> AssimpContext::skeleton() const
 {
-	return detail::systemArena().createImpl<AssimpSkeleton, AssimpSkeletonImpl>(getScene());
+	return systemArena().createImpl<AssimpSkeleton, AssimpSkeletonImpl>(getScene());
 }
 
 Holder<SkeletonRig> AssimpContext::skeletonRig() const
@@ -723,7 +723,7 @@ Holder<SkeletalAnimation> AssimpContext::animation(uint32 chosenAnimationIndex) 
 
 Holder<AssimpContext> newAssimpContext(uint32 addFlags, uint32 removeFlags)
 {
-	return detail::systemArena().createImpl<AssimpContext, AssimpContextImpl>(addFlags, removeFlags);
+	return systemArena().createImpl<AssimpContext, AssimpContextImpl>(addFlags, removeFlags);
 }
 
 void analyzeAssimp()

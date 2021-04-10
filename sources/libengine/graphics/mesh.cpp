@@ -452,6 +452,6 @@ namespace cage
 
 	Holder<Model> newModel()
 	{
-		return detail::systemArena().createImpl<Model, ModelImpl>();
+		return systemArena().createImpl<Model, ModelImpl>();
 	}
 }

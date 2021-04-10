@@ -1232,12 +1232,12 @@ namespace cage
 
 	void graphicsDispatchCreate(const EngineCreateConfig &config)
 	{
-		graphicsDispatch = detail::systemArena().createObject<GraphicsDispatchImpl>(config);
+		graphicsDispatch = systemArena().createObject<GraphicsDispatchImpl>(config);
 	}
 
 	void graphicsDispatchDestroy()
 	{
-		detail::systemArena().destroy<GraphicsDispatchImpl>(graphicsDispatch);
+		systemArena().destroy<GraphicsDispatchImpl>(graphicsDispatch);
 		graphicsDispatch = nullptr;
 	}
 

@@ -171,7 +171,7 @@ namespace cage
 
 			~ApplicationLogInitializer()
 			{
-				uint64 duration = getApplicationTime();
+				uint64 duration = applicationTime();
 				uint32 micros = numeric_cast<uint32>(duration % 1000000);
 				duration /= 1000000;
 				uint32 secs = numeric_cast<uint32>(duration % 60);
@@ -231,7 +231,7 @@ namespace cage
 
 	Holder<Logger> newLogger()
 	{
-		return detail::systemArena().createImpl<Logger, LoggerImpl>();
+		return systemArena().createImpl<Logger, LoggerImpl>();
 	}
 
 	namespace detail
@@ -301,7 +301,7 @@ namespace cage
 				info.debug = debug;
 				info.currentThreadId = threadId();
 				info.currentThreadName = getCurrentThreadName();
-				info.time = getApplicationTime();
+				info.time = applicationTime();
 				info.file = file;
 				info.line = line;
 				info.function = function;
@@ -381,10 +381,10 @@ namespace cage
 
 	Holder<LoggerOutputFile> newLoggerOutputFile(const string &path, bool append, bool realFilesystemOnly)
 	{
-		return detail::systemArena().createImpl<LoggerOutputFile, LoggerOutputFileImpl>(path, append, realFilesystemOnly);
+		return systemArena().createImpl<LoggerOutputFile, LoggerOutputFileImpl>(path, append, realFilesystemOnly);
 	}
 
-	uint64 getApplicationTime()
+	uint64 applicationTime()
 	{
 		return loggerTimer()->microsSinceStart();
 	}

@@ -97,6 +97,6 @@ namespace cage
 
 	Holder<Timer> newTimer()
 	{
-		return detail::systemArena().createImpl<Timer, TimerImpl>();
+		return systemArena().createImpl<Timer, TimerImpl>();
 	}
 }

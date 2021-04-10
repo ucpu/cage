@@ -62,6 +62,6 @@ namespace cage
 
 	Holder<RectPacking> newRectPacking(const RectPackingCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<RectPacking, RectPackingImpl>(config);
+		return systemArena().createImpl<RectPacking, RectPackingImpl>(config);
 	}
 }

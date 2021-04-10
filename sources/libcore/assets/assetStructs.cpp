@@ -51,7 +51,7 @@ namespace cage
 	{
 		void processRawLoad(AssetContext *context)
 		{
-			Holder<MemoryBuffer> mem = detail::systemArena().createHolder<MemoryBuffer>(templates::move(context->originalData));
+			Holder<MemoryBuffer> mem = systemArena().createHolder<MemoryBuffer>(templates::move(context->originalData));
 			context->assetHolder = templates::move(mem).cast<void>();
 		}
 	}

@@ -59,7 +59,7 @@ namespace cage
 				{
 					if (ms[i] == prim)
 						primary = i;
-					devices.push_back(detail::systemArena().createHolder<ScreenDeviceImpl>(ms[i]));
+					devices.push_back(systemArena().createHolder<ScreenDeviceImpl>(ms[i]));
 				}
 			}
 
@@ -110,6 +110,6 @@ namespace cage
 
 	Holder<ScreenList> newScreenList()
 	{
-		return detail::systemArena().createImpl<ScreenList, ScreenListImpl>();
+		return systemArena().createImpl<ScreenList, ScreenListImpl>();
 	}
 }

@@ -236,12 +236,12 @@ namespace cage
 
 	void soundCreate(const EngineCreateConfig &config)
 	{
-		soundPrepare = detail::systemArena().createObject<SoundPrepareImpl>(config);
+		soundPrepare = systemArena().createObject<SoundPrepareImpl>(config);
 	}
 
 	void soundDestroy()
 	{
-		detail::systemArena().destroy<SoundPrepareImpl>(soundPrepare);
+		systemArena().destroy<SoundPrepareImpl>(soundPrepare);
 		soundPrepare = nullptr;
 	}
 }

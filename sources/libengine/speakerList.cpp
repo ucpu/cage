@@ -71,6 +71,6 @@ namespace cage
 
 	Holder<SpeakerList> newSpeakerList()
 	{
-		return detail::systemArena().createImpl<SpeakerList, SpeakerListImpl>();
+		return systemArena().createImpl<SpeakerList, SpeakerListImpl>();
 	}
 }

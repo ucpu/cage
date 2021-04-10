@@ -103,7 +103,7 @@ namespace cage
 
 	Holder<Mutex> newMutex()
 	{
-		return detail::systemArena().createImpl<Mutex, MutexImpl>();
+		return systemArena().createImpl<Mutex, MutexImpl>();
 	}
 
 	namespace
@@ -169,7 +169,7 @@ namespace cage
 
 	Holder<RwMutex> newRwMutex()
 	{
-		return detail::systemArena().createImpl<RwMutex, RwMutexImpl>();
+		return systemArena().createImpl<RwMutex, RwMutexImpl>();
 	}
 
 	namespace
@@ -239,7 +239,7 @@ namespace cage
 
 	Holder<Semaphore> newSemaphore(uint32 value, uint32 max)
 	{
-		return detail::systemArena().createImpl<Semaphore, SemaphoreImpl>(value, max);
+		return systemArena().createImpl<Semaphore, SemaphoreImpl>(value, max);
 	}
 }
 
@@ -379,7 +379,7 @@ namespace cage
 
 	Holder<Barrier> newBarrier(uint32 value)
 	{
-		return detail::systemArena().createImpl<Barrier, BarrierImpl>(value);
+		return systemArena().createImpl<Barrier, BarrierImpl>(value);
 	}
 
 	namespace
@@ -460,7 +460,7 @@ namespace cage
 
 	Holder<ConditionalVariableBase> newConditionalVariableBase()
 	{
-		return detail::systemArena().createImpl<ConditionalVariableBase, ConditionalVariableBaseImpl>();
+		return systemArena().createImpl<ConditionalVariableBase, ConditionalVariableBaseImpl>();
 	}
 
 	void ConditionalVariable::lock()
@@ -499,7 +499,7 @@ namespace cage
 
 	Holder<ConditionalVariable> newConditionalVariable(bool broadcast)
 	{
-		return detail::systemArena().createImpl<ConditionalVariable, ConditionalVariableImpl>(broadcast);
+		return systemArena().createImpl<ConditionalVariable, ConditionalVariableImpl>(broadcast);
 	}
 
 	namespace
@@ -626,7 +626,7 @@ namespace cage
 
 	Holder<Thread> newThread(Delegate<void()> func, const string &threadName)
 	{
-		return detail::systemArena().createImpl<Thread, ThreadImpl>(func, threadName);
+		return systemArena().createImpl<Thread, ThreadImpl>(func, threadName);
 	}
 
 	namespace

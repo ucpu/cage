@@ -69,7 +69,7 @@ namespace cage
 		t->data.ndcPos = hierarchy->impl->pointsToNdc(position, size);
 		t->data.uvClip = vec4(Image.textureUvOffset, Image.textureUvOffset + Image.textureUvSize);
 		// todo format mode
-		t->data.aniTexFrames = detail::evalSamplesForTextureAnimation(texture, getApplicationTime(), Image.animationStart, format.animationSpeed, format.animationOffset);
+		t->data.aniTexFrames = detail::evalSamplesForTextureAnimation(texture, applicationTime(), Image.animationStart, format.animationSpeed, format.animationOffset);
 		e->last->next = t;
 		e->last = t;
 		return t;

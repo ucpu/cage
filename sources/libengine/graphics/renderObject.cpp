@@ -67,6 +67,6 @@ namespace cage
 
 	Holder<RenderObject> newRenderObject()
 	{
-		return detail::systemArena().createImpl<RenderObject, RenderObjectImpl>();
+		return systemArena().createImpl<RenderObject, RenderObjectImpl>();
 	}
 }

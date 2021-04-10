@@ -303,6 +303,6 @@ namespace cage
 
 	Holder<EngineProfiling> newEngineProfiling()
 	{
-		return detail::systemArena().createImpl<EngineProfiling, EngineProfilingImpl>();
+		return systemArena().createImpl<EngineProfiling, EngineProfilingImpl>();
 	}
 }

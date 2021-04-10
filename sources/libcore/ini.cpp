@@ -174,7 +174,7 @@ namespace cage
 			CAGE_THROW_ERROR(Exception, "invalid value");
 		IniImpl *impl = (IniImpl *)this;
 		if (!sectionExists(section))
-			impl->sections[section] = detail::systemArena().createHolder<IniSection>();
+			impl->sections[section] = systemArena().createHolder<IniSection>();
 		impl->sections[section]->items[item] = value;
 	}
 
@@ -541,6 +541,6 @@ namespace cage
 
 	Holder<Ini> newIni()
 	{
-		return detail::systemArena().createImpl<Ini, IniImpl>();
+		return systemArena().createImpl<Ini, IniImpl>();
 	}
 }

@@ -286,7 +286,7 @@ namespace cage
 				if (e.type != Event::TypeEnum::MousePress)
 					return false;
 				CAGE_ASSERT((uint32)e.mouse.buttons < sizeof(lastMouseButtonPressTimes) / sizeof(lastMouseButtonPressTimes[0]));
-				uint64 current = getApplicationTime();
+				uint64 current = applicationTime();
 				uint64 &last = lastMouseButtonPressTimes[(uint32)e.mouse.buttons];
 				if (current - last < 500000)
 				{
@@ -837,7 +837,7 @@ namespace cage
 
 	Holder<Window> newWindow(Window *shareContext)
 	{
-		return detail::systemArena().createImpl<Window, WindowImpl>(shareContext);
+		return systemArena().createImpl<Window, WindowImpl>(shareContext);
 	}
 
 	void WindowEventListeners::attachAll(Window *window, sint32 order)

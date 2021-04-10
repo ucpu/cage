@@ -325,7 +325,7 @@ namespace cage
 
 	Holder<Collider> newCollider()
 	{
-		return detail::systemArena().createImpl<Collider, ColliderImpl>();
+		return systemArena().createImpl<Collider, ColliderImpl>();
 	}
 
 	Holder<Collider> newCollider(const MemoryBuffer &buffer)

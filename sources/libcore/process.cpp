@@ -418,6 +418,6 @@ namespace cage
 
 	Holder<Process> newProcess(const ProcessCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<Process, ProcessImpl>(config);
+		return systemArena().createImpl<Process, ProcessImpl>(config);
 	}
 }

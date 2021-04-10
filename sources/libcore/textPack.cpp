@@ -114,6 +114,6 @@ namespace cage
 
 	Holder<TextPack> newTextPack()
 	{
-		return detail::systemArena().createImpl<TextPack, TextPackImpl>();
+		return systemArena().createImpl<TextPack, TextPackImpl>();
 	}
 }

@@ -172,7 +172,7 @@ namespace cage
 
 	Holder<Audio> newAudio()
 	{
-		return detail::systemArena().createImpl<Audio, AudioImpl>();
+		return systemArena().createImpl<Audio, AudioImpl>();
 	}
 
 	void audioSetSampleRate(Audio *snd, uint32 sampleRate)

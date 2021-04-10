@@ -407,13 +407,13 @@ namespace cage
 		data.format = &format;
 		data.gls = glyphs.data();
 		data.count = numeric_cast<uint32>(glyphs.size());
-		data.cursor = getApplicationTime() % 1000000 < 300000 ? m : cursor;
+		data.cursor = applicationTime() % 1000000 < 300000 ? m : cursor;
 		data.render = true;
 		((FontImpl*)this)->processText(data);
 	}
 
 	Holder<Font> newFont()
 	{
-		return detail::systemArena().createImpl<Font, FontImpl>();
+		return systemArena().createImpl<Font, FontImpl>();
 	}
 }

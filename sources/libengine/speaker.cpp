@@ -258,7 +258,7 @@ namespace cage
 
 				if (config.ringBuffer)
 				{
-					ringBuffer = detail::systemArena().createHolder<RingBuffer>(channels, sampleRate, callback);
+					ringBuffer = systemArena().createHolder<RingBuffer>(channels, sampleRate, callback);
 					this->callback = Delegate<void(const SoundCallbackData &)>().bind<RingBuffer, &RingBuffer::speaker>(+ringBuffer);
 				}
 				else
@@ -383,6 +383,6 @@ namespace cage
 
 	Holder<Speaker> newSpeaker(const SpeakerCreateConfig &config, Delegate<void(const SoundCallbackData &)> callback)
 	{
-		return detail::systemArena().createImpl<Speaker, SpeakerImpl>(config, callback);
+		return systemArena().createImpl<Speaker, SpeakerImpl>(config, callback);
 	}
 }

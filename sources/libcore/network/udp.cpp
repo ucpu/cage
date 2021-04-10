@@ -266,7 +266,7 @@ namespace cage
 		class UdpConnectionImpl : public UdpConnection
 		{
 		public:
-			UdpConnectionImpl(const string &address, uint16 port, uint64 timeout) : startTime(getApplicationTime()), connId(randomRange(1u, std::numeric_limits<uint32>::max()))
+			UdpConnectionImpl(const string &address, uint16 port, uint64 timeout) : startTime(applicationTime()), connId(randomRange(1u, std::numeric_limits<uint32>::max()))
 			{
 				UDP_LOG(1, "creating new connection to address: '" + address + "', port: " + port + ", timeout: " + timeout);
 				sockGroup = std::make_shared<SockGroup>();
@@ -300,14 +300,14 @@ namespace cage
 							service();
 							if (established)
 								break;
-							if (getApplicationTime() > startTime + timeout)
+							if (applicationTime() > startTime + timeout)
 								CAGE_THROW_ERROR(Disconnected, "failed to connect (timeout)");
 						}
 					}
 				}
 			}
 
-			UdpConnectionImpl(std::shared_ptr<SockGroup> sg, std::shared_ptr<SockGroup::Receiver> rec) : sockGroup(sg), sockReceiver(rec), startTime(getApplicationTime()), connId(rec->connId)
+			UdpConnectionImpl(std::shared_ptr<SockGroup> sg, std::shared_ptr<SockGroup::Receiver> rec) : sockGroup(sg), sockReceiver(rec), startTime(applicationTime()), connId(rec->connId)
 			{
 				UDP_LOG(1, "accepting new connection");
 			}
@@ -1147,7 +1147,7 @@ namespace cage
 
 			void service()
 			{
-				const uint64 newTime = getApplicationTime();
+				const uint64 newTime = applicationTime();
 				deltaTime = newTime - currentServiceTime;
 				currentServiceTime = newTime;
 				detail::OverrideBreakpoint brk;
@@ -1205,7 +1205,7 @@ namespace cage
 				}
 				try
 				{
-					auto c = detail::systemArena().createHolder<UdpConnectionImpl>(sockGroup, acc);
+					auto c = systemArena().createHolder<UdpConnectionImpl>(sockGroup, acc);
 					c->serviceReceiving();
 					if (!c->established)
 					{
@@ -1341,11 +1341,11 @@ namespace cage
 
 	Holder<UdpConnection> newUdpConnection(const string &address, uint16 port, uint64 timeout)
 	{
-		return detail::systemArena().createImpl<UdpConnection, UdpConnectionImpl>(address, port, timeout);
+		return systemArena().createImpl<UdpConnection, UdpConnectionImpl>(address, port, timeout);
 	}
 
 	Holder<UdpServer> newUdpServer(uint16 port)
 	{
-		return detail::systemArena().createImpl<UdpServer, UdpServerImpl>(port);
+		return systemArena().createImpl<UdpServer, UdpServerImpl>(port);
 	}
 }

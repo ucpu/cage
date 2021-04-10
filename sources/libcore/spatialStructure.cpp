@@ -526,11 +526,11 @@ namespace cage
 
 	Holder<SpatialStructure> newSpatialStructure(const SpatialStructureCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<SpatialStructure, SpatialDataImpl>(config);
+		return systemArena().createImpl<SpatialStructure, SpatialDataImpl>(config);
 	}
 
 	Holder<SpatialQuery> newSpatialQuery(const SpatialStructure *data)
 	{
-		return detail::systemArena().createImpl<SpatialQuery, SpatialQueryImpl>((SpatialDataImpl*)data);
+		return systemArena().createImpl<SpatialQuery, SpatialQueryImpl>((SpatialDataImpl*)data);
 	}
 }

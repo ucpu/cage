@@ -65,12 +65,12 @@ namespace cage
 			VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> &vsb;
 			uint64 st;
 
-			explicit ScopedTimer(VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> &vsb) : vsb(vsb), st(getApplicationTime())
+			explicit ScopedTimer(VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> &vsb) : vsb(vsb), st(applicationTime())
 			{}
 
 			~ScopedTimer()
 			{
-				uint64 et = getApplicationTime();
+				uint64 et = applicationTime();
 				vsb.add(et - st);
 			}
 		};
@@ -141,7 +141,7 @@ namespace cage
 					}
 					{
 						OPTICK_EVENT("tick");
-						graphicsPrepareTick(getApplicationTime());
+						graphicsPrepareTick(applicationTime());
 					}
 				}
 				{
@@ -708,7 +708,7 @@ namespace cage
 	void engineInitialize(const EngineCreateConfig &config)
 	{
 		CAGE_ASSERT(!engineData);
-		engineData = detail::systemArena().createHolder<EngineData>(config);
+		engineData = systemArena().createHolder<EngineData>(config);
 		engineData->initialize(config);
 	}
 

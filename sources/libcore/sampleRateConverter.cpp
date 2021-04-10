@@ -103,6 +103,6 @@ namespace cage
 
 	Holder<SampleRateConverter> newSampleRateConverter(const SampleRateConverterCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<SampleRateConverter, SampleRateConverterImpl>(config);
+		return systemArena().createImpl<SampleRateConverter, SampleRateConverterImpl>(config);
 	}
 }

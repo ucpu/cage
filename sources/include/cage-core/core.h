@@ -1121,14 +1121,8 @@ namespace cage
 		bool operator != (const MemoryArena &other) const noexcept;
 	};
 
-	namespace detail
-	{
-		CAGE_CORE_API MemoryArena &systemArena();
-	}
-
-	// app time
-
-	CAGE_CORE_API uint64 getApplicationTime();
+	CAGE_CORE_API MemoryArena &systemArena();
+	CAGE_CORE_API uint64 applicationTime();
 }
 
 #endif // guard_core_h_39243ce0_71a5_4900_8898_63fb89591b7b_
