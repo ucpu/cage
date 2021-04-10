@@ -128,11 +128,11 @@ namespace cage
 			}
 
 			virtual aabb getBox() const { return aabb(*(T*)(this)); }
-			virtual bool intersects(const line &other) { return cage::intersects(*this, other); };
-			virtual bool intersects(const triangle &other) { return cage::intersects(*this, other); };
-			virtual bool intersects(const plane &other) { return cage::intersects(*this, other); };
-			virtual bool intersects(const sphere &other) { return cage::intersects(*this, other); };
-			virtual bool intersects(const aabb &other) { return cage::intersects(*this, other); };
+			virtual bool intersects(const line &other) { return cage::intersects(*(T *)this, other); };
+			virtual bool intersects(const triangle &other) { return cage::intersects(*(T *)this, other); };
+			virtual bool intersects(const plane &other) { return cage::intersects(*(T *)this, other); };
+			virtual bool intersects(const sphere &other) { return cage::intersects(*(T *)this, other); };
+			virtual bool intersects(const aabb &other) { return cage::intersects(*(T *)this, other); };
 		};
 
 		struct Node

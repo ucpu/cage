@@ -197,36 +197,11 @@ namespace cage
 
 	inline sphere::sphere(const aabb &other) : center(other.center()), radius(other.diagonal() * 0.5) {}
 
-	CAGE_CORE_API bool parallel(const vec3 &dir1, const vec3 &dir2);
-	CAGE_CORE_API bool parallel(const line &a, const line &b);
-	CAGE_CORE_API bool parallel(const line &a, const triangle &b);
-	CAGE_CORE_API bool parallel(const line &a, const plane &b);
-	inline        bool parallel(const triangle &a, const line &b) { return parallel(b, a); }
-	inline        bool parallel(const plane &a, const line &b) { return parallel(b, a); }
-	CAGE_CORE_API bool parallel(const triangle &a, const triangle &b);
-	CAGE_CORE_API bool parallel(const triangle &a, const plane &b);
-	inline        bool parallel(const plane &a, const triangle &b) { return parallel(b, a); }
-	CAGE_CORE_API bool parallel(const plane &a, const plane &b);
-
-	CAGE_CORE_API bool perpendicular(const vec3 &dir1, const vec3 &dir2);
-	CAGE_CORE_API bool perpendicular(const line &a, const line &b);
-	CAGE_CORE_API bool perpendicular(const line &a, const triangle &b);
-	CAGE_CORE_API bool perpendicular(const line &a, const plane &b);
-	inline        bool perpendicular(const triangle &a, const line &b) { return perpendicular(b, a); }
-	inline        bool perpendicular(const plane &a, const line &b) { return perpendicular(b, a); }
-	CAGE_CORE_API bool perpendicular(const triangle &a, const triangle &b);
-	CAGE_CORE_API bool perpendicular(const triangle &a, const plane &b);
-	inline        bool perpendicular(const plane &a, const triangle &b) { return perpendicular(b, a); }
-	CAGE_CORE_API bool perpendicular(const plane &a, const plane &b);
-
 	CAGE_CORE_API rads angle(const line &a, const line &b);
 	CAGE_CORE_API rads angle(const line &a, const triangle &b);
 	CAGE_CORE_API rads angle(const line &a, const plane &b);
-	inline        rads angle(const triangle &a, const line &b) { return angle(b, a); };
 	CAGE_CORE_API rads angle(const triangle &a, const triangle &b);
 	CAGE_CORE_API rads angle(const triangle &a, const plane &b);
-	inline        rads angle(const plane &a, const line &b) { return angle(b, a); };
-	inline        rads angle(const plane &a, const triangle &b) { return angle(b, a); };
 	CAGE_CORE_API rads angle(const plane &a, const plane &b);
 
 	//CAGE_CORE_API real distance(const vec3 &a, const vec3 &b);
@@ -235,35 +210,20 @@ namespace cage
 	CAGE_CORE_API real distance(const vec3 &a, const plane &b);
 	CAGE_CORE_API real distance(const vec3 &a, const sphere &b);
 	CAGE_CORE_API real distance(const vec3 &a, const aabb &b);
-	inline        real distance(const line &a, const vec3 &b) { return distance(b, a); };
 	CAGE_CORE_API real distance(const line &a, const line &b);
 	CAGE_CORE_API real distance(const line &a, const triangle &b);
 	CAGE_CORE_API real distance(const line &a, const plane &b);
 	CAGE_CORE_API real distance(const line &a, const sphere &b);
 	CAGE_CORE_API real distance(const line &a, const aabb &b);
-	inline        real distance(const triangle &a, const vec3 &b) { return distance(b, a); };
-	inline        real distance(const triangle &a, const line &b) { return distance(b, a); };
 	CAGE_CORE_API real distance(const triangle &a, const triangle &b);
 	CAGE_CORE_API real distance(const triangle &a, const plane &b);
 	CAGE_CORE_API real distance(const triangle &a, const sphere &b);
 	CAGE_CORE_API real distance(const triangle &a, const aabb &b);
-	inline        real distance(const plane &a, const vec3 &b) { return distance(b, a); };
-	inline        real distance(const plane &a, const line &b) { return distance(b, a); };
-	inline        real distance(const plane &a, const triangle &b) { return distance(b, a); };
 	CAGE_CORE_API real distance(const plane &a, const plane &b);
 	CAGE_CORE_API real distance(const plane &a, const sphere &b);
 	CAGE_CORE_API real distance(const plane &a, const aabb &b);
-	inline        real distance(const sphere &a, const vec3 &b) { return distance(b, a); };
-	inline        real distance(const sphere &a, const line &b) { return distance(b, a); };
-	inline        real distance(const sphere &a, const triangle &b) { return distance(b, a); };
-	inline        real distance(const sphere &a, const plane &b) { return distance(b, a); };
 	CAGE_CORE_API real distance(const sphere &a, const sphere &b);
 	CAGE_CORE_API real distance(const sphere &a, const aabb &b);
-	inline        real distance(const aabb &a, const vec3 &b) { return distance(b, a); };
-	inline        real distance(const aabb &a, const line &b) { return distance(b, a); };
-	inline        real distance(const aabb &a, const triangle &b) { return distance(b, a); };
-	inline        real distance(const aabb &a, const plane &b) { return distance(b, a); };
-	inline        real distance(const aabb &a, const sphere &b) { return distance(b, a); };
 	CAGE_CORE_API real distance(const aabb &a, const aabb &b);
 
 	CAGE_CORE_API bool intersects(const vec3 &a, const vec3 &b);
@@ -272,35 +232,20 @@ namespace cage
 	CAGE_CORE_API bool intersects(const vec3 &a, const plane &b);
 	CAGE_CORE_API bool intersects(const vec3 &a, const sphere &b);
 	CAGE_CORE_API bool intersects(const vec3 &a, const aabb &b);
-	inline        bool intersects(const line &a, const vec3 &b) { return intersects(b, a); };
 	CAGE_CORE_API bool intersects(const line &a, const line &b);
 	CAGE_CORE_API bool intersects(const line &a, const triangle &b);
 	CAGE_CORE_API bool intersects(const line &a, const plane &b);
 	CAGE_CORE_API bool intersects(const line &a, const sphere &b);
 	CAGE_CORE_API bool intersects(const line &a, const aabb &b);
-	inline        bool intersects(const triangle &a, const vec3 &b) { return intersects(b, a); };
-	inline        bool intersects(const triangle &a, const line &b) { return intersects(b, a); };
 	CAGE_CORE_API bool intersects(const triangle &a, const triangle &b);
 	CAGE_CORE_API bool intersects(const triangle &a, const plane &b);
 	CAGE_CORE_API bool intersects(const triangle &a, const sphere &b);
 	CAGE_CORE_API bool intersects(const triangle &a, const aabb &b);
-	inline        bool intersects(const plane &a, const vec3 &b) { return intersects(b, a); };
-	inline        bool intersects(const plane &a, const line &b) { return intersects(b, a); };
-	inline        bool intersects(const plane &a, const triangle &b) { return intersects(b, a); };
 	CAGE_CORE_API bool intersects(const plane &a, const plane &b);
 	CAGE_CORE_API bool intersects(const plane &a, const sphere &b);
 	CAGE_CORE_API bool intersects(const plane &a, const aabb &b);
-	inline        bool intersects(const sphere &a, const vec3 &b) { return intersects(b, a); };
-	inline        bool intersects(const sphere &a, const line &b) { return intersects(b, a); };
-	inline        bool intersects(const sphere &a, const triangle &b) { return intersects(b, a); };
-	inline        bool intersects(const sphere &a, const plane &b) { return intersects(b, a); };
 	CAGE_CORE_API bool intersects(const sphere &a, const sphere &b);
 	CAGE_CORE_API bool intersects(const sphere &a, const aabb &b);
-	inline        bool intersects(const aabb &a, const vec3 &b) { return intersects(b, a); };
-	inline        bool intersects(const aabb &a, const line &b) { return intersects(b, a); };
-	inline        bool intersects(const aabb &a, const triangle &b) { return intersects(b, a); };
-	inline        bool intersects(const aabb &a, const plane &b) { return intersects(b, a); };
-	inline        bool intersects(const aabb &a, const sphere &b) { return intersects(b, a); };
 	CAGE_CORE_API bool intersects(const aabb &a, const aabb &b);
 
 	CAGE_CORE_API vec3 intersection(const line &a, const triangle &b);
@@ -308,14 +253,37 @@ namespace cage
 	CAGE_CORE_API line intersection(const line &a, const sphere &b);
 	CAGE_CORE_API line intersection(const line &a, const aabb &b);
 	CAGE_CORE_API aabb intersection(const aabb &a, const aabb &b);
-	inline        vec3 intersection(const triangle &a, const line &b) { return intersection(b, a); }
-	inline        vec3 intersection(const plane &a, const line &b) { return intersection(b, a); }
-	inline        line intersection(const sphere &a, const line &b) { return intersection(b, a); };
-	inline        line intersection(const aabb &a, const line &b) { return intersection(b, a); };
 
-	CAGE_CORE_API vec3 closestPoint(const line &lin, const vec3 &point);
-	CAGE_CORE_API vec3 closestPoint(const triangle &trig, const vec3 &point);
-	CAGE_CORE_API vec3 closestPoint(const plane &pl, const vec3 &point);
+	CAGE_CORE_API vec3 closestPoint(const vec3 &point, const line &lin);
+	CAGE_CORE_API vec3 closestPoint(const vec3 &point, const triangle &trig);
+	CAGE_CORE_API vec3 closestPoint(const vec3 &point, const plane &pl);
+
+	namespace privat
+	{
+		template<class T> struct GeometryOrder {};
+		template<> struct GeometryOrder<vec3> { static constexpr int order = 1; };
+		template<> struct GeometryOrder<line> { static constexpr int order = 2; };
+		template<> struct GeometryOrder<triangle> { static constexpr int order = 3; };
+		template<> struct GeometryOrder<plane> { static constexpr int order = 4; };
+		template<> struct GeometryOrder<sphere> { static constexpr int order = 5; };
+		template<> struct GeometryOrder<aabb> { static constexpr int order = 6; };
+
+		// todo replace with requires (c++20)
+		template<class A, class B, bool enabled = (GeometryOrder<A>::order > GeometryOrder<B>::order)> struct GeometryOrderedType {};
+		template<class A, class B> struct GeometryOrderedType<A, B, true> { using type = int; };
+		template<class A, class B> using GeometryOrderedEnabled = typename GeometryOrderedType<A, B>::type;
+	}
+
+	template<class A, class B, privat::GeometryOrderedEnabled<A, B> = 1>
+	CAGE_FORCE_INLINE auto angle(const A &a, const B &b) { return angle(b, a); }
+	template<class A, class B, privat::GeometryOrderedEnabled<A, B> = 1>
+	CAGE_FORCE_INLINE auto distance(const A &a, const B &b) { return distance(b, a); }
+	template<class A, class B, privat::GeometryOrderedEnabled<A, B> = 1>
+	CAGE_FORCE_INLINE auto intersects(const A &a, const B &b) { return intersects(b, a); }
+	template<class A, class B, privat::GeometryOrderedEnabled<A, B> = 1>
+	CAGE_FORCE_INLINE auto intersection(const A &a, const B &b) { return intersection(b, a); }
+	template<class A, class B, privat::GeometryOrderedEnabled<A, B> = 1>
+	CAGE_FORCE_INLINE auto closestPoint(const A &a, const B &b) { return closestPoint(b, a); }
 }
 
 #endif // guard_geometry_h_waesfes54hg96r85t4h6rt4h564rzth_

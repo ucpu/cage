@@ -107,6 +107,7 @@ void testGeometry()
 			line d = makeSegment(vec3(3, -1, 0), vec3(3, 1, 0));
 			test(distance(a, a), 0);
 			test(distance(a, b), 1);
+			test(distance(b, a), 1);
 			test(distance(a, c), 0);
 			test(distance(b, c), 1);
 			test(distance(a, d), 3);
@@ -130,14 +131,8 @@ void testGeometry()
 			line d = makeSegment(vec3(3, -1, 0), vec3(3, 1, 0));
 			test(angle(a, a), degs(0));
 			test(angle(a, b), degs(90));
+			test(angle(b, a), degs(90));
 			test(angle(a, c), atan2(real(1), sqrt(2)));
-			CAGE_TEST(!perpendicular(a, a));
-			CAGE_TEST(perpendicular(a, b));
-			CAGE_TEST(!perpendicular(a, c));
-			CAGE_TEST(parallel(a, a));
-			CAGE_TEST(!parallel(a, b));
-			CAGE_TEST(!parallel(a, c));
-			CAGE_TEST(parallel(a, d));
 		}
 
 		{
@@ -181,7 +176,6 @@ void testGeometry()
 			triangle t1(vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 2, 0));
 			triangle t2(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1));
 			triangle t3(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0));
-			CAGE_TEST(parallel(t1, t2));
 			CAGE_TEST(!intersects(t1, t2));
 			CAGE_TEST(intersects(t1, t3));
 			CAGE_TEST(intersects(t2, t3));
@@ -224,6 +218,7 @@ void testGeometry()
 			test(closestPoint(tri, vec3(-5, 5, 0)), vec3(0, 2, 0));
 			test(closestPoint(tri, vec3(1, -5, 0)), vec3(1, 0, 0));
 			test(closestPoint(tri, vec3(-5, 1, 0)), vec3(0, 1, 0));
+			test(closestPoint(vec3(-5, 1, 0), tri), vec3(0, 1, 0));
 		}
 
 		{
@@ -262,7 +257,9 @@ void testGeometry()
 			triangle t2(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1));
 			triangle t3(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0));
 			test(intersection(makeSegment(vec3(0, 1, -1), vec3(0, 1, 1)), t1), vec3(0, 1, 0));
+			test(intersection(t1, makeSegment(vec3(0, 1, -1), vec3(0, 1, 1))), vec3(0, 1, 0));
 			CAGE_TEST(intersects(makeSegment(vec3(0, 1, -1), vec3(0, 1, 1)), t1));
+			CAGE_TEST(intersects(t1, makeSegment(vec3(0, 1, -1), vec3(0, 1, 1))));
 			CAGE_TEST(!intersection(makeSegment(vec3(5, 1, -1), vec3(0, 1, 1)), t1).valid());
 			CAGE_TEST(!intersects(makeSegment(vec3(5, 1, -1), vec3(0, 1, 1)), t1));
 			test(intersection(makeSegment(vec3(2, 5, 0), vec3(2, -5, 0)), t3), vec3(2, 1, 0));
@@ -279,6 +276,7 @@ void testGeometry()
 			test(distance(triangle(vec3(-2, -2, 0), vec3(-2, 2, 0), vec3(2, -2, 0)), makeSegment(vec3(-5, 0, 1), vec3(5, 0, 1))), 1);
 			test(distance(triangle(vec3(-2, -2, 0), vec3(-2, 2, 0), vec3(2, -2, 0)), makeSegment(vec3(-1.5, 0, 1), vec3(-0.5, 0, 1))), 1);
 			test(distance(triangle(vec3(-2, -2, 0), vec3(-2, 2, 0), vec3(2, -2, 0)), makeSegment(vec3(-1.5, -6, 3), vec3(-0.5, -6, 3))), 5);
+			test(distance(makeSegment(vec3(-1.5, -6, 3), vec3(-0.5, -6, 3)), triangle(vec3(-2, -2, 0), vec3(-2, 2, 0), vec3(2, -2, 0))), 5);
 		}
 
 		{
@@ -288,6 +286,7 @@ void testGeometry()
 			test(distance(triangle(vec3(-2, -2, 0), vec3(-2, 4, 0), vec3(4, -2, 0)), triangle(vec3(-2, -2, 1), vec3(-2, 4, 1), vec3(4, -2, 1))), 1);
 			test(distance(triangle(vec3(-2, -2, 0), vec3(-2, 4, 0), vec3(4, -2, 0)), triangle(vec3(0, 0, 0.5), vec3(0, 0, 2), vec3(0, 1, 2))), 0.5);
 			test(distance(triangle(vec3(-2, -2, 0), vec3(-2, 2, 0), vec3(2, -2, 0)), triangle(vec3(1, 1, -2), vec3(1, 1, 2), vec3(2, 2, 0))), cage::sqrt(2));
+			test(distance(triangle(vec3(1, 1, -2), vec3(1, 1, 2), vec3(2, 2, 0)), triangle(vec3(-2, -2, 0), vec3(-2, 2, 0), vec3(2, -2, 0))), cage::sqrt(2));
 		}
 
 		{
@@ -340,6 +339,7 @@ void testGeometry()
 			CAGE_TESTCASE("closest point");
 
 			test(closestPoint(plane(vec3(13, 42, -5), vec3(0, 0, 1)), vec3(123, 456, 1)), vec3(123, 456, -5));
+			test(closestPoint(vec3(123, 456, 1), plane(vec3(13, 42, -5), vec3(0, 0, 1))), vec3(123, 456, -5));
 			CAGE_TEST_ASSERTED(closestPoint(plane(vec3(13, 42, -5), vec3(0, 0, 2)), vec3(123, 456, 1)));
 		}
 
@@ -347,6 +347,7 @@ void testGeometry()
 			CAGE_TESTCASE("distances (with points)");
 
 			test(distance(plane(vec3(13, 42, -5), vec3(0, 0, 1)), vec3(123, 456, 1)), 6);
+			test(distance(vec3(123, 456, 1), plane(vec3(13, 42, -5), vec3(0, 0, 1))), 6);
 			test(distance(plane(vec3(13, 42, -5), vec3(0, 0, -1)), vec3(123, 456, 1)), 6);
 			test(distance(plane(vec3(13, 42, 5), vec3(0, 0, -1)), vec3(123, 456, 1)), 4);
 			test(distance(plane(vec3(13, 42, 5), vec3(0, 1, 0)), vec3(123, 40, 541)), 2);
@@ -358,12 +359,14 @@ void testGeometry()
 			test(distance(plane(vec3(13, 42, 1), vec3(0, 0, 1)), makeSegment(vec3(123, 456, 7), vec3(890, 123, -4))), 0);
 			test(distance(plane(vec3(13, 42, 1), vec3(0, 0, 1)), makeSegment(vec3(123, 456, 7), vec3(890, 123, 1))), 0);
 			test(distance(plane(vec3(13, 42, -5), vec3(0, 0, 1)), makeSegment(vec3(123, 456, 1), vec3(890, 123, 1))), 6);
+			test(distance(makeSegment(vec3(123, 456, 1), vec3(890, 123, 1)), plane(vec3(13, 42, -5), vec3(0, 0, 1))), 6);
 		}
 
 		{
 			CAGE_TESTCASE("intersects");
 
 			CAGE_TEST(intersects(plane(vec3(13, 42, 1), vec3(0, 0, 1)), makeSegment(vec3(123, 456, 7), vec3(890, 123, -4))));
+			CAGE_TEST(intersects(makeSegment(vec3(123, 456, 7), vec3(890, 123, -4)), plane(vec3(13, 42, 1), vec3(0, 0, 1))));
 			CAGE_TEST(intersects(plane(vec3(13, 42, 1), vec3(0, 0, 1)), makeSegment(vec3(123, 456, 7), vec3(890, 123, 1))));
 			CAGE_TEST(!intersects(plane(vec3(13, 42, -5), vec3(0, 0, 1)), makeSegment(vec3(123, 456, 7), vec3(890, 123, 1))));
 		}
@@ -373,6 +376,7 @@ void testGeometry()
 
 			test(intersection(plane(vec3(), vec3(0, 1, 0)), makeLine(vec3(0, 1, 0), vec3(0, -1, 0))), vec3());
 			test(intersection(plane(vec3(), vec3(0, 1, 0)), makeLine(vec3(1, 1, 0), vec3(1, -1, 0))), vec3(1, 0, 0));
+			test(intersection(makeLine(vec3(1, 1, 0), vec3(1, -1, 0)), plane(vec3(), vec3(0, 1, 0))), vec3(1, 0, 0));
 			test(intersection(plane(vec3(13, 5, 42), vec3(0, 1, 0)), makeLine(vec3(1, 1, 0), vec3(1, -1, 0))), vec3(1, 5, 0));
 			test(intersection(plane(vec3(), vec3(0, 1, 0)), makeSegment(vec3(1, 1, 0), vec3(1, -1, 0))), vec3(1, 0, 0));
 			CAGE_TEST(!intersection(plane(vec3(), vec3(0, 1, 0)), makeSegment(vec3(1, 1, 0), vec3(1, 2, 0))).valid());
@@ -386,6 +390,7 @@ void testGeometry()
 			CAGE_TESTCASE("distances");
 
 			test(distance(makeLine(vec3(1, 10, 20), vec3(1, 10, 25)), sphere(vec3(1, 2, 3), 3)), 5);
+			test(distance(sphere(vec3(1, 2, 3), 3), makeLine(vec3(1, 10, 20), vec3(1, 10, 25))), 5);
 			test(distance(makeLine(vec3(1, 10, -20), vec3(1, 10, 25)), sphere(vec3(1, 2, 3), 3)), 5);
 			test(distance(makeLine(vec3(1, 4, -20), vec3(1, 4, 25)), sphere(vec3(1, 2, 3), 3)), 0);
 
@@ -407,6 +412,7 @@ void testGeometry()
 			CAGE_TEST(!intersects(makeLine(vec3(1, 10, 20), vec3(1, 10, 25)), sphere(vec3(1, 2, 3), 3)));
 			CAGE_TEST(!intersects(makeLine(vec3(1, 10, -20), vec3(1, 10, 25)), sphere(vec3(1, 2, 3), 3)));
 			CAGE_TEST(intersects(makeLine(vec3(1, 4, -20), vec3(1, 4, 25)), sphere(vec3(1, 2, 3), 3)));
+			CAGE_TEST(intersects(sphere(vec3(1, 2, 3), 3), makeLine(vec3(1, 4, -20), vec3(1, 4, 25))));
 
 			CAGE_TEST(!intersects(makeRay(vec3(1, 10, 20), vec3(1, 10, 25)), sphere(vec3(1, 2, 3), 3)));
 			CAGE_TEST(!intersects(makeRay(vec3(1, 10, -20), vec3(1, 10, -25)), sphere(vec3(1, 2, 3), 3)));
@@ -504,6 +510,7 @@ void testGeometry()
 			CAGE_TESTCASE("ray test");
 			aabb a(vec3(-5, -6, -3), vec3(-4, -4, -1));
 			CAGE_TEST(intersects(makeSegment(vec3(-4, -4, -10), vec3(-5, -5, 10)), a));
+			CAGE_TEST(intersects(a, makeSegment(vec3(-4, -4, -10), vec3(-5, -5, 10))));
 			CAGE_TEST(intersects(makeSegment(vec3(-10, -12, -6), vec3(-5, -6, -2)), a));
 			CAGE_TEST(!intersects(makeSegment(vec3(-4, -4, -10), vec3(-5, -5, -5)), a));
 			CAGE_TEST(!intersects(makeSegment(vec3(-5, -5, -5), vec3(-4, -4, -5)), a));
@@ -515,6 +522,7 @@ void testGeometry()
 			test(distance(a, vec3(0, 0, 0)), length(vec3(1, 3, 4)));
 			test(distance(a, vec3(2, 7, 6)), 0);
 			test(distance(a, vec3(3, 3, 10)), 2);
+			test(distance(vec3(3, 3, 10), a), 2);
 		}
 
 		{
@@ -556,6 +564,7 @@ void testGeometry()
 			{
 				aabb box(vec3(5, 3, 8), vec3(12, 9, 10));
 				CAGE_TEST(intersects(triangle(vec3(6, 7, 8), vec3(11, 3, 8), vec3(11, 9, 10)), box)); // triangle fully inside
+				CAGE_TEST(intersects(box, triangle(vec3(6, 7, 8), vec3(11, 3, 8), vec3(11, 9, 10)))); // triangle fully inside
 				CAGE_TEST(!intersects(triangle(vec3(-6, 7, 8), vec3(-11, 3, 8), vec3(-11, 9, 10)), box)); // triangle fully outside
 			}
 			{ // triangles with all vertices outside

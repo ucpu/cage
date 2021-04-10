@@ -114,91 +114,17 @@ namespace cage
 			vec3 dP = w + (sc * u) - (tc * v);
 			return length(dP);
 		}
-	}
 
+		bool parallel(const vec3 &dir1, const vec3 &dir2)
+		{
+			return abs(dot(dir1, dir2)) >= 1 - 1e-5;
+		}
 
+		bool perpendicular(const vec3 &dir1, const vec3 &dir2)
+		{
+			return abs(dot(dir1, dir2)) <= 1e-5;
+		}
 
-
-
-
-
-	bool parallel(const vec3 &dir1, const vec3 &dir2)
-	{
-		return abs(dot(dir1, dir2)) >= 1 - 1e-5;
-	}
-
-	bool parallel(const line &a, const line &b)
-	{
-		return parallel(a.direction, b.direction);
-	}
-
-	bool parallel(const line &a, const triangle &b)
-	{
-		return perpendicular(b.normal(), a.direction);
-	}
-
-	bool parallel(const line &a, const plane &b)
-	{
-		return perpendicular(b.normal, a.direction);
-	}
-
-	bool parallel(const triangle &a, const triangle &b)
-	{
-		return parallel(a.normal(), b.normal());
-	}
-
-	bool parallel(const triangle &a, const plane &b)
-	{
-		return parallel(a.normal(), b.normal);
-	}
-
-	bool parallel(const plane &a, const plane &b)
-	{
-		return parallel(a.normal, b.normal);
-	}
-
-	bool perpendicular(const vec3 &dir1, const vec3 &dir2)
-	{
-		return abs(dot(dir1, dir2)) <= 1e-5;
-	}
-
-	bool perpendicular(const line &a, const line &b)
-	{
-		return perpendicular(a.direction, b.direction);
-	}
-
-	bool perpendicular(const line &a, const triangle &b)
-	{
-		return parallel(a.direction, b.normal());
-	}
-
-	bool perpendicular(const line &a, const plane &b)
-	{
-		return parallel(a.direction, b.normal);
-	}
-
-	bool perpendicular(const triangle &a, const triangle &b)
-	{
-		return perpendicular(a.normal(), b.normal());
-	}
-
-	bool perpendicular(const triangle &a, const plane &b)
-	{
-		return perpendicular(a.normal(), b.normal);
-	}
-
-	bool perpendicular(const plane &a, const plane &b)
-	{
-		return perpendicular(a.normal, b.normal);
-	}
-
-
-
-
-
-
-	namespace
-	{
 		rads angle(const vec3 &a, const vec3 &b)
 		{
 			CAGE_ASSERT(abs(lengthSquared(a) - 1) < 1e-4);
@@ -294,7 +220,7 @@ namespace cage
 		vec3 p = intersection(plane(b), makeLine(a.origin, a.origin + a.direction));
 		if (!p.valid())
 		{
-			CAGE_ASSERT(parallel(a, b));
+			CAGE_ASSERT(perpendicular(a.direction, b.normal()));
 			for (uint32 i = 0; i < 3; i++)
 				d = min(d, distance(a, makeSegment(b[i], b[(i + 1) % 3])));
 			return d;
@@ -393,7 +319,7 @@ namespace cage
 	real distance(const plane &a, const plane &b)
 	{
 		CAGE_ASSERT(a.normalized() && b.normalized());
-		if (parallel(a, b))
+		if (parallel(a.normal, b.normal))
 			return abs(a.d - b.d);
 		return 0;
 	}
@@ -498,13 +424,13 @@ namespace cage
 	{
 		if (a.isLine())
 		{
-			if (parallel(a, b))
+			if (perpendicular(a.direction, b.normal))
 				return distance(a.origin, b) < 1e-5;
 			return true;
 		}
 		else if (a.isRay())
 		{
-			if (parallel(a, b))
+			if (perpendicular(a.direction, b.normal))
 				return distance(a.origin, b) < 1e-5;
 			real x = dot(a.origin - b.origin(), b.normal);
 			real y = dot(a.direction, b.normal);
@@ -766,7 +692,7 @@ namespace cage
 	bool intersects(const plane &a, const plane &b)
 	{
 		CAGE_ASSERT(a.normalized() && b.normalized());
-		if (parallel(a, b))
+		if (parallel(a.normal, b.normal))
 			return abs(a.d - b.d) < 1e-5;
 		return true;
 	}
@@ -908,14 +834,14 @@ namespace cage
 
 
 
-	vec3 closestPoint(const line &l, const vec3 &p)
+	vec3 closestPoint(const vec3 &p, const line &l)
 	{
 		real d = dot(p - l.origin, l.direction);
 		d = clamp(d, l.minimum, l.maximum);
 		return l.origin + l.direction * d;
 	}
 
-	vec3 closestPoint(const triangle &trig, const vec3 &sourcePosition)
+	vec3 closestPoint(const vec3 &sourcePosition, const triangle &trig)
 	{
 		const vec3 p = closestPoint(plane(trig), sourcePosition);
 		{
@@ -945,7 +871,7 @@ namespace cage
 		return pca;
 	}
 
-	vec3 closestPoint(const plane &pl, const vec3 &pt)
+	vec3 closestPoint(const vec3 &pt, const plane &pl)
 	{
 		CAGE_ASSERT(pl.normalized());
 		return pt - dot(pl.normal, pt - pl.origin()) * pl.normal;
