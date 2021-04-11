@@ -376,6 +376,54 @@ namespace cage
 		return true;
 	}
 
+	bool intersects(const vec3 &a, const Frustum &b)
+	{
+		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+	}
+
+	bool intersects(const Line &a, const Frustum &b)
+	{
+		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+	}
+
+	bool intersects(const Triangle &a, const Frustum &b)
+	{
+		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+	}
+
+	bool intersects(const Plane &a, const Frustum &b)
+	{
+		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+	}
+
+	bool intersects(const Sphere &a, const Frustum &b)
+	{
+		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+	}
+
+	bool intersects(const Aabb &box, const Frustum &frustum)
+	{
+		const vec3 b[] = { box.a, box.b };
+		for (uint32 i = 0; i < 6; i++)
+		{
+			const vec4 &p = frustum.planes[i]; // current plane
+			const vec3 pv = vec3( // current p-vertex
+				b[!!(p[0] > 0)][0],
+				b[!!(p[1] > 0)][1],
+				b[!!(p[2] > 0)][2]
+			);
+			const real d = dot(vec3(p), pv);
+			if (d < -p[3])
+				return false;
+		}
+		return true;
+	}
+
+	bool intersects(const Frustum &a, const Frustum &b)
+	{
+		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+	}
+
 	vec3 intersection(const Line &ray, const Triangle &tri)
 	{
 		vec3 v0 = tri[0];

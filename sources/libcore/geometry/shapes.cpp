@@ -291,4 +291,22 @@ namespace cage
 		real wz = b[2] - a[2];
 		return (wx*wy + wx*wz + wy*wz) * 2;
 	}
+
+	Frustum::Frustum(const transform &camera, const mat4 &proj) : Frustum(mat4(inverse(camera)), proj)
+	{}
+
+	Frustum::Frustum(const mat4 &view, const mat4 &proj)
+	{
+		const mat4 mvp = proj * view;
+		const auto &column = [&](uint32 index)
+		{
+			return vec4(mvp[index], mvp[index + 4], mvp[index + 8], mvp[index + 12]);
+		};
+		planes[0] = column(3) + column(0);
+		planes[1] = column(3) - column(0);
+		planes[2] = column(3) + column(1);
+		planes[3] = column(3) - column(1);
+		planes[4] = column(3) + column(2);
+		planes[5] = column(3) - column(2);
+	}
 }

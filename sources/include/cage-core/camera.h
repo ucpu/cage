@@ -13,13 +13,6 @@ namespace cage
 	CAGE_CORE_API mat4 perspectiveProjection(real left, real right, real bottom, real top, real near, real far);
 	CAGE_CORE_API mat4 orthographicProjection(real left, real right, real bottom, real top, real near, real far);
 
-	CAGE_CORE_API bool intersectsFrustum(const vec3 &shape, const mat4 &mvp);
-	CAGE_CORE_API bool intersectsFrustum(const Line &shape, const mat4 &mvp);
-	CAGE_CORE_API bool intersectsFrustum(const Triangle &shape, const mat4 &mvp);
-	CAGE_CORE_API bool intersectsFrustum(const Plane &shape, const mat4 &mvp);
-	CAGE_CORE_API bool intersectsFrustum(const Sphere &shape, const mat4 &mvp);
-	CAGE_CORE_API bool intersectsFrustum(const Aabb &shape, const mat4 &mvp);
-
 	enum class StereoModeEnum : uint32
 	{
 		Mono,

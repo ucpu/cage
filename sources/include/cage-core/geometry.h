@@ -182,6 +182,17 @@ namespace cage
 		static constexpr Aabb Universe() { return Aabb(vec3(-real::Infinity()), vec3(real::Infinity())); }
 	};
 
+	struct CAGE_CORE_API Frustum
+	{
+		// data
+		vec4 planes[6];
+
+		// constructor
+		constexpr Frustum() noexcept {}
+		explicit Frustum(const transform &camera, const mat4 &proj);
+		explicit Frustum(const mat4 &view, const mat4 &proj);
+	};
+
 	namespace detail
 	{
 		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const Line &other) { return str + "(" + other.origin + ", " + other.direction + ", " + other.minimum + ", " + other.maximum + ")"; }
@@ -204,7 +215,6 @@ namespace cage
 	CAGE_CORE_API rads angle(const Triangle &a, const Plane &b);
 	CAGE_CORE_API rads angle(const Plane &a, const Plane &b);
 
-	//CAGE_CORE_API real distance(const vec3 &a, const vec3 &b);
 	CAGE_CORE_API real distance(const vec3 &a, const Line &b);
 	CAGE_CORE_API real distance(const vec3 &a, const Triangle &b);
 	CAGE_CORE_API real distance(const vec3 &a, const Plane &b);
@@ -232,21 +242,28 @@ namespace cage
 	CAGE_CORE_API bool intersects(const vec3 &a, const Plane &b);
 	CAGE_CORE_API bool intersects(const vec3 &a, const Sphere &b);
 	CAGE_CORE_API bool intersects(const vec3 &a, const Aabb &b);
+	CAGE_CORE_API bool intersects(const vec3 &a, const Frustum &b);
 	CAGE_CORE_API bool intersects(const Line &a, const Line &b);
 	CAGE_CORE_API bool intersects(const Line &a, const Triangle &b);
 	CAGE_CORE_API bool intersects(const Line &a, const Plane &b);
 	CAGE_CORE_API bool intersects(const Line &a, const Sphere &b);
 	CAGE_CORE_API bool intersects(const Line &a, const Aabb &b);
+	CAGE_CORE_API bool intersects(const Line &a, const Frustum &b);
 	CAGE_CORE_API bool intersects(const Triangle &a, const Triangle &b);
 	CAGE_CORE_API bool intersects(const Triangle &a, const Plane &b);
 	CAGE_CORE_API bool intersects(const Triangle &a, const Sphere &b);
 	CAGE_CORE_API bool intersects(const Triangle &a, const Aabb &b);
+	CAGE_CORE_API bool intersects(const Triangle &a, const Frustum &b);
 	CAGE_CORE_API bool intersects(const Plane &a, const Plane &b);
 	CAGE_CORE_API bool intersects(const Plane &a, const Sphere &b);
 	CAGE_CORE_API bool intersects(const Plane &a, const Aabb &b);
+	CAGE_CORE_API bool intersects(const Plane &a, const Frustum &b);
 	CAGE_CORE_API bool intersects(const Sphere &a, const Sphere &b);
 	CAGE_CORE_API bool intersects(const Sphere &a, const Aabb &b);
+	CAGE_CORE_API bool intersects(const Sphere &a, const Frustum &b);
 	CAGE_CORE_API bool intersects(const Aabb &a, const Aabb &b);
+	CAGE_CORE_API bool intersects(const Aabb &a, const Frustum &b);
+	CAGE_CORE_API bool intersects(const Frustum &a, const Frustum &b);
 
 	CAGE_CORE_API vec3 intersection(const Line &a, const Triangle &b);
 	CAGE_CORE_API vec3 intersection(const Line &a, const Plane &b);
@@ -267,6 +284,7 @@ namespace cage
 		template<> struct GeometryOrder<Plane> { static constexpr int order = 4; };
 		template<> struct GeometryOrder<Sphere> { static constexpr int order = 5; };
 		template<> struct GeometryOrder<Aabb> { static constexpr int order = 6; };
+		template<> struct GeometryOrder<Frustum> { static constexpr int order = 7; };
 
 		// todo replace with requires (c++20)
 		template<class A, class B, bool enabled = (GeometryOrder<A>::order > GeometryOrder<B>::order)> struct GeometryOrderedType {};

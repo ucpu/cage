@@ -544,23 +544,23 @@ void testGeometry()
 
 		{
 			CAGE_TESTCASE("frustum culling");
-			Aabb a(vec3(1, 1, -7), vec3(3, 5, -1));
-			mat4 proj = perspectiveProjection(degs(90), 1, 2, 10);
+			const Aabb a(vec3(1, 1, -7), vec3(3, 5, -1));
+			const mat4 proj = perspectiveProjection(degs(90), 1, 2, 10);
 			// varying distance along z-axis
-			CAGE_TEST(intersectsFrustum(a, proj * inverse(mat4(vec3(2, 3, -10)))) == false);
-			CAGE_TEST(intersectsFrustum(a, proj * inverse(mat4(vec3(2, 3, -5)))) == true);
-			CAGE_TEST(intersectsFrustum(a, proj * inverse(mat4(vec3(2, 3, 0)))) == true);
-			CAGE_TEST(intersectsFrustum(a, proj * inverse(mat4(vec3(2, 3, 3)))) == true);
-			CAGE_TEST(intersectsFrustum(a, proj * inverse(mat4(vec3(2, 3, 10)))) == false);
+			CAGE_TEST(intersects(a, Frustum(transform(vec3(2, 3, -10)), proj)) == false);
+			CAGE_TEST(intersects(a, Frustum(transform(vec3(2, 3, -5)), proj)) == true);
+			CAGE_TEST(intersects(a, Frustum(transform(vec3(2, 3, 0)), proj)) == true);
+			CAGE_TEST(intersects(a, Frustum(transform(vec3(2, 3, 3)), proj)) == true);
+			CAGE_TEST(intersects(a, Frustum(transform(vec3(2, 3, 10)), proj)) == false);
 			// box moved left and right
-			CAGE_TEST(intersectsFrustum(a, proj * inverse(mat4(vec3(-10, 3, 0)))) == false);
-			CAGE_TEST(intersectsFrustum(a, proj * inverse(mat4(vec3(0, 3, 0)))) == true);
-			CAGE_TEST(intersectsFrustum(a, proj * inverse(mat4(vec3(5, 3, 0)))) == true);
-			CAGE_TEST(intersectsFrustum(a, proj * inverse(mat4(vec3(15, 3, 0)))) == false);
+			CAGE_TEST(intersects(a, Frustum(transform(vec3(-10, 3, 0)), proj)) == false);
+			CAGE_TEST(intersects(a, Frustum(transform(vec3(0, 3, 0)), proj)) == true);
+			CAGE_TEST(intersects(a, Frustum(transform(vec3(5, 3, 0)), proj)) == true);
+			CAGE_TEST(intersects(a, Frustum(transform(vec3(15, 3, 0)), proj)) == false);
 		}
 
 		{
-			CAGE_TESTCASE("Triangle-Aabb intersects");
+			CAGE_TESTCASE("triangle-aabb intersects");
 			{
 				Aabb box(vec3(5, 3, 8), vec3(12, 9, 10));
 				CAGE_TEST(intersects(Triangle(vec3(6, 7, 8), vec3(11, 3, 8), vec3(11, 9, 10)), box)); // Triangle fully inside

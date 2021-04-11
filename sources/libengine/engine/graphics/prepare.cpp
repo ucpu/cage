@@ -446,7 +446,7 @@ namespace cage
 
 			void addRenderableModel(RenderPassImpl *pass, EmitObject *e, Holder<Model> m, const mat4 &model, const mat4 &mvp, const mat4 &mvpPrev)
 			{
-				if (!intersectsFrustum(m->getBoundingBox(), mvp))
+				if (!intersects(m->getBoundingBox(), Frustum(mat4(), mvp)))
 					return;
 				if (pass->targetShadowmap != 0 && none(m->getFlags() & ModelRenderFlags::ShadowCast))
 					return;
@@ -594,12 +594,12 @@ namespace cage
 					break;
 				case LightTypeEnum::Spot:
 					mvpMat = pass->viewProj * light->model * lightSpotCone(lightRange(light->light.color, light->light.attenuation), light->light.spotAngle);
-					if (!intersectsFrustum(modelCone->getBoundingBox(), mvpMat))
+					if (!intersects(modelCone->getBoundingBox(), Frustum(mat4(), mvpMat)))
 						return; // this light's volume is outside view frustum
 					break;
 				case LightTypeEnum::Point:
 					mvpMat = pass->viewProj * light->model * mat4::scale(lightRange(light->light.color, light->light.attenuation));
-					if (!intersectsFrustum(modelSphere->getBoundingBox(), mvpMat))
+					if (!intersects(modelSphere->getBoundingBox(), Frustum(mat4(), mvpMat)))
 						return; // this light's volume is outside view frustum
 					break;
 				}
