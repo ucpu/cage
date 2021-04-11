@@ -269,13 +269,7 @@ namespace cage
 		return impl->query(shape);
 	}
 
-	bool CollisionQuery::query(const ExactFrustum &shape)
-	{
-		CollisionQueryImpl *impl = (CollisionQueryImpl *)this;
-		return impl->query(shape);
-	}
-
-	bool CollisionQuery::query(const ConservativeFrustum &shape)
+	bool CollisionQuery::query(const Frustum &shape)
 	{
 		CollisionQueryImpl *impl = (CollisionQueryImpl *)this;
 		return impl->query(shape);

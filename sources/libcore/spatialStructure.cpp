@@ -108,8 +108,7 @@ namespace cage
 			virtual bool intersects(const Sphere &other) = 0;
 			virtual bool intersects(const Aabb &other) = 0;
 			virtual bool intersects(const Cone &other) = 0;
-			virtual bool intersects(const ExactFrustum &other) = 0;
-			virtual bool intersects(const ConservativeFrustum &other) = 0;
+			virtual bool intersects(const Frustum &other) = 0;
 
 			ItemBase(uint32 name) : name(name)
 			{}
@@ -137,8 +136,7 @@ namespace cage
 			virtual bool intersects(const Sphere &other) { return cage::intersects(*(T *)this, other); };
 			virtual bool intersects(const Aabb &other) { return cage::intersects(*(T *)this, other); };
 			virtual bool intersects(const Cone &other) { return cage::intersects(*(T *)this, other); };
-			virtual bool intersects(const ExactFrustum &other) { return cage::intersects(*(T *)this, other); };
-			virtual bool intersects(const ConservativeFrustum &other) { return cage::intersects(*(T *)this, other); };
+			virtual bool intersects(const Frustum &other) { return cage::intersects(*(T *)this, other); };
 		};
 
 		struct Node
@@ -475,13 +473,7 @@ namespace cage
 		return impl->intersection(shape);
 	}
 
-	bool SpatialQuery::intersection(const ExactFrustum &shape)
-	{
-		SpatialQueryImpl *impl = (SpatialQueryImpl *)this;
-		return impl->intersection(shape);
-	}
-
-	bool SpatialQuery::intersection(const ConservativeFrustum &shape)
+	bool SpatialQuery::intersection(const Frustum &shape)
 	{
 		SpatialQueryImpl *impl = (SpatialQueryImpl *)this;
 		return impl->intersection(shape);

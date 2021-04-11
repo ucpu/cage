@@ -547,16 +547,16 @@ void testGeometry()
 			const Aabb a(vec3(1, 1, -7), vec3(3, 5, -1));
 			const mat4 proj = perspectiveProjection(degs(90), 1, 2, 10);
 			// varying distance along z-axis
-			CAGE_TEST(intersects(a, ConservativeFrustum(transform(vec3(2, 3, -10)), proj)) == false);
-			CAGE_TEST(intersects(a, ConservativeFrustum(transform(vec3(2, 3, -5)), proj)) == true);
-			CAGE_TEST(intersects(a, ConservativeFrustum(transform(vec3(2, 3, 0)), proj)) == true);
-			CAGE_TEST(intersects(a, ConservativeFrustum(transform(vec3(2, 3, 3)), proj)) == true);
-			CAGE_TEST(intersects(a, ConservativeFrustum(transform(vec3(2, 3, 10)), proj)) == false);
+			CAGE_TEST(intersects(a, Frustum(transform(vec3(2, 3, -10)), proj)) == false);
+			CAGE_TEST(intersects(a, Frustum(transform(vec3(2, 3, -5)), proj)) == true);
+			CAGE_TEST(intersects(a, Frustum(transform(vec3(2, 3, 0)), proj)) == true);
+			CAGE_TEST(intersects(a, Frustum(transform(vec3(2, 3, 3)), proj)) == true);
+			CAGE_TEST(intersects(a, Frustum(transform(vec3(2, 3, 10)), proj)) == false);
 			// box moved left and right
-			CAGE_TEST(intersects(a, ConservativeFrustum(transform(vec3(-10, 3, 0)), proj)) == false);
-			CAGE_TEST(intersects(a, ConservativeFrustum(transform(vec3(0, 3, 0)), proj)) == true);
-			CAGE_TEST(intersects(a, ConservativeFrustum(transform(vec3(5, 3, 0)), proj)) == true);
-			CAGE_TEST(intersects(a, ConservativeFrustum(transform(vec3(15, 3, 0)), proj)) == false);
+			CAGE_TEST(intersects(a, Frustum(transform(vec3(-10, 3, 0)), proj)) == false);
+			CAGE_TEST(intersects(a, Frustum(transform(vec3(0, 3, 0)), proj)) == true);
+			CAGE_TEST(intersects(a, Frustum(transform(vec3(5, 3, 0)), proj)) == true);
+			CAGE_TEST(intersects(a, Frustum(transform(vec3(15, 3, 0)), proj)) == false);
 		}
 
 		{

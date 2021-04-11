@@ -812,13 +812,7 @@ namespace cage
 		return d.distance(shape);
 	}
 
-	real distance(const ExactFrustum &shape, const Collider *collider, const transform &t)
-	{
-		IntersectionDetector d((const ColliderImpl *)collider, t);
-		return d.distance(shape);
-	}
-
-	real distance(const ConservativeFrustum &shape, const Collider *collider, const transform &t)
+	real distance(const Frustum &shape, const Collider *collider, const transform &t)
 	{
 		IntersectionDetector d((const ColliderImpl *)collider, t);
 		return d.distance(shape);
@@ -867,13 +861,7 @@ namespace cage
 		return d.intersects(shape);
 	}
 
-	bool intersects(const ExactFrustum &shape, const Collider *collider, const transform &t)
-	{
-		IntersectionDetector d((const ColliderImpl *)collider, t);
-		return d.intersects(shape);
-	}
-
-	bool intersects(const ConservativeFrustum &shape, const Collider *collider, const transform &t)
+	bool intersects(const Frustum &shape, const Collider *collider, const transform &t)
 	{
 		IntersectionDetector d((const ColliderImpl *)collider, t);
 		return d.intersects(shape);

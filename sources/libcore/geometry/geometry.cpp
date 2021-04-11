@@ -529,12 +529,7 @@ namespace cage
 		return true;
 	}
 
-	bool intersects(const Aabb &a, const ExactFrustum &b)
-	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
-	}
-
-	bool intersects(const Aabb &box, const ConservativeFrustum &frustum)
+	bool intersects(const Aabb &box, const Frustum &frustum)
 	{
 		const vec3 b[] = { box.a, box.b };
 		for (uint32 i = 0; i < 6; i++)
@@ -557,12 +552,7 @@ namespace cage
 		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
 	}
 
-	bool intersects(const Cone &a, const ExactFrustum &b)
-	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
-	}
-
-	bool intersects(const Cone &a, const ConservativeFrustum &b)
+	bool intersects(const Cone &a, const Frustum &b)
 	{
 		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
 	}

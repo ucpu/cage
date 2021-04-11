@@ -214,6 +214,7 @@ namespace cage
 		bool valid() const noexcept { return origin.valid() && direction.valid() && length.valid() && halfAngle.valid(); }
 	};
 
+	// note: some intersection tests with frustums are conservative
 	struct CAGE_CORE_API Frustum
 	{
 		// data
@@ -234,36 +235,6 @@ namespace cage
 		explicit Frustum(const mat4 &viewProj);
 	};
 
-	struct CAGE_CORE_API ExactFrustum : public Frustum
-	{
-		using Frustum::Frustum;
-		explicit ExactFrustum(const Frustum &other) noexcept : Frustum(other) {}
-		explicit ExactFrustum(const ConservativeFrustum &other) noexcept;
-
-		// compound operators
-		ExactFrustum &operator *= (const mat4 &other) { return *this = *this * other; }
-		ExactFrustum &operator *= (const transform &other) { return *this = *this * other; }
-
-		// binary operators
-		ExactFrustum operator * (const mat4 &other) const { return ExactFrustum(Frustum(*this) * other); }
-		ExactFrustum operator * (const transform &other) const { return *this * mat4(other); }
-	};
-
-	struct CAGE_CORE_API ConservativeFrustum : public Frustum
-	{
-		using Frustum::Frustum;
-		explicit ConservativeFrustum(const Frustum &other) noexcept : Frustum(other) {}
-		explicit ConservativeFrustum(const ExactFrustum &other) noexcept;
-
-		// compound operators
-		ConservativeFrustum &operator *= (const mat4 &other) { return *this = *this * other; }
-		ConservativeFrustum &operator *= (const transform &other) { return *this = *this * other; }
-
-		// binary operators
-		ConservativeFrustum operator * (const mat4 &other) const { return ConservativeFrustum(Frustum(*this) * other); }
-		ConservativeFrustum operator * (const transform &other) const { return *this * mat4(other); }
-	};
-
 	namespace detail
 	{
 		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const Line &other) { return str + "(" + other.origin + ", " + other.direction + ", " + other.minimum + ", " + other.maximum + ")"; }
@@ -278,8 +249,6 @@ namespace cage
 	CAGE_CORE_API Line makeLine(const vec3 &a, const vec3 &b);
 
 	inline Sphere::Sphere(const Aabb &other) : center(other.center()), radius(other.diagonal() * 0.5) {}
-	inline ExactFrustum::ExactFrustum(const ConservativeFrustum &other) noexcept : Frustum(other) {};
-	inline ConservativeFrustum::ConservativeFrustum(const ExactFrustum &other) noexcept : Frustum(other) {};
 
 	CAGE_CORE_API rads angle(const Line &a, const Line &b);
 	CAGE_CORE_API rads angle(const Line &a, const Triangle &b);
@@ -356,11 +325,9 @@ namespace cage
 	CAGE_CORE_API bool intersects(const Sphere &a, const Frustum &b);
 	CAGE_CORE_API bool intersects(const Aabb &a, const Aabb &b);
 	CAGE_CORE_API bool intersects(const Aabb &a, const Cone &b);
-	CAGE_CORE_API bool intersects(const Aabb &a, const ExactFrustum &b);
-	CAGE_CORE_API bool intersects(const Aabb &a, const ConservativeFrustum &b);
+	CAGE_CORE_API bool intersects(const Aabb &a, const Frustum &b);
 	CAGE_CORE_API bool intersects(const Cone &a, const Cone &b);
-	CAGE_CORE_API bool intersects(const Cone &a, const ExactFrustum &b);
-	CAGE_CORE_API bool intersects(const Cone &a, const ConservativeFrustum &b);
+	CAGE_CORE_API bool intersects(const Cone &a, const Frustum &b);
 
 	CAGE_CORE_API vec3 intersection(const Line &a, const Triangle &b);
 	CAGE_CORE_API vec3 intersection(const Line &a, const Plane &b);
@@ -387,8 +354,6 @@ namespace cage
 		template<> struct GeometryOrder<Aabb> { static constexpr int order = 6; };
 		template<> struct GeometryOrder<Cone> { static constexpr int order = 7; };
 		template<> struct GeometryOrder<Frustum> { static constexpr int order = 8; };
-		template<> struct GeometryOrder<ExactFrustum> { static constexpr int order = 8; };
-		template<> struct GeometryOrder<ConservativeFrustum> { static constexpr int order = 8; };
 
 		// todo replace sfinae with requires (c++20)
 		template<class A, class B, bool enabled = (GeometryOrder<A>::order > GeometryOrder<B>::order)> struct GeometryOrderedType {};

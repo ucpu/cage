@@ -71,8 +71,7 @@ namespace cage
 	CAGE_CORE_API real distance(const Sphere &shape, const Collider *collider, const transform &t);
 	CAGE_CORE_API real distance(const Aabb &shape, const Collider *collider, const transform &t);
 	CAGE_CORE_API real distance(const Cone &shape, const Collider *collider, const transform &t);
-	CAGE_CORE_API real distance(const ExactFrustum &shape, const Collider *collider, const transform &t);
-	CAGE_CORE_API real distance(const ConservativeFrustum &shape, const Collider *collider, const transform &t);
+	CAGE_CORE_API real distance(const Frustum &shape, const Collider *collider, const transform &t);
 	CAGE_CORE_API real distance(const Collider *ao, const Collider *bo, const transform &at, const transform &bt);
 
 	CAGE_CORE_API bool intersects(const Line &shape, const Collider *collider, const transform &t);
@@ -81,8 +80,7 @@ namespace cage
 	CAGE_CORE_API bool intersects(const Sphere &shape, const Collider *collider, const transform &t);
 	CAGE_CORE_API bool intersects(const Aabb &shape, const Collider *collider, const transform &t);
 	CAGE_CORE_API bool intersects(const Cone &shape, const Collider *collider, const transform &t);
-	CAGE_CORE_API bool intersects(const ExactFrustum &shape, const Collider *collider, const transform &t);
-	CAGE_CORE_API bool intersects(const ConservativeFrustum &shape, const Collider *collider, const transform &t);
+	CAGE_CORE_API bool intersects(const Frustum &shape, const Collider *collider, const transform &t);
 	CAGE_CORE_API bool intersects(const Collider *ao, const Collider *bo, const transform &at, const transform &bt);
 
 	CAGE_CORE_API vec3 intersection(const Line &shape, const Collider *collider, const transform &t);

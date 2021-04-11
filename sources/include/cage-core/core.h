@@ -127,8 +127,6 @@ namespace cage
 	struct Aabb;
 	struct Cone;
 	struct Frustum;
-	struct ExactFrustum;
-	struct ConservativeFrustum;
 
 	class AssetManager;
 	struct AssetManagerCreateConfig;
