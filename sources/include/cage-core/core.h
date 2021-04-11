@@ -125,6 +125,10 @@ namespace cage
 	struct Plane;
 	struct Sphere;
 	struct Aabb;
+	struct Cone;
+	struct Frustum;
+	struct ExactFrustum;
+	struct ConservativeFrustum;
 
 	class AssetManager;
 	struct AssetManagerCreateConfig;

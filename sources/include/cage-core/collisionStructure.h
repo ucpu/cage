@@ -28,6 +28,9 @@ namespace cage
 		bool query(const Plane &shape);
 		bool query(const Sphere &shape);
 		bool query(const Aabb &shape);
+		bool query(const Cone &shape);
+		bool query(const ExactFrustum &shape);
+		bool query(const ConservativeFrustum &shape);
 	};
 
 	class CAGE_CORE_API CollisionStructure : private Immovable

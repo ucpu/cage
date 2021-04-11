@@ -107,6 +107,9 @@ namespace cage
 			virtual bool intersects(const Plane &other) = 0;
 			virtual bool intersects(const Sphere &other) = 0;
 			virtual bool intersects(const Aabb &other) = 0;
+			virtual bool intersects(const Cone &other) = 0;
+			virtual bool intersects(const ExactFrustum &other) = 0;
+			virtual bool intersects(const ConservativeFrustum &other) = 0;
 
 			ItemBase(uint32 name) : name(name)
 			{}
@@ -133,6 +136,9 @@ namespace cage
 			virtual bool intersects(const Plane &other) { return cage::intersects(*(T *)this, other); };
 			virtual bool intersects(const Sphere &other) { return cage::intersects(*(T *)this, other); };
 			virtual bool intersects(const Aabb &other) { return cage::intersects(*(T *)this, other); };
+			virtual bool intersects(const Cone &other) { return cage::intersects(*(T *)this, other); };
+			virtual bool intersects(const ExactFrustum &other) { return cage::intersects(*(T *)this, other); };
+			virtual bool intersects(const ConservativeFrustum &other) { return cage::intersects(*(T *)this, other); };
 		};
 
 		struct Node
@@ -160,6 +166,7 @@ namespace cage
 				ItemShape<Plane> c;
 				ItemShape<Sphere> d;
 				ItemShape<Aabb> e;
+				ItemShape<Cone> f;
 				ItemUnion() {}
 			};
 
@@ -462,6 +469,24 @@ namespace cage
 		return impl->intersection(shape);
 	}
 
+	bool SpatialQuery::intersection(const Cone &shape)
+	{
+		SpatialQueryImpl *impl = (SpatialQueryImpl *)this;
+		return impl->intersection(shape);
+	}
+
+	bool SpatialQuery::intersection(const ExactFrustum &shape)
+	{
+		SpatialQueryImpl *impl = (SpatialQueryImpl *)this;
+		return impl->intersection(shape);
+	}
+
+	bool SpatialQuery::intersection(const ConservativeFrustum &shape)
+	{
+		SpatialQueryImpl *impl = (SpatialQueryImpl *)this;
+		return impl->intersection(shape);
+	}
+
 	void SpatialStructure::update(uint32 name, const vec3 &other)
 	{
 		update(name, Aabb(other, other));
@@ -501,6 +526,14 @@ namespace cage
 		SpatialDataImpl *impl = (SpatialDataImpl*)this;
 		remove(name);
 		impl->itemsTable[name] = impl->itemsArena.createImpl<ItemBase, ItemShape<Aabb>>(name, other);
+	}
+
+	void SpatialStructure::update(uint32 name, const Cone &other)
+	{
+		CAGE_ASSERT(other.valid());
+		SpatialDataImpl *impl = (SpatialDataImpl *)this;
+		remove(name);
+		impl->itemsTable[name] = impl->itemsArena.createImpl<ItemBase, ItemShape<Cone>>(name, other);
 	}
 
 	void SpatialStructure::remove(uint32 name)

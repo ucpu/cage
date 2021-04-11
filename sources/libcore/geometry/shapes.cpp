@@ -163,6 +163,22 @@ namespace cage
 		return Plane(normal / l, d * l); // d times or divided by l ?
 	}
 
+	Sphere::Sphere(const Line &other)
+	{
+		if (!other.valid())
+			*this = Sphere();
+		else if (other.isPoint())
+			*this = Sphere(other.a(), 0);
+		else if (other.isSegment())
+		{
+			const vec3 a = other.a();
+			const vec3 b = other.b();
+			*this = Sphere((a + b) * 0.5, distance(a, b) * 0.5);
+		}
+		else
+			*this = Sphere(vec3(), real::Infinity());
+	}
+
 	Sphere::Sphere(const Triangle &other)
 	{
 		vec3 a = other[0];
@@ -198,20 +214,29 @@ namespace cage
 		radius = distance(center, referencePt);
 	}
 
-	Sphere::Sphere(const Line &other)
+	Sphere::Sphere(const Cone &other)
 	{
-		if (!other.valid())
-			*this = Sphere();
-		else if (other.isPoint())
-			*this = Sphere(other.a(), 0);
-		else if (other.isSegment())
+		// https://bartwronski.com/2017/04/13/cull-that-cone/ modified
+		if (other.halfAngle > rads(real::Pi() / 4))
 		{
-			const vec3 a = other.a();
-			const vec3 b = other.b();
-			*this = Sphere((a + b) * 0.5, distance(a, b) * 0.5);
+			*this = Sphere(
+				other.origin + cos(other.halfAngle) * other.length * other.direction,
+				sin(other.halfAngle) * other.length
+			);
 		}
 		else
-			*this = Sphere(vec3(), real::Infinity());
+		{
+			const real ca2 = 2 * cos(other.halfAngle);
+			*this = Sphere(
+				other.origin + other.length / ca2,
+				other.length / ca2
+			);
+		}
+	}
+
+	Sphere::Sphere(const Frustum &other)
+	{
+		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
 	}
 
 	Sphere Sphere::operator * (const mat4 &other) const
@@ -248,6 +273,16 @@ namespace cage
 			if (abs(abs(other.normal[a]) - 1) < 1e-5)
 				this->a[a] = this->b[a] = o[a];
 		}
+	}
+
+	Aabb::Aabb(const Cone &other)
+	{
+		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+	}
+
+	Aabb::Aabb(const Frustum &other)
+	{
+		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
 	}
 
 	Aabb Aabb::operator + (const Aabb &other) const
@@ -292,21 +327,34 @@ namespace cage
 		return (wx*wy + wx*wz + wy*wz) * 2;
 	}
 
-	Frustum::Frustum(const transform &camera, const mat4 &proj) : Frustum(mat4(inverse(camera)), proj)
+	Cone Cone::operator * (const mat4 &other) const
+	{
+		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+	}
+
+	Frustum Frustum::operator * (const mat4 &other) const
+	{
+		return Frustum(viewProj * other);
+	}
+
+	Frustum::Frustum(const transform &camera, const mat4 &proj) : Frustum(proj * mat4(inverse(camera)))
 	{}
 
-	Frustum::Frustum(const mat4 &view, const mat4 &proj)
+	Frustum::Frustum(const mat4 &viewProj) : viewProj(viewProj)
 	{
-		const mat4 mvp = proj * view;
 		const auto &column = [&](uint32 index)
 		{
-			return vec4(mvp[index], mvp[index + 4], mvp[index + 8], mvp[index + 12]);
+			return vec4(viewProj[index], viewProj[index + 4], viewProj[index + 8], viewProj[index + 12]);
 		};
-		planes[0] = column(3) + column(0);
-		planes[1] = column(3) - column(0);
-		planes[2] = column(3) + column(1);
-		planes[3] = column(3) - column(1);
-		planes[4] = column(3) + column(2);
-		planes[5] = column(3) - column(2);
+		const vec4 c0 = column(0);
+		const vec4 c1 = column(1);
+		const vec4 c2 = column(2);
+		const vec4 c3 = column(3);
+		planes[0] = c3 + c0;
+		planes[1] = c3 - c0;
+		planes[2] = c3 + c1;
+		planes[3] = c3 - c1;
+		planes[4] = c3 + c2;
+		planes[5] = c3 - c2;
 	}
 }

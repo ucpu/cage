@@ -16,6 +16,9 @@ namespace cage
 		bool intersection(const Plane &shape);
 		bool intersection(const Sphere &shape);
 		bool intersection(const Aabb &shape);
+		bool intersection(const Cone &shape);
+		bool intersection(const ExactFrustum &shape);
+		bool intersection(const ConservativeFrustum &shape);
 	};
 
 	class CAGE_CORE_API SpatialStructure : private Immovable
@@ -26,6 +29,7 @@ namespace cage
 		void update(uint32 name, const Triangle &other);
 		void update(uint32 name, const Sphere &other);
 		void update(uint32 name, const Aabb &other);
+		void update(uint32 name, const Cone &other);
 		void remove(uint32 name);
 		void clear();
 		void rebuild();

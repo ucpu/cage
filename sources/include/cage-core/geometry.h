@@ -118,9 +118,11 @@ namespace cage
 		// constructors
 		constexpr Sphere() noexcept {}
 		explicit constexpr Sphere(const vec3 &center, real radius) noexcept : center(center), radius(radius) {}
+		explicit Sphere(const Line &other);
 		explicit Sphere(const Triangle &other);
 		explicit Sphere(const Aabb &other);
-		explicit Sphere(const Line &other);
+		explicit Sphere(const Cone &other);
+		explicit Sphere(const Frustum &other);
 
 		// compound operators
 		Sphere &operator *= (const mat4 &other) { return *this = *this * other; }
@@ -154,6 +156,8 @@ namespace cage
 		explicit constexpr Aabb(const Sphere &other) noexcept : a(other.center - other.radius), b(other.center + other.radius) {}
 		explicit Aabb(const Line &other);
 		explicit Aabb(const Plane &other);
+		explicit Aabb(const Cone &other);
+		explicit Aabb(const Frustum &other);
 
 		// compound operators
 		Aabb &operator += (const Aabb &other) { return *this = *this + other; }
@@ -182,15 +186,82 @@ namespace cage
 		static constexpr Aabb Universe() { return Aabb(vec3(-real::Infinity()), vec3(real::Infinity())); }
 	};
 
+	struct CAGE_CORE_API Cone
+	{
+		// data
+		vec3 origin = vec3::Nan();
+		vec3 direction = vec3::Nan();
+		real length = real::Nan();
+		rads halfAngle = rads::Nan();
+
+		// constructor
+		constexpr Cone() noexcept {}
+		explicit constexpr Cone(const vec3 &origin, const vec3 &direction, real length, rads halfAngle) noexcept : origin(origin), direction(direction), length(length), halfAngle(halfAngle) {}
+
+		// compound operators
+		Cone &operator *= (const mat4 &other) { return *this = *this * other; }
+		Cone &operator *= (const transform &other) { return *this = *this * other; }
+
+		// binary operators
+		Cone operator * (const mat4 &other) const;
+		Cone operator * (const transform &other) const { return *this * mat4(other); }
+
+		// comparison operators
+		bool operator == (const Cone &other) const noexcept { return origin == other.origin && direction == other.direction && length == other.length && halfAngle == other.halfAngle; }
+		bool operator != (const Cone &other) const noexcept { return !(*this == other); }
+
+		// methods
+		bool valid() const noexcept { return origin.valid() && direction.valid() && length.valid() && halfAngle.valid(); }
+	};
+
 	struct CAGE_CORE_API Frustum
 	{
 		// data
+		mat4 viewProj;
 		vec4 planes[6];
+
+		// compound operators
+		Frustum &operator *= (const mat4 &other) { return *this = *this * other; }
+		Frustum &operator *= (const transform &other) { return *this = *this * other; }
+
+		// binary operators
+		Frustum operator * (const mat4 &other) const;
+		Frustum operator * (const transform &other) const { return *this * mat4(other); }
 
 		// constructor
 		constexpr Frustum() noexcept {}
 		explicit Frustum(const transform &camera, const mat4 &proj);
-		explicit Frustum(const mat4 &view, const mat4 &proj);
+		explicit Frustum(const mat4 &viewProj);
+	};
+
+	struct CAGE_CORE_API ExactFrustum : public Frustum
+	{
+		using Frustum::Frustum;
+		explicit ExactFrustum(const Frustum &other) noexcept : Frustum(other) {}
+		explicit ExactFrustum(const ConservativeFrustum &other) noexcept;
+
+		// compound operators
+		ExactFrustum &operator *= (const mat4 &other) { return *this = *this * other; }
+		ExactFrustum &operator *= (const transform &other) { return *this = *this * other; }
+
+		// binary operators
+		ExactFrustum operator * (const mat4 &other) const { return ExactFrustum(Frustum(*this) * other); }
+		ExactFrustum operator * (const transform &other) const { return *this * mat4(other); }
+	};
+
+	struct CAGE_CORE_API ConservativeFrustum : public Frustum
+	{
+		using Frustum::Frustum;
+		explicit ConservativeFrustum(const Frustum &other) noexcept : Frustum(other) {}
+		explicit ConservativeFrustum(const ExactFrustum &other) noexcept;
+
+		// compound operators
+		ConservativeFrustum &operator *= (const mat4 &other) { return *this = *this * other; }
+		ConservativeFrustum &operator *= (const transform &other) { return *this = *this * other; }
+
+		// binary operators
+		ConservativeFrustum operator * (const mat4 &other) const { return ConservativeFrustum(Frustum(*this) * other); }
+		ConservativeFrustum operator * (const transform &other) const { return *this * mat4(other); }
 	};
 
 	namespace detail
@@ -207,6 +278,8 @@ namespace cage
 	CAGE_CORE_API Line makeLine(const vec3 &a, const vec3 &b);
 
 	inline Sphere::Sphere(const Aabb &other) : center(other.center()), radius(other.diagonal() * 0.5) {}
+	inline ExactFrustum::ExactFrustum(const ConservativeFrustum &other) noexcept : Frustum(other) {};
+	inline ConservativeFrustum::ConservativeFrustum(const ExactFrustum &other) noexcept : Frustum(other) {};
 
 	CAGE_CORE_API rads angle(const Line &a, const Line &b);
 	CAGE_CORE_API rads angle(const Line &a, const Triangle &b);
@@ -220,21 +293,36 @@ namespace cage
 	CAGE_CORE_API real distance(const vec3 &a, const Plane &b);
 	CAGE_CORE_API real distance(const vec3 &a, const Sphere &b);
 	CAGE_CORE_API real distance(const vec3 &a, const Aabb &b);
+	CAGE_CORE_API real distance(const vec3 &a, const Cone &b);
+	CAGE_CORE_API real distance(const vec3 &a, const Frustum &b);
 	CAGE_CORE_API real distance(const Line &a, const Line &b);
 	CAGE_CORE_API real distance(const Line &a, const Triangle &b);
 	CAGE_CORE_API real distance(const Line &a, const Plane &b);
 	CAGE_CORE_API real distance(const Line &a, const Sphere &b);
 	CAGE_CORE_API real distance(const Line &a, const Aabb &b);
+	CAGE_CORE_API real distance(const Line &a, const Cone &b);
+	CAGE_CORE_API real distance(const Line &a, const Frustum &b);
 	CAGE_CORE_API real distance(const Triangle &a, const Triangle &b);
 	CAGE_CORE_API real distance(const Triangle &a, const Plane &b);
 	CAGE_CORE_API real distance(const Triangle &a, const Sphere &b);
 	CAGE_CORE_API real distance(const Triangle &a, const Aabb &b);
+	CAGE_CORE_API real distance(const Triangle &a, const Cone &b);
+	CAGE_CORE_API real distance(const Triangle &a, const Frustum &b);
 	CAGE_CORE_API real distance(const Plane &a, const Plane &b);
 	CAGE_CORE_API real distance(const Plane &a, const Sphere &b);
 	CAGE_CORE_API real distance(const Plane &a, const Aabb &b);
+	CAGE_CORE_API real distance(const Plane &a, const Cone &b);
+	CAGE_CORE_API real distance(const Plane &a, const Frustum &b);
 	CAGE_CORE_API real distance(const Sphere &a, const Sphere &b);
 	CAGE_CORE_API real distance(const Sphere &a, const Aabb &b);
+	CAGE_CORE_API real distance(const Sphere &a, const Cone &b);
+	CAGE_CORE_API real distance(const Sphere &a, const Frustum &b);
 	CAGE_CORE_API real distance(const Aabb &a, const Aabb &b);
+	CAGE_CORE_API real distance(const Aabb &a, const Cone &b);
+	CAGE_CORE_API real distance(const Aabb &a, const Frustum &b);
+	CAGE_CORE_API real distance(const Cone &a, const Cone &b);
+	CAGE_CORE_API real distance(const Cone &a, const Frustum &b);
+	CAGE_CORE_API real distance(const Frustum &a, const Frustum &b);
 
 	CAGE_CORE_API bool intersects(const vec3 &a, const vec3 &b);
 	CAGE_CORE_API bool intersects(const vec3 &a, const Line &b);
@@ -242,28 +330,37 @@ namespace cage
 	CAGE_CORE_API bool intersects(const vec3 &a, const Plane &b);
 	CAGE_CORE_API bool intersects(const vec3 &a, const Sphere &b);
 	CAGE_CORE_API bool intersects(const vec3 &a, const Aabb &b);
+	CAGE_CORE_API bool intersects(const vec3 &a, const Cone &b);
 	CAGE_CORE_API bool intersects(const vec3 &a, const Frustum &b);
 	CAGE_CORE_API bool intersects(const Line &a, const Line &b);
 	CAGE_CORE_API bool intersects(const Line &a, const Triangle &b);
 	CAGE_CORE_API bool intersects(const Line &a, const Plane &b);
 	CAGE_CORE_API bool intersects(const Line &a, const Sphere &b);
 	CAGE_CORE_API bool intersects(const Line &a, const Aabb &b);
+	CAGE_CORE_API bool intersects(const Line &a, const Cone &b);
 	CAGE_CORE_API bool intersects(const Line &a, const Frustum &b);
 	CAGE_CORE_API bool intersects(const Triangle &a, const Triangle &b);
 	CAGE_CORE_API bool intersects(const Triangle &a, const Plane &b);
 	CAGE_CORE_API bool intersects(const Triangle &a, const Sphere &b);
 	CAGE_CORE_API bool intersects(const Triangle &a, const Aabb &b);
+	CAGE_CORE_API bool intersects(const Triangle &a, const Cone &b);
 	CAGE_CORE_API bool intersects(const Triangle &a, const Frustum &b);
 	CAGE_CORE_API bool intersects(const Plane &a, const Plane &b);
 	CAGE_CORE_API bool intersects(const Plane &a, const Sphere &b);
 	CAGE_CORE_API bool intersects(const Plane &a, const Aabb &b);
+	CAGE_CORE_API bool intersects(const Plane &a, const Cone &b);
 	CAGE_CORE_API bool intersects(const Plane &a, const Frustum &b);
 	CAGE_CORE_API bool intersects(const Sphere &a, const Sphere &b);
 	CAGE_CORE_API bool intersects(const Sphere &a, const Aabb &b);
+	CAGE_CORE_API bool intersects(const Sphere &a, const Cone &b);
 	CAGE_CORE_API bool intersects(const Sphere &a, const Frustum &b);
 	CAGE_CORE_API bool intersects(const Aabb &a, const Aabb &b);
-	CAGE_CORE_API bool intersects(const Aabb &a, const Frustum &b);
-	CAGE_CORE_API bool intersects(const Frustum &a, const Frustum &b);
+	CAGE_CORE_API bool intersects(const Aabb &a, const Cone &b);
+	CAGE_CORE_API bool intersects(const Aabb &a, const ExactFrustum &b);
+	CAGE_CORE_API bool intersects(const Aabb &a, const ConservativeFrustum &b);
+	CAGE_CORE_API bool intersects(const Cone &a, const Cone &b);
+	CAGE_CORE_API bool intersects(const Cone &a, const ExactFrustum &b);
+	CAGE_CORE_API bool intersects(const Cone &a, const ConservativeFrustum &b);
 
 	CAGE_CORE_API vec3 intersection(const Line &a, const Triangle &b);
 	CAGE_CORE_API vec3 intersection(const Line &a, const Plane &b);
@@ -271,9 +368,13 @@ namespace cage
 	CAGE_CORE_API Line intersection(const Line &a, const Aabb &b);
 	CAGE_CORE_API Aabb intersection(const Aabb &a, const Aabb &b);
 
-	CAGE_CORE_API vec3 closestPoint(const vec3 &point, const Line &lin);
-	CAGE_CORE_API vec3 closestPoint(const vec3 &point, const Triangle &trig);
-	CAGE_CORE_API vec3 closestPoint(const vec3 &point, const Plane &pl);
+	CAGE_CORE_API vec3 closestPoint(const vec3 &a, const Line &b);
+	CAGE_CORE_API vec3 closestPoint(const vec3 &a, const Triangle &b);
+	CAGE_CORE_API vec3 closestPoint(const vec3 &a, const Plane &b);
+	CAGE_CORE_API vec3 closestPoint(const vec3 &a, const Sphere &b);
+	CAGE_CORE_API vec3 closestPoint(const vec3 &a, const Aabb &b);
+	CAGE_CORE_API vec3 closestPoint(const vec3 &a, const Cone &b);
+	CAGE_CORE_API vec3 closestPoint(const vec3 &a, const Frustum &b);
 
 	namespace privat
 	{
@@ -284,9 +385,12 @@ namespace cage
 		template<> struct GeometryOrder<Plane> { static constexpr int order = 4; };
 		template<> struct GeometryOrder<Sphere> { static constexpr int order = 5; };
 		template<> struct GeometryOrder<Aabb> { static constexpr int order = 6; };
-		template<> struct GeometryOrder<Frustum> { static constexpr int order = 7; };
+		template<> struct GeometryOrder<Cone> { static constexpr int order = 7; };
+		template<> struct GeometryOrder<Frustum> { static constexpr int order = 8; };
+		template<> struct GeometryOrder<ExactFrustum> { static constexpr int order = 8; };
+		template<> struct GeometryOrder<ConservativeFrustum> { static constexpr int order = 8; };
 
-		// todo replace with requires (c++20)
+		// todo replace sfinae with requires (c++20)
 		template<class A, class B, bool enabled = (GeometryOrder<A>::order > GeometryOrder<B>::order)> struct GeometryOrderedType {};
 		template<class A, class B> struct GeometryOrderedType<A, B, true> { using type = int; };
 		template<class A, class B> using GeometryOrderedEnabled = typename GeometryOrderedType<A, B>::type;

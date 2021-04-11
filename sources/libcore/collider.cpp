@@ -806,9 +806,27 @@ namespace cage
 		return d.distance(shape);
 	}
 
+	real distance(const Cone &shape, const Collider *collider, const transform &t)
+	{
+		IntersectionDetector d((const ColliderImpl *)collider, t);
+		return d.distance(shape);
+	}
+
+	real distance(const ExactFrustum &shape, const Collider *collider, const transform &t)
+	{
+		IntersectionDetector d((const ColliderImpl *)collider, t);
+		return d.distance(shape);
+	}
+
+	real distance(const ConservativeFrustum &shape, const Collider *collider, const transform &t)
+	{
+		IntersectionDetector d((const ColliderImpl *)collider, t);
+		return d.distance(shape);
+	}
+
 	real distance(const Collider *ao, const Collider *bo, const transform &at, const transform &bt)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "Collider-Collider distance");
+		CAGE_THROW_CRITICAL(NotImplemented, "collider-collider distance");
 	}
 
 
@@ -838,6 +856,24 @@ namespace cage
 	}
 
 	bool intersects(const Aabb &shape, const Collider *collider, const transform &t)
+	{
+		IntersectionDetector d((const ColliderImpl *)collider, t);
+		return d.intersects(shape);
+	}
+
+	bool intersects(const Cone &shape, const Collider *collider, const transform &t)
+	{
+		IntersectionDetector d((const ColliderImpl *)collider, t);
+		return d.intersects(shape);
+	}
+
+	bool intersects(const ExactFrustum &shape, const Collider *collider, const transform &t)
+	{
+		IntersectionDetector d((const ColliderImpl *)collider, t);
+		return d.intersects(shape);
+	}
+
+	bool intersects(const ConservativeFrustum &shape, const Collider *collider, const transform &t)
 	{
 		IntersectionDetector d((const ColliderImpl *)collider, t);
 		return d.intersects(shape);
