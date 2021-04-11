@@ -23,6 +23,7 @@ namespace cage
 	}
 
 
+
 	rads angle(const Line &a, const Line &b)
 	{
 		return angle(a.direction, b.direction);
@@ -52,6 +53,7 @@ namespace cage
 	{
 		return angle(a.normal, b.normal);
 	}
+
 
 
 	real distance(const vec3 &a, const Line &b)
@@ -297,6 +299,7 @@ namespace cage
 	}
 
 
+
 	bool intersects(const vec3 &a, const vec3 &b)
 	{
 		return distance(a, b) <= 1e-5;
@@ -511,11 +514,6 @@ namespace cage
 		return true;
 	}
 
-	bool intersects(const Aabb &a, const Cone &b)
-	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
-	}
-
 	bool intersects(const Aabb &a, const ExactFrustum &b)
 	{
 		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
@@ -553,6 +551,7 @@ namespace cage
 	{
 		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
 	}
+
 
 
 	vec3 intersection(const Line &ray, const Triangle &tri)
@@ -642,6 +641,7 @@ namespace cage
 		else
 			return Aabb();
 	}
+
 
 
 	vec3 closestPoint(const vec3 &p, const Line &l)
