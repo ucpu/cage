@@ -492,9 +492,17 @@ namespace cage
 		return distance(a.center, b) <= a.radius;
 	}
 
-	bool intersects(const Sphere &a, const Cone &b)
+	bool intersects(const Sphere &sphere, const Cone &cone)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		// https://bartwronski.com/2017/04/13/cull-that-cone/ modified
+		const vec3 V = sphere.center - cone.origin;
+		const real VlenSq = dot(V, V);
+		const real V1len = dot(V, cone.direction);
+		const real distanceClosestPoint = cos(cone.halfAngle) * sqrt(VlenSq - V1len * V1len) - V1len * sin(cone.halfAngle);
+		const bool angleCull = distanceClosestPoint > sphere.radius;
+		const bool frontCull = V1len > sphere.radius + cone.length;
+		const bool backCull = V1len < -sphere.radius;
+		return !(angleCull || frontCull || backCull);
 	}
 
 	bool intersects(const Sphere &a, const Frustum &b)

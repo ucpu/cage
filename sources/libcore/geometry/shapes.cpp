@@ -226,10 +226,10 @@ namespace cage
 		}
 		else
 		{
-			const real ca2 = 2 * cos(other.halfAngle);
+			const real ca2 = 1 / (2 * cos(other.halfAngle));
 			*this = Sphere(
-				other.origin + other.length / ca2,
-				other.length / ca2
+				other.origin + other.length * ca2 * other.direction,
+				other.length * ca2
 			);
 		}
 	}
