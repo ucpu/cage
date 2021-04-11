@@ -505,9 +505,16 @@ namespace cage
 		return !(angleCull || frontCull || backCull);
 	}
 
-	bool intersects(const Sphere &a, const Frustum &b)
+	bool intersects(const Sphere &sphere, const Frustum &frustum)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		// https://www.flipcode.com/archives/Frustum_Culling.shtml modified
+		for (int i = 0; i < 6; i++)
+		{
+			const real d = dot(frustum.planes[i], vec4(sphere.center, 1));
+			if (d < -sphere.radius)
+				return false;
+		}
+		return true;
 	}
 
 	bool intersects(const Aabb &a, const Aabb &b)
