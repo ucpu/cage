@@ -102,11 +102,11 @@ namespace cage
 		}
 	}
 
-	aabb Mesh::boundingBox() const
+	Aabb Mesh::boundingBox() const
 	{
-		aabb result;
+		Aabb result;
 		for (const vec3 &it : positions())
-			result += aabb(it);
+			result += Aabb(it);
 		return result;
 	}
 
@@ -202,7 +202,7 @@ namespace cage
 		impl->indices.push_back(b);
 	}
 
-	void Mesh::addLine(const line &l)
+	void Mesh::addLine(const Line &l)
 	{
 		CAGE_ASSERT(l.isSegment());
 		MeshImpl *impl = (MeshImpl *)this;
@@ -222,7 +222,7 @@ namespace cage
 		impl->indices.push_back(c);
 	}
 
-	void Mesh::addTriangle(const triangle &t)
+	void Mesh::addTriangle(const Triangle &t)
 	{
 		MeshImpl *impl = (MeshImpl *)this;
 		CAGE_ASSERT(type() == MeshTypeEnum::Triangles);
@@ -257,7 +257,7 @@ namespace cage
 	void Mesh::importCollider(const Collider *collider)
 	{
 		clear();
-		CAGE_ASSERT(sizeof(triangle) == sizeof(vec3) * 3);
+		CAGE_ASSERT(sizeof(Triangle) == sizeof(vec3) * 3);
 		positions(bufferCast<const vec3>(collider->triangles()));
 	}
 

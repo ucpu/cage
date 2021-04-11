@@ -40,7 +40,7 @@ namespace
 		CAGE_TEST(distance(a, b) < 1);
 	}
 
-	void approxEqual(const aabb &a, const aabb &b)
+	void approxEqual(const Aabb &a, const Aabb &b)
 	{
 		approxEqual(a.a, b.a);
 		approxEqual(a.b, b.b);
@@ -82,14 +82,14 @@ void testMesh()
 
 	{
 		CAGE_TESTCASE("bounding box");
-		approxEqual(poly->boundingBox(), aabb(vec3(-10), vec3(10)));
+		approxEqual(poly->boundingBox(), Aabb(vec3(-10), vec3(10)));
 	}
 
 	{
 		CAGE_TESTCASE("apply transformation");
 		auto p = poly->copy();
 		meshApplyTransform(+p, transform(vec3(0, 5, 0)));
-		approxEqual(p->boundingBox(), aabb(vec3(-10, -5, -10), vec3(10, 15, 10)));
+		approxEqual(p->boundingBox(), Aabb(vec3(-10, -5, -10), vec3(10, 15, 10)));
 	}
 
 	{
@@ -153,7 +153,7 @@ void testMesh()
 	{
 		CAGE_TESTCASE("clip");
 		auto p = poly->copy();
-		meshClip(+p, aabb(vec3(-6, -6, -10), vec3(6, 6, 10)));
+		meshClip(+p, Aabb(vec3(-6, -6, -10), vec3(6, 6, 10)));
 		p->exportObjFile({}, "models/clip.obj");
 	}
 

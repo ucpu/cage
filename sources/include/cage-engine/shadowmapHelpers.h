@@ -5,13 +5,13 @@
 
 namespace cage
 {
-	CAGE_ENGINE_API aabb getBoxForModel(uint32 name);
-	CAGE_ENGINE_API aabb getBoxForObject(uint32 name);
-	CAGE_ENGINE_API aabb getBoxForAsset(uint32 name);
-	CAGE_ENGINE_API aabb getBoxForEntity(Entity *e);
-	CAGE_ENGINE_API aabb getBoxForScene(uint32 sceneMask);
+	CAGE_ENGINE_API Aabb getBoxForModel(uint32 name);
+	CAGE_ENGINE_API Aabb getBoxForObject(uint32 name);
+	CAGE_ENGINE_API Aabb getBoxForAsset(uint32 name);
+	CAGE_ENGINE_API Aabb getBoxForEntity(Entity *e);
+	CAGE_ENGINE_API Aabb getBoxForScene(uint32 sceneMask);
 
-	CAGE_ENGINE_API void fitShadowmapForDirectionalLight(Entity *light, const aabb &box);
+	CAGE_ENGINE_API void fitShadowmapForDirectionalLight(Entity *light, const Aabb &box);
 	CAGE_ENGINE_API void fitShadowmapForDirectionalLight(Entity *light, uint32 sceneMask);
 	CAGE_ENGINE_API void fitShadowmapForDirectionalLight(Entity *light, Entity *camera);
 }

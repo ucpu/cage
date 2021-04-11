@@ -324,7 +324,7 @@ namespace cage
 				verticesToRemove.reserve(tris * 3);
 				for (uint32 i = 0; i < tris; i++)
 				{
-					triangle t(ps[i * 3 + 0], ps[i * 3 + 1], ps[i * 3 + 2]);
+					Triangle t(ps[i * 3 + 0], ps[i * 3 + 1], ps[i * 3 + 2]);
 					bool d = t.degenerated();
 					verticesToRemove.push_back(d);
 					verticesToRemove.push_back(d);
@@ -340,7 +340,7 @@ namespace cage
 				indicesToRemove.reserve(tris * 3);
 				for (uint32 i = 0; i < tris; i++)
 				{
-					triangle t(ps[is[i * 3 + 0]], ps[is[i * 3 + 1]], ps[is[i * 3 + 2]]);
+					Triangle t(ps[is[i * 3 + 0]], ps[is[i * 3 + 1]], ps[is[i * 3 + 2]]);
 					const bool d = t.degenerated();
 					indicesToRemove.push_back(d);
 					indicesToRemove.push_back(d);
@@ -455,7 +455,7 @@ namespace cage
 			Holder<SpatialQuery> q = newSpatialQuery(+ss);
 			for (uint32 i = 0; i < vc; i++)
 			{
-				q->intersection(aabb(ps[i] - config.distanceThreshold, ps[i] + config.distanceThreshold));
+				q->intersection(Aabb(ps[i] - config.distanceThreshold, ps[i] + config.distanceThreshold));
 				for (uint32 j : q->result())
 				{
 					if (distanceSquared(ps[i], ps[j]) < threashold)
@@ -640,7 +640,7 @@ namespace cage
 		// todo tangents & bitangents ?
 	}
 
-	void meshClip(Mesh *msh, const aabb &clipBox)
+	void meshClip(Mesh *msh, const Aabb &clipBox)
 	{
 		if (msh->facesCount() == 0)
 			return;
@@ -670,7 +670,7 @@ namespace cage
 					impl->indices.push_back(ids[2]);
 					continue;
 				}
-				if (!intersects(triangle(a, b, c), clipBox))
+				if (!intersects(Triangle(a, b, c), clipBox))
 					continue; // triangle fully outside
 			}
 			CAGE_ASSERT(tmp.empty());
@@ -698,13 +698,13 @@ namespace cage
 		meshDiscardInvalid(impl);
 	}
 
-	void meshClip(Mesh *msh, const plane &pln)
+	void meshClip(Mesh *msh, const Plane &pln)
 	{
 		// todo optimized code without constructing the other mesh
 		meshCut(msh, pln);
 	}
 
-	Holder<Mesh> meshCut(Mesh *msh, const plane &pln)
+	Holder<Mesh> meshCut(Mesh *msh, const Plane &pln)
 	{
 		MeshImpl *impl = (MeshImpl *)msh;
 		CAGE_THROW_CRITICAL(NotImplemented, "cut");

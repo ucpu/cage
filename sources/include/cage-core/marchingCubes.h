@@ -23,7 +23,7 @@ namespace cage
 
 	struct CAGE_CORE_API MarchingCubesCreateConfig
 	{
-		aabb box = aabb(vec3(-1), vec3(1));
+		Aabb box = Aabb(vec3(-1), vec3(1));
 		ivec3 resolution = ivec3(20);
 		bool clip = true;
 

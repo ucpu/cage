@@ -87,22 +87,22 @@ namespace cage
 		CAGE_THROW_CRITICAL(NotImplemented, "intersectsFrustum");
 	}
 
-	bool intersectsFrustum(const line &shape, const mat4 &mvp)
+	bool intersectsFrustum(const Line &shape, const mat4 &mvp)
 	{
 		CAGE_THROW_CRITICAL(NotImplemented, "intersectsFrustum");
 	}
 
-	bool intersectsFrustum(const triangle &shape, const mat4 &mvp)
+	bool intersectsFrustum(const Triangle &shape, const mat4 &mvp)
 	{
 		CAGE_THROW_CRITICAL(NotImplemented, "intersectsFrustum");
 	}
 
-	bool intersectsFrustum(const plane &shape, const mat4 &mvp)
+	bool intersectsFrustum(const Plane &shape, const mat4 &mvp)
 	{
 		CAGE_THROW_CRITICAL(NotImplemented, "intersectsFrustum");
 	}
 
-	bool intersectsFrustum(const sphere &shape, const mat4 &mvp)
+	bool intersectsFrustum(const Sphere &shape, const mat4 &mvp)
 	{
 		CAGE_THROW_CRITICAL(NotImplemented, "intersectsFrustum");
 	}
@@ -115,7 +115,7 @@ namespace cage
 		}
 	}
 
-	bool intersectsFrustum(const aabb &box, const mat4 &mvp)
+	bool intersectsFrustum(const Aabb &box, const mat4 &mvp)
 	{
 		const vec4 planes[6] = {
 			column(mvp, 3) + column(mvp, 0),

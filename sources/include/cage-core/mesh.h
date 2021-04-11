@@ -96,7 +96,7 @@ namespace cage
 		void addVertex(const vec3 &position, const vec2 &uv);
 		void addVertex(const vec3 &position, const vec3 &normal, const vec2 &uv);
 
-		aabb boundingBox() const;
+		Aabb boundingBox() const;
 
 		uint32 indicesCount() const;
 		uint32 facesCount() const;
@@ -113,9 +113,9 @@ namespace cage
 		void addPoint(uint32 a);
 		void addPoint(const vec3 &p);
 		void addLine(uint32 a, uint32 b);
-		void addLine(const line &l);
+		void addLine(const Line &l);
 		void addTriangle(uint32 a, uint32 b, uint32 c);
-		void addTriangle(const triangle &t);
+		void addTriangle(const Triangle &t);
 	};
 
 	CAGE_CORE_API Holder<Mesh> newMesh();
@@ -130,9 +130,9 @@ namespace cage
 
 	CAGE_CORE_API void meshFlipNormals(Mesh *msh);
 
-	CAGE_CORE_API void meshClip(Mesh *msh, const aabb &box);
-	CAGE_CORE_API void meshClip(Mesh *msh, const plane &pln);
-	CAGE_CORE_API Holder<Mesh> meshCut(Mesh *msh, const plane &pln);
+	CAGE_CORE_API void meshClip(Mesh *msh, const Aabb &box);
+	CAGE_CORE_API void meshClip(Mesh *msh, const Plane &pln);
+	CAGE_CORE_API Holder<Mesh> meshCut(Mesh *msh, const Plane &pln);
 
 	CAGE_CORE_API void meshDiscardInvalid(Mesh *msh);
 	CAGE_CORE_API void meshDiscardDisconnected(Mesh *msh);

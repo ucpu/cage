@@ -13,7 +13,7 @@ namespace
 
 	real sdfTiltedPlane(const vec3 &pos)
 	{
-		static const plane pln = plane(vec3(), normalize(vec3(1)));
+		static const Plane pln = Plane(vec3(), normalize(vec3(1)));
 		vec3 c = pln.normal * pln.d;
 		return dot(pln.normal, pos - c);
 	}
@@ -93,7 +93,7 @@ void testMarchingCubes()
 		CAGE_TESTCASE("generate sphere");
 
 		MarchingCubesCreateConfig config;
-		config.box = aabb(vec3(-10), vec3(20));
+		config.box = Aabb(vec3(-10), vec3(20));
 		config.resolution = ivec3(25);
 		Holder<MarchingCubes> cubes = newMarchingCubes(config);
 		cubes->updateByPosition(Delegate<real(const vec3 &)>().bind<&sdfSphere>());
@@ -103,7 +103,7 @@ void testMarchingCubes()
 		poly->exportObjFile({}, "models/marchingCubesSphere.obj");
 
 		{
-			CAGE_TESTCASE("coordinates of center of the sphere");
+			CAGE_TESTCASE("coordinates of center of the Sphere");
 			vec3 s;
 			for (const vec3 &p : poly->positions())
 				s += p;
@@ -123,19 +123,19 @@ void testMarchingCubes()
 		{
 			CAGE_TESTCASE("clip x");
 			auto p = poly->copy();
-			meshClip(+p, aabb(vec3(-100, 2, 2), vec3(100, 8, 8)));
+			meshClip(+p, Aabb(vec3(-100, 2, 2), vec3(100, 8, 8)));
 			p->exportObjFile({}, "models/marchingCubesClipX.obj");
 		}
 		{
 			CAGE_TESTCASE("clip y");
 			auto p = poly->copy();
-			meshClip(+p, aabb(vec3(2, -100, 2), vec3(8, 100, 8)));
+			meshClip(+p, Aabb(vec3(2, -100, 2), vec3(8, 100, 8)));
 			p->exportObjFile({}, "models/marchingCubesClipY.obj");
 		}
 		{
 			CAGE_TESTCASE("clip z");
 			auto p = poly->copy();
-			meshClip(+p, aabb(vec3(2, 2, -100), vec3(8, 8, 100)));
+			meshClip(+p, Aabb(vec3(2, 2, -100), vec3(8, 8, 100)));
 			p->exportObjFile({}, "models/marchingCubesClipZ.obj");
 		}
 	}
@@ -144,7 +144,7 @@ void testMarchingCubes()
 		CAGE_TESTCASE("generate hexagon");
 
 		MarchingCubesCreateConfig config;
-		config.box = aabb(vec3(-10), vec3(10));
+		config.box = Aabb(vec3(-10), vec3(10));
 		config.resolution = ivec3(25);
 		Holder<MarchingCubes> cubes = newMarchingCubes(config);
 		cubes->updateByPosition(Delegate<real(const vec3 &)>().bind<&sdfTiltedPlane>());

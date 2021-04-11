@@ -16,15 +16,15 @@ namespace cage
 
 		void importMesh(const Mesh *mesh);
 
-		PointerRange<const triangle> triangles() const;
+		PointerRange<const Triangle> triangles() const;
 
-		void addTriangle(const triangle &t);
-		void addTriangles(PointerRange<const triangle> tris);
+		void addTriangle(const Triangle &t);
+		void addTriangles(PointerRange<const Triangle> tris);
 
 		void rebuild();
 		bool needsRebuild() const;
 
-		const aabb &box() const;
+		const Aabb &box() const;
 	};
 
 	CAGE_CORE_API Holder<Collider> newCollider();
@@ -65,22 +65,22 @@ namespace cage
 
 	CAGE_CORE_API bool collisionDetection(CollisionDetectionParams &params);
 
-	CAGE_CORE_API real distance(const line &shape, const Collider *collider, const transform &t);
-	CAGE_CORE_API real distance(const triangle &shape, const Collider *collider, const transform &t);
-	CAGE_CORE_API real distance(const plane &shape, const Collider *collider, const transform &t);
-	CAGE_CORE_API real distance(const sphere &shape, const Collider *collider, const transform &t);
-	CAGE_CORE_API real distance(const aabb &shape, const Collider *collider, const transform &t);
+	CAGE_CORE_API real distance(const Line &shape, const Collider *collider, const transform &t);
+	CAGE_CORE_API real distance(const Triangle &shape, const Collider *collider, const transform &t);
+	CAGE_CORE_API real distance(const Plane &shape, const Collider *collider, const transform &t);
+	CAGE_CORE_API real distance(const Sphere &shape, const Collider *collider, const transform &t);
+	CAGE_CORE_API real distance(const Aabb &shape, const Collider *collider, const transform &t);
 	CAGE_CORE_API real distance(const Collider *ao, const Collider *bo, const transform &at, const transform &bt);
 
-	CAGE_CORE_API bool intersects(const line &shape, const Collider *collider, const transform &t);
-	CAGE_CORE_API bool intersects(const triangle &shape, const Collider *collider, const transform &t);
-	CAGE_CORE_API bool intersects(const plane &shape, const Collider *collider, const transform &t);
-	CAGE_CORE_API bool intersects(const sphere &shape, const Collider *collider, const transform &t);
-	CAGE_CORE_API bool intersects(const aabb &shape, const Collider *collider, const transform &t);
+	CAGE_CORE_API bool intersects(const Line &shape, const Collider *collider, const transform &t);
+	CAGE_CORE_API bool intersects(const Triangle &shape, const Collider *collider, const transform &t);
+	CAGE_CORE_API bool intersects(const Plane &shape, const Collider *collider, const transform &t);
+	CAGE_CORE_API bool intersects(const Sphere &shape, const Collider *collider, const transform &t);
+	CAGE_CORE_API bool intersects(const Aabb &shape, const Collider *collider, const transform &t);
 	CAGE_CORE_API bool intersects(const Collider *ao, const Collider *bo, const transform &at, const transform &bt);
 
-	CAGE_CORE_API vec3 intersection(const line &shape, const Collider *collider, const transform &t);
-	CAGE_CORE_API vec3 intersection(const line &shape, const Collider *collider, const transform &t, uint32 &triangleIndex);
+	CAGE_CORE_API vec3 intersection(const Line &shape, const Collider *collider, const transform &t);
+	CAGE_CORE_API vec3 intersection(const Line &shape, const Collider *collider, const transform &t, uint32 &triangleIndex);
 
 	CAGE_CORE_API AssetScheme genAssetSchemeCollider();
 	constexpr uint32 AssetSchemeIndexCollider = 3;

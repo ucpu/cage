@@ -20,8 +20,8 @@ void processCollider()
 	mat3 axesScale = axesScaleMatrix();
 	for (uint32 i = 0; i < am->mNumFaces; i++)
 	{
-		triangle tri;
-		tri = triangle(vec3(), vec3(), vec3());
+		Triangle tri;
+		tri = Triangle(vec3(), vec3(), vec3());
 		for (uint32 j = 0; j < 3; j++)
 		{
 			uint32 idx = numeric_cast<uint32>(am->mFaces[i].mIndices[j]);

@@ -221,7 +221,7 @@ namespace cage
 
 		void setFlags(ModelRenderFlags flags);
 		void setPrimitiveType(uint32 type);
-		void setBoundingBox(const aabb &box);
+		void setBoundingBox(const Aabb &box);
 		void setTextureNames(PointerRange<const uint32> textureNames);
 		void setTextureName(uint32 index, uint32 name);
 		void setBuffers(uint32 vertexSize, PointerRange<const char> vertexData, PointerRange<const uint32> indexData, PointerRange<const char> materialBuffer);
@@ -233,7 +233,7 @@ namespace cage
 		uint32 getIndicesCount() const;
 		uint32 getPrimitivesCount() const;
 		ModelRenderFlags getFlags() const;
-		aabb getBoundingBox() const;
+		Aabb getBoundingBox() const;
 		PointerRange<const uint32> getTextureNames() const;
 		uint32 getTextureName(uint32 index) const;
 		uint32 getSkeletonName() const;

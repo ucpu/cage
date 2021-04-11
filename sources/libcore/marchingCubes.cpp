@@ -211,7 +211,7 @@ namespace cage
 			const int *const selected = (which ? first : second);
 			const auto &tri = [&](const int *inds)
 			{
-				triangle t = triangle(positions[is[inds[0]]], positions[is[inds[1]]], positions[is[inds[2]]]);
+				Triangle t = Triangle(positions[is[inds[0]]], positions[is[inds[1]]], positions[is[inds[2]]]);
 				if (!t.degenerated())
 				{
 					indices.push_back(is[inds[0]]);

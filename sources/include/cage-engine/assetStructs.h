@@ -53,7 +53,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API ModelHeader
 	{
-		aabb box;
+		Aabb box;
 		uint32 textureNames[MaxTexturesCountPerMaterial];
 		uint32 skeletonName;
 		uint32 skeletonBones;

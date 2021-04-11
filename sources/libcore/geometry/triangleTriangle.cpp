@@ -40,7 +40,7 @@ namespace
   if(D0D1>0.0f)                                         \
   {                                                     \
     /* here we know that D0D2<=0.0 */                   \
-    /* that is D0, D1 are on the same side, D2 on the other or on the plane */ \
+    /* that is D0, D1 are on the same side, D2 on the other or on the Plane */ \
     ISECT(VV2,VV0,VV1,D2,D0,D1,isect0,isect1);          \
   }                                                     \
   else if(D0D2>0.0f)                                    \
@@ -133,7 +133,7 @@ pp. 199-202 */
 	{
 		float A[3];
 		short i0, i1;
-		/* first project onto an axis-aligned plane, that maximizes the area */
+		/* first project onto an axis-aligned Plane, that maximizes the area */
 		/* of the triangles, compute indices: i0,i1. */
 		A[0] = std::abs(N[0]);
 		A[1] = std::abs(N[1]);
@@ -165,7 +165,7 @@ pp. 199-202 */
 			}
 		}
 
-		/* test all edges of triangle 1 against the edges of triangle 2 */
+		/* test all edges of Triangle 1 against the edges of Triangle 2 */
 		EDGE_AGAINST_TRI_EDGES(V0, V1, U0, U1, U2);
 		EDGE_AGAINST_TRI_EDGES(V1, V2, U0, U1, U2);
 		EDGE_AGAINST_TRI_EDGES(V2, V0, U0, U1, U2);
@@ -191,14 +191,14 @@ pp. 199-202 */
 		float up0, up1, up2;
 		float b, c, max;
 
-		/* compute plane equation of triangle(V0,V1,V2) */
+		/* compute Plane equation of Triangle(V0,V1,V2) */
 		SUB(E1, V1, V0);
 		SUB(E2, V2, V0);
 		CROSS(N1, E1, E2);
 		d1 = -DOT(N1, V0);
-		/* plane equation 1: N1.X+d1=0 */
+		/* Plane equation 1: N1.X+d1=0 */
 
-		/* put U0,U1,U2 into plane equation 1 to compute signed distances to the plane*/
+		/* put U0,U1,U2 into Plane equation 1 to compute signed distances to the Plane*/
 		du0 = DOT(N1, U0) + d1;
 		du1 = DOT(N1, U1) + d1;
 		du2 = DOT(N1, U2) + d1;
@@ -215,14 +215,14 @@ pp. 199-202 */
 		if (du0du1 > 0.0f && du0du2 > 0.0f) /* same sign on all of them + not equal 0 ? */
 			return false;                    /* no intersection occurs */
 
-											 /* compute plane of triangle (U0,U1,U2) */
+											 /* compute Plane of Triangle (U0,U1,U2) */
 		SUB(E1, U1, U0);
 		SUB(E2, U2, U0);
 		CROSS(N2, E1, E2);
 		d2 = -DOT(N2, U0);
-		/* plane equation 2: N2.X+d2=0 */
+		/* Plane equation 2: N2.X+d2=0 */
 
-		/* put V0,V1,V2 into plane equation 2 */
+		/* put V0,V1,V2 into Plane equation 2 */
 		dv0 = DOT(N2, V0) + d2;
 		dv1 = DOT(N2, V1) + d2;
 		dv2 = DOT(N2, V2) + d2;
@@ -239,7 +239,7 @@ pp. 199-202 */
 		if (dv0dv1 > 0.0f && dv0dv2 > 0.0f) /* same sign on all of them + not equal 0 ? */
 			return false;                    /* no intersection occurs */
 
-											 /* compute direction of intersection line */
+											 /* compute direction of intersection Line */
 		CROSS(D, N1, N2);
 
 		/* compute and index to the largest component of D */
@@ -259,10 +259,10 @@ pp. 199-202 */
 		up1 = U1[index];
 		up2 = U2[index];
 
-		/* compute interval for triangle 1 */
+		/* compute interval for Triangle 1 */
 		COMPUTE_INTERVALS(vp0, vp1, vp2, dv0, dv1, dv2, dv0dv1, dv0dv2, isect1[0], isect1[1]);
 
-		/* compute interval for triangle 2 */
+		/* compute interval for Triangle 2 */
 		COMPUTE_INTERVALS(up0, up1, up2, du0, du1, du2, du0du1, du0du2, isect2[0], isect2[1]);
 
 		SORT(isect1[0], isect1[1]);
@@ -276,7 +276,7 @@ pp. 199-202 */
 
 namespace cage
 {
-	bool intersects(const triangle &a, const triangle &b)
+	bool intersects(const Triangle &a, const Triangle &b)
 	{
 		return tri_tri_intersect((float*)a[0].data, (float*)a[1].data, (float*)a[2].data, (float*)b[0].data, (float*)b[1].data, (float*)b[2].data);
 	}

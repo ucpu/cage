@@ -381,13 +381,13 @@ namespace
 		return p + u2 + u3 + n + t + b;
 	}
 
-	aabb enlarge(const aabb &box)
+	Aabb enlarge(const Aabb &box)
 	{
 		vec3 c = box.center();
 		vec3 a = box.a - c;
 		vec3 b = box.b - c;
 		real s = 1.1;
-		return aabb(a * s + c, b * s + c);
+		return Aabb(a * s + c, b * s + c);
 	}
 }
 
@@ -447,7 +447,7 @@ void processModel()
 	printMaterial(dsm, mat);
 	validateFlags(dsm, flags, mat);
 
-	dsm.box = aabb();
+	dsm.box = Aabb();
 	const mat3 axes = axesMatrix();
 	const mat3 axesScale = axesScaleMatrix();
 
@@ -467,7 +467,7 @@ void processModel()
 		for (uint32 i = 0; i < verticesCount; i++)
 		{
 			vec3 p = axesScale * conv(am->mVertices[i]);
-			dsm.box += aabb(p);
+			dsm.box += Aabb(p);
 			ps.push_back(p);
 		}
 		poly->positions(ps);
@@ -614,7 +614,7 @@ void processModel()
 				Holder<Mesh> tmp = poly->copy();
 				animateMesh(+rig, +ani, t, +tmp);
 				//tmp->exportObjFile({}, pathReplaceInvalidCharacters(stringizer() + "skellies/" + i + "/" + t + "/" + inputName + ".obj", "_", true));
-				aabb box = tmp->boundingBox();
+				Aabb box = tmp->boundingBox();
 				box = enlarge(box);
 				dsm.box += box;
 			}

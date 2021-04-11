@@ -19,7 +19,7 @@ namespace cage
 			static constexpr ModelRenderFlags defaultFlags = ModelRenderFlags::DepthTest | ModelRenderFlags::DepthWrite | ModelRenderFlags::VelocityWrite | ModelRenderFlags::Lighting | ModelRenderFlags::ShadowCast;
 
 		public:
-			aabb box = aabb::Universe();
+			Aabb box = Aabb::Universe();
 			uint32 textures[MaxTexturesCountPerMaterial];
 			uint32 id = 0;
 			uint32 vbo = 0;
@@ -248,7 +248,7 @@ namespace cage
 		impl->updatePrimitivesCount();
 	}
 
-	void Model::setBoundingBox(const aabb &box)
+	void Model::setBoundingBox(const Aabb &box)
 	{
 		ModelImpl *impl = (ModelImpl*)this;
 		impl->box = box;
@@ -391,7 +391,7 @@ namespace cage
 		return impl->flags;
 	}
 
-	aabb Model::getBoundingBox() const
+	Aabb Model::getBoundingBox() const
 	{
 		ModelImpl *impl = (ModelImpl*)this;
 		return impl->box;

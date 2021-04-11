@@ -110,20 +110,21 @@ namespace cage
 	struct rads;
 	struct degs;
 	struct vec2;
+	struct ivec2;
 	struct vec3;
+	struct ivec3;
 	struct vec4;
+	struct ivec4;
 	struct quat;
 	struct mat3;
 	struct mat4;
 	struct transform;
-	struct line;
-	struct triangle;
-	struct plane;
-	struct sphere;
-	struct aabb;
-	struct ivec2;
-	struct ivec3;
-	struct ivec4;
+
+	struct Line;
+	struct Triangle;
+	struct Plane;
+	struct Sphere;
+	struct Aabb;
 
 	class AssetManager;
 	struct AssetManagerCreateConfig;
