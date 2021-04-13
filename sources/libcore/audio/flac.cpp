@@ -9,7 +9,11 @@ namespace cage
 		drflac *flac = drflac_open_memory(inBuffer.data(), inBuffer.size(), nullptr);
 		try
 		{
-			impl->initialize(flac->totalPCMFrameCount, flac->channels, flac->sampleRate, AudioFormatEnum::S32);
+#ifdef CAGE_ARCHITECTURE_32
+			if (flac->totalPCMFrameCount > (uint32)m)
+				CAGE_THROW_ERROR(Exception, "32 bit build of cage cannot handle this large flac file")
+#endif // CAGE_ARCHITECTURE_32
+			impl->initialize(numeric_cast<uintPtr>(flac->totalPCMFrameCount), flac->channels, flac->sampleRate, AudioFormatEnum::S32);
 			if (drflac_read_pcm_frames_s32(flac, impl->frames, (sint32 *)impl->mem.data()) != impl->frames)
 				CAGE_THROW_ERROR(Exception, "failed to read samples in decoding flac sound");
 		}

@@ -639,9 +639,9 @@ namespace cage
 				file->read(bufferCast<char, uint32>(asset->dependencies));
 
 				if (h.compressedSize)
-					compData.allocate(h.compressedSize);
+					compData.allocate(numeric_cast<uintPtr>(h.compressedSize));
 				if (h.originalSize)
-					origData.allocate(h.originalSize);
+					origData.allocate(numeric_cast<uintPtr>(h.originalSize));
 				if (h.compressedSize || h.originalSize)
 				{
 					MemoryBuffer &t = h.compressedSize ? compData : origData;

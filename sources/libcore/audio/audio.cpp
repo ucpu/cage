@@ -8,7 +8,7 @@
 
 namespace cage
 {
-	uint32 formatBytes(AudioFormatEnum format)
+	uintPtr formatBytes(AudioFormatEnum format)
 	{
 		switch (format)
 		{
@@ -32,7 +32,7 @@ namespace cage
 		impl->mem.resize(0);
 	}
 
-	void Audio::initialize(uint64 frames, uint32 channels, uint32 sampleRate, AudioFormatEnum format)
+	void Audio::initialize(uintPtr frames, uint32 channels, uint32 sampleRate, AudioFormatEnum format)
 	{
 		CAGE_ASSERT(format != AudioFormatEnum::Vorbis);
 		CAGE_ASSERT(format != AudioFormatEnum::Default);
@@ -60,7 +60,7 @@ namespace cage
 		return poly;
 	}
 
-	void Audio::importRaw(PointerRange<const char> buffer, uint64 frames, uint32 channels, uint32 sampleRate, AudioFormatEnum format)
+	void Audio::importRaw(PointerRange<const char> buffer, uintPtr frames, uint32 channels, uint32 sampleRate, AudioFormatEnum format)
 	{
 		AudioImpl *impl = (AudioImpl *)this;
 		CAGE_ASSERT(buffer.size() >= frames * channels * formatBytes(format));
@@ -96,7 +96,7 @@ namespace cage
 		return impl->mem;
 	}
 
-	uint64 Audio::frames() const
+	uintPtr Audio::frames() const
 	{
 		const AudioImpl *impl = (const AudioImpl *)this;
 		return impl->frames;
@@ -122,14 +122,14 @@ namespace cage
 
 	uint64 Audio::duration() const
 	{
-		return 1000000 * frames() / sampleRate();
+		return uint64(1000000) * frames() / sampleRate();
 	}
 
-	float Audio::value(uint64 f, uint32 c) const
+	float Audio::value(uintPtr f, uint32 c) const
 	{
 		const AudioImpl *impl = (const AudioImpl *)this;
 		CAGE_ASSERT(f < impl->frames && c < impl->channels);
-		const uint64 offset = f * impl->channels + c;
+		const uintPtr offset = f * impl->channels + c;
 		switch (impl->format)
 		{
 		case AudioFormatEnum::S16:
@@ -145,11 +145,11 @@ namespace cage
 		}
 	}
 
-	void Audio::value(uint64 f, uint32 c, float v)
+	void Audio::value(uintPtr f, uint32 c, float v)
 	{
 		AudioImpl *impl = (AudioImpl *)this;
 		CAGE_ASSERT(f < impl->frames &&c < impl->channels);
-		const uint64 offset = f * impl->channels + c;
+		const uintPtr offset = f * impl->channels + c;
 		switch (impl->format)
 		{
 		case AudioFormatEnum::S16:
@@ -168,7 +168,7 @@ namespace cage
 		}
 	}
 
-	void Audio::value(uint64 f, uint32 c, const real &v) { value(f, c, v.value); }
+	void Audio::value(uintPtr f, uint32 c, const real &v) { value(f, c, v.value); }
 
 	Holder<Audio> newAudio()
 	{
@@ -184,13 +184,13 @@ namespace cage
 	void audioConvertSampleRate(Audio *snd, uint32 sampleRate, uint32 quality)
 	{
 		const uint64 originalDuration = snd->duration();
-		audioConvertFrames(snd, snd->frames() * sampleRate / snd->sampleRate(), quality);
+		audioConvertFrames(snd, numeric_cast<uintPtr>(snd->frames() * uint64(sampleRate) / snd->sampleRate()), quality);
 		CAGE_ASSERT(abs((sint32)(snd->sampleRate() - sampleRate)) < 10);
 		audioSetSampleRate(snd, sampleRate); // in case of rounding errors
 		CAGE_ASSERT(abs((sint64)(snd->duration() - originalDuration)) < 100);
 	}
 
-	void audioConvertFrames(Audio *snd, uint64 frames, uint32 quality)
+	void audioConvertFrames(Audio *snd, uintPtr frames, uint32 quality)
 	{
 		AudioImpl *impl = (AudioImpl *)snd;
 		audioConvertFormat(snd, AudioFormatEnum::Float);
@@ -199,7 +199,7 @@ namespace cage
 		SampleRateConverterCreateConfig cfg(snd->channels());
 		cfg.quality = quality;
 		Holder<SampleRateConverter> cnv = newSampleRateConverter(cfg);
-		const uint32 targetSampleRate = numeric_cast<uint32>(1000000 * frames / snd->duration());
+		const uint32 targetSampleRate = numeric_cast<uint32>(uint64(1000000) * frames / snd->duration());
 		cnv->convert(snd->rawViewFloat(), bufferCast<float, char>(tmp), targetSampleRate / (double)snd->sampleRate());
 		std::swap(impl->mem, tmp);
 		impl->sampleRate = targetSampleRate;
@@ -228,19 +228,19 @@ namespace cage
 
 	namespace
 	{
-		bool overlaps(uint64 x1, uint64 y1, uint64 s)
+		bool overlaps(uintPtr x1, uintPtr y1, uintPtr s)
 		{
 			if (x1 > y1)
 				std::swap(x1, y1);
-			uint64 x2 = x1 + s;
-			uint64 y2 = y1 + s;
+			uintPtr x2 = x1 + s;
+			uintPtr y2 = y1 + s;
 			return x1 < y2 && y1 < x2;
 		}
 	}
 
-	Holder<Audio> vorbisExtract(const AudioImpl *snd, uint64 offset, uint64 frames);
+	Holder<Audio> vorbisExtract(const AudioImpl *snd, uintPtr offset, uintPtr frames);
 
-	void audioBlit(const Audio *source, Audio *target, uint64 sourceFrameOffset, uint64 targetFrameOffset, uint64 frames)
+	void audioBlit(const Audio *source, Audio *target, uintPtr sourceFrameOffset, uintPtr targetFrameOffset, uintPtr frames)
 	{
 		const AudioImpl *s = (const AudioImpl *)source;
 		AudioImpl *t = (AudioImpl *)target;
@@ -263,12 +263,12 @@ namespace cage
 		}
 		else if (s->format == t->format)
 		{
-			const uint64 fb = s->channels * formatBytes(s->format);
+			const uintPtr fb = s->channels * formatBytes(s->format);
 			detail::memcpy((char *)t->mem.data() + targetFrameOffset * fb, (char *)s->mem.data() + sourceFrameOffset * fb, frames * fb);
 		}
 		else
 		{
-			for (uint32 f = 0; f < frames; f++)
+			for (uintPtr f = 0; f < frames; f++)
 				for (uint32 c = 0; c < s->channels; c++)
 					t->value(targetFrameOffset + f, c, s->value(sourceFrameOffset + f, c));
 		}

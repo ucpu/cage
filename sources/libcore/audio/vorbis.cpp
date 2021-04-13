@@ -12,7 +12,7 @@ namespace cage
 		if (ov_open_callbacks(this, &ovf, nullptr, 0, callbacks) < 0)
 			CAGE_THROW_ERROR(Exception, "failed initialization in decoding vorbis sound stream");
 		CAGE_ASSERT(ovf.links == 1);
-		frames = numeric_cast<uint32>(ov_pcm_total(&ovf, 0));
+		frames = numeric_cast<uintPtr>(ov_pcm_total(&ovf, 0));
 		channels = numeric_cast<uint32>(ovf.vi->channels);
 		sampleRate = numeric_cast<uint32>(ovf.vi->rate);
 	}
@@ -23,26 +23,26 @@ namespace cage
 		ovf = {};
 	}
 
-	void VorbisDecoder::seek(uint64 frame)
+	void VorbisDecoder::seek(uintPtr frame)
 	{
 		if (ov_pcm_seek(&ovf, frame) != 0)
 			CAGE_THROW_ERROR(Exception, "failed seek in decoding vorbis sound stream");
 	}
 
-	uint64 VorbisDecoder::tell() const
+	uintPtr VorbisDecoder::tell() const
 	{
-		return ov_pcm_tell(const_cast<OggVorbis_File *>(&ovf));
+		return numeric_cast<uintPtr>(ov_pcm_tell(const_cast<OggVorbis_File *>(&ovf)));
 	}
 
 	void VorbisDecoder::decode(PointerRange<float> buffer)
 	{
 		CAGE_ASSERT(buffer.size() % ovf.vi->channels == 0);
-		const uint64 frames = buffer.size() / ovf.vi->channels;
-		uint64 indexTarget = 0;
+		const uintPtr frames = buffer.size() / ovf.vi->channels;
+		uintPtr indexTarget = 0;
 		while (indexTarget < frames)
 		{
 			float **pcm = nullptr;
-			long res = ov_read_float(&ovf, &pcm, numeric_cast<int>(min(frames - indexTarget, uint64(1073741824))), nullptr);
+			long res = ov_read_float(&ovf, &pcm, numeric_cast<int>(min(frames - indexTarget, uintPtr(1073741824))), nullptr);
 			if (res <= 0)
 				CAGE_THROW_ERROR(Exception, "failed read in decoding vorbis sound stream");
 			for (long f = 0; f < res; f++)
@@ -69,13 +69,13 @@ namespace cage
 		switch (whence)
 		{
 		case SEEK_SET:
-			impl->file->seek(offset);
+			impl->file->seek(numeric_cast<uintPtr>(offset));
 			break;
 		case SEEK_CUR:
-			impl->file->seek(impl->file->tell() + offset);
+			impl->file->seek(numeric_cast<uintPtr>(impl->file->tell() + offset));
 			break;
 		case SEEK_END:
-			impl->file->seek(impl->file->size() + offset);
+			impl->file->seek(numeric_cast<uintPtr>(impl->file->size() + offset));
 			break;
 		}
 		return 0;
@@ -127,15 +127,15 @@ namespace cage
 				ser.write({ (char *)og.body, (char *)og.body + og.body_len });
 			}
 		}
-		uint64 offset = 0;
+		uintPtr offset = 0;
 		while (frames > 0)
 		{
-			uint64 wrt = min(frames, uint64(1024));
+			uintPtr wrt = min(frames, uintPtr(1024));
 			float **buf2 = vorbis_analysis_buffer(&v, numeric_cast<int>(wrt));
 			if (!buf2)
 				CAGE_THROW_ERROR(Exception, "vorbis_analysis_buffer");
 			PointerRange<const float> src = bufferCast<const float, const char>(inputBuffer);
-			for (uint32 f = 0; f < wrt; f++)
+			for (uintPtr f = 0; f < wrt; f++)
 			{
 				for (uint32 c = 0; c < channels; c++)
 					buf2[c][f] = src[(offset + f) * channels + c];

@@ -38,13 +38,16 @@ namespace cage
 			Deserializer des(context->originalData.data() ? context->originalData : context->compressedData);
 			SoundSourceHeader snd;
 			des >> snd;
-
+#ifdef CAGE_ARCHITECTURE_32
+			if (snd.frames > (uint32)m)
+				CAGE_THROW_ERROR(Exception, "32 bit build of cage cannot handle this large sound file")
+#endif // CAGE_ARCHITECTURE_32
 			Holder<Audio> poly = newAudio();
 			switch (snd.soundType)
 			{
 			case SoundTypeEnum::RawRaw:
 			case SoundTypeEnum::CompressedRaw:
-				poly->importRaw(des.advance(des.available()), snd.frames, snd.channels, snd.sampleRate, AudioFormatEnum::Float);
+				poly->importRaw(des.advance(des.available()), numeric_cast<uintPtr>(snd.frames), snd.channels, snd.sampleRate, AudioFormatEnum::Float);
 				break;
 			case SoundTypeEnum::CompressedCompressed:
 				poly->importBuffer(des.advance(des.available()));

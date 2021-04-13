@@ -12,17 +12,21 @@ namespace cage
 		try
 		{
 			CAGE_ASSERT(impl->format == AudioFormatEnum::Default);
+#ifdef CAGE_ARCHITECTURE_32
+			if (wav.totalPCMFrameCount > (uint32)m)
+				CAGE_THROW_ERROR(Exception, "32 bit build of cage cannot handle this large mp3 file")
+#endif // CAGE_ARCHITECTURE_32
 			if (wav.translatedFormatTag == DR_WAVE_FORMAT_PCM)
 			{
 				switch (wav.bitsPerSample)
 				{
 				case 16:
-					impl->initialize(wav.totalPCMFrameCount, wav.channels, wav.sampleRate, AudioFormatEnum::S16);
+					impl->initialize(numeric_cast<uintPtr>(wav.totalPCMFrameCount), wav.channels, wav.sampleRate, AudioFormatEnum::S16);
 					if (drwav_read_pcm_frames_s16(&wav, impl->frames, (sint16 *)impl->mem.data()) != impl->frames)
 						CAGE_THROW_ERROR(Exception, "failed to read s16 samples in decoding wav sound");
 					break;
 				case 32:
-					impl->initialize(wav.totalPCMFrameCount, wav.channels, wav.sampleRate, AudioFormatEnum::S32);
+					impl->initialize(numeric_cast<uintPtr>(wav.totalPCMFrameCount), wav.channels, wav.sampleRate, AudioFormatEnum::S32);
 					if (drwav_read_pcm_frames_s32(&wav, impl->frames, (sint32 *)impl->mem.data()) != impl->frames)
 						CAGE_THROW_ERROR(Exception, "failed to read s32 samples in decoding wav sound");
 					break;
@@ -30,7 +34,7 @@ namespace cage
 			}
 			if (impl->format == AudioFormatEnum::Default)
 			{
-				impl->initialize(wav.totalPCMFrameCount, wav.channels, wav.sampleRate, AudioFormatEnum::Float);
+				impl->initialize(numeric_cast<uintPtr>(wav.totalPCMFrameCount), wav.channels, wav.sampleRate, AudioFormatEnum::Float);
 				if (drwav_read_pcm_frames_f32(&wav, impl->frames, (float *)impl->mem.data()) != impl->frames)
 					CAGE_THROW_ERROR(Exception, "failed to read f32 samples in decoding wav sound");
 			}

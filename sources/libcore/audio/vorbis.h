@@ -12,14 +12,14 @@ namespace cage
 {
 	struct VorbisDecoder : Immovable
 	{
-		uint64 frames = 0;
+		uintPtr frames = 0;
 		uint32 channels = 0;
 		uint32 sampleRate = 0;
 
 		VorbisDecoder(Holder<File> &&file);
 		~VorbisDecoder();
-		void seek(uint64 frame);
-		uint64 tell() const;
+		void seek(uintPtr frame);
+		uintPtr tell() const;
 		void decode(PointerRange<float> buffer);
 
 	private:
@@ -43,7 +43,7 @@ namespace cage
 
 	private:
 		Serializer ser = Serializer(outputBuffer);
-		uint64 frames = 0;
+		uintPtr frames = 0;
 		uint32 channels = 0;
 		uint32 sampleRate = 0;
 		float compressQuality = 1;

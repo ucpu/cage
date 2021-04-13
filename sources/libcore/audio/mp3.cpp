@@ -11,7 +11,12 @@ namespace cage
 			CAGE_THROW_ERROR(Exception, "failed to initialize decoding mp3 sound");
 		try
 		{
-			impl->initialize(drmp3_get_pcm_frame_count(&mp3), mp3.channels, mp3.sampleRate, AudioFormatEnum::Float);
+			const uint64 frames = drmp3_get_pcm_frame_count(&mp3);
+#ifdef CAGE_ARCHITECTURE_32
+			if (frames > (uint32)m)
+				CAGE_THROW_ERROR(Exception, "32 bit build of cage cannot handle this large mp3 file")
+#endif // CAGE_ARCHITECTURE_32
+			impl->initialize(numeric_cast<uintPtr>(frames), mp3.channels, mp3.sampleRate, AudioFormatEnum::Float);
 			if (drmp3_read_pcm_frames_f32(&mp3, impl->frames, (float *)impl->mem.data()) != impl->frames)
 				CAGE_THROW_ERROR(Exception, "failed to read samples in decoding mp3 sound");
 		}

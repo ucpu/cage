@@ -17,13 +17,13 @@ namespace cage
 
 		void initialize(Holder<Audio> &&audio);
 
-		uint64 frames() const;
+		uintPtr frames() const;
 		uint32 channels() const;
 		uint32 sampleRate() const;
 		uint64 duration() const; // microseconds
 
 		// looping is handled here but attenuation and gain are not
-		void decode(sint64 startFrame, PointerRange<float> buffer);
+		void decode(sintPtr startFrame, PointerRange<float> buffer);
 
 		// requires matching sample rate and channels
 		// looping is handled here but attenuation and gain are not

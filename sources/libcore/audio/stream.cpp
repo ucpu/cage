@@ -21,13 +21,13 @@ namespace cage
 		return +impl->poly;
 	}
 
-	void AudioStream::decode(uint64 frameOffset, PointerRange<float> buffer)
+	void AudioStream::decode(uintPtr frameOffset, PointerRange<float> buffer)
 	{
 		AudioStreamImpl *impl = (AudioStreamImpl *)this;
 		AudioImpl *src = (AudioImpl *)+impl->poly;
 		const uint32 channels = src->channels;
 		CAGE_ASSERT((buffer.size() % channels) == 0);
-		const uint64 frames = buffer.size() / channels;
+		const uintPtr frames = buffer.size() / channels;
 		switch (impl->poly->format())
 		{
 		case AudioFormatEnum::Vorbis:
@@ -41,7 +41,7 @@ namespace cage
 		} break;
 		default:
 		{
-			for (uint64 f = 0; f < frames; f++)
+			for (uintPtr f = 0; f < frames; f++)
 				for (uint32 c = 0; c < channels; c++)
 					buffer[f * channels + c] = src->value(frameOffset + f, c);
 		} break;
@@ -80,7 +80,7 @@ namespace cage
 		}
 	}
 
-	Holder<Audio> vorbisExtract(const AudioImpl *src, uint64 offset, uint64 frames)
+	Holder<Audio> vorbisExtract(const AudioImpl *src, uintPtr offset, uintPtr frames)
 	{
 		CAGE_ASSERT(src->format == AudioFormatEnum::Vorbis);
 		CAGE_ASSERT(offset + frames <= src->frames);

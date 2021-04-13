@@ -19,11 +19,11 @@ namespace cage
 	{
 	public:
 		void clear();
-		void initialize(uint64 frames, uint32 channels, uint32 sampleRate = 48000, AudioFormatEnum format = AudioFormatEnum::Float);
+		void initialize(uintPtr frames, uint32 channels, uint32 sampleRate = 48000, AudioFormatEnum format = AudioFormatEnum::Float);
 		Holder<Audio> copy() const;
 
 		// import from raw memory
-		void importRaw(PointerRange<const char> buffer, uint64 frames, uint32 channels, uint32 sampleRate, AudioFormatEnum format);
+		void importRaw(PointerRange<const char> buffer, uintPtr frames, uint32 channels, uint32 sampleRate, AudioFormatEnum format);
 
 		// sound decode
 		void importBuffer(PointerRange<const char> buffer, AudioFormatEnum requestedFormat = AudioFormatEnum::Default);
@@ -40,22 +40,22 @@ namespace cage
 		PointerRange<const float> rawViewFloat() const;
 		PointerRange<const char> rawViewVorbis() const;
 
-		uint64 frames() const;
+		uintPtr frames() const;
 		uint32 channels() const;
 		uint32 sampleRate() const;
 		AudioFormatEnum format() const;
 		uint64 duration() const; // microseconds
 
-		float value(uint64 f, uint32 c) const;
-		void value(uint64 f, uint32 c, float v);
-		void value(uint64 f, uint32 c, const real &v);
+		float value(uintPtr f, uint32 c) const;
+		void value(uintPtr f, uint32 c, float v);
+		void value(uintPtr f, uint32 c, const real &v);
 	};
 
 	CAGE_CORE_API Holder<Audio> newAudio();
 
 	CAGE_CORE_API void audioSetSampleRate(Audio *snd, uint32 sampleRate); // preserve number of frames and change duration
 	CAGE_CORE_API void audioConvertSampleRate(Audio *snd, uint32 sampleRate, uint32 quality = 4); // preserve duration and change number of frames
-	CAGE_CORE_API void audioConvertFrames(Audio *snd, uint64 frames, uint32 quality = 4); // preserve duration and change sample rate
+	CAGE_CORE_API void audioConvertFrames(Audio *snd, uintPtr frames, uint32 quality = 4); // preserve duration and change sample rate
 	CAGE_CORE_API void audioConvertFormat(Audio *snd, AudioFormatEnum format);
 
 	// copies parts of an audio into another audio
@@ -64,7 +64,7 @@ namespace cage
 	// if the audios have different format, transferred samples will be converted to the target format
 	// both audios must have same number of channels
 	// sample rate is ignored (except when initializing new audio)
-	CAGE_CORE_API void audioBlit(const Audio *source, Audio *target, uint64 sourceFrameOffset, uint64 targetFrameOffset, uint64 frames);
+	CAGE_CORE_API void audioBlit(const Audio *source, Audio *target, uintPtr sourceFrameOffset, uintPtr targetFrameOffset, uintPtr frames);
 
 	// stateful decoder
 	class CAGE_CORE_API AudioStream : private Immovable
@@ -72,7 +72,7 @@ namespace cage
 	public:
 		const Audio *source() const;
 
-		void decode(uint64 startFrame, PointerRange<float> buffer);
+		void decode(uintPtr startFrame, PointerRange<float> buffer);
 	};
 
 	CAGE_CORE_API Holder<AudioStream> newAudioStream(Holder<Audio> &&audio);
