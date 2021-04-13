@@ -346,11 +346,13 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void Texture::multiBind(uint32 count, const uint32 tius[], const Texture *const texs[])
+	void Texture::multiBind(PointerRange<const uint32> tius, PointerRange<const Texture *const> texs)
 	{
+		CAGE_ASSERT(tius.size() == texs.size());
 		CAGE_ASSERT(graphicsPrivat::getCurrentContext());
 		GLint active = 0;
 		glGetIntegerv(GL_ACTIVE_TEXTURE, &active);
+		const uint32 count = numeric_cast<uint32>(tius.size());
 		for (uint32 i = 0; i < count; i++)
 		{
 			glActiveTexture(GL_TEXTURE0 + tius[i]);
@@ -358,29 +360,6 @@ namespace cage
 		}
 		glActiveTexture(active);
 		CAGE_CHECK_GL_ERROR_DEBUG();
-		/*
-		CAGE_ASSERT(count <= 32);
-		uint32 textures[32];
-		detail::memset(textures, 0, sizeof(textures));
-		for (uint32 i = 0; i < count; i++)
-		{
-			if (texs[i])
-			{
-				CAGE_ASSERT(textures[i] == 0, "cannot bind multiple textures to same texture unit", textures[i], i);
-				textures[tius[i]] = ((TextureImpl*)texs[i])->id;
-			}
-		}
-		glBindTextures(0, 32, textures);
-		CAGE_CHECK_GL_ERROR_DEBUG();
-		for (uint32 i = 0; i < 32; i++)
-			privat::setSpecificTexture(i, textures[i]);
-		*/
-	}
-
-	void Texture::multiBind(PointerRange<const uint32> tius, PointerRange<const Texture *const> texs)
-	{
-		CAGE_ASSERT(tius.size() == texs.size());
-		multiBind(numeric_cast<uint32>(tius.size()), tius.data(), texs.data());
 	}
 
 	Holder<Texture> newTexture()

@@ -59,7 +59,6 @@ namespace cage
 		void wraps(uint32 s, uint32 t, uint32 r);
 		void generateMipmaps();
 
-		[[deprecated]] static void multiBind(uint32 count, const uint32 tius[], const Texture *const texs[]);
 		static void multiBind(PointerRange<const uint32> tius, PointerRange<const Texture *const> texs);
 	};
 

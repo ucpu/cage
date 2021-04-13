@@ -36,8 +36,12 @@ void testNumericTypes()
 		CAGE_TEST(numeric_cast<float>((double)4) == 4);
 		CAGE_TEST(numeric_cast<float>((double)1e-50) >= 0); // numeric_cast does not detect underflows with floating point numbers
 		CAGE_TEST(numeric_cast<float>((double)-1e-50) <= 0);
-		CAGE_TEST(numeric_cast<float>((double)1e50) > 1e20); // numeric_cast allows conversions with infinites
-		CAGE_TEST(numeric_cast<float>((double)-1e50) < -1e20);
+		{
+			double a = 1e50; // avoid warning about overflow in constant arithmetic
+			double b = -1e50;
+			CAGE_TEST(numeric_cast<float>(a) > 1e20); // numeric_cast allows conversions with infinites
+			CAGE_TEST(numeric_cast<float>(b) < -1e20);
+		}
 		CAGE_TEST(std::isnan(numeric_cast<float>(std::numeric_limits<double>::quiet_NaN())));
 		// float -> signed
 		CAGE_TEST(numeric_cast<sint8>((float)5.1) == 5);
