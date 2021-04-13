@@ -4,10 +4,10 @@
 
 namespace cage
 {
+	// https://www.geometrictools.com/GTE/Mathematics/IntrAlignedBox3Cone3.h modified
+
 	namespace
 	{
-		// https://www.geometrictools.com/GTE/Mathematics/IntrAlignedBox3Cone3.h modified
-
 		enum
 		{
 			NUM_BOX_VERTICES = 8,

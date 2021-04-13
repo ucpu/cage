@@ -139,10 +139,8 @@ namespace cage
 	Plane::Plane(const Triangle &other) : Plane(other[0], other.normal())
 	{}
 
-	Plane::Plane(const Line &a, const vec3 &b)
-	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
-	}
+	Plane::Plane(const Line &a, const vec3 &b) : Plane(a.origin, a.origin + a.direction, b)
+	{}
 
 	Plane Plane::operator * (const mat4 &other) const
 	{
@@ -234,11 +232,6 @@ namespace cage
 		}
 	}
 
-	Sphere::Sphere(const Frustum &other)
-	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
-	}
-
 	Sphere Sphere::operator * (const mat4 &other) const
 	{
 		real sx2 = lengthSquared(vec3(other[0], other[1], other[2]));
@@ -282,7 +275,24 @@ namespace cage
 
 	Aabb::Aabb(const Frustum &other)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		const mat4 invVP = inverse(other.viewProj);
+		constexpr const vec3 clipCorners[8] = {
+			vec3(-1, -1, -1),
+			vec3(-1, -1, +1),
+			vec3(-1, +1, -1),
+			vec3(-1, +1, +1),
+			vec3(+1, -1, -1),
+			vec3(+1, -1, +1),
+			vec3(+1, +1, -1),
+			vec3(+1, +1, +1),
+		};
+		Aabb box;
+		for (const vec3 &v : clipCorners)
+		{
+			const vec4 p = invVP * vec4(v, 1);
+			box += Aabb(vec3(p) / p[3]);
+		}
+		*this = box;
 	}
 
 	Aabb Aabb::operator + (const Aabb &other) const

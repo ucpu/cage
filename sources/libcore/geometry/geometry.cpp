@@ -85,12 +85,12 @@ namespace cage
 
 	real distance(const vec3 &a, const Cone &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		return distance(a, closestPoint(a, b));
 	}
 
 	real distance(const vec3 &a, const Frustum &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		return distance(a, closestPoint(a, b));
 	}
 
 	real distance(const Line &a, const Triangle &b)
@@ -183,7 +183,7 @@ namespace cage
 			vec3(b.a[0], b.b[1], b.b[2]),
 			vec3(b.b[0], b.b[1], b.b[2])
 		};
-		static constexpr const uint32 ids[12 * 3] =  {
+		constexpr const uint32 ids[12 * 3] =  {
 			0, 1, 2,
 			1, 2, 3,
 			4, 5, 6,
@@ -260,17 +260,26 @@ namespace cage
 
 	real distance(const Sphere &a, const Cone &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		return max(distance(a.center, b) - a.radius, real(0));
 	}
 
 	real distance(const Sphere &a, const Frustum &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		return max(distance(a.center, b) - a.radius, real(0));
 	}
 
 	real distance(const Aabb &a, const Aabb &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		// https://groups.google.com/g/comp.graphics.algorithms/c/hbu10Xc7JcY modified
+		real res = 0;
+		for (int i = 0; i < 3; ++i)
+		{
+			if (a.a[i] >= b.b[i])
+				res += sqr(a.a[i] - b.a[i]);
+			else if (b.a[i] >= a.b[i])
+				res += sqr(b.a[i] - a.b[i]);
+		}
+		return sqrt(res);
 	}
 
 	real distance(const Aabb &a, const Cone &b)
@@ -467,7 +476,7 @@ namespace cage
 	{
 		vec3 c = b.center();
 		vec3 e = b.size() * 0.5;
-		real r = e[0] * abs(a.normal[0]) + e[1] * abs(a.normal[1]) + e[2] * abs(a.normal[2]);
+		real r = dot(e, abs(a.normal));
 		real s = dot(a.normal, c) - a.d;
 		return abs(s) <= r;
 	}
@@ -594,7 +603,7 @@ namespace cage
 		{
 			// parallel
 			if (abs(numer) < 1e-5)
-				return a.a(); // any point of the Line
+				return a.a(); // any point of the line
 			return vec3::Nan(); // no intersection
 		}
 		real d = numer / denom;
@@ -639,6 +648,16 @@ namespace cage
 			return Line();
 	}
 
+	Line intersection(const Line &a, const Cone &b)
+	{
+		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+	}
+
+	Line intersection(const Line &a, const Frustum &b)
+	{
+		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+	}
+
 	Aabb intersection(const Aabb &a, const Aabb &b)
 	{
 		if (intersects(a, b))
@@ -667,7 +686,7 @@ namespace cage
 			const vec3 v = cross(b, c);
 			const vec3 w = cross(c, a);
 			if (dot(u, v) > 0 && dot(u, w) > 0)
-				return p; // p is inside the Triangle
+				return p; // p is inside the triangle
 		}
 		const Line ab = makeSegment(trig[0], trig[1]);
 		const Line bc = makeSegment(trig[1], trig[2]);
@@ -701,7 +720,7 @@ namespace cage
 
 	vec3 closestPoint(const vec3 &a, const Aabb &b)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
+		return clamp(a, b.a, b.b);
 	}
 
 	vec3 closestPoint(const vec3 &a, const Cone &b)

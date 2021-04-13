@@ -242,6 +242,8 @@ namespace cage
 		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const Plane &other) { return str + "(" + other.normal + ", " + other.d + ")"; }
 		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const Sphere &other) { return str + "(" + other.center + ", " + other.radius + ")"; }
 		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const Aabb &other) { return str + "(" + other.a + "," + other.b + ")"; }
+		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const Cone &other) { return str + "(" + other.origin + "," + other.direction + "," + other.length + "," + other.halfAngle + ")"; }
+		template<uint32 N> inline StringizerBase<N> &operator + (StringizerBase<N> &str, const Frustum &other) { return str + other.viewProj; }
 	}
 
 	CAGE_CORE_API Line makeSegment(const vec3 &a, const vec3 &b);
@@ -333,6 +335,8 @@ namespace cage
 	CAGE_CORE_API vec3 intersection(const Line &a, const Plane &b);
 	CAGE_CORE_API Line intersection(const Line &a, const Sphere &b);
 	CAGE_CORE_API Line intersection(const Line &a, const Aabb &b);
+	CAGE_CORE_API Line intersection(const Line &a, const Cone &b);
+	CAGE_CORE_API Line intersection(const Line &a, const Frustum &b);
 	CAGE_CORE_API Aabb intersection(const Aabb &a, const Aabb &b);
 
 	CAGE_CORE_API vec3 closestPoint(const vec3 &a, const Line &b);

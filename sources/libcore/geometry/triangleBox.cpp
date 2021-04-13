@@ -2,10 +2,10 @@
 
 namespace cage
 {
+	// https://gist.github.com/jflipts/fc68d4eeacfcc04fbdb2bf38e0911850 modified
+
 	namespace
 	{
-		// https://gist.github.com/jflipts/fc68d4eeacfcc04fbdb2bf38e0911850 modified
-
 		void findMinMax(real x0, real x1, real x2, real &min, real &max)
 		{
 			min = max = x0;

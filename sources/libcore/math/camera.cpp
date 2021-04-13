@@ -31,7 +31,7 @@ namespace cage
 	mat4 perspectiveProjection(rads fov, real aspectRatio, real near, real far)
 	{
 		CAGE_ASSERT(fov > rads(0));
-		CAGE_ASSERT(aspectRatio != 0);
+		CAGE_ASSERT(aspectRatio > 0);
 		CAGE_ASSERT(sign(near) == sign(far) && near != far);
 		real f = 1 / tan(fov / 2);
 		return mat4(
@@ -44,6 +44,9 @@ namespace cage
 
 	mat4 perspectiveProjection(rads fov, real aspectRatio, real near, real far, real zeroParallaxDistance, real eyeSeparation)
 	{
+		CAGE_ASSERT(fov > rads(0));
+		CAGE_ASSERT(aspectRatio > 0);
+		CAGE_ASSERT(sign(near) == sign(far) && near != far);
 		real baseLength = near * tan(fov * 0.5);
 		real stereoOffset = 0.5 * eyeSeparation * near / zeroParallaxDistance;
 		real left = -aspectRatio * baseLength + stereoOffset;
@@ -61,8 +64,8 @@ namespace cage
 		return mat4(
 			near * 2.0 / (right - left), 0, 0, 0,
 			0, near * 2.0 / (top - bottom), 0, 0,
-			(right + left) / (right - left), (top + bottom) / (top - bottom), -(far + near) / (far - near), -1,
-			0, 0, -2 * far * near / (far - near), 0
+			(right + left) / (right - left), (top + bottom) / (top - bottom), (far + near) / (near - far), -1,
+			0, 0, 2 * far * near / (near - far), 0
 		);
 	}
 
@@ -81,7 +84,7 @@ namespace cage
 
 	StereoModeEnum stringToStereoMode(const string & mode)
 	{
-		string m = toLower(mode);
+		const string m = toLower(mode);
 		if (m == "mono") return StereoModeEnum::Mono;
 		if (m == "horizontal") return StereoModeEnum::Horizontal;
 		if (m == "vertical") return StereoModeEnum::Vertical;

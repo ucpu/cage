@@ -17,6 +17,11 @@ void test(const Aabb &a, const Aabb &b)
 	test(a.a, b.a);
 	test(a.b, b.b);
 }
+void test(const Sphere &a, const Sphere &b)
+{
+	test(a.center, b.center);
+	test(a.radius, b.radius);
+}
 
 namespace
 {
@@ -101,10 +106,10 @@ void testGeometry()
 		{
 			CAGE_TESTCASE("distances (segments)");
 
-			Line a = makeSegment(vec3(0, -1, 0), vec3(0, 1, 0));
-			Line b = makeSegment(vec3(1, -2, 0), vec3(1, 2, 0));
-			Line c = makeSegment(vec3(0, 0, 0), vec3(0, 0, 1));
-			Line d = makeSegment(vec3(3, -1, 0), vec3(3, 1, 0));
+			const Line a = makeSegment(vec3(0, -1, 0), vec3(0, 1, 0));
+			const Line b = makeSegment(vec3(1, -2, 0), vec3(1, 2, 0));
+			const Line c = makeSegment(vec3(0, 0, 0), vec3(0, 0, 1));
+			const Line d = makeSegment(vec3(3, -1, 0), vec3(3, 1, 0));
 			test(distance(a, a), 0);
 			test(distance(a, b), 1);
 			test(distance(b, a), 1);
@@ -125,10 +130,10 @@ void testGeometry()
 		{
 			CAGE_TESTCASE("angles");
 
-			Line a = makeSegment(vec3(0, -1, 1), vec3(0, 1, 1));
-			Line b = makeSegment(vec3(-1, 0, 2), vec3(1, 0, 2));
-			Line c = makeSegment(vec3(0, 0, 0), vec3(1, 1, 1));
-			Line d = makeSegment(vec3(3, -1, 0), vec3(3, 1, 0));
+			const Line a = makeSegment(vec3(0, -1, 1), vec3(0, 1, 1));
+			const Line b = makeSegment(vec3(-1, 0, 2), vec3(1, 0, 2));
+			const Line c = makeSegment(vec3(0, 0, 0), vec3(1, 1, 1));
+			const Line d = makeSegment(vec3(3, -1, 0), vec3(3, 1, 0));
 			test(angle(a, a), degs(0));
 			test(angle(a, b), degs(90));
 			test(angle(b, a), degs(90));
@@ -174,8 +179,8 @@ void testGeometry()
 			CAGE_TESTCASE("basics");
 
 			Triangle t1(vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 2, 0));
-			Triangle t2(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1));
-			Triangle t3(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0));
+			const Triangle t2(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1));
+			const Triangle t3(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0));
 			CAGE_TEST(!intersects(t1, t2));
 			CAGE_TEST(intersects(t1, t3));
 			CAGE_TEST(intersects(t2, t3));
@@ -189,7 +194,7 @@ void testGeometry()
 		{
 			CAGE_TESTCASE("tests");
 
-			Triangle t1(vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 2, 0));
+			const Triangle t1(vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 2, 0));
 			test(t1.normal(), -t1.flip().normal());
 			CAGE_TEST(!t1.degenerated());
 			CAGE_TEST(Triangle(vec3(1, 2, 3), vec3(3, 2, 1), vec3(1, 2, 3)).degenerated()); // two vertices are the same
@@ -253,9 +258,9 @@ void testGeometry()
 		{
 			CAGE_TESTCASE("intersections (with lines)");
 
-			Triangle t1(vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 2, 0));
-			Triangle t2(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1));
-			Triangle t3(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0));
+			const Triangle t1(vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 2, 0));
+			const Triangle t2(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1));
+			const Triangle t3(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0));
 			test(intersection(makeSegment(vec3(0, 1, -1), vec3(0, 1, 1)), t1), vec3(0, 1, 0));
 			test(intersection(t1, makeSegment(vec3(0, 1, -1), vec3(0, 1, 1))), vec3(0, 1, 0));
 			CAGE_TEST(intersects(makeSegment(vec3(0, 1, -1), vec3(0, 1, 1)), t1));
@@ -326,7 +331,7 @@ void testGeometry()
 
 			for (int i = 0; i < 5; i++)
 			{
-				Plane p(randomChance3() * 100, randomDirection3());
+				const Plane p(randomChance3() * 100, randomDirection3());
 				CAGE_TEST(p.normalized());
 				test(distance(p, p.origin()), 0); // origin is a point on the Plane
 			}
@@ -433,7 +438,7 @@ void testGeometry()
 	}
 
 	{
-		CAGE_TESTCASE("Aabb");
+		CAGE_TESTCASE("aabb");
 
 		{
 			CAGE_TESTCASE("ctors, isEmpty, volume, addition");
@@ -466,25 +471,25 @@ void testGeometry()
 		}
 
 		{
-			CAGE_TESTCASE("construct from Plane");
-			Aabb a = Aabb(Plane(vec3(123, 456, 789), vec3(0, 1, 0)));
+			CAGE_TESTCASE("construct from plane");
+			const Aabb a = Aabb(Plane(vec3(123, 456, 789), vec3(0, 1, 0)));
 			testEx(a.a, vec3(-real::Infinity(), 456, -real::Infinity()));
 			testEx(a.b, vec3(real::Infinity(), 456, real::Infinity()));
-			Aabb b = Aabb(Plane(vec3(123, 456, 789), vec3(0, 0, -1)));
+			const Aabb b = Aabb(Plane(vec3(123, 456, 789), vec3(0, 0, -1)));
 			testEx(b.a, vec3(-real::Infinity(), -real::Infinity(), 789));
 			testEx(b.b, vec3(real::Infinity(), real::Infinity(), 789));
-			Aabb c = Aabb(Plane(vec3(123, 456, 789), normalize(vec3(1, 2, -1))));
+			const Aabb c = Aabb(Plane(vec3(123, 456, 789), normalize(vec3(1, 2, -1))));
 			testEx(c.a, vec3(-real::Infinity()));
 			testEx(c.b, vec3(real::Infinity()));
 		}
 
 		{
-			CAGE_TESTCASE("intersects, intersections (with Aabb)");
-			Aabb a(vec3(-5, -6, -3), vec3(-4, -4, -1));
-			Aabb b(vec3(1, 3, 4), vec3(4, 7, 8));
-			Aabb c(vec3(-10, -10, -10), vec3());
-			Aabb d(vec3(), vec3(10, 10, 10));
-			Aabb e(vec3(-5, -5, -5), vec3(5, 5, 5));
+			CAGE_TESTCASE("intersects, intersections (with aabb)");
+			const Aabb a(vec3(-5, -6, -3), vec3(-4, -4, -1));
+			const Aabb b(vec3(1, 3, 4), vec3(4, 7, 8));
+			const Aabb c(vec3(-10, -10, -10), vec3());
+			const Aabb d(vec3(), vec3(10, 10, 10));
+			const Aabb e(vec3(-5, -5, -5), vec3(5, 5, 5));
 			CAGE_TEST(!intersects(a, b));
 			CAGE_TEST(intersection(a, b).empty());
 			CAGE_TEST(intersects(c, d));
@@ -504,11 +509,13 @@ void testGeometry()
 			test(intersection(c, e), Aabb(vec3(-5, -5, -5), vec3()));
 			test(intersection(d, e), Aabb(vec3(5, 5, 5), vec3()));
 			test(intersection(e, e), e);
+			test(distance(c, d), 0);
+			test(distance(a, b), distance(a.b, b.a));
 		}
 
 		{
 			CAGE_TESTCASE("ray test");
-			Aabb a(vec3(-5, -6, -3), vec3(-4, -4, -1));
+			const Aabb a(vec3(-5, -6, -3), vec3(-4, -4, -1));
 			CAGE_TEST(intersects(makeSegment(vec3(-4, -4, -10), vec3(-5, -5, 10)), a));
 			CAGE_TEST(intersects(a, makeSegment(vec3(-4, -4, -10), vec3(-5, -5, 10))));
 			CAGE_TEST(intersects(makeSegment(vec3(-10, -12, -6), vec3(-5, -6, -2)), a));
@@ -518,7 +525,7 @@ void testGeometry()
 
 		{
 			CAGE_TESTCASE("distance to point");
-			Aabb a(vec3(1, 3, 4), vec3(4, 7, 8));
+			const Aabb a(vec3(1, 3, 4), vec3(4, 7, 8));
 			test(distance(a, vec3(0, 0, 0)), length(vec3(1, 3, 4)));
 			test(distance(a, vec3(2, 7, 6)), 0);
 			test(distance(a, vec3(3, 3, 10)), 2);
@@ -527,15 +534,15 @@ void testGeometry()
 
 		{
 			CAGE_TESTCASE("transformation");
-			Aabb a(vec3(-5, -6, -3), vec3(-4, -4, -1));
-			Aabb b(vec3(1, 3, 4), vec3(4, 7, 8));
-			Aabb c(vec3(-10, -10, -10), vec3());
-			Aabb d(vec3(), vec3(10, 10, 10));
-			Aabb e(vec3(-5, -5, -5), vec3(5, 5, 5));
-			mat4 rot1(quat(degs(30), degs(), degs()));
-			mat4 rot2(quat(degs(), degs(315), degs()));
-			mat4 tran(vec3(0, 10, 0));
-			mat4 scl = mat4::scale(3);
+			const Aabb a(vec3(-5, -6, -3), vec3(-4, -4, -1));
+			const Aabb b(vec3(1, 3, 4), vec3(4, 7, 8));
+			const Aabb c(vec3(-10, -10, -10), vec3());
+			const Aabb d(vec3(), vec3(10, 10, 10));
+			const Aabb e(vec3(-5, -5, -5), vec3(5, 5, 5));
+			const mat4 rot1(quat(degs(30), degs(), degs()));
+			const mat4 rot2(quat(degs(), degs(315), degs()));
+			const mat4 tran(vec3(0, 10, 0));
+			const mat4 scl = mat4::scale(3);
 			CAGE_TEST((a * rot1).volume() > a.volume());
 			CAGE_TEST((a * rot1 * rot2).volume() > a.volume());
 			CAGE_TEST((a * scl).volume() > a.volume());
@@ -543,32 +550,15 @@ void testGeometry()
 		}
 
 		{
-			CAGE_TESTCASE("frustum culling");
-			const Aabb a(vec3(1, 1, -7), vec3(3, 5, -1));
-			const mat4 proj = perspectiveProjection(degs(90), 1, 2, 10);
-			// varying distance along z-axis
-			CAGE_TEST(intersects(a, Frustum(transform(vec3(2, 3, -10)), proj)) == false);
-			CAGE_TEST(intersects(a, Frustum(transform(vec3(2, 3, -5)), proj)) == true);
-			CAGE_TEST(intersects(a, Frustum(transform(vec3(2, 3, 0)), proj)) == true);
-			CAGE_TEST(intersects(a, Frustum(transform(vec3(2, 3, 3)), proj)) == true);
-			CAGE_TEST(intersects(a, Frustum(transform(vec3(2, 3, 10)), proj)) == false);
-			// box moved left and right
-			CAGE_TEST(intersects(a, Frustum(transform(vec3(-10, 3, 0)), proj)) == false);
-			CAGE_TEST(intersects(a, Frustum(transform(vec3(0, 3, 0)), proj)) == true);
-			CAGE_TEST(intersects(a, Frustum(transform(vec3(5, 3, 0)), proj)) == true);
-			CAGE_TEST(intersects(a, Frustum(transform(vec3(15, 3, 0)), proj)) == false);
-		}
-
-		{
 			CAGE_TESTCASE("triangle-aabb intersects");
 			{
-				Aabb box(vec3(5, 3, 8), vec3(12, 9, 10));
+				const Aabb box(vec3(5, 3, 8), vec3(12, 9, 10));
 				CAGE_TEST(intersects(Triangle(vec3(6, 7, 8), vec3(11, 3, 8), vec3(11, 9, 10)), box)); // Triangle fully inside
 				CAGE_TEST(intersects(box, Triangle(vec3(6, 7, 8), vec3(11, 3, 8), vec3(11, 9, 10)))); // Triangle fully inside
 				CAGE_TEST(!intersects(Triangle(vec3(-6, 7, 8), vec3(-11, 3, 8), vec3(-11, 9, 10)), box)); // Triangle fully outside
 			}
 			{ // triangles with all vertices outside
-				Aabb box(vec3(0, 0, 0), vec3(2, 2, 2));
+				const Aabb box(vec3(0, 0, 0), vec3(2, 2, 2));
 				CAGE_TEST(intersects(Triangle(vec3(-1, -1, 1), vec3(3, -1, 1), vec3(1, 3, 1)), box)); // Plane cut
 				CAGE_TEST(intersects(Triangle(vec3(0, -1, 1), vec3(3, -1, 1), vec3(3, 2, 1)), box)); // one edge
 				CAGE_TEST(intersects(Triangle(vec3(0, 0, 5), vec3(0, 5, 0), vec3(5, 0, 0)), box)); // cut a corner
@@ -577,8 +567,81 @@ void testGeometry()
 		}
 
 		{
-			CAGE_TESTCASE("stringize");
-			string s = detail::StringizerBase<5432>() + makeSegment(vec3(1, 2, 3), vec3(4, 5, 6)) + ", " + Triangle() + ", " + Plane() + ", " + Sphere() + ", " + Aabb();
+			CAGE_TESTCASE("plane-aabb intersects");
+			const Aabb box(vec3(-5, -5, -5), vec3(5, 5, 5));
+			const Plane a(vec3(1, 2, 3), vec3(0, 0, 1));
+			const Plane b(vec3(1, 2, 13), vec3(0, 0, 1));
+			const Plane c(vec3(1, 42, 3), vec3(0, 0, 1));
+			CAGE_TEST(intersects(box, a));
+			CAGE_TEST(!intersects(box, b));
+			CAGE_TEST(intersects(box, c));
 		}
+	}
+
+	{
+		CAGE_TESTCASE("frustum");
+
+		{
+			CAGE_TESTCASE("convert perspective frustum to box/sphere");
+			const mat4 proj = perspectiveProjection(degs(90), 1, 10, 20);
+			const Frustum frustum = Frustum(transform(vec3(13, 42, 5), quat(degs(), degs(180), degs())), proj);
+			const Aabb box = Aabb(frustum);
+			test(box, Aabb(vec3(-7, 22, 15), vec3(33, 62, 25)));
+			const Sphere sphere = Sphere(frustum);
+			test(sphere, Sphere(vec3(13, 42, 25), sqrt(sqr(20) * 2)));
+		}
+
+		{
+			CAGE_TESTCASE("convert orthographic frustum to box/sphere");
+			const mat4 proj = orthographicProjection(42, 62, 13, 23, 10, 20);
+			const Frustum frustum = Frustum(transform(vec3(5)), proj);
+			const Aabb box = Aabb(frustum);
+			test(box, Aabb(vec3(47, 18, -15), vec3(67, 28, -5)));
+			const Sphere sphere = Sphere(frustum);
+			test(sphere, Sphere(box)); // in this case (the frustum is axis aligned) the sphere should be the same when constructed from the frustum as from the box
+		}
+
+		{
+			CAGE_TESTCASE("point-frustum intersections");
+			const mat4 proj = perspectiveProjection(degs(90), 1, 10, 20);
+			const Frustum frustum = Frustum(transform(vec3(13, 42, 5), quat(degs(), degs(180), degs())), proj);
+			CAGE_TEST(intersects(frustum, vec3(5, 40, 20)));
+			CAGE_TEST(intersects(vec3(5, 40, 20), frustum));
+			CAGE_TEST(!intersects(frustum, vec3(5, 40, 10)));
+			CAGE_TEST(!intersects(frustum, vec3(5, 40, 30)));
+			CAGE_TEST(!intersects(frustum, vec3(-10, 40, 20)));
+			CAGE_TEST(!intersects(frustum, vec3(30, 40, 20)));
+			CAGE_TEST(!intersects(frustum, vec3(5, 20, 20)));
+			CAGE_TEST(!intersects(frustum, vec3(5, 70, 20)));
+		}
+
+		{
+			CAGE_TESTCASE("aabb-frustum intersections");
+			const Aabb a(vec3(1, 1, -7), vec3(3, 5, -1));
+			const mat4 proj = perspectiveProjection(degs(90), 1, 2, 10);
+			// frustum moved back and forth
+			CAGE_TEST(intersects(a, Frustum(transform(vec3(2, 3, -10)), proj)) == false);
+			CAGE_TEST(intersects(a, Frustum(transform(vec3(2, 3, -5)), proj)) == true);
+			CAGE_TEST(intersects(a, Frustum(transform(vec3(2, 3, 0)), proj)) == true);
+			CAGE_TEST(intersects(a, Frustum(transform(vec3(2, 3, 3)), proj)) == true);
+			CAGE_TEST(intersects(a, Frustum(transform(vec3(2, 3, 10)), proj)) == false);
+			// frustum moved left and right
+			CAGE_TEST(intersects(a, Frustum(transform(vec3(-10, 3, 0)), proj)) == false);
+			CAGE_TEST(intersects(a, Frustum(transform(vec3(0, 3, 0)), proj)) == true);
+			CAGE_TEST(intersects(a, Frustum(transform(vec3(5, 3, 0)), proj)) == true);
+			CAGE_TEST(intersects(a, Frustum(transform(vec3(15, 3, 0)), proj)) == false);
+		}
+	}
+
+	{
+		CAGE_TESTCASE("stringize");
+		const string s = detail::StringizerBase<5432>()
+			+ makeSegment(vec3(1, 2, 3), vec3(4, 5, 6)) + ", "
+			+ Triangle() + ", "
+			+ Plane() + ", "
+			+ Sphere() + ", "
+			+ Aabb() + ", "
+			+ Cone() + ", "
+			+ Frustum();
 	}
 }
