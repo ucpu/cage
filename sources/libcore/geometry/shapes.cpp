@@ -275,23 +275,10 @@ namespace cage
 
 	Aabb::Aabb(const Frustum &other)
 	{
-		const mat4 invVP = inverse(other.viewProj);
-		constexpr const vec3 clipCorners[8] = {
-			vec3(-1, -1, -1),
-			vec3(-1, -1, +1),
-			vec3(-1, +1, -1),
-			vec3(-1, +1, +1),
-			vec3(+1, -1, -1),
-			vec3(+1, -1, +1),
-			vec3(+1, +1, -1),
-			vec3(+1, +1, +1),
-		};
 		Aabb box;
-		for (const vec3 &v : clipCorners)
-		{
-			const vec4 p = invVP * vec4(v, 1);
-			box += Aabb(vec3(p) / p[3]);
-		}
+		Frustum::Corners corners = other.corners();
+		for (const vec3 &v : corners.data)
+			box += Aabb(v);
 		*this = box;
 	}
 
@@ -342,11 +329,6 @@ namespace cage
 		CAGE_THROW_CRITICAL(NotImplemented, "geometry");
 	}
 
-	Frustum Frustum::operator * (const mat4 &other) const
-	{
-		return Frustum(viewProj * other);
-	}
-
 	Frustum::Frustum(const transform &camera, const mat4 &proj) : Frustum(proj * mat4(inverse(camera)))
 	{}
 
@@ -366,5 +348,33 @@ namespace cage
 		planes[3] = c3 - c1;
 		planes[4] = c3 + c2;
 		planes[5] = c3 - c2;
+	}
+
+	Frustum Frustum::operator * (const mat4 &other) const
+	{
+		return Frustum(viewProj * other);
+	}
+
+	Frustum::Corners Frustum::corners() const
+	{
+		const mat4 invVP = inverse(viewProj);
+		constexpr const vec3 clipCorners[8] = {
+			vec3(-1, -1, -1),
+			vec3(-1, -1, +1),
+			vec3(-1, +1, -1),
+			vec3(-1, +1, +1),
+			vec3(+1, -1, -1),
+			vec3(+1, -1, +1),
+			vec3(+1, +1, -1),
+			vec3(+1, +1, +1),
+		};
+		Frustum::Corners res;
+		int i = 0;
+		for (const vec3 &v : clipCorners)
+		{
+			const vec4 p = invVP * vec4(v, 1);
+			res.data[i++] = vec3(p) / p[3];
+		}
+		return res;
 	}
 }

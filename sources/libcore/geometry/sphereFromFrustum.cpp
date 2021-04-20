@@ -71,25 +71,12 @@ namespace cage
 
 	Sphere::Sphere(const Frustum &other)
 	{
-		const mat4 invVP = inverse(other.viewProj);
-		constexpr const vec3 clipCorners[8] = {
-			vec3(-1, -1, -1),
-			vec3(-1, -1, +1),
-			vec3(-1, +1, -1),
-			vec3(-1, +1, +1),
-			vec3(+1, -1, -1),
-			vec3(+1, -1, +1),
-			vec3(+1, +1, -1),
-			vec3(+1, +1, +1),
-		};
-		vec3 points[8];
+		const Frustum::Corners corners = other.corners();
 		const vec3 *L[8];
 		int i = 0;
-		for (const vec3 &v : clipCorners)
+		for (const vec3 &v : corners.data)
 		{
-			const vec4 p = invVP * vec4(v, 1);
-			points[i] = vec3(p) / p[3];
-			L[i] = &points[i];
+			L[i] = &v;
 			i++;
 		}
 		*this = recurseMini(L, 8, 0);

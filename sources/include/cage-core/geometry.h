@@ -221,6 +221,11 @@ namespace cage
 		mat4 viewProj;
 		vec4 planes[6];
 
+		// constructor
+		constexpr Frustum() noexcept {}
+		explicit Frustum(const transform &camera, const mat4 &proj);
+		explicit Frustum(const mat4 &viewProj);
+
 		// compound operators
 		Frustum &operator *= (const mat4 &other) { return *this = *this * other; }
 		Frustum &operator *= (const transform &other) { return *this = *this * other; }
@@ -229,10 +234,9 @@ namespace cage
 		Frustum operator * (const mat4 &other) const;
 		Frustum operator * (const transform &other) const { return *this * mat4(other); }
 
-		// constructor
-		constexpr Frustum() noexcept {}
-		explicit Frustum(const transform &camera, const mat4 &proj);
-		explicit Frustum(const mat4 &viewProj);
+		// methods
+		struct Corners { vec3 data[8]; };
+		Corners corners() const;
 	};
 
 	namespace detail

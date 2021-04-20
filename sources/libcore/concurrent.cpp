@@ -316,6 +316,9 @@ namespace cage
 		public:
 #ifdef CAGE_SYSTEM_WINDOWS
 
+#if 0
+			// old implementation compatible with windows before version 8
+
 			Holder<Mutex> mut;
 			Holder<Semaphore> sem1, sem2;
 			uint32 total, current;
@@ -347,6 +350,29 @@ namespace cage
 				}
 				sem2->lock();
 			}
+
+#else
+			// new implementation that requires windows 8 or later
+
+			SYNCHRONIZATION_BARRIER bar;
+
+			explicit BarrierImpl(uint32 value)
+			{
+				if (InitializeSynchronizationBarrier(&bar, value, 0) != TRUE)
+					CAGE_THROW_ERROR(SystemError, "InitializeSynchronizationBarrier", GetLastError());
+			}
+
+			~BarrierImpl()
+			{
+				DeleteSynchronizationBarrier(&bar);
+			}
+
+			void lock()
+			{
+				EnterSynchronizationBarrier(&bar, SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY);
+			}
+
+#endif // windows version compatibility
 
 #else
 
@@ -647,7 +673,7 @@ namespace cage
 		if (!name.empty())
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
-			static constexpr DWORD MS_VC_EXCEPTION = 0x406D1388;
+			constexpr DWORD MS_VC_EXCEPTION = 0x406D1388;
 #pragma pack(push,8)
 			struct THREADNAME_INFO
 			{
