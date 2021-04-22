@@ -430,7 +430,9 @@ namespace cage
 					guiVoice = masterBus->newVoice();
 					effectsVoice->callback.bind<VoicesMixer, &VoicesMixer::process>(+effectsBus);
 					guiVoice->callback.bind<VoicesMixer, &VoicesMixer::process>(+guiBus);
-					speaker = newSpeaker(config.speaker ? *config.speaker : SpeakerCreateConfig(), Delegate<void(const SoundCallbackData &)>().bind<VoicesMixer, &VoicesMixer::process>(+masterBus));
+					SpeakerCreateConfig scc;
+					scc.sampleRate = 48000; // minimize sample rate conversions
+					speaker = newSpeaker(config.speaker ? *config.speaker : scc, Delegate<void(const SoundCallbackData &)>().bind<VoicesMixer, &VoicesMixer::process>(+masterBus));
 				}
 
 				{ // create gui

@@ -1,6 +1,9 @@
 #include <cage-core/audio.h>
+#include <cage-core/audioChannelsConverter.h>
 
 #include "processor.h"
+
+#include <utility> // swap
 
 void processSound()
 {
@@ -8,6 +11,28 @@ void processSound()
 
 	Holder<Audio> audio = newAudio();
 	audio->importFile(inputFileName);
+
+	{
+		const bool mono = toBool(properties("mono"));
+		if (mono && audio->channels() != 1)
+		{
+			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "converting channels from " + audio->channels() + " to mono");
+			audioConvertFormat(+audio, AudioFormatEnum::Float);
+			Holder<Audio> tmp = newAudio();
+			tmp->initialize(audio->frames(), 1, audio->sampleRate());
+			newAudioChannelsConverter({})->convert(audio->rawViewFloat(), (PointerRange<float>&)tmp->rawViewFloat(), audio->channels(), 1);
+			std::swap(tmp, audio);
+		}
+	}
+
+	{
+		const uint32 sr = toUint32(properties("sampleRate"));
+		if (sr != 0 && audio->sampleRate() != sr)
+		{
+			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "converting sample rate from " + audio->sampleRate() + " to " + sr);
+			audioConvertSampleRate(+audio, sr);
+		}
+	}
 
 	SoundSourceHeader sds = {};
 	sds.channels = audio->channels();
@@ -33,7 +58,7 @@ void processSound()
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "frames: " + sds.frames);
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "channels: " + sds.channels);
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "raw size: " + rawSize + " bytes");
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "samplerate: " + sds.sampleRate);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "sample rate: " + sds.sampleRate);
 	switch (sds.soundType)
 	{
 	case SoundTypeEnum::RawRaw:
@@ -96,7 +121,7 @@ void processSound()
 	// preview sound
 	if (configGetBool("cage-asset-processor/sound/preview"))
 	{
-		string dbgName = pathJoin(configGetString("cage-asset-processor/sound/path", "asset-preview"), stringizer() + pathReplaceInvalidCharacters(inputName) + ".ogg");
+		const string dbgName = pathJoin(configGetString("cage-asset-processor/sound/path", "asset-preview"), stringizer() + pathReplaceInvalidCharacters(inputName) + ".ogg");
 		audio->exportFile(dbgName);
 	}
 }
