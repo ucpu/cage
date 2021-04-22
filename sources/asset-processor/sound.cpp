@@ -20,7 +20,8 @@ void processSound()
 			audioConvertFormat(+audio, AudioFormatEnum::Float);
 			Holder<Audio> tmp = newAudio();
 			tmp->initialize(audio->frames(), 1, audio->sampleRate());
-			newAudioChannelsConverter({})->convert(audio->rawViewFloat(), (PointerRange<float>&)tmp->rawViewFloat(), audio->channels(), 1);
+			PointerRange<float> dst = { (float *)tmp->rawViewFloat().begin(), (float *)tmp->rawViewFloat().end() };
+			newAudioChannelsConverter({})->convert(audio->rawViewFloat(), dst, audio->channels(), 1);
 			std::swap(tmp, audio);
 		}
 	}
