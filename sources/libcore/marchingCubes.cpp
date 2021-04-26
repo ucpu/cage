@@ -1,7 +1,3 @@
-#ifdef _MSC_VER
-#pragma warning(push, 0)
-#endif
-
 #include <cage-core/marchingCubes.h>
 #include <cage-core/mesh.h>
 #include <cage-core/collider.h>
@@ -244,7 +240,7 @@ namespace cage
 		{ // merge vertices
 			const vec3 cell = cfg.box.size() / vec3(cfg.resolution);
 			const real side = min(cell[0], min(cell[1], cell[2]));
-			MeshCloseVerticesMergingConfig cfg;
+			MeshMergeCloseVerticesConfig cfg;
 			cfg.distanceThreshold = side * 0.1;
 			meshMergeCloseVertices(+result, cfg);
 		}
@@ -282,7 +278,3 @@ namespace cage
 		return systemArena().createImpl<MarchingCubes, MarchingCubesImpl>(config);
 	}
 }
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif

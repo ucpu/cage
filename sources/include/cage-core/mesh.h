@@ -12,7 +12,7 @@ namespace cage
 		Triangles = 3,
 	};
 
-	struct CAGE_CORE_API MeshObjExportConfig
+	struct CAGE_CORE_API MeshExportObjConfig
 	{
 		string materialLibraryName;
 		string materialName;
@@ -30,8 +30,8 @@ namespace cage
 
 		void importCollider(const Collider *collider);
 
-		Holder<PointerRange<char>> exportObjBuffer(const MeshObjExportConfig &config) const;
-		void exportObjFile(const MeshObjExportConfig &config, const string &filename) const;
+		Holder<PointerRange<char>> exportObjBuffer(const MeshExportObjConfig &config) const;
+		void exportObjFile(const MeshExportObjConfig &config, const string &filename) const;
 
 		uint32 verticesCount() const;
 
@@ -97,6 +97,7 @@ namespace cage
 		void addVertex(const vec3 &position, const vec3 &normal, const vec2 &uv);
 
 		Aabb boundingBox() const;
+		Sphere boundingSphere() const;
 
 		uint32 indicesCount() const;
 		uint32 facesCount() const;
@@ -138,15 +139,15 @@ namespace cage
 	CAGE_CORE_API void meshDiscardDisconnected(Mesh *msh);
 	CAGE_CORE_API Holder<PointerRange<Holder<Mesh>>> meshSeparateDisconnected(const Mesh *msh);
 
-	struct CAGE_CORE_API MeshCloseVerticesMergingConfig
+	struct CAGE_CORE_API MeshMergeCloseVerticesConfig
 	{
 		real distanceThreshold;
 		bool moveVerticesOnly = false; // true -> vertices are moved only (no deduplication) and other attributes are ignored; false -> indices are remapped to other vertices
 	};
 
-	CAGE_CORE_API void meshMergeCloseVertices(Mesh *msh, const MeshCloseVerticesMergingConfig &config);
+	CAGE_CORE_API void meshMergeCloseVertices(Mesh *msh, const MeshMergeCloseVerticesConfig &config);
 
-	struct CAGE_CORE_API MeshSimplificationConfig
+	struct CAGE_CORE_API MeshSimplifyConfig
 	{
 		real minEdgeLength = 0.1;
 		real maxEdgeLength = 10;
@@ -155,16 +156,16 @@ namespace cage
 		bool useProjection = true;
 	};
 
-	CAGE_CORE_API void meshSimplify(Mesh *msh, const MeshSimplificationConfig &config);
+	CAGE_CORE_API void meshSimplify(Mesh *msh, const MeshSimplifyConfig &config);
 
-	struct CAGE_CORE_API MeshRegularizationConfig
+	struct CAGE_CORE_API MeshRegularizeConfig
 	{
 		real targetEdgeLength = 1;
 		uint32 iterations = 10;
 		bool useProjection = true;
 	};
 
-	CAGE_CORE_API void meshRegularize(Mesh *msh, const MeshRegularizationConfig &config);
+	CAGE_CORE_API void meshRegularize(Mesh *msh, const MeshRegularizeConfig &config);
 
 	struct CAGE_CORE_API MeshUnwrapConfig
 	{
@@ -189,28 +190,28 @@ namespace cage
 
 	CAGE_CORE_API uint32 meshUnwrap(Mesh *msh, const MeshUnwrapConfig &config);
 
-	struct CAGE_CORE_API MeshTextureGenerationConfig
+	struct CAGE_CORE_API MeshGenerateTextureConfig
 	{
 		Delegate<void(uint32, uint32, const ivec3 &, const vec3 &)> generator;
 		uint32 width = 0;
 		uint32 height = 0;
 	};
 
-	CAGE_CORE_API void meshGenerateTexture(const Mesh *msh, const MeshTextureGenerationConfig &config);
+	CAGE_CORE_API void meshGenerateTexture(const Mesh *msh, const MeshGenerateTextureConfig &config);
 
-	struct CAGE_CORE_API MeshNormalsGenerationConfig
+	struct CAGE_CORE_API MeshGenerateNormalsConfig
 	{
 		// todo
 	};
 
-	CAGE_CORE_API void meshGenerateNormals(Mesh *msh, const MeshNormalsGenerationConfig &config);
+	CAGE_CORE_API void meshGenerateNormals(Mesh *msh, const MeshGenerateNormalsConfig &config);
 
-	struct CAGE_CORE_API MeshTangentsGenerationConfig
+	struct CAGE_CORE_API MeshGenerateTangentsConfig
 	{
 		// todo
 	};
 
-	CAGE_CORE_API void meshGenerateTangents(Mesh *msh, const MeshTangentsGenerationConfig &config);
+	CAGE_CORE_API void meshGenerateTangents(Mesh *msh, const MeshGenerateTangentsConfig &config);
 }
 
 #endif // guard_mesh_h_CA052442302D4C3BAA9293200603C20A

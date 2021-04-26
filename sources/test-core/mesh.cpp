@@ -46,11 +46,17 @@ namespace
 		approxEqual(a.b, b.b);
 	}
 
+	void approxEqual(const Sphere &a, const Sphere &b)
+	{
+		approxEqual(a.center, b.center);
+		CAGE_TEST(abs(a.radius - b.radius) < 1);
+	}
+
 	Holder<Mesh> splitSphereIntoTwo(const Mesh *poly)
 	{
 		auto p = poly->copy();
 		{
-			MeshCloseVerticesMergingConfig cfg;
+			MeshMergeCloseVerticesConfig cfg;
 			cfg.distanceThreshold = 1e-3;
 			meshMergeCloseVertices(+p, cfg);
 		}
@@ -86,6 +92,11 @@ void testMesh()
 	}
 
 	{
+		CAGE_TESTCASE("bounding sphere");
+		approxEqual(poly->boundingSphere(), Sphere(vec3(), 10));
+	}
+
+	{
 		CAGE_TESTCASE("apply transformation");
 		auto p = poly->copy();
 		meshApplyTransform(+p, transform(vec3(0, 5, 0)));
@@ -106,7 +117,7 @@ void testMesh()
 		CAGE_TESTCASE("merge close vertices");
 		auto p = poly->copy();
 		{
-			MeshCloseVerticesMergingConfig cfg;
+			MeshMergeCloseVerticesConfig cfg;
 			cfg.distanceThreshold = 1e-3;
 			meshMergeCloseVertices(+p, cfg);
 		}
@@ -118,7 +129,7 @@ void testMesh()
 	{
 		CAGE_TESTCASE("simplify");
 		auto p = poly->copy();
-		MeshSimplificationConfig cfg;
+		MeshSimplifyConfig cfg;
 #ifdef CAGE_DEBUG
 		cfg.iterations = 1;
 		cfg.minEdgeLength = 0.5;
@@ -132,7 +143,7 @@ void testMesh()
 	{
 		CAGE_TESTCASE("regularize");
 		auto p = poly->copy();
-		MeshRegularizationConfig cfg;
+		MeshRegularizeConfig cfg;
 #ifdef CAGE_DEBUG
 		cfg.iterations = 1;
 		cfg.targetEdgeLength = 3;

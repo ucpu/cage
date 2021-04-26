@@ -1,5 +1,7 @@
 #include <cage-core/geometry.h>
 
+#include <vector>
+
 namespace cage
 {
 	// https://www.flipcode.com/archives/Smallest_Enclosing_Spheres.shtml modified
@@ -75,10 +77,24 @@ namespace cage
 		const vec3 *L[8];
 		int i = 0;
 		for (const vec3 &v : corners.data)
-		{
-			L[i] = &v;
-			i++;
-		}
+			L[i++] = &v;
 		*this = recurseMini(L, 8, 0);
+	}
+
+	Sphere makeSphere(PointerRange<const vec3> points)
+	{
+		switch (points.size())
+		{
+		case 0: return Sphere();
+		case 1: return Sphere(points[0], 0);
+		case 2: return Sphere(makeSegment(points[0], points[1]));
+		case 3: return Sphere(Triangle(points[0], points[1], points[2]));
+		}
+		std::vector<const vec3 *> L;
+		L.resize(points.size());
+		int i = 0;
+		for (const vec3 &v : points)
+			L[i++] = &v;
+		return recurseMini(L.data(), numeric_cast<uint32>(points.size()), 0);
 	}
 }

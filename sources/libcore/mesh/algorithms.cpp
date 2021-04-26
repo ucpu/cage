@@ -428,7 +428,7 @@ namespace cage
 		CAGE_THROW_CRITICAL(NotImplemented, "convertToExpanded");
 	}
 
-	void meshMergeCloseVertices(Mesh *msh, const MeshCloseVerticesMergingConfig &config)
+	void meshMergeCloseVertices(Mesh *msh, const MeshMergeCloseVerticesConfig &config)
 	{
 		if (msh->facesCount() == 0)
 			return;
@@ -505,7 +505,7 @@ namespace cage
 		meshDiscardInvalid(msh);
 	}
 
-	void meshGenerateTexture(const Mesh *msh, const MeshTextureGenerationConfig &config)
+	void meshGenerateTexture(const Mesh *msh, const MeshGenerateTextureConfig &config)
 	{
 		if (msh->facesCount() == 0)
 			return;
@@ -556,13 +556,13 @@ namespace cage
 		}
 	}
 
-	void meshGenerateNormals(Mesh *msh, const MeshNormalsGenerationConfig &config)
+	void meshGenerateNormals(Mesh *msh, const MeshGenerateNormalsConfig &config)
 	{
 		MeshImpl *impl = (MeshImpl *)msh;
 		CAGE_THROW_CRITICAL(NotImplemented, "generateNormals");
 	}
 
-	void meshGenerateTangents(Mesh *msh, const MeshTangentsGenerationConfig &config)
+	void meshGenerateTangents(Mesh *msh, const MeshGenerateTangentsConfig &config)
 	{
 		MeshImpl *impl = (MeshImpl *)msh;
 		CAGE_THROW_CRITICAL(NotImplemented, "generateTangents");

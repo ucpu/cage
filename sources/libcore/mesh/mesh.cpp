@@ -110,6 +110,11 @@ namespace cage
 		return result;
 	}
 
+	Sphere Mesh::boundingSphere() const
+	{
+		return makeSphere(positions());
+	}
+
 	uint32 Mesh::indicesCount() const
 	{
 		const MeshImpl *impl = (const MeshImpl *)this;

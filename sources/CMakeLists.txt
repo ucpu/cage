@@ -16,6 +16,9 @@ else()
 	target_link_libraries(cage-core PRIVATE m pthread)
 	target_link_libraries(cage-core PUBLIC ${CMAKE_DL_LIBS})
 endif()
+if(MSVC)
+	set_source_files_properties(libcore/marchingCubes.cpp PROPERTIES COMPILE_FLAGS "/wd4244 /wd4267") # it includes file with weird extension which does not honor warnings disabled by pragma
+endif()
 cage_ide_category(cage-core cage/libs)
 cage_ide_sort_files(cage-core)
 

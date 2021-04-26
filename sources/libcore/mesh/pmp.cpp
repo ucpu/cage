@@ -71,7 +71,7 @@ namespace cage
 		}
 	}
 
-	void meshSimplify(Mesh *poly,  const MeshSimplificationConfig &config)
+	void meshSimplify(Mesh *poly,  const MeshSimplifyConfig &config)
 	{
 		try
 		{
@@ -87,7 +87,7 @@ namespace cage
 		}
 	}
 
-	void meshRegularize(Mesh *poly, const MeshRegularizationConfig &config)
+	void meshRegularize(Mesh *poly, const MeshRegularizeConfig &config)
 	{
 		try
 		{

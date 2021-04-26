@@ -256,6 +256,8 @@ namespace cage
 
 	inline Sphere::Sphere(const Aabb &other) : center(other.center()), radius(other.diagonal() * 0.5) {}
 
+	CAGE_CORE_API Sphere makeSphere(PointerRange<const vec3> points); // minimum bounding sphere
+
 	CAGE_CORE_API rads angle(const Line &a, const Line &b);
 	CAGE_CORE_API rads angle(const Line &a, const Triangle &b);
 	CAGE_CORE_API rads angle(const Line &a, const Plane &b);

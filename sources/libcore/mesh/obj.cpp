@@ -84,7 +84,7 @@ namespace cage
 		}
 	}
 
-	Holder<PointerRange<char>> Mesh::exportObjBuffer(const MeshObjExportConfig &config) const
+	Holder<PointerRange<char>> Mesh::exportObjBuffer(const MeshExportObjConfig &config) const
 	{
 		MeshImpl *impl = (MeshImpl *)this;
 		CAGE_ASSERT(impl->uvs.empty() || impl->uvs3.empty());
@@ -166,7 +166,7 @@ namespace cage
 		return templates::move(buffer);
 	}
 
-	void Mesh::exportObjFile(const MeshObjExportConfig &config, const string &filename) const
+	void Mesh::exportObjFile(const MeshExportObjConfig &config, const string &filename) const
 	{
 		MeshImpl *impl = (MeshImpl *)this;
 		Holder<PointerRange<char>> buff = exportObjBuffer(config);

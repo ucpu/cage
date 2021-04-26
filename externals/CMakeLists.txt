@@ -139,6 +139,6 @@ if(TARGET simd-objs)
 	set_target_properties(simd-objs PROPERTIES FOLDER cage/externals)
 endif()
 if(TARGET OptickGui)
-	set_target_properties(OptickGui PROPERTIES FOLDER cage/utility EXCLUDE_FROM_ALL false)
+	set_target_properties(OptickGui PROPERTIES FOLDER cage/tools EXCLUDE_FROM_ALL false)
 endif()
 
