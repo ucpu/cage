@@ -465,19 +465,19 @@ namespace cage
 
 				{ // initialize asset schemes
 					// core assets
-					assets->defineScheme<AssetPack>(AssetSchemeIndexPack, genAssetSchemePack());
-					assets->defineScheme<MemoryBuffer>(AssetSchemeIndexRaw, genAssetSchemeRaw());
-					assets->defineScheme<TextPack>(AssetSchemeIndexTextPack, genAssetSchemeTextPack());
-					assets->defineScheme<Collider>(AssetSchemeIndexCollider, genAssetSchemeCollider());
+					assets->defineScheme<AssetSchemeIndexPack, AssetPack>(genAssetSchemePack());
+					assets->defineScheme<AssetSchemeIndexRaw, MemoryBuffer>(genAssetSchemeRaw());
+					assets->defineScheme<AssetSchemeIndexTextPack, TextPack>(genAssetSchemeTextPack());
+					assets->defineScheme<AssetSchemeIndexCollider, Collider>(genAssetSchemeCollider());
 					// engine assets
-					assets->defineScheme<ShaderProgram>(AssetSchemeIndexShaderProgram, genAssetSchemeShaderProgram(EngineGraphicsUploadThread::threadIndex));
-					assets->defineScheme<Texture>(AssetSchemeIndexTexture, genAssetSchemeTexture(EngineGraphicsUploadThread::threadIndex));
-					assets->defineScheme<Model>(AssetSchemeIndexModel, genAssetSchemeModel(EngineGraphicsDispatchThread::threadIndex));
-					assets->defineScheme<SkeletonRig>(AssetSchemeIndexSkeletonRig, genAssetSchemeSkeletonRig());
-					assets->defineScheme<SkeletalAnimation>(AssetSchemeIndexSkeletalAnimation, genAssetSchemeSkeletalAnimation());
-					assets->defineScheme<RenderObject>(AssetSchemeIndexRenderObject, genAssetSchemeRenderObject());
-					assets->defineScheme<Font>(AssetSchemeIndexFont, genAssetSchemeFont(EngineGraphicsUploadThread::threadIndex));
-					assets->defineScheme<Sound>(AssetSchemeIndexSound, genAssetSchemeSound(EngineSoundThread::threadIndex));
+					assets->defineScheme<AssetSchemeIndexShaderProgram, ShaderProgram>(genAssetSchemeShaderProgram(EngineGraphicsUploadThread::threadIndex));
+					assets->defineScheme<AssetSchemeIndexTexture, Texture>(genAssetSchemeTexture(EngineGraphicsUploadThread::threadIndex));
+					assets->defineScheme<AssetSchemeIndexModel, Model>(genAssetSchemeModel(EngineGraphicsDispatchThread::threadIndex));
+					assets->defineScheme<AssetSchemeIndexSkeletonRig, SkeletonRig>(genAssetSchemeSkeletonRig());
+					assets->defineScheme<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(genAssetSchemeSkeletalAnimation());
+					assets->defineScheme<AssetSchemeIndexRenderObject, RenderObject>(genAssetSchemeRenderObject());
+					assets->defineScheme<AssetSchemeIndexFont, Font>(genAssetSchemeFont(EngineGraphicsUploadThread::threadIndex));
+					assets->defineScheme<AssetSchemeIndexSound, Sound>(genAssetSchemeSound(EngineSoundThread::threadIndex));
 					// cage pack
 					assets->add(HashString("cage/cage.pack"));
 				}

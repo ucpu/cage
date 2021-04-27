@@ -469,7 +469,7 @@ namespace cage
 
 			// api methods
 
-			void defineScheme(uint32 scheme, uintPtr typeId, const AssetScheme &value)
+			void defineScheme(uintPtr typeId, uint32 scheme, const AssetScheme &value)
 			{
 				CAGE_ASSERT(typeId != 0);
 				CAGE_ASSERT(scheme < schemes.size());
@@ -515,7 +515,7 @@ namespace cage
 				return generateName++;
 			}
 
-			void fabricate(uint32 assetName, const string &textName, uint32 scheme, uintPtr typeId, Holder<void> &&value)
+			void fabricate(uintPtr typeId, uint32 scheme, uint32 assetName, const string &textName, Holder<void> &&value)
 			{
 				CAGE_ASSERT(typeId != 0);
 				CAGE_ASSERT(scheme < schemes.size());
@@ -529,7 +529,7 @@ namespace cage
 				maintenanceQueue.push(templates::move(cmd).cast<WorkingAsset>());
 			}
 
-			Holder<void> get(uint32 assetName, uint32 scheme, uintPtr typeId, bool throwOnInvalidScheme) const
+			Holder<void> get(uintPtr typeId, uint32 scheme, uint32 assetName, bool throwOnInvalidScheme) const
 			{
 				CAGE_ASSERT(typeId != 0);
 				CAGE_ASSERT(scheme < schemes.size());
@@ -868,10 +868,10 @@ namespace cage
 		}
 	}
 
-	void AssetManager::defineScheme_(uint32 scheme, uintPtr typeId, const AssetScheme &value)
+	void AssetManager::defineScheme_(uintPtr typeId, uint32 scheme, const AssetScheme &value)
 	{
 		AssetManagerImpl *impl = (AssetManagerImpl*)this;
-		impl->defineScheme(scheme, typeId, value);
+		impl->defineScheme(typeId, scheme, value);
 	}
 
 	void AssetManager::add(uint32 assetName)
@@ -898,16 +898,16 @@ namespace cage
 		return impl->generateUniqueName();
 	}
 
-	void AssetManager::fabricate_(uint32 assetName, const string &textName, uint32 scheme, uintPtr typeId, Holder<void> &&value)
+	void AssetManager::fabricate_(uintPtr typeId, uint32 scheme, uint32 assetName, const string &textName, Holder<void> &&value)
 	{
 		AssetManagerImpl *impl = (AssetManagerImpl*)this;
-		impl->fabricate(assetName, textName, scheme, typeId, templates::move(value));
+		impl->fabricate(typeId, scheme, assetName, textName, templates::move(value));
 	}
 
-	Holder<void> AssetManager::get_(uint32 assetName, uint32 scheme, uintPtr typeId, bool throwOnInvalidScheme) const
+	Holder<void> AssetManager::get_(uintPtr typeId, uint32 scheme, uint32 assetName, bool throwOnInvalidScheme) const
 	{
 		const AssetManagerImpl *impl = (const AssetManagerImpl*)this;
-		return impl->get(assetName, scheme, typeId, throwOnInvalidScheme);
+		return impl->get(typeId, scheme, assetName, throwOnInvalidScheme);
 	}
 
 	bool AssetManager::processCustomThread(uint32 threadIndex)
