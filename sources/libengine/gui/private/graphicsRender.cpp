@@ -2,6 +2,7 @@
 #include <cage-core/serialization.h>
 
 #include <cage-engine/opengl.h>
+#include <cage-engine/graphics.h>
 #include "../private.h"
 
 #include <optick.h>

@@ -1,4 +1,6 @@
 #include <cage-engine/opengl.h>
+#include <cage-engine/frameBuffer.h>
+#include <cage-engine/texture.h>
 #include "private.h"
 
 namespace cage
@@ -89,7 +91,7 @@ namespace cage
 
 	void FrameBuffer::depthTexture(Texture *tex)
 	{
-		FrameBufferImpl *impl = (FrameBufferImpl*)this;
+		FrameBufferImpl *impl = (FrameBufferImpl *)this;
 		impl->checkBinded();
 		glFramebufferTexture(impl->target, GL_DEPTH_ATTACHMENT, tex ? tex->getId() : 0, 0);
 		CAGE_CHECK_GL_ERROR_DEBUG();
@@ -97,7 +99,7 @@ namespace cage
 
 	void FrameBuffer::colorTexture(uint32 index, Texture *tex, uint32 mipmapLevel)
 	{
-		FrameBufferImpl *impl = (FrameBufferImpl*)this;
+		FrameBufferImpl *impl = (FrameBufferImpl *)this;
 		impl->checkBinded();
 		glFramebufferTexture(impl->target, GL_COLOR_ATTACHMENT0 + index, tex ? tex->getId() : 0, mipmapLevel);
 		CAGE_CHECK_GL_ERROR_DEBUG();
@@ -105,7 +107,7 @@ namespace cage
 
 	void FrameBuffer::activeAttachments(uint32 mask)
 	{
-		FrameBufferImpl *impl = (FrameBufferImpl*)this;
+		FrameBufferImpl *impl = (FrameBufferImpl *)this;
 		impl->checkBinded();
 		uint32 count = 0;
 		GLenum bufs[32];
@@ -139,7 +141,7 @@ namespace cage
 
 	void FrameBuffer::checkStatus()
 	{
-		FrameBufferImpl *impl = (FrameBufferImpl*)this;
+		FrameBufferImpl *impl = (FrameBufferImpl *)this;
 		impl->checkBinded();
 		GLenum result = glCheckFramebufferStatus(impl->target);
 		CAGE_CHECK_GL_ERROR_DEBUG();

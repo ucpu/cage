@@ -1,4 +1,5 @@
 #include <cage-engine/opengl.h>
+#include <cage-engine/uniformBuffer.h>
 #include "private.h"
 
 namespace cage

@@ -3,8 +3,13 @@
 #include <cage-core/serialization.h>
 
 #include <cage-engine/shaderConventions.h>
-#include <cage-engine/opengl.h>
 #include <cage-engine/assetStructs.h>
+#include <cage-engine/opengl.h>
+#include <cage-engine/font.h>
+#include <cage-engine/texture.h>
+#include <cage-engine/uniformBuffer.h>
+#include <cage-engine/model.h>
+#include <cage-engine/shaderProgram.h>
 #include "private.h"
 
 #include <vector>
@@ -336,33 +341,33 @@ namespace cage
 		impl->spaceGlyph = impl->findGlyphIndex(' ');
 	}
 
-	uint32 Font::glyphsCount(const string &text)
+	uint32 Font::glyphsCount(const string &text) const
 	{
 		return utf32Length(text);
 	}
 
-	uint32 Font::glyphsCount(const char *text)
+	uint32 Font::glyphsCount(const char *text) const
 	{
 		return utf32Length(text);
 	}
 
-	uint32 Font::glyphsCount(PointerRange<const char> text)
+	uint32 Font::glyphsCount(PointerRange<const char> text) const
 	{
 		return utf32Length(text);
 	}
 
-	void Font::transcript(const string &text, PointerRange<uint32> glyphs)
+	void Font::transcript(const string &text, PointerRange<uint32> glyphs) const
 	{
 		transcript({ text.begin(), text.end() }, glyphs);
 	}
 
-	void Font::transcript(const char *text, PointerRange<uint32> glyphs)
+	void Font::transcript(const char *text, PointerRange<uint32> glyphs) const
 	{
 		uint32 s = numeric_cast<uint32>(std::strlen(text));
 		transcript({ text, text + s }, glyphs);
 	}
 
-	void Font::transcript(PointerRange<const char> text, PointerRange<uint32> glyphs)
+	void Font::transcript(PointerRange<const char> text, PointerRange<uint32> glyphs) const
 	{
 		FontImpl *impl = (FontImpl*)this;
 		utf8to32(glyphs, text);
@@ -370,14 +375,14 @@ namespace cage
 			i = impl->findGlyphIndex(i);
 	}
 
-	vec2 Font::size(PointerRange<const uint32> glyphs, const FormatStruct &format)
+	vec2 Font::size(PointerRange<const uint32> glyphs, const FormatStruct &format) const
 	{
 		vec2 mp;
 		uint32 c;
 		return this->size(glyphs, format, mp, c);
 	}
 
-	vec2 Font::size(PointerRange<const uint32> glyphs, const FormatStruct &format, const vec2 &mousePosition, uint32 &cursor)
+	vec2 Font::size(PointerRange<const uint32> glyphs, const FormatStruct &format, const vec2 &mousePosition, uint32 &cursor) const
 	{
 		ProcessData data;
 		data.mousePosition = mousePosition;

@@ -115,6 +115,13 @@ namespace cage
 		};
 	}
 
+	void Sound::setDebugName(const string &name)
+	{
+#ifdef CAGE_DEBUG
+		debugName = name;
+#endif // CAGE_DEBUG
+	}
+
 	void Sound::initialize(Holder<Audio> &&audio)
 	{
 		SoundImpl *impl = (SoundImpl *)this;

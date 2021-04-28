@@ -2,12 +2,9 @@
 #include <cage-core/serialization.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/mesh.h>
-#include <cage-core/color.h>
 
-#include <cage-engine/graphics.h>
-#include <cage-engine/opengl.h>
 #include <cage-engine/assetStructs.h>
-#include <cage-engine/shaderConventions.h>
+#include <cage-engine/model.h>
 
 namespace cage
 {
@@ -29,7 +26,7 @@ namespace cage
 			Holder<Mesh> poly = newMesh();
 			poly->deserialize(des.advance(des.available()));
 
-			msh->importMesh(poly.get(), mat);
+			msh->importMesh(+poly, mat);
 
 			msh->setFlags(data.renderFlags);
 			msh->setBoundingBox(data.box);

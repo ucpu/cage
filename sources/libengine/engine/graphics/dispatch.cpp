@@ -6,6 +6,9 @@
 #include <cage-engine/graphics.h>
 #include <cage-engine/opengl.h>
 #include <cage-engine/shaderConventions.h>
+#include <cage-engine/shaderProgram.h>
+#include <cage-engine/uniformBuffer.h>
+#include <cage-engine/frameBuffer.h>
 #include <cage-engine/window.h>
 
 #include "../engine.h"
@@ -1095,10 +1098,9 @@ namespace cage
 						if (renderPass->targetTexture)
 						{ // render to texture
 							visualizableTextures.emplace_back(renderPass->targetTexture, VisualizableTextureModeEnum::Color);
-							uint32 w, h;
-							renderPass->targetTexture->getResolution(w, h);
-							maxW = max(maxW, w);
-							maxH = max(maxH, h);
+							const ivec2 res = renderPass->targetTexture->getResolution();
+							maxW = max(maxW, numeric_cast<uint32>(res[0]));
+							maxH = max(maxH, numeric_cast<uint32>(res[1]));
 							continue;
 						}
 						if (renderPass->targetShadowmap == 0)

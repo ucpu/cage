@@ -1,3 +1,8 @@
+#include <cage-engine/renderObject.h>
+#include <cage-engine/texture.h>
+#include <cage-engine/model.h>
+#include <cage-engine/font.h>
+
 #include "../engine.h"
 
 #include <vector>

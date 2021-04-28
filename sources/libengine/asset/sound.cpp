@@ -3,8 +3,8 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/audio.h>
 
-#include <cage-engine/sound.h>
 #include <cage-engine/assetStructs.h>
+#include <cage-engine/sound.h>
 
 namespace cage
 {
@@ -61,6 +61,7 @@ namespace cage
 			CAGE_ASSERT(snd.frames == poly->frames());
 			CAGE_ASSERT(snd.sampleRate == poly->sampleRate());
 			Holder<Sound> source = newSound();
+			source->setDebugName(context->textName);
 			source->referenceDistance = snd.referenceDistance;
 			source->rolloffFactor = snd.rolloffFactor;
 			source->gain = snd.gain;

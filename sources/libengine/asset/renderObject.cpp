@@ -2,8 +2,8 @@
 #include <cage-core/serialization.h>
 #include <cage-core/memoryBuffer.h>
 
-#include <cage-engine/graphics.h>
 #include <cage-engine/assetStructs.h>
+#include <cage-engine/renderObject.h>
 
 namespace cage
 {

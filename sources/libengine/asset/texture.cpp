@@ -3,9 +3,9 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/config.h>
 
-#include <cage-engine/graphics.h>
 #include <cage-engine/opengl.h>
 #include <cage-engine/assetStructs.h>
+#include <cage-engine/texture.h>
 
 namespace cage
 {

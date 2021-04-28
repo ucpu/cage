@@ -1,7 +1,6 @@
 #include <cage-core/assetManager.h>
 
-#include <cage-engine/graphics.h>
-#include <cage-engine/sound.h>
+#include <cage-engine/core.h>
 
 namespace cage
 {

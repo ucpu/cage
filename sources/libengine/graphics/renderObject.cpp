@@ -1,3 +1,4 @@
+#include <cage-engine/renderObject.h>
 #include "private.h"
 
 #include <vector>

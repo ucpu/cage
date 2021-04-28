@@ -99,10 +99,7 @@ namespace cage
 			{
 				uint32 h = 0;
 				if (camera->camera.target)
-				{
-					uint32 w;
-					camera->camera.target->getResolution(w, h);
-				}
+					h = numeric_cast<uint32>(camera->camera.target->getResolution()[1]);
 				else
 					h = graphicsDispatch->windowHeight;
 				switch (camera->camera.cameraType)
@@ -270,7 +267,11 @@ namespace cage
 				{
 					OPTICK_TAG("target", (uintPtr)camera->camera.target);
 					uint32 w = 0, h = 0;
-					camera->camera.target->getResolution(w, h);
+					{
+						const ivec2 res = camera->camera.target->getResolution();
+						w = numeric_cast<uint32>(res[0]);
+						h = numeric_cast<uint32>(res[1]);
+					}
 					if (w == 0 || h == 0)
 						CAGE_THROW_ERROR(Exception, "target texture has zero resolution");
 					switch (camera->camera.cameraType)

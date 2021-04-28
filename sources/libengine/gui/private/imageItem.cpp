@@ -50,11 +50,7 @@ namespace cage
 	vec2 ImageItem::findRequestedSize()
 	{
 		if (texture)
-		{
-			uint32 w, h;
-			texture->getResolution(w, h);
-			return vec2(w, h);
-		}
+			return vec2(texture->getResolution());
 		return vec2();
 	}
 

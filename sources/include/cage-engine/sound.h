@@ -7,7 +7,13 @@ namespace cage
 {
 	class CAGE_ENGINE_API Sound : private Immovable
 	{
+#ifdef CAGE_DEBUG
+		detail::StringBase<64> debugName;
+#endif // CAGE_DEBUG
+
 	public:
+		void setDebugName(const string &name);
+
 		real referenceDistance = 1; // minimum distance to apply attenuation
 		real rolloffFactor = 1; // distance multiplier
 		real gain = 1; // linear amplitude multiplier

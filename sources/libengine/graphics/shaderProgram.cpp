@@ -4,6 +4,7 @@
 #include <cage-core/serialization.h>
 
 #include <cage-engine/opengl.h>
+#include <cage-engine/shaderProgram.h>
 #include "private.h"
 
 #include <list>
@@ -83,150 +84,198 @@ namespace cage
 
 	uint32 ShaderProgram::getId() const
 	{
-		return ((ShaderProgramImpl*)this)->id;
+		return ((ShaderProgramImpl *)this)->id;
 	}
 
 	void ShaderProgram::bind() const
 	{
-		ShaderProgramImpl *impl = (ShaderProgramImpl*)this;
+		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
 		glUseProgram(impl->id);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 		setCurrentObject<ShaderProgram>(impl->id);
 	}
 
-	void ShaderProgram::uniform(uint32 name, const sint32 &u)
+	void ShaderProgram::uniform(uint32 name, const sint32 &u) const
 	{
-		ShaderProgramImpl *impl = (ShaderProgramImpl*)this;
+		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
 		CAGE_ASSERT(graphicsPrivat::getCurrentObject<ShaderProgram>() == impl->id);
 		glUniform1i(name, u);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void ShaderProgram::uniform(uint32 name, const uint32 &u)
+	void ShaderProgram::uniform(uint32 name, const uint32 &u) const
 	{
-		ShaderProgramImpl *impl = (ShaderProgramImpl*)this;
+		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
 		CAGE_ASSERT(graphicsPrivat::getCurrentObject<ShaderProgram>() == impl->id);
 		glUniform1ui(name, u);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void ShaderProgram::uniform(uint32 name, const real &u)
+	void ShaderProgram::uniform(uint32 name, const ivec2 &u) const
 	{
-		ShaderProgramImpl *impl = (ShaderProgramImpl*)this;
+		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
+		CAGE_ASSERT(graphicsPrivat::getCurrentObject<ShaderProgram>() == impl->id);
+		glUniform2iv(name, 1, &const_cast<ivec2&>(u)[0]);
+		CAGE_CHECK_GL_ERROR_DEBUG();
+	}
+
+	void ShaderProgram::uniform(uint32 name, const ivec3 &u) const
+	{
+		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
+		CAGE_ASSERT(graphicsPrivat::getCurrentObject<ShaderProgram>() == impl->id);
+		glUniform3iv(name, 1, &const_cast<ivec3&>(u)[0]);
+		CAGE_CHECK_GL_ERROR_DEBUG();
+	}
+
+	void ShaderProgram::uniform(uint32 name, const ivec4 &u) const
+	{
+		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
+		CAGE_ASSERT(graphicsPrivat::getCurrentObject<ShaderProgram>() == impl->id);
+		glUniform4iv(name, 1, &const_cast<ivec4&>(u)[0]);
+		CAGE_CHECK_GL_ERROR_DEBUG();
+	}
+
+	void ShaderProgram::uniform(uint32 name, const real &u) const
+	{
+		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
 		CAGE_ASSERT(graphicsPrivat::getCurrentObject<ShaderProgram>() == impl->id);
 		glUniform1f(name, u.value);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void ShaderProgram::uniform(uint32 name, const vec2 &u)
+	void ShaderProgram::uniform(uint32 name, const vec2 &u) const
 	{
-		ShaderProgramImpl *impl = (ShaderProgramImpl*)this;
+		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
 		CAGE_ASSERT(graphicsPrivat::getCurrentObject<ShaderProgram>() == impl->id);
 		glUniform2fv(name, 1, &const_cast<vec2&>(u)[0].value);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void ShaderProgram::uniform(uint32 name, const vec3 &u)
+	void ShaderProgram::uniform(uint32 name, const vec3 &u) const
 	{
-		ShaderProgramImpl *impl = (ShaderProgramImpl*)this;
+		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
 		CAGE_ASSERT(graphicsPrivat::getCurrentObject<ShaderProgram>() == impl->id);
 		glUniform3fv(name, 1, &const_cast<vec3&>(u)[0].value);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void ShaderProgram::uniform(uint32 name, const vec4 &u)
+	void ShaderProgram::uniform(uint32 name, const vec4 &u) const
 	{
-		ShaderProgramImpl *impl = (ShaderProgramImpl*)this;
+		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
 		CAGE_ASSERT(graphicsPrivat::getCurrentObject<ShaderProgram>() == impl->id);
 		glUniform4fv(name, 1, &const_cast<vec4&>(u)[0].value);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void ShaderProgram::uniform(uint32 name, const quat &u)
+	void ShaderProgram::uniform(uint32 name, const quat &u) const
 	{
 		uniform(name, vec4(u[0], u[1], u[2], u[3]));
 	}
 
-	void ShaderProgram::uniform(uint32 name, const mat3 &u)
+	void ShaderProgram::uniform(uint32 name, const mat3 &u) const
 	{
-		ShaderProgramImpl *impl = (ShaderProgramImpl*)this;
+		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
 		CAGE_ASSERT(graphicsPrivat::getCurrentObject<ShaderProgram>() == impl->id);
 		glUniformMatrix3fv(name, 1, GL_FALSE, &const_cast<mat3&>(u)[0].value);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void ShaderProgram::uniform(uint32 name, const mat4 &u)
+	void ShaderProgram::uniform(uint32 name, const mat4 &u) const
 	{
-		ShaderProgramImpl *impl = (ShaderProgramImpl*)this;
+		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
 		CAGE_ASSERT(graphicsPrivat::getCurrentObject<ShaderProgram>() == impl->id);
 		glUniformMatrix4fv(name, 1, GL_FALSE, &const_cast<mat4&>(u)[0].value);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void ShaderProgram::uniform(uint32 name, PointerRange<const sint32> values)
+	void ShaderProgram::uniform(uint32 name, PointerRange<const sint32> values) const
 	{
-		ShaderProgramImpl *impl = (ShaderProgramImpl*)this;
+		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
 		CAGE_ASSERT(graphicsPrivat::getCurrentObject<ShaderProgram>() == impl->id);
 		glUniform1iv(name, numeric_cast<uint32>(values.size()), values.data());
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void ShaderProgram::uniform(uint32 name, PointerRange<const uint32> values)
+	void ShaderProgram::uniform(uint32 name, PointerRange<const uint32> values) const
 	{
-		ShaderProgramImpl *impl = (ShaderProgramImpl*)this;
+		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
 		CAGE_ASSERT(graphicsPrivat::getCurrentObject<ShaderProgram>() == impl->id);
 		glUniform1uiv(name, numeric_cast<uint32>(values.size()), values.data());
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void ShaderProgram::uniform(uint32 name, PointerRange<const real> values)
+	void ShaderProgram::uniform(uint32 name, PointerRange<const ivec2> values) const
 	{
-		ShaderProgramImpl *impl = (ShaderProgramImpl*)this;
+		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
+		CAGE_ASSERT(graphicsPrivat::getCurrentObject<ShaderProgram>() == impl->id);
+		glUniform2iv(name, numeric_cast<uint32>(values.size()), (sint32 *)values.data());
+		CAGE_CHECK_GL_ERROR_DEBUG();
+	}
+
+	void ShaderProgram::uniform(uint32 name, PointerRange<const ivec3> values) const
+	{
+		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
+		CAGE_ASSERT(graphicsPrivat::getCurrentObject<ShaderProgram>() == impl->id);
+		glUniform3iv(name, numeric_cast<uint32>(values.size()), (sint32 *)values.data());
+		CAGE_CHECK_GL_ERROR_DEBUG();
+	}
+
+	void ShaderProgram::uniform(uint32 name, PointerRange<const ivec4> values) const
+	{
+		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
+		CAGE_ASSERT(graphicsPrivat::getCurrentObject<ShaderProgram>() == impl->id);
+		glUniform4iv(name, numeric_cast<uint32>(values.size()), (sint32 *)values.data());
+		CAGE_CHECK_GL_ERROR_DEBUG();
+	}
+
+	void ShaderProgram::uniform(uint32 name, PointerRange<const real> values) const
+	{
+		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
 		CAGE_ASSERT(graphicsPrivat::getCurrentObject<ShaderProgram>() == impl->id);
 		glUniform1fv(name, numeric_cast<uint32>(values.size()), (float*)values.data());
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void ShaderProgram::uniform(uint32 name, PointerRange<const vec2> values)
+	void ShaderProgram::uniform(uint32 name, PointerRange<const vec2> values) const
 	{
-		ShaderProgramImpl *impl = (ShaderProgramImpl*)this;
+		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
 		CAGE_ASSERT(graphicsPrivat::getCurrentObject<ShaderProgram>() == impl->id);
 		glUniform2fv(name, numeric_cast<uint32>(values.size()), (float*)values.data());
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void ShaderProgram::uniform(uint32 name, PointerRange<const vec3> values)
+	void ShaderProgram::uniform(uint32 name, PointerRange<const vec3> values) const
 	{
-		ShaderProgramImpl *impl = (ShaderProgramImpl*)this;
+		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
 		CAGE_ASSERT(graphicsPrivat::getCurrentObject<ShaderProgram>() == impl->id);
 		glUniform3fv(name, numeric_cast<uint32>(values.size()), (float*)values.data());
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void ShaderProgram::uniform(uint32 name, PointerRange<const vec4> values)
+	void ShaderProgram::uniform(uint32 name, PointerRange<const vec4> values) const
 	{
-		ShaderProgramImpl *impl = (ShaderProgramImpl*)this;
+		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
 		CAGE_ASSERT(graphicsPrivat::getCurrentObject<ShaderProgram>() == impl->id);
 		glUniform4fv(name, numeric_cast<uint32>(values.size()), (float*)values.data());
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void ShaderProgram::uniform(uint32 name, PointerRange<const quat> values)
+	void ShaderProgram::uniform(uint32 name, PointerRange<const quat> values) const
 	{
 		uniform(name, bufferCast<const vec4>(values));
 	}
 
-	void ShaderProgram::uniform(uint32 name, PointerRange<const mat3> values)
+	void ShaderProgram::uniform(uint32 name, PointerRange<const mat3> values) const
 	{
-		ShaderProgramImpl *impl = (ShaderProgramImpl*)this;
+		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
 		CAGE_ASSERT(graphicsPrivat::getCurrentObject<ShaderProgram>() == impl->id);
 		glUniformMatrix3fv(name, numeric_cast<uint32>(values.size()), GL_FALSE, (float*)values.data());
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void ShaderProgram::uniform(uint32 name, PointerRange<const mat4> values)
+	void ShaderProgram::uniform(uint32 name, PointerRange<const mat4> values) const
 	{
-		ShaderProgramImpl *impl = (ShaderProgramImpl*)this;
+		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
 		CAGE_ASSERT(graphicsPrivat::getCurrentObject<ShaderProgram>() == impl->id);
 		glUniformMatrix4fv(name, numeric_cast<uint32>(values.size()), GL_FALSE, (float*)values.data());
 		CAGE_CHECK_GL_ERROR_DEBUG();
@@ -556,9 +605,9 @@ namespace cage
 		}
 	}
 
-	void ShaderProgram::validate()
+	void ShaderProgram::validate() const
 	{
-		ShaderProgramImpl *impl = (ShaderProgramImpl*)this;
+		const ShaderProgramImpl *impl = (const ShaderProgramImpl *)this;
 		CAGE_ASSERT(graphicsPrivat::getCurrentObject<ShaderProgram>() == impl->id);
 
 		glValidateProgram(impl->id);

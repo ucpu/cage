@@ -1,7 +1,9 @@
 #include <cage-core/macros.h>
 #include <cage-core/image.h>
 #include <cage-core/serialization.h>
+
 #include <cage-engine/opengl.h>
+#include <cage-engine/texture.h>
 #include "private.h"
 
 namespace cage
@@ -11,7 +13,7 @@ namespace cage
 		namespace
 		{
 			template<uint32 N>
-			class numberedTextureClass;
+			class NumberedTexture;
 
 			sint32 activeTexture()
 			{
@@ -27,7 +29,7 @@ namespace cage
 			{
 				switch (index)
 				{
-#define GCHL_GENERATE(I) case I: return setCurrentObject<numberedTextureClass<I>>(id);
+#define GCHL_GENERATE(I) case I: return setCurrentObject<NumberedTexture<I>>(id);
 					GCHL_GENERATE(0);
 					CAGE_EVAL_MEDIUM(CAGE_REPEAT(31, GCHL_GENERATE));
 #undef GCHL_GENERATE
@@ -43,7 +45,7 @@ namespace cage
 			{
 				switch (activeTexture())
 				{
-#define GCHL_GENERATE(I) case I: return getCurrentObject<numberedTextureClass<I>>();
+#define GCHL_GENERATE(I) case I: return getCurrentObject<NumberedTexture<I>>();
 					GCHL_GENERATE(0);
 					CAGE_EVAL_MEDIUM(CAGE_REPEAT(31, GCHL_GENERATE));
 #undef GCHL_GENERATE
@@ -176,19 +178,16 @@ namespace cage
 		return ((TextureImpl*)this)->target;
 	}
 
-	void Texture::getResolution(uint32 &width, uint32 &height) const
+	ivec2 Texture::getResolution() const
 	{
-		TextureImpl *impl = (TextureImpl*)this;
-		width = impl->width;
-		height = impl->height;
+		const TextureImpl *impl = (const TextureImpl *)this;
+		return ivec2(impl->width, impl->height);
 	}
 
-	void Texture::getResolution(uint32 &width, uint32 &height, uint32 &depth) const
+	ivec3 Texture::getResolution3() const
 	{
-		TextureImpl *impl = (TextureImpl*)this;
-		width = impl->width;
-		height = impl->height;
-		depth = impl->depth;
+		const TextureImpl *impl = (const TextureImpl *)this;
+		return ivec3(impl->width, impl->height, impl->depth);
 	}
 
 	void Texture::bind() const
@@ -379,8 +378,7 @@ namespace cage
 		{
 			if (!texture)
 				return vec4();
-			uint32 dummy, frames;
-			texture->getResolution(dummy, dummy, frames);
+			const uint32 frames = numeric_cast<uint32>(texture->getResolution3()[2]);
 			if (frames <= 1)
 				return vec4();
 			double sample = ((double)((sint64)emitTime - (sint64)animationStart) * (double)animationSpeed.value + (double)animationOffset.value) * (double)frames / (double)texture->animationDuration;
@@ -400,8 +398,8 @@ namespace cage
 				}
 			}
 			CAGE_ASSERT(sample >= 0 && sample < frames);
-			real s = (float)sample;
-			real f = floor(s);
+			const real s = (float)sample;
+			const real f = floor(s);
 			if (s < frames - 1)
 				return vec4(f, f + 1, s - f, 0);
 			return vec4(frames - 1, 0, s - f, 0);

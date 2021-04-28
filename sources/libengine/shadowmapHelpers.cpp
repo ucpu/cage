@@ -2,7 +2,8 @@
 #include <cage-core/entities.h>
 #include <cage-core/assetManager.h>
 
-#include <cage-engine/graphics.h>
+#include <cage-engine/model.h>
+#include <cage-engine/renderObject.h>
 #include <cage-engine/engine.h>
 #include <cage-engine/shadowmapHelpers.h>
 

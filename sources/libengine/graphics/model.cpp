@@ -1,11 +1,11 @@
-#include <cage-core/geometry.h>
 #include <cage-core/mesh.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/memoryUtils.h> // addToAlign
 
 #include <cage-engine/shaderConventions.h>
-#include <cage-engine/opengl.h>
 #include <cage-engine/assetStructs.h>
+#include <cage-engine/opengl.h>
+#include <cage-engine/model.h>
 #include "private.h"
 
 #include <vector>
