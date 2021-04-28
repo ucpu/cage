@@ -140,4 +140,14 @@ namespace cage
 		s.load.bind<&processSkeletonRigLoad>();
 		return s;
 	}
+
+	namespace detail
+	{
+		template<> CAGE_API_EXPORT char assetTypeBlock<AssetPack>;
+		template<> CAGE_API_EXPORT char assetTypeBlock<MemoryBuffer>;
+		template<> CAGE_API_EXPORT char assetTypeBlock<TextPack>;
+		template<> CAGE_API_EXPORT char assetTypeBlock<Collider>;
+		template<> CAGE_API_EXPORT char assetTypeBlock<SkeletalAnimation>;
+		template<> CAGE_API_EXPORT char assetTypeBlock<SkeletonRig>;
+	}
 }

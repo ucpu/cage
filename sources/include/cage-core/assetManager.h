@@ -5,10 +5,14 @@
 
 namespace cage
 {
-	namespace privat
+	namespace detail
 	{
-		template<class T> inline char assetTypeBlock;
-		template<class T> const uintPtr assetTypeId = (uintPtr)&assetTypeBlock<T>;
+		// c++17 inline variables do not seem to work across dll boundaries
+#ifdef _MSC_VER
+		template<class T> CAGE_API_IMPORT char assetTypeBlock;
+#else
+		template<class T> extern char assetTypeBlock;
+#endif // _MSC_VER
 	}
 
 	class CAGE_CORE_API AssetManager : private Immovable
@@ -17,7 +21,7 @@ namespace cage
 		template<uint32 Scheme, class T>
 		void defineScheme(const AssetScheme &value)
 		{
-			defineScheme_(privat::assetTypeId<T>, Scheme, value);
+			defineScheme_((uintPtr)&detail::assetTypeBlock<T>, Scheme, value);
 		}
 
 		// begin thread-safe methods
@@ -30,13 +34,13 @@ namespace cage
 		template<uint32 Scheme, class T>
 		void fabricate(uint32 assetName, Holder<T> &&value, const string &textName = "<fabricated>")
 		{
-			fabricate_(privat::assetTypeId<T>, Scheme, assetName, textName, templates::move(value).template cast<void>());
+			fabricate_((uintPtr)&detail::assetTypeBlock<T>, Scheme, assetName, textName, templates::move(value).template cast<void>());
 		}
 
 		template<uint32 Scheme, class T>
 		Holder<T> tryGet(uint32 assetName) const
 		{
-			return get_(privat::assetTypeId<T>, Scheme, assetName, false).template cast<T>();
+			return get_((uintPtr)&detail::assetTypeBlock<T>, Scheme, assetName, false).template cast<T>();
 		}
 
 		template<uint32 Scheme, class T>
@@ -48,7 +52,7 @@ namespace cage
 		template<uint32 Scheme, class T>
 		Holder<T> get(uint32 assetName) const
 		{
-			return get_(privat::assetTypeId<T>, Scheme, assetName, true).template cast<T>();
+			return get_((uintPtr)&detail::assetTypeBlock<T>, Scheme, assetName, true).template cast<T>();
 		}
 
 		template<uint32 Scheme, class T>
