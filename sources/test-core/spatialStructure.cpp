@@ -23,19 +23,19 @@ namespace
 		return randomRange3(-120, 120);
 	}
 
-	aabb generateRandomBox()
+	Aabb generateRandomBox()
 	{
-		return aabb(generateRandomPoint(), generateRandomPoint());
+		return Aabb(generateRandomPoint(), generateRandomPoint());
 	}
 
-	aabb generateNonuniformBox()
+	Aabb generateNonuniformBox()
 	{
 		real x = randomRange(-120, 120);
 		real z = randomRange(-120, 120);
 		real y = 4 * sin(rads(x * sqrt(abs(z + 2) + 0.3))) + 2 * powE(1 + cos(rads(x / 20 + (z - 40) / 30)));
 		vec3 o = vec3(x, y, z);
 		vec3 s = generateRandomPoint() * 0.05;
-		return aabb(o + s, o - s);
+		return Aabb(o + s, o - s);
 	}
 
 	struct Checker
@@ -56,9 +56,9 @@ namespace
 				CAGE_TEST(*ita == *itb);
 		}
 
-		void verifiableAabb(const aabb elData[], const uint32 elCount)
+		void verifiableAabb(const Aabb elData[], const uint32 elCount)
 		{
-			aabb qb = generateRandomBox();
+			Aabb qb = generateRandomBox();
 			query->intersection(qb);
 			std::set<uint32> b;
 			for (uint32 i = 0; i < elCount; i++)
@@ -69,9 +69,9 @@ namespace
 			checkResults(b);
 		}
 
-		void verifiableRange(const aabb elData[], const uint32 elCount)
+		void verifiableRange(const Aabb elData[], const uint32 elCount)
 		{
-			sphere sph(generateRandomPoint(), cage::randomRange(10, 100));
+			Sphere sph(generateRandomPoint(), cage::randomRange(10, 100));
 			query->intersection(sph);
 			std::set<uint32> b;
 			for (uint32 i = 0; i < elCount; i++)
@@ -89,11 +89,11 @@ namespace
 
 		void randomRange()
 		{
-			query->intersection(sphere(generateRandomPoint(), cage::randomRange(10, 100)));
+			query->intersection(Sphere(generateRandomPoint(), cage::randomRange(10, 100)));
 		}
 	};
 
-	void verifiableQueries(const aabb elData[], const uint32 elCount, SpatialStructure *data)
+	void verifiableQueries(const Aabb elData[], const uint32 elCount, SpatialStructure *data)
 	{
 		Checker c(data);
 		for (uint32 qi = 0; qi < 30; qi++)
@@ -119,12 +119,12 @@ void testSpatialStructure()
 	{
 		CAGE_TESTCASE("basic tests");
 		Holder<SpatialStructure> data = newSpatialStructure(SpatialStructureCreateConfig());
-		std::vector<aabb> elements;
+		std::vector<Aabb> elements;
 
 		// insertions
 		for (uint32 k = 0; k < limit / 2; k++)
 		{
-			aabb b = generateRandomBox();
+			Aabb b = generateRandomBox();
 			elements.push_back(b);
 			data->update(k, b);
 		}
@@ -135,7 +135,7 @@ void testSpatialStructure()
 		for (uint32 i = 0; i < limit / 5; i++)
 		{
 			uint32 k = randomRange(0u, numeric_cast<uint32>(elements.size()));
-			aabb b = generateRandomBox();
+			Aabb b = generateRandomBox();
 			elements[k] = b;
 			data->update(k, b);
 		}
@@ -146,7 +146,7 @@ void testSpatialStructure()
 		for (uint32 i = 0; i < limit / 5; i++)
 		{
 			uint32 k = randomRange(0u, numeric_cast<uint32>(elements.size()));
-			elements[k] = aabb();
+			elements[k] = Aabb();
 			data->remove(k);
 		}
 		data->rebuild();
@@ -157,10 +157,10 @@ void testSpatialStructure()
 		CAGE_TESTCASE("points");
 		Holder<SpatialStructure> data = newSpatialStructure(SpatialStructureCreateConfig());
 		for (uint32 i = 0; i < 100; i++)
-			data->update(i, aabb(generateRandomPoint()));
+			data->update(i, Aabb(generateRandomPoint()));
 		data->rebuild();
 		Holder<SpatialQuery> query = newSpatialQuery(data.get());
-		query->intersection(sphere(vec3(50, 0, 0), 100));
+		query->intersection(Sphere(vec3(50, 0, 0), 100));
 	}
 
 	{
@@ -168,22 +168,22 @@ void testSpatialStructure()
 		constexpr const vec3 pts[3] = { vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 1) };
 		Holder<SpatialStructure> data = newSpatialStructure(SpatialStructureCreateConfig());
 		for (uint32 i = 0; i < 100; i++)
-			data->update(i, aabb(pts[i % 3]));
+			data->update(i, Aabb(pts[i % 3]));
 		data->rebuild();
 		Holder<SpatialQuery> query = newSpatialQuery(data.get());
-		query->intersection(sphere(vec3(0, 0, 0), 5));
+		query->intersection(Sphere(vec3(0, 0, 0), 5));
 		CAGE_TEST(query->result().size() == 100);
 	}
 
 	{
 		CAGE_TESTCASE("spheres");
 		Holder<SpatialStructure> data = newSpatialStructure(SpatialStructureCreateConfig());
-		data->update(0, sphere(vec3(), 100));
+		data->update(0, Sphere(vec3(), 100));
 		data->rebuild();
 		Holder<SpatialQuery> query = newSpatialQuery(data.get());
-		query->intersection(sphere(vec3(50, 0, 0), 100));
+		query->intersection(Sphere(vec3(50, 0, 0), 100));
 		CAGE_TEST(query->result().size() == 1);
-		query->intersection(sphere(vec3(250, 0, 0), 100));
+		query->intersection(Sphere(vec3(250, 0, 0), 100));
 		CAGE_TEST(query->result().size() == 0);
 
 		// test aabb-sphere intersection
@@ -195,10 +195,10 @@ void testSpatialStructure()
 		constexpr const vec3 pts[3] = { vec3(3, 0, 0), vec3(0, 7, 0), vec3(0, 0, 13) };
 		Holder<SpatialStructure> data = newSpatialStructure(SpatialStructureCreateConfig());
 		for (uint32 i = 0; i < 100; i++)
-			data->update(i, sphere(pts[i % 3], 1));
+			data->update(i, Sphere(pts[i % 3], 1));
 		data->rebuild();
 		Holder<SpatialQuery> query = newSpatialQuery(data.get());
-		query->intersection(sphere(vec3(0, 0, 0), 5));
+		query->intersection(Sphere(vec3(0, 0, 0), 5));
 		CAGE_TEST(query->result().size() == 34);
 	}
 

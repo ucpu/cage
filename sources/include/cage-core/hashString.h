@@ -56,25 +56,25 @@ namespace cage
 	private:
 		struct ConstCharWrapper
 		{
-			ConstCharWrapper(const char *str) noexcept : str(str) {}
+			CAGE_FORCE_INLINE ConstCharWrapper(const char *str) noexcept : str(str) {}
 			const char *str;
 		};
 
 		uint32 value;
 
 	public:
-		explicit HashString(const ConstCharWrapper &wrp) noexcept : value(detail::hashString(wrp.str) | ((uint32)1 << 31))
+		CAGE_FORCE_INLINE explicit HashString(const ConstCharWrapper &wrp) noexcept : value(detail::hashString(wrp.str) | ((uint32)1 << 31))
 		{}
 
 		template<uint32 N>
-		explicit HashString(const detail::StringBase<N> &str) noexcept : HashString(str.c_str())
+		CAGE_FORCE_INLINE explicit HashString(const detail::StringBase<N> &str) noexcept : HashString(str.c_str())
 		{}
 
 		template<uint32 N>
-		constexpr explicit HashString(const char(&str)[N]) noexcept : value(detail::HashCompile(str) | ((uint32)1 << 31))
+		CAGE_FORCE_INLINE constexpr explicit HashString(const char(&str)[N]) noexcept : value(detail::HashCompile(str) | ((uint32)1 << 31))
 		{}
 
-		constexpr operator uint32() const noexcept
+		CAGE_FORCE_INLINE constexpr operator uint32() const noexcept
 		{
 			return value;
 		}

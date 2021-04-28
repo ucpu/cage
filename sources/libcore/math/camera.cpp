@@ -31,7 +31,7 @@ namespace cage
 	mat4 perspectiveProjection(rads fov, real aspectRatio, real near, real far)
 	{
 		CAGE_ASSERT(fov > rads(0));
-		CAGE_ASSERT(aspectRatio != 0);
+		CAGE_ASSERT(aspectRatio > 0);
 		CAGE_ASSERT(sign(near) == sign(far) && near != far);
 		real f = 1 / tan(fov / 2);
 		return mat4(
@@ -44,6 +44,9 @@ namespace cage
 
 	mat4 perspectiveProjection(rads fov, real aspectRatio, real near, real far, real zeroParallaxDistance, real eyeSeparation)
 	{
+		CAGE_ASSERT(fov > rads(0));
+		CAGE_ASSERT(aspectRatio > 0);
+		CAGE_ASSERT(sign(near) == sign(far) && near != far);
 		real baseLength = near * tan(fov * 0.5);
 		real stereoOffset = 0.5 * eyeSeparation * near / zeroParallaxDistance;
 		real left = -aspectRatio * baseLength + stereoOffset;
@@ -61,8 +64,8 @@ namespace cage
 		return mat4(
 			near * 2.0 / (right - left), 0, 0, 0,
 			0, near * 2.0 / (top - bottom), 0, 0,
-			(right + left) / (right - left), (top + bottom) / (top - bottom), -(far + near) / (far - near), -1,
-			0, 0, -2 * far * near / (far - near), 0
+			(right + left) / (right - left), (top + bottom) / (top - bottom), (far + near) / (near - far), -1,
+			0, 0, 2 * far * near / (near - far), 0
 		);
 	}
 
@@ -79,75 +82,9 @@ namespace cage
 		));
 	}
 
-
-
-
-	bool intersectsFrustum(const vec3 &shape, const mat4 &mvp)
-	{
-		CAGE_THROW_CRITICAL(NotImplemented, "intersectsFrustum");
-	}
-
-	bool intersectsFrustum(const line &shape, const mat4 &mvp)
-	{
-		CAGE_THROW_CRITICAL(NotImplemented, "intersectsFrustum");
-	}
-
-	bool intersectsFrustum(const triangle &shape, const mat4 &mvp)
-	{
-		CAGE_THROW_CRITICAL(NotImplemented, "intersectsFrustum");
-	}
-
-	bool intersectsFrustum(const plane &shape, const mat4 &mvp)
-	{
-		CAGE_THROW_CRITICAL(NotImplemented, "intersectsFrustum");
-	}
-
-	bool intersectsFrustum(const sphere &shape, const mat4 &mvp)
-	{
-		CAGE_THROW_CRITICAL(NotImplemented, "intersectsFrustum");
-	}
-
-	namespace
-	{
-		vec4 column(const mat4 &m, uint32 index)
-		{
-			return vec4(m[index], m[index + 4], m[index + 8], m[index + 12]);
-		}
-	}
-
-	bool intersectsFrustum(const aabb &box, const mat4 &mvp)
-	{
-		const vec4 planes[6] = {
-			column(mvp, 3) + column(mvp, 0),
-			column(mvp, 3) - column(mvp, 0),
-			column(mvp, 3) + column(mvp, 1),
-			column(mvp, 3) - column(mvp, 1),
-			column(mvp, 3) + column(mvp, 2),
-			column(mvp, 3) - column(mvp, 2),
-		};
-		const vec3 b[] = { box.a, box.b };
-		for (uint32 i = 0; i < 6; i++)
-		{
-			const vec4 &p = planes[i]; // current plane
-			const vec3 pv = vec3( // current p-vertex
-				b[!!(p[0] > 0)][0],
-				b[!!(p[1] > 0)][1],
-				b[!!(p[2] > 0)][2]
-			);
-			const real d = dot(vec3(p), pv);
-			if (d < -p[3])
-				return false;
-		}
-		return true;
-	}
-
-
-
-
-
 	StereoModeEnum stringToStereoMode(const string & mode)
 	{
-		string m = toLower(mode);
+		const string m = toLower(mode);
 		if (m == "mono") return StereoModeEnum::Mono;
 		if (m == "horizontal") return StereoModeEnum::Horizontal;
 		if (m == "vertical") return StereoModeEnum::Vertical;

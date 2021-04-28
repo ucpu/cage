@@ -7,20 +7,21 @@ namespace cage
 {
 	namespace detail
 	{
+		// c++17 inline variables do not seem to work across dll boundaries
 #ifdef _MSC_VER
-		template<class T> CAGE_API_IMPORT char assetClassId;
+		template<class T> CAGE_API_IMPORT char assetTypeBlock;
 #else
-		template<class T> extern char assetClassId;
+		template<class T> extern char assetTypeBlock;
 #endif // _MSC_VER
 	}
 
 	class CAGE_CORE_API AssetManager : private Immovable
 	{
 	public:
-		template<class T>
-		void defineScheme(uint32 scheme, const AssetScheme &value)
+		template<uint32 Scheme, class T>
+		void defineScheme(const AssetScheme &value)
 		{
-			defineScheme_(scheme, reinterpret_cast<uintPtr>(&detail::assetClassId<T>), value);
+			defineScheme_((uintPtr)&detail::assetTypeBlock<T>, Scheme, value);
 		}
 
 		// begin thread-safe methods
@@ -33,13 +34,13 @@ namespace cage
 		template<uint32 Scheme, class T>
 		void fabricate(uint32 assetName, Holder<T> &&value, const string &textName = "<fabricated>")
 		{
-			fabricate_(assetName, textName, Scheme, reinterpret_cast<uintPtr>(&detail::assetClassId<T>), templates::move(value).template cast<void>());
+			fabricate_((uintPtr)&detail::assetTypeBlock<T>, Scheme, assetName, textName, templates::move(value).template cast<void>());
 		}
 
 		template<uint32 Scheme, class T>
 		Holder<T> tryGet(uint32 assetName) const
 		{
-			return get_(assetName, Scheme, reinterpret_cast<uintPtr>(&detail::assetClassId<T>), false).template cast<T>();
+			return get_((uintPtr)&detail::assetTypeBlock<T>, Scheme, assetName, false).template cast<T>();
 		}
 
 		template<uint32 Scheme, class T>
@@ -51,7 +52,7 @@ namespace cage
 		template<uint32 Scheme, class T>
 		Holder<T> get(uint32 assetName) const
 		{
-			return get_(assetName, Scheme, reinterpret_cast<uintPtr>(&detail::assetClassId<T>), true).template cast<T>();
+			return get_((uintPtr)&detail::assetTypeBlock<T>, Scheme, assetName, true).template cast<T>();
 		}
 
 		template<uint32 Scheme, class T>
@@ -74,9 +75,9 @@ namespace cage
 		EventDispatcher<bool(uint32 name, Holder<File> &file)> findAsset; // this event is called from the loading thread
 
 	private:
-		void defineScheme_(uint32 scheme, uintPtr typeId, const AssetScheme &value);
-		void fabricate_(uint32 assetName, const string &textName, uint32 scheme, uintPtr typeId, Holder<void> &&value);
-		Holder<void> get_(uint32 assetName, uint32 scheme, uintPtr typeId, bool throwOnInvalidScheme) const;
+		void defineScheme_(uintPtr typeId, uint32 scheme, const AssetScheme &value);
+		void fabricate_(uintPtr typeId, uint32 scheme, uint32 assetName, const string &textName, Holder<void> &&value);
+		Holder<void> get_(uintPtr typeId, uint32 scheme, uint32 assetName, bool throwOnInvalidScheme) const;
 	};
 
 	struct CAGE_CORE_API AssetManagerCreateConfig

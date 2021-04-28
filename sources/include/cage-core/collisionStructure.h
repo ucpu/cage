@@ -1,5 +1,5 @@
-#ifndef guard_collision_h_erthg456ter4h56r1th64rth
-#define guard_collision_h_erthg456ter4h56r1th64rth
+#ifndef guard_collisionStructure_h_erthg456ter4h56r1th64rth
+#define guard_collisionStructure_h_erthg456ter4h56r1th64rth
 
 #include "core.h"
 
@@ -21,13 +21,15 @@ namespace cage
 		bool query(const Collider *collider, const transform &t1, const transform &t2); // t1 and t2 are initial and final transformations
 
 		// finds a collision that is first along the line, if any
-		bool query(const line &shape);
+		bool query(const Line &shape);
 
 		// finds arbitrary collision, if any
-		bool query(const triangle &shape);
-		bool query(const plane &shape);
-		bool query(const sphere &shape);
-		bool query(const aabb &shape);
+		bool query(const Triangle &shape);
+		bool query(const Plane &shape);
+		bool query(const Sphere &shape);
+		bool query(const Aabb &shape);
+		bool query(const Cone &shape);
+		bool query(const Frustum &shape);
 	};
 
 	class CAGE_CORE_API CollisionStructure : private Immovable
@@ -48,4 +50,4 @@ namespace cage
 	CAGE_CORE_API Holder<CollisionQuery> newCollisionQuery(const CollisionStructure *structure);
 }
 
-#endif // guard_collision_h_erthg456ter4h56r1th64rth
+#endif // guard_collisionStructure_h_erthg456ter4h56r1th64rth

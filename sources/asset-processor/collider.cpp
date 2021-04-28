@@ -6,7 +6,7 @@ void processCollider()
 {
 	Holder<AssimpContext> context = newAssimpContext(0, 0);
 	const aiScene *scene = context->getScene();
-	const aiMesh *am = scene->mMeshes[context->selectMesh()];
+	const aiMesh *am = scene->mMeshes[context->selectModel()];
 
 	switch (am->mPrimitiveTypes)
 	{
@@ -20,8 +20,8 @@ void processCollider()
 	mat3 axesScale = axesScaleMatrix();
 	for (uint32 i = 0; i < am->mNumFaces; i++)
 	{
-		triangle tri;
-		tri = triangle(vec3(), vec3(), vec3());
+		Triangle tri;
+		tri = Triangle(vec3(), vec3(), vec3());
 		for (uint32 j = 0; j < 3; j++)
 		{
 			uint32 idx = numeric_cast<uint32>(am->mFaces[i].mIndices[j]);
@@ -44,15 +44,14 @@ void processCollider()
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "aabb: " + collider->box());
 
 	Holder<PointerRange<char>> buff = collider->serialize();
-
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
 	Holder<PointerRange<char>> comp = compress(buff);
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + comp.size());
 
 	AssetHeader h = initializeAssetHeader();
-	h.originalSize = numeric_cast<uint32>(buff.size());
-	h.compressedSize = numeric_cast<uint32>(comp.size());
-	Holder<File> f = newFile(outputFileName, FileMode(false, true));
+	h.originalSize = buff.size();
+	h.compressedSize = comp.size();
+	Holder<File> f = writeFile(outputFileName);
 	f->write(bufferView(h));
 	f->write(comp);
 	f->close();

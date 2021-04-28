@@ -313,7 +313,7 @@ namespace cage
 
 	Holder<DiscoveryClient> newDiscoveryClient(uint16 sendPort, uint32 gameId)
 	{
-		return detail::systemArena().createImpl<DiscoveryClient, DiscoveryClientImpl>(sendPort, gameId);
+		return systemArena().createImpl<DiscoveryClient, DiscoveryClientImpl>(sendPort, gameId);
 	}
 
 	void DiscoveryServer::update()
@@ -324,6 +324,6 @@ namespace cage
 
 	Holder<DiscoveryServer> newDiscoveryServer(uint16 listenPort, uint16 gamePort, uint32 gameId)
 	{
-		return detail::systemArena().createImpl<DiscoveryServer, DiscoveryServerImpl>(listenPort, gamePort, gameId);
+		return systemArena().createImpl<DiscoveryServer, DiscoveryServerImpl>(listenPort, gamePort, gameId);
 	}
 }

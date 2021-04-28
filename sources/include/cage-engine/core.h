@@ -14,11 +14,9 @@ namespace cage
 	// forward declarations
 
 	struct TransformComponent;
-	// todo MatrixComponent -> allow for skew, non-uniform scale, etc.
 	struct RenderComponent;
 	struct TextureAnimationComponent;
 	struct SkeletalAnimationComponent;
-	// todo SkeletonPoseComponent -> allow the application to compute the pose itself
 	enum class LightTypeEnum : uint32;
 	struct LightComponent;
 	struct ShadowmapComponent;
@@ -44,7 +42,7 @@ namespace cage
 	class Font;
 	class FrameBuffer;
 	struct GraphicsError;
-	class Mesh;
+	class Model;
 	class RenderObject;
 	class ShaderProgram;
 	class Texture;
@@ -92,22 +90,18 @@ namespace cage
 	struct GuiPanelComponent;
 	struct GuiSpoilerComponent;
 
-	class MixingBus;
-	struct MixingFilterApi;
-	class MixingFilter;
-	class VolumeFilter;
-	struct SoundError;
-	class SoundContext;
-	struct SoundContextCreateConfig;
-	class SoundSource;
-	struct SoundInterleavedBuffer;
-	struct SoundDataBuffer;
+	struct SoundCallbackData;
+	class Sound;
 	class Speaker;
 	struct SpeakerCreateConfig;
+	struct Voice;
+	struct Listener;
+	class VoicesMixer;
+	struct VoicesMixerCreateConfig;
 
 	enum class TextureFlags : uint32;
 	struct TextureHeader;
-	struct MeshHeader;
+	struct ModelHeader;
 	struct SkeletonRigHeader;
 	struct SkeletalAnimationHeader;
 	struct RenderObjectHeader;
@@ -137,7 +131,7 @@ namespace cage
 
 	// enum declarations
 
-	enum class MeshRenderFlags : uint32
+	enum class ModelRenderFlags : uint32
 	{
 		None = 0,
 		Translucent = 1 << 1,
@@ -180,7 +174,7 @@ namespace cage
 	GCHL_ENUM_BITS(SoundFlags);
 	GCHL_ENUM_BITS(EngineProfilingStatsFlags);
 	GCHL_ENUM_BITS(WindowFlags);
-	GCHL_ENUM_BITS(MeshRenderFlags);
+	GCHL_ENUM_BITS(ModelRenderFlags);
 	GCHL_ENUM_BITS(ModifiersFlags);
 	GCHL_ENUM_BITS(MouseButtonsFlags);
 

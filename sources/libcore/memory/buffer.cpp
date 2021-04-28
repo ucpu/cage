@@ -53,7 +53,7 @@ namespace cage
 			return;
 		if (size > cap)
 			cap = size;
-		data_ = (char*)detail::systemArena().allocate(cap, sizeof(uintPtr));
+		data_ = (char*)systemArena().allocate(cap, sizeof(uintPtr));
 		capacity_ = cap;
 		size_ = size;
 	}
@@ -119,7 +119,7 @@ namespace cage
 
 	void MemoryBuffer::free()
 	{
-		detail::systemArena().deallocate(data_);
+		systemArena().deallocate(data_);
 		data_ = nullptr;
 		capacity_ = size_ = 0;
 	}
@@ -133,8 +133,8 @@ namespace cage
 		};
 
 		Delegate<void(void *)> d;
-		d.bind<MemoryArena, &MemoryArena::destroy<OwnedBufferRange>>(&detail::systemArena());
-		OwnedBufferRange *p = detail::systemArena().createObject<OwnedBufferRange>();
+		d.bind<MemoryArena, &MemoryArena::destroy<OwnedBufferRange>>(&systemArena());
+		OwnedBufferRange *p = systemArena().createObject<OwnedBufferRange>();
 		std::swap(*this, p->buff);
 		p->range = p->buff;
 		Holder<PointerRange<char>> h(&p->range, p, d);

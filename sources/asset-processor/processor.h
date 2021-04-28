@@ -34,7 +34,7 @@ void processTexture();
 void processShader();
 void processPack();
 void processObject();
-void processMesh();
+void processModel();
 void processSkeleton();
 void processAnimation();
 void processFont();

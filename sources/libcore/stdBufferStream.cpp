@@ -47,11 +47,11 @@ namespace cage
 
 	std::streamsize BufferOStream::xsputn(const char *s, std::streamsize n)
 	{
-		uintPtr req = writePos + n;
+		uintPtr req = numeric_cast<uintPtr>(writePos + n);
 		if (buffer.size() < req)
 			buffer.resizeSmart(req);
 		detail::memcpy(buffer.data() + writePos, s, numeric_cast<uintPtr>(n));
-		writePos += n;
+		writePos += numeric_cast<uintPtr>(n);
 		return n;
 	};
 
@@ -73,13 +73,13 @@ namespace cage
 			switch (dir)
 			{
 			case std::ios_base::beg:
-				writePos = off;
+				writePos = numeric_cast<uintPtr>(off);
 				break;
 			case std::ios_base::cur:
-				writePos += off;
+				writePos += numeric_cast<uintPtr>(off);
 				break;
 			case std::ios_base::end:
-				writePos = buffer.size() + off;
+				writePos = buffer.size() + numeric_cast<uintPtr>(off);
 				break;
 			default:
 				CAGE_THROW_CRITICAL(Exception, "invalid seek direction");

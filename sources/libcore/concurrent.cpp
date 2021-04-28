@@ -103,7 +103,7 @@ namespace cage
 
 	Holder<Mutex> newMutex()
 	{
-		return detail::systemArena().createImpl<Mutex, MutexImpl>();
+		return systemArena().createImpl<Mutex, MutexImpl>();
 	}
 
 	namespace
@@ -169,7 +169,7 @@ namespace cage
 
 	Holder<RwMutex> newRwMutex()
 	{
-		return detail::systemArena().createImpl<RwMutex, RwMutexImpl>();
+		return systemArena().createImpl<RwMutex, RwMutexImpl>();
 	}
 
 	namespace
@@ -239,7 +239,7 @@ namespace cage
 
 	Holder<Semaphore> newSemaphore(uint32 value, uint32 max)
 	{
-		return detail::systemArena().createImpl<Semaphore, SemaphoreImpl>(value, max);
+		return systemArena().createImpl<Semaphore, SemaphoreImpl>(value, max);
 	}
 }
 
@@ -316,6 +316,9 @@ namespace cage
 		public:
 #ifdef CAGE_SYSTEM_WINDOWS
 
+#if 0
+			// old implementation compatible with windows before version 8
+
 			Holder<Mutex> mut;
 			Holder<Semaphore> sem1, sem2;
 			uint32 total, current;
@@ -349,6 +352,29 @@ namespace cage
 			}
 
 #else
+			// new implementation that requires windows 8 or later
+
+			SYNCHRONIZATION_BARRIER bar;
+
+			explicit BarrierImpl(uint32 value)
+			{
+				if (InitializeSynchronizationBarrier(&bar, value, 0) != TRUE)
+					CAGE_THROW_ERROR(SystemError, "InitializeSynchronizationBarrier", GetLastError());
+			}
+
+			~BarrierImpl()
+			{
+				DeleteSynchronizationBarrier(&bar);
+			}
+
+			void lock()
+			{
+				EnterSynchronizationBarrier(&bar, SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY);
+			}
+
+#endif // windows version compatibility
+
+#else
 
 			pthread_barrier_t bar;
 
@@ -379,7 +405,7 @@ namespace cage
 
 	Holder<Barrier> newBarrier(uint32 value)
 	{
-		return detail::systemArena().createImpl<Barrier, BarrierImpl>(value);
+		return systemArena().createImpl<Barrier, BarrierImpl>(value);
 	}
 
 	namespace
@@ -460,7 +486,7 @@ namespace cage
 
 	Holder<ConditionalVariableBase> newConditionalVariableBase()
 	{
-		return detail::systemArena().createImpl<ConditionalVariableBase, ConditionalVariableBaseImpl>();
+		return systemArena().createImpl<ConditionalVariableBase, ConditionalVariableBaseImpl>();
 	}
 
 	void ConditionalVariable::lock()
@@ -499,7 +525,7 @@ namespace cage
 
 	Holder<ConditionalVariable> newConditionalVariable(bool broadcast)
 	{
-		return detail::systemArena().createImpl<ConditionalVariable, ConditionalVariableImpl>(broadcast);
+		return systemArena().createImpl<ConditionalVariable, ConditionalVariableImpl>(broadcast);
 	}
 
 	namespace
@@ -626,7 +652,7 @@ namespace cage
 
 	Holder<Thread> newThread(Delegate<void()> func, const string &threadName)
 	{
-		return detail::systemArena().createImpl<Thread, ThreadImpl>(func, threadName);
+		return systemArena().createImpl<Thread, ThreadImpl>(func, threadName);
 	}
 
 	namespace
@@ -647,7 +673,7 @@ namespace cage
 		if (!name.empty())
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
-			static constexpr DWORD MS_VC_EXCEPTION = 0x406D1388;
+			constexpr DWORD MS_VC_EXCEPTION = 0x406D1388;
 #pragma pack(push,8)
 			struct THREADNAME_INFO
 			{

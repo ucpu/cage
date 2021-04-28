@@ -35,7 +35,7 @@ namespace cage
 			Holder<Texture> tex;
 			uint32 texWidth, texHeight;
 			ShaderProgram *shr;
-			Mesh *msh;
+			Model *msh;
 			uint32 spaceGlyph;
 			uint32 returnGlyph;
 			uint32 cursorGlyph;
@@ -390,12 +390,12 @@ namespace cage
 		return data.outSize;
 	}
 
-	void Font::bind(Mesh *mesh, ShaderProgram *shader) const
+	void Font::bind(Model *model, ShaderProgram *shader) const
 	{
 		FontImpl *impl = (FontImpl*)this;
 		glActiveTexture(GL_TEXTURE0);
 		impl->tex->bind();
-		impl->msh = mesh;
+		impl->msh = model;
 		impl->msh->bind();
 		impl->shr = shader;
 		impl->shr->bind();
@@ -407,13 +407,13 @@ namespace cage
 		data.format = &format;
 		data.gls = glyphs.data();
 		data.count = numeric_cast<uint32>(glyphs.size());
-		data.cursor = getApplicationTime() % 1000000 < 300000 ? m : cursor;
+		data.cursor = applicationTime() % 1000000 < 300000 ? m : cursor;
 		data.render = true;
 		((FontImpl*)this)->processText(data);
 	}
 
 	Holder<Font> newFont()
 	{
-		return detail::systemArena().createImpl<Font, FontImpl>();
+		return systemArena().createImpl<Font, FontImpl>();
 	}
 }

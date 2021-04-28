@@ -15,6 +15,7 @@ set(CMAKE_DISABLE_FIND_PACKAGE_BrotliDec ON)
 add_subdirectory(freetype)
 
 target_include_directories(freetype INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/freetype/include")
+target_include_directories(freetype INTERFACE "${CMAKE_CURRENT_BUILD_DIR}/freetype/include")
 
 cage_gen_module(Freetype $<TARGET_LINKER_FILE:freetype> $<TARGET_PROPERTY:freetype,INTERFACE_INCLUDE_DIRECTORIES>)
 

@@ -115,7 +115,7 @@ namespace cage
 				const Item &item = data->allItems.at(resultName);
 				uint32 i = 0;
 				PointerRangeHolder<CollisionPair> pairs;
-				for (const triangle &t : item.c->triangles())
+				for (const Triangle &t : item.c->triangles())
 				{
 					if (intersects(shape, t * item.t))
 					{
@@ -134,7 +134,7 @@ namespace cage
 			bool query(const T &shape)
 			{
 				clear();
-				spatial->intersection(aabb(shape)); // broad phase
+				spatial->intersection(Aabb(shape)); // broad phase
 				bool found = false;
 				for (uint32 nameIt : spatial->result())
 				{
@@ -156,11 +156,11 @@ namespace cage
 		};
 
 		template<>
-		bool CollisionQueryImpl::query(const line &shape)
+		bool CollisionQueryImpl::query(const Line &shape)
 		{
 			CAGE_ASSERT(shape.normalized());
 			clear();
-			spatial->intersection(aabb(shape)); // broad phase
+			spatial->intersection(Aabb(shape)); // broad phase
 			real best = real::Infinity();
 			for (uint32 nameIt : spatial->result())
 			{
@@ -233,31 +233,43 @@ namespace cage
 		return impl->query(collider, t1, t2);
 	}
 
-	bool CollisionQuery::query(const line &shape)
+	bool CollisionQuery::query(const Line &shape)
 	{
 		CollisionQueryImpl *impl = (CollisionQueryImpl *)this;
 		return impl->query(shape);
 	}
 
-	bool CollisionQuery::query(const triangle &shape)
+	bool CollisionQuery::query(const Triangle &shape)
 	{
 		CollisionQueryImpl *impl = (CollisionQueryImpl *)this;
 		return impl->query(shape);
 	}
 
-	bool CollisionQuery::query(const plane &shape)
+	bool CollisionQuery::query(const Plane &shape)
 	{
 		CollisionQueryImpl *impl = (CollisionQueryImpl *)this;
 		return impl->query(shape);
 	}
 
-	bool CollisionQuery::query(const sphere &shape)
+	bool CollisionQuery::query(const Sphere &shape)
 	{
 		CollisionQueryImpl *impl = (CollisionQueryImpl *)this;
 		return impl->query(shape);
 	}
 
-	bool CollisionQuery::query(const aabb &shape)
+	bool CollisionQuery::query(const Aabb &shape)
+	{
+		CollisionQueryImpl *impl = (CollisionQueryImpl *)this;
+		return impl->query(shape);
+	}
+
+	bool CollisionQuery::query(const Cone &shape)
+	{
+		CollisionQueryImpl *impl = (CollisionQueryImpl *)this;
+		return impl->query(shape);
+	}
+
+	bool CollisionQuery::query(const Frustum &shape)
 	{
 		CollisionQueryImpl *impl = (CollisionQueryImpl *)this;
 		return impl->query(shape);
@@ -294,11 +306,11 @@ namespace cage
 
 	Holder<CollisionStructure> newCollisionStructure(const CollisionStructureCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<CollisionStructure, CollisionDataImpl>(config);
+		return systemArena().createImpl<CollisionStructure, CollisionDataImpl>(config);
 	}
 
 	Holder<CollisionQuery> newCollisionQuery(const CollisionStructure *data)
 	{
-		return detail::systemArena().createImpl<CollisionQuery, CollisionQueryImpl>((CollisionDataImpl*)data);
+		return systemArena().createImpl<CollisionQuery, CollisionQueryImpl>((CollisionDataImpl*)data);
 	}
 }

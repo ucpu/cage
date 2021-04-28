@@ -16,10 +16,10 @@ void testCollisionStructure()
 		const vec3 c(-0.86603, -0.7, -0.5);
 		const vec3 d(0, 0.7, 0);
 		const transform off = transform(vec3(10, 0, 0));
-		c1->addTriangle(triangle(c, b, a) * off);
-		c1->addTriangle(triangle(a, b, d) * off);
-		c1->addTriangle(triangle(b, c, d) * off);
-		c1->addTriangle(triangle(c, a, d) * off);
+		c1->addTriangle(Triangle(c, b, a) * off);
+		c1->addTriangle(Triangle(a, b, d) * off);
+		c1->addTriangle(Triangle(b, c, d) * off);
+		c1->addTriangle(Triangle(c, a, d) * off);
 		c1->rebuild();
 	}
 	Holder<Collider> c2 = newCollider();
@@ -29,10 +29,10 @@ void testCollisionStructure()
 		const vec3 c(-0.86603, -0.7, -0.5);
 		const vec3 d(0, 0.7, 0);
 		const transform off = transform(vec3(0, 10, 0));
-		c2->addTriangle(triangle(c, b, a) * off);
-		c2->addTriangle(triangle(a, b, d) * off);
-		c2->addTriangle(triangle(b, c, d) * off);
-		c2->addTriangle(triangle(c, a, d) * off);
+		c2->addTriangle(Triangle(c, b, a) * off);
+		c2->addTriangle(Triangle(a, b, d) * off);
+		c2->addTriangle(Triangle(b, c, d) * off);
+		c2->addTriangle(Triangle(c, a, d) * off);
 		c2->rebuild();
 	}
 	Holder<Collider> c3 = newCollider();
@@ -41,10 +41,10 @@ void testCollisionStructure()
 		const vec3 b(+0.86603, -0.7, -0.5);
 		const vec3 c(-0.86603, -0.7, -0.5);
 		const vec3 d(0, 0.7, 0);
-		c3->addTriangle(triangle(c, b, a));
-		c3->addTriangle(triangle(a, b, d));
-		c3->addTriangle(triangle(b, c, d));
-		c3->addTriangle(triangle(c, a, d));
+		c3->addTriangle(Triangle(c, b, a));
+		c3->addTriangle(Triangle(a, b, d));
+		c3->addTriangle(Triangle(b, c, d));
+		c3->addTriangle(Triangle(c, a, d));
 		c3->rebuild();
 	}
 
@@ -204,52 +204,52 @@ void testCollisionStructure()
 		}
 		{
 			CAGE_TESTCASE("triangle 1");
-			CAGE_TEST(query->query(triangle(vec3(10, -1, 1), vec3(10, 1, 1), vec3(10, 0, -2))));
+			CAGE_TEST(query->query(Triangle(vec3(10, -1, 1), vec3(10, 1, 1), vec3(10, 0, -2))));
 			CAGE_TEST(query->name() == 1);
 			CAGE_TEST(query->collisionPairs().size() > 0);
 		}
 		{
 			CAGE_TESTCASE("triangle 2");
-			CAGE_TEST(query->query(triangle(vec3(0, -1, 1), vec3(0, 1, 1), vec3(0, 0, -2))));
+			CAGE_TEST(query->query(Triangle(vec3(0, -1, 1), vec3(0, 1, 1), vec3(0, 0, -2))));
 			CAGE_TEST(query->name() == 3);
 			CAGE_TEST(query->collisionPairs().size() > 0);
 		}
 		{
 			CAGE_TESTCASE("triangle 3");
-			CAGE_TEST(!query->query(triangle(vec3(10, -1, 11), vec3(10, 1, 11), vec3(10, 0, 8))));
+			CAGE_TEST(!query->query(Triangle(vec3(10, -1, 11), vec3(10, 1, 11), vec3(10, 0, 8))));
 			CAGE_TEST_ASSERTED(query->name());
 		}
 		{
 			CAGE_TESTCASE("plane 1");
-			CAGE_TEST(query->query(plane(vec3(0,0,0), vec3(0, 1, 0))));
+			CAGE_TEST(query->query(Plane(vec3(0,0,0), vec3(0, 1, 0))));
 			CAGE_TEST(query->name() == 1 || query->name() == 3);
 			CAGE_TEST(query->collisionPairs().size() > 0);
 		}
 		{
 			CAGE_TESTCASE("plane 2");
-			CAGE_TEST(!query->query(plane(vec3(0,0,10), vec3(0, 0, 1))));
+			CAGE_TEST(!query->query(Plane(vec3(0,0,10), vec3(0, 0, 1))));
 			CAGE_TEST_ASSERTED(query->name());
 		}
 		{
 			CAGE_TESTCASE("plane 3");
-			CAGE_TEST(query->query(plane(vec3(123,0,456), vec3(0, 1, 0))));
+			CAGE_TEST(query->query(Plane(vec3(123,0,456), vec3(0, 1, 0))));
 			CAGE_TEST(query->name() == 1 || query->name() == 3);
 			CAGE_TEST(query->collisionPairs().size() > 0);
 		}
 		{
 			CAGE_TESTCASE("sphere 1");
-			CAGE_TEST(query->query(sphere(vec3(0, 10, 0), 2)));
+			CAGE_TEST(query->query(Sphere(vec3(0, 10, 0), 2)));
 			CAGE_TEST(query->name() == 2);
 			CAGE_TEST(query->collisionPairs().size() > 0);
 		}
 		{
 			CAGE_TESTCASE("sphere 2");
-			CAGE_TEST(!query->query(sphere(vec3(0, 10, 10), 2)));
+			CAGE_TEST(!query->query(Sphere(vec3(0, 10, 10), 2)));
 			CAGE_TEST_ASSERTED(query->name());
 		}
 		{
 			CAGE_TESTCASE("aabb");
-			CAGE_TEST(query->query(aabb(vec3(-1, 9, -1), vec3(1, 11, 1))));
+			CAGE_TEST(query->query(Aabb(vec3(-1, 9, -1), vec3(1, 11, 1))));
 			CAGE_TEST(query->name() == 2);
 			CAGE_TEST(query->collisionPairs().size() > 0);
 		}
@@ -350,7 +350,7 @@ void testCollisionStructure()
 
 			for (uint32 round = 0; round < 10; round++)
 			{
-				const line l = makeLine(randomDirection3() * 10, randomDirection3() * 10);
+				const Line l = makeLine(randomDirection3() * 10, randomDirection3() * 10);
 				const bool res = intersects(l, c3.get(), t1);
 				CAGE_TEST(query->query(l) == res);
 				if (res)

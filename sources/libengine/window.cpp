@@ -40,13 +40,15 @@ namespace cage
 		public:
 			CageGlfwInitializer()
 			{
+				CAGE_LOG(SeverityEnum::Info, "glfw", stringizer() + "initializing glfw");
 				glfwSetErrorCallback(&handleGlfwError);
 				if (!glfwInit())
-					CAGE_THROW_CRITICAL(Exception, "failed to initialize glfw");
+					CAGE_THROW_ERROR(Exception, "failed to initialize glfw");
 			}
 
 			~CageGlfwInitializer()
 			{
+				CAGE_LOG(SeverityEnum::Info, "glfw", stringizer() + "terminating glfw");
 				glfwTerminate();
 			}
 		};
@@ -55,7 +57,6 @@ namespace cage
 	void cageGlfwInitializeFunc()
 	{
 		static CageGlfwInitializer *m = new CageGlfwInitializer(); // intentional leak
-		(void)m;
 	}
 
 	namespace
@@ -285,7 +286,7 @@ namespace cage
 				if (e.type != Event::TypeEnum::MousePress)
 					return false;
 				CAGE_ASSERT((uint32)e.mouse.buttons < sizeof(lastMouseButtonPressTimes) / sizeof(lastMouseButtonPressTimes[0]));
-				uint64 current = getApplicationTime();
+				uint64 current = applicationTime();
 				uint64 &last = lastMouseButtonPressTimes[(uint32)e.mouse.buttons];
 				if (current - last < 500000)
 				{
@@ -836,7 +837,7 @@ namespace cage
 
 	Holder<Window> newWindow(Window *shareContext)
 	{
-		return detail::systemArena().createImpl<Window, WindowImpl>(shareContext);
+		return systemArena().createImpl<Window, WindowImpl>(shareContext);
 	}
 
 	void WindowEventListeners::attachAll(Window *window, sint32 order)

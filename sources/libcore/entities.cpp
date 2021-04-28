@@ -137,12 +137,12 @@ namespace cage
 
 			void *newVal() override
 			{
-				return detail::systemArena().allocate(size, alignment);
+				return systemArena().allocate(size, alignment);
 			}
 
 			void desVal(void *val) override
 			{
-				detail::systemArena().deallocate(val);
+				systemArena().deallocate(val);
 			}
 		};
 
@@ -150,9 +150,9 @@ namespace cage
 		{
 			const uintPtr s = max(size, alignment);
 			if (s > 128)
-				return detail::systemArena().createHolder<ValuesFallback>(size, alignment).cast<Values>();
+				return systemArena().createHolder<ValuesFallback>(size, alignment).cast<Values>();
 
-#define GCHL_GENERATE(SIZE) if (s <= SIZE) return detail::systemArena().createHolder<ValuesImpl<SIZE>>().cast<Values>();
+#define GCHL_GENERATE(SIZE) if (s <= SIZE) return systemArena().createHolder<ValuesImpl<SIZE>>().cast<Values>();
 			//CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, 4, 8, 12, 16, 20, 24, 28, 32, 48, 64, 96, 128));
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, 4, 8, 16, 32, 64, 128));
 #undef GCHL_GENERATE
@@ -175,7 +175,7 @@ namespace cage
 				manager(manager), typeSize(typeSize), typeAlignment(typeAlignment), vectorIndex(numeric_cast<uint32>(manager->components.size()))
 			{
 				if (config.enumerableEntities)
-					componentEntities = detail::systemArena().createHolder<GroupImpl>(manager);
+					componentEntities = systemArena().createHolder<GroupImpl>(manager);
 				values = newValues(typeSize, typeAlignment);
 				prototype = values->newVal();
 				detail::memcpy(prototype, prototype_, typeSize);
@@ -254,7 +254,7 @@ namespace cage
 	EntityGroup *EntityManager::defineGroup()
 	{
 		EntityManagerImpl *impl = (EntityManagerImpl *)this;
-		Holder<GroupImpl> h = detail::systemArena().createHolder<GroupImpl>(impl);
+		Holder<GroupImpl> h = systemArena().createHolder<GroupImpl>(impl);
 		GroupImpl *g = +h;
 		impl->groups.push_back(templates::move(h));
 		return g;
@@ -334,7 +334,7 @@ namespace cage
 	EntityComponent *EntityManager::defineComponent_(uintPtr typeSize, uintPtr typeAlignment, void *prototype, const EntityComponentCreateConfig &config)
 	{
 		EntityManagerImpl *impl = (EntityManagerImpl *)this;
-		Holder<ComponentImpl> h = detail::systemArena().createHolder<ComponentImpl>(impl, typeSize, typeAlignment, prototype, config);
+		Holder<ComponentImpl> h = systemArena().createHolder<ComponentImpl>(impl, typeSize, typeAlignment, prototype, config);
 		ComponentImpl *c = +h;
 		impl->components.push_back(templates::move(h));
 		return c;
@@ -342,7 +342,7 @@ namespace cage
 
 	Holder<EntityManager> newEntityManager(const EntityManagerCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<EntityManager, EntityManagerImpl>(config);
+		return systemArena().createImpl<EntityManager, EntityManagerImpl>(config);
 	}
 
 	uintPtr EntityComponent::typeSize() const

@@ -6,12 +6,12 @@ using namespace cage;
 
 #include "runner.h"
 
-Runner::Runner() : time(getApplicationTime()), timeStep(1000000 / (randomRange(40, 50)))
+Runner::Runner() : time(applicationTime()), timeStep(1000000 / (randomRange(40, 50)))
 {}
 
 void Runner::step()
 {
-	const uint64 t = getApplicationTime();
+	const uint64 t = applicationTime();
 	sint64 s = time + timeStep - t;
 	if (s >= 0)
 	{

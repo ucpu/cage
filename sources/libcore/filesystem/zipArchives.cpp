@@ -89,7 +89,7 @@ namespace cage
 
 		Holder<File> newProxyFile(Mutex *mutex, File *f, uintPtr start, uintPtr size)
 		{
-			return detail::systemArena().createImpl<File, ProxyFile>(mutex, f, start, size);
+			return systemArena().createImpl<File, ProxyFile>(mutex, f, start, size);
 		}
 	}
 
@@ -815,12 +815,12 @@ namespace cage
 
 		Holder<File> ArchiveZip::openFile(const string &path, const FileMode &mode)
 		{
-			return detail::systemArena().createImpl<File, FileZip>(std::static_pointer_cast<ArchiveZip>(shared_from_this()), path, mode);
+			return systemArena().createImpl<File, FileZip>(std::static_pointer_cast<ArchiveZip>(shared_from_this()), path, mode);
 		}
 
 		Holder<DirectoryList> ArchiveZip::listDirectory(const string &path) const
 		{
-			return detail::systemArena().createImpl<DirectoryList, DirectoryListZip>(std::static_pointer_cast<const ArchiveZip>(shared_from_this()), path);
+			return systemArena().createImpl<DirectoryList, DirectoryListZip>(std::static_pointer_cast<const ArchiveZip>(shared_from_this()), path);
 		}
 	}
 

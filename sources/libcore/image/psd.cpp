@@ -203,7 +203,7 @@ namespace cage
 			uint64 len;
 			des >> len;
 			len = endianness::change(len);
-			des.advance(len); // ignore
+			des.advance(numeric_cast<uintPtr>(len)); // ignore
 		} break;
 		default:
 			CAGE_THROW_ERROR(Exception, "unsupported version in psd decoding");

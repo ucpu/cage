@@ -2,6 +2,27 @@
 processor = cage-asset-processor sound
 index = 20
 
+[gain]
+display = gain
+hint = applied at runtime
+type = real
+min = 0
+default = 1.0
+
+[referenceDistance]
+display = reference distance
+hint = minimum distance to apply attenuation
+type = real
+min = 0
+default = 1
+
+[rolloffFactor]
+display = roll off factor
+hint = distance multiplier
+type = real
+min = 0
+default = 1
+
 [loopBefore]
 display = loop before start
 type = bool
@@ -11,6 +32,18 @@ default = true
 display = loop after end
 type = bool
 default = true
+
+[sampleRate]
+display = sample rate
+hint = use 0 to keep original from the input file
+type = uint32
+default = 48000
+
+[mono]
+display = mono channel
+hint = convert to mono channel for spatial audio
+type = bool
+default = false
 
 [stream]
 display = stream

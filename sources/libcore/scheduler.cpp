@@ -51,7 +51,7 @@ namespace cage
 			explicit ScheduleImpl(SchedulerImpl *schr, const ScheduleCreateConfig &config) : conf(config), schr(schr)
 			{
 				if (conf.type != ScheduleTypeEnum::Once)
-					stats = detail::systemArena().createHolder<SchedStats>();
+					stats = systemArena().createHolder<SchedStats>();
 			}
 		};
 
@@ -381,7 +381,7 @@ namespace cage
 	Schedule *Scheduler::newSchedule(const ScheduleCreateConfig &config)
 	{
 		SchedulerImpl *impl = (SchedulerImpl *)this;
-		auto sch = detail::systemArena().createHolder<ScheduleImpl>(impl, config);
+		auto sch = systemArena().createHolder<ScheduleImpl>(impl, config);
 		auto res = sch.get();
 		impl->scheds.push_back(templates::move(sch));
 		return res;
@@ -422,6 +422,6 @@ namespace cage
 
 	Holder<Scheduler> newScheduler(const SchedulerCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<Scheduler, SchedulerImpl>(config);
+		return systemArena().createImpl<Scheduler, SchedulerImpl>(config);
 	}
 }

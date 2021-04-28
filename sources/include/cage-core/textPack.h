@@ -8,9 +8,14 @@ namespace cage
 	class CAGE_CORE_API TextPack : private Immovable
 	{
 	public:
+		void clear();
+		Holder<TextPack> copy() const;
+
+		Holder<PointerRange<char>> serialize() const;
+		void deserialize(PointerRange<const char> buffer);
+
 		void set(uint32 name, const string &text);
 		void erase(uint32 name);
-		void clear();
 
 		string get(uint32 name) const;
 		string format(uint32 name, PointerRange<const string> params) const;

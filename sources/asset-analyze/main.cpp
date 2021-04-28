@@ -65,12 +65,12 @@ namespace
 				}
 			}
 
-			if (generateObjects && assets.count("mesh") > 0)
+			if (generateObjects && assets.count("model") > 0)
 			{
 				string name = pathExtractFilenameNoExtension(path) + ".object";
 				Holder<File> f = newFile(pathJoin(pathExtractDirectory(path), name), FileMode(false, true));
 				f->writeLine("[]");
-				for (const auto &a : assets["mesh"])
+				for (const auto &a : assets["model"])
 					f->writeLine(a);
 				f->close();
 				assets["object"].insert(name);

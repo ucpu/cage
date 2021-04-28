@@ -301,8 +301,6 @@ namespace cage
 		ivec2 getOutputResolution() const;
 		real getOutputRetina() const;
 		real getZoom() const;
-		void setOutputSoundBus(MixingBus *bus);
-		MixingBus *getOutputSoundBus() const;
 		void setFocus(uint32 widget);
 		uint32 getFocus() const;
 		void controlUpdateStart(); // must be called before processing events

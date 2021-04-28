@@ -26,9 +26,9 @@ namespace cage
 					shr->uniform(1, colorRgbToHsv(rgb)[0]);
 					break;
 				}
-				Mesh *mesh = impl->graphicsData.imageMesh;
-				mesh->bind();
-				mesh->dispatch();
+				Model *model = impl->graphicsData.imageModel;
+				model->bind();
+				model->dispatch();
 			}
 		};
 

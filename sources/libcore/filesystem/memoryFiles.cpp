@@ -157,26 +157,26 @@ namespace cage
 
 	Holder<File> newFileBuffer(MemoryBuffer *buffer, const FileMode &mode)
 	{
-		return detail::systemArena().createImpl<File, FileBuffer>(buffer, mode);
+		return systemArena().createImpl<File, FileBuffer>(buffer, mode);
 	}
 
 	Holder<File> newFileBuffer(MemoryBuffer &&buffer, const FileMode &mode)
 	{
-		return detail::systemArena().createImpl<File, FileBuffer>(templates::move(buffer), mode);
+		return systemArena().createImpl<File, FileBuffer>(templates::move(buffer), mode);
 	}
 
 	Holder<File> newFileBuffer(PointerRange<char> buffer, const FileMode &mode)
 	{
-		return detail::systemArena().createImpl<File, FileRange>(buffer, mode);
+		return systemArena().createImpl<File, FileRange>(buffer, mode);
 	}
 
 	Holder<File> newFileBuffer(PointerRange<const char> buffer)
 	{
-		return detail::systemArena().createImpl<File, FileRange>(PointerRange<char>((char*)buffer.begin(), (char*)buffer.end()), FileMode(true, false));
+		return systemArena().createImpl<File, FileRange>(PointerRange<char>((char*)buffer.begin(), (char*)buffer.end()), FileMode(true, false));
 	}
 
 	Holder<File> newFileBuffer()
 	{
-		return detail::systemArena().createImpl<File, FileBuffer>(MemoryBuffer(), FileMode(true, true));
+		return systemArena().createImpl<File, FileBuffer>(MemoryBuffer(), FileMode(true, true));
 	}
 }

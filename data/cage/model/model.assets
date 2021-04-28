@@ -1,0 +1,27 @@
+
+[]
+scheme = model
+fake.obj
+
+[]
+scheme = model
+uvs = false
+bone.obj
+
+[]
+scheme = model
+normals = false
+square.obj
+
+[]
+scheme = model
+uvs = false
+normals = false
+sphere.obj
+cone.obj
+guiElement.obj
+guiWire.obj
+
+[]
+scheme = pack
+model.pack

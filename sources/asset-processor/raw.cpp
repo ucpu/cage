@@ -1,5 +1,3 @@
-#include <cage-core/memoryCompression.h>
-
 #include "processor.h"
 
 #include <utility>
@@ -34,7 +32,7 @@ void processRaw()
 	else
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "data are under compression threshold");
 
-	Holder<File> f = newFile(outputFileName, FileMode(false, true));
+	Holder<File> f = writeFile(outputFileName);
 	f->write(bufferView(h));
 	f->write(data);
 	f->close();

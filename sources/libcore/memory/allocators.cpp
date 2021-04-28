@@ -90,10 +90,10 @@ namespace cage
 			void nextBuffer()
 			{
 				if (blocks.empty())
-					blocks.push_back(detail::systemArena().createHolder<Block>(config.blockSize));
+					blocks.push_back(systemArena().createHolder<Block>(config.blockSize));
 				index = (index + 1) % numeric_cast<uint32>(blocks.size());
 				if (blocks[index]->cnt != 0)
-					blocks.insert(blocks.begin() + index, detail::systemArena().createHolder<Block>(config.blockSize));
+					blocks.insert(blocks.begin() + index, systemArena().createHolder<Block>(config.blockSize));
 				updatePointers();
 			}
 
@@ -146,13 +146,13 @@ namespace cage
 
 	Holder<MemoryArena> newMemoryAllocatorLinear(const MemoryAllocatorLinearCreateConfig &config)
 	{
-		Holder<MemoryAllocatorLinearImpl> b = detail::systemArena().createHolder<MemoryAllocatorLinearImpl>(config);
+		Holder<MemoryAllocatorLinearImpl> b = systemArena().createHolder<MemoryAllocatorLinearImpl>(config);
 		return Holder<MemoryArena>(&b->arena, templates::move(b));
 	}
 
 	Holder<MemoryArena> newMemoryAllocatorStream(const MemoryAllocatorStreamCreateConfig &config)
 	{
-		Holder<MemoryAllocatorStreamImpl> b = detail::systemArena().createHolder<MemoryAllocatorStreamImpl>(config);
+		Holder<MemoryAllocatorStreamImpl> b = systemArena().createHolder<MemoryAllocatorStreamImpl>(config);
 		return Holder<MemoryArena>(&b->arena, templates::move(b));
 	}
 }

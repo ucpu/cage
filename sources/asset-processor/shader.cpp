@@ -1,7 +1,4 @@
-#include <cage-core/string.h>
 #include <cage-core/timer.h>
-#include <cage-core/memoryBuffer.h>
-#include <cage-core/serialization.h>
 #include <cage-core/hashString.h>
 #include <cage-engine/opengl.h>
 
@@ -469,6 +466,7 @@ void processShader()
 			ser << (uint32)shaderType(it.first);
 			ser << numeric_cast<uint32>(it.second.length());
 			ser.write({ it.second.c_str(), it.second.c_str() + it.second.length() });
+			//ser.write(it.second);
 			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "stage: " + it.first + ", length: " + it.second.size());
 		}
 
@@ -477,9 +475,9 @@ void processShader()
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + comp.size());
 
 		AssetHeader h = initializeAssetHeader();
-		h.originalSize = numeric_cast<uint32>(buff.size());
-		h.compressedSize = numeric_cast<uint32>(comp.size());
-		Holder<File> f = newFile(outputFileName, FileMode(false, true));
+		h.originalSize = buff.size();
+		h.compressedSize = comp.size();
+		Holder<File> f = writeFile(outputFileName);
 		f->write(bufferView(h));
 		f->write(comp);
 		f->close();
@@ -494,6 +492,7 @@ void processShader()
 			fm.textual = true;
 			Holder<File> f = newFile(name, fm);
 			f->write({ it.second.c_str(), it.second.c_str() + it.second.length() });
+			f->close();
 		}
 	}
 }

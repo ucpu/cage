@@ -223,7 +223,7 @@ namespace cage
 				publicMutex = newRwMutex();
 				customProcessingQueues.resize(config.threadsMaxCount);
 				for (auto &it : customProcessingQueues)
-					it = detail::systemArena().createHolder<Queue>();
+					it = systemArena().createHolder<Queue>();
 				schemes.resize(config.schemesMaxCount);
 				maintenanceThread = newThread(Delegate<void()>().bind<AssetManagerImpl, &AssetManagerImpl::maintenanceEntry>(this), "asset maintenance");
 				diskLoadingThread = newThread(Delegate<void()>().bind<AssetManagerImpl, &AssetManagerImpl::diskLoadingEntry>(this), "asset disk loading");
@@ -286,7 +286,7 @@ namespace cage
 
 			void dereference(void *ptr)
 			{
-				Holder<Unloading> u = detail::systemArena().createHolder<Unloading>(&workingCounter);
+				Holder<Unloading> u = systemArena().createHolder<Unloading>(&workingCounter);
 				u->ptr = ptr;
 				maintenanceQueue.push(templates::move(u).cast<WorkingAsset>());
 			}
@@ -312,7 +312,7 @@ namespace cage
 
 				if (c.references == 0)
 				{
-					Holder<Unloading> u = detail::systemArena().createHolder<Unloading>(&workingCounter);
+					Holder<Unloading> u = systemArena().createHolder<Unloading>(&workingCounter);
 					u->asset = ass.share();
 					enqueueForDeprocessing(templates::move(u).cast<WorkingAsset>());
 				}
@@ -469,7 +469,7 @@ namespace cage
 
 			// api methods
 
-			void defineScheme(uint32 scheme, uintPtr typeId, const AssetScheme &value)
+			void defineScheme(uintPtr typeId, uint32 scheme, const AssetScheme &value)
 			{
 				CAGE_ASSERT(typeId != 0);
 				CAGE_ASSERT(scheme < schemes.size());
@@ -481,7 +481,7 @@ namespace cage
 
 			void add(uint32 assetName)
 			{
-				Holder<Command> cmd = detail::systemArena().createHolder<Command>(&workingCounter);
+				Holder<Command> cmd = systemArena().createHolder<Command>(&workingCounter);
 				cmd->realName = assetName;
 				cmd->type = CommandEnum::Add;
 				maintenanceQueue.push(templates::move(cmd).cast<WorkingAsset>());
@@ -489,7 +489,7 @@ namespace cage
 
 			void remove(uint32 assetName)
 			{
-				Holder<Command> cmd = detail::systemArena().createHolder<Command>(&workingCounter);
+				Holder<Command> cmd = systemArena().createHolder<Command>(&workingCounter);
 				cmd->realName = assetName;
 				cmd->type = CommandEnum::Remove;
 				maintenanceQueue.push(templates::move(cmd).cast<WorkingAsset>());
@@ -497,7 +497,7 @@ namespace cage
 
 			void reload(uint32 assetName)
 			{
-				Holder<Command> cmd = detail::systemArena().createHolder<Command>(&workingCounter);
+				Holder<Command> cmd = systemArena().createHolder<Command>(&workingCounter);
 				cmd->realName = assetName;
 				cmd->type = CommandEnum::Reload;
 				maintenanceQueue.push(templates::move(cmd).cast<WorkingAsset>());
@@ -515,12 +515,12 @@ namespace cage
 				return generateName++;
 			}
 
-			void fabricate(uint32 assetName, const string &textName, uint32 scheme, uintPtr typeId, Holder<void> &&value)
+			void fabricate(uintPtr typeId, uint32 scheme, uint32 assetName, const string &textName, Holder<void> &&value)
 			{
 				CAGE_ASSERT(typeId != 0);
 				CAGE_ASSERT(scheme < schemes.size());
 				CAGE_ASSERT(schemes[scheme].typeId == typeId);
-				Holder<FabricateCommand> cmd = detail::systemArena().createHolder<FabricateCommand>(&workingCounter);
+				Holder<FabricateCommand> cmd = systemArena().createHolder<FabricateCommand>(&workingCounter);
 				cmd->realName = assetName;
 				cmd->textName = textName;
 				cmd->scheme = scheme;
@@ -529,7 +529,7 @@ namespace cage
 				maintenanceQueue.push(templates::move(cmd).cast<WorkingAsset>());
 			}
 
-			Holder<void> get(uint32 assetName, uint32 scheme, uintPtr typeId, bool throwOnInvalidScheme) const
+			Holder<void> get(uintPtr typeId, uint32 scheme, uint32 assetName, bool throwOnInvalidScheme) const
 			{
 				CAGE_ASSERT(typeId != 0);
 				CAGE_ASSERT(scheme < schemes.size());
@@ -639,9 +639,9 @@ namespace cage
 				file->read(bufferCast<char, uint32>(asset->dependencies));
 
 				if (h.compressedSize)
-					compData.allocate(h.compressedSize);
+					compData.allocate(numeric_cast<uintPtr>(h.compressedSize));
 				if (h.originalSize)
-					origData.allocate(h.originalSize);
+					origData.allocate(numeric_cast<uintPtr>(h.originalSize));
 				if (h.compressedSize || h.originalSize)
 				{
 					MemoryBuffer &t = h.compressedSize ? compData : origData;
@@ -719,7 +719,7 @@ namespace cage
 
 			if (!asset->dependencies.empty())
 			{
-				Holder<Waiting> w = detail::systemArena().createHolder<Waiting>(&impl->workingCounter).makeShareable();
+				Holder<Waiting> w = systemArena().createHolder<Waiting>(&impl->workingCounter).makeShareable();
 				w->asset = asset.share();
 				ScopeLock lock(impl->publicMutex, ReadLockTag());
 				for (uint32 d : asset->dependencies)
@@ -765,7 +765,7 @@ namespace cage
 			if (ptr)
 			{
 				auto &c = impl->privateIndex[((Asset *)ptr)->realName];
-				Holder<Unloading> u = detail::systemArena().createHolder<Unloading>(&impl->workingCounter);
+				Holder<Unloading> u = systemArena().createHolder<Unloading>(&impl->workingCounter);
 				for (Holder<Asset> &a : c.versions)
 					if (a.get() == ptr)
 						u->asset = a.share();
@@ -831,8 +831,8 @@ namespace cage
 					CAGE_LOG(SeverityEnum::Warning, "assetManager", stringizer() + "cannot reload asset " + realName + ", it is fabricated");
 					return; // if an existing asset was replaced with a fabricated one, it may not be reloaded with an asset from disk
 				}
-				auto l = detail::systemArena().createHolder<Loading>(&impl->workingCounter);
-				l->asset = detail::systemArena().createHolder<Asset>(realName, impl).makeShareable();
+				auto l = systemArena().createHolder<Loading>(&impl->workingCounter);
+				l->asset = systemArena().createHolder<Asset>(realName, impl).makeShareable();
 				c.versions.insert(c.versions.begin(), l->asset.share());
 				impl->diskLoadingQueue.push(templates::move(l).cast<WorkingAsset>());
 			} break;
@@ -854,8 +854,8 @@ namespace cage
 				auto &c = impl->privateIndex[realName];
 				c.references++;
 				c.fabricated = true;
-				auto l = detail::systemArena().createHolder<Loading>(&impl->workingCounter);
-				l->asset = detail::systemArena().createHolder<Asset>(realName, impl).makeShareable();
+				auto l = systemArena().createHolder<Loading>(&impl->workingCounter);
+				l->asset = systemArena().createHolder<Asset>(realName, impl).makeShareable();
 				l->asset->textName = textName;
 				l->asset->scheme = scheme;
 				l->asset->assetHolder = templates::move(holder);
@@ -868,10 +868,10 @@ namespace cage
 		}
 	}
 
-	void AssetManager::defineScheme_(uint32 scheme, uintPtr typeId, const AssetScheme &value)
+	void AssetManager::defineScheme_(uintPtr typeId, uint32 scheme, const AssetScheme &value)
 	{
 		AssetManagerImpl *impl = (AssetManagerImpl*)this;
-		impl->defineScheme(scheme, typeId, value);
+		impl->defineScheme(typeId, scheme, value);
 	}
 
 	void AssetManager::add(uint32 assetName)
@@ -898,16 +898,16 @@ namespace cage
 		return impl->generateUniqueName();
 	}
 
-	void AssetManager::fabricate_(uint32 assetName, const string &textName, uint32 scheme, uintPtr typeId, Holder<void> &&value)
+	void AssetManager::fabricate_(uintPtr typeId, uint32 scheme, uint32 assetName, const string &textName, Holder<void> &&value)
 	{
 		AssetManagerImpl *impl = (AssetManagerImpl*)this;
-		impl->fabricate(assetName, textName, scheme, typeId, templates::move(value));
+		impl->fabricate(typeId, scheme, assetName, textName, templates::move(value));
 	}
 
-	Holder<void> AssetManager::get_(uint32 assetName, uint32 scheme, uintPtr typeId, bool throwOnInvalidScheme) const
+	Holder<void> AssetManager::get_(uintPtr typeId, uint32 scheme, uint32 assetName, bool throwOnInvalidScheme) const
 	{
 		const AssetManagerImpl *impl = (const AssetManagerImpl*)this;
-		return impl->get(assetName, scheme, typeId, throwOnInvalidScheme);
+		return impl->get(typeId, scheme, assetName, throwOnInvalidScheme);
 	}
 
 	bool AssetManager::processCustomThread(uint32 threadIndex)
@@ -953,7 +953,7 @@ namespace cage
 
 	Holder<AssetManager> newAssetManager(const AssetManagerCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<AssetManager, AssetManagerImpl>(config);
+		return systemArena().createImpl<AssetManager, AssetManagerImpl>(config);
 	}
 
 	AssetHeader initializeAssetHeader(const string &name_, uint16 schemeIndex)

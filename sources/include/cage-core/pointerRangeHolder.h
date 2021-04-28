@@ -36,8 +36,8 @@ namespace cage
 			};
 
 			Delegate<void(void *)> d;
-			d.bind<MemoryArena, &MemoryArena::destroy<OwnedVector>>(&detail::systemArena());
-			OwnedVector *p = detail::systemArena().createObject<OwnedVector>();
+			d.bind<MemoryArena, &MemoryArena::destroy<OwnedVector>>(&systemArena());
+			OwnedVector *p = systemArena().createObject<OwnedVector>();
 			std::swap(*this, p->vec);
 			p->range = p->vec;
 			Holder<PointerRange<T>> h(&p->range, p, d);

@@ -298,10 +298,10 @@ namespace cage
 			ShaderProgram *imageAnimatedShader;
 			ShaderProgram *imageStaticShader;
 			ShaderProgram *colorPickerShader[3];
-			Mesh *debugMesh;
-			Mesh *elementMesh;
-			Mesh *fontMesh;
-			Mesh *imageMesh;
+			Model *debugModel;
+			Model *elementModel;
+			Model *fontModel;
+			Model *imageModel;
 			GraphicsData();
 		} graphicsData;
 

@@ -23,7 +23,7 @@ namespace cage
 	struct Objects
 	{
 		ShaderConfig shaderConfig;
-		struct UniMesh
+		struct UniModel
 		{
 			mat4 mvpMat;
 			mat4 mvpPrevMat;
@@ -32,12 +32,12 @@ namespace cage
 			vec4 color; // color rgb is linear, and NOT alpha-premultiplied
 			vec4 aniTexFrames;
 		};
-		std::vector<UniMesh> uniMeshes;
+		std::vector<UniModel> uniModeles;
 		std::vector<Mat3x4> uniArmatures;
 		Holder<Texture> textures[MaxTexturesCountPerMaterial];
-		const Holder<Mesh> mesh;
+		const Holder<Model> model;
 
-		Objects(Holder<Mesh> mesh, uint32 max);
+		Objects(Holder<Model> model, uint32 max);
 	};
 
 	struct Lights
@@ -64,7 +64,7 @@ namespace cage
 		Objects object;
 		std::vector<Holder<Lights>> lights;
 
-		Translucent(Holder<Mesh> mesh);
+		Translucent(Holder<Model> model);
 	};
 
 	struct Texts

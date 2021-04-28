@@ -1,5 +1,5 @@
-#ifndef guard_graphic_h_d776d3a2_43c7_464d_b721_291294b5b1ef_
-#define guard_graphic_h_d776d3a2_43c7_464d_b721_291294b5b1ef_
+#ifndef guard_graphics_h_d776d3a2_43c7_464d_b721_291294b5b1ef_
+#define guard_graphics_h_d776d3a2_43c7_464d_b721_291294b5b1ef_
 
 #include "core.h"
 
@@ -59,7 +59,6 @@ namespace cage
 		void wraps(uint32 s, uint32 t, uint32 r);
 		void generateMipmaps();
 
-		[[deprecated]] static void multiBind(uint32 count, const uint32 tius[], const Texture *const texs[]);
 		static void multiBind(PointerRange<const uint32> tius, PointerRange<const Texture *const> texs);
 	};
 
@@ -196,7 +195,7 @@ namespace cage
 		vec2 size(PointerRange<const uint32> glyphs, const FormatStruct &format);
 		vec2 size(PointerRange<const uint32> glyphs, const FormatStruct &format, const vec2 &mousePosition, uint32 &cursor);
 
-		void bind(Mesh *mesh, ShaderProgram *shader) const;
+		void bind(Model *model, ShaderProgram *shader) const;
 		void render(PointerRange<const uint32> glyphs, const FormatStruct &format, uint32 cursor = m);
 	};
 
@@ -205,7 +204,7 @@ namespace cage
 	CAGE_ENGINE_API AssetScheme genAssetSchemeFont(uint32 threadIndex);
 	static constexpr uint32 AssetSchemeIndexFont = 14;
 
-	class CAGE_ENGINE_API Mesh : private Immovable
+	class CAGE_ENGINE_API Model : private Immovable
 	{
 #ifdef CAGE_DEBUG
 		detail::StringBase<64> debugName;
@@ -217,11 +216,11 @@ namespace cage
 		uint32 getId() const;
 		void bind() const;
 
-		void importPolyhedron(const Polyhedron *poly, PointerRange<const char> materialBuffer);
+		void importMesh(const Mesh *poly, PointerRange<const char> materialBuffer);
 
-		void setFlags(MeshRenderFlags flags);
+		void setFlags(ModelRenderFlags flags);
 		void setPrimitiveType(uint32 type);
-		void setBoundingBox(const aabb &box);
+		void setBoundingBox(const Aabb &box);
 		void setTextureNames(PointerRange<const uint32> textureNames);
 		void setTextureName(uint32 index, uint32 name);
 		void setBuffers(uint32 vertexSize, PointerRange<const char> vertexData, PointerRange<const uint32> indexData, PointerRange<const char> materialBuffer);
@@ -232,8 +231,8 @@ namespace cage
 		uint32 getVerticesCount() const;
 		uint32 getIndicesCount() const;
 		uint32 getPrimitivesCount() const;
-		MeshRenderFlags getFlags() const;
-		aabb getBoundingBox() const;
+		ModelRenderFlags getFlags() const;
+		Aabb getBoundingBox() const;
 		PointerRange<const uint32> getTextureNames() const;
 		uint32 getTextureName(uint32 index) const;
 		uint32 getSkeletonName() const;
@@ -244,10 +243,10 @@ namespace cage
 		void dispatch(uint32 instances) const;
 	};
 
-	CAGE_ENGINE_API Holder<Mesh> newMesh();
+	CAGE_ENGINE_API Holder<Model> newModel();
 
-	CAGE_ENGINE_API AssetScheme genAssetSchemeMesh(uint32 threadIndex);
-	static constexpr uint32 AssetSchemeIndexMesh = 12;
+	CAGE_ENGINE_API AssetScheme genAssetSchemeModel(uint32 threadIndex);
+	static constexpr uint32 AssetSchemeIndexModel = 12;
 
 	class CAGE_ENGINE_API RenderObject : private Immovable
 	{
@@ -262,10 +261,10 @@ namespace cage
 
 		real worldSize;
 		real pixelsSize;
-		void setLods(PointerRange<const real> thresholds, PointerRange<const uint32> meshIndices, PointerRange<const uint32> meshNames);
+		void setLods(PointerRange<const real> thresholds, PointerRange<const uint32> modelIndices, PointerRange<const uint32> modelNames);
 		uint32 lodsCount() const;
 		uint32 lodSelect(real threshold) const;
-		PointerRange<const uint32> meshes(uint32 lod) const;
+		PointerRange<const uint32> models(uint32 lod) const;
 
 		// default values for rendering
 
@@ -285,4 +284,4 @@ namespace cage
 	static constexpr uint32 AssetSchemeIndexRenderObject = 13;
 }
 
-#endif // guard_graphic_h_d776d3a2_43c7_464d_b721_291294b5b1ef_
+#endif // guard_graphics_h_d776d3a2_43c7_464d_b721_291294b5b1ef_

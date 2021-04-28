@@ -13,7 +13,7 @@ namespace
 	{
 		uint32 index;
 		float threshold;
-		std::set<uint32> meshes;
+		std::set<uint32> models;
 	};
 }
 
@@ -24,10 +24,9 @@ void processObject()
 	Holder<Ini> ini = newIni();
 	ini->importFile(inputFileName);
 
-	//string basePath = pathExtractDirectory(inputFile);
 	std::vector<Lod> lods;
 	std::set<uint32> deps;
-	uint32 totalMeshes = 0;
+	uint32 totalModeles = 0;
 	for (const string &section : ini->sections())
 	{
 		if (!isDigitsOnly(section))
@@ -40,14 +39,12 @@ void processObject()
 			string v = ini->getString(section, n);
 			if (!isDigitsOnly(n))
 				continue;
-			//v = pathJoin(basePath, v);
-			//writeLine(string("ref=") + v);
 			v = convertAssetPath(v);
 			uint32 h = HashString(v);
-			ls.meshes.insert(h);
+			ls.models.insert(h);
 			deps.insert(h);
 		}
-		totalMeshes += numeric_cast<uint32>(ls.meshes.size());
+		totalModeles += numeric_cast<uint32>(ls.models.size());
 		lods.push_back(templates::move(ls));
 	}
 
@@ -74,8 +71,6 @@ void processObject()
 		string s = ini->getString("skeletalAnimation", "name");
 		if (!s.empty())
 		{
-			//s = pathJoin(basePath, s);
-			//writeLine(string("ref=") + s);
 			s = convertAssetPath(s);
 			o.skelAnimName = HashString(s);
 			deps.insert(o.skelAnimName);
@@ -104,7 +99,7 @@ void processObject()
 	h.originalSize = sizeof(RenderObjectHeader);
 	h.originalSize += numeric_cast<uint32>(lods.size()) * sizeof(uint32);
 	h.originalSize += numeric_cast<uint32>(lods.size() + 1) * sizeof(uint32);
-	h.originalSize += totalMeshes * sizeof(uint32);
+	h.originalSize += totalModeles * sizeof(uint32);
 
 	MemoryBuffer buffer;
 	Serializer ser(buffer);
@@ -112,7 +107,7 @@ void processObject()
 	for (uint32 it : deps)
 		ser << it;
 	o.lodsCount = numeric_cast<uint32>(lods.size());
-	o.meshesCount = totalMeshes;
+	o.modelesCount = totalModeles;
 	ser << o;
 	for (const auto &ls : lods)
 		ser << ls.threshold;
@@ -120,13 +115,15 @@ void processObject()
 	for (const auto &ls : lods)
 	{
 		ser << accum;
-		accum += numeric_cast<uint32>(ls.meshes.size());
+		accum += numeric_cast<uint32>(ls.models.size());
 	}
 	ser << accum;
 	for (const auto &ls : lods)
 	{
-		for (auto msh : ls.meshes)
+		for (auto msh : ls.models)
 			ser << msh;
 	}
-	writeFile(outputFileName)->write(buffer);
+	Holder<File> f = writeFile(outputFileName);
+	f->write(buffer);
+	f->close();
 }

@@ -385,7 +385,7 @@ namespace
 			h.originalSize += it.data->rawViewU8().size();
 
 		MemoryBuffer inputBuffer;
-		inputBuffer.reserve(h.originalSize);
+		inputBuffer.reserve(numeric_cast<uintPtr>(h.originalSize));
 		Serializer ser(inputBuffer);
 		ser << data;
 		for (const auto &it : images)

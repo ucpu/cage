@@ -1,7 +1,7 @@
 #include <cage-core/assetContext.h>
 #include <cage-core/serialization.h>
 #include <cage-core/memoryBuffer.h>
-#include <cage-core/polyhedron.h>
+#include <cage-core/mesh.h>
 #include <cage-core/color.h>
 
 #include <cage-engine/graphics.h>
@@ -15,21 +15,21 @@ namespace cage
 	{
 		void processLoad(AssetContext *context)
 		{
-			Holder<Mesh> msh = newMesh();
+			Holder<Model> msh = newModel();
 			msh->setDebugName(context->textName);
 
 			Deserializer des(context->originalData);
-			MeshHeader data;
+			ModelHeader data;
 			des >> data;
 
 			MemoryBuffer mat;
 			mat.resize(data.materialSize);
 			des.read(mat);
 
-			Holder<Polyhedron> poly = newPolyhedron();
+			Holder<Mesh> poly = newMesh();
 			poly->deserialize(des.advance(des.available()));
 
-			msh->importPolyhedron(poly.get(), mat);
+			msh->importMesh(poly.get(), mat);
 
 			msh->setFlags(data.renderFlags);
 			msh->setBoundingBox(data.box);
@@ -41,7 +41,7 @@ namespace cage
 		}
 	}
 
-	AssetScheme genAssetSchemeMesh(uint32 threadIndex)
+	AssetScheme genAssetSchemeModel(uint32 threadIndex)
 	{
 		AssetScheme s;
 		s.threadIndex = threadIndex;

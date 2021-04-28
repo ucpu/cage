@@ -18,14 +18,14 @@ namespace cage
 		context.elementShader->uniform(1, data.inner);
 		context.elementShader->uniform(2, data.element);
 		context.elementShader->uniform(3, data.mode);
-		context.elementMesh->bind();
-		context.elementMesh->dispatch();
+		context.elementModel->bind();
+		context.elementModel->dispatch();
 	}
 
 	void RenderableText::render(GuiImpl *impl)
 	{
 		GuiImpl::GraphicsData &context = impl->graphicsData;
-		data.font->bind(context.fontMesh, context.fontShader);
+		data.font->bind(context.fontModel, context.fontShader);
 		context.fontShader->uniform(0, data.transform);
 		context.fontShader->uniform(4, data.color);
 		data.font->render({ data.glyphs, data.glyphs + data.count }, data.format, data.cursor);
@@ -41,8 +41,8 @@ namespace cage
 		shr->uniform(1, data.uvClip);
 		if (data.texture->getTarget() == GL_TEXTURE_2D_ARRAY)
 			shr->uniform(2, data.aniTexFrames);
-		context.imageMesh->bind();
-		context.imageMesh->dispatch();
+		context.imageModel->bind();
+		context.imageModel->dispatch();
 	}
 
 	namespace

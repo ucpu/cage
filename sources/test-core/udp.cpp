@@ -22,7 +22,7 @@ namespace
 		uint64 lastTime;
 		bool hadConnection;
 
-		ServerImpl() : lastTime(getApplicationTime()), hadConnection(false)
+		ServerImpl() : lastTime(applicationTime()), hadConnection(false)
 		{
 			udp = newUdpServer(3210);
 		}
@@ -49,7 +49,7 @@ namespace
 					bool r;
 					Holder<PointerRange<char>> b = c->read(ch, r);
 					c->write(b, ch, r); // just repeat back the same message
-					lastTime = getApplicationTime();
+					lastTime = applicationTime();
 				}
 				try
 				{

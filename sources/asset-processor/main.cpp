@@ -117,6 +117,8 @@ namespace
 			const string relativeTo = relativeTo_.empty() ? pathExtractDirectory(inputFile) : relativeTo_;
 			input = pathJoin(relativeTo, input);
 		}
+		if (input.empty())
+			CAGE_THROW_ERROR(Exception, "input cannot be empty");
 		return input;
 	}
 }
@@ -125,9 +127,8 @@ string convertAssetPath(const string &input, const string &relativeTo, bool mark
 {
 	string detail;
 	string p = input;
-	const uint32 sep = min(find(p, '?'), find(p, ';'));
-	if (sep != 0)
 	{
+		const uint32 sep = min(find(p, '?'), find(p, ';'));
 		detail = subString(p, sep, m);
 		p = subString(p, 0, sep);
 	}
@@ -213,8 +214,8 @@ int main(int argc, const char *args[])
 			func.bind<&processObject>();
 		else if (component == "animation")
 			func.bind<&processAnimation>();
-		else if (component == "mesh")
-			func.bind<&processMesh>();
+		else if (component == "model")
+			func.bind<&processModel>();
 		else if (component == "skeleton")
 			func.bind<&processSkeleton>();
 		else if (component == "font")

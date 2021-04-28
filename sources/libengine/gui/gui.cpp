@@ -35,19 +35,6 @@ namespace cage
 		return impl->zoom;
 	}
 
-	void Gui::setOutputSoundBus(MixingBus *bus)
-	{
-		GuiImpl *impl = (GuiImpl*)this;
-		// todo
-	}
-
-	MixingBus *Gui::getOutputSoundBus() const
-	{
-		GuiImpl *impl = (GuiImpl*)this;
-		// todo
-		return nullptr;
-	}
-
 	void Gui::setFocus(uint32 widget)
 	{
 		GuiImpl *impl = (GuiImpl*)this;
@@ -111,6 +98,6 @@ namespace cage
 
 	Holder<Gui> newGui(const GuiCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<Gui, GuiImpl>(config);
+		return systemArena().createImpl<Gui, GuiImpl>(config);
 	}
 }

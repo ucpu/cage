@@ -18,12 +18,12 @@ namespace cage
 		void updateByPosition(const Delegate<real(const vec3 &)> &generator);
 
 		Holder<Collider> makeCollider() const;
-		Holder<Polyhedron> makePolyhedron() const;
+		Holder<Mesh> makeMesh() const;
 	};
 
 	struct CAGE_CORE_API MarchingCubesCreateConfig
 	{
-		aabb box = aabb(vec3(-1), vec3(1));
+		Aabb box = Aabb(vec3(-1), vec3(1));
 		ivec3 resolution = ivec3(20);
 		bool clip = true;
 

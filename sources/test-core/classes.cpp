@@ -70,8 +70,8 @@ void testClasses()
 
 	{
 		CAGE_TESTCASE("class_cast");
-		Holder<Base> ah = detail::systemArena().createHolder<Base>();
-		Holder<Base> bh = detail::systemArena().createImpl<Base, Derived>();
+		Holder<Base> ah = systemArena().createHolder<Base>();
+		Holder<Base> bh = systemArena().createImpl<Base, Derived>();
 		Base *a = ah.get();
 		Base *b = bh.get();
 		CAGE_TEST(class_cast<Base*>(a));
@@ -85,10 +85,10 @@ void testClasses()
 
 	{
 		CAGE_TESTCASE("holder cast");
-		CAGE_TEST((detail::systemArena().createHolder<Base>().dynCast<Base>()));
-		CAGE_TEST((detail::systemArena().createImpl<Base, Derived>().dynCast<Base>()));
-		CAGE_TEST((detail::systemArena().createImpl<Base, Derived>().dynCast<Derived>()));
-		CAGE_TEST_THROWN((detail::systemArena().createImpl<Base, Derived>().dynCast<OtherDerived>()));
+		CAGE_TEST((systemArena().createHolder<Base>().dynCast<Base>()));
+		CAGE_TEST((systemArena().createImpl<Base, Derived>().dynCast<Base>()));
+		CAGE_TEST((systemArena().createImpl<Base, Derived>().dynCast<Derived>()));
+		CAGE_TEST_THROWN((systemArena().createImpl<Base, Derived>().dynCast<OtherDerived>()));
 		CAGE_TEST((Holder<Base>().dynCast<Derived>().get()) == nullptr);
 		CAGE_TEST((Holder<Derived>().dynCast<Derived>().get()) == nullptr);
 		CAGE_TEST((Holder<Derived>().dynCast<Base>().get()) == nullptr);
@@ -96,14 +96,14 @@ void testClasses()
 
 	{
 		CAGE_TESTCASE("memory arena and throwing constructor");
-		MemoryArena m = detail::systemArena();
+		MemoryArena m = systemArena();
 		CAGE_TEST(m.createHolder<Throwing>(false));
 		CAGE_TEST_THROWN(m.createHolder<Throwing>(true));
 	}
 
 	{
 		CAGE_TESTCASE("holder and inheritance");
-		MemoryArena m = detail::systemArena();
+		MemoryArena m = systemArena();
 		{
 			CAGE_TESTCASE("regular inheritance");
 			Holder<Base> h = m.createImpl<Base, Derived>();

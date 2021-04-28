@@ -111,20 +111,23 @@ namespace cage
 	struct rads;
 	struct degs;
 	struct vec2;
+	struct ivec2;
 	struct vec3;
+	struct ivec3;
 	struct vec4;
+	struct ivec4;
 	struct quat;
 	struct mat3;
 	struct mat4;
 	struct transform;
-	struct line;
-	struct triangle;
-	struct plane;
-	struct sphere;
-	struct aabb;
-	struct ivec2;
-	struct ivec3;
-	struct ivec4;
+
+	struct Line;
+	struct Triangle;
+	struct Plane;
+	struct Sphere;
+	struct Aabb;
+	struct Cone;
+	struct Frustum;
 
 	class AssetManager;
 	struct AssetManagerCreateConfig;
@@ -132,6 +135,14 @@ namespace cage
 	struct AssetScheme;
 	struct AssetHeader;
 	struct AssetHeader;
+	enum class AudioFormatEnum : uint32;
+	class Audio;
+	class AudioStream;
+	class AudioChannelsConverter;
+	struct AudioChannelsConverterCreateConfig;
+	struct AudioDirectionalData;
+	class AudioDirectionalConverter;
+	struct AudioDirectionalConverterCreateConfig;
 	enum class StereoModeEnum : uint32;
 	enum class StereoEyeEnum : uint32;
 	struct StereoCameraInput;
@@ -189,6 +200,16 @@ namespace cage
 	struct OutOfMemory;
 	class VirtualMemory;
 	struct MemoryBuffer;
+	enum class MeshTypeEnum : uint32;
+	struct MeshMergeCloseVerticesConfig;
+	struct MeshSimplifyConfig;
+	struct MeshRegularizeConfig;
+	struct MeshUnwrapConfig;
+	struct MeshGenerateTextureConfig;
+	struct MeshGenerateNormalsConfig;
+	struct MeshGenerateTangentsConfig;
+	struct MeshExportObjConfig;
+	class Mesh;
 	struct Disconnected;
 	class TcpConnection;
 	class TcpServer;
@@ -206,18 +227,6 @@ namespace cage
 	class NoiseFunction;
 	struct NoiseFunctionCreateConfig;
 	template<class T> struct PointerRangeHolder;
-	enum class PolyhedronTypeEnum : uint32;
-	struct PolyhedronSimplificationConfig;
-	struct PolyhedronRegularizationConfig;
-	struct PolyhedronUnwrapConfig;
-	struct PolyhedronTextureGenerationConfig;
-	struct PolyhedronNormalsGenerationConfig;
-	struct PolyhedronTangentsGenerationConfig;
-	struct PolyhedronObjExportConfig;
-	class Polyhedron;
-	enum class PolytoneFormatEnum : uint32;
-	class Polytone;
-	class PolytoneStream;
 	class SampleRateConverter;
 	struct SampleRateConverterCreateConfig;
 	struct ProcessCreateConfig;
@@ -225,6 +234,8 @@ namespace cage
 	struct RandomGenerator;
 	class RectPacking;
 	struct RectPackingCreateConfig;
+	class SampleRateConverter;
+	struct SampleRateConverterCreateConfig;
 	enum class ScheduleTypeEnum : uint32;
 	struct ScheduleCreateConfig;
 	class Schedule;
@@ -1120,14 +1131,8 @@ namespace cage
 		bool operator != (const MemoryArena &other) const noexcept;
 	};
 
-	namespace detail
-	{
-		CAGE_CORE_API MemoryArena &systemArena();
-	}
-
-	// app time
-
-	CAGE_CORE_API uint64 getApplicationTime();
+	CAGE_CORE_API MemoryArena &systemArena();
+	CAGE_CORE_API uint64 applicationTime();
 }
 
 #endif // guard_core_h_39243ce0_71a5_4900_8898_63fb89591b7b_

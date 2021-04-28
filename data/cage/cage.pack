@@ -1,7 +1,6 @@
-
-[0] #pack
+[]
 font/font.pack
-mesh/mesh.pack
+model/model.pack
 shader/shader.pack
 texture/texture.pack
 sound/sound.pack

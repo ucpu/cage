@@ -1,5 +1,6 @@
 #include <cage-core/memoryCompression.h>
 #include <cage-core/memoryBuffer.h>
+#include <cage-core/math.h> // clamp
 
 #include <zstd.h>
 
@@ -25,7 +26,8 @@ namespace cage
 
 	void compress(PointerRange<const char> input, PointerRange<char> &output, sint32 preference)
 	{
-		const std::size_t r = ZSTD_compress(output.data(), output.size(), input.data(), input.size(), ZSTD_maxCLevel() * preference / 100);
+		const int level = clamp(ZSTD_maxCLevel() * preference / 100, ZSTD_minCLevel(), ZSTD_maxCLevel());
+		const std::size_t r = ZSTD_compress(output.data(), output.size(), input.data(), input.size(), level);
 		if (ZSTD_isError(r))
 			CAGE_THROW_ERROR(Exception, Exception::StringLiteral(ZSTD_getErrorName(r)));
 		CAGE_ASSERT(r <= output.size());
@@ -44,6 +46,6 @@ namespace cage
 	uintPtr compressionBound(uintPtr size)
 	{
 		const std::size_t r = ZSTD_compressBound(size);
-		return r + r / 100 + 100000; // additional capacity allows faster compression
+		return r + r / 10 + 1000000; // additional capacity allows faster compression
 	}
 }

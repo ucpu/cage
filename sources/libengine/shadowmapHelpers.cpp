@@ -8,30 +8,30 @@
 
 namespace cage
 {
-	aabb getBoxForMesh(uint32 name)
+	Aabb getBoxForModel(uint32 name)
 	{
-		Holder<Mesh> m = engineAssets()->tryGet<AssetSchemeIndexMesh, Mesh>(name);
+		Holder<Model> m = engineAssets()->tryGet<AssetSchemeIndexModel, Model>(name);
 		if (m)
 			return m->getBoundingBox();
-		return aabb();
+		return Aabb();
 	}
 
-	aabb getBoxForObject(uint32 name)
+	Aabb getBoxForObject(uint32 name)
 	{
 		Holder<RenderObject> o = engineAssets()->tryGet<AssetSchemeIndexRenderObject, RenderObject>(name);
 		if (!o)
-			return aabb();
-		aabb res;
-		for (uint32 it : o->meshes(0))
-			res += getBoxForMesh(it);
+			return Aabb();
+		Aabb res;
+		for (uint32 it : o->models(0))
+			res += getBoxForModel(it);
 		return res;
 	}
 
-	aabb getBoxForAsset(uint32 name)
+	Aabb getBoxForAsset(uint32 name)
 	{
 		AssetManager *ass = engineAssets();
 		{
-			Holder<Mesh> m = ass->tryGet<AssetSchemeIndexMesh, Mesh>(name);
+			Holder<Model> m = ass->tryGet<AssetSchemeIndexModel, Model>(name);
 			if (m)
 				return m->getBoundingBox();
 		}
@@ -40,22 +40,22 @@ namespace cage
 			if (o)
 				return getBoxForObject(name);
 		}
-		return aabb();
+		return Aabb();
 	}
 
-	aabb getBoxForEntity(Entity *e)
+	Aabb getBoxForEntity(Entity *e)
 	{
 		CAGE_ASSERT(e->has(TransformComponent::component));
 		CAGE_ASSERT(e->has(RenderComponent::component));
 		CAGE_COMPONENT_ENGINE(Transform, t, e);
 		CAGE_COMPONENT_ENGINE(Render, r, e);
-		aabb b = getBoxForAsset(r.object);
+		Aabb b = getBoxForAsset(r.object);
 		return b * t;
 	}
 
-	aabb getBoxForScene(uint32 sceneMask)
+	Aabb getBoxForScene(uint32 sceneMask)
 	{
-		aabb res;
+		Aabb res;
 		for (Entity *e : RenderComponent::component->entities())
 		{
 			CAGE_COMPONENT_ENGINE(Render, r, e);
@@ -81,7 +81,7 @@ namespace cage
 		}
 	}
 
-	void fitShadowmapForDirectionalLight(Entity *light, const aabb &box)
+	void fitShadowmapForDirectionalLight(Entity *light, const Aabb &box)
 	{
 		CAGE_ASSERT(isEntityDirectionalLightWithShadowmap(light));
 		CAGE_COMPONENT_ENGINE(Transform, t, light);

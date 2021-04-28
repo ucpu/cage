@@ -1,20 +1,49 @@
+#include <cage-core/audio.h>
+#include <cage-core/audioChannelsConverter.h>
+
 #include "processor.h"
 
-#include <cage-core/polytone.h>
+#include <utility> // swap
 
 void processSound()
 {
 	writeLine(string("use=") + inputFile);
 
-	Holder<Polytone> polytone = newPolytone();
-	polytone->importFile(inputFileName);
+	Holder<Audio> audio = newAudio();
+	audio->importFile(inputFileName);
+
+	{
+		const bool mono = toBool(properties("mono"));
+		if (mono && audio->channels() != 1)
+		{
+			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "converting channels from " + audio->channels() + " to mono");
+			audioConvertFormat(+audio, AudioFormatEnum::Float);
+			Holder<Audio> tmp = newAudio();
+			tmp->initialize(audio->frames(), 1, audio->sampleRate());
+			PointerRange<float> dst = { (float *)tmp->rawViewFloat().begin(), (float *)tmp->rawViewFloat().end() };
+			newAudioChannelsConverter({})->convert(audio->rawViewFloat(), dst, audio->channels(), 1);
+			std::swap(tmp, audio);
+		}
+	}
+
+	{
+		const uint32 sr = toUint32(properties("sampleRate"));
+		if (sr != 0 && audio->sampleRate() != sr)
+		{
+			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "converting sample rate from " + audio->sampleRate() + " to " + sr);
+			audioConvertSampleRate(+audio, sr);
+		}
+	}
 
 	SoundSourceHeader sds = {};
-	sds.channels = polytone->channels();
-	sds.frames = polytone->frames();
-	sds.sampleRate = polytone->sampleRate();
+	sds.channels = audio->channels();
+	sds.frames = audio->frames();
+	sds.sampleRate = audio->sampleRate();
 	const uint64 rawSize = sds.frames * sds.channels * sizeof(float);
 
+	sds.referenceDistance = toFloat(properties("referenceDistance"));
+	sds.rolloffFactor = toFloat(properties("rolloffFactor"));
+	sds.gain = toFloat(properties("gain"));
 	if (toBool(properties("loopBefore")))
 		sds.flags = sds.flags | SoundFlags::LoopBeforeStart;
 	if (toBool(properties("loopAfter")))
@@ -30,7 +59,7 @@ void processSound()
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "frames: " + sds.frames);
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "channels: " + sds.channels);
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "raw size: " + rawSize + " bytes");
-	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "samplerate: " + sds.sampleRate);
+	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "sample rate: " + sds.sampleRate);
 	switch (sds.soundType)
 	{
 	case SoundTypeEnum::RawRaw:
@@ -50,13 +79,13 @@ void processSound()
 	{
 	case SoundTypeEnum::RawRaw:
 	{
-		polytoneConvertFormat(+polytone, PolytoneFormatEnum::Float);
+		audioConvertFormat(+audio, AudioFormatEnum::Float);
 		Holder<File> f = writeFile(outputFileName);
 		AssetHeader h = initializeAssetHeader();
 		h.originalSize = sizeof(SoundSourceHeader) + rawSize;
 		f->write(bufferView(h));
 		f->write(bufferView(sds));
-		PointerRange<const char> buff = bufferCast<const char, const float>(polytone->rawViewFloat());
+		PointerRange<const char> buff = bufferCast<const char, const float>(audio->rawViewFloat());
 		CAGE_ASSERT(buff.size() == rawSize);
 		f->write(buff);
 		f->close();
@@ -64,7 +93,7 @@ void processSound()
 	case SoundTypeEnum::CompressedRaw:
 	case SoundTypeEnum::CompressedCompressed:
 	{
-		Holder<PointerRange<char>> buff = polytone->exportBuffer(".ogg");
+		Holder<PointerRange<char>> buff = audio->exportBuffer(".ogg");
 		const uint64 oggSize = buff.size();
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "compressed size: " + oggSize + " bytes");
 		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "compression ratio: " + (oggSize / (float)rawSize));
@@ -93,8 +122,8 @@ void processSound()
 	// preview sound
 	if (configGetBool("cage-asset-processor/sound/preview"))
 	{
-		string dbgName = pathJoin(configGetString("cage-asset-processor/sound/path", "asset-preview"), stringizer() + pathReplaceInvalidCharacters(inputName) + ".ogg");
-		polytone->exportFile(dbgName);
+		const string dbgName = pathJoin(configGetString("cage-asset-processor/sound/path", "asset-preview"), stringizer() + pathReplaceInvalidCharacters(inputName) + ".ogg");
+		audio->exportFile(dbgName);
 	}
 }
 
@@ -102,8 +131,8 @@ void analyzeSound()
 {
 	try
 	{
-		Holder<Polytone> polytone = newPolytone();
-		polytone->importFile(inputFileName);
+		Holder<Audio> audio = newAudio();
+		audio->importFile(inputFileName);
 		writeLine("cage-begin");
 		writeLine("scheme=sound");
 		writeLine(string() + "asset=" + inputFile);

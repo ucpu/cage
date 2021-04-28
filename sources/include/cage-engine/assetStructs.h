@@ -51,15 +51,15 @@ namespace cage
 		// array of texels
 	};
 
-	struct CAGE_ENGINE_API MeshHeader
+	struct CAGE_ENGINE_API ModelHeader
 	{
-		aabb box;
+		Aabb box;
 		uint32 textureNames[MaxTexturesCountPerMaterial];
 		uint32 skeletonName;
 		uint32 skeletonBones;
 		uint32 instancesLimitHint;
 		uint32 materialSize;
-		MeshRenderFlags renderFlags;
+		ModelRenderFlags renderFlags;
 
 		struct CAGE_ENGINE_API MaterialData
 		{
@@ -72,7 +72,7 @@ namespace cage
 
 		// follows:
 		// material (may or may not be the MaterialData)
-		// serialized polyhedron
+		// serialized mesh
 	};
 
 	struct CAGE_ENGINE_API RenderObjectHeader
@@ -90,12 +90,12 @@ namespace cage
 		real worldSize;
 		real pixelsSize;
 		uint32 lodsCount;
-		uint32 meshesCount;
+		uint32 modelesCount;
 
 		// follows:
 		// array of thresholds, each float
-		// array of mesh indices, each uint32 (one item more than thresholds)
-		// array of mesh names, each uint32
+		// array of model indices, each uint32 (one item more than thresholds)
+		// array of model names, each uint32
 	};
 
 	enum class FontFlags : uint32
@@ -154,6 +154,9 @@ namespace cage
 		uint64 frames;
 		uint32 channels;
 		uint32 sampleRate;
+		real referenceDistance;
+		real rolloffFactor;
+		real gain;
 		SoundTypeEnum soundType;
 		SoundFlags flags;
 

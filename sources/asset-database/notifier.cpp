@@ -55,7 +55,7 @@ namespace
 
 void notifierInitialize(const uint16 port)
 {
-	notifierInstance = detail::systemArena().createHolder<Notifier>(port);
+	notifierInstance = systemArena().createHolder<Notifier>(port);
 }
 
 void notifierAccept()

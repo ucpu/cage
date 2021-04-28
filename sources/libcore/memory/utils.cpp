@@ -66,7 +66,7 @@ namespace cage
 				{
 					if (--cnt <= 0)
 					{
-						detail::systemArena().destroy<SharedCounter>(this); // suicide
+						systemArena().destroy<SharedCounter>(this); // suicide
 					}
 				}
 			};
@@ -92,80 +92,77 @@ namespace cage
 		{
 			if (isHolderShareable(deleter))
 				return;
-			SharedCounter *shr = detail::systemArena().createObject<SharedCounter>();
+			SharedCounter *shr = systemArena().createObject<SharedCounter>();
 			shr->payload = Holder<void>(nullptr, ptr, deleter);
 			ptr = shr;
 			deleter = Delegate<void(void *)>().bind<&decHolderShareable>();
 		}
 	}
 
-	namespace detail
+	namespace
 	{
-		namespace
+		void *malloca(uintPtr size, uintPtr alignment)
 		{
-			void *malloca(uintPtr size, uintPtr alignment)
-			{
-				CAGE_ASSERT(size > 0);
-				CAGE_ASSERT(isPowerOf2(alignment));
-				uintPtr s = roundUpTo(size, alignment);
+			CAGE_ASSERT(size > 0);
+			CAGE_ASSERT(detail::isPowerOf2(alignment));
+			uintPtr s = detail::roundUpTo(size, alignment);
 #ifdef _MSC_VER
-				void *p = _aligned_malloc(s, alignment);
+			void *p = _aligned_malloc(s, alignment);
 #else
-				void *p = std::aligned_alloc(alignment, s);
+			void *p = std::aligned_alloc(alignment, s);
 #endif // _MSC_VER
-				CAGE_ASSERT(uintPtr(p) % alignment == 0);
-				return p;
-			}
-
-			void freea(void *ptr)
-			{
-#ifdef _MSC_VER
-				_aligned_free(ptr);
-#else
-				::free(ptr);
-#endif // _MSC_VER
-			}
-
-			class SystemMemoryArenaImpl : private Immovable
-			{
-			public:
-				SystemMemoryArenaImpl() : arena(this)
-				{}
-
-				void *allocate(uintPtr size, uintPtr alignment)
-				{
-					void *tmp = malloca(size, alignment);
-					if (!tmp)
-						CAGE_THROW_ERROR(OutOfMemory, "system arena out of memory", size);
-					allocations++;
-					return tmp;
-				}
-
-				void deallocate(void *ptr)
-				{
-					if (!ptr)
-						return;
-					freea(ptr);
-					if (allocations-- == 0)
-						CAGE_THROW_CRITICAL(Exception, "memory corruption - double deallocation detected");
-				}
-
-				void flush()
-				{
-					CAGE_THROW_CRITICAL(Exception, "invalid operation - deallocate must be used");
-				}
-
-				std::atomic<uint32> allocations = 0;
-
-				MemoryArena arena;
-			};
+			CAGE_ASSERT(uintPtr(p) % alignment == 0);
+			return p;
 		}
 
-		MemoryArena &systemArena()
+		void freea(void *ptr)
 		{
-			static SystemMemoryArenaImpl *arena = new SystemMemoryArenaImpl(); // intentionally left to leak
-			return arena->arena;
+#ifdef _MSC_VER
+			_aligned_free(ptr);
+#else
+			::free(ptr);
+#endif // _MSC_VER
 		}
+
+		class SystemMemoryArenaImpl : private Immovable
+		{
+		public:
+			SystemMemoryArenaImpl() : arena(this)
+			{}
+
+			void *allocate(uintPtr size, uintPtr alignment)
+			{
+				void *tmp = malloca(size, alignment);
+				if (!tmp)
+					CAGE_THROW_ERROR(OutOfMemory, "system arena out of memory", size);
+				allocations++;
+				return tmp;
+			}
+
+			void deallocate(void *ptr)
+			{
+				if (!ptr)
+					return;
+				freea(ptr);
+				if (allocations-- == 0)
+					CAGE_THROW_CRITICAL(Exception, "memory corruption - double deallocation detected");
+			}
+
+			void flush()
+			{
+				CAGE_THROW_CRITICAL(Exception, "invalid operation - deallocate must be used");
+			}
+
+			std::atomic<uint32> allocations = 0;
+
+			MemoryArena arena;
+		};
+	}
+
+	MemoryArena &systemArena()
+	{
+		static SystemMemoryArenaImpl *arena = new SystemMemoryArenaImpl(); // intentionally left to leak
+		return arena->arena;
 	}
 
 	namespace
@@ -296,7 +293,7 @@ namespace cage
 
 	Holder<VirtualMemory> newVirtualMemory()
 	{
-		return detail::systemArena().createImpl<VirtualMemory, VirtualMemoryImpl>();
+		return systemArena().createImpl<VirtualMemory, VirtualMemoryImpl>();
 	}
 
 	namespace detail

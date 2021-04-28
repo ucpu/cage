@@ -193,7 +193,7 @@ namespace cage
 
 	Holder<SwapBufferGuard> newSwapBufferGuard(const SwapBufferGuardCreateConfig &config)
 	{
-		return detail::systemArena().createImpl<SwapBufferGuard, SwapBufferGuardImpl>(config);
+		return systemArena().createImpl<SwapBufferGuard, SwapBufferGuardImpl>(config);
 	}
 }
 

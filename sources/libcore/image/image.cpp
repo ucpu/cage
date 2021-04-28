@@ -412,6 +412,6 @@ namespace cage
 
 	Holder<Image> newImage()
 	{
-		return detail::systemArena().createImpl<Image, ImageImpl>();
+		return systemArena().createImpl<Image, ImageImpl>();
 	}
 }

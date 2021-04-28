@@ -39,7 +39,7 @@ namespace
 	{
 		if (context->realName >= 5000)
 			CAGE_THROW_ERROR(Exception, "intentionally failed asset processing");
-		Holder<AssetCounter> h = detail::systemArena().createHolder<AssetCounter>();
+		Holder<AssetCounter> h = systemArena().createHolder<AssetCounter>();
 		context->assetHolder = templates::move(h).cast<void>();
 	}
 
@@ -93,9 +93,9 @@ namespace
 		AssetManagerCreateConfig cfg;
 		cfg.assetsFolderName = AssetsPath;
 		Holder<AssetManager> man = newAssetManager(cfg);
-		man->defineScheme<AssetPack>(AssetSchemeIndexPack, genAssetSchemePack());
-		man->defineScheme<MemoryBuffer>(AssetSchemeIndexRaw, genAssetSchemeRaw());
-		man->defineScheme<AssetCounter>(AssetSchemeIndexCounter, genAssetSchemeCounter());
+		man->defineScheme<AssetSchemeIndexPack, AssetPack>(genAssetSchemePack());
+		man->defineScheme<AssetSchemeIndexRaw, MemoryBuffer>(genAssetSchemeRaw());
+		man->defineScheme<AssetSchemeIndexCounter, AssetCounter>(genAssetSchemeCounter());
 		return man;
 	}
 
@@ -112,6 +112,18 @@ namespace
 		CAGE_TEST(a);
 		CAGE_TEST(a->size() == Length - 1);
 		CAGE_TEST(detail::memcmp(a->data(), content, Length - 1) == 0);
+	}
+
+	void processAssetDummyLoad(AssetContext *context)
+	{
+		// nothing
+	}
+
+	AssetScheme genDummyScheme()
+	{
+		AssetScheme s;
+		s.load.bind<&processAssetDummyLoad>();
+		return s;
 	}
 }
 
@@ -142,6 +154,23 @@ void testAssetManager()
 		waitProcessing(man);
 		CAGE_TEST(AssetCounter::counter == 0);
 		man->unloadWait();
+	}
+
+	{
+		CAGE_TESTCASE("type validation");
+		Holder<AssetManager> man = instantiate();
+		man->defineScheme<71, uint8>(genDummyScheme());
+		man->defineScheme<72, uint16>(genDummyScheme());
+		man->defineScheme<73, uint32>(genDummyScheme());
+		man->defineScheme<74, uint64>(genDummyScheme());
+		{ auto a = man->tryGet<71, uint8>(42); CAGE_TEST(!a); }
+		{ auto a = man->tryGet<72, uint16>(42); CAGE_TEST(!a); }
+		{ auto a = man->tryGet<73, uint32>(42); CAGE_TEST(!a); }
+		{ auto a = man->tryGet<74, uint64>(42); CAGE_TEST(!a); }
+		CAGE_TEST_ASSERTED((man->tryGet<71, uint64>(42)));
+		CAGE_TEST_ASSERTED((man->tryGet<72, uint8>(42)));
+		CAGE_TEST_ASSERTED((man->tryGet<73, uint16>(42)));
+		CAGE_TEST_ASSERTED((man->tryGet<74, uint32>(42)));
 	}
 
 	{
@@ -281,7 +310,7 @@ void testAssetManager()
 		CAGE_TESTCASE("fabricated");
 		Holder<AssetManager> man = instantiate();
 		{
-			Holder<AssetCounter> f = detail::systemArena().createHolder<AssetCounter>();
+			Holder<AssetCounter> f = systemArena().createHolder<AssetCounter>();
 			man->fabricate<AssetSchemeIndexCounter, AssetCounter>(10, templates::move(f));
 		}
 		waitProcessing(man);
@@ -302,7 +331,7 @@ void testAssetManager()
 		CAGE_TEST(AssetCounter::counter == 1);
 		AssetCounter *ptr = nullptr;
 		{
-			Holder<AssetCounter> f = detail::systemArena().createHolder<AssetCounter>();
+			Holder<AssetCounter> f = systemArena().createHolder<AssetCounter>();
 			ptr = f.get();
 			man->fabricate<AssetSchemeIndexCounter, AssetCounter>(10, templates::move(f));
 		}
@@ -513,6 +542,10 @@ namespace cage
 {
 	namespace detail
 	{
-		template<> CAGE_API_EXPORT char assetClassId<AssetCounter>;
+		template<> CAGE_API_EXPORT char assetTypeBlock<AssetCounter>;
+		template<> CAGE_API_EXPORT char assetTypeBlock<uint8>;
+		template<> CAGE_API_EXPORT char assetTypeBlock<uint16>;
+		template<> CAGE_API_EXPORT char assetTypeBlock<uint32>;
+		template<> CAGE_API_EXPORT char assetTypeBlock<uint64>;
 	}
 }
