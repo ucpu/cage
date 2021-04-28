@@ -26,8 +26,7 @@ namespace cage
 		Line operator * (const transform &other) const { return *this * mat4(other); }
 
 		// comparison operators
-		constexpr bool operator == (const Line &other) const noexcept { return origin == other.origin && direction == other.direction && minimum == other.minimum && maximum == other.maximum; }
-		constexpr bool operator != (const Line &other) const noexcept { return !(*this == other); }
+		bool operator == (const Line &) const noexcept = default;
 
 		// methods
 		bool valid() const noexcept { return origin.valid() && direction.valid() && minimum.valid() && maximum.valid(); }
@@ -64,8 +63,7 @@ namespace cage
 		constexpr vec3 &operator [] (uint32 idx) { CAGE_ASSERT(idx < 3); return vertices[idx]; }
 
 		// comparison operators
-		constexpr bool operator == (const Triangle &other) const noexcept { for (uint8 i = 0; i < 3; i++) if (vertices[i] != other.vertices[i]) return false; return true; }
-		constexpr bool operator != (const Triangle &other) const noexcept { return !(*this == other); }
+		bool operator == (const Triangle &) const noexcept = default;
 
 		// methods
 		bool valid() const noexcept { return vertices[0].valid() && vertices[1].valid() && vertices[2].valid(); };
@@ -99,8 +97,7 @@ namespace cage
 		Plane operator * (const transform &other) const { return *this * mat4(other); }
 
 		// comparison operators
-		constexpr bool operator == (const Plane &other) const noexcept { return d == other.d && normal == other.normal; }
-		constexpr bool operator != (const Plane &other) const noexcept { return !(*this == other); }
+		bool operator == (const Plane &) const noexcept = default;
 
 		// methods
 		bool valid() const noexcept { return d.valid() && normal.valid(); }
@@ -133,8 +130,7 @@ namespace cage
 		Sphere operator * (const transform &other) const { return *this * mat4(other); }
 
 		// comparison operators
-		bool operator == (const Sphere &other) const noexcept { return (empty() == other.empty()) || (center == other.center && radius == other.radius); }
-		bool operator != (const Sphere &other) const noexcept { return !(*this == other); }
+		bool operator == (const Sphere &other) const noexcept { return (empty() && other.empty()) || (center == other.center && radius == other.radius); }
 
 		// methods
 		bool valid() const noexcept { return center.valid() && radius >= 0; }
@@ -170,8 +166,7 @@ namespace cage
 		Aabb operator * (const transform &other) const { return *this * mat4(other); }
 
 		// comparison operators
-		bool operator == (const Aabb &other) const noexcept { return (empty() == other.empty()) && (empty() || (a == other.a && b == other.b)); }
-		bool operator != (const Aabb &other) const noexcept { return !(*this == other); }
+		bool operator == (const Aabb &other) const noexcept { return (empty() && other.empty()) || (a == other.a && b == other.b); }
 
 		// methods
 		bool valid() const noexcept { return a.valid() && b.valid(); }
@@ -207,11 +202,11 @@ namespace cage
 		Cone operator * (const transform &other) const { return *this * mat4(other); }
 
 		// comparison operators
-		bool operator == (const Cone &other) const noexcept { return origin == other.origin && direction == other.direction && length == other.length && halfAngle == other.halfAngle; }
-		bool operator != (const Cone &other) const noexcept { return !(*this == other); }
+		bool operator == (const Cone &other) const noexcept { return (empty() && other.empty()) || (origin == other.origin && direction == other.direction && length == other.length && halfAngle == other.halfAngle); }
 
 		// methods
 		bool valid() const noexcept { return origin.valid() && direction.valid() && length.valid() && halfAngle.valid(); }
+		bool empty() const noexcept { return !valid(); }
 	};
 
 	// note: some intersection tests with frustums are conservative
@@ -364,23 +359,19 @@ namespace cage
 		template<> struct GeometryOrder<Aabb> { static constexpr int order = 6; };
 		template<> struct GeometryOrder<Cone> { static constexpr int order = 7; };
 		template<> struct GeometryOrder<Frustum> { static constexpr int order = 8; };
-
-		// todo replace sfinae with requires (c++20)
-		template<class A, class B, bool enabled = (GeometryOrder<A>::order > GeometryOrder<B>::order)> struct GeometryOrderedType {};
-		template<class A, class B> struct GeometryOrderedType<A, B, true> { using type = int; };
-		template<class A, class B> using GeometryOrderedEnabled = typename GeometryOrderedType<A, B>::type;
+		template<class A, class B> constexpr bool geometrySwapParameters = GeometryOrder<A>::order > GeometryOrder<B>::order;
 	}
 
-	template<class A, class B, privat::GeometryOrderedEnabled<A, B> = 1>
-	CAGE_FORCE_INLINE auto angle(const A &a, const B &b) { return angle(b, a); }
-	template<class A, class B, privat::GeometryOrderedEnabled<A, B> = 1>
-	CAGE_FORCE_INLINE auto distance(const A &a, const B &b) { return distance(b, a); }
-	template<class A, class B, privat::GeometryOrderedEnabled<A, B> = 1>
-	CAGE_FORCE_INLINE auto intersects(const A &a, const B &b) { return intersects(b, a); }
-	template<class A, class B, privat::GeometryOrderedEnabled<A, B> = 1>
-	CAGE_FORCE_INLINE auto intersection(const A &a, const B &b) { return intersection(b, a); }
-	template<class A, class B, privat::GeometryOrderedEnabled<A, B> = 1>
-	CAGE_FORCE_INLINE auto closestPoint(const A &a, const B &b) { return closestPoint(b, a); }
+	template<class A, class B>
+	CAGE_FORCE_INLINE auto angle(const A &a, const B &b) requires(privat::geometrySwapParameters<A, B>) { return angle(b, a); }
+	template<class A, class B>
+	CAGE_FORCE_INLINE auto distance(const A &a, const B &b) requires(privat::geometrySwapParameters<A, B>) { return distance(b, a); }
+	template<class A, class B>
+	CAGE_FORCE_INLINE auto intersects(const A &a, const B &b) requires(privat::geometrySwapParameters<A, B>) { return intersects(b, a); }
+	template<class A, class B>
+	CAGE_FORCE_INLINE auto intersection(const A &a, const B &b) requires(privat::geometrySwapParameters<A, B>) { return intersection(b, a); }
+	template<class A, class B>
+	CAGE_FORCE_INLINE auto closestPoint(const A &a, const B &b) requires(privat::geometrySwapParameters<A, B>) { return closestPoint(b, a); }
 }
 
 #endif // guard_geometry_h_waesfes54hg96r85t4h6rt4h564rzth_
