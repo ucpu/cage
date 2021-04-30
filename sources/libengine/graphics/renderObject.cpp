@@ -33,7 +33,7 @@ namespace cage
 			return b < a;
 		}));
 		CAGE_ASSERT(std::is_sorted(modelIndices.begin(), modelIndices.end()));
-		RenderObjectImpl *impl = (RenderObjectImpl*)this;
+		RenderObjectImpl *impl = (RenderObjectImpl *)this;
 		impl->thresholds.resize(thresholds.size());
 		impl->indices.resize(thresholds.size() + 1);
 		impl->names.resize(modelNames.size());
@@ -44,13 +44,13 @@ namespace cage
 
 	uint32 RenderObject::lodsCount() const
 	{
-		RenderObjectImpl *impl = (RenderObjectImpl*)this;
+		const RenderObjectImpl *impl = (const RenderObjectImpl *)this;
 		return numeric_cast<uint32>(impl->thresholds.size());
 	}
 
 	uint32 RenderObject::lodSelect(real threshold) const
 	{
-		RenderObjectImpl *impl = (RenderObjectImpl*)this;
+		const RenderObjectImpl *impl = (const RenderObjectImpl *)this;
 		// todo rewrite to binary search
 		uint32 cnt = numeric_cast<uint32>(impl->thresholds.size());
 		uint32 lod = 0;
@@ -61,7 +61,7 @@ namespace cage
 
 	PointerRange<const uint32> RenderObject::models(uint32 lod) const
 	{
-		RenderObjectImpl *impl = (RenderObjectImpl*)this;
+		const RenderObjectImpl *impl = (const RenderObjectImpl *)this;
 		CAGE_ASSERT(lod < lodsCount());
 		return { impl->names.data() + impl->indices[lod], impl->names.data() + impl->indices[lod + 1] };
 	}

@@ -264,20 +264,20 @@ namespace cage
 #ifdef CAGE_DEBUG
 		debugName = name;
 #endif // CAGE_DEBUG
-		FontImpl *impl = (FontImpl*)this;
+		FontImpl *impl = (FontImpl *)this;
 		impl->tex->setDebugName(name);
 	}
 
 	void Font::setLine(real lineHeight, real firstLineOffset)
 	{
-		FontImpl *impl = (FontImpl*)this;
+		FontImpl *impl = (FontImpl *)this;
 		impl->lineHeight = lineHeight;
 		impl->firstLineOffset = -firstLineOffset;
 	}
 
 	void Font::setImage(uint32 width, uint32 height, PointerRange<const char> buffer)
 	{
-		FontImpl *impl = (FontImpl*)this;
+		FontImpl *impl = (FontImpl *)this;
 		impl->texWidth = width;
 		impl->texHeight = height;
 		impl->tex->bind();
@@ -313,7 +313,7 @@ namespace cage
 
 	void Font::setGlyphs(PointerRange<const char> buffer, PointerRange<const real> kerning)
 	{
-		FontImpl *impl = (FontImpl*)this;
+		FontImpl *impl = (FontImpl *)this;
 		const uint32 count = numeric_cast<uint32>(buffer.size() / sizeof(FontHeader::GlyphData));
 		CAGE_ASSERT(buffer.size() == count * sizeof(FontHeader::GlyphData));
 		impl->glyphsArray.resize(count);
@@ -331,7 +331,7 @@ namespace cage
 
 	void Font::setCharmap(PointerRange<const uint32> chars, PointerRange<const uint32> glyphs)
 	{
-		FontImpl *impl = (FontImpl*)this;
+		FontImpl *impl = (FontImpl *)this;
 		CAGE_ASSERT(chars.size() == glyphs.size());
 		impl->charmapChars.resize(chars.size());
 		impl->charmapGlyphs.resize(chars.size());
@@ -369,7 +369,7 @@ namespace cage
 
 	void Font::transcript(PointerRange<const char> text, PointerRange<uint32> glyphs) const
 	{
-		FontImpl *impl = (FontImpl*)this;
+		FontImpl *impl = (FontImpl *)this;
 		utf8to32(glyphs, text);
 		for (uint32 &i : glyphs)
 			i = impl->findGlyphIndex(i);
@@ -390,14 +390,14 @@ namespace cage
 		data.gls = glyphs.data();
 		data.count = numeric_cast<uint32>(glyphs.size());
 		data.outCursor = cursor;
-		((FontImpl*)this)->processText(data);
+		((FontImpl *)this)->processText(data);
 		cursor = data.outCursor;
 		return data.outSize;
 	}
 
-	void Font::bind(Model *model, ShaderProgram *shader) const
+	void Font::bind(Model *model, ShaderProgram *shader)
 	{
-		FontImpl *impl = (FontImpl*)this;
+		FontImpl *impl = (FontImpl *)this;
 		glActiveTexture(GL_TEXTURE0);
 		impl->tex->bind();
 		impl->msh = model;
@@ -414,7 +414,7 @@ namespace cage
 		data.count = numeric_cast<uint32>(glyphs.size());
 		data.cursor = applicationTime() % 1000000 < 300000 ? m : cursor;
 		data.render = true;
-		((FontImpl*)this)->processText(data);
+		((FontImpl *)this)->processText(data);
 	}
 
 	Holder<Font> newFont()

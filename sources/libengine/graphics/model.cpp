@@ -86,18 +86,18 @@ namespace cage
 #ifdef CAGE_DEBUG
 		debugName = name;
 #endif // CAGE_DEBUG
-		ModelImpl *impl = (ModelImpl*)this;
+		ModelImpl *impl = (ModelImpl *)this;
 		glObjectLabel(GL_VERTEX_ARRAY, impl->id, name.length(), name.c_str());
 	}
 
 	uint32 Model::getId() const
 	{
-		return ((ModelImpl*)this)->id;
+		return ((ModelImpl *)this)->id;
 	}
 
 	void Model::bind() const
 	{
-		ModelImpl *impl = (ModelImpl*)this;
+		const ModelImpl *impl = (const ModelImpl *)this;
 		glBindVertexArray(impl->id);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 		if (impl->materialSize)
@@ -237,40 +237,40 @@ namespace cage
 
 	void Model::setFlags(ModelRenderFlags flags)
 	{
-		ModelImpl *impl = (ModelImpl*)this;
+		ModelImpl *impl = (ModelImpl *)this;
 		impl->flags = flags;
 	}
 
 	void Model::setPrimitiveType(uint32 type)
 	{
-		ModelImpl *impl = (ModelImpl*)this;
+		ModelImpl *impl = (ModelImpl *)this;
 		impl->primitiveType = type;
 		impl->updatePrimitivesCount();
 	}
 
 	void Model::setBoundingBox(const Aabb &box)
 	{
-		ModelImpl *impl = (ModelImpl*)this;
+		ModelImpl *impl = (ModelImpl *)this;
 		impl->box = box;
 	}
 
 	void Model::setTextureNames(PointerRange<const uint32> textureNames)
 	{
-		ModelImpl *impl = (ModelImpl*)this;
+		ModelImpl *impl = (ModelImpl *)this;
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 			impl->textures[i] = textureNames[i];
 	}
 
 	void Model::setTextureName(uint32 texIdx, uint32 name)
 	{
-		ModelImpl *impl = (ModelImpl*)this;
+		ModelImpl *impl = (ModelImpl *)this;
 		CAGE_ASSERT(texIdx < MaxTexturesCountPerMaterial);
 		impl->textures[texIdx] = name;
 	}
 
 	void Model::setBuffers(uint32 vertexSize, PointerRange<const char> vertexData, PointerRange<const uint32> indexData, PointerRange<const char> materialBuffer)
 	{
-		ModelImpl *impl = (ModelImpl*)this;
+		ModelImpl *impl = (ModelImpl *)this;
 		CAGE_ASSERT(graphicsPrivat::getCurrentObject<Model>() == impl->id);
 		{
 			if (impl->vbo)
@@ -289,8 +289,8 @@ namespace cage
 		impl->materialSize = numeric_cast<uint32>(materialBuffer.size());
 		CAGE_ASSERT(vertexData.size() == vertexSize * impl->verticesCount);
 
-		uint32 bufferAlignment = 256;
-		glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, (GLint*)&bufferAlignment);
+		GLint bufferAlignment = 256;
+		glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &bufferAlignment);
 
 		const uint32 bufferSize = numeric_cast<uint32>(
 			impl->verticesCount * vertexSize + detail::addToAlign(impl->verticesCount * vertexSize, bufferAlignment) +
@@ -327,7 +327,7 @@ namespace cage
 
 	void Model::setAttribute(uint32 index, uint32 size, uint32 type, uint32 stride, uint32 startOffset)
 	{
-		ModelImpl *impl = (ModelImpl*)this;
+		ModelImpl *impl = (ModelImpl *)this;
 		CAGE_ASSERT(graphicsPrivat::getCurrentObject<Model>() == impl->id);
 		if (type == 0)
 			glDisableVertexAttribArray(index);
@@ -356,81 +356,81 @@ namespace cage
 
 	void Model::setSkeleton(uint32 name, uint32 bones)
 	{
-		ModelImpl *impl = (ModelImpl*)this;
+		ModelImpl *impl = (ModelImpl *)this;
 		impl->skeletonName = name;
 		impl->skeletonBones = bones;
 	}
 
 	void Model::setInstancesLimitHint(uint32 limit)
 	{
-		ModelImpl *impl = (ModelImpl*)this;
+		ModelImpl *impl = (ModelImpl *)this;
 		impl->instancesLimitHint = limit;
 	}
 
 	uint32 Model::getVerticesCount() const
 	{
-		ModelImpl *impl = (ModelImpl*)this;
+		const ModelImpl *impl = (const ModelImpl *)this;
 		return impl->verticesCount;
 	}
 
 	uint32 Model::getIndicesCount() const
 	{
-		ModelImpl *impl = (ModelImpl*)this;
+		const ModelImpl *impl = (const ModelImpl *)this;
 		return impl->indicesCount;
 	}
 
 	uint32 Model::getPrimitivesCount() const
 	{
-		ModelImpl *impl = (ModelImpl*)this;
+		const ModelImpl *impl = (const ModelImpl *)this;
 		return impl->primitivesCount;
 	}
 
 	ModelRenderFlags Model::getFlags() const
 	{
-		ModelImpl *impl = (ModelImpl*)this;
+		const ModelImpl *impl = (const ModelImpl *)this;
 		return impl->flags;
 	}
 
 	Aabb Model::getBoundingBox() const
 	{
-		ModelImpl *impl = (ModelImpl*)this;
+		const ModelImpl *impl = (const ModelImpl *)this;
 		return impl->box;
 	}
 
 	PointerRange<const uint32> Model::getTextureNames() const
 	{
-		ModelImpl *impl = (ModelImpl*)this;
+		const ModelImpl *impl = (const ModelImpl *)this;
 		return impl->textures;
 	}
 
 	uint32 Model::getTextureName(uint32 texIdx) const
 	{
-		ModelImpl *impl = (ModelImpl*)this;
+		const ModelImpl *impl = (const ModelImpl *)this;
 		CAGE_ASSERT(texIdx < MaxTexturesCountPerMaterial);
 		return impl->textures[texIdx];
 	}
 
 	uint32 Model::getSkeletonName() const
 	{
-		ModelImpl *impl = (ModelImpl*)this;
+		const ModelImpl *impl = (const ModelImpl *)this;
 		return impl->skeletonName;
 	}
 
 	uint32 Model::getSkeletonBones() const
 	{
-		ModelImpl *impl = (ModelImpl*)this;
+		const ModelImpl *impl = (const ModelImpl *)this;
 		return impl->skeletonBones;
 	}
 
 	uint32 Model::getInstancesLimitHint() const
 	{
-		ModelImpl *impl = (ModelImpl*)this;
+		const ModelImpl *impl = (const ModelImpl *)this;
 		return impl->instancesLimitHint;
 	}
 
 	void Model::dispatch() const
 	{
-		ModelImpl *impl = (ModelImpl*)this;
+		const ModelImpl *impl = (const ModelImpl *)this;
 		CAGE_ASSERT(graphicsPrivat::getCurrentObject<Model>() == impl->id);
 		if (impl->indicesCount)
 			glDrawElements(impl->primitiveType, impl->indicesCount, GL_UNSIGNED_INT, (void*)(uintPtr)impl->indicesOffset);
@@ -441,7 +441,7 @@ namespace cage
 
 	void Model::dispatch(uint32 instances) const
 	{
-		ModelImpl *impl = (ModelImpl*)this;
+		const ModelImpl *impl = (const ModelImpl *)this;
 		CAGE_ASSERT(graphicsPrivat::getCurrentObject<Model>() == impl->id);
 		if (impl->indicesCount)
 			glDrawElementsInstanced(impl->primitiveType, impl->indicesCount, GL_UNSIGNED_INT, (void*)(uintPtr)impl->indicesOffset, instances);

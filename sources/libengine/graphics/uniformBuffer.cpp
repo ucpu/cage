@@ -62,18 +62,18 @@ namespace cage
 #ifdef CAGE_DEBUG
 		debugName = name;
 #endif // CAGE_DEBUG
-		UniformBufferImpl *impl = (UniformBufferImpl*)this;
+		UniformBufferImpl *impl = (UniformBufferImpl *)this;
 		glObjectLabel(GL_BUFFER, impl->id, name.length(), name.c_str());
 	}
 
 	uint32 UniformBuffer::getId() const
 	{
-		return ((UniformBufferImpl*)this)->id;
+		return ((UniformBufferImpl *)this)->id;
 	}
 
 	void UniformBuffer::bind() const
 	{
-		UniformBufferImpl *impl = (UniformBufferImpl*)this;
+		const UniformBufferImpl *impl = (const UniformBufferImpl *)this;
 		glBindBuffer(GL_UNIFORM_BUFFER, impl->id);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 		setCurrentObject<UniformBuffer>(impl->id);
@@ -81,14 +81,14 @@ namespace cage
 
 	void UniformBuffer::bind(uint32 bindingPoint) const
 	{
-		UniformBufferImpl *impl = (UniformBufferImpl*)this;
+		const UniformBufferImpl *impl = (const UniformBufferImpl *)this;
 		glBindBufferBase(GL_UNIFORM_BUFFER, bindingPoint, impl->id);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
 	void UniformBuffer::bind(uint32 bindingPoint, uint32 offset, uint32 size) const
 	{
-		UniformBufferImpl *impl = (UniformBufferImpl*)this;
+		const UniformBufferImpl *impl = (const UniformBufferImpl *)this;
 		CAGE_ASSERT(offset + size <= impl->size);
 		CAGE_ASSERT((offset % getAlignmentRequirement()) == 0);
 		glBindBufferRange(GL_UNIFORM_BUFFER, bindingPoint, impl->id, offset, size);
@@ -97,7 +97,7 @@ namespace cage
 
 	void UniformBuffer::writeWhole(PointerRange<const char> buffer, uint32 usage)
 	{
-		UniformBufferImpl *impl = (UniformBufferImpl*)this;
+		UniformBufferImpl *impl = (UniformBufferImpl *)this;
 		if (impl->mapped || impl->config.size)
 		{
 			CAGE_ASSERT(usage == 0);
@@ -117,7 +117,7 @@ namespace cage
 
 	void UniformBuffer::writeRange(PointerRange<const char> buffer, uint32 offset)
 	{
-		UniformBufferImpl *impl = (UniformBufferImpl*)this;
+		UniformBufferImpl *impl = (UniformBufferImpl *)this;
 		CAGE_ASSERT(offset + buffer.size() <= impl->size);
 		if (impl->mapped)
 		{
@@ -139,7 +139,7 @@ namespace cage
 
 	uint32 UniformBuffer::getSize() const
 	{
-		const UniformBufferImpl *impl = (const UniformBufferImpl*)this;
+		const UniformBufferImpl *impl = (const UniformBufferImpl *)this;
 		return impl->size;
 	}
 
@@ -147,9 +147,9 @@ namespace cage
 	{
 		uint32 getAlignmentRequirementImpl()
 		{
-			uint32 alignment = 256;
-			glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, (GLint*)&alignment);
-			return alignment;
+			GLint alignment = 256;
+			glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &alignment);
+			return numeric_cast<uint32>(alignment);
 		}
 	}
 

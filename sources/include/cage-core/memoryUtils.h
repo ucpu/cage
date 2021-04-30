@@ -9,32 +9,32 @@ namespace cage
 	{
 		explicit OutOfMemory(StringLiteral file, uint32 line, StringLiteral function, SeverityEnum severity, StringLiteral message, uintPtr memory) noexcept;
 		virtual void log();
-		uintPtr memory;
+		uintPtr memory = 0;
 	};
 
 	namespace detail
 	{
-		inline bool isPowerOf2(uintPtr x)
+		inline constexpr bool isPowerOf2(uintPtr x)
 		{
 			return x && !(x & (x - 1));
 		}
 
-		inline uintPtr addToAlign(uintPtr ptr, uintPtr alignment)
+		inline constexpr uintPtr addToAlign(uintPtr ptr, uintPtr alignment)
 		{
 			return (alignment - (ptr % alignment)) % alignment;
 		}
 
-		inline uintPtr subtractToAlign(uintPtr ptr, uintPtr alignment)
+		inline constexpr uintPtr subtractToAlign(uintPtr ptr, uintPtr alignment)
 		{
 			return (alignment - addToAlign(ptr, alignment)) % alignment;
 		}
 
-		inline uintPtr roundDownTo(uintPtr ptr, uintPtr alignment)
+		inline constexpr uintPtr roundDownTo(uintPtr ptr, uintPtr alignment)
 		{
 			return (ptr / alignment) * alignment;
 		}
 
-		inline uintPtr roundUpTo(uintPtr ptr, uintPtr alignment)
+		inline constexpr uintPtr roundUpTo(uintPtr ptr, uintPtr alignment)
 		{
 			return roundDownTo(ptr + alignment - 1, alignment);
 		}

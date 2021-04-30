@@ -1,10 +1,9 @@
 #include <cage-core/concurrent.h>
-#include <cage-core/config.h>
 #include <cage-core/concurrentQueue.h>
+#include <cage-core/config.h>
 #include <cage-core/flatSet.h>
 
 #include <cage-engine/window.h>
-#include <cage-engine/graphics.h>
 #include <cage-engine/opengl.h>
 #include "graphics/private.h"
 

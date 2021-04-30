@@ -22,7 +22,7 @@ namespace cage
 		void colorTexture(uint32 index, Texture *tex, uint32 mipmapLevel = 0);
 		void activeAttachments(uint32 mask);
 		void clear();
-		void checkStatus();
+		void checkStatus() const;
 	};
 
 	CAGE_ENGINE_API Holder<FrameBuffer> newFrameBufferDraw();

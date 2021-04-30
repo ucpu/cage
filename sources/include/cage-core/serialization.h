@@ -60,8 +60,8 @@ namespace cage
 	template<class Dst = const char, class Src>
 	constexpr PointerRange<Dst> bufferCast(const PointerRange<Src> src)
 	{
-		static_assert(std::is_trivially_copyable<Dst>::value, "type not trivial");
-		static_assert(std::is_trivially_copyable<Src>::value, "type not trivial");
+		static_assert(std::is_trivially_copyable_v<Dst>);
+		static_assert(std::is_trivially_copyable_v<Src>);
 		return { reinterpret_cast<Dst*>(src.begin()), reinterpret_cast<Dst*>(src.end()) };
 	}
 
@@ -84,7 +84,7 @@ namespace cage
 	template<class T>
 	Serializer &operator << (Serializer &s, const T &v)
 	{
-		static_assert(!std::is_pointer<T>::value, "pointer serialization is forbidden");
+		static_assert(!std::is_pointer_v<T>, "pointer serialization is forbidden");
 		s.write(bufferView<const char>(v));
 		return s;
 	}
@@ -92,7 +92,7 @@ namespace cage
 	template<class T>
 	Deserializer &operator >> (Deserializer &s, T &v)
 	{
-		static_assert(!std::is_pointer<T>::value, "pointer serialization is forbidden");
+		static_assert(!std::is_pointer_v<T>, "pointer serialization is forbidden");
 		s.read(bufferView<char>(v));
 		return s;
 	}

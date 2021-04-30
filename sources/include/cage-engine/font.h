@@ -38,7 +38,7 @@ namespace cage
 		vec2 size(PointerRange<const uint32> glyphs, const FormatStruct &format) const;
 		vec2 size(PointerRange<const uint32> glyphs, const FormatStruct &format, const vec2 &mousePosition, uint32 &cursor) const;
 
-		void bind(Model *model, ShaderProgram *shader) const;
+		void bind(Model *model, ShaderProgram *shader);
 		void render(PointerRange<const uint32> glyphs, const FormatStruct &format, uint32 cursor = m);
 	};
 

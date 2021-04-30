@@ -17,7 +17,7 @@ namespace cage
 
 	CAGE_CORE_API Holder<MemoryArena> newMemoryAllocatorLinear(const MemoryAllocatorLinearCreateConfig &config);
 
-	// linear allocator with individual deallocations
+	// stream allocator with individual deallocations
 	// both individual deallocations (in any order) and flushing are available
 	// blocks are reused in fifo order and only after fully cleared
 	// allocations can have any sizes and alignments (within the block size)
