@@ -141,13 +141,10 @@ namespace cage
 		return s;
 	}
 
-	namespace detail
-	{
-		template<> CAGE_API_EXPORT char assetTypeBlock<AssetPack>;
-		template<> CAGE_API_EXPORT char assetTypeBlock<MemoryBuffer>;
-		template<> CAGE_API_EXPORT char assetTypeBlock<TextPack>;
-		template<> CAGE_API_EXPORT char assetTypeBlock<Collider>;
-		template<> CAGE_API_EXPORT char assetTypeBlock<SkeletalAnimation>;
-		template<> CAGE_API_EXPORT char assetTypeBlock<SkeletonRig>;
-	}
+	GCHL_REGISTER_TYPE(AssetPack);
+	GCHL_REGISTER_TYPE(MemoryBuffer);
+	GCHL_REGISTER_TYPE(TextPack);
+	GCHL_REGISTER_TYPE(Collider);
+	GCHL_REGISTER_TYPE(SkeletalAnimation);
+	GCHL_REGISTER_TYPE(SkeletonRig);
 }

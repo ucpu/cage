@@ -1,17 +1,12 @@
-#include <cage-core/assetManager.h>
-
-#include <cage-engine/graphics.h>
-#include <cage-engine/sound.h>
+#include <cage-core/typeRegistry.h>
+#include <cage-engine/core.h>
 
 namespace cage
 {
-	namespace detail
-	{
-		template<> CAGE_API_EXPORT char assetTypeBlock<Font>;
-		template<> CAGE_API_EXPORT char assetTypeBlock<Model>;
-		template<> CAGE_API_EXPORT char assetTypeBlock<RenderObject>;
-		template<> CAGE_API_EXPORT char assetTypeBlock<ShaderProgram>;
-		template<> CAGE_API_EXPORT char assetTypeBlock<Sound>;
-		template<> CAGE_API_EXPORT char assetTypeBlock<Texture>;
-	}
+	GCHL_REGISTER_TYPE(Font);
+	GCHL_REGISTER_TYPE(Model);
+	GCHL_REGISTER_TYPE(RenderObject);
+	GCHL_REGISTER_TYPE(ShaderProgram);
+	GCHL_REGISTER_TYPE(Sound);
+	GCHL_REGISTER_TYPE(Texture);
 }

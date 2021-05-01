@@ -540,12 +540,5 @@ void testAssetManager()
 
 namespace cage
 {
-	namespace detail
-	{
-		template<> CAGE_API_EXPORT char assetTypeBlock<AssetCounter>;
-		template<> CAGE_API_EXPORT char assetTypeBlock<uint8>;
-		template<> CAGE_API_EXPORT char assetTypeBlock<uint16>;
-		template<> CAGE_API_EXPORT char assetTypeBlock<uint32>;
-		template<> CAGE_API_EXPORT char assetTypeBlock<uint64>;
-	}
+	GCHL_REGISTER_TYPE(AssetCounter);
 }
