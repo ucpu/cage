@@ -7,7 +7,7 @@ namespace cage
 {
 	struct RenderQueueNamedPassScope;
 
-	class CAGE_ENGINE_API RenderQueue
+	class CAGE_ENGINE_API RenderQueue : private Immovable
 	{
 	public:
 		// uses internal uniform buffer that is populated at start of dispatch of this queue
@@ -81,10 +81,15 @@ namespace cage
 		void cullingFace(bool front);
 		void culling(bool enable);
 		void depthFunc(uint32 func);
+		void depthFuncAlways();
+		void depthFuncLessEqual();
 		void depthTest(bool enable);
 		void depthWrite(bool enable);
 		void colorWrite(bool enable);
 		void blendFunc(uint32 s, uint32 d);
+		void blendFuncAdditive(); // ONE, ONE
+		void blendFuncPremultipliedTransparency(); // ONE, ONE_MINUS_SRC_ALPHA
+		void blendFuncAlphaTransparency(); // SRC_ALPHA, ONE_MINUS_SRC_ALPHA
 		void blending(bool enable);
 		void clearColor(const vec4 &rgba);
 		void clear(bool color, bool depth, bool stencil = false);

@@ -24,24 +24,6 @@ namespace cage
 			virtual void dispatch(RenderQueueImpl *impl) = 0;
 		};
 
-		struct CmdEnable : public CmdBase
-		{
-			uint32 key = 0;
-			void dispatch(RenderQueueImpl *) override
-			{
-				glEnable(key);
-			}
-		};
-
-		struct CmdDisable : public CmdBase
-		{
-			uint32 key = 0;
-			void dispatch(RenderQueueImpl *) override
-			{
-				glDisable(key);
-			}
-		};
-
 		// stores memory pointer that needs to be deallocated
 		struct MemBlock
 		{
@@ -706,6 +688,16 @@ namespace cage
 		cmd.func = func;
 	}
 
+	void RenderQueue::depthFuncAlways()
+	{
+		depthFunc(GL_ALWAYS);
+	}
+
+	void RenderQueue::depthFuncLessEqual()
+	{
+		depthFunc(GL_LEQUAL);
+	}
+
 	void RenderQueue::depthTest(bool enable)
 	{
 		genericEnable(GL_DEPTH_TEST, enable);
@@ -757,6 +749,21 @@ namespace cage
 		cmd.d = d;
 	}
 
+	void RenderQueue::blendFuncAdditive()
+	{
+		blendFunc(GL_ONE, GL_ONE);
+	}
+
+	void RenderQueue::blendFuncPremultipliedTransparency()
+	{
+		blendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	}
+
+	void RenderQueue::blendFuncAlphaTransparency()
+	{
+		blendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}
+
 	void RenderQueue::blending(bool enable)
 	{
 		genericEnable(GL_BLEND, enable);
@@ -799,12 +806,28 @@ namespace cage
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		if (enable)
 		{
-			CmdEnable &cmd = impl->addCmd<CmdEnable>();
+			struct Cmd : public CmdBase
+			{
+				uint32 key = 0;
+				void dispatch(RenderQueueImpl *) override
+				{
+					glEnable(key);
+				}
+			};
+			Cmd &cmd = impl->addCmd<Cmd>();
 			cmd.key = key;
 		}
 		else
 		{
-			CmdDisable &cmd = impl->addCmd<CmdDisable>();
+			struct Cmd : public CmdBase
+			{
+				uint32 key = 0;
+				void dispatch(RenderQueueImpl *) override
+				{
+					glDisable(key);
+				}
+			};
+			Cmd &cmd = impl->addCmd<Cmd>();
 			cmd.key = key;
 		}
 	}
