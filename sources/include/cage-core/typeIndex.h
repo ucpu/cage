@@ -12,6 +12,7 @@ namespace cage
 		template<class T>
 		constexpr const char *typeIndexTypeName()
 		{
+			static_assert(std::is_same_v<std::decay_t<T>, T>);
 #ifdef _MSC_VER
 			return __FUNCSIG__;
 #else
@@ -22,10 +23,13 @@ namespace cage
 
 	namespace detail
 	{
+		// returns unique index for each type
+		// works well across DLL boundaries
+		// the indices may differ between different runs of a program!
+
 		template<class T>
 		CAGE_FORCE_INLINE uint32 typeIndex()
 		{
-			static_assert(std::is_same_v<std::decay_t<T>, T>);
 			static const uint32 id = privat::typeIndexInit(privat::typeIndexTypeName<T>());
 			return id;
 		};

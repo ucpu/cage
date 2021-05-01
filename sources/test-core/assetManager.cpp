@@ -47,6 +47,7 @@ namespace
 	{
 		AssetScheme s;
 		s.load.bind<&processAssetCounterLoad>();
+		s.typeIndex = detail::typeIndex<AssetCounter>();
 		return s;
 	}
 
@@ -119,10 +120,11 @@ namespace
 		// nothing
 	}
 
-	AssetScheme genDummyScheme()
+	AssetScheme genDummyScheme(uint32 typeIndex)
 	{
 		AssetScheme s;
 		s.load.bind<&processAssetDummyLoad>();
+		s.typeIndex = typeIndex;
 		return s;
 	}
 }
@@ -159,10 +161,10 @@ void testAssetManager()
 	{
 		CAGE_TESTCASE("type validation");
 		Holder<AssetManager> man = instantiate();
-		man->defineScheme<71, uint8>(genDummyScheme());
-		man->defineScheme<72, uint16>(genDummyScheme());
-		man->defineScheme<73, uint32>(genDummyScheme());
-		man->defineScheme<74, uint64>(genDummyScheme());
+		man->defineScheme<71, uint8>(genDummyScheme(detail::typeIndex<uint8>()));
+		man->defineScheme<72, uint16>(genDummyScheme(detail::typeIndex<uint16>()));
+		man->defineScheme<73, uint32>(genDummyScheme(detail::typeIndex<uint32>()));
+		man->defineScheme<74, uint64>(genDummyScheme(detail::typeIndex<uint64>()));
 		{ auto a = man->tryGet<71, uint8>(42); CAGE_TEST(!a); }
 		{ auto a = man->tryGet<72, uint16>(42); CAGE_TEST(!a); }
 		{ auto a = man->tryGet<73, uint32>(42); CAGE_TEST(!a); }

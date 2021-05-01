@@ -3,6 +3,7 @@
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/mesh.h>
 #include <cage-core/color.h>
+#include <cage-core/typeIndex.h>
 
 #include <cage-engine/graphics.h>
 #include <cage-engine/opengl.h>
@@ -46,6 +47,7 @@ namespace cage
 		AssetScheme s;
 		s.threadIndex = threadIndex;
 		s.load.bind<&processLoad>();
+		s.typeIndex = detail::typeIndex<Model>();
 		return s;
 	}
 }

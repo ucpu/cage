@@ -44,6 +44,7 @@ namespace cage
 	{
 		AssetScheme s;
 		s.load.bind<&processAssetPackLoad>();
+		s.typeIndex = detail::typeIndex<AssetPack>();
 		return s;
 	}
 
@@ -60,6 +61,7 @@ namespace cage
 	{
 		AssetScheme s;
 		s.load.bind<&processRawLoad>();
+		s.typeIndex = detail::typeIndex<MemoryBuffer>();
 		return s;
 	}
 
@@ -86,6 +88,7 @@ namespace cage
 	{
 		AssetScheme s;
 		s.load.bind<&processTextPackLoad>();
+		s.typeIndex = detail::typeIndex<TextPack>();
 		return s;
 	}
 
@@ -104,6 +107,7 @@ namespace cage
 	{
 		AssetScheme s;
 		s.load.bind<&processColliderLoad>();
+		s.typeIndex = detail::typeIndex<Collider>();
 		return s;
 	}
 
@@ -121,6 +125,7 @@ namespace cage
 	{
 		AssetScheme s;
 		s.load.bind<&processSkeletalAnimationLoad>();
+		s.typeIndex = detail::typeIndex<SkeletalAnimation>();
 		return s;
 	}
 
@@ -138,6 +143,7 @@ namespace cage
 	{
 		AssetScheme s;
 		s.load.bind<&processSkeletonRigLoad>();
+		s.typeIndex = detail::typeIndex<SkeletonRig>();
 		return s;
 	}
 }

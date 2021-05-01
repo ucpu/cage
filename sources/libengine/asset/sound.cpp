@@ -2,6 +2,7 @@
 #include <cage-core/serialization.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/audio.h>
+#include <cage-core/typeIndex.h>
 
 #include <cage-engine/sound.h>
 #include <cage-engine/assetStructs.h>
@@ -77,6 +78,7 @@ namespace cage
 		s.threadIndex = threadIndex;
 		s.decompress.bind<&processDecompress>();
 		s.load.bind<&processLoad>();
+		s.typeIndex = detail::typeIndex<Sound>();
 		return s;
 	}
 }

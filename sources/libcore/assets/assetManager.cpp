@@ -45,11 +45,6 @@ namespace cage
 
 		constexpr uint32 CurrentAssetVersion = 1;
 
-		struct Scheme : public AssetScheme
-		{
-			uint32 typeId = 0;
-		};
-
 		// one particular version of an asset
 		struct Asset
 		{
@@ -157,7 +152,7 @@ namespace cage
 		public:
 			typedef ConcurrentQueue<Holder<WorkingAsset>> Queue;
 
-			std::vector<Scheme> schemes;
+			std::vector<AssetScheme> schemes;
 			const string path;
 			const uint64 listenerPeriod;
 			uint32 generateName = 0;
@@ -471,11 +466,12 @@ namespace cage
 
 			void defineScheme(uint32 typeId, uint32 scheme, const AssetScheme &value)
 			{
+				CAGE_ASSERT(typeId != m);
 				CAGE_ASSERT(scheme < schemes.size());
-				CAGE_ASSERT(schemes[scheme].typeId == 0);
+				CAGE_ASSERT(value.typeIndex == typeId);
 				CAGE_ASSERT(value.threadIndex == m || value.threadIndex < customProcessingQueues.size());
-				(AssetScheme &)schemes[scheme] = value;
-				schemes[scheme].typeId = typeId;
+				CAGE_ASSERT(schemes[scheme].typeIndex == m); // the scheme was not defined previously
+				schemes[scheme] = value;
 			}
 
 			void add(uint32 assetName)
@@ -514,10 +510,9 @@ namespace cage
 				return generateName++;
 			}
 
-			void fabricate(uint32 typeId, uint32 scheme, uint32 assetName, const string &textName, Holder<void> &&value)
+			void fabricate(uint32 scheme, uint32 assetName, const string &textName, Holder<void> &&value)
 			{
 				CAGE_ASSERT(scheme < schemes.size());
-				CAGE_ASSERT(schemes[scheme].typeId == typeId);
 				Holder<FabricateCommand> cmd = systemArena().createHolder<FabricateCommand>(&workingCounter);
 				cmd->realName = assetName;
 				cmd->textName = textName;
@@ -527,10 +522,9 @@ namespace cage
 				maintenanceQueue.push(templates::move(cmd).cast<WorkingAsset>());
 			}
 
-			Holder<void> get(uint32 typeId, uint32 scheme, uint32 assetName, bool throwOnInvalidScheme) const
+			Holder<void> get(uint32 scheme, uint32 assetName, bool throwOnInvalidScheme) const
 			{
 				CAGE_ASSERT(scheme < schemes.size());
-				CAGE_ASSERT(schemes[scheme].typeId == typeId);
 				CAGE_ASSERT(schemes[scheme].load);
 				ScopeLock<RwMutex> lock(publicMutex, ReadLockTag());
 				auto it = publicIndex.find(assetName);
@@ -895,16 +889,23 @@ namespace cage
 		return impl->generateUniqueName();
 	}
 
-	void AssetManager::fabricate_(uint32 typeId, uint32 scheme, uint32 assetName, const string &textName, Holder<void> &&value)
+	void AssetManager::fabricate_(uint32 scheme, uint32 assetName, const string &textName, Holder<void> &&value)
 	{
 		AssetManagerImpl *impl = (AssetManagerImpl*)this;
-		impl->fabricate(typeId, scheme, assetName, textName, templates::move(value));
+		impl->fabricate(scheme, assetName, textName, templates::move(value));
 	}
 
-	Holder<void> AssetManager::get_(uint32 typeId, uint32 scheme, uint32 assetName, bool throwOnInvalidScheme) const
+	Holder<void> AssetManager::get_(uint32 scheme, uint32 assetName, bool throwOnInvalidScheme) const
 	{
 		const AssetManagerImpl *impl = (const AssetManagerImpl*)this;
-		return impl->get(typeId, scheme, assetName, throwOnInvalidScheme);
+		return impl->get(scheme, assetName, throwOnInvalidScheme);
+	}
+
+	uint32 AssetManager::schemeTypeId_(uint32 scheme) const
+	{
+		const AssetManagerImpl *impl = (const AssetManagerImpl *)this;
+		CAGE_ASSERT(scheme < impl->schemes.size());
+		return impl->schemes[scheme].typeIndex;
 	}
 
 	bool AssetManager::processCustomThread(uint32 threadIndex)

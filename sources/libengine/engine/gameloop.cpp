@@ -469,12 +469,12 @@ namespace cage
 					assets->defineScheme<AssetSchemeIndexRaw, MemoryBuffer>(genAssetSchemeRaw());
 					assets->defineScheme<AssetSchemeIndexTextPack, TextPack>(genAssetSchemeTextPack());
 					assets->defineScheme<AssetSchemeIndexCollider, Collider>(genAssetSchemeCollider());
+					assets->defineScheme<AssetSchemeIndexSkeletonRig, SkeletonRig>(genAssetSchemeSkeletonRig());
+					assets->defineScheme<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(genAssetSchemeSkeletalAnimation());
 					// engine assets
 					assets->defineScheme<AssetSchemeIndexShaderProgram, ShaderProgram>(genAssetSchemeShaderProgram(EngineGraphicsUploadThread::threadIndex));
 					assets->defineScheme<AssetSchemeIndexTexture, Texture>(genAssetSchemeTexture(EngineGraphicsUploadThread::threadIndex));
 					assets->defineScheme<AssetSchemeIndexModel, Model>(genAssetSchemeModel(EngineGraphicsDispatchThread::threadIndex));
-					assets->defineScheme<AssetSchemeIndexSkeletonRig, SkeletonRig>(genAssetSchemeSkeletonRig());
-					assets->defineScheme<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(genAssetSchemeSkeletalAnimation());
 					assets->defineScheme<AssetSchemeIndexRenderObject, RenderObject>(genAssetSchemeRenderObject());
 					assets->defineScheme<AssetSchemeIndexFont, Font>(genAssetSchemeFont(EngineGraphicsUploadThread::threadIndex));
 					assets->defineScheme<AssetSchemeIndexSound, Sound>(genAssetSchemeSound(EngineSoundThread::threadIndex));

@@ -25,13 +25,15 @@ namespace cage
 		template<uint32 Scheme, class T>
 		void fabricate(uint32 assetName, Holder<T> &&value, const string &textName = "<fabricated>")
 		{
-			fabricate_(detail::typeIndex<T>(), Scheme, assetName, textName, templates::move(value).template cast<void>());
+			CAGE_ASSERT(detail::typeIndex<T>() == schemeTypeId_(Scheme))
+			fabricate_(Scheme, assetName, textName, templates::move(value).template cast<void>());
 		}
 
 		template<uint32 Scheme, class T>
 		Holder<T> tryGet(uint32 assetName) const
 		{
-			return get_(detail::typeIndex<T>(), Scheme, assetName, false).template cast<T>();
+			CAGE_ASSERT(detail::typeIndex<T>() == schemeTypeId_(Scheme))
+			return get_(Scheme, assetName, false).template cast<T>();
 		}
 
 		template<uint32 Scheme, class T>
@@ -43,7 +45,8 @@ namespace cage
 		template<uint32 Scheme, class T>
 		Holder<T> get(uint32 assetName) const
 		{
-			return get_(detail::typeIndex<T>(), Scheme, assetName, true).template cast<T>();
+			CAGE_ASSERT(detail::typeIndex<T>() == schemeTypeId_(Scheme))
+			return get_(Scheme, assetName, true).template cast<T>();
 		}
 
 		template<uint32 Scheme, class T>
@@ -67,8 +70,9 @@ namespace cage
 
 	private:
 		void defineScheme_(uint32 typeId, uint32 scheme, const AssetScheme &value);
-		void fabricate_(uint32 typeId, uint32 scheme, uint32 assetName, const string &textName, Holder<void> &&value);
-		Holder<void> get_(uint32 typeId, uint32 scheme, uint32 assetName, bool throwOnInvalidScheme) const;
+		void fabricate_(uint32 scheme, uint32 assetName, const string &textName, Holder<void> &&value);
+		Holder<void> get_(uint32 scheme, uint32 assetName, bool throwOnInvalidScheme) const;
+		uint32 schemeTypeId_(uint32 scheme) const;
 	};
 
 	struct CAGE_CORE_API AssetManagerCreateConfig
