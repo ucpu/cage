@@ -9,7 +9,7 @@ void testMacros();
 void testEnums();
 void testExceptions();
 void testNumericTypes();
-void testTypeRegistry();
+void testTypeIndex();
 void testStrings();
 void testPaths();
 void testDelegates();
@@ -71,7 +71,7 @@ int main()
 	testEnums();
 	testExceptions();
 	testNumericTypes();
-	testTypeRegistry();
+	testTypeIndex();
 	testStrings();
 	testPaths();
 	testDelegates();

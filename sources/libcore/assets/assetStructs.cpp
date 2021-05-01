@@ -140,11 +140,4 @@ namespace cage
 		s.load.bind<&processSkeletonRigLoad>();
 		return s;
 	}
-
-	GCHL_REGISTER_TYPE(AssetPack);
-	GCHL_REGISTER_TYPE(MemoryBuffer);
-	GCHL_REGISTER_TYPE(TextPack);
-	GCHL_REGISTER_TYPE(Collider);
-	GCHL_REGISTER_TYPE(SkeletalAnimation);
-	GCHL_REGISTER_TYPE(SkeletonRig);
 }

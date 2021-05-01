@@ -2,7 +2,7 @@
 #define guard_assetsManager_h_s54dhg56sr4ht564fdrsh6t
 
 #include "events.h"
-#include "typeRegistry.h"
+#include "typeIndex.h"
 
 namespace cage
 {
@@ -12,7 +12,7 @@ namespace cage
 		template<uint32 Scheme, class T>
 		void defineScheme(const AssetScheme &value)
 		{
-			defineScheme_(detail::typeRegistryId<T>(), Scheme, value);
+			defineScheme_(detail::typeIndex<T>(), Scheme, value);
 		}
 
 		// begin thread-safe methods
@@ -25,13 +25,13 @@ namespace cage
 		template<uint32 Scheme, class T>
 		void fabricate(uint32 assetName, Holder<T> &&value, const string &textName = "<fabricated>")
 		{
-			fabricate_(detail::typeRegistryId<T>(), Scheme, assetName, textName, templates::move(value).template cast<void>());
+			fabricate_(detail::typeIndex<T>(), Scheme, assetName, textName, templates::move(value).template cast<void>());
 		}
 
 		template<uint32 Scheme, class T>
 		Holder<T> tryGet(uint32 assetName) const
 		{
-			return get_(detail::typeRegistryId<T>(), Scheme, assetName, false).template cast<T>();
+			return get_(detail::typeIndex<T>(), Scheme, assetName, false).template cast<T>();
 		}
 
 		template<uint32 Scheme, class T>
@@ -43,7 +43,7 @@ namespace cage
 		template<uint32 Scheme, class T>
 		Holder<T> get(uint32 assetName) const
 		{
-			return get_(detail::typeRegistryId<T>(), Scheme, assetName, true).template cast<T>();
+			return get_(detail::typeIndex<T>(), Scheme, assetName, true).template cast<T>();
 		}
 
 		template<uint32 Scheme, class T>

@@ -537,8 +537,3 @@ void testAssetManager()
 		man->unloadWait();
 	}
 }
-
-namespace cage
-{
-	GCHL_REGISTER_TYPE(AssetCounter);
-}
