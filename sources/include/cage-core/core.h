@@ -170,11 +170,9 @@ namespace cage
 	struct ConfigDouble;
 	struct ConfigString;
 	class ConfigList;
-	struct EntityComponentCreateConfig;
 	class EntityManager;
-	struct EntityManagerCreateConfig;
-	class Entity;
 	class EntityComponent;
+	class Entity;
 	class EntityGroup;
 	struct FileMode;
 	class File;

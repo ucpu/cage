@@ -7,7 +7,7 @@ namespace cage
 {
 	namespace privat
 	{
-		CAGE_CORE_API uint32 typeIndexInit(const char *ptr);
+		CAGE_CORE_API uint32 typeIndexInit(const char *name, uintPtr size, uintPtr alignment);
 
 		template<class T>
 		constexpr const char *typeIndexTypeName()
@@ -30,9 +30,25 @@ namespace cage
 		template<class T>
 		CAGE_FORCE_INLINE uint32 typeIndex()
 		{
-			static const uint32 id = privat::typeIndexInit(privat::typeIndexTypeName<T>());
+			static const uint32 id = privat::typeIndexInit(privat::typeIndexTypeName<T>(), sizeof(T), alignof(T));
 			return id;
 		};
+
+		CAGE_CORE_API uintPtr typeSize(uint32 index);
+
+		template<class T>
+		CAGE_FORCE_INLINE uintPtr typeSize()
+		{
+			return typeSize(typeIndex<T>());
+		}
+
+		CAGE_CORE_API uintPtr typeAlignment(uint32 index);
+
+		template<class T>
+		CAGE_FORCE_INLINE uintPtr typeAlignment()
+		{
+			return typeAlignment(typeIndex<T>());
+		}
 	}
 }
 

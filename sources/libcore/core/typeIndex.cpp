@@ -6,31 +6,59 @@
 
 namespace cage
 {
+	namespace
+	{
+		struct Type
+		{
+			const char *name = nullptr;
+			uintPtr size = 0;
+			uintPtr alignment = 0;
+		};
+
+		struct Data
+		{
+			std::vector<Type> values;
+
+			Data()
+			{
+				values.reserve(100);
+			}
+
+			uint32 index(const char *name, uintPtr size, uintPtr alignment)
+			{
+				for (auto it : cage::enumerate(values))
+					if (strcmp(it->name, name) == 0)
+						return numeric_cast<uint32>(it.index);
+				values.push_back({ name, size, alignment });
+				return numeric_cast<uint32>(values.size() - 1);
+			}
+		};
+
+		Data &data()
+		{
+			static Data d;
+			return d;
+		}
+	}
+
 	namespace privat
 	{
-		uint32 typeIndexInit(const char *ptr)
+		uint32 typeIndexInit(const char *name, uintPtr size, uintPtr alignment)
 		{
-			struct Data
-			{
-				std::vector<const char *> values;
+			return data().index(name, size, alignment);
+		}
+	}
 
-				Data()
-				{
-					values.reserve(100);
-				}
+	namespace detail
+	{
+		uintPtr typeSize(uint32 index)
+		{
+			return data().values[index].size;
+		}
 
-				uint32 val(const char *ptr)
-				{
-					for (auto it : cage::enumerate(values))
-						if (strcmp(*it, ptr) == 0)
-							return numeric_cast<uint32>(it.index);
-					values.push_back(ptr);
-					return numeric_cast<uint32>(values.size() - 1);
-				}
-			};
-
-			static Data data;
-			return data.val(ptr);
+		uintPtr typeAlignment(uint32 index)
+		{
+			return data().values[index].alignment;
 		}
 	}
 }

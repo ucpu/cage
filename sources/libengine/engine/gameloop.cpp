@@ -445,7 +445,7 @@ namespace cage
 				}
 
 				{ // create entities
-					entities = newEntityManager(config.entities ? *config.entities : EntityManagerCreateConfig());
+					entities = newEntityManager();
 				}
 
 				{ // create sync objects
@@ -492,17 +492,17 @@ namespace cage
 
 				{ // initialize entity components
 					EntityManager *entityMgr = entities.get();
-					TransformComponent::component = entityMgr->defineComponent(TransformComponent(), true);
-					TransformComponent::componentHistory = entityMgr->defineComponent(TransformComponent(), false);
-					RenderComponent::component = entityMgr->defineComponent(RenderComponent(), true);
-					TextureAnimationComponent::component = entityMgr->defineComponent(TextureAnimationComponent(), false);
-					SkeletalAnimationComponent::component = entityMgr->defineComponent(SkeletalAnimationComponent(), false);
-					LightComponent::component = entityMgr->defineComponent(LightComponent(), true);
-					ShadowmapComponent::component = entityMgr->defineComponent(ShadowmapComponent(), false);
-					TextComponent::component = entityMgr->defineComponent(TextComponent(), true);
-					CameraComponent::component = entityMgr->defineComponent(CameraComponent(), true);
-					SoundComponent::component = entityMgr->defineComponent(SoundComponent(), true);
-					ListenerComponent::component = entityMgr->defineComponent(ListenerComponent(), true);
+					TransformComponent::component = entityMgr->defineComponent(TransformComponent());
+					TransformComponent::componentHistory = entityMgr->defineComponent(TransformComponent());
+					RenderComponent::component = entityMgr->defineComponent(RenderComponent());
+					TextureAnimationComponent::component = entityMgr->defineComponent(TextureAnimationComponent());
+					SkeletalAnimationComponent::component = entityMgr->defineComponent(SkeletalAnimationComponent());
+					LightComponent::component = entityMgr->defineComponent(LightComponent());
+					ShadowmapComponent::component = entityMgr->defineComponent(ShadowmapComponent());
+					TextComponent::component = entityMgr->defineComponent(TextComponent());
+					CameraComponent::component = entityMgr->defineComponent(CameraComponent());
+					SoundComponent::component = entityMgr->defineComponent(SoundComponent());
+					ListenerComponent::component = entityMgr->defineComponent(ListenerComponent());
 				}
 
 				{ ScopeLock l(threadsStateBarier); }

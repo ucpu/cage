@@ -50,6 +50,7 @@ namespace cage
 		public:
 			std::vector<Holder<GroupImpl>> groups;
 			std::vector<Holder<ComponentImpl>> components;
+			std::vector<EntityComponent *> componentsByTypes;
 			robin_hood::unordered_map<uint32, Entity *> namedEntities;
 			plf::colony<EntityImpl> ents;
 			GroupImpl allEntities;
@@ -60,7 +61,7 @@ namespace cage
 #pragma warning (disable: 4355) // disable warning that using this in initializer list is dangerous
 #endif
 
-			EntityManagerImpl(const EntityManagerCreateConfig &config) : allEntities(this)
+			EntityManagerImpl() : allEntities(this)
 			{}
 
 #ifdef _MSC_VER
@@ -153,7 +154,6 @@ namespace cage
 				return systemArena().createHolder<ValuesFallback>(size, alignment).cast<Values>();
 
 #define GCHL_GENERATE(SIZE) if (s <= SIZE) return systemArena().createHolder<ValuesImpl<SIZE>>().cast<Values>();
-			//CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, 4, 8, 12, 16, 20, 24, 28, 32, 48, 64, 96, 128));
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, 4, 8, 16, 32, 64, 128));
 #undef GCHL_GENERATE
 
@@ -163,22 +163,19 @@ namespace cage
 		class ComponentImpl : public EntityComponent
 		{
 		public:
-			EntityManagerImpl *const manager = nullptr;
 			Holder<GroupImpl> componentEntities;
 			Holder<Values> values;
-			const uintPtr typeSize = m;
-			const uintPtr typeAlignment = m;
+			EntityManagerImpl *const manager = nullptr;
 			void *prototype = nullptr;
+			const uint32 typeIndex = m;
 			const uint32 vectorIndex = m;
 
-			ComponentImpl(EntityManagerImpl *manager, uintPtr typeSize, uintPtr typeAlignment, void *prototype_, const EntityComponentCreateConfig &config) :
-				manager(manager), typeSize(typeSize), typeAlignment(typeAlignment), vectorIndex(numeric_cast<uint32>(manager->components.size()))
+			ComponentImpl(EntityManagerImpl *manager, uint32 typeIndex, const void *prototype_) : manager(manager), typeIndex(typeIndex), vectorIndex(numeric_cast<uint32>(manager->components.size()))
 			{
-				if (config.enumerableEntities)
-					componentEntities = systemArena().createHolder<GroupImpl>(manager);
-				values = newValues(typeSize, typeAlignment);
+				componentEntities = systemArena().createHolder<GroupImpl>(manager);
+				values = newValues(detail::typeSize(typeIndex), detail::typeAlignment(typeIndex));
 				prototype = values->newVal();
-				detail::memcpy(prototype, prototype_, typeSize);
+				detail::memcpy(prototype, prototype_, detail::typeSize(typeIndex));
 			}
 
 			~ComponentImpl()
@@ -191,7 +188,7 @@ namespace cage
 			void *newVal()
 			{
 				void *v = values->newVal();
-				detail::memcpy(v, prototype, typeSize);
+				detail::memcpy(v, prototype, detail::typeSize(typeIndex));
 				return v;
 			}
 
@@ -225,30 +222,23 @@ namespace cage
 		}
 	}
 
-	EntityComponent *EntityManager::componentByIndex(uint32 index) const
+	EntityComponent *EntityManager::componentByOrder(uint32 index) const
 	{
 		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
 		CAGE_ASSERT(index < impl->components.size());
 		return +impl->components[index];
 	}
 
-	EntityGroup *EntityManager::groupByIndex(uint32 index) const
+	EntityComponent *EntityManager::componentByType(uint32 index) const
 	{
 		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
-		CAGE_ASSERT(index < impl->groups.size());
-		return +impl->groups[index];
+		return impl->componentsByTypes[index];
 	}
 
 	uint32 EntityManager::componentsCount() const
 	{
 		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
 		return numeric_cast<uint32>(impl->components.size());
-	}
-
-	uint32 EntityManager::groupsCount() const
-	{
-		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
-		return numeric_cast<uint32>(impl->groups.size());
 	}
 
 	EntityGroup *EntityManager::defineGroup()
@@ -258,6 +248,19 @@ namespace cage
 		GroupImpl *g = +h;
 		impl->groups.push_back(templates::move(h));
 		return g;
+	}
+
+	EntityGroup *EntityManager::groupByOrder(uint32 index) const
+	{
+		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
+		CAGE_ASSERT(index < impl->groups.size());
+		return +impl->groups[index];
+	}
+
+	uint32 EntityManager::groupsCount() const
+	{
+		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
+		return numeric_cast<uint32>(impl->groups.size());
 	}
 
 	const EntityGroup *EntityManager::group() const
@@ -278,16 +281,17 @@ namespace cage
 		return impl->newEnt(0);
 	}
 
-	Entity *EntityManager::create(uint32 name)
+	Entity *EntityManager::create(uint32 entityName)
 	{
+		CAGE_ASSERT(entityName != 0 && entityName != m);
 		EntityManagerImpl *impl = (EntityManagerImpl *)this;
-		CAGE_ASSERT(name != 0);
-		CAGE_ASSERT(!impl->namedEntities.count(name));
-		return impl->newEnt(name);
+		CAGE_ASSERT(!impl->namedEntities.count(entityName));
+		return impl->newEnt(entityName);
 	}
 
 	Entity *EntityManager::tryGet(uint32 entityName) const
 	{
+		CAGE_ASSERT(entityName != 0 && entityName != m);
 		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
 		auto it = impl->namedEntities.find(entityName);
 		if (it == impl->namedEntities.end())
@@ -297,6 +301,7 @@ namespace cage
 
 	Entity *EntityManager::get(uint32 entityName) const
 	{
+		CAGE_ASSERT(entityName != 0 && entityName != m);
 		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
 		try
 		{
@@ -311,6 +316,7 @@ namespace cage
 
 	Entity *EntityManager::getOrCreate(uint32 entityName)
 	{
+		CAGE_ASSERT(entityName != 0 && entityName != m);
 		Entity *e = tryGet(entityName);
 		if (e)
 			return e;
@@ -319,6 +325,7 @@ namespace cage
 
 	bool EntityManager::has(uint32 entityName) const
 	{
+		CAGE_ASSERT(entityName != m);
 		if (entityName == 0)
 			return false;
 		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
@@ -331,30 +338,43 @@ namespace cage
 		impl->allEntities.destroy();
 	}
 
-	EntityComponent *EntityManager::defineComponent_(uintPtr typeSize, uintPtr typeAlignment, void *prototype, const EntityComponentCreateConfig &config)
+	EntityComponent *EntityManager::defineComponent_(uint32 typeIndex, const void *prototype)
 	{
 		EntityManagerImpl *impl = (EntityManagerImpl *)this;
-		Holder<ComponentImpl> h = systemArena().createHolder<ComponentImpl>(impl, typeSize, typeAlignment, prototype, config);
+		Holder<ComponentImpl> h = systemArena().createHolder<ComponentImpl>(impl, typeIndex, prototype);
+		{
+			auto &v = impl->componentsByTypes;
+			if (v.size() <= typeIndex)
+				v.resize(typeIndex + 1, nullptr);
+			if (v[typeIndex] == nullptr)
+				v[typeIndex] = +h;
+		}
 		ComponentImpl *c = +h;
 		impl->components.push_back(templates::move(h));
 		return c;
 	}
 
-	Holder<EntityManager> newEntityManager(const EntityManagerCreateConfig &config)
+	Holder<EntityManager> newEntityManager()
 	{
-		return systemArena().createImpl<EntityManager, EntityManagerImpl>(config);
+		return systemArena().createImpl<EntityManager, EntityManagerImpl>();
 	}
 
-	uintPtr EntityComponent::typeSize() const
+	EntityManager *EntityComponent::manager() const
 	{
-		const ComponentImpl *impl = (const ComponentImpl*)this;
-		return impl->typeSize;
+		const ComponentImpl *impl = (const ComponentImpl *)this;
+		return impl->manager;
 	}
 
-	uint32 EntityComponent::index() const
+	uint32 EntityComponent::order() const
 	{
-		const ComponentImpl *impl = (const ComponentImpl*)this;
+		const ComponentImpl *impl = (const ComponentImpl *)this;
 		return impl->vectorIndex;
+	}
+
+	uint32 EntityComponent::typeIndex() const
+	{
+		const ComponentImpl *impl = (const ComponentImpl *)this;
+		return impl->typeIndex;
 	}
 
 	const EntityGroup *EntityComponent::group() const
@@ -369,15 +389,15 @@ namespace cage
 		impl->componentEntities.get()->destroy();
 	}
 
-	EntityManager *EntityComponent::manager() const
+	EntityManager *Entity::manager() const
 	{
-		const ComponentImpl *impl = (const ComponentImpl*)this;
+		const EntityImpl *impl = (const EntityImpl *)this;
 		return impl->manager;
 	}
 
 	uint32 Entity::name() const
 	{
-		const EntityImpl *impl = (const EntityImpl*)this;
+		const EntityImpl *impl = (const EntityImpl *)this;
 		return impl->name;
 	}
 
@@ -385,7 +405,7 @@ namespace cage
 	{
 		if (has(group))
 			return;
-		EntityImpl *impl = (EntityImpl*)this;
+		EntityImpl *impl = (EntityImpl *)this;
 		impl->groups.insert(group);
 		((GroupImpl*)group)->entities.push_back(impl);
 		group->entityAdded.dispatch(this);
@@ -395,7 +415,7 @@ namespace cage
 	{
 		if (!has(group))
 			return;
-		EntityImpl *impl = (EntityImpl*)this;
+		EntityImpl *impl = (EntityImpl *)this;
 		impl->groups.erase(group);
 		for (std::vector<Entity*>::reverse_iterator it = ((GroupImpl*)group)->entities.rbegin(), et = ((GroupImpl*)group)->entities.rend(); it != et; it++)
 		{
@@ -410,7 +430,7 @@ namespace cage
 
 	bool Entity::has(const EntityGroup *group) const
 	{
-		const EntityImpl *impl = (const EntityImpl*)this;
+		const EntityImpl *impl = (const EntityImpl *)this;
 		CAGE_ASSERT(((GroupImpl*)group)->manager == impl->manager);
 		return impl->groups.count(const_cast<EntityGroup*>(group)) != 0;
 	}
@@ -419,7 +439,7 @@ namespace cage
 	{
 		if (has(component))
 			return;
-		EntityImpl *impl = (EntityImpl*)this;
+		EntityImpl *impl = (EntityImpl *)this;
 		ComponentImpl *ci = (ComponentImpl *)component;
 		if (impl->components.size() < ci->vectorIndex + 1)
 			impl->components.resize(ci->vectorIndex + 1);
@@ -432,7 +452,7 @@ namespace cage
 	{
 		if (!has(component))
 			return;
-		EntityImpl *impl = (EntityImpl*)this;
+		EntityImpl *impl = (EntityImpl *)this;
 		ComponentImpl *ci = (ComponentImpl *)component;
 		if (ci->componentEntities)
 			ci->componentEntities->remove(this);
@@ -442,7 +462,7 @@ namespace cage
 
 	bool Entity::has(const EntityComponent *component) const
 	{
-		const EntityImpl *impl = (const EntityImpl*)this;
+		const EntityImpl *impl = (const EntityImpl *)this;
 		ComponentImpl *ci = (ComponentImpl *)component;
 		CAGE_ASSERT(ci->manager == impl->manager);
 		if (impl->components.size() > ci->vectorIndex)
@@ -450,22 +470,9 @@ namespace cage
 		return false;
 	}
 
-	void Entity::destroy()
-	{
-		CAGE_ASSERT(this); // calling free/delete on null is ok, but calling the destroy METHOD is not, and some compilers totally ignored that issue
-		EntityManagerImpl *man = (EntityManagerImpl *)(manager());
-		man->desEnt((EntityImpl *)this);
-	}
-
-	EntityManager *Entity::manager() const
-	{
-		const EntityImpl *impl = (const EntityImpl*)this;
-		return impl->manager;
-	}
-
 	void *Entity::unsafeValue(EntityComponent *component)
 	{
-		EntityImpl *impl = (EntityImpl*)this;
+		EntityImpl *impl = (EntityImpl *)this;
 		ComponentImpl *ci = (ComponentImpl*)component;
 		if (impl->components.size() > ci->vectorIndex)
 		{
@@ -477,56 +484,50 @@ namespace cage
 		return unsafeValue(component);
 	}
 
-	uint32 EntityGroup::index() const
+	void Entity::destroy()
 	{
-		const GroupImpl *impl = (const GroupImpl*)this;
+		CAGE_ASSERT(this); // calling free/delete on null is ok, but calling the destroy METHOD is not, and some compilers totally ignored that issue
+		EntityManagerImpl *man = (EntityManagerImpl *)(manager());
+		man->desEnt((EntityImpl *)this);
+	}
+
+	EntityManager *EntityGroup::manager() const
+	{
+		const GroupImpl *impl = (const GroupImpl *)this;
+		return impl->manager;
+	}
+
+	uint32 EntityGroup::order() const
+	{
+		const GroupImpl *impl = (const GroupImpl *)this;
 		return impl->vectorIndex;
-	}
-
-	uint32 EntityGroup::count() const
-	{
-		const GroupImpl *impl = (const GroupImpl*)this;
-		return numeric_cast <uint32> (impl->entities.size());
-	}
-
-	Entity *const *EntityGroup::array() const
-	{
-		const GroupImpl *impl = (const GroupImpl*)this;
-		if (impl->entities.empty())
-			return nullptr;
-		return &impl->entities[0];
 	}
 
 	PointerRange<Entity *const> EntityGroup::entities() const
 	{
-		const GroupImpl *impl = (const GroupImpl*)this;
+		const GroupImpl *impl = (const GroupImpl *)this;
 		return impl->entities;
 	}
 
 	void EntityGroup::merge(const EntityGroup *other)
 	{
-		if (other == this)
-			return;
+		CAGE_ASSERT(this != other);
 		for (auto it : other->entities())
 			it->add(this);
 	}
 
 	void EntityGroup::subtract(const EntityGroup *other)
 	{
-		if (other == this)
-		{
-			clear();
-			return;
-		}
+		CAGE_ASSERT(this != other);
 		for (auto it : other->entities())
 			it->remove(this);
 	}
 
 	void EntityGroup::intersect(const EntityGroup *other)
 	{
-		if (other == this)
-			return;
-		std::vector<Entity*> r;
+		CAGE_ASSERT(this != other);
+		std::vector<Entity *> r;
+		r.reserve(entities().size());
 		for (auto it : entities())
 			if (!it->has(other))
 				r.push_back(it);
@@ -536,30 +537,24 @@ namespace cage
 
 	void EntityGroup::clear()
 	{
-		GroupImpl *impl = (GroupImpl*)this;
+		GroupImpl *impl = (GroupImpl *)this;
 		while (!impl->entities.empty())
 			impl->entities[0]->remove(this);
 	}
 
 	void EntityGroup::destroy()
 	{
-		GroupImpl *impl = (GroupImpl*)this;
+		GroupImpl *impl = (GroupImpl *)this;
 		while (!impl->entities.empty())
 			(*impl->entities.rbegin())->destroy();
 	}
 
-	EntityManager *EntityGroup::manager() const
-	{
-		const GroupImpl *impl = (const GroupImpl*)this;
-		return impl->manager;
-	}
-
 	Holder<PointerRange<char>> entitiesSerialize(const EntityGroup *entities, EntityComponent *component)
 	{
-		uintPtr typeSize = component->typeSize();
+		const uintPtr typeSize = detail::typeSize(component->typeIndex());
 		MemoryBuffer buffer;
 		Serializer ser(buffer);
-		ser << component->index();
+		ser << component->order();
 		ser << (uint64)typeSize;
 		Serializer cntPlaceholder = ser.placeholder(sizeof(uint32));
 		uint32 cnt = 0;
@@ -590,10 +585,10 @@ namespace cage
 		des >> componentIndex;
 		if (componentIndex >= manager->componentsCount())
 			CAGE_THROW_ERROR(Exception, "incompatible component (different index)");
-		EntityComponent *component = manager->componentByIndex(componentIndex);
+		EntityComponent *component = manager->componentByOrder(componentIndex);
 		uint64 typeSize;
 		des >> typeSize;
-		if (component->typeSize() != typeSize)
+		if (detail::typeSize(component->typeIndex()) != typeSize)
 			CAGE_THROW_ERROR(Exception, "incompatible component (different size)");
 		uint32 cnt;
 		des >> cnt;
