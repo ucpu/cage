@@ -245,21 +245,21 @@ namespace cage
 				CAGE_ASSERT(ass->asset);
 				if (ass->asset->failed)
 				{
-					maintenanceQueue.push(templates::move(ass));
+					maintenanceQueue.push(std::move(ass));
 					return;
 				}
 				const uint32 scheme = ass->asset->scheme;
 				CAGE_ASSERT(scheme < schemes.size());
 				if (!schemes[scheme].load)
 				{
-					maintenanceQueue.push(templates::move(ass));
+					maintenanceQueue.push(std::move(ass));
 					return;
 				}
 				const uint32 thr = schemes[scheme].threadIndex;
 				if (thr == m)
-					defaultProcessingQueue.push(templates::move(ass));
+					defaultProcessingQueue.push(std::move(ass));
 				else
-					customProcessingQueues[thr]->push(templates::move(ass));
+					customProcessingQueues[thr]->push(std::move(ass));
 			}
 
 			void enqueueForDeprocessing(Holder<WorkingAsset> &&ass)
@@ -267,23 +267,23 @@ namespace cage
 				CAGE_ASSERT(ass->asset);
 				if (ass->asset->failed)
 				{
-					defaultProcessingQueue.push(templates::move(ass));
+					defaultProcessingQueue.push(std::move(ass));
 					return;
 				}
 				const uint32 scheme = ass->asset->scheme;
 				CAGE_ASSERT(scheme < schemes.size());
 				const uint32 thr = schemes[scheme].threadIndex;
 				if (thr == m)
-					defaultProcessingQueue.push(templates::move(ass));
+					defaultProcessingQueue.push(std::move(ass));
 				else
-					customProcessingQueues[thr]->push(templates::move(ass));
+					customProcessingQueues[thr]->push(std::move(ass));
 			}
 
 			void dereference(void *ptr)
 			{
 				Holder<Unloading> u = systemArena().createHolder<Unloading>(&workingCounter);
 				u->ptr = ptr;
-				maintenanceQueue.push(templates::move(u).cast<WorkingAsset>());
+				maintenanceQueue.push(std::move(u).cast<WorkingAsset>());
 			}
 
 			void unpublish(uint32 realName)
@@ -309,7 +309,7 @@ namespace cage
 				{
 					Holder<Unloading> u = systemArena().createHolder<Unloading>(&workingCounter);
 					u->asset = ass.share();
-					enqueueForDeprocessing(templates::move(u).cast<WorkingAsset>());
+					enqueueForDeprocessing(std::move(u).cast<WorkingAsset>());
 				}
 				else
 				{
@@ -370,12 +370,12 @@ namespace cage
 					{
 						Holder<WorkingAsset> ass1;
 						diskLoadingQueue.pop(ass1);
-						Holder<Loading> ass2 = templates::move(ass1).cast<Loading>();
+						Holder<Loading> ass2 = std::move(ass1).cast<Loading>();
 						ass2->diskLoad(this);
 						if (ass2->compData.size() > 0)
-							decompressionQueue.push(templates::move(ass2).cast<WorkingAsset>());
+							decompressionQueue.push(std::move(ass2).cast<WorkingAsset>());
 						else
-							enqueueForProcessing(templates::move(ass2).cast<WorkingAsset>());
+							enqueueForProcessing(std::move(ass2).cast<WorkingAsset>());
 					}
 				}
 				catch (const ConcurrentQueueTerminated &)
@@ -392,9 +392,9 @@ namespace cage
 					{
 						Holder<WorkingAsset> ass1;
 						decompressionQueue.pop(ass1);
-						Holder<Loading> ass2 = templates::move(ass1).cast<Loading>();
+						Holder<Loading> ass2 = std::move(ass1).cast<Loading>();
 						ass2->decompress(this);
-						enqueueForProcessing(templates::move(ass2).cast<WorkingAsset>());
+						enqueueForProcessing(std::move(ass2).cast<WorkingAsset>());
 					}
 				}
 				catch (const ConcurrentQueueTerminated &)
@@ -412,7 +412,7 @@ namespace cage
 						Holder<WorkingAsset> ass;
 						defaultProcessingQueue.pop(ass);
 						ass->process(this);
-						maintenanceQueue.push(templates::move(ass));
+						maintenanceQueue.push(std::move(ass));
 					}
 				}
 				catch (const ConcurrentQueueTerminated &)
@@ -479,7 +479,7 @@ namespace cage
 				Holder<Command> cmd = systemArena().createHolder<Command>(&workingCounter);
 				cmd->realName = assetName;
 				cmd->type = CommandEnum::Add;
-				maintenanceQueue.push(templates::move(cmd).cast<WorkingAsset>());
+				maintenanceQueue.push(std::move(cmd).cast<WorkingAsset>());
 			}
 
 			void remove(uint32 assetName)
@@ -487,7 +487,7 @@ namespace cage
 				Holder<Command> cmd = systemArena().createHolder<Command>(&workingCounter);
 				cmd->realName = assetName;
 				cmd->type = CommandEnum::Remove;
-				maintenanceQueue.push(templates::move(cmd).cast<WorkingAsset>());
+				maintenanceQueue.push(std::move(cmd).cast<WorkingAsset>());
 			}
 
 			void reload(uint32 assetName)
@@ -495,7 +495,7 @@ namespace cage
 				Holder<Command> cmd = systemArena().createHolder<Command>(&workingCounter);
 				cmd->realName = assetName;
 				cmd->type = CommandEnum::Reload;
-				maintenanceQueue.push(templates::move(cmd).cast<WorkingAsset>());
+				maintenanceQueue.push(std::move(cmd).cast<WorkingAsset>());
 			}
 
 			uint32 generateUniqueName()
@@ -517,9 +517,9 @@ namespace cage
 				cmd->realName = assetName;
 				cmd->textName = textName;
 				cmd->scheme = scheme;
-				cmd->holder = templates::move(value);
+				cmd->holder = std::move(value);
 				cmd->type = CommandEnum::Fabricate;
-				maintenanceQueue.push(templates::move(cmd).cast<WorkingAsset>());
+				maintenanceQueue.push(std::move(cmd).cast<WorkingAsset>());
 			}
 
 			Holder<void> get(uint32 scheme, uint32 assetName, bool throwOnInvalidScheme) const
@@ -558,7 +558,7 @@ namespace cage
 				if (customProcessingQueues[threadIndex]->tryPop(ass))
 				{
 					ass->process(this);
-					maintenanceQueue.push(templates::move(ass));
+					maintenanceQueue.push(std::move(ass));
 					return true;
 				}
 				return false;
@@ -761,7 +761,7 @@ namespace cage
 					if (a.get() == ptr)
 						u->asset = a.share();
 				CAGE_ASSERT(u->asset);
-				impl->enqueueForDeprocessing(templates::move(u).cast<WorkingAsset>());
+				impl->enqueueForDeprocessing(std::move(u).cast<WorkingAsset>());
 			}
 			else
 			{
@@ -825,7 +825,7 @@ namespace cage
 				auto l = systemArena().createHolder<Loading>(&impl->workingCounter);
 				l->asset = systemArena().createHolder<Asset>(realName, impl).makeShareable();
 				c.versions.insert(c.versions.begin(), l->asset.share());
-				impl->diskLoadingQueue.push(templates::move(l).cast<WorkingAsset>());
+				impl->diskLoadingQueue.push(std::move(l).cast<WorkingAsset>());
 			} break;
 			default:
 				CAGE_THROW_CRITICAL(Exception, "invalid command type enum");
@@ -849,9 +849,9 @@ namespace cage
 				l->asset = systemArena().createHolder<Asset>(realName, impl).makeShareable();
 				l->asset->textName = textName;
 				l->asset->scheme = scheme;
-				l->asset->assetHolder = templates::move(holder);
+				l->asset->assetHolder = std::move(holder);
 				c.versions.insert(c.versions.begin(), l->asset.share());
-				impl->maintenanceQueue.push(templates::move(l).cast<WorkingAsset>());
+				impl->maintenanceQueue.push(std::move(l).cast<WorkingAsset>());
 			} break;
 			default:
 				CAGE_THROW_CRITICAL(Exception, "invalid command type enum");
@@ -892,7 +892,7 @@ namespace cage
 	void AssetManager::fabricate_(uint32 scheme, uint32 assetName, const string &textName, Holder<void> &&value)
 	{
 		AssetManagerImpl *impl = (AssetManagerImpl*)this;
-		impl->fabricate(scheme, assetName, textName, templates::move(value));
+		impl->fabricate(scheme, assetName, textName, std::move(value));
 	}
 
 	Holder<void> AssetManager::get_(uint32 scheme, uint32 assetName, bool throwOnInvalidScheme) const

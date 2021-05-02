@@ -26,7 +26,7 @@ namespace cage
 		void fabricate(uint32 assetName, Holder<T> &&value, const string &textName = "<fabricated>")
 		{
 			CAGE_ASSERT(detail::typeIndex<T>() == schemeTypeId_(Scheme))
-			fabricate_(Scheme, assetName, textName, templates::move(value).template cast<void>());
+			fabricate_(Scheme, assetName, textName, std::move(value).template cast<void>());
 		}
 
 		template<uint32 Scheme, class T>

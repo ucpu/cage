@@ -81,7 +81,7 @@ namespace cage
 			size_ = size;
 			return;
 		}
-		MemoryBuffer c = templates::move(*this);
+		MemoryBuffer c = std::move(*this);
 		allocate(size);
 		detail::memcpy(data_, c.data(), c.size());
 	}
@@ -102,7 +102,7 @@ namespace cage
 		if (capacity_ == size_)
 			return;
 		CAGE_ASSERT(capacity_ > size_);
-		MemoryBuffer c = templates::move(*this);
+		MemoryBuffer c = std::move(*this);
 		allocate(c.size());
 		detail::memcpy(data_, c.data(), c.size());
 	}

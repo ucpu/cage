@@ -46,7 +46,7 @@ struct HolderSet
 
 	T *insert(T &&value)
 	{
-		return const_cast<T*>(data.insert(systemArena().createHolder<T>(templates::move(value))).first->get());
+		return const_cast<T*>(data.insert(systemArena().createHolder<T>(std::move(value))).first->get());
 	}
 
 	Iterator erase(const Iterator &what)
@@ -93,7 +93,7 @@ struct HolderSet
 		{
 			T tmp;
 			tmp.load(f);
-			insert(templates::move(tmp));
+			insert(std::move(tmp));
 		}
 	}
 

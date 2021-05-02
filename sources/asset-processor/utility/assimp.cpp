@@ -166,7 +166,7 @@ namespace
 	class CageIoStream : public Assimp::IOStream
 	{
 	public:
-		CageIoStream(cage::Holder<cage::File> r) : r(templates::move(r))
+		CageIoStream(cage::Holder<cage::File> r) : r(std::move(r))
 		{}
 
 		virtual ~CageIoStream()

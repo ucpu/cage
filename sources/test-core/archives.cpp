@@ -132,7 +132,7 @@ namespace
 				uint32 cnt = randomRange(10, 100);
 				for (uint32 i = 0; i < cnt; i++)
 					ser << randomRange(-1.0, 1.0);
-				data = templates::move(buff);
+				data = std::move(buff);
 			}
 		}
 
@@ -195,7 +195,7 @@ void testArchives()
 			uint32 cnt = randomRange(10, 100);
 			for (uint32 i = 0; i < cnt; i++)
 				ser << randomRange(-1.0, 1.0);
-			*d = templates::move(buff);
+			*d = std::move(buff);
 		}
 	}
 

@@ -12,7 +12,7 @@ namespace cage
 		template<class T>
 		EntityComponent *defineComponent(const T &prototype)
 		{
-			static_assert(std::is_trivially_copyable<T>::value && std::is_trivially_destructible<T>::value);
+			static_assert(std::is_trivially_copyable_v<T> && std::is_trivially_destructible_v<T>);
 			return defineComponent_(detail::typeIndex<T>(), &prototype);
 		}
 

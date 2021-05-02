@@ -27,7 +27,7 @@ namespace
 		VariableSmoothingBuffer<uint64, 20> smoothRtt;
 		VariableSmoothingBuffer<uint64, 20> smoothThroughput;
 
-		ConnImpl(Holder<UdpConnection> udp) : udp(templates::move(udp)), timeStart(applicationTime())
+		ConnImpl(Holder<UdpConnection> udp) : udp(std::move(udp)), timeStart(applicationTime())
 		{
 			timeStats = timeStart + 500000;
 			lastProcessTime = timeStart;
@@ -134,5 +134,5 @@ bool Conn::process()
 
 Holder<Conn> newConn(Holder<UdpConnection> udp)
 {
-	return systemArena().createImpl<Conn, ConnImpl>(templates::move(udp));
+	return systemArena().createImpl<Conn, ConnImpl>(std::move(udp));
 }

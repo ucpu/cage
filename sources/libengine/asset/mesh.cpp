@@ -38,7 +38,7 @@ namespace cage
 			msh->setSkeleton(data.skeletonName, data.skeletonBones);
 			msh->setInstancesLimitHint(data.instancesLimitHint);
 
-			context->assetHolder = templates::move(msh).cast<void>();
+			context->assetHolder = std::move(msh).cast<void>();
 		}
 	}
 

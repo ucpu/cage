@@ -34,7 +34,7 @@ namespace cage
 			PointerRange<const uint32> names = bufferCast<const uint32>(des.advance(h.modelesCount * sizeof(uint32)));
 			obj->setLods(thresholds, indices, names);
 
-			context->assetHolder = templates::move(obj).cast<void>();
+			context->assetHolder = std::move(obj).cast<void>();
 		}
 	}
 

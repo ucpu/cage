@@ -34,7 +34,7 @@ namespace
 				auto c = udp->accept();
 				if (c)
 				{
-					conns.push_back(templates::move(c));
+					conns.push_back(std::move(c));
 					hadConnection = true;
 				}
 				else
@@ -89,7 +89,7 @@ namespace
 				MemoryBuffer b(cnt);
 				for (uint32 i = 0; i < cnt; i++)
 					b.data()[i] = (char)randomRange(0u, 256u);
-				sends.push_back(templates::move(b));
+				sends.push_back(std::move(b));
 			}
 			udp = newUdpConnection("localhost", 3210, randomChance() < 0.5 ? 10000000 : 0);
 		}

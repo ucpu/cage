@@ -42,7 +42,7 @@ namespace
 		numbers.push_back(5);
 		numbers.push_back(42);
 		numbers.push_back(13);
-		return PointerRangeHolder<uint32>(templates::move(numbers));
+		return PointerRangeHolder<uint32>(std::move(numbers));
 	}
 
 	Holder<PointerRange<Test>> makeRangeTests()
@@ -55,7 +55,7 @@ namespace
 		tests.emplace_back();
 		tests.emplace_back();
 		CAGE_TEST(counter == init + 4);
-		return PointerRangeHolder<Test>(templates::move(tests));
+		return PointerRangeHolder<Test>(std::move(tests));
 	}
 
 	void functionTakingMutableRange(PointerRange<Test> r)
@@ -177,7 +177,7 @@ void testPointerRange()
 			functionTakingMutableRange(range);
 			functionTakingConstRange(makeRangeTests());
 			functionTakingMutableRange(makeRangeTests());
-			Holder<PointerRange<const Test>> crange = templates::move(range);
+			Holder<PointerRange<const Test>> crange = std::move(range);
 			CAGE_TEST(crange->size() == 4);
 			CAGE_TEST(counter == 4);
 		}
@@ -255,7 +255,7 @@ void testPointerRange()
 	{
 		CAGE_TESTCASE("move Holder<PointerRange<T>>");
 		Holder<PointerRange<uint32>> r1 = makeRangeInts();
-		Holder<PointerRange<uint32>> r2 = templates::move(r1);
+		Holder<PointerRange<uint32>> r2 = std::move(r1);
 		CAGE_TEST(r1.empty());
 		CAGE_TEST(r2.size() == 3);
 	}
@@ -263,7 +263,7 @@ void testPointerRange()
 	{
 		CAGE_TESTCASE("move Holder<PointerRange<const T>>");
 		Holder<PointerRange<const uint32>> r1 = makeRangeInts();
-		Holder<PointerRange<const uint32>> r2 = templates::move(r1);
+		Holder<PointerRange<const uint32>> r2 = std::move(r1);
 		CAGE_TEST(r1.empty());
 		CAGE_TEST(r2.size() == 3);
 	}
@@ -273,7 +273,7 @@ void testPointerRange()
 		PointerRangeHolder<uint32> r1;
 		r1.emplace_back(13);
 		r1.emplace_back(42);
-		PointerRangeHolder<uint32> r2 = templates::move(r1);
+		PointerRangeHolder<uint32> r2 = std::move(r1);
 		CAGE_TEST(r1.empty());
 		CAGE_TEST(r2.size() == 2);
 	}

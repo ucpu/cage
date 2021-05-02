@@ -32,7 +32,7 @@ namespace cage
 			font->setGlyphs(glyphs, bufferCast<const real>(kerning));
 			font->setCharmap(bufferCast<const uint32>(charmapChars), bufferCast<const uint32>(charmapGlyphs));
 
-			context->assetHolder = templates::move(font).cast<void>();
+			context->assetHolder = std::move(font).cast<void>();
 		}
 	}
 

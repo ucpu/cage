@@ -28,7 +28,7 @@ namespace cage
 			shr->relink();
 			CAGE_ASSERT(des.available() == 0);
 
-			context->assetHolder = templates::move(shr).cast<void>();
+			context->assetHolder = std::move(shr).cast<void>();
 		}
 	}
 

@@ -48,7 +48,7 @@ namespace cage
 		{
 			auto &d = (Delegate<bool(Ts...)>&)*this;
 			if (d)
-				return d(templates::forward<Ts>(vs)...);
+				return d(std::forward<Ts>(vs)...);
 			return false;
 		}
 
@@ -74,7 +74,7 @@ namespace cage
 		{
 			auto &d = (Delegate<void(Ts...)>&)*this;
 			if (d)
-				d(templates::forward<Ts>(vs)...);
+				d(std::forward<Ts>(vs)...);
 			return false;
 		}
 	};
@@ -91,7 +91,7 @@ namespace cage
 			const privat::EventLinker *l = this->n;
 			while (l)
 			{
-				if (static_cast<const EventListener<bool(Ts...)>*>(l)->invoke(templates::forward<Ts>(vs)...))
+				if (static_cast<const EventListener<bool(Ts...)>*>(l)->invoke(std::forward<Ts>(vs)...))
 					return true;
 				l = l->n;
 			}

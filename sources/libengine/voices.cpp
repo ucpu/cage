@@ -40,7 +40,7 @@ namespace cage
 				VoiceImpl *p = &*voices.emplace();
 				Holder<Voice> h(p, p, Delegate<void(void *)>().bind<VoicesMixerImpl, &VoicesMixerImpl::removeVoice>(this));
 				// todo init properties
-				return templates::move(h);
+				return std::move(h);
 			}
 
 			real attenuation(const vec3 &position, real referenceDistance, real rolloffFactor) const

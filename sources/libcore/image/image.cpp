@@ -93,7 +93,7 @@ namespace cage
 		ImageImpl *impl = (ImageImpl *)this;
 		CAGE_ASSERT(buffer.size() >= width * height * channels * formatBytes(format));
 		initialize(0, 0, channels, format);
-		impl->mem = templates::move(buffer);
+		impl->mem = std::move(buffer);
 		impl->width = width;
 		impl->height = height;
 	}

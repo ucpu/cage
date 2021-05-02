@@ -82,7 +82,7 @@ namespace cage
 			indices[k] = head;
 			head = h.n;
 			h.key = k;
-			h.value = templates::move(value);
+			h.value = std::move(value);
 			h.valid = true;
 			return &h.value;
 		}

@@ -40,7 +40,7 @@ namespace cage
 			tex->animationDuration = data.animationDuration;
 			tex->animationLoop = any(data.flags & TextureFlags::AnimationLoop);
 
-			context->assetHolder = templates::move(tex).cast<void>();
+			context->assetHolder = std::move(tex).cast<void>();
 		}
 	}
 

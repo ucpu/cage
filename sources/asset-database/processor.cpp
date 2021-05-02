@@ -187,7 +187,7 @@ namespace
 					ass.corrupted = true;
 				}
 
-				assets.insert(templates::move(ass));
+				assets.insert(std::move(ass));
 			}
 		}
 
@@ -667,7 +667,7 @@ namespace
 			Holder<Ini> ini = newIni();
 			ini->importFile(pathJoin(configPathSchemes, name));
 			s.parse(ini.get());
-			schemes.insert(templates::move(s));
+			schemes.insert(std::move(s));
 		}
 	}
 

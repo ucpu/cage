@@ -232,7 +232,9 @@ namespace cage
 	EntityComponent *EntityManager::componentByType(uint32 index) const
 	{
 		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
-		return impl->componentsByTypes[index];
+		if (index < impl->componentsByTypes.size())
+			return impl->componentsByTypes[index];
+		return nullptr;
 	}
 
 	uint32 EntityManager::componentsCount() const
@@ -246,7 +248,7 @@ namespace cage
 		EntityManagerImpl *impl = (EntityManagerImpl *)this;
 		Holder<GroupImpl> h = systemArena().createHolder<GroupImpl>(impl);
 		GroupImpl *g = +h;
-		impl->groups.push_back(templates::move(h));
+		impl->groups.push_back(std::move(h));
 		return g;
 	}
 
@@ -350,7 +352,7 @@ namespace cage
 				v[typeIndex] = +h;
 		}
 		ComponentImpl *c = +h;
-		impl->components.push_back(templates::move(h));
+		impl->components.push_back(std::move(h));
 		return c;
 	}
 
@@ -573,7 +575,7 @@ namespace cage
 		if (cnt == 0)
 			return {};
 		cntPlaceholder << cnt;
-		return templates::move(buffer);
+		return std::move(buffer);
 	}
 
 	void entitiesDeserialize(PointerRange<const char> buffer, EntityManager *manager)

@@ -36,7 +36,7 @@ namespace cage
 		{
 			static AssetPack pack;
 			Holder<AssetPack> h = Holder<AssetPack>(&pack, nullptr, {});
-			context->assetHolder = templates::move(h).cast<void>();
+			context->assetHolder = std::move(h).cast<void>();
 		}
 	}
 
@@ -52,8 +52,8 @@ namespace cage
 	{
 		void processRawLoad(AssetContext *context)
 		{
-			Holder<MemoryBuffer> mem = systemArena().createHolder<MemoryBuffer>(templates::move(context->originalData));
-			context->assetHolder = templates::move(mem).cast<void>();
+			Holder<MemoryBuffer> mem = systemArena().createHolder<MemoryBuffer>(std::move(context->originalData));
+			context->assetHolder = std::move(mem).cast<void>();
 		}
 	}
 
@@ -80,7 +80,7 @@ namespace cage
 				des >> name >> val;
 				texts->set(name, val);
 			}
-			context->assetHolder = templates::move(texts).cast<void>();
+			context->assetHolder = std::move(texts).cast<void>();
 		}
 	}
 
@@ -99,7 +99,7 @@ namespace cage
 			Holder<Collider> col = newCollider();
 			col->deserialize(context->originalData);
 			col->rebuild();
-			context->assetHolder = templates::move(col).cast<void>();
+			context->assetHolder = std::move(col).cast<void>();
 		}
 	}
 
@@ -117,7 +117,7 @@ namespace cage
 		{
 			Holder<SkeletalAnimation> ani = newSkeletalAnimation();
 			ani->deserialize(context->originalData);
-			context->assetHolder = templates::move(ani).cast<void>();
+			context->assetHolder = std::move(ani).cast<void>();
 		}
 	}
 
@@ -135,7 +135,7 @@ namespace cage
 		{
 			Holder<SkeletonRig> skl = newSkeletonRig();
 			skl->deserialize(context->originalData);
-			context->assetHolder = templates::move(skl).cast<void>();
+			context->assetHolder = std::move(skl).cast<void>();
 		}
 	}
 

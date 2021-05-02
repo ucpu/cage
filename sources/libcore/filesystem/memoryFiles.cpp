@@ -20,7 +20,7 @@ namespace cage
 					pos = buf.size();
 			}
 
-			FileBuffer(MemoryBuffer &&buffer, const FileMode &mode) : FileAbstract(stringizer() + "buffer:/" + uintPtr(&persistent), mode), persistent(templates::move(buffer)), buf(persistent)
+			FileBuffer(MemoryBuffer &&buffer, const FileMode &mode) : FileAbstract(stringizer() + "buffer:/" + uintPtr(&persistent), mode), persistent(std::move(buffer)), buf(persistent)
 			{
 				CAGE_ASSERT(mode.valid());
 				if (mode.append)
@@ -162,7 +162,7 @@ namespace cage
 
 	Holder<File> newFileBuffer(MemoryBuffer &&buffer, const FileMode &mode)
 	{
-		return systemArena().createImpl<File, FileBuffer>(templates::move(buffer), mode);
+		return systemArena().createImpl<File, FileBuffer>(std::move(buffer), mode);
 	}
 
 	Holder<File> newFileBuffer(PointerRange<char> buffer, const FileMode &mode)

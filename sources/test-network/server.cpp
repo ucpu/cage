@@ -17,7 +17,7 @@ struct Thr
 	Runner runner;
 	bool done = false;
 
-	Thr(Holder<Conn> conn) : conn(templates::move(conn))
+	Thr(Holder<Conn> conn) : conn(std::move(conn))
 	{
 		thr = newThread(Delegate<void()>().bind<Thr, &Thr::entry>(this), "thr");
 	}
@@ -54,7 +54,7 @@ void runServer()
 		{
 			CAGE_LOG(SeverityEnum::Info, "server", "connection accepted");
 			hadConnection = true;
-			thrs.emplace_back(newConn(templates::move(a)));
+			thrs.emplace_back(newConn(std::move(a)));
 		}
 		if (hadConnection)
 		{
