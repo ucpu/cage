@@ -19,14 +19,9 @@ jobs:
         cmake --version
         git --version
 
-    - uses: actions/checkout@v1
-
-    - name: Checkout submodules
-      shell: bash
-      run: |
-        export MSYS=winsymlinks:nativestrict
-        git config --global core.symlinks true
-        git submodule update --init --recursive #--depth 1
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
 
     - name: Configure
       shell: bash
@@ -95,11 +90,9 @@ jobs:
         ${{ matrix.compiler.cxx }} --version
         git --version
 
-    - uses: actions/checkout@v1
-
-    - name: Checkout submodules
-      run: |
-        git submodule update --init --recursive --depth 1
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
 
     - name: Configure
       run: |
