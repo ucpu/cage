@@ -50,7 +50,7 @@ namespace cage
 	{
 		MemoryBuffer r(size);
 		read(r);
-		return templates::move(r);
+		return std::move(r);
 	}
 
 	Holder<PointerRange<char>> File::readAll()
@@ -58,7 +58,7 @@ namespace cage
 		CAGE_ASSERT(tell() == 0);
 		MemoryBuffer r(size());
 		read(r);
-		return templates::move(r);
+		return std::move(r);
 	}
 
 	bool File::readLine(string &line)

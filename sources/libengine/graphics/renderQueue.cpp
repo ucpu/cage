@@ -239,7 +239,7 @@ namespace cage
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.uniformBuffer = templates::move(uniformBuffer);
+		cmd.uniformBuffer = std::move(uniformBuffer);
 		cmd.bindingPoint = bindingPoint;
 	}
 
@@ -259,7 +259,7 @@ namespace cage
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.uniformBuffer = templates::move(uniformBuffer);
+		cmd.uniformBuffer = std::move(uniformBuffer);
 		cmd.bindingPoint = bindingPoint;
 		cmd.offset = offset;
 		cmd.size = size;
@@ -277,7 +277,7 @@ namespace cage
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.uniformBuffer = templates::move(uniformBuffer);
+		cmd.uniformBuffer = std::move(uniformBuffer);
 	}
 
 	void RenderQueue::writeWhole(PointerRange<const char> data, uint32 usage)
@@ -327,7 +327,7 @@ namespace cage
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.shaderProgram = templates::move(shader);
+		cmd.shaderProgram = std::move(shader);
 	}
 
 #define GCHL_GENERATE(TYPE) \
@@ -368,7 +368,7 @@ namespace cage
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.framebuffer = templates::move(framebuffer);
+		cmd.framebuffer = std::move(framebuffer);
 	}
 
 	void RenderQueue::depthTexture(Holder<Texture> &&texture)
@@ -383,7 +383,7 @@ namespace cage
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.texture = templates::move(texture);
+		cmd.texture = std::move(texture);
 	}
 
 	void RenderQueue::colorTexture(uint32 index, Holder<Texture> &&texture, uint32 mipmapLevel)
@@ -400,7 +400,7 @@ namespace cage
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.texture = templates::move(texture);
+		cmd.texture = std::move(texture);
 		cmd.index = index;
 		cmd.mipmapLevel = mipmapLevel;
 	}
@@ -448,7 +448,7 @@ namespace cage
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.texture = templates::move(texture);
+		cmd.texture = std::move(texture);
 	}
 
 	void RenderQueue::image2d(uint32 w, uint32 h, uint32 internalFormat)
@@ -593,7 +593,7 @@ namespace cage
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		impl->lastModel = +model;
 		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.model = templates::move(model);
+		cmd.model = std::move(model);
 	}
 
 	void RenderQueue::draw(uint32 instances)

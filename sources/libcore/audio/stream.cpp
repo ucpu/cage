@@ -8,7 +8,7 @@ namespace cage
 		Holder<Audio> poly;
 		Holder<VorbisDecoder> vorbis;
 
-		AudioStreamImpl(Holder<Audio> &&audio) : poly(templates::move(audio))
+		AudioStreamImpl(Holder<Audio> &&audio) : poly(std::move(audio))
 		{
 			if (poly->format() == AudioFormatEnum::Vorbis)
 				vorbis = systemArena().createHolder<VorbisDecoder>(newFileBuffer(&((AudioImpl *)+poly)->mem));
@@ -50,7 +50,7 @@ namespace cage
 
 	Holder<AudioStream> newAudioStream(Holder<Audio> &&audio)
 	{
-		return systemArena().createImpl<AudioStream, AudioStreamImpl>(templates::move(audio));
+		return systemArena().createImpl<AudioStream, AudioStreamImpl>(std::move(audio));
 	}
 
 	void vorbisConvertFormat(AudioImpl *snd, AudioFormatEnum format)

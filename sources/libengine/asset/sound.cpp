@@ -2,6 +2,7 @@
 #include <cage-core/serialization.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/audio.h>
+#include <cage-core/typeIndex.h>
 
 #include <cage-engine/assetStructs.h>
 #include <cage-engine/sound.h>
@@ -67,8 +68,8 @@ namespace cage
 			source->gain = snd.gain;
 			source->loopBeforeStart = any(snd.flags & SoundFlags::LoopBeforeStart);
 			source->loopAfterEnd = any(snd.flags & SoundFlags::LoopAfterEnd);
-			source->initialize(templates::move(poly));
-			context->assetHolder = templates::move(source).cast<void>();
+			source->initialize(std::move(poly));
+			context->assetHolder = std::move(source).cast<void>();
 		}
 	}
 
@@ -78,6 +79,7 @@ namespace cage
 		s.threadIndex = threadIndex;
 		s.decompress.bind<&processDecompress>();
 		s.load.bind<&processLoad>();
+		s.typeIndex = detail::typeIndex<Sound>();
 		return s;
 	}
 }

@@ -228,7 +228,7 @@ namespace cage
 			}
 
 			// open existing archive
-			ArchiveZip(Holder<File> &&file) : ArchiveAbstract(((FileAbstract *)+file)->myPath), src(templates::move(file))
+			ArchiveZip(Holder<File> &&file) : ArchiveAbstract(((FileAbstract *)+file)->myPath), src(std::move(file))
 			{
 				CAGE_ASSERT(src->mode().read && !src->mode().write && !src->mode().append && !src->mode().textual);
 
@@ -347,7 +347,7 @@ namespace cage
 							continue;
 						}
 
-						files.push_back(templates::move(e));
+						files.push_back(std::move(e));
 					}
 					std::sort(files.begin(), files.end());
 				}
@@ -731,7 +731,7 @@ namespace cage
 				h.externalFileAttributes = 0x80;
 				h.name = myName;
 				h.nameLength = myName.length();
-				h.newContent = templates::move(buff);
+				h.newContent = std::move(buff);
 				{
 					uint32 crc = crc32_z(0, nullptr, 0);
 					crc = crc32_z(crc, (unsigned char *)h.newContent.data(), h.newContent.size());
@@ -831,7 +831,7 @@ namespace cage
 
 	std::shared_ptr<ArchiveAbstract> archiveOpenZip(Holder<File> &&f)
 	{
-		auto a = std::make_shared<ArchiveZip>(templates::move(f));
+		auto a = std::make_shared<ArchiveZip>(std::move(f));
 		return a;
 	}
 }

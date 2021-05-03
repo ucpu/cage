@@ -2,6 +2,7 @@
 #include <cage-core/serialization.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/mesh.h>
+#include <cage-core/typeIndex.h>
 
 #include <cage-engine/assetStructs.h>
 #include <cage-engine/model.h>
@@ -34,7 +35,7 @@ namespace cage
 			msh->setSkeleton(data.skeletonName, data.skeletonBones);
 			msh->setInstancesLimitHint(data.instancesLimitHint);
 
-			context->assetHolder = templates::move(msh).cast<void>();
+			context->assetHolder = std::move(msh).cast<void>();
 		}
 	}
 
@@ -43,6 +44,7 @@ namespace cage
 		AssetScheme s;
 		s.threadIndex = threadIndex;
 		s.load.bind<&processLoad>();
+		s.typeIndex = detail::typeIndex<Model>();
 		return s;
 	}
 }

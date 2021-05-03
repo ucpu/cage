@@ -1,6 +1,5 @@
 #include "image.h"
 #include <cage-core/serialization.h>
-#include <utility>
 
 namespace cage
 {

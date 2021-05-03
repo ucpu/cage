@@ -16,7 +16,7 @@ namespace cage
 		PointerRangeHolder()
 		{}
 
-		explicit PointerRangeHolder(std::vector<CT> &&other) : std::vector<CT>(templates::move(other))
+		explicit PointerRangeHolder(std::vector<CT> &&other) : std::vector<CT>(std::move(other))
 		{}
 
 		template<class IT>

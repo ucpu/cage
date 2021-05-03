@@ -358,7 +358,7 @@ namespace cage
 	{
 		MemoryBuffer buf(size);
 		read(buf);
-		return templates::move(buf);
+		return std::move(buf);
 	}
 
 	string Process::readLine()

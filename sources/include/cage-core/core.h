@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <limits>
+#include <utility>
 #include <type_traits>
 
 #if !defined(CAGE_DEBUG) && !defined(NDEBUG)
@@ -170,11 +171,9 @@ namespace cage
 	struct ConfigDouble;
 	struct ConfigString;
 	class ConfigList;
-	struct EntityComponentCreateConfig;
 	class EntityManager;
-	struct EntityManagerCreateConfig;
-	class Entity;
 	class EntityComponent;
+	class Entity;
 	class EntityGroup;
 	struct FileMode;
 	class File;
@@ -288,21 +287,21 @@ namespace cage
 	template<class To, class From>
 	CAGE_FORCE_INLINE constexpr To numeric_cast(From from)
 	{
-		if constexpr (!std::is_floating_point<To>::value && std::is_floating_point<From>::value)
+		if constexpr (!std::is_floating_point_v<To> && std::is_floating_point_v<From>)
 		{
 			CAGE_ASSERT(from >= (From)std::numeric_limits<To>::min());
 			CAGE_ASSERT(from <= (From)std::numeric_limits<To>::max());
 		}
-		else if constexpr (!std::is_floating_point<To>::value && !std::is_floating_point<From>::value)
+		else if constexpr (!std::is_floating_point_v<To> && !std::is_floating_point_v<From>)
 		{
 			if constexpr (std::numeric_limits<To>::is_signed && !std::numeric_limits<From>::is_signed)
 			{
-				CAGE_ASSERT(from <= static_cast<typename std::make_unsigned<To>::type>(std::numeric_limits<To>::max()));
+				CAGE_ASSERT(from <= static_cast<typename std::make_unsigned_t<To>>(std::numeric_limits<To>::max()));
 			}
 			else if constexpr (!std::numeric_limits<To>::is_signed && std::numeric_limits<From>::is_signed)
 			{
 				CAGE_ASSERT(from >= 0);
-				CAGE_ASSERT(static_cast<typename std::make_unsigned<From>::type>(from) <= std::numeric_limits<To>::max());
+				CAGE_ASSERT(static_cast<typename std::make_unsigned_t<From>>(from) <= std::numeric_limits<To>::max());
 			}
 			else
 			{
@@ -362,24 +361,20 @@ namespace cage
 			CAGE_FORCE_INLINE friend bool operator <  (const T &lhs, const T &rhs) noexcept { return compare(lhs, rhs) <  0; }
 			CAGE_FORCE_INLINE friend bool operator >  (const T &lhs, const T &rhs) noexcept { return compare(lhs, rhs) >  0; }
 		};
-
-		template<class T> CAGE_FORCE_INLINE constexpr T &&forward(typename std::remove_reference<T>::type  &v) noexcept { return static_cast<T&&>(v); }
-		template<class T> CAGE_FORCE_INLINE constexpr T &&forward(typename std::remove_reference<T>::type &&v) noexcept { static_assert(!std::is_lvalue_reference<T>::value, "invalid rvalue to lvalue conversion"); return static_cast<T&&>(v); }
-		template<class T> CAGE_FORCE_INLINE constexpr typename std::remove_reference<T>::type &&move(T &&v) noexcept { return static_cast<typename std::remove_reference<T>::type&&>(v); }
 	}
 
 	// enum class bit operators
 
 	template<class T> struct enable_bitmask_operators { static constexpr bool enable = false; };
-	template<class T> CAGE_FORCE_INLINE constexpr typename std::enable_if<enable_bitmask_operators<T>::enable, T>::type operator ~ (T lhs) noexcept { typedef typename std::underlying_type<T>::type underlying; return static_cast<T>(~static_cast<underlying>(lhs)); }
-	template<class T> CAGE_FORCE_INLINE constexpr typename std::enable_if<enable_bitmask_operators<T>::enable, T>::type operator | (T lhs, T rhs) noexcept { typedef typename std::underlying_type<T>::type underlying; return static_cast<T>(static_cast<underlying>(lhs) | static_cast<underlying>(rhs)); }
-	template<class T> CAGE_FORCE_INLINE constexpr typename std::enable_if<enable_bitmask_operators<T>::enable, T>::type operator & (T lhs, T rhs) noexcept { typedef typename std::underlying_type<T>::type underlying; return static_cast<T>(static_cast<underlying>(lhs) & static_cast<underlying>(rhs)); }
-	template<class T> CAGE_FORCE_INLINE constexpr typename std::enable_if<enable_bitmask_operators<T>::enable, T>::type operator ^ (T lhs, T rhs) noexcept { typedef typename std::underlying_type<T>::type underlying; return static_cast<T>(static_cast<underlying>(lhs) ^ static_cast<underlying>(rhs)); }
-	template<class T> CAGE_FORCE_INLINE constexpr typename std::enable_if<enable_bitmask_operators<T>::enable, T>::type operator |= (T &lhs, T rhs) noexcept { typedef typename std::underlying_type<T>::type underlying; return lhs = static_cast<T>(static_cast<underlying>(lhs) | static_cast<underlying>(rhs)); }
-	template<class T> CAGE_FORCE_INLINE constexpr typename std::enable_if<enable_bitmask_operators<T>::enable, T>::type operator &= (T &lhs, T rhs) noexcept { typedef typename std::underlying_type<T>::type underlying; return lhs = static_cast<T>(static_cast<underlying>(lhs) & static_cast<underlying>(rhs)); }
-	template<class T> CAGE_FORCE_INLINE constexpr typename std::enable_if<enable_bitmask_operators<T>::enable, T>::type operator ^= (T &lhs, T rhs) noexcept { typedef typename std::underlying_type<T>::type underlying; return lhs = static_cast<T>(static_cast<underlying>(lhs) ^ static_cast<underlying>(rhs)); }
-	template<class T> CAGE_FORCE_INLINE constexpr typename std::enable_if<enable_bitmask_operators<T>::enable, bool>::type any(T lhs) noexcept { typedef typename std::underlying_type<T>::type underlying; return static_cast<underlying>(lhs) != 0; }
-	template<class T> CAGE_FORCE_INLINE constexpr typename std::enable_if<enable_bitmask_operators<T>::enable, bool>::type none(T lhs) noexcept { typedef typename std::underlying_type<T>::type underlying; return static_cast<underlying>(lhs) == 0; }
+	template<class T> CAGE_FORCE_INLINE constexpr typename std::enable_if_t<enable_bitmask_operators<T>::enable, T> operator ~ (T lhs) noexcept { return static_cast<T>(~static_cast<std::underlying_type_t<T>>(lhs)); }
+	template<class T> CAGE_FORCE_INLINE constexpr typename std::enable_if_t<enable_bitmask_operators<T>::enable, T> operator | (T lhs, T rhs) noexcept { return static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) | static_cast<std::underlying_type_t<T>>(rhs)); }
+	template<class T> CAGE_FORCE_INLINE constexpr typename std::enable_if_t<enable_bitmask_operators<T>::enable, T> operator & (T lhs, T rhs) noexcept { return static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) & static_cast<std::underlying_type_t<T>>(rhs)); }
+	template<class T> CAGE_FORCE_INLINE constexpr typename std::enable_if_t<enable_bitmask_operators<T>::enable, T> operator ^ (T lhs, T rhs) noexcept { return static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) ^ static_cast<std::underlying_type_t<T>>(rhs)); }
+	template<class T> CAGE_FORCE_INLINE constexpr typename std::enable_if_t<enable_bitmask_operators<T>::enable, T> operator |= (T &lhs, T rhs) noexcept { return lhs = static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) | static_cast<std::underlying_type_t<T>>(rhs)); }
+	template<class T> CAGE_FORCE_INLINE constexpr typename std::enable_if_t<enable_bitmask_operators<T>::enable, T> operator &= (T &lhs, T rhs) noexcept { return lhs = static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) & static_cast<std::underlying_type_t<T>>(rhs)); }
+	template<class T> CAGE_FORCE_INLINE constexpr typename std::enable_if_t<enable_bitmask_operators<T>::enable, T> operator ^= (T &lhs, T rhs) noexcept { return lhs = static_cast<T>(static_cast<std::underlying_type_t<T>>(lhs) ^ static_cast<std::underlying_type_t<T>>(rhs)); }
+	template<class T> CAGE_FORCE_INLINE constexpr typename std::enable_if_t<enable_bitmask_operators<T>::enable, bool> any(T lhs) noexcept { return static_cast<std::underlying_type_t<T>>(lhs) != 0; }
+	template<class T> CAGE_FORCE_INLINE constexpr typename std::enable_if_t<enable_bitmask_operators<T>::enable, bool> none(T lhs) noexcept { return static_cast<std::underlying_type_t<T>>(lhs) == 0; }
 
 	// this macro has to be used inside namespace cage
 #define GCHL_ENUM_BITS(TYPE) template<> struct enable_bitmask_operators<TYPE> { static constexpr bool enable = true; };
@@ -685,7 +680,7 @@ namespace cage
 		constexpr Delegate &bind()
 		{
 			fnc = +[](void *inst, Ts... vs) {
-				return F(templates::forward<Ts>(vs)...);
+				return F(std::forward<Ts>(vs)...);
 			};
 			return *this;
 		}
@@ -703,7 +698,7 @@ namespace cage
 			fnc = +[](void *inst, Ts... vs) {
 				U u;
 				u.p = inst;
-				return F(u.d, templates::forward<Ts>(vs)...);
+				return F(u.d, std::forward<Ts>(vs)...);
 			};
 			U u;
 			u.d = d;
@@ -715,7 +710,7 @@ namespace cage
 		Delegate &bind(C *i)
 		{
 			fnc = +[](void *inst, Ts... vs) {
-				return (((C*)inst)->*F)(templates::forward<Ts>(vs)...);
+				return (((C*)inst)->*F)(std::forward<Ts>(vs)...);
 			};
 			inst = i;
 			return *this;
@@ -725,7 +720,7 @@ namespace cage
 		Delegate &bind(const C *i)
 		{
 			fnc = +[](void *inst, Ts... vs) {
-				return (((const C*)inst)->*F)(templates::forward<Ts>(vs)...);
+				return (((const C*)inst)->*F)(std::forward<Ts>(vs)...);
 			};
 			inst = const_cast<C*>(i);
 			return *this;
@@ -745,7 +740,7 @@ namespace cage
 		CAGE_FORCE_INLINE constexpr R operator ()(Ts... vs) const
 		{
 			CAGE_ASSERT(!!*this);
-			return fnc(inst, templates::forward<Ts>(vs)...);
+			return fnc(inst, std::forward<Ts>(vs)...);
 		}
 
 		CAGE_FORCE_INLINE constexpr bool operator == (const Delegate &other) const noexcept
@@ -895,7 +890,7 @@ namespace cage
 
 			Delegate<void(void *)> deleter_;
 			void *ptr_ = nullptr; // pointer to deallocate
-			T *data_ = nullptr; // pointer to the object (may differ in case of classes with inheritance)
+			T *data_ = nullptr; // pointer to the object
 
 			template<class U>
 			friend struct HolderBase;
@@ -951,9 +946,9 @@ namespace cage
 		CAGE_FORCE_INLINE constexpr PointerRange(T *begin, T *end) noexcept : begin_(begin), end_(end) {}
 		template<uint32 N>
 		CAGE_FORCE_INLINE constexpr PointerRange(T (&arr)[N]) noexcept : begin_(arr), end_(arr + N + privat::TerminalZero<std::remove_cv_t<T>>::value) {}
-		template<class U, std::enable_if_t<std::is_same<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>::value, int> = 0>
+		template<class U, std::enable_if_t<std::is_same_v<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>, int> = 0>
 		CAGE_FORCE_INLINE constexpr PointerRange(U &other) : begin_(other.data()), end_(other.data() + other.size()) {}
-		template<class U, std::enable_if_t<std::is_same<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>::value, int> = 0>
+		template<class U, std::enable_if_t<std::is_same_v<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>, int> = 0>
 		CAGE_FORCE_INLINE constexpr PointerRange(U &&other) : begin_(other.data()), end_(other.data() + other.size()) {}
 
 		CAGE_FORCE_INLINE constexpr T *begin() const noexcept { return begin_; }
@@ -1080,7 +1075,7 @@ namespace cage
 			void *ptr = allocate(sizeof(T), alignof(T));
 			try
 			{
-				return new(ptr, privat::CageNewTrait()) T(templates::forward<Ts>(vs)...);
+				return new(ptr, privat::CageNewTrait()) T(std::forward<Ts>(vs)...);
 			}
 			catch (...)
 			{
@@ -1094,14 +1089,14 @@ namespace cage
 		{
 			Delegate<void(void*)> d;
 			d.bind<MemoryArena, &MemoryArena::destroy<T>>(this);
-			T *p = createObject<T>(templates::forward<Ts>(vs)...);
+			T *p = createObject<T>(std::forward<Ts>(vs)...);
 			return Holder<T>(p, p, d);
 		};
 
 		template<class Interface, class Impl, class... Ts>
 		CAGE_FORCE_INLINE Holder<Interface> createImpl(Ts... vs)
 		{
-			return createHolder<Impl>(templates::forward<Ts>(vs)...).template cast<Interface>();
+			return createHolder<Impl>(std::forward<Ts>(vs)...).template cast<Interface>();
 		};
 
 		template<class T>

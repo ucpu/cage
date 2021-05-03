@@ -187,7 +187,7 @@ namespace cage
 				textsMap.clear();
 				Holder<RenderPassImpl> t = systemArena().createHolder<RenderPassImpl>(camera);
 				RenderPassImpl *r = t.get();
-				graphicsDispatch->renderPasses.push_back(templates::move(t).cast<RenderPass>());
+				graphicsDispatch->renderPasses.push_back(std::move(t).cast<RenderPass>());
 				return r;
 			}
 
@@ -218,7 +218,7 @@ namespace cage
 				std::vector<Holder<Translucent>> result;
 				result.reserve(pass->translucents.size());
 				for (uint32 o : order)
-					result.push_back(templates::move(pass->translucents[o]));
+					result.push_back(std::move(pass->translucents[o]));
 				std::swap(result, pass->translucents);
 			}
 
@@ -374,7 +374,7 @@ namespace cage
 						Holder<Model> m = engineAssets()->tryGet<AssetSchemeIndexModel, Model>(e.object.object);
 						if (m)
 						{
-							addRenderableModel(pass, &e, templates::move(m));
+							addRenderableModel(pass, &e, std::move(m));
 							continue;
 						}
 					}
@@ -400,7 +400,7 @@ namespace cage
 						{
 							Holder<Model> m = engineAssets()->get<AssetSchemeIndexModel, Model>(msh);
 							if (m)
-								addRenderableModel(pass, &e, templates::move(m));
+								addRenderableModel(pass, &e, std::move(m));
 						}
 					}
 				}
@@ -442,7 +442,7 @@ namespace cage
 
 			void addRenderableModel(RenderPassImpl *pass, EmitObject *e, Holder<Model> m)
 			{
-				addRenderableModel(pass, e, templates::move(m), e->model, pass->viewProj * e->model, pass->viewProjPrev * e->modelPrev);
+				addRenderableModel(pass, e, std::move(m), e->model, pass->viewProj * e->model, pass->viewProjPrev * e->modelPrev);
 			}
 
 			void addRenderableModel(RenderPassImpl *pass, EmitObject *e, Holder<Model> m, const mat4 &model, const mat4 &mvp, const mat4 &mvpPrev)
@@ -454,7 +454,7 @@ namespace cage
 				if (m->getSkeletonName() && confRenderSkeletonBones)
 				{
 					Holder<SkeletonRig> s = engineAssets()->get<AssetSchemeIndexSkeletonRig, SkeletonRig>(m->getSkeletonName());
-					addRenderableSkeleton(pass, e, templates::move(s), model, mvp);
+					addRenderableSkeleton(pass, e, std::move(s), model, mvp);
 					return;
 				}
 				Objects *obj = nullptr;
@@ -574,7 +574,7 @@ namespace cage
 					}
 
 					// add at end
-					tex->renders.push_back(templates::move(r));
+					tex->renders.push_back(std::move(r));
 				}
 			}
 
@@ -700,7 +700,7 @@ namespace cage
 						c.animatedTexture = systemArena().createHolder<TextureAnimationComponent>(e->value<TextureAnimationComponent>(TextureAnimationComponent::component));
 					if (e->has(SkeletalAnimationComponent::component))
 						c.animatedSkeleton = systemArena().createHolder<SkeletalAnimationComponent>(e->value<SkeletalAnimationComponent>(SkeletalAnimationComponent::component));
-					emitWrite->objects.push_back(templates::move(c));
+					emitWrite->objects.push_back(std::move(c));
 				}
 
 				// emit renderable texts
@@ -709,7 +709,7 @@ namespace cage
 					EmitText c;
 					emitTransform(&c, e);
 					c.text = e->value<TextComponent>(TextComponent::component);
-					emitWrite->texts.push_back(templates::move(c));
+					emitWrite->texts.push_back(std::move(c));
 				}
 
 				// emit lights
@@ -721,7 +721,7 @@ namespace cage
 					c.light = e->value<LightComponent>(LightComponent::component);
 					if (e->has(ShadowmapComponent::component))
 						c.shadowmap = systemArena().createHolder<ShadowmapComponent>(e->value<ShadowmapComponent>(ShadowmapComponent::component));
-					emitWrite->lights.push_back(templates::move(c));
+					emitWrite->lights.push_back(std::move(c));
 				}
 
 				// emit cameras
@@ -740,7 +740,7 @@ namespace cage
 					c.camera = e->value<CameraComponent>(CameraComponent::component);
 					c.camera.effects &= effectsMask;
 					c.entityId = ((uintPtr)e) ^ e->name();
-					emitWrite->cameras.push_back(templates::move(c));
+					emitWrite->cameras.push_back(std::move(c));
 				}
 			}
 
@@ -949,7 +949,7 @@ namespace cage
 		shaderRoutines[name] = value;
 	}
 
-	Objects::Objects(Holder<Model> model_, uint32 max) : model(templates::move(model_))
+	Objects::Objects(Holder<Model> model_, uint32 max) : model(std::move(model_))
 	{
 		AssetManager *ass = engineAssets();
 		uniModeles.reserve(max);
@@ -1036,10 +1036,10 @@ namespace cage
 		}
 	}
 
-	Translucent::Translucent(Holder<Model> model_) : object(templates::move(model_), 1)
+	Translucent::Translucent(Holder<Model> model_) : object(std::move(model_), 1)
 	{}
 
-	Texts::Texts(Holder<Font> font_) : font(templates::move(font_))
+	Texts::Texts(Holder<Font> font_) : font(std::move(font_))
 	{}
 
 	void graphicsPrepareCreate(const EngineCreateConfig &config)

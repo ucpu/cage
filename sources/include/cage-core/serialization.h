@@ -101,7 +101,7 @@ namespace cage
 	Deserializer &&operator >> (Deserializer &&s, T &v)
 	{
 		s >> v;
-		return templates::move(s);
+		return std::move(s);
 	}
 
 	// c array serialization

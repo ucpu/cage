@@ -276,7 +276,7 @@ namespace cage
 		writeVector(ser, impl->tris);
 		writeVector(ser, impl->boxes);
 		writeVector(ser, impl->nodes);
-		return templates::move(buffer);
+		return std::move(buffer);
 	}
 
 	void Collider::deserialize(PointerRange<const char> buffer)
@@ -467,7 +467,7 @@ namespace cage
 			void process()
 			{
 				process(0, 0);
-				outputBuffer = templates::move(collisions);
+				outputBuffer = std::move(collisions);
 			}
 		};
 
@@ -768,7 +768,7 @@ namespace cage
 				CollisionDetectionParams p(ao, bo, interpolate(at1, at2, fractionContact), interpolate(bt1, bt2, fractionContact));
 				bool res = collisionDetection(p);
 				CAGE_ASSERT(res);
-				outputBuffer = templates::move(p.collisionPairs);
+				outputBuffer = std::move(p.collisionPairs);
 			}
 			return true;
 		}

@@ -16,7 +16,7 @@ namespace cage
 
 			void initialize(Holder<Audio> &&audio)
 			{
-				stream = newAudioStream(templates::move(audio));
+				stream = newAudioStream(std::move(audio));
 				length = stream->source()->frames();
 				channels = stream->source()->channels();
 				sampleRate = stream->source()->sampleRate();
@@ -125,7 +125,7 @@ namespace cage
 	void Sound::initialize(Holder<Audio> &&audio)
 	{
 		SoundImpl *impl = (SoundImpl *)this;
-		impl->initialize(templates::move(audio));
+		impl->initialize(std::move(audio));
 	}
 
 	uintPtr Sound::frames() const

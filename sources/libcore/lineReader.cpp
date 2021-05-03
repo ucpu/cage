@@ -53,7 +53,7 @@ namespace cage
 			LineReaderImpl(const char *buff, uintPtr size) : buffer(buff), size(size)
 			{}
 
-			LineReaderImpl(MemoryBuffer &&buff) : mb(templates::move(buff)), buffer(mb.data()), size(mb.size())
+			LineReaderImpl(MemoryBuffer &&buff) : mb(std::move(buff)), buffer(mb.data()), size(mb.size())
 			{}
 
 			MemoryBuffer mb;
@@ -81,6 +81,6 @@ namespace cage
 
 	Holder<LineReader> newLineReader(MemoryBuffer &&buffer)
 	{
-		return systemArena().createImpl<LineReader, LineReaderImpl>(templates::move(buffer));
+		return systemArena().createImpl<LineReader, LineReaderImpl>(std::move(buffer));
 	}
 }

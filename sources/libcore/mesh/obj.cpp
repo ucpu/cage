@@ -163,7 +163,7 @@ namespace cage
 			CAGE_THROW_CRITICAL(Exception, "invalid mesh type enum");
 		}
 
-		return templates::move(buffer);
+		return std::move(buffer);
 	}
 
 	void Mesh::exportObjFile(const MeshExportObjConfig &config, const string &filename) const

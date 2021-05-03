@@ -2,6 +2,7 @@
 #include <cage-core/serialization.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/config.h>
+#include <cage-core/typeIndex.h>
 
 #include <cage-engine/opengl.h>
 #include <cage-engine/assetStructs.h>
@@ -39,7 +40,7 @@ namespace cage
 			tex->animationDuration = data.animationDuration;
 			tex->animationLoop = any(data.flags & TextureFlags::AnimationLoop);
 
-			context->assetHolder = templates::move(tex).cast<void>();
+			context->assetHolder = std::move(tex).cast<void>();
 		}
 	}
 
@@ -48,6 +49,7 @@ namespace cage
 		AssetScheme s;
 		s.threadIndex = threadIndex;
 		s.load.bind<&processLoad>();
+		s.typeIndex = detail::typeIndex<Texture>();
 		return s;
 	}
 }
