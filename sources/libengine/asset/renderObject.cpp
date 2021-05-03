@@ -1,6 +1,7 @@
 #include <cage-core/assetContext.h>
 #include <cage-core/serialization.h>
 #include <cage-core/memoryBuffer.h>
+#include <cage-core/typeIndex.h>
 
 #include <cage-engine/graphics.h>
 #include <cage-engine/assetStructs.h>
@@ -33,7 +34,7 @@ namespace cage
 			PointerRange<const uint32> names = bufferCast<const uint32>(des.advance(h.modelesCount * sizeof(uint32)));
 			obj->setLods(thresholds, indices, names);
 
-			context->assetHolder = templates::move(obj).cast<void>();
+			context->assetHolder = std::move(obj).cast<void>();
 		}
 	}
 
@@ -41,6 +42,7 @@ namespace cage
 	{
 		AssetScheme s;
 		s.load.bind<&processLoad>();
+		s.typeIndex = detail::typeIndex<RenderObject>();
 		return s;
 	}
 }

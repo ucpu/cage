@@ -127,7 +127,7 @@ namespace cage
 					i++;
 				}
 				CAGE_ASSERT(!pairs.empty());
-				resultPairs = templates::move(pairs);
+				resultPairs = std::move(pairs);
 			}
 
 			template<class T>

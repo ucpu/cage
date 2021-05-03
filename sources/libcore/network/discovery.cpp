@@ -55,7 +55,7 @@ namespace cage
 					s.s.setBroadcast(true);
 					s.s.setReuseaddr(true);
 					s.s.bind(address);
-					sockets.push_back(templates::move(s));
+					sockets.push_back(std::move(s));
 					l.next();
 				}
 				try
@@ -206,7 +206,7 @@ namespace cage
 					s.setBroadcast(true);
 					s.setReuseaddr(true);
 					s.bind(address);
-					sockets.push_back(templates::move(s));
+					sockets.push_back(std::move(s));
 					l.next();
 				}
 			}

@@ -417,7 +417,7 @@ namespace cage
 			for (const auto &j : i.second->items)
 				ser.writeLine(string() + j.first + "=" + j.second.value);
 		}
-		return templates::move(buff);
+		return std::move(buff);
 	}
 
 	void Ini::exportFile(const string &filename) const

@@ -45,7 +45,7 @@ void processObject()
 			deps.insert(h);
 		}
 		totalModeles += numeric_cast<uint32>(ls.models.size());
-		lods.push_back(templates::move(ls));
+		lods.push_back(std::move(ls));
 	}
 
 	for (Lod &ls : lods)

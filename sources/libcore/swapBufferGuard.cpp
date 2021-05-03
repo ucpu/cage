@@ -1,8 +1,6 @@
 #include <cage-core/concurrent.h>
 #include <cage-core/swapBufferGuard.h>
 
-#include <utility>
-
 namespace cage
 {
 	namespace

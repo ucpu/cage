@@ -1,7 +1,5 @@
 #include <cage-core/geometry.h>
 
-#include <utility>
-
 namespace cage
 {
 	Line Line::operator * (const mat4 &other) const

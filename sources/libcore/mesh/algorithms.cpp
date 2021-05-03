@@ -7,7 +7,6 @@
 
 #include <algorithm> // std::remove_if
 #include <numeric> // std::iota
-#include <utility> // std::swap
 
 namespace cage
 {
@@ -406,7 +405,7 @@ namespace cage
 				p->indices(inds);
 				removeUnusedVertices((MeshImpl *)p.get());
 				inds.clear();
-				result.push_back(templates::move(p));
+				result.push_back(std::move(p));
 			}
 			return result;
 		}

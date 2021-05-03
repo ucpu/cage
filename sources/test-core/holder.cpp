@@ -50,7 +50,7 @@ namespace
 	
 	void functionTakingForwardDeclared(Holder<ForwardDeclared> &&param)
 	{
-		Holder<ForwardDeclared> local = templates::move(param);
+		Holder<ForwardDeclared> local = std::move(param);
 		(void)local;
 	}
 }
@@ -62,7 +62,7 @@ void testHolder()
 	{
 		CAGE_TESTCASE("forward declared only");
 		Holder<ForwardDeclared> h = functionReturningForwardDeclared();
-		functionTakingForwardDeclared(templates::move(h));
+		functionTakingForwardDeclared(std::move(h));
 	}
 
 	{
@@ -72,7 +72,7 @@ void testHolder()
 		CAGE_TEST(gCount == 1);
 		takeByReference(ts);
 		CAGE_TEST(gCount == 1);
-		takeByValue(templates::move(ts));
+		takeByValue(std::move(ts));
 		CAGE_TEST(gCount == 0);
 	}
 
@@ -81,11 +81,11 @@ void testHolder()
 		CAGE_TEST(gCount == 0);
 		Holder<Tester> a = systemArena().createHolder<Tester>();
 		CAGE_TEST(gCount == 1);
-		Holder<void> b = templates::move(a).cast<void>();
+		Holder<void> b = std::move(a).cast<void>();
 		CAGE_TEST(gCount == 1);
-		Holder<void> c(templates::move(b));
+		Holder<void> c(std::move(b));
 		CAGE_TEST(gCount == 1);
-		Holder<Tester> d = templates::move(c).cast<Tester>();
+		Holder<Tester> d = std::move(c).cast<Tester>();
 		CAGE_TEST(gCount == 1);
 		d.clear();
 		CAGE_TEST(gCount == 0);
@@ -96,9 +96,9 @@ void testHolder()
 		CAGE_TEST(gCount == 0);
 		Holder<Tester> a = systemArena().createHolder<Tester>();
 		CAGE_TEST(gCount == 1);
-		Holder<void> b = templates::move(a).cast<void>();
+		Holder<void> b = std::move(a).cast<void>();
 		CAGE_TEST(gCount == 1);
-		functionTakingHolder(templates::move(b));
+		functionTakingHolder(std::move(b));
 		CAGE_TEST(gCount == 0);
 	}
 
@@ -107,13 +107,13 @@ void testHolder()
 		CAGE_TEST(gCount == 0);
 		Holder<Tester> a = systemArena().createHolder<Tester>();
 		CAGE_TEST(gCount == 1);
-		Holder<void> b = templates::move(a).cast<void>();
+		Holder<void> b = std::move(a).cast<void>();
 		CAGE_TEST(gCount == 1);
-		Holder<Tester> c = templates::move(b).cast<Tester>();
+		Holder<Tester> c = std::move(b).cast<Tester>();
 		CAGE_TEST(gCount == 1);
-		Holder<void> d = templates::move(c).cast<void>();
+		Holder<void> d = std::move(c).cast<void>();
 		CAGE_TEST(gCount == 1);
-		Holder<Tester> e = templates::move(d).cast<Tester>();
+		Holder<Tester> e = std::move(d).cast<Tester>();
 		CAGE_TEST(gCount == 1);
 		e.clear();
 		CAGE_TEST(gCount == 0);
@@ -159,7 +159,7 @@ void testHolder()
 			vec[i] = systemArena().createHolder<Tester>();
 		CAGE_TEST(gCount == 100);
 		CAGE_TEST(vec[0].get() == firstTester);
-		std::vector<Holder<Tester>> vec2 = templates::move(vec);
+		std::vector<Holder<Tester>> vec2 = std::move(vec);
 		CAGE_TEST(gCount == 100);
 		CAGE_TEST(vec.empty());
 		vec2.clear();
@@ -172,7 +172,7 @@ void testHolder()
 		Holder<Tester> a = systemArena().createHolder<Tester>();
 		CAGE_TEST(gCount == 1);
 		CAGE_TEST(!a.isShareable());
-		Holder<Tester> b = templates::move(a).makeShareable();
+		Holder<Tester> b = std::move(a).makeShareable();
 		CAGE_TEST(gCount == 1);
 		CAGE_TEST(!a);
 		CAGE_TEST(b);

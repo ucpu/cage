@@ -2,8 +2,6 @@
 
 #include <cage-core/math.h>
 
-#include <utility> // swap
-
 namespace cage
 {
 	void imageFill(Image *img, const real &value)

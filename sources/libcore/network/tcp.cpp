@@ -44,7 +44,7 @@ namespace cage
 				s.setBlocking(false);
 			}
 
-			TcpConnectionImpl(Sock &&s) : s(templates::move(s))
+			TcpConnectionImpl(Sock &&s) : s(std::move(s))
 			{}
 
 			void waitForBytes(uintPtr size)
@@ -82,7 +82,7 @@ namespace cage
 						s.setReuseaddr(true);
 						s.bind(address);
 						s.listen();
-						socks.push_back(templates::move(s));
+						socks.push_back(std::move(s));
 					}
 					catch (const Exception &)
 					{
@@ -148,14 +148,14 @@ namespace cage
 	{
 		MemoryBuffer b(size);
 		readWait(b);
-		return templates::move(b);
+		return std::move(b);
 	}
 
 	Holder<PointerRange<char>> TcpConnection::read()
 	{
 		MemoryBuffer b(available());
 		readWait(b);
-		return templates::move(b);
+		return std::move(b);
 	}
 
 	string TcpConnection::readLineWait()
@@ -213,7 +213,7 @@ namespace cage
 			{
 				Sock s = ss.accept();
 				if (s.isValid())
-					return systemArena().createImpl<TcpConnection, TcpConnectionImpl>(templates::move(s));
+					return systemArena().createImpl<TcpConnection, TcpConnectionImpl>(std::move(s));
 			}
 			catch (const cage::Exception &)
 			{

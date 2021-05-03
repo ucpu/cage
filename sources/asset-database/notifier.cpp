@@ -22,7 +22,7 @@ namespace
 			ScopeLock lck(mut);
 			Holder<TcpConnection> tmp = server->accept();
 			if (tmp)
-				connections.push_back(templates::move(tmp));
+				connections.push_back(std::move(tmp));
 		}
 
 		void notify(const string &str)

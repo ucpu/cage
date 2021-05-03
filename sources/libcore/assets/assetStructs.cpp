@@ -36,7 +36,7 @@ namespace cage
 		{
 			static AssetPack pack;
 			Holder<AssetPack> h = Holder<AssetPack>(&pack, nullptr, {});
-			context->assetHolder = templates::move(h).cast<void>();
+			context->assetHolder = std::move(h).cast<void>();
 		}
 	}
 
@@ -44,6 +44,7 @@ namespace cage
 	{
 		AssetScheme s;
 		s.load.bind<&processAssetPackLoad>();
+		s.typeIndex = detail::typeIndex<AssetPack>();
 		return s;
 	}
 
@@ -51,8 +52,8 @@ namespace cage
 	{
 		void processRawLoad(AssetContext *context)
 		{
-			Holder<MemoryBuffer> mem = systemArena().createHolder<MemoryBuffer>(templates::move(context->originalData));
-			context->assetHolder = templates::move(mem).cast<void>();
+			Holder<MemoryBuffer> mem = systemArena().createHolder<MemoryBuffer>(std::move(context->originalData));
+			context->assetHolder = std::move(mem).cast<void>();
 		}
 	}
 
@@ -60,6 +61,7 @@ namespace cage
 	{
 		AssetScheme s;
 		s.load.bind<&processRawLoad>();
+		s.typeIndex = detail::typeIndex<MemoryBuffer>();
 		return s;
 	}
 
@@ -78,7 +80,7 @@ namespace cage
 				des >> name >> val;
 				texts->set(name, val);
 			}
-			context->assetHolder = templates::move(texts).cast<void>();
+			context->assetHolder = std::move(texts).cast<void>();
 		}
 	}
 
@@ -86,6 +88,7 @@ namespace cage
 	{
 		AssetScheme s;
 		s.load.bind<&processTextPackLoad>();
+		s.typeIndex = detail::typeIndex<TextPack>();
 		return s;
 	}
 
@@ -96,7 +99,7 @@ namespace cage
 			Holder<Collider> col = newCollider();
 			col->deserialize(context->originalData);
 			col->rebuild();
-			context->assetHolder = templates::move(col).cast<void>();
+			context->assetHolder = std::move(col).cast<void>();
 		}
 	}
 
@@ -104,6 +107,7 @@ namespace cage
 	{
 		AssetScheme s;
 		s.load.bind<&processColliderLoad>();
+		s.typeIndex = detail::typeIndex<Collider>();
 		return s;
 	}
 
@@ -113,7 +117,7 @@ namespace cage
 		{
 			Holder<SkeletalAnimation> ani = newSkeletalAnimation();
 			ani->deserialize(context->originalData);
-			context->assetHolder = templates::move(ani).cast<void>();
+			context->assetHolder = std::move(ani).cast<void>();
 		}
 	}
 
@@ -121,6 +125,7 @@ namespace cage
 	{
 		AssetScheme s;
 		s.load.bind<&processSkeletalAnimationLoad>();
+		s.typeIndex = detail::typeIndex<SkeletalAnimation>();
 		return s;
 	}
 
@@ -130,7 +135,7 @@ namespace cage
 		{
 			Holder<SkeletonRig> skl = newSkeletonRig();
 			skl->deserialize(context->originalData);
-			context->assetHolder = templates::move(skl).cast<void>();
+			context->assetHolder = std::move(skl).cast<void>();
 		}
 	}
 
@@ -138,16 +143,7 @@ namespace cage
 	{
 		AssetScheme s;
 		s.load.bind<&processSkeletonRigLoad>();
+		s.typeIndex = detail::typeIndex<SkeletonRig>();
 		return s;
-	}
-
-	namespace detail
-	{
-		template<> CAGE_API_EXPORT char assetTypeBlock<AssetPack>;
-		template<> CAGE_API_EXPORT char assetTypeBlock<MemoryBuffer>;
-		template<> CAGE_API_EXPORT char assetTypeBlock<TextPack>;
-		template<> CAGE_API_EXPORT char assetTypeBlock<Collider>;
-		template<> CAGE_API_EXPORT char assetTypeBlock<SkeletalAnimation>;
-		template<> CAGE_API_EXPORT char assetTypeBlock<SkeletonRig>;
 	}
 }
