@@ -27,24 +27,24 @@ namespace cage
 		};
 
 		template<class Types, std::size_t I>
-		void fillComponentsArray(EntityManager *ents, EntityComponent *components[])
+		CAGE_FORCE_INLINE void fillComponentsArray(EntityManager *ents, EntityComponent *components[])
 		{
 			using T = std::tuple_element_t<I, Types>;
 			using D = std::decay_t<T>;
-			static_assert(std::is_same_v<T, D &>);
+			static_assert(std::is_same_v<T, D &> || std::is_same_v<T, const D &>);
 			components[I] = ents->component<D>();
 			if (!components[I])
 				CAGE_THROW_CRITICAL(Exception, "undefined entities component for type");
 		}
 
 		template<class Types, std::size_t... I>
-		void fillComponentsArray(EntityManager *ents, EntityComponent *components[], std::index_sequence<I...>)
+		CAGE_FORCE_INLINE void fillComponentsArray(EntityManager *ents, EntityComponent *components[], std::index_sequence<I...>)
 		{
 			((fillComponentsArray<Types, I>(ents, components)), ...);
 		}
 
 		template<class Visitor, class Types, std::size_t... I>
-		void invokeVisitor(Visitor &visitor, EntityComponent *components[], Entity *e, std::index_sequence<I...>)
+		CAGE_FORCE_INLINE void invokeVisitor(Visitor &visitor, EntityComponent *components[], Entity *e, std::index_sequence<I...>)
 		{
 			visitor(((e->value<std::decay_t<std::tuple_element_t<I, Types>>>(components[I])))...);
 		}
