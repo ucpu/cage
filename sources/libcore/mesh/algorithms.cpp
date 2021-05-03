@@ -7,7 +7,6 @@
 
 #include <algorithm> // std::remove_if
 #include <numeric> // std::iota
-#include <utility> // std::swap
 
 namespace cage
 {

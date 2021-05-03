@@ -1,5 +1,4 @@
 #include "dxt.h"
-#include <utility>
 
 #include <stb_dxt.h>
 

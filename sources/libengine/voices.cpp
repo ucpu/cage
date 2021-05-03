@@ -8,7 +8,6 @@
 #include <plf_colony.h>
 
 #include <vector>
-#include <utility>
 
 namespace cage
 {

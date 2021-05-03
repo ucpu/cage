@@ -1,8 +1,6 @@
 #include <cage-core/memoryUtils.h> // OutOfMemory
 #include <cage-core/memoryBuffer.h>
 
-#include <utility> // swap
-
 namespace cage
 {
 	MemoryBuffer::MemoryBuffer(uintPtr size, uintPtr capacity)

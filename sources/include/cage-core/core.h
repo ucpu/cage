@@ -890,7 +890,7 @@ namespace cage
 
 			Delegate<void(void *)> deleter_;
 			void *ptr_ = nullptr; // pointer to deallocate
-			T *data_ = nullptr; // pointer to the object (may differ in case of classes with inheritance)
+			T *data_ = nullptr; // pointer to the object
 
 			template<class U>
 			friend struct HolderBase;

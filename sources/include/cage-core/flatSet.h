@@ -5,7 +5,6 @@
 
 #include <vector>
 #include <algorithm> // lower_bound, binary_search
-#include <utility> // pair
 #include <functional> // less
 
 namespace cage
