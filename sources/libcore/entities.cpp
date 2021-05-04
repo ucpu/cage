@@ -26,7 +26,7 @@ namespace cage
 		public:
 			std::vector<Entity *> entities;
 			EntityManagerImpl *const manager = nullptr;
-			const uint32 vectorIndex = m;
+			const uint32 definitionIndex = m;
 
 			GroupImpl(EntityManagerImpl *manager);
 		};
@@ -168,9 +168,9 @@ namespace cage
 			EntityManagerImpl *const manager = nullptr;
 			void *prototype = nullptr;
 			const uint32 typeIndex = m;
-			const uint32 vectorIndex = m;
+			const uint32 definitionIndex = m;
 
-			ComponentImpl(EntityManagerImpl *manager, uint32 typeIndex, const void *prototype_) : manager(manager), typeIndex(typeIndex), vectorIndex(numeric_cast<uint32>(manager->components.size()))
+			ComponentImpl(EntityManagerImpl *manager, uint32 typeIndex, const void *prototype_) : manager(manager), typeIndex(typeIndex), definitionIndex(numeric_cast<uint32>(manager->components.size()))
 			{
 				componentEntities = systemArena().createHolder<GroupImpl>(manager);
 				values = newValues(detail::typeSize(typeIndex), detail::typeAlignment(typeIndex));
@@ -216,13 +216,13 @@ namespace cage
 				manager->namedEntities.erase(name);
 		}
 
-		GroupImpl::GroupImpl(EntityManagerImpl *manager) : manager(manager), vectorIndex(numeric_cast<uint32>(manager->groups.size()))
+		GroupImpl::GroupImpl(EntityManagerImpl *manager) : manager(manager), definitionIndex(numeric_cast<uint32>(manager->groups.size()))
 		{
 			entities.reserve(100);
 		}
 	}
 
-	EntityComponent *EntityManager::componentByOrder(uint32 index) const
+	EntityComponent *EntityManager::componentByDefinition(uint32 index) const
 	{
 		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
 		CAGE_ASSERT(index < impl->components.size());
@@ -252,7 +252,7 @@ namespace cage
 		return g;
 	}
 
-	EntityGroup *EntityManager::groupByOrder(uint32 index) const
+	EntityGroup *EntityManager::groupByDefinition(uint32 index) const
 	{
 		const EntityManagerImpl *impl = (const EntityManagerImpl *)this;
 		CAGE_ASSERT(index < impl->groups.size());
@@ -367,10 +367,10 @@ namespace cage
 		return impl->manager;
 	}
 
-	uint32 EntityComponent::order() const
+	uint32 EntityComponent::definitionIndex() const
 	{
 		const ComponentImpl *impl = (const ComponentImpl *)this;
-		return impl->vectorIndex;
+		return impl->definitionIndex;
 	}
 
 	uint32 EntityComponent::typeIndex() const
@@ -443,9 +443,9 @@ namespace cage
 			return;
 		EntityImpl *impl = (EntityImpl *)this;
 		ComponentImpl *ci = (ComponentImpl *)component;
-		if (impl->components.size() < ci->vectorIndex + 1)
-			impl->components.resize(ci->vectorIndex + 1);
-		impl->components[ci->vectorIndex] = ci->newVal();
+		if (impl->components.size() < ci->definitionIndex + 1)
+			impl->components.resize(ci->definitionIndex + 1);
+		impl->components[ci->definitionIndex] = ci->newVal();
 		if (ci->componentEntities)
 			ci->componentEntities->add(this);
 	}
@@ -458,8 +458,8 @@ namespace cage
 		ComponentImpl *ci = (ComponentImpl *)component;
 		if (ci->componentEntities)
 			ci->componentEntities->remove(this);
-		ci->values->desVal(impl->components[ci->vectorIndex]);
-		impl->components[ci->vectorIndex] = nullptr;
+		ci->values->desVal(impl->components[ci->definitionIndex]);
+		impl->components[ci->definitionIndex] = nullptr;
 	}
 
 	bool Entity::has(const EntityComponent *component) const
@@ -467,8 +467,8 @@ namespace cage
 		const EntityImpl *impl = (const EntityImpl *)this;
 		ComponentImpl *ci = (ComponentImpl *)component;
 		CAGE_ASSERT(ci->manager == impl->manager);
-		if (impl->components.size() > ci->vectorIndex)
-			return impl->components[ci->vectorIndex] != nullptr;
+		if (impl->components.size() > ci->definitionIndex)
+			return impl->components[ci->definitionIndex] != nullptr;
 		return false;
 	}
 
@@ -476,9 +476,9 @@ namespace cage
 	{
 		EntityImpl *impl = (EntityImpl *)this;
 		ComponentImpl *ci = (ComponentImpl*)component;
-		if (impl->components.size() > ci->vectorIndex)
+		if (impl->components.size() > ci->definitionIndex)
 		{
-			void *res = impl->components[ci->vectorIndex];
+			void *res = impl->components[ci->definitionIndex];
 			if (res)
 				return res;
 		}
@@ -499,10 +499,10 @@ namespace cage
 		return impl->manager;
 	}
 
-	uint32 EntityGroup::order() const
+	uint32 EntityGroup::definitionIndex() const
 	{
 		const GroupImpl *impl = (const GroupImpl *)this;
-		return impl->vectorIndex;
+		return impl->definitionIndex;
 	}
 
 	PointerRange<Entity *const> EntityGroup::entities() const
@@ -556,7 +556,7 @@ namespace cage
 		const uintPtr typeSize = detail::typeSize(component->typeIndex());
 		MemoryBuffer buffer;
 		Serializer ser(buffer);
-		ser << component->order();
+		ser << component->definitionIndex();
 		ser << (uint64)typeSize;
 		Serializer cntPlaceholder = ser.placeholder(sizeof(uint32));
 		uint32 cnt = 0;
@@ -587,7 +587,7 @@ namespace cage
 		des >> componentIndex;
 		if (componentIndex >= manager->componentsCount())
 			CAGE_THROW_ERROR(Exception, "incompatible component (different index)");
-		EntityComponent *component = manager->componentByOrder(componentIndex);
+		EntityComponent *component = manager->componentByDefinition(componentIndex);
 		uint64 typeSize;
 		des >> typeSize;
 		if (detail::typeSize(component->typeIndex()) != typeSize)

@@ -72,15 +72,15 @@ namespace
 				for (uint32 j = 0; j < 3; j++)
 				{
 					if (randomChance() < 0.5)
-						e->add(manager->componentByOrder(j));
+						e->add(manager->componentByDefinition(j));
 					if (randomChance() < 0.5)
-						e->add(manager->groupByOrder(j));
+						e->add(manager->groupByDefinition(j));
 				}
 			}
 			for (uint32 j = 0; j < 3; j++)
 			{
 				if (randomChance() < 0.2)
-					manager->groupByOrder(j)->destroy();
+					manager->groupByDefinition(j)->destroy();
 			}
 		}
 	}
@@ -138,8 +138,8 @@ namespace
 		EntityComponent *cb = man->defineComponent(vec3(42));
 		CAGE_TEST(ca != cb);
 		CAGE_TEST(ca->typeIndex() == cb->typeIndex());
-		CAGE_TEST(ca->order() == 0);
-		CAGE_TEST(cb->order() == 1);
+		CAGE_TEST(ca->definitionIndex() == 0);
+		CAGE_TEST(cb->definitionIndex() == 1);
 
 		Entity *e = man->createAnonymous();
 		e->add(ca, vec3(1));
@@ -278,7 +278,7 @@ namespace
 					{
 						if (randomChance() < 0.5)
 						{
-							e->add(manager->componentByOrder(i));
+							e->add(manager->componentByDefinition(i));
 							reference[entName].insert(i);
 						}
 					}
@@ -295,7 +295,7 @@ namespace
 					{
 						if (randomChance() < 0.5)
 						{
-							e->add(manager->componentByOrder(i));
+							e->add(manager->componentByDefinition(i));
 							reference[it->first].insert(i);
 						}
 					}
@@ -311,7 +311,7 @@ namespace
 					{
 						if (randomChance() < 0.5)
 						{
-							e->remove(manager->componentByOrder(i));
+							e->remove(manager->componentByDefinition(i));
 							reference[it->first].erase(i);
 						}
 					}
@@ -324,7 +324,7 @@ namespace
 					std::advance(it, randomRange((uint32)0, numeric_cast<uint32>(reference.size())));
 					Entity *e = manager->get(it->first);
 					for (uint32 i = 0; i < TotalComponents; i++)
-						CAGE_TEST(!!reference[it->first].count(i) == e->has(manager->componentByOrder(i)));
+						CAGE_TEST(!!reference[it->first].count(i) == e->has(manager->componentByDefinition(i)));
 				} break;
 				}
 			}
@@ -350,7 +350,7 @@ namespace
 			CAGE_TEST(detail::memcmp(entsBuf.data(), allEntities.data(), sizeof(Entity *) * reference.size()) == 0);
 			for (uint32 i = 0; i < TotalComponents; i++)
 			{
-				const EntityGroup *grp = manager->componentByOrder(i)->group();
+				const EntityGroup *grp = manager->componentByDefinition(i)->group();
 				CAGE_TEST(grp->count() == componentEntities[i].size());
 				if (componentEntities[i].empty())
 					continue;
@@ -362,9 +362,60 @@ namespace
 		}
 	}
 
-	void performanceTest()
+	void performanceTypeVsComponent()
 	{
-		CAGE_TESTCASE("performance test");
+		CAGE_TESTCASE("performance type vs component");
+
+		Holder<EntityManager> man = newEntityManager();
+
+		EntityComponent *comps[3] = {};
+		comps[0] = man->defineComponent(vec3());
+		comps[1] = man->defineComponent(uint32());
+		comps[2] = man->defineComponent(real());
+
+		for (uint32 i = 0; i < 10000; i++)
+		{
+			Entity *e = man->createUnique();
+			if ((i % 2) == 1)
+				e->value<vec3>();
+			if ((i % 3) > 0)
+				e->value<uint32>();
+			if ((i % 7) < 4)
+				e->value<real>();
+		}
+
+		for (uint32 round = 0; round < 3; round++)
+		{
+			Holder<Timer> tmr = newTimer();
+
+			for (Entity *e : comps[0]->entities())
+				e->value<vec3>() += 1;
+			for (Entity *e : comps[1]->entities())
+				e->value<uint32>() += 1;
+			for (Entity *e : comps[2]->entities())
+				e->value<real>() += 1;
+
+			CAGE_LOG(SeverityEnum::Info, "entities performance", stringizer() + "time for access with type: " + (tmr->microsSinceStart()) + " us");
+		}
+
+		for (uint32 round = 0; round < 3; round++)
+		{
+			Holder<Timer> tmr = newTimer();
+
+			for (Entity *e : comps[0]->entities())
+				e->value<vec3>(comps[0]) += 1;
+			for (Entity *e : comps[1]->entities())
+				e->value<uint32>(comps[1]) += 1;
+			for (Entity *e : comps[2]->entities())
+				e->value<real>(comps[2]) += 1;
+
+			CAGE_LOG(SeverityEnum::Info, "entities performance", stringizer() + "time for access with component: " + (tmr->microsSinceStart()) + " us");
+		}
+	}
+
+	void performanceSimulationTest()
+	{
+		CAGE_TESTCASE("performance simulation test");
 
 #ifdef CAGE_DEBUG
 		constexpr uint32 TotalCycles = 100;
@@ -460,7 +511,7 @@ namespace
 			}
 		}
 
-		CAGE_LOG(SeverityEnum::Info, "entities performance", stringizer() + "avg time per cycle: " + (tmr->microsSinceStart() / TotalCycles) + " us");
+		CAGE_LOG(SeverityEnum::Info, "entities performance", stringizer() + "simulation avg time per cycle: " + (tmr->microsSinceStart() / TotalCycles) + " us");
 	}
 }
 
@@ -475,6 +526,7 @@ void testEntities()
 	multipleComponentsOfSameType();
 	callbacks();
 	randomizedTests();
-	performanceTest();
+	performanceTypeVsComponent();
+	performanceSimulationTest();
 }
 

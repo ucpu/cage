@@ -16,13 +16,13 @@ namespace cage
 			return defineComponent_(detail::typeIndex<T>(), &prototype);
 		}
 
-		EntityComponent *componentByOrder(uint32 index) const;
+		EntityComponent *componentByDefinition(uint32 index) const;
 		EntityComponent *componentByType(uint32 index) const;
 		template<class T> EntityComponent *component() const { return componentByType(detail::typeIndex<T>()); }
 		uint32 componentsCount() const;
 
 		EntityGroup *defineGroup();
-		EntityGroup *groupByOrder(uint32 index) const;
+		EntityGroup *groupByDefinition(uint32 index) const;
 		uint32 groupsCount() const;
 		const EntityGroup *group() const; // all entities in this manager
 
@@ -48,7 +48,7 @@ namespace cage
 	{
 	public:
 		EntityManager *manager() const;
-		uint32 order() const; // index where the component was defined
+		uint32 definitionIndex() const;
 		uint32 typeIndex() const;
 
 		const EntityGroup *group() const; // all entities with this component
@@ -92,7 +92,7 @@ namespace cage
 	{
 	public:
 		EntityManager *manager() const;
-		uint32 order() const; // index where the group was defined
+		uint32 definitionIndex() const;
 
 		PointerRange<Entity *const> entities() const;
 		uint32 count() const { return numeric_cast<uint32>(entities().size()); }
