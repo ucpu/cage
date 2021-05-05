@@ -531,12 +531,12 @@ namespace cage
 				OPTICK_EVENT("texts");
 				for (const Holder<Texts> &t : pass->texts)
 				{
-					t->font->bind(modelSquare.get(), shaderFont.get());
+					shaderFont->bind();
 					for (const Holder<Texts::Render> &r : t->renders)
 					{
 						shaderFont->uniform(0, r->transform);
 						shaderFont->uniform(4, r->color);
-						t->font->render(r->glyphs, r->format);
+						t->font->render(modelSquare.share(), shaderFont.share(), r->glyphs, r->format);
 						drawCalls += numeric_cast<uint32>(r->glyphs.size() + CAGE_SHADER_MAX_CHARACTERS - 1) / CAGE_SHADER_MAX_CHARACTERS;
 						drawPrimitives += numeric_cast<uint32>(r->glyphs.size()) * 2;
 					}

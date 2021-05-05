@@ -1,5 +1,3 @@
-#include <cage-core/assetManager.h>
-#include <cage-core/hashString.h>
 #include <cage-core/swapBufferGuard.h>
 
 #include "private.h"
@@ -292,27 +290,8 @@ namespace cage
 		if (!impl->eventsEnabled)
 			return;
 
-		if (!impl->assetMgr->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/cage.pack")))
-			return;
-
-		for (auto &s : impl->skins)
-			s.texture = impl->assetMgr->getRaw<AssetSchemeIndexTexture, Texture>(s.textureName);
-
 		if (auto lock = impl->emitController->write())
 		{
-			impl->graphicsData.debugShader = impl->assetMgr->getRaw<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/debug.glsl"));
-			impl->graphicsData.elementShader = impl->assetMgr->getRaw<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/element.glsl"));
-			impl->graphicsData.fontShader = impl->assetMgr->getRaw<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/font.glsl"));
-			impl->graphicsData.imageAnimatedShader = impl->assetMgr->getRaw<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/image.glsl?A"));
-			impl->graphicsData.imageStaticShader = impl->assetMgr->getRaw<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/image.glsl?a"));
-			impl->graphicsData.colorPickerShader[0] = impl->assetMgr->getRaw<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/colorPicker.glsl?F"));
-			impl->graphicsData.colorPickerShader[1] = impl->assetMgr->getRaw<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/colorPicker.glsl?H"));
-			impl->graphicsData.colorPickerShader[2] = impl->assetMgr->getRaw<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/colorPicker.glsl?S"));
-			impl->graphicsData.debugModel = impl->assetMgr->getRaw<AssetSchemeIndexModel, Model>(HashString("cage/model/guiWire.obj"));
-			impl->graphicsData.elementModel = impl->assetMgr->getRaw<AssetSchemeIndexModel, Model>(HashString("cage/model/guiElement.obj"));
-			impl->graphicsData.fontModel = impl->assetMgr->getRaw<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
-			impl->graphicsData.imageModel = impl->graphicsData.fontModel;
-
 			impl->emitControl = &impl->emitData[lock.index()];
 			auto *e = impl->emitControl;
 			e->flush();

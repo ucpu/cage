@@ -72,8 +72,7 @@ namespace cage
 		vec4 border = skin->layouts[(uint32)element].border;
 		offset(pos, size, -border);
 		t->data.inner = hierarchy->impl->pointsToNdc(pos, size);
-		t->skinBuffer = skin->elementsGpuBuffer.get();
-		t->skinTexture = skin->texture;
+		t->skin = skin;
 		e->last->next = t;
 		e->last = t;
 		return t;

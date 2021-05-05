@@ -195,6 +195,22 @@ void testHolder()
 	}
 
 	{
+		CAGE_TESTCASE("sharing shared holder");
+		CAGE_TEST(gCount == 0);
+		Holder<Tester> a = systemArena().createHolder<Tester>().makeShareable();
+		Holder<Tester> b = a.share();
+		Holder<Tester> c = b.share();
+		CAGE_TEST(gCount == 1);
+		CAGE_TEST(a);
+		CAGE_TEST(a.isShareable());
+		CAGE_TEST(b);
+		CAGE_TEST(b.isShareable());
+		CAGE_TEST(c);
+		CAGE_TEST(c.isShareable());
+		CAGE_TEST(+a == +c);
+	}
+
+	{
 		CAGE_TESTCASE("get and operator +");
 		auto s = systemArena().createHolder<Tester>();
 		CAGE_TEST(s.get());

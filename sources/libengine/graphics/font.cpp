@@ -1,19 +1,19 @@
-#include <cage-core/geometry.h>
 #include <cage-core/utf.h>
+#include <cage-core/geometry.h>
 #include <cage-core/serialization.h>
+#include <cage-core/pointerRangeHolder.h>
 
 #include <cage-engine/shaderConventions.h>
 #include <cage-engine/assetStructs.h>
-#include <cage-engine/opengl.h>
 #include <cage-engine/font.h>
 #include <cage-engine/texture.h>
-#include <cage-engine/uniformBuffer.h>
-#include <cage-engine/model.h>
-#include <cage-engine/shaderProgram.h>
+#include <cage-engine/renderQueue.h>
+#include <cage-engine/opengl.h>
 #include "private.h"
 
 #include <vector>
 #include <cstring>
+#include <algorithm>
 
 namespace cage
 {
@@ -21,50 +21,38 @@ namespace cage
 	{
 		struct ProcessData
 		{
-			vec2 mousePosition;
+			vec2 mousePosition = vec2::Nan();
 			mutable vec2 outSize;
-			const Font::FormatStruct *format;
-			const uint32 *gls;
-			mutable uint32 outCursor;
-			uint32 count;
-			uint32 cursor;
-			bool render;
-			ProcessData() : mousePosition(vec2::Nan()), format(nullptr), gls(nullptr),
-				outCursor(0), count(0), cursor(m), render(false)
-			{}
+			RenderQueue *renderQueue = nullptr;
+			const Font::FormatStruct *format = nullptr;
+			const uint32 *gls = nullptr;
+			mutable uint32 outCursor = 0;
+			uint32 count = 0;
+			uint32 cursor = m;
 		};
 
 		class FontImpl : public Font
 		{
 		public:
-			Holder<Texture> tex;
-			uint32 texWidth, texHeight;
-			ShaderProgram *shr;
-			Model *msh;
-			uint32 spaceGlyph;
-			uint32 returnGlyph;
-			uint32 cursorGlyph;
-			real lineHeight;
-			real firstLineOffset;
-
 			std::vector<FontHeader::GlyphData> glyphsArray;
 			std::vector<real> kerning;
 			std::vector<uint32> charmapChars;
 			std::vector<uint32> charmapGlyphs;
 
-			FontHeader::GlyphData getGlyph(uint32 glyphIndex, real size)
-			{
-				FontHeader::GlyphData r(glyphsArray[glyphIndex]);
-				r.advance *= size;
-				r.bearing *= size;
-				r.size *= size;
-				return r;
-			}
+			Holder<Texture> tex;
+
+			uint32 texWidth = 0, texHeight = 0;
+			uint32 spaceGlyph = 0;
+			uint32 returnGlyph = 0;
+			uint32 cursorGlyph = m;
+			real lineHeight = 0;
+			real firstLineOffset = 0;
 
 			struct Instance
 			{
 				vec4 wrld;
 				vec4 text;
+
 				Instance(real x, real y, const FontHeader::GlyphData &g)
 				{
 					text = g.texUv;
@@ -76,11 +64,19 @@ namespace cage
 			};
 			std::vector<Instance> instances;
 
-			FontImpl() : texWidth(0), texHeight(0),
-				shr(nullptr), msh(nullptr), spaceGlyph(0), returnGlyph(0), cursorGlyph(m)
+			FontImpl()
 			{
-				tex = newTexture();
+				tex = newTexture().makeShareable();
 				instances.reserve(1000);
+			}
+
+			FontHeader::GlyphData getGlyph(uint32 glyphIndex, real size) const
+			{
+				FontHeader::GlyphData r = glyphsArray[glyphIndex];
+				r.advance *= size;
+				r.bearing *= size;
+				r.size *= size;
+				return r;
 			}
 
 			real findKerning(uint32 L, uint32 R, real size) const
@@ -88,13 +84,19 @@ namespace cage
 				CAGE_ASSERT(L < glyphsArray.size() && R < glyphsArray.size());
 				if (kerning.empty() || glyphsArray.empty())
 					return 0;
-				uint32 s = numeric_cast<uint32>(glyphsArray.size());
+				const uint32 s = numeric_cast<uint32>(glyphsArray.size());
 				return kerning[L * s + R] * size;
 			}
 
 			uint32 findGlyphIndex(uint32 character) const
 			{
 				CAGE_ASSERT(charmapChars.size());
+				auto it = std::lower_bound(charmapChars.begin(), charmapChars.end(), character);
+				if (*it != character)
+					return 0;
+				return charmapGlyphs[it - charmapChars.begin()];
+
+				/*
 				if (charmapChars[0] > character)
 					return 0; // otherwise the mid-1 could overflow
 				uint32 min = 0, max = numeric_cast<uint32>(charmapChars.size() - 1);
@@ -111,11 +113,12 @@ namespace cage
 				if (charmapChars[min] == character)
 					return charmapGlyphs[min];
 				return 0;
+				*/
 			}
 
 			void processCursor(const ProcessData &data, const uint32 *begin, real x, real lineY)
 			{
-				if (data.render && begin == data.gls + data.cursor)
+				if (data.renderQueue && begin == data.gls + data.cursor)
 				{
 					FontHeader::GlyphData g = getGlyph(cursorGlyph, data.format->size);
 					instances.emplace_back(x, lineY, g);
@@ -135,7 +138,7 @@ namespace cage
 
 				vec2 mousePos = data.mousePosition + vec2(-x, lineY + lineHeight * data.format->size);
 				bool mouseInLine = mousePos[1] >= 0 && mousePos[1] <= (lineHeight + data.format->lineSpacing) * data.format->size;
-				if (!data.render && !mouseInLine)
+				if (!data.renderQueue && !mouseInLine)
 					return;
 				if (mouseInLine)
 				{
@@ -152,7 +155,7 @@ namespace cage
 					FontHeader::GlyphData g = getGlyph(*begin, data.format->size);
 					real k = findKerning(prev, *begin, data.format->size);
 					prev = *begin++;
-					if (data.render)
+					if (data.renderQueue)
 						instances.emplace_back(x + k, lineY, g);
 					if (mouseInLine && data.mousePosition[0] >= x && data.mousePosition[0] < x + k + g.advance)
 						data.outCursor = numeric_cast<uint32>(begin - data.gls);
@@ -163,13 +166,13 @@ namespace cage
 
 			void processText(const ProcessData &data)
 			{
-				CAGE_ASSERT(!data.render || instances.empty());
+				CAGE_ASSERT(!data.renderQueue || instances.empty());
 				CAGE_ASSERT(data.format->align <= TextAlignEnum::Center);
 				CAGE_ASSERT(data.format->wrapWidth > 0);
 				CAGE_ASSERT(data.format->size > 0);
-				const uint32 *totalEnd = data.gls + data.count;
+				const uint32 *const totalEnd = data.gls + data.count;
 				const uint32 *it = data.gls;
-				real actualLineHeight = (lineHeight + data.format->lineSpacing) * data.format->size;
+				const real actualLineHeight = (lineHeight + data.format->lineSpacing) * data.format->size;
 				real lineY = (firstLineOffset - data.format->lineSpacing * 0.75) * data.format->size;
 
 				if (data.count == 0)
@@ -229,28 +232,24 @@ namespace cage
 					lineY -= actualLineHeight;
 				}
 
-				if (data.render)
+				if (data.renderQueue)
 				{
-					uint32 s = numeric_cast<uint32>(instances.size());
-					uint32 a = s / CAGE_SHADER_MAX_CHARACTERS;
-					uint32 b = s - a * CAGE_SHADER_MAX_CHARACTERS;
+					const uint32 s = numeric_cast<uint32>(instances.size());
+					const uint32 a = s / CAGE_SHADER_MAX_CHARACTERS;
+					const uint32 b = s - a * CAGE_SHADER_MAX_CHARACTERS;
 					for (uint32 i = 0; i < a; i++)
 					{
-						Holder<UniformBuffer> uni = newUniformBuffer();
-						uni->bind(1);
 						auto p = instances.data() + i * CAGE_SHADER_MAX_CHARACTERS;
-						PointerRange<Instance> r = { p, p + sizeof(Instance) * CAGE_SHADER_MAX_CHARACTERS };
-						uni->writeWhole(bufferCast(r), GL_STREAM_DRAW);
-						msh->dispatch(CAGE_SHADER_MAX_CHARACTERS);
+						PointerRange<Instance> r = { p, p + CAGE_SHADER_MAX_CHARACTERS };
+						data.renderQueue->universalUniformArray<Instance>(r, 1);
+						data.renderQueue->draw(CAGE_SHADER_MAX_CHARACTERS);
 					}
 					if (b)
 					{
-						Holder<UniformBuffer> uni = newUniformBuffer();
-						uni->bind(1);
 						auto p = instances.data() + a * CAGE_SHADER_MAX_CHARACTERS;
-						PointerRange<Instance> r = { p, p + b * sizeof(Instance) };
-						uni->writeWhole(bufferCast(r), GL_STREAM_DRAW);
-						msh->dispatch(b);
+						PointerRange<Instance> r = { p, p + b };
+						data.renderQueue->universalUniformArray<Instance>(r, 1);
+						data.renderQueue->draw(b);
 					}
 
 					instances.clear();
@@ -281,9 +280,9 @@ namespace cage
 		impl->texWidth = width;
 		impl->texHeight = height;
 		impl->tex->bind();
-		const uint32 channels = numeric_cast<uint32>(buffer.size() / (width * height));
-		CAGE_ASSERT(width * height * channels == buffer.size());
-		switch (channels)
+		const uint32 bpp = numeric_cast<uint32>(buffer.size() / (width * height));
+		CAGE_ASSERT(width * height * bpp == buffer.size());
+		switch (bpp)
 		{
 		case 1:
 			impl->tex->image2d(width, height, GL_R8, GL_RED, GL_UNSIGNED_BYTE, buffer);
@@ -363,16 +362,36 @@ namespace cage
 
 	void Font::transcript(const char *text, PointerRange<uint32> glyphs) const
 	{
-		uint32 s = numeric_cast<uint32>(std::strlen(text));
+		const uint32 s = numeric_cast<uint32>(std::strlen(text));
 		transcript({ text, text + s }, glyphs);
 	}
 
 	void Font::transcript(PointerRange<const char> text, PointerRange<uint32> glyphs) const
 	{
-		FontImpl *impl = (FontImpl *)this;
+		const FontImpl *impl = (const FontImpl *)this;
 		utf8to32(glyphs, text);
 		for (uint32 &i : glyphs)
 			i = impl->findGlyphIndex(i);
+	}
+
+	Holder<PointerRange<uint32>> Font::transcript(const string &text) const
+	{
+		return transcript({ text.begin(), text.end() });
+	}
+
+	Holder<PointerRange<uint32>> Font::transcript(const char *text) const
+	{
+		const uint32 s = numeric_cast<uint32>(std::strlen(text));
+		return transcript({ text, text + s });
+	}
+
+	Holder<PointerRange<uint32>> Font::transcript(PointerRange<const char> text) const
+	{
+		const FontImpl *impl = (const FontImpl *)this;
+		auto glyphs = utf8to32(text);
+		for (uint32 &i : glyphs)
+			i = impl->findGlyphIndex(i);
+		return glyphs;
 	}
 
 	vec2 Font::size(PointerRange<const uint32> glyphs, const FormatStruct &format) const
@@ -395,26 +414,33 @@ namespace cage
 		return data.outSize;
 	}
 
-	void Font::bind(Model *model, ShaderProgram *shader)
+	void Font::bind(RenderQueue *queue, Holder<Model> &&model, Holder<ShaderProgram> &&shader)
 	{
 		FontImpl *impl = (FontImpl *)this;
-		glActiveTexture(GL_TEXTURE0);
-		impl->tex->bind();
-		impl->msh = model;
-		impl->msh->bind();
-		impl->shr = shader;
-		impl->shr->bind();
+		queue->bind(impl->tex.share(), 0);
+		queue->bind(model.share());
+		queue->bind(shader.share());
 	}
 
-	void Font::render(PointerRange<const uint32> glyphs, const FormatStruct &format, uint32 cursor)
+	void Font::render(RenderQueue *queue, PointerRange<const uint32> glyphs, const FormatStruct &format, uint32 cursor)
 	{
+		FontImpl *impl = (FontImpl *)this;
 		ProcessData data;
+		data.renderQueue = queue;
 		data.format = &format;
 		data.gls = glyphs.data();
 		data.count = numeric_cast<uint32>(glyphs.size());
 		data.cursor = applicationTime() % 1000000 < 300000 ? m : cursor;
-		data.render = true;
-		((FontImpl *)this)->processText(data);
+		impl->processText(data);
+	}
+
+	void Font::render(Holder<Model> &&model, Holder<ShaderProgram> &&shader, PointerRange<const uint32> glyphs, const FormatStruct &format, uint32 cursor)
+	{
+		Holder<RenderQueue> queue = newRenderQueue();
+		bind(+queue, std::move(model), std::move(shader));
+		render(+queue, glyphs, format, cursor);
+		queue->dispatch();
+		queue.clear();
 	}
 
 	Holder<Font> newFont()

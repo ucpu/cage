@@ -32,7 +32,7 @@ namespace cage
 	struct SkinData : public GuiSkinConfig
 	{
 		Holder<UniformBuffer> elementsGpuBuffer;
-		Texture *texture;
+		Holder<Texture> texture;
 	};
 
 	struct RenderableBase
@@ -58,8 +58,8 @@ namespace cage
 			uint32 mode;
 			Element();
 		} data;
-		const UniformBuffer *skinBuffer;
-		const Texture *skinTexture;
+
+		const SkinData *skin = nullptr;
 
 		RenderableElement();
 
@@ -296,17 +296,18 @@ namespace cage
 
 		struct GraphicsData
 		{
-			ShaderProgram *debugShader;
-			ShaderProgram *elementShader;
-			ShaderProgram *fontShader;
-			ShaderProgram *imageAnimatedShader;
-			ShaderProgram *imageStaticShader;
-			ShaderProgram *colorPickerShader[3];
-			Model *debugModel;
-			Model *elementModel;
-			Model *fontModel;
-			Model *imageModel;
-			GraphicsData();
+			Holder<ShaderProgram> debugShader;
+			Holder<ShaderProgram> elementShader;
+			Holder<ShaderProgram> fontShader;
+			Holder<ShaderProgram> imageAnimatedShader;
+			Holder<ShaderProgram> imageStaticShader;
+			Holder<ShaderProgram> colorPickerShader[3];
+			Holder<Model> debugModel;
+			Holder<Model> elementModel;
+			Holder<Model> fontModel;
+			Holder<Model> imageModel;
+
+			void load(AssetManager *assetMgr);
 		} graphicsData;
 
 		struct EmitData

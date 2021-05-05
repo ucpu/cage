@@ -59,7 +59,7 @@ namespace cage
 		{
 			struct SharedCounter
 			{
-				std::atomic<sint32> cnt{1};
+				std::atomic<sint32> cnt = 1;
 				Holder<void> payload;
 
 				void dec()

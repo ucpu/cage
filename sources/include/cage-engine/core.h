@@ -129,6 +129,8 @@ namespace cage
 	class Window;
 	struct WindowEventListeners;
 
+	class RenderQueue;
+
 	// enum declarations
 
 	enum class ModelRenderFlags : uint32

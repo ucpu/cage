@@ -1,3 +1,5 @@
+#include <cage-core/assetManager.h>
+#include <cage-core/hashString.h>
 #include <cage-core/swapBufferGuard.h>
 #include <cage-core/serialization.h>
 
@@ -12,8 +14,8 @@ namespace cage
 	void RenderableElement::render(GuiImpl *impl)
 	{
 		GuiImpl::GraphicsData &context = impl->graphicsData;
-		skinBuffer->bind(0);
-		skinTexture->bind();
+		skin->elementsGpuBuffer->bind(0);
+		skin->texture->bind();
 		context.elementShader->bind();
 		context.elementShader->uniform(0, data.outer);
 		context.elementShader->uniform(1, data.inner);
@@ -26,17 +28,17 @@ namespace cage
 	void RenderableText::render(GuiImpl *impl)
 	{
 		GuiImpl::GraphicsData &context = impl->graphicsData;
-		data.font->bind(context.fontModel, context.fontShader);
+		context.fontShader->bind();
 		context.fontShader->uniform(0, data.transform);
 		context.fontShader->uniform(4, data.color);
-		data.font->render({ data.glyphs, data.glyphs + data.count }, data.format, data.cursor);
+		data.font->render(context.fontModel.share(), context.fontShader.share() , { data.glyphs, data.glyphs + data.count }, data.format, data.cursor);
 	}
 
 	void RenderableImage::render(GuiImpl *impl)
 	{
 		GuiImpl::GraphicsData &context = impl->graphicsData;
 		data.texture->bind();
-		ShaderProgram *shr = data.texture->getTarget() == GL_TEXTURE_2D_ARRAY ? context.imageAnimatedShader : context.imageStaticShader;
+		Holder<ShaderProgram> shr = data.texture->getTarget() == GL_TEXTURE_2D_ARRAY ? context.imageAnimatedShader.share() : context.imageStaticShader.share();
 		shr->bind();
 		shr->uniform(0, data.ndcPos);
 		shr->uniform(1, data.uvClip);
@@ -44,6 +46,22 @@ namespace cage
 			shr->uniform(2, data.aniTexFrames);
 		context.imageModel->bind();
 		context.imageModel->dispatch();
+	}
+
+	void GuiImpl::GraphicsData::load(AssetManager *assetMgr)
+	{
+		debugShader = assetMgr->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/debug.glsl"));
+		elementShader = assetMgr->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/element.glsl"));
+		fontShader = assetMgr->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/font.glsl"));
+		imageAnimatedShader = assetMgr->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/image.glsl?A"));
+		imageStaticShader = assetMgr->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/image.glsl?a"));
+		colorPickerShader[0] = assetMgr->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/colorPicker.glsl?F"));
+		colorPickerShader[1] = assetMgr->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/colorPicker.glsl?H"));
+		colorPickerShader[2] = assetMgr->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/colorPicker.glsl?S"));
+		debugModel = assetMgr->get<AssetSchemeIndexModel, Model>(HashString("cage/model/guiWire.obj"));
+		elementModel = assetMgr->get<AssetSchemeIndexModel, Model>(HashString("cage/model/guiElement.obj"));
+		fontModel = assetMgr->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj"));
+		imageModel = fontModel.share();
 	}
 
 	namespace
@@ -67,6 +85,21 @@ namespace cage
 			for (int i = 0; i < 4; i++)
 				copyTextureUv(source.data[i], target.data[i]);
 		}
+
+		struct GraphicsDataCleaner : Immovable
+		{
+			GuiImpl &data;
+
+			GraphicsDataCleaner(GuiImpl &data) : data(data)
+			{}
+
+			~GraphicsDataCleaner()
+			{
+				data.graphicsData = GuiImpl::GraphicsData();
+				for (auto &it : data.skins)
+					it.texture.clear();
+			}
+		};
 	}
 
 	void GuiImpl::graphicsDispatch()
@@ -75,17 +108,24 @@ namespace cage
 		OPTICK_EVENT("render gui");
 		CAGE_CHECK_GL_ERROR_DEBUG();
 
+		GraphicsDataCleaner graphicsDataCleaner(*this);
+
 		if (auto lock = emitController->read())
 		{
 			if (outputResolution[0] <= 0 || outputResolution[1] <= 0)
 				return;
 
-			// check skins textures
+			if (!assetMgr->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/cage.pack")))
+				return;
+
 			for (auto &s : skins)
 			{
+				s.texture = assetMgr->get<AssetSchemeIndexTexture, Texture>(s.textureName);
 				if (!s.texture)
 					return;
 			}
+
+			graphicsData.load(assetMgr);
 
 			// write skins uv coordinates
 			for (auto &s : skins)

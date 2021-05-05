@@ -22,7 +22,7 @@ namespace cage
 	RenderableElement::Element::Element() : element(m), mode(m)
 	{}
 
-	RenderableElement::RenderableElement() : skinBuffer(nullptr), skinTexture(nullptr)
+	RenderableElement::RenderableElement()
 	{}
 
 	RenderableText::Text::Text() : glyphs(nullptr), font(nullptr), color(vec3::Nan()), cursor(m), count(0)

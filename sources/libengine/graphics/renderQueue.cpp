@@ -11,6 +11,8 @@
 #include <cage-engine/renderQueue.h>
 #include "private.h"
 
+#include <vector>
+
 namespace cage
 {
 	namespace
@@ -31,7 +33,17 @@ namespace cage
 			void *ptr = nullptr;
 		};
 
-		struct RenderQueueContent
+		struct RenderQueueBindings
+		{
+			UniformBuffer *boundUniformBuffer = nullptr;
+			ShaderProgram *boundShaderProgram = nullptr;
+			FrameBuffer *boundFrameBuffer = nullptr;
+			Texture *boundTexture = nullptr;
+			Model *boundModel = nullptr;
+			uint32 activeTextureIndex = m;
+		};
+
+		struct RenderQueueContent : public RenderQueueBindings
 		{
 			CmdBase *head = nullptr, *tail = nullptr;
 			MemBlock *memHead = nullptr, *memTail = nullptr;
@@ -39,13 +51,6 @@ namespace cage
 			uint32 commandsCount = 0;
 			uint32 drawsCount = 0;
 			uint32 primitivesCount = 0;
-
-			UniformBuffer *boundUniformBuffer = nullptr;
-			ShaderProgram *boundShaderProgram = nullptr;
-			FrameBuffer *boundFrameBuffer = nullptr;
-			Texture *boundTexture = nullptr;
-			Model *boundModel = nullptr;
-			uint32 activeTextureIndex = m;
 
 			Model *lastModel = nullptr;
 		};
@@ -58,12 +63,21 @@ namespace cage
 			using RenderQueueContent::primitivesCount;
 
 			Holder<MemoryArena> arena = newMemoryAllocatorStream({});
-			Holder<UniformBuffer> uubObject;
 			MemoryBuffer uubStaging;
+			UniformBuffer *uubObject = nullptr;
+
+#ifdef CAGE_DEBUG
+			std::vector<string> namesStack;
+#endif // CAGE_DEBUG
 
 			RenderQueueImpl()
 			{
 				initHeads();
+			}
+
+			~RenderQueueImpl()
+			{
+				reset(); // make sure to properly destroy all the commands, they may hold some assets
 			}
 
 			void initHeads()
@@ -99,16 +113,21 @@ namespace cage
 
 			void dispatch()
 			{
+#ifdef CAGE_DEBUG
+				namesStack.clear();
+#endif // CAGE_DEBUG
+
+				Holder<UniformBuffer> uub; // make sure the uub is destroyed on the opengl thread
 				if (uubStaging.size() > 0)
 				{
-					uubObject = newUniformBuffer();
-					uubObject->writeWhole(uubStaging);
+					uub = newUniformBuffer();
+					uub->writeWhole(uubStaging);
 				}
 
+				uubObject = +uub;
 				for (CmdBase *cmd = head; cmd; cmd = cmd->next)
 					cmd->dispatch(this);
-
-				uubObject.clear();
+				uubObject = nullptr;
 			}
 
 			template<class T>
@@ -219,7 +238,7 @@ namespace cage
 		};
 	}
 
-	void RenderQueue::universalUniformBuffer(uint32 bindingPoint, PointerRange<const char> data)
+	void RenderQueue::universalUniformBuffer(PointerRange<const char> data, uint32 bindingPoint)
 	{
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		impl->universalUniformBuffer(bindingPoint, data);
@@ -832,6 +851,28 @@ namespace cage
 		}
 	}
 
+	void RenderQueue::enqueue(Holder<RenderQueue> &&queue)
+	{
+		struct Cmd : public CmdBase
+		{
+			Holder<RenderQueue> queue;
+			void dispatch(RenderQueueImpl *impl) override
+			{
+				queue->dispatch();
+				*(RenderQueueBindings *)impl = RenderQueueBindings();
+			}
+		};
+
+		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		
+		impl->commandsCount += queue->commandsCount();
+		impl->drawsCount += queue->drawsCount();
+		impl->primitivesCount += queue->primitivesCount();
+
+		Cmd &cmd = impl->addCmd<Cmd>();
+		cmd.queue = std::move(queue);
+	}
+
 	void RenderQueue::pushNamedPass(const string &name)
 	{
 		struct Cmd : public CmdBase
@@ -839,6 +880,9 @@ namespace cage
 			string name;
 			void dispatch(RenderQueueImpl *impl) override
 			{
+#ifdef CAGE_DEBUG
+				impl->namesStack.push_back(name);
+#endif // CAGE_DEBUG
 				glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, name.c_str());
 			}
 		};
@@ -853,6 +897,9 @@ namespace cage
 		{
 			void dispatch(RenderQueueImpl *impl) override
 			{
+#ifdef CAGE_DEBUG
+				impl->namesStack.pop_back();
+#endif // CAGE_DEBUG
 				glPopDebugGroup();
 			}
 		};

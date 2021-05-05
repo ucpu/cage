@@ -16,12 +16,6 @@ namespace cage
 		}
 	}
 
-	GuiImpl::GraphicsData::GraphicsData() :
-		debugShader(nullptr), elementShader(nullptr), fontShader(nullptr), imageAnimatedShader(nullptr), imageStaticShader(nullptr),
-		colorPickerShader{nullptr, nullptr, nullptr},
-		debugModel(nullptr), elementModel(nullptr), fontModel(nullptr), imageModel(nullptr)
-	{}
-
 	GuiImpl::EmitData::EmitData(const GuiCreateConfig &config) : arena(newMemoryAllocatorLinear({})), memory(+arena)
 	{}
 

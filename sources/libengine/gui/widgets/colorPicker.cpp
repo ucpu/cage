@@ -14,7 +14,7 @@ namespace cage
 
 			virtual void render(GuiImpl *impl) override
 			{
-				ShaderProgram *shr = impl->graphicsData.colorPickerShader[mode];
+				Holder<ShaderProgram> shr = impl->graphicsData.colorPickerShader[mode].share();
 				shr->bind();
 				shr->uniform(0, pos);
 				switch (mode)
@@ -26,7 +26,7 @@ namespace cage
 					shr->uniform(1, colorRgbToHsv(rgb)[0]);
 					break;
 				}
-				Model *model = impl->graphicsData.imageModel;
+				Holder<Model> model = impl->graphicsData.imageModel.share();
 				model->bind();
 				model->dispatch();
 			}

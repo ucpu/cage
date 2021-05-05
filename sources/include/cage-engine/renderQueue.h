@@ -10,26 +10,26 @@ namespace cage
 	class CAGE_ENGINE_API RenderQueue : private Immovable
 	{
 	public:
-		// uses internal uniform buffer that is populated at start of dispatch of this queue
-		// the contents are sent to gpu memory all at once and individual ranges are bound as requested
-		void universalUniformBuffer(uint32 bindingPoint, PointerRange<const char> data);
+		// uses internal uniform buffer
+		// its contents are sent to gpu memory all at once and individual ranges are bound as requested
+		void universalUniformBuffer(PointerRange<const char> data, uint32 bindingPoint);
 
 		template<class T>
-		void universalUniformStruct(uint32 bindingPoint, const T &data)
+		void universalUniformStruct(const T &data, uint32 bindingPoint)
 		{
 			static_assert(std::is_trivially_copyable_v<T>);
 			static_assert(std::is_trivially_destructible_v<T>);
 			static_assert(!std::is_pointer_v<T>);
-			universalUniformBuffer(bindingPoint, { (const char *)&data, (const char *)(&data + 1) });
+			universalUniformBuffer({ (const char *)&data, (const char *)(&data + 1) }, bindingPoint);
 		}
 
 		template<class T>
-		void universalUniformArray(uint32 bindingPoint, PointerRange<const T> data)
+		void universalUniformArray(PointerRange<const T> data, uint32 bindingPoint)
 		{
 			static_assert(std::is_trivially_copyable_v<T>);
 			static_assert(std::is_trivially_destructible_v<T>);
 			static_assert(!std::is_pointer_v<T>);
-			universalUniformBuffer(bindingPoint, { (const char *)data.data(), (const char *)(data.data() + data.size()) });
+			universalUniformBuffer({ (const char *)data.data(), (const char *)(data.data() + data.size()) }, bindingPoint);
 		}
 
 		void bind(Holder<UniformBuffer> &&uniformBuffer, uint32 bindingPoint); // bind for reading from (on gpu)
@@ -94,6 +94,10 @@ namespace cage
 		void clearColor(const vec4 &rgba);
 		void clear(bool color, bool depth, bool stencil = false);
 		void genericEnable(uint32 key, bool enable);
+
+		// dispatch another queue as part of this queue
+		// stores a reference to the queue - do not modify it after it has been enqueued
+		void enqueue(Holder<RenderQueue> &&queue);
 
 		void pushNamedPass(const string &name);
 		void popNamedPass();

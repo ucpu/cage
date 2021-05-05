@@ -34,12 +34,17 @@ namespace cage
 		void transcript(const string &text, PointerRange<uint32> glyphs) const;
 		void transcript(const char *text, PointerRange<uint32> glyphs) const;
 		void transcript(PointerRange<const char> text, PointerRange<uint32> glyphs) const;
+		Holder<PointerRange<uint32>> transcript(const string &text) const;
+		Holder<PointerRange<uint32>> transcript(const char *text) const;
+		Holder<PointerRange<uint32>> transcript(PointerRange<const char> text) const;
 
 		vec2 size(PointerRange<const uint32> glyphs, const FormatStruct &format) const;
 		vec2 size(PointerRange<const uint32> glyphs, const FormatStruct &format, const vec2 &mousePosition, uint32 &cursor) const;
 
-		void bind(Model *model, ShaderProgram *shader);
-		void render(PointerRange<const uint32> glyphs, const FormatStruct &format, uint32 cursor = m);
+		void bind(RenderQueue *queue, Holder<Model> &&model, Holder<ShaderProgram> &&shader);
+		void render(RenderQueue *queue, PointerRange<const uint32> glyphs, const FormatStruct &format, uint32 cursor = m);
+
+		[[deprecated]] void render(Holder<Model> &&model, Holder<ShaderProgram> &&shader, PointerRange<const uint32> glyphs, const FormatStruct &format, uint32 cursor = m);
 	};
 
 	CAGE_ENGINE_API Holder<Font> newFont();
