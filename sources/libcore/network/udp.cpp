@@ -280,7 +280,7 @@ namespace cage
 					s.setBlocking(false);
 					s.connect(adr);
 					if (s.isValid())
-						sockGroup->socks.push_back(templates::move(s));
+						sockGroup->socks.push_back(std::move(s));
 					lst.next();
 				}
 				sockGroup->applyBufferSizes();
@@ -545,7 +545,7 @@ namespace cage
 					cmd.data.ack = pa;
 					cmd.type = CmdTypeEnum::acknowledgement;
 					cmd.priority = priority;
-					sending.cmds.push_back(templates::move(cmd));
+					sending.cmds.push_back(std::move(cmd));
 				}
 			}
 
@@ -811,7 +811,7 @@ namespace cage
 						if (!complete)
 							continue;
 						seqnpc = msg->msgSeqn + (uint16)1;
-						receiving.messages.push_back(templates::move(*msg));
+						receiving.messages.push_back(std::move(*msg));
 					}
 				}
 
@@ -833,7 +833,7 @@ namespace cage
 						if (!complete)
 							break;
 						seqnpc++;
-						receiving.messages.push_back(templates::move(msg));
+						receiving.messages.push_back(std::move(msg));
 					}
 				}
 
@@ -882,7 +882,7 @@ namespace cage
 				cmd.data.stats = p;
 				cmd.type = CmdTypeEnum::statsDiscovery;
 				cmd.priority = 3;
-				sending.cmds.push_back(templates::move(cmd));
+				sending.cmds.push_back(std::move(cmd));
 				lastStatsSendTime = currentServiceTime;
 			}
 
@@ -946,7 +946,7 @@ namespace cage
 					{
 						msg.data.resize(size);
 						d.read(msg.data);
-						receiving.staging[msg.channel][msg.msgSeqn] = templates::move(msg);
+						receiving.staging[msg.channel][msg.msgSeqn] = std::move(msg);
 					}
 				} break;
 				case CmdTypeEnum::longMessage:
@@ -1117,11 +1117,11 @@ namespace cage
 			{
 				if (receiving.messages.empty())
 					CAGE_THROW_ERROR(Exception, "no data available");
-				auto tmp = templates::move(receiving.messages.front());
+				auto tmp = std::move(receiving.messages.front());
 				receiving.messages.pop_front();
 				channel = tmp.channel & 127; // strip reliability bit
 				reliable = tmp.channel > 127;
-				return templates::move(tmp.data);
+				return std::move(tmp.data);
 			}
 
 			void write(MemoryBuffer &&buffer, uint32 channel, bool reliable)
@@ -1133,13 +1133,13 @@ namespace cage
 
 				writeBandwidth.capacity -= buffer.size();
 				auto msg = std::make_shared<Sending::ReliableMsg>();
-				msg->data = std::make_shared<MemoryBuffer>(templates::move(buffer));
+				msg->data = std::make_shared<MemoryBuffer>(std::move(buffer));
 				msg->channel = numeric_cast<uint8>(channel + reliable * 128);
 				msg->msgSeqn = sending.seqnPerChannel[msg->channel]++;
 				if (reliable)
 				{
 					msg->parts.resize(longCmdsCount(numeric_cast<uint32>(msg->data->size())));
-					sending.relMsgs.push_back(templates::move(msg));
+					sending.relMsgs.push_back(std::move(msg));
 				}
 				else
 					generateCommands(msg, 0);
@@ -1175,7 +1175,7 @@ namespace cage
 					s.setReuseaddr(true);
 					s.bind(adr);
 					if (s.isValid())
-						sockGroup->socks.push_back(templates::move(s));
+						sockGroup->socks.push_back(std::move(s));
 					lst.next();
 				}
 				sockGroup->applyBufferSizes();
@@ -1212,7 +1212,7 @@ namespace cage
 						UDP_LOG(2, "received packets failed to initialize new connection");
 						return {};
 					}
-					return templates::move(c).cast<UdpConnection>();
+					return std::move(c).cast<UdpConnection>();
 				}
 				catch (...)
 				{
@@ -1306,7 +1306,7 @@ namespace cage
 		UdpConnectionImpl *impl = (UdpConnectionImpl *)this;
 		MemoryBuffer b(buffer.size());
 		detail::memcpy(b.data(), buffer.data(), b.size());
-		impl->write(templates::move(b), channel, reliable);
+		impl->write(std::move(b), channel, reliable);
 	}
 
 	void UdpConnection::update()

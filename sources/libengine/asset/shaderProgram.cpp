@@ -1,6 +1,7 @@
 #include <cage-core/assetContext.h>
 #include <cage-core/serialization.h>
 #include <cage-core/memoryBuffer.h>
+#include <cage-core/typeIndex.h>
 
 #include <cage-engine/graphics.h>
 #include <cage-engine/assetStructs.h>
@@ -27,7 +28,7 @@ namespace cage
 			shr->relink();
 			CAGE_ASSERT(des.available() == 0);
 
-			context->assetHolder = templates::move(shr).cast<void>();
+			context->assetHolder = std::move(shr).cast<void>();
 		}
 	}
 
@@ -36,6 +37,7 @@ namespace cage
 		AssetScheme s;
 		s.threadIndex = threadIndex;
 		s.load.bind<&processLoad>();
+		s.typeIndex = detail::typeIndex<ShaderProgram>();
 		return s;
 	}
 }

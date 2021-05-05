@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16)
 
 # make cmake find our own provided libraries
 # the libraries provided here have higher priority than system libraries

@@ -147,12 +147,12 @@ namespace cage
 	Holder<MemoryArena> newMemoryAllocatorLinear(const MemoryAllocatorLinearCreateConfig &config)
 	{
 		Holder<MemoryAllocatorLinearImpl> b = systemArena().createHolder<MemoryAllocatorLinearImpl>(config);
-		return Holder<MemoryArena>(&b->arena, templates::move(b));
+		return Holder<MemoryArena>(&b->arena, std::move(b));
 	}
 
 	Holder<MemoryArena> newMemoryAllocatorStream(const MemoryAllocatorStreamCreateConfig &config)
 	{
 		Holder<MemoryAllocatorStreamImpl> b = systemArena().createHolder<MemoryAllocatorStreamImpl>(config);
-		return Holder<MemoryArena>(&b->arena, templates::move(b));
+		return Holder<MemoryArena>(&b->arena, std::move(b));
 	}
 }

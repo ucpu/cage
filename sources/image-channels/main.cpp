@@ -85,10 +85,10 @@ void doJoin(const string names[4], const string &output, const bool mono)
 						m->value(x, y, 0, sum / ch);
 					}
 				}
-				p = templates::move(m);
+				p = std::move(m);
 			}
 			channels = max(channels, index + 1u);
-			pngs[index] = templates::move(p);
+			pngs[index] = std::move(p);
 		}
 	}
 	if (channels == 0)

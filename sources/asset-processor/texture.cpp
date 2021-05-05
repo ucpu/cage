@@ -207,7 +207,7 @@ namespace
 		ImageLayer l;
 		l.data = newImage();
 		l.data->importFile(wholeFilename);
-		images.push_back(templates::move(l));
+		images.push_back(std::move(l));
 	}
 
 	void performDownscale(uint32 downscale, uint32 target)
@@ -229,7 +229,7 @@ namespace
 	{
 		if (images.size() != 1)
 			CAGE_THROW_ERROR(Exception, "skyboxToCube requires one input image");
-		ImageLayer src = templates::move(images[0]);
+		ImageLayer src = std::move(images[0]);
 		images.clear();
 		images.resize(6);
 		if (src.data->width() * 3 != src.data->height() * 4)

@@ -52,7 +52,7 @@ namespace cage
 					writer->wait(sl);
 				else
 				{
-					items.push_back(templates::move(value));
+					items.push_back(std::move(value));
 					reader->signal();
 					return;
 				}
@@ -80,7 +80,7 @@ namespace cage
 				CAGE_THROW_SILENT(ConcurrentQueueTerminated, "concurrent queue terminated");
 			if (items.size() < maxItems)
 			{
-				items.push_back(templates::move(value));
+				items.push_back(std::move(value));
 				reader->signal();
 				return true;
 			}
@@ -98,7 +98,7 @@ namespace cage
 					reader->wait(sl);
 				else
 				{
-					value = templates::move(items.front());
+					value = std::move(items.front());
 					items.pop_front();
 					writer->signal();
 					return;
@@ -113,7 +113,7 @@ namespace cage
 				CAGE_THROW_SILENT(ConcurrentQueueTerminated, "concurrent queue terminated");
 			if (!items.empty())
 			{
-				value = templates::move(items.front());
+				value = std::move(items.front());
 				items.pop_front();
 				writer->signal();
 				return true;

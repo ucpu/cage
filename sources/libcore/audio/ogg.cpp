@@ -22,7 +22,7 @@ namespace cage
 		{
 			VorbisEncoder enc(impl);
 			enc.encode();
-			return templates::move(enc.outputBuffer);
+			return std::move(enc.outputBuffer);
 		}
 		else
 		{
@@ -30,7 +30,7 @@ namespace cage
 			audioConvertFormat(+a, AudioFormatEnum::Float);
 			VorbisEncoder enc((AudioImpl *)+a);
 			enc.encode();
-			return templates::move(enc.outputBuffer);
+			return std::move(enc.outputBuffer);
 		}
 	}
 }

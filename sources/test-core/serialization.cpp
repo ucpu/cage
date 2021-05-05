@@ -130,8 +130,8 @@ void testSerialization()
 		MemoryBuffer b2;
 		Serializer s2(b2);
 		Deserializer d2(b2);
-		s1 = templates::move(s2);
-		d2 = templates::move(d1);
+		s1 = std::move(s2);
+		d2 = std::move(d1);
 	}
 
 	{

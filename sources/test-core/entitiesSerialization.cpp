@@ -8,22 +8,22 @@ namespace
 {
 	void defineManager(EntityManager *man)
 	{
-		man->defineComponent<float>(0, randomChance() < 0.5);
-		man->defineComponent<int>(0, randomChance() < 0.5);
-		man->defineComponent<vec3>(vec3(), randomChance() < 0.5);
+		man->defineComponent<float>(0);
+		man->defineComponent<int>(0);
+		man->defineComponent(vec3());
 	}
 
 	void generateEntity(Entity *e)
 	{
-		bool a = randomChance() < 0.5;
-		bool b = randomChance() < 0.5;
-		bool c = randomChance() < 0.5 || (!a && !b);
+		const bool a = randomChance() < 0.5;
+		const bool b = randomChance() < 0.5;
+		const bool c = randomChance() < 0.5 || (!a && !b);
 		if (a)
-			e->value<float>(e->manager()->componentByIndex(0)) = randomChance().value;
+			e->value<float>(e->manager()->componentByDefinition(0)) = randomChance().value;
 		if (b)
-			e->value<int>(e->manager()->componentByIndex(1)) = randomRange(-100, 100);
+			e->value<int>(e->manager()->componentByDefinition(1)) = randomRange(-100, 100);
 		if (c)
-			e->value<vec3>(e->manager()->componentByIndex(2)) = randomDirection3();
+			e->value<vec3>(e->manager()->componentByDefinition(2)) = randomDirection3();
 	}
 
 	void changeEntities(EntityManager *man)
@@ -50,18 +50,15 @@ namespace
 	{
 		for (uint32 i = 0; i < 3; i++)
 		{
-			Holder<PointerRange<char>> buf = entitiesSerialize(a->group(), a->componentByIndex(i));
+			Holder<PointerRange<char>> buf = entitiesSerialize(a->group(), a->componentByDefinition(i));
 			entitiesDeserialize(buf, b);
 		}
 	}
 
 	void check(EntityManager *a, EntityManager *b)
 	{
-		uint32 cnt = a->group()->count();
-		Entity *const *ents = a->group()->array();
-		for (uint32 ei = 0; ei < cnt; ei++)
+		for (Entity *ea : a->entities())
 		{
-			Entity *ea = ents[ei];
 			uint32 aName = ea->name();
 			if (aName == 0)
 				continue;
@@ -69,10 +66,10 @@ namespace
 			Entity *eb = b->get(aName);
 			for (uint32 i = 0; i < 3; i++)
 			{
-				if (ea->has(a->componentByIndex(i)))
+				if (ea->has(a->componentByDefinition(i)))
 				{
-					CAGE_TEST(eb->has(b->componentByIndex(i)));
-					CAGE_TEST(detail::memcmp(ea->unsafeValue(a->componentByIndex(i)), eb->unsafeValue(b->componentByIndex(i)), a->componentByIndex(i)->typeSize()) == 0);
+					CAGE_TEST(eb->has(b->componentByDefinition(i)));
+					CAGE_TEST(detail::memcmp(ea->unsafeValue(a->componentByDefinition(i)), eb->unsafeValue(b->componentByDefinition(i)), detail::typeSize(a->componentByDefinition(i)->typeIndex())) == 0);
 				}
 			}
 		}
@@ -83,18 +80,18 @@ void testEntitiesSerialization()
 {
 	CAGE_TESTCASE("entities serialization");
 
-	Holder<EntityManager> manA = newEntityManager(EntityManagerCreateConfig());
-	defineManager(manA.get());
+	Holder<EntityManager> manA = newEntityManager();
+	defineManager(+manA);
 
-	Holder<EntityManager> manB = newEntityManager(EntityManagerCreateConfig());
-	defineManager(manB.get());
+	Holder<EntityManager> manB = newEntityManager();
+	defineManager(+manB);
 
 	CAGE_TESTCASE("randomized test");
 	for (uint32 round = 0; round < 10; round++)
 	{
-		changeEntities(manA.get());
-		changeEntities(manB.get());
-		sync(manA.get(), manB.get());
-		check(manA.get(), manB.get());
+		changeEntities(+manA);
+		changeEntities(+manB);
+		sync(+manA, +manB);
+		check(+manA, +manB);
 	}
 }

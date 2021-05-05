@@ -2,26 +2,17 @@
 #define guard_assetsManager_h_s54dhg56sr4ht564fdrsh6t
 
 #include "events.h"
+#include "typeIndex.h"
 
 namespace cage
 {
-	namespace detail
-	{
-		// c++17 inline variables do not seem to work across dll boundaries
-#ifdef _MSC_VER
-		template<class T> CAGE_API_IMPORT char assetTypeBlock;
-#else
-		template<class T> extern char assetTypeBlock;
-#endif // _MSC_VER
-	}
-
 	class CAGE_CORE_API AssetManager : private Immovable
 	{
 	public:
 		template<uint32 Scheme, class T>
 		void defineScheme(const AssetScheme &value)
 		{
-			defineScheme_((uintPtr)&detail::assetTypeBlock<T>, Scheme, value);
+			defineScheme_(detail::typeIndex<T>(), Scheme, value);
 		}
 
 		// begin thread-safe methods
@@ -34,13 +25,15 @@ namespace cage
 		template<uint32 Scheme, class T>
 		void fabricate(uint32 assetName, Holder<T> &&value, const string &textName = "<fabricated>")
 		{
-			fabricate_((uintPtr)&detail::assetTypeBlock<T>, Scheme, assetName, textName, templates::move(value).template cast<void>());
+			CAGE_ASSERT(detail::typeIndex<T>() == schemeTypeId_(Scheme))
+			fabricate_(Scheme, assetName, textName, std::move(value).template cast<void>());
 		}
 
 		template<uint32 Scheme, class T>
 		Holder<T> tryGet(uint32 assetName) const
 		{
-			return get_((uintPtr)&detail::assetTypeBlock<T>, Scheme, assetName, false).template cast<T>();
+			CAGE_ASSERT(detail::typeIndex<T>() == schemeTypeId_(Scheme))
+			return get_(Scheme, assetName, false).template cast<T>();
 		}
 
 		template<uint32 Scheme, class T>
@@ -52,7 +45,8 @@ namespace cage
 		template<uint32 Scheme, class T>
 		Holder<T> get(uint32 assetName) const
 		{
-			return get_((uintPtr)&detail::assetTypeBlock<T>, Scheme, assetName, true).template cast<T>();
+			CAGE_ASSERT(detail::typeIndex<T>() == schemeTypeId_(Scheme))
+			return get_(Scheme, assetName, true).template cast<T>();
 		}
 
 		template<uint32 Scheme, class T>
@@ -75,9 +69,10 @@ namespace cage
 		EventDispatcher<bool(uint32 name, Holder<File> &file)> findAsset; // this event is called from the loading thread
 
 	private:
-		void defineScheme_(uintPtr typeId, uint32 scheme, const AssetScheme &value);
-		void fabricate_(uintPtr typeId, uint32 scheme, uint32 assetName, const string &textName, Holder<void> &&value);
-		Holder<void> get_(uintPtr typeId, uint32 scheme, uint32 assetName, bool throwOnInvalidScheme) const;
+		void defineScheme_(uint32 typeId, uint32 scheme, const AssetScheme &value);
+		void fabricate_(uint32 scheme, uint32 assetName, const string &textName, Holder<void> &&value);
+		Holder<void> get_(uint32 scheme, uint32 assetName, bool throwOnInvalidScheme) const;
+		uint32 schemeTypeId_(uint32 scheme) const;
 	};
 
 	struct CAGE_CORE_API AssetManagerCreateConfig

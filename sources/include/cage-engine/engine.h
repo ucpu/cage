@@ -267,7 +267,6 @@ namespace cage
 
 	struct CAGE_ENGINE_API EngineCreateConfig
 	{
-		EntityManagerCreateConfig *entities = nullptr;
 		AssetManagerCreateConfig *assets = nullptr;
 		GuiCreateConfig *gui = nullptr;
 		SpeakerCreateConfig *speaker = nullptr;

@@ -4,7 +4,7 @@
 
 namespace cage
 {
-	VorbisDecoder::VorbisDecoder(Holder<File> &&file) : file(templates::move(file))
+	VorbisDecoder::VorbisDecoder(Holder<File> &&file) : file(std::move(file))
 	{
 		callbacks.read_func = &read_func;
 		callbacks.seek_func = &seek_func;

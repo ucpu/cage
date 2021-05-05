@@ -12,7 +12,7 @@ namespace cage
 		PointerRange<char> output = result;
 		compress(input, output, preference);
 		result.resize(output.size());
-		return templates::move(result);
+		return std::move(result);
 	}
 
 	Holder<PointerRange<char>> decompress(PointerRange<const char> input, uintPtr outputSize)
@@ -21,7 +21,7 @@ namespace cage
 		PointerRange<char> output = result;
 		decompress(input, output);
 		result.resize(output.size());
-		return templates::move(result);
+		return std::move(result);
 	}
 
 	void compress(PointerRange<const char> input, PointerRange<char> &output, sint32 preference)

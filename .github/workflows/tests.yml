@@ -19,14 +19,9 @@ jobs:
         cmake --version
         git --version
 
-    - uses: actions/checkout@v1
-
-    - name: Checkout submodules
-      shell: bash
-      run: |
-        export MSYS=winsymlinks:nativestrict
-        git config --global core.symlinks true
-        git submodule update --init --recursive #--depth 1
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
 
     - name: Configure
       shell: bash
@@ -63,7 +58,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os-version: [18, 20]
+        os-version: [20]
         build-config: [debug, release]
         compiler:
         - {
@@ -75,6 +70,11 @@ jobs:
             cc: gcc-10,
             cxx: g++-10,
             install: gcc-10 g++-10
+          }
+        - {
+            cc: gcc-11,
+            cxx: g++-11,
+            install: gcc-11 g++-11
           }
         - {
             cc: clang,
@@ -95,11 +95,9 @@ jobs:
         ${{ matrix.compiler.cxx }} --version
         git --version
 
-    - uses: actions/checkout@v1
-
-    - name: Checkout submodules
-      run: |
-        git submodule update --init --recursive --depth 1
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
 
     - name: Configure
       run: |

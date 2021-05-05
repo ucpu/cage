@@ -10,18 +10,17 @@
 #include <set>
 #include <algorithm>
 
-void testEntities()
+namespace
 {
-	CAGE_TESTCASE("entities");
-
+	void basicFunctionality()
 	{
 		CAGE_TESTCASE("basic functionality");
 
-		Holder<EntityManager> manager = newEntityManager(EntityManagerCreateConfig());
+		Holder<EntityManager> manager = newEntityManager();
 
-		EntityComponent *position = manager->defineComponent(vec3(), true);
-		EntityComponent *velocity = manager->defineComponent(vec3(0, -1, 0), false);
-		EntityComponent *orientation = manager->defineComponent(quat(), true);
+		EntityComponent *position = manager->defineComponent(vec3());
+		EntityComponent *velocity = manager->defineComponent(vec3(0, -1, 0));
+		EntityComponent *orientation = manager->defineComponent(quat());
 
 		EntityGroup *movement = manager->defineGroup();
 
@@ -35,6 +34,7 @@ void testEntities()
 		tank->add(position, vec3(100, 0, 50));
 		tank->add(orientation);
 
+		CAGE_TEST(player->value<vec3>(position) == vec3());
 		CAGE_TEST(player->value<vec3>(velocity) == vec3(0, -1, 0));
 
 		player->value<vec3>(position)[0] = 20;
@@ -54,12 +54,13 @@ void testEntities()
 		CAGE_TEST(!player->has(position));
 	}
 
+	void deletions()
 	{
 		CAGE_TESTCASE("deletions");
 
-		Holder<EntityManager> manager = newEntityManager(EntityManagerCreateConfig());
+		Holder<EntityManager> manager = newEntityManager();
 		for (uint32 i = 0; i < 3; i++)
-			manager->defineComponent(vec3(), true);
+			manager->defineComponent(vec3());
 		for (uint32 i = 0; i < 3; i++)
 			manager->defineGroup();
 
@@ -71,26 +72,27 @@ void testEntities()
 				for (uint32 j = 0; j < 3; j++)
 				{
 					if (randomChance() < 0.5)
-						e->add(manager->componentByIndex(j));
+						e->add(manager->componentByDefinition(j));
 					if (randomChance() < 0.5)
-						e->add(manager->groupByIndex(j));
+						e->add(manager->groupByDefinition(j));
 				}
 			}
 			for (uint32 j = 0; j < 3; j++)
 			{
 				if (randomChance() < 0.2)
-					manager->groupByIndex(j)->destroy();
+					manager->groupByDefinition(j)->destroy();
 			}
 		}
 	}
 
+	void multipleManagers()
 	{
 		CAGE_TESTCASE("multiple managers");
 
-		Holder<EntityManager> man1 = newEntityManager(EntityManagerCreateConfig());
-		Holder<EntityManager> man2 = newEntityManager(EntityManagerCreateConfig());
-		EntityComponent *com1 = man1->defineComponent(vec3(), true);
-		EntityComponent *com2 = man2->defineComponent(vec3(), true);
+		Holder<EntityManager> man1 = newEntityManager();
+		Holder<EntityManager> man2 = newEntityManager();
+		EntityComponent *com1 = man1->defineComponent(vec3());
+		EntityComponent *com2 = man2->defineComponent(vec3());
 		Entity *ent1 = man1->createAnonymous();
 		Entity *ent2 = man2->createAnonymous();
 		{
@@ -107,17 +109,18 @@ void testEntities()
 		}
 	}
 
+	void componentsWithAlignment()
 	{
 		CAGE_TESTCASE("components with alignment");
 
-		Holder<EntityManager> manager = newEntityManager(EntityManagerCreateConfig());
+		Holder<EntityManager> manager = newEntityManager();
 
 		struct alignas(32) S
 		{
 			vec3 data;
 		};
 
-		EntityComponent *c = manager->defineComponent(S(), true);
+		EntityComponent *c = manager->defineComponent(S());
 
 		for (uint32 i = 0; i < 10000; i++)
 		{
@@ -127,6 +130,39 @@ void testEntities()
 		}
 	}
 
+	void multipleComponentsOfSameType()
+	{
+		Holder<EntityManager> man = newEntityManager();
+
+		EntityComponent *ca = man->defineComponent(vec3(13));
+		EntityComponent *cb = man->defineComponent(vec3(42));
+		CAGE_TEST(ca != cb);
+		CAGE_TEST(ca->typeIndex() == cb->typeIndex());
+		CAGE_TEST(ca->definitionIndex() == 0);
+		CAGE_TEST(cb->definitionIndex() == 1);
+
+		Entity *e = man->createAnonymous();
+		e->add(ca, vec3(1));
+		e->add(cb, vec3(2));
+
+		CAGE_TEST(e->value<vec3>() == vec3(1));
+		CAGE_TEST(e->value<vec3>(ca) == vec3(1));
+		CAGE_TEST(e->value<vec3>(cb) == vec3(2));
+
+		CAGE_TEST(e->has(ca));
+		CAGE_TEST(e->has(cb));
+		CAGE_TEST(e->has<vec3>());
+
+		e->remove<vec3>();
+
+		CAGE_TEST(!e->has(ca));
+		CAGE_TEST(e->has(cb));
+		CAGE_TEST(!e->has<vec3>()); // component by type still refers to ca, not cb
+
+		CAGE_TEST(e->value<vec3>() == vec3(13)); // adding component ca again has default value
+	}
+
+	void callbacks()
 	{
 		CAGE_TESTCASE("callbacks");
 
@@ -155,15 +191,15 @@ void testEntities()
 			}
 		} manCbs, posCbs, oriCbs;
 
-		Holder<EntityManager> man = newEntityManager({});
+		Holder<EntityManager> man = newEntityManager();
 		man->group()->entityAdded.attach(manCbs.addListener);
 		man->group()->entityRemoved.attach(manCbs.removeListener);
 
-		EntityComponent *pos = man->defineComponent(vec3(), true);
+		EntityComponent *pos = man->defineComponent(vec3());
 		pos->group()->entityAdded.attach(posCbs.addListener);
 		pos->group()->entityRemoved.attach(posCbs.removeListener);
 
-		EntityComponent *ori = man->defineComponent(quat(), true);
+		EntityComponent *ori = man->defineComponent(quat());
 		ori->group()->entityAdded.attach(oriCbs.addListener);
 		ori->group()->entityRemoved.attach(oriCbs.removeListener);
 
@@ -193,32 +229,33 @@ void testEntities()
 		CAGE_TEST(oriCbs.removed == 20);
 	}
 
+	void randomizedTests()
 	{
 		CAGE_TESTCASE("randomized test");
 
 #ifdef CAGE_DEBUG
-		constexpr uint32 totalCycles = 30;
-		constexpr uint32 totalChanges = 50;
-		constexpr uint32 totalComponents = 5;
+		constexpr uint32 TotalCycles = 30;
+		constexpr uint32 TotalChanges = 50;
+		constexpr uint32 TotalComponents = 5;
 #else
-		constexpr uint32 totalCycles = 100;
-		constexpr uint32 totalChanges = 500;
-		constexpr uint32 totalComponents = 15;
+		constexpr uint32 TotalCycles = 100;
+		constexpr uint32 TotalChanges = 500;
+		constexpr uint32 TotalComponents = 15;
 #endif
 
-		Holder<EntityManager> manager = newEntityManager(EntityManagerCreateConfig());
+		Holder<EntityManager> manager = newEntityManager();
 
-		for (uint32 i = 0; i < totalComponents; i++)
-			manager->defineComponent(vec3(), true);
+		for (uint32 i = 0; i < TotalComponents; i++)
+			manager->defineComponent(vec3());
 
-		typedef std::map<uint32, std::set<uint32>> referenceType;
-		referenceType reference;
+		typedef std::map<uint32, std::set<uint32>> Reference;
+		Reference reference;
 		uint32 entName = 1;
 
-		for (uint32 cycle = 0; cycle < totalCycles; cycle++)
+		for (uint32 cycle = 0; cycle < TotalCycles; cycle++)
 		{
 			// changes
-			for (uint32 change = 0; change < totalChanges; change++)
+			for (uint32 change = 0; change < TotalChanges; change++)
 			{
 				switch (randomRange(0, 6))
 				{
@@ -226,7 +263,7 @@ void testEntities()
 				{ // remove random entity
 					if (reference.empty())
 						break;
-					referenceType::iterator it = reference.begin();
+					auto it = reference.begin();
 					std::advance(it, randomRange((uint32)0, numeric_cast<uint32>(reference.size())));
 					manager->get(it->first)->destroy();
 					reference.erase(it);
@@ -237,11 +274,11 @@ void testEntities()
 					CAGE_ASSERT(reference.find(entName) == reference.end());
 					Entity *e = manager->create(entName);
 					reference[entName];
-					for (uint32 i = 0; i < totalComponents; i++)
+					for (uint32 i = 0; i < TotalComponents; i++)
 					{
 						if (randomChance() < 0.5)
 						{
-							e->add(manager->componentByIndex(i));
+							e->add(manager->componentByDefinition(i));
 							reference[entName].insert(i);
 						}
 					}
@@ -251,14 +288,14 @@ void testEntities()
 				{ // add components
 					if (reference.empty())
 						break;
-					referenceType::iterator it = reference.begin();
+					auto it = reference.begin();
 					std::advance(it, randomRange((uint32)0, numeric_cast<uint32>(reference.size())));
 					Entity *e = manager->get(it->first);
-					for (uint32 i = 0; i < totalComponents; i++)
+					for (uint32 i = 0; i < TotalComponents; i++)
 					{
 						if (randomChance() < 0.5)
 						{
-							e->add(manager->componentByIndex(i));
+							e->add(manager->componentByDefinition(i));
 							reference[it->first].insert(i);
 						}
 					}
@@ -267,14 +304,14 @@ void testEntities()
 				{ // remove components
 					if (reference.empty())
 						break;
-					referenceType::iterator it = reference.begin();
+					auto it = reference.begin();
 					std::advance(it, randomRange((uint32)0, numeric_cast<uint32>(reference.size())));
 					Entity *e = manager->get(it->first);
-					for (uint32 i = 0; i < totalComponents; i++)
+					for (uint32 i = 0; i < TotalComponents; i++)
 					{
 						if (randomChance() < 0.5)
 						{
-							e->remove(manager->componentByIndex(i));
+							e->remove(manager->componentByDefinition(i));
 							reference[it->first].erase(i);
 						}
 					}
@@ -283,106 +320,155 @@ void testEntities()
 				{ // test components
 					if (reference.empty())
 						break;
-					referenceType::iterator it = reference.begin();
+					auto it = reference.begin();
 					std::advance(it, randomRange((uint32)0, numeric_cast<uint32>(reference.size())));
 					Entity *e = manager->get(it->first);
-					for (uint32 i = 0; i < totalComponents; i++)
-						CAGE_TEST(!!reference[it->first].count(i) == e->has(manager->componentByIndex(i)));
+					for (uint32 i = 0; i < TotalComponents; i++)
+						CAGE_TEST(!!reference[it->first].count(i) == e->has(manager->componentByDefinition(i)));
 				} break;
 				}
 			}
 
 			// validation
-			uint32 entsCnt = manager->group()->count();
-			CAGE_TEST(entsCnt == reference.size());
-			if (entsCnt == 0)
+			CAGE_TEST(manager->count() == reference.size());
+			if (reference.empty())
 				continue;
-			std::vector<Entity*> allEntities;
-			allEntities.reserve(entsCnt);
-			std::vector<std::vector<Entity*> > componentEntities;
-			componentEntities.resize(totalComponents);
-			for (referenceType::iterator it = reference.begin(), et = reference.end(); it != et; it++)
+			std::vector<Entity *> allEntities;
+			allEntities.reserve(reference.size());
+			std::vector<std::vector<Entity *>> componentEntities;
+			componentEntities.resize(TotalComponents);
+			for (const auto &it : reference)
 			{
-				Entity *e = manager->get(it->first);
+				Entity *e = manager->get(it.first);
 				allEntities.push_back(e);
-				for (std::set<uint32>::iterator cit = it->second.begin(), cet = it->second.end(); cit != cet; cit++)
-					componentEntities[*cit].push_back(e);
+				for (const auto &cit : it.second)
+					componentEntities[cit].push_back(e);
 			}
-			Entity *const *entsBufConst = manager->group()->array();
-			std::vector<Entity*> entsBuf(entsBufConst, entsBufConst + entsCnt);
+			std::vector<Entity *> entsBuf(manager->entities().begin(), manager->entities().end());
 			std::sort(entsBuf.begin(), entsBuf.end());
 			std::sort(allEntities.begin(), allEntities.end());
-			CAGE_TEST(detail::memcmp(&entsBuf[0], &allEntities[0], sizeof(Entity*) * entsCnt) == 0);
-			for (uint32 i = 0; i < totalComponents; i++)
+			CAGE_TEST(detail::memcmp(entsBuf.data(), allEntities.data(), sizeof(Entity *) * reference.size()) == 0);
+			for (uint32 i = 0; i < TotalComponents; i++)
 			{
-				entsCnt = manager->componentByIndex(i)->group()->count();
-				CAGE_TEST(entsCnt == componentEntities[i].size());
-				if (entsCnt == 0)
+				const EntityGroup *grp = manager->componentByDefinition(i)->group();
+				CAGE_TEST(grp->count() == componentEntities[i].size());
+				if (componentEntities[i].empty())
 					continue;
-				entsBufConst = manager->componentByIndex(i)->group()->array();
-				entsBuf = std::vector<Entity*>(entsBufConst, entsBufConst + entsCnt);
+				entsBuf = std::vector<Entity *>(grp->entities().begin(), grp->entities().end());
 				std::sort(entsBuf.begin(), entsBuf.end());
 				std::sort(componentEntities[i].begin(), componentEntities[i].end());
-				CAGE_TEST(detail::memcmp(&entsBuf[0], &componentEntities[i][0], sizeof(Entity*) * entsCnt) == 0);
+				CAGE_TEST(detail::memcmp(entsBuf.data(), componentEntities[i].data(), sizeof(Entity *) * componentEntities[i].size()) == 0);
 			}
 		}
 	}
 
+	void performanceTypeVsComponent()
 	{
-		CAGE_TESTCASE("performance test");
+		CAGE_TESTCASE("performance type vs component");
+
+		Holder<EntityManager> man = newEntityManager();
+
+		EntityComponent *comps[3] = {};
+		comps[0] = man->defineComponent(vec3());
+		comps[1] = man->defineComponent(uint32());
+		comps[2] = man->defineComponent(real());
+
+		for (uint32 i = 0; i < 10000; i++)
+		{
+			Entity *e = man->createUnique();
+			if ((i % 2) == 1)
+				e->value<vec3>();
+			if ((i % 3) > 0)
+				e->value<uint32>();
+			if ((i % 7) < 4)
+				e->value<real>();
+		}
+
+		for (uint32 round = 0; round < 3; round++)
+		{
+			Holder<Timer> tmr = newTimer();
+
+			for (Entity *e : comps[0]->entities())
+				e->value<vec3>() += 1;
+			for (Entity *e : comps[1]->entities())
+				e->value<uint32>() += 1;
+			for (Entity *e : comps[2]->entities())
+				e->value<real>() += 1;
+
+			CAGE_LOG(SeverityEnum::Info, "entities performance", stringizer() + "time for access with type: " + (tmr->microsSinceStart()) + " us");
+		}
+
+		for (uint32 round = 0; round < 3; round++)
+		{
+			Holder<Timer> tmr = newTimer();
+
+			for (Entity *e : comps[0]->entities())
+				e->value<vec3>(comps[0]) += 1;
+			for (Entity *e : comps[1]->entities())
+				e->value<uint32>(comps[1]) += 1;
+			for (Entity *e : comps[2]->entities())
+				e->value<real>(comps[2]) += 1;
+
+			CAGE_LOG(SeverityEnum::Info, "entities performance", stringizer() + "time for access with component: " + (tmr->microsSinceStart()) + " us");
+		}
+	}
+
+	void performanceSimulationTest()
+	{
+		CAGE_TESTCASE("performance simulation test");
 
 #ifdef CAGE_DEBUG
-		constexpr uint32 totalCycles = 100;
-		constexpr uint32 totalComponents = 10;
-		constexpr uint32 totalGroups = 10;
-		constexpr uint32 usedComponents = 3;
-		constexpr uint32 usedGroups = 3;
-		constexpr uint32 initialEntities = 1000;
+		constexpr uint32 TotalCycles = 100;
+		constexpr uint32 TotalComponents = 10;
+		constexpr uint32 TotalGroups = 10;
+		constexpr uint32 UsedComponents = 3;
+		constexpr uint32 UsedGroups = 3;
+		constexpr uint32 InitialEntities = 1000;
 #else
-		constexpr uint32 totalCycles = 500;
-		constexpr uint32 totalComponents = 25;
-		constexpr uint32 totalGroups = 25;
-		constexpr uint32 usedComponents = 15;
-		constexpr uint32 usedGroups = 15;
-		constexpr uint32 initialEntities = 5000;
+		constexpr uint32 TotalCycles = 500;
+		constexpr uint32 TotalComponents = 25;
+		constexpr uint32 TotalGroups = 25;
+		constexpr uint32 UsedComponents = 15;
+		constexpr uint32 UsedGroups = 15;
+		constexpr uint32 InitialEntities = 5000;
 #endif
 
-		Holder<EntityManager> manager = newEntityManager(EntityManagerCreateConfig());
-		EntityComponent *components[totalComponents];
-		EntityGroup *groups[totalGroups];
+		Holder<EntityManager> manager = newEntityManager();
+		EntityComponent *components[TotalComponents];
+		EntityGroup *groups[TotalGroups];
 
-		for (uint32 i = 0; i < totalComponents; i++)
-			components[i] = manager->defineComponent(vec3(), true);
+		for (uint32 i = 0; i < TotalComponents; i++)
+			components[i] = manager->defineComponent(vec3());
 
-		for (uint32 i = 0; i < totalGroups; i++)
+		for (uint32 i = 0; i < TotalGroups; i++)
 			groups[i] = manager->defineGroup();
 
 		std::vector<bool> exists;
-		exists.resize(initialEntities + totalCycles * 5);
+		exists.resize(InitialEntities + TotalCycles * 5);
 
 		uint32 entityNameIndex = 1;
-		for (uint32 i = 0; i < initialEntities; i++)
+		for (uint32 i = 0; i < InitialEntities; i++)
 		{
-			uint32 n = entityNameIndex++;
+			const uint32 n = entityNameIndex++;
 			Entity *e = manager->create(n);
-			for (uint32 j = n % totalComponents, je = min(j + usedComponents, totalComponents); j < je; j++)
+			for (uint32 j = n % TotalComponents, je = min(j + UsedComponents, TotalComponents); j < je; j++)
 				e->add(components[j]);
-			for (uint32 j = 0; j < totalGroups; j++)
-				if ((n + j) % totalGroups < usedGroups)
+			for (uint32 j = 0; j < TotalGroups; j++)
+				if ((n + j) % TotalGroups < UsedGroups)
 					e->add(groups[j]);
 			exists[n] = true;
 		}
 
 		Holder<Timer> tmr = newTimer();
 
-		for (uint32 cycle = 0; cycle < totalCycles; cycle++)
+		for (uint32 cycle = 0; cycle < TotalCycles; cycle++)
 		{
 			if (randomChance() < 0.2)
 			{ // simulate update
 				// remove some entities
 				for (uint32 i = 0, et = randomRange(1, 20); i < et; i++)
 				{
-					uint32 n = randomRange(randomRange((uint32)1, entityNameIndex), entityNameIndex);
+					const uint32 n = randomRange(randomRange((uint32)1, entityNameIndex), entityNameIndex);
 					if (exists[n])
 					{
 						exists[n] = false;
@@ -392,32 +478,31 @@ void testEntities()
 				// add some new entities
 				for (uint32 i = 0, et = randomRange(1, 20); i < et; i++)
 				{
-					uint32 n = entityNameIndex++;
+					const uint32 n = entityNameIndex++;
 					Entity *e = manager->create(n);
-					for (uint32 j = n % totalComponents, je = min(j + usedComponents, totalComponents); j < je; j++)
+					const uint32 je = min((n % TotalComponents) + UsedComponents, TotalComponents);
+					for (uint32 j = n % TotalComponents; j < je; j++)
 						e->add(components[j]);
-					for (uint32 j = 0; j < totalGroups; j++)
-						if ((n + j) % totalGroups < usedGroups)
+					for (uint32 j = 0; j < TotalGroups; j++)
+						if ((n + j) % TotalGroups < UsedGroups)
 							e->add(groups[j]);
 					exists[n] = true;
 				}
 			}
 			else
 			{ // simulate draw
-				for (uint32 j = 0; j < totalGroups; j++)
+				for (uint32 i = 0; i < TotalGroups; i++)
 				{
 					if (randomChance() < 0.5)
 						continue;
-					uint32 cnt = groups[j]->count();
-					Entity *const *ents = groups[j]->array();
-					bool w = randomChance() < 0.2;
-					for (uint32 k = 0; k < cnt; k++)
+					const bool w = randomChance() < 0.2;
+					for (Entity *e : groups[i]->entities())
 					{
-						Entity *e = ents[k];
-						uint32 n = e->name();
-						for (uint32 m = n % totalComponents, me = min(m + usedComponents, totalComponents); m < me; m++)
+						const uint32 n = e->name();
+						const uint32 je = min((n % TotalComponents) + UsedComponents, TotalComponents);
+						for (uint32 j = n % TotalComponents; j < je; j++)
 						{
-							vec3 &a = e->value<vec3>(components[m]);
+							vec3 &a = e->value<vec3>(components[j]);
 							if (w)
 								a[0] += a[1] += a[2] += 1;
 						}
@@ -426,7 +511,22 @@ void testEntities()
 			}
 		}
 
-		CAGE_LOG(SeverityEnum::Info, "entities performance", stringizer() + "avg time per cycle: " + (tmr->microsSinceStart() / totalCycles) + " us");
+		CAGE_LOG(SeverityEnum::Info, "entities performance", stringizer() + "simulation avg time per cycle: " + (tmr->microsSinceStart() / TotalCycles) + " us");
 	}
+}
+
+void testEntities()
+{
+	CAGE_TESTCASE("entities");
+
+	basicFunctionality();
+	deletions();
+	multipleManagers();
+	componentsWithAlignment();
+	multipleComponentsOfSameType();
+	callbacks();
+	randomizedTests();
+	performanceTypeVsComponent();
+	performanceSimulationTest();
 }
 

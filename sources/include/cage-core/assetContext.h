@@ -23,6 +23,7 @@ namespace cage
 		AssetDelegate decompress;
 		AssetDelegate load;
 		uint32 threadIndex = m;
+		uint32 typeIndex = m;
 
 		AssetScheme();
 	};

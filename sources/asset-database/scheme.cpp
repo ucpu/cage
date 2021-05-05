@@ -25,7 +25,7 @@ void Scheme::parse(Ini *ini)
 		fld.hint = "common name to reference the asset in multipacks";
 		fld.type = "string";
 		CAGE_ASSERT(fld.valid());
-		schemeFields.insert(templates::move(fld));
+		schemeFields.insert(std::move(fld));
 	}
 
 	for (const string &section : ini->sections())
@@ -39,7 +39,7 @@ void Scheme::parse(Ini *ini)
 #undef GCHL_GENERATE
 			fld.defaul = ini->getString(section, "default");
 		if (fld.valid())
-			schemeFields.insert(templates::move(fld));
+			schemeFields.insert(std::move(fld));
 		else
 		{
 			CAGE_LOG_THROW(stringizer() + "scheme: " + name);
@@ -77,7 +77,7 @@ void Scheme::load(File *f)
 		read(f, c.max);
 		read(f, c.defaul);
 		read(f, c.values);
-		schemeFields.insert(templates::move(c));
+		schemeFields.insert(std::move(c));
 	}
 }
 

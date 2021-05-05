@@ -6,8 +6,6 @@
 #include <vorbis/vorbisenc.h>
 #include <vorbis/vorbisfile.h>
 
-#include <utility> // std::swap
-
 namespace cage
 {
 	struct VorbisDecoder : Immovable

@@ -79,7 +79,7 @@ namespace cage
 			constexpr auto begin() const { return Iterator<It1>(it1, start); }
 			constexpr auto end() const { return Iterator<It2>(it2, start); }
 
-			constexpr Enumerate(Range &&range, const It1 &it1, const It2 &it2, const Counter &start) : Range(templates::move(range)), it1(it1), it2(it2), start(start)
+			constexpr Enumerate(Range &&range, const It1 &it1, const It2 &it2, const Counter &start) : Range(std::move(range)), it1(it1), it2(it2), start(start)
 			{}
 
 		private:
@@ -92,7 +92,7 @@ namespace cage
 		template<class Range, class It1, class It2, class Counter>
 		inline constexpr auto enumerate(Range &&range, const It1 &it1, const It2 &it2, const Counter &start)
 		{
-			return Enumerate<Range, It1, It2, Counter>(templates::move(range), it1, it2, start);
+			return Enumerate<Range, It1, It2, Counter>(std::move(range), it1, it2, start);
 		}
 
 		struct EnumerateNone
@@ -125,7 +125,7 @@ namespace cage
 	inline constexpr auto enumerate(Range &&range)
 	{
 		// we need to extend lifetime of the temporary (we take ownership of the variable)
-		return privat::enumerate(templates::move(range), range.begin(), range.end(), Counter());
+		return privat::enumerate(std::move(range), range.begin(), range.end(), Counter());
 	}
 
 	// c array

@@ -4,8 +4,6 @@
 
 #include "audio.h"
 
-#include <utility> // std::swap
-
 namespace cage
 {
 	uintPtr formatBytes(AudioFormatEnum format)

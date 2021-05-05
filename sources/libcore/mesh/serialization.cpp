@@ -64,6 +64,6 @@ namespace cage
 		CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, POLYHEDRON_ATTRIBUTES));
 #undef GCHL_GENERATE
 		ser.write(bufferCast<const char, const uint32>(impl->indices));
-		return templates::move(buff);
+		return std::move(buff);
 	}
 }

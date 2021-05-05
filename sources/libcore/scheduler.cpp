@@ -383,7 +383,7 @@ namespace cage
 		SchedulerImpl *impl = (SchedulerImpl *)this;
 		auto sch = systemArena().createHolder<ScheduleImpl>(impl, config);
 		auto res = sch.get();
-		impl->scheds.push_back(templates::move(sch));
+		impl->scheds.push_back(std::move(sch));
 		return res;
 	}
 
