@@ -912,15 +912,19 @@ namespace cage
 
 	// pointer range
 
+	namespace privat
+	{
+		// this can be moved directly into the PointerRange once compilers implemented CWG 727
+		template<class K> struct TerminalZero { static constexpr int value = 0; };
+		template<> struct TerminalZero<char> { static constexpr int value = -1; };
+	}
+
 	template<class T>
 	struct PointerRange
 	{
 	private:
 		T *begin_ = nullptr;
 		T *end_ = nullptr;
-
-		template<class K> struct TerminalZero { static constexpr int value = 0; };
-		template<> struct TerminalZero<char> { static constexpr int value = -1; };
 
 	public:
 		using size_type = uintPtr;
@@ -930,7 +934,7 @@ namespace cage
 		constexpr PointerRange(const PointerRange<T> &other) noexcept = default;
 		CAGE_FORCE_INLINE constexpr PointerRange(T *begin, T *end) noexcept : begin_(begin), end_(end) {}
 		template<uint32 N>
-		CAGE_FORCE_INLINE constexpr PointerRange(T (&arr)[N]) noexcept : begin_(arr), end_(arr + N + TerminalZero<std::remove_cv_t<T>>::value) {}
+		CAGE_FORCE_INLINE constexpr PointerRange(T (&arr)[N]) noexcept : begin_(arr), end_(arr + N + privat::TerminalZero<std::remove_cv_t<T>>::value) {}
 		template<class U> requires(std::is_same_v<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>)
 		CAGE_FORCE_INLINE constexpr PointerRange(U &other) : begin_(other.data()), end_(other.data() + other.size()) {}
 		template<class U> requires(std::is_same_v<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>)
