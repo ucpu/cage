@@ -212,6 +212,7 @@ namespace cage
 
 		// methods
 		bool valid() const noexcept { return origin.valid() && direction.valid() && length.valid() && halfAngle.valid(); }
+		bool empty() const noexcept { return !valid(); }
 	};
 
 	// note: some intersection tests with frustums are conservative

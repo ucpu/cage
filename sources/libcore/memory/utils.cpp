@@ -23,9 +23,6 @@ namespace cage
 		::cage::privat::makeLog(file, line, function, severity, "exception", message, false, false);
 	};
 
-	MemoryArena::MemoryArena() : stub(nullptr), inst(nullptr)
-	{}
-
 	void *MemoryArena::allocate(uintPtr size, uintPtr alignment)
 	{
 		void *res = stub->alloc(inst, size, alignment);
@@ -77,7 +74,7 @@ namespace cage
 			}
 		}
 
-		bool isHolderShareable(const Delegate<void(void *)> &deleter)
+		bool isHolderShareable(const Delegate<void(void *)> &deleter) noexcept
 		{
 			return deleter == Delegate<void(void *)>().bind<&decHolderShareable>();
 		}

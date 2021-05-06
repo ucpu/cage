@@ -397,10 +397,10 @@ namespace cage
 		struct StringLiteral
 		{
 			template<uint32 N>
-			CAGE_FORCE_INLINE StringLiteral(const char(&str)[N]) : str(str)
+			CAGE_FORCE_INLINE StringLiteral(const char(&str)[N]) noexcept : str(str)
 			{}
 
-			CAGE_FORCE_INLINE explicit StringLiteral(const char *str) : str(str)
+			CAGE_FORCE_INLINE explicit StringLiteral(const char *str) noexcept : str(str)
 			{}
 
 			const char *str = nullptr;
@@ -472,10 +472,13 @@ namespace cage
 			StringBase() noexcept = default;
 
 			template<uint32 M>
-			StringBase(const StringBase<M> &other)
+			StringBase(const StringBase<M> &other) noexcept(N >= M)
 			{
-				if (other.length() > N)
-					CAGE_THROW_ERROR(Exception, "string truncation");
+				if constexpr (N < M)
+				{
+					if (other.length() > N)
+						CAGE_THROW_ERROR(Exception, "string truncation");
+				}
 				current = other.length();
 				detail::memcpy(value, other.c_str(), current);
 				value[current] = 0;
@@ -677,7 +680,7 @@ namespace cage
 
 	public:
 		template<R(*F)(Ts...)>
-		constexpr Delegate &bind()
+		constexpr Delegate &bind() noexcept
 		{
 			fnc = +[](void *inst, Ts... vs) {
 				return F(std::forward<Ts>(vs)...);
@@ -686,7 +689,7 @@ namespace cage
 		}
 
 		template<class D, R(*F)(D, Ts...)>
-		Delegate &bind(D d)
+		Delegate &bind(D d) noexcept
 		{
 			static_assert(sizeof(d) <= sizeof(inst));
 			static_assert(std::is_trivially_copyable_v<D> && std::is_trivially_destructible_v<D>);
@@ -707,7 +710,7 @@ namespace cage
 		}
 
 		template<class C, R(C::*F)(Ts...)>
-		Delegate &bind(C *i)
+		Delegate &bind(C *i) noexcept
 		{
 			fnc = +[](void *inst, Ts... vs) {
 				return (((C*)inst)->*F)(std::forward<Ts>(vs)...);
@@ -717,7 +720,7 @@ namespace cage
 		}
 
 		template<class C, R(C::*F)(Ts...) const>
-		Delegate &bind(const C *i)
+		Delegate &bind(const C *i) noexcept
 		{
 			fnc = +[](void *inst, Ts... vs) {
 				return (((const C*)inst)->*F)(std::forward<Ts>(vs)...);
@@ -763,7 +766,7 @@ namespace cage
 		template<class T> struct HolderDereference { typedef T &type; };
 		template<> struct HolderDereference<void> { typedef void type; };
 
-		CAGE_CORE_API bool isHolderShareable(const Delegate<void(void *)> &deleter);
+		CAGE_CORE_API bool isHolderShareable(const Delegate<void(void *)> &deleter) noexcept;
 		CAGE_CORE_API void incrementHolderShareable(void *ptr, const Delegate<void(void *)> &deleter);
 		CAGE_CORE_API void makeHolderShareable(void *&ptr, Delegate<void(void *)> &deleter);
 
@@ -859,7 +862,7 @@ namespace cage
 				data_ = nullptr;
 			}
 
-			CAGE_FORCE_INLINE bool isShareable() const
+			CAGE_FORCE_INLINE bool shareable() const noexcept
 			{
 				return isHolderShareable(deleter_);
 			}
@@ -1038,7 +1041,7 @@ namespace cage
 			}
 
 			template<class A>
-			static Stub init()
+			static Stub init() noexcept
 			{
 				Stub s;
 				s.alloc = &allocate<A>;
@@ -1050,10 +1053,10 @@ namespace cage
 		void *inst = nullptr;
 
 	public:
-		MemoryArena();
+		MemoryArena() = default;
 
 		template<class A>
-		explicit MemoryArena(A *a)
+		explicit MemoryArena(A *a) noexcept
 		{
 			static Stub stb = Stub::init<A>();
 			this->stub = &stb;
@@ -1106,7 +1109,7 @@ namespace cage
 				return;
 			try
 			{
-				((T*)ptr)->~T();
+				((T *)ptr)->~T();
 			}
 			catch (...)
 			{
