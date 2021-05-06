@@ -28,18 +28,31 @@ void testTypeIndex()
 
 	using namespace detail;
 
-	const uint32 val = typeIndex<uint16>();
-	CAGE_TEST(val == typeIndex<uint16>()); // multiple calls to typeIndex are allowed
-	CAGE_TEST(val != typeIndex<uint64>());
-	CAGE_TEST(typeIndex<float>() != typeIndex<double>());
-	CAGE_TEST(typeIndex<uint16>() != typeIndex<uintPtr>());
-	CAGE_TEST(typeIndex<void*>() != typeIndex<uintPtr>());
-	CAGE_TEST(typeIndex<uint32>() != typeIndex<uint64>());
+	{
+		CAGE_TESTCASE("basics");
+		const uint32 val = typeIndex<uint16>();
+		CAGE_TEST(val == typeIndex<uint16>()); // multiple calls to typeIndex are allowed
+		CAGE_TEST(val != typeIndex<uint64>());
+		CAGE_TEST(typeIndex<float>() != typeIndex<double>());
+		CAGE_TEST(typeIndex<uint16>() != typeIndex<uintPtr>());
+		CAGE_TEST(typeIndex<void*>() != typeIndex<uintPtr>());
+		CAGE_TEST(typeIndex<uint32>() != typeIndex<uint64>());
 #ifdef CAGE_ARCHITECTURE_64
-	CAGE_TEST(typeIndex<uint64>() == typeIndex<uintPtr>());
+		CAGE_TEST(typeIndex<uint64>() == typeIndex<uintPtr>());
 #else
-	CAGE_TEST(typeIndex<uint32>() == typeIndex<uintPtr>());
+		CAGE_TEST(typeIndex<uint32>() == typeIndex<uintPtr>());
 #endif // CAGE_ARCHITECTURE_64
+	}
+
+	{
+		CAGE_TESTCASE("size and alignment of types");
+		CAGE_TEST(typeSize<uintPtr>() == sizeof(uintPtr));
+		CAGE_TEST(typeAlignment<uintPtr>() == alignof(uintPtr));
+		CAGE_TEST(typeSize<char>() == sizeof(char));
+		CAGE_TEST(typeAlignment<char>() == alignof(char));
+		CAGE_TEST(typeSize<void>() == 0); // special case - sizeof(void) is not allowed
+		CAGE_TEST(typeAlignment<void>() == 0);
+	}
 
 	{
 		CAGE_TESTCASE("performance");

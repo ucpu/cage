@@ -23,6 +23,24 @@ namespace cage
 		::cage::privat::makeLog(file, line, function, severity, "exception", message, false, false);
 	};
 
+
+	void *MemoryArena::allocate(uintPtr size, uintPtr alignment)
+	{
+		void *res = stub->alloc(inst, size, alignment);
+		CAGE_ASSERT((uintPtr(res) % alignment) == 0);
+		return res;
+	}
+
+	void MemoryArena::deallocate(void *ptr)
+	{
+		stub->dealloc(inst, ptr);
+	}
+
+	void MemoryArena::flush()
+	{
+		stub->fls(inst);
+	}
+
 	namespace privat
 	{
 		namespace

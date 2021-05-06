@@ -386,10 +386,10 @@ namespace cage
 		struct StringLiteral
 		{
 			template<uint32 N>
-			CAGE_FORCE_INLINE StringLiteral(const char(&str)[N]) : str(str)
+			CAGE_FORCE_INLINE StringLiteral(const char(&str)[N]) noexcept : str(str)
 			{}
 
-			CAGE_FORCE_INLINE explicit StringLiteral(const char *str) : str(str)
+			CAGE_FORCE_INLINE explicit StringLiteral(const char *str) noexcept : str(str)
 			{}
 
 			const char *str = nullptr;
@@ -847,7 +847,7 @@ namespace cage
 				data_ = nullptr;
 			}
 
-			CAGE_FORCE_INLINE bool isShareable() const noexcept
+			CAGE_FORCE_INLINE bool shareable() const noexcept
 			{
 				return isHolderShareable(deleter_);
 			}
@@ -1054,22 +1054,9 @@ namespace cage
 		MemoryArena &operator = (const MemoryArena &) = default;
 		MemoryArena &operator = (MemoryArena &&) = default;
 
-		CAGE_FORCE_INLINE void *allocate(uintPtr size, uintPtr alignment)
-		{
-			void *res = stub->alloc(inst, size, alignment);
-			CAGE_ASSERT((uintPtr(res) % alignment) == 0);
-			return res;
-		}
-
-		CAGE_FORCE_INLINE void deallocate(void *ptr)
-		{
-			stub->dealloc(inst, ptr);
-		}
-
-		CAGE_FORCE_INLINE void flush()
-		{
-			stub->fls(inst);
-		}
+		void *allocate(uintPtr size, uintPtr alignment);
+		void deallocate(void *ptr);
+		void flush();
 
 		template<class T, class... Ts>
 		CAGE_FORCE_INLINE T *createObject(Ts... vs)

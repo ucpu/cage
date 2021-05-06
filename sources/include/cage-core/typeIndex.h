@@ -34,6 +34,13 @@ namespace cage
 			return id;
 		};
 
+		template<>
+		CAGE_FORCE_INLINE uint32 typeIndex<void>()
+		{
+			static const uint32 id = privat::typeIndexInit(privat::typeIndexTypeName<void>(), 0, 0);
+			return id;
+		};
+
 		CAGE_CORE_API uintPtr typeSize(uint32 index);
 
 		template<class T>

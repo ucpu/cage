@@ -360,7 +360,7 @@ namespace cage
 		int stringComparison(const char *ad, uint32 al, const char *bd, uint32 bl) noexcept
 		{
 			const uint32 l = al < bl ? al : bl;
-			int c = std::memcmp(ad, bd, l);
+			const int c = std::memcmp(ad, bd, l);
 			if (c == 0)
 				return al == bl ? 0 : al < bl ? -1 : 1;
 			return c;
