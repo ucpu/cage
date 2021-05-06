@@ -137,7 +137,7 @@ namespace cage
 			void stringSortAndUnique(char *data, uint32 &current)
 			{
 				std::sort(data, data + current);
-				auto it = std::unique(data, data + current);
+				const auto it = std::unique(data, data + current);
 				current = numeric_cast<uint32>(it - data);
 			}
 
@@ -277,7 +277,7 @@ namespace cage
 #define GCHL_GENERATE(TYPE) \
 		uint32 toString(char *s, uint32 n, TYPE value) \
 		{ \
-			auto [p, ec] = std::to_chars(s, s + n, value); \
+			const auto [p, ec] = std::to_chars(s, s + n, value); \
 			if (ec != std::errc()) \
 				CAGE_THROW_ERROR(Exception, "failed conversion of " CAGE_STRINGIZE(TYPE) " to string"); \
 			*p = 0; \
@@ -285,7 +285,7 @@ namespace cage
 		} \
 		void fromString(const char *s, uint32 n, TYPE &value) \
 		{ \
-			auto [p, ec] = std::from_chars(s, s + n, value); \
+			const auto [p, ec] = std::from_chars(s, s + n, value); \
 			if (p != s + n || ec != std::errc()) \
 			{ \
 				CAGE_LOG_THROW(stringizer() + "input string: '" + s + "'"); \
@@ -315,7 +315,7 @@ namespace cage
 
 		void fromString(const char *s, uint32 n, bool &value)
 		{
-			string l = toLower(string(s));
+			const string l = toLower(string(s));
 			if (l == "false" || l == "f" || l == "no" || l == "n" || l == "off" || l == "0")
 			{
 				value = false;
@@ -331,7 +331,7 @@ namespace cage
 
 		uint32 toString(char *s, uint32 n, const char *src)
 		{
-			auto l = std::strlen(src);
+			const auto l = std::strlen(src);
 			if (l > n)
 				CAGE_THROW_ERROR(Exception, "string truncation");
 			std::memcpy(s, src, l);
@@ -359,8 +359,8 @@ namespace cage
 
 		int stringComparison(const char *ad, uint32 al, const char *bd, uint32 bl) noexcept
 		{
-			uint32 l = al < bl ? al : bl;
-			int c = std::memcmp(ad, bd, l);
+			const uint32 l = al < bl ? al : bl;
+			const int c = std::memcmp(ad, bd, l);
 			if (c == 0)
 				return al == bl ? 0 : al < bl ? -1 : 1;
 			return c;
@@ -442,7 +442,7 @@ namespace cage
 		{
 			if (what.size() == 0 || offset + what.size() > data.size())
 				return m;
-			uint32 end = numeric_cast<uint32>(data.size() - what.size() + 1);
+			const uint32 end = numeric_cast<uint32>(data.size() - what.size() + 1);
 			for (uint32 i = offset; i < end; i++)
 				if (std::memcmp(data.data() + i, what.data(), what.size()) == 0)
 					return i;
@@ -453,7 +453,7 @@ namespace cage
 		{
 			// todo this can buffer overflow
 			char tmp[4096];
-			uint32 len = encodeUrlBase(tmp, what.data(), numeric_cast<uint32>(what.size()));
+			const uint32 len = encodeUrlBase(tmp, what.data(), numeric_cast<uint32>(what.size()));
 			if (len > maxLength)
 				CAGE_THROW_ERROR(Exception, "string truncation");
 			std::memcpy(data, tmp, len);
@@ -490,7 +490,7 @@ namespace cage
 				return false;
 			if (infix.size() == 0)
 				return true;
-			uint32 pos = stringFind(data, infix, numeric_cast<uint32>(prefix.size()));
+			const uint32 pos = stringFind(data, infix, numeric_cast<uint32>(prefix.size()));
 			return pos != m && pos <= data.size() - infix.size() - suffix.size();
 		}
 
@@ -528,7 +528,7 @@ namespace cage
 		{
 			if (data.size() > 10)
 				return false;
-			string l = toLower(string(data));
+			const string l = toLower(string(data));
 			if (l == "false" || l == "f" || l == "no" || l == "n" || l == "off")
 				return true;
 			if (l == "true" || l == "t" || l == "yes" || l == "y" || l == "on")
