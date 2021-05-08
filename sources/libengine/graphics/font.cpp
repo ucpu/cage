@@ -19,15 +19,30 @@ namespace cage
 {
 	namespace
 	{
+		struct Instance
+		{
+			vec4 wrld;
+			vec4 text;
+
+			Instance(real x, real y, const FontHeader::GlyphData &g)
+			{
+				text = g.texUv;
+				wrld[0] = x + g.bearing[0];
+				wrld[1] = y + g.bearing[1] - g.size[1];
+				wrld[2] = g.size[0];
+				wrld[3] = g.size[1];
+			}
+		};
+
 		struct ProcessData
 		{
+			std::vector<Instance> instances;
+			PointerRange<const uint32> glyphs;
 			vec2 mousePosition = vec2::Nan();
-			mutable vec2 outSize;
+			vec2 outSize;
 			RenderQueue *renderQueue = nullptr;
-			const Font::FormatStruct *format = nullptr;
-			const uint32 *gls = nullptr;
-			mutable uint32 outCursor = 0;
-			uint32 count = 0;
+			const FontFormat *format = nullptr;
+			uint32 outCursor = 0;
 			uint32 cursor = m;
 		};
 
@@ -48,26 +63,9 @@ namespace cage
 			real lineHeight = 0;
 			real firstLineOffset = 0;
 
-			struct Instance
-			{
-				vec4 wrld;
-				vec4 text;
-
-				Instance(real x, real y, const FontHeader::GlyphData &g)
-				{
-					text = g.texUv;
-					wrld[0] = x + g.bearing[0];
-					wrld[1] = y + g.bearing[1] - g.size[1];
-					wrld[2] = g.size[0];
-					wrld[3] = g.size[1];
-				}
-			};
-			std::vector<Instance> instances;
-
 			FontImpl()
 			{
 				tex = newTexture().makeShareable();
-				instances.reserve(1000);
 			}
 
 			FontHeader::GlyphData getGlyph(uint32 glyphIndex, real size) const
@@ -95,37 +93,18 @@ namespace cage
 				if (*it != character)
 					return 0;
 				return charmapGlyphs[it - charmapChars.begin()];
-
-				/*
-				if (charmapChars[0] > character)
-					return 0; // otherwise the mid-1 could overflow
-				uint32 min = 0, max = numeric_cast<uint32>(charmapChars.size() - 1);
-				while (min < max)
-				{
-					uint32 mid = (max + min) / 2;
-					if (charmapChars[mid] > character)
-						max = mid - 1;
-					else if (charmapChars[mid] < character)
-						min = mid + 1;
-					else
-						min = max = mid;
-				}
-				if (charmapChars[min] == character)
-					return charmapGlyphs[min];
-				return 0;
-				*/
 			}
 
-			void processCursor(const ProcessData &data, const uint32 *begin, real x, real lineY)
+			void processCursor(ProcessData &data, const uint32 *begin, real x, real lineY) const
 			{
-				if (data.renderQueue && begin == data.gls + data.cursor)
+				if (data.renderQueue && begin == data.glyphs.data() + data.cursor)
 				{
 					FontHeader::GlyphData g = getGlyph(cursorGlyph, data.format->size);
-					instances.emplace_back(x, lineY, g);
+					data.instances.emplace_back(x, lineY, g);
 				}
 			}
 
-			void processLine(const ProcessData &data, const uint32 *begin, const uint32 *end, real lineWidth, real lineY)
+			void processLine(ProcessData &data, const uint32 *begin, const uint32 *end, real lineWidth, real lineY) const
 			{
 				real x;
 				switch (data.format->align)
@@ -143,9 +122,9 @@ namespace cage
 				if (mouseInLine)
 				{
 					if (mousePos[0] < 0)
-						data.outCursor = numeric_cast<uint32>(begin - data.gls);
+						data.outCursor = numeric_cast<uint32>(begin - data.glyphs.data());
 					else if (mousePos[0] >= lineWidth)
-						data.outCursor = numeric_cast<uint32>(end - data.gls);
+						data.outCursor = numeric_cast<uint32>(end - data.glyphs.data());
 				}
 
 				uint32 prev = 0;
@@ -156,26 +135,26 @@ namespace cage
 					real k = findKerning(prev, *begin, data.format->size);
 					prev = *begin++;
 					if (data.renderQueue)
-						instances.emplace_back(x + k, lineY, g);
+						data.instances.emplace_back(x + k, lineY, g);
 					if (mouseInLine && data.mousePosition[0] >= x && data.mousePosition[0] < x + k + g.advance)
-						data.outCursor = numeric_cast<uint32>(begin - data.gls);
+						data.outCursor = numeric_cast<uint32>(begin - data.glyphs.data());
 					x += k + g.advance;
 				}
 				processCursor(data, begin, x, lineY);
 			}
 
-			void processText(const ProcessData &data)
+			void processText(ProcessData &data) const
 			{
-				CAGE_ASSERT(!data.renderQueue || instances.empty());
 				CAGE_ASSERT(data.format->align <= TextAlignEnum::Center);
 				CAGE_ASSERT(data.format->wrapWidth > 0);
 				CAGE_ASSERT(data.format->size > 0);
-				const uint32 *const totalEnd = data.gls + data.count;
-				const uint32 *it = data.gls;
+				data.instances.reserve(data.glyphs.size() + 1);
+				const uint32 *const totalEnd = data.glyphs.end();
+				const uint32 *it = data.glyphs.begin();
 				const real actualLineHeight = (lineHeight + data.format->lineSpacing) * data.format->size;
 				real lineY = (firstLineOffset - data.format->lineSpacing * 0.75) * data.format->size;
 
-				if (data.count == 0)
+				if (data.glyphs.empty())
 				{ // process cursor
 					processLine(data, it, totalEnd, 0, lineY);
 				}
@@ -234,25 +213,23 @@ namespace cage
 
 				if (data.renderQueue)
 				{
-					const uint32 s = numeric_cast<uint32>(instances.size());
+					const uint32 s = numeric_cast<uint32>(data.instances.size());
 					const uint32 a = s / CAGE_SHADER_MAX_CHARACTERS;
 					const uint32 b = s - a * CAGE_SHADER_MAX_CHARACTERS;
 					for (uint32 i = 0; i < a; i++)
 					{
-						auto p = instances.data() + i * CAGE_SHADER_MAX_CHARACTERS;
+						const auto p = data.instances.data() + i * CAGE_SHADER_MAX_CHARACTERS;
 						PointerRange<Instance> r = { p, p + CAGE_SHADER_MAX_CHARACTERS };
 						data.renderQueue->universalUniformArray<Instance>(r, 1);
 						data.renderQueue->draw(CAGE_SHADER_MAX_CHARACTERS);
 					}
 					if (b)
 					{
-						auto p = instances.data() + a * CAGE_SHADER_MAX_CHARACTERS;
+						const auto p = data.instances.data() + a * CAGE_SHADER_MAX_CHARACTERS;
 						PointerRange<Instance> r = { p, p + b };
 						data.renderQueue->universalUniformArray<Instance>(r, 1);
 						data.renderQueue->draw(b);
 					}
-
-					instances.clear();
 				}
 			}
 		};
@@ -394,47 +371,46 @@ namespace cage
 		return glyphs;
 	}
 
-	vec2 Font::size(PointerRange<const uint32> glyphs, const FormatStruct &format) const
+	vec2 Font::size(PointerRange<const uint32> glyphs, const FontFormat &format) const
 	{
 		vec2 mp;
 		uint32 c;
 		return this->size(glyphs, format, mp, c);
 	}
 
-	vec2 Font::size(PointerRange<const uint32> glyphs, const FormatStruct &format, const vec2 &mousePosition, uint32 &cursor) const
+	vec2 Font::size(PointerRange<const uint32> glyphs, const FontFormat &format, const vec2 &mousePosition, uint32 &cursor) const
 	{
+		const FontImpl *impl = (const FontImpl *)this;
 		ProcessData data;
 		data.mousePosition = mousePosition;
 		data.format = &format;
-		data.gls = glyphs.data();
-		data.count = numeric_cast<uint32>(glyphs.size());
+		data.glyphs = glyphs;
 		data.outCursor = cursor;
-		((FontImpl *)this)->processText(data);
+		impl->processText(data);
 		cursor = data.outCursor;
 		return data.outSize;
 	}
 
-	void Font::bind(RenderQueue *queue, Holder<Model> &&model, Holder<ShaderProgram> &&shader)
+	void Font::bind(RenderQueue *queue, Holder<Model> &&model, Holder<ShaderProgram> &&shader) const
 	{
-		FontImpl *impl = (FontImpl *)this;
+		const FontImpl *impl = (const FontImpl *)this;
 		queue->bind(impl->tex.share(), 0);
 		queue->bind(model.share());
 		queue->bind(shader.share());
 	}
 
-	void Font::render(RenderQueue *queue, PointerRange<const uint32> glyphs, const FormatStruct &format, uint32 cursor)
+	void Font::render(RenderQueue *queue, PointerRange<const uint32> glyphs, const FontFormat &format, uint32 cursor) const
 	{
-		FontImpl *impl = (FontImpl *)this;
+		const FontImpl *impl = (const FontImpl *)this;
 		ProcessData data;
 		data.renderQueue = queue;
 		data.format = &format;
-		data.gls = glyphs.data();
-		data.count = numeric_cast<uint32>(glyphs.size());
+		data.glyphs = glyphs;
 		data.cursor = applicationTime() % 1000000 < 300000 ? m : cursor;
 		impl->processText(data);
 	}
 
-	void Font::render(Holder<Model> &&model, Holder<ShaderProgram> &&shader, PointerRange<const uint32> glyphs, const FormatStruct &format, uint32 cursor)
+	void Font::render(Holder<Model> &&model, Holder<ShaderProgram> &&shader, PointerRange<const uint32> glyphs, const FontFormat &format, uint32 cursor) const
 	{
 		Holder<RenderQueue> queue = newRenderQueue();
 		bind(+queue, std::move(model), std::move(shader));

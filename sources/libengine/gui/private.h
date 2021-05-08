@@ -5,7 +5,7 @@
 
 #include <cage-engine/gui.h>
 #include <cage-engine/guiSkins.h>
-#include <cage-engine/font.h> // Font::Format
+#include <cage-engine/font.h> // FontFormat
 #include <cage-engine/window.h> // WindowEventListeners
 #include <cage-engine/renderQueue.h> // UubRange
 
@@ -51,8 +51,6 @@ namespace cage
 		GuiImpl *const impl = nullptr;
 		Entity *const ent = nullptr;
 
-		//HierarchyItem *parent = nullptr;
-		//HierarchyItem *prevSibling = nullptr, *nextSibling = nullptr;
 		std::vector<Holder<HierarchyItem>> children;
 		sint32 order = 0; // relative ordering of items with same parent
 
@@ -149,7 +147,7 @@ namespace cage
 	struct CommonTextData
 	{
 		mat4 transform;
-		Font::FormatStruct format;
+		FontFormat format;
 		Holder<Font> font;
 		Holder<PointerRange<uint32>> glyphs;
 		vec3 color = vec3::Nan();

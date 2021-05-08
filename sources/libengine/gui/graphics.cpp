@@ -16,6 +16,7 @@ namespace cage
 {
 	void SkinData::bind(RenderQueue *queue) const
 	{
+		CAGE_ASSERT(texture);
 		queue->bind(uubRange, 0);
 		queue->bind(texture.share(), 0);
 	}
@@ -43,6 +44,7 @@ namespace cage
 		CAGE_ASSERT(mode < 4);
 		CAGE_ASSERT(pos.valid());
 		CAGE_ASSERT(size.valid());
+		CAGE_ASSERT(item->skin->texture);
 		setClip(item->hierarchy);
 		data.element = (uint32)element;
 		data.mode = mode;
@@ -71,6 +73,8 @@ namespace cage
 	RenderableText::RenderableText(TextItem *item, vec2 position, vec2 size) : RenderableBase(item->hierarchy->impl)
 	{
 		CAGE_ASSERT(item->color.valid());
+		if (!item->font)
+			return;
 		setClip(item->hierarchy);
 		data.transform = item->transform;
 		data.format = item->format;
@@ -95,6 +99,9 @@ namespace cage
 	{
 		if (!prepare())
 			return;
+		CAGE_ASSERT(data.font);
+		if (data.glyphs.empty() && data.cursor != 0)
+			return;
 		RenderQueue *q = impl->activeQueue;
 		q->bind(impl->graphicsData.fontShader.share());
 		q->uniform(0, data.transform);
@@ -105,6 +112,8 @@ namespace cage
 
 	RenderableImage::RenderableImage(ImageItem *item, vec2 position, vec2 size) : RenderableBase(item->hierarchy->impl)
 	{
+		if (!item->texture)
+			return;
 		setClip(item->hierarchy);
 		data.texture = item->texture.share();
 		data.ndcPos = item->hierarchy->impl->pointsToNdc(position, size);
@@ -117,6 +126,7 @@ namespace cage
 	{
 		if (!prepare())
 			return;
+		CAGE_ASSERT(data.texture);
 		RenderQueue *q = impl->activeQueue;
 		q->bind(data.texture.share(), 0);
 		q->bind(data.texture->getTarget() == GL_TEXTURE_2D_ARRAY ? impl->graphicsData.imageAnimatedShader.share() : impl->graphicsData.imageStaticShader.share());

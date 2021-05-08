@@ -77,7 +77,7 @@ namespace cage
 		struct Render
 		{
 			std::vector<uint32> glyphs;
-			Font::FormatStruct format;
+			FontFormat format;
 			mat4 transform;
 			vec3 color;
 		};

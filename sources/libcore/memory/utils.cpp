@@ -82,7 +82,7 @@ namespace cage
 		void incrementHolderShareable(void *ptr, const Delegate<void(void *)> &deleter)
 		{
 			CAGE_ASSERT(isHolderShareable(deleter));
-			((SharedCounter*)ptr)->cnt++;
+			((SharedCounter *)ptr)->cnt++;
 		}
 
 		void makeHolderShareable(void *&ptr, Delegate<void(void *)> &deleter)

@@ -370,7 +370,7 @@ namespace cage
 	{
 		if (!font)
 			return;
-		Font::FormatStruct f = format;
+		FontFormat f = format;
 		f.wrapWidth = size[0];
 		font->size(glyphs, f, point - position, cursor);
 		cursor = cursor;

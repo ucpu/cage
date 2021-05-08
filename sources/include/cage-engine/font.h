@@ -5,6 +5,14 @@
 
 namespace cage
 {
+	struct CAGE_ENGINE_API FontFormat
+	{
+		real size = 13;
+		real wrapWidth = real::Infinity();
+		real lineSpacing = 0;
+		TextAlignEnum align = TextAlignEnum::Left;
+	};
+
 	class CAGE_ENGINE_API Font : private Immovable
 	{
 #ifdef CAGE_DEBUG
@@ -19,14 +27,6 @@ namespace cage
 		void setGlyphs(PointerRange<const char> buffer, PointerRange<const real> kerning);
 		void setCharmap(PointerRange<const uint32> chars, PointerRange<const uint32> glyphs);
 
-		struct CAGE_ENGINE_API FormatStruct
-		{
-			real size = 13;
-			real wrapWidth = real::Infinity();
-			real lineSpacing = 0;
-			TextAlignEnum align = TextAlignEnum::Left;
-		};
-
 		uint32 glyphsCount(const string &text) const;
 		uint32 glyphsCount(const char *text) const;
 		uint32 glyphsCount(PointerRange<const char> text) const;
@@ -38,13 +38,13 @@ namespace cage
 		Holder<PointerRange<uint32>> transcript(const char *text) const;
 		Holder<PointerRange<uint32>> transcript(PointerRange<const char> text) const;
 
-		vec2 size(PointerRange<const uint32> glyphs, const FormatStruct &format) const;
-		vec2 size(PointerRange<const uint32> glyphs, const FormatStruct &format, const vec2 &mousePosition, uint32 &cursor) const;
+		vec2 size(PointerRange<const uint32> glyphs, const FontFormat &format) const;
+		vec2 size(PointerRange<const uint32> glyphs, const FontFormat &format, const vec2 &mousePosition, uint32 &cursor) const;
 
-		void bind(RenderQueue *queue, Holder<Model> &&model, Holder<ShaderProgram> &&shader);
-		void render(RenderQueue *queue, PointerRange<const uint32> glyphs, const FormatStruct &format, uint32 cursor = m);
+		void bind(RenderQueue *queue, Holder<Model> &&model, Holder<ShaderProgram> &&shader) const;
+		void render(RenderQueue *queue, PointerRange<const uint32> glyphs, const FontFormat &format, uint32 cursor = m) const;
 
-		[[deprecated]] void render(Holder<Model> &&model, Holder<ShaderProgram> &&shader, PointerRange<const uint32> glyphs, const FormatStruct &format, uint32 cursor = m);
+		[[deprecated]] void render(Holder<Model> &&model, Holder<ShaderProgram> &&shader, PointerRange<const uint32> glyphs, const FontFormat &format, uint32 cursor = m) const;
 	};
 
 	CAGE_ENGINE_API Holder<Font> newFont();

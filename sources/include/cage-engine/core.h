@@ -39,6 +39,7 @@ namespace cage
 	struct EngineSoundThread;
 	struct EngineCreateConfig;
 
+	struct FontFormat;
 	class Font;
 	class FrameBuffer;
 	struct GraphicsError;
@@ -129,6 +130,7 @@ namespace cage
 	class Window;
 	struct WindowEventListeners;
 
+	struct UubRange;
 	class RenderQueue;
 
 	// enum declarations
