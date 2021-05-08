@@ -81,6 +81,38 @@ namespace cage
 			}
 		};
 
+		template<class T>
+		struct ExclusiveHolder : Immovable
+		{
+			void assign(Holder<T> &&value)
+			{
+				ScopeLock lock(mut);
+				data = std::move(value).makeShareable();
+			}
+
+			Holder<T> get() const
+			{
+				ScopeLock lock(mut);
+				if (data)
+					return data.share();
+				return {};
+			}
+
+			void clear()
+			{
+				Holder<T> tmp;
+				{
+					ScopeLock lock(mut);
+					std::swap(tmp, data); // swap under lock
+				}
+				tmp.clear(); // clear outside lock
+			}
+
+		private:
+			Holder<T> data;
+			Holder<Mutex> mut = newMutex();
+		};
+
 		struct EngineData
 		{
 			VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> profilingBufferGraphicsPrepare;
@@ -102,6 +134,7 @@ namespace cage
 			Holder<Voice> effectsVoice;
 			Holder<Voice> guiVoice;
 			Holder<Gui> gui;
+			ExclusiveHolder<RenderQueue> guiRenderQueue;
 			Holder<EntityManager> entities;
 
 			Holder<Semaphore> graphicsSemaphore1;
@@ -114,8 +147,8 @@ namespace cage
 #endif // CAGE_USE_SEPARATE_THREAD_FOR_GPU_UPLOADS
 			Holder<Thread> soundThreadHolder;
 
-			std::atomic<uint32> engineStarted{0};
-			std::atomic<bool> stopping{false};
+			std::atomic<uint32> engineStarted = 0;
+			std::atomic<bool> stopping = false;
 			uint64 controlTime = 0;
 
 			Holder<Scheduler> controlScheduler;
@@ -207,7 +240,9 @@ namespace cage
 				if (graphicsPrepareThread().stereoMode == StereoModeEnum::Mono)
 				{
 					OPTICK_EVENT("gui render");
-					gui->graphics()->dispatch();
+					Holder<RenderQueue> grq = guiRenderQueue.get();
+					if (grq)
+						grq->dispatch();
 					CAGE_CHECK_GL_ERROR_DEBUG();
 				}
 				{
@@ -306,16 +341,18 @@ namespace cage
 			{
 				OPTICK_EVENT("inputs");
 				{
+					OPTICK_EVENT("gui prepare");
 					gui->outputResolution(window->resolution());
 					gui->outputRetina(window->contentScaling());
+					gui->prepare();
 				}
 				{
 					OPTICK_EVENT("window events");
 					window->processEvents();
 				}
 				{
-					OPTICK_EVENT("gui update");
-					gui->update();
+					OPTICK_EVENT("gui finish");
+					guiRenderQueue.assign(gui->finish());
 				}
 			}
 
@@ -558,6 +595,12 @@ namespace cage
 				CAGE_LOG(SeverityEnum::Info, "engine", "finalizing engine");
 				{ ScopeLock l(threadsStateBarier); }
 
+				{ // release resources hold by gui
+					guiRenderQueue.clear();
+					if (gui)
+						gui->cleanUp();
+				}
+
 				{ // unload assets
 					assets->remove(HashString("cage/cage.pack"));
 					while (!assets->unloaded())
@@ -567,7 +610,7 @@ namespace cage
 							controlThread().unload.dispatch();
 						}
 						GCHL_GENERATE_CATCH(control, unload);
-						threadSleep(2000);
+						threadYield();
 					}
 				}
 

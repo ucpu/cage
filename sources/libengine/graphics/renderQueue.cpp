@@ -251,6 +251,7 @@ namespace cage
 
 	void RenderQueue::bind(Holder<UniformBuffer> &&uniformBuffer, uint32 bindingPoint)
 	{
+		CAGE_ASSERT(uniformBuffer);
 		struct Cmd : public CmdBase
 		{
 			Holder<UniformBuffer> uniformBuffer;
@@ -269,6 +270,7 @@ namespace cage
 
 	void RenderQueue::bind(Holder<UniformBuffer> &&uniformBuffer, uint32 bindingPoint, uint32 offset, uint32 size)
 	{
+		CAGE_ASSERT(uniformBuffer);
 		struct Cmd : public CmdBase
 		{
 			Holder<UniformBuffer> uniformBuffer;
@@ -291,6 +293,7 @@ namespace cage
 
 	void RenderQueue::bind(Holder<UniformBuffer> &&uniformBuffer)
 	{
+		CAGE_ASSERT(uniformBuffer);
 		struct Cmd : public CmdBase
 		{
 			Holder<UniformBuffer> uniformBuffer;
@@ -340,6 +343,7 @@ namespace cage
 
 	void RenderQueue::bind(Holder<ShaderProgram> &&shader)
 	{
+		CAGE_ASSERT(shader);
 		struct Cmd : public CmdBase
 		{
 			Holder<ShaderProgram> shaderProgram;
@@ -381,6 +385,7 @@ namespace cage
 
 	void RenderQueue::bind(Holder<FrameBuffer> &&framebuffer)
 	{
+		CAGE_ASSERT(framebuffer);
 		struct Cmd : public CmdBase
 		{
 			Holder<FrameBuffer> framebuffer;
@@ -459,6 +464,7 @@ namespace cage
 
 	void RenderQueue::bind(Holder<Texture> &&texture, uint32 bindingPoint)
 	{
+		CAGE_ASSERT(texture);
 		struct Cmd : public CmdBase
 		{
 			Holder<Texture> texture;
@@ -605,6 +611,7 @@ namespace cage
 
 	void RenderQueue::bind(Holder<Model> &&model)
 	{
+		CAGE_ASSERT(model);
 		struct Cmd : public CmdBase
 		{
 			Holder<Model> model;
@@ -858,6 +865,8 @@ namespace cage
 
 	void RenderQueue::enqueue(Holder<RenderQueue> &&queue)
 	{
+		CAGE_ASSERT(queue);
+
 		struct Cmd : public CmdBase
 		{
 			Holder<RenderQueue> queue;

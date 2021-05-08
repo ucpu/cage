@@ -75,6 +75,25 @@ namespace cage
 		}
 	}
 
+	void HierarchyItem::childrenEmit()
+	{
+		for (const auto &a : children)
+		{
+			if (a->item)
+				a->item->emit();
+			else
+				a->childrenEmit();
+		}
+	}
+
+	void HierarchyItem::generateEventReceivers() const
+	{
+		for (auto i = children.size(); i-- > 0;) // typographically pleasing iteration in reverse order ;)
+			children[i]->generateEventReceivers();
+		if (item)
+			item->generateEventReceivers();
+	}
+
 	void HierarchyItem::moveToWindow(bool horizontal, bool vertical)
 	{
 		bool enabled[2] = { horizontal, vertical };
@@ -91,23 +110,16 @@ namespace cage
 		}
 	}
 
-	void HierarchyItem::childrenEmit()
+	HierarchyItem *HierarchyItem::findParentOf(HierarchyItem *item)
 	{
-		for (const auto &a : children)
+		for (const auto &it : children)
 		{
-			if (a->item)
-				a->item->emit();
-			else
-				a->childrenEmit();
+			if (+it == item)
+				return this;
+			if (HierarchyItem *r = it->findParentOf(item))
+				return r;
 		}
-	}
-
-	void HierarchyItem::generateEventReceivers() const
-	{
-		for (auto i = children.size(); i --> 0 ;) // typographically pleasing iteration in reverse order ;)
-			children[i]->generateEventReceivers();
-		if (item)
-			item->generateEventReceivers();
+		return nullptr;
 	}
 
 	BaseItem::BaseItem(HierarchyItem *hierarchy) : hierarchy(hierarchy)

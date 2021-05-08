@@ -133,7 +133,7 @@ namespace cage
 			hierarchy->requestedSize = vec2();
 			offsetSize(hierarchy->requestedSize, skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxList].border + skin->defaults.comboBox.listPadding);
 			const vec4 os = skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxItemUnchecked].border + skin->defaults.comboBox.itemPadding;
-			for (const auto &c : hierarchy->children)
+			for (const auto &c : combo->hierarchy->children)
 			{
 				// todo limit text wrap width to the combo box item
 				c->requestedSize = c->text->findRequestedSize();
@@ -156,7 +156,7 @@ namespace cage
 			vec2 p = hierarchy->renderPos;
 			vec2 s = hierarchy->renderSize;
 			offset(p, s, -skin->defaults.comboBox.baseMargin * vec4(1, 0, 1, 0) - skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxList].border - skin->defaults.comboBox.listPadding);
-			for (const auto &c : hierarchy->children)
+			for (const auto &c : combo->hierarchy->children)
 			{
 				c->renderPos = p;
 				c->renderSize = vec2(s[0], c->requestedSize[1]);
@@ -167,14 +167,14 @@ namespace cage
 		void ComboListImpl::emit()
 		{
 			emitElement(GuiElementTypeEnum::ComboBoxList, 0, hierarchy->renderPos, hierarchy->renderSize);
-			vec4 itemFrame = -skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxItemUnchecked].border - skin->defaults.comboBox.itemPadding;
+			const vec4 itemFrame = -skin->layouts[(uint32)GuiElementTypeEnum::ComboBoxItemUnchecked].border - skin->defaults.comboBox.itemPadding;
 			uint32 idx = 0;
 			bool allowHover = true;
-			for (const auto &c : hierarchy->children)
+			for (const auto &c : combo->hierarchy->children)
 			{
 				vec2 p = c->renderPos;
 				vec2 s = c->renderSize;
-				uint32 md = allowHover ? mode(p, s, 0) : 0;
+				const uint32 md = allowHover ? mode(p, s, 0) : 0;
 				allowHover &= !md; // items may have small overlap, this will ensure that only one item has hover
 				emitElement(idx == combo->selected ? GuiElementTypeEnum::ComboBoxItemChecked : GuiElementTypeEnum::ComboBoxItemUnchecked, md, p, s);
 				offset(p, s, itemFrame);
@@ -192,7 +192,7 @@ namespace cage
 				return true;
 			uint32 idx = 0;
 			HierarchyItem *newlySelected = nullptr;
-			for (const auto &c : hierarchy->children)
+			for (const auto &c : combo->hierarchy->children)
 			{
 				if (pointInside(c->renderPos, c->renderSize, point))
 				{

@@ -259,8 +259,10 @@ namespace cage
 		real zoom() const;
 		void focus(uint32 widget);
 		uint32 focus() const;
-		void update();
-		Holder<RenderQueue> graphics();
+
+		void prepare(); // prepare the gui for handling events
+		Holder<RenderQueue> finish(); // finish handling events, generate rendering commands, and release resources
+		void cleanUp();
 
 		bool windowResize(const ivec2 &);
 		bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, const ivec2 &point);

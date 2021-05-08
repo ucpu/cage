@@ -926,14 +926,14 @@ namespace cage
 		while (!unloaded())
 		{
 			while (processCustomThread(threadIndex));
-			threadSleep(2000);
+			threadYield();
 		}
 	}
 
 	void AssetManager::unloadWait()
 	{
 		while (!unloaded())
-			threadSleep(2000);
+			threadYield();
 	}
 
 	bool AssetManager::unloaded() const

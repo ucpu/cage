@@ -1,4 +1,3 @@
-#include <cage-core/swapBufferGuard.h>
 #include <cage-core/memoryAllocators.h>
 #include <cage-core/macros.h>
 
@@ -30,19 +29,7 @@ namespace cage
 
 		skins.resize(config.skinsCount);
 
-		renderQueues[0] = newRenderQueue().makeShareable();
-		renderQueues[1] = newRenderQueue().makeShareable();
-		renderQueues[2] = newRenderQueue().makeShareable();
-
-		{
-			SwapBufferGuardCreateConfig cfg(3);
-			cfg.repeatedReads = true;
-			emitController = newSwapBufferGuard(cfg);
-		}
-
 		memory = newMemoryAllocatorStream({});
-
-		update(); // initialize remaining variables
 	}
 
 	GuiImpl::~GuiImpl()
@@ -319,7 +306,7 @@ namespace cage
 		}
 	}
 
-	void Gui::update()
+	void Gui::prepare()
 	{
 		GuiImpl *impl = (GuiImpl *)this;
 
@@ -336,7 +323,13 @@ namespace cage
 			propagateWidgetState(+impl->root, ws);
 		}
 
-		callInitialize(+impl->root);
+		{ // initialize
+			impl->root->initialize();
+			// make sure that items added during initialization are initialized too
+			std::size_t i = 0;
+			while (i < impl->root->children.size())
+				callInitialize(+impl->root->children[i++]);
+		}
 
 		{ // layouting
 			impl->root->findRequestedSize();
@@ -349,26 +342,20 @@ namespace cage
 		impl->root->generateEventReceivers();
 
 		findHover(impl);
-
-		if (auto lock = impl->emitController->write())
-		{
-			impl->activeQueue = +impl->renderQueues[lock.index()];
-			impl->activeQueue->reset();
-			impl->emit();
-		}
-		else
-		{
-			CAGE_LOG_DEBUG(SeverityEnum::Warning, "gui", "gui is late for rendering update and will skip it");
-		}
 	}
 
-	Holder<RenderQueue> Gui::graphics()
+	Holder<RenderQueue> Gui::finish()
 	{
 		GuiImpl *impl = (GuiImpl *)this;
-		if (auto lock = impl->emitController->read())
-			return impl->renderQueues[lock.index()].share();
-		else
-			return newRenderQueue();
+		Holder<RenderQueue> q = impl->emit();
+		cleanUp();
+		return q;
+	}
+
+	void Gui::cleanUp()
+	{
+		GuiImpl *impl = (GuiImpl *)this;
+		impl->root.clear();
 	}
 
 	Holder<Gui> newGui(const GuiCreateConfig &config)

@@ -73,6 +73,7 @@ namespace cage
 
 		// helpers
 		void moveToWindow(bool horizontal, bool vertical);
+		HierarchyItem *findParentOf(HierarchyItem *item);
 		void fireWidgetEvent() const;
 	};
 
@@ -297,10 +298,7 @@ namespace cage
 
 			void load(AssetManager *assetMgr);
 		} graphicsData;
-
-		Holder<RenderQueue> renderQueues[3];
 		RenderQueue *activeQueue = nullptr;
-		Holder<SwapBufferGuard> emitController;
 
 		WindowEventListeners listeners;
 		std::vector<EventReceiver> mouseEventReceivers;
@@ -313,7 +311,7 @@ namespace cage
 		void scaling();
 		vec4 pointsToNdc(vec2 position, vec2 size) const;
 		bool eventPoint(const ivec2 &ptIn, vec2 &ptOut);
-		void emit();
+		Holder<RenderQueue> emit();
 	};
 
 	uint32 entityWidgetsCount(Entity *e);

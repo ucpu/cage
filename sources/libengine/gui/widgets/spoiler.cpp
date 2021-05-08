@@ -95,20 +95,13 @@ namespace cage
 					data.collapsed = !data.collapsed;
 					if (data.collapsesSiblings)
 					{
-						/*
-						HierarchyItem *i = hierarchy->prevSibling;
-						while (i)
+						HierarchyItem *parent = hierarchy->impl->root->findParentOf(hierarchy);
+						for (const auto &it : parent->children)
 						{
-							collapse(i);
-							i = i->prevSibling;
+							if (+it == hierarchy)
+								continue;
+							collapse(+it);
 						}
-						i = hierarchy->nextSibling;
-						while (i)
-						{
-							collapse(i);
-							i = i->nextSibling;
-						}
-						*/
 					}
 				}
 				return true;

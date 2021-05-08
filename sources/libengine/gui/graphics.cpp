@@ -173,6 +173,7 @@ namespace cage
 
 			~GraphicsDataCleaner()
 			{
+				impl->activeQueue = nullptr;
 				impl->graphicsData = GuiImpl::GraphicsData();
 				for (auto &it : impl->skins)
 					it.texture.clear();
@@ -180,15 +181,15 @@ namespace cage
 		};
 	}
 
-	void GuiImpl::emit()
+	Holder<RenderQueue> GuiImpl::emit()
 	{
 		OPTICK_EVENT("render gui");
 
 		if (outputResolution[0] <= 0 || outputResolution[1] <= 0)
-			return;
+			return {};
 
 		if (!assetMgr->get<AssetSchemeIndexPack, AssetPack>(HashString("cage/cage.pack")))
-			return;
+			return {};
 
 		GraphicsDataCleaner graphicsDataCleaner(this);
 
@@ -196,13 +197,13 @@ namespace cage
 		{
 			s.texture = assetMgr->get<AssetSchemeIndexTexture, Texture>(s.textureName);
 			if (!s.texture)
-				return;
+				return {};
 		}
 
 		graphicsData.load(assetMgr);
 
-		CAGE_ASSERT(activeQueue);
-		RenderQueue *q = activeQueue;
+		Holder<RenderQueue> q = newRenderQueue();
+		activeQueue = +q;
 		auto namedScope = q->scopedNamedPass("gui");
 
 		// write skins uv coordinates
@@ -220,10 +221,10 @@ namespace cage
 		q->blendFuncAlphaTransparency();
 		q->depthTest(false);
 		q->viewport(ivec2(), outputResolution);
-
 		root->childrenEmit();
-
 		q->blending(false);
 		q->scissors(false);
+
+		return std::move(q);
 	}
 }

@@ -74,7 +74,6 @@ namespace cage
 							large->skin = skin;
 							small = this;
 							hierarchy->impl->root->children.push_back(std::move(item));
-							// siblings? parent?
 						}
 						else
 						{ // no popup
