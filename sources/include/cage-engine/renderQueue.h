@@ -7,30 +7,35 @@ namespace cage
 {
 	struct RenderQueueNamedPassScope;
 
+	struct UubRange
+	{
+		uint32 offset = 0;
+		uint32 size = 0;
+	};
+
 	class CAGE_ENGINE_API RenderQueue : private Immovable
 	{
 	public:
 		// uses internal uniform buffer
 		// its contents are sent to gpu memory all at once and individual ranges are bound as requested
-		void universalUniformBuffer(PointerRange<const char> data, uint32 bindingPoint);
-
+		UubRange universalUniformBuffer(PointerRange<const char> data, uint32 bindingPoint = m);
 		template<class T>
-		void universalUniformStruct(const T &data, uint32 bindingPoint)
+		UubRange universalUniformStruct(const T &data, uint32 bindingPoint = m)
 		{
 			static_assert(std::is_trivially_copyable_v<T>);
 			static_assert(std::is_trivially_destructible_v<T>);
 			static_assert(!std::is_pointer_v<T>);
-			universalUniformBuffer({ (const char *)&data, (const char *)(&data + 1) }, bindingPoint);
+			return universalUniformBuffer({ (const char *)&data, (const char *)(&data + 1) }, bindingPoint);
 		}
-
 		template<class T>
-		void universalUniformArray(PointerRange<const T> data, uint32 bindingPoint)
+		UubRange universalUniformArray(PointerRange<const T> data, uint32 bindingPoint = m)
 		{
 			static_assert(std::is_trivially_copyable_v<T>);
 			static_assert(std::is_trivially_destructible_v<T>);
 			static_assert(!std::is_pointer_v<T>);
-			universalUniformBuffer({ (const char *)data.data(), (const char *)(data.data() + data.size()) }, bindingPoint);
+			return universalUniformBuffer({ (const char *)data.data(), (const char *)(data.data() + data.size()) }, bindingPoint);
 		}
+		void bind(UubRange uubRange, uint32 bindingPoint);
 
 		void bind(Holder<UniformBuffer> &&uniformBuffer, uint32 bindingPoint); // bind for reading from (on gpu)
 		void bind(Holder<UniformBuffer> &&uniformBuffer, uint32 bindingPoint, uint32 offset, uint32 size); // bind for reading from (on gpu)
@@ -112,11 +117,13 @@ namespace cage
 		uint32 primitivesCount() const;
 	};
 
-	struct RenderQueueNamedPassScope : Immovable
+	struct CAGE_ENGINE_API RenderQueueNamedPassScope : Immovable
 	{
-		RenderQueue *queue = nullptr;
 		[[nodiscard]] RenderQueueNamedPassScope(RenderQueue *queue, const string &name);
 		~RenderQueueNamedPassScope();
+
+	private:
+		RenderQueue *queue = nullptr;
 	};
 
 	CAGE_ENGINE_API Holder<RenderQueue> newRenderQueue();

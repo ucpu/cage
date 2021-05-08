@@ -19,7 +19,7 @@ namespace cage
 				hierarchy->requestedSize = vec2(); // todo this is a temporary hack
 			}
 
-			virtual void emit() const override
+			virtual void emit() override
 			{
 
 			}
@@ -29,6 +29,6 @@ namespace cage
 	void ProgressBarCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<ProgressBarImpl>(item);
+		item->item = item->impl->memory->createHolder<ProgressBarImpl>(item).cast<BaseItem>();
 	}
 }

@@ -14,10 +14,10 @@ namespace cage
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT(!hierarchy->firstChild);
-				CAGE_ASSERT(!hierarchy->Image);
+				CAGE_ASSERT(hierarchy->children.empty());
+				CAGE_ASSERT(!hierarchy->image);
 				if (hierarchy->text)
-					hierarchy->text->text.apply(skin->defaults.checkBox.textFormat, hierarchy->impl);
+					hierarchy->text->apply(skin->defaults.checkBox.textFormat);
 				element = GuiElementTypeEnum((uint32)GuiElementTypeEnum::CheckBoxUnchecked + (uint32)data.state);
 			}
 
@@ -33,7 +33,7 @@ namespace cage
 				offsetSize(hierarchy->requestedSize, skin->defaults.checkBox.margin);
 			}
 
-			virtual void emit() const override
+			virtual void emit() override
 			{
 				vec2 sd = skin->defaults.checkBox.size;
 				{
@@ -78,6 +78,6 @@ namespace cage
 	void CheckBoxCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<CheckBoxImpl>(item);
+		item->item = item->impl->memory->createHolder<CheckBoxImpl>(item).cast<BaseItem>();
 	}
 }

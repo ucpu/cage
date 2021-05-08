@@ -2,130 +2,65 @@
 #define guard_private_h_BEDE53C63BB74919B9BD171B995FD1A1
 
 #include <cage-core/entities.h>
-#include <cage-core/macros.h>
 
 #include <cage-engine/gui.h>
 #include <cage-engine/guiSkins.h>
-#include <cage-engine/font.h>
-#include <cage-engine/shaderProgram.h>
-#include <cage-engine/uniformBuffer.h>
-#include <cage-engine/model.h>
-#include <cage-engine/texture.h>
-#include <cage-engine/window.h>
+#include <cage-engine/font.h> // Font::Format
+#include <cage-engine/window.h> // WindowEventListeners
+#include <cage-engine/renderQueue.h> // UubRange
 
 #include <vector>
-#include <atomic>
 
 #define GCHL_GUI_COMMON_COMPONENTS Parent, Image, ImageFormat, Text, TextFormat, Selection, Tooltip, WidgetState, SelectedItem, Scrollbars, ExplicitSize, Event
 #define GCHL_GUI_WIDGET_COMPONENTS Label, Button, Input, TextArea, CheckBox, RadioBox, ComboBox, ListBox, ProgressBar, SliderBar, ColorPicker, Panel, Spoiler
 #define GCHL_GUI_LAYOUT_COMPONENTS LayoutLine, LayoutTable, LayoutSplitter
 
-#define GUI_HAS_COMPONENT(T,E) (E)->has(impl->components.T)
-#define GUI_REF_COMPONENT(T) hierarchy->ent->value<CAGE_JOIN(Gui, CAGE_JOIN(T, Component))>(hierarchy->impl->components.T)
-#define CAGE_COMPONENT_GUI(T,N,E) CAGE_JOIN(Gui, CAGE_JOIN(T, Component)) &N = (E)->value<CAGE_JOIN(Gui, CAGE_JOIN(T, Component))>(impl->components.T);
+#define GUI_HAS_COMPONENT(T,E) (E)->has<Gui##T##Component>()
+#define GUI_REF_COMPONENT(T) hierarchy->ent->value<Gui##T##Component>()
+#define GUI_COMPONENT(T,N,E) Gui##T##Component &N = (E)->value<Gui##T##Component>();
 
 namespace cage
 {
 	class GuiImpl;
 	struct HierarchyItem;
+	struct RenderableElement;
+	struct RenderableText;
+	struct RenderableImage;
 
 	struct SkinData : public GuiSkinConfig
 	{
-		Holder<UniformBuffer> elementsGpuBuffer;
 		Holder<Texture> texture;
-	};
+		UubRange uubRange;
 
-	struct RenderableBase
-	{
-		RenderableBase *next;
-		vec2 clipPos, clipSize;
-
-		RenderableBase();
-		virtual ~RenderableBase();
-
-		void setClip(const HierarchyItem *item);
-
-		virtual void render(GuiImpl *impl);
-	};
-
-	struct RenderableElement : public RenderableBase
-	{
-		struct Element
-		{
-			vec4 outer;
-			vec4 inner;
-			uint32 element;
-			uint32 mode;
-			Element();
-		} data;
-
-		const SkinData *skin = nullptr;
-
-		RenderableElement();
-
-		virtual void render(GuiImpl *impl) override;
-	};
-
-	struct RenderableText : public RenderableBase
-	{
-		struct Text
-		{
-			mat4 transform;
-			Font::FormatStruct format;
-			vec3 color;
-			Font *font;
-			uint32 *glyphs;
-			uint32 cursor;
-			uint32 count;
-			Text();
-			void apply(const GuiTextFormatComponent &f, GuiImpl *impl);
-		} data;
-
-		virtual void render(GuiImpl *impl) override;
-	};
-
-	struct RenderableImage : public RenderableBase
-	{
-		struct Image
-		{
-			vec4 ndcPos;
-			vec4 uvClip;
-			vec4 aniTexFrames;
-			Texture *texture;
-			Image();
-		} data;
-
-		virtual void render(GuiImpl *impl) override;
+		void bind(RenderQueue *queue) const;
 	};
 
 	struct FinalPosition
 	{
-		vec2 renderPos, renderSize;
-		vec2 clipPos, clipSize;
-
-		FinalPosition();
+		vec2 renderPos = vec2::Nan(), renderSize = vec2::Nan();
+		vec2 clipPos = vec2::Nan(), clipSize = vec2::Nan();
 	};
 
-	struct HierarchyItem
+	struct HierarchyItem : Immovable
 	{
 		// size (points) as seen by parent
-		vec2 requestedSize;
-		vec2 renderPos, renderSize;
-		vec2 clipPos, clipSize; // clip pos/size are in same coordinate system as render pos/size, they make a rectangle intersection of parents viewport and our render pos/size
+		vec2 requestedSize = vec2::Nan();
+		vec2 renderPos = vec2::Nan(), renderSize = vec2::Nan();
+		vec2 clipPos = vec2::Nan(), clipSize = vec2::Nan(); // clip pos/size are in same coordinate system as render pos/size, they make a rectangle intersection of parents viewport and our render pos/size
 
-		GuiImpl *const impl;
-		Entity *const ent;
+		GuiImpl *const impl = nullptr;
+		Entity *const ent = nullptr;
 
-		HierarchyItem *parent;
-		HierarchyItem *prevSibling, *nextSibling;
-		HierarchyItem *firstChild, *lastChild;
-		sint32 order; // relative ordering of items with same parent
+		//HierarchyItem *parent = nullptr;
+		//HierarchyItem *prevSibling = nullptr, *nextSibling = nullptr;
+		std::vector<Holder<HierarchyItem>> children;
+		sint32 order = 0; // relative ordering of items with same parent
 
-		struct BaseItem *item;
-		struct TextItem *text;
-		struct ImageItem *Image;
+		Holder<struct BaseItem> item;
+		Holder<struct TextItem> text;
+		Holder<struct ImageItem> image;
 
-		bool subsidedItem; // prevent use of explicit position
+		bool subsidedItem = false; // prevent use of explicit position
 
 		HierarchyItem(GuiImpl *impl, Entity *ent);
 
@@ -133,34 +68,25 @@ namespace cage
 		void initialize(); // initialize and validate widget, layout, text and image, initialize children
 		void findRequestedSize(); // fills in the requestedSize
 		void findFinalPosition(const FinalPosition &update); // given position and available space in the FinalPosition, determine actual position and size
-		void childrenEmit() const;
+		void childrenEmit();
 		void generateEventReceivers() const;
 
 		// helpers
 		void moveToWindow(bool horizontal, bool vertical);
-		void detachChildren();
-		void detachParent();
-		void attachParent(HierarchyItem *newParent);
-
-		// debug
-		void emitDebug() const;
-		void emitDebug(vec2 pos, vec2 size, vec4 color) const;
-		void printDebug(uint32 offset) const;
-
 		void fireWidgetEvent() const;
 	};
 
-	struct BaseItem
+	struct BaseItem : Immovable
 	{
-		HierarchyItem *const hierarchy;
+		HierarchyItem *const hierarchy = nullptr;
 
 		BaseItem(HierarchyItem *hierarchy);
-		virtual ~BaseItem();
+		virtual ~BaseItem() = default;
 
 		virtual void initialize() = 0;
 		virtual void findRequestedSize() = 0;
 		virtual void findFinalPosition(const FinalPosition &update) = 0;
-		virtual void emit() const = 0;
+		virtual void emit() = 0;
 		virtual void generateEventReceivers() = 0;
 
 		virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) = 0;
@@ -177,7 +103,7 @@ namespace cage
 	struct WidgetItem : public BaseItem
 	{
 		GuiWidgetStateComponent widgetState;
-		const SkinData *skin;
+		const SkinData *skin = nullptr;
 
 		WidgetItem(HierarchyItem *hierarchy);
 
@@ -185,7 +111,7 @@ namespace cage
 		uint32 mode(const vec2 &pos, const vec2 &size, uint32 focusParts = 1) const;
 		bool hasFocus(uint32 part = 1) const;
 		void makeFocused(uint32 part = 1);
-		RenderableElement *emitElement(GuiElementTypeEnum element, uint32 mode, vec2 pos, vec2 size) const;
+		RenderableElement emitElement(GuiElementTypeEnum element, uint32 mode, vec2 pos, vec2 size);
 
 		virtual void findFinalPosition(const FinalPosition &update) override;
 		virtual void generateEventReceivers() override;
@@ -205,7 +131,7 @@ namespace cage
 	{
 		LayoutItem(HierarchyItem *hierarchy);
 
-		virtual void emit() const override;
+		virtual void emit() override;
 		virtual void generateEventReceivers() override;
 
 		virtual bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, vec2 point) override;
@@ -219,15 +145,26 @@ namespace cage
 		virtual bool keyChar(uint32 key) override;
 	};
 
-	struct TextItem
+	struct CommonTextData
+	{
+		mat4 transform;
+		Font::FormatStruct format;
+		Holder<Font> font;
+		Holder<PointerRange<uint32>> glyphs;
+		vec3 color = vec3::Nan();
+		uint32 cursor = m;
+	};
+
+	struct TextItem : Immovable, public CommonTextData
 	{
 		HierarchyItem *const hierarchy;
-		RenderableText::Text text;
-		bool skipInitialize;
+		bool skipInitialize = false;
 
 		TextItem(HierarchyItem *hierarchy);
 
 		void initialize();
+
+		void apply(const GuiTextFormatComponent &f);
 
 		void transcript();
 		void transcript(const string &value);
@@ -235,17 +172,18 @@ namespace cage
 
 		vec2 findRequestedSize();
 
-		RenderableText *emit(vec2 position, vec2 size) const;
+		RenderableText emit(vec2 position, vec2 size);
 
 		void updateCursorPosition(vec2 position, vec2 size, vec2 point, uint32 &cursor);
 	};
 
-	struct ImageItem
+	struct ImageItem : Immovable
 	{
-		GuiImageComponent Image;
+		GuiImageComponent image;
 		GuiImageFormatComponent format;
+		Holder<Texture> texture;
+
 		HierarchyItem *const hierarchy = nullptr;
-		Texture *texture = nullptr;
 		bool skipInitialize = false;
 
 		ImageItem(HierarchyItem *hierarchy);
@@ -258,7 +196,62 @@ namespace cage
 
 		vec2 findRequestedSize();
 
-		RenderableImage *emit(vec2 position, vec2 size) const;
+		RenderableImage emit(vec2 position, vec2 size);
+	};
+
+	struct RenderableBase : Immovable
+	{
+		GuiImpl *impl = nullptr;
+		vec2 clipPos, clipSize;
+
+		RenderableBase(GuiImpl *impl) : impl(impl)
+		{}
+
+		virtual ~RenderableBase() = default;
+
+		void setClip(const HierarchyItem *item);
+		bool prepare();
+	};
+
+	struct RenderableElement : public RenderableBase
+	{
+		struct Element
+		{
+			vec4 outer;
+			vec4 inner;
+			uint32 element = m;
+			uint32 mode = m;
+		} data;
+
+		const SkinData *skin = nullptr;
+
+		RenderableElement(WidgetItem *item, GuiElementTypeEnum element, uint32 mode, vec2 pos, vec2 size);
+
+		virtual ~RenderableElement() override;
+	};
+
+	struct RenderableText : public RenderableBase
+	{
+		CommonTextData data;
+
+		RenderableText(TextItem *text, vec2 position, vec2 size);
+
+		virtual ~RenderableText() override;
+	};
+
+	struct RenderableImage : public RenderableBase
+	{
+		struct Image
+		{
+			vec4 ndcPos;
+			vec4 uvClip;
+			vec4 aniTexFrames;
+			Holder<Texture> texture;
+		} data;
+
+		RenderableImage(ImageItem *item, vec2 position, vec2 size);
+
+		virtual ~RenderableImage() override;
 	};
 
 	struct EventReceiver
@@ -275,34 +268,29 @@ namespace cage
 	class GuiImpl : public Gui
 	{
 	public:
-		Holder<EntityManager> entityMgr;
-		privat::GuiComponents components;
+		Holder<MemoryArena> memory; // must be last to destroy
 
-		AssetManager *assetMgr;
+		Holder<EntityManager> entityMgr = newEntityManager();
+		AssetManager *assetMgr = nullptr;
 
 		ivec2 inputResolution; // last window resolution (pixels)
 		ivec2 inputMouse; // last position of mouse (pixels)
 		ivec2 outputResolution; // resolution of output texture or screen (pixels)
 		vec2 outputSize; // (points)
 		vec2 outputMouse; // (points)
-		real zoom, retina, pointsScale; // how many pixels per point (1D)
-		uint32 focusName; // focused entity name
-		uint32 focusParts; // bitmask of focused parts of the single widget (bits 30 and 31 are reserved for scrollbars)
-		WidgetItem *hover;
-
-		Holder<MemoryArena> itemsArena;
-		MemoryArena itemsMemory;
-		HierarchyItem *root;
+		real zoom = 1, retina = 1, pointsScale = 1; // how many pixels per point (1D)
+		uint32 focusName = 0; // focused entity name
+		uint32 focusParts = 0; // bitmask of focused parts of the single widget (bits 30 and 31 are reserved for scrollbars)
+		WidgetItem *hover = nullptr;
+		Holder<HierarchyItem> root;
 
 		struct GraphicsData
 		{
-			Holder<ShaderProgram> debugShader;
 			Holder<ShaderProgram> elementShader;
 			Holder<ShaderProgram> fontShader;
 			Holder<ShaderProgram> imageAnimatedShader;
 			Holder<ShaderProgram> imageStaticShader;
 			Holder<ShaderProgram> colorPickerShader[3];
-			Holder<Model> debugModel;
 			Holder<Model> elementModel;
 			Holder<Model> fontModel;
 			Holder<Model> imageModel;
@@ -310,45 +298,31 @@ namespace cage
 			void load(AssetManager *assetMgr);
 		} graphicsData;
 
-		struct EmitData
-		{
-			Holder<MemoryArena> arena;
-			MemoryArena memory;
-			RenderableBase *first = nullptr, *last = nullptr;
-
-			EmitData(const GuiCreateConfig &config);
-			EmitData(EmitData &&other); // this is not defined but it is required - some stupid weird issue with gcc.
-			~EmitData();
-			void flush();
-		} emitData[3], *emitControl;
+		Holder<RenderQueue> renderQueues[3];
+		RenderQueue *activeQueue = nullptr;
 		Holder<SwapBufferGuard> emitController;
 
 		WindowEventListeners listeners;
 		std::vector<EventReceiver> mouseEventReceivers;
-		bool eventsEnabled;
+		bool eventsEnabled = false;
 
 		std::vector<SkinData> skins;
 
 		explicit GuiImpl(const GuiCreateConfig &config);
 		~GuiImpl();
-
 		void scaling();
-
+		vec4 pointsToNdc(vec2 position, vec2 size) const;
 		bool eventPoint(const ivec2 &ptIn, vec2 &ptOut);
-		vec4 pointsToNdc(vec2 position, vec2 size);
-
-		void graphicsDispatch();
-
-		uint32 entityWidgetsCount(Entity *e);
-		uint32 entityLayoutsCount(Entity *e);
+		void emit();
 	};
 
+	uint32 entityWidgetsCount(Entity *e);
+	uint32 entityLayoutsCount(Entity *e);
 	void offsetPosition(vec2 &position, const vec4 &offset);
 	void offsetSize(vec2 &size, const vec4 &offset);
 	void offset(vec2 &position, vec2 &size, const vec4 &offset);
 	bool pointInside(vec2 pos, vec2 size, vec2 point);
 	bool clip(vec2 &pos, vec2 &size, vec2 clipPos, vec2 clipSize); // return whether the clipped rect has positive area
-
 	HierarchyItem *subsideItem(HierarchyItem *item);
 	void ensureItemHasLayout(HierarchyItem *item); // if the item's entity does not have any layout, subside the item and add default layouter to it
 }

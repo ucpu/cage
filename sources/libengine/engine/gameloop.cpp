@@ -25,6 +25,7 @@
 #include <cage-engine/voices.h>
 #include <cage-engine/gui.h>
 #include <cage-engine/engineProfiling.h>
+#include <cage-engine/renderQueue.h>
 
 #include "engine.h"
 
@@ -179,7 +180,6 @@ namespace cage
 			void graphicsDispatchInitializeStage()
 			{
 				window->makeCurrent();
-				gui->graphicsInitialize();
 				graphicsDispatchInitialize();
 			}
 
@@ -207,7 +207,7 @@ namespace cage
 				if (graphicsPrepareThread().stereoMode == StereoModeEnum::Mono)
 				{
 					OPTICK_EVENT("gui render");
-					gui->graphicsRender();
+					gui->graphics()->dispatch();
 					CAGE_CHECK_GL_ERROR_DEBUG();
 				}
 				{
@@ -237,7 +237,6 @@ namespace cage
 
 			void graphicsDispatchFinalizeStage()
 			{
-				gui->graphicsFinalize();
 				graphicsDispatchFinalize();
 				assets->unloadCustomThread(graphicsDispatchThread().threadIndex);
 			}
@@ -307,17 +306,16 @@ namespace cage
 			{
 				OPTICK_EVENT("inputs");
 				{
-					OPTICK_EVENT("gui update");
-					gui->setOutputResolution(window->resolution(), window->contentScaling());
-					gui->controlUpdateStart();
+					gui->outputResolution(window->resolution());
+					gui->outputRetina(window->contentScaling());
 				}
 				{
 					OPTICK_EVENT("window events");
 					window->processEvents();
 				}
 				{
-					OPTICK_EVENT("gui emit");
-					gui->controlUpdateDone();
+					OPTICK_EVENT("gui update");
+					gui->update();
 				}
 			}
 

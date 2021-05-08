@@ -10,11 +10,12 @@ namespace cage
 
 			struct Scrollbar
 			{
-				vec2 position;
-				vec2 size;
-				real dotSize;
+				vec2 position = vec2::Nan();
+				vec2 size = vec2::Nan();
+				real dotSize = real::Nan();
 				real &value;
-				Scrollbar(real &value) : position(vec2::Nan()), size(vec2::Nan()), dotSize(real::Nan()), value(value)
+
+				Scrollbar(real &value) : value(value)
 				{}
 			} scrollbars[2];
 
@@ -28,21 +29,21 @@ namespace cage
 			virtual void initialize() override
 			{
 				CAGE_ASSERT(!hierarchy->text);
-				CAGE_ASSERT(!hierarchy->Image);
+				CAGE_ASSERT(!hierarchy->image);
 			}
 
 			virtual void findRequestedSize() override
 			{
-				hierarchy->firstChild->findRequestedSize();
-				hierarchy->requestedSize = hierarchy->firstChild->requestedSize;
+				hierarchy->children[0]->findRequestedSize();
+				hierarchy->requestedSize = hierarchy->children[0]->requestedSize;
 			}
 
 			virtual void findFinalPosition(const FinalPosition &update) override
 			{
+				const real scw = skin->defaults.scrollbars.scrollbarSize + skin->defaults.scrollbars.contentPadding;
 				wheelFactor = 70 / (hierarchy->requestedSize[1] - update.renderSize[1]);
 				FinalPosition u(update);
 				u.renderSize = hierarchy->requestedSize;
-				real scw = skin->defaults.scrollbars.scrollbarSize + skin->defaults.scrollbars.contentPadding;
 				for (uint32 a = 0; a < 2; a++)
 				{
 					bool show = data.overflow[a] == OverflowModeEnum::Always;
@@ -66,10 +67,10 @@ namespace cage
 					}
 				}
 				u.clipSize = max(u.clipSize, 0);
-				hierarchy->firstChild->findFinalPosition(u);
+				hierarchy->children[0]->findFinalPosition(u);
 			}
 
-			virtual void emit() const override
+			virtual void emit() override
 			{
 				hierarchy->childrenEmit();
 				for (uint32 a = 0; a < 2; a++)
@@ -169,6 +170,6 @@ namespace cage
 	void scrollbarsCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<ScrollbarsImpl>(item);
+		item->item = item->impl->memory->createHolder<ScrollbarsImpl>(item).cast<BaseItem>();
 	}
 }

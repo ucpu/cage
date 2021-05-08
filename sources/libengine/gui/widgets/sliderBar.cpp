@@ -19,9 +19,9 @@ namespace cage
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT(!hierarchy->firstChild);
+				CAGE_ASSERT(hierarchy->children.empty());
 				CAGE_ASSERT(!hierarchy->text);
-				CAGE_ASSERT(!hierarchy->Image);
+				CAGE_ASSERT(!hierarchy->image);
 				CAGE_ASSERT(data.value.valid() && data.min.valid() && data.max.valid());
 				CAGE_ASSERT(data.max > data.min);
 				normalizedValue = (data.value - data.min) / (data.max - data.min);
@@ -36,7 +36,7 @@ namespace cage
 				offsetSize(hierarchy->requestedSize, defaults.margin);
 			}
 
-			virtual void emit() const override
+			virtual void emit() override
 			{
 				vec2 p = hierarchy->renderPos;
 				vec2 s = hierarchy->renderSize;
@@ -111,6 +111,6 @@ namespace cage
 	void SliderBarCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<SliderBarImpl>(item);
+		item->item = item->impl->memory->createHolder<SliderBarImpl>(item).cast<BaseItem>();
 	}
 }

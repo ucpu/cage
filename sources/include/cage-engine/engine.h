@@ -289,6 +289,6 @@ namespace cage
 }
 
 #define CAGE_COMPONENT_ENGINE(T,C,E) ::cage::T##Component &C = (E)->value<::cage::T##Component>(::cage::T##Component::component);
-#define CAGE_COMPONENT_GUI(T,C,E) ::cage::Gui##T##Component &C = (E)->value<::cage::Gui##T##Component>(::cage::engineGui()->components().T);
+#define CAGE_COMPONENT_GUI(T,C,E) ::cage::Gui##T##Component &C = (E)->value<::cage::Gui##T##Component>();
 
 #endif // guard_engine_h_73772AB49E6A4E6DB7F99E0D0151468D

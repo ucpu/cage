@@ -6,9 +6,7 @@ namespace cage
 	{
 		struct PanelImpl : public WidgetItem
 		{
-			GuiPanelComponent &data;
-
-			PanelImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(Panel))
+			PanelImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy)
 			{
 				ensureItemHasLayout(hierarchy);
 			}
@@ -16,13 +14,13 @@ namespace cage
 			virtual void initialize() override
 			{
 				if (hierarchy->text)
-					hierarchy->text->text.apply(skin->defaults.panel.textFormat, hierarchy->impl);
+					hierarchy->text->apply(skin->defaults.panel.textFormat);
 			}
 
 			virtual void findRequestedSize() override
 			{
-				hierarchy->firstChild->findRequestedSize();
-				hierarchy->requestedSize = hierarchy->firstChild->requestedSize;
+				hierarchy->children[0]->findRequestedSize();
+				hierarchy->requestedSize = hierarchy->children[0]->requestedSize;
 				offsetSize(hierarchy->requestedSize, skin->defaults.panel.contentPadding);
 				if (hierarchy->text)
 				{
@@ -48,10 +46,10 @@ namespace cage
 					u.renderSize[1] -= skin->defaults.panel.captionHeight;
 				}
 				offset(u.renderPos, u.renderSize, -skin->defaults.panel.contentPadding);
-				hierarchy->firstChild->findFinalPosition(u);
+				hierarchy->children[0]->findFinalPosition(u);
 			}
 
-			virtual void emit() const override
+			virtual void emit() override
 			{
 				vec2 p = hierarchy->renderPos;
 				vec2 s = hierarchy->renderSize;
@@ -73,6 +71,6 @@ namespace cage
 	void PanelCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<PanelImpl>(item);
+		item->item = item->impl->memory->createHolder<PanelImpl>(item).cast<BaseItem>();
 	}
 }

@@ -4,38 +4,38 @@
 
 namespace cage
 {
-	namespace detail
+	namespace
 	{
-		namespace
+		void renderRectangle(Image *png, uint32 x1, uint32 y1, uint32 x2, uint32 y2, const vec3 &color)
 		{
-			void renderRectangle(Image *png, uint32 x1, uint32 y1, uint32 x2, uint32 y2, const vec3 &color)
-			{
-				vec4 c = vec4(color, 1);
-				CAGE_ASSERT(x1 <= x2 && y1 <= y2);
-				CAGE_ASSERT(x2 < png->width() && y2 < png->height());
-				for (uint32 y = y1; y < y2; y++)
-					for (uint32 x = x1; x < x2; x++)
-						png->set(x, y, c);
-			}
-
-			void renderRectangle(Image *png, const vec4 &rect, const vec3 &color)
-			{
-				renderRectangle(png,
-					numeric_cast<uint32>(rect[0] * png->width()),
-					numeric_cast<uint32>(rect[1] * png->height()),
-					numeric_cast<uint32>(rect[2] * png->width()),
-					numeric_cast<uint32>(rect[3] * png->height()),
-					color);
-			}
-
-			void renderRectangle(Image *png, const GuiSkinElementLayout::TextureUvOi &rects, const vec3 &outerBorder, const vec3 &innerBorder, const vec3 &content)
-			{
-				renderRectangle(png, rects.outer, outerBorder);
-				renderRectangle(png, interpolate(rects.outer, rects.inner, 0.5), innerBorder);
-				renderRectangle(png, rects.inner, content);
-			}
+			vec4 c = vec4(color, 1);
+			CAGE_ASSERT(x1 <= x2 && y1 <= y2);
+			CAGE_ASSERT(x2 < png->width() && y2 < png->height());
+			for (uint32 y = y1; y < y2; y++)
+				for (uint32 x = x1; x < x2; x++)
+					png->set(x, y, c);
 		}
 
+		void renderRectangle(Image *png, const vec4 &rect, const vec3 &color)
+		{
+			renderRectangle(png,
+				numeric_cast<uint32>(rect[0] * png->width()),
+				numeric_cast<uint32>(rect[1] * png->height()),
+				numeric_cast<uint32>(rect[2] * png->width()),
+				numeric_cast<uint32>(rect[3] * png->height()),
+				color);
+		}
+
+		void renderRectangle(Image *png, const GuiSkinElementLayout::TextureUvOi &rects, const vec3 &outerBorder, const vec3 &innerBorder, const vec3 &content)
+		{
+			renderRectangle(png, rects.outer, outerBorder);
+			renderRectangle(png, interpolate(rects.outer, rects.inner, 0.5), innerBorder);
+			renderRectangle(png, rects.inner, content);
+		}
+	}
+
+	namespace detail
+	{
 		Holder<Image> guiSkinTemplateExport(const GuiSkinConfig &skin, uint32 resolution)
 		{
 			Holder<Image> png = newImage();

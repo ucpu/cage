@@ -14,28 +14,25 @@ namespace cage
 
 	namespace
 	{
-		void findWidgets(HierarchyItem *item, uint32 name, std::vector<WidgetItem*> &result)
+		void findWidgets(HierarchyItem *item, uint32 name, std::vector<WidgetItem *> &result)
 		{
+			if (item->ent && item->ent->name() == name)
 			{
-				WidgetItem *w = nullptr;
-				if (item->ent && item->ent->name() == name && (w = dynamic_cast<WidgetItem*>(item->item)))
+				WidgetItem *w = dynamic_cast<WidgetItem *>(+item->item);
+				if (w)
 					result.push_back(w);
 			}
-			HierarchyItem *c = item->firstChild;
-			while (c)
-			{
-				findWidgets(c, name, result);
-				c = c->nextSibling;
-			}
+			for (auto &it : item->children)
+				findWidgets(+it, name, result);
 		}
 
-		std::vector<WidgetItem*> focused(GuiImpl *impl)
+		std::vector<WidgetItem *> focused(GuiImpl *impl)
 		{
 			std::vector<WidgetItem*> result;
 			if (impl->focusName)
 			{
 				result.reserve(3);
-				findWidgets(impl->root, impl->focusName, result);
+				findWidgets(+impl->root, impl->focusName, result);
 			}
 			return result;
 		}
@@ -184,9 +181,9 @@ namespace cage
 
 	void HierarchyItem::fireWidgetEvent() const
 	{
-		if (ent->has(impl->components.Event))
+		if (ent->has<GuiEventComponent>())
 		{
-			GuiEventComponent &v = ent->value<GuiEventComponent>(impl->components.Event);
+			GuiEventComponent &v = ent->value<GuiEventComponent>();
 			if (v.event)
 			{
 				if (v.event(ent->name()))

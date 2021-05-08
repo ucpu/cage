@@ -7,17 +7,17 @@ namespace cage
 		struct RadioBoxImpl : public WidgetItem
 		{
 			GuiRadioBoxComponent &data;
-			GuiElementTypeEnum element;
+			GuiElementTypeEnum element = GuiElementTypeEnum::InvalidElement;
 
-			RadioBoxImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(RadioBox)), element(GuiElementTypeEnum::TotalElements)
+			RadioBoxImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(RadioBox))
 			{}
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT(!hierarchy->firstChild);
-				CAGE_ASSERT(!hierarchy->Image);
+				CAGE_ASSERT(hierarchy->children.empty());
+				CAGE_ASSERT(!hierarchy->image);
 				if (hierarchy->text)
-					hierarchy->text->text.apply(skin->defaults.radioBox.textFormat, hierarchy->impl);
+					hierarchy->text->apply(skin->defaults.radioBox.textFormat);
 				element = GuiElementTypeEnum((uint32)GuiElementTypeEnum::RadioBoxUnchecked + (uint32)data.state);
 			}
 
@@ -33,7 +33,7 @@ namespace cage
 				offsetSize(hierarchy->requestedSize, skin->defaults.radioBox.margin);
 			}
 
-			virtual void emit() const override
+			virtual void emit() override
 			{
 				vec2 sd = skin->defaults.radioBox.size;
 				{
@@ -78,6 +78,6 @@ namespace cage
 	void RadioBoxCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<RadioBoxImpl>(item);
+		item->item = item->impl->memory->createHolder<RadioBoxImpl>(item).cast<BaseItem>();
 	}
 }

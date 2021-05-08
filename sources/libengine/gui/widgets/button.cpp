@@ -11,9 +11,9 @@ namespace cage
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT(!hierarchy->firstChild);
+				CAGE_ASSERT(hierarchy->children.empty());
 				if (hierarchy->text)
-					hierarchy->text->text.apply(skin->defaults.button.textFormat, hierarchy->impl);
+					hierarchy->text->apply(skin->defaults.button.textFormat);
 			}
 
 			virtual void findRequestedSize() override
@@ -22,7 +22,7 @@ namespace cage
 				offsetSize(hierarchy->requestedSize, skin->defaults.button.margin);
 			}
 
-			virtual void emit() const override
+			virtual void emit() override
 			{
 				{
 					vec2 p = hierarchy->renderPos;
@@ -34,8 +34,8 @@ namespace cage
 					vec2 p = hierarchy->renderPos;
 					vec2 s = hierarchy->renderSize;
 					offset(p, s, -skin->defaults.button.margin - skin->layouts[(uint32)GuiElementTypeEnum::Button].border - skin->defaults.button.padding);
-					if (hierarchy->Image)
-						hierarchy->Image->emit(p, s);
+					if (hierarchy->image)
+						hierarchy->image->emit(p, s);
 					if (hierarchy->text)
 						hierarchy->text->emit(p, s);
 				}
@@ -57,6 +57,6 @@ namespace cage
 	void ButtonCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<ButtonImpl>(item);
+		item->item = item->impl->memory->createHolder<ButtonImpl>(item).cast<BaseItem>();
 	}
 }

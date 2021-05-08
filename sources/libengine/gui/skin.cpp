@@ -1,8 +1,7 @@
 #include <cage-core/hashString.h>
+#include <cage-core/flatSet.h>
 
 #include "private.h"
-
-#include <set>
 
 namespace cage
 {
@@ -33,7 +32,7 @@ namespace cage
 
 	namespace
 	{
-		struct packerStruct
+		struct Packer
 		{
 			vec2 size; // including border
 			real frame; // spacing around element
@@ -133,7 +132,7 @@ namespace cage
 			GuiElementTypeEnum::ColorPickerPreviewPanel, // overlaps: ColorPickerHuePanel, ColorPickerSatValPanel
 		};
 
-		std::set<GuiElementTypeEnum> wideElements = {
+		FlatSet<GuiElementTypeEnum> wideElements = {
 			GuiElementTypeEnum::PanelCaption,
 			GuiElementTypeEnum::SpoilerCaption,
 			GuiElementTypeEnum::Button,
@@ -149,14 +148,14 @@ namespace cage
 			GuiElementTypeEnum::ProgressBar,
 		};
 
-		std::set<GuiElementTypeEnum> noBorder = {
+		FlatSet<GuiElementTypeEnum> noBorder = {
 			//GuiElementTypeEnum::ScrollbarHorizontalDot, GuiElementTypeEnum::ScrollbarVerticalDot,
 			GuiElementTypeEnum::SpoilerIconCollapsed, GuiElementTypeEnum::SpoilerIconShown,
 			GuiElementTypeEnum::RadioBoxChecked, GuiElementTypeEnum::RadioBoxUnchecked, GuiElementTypeEnum::RadioBoxIndetermined,
 			GuiElementTypeEnum::SliderHorizontalDot, GuiElementTypeEnum::SliderVerticalDot,
 		};
 
-		std::set<GuiElementTypeEnum> noFocus = {
+		FlatSet<GuiElementTypeEnum> noFocus = {
 			GuiElementTypeEnum::PanelBase, GuiElementTypeEnum::PanelCaption,
 			GuiElementTypeEnum::SpoilerBase, GuiElementTypeEnum::SpoilerCaption, GuiElementTypeEnum::SpoilerIconCollapsed, GuiElementTypeEnum::SpoilerIconShown,
 			GuiElementTypeEnum::InputButtonDecrement, GuiElementTypeEnum::InputButtonIncrement,
@@ -167,7 +166,7 @@ namespace cage
 			GuiElementTypeEnum::ToolTip,
 		};
 
-		std::set<GuiElementTypeEnum> noHover = {
+		FlatSet<GuiElementTypeEnum> noHover = {
 			GuiElementTypeEnum::PanelBase,
 			GuiElementTypeEnum::SpoilerBase, GuiElementTypeEnum::SpoilerIconCollapsed, GuiElementTypeEnum::SpoilerIconShown,
 			GuiElementTypeEnum::ComboBoxList,
@@ -176,7 +175,7 @@ namespace cage
 		};
 
 		{ // automatic uv construction
-			packerStruct packer;
+			Packer packer;
 			packer.frame = 4.f / 1024;
 			packer.border = 4.f / 1024;
 

@@ -24,7 +24,7 @@ namespace cage
 
 			}
 
-			virtual void emit() const override
+			virtual void emit() override
 			{
 
 			}
@@ -34,6 +34,6 @@ namespace cage
 	void ListBoxCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<ListBoxImpl>(item);
+		item->item = item->impl->memory->createHolder<ListBoxImpl>(item).cast<BaseItem>();
 	}
 }

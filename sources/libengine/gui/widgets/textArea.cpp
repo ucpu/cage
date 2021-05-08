@@ -24,7 +24,7 @@ namespace cage
 
 			}
 
-			virtual void emit() const override
+			virtual void emit() override
 			{
 
 			}
@@ -34,6 +34,6 @@ namespace cage
 	void TextAreaCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<TextAreaImpl>(item);
+		item->item = item->impl->memory->createHolder<TextAreaImpl>(item).cast<BaseItem>();
 	}
 }

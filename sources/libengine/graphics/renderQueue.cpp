@@ -154,27 +154,16 @@ namespace cage
 				return { (T *)blck->ptr, ((T *)blck->ptr) + values.size() };
 			}
 
-			void universalUniformBuffer(uint32 bindingPoint, PointerRange<const char> data)
+			UubRange universalUniformBuffer(PointerRange<const char> data, uint32 bindingPoint)
 			{
 				const uint32 offset = numeric_cast<uint32>(detail::roundUpTo(uubStaging.size(), UniformBuffer::getAlignmentRequirement()));
-				uubStaging.resizeSmart(numeric_cast<uint32>(offset + data.size()));
-				detail::memcpy(uubStaging.data() + offset, data.data(), data.size());
-
-				struct Cmd : public CmdBase
-				{
-					uint32 bindingPoint = 0;
-					uint32 offset = 0;
-					uint32 size = 0;
-					void dispatch(RenderQueueImpl *impl) override
-					{
-						impl->uubObject->bind(bindingPoint, offset, size);
-					}
-				};
-				RenderQueueImpl *impl = (RenderQueueImpl *)this;
-				Cmd &cmd = impl->addCmd<Cmd>();
-				cmd.bindingPoint = bindingPoint;
-				cmd.offset = offset;
-				cmd.size = numeric_cast<uint32>(data.size());
+				const uint32 size = numeric_cast<uint32>(data.size());
+				uubStaging.resizeSmart(numeric_cast<uint32>(offset + size));
+				detail::memcpy(uubStaging.data() + offset, data.data(), size);
+				UubRange uubRange = { offset, size };
+				if (bindingPoint != m)
+					bind(uubRange, bindingPoint);
+				return uubRange;
 			}
 
 			template<class T>
@@ -238,10 +227,26 @@ namespace cage
 		};
 	}
 
-	void RenderQueue::universalUniformBuffer(PointerRange<const char> data, uint32 bindingPoint)
+	UubRange RenderQueue::universalUniformBuffer(PointerRange<const char> data, uint32 bindingPoint)
 	{
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
-		impl->universalUniformBuffer(bindingPoint, data);
+		return impl->universalUniformBuffer(data, bindingPoint);
+	}
+
+	void RenderQueue::bind(UubRange uubRange, uint32 bindingPoint)
+	{
+		struct Cmd : public CmdBase, public UubRange
+		{
+			uint32 bindingPoint = 0;
+			void dispatch(RenderQueueImpl *impl) override
+			{
+				impl->uubObject->bind(bindingPoint, offset, size);
+			}
+		};
+		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		Cmd &cmd = impl->addCmd<Cmd>();
+		(UubRange&)cmd = uubRange;
+		cmd.bindingPoint = bindingPoint;
 	}
 
 	void RenderQueue::bind(Holder<UniformBuffer> &&uniformBuffer, uint32 bindingPoint)

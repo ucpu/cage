@@ -248,63 +248,19 @@ namespace cage
 		// GuiImageComponent defines background
 	};
 
-	namespace privat
-	{
-		struct CAGE_ENGINE_API GuiComponents
-		{
-			EntityComponent *Parent;
-			EntityComponent *Image;
-			EntityComponent *ImageFormat;
-			EntityComponent *Text;
-			EntityComponent *TextFormat;
-			EntityComponent *Selection;
-			EntityComponent *Tooltip;
-			EntityComponent *WidgetState;
-			EntityComponent *SelectedItem;
-			EntityComponent *Scrollbars;
-			EntityComponent *ExplicitSize;
-			EntityComponent *Event;
-			EntityComponent *Label;
-			EntityComponent *Button;
-			EntityComponent *Input;
-			EntityComponent *TextArea;
-			EntityComponent *CheckBox;
-			EntityComponent *RadioBox;
-			EntityComponent *ComboBox;
-			EntityComponent *ListBox;
-			EntityComponent *ProgressBar;
-			EntityComponent *SliderBar;
-			EntityComponent *ColorPicker;
-			EntityComponent *Panel;
-			EntityComponent *Spoiler;
-			EntityComponent *LayoutLine;
-			EntityComponent *LayoutTable;
-			EntityComponent *LayoutSplitter;
-
-			GuiComponents(EntityManager* ents);
-		};
-	}
-
 	class CAGE_ENGINE_API Gui : private Immovable
 	{
 	public:
-		void graphicsInitialize();
-		void graphicsFinalize();
-		void graphicsRender();
-
-		//void soundInitialize();
-		//void soundFinalize();
-		//void soundRender();
-
-		void setOutputResolution(const ivec2 &resolution, real retina = 1); // resolution: pixels; retina: how many pixels per point (1D)
-		void setZoom(real zoom); // pixels per point (1D)
-		ivec2 getOutputResolution() const;
-		real getOutputRetina() const;
-		real getZoom() const;
-		void setFocus(uint32 widget);
-		uint32 getFocus() const;
-		void controlUpdateStart(); // must be called before processing events
-		void controlUpdateDone(); // accesses asset manager
+		void outputResolution(const ivec2 &resolution); // pixels
+		ivec2 outputResolution() const;
+		void outputRetina(real retina); // pixels per point (1D)
+		real outputRetina() const;
+		void zoom(real zoom); // pixels per point (1D)
+		real zoom() const;
+		void focus(uint32 widget);
+		uint32 focus() const;
+		void update();
+		Holder<RenderQueue> graphics();
 
 		bool windowResize(const ivec2 &);
 		bool mousePress(MouseButtonsFlags buttons, ModifiersFlags modifiers, const ivec2 &point);
@@ -319,16 +275,14 @@ namespace cage
 
 		void handleWindowEvents(Window *window, sint32 order = 0);
 		void skipAllEventsUntilNextUpdate();
-		ivec2 getInputResolution() const;
+		ivec2 inputResolution() const;
 		Delegate<bool(const ivec2&, vec2&)> eventCoordinatesTransformer; // called from controlUpdateStart or from any window events, it should return false to signal that the point is outside the gui, otherwise the point should be converted from window coordinate system to the gui output resolution coordinate system
 		EventDispatcher<bool(uint32)> widgetEvent; // called from controlUpdateStart or window events
 
 		GuiSkinConfig &skin(uint32 index = 0);
 		const GuiSkinConfig &skin(uint32 index = 0) const;
 
-		privat::GuiComponents &components();
 		EntityManager *entities();
-		AssetManager *assets();
 	};
 
 	struct CAGE_ENGINE_API GuiCreateConfig

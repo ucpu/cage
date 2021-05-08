@@ -14,19 +14,19 @@ namespace cage
 		{
 			GuiInputComponent &data;
 			GuiSelectionComponent &selection;
-			bool showArrows;
+			bool showArrows = false;
 
 			vec2 leftPos, rightPos;
 			vec2 mainPos, mainSize;
 			vec2 textPos, textSize;
 
-			InputImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(Input)), selection(GUI_REF_COMPONENT(Selection)), showArrows(false)
+			InputImpl(HierarchyItem *hierarchy) : WidgetItem(hierarchy), data(GUI_REF_COMPONENT(Input)), selection(GUI_REF_COMPONENT(Selection))
 			{}
 
 			virtual void initialize() override
 			{
-				CAGE_ASSERT(!hierarchy->firstChild);
-				CAGE_ASSERT(!hierarchy->Image);
+				CAGE_ASSERT(hierarchy->children.empty());
+				CAGE_ASSERT(!hierarchy->image);
 
 				showArrows = data.type == InputTypeEnum::Real || data.type == InputTypeEnum::Integer;
 
@@ -55,22 +55,22 @@ namespace cage
 				hierarchy->text->skipInitialize = true;
 				if (data.value.empty() && !hasFocus())
 				{ // placeholder
-					hierarchy->text->text.apply(skin->defaults.inputBox.placeholderFormat, hierarchy->impl);
+					hierarchy->text->apply(skin->defaults.inputBox.placeholderFormat);
 					hierarchy->text->transcript();
 				}
 				else
 				{ // actual value
 					if (data.valid)
-						hierarchy->text->text.apply(skin->defaults.inputBox.textValidFormat, hierarchy->impl);
+						hierarchy->text->apply(skin->defaults.inputBox.textValidFormat);
 					else
-						hierarchy->text->text.apply(skin->defaults.inputBox.textInvalidFormat, hierarchy->impl);
+						hierarchy->text->apply(skin->defaults.inputBox.textInvalidFormat);
 					if (data.type == InputTypeEnum::Password)
 					{
 						hierarchy->text->transcript("*");
-						uint32 g = hierarchy->text->text.glyphs[0];
+						uint32 g = hierarchy->text->glyphs[0];
 						hierarchy->text->transcript(data.value);
-						for (uint32 i = 0; i < hierarchy->text->text.count; i++)
-							hierarchy->text->text.glyphs[i] = g;
+						for (uint32 i = 0; i < hierarchy->text->glyphs.size(); i++)
+							hierarchy->text->glyphs[i] = g;
 					}
 					else
 						hierarchy->text->transcript(data.value);
@@ -79,7 +79,7 @@ namespace cage
 				if (hasFocus())
 				{
 					data.cursor = min(data.cursor, utf32Length(data.value));
-					hierarchy->text->text.cursor = data.cursor;
+					hierarchy->text->cursor = data.cursor;
 				}
 			}
 
@@ -209,7 +209,7 @@ namespace cage
 				offset(textPos, textSize, -skin->layouts[(uint32)GuiElementTypeEnum::Input].border - s.basePadding);
 			}
 
-			virtual void emit() const override
+			virtual void emit() override
 			{
 				const auto &s = skin->defaults.inputBox;
 				emitElement(GuiElementTypeEnum::Input, mode(mainPos, mainSize), mainPos, mainSize);
@@ -372,6 +372,6 @@ namespace cage
 	void InputCreate(HierarchyItem *item)
 	{
 		CAGE_ASSERT(!item->item);
-		item->item = item->impl->itemsMemory.createObject<InputImpl>(item);
+		item->item = item->impl->memory->createHolder<InputImpl>(item).cast<BaseItem>();
 	}
 }
