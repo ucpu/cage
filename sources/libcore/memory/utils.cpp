@@ -14,13 +14,13 @@
 
 namespace cage
 {
-	OutOfMemory::OutOfMemory(StringLiteral file, uint32 line, StringLiteral function, SeverityEnum severity, StringLiteral message, uintPtr memory) noexcept : Exception(file, line, function, severity, message), memory(memory)
+	OutOfMemory::OutOfMemory(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, StringLiteral message, uintPtr memory) noexcept : Exception(function, file, line, severity, message), memory(memory)
 	{};
 
 	void OutOfMemory::log()
 	{
-		::cage::privat::makeLog(file, line, function, SeverityEnum::Note, "exception", stringizer() + "memory requested: " + memory, false, false);
-		::cage::privat::makeLog(file, line, function, severity, "exception", message, false, false);
+		::cage::privat::makeLog(function, file, line, SeverityEnum::Note, "exception", stringizer() + "memory requested: " + +memory, false, false);
+		::cage::privat::makeLog(function, file, line, severity, "exception", +message, false, false);
 	};
 
 	void *MemoryArena::allocate(uintPtr size, uintPtr alignment)

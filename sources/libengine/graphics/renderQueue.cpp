@@ -67,7 +67,7 @@ namespace cage
 			UniformBuffer *uubObject = nullptr;
 
 #ifdef CAGE_DEBUG
-			std::vector<string> namesStack;
+			std::vector<StringLiteral> namesStack;
 #endif // CAGE_DEBUG
 
 			RenderQueueImpl()
@@ -128,6 +128,8 @@ namespace cage
 				for (CmdBase *cmd = head; cmd; cmd = cmd->next)
 					cmd->dispatch(this);
 				uubObject = nullptr;
+
+				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
 			template<class T>
@@ -244,6 +246,8 @@ namespace cage
 			}
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(uubRange.offset + uubRange.size <= impl->uubStaging.size());
+		CAGE_ASSERT((uubRange.offset % UniformBuffer::getAlignmentRequirement()) == 0);
 		Cmd &cmd = impl->addCmd<Cmd>();
 		(UubRange&)cmd = uubRange;
 		cmd.bindingPoint = bindingPoint;
@@ -887,17 +891,17 @@ namespace cage
 		cmd.queue = std::move(queue);
 	}
 
-	void RenderQueue::pushNamedPass(const string &name)
+	void RenderQueue::pushNamedPass(StringLiteral name)
 	{
 		struct Cmd : public CmdBase
 		{
-			string name;
+			StringLiteral name;
 			void dispatch(RenderQueueImpl *impl) override
 			{
 #ifdef CAGE_DEBUG
 				impl->namesStack.push_back(name);
 #endif // CAGE_DEBUG
-				glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, name.c_str());
+				glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, name);
 			}
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -912,6 +916,7 @@ namespace cage
 			void dispatch(RenderQueueImpl *impl) override
 			{
 #ifdef CAGE_DEBUG
+				CAGE_ASSERT(!impl->namesStack.empty());
 				impl->namesStack.pop_back();
 #endif // CAGE_DEBUG
 				glPopDebugGroup();
@@ -921,7 +926,7 @@ namespace cage
 		Cmd &cmd = impl->addCmd<Cmd>();
 	}
 
-	RenderQueueNamedPassScope RenderQueue::scopedNamedPass(const string &name)
+	RenderQueueNamedPassScope RenderQueue::scopedNamedPass(StringLiteral name)
 	{
 		return RenderQueueNamedPassScope(this, name);
 	}
@@ -956,7 +961,7 @@ namespace cage
 		return impl->primitivesCount;
 	}
 
-	RenderQueueNamedPassScope::RenderQueueNamedPassScope(RenderQueue *queue, const string &name) : queue(queue)
+	RenderQueueNamedPassScope::RenderQueueNamedPassScope(RenderQueue *queue, StringLiteral name) : queue(queue)
 	{
 		queue->pushNamedPass(name);
 	}

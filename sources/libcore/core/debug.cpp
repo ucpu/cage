@@ -142,7 +142,7 @@ namespace cage
 			}
 		}
 
-		void runtimeAssertFailure(const char *expt, const char *file, uintPtr line, const char *function)
+		void runtimeAssertFailure(StringLiteral function, StringLiteral file, uintPtr line, StringLiteral expt)
 		{
 			char buffer[2048];
 			buffer[0] = 0;

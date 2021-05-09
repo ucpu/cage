@@ -213,6 +213,7 @@ namespace cage
 		graphicsData.load(assetMgr);
 
 		Holder<RenderQueue> q = newRenderQueue();
+
 		activeQueue = +q;
 		auto namedScope = q->scopedNamedPass("gui");
 

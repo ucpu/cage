@@ -104,9 +104,9 @@ namespace cage
 		// stores a reference to the queue - do not modify it after it has been enqueued
 		void enqueue(Holder<RenderQueue> &&queue);
 
-		void pushNamedPass(const string &name);
+		void pushNamedPass(StringLiteral name);
 		void popNamedPass();
-		[[nodiscard]] RenderQueueNamedPassScope scopedNamedPass(const string &name);
+		[[nodiscard]] RenderQueueNamedPassScope scopedNamedPass(StringLiteral name);
 
 		void reset(); // erase all stored commands
 
@@ -119,7 +119,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API RenderQueueNamedPassScope : Immovable
 	{
-		[[nodiscard]] RenderQueueNamedPassScope(RenderQueue *queue, const string &name);
+		[[nodiscard]] RenderQueueNamedPassScope(RenderQueue *queue, StringLiteral name);
 		~RenderQueueNamedPassScope();
 
 	private:

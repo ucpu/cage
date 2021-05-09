@@ -287,7 +287,7 @@ namespace cage
 
 	namespace privat
 	{
-		uint64 makeLog(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept
+		uint64 makeLog(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept
 		{
 			try
 			{

@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <vector>
 
-#define CAGE_THROW_WARNING(EXCEPTION, ...) { EXCEPTION e(__FILE__, __LINE__, __FUNCTION__, ::cage::SeverityEnum::Warning, __VA_ARGS__); e.makeLog(); throw e; }
+#define CAGE_THROW_WARNING(EXCEPTION, ...) { EXCEPTION e(__FUNCTION__, __FILE__, __LINE__, ::cage::SeverityEnum::Warning, __VA_ARGS__); e.makeLog(); throw e; }
 
 namespace
 {
