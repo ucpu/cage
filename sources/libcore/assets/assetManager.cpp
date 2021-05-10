@@ -954,19 +954,15 @@ namespace cage
 		return systemArena().createImpl<AssetManager, AssetManagerImpl>(config);
 	}
 
-	AssetHeader initializeAssetHeader(const string &name_, uint16 schemeIndex)
+	AssetHeader::AssetHeader(const string &name_, uint16 schemeIndex)
 	{
-		AssetHeader a;
-		detail::memset(&a, 0, sizeof(AssetHeader));
-		detail::memcpy(a.cageName, "cageAss", 7);
-		a.version = CurrentAssetVersion;
+		version = CurrentAssetVersion;
 		string name = name_;
-		constexpr uint32 maxTexName = sizeof(a.textName);
-		if (name.length() >= maxTexName)
-			name = string() + ".." + subString(name, name.length() - maxTexName - 3, maxTexName - 3);
-		CAGE_ASSERT(name.length() < sizeof(a.textName));
-		detail::memcpy(a.textName, name.c_str(), name.length());
-		a.scheme = schemeIndex;
-		return a;
+		constexpr uint32 MaxTexName = sizeof(textName) - 1;
+		if (name.length() > MaxTexName)
+			name = string() + ".." + subString(name, name.length() - MaxTexName + 2, m);
+		CAGE_ASSERT(name.length() <= MaxTexName);
+		detail::memcpy(textName, name.c_str(), name.length());
+		scheme = schemeIndex;
 	}
 }

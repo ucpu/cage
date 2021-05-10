@@ -25,7 +25,7 @@ const char *logComponentName;
 
 AssetHeader initializeAssetHeader()
 {
-	AssetHeader h = initializeAssetHeader(inputName, numeric_cast<uint16>(schemeIndex));
+	AssetHeader h(inputName, numeric_cast<uint16>(schemeIndex));
 	string intr = properties("alias");
 	if (!intr.empty())
 	{
