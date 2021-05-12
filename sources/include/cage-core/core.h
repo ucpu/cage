@@ -843,7 +843,7 @@ namespace cage
 				return data_;
 			}
 
-			CAGE_FORCE_INLINE void clear()
+			void clear()
 			{
 				data_ = nullptr;
 				HolderControlBase *tmpCtrl = control_;
@@ -853,7 +853,7 @@ namespace cage
 					tmpCtrl->dec();
 			}
 
-			Holder<T> share() const
+			CAGE_FORCE_INLINE Holder<T> share() const
 			{
 				return Holder<T>(data_, control_);
 			}

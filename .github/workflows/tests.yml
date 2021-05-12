@@ -85,7 +85,6 @@ jobs:
     steps:
     - name: Install packages
       run: |
-        sudo apt-get update
         sudo apt-get install -y xorg-dev nasm ${{ matrix.compiler.install }}
 
     - name: Versions
