@@ -6,7 +6,7 @@ namespace
 {
 	int gCount = 0;
 
-	struct Tester
+	struct Tester : Immovable
 	{
 		Tester()
 		{
@@ -17,21 +17,19 @@ namespace
 		{
 			gCount--;
 		}
-
-		void test(const int expected)
-		{
-			CAGE_TEST(gCount == expected, gCount, expected);
-		}
 	};
+
+	struct Derived : public Tester
+	{};
 
 	void takeByReference(Holder<Tester> &ts)
 	{
-		ts->test(1);
+		CAGE_TEST(gCount == 1);
 	}
 
 	void takeByValue(Holder<Tester> ts)
 	{
-		ts->test(1);
+		CAGE_TEST(gCount == 1);
 	}
 
 	void functionTakingHolder(Holder<void> hld)
@@ -51,7 +49,6 @@ namespace
 	void functionTakingForwardDeclared(Holder<ForwardDeclared> &&param)
 	{
 		Holder<ForwardDeclared> local = std::move(param);
-		(void)local;
 	}
 }
 
@@ -88,6 +85,19 @@ void testHolder()
 		Holder<Tester> d = std::move(c).cast<Tester>();
 		CAGE_TEST(gCount == 1);
 		d.clear();
+		CAGE_TEST(gCount == 0);
+	}
+
+	{
+		CAGE_TESTCASE("dynamic cast");
+		CAGE_TEST(gCount == 0);
+		Holder<Derived> a = systemArena().createHolder<Derived>();
+		CAGE_TEST(gCount == 1);
+		Holder<Tester> b = std::move(a).cast<Tester>();
+		CAGE_TEST(gCount == 1);
+		Holder<Derived> c = std::move(b).dynCast<Derived>();
+		CAGE_TEST(gCount == 1);
+		c.clear();
 		CAGE_TEST(gCount == 0);
 	}
 
@@ -171,24 +181,20 @@ void testHolder()
 		CAGE_TEST(gCount == 0);
 		Holder<Tester> a = systemArena().createHolder<Tester>();
 		CAGE_TEST(gCount == 1);
-		CAGE_TEST(!a.shareable());
-		Holder<Tester> b = std::move(a).makeShareable();
+		Holder<Tester> b = std::move(a).share();
 		CAGE_TEST(gCount == 1);
-		CAGE_TEST(!a);
+		CAGE_TEST(a);
 		CAGE_TEST(b);
-		CAGE_TEST(b.shareable());
 		Holder<Tester> c = b.share();
 		CAGE_TEST(gCount == 1);
 		CAGE_TEST(b);
 		CAGE_TEST(c);
-		CAGE_TEST(b.get() == c.get());
-		CAGE_TEST(b.shareable());
-		CAGE_TEST(c.shareable());
+		CAGE_TEST(+b == +c);
 		b.clear();
 		CAGE_TEST(gCount == 1);
 		CAGE_TEST(!b);
 		CAGE_TEST(c);
-		CAGE_TEST(c.shareable());
+		a.clear();
 		c.clear();
 		CAGE_TEST(gCount == 0);
 		CAGE_TEST(!c);
@@ -201,4 +207,14 @@ void testHolder()
 		CAGE_TEST(+s);
 		Tester *raw = +s;
 	}
+
+	{
+		CAGE_TESTCASE("self assignment");
+		auto s = systemArena().createHolder<Tester>();
+		CAGE_TEST(gCount == 1);
+		s = std::move(s);
+		CAGE_TEST(gCount == 1);
+	}
+
+	CAGE_TEST(gCount == 0);
 }

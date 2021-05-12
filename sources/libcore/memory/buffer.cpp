@@ -130,12 +130,9 @@ namespace cage
 			PointerRange<char> range;
 		};
 
-		Delegate<void(void *)> d;
-		d.bind<MemoryArena, &MemoryArena::destroy<OwnedBufferRange>>(&systemArena());
-		OwnedBufferRange *p = systemArena().createObject<OwnedBufferRange>();
-		std::swap(*this, p->buff);
-		p->range = p->buff;
-		Holder<PointerRange<char>> h(&p->range, p, d);
-		return h;
+		Holder<OwnedBufferRange> h = systemArena().createHolder<OwnedBufferRange>();
+		h->buff = std::move(*this);
+		h->range = h->buff;
+		return Holder<PointerRange<char>>(&h->range, std::move(h));
 	}
 }

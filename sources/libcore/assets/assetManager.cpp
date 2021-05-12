@@ -313,7 +313,21 @@ namespace cage
 				}
 				else
 				{
-					ass->ref = Holder<void>(ass->assetHolder ? ass->assetHolder.get() : (void*)1, ass.get(), Delegate<void(void *)>().bind<AssetManagerImpl, &AssetManagerImpl::dereference>(this)).makeShareable();
+					{
+						struct PublicAssetReference
+						{
+							Asset *ass = nullptr;
+							AssetManagerImpl *impl = nullptr;
+							~PublicAssetReference()
+							{
+								impl->dereference(ass);
+							}
+						};
+						Holder<PublicAssetReference> ctrl = systemArena().createHolder<PublicAssetReference>();
+						ctrl->ass = +ass;
+						ctrl->impl = this;
+						ass->ref = Holder<void>(ass->assetHolder ? +ass->assetHolder : (void *)1, std::move(ctrl));
+					}
 					{
 						ScopeLock<RwMutex> lock(publicMutex, WriteLockTag());
 						bool found = false;
@@ -710,7 +724,7 @@ namespace cage
 
 			if (!asset->dependencies.empty())
 			{
-				Holder<Waiting> w = systemArena().createHolder<Waiting>(&impl->workingCounter).makeShareable();
+				Holder<Waiting> w = systemArena().createHolder<Waiting>(&impl->workingCounter);
 				w->asset = asset.share();
 				ScopeLock lock(impl->publicMutex, ReadLockTag());
 				for (uint32 d : asset->dependencies)
@@ -823,7 +837,7 @@ namespace cage
 					return; // if an existing asset was replaced with a fabricated one, it may not be reloaded with an asset from disk
 				}
 				auto l = systemArena().createHolder<Loading>(&impl->workingCounter);
-				l->asset = systemArena().createHolder<Asset>(realName, impl).makeShareable();
+				l->asset = systemArena().createHolder<Asset>(realName, impl);
 				c.versions.insert(c.versions.begin(), l->asset.share());
 				impl->diskLoadingQueue.push(std::move(l).cast<WorkingAsset>());
 			} break;
@@ -846,7 +860,7 @@ namespace cage
 				c.references++;
 				c.fabricated = true;
 				auto l = systemArena().createHolder<Loading>(&impl->workingCounter);
-				l->asset = systemArena().createHolder<Asset>(realName, impl).makeShareable();
+				l->asset = systemArena().createHolder<Asset>(realName, impl);
 				l->asset->textName = textName;
 				l->asset->scheme = scheme;
 				l->asset->assetHolder = std::move(holder);
