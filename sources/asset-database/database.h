@@ -32,7 +32,7 @@ struct HolderSet
 	{
 		T tmp;
 		tmp.name = name;
-		Holder<T> tmh(&tmp, nullptr, Delegate<void(void*)>());
+		Holder<T> tmh(&tmp, nullptr);
 		return const_cast<HolderSet*>(this)->data.find(tmh);
 	}
 

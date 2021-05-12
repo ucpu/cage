@@ -42,7 +42,7 @@ void Asset::save(File *f) const
 	write(f, databank);
 	uint32 m = numeric_cast<uint32>(fields.size());
 	f->write(bufferView(m));
-	for (auto it : fields)
+	for (const auto &it : fields)
 	{
 		write(f, it.first);
 		write(f, it.second);

@@ -35,8 +35,7 @@ namespace cage
 		void processAssetPackLoad(AssetContext *context)
 		{
 			static AssetPack pack;
-			Holder<AssetPack> h = Holder<AssetPack>(&pack, nullptr, {});
-			context->assetHolder = std::move(h).cast<void>();
+			context->assetHolder = Holder<AssetPack>(&pack, nullptr).cast<void>();
 		}
 	}
 
