@@ -65,7 +65,7 @@ namespace cage
 
 			FontImpl()
 			{
-				tex = newTexture().makeShareable();
+				tex = newTexture();
 			}
 
 			FontHeader::GlyphData getGlyph(uint32 glyphIndex, real size) const

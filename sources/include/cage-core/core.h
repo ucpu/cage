@@ -766,64 +766,54 @@ namespace cage
 		template<class T> struct HolderDereference { typedef T &type; };
 		template<> struct HolderDereference<void> { typedef void type; };
 
-		CAGE_CORE_API bool isHolderShareable(const Delegate<void(void *)> &deleter) noexcept;
-		CAGE_CORE_API void incrementHolderShareable(void *ptr, const Delegate<void(void *)> &deleter);
-		CAGE_CORE_API void makeHolderShareable(void *&ptr, Delegate<void(void *)> &deleter);
+		struct CAGE_CORE_API HolderControlBase
+		{
+			Delegate<void(void *)> deleter;
+			void *deletee = nullptr;
+			void inc();
+			void dec();
+		private:
+			alignas(4) volatile uint32 counter = 0;
+		};
 
 		template<class T>
 		struct HolderBase
 		{
-			HolderBase() noexcept {}
-			explicit HolderBase(T *data, void *ptr, Delegate<void(void*)> deleter) noexcept : deleter_(deleter), ptr_(ptr), data_(data) {}
+			HolderBase() noexcept = default;
+			explicit HolderBase(T *data, HolderControlBase *control) noexcept : data_(data), control_(control)
+			{
+				if (control_)
+					control_->inc();
+			}
 
 			template<class U>
-			HolderBase(T *data, HolderBase<U> &&base) noexcept
+			HolderBase(T *data, HolderBase<U> &&base) noexcept : data_(data), control_(base.control_)
 			{
-				deleter_ = base.deleter_;
-				ptr_ = base.ptr_;
-				data_ = data;
-				base.deleter_.clear();
-				base.ptr_ = nullptr;
 				base.data_ = nullptr;
+				base.control_ = nullptr;
 			}
 
 			HolderBase(const HolderBase &) = delete;
-			HolderBase(HolderBase &&other) noexcept
-			{
-				deleter_ = other.deleter_;
-				ptr_ = other.ptr_;
-				data_ = other.data_;
-				other.deleter_.clear();
-				other.ptr_ = nullptr;
-				other.data_ = nullptr;
-			}
+			HolderBase(HolderBase &&other) noexcept : HolderBase(other.data_, std::move(other))
+			{}
 
 			HolderBase &operator = (const HolderBase &) = delete;
 			HolderBase &operator = (HolderBase &&other) noexcept
 			{
 				if (this == &other)
 					return *this;
-				if (deleter_)
-					deleter_(ptr_);
-				deleter_ = other.deleter_;
-				ptr_ = other.ptr_;
+				if (control_)
+					control_->dec();
 				data_ = other.data_;
-				other.deleter_.clear();
-				other.ptr_ = nullptr;
+				control_ = other.control_;
 				other.data_ = nullptr;
+				other.control_ = nullptr;
 				return *this;
 			}
 
 			~HolderBase()
 			{
-				data_ = nullptr;
-				void *tmpPtr = ptr_;
-				Delegate<void(void *)> tmpDeleter = deleter_;
-				ptr_ = nullptr;
-				deleter_.clear();
-				// calling the deleter is purposefully deferred to until this holder is cleared first
-				if (tmpDeleter)
-					tmpDeleter(tmpPtr);
+				clear();
 			}
 
 			CAGE_FORCE_INLINE explicit operator bool() const noexcept
@@ -853,47 +843,24 @@ namespace cage
 				return data_;
 			}
 
-			CAGE_FORCE_INLINE void clear()
+			void clear()
 			{
-				if (deleter_)
-					deleter_(ptr_);
-				deleter_.clear();
-				ptr_ = nullptr;
 				data_ = nullptr;
+				HolderControlBase *tmpCtrl = control_;
+				control_ = nullptr;
+				// decrementing the counter is purposefully deferred to until this holder is cleared first
+				if (tmpCtrl)
+					tmpCtrl->dec();
 			}
 
-			CAGE_FORCE_INLINE bool shareable() const noexcept
+			CAGE_FORCE_INLINE Holder<T> share() const
 			{
-				return isHolderShareable(deleter_);
-			}
-
-			Holder<T> share() const
-			{
-				incrementHolderShareable(ptr_, deleter_);
-				return Holder<T>(data_, ptr_, deleter_);
-			}
-
-			Holder<T> makeShareable() &&
-			{
-				Holder<T> tmp(data_, ptr_, deleter_);
-				makeHolderShareable(tmp.ptr_, tmp.deleter_);
-				deleter_.clear();
-				ptr_ = nullptr;
-				data_ = nullptr;
-				return tmp;
+				return Holder<T>(data_, control_);
 			}
 
 		protected:
-			CAGE_FORCE_INLINE void erase() noexcept
-			{
-				deleter_.clear();
-				ptr_ = nullptr;
-				data_ = nullptr;
-			}
-
-			Delegate<void(void *)> deleter_;
-			void *ptr_ = nullptr; // pointer to deallocate
-			T *data_ = nullptr; // pointer to the object
+			T *data_ = nullptr;
+			HolderControlBase *control_ = nullptr;
 
 			template<class U>
 			friend struct HolderBase;
@@ -911,17 +878,13 @@ namespace cage
 			M *m = dynamic_cast<M*>(this->data_);
 			if (!m && this->data_)
 				CAGE_THROW_ERROR(Exception, "bad dynamic cast");
-			Holder<M> tmp(m, this->ptr_, this->deleter_);
-			this->erase();
-			return tmp;
+			return Holder<M>(m, std::move(*this));
 		}
 
 		template<class M>
 		Holder<M> cast() &&
 		{
-			Holder<M> tmp(static_cast<M*>(this->data_), this->ptr_, this->deleter_);
-			this->erase();
-			return tmp;
+			return Holder<M>(static_cast<M*>(this->data_), std::move(*this));
 		}
 	};
 
@@ -971,9 +934,7 @@ namespace cage
 
 		CAGE_FORCE_INLINE operator Holder<PointerRange<const T>> () &&
 		{
-			Holder<PointerRange<const T>> tmp((PointerRange<const T>*)this->data_, this->ptr_, this->deleter_);
-			this->erase();
-			return tmp;
+			return Holder<PointerRange<const T>>((PointerRange<const T>*)this->data_, std::move(*this));
 		}
 
 		CAGE_FORCE_INLINE T *begin() const noexcept { return this->data_->begin(); }
@@ -1090,10 +1051,15 @@ namespace cage
 		template<class T, class... Ts>
 		CAGE_FORCE_INLINE Holder<T> createHolder(Ts... vs)
 		{
-			Delegate<void(void*)> d;
-			d.bind<MemoryArena, &MemoryArena::destroy<T>>(this);
-			T *p = createObject<T>(std::forward<Ts>(vs)...);
-			return Holder<T>(p, p, d);
+			struct Ctrl : public privat::HolderControlBase
+			{
+				Ctrl(Ts... vs) : data(std::forward<Ts>(vs)...) {}
+				T data;
+			};
+			Ctrl *p = createObject<Ctrl>(std::forward<Ts>(vs)...);
+			p->deletee = p;
+			p->deleter.template bind<MemoryArena, &MemoryArena::destroy<Ctrl>>(this);
+			return Holder<T>(&p->data, p);
 		};
 
 		template<class Interface, class Impl, class... Ts>

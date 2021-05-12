@@ -36,10 +36,20 @@ namespace cage
 
 			Holder<Voice> createVoice()
 			{
-				VoiceImpl *p = &*voices.emplace();
-				Holder<Voice> h(p, p, Delegate<void(void *)>().bind<VoicesMixerImpl, &VoicesMixerImpl::removeVoice>(this));
+				struct VoiceReference
+				{
+					VoiceImpl *v = nullptr;
+					VoicesMixerImpl *m = nullptr;
+					~VoiceReference()
+					{
+						m->voices.erase(m->voices.get_iterator_from_pointer(v));
+					}
+				};
+				Holder<VoiceReference> h = systemArena().createHolder<VoiceReference>();
+				h->v = &*voices.emplace();
+				h->m = this;
 				// todo init properties
-				return std::move(h);
+				return Holder<Voice>(h->v, std::move(h));
 			}
 
 			real attenuation(const vec3 &position, real referenceDistance, real rolloffFactor) const

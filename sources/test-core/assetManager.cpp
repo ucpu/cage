@@ -53,7 +53,7 @@ namespace
 
 	void makeAssetPack(uint32 name, PointerRange<const uint32> deps)
 	{
-		AssetHeader hdr = initializeAssetHeader(stringizer() + name, AssetSchemeIndexPack);
+		AssetHeader hdr(stringizer() + name, AssetSchemeIndexPack);
 		hdr.dependenciesCount = numeric_cast<uint16>(deps.size());
 		Holder<File> f = writeFile(pathJoin(AssetsPath, stringizer() + name));
 		f->write(bufferView(hdr));
@@ -63,7 +63,7 @@ namespace
 
 	void makeAssetRaw(uint32 name, PointerRange<const char> contents)
 	{
-		AssetHeader hdr = initializeAssetHeader(stringizer() + name, AssetSchemeIndexRaw);
+		AssetHeader hdr(stringizer() + name, AssetSchemeIndexRaw);
 		hdr.originalSize = contents.size();
 		Holder<File> f = writeFile(pathJoin(AssetsPath, stringizer() + name));
 		f->write(bufferView(hdr));
@@ -73,7 +73,7 @@ namespace
 
 	void makeAssetCounter(uint32 name, PointerRange<const uint32> deps)
 	{
-		AssetHeader hdr = initializeAssetHeader(stringizer() + name, AssetSchemeIndexCounter);
+		AssetHeader hdr(stringizer() + name, AssetSchemeIndexCounter);
 		hdr.dependenciesCount = numeric_cast<uint16>(deps.size());
 		Holder<File> f = writeFile(pathJoin(AssetsPath, stringizer() + name));
 		f->write(bufferView(hdr));
@@ -354,7 +354,7 @@ void testAssetManager()
 		CAGE_TESTCASE("alias");
 		Holder<AssetManager> man = instantiate();
 		{
-			AssetHeader hdr = initializeAssetHeader(stringizer() + 10, AssetSchemeIndexCounter);
+			AssetHeader hdr(stringizer() + 10, AssetSchemeIndexCounter);
 			hdr.aliasName = 20;
 			Holder<File> f = writeFile(pathJoin(AssetsPath, stringizer() + 10));
 			f->write(bufferView(hdr));
@@ -414,7 +414,7 @@ void testAssetManager()
 		Holder<AssetManager> man = instantiate();
 		{
 			constexpr uint32 name = 10;
-			AssetHeader hdr = initializeAssetHeader(stringizer() + name, 42);
+			AssetHeader hdr(stringizer() + name, 42);
 			Holder<File> f = writeFile(pathJoin(AssetsPath, stringizer() + name));
 			f->write(bufferView(hdr));
 			f->close();
@@ -441,7 +441,7 @@ void testAssetManager()
 		Holder<AssetManager> man = instantiate();
 		{
 			constexpr uint32 name = 10;
-			AssetHeader hdr = initializeAssetHeader(stringizer() + name, AssetSchemeIndexCounter);
+			AssetHeader hdr(stringizer() + name, AssetSchemeIndexCounter);
 			Holder<File> f = writeFile(pathJoin(AssetsPath, stringizer() + name));
 			const auto view1 = bufferView(hdr);
 			const auto view2 = PointerRange<const char>(view1.begin(), view1.begin() + randomRange(uintPtr(0), view1.size() - 1u));
@@ -461,7 +461,7 @@ void testAssetManager()
 		{
 			constexpr const char Content[] = "lorem ipsum dolor sit amet";
 			constexpr uint32 name = 10;
-			AssetHeader hdr = initializeAssetHeader(stringizer() + name, AssetSchemeIndexRaw);
+			AssetHeader hdr(stringizer() + name, AssetSchemeIndexRaw);
 			hdr.compressedSize = sizeof(Content);
 			hdr.originalSize = sizeof(Content) * 2;
 			Holder<File> f = writeFile(pathJoin(AssetsPath, stringizer() + name));
@@ -537,5 +537,35 @@ void testAssetManager()
 		waitProcessing(man);
 		CAGE_TEST(AssetCounter::counter == 0);
 		man->unloadWait();
+	}
+
+	{
+		CAGE_TESTCASE("initializeAssetHeader");
+
+		{
+			AssetHeader ass("abcdefghijklmnopqrstuvwxyz", 42);
+			CAGE_TEST(string(ass.cageName) == "cageAss");
+			CAGE_TEST(ass.version > 0);
+			CAGE_TEST(ass.flags == 0);
+			CAGE_TEST(string(ass.textName) == "abcdefghijklmnopqrstuvwxyz");
+			CAGE_TEST(ass.compressedSize == 0);
+			CAGE_TEST(ass.originalSize == 0);
+			CAGE_TEST(ass.aliasName == 0);
+			CAGE_TEST(ass.scheme == 42);
+			CAGE_TEST(ass.dependenciesCount == 0);
+		}
+
+		{
+			AssetHeader ass("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz", 13);
+			CAGE_TEST(string(ass.cageName) == "cageAss");
+			CAGE_TEST(ass.version > 0);
+			CAGE_TEST(ass.flags == 0);
+			CAGE_TEST(string(ass.textName) == "..rstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz");
+			CAGE_TEST(ass.compressedSize == 0);
+			CAGE_TEST(ass.originalSize == 0);
+			CAGE_TEST(ass.aliasName == 0);
+			CAGE_TEST(ass.scheme == 13);
+			CAGE_TEST(ass.dependenciesCount == 0);
+		}
 	}
 }

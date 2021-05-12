@@ -87,7 +87,7 @@ namespace cage
 			void assign(Holder<T> &&value)
 			{
 				ScopeLock lock(mut);
-				data = std::move(value).makeShareable();
+				data = std::move(value);
 			}
 
 			Holder<T> get() const

@@ -48,10 +48,20 @@ namespace cage
 
 		Holder<xatlas::Atlas> newAtlas(bool reportProgress)
 		{
-			xatlas::Atlas *a = xatlas::Create();
-			if (reportProgress)
-				xatlas::SetProgressCallback(a, &xAtlasProgress);
-			return Holder<xatlas::Atlas>(a, a, Delegate<void(void*)>().bind<&destroyAtlas>());
+			struct Atl : Immovable
+			{
+				xatlas::Atlas *a = nullptr;
+				Atl()
+				{
+					a = xatlas::Create();
+				}
+				~Atl()
+				{
+					xatlas::Destroy(a);
+				}
+			};
+			Holder<Atl> h = systemArena().createHolder<Atl>();
+			return Holder<xatlas::Atlas>(h->a, std::move(h));
 		}
 	}
 

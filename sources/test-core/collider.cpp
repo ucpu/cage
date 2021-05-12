@@ -301,7 +301,7 @@ void testColliders()
 			const auto &trisTest = [&](const Triangle &l)
 			{
 				bool res = false;
-				for (const Triangle t : tet->triangles())
+				for (const Triangle &t : tet->triangles())
 					res = res || intersects(l, t * t1);
 				return res;
 			};
@@ -350,7 +350,7 @@ void testColliders()
 			const auto &trisTest = [&](const Line &l)
 			{
 				bool res = false;
-				for (const Triangle t : tet->triangles())
+				for (const Triangle &t : tet->triangles())
 					res = res || intersects(l, t * t1);
 				return res;
 			};

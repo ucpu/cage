@@ -9,22 +9,23 @@ namespace cage
 	{
 		// this is the first header found in every asset file
 
-		char cageName[8]; // cageAss\0
-		uint32 version;
-		uint32 flags;
-		char textName[64];
-		uint64 compressedSize;
-		uint64 originalSize;
-		uint32 aliasName;
-		uint16 scheme;
-		uint16 dependenciesCount;
+		char cageName[8] = "cageAss";
+		uint32 version = 0;
+		uint32 flags = 0;
+		char textName[64] = {};
+		uint64 compressedSize = 0;
+		uint64 originalSize = 0;
+		uint32 aliasName = 0;
+		uint16 scheme = m;
+		uint16 dependenciesCount = 0;
+
+		AssetHeader() = default;
+		explicit AssetHeader(const string &name, uint16 schemeIndex);
 
 		// follows:
 		// array of dependency names, each uint32
 		// any other asset-specific data
 	};
-
-	CAGE_CORE_API AssetHeader initializeAssetHeader(const string &name, uint16 schemeIndex);
 }
 
 #endif // guard_assetHeader_h_k1i7178asdvujhz89jhg14j

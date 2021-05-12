@@ -397,38 +397,31 @@ namespace cage
 
 				union CommandUnion
 				{
-					uint16 initIndex;
+					uint16 initIndex = 0;
 
 					PackAck ack;
 
 					struct Msg
 					{
-						uint16 msgSeqn;
-						uint8 channel;
+						uint16 msgSeqn = 0;
+						uint8 channel = 0;
 					} msg;
 
 					struct Stats
 					{
 						struct sideStruct
 						{
-							uint64 time;
-							uint64 receivedBytes;
-							uint64 sentBytes;
-							uint32 receivedPackets;
-							uint32 sentPackets;
+							uint64 time = 0;
+							uint64 receivedBytes = 0;
+							uint64 sentBytes = 0;
+							uint32 receivedPackets = 0;
+							uint32 sentPackets = 0;
 						} a, b;
-						uint16 step;
-
-						Stats()
-						{
-							detail::memset(this, 0, sizeof(*this));
-						}
+						uint16 step = 0;
 					} stats;
 
 					CommandUnion()
-					{
-						detail::memset(this, 0, sizeof(*this));
-					}
+					{}
 
 					~CommandUnion()
 					{}

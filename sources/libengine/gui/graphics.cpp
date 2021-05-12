@@ -79,7 +79,7 @@ namespace cage
 		data.transform = item->transform;
 		data.format = item->format;
 		data.font = item->font.share();
-		item->glyphs = std::move(item->glyphs).makeShareable();
+		item->glyphs = std::move(item->glyphs);
 		data.glyphs = item->glyphs.share();
 		data.color = item->color;
 		data.cursor = item->cursor;

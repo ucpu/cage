@@ -14,6 +14,9 @@
 
 namespace cage
 {
+	static_assert(sizeof(Holder<uint32>) == 2 * sizeof(uintPtr));
+	static_assert(sizeof(Holder<string>) == 2 * sizeof(uintPtr));
+
 	OutOfMemory::OutOfMemory(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, StringLiteral message, uintPtr memory) noexcept : Exception(function, file, line, severity, message), memory(memory)
 	{};
 
@@ -52,47 +55,31 @@ namespace cage
 
 	namespace privat
 	{
-		namespace
+		// platform specific implementation to avoid including <atomic> in the core.h
+
+		void HolderControlBase::inc()
 		{
-			struct SharedCounter
-			{
-				std::atomic<sint32> cnt = 1;
-				Holder<void> payload;
-
-				void dec()
-				{
-					if (--cnt <= 0)
-					{
-						systemArena().destroy<SharedCounter>(this); // suicide
-					}
-				}
-			};
-
-			void decHolderShareable(void *ptr)
-			{
-				((SharedCounter *)ptr)->dec();
-			}
+			const uint32 val =
+#ifdef CAGE_SYSTEM_WINDOWS
+				InterlockedIncrementNoFence(&counter);
+#else
+				__atomic_add_fetch(&counter, (uint32)1, __ATOMIC_RELAXED);
+#endif // CAGE_SYSTEM_WINDOWS
+			CAGE_ASSERT(val != m);
 		}
 
-		bool isHolderShareable(const Delegate<void(void *)> &deleter) noexcept
+		void HolderControlBase::dec()
 		{
-			return deleter == Delegate<void(void *)>().bind<&decHolderShareable>();
-		}
+			const uint32 val =
+#ifdef CAGE_SYSTEM_WINDOWS
+				InterlockedDecrementNoFence(&counter);
+#else
+				__atomic_sub_fetch(&counter, (uint32)1, __ATOMIC_RELAXED);
+#endif // CAGE_SYSTEM_WINDOWS
+			CAGE_ASSERT(val != m);
 
-		void incrementHolderShareable(void *ptr, const Delegate<void(void *)> &deleter)
-		{
-			CAGE_ASSERT(isHolderShareable(deleter));
-			((SharedCounter *)ptr)->cnt++;
-		}
-
-		void makeHolderShareable(void *&ptr, Delegate<void(void *)> &deleter)
-		{
-			if (isHolderShareable(deleter))
-				return;
-			SharedCounter *shr = systemArena().createObject<SharedCounter>();
-			shr->payload = Holder<void>(nullptr, ptr, deleter);
-			ptr = shr;
-			deleter = Delegate<void(void *)>().bind<&decHolderShareable>();
+			if (val == 0)
+				deleter(deletee);
 		}
 	}
 

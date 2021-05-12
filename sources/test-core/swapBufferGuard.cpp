@@ -10,18 +10,18 @@ namespace
 	class SwapBufferTester
 	{
 	public:
-		static const uint32 elementsCount = 100;
+		static constexpr uint32 ElementsCount = 100;
 		Holder<SwapBufferGuard> controller;
-		uint32 buffers[BuffersCount][elementsCount];
-		uint32 sums[BuffersCount];
-		uint32 indices[BuffersCount];
-		uint32 readIndex, writeIndex;
-		uint32 written, read, skipped, reused, generated, tested;
-		bool running;
+		uint32 buffers[BuffersCount][ElementsCount] = {};
+		uint32 sums[BuffersCount] = {};
+		uint32 indices[BuffersCount] = {};
+		uint32 readIndex = 0, writeIndex = 0;
+		uint32 written = 0, read = 0, skipped = 0, reused = 0, generated = 0, tested = 0;
+		bool running = false;
 
 		void consumer()
 		{
-			uint32 tmpBuff[elementsCount];
+			uint32 tmpBuff[ElementsCount];
 			detail::memset(tmpBuff, 0, sizeof(tmpBuff));
 			uint32 tmpSum = 0;
 			//while (running && generated == 0)
@@ -30,7 +30,7 @@ namespace
 			{
 				if (auto mark = controller->read())
 				{
-					for (uint32 i = 0; i < elementsCount; i++)
+					for (uint32 i = 0; i < ElementsCount; i++)
 						tmpBuff[i] = buffers[mark.index()][i];
 					tmpSum = sums[mark.index()];
 					CAGE_TEST(indices[mark.index()] >= readIndex);
@@ -42,7 +42,7 @@ namespace
 				threadSleep(0);
 				{ // consume
 					uint32 sum = 0;
-					for (uint32 i = 0; i < elementsCount; i++)
+					for (uint32 i = 0; i < ElementsCount; i++)
 						sum += tmpBuff[i];
 					CAGE_TEST(sum == tmpSum);
 					tested++;
@@ -52,14 +52,14 @@ namespace
 
 		void producer()
 		{
-			uint32 tmpBuff[elementsCount];
+			uint32 tmpBuff[ElementsCount];
 			detail::memset(tmpBuff, 0, sizeof(tmpBuff));
 			uint32 tmpSum = 0;
 			while (running)
 			{
 				{ // produce
 					uint32 sum = 0;
-					for (uint32 i = 0; i < elementsCount; i++)
+					for (uint32 i = 0; i < ElementsCount; i++)
 						sum += (tmpBuff[i] = randomRange(0u, m));
 					tmpSum = sum;
 					generated++;
@@ -67,7 +67,7 @@ namespace
 				threadSleep(0);
 				if (auto mark = controller->write())
 				{
-					for (uint32 i = 0; i < elementsCount; i++)
+					for (uint32 i = 0; i < ElementsCount; i++)
 						buffers[mark.index()][i] = tmpBuff[i];
 					sums[mark.index()] = tmpSum;
 					indices[mark.index()] = writeIndex++;
@@ -77,9 +77,6 @@ namespace
 					skipped++;
 			}
 		}
-
-		SwapBufferTester() : readIndex(0), writeIndex(0), written(0), read(0), skipped(0), reused(0), generated(0), tested(0), running(false)
-		{}
 
 		void run(bool repeatedReads, bool repeatedWrites)
 		{

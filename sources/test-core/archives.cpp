@@ -77,17 +77,10 @@ namespace
 
 	PathTypeFlags testPathType(const string &name)
 	{
-		PathTypeFlags a, b;
-		{
-			PathTypeFlags *p[2] = { &a, &b };
-			uint32 i = 0;
-			for (const string &dir : directories)
-				*p[i++] = pathType(pathJoin(dir, name));
-		}
-		{
-			constexpr PathTypeFlags msk = PathTypeFlags::File | PathTypeFlags::Directory;
-			CAGE_TEST((a & msk) == (b & msk));
-		}
+		const PathTypeFlags a = pathType(pathJoin(directories[0], name));
+		const PathTypeFlags b = pathType(pathJoin(directories[1], name));
+		constexpr PathTypeFlags msk = PathTypeFlags::File | PathTypeFlags::Directory;
+		CAGE_TEST((a & msk) == (b & msk));
 		return b;
 	}
 

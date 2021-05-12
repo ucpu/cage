@@ -157,20 +157,9 @@ namespace cage
 
 		struct ColonyAsAllocator
 		{
-			union ItemUnion
+			struct ItemAlloc
 			{
-				ItemShape<Line> a;
-				ItemShape<Triangle> b;
-				ItemShape<Plane> c;
-				ItemShape<Sphere> d;
-				ItemShape<Aabb> e;
-				ItemShape<Cone> f;
-				ItemUnion() {}
-			};
-
-			struct alignas(alignof(ItemUnion)) ItemAlloc
-			{
-				char reserved[sizeof(ItemUnion)];
+				alignas(16) char reserved[128];
 			};
 
 			plf::colony<ItemAlloc, MemoryAllocatorStd<ItemAlloc>> colony;
@@ -232,7 +221,7 @@ namespace cage
 				FastBox bestBoxRight;
 				for (uint32 axis = 0; axis < 3; axis++)
 				{
-					if (node.box.high.v4[axis] - node.box.low.v4[axis] < 1e-7)
+					if (node.box.high.v4[axis] - node.box.low.v4[axis] < 1e-7f)
 						continue; // the box is flat (along this axis)
 					for (FastBox &b : leftBinBoxes)
 						b = FastBox();

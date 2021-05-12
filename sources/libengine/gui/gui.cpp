@@ -174,7 +174,7 @@ namespace cage
 			{
 				const uint32 name = e->name();
 				CAGE_ASSERT(name != 0 && name != m);
-				map[name] = impl->memory->createHolder<HierarchyItem>(impl, e).makeShareable();
+				map[name] = impl->memory->createHolder<HierarchyItem>(impl, e);
 			}
 			// attach all items to their parents
 			for (auto e : impl->entityMgr->entities())
