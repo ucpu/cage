@@ -5,8 +5,6 @@
 
 namespace cage
 {
-	struct RenderQueueNamedPassScope;
-
 	struct UubRange
 	{
 		uint32 offset = 0;
@@ -61,13 +59,17 @@ namespace cage
 		GCHL_GENERATE(mat4);
 #undef GCHL_GENERATE
 
-		void bind(Holder<FrameBuffer> &&framebuffer);
+		void bind(Holder<FrameBuffer> &&frameBuffer);
+		void bind(Holder<ProvisionalFrameBufferHandle> &&frameBuffer);
 		void depthTexture(Holder<Texture> &&texture);
+		void depthTexture(Holder<ProvisionalTextureHandle> &&texture);
 		void colorTexture(uint32 index, Holder<Texture> &&texture, uint32 mipmapLevel = 0);
+		void colorTexture(uint32 index, Holder<ProvisionalTextureHandle> &&texture, uint32 mipmapLevel = 0);
 		void activeAttachments(uint32 mask);
 		void clearFrameBuffer();
 
 		void bind(Holder<Texture> &&texture, uint32 bindingPoint);
+		void bind(Holder<ProvisionalTextureHandle> &&texture, uint32 bindingPoint);
 		void image2d(uint32 w, uint32 h, uint32 internalFormat);
 		void imageCube(uint32 w, uint32 h, uint32 internalFormat);
 		void image3d(uint32 w, uint32 h, uint32 d, uint32 internalFormat);
@@ -106,7 +108,7 @@ namespace cage
 
 		void pushNamedPass(StringLiteral name);
 		void popNamedPass();
-		[[nodiscard]] RenderQueueNamedPassScope scopedNamedPass(StringLiteral name);
+		[[nodiscard]] struct RenderQueueNamedPassScope scopedNamedPass(StringLiteral name);
 
 		void reset(); // erase all stored commands
 

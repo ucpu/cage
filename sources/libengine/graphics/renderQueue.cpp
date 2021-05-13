@@ -9,6 +9,7 @@
 #include <cage-engine/texture.h>
 #include <cage-engine/model.h>
 #include <cage-engine/renderQueue.h>
+#include <cage-engine/provisionalRenderData.h>
 #include "private.h"
 
 #include <vector>
@@ -35,15 +36,15 @@ namespace cage
 
 		struct RenderQueueBindings
 		{
-			UniformBuffer *boundUniformBuffer = nullptr;
-			ShaderProgram *boundShaderProgram = nullptr;
-			FrameBuffer *boundFrameBuffer = nullptr;
-			Texture *boundTexture = nullptr;
-			Model *boundModel = nullptr;
+			Holder<UniformBuffer> uniformBuffer;
+			Holder<ShaderProgram> shaderProgram;
+			Holder<FrameBuffer> frameBuffer;
+			Holder<Texture> texture;
+			Holder<Model> model;
 			uint32 activeTextureIndex = m;
 		};
 
-		struct RenderQueueContent : public RenderQueueBindings
+		struct RenderQueueContent
 		{
 			CmdBase *head = nullptr, *tail = nullptr;
 			MemBlock *memHead = nullptr, *memTail = nullptr;
@@ -51,8 +52,7 @@ namespace cage
 			uint32 commandsCount = 0;
 			uint32 drawsCount = 0;
 			uint32 primitivesCount = 0;
-
-			Model *lastModel = nullptr;
+			uint32 lastModelPrimitives = 0;
 		};
 
 		class RenderQueueImpl : public RenderQueueContent, public RenderQueue
@@ -65,6 +65,7 @@ namespace cage
 			Holder<MemoryArena> arena = newMemoryAllocatorStream({});
 			MemoryBuffer uubStaging;
 			UniformBuffer *uubObject = nullptr;
+			RenderQueueBindings *bindings = nullptr;
 
 #ifdef CAGE_DEBUG
 			std::vector<StringLiteral> namesStack;
@@ -117,16 +118,21 @@ namespace cage
 				namesStack.clear();
 #endif // CAGE_DEBUG
 
+				RenderQueueBindings localBindings; // make sure the bindings are destroyed on the opengl thread
+				bindings = &localBindings;
+
 				Holder<UniformBuffer> uub; // make sure the uub is destroyed on the opengl thread
 				if (uubStaging.size() > 0)
 				{
 					uub = newUniformBuffer();
 					uub->writeWhole(uubStaging);
 				}
-
 				uubObject = +uub;
+
 				for (CmdBase *cmd = head; cmd; cmd = cmd->next)
 					cmd->dispatch(this);
+
+				bindings = nullptr;
 				uubObject = nullptr;
 
 				CAGE_CHECK_GL_ERROR_DEBUG();
@@ -177,7 +183,7 @@ namespace cage
 					uint32 name = 0;
 					void dispatch(RenderQueueImpl *impl) override
 					{
-						impl->boundShaderProgram->uniform(name, value);
+						impl->bindings->shaderProgram->uniform(name, value);
 					}
 				};
 				Cmd &cmd = addCmd<Cmd>();
@@ -194,7 +200,7 @@ namespace cage
 					uint32 name = 0;
 					void dispatch(RenderQueueImpl *impl) override
 					{
-						impl->boundShaderProgram->uniform(name, values);
+						impl->bindings->shaderProgram->uniform(name, values);
 					}
 				};
 				Cmd &cmd = addCmd<Cmd>();
@@ -204,10 +210,10 @@ namespace cage
 
 			void activeTexture(uint32 t)
 			{
-				if (t == activeTextureIndex)
+				if (t == bindings->activeTextureIndex)
 					return;
 				glActiveTexture(GL_TEXTURE0 + t);
-				activeTextureIndex = t;
+				bindings->activeTextureIndex = t;
 			}
 
 			void unbindAllTextures()
@@ -224,7 +230,7 @@ namespace cage
 					glBindTexture(GL_TEXTURE_3D, 0);
 				}
 				activeTexture(0);
-				boundTexture = nullptr;
+				bindings->texture.clear();
 			}
 		};
 	}
@@ -263,7 +269,7 @@ namespace cage
 			void dispatch(RenderQueueImpl *impl) override
 			{
 				uniformBuffer->bind(bindingPoint);
-				impl->boundUniformBuffer = +uniformBuffer;
+				impl->bindings->uniformBuffer = uniformBuffer.share();
 			}
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -284,7 +290,7 @@ namespace cage
 			void dispatch(RenderQueueImpl *impl) override
 			{
 				uniformBuffer->bind(bindingPoint, offset, size);
-				impl->boundUniformBuffer = +uniformBuffer;
+				impl->bindings->uniformBuffer = uniformBuffer.share();
 			}
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -319,7 +325,7 @@ namespace cage
 			uint32 usage = 0;
 			void dispatch(RenderQueueImpl *impl) override
 			{
-				impl->boundUniformBuffer->writeWhole(data, usage);
+				impl->bindings->uniformBuffer->writeWhole(data, usage);
 			}
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -336,7 +342,7 @@ namespace cage
 			uint32 offset = 0;
 			void dispatch(RenderQueueImpl *impl) override
 			{
-				impl->boundUniformBuffer->writeRange(data, offset);
+				impl->bindings->uniformBuffer->writeRange(data, offset);
 			}
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -354,7 +360,7 @@ namespace cage
 			void dispatch(RenderQueueImpl *impl) override
 			{
 				shaderProgram->bind();
-				impl->boundShaderProgram = +shaderProgram;
+				impl->bindings->shaderProgram = shaderProgram.share();
 			}
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -387,21 +393,39 @@ namespace cage
 	GCHL_GENERATE(mat4);
 #undef GCHL_GENERATE
 
-	void RenderQueue::bind(Holder<FrameBuffer> &&framebuffer)
+	void RenderQueue::bind(Holder<FrameBuffer> &&frameBuffer)
 	{
-		CAGE_ASSERT(framebuffer);
+		CAGE_ASSERT(frameBuffer);
 		struct Cmd : public CmdBase
 		{
-			Holder<FrameBuffer> framebuffer;
+			Holder<FrameBuffer> frameBuffer;
 			void dispatch(RenderQueueImpl *impl) override
 			{
-				framebuffer->bind();
-				impl->boundFrameBuffer = +framebuffer;
+				frameBuffer->bind();
+				impl->bindings->frameBuffer = frameBuffer.share();
 			}
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.framebuffer = std::move(framebuffer);
+		cmd.frameBuffer = std::move(frameBuffer);
+	}
+
+	void RenderQueue::bind(Holder<ProvisionalFrameBufferHandle> &&frameBuffer)
+	{
+		CAGE_ASSERT(frameBuffer);
+		struct Cmd : public CmdBase
+		{
+			Holder<ProvisionalFrameBufferHandle> frameBuffer;
+			void dispatch(RenderQueueImpl *impl) override
+			{
+				Holder<FrameBuffer> fb = frameBuffer->resolve();
+				fb->bind();
+				impl->bindings->frameBuffer = std::move(fb);
+			}
+		};
+		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		Cmd &cmd = impl->addCmd<Cmd>();
+		cmd.frameBuffer = std::move(frameBuffer);
 	}
 
 	void RenderQueue::depthTexture(Holder<Texture> &&texture)
@@ -411,7 +435,22 @@ namespace cage
 			Holder<Texture> texture;
 			void dispatch(RenderQueueImpl *impl) override
 			{
-				impl->boundFrameBuffer->depthTexture(+texture);
+				impl->bindings->frameBuffer->depthTexture(+texture);
+			}
+		};
+		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		Cmd &cmd = impl->addCmd<Cmd>();
+		cmd.texture = std::move(texture);
+	}
+
+	void RenderQueue::depthTexture(Holder<ProvisionalTextureHandle> &&texture)
+	{
+		struct Cmd : public CmdBase
+		{
+			Holder<ProvisionalTextureHandle> texture;
+			void dispatch(RenderQueueImpl *impl) override
+			{
+				impl->bindings->frameBuffer->depthTexture(+texture->resolve());
 			}
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -428,7 +467,26 @@ namespace cage
 			uint32 mipmapLevel = 0;
 			void dispatch(RenderQueueImpl *impl) override
 			{
-				impl->boundFrameBuffer->colorTexture(index, +texture, mipmapLevel);
+				impl->bindings->frameBuffer->colorTexture(index, +texture, mipmapLevel);
+			}
+		};
+		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		Cmd &cmd = impl->addCmd<Cmd>();
+		cmd.texture = std::move(texture);
+		cmd.index = index;
+		cmd.mipmapLevel = mipmapLevel;
+	}
+
+	void RenderQueue::colorTexture(uint32 index, Holder<ProvisionalTextureHandle> &&texture, uint32 mipmapLevel)
+	{
+		struct Cmd : public CmdBase
+		{
+			Holder<ProvisionalTextureHandle> texture;
+			uint32 index = 0;
+			uint32 mipmapLevel = 0;
+			void dispatch(RenderQueueImpl *impl) override
+			{
+				impl->bindings->frameBuffer->colorTexture(index, +texture->resolve(), mipmapLevel);
 			}
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -445,7 +503,7 @@ namespace cage
 			uint32 mask = 0;
 			void dispatch(RenderQueueImpl *impl) override
 			{
-				impl->boundFrameBuffer->activeAttachments(mask);
+				impl->bindings->frameBuffer->activeAttachments(mask);
 			}
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -459,7 +517,7 @@ namespace cage
 		{
 			void dispatch(RenderQueueImpl *impl) override
 			{
-				impl->boundFrameBuffer->clear();
+				impl->bindings->frameBuffer->clear();
 			}
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -477,7 +535,27 @@ namespace cage
 			{
 				impl->activeTexture(bindingPoint);
 				texture->bind();
-				impl->boundTexture = +texture;
+				impl->bindings->texture = texture.share();
+			}
+		};
+		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		Cmd &cmd = impl->addCmd<Cmd>();
+		cmd.texture = std::move(texture);
+	}
+
+	void RenderQueue::bind(Holder<ProvisionalTextureHandle> &&texture, uint32 bindingPoint)
+	{
+		CAGE_ASSERT(texture);
+		struct Cmd : public CmdBase
+		{
+			Holder<ProvisionalTextureHandle> texture;
+			uint32 bindingPoint = 0;
+			void dispatch(RenderQueueImpl *impl) override
+			{
+				impl->activeTexture(bindingPoint);
+				Holder<Texture> tex = texture->resolve();
+				tex->bind();
+				impl->bindings->texture = std::move(tex);
 			}
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -492,7 +570,7 @@ namespace cage
 			uint32 w = 0, h = 0, f = 0;
 			void dispatch(RenderQueueImpl *impl) override
 			{
-				impl->boundTexture->image2d(w, h, f);
+				impl->bindings->texture->image2d(w, h, f);
 			}
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -509,7 +587,7 @@ namespace cage
 			uint32 w = 0, h = 0, f = 0;
 			void dispatch(RenderQueueImpl *impl) override
 			{
-				impl->boundTexture->imageCube(w, h, f);
+				impl->bindings->texture->imageCube(w, h, f);
 			}
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -526,7 +604,7 @@ namespace cage
 			uint32 w = 0, h = 0, d = 0, f = 0;
 			void dispatch(RenderQueueImpl *impl) override
 			{
-				impl->boundTexture->image3d(w, h, d, f);
+				impl->bindings->texture->image3d(w, h, d, f);
 			}
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -544,7 +622,7 @@ namespace cage
 			uint32 mig = 0, mag = 0, aniso = 0;
 			void dispatch(RenderQueueImpl *impl) override
 			{
-				impl->boundTexture->filters(mig, mag, aniso);
+				impl->bindings->texture->filters(mig, mag, aniso);
 			}
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -561,7 +639,7 @@ namespace cage
 			uint32 s = 0, t = 0;
 			void dispatch(RenderQueueImpl *impl) override
 			{
-				impl->boundTexture->wraps(s, t);
+				impl->bindings->texture->wraps(s, t);
 			}
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -577,7 +655,7 @@ namespace cage
 			uint32 s = 0, t = 0, r = 0;
 			void dispatch(RenderQueueImpl *impl) override
 			{
-				impl->boundTexture->wraps(s, t, r);
+				impl->bindings->texture->wraps(s, t, r);
 			}
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -593,7 +671,7 @@ namespace cage
 		{
 			void dispatch(RenderQueueImpl *impl) override
 			{
-				impl->boundTexture->generateMipmaps();
+				impl->bindings->texture->generateMipmaps();
 			}
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
@@ -622,11 +700,11 @@ namespace cage
 			void dispatch(RenderQueueImpl *impl) override
 			{
 				model->bind();
-				impl->boundModel = +model;
+				impl->bindings->model = model.share();
 			}
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
-		impl->lastModel = +model;
+		impl->lastModelPrimitives = model->getPrimitivesCount();
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.model = std::move(model);
 	}
@@ -638,12 +716,12 @@ namespace cage
 			uint32 instances = 0;
 			void dispatch(RenderQueueImpl *impl) override
 			{
-				impl->boundModel->dispatch(instances);
+				impl->bindings->model->dispatch(instances);
 			}
 		};
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		impl->drawsCount++;
-		impl->primitivesCount += instances * impl->lastModel->getPrimitivesCount();
+		impl->primitivesCount += instances * impl->lastModelPrimitives;
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.instances = instances;
 	}
@@ -877,7 +955,7 @@ namespace cage
 			void dispatch(RenderQueueImpl *impl) override
 			{
 				queue->dispatch();
-				*(RenderQueueBindings *)impl = RenderQueueBindings();
+				*impl->bindings = RenderQueueBindings();
 			}
 		};
 
@@ -886,6 +964,7 @@ namespace cage
 		impl->commandsCount += queue->commandsCount();
 		impl->drawsCount += queue->drawsCount();
 		impl->primitivesCount += queue->primitivesCount();
+		impl->lastModelPrimitives = 0;
 
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.queue = std::move(queue);

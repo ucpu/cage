@@ -132,6 +132,9 @@ namespace cage
 
 	struct UubRange;
 	class RenderQueue;
+	class ProvisionalTextureHandle;
+	class ProvisionalFrameBufferHandle;
+	class ProvisionalRenderData;
 
 	// enum declarations
 
