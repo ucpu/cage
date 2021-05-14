@@ -41,10 +41,10 @@ namespace cage
 		vec2 size(PointerRange<const uint32> glyphs, const FontFormat &format) const;
 		vec2 size(PointerRange<const uint32> glyphs, const FontFormat &format, const vec2 &mousePosition, uint32 &cursor) const;
 
-		void bind(RenderQueue *queue, Holder<Model> &&model, Holder<ShaderProgram> &&shader) const;
+		void bind(RenderQueue *queue, const Holder<Model> &model, const Holder<ShaderProgram> &shader) const;
 		void render(RenderQueue *queue, PointerRange<const uint32> glyphs, const FontFormat &format, uint32 cursor = m) const;
 
-		[[deprecated]] void render(Holder<Model> &&model, Holder<ShaderProgram> &&shader, PointerRange<const uint32> glyphs, const FontFormat &format, uint32 cursor = m) const;
+		[[deprecated]] void render(const Holder<Model> &model, const Holder<ShaderProgram> &shader, PointerRange<const uint32> glyphs, const FontFormat &format, uint32 cursor = m) const;
 	};
 
 	CAGE_ENGINE_API Holder<Font> newFont();

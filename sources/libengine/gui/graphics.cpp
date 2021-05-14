@@ -18,7 +18,7 @@ namespace cage
 	{
 		CAGE_ASSERT(texture);
 		queue->bind(uubRange, 0);
-		queue->bind(texture.share(), 0);
+		queue->bind(texture, 0);
 	}
 
 	void RenderableBase::setClip(const HierarchyItem *item)
@@ -61,12 +61,12 @@ namespace cage
 			return;
 		RenderQueue *q = impl->activeQueue;
 		skin->bind(q);
-		q->bind(impl->graphicsData.elementShader.share());
+		q->bind(impl->graphicsData.elementShader);
 		q->uniform(0, data.outer);
 		q->uniform(1, data.inner);
 		q->uniform(2, data.element);
 		q->uniform(3, data.mode);
-		q->bind(impl->graphicsData.elementModel.share());
+		q->bind(impl->graphicsData.elementModel);
 		q->draw();
 	}
 
@@ -103,10 +103,10 @@ namespace cage
 		if (data.glyphs.empty() && data.cursor != 0)
 			return;
 		RenderQueue *q = impl->activeQueue;
-		q->bind(impl->graphicsData.fontShader.share());
+		q->bind(impl->graphicsData.fontShader);
 		q->uniform(0, data.transform);
 		q->uniform(4, data.color);
-		data.font->bind(q, impl->graphicsData.fontModel.share(), impl->graphicsData.fontShader.share());
+		data.font->bind(q, impl->graphicsData.fontModel, impl->graphicsData.fontShader);
 		data.font->render(q, data.glyphs, data.format, data.cursor);
 	}
 
@@ -128,13 +128,13 @@ namespace cage
 			return;
 		CAGE_ASSERT(data.texture);
 		RenderQueue *q = impl->activeQueue;
-		q->bind(data.texture.share(), 0);
-		q->bind(data.texture->getTarget() == GL_TEXTURE_2D_ARRAY ? impl->graphicsData.imageAnimatedShader.share() : impl->graphicsData.imageStaticShader.share());
+		q->bind(data.texture, 0);
+		q->bind(data.texture->getTarget() == GL_TEXTURE_2D_ARRAY ? impl->graphicsData.imageAnimatedShader : impl->graphicsData.imageStaticShader);
 		q->uniform(0, data.ndcPos);
 		q->uniform(1, data.uvClip);
 		if (data.texture->getTarget() == GL_TEXTURE_2D_ARRAY)
 			q->uniform(2, data.aniTexFrames);
-		q->bind(impl->graphicsData.imageModel.share());
+		q->bind(impl->graphicsData.imageModel);
 		q->draw();
 	}
 

@@ -35,13 +35,13 @@ namespace cage
 		}
 		void bind(UubRange uubRange, uint32 bindingPoint);
 
-		void bind(Holder<UniformBuffer> &&uniformBuffer, uint32 bindingPoint); // bind for reading from (on gpu)
-		void bind(Holder<UniformBuffer> &&uniformBuffer, uint32 bindingPoint, uint32 offset, uint32 size); // bind for reading from (on gpu)
-		void bind(Holder<UniformBuffer> &&uniformBuffer); // bind for writing into (on cpu)
+		void bind(const Holder<UniformBuffer> &uniformBuffer, uint32 bindingPoint); // bind for reading from (on gpu)
+		void bind(const Holder<UniformBuffer> &uniformBuffer, uint32 bindingPoint, uint32 offset, uint32 size); // bind for reading from (on gpu)
+		void bind(const Holder<UniformBuffer> &uniformBuffer); // bind for writing into (on cpu)
 		void writeWhole(PointerRange<const char> data, uint32 usage = 0);
 		void writeRange(PointerRange<const char> data, uint32 offset = 0);
 
-		void bind(Holder<ShaderProgram> &&shader);
+		void bind(const Holder<ShaderProgram> &shader);
 #define GCHL_GENERATE(TYPE) \
 		void uniform(uint32 name, const TYPE &value); \
 		void uniform(uint32 name, PointerRange<const TYPE> values);
@@ -59,17 +59,17 @@ namespace cage
 		GCHL_GENERATE(mat4);
 #undef GCHL_GENERATE
 
-		void bind(Holder<FrameBuffer> &&frameBuffer);
-		void bind(Holder<ProvisionalFrameBufferHandle> &&frameBuffer);
-		void depthTexture(Holder<Texture> &&texture);
-		void depthTexture(Holder<ProvisionalTextureHandle> &&texture);
-		void colorTexture(uint32 index, Holder<Texture> &&texture, uint32 mipmapLevel = 0);
-		void colorTexture(uint32 index, Holder<ProvisionalTextureHandle> &&texture, uint32 mipmapLevel = 0);
+		void bind(const Holder<FrameBuffer> &frameBuffer);
+		void bind(const Holder<ProvisionalFrameBufferHandle> &frameBuffer);
+		void depthTexture(const Holder<Texture> &texture);
+		void depthTexture(const Holder<ProvisionalTextureHandle> &texture);
+		void colorTexture(uint32 index, const Holder<Texture> &texture, uint32 mipmapLevel = 0);
+		void colorTexture(uint32 index, const Holder<ProvisionalTextureHandle> &texture, uint32 mipmapLevel = 0);
 		void activeAttachments(uint32 mask);
 		void clearFrameBuffer();
 
-		void bind(Holder<Texture> &&texture, uint32 bindingPoint);
-		void bind(Holder<ProvisionalTextureHandle> &&texture, uint32 bindingPoint);
+		void bind(const Holder<Texture> &texture, uint32 bindingPoint);
+		void bind(const Holder<ProvisionalTextureHandle> &texture, uint32 bindingPoint);
 		void image2d(uint32 w, uint32 h, uint32 internalFormat);
 		void imageCube(uint32 w, uint32 h, uint32 internalFormat);
 		void image3d(uint32 w, uint32 h, uint32 d, uint32 internalFormat);
@@ -79,7 +79,7 @@ namespace cage
 		void generateMipmaps();
 		void unbindAllTextures();
 
-		void bind(Holder<Model> &&model);
+		void bind(const Holder<Model> &model);
 		void draw(uint32 instances = 1);
 
 		void viewport(ivec2 origin, ivec2 size);
@@ -104,7 +104,7 @@ namespace cage
 
 		// dispatch another queue as part of this queue
 		// stores a reference to the queue - do not modify it after it has been enqueued
-		void enqueue(Holder<RenderQueue> &&queue);
+		void enqueue(const Holder<RenderQueue> &queue);
 
 		void pushNamedPass(StringLiteral name);
 		void popNamedPass();

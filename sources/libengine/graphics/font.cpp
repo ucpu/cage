@@ -391,12 +391,12 @@ namespace cage
 		return data.outSize;
 	}
 
-	void Font::bind(RenderQueue *queue, Holder<Model> &&model, Holder<ShaderProgram> &&shader) const
+	void Font::bind(RenderQueue *queue, const Holder<Model> &model, const Holder<ShaderProgram> &shader) const
 	{
 		const FontImpl *impl = (const FontImpl *)this;
-		queue->bind(impl->tex.share(), 0);
-		queue->bind(model.share());
-		queue->bind(shader.share());
+		queue->bind(impl->tex, 0);
+		queue->bind(model);
+		queue->bind(shader);
 	}
 
 	void Font::render(RenderQueue *queue, PointerRange<const uint32> glyphs, const FontFormat &format, uint32 cursor) const
@@ -410,10 +410,10 @@ namespace cage
 		impl->processText(data);
 	}
 
-	void Font::render(Holder<Model> &&model, Holder<ShaderProgram> &&shader, PointerRange<const uint32> glyphs, const FontFormat &format, uint32 cursor) const
+	void Font::render(const Holder<Model> &model, const Holder<ShaderProgram> &shader, PointerRange<const uint32> glyphs, const FontFormat &format, uint32 cursor) const
 	{
 		Holder<RenderQueue> queue = newRenderQueue();
-		bind(+queue, std::move(model), std::move(shader));
+		bind(+queue, model, shader);
 		render(+queue, glyphs, format, cursor);
 		queue->dispatch();
 		queue.clear();
