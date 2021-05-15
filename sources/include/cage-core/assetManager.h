@@ -29,6 +29,7 @@ namespace cage
 			fabricate_(Scheme, assetName, textName, std::move(value).template cast<void>());
 		}
 
+		// returns null if the asset is not yet loaded or has different scheme
 		template<uint32 Scheme, class T>
 		Holder<T> tryGet(uint32 assetName) const
 		{
@@ -36,12 +37,8 @@ namespace cage
 			return get_(Scheme, assetName, false).template cast<T>();
 		}
 
-		template<uint32 Scheme, class T>
-		[[deprecated]] T *tryGetRaw(uint32 assetName) const
-		{
-			return tryGet<Scheme, T>(assetName).get();
-		}
-
+		// returns null if the asset is not yet loaded
+		// throws an exception if the asset has different scheme
 		template<uint32 Scheme, class T>
 		Holder<T> get(uint32 assetName) const
 		{
@@ -49,19 +46,13 @@ namespace cage
 			return get_(Scheme, assetName, true).template cast<T>();
 		}
 
-		template<uint32 Scheme, class T>
-		[[deprecated]] T *getRaw(uint32 assetName) const
-		{
-			return get<Scheme, T>(assetName).get();
-		}
-
 		// end thread-safe methods
 
 		bool processCustomThread(uint32 threadIndex);
-		bool processing() const;
-
 		void unloadCustomThread(uint32 threadIndex);
 		void unloadWait();
+
+		bool processing() const;
 		bool unloaded() const;
 
 		void listen(const string &address = "localhost", uint16 port = 65042);

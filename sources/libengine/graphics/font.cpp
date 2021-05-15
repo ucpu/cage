@@ -410,15 +410,6 @@ namespace cage
 		impl->processText(data);
 	}
 
-	void Font::render(const Holder<Model> &model, const Holder<ShaderProgram> &shader, PointerRange<const uint32> glyphs, const FontFormat &format, uint32 cursor) const
-	{
-		Holder<RenderQueue> queue = newRenderQueue();
-		bind(+queue, model, shader);
-		render(+queue, glyphs, format, cursor);
-		queue->dispatch();
-		queue.clear();
-	}
-
 	Holder<Font> newFont()
 	{
 		return systemArena().createImpl<Font, FontImpl>();

@@ -345,22 +345,6 @@ namespace cage
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void Texture::multiBind(PointerRange<const uint32> tius, PointerRange<const Texture *const> texs)
-	{
-		CAGE_ASSERT(tius.size() == texs.size());
-		CAGE_ASSERT(graphicsPrivat::getCurrentContext());
-		GLint active = 0;
-		glGetIntegerv(GL_ACTIVE_TEXTURE, &active);
-		const uint32 count = numeric_cast<uint32>(tius.size());
-		for (uint32 i = 0; i < count; i++)
-		{
-			glActiveTexture(GL_TEXTURE0 + tius[i]);
-			texs[i] ? texs[i]->bind() : void();
-		}
-		glActiveTexture(active);
-		CAGE_CHECK_GL_ERROR_DEBUG();
-	}
-
 	Holder<Texture> newTexture()
 	{
 		return newTexture(GL_TEXTURE_2D);

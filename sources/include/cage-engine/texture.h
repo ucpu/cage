@@ -34,8 +34,6 @@ namespace cage
 		void wraps(uint32 s, uint32 t);
 		void wraps(uint32 s, uint32 t, uint32 r);
 		void generateMipmaps();
-
-		[[deprecated]] static void multiBind(PointerRange<const uint32> tius, PointerRange<const Texture *const> texs);
 	};
 
 	CAGE_ENGINE_API Holder<Texture> newTexture();
