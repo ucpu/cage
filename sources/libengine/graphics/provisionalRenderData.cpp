@@ -6,7 +6,7 @@
 #include <cage-engine/frameBuffer.h>
 #include <cage-engine/provisionalRenderData.h>
 
-#include <map>
+#include <set>
 
 namespace cage
 {
@@ -17,19 +17,27 @@ namespace cage
 		class ProvisionalTextureHandleImpl : public ProvisionalTextureHandle
 		{
 		public:
+			const string name;
 			Holder<Texture> result;
 			ProvisionalRenderDataImpl *impl = nullptr;
 			uint32 target = m;
 			bool used = true;
+
+			ProvisionalTextureHandleImpl(const string &name) : name(name)
+			{}
 		};
 
 		class ProvisionalFrameBufferHandleImpl : public ProvisionalFrameBufferHandle
 		{
 		public:
+			const string name;
 			Holder<FrameBuffer> result;
 			ProvisionalRenderDataImpl *impl = nullptr;
 			uint32 type = m; // 1 = draw, 2 = read
 			bool used = true;
+
+			ProvisionalFrameBufferHandleImpl(const string &name) : name(name)
+			{}
 		};
 
 		class ProvisionalRenderDataImpl : public ProvisionalRenderData
@@ -38,17 +46,17 @@ namespace cage
 			template<class T>
 			struct Container
 			{
-				Holder<Mutex> mutex = newMutex();
-
-				std::map<string, Holder<T>, StringComparatorFast> data;
-
 				Holder<T> acquire(const string &name)
 				{
 					ScopeLock lock(mutex);
 					auto it = data.find(name);
 					if (it == data.end())
-						return (data[name] = systemArena().createHolder<T>()).share();
-					return it->second.share();
+					{
+						Holder<T> v = systemArena().createHolder<T>(name);
+						data.insert(v.share());
+						return std::move(v);
+					}
+					return it->share();
 				}
 
 				void reset()
@@ -57,9 +65,9 @@ namespace cage
 					auto it = data.begin();
 					while (it != data.end())
 					{
-						if (it->second->used)
+						if ((*it)->used)
 						{
-							it->second->used = false;
+							(*it)->used = false;
 							it++;
 						}
 						else
@@ -71,7 +79,7 @@ namespace cage
 				{
 					ScopeLock lock(mutex);
 					for (const auto &it : data)
-						it.second->result.clear(); // make sure the resources are released on the opengl thread, even if there are remaining handles
+						it->result.clear(); // make sure the resources are released on the opengl thread, even if there are remaining handles
 					data.clear();
 				}
 
@@ -79,6 +87,31 @@ namespace cage
 				{
 					purge(); // make sure the resources are released on the opengl thread
 				}
+
+			private:
+				Holder<Mutex> mutex = newMutex();
+
+				struct Comparator
+				{
+					using is_transparent = void;
+
+					bool operator() (const Holder<T> &a, const Holder<T> &b) const
+					{
+						return StringComparatorFast()(a->name, b->name);
+					}
+
+					bool operator() (const Holder<T> &a, const string &b) const
+					{
+						return StringComparatorFast()(a->name, b);
+					}
+
+					bool operator() (const string &a, const Holder<T> &b) const
+					{
+						return StringComparatorFast()(a, b->name);
+					}
+				};
+
+				std::set<Holder<T>, Comparator> data;
 			};
 
 			Container<ProvisionalTextureHandleImpl> textures;
@@ -119,7 +152,10 @@ namespace cage
 		ProvisionalTextureHandleImpl *impl = (ProvisionalTextureHandleImpl *)this;
 		impl->used = true;
 		if (!impl->result)
+		{
 			impl->result = newTexture(impl->target);
+			impl->result->setDebugName(impl->name);
+		}
 		return impl->result.share();
 	}
 
@@ -138,6 +174,7 @@ namespace cage
 				impl->result = newFrameBufferRead();
 				break;
 			}
+			impl->result->setDebugName(impl->name);
 		}
 		return impl->result.share();
 	}

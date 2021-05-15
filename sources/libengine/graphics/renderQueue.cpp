@@ -12,7 +12,8 @@
 #include <cage-engine/provisionalRenderData.h>
 #include "private.h"
 
-#include <vector>
+#include <vector> // namesStack
+#include <array>
 
 namespace cage
 {
@@ -34,16 +35,88 @@ namespace cage
 			void *ptr = nullptr;
 		};
 
-		struct RenderQueueBindings
+		// available during dispatch only
+		struct RenderQueueDispatchBindings
 		{
 			Holder<UniformBuffer> uniformBuffer;
 			Holder<ShaderProgram> shaderProgram;
 			Holder<FrameBuffer> frameBuffer;
 			Holder<Texture> texture;
 			Holder<Model> model;
+		};
+
+		enum CemKeys
+		{
+			CEM_VIEWPORT_X,
+			CEM_VIEWPORT_Y,
+			CEM_VIEWPORT_W,
+			CEM_VIEWPORT_H,
+			CEM_SCISSOR_X,
+			CEM_SCISSOR_Y,
+			CEM_SCISSOR_W,
+			CEM_SCISSOR_H,
+			CEM_CULLING_FACE,
+			CEM_DEPTH_FUNC,
+			CEM_DEPTH_WRITE,
+			CEM_COLOR_WRITE,
+			CEM_BLEND_FUNC_S,
+			CEM_BLEND_FUNC_D,
+
+			CEM_TOTAL
+		};
+
+		struct ChangeEliminationMachine
+		{
+			// returns whether the value has changed
+			bool update(uint32 key, uint32 value)
+			{
+				const uint32 p = map(key);
+				if (p == m)
+					return true;
+				uint32 &v = values[p];
+				if (v == value)
+					return false;
+				v = value;
+				return true;
+			}
+
+			ChangeEliminationMachine()
+			{
+				values.fill(m);
+			}
+
+		private:
+			std::array<uint32, CEM_TOTAL + 4> values = {};
+
+			static constexpr uint32 map(uint32 key)
+			{
+				if (key < CEM_TOTAL)
+					return key;
+				switch (key)
+				{
+				case GL_SCISSOR_TEST: return CEM_TOTAL + 0;
+				case GL_CULL_FACE: return CEM_TOTAL + 1;
+				case GL_DEPTH_TEST: return CEM_TOTAL + 2;
+				case GL_BLEND: return  CEM_TOTAL + 3;
+				default: return m;
+				}
+			}
+		};
+
+		// available during setting up - reset when enqueueing another queue, and by explicit call
+		struct RenderQueueSettingBindings
+		{
+			ChangeEliminationMachine states;
+			// pointers used for comparisons only, never to access the objects
+			std::array<void *, 16> textures = {};
+			void *shaderProgram = nullptr;
+			void *frameBuffer = nullptr;
+			void *model = nullptr;
+			uint32 modelPrimitives = 0;
 			uint32 activeTextureIndex = m;
 		};
 
+		// available during setting up - reset by explicit call
 		struct RenderQueueContent
 		{
 			CmdBase *head = nullptr, *tail = nullptr;
@@ -52,7 +125,8 @@ namespace cage
 			uint32 commandsCount = 0;
 			uint32 drawsCount = 0;
 			uint32 primitivesCount = 0;
-			uint32 lastModelPrimitives = 0;
+
+			RenderQueueSettingBindings setting;
 		};
 
 		class RenderQueueImpl : public RenderQueueContent, public RenderQueue
@@ -65,7 +139,7 @@ namespace cage
 			Holder<MemoryArena> arena = newMemoryAllocatorStream({});
 			MemoryBuffer uubStaging;
 			UniformBuffer *uubObject = nullptr;
-			RenderQueueBindings *bindings = nullptr;
+			RenderQueueDispatchBindings *bindings = nullptr;
 
 #ifdef CAGE_DEBUG
 			std::vector<StringLiteral> namesStack;
@@ -118,7 +192,7 @@ namespace cage
 				namesStack.clear();
 #endif // CAGE_DEBUG
 
-				RenderQueueBindings localBindings; // make sure the bindings are destroyed on the opengl thread
+				RenderQueueDispatchBindings localBindings; // make sure the bindings are destroyed on the opengl thread
 				bindings = &localBindings;
 
 				Holder<UniformBuffer> uub; // make sure the uub is destroyed on the opengl thread
@@ -186,6 +260,8 @@ namespace cage
 						impl->bindings->shaderProgram->uniform(name, value);
 					}
 				};
+
+				CAGE_ASSERT(setting.shaderProgram);
 				Cmd &cmd = addCmd<Cmd>();
 				cmd.value = value;
 				cmd.name = name;
@@ -203,36 +279,35 @@ namespace cage
 						impl->bindings->shaderProgram->uniform(name, values);
 					}
 				};
+
+				CAGE_ASSERT(setting.shaderProgram);
 				Cmd &cmd = addCmd<Cmd>();
 				cmd.values = copyMem(values);
 				cmd.name = name;
 			}
-
-			void activeTexture(uint32 t)
-			{
-				if (t == bindings->activeTextureIndex)
-					return;
-				glActiveTexture(GL_TEXTURE0 + t);
-				bindings->activeTextureIndex = t;
-			}
-
-			void unbindAllTextures()
-			{
-				GraphicsDebugScope graphicsDebugScope("reset all textures");
-				for (uint32 i = 0; i < 16; i++)
-				{
-					activeTexture(i);
-					glBindTexture(GL_TEXTURE_1D, 0);
-					glBindTexture(GL_TEXTURE_1D_ARRAY, 0);
-					glBindTexture(GL_TEXTURE_2D, 0);
-					glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
-					glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-					glBindTexture(GL_TEXTURE_3D, 0);
-				}
-				activeTexture(0);
-				bindings->texture.clear();
-			}
 		};
+
+		// logical or without short circuiting
+		bool or_(bool a, bool b)
+		{
+			return a || b;
+		}
+
+		bool cemUpdate(ChangeEliminationMachine &cem, uint32 key, const ivec4 &value)
+		{
+			return or_(or_(
+				cem.update(key + 0, value[0]),
+				cem.update(key + 1, value[1])
+			), or_(
+				cem.update(key + 2, value[2]),
+				cem.update(key + 3, value[3])
+			));
+		}
+
+		bool cemUpdate(ChangeEliminationMachine &cem, uint32 key, const ivec2 &a, const ivec2 &b)
+		{
+			return cemUpdate(cem, key, ivec4(a, b));
+		}
 	}
 
 	UubRange RenderQueue::universalUniformBuffer(PointerRange<const char> data, uint32 bindingPoint)
@@ -251,6 +326,7 @@ namespace cage
 				impl->uubObject->bind(bindingPoint, offset, size);
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		CAGE_ASSERT(uubRange.offset + uubRange.size <= impl->uubStaging.size());
 		CAGE_ASSERT((uubRange.offset % UniformBuffer::getAlignmentRequirement()) == 0);
@@ -261,7 +337,6 @@ namespace cage
 
 	void RenderQueue::bind(const Holder<UniformBuffer> &uniformBuffer, uint32 bindingPoint)
 	{
-		CAGE_ASSERT(uniformBuffer);
 		struct Cmd : public CmdBase
 		{
 			Holder<UniformBuffer> uniformBuffer;
@@ -272,7 +347,9 @@ namespace cage
 				impl->bindings->uniformBuffer = uniformBuffer.share();
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(uniformBuffer);
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.uniformBuffer = uniformBuffer.share();
 		cmd.bindingPoint = bindingPoint;
@@ -280,7 +357,6 @@ namespace cage
 
 	void RenderQueue::bind(const Holder<UniformBuffer> &uniformBuffer, uint32 bindingPoint, uint32 offset, uint32 size)
 	{
-		CAGE_ASSERT(uniformBuffer);
 		struct Cmd : public CmdBase
 		{
 			Holder<UniformBuffer> uniformBuffer;
@@ -293,7 +369,9 @@ namespace cage
 				impl->bindings->uniformBuffer = uniformBuffer.share();
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(uniformBuffer);
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.uniformBuffer = uniformBuffer.share();
 		cmd.bindingPoint = bindingPoint;
@@ -303,7 +381,6 @@ namespace cage
 
 	void RenderQueue::bind(const Holder<UniformBuffer> &uniformBuffer)
 	{
-		CAGE_ASSERT(uniformBuffer);
 		struct Cmd : public CmdBase
 		{
 			Holder<UniformBuffer> uniformBuffer;
@@ -312,7 +389,9 @@ namespace cage
 				uniformBuffer->bind();
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(uniformBuffer);
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.uniformBuffer = uniformBuffer.share();
 	}
@@ -328,6 +407,7 @@ namespace cage
 				impl->bindings->uniformBuffer->writeWhole(data, usage);
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.data = impl->copyMem(data);
@@ -345,6 +425,7 @@ namespace cage
 				impl->bindings->uniformBuffer->writeRange(data, offset);
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.data = impl->copyMem(data);
@@ -353,7 +434,6 @@ namespace cage
 
 	void RenderQueue::bind(const Holder<ShaderProgram> &shader)
 	{
-		CAGE_ASSERT(shader);
 		struct Cmd : public CmdBase
 		{
 			Holder<ShaderProgram> shaderProgram;
@@ -363,7 +443,12 @@ namespace cage
 				impl->bindings->shaderProgram = shaderProgram.share();
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(shader);
+		if (impl->setting.shaderProgram == +shader)
+			return;
+		impl->setting.shaderProgram = +shader;
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.shaderProgram = shader.share();
 	}
@@ -395,7 +480,6 @@ namespace cage
 
 	void RenderQueue::bind(const Holder<FrameBuffer> &frameBuffer)
 	{
-		CAGE_ASSERT(frameBuffer);
 		struct Cmd : public CmdBase
 		{
 			Holder<FrameBuffer> frameBuffer;
@@ -405,14 +489,18 @@ namespace cage
 				impl->bindings->frameBuffer = frameBuffer.share();
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(frameBuffer);
+		if (impl->setting.frameBuffer == +frameBuffer)
+			return;
+		impl->setting.frameBuffer = +frameBuffer;
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.frameBuffer = frameBuffer.share();
 	}
 
 	void RenderQueue::bind(const Holder<ProvisionalFrameBufferHandle> &frameBuffer)
 	{
-		CAGE_ASSERT(frameBuffer);
 		struct Cmd : public CmdBase
 		{
 			Holder<ProvisionalFrameBufferHandle> frameBuffer;
@@ -423,7 +511,12 @@ namespace cage
 				impl->bindings->frameBuffer = std::move(fb);
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(frameBuffer);
+		if (impl->setting.frameBuffer == +frameBuffer)
+			return;
+		impl->setting.frameBuffer = +frameBuffer;
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.frameBuffer = frameBuffer.share();
 	}
@@ -438,7 +531,9 @@ namespace cage
 				impl->bindings->frameBuffer->depthTexture(+texture);
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(impl->setting.frameBuffer);
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.texture = texture.share();
 	}
@@ -453,7 +548,9 @@ namespace cage
 				impl->bindings->frameBuffer->depthTexture(+texture->resolve());
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(impl->setting.frameBuffer);
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.texture = texture.share();
 	}
@@ -470,7 +567,9 @@ namespace cage
 				impl->bindings->frameBuffer->colorTexture(index, +texture, mipmapLevel);
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(impl->setting.frameBuffer);
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.texture = texture.share();
 		cmd.index = index;
@@ -489,7 +588,9 @@ namespace cage
 				impl->bindings->frameBuffer->colorTexture(index, +texture->resolve(), mipmapLevel);
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(impl->setting.frameBuffer);
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.texture = texture.share();
 		cmd.index = index;
@@ -506,7 +607,9 @@ namespace cage
 				impl->bindings->frameBuffer->activeAttachments(mask);
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(impl->setting.frameBuffer);
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.mask = mask;
 	}
@@ -520,45 +623,93 @@ namespace cage
 				impl->bindings->frameBuffer->clear();
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(impl->setting.frameBuffer);
+		impl->addCmd<Cmd>();
+	}
+
+	void RenderQueue::checkFrameBuffer()
+	{
+		struct Cmd : public CmdBase
+		{
+			void dispatch(RenderQueueImpl *impl) const override
+			{
+				impl->bindings->frameBuffer->checkStatus();
+			}
+		};
+
+		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(impl->setting.frameBuffer);
+		impl->addCmd<Cmd>();
+	}
+
+	void RenderQueue::activeTexture(uint32 bindingPoint)
+	{
+		struct Cmd : public CmdBase
+		{
+			uint32 bindingPoint = 0;
+			void dispatch(RenderQueueImpl *impl) const override
+			{
+				glActiveTexture(GL_TEXTURE0 + bindingPoint);
+				impl->bindings->texture.clear();
+			}
+		};
+
+		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(bindingPoint < 16);
+		if (impl->setting.activeTextureIndex == bindingPoint)
+			return;
+		impl->setting.activeTextureIndex = bindingPoint;
 		Cmd &cmd = impl->addCmd<Cmd>();
+		cmd.bindingPoint = bindingPoint;
 	}
 
 	void RenderQueue::bind(const Holder<Texture> &texture, uint32 bindingPoint)
 	{
-		CAGE_ASSERT(texture);
 		struct Cmd : public CmdBase
 		{
 			Holder<Texture> texture;
-			uint32 bindingPoint = 0;
 			void dispatch(RenderQueueImpl *impl) const override
 			{
-				impl->activeTexture(bindingPoint);
 				texture->bind();
 				impl->bindings->texture = texture.share();
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(texture);
+		if (bindingPoint == m)
+			bindingPoint = impl->setting.activeTextureIndex;
+		activeTexture(bindingPoint);
+		if (impl->setting.textures[bindingPoint] == +texture)
+			return;
+		impl->setting.textures[bindingPoint] = +texture;
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.texture = texture.share();
 	}
 
 	void RenderQueue::bind(const Holder<ProvisionalTextureHandle> &texture, uint32 bindingPoint)
 	{
-		CAGE_ASSERT(texture);
 		struct Cmd : public CmdBase
 		{
 			Holder<ProvisionalTextureHandle> texture;
-			uint32 bindingPoint = 0;
 			void dispatch(RenderQueueImpl *impl) const override
 			{
-				impl->activeTexture(bindingPoint);
 				Holder<Texture> tex = texture->resolve();
 				tex->bind();
 				impl->bindings->texture = std::move(tex);
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(texture);
+		if (bindingPoint == m)
+			bindingPoint = impl->setting.activeTextureIndex;
+		activeTexture(bindingPoint);
+		if (impl->setting.textures[bindingPoint] == +texture)
+			return;
+		impl->setting.textures[bindingPoint] = +texture;
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.texture = texture.share();
 	}
@@ -573,7 +724,9 @@ namespace cage
 				impl->bindings->texture->image2d(w, h, f);
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(impl->setting.textures[impl->setting.activeTextureIndex]);
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.w = w;
 		cmd.h = h;
@@ -590,7 +743,9 @@ namespace cage
 				impl->bindings->texture->imageCube(w, h, f);
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(impl->setting.textures[impl->setting.activeTextureIndex]);
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.w = w;
 		cmd.h = h;
@@ -607,7 +762,9 @@ namespace cage
 				impl->bindings->texture->image3d(w, h, d, f);
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(impl->setting.textures[impl->setting.activeTextureIndex]);
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.w = w;
 		cmd.h = h;
@@ -625,7 +782,9 @@ namespace cage
 				impl->bindings->texture->filters(mig, mag, aniso);
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(impl->setting.textures[impl->setting.activeTextureIndex]);
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.mig = mig;
 		cmd.mag = mag;
@@ -642,7 +801,9 @@ namespace cage
 				impl->bindings->texture->wraps(s, t);
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(impl->setting.textures[impl->setting.activeTextureIndex]);
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.s = s;
 		cmd.t = t;
@@ -658,7 +819,9 @@ namespace cage
 				impl->bindings->texture->wraps(s, t, r);
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(impl->setting.textures[impl->setting.activeTextureIndex]);
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.s = s;
 		cmd.t = t;
@@ -674,7 +837,9 @@ namespace cage
 				impl->bindings->texture->generateMipmaps();
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(impl->setting.textures[impl->setting.activeTextureIndex]);
 		Cmd &cmd = impl->addCmd<Cmd>();
 	}
 
@@ -684,16 +849,31 @@ namespace cage
 		{
 			void dispatch(RenderQueueImpl *impl) const override
 			{
-				impl->unbindAllTextures();
+				GraphicsDebugScope graphicsDebugScope("reset all textures");
+				for (uint32 i = 0; i < 16; i++)
+				{
+					glActiveTexture(i);
+					glBindTexture(GL_TEXTURE_1D, 0);
+					glBindTexture(GL_TEXTURE_1D_ARRAY, 0);
+					glBindTexture(GL_TEXTURE_2D, 0);
+					glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+					glBindTexture(GL_TEXTURE_RECTANGLE, 0);
+					glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+					glBindTexture(GL_TEXTURE_3D, 0);
+				}
+				glActiveTexture(0);
+				impl->bindings->texture.clear();
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		impl->setting.activeTextureIndex = 0;
+		impl->setting.textures.fill(nullptr);
 		Cmd &cmd = impl->addCmd<Cmd>();
 	}
 
 	void RenderQueue::bind(const Holder<Model> &model)
 	{
-		CAGE_ASSERT(model);
 		struct Cmd : public CmdBase
 		{
 			Holder<Model> model;
@@ -703,8 +883,13 @@ namespace cage
 				impl->bindings->model = model.share();
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
-		impl->lastModelPrimitives = model->getPrimitivesCount();
+		CAGE_ASSERT(model);
+		if (impl->setting.model == +model)
+			return;
+		impl->setting.model = +model;
+		impl->setting.modelPrimitives = model->getPrimitivesCount();
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.model = model.share();
 	}
@@ -719,9 +904,11 @@ namespace cage
 				impl->bindings->model->dispatch(instances);
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(impl->setting.model);
 		impl->drawsCount++;
-		impl->primitivesCount += instances * impl->lastModelPrimitives;
+		impl->primitivesCount += instances * impl->setting.modelPrimitives;
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.instances = instances;
 	}
@@ -738,7 +925,10 @@ namespace cage
 				glScissor(origin[0], origin[1], size[0], size[1]);
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		if (!or_(cemUpdate(impl->setting.states, CEM_VIEWPORT_X, origin, size), cemUpdate(impl->setting.states, CEM_SCISSOR_X, origin, size)))
+			return;
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.origin = origin;
 		cmd.size = size;
@@ -755,7 +945,10 @@ namespace cage
 				glScissor(origin[0], origin[1], size[0], size[1]);
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		if (!cemUpdate(impl->setting.states, CEM_SCISSOR_X, origin, size))
+			return;
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.origin = origin;
 		cmd.size = size;
@@ -776,7 +969,10 @@ namespace cage
 				glCullFace(key);
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		if (!impl->setting.states.update(CEM_CULLING_FACE, front))
+			return;
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.key = front ? GL_FRONT : GL_BACK;
 	}
@@ -796,7 +992,10 @@ namespace cage
 				glDepthFunc(func);
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		if (!impl->setting.states.update(CEM_DEPTH_FUNC, func))
+			return;
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.func = func;
 	}
@@ -826,7 +1025,10 @@ namespace cage
 				glDepthMask(enable);
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		if (!impl->setting.states.update(CEM_DEPTH_WRITE, enable))
+			return;
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.enable = enable;
 	}
@@ -841,7 +1043,10 @@ namespace cage
 				glColorMask(enable, enable, enable, enable);
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		if (!impl->setting.states.update(CEM_COLOR_WRITE, enable))
+			return;
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.enable = enable;
 	}
@@ -856,7 +1061,10 @@ namespace cage
 				glBlendFunc(s, d);
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		if (!or_(impl->setting.states.update(CEM_BLEND_FUNC_S, s), impl->setting.states.update(CEM_BLEND_FUNC_D, d)))
+			return;
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.s = s;
 		cmd.d = d;
@@ -892,6 +1100,7 @@ namespace cage
 				glClearColor(rgba[0].value, rgba[1].value, rgba[2].value, rgba[3].value);
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.rgba = rgba;
@@ -907,7 +1116,10 @@ namespace cage
 				glClear(mask);
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		if (!color && !depth && !stencil)
+			return;
 		Cmd &cmd = impl->addCmd<Cmd>();
 		if (color) cmd.mask |= GL_COLOR_BUFFER_BIT;
 		if (depth) cmd.mask |= GL_DEPTH_BUFFER_BIT;
@@ -917,6 +1129,9 @@ namespace cage
 	void RenderQueue::genericEnable(uint32 key, bool enable)
 	{
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		if (!impl->setting.states.update(key, enable))
+			return;
+
 		if (enable)
 		{
 			struct Cmd : public CmdBase
@@ -927,6 +1142,7 @@ namespace cage
 					glEnable(key);
 				}
 			};
+
 			Cmd &cmd = impl->addCmd<Cmd>();
 			cmd.key = key;
 		}
@@ -940,32 +1156,67 @@ namespace cage
 					glDisable(key);
 				}
 			};
+
 			Cmd &cmd = impl->addCmd<Cmd>();
 			cmd.key = key;
 		}
 	}
 
+#ifdef CAGE_DEBUG
+	void RenderQueue::checkGlErrorDebug()
+	{
+		struct Cmd : public CmdBase
+		{
+			void dispatch(RenderQueueImpl *) const override
+			{
+				try
+				{
+					cage::checkGlError();
+				}
+				catch (const GraphicsError &)
+				{
+					CAGE_LOG(SeverityEnum::Error, "exception", stringizer() + "uncaught opengl error");
+				}
+			}
+		};
+
+		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		impl->addCmd<Cmd>();
+	}
+#endif // CAGE_DEBUG
+
+	void RenderQueue::checkGlError()
+	{
+		struct Cmd : public CmdBase
+		{
+			void dispatch(RenderQueueImpl *) const override
+			{
+				cage::checkGlError();
+			}
+		};
+
+		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		impl->addCmd<Cmd>();
+	}
+
 	void RenderQueue::enqueue(const Holder<RenderQueue> &queue)
 	{
-		CAGE_ASSERT(queue);
-
 		struct Cmd : public CmdBase
 		{
 			Holder<RenderQueue> queue;
 			void dispatch(RenderQueueImpl *impl) const override
 			{
 				queue->dispatch();
-				*impl->bindings = RenderQueueBindings();
+				*impl->bindings = RenderQueueDispatchBindings();
 			}
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
-		
+		CAGE_ASSERT(queue);		
 		impl->commandsCount += queue->commandsCount();
 		impl->drawsCount += queue->drawsCount();
 		impl->primitivesCount += queue->primitivesCount();
-		impl->lastModelPrimitives = 0;
-
+		impl->setting = RenderQueueSettingBindings();
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.queue = queue.share();
 	}
@@ -983,6 +1234,7 @@ namespace cage
 				glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, name);
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.name = name;
@@ -1001,8 +1253,9 @@ namespace cage
 				glPopDebugGroup();
 			}
 		};
+
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
-		Cmd &cmd = impl->addCmd<Cmd>();
+		impl->addCmd<Cmd>();
 	}
 
 	RenderQueueNamedPassScope RenderQueue::scopedNamedPass(StringLiteral name)

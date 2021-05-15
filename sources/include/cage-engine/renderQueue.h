@@ -67,9 +67,11 @@ namespace cage
 		void colorTexture(uint32 index, const Holder<ProvisionalTextureHandle> &texture, uint32 mipmapLevel = 0);
 		void activeAttachments(uint32 mask);
 		void clearFrameBuffer();
+		void checkFrameBuffer();
 
-		void bind(const Holder<Texture> &texture, uint32 bindingPoint);
-		void bind(const Holder<ProvisionalTextureHandle> &texture, uint32 bindingPoint);
+		void activeTexture(uint32 bindingPoint);
+		void bind(const Holder<Texture> &texture, uint32 bindingPoint = m);
+		void bind(const Holder<ProvisionalTextureHandle> &texture, uint32 bindingPoint = m);
 		void image2d(uint32 w, uint32 h, uint32 internalFormat);
 		void imageCube(uint32 w, uint32 h, uint32 internalFormat);
 		void image3d(uint32 w, uint32 h, uint32 d, uint32 internalFormat);
@@ -101,6 +103,12 @@ namespace cage
 		void clearColor(const vec4 &rgba);
 		void clear(bool color, bool depth, bool stencil = false);
 		void genericEnable(uint32 key, bool enable);
+#ifdef CAGE_DEBUG
+		void checkGlErrorDebug();
+#else
+		void checkGlErrorDebug() {}
+#endif
+		void checkGlError();
 
 		// dispatch another queue as part of this queue
 		// stores a reference to the queue - do not modify it after it has been enqueued
