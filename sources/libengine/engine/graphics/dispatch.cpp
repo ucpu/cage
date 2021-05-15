@@ -888,6 +888,22 @@ namespace cage
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
+			struct DepthMapVisualizationData
+			{
+				Holder<Model> modelSquare;
+				Texture *tex = nullptr;
+			};
+
+			static void depthMapVisualizationFunction(void *ptr)
+			{
+				const DepthMapVisualizationData *data = (const DepthMapVisualizationData *)ptr;
+				GLint cmpMode = 0;
+				glGetTexParameteriv(data->tex->getTarget(), GL_TEXTURE_COMPARE_MODE, &cmpMode);
+				glTexParameteri(data->tex->getTarget(), GL_TEXTURE_COMPARE_MODE, GL_NONE);
+				data->modelSquare->dispatch();
+				glTexParameteri(data->tex->getTarget(), GL_TEXTURE_COMPARE_MODE, cmpMode);
+			}
+
 		public:
 			explicit GraphicsDispatchImpl(const EngineCreateConfig &config)
 			{}
@@ -1085,26 +1101,10 @@ namespace cage
 						{
 							renderQueue->bind(shaderVisualizeDepth);
 							renderQueue->uniform(0, scale);
-
-							struct Data
-							{
-								Holder<Model> modelSquare;
-								Texture *tex = nullptr;
-							};
-							Holder<Data> data = systemArena().createHolder<Data>();
+							Holder<DepthMapVisualizationData> data = systemArena().createHolder<DepthMapVisualizationData>();
 							data->modelSquare = modelSquare.share();
 							data->tex = v.tex;
-
-							constexpr void (*fncPtr)(void*) = +[](void *ptr) {
-								Data *data = (Data *)ptr;
-								GLint cmpMode = 0;
-								glGetTexParameteriv(data->tex->getTarget(), GL_TEXTURE_COMPARE_MODE, &cmpMode);
-								glTexParameteri(data->tex->getTarget(), GL_TEXTURE_COMPARE_MODE, GL_NONE);
-								data->modelSquare->dispatch();
-								glTexParameteri(data->tex->getTarget(), GL_TEXTURE_COMPARE_MODE, cmpMode);
-							};
-
-							renderQueue->customCommand(Delegate<void(void *)>().bind<fncPtr>(), std::move(data).cast<void>(), true);
+							renderQueue->customCommand(Delegate<void(void *)>().bind<&GraphicsDispatchImpl::depthMapVisualizationFunction>(), std::move(data).cast<void>(), true);
 						} break;
 						case VisualizableTextureModeEnum::Monochromatic:
 							renderQueue->bind(shaderVisualizeMonochromatic);
