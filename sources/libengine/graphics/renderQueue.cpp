@@ -68,7 +68,7 @@ namespace cage
 		struct ChangeEliminationMachine
 		{
 			// returns whether the value has changed
-			bool update(uint32 key, uint32 value)
+			CAGE_FORCE_INLINE bool update(uint32 key, uint32 value)
 			{
 				const uint32 p = map(key);
 				if (p == m)
@@ -88,7 +88,7 @@ namespace cage
 		private:
 			std::array<uint32, CEM_TOTAL + 4> values = {};
 
-			static constexpr uint32 map(uint32 key)
+			CAGE_FORCE_INLINE static constexpr uint32 map(uint32 key)
 			{
 				if (key < CEM_TOTAL)
 					return key;
@@ -644,6 +644,22 @@ namespace cage
 		impl->addCmd<Cmd>();
 	}
 
+	void RenderQueue::unbindFrameBuffer()
+	{
+		struct Cmd : public CmdBase
+		{
+			void dispatch(RenderQueueImpl *impl) const override
+			{
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+				impl->bindings->frameBuffer.clear();
+			}
+		};
+
+		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		impl->setting.frameBuffer = nullptr;
+		impl->addCmd<Cmd>();
+	}
+
 	void RenderQueue::activeTexture(uint32 bindingPoint)
 	{
 		struct Cmd : public CmdBase
@@ -852,7 +868,7 @@ namespace cage
 				GraphicsDebugScope graphicsDebugScope("reset all textures");
 				for (uint32 i = 0; i < 16; i++)
 				{
-					glActiveTexture(i);
+					glActiveTexture(GL_TEXTURE0 + i);
 					glBindTexture(GL_TEXTURE_1D, 0);
 					glBindTexture(GL_TEXTURE_1D_ARRAY, 0);
 					glBindTexture(GL_TEXTURE_2D, 0);
@@ -861,7 +877,7 @@ namespace cage
 					glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 					glBindTexture(GL_TEXTURE_3D, 0);
 				}
-				glActiveTexture(0);
+				glActiveTexture(GL_TEXTURE0 + 0);
 				impl->bindings->texture.clear();
 			}
 		};
@@ -1261,6 +1277,31 @@ namespace cage
 	RenderQueueNamedPassScope RenderQueue::scopedNamedPass(StringLiteral name)
 	{
 		return RenderQueueNamedPassScope(this, name);
+	}
+
+	void RenderQueue::customCommand(Delegate<void(void *)> fnc, const Holder<void> &data, bool preserveGlState)
+	{
+		struct Cmd : public CmdBase
+		{
+			Delegate<void(void *)> fnc;
+			Holder<void> data;
+			bool preserveGlState = false;
+			void dispatch(RenderQueueImpl *impl) const override
+			{
+				fnc(+data);
+				if (!preserveGlState)
+					*impl->bindings = RenderQueueDispatchBindings();
+			}
+		};
+
+		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(fnc);
+		if (!preserveGlState)
+			impl->setting = RenderQueueSettingBindings();
+		Cmd &cmd = impl->addCmd<Cmd>();
+		cmd.fnc = fnc;
+		cmd.data = data.share();
+		cmd.preserveGlState = preserveGlState;
 	}
 
 	void RenderQueue::reset()

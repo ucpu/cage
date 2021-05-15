@@ -68,6 +68,7 @@ namespace cage
 		void activeAttachments(uint32 mask);
 		void clearFrameBuffer();
 		void checkFrameBuffer();
+		void unbindFrameBuffer();
 
 		void activeTexture(uint32 bindingPoint);
 		void bind(const Holder<Texture> &texture, uint32 bindingPoint = m);
@@ -117,6 +118,8 @@ namespace cage
 		void pushNamedPass(StringLiteral name);
 		void popNamedPass();
 		[[nodiscard]] struct RenderQueueNamedPassScope scopedNamedPass(StringLiteral name);
+
+		void customCommand(Delegate<void(void *)> fnc, const Holder<void> &data, bool preserveGlState = false);
 
 		void reset(); // erase all stored commands
 
