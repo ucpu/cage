@@ -8,7 +8,7 @@
 
 namespace cage
 {
-	struct VorbisDecoder : Immovable
+	struct VorbisDecoder : private Immovable
 	{
 		uintPtr frames = 0;
 		uint32 channels = 0;
@@ -30,7 +30,7 @@ namespace cage
 		static long tell_func(void *datasource);
 	};
 
-	struct VorbisEncoder : Immovable
+	struct VorbisEncoder : private Immovable
 	{
 		const MemoryBuffer &inputBuffer;
 		MemoryBuffer outputBuffer;

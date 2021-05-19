@@ -1,7 +1,7 @@
 #ifndef guard_renderQueue_h_edrtz54sedr9wse4g4jk7
 #define guard_renderQueue_h_edrtz54sedr9wse4g4jk7
 
-#include "core.h"
+#include "provisionalRenderHandles.h"
 
 namespace cage
 {
@@ -35,9 +35,9 @@ namespace cage
 		}
 		void bind(UubRange uubRange, uint32 bindingPoint);
 
-		void bind(const Holder<UniformBuffer> &uniformBuffer, uint32 bindingPoint); // bind for reading from (on gpu)
-		void bind(const Holder<UniformBuffer> &uniformBuffer, uint32 bindingPoint, uint32 offset, uint32 size); // bind for reading from (on gpu)
-		void bind(const Holder<UniformBuffer> &uniformBuffer); // bind for writing into (on cpu)
+		void bind(UniformBufferHandle uniformBuffer, uint32 bindingPoint); // bind for reading from (on gpu)
+		void bind(UniformBufferHandle uniformBuffer, uint32 bindingPoint, uint32 offset, uint32 size); // bind for reading from (on gpu)
+		void bind(UniformBufferHandle uniformBuffer); // bind for writing into (on cpu)
 		void writeWhole(PointerRange<const char> data, uint32 usage = 0);
 		void writeRange(PointerRange<const char> data, uint32 offset = 0);
 
@@ -59,28 +59,24 @@ namespace cage
 		GCHL_GENERATE(mat4);
 #undef GCHL_GENERATE
 
-		void bind(const Holder<FrameBuffer> &frameBuffer);
-		void bind(const Holder<ProvisionalFrameBufferHandle> &frameBuffer);
-		void depthTexture(const Holder<Texture> &texture);
-		void depthTexture(const Holder<ProvisionalTextureHandle> &texture);
-		void colorTexture(uint32 index, const Holder<Texture> &texture, uint32 mipmapLevel = 0);
-		void colorTexture(uint32 index, const Holder<ProvisionalTextureHandle> &texture, uint32 mipmapLevel = 0);
+		void bind(FrameBufferHandle frameBuffer);
+		void depthTexture(TextureHandle texture);
+		void colorTexture(uint32 index, TextureHandle texture, uint32 mipmapLevel = 0);
 		void activeAttachments(uint32 mask);
-		void clearFrameBuffer();
-		void checkFrameBuffer();
-		void unbindFrameBuffer();
+		void clearFrameBuffer(); // detach all textures from the frame buffer
+		void checkFrameBuffer(); // check the frame buffer for completeness
+		void resetFrameBuffer(); // bind default (0) frame buffer
 
-		void activeTexture(uint32 bindingPoint);
-		void bind(const Holder<Texture> &texture, uint32 bindingPoint = m);
-		void bind(const Holder<ProvisionalTextureHandle> &texture, uint32 bindingPoint = m);
-		void image2d(uint32 w, uint32 h, uint32 internalFormat);
-		void imageCube(uint32 w, uint32 h, uint32 internalFormat);
-		void image3d(uint32 w, uint32 h, uint32 d, uint32 internalFormat);
+		[[deprecated]] void activeTexture(uint32 bindingPoint);
+		void bind(TextureHandle texture, uint32 bindingPoint = m);
+		void image2d(ivec2 resolution, uint32 internalFormat);
+		void imageCube(ivec2 resolution, uint32 internalFormat);
+		void image3d(ivec3 resolution, uint32 internalFormat);
 		void filters(uint32 mig, uint32 mag, uint32 aniso);
 		void wraps(uint32 s, uint32 t);
 		void wraps(uint32 s, uint32 t, uint32 r);
 		void generateMipmaps();
-		void unbindAllTextures();
+		void resetAllTextures(); // bind default (0) texture in all texture units in all types
 
 		void bind(const Holder<Model> &model);
 		void draw(uint32 instances = 1);
@@ -88,15 +84,17 @@ namespace cage
 		void viewport(ivec2 origin, ivec2 size);
 		void scissors(ivec2 origin, ivec2 size);
 		void scissors(bool enable);
-		void cullingFace(bool front);
+		void cullFace(bool front);
 		void culling(bool enable);
 		void depthFunc(uint32 func);
-		void depthFuncAlways();
+		void depthFuncLess();
 		void depthFuncLessEqual();
+		void depthFuncAlways();
 		void depthTest(bool enable);
 		void depthWrite(bool enable);
 		void colorWrite(bool enable);
 		void blendFunc(uint32 s, uint32 d);
+		void blendFuncNone(); // ONE, ZERO
 		void blendFuncAdditive(); // ONE, ONE
 		void blendFuncPremultipliedTransparency(); // ONE, ONE_MINUS_SRC_ALPHA
 		void blendFuncAlphaTransparency(); // SRC_ALPHA, ONE_MINUS_SRC_ALPHA
@@ -104,6 +102,18 @@ namespace cage
 		void clearColor(const vec4 &rgba);
 		void clear(bool color, bool depth, bool stencil = false);
 		void genericEnable(uint32 key, bool enable);
+		void resetAllState(); // set viewport, scissors, culling, depth, blend etc all to default values
+
+		void pushNamedPass(StringLiteral name);
+		void popNamedPass();
+		[[nodiscard]] struct RenderQueueNamedPassScope scopedNamedPass(StringLiteral name);
+
+		// dispatch another queue as part of this queue
+		// stores a reference to the queue - do not modify it after it has been enqueued
+		void enqueue(const Holder<RenderQueue> &queue);
+
+		void customCommand(Delegate<void(void *)> fnc, const Holder<void> &data, bool preservesGlState = false);
+
 #ifdef CAGE_DEBUG
 		void checkGlErrorDebug();
 #else
@@ -111,17 +121,7 @@ namespace cage
 #endif
 		void checkGlError();
 
-		// dispatch another queue as part of this queue
-		// stores a reference to the queue - do not modify it after it has been enqueued
-		void enqueue(const Holder<RenderQueue> &queue);
-
-		void pushNamedPass(StringLiteral name);
-		void popNamedPass();
-		[[nodiscard]] struct RenderQueueNamedPassScope scopedNamedPass(StringLiteral name);
-
-		void customCommand(Delegate<void(void *)> fnc, const Holder<void> &data, bool preserveGlState = false);
-
-		void reset(); // erase all stored commands
+		void resetQueue(); // erase all stored commands
 
 		void dispatch(); // requires opengl context bound in current thread
 
@@ -130,7 +130,7 @@ namespace cage
 		uint32 primitivesCount() const;
 	};
 
-	struct CAGE_ENGINE_API RenderQueueNamedPassScope : Immovable
+	struct CAGE_ENGINE_API RenderQueueNamedPassScope : private Immovable
 	{
 		[[nodiscard]] RenderQueueNamedPassScope(RenderQueue *queue, StringLiteral name);
 		~RenderQueueNamedPassScope();

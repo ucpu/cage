@@ -1,7 +1,6 @@
 #include <cage-core/entities.h>
 #include <cage-core/variableSmoothingBuffer.h>
 
-#include <cage-engine/graphics.h>
 #include <cage-engine/window.h>
 #include <cage-engine/engine.h>
 #include <cage-engine/fpsCamera.h>

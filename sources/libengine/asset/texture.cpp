@@ -12,7 +12,7 @@ namespace cage
 {
 	namespace
 	{
-		ConfigUint32 textureDownscale("cage/graphics/textureDownscale", 1);
+		ConfigUint32 textureDownscale("cage/graphics/textureDownscale", 1); // todo
 
 		void processLoad(AssetContext *context)
 		{
@@ -23,15 +23,15 @@ namespace cage
 			Holder<Texture> tex = newTexture(data.target);
 			tex->setDebugName(context->textName);
 
-			uint32 bytesSize = data.dimX * data.dimY * data.dimZ * data.channels;
+			const uint32 bytesSize = data.resolution[0] * data.resolution[1] * data.resolution[2] * data.channels;
 			PointerRange<const char> values = des.advance(bytesSize);
 
 			if (data.target == GL_TEXTURE_3D || data.target == GL_TEXTURE_2D_ARRAY)
-				tex->image3d(data.dimX, data.dimY, data.dimZ, data.internalFormat, data.copyFormat, data.copyType, values);
+				tex->image3d(data.resolution, data.internalFormat, data.copyFormat, data.copyType, values);
 			else if (data.target == GL_TEXTURE_CUBE_MAP)
-				tex->imageCube(data.dimX, data.dimY, data.internalFormat, data.copyFormat, data.copyType, values, data.stride);
+				tex->imageCube(ivec2(data.resolution), data.internalFormat, data.copyFormat, data.copyType, values, data.stride);
 			else
-				tex->image2d(data.dimX, data.dimY, data.internalFormat, data.copyFormat, data.copyType, values);
+				tex->image2d(ivec2(data.resolution), data.internalFormat, data.copyFormat, data.copyType, values);
 			tex->filters(data.filterMin, data.filterMag, data.filterAniso);
 			tex->wraps(data.wrapX, data.wrapY, data.wrapZ);
 			if (any(data.flags & TextureFlags::GenerateMipmaps))

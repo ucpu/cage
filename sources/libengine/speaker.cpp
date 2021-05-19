@@ -123,7 +123,7 @@ namespace cage
 		long dataCallbackFree(cubeb_stream *stream, void *user_ptr, void const *input_buffer, void *output_buffer, long nframes);
 		void stateCallbackFree(cubeb_stream *stream, void *user_ptr, cubeb_state state);
 
-		struct RingBuffer : Immovable
+		struct RingBuffer : private Immovable
 		{
 			lock_free_audio_ring_buffer<float> ring;
 			Delegate<void(const SoundCallbackData &)> callback;
@@ -184,7 +184,7 @@ namespace cage
 			}
 		};
 
-		struct DevicesCollection : Immovable, public cubeb_device_collection
+		struct DevicesCollection : private Immovable, public cubeb_device_collection
 		{
 			DevicesCollection()
 			{

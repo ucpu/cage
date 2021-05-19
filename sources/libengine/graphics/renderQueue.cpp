@@ -152,7 +152,7 @@ namespace cage
 
 			~RenderQueueImpl()
 			{
-				reset(); // make sure to properly destroy all the commands, they may hold some assets
+				resetQueue(); // make sure to properly destroy all the commands, they may hold some assets
 			}
 
 			void initHeads()
@@ -166,7 +166,7 @@ namespace cage
 				memHead = memTail = arena->createObject<MemBlock>();
 			}
 
-			void reset()
+			void resetQueue()
 			{
 				for (CmdBase *cmd = head; cmd; )
 				{
@@ -238,7 +238,7 @@ namespace cage
 
 			UubRange universalUniformBuffer(PointerRange<const char> data, uint32 bindingPoint)
 			{
-				const uint32 offset = numeric_cast<uint32>(detail::roundUpTo(uubStaging.size(), UniformBuffer::getAlignmentRequirement()));
+				const uint32 offset = numeric_cast<uint32>(detail::roundUpTo(uubStaging.size(), UniformBuffer::alignmentRequirement()));
 				const uint32 size = numeric_cast<uint32>(data.size());
 				uubStaging.resizeSmart(numeric_cast<uint32>(offset + size));
 				detail::memcpy(uubStaging.data() + offset, data.data(), size);
@@ -285,6 +285,26 @@ namespace cage
 				cmd.values = copyMem(values);
 				cmd.name = name;
 			}
+
+			void activeTexture(uint32 bindingPoint)
+			{
+				struct Cmd : public CmdBase
+				{
+					uint32 bindingPoint = 0;
+					void dispatch(RenderQueueImpl *impl) const override
+					{
+						glActiveTexture(GL_TEXTURE0 + bindingPoint);
+						impl->bindings->texture.clear();
+					}
+				};
+
+				CAGE_ASSERT(bindingPoint < 16);
+				if (setting.activeTextureIndex == bindingPoint)
+					return;
+				setting.activeTextureIndex = bindingPoint;
+				Cmd &cmd = addCmd<Cmd>();
+				cmd.bindingPoint = bindingPoint;
+			}
 		};
 
 		// logical or without short circuiting
@@ -329,71 +349,73 @@ namespace cage
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		CAGE_ASSERT(uubRange.offset + uubRange.size <= impl->uubStaging.size());
-		CAGE_ASSERT((uubRange.offset % UniformBuffer::getAlignmentRequirement()) == 0);
+		CAGE_ASSERT((uubRange.offset % UniformBuffer::alignmentRequirement()) == 0);
 		Cmd &cmd = impl->addCmd<Cmd>();
 		(UubRange&)cmd = uubRange;
 		cmd.bindingPoint = bindingPoint;
 	}
 
-	void RenderQueue::bind(const Holder<UniformBuffer> &uniformBuffer, uint32 bindingPoint)
+	void RenderQueue::bind(UniformBufferHandle uniformBuffer, uint32 bindingPoint)
 	{
 		struct Cmd : public CmdBase
 		{
-			Holder<UniformBuffer> uniformBuffer;
+			UniformBufferHandle uniformBuffer;
 			uint32 bindingPoint = 0;
 			void dispatch(RenderQueueImpl *impl) const override
 			{
-				uniformBuffer->bind(bindingPoint);
-				impl->bindings->uniformBuffer = uniformBuffer.share();
+				Holder<UniformBuffer> ub = uniformBuffer.resolve();
+				ub->bind(bindingPoint);
+				impl->bindings->uniformBuffer = std::move(ub);
 			}
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		CAGE_ASSERT(uniformBuffer);
 		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.uniformBuffer = uniformBuffer.share();
+		cmd.uniformBuffer = std::move(uniformBuffer);
 		cmd.bindingPoint = bindingPoint;
 	}
 
-	void RenderQueue::bind(const Holder<UniformBuffer> &uniformBuffer, uint32 bindingPoint, uint32 offset, uint32 size)
+	void RenderQueue::bind(UniformBufferHandle uniformBuffer, uint32 bindingPoint, uint32 offset, uint32 size)
 	{
 		struct Cmd : public CmdBase
 		{
-			Holder<UniformBuffer> uniformBuffer;
+			UniformBufferHandle uniformBuffer;
 			uint32 bindingPoint = 0;
 			uint32 offset = 0;
 			uint32 size = 0;
 			void dispatch(RenderQueueImpl *impl) const override
 			{
-				uniformBuffer->bind(bindingPoint, offset, size);
-				impl->bindings->uniformBuffer = uniformBuffer.share();
+				Holder<UniformBuffer> ub = uniformBuffer.resolve();
+				ub->bind(bindingPoint, offset, size);
+				impl->bindings->uniformBuffer = std::move(ub);
 			}
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		CAGE_ASSERT(uniformBuffer);
 		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.uniformBuffer = uniformBuffer.share();
+		cmd.uniformBuffer = std::move(uniformBuffer);
 		cmd.bindingPoint = bindingPoint;
 		cmd.offset = offset;
 		cmd.size = size;
 	}
 
-	void RenderQueue::bind(const Holder<UniformBuffer> &uniformBuffer)
+	void RenderQueue::bind(UniformBufferHandle uniformBuffer)
 	{
 		struct Cmd : public CmdBase
 		{
-			Holder<UniformBuffer> uniformBuffer;
+			UniformBufferHandle uniformBuffer;
 			void dispatch(RenderQueueImpl *impl) const override
 			{
-				uniformBuffer->bind();
+				uniformBuffer.resolve()->bind();
 			}
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		CAGE_ASSERT(uniformBuffer);
 		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.uniformBuffer = uniformBuffer.share();
+		cmd.uniformBuffer = std::move(uniformBuffer);
 	}
 
 	void RenderQueue::writeWhole(PointerRange<const char> data, uint32 usage)
@@ -478,35 +500,14 @@ namespace cage
 	GCHL_GENERATE(mat4);
 #undef GCHL_GENERATE
 
-	void RenderQueue::bind(const Holder<FrameBuffer> &frameBuffer)
+	void RenderQueue::bind(FrameBufferHandle frameBuffer)
 	{
 		struct Cmd : public CmdBase
 		{
-			Holder<FrameBuffer> frameBuffer;
+			FrameBufferHandle frameBuffer;
 			void dispatch(RenderQueueImpl *impl) const override
 			{
-				frameBuffer->bind();
-				impl->bindings->frameBuffer = frameBuffer.share();
-			}
-		};
-
-		RenderQueueImpl *impl = (RenderQueueImpl *)this;
-		CAGE_ASSERT(frameBuffer);
-		if (impl->setting.frameBuffer == +frameBuffer)
-			return;
-		impl->setting.frameBuffer = +frameBuffer;
-		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.frameBuffer = frameBuffer.share();
-	}
-
-	void RenderQueue::bind(const Holder<ProvisionalFrameBufferHandle> &frameBuffer)
-	{
-		struct Cmd : public CmdBase
-		{
-			Holder<ProvisionalFrameBufferHandle> frameBuffer;
-			void dispatch(RenderQueueImpl *impl) const override
-			{
-				Holder<FrameBuffer> fb = frameBuffer->resolve();
+				Holder<FrameBuffer> fb = frameBuffer.resolve();
 				fb->bind();
 				impl->bindings->frameBuffer = std::move(fb);
 			}
@@ -514,85 +515,47 @@ namespace cage
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		CAGE_ASSERT(frameBuffer);
-		if (impl->setting.frameBuffer == +frameBuffer)
+		if (impl->setting.frameBuffer == frameBuffer.pointer())
 			return;
-		impl->setting.frameBuffer = +frameBuffer;
+		impl->setting.frameBuffer = frameBuffer.pointer();
 		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.frameBuffer = frameBuffer.share();
+		cmd.frameBuffer = std::move(frameBuffer);
 	}
 
-	void RenderQueue::depthTexture(const Holder<Texture> &texture)
+	void RenderQueue::depthTexture(TextureHandle texture)
 	{
 		struct Cmd : public CmdBase
 		{
-			Holder<Texture> texture;
+			TextureHandle texture;
 			void dispatch(RenderQueueImpl *impl) const override
 			{
-				impl->bindings->frameBuffer->depthTexture(+texture);
+				impl->bindings->frameBuffer->depthTexture(+texture.resolve());
 			}
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		CAGE_ASSERT(impl->setting.frameBuffer);
 		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.texture = texture.share();
+		cmd.texture = std::move(texture);
 	}
 
-	void RenderQueue::depthTexture(const Holder<ProvisionalTextureHandle> &texture)
+	void RenderQueue::colorTexture(uint32 index, TextureHandle texture, uint32 mipmapLevel)
 	{
 		struct Cmd : public CmdBase
 		{
-			Holder<ProvisionalTextureHandle> texture;
-			void dispatch(RenderQueueImpl *impl) const override
-			{
-				impl->bindings->frameBuffer->depthTexture(+texture->resolve());
-			}
-		};
-
-		RenderQueueImpl *impl = (RenderQueueImpl *)this;
-		CAGE_ASSERT(impl->setting.frameBuffer);
-		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.texture = texture.share();
-	}
-
-	void RenderQueue::colorTexture(uint32 index, const Holder<Texture> &texture, uint32 mipmapLevel)
-	{
-		struct Cmd : public CmdBase
-		{
-			Holder<Texture> texture;
+			TextureHandle texture;
 			uint32 index = 0;
 			uint32 mipmapLevel = 0;
 			void dispatch(RenderQueueImpl *impl) const override
 			{
-				impl->bindings->frameBuffer->colorTexture(index, +texture, mipmapLevel);
+				impl->bindings->frameBuffer->colorTexture(index, +texture.resolve(), mipmapLevel);
 			}
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		CAGE_ASSERT(impl->setting.frameBuffer);
 		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.texture = texture.share();
-		cmd.index = index;
-		cmd.mipmapLevel = mipmapLevel;
-	}
-
-	void RenderQueue::colorTexture(uint32 index, const Holder<ProvisionalTextureHandle> &texture, uint32 mipmapLevel)
-	{
-		struct Cmd : public CmdBase
-		{
-			Holder<ProvisionalTextureHandle> texture;
-			uint32 index = 0;
-			uint32 mipmapLevel = 0;
-			void dispatch(RenderQueueImpl *impl) const override
-			{
-				impl->bindings->frameBuffer->colorTexture(index, +texture->resolve(), mipmapLevel);
-			}
-		};
-
-		RenderQueueImpl *impl = (RenderQueueImpl *)this;
-		CAGE_ASSERT(impl->setting.frameBuffer);
-		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.texture = texture.share();
+		cmd.texture = std::move(texture);
 		cmd.index = index;
 		cmd.mipmapLevel = mipmapLevel;
 	}
@@ -644,7 +607,7 @@ namespace cage
 		impl->addCmd<Cmd>();
 	}
 
-	void RenderQueue::unbindFrameBuffer()
+	void RenderQueue::resetFrameBuffer()
 	{
 		struct Cmd : public CmdBase
 		{
@@ -662,57 +625,18 @@ namespace cage
 
 	void RenderQueue::activeTexture(uint32 bindingPoint)
 	{
-		struct Cmd : public CmdBase
-		{
-			uint32 bindingPoint = 0;
-			void dispatch(RenderQueueImpl *impl) const override
-			{
-				glActiveTexture(GL_TEXTURE0 + bindingPoint);
-				impl->bindings->texture.clear();
-			}
-		};
-
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
-		CAGE_ASSERT(bindingPoint < 16);
-		if (impl->setting.activeTextureIndex == bindingPoint)
-			return;
-		impl->setting.activeTextureIndex = bindingPoint;
-		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.bindingPoint = bindingPoint;
+		impl->activeTexture(bindingPoint);
 	}
 
-	void RenderQueue::bind(const Holder<Texture> &texture, uint32 bindingPoint)
+	void RenderQueue::bind(TextureHandle texture, uint32 bindingPoint)
 	{
 		struct Cmd : public CmdBase
 		{
-			Holder<Texture> texture;
+			TextureHandle texture;
 			void dispatch(RenderQueueImpl *impl) const override
 			{
-				texture->bind();
-				impl->bindings->texture = texture.share();
-			}
-		};
-
-		RenderQueueImpl *impl = (RenderQueueImpl *)this;
-		CAGE_ASSERT(texture);
-		if (bindingPoint == m)
-			bindingPoint = impl->setting.activeTextureIndex;
-		activeTexture(bindingPoint);
-		if (impl->setting.textures[bindingPoint] == +texture)
-			return;
-		impl->setting.textures[bindingPoint] = +texture;
-		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.texture = texture.share();
-	}
-
-	void RenderQueue::bind(const Holder<ProvisionalTextureHandle> &texture, uint32 bindingPoint)
-	{
-		struct Cmd : public CmdBase
-		{
-			Holder<ProvisionalTextureHandle> texture;
-			void dispatch(RenderQueueImpl *impl) const override
-			{
-				Holder<Texture> tex = texture->resolve();
+				Holder<Texture> tex = texture.resolve();
 				tex->bind();
 				impl->bindings->texture = std::move(tex);
 			}
@@ -722,69 +646,68 @@ namespace cage
 		CAGE_ASSERT(texture);
 		if (bindingPoint == m)
 			bindingPoint = impl->setting.activeTextureIndex;
-		activeTexture(bindingPoint);
-		if (impl->setting.textures[bindingPoint] == +texture)
+		impl->activeTexture(bindingPoint);
+		if (impl->setting.textures[bindingPoint] == texture.pointer())
 			return;
-		impl->setting.textures[bindingPoint] = +texture;
+		impl->setting.textures[bindingPoint] = texture.pointer();
 		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.texture = texture.share();
+		cmd.texture = std::move(texture);
 	}
 
-	void RenderQueue::image2d(uint32 w, uint32 h, uint32 internalFormat)
+	void RenderQueue::image2d(ivec2 resolution, uint32 internalFormat)
 	{
 		struct Cmd : public CmdBase
 		{
-			uint32 w = 0, h = 0, f = 0;
+			ivec2 resolution;
+			uint32 f = 0;
 			void dispatch(RenderQueueImpl *impl) const override
 			{
-				impl->bindings->texture->image2d(w, h, f);
+				impl->bindings->texture->image2d(resolution, f);
 			}
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		CAGE_ASSERT(impl->setting.textures[impl->setting.activeTextureIndex]);
 		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.w = w;
-		cmd.h = h;
+		cmd.resolution = resolution;
 		cmd.f = internalFormat;
 	}
 
-	void RenderQueue::imageCube(uint32 w, uint32 h, uint32 internalFormat)
+	void RenderQueue::imageCube(ivec2 resolution, uint32 internalFormat)
 	{
 		struct Cmd : public CmdBase
 		{
-			uint32 w = 0, h = 0, f = 0;
+			ivec2 resolution;
+			uint32 f = 0;
 			void dispatch(RenderQueueImpl *impl) const override
 			{
-				impl->bindings->texture->imageCube(w, h, f);
+				impl->bindings->texture->imageCube(resolution, f);
 			}
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		CAGE_ASSERT(impl->setting.textures[impl->setting.activeTextureIndex]);
 		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.w = w;
-		cmd.h = h;
+		cmd.resolution = resolution;
 		cmd.f = internalFormat;
 	}
 
-	void RenderQueue::image3d(uint32 w, uint32 h, uint32 d, uint32 internalFormat)
+	void RenderQueue::image3d(ivec3 resolution, uint32 internalFormat)
 	{
 		struct Cmd : public CmdBase
 		{
-			uint32 w = 0, h = 0, d = 0, f = 0;
+			ivec3 resolution;
+			uint32 f = 0;
 			void dispatch(RenderQueueImpl *impl) const override
 			{
-				impl->bindings->texture->image3d(w, h, d, f);
+				impl->bindings->texture->image3d(resolution, f);
 			}
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		CAGE_ASSERT(impl->setting.textures[impl->setting.activeTextureIndex]);
 		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.w = w;
-		cmd.h = h;
-		cmd.d = d;
+		cmd.resolution = resolution;
 		cmd.f = internalFormat;
 	}
 
@@ -859,13 +782,12 @@ namespace cage
 		Cmd &cmd = impl->addCmd<Cmd>();
 	}
 
-	void RenderQueue::unbindAllTextures()
+	void RenderQueue::resetAllTextures()
 	{
 		struct Cmd : public CmdBase
 		{
 			void dispatch(RenderQueueImpl *impl) const override
 			{
-				GraphicsDebugScope graphicsDebugScope("reset all textures");
 				for (uint32 i = 0; i < 16; i++)
 				{
 					glActiveTexture(GL_TEXTURE0 + i);
@@ -882,6 +804,7 @@ namespace cage
 			}
 		};
 
+		const auto scopedName = scopedNamedPass("reset all textures");
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		impl->setting.activeTextureIndex = 0;
 		impl->setting.textures.fill(nullptr);
@@ -905,7 +828,7 @@ namespace cage
 		if (impl->setting.model == +model)
 			return;
 		impl->setting.model = +model;
-		impl->setting.modelPrimitives = model->getPrimitivesCount();
+		impl->setting.modelPrimitives = model->primitivesCount();
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.model = model.share();
 	}
@@ -975,7 +898,7 @@ namespace cage
 		genericEnable(GL_SCISSOR_TEST, enable);
 	}
 
-	void RenderQueue::cullingFace(bool front)
+	void RenderQueue::cullFace(bool front)
 	{
 		struct Cmd : public CmdBase
 		{
@@ -1016,14 +939,19 @@ namespace cage
 		cmd.func = func;
 	}
 
-	void RenderQueue::depthFuncAlways()
+	void RenderQueue::depthFuncLess()
 	{
-		depthFunc(GL_ALWAYS);
+		depthFunc(GL_LESS);
 	}
 
 	void RenderQueue::depthFuncLessEqual()
 	{
 		depthFunc(GL_LEQUAL);
+	}
+
+	void RenderQueue::depthFuncAlways()
+	{
+		depthFunc(GL_ALWAYS);
 	}
 
 	void RenderQueue::depthTest(bool enable)
@@ -1086,6 +1014,11 @@ namespace cage
 		cmd.d = d;
 	}
 
+	void RenderQueue::blendFuncNone()
+	{
+		blendFunc(GL_ONE, GL_ZERO);
+	}
+
 	void RenderQueue::blendFuncAdditive()
 	{
 		blendFunc(GL_ONE, GL_ONE);
@@ -1118,6 +1051,7 @@ namespace cage
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		// todo redundant state removal
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.rgba = rgba;
 	}
@@ -1178,63 +1112,20 @@ namespace cage
 		}
 	}
 
-#ifdef CAGE_DEBUG
-	void RenderQueue::checkGlErrorDebug()
+	void RenderQueue::resetAllState()
 	{
-		struct Cmd : public CmdBase
-		{
-			void dispatch(RenderQueueImpl *) const override
-			{
-				try
-				{
-					cage::checkGlError();
-				}
-				catch (const GraphicsError &)
-				{
-					CAGE_LOG(SeverityEnum::Error, "exception", stringizer() + "uncaught opengl error");
-				}
-			}
-		};
-
-		RenderQueueImpl *impl = (RenderQueueImpl *)this;
-		impl->addCmd<Cmd>();
-	}
-#endif // CAGE_DEBUG
-
-	void RenderQueue::checkGlError()
-	{
-		struct Cmd : public CmdBase
-		{
-			void dispatch(RenderQueueImpl *) const override
-			{
-				cage::checkGlError();
-			}
-		};
-
-		RenderQueueImpl *impl = (RenderQueueImpl *)this;
-		impl->addCmd<Cmd>();
-	}
-
-	void RenderQueue::enqueue(const Holder<RenderQueue> &queue)
-	{
-		struct Cmd : public CmdBase
-		{
-			Holder<RenderQueue> queue;
-			void dispatch(RenderQueueImpl *impl) const override
-			{
-				queue->dispatch();
-				*impl->bindings = RenderQueueDispatchBindings();
-			}
-		};
-
-		RenderQueueImpl *impl = (RenderQueueImpl *)this;
-		CAGE_ASSERT(queue);		
-		impl->commandsCount += queue->commandsCount();
-		impl->drawsCount += queue->drawsCount();
-		impl->primitivesCount += queue->primitivesCount();
-		impl->setting = RenderQueueSettingBindings();
-		Cmd &cmd = impl->addCmd<Cmd>();
-		cmd.queue = queue.share();
+		const auto scopedName = scopedNamedPass("default all state");
+		viewport(ivec2(), ivec2());
+		scissors(false);
+		cullFace(false);
+		culling(false);
+		depthFuncLess();
+		depthTest(false);
+		depthWrite(true);
+		colorWrite(true);
+		blendFuncNone();
+		blending(false);
+		clearColor(vec4());
 	}
 
 	void RenderQueue::pushNamedPass(StringLiteral name)
@@ -1279,35 +1170,94 @@ namespace cage
 		return RenderQueueNamedPassScope(this, name);
 	}
 
-	void RenderQueue::customCommand(Delegate<void(void *)> fnc, const Holder<void> &data, bool preserveGlState)
+	void RenderQueue::enqueue(const Holder<RenderQueue> &queue)
+	{
+		struct Cmd : public CmdBase
+		{
+			Holder<RenderQueue> queue;
+			void dispatch(RenderQueueImpl *impl) const override
+			{
+				queue->dispatch();
+				*impl->bindings = RenderQueueDispatchBindings();
+			}
+		};
+
+		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(queue);		
+		impl->commandsCount += queue->commandsCount();
+		impl->drawsCount += queue->drawsCount();
+		impl->primitivesCount += queue->primitivesCount();
+		impl->setting = RenderQueueSettingBindings();
+		Cmd &cmd = impl->addCmd<Cmd>();
+		cmd.queue = queue.share();
+	}
+
+	void RenderQueue::customCommand(Delegate<void(void *)> fnc, const Holder<void> &data, bool preservesGlState)
 	{
 		struct Cmd : public CmdBase
 		{
 			Delegate<void(void *)> fnc;
 			Holder<void> data;
-			bool preserveGlState = false;
+			bool preservesGlState = false;
 			void dispatch(RenderQueueImpl *impl) const override
 			{
 				fnc(+data);
-				if (!preserveGlState)
+				if (!preservesGlState)
 					*impl->bindings = RenderQueueDispatchBindings();
 			}
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		CAGE_ASSERT(fnc);
-		if (!preserveGlState)
+		if (!preservesGlState)
 			impl->setting = RenderQueueSettingBindings();
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.fnc = fnc;
 		cmd.data = data.share();
-		cmd.preserveGlState = preserveGlState;
+		cmd.preservesGlState = preservesGlState;
 	}
 
-	void RenderQueue::reset()
+#ifdef CAGE_DEBUG
+	void RenderQueue::checkGlErrorDebug()
+	{
+		struct Cmd : public CmdBase
+		{
+			void dispatch(RenderQueueImpl *) const override
+			{
+				try
+				{
+					cage::checkGlError();
+				}
+				catch (const GraphicsError &)
+				{
+					CAGE_LOG(SeverityEnum::Error, "exception", stringizer() + "uncaught opengl error");
+				}
+			}
+		};
+
+		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		impl->addCmd<Cmd>();
+	}
+#endif // CAGE_DEBUG
+
+	void RenderQueue::checkGlError()
+	{
+		struct Cmd : public CmdBase
+		{
+			void dispatch(RenderQueueImpl *) const override
+			{
+				cage::checkGlError();
+			}
+		};
+
+		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		impl->addCmd<Cmd>();
+	}
+
+	void RenderQueue::resetQueue()
 	{
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
-		impl->reset();
+		impl->resetQueue();
 	}
 
 	void RenderQueue::dispatch()

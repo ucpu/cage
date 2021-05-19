@@ -29,11 +29,13 @@ namespace cage
 
 			msh->importMesh(+poly, mat);
 
-			msh->setFlags(data.renderFlags);
 			msh->setBoundingBox(data.box);
 			msh->setTextureNames(data.textureNames);
-			msh->setSkeleton(data.skeletonName, data.skeletonBones);
-			msh->setInstancesLimitHint(data.instancesLimitHint);
+
+			msh->flags = data.renderFlags;
+			msh->skeletonBones = data.skeletonName;
+			msh->skeletonBones = data.skeletonBones;
+			msh->instancesLimitHint = data.instancesLimitHint;
 
 			context->assetHolder = std::move(msh).cast<void>();
 		}

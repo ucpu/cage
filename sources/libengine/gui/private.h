@@ -41,7 +41,7 @@ namespace cage
 		vec2 clipPos = vec2::Nan(), clipSize = vec2::Nan();
 	};
 
-	struct HierarchyItem : Immovable
+	struct HierarchyItem : private Immovable
 	{
 		// size (points) as seen by parent
 		vec2 requestedSize = vec2::Nan();
@@ -75,7 +75,7 @@ namespace cage
 		void fireWidgetEvent() const;
 	};
 
-	struct BaseItem : Immovable
+	struct BaseItem : private Immovable
 	{
 		HierarchyItem *const hierarchy = nullptr;
 
@@ -154,7 +154,7 @@ namespace cage
 		uint32 cursor = m;
 	};
 
-	struct TextItem : Immovable, public CommonTextData
+	struct TextItem : private Immovable, public CommonTextData
 	{
 		HierarchyItem *const hierarchy;
 		bool skipInitialize = false;
@@ -176,7 +176,7 @@ namespace cage
 		void updateCursorPosition(vec2 position, vec2 size, vec2 point, uint32 &cursor);
 	};
 
-	struct ImageItem : Immovable
+	struct ImageItem : private Immovable
 	{
 		GuiImageComponent image;
 		GuiImageFormatComponent format;
@@ -198,7 +198,7 @@ namespace cage
 		RenderableImage emit(vec2 position, vec2 size);
 	};
 
-	struct RenderableBase : Immovable
+	struct RenderableBase : private Immovable
 	{
 		GuiImpl *impl = nullptr;
 		vec2 clipPos, clipSize;

@@ -1,5 +1,5 @@
-#ifndef guard_graphics_h_d776d3a243c7464db721291294b5b1ef_
-#define guard_graphics_h_d776d3a243c7464db721291294b5b1ef_
+#ifndef guard_graphicsError_h_d776d3a243c7464db721291294b5b1ef_
+#define guard_graphicsError_h_d776d3a243c7464db721291294b5b1ef_
 
 #include "core.h"
 
@@ -20,7 +20,7 @@ namespace cage
 
 	struct CAGE_ENGINE_API GraphicsDebugScope : private Immovable
 	{
-		GraphicsDebugScope(const char *name);
+		GraphicsDebugScope(StringLiteral name);
 		~GraphicsDebugScope();
 	};
 
@@ -30,4 +30,4 @@ namespace cage
 	}
 }
 
-#endif // guard_graphics_h_d776d3a243c7464db721291294b5b1ef_
+#endif // guard_graphicsError_h_d776d3a243c7464db721291294b5b1ef_

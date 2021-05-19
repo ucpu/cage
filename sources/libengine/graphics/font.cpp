@@ -56,7 +56,7 @@ namespace cage
 
 			Holder<Texture> tex;
 
-			uint32 texWidth = 0, texHeight = 0;
+			ivec2 resolution;
 			uint32 spaceGlyph = 0;
 			uint32 returnGlyph = 0;
 			uint32 cursorGlyph = m;
@@ -251,33 +251,32 @@ namespace cage
 		impl->firstLineOffset = -firstLineOffset;
 	}
 
-	void Font::setImage(uint32 width, uint32 height, PointerRange<const char> buffer)
+	void Font::setImage(ivec2 resolution, PointerRange<const char> buffer)
 	{
 		FontImpl *impl = (FontImpl *)this;
-		impl->texWidth = width;
-		impl->texHeight = height;
+		impl->resolution = resolution;
 		impl->tex->bind();
-		const uint32 bpp = numeric_cast<uint32>(buffer.size() / (width * height));
-		CAGE_ASSERT(width * height * bpp == buffer.size());
+		const uint32 bpp = numeric_cast<uint32>(buffer.size() / (resolution[0] * resolution[1]));
+		CAGE_ASSERT(resolution[0] * resolution[1] * bpp == buffer.size());
 		switch (bpp)
 		{
 		case 1:
-			impl->tex->image2d(width, height, GL_R8, GL_RED, GL_UNSIGNED_BYTE, buffer);
+			impl->tex->image2d(resolution, GL_R8, GL_RED, GL_UNSIGNED_BYTE, buffer);
 			break;
 		case 2:
-			impl->tex->image2d(width, height, GL_R16, GL_RED, GL_UNSIGNED_SHORT, buffer);
+			impl->tex->image2d(resolution, GL_R16, GL_RED, GL_UNSIGNED_SHORT, buffer);
 			break;
 		case 3:
-			impl->tex->image2d(width, height, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, buffer);
+			impl->tex->image2d(resolution, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, buffer);
 			break;
 		case 4:
-			impl->tex->image2d(width, height, GL_R32F, GL_RED, GL_FLOAT, buffer);
+			impl->tex->image2d(resolution, GL_R32F, GL_RED, GL_FLOAT, buffer);
 			break;
 		case 6:
-			impl->tex->image2d(width, height, GL_RGB16, GL_RGB, GL_UNSIGNED_SHORT, buffer);
+			impl->tex->image2d(resolution, GL_RGB16, GL_RGB, GL_UNSIGNED_SHORT, buffer);
 			break;
 		case 12:
-			impl->tex->image2d(width, height, GL_RGB32F, GL_RGB, GL_FLOAT, buffer);
+			impl->tex->image2d(resolution, GL_RGB32F, GL_RGB, GL_FLOAT, buffer);
 			break;
 		default:
 			CAGE_THROW_ERROR(Exception, "font: unsupported image bpp");

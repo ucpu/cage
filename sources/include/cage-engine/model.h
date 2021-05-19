@@ -14,34 +14,32 @@ namespace cage
 	public:
 		void setDebugName(const string &name);
 
-		uint32 getId() const;
+		uint32 id() const;
 		void bind() const;
 
 		void importMesh(const Mesh *poly, PointerRange<const char> materialBuffer);
 
-		void setFlags(ModelRenderFlags flags);
 		void setPrimitiveType(uint32 type);
 		void setBoundingBox(const Aabb &box);
 		void setTextureNames(PointerRange<const uint32> textureNames);
 		void setTextureName(uint32 index, uint32 name);
 		void setBuffers(uint32 vertexSize, PointerRange<const char> vertexData, PointerRange<const uint32> indexData, PointerRange<const char> materialBuffer);
 		void setAttribute(uint32 index, uint32 size, uint32 type, uint32 stride, uint32 startOffset);
-		void setSkeleton(uint32 name, uint32 bones);
-		void setInstancesLimitHint(uint32 limit);
 
-		uint32 getVerticesCount() const;
-		uint32 getIndicesCount() const;
-		uint32 getPrimitivesCount() const;
-		ModelRenderFlags getFlags() const;
-		Aabb getBoundingBox() const;
-		PointerRange<const uint32> getTextureNames() const;
-		uint32 getTextureName(uint32 index) const;
-		uint32 getSkeletonName() const;
-		uint32 getSkeletonBones() const;
-		uint32 getInstancesLimitHint() const;
+		uint32 verticesCount() const;
+		uint32 indicesCount() const;
+		uint32 primitivesCount() const;
+		Aabb boundingBox() const;
+		PointerRange<const uint32> textureNames() const;
+		uint32 textureName(uint32 index) const;
 
 		void dispatch() const;
 		void dispatch(uint32 instances) const;
+
+		ModelRenderFlags flags = ModelRenderFlags::None;
+		uint32 skeletonName = 0;
+		uint32 skeletonBones = 0;
+		uint32 instancesLimitHint = 1;
 	};
 
 	CAGE_ENGINE_API Holder<Model> newModel();

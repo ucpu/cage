@@ -129,10 +129,10 @@ namespace cage
 		CAGE_ASSERT(data.texture);
 		RenderQueue *q = impl->activeQueue;
 		q->bind(data.texture, 0);
-		q->bind(data.texture->getTarget() == GL_TEXTURE_2D_ARRAY ? impl->graphicsData.imageAnimatedShader : impl->graphicsData.imageStaticShader);
+		q->bind(data.texture->target() == GL_TEXTURE_2D_ARRAY ? impl->graphicsData.imageAnimatedShader : impl->graphicsData.imageStaticShader);
 		q->uniform(0, data.ndcPos);
 		q->uniform(1, data.uvClip);
-		if (data.texture->getTarget() == GL_TEXTURE_2D_ARRAY)
+		if (data.texture->target() == GL_TEXTURE_2D_ARRAY)
 			q->uniform(2, data.aniTexFrames);
 		q->bind(impl->graphicsData.imageModel);
 		q->draw();
@@ -174,7 +174,7 @@ namespace cage
 				copyTextureUv(source.data[i], target.data[i]);
 		}
 
-		struct GraphicsDataCleaner : Immovable
+		struct GraphicsDataCleaner : private Immovable
 		{
 			GuiImpl *impl = nullptr;
 

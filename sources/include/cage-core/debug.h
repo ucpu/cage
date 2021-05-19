@@ -13,7 +13,7 @@ namespace cage
 		CAGE_CORE_API void debugBreakpoint();
 
 		// makes all debugBreakpoint calls (in this thread) be ignored
-		struct CAGE_CORE_API OverrideBreakpoint : Immovable
+		struct CAGE_CORE_API OverrideBreakpoint : private Immovable
 		{
 			explicit OverrideBreakpoint(bool enable = false);
 			~OverrideBreakpoint();
@@ -23,7 +23,7 @@ namespace cage
 		};
 
 		// make assert failures (in this thread) throw a critical exception instead of terminating the application
-		struct CAGE_CORE_API OverrideAssert : Immovable
+		struct CAGE_CORE_API OverrideAssert : private Immovable
 		{
 			explicit OverrideAssert(bool deadly = false);
 			~OverrideAssert();
@@ -33,7 +33,7 @@ namespace cage
 		};
 
 		// changes threshold for exception severity for logging (in this thread)
-		struct CAGE_CORE_API OverrideException : Immovable
+		struct CAGE_CORE_API OverrideException : private Immovable
 		{
 			explicit OverrideException(SeverityEnum severity = SeverityEnum::Critical);
 			~OverrideException();

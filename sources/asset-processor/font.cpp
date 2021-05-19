@@ -286,16 +286,15 @@ namespace
 			vec2 ts = vec2(g.png->width(), g.png->height()) / res;
 			g.data.texUv = vec4(to, ts);
 		}
-		data.texWidth = res;
-		data.texHeight = res;
-		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "texture atlas resolution " + data.texWidth + "*" + data.texHeight);
+		data.texResolution = ivec2(res);
+		CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "texture atlas resolution " + data.texResolution[0] + "*" + data.texResolution[1]);
 	}
 
 	void createAtlasPixels()
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "create atlas pixels");
 		texels = newImage();
-		texels->initialize(data.texWidth, data.texHeight, 3);
+		texels->initialize(data.texResolution[0], data.texResolution[1], 3);
 		for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
 		{
 			Glyph &g = glyphs[glyphIndex];

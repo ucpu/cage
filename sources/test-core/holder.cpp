@@ -7,7 +7,7 @@ namespace
 	int gCount = 0;
 	int dCount = 0;
 
-	struct HolderTester : Immovable
+	struct HolderTester : private Immovable
 	{
 		HolderTester()
 		{

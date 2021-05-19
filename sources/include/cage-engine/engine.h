@@ -3,7 +3,7 @@
 
 #include <cage-core/events.h>
 
-#include "core.h"
+#include "graphicsEffectsProperties.h"
 
 namespace cage
 {
@@ -21,57 +21,23 @@ namespace cage
 		Default = AmbientOcclusion | MotionBlur | Bloom | ToneMapping | GammaCorrection | AntiAliasing,
 	};
 
-	struct CAGE_ENGINE_API CameraSsao
-	{
-		real worldRadius = 0.5;
-		real bias = 0.03;
-		real power = 1.3;
-		real strength = 3;
-		// ao = pow(ao - bias, power) * strength
-		uint32 samplesCount = 16;
-		uint32 blurPasses = 3;
-	};
+	struct CAGE_ENGINE_API CameraSsao : public GfSsao
+	{};
 
-	struct CAGE_ENGINE_API CameraMotionBlur
-	{
-		// todo
-	};
+	struct CAGE_ENGINE_API CameraMotionBlur : public GfMotionBlur
+	{};
 
-	struct CAGE_ENGINE_API CameraBloom
-	{
-		uint32 blurPasses = 5;
-		real threshold = 1;
-	};
+	struct CAGE_ENGINE_API CameraBloom : public GfBloom
+	{};
 
-	struct CAGE_ENGINE_API CameraEyeAdaptation
-	{
-		real key = 0.15;
-		real strength = 0.5;
-		real darkerSpeed = 0.2;
-		real lighterSpeed = 1;
-	};
+	struct CAGE_ENGINE_API CameraEyeAdaptation : public GfEyeAdaptation
+	{};
 
-	struct CAGE_ENGINE_API CameraTonemap
-	{
-		real shoulderStrength = 0.22;
-		real linearStrength = 0.3;
-		real linearAngle = 0.1;
-		real toeStrength = 0.2;
-		real toeNumerator = 0.01;
-		real toeDenominator = 0.3;
-		real white = 11.2;
-	};
+	struct CAGE_ENGINE_API CameraTonemap : public GfTonemap
+	{};
 
-	struct CAGE_ENGINE_API CameraDepthOfField
-	{
-		// objects within (focusDistance - focusRadius) and (focusDistance + focusRadius) are in focus
-		// objects further than focusDistance + focusRadius + blendRadius are out of focus
-		// objects closer than focusDistance - focusRadius - blendRadius are out of focus
-		real focusDistance = 5;
-		real focusRadius = 0;
-		real blendRadius = 5;
-		uint32 blurPasses = 3;
-	};
+	struct CAGE_ENGINE_API CameraDepthOfField : public GfDepthOfField
+	{};
 
 	struct CAGE_ENGINE_API CameraEffects
 	{

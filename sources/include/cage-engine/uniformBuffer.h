@@ -14,7 +14,7 @@ namespace cage
 	public:
 		void setDebugName(const string &name);
 
-		uint32 getId() const;
+		uint32 id() const;
 		void bind() const;
 		void bind(uint32 bindingPoint) const;
 		void bind(uint32 bindingPoint, uint32 offset, uint32 size) const;
@@ -22,9 +22,9 @@ namespace cage
 		void writeWhole(PointerRange<const char> buffer, uint32 usage = 0);
 		void writeRange(PointerRange<const char> buffer, uint32 offset);
 
-		uint32 getSize() const;
+		uint32 size() const;
 
-		static uint32 getAlignmentRequirement();
+		static uint32 alignmentRequirement();
 	};
 
 	struct CAGE_ENGINE_API UniformBufferCreateConfig

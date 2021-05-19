@@ -14,7 +14,7 @@ namespace cage
 	public:
 		void setDebugName(const string &name);
 
-		uint32 getId() const;
+		uint32 id() const;
 		void bind() const;
 
 		void source(uint32 type, PointerRange<const char> buffer);

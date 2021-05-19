@@ -13,7 +13,7 @@
 #include <cage-core/logger.h>
 #include <cage-core/assetContext.h>
 
-#include <cage-engine/graphics.h>
+#include <cage-engine/graphicsError.h>
 #include <cage-engine/texture.h>
 #include <cage-engine/model.h>
 #include <cage-engine/shaderProgram.h>
@@ -82,7 +82,7 @@ namespace cage
 		};
 
 		template<class T>
-		struct ExclusiveHolder : Immovable
+		struct ExclusiveHolder : private Immovable
 		{
 			void assign(Holder<T> &&value)
 			{

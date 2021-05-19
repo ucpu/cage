@@ -23,7 +23,7 @@ namespace cage
 		void setDebugName(const string &name);
 
 		void setLine(real lineHeight, real firstLineOffset);
-		void setImage(uint32 width, uint32 height, PointerRange<const char> buffer);
+		void setImage(ivec2 resolution, PointerRange<const char> buffer);
 		void setGlyphs(PointerRange<const char> buffer, PointerRange<const real> kerning);
 		void setCharmap(PointerRange<const uint32> chars, PointerRange<const uint32> glyphs);
 

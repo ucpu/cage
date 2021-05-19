@@ -81,7 +81,7 @@ namespace cage
 		glObjectLabel(GL_PROGRAM, impl->id, name.length(), name.c_str());
 	}
 
-	uint32 ShaderProgram::getId() const
+	uint32 ShaderProgram::id() const
 	{
 		return ((ShaderProgramImpl *)this)->id;
 	}

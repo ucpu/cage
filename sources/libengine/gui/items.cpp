@@ -420,7 +420,7 @@ namespace cage
 	vec2 ImageItem::findRequestedSize()
 	{
 		if (texture)
-			return vec2(texture->getResolution());
+			return vec2(texture->resolution());
 		return vec2();
 	}
 

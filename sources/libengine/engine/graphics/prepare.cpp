@@ -4,7 +4,6 @@
 #include <cage-core/skeletalAnimation.h>
 #include <cage-core/color.h>
 
-#include <cage-engine/graphics.h>
 #include <cage-engine/opengl.h>
 #include <cage-engine/shaderConventions.h>
 #include <cage-engine/window.h>
@@ -99,7 +98,7 @@ namespace cage
 			{
 				uint32 h = 0;
 				if (camera->camera.target)
-					h = numeric_cast<uint32>(camera->camera.target->getResolution()[1]);
+					h = numeric_cast<uint32>(camera->camera.target->resolution()[1]);
 				else
 					h = graphicsDispatch->windowHeight;
 				switch (camera->camera.cameraType)
@@ -268,7 +267,7 @@ namespace cage
 					OPTICK_TAG("target", (uintPtr)camera->camera.target);
 					uint32 w = 0, h = 0;
 					{
-						const ivec2 res = camera->camera.target->getResolution();
+						const ivec2 res = camera->camera.target->resolution();
 						w = numeric_cast<uint32>(res[0]);
 						h = numeric_cast<uint32>(res[1]);
 					}
@@ -430,7 +429,7 @@ namespace cage
 				Holder<Model> bone = engineAssets()->get<AssetSchemeIndexModel, Model>(HashString("cage/model/bone.obj"));
 				if (!bone)
 					return;
-				CAGE_ASSERT(bone->getSkeletonName() == 0);
+				CAGE_ASSERT(bone->skeletonName == 0);
 				for (uint32 i = 0; i < bonesCount; i++)
 				{
 					e->object.color = colorGammaToLinear(colorHsvToRgb(vec3(real(i) / real(bonesCount), 1, 1)));
@@ -447,23 +446,23 @@ namespace cage
 
 			void addRenderableModel(RenderPassImpl *pass, EmitObject *e, Holder<Model> m, const mat4 &model, const mat4 &mvp, const mat4 &mvpPrev)
 			{
-				if (!intersects(m->getBoundingBox(), Frustum(mvp)))
+				if (!intersects(m->boundingBox(), Frustum(mvp)))
 					return;
-				if (pass->targetShadowmap != 0 && none(m->getFlags() & ModelRenderFlags::ShadowCast))
+				if (pass->targetShadowmap != 0 && none(m->flags & ModelRenderFlags::ShadowCast))
 					return;
-				if (m->getSkeletonName() && confRenderSkeletonBones)
+				if (m->skeletonName && confRenderSkeletonBones)
 				{
-					Holder<SkeletonRig> s = engineAssets()->get<AssetSchemeIndexSkeletonRig, SkeletonRig>(m->getSkeletonName());
+					Holder<SkeletonRig> s = engineAssets()->get<AssetSchemeIndexSkeletonRig, SkeletonRig>(m->skeletonName);
 					addRenderableSkeleton(pass, e, std::move(s), model, mvp);
 					return;
 				}
 				Objects *obj = nullptr;
-				if (any(m->getFlags() & ModelRenderFlags::Translucent) || e->object.opacity < 1)
+				if (any(m->flags & ModelRenderFlags::Translucent) || e->object.opacity < 1)
 				{ // translucent
 					pass->translucents.push_back(systemArena().createHolder<Translucent>(m.share()));
 					Translucent *t = pass->translucents.back().get();
 					obj = &t->object;
-					if (any(m->getFlags() & ModelRenderFlags::Lighting))
+					if (any(m->flags & ModelRenderFlags::Lighting))
 					{
 						for (EmitLight &it : emitRead->lights)
 							addLight(pass, t->lights, mvp, &it); // todo pass other parameters needed for the intersection tests
@@ -475,9 +474,9 @@ namespace cage
 					if (it == opaqueObjectsMap.end())
 					{
 						uint32 mm = CAGE_SHADER_MAX_INSTANCES;
-						mm = min(mm, m->getInstancesLimitHint());
-						if (m->getSkeletonBones())
-							mm = min(mm, CAGE_SHADER_MAX_BONES / m->getSkeletonBones());
+						mm = min(mm, m->instancesLimitHint);
+						if (m->skeletonBones)
+							mm = min(mm, CAGE_SHADER_MAX_BONES / m->skeletonBones);
 						pass->opaques.push_back(systemArena().createHolder<Objects>(m.share(), mm));
 						obj = pass->opaques.back().get();
 						if (mm > 1)
@@ -495,25 +494,25 @@ namespace cage
 				sm->color = vec4(colorGammaToLinear(e->object.color) * e->object.intensity, e->object.opacity);
 				sm->mMat = Mat3x4(model);
 				sm->mvpMat = mvp;
-				if (any(m->getFlags() & ModelRenderFlags::VelocityWrite))
+				if (any(m->flags & ModelRenderFlags::VelocityWrite))
 					sm->mvpPrevMat = mvpPrev;
 				else
 					sm->mvpPrevMat = mvp;
 				sm->normalMat = Mat3x4(inverse(mat3(model)));
-				sm->normalMat.data[2][3] = any(m->getFlags() & ModelRenderFlags::Lighting) ? 1 : 0; // is lighting enabled
+				sm->normalMat.data[2][3] = any(m->flags & ModelRenderFlags::Lighting) ? 1 : 0; // is lighting enabled
 				if (e->animatedTexture)
 					sm->aniTexFrames = detail::evalSamplesForTextureAnimation(obj->textures[CAGE_SHADER_TEXTURE_ALBEDO].get(), dispatchTime, e->animatedTexture->startTime, e->animatedTexture->speed, e->animatedTexture->offset);
 				if (!obj->uniArmatures.empty())
 				{
-					uint32 bonesCount = m->getSkeletonBones();
+					const uint32 bonesCount = m->skeletonBones;
 					Mat3x4 *sa = &obj->uniArmatures[(obj->uniModeles.size() - 1) * bonesCount];
 					CAGE_ASSERT(!e->animatedSkeleton || e->animatedSkeleton->name);
 					bool initialized = false;
-					if (e->animatedSkeleton && m->getSkeletonName())
+					if (e->animatedSkeleton && m->skeletonName)
 					{
 						const auto &ba = *e->animatedSkeleton;
 						Holder<SkeletalAnimation> an = engineAssets()->get<AssetSchemeIndexSkeletalAnimation, SkeletalAnimation>(ba.name);
-						Holder<SkeletonRig> skel = engineAssets()->get<AssetSchemeIndexSkeletonRig, SkeletonRig>(m->getSkeletonName());
+						Holder<SkeletonRig> skel = engineAssets()->get<AssetSchemeIndexSkeletonRig, SkeletonRig>(m->skeletonName);
 						if (an && skel)
 						{
 							CAGE_ASSERT(skel->bonesCount() == bonesCount);
@@ -595,12 +594,12 @@ namespace cage
 					break;
 				case LightTypeEnum::Spot:
 					mvpMat = pass->viewProj * light->model * lightSpotCone(lightRange(light->light.color, light->light.attenuation), light->light.spotAngle);
-					if (!intersects(modelCone->getBoundingBox(), Frustum(mvpMat)))
+					if (!intersects(modelCone->boundingBox(), Frustum(mvpMat)))
 						return; // this light's volume is outside view frustum
 					break;
 				case LightTypeEnum::Point:
 					mvpMat = pass->viewProj * light->model * mat4::scale(lightRange(light->light.color, light->light.attenuation));
-					if (!intersects(modelSphere->getBoundingBox(), Frustum(mvpMat)))
+					if (!intersects(modelSphere->boundingBox(), Frustum(mvpMat)))
 						return; // this light's volume is outside view frustum
 					break;
 				}
@@ -953,18 +952,18 @@ namespace cage
 	{
 		AssetManager *ass = engineAssets();
 		uniModeles.reserve(max);
-		if (model->getSkeletonBones())
-			uniArmatures.resize(model->getSkeletonBones() * max);
+		if (model->skeletonBones)
+			uniArmatures.resize(model->skeletonBones * max);
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 		{
-			uint32 n = model->getTextureName(i);
+			const uint32 n = model->textureName(i);
 			textures[i] = n ? ass->get<AssetSchemeIndexTexture, Texture>(n) : Holder<Texture>();
 		}
-		shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_SKELETON, model->getSkeletonBones() > 0 ? CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION : CAGE_SHADER_ROUTINEPROC_SKELETONNOTHING);
+		shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_SKELETON, model->skeletonBones > 0 ? CAGE_SHADER_ROUTINEPROC_SKELETONANIMATION : CAGE_SHADER_ROUTINEPROC_SKELETONNOTHING);
 
 		if (textures[CAGE_SHADER_TEXTURE_ALBEDO])
 		{
-			switch (textures[CAGE_SHADER_TEXTURE_ALBEDO]->getTarget())
+			switch (textures[CAGE_SHADER_TEXTURE_ALBEDO]->target())
 			{
 			case GL_TEXTURE_2D_ARRAY:
 				shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_MAPALBEDO, CAGE_SHADER_ROUTINEPROC_MAPALBEDOARRAY);
@@ -982,7 +981,7 @@ namespace cage
 
 		if (textures[CAGE_SHADER_TEXTURE_SPECIAL])
 		{
-			switch (textures[CAGE_SHADER_TEXTURE_SPECIAL]->getTarget())
+			switch (textures[CAGE_SHADER_TEXTURE_SPECIAL]->target())
 			{
 			case GL_TEXTURE_2D_ARRAY:
 				shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_MAPSPECIAL, CAGE_SHADER_ROUTINEPROC_MAPSPECIALARRAY);
@@ -1000,7 +999,7 @@ namespace cage
 
 		if (textures[CAGE_SHADER_TEXTURE_NORMAL] && !confNoNormalMap)
 		{
-			switch (textures[CAGE_SHADER_TEXTURE_NORMAL]->getTarget())
+			switch (textures[CAGE_SHADER_TEXTURE_NORMAL]->target())
 			{
 			case GL_TEXTURE_2D_ARRAY:
 				shaderConfig.set(CAGE_SHADER_ROUTINEUNIF_MAPNORMAL, CAGE_SHADER_ROUTINEPROC_MAPNORMALARRAY);

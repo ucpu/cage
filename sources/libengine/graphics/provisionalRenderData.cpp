@@ -4,6 +4,7 @@
 #include <cage-engine/opengl.h>
 #include <cage-engine/texture.h>
 #include <cage-engine/frameBuffer.h>
+#include <cage-engine/uniformBuffer.h>
 #include <cage-engine/provisionalRenderData.h>
 
 #include <set>
@@ -14,20 +15,19 @@ namespace cage
 	{
 		class ProvisionalRenderDataImpl;
 
-		class ProvisionalTextureHandleImpl : public ProvisionalTextureHandle
+		class ProvisionalUniformBufferImpl : public ProvisionalUniformBuffer
 		{
 		public:
 			const string name;
-			Holder<Texture> result;
+			Holder<UniformBuffer> result;
 			ProvisionalRenderDataImpl *impl = nullptr;
-			uint32 target = m;
 			bool used = true;
 
-			ProvisionalTextureHandleImpl(const string &name) : name(name)
+			ProvisionalUniformBufferImpl(const string &name) : name(name)
 			{}
 		};
 
-		class ProvisionalFrameBufferHandleImpl : public ProvisionalFrameBufferHandle
+		class ProvisionalFrameBufferHandleImpl : public ProvisionalFrameBuffer
 		{
 		public:
 			const string name;
@@ -37,6 +37,19 @@ namespace cage
 			bool used = true;
 
 			ProvisionalFrameBufferHandleImpl(const string &name) : name(name)
+			{}
+		};
+
+		class ProvisionalTextureHandleImpl : public ProvisionalTexture
+		{
+		public:
+			const string name;
+			Holder<Texture> result;
+			ProvisionalRenderDataImpl *impl = nullptr;
+			uint32 target = m;
+			bool used = true;
+
+			ProvisionalTextureHandleImpl(const string &name) : name(name)
 			{}
 		};
 
@@ -114,23 +127,30 @@ namespace cage
 				std::set<Holder<T>, Comparator> data;
 			};
 
-			Container<ProvisionalTextureHandleImpl> textures;
+			Container<ProvisionalUniformBufferImpl> uniformBuffers;
 			Container<ProvisionalFrameBufferHandleImpl> frameBuffers;
+			Container<ProvisionalTextureHandleImpl> textures;
 
-			Holder<ProvisionalTextureHandle> texture(const string &name, uint32 target)
+			Holder<ProvisionalUniformBuffer> uniformBuffer(const string &name)
 			{
-				auto t = textures.acquire(name);
-				CAGE_ASSERT(t->target == m || t->target == target);
-				t->target = target;
-				return std::move(t).cast<ProvisionalTextureHandle>();
+				auto ub = uniformBuffers.acquire(name);
+				return std::move(ub).cast<ProvisionalUniformBuffer>();
 			}
 
-			Holder<ProvisionalFrameBufferHandle> frameBuffer(const string &name, uint32 type)
+			Holder<ProvisionalFrameBuffer> frameBuffer(const string &name, uint32 type)
 			{
 				auto fb = frameBuffers.acquire(name);
 				CAGE_ASSERT(fb->type == m || fb->type == type);
 				fb->type = type;
-				return std::move(fb).cast<ProvisionalFrameBufferHandle>();
+				return std::move(fb).cast<ProvisionalFrameBuffer>();
+			}
+
+			Holder<ProvisionalTexture> texture(const string &name, uint32 target)
+			{
+				auto t = textures.acquire(name);
+				CAGE_ASSERT(t->target == m || t->target == target);
+				t->target = target;
+				return std::move(t).cast<ProvisionalTexture>();
 			}
 
 			void reset()
@@ -147,19 +167,25 @@ namespace cage
 		};
 	}
 
-	Holder<Texture> ProvisionalTextureHandle::resolve()
+	Holder<UniformBuffer> ProvisionalUniformBuffer::resolve()
 	{
-		ProvisionalTextureHandleImpl *impl = (ProvisionalTextureHandleImpl *)this;
+		ProvisionalUniformBufferImpl *impl = (ProvisionalUniformBufferImpl *)this;
 		impl->used = true;
 		if (!impl->result)
 		{
-			impl->result = newTexture(impl->target);
+			impl->result = newUniformBuffer();
 			impl->result->setDebugName(impl->name);
 		}
 		return impl->result.share();
 	}
 
-	Holder<FrameBuffer> ProvisionalFrameBufferHandle::resolve()
+	bool ProvisionalUniformBuffer::ready() const
+	{
+		const ProvisionalUniformBufferImpl *impl = (const ProvisionalUniformBufferImpl *)this;
+		return !!impl->result;
+	}
+
+	Holder<FrameBuffer> ProvisionalFrameBuffer::resolve()
 	{
 		ProvisionalFrameBufferHandleImpl *impl = (ProvisionalFrameBufferHandleImpl *)this;
 		impl->used = true;
@@ -179,47 +205,77 @@ namespace cage
 		return impl->result.share();
 	}
 
-	Holder<ProvisionalTextureHandle> ProvisionalRenderData::texture(const string &name)
+	bool ProvisionalFrameBuffer::ready() const
 	{
-		return texture(name, GL_TEXTURE_2D);
+		const ProvisionalFrameBufferHandleImpl *impl = (const ProvisionalFrameBufferHandleImpl *)this;
+		return !!impl->result;
 	}
 
-	Holder<ProvisionalTextureHandle> ProvisionalRenderData::texture(const string &name, uint32 target)
+	Holder<Texture> ProvisionalTexture::resolve()
+	{
+		ProvisionalTextureHandleImpl *impl = (ProvisionalTextureHandleImpl *)this;
+		impl->used = true;
+		if (!impl->result)
+		{
+			impl->result = newTexture(impl->target);
+			impl->result->setDebugName(impl->name);
+		}
+		return impl->result.share();
+	}
+
+	bool ProvisionalTexture::ready() const
+	{
+		const ProvisionalTextureHandleImpl *impl = (const ProvisionalTextureHandleImpl *)this;
+		return !!impl->result;
+	}
+
+	Holder<ProvisionalUniformBuffer> ProvisionalRenderData::uniformBuffer(const string &name)
 	{
 		ProvisionalRenderDataImpl *impl = (ProvisionalRenderDataImpl *)this;
-		return impl->texture(name, target);
+		return impl->uniformBuffer(name);
 	}
 
-	Holder<ProvisionalTextureHandle> ProvisionalRenderData::texture2dArray(const string &name)
-	{
-		return texture(name, GL_TEXTURE_2D_ARRAY);
-	}
-
-	Holder<ProvisionalTextureHandle> ProvisionalRenderData::textureRectangle(const string &name)
-	{
-		return texture(name, GL_TEXTURE_RECTANGLE);
-	}
-
-	Holder<ProvisionalTextureHandle> ProvisionalRenderData::texture3d(const string &name)
-	{
-		return texture(name, GL_TEXTURE_3D);
-	}
-
-	Holder<ProvisionalTextureHandle> ProvisionalRenderData::textureCube(const string &name)
-	{
-		return texture(name, GL_TEXTURE_CUBE_MAP);
-	}
-
-	Holder<ProvisionalFrameBufferHandle> ProvisionalRenderData::frameBufferDraw(const string &name)
+	Holder<ProvisionalFrameBuffer> ProvisionalRenderData::frameBufferDraw(const string &name)
 	{
 		ProvisionalRenderDataImpl *impl = (ProvisionalRenderDataImpl *)this;
 		return impl->frameBuffer(name, 1);
 	}
 
-	Holder<ProvisionalFrameBufferHandle> ProvisionalRenderData::frameBufferRead(const string &name)
+	Holder<ProvisionalFrameBuffer> ProvisionalRenderData::frameBufferRead(const string &name)
 	{
 		ProvisionalRenderDataImpl *impl = (ProvisionalRenderDataImpl *)this;
 		return impl->frameBuffer(name, 2);
+	}
+
+	Holder<ProvisionalTexture> ProvisionalRenderData::texture(const string &name)
+	{
+		return texture(name, GL_TEXTURE_2D);
+	}
+
+	Holder<ProvisionalTexture> ProvisionalRenderData::texture(const string &name, uint32 target)
+	{
+		ProvisionalRenderDataImpl *impl = (ProvisionalRenderDataImpl *)this;
+		return impl->texture(name, target);
+	}
+
+	Holder<ProvisionalTexture> ProvisionalRenderData::texture2dArray(const string &name)
+	{
+		return texture(name, GL_TEXTURE_2D_ARRAY);
+	}
+
+	Holder<ProvisionalTexture> ProvisionalRenderData::textureRectangle(const string &name)
+	{
+		return texture(name, GL_TEXTURE_RECTANGLE);
+	}
+
+	Holder<ProvisionalTexture> ProvisionalRenderData::texture3d(const string &name)
+	{
+		return texture(name, GL_TEXTURE_3D);
+	}
+
+	Holder<ProvisionalTexture> ProvisionalRenderData::textureCube(const string &name)
+	{
+		return texture(name, GL_TEXTURE_CUBE_MAP);
 	}
 
 	void ProvisionalRenderData::reset()

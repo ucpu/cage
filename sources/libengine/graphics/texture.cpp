@@ -60,9 +60,9 @@ namespace cage
 		class TextureImpl : public Texture
 		{
 		public:
+			ivec3 resolution;
 			const uint32 target = 0;
 			uint32 id = 0;
-			uint32 width = 0, height = 0, depth = 0;
 
 			TextureImpl(uint32 target) : target(target)
 			{
@@ -168,26 +168,27 @@ namespace cage
 		glObjectLabel(GL_TEXTURE, impl->id, name.length(), name.c_str());
 	}
 
-	uint32 Texture::getId() const
+	uint32 Texture::id() const
 	{
 		return ((TextureImpl *)this)->id;
 	}
 
-	uint32 Texture::getTarget() const
+	uint32 Texture::target() const
 	{
 		return ((TextureImpl *)this)->target;
 	}
 
-	ivec2 Texture::getResolution() const
+	ivec2 Texture::resolution() const
 	{
 		const TextureImpl *impl = (const TextureImpl *)this;
-		return ivec2(impl->width, impl->height);
+		CAGE_ASSERT(impl->resolution[2] <= 1);
+		return ivec2(impl->resolution);
 	}
 
-	ivec3 Texture::getResolution3() const
+	ivec3 Texture::resolution3() const
 	{
 		const TextureImpl *impl = (const TextureImpl *)this;
-		return ivec3(impl->width, impl->height, impl->depth);
+		return impl->resolution;
 	}
 
 	void Texture::bind() const
@@ -205,6 +206,7 @@ namespace cage
 	{
 		const uint32 w = img->width();
 		const uint32 h = img->height();
+		const ivec2 res = ivec2(w, h);
 		if (img->colorConfig.gammaSpace == GammaSpaceEnum::Gamma)
 		{
 			switch (img->format())
@@ -213,8 +215,8 @@ namespace cage
 			{
 				switch (img->channels())
 				{
-				case 3: return image2d(w, h, GL_SRGB8, GL_RGB, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
-				case 4: return image2d(w, h, GL_SRGB8_ALPHA8, GL_RGBA, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
+				case 3: return image2d(res, GL_SRGB8, GL_RGB, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
+				case 4: return image2d(res, GL_SRGB8_ALPHA8, GL_RGBA, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
 				}
 			} break;
 			}
@@ -227,30 +229,30 @@ namespace cage
 			{
 				switch (img->channels())
 				{
-				case 1: return image2d(w, h, GL_R8, GL_RED, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
-				case 2: return image2d(w, h, GL_RG8, GL_RG, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
-				case 3: return image2d(w, h, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
-				case 4: return image2d(w, h, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
+				case 1: return image2d(res, GL_R8, GL_RED, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
+				case 2: return image2d(res, GL_RG8, GL_RG, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
+				case 3: return image2d(res, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
+				case 4: return image2d(res, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE, bufferCast<const char>(img->rawViewU8()));
 				}
 			} break;
 			case ImageFormatEnum::U16:
 			{
 				switch (img->channels())
 				{
-				case 1: return image2d(w, h, GL_R16, GL_RED, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16()));
-				case 2: return image2d(w, h, GL_RG16, GL_RG, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16()));
-				case 3: return image2d(w, h, GL_RGB16, GL_RGB, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16()));
-				case 4: return image2d(w, h, GL_RGBA16, GL_RGBA, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16()));
+				case 1: return image2d(res, GL_R16, GL_RED, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16()));
+				case 2: return image2d(res, GL_RG16, GL_RG, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16()));
+				case 3: return image2d(res, GL_RGB16, GL_RGB, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16()));
+				case 4: return image2d(res, GL_RGBA16, GL_RGBA, GL_UNSIGNED_SHORT, bufferCast<const char>(img->rawViewU16()));
 				}
 			} break;
 			case ImageFormatEnum::Float:
 			{
 				switch (img->channels())
 				{
-				case 1: return image2d(w, h, GL_R32F, GL_RED, GL_FLOAT, bufferCast<const char>(img->rawViewFloat()));
-				case 2: return image2d(w, h, GL_RG32F, GL_RG, GL_FLOAT, bufferCast<const char>(img->rawViewFloat()));
-				case 3: return image2d(w, h, GL_RGB32F, GL_RGB, GL_FLOAT, bufferCast<const char>(img->rawViewFloat()));
-				case 4: return image2d(w, h, GL_RGBA32F, GL_RGBA, GL_FLOAT, bufferCast<const char>(img->rawViewFloat()));
+				case 1: return image2d(res, GL_R32F, GL_RED, GL_FLOAT, bufferCast<const char>(img->rawViewFloat()));
+				case 2: return image2d(res, GL_RG32F, GL_RG, GL_FLOAT, bufferCast<const char>(img->rawViewFloat()));
+				case 3: return image2d(res, GL_RGB32F, GL_RGB, GL_FLOAT, bufferCast<const char>(img->rawViewFloat()));
+				case 4: return image2d(res, GL_RGBA32F, GL_RGBA, GL_FLOAT, bufferCast<const char>(img->rawViewFloat()));
 				}
 			} break;
 			}
@@ -258,55 +260,49 @@ namespace cage
 		CAGE_THROW_ERROR(Exception, "image has a combination of format, channels count and color configuration that cannot be imported into texture");
 	}
 
-	void Texture::image2d(uint32 w, uint32 h, uint32 internalFormat)
+	void Texture::image2d(ivec2 resolution, uint32 internalFormat)
 	{
-		image2d(w, h, internalFormat, textureFormat(internalFormat), textureType(internalFormat), {});
+		image2d(resolution, internalFormat, textureFormat(internalFormat), textureType(internalFormat), {});
 	}
 
-	void Texture::image2d(uint32 w, uint32 h, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer)
+	void Texture::image2d(ivec2 resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer)
 	{
 		TextureImpl *impl = (TextureImpl *)this;
 		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
 		CAGE_ASSERT(impl->target == GL_TEXTURE_2D || impl->target == GL_TEXTURE_RECTANGLE);
-		glTexImage2D(impl->target, 0, internalFormat, w, h, 0, format, type, buffer.data());
-		impl->width = w;
-		impl->height = h;
-		impl->depth = 1;
+		glTexImage2D(impl->target, 0, internalFormat, resolution[0], resolution[1], 0, format, type, buffer.data());
+		impl->resolution = ivec3(resolution, 1);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void Texture::imageCube(uint32 w, uint32 h, uint32 internalFormat)
+	void Texture::imageCube(ivec2 resolution, uint32 internalFormat)
 	{
-		imageCube(w, h, internalFormat, textureFormat(internalFormat), textureType(internalFormat), {}, 0);
+		imageCube(resolution, internalFormat, textureFormat(internalFormat), textureType(internalFormat), {}, 0);
 	}
 
-	void Texture::imageCube(uint32 w, uint32 h, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer, uintPtr stride)
+	void Texture::imageCube(ivec2 resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer, uintPtr stride)
 	{
 		TextureImpl *impl = (TextureImpl *)this;
 		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
 		CAGE_ASSERT(impl->target == GL_TEXTURE_CUBE_MAP);
 		for (uint32 i = 0; i < 6; i++)
-			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, w, h, 0, format, type, buffer.data() + i * stride);
-		impl->width = w;
-		impl->height = h;
-		impl->depth = 1;
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, resolution[0], resolution[1], 0, format, type, buffer.data() + i * stride);
+		impl->resolution = ivec3(resolution, 1);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
-	void Texture::image3d(uint32 w, uint32 h, uint32 d, uint32 internalFormat)
+	void Texture::image3d(ivec3 resolution, uint32 internalFormat)
 	{
-		image3d(w, h, d, internalFormat, textureFormat(internalFormat), textureType(internalFormat), {});
+		image3d(resolution, internalFormat, textureFormat(internalFormat), textureType(internalFormat), {});
 	}
 
-	void Texture::image3d(uint32 w, uint32 h, uint32 d, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer)
+	void Texture::image3d(ivec3 resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer)
 	{
 		TextureImpl *impl = (TextureImpl *)this;
 		CAGE_ASSERT(privat::getCurrentTexture() == impl->id);
 		CAGE_ASSERT(impl->target == GL_TEXTURE_3D || impl->target == GL_TEXTURE_2D_ARRAY);
-		glTexImage3D(impl->target, 0, internalFormat, w, h, d, 0, format, type, buffer.data());
-		impl->width = w;
-		impl->height = h;
-		impl->depth = d;
+		glTexImage3D(impl->target, 0, internalFormat, resolution[0], resolution[1], resolution[2], 0, format, type, buffer.data());
+		impl->resolution = resolution;
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
@@ -362,7 +358,7 @@ namespace cage
 		{
 			if (!texture)
 				return vec4();
-			const uint32 frames = numeric_cast<uint32>(texture->getResolution3()[2]);
+			const uint32 frames = numeric_cast<uint32>(texture->resolution3()[2]);
 			if (frames <= 1)
 				return vec4();
 			double sample = ((double)((sint64)emitTime - (sint64)animationStart) * (double)animationSpeed.value + (double)animationOffset.value) * (double)frames / (double)texture->animationDuration;

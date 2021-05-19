@@ -69,13 +69,13 @@ namespace cage
 		glObjectLabel(GL_FRAMEBUFFER, impl->id, name.length(), name.c_str());
 	}
 
-	uint32 FrameBuffer::getId() const
+	uint32 FrameBuffer::id() const
 	{
 		const FrameBufferImpl *impl = (const FrameBufferImpl *)this;
 		return impl->id;
 	}
 
-	uint32 FrameBuffer::getTarget() const
+	uint32 FrameBuffer::target() const
 	{
 		const FrameBufferImpl *impl = (const FrameBufferImpl *)this;
 		return impl->target;
@@ -93,7 +93,7 @@ namespace cage
 	{
 		FrameBufferImpl *impl = (FrameBufferImpl *)this;
 		impl->checkBound();
-		glFramebufferTexture(impl->target, GL_DEPTH_ATTACHMENT, tex ? tex->getId() : 0, 0);
+		glFramebufferTexture(impl->target, GL_DEPTH_ATTACHMENT, tex ? tex->id() : 0, 0);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 
@@ -101,7 +101,7 @@ namespace cage
 	{
 		FrameBufferImpl *impl = (FrameBufferImpl *)this;
 		impl->checkBound();
-		glFramebufferTexture(impl->target, GL_COLOR_ATTACHMENT0 + index, tex ? tex->getId() : 0, mipmapLevel);
+		glFramebufferTexture(impl->target, GL_COLOR_ATTACHMENT0 + index, tex ? tex->id() : 0, mipmapLevel);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
 

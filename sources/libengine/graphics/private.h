@@ -1,4 +1,4 @@
-#include <cage-engine/graphics.h>
+#include <cage-engine/graphicsError.h>
 
 #ifdef CAGE_ASSERT_ENABLED
 #define GCHL_ENABLE_CONTEXT_BINDING_CHECKS

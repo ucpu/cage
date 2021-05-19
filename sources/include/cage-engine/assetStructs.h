@@ -1,8 +1,9 @@
 #ifndef guard_asset_structs_h_5aade310_996b_42c7_8684_2100f6625d36_
 #define guard_asset_structs_h_5aade310_996b_42c7_8684_2100f6625d36_
 
-#include "core.h"
 #include <cage-core/geometry.h>
+
+#include "core.h"
 
 namespace cage
 {
@@ -32,9 +33,7 @@ namespace cage
 		uint64 animationDuration;
 		TextureFlags flags;
 		uint32 target; // GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_2D_ARRAY, GL_TEXTURE_CUBE_MAP, ...
-		uint32 dimX;
-		uint32 dimY;
-		uint32 dimZ;
+		ivec3 resolution;
 		uint32 channels;
 		uint32 stride; // only used for GL_TEXTURE_CUBE_MAP, otherwise 0
 		uint32 internalFormat;
@@ -111,7 +110,7 @@ namespace cage
 		real lineHeight; // linear units
 		real firstLineOffset; // linear units
 		uint32 texSize; // bytes
-		uint32 texWidth, texHeight; // texels
+		ivec2 texResolution;
 		uint32 glyphCount;
 		uint32 charCount;
 

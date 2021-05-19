@@ -5,32 +5,43 @@
 
 namespace cage
 {
-	class CAGE_ENGINE_API ProvisionalTextureHandle : private Immovable
+	class CAGE_ENGINE_API ProvisionalUniformBuffer : private Immovable
 	{
 	public:
-		Holder<Texture> resolve(); // requires opengl context
+		Holder<UniformBuffer> resolve(); // requires opengl context
+		bool ready() const;
 	};
 
-	class CAGE_ENGINE_API ProvisionalFrameBufferHandle : private Immovable
+	class CAGE_ENGINE_API ProvisionalFrameBuffer : private Immovable
 	{
 	public:
 		Holder<FrameBuffer> resolve(); // requires opengl context
+		bool ready() const;
+	};
+
+	class CAGE_ENGINE_API ProvisionalTexture : private Immovable
+	{
+	public:
+		Holder<Texture> resolve(); // requires opengl context
+		bool ready() const;
 	};
 
 	class CAGE_ENGINE_API ProvisionalRenderData : private Immovable
 	{
 	public:
 		// section: thread-safe, does not require opengl context
-		
-		Holder<ProvisionalTextureHandle> texture(const string &name);
-		Holder<ProvisionalTextureHandle> texture(const string &name, uint32 target);
-		Holder<ProvisionalTextureHandle> texture2dArray(const string &name);
-		Holder<ProvisionalTextureHandle> textureRectangle(const string &name);
-		Holder<ProvisionalTextureHandle> texture3d(const string &name);
-		Holder<ProvisionalTextureHandle> textureCube(const string &name);
 
-		Holder<ProvisionalFrameBufferHandle> frameBufferDraw(const string &name);
-		Holder<ProvisionalFrameBufferHandle> frameBufferRead(const string &name);
+		Holder<ProvisionalUniformBuffer> uniformBuffer(const string &name);
+
+		Holder<ProvisionalFrameBuffer> frameBufferDraw(const string &name);
+		Holder<ProvisionalFrameBuffer> frameBufferRead(const string &name);
+
+		Holder<ProvisionalTexture> texture(const string &name);
+		Holder<ProvisionalTexture> texture(const string &name, uint32 target);
+		Holder<ProvisionalTexture> texture2dArray(const string &name);
+		Holder<ProvisionalTexture> textureRectangle(const string &name);
+		Holder<ProvisionalTexture> texture3d(const string &name);
+		Holder<ProvisionalTexture> textureCube(const string &name);
 
 		// section: thread-safe, requires opengl context
 

@@ -13,7 +13,7 @@ namespace cage
 	{
 		Holder<Model> m = engineAssets()->tryGet<AssetSchemeIndexModel, Model>(name);
 		if (m)
-			return m->getBoundingBox();
+			return m->boundingBox();
 		return Aabb();
 	}
 
@@ -34,7 +34,7 @@ namespace cage
 		{
 			Holder<Model> m = ass->tryGet<AssetSchemeIndexModel, Model>(name);
 			if (m)
-				return m->getBoundingBox();
+				return m->boundingBox();
 		}
 		{
 			Holder<RenderObject> o = ass->tryGet<AssetSchemeIndexRenderObject, RenderObject>(name);

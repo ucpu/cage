@@ -10,7 +10,7 @@ namespace cage
 
 	namespace
 	{
-		struct Devices : Immovable, public cubeb_device_collection
+		struct Devices : private Immovable, public cubeb_device_collection
 		{
 			Devices()
 			{

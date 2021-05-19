@@ -17,19 +17,19 @@ namespace cage
 		uint64 animationDuration = 0;
 		bool animationLoop = false;
 
-		uint32 getId() const;
-		uint32 getTarget() const;
-		ivec2 getResolution() const;
-		ivec3 getResolution3() const;
+		uint32 id() const;
+		uint32 target() const;
+		ivec2 resolution() const;
+		ivec3 resolution3() const;
 		void bind() const;
 
 		void importImage(const Image *img);
-		void image2d(uint32 w, uint32 h, uint32 internalFormat);
-		void image2d(uint32 w, uint32 h, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer);
-		void imageCube(uint32 w, uint32 h, uint32 internalFormat);
-		void imageCube(uint32 w, uint32 h, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer, uintPtr stride = 0);
-		void image3d(uint32 w, uint32 h, uint32 d, uint32 internalFormat);
-		void image3d(uint32 w, uint32 h, uint32 d, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer);
+		void image2d(ivec2 resolution, uint32 internalFormat);
+		void image2d(ivec2 resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer);
+		void imageCube(ivec2 resolution, uint32 internalFormat);
+		void imageCube(ivec2 resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer, uintPtr stride = 0);
+		void image3d(ivec3 resolution, uint32 internalFormat);
+		void image3d(ivec3 resolution, uint32 internalFormat, uint32 format, uint32 type, PointerRange<const char> buffer);
 		void filters(uint32 mig, uint32 mag, uint32 aniso);
 		void wraps(uint32 s, uint32 t);
 		void wraps(uint32 s, uint32 t, uint32 r);

@@ -30,13 +30,10 @@ namespace cage
 			uint32 materialOffset = 0;
 			uint32 primitiveType = GL_TRIANGLES;
 			uint32 primitivesCount = 0;
-			uint32 skeletonName = 0;
-			uint32 skeletonBones = 0;
-			uint32 instancesLimitHint = 1;
-			ModelRenderFlags flags = defaultFlags;
 
 			ModelImpl()
 			{
+				flags = defaultFlags;
 				for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 					textures[i] = 0;
 				glGenVertexArrays(1, &id);
@@ -90,7 +87,7 @@ namespace cage
 		glObjectLabel(GL_VERTEX_ARRAY, impl->id, name.length(), name.c_str());
 	}
 
-	uint32 Model::getId() const
+	uint32 Model::id() const
 	{
 		return ((ModelImpl *)this)->id;
 	}
@@ -235,12 +232,6 @@ namespace cage
 		setBoundingBox(poly->boundingBox());
 	}
 
-	void Model::setFlags(ModelRenderFlags flags)
-	{
-		ModelImpl *impl = (ModelImpl *)this;
-		impl->flags = flags;
-	}
-
 	void Model::setPrimitiveType(uint32 type)
 	{
 		ModelImpl *impl = (ModelImpl *)this;
@@ -353,79 +344,41 @@ namespace cage
 			}
 		}
 	}
-
-	void Model::setSkeleton(uint32 name, uint32 bones)
-	{
-		ModelImpl *impl = (ModelImpl *)this;
-		impl->skeletonName = name;
-		impl->skeletonBones = bones;
-	}
-
-	void Model::setInstancesLimitHint(uint32 limit)
-	{
-		ModelImpl *impl = (ModelImpl *)this;
-		impl->instancesLimitHint = limit;
-	}
-
-	uint32 Model::getVerticesCount() const
+	uint32 Model::verticesCount() const
 	{
 		const ModelImpl *impl = (const ModelImpl *)this;
 		return impl->verticesCount;
 	}
 
-	uint32 Model::getIndicesCount() const
+	uint32 Model::indicesCount() const
 	{
 		const ModelImpl *impl = (const ModelImpl *)this;
 		return impl->indicesCount;
 	}
 
-	uint32 Model::getPrimitivesCount() const
+	uint32 Model::primitivesCount() const
 	{
 		const ModelImpl *impl = (const ModelImpl *)this;
 		return impl->primitivesCount;
 	}
 
-	ModelRenderFlags Model::getFlags() const
-	{
-		const ModelImpl *impl = (const ModelImpl *)this;
-		return impl->flags;
-	}
-
-	Aabb Model::getBoundingBox() const
+	Aabb Model::boundingBox() const
 	{
 		const ModelImpl *impl = (const ModelImpl *)this;
 		return impl->box;
 	}
 
-	PointerRange<const uint32> Model::getTextureNames() const
+	PointerRange<const uint32> Model::textureNames() const
 	{
 		const ModelImpl *impl = (const ModelImpl *)this;
 		return impl->textures;
 	}
 
-	uint32 Model::getTextureName(uint32 texIdx) const
+	uint32 Model::textureName(uint32 texIdx) const
 	{
 		const ModelImpl *impl = (const ModelImpl *)this;
 		CAGE_ASSERT(texIdx < MaxTexturesCountPerMaterial);
 		return impl->textures[texIdx];
-	}
-
-	uint32 Model::getSkeletonName() const
-	{
-		const ModelImpl *impl = (const ModelImpl *)this;
-		return impl->skeletonName;
-	}
-
-	uint32 Model::getSkeletonBones() const
-	{
-		const ModelImpl *impl = (const ModelImpl *)this;
-		return impl->skeletonBones;
-	}
-
-	uint32 Model::getInstancesLimitHint() const
-	{
-		const ModelImpl *impl = (const ModelImpl *)this;
-		return impl->instancesLimitHint;
 	}
 
 	void Model::dispatch() const

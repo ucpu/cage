@@ -23,7 +23,7 @@ namespace cage
 		uint32 maxActiveVoices = 100;
 	};
 
-	class CAGE_ENGINE_API VoicesMixer : Immovable
+	class CAGE_ENGINE_API VoicesMixer : private Immovable
 	{
 	public:
 		Holder<Voice> newVoice();

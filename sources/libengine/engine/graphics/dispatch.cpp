@@ -3,7 +3,7 @@
 #include <cage-core/serialization.h>
 #include <cage-core/flatSet.h>
 
-#include <cage-engine/graphics.h>
+#include <cage-engine/graphicsError.h>
 #include <cage-engine/opengl.h>
 #include <cage-engine/shaderConventions.h>
 #include <cage-engine/shaderProgram.h>
@@ -39,10 +39,10 @@ namespace cage
 				width = w;
 				height = h;
 				texture->bind();
-				if (texture->getTarget() == GL_TEXTURE_CUBE_MAP)
-					texture->imageCube(w, h, GL_DEPTH_COMPONENT16);
+				if (texture->target() == GL_TEXTURE_CUBE_MAP)
+					texture->imageCube(ivec2(w, h), GL_DEPTH_COMPONENT16);
 				else
-					texture->image2d(w, h, GL_DEPTH_COMPONENT24);
+					texture->image2d(ivec2(w, h), GL_DEPTH_COMPONENT24);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
@@ -130,7 +130,7 @@ namespace cage
 						luminanceCollectionTexture->filters(GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR, 0);
 						luminanceCollectionTexture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 					}
-					luminanceCollectionTexture->image2d(max(w / CAGE_SHADER_LUMINANCE_DOWNSCALE, 1u), max(h / CAGE_SHADER_LUMINANCE_DOWNSCALE, 1u), GL_R16F);
+					luminanceCollectionTexture->image2d(max(ivec2(w, h) / CAGE_SHADER_LUMINANCE_DOWNSCALE, 1u), GL_R16F);
 					if (luminanceAccumulationTexture)
 						luminanceAccumulationTexture->bind();
 					else
@@ -140,7 +140,7 @@ namespace cage
 						luminanceAccumulationTexture->filters(GL_NEAREST, GL_NEAREST, 0);
 						luminanceAccumulationTexture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 					}
-					luminanceAccumulationTexture->image2d(1, 1, GL_R16F);
+					luminanceAccumulationTexture->image2d(ivec2(1), GL_R16F);
 					CAGE_CHECK_GL_ERROR_DEBUG();
 				}
 				else
@@ -218,7 +218,7 @@ namespace cage
 
 			void resetAllTextures()
 			{
-				renderQueue->unbindAllTextures();
+				renderQueue->resetAllTextures();
 			}
 
 			void setTwoSided(bool twoSided)
@@ -311,7 +311,7 @@ namespace cage
 
 			void renderObject(const Objects *obj, const Holder<ShaderProgram> &shr)
 			{
-				renderObject(obj, shr, obj->model->getFlags());
+				renderObject(obj, shr, obj->model->flags);
 			}
 
 			void renderObject(const Objects *obj, const Holder<ShaderProgram> &shr, ModelRenderFlags flags)
@@ -321,7 +321,7 @@ namespace cage
 				if (!obj->uniArmatures.empty())
 				{
 					useDisposableUbo(CAGE_SHADER_UNIBLOCK_ARMATURES, obj->uniArmatures);
-					renderQueue->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, obj->model->getSkeletonBones());
+					renderQueue->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, obj->model->skeletonBones);
 				}
 				renderQueue->bind(obj->model);
 				setTwoSided(any(flags & ModelRenderFlags::TwoSided));
@@ -331,7 +331,7 @@ namespace cage
 					{
 						if (obj->textures[i])
 						{
-							switch (obj->textures[i]->getTarget())
+							switch (obj->textures[i]->target())
 							{
 							case GL_TEXTURE_2D_ARRAY:
 								renderQueue->bind(obj->textures[i], CAGE_SHADER_TEXTURE_ALBEDO_ARRAY + i);
@@ -376,15 +376,15 @@ namespace cage
 					{
 					case LightTypeEnum::Directional:
 						model = modelSquare.share();
-						renderQueue->cullingFace(false);
+						renderQueue->cullFace(false);
 						break;
 					case LightTypeEnum::Spot:
 						model = modelCone.share();
-						renderQueue->cullingFace(true);
+						renderQueue->cullFace(true);
 						break;
 					case LightTypeEnum::Point:
 						model = modelSphere.share();
-						renderQueue->cullingFace(true);
+						renderQueue->cullFace(true);
 						break;
 					default:
 						CAGE_THROW_CRITICAL(Exception, "invalid light type");
@@ -394,7 +394,7 @@ namespace cage
 					renderQueue->bind(model);
 					renderDispatch(model, numeric_cast<uint32>(l->uniLights.size()));
 				}
-				renderQueue->cullingFace(false);
+				renderQueue->cullFace(false);
 				renderQueue->checkGlErrorDebug();
 			}
 
@@ -798,9 +798,9 @@ namespace cage
 				const Holder<ShaderProgram> &shr = shaderDepth;
 				renderQueue->bind(shr);
 				for (const Holder<Objects> &o : pass->opaques)
-					renderObject(o.get(), shr, o->model->getFlags() | ModelRenderFlags::DepthWrite);
+					renderObject(o.get(), shr, o->model->flags | ModelRenderFlags::DepthWrite);
 				for (const Holder<Translucent> &o : pass->translucents)
-					renderObject(&o->object, shr, o->object.model->getFlags() | ModelRenderFlags::DepthWrite);
+					renderObject(&o->object, shr, o->object.model->flags | ModelRenderFlags::DepthWrite);
 
 				renderQueue->colorWrite(true);
 				renderQueue->checkGlErrorDebug();
@@ -842,7 +842,7 @@ namespace cage
 						texture->filters(mipmaps ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR, GL_LINEAR, 0);
 						texture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 					}
-					texture->image2d(max(lastGBufferWidth / downscale, 1u), max(lastGBufferHeight / downscale, 1u), internalFormat);
+					texture->image2d(max(ivec2(lastGBufferWidth, lastGBufferHeight) / downscale, 1u), internalFormat);
 					if (mipmaps)
 						texture->generateMipmaps();
 				}
@@ -898,10 +898,10 @@ namespace cage
 			{
 				const DepthMapVisualizationData *data = (const DepthMapVisualizationData *)ptr;
 				GLint cmpMode = 0;
-				glGetTexParameteriv(data->tex->getTarget(), GL_TEXTURE_COMPARE_MODE, &cmpMode);
-				glTexParameteri(data->tex->getTarget(), GL_TEXTURE_COMPARE_MODE, GL_NONE);
+				glGetTexParameteriv(data->tex->target(), GL_TEXTURE_COMPARE_MODE, &cmpMode);
+				glTexParameteri(data->tex->target(), GL_TEXTURE_COMPARE_MODE, GL_NONE);
 				data->modelSquare->dispatch();
-				glTexParameteri(data->tex->getTarget(), GL_TEXTURE_COMPARE_MODE, cmpMode);
+				glTexParameteri(data->tex->target(), GL_TEXTURE_COMPARE_MODE, cmpMode);
 			}
 
 		public:
@@ -1012,7 +1012,7 @@ namespace cage
 						if (renderPass->targetTexture)
 						{ // render to texture
 							visualizableTextures.emplace_back(renderPass->targetTexture, VisualizableTextureModeEnum::Color);
-							const ivec2 res = renderPass->targetTexture->getResolution();
+							const ivec2 res = renderPass->targetTexture->resolution();
 							maxW = max(maxW, numeric_cast<uint32>(res[0]));
 							maxH = max(maxH, numeric_cast<uint32>(res[1]));
 							continue;
@@ -1049,7 +1049,7 @@ namespace cage
 				if (!visualizableTextures[0].tex)
 					return;
 
-				renderQueue->reset();
+				renderQueue->resetQueue();
 
 				renderQueue->bind(ssaoPointsBuffer, CAGE_SHADER_UNIBLOCK_SSAO_POINTS);
 				renderQueue->checkGlErrorDebug();
@@ -1070,7 +1070,7 @@ namespace cage
 
 				{ // blit to the window
 					const auto graphicsDebugScope = renderQueue->scopedNamedPass("blit to the window");
-					renderQueue->unbindFrameBuffer();
+					renderQueue->resetFrameBuffer();
 					viewportAndScissor(0, 0, windowWidth, windowHeight);
 					setTwoSided(false);
 					setDepthTest(false, false);

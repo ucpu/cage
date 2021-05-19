@@ -66,7 +66,7 @@ namespace cage
 		glObjectLabel(GL_BUFFER, impl->id, name.length(), name.c_str());
 	}
 
-	uint32 UniformBuffer::getId() const
+	uint32 UniformBuffer::id() const
 	{
 		return ((UniformBufferImpl *)this)->id;
 	}
@@ -90,7 +90,7 @@ namespace cage
 	{
 		const UniformBufferImpl *impl = (const UniformBufferImpl *)this;
 		CAGE_ASSERT(offset + size <= impl->size);
-		CAGE_ASSERT((offset % getAlignmentRequirement()) == 0);
+		CAGE_ASSERT((offset % alignmentRequirement()) == 0);
 		glBindBufferRange(GL_UNIFORM_BUFFER, bindingPoint, impl->id, offset, size);
 		CAGE_CHECK_GL_ERROR_DEBUG();
 	}
@@ -137,7 +137,7 @@ namespace cage
 		}
 	}
 
-	uint32 UniformBuffer::getSize() const
+	uint32 UniformBuffer::size() const
 	{
 		const UniformBufferImpl *impl = (const UniformBufferImpl *)this;
 		return impl->size;
@@ -145,7 +145,7 @@ namespace cage
 
 	namespace
 	{
-		uint32 getAlignmentRequirementImpl()
+		uint32 alignmentRequirementImpl()
 		{
 			GLint alignment = 256;
 			glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &alignment);
@@ -153,9 +153,9 @@ namespace cage
 		}
 	}
 
-	uint32 UniformBuffer::getAlignmentRequirement()
+	uint32 UniformBuffer::alignmentRequirement()
 	{
-		static const uint32 alignment = getAlignmentRequirementImpl();
+		static const uint32 alignment = alignmentRequirementImpl();
 		return alignment;
 	}
 

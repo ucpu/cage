@@ -35,7 +35,7 @@ namespace cage
 		}
 	}
 
-	GraphicsDebugScope::GraphicsDebugScope(const char *name)
+	GraphicsDebugScope::GraphicsDebugScope(StringLiteral name)
 	{
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, name);
 	}
@@ -163,7 +163,7 @@ namespace cage
 
 			glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
-			UniformBuffer::getAlignmentRequirement(); // make sure that the value is retrieved in thread with bound opengl context
+			UniformBuffer::alignmentRequirement(); // make sure that the value is retrieved in thread with bound opengl context
 
 			checkGlError();
 		}

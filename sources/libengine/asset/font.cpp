@@ -28,7 +28,7 @@ namespace cage
 			CAGE_ASSERT(des.available() == 0);
 
 			font->setLine(data.lineHeight, data.firstLineOffset);
-			font->setImage(data.texWidth, data.texHeight, image);
+			font->setImage(data.texResolution, image);
 			font->setGlyphs(glyphs, bufferCast<const real>(kerning));
 			font->setCharmap(bufferCast<const uint32>(charmapChars), bufferCast<const uint32>(charmapGlyphs));
 

@@ -14,8 +14,8 @@ namespace cage
 	public:
 		void setDebugName(const string &name);
 
-		uint32 getId() const;
-		uint32 getTarget() const;
+		uint32 id() const;
+		uint32 target() const;
 		void bind() const;
 
 		void depthTexture(Texture *tex);

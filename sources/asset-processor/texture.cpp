@@ -326,9 +326,7 @@ namespace
 		data.flags =
 			(requireMipmaps(data.filterMin) ? TextureFlags::GenerateMipmaps : TextureFlags::None) |
 			(toBool(properties("animationLoop")) ? TextureFlags::AnimationLoop : TextureFlags::None);
-		data.dimX = images[0].data->width();
-		data.dimY = images[0].data->height();
-		data.dimZ = numeric_cast<uint32>(images.size());
+		data.resolution = ivec3(images[0].data->width(), images[0].data->height(), numeric_cast<uint32>(images.size()));
 		data.channels = images[0].data->channels();
 
 		// todo
@@ -376,7 +374,7 @@ namespace
 			}
 		}
 		data.copyType = GL_UNSIGNED_BYTE;
-		data.stride = data.dimX * data.dimY * data.channels;
+		data.stride = data.resolution[0] * data.resolution[1] * data.channels;
 		data.animationDuration = toUint64(properties("animationDuration"));
 
 		AssetHeader h = initializeAssetHeader();
