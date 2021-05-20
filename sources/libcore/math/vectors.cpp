@@ -217,6 +217,33 @@ namespace cage
 		return 2 * atan2(q.data[3], length(v));
 	}
 
+	rads pitch(const quat &q)
+	{
+		const real qx = q[0];
+		const real qy = q[1];
+		const real qz = q[2];
+		const real qw = q[3];
+		return atan2(sqr(qw) - sqr(qx) - sqr(qy) + sqr(qz), 2 * (qy * qz + qw * qx));
+	}
+
+	rads yaw(const quat &q)
+	{
+		const real qx = q[0];
+		const real qy = q[1];
+		const real qz = q[2];
+		const real qw = q[3];
+		return asin(-2 * (qx * qz - qw * qy));
+	}
+
+	rads roll(const quat &q)
+	{
+		const real qx = q[0];
+		const real qy = q[1];
+		const real qz = q[2];
+		const real qw = q[3];
+		return atan2(sqr(qw) + sqr(qx) - sqr(qy) - sqr(qz), 2 * (qx * qy + qw * qz));
+	}
+
 	void toAxisAngle(const quat &x, vec3 &axis, rads &angle)
 	{
 		angle = acos(x[3]) * 2;

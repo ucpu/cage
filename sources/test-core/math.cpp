@@ -853,6 +853,28 @@ namespace
 				test(a, degs(180));
 			}
 		}
+
+		{
+			CAGE_TESTCASE("quaternion to euler angles");
+
+			const auto &cmp = [](const quat &a, const quat &b)
+			{
+				test(a, b);
+				test(a * vec3(0, 0, 1), b * vec3(0, 0, 1));
+				test(a * vec3(0, 1, 0), b * vec3(0, 1, 0));
+				test(a * vec3(1, 0, 0), b * vec3(1, 0, 0));
+			};
+
+			for (uint32 i = 0; i < 100; i++)
+			{
+				const quat a = randomDirectionQuat();
+				const rads p = pitch(a);
+				const rads y = yaw(a);
+				const rads r = roll(a);
+				const quat b = quat(p, y, r);
+				cmp(a, b);
+			}
+		}
 	}
 
 	void testMathMat3()
