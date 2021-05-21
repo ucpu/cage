@@ -286,14 +286,34 @@ namespace cage
 
 	void gfEyeAdaptationApply(const GfEyeAdaptationConfig &config)
 	{
+		RenderQueue *q = config.queue;
+		const auto graphicsDebugScope = q->scopedNamedPass("eye adaptation apply");
+
+		struct Shader
+		{
+			vec4 luminanceParams;
+		} s;
+		s.luminanceParams = vec4(config.key, config.strength, 0, 0);
+		q->universalUniformStruct(s, CAGE_SHADER_UNIBLOCK_EFFECT_PROPERTIES);
+
+		q->viewport(ivec2(), config.resolution);
+		updateTexture(q, config.outColor, config.resolution, GL_RGB16F);
+		FrameBufferHandle fb = genFB(config.provisionals, "luminanceApply", config.resolution);
+		q->bind(fb);
+		q->colorTexture(0, config.outColor);
+		q->checkFrameBuffer();
+		q->bind(config.inColor, CAGE_SHADER_TEXTURE_COLOR);
 		TextureHandle texAccum = genTex(config.provisionals, config.queue, stringizer() + "luminanceAccumulation" + config.cameraId, ivec2(1), GL_R16F);
-		// todo
+		q->bind(texAccum, CAGE_SHADER_TEXTURE_EFFECTS);
+		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/luminanceApply.glsl")));
+		q->bind(config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj")));
+		q->draw();
 	}
 
 	void gfTonemap(const GfTonemapConfig &config)
 	{
 		RenderQueue *q = config.queue;
-		const auto graphicsDebugScope = q->scopedNamedPass("final screen");
+		const auto graphicsDebugScope = q->scopedNamedPass("tonemap");
 
 		struct Shader
 		{
@@ -302,8 +322,8 @@ namespace cage
 			vec4 gamma;
 		} s;
 		s.tonemap = config;
-		s.tonemapEnabled = true;
-		s.gamma = vec4(1.0 / config.gamma);
+		s.tonemapEnabled = config.tonemapEnabled;
+		s.gamma = vec4(1.0 / config.gamma, 0, 0, 0);
 		q->universalUniformStruct(s, CAGE_SHADER_UNIBLOCK_EFFECT_PROPERTIES);
 
 		q->viewport(ivec2(), config.resolution);

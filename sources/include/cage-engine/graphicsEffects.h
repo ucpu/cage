@@ -56,6 +56,7 @@ namespace cage
 		TextureHandle inColor;
 		TextureHandle outColor;
 		real gamma = 2.2;
+		bool tonemapEnabled = true;
 	};
 
 	struct CAGE_ENGINE_API GfFxaaConfig : public GfCommonConfig

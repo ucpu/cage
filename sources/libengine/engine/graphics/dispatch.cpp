@@ -1,6 +1,5 @@
 #include <cage-core/geometry.h>
 #include <cage-core/config.h>
-#include <cage-core/flatSet.h>
 
 #include <cage-engine/graphicsError.h>
 #include <cage-engine/opengl.h>
@@ -75,78 +74,12 @@ namespace cage
 			{}
 		};
 
-		struct FinalScreenShader
-		{
-			CameraTonemap tonemap; // 7 reals
-			real tonemapEnabled;
-
-			real eyeAdaptationKey;
-			real eyeAdaptationStrength;
-			real _dummy1;
-			real _dummy2;
-
-			real gamma;
-			real _dummy3;
-			real _dummy4;
-			real _dummy5;
-		};
-
-		struct CameraSpecificData
-		{
-			Holder<Texture> luminanceCollectionTexture; // w * h
-			Holder<Texture> luminanceAccumulationTexture; // 1 * 1
-
-			void update(uint32 w, uint32 h, CameraEffectsFlags ce)
-			{
-				if (w == width && h == height && ce == cameraEffects)
-					return;
-				width = w;
-				height = h;
-				cameraEffects = ce;
-
-				if ((ce & CameraEffectsFlags::EyeAdaptation) == CameraEffectsFlags::EyeAdaptation)
-				{
-					if (luminanceCollectionTexture)
-						luminanceCollectionTexture->bind();
-					else
-					{
-						luminanceCollectionTexture = newTexture();
-						luminanceCollectionTexture->setDebugName("luminanceCollectionTexture");
-						luminanceCollectionTexture->filters(GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR, 0);
-						luminanceCollectionTexture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-					}
-					luminanceCollectionTexture->image2d(max(ivec2(w, h) / CAGE_SHADER_LUMINANCE_DOWNSCALE, 1u), GL_R16F);
-					if (luminanceAccumulationTexture)
-						luminanceAccumulationTexture->bind();
-					else
-					{
-						luminanceAccumulationTexture = newTexture();
-						luminanceAccumulationTexture->setDebugName("luminanceAccumulationTexture");
-						luminanceAccumulationTexture->filters(GL_NEAREST, GL_NEAREST, 0);
-						luminanceAccumulationTexture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-					}
-					luminanceAccumulationTexture->image2d(ivec2(1), GL_R16F);
-					CAGE_CHECK_GL_ERROR_DEBUG();
-				}
-				else
-				{
-					luminanceCollectionTexture.clear();
-					luminanceAccumulationTexture.clear();
-				}
-			}
-
-		private:
-			uint32 width = 0;
-			uint32 height = 0;
-			CameraEffectsFlags cameraEffects = CameraEffectsFlags::None;
-		};
-
 		struct GraphicsDispatchHolders
 		{
 			Holder<Model> modelSquare, modelSphere, modelCone;
 			Holder<ShaderProgram> shaderVisualizeColor, shaderVisualizeDepth, shaderVisualizeMonochromatic, shaderVisualizeVelocity;
 			Holder<ShaderProgram> shaderAmbient, shaderBlit, shaderDepth, shaderGBuffer, shaderLighting, shaderTranslucent;
-			Holder<ShaderProgram> shaderGaussianBlur, shaderMotionBlur, shaderBloomGenerate, shaderBloomApply, shaderLuminanceCollection, shaderLuminanceCopy, shaderFinalScreen, shaderFxaa;
+			Holder<ShaderProgram> shaderGaussianBlur, shaderBloomGenerate, shaderBloomApply, shaderFxaa;
 			Holder<ShaderProgram> shaderFont;
 
 			Holder<FrameBuffer> gBufferTarget;
@@ -170,7 +103,6 @@ namespace cage
 
 			std::vector<ShadowmapBuffer> shadowmaps2d, shadowmapsCube;
 			std::vector<VisualizableTexture> visualizableTextures;
-			std::map<uintPtr, CameraSpecificData> cameras;
 		};
 
 		struct GraphicsDispatchImpl : public GraphicsDispatch, private GraphicsDispatchHolders
@@ -436,13 +368,10 @@ namespace cage
 
 				// camera specific data
 				CAGE_ASSERT(pass->entityId != 0);
-				CameraSpecificData &cs = cameras[pass->entityId];
-				cs.update(pass->vpW, pass->vpH, pass->effects);
-
 				renderCameraOpaque(pass);
-				renderCameraEffectsOpaque(pass, cs);
+				renderCameraEffectsOpaque(pass);
 				renderCameraTransparencies(pass);
-				renderCameraEffectsFinal(pass, cs);
+				renderCameraEffectsFinal(pass);
 
 				// blit to final output texture
 				CAGE_ASSERT(pass->targetTexture);
@@ -488,21 +417,18 @@ namespace cage
 				renderQueue->checkGlErrorDebug();
 			}
 
-			void renderCameraEffectsOpaque(const RenderPass *pass, CameraSpecificData &cs)
+			void renderCameraEffectsOpaque(const RenderPass *pass)
 			{
 				const auto graphicsDebugScope2 = renderQueue->scopedNamedPass("effects opaque");
 				OPTICK_EVENT("effects opaque");
 
-				// opaque screen-space effects
 				renderQueue->bind(renderTarget);
 				renderQueue->depthTexture(Holder<Texture>());
+				renderQueue->colorTexture(0, Holder<Texture>());
 				renderQueue->activeAttachments(1);
-				bindGBufferTextures();
-				renderQueue->bind(modelSquare);
+
 				texSource = colorTexture.share();
 				texTarget = intermediateTexture.share();
-				renderQueue->checkGlErrorDebug();
-
 				gfCommonConfig.resolution = ivec2(pass->vpW, pass->vpH);
 
 				// ssao
@@ -517,17 +443,15 @@ namespace cage
 					cfg.outAo = ambientOcclusionTexture;
 					cfg.viewProj = pass->viewProj;
 					gfSsao(cfg);
-
-					renderQueue->bind(renderTarget);
-					renderQueue->activeTexture(CAGE_SHADER_TEXTURE_COLOR);
-					viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
 				}
 
 				// ambient light
 				if ((pass->uniViewport.ambientLight + pass->uniViewport.ambientDirectionalLight) != vec4())
 				{
 					const auto graphicsDebugScope = renderQueue->scopedNamedPass("ambient light");
+					viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
 					renderQueue->bind(shaderAmbient);
+					renderQueue->bind(modelSquare);
 					if (any(pass->effects & CameraEffectsFlags::AmbientOcclusion))
 					{
 						renderQueue->bind(ambientOcclusionTexture, CAGE_SHADER_TEXTURE_EFFECTS);
@@ -551,10 +475,6 @@ namespace cage
 					cfg.outColor = texTarget;
 					gfDepthOfField(cfg);
 					std::swap(texSource, texTarget);
-
-					renderQueue->bind(renderTarget);
-					viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
-					renderQueue->activeTexture(CAGE_SHADER_TEXTURE_COLOR);
 				}
 
 				// motion blur
@@ -568,47 +488,22 @@ namespace cage
 					cfg.outColor = texTarget;
 					gfMotionBlur(cfg);
 					std::swap(texSource, texTarget);
-
-					renderQueue->bind(renderTarget);
-					viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
-					renderQueue->activeTexture(CAGE_SHADER_TEXTURE_COLOR);
 				}
 
 				// eye adaptation
 				if (any(pass->effects & CameraEffectsFlags::EyeAdaptation))
 				{
-					const auto graphicsDebugScope = renderQueue->scopedNamedPass("eye adaptation");
-					// bind the luminance texture for use
-					{
-						renderQueue->bind(cs.luminanceAccumulationTexture, CAGE_SHADER_TEXTURE_EFFECTS);
-						renderQueue->activeTexture(CAGE_SHADER_TEXTURE_COLOR);
-					}
-					// luminance collection
-					{
-						viewportAndScissor(pass->vpX / CAGE_SHADER_LUMINANCE_DOWNSCALE, pass->vpY / CAGE_SHADER_LUMINANCE_DOWNSCALE, pass->vpW / CAGE_SHADER_LUMINANCE_DOWNSCALE, pass->vpH / CAGE_SHADER_LUMINANCE_DOWNSCALE);
-						renderQueue->colorTexture(0, cs.luminanceCollectionTexture);
-						renderQueue->checkFrameBuffer();
-						renderQueue->bind(texSource);
-						renderQueue->bind(shaderLuminanceCollection);
-						renderDispatch(modelSquare, 1);
-					}
-					// downscale
-					{
-						renderQueue->bind(cs.luminanceCollectionTexture);
-						renderQueue->generateMipmaps();
-					}
-					// luminance copy
-					{
-						viewportAndScissor(0, 0, 1, 1);
-						renderQueue->colorTexture(0, cs.luminanceAccumulationTexture);
-						renderQueue->checkFrameBuffer();
-						renderQueue->bind(shaderLuminanceCopy);
-						renderQueue->uniform(0, vec2(pass->eyeAdaptation.darkerSpeed, pass->eyeAdaptation.lighterSpeed));
-						renderDispatch(modelSquare, 1);
-					}
-					viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
-					renderQueue->bind(texSource);
+					GfEyeAdaptationConfig cfg;
+					(GfCommonConfig &)cfg = gfCommonConfig;
+					(GfEyeAdaptation &)cfg = pass->eyeAdaptation;
+					cfg.cameraId = stringizer() + pass->entityId;
+					cfg.inColor = texSource;
+					gfEyeAdaptationPrepare(cfg);
 				}
+
+				viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
+				renderQueue->bind(renderTarget);
+				renderQueue->bind(texSource, CAGE_SHADER_TEXTURE_COLOR);
 			}
 
 			void renderCameraTransparencies(const RenderPass *pass)
@@ -658,10 +553,12 @@ namespace cage
 				bindGBufferTextures();
 			}
 
-			void renderCameraEffectsFinal(const RenderPass *pass, CameraSpecificData &cs)
+			void renderCameraEffectsFinal(const RenderPass *pass)
 			{
 				const auto graphicsDebugScope2 = renderQueue->scopedNamedPass("effects final");
 				OPTICK_EVENT("effects final");
+
+				gfCommonConfig.resolution = ivec2(pass->vpW, pass->vpH);
 
 				// bloom
 				if (any(pass->effects & CameraEffectsFlags::Bloom))
@@ -695,28 +592,36 @@ namespace cage
 					}
 				}
 
-				// final screen effects
-				if (any(pass->effects & (CameraEffectsFlags::EyeAdaptation | CameraEffectsFlags::ToneMapping | CameraEffectsFlags::GammaCorrection)))
+				// eye adaptation
+				if (any(pass->effects & CameraEffectsFlags::EyeAdaptation))
 				{
-					const auto graphicsDebugScope = renderQueue->scopedNamedPass("final screen");
-					FinalScreenShader f;
-					if (any(pass->effects & CameraEffectsFlags::EyeAdaptation))
-					{
-						renderQueue->bind(cs.luminanceAccumulationTexture, CAGE_SHADER_TEXTURE_EFFECTS);
-						renderQueue->activeTexture(CAGE_SHADER_TEXTURE_COLOR);
-						f.eyeAdaptationKey = pass->eyeAdaptation.key;
-						f.eyeAdaptationStrength = pass->eyeAdaptation.strength;
-					}
-					f.tonemap = pass->tonemap;
-					f.tonemapEnabled = any(pass->effects & CameraEffectsFlags::ToneMapping);
-					if (any(pass->effects & CameraEffectsFlags::GammaCorrection))
-						f.gamma = 1.0 / pass->gamma;
-					else
-						f.gamma = 1.0;
-					useDisposableUbo(CAGE_SHADER_UNIBLOCK_EFFECT_PROPERTIES, f);
-					renderQueue->bind(shaderFinalScreen);
-					renderEffect();
+					GfEyeAdaptationConfig cfg;
+					(GfCommonConfig &)cfg = gfCommonConfig;
+					(GfEyeAdaptation &)cfg = pass->eyeAdaptation;
+					cfg.cameraId = stringizer() + pass->entityId;
+					cfg.inColor = texSource;
+					cfg.outColor = texTarget;
+					gfEyeAdaptationApply(cfg);
+					std::swap(texSource, texTarget);
 				}
+
+				// final screen effects
+				if (any(pass->effects & (CameraEffectsFlags::ToneMapping | CameraEffectsFlags::GammaCorrection)))
+				{
+					GfTonemapConfig cfg;
+					(GfCommonConfig &)cfg = gfCommonConfig;
+					(GfTonemap &)cfg = pass->tonemap;
+					cfg.inColor = texSource;
+					cfg.outColor = texTarget;
+					cfg.tonemapEnabled = any(pass->effects & CameraEffectsFlags::ToneMapping);
+					cfg.gamma = any(pass->effects & CameraEffectsFlags::GammaCorrection) ? pass->gamma : 1;
+					gfTonemap(cfg);
+					std::swap(texSource, texTarget);
+				}
+
+				viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
+				renderQueue->bind(renderTarget);
+				renderQueue->bind(texSource, CAGE_SHADER_TEXTURE_COLOR);
 
 				// fxaa
 				if (any(pass->effects & CameraEffectsFlags::AntiAliasing))
@@ -900,12 +805,8 @@ namespace cage
 				shaderLighting = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/lighting.glsl"));
 				shaderTranslucent = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/translucent.glsl"));
 				shaderGaussianBlur = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/gaussianBlur.glsl"));
-				shaderMotionBlur = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/motionBlur.glsl"));
 				shaderBloomGenerate = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/bloomGenerate.glsl"));
 				shaderBloomApply = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/bloomApply.glsl"));
-				shaderLuminanceCollection = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/luminanceCollection.glsl"));
-				shaderLuminanceCopy = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/luminanceCopy.glsl"));
-				shaderFinalScreen = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/finalScreen.glsl"));
 				shaderFxaa = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/fxaa.glsl"));
 				shaderFont = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/font.glsl"));
 
@@ -981,17 +882,11 @@ namespace cage
 				gfCommonConfig.queue = +renderQueue;
 
 				{ // render all passes
-					FlatSet<uintPtr> camerasToDestroy;
-					for (auto &cs : cameras)
-						camerasToDestroy.insert(cs.first);
 					for (const Holder<RenderPass> &pass : renderPasses)
 					{
 						renderPass(pass.get());
 						renderQueue->checkGlErrorDebug();
-						camerasToDestroy.erase(pass->entityId);
 					}
-					for (auto r : camerasToDestroy)
-						cameras.erase(r);
 				}
 
 				{ // blit to the window
