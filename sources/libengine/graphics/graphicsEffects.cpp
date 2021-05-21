@@ -10,6 +10,8 @@
 #include <cage-engine/shaderProgram.h>
 #include <cage-engine/provisionalRenderData.h>
 
+#include <cmath>
+
 namespace cage
 {
 	namespace
@@ -37,6 +39,49 @@ namespace cage
 			TextureHandle tex = prov->texture(name);
 			updateTexture(q, tex, resolution, internalFormat);
 			return tex;
+		}
+
+		struct GfGaussianBlurConfig : public GfCommonConfig
+		{
+			TextureHandle texture;
+			uint32 internalFormat = 0;
+			uint32 mipmapLevel = 0;
+			uint32 mipmapsCount = 0;
+		};
+
+		void gfGaussianBlur(const GfGaussianBlurConfig &config)
+		{
+			RenderQueue *q = config.queue;
+			const auto graphicsDebugScope = q->scopedNamedPass("blur");
+
+			const ivec2 res = max(config.resolution / std::pow(2, config.mipmapLevel), 1);
+			q->viewport(ivec2(), res);
+
+			q->bind(config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/gaussianBlur.glsl")));
+			q->bind(config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj")));
+			q->uniform(1, (int)config.mipmapLevel);
+
+			TextureHandle tex = genTex(config.provisionals, config.queue, stringizer() + "blur" + config.mipmapsCount, config.resolution, config.internalFormat);
+			if (config.mipmapsCount && !tex.tryResolve())
+			{
+				q->bind(tex, CAGE_SHADER_TEXTURE_COLOR);
+				q->filters(GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, 0);
+				q->generateMipmaps();
+			}
+
+			FrameBufferHandle fb = genFB(config.provisionals, "blur", config.resolution);
+			q->bind(fb);
+
+			const auto &blur = [&](const TextureHandle &texIn, const TextureHandle &texOut, const vec2 &direction)
+			{
+				q->colorTexture(0, texOut, config.mipmapLevel);
+				q->checkFrameBuffer();
+				q->bind(texIn, CAGE_SHADER_TEXTURE_COLOR);
+				q->uniform(0, direction);
+				q->draw();
+			};
+			blur(config.texture, tex, vec2(1, 0));
+			blur(tex, config.texture, vec2(0, 1));
 		}
 	}
 
@@ -245,8 +290,6 @@ namespace cage
 
 		// generate
 		TextureHandle tex = genTex(config.provisionals, config.queue, "bloom", res, GL_RGB16F);
-		q->bind(tex);
-		q->filters(GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, 0);
 		FrameBufferHandle fbGen = genFB(config.provisionals, "bloomGenerate", res);
 		q->bind(fbGen);
 		q->colorTexture(0, tex);
@@ -257,12 +300,18 @@ namespace cage
 		q->bind(config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj")));
 		q->draw();
 
+		// prepare mipmaps
+		q->bind(tex);
+		q->filters(GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, 0);
+		q->generateMipmaps();
+
 		// blur
 		GfGaussianBlurConfig gb;
 		(GfCommonConfig &)gb = config;
 		gb.texture = tex;
 		gb.resolution = res;
 		gb.internalFormat = GL_RGB16F;
+		gb.mipmapsCount = max(config.blurPasses, 1u) - 1;
 		for (uint32 i = 0; i < config.blurPasses; i++)
 		{
 			gb.mipmapLevel = i;
@@ -279,7 +328,7 @@ namespace cage
 		q->bind(config.inColor, CAGE_SHADER_TEXTURE_COLOR);
 		q->bind(tex, CAGE_SHADER_TEXTURE_EFFECTS);
 		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/bloomApply.glsl")));
-		q->uniform(0, (int)config.blurPasses);
+		q->uniform(0, (int)max(config.blurPasses, 1u));
 		q->bind(config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj")));
 		q->draw();
 	}
@@ -353,33 +402,5 @@ namespace cage
 		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/fxaa.glsl")));
 		q->bind(config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj")));
 		q->draw();
-	}
-
-	void gfGaussianBlur(const GfGaussianBlurConfig &config)
-	{
-		RenderQueue *q = config.queue;
-		const auto graphicsDebugScope = q->scopedNamedPass("blur");
-
-		const ivec2 res = config.resolution / (1 + config.mipmapLevel);
-		q->viewport(ivec2(), res);
-
-		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/gaussianBlur.glsl")));
-		q->bind(config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj")));
-		q->uniform(1, (int)config.mipmapLevel);
-
-		TextureHandle tex = genTex(config.provisionals, config.queue, "blur", config.resolution, config.internalFormat);
-		FrameBufferHandle fb = genFB(config.provisionals, "blur", config.resolution);
-		q->bind(fb);
-
-		const auto &blur = [&](const TextureHandle &tex1, const TextureHandle &tex2, const vec2 &direction)
-		{
-			q->colorTexture(0, tex2, config.mipmapLevel);
-			q->checkFrameBuffer();
-			q->bind(tex1, CAGE_SHADER_TEXTURE_COLOR);
-			q->uniform(0, direction);
-			q->draw();
-		};
-		blur(config.texture, tex, vec2(1, 0));
-		blur(tex, config.texture, vec2(0, 1));
 	}
 }

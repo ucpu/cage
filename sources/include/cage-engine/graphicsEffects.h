@@ -65,13 +65,6 @@ namespace cage
 		TextureHandle outColor;
 	};
 
-	struct CAGE_ENGINE_API GfGaussianBlurConfig : public GfCommonConfig
-	{
-		TextureHandle texture;
-		uint32 internalFormat = 0;
-		uint32 mipmapLevel = 0;
-	};
-
 	CAGE_ENGINE_API void gfSsao(const GfSsaoConfig &config);
 	CAGE_ENGINE_API void gfDepthOfField(const GfDepthOfFieldConfig &config);
 	CAGE_ENGINE_API void gfMotionBlur(const GfMotionBlurConfig &config);
@@ -81,8 +74,6 @@ namespace cage
 	CAGE_ENGINE_API void gfEyeAdaptationApply(const GfEyeAdaptationConfig &config);
 	CAGE_ENGINE_API void gfTonemap(const GfTonemapConfig &config);
 	CAGE_ENGINE_API void gfFxaa(const GfFxaaConfig &config);
-
-	CAGE_ENGINE_API void gfGaussianBlur(const GfGaussianBlurConfig &config);
 }
 
 #endif // guard_graphicsEffects_h_xcfvh241448960sdrt

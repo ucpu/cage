@@ -79,7 +79,7 @@ namespace cage
 			Holder<Model> modelSquare, modelSphere, modelCone;
 			Holder<ShaderProgram> shaderVisualizeColor, shaderVisualizeDepth, shaderVisualizeMonochromatic, shaderVisualizeVelocity;
 			Holder<ShaderProgram> shaderAmbient, shaderBlit, shaderDepth, shaderGBuffer, shaderLighting, shaderTranslucent;
-			Holder<ShaderProgram> shaderGaussianBlur, shaderBloomGenerate, shaderBloomApply, shaderFxaa;
+			Holder<ShaderProgram> shaderFxaa;
 			Holder<ShaderProgram> shaderFont;
 
 			Holder<FrameBuffer> gBufferTarget;
@@ -91,8 +91,6 @@ namespace cage
 			Holder<Texture> intermediateTexture;
 			Holder<Texture> velocityTexture;
 			Holder<Texture> ambientOcclusionTexture;
-			Holder<Texture> bloomTexture1;
-			Holder<Texture> bloomTexture2;
 			Holder<Texture> depthTexture;
 
 			Holder<RenderQueue> renderQueue;
@@ -180,24 +178,6 @@ namespace cage
 					ShadowmapBuffer &s = shadowmap > 0 ? shadowmaps2d[shadowmap - 1] : shadowmapsCube[-shadowmap - 1];
 					renderQueue->bind(s.texture, shadowmap > 0 ? CAGE_SHADER_TEXTURE_SHADOW : CAGE_SHADER_TEXTURE_SHADOW_CUBE);
 				}
-			}
-
-			void gaussianBlur(const Holder<Texture> &texData, const Holder<Texture> &texHelper, uint32 mipmapLevel = 0)
-			{
-				renderQueue->bind(shaderGaussianBlur);
-				renderQueue->uniform(1, (int)mipmapLevel);
-				auto blur = [&](const Holder<Texture> &tex1, const Holder<Texture> &tex2, const vec2 &direction)
-				{
-					renderQueue->bind(tex1);
-					renderQueue->colorTexture(0, tex2, mipmapLevel);
-#ifdef CAGE_DEBUG
-					renderQueue->checkFrameBuffer();
-#endif // CAGE_DEBUG
-					renderQueue->uniform(0, direction);
-					renderDispatch(modelSquare, 1);
-				};
-				blur(texData, texHelper, vec2(1, 0));
-				blur(texHelper, texData, vec2(0, 1));
 			}
 
 			void renderEffect()
@@ -563,33 +543,13 @@ namespace cage
 				// bloom
 				if (any(pass->effects & CameraEffectsFlags::Bloom))
 				{
-					const auto graphicsDebugScope = renderQueue->scopedNamedPass("bloom");
-					viewportAndScissor(pass->vpX / CAGE_SHADER_BLOOM_DOWNSCALE, pass->vpY / CAGE_SHADER_BLOOM_DOWNSCALE, pass->vpW / CAGE_SHADER_BLOOM_DOWNSCALE, pass->vpH / CAGE_SHADER_BLOOM_DOWNSCALE);
-					{ // generate
-						renderQueue->colorTexture(0, bloomTexture1);
-						renderQueue->checkFrameBuffer();
-						renderQueue->bind(shaderBloomGenerate);
-						renderQueue->uniform(0, vec4(pass->bloom.threshold, 0, 0, 0));
-						renderDispatch(modelSquare, 1);
-					}
-					{ // blur
-						renderQueue->bind(bloomTexture1);
-						renderQueue->generateMipmaps();
-						for (uint32 i = 0; i < pass->bloom.blurPasses; i++)
-						{
-							uint32 d = CAGE_SHADER_BLOOM_DOWNSCALE + i;
-							viewportAndScissor(pass->vpX / d, pass->vpY / d, pass->vpW / d, pass->vpH / d);
-							gaussianBlur(bloomTexture1, bloomTexture2, i);
-						}
-					}
-					viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
-					{ // apply
-						renderQueue->bind(bloomTexture1, CAGE_SHADER_TEXTURE_EFFECTS);
-						renderQueue->activeTexture(CAGE_SHADER_TEXTURE_COLOR);
-						renderQueue->bind(shaderBloomApply);
-						renderQueue->uniform(0, (int)pass->bloom.blurPasses);
-						renderEffect();
-					}
+					GfBloomConfig cfg;
+					(GfCommonConfig &)cfg = gfCommonConfig;
+					(GfBloom &)cfg = pass->bloom;
+					cfg.inColor = texSource;
+					cfg.outColor = texTarget;
+					gfBloom(cfg);
+					std::swap(texSource, texTarget);
 				}
 
 				// eye adaptation
@@ -721,8 +681,6 @@ namespace cage
 				resizeTexture("intermediateTexture", intermediateTexture, true, GL_RGB16F);
 				resizeTexture("velocityTexture", velocityTexture, any(cameraEffects & CameraEffectsFlags::MotionBlur), GL_RG16F);
 				resizeTexture("ambientOcclusionTexture", ambientOcclusionTexture, any(cameraEffects & CameraEffectsFlags::AmbientOcclusion), GL_R8, CAGE_SHADER_SSAO_DOWNSCALE);
-				resizeTexture("bloomTexture1", bloomTexture1, any(cameraEffects & CameraEffectsFlags::Bloom), GL_RGB16F, CAGE_SHADER_BLOOM_DOWNSCALE, true);
-				resizeTexture("bloomTexture2", bloomTexture2, any(cameraEffects & CameraEffectsFlags::Bloom), GL_RGB16F, CAGE_SHADER_BLOOM_DOWNSCALE, true);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
 				gBufferTarget->bind();
@@ -804,9 +762,6 @@ namespace cage
 				shaderGBuffer = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/gBuffer.glsl"));
 				shaderLighting = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/lighting.glsl"));
 				shaderTranslucent = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/translucent.glsl"));
-				shaderGaussianBlur = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/gaussianBlur.glsl"));
-				shaderBloomGenerate = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/bloomGenerate.glsl"));
-				shaderBloomApply = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/bloomApply.glsl"));
 				shaderFxaa = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/fxaa.glsl"));
 				shaderFont = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/font.glsl"));
 
@@ -823,8 +778,6 @@ namespace cage
 				visualizableTextures.emplace_back(depthTexture.get(), VisualizableTextureModeEnum::Depth2d);
 				if (ambientOcclusionTexture)
 					visualizableTextures.emplace_back(ambientOcclusionTexture.get(), VisualizableTextureModeEnum::Monochromatic);
-				if (bloomTexture1)
-					visualizableTextures.emplace_back(bloomTexture1.get(), VisualizableTextureModeEnum::Color);
 				if (velocityTexture)
 					visualizableTextures.emplace_back(velocityTexture.get(), VisualizableTextureModeEnum::Velocity);
 
