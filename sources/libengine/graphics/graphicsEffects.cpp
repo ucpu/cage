@@ -128,6 +128,7 @@ namespace cage
 		TextureHandle texFar = genTex(config.provisionals, config.queue, "dofFar", res, GL_RGB16F);
 
 		q->bind(config.inColor, CAGE_SHADER_TEXTURE_COLOR);
+		q->bind(config.inDepth, CAGE_SHADER_TEXTURE_DEPTH);
 		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/dofCollect.glsl")));
 		q->bind(config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj")));
 		{ // collect near
@@ -166,6 +167,8 @@ namespace cage
 		q->bind(fbApply);
 		q->colorTexture(0, config.outColor);
 		q->checkFrameBuffer();
+		q->bind(config.inColor, CAGE_SHADER_TEXTURE_COLOR);
+		q->bind(config.inDepth, CAGE_SHADER_TEXTURE_DEPTH);
 		q->bind(texNear, CAGE_SHADER_TEXTURE_EFFECTS + 0);
 		q->bind(texFar, CAGE_SHADER_TEXTURE_EFFECTS + 1);
 		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/dofApply.glsl")));
