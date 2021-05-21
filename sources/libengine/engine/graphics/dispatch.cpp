@@ -79,7 +79,6 @@ namespace cage
 			Holder<Model> modelSquare, modelSphere, modelCone;
 			Holder<ShaderProgram> shaderVisualizeColor, shaderVisualizeDepth, shaderVisualizeMonochromatic, shaderVisualizeVelocity;
 			Holder<ShaderProgram> shaderAmbient, shaderBlit, shaderDepth, shaderGBuffer, shaderLighting, shaderTranslucent;
-			Holder<ShaderProgram> shaderFxaa;
 			Holder<ShaderProgram> shaderFont;
 
 			Holder<FrameBuffer> gBufferTarget;
@@ -579,17 +578,20 @@ namespace cage
 					std::swap(texSource, texTarget);
 				}
 
-				viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
-				renderQueue->bind(renderTarget);
-				renderQueue->bind(texSource, CAGE_SHADER_TEXTURE_COLOR);
-
 				// fxaa
 				if (any(pass->effects & CameraEffectsFlags::AntiAliasing))
 				{
-					const auto graphicsDebugScope = renderQueue->scopedNamedPass("fxaa");
-					renderQueue->bind(shaderFxaa);
-					renderEffect();
+					GfFxaaConfig cfg;
+					(GfCommonConfig &)cfg = gfCommonConfig;
+					cfg.inColor = texSource;
+					cfg.outColor = texTarget;
+					gfFxaa(cfg);
+					std::swap(texSource, texTarget);
 				}
+
+				viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
+				renderQueue->bind(renderTarget);
+				renderQueue->bind(texSource, CAGE_SHADER_TEXTURE_COLOR);
 			}
 
 			void renderShadowPass(const RenderPass *pass)
@@ -762,7 +764,6 @@ namespace cage
 				shaderGBuffer = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/gBuffer.glsl"));
 				shaderLighting = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/lighting.glsl"));
 				shaderTranslucent = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/translucent.glsl"));
-				shaderFxaa = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/fxaa.glsl"));
 				shaderFont = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/font.glsl"));
 
 				if (!shaderBlit)
