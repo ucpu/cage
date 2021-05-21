@@ -1,4 +1,5 @@
-#include "ssaoPoints.h"
+#include <cage-core/serialization.h>
+#include <cage-core/math.h>
 
 namespace cage
 {
@@ -266,9 +267,9 @@ namespace cage
 
 	namespace privat
 	{
-		PointerRange<const vec4> pointsForSsaoShader()
+		PointerRange<const char> pointsForSsaoShader()
 		{
-			return ps;
+			return bufferCast<const char, const vec4>(ps);
 		}
 	}
 }

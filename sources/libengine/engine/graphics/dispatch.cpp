@@ -560,11 +560,18 @@ namespace cage
 				// motion blur
 				if (any(pass->effects & CameraEffectsFlags::MotionBlur))
 				{
-					const auto graphicsDebugScope = renderQueue->scopedNamedPass("motion blur");
-					renderQueue->bind(velocityTexture, CAGE_SHADER_TEXTURE_EFFECTS);
+					GfMotionBlurConfig cfg;
+					(GfCommonConfig &)cfg = gfCommonConfig;
+					(GfMotionBlur &)cfg = pass->motionBlur;
+					cfg.inVelocity = velocityTexture;
+					cfg.inColor = texSource;
+					cfg.outColor = texTarget;
+					gfMotionBlur(cfg);
+					std::swap(texSource, texTarget);
+
+					renderQueue->bind(renderTarget);
+					viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
 					renderQueue->activeTexture(CAGE_SHADER_TEXTURE_COLOR);
-					renderQueue->bind(shaderMotionBlur);
-					renderEffect();
 				}
 
 				// eye adaptation

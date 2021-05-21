@@ -1,6 +1,5 @@
 #include <cage-core/assetManager.h>
 #include <cage-core/hashString.h>
-#include <cage-core/serialization.h>
 
 #include <cage-engine/opengl.h>
 #include <cage-engine/shaderConventions.h>
@@ -10,8 +9,6 @@
 #include <cage-engine/texture.h>
 #include <cage-engine/shaderProgram.h>
 #include <cage-engine/provisionalRenderData.h>
-
-#include "ssaoPoints.h"
 
 namespace cage
 {
@@ -43,6 +40,11 @@ namespace cage
 		}
 	}
 
+	namespace privat
+	{
+		PointerRange<const char> pointsForSsaoShader();
+	}
+
 	void gfSsao(const GfSsaoConfig &config)
 	{
 		RenderQueue *q = config.queue;
@@ -55,7 +57,7 @@ namespace cage
 		if (!ssaoPoints.tryResolve())
 		{
 			q->bind(ssaoPoints);
-			q->writeWhole(bufferCast<const char>(privat::pointsForSsaoShader()), GL_STATIC_DRAW);
+			q->writeWhole(privat::pointsForSsaoShader(), GL_STATIC_DRAW);
 		}
 		q->bind(ssaoPoints, CAGE_SHADER_UNIBLOCK_SSAO_POINTS);
 
