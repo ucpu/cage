@@ -1,6 +1,5 @@
 #include <cage-core/geometry.h>
 #include <cage-core/config.h>
-#include <cage-core/serialization.h>
 #include <cage-core/flatSet.h>
 
 #include <cage-engine/graphicsError.h>
@@ -11,10 +10,11 @@
 #include <cage-engine/frameBuffer.h>
 #include <cage-engine/renderQueue.h>
 #include <cage-engine/window.h>
+#include <cage-engine/provisionalRenderData.h>
+#include <cage-engine/graphicsEffects.h>
 
 #include "../engine.h"
 #include "graphics.h"
-#include "ssaoPoints.h"
 
 #include <map>
 
@@ -73,14 +73,6 @@ namespace cage
 
 			VisualizableTexture(Texture *tex, VisualizableTextureModeEnum vtm) : tex(tex), visualizableTextureMode(vtm)
 			{}
-		};
-
-		struct SsaoShader
-		{
-			mat4 viewProj;
-			mat4 viewProjInv;
-			vec4 params; // strength, bias, power, radius
-			ivec4 iparams; // sampleCount, frameIndex
 		};
 
 		struct DofShader
@@ -161,7 +153,7 @@ namespace cage
 			Holder<Model> modelSquare, modelSphere, modelCone;
 			Holder<ShaderProgram> shaderVisualizeColor, shaderVisualizeDepth, shaderVisualizeMonochromatic, shaderVisualizeVelocity;
 			Holder<ShaderProgram> shaderAmbient, shaderBlit, shaderDepth, shaderGBuffer, shaderLighting, shaderTranslucent;
-			Holder<ShaderProgram> shaderGaussianBlur, shaderSsaoGenerate, shaderSsaoApply, shaderDofCollect, shaderDofApply, shaderMotionBlur, shaderBloomGenerate, shaderBloomApply, shaderLuminanceCollection, shaderLuminanceCopy, shaderFinalScreen, shaderFxaa;
+			Holder<ShaderProgram> shaderGaussianBlur, shaderDofCollect, shaderDofApply, shaderMotionBlur, shaderBloomGenerate, shaderBloomApply, shaderLuminanceCollection, shaderLuminanceCopy, shaderFinalScreen, shaderFxaa;
 			Holder<ShaderProgram> shaderFont;
 
 			Holder<FrameBuffer> gBufferTarget;
@@ -172,8 +164,7 @@ namespace cage
 			Holder<Texture> colorTexture;
 			Holder<Texture> intermediateTexture;
 			Holder<Texture> velocityTexture;
-			Holder<Texture> ambientOcclusionTexture1;
-			Holder<Texture> ambientOcclusionTexture2;
+			Holder<Texture> ambientOcclusionTexture;
 			Holder<Texture> bloomTexture1;
 			Holder<Texture> bloomTexture2;
 			Holder<Texture> dofTexture1;
@@ -181,9 +172,8 @@ namespace cage
 			Holder<Texture> dofTexture3;
 			Holder<Texture> depthTexture;
 
-			Holder<UniformBuffer> ssaoPointsBuffer;
-
 			Holder<RenderQueue> renderQueue;
+			Holder<ProvisionalRenderData> provisionalData;
 
 			Holder<Texture> texSource;
 			Holder<Texture> texTarget;
@@ -204,6 +194,7 @@ namespace cage
 			uint32 lastGBufferWidth = 0;
 			uint32 lastGBufferHeight = 0;
 			CameraEffectsFlags lastCameraEffects = CameraEffectsFlags::None;
+			GfCommonConfig gfCommonConfig; // helper to simplify initialization
 
 			void applyShaderRoutines(const ShaderConfig *c, const Holder<ShaderProgram> &s)
 			{
@@ -522,38 +513,23 @@ namespace cage
 				texTarget = intermediateTexture.share();
 				renderQueue->checkGlErrorDebug();
 
+				gfCommonConfig.resolution = ivec2(pass->vpW, pass->vpH);
+
 				// ssao
 				if (any(pass->effects & CameraEffectsFlags::AmbientOcclusion))
 				{
-					const auto graphicsDebugScope = renderQueue->scopedNamedPass("ssao");
-					viewportAndScissor(pass->vpX / CAGE_SHADER_SSAO_DOWNSCALE, pass->vpY / CAGE_SHADER_SSAO_DOWNSCALE, pass->vpW / CAGE_SHADER_SSAO_DOWNSCALE, pass->vpH / CAGE_SHADER_SSAO_DOWNSCALE);
-					{
-						SsaoShader s;
-						s.viewProj = pass->viewProj;
-						s.viewProjInv = pass->uniViewport.vpInv;
-						s.params = vec4(pass->ssao.strength, pass->ssao.bias, pass->ssao.power, pass->ssao.worldRadius);
-						s.iparams[0] = pass->ssao.samplesCount;
-						s.iparams[1] = frameIndex;
-						useDisposableUbo(CAGE_SHADER_UNIBLOCK_EFFECT_PROPERTIES, s);
-					}
-					{ // generate
-						renderQueue->colorTexture(0, ambientOcclusionTexture1);
-						renderQueue->checkFrameBuffer();
-						renderQueue->bind(shaderSsaoGenerate);
-						renderDispatch(modelSquare, 1);
-					}
-					{ // blur
-						for (uint32 i = 0; i < pass->ssao.blurPasses; i++)
-							gaussianBlur(ambientOcclusionTexture1, ambientOcclusionTexture2);
-					}
-					{ // apply
-						renderQueue->colorTexture(0, ambientOcclusionTexture2);
-						renderQueue->checkFrameBuffer();
-						renderQueue->bind(ambientOcclusionTexture1, CAGE_SHADER_TEXTURE_EFFECTS);
-						renderQueue->activeTexture(CAGE_SHADER_TEXTURE_COLOR);
-						renderQueue->bind(shaderSsaoApply);
-						renderDispatch(modelSquare, 1);
-					}
+					GfSsaoConfig cfg;
+					(GfCommonConfig &)cfg = gfCommonConfig;
+					(GfSsao &)cfg = pass->ssao;
+					cfg.frameIndex = frameIndex;
+					cfg.inDepth = depthTexture;
+					cfg.inNormal = normalTexture;
+					cfg.outAo = ambientOcclusionTexture;
+					cfg.viewProj = pass->viewProj;
+					gfSsao(cfg);
+
+					renderQueue->bind(renderTarget);
+					renderQueue->activeTexture(CAGE_SHADER_TEXTURE_COLOR);
 					viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
 				}
 
@@ -564,7 +540,7 @@ namespace cage
 					renderQueue->bind(shaderAmbient);
 					if (any(pass->effects & CameraEffectsFlags::AmbientOcclusion))
 					{
-						renderQueue->bind(ambientOcclusionTexture2, CAGE_SHADER_TEXTURE_EFFECTS);
+						renderQueue->bind(ambientOcclusionTexture, CAGE_SHADER_TEXTURE_EFFECTS);
 						renderQueue->activeTexture(CAGE_SHADER_TEXTURE_COLOR);
 						renderQueue->uniform(CAGE_SHADER_UNI_AMBIENTOCCLUSION, 1);
 					}
@@ -869,8 +845,7 @@ namespace cage
 				resizeTexture("depthTexture", depthTexture, true, GL_DEPTH_COMPONENT32);
 				resizeTexture("intermediateTexture", intermediateTexture, true, GL_RGB16F);
 				resizeTexture("velocityTexture", velocityTexture, any(cameraEffects & CameraEffectsFlags::MotionBlur), GL_RG16F);
-				resizeTexture("ambientOcclusionTexture1", ambientOcclusionTexture1, any(cameraEffects & CameraEffectsFlags::AmbientOcclusion), GL_R8, CAGE_SHADER_SSAO_DOWNSCALE);
-				resizeTexture("ambientOcclusionTexture2", ambientOcclusionTexture2, any(cameraEffects & CameraEffectsFlags::AmbientOcclusion), GL_R8, CAGE_SHADER_SSAO_DOWNSCALE);
+				resizeTexture("ambientOcclusionTexture", ambientOcclusionTexture, any(cameraEffects & CameraEffectsFlags::AmbientOcclusion), GL_R8, CAGE_SHADER_SSAO_DOWNSCALE);
 				resizeTexture("bloomTexture1", bloomTexture1, any(cameraEffects & CameraEffectsFlags::Bloom), GL_RGB16F, CAGE_SHADER_BLOOM_DOWNSCALE, true);
 				resizeTexture("bloomTexture2", bloomTexture2, any(cameraEffects & CameraEffectsFlags::Bloom), GL_RGB16F, CAGE_SHADER_BLOOM_DOWNSCALE, true);
 				resizeTexture("dofTexture1", dofTexture1, any(cameraEffects & CameraEffectsFlags::DepthOfField), GL_RGB16F, CAGE_SHADER_DOF_DOWNSCALE);
@@ -917,18 +892,8 @@ namespace cage
 				renderTarget = newFrameBufferDraw();
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
-				ssaoPointsBuffer = newUniformBuffer();
-				ssaoPointsBuffer->setDebugName("ssaoPointsBuffer");
-				{
-					const vec4 *points = nullptr;
-					uint32 count = 0;
-					pointsForSsaoShader(points, count);
-					PointerRange<const vec4> r = { points, points + count };
-					ssaoPointsBuffer->writeWhole(bufferCast<const char>(r), GL_STATIC_DRAW);
-				}
-				CAGE_CHECK_GL_ERROR_DEBUG();
-
 				renderQueue = newRenderQueue();
+				provisionalData = newProvisionalRenderData();
 			}
 
 			void finalize()
@@ -968,8 +933,6 @@ namespace cage
 				shaderLighting = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/lighting.glsl"));
 				shaderTranslucent = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/translucent.glsl"));
 				shaderGaussianBlur = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/gaussianBlur.glsl"));
-				shaderSsaoGenerate = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/ssaoGenerate.glsl"));
-				shaderSsaoApply = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/ssaoApply.glsl"));
 				shaderDofCollect = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/dofCollect.glsl"));
 				shaderDofApply = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/dofApply.glsl"));
 				shaderMotionBlur = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/motionBlur.glsl"));
@@ -992,8 +955,8 @@ namespace cage
 				visualizableTextures.emplace_back(specialTexture.get(), VisualizableTextureModeEnum::Color);
 				visualizableTextures.emplace_back(normalTexture.get(), VisualizableTextureModeEnum::Color);
 				visualizableTextures.emplace_back(depthTexture.get(), VisualizableTextureModeEnum::Depth2d);
-				if (ambientOcclusionTexture2)
-					visualizableTextures.emplace_back(ambientOcclusionTexture2.get(), VisualizableTextureModeEnum::Monochromatic);
+				if (ambientOcclusionTexture)
+					visualizableTextures.emplace_back(ambientOcclusionTexture.get(), VisualizableTextureModeEnum::Monochromatic);
 				if (bloomTexture1)
 					visualizableTextures.emplace_back(bloomTexture1.get(), VisualizableTextureModeEnum::Color);
 				if (dofTexture1)
@@ -1050,9 +1013,11 @@ namespace cage
 					return;
 
 				renderQueue->resetQueue();
+				provisionalData->reset();
 
-				renderQueue->bind(ssaoPointsBuffer, CAGE_SHADER_UNIBLOCK_SSAO_POINTS);
-				renderQueue->checkGlErrorDebug();
+				gfCommonConfig.assets = engineAssets();
+				gfCommonConfig.provisionals = +provisionalData;
+				gfCommonConfig.queue = +renderQueue;
 
 				{ // render all passes
 					FlatSet<uintPtr> camerasToDestroy;

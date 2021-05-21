@@ -365,7 +365,6 @@ namespace cage
 			{
 				Holder<UniformBuffer> ub = uniformBuffer.resolve();
 				ub->bind(bindingPoint);
-				impl->bindings->uniformBuffer = std::move(ub);
 			}
 		};
 
@@ -388,7 +387,6 @@ namespace cage
 			{
 				Holder<UniformBuffer> ub = uniformBuffer.resolve();
 				ub->bind(bindingPoint, offset, size);
-				impl->bindings->uniformBuffer = std::move(ub);
 			}
 		};
 
@@ -408,7 +406,9 @@ namespace cage
 			UniformBufferHandle uniformBuffer;
 			void dispatch(RenderQueueImpl *impl) const override
 			{
-				uniformBuffer.resolve()->bind();
+				Holder<UniformBuffer> ub = uniformBuffer.resolve();
+				ub->bind();
+				impl->bindings->uniformBuffer = std::move(ub);
 			}
 		};
 

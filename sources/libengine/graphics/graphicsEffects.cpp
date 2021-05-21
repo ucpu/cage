@@ -1,5 +1,6 @@
 #include <cage-core/assetManager.h>
 #include <cage-core/hashString.h>
+#include <cage-core/serialization.h>
 
 #include <cage-engine/opengl.h>
 #include <cage-engine/shaderConventions.h>
@@ -9,6 +10,8 @@
 #include <cage-engine/texture.h>
 #include <cage-engine/shaderProgram.h>
 #include <cage-engine/provisionalRenderData.h>
+
+#include "ssaoPoints.h"
 
 namespace cage
 {
@@ -48,6 +51,14 @@ namespace cage
 		const ivec2 res = max(config.resolution / CAGE_SHADER_SSAO_DOWNSCALE, 1u);
 		q->viewport(ivec2(), res);
 
+		UniformBufferHandle ssaoPoints = config.provisionals->uniformBuffer("ssaoPoints");
+		if (!ssaoPoints.tryResolve())
+		{
+			q->bind(ssaoPoints);
+			q->writeWhole(bufferCast<const char>(privat::pointsForSsaoShader()), GL_STATIC_DRAW);
+		}
+		q->bind(ssaoPoints, CAGE_SHADER_UNIBLOCK_SSAO_POINTS);
+
 		struct Shader
 		{
 			mat4 viewProj;
@@ -62,15 +73,19 @@ namespace cage
 		s.iparams[1] = config.frameIndex;
 		q->universalUniformStruct(s, CAGE_SHADER_UNIBLOCK_EFFECT_PROPERTIES);
 
+		// generate
 		updateTexture(q, config.outAo, res, GL_R8);
 		FrameBufferHandle fb = genFB(config.provisionals, "ssao", res);
+		q->bind(fb);
 		q->colorTexture(0, config.outAo);
 		q->checkFrameBuffer();
-
+		q->bind(config.inDepth, CAGE_SHADER_TEXTURE_DEPTH);
+		q->bind(config.inNormal, CAGE_SHADER_TEXTURE_NORMAL);
 		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/ssaoGenerate.glsl")));
 		q->bind(config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj")));
 		q->draw();
 
+		// blur
 		GfGaussianBlurConfig gb;
 		(GfCommonConfig &)gb = config;
 		gb.texture = config.outAo;
@@ -78,6 +93,13 @@ namespace cage
 		gb.internalFormat = GL_R8;
 		for (uint32 i = 0; i < config.blurPasses; i++)
 			gfGaussianBlur(gb);
+
+		// apply - update outAo inplace
+		q->bind(fb);
+		q->bind(config.outAo, CAGE_SHADER_TEXTURE_EFFECTS);
+		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/ssaoApply.glsl")));
+		q->bind(config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj")));
+		q->draw();
 	}
 
 	void gfDepthOfField(const GfDepthOfFieldConfig &config)
@@ -313,7 +335,7 @@ namespace cage
 		RenderQueue *q = config.queue;
 		const auto graphicsDebugScope = q->scopedNamedPass("blur");
 
-		const ivec2 res = config.resolution / config.mipmapLevel;
+		const ivec2 res = config.resolution / (1 + config.mipmapLevel);
 		q->viewport(ivec2(), res);
 
 		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/gaussianBlur.glsl")));

@@ -264,9 +264,11 @@ namespace cage
 		};
 	}
 
-	void pointsForSsaoShader(const vec4 *&points, uint32 &count)
+	namespace privat
 	{
-		points = ps;
-		count = sizeof(ps) / sizeof(ps[0]);
+		PointerRange<const vec4> pointsForSsaoShader()
+		{
+			return ps;
+		}
 	}
 }
