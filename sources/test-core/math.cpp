@@ -57,6 +57,9 @@ void test(const ivec2 &a, const ivec2 &b)
 void test(const quat &a, const quat &b)
 {
 	test(abs(dot(a, b)), 1);
+	test(a * vec3(0, 0, 0.1), b * vec3(0, 0, 0.1));
+	test(a * vec3(0, 0.1, 0), b * vec3(0, 0.1, 0));
+	test(a * vec3(0.1, 0, 0), b * vec3(0.1, 0, 0));
 }
 void test(rads a, rads b)
 {
@@ -857,14 +860,6 @@ namespace
 		{
 			CAGE_TESTCASE("quaternion to euler angles");
 
-			const auto &cmp = [](const quat &a, const quat &b)
-			{
-				test(a, b);
-				test(a * vec3(0, 0, 1), b * vec3(0, 0, 1));
-				test(a * vec3(0, 1, 0), b * vec3(0, 1, 0));
-				test(a * vec3(1, 0, 0), b * vec3(1, 0, 0));
-			};
-
 			for (uint32 i = 0; i < 100; i++)
 			{
 				const quat a = randomDirectionQuat();
@@ -872,7 +867,7 @@ namespace
 				const rads y = yaw(a);
 				const rads r = roll(a);
 				const quat b = quat(p, y, r);
-				cmp(a, b);
+				test(a, b);
 			}
 		}
 	}

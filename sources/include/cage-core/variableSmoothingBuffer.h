@@ -61,7 +61,7 @@ namespace cage
 
 	namespace privat
 	{
-		CAGE_CORE_API quat averageQuaternions(const quat *quaternions, uint32 count);
+		CAGE_CORE_API quat averageQuaternions(PointerRange<const quat> quaternions);
 	}
 
 	template<uint32 N>
@@ -78,11 +78,16 @@ namespace cage
 		{
 			index = (index + 1) % N;
 			buffer[index] = value;
-			avg = privat::averageQuaternions(buffer, N);
+			dirty = true;
 		}
 
 		quat smooth() const
 		{
+			if (dirty)
+			{
+				avg = privat::averageQuaternions(buffer);
+				dirty = false;
+			}
 			return avg;
 		}
 
@@ -99,7 +104,8 @@ namespace cage
 	private:
 		uint32 index = 0;
 		quat buffer[N];
-		quat avg;
+		mutable quat avg;
+		mutable bool dirty = false;
 	};
 }
 
