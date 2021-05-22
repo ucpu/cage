@@ -679,9 +679,9 @@ namespace cage
 				resizeTexture("specialTexture", specialTexture, true, GL_RG8);
 				resizeTexture("normalTexture", normalTexture, true, GL_RGB16F);
 				resizeTexture("colorTexture", colorTexture, true, GL_RGB16F);
+				resizeTexture("velocityTexture", velocityTexture, any(cameraEffects & CameraEffectsFlags::MotionBlur), GL_RG16F);
 				resizeTexture("depthTexture", depthTexture, true, GL_DEPTH_COMPONENT32);
 				resizeTexture("intermediateTexture", intermediateTexture, true, GL_RGB16F);
-				resizeTexture("velocityTexture", velocityTexture, any(cameraEffects & CameraEffectsFlags::MotionBlur), GL_RG16F);
 				resizeTexture("ambientOcclusionTexture", ambientOcclusionTexture, any(cameraEffects & CameraEffectsFlags::AmbientOcclusion), GL_R8, CAGE_SHADER_SSAO_DOWNSCALE);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
@@ -692,6 +692,7 @@ namespace cage
 				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_COLOR, colorTexture.get());
 				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_VELOCITY, any(cameraEffects & CameraEffectsFlags::MotionBlur) ? velocityTexture.get() : nullptr);
 				gBufferTarget->depthTexture(depthTexture.get());
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
@@ -838,7 +839,7 @@ namespace cage
 				{ // render all passes
 					for (const Holder<RenderPass> &pass : renderPasses)
 					{
-						renderPass(pass.get());
+						renderPass(+pass);
 						renderQueue->checkGlErrorDebug();
 					}
 				}
@@ -897,7 +898,7 @@ namespace cage
 				}
 
 				{
-					GraphicsDebugScope graphicsDebugScope("dispatch render queue");
+					OPTICK_EVENT("dispatch render queue");
 					renderQueue->dispatch();
 				}
 

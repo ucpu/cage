@@ -645,7 +645,7 @@ namespace cage
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
 		CAGE_ASSERT(texture);
 		if (bindingPoint == m)
-			bindingPoint = impl->setting.activeTextureIndex;
+			bindingPoint = impl->setting.activeTextureIndex == m ? 0 : impl->setting.activeTextureIndex;
 		impl->activeTexture(bindingPoint);
 		if (impl->setting.textures[bindingPoint] == texture.pointer())
 			return;
@@ -659,18 +659,19 @@ namespace cage
 		struct Cmd : public CmdBase
 		{
 			ivec2 resolution;
-			uint32 f = 0;
+			uint32 internalFormat = 0;
 			void dispatch(RenderQueueImpl *impl) const override
 			{
-				impl->bindings->texture->image2d(resolution, f);
+				impl->bindings->texture->image2d(resolution, internalFormat);
 			}
 		};
 
 		RenderQueueImpl *impl = (RenderQueueImpl *)this;
+		CAGE_ASSERT(impl->setting.activeTextureIndex < 16);
 		CAGE_ASSERT(impl->setting.textures[impl->setting.activeTextureIndex]);
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.resolution = resolution;
-		cmd.f = internalFormat;
+		cmd.internalFormat = internalFormat;
 	}
 
 	void RenderQueue::imageCube(ivec2 resolution, uint32 internalFormat)
@@ -678,10 +679,10 @@ namespace cage
 		struct Cmd : public CmdBase
 		{
 			ivec2 resolution;
-			uint32 f = 0;
+			uint32 internalFormat = 0;
 			void dispatch(RenderQueueImpl *impl) const override
 			{
-				impl->bindings->texture->imageCube(resolution, f);
+				impl->bindings->texture->imageCube(resolution, internalFormat);
 			}
 		};
 
@@ -689,7 +690,7 @@ namespace cage
 		CAGE_ASSERT(impl->setting.textures[impl->setting.activeTextureIndex]);
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.resolution = resolution;
-		cmd.f = internalFormat;
+		cmd.internalFormat = internalFormat;
 	}
 
 	void RenderQueue::image3d(ivec3 resolution, uint32 internalFormat)
@@ -697,10 +698,10 @@ namespace cage
 		struct Cmd : public CmdBase
 		{
 			ivec3 resolution;
-			uint32 f = 0;
+			uint32 internalFormat = 0;
 			void dispatch(RenderQueueImpl *impl) const override
 			{
-				impl->bindings->texture->image3d(resolution, f);
+				impl->bindings->texture->image3d(resolution, internalFormat);
 			}
 		};
 
@@ -708,7 +709,7 @@ namespace cage
 		CAGE_ASSERT(impl->setting.textures[impl->setting.activeTextureIndex]);
 		Cmd &cmd = impl->addCmd<Cmd>();
 		cmd.resolution = resolution;
-		cmd.f = internalFormat;
+		cmd.internalFormat = internalFormat;
 	}
 
 	void RenderQueue::filters(uint32 mig, uint32 mag, uint32 aniso)

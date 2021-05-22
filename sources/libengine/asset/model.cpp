@@ -33,7 +33,7 @@ namespace cage
 			msh->setTextureNames(data.textureNames);
 
 			msh->flags = data.renderFlags;
-			msh->skeletonBones = data.skeletonName;
+			msh->skeletonName = data.skeletonName;
 			msh->skeletonBones = data.skeletonBones;
 			msh->instancesLimitHint = data.instancesLimitHint;
 

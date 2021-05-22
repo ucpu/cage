@@ -7,10 +7,7 @@ $define shader fragment
 layout(binding = CAGE_SHADER_TEXTURE_COLOR) uniform sampler2D texColor;
 layout(binding = CAGE_SHADER_TEXTURE_EFFECTS) uniform sampler2D texLuminance;
 
-layout(std140, binding = CAGE_SHADER_UNIBLOCK_EFFECT_PROPERTIES) uniform Luminance
-{
-	vec4 luminanceParams; // key, strength
-};
+layout(location = 0) uniform vec2 uniLuminanceParams; // key, strength
 
 out vec3 outColor;
 
@@ -45,10 +42,10 @@ void main()
 	vec3 color = texelFetch(texColor, ivec2(gl_FragCoord.xy), 0).xyz;
 	float avgLuminance = texelFetch(texLuminance, ivec2(0), 0).x;
 	avgLuminance = exp(avgLuminance);
-	float li = luminanceParams[0] / avgLuminance;
+	float li = uniLuminanceParams[0] / avgLuminance;
 	vec3 c = color * li;
 	//float night = max((li - 25.0) / li, 0.0);
 	//c = blueShift(c, night);
 	//c = desaturate(c, night);
-	outColor = mix(color, c, luminanceParams[1]);
+	outColor = mix(color, c, uniLuminanceParams[1]);
 }

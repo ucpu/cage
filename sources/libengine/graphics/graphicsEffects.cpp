@@ -16,24 +16,18 @@ namespace cage
 {
 	namespace
 	{
-		FrameBufferHandle genFB(ProvisionalRenderData *prov, const string &prefix, ivec2 resolution, bool read = false)
-		{
-			const string name = stringizer() + prefix + resolution + read;
-			return read ? prov->frameBufferRead(name) : prov->frameBufferDraw(name);
-		}
-
 		void updateTexture(RenderQueue *q, const TextureHandle &tex, ivec2 resolution, uint32 internalFormat)
 		{
 			if (!tex.tryResolve() || tex.resolve()->resolution() != resolution)
 			{
-				q->bind(tex);
+				q->bind(tex, CAGE_SHADER_TEXTURE_COLOR);
 				q->image2d(resolution, internalFormat);
 				q->filters(GL_LINEAR, GL_LINEAR, 0);
 				q->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 			}
 		}
 
-		TextureHandle genTex(ProvisionalRenderData *prov, RenderQueue *q, const string &prefix, ivec2 resolution, uint32 internalFormat)
+		TextureHandle provTex(ProvisionalRenderData *prov, RenderQueue *q, const string &prefix, ivec2 resolution, uint32 internalFormat)
 		{
 			const string name = stringizer() + prefix + resolution + internalFormat;
 			TextureHandle tex = prov->texture(name);
@@ -56,21 +50,20 @@ namespace cage
 
 			const ivec2 res = max(config.resolution / std::pow(2, config.mipmapLevel), 1);
 			q->viewport(ivec2(), res);
+			FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
+			q->bind(fb);
 
 			q->bind(config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/gaussianBlur.glsl")));
 			q->bind(config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj")));
 			q->uniform(1, (int)config.mipmapLevel);
 
-			TextureHandle tex = genTex(config.provisionals, config.queue, stringizer() + "blur" + config.mipmapsCount, config.resolution, config.internalFormat);
+			TextureHandle tex = provTex(config.provisionals, config.queue, stringizer() + "blur" + config.mipmapsCount, config.resolution, config.internalFormat);
 			if (config.mipmapsCount && !tex.tryResolve())
 			{
 				q->bind(tex, CAGE_SHADER_TEXTURE_COLOR);
 				q->filters(GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR, 0);
 				q->generateMipmaps();
 			}
-
-			FrameBufferHandle fb = genFB(config.provisionals, "blur", config.resolution);
-			q->bind(fb);
 
 			const auto &blur = [&](const TextureHandle &texIn, const TextureHandle &texOut, const vec2 &direction)
 			{
@@ -97,6 +90,8 @@ namespace cage
 
 		const ivec2 res = max(config.resolution / CAGE_SHADER_SSAO_DOWNSCALE, 1u);
 		q->viewport(ivec2(), res);
+		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
+		q->bind(fb);
 
 		UniformBufferHandle ssaoPoints = config.provisionals->uniformBuffer("ssaoPoints");
 		if (!ssaoPoints.tryResolve())
@@ -122,8 +117,6 @@ namespace cage
 
 		// generate
 		updateTexture(q, config.outAo, res, GL_R8);
-		FrameBufferHandle fb = genFB(config.provisionals, "ssao", res);
-		q->bind(fb);
 		q->colorTexture(0, config.outAo);
 		q->checkFrameBuffer();
 		q->bind(config.inDepth, CAGE_SHADER_TEXTURE_DEPTH);
@@ -142,7 +135,6 @@ namespace cage
 			gfGaussianBlur(gb);
 
 		// apply - update outAo inplace
-		q->bind(fb);
 		q->bind(config.outAo, CAGE_SHADER_TEXTURE_EFFECTS);
 		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/ssaoApply.glsl")));
 		q->bind(config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj")));
@@ -156,6 +148,8 @@ namespace cage
 
 		const ivec2 res = max(config.resolution / CAGE_SHADER_DOF_DOWNSCALE, 1u);
 		q->viewport(ivec2(), res);
+		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
+		q->bind(fb);
 
 		struct Shader
 		{
@@ -171,24 +165,20 @@ namespace cage
 		s.dofFar = vec4(fd + fr, fd + fr + br, 0, 0);
 		q->universalUniformStruct(s, CAGE_SHADER_UNIBLOCK_EFFECT_PROPERTIES);
 
-		TextureHandle texNear = genTex(config.provisionals, config.queue, "dofNear", res, GL_RGB16F);
-		TextureHandle texFar = genTex(config.provisionals, config.queue, "dofFar", res, GL_RGB16F);
+		TextureHandle texNear = provTex(config.provisionals, config.queue, "dofNear", res, GL_RGB16F);
+		TextureHandle texFar = provTex(config.provisionals, config.queue, "dofFar", res, GL_RGB16F);
 
 		q->bind(config.inColor, CAGE_SHADER_TEXTURE_COLOR);
 		q->bind(config.inDepth, CAGE_SHADER_TEXTURE_DEPTH);
 		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/dofCollect.glsl")));
 		q->bind(config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj")));
 		{ // collect near
-			FrameBufferHandle fbNear = genFB(config.provisionals, "dofNear", res);
-			q->bind(fbNear);
 			q->colorTexture(0, texNear);
 			q->checkFrameBuffer();
 			q->uniform(0, 0);
 			q->draw();
 		}
 		{ // collect far
-			FrameBufferHandle fbFar = genFB(config.provisionals, "dofFar", res);
-			q->bind(fbFar);
 			q->colorTexture(0, texFar);
 			q->checkFrameBuffer();
 			q->uniform(0, 1);
@@ -210,8 +200,6 @@ namespace cage
 		// apply
 		q->viewport(ivec2(), config.resolution);
 		updateTexture(q, config.outColor, config.resolution, GL_RGB16F);
-		FrameBufferHandle fbApply = genFB(config.provisionals, "dofApply", config.resolution);
-		q->bind(fbApply);
 		q->colorTexture(0, config.outColor);
 		q->checkFrameBuffer();
 		q->bind(config.inColor, CAGE_SHADER_TEXTURE_COLOR);
@@ -227,10 +215,12 @@ namespace cage
 	{
 		RenderQueue *q = config.queue;
 		const auto graphicsDebugScope = q->scopedNamedPass("motion blur");
+
 		q->viewport(ivec2(), config.resolution);
-		updateTexture(q, config.outColor, config.resolution, GL_RGB16F);
-		FrameBufferHandle fb = genFB(config.provisionals, "motionBlur", config.resolution);
+		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
 		q->bind(fb);
+
+		updateTexture(q, config.outColor, config.resolution, GL_RGB16F);
 		q->colorTexture(0, config.outColor);
 		q->checkFrameBuffer();
 		q->bind(config.inColor, CAGE_SHADER_TEXTURE_COLOR);
@@ -247,13 +237,13 @@ namespace cage
 
 		const ivec2 res = max(config.resolution / CAGE_SHADER_LUMINANCE_DOWNSCALE, 1u);
 		q->viewport(ivec2(), res);
+		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
+		q->bind(fb);
 
 		// collection
-		TextureHandle texCollect = genTex(config.provisionals, config.queue, "luminanceCollection", res, GL_R16F);
+		TextureHandle texCollect = provTex(config.provisionals, config.queue, "luminanceCollection", res, GL_R16F);
 		q->bind(texCollect);
 		q->filters(GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR, 0); // is linear necessary?
-		FrameBufferHandle fbCollect = genFB(config.provisionals, "luminanceCollection", res);
-		q->bind(fbCollect);
 		q->colorTexture(0, texCollect);
 		q->checkFrameBuffer();
 		q->bind(config.inColor, CAGE_SHADER_TEXTURE_COLOR);
@@ -267,9 +257,7 @@ namespace cage
 
 		// accumulation / copy
 		q->viewport(ivec2(), ivec2(1));
-		TextureHandle texAccum = genTex(config.provisionals, config.queue, stringizer() + "luminanceAccumulation" + config.cameraId, ivec2(1), GL_R16F);
-		FrameBufferHandle fbAccum = genFB(config.provisionals, stringizer() + "luminanceAccumulation" + config.cameraId, ivec2(1));
-		q->bind(fbAccum);
+		TextureHandle texAccum = provTex(config.provisionals, config.queue, stringizer() + "luminanceAccumulation" + config.cameraId, ivec2(1), GL_R16F);
 		q->colorTexture(0, texAccum);
 		q->checkFrameBuffer();
 		q->bind(texAccum, CAGE_SHADER_TEXTURE_EFFECTS);
@@ -287,11 +275,11 @@ namespace cage
 
 		const ivec2 res = max(config.resolution / CAGE_SHADER_BLOOM_DOWNSCALE, 1u);
 		q->viewport(ivec2(), res);
+		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
+		q->bind(fb);
 
 		// generate
-		TextureHandle tex = genTex(config.provisionals, config.queue, "bloom", res, GL_RGB16F);
-		FrameBufferHandle fbGen = genFB(config.provisionals, "bloomGenerate", res);
-		q->bind(fbGen);
+		TextureHandle tex = provTex(config.provisionals, config.queue, "bloom", res, GL_RGB16F);
 		q->colorTexture(0, tex);
 		q->checkFrameBuffer();
 		q->bind(config.inColor, CAGE_SHADER_TEXTURE_COLOR);
@@ -321,8 +309,6 @@ namespace cage
 		// apply
 		q->viewport(ivec2(), config.resolution);
 		updateTexture(q, config.outColor, config.resolution, GL_RGB16F);
-		FrameBufferHandle fbApply = genFB(config.provisionals, "bloomApply", config.resolution);
-		q->bind(fbApply);
 		q->colorTexture(0, config.outColor);
 		q->checkFrameBuffer();
 		q->bind(config.inColor, CAGE_SHADER_TEXTURE_COLOR);
@@ -338,23 +324,18 @@ namespace cage
 		RenderQueue *q = config.queue;
 		const auto graphicsDebugScope = q->scopedNamedPass("eye adaptation apply");
 
-		struct Shader
-		{
-			vec4 luminanceParams;
-		} s;
-		s.luminanceParams = vec4(config.key, config.strength, 0, 0);
-		q->universalUniformStruct(s, CAGE_SHADER_UNIBLOCK_EFFECT_PROPERTIES);
-
 		q->viewport(ivec2(), config.resolution);
-		updateTexture(q, config.outColor, config.resolution, GL_RGB16F);
-		FrameBufferHandle fb = genFB(config.provisionals, "luminanceApply", config.resolution);
+		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
 		q->bind(fb);
+
+		updateTexture(q, config.outColor, config.resolution, GL_RGB16F);
 		q->colorTexture(0, config.outColor);
 		q->checkFrameBuffer();
 		q->bind(config.inColor, CAGE_SHADER_TEXTURE_COLOR);
-		TextureHandle texAccum = genTex(config.provisionals, config.queue, stringizer() + "luminanceAccumulation" + config.cameraId, ivec2(1), GL_R16F);
+		TextureHandle texAccum = provTex(config.provisionals, config.queue, stringizer() + "luminanceAccumulation" + config.cameraId, ivec2(1), GL_R16F);
 		q->bind(texAccum, CAGE_SHADER_TEXTURE_EFFECTS);
 		q->bind(config.assets->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/effects/luminanceApply.glsl")));
+		q->uniform(0, vec2(config.key, config.strength));
 		q->bind(config.assets->get<AssetSchemeIndexModel, Model>(HashString("cage/model/square.obj")));
 		q->draw();
 	}
@@ -363,6 +344,10 @@ namespace cage
 	{
 		RenderQueue *q = config.queue;
 		const auto graphicsDebugScope = q->scopedNamedPass("tonemap");
+
+		q->viewport(ivec2(), config.resolution);
+		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
+		q->bind(fb);
 
 		struct Shader
 		{
@@ -375,10 +360,7 @@ namespace cage
 		s.gamma = vec4(1.0 / config.gamma, 0, 0, 0);
 		q->universalUniformStruct(s, CAGE_SHADER_UNIBLOCK_EFFECT_PROPERTIES);
 
-		q->viewport(ivec2(), config.resolution);
 		updateTexture(q, config.outColor, config.resolution, GL_RGB16F);
-		FrameBufferHandle fb = genFB(config.provisionals, "tonemap", config.resolution);
-		q->bind(fb);
 		q->colorTexture(0, config.outColor);
 		q->checkFrameBuffer();
 		q->bind(config.inColor, CAGE_SHADER_TEXTURE_COLOR);
@@ -393,9 +375,10 @@ namespace cage
 		const auto graphicsDebugScope = q->scopedNamedPass("fxaa");
 
 		q->viewport(ivec2(), config.resolution);
-		updateTexture(q, config.outColor, config.resolution, GL_RGB16F);
-		FrameBufferHandle fb = genFB(config.provisionals, "fxaa", config.resolution);
+		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
 		q->bind(fb);
+
+		updateTexture(q, config.outColor, config.resolution, GL_RGB16F);
 		q->colorTexture(0, config.outColor);
 		q->checkFrameBuffer();
 		q->bind(config.inColor, CAGE_SHADER_TEXTURE_COLOR);
