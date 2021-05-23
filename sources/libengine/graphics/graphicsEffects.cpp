@@ -46,7 +46,7 @@ namespace cage
 		void gfGaussianBlur(const GfGaussianBlurConfig &config)
 		{
 			RenderQueue *q = config.queue;
-			const auto graphicsDebugScope = q->scopedNamedPass("blur");
+			const auto graphicsDebugScope = q->namedScope("blur");
 
 			const ivec2 res = max(config.resolution / std::pow(2, config.mipmapLevel), 1);
 			q->viewport(ivec2(), res);
@@ -86,7 +86,7 @@ namespace cage
 	void gfSsao(const GfSsaoConfig &config)
 	{
 		RenderQueue *q = config.queue;
-		const auto graphicsDebugScope = q->scopedNamedPass("ssao");
+		const auto graphicsDebugScope = q->namedScope("ssao");
 
 		const ivec2 res = max(config.resolution / CAGE_SHADER_SSAO_DOWNSCALE, 1u);
 		q->viewport(ivec2(), res);
@@ -144,7 +144,7 @@ namespace cage
 	void gfDepthOfField(const GfDepthOfFieldConfig &config)
 	{
 		RenderQueue *q = config.queue;
-		const auto graphicsDebugScope = q->scopedNamedPass("depth of field");
+		const auto graphicsDebugScope = q->namedScope("depth of field");
 
 		const ivec2 res = max(config.resolution / CAGE_SHADER_DOF_DOWNSCALE, 1u);
 		q->viewport(ivec2(), res);
@@ -214,7 +214,7 @@ namespace cage
 	void gfMotionBlur(const GfMotionBlurConfig &config)
 	{
 		RenderQueue *q = config.queue;
-		const auto graphicsDebugScope = q->scopedNamedPass("motion blur");
+		const auto graphicsDebugScope = q->namedScope("motion blur");
 
 		q->viewport(ivec2(), config.resolution);
 		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
@@ -233,7 +233,7 @@ namespace cage
 	void gfEyeAdaptationPrepare(const GfEyeAdaptationConfig &config)
 	{
 		RenderQueue *q = config.queue;
-		const auto graphicsDebugScope = q->scopedNamedPass("eye adaptation prepare");
+		const auto graphicsDebugScope = q->namedScope("eye adaptation prepare");
 
 		const ivec2 res = max(config.resolution / CAGE_SHADER_LUMINANCE_DOWNSCALE, 1u);
 		q->viewport(ivec2(), res);
@@ -271,7 +271,7 @@ namespace cage
 	void gfBloom(const GfBloomConfig &config)
 	{
 		RenderQueue *q = config.queue;
-		const auto graphicsDebugScope = q->scopedNamedPass("bloom");
+		const auto graphicsDebugScope = q->namedScope("bloom");
 
 		const ivec2 res = max(config.resolution / CAGE_SHADER_BLOOM_DOWNSCALE, 1u);
 		q->viewport(ivec2(), res);
@@ -322,7 +322,7 @@ namespace cage
 	void gfEyeAdaptationApply(const GfEyeAdaptationConfig &config)
 	{
 		RenderQueue *q = config.queue;
-		const auto graphicsDebugScope = q->scopedNamedPass("eye adaptation apply");
+		const auto graphicsDebugScope = q->namedScope("eye adaptation apply");
 
 		q->viewport(ivec2(), config.resolution);
 		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
@@ -343,7 +343,7 @@ namespace cage
 	void gfTonemap(const GfTonemapConfig &config)
 	{
 		RenderQueue *q = config.queue;
-		const auto graphicsDebugScope = q->scopedNamedPass("tonemap");
+		const auto graphicsDebugScope = q->namedScope("tonemap");
 
 		q->viewport(ivec2(), config.resolution);
 		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
@@ -372,7 +372,7 @@ namespace cage
 	void gfFxaa(const GfFxaaConfig &config)
 	{
 		RenderQueue *q = config.queue;
-		const auto graphicsDebugScope = q->scopedNamedPass("fxaa");
+		const auto graphicsDebugScope = q->namedScope("fxaa");
 
 		q->viewport(ivec2(), config.resolution);
 		FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");

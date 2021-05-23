@@ -161,7 +161,7 @@ namespace cage
 
 			void bindGBufferTextures()
 			{
-				const auto graphicsDebugScope = renderQueue->scopedNamedPass("bind gBuffer textures");
+				const auto graphicsDebugScope = renderQueue->namedScope("bind gBuffer textures");
 				renderQueue->bind(albedoTexture, CAGE_SHADER_TEXTURE_ALBEDO);
 				renderQueue->bind(specialTexture, CAGE_SHADER_TEXTURE_SPECIAL);
 				renderQueue->bind(normalTexture, CAGE_SHADER_TEXTURE_NORMAL);
@@ -245,7 +245,7 @@ namespace cage
 
 			void renderOpaque(const RenderPass *pass)
 			{
-				const auto graphicsDebugScope = renderQueue->scopedNamedPass("opaque");
+				const auto graphicsDebugScope = renderQueue->namedScope("opaque");
 				OPTICK_EVENT("opaque");
 				const Holder<ShaderProgram> &shr = pass->targetShadowmap ? shaderDepth : shaderGBuffer;
 				renderQueue->bind(shr);
@@ -256,7 +256,7 @@ namespace cage
 
 			void renderLighting(const RenderPass *pass)
 			{
-				const auto graphicsDebugScope = renderQueue->scopedNamedPass("lighting");
+				const auto graphicsDebugScope = renderQueue->namedScope("lighting");
 				OPTICK_EVENT("lighting");
 				const Holder<ShaderProgram> &shr = shaderLighting;
 				renderQueue->bind(shr);
@@ -292,7 +292,7 @@ namespace cage
 
 			void renderTranslucent(const RenderPass *pass)
 			{
-				const auto graphicsDebugScope = renderQueue->scopedNamedPass("translucent");
+				const auto graphicsDebugScope = renderQueue->namedScope("translucent");
 				OPTICK_EVENT("translucent");
 				const Holder<ShaderProgram> &shr = shaderTranslucent;
 				renderQueue->bind(shr);
@@ -324,7 +324,7 @@ namespace cage
 
 			void renderTexts(const RenderPass *pass)
 			{
-				const auto graphicsDebugScope = renderQueue->scopedNamedPass("texts");
+				const auto graphicsDebugScope = renderQueue->namedScope("texts");
 				OPTICK_EVENT("texts");
 				for (const Holder<Texts> &t : pass->texts)
 				{
@@ -342,7 +342,7 @@ namespace cage
 
 			void renderCameraPass(const RenderPass *pass)
 			{
-				const auto graphicsDebugScope = renderQueue->scopedNamedPass("camera pass");
+				const auto graphicsDebugScope = renderQueue->namedScope("camera pass");
 				OPTICK_EVENT("camera pass");
 
 				// camera specific data
@@ -364,7 +364,7 @@ namespace cage
 
 			void renderCameraOpaque(const RenderPass *pass)
 			{
-				const auto graphicsDebugScope = renderQueue->scopedNamedPass("deferred");
+				const auto graphicsDebugScope = renderQueue->namedScope("deferred");
 				OPTICK_EVENT("deferred");
 
 				// opaque
@@ -398,7 +398,7 @@ namespace cage
 
 			void renderCameraEffectsOpaque(const RenderPass *pass)
 			{
-				const auto graphicsDebugScope2 = renderQueue->scopedNamedPass("effects opaque");
+				const auto graphicsDebugScope2 = renderQueue->namedScope("effects opaque");
 				OPTICK_EVENT("effects opaque");
 
 				renderQueue->bind(renderTarget);
@@ -427,7 +427,7 @@ namespace cage
 				// ambient light
 				if ((pass->uniViewport.ambientLight + pass->uniViewport.ambientDirectionalLight) != vec4())
 				{
-					const auto graphicsDebugScope = renderQueue->scopedNamedPass("ambient light");
+					const auto graphicsDebugScope = renderQueue->namedScope("ambient light");
 					viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
 					renderQueue->bind(shaderAmbient);
 					renderQueue->bind(modelSquare);
@@ -487,7 +487,7 @@ namespace cage
 
 			void renderCameraTransparencies(const RenderPass *pass)
 			{
-				const auto graphicsDebugScope = renderQueue->scopedNamedPass("transparencies");
+				const auto graphicsDebugScope = renderQueue->namedScope("transparencies");
 				OPTICK_EVENT("transparencies");
 
 				if (pass->translucents.empty() && pass->texts.empty())
@@ -534,7 +534,7 @@ namespace cage
 
 			void renderCameraEffectsFinal(const RenderPass *pass)
 			{
-				const auto graphicsDebugScope2 = renderQueue->scopedNamedPass("effects final");
+				const auto graphicsDebugScope2 = renderQueue->namedScope("effects final");
 				OPTICK_EVENT("effects final");
 
 				gfCommonConfig.resolution = ivec2(pass->vpW, pass->vpH);
@@ -596,7 +596,7 @@ namespace cage
 
 			void renderShadowPass(const RenderPass *pass)
 			{
-				const auto graphicsDebugScope = renderQueue->scopedNamedPass("shadow pass");
+				const auto graphicsDebugScope = renderQueue->namedScope("shadow pass");
 				OPTICK_EVENT("shadow pass");
 
 				renderQueue->bind(renderTarget);
@@ -845,7 +845,7 @@ namespace cage
 				}
 
 				{ // blit to the window
-					const auto graphicsDebugScope = renderQueue->scopedNamedPass("blit to the window");
+					const auto graphicsDebugScope = renderQueue->namedScope("blit to the window");
 					renderQueue->resetFrameBuffer();
 					viewportAndScissor(0, 0, windowWidth, windowHeight);
 					setTwoSided(false);

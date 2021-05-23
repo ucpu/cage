@@ -104,9 +104,7 @@ namespace cage
 		void genericEnable(uint32 key, bool enable);
 		void resetAllState(); // set viewport, scissors, culling, depth, blend etc all to default values
 
-		void pushNamedPass(StringLiteral name);
-		void popNamedPass();
-		[[nodiscard]] struct RenderQueueNamedPassScope scopedNamedPass(StringLiteral name);
+		[[nodiscard]] struct RenderQueueNamedScope namedScope(StringLiteral name);
 
 		// dispatch another queue as part of this queue
 		// stores a reference to the queue - do not modify it after it has been enqueued
@@ -130,16 +128,16 @@ namespace cage
 		uint32 primitivesCount() const;
 	};
 
-	struct CAGE_ENGINE_API RenderQueueNamedPassScope : private Immovable
+	CAGE_ENGINE_API Holder<RenderQueue> newRenderQueue();
+
+	struct CAGE_ENGINE_API RenderQueueNamedScope : private Immovable
 	{
-		[[nodiscard]] RenderQueueNamedPassScope(RenderQueue *queue, StringLiteral name);
-		~RenderQueueNamedPassScope();
+		[[nodiscard]] RenderQueueNamedScope(RenderQueue *queue, StringLiteral name);
+		~RenderQueueNamedScope();
 
 	private:
 		RenderQueue *queue = nullptr;
 	};
-
-	CAGE_ENGINE_API Holder<RenderQueue> newRenderQueue();
 }
 
 #endif // guard_renderQueue_h_edrtz54sedr9wse4g4jk7

@@ -215,7 +215,7 @@ namespace cage
 		Holder<RenderQueue> q = newRenderQueue();
 
 		activeQueue = +q;
-		auto namedScope = q->scopedNamedPass("gui");
+		auto namedScope = q->namedScope("gui");
 
 		// write skins uv coordinates
 		for (auto &s : skins)
