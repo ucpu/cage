@@ -4,12 +4,23 @@
 #include <cage-core/hashString.h>
 
 #include <cstring>
+#include <cmath> // std::abs
 #include <map>
 
 void test(real a, real b);
 
 namespace
 {
+	void test(float a, float b)
+	{
+		CAGE_TEST(std::abs(a - b) < 1e-5);
+	}
+
+	void test(double a, double b)
+	{
+		CAGE_TEST(std::abs(a - b) < 1e-12);
+	}
+
 	void testBasics()
 	{
 		{
@@ -134,6 +145,18 @@ namespace
 			}
 		}
 		{
+			CAGE_TESTCASE("different baseString<N>");
+			detail::StringBase<128> a = "ahoj";
+			string b = "nazdar";
+			detail::StringBase<1024> c = "cau";
+			string d = a + b + c;
+			CAGE_TEST(d == "ahojnazdarcau");
+		}
+	}
+
+	void testFunctions()
+	{
+		{
 			CAGE_TESTCASE("reverse");
 			CAGE_TEST(reverse(string()) == "");
 			CAGE_TEST(reverse(string("ahoj")) == "joha");
@@ -192,113 +215,6 @@ namespace
 			CAGE_TEST(split(f, "") == "");
 			CAGE_TEST(f == "kulomet");
 			CAGE_TEST_ASSERTED(split(f, "za")); // delimiting characters have to be sorted
-		}
-		{
-			CAGE_TESTCASE("conversions");
-			test(toFloat(string("0.5")), 0.5f);
-			test(toFloat(string("-45.123")), -45.123f);
-			test(toFloat(string("-3.8e9")), -3.8e9f);
-			CAGE_TEST(toUint32(string("157")) == 157);
-			CAGE_TEST(toSint32(string("157")) == 157);
-			CAGE_TEST(toSint32(string("-157")) == -157);
-			CAGE_TEST(toUint64(string("157")) == 157);
-			CAGE_TEST(toUint64(string("50000000000")) == 50000000000);
-			CAGE_TEST(toSint64(string("-50000000000")) == -50000000000);
-			CAGE_TEST(toSint64(string("157")) == 157);
-			CAGE_TEST(toSint64(string("-157")) == -157);
-			CAGE_TEST(toBool(string("yES")));
-			CAGE_TEST(toBool(string("T")));
-			CAGE_TEST(!toBool(string("FALse")));
-			CAGE_TEST(isBool(string("yES")));
-			CAGE_TEST(isBool(string("T")));
-			CAGE_TEST(isBool(string("FALse")));
-			CAGE_TEST(!isBool(string("kk")));
-			CAGE_TEST(isDigitsOnly(string()));
-			CAGE_TEST(isDigitsOnly(string("157")));
-			CAGE_TEST(!isDigitsOnly(string("hola")));
-			CAGE_TEST_THROWN(toBool(string("")));
-			CAGE_TEST_THROWN(toFloat(string("")));
-			CAGE_TEST_THROWN(toSint32(string("")));
-			CAGE_TEST_THROWN(toSint64(string("")));
-			CAGE_TEST_THROWN(toUint32(string("")));
-			CAGE_TEST_THROWN(toUint64(string("")));
-			CAGE_TEST_THROWN(toBool(string("hola")));
-			CAGE_TEST_THROWN(toFloat(string("hola")));
-			CAGE_TEST_THROWN(toSint32(string("hola")));
-			CAGE_TEST_THROWN(toSint64(string("hola")));
-			CAGE_TEST_THROWN(toUint32(string("hola")));
-			CAGE_TEST_THROWN(toUint64(string("hola")));
-			CAGE_TEST_THROWN(toSint32(string("157hola")));
-			CAGE_TEST_THROWN(toSint64(string("157hola")));
-			CAGE_TEST_THROWN(toUint32(string("157hola")));
-			CAGE_TEST_THROWN(toUint64(string("157hola")));
-			CAGE_TEST_THROWN(toSint32(string("15.7")));
-			CAGE_TEST_THROWN(toSint64(string("15.7")));
-			CAGE_TEST_THROWN(toUint32(string("15.7")));
-			CAGE_TEST_THROWN(toUint64(string("15.7")));
-			CAGE_TEST_THROWN(toUint32(string("-157")));
-			CAGE_TEST_THROWN(toUint64(string("-157")));
-			CAGE_TEST_THROWN(toFloat(string("-3.8ha")));
-			CAGE_TEST_THROWN(toFloat(string("-3.8e-4ha")));
-			CAGE_TEST_THROWN(toSint32(string("0x157")));
-			CAGE_TEST_THROWN(toSint64(string("0x157")));
-			CAGE_TEST_THROWN(toUint32(string("0x157")));
-			CAGE_TEST_THROWN(toUint64(string("0x157")));
-			CAGE_TEST_THROWN(toSint32(string(" 157")));
-			CAGE_TEST_THROWN(toSint64(string(" 157")));
-			CAGE_TEST_THROWN(toUint32(string(" 157")));
-			CAGE_TEST_THROWN(toUint64(string(" 157")));
-			CAGE_TEST_THROWN(toFloat(string(" 157")));
-			CAGE_TEST_THROWN(toSint32(string("157 ")));
-			CAGE_TEST_THROWN(toSint64(string("157 ")));
-			CAGE_TEST_THROWN(toUint32(string("157 ")));
-			CAGE_TEST_THROWN(toUint64(string("157 ")));
-			CAGE_TEST_THROWN(toFloat(string("157 ")));
-			CAGE_TEST_THROWN(toBool(string(" true")));
-			CAGE_TEST_THROWN(toBool(string("true ")));
-			CAGE_TEST_THROWN(toBool(string("tee")));
-			CAGE_TEST_THROWN(toSint32(string("50000000000")));
-			CAGE_TEST_THROWN(toUint32(string("50000000000")));
-
-			{
-				CAGE_TESTCASE("long long numbers and toSint64()");
-				CAGE_TEST(toSint64(string("-1099511627776")) == -1099511627776);
-				CAGE_TEST_THROWN(toUint64(string("-1099511627776")));
-				CAGE_TEST(toSint64(string("1152921504606846976")) == 1152921504606846976);
-				CAGE_TEST(toUint64(string("1152921504606846976")) == 1152921504606846976);
-			}
-			{
-				CAGE_TESTCASE("isInteger");
-				CAGE_TEST(isDigitsOnly(string("")));
-				CAGE_TEST(isInteger(string("5")));
-				CAGE_TEST(isDigitsOnly(string("5")));
-				CAGE_TEST(isInteger(string("123")));
-				CAGE_TEST(isInteger(string("-123")));
-				CAGE_TEST(!isInteger(string("")));
-				CAGE_TEST(!isInteger(string("pet")));
-				CAGE_TEST(!isInteger(string("13.42")));
-				CAGE_TEST(!isInteger(string("13k")));
-				CAGE_TEST(!isInteger(string("k13")));
-				CAGE_TEST(!isInteger(string("1k3")));
-				CAGE_TEST(!isInteger(string("-")));
-				CAGE_TEST(!isInteger(string("+")));
-				CAGE_TEST(!isDigitsOnly(string("-123")));
-				CAGE_TEST(!isInteger(string("+123")));
-			}
-			{
-				CAGE_TESTCASE("isReal");
-				CAGE_TEST(isReal(string("5")));
-				CAGE_TEST(isReal(string("13.42")));
-				CAGE_TEST(isReal(string("-13.42")));
-				CAGE_TEST(!isReal(string("")));
-				CAGE_TEST(!isReal(string("pet")));
-				CAGE_TEST(!isReal(string("13,42")));
-				CAGE_TEST(!isReal(string("13.42k")));
-				CAGE_TEST(!isReal(string("+13.42")));
-				CAGE_TEST(!isReal(string("13.k42")));
-				CAGE_TEST(!isReal(string("13k.42")));
-				CAGE_TEST_THROWN(toSint32(string("ha")));
-			}
 		}
 		{
 			CAGE_TESTCASE("find");
@@ -390,6 +306,10 @@ namespace
 				CAGE_TEST(sde == s);
 			}
 		}
+	}
+
+	void testContainers()
+	{
 		{
 			CAGE_TESTCASE("std::map");
 			string a = "ahoj";
@@ -401,14 +321,6 @@ namespace
 			CAGE_TEST(m.size() == 2);
 			CAGE_TEST(m[a] == 15);
 			CAGE_TEST(m[b] == 10);
-		}
-		{
-			CAGE_TESTCASE("different baseString<N>");
-			detail::StringBase<128> a = "ahoj";
-			string b = "nazdar";
-			detail::StringBase<1024> c = "cau";
-			string d = a + b + c;
-			CAGE_TEST(d == "ahojnazdarcau");
 		}
 		{
 			CAGE_TESTCASE("hashed string");
@@ -424,6 +336,140 @@ namespace
 			CAGE_TEST(compile_time == run_time);
 			constexpr uint32 different = HashString("different");
 			CAGE_TEST(compile_time != different);
+		}
+	}
+
+	void testConversions()
+	{
+		CAGE_TESTCASE("conversions");
+		test(toFloat(string("0.5")), 0.5f);
+		test(toFloat(string("-45.123")), -45.123f);
+		test(toFloat(string("-3.8e9")), -3.8e9f);
+		test(toDouble(string("0.5")), 0.5);
+		test(toDouble(string("-45.123")), -45.123);
+		test(toDouble(string("-3.8e9")), -3.8e9);
+		test(toDouble(string("-10995.11627776")), -10995.11627776);
+		test(toDouble(string("1152.9215046068")), 1152.9215046068);
+		test(toDouble(string("21504606846.976")), 21504606846.976);
+		test(toDouble(string("-3.8e9")), -3.8e9);
+		CAGE_TEST(toUint32(string("157")) == 157);
+		CAGE_TEST(toSint32(string("157")) == 157);
+		CAGE_TEST(toSint32(string("-157")) == -157);
+		CAGE_TEST(toUint64(string("157")) == 157);
+		CAGE_TEST(toUint64(string("50000000000")) == 50000000000);
+		CAGE_TEST(toSint64(string("-50000000000")) == -50000000000);
+		CAGE_TEST(toSint64(string("157")) == 157);
+		CAGE_TEST(toSint64(string("-157")) == -157);
+		CAGE_TEST(toBool(string("yES")));
+		CAGE_TEST(toBool(string("T")));
+		CAGE_TEST(!toBool(string("FALse")));
+		CAGE_TEST(isBool(string("yES")));
+		CAGE_TEST(isBool(string("T")));
+		CAGE_TEST(isBool(string("FALse")));
+		CAGE_TEST(!isBool(string("kk")));
+		CAGE_TEST(isDigitsOnly(string()));
+		CAGE_TEST(isDigitsOnly(string("157")));
+		CAGE_TEST(!isDigitsOnly(string("hola")));
+		CAGE_TEST_THROWN(toBool(string("")));
+		CAGE_TEST_THROWN(toFloat(string("")));
+		CAGE_TEST_THROWN(toSint32(string("")));
+		CAGE_TEST_THROWN(toSint64(string("")));
+		CAGE_TEST_THROWN(toUint32(string("")));
+		CAGE_TEST_THROWN(toUint64(string("")));
+		CAGE_TEST_THROWN(toBool(string("hola")));
+		CAGE_TEST_THROWN(toFloat(string("hola")));
+		CAGE_TEST_THROWN(toSint32(string("hola")));
+		CAGE_TEST_THROWN(toSint64(string("hola")));
+		CAGE_TEST_THROWN(toUint32(string("hola")));
+		CAGE_TEST_THROWN(toUint64(string("hola")));
+		CAGE_TEST_THROWN(toSint32(string("157hola")));
+		CAGE_TEST_THROWN(toSint64(string("157hola")));
+		CAGE_TEST_THROWN(toUint32(string("157hola")));
+		CAGE_TEST_THROWN(toUint64(string("157hola")));
+		CAGE_TEST_THROWN(toSint32(string("15.7")));
+		CAGE_TEST_THROWN(toSint64(string("15.7")));
+		CAGE_TEST_THROWN(toUint32(string("15.7")));
+		CAGE_TEST_THROWN(toUint64(string("15.7")));
+		CAGE_TEST_THROWN(toUint32(string("-157")));
+		CAGE_TEST_THROWN(toUint64(string("-157")));
+		CAGE_TEST_THROWN(toFloat(string("-3.8ha")));
+		CAGE_TEST_THROWN(toFloat(string("-3.8e-4ha")));
+		CAGE_TEST_THROWN(toSint32(string("0x157")));
+		CAGE_TEST_THROWN(toSint64(string("0x157")));
+		CAGE_TEST_THROWN(toUint32(string("0x157")));
+		CAGE_TEST_THROWN(toUint64(string("0x157")));
+		CAGE_TEST_THROWN(toSint32(string(" 157")));
+		CAGE_TEST_THROWN(toSint64(string(" 157")));
+		CAGE_TEST_THROWN(toUint32(string(" 157")));
+		CAGE_TEST_THROWN(toUint64(string(" 157")));
+		CAGE_TEST_THROWN(toFloat(string(" 157")));
+		CAGE_TEST_THROWN(toSint32(string("157 ")));
+		CAGE_TEST_THROWN(toSint64(string("157 ")));
+		CAGE_TEST_THROWN(toUint32(string("157 ")));
+		CAGE_TEST_THROWN(toUint64(string("157 ")));
+		CAGE_TEST_THROWN(toFloat(string("157 ")));
+		CAGE_TEST_THROWN(toBool(string(" true")));
+		CAGE_TEST_THROWN(toBool(string("true ")));
+		CAGE_TEST_THROWN(toBool(string("tee")));
+		CAGE_TEST_THROWN(toSint32(string("50000000000")));
+		CAGE_TEST_THROWN(toUint32(string("50000000000")));
+
+		{
+			CAGE_TESTCASE("long long numbers and toSint64()");
+			CAGE_TEST(toSint64(string("-1099511627776")) == -1099511627776);
+			CAGE_TEST_THROWN(toUint64(string("-1099511627776")));
+			CAGE_TEST(toSint64(string("1152921504606846976")) == 1152921504606846976);
+			CAGE_TEST(toUint64(string("1152921504606846976")) == 1152921504606846976);
+		}
+		{
+			CAGE_TESTCASE("isInteger");
+			CAGE_TEST(isDigitsOnly(string("")));
+			CAGE_TEST(isInteger(string("5")));
+			CAGE_TEST(isDigitsOnly(string("5")));
+			CAGE_TEST(isInteger(string("123")));
+			CAGE_TEST(isInteger(string("-123")));
+			CAGE_TEST(!isInteger(string("")));
+			CAGE_TEST(!isInteger(string("pet")));
+			CAGE_TEST(!isInteger(string("13.42")));
+			CAGE_TEST(!isInteger(string("13k")));
+			CAGE_TEST(!isInteger(string("k13")));
+			CAGE_TEST(!isInteger(string("1k3")));
+			CAGE_TEST(!isInteger(string("-")));
+			CAGE_TEST(!isInteger(string("+")));
+			CAGE_TEST(!isDigitsOnly(string("-123")));
+			CAGE_TEST(!isInteger(string("+123")));
+		}
+		{
+			CAGE_TESTCASE("isReal");
+			CAGE_TEST(isReal(string("5")));
+			CAGE_TEST(isReal(string("13.42")));
+			CAGE_TEST(isReal(string("-13.42")));
+			CAGE_TEST(!isReal(string("")));
+			CAGE_TEST(!isReal(string("pet")));
+			CAGE_TEST(!isReal(string("13,42")));
+			CAGE_TEST(!isReal(string("13.42k")));
+			CAGE_TEST(!isReal(string("+13.42")));
+			CAGE_TEST(!isReal(string("13.k42")));
+			CAGE_TEST(!isReal(string("13k.42")));
+			CAGE_TEST_THROWN(toSint32(string("ha")));
+		}
+		{
+			CAGE_TESTCASE("float -> string -> float");
+			for (float a : { 123.456f, 1056454.4f, 0.000045678974f, -45544.f, 0.18541e-10f })
+			{
+				const string s = stringizer() + a;
+				float b = toFloat(s);
+				test(a, b);
+			}
+		}
+		{
+			CAGE_TESTCASE("double -> string -> double");
+			for (double a : { 123.456789, 1056454.42189, 0.0000456789741248145, -45524144.0254, 0.141158541e-10 })
+			{
+				const string s = stringizer() + a;
+				double b = toDouble(s);
+				test(a, b);
+			}
 		}
 	}
 
@@ -632,6 +678,9 @@ void testStrings()
 {
 	CAGE_TESTCASE("strings");
 	testBasics();
+	testFunctions();
+	testContainers();
+	testConversions();
 	testCopies1();
 	testCopies2();
 	testStringizer();
