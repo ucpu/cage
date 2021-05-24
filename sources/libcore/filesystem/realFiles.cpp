@@ -221,7 +221,7 @@ namespace cage
 
 	namespace
 	{
-		string getExecutableFullPathImpl()
+		string executableFullPathImpl()
 		{
 			char buffer[string::MaxLength];
 
@@ -258,20 +258,20 @@ namespace cage
 
 	namespace detail
 	{
-		string getExecutableFullPath()
+		string executableFullPath()
 		{
-			static const string pth = getExecutableFullPathImpl();
+			static const string pth = executableFullPathImpl();
 			return pth;
 		}
 
-		string getExecutableFullPathNoExe()
+		string executableFullPathNoExe()
 		{
 #ifdef CAGE_SYSTEM_WINDOWS
-			string p = getExecutableFullPath();
+			string p = executableFullPath();
 			CAGE_ASSERT(isPattern(toLower(p), "", "", ".exe"));
 			return subString(p, 0, p.length() - 4);
 #else
-			return getExecutableFullPath();
+			return executableFullPath();
 #endif
 		}
 	}

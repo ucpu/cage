@@ -5,6 +5,7 @@
 #include <cage-core/config.h>
 #include <cage-core/ini.h>
 #include <cage-core/debug.h>
+#include <cage-core/logger.h>
 #include <cage-core/macros.h>
 
 #include <map>
@@ -120,7 +121,7 @@ namespace cage
 						}
 					}
 				}
-				catch(...)
+				catch (...)
 				{
 					// do nothing
 				}
@@ -129,10 +130,11 @@ namespace cage
 
 		int loadGlobalConfiguration()
 		{
-			string pr = detail::getConfigAppPrefix();
-			string ep = pathExtractDirectory(detail::getExecutableFullPath());
-			string wp = pathWorkingDir();
-			bool same = ep == wp;
+			detail::applicationLogger(); // ensure application logger was initialized
+			const string pr = detail::configAppPrefix();
+			const string ep = pathExtractDirectory(detail::executableFullPath());
+			const string wp = pathWorkingDir();
+			const bool same = ep == wp;
 			if (!same)
 				loadConfigFile(pathJoin(ep, "cage.ini"), "");
 			loadConfigFile(pathJoin(wp, "cage.ini"), "");
@@ -468,9 +470,9 @@ namespace cage
 
 	namespace detail
 	{
-		string getConfigAppPrefix()
+		string configAppPrefix()
 		{
-			return pathExtractFilename(detail::getExecutableFullPathNoExe());
+			return pathExtractFilename(detail::executableFullPathNoExe());
 		}
 	}
 
@@ -486,7 +488,7 @@ namespace cage
 				{
 					try
 					{
-						configExportIni(pathExtractFilename(detail::getExecutableFullPathNoExe()) + ".ini", detail::getConfigAppPrefix());
+						configExportIni(pathExtractFilename(detail::executableFullPathNoExe()) + ".ini", detail::configAppPrefix());
 					}
 					catch (...)
 					{
