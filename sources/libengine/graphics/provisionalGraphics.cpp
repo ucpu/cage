@@ -5,7 +5,7 @@
 #include <cage-engine/texture.h>
 #include <cage-engine/frameBuffer.h>
 #include <cage-engine/uniformBuffer.h>
-#include <cage-engine/provisionalRenderData.h>
+#include <cage-engine/provisionalGraphics.h>
 
 #include <set>
 
@@ -13,14 +13,14 @@ namespace cage
 {
 	namespace
 	{
-		class ProvisionalRenderDataImpl;
+		class ProvisionalGraphicsImpl;
 
 		class ProvisionalUniformBufferImpl : public ProvisionalUniformBuffer
 		{
 		public:
 			const string name;
 			Holder<UniformBuffer> result;
-			ProvisionalRenderDataImpl *impl = nullptr;
+			ProvisionalGraphicsImpl *impl = nullptr;
 			bool used = true;
 
 			ProvisionalUniformBufferImpl(const string &name) : name(name)
@@ -32,7 +32,7 @@ namespace cage
 		public:
 			const string name;
 			Holder<FrameBuffer> result;
-			ProvisionalRenderDataImpl *impl = nullptr;
+			ProvisionalGraphicsImpl *impl = nullptr;
 			uint32 type = m; // 1 = draw, 2 = read
 			bool used = true;
 
@@ -45,7 +45,7 @@ namespace cage
 		public:
 			const string name;
 			Holder<Texture> result;
-			ProvisionalRenderDataImpl *impl = nullptr;
+			ProvisionalGraphicsImpl *impl = nullptr;
 			uint32 target = m;
 			bool used = true;
 
@@ -53,7 +53,7 @@ namespace cage
 			{}
 		};
 
-		class ProvisionalRenderDataImpl : public ProvisionalRenderData
+		class ProvisionalGraphicsImpl : public ProvisionalGraphics
 		{
 		public:
 			template<class T>
@@ -229,69 +229,69 @@ namespace cage
 		return !!impl->result;
 	}
 
-	Holder<ProvisionalUniformBuffer> ProvisionalRenderData::uniformBuffer(const string &name)
+	Holder<ProvisionalUniformBuffer> ProvisionalGraphics::uniformBuffer(const string &name)
 	{
-		ProvisionalRenderDataImpl *impl = (ProvisionalRenderDataImpl *)this;
+		ProvisionalGraphicsImpl *impl = (ProvisionalGraphicsImpl *)this;
 		return impl->uniformBuffer(name);
 	}
 
-	Holder<ProvisionalFrameBuffer> ProvisionalRenderData::frameBufferDraw(const string &name)
+	Holder<ProvisionalFrameBuffer> ProvisionalGraphics::frameBufferDraw(const string &name)
 	{
-		ProvisionalRenderDataImpl *impl = (ProvisionalRenderDataImpl *)this;
+		ProvisionalGraphicsImpl *impl = (ProvisionalGraphicsImpl *)this;
 		return impl->frameBuffer(name, 1);
 	}
 
-	Holder<ProvisionalFrameBuffer> ProvisionalRenderData::frameBufferRead(const string &name)
+	Holder<ProvisionalFrameBuffer> ProvisionalGraphics::frameBufferRead(const string &name)
 	{
-		ProvisionalRenderDataImpl *impl = (ProvisionalRenderDataImpl *)this;
+		ProvisionalGraphicsImpl *impl = (ProvisionalGraphicsImpl *)this;
 		return impl->frameBuffer(name, 2);
 	}
 
-	Holder<ProvisionalTexture> ProvisionalRenderData::texture(const string &name)
+	Holder<ProvisionalTexture> ProvisionalGraphics::texture(const string &name)
 	{
 		return texture(name, GL_TEXTURE_2D);
 	}
 
-	Holder<ProvisionalTexture> ProvisionalRenderData::texture(const string &name, uint32 target)
+	Holder<ProvisionalTexture> ProvisionalGraphics::texture(const string &name, uint32 target)
 	{
-		ProvisionalRenderDataImpl *impl = (ProvisionalRenderDataImpl *)this;
+		ProvisionalGraphicsImpl *impl = (ProvisionalGraphicsImpl *)this;
 		return impl->texture(name, target);
 	}
 
-	Holder<ProvisionalTexture> ProvisionalRenderData::texture2dArray(const string &name)
+	Holder<ProvisionalTexture> ProvisionalGraphics::texture2dArray(const string &name)
 	{
 		return texture(name, GL_TEXTURE_2D_ARRAY);
 	}
 
-	Holder<ProvisionalTexture> ProvisionalRenderData::textureRectangle(const string &name)
+	Holder<ProvisionalTexture> ProvisionalGraphics::textureRectangle(const string &name)
 	{
 		return texture(name, GL_TEXTURE_RECTANGLE);
 	}
 
-	Holder<ProvisionalTexture> ProvisionalRenderData::texture3d(const string &name)
+	Holder<ProvisionalTexture> ProvisionalGraphics::texture3d(const string &name)
 	{
 		return texture(name, GL_TEXTURE_3D);
 	}
 
-	Holder<ProvisionalTexture> ProvisionalRenderData::textureCube(const string &name)
+	Holder<ProvisionalTexture> ProvisionalGraphics::textureCube(const string &name)
 	{
 		return texture(name, GL_TEXTURE_CUBE_MAP);
 	}
 
-	void ProvisionalRenderData::reset()
+	void ProvisionalGraphics::reset()
 	{
-		ProvisionalRenderDataImpl *impl = (ProvisionalRenderDataImpl *)this;
+		ProvisionalGraphicsImpl *impl = (ProvisionalGraphicsImpl *)this;
 		impl->reset();
 	}
 
-	void ProvisionalRenderData::purge()
+	void ProvisionalGraphics::purge()
 	{
-		ProvisionalRenderDataImpl *impl = (ProvisionalRenderDataImpl *)this;
+		ProvisionalGraphicsImpl *impl = (ProvisionalGraphicsImpl *)this;
 		impl->purge();
 	}
 
-	Holder<ProvisionalRenderData> newProvisionalRenderData()
+	Holder<ProvisionalGraphics> newProvisionalGraphics()
 	{
-		return systemArena().createImpl<ProvisionalRenderData, ProvisionalRenderDataImpl>();
+		return systemArena().createImpl<ProvisionalGraphics, ProvisionalGraphicsImpl>();
 	}
 }

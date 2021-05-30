@@ -1,11 +1,11 @@
-#ifndef guard_graphicsEffectsProperties_h_0156sdrf4treth1
-#define guard_graphicsEffectsProperties_h_0156sdrf4treth1
+#ifndef guard_screenSpaceEffectsProperties_h_0156sdrf4treth1
+#define guard_screenSpaceEffectsProperties_h_0156sdrf4treth1
 
 #include "core.h"
 
 namespace cage
 {
-	struct CAGE_ENGINE_API GfSsao
+	struct CAGE_ENGINE_API ScreenSpaceAmbientOcclusion
 	{
 		real worldRadius = 0.5;
 		real bias = 0.03;
@@ -16,7 +16,7 @@ namespace cage
 		uint32 blurPasses = 3;
 	};
 
-	struct CAGE_ENGINE_API GfDepthOfField
+	struct CAGE_ENGINE_API ScreenSpaceDepthOfField
 	{
 		// objects within (focusDistance - focusRadius) and (focusDistance + focusRadius) are in focus
 		// objects further than focusDistance + focusRadius + blendRadius are out of focus
@@ -27,12 +27,12 @@ namespace cage
 		uint32 blurPasses = 3;
 	};
 
-	struct CAGE_ENGINE_API GfMotionBlur
+	struct CAGE_ENGINE_API ScreenSpaceMotionBlur
 	{
 		// todo
 	};
 
-	struct CAGE_ENGINE_API GfEyeAdaptation
+	struct CAGE_ENGINE_API ScreenSpaceEyeAdaptation
 	{
 		real key = 0.15;
 		real strength = 0.5;
@@ -40,13 +40,13 @@ namespace cage
 		real lighterSpeed = 1;
 	};
 
-	struct CAGE_ENGINE_API GfBloom
+	struct CAGE_ENGINE_API ScreenSpaceBloom
 	{
 		uint32 blurPasses = 5;
 		real threshold = 1;
 	};
 
-	struct CAGE_ENGINE_API GfTonemap
+	struct CAGE_ENGINE_API ScreenSpaceTonemap
 	{
 		real shoulderStrength = 0.22;
 		real linearStrength = 0.3;
@@ -58,4 +58,4 @@ namespace cage
 	};
 }
 
-#endif // guard_graphicsEffectsProperties_h_0156sdrf4treth1
+#endif // guard_screenSpaceEffectsProperties_h_0156sdrf4treth1

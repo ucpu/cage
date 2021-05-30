@@ -3,12 +3,12 @@
 
 #include <cage-engine/opengl.h>
 #include <cage-engine/shaderConventions.h>
-#include <cage-engine/graphicsEffects.h>
+#include <cage-engine/screenSpaceEffects.h>
 #include <cage-engine/renderQueue.h>
 #include <cage-engine/model.h>
 #include <cage-engine/texture.h>
 #include <cage-engine/shaderProgram.h>
-#include <cage-engine/provisionalRenderData.h>
+#include <cage-engine/provisionalGraphics.h>
 
 #include <cmath>
 
@@ -27,7 +27,7 @@ namespace cage
 			}
 		}
 
-		TextureHandle provTex(ProvisionalRenderData *prov, RenderQueue *q, const string &prefix, ivec2 resolution, uint32 internalFormat)
+		TextureHandle provTex(ProvisionalGraphics *prov, RenderQueue *q, const string &prefix, ivec2 resolution, uint32 internalFormat)
 		{
 			const string name = stringizer() + prefix + resolution + internalFormat;
 			TextureHandle tex = prov->texture(name);
@@ -35,7 +35,7 @@ namespace cage
 			return tex;
 		}
 
-		struct GfGaussianBlurConfig : public GfCommonConfig
+		struct GfGaussianBlurConfig : public ScreenSpaceCommonConfig
 		{
 			TextureHandle texture;
 			uint32 internalFormat = 0;
@@ -83,7 +83,7 @@ namespace cage
 		PointerRange<const char> pointsForSsaoShader();
 	}
 
-	void gfSsao(const GfSsaoConfig &config)
+	void screenSpaceAmbientOcclusion(const ScreenSpaceAmbientOcclusionConfig &config)
 	{
 		RenderQueue *q = config.queue;
 		const auto graphicsDebugScope = q->namedScope("ssao");
@@ -127,7 +127,7 @@ namespace cage
 
 		// blur
 		GfGaussianBlurConfig gb;
-		(GfCommonConfig &)gb = config;
+		(ScreenSpaceCommonConfig &)gb = config;
 		gb.texture = config.outAo;
 		gb.resolution = res;
 		gb.internalFormat = GL_R8;
@@ -141,7 +141,7 @@ namespace cage
 		q->draw();
 	}
 
-	void gfDepthOfField(const GfDepthOfFieldConfig &config)
+	void screenSpaceDepthOfField(const ScreenSpaceDepthOfFieldConfig &config)
 	{
 		RenderQueue *q = config.queue;
 		const auto graphicsDebugScope = q->namedScope("depth of field");
@@ -187,7 +187,7 @@ namespace cage
 
 		// blur
 		GfGaussianBlurConfig gb;
-		(GfCommonConfig &)gb = config;
+		(ScreenSpaceCommonConfig &)gb = config;
 		gb.resolution = res;
 		gb.internalFormat = GL_RGB16F;
 		gb.texture = texNear;
@@ -211,7 +211,7 @@ namespace cage
 		q->draw();
 	}
 
-	void gfMotionBlur(const GfMotionBlurConfig &config)
+	void screenSpaceMotionBlur(const ScreenSpaceMotionBlurConfig &config)
 	{
 		RenderQueue *q = config.queue;
 		const auto graphicsDebugScope = q->namedScope("motion blur");
@@ -230,7 +230,7 @@ namespace cage
 		q->draw();
 	}
 
-	void gfEyeAdaptationPrepare(const GfEyeAdaptationConfig &config)
+	void screenSpaceEyeAdaptationPrepare(const ScreenSpaceEyeAdaptationConfig &config)
 	{
 		RenderQueue *q = config.queue;
 		const auto graphicsDebugScope = q->namedScope("eye adaptation prepare");
@@ -268,7 +268,7 @@ namespace cage
 		q->draw();
 	}
 
-	void gfBloom(const GfBloomConfig &config)
+	void screenSpaceBloom(const ScreenSpaceBloomConfig &config)
 	{
 		RenderQueue *q = config.queue;
 		const auto graphicsDebugScope = q->namedScope("bloom");
@@ -295,7 +295,7 @@ namespace cage
 
 		// blur
 		GfGaussianBlurConfig gb;
-		(GfCommonConfig &)gb = config;
+		(ScreenSpaceCommonConfig &)gb = config;
 		gb.texture = tex;
 		gb.resolution = res;
 		gb.internalFormat = GL_RGB16F;
@@ -319,7 +319,7 @@ namespace cage
 		q->draw();
 	}
 
-	void gfEyeAdaptationApply(const GfEyeAdaptationConfig &config)
+	void screenSpaceEyeAdaptationApply(const ScreenSpaceEyeAdaptationConfig &config)
 	{
 		RenderQueue *q = config.queue;
 		const auto graphicsDebugScope = q->namedScope("eye adaptation apply");
@@ -340,7 +340,7 @@ namespace cage
 		q->draw();
 	}
 
-	void gfTonemap(const GfTonemapConfig &config)
+	void screenSpaceTonemap(const ScreenSpaceTonemapConfig &config)
 	{
 		RenderQueue *q = config.queue;
 		const auto graphicsDebugScope = q->namedScope("tonemap");
@@ -351,7 +351,7 @@ namespace cage
 
 		struct Shader
 		{
-			GfTonemap tonemap; // 7 reals
+			ScreenSpaceTonemap tonemap; // 7 reals
 			real tonemapEnabled;
 			vec4 gamma;
 		} s;
@@ -369,7 +369,7 @@ namespace cage
 		q->draw();
 	}
 
-	void gfFxaa(const GfFxaaConfig &config)
+	void screenSpaceFastApproximateAntiAliasing(const ScreenSpaceFastApproximateAntiAliasingConfig &config)
 	{
 		RenderQueue *q = config.queue;
 		const auto graphicsDebugScope = q->namedScope("fxaa");

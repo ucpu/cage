@@ -1,5 +1,5 @@
-#ifndef guard_provisionalRenderHandles_h_zj6h8sa7eg51f0z5ui
-#define guard_provisionalRenderHandles_h_zj6h8sa7eg51f0z5ui
+#ifndef guard_provisionalHandles_h_zj6h8sa7eg51f0z5ui
+#define guard_provisionalHandles_h_zj6h8sa7eg51f0z5ui
 
 #include "core.h"
 
@@ -8,32 +8,32 @@ namespace cage
 	namespace privat
 	{
 		template<class A, class B>
-		struct ProvisionalRenderHandle
+		struct ProvisionalHandle
 		{
 		public:
-			ProvisionalRenderHandle() = default;
-			ProvisionalRenderHandle(ProvisionalRenderHandle &&) = default;
-			ProvisionalRenderHandle(const ProvisionalRenderHandle &other) : data_(other.data_.share()), type_(other.type_)
+			ProvisionalHandle() = default;
+			ProvisionalHandle(ProvisionalHandle &&) = default;
+			ProvisionalHandle(const ProvisionalHandle &other) : data_(other.data_.share()), type_(other.type_)
 			{}
-			ProvisionalRenderHandle(const Holder<A> &data) : data_(data.share().template cast<void>()), type_(1)
+			ProvisionalHandle(const Holder<A> &data) : data_(data.share().template cast<void>()), type_(1)
 			{}
-			ProvisionalRenderHandle(const Holder<B> &data) : data_(data.share().template cast<void>()), type_(2)
+			ProvisionalHandle(const Holder<B> &data) : data_(data.share().template cast<void>()), type_(2)
 			{}
 
-			ProvisionalRenderHandle &operator = (ProvisionalRenderHandle &&) = default;
-			ProvisionalRenderHandle &operator = (const ProvisionalRenderHandle &other)
+			ProvisionalHandle &operator = (ProvisionalHandle &&) = default;
+			ProvisionalHandle &operator = (const ProvisionalHandle &other)
 			{
 				data_ = other.data_.share();
 				type_ = other.type_;
 				return *this;
 			}
-			ProvisionalRenderHandle &operator = (const Holder<A> &data)
+			ProvisionalHandle &operator = (const Holder<A> &data)
 			{
 				data_ = data.share().template cast<void>();
 				type_ = 1;
 				return *this;
 			}
-			ProvisionalRenderHandle &operator = (const Holder<B> &data)
+			ProvisionalHandle &operator = (const Holder<B> &data)
 			{
 				data_ = data.share().template cast<void>();
 				type_ = 2;
@@ -93,9 +93,9 @@ namespace cage
 		};
 	}
 
-	using UniformBufferHandle = privat::ProvisionalRenderHandle<UniformBuffer, ProvisionalUniformBuffer>;
-	using FrameBufferHandle = privat::ProvisionalRenderHandle<FrameBuffer, ProvisionalFrameBuffer>;
-	using TextureHandle = privat::ProvisionalRenderHandle<Texture, ProvisionalTexture>;
+	using UniformBufferHandle = privat::ProvisionalHandle<UniformBuffer, ProvisionalUniformBuffer>;
+	using FrameBufferHandle = privat::ProvisionalHandle<FrameBuffer, ProvisionalFrameBuffer>;
+	using TextureHandle = privat::ProvisionalHandle<Texture, ProvisionalTexture>;
 }
 
-#endif // guard_provisionalRenderHandles_h_zj6h8sa7eg51f0z5ui
+#endif // guard_provisionalHandles_h_zj6h8sa7eg51f0z5ui

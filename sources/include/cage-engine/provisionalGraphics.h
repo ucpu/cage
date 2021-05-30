@@ -1,5 +1,5 @@
-#ifndef guard_provisionalRenderData_h_dftrh5serft4l4u696f
-#define guard_provisionalRenderData_h_dftrh5serft4l4u696f
+#ifndef guard_provisionalGraphics_h_dftrh5serft4l4u696f
+#define guard_provisionalGraphics_h_dftrh5serft4l4u696f
 
 #include "core.h"
 
@@ -26,7 +26,7 @@ namespace cage
 		bool ready() const;
 	};
 
-	class CAGE_ENGINE_API ProvisionalRenderData : private Immovable
+	class CAGE_ENGINE_API ProvisionalGraphics : private Immovable
 	{
 	public:
 		// section: thread-safe, does not require opengl context
@@ -49,7 +49,7 @@ namespace cage
 		void purge(); // erase all data unconditionally
 	};
 
-	CAGE_ENGINE_API Holder<ProvisionalRenderData> newProvisionalRenderData();
+	CAGE_ENGINE_API Holder<ProvisionalGraphics> newProvisionalGraphics();
 }
 
-#endif // guard_provisionalRenderData_h_dftrh5serft4l4u696f
+#endif // guard_provisionalGraphics_h_dftrh5serft4l4u696f

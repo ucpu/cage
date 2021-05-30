@@ -9,8 +9,8 @@
 #include <cage-engine/frameBuffer.h>
 #include <cage-engine/renderQueue.h>
 #include <cage-engine/window.h>
-#include <cage-engine/provisionalRenderData.h>
-#include <cage-engine/graphicsEffects.h>
+#include <cage-engine/provisionalGraphics.h>
+#include <cage-engine/screenSpaceEffects.h>
 
 #include "../engine.h"
 #include "graphics.h"
@@ -93,7 +93,7 @@ namespace cage
 			Holder<Texture> depthTexture;
 
 			Holder<RenderQueue> renderQueue;
-			Holder<ProvisionalRenderData> provisionalData;
+			Holder<ProvisionalGraphics> provisionalData;
 
 			Holder<Texture> texSource;
 			Holder<Texture> texTarget;
@@ -113,7 +113,7 @@ namespace cage
 			uint32 lastGBufferWidth = 0;
 			uint32 lastGBufferHeight = 0;
 			CameraEffectsFlags lastCameraEffects = CameraEffectsFlags::None;
-			GfCommonConfig gfCommonConfig; // helper to simplify initialization
+			ScreenSpaceCommonConfig gfCommonConfig; // helper to simplify initialization
 
 			void applyShaderRoutines(const ShaderConfig *c, const Holder<ShaderProgram> &s)
 			{
@@ -413,15 +413,15 @@ namespace cage
 				// ssao
 				if (any(pass->effects & CameraEffectsFlags::AmbientOcclusion))
 				{
-					GfSsaoConfig cfg;
-					(GfCommonConfig &)cfg = gfCommonConfig;
-					(GfSsao &)cfg = pass->ssao;
+					ScreenSpaceAmbientOcclusionConfig cfg;
+					(ScreenSpaceCommonConfig &)cfg = gfCommonConfig;
+					(ScreenSpaceAmbientOcclusion &)cfg = pass->ssao;
 					cfg.frameIndex = frameIndex;
 					cfg.inDepth = depthTexture;
 					cfg.inNormal = normalTexture;
 					cfg.outAo = ambientOcclusionTexture;
 					cfg.viewProj = pass->viewProj;
-					gfSsao(cfg);
+					screenSpaceAmbientOcclusion(cfg);
 				}
 
 				// ambient light
@@ -445,39 +445,39 @@ namespace cage
 				// depth of field
 				if (any(pass->effects & CameraEffectsFlags::DepthOfField))
 				{
-					GfDepthOfFieldConfig cfg;
-					(GfCommonConfig &)cfg = gfCommonConfig;
-					(GfDepthOfField &)cfg = pass->depthOfField;
+					ScreenSpaceDepthOfFieldConfig cfg;
+					(ScreenSpaceCommonConfig &)cfg = gfCommonConfig;
+					(ScreenSpaceDepthOfField &)cfg = pass->depthOfField;
 					cfg.proj = pass->proj;
 					cfg.inDepth = depthTexture;
 					cfg.inColor = texSource;
 					cfg.outColor = texTarget;
-					gfDepthOfField(cfg);
+					screenSpaceDepthOfField(cfg);
 					std::swap(texSource, texTarget);
 				}
 
 				// motion blur
 				if (any(pass->effects & CameraEffectsFlags::MotionBlur))
 				{
-					GfMotionBlurConfig cfg;
-					(GfCommonConfig &)cfg = gfCommonConfig;
-					(GfMotionBlur &)cfg = pass->motionBlur;
+					ScreenSpaceMotionBlurConfig cfg;
+					(ScreenSpaceCommonConfig &)cfg = gfCommonConfig;
+					(ScreenSpaceMotionBlur &)cfg = pass->motionBlur;
 					cfg.inVelocity = velocityTexture;
 					cfg.inColor = texSource;
 					cfg.outColor = texTarget;
-					gfMotionBlur(cfg);
+					screenSpaceMotionBlur(cfg);
 					std::swap(texSource, texTarget);
 				}
 
 				// eye adaptation
 				if (any(pass->effects & CameraEffectsFlags::EyeAdaptation))
 				{
-					GfEyeAdaptationConfig cfg;
-					(GfCommonConfig &)cfg = gfCommonConfig;
-					(GfEyeAdaptation &)cfg = pass->eyeAdaptation;
+					ScreenSpaceEyeAdaptationConfig cfg;
+					(ScreenSpaceCommonConfig &)cfg = gfCommonConfig;
+					(ScreenSpaceEyeAdaptation &)cfg = pass->eyeAdaptation;
 					cfg.cameraId = stringizer() + pass->entityId;
 					cfg.inColor = texSource;
-					gfEyeAdaptationPrepare(cfg);
+					screenSpaceEyeAdaptationPrepare(cfg);
 				}
 
 				viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
@@ -542,50 +542,50 @@ namespace cage
 				// bloom
 				if (any(pass->effects & CameraEffectsFlags::Bloom))
 				{
-					GfBloomConfig cfg;
-					(GfCommonConfig &)cfg = gfCommonConfig;
-					(GfBloom &)cfg = pass->bloom;
+					ScreenSpaceBloomConfig cfg;
+					(ScreenSpaceCommonConfig &)cfg = gfCommonConfig;
+					(ScreenSpaceBloom &)cfg = pass->bloom;
 					cfg.inColor = texSource;
 					cfg.outColor = texTarget;
-					gfBloom(cfg);
+					screenSpaceBloom(cfg);
 					std::swap(texSource, texTarget);
 				}
 
 				// eye adaptation
 				if (any(pass->effects & CameraEffectsFlags::EyeAdaptation))
 				{
-					GfEyeAdaptationConfig cfg;
-					(GfCommonConfig &)cfg = gfCommonConfig;
-					(GfEyeAdaptation &)cfg = pass->eyeAdaptation;
+					ScreenSpaceEyeAdaptationConfig cfg;
+					(ScreenSpaceCommonConfig &)cfg = gfCommonConfig;
+					(ScreenSpaceEyeAdaptation &)cfg = pass->eyeAdaptation;
 					cfg.cameraId = stringizer() + pass->entityId;
 					cfg.inColor = texSource;
 					cfg.outColor = texTarget;
-					gfEyeAdaptationApply(cfg);
+					screenSpaceEyeAdaptationApply(cfg);
 					std::swap(texSource, texTarget);
 				}
 
 				// final screen effects
 				if (any(pass->effects & (CameraEffectsFlags::ToneMapping | CameraEffectsFlags::GammaCorrection)))
 				{
-					GfTonemapConfig cfg;
-					(GfCommonConfig &)cfg = gfCommonConfig;
-					(GfTonemap &)cfg = pass->tonemap;
+					ScreenSpaceTonemapConfig cfg;
+					(ScreenSpaceCommonConfig &)cfg = gfCommonConfig;
+					(ScreenSpaceTonemap &)cfg = pass->tonemap;
 					cfg.inColor = texSource;
 					cfg.outColor = texTarget;
 					cfg.tonemapEnabled = any(pass->effects & CameraEffectsFlags::ToneMapping);
 					cfg.gamma = any(pass->effects & CameraEffectsFlags::GammaCorrection) ? pass->gamma : 1;
-					gfTonemap(cfg);
+					screenSpaceTonemap(cfg);
 					std::swap(texSource, texTarget);
 				}
 
 				// fxaa
 				if (any(pass->effects & CameraEffectsFlags::AntiAliasing))
 				{
-					GfFxaaConfig cfg;
-					(GfCommonConfig &)cfg = gfCommonConfig;
+					ScreenSpaceFastApproximateAntiAliasingConfig cfg;
+					(ScreenSpaceCommonConfig &)cfg = gfCommonConfig;
 					cfg.inColor = texSource;
 					cfg.outColor = texTarget;
-					gfFxaa(cfg);
+					screenSpaceFastApproximateAntiAliasing(cfg);
 					std::swap(texSource, texTarget);
 				}
 
@@ -726,7 +726,7 @@ namespace cage
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
 				renderQueue = newRenderQueue();
-				provisionalData = newProvisionalRenderData();
+				provisionalData = newProvisionalGraphics();
 			}
 
 			void finalize()

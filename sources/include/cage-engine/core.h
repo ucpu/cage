@@ -135,7 +135,7 @@ namespace cage
 	class ProvisionalUniformBuffer;
 	class ProvisionalFrameBuffer;
 	class ProvisionalTexture;
-	class ProvisionalRenderData;
+	class ProvisionalGraphics;
 
 	// enum declarations
 

@@ -9,7 +9,7 @@
 #include <cage-engine/texture.h>
 #include <cage-engine/model.h>
 #include <cage-engine/renderQueue.h>
-#include <cage-engine/provisionalRenderData.h>
+#include <cage-engine/provisionalGraphics.h>
 #include "private.h"
 
 #include <vector> // namesStack

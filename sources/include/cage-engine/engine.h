@@ -3,7 +3,7 @@
 
 #include <cage-core/events.h>
 
-#include "graphicsEffectsProperties.h"
+#include "screenSpaceEffectsProperties.h"
 
 namespace cage
 {
@@ -21,22 +21,22 @@ namespace cage
 		Default = AmbientOcclusion | MotionBlur | Bloom | ToneMapping | GammaCorrection | AntiAliasing,
 	};
 
-	struct CAGE_ENGINE_API CameraSsao : public GfSsao
+	struct CAGE_ENGINE_API CameraSsao : public ScreenSpaceAmbientOcclusion
 	{};
 
-	struct CAGE_ENGINE_API CameraMotionBlur : public GfMotionBlur
+	struct CAGE_ENGINE_API CameraMotionBlur : public ScreenSpaceMotionBlur
 	{};
 
-	struct CAGE_ENGINE_API CameraBloom : public GfBloom
+	struct CAGE_ENGINE_API CameraBloom : public ScreenSpaceBloom
 	{};
 
-	struct CAGE_ENGINE_API CameraEyeAdaptation : public GfEyeAdaptation
+	struct CAGE_ENGINE_API CameraEyeAdaptation : public ScreenSpaceEyeAdaptation
 	{};
 
-	struct CAGE_ENGINE_API CameraTonemap : public GfTonemap
+	struct CAGE_ENGINE_API CameraTonemap : public ScreenSpaceTonemap
 	{};
 
-	struct CAGE_ENGINE_API CameraDepthOfField : public GfDepthOfField
+	struct CAGE_ENGINE_API CameraDepthOfField : public ScreenSpaceDepthOfField
 	{};
 
 	struct CAGE_ENGINE_API CameraEffects

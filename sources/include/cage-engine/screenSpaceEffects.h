@@ -1,0 +1,79 @@
+#ifndef guard_screenSpaceEffects_h_xcfvh241448960sdrt
+#define guard_screenSpaceEffects_h_xcfvh241448960sdrt
+
+#include "screenSpaceEffectsProperties.h"
+#include "provisionalHandles.h"
+
+namespace cage
+{
+	struct CAGE_ENGINE_API ScreenSpaceCommonConfig
+	{
+		RenderQueue *queue = nullptr;
+		AssetManager *assets = nullptr;
+		ProvisionalGraphics *provisionals = nullptr;
+		ivec2 resolution;
+	};
+
+	struct CAGE_ENGINE_API ScreenSpaceAmbientOcclusionConfig : public ScreenSpaceCommonConfig, public ScreenSpaceAmbientOcclusion
+	{
+		mat4 viewProj;
+		TextureHandle inDepth;
+		TextureHandle inNormal;
+		TextureHandle outAo;
+		uint32 frameIndex = 0;
+	};
+
+	struct CAGE_ENGINE_API ScreenSpaceDepthOfFieldConfig : public ScreenSpaceCommonConfig, public ScreenSpaceDepthOfField
+	{
+		mat4 proj;
+		TextureHandle inDepth;
+		TextureHandle inColor;
+		TextureHandle outColor;
+	};
+
+	struct CAGE_ENGINE_API ScreenSpaceMotionBlurConfig : public ScreenSpaceCommonConfig, public ScreenSpaceMotionBlur
+	{
+		TextureHandle inVelocity;
+		TextureHandle inColor;
+		TextureHandle outColor;
+	};
+
+	struct CAGE_ENGINE_API ScreenSpaceEyeAdaptationConfig : public ScreenSpaceCommonConfig, public ScreenSpaceEyeAdaptation
+	{
+		detail::StringBase<16> cameraId; // for synchronizing data across frames
+		TextureHandle inColor; // used in both passes
+		TextureHandle outColor; // used in the apply pass only
+	};
+
+	struct CAGE_ENGINE_API ScreenSpaceBloomConfig : public ScreenSpaceCommonConfig, public ScreenSpaceBloom
+	{
+		TextureHandle inColor;
+		TextureHandle outColor;
+	};
+
+	struct CAGE_ENGINE_API ScreenSpaceTonemapConfig : public ScreenSpaceCommonConfig, public ScreenSpaceTonemap
+	{
+		TextureHandle inColor;
+		TextureHandle outColor;
+		real gamma = 2.2;
+		bool tonemapEnabled = true;
+	};
+
+	struct CAGE_ENGINE_API ScreenSpaceFastApproximateAntiAliasingConfig : public ScreenSpaceCommonConfig
+	{
+		TextureHandle inColor;
+		TextureHandle outColor;
+	};
+
+	CAGE_ENGINE_API void screenSpaceAmbientOcclusion(const ScreenSpaceAmbientOcclusionConfig &config);
+	CAGE_ENGINE_API void screenSpaceDepthOfField(const ScreenSpaceDepthOfFieldConfig &config);
+	CAGE_ENGINE_API void screenSpaceMotionBlur(const ScreenSpaceMotionBlurConfig &config);
+	CAGE_ENGINE_API void screenSpaceEyeAdaptationPrepare(const ScreenSpaceEyeAdaptationConfig &config);
+
+	CAGE_ENGINE_API void screenSpaceBloom(const ScreenSpaceBloomConfig &config);
+	CAGE_ENGINE_API void screenSpaceEyeAdaptationApply(const ScreenSpaceEyeAdaptationConfig &config);
+	CAGE_ENGINE_API void screenSpaceTonemap(const ScreenSpaceTonemapConfig &config);
+	CAGE_ENGINE_API void screenSpaceFastApproximateAntiAliasing(const ScreenSpaceFastApproximateAntiAliasingConfig &config);
+}
+
+#endif // guard_screenSpaceEffects_h_xcfvh241448960sdrt
