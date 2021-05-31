@@ -20,41 +20,11 @@ namespace cage
 {
 	namespace
 	{
-		struct ShadowmapBuffer
+		struct GraphicsDispatchHolders
 		{
-		private:
-			uint32 width = 0;
-			uint32 height = 0;
-		public:
-			Holder<Texture> texture;
-
-			void resize(uint32 w, uint32 h)
-			{
-				if (w == width && h == height)
-					return;
-				width = w;
-				height = h;
-				texture->bind();
-				if (texture->target() == GL_TEXTURE_CUBE_MAP)
-					texture->imageCube(ivec2(w, h), GL_DEPTH_COMPONENT16);
-				else
-					texture->image2d(ivec2(w, h), GL_DEPTH_COMPONENT24);
-				CAGE_CHECK_GL_ERROR_DEBUG();
-			}
-
-			ShadowmapBuffer(uint32 target)
-			{
-				CAGE_ASSERT(target == GL_TEXTURE_CUBE_MAP || target == GL_TEXTURE_2D);
-				texture = newTexture(target);
-				texture->setDebugName("shadowmap");
-				texture->filters(GL_LINEAR, GL_LINEAR, 16);
-				texture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-				CAGE_CHECK_GL_ERROR_DEBUG();
-			}
-		};
-
-		struct GraphicsDispatchHandles
-		{
+			Holder<Model> modelSquare, modelSphere, modelCone;
+			Holder<ShaderProgram> shaderVisualizeColor, shaderFont;
+			Holder<ShaderProgram> shaderAmbient, shaderBlit, shaderDepth, shaderGBuffer, shaderLighting, shaderTranslucent;
 			FrameBufferHandle gBufferTarget;
 			FrameBufferHandle renderTarget;
 			TextureHandle albedoTexture;
@@ -67,19 +37,7 @@ namespace cage
 			TextureHandle depthTexture;
 			TextureHandle texSource;
 			TextureHandle texTarget;
-		};
-
-		struct GraphicsDispatchHolders : public GraphicsDispatchHandles
-		{
-			Holder<Model> modelSquare, modelSphere, modelCone;
-			Holder<ShaderProgram> shaderVisualizeColor, shaderVisualizeDepth, shaderVisualizeMonochromatic, shaderVisualizeVelocity;
-			Holder<ShaderProgram> shaderAmbient, shaderBlit, shaderDepth, shaderGBuffer, shaderLighting, shaderTranslucent;
-			Holder<ShaderProgram> shaderFont;
-
-			Holder<RenderQueue> renderQueue;
-			Holder<ProvisionalGraphics> provisionalData;
-
-			std::vector<ShadowmapBuffer> shadowmaps2d, shadowmapsCube;
+			std::vector<TextureHandle> shadowmaps2d, shadowmapsCube;
 		};
 
 		struct GraphicsDispatchImpl : public GraphicsDispatch, private GraphicsDispatchHolders
@@ -89,9 +47,10 @@ namespace cage
 			uint32 drawPrimitives = 0;
 
 		private:
-			uint32 frameIndex = 0;
-			CameraEffectsFlags lastCameraEffects = CameraEffectsFlags::None;
+			Holder<RenderQueue> renderQueue;
+			Holder<ProvisionalGraphics> provisionalData;
 			ScreenSpaceCommonConfig gfCommonConfig; // helper to simplify initialization
+			uint32 frameIndex = 0;
 
 			void applyShaderRoutines(const ShaderConfig *c, const Holder<ShaderProgram> &s)
 			{
@@ -152,8 +111,8 @@ namespace cage
 			{
 				if (shadowmap != 0)
 				{
-					ShadowmapBuffer &s = shadowmap > 0 ? shadowmaps2d[shadowmap - 1] : shadowmapsCube[-shadowmap - 1];
-					renderQueue->bind(s.texture, shadowmap > 0 ? CAGE_SHADER_TEXTURE_SHADOW : CAGE_SHADER_TEXTURE_SHADOW_CUBE);
+					TextureHandle &s = shadowmap > 0 ? shadowmaps2d[shadowmap - 1] : shadowmapsCube[-shadowmap - 1];
+					renderQueue->bind(s, shadowmap > 0 ? CAGE_SHADER_TEXTURE_SHADOW : CAGE_SHADER_TEXTURE_SHADOW_CUBE);
 				}
 			}
 
@@ -578,7 +537,7 @@ namespace cage
 
 				renderQueue->bind(renderTarget);
 				renderQueue->clearFrameBuffer();
-				renderQueue->depthTexture(pass->targetShadowmap > 0 ? shadowmaps2d[pass->targetShadowmap - 1].texture : shadowmapsCube[-pass->targetShadowmap - 1].texture);
+				renderQueue->depthTexture(pass->targetShadowmap > 0 ? shadowmaps2d[pass->targetShadowmap - 1] : shadowmapsCube[-pass->targetShadowmap - 1]);
 				renderQueue->activeAttachments(0);
 				renderQueue->checkFrameBuffer();
 				renderQueue->colorWrite(false);
@@ -676,26 +635,43 @@ namespace cage
 				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
+			TextureHandle prepareShadowmap(const RenderPass *pass)
+			{
+				CAGE_ASSERT(pass->targetShadowmap != 0);
+				TextureHandle t;
+				if (pass->targetShadowmap < 0)
+				{
+					t = provisionalData->textureCube(stringizer() + "shadowmap_cube_" + pass->entityId);
+					renderQueue->bind(t);
+					renderQueue->imageCube(ivec2(pass->shadowmapResolution), GL_DEPTH_COMPONENT16);
+				}
+				else
+				{
+					t = provisionalData->texture(stringizer() + "shadowmap_2d_" + pass->entityId);
+					renderQueue->bind(t);
+					renderQueue->image2d(ivec2(pass->shadowmapResolution), GL_DEPTH_COMPONENT24);
+				}
+				renderQueue->filters(GL_LINEAR, GL_LINEAR, 16);
+				renderQueue->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+				renderQueue->checkGlErrorDebug();
+				return t;
+			}
+
 		public:
 			explicit GraphicsDispatchImpl(const EngineCreateConfig &config)
 			{}
 
 			void initialize()
 			{
-				shadowmaps2d.reserve(4);
-				shadowmapsCube.reserve(32);
-
-				gBufferTarget = newFrameBufferDraw();
-				renderTarget = newFrameBufferDraw();
-				CAGE_CHECK_GL_ERROR_DEBUG();
-
 				renderQueue = newRenderQueue();
 				provisionalData = newProvisionalGraphics();
 			}
 
 			void finalize()
 			{
-				*(GraphicsDispatchHolders*)this = GraphicsDispatchHolders();
+				*(GraphicsDispatchHolders *)this = GraphicsDispatchHolders();
+				renderQueue.clear();
+				provisionalData.clear();
 			}
 
 			void tick()
@@ -704,11 +680,14 @@ namespace cage
 
 				drawCalls = 0;
 				drawPrimitives = 0;
+				*(GraphicsDispatchHolders *)this = GraphicsDispatchHolders();
+				renderQueue->resetQueue();
+				provisionalData->reset();
 
 				glBindFramebuffer(GL_FRAMEBUFFER, 0);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
-				if (windowWidth == 0 || windowHeight == 0)
+				if (windowWidth == 0 || windowHeight == 0 || renderPasses.empty())
 					return;
 
 				AssetManager *ass = engineAssets();
@@ -719,9 +698,6 @@ namespace cage
 				modelSphere = ass->get<AssetSchemeIndexModel, Model>(HashString("cage/model/sphere.obj"));
 				modelCone = ass->get<AssetSchemeIndexModel, Model>(HashString("cage/model/cone.obj"));
 				shaderVisualizeColor = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/visualize/color.glsl"));
-				shaderVisualizeDepth = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/visualize/depth.glsl"));
-				shaderVisualizeMonochromatic = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/visualize/monochromatic.glsl"));
-				shaderVisualizeVelocity = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/visualize/velocity.glsl"));
 				shaderAmbient = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/ambient.glsl"));
 				shaderBlit = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/blit.glsl"));
 				shaderDepth = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/depth.glsl"));
@@ -729,21 +705,11 @@ namespace cage
 				shaderLighting = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/lighting.glsl"));
 				shaderTranslucent = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/engine/translucent.glsl"));
 				shaderFont = ass->get<AssetSchemeIndexShaderProgram, ShaderProgram>(HashString("cage/shader/gui/font.glsl"));
-
-				if (!shaderBlit)
-					return;
-
-				renderQueue->resetQueue();
-				*(GraphicsDispatchHandles *)this = {};
-				provisionalData->reset();
-
-				if (renderPasses.empty())
-					return;
+				CAGE_ASSERT(shaderBlit);
 
 				gfCommonConfig.assets = engineAssets();
 				gfCommonConfig.provisionals = +provisionalData;
 				gfCommonConfig.queue = +renderQueue;
-
 				renderTarget = provisionalData->frameBufferDraw("renderTarget");
 
 				// render all passes
@@ -751,21 +717,19 @@ namespace cage
 				{
 					if (pass->targetShadowmap > 0)
 					{ // 2d shadowmap
-						uint32 idx = pass->targetShadowmap - 1;
-						while (shadowmaps2d.size() <= idx)
-							shadowmaps2d.push_back(ShadowmapBuffer(GL_TEXTURE_2D));
-						ShadowmapBuffer &s = shadowmaps2d[idx];
-						s.resize(pass->shadowmapResolution, pass->shadowmapResolution);
+						const uint32 idx = pass->targetShadowmap - 1;
+						shadowmaps2d.resize(max(numeric_cast<uint32>(shadowmaps2d.size()), idx + 1));
+						TextureHandle &s = shadowmaps2d[idx];
+						s = prepareShadowmap(+pass);
 						renderPass(+pass);
 						continue;
 					}
 					else if (pass->targetShadowmap < 0)
 					{ // cube shadowmap
-						uint32 idx = -pass->targetShadowmap - 1;
-						while (shadowmapsCube.size() <= idx)
-							shadowmapsCube.push_back(ShadowmapBuffer(GL_TEXTURE_CUBE_MAP));
-						ShadowmapBuffer &s = shadowmapsCube[idx];
-						s.resize(pass->shadowmapResolution, pass->shadowmapResolution);
+						const uint32 idx = -pass->targetShadowmap - 1;
+						shadowmapsCube.resize(max(numeric_cast<uint32>(shadowmapsCube.size()), idx + 1));
+						TextureHandle &s = shadowmapsCube[idx];
+						s = prepareShadowmap(+pass);
 						renderPass(+pass);
 						continue;
 					}
