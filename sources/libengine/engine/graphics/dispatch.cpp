@@ -1,5 +1,4 @@
 #include <cage-core/geometry.h>
-#include <cage-core/config.h>
 
 #include <cage-engine/graphicsError.h>
 #include <cage-engine/opengl.h>
@@ -21,8 +20,6 @@ namespace cage
 {
 	namespace
 	{
-		ConfigSint32 visualizeBuffer("cage/graphics/visualizeBuffer", 0);
-
 		struct ShadowmapBuffer
 		{
 		private:
@@ -56,50 +53,33 @@ namespace cage
 			}
 		};
 
-		enum class VisualizableTextureModeEnum
+		struct GraphicsDispatchHandles
 		{
-			Color,
-			Depth2d,
-			DepthCube,
-			Monochromatic,
-			Velocity,
+			FrameBufferHandle gBufferTarget;
+			FrameBufferHandle renderTarget;
+			TextureHandle albedoTexture;
+			TextureHandle specialTexture;
+			TextureHandle normalTexture;
+			TextureHandle colorTexture;
+			TextureHandle intermediateTexture;
+			TextureHandle velocityTexture;
+			TextureHandle ambientOcclusionTexture;
+			TextureHandle depthTexture;
+			TextureHandle texSource;
+			TextureHandle texTarget;
 		};
 
-		struct VisualizableTexture
-		{
-			Texture *tex = nullptr;
-			VisualizableTextureModeEnum visualizableTextureMode;
-
-			VisualizableTexture(Texture *tex, VisualizableTextureModeEnum vtm) : tex(tex), visualizableTextureMode(vtm)
-			{}
-		};
-
-		struct GraphicsDispatchHolders
+		struct GraphicsDispatchHolders : public GraphicsDispatchHandles
 		{
 			Holder<Model> modelSquare, modelSphere, modelCone;
 			Holder<ShaderProgram> shaderVisualizeColor, shaderVisualizeDepth, shaderVisualizeMonochromatic, shaderVisualizeVelocity;
 			Holder<ShaderProgram> shaderAmbient, shaderBlit, shaderDepth, shaderGBuffer, shaderLighting, shaderTranslucent;
 			Holder<ShaderProgram> shaderFont;
 
-			Holder<FrameBuffer> gBufferTarget;
-			Holder<FrameBuffer> renderTarget;
-			Holder<Texture> albedoTexture;
-			Holder<Texture> specialTexture;
-			Holder<Texture> normalTexture;
-			Holder<Texture> colorTexture;
-			Holder<Texture> intermediateTexture;
-			Holder<Texture> velocityTexture;
-			Holder<Texture> ambientOcclusionTexture;
-			Holder<Texture> depthTexture;
-
 			Holder<RenderQueue> renderQueue;
 			Holder<ProvisionalGraphics> provisionalData;
 
-			Holder<Texture> texSource;
-			Holder<Texture> texTarget;
-
 			std::vector<ShadowmapBuffer> shadowmaps2d, shadowmapsCube;
-			std::vector<VisualizableTexture> visualizableTextures;
 		};
 
 		struct GraphicsDispatchImpl : public GraphicsDispatch, private GraphicsDispatchHolders
@@ -110,8 +90,6 @@ namespace cage
 
 		private:
 			uint32 frameIndex = 0;
-			uint32 lastGBufferWidth = 0;
-			uint32 lastGBufferHeight = 0;
 			CameraEffectsFlags lastCameraEffects = CameraEffectsFlags::None;
 			ScreenSpaceCommonConfig gfCommonConfig; // helper to simplify initialization
 
@@ -345,7 +323,6 @@ namespace cage
 				const auto graphicsDebugScope = renderQueue->namedScope("camera pass");
 				OPTICK_EVENT("camera pass");
 
-				// camera specific data
 				CAGE_ASSERT(pass->entityId != 0);
 				renderCameraOpaque(pass);
 				renderCameraEffectsOpaque(pass);
@@ -354,9 +331,9 @@ namespace cage
 
 				// blit to final output texture
 				CAGE_ASSERT(pass->targetTexture);
-				if (+texSource != pass->targetTexture)
+				if (texSource != pass->targetTexture)
 				{
-					texTarget = Holder<Texture>(pass->targetTexture, nullptr); // non-owning holder - temporary fix
+					texTarget = pass->targetTexture, nullptr;
 					renderQueue->bind(shaderBlit);
 					renderEffect();
 				}
@@ -406,8 +383,8 @@ namespace cage
 				renderQueue->colorTexture(0, Holder<Texture>());
 				renderQueue->activeAttachments(1);
 
-				texSource = colorTexture.share();
-				texTarget = intermediateTexture.share();
+				texSource = colorTexture;
+				texTarget = intermediateTexture;
 				gfCommonConfig.resolution = ivec2(pass->vpW, pass->vpH);
 
 				// ssao
@@ -493,13 +470,13 @@ namespace cage
 				if (pass->translucents.empty() && pass->texts.empty())
 					return;
 
-				if (+texSource != +colorTexture)
+				if (texSource != colorTexture)
 				{
 					renderQueue->bind(shaderBlit);
 					renderEffect();
 				}
-				CAGE_ASSERT(+texSource == +colorTexture);
-				CAGE_ASSERT(+texTarget == +intermediateTexture);
+				CAGE_ASSERT(texSource == colorTexture);
+				CAGE_ASSERT(texTarget == intermediateTexture);
 
 				renderQueue->colorTexture(0, colorTexture);
 				renderQueue->depthTexture(depthTexture);
@@ -622,7 +599,7 @@ namespace cage
 			void renderPass(const RenderPass *pass)
 			{
 				useDisposableUbo(CAGE_SHADER_UNIBLOCK_VIEWPORT, pass->uniViewport);
-				viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
+				viewportAndScissor(0, 0, pass->vpW, pass->vpH);
 				renderQueue->depthTest(true);
 				renderQueue->scissors(true);
 				renderQueue->blending(false);
@@ -642,74 +619,61 @@ namespace cage
 				renderQueue->checkGlErrorDebug();
 			}
 
-			bool resizeTexture(const char *debugName, Holder<Texture> &texture, bool enabled, uint32 internalFormat, uint32 downscale = 1, bool mipmaps = false)
+			void blitToWindow(const RenderPass *pass)
 			{
-				if (enabled)
-				{
-					if (texture)
-						texture->bind();
-					else
-					{
-						texture = newTexture();
-						texture->setDebugName(debugName);
-						texture->filters(mipmaps ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR, GL_LINEAR, 0);
-						texture->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-					}
-					texture->image2d(max(ivec2(lastGBufferWidth, lastGBufferHeight) / downscale, 1u), internalFormat);
-					if (mipmaps)
-						texture->generateMipmaps();
-				}
-				else
-					texture.clear();
-				return enabled;
+				const auto graphicsDebugScope = renderQueue->namedScope("blit to window");
+				renderQueue->resetFrameBuffer();
+				viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
+				setTwoSided(false);
+				setDepthTest(false, false);
+				renderQueue->bind(colorTexture, 0);
+				renderQueue->bind(shaderVisualizeColor);
+				renderQueue->uniform(0, vec2(1.0 / windowWidth, 1.0 / windowHeight));
+				renderQueue->bind(modelSquare);
+				renderQueue->draw();
+				renderQueue->checkGlErrorDebug();
 			}
 
-			void gBufferResize(uint32 w, uint32 h, CameraEffectsFlags cameraEffects)
+			TextureHandle prepareTexture(const RenderPass *pass, const char *name, bool enabled, uint32 internalFormat, uint32 downscale = 1, bool mipmaps = false)
 			{
-				if (w == lastGBufferWidth && h == lastGBufferHeight && lastCameraEffects == cameraEffects)
-					return;
-
-				OPTICK_EVENT("g-buffer resize");
-
-				lastGBufferWidth = w;
-				lastGBufferHeight = h;
-				lastCameraEffects = cameraEffects;
-
-				resizeTexture("albedoTexture", albedoTexture, true, GL_RGB8);
-				resizeTexture("specialTexture", specialTexture, true, GL_RG8);
-				resizeTexture("normalTexture", normalTexture, true, GL_RGB16F);
-				resizeTexture("colorTexture", colorTexture, true, GL_RGB16F);
-				resizeTexture("velocityTexture", velocityTexture, any(cameraEffects & CameraEffectsFlags::MotionBlur), GL_RG16F);
-				resizeTexture("depthTexture", depthTexture, true, GL_DEPTH_COMPONENT32);
-				resizeTexture("intermediateTexture", intermediateTexture, true, GL_RGB16F);
-				resizeTexture("ambientOcclusionTexture", ambientOcclusionTexture, any(cameraEffects & CameraEffectsFlags::AmbientOcclusion), GL_R8, CAGE_SHADER_SSAO_DOWNSCALE);
-				CAGE_CHECK_GL_ERROR_DEBUG();
-
-				gBufferTarget->bind();
-				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_ALBEDO, albedoTexture.get());
-				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_SPECIAL, specialTexture.get());
-				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_NORMAL, normalTexture.get());
-				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_COLOR, colorTexture.get());
-				gBufferTarget->colorTexture(CAGE_SHADER_ATTRIB_OUT_VELOCITY, any(cameraEffects & CameraEffectsFlags::MotionBlur) ? velocityTexture.get() : nullptr);
-				gBufferTarget->depthTexture(depthTexture.get());
-				glBindFramebuffer(GL_FRAMEBUFFER, 0);
-				CAGE_CHECK_GL_ERROR_DEBUG();
+				if (!enabled)
+					return {};
+				RenderQueue *q = +renderQueue;
+				TextureHandle t = provisionalData->texture(name);
+				q->bind(t, 0);
+				q->filters(mipmaps ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR, GL_LINEAR, 0);
+				q->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+				q->image2d(max(ivec2(pass->vpW, pass->vpH) / downscale, 1u), internalFormat);
+				if (mipmaps)
+					q->generateMipmaps();
+				return t;
 			}
 
-			struct DepthMapVisualizationData
+			void prepareGBuffer(const RenderPass *pass)
 			{
-				Holder<Model> modelSquare;
-				Texture *tex = nullptr;
-			};
+				const auto graphicsDebugScope = renderQueue->namedScope("prepare gBuffer");
 
-			static void depthMapVisualizationFunction(void *ptr)
-			{
-				const DepthMapVisualizationData *data = (const DepthMapVisualizationData *)ptr;
-				GLint cmpMode = 0;
-				glGetTexParameteriv(data->tex->target(), GL_TEXTURE_COMPARE_MODE, &cmpMode);
-				glTexParameteri(data->tex->target(), GL_TEXTURE_COMPARE_MODE, GL_NONE);
-				data->modelSquare->dispatch();
-				glTexParameteri(data->tex->target(), GL_TEXTURE_COMPARE_MODE, cmpMode);
+				albedoTexture = prepareTexture(pass, "albedoTexture", true, GL_RGB8);
+				specialTexture = prepareTexture(pass, "specialTexture", true, GL_RG8);
+				normalTexture = prepareTexture(pass, "normalTexture", true, GL_RGB16F);
+				colorTexture = prepareTexture(pass, "colorTexture", true, GL_RGB16F);
+				velocityTexture = prepareTexture(pass, "velocityTexture", any(pass->effects & CameraEffectsFlags::MotionBlur), GL_RG16F);
+				depthTexture = prepareTexture(pass, "depthTexture", true, GL_DEPTH_COMPONENT32);
+				intermediateTexture = prepareTexture(pass, "intermediateTexture", true, GL_RGB16F);
+				ambientOcclusionTexture = prepareTexture(pass, "ambientOcclusionTexture", any(pass->effects & CameraEffectsFlags::AmbientOcclusion), GL_R8, CAGE_SHADER_SSAO_DOWNSCALE);
+				CAGE_CHECK_GL_ERROR_DEBUG();
+
+				RenderQueue *q = +renderQueue;
+				gBufferTarget = provisionalData->frameBufferDraw("gBuffer");
+				q->bind(gBufferTarget);
+				q->colorTexture(CAGE_SHADER_ATTRIB_OUT_ALBEDO, albedoTexture);
+				q->colorTexture(CAGE_SHADER_ATTRIB_OUT_SPECIAL, specialTexture);
+				q->colorTexture(CAGE_SHADER_ATTRIB_OUT_NORMAL, normalTexture);
+				q->colorTexture(CAGE_SHADER_ATTRIB_OUT_COLOR, colorTexture);
+				q->colorTexture(CAGE_SHADER_ATTRIB_OUT_VELOCITY, any(pass->effects & CameraEffectsFlags::MotionBlur) ? velocityTexture : TextureHandle());
+				q->depthTexture(depthTexture);
+				q->resetFrameBuffer();
+				CAGE_CHECK_GL_ERROR_DEBUG();
 			}
 
 		public:
@@ -731,7 +695,6 @@ namespace cage
 
 			void finalize()
 			{
-				lastGBufferWidth = lastGBufferHeight = 0;
 				*(GraphicsDispatchHolders*)this = GraphicsDispatchHolders();
 			}
 
@@ -770,131 +733,57 @@ namespace cage
 				if (!shaderBlit)
 					return;
 
-				visualizableTextures.clear();
-				visualizableTextures.emplace_back(colorTexture.get(), VisualizableTextureModeEnum::Color); // unscaled
-				if (windowWidth != lastGBufferWidth || windowHeight != lastGBufferHeight)
-					visualizableTextures.emplace_back(colorTexture.get(), VisualizableTextureModeEnum::Color); // scaled
-				visualizableTextures.emplace_back(albedoTexture.get(), VisualizableTextureModeEnum::Color);
-				visualizableTextures.emplace_back(specialTexture.get(), VisualizableTextureModeEnum::Color);
-				visualizableTextures.emplace_back(normalTexture.get(), VisualizableTextureModeEnum::Color);
-				visualizableTextures.emplace_back(depthTexture.get(), VisualizableTextureModeEnum::Depth2d);
-				if (ambientOcclusionTexture)
-					visualizableTextures.emplace_back(ambientOcclusionTexture.get(), VisualizableTextureModeEnum::Monochromatic);
-				if (velocityTexture)
-					visualizableTextures.emplace_back(velocityTexture.get(), VisualizableTextureModeEnum::Velocity);
-
-				{ // prepare all render targets
-					uint32 maxW = windowWidth, maxH = windowHeight;
-					CameraEffectsFlags cameraEffects = CameraEffectsFlags::None;
-					for (const Holder<RenderPass> &renderPass : renderPasses)
-					{
-						cameraEffects |= renderPass->effects;
-						if (renderPass->targetTexture)
-						{ // render to texture
-							visualizableTextures.emplace_back(renderPass->targetTexture, VisualizableTextureModeEnum::Color);
-							const ivec2 res = renderPass->targetTexture->resolution();
-							maxW = max(maxW, numeric_cast<uint32>(res[0]));
-							maxH = max(maxH, numeric_cast<uint32>(res[1]));
-							continue;
-						}
-						if (renderPass->targetShadowmap == 0)
-						{ // render to screen
-							renderPass->targetTexture = colorTexture.get();
-							continue;
-						}
-						// render to shadowmap
-						if (renderPass->targetShadowmap > 0)
-						{ // 2d shadowmap
-							uint32 idx = renderPass->targetShadowmap - 1;
-							while (shadowmaps2d.size() <= idx)
-								shadowmaps2d.push_back(ShadowmapBuffer(GL_TEXTURE_2D));
-							ShadowmapBuffer &s = shadowmaps2d[idx];
-							s.resize(renderPass->shadowmapResolution, renderPass->shadowmapResolution);
-							visualizableTextures.emplace_back(s.texture.get(), VisualizableTextureModeEnum::Depth2d);
-						}
-						if (renderPass->targetShadowmap < 0)
-						{ // cube shadowmap
-							uint32 idx = -renderPass->targetShadowmap - 1;
-							while (shadowmapsCube.size() <= idx)
-								shadowmapsCube.push_back(ShadowmapBuffer(GL_TEXTURE_CUBE_MAP));
-							ShadowmapBuffer &s = shadowmapsCube[idx];
-							s.resize(renderPass->shadowmapResolution, renderPass->shadowmapResolution);
-							visualizableTextures.emplace_back(s.texture.get(), VisualizableTextureModeEnum::DepthCube);
-						}
-					}
-					gBufferResize(maxW, maxH, cameraEffects);
-					CAGE_CHECK_GL_ERROR_DEBUG();
-				}
-
-				if (!visualizableTextures[0].tex)
-					return;
-
 				renderQueue->resetQueue();
+				*(GraphicsDispatchHandles *)this = {};
 				provisionalData->reset();
+
+				if (renderPasses.empty())
+					return;
 
 				gfCommonConfig.assets = engineAssets();
 				gfCommonConfig.provisionals = +provisionalData;
 				gfCommonConfig.queue = +renderQueue;
 
-				{ // render all passes
-					for (const Holder<RenderPass> &pass : renderPasses)
-					{
-						renderPass(+pass);
-						renderQueue->checkGlErrorDebug();
-					}
-				}
+				renderTarget = provisionalData->frameBufferDraw("renderTarget");
 
-				{ // blit to the window
-					const auto graphicsDebugScope = renderQueue->namedScope("blit to the window");
-					renderQueue->resetFrameBuffer();
-					viewportAndScissor(0, 0, windowWidth, windowHeight);
-					setTwoSided(false);
-					setDepthTest(false, false);
-					const sint32 visualizeCount = numeric_cast<sint32>(visualizableTextures.size());
-					const sint32 visualizeIndex = (visualizeBuffer % visualizeCount + visualizeCount) % visualizeCount;
-					const VisualizableTexture &v = visualizableTextures[visualizeIndex];
-					renderQueue->bind(modelSquare);
-					renderQueue->bind(Holder<Texture>(v.tex, nullptr));
-					if (visualizeIndex == 0)
-					{
-						CAGE_ASSERT(v.visualizableTextureMode == VisualizableTextureModeEnum::Color);
-						renderQueue->bind(shaderVisualizeColor);
-						renderQueue->uniform(0, vec2(1.0 / lastGBufferWidth, 1.0 / lastGBufferHeight));
-						renderDispatch(modelSquare, 1);
+				// render all passes
+				for (const Holder<RenderPass> &pass : renderPasses)
+				{
+					if (pass->targetShadowmap > 0)
+					{ // 2d shadowmap
+						uint32 idx = pass->targetShadowmap - 1;
+						while (shadowmaps2d.size() <= idx)
+							shadowmaps2d.push_back(ShadowmapBuffer(GL_TEXTURE_2D));
+						ShadowmapBuffer &s = shadowmaps2d[idx];
+						s.resize(pass->shadowmapResolution, pass->shadowmapResolution);
+						renderPass(+pass);
+						continue;
+					}
+					else if (pass->targetShadowmap < 0)
+					{ // cube shadowmap
+						uint32 idx = -pass->targetShadowmap - 1;
+						while (shadowmapsCube.size() <= idx)
+							shadowmapsCube.push_back(ShadowmapBuffer(GL_TEXTURE_CUBE_MAP));
+						ShadowmapBuffer &s = shadowmapsCube[idx];
+						s.resize(pass->shadowmapResolution, pass->shadowmapResolution);
+						renderPass(+pass);
+						continue;
 					}
 					else
-					{
-						const vec2 scale = vec2(1.0 / windowWidth, 1.0 / windowHeight);
-						switch (v.visualizableTextureMode)
-						{
-						case VisualizableTextureModeEnum::Color:
-							renderQueue->bind(shaderVisualizeColor);
-							renderQueue->uniform(0, scale);
-							renderDispatch(modelSquare, 1);
-							break;
-						case VisualizableTextureModeEnum::Depth2d:
-						case VisualizableTextureModeEnum::DepthCube:
-						{
-							renderQueue->bind(shaderVisualizeDepth);
-							renderQueue->uniform(0, scale);
-							Holder<DepthMapVisualizationData> data = systemArena().createHolder<DepthMapVisualizationData>();
-							data->modelSquare = modelSquare.share();
-							data->tex = v.tex;
-							renderQueue->customCommand(Delegate<void(void *)>().bind<&GraphicsDispatchImpl::depthMapVisualizationFunction>(), std::move(data).cast<void>(), true);
-						} break;
-						case VisualizableTextureModeEnum::Monochromatic:
-							renderQueue->bind(shaderVisualizeMonochromatic);
-							renderQueue->uniform(0, scale);
-							renderDispatch(modelSquare, 1);
-							break;
-						case VisualizableTextureModeEnum::Velocity:
-							renderQueue->bind(shaderVisualizeVelocity);
-							renderQueue->uniform(0, scale);
-							renderDispatch(modelSquare, 1);
-							break;
+					{ // regular scene render
+						CAGE_ASSERT(pass->targetShadowmap == 0);
+						prepareGBuffer(+pass);
+						if (pass->targetTexture)
+						{ // render to texture
+							renderPass(+pass);
+						}
+						else
+						{ // render to screen
+							pass->targetTexture = colorTexture;
+							renderPass(+pass);
+							blitToWindow(+pass);
 						}
 					}
-					renderQueue->checkGlErrorDebug();
 				}
 
 				{

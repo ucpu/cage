@@ -307,7 +307,7 @@ namespace cage
 				pass->uniViewport.ambientLight = vec4(colorGammaToLinear(camera->camera.ambientColor) * camera->camera.ambientIntensity, 0);
 				pass->uniViewport.ambientDirectionalLight = vec4(colorGammaToLinear(camera->camera.ambientDirectionalColor) * camera->camera.ambientDirectionalIntensity, 0);
 				pass->uniViewport.viewport = vec4(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
-				pass->targetTexture = camera->camera.target;
+				pass->targetTexture = Holder<Texture>(camera->camera.target, nullptr);
 				pass->clearFlags = ((camera->camera.clear & CameraClearFlags::Color) == CameraClearFlags::Color ? GL_COLOR_BUFFER_BIT : 0) | ((camera->camera.clear & CameraClearFlags::Depth) == CameraClearFlags::Depth ? GL_DEPTH_BUFFER_BIT : 0);
 				pass->entityId = camera->entityId;
 				(CameraEffects&)*pass = (CameraEffects&)camera->camera;

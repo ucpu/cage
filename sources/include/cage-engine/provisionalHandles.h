@@ -40,6 +40,18 @@ namespace cage
 				return *this;
 			}
 
+			bool operator == (const ProvisionalHandle &other) const
+			{
+				if (type() != other.type())
+					return false;
+				return pointer() == other.pointer();
+			}
+
+			bool operator != (const ProvisionalHandle &other) const
+			{
+				return !(*this == other);
+			}
+
 			uint32 type() const
 			{
 				return type_;

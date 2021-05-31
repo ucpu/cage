@@ -2,6 +2,7 @@
 #include <cage-engine/texture.h>
 #include <cage-engine/model.h>
 #include <cage-engine/font.h>
+#include <cage-engine/provisionalHandles.h>
 
 #include "../engine.h"
 
@@ -102,7 +103,7 @@ namespace cage
 		std::vector<Holder<Lights>> lights;
 		std::vector<Holder<Translucent>> translucents;
 		std::vector<Holder<Texts>> texts;
-		Texture *targetTexture = nullptr;
+		TextureHandle targetTexture;
 		mat4 view;
 		mat4 proj;
 		mat4 viewProj;
