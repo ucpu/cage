@@ -13,7 +13,7 @@ namespace cage
 	namespace
 	{
 		ConfigSint32 visualizeBuffer("cage/graphics/visualizeBuffer");
-		ConfigBool confRenderMissingModeles("cage/graphics/renderMissingModeles");
+		ConfigBool confRenderMissingModels("cage/graphics/renderMissingModels");
 		ConfigBool confRenderSkeletonBones("cage/graphics/renderSkeletonBones");
 
 		class EngineProfilingImpl : public EngineProfiling
@@ -284,9 +284,9 @@ namespace cage
 						}
 						return true;
 					}
-					if (key == keyToggleRenderMissingModeles)
+					if (key == keyToggleRenderMissingModels)
 					{
-						confRenderMissingModeles = !confRenderMissingModeles;
+						confRenderMissingModels = !confRenderMissingModels;
 						return true;
 					}
 					if (key == keyToggleRenderSkeletonBones)

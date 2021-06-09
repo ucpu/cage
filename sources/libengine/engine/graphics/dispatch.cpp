@@ -52,50 +52,6 @@ namespace cage
 			ScreenSpaceCommonConfig gfCommonConfig; // helper to simplify initialization
 			uint32 frameIndex = 0;
 
-			void applyShaderRoutines(const ShaderConfig *c, const Holder<ShaderProgram> &s)
-			{
-				renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, c->shaderRoutines);
-				renderQueue->checkGlErrorDebug();
-			}
-
-			void viewportAndScissor(sint32 x, sint32 y, uint32 w, uint32 h)
-			{
-				renderQueue->viewport(ivec2(x, y), ivec2(w, h));
-			}
-
-			void resetAllTextures()
-			{
-				renderQueue->resetAllTextures();
-			}
-
-			void setTwoSided(bool twoSided)
-			{
-				renderQueue->culling(!twoSided);
-			}
-
-			void setDepthTest(bool depthTest, bool depthWrite)
-			{
-				renderQueue->depthTest(depthTest);
-				renderQueue->depthWrite(depthWrite);
-			}
-
-			void useDisposableUbo(uint32 bindIndex, PointerRange<const char> data)
-			{
-				renderQueue->universalUniformBuffer(data, bindIndex);
-			}
-
-			template<class T>
-			void useDisposableUbo(uint32 bindIndex, const T &data)
-			{
-				renderQueue->universalUniformStruct<T>(data, bindIndex);
-			}
-
-			template<class T>
-			void useDisposableUbo(uint32 bindIndex, const std::vector<T> &data)
-			{
-				renderQueue->universalUniformArray<T>(data, bindIndex);
-			}
-
 			void bindGBufferTextures()
 			{
 				const auto graphicsDebugScope = renderQueue->namedScope("bind gBuffer textures");
@@ -130,7 +86,7 @@ namespace cage
 
 			void renderDispatch(const Objects *obj)
 			{
-				renderDispatch(obj->model, numeric_cast<uint32>(obj->uniModeles.size()));
+				renderDispatch(obj->model, numeric_cast<uint32>(obj->uniModels.size()));
 			}
 
 			void renderDispatch(const Holder<Model> &model, uint32 count)
@@ -138,23 +94,24 @@ namespace cage
 				renderQueue->draw(count);
 			}
 
-			void renderObject(const Objects *obj, const Holder<ShaderProgram> &shr)
+			void renderObject(const Objects *obj)
 			{
-				renderObject(obj, shr, obj->model->flags);
+				renderObject(obj, obj->model->flags);
 			}
 
-			void renderObject(const Objects *obj, const Holder<ShaderProgram> &shr, ModelRenderFlags flags)
+			void renderObject(const Objects *obj, ModelRenderFlags flags)
 			{
-				applyShaderRoutines(&obj->shaderConfig, shr);
-				useDisposableUbo(CAGE_SHADER_UNIBLOCK_MESHES, obj->uniModeles);
+				renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, obj->shaderConfig.shaderRoutines);
+				renderQueue->universalUniformArray<Objects::UniModel>(obj->uniModels, CAGE_SHADER_UNIBLOCK_MESHES);
 				if (!obj->uniArmatures.empty())
 				{
-					useDisposableUbo(CAGE_SHADER_UNIBLOCK_ARMATURES, obj->uniArmatures);
+					renderQueue->universalUniformArray<Mat3x4>(obj->uniArmatures, CAGE_SHADER_UNIBLOCK_ARMATURES);
 					renderQueue->uniform(CAGE_SHADER_UNI_BONESPERINSTANCE, obj->model->skeletonBones);
 				}
 				renderQueue->bind(obj->model);
-				setTwoSided(any(flags & ModelRenderFlags::TwoSided));
-				setDepthTest(any(flags & ModelRenderFlags::DepthTest), any(flags & ModelRenderFlags::DepthWrite));
+				renderQueue->culling(!any(flags & ModelRenderFlags::TwoSided));
+				renderQueue->depthTest(any(flags & ModelRenderFlags::DepthTest));
+				renderQueue->depthWrite(any(flags & ModelRenderFlags::DepthWrite));
 				{ // bind textures
 					for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)
 					{
@@ -187,7 +144,7 @@ namespace cage
 				const Holder<ShaderProgram> &shr = pass->targetShadowmap ? shaderDepth : shaderGBuffer;
 				renderQueue->bind(shr);
 				for (const Holder<Objects> &o : pass->opaques)
-					renderObject(o.get(), shr);
+					renderObject(+o);
 				renderQueue->checkGlErrorDebug();
 			}
 
@@ -199,7 +156,7 @@ namespace cage
 				renderQueue->bind(shr);
 				for (const Holder<Lights> &l : pass->lights)
 				{
-					applyShaderRoutines(&l->shaderConfig, shr);
+					renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, l->shaderConfig.shaderRoutines);
 					Holder<Model> model;
 					switch (l->lightType)
 					{
@@ -219,7 +176,7 @@ namespace cage
 						CAGE_THROW_CRITICAL(Exception, "invalid light type");
 					}
 					bindShadowmap(l->shadowmap);
-					useDisposableUbo(CAGE_SHADER_UNIBLOCK_LIGHTS, l->uniLights);
+					renderQueue->universalUniformArray<Lights::UniLight>(l->uniLights, CAGE_SHADER_UNIBLOCK_LIGHTS);
 					renderQueue->bind(model);
 					renderDispatch(model, numeric_cast<uint32>(l->uniLights.size()));
 				}
@@ -240,7 +197,7 @@ namespace cage
 						uint32 tmp = CAGE_SHADER_ROUTINEPROC_LIGHTFORWARDBASE;
 						uint32 &orig = const_cast<uint32&>(t->object.shaderConfig.shaderRoutines[CAGE_SHADER_ROUTINEUNIF_LIGHTTYPE]);
 						std::swap(tmp, orig);
-						renderObject(&t->object, shr);
+						renderObject(&t->object);
 						std::swap(tmp, orig);
 					}
 
@@ -249,9 +206,9 @@ namespace cage
 						renderQueue->blendFuncAdditive();
 						for (const Holder<Lights> &l : t->lights)
 						{
-							applyShaderRoutines(&l->shaderConfig, shr);
+							renderQueue->uniform(CAGE_SHADER_UNI_ROUTINES, l->shaderConfig.shaderRoutines);
 							bindShadowmap(l->shadowmap);
-							useDisposableUbo(CAGE_SHADER_UNIBLOCK_LIGHTS, l->uniLights);
+							renderQueue->universalUniformArray<Lights::UniLight>(l->uniLights, CAGE_SHADER_UNIBLOCK_LIGHTS);
 							renderDispatch(t->object.model, numeric_cast<uint32>(l->uniLights.size()));
 						}
 					}
@@ -311,8 +268,9 @@ namespace cage
 				if (pass->clearFlags)
 					renderQueue->clear(pass->clearFlags & GL_COLOR_BUFFER_BIT, pass->clearFlags & GL_DEPTH_BUFFER_BIT, pass->clearFlags & GL_STENCIL_BUFFER_BIT);
 				renderOpaque(pass);
-				setTwoSided(false);
-				setDepthTest(false, false);
+				renderQueue->culling(true);
+				renderQueue->depthTest(false);
+				renderQueue->depthWrite(false);
 				renderQueue->checkGlErrorDebug();
 
 				// lighting
@@ -326,7 +284,8 @@ namespace cage
 				renderQueue->blendFuncAdditive();
 				renderQueue->checkGlErrorDebug();
 				renderLighting(pass);
-				setDepthTest(false, false);
+				renderQueue->depthTest(false);
+				renderQueue->depthWrite(false);
 				renderQueue->blending(false);
 				renderQueue->activeTexture(CAGE_SHADER_TEXTURE_COLOR);
 				renderQueue->checkGlErrorDebug();
@@ -364,7 +323,7 @@ namespace cage
 				if ((pass->uniViewport.ambientLight + pass->uniViewport.ambientDirectionalLight) != vec4())
 				{
 					const auto graphicsDebugScope = renderQueue->namedScope("ambient light");
-					viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
+					renderQueue->viewport(ivec2(pass->vpX, pass->vpY), ivec2(pass->vpW, pass->vpH));
 					renderQueue->bind(shaderAmbient);
 					renderQueue->bind(modelSquare);
 					if (any(pass->effects & CameraEffectsFlags::AmbientOcclusion))
@@ -416,7 +375,7 @@ namespace cage
 					screenSpaceEyeAdaptationPrepare(cfg);
 				}
 
-				viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
+				renderQueue->viewport(ivec2(pass->vpX, pass->vpY), ivec2(pass->vpW, pass->vpH));
 				renderQueue->bind(renderTarget);
 				renderQueue->bind(texSource, CAGE_SHADER_TEXTURE_COLOR);
 			}
@@ -443,21 +402,24 @@ namespace cage
 				renderQueue->checkFrameBuffer();
 				renderQueue->checkGlErrorDebug();
 
-				setDepthTest(true, true);
+				renderQueue->depthTest(true);
+				renderQueue->depthWrite(true);
 				renderQueue->blending(true);
 				renderQueue->checkGlErrorDebug();
 
 				renderTranslucent(pass);
 
-				setDepthTest(true, false);
-				setTwoSided(true);
+				renderQueue->depthTest(true);
+				renderQueue->depthWrite(false);
+				renderQueue->culling(false);
 				renderQueue->blendFuncAlphaTransparency();
 				renderQueue->checkGlErrorDebug();
 
 				renderTexts(pass);
 
-				setDepthTest(false, false);
-				setTwoSided(false);
+				renderQueue->depthTest(false);
+				renderQueue->depthWrite(false);
+				renderQueue->culling(true);
 				renderQueue->blending(false);
 				renderQueue->activeTexture(CAGE_SHADER_TEXTURE_COLOR);
 				renderQueue->checkGlErrorDebug();
@@ -525,7 +487,7 @@ namespace cage
 					std::swap(texSource, texTarget);
 				}
 
-				viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
+				renderQueue->viewport(ivec2(pass->vpX, pass->vpY), ivec2(pass->vpW, pass->vpH));
 				renderQueue->bind(renderTarget);
 				renderQueue->bind(texSource, CAGE_SHADER_TEXTURE_COLOR);
 			}
@@ -547,9 +509,9 @@ namespace cage
 				const Holder<ShaderProgram> &shr = shaderDepth;
 				renderQueue->bind(shr);
 				for (const Holder<Objects> &o : pass->opaques)
-					renderObject(o.get(), shr, o->model->flags | ModelRenderFlags::DepthWrite);
+					renderObject(+o, o->model->flags | ModelRenderFlags::DepthWrite);
 				for (const Holder<Translucent> &o : pass->translucents)
-					renderObject(&o->object, shr, o->object.model->flags | ModelRenderFlags::DepthWrite);
+					renderObject(&o->object, o->object.model->flags | ModelRenderFlags::DepthWrite);
 
 				renderQueue->colorWrite(true);
 				renderQueue->checkGlErrorDebug();
@@ -557,14 +519,15 @@ namespace cage
 
 			void renderPass(const RenderPass *pass)
 			{
-				useDisposableUbo(CAGE_SHADER_UNIBLOCK_VIEWPORT, pass->uniViewport);
-				viewportAndScissor(0, 0, pass->vpW, pass->vpH);
+				renderQueue->universalUniformStruct(pass->uniViewport, CAGE_SHADER_UNIBLOCK_VIEWPORT);
+				renderQueue->viewport(ivec2(), ivec2(pass->vpW, pass->vpH));
 				renderQueue->depthTest(true);
 				renderQueue->scissors(true);
 				renderQueue->blending(false);
-				setTwoSided(false);
-				setDepthTest(true, true);
-				resetAllTextures();
+				renderQueue->culling(true);
+				renderQueue->depthTest(true);
+				renderQueue->depthWrite(true);
+				renderQueue->resetAllTextures();
 				renderQueue->checkGlErrorDebug();
 
 				if (pass->targetShadowmap == 0)
@@ -572,9 +535,10 @@ namespace cage
 				else
 					renderShadowPass(pass);
 
-				setTwoSided(false);
-				setDepthTest(false, false);
-				resetAllTextures();
+				renderQueue->culling(true);
+				renderQueue->depthTest(false);
+				renderQueue->depthWrite(false);
+				renderQueue->resetAllTextures();
 				renderQueue->checkGlErrorDebug();
 			}
 
@@ -582,9 +546,10 @@ namespace cage
 			{
 				const auto graphicsDebugScope = renderQueue->namedScope("blit to window");
 				renderQueue->resetFrameBuffer();
-				viewportAndScissor(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
-				setTwoSided(false);
-				setDepthTest(false, false);
+				renderQueue->viewport(ivec2(pass->vpX, pass->vpY), ivec2(pass->vpW, pass->vpH));
+				renderQueue->culling(true);
+				renderQueue->depthTest(false);
+				renderQueue->depthWrite(false);
 				renderQueue->bind(colorTexture, 0);
 				renderQueue->bind(shaderVisualizeColor);
 				renderQueue->uniform(0, vec2(1.0 / windowWidth, 1.0 / windowHeight));
@@ -658,9 +623,6 @@ namespace cage
 			}
 
 		public:
-			explicit GraphicsDispatchImpl(const EngineCreateConfig &config)
-			{}
-
 			void initialize()
 			{
 				renderQueue = newRenderQueue();
@@ -783,7 +745,7 @@ namespace cage
 
 	void graphicsDispatchCreate(const EngineCreateConfig &config)
 	{
-		graphicsDispatch = systemArena().createObject<GraphicsDispatchImpl>(config);
+		graphicsDispatch = systemArena().createObject<GraphicsDispatchImpl>();
 	}
 
 	void graphicsDispatchDestroy()

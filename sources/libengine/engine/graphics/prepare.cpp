@@ -21,7 +21,7 @@ namespace cage
 
 	namespace
 	{
-		ConfigBool confRenderMissingModeles("cage/graphics/renderMissingModeles", false);
+		ConfigBool confRenderMissingModels("cage/graphics/renderMissingModels", false);
 		ConfigBool confRenderSkeletonBones("cage/graphics/renderSkeletonBones", false);
 		ConfigBool confNoAmbientOcclusion("cage/graphics/disableAmbientOcclusion", false);
 		ConfigBool confNoBloom("cage/graphics/disableBloom", false);
@@ -205,7 +205,7 @@ namespace cage
 					uint32 idx = 0;
 					for (const auto &it : pass->translucents)
 					{
-						const vec4 *m = it->object.uniModeles[0].mMat.data;
+						const vec4 *m = it->object.uniModels[0].mMat.data;
 						const vec3 p = vec3(m[0][3], m[1][3], m[2][3]);
 						distances.push_back(distanceSquared(center, p));
 						order.push_back(idx++);
@@ -485,12 +485,12 @@ namespace cage
 					else
 					{
 						obj = it->second;
-						if (obj->uniModeles.size() + 1 == obj->uniModeles.capacity())
+						if (obj->uniModels.size() + 1 == obj->uniModels.capacity())
 							opaqueObjectsMap.erase(m.get());
 					}
 				}
-				obj->uniModeles.emplace_back();
-				Objects::UniModel *sm = &obj->uniModeles.back();
+				obj->uniModels.emplace_back();
+				Objects::UniModel *sm = &obj->uniModels.back();
 				sm->color = vec4(colorGammaToLinear(e->object.color) * e->object.intensity, e->object.opacity);
 				sm->mMat = Mat3x4(model);
 				sm->mvpMat = mvp;
@@ -505,7 +505,7 @@ namespace cage
 				if (!obj->uniArmatures.empty())
 				{
 					const uint32 bonesCount = m->skeletonBones;
-					Mat3x4 *sa = &obj->uniArmatures[(obj->uniModeles.size() - 1) * bonesCount];
+					Mat3x4 *sa = &obj->uniArmatures[(obj->uniModels.size() - 1) * bonesCount];
 					CAGE_ASSERT(!e->animatedSkeleton || e->animatedSkeleton->name);
 					bool initialized = false;
 					if (e->animatedSkeleton && m->skeletonName)
@@ -752,7 +752,7 @@ namespace cage
 
 				if (!o && !engineAssets()->tryGet<AssetSchemeIndexModel, Model>(e->object.object))
 				{
-					if (!confRenderMissingModeles)
+					if (!confRenderMissingModels)
 					{
 						e->object.object = 0; // disable rendering further in the pipeline
 						return;
@@ -951,7 +951,7 @@ namespace cage
 	Objects::Objects(Holder<Model> model_, uint32 max) : model(std::move(model_))
 	{
 		AssetManager *ass = engineAssets();
-		uniModeles.reserve(max);
+		uniModels.reserve(max);
 		if (model->skeletonBones)
 			uniArmatures.resize(model->skeletonBones * max);
 		for (uint32 i = 0; i < MaxTexturesCountPerMaterial; i++)

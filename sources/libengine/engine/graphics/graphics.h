@@ -38,7 +38,7 @@ namespace cage
 			vec4 color; // color rgb is linear, and NOT alpha-premultiplied
 			vec4 aniTexFrames;
 		};
-		std::vector<UniModel> uniModeles;
+		std::vector<UniModel> uniModels;
 		std::vector<Mat3x4> uniArmatures;
 		Holder<Texture> textures[MaxTexturesCountPerMaterial];
 		const Holder<Model> model;
