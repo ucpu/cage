@@ -1,10 +1,11 @@
 #include <cage-core/events.h>
+#include <cage-core/string.h>
 
 namespace cage
 {
 	namespace privat
 	{
-		EventLinker::EventLinker(const string &name) : order(std::numeric_limits<sint32>::min()), name(name)
+		EventLinker::EventLinker(const std::source_location location) : location(location), order(std::numeric_limits<sint32>::min())
 		{}
 
 		EventLinker::~EventLinker()
@@ -46,14 +47,34 @@ namespace cage
 			unlink();
 		}
 
+		stringizer &operator + (stringizer &s, const std::source_location &l)
+		{
+			string n = l.file_name();
+#ifdef CAGE_SYSTEM_WINDOWS
+			n = replace(n, "\\", "/");
+#endif // CAGE_SYSTEM_WINDOWS
+
+			// extract just one folder and file name
+			n = reverse(n);
+			string a = split(n, "/");
+			if (!n.empty())
+				a += string() + "/" + split(n, "/");
+			a = reverse(a);
+
+			return s + a + ":" + l.line();
+		}
+
 		void EventLinker::logAllNames()
 		{
 			EventLinker *l = this;
 			while (l->p)
 				l = l->p;
+			CAGE_ASSERT(l);
+			CAGE_LOG(SeverityEnum::Info, "event-listener", stringizer() + "(event): " + l->location);
+			l = l->n;
 			while (l)
 			{
-				CAGE_LOG(SeverityEnum::Info, "event-listener", stringizer() + l->name + " (" + l->order + ")");
+				CAGE_LOG_CONTINUE(SeverityEnum::Info, "event-listener", stringizer() + "(" + l->order + "): " + l->location);
 				l = l->n;
 			}
 		}

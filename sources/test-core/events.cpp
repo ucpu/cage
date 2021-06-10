@@ -157,8 +157,8 @@ void testEvents()
 
 	{
 		CAGE_TESTCASE("event names");
-		EventDispatcher<bool()> d("dispatcher D");
-		EventListener<bool()> l1("listener L1"), l2("listener L2");
+		EventDispatcher<bool()> d;
+		EventListener<bool()> l1, l2;
 		d.attach(l1, 13);
 		d.attach(l2, 42);
 		d.logAllNames();
