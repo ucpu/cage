@@ -47,37 +47,32 @@ namespace cage
 
 			LoggerImpl()
 			{
+				ScopeLock l(loggerMutex());
+				if (loggerLast())
 				{
-					ScopeLock l(loggerMutex());
-					if (loggerLast())
-					{
-						prev = loggerLast();
-						loggerLast()->next = this;
-					}
-					loggerLast() = this;
+					prev = loggerLast();
+					loggerLast()->next = this;
 				}
-
+				loggerLast() = this;
 				output.bind<&logOutputStdErr>();
 			}
 
 			~LoggerImpl()
 			{
-				{
-					ScopeLock l(loggerMutex());
-					if (prev)
-						prev->next = next;
-					if (next)
-						next->prev = prev;
-					if (loggerLast() == this)
-						loggerLast() = prev;
-				}
+				ScopeLock l(loggerMutex());
+				if (prev)
+					prev->next = next;
+				if (next)
+					next->prev = prev;
+				if (loggerLast() == this)
+					loggerLast() = prev;
 			}
 		};
 
-		class ApplicationLog
+		class ApplicationLogger
 		{
 		public:
-			ApplicationLog()
+			ApplicationLogger()
 			{
 				if (detail::isDebugging())
 				{
@@ -86,10 +81,19 @@ namespace cage
 					loggerDebug->output.bind<&logOutputDebug>();
 				}
 
-				loggerOutputFile = newLoggerOutputFile(pathExtractFilename(detail::getExecutableFullPathNoExe()) + ".log", false, true);
 				loggerFile = newLogger();
-				loggerFile->output.bind<LoggerOutputFile, &LoggerOutputFile::output>(loggerOutputFile.get());
 				loggerFile->format.bind<&logFormatFileShort>();
+
+				try
+				{
+					detail::OverrideException oe; // avoid deadlock when the file cannot be opened - the logger is still under construction
+					loggerOutputFile = newLoggerOutputFile(pathExtractFilename(detail::executableFullPathNoExe()) + ".log", false, true);
+					loggerFile->output.bind<LoggerOutputFile, &LoggerOutputFile::output>(+loggerOutputFile);
+				}
+				catch (const cage::SystemError &)
+				{
+					// do nothing
+				}
 			}
 
 			Holder<Logger> loggerDebug;
@@ -143,7 +147,7 @@ namespace cage
 					CAGE_LOG(SeverityEnum::Info, "log", stringizer() + "current time: " + buffer);
 				}
 
-				CAGE_LOG(SeverityEnum::Info, "log", stringizer() + "executable path: " + detail::getExecutableFullPath());
+				CAGE_LOG(SeverityEnum::Info, "log", stringizer() + "executable path: " + detail::executableFullPath());
 				CAGE_LOG(SeverityEnum::Info, "log", stringizer() + "working directory: " + pathWorkingDir());
 
 				if (confDetailedInfo)
@@ -166,7 +170,7 @@ namespace cage
 					}
 				}
 
-				setCurrentThreadName(pathExtractFilename(detail::getExecutableFullPathNoExe()));
+				setCurrentThreadName(pathExtractFilename(detail::executableFullPathNoExe()));
 			}
 
 			~ApplicationLogInitializer()
@@ -236,10 +240,10 @@ namespace cage
 
 	namespace detail
 	{
-		Logger *getApplicationLog()
+		Logger *applicationLogger()
 		{
-			static ApplicationLog *centralLogInstance = new ApplicationLog(); // this leak is intentional
-			return +centralLogInstance->loggerFile;
+			static ApplicationLogger *appLoggerInstance = new ApplicationLogger(); // this leak is intentional
+			return +appLoggerInstance->loggerFile;
 		}
 
 		string severityToString(SeverityEnum severity)
@@ -289,10 +293,10 @@ namespace cage
 	{
 		uint64 makeLog(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept
 		{
+			detail::applicationLogger(); // ensure application logger was initialized
+
 			try
 			{
-				detail::getApplicationLog(); // ensure application logger was initialized
-
 				detail::LoggerInfo info;
 				info.message = message;
 				info.component = component;
@@ -372,9 +376,9 @@ namespace cage
 		fflush(stderr);
 	}
 
-	void LoggerOutputFile::output(const string &message)
+	void LoggerOutputFile::output(const string &message) const
 	{
-		LoggerOutputFileImpl *impl = (LoggerOutputFileImpl*)this;
+		const LoggerOutputFileImpl *impl = (const LoggerOutputFileImpl *)this;
 		impl->f->writeLine(message);
 		realTryFlushFile(+impl->f);
 	}

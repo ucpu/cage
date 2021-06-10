@@ -200,7 +200,7 @@ namespace cage
 			static void alterEnvironment()
 			{
 				const std::string p = getenv("PATH");
-				const std::string n = p + ":" + pathWorkingDir().c_str() + ":" + pathExtractDirectory(detail::getExecutableFullPath()).c_str();
+				const std::string n = p + ":" + pathWorkingDir().c_str() + ":" + pathExtractDirectory(detail::executableFullPath()).c_str();
 				setenv("PATH", n.c_str(), 1);
 			}
 

@@ -144,8 +144,8 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_CORE_API string getExecutableFullPath();
-		CAGE_CORE_API string getExecutableFullPathNoExe();
+		CAGE_CORE_API string executableFullPath();
+		CAGE_CORE_API string executableFullPathNoExe();
 	}
 }
 

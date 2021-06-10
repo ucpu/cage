@@ -94,7 +94,7 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_CORE_API string getConfigAppPrefix();
+		CAGE_CORE_API string configAppPrefix();
 	}
 }
 

@@ -45,14 +45,14 @@ namespace cage
 	class CAGE_CORE_API LoggerOutputFile : private Immovable
 	{
 	public:
-		void output(const string &message);
+		void output(const string &message) const;
 	};
 
 	CAGE_CORE_API Holder<LoggerOutputFile> newLoggerOutputFile(const string &path, bool append, bool realFilesystemOnly = true);
 
 	namespace detail
 	{
-		CAGE_CORE_API Logger *getApplicationLog();
+		CAGE_CORE_API Logger *applicationLogger();
 		CAGE_CORE_API string severityToString(const SeverityEnum severity);
 	}
 }

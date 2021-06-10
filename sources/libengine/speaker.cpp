@@ -64,7 +64,7 @@ namespace cage
 
 		string defaultName()
 		{
-			return sanitizeName(pathExtractFilename(detail::getExecutableFullPathNoExe()));
+			return sanitizeName(pathExtractFilename(detail::executableFullPathNoExe()));
 		}
 
 #ifdef GCHL_CUBEB_LOGGING
