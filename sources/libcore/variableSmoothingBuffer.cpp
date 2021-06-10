@@ -4,13 +4,13 @@ namespace cage
 {
 	namespace privat
 	{
-		quat averageQuaternions(const quat *quaternions, uint32 count)
+		quat averageQuaternions(PointerRange<const quat> quaternions)
 		{
 			vec3 f, u;
-			for (uint32 i = 0; i < count; i++)
+			for (const quat &q : quaternions)
 			{
-				f += quaternions[i] * vec3(0, 0, -1);
-				u += quaternions[i] * vec3(0, 1, 0);
+				f += q * vec3(0, 0, -1);
+				u += q * vec3(0, 1, 0);
 			}
 			return quat(f, u);
 		}

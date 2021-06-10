@@ -137,7 +137,7 @@ namespace cage
 
 	FullscreenSwitcherCreateConfig::FullscreenSwitcherCreateConfig(bool defaultFullscreen) : defaultFullscreen(defaultFullscreen)
 	{
-		configPrefix = detail::getConfigAppPrefix();
+		configPrefix = detail::configAppPrefix();
 		window = cage::engineWindow();
 	}
 

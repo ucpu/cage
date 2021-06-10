@@ -201,7 +201,7 @@ namespace cage
 					}
 					catch (const Exception &)
 					{
-						return pathSearchTowardsRoot(config.assetsFolderName, pathExtractDirectory(detail::getExecutableFullPath()), PathTypeFlags::Directory | PathTypeFlags::Archive);
+						return pathSearchTowardsRoot(config.assetsFolderName, pathExtractDirectory(detail::executableFullPath()), PathTypeFlags::Directory | PathTypeFlags::Archive);
 					}
 				}
 				catch (const Exception &)

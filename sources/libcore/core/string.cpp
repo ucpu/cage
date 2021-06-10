@@ -269,7 +269,7 @@ namespace cage
 		GCHL_GENERATE(uint64, %lu);
 #endif
 		GCHL_GENERATE(float, %f);
-		GCHL_GENERATE(double, %lf);
+		GCHL_GENERATE(double, %.16lg);
 #undef GCHL_GENERATE
 
 #else // GCHL_USE_CHARCONV
