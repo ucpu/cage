@@ -36,34 +36,40 @@ void testLruCache()
 	{
 		CAGE_TESTCASE("basics");
 		LruCache<uint32, uint32> cache(3);
-		CAGE_TEST(cache.find(13) == nullptr);
-		cache.set(13, 130);
-		CAGE_TEST(cache.find(13));
-		CAGE_TEST(*cache.find(13) == 130);
+		CAGE_TEST(!cache.find(13));
+		uint32 setResult = cache.set(13, 42);
+		std::optional<uint32> findResult = cache.find(13);
+		CAGE_TEST(findResult);
+		CAGE_TEST(*findResult == 42);
 		cache.clear();
-		CAGE_TEST(cache.find(13) == nullptr);
+		CAGE_TEST(!cache.find(13));
+		CAGE_TEST(*findResult == 42);
 	}
 
 	{
 		CAGE_TESTCASE("with custom types");
 		LruCache<Key, Value, Hasher> cache(3);
-		CAGE_TEST(cache.find(13) == nullptr);
-		cache.set(13, 130);
-		CAGE_TEST(cache.find(13));
-		CAGE_TEST(cache.find(13)->v == 130);
+		CAGE_TEST(!cache.find(13));
+		Value setResult = cache.set(13, 42);
+		std::optional<Value> findResult = cache.find(13);
+		CAGE_TEST(findResult);
+		CAGE_TEST(findResult->v == 42);
 		cache.clear();
-		CAGE_TEST(cache.find(13) == nullptr);
+		CAGE_TEST(!cache.find(13));
+		CAGE_TEST(findResult->v == 42);
 	}
 
 	{
 		CAGE_TESTCASE("with holder");
 		LruCache<uint32, Holder<uint32>> cache(3);
-		CAGE_TEST(cache.find(13) == nullptr);
-		cache.set(13, systemArena().createHolder<uint32>(13));
-		CAGE_TEST(cache.find(13));
-		CAGE_TEST(**cache.find(13) == 13);
+		CAGE_TEST(!cache.find(13));
+		Holder<uint32> setResult = cache.set(13, systemArena().createHolder<uint32>(42));
+		Holder<uint32> findResult = cache.find(13);
+		CAGE_TEST(findResult);
+		CAGE_TEST(*findResult == 42);
 		cache.clear();
-		CAGE_TEST(cache.find(13) == nullptr);
+		CAGE_TEST(!cache.find(13));
+		CAGE_TEST(*findResult == 42);
 	}
 
 	{

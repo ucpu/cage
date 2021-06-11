@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include <optional>
 
 namespace cage
 {
@@ -44,11 +45,11 @@ namespace cage
 			clear();
 		}
 
-		const Value *find(const Key &k)
+		std::optional<Value> find(Key k)
 		{
 			auto it = indices.find(k);
 			if (it == indices.end())
-				return nullptr;
+				return {};
 			Data &d = data[it->second];
 			CAGE_ASSERT(d.valid);
 			CAGE_ASSERT(d.key == k);
@@ -56,24 +57,10 @@ namespace cage
 				head = d.n;
 			else
 				move(it->second, head);
-			return &d.value;
+			return d.value;
 		}
 
-		const Value *set(const Key &k, const Value &value)
-		{
-			CAGE_ASSERT(indices.count(k) == 0);
-			Data &h = data[head];
-			if (h.valid)
-				indices.erase(h.key);
-			indices[k] = head;
-			head = h.n;
-			h.key = k;
-			h.value = value;
-			h.valid = true;
-			return &h.value;
-		}
-
-		const Value *set(const Key &k, Value &&value)
+		Value set(Key k, Value value)
 		{
 			CAGE_ASSERT(indices.count(k) == 0);
 			Data &h = data[head];
@@ -84,10 +71,10 @@ namespace cage
 			h.key = k;
 			h.value = std::move(value);
 			h.valid = true;
-			return &h.value;
+			return h.value;
 		}
 
-		void erase(const Key &k)
+		void erase(Key k)
 		{
 			auto it = indices.find(k);
 			if (it == indices.end())
@@ -128,6 +115,53 @@ namespace cage
 				d.n = 0;
 			}
 			head = 0;
+		}
+	};
+
+	template<class Key, class Value, class Hasher>
+	struct LruCache<Key, Holder<Value>, Hasher> : private Immovable
+	{
+	private:
+		struct Data
+		{
+			Holder<Value> data;
+
+			Data() = default;
+			Data(Data &&other) = default;
+			Data(const Data &other) : data(other.data.share()) {}
+			Data &operator = (Data &&other) = default;
+			Data &operator = (const Data &other) { if (&other != this) { data = other.data.share(); } return *this; }
+		};
+
+		LruCache<Key, Data, Hasher> cache;
+
+	public:
+		explicit LruCache(uint32 capacity) : cache(capacity)
+		{}
+
+		Holder<Value> find(Key k)
+		{
+			auto v = cache.find(k);
+			if (v)
+				return std::move(v->data);
+			return {};
+		}
+
+		Holder<Value> set(Key k, Holder<Value> value)
+		{
+			Data d;
+			d.data = std::move(value);
+			return cache.set(k, d).data;
+		}
+
+		void erase(Key k)
+		{
+			cache.erase(k);
+		}
+
+		void clear()
+		{
+			cache.clear();
 		}
 	};
 }

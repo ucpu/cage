@@ -58,7 +58,7 @@ namespace cage
 				CAGE_ASSERT(allocations.find(ptr) == allocations.end());
 				Allocation a;
 				a.size = size;
-				a.thread = threadId();
+				a.thread = currentThreadId();
 				a.time = CAGE_LOG(SeverityEnum::Info, "memory", stringizer() + "allocation at " + ptr + " of size " + size);
 				allocations[ptr] = a;
 			}

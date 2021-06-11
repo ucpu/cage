@@ -85,7 +85,7 @@ namespace cage
 
 	CAGE_CORE_API Holder<ConfigList> newConfigList();
 
-	// ini values are mapped to config variables as 'prefix/section/item = value'
+	// ini values are mapped to config variables as 'prefix/section/item' = 'value'
 
 	CAGE_CORE_API void configApplyIni(const Ini *ini, const string &prefix);
 	CAGE_CORE_API Holder<Ini> configGenerateIni(const string &prefix);
@@ -94,7 +94,7 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_CORE_API string configAppPrefix();
+		CAGE_CORE_API string globalConfigPrefix();
 	}
 }
 

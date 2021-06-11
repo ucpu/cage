@@ -74,6 +74,12 @@ namespace cage
 		colorConfig = defaultConfig(c);
 	}
 
+	void Image::initialize(const ivec2 &r, uint32 c, ImageFormatEnum f)
+	{
+		CAGE_ASSERT(r[0] >= 0 && r[1] >= 0);
+		initialize(r[0], r[0], c, f);
+	}
+
 	Holder<Image> Image::copy() const
 	{
 		const ImageImpl *src = (const ImageImpl *)this;
@@ -98,12 +104,24 @@ namespace cage
 		impl->height = height;
 	}
 
+	void Image::importRaw(MemoryBuffer &&buffer, const ivec2 &resolution, uint32 channels, ImageFormatEnum format)
+	{
+		CAGE_ASSERT(resolution[0] >= 0 && resolution[1] >= 0);
+		importRaw(std::move(buffer), resolution[0], resolution[1], channels, format);
+	}
+
 	void Image::importRaw(PointerRange<const char> buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format)
 	{
 		ImageImpl *impl = (ImageImpl *)this;
 		CAGE_ASSERT(buffer.size() >= width * height * channels * formatBytes(format));
 		initialize(width, height, channels, format);
 		detail::memcpy(impl->mem.data(), buffer.data(), impl->mem.size());
+	}
+
+	void Image::importRaw(PointerRange<const char> buffer, const ivec2 &resolution, uint32 channels, ImageFormatEnum format)
+	{
+		CAGE_ASSERT(resolution[0] >= 0 && resolution[1] >= 0);
+		importRaw(buffer, resolution[0], resolution[1], channels, format);
 	}
 
 	uint32 Image::width() const
@@ -116,6 +134,12 @@ namespace cage
 	{
 		const ImageImpl *impl = (const ImageImpl *)this;
 		return impl->height;
+	}
+
+	ivec2 Image::resolution() const
+	{
+		const ImageImpl *impl = (const ImageImpl *)this;
+		return ivec2(impl->width, impl->height);
 	}
 
 	uint32 Image::channels() const
@@ -151,6 +175,12 @@ namespace cage
 		}
 	}
 
+	float Image::value(const ivec2 &p, uint32 c) const
+	{
+		CAGE_ASSERT(p[0] >= 0 && p[1] >= 0);
+		return value(p[0], p[1], c);
+	}
+
 	void Image::value(uint32 x, uint32 y, uint32 c, float v)
 	{
 		ImageImpl *impl = (ImageImpl *)this;
@@ -180,7 +210,22 @@ namespace cage
 		}
 	}
 
-	void Image::value(uint32 x, uint32 y, uint32 c, const real &v) { value(x, y, c, v.value); }
+	void Image::value(const ivec2 &p, uint32 c, float v)
+	{
+		CAGE_ASSERT(p[0] >= 0 && p[1] >= 0);
+		value(p[0], p[1], c, v);
+	}
+
+	void Image::value(uint32 x, uint32 y, uint32 c, const real &v)
+	{
+		value(x, y, c, v.value);
+	}
+
+	void Image::value(const ivec2 &p, uint32 c, const real &v)
+	{
+		CAGE_ASSERT(p[0] >= 0 && p[1] >= 0);
+		value(p[0], p[1], c, v);
+	}
 
 	real Image::get1(uint32 x, uint32 y) const
 	{
@@ -277,10 +322,20 @@ namespace cage
 		}
 	}
 
+	real Image::get1(const ivec2 &p) const { CAGE_ASSERT(p[0] >= 0 && p[1] >= 0); return get1(p[0], p[1]); }
+	vec2 Image::get2(const ivec2 &p) const { CAGE_ASSERT(p[0] >= 0 && p[1] >= 0); return get2(p[0], p[1]); }
+	vec3 Image::get3(const ivec2 &p) const { CAGE_ASSERT(p[0] >= 0 && p[1] >= 0); return get3(p[0], p[1]); }
+	vec4 Image::get4(const ivec2 &p) const { CAGE_ASSERT(p[0] >= 0 && p[1] >= 0); return get4(p[0], p[1]); }
+
 	void Image::get(uint32 x, uint32 y, real &value) const { value = get1(x, y); }
 	void Image::get(uint32 x, uint32 y, vec2 &value) const { value = get2(x, y); }
 	void Image::get(uint32 x, uint32 y, vec3 &value) const { value = get3(x, y); }
 	void Image::get(uint32 x, uint32 y, vec4 &value) const { value = get4(x, y); }
+
+	void Image::get(const ivec2 &p, real &value) const { value = get1(p); }
+	void Image::get(const ivec2 &p, vec2 &value) const { value = get2(p); }
+	void Image::get(const ivec2 &p, vec3 &value) const { value = get3(p); }
+	void Image::get(const ivec2 &p, vec4 &value) const { value = get4(p); }
 
 	void Image::set(uint32 x, uint32 y, const real &v)
 	{
@@ -388,6 +443,11 @@ namespace cage
 			CAGE_THROW_CRITICAL(Exception, "invalid image format");
 		}
 	}
+
+	void Image::set(const ivec2 &p, const real &value) { CAGE_ASSERT(p[0] >= 0 && p[1] >= 0); set(p[0], p[1], value); }
+	void Image::set(const ivec2 &p, const vec2 &value) { CAGE_ASSERT(p[0] >= 0 && p[1] >= 0); set(p[0], p[1], value); }
+	void Image::set(const ivec2 &p, const vec3 &value) { CAGE_ASSERT(p[0] >= 0 && p[1] >= 0); set(p[0], p[1], value); }
+	void Image::set(const ivec2 &p, const vec4 &value) { CAGE_ASSERT(p[0] >= 0 && p[1] >= 0); set(p[0], p[1], value); }
 
 	PointerRange<const uint8> Image::rawViewU8() const
 	{

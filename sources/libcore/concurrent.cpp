@@ -657,18 +657,45 @@ namespace cage
 
 	namespace
 	{
-		string &currentThreadName()
+#ifdef CAGE_SYSTEM_WINDOWS
+		DWORD WINAPI threadFunctionImpl(LPVOID params)
+#else
+		void *threadFunctionImpl(void *params)
+#endif
+		{
+			ThreadImpl *impl = (ThreadImpl *)params;
+			currentThreadName(impl->threadName);
+			OPTICK_THREAD(impl->threadName.c_str());
+			try
+			{
+				impl->function();
+			}
+			catch (...)
+			{
+				impl->exptr = std::current_exception();
+				CAGE_LOG(SeverityEnum::Warning, "thread", stringizer() + "unhandled exception in thread '" + currentThreadName() + "'");
+				detail::logCurrentCaughtException();
+			}
+			CAGE_LOG(SeverityEnum::Info, "thread", stringizer() + "thread '" + currentThreadName() + "' ended");
+#ifdef CAGE_SYSTEM_WINDOWS
+			return 0;
+#else
+			return nullptr;
+#endif
+		}
+
+		string &currentThreadName_()
 		{
 			static thread_local string name;
 			return name;
 		}
 	}
 
-	void setCurrentThreadName(const string &name)
+	void currentThreadName(const string &name)
 	{
-		string oldName = currentThreadName();
-		currentThreadName() = name;
-		CAGE_LOG(SeverityEnum::Info, "thread", stringizer() + "renamed thread id '" + threadId() + "' to '" + name + "'" + (oldName.empty() ? stringizer() : stringizer() + " was '" + oldName + "'"));
+		string oldName = currentThreadName_();
+		currentThreadName_() = name;
+		CAGE_LOG(SeverityEnum::Info, "thread", stringizer() + "renamed thread id '" + currentThreadId() + "' to '" + name + "'" + (oldName.empty() ? stringizer() : stringizer() + " was '" + oldName + "'"));
 
 		if (!name.empty())
 		{
@@ -704,51 +731,16 @@ namespace cage
 		}
 	}
 
-	string getCurrentThreadName()
+	string currentThreadName()
 	{
-		string n = currentThreadName();
+		string n = currentThreadName_();
 		if (n.empty())
-			return stringizer() + threadId();
+			return stringizer() + currentThreadId();
 		else
 			return n;
 	}
 
-	namespace
-	{
-#ifdef CAGE_SYSTEM_WINDOWS
-		DWORD WINAPI threadFunctionImpl(LPVOID params)
-#else
-		void *threadFunctionImpl(void *params)
-#endif
-		{
-			ThreadImpl *impl = (ThreadImpl*)params;
-			setCurrentThreadName(impl->threadName);
-			OPTICK_THREAD(impl->threadName.c_str());
-			try
-			{
-				impl->function();
-			}
-			catch (...)
-			{
-				impl->exptr = std::current_exception();
-				CAGE_LOG(SeverityEnum::Warning, "thread", stringizer() + "unhandled exception in thread '" + getCurrentThreadName() + "'");
-				detail::logCurrentCaughtException();
-			}
-			CAGE_LOG(SeverityEnum::Info, "thread", stringizer() + "thread '" + getCurrentThreadName() + "' ended");
-#ifdef CAGE_SYSTEM_WINDOWS
-			return 0;
-#else
-			return nullptr;
-#endif
-		}
-	}
-
-	uint32 processorsCount()
-	{
-		return std::thread::hardware_concurrency();
-	}
-
-	uint64 threadId()
+	uint64 currentThreadId()
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
 		return uint64(GetCurrentThreadId());
@@ -757,13 +749,18 @@ namespace cage
 #endif
 	}
 
-	uint64 processId()
+	uint64 currentProcessId()
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
 		return uint64(GetCurrentProcessId());
 #else
 		return uint64(getpid());
 #endif
+	}
+
+	uint32 processorsCount()
+	{
+		return std::thread::hardware_concurrency();
 	}
 
 	void threadSleep(uint64 micros)

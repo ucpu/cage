@@ -60,7 +60,7 @@ namespace cage
 	{
 	public:
 		void wait(Mutex *mut);
-		void wait(Holder<Mutex> &mut) { return wait(mut.get()); }
+		void wait(Holder<Mutex> &mut) { return wait(+mut); }
 		void wait(ScopeLock<Mutex> &mut) { return wait(mut.ptr); }
 		void signal();
 		void broadcast();
@@ -91,12 +91,11 @@ namespace cage
 
 	CAGE_CORE_API Holder<Thread> newThread(Delegate<void()> func, const string &threadName);
 
-	CAGE_CORE_API void setCurrentThreadName(const string &name);
-	CAGE_CORE_API string getCurrentThreadName();
-
-	CAGE_CORE_API uint32 processorsCount(); // return count of threads that can physically run simultaneously
-	CAGE_CORE_API uint64 threadId(); // return id of current thread
-	CAGE_CORE_API uint64 processId(); // return id of current process
+	CAGE_CORE_API void currentThreadName(const string &name);
+	CAGE_CORE_API string currentThreadName();
+	CAGE_CORE_API uint64 currentThreadId();
+	CAGE_CORE_API uint64 currentProcessId();
+	CAGE_CORE_API uint32 processorsCount(); // return number of threads that can physically run simultaneously
 	CAGE_CORE_API void threadSleep(uint64 micros);
 	CAGE_CORE_API void threadYield();
 }

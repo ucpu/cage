@@ -130,8 +130,8 @@ namespace cage
 
 		int loadGlobalConfiguration()
 		{
-			detail::applicationLogger(); // ensure application logger was initialized
-			const string pr = detail::configAppPrefix();
+			detail::globalLogger(); // ensure global logger was initialized
+			const string pr = detail::globalConfigPrefix();
 			const string ep = pathExtractDirectory(detail::executableFullPath());
 			const string wp = pathWorkingDir();
 			const bool same = ep == wp;
@@ -470,7 +470,7 @@ namespace cage
 
 	namespace detail
 	{
-		string configAppPrefix()
+		string globalConfigPrefix()
 		{
 			return pathExtractFilename(detail::executableFullPathNoExe());
 		}
@@ -488,7 +488,7 @@ namespace cage
 				{
 					try
 					{
-						configExportIni(pathExtractFilename(detail::executableFullPathNoExe()) + ".ini", detail::configAppPrefix());
+						configExportIni(pathExtractFilename(detail::executableFullPathNoExe()) + ".ini", detail::globalConfigPrefix());
 					}
 					catch (...)
 					{

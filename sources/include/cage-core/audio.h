@@ -49,6 +49,8 @@ namespace cage
 		float value(uintPtr f, uint32 c) const;
 		void value(uintPtr f, uint32 c, float v);
 		void value(uintPtr f, uint32 c, const real &v);
+
+		void decode(uintPtr startFrame, PointerRange<float> buffer) const;
 	};
 
 	CAGE_CORE_API Holder<Audio> newAudio();
@@ -65,17 +67,6 @@ namespace cage
 	// both audios must have same number of channels
 	// sample rate is ignored (except when initializing new audio)
 	CAGE_CORE_API void audioBlit(const Audio *source, Audio *target, uintPtr sourceFrameOffset, uintPtr targetFrameOffset, uintPtr frames);
-
-	// stateful decoder
-	class CAGE_CORE_API AudioStream : private Immovable
-	{
-	public:
-		const Audio *source() const;
-
-		void decode(uintPtr startFrame, PointerRange<float> buffer);
-	};
-
-	CAGE_CORE_API Holder<AudioStream> newAudioStream(Holder<Audio> &&audio);
 }
 
 #endif // guard_audio_h_C930FD49904A491DBB9CF3D0AE972EB2

@@ -43,7 +43,7 @@ namespace cage
 		{
 		public:
 			LoggerImpl *prev = nullptr, *next = nullptr;
-			const uint64 thread = threadId();
+			const uint64 thread = currentThreadId();
 
 			LoggerImpl()
 			{
@@ -138,7 +138,7 @@ namespace cage
 					CAGE_LOG(SeverityEnum::Info, "log", version);
 				}
 
-				CAGE_LOG(SeverityEnum::Info, "log", stringizer() + "process id: " + processId());
+				CAGE_LOG(SeverityEnum::Info, "log", stringizer() + "process id: " + currentProcessId());
 
 				{
 					const std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -170,7 +170,7 @@ namespace cage
 					}
 				}
 
-				setCurrentThreadName(pathExtractFilename(detail::executableFullPathNoExe()));
+				currentThreadName(pathExtractFilename(detail::executableFullPathNoExe()));
 			}
 
 			~ApplicationLogInitializer()
@@ -240,7 +240,7 @@ namespace cage
 
 	namespace detail
 	{
-		Logger *applicationLogger()
+		Logger *globalLogger()
 		{
 			static ApplicationLogger *appLoggerInstance = new ApplicationLogger(); // this leak is intentional
 			return +appLoggerInstance->loggerFile;
@@ -293,7 +293,7 @@ namespace cage
 	{
 		uint64 makeLog(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept
 		{
-			detail::applicationLogger(); // ensure application logger was initialized
+			detail::globalLogger(); // ensure global logger was initialized
 
 			try
 			{
@@ -303,8 +303,8 @@ namespace cage
 				info.severity = severity;
 				info.continuous = continuous;
 				info.debug = debug;
-				info.currentThreadId = threadId();
-				info.currentThreadName = getCurrentThreadName();
+				info.currentThreadId = currentThreadId();
+				info.currentThreadName = currentThreadName();
 				info.time = applicationTime();
 				info.file = file;
 				info.line = line;

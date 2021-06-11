@@ -40,12 +40,12 @@ namespace
 
 	struct Checker
 	{
-		SpatialStructure *const data;
+		const Holder<const SpatialStructure> data;
 		Holder<SpatialQuery> query;
 
-		Checker(SpatialStructure *data) : data(data)
+		Checker(Holder<const SpatialStructure> data) : data(data.share())
 		{
-			query = newSpatialQuery(data);
+			query = newSpatialQuery(data.share());
 		}
 
 		void checkResults(const std::set<uint32> &b)
@@ -93,18 +93,18 @@ namespace
 		}
 	};
 
-	void verifiableQueries(const Aabb elData[], const uint32 elCount, SpatialStructure *data)
+	void verifiableQueries(const Aabb elData[], const uint32 elCount, Holder<const SpatialStructure> data)
 	{
-		Checker c(data);
+		Checker c(std::move(data));
 		for (uint32 qi = 0; qi < 30; qi++)
 			c.verifiableAabb(elData, elCount);
 		for (uint32 qi = 0; qi < 30; qi++)
 			c.verifiableRange(elData, elCount);
 	}
 
-	void randomQueries(SpatialStructure *data)
+	void randomQueries(Holder<const SpatialStructure> data)
 	{
-		Checker c(data);
+		Checker c(std::move(data));
 		for (uint32 qi = 0; qi < 30; qi++)
 			c.randomAabb();
 		for (uint32 qi = 0; qi < 30; qi++)
@@ -129,7 +129,7 @@ void testSpatialStructure()
 			data->update(k, b);
 		}
 		data->rebuild();
-		verifiableQueries(elements.data(), numeric_cast<uint32>(elements.size()), data.get());
+		verifiableQueries(elements.data(), numeric_cast<uint32>(elements.size()), data.share());
 
 		// updates
 		for (uint32 i = 0; i < limit / 5; i++)
@@ -140,7 +140,7 @@ void testSpatialStructure()
 			data->update(k, b);
 		}
 		data->rebuild();
-		verifiableQueries(elements.data(), numeric_cast<uint32>(elements.size()), data.get());
+		verifiableQueries(elements.data(), numeric_cast<uint32>(elements.size()), data.share());
 
 		// removes
 		for (uint32 i = 0; i < limit / 5; i++)
@@ -150,7 +150,7 @@ void testSpatialStructure()
 			data->remove(k);
 		}
 		data->rebuild();
-		verifiableQueries(elements.data(), numeric_cast<uint32>(elements.size()), data.get());
+		verifiableQueries(elements.data(), numeric_cast<uint32>(elements.size()), data.share());
 	}
 
 	{
@@ -159,7 +159,7 @@ void testSpatialStructure()
 		for (uint32 i = 0; i < 100; i++)
 			data->update(i, Aabb(generateRandomPoint()));
 		data->rebuild();
-		Holder<SpatialQuery> query = newSpatialQuery(data.get());
+		Holder<SpatialQuery> query = newSpatialQuery(data.share());
 		query->intersection(Sphere(vec3(50, 0, 0), 100));
 	}
 
@@ -170,7 +170,7 @@ void testSpatialStructure()
 		for (uint32 i = 0; i < 100; i++)
 			data->update(i, Aabb(pts[i % 3]));
 		data->rebuild();
-		Holder<SpatialQuery> query = newSpatialQuery(data.get());
+		Holder<SpatialQuery> query = newSpatialQuery(data.share());
 		query->intersection(Sphere(vec3(0, 0, 0), 5));
 		CAGE_TEST(query->result().size() == 100);
 	}
@@ -180,7 +180,7 @@ void testSpatialStructure()
 		Holder<SpatialStructure> data = newSpatialStructure(SpatialStructureCreateConfig());
 		data->update(0, Sphere(vec3(), 100));
 		data->rebuild();
-		Holder<SpatialQuery> query = newSpatialQuery(data.get());
+		Holder<SpatialQuery> query = newSpatialQuery(data.share());
 		query->intersection(Sphere(vec3(50, 0, 0), 100));
 		CAGE_TEST(query->result().size() == 1);
 		query->intersection(Sphere(vec3(250, 0, 0), 100));
@@ -197,7 +197,7 @@ void testSpatialStructure()
 		for (uint32 i = 0; i < 100; i++)
 			data->update(i, Sphere(pts[i % 3], 1));
 		data->rebuild();
-		Holder<SpatialQuery> query = newSpatialQuery(data.get());
+		Holder<SpatialQuery> query = newSpatialQuery(data.share());
 		query->intersection(Sphere(vec3(0, 0, 0), 5));
 		CAGE_TEST(query->result().size() == 34);
 	}
@@ -217,7 +217,7 @@ void testSpatialStructure()
 			if (i % 20 == 0)
 			{
 				data->rebuild();
-				randomQueries(data.get());
+				randomQueries(data.share());
 			}
 		}
 

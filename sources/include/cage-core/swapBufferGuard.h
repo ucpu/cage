@@ -13,7 +13,7 @@ namespace cage
 	{
 		if (auto lock = controller->read())
 		{
-			// read the data from lock.index() buffer
+			// read data from lock.index() buffer
 		}
 		else
 		{
@@ -59,8 +59,8 @@ namespace cage
 	class CAGE_CORE_API SwapBufferGuard : private Immovable
 	{
 	public:
-		privat::SwapBufferLock read();
-		privat::SwapBufferLock write();
+		[[nodiscard]] privat::SwapBufferLock read();
+		[[nodiscard]] privat::SwapBufferLock write();
 	};
 
 	struct CAGE_CORE_API SwapBufferGuardCreateConfig

@@ -137,7 +137,6 @@ namespace cage
 	struct AssetHeader;
 	enum class AudioFormatEnum : uint32;
 	class Audio;
-	class AudioStream;
 	class AudioChannelsConverter;
 	struct AudioChannelsConverterCreateConfig;
 	struct AudioDirectionalData;
@@ -763,9 +762,6 @@ namespace cage
 
 	namespace privat
 	{
-		template<class T> struct HolderDereference { typedef T &type; };
-		template<> struct HolderDereference<void> { typedef void type; };
-
 		struct CAGE_CORE_API HolderControlBase
 		{
 			Delegate<void(void *)> deleter;
@@ -827,7 +823,8 @@ namespace cage
 				return data_;
 			}
 
-			CAGE_FORCE_INLINE typename HolderDereference<T>::type operator * () const
+			template<bool Enable = !std::is_same_v<T, void>>
+			CAGE_FORCE_INLINE typename std::enable_if_t<Enable, T> &operator * () const
 			{
 				CAGE_ASSERT(data_);
 				return *data_;
@@ -885,6 +882,11 @@ namespace cage
 		Holder<M> cast() &&
 		{
 			return Holder<M>(static_cast<M*>(this->data_), std::move(*this));
+		}
+
+		CAGE_FORCE_INLINE operator Holder<const T>() &&
+		{
+			return Holder<const T>((const T*)this->data_, std::move(*this));
 		}
 	};
 

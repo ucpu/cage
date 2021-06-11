@@ -52,7 +52,7 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_CORE_API Logger *applicationLogger();
+		CAGE_CORE_API Logger *globalLogger();
 		CAGE_CORE_API string severityToString(const SeverityEnum severity);
 	}
 }

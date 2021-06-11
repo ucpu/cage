@@ -2,55 +2,31 @@
 
 namespace cage
 {
-	class AudioStreamImpl : public AudioStream
+	void Audio::decode(uintPtr startFrame, PointerRange<float> buffer) const
 	{
-	public:
-		Holder<Audio> poly;
-		Holder<VorbisDecoder> vorbis;
-
-		AudioStreamImpl(Holder<Audio> &&audio) : poly(std::move(audio))
-		{
-			if (poly->format() == AudioFormatEnum::Vorbis)
-				vorbis = systemArena().createHolder<VorbisDecoder>(newFileBuffer(&((AudioImpl *)+poly)->mem));
-		}
-	};
-
-	const Audio *AudioStream::source() const
-	{
-		const AudioStreamImpl *impl = (const AudioStreamImpl *)this;
-		return +impl->poly;
-	}
-
-	void AudioStream::decode(uintPtr frameOffset, PointerRange<float> buffer)
-	{
-		AudioStreamImpl *impl = (AudioStreamImpl *)this;
-		AudioImpl *src = (AudioImpl *)+impl->poly;
-		const uint32 channels = src->channels;
+		const AudioImpl *impl = (const AudioImpl *)this;
+		const uint32 channels = impl->channels;
 		CAGE_ASSERT((buffer.size() % channels) == 0);
 		const uintPtr frames = buffer.size() / channels;
-		switch (impl->poly->format())
+		switch (impl->format)
 		{
 		case AudioFormatEnum::Vorbis:
 		{
-			impl->vorbis->seek(frameOffset);
-			impl->vorbis->decode(buffer);
+			VorbisDecoder dec(newFileBuffer(impl->mem));
+			dec.seek(startFrame);
+			dec.decode(buffer);
 		} break;
 		case AudioFormatEnum::Float:
 		{
-			detail::memcpy(buffer.data(), src->mem.data() + frameOffset * channels * sizeof(float), frames * channels * sizeof(float));
+			detail::memcpy(buffer.data(), impl->mem.data() + startFrame * channels * sizeof(float), frames * channels * sizeof(float));
 		} break;
 		default:
 		{
 			for (uintPtr f = 0; f < frames; f++)
 				for (uint32 c = 0; c < channels; c++)
-					buffer[f * channels + c] = src->value(frameOffset + f, c);
+					buffer[f * channels + c] = impl->value(startFrame + f, c);
 		} break;
 		}
-	}
-
-	Holder<AudioStream> newAudioStream(Holder<Audio> &&audio)
-	{
-		return systemArena().createImpl<AudioStream, AudioStreamImpl>(std::move(audio));
 	}
 
 	void vorbisConvertFormat(AudioImpl *snd, AudioFormatEnum format)
