@@ -46,7 +46,7 @@ namespace
 
 	constexpr auto constexprTestArray()
 	{
-		const int arr[] = { 42, -1, 3 };
+		constexpr const int arr[] = { 42, -1, 3 };
 		int res = 0;
 		for (const auto &it : enumerate(arr))
 			res += (int)it.index * *it;
@@ -55,7 +55,7 @@ namespace
 
 	constexpr auto constexprTestIterator()
 	{
-		const int arr[] = { 42, -1, 3 };
+		constexpr const int arr[] = { 42, -1, 3 };
 		int res = 0;
 		for (const auto &it : enumerate(std::begin(arr), std::end(arr)))
 			res += (int)it.index * *it;
@@ -249,8 +249,6 @@ void testEnumerate()
 		CAGE_TEST(i == fs.size());
 	}
 
-	// todo fix these
-	/*
 	{
 		CAGE_TESTCASE("constexpr enumerate array");
 		constexpr auto index = constexprTestArray();
@@ -262,5 +260,4 @@ void testEnumerate()
 		constexpr auto index = constexprTestIterator();
 		CAGE_TEST(index == 5);
 	}
-	*/
 }

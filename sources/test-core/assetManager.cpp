@@ -470,10 +470,10 @@ void testAssetManager()
 			f->close();
 		}
 		{
-			detail::setGlobalBreakpointOverride(false); // the decompression thread would stop on breakpoint otherwise
+			detail::globalBreakpointOverride(false); // the decompression thread would stop on breakpoint otherwise
 			man->add(10);
 			waitProcessing(man);
-			detail::setGlobalBreakpointOverride(true);
+			detail::globalBreakpointOverride(true);
 		}
 		CAGE_TEST_THROWN((man->get<AssetSchemeIndexRaw, MemoryBuffer>(10)));
 		man->remove(10);
@@ -485,10 +485,10 @@ void testAssetManager()
 		Holder<AssetManager> man = instantiate();
 		makeAssetCounter(5000);
 		{
-			detail::setGlobalBreakpointOverride(false); // the processing thread would stop on breakpoint otherwise
+			detail::globalBreakpointOverride(false); // the processing thread would stop on breakpoint otherwise
 			man->add(5000);
 			waitProcessing(man);
-			detail::setGlobalBreakpointOverride(true);
+			detail::globalBreakpointOverride(true);
 		}
 		CAGE_TEST_THROWN((man->get<AssetSchemeIndexCounter, AssetCounter>(5000)));
 		man->remove(5000);
@@ -502,10 +502,10 @@ void testAssetManager()
 		makeAssetCounter(20);
 		makeAssetCounter(5000, PointerRange<const uint32>({ (uint32)10, (uint32)20 }));
 		{
-			detail::setGlobalBreakpointOverride(false); // the processing thread would stop on breakpoint otherwise
+			detail::globalBreakpointOverride(false); // the processing thread would stop on breakpoint otherwise
 			man->add(5000);
 			waitProcessing(man);
-			detail::setGlobalBreakpointOverride(true);
+			detail::globalBreakpointOverride(true);
 		}
 		CAGE_TEST(AssetCounter::counter == 2);
 		CAGE_TEST((man->get<AssetSchemeIndexCounter, AssetCounter>(10)));
@@ -524,10 +524,10 @@ void testAssetManager()
 		makeAssetCounter(20);
 		makeAssetCounter(5000);
 		{
-			detail::setGlobalBreakpointOverride(false); // the processing thread would stop on breakpoint otherwise
+			detail::globalBreakpointOverride(false); // the processing thread would stop on breakpoint otherwise
 			man->add(10);
 			waitProcessing(man);
-			detail::setGlobalBreakpointOverride(true);
+			detail::globalBreakpointOverride(true);
 		}
 		CAGE_TEST(AssetCounter::counter == 2);
 		CAGE_TEST((man->get<AssetSchemeIndexCounter, AssetCounter>(10)));

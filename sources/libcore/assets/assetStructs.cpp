@@ -96,7 +96,7 @@ namespace cage
 		void processColliderLoad(AssetContext *context)
 		{
 			Holder<Collider> col = newCollider();
-			col->deserialize(context->originalData);
+			col->importBuffer(context->originalData);
 			col->rebuild();
 			context->assetHolder = std::move(col).cast<void>();
 		}

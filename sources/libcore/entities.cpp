@@ -551,14 +551,14 @@ namespace cage
 			(*impl->entities.rbegin())->destroy();
 	}
 
-	Holder<PointerRange<char>> entitiesSerialize(const EntityGroup *entities, EntityComponent *component)
+	Holder<PointerRange<char>> entitiesExportBuffer(const EntityGroup *entities, EntityComponent *component)
 	{
 		const uintPtr typeSize = detail::typeSize(component->typeIndex());
 		MemoryBuffer buffer;
 		Serializer ser(buffer);
 		ser << component->definitionIndex();
 		ser << (uint64)typeSize;
-		Serializer cntPlaceholder = ser.placeholder(sizeof(uint32));
+		Serializer cntPlaceholder = ser.reserve(sizeof(uint32));
 		uint32 cnt = 0;
 		for (Entity *e : entities->entities())
 		{
@@ -578,7 +578,7 @@ namespace cage
 		return std::move(buffer);
 	}
 
-	void entitiesDeserialize(PointerRange<const char> buffer, EntityManager *manager)
+	void entitiesImportBuffer(PointerRange<const char> buffer, EntityManager *manager)
 	{
 		if (buffer.empty())
 			return;

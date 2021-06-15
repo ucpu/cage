@@ -118,12 +118,12 @@ namespace cage
 			isLocal().assertDeadly = original;
 		}
 
-		void setGlobalBreakpointOverride(bool enable)
+		void globalBreakpointOverride(bool enable)
 		{
 			isGlobalBreakpointEnabled() = enable;
 		}
 
-		void setGlobalAssertOverride(bool enable)
+		void globalAssertOverride(bool enable)
 		{
 			isGlobalAssertDeadly() = enable;
 		}

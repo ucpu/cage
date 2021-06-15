@@ -18,11 +18,11 @@ namespace cage
 		uintPtr available() const; // number of bytes still available in the buffer (valid only if the maximum size was given in the constructor)
 		void write(PointerRange<const char> buffer);
 		void writeLine(const string &line);
-		Serializer placeholder(uintPtr s);
-		PointerRange<char> advance(uintPtr s); // returns the original position
+		Serializer reserve(uintPtr s);
 
 	private:
 		explicit Serializer(MemoryBuffer *buffer, char *data, uintPtr offset, uintPtr size);
+		PointerRange<char> advance(uintPtr s); // future writes may cause the MemoryBuffer to reallocate invalidating the PointerRange
 
 		MemoryBuffer *buffer = nullptr;
 		char *data = nullptr;
@@ -41,9 +41,10 @@ namespace cage
 
 		uintPtr available() const; // number of bytes still available in the buffer
 		void read(PointerRange<char> buffer);
+		PointerRange<const char> read(uintPtr size);
+		bool readLine(PointerRange<const char> &line);
 		bool readLine(string &line);
-		Deserializer placeholder(uintPtr s);
-		PointerRange<const char> advance(uintPtr s); // returns the original position
+		Deserializer subview(uintPtr s);
 		Deserializer copy() const;
 
 	private:
@@ -57,6 +58,7 @@ namespace cage
 	// helpers
 
 	// reinterpret types of range of elements
+	// preserves number of bytes, but may change number of elements
 	template<class Dst = const char, class Src>
 	constexpr PointerRange<Dst> bufferCast(const PointerRange<Src> src)
 	{
@@ -127,9 +129,9 @@ namespace cage
 	template<uint32 N>
 	Serializer &operator << (Serializer &s, const detail::StringBase<N> &v)
 	{
-		Serializer ss = s.placeholder(sizeof(uint32) + v.length()); // write all or nothing
+		Serializer ss = s.reserve(sizeof(uint32) + v.length()); // write all or nothing
 		ss << v.length();
-		ss.write({ v.c_str(), v.c_str() + v.length() });
+		ss.write(v);
 		return s;
 	}
 
@@ -138,7 +140,7 @@ namespace cage
 	{
 		decltype(v.length()) size;
 		s >> size;
-		v = detail::StringBase<N>(s.advance(size));
+		v = detail::StringBase<N>(s.read(size));
 		return s;
 	}
 }

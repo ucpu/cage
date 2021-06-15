@@ -1,6 +1,7 @@
-#include "net.h"
 #include <cage-core/lineReader.h>
 #include <cage-core/math.h> // min
+
+#include "net.h"
 
 #include <vector>
 
@@ -13,8 +14,8 @@ namespace cage
 		class TcpConnectionImpl : public TcpConnection
 		{
 		public:
-			Sock s;
-			std::vector<char> buffer;
+			Sock sock;
+			std::vector<char> staging;
 
 			TcpConnectionImpl(const string &address, uint16 port)
 			{
@@ -27,38 +28,109 @@ namespace cage
 					l.getAll(address, family, type, protocol);
 					try
 					{
-						s = Sock(family, type, protocol);
-						s.connect(address);
+						sock = Sock(family, type, protocol);
+						sock.connect(address);
 						break;
 					}
 					catch (const Exception &)
 					{
-						s = Sock();
+						sock = Sock();
 					}
 					l.next();
 				}
 
-				if (!s.isValid())
+				if (!sock.isValid())
 					CAGE_THROW_ERROR(Exception, "no connection");
-
-				s.setBlocking(false);
 			}
 
-			TcpConnectionImpl(Sock &&s) : s(std::move(s))
-			{}
-
-			void waitForBytes(uintPtr size)
+			TcpConnectionImpl(Sock &&sock) : sock(std::move(sock))
 			{
+				this->sock.setBlocking(true);
+			}
+
+			void update()
+			{
+				const uintPtr a = sock.available();
+				if (a > 0)
+				{
+					const uintPtr c = staging.size();
+					staging.resize(c + a);
+					if (sock.recv(&staging[c], a) != a)
+						CAGE_THROW_ERROR(Exception, "incomplete read");
+				}
+			}
+
+			void waitForBytes(uintPtr sz)
+			{
+				CAGE_ASSERT(sz > 0);
 				while (true)
 				{
-					uintPtr a = available();
-					if (a >= size)
+					update();
+					const uintPtr a = staging.size();
+					if (a >= sz)
 						break;
 					// an ugly hack here, using the reserved capacity of a vector as a temporary storage
-					if (buffer.capacity() < size)
-						buffer.reserve(size);
-					s.recv(buffer.data() + buffer.size(), size - a, MSG_WAITALL | MSG_PEEK); // blocking wait
+					if (staging.capacity() < sz)
+						staging.reserve(sz);
+					if (!sock.recv(staging.data() + staging.size(), sz - a, MSG_PEEK)) // blocking
+						CAGE_THROW_ERROR(Disconnected, "disconnected");
 				}
+			}
+
+			void discardBytes(uintPtr sz)
+			{
+				CAGE_ASSERT(staging.size() >= sz);
+				const uintPtr ts = staging.size() - sz;
+				detail::memmove(staging.data(), staging.data() + sz, ts);
+				staging.resize(ts);
+			}
+
+			void read(PointerRange<char> data) override
+			{
+				detail::OverrideBreakpoint brk;
+				waitForBytes(data.size());
+				CAGE_ASSERT(staging.size() >= data.size());
+				detail::memcpy(data.data(), staging.data(), data.size());
+				discardBytes(data.size());
+			}
+
+			void write(PointerRange<const char> data) override
+			{
+				detail::OverrideBreakpoint brk;
+				sock.send(data.data(), data.size());
+			}
+
+			uintPtr size() override
+			{
+				detail::OverrideBreakpoint brk;
+				update();
+				return staging.size();
+			}
+
+			string readLine() override
+			{
+				detail::OverrideBreakpoint brk;
+				update();
+				const uintPtr sz = staging.size();
+				string line;
+				const uintPtr rd = detail::readLine(line, staging, true);
+				if (rd)
+				{
+					discardBytes(rd);
+					return line;
+				}
+				waitForBytes(sz + 1); // blocking call
+				return readLine(); // try again
+			}
+
+			bool readLine(string &line) override
+			{
+				detail::OverrideBreakpoint brk;
+				update();
+				const uintPtr rd = detail::readLine(line, staging, true);
+				if (rd)
+					discardBytes(rd);
+				return rd;
 			}
 		};
 
@@ -102,7 +174,7 @@ namespace cage
 		const TcpConnectionImpl *impl = (const TcpConnectionImpl *)this;
 		string a;
 		uint16 p;
-		impl->s.getRemoteAddress().translate(a, p);
+		impl->sock.getRemoteAddress().translate(a, p);
 		return a;
 	}
 
@@ -111,87 +183,8 @@ namespace cage
 		const TcpConnectionImpl *impl = (const TcpConnectionImpl *)this;
 		string a;
 		uint16 p;
-		impl->s.getRemoteAddress().translate(a, p);
+		impl->sock.getRemoteAddress().translate(a, p);
 		return p;
-	}
-
-	uintPtr TcpConnection::available()
-	{
-		TcpConnectionImpl *impl = (TcpConnectionImpl *)this;
-		uintPtr a = impl->s.available();
-		if (a > 0)
-		{
-			uintPtr c = impl->buffer.size();
-			impl->buffer.resize(c + a);
-			impl->s.recv(&impl->buffer[c], a);
-		}
-		return impl->buffer.size();
-	}
-
-	void TcpConnection::readWait(PointerRange<char> buffer)
-	{
-		TcpConnectionImpl *impl = (TcpConnectionImpl *)this;
-		impl->waitForBytes(buffer.size());
-		detail::memcpy(buffer.data(), impl->buffer.data(), buffer.size());
-		detail::memmove(impl->buffer.data(), impl->buffer.data() + (buffer.size() + 1), impl->buffer.size() - buffer.size());
-		impl->buffer.resize(impl->buffer.size() - buffer.size());
-	}
-
-	void TcpConnection::read(PointerRange<char> &buffer)
-	{
-		uintPtr s = min(buffer.size(), available());
-		buffer = { buffer.data(), buffer.data() + s };
-		readWait(buffer);
-	}
-
-	Holder<PointerRange<char>> TcpConnection::readWait(uintPtr size)
-	{
-		MemoryBuffer b(size);
-		readWait(b);
-		return std::move(b);
-	}
-
-	Holder<PointerRange<char>> TcpConnection::read()
-	{
-		MemoryBuffer b(available());
-		readWait(b);
-		return std::move(b);
-	}
-
-	string TcpConnection::readLineWait()
-	{
-		TcpConnectionImpl *impl = (TcpConnectionImpl *)this;
-		string line;
-		while (!readLine(line))
-			impl->waitForBytes(impl->buffer.size() + 1);
-		return line;
-	}
-
-	bool TcpConnection::readLine(string &line)
-	{
-		available();
-		TcpConnectionImpl *impl = (TcpConnectionImpl *)this;
-		if (impl->buffer.empty())
-			return false;
-
-		PointerRange<const char> pr = impl->buffer;
-		if (!detail::readLine(line, pr, true))
-			return false;
-		detail::memmove(impl->buffer.data(), pr.data(), pr.size());
-		impl->buffer.resize(pr.size());
-		return true;
-	}
-
-	void TcpConnection::write(PointerRange<const char> buffer)
-	{
-		TcpConnectionImpl *impl = (TcpConnectionImpl *)this;
-		impl->s.send(buffer.data(), buffer.size());
-	}
-
-	void TcpConnection::writeLine(const string &str)
-	{
-		string tmp = str + "\n";
-		write({ tmp.c_str(), tmp.c_str() + tmp.length() });
 	}
 
 	uint16 TcpServer::port() const

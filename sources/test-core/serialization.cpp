@@ -39,14 +39,14 @@ void testSerialization()
 	}
 
 	{
-		CAGE_TESTCASE("placeholders");
+		CAGE_TESTCASE("reserve & subview");
 		MemoryBuffer b1;
 		Serializer s(b1);
-		Serializer s1 = s.placeholder(8);
+		Serializer s1 = s.reserve(8);
 		CAGE_TEST(b1.size() == 1 * 8);
-		Serializer s2 = s.placeholder(8);
+		Serializer s2 = s.reserve(8);
 		CAGE_TEST(b1.size() == 2 * 8);
-		Serializer s3 = s.placeholder(8);
+		Serializer s3 = s.reserve(8);
 		CAGE_TEST(b1.size() == 3 * 8);
 		s << 4.0;
 		CAGE_TEST(b1.size() == 4 * 8);
@@ -58,11 +58,11 @@ void testSerialization()
 		CAGE_TEST(b1.size() == 4 * 8);
 		double t;
 		Deserializer d(b1);
-		Deserializer d1 = d.placeholder(8);
+		Deserializer d1 = d.subview(8);
 		d >> t;
 		CAGE_TEST(t == 2.0);
-		Deserializer d3 = d.placeholder(8);
-		Deserializer d4 = d.placeholder(8);
+		Deserializer d3 = d.subview(8);
+		Deserializer d4 = d.subview(8);
 		d1 >> t;
 		CAGE_TEST(t == 1.0);
 		d3 >> t;

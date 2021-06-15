@@ -42,8 +42,8 @@ namespace cage
 			Deserializer des() const
 			{
 				Deserializer d(*buffer);
-				d.advance(offset);
-				return d.placeholder(size);
+				d.read(offset);
+				return d.subview(size);
 			}
 
 			std::shared_ptr<MemoryBuffer> buffer;
@@ -918,7 +918,7 @@ namespace cage
 				} break;
 				case CmdTypeEnum::connectionFinish:
 				{
-					CAGE_THROW_ERROR(Disconnected, "connection closed by other end");
+					CAGE_THROW_ERROR(Disconnected, "connection closed by peer");
 				} break;
 				case CmdTypeEnum::acknowledgement:
 				{
@@ -933,7 +933,7 @@ namespace cage
 					d >> msg.channel >> msg.msgSeqn >> size;
 					if (comp(msg.msgSeqn, receiving.seqnPerChannel[msg.channel]))
 					{ // obsolete
-						d.advance(size);
+						d.read(size);
 					}
 					else
 					{
@@ -955,7 +955,7 @@ namespace cage
 					uint16 size = index + 1 == totalCount ? totalSize - (totalCount - 1) * LongSize : LongSize;
 					if (comp(msgSeqn, receiving.seqnPerChannel[channel]))
 					{ // obsolete
-						d.advance(size);
+						d.read(size);
 					}
 					else
 					{

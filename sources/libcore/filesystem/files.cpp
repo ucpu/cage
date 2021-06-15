@@ -1,5 +1,6 @@
 #include <cage-core/string.h>
 #include <cage-core/memoryBuffer.h>
+#include <cage-core/pointerRangeHolder.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/debug.h>
 
@@ -11,29 +12,22 @@
 
 namespace cage
 {
-	FileAbstract::FileAbstract(const string &path, const FileMode &mode) : myPath(path), mode(mode)
-	{
-		CAGE_ASSERT(path == pathSimplify(path));
-	}
+	FileAbstract::FileAbstract(const string &path, const FileMode &mode) : myPath(path), myMode(mode)
+	{}
 
 	void FileAbstract::reopenForModification()
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "reopening for modification a file that does not support it");
+		CAGE_THROW_CRITICAL(NotImplemented, "reopening abstract file");
 	}
 
 	void FileAbstract::readAt(PointerRange<char> buffer, uintPtr at)
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "reading from file at offset not supported");
+		CAGE_THROW_CRITICAL(NotImplemented, "reading with offset from abstract file");
 	}
 
-	void FileAbstract::read(PointerRange<char> buffer)
+	FileMode FileAbstract::mode() const
 	{
-		CAGE_THROW_CRITICAL(NotImplemented, "reading from write-only file");
-	}
-
-	void FileAbstract::write(PointerRange<const char> buffer)
-	{
-		CAGE_THROW_CRITICAL(NotImplemented, "writing to read-only file");
+		return myMode;
 	}
 
 	ArchiveAbstract::ArchiveAbstract(const string & path) : myPath(path)

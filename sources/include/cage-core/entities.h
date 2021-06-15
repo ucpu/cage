@@ -2,7 +2,7 @@
 #define guard_entities_h_1259B2E89D514872B54F01F42E1EC56A
 
 #include "events.h"
-#include <cage-core/typeIndex.h>
+#include "typeIndex.h"
 
 namespace cage
 {
@@ -116,8 +116,8 @@ namespace cage
 	inline PointerRange<Entity *const> EntityManager::entities() const { return group()->entities(); }
 	inline PointerRange<Entity *const> EntityComponent::entities() const { return group()->entities(); }
 
-	CAGE_CORE_API Holder<PointerRange<char>> entitiesSerialize(const EntityGroup *entities, EntityComponent *component);
-	CAGE_CORE_API void entitiesDeserialize(PointerRange<const char> buffer, EntityManager *manager);
+	CAGE_CORE_API Holder<PointerRange<char>> entitiesExportBuffer(const EntityGroup *entities, EntityComponent *component);
+	CAGE_CORE_API void entitiesImportBuffer(PointerRange<const char> buffer, EntityManager *manager);
 }
 
 #endif // guard_entities_h_1259B2E89D514872B54F01F42E1EC56A

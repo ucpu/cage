@@ -1,7 +1,7 @@
 #ifndef guard_entitiesVisitor_h_m1nb54v6sre8t
 #define guard_entitiesVisitor_h_m1nb54v6sre8t
 
-#include <cage-core/entities.h>
+#include "entities.h"
 
 #include <tuple>
 #include <algorithm>
@@ -52,10 +52,10 @@ namespace cage
 			((fillComponentsArray<Types, I>(ents, components)), ...);
 		}
 
-		template<bool useEnt, class Visitor, class Types, std::size_t... I>
-		CAGE_FORCE_INLINE void invokeVisitor(Visitor &visitor, EntityComponent *components[], Entity *e, std::index_sequence<I...>)
+		template<bool UseEnt, class Visitor, class Types, std::size_t... I>
+		CAGE_FORCE_INLINE void invokeVisitor(const Visitor &visitor, EntityComponent *components[], Entity *e, std::index_sequence<I...>)
 		{
-			if constexpr (useEnt)
+			if constexpr (UseEnt)
 				visitor(e, ((e->value<std::decay_t<std::tuple_element_t<I, Types>>>(components[I])))...);
 			else
 				visitor(((e->value<std::decay_t<std::tuple_element_t<I, Types>>>(components[I])))...);
@@ -63,7 +63,7 @@ namespace cage
 	}
 
 	template<class Visitor>
-	void visit(EntityManager *ents, Visitor &&visitor)
+	void entitiesVisitor(EntityManager *ents, const Visitor &visitor)
 	{
 		using Types = typename privat::LambdaParamsPack<Visitor>::Params;
 		constexpr uint32 typesCount = std::tuple_size_v<Types>;

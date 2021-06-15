@@ -46,7 +46,7 @@ void testExceptions()
 	}
 
 	{
-		detail::setGlobalBreakpointOverride(false);
+		detail::globalBreakpointOverride(false);
 		try
 		{
 			CAGE_TESTCASE("exception transfer between threads");
@@ -57,6 +57,6 @@ void testExceptions()
 		{
 			// do nothing
 		}
-		detail::setGlobalBreakpointOverride(true);
+		detail::globalBreakpointOverride(true);
 	}
 }

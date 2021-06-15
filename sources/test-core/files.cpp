@@ -157,21 +157,27 @@ void testFiles()
 	{
 		CAGE_TESTCASE("lines");
 
-		const string bs = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
+		const string data = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
 
 		{
 			Holder<File> f = writeFile("testdir/files/lines");
-			string s = bs;
+			string s = data;
 			while (!s.empty())
 				f->writeLine(split(s, "/"));
+			f->close();
 		}
 
 		{
 			Holder<File> f = readFile("testdir/files/lines");
-			string s = bs;
+			string s;
+			uint32 cnt = 0;
 			for (string line; f->readLine(line);)
-				CAGE_TEST(line == split(s, "/"));
-			CAGE_TEST(s == "");
+			{
+				s += line + "/";
+				cnt++;
+			}
+			CAGE_TEST(s == data + "/");
+			CAGE_TEST(cnt == 6);
 		}
 	}
 

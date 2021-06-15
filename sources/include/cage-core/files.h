@@ -22,21 +22,22 @@ namespace cage
 	class CAGE_CORE_API File : private Immovable
 	{
 	public:
-		void read(PointerRange<char> buffer);
+		virtual void read(PointerRange<char> buffer);
 		Holder<PointerRange<char>> read(uintPtr size);
 		Holder<PointerRange<char>> readAll();
-		bool readLine(string &line);
+		virtual string readLine(); // may block or return empty string
+		virtual bool readLine(string &line); // non blocking
 
-		void write(PointerRange<const char> buffer);
+		virtual void write(PointerRange<const char> buffer);
 		void writeLine(const string &line);
 
-		void seek(uintPtr position);
-		uintPtr tell() const;
-		uintPtr size() const;
+		virtual void seek(uintPtr position);
+		virtual uintPtr tell();
+		virtual uintPtr size();
+		virtual FileMode mode() const;
 
-		void close();
-
-		FileMode mode() const;
+		virtual void close();
+		virtual ~File() = default;
 	};
 
 	CAGE_CORE_API Holder<File> newFile(const string &path, const FileMode &mode);

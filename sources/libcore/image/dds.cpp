@@ -23,10 +23,10 @@ namespace cage
 			const uint32 lineSize = impl->width * 4; // bytes count
 			for (uint32 y = 0; y < rows; y++)
 			{
-				Serializer tmpSer0 = masterSer.placeholder(lineSize);
-				Serializer tmpSer1 = masterSer.placeholder(lineSize);
-				Serializer tmpSer2 = masterSer.placeholder(lineSize);
-				Serializer tmpSer3 = masterSer.placeholder(lineSize);
+				Serializer tmpSer0 = masterSer.reserve(lineSize);
+				Serializer tmpSer1 = masterSer.reserve(lineSize);
+				Serializer tmpSer2 = masterSer.reserve(lineSize);
+				Serializer tmpSer3 = masterSer.reserve(lineSize);
 				Serializer *lineSer[4] = { &tmpSer0, &tmpSer1, &tmpSer2, &tmpSer3 };
 				for (uint32 x = 0; x < cols; x++)
 				{

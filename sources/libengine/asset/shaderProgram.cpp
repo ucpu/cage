@@ -22,7 +22,7 @@ namespace cage
 			{
 				uint32 type, len;
 				des >> type >> len;
-				PointerRange<const char> pos = des.advance(len);
+				PointerRange<const char> pos = des.read(len);
 				shr->source(type, pos);
 			}
 			shr->relink();
