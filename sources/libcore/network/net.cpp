@@ -210,6 +210,17 @@ namespace cage
 			return res;
 		}
 
+		uint16 Sock::events() const
+		{
+			pollfd fds = {};
+			fds.fd = descriptor;
+			fds.events = POLLIN | POLLOUT | POLLPRI | POLLRDHUP;
+			const auto err = poll(&fds, 1, 0);
+			if (err < 0)
+				CAGE_THROW_ERROR(SystemError, "check socket events (poll)", err);
+			return fds.revents;
+		}
+
 		void Sock::send(const void *buffer, uintPtr bufferSize)
 		{
 			CAGE_ASSERT(connected);

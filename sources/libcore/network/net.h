@@ -8,23 +8,24 @@
 #ifdef CAGE_SYSTEM_WINDOWS
 
 #include "../incWin.h"
-#include <winsock2.h>         // For socket(), connect(), send(), and recv()
+#include <winsock2.h>
 #include <ws2tcpip.h>
-typedef char raw_type;       // Type used for raw data on this platform
+typedef char raw_type;
 #undef near
 #undef far
 
 #else
 
-#include <sys/types.h>       // For data types
-#include <sys/socket.h>      // For socket(), connect(), send(), and recv()
-#include <sys/ioctl.h>       // For ioctl()
-#include <netdb.h>           // For gethostbyname()
-#include <arpa/inet.h>       // For inet_addr()
-#include <unistd.h>          // For close()
-#include <netinet/in.h>      // For sockaddr_in
-#include <errno.h>           // For errno
-typedef void raw_type;       // Type used for raw data on this platform
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <netinet/in.h>
+#include <errno.h>
+#include <poll.h>
+typedef void raw_type;
 typedef int SOCKET;
 #define WSAGetLastError() errno
 #define closesocket close
@@ -92,6 +93,7 @@ namespace cage
 			Addr getRemoteAddress() const;
 
 			uintPtr available() const;
+			uint16 events() const;
 			void send(const void *buffer, uintPtr bufferSize);
 			void sendTo(const void *buffer, uintPtr bufferSize, const Addr &remoteAddress);
 			uintPtr recv(void *buffer, uintPtr bufferSize, int flags = 0);

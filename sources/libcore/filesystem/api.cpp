@@ -53,8 +53,10 @@ namespace cage
 
 	Holder<PointerRange<char>> File::readAll()
 	{
-		CAGE_ASSERT(tell() == 0);
-		MemoryBuffer r(size());
+		const uintPtr s = size();
+		if (!s)
+			return {};
+		MemoryBuffer r(s);
 		read(r);
 		return std::move(r);
 	}

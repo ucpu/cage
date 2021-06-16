@@ -1,5 +1,6 @@
 #include "main.h"
 #include <cage-core/process.h>
+#include <cage-core/concurrent.h>
 
 void testProcess()
 {
@@ -62,8 +63,26 @@ void testProcess()
 		}
 		catch (const ProcessPipeEof &)
 		{
+			// nothing
 		}
 		CAGE_TEST(lines == 0);
 		CAGE_TEST(prg->wait() == 0);
 	}
+
+	{
+		CAGE_TESTCASE("readAll (after sleep)");
+		Holder<Process> prg = newProcess(cmdLs);
+		threadSleep(10000); // give the process time to write the data
+		auto output = prg->readAll();
+		CAGE_TEST(output.size() > 100);
+	}
+
+	{
+		CAGE_TESTCASE("readAll (after wait)");
+		Holder<Process> prg = newProcess(cmdLs);
+		prg->wait(); // let the process finish
+		auto output = prg->readAll();
+		CAGE_TEST(output.size() > 100);
+	}
 }
+

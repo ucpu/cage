@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 #include <fcntl.h>
 #endif
 
@@ -179,6 +180,7 @@ namespace cage
 				}
 			}
 
+			/* this is disabled for compatibility with linux
 			bool readLine(string &line) override
 			{
 				char buffer[string::MaxLength + 1]; // plus 1 to allow detecting that the line is too long
@@ -190,6 +192,7 @@ namespace cage
 					read({ buffer, buffer + l });
 				return l;
 			}
+			*/
 
 			AutoHandle hPipeInR;
 			AutoHandle hPipeInW;
@@ -290,7 +293,7 @@ namespace cage
 					alterEnvironment();
 
 					// run child process image
-					const string params = string() + "(cd '" + workingDir + "'; " + cmd + " )";
+					const string params = string() + "(cd '" + workingDir + "'; " + config.command + " )";
 					const int res = execlp("/bin/sh", "sh", "-c", params.c_str(), nullptr);
 
 					// if we get here, an error occurred, but we are in the child process, so just exit
@@ -379,7 +382,12 @@ namespace cage
 
 			uintPtr size() override
 			{
-				CAGE_THROW_CRITICAL(NotImplemented, "todo");
+				int s = -1;
+				const auto r = ::ioctl(aStdoutPipe.handles[PIPE_READ], FIONREAD, &s);
+				if (r < 0)
+					CAGE_THROW_ERROR(SystemError, "ioctl", errno);
+				CAGE_ASSERT(s >= 0);
+				return s;
 			}
 
 			string readLine() override
@@ -396,10 +404,10 @@ namespace cage
 				}
 			}
 
+			/* this would require file peek which is not possible with pipes
 			bool readLine(string &line) override
-			{
-				CAGE_THROW_CRITICAL(NotImplemented, "todo");
-			}
+			{}
+			*/
 		};
 
 #endif

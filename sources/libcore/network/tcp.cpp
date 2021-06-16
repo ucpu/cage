@@ -55,9 +55,19 @@ namespace cage
 				{
 					const uintPtr c = staging.size();
 					staging.resize(c + a);
-					if (sock.recv(&staging[c], a) != a)
+					const auto r = sock.recv(&staging[c], a);
+					if (r == 0)
+						CAGE_THROW_ERROR(Disconnected, "disconnected");
+					if (r != a)
 						CAGE_THROW_ERROR(Exception, "incomplete read");
 				}
+			}
+
+			void updateCheck()
+			{
+				if (staging.empty() && (sock.events() & (POLLIN | POLLERR | POLLHUP)) != 0 && sock.available() == 0)
+					CAGE_THROW_ERROR(Disconnected, "disconnected");
+				update();
 			}
 
 			void waitForBytes(uintPtr sz)
@@ -103,14 +113,14 @@ namespace cage
 			uintPtr size() override
 			{
 				detail::OverrideBreakpoint brk;
-				update();
+				updateCheck();
 				return staging.size();
 			}
 
 			string readLine() override
 			{
 				detail::OverrideBreakpoint brk;
-				update();
+				updateCheck();
 				const uintPtr sz = staging.size();
 				string line;
 				const uintPtr rd = detail::readLine(line, staging, true);
@@ -126,7 +136,7 @@ namespace cage
 			bool readLine(string &line) override
 			{
 				detail::OverrideBreakpoint brk;
-				update();
+				updateCheck();
 				const uintPtr rd = detail::readLine(line, staging, true);
 				if (rd)
 					discardBytes(rd);

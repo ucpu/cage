@@ -23,13 +23,13 @@ namespace cage
 	{
 	public:
 		virtual void read(PointerRange<char> buffer);
-		Holder<PointerRange<char>> read(uintPtr size);
-		Holder<PointerRange<char>> readAll();
+		virtual Holder<PointerRange<char>> read(uintPtr size);
+		virtual Holder<PointerRange<char>> readAll();
 		virtual string readLine(); // may block or return empty string
 		virtual bool readLine(string &line); // non blocking
 
 		virtual void write(PointerRange<const char> buffer);
-		void writeLine(const string &line);
+		virtual void writeLine(const string &line);
 
 		virtual void seek(uintPtr position);
 		virtual uintPtr tell();
