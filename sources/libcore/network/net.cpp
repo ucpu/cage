@@ -1,4 +1,5 @@
 #include "net.h"
+
 #include <cage-core/string.h>
 
 namespace cage
@@ -215,9 +216,9 @@ namespace cage
 			pollfd fds = {};
 			fds.fd = descriptor;
 			fds.events = POLLIN | POLLOUT | POLLPRI | POLLRDHUP;
-			const auto err = poll(&fds, 1, 0);
-			if (err < 0)
-				CAGE_THROW_ERROR(SystemError, "check socket events (poll)", err);
+			const auto res = WSAPoll(&fds, 1, 0);
+			if (res < 0)
+				CAGE_THROW_ERROR(SystemError, "check socket events (WSAPoll)", WSAGetLastError());
 			return fds.revents;
 		}
 

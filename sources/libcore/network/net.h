@@ -13,6 +13,9 @@
 typedef char raw_type;
 #undef near
 #undef far
+#define POLLRDHUP 0
+#undef POLLPRI // WSAPoll rejects POLLPRI with an error
+#define POLLPRI 0
 
 #else
 
@@ -33,6 +36,7 @@ typedef int SOCKET;
 #define WSAEWOULDBLOCK EWOULDBLOCK
 #define WSAECONNRESET ECONNRESET
 #define INVALID_SOCKET -1
+#define WSAPoll poll
 
 #endif
 
@@ -115,7 +119,7 @@ namespace cage
 			bool connected;
 		};
 
-		struct AddrList
+		struct AddrList : private Immovable
 		{
 			AddrList(const string &address, uint16 port, int family, int type, int protocol, int flags);
 			AddrList(const char *address, uint16 port, int family, int type, int protocol, int flags);

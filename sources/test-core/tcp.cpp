@@ -107,7 +107,7 @@ namespace
 					const uintPtr a = des.available();
 					if (a)
 					{
-						const uintPtr s = a > 10 ? randomRange(uintPtr(5), a) : a;
+						const uintPtr s = a > 10 ? randomRange(uintPtr(5), min(a, uintPtr(1000))) : a;
 						conn->write(des.read(s));
 					}
 				}

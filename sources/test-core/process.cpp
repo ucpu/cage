@@ -76,13 +76,5 @@ void testProcess()
 		auto output = prg->readAll();
 		CAGE_TEST(output.size() > 100);
 	}
-
-	{
-		CAGE_TESTCASE("readAll (after wait)");
-		Holder<Process> prg = newProcess(cmdLs);
-		prg->wait(); // let the process finish
-		auto output = prg->readAll();
-		CAGE_TEST(output.size() > 100);
-	}
 }
 

@@ -58,6 +58,15 @@ void testFiles()
 	}
 
 	{
+		CAGE_TESTCASE("readAll from file");
+		Holder<File> f = readFile("testdir/files/1");
+		CAGE_TEST(f);
+		CAGE_TEST(f->size() == (uint64)FILE_BLOCKS * (uint64)BLOCK_SIZE);
+		auto tmp = f->readAll();
+		CAGE_TEST(tmp.size() == (uint64)FILE_BLOCKS * (uint64)BLOCK_SIZE);
+	}
+
+	{
 		CAGE_TESTCASE("create several files");
 		for (uint32 i = 2; i <= 32; i++)
 			writeFile(pathJoin("testdir/files", stringizer() + i));
