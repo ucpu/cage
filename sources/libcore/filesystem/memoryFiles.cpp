@@ -9,22 +9,14 @@ namespace cage
 		{
 		public:
 			const FileMode myMode;
-			MemoryBuffer persistent;
-			MemoryBuffer &buf;
+			Holder<MemoryBuffer> buf;
 			uintPtr pos = 0;
 
-			FileBuffer(MemoryBuffer *buffer, const FileMode &mode) : myMode(mode), buf(*buffer)
+			FileBuffer(Holder<MemoryBuffer> buffer, const FileMode &mode) : myMode(mode), buf(std::move(buffer))
 			{
 				CAGE_ASSERT(mode.valid());
 				if (mode.append)
-					pos = buf.size();
-			}
-
-			FileBuffer(MemoryBuffer &&buffer, const FileMode &mode) : myMode(mode), persistent(std::move(buffer)), buf(persistent)
-			{
-				CAGE_ASSERT(mode.valid());
-				if (mode.append)
-					pos = buf.size();
+					pos = buf->size();
 			}
 
 			void read(PointerRange<char> buffer) override
@@ -33,9 +25,9 @@ namespace cage
 					CAGE_THROW_CRITICAL(NotImplemented, "reading from write-only memory file");
 				char *data = buffer.data();
 				const uintPtr size = buffer.size();
-				if (pos + size > buf.size())
+				if (pos + size > buf->size())
 					CAGE_THROW_ERROR(Exception, "reading beyond buffer");
-				detail::memcpy(data, buf.data() + pos, size);
+				detail::memcpy(data, buf->data() + pos, size);
 				pos += size;
 			}
 
@@ -45,15 +37,15 @@ namespace cage
 					CAGE_THROW_CRITICAL(NotImplemented, "writing to read-only memory file");
 				const char *data = buffer.data();
 				const uintPtr size = buffer.size();
-				if (pos + size > buf.size())
-					buf.resizeSmart(pos + size);
-				detail::memcpy(buf.data() + pos, data, size);
+				if (pos + size > buf->size())
+					buf->resizeSmart(pos + size);
+				detail::memcpy(buf->data() + pos, data, size);
 				pos += size;
 			}
 
 			void seek(uintPtr position) override
 			{
-				CAGE_ASSERT(position <= buf.size());
+				CAGE_ASSERT(position <= buf->size());
 				pos = position;
 			}
 
@@ -69,7 +61,7 @@ namespace cage
 
 			uintPtr size() override
 			{
-				return buf.size();
+				return buf->size();
 			}
 
 			FileMode mode() const override
@@ -82,10 +74,10 @@ namespace cage
 		{
 		public:
 			const FileMode myMode;
-			const PointerRange<char> buf;
+			Holder<PointerRange<char>> buf;
 			uintPtr pos = 0;
 
-			FileRange(PointerRange<char> buffer, const FileMode &mode) : myMode(mode), buf(buffer)
+			FileRange(Holder<PointerRange<char>> buffer, const FileMode &mode) : buf(std::move(buffer)), myMode(mode)
 			{
 				CAGE_ASSERT(mode.valid());
 				if (mode.append)
@@ -144,28 +136,37 @@ namespace cage
 		};
 	}
 
-	Holder<File> newFileBuffer(MemoryBuffer *buffer, const FileMode &mode)
+	Holder<File> newFileBuffer(Holder<PointerRange<const char>> buffer)
 	{
-		return systemArena().createImpl<File, FileBuffer>(buffer, mode);
+		PointerRange<char> *r = (PointerRange<char>*)+buffer;
+		Holder<PointerRange<char>> tmp = Holder<PointerRange<char>>(r, std::move(buffer));
+		return newFileBuffer(std::move(tmp), FileMode(true, false));
 	}
 
-	Holder<File> newFileBuffer(MemoryBuffer &&buffer, const FileMode &mode)
+	Holder<File> newFileBuffer(Holder<PointerRange<char>> buffer, const FileMode &mode)
+	{
+		return systemArena().createImpl<File, FileRange>(std::move(buffer), mode);
+	}
+
+	Holder<File> newFileBuffer(Holder<const MemoryBuffer> buffer)
+	{
+		MemoryBuffer *b = (MemoryBuffer *)+buffer;
+		return newFileBuffer(Holder<MemoryBuffer>(b, std::move(buffer)), FileMode(true, false));
+	}
+
+	Holder<File> newFileBuffer(Holder<MemoryBuffer> buffer, const FileMode &mode)
 	{
 		return systemArena().createImpl<File, FileBuffer>(std::move(buffer), mode);
 	}
 
-	Holder<File> newFileBuffer(PointerRange<char> buffer, const FileMode &mode)
+	Holder<File> newFileBuffer(MemoryBuffer &&buffer, const FileMode &mode)
 	{
-		return systemArena().createImpl<File, FileRange>(buffer, mode);
-	}
-
-	Holder<File> newFileBuffer(PointerRange<const char> buffer)
-	{
-		return systemArena().createImpl<File, FileRange>(PointerRange<char>((char*)buffer.begin(), (char*)buffer.end()), FileMode(true, false));
+		Holder<MemoryBuffer> tmp = systemArena().createHolder<MemoryBuffer>(std::move(buffer));
+		return newFileBuffer(std::move(tmp), mode);
 	}
 
 	Holder<File> newFileBuffer()
 	{
-		return systemArena().createImpl<File, FileBuffer>(MemoryBuffer(), FileMode(true, true));
+		return newFileBuffer(MemoryBuffer());
 	}
 }

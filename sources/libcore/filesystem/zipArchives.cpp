@@ -631,13 +631,13 @@ namespace cage
 					r.compressedSize = 0;
 					r.modified = true;
 					modified = true;
-					src = newFileBuffer(&buff);
+					src = newFileBuffer(Holder<MemoryBuffer>(&buff, nullptr));
 				}
 				else
 				{ // read or update
 					CAGE_ASSERT(!modified);
 					if (r.modified)
-						src = newFileBuffer(PointerRange<char>(r.newContent), FileMode(true, false));
+						src = newFileBuffer(systemArena().createHolder<PointerRange<char>>(PointerRange<char>(r.newContent)), FileMode(true, false));
 					else
 						src = newProxyFile(+a->mutex, +a->src, r.getFileStartOffset(), r.uncompressedSize);
 				}
@@ -678,7 +678,7 @@ namespace cage
 					CAGE_ASSERT(tmp.size() == buff.size());
 					detail::memcpy(buff.data(), tmp.data(), buff.size());
 				}
-				src = newFileBuffer(&buff);
+				src = newFileBuffer(Holder<MemoryBuffer>(&buff, nullptr));
 				src->seek(pos);
 				modified = true;
 			}

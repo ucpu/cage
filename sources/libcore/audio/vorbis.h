@@ -14,7 +14,7 @@ namespace cage
 		uint32 channels = 0;
 		uint32 sampleRate = 0;
 
-		VorbisDecoder(Holder<File> &&file);
+		VorbisDecoder(Holder<File> file);
 		~VorbisDecoder();
 		void seek(uintPtr frame);
 		uintPtr tell() const;

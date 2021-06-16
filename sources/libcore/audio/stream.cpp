@@ -12,7 +12,7 @@ namespace cage
 		{
 		case AudioFormatEnum::Vorbis:
 		{
-			VorbisDecoder dec(newFileBuffer(impl->mem));
+			VorbisDecoder dec(newFileBuffer(Holder<const MemoryBuffer>(&impl->mem, nullptr)));
 			dec.seek(startFrame);
 			dec.decode(buffer);
 		} break;
@@ -38,7 +38,7 @@ namespace cage
 			// vorbis -> float -> format
 			MemoryBuffer tmp;
 			std::swap(tmp, snd->mem);
-			VorbisDecoder dec(newFileBuffer(tmp, FileMode(true, false)));
+			VorbisDecoder dec(newFileBuffer(Holder<MemoryBuffer>(&tmp, nullptr), FileMode(true, false)));
 			CAGE_ASSERT(dec.frames == snd->frames);
 			CAGE_ASSERT(dec.channels == snd->channels);
 			snd->initialize(dec.frames, dec.channels, dec.sampleRate, AudioFormatEnum::Float);
@@ -63,7 +63,7 @@ namespace cage
 		Holder<Audio> poly = newAudio();
 		AudioImpl *dst = (AudioImpl *)+poly;
 		dst->initialize(frames, src->channels, src->sampleRate, AudioFormatEnum::Float);
-		VorbisDecoder dec(newFileBuffer(src->mem));
+		VorbisDecoder dec(newFileBuffer(Holder<const MemoryBuffer>(&src->mem, nullptr)));
 		dec.seek(offset);
 		dec.decode(bufferCast<float, char>(dst->mem));
 		return poly;

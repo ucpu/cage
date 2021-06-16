@@ -218,12 +218,12 @@ void testFiles()
 	{
 		CAGE_TESTCASE("in-memory files");
 		{
-			Holder<File> f = newFileBuffer(&data, FileMode(true, false));
+			Holder<File> f = newFileBuffer(Holder<MemoryBuffer>(&data, nullptr), FileMode(true, false));
 			readInMemoryFile(f);
 		}
 		{
-			const PointerRange<char> pr = PointerRange<char>(data); // store the range in variable instead of passing it directly - it would trigger an error in visual studio 2017 and crash at runtime
-			Holder<File> f = newFileBuffer(pr);
+			auto pr = PointerRange<char>(data);
+			Holder<File> f = newFileBuffer(Holder<PointerRange<char>>(&pr, nullptr)); // not good practice - the pointer to pr is dangerous
 			readInMemoryFile(f);
 		}
 		{
