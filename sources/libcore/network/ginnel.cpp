@@ -192,7 +192,7 @@ namespace cage
 		static_assert(!comp(5, 5));
 		static_assert(!comp(60000, 60000));
 
-		FlatSet<uint16> decodeAck(uint16 seqn, uint32 bits)
+		constexpr FlatSet<uint16> decodeAck(uint16 seqn, uint32 bits)
 		{
 			FlatSet<uint16> result;
 			result.reserve(32);
@@ -208,7 +208,7 @@ namespace cage
 			return result;
 		}
 
-		uint32 encodeAck(uint16 seqn, const FlatSet<uint16> &bits)
+		constexpr uint32 encodeAck(uint16 seqn, const FlatSet<uint16> &bits)
 		{
 			uint32 result = 0;
 			for (uint16 i = 0; i < 32; i++)
@@ -223,20 +223,11 @@ namespace cage
 			return result;
 		}
 
-#ifdef CAGE_DEBUG
-		class AckTester
-		{
-		public:
-			AckTester()
-			{
-				CAGE_ASSERT(decodeAck(1000, encodeAck(1000, { 999 })) == FlatSet<uint16>({ 999 }));
-				CAGE_ASSERT(decodeAck(1000, encodeAck(1000, { 1000 })) == FlatSet<uint16>({ 1000 }));
-				CAGE_ASSERT(decodeAck(1000, encodeAck(1000, { 1000, 999 })) == FlatSet<uint16>({ 1000, 999 }));
-				CAGE_ASSERT(decodeAck(1000, encodeAck(1000, { 1000, 999, 990 })) == FlatSet<uint16>({ 1000, 999, 990 }));
-				CAGE_ASSERT(decodeAck(5, encodeAck(5, { 1, 65533 })) == FlatSet<uint16>({ 1, 65533 }));
-			}
-		} ackTesterInstance;
-#endif // CAGE_DEBUG
+		static_assert(decodeAck(1000, encodeAck(1000, { 999 })) == FlatSet<uint16>({ 999 }));
+		static_assert(decodeAck(1000, encodeAck(1000, { 1000 })) == FlatSet<uint16>({ 1000 }));
+		static_assert(decodeAck(1000, encodeAck(1000, { 1000, 999 })) == FlatSet<uint16>({ 1000, 999 }));
+		static_assert(decodeAck(1000, encodeAck(1000, { 1000, 999, 990 })) == FlatSet<uint16>({ 1000, 999, 990 }));
+		static_assert(decodeAck(5, encodeAck(5, { 1, 65533 })) == FlatSet<uint16>({ 1, 65533 }));
 
 		struct PackAck
 		{
