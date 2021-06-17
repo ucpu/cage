@@ -71,6 +71,6 @@ namespace cage
 
 	Holder<SpeakerList> newSpeakerList()
 	{
-		return systemArena().createImpl<SpeakerList, SpeakerListImpl>();
+		return systemMemory().createImpl<SpeakerList, SpeakerListImpl>();
 	}
 }

@@ -338,7 +338,7 @@ namespace
 		writeLine(string("ref = ") + n);
 	}
 
-	vec3 fixUnitVector(vec3 n, Exception::StringLiteral name)
+	vec3 fixUnitVector(vec3 n, StringLiteral name)
 	{
 		if (abs(lengthSquared(n) - 1) > 1e-3)
 		{

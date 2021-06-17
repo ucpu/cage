@@ -216,7 +216,7 @@ namespace cage
 			{
 				Sock s = ss.accept();
 				if (s.isValid())
-					return systemArena().createImpl<TcpConnection, TcpConnectionImpl>(std::move(s));
+					return systemMemory().createImpl<TcpConnection, TcpConnectionImpl>(std::move(s));
 			}
 			catch (const cage::Exception &)
 			{
@@ -229,11 +229,11 @@ namespace cage
 
 	Holder<TcpConnection> newTcpConnection(const string &address, uint16 port)
 	{
-		return systemArena().createImpl<TcpConnection, TcpConnectionImpl>(address, port);
+		return systemMemory().createImpl<TcpConnection, TcpConnectionImpl>(address, port);
 	}
 
 	Holder<TcpServer> newTcpServer(uint16 port)
 	{
-		return systemArena().createImpl<TcpServer, TcpServerImpl>(port);
+		return systemMemory().createImpl<TcpServer, TcpServerImpl>(port);
 	}
 }

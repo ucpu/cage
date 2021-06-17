@@ -240,7 +240,7 @@ namespace cage
 
 	Holder<SkeletalAnimation> newSkeletalAnimation()
 	{
-		return systemArena().createImpl<SkeletalAnimation, SkeletalAnimationImpl>();
+		return systemMemory().createImpl<SkeletalAnimation, SkeletalAnimationImpl>();
 	}
 
 	namespace
@@ -322,7 +322,7 @@ namespace cage
 
 	Holder<SkeletonRig> newSkeletonRig()
 	{
-		return systemArena().createImpl<SkeletonRig, SkeletonRigImpl>();
+		return systemMemory().createImpl<SkeletonRig, SkeletonRigImpl>();
 	}
 
 	namespace

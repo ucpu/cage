@@ -142,23 +142,23 @@ namespace cage
 			}
 		}
 
-		void runtimeAssertFailure(const char *expt, const char *file, uintPtr line, const char *function)
+		void runtimeAssertFailure(StringLiteral expt, StringLiteral file, uintPtr line, StringLiteral function)
 		{
 			char buffer[2048];
 			buffer[0] = 0;
 			std::strcat(buffer, "assert '");
-			std::strcat(buffer, expt);
+			std::strcat(buffer, expt.str);
 			std::strcat(buffer, "' failed");
 			assertOutputLine(buffer, false);
 
 			buffer[0] = 0;
-			std::strcat(buffer, file);
+			std::strcat(buffer, file.str);
 			std::strcat(buffer, "(");
 			char linebuf[20];
 			toString(linebuf, 20, line);
 			std::strcat(buffer, linebuf);
 			std::strcat(buffer, ") - ");
-			std::strcat(buffer, function);
+			std::strcat(buffer, function.str);
 			assertOutputLine(buffer);
 
 			if (isLocal().assertDeadly && isGlobalAssertDeadly())
@@ -170,23 +170,23 @@ namespace cage
 
 	namespace
 	{
-		static_assert(sizeof(uint8) == 1, "assert size uint8");
-		static_assert(sizeof(uint16) == 2, "assert size uint16");
-		static_assert(sizeof(uint32) == 4, "assert size uint32");
-		static_assert(sizeof(uint64) == 8, "assert size uint64");
-		static_assert(sizeof(uintPtr) == sizeof(void*), "assert size uintPtr");
-		static_assert(sizeof(sint8) == 1, "assert size sint8");
-		static_assert(sizeof(sint16) == 2, "assert size sint16");
-		static_assert(sizeof(sint32) == 4, "assert size sint32");
-		static_assert(sizeof(sint64) == 8, "assert size sint64");
-		static_assert(sizeof(sintPtr) == sizeof(void*), "assert size sintPtr");
-		static_assert(sizeof(bool) == 1, "assert size bool");
+		static_assert(sizeof(uint8) == 1);
+		static_assert(sizeof(uint16) == 2);
+		static_assert(sizeof(uint32) == 4);
+		static_assert(sizeof(uint64) == 8);
+		static_assert(sizeof(uintPtr) == sizeof(void*));
+		static_assert(sizeof(sint8) == 1);
+		static_assert(sizeof(sint16) == 2);
+		static_assert(sizeof(sint32) == 4);
+		static_assert(sizeof(sint64) == 8);
+		static_assert(sizeof(sintPtr) == sizeof(void*));
+		static_assert(sizeof(bool) == 1);
 
-		static_assert(std::is_trivially_copy_constructible<string>::value, "string not trivial");
-		static_assert(std::is_trivially_move_constructible<string>::value, "string not trivial");
-		static_assert(std::is_trivially_copy_assignable<string>::value, "string not trivial");
-		static_assert(std::is_trivially_move_assignable<string>::value, "string not trivial");
-		static_assert(std::is_trivially_copyable<string>::value, "string not trivial");
-		static_assert(std::is_trivially_destructible<string>::value, "string not trivial");
+		static_assert(std::is_trivially_copy_constructible_v<string>);
+		static_assert(std::is_trivially_move_constructible_v<string>);
+		static_assert(std::is_trivially_copy_assignable_v<string>);
+		static_assert(std::is_trivially_move_assignable_v<string>);
+		static_assert(std::is_trivially_copyable_v<string>);
+		static_assert(std::is_trivially_destructible_v<string>);
 	}
 }

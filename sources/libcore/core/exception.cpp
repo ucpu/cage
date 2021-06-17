@@ -51,7 +51,7 @@ namespace cage
 
 	namespace privat
 	{
-		void makeLogThrow(const char *file, uint32 line, const char *function, const string &message) noexcept
+		void makeLogThrow(StringLiteral file, uint32 line, StringLiteral function, const string &message) noexcept
 		{
 			if (SeverityEnum::Note < getExceptionSilenceSeverity())
 				return;
@@ -77,14 +77,14 @@ namespace cage
 
 	void Exception::log()
 	{
-		::cage::privat::makeLog(file, line, function, severity, "exception", message, false, false);
+		::cage::privat::makeLog(file, line, function, severity, "exception", message.str, false, false);
 	}
 
 	// NotImplemented
 
 	void NotImplemented::log()
 	{
-		::cage::privat::makeLog(file, line, function, severity, "exception", string() + "not implemented: '" + message + "'", false, false);
+		::cage::privat::makeLog(file, line, function, severity, "exception", string() + "not implemented: '" + message.str + "'", false, false);
 	}
 
 	// SystemError
@@ -95,6 +95,6 @@ namespace cage
 	void SystemError::log()
 	{
 		::cage::privat::makeLog(file, line, function, SeverityEnum::Note, "exception", stringizer() + "code: " + code, false, false);
-		::cage::privat::makeLog(file, line, function, severity, "exception", message, false, false);
+		::cage::privat::makeLog(file, line, function, severity, "exception", message.str, false, false);
 	}
 }

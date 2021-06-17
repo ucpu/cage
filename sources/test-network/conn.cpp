@@ -134,5 +134,5 @@ bool Conn::process()
 
 Holder<Conn> newConn(Holder<UdpConnection> udp)
 {
-	return systemArena().createImpl<Conn, ConnImpl>(std::move(udp));
+	return systemMemory().createImpl<Conn, ConnImpl>(std::move(udp));
 }

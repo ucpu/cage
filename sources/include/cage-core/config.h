@@ -13,7 +13,7 @@ namespace cage
 	// structures Config* store a reference to the config variable and are very fast to access, but are not thread safe
 	// functions ConfigSet* and ConfigGet* are simpler to use for one-time access
 
-	// assigning a value to config variable also changes the type of the variable
+	// assigning a value to config variable also changes type of the variable
 	// reading a value from config variable converts the value from the type of the variable to the requested type, and does not change the type of the variable itself
 
 	enum class ConfigTypeEnum : uint32

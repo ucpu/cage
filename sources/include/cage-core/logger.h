@@ -11,9 +11,9 @@ namespace cage
 		{
 			string message;
 			string currentThreadName;
-			const char *component = "";
-			const char *file = nullptr;
-			const char *function = nullptr;
+			StringLiteral component = "";
+			StringLiteral file = "";
+			StringLiteral function = "";
 			uint64 time = 0;
 			uint64 createThreadId = 0;
 			uint64 currentThreadId = 0;
@@ -49,6 +49,7 @@ namespace cage
 	};
 
 	CAGE_CORE_API Holder<LoggerOutputFile> newLoggerOutputFile(const string &path, bool append, bool realFilesystemOnly = true);
+	CAGE_CORE_API Holder<LoggerOutputFile> newLoggerOutputFile(Holder<File> file);
 
 	namespace detail
 	{

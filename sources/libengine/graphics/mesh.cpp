@@ -452,6 +452,6 @@ namespace cage
 
 	Holder<Model> newModel()
 	{
-		return systemArena().createImpl<Model, ModelImpl>();
+		return systemMemory().createImpl<Model, ModelImpl>();
 	}
 }

@@ -23,7 +23,7 @@ extern string inputFile;
 extern string inputSpec;
 extern string inputIdentifier;
 
-extern const char *logComponentName;
+extern StringLiteral logComponentName;
 
 void writeLine(const string &other);
 string properties(const string &name);

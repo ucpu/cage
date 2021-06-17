@@ -26,11 +26,11 @@ namespace
 	std::vector<Holder<string>> genHolders()
 	{
 		std::vector<Holder<string>> res;
-		res.push_back(systemArena().createHolder<string>("ar"));
-		res.push_back(systemArena().createHolder<string>("ma"));
+		res.push_back(systemMemory().createHolder<string>("ar"));
+		res.push_back(systemMemory().createHolder<string>("ma"));
 		res.push_back({});
-		res.push_back(systemArena().createHolder<string>("ge"));
-		res.push_back(systemArena().createHolder<string>("don"));
+		res.push_back(systemMemory().createHolder<string>("ge"));
+		res.push_back(systemMemory().createHolder<string>("don"));
 		return res;
 	}
 

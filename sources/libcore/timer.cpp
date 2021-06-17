@@ -97,6 +97,6 @@ namespace cage
 
 	Holder<Timer> newTimer()
 	{
-		return systemArena().createImpl<Timer, TimerImpl>();
+		return systemMemory().createImpl<Timer, TimerImpl>();
 	}
 }

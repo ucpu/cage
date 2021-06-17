@@ -94,6 +94,6 @@ namespace cage
 
 	Holder<RectPacking> newRectPacking()
 	{
-		return systemArena().createImpl<RectPacking, RectPackingImpl>();
+		return systemMemory().createImpl<RectPacking, RectPackingImpl>();
 	}
 }

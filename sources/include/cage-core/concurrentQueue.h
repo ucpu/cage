@@ -3,7 +3,7 @@
 
 #include "concurrent.h"
 
-#include <list>
+#include <plf_list.h>
 
 namespace cage
 {
@@ -145,7 +145,7 @@ namespace cage
 	private:
 		Holder<Mutex> mut;
 		Holder<ConditionalVariableBase> writer, reader;
-		std::list<T> items;
+		plf::list<T> items;
 		const uint32 maxItems = m;
 		bool stop = false;
 	};

@@ -70,7 +70,7 @@ namespace
 					Holder<TcpConnection> c = server->accept();
 					if (c)
 					{
-						echos[i] = systemArena().createHolder<Echo>(std::move(c));
+						echos[i] = systemMemory().createHolder<Echo>(std::move(c));
 						break;
 					}
 					threadYield();

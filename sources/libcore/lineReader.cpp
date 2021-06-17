@@ -81,11 +81,11 @@ namespace cage
 
 	Holder<LineReader> newLineReader(PointerRange<const char> buffer)
 	{
-		return systemArena().createImpl<LineReader, LineReaderImpl>(buffer.data(), buffer.size());
+		return systemMemory().createImpl<LineReader, LineReaderImpl>(buffer.data(), buffer.size());
 	}
 
 	Holder<LineReader> newLineReader(MemoryBuffer &&buffer)
 	{
-		return systemArena().createImpl<LineReader, LineReaderImpl>(std::move(buffer));
+		return systemMemory().createImpl<LineReader, LineReaderImpl>(std::move(buffer));
 	}
 }

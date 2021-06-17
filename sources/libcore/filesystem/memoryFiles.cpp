@@ -145,7 +145,7 @@ namespace cage
 
 	Holder<File> newFileBuffer(Holder<PointerRange<char>> buffer, const FileMode &mode)
 	{
-		return systemArena().createImpl<File, FileRange>(std::move(buffer), mode);
+		return systemMemory().createImpl<File, FileRange>(std::move(buffer), mode);
 	}
 
 	Holder<File> newFileBuffer(Holder<const MemoryBuffer> buffer)
@@ -156,12 +156,12 @@ namespace cage
 
 	Holder<File> newFileBuffer(Holder<MemoryBuffer> buffer, const FileMode &mode)
 	{
-		return systemArena().createImpl<File, FileBuffer>(std::move(buffer), mode);
+		return systemMemory().createImpl<File, FileBuffer>(std::move(buffer), mode);
 	}
 
 	Holder<File> newFileBuffer(MemoryBuffer &&buffer, const FileMode &mode)
 	{
-		Holder<MemoryBuffer> tmp = systemArena().createHolder<MemoryBuffer>(std::move(buffer));
+		Holder<MemoryBuffer> tmp = systemMemory().createHolder<MemoryBuffer>(std::move(buffer));
 		return newFileBuffer(std::move(tmp), mode);
 	}
 

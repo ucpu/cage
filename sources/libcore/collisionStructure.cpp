@@ -306,11 +306,11 @@ namespace cage
 
 	Holder<CollisionStructure> newCollisionStructure(const CollisionStructureCreateConfig &config)
 	{
-		return systemArena().createImpl<CollisionStructure, CollisionDataImpl>(config);
+		return systemMemory().createImpl<CollisionStructure, CollisionDataImpl>(config);
 	}
 
 	Holder<CollisionQuery> newCollisionQuery(Holder<const CollisionStructure> structure)
 	{
-		return systemArena().createImpl<CollisionQuery, CollisionQueryImpl>(std::move(structure).cast<const CollisionDataImpl>());
+		return systemMemory().createImpl<CollisionQuery, CollisionQueryImpl>(std::move(structure).cast<const CollisionDataImpl>());
 	}
 }

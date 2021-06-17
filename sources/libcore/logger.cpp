@@ -69,10 +69,10 @@ namespace cage
 			}
 		};
 
-		class ApplicationLogger
+		class GlobalLogger
 		{
 		public:
-			ApplicationLogger()
+			GlobalLogger()
 			{
 				if (detail::isDebugging())
 				{
@@ -101,10 +101,10 @@ namespace cage
 			Holder<Logger> loggerFile;
 		};
 
-		class ApplicationLogInitializer
+		class GlobalLoggerInitializer
 		{
 		public:
-			ApplicationLogInitializer()
+			GlobalLoggerInitializer()
 			{
 				{
 					string version = "cage version: ";
@@ -173,7 +173,7 @@ namespace cage
 				currentThreadName(pathExtractFilename(detail::executableFullPathNoExe()));
 			}
 
-			~ApplicationLogInitializer()
+			~GlobalLoggerInitializer()
 			{
 				uint64 duration = applicationTime();
 				uint32 micros = numeric_cast<uint32>(duration % 1000000);
@@ -186,7 +186,7 @@ namespace cage
 				duration /= 24;
 				CAGE_LOG(SeverityEnum::Info, "log", stringizer() + "total duration: " + duration + " days, " + hours + " hours, " + mins + " minutes, " + secs + " seconds and " + micros + " microseconds");
 			}
-		} applicationLogInitializerInstance;
+		} globalLoggerInitializerInstance;
 
 		void logFormatFileImpl(const detail::LoggerInfo &info, Delegate<void(const string &)> output, bool longer)
 		{
@@ -200,11 +200,11 @@ namespace cage
 				res += fill(string(stringizer() + info.time), 12) + " ";
 				res += fill(string(info.currentThreadName), 26) + " ";
 				res += detail::severityToString(info.severity) + " ";
-				res += fill(string(info.component), 20) + " ";
+				res += fill(string(info.component.str), 20) + " ";
 				res += info.message;
-				if (longer && info.file)
+				if (longer && info.file.str)
 				{
-					string flf = stringizer() + " " + info.file + ":" + info.line + " (" + info.function + ")";
+					string flf = stringizer() + " " + info.file.str + ":" + info.line + " (" + info.function.str + ")";
 					if (res.length() + flf.length() + 10 < string::MaxLength)
 					{
 						res += fill(string(), string::MaxLength - flf.length() - res.length() - 5);
@@ -229,20 +229,25 @@ namespace cage
 					f = newFile(path, fm);
 			}
 
+			LoggerOutputFileImpl(Holder<File> file) : f(std::move(file))
+			{
+				CAGE_ASSERT(f->mode().write);
+			}
+
 			Holder<File> f;
 		};
 	}
 
 	Holder<Logger> newLogger()
 	{
-		return systemArena().createImpl<Logger, LoggerImpl>();
+		return systemMemory().createImpl<Logger, LoggerImpl>();
 	}
 
 	namespace detail
 	{
 		Logger *globalLogger()
 		{
-			static ApplicationLogger *appLoggerInstance = new ApplicationLogger(); // this leak is intentional
+			static GlobalLogger *appLoggerInstance = new GlobalLogger(); // this leak is intentional
 			return +appLoggerInstance->loggerFile;
 		}
 
@@ -268,7 +273,7 @@ namespace cage
 			}
 			catch (const cage::Exception &e)
 			{
-				CAGE_LOG(SeverityEnum::Info, "exception", stringizer() + "cage exception: " + e.message);
+				CAGE_LOG(SeverityEnum::Info, "exception", stringizer() + "cage exception: " + e.message.str);
 			}
 			catch (const std::exception &e)
 			{
@@ -291,7 +296,7 @@ namespace cage
 
 	namespace privat
 	{
-		uint64 makeLog(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept
+		uint64 makeLog(StringLiteral file, uint32 line, StringLiteral function, SeverityEnum severity, StringLiteral component, const string &message, bool continuous, bool debug) noexcept
 		{
 			detail::globalLogger(); // ensure global logger was initialized
 
@@ -385,7 +390,12 @@ namespace cage
 
 	Holder<LoggerOutputFile> newLoggerOutputFile(const string &path, bool append, bool realFilesystemOnly)
 	{
-		return systemArena().createImpl<LoggerOutputFile, LoggerOutputFileImpl>(path, append, realFilesystemOnly);
+		return systemMemory().createImpl<LoggerOutputFile, LoggerOutputFileImpl>(path, append, realFilesystemOnly);
+	}
+
+	Holder<LoggerOutputFile> newLoggerOutputFile(Holder<File> file)
+	{
+		return systemMemory().createImpl<LoggerOutputFile, LoggerOutputFileImpl>(std::move(file));
 	}
 
 	uint64 applicationTime()

@@ -127,7 +127,7 @@ namespace cage
 				return ret;
 			}
 
-			void error(Exception::StringLiteral msg)
+			void error(StringLiteral msg)
 			{
 				const DWORD err = GetLastError();
 				if (err == ERROR_BROKEN_PIPE)
@@ -427,6 +427,6 @@ namespace cage
 
 	Holder<Process> newProcess(const ProcessCreateConfig &config)
 	{
-		return systemArena().createImpl<Process, ProcessImpl>(config);
+		return systemMemory().createImpl<Process, ProcessImpl>(config);
 	}
 }

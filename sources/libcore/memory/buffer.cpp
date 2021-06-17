@@ -51,7 +51,7 @@ namespace cage
 			return;
 		if (size > cap)
 			cap = size;
-		data_ = (char*)systemArena().allocate(cap, sizeof(uintPtr));
+		data_ = (char*)systemMemory().allocate(cap, sizeof(uintPtr));
 		capacity_ = cap;
 		size_ = size;
 	}
@@ -117,7 +117,7 @@ namespace cage
 
 	void MemoryBuffer::free()
 	{
-		systemArena().deallocate(data_);
+		systemMemory().deallocate(data_);
 		data_ = nullptr;
 		capacity_ = size_ = 0;
 	}
@@ -130,7 +130,7 @@ namespace cage
 			PointerRange<char> range;
 		};
 
-		Holder<OwnedBufferRange> h = systemArena().createHolder<OwnedBufferRange>();
+		Holder<OwnedBufferRange> h = systemMemory().createHolder<OwnedBufferRange>();
 		h->buff = std::move(*this);
 		h->range = h->buff;
 		return Holder<PointerRange<char>>(&h->range, std::move(h));

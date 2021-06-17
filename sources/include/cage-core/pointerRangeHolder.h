@@ -35,7 +35,7 @@ namespace cage
 				PointerRange<T> range;
 			};
 
-			Holder<OwnedVector> h = systemArena().createHolder<OwnedVector>();
+			Holder<OwnedVector> h = systemMemory().createHolder<OwnedVector>();
 			std::swap(*this, h->vec);
 			h->range = h->vec;
 			return Holder<PointerRange<T>>(&h->range, std::move(h));

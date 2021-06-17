@@ -402,7 +402,7 @@ namespace cage
 
 	Holder<File> realNewFile(const string &path, const FileMode &mode)
 	{
-		return systemArena().createImpl<File, FileReal>(path, mode);
+		return systemMemory().createImpl<File, FileReal>(path, mode);
 	}
 
 	void realTryFlushFile(File *f_)
@@ -502,7 +502,7 @@ namespace cage
 
 	Holder<DirectoryList> realNewDirectoryList(const string &path)
 	{
-		return systemArena().createImpl<DirectoryList, DirectoryListReal>(path);
+		return systemMemory().createImpl<DirectoryList, DirectoryListReal>(path);
 	}
 
 	namespace
@@ -567,7 +567,7 @@ namespace cage
 
 			FilesystemWatcherImpl()
 			{
-				fw = systemArena().createHolder<FW::FileWatcher>();
+				fw = systemMemory().createHolder<FW::FileWatcher>();
 				clock = newTimer();
 			}
 
@@ -629,6 +629,6 @@ namespace cage
 
 	Holder<FilesystemWatcher> newFilesystemWatcher()
 	{
-		return systemArena().createImpl<FilesystemWatcher, FilesystemWatcherImpl>();
+		return systemMemory().createImpl<FilesystemWatcher, FilesystemWatcherImpl>();
 	}
 }

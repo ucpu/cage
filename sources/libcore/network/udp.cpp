@@ -1198,7 +1198,7 @@ namespace cage
 				}
 				try
 				{
-					auto c = systemArena().createHolder<UdpConnectionImpl>(sockGroup, acc);
+					auto c = systemMemory().createHolder<UdpConnectionImpl>(sockGroup, acc);
 					c->serviceReceiving();
 					if (!c->established)
 					{
@@ -1334,11 +1334,11 @@ namespace cage
 
 	Holder<UdpConnection> newUdpConnection(const string &address, uint16 port, uint64 timeout)
 	{
-		return systemArena().createImpl<UdpConnection, UdpConnectionImpl>(address, port, timeout);
+		return systemMemory().createImpl<UdpConnection, UdpConnectionImpl>(address, port, timeout);
 	}
 
 	Holder<UdpServer> newUdpServer(uint16 port)
 	{
-		return systemArena().createImpl<UdpServer, UdpServerImpl>(port);
+		return systemMemory().createImpl<UdpServer, UdpServerImpl>(port);
 	}
 }

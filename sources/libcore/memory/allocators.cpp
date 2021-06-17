@@ -1,6 +1,7 @@
 #include <cage-core/memoryAllocators.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/memoryUtils.h>
+#include <cage-core/memoryArena.h>
 #include <cage-core/math.h> // max
 
 #include <vector>
@@ -11,7 +12,7 @@ namespace cage
 	{
 		struct MemoryAllocatorLinearImpl : private Immovable
 		{
-			explicit MemoryAllocatorLinearImpl(const MemoryAllocatorLinearCreateConfig &config) : arena(this), config(config)
+			explicit MemoryAllocatorLinearImpl(const MemoryAllocatorLinearCreateConfig &config) : config(config)
 			{}
 
 			void updatePointers()
@@ -59,7 +60,7 @@ namespace cage
 				}
 			}
 
-			MemoryArena arena;
+			MemoryArena arena = MemoryArena(this);
 			const MemoryAllocatorLinearCreateConfig config;
 			std::vector<MemoryBuffer> blocks;
 			uintPtr where = 0; // pointer inside the current buffer where next allocation should start
@@ -76,7 +77,7 @@ namespace cage
 				sint32 cnt = 0;
 			};
 
-			explicit MemoryAllocatorStreamImpl(const MemoryAllocatorStreamCreateConfig &config) : arena(this), config(config)
+			explicit MemoryAllocatorStreamImpl(const MemoryAllocatorStreamCreateConfig &config) : config(config)
 			{}
 
 			void updatePointers()
@@ -90,10 +91,10 @@ namespace cage
 			void nextBuffer()
 			{
 				if (blocks.empty())
-					blocks.push_back(systemArena().createHolder<Block>(config.blockSize));
+					blocks.push_back(systemMemory().createHolder<Block>(config.blockSize));
 				index = (index + 1) % numeric_cast<uint32>(blocks.size());
 				if (blocks[index]->cnt != 0)
-					blocks.insert(blocks.begin() + index, systemArena().createHolder<Block>(config.blockSize));
+					blocks.insert(blocks.begin() + index, systemMemory().createHolder<Block>(config.blockSize));
 				updatePointers();
 			}
 
@@ -135,7 +136,7 @@ namespace cage
 				}
 			}
 
-			MemoryArena arena;
+			MemoryArena arena = MemoryArena(this);
 			const MemoryAllocatorStreamCreateConfig config;
 			std::vector<Holder<Block>> blocks;
 			uintPtr where = 0; // pointer inside the current buffer where next allocation should start
@@ -146,13 +147,13 @@ namespace cage
 
 	Holder<MemoryArena> newMemoryAllocatorLinear(const MemoryAllocatorLinearCreateConfig &config)
 	{
-		Holder<MemoryAllocatorLinearImpl> b = systemArena().createHolder<MemoryAllocatorLinearImpl>(config);
+		Holder<MemoryAllocatorLinearImpl> b = systemMemory().createHolder<MemoryAllocatorLinearImpl>(config);
 		return Holder<MemoryArena>(&b->arena, std::move(b));
 	}
 
 	Holder<MemoryArena> newMemoryAllocatorStream(const MemoryAllocatorStreamCreateConfig &config)
 	{
-		Holder<MemoryAllocatorStreamImpl> b = systemArena().createHolder<MemoryAllocatorStreamImpl>(config);
+		Holder<MemoryAllocatorStreamImpl> b = systemMemory().createHolder<MemoryAllocatorStreamImpl>(config);
 		return Holder<MemoryArena>(&b->arena, std::move(b));
 	}
 }

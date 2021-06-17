@@ -63,7 +63,7 @@ void testLruCache()
 		CAGE_TESTCASE("with holder");
 		LruCache<uint32, Holder<uint32>> cache(3);
 		CAGE_TEST(!cache.find(13));
-		Holder<uint32> setResult = cache.set(13, systemArena().createHolder<uint32>(42));
+		Holder<uint32> setResult = cache.set(13, systemMemory().createHolder<uint32>(42));
 		Holder<uint32> findResult = cache.find(13);
 		CAGE_TEST(findResult);
 		CAGE_TEST(*findResult == 42);

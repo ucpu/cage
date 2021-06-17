@@ -594,6 +594,6 @@ namespace cage
 
 	Holder<ShaderProgram> newShaderProgram()
 	{
-		return systemArena().createImpl<ShaderProgram, ShaderProgramImpl>();
+		return systemMemory().createImpl<ShaderProgram, ShaderProgramImpl>();
 	}
 }

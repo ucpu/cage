@@ -39,7 +39,7 @@ namespace
 	{
 		if (context->realName >= 5000)
 			CAGE_THROW_ERROR(Exception, "intentionally failed asset processing");
-		Holder<AssetCounter> h = systemArena().createHolder<AssetCounter>();
+		Holder<AssetCounter> h = systemMemory().createHolder<AssetCounter>();
 		context->assetHolder = std::move(h).cast<void>();
 	}
 
@@ -312,7 +312,7 @@ void testAssetManager()
 		CAGE_TESTCASE("fabricated");
 		Holder<AssetManager> man = instantiate();
 		{
-			Holder<AssetCounter> f = systemArena().createHolder<AssetCounter>();
+			Holder<AssetCounter> f = systemMemory().createHolder<AssetCounter>();
 			man->fabricate<AssetSchemeIndexCounter, AssetCounter>(10, std::move(f));
 		}
 		waitProcessing(man);
@@ -333,7 +333,7 @@ void testAssetManager()
 		CAGE_TEST(AssetCounter::counter == 1);
 		AssetCounter *ptr = nullptr;
 		{
-			Holder<AssetCounter> f = systemArena().createHolder<AssetCounter>();
+			Holder<AssetCounter> f = systemMemory().createHolder<AssetCounter>();
 			ptr = f.get();
 			man->fabricate<AssetSchemeIndexCounter, AssetCounter>(10, std::move(f));
 		}

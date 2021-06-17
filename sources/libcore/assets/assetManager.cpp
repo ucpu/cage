@@ -218,7 +218,7 @@ namespace cage
 				publicMutex = newRwMutex();
 				customProcessingQueues.resize(config.threadsMaxCount);
 				for (auto &it : customProcessingQueues)
-					it = systemArena().createHolder<Queue>();
+					it = systemMemory().createHolder<Queue>();
 				schemes.resize(config.schemesMaxCount);
 				maintenanceThread = newThread(Delegate<void()>().bind<AssetManagerImpl, &AssetManagerImpl::maintenanceEntry>(this), "asset maintenance");
 				diskLoadingThread = newThread(Delegate<void()>().bind<AssetManagerImpl, &AssetManagerImpl::diskLoadingEntry>(this), "asset disk loading");
@@ -281,7 +281,7 @@ namespace cage
 
 			void dereference(void *ptr)
 			{
-				Holder<Unloading> u = systemArena().createHolder<Unloading>(&workingCounter);
+				Holder<Unloading> u = systemMemory().createHolder<Unloading>(&workingCounter);
 				u->ptr = ptr;
 				maintenanceQueue.push(std::move(u).cast<WorkingAsset>());
 			}
@@ -307,7 +307,7 @@ namespace cage
 
 				if (c.references == 0)
 				{
-					Holder<Unloading> u = systemArena().createHolder<Unloading>(&workingCounter);
+					Holder<Unloading> u = systemMemory().createHolder<Unloading>(&workingCounter);
 					u->asset = ass.share();
 					enqueueForDeprocessing(std::move(u).cast<WorkingAsset>());
 				}
@@ -323,7 +323,7 @@ namespace cage
 								impl->dereference(ass);
 							}
 						};
-						Holder<PublicAssetReference> ctrl = systemArena().createHolder<PublicAssetReference>();
+						Holder<PublicAssetReference> ctrl = systemMemory().createHolder<PublicAssetReference>();
 						ctrl->ass = +ass;
 						ctrl->impl = this;
 						ass->ref = Holder<void>(ass->assetHolder ? +ass->assetHolder : (void *)1, std::move(ctrl));
@@ -490,7 +490,7 @@ namespace cage
 
 			void add(uint32 assetName)
 			{
-				Holder<Command> cmd = systemArena().createHolder<Command>(&workingCounter);
+				Holder<Command> cmd = systemMemory().createHolder<Command>(&workingCounter);
 				cmd->realName = assetName;
 				cmd->type = CommandEnum::Add;
 				maintenanceQueue.push(std::move(cmd).cast<WorkingAsset>());
@@ -498,7 +498,7 @@ namespace cage
 
 			void remove(uint32 assetName)
 			{
-				Holder<Command> cmd = systemArena().createHolder<Command>(&workingCounter);
+				Holder<Command> cmd = systemMemory().createHolder<Command>(&workingCounter);
 				cmd->realName = assetName;
 				cmd->type = CommandEnum::Remove;
 				maintenanceQueue.push(std::move(cmd).cast<WorkingAsset>());
@@ -506,7 +506,7 @@ namespace cage
 
 			void reload(uint32 assetName)
 			{
-				Holder<Command> cmd = systemArena().createHolder<Command>(&workingCounter);
+				Holder<Command> cmd = systemMemory().createHolder<Command>(&workingCounter);
 				cmd->realName = assetName;
 				cmd->type = CommandEnum::Reload;
 				maintenanceQueue.push(std::move(cmd).cast<WorkingAsset>());
@@ -527,7 +527,7 @@ namespace cage
 			void fabricate(uint32 scheme, uint32 assetName, const string &textName, Holder<void> &&value)
 			{
 				CAGE_ASSERT(scheme < schemes.size());
-				Holder<FabricateCommand> cmd = systemArena().createHolder<FabricateCommand>(&workingCounter);
+				Holder<FabricateCommand> cmd = systemMemory().createHolder<FabricateCommand>(&workingCounter);
 				cmd->realName = assetName;
 				cmd->textName = textName;
 				cmd->scheme = scheme;
@@ -724,7 +724,7 @@ namespace cage
 
 			if (!asset->dependencies.empty())
 			{
-				Holder<Waiting> w = systemArena().createHolder<Waiting>(&impl->workingCounter);
+				Holder<Waiting> w = systemMemory().createHolder<Waiting>(&impl->workingCounter);
 				w->asset = asset.share();
 				ScopeLock lock(impl->publicMutex, ReadLockTag());
 				for (uint32 d : asset->dependencies)
@@ -770,7 +770,7 @@ namespace cage
 			if (ptr)
 			{
 				auto &c = impl->privateIndex[((Asset *)ptr)->realName];
-				Holder<Unloading> u = systemArena().createHolder<Unloading>(&impl->workingCounter);
+				Holder<Unloading> u = systemMemory().createHolder<Unloading>(&impl->workingCounter);
 				for (Holder<Asset> &a : c.versions)
 					if (a.get() == ptr)
 						u->asset = a.share();
@@ -836,8 +836,8 @@ namespace cage
 					CAGE_LOG(SeverityEnum::Warning, "assetManager", stringizer() + "cannot reload asset " + realName + ", it is fabricated");
 					return; // if an existing asset was replaced with a fabricated one, it may not be reloaded with an asset from disk
 				}
-				auto l = systemArena().createHolder<Loading>(&impl->workingCounter);
-				l->asset = systemArena().createHolder<Asset>(realName, impl);
+				auto l = systemMemory().createHolder<Loading>(&impl->workingCounter);
+				l->asset = systemMemory().createHolder<Asset>(realName, impl);
 				c.versions.insert(c.versions.begin(), l->asset.share());
 				impl->diskLoadingQueue.push(std::move(l).cast<WorkingAsset>());
 			} break;
@@ -859,8 +859,8 @@ namespace cage
 				auto &c = impl->privateIndex[realName];
 				c.references++;
 				c.fabricated = true;
-				auto l = systemArena().createHolder<Loading>(&impl->workingCounter);
-				l->asset = systemArena().createHolder<Asset>(realName, impl);
+				auto l = systemMemory().createHolder<Loading>(&impl->workingCounter);
+				l->asset = systemMemory().createHolder<Asset>(realName, impl);
 				l->asset->textName = textName;
 				l->asset->scheme = scheme;
 				l->asset->assetHolder = std::move(holder);
@@ -965,7 +965,7 @@ namespace cage
 
 	Holder<AssetManager> newAssetManager(const AssetManagerCreateConfig &config)
 	{
-		return systemArena().createImpl<AssetManager, AssetManagerImpl>(config);
+		return systemMemory().createImpl<AssetManager, AssetManagerImpl>(config);
 	}
 
 	AssetHeader::AssetHeader(const string &name_, uint16 schemeIndex)

@@ -45,7 +45,7 @@ namespace cage
 			void set(uint64 value) { setType(ConfigTypeEnum::Uint64); u64 = value; }
 			void set(float value) { setType(ConfigTypeEnum::Float); f = value; }
 			void set(double value) { setType(ConfigTypeEnum::Double); d = value; }
-			void set(const string &value) { if (!s) s = systemArena().createObject<string>(value); else *s = value; setType(ConfigTypeEnum::String); }
+			void set(const string &value) { if (!s) s = systemMemory().createObject<string>(value); else *s = value; setType(ConfigTypeEnum::String); }
 			void setDynamic(const string &value)
 			{
 				if (value.empty())
@@ -92,7 +92,7 @@ namespace cage
 			Variable *v = directVariables()[name];
 			if (!v)
 			{
-				directVariables()[name] = systemArena().createObject<Variable>();
+				directVariables()[name] = systemMemory().createObject<Variable>();
 				v = directVariables()[name];
 			}
 			return v;
@@ -412,7 +412,7 @@ namespace cage
 
 	Holder<ConfigList> newConfigList()
 	{
-		return systemArena().createImpl<ConfigList, ConfigListImpl>();
+		return systemMemory().createImpl<ConfigList, ConfigListImpl>();
 	}
 
 	void configApplyIni(const Ini *ini, const string &prefix)

@@ -58,6 +58,7 @@ void testTcp();
 void testUdp();
 void testUdpDiscovery();
 void testProcess();
+void testLogger();
 void testSystemInformation();
 void generatePointsOnSphere();
 
@@ -121,6 +122,7 @@ int main()
 	testUdp();
 	testUdpDiscovery();
 	testProcess();
+	testLogger();
 	testSystemInformation();
 
 	{

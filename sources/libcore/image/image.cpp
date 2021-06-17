@@ -472,6 +472,6 @@ namespace cage
 
 	Holder<Image> newImage()
 	{
-		return systemArena().createImpl<Image, ImageImpl>();
+		return systemMemory().createImpl<Image, ImageImpl>();
 	}
 }

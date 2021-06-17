@@ -41,7 +41,7 @@ namespace cage
 			{
 				CAGE_ASSERT(schr);
 				if (conf.type != ScheduleTypeEnum::Once)
-					stats = systemArena().createHolder<ScheduleStatistics>();
+					stats = systemMemory().createHolder<ScheduleStatistics>();
 			}
 
 			~ScheduleImpl()
@@ -343,7 +343,7 @@ namespace cage
 	Holder<Schedule> Scheduler::newSchedule(const ScheduleCreateConfig &config)
 	{
 		SchedulerImpl *impl = (SchedulerImpl *)this;
-		auto sch = systemArena().createHolder<ScheduleImpl>(impl, config);
+		auto sch = systemMemory().createHolder<ScheduleImpl>(impl, config);
 		impl->scheds.push_back(sch.share());
 		return std::move(sch).cast<Schedule>();
 	}
@@ -383,6 +383,6 @@ namespace cage
 
 	Holder<Scheduler> newScheduler(const SchedulerCreateConfig &config)
 	{
-		return systemArena().createImpl<Scheduler, SchedulerImpl>(config);
+		return systemMemory().createImpl<Scheduler, SchedulerImpl>(config);
 	}
 }

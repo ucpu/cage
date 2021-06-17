@@ -139,7 +139,7 @@ namespace cage
 	class Audio;
 	class AudioChannelsConverter;
 	struct AudioChannelsConverterCreateConfig;
-	struct AudioDirectionalData;
+	struct AudioDirectionalProcessConfig;
 	class AudioDirectionalConverter;
 	struct AudioDirectionalConverterCreateConfig;
 	enum class StereoModeEnum : uint32;
@@ -257,6 +257,31 @@ namespace cage
 	template<class T, class F> struct VariableInterpolatingBuffer;
 	template<class T, uint32 N = 16> struct VariableSmoothingBuffer;
 
+	// Immovable
+
+	struct CAGE_CORE_API Immovable
+	{
+		Immovable() = default;
+		Immovable(const Immovable &) = delete;
+		Immovable(Immovable &&) = delete;
+		Immovable &operator = (const Immovable &) = delete;
+		Immovable &operator = (Immovable &&) = delete;
+	};
+
+	// string literal
+
+	struct StringLiteral
+	{
+		template<uint32 N>
+		CAGE_FORCE_INLINE StringLiteral(const char(&str)[N]) noexcept : str(str)
+		{}
+
+		CAGE_FORCE_INLINE explicit StringLiteral(const char *str) noexcept : str(str)
+		{}
+
+		const char *str = nullptr;
+	};
+
 	// severity, makeLog, runtimeAssertFailure
 
 	enum class SeverityEnum
@@ -271,9 +296,9 @@ namespace cage
 
 	namespace privat
 	{
-		CAGE_CORE_API uint64 makeLog(const char *file, uint32 line, const char *function, SeverityEnum severity, const char *component, const string &message, bool continuous, bool debug) noexcept;
-		CAGE_CORE_API void makeLogThrow(const char *file, uint32 line, const char *function, const string &message) noexcept;
-		CAGE_CORE_API void runtimeAssertFailure(const char *expt, const char *file, uintPtr line, const char *function);
+		CAGE_CORE_API uint64 makeLog(StringLiteral file, uint32 line, StringLiteral function, SeverityEnum severity, StringLiteral component, const string &message, bool continuous, bool debug) noexcept;
+		CAGE_CORE_API void makeLogThrow(StringLiteral file, uint32 line, StringLiteral function, const string &message) noexcept;
+		CAGE_CORE_API void runtimeAssertFailure(StringLiteral expt, StringLiteral file, uintPtr line, StringLiteral function);
 	}
 
 	namespace detail
@@ -378,42 +403,19 @@ namespace cage
 	// this macro has to be used inside namespace cage
 #define GCHL_ENUM_BITS(TYPE) template<> struct enable_bitmask_operators<TYPE> { static constexpr bool enable = true; };
 
-	// Immovable
-
-	struct CAGE_CORE_API Immovable
-	{
-		Immovable() = default;
-		Immovable(const Immovable &) = delete;
-		Immovable(Immovable &&) = delete;
-		Immovable &operator = (const Immovable &) = delete;
-		Immovable &operator = (Immovable &&) = delete;
-	};
-
 	// exceptions
 
 	struct CAGE_CORE_API Exception
 	{
-		struct StringLiteral
-		{
-			template<uint32 N>
-			CAGE_FORCE_INLINE StringLiteral(const char(&str)[N]) noexcept : str(str)
-			{}
-
-			CAGE_FORCE_INLINE explicit StringLiteral(const char *str) noexcept : str(str)
-			{}
-
-			const char *str = nullptr;
-		};
-
 		explicit Exception(StringLiteral file, uint32 line, StringLiteral function, SeverityEnum severity, StringLiteral message) noexcept;
 		virtual ~Exception() noexcept;
 
 		void makeLog(); // check conditions and call log()
 		virtual void log();
 
-		const char *file = nullptr;
-		const char *function = nullptr;
-		const char *message = nullptr;
+		StringLiteral file;
+		StringLiteral function;
+		StringLiteral message;
 		uint32 line = 0;
 		SeverityEnum severity = SeverityEnum::Critical;
 	};
@@ -964,72 +966,27 @@ namespace cage
 
 	namespace privat
 	{
-		struct CageNewTrait
-		{};
+		struct OperatorNewTrait {};
+		struct MemoryArenaStub;
 	}
 }
 
-CAGE_FORCE_INLINE void *operator new(cage::uintPtr size, void *ptr, cage::privat::CageNewTrait) noexcept { return ptr; }
-CAGE_FORCE_INLINE void *operator new[](cage::uintPtr size, void *ptr, cage::privat::CageNewTrait) noexcept { return ptr; }
-CAGE_FORCE_INLINE void operator delete(void *ptr, void *ptr2, cage::privat::CageNewTrait) noexcept {}
-CAGE_FORCE_INLINE void operator delete[](void *ptr, void *ptr2, cage::privat::CageNewTrait) noexcept {}
+CAGE_FORCE_INLINE void *operator new(cage::uintPtr size, void *ptr, cage::privat::OperatorNewTrait) noexcept { return ptr; }
+CAGE_FORCE_INLINE void *operator new[](cage::uintPtr size, void *ptr, cage::privat::OperatorNewTrait) noexcept { return ptr; }
+CAGE_FORCE_INLINE void operator delete(void *ptr, void *ptr2, cage::privat::OperatorNewTrait) noexcept {}
+CAGE_FORCE_INLINE void operator delete[](void *ptr, void *ptr2, cage::privat::OperatorNewTrait) noexcept {}
 
 namespace cage
 {
 	struct CAGE_CORE_API MemoryArena
 	{
 	private:
-		struct Stub
-		{
-			void *(*alloc)(void *, uintPtr, uintPtr);
-			void (*dealloc)(void *, void *);
-			void (*fls)(void *);
-
-			template<class A>
-			CAGE_FORCE_INLINE static void *allocate(void *inst, uintPtr size, uintPtr alignment)
-			{
-				return ((A*)inst)->allocate(size, alignment);
-			}
-
-			template<class A>
-			CAGE_FORCE_INLINE static void deallocate(void *inst, void *ptr)
-			{
-				((A*)inst)->deallocate(ptr);
-			}
-
-			template<class A>
-			CAGE_FORCE_INLINE static void flush(void *inst)
-			{
-				((A*)inst)->flush();
-			}
-
-			template<class A>
-			static Stub init() noexcept
-			{
-				Stub s;
-				s.alloc = &allocate<A>;
-				s.dealloc = &deallocate<A>;
-				s.fls = &flush<A>;
-				return s;
-			}
-		} *stub = nullptr;
+		privat::MemoryArenaStub *stub = nullptr;
 		void *inst = nullptr;
 
 	public:
-		MemoryArena() = default;
-
 		template<class A>
-		explicit MemoryArena(A *a) noexcept
-		{
-			static Stub stb = Stub::init<A>();
-			this->stub = &stb;
-			inst = a;
-		}
-
-		MemoryArena(const MemoryArena &) = default;
-		MemoryArena(MemoryArena &&) = default;
-		MemoryArena &operator = (const MemoryArena &) = default;
-		MemoryArena &operator = (MemoryArena &&) = default;
+		inline explicit MemoryArena(A *a) noexcept;
 
 		void *allocate(uintPtr size, uintPtr alignment);
 		void deallocate(void *ptr);
@@ -1041,7 +998,7 @@ namespace cage
 			void *ptr = allocate(sizeof(T), alignof(T));
 			try
 			{
-				return new(ptr, privat::CageNewTrait()) T(std::forward<Ts>(vs)...);
+				return new(ptr, privat::OperatorNewTrait()) T(std::forward<Ts>(vs)...);
 			}
 			catch (...)
 			{
@@ -1091,7 +1048,7 @@ namespace cage
 		bool operator != (const MemoryArena &other) const noexcept;
 	};
 
-	CAGE_CORE_API MemoryArena &systemArena();
+	CAGE_CORE_API MemoryArena &systemMemory();
 	CAGE_CORE_API uint64 applicationTime();
 }
 

@@ -89,7 +89,7 @@ namespace cage
 
 		Holder<File> newProxyFile(Mutex *mutex, File *f, uintPtr start, uintPtr size)
 		{
-			return systemArena().createImpl<File, ProxyFile>(mutex, f, start, size);
+			return systemMemory().createImpl<File, ProxyFile>(mutex, f, start, size);
 		}
 	}
 
@@ -637,7 +637,7 @@ namespace cage
 				{ // read or update
 					CAGE_ASSERT(!modified);
 					if (r.modified)
-						src = newFileBuffer(systemArena().createHolder<PointerRange<char>>(PointerRange<char>(r.newContent)), FileMode(true, false));
+						src = newFileBuffer(systemMemory().createHolder<PointerRange<char>>(PointerRange<char>(r.newContent)), FileMode(true, false));
 					else
 						src = newProxyFile(+a->mutex, +a->src, r.getFileStartOffset(), r.uncompressedSize);
 				}
@@ -815,12 +815,12 @@ namespace cage
 
 		Holder<File> ArchiveZip::openFile(const string &path, const FileMode &mode)
 		{
-			return systemArena().createImpl<File, FileZip>(std::static_pointer_cast<ArchiveZip>(shared_from_this()), path, mode);
+			return systemMemory().createImpl<File, FileZip>(std::static_pointer_cast<ArchiveZip>(shared_from_this()), path, mode);
 		}
 
 		Holder<DirectoryList> ArchiveZip::listDirectory(const string &path) const
 		{
-			return systemArena().createImpl<DirectoryList, DirectoryListZip>(std::static_pointer_cast<const ArchiveZip>(shared_from_this()), path);
+			return systemMemory().createImpl<DirectoryList, DirectoryListZip>(std::static_pointer_cast<const ArchiveZip>(shared_from_this()), path);
 		}
 	}
 

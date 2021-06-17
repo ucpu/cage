@@ -710,7 +710,7 @@ namespace cage
 	void engineInitialize(const EngineCreateConfig &config)
 	{
 		CAGE_ASSERT(!engineData);
-		engineData = systemArena().createHolder<EngineData>(config);
+		engineData = systemMemory().createHolder<EngineData>(config);
 		engineData->initialize(config);
 	}
 

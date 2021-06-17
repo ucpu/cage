@@ -330,7 +330,7 @@ namespace cage
 
 	Holder<Collider> newCollider()
 	{
-		return systemArena().createImpl<Collider, ColliderImpl>();
+		return systemMemory().createImpl<Collider, ColliderImpl>();
 	}
 
 	bool operator < (const CollisionPair &l, const CollisionPair &r)

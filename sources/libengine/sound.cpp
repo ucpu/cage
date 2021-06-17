@@ -159,6 +159,6 @@ namespace cage
 
 	Holder<Sound> newSound()
 	{
-		return systemArena().createImpl<Sound, SoundImpl>();
+		return systemMemory().createImpl<Sound, SoundImpl>();
 	}
 }

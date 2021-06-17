@@ -1,6 +1,7 @@
 #include <cage-core/geometry.h>
 #include <cage-core/spatialStructure.h>
 #include <cage-core/memoryAllocators.h>
+#include <cage-core/memoryArena.h>
 
 #include <robin_hood.h>
 #include <plf_colony.h>
@@ -540,11 +541,11 @@ namespace cage
 
 	Holder<SpatialStructure> newSpatialStructure(const SpatialStructureCreateConfig &config)
 	{
-		return systemArena().createImpl<SpatialStructure, SpatialDataImpl>(config);
+		return systemMemory().createImpl<SpatialStructure, SpatialDataImpl>(config);
 	}
 
 	Holder<SpatialQuery> newSpatialQuery(Holder<const SpatialStructure> data)
 	{
-		return systemArena().createImpl<SpatialQuery, SpatialQueryImpl>(std::move(data).cast<const SpatialDataImpl>());
+		return systemMemory().createImpl<SpatialQuery, SpatialQueryImpl>(std::move(data).cast<const SpatialDataImpl>());
 	}
 }

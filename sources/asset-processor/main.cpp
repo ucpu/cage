@@ -21,7 +21,7 @@ string inputFile; // path/file
 string inputSpec; // specifier
 string inputIdentifier; // identifier
 
-const char *logComponentName;
+StringLiteral logComponentName = "assetProcessor";
 
 AssetHeader initializeAssetHeader()
 {
@@ -231,7 +231,7 @@ int main(int argc, const char *args[])
 		else
 			CAGE_THROW_ERROR(Exception, "invalid asset type parameter");
 
-		logComponentName = args[1];
+		logComponentName = StringLiteral(args[1]);
 		writeLine("cage-begin");
 		func();
 		writeLine("cage-end");

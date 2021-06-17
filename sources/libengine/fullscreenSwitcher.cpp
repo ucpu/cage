@@ -143,6 +143,6 @@ namespace cage
 
 	Holder<FullscreenSwitcher> newFullscreenSwitcher(const FullscreenSwitcherCreateConfig &config)
 	{
-		return systemArena().createImpl<FullscreenSwitcher, FullscreenSwitcherImpl>(config);
+		return systemMemory().createImpl<FullscreenSwitcher, FullscreenSwitcherImpl>(config);
 	}
 }
