@@ -8,8 +8,8 @@ namespace cage
 	struct CAGE_CORE_API OutOfMemory : public Exception
 	{
 		explicit OutOfMemory(StringLiteral file, uint32 line, StringLiteral function, SeverityEnum severity, StringLiteral message, uintPtr memory) noexcept;
-		virtual void log();
-		uintPtr memory;
+		void log() override;
+		uintPtr memory = 0;
 	};
 
 	namespace detail

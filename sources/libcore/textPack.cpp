@@ -49,11 +49,11 @@ namespace cage
 	Holder<TextPack> TextPack::copy() const
 	{
 		Holder<TextPack> res = newTextPack();
-		res->deserialize(serialize());
+		res->importBuffer(exportBuffer()); // todo more efficient
 		return res;
 	}
 
-	Holder<PointerRange<char>> TextPack::serialize() const
+	Holder<PointerRange<char>> TextPack::exportBuffer() const
 	{
 		TextPackImpl *impl = (TextPackImpl *)this;
 		MemoryBuffer buff;
@@ -64,7 +64,7 @@ namespace cage
 		return PointerRangeHolder<char>(PointerRange<char>(buff));
 	}
 
-	void TextPack::deserialize(PointerRange<const char> buffer)
+	void TextPack::importBuffer(PointerRange<const char> buffer)
 	{
 		TextPackImpl *impl = (TextPackImpl *)this;
 		clear();

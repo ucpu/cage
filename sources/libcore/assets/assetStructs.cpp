@@ -115,7 +115,7 @@ namespace cage
 		void processSkeletalAnimationLoad(AssetContext *context)
 		{
 			Holder<SkeletalAnimation> ani = newSkeletalAnimation();
-			ani->deserialize(context->originalData);
+			ani->importBuffer(context->originalData);
 			context->assetHolder = std::move(ani).cast<void>();
 		}
 	}
@@ -133,7 +133,7 @@ namespace cage
 		void processSkeletonRigLoad(AssetContext *context)
 		{
 			Holder<SkeletonRig> skl = newSkeletonRig();
-			skl->deserialize(context->originalData);
+			skl->importBuffer(context->originalData);
 			context->assetHolder = std::move(skl).cast<void>();
 		}
 	}

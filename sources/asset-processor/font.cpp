@@ -248,9 +248,7 @@ namespace
 	void createAtlasCoordinates()
 	{
 		CAGE_LOG(SeverityEnum::Info, logComponentName, "create atlas coordinates");
-		RectPackingCreateConfig packingCfg;
-		packingCfg.margin = 2;
-		Holder<RectPacking> packer = newRectPacking(packingCfg);
+		Holder<RectPacking> packer = newRectPacking();
 		uint32 area = 0;
 		uint32 mgs = 0;
 		for (uint32 glyphIndex = 0; glyphIndex < data.glyphCount; glyphIndex++)
@@ -260,7 +258,8 @@ namespace
 				continue;
 			area += g.png->width() * g.png->height();
 			mgs = max(mgs, max(g.png->width(), g.png->height()));
-			packer->add(glyphIndex, g.png->width(), g.png->height());
+			packer->resize(numeric_cast<uint32>(packer->data().size()) + 1);
+			packer->data()[packer->data().size() - 1] = PackingRect{ glyphIndex, g.png->width(), g.png->height() };
 		}
 		uint32 res = 64;
 		while (res < mgs) res *= 2;
@@ -268,14 +267,16 @@ namespace
 		while (true)
 		{
 			CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "trying to pack into resolution " + res + "*" + res);
-			if (packer->solve(res, res))
+			RectPackingSolveConfig cfg;
+			cfg.margin = 2;
+			cfg.width = cfg.height = res;
+			if (packer->solve(cfg))
 				break;
 			res *= 2;
 		}
-		for (uint32 index = 0, e = packer->count(); index < e; index++)
+		for (const auto &it : packer->data())
 		{
-			uint32 glyphIndex = 0, x = 0, y = 0;
-			packer->get(index, glyphIndex, x, y);
+			uint32 glyphIndex = it.id, x = it.x, y = it.y;
 			CAGE_ASSERT(glyphIndex < glyphs.size());
 			Glyph &g = glyphs[glyphIndex];
 			CAGE_ASSERT(x < res);

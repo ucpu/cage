@@ -104,7 +104,7 @@ namespace cage
 	Holder<SkeletalAnimation> SkeletalAnimation::copy() const
 	{
 		Holder<SkeletalAnimation> res = newSkeletalAnimation();
-		res->deserialize(serialize());
+		res->importBuffer(exportBuffer()); // todo more efficient
 		return res;
 	}
 
@@ -119,7 +119,7 @@ namespace cage
 			tmp.resize(cnt);
 			for (T &it : tmp)
 				des >> it;
-			vec = tmp;
+			std::swap(vec, tmp);
 			return des;
 		}
 
@@ -153,7 +153,7 @@ namespace cage
 		}
 	}
 
-	Holder<PointerRange<char>> SkeletalAnimation::serialize() const
+	Holder<PointerRange<char>> SkeletalAnimation::exportBuffer() const
 	{
 		SkeletalAnimationImpl *impl = (SkeletalAnimationImpl *)this;
 		MemoryBuffer buff;
@@ -162,7 +162,7 @@ namespace cage
 		return PointerRangeHolder<char>(PointerRange<char>(buff));
 	}
 
-	void SkeletalAnimation::deserialize(PointerRange<const char> buffer)
+	void SkeletalAnimation::importBuffer(PointerRange<const char> buffer)
 	{
 		SkeletalAnimationImpl *impl = (SkeletalAnimationImpl *)this;
 		impl->clear();
@@ -266,7 +266,7 @@ namespace cage
 	Holder<SkeletonRig> SkeletonRig::copy() const
 	{
 		Holder<SkeletonRig> res = newSkeletonRig();
-		res->deserialize(serialize());
+		res->importBuffer(exportBuffer()); // todo more efficient
 		return res;
 	}
 
@@ -282,7 +282,7 @@ namespace cage
 		}
 	}
 
-	Holder<PointerRange<char>> SkeletonRig::serialize() const
+	Holder<PointerRange<char>> SkeletonRig::exportBuffer() const
 	{
 		SkeletonRigImpl *impl = (SkeletonRigImpl *)this;
 		MemoryBuffer buff;
@@ -291,7 +291,7 @@ namespace cage
 		return PointerRangeHolder<char>(PointerRange<char>(buff));
 	}
 
-	void SkeletonRig::deserialize(PointerRange<const char> buffer)
+	void SkeletonRig::importBuffer(PointerRange<const char> buffer)
 	{
 		SkeletonRigImpl *impl = (SkeletonRigImpl *)this;
 		impl->clear();

@@ -230,11 +230,11 @@ namespace cage
 	class Process;
 	struct RandomGenerator;
 	class RectPacking;
-	struct RectPackingCreateConfig;
 	class SampleRateConverter;
 	struct SampleRateConverterCreateConfig;
 	enum class ScheduleTypeEnum : uint32;
 	struct ScheduleCreateConfig;
+	struct ScheduleStatistics;
 	class Schedule;
 	struct SchedulerCreateConfig;
 	class Scheduler;

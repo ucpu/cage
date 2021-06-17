@@ -634,7 +634,7 @@ void processModel()
 	Serializer ser(buffer);
 	ser << dsm;
 	ser << mat;
-	ser.write(poly->serialize());
+	ser.write(poly->exportBuffer());
 	h.originalSize = buffer.size();
 	Holder<PointerRange<char>> compressed = compress(buffer);
 	h.compressedSize = compressed.size();

@@ -8,60 +8,92 @@ namespace cage
 {
 	namespace
 	{
+		stbrp_rect conv(const PackingRect &r)
+		{
+			stbrp_rect s = {};
+			s.id = r.id;
+			s.w = r.width;
+			s.h = r.height;
+			return s;
+		}
+
+		PackingRect conv(const stbrp_rect &s)
+		{
+			CAGE_ASSERT(s.was_packed);
+			PackingRect r;
+			r.id = s.id;
+			r.width = s.w;
+			r.height = s.h;
+			r.x = s.x;
+			r.y = s.y;
+			return r;
+		}
+
 		class RectPackingImpl : public RectPacking
 		{
 		public:
-			RectPackingCreateConfig config;
-			std::vector<stbrp_node> nodes;
-			std::vector<stbrp_rect> rects;
+			std::vector<PackingRect> data;
 
-			RectPackingImpl(const RectPackingCreateConfig &config) : config(config)
+			std::vector<stbrp_rect> rs;
+			std::vector<stbrp_node> ns;
+			stbrp_context ctx;
+
+			bool solve(const RectPackingSolveConfig &config)
 			{
-				rects.reserve(1000);
+				{
+					rs.resize(data.size());
+					auto a = data.begin();
+					for (auto &it : rs)
+					{
+						it = conv(*a++);
+						it.w += config.margin * 2;
+						it.h += config.margin * 2;
+					}
+				}
+				ns.resize(config.width);
+				stbrp_init_target(&ctx, config.width, config.height, ns.data(), numeric_cast<int>(ns.size()));
+				const bool res = stbrp_pack_rects(&ctx, rs.data(), numeric_cast<int>(rs.size()));
+				if (res)
+				{
+					auto a = rs.begin();
+					for (auto &it : data)
+					{
+						it = conv(*a++);
+						it.x += config.margin;
+						it.y += config.margin;
+					}
+				}
+				return res;
 			}
 		};
 	}
 
-	void RectPacking::add(uint32 id, uint32 width, uint32 height)
-	{
-		RectPackingImpl *impl = (RectPackingImpl*)this;
-		stbrp_rect r;
-		r.id = id;
-		r.w = numeric_cast<stbrp_coord>(width + impl->config.margin * 2);
-		r.h = numeric_cast<stbrp_coord>(height + impl->config.margin * 2);
-		r.x = r.y = 0;
-		r.was_packed = 0;
-		impl->rects.push_back(r);
-	}
-
-	bool RectPacking::solve(uint32 width, uint32 height)
+	void RectPacking::resize(uint32 cnt)
 	{
 		RectPackingImpl *impl = (RectPackingImpl *)this;
-		stbrp_context ctx;
-		impl->nodes.resize(width);
-		stbrp_init_target(&ctx, width, height, impl->nodes.data(), numeric_cast<int>(impl->nodes.size()));
-		return stbrp_pack_rects(&ctx, impl->rects.data(), numeric_cast<int>(impl->rects.size()));
+		impl->data.resize(cnt);
 	}
 
-	void RectPacking::get(uint32 index, uint32 &id, uint32 &x, uint32 &y) const
+	PointerRange<PackingRect> RectPacking::data()
+	{
+		RectPackingImpl *impl = (RectPackingImpl *)this;
+		return impl->data;
+	}
+
+	PointerRange<const PackingRect> RectPacking::data() const
 	{
 		const RectPackingImpl *impl = (const RectPackingImpl *)this;
-		CAGE_ASSERT(index < impl->rects.size());
-		auto &r = impl->rects[index];
-		CAGE_ASSERT(r.was_packed);
-		id = r.id;
-		x = r.x + impl->config.margin;
-		y = r.y + impl->config.margin;
+		return impl->data;
 	}
 
-	uint32 RectPacking::count() const
+	bool RectPacking::solve(const RectPackingSolveConfig &config)
 	{
-		const RectPackingImpl *impl = (const RectPackingImpl *)this;
-		return numeric_cast<uint32>(impl->rects.size());
+		RectPackingImpl *impl = (RectPackingImpl *)this;
+		return impl->solve(config);
 	}
 
-	Holder<RectPacking> newRectPacking(const RectPackingCreateConfig &config)
+	Holder<RectPacking> newRectPacking()
 	{
-		return systemArena().createImpl<RectPacking, RectPackingImpl>(config);
+		return systemArena().createImpl<RectPacking, RectPackingImpl>();
 	}
 }
