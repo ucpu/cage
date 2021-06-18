@@ -381,7 +381,7 @@ void testImage()
 		{
 			Holder<Timer> timer = newTimer();
 			imageDilation(+img, 5);
-			CAGE_LOG(SeverityEnum::Info, "performance", stringizer() + "duration: " + timer->microsSinceStart());
+			CAGE_LOG(SeverityEnum::Info, "performance", stringizer() + "duration: " + timer->duration());
 		}
 		img->exportFile("images/dilation/3_5.png");
 		CAGE_TEST(img->value(50 - 5, 150, 0) < 0.1);
@@ -405,7 +405,7 @@ void testImage()
 		{
 			Holder<Timer> timer = newTimer();
 			imageDilation(+img, 5);
-			CAGE_LOG(SeverityEnum::Info, "performance", stringizer() + "duration: " + timer->microsSinceStart());
+			CAGE_LOG(SeverityEnum::Info, "performance", stringizer() + "duration: " + timer->duration());
 		}
 		img->exportFile("images/dilation/4_5.png");
 		CAGE_TEST(img->value(50 - 5, 150, 0) < 0.1);
@@ -426,7 +426,7 @@ void testImage()
 		{
 			Holder<Timer> timer = newTimer();
 			imageDilation(+img, 1, true);
-			CAGE_LOG(SeverityEnum::Info, "performance", stringizer() + "duration: " + timer->microsSinceStart());
+			CAGE_LOG(SeverityEnum::Info, "performance", stringizer() + "duration: " + timer->duration());
 		}
 		imageConvert(+img, ImageFormatEnum::U8);
 		img->exportFile("images/dilation/nan.png");

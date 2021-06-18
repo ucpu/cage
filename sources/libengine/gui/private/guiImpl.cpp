@@ -1,5 +1,6 @@
 #include <cage-core/swapBufferGuard.h>
 #include <cage-core/memoryAllocators.h>
+#include <cage-core/memoryArena.h>
 
 #include "../private.h"
 

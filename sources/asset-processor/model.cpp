@@ -338,7 +338,7 @@ namespace
 		writeLine(string("ref = ") + n);
 	}
 
-	vec3 fixUnitVector(vec3 n, Exception::StringLiteral name)
+	vec3 fixUnitVector(vec3 n, StringLiteral name)
 	{
 		if (abs(lengthSquared(n) - 1) > 1e-3)
 		{
@@ -634,7 +634,7 @@ void processModel()
 	Serializer ser(buffer);
 	ser << dsm;
 	ser << mat;
-	ser.write(poly->serialize());
+	ser.write(poly->exportBuffer());
 	h.originalSize = buffer.size();
 	Holder<PointerRange<char>> compressed = compress(buffer);
 	h.compressedSize = compressed.size();

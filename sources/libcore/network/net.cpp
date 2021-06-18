@@ -1,4 +1,5 @@
 #include "net.h"
+
 #include <cage-core/string.h>
 
 namespace cage
@@ -157,10 +158,10 @@ namespace cage
 
 		Sock Sock::accept()
 		{
-			SOCKET rtn;
-			if ((rtn = ::accept(descriptor, nullptr, 0)) == INVALID_SOCKET)
+			SOCKET rtn = ::accept(descriptor, nullptr, 0);
+			if (rtn == INVALID_SOCKET)
 			{
-				int err = WSAGetLastError();
+				const int err = WSAGetLastError();
 				if (err != WSAEWOULDBLOCK)
 					CAGE_THROW_ERROR(SystemError, "accept failed (accept)", err);
 				rtn = INVALID_SOCKET;
@@ -203,11 +204,22 @@ namespace cage
 			u_long res = 0;
 			if (ioctlsocket(descriptor, FIONREAD, &res) != 0)
 			{
-				int err = WSAGetLastError();
+				const int err = WSAGetLastError();
 				if (err != WSAEWOULDBLOCK)
 					CAGE_THROW_ERROR(SystemError, "determine available bytes (ioctlsocket)", err);
 			}
 			return res;
+		}
+
+		uint16 Sock::events() const
+		{
+			pollfd fds = {};
+			fds.fd = descriptor;
+			fds.events = POLLIN | POLLOUT | POLLPRI | POLLRDHUP;
+			const auto res = WSAPoll(&fds, 1, 0);
+			if (res < 0)
+				CAGE_THROW_ERROR(SystemError, "check socket events (WSAPoll)", WSAGetLastError());
+			return fds.revents;
 		}
 
 		void Sock::send(const void *buffer, uintPtr bufferSize)
@@ -227,28 +239,27 @@ namespace cage
 		uintPtr Sock::recv(void *buffer, uintPtr bufferSize, int flags)
 		{
 			CAGE_ASSERT(connected);
-			int rtn;
-			if ((rtn = ::recv(descriptor, (raw_type*)buffer, numeric_cast<int>(bufferSize), flags)) < 0)
+			const int rtn = ::recv(descriptor, (raw_type *)buffer, numeric_cast<int>(bufferSize), flags);
+			if (rtn < 0)
 			{
 				int err = WSAGetLastError();
 				if (err != WSAEWOULDBLOCK && (err != WSAECONNRESET || protocol != IPPROTO_UDP))
 					CAGE_THROW_ERROR(SystemError, "received failed (recv)", err);
-				rtn = 0;
+				return 0;
 			}
 			return rtn;
 		}
 
 		uintPtr Sock::recvFrom(void *buffer, uintPtr bufferSize, Addr &remoteAddress, int flags)
 		{
-			//CAGE_ASSERT(!connected);
 			remoteAddress.addrlen = sizeof(remoteAddress.storage);
-			int rtn;
-			if ((rtn = ::recvfrom(descriptor, (raw_type*)buffer, numeric_cast<int>(bufferSize), flags, (sockaddr*)&remoteAddress.storage, &remoteAddress.addrlen)) < 0)
+			const int rtn = ::recvfrom(descriptor, (raw_type *)buffer, numeric_cast<int>(bufferSize), flags, (sockaddr *)&remoteAddress.storage, &remoteAddress.addrlen);
+			if (rtn < 0)
 			{
 				int err = WSAGetLastError();
 				if (err != WSAEWOULDBLOCK && (err != WSAECONNRESET || protocol != IPPROTO_UDP))
 					CAGE_THROW_ERROR(SystemError, "received failed (recvfrom)", err);
-				rtn = 0;
+				return 0;
 			}
 			return rtn;
 		}

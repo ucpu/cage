@@ -14,7 +14,7 @@ namespace cage
 		Holder<pmp::SurfaceMesh> toPmp(const Mesh *model)
 		{
 			CAGE_ASSERT(model->type() == MeshTypeEnum::Triangles);
-			Holder<pmp::SurfaceMesh> res = systemArena().createHolder<pmp::SurfaceMesh>();
+			Holder<pmp::SurfaceMesh> res = systemMemory().createHolder<pmp::SurfaceMesh>();
 			{ // vertices
 				for (const vec3 &p : model->positions())
 					res->add_vertex(pmp::Point(p[0].value, p[1].value, p[2].value));

@@ -36,7 +36,7 @@ namespace cage
 	{
 		using value_type = T;
 
-		MemoryAllocatorStd() : a(systemArena())
+		MemoryAllocatorStd() : a(systemMemory())
 		{}
 
 		explicit MemoryAllocatorStd(const MemoryArena &arena) : a(arena)

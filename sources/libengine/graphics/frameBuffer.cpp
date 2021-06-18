@@ -162,11 +162,11 @@ namespace cage
 
 	Holder<FrameBuffer> newFrameBufferDraw()
 	{
-		return systemArena().createImpl<FrameBuffer, FrameBufferImpl>(GL_DRAW_FRAMEBUFFER);
+		return systemMemory().createImpl<FrameBuffer, FrameBufferImpl>(GL_DRAW_FRAMEBUFFER);
 	}
 
 	Holder<FrameBuffer> newFrameBufferRead()
 	{
-		return systemArena().createImpl<FrameBuffer, FrameBufferImpl>(GL_READ_FRAMEBUFFER);
+		return systemMemory().createImpl<FrameBuffer, FrameBufferImpl>(GL_READ_FRAMEBUFFER);
 	}
 }

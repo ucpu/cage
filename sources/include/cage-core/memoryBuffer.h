@@ -5,16 +5,13 @@
 
 namespace cage
 {
-	struct CAGE_CORE_API MemoryBuffer
+	struct CAGE_CORE_API MemoryBuffer : private Noncopyable
 	{
 		MemoryBuffer() = default; // no allocation ctor
 		explicit MemoryBuffer(uintPtr size, uintPtr capacity = 0);
 		MemoryBuffer(MemoryBuffer &&other) noexcept;
 		MemoryBuffer &operator = (MemoryBuffer &&other) noexcept;
 		~MemoryBuffer();
-
-		MemoryBuffer(const MemoryBuffer &) = delete; // the buffer is non-copyable
-		MemoryBuffer &operator = (const MemoryBuffer &) = delete;
 
 		MemoryBuffer copy() const;
 

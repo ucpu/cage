@@ -25,11 +25,10 @@ namespace cage
 		void clear();
 		Holder<Mesh> copy() const;
 
-		Holder<PointerRange<char>> serialize() const;
-		void deserialize(PointerRange<const char> buffer);
-
+		void importBuffer(PointerRange<const char> buffer);
 		void importCollider(const Collider *collider);
 
+		Holder<PointerRange<char>> exportBuffer() const;
 		Holder<PointerRange<char>> exportObjBuffer(const MeshExportObjConfig &config) const;
 		void exportObjFile(const MeshExportObjConfig &config, const string &filename) const;
 

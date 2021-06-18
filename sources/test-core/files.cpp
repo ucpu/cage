@@ -58,6 +58,15 @@ void testFiles()
 	}
 
 	{
+		CAGE_TESTCASE("readAll from file");
+		Holder<File> f = readFile("testdir/files/1");
+		CAGE_TEST(f);
+		CAGE_TEST(f->size() == (uint64)FILE_BLOCKS * (uint64)BLOCK_SIZE);
+		auto tmp = f->readAll();
+		CAGE_TEST(tmp.size() == (uint64)FILE_BLOCKS * (uint64)BLOCK_SIZE);
+	}
+
+	{
 		CAGE_TESTCASE("create several files");
 		for (uint32 i = 2; i <= 32; i++)
 			writeFile(pathJoin("testdir/files", stringizer() + i));
@@ -157,21 +166,27 @@ void testFiles()
 	{
 		CAGE_TESTCASE("lines");
 
-		const string bs = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
+		const string data = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
 
 		{
 			Holder<File> f = writeFile("testdir/files/lines");
-			string s = bs;
+			string s = data;
 			while (!s.empty())
 				f->writeLine(split(s, "/"));
+			f->close();
 		}
 
 		{
 			Holder<File> f = readFile("testdir/files/lines");
-			string s = bs;
+			string s;
+			uint32 cnt = 0;
 			for (string line; f->readLine(line);)
-				CAGE_TEST(line == split(s, "/"));
-			CAGE_TEST(s == "");
+			{
+				s += line + "/";
+				cnt++;
+			}
+			CAGE_TEST(s == data + "/");
+			CAGE_TEST(cnt == 6);
 		}
 	}
 
@@ -203,12 +218,12 @@ void testFiles()
 	{
 		CAGE_TESTCASE("in-memory files");
 		{
-			Holder<File> f = newFileBuffer(&data, FileMode(true, false));
+			Holder<File> f = newFileBuffer(Holder<MemoryBuffer>(&data, nullptr), FileMode(true, false));
 			readInMemoryFile(f);
 		}
 		{
-			const PointerRange<char> pr = PointerRange<char>(data); // store the range in variable instead of passing it directly - it would trigger an error in visual studio 2017 and crash at runtime
-			Holder<File> f = newFileBuffer(pr);
+			auto pr = PointerRange<char>(data);
+			Holder<File> f = newFileBuffer(Holder<PointerRange<char>>(&pr, nullptr)); // not good practice - the pointer to pr is dangerous
 			readInMemoryFile(f);
 		}
 		{

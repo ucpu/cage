@@ -27,14 +27,14 @@ void testExceptions()
 			}
 			catch (const Exception &e)
 			{
-				CAGE_TEST(std::strcmp(e.message, "intentional") == 0);
+				CAGE_TEST(std::strcmp(e.message.str, "intentional") == 0);
 				catches++;
 				throw;
 			}
 		}
 		catch (const SystemError &e)
 		{
-			CAGE_TEST(std::strcmp(e.message, "intentional") == 0);
+			CAGE_TEST(std::strcmp(e.message.str, "intentional") == 0);
 			CAGE_TEST(e.code == 42);
 			catches++;
 		}
@@ -46,7 +46,7 @@ void testExceptions()
 	}
 
 	{
-		detail::setGlobalBreakpointOverride(false);
+		detail::globalBreakpointOverride(false);
 		try
 		{
 			CAGE_TESTCASE("exception transfer between threads");
@@ -57,6 +57,6 @@ void testExceptions()
 		{
 			// do nothing
 		}
-		detail::setGlobalBreakpointOverride(true);
+		detail::globalBreakpointOverride(true);
 	}
 }

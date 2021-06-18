@@ -11,8 +11,8 @@ namespace cage
 		void clear();
 		Holder<SkeletalAnimation> copy() const;
 
-		Holder<PointerRange<char>> serialize() const;
-		void deserialize(PointerRange<const char> buffer);
+		void importBuffer(PointerRange<const char> buffer);
+		Holder<PointerRange<char>> exportBuffer() const;
 
 		void channelsMapping(uint16 bones, uint16 channels, PointerRange<const uint16> mapping);
 		void positionsData(PointerRange<const PointerRange<const real>> times, PointerRange<const PointerRange<const vec3>> values);
@@ -37,8 +37,8 @@ namespace cage
 		void clear();
 		Holder<SkeletonRig> copy() const;
 
-		Holder<PointerRange<char>> serialize() const;
-		void deserialize(PointerRange<const char> buffer);
+		void importBuffer(PointerRange<const char> buffer);
+		Holder<PointerRange<char>> exportBuffer() const;
 
 		void skeletonData(const mat4 &globalInverse, PointerRange<const uint16> parents, PointerRange<const mat4> bases, PointerRange<const mat4> invRests);
 

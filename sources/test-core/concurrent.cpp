@@ -88,7 +88,7 @@ void testConcurrent()
 		}
 		catch (const cage::Exception &e)
 		{
-			ok = string(e.message) == "intentionally thrown exception";
+			ok = string(e.message.str) == "intentionally thrown exception";
 		}
 		CAGE_TEST(ok);
 	}

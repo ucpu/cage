@@ -13,7 +13,7 @@ namespace cage
 	// structures Config* store a reference to the config variable and are very fast to access, but are not thread safe
 	// functions ConfigSet* and ConfigGet* are simpler to use for one-time access
 
-	// assigning a value to config variable also changes the type of the variable
+	// assigning a value to config variable also changes type of the variable
 	// reading a value from config variable converts the value from the type of the variable to the requested type, and does not change the type of the variable itself
 
 	enum class ConfigTypeEnum : uint32
@@ -85,7 +85,7 @@ namespace cage
 
 	CAGE_CORE_API Holder<ConfigList> newConfigList();
 
-	// ini values are mapped to config variables as 'prefix/section/item = value'
+	// ini values are mapped to config variables as 'prefix/section/item' = 'value'
 
 	CAGE_CORE_API void configApplyIni(const Ini *ini, const string &prefix);
 	CAGE_CORE_API Holder<Ini> configGenerateIni(const string &prefix);
@@ -94,7 +94,7 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_CORE_API string configAppPrefix();
+		CAGE_CORE_API string globalConfigPrefix();
 	}
 }
 

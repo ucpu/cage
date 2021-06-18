@@ -43,11 +43,14 @@ namespace cage
 	public:
 		void clear();
 		void initialize(uint32 width, uint32 height, uint32 channels = 4, ImageFormatEnum format = ImageFormatEnum::U8);
+		void initialize(const ivec2 &resolution, uint32 channels = 4, ImageFormatEnum format = ImageFormatEnum::U8);
 		Holder<Image> copy() const;
 
 		// import from raw memory
 		void importRaw(MemoryBuffer &&buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format);
+		void importRaw(MemoryBuffer &&buffer, const ivec2 &resolution, uint32 channels, ImageFormatEnum format);
 		void importRaw(PointerRange<const char> buffer, uint32 width, uint32 height, uint32 channels, ImageFormatEnum format);
+		void importRaw(PointerRange<const char> buffer, const ivec2 &resolution, uint32 channels, ImageFormatEnum format);
 
 		// image decode
 		void importBuffer(PointerRange<const char> buffer, uint32 channels = m, ImageFormatEnum requestedFormat = ImageFormatEnum::Default);
@@ -65,28 +68,44 @@ namespace cage
 
 		uint32 width() const;
 		uint32 height() const;
+		ivec2 resolution() const;
 		uint32 channels() const;
 		ImageFormatEnum format() const;
 
 		float value(uint32 x, uint32 y, uint32 c) const;
+		float value(const ivec2 &position, uint32 c) const;
 		void value(uint32 x, uint32 y, uint32 c, float v);
+		void value(const ivec2 &position, uint32 c, float v);
 		void value(uint32 x, uint32 y, uint32 c, const real &v);
+		void value(const ivec2 &position, uint32 c, const real &v);
 
 		// getting a value must match the number of channels
 		real get1(uint32 x, uint32 y) const;
 		vec2 get2(uint32 x, uint32 y) const;
 		vec3 get3(uint32 x, uint32 y) const;
 		vec4 get4(uint32 x, uint32 y) const;
+		real get1(const ivec2 &position) const;
+		vec2 get2(const ivec2 &position) const;
+		vec3 get3(const ivec2 &position) const;
+		vec4 get4(const ivec2 &position) const;
 		void get(uint32 x, uint32 y, real &value) const;
 		void get(uint32 x, uint32 y, vec2 &value) const;
 		void get(uint32 x, uint32 y, vec3 &value) const;
 		void get(uint32 x, uint32 y, vec4 &value) const;
+		void get(const ivec2 &position, real &value) const;
+		void get(const ivec2 &position, vec2 &value) const;
+		void get(const ivec2 &position, vec3 &value) const;
+		void get(const ivec2 &position, vec4 &value) const;
 
 		// setting a value must match the number of channels
 		void set(uint32 x, uint32 y, const real &value);
 		void set(uint32 x, uint32 y, const vec2 &value);
 		void set(uint32 x, uint32 y, const vec3 &value);
 		void set(uint32 x, uint32 y, const vec4 &value);
+		void set(const ivec2 &position, const real &value);
+		void set(const ivec2 &position, const vec2 &value);
+		void set(const ivec2 &position, const vec3 &value);
+		void set(const ivec2 &position, const vec4 &value);
 
 		ImageColorConfig colorConfig;
 	};
@@ -109,6 +128,7 @@ namespace cage
 
 	CAGE_CORE_API void imageVerticalFlip(Image *img);
 	CAGE_CORE_API void imageResize(Image *img, uint32 width, uint32 height, bool useColorConfig = true);
+	CAGE_CORE_API void imageResize(Image *img, const ivec2 &resolution, bool useColorConfig = true);
 	CAGE_CORE_API void imageBoxBlur(Image *img, uint32 radius, uint32 rounds = 1, bool useColorConfig = true);
 	CAGE_CORE_API void imageDilation(Image *img, uint32 rounds, bool useNan = false);
 
@@ -119,6 +139,7 @@ namespace cage
 	// both images must have same number of channels
 	// colorConfig is ignored (except when initializing new image)
 	CAGE_CORE_API void imageBlit(const Image *source, Image *target, uint32 sourceX, uint32 sourceY, uint32 targetX, uint32 targetY, uint32 width, uint32 height);
+	CAGE_CORE_API void imageBlit(const Image *source, Image *target, const ivec2 &sourceOffset, const ivec2 &targetOffset, const ivec2 &resolution);
 
 	namespace detail
 	{

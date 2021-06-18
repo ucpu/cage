@@ -49,7 +49,7 @@ namespace cage
 
 	namespace detail
 	{
-		CAGE_CORE_API RandomGenerator &getApplicationRandomGenerator();
+		CAGE_CORE_API RandomGenerator &globalRandomGenerator();
 	}
 }
 

@@ -370,7 +370,7 @@ namespace cage
 	Holder<Texture> newTexture(uint32 target)
 	{
 		CAGE_ASSERT(target == GL_TEXTURE_2D || target == GL_TEXTURE_2D_ARRAY || target == GL_TEXTURE_RECTANGLE || target == GL_TEXTURE_3D || target == GL_TEXTURE_CUBE_MAP);
-		return systemArena().createImpl<Texture, TextureImpl>(target);
+		return systemMemory().createImpl<Texture, TextureImpl>(target);
 	}
 
 	namespace detail

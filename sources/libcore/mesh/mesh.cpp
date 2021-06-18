@@ -268,6 +268,6 @@ namespace cage
 
 	Holder<Mesh> newMesh()
 	{
-		return systemArena().createImpl<Mesh, MeshImpl>();
+		return systemMemory().createImpl<Mesh, MeshImpl>();
 	}
 }

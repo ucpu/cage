@@ -69,7 +69,7 @@ namespace cage
 				CAGE_ASSERT(config.channels > 0 && config.channels <= 8);
 			}
 
-			void process(PointerRange<const float> srcMono, PointerRange<float> dstPoly, const AudioDirectionalData &data)
+			void process(PointerRange<const float> srcMono, PointerRange<float> dstPoly, const AudioDirectionalProcessConfig &data)
 			{
 				CAGE_ASSERT((dstPoly.size() % config.channels) == 0);
 				CAGE_ASSERT(srcMono.size() * config.channels == dstPoly.size());
@@ -102,7 +102,7 @@ namespace cage
 		return impl->config.channels;
 	}
 
-	void AudioDirectionalConverter::process(PointerRange<const float> srcMono, PointerRange<float> dstPoly, const AudioDirectionalData &data)
+	void AudioDirectionalConverter::process(PointerRange<const float> srcMono, PointerRange<float> dstPoly, const AudioDirectionalProcessConfig &data)
 	{
 		AudioDirectionalConverterImpl *impl = (AudioDirectionalConverterImpl *)this;
 		impl->process(srcMono, dstPoly, data);
@@ -110,6 +110,6 @@ namespace cage
 
 	Holder<AudioDirectionalConverter> newAudioDirectionalConverter(const AudioDirectionalConverterCreateConfig &config)
 	{
-		return systemArena().createImpl<AudioDirectionalConverter, AudioDirectionalConverterImpl>(config);
+		return systemMemory().createImpl<AudioDirectionalConverter, AudioDirectionalConverterImpl>(config);
 	}
 }

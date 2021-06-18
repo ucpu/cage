@@ -451,7 +451,7 @@ namespace cage
 			for (uint32 i = 0; i < vc; i++)
 				ss->update(i, ps[i]);
 			ss->rebuild();
-			Holder<SpatialQuery> q = newSpatialQuery(+ss);
+			Holder<SpatialQuery> q = newSpatialQuery(ss.share());
 			for (uint32 i = 0; i < vc; i++)
 			{
 				q->intersection(Aabb(ps[i] - config.distanceThreshold, ps[i] + config.distanceThreshold));

@@ -1,70 +1,51 @@
 #include <cage-core/memoryBuffer.h>
-
-#include "files.h"
+#include <cage-core/files.h>
 
 namespace cage
 {
 	namespace
 	{
-		class FileBuffer : public FileAbstract
+		class FileBuffer : public File
 		{
 		public:
-			MemoryBuffer persistent;
-			MemoryBuffer &buf;
+			const FileMode myMode;
+			Holder<MemoryBuffer> buf;
 			uintPtr pos = 0;
 
-			FileBuffer(MemoryBuffer *buffer, const FileMode &mode) : FileAbstract(stringizer() + "buffer:/" + uintPtr(buffer), mode), buf(*buffer)
+			FileBuffer(Holder<MemoryBuffer> buffer, const FileMode &mode) : myMode(mode), buf(std::move(buffer))
 			{
 				CAGE_ASSERT(mode.valid());
 				if (mode.append)
-					pos = buf.size();
-			}
-
-			FileBuffer(MemoryBuffer &&buffer, const FileMode &mode) : FileAbstract(stringizer() + "buffer:/" + uintPtr(&persistent), mode), persistent(std::move(buffer)), buf(persistent)
-			{
-				CAGE_ASSERT(mode.valid());
-				if (mode.append)
-					pos = buf.size();
-			}
-
-			void readAt(PointerRange<char> buffer, uintPtr at) override
-			{
-				if (!mode.read)
-					CAGE_THROW_CRITICAL(NotImplemented, "reading from write-only memory file");
-				char *data = buffer.data();
-				const uintPtr size = buffer.size();
-				if (at + size > buf.size())
-					CAGE_THROW_ERROR(Exception, "reading beyond buffer");
-				detail::memcpy(data, buf.data() + at, size);
+					pos = buf->size();
 			}
 
 			void read(PointerRange<char> buffer) override
 			{
-				if (!mode.read)
+				if (!myMode.read)
 					CAGE_THROW_CRITICAL(NotImplemented, "reading from write-only memory file");
 				char *data = buffer.data();
 				const uintPtr size = buffer.size();
-				if (pos + size > buf.size())
+				if (pos + size > buf->size())
 					CAGE_THROW_ERROR(Exception, "reading beyond buffer");
-				detail::memcpy(data, buf.data() + pos, size);
+				detail::memcpy(data, buf->data() + pos, size);
 				pos += size;
 			}
 
 			void write(PointerRange<const char> buffer) override
 			{
-				if (!mode.write)
+				if (!myMode.write)
 					CAGE_THROW_CRITICAL(NotImplemented, "writing to read-only memory file");
 				const char *data = buffer.data();
 				const uintPtr size = buffer.size();
-				if (pos + size > buf.size())
-					buf.resizeSmart(pos + size);
-				detail::memcpy(buf.data() + pos, data, size);
+				if (pos + size > buf->size())
+					buf->resizeSmart(pos + size);
+				detail::memcpy(buf->data() + pos, data, size);
 				pos += size;
 			}
 
 			void seek(uintPtr position) override
 			{
-				CAGE_ASSERT(position <= buf.size());
+				CAGE_ASSERT(position <= buf->size());
 				pos = position;
 			}
 
@@ -73,44 +54,39 @@ namespace cage
 				// nothing
 			}
 
-			uintPtr tell() const override
+			uintPtr tell() override
 			{
 				return pos;
 			}
 
-			uintPtr size() const override
+			uintPtr size() override
 			{
-				return buf.size();
+				return buf->size();
+			}
+
+			FileMode mode() const override
+			{
+				return myMode;
 			}
 		};
 
-		class FileRange : public FileAbstract
+		class FileRange : public File
 		{
 		public:
-			const PointerRange<char> buf;
+			const FileMode myMode;
+			Holder<PointerRange<char>> buf;
 			uintPtr pos = 0;
 
-			FileRange(PointerRange<char> buffer, const FileMode &mode) : FileAbstract(stringizer() + "memory:/" + uintPtr(buffer.data()), mode), buf(buffer)
+			FileRange(Holder<PointerRange<char>> buffer, const FileMode &mode) : buf(std::move(buffer)), myMode(mode)
 			{
 				CAGE_ASSERT(mode.valid());
 				if (mode.append)
 					pos = buf.size();
 			}
 
-			void readAt(PointerRange<char> buffer, uintPtr at) override
-			{
-				if (!mode.read)
-					CAGE_THROW_CRITICAL(NotImplemented, "reading from write-only memory file");
-				char *data = buffer.data();
-				const uintPtr size = buffer.size();
-				if (at + size > buf.size())
-					CAGE_THROW_ERROR(Exception, "reading beyond buffer");
-				detail::memcpy(data, buf.data() + at, size);
-			}
-
 			void read(PointerRange<char> buffer) override
 			{
-				if (!mode.read)
+				if (!myMode.read)
 					CAGE_THROW_CRITICAL(NotImplemented, "reading from write-only memory file");
 				char *data = buffer.data();
 				const uintPtr size = buffer.size();
@@ -122,7 +98,7 @@ namespace cage
 
 			void write(PointerRange<const char> buffer) override
 			{
-				if (!mode.write)
+				if (!myMode.write)
 					CAGE_THROW_CRITICAL(NotImplemented, "writing to read-only memory file");
 				const char *data = buffer.data();
 				const uintPtr size = buffer.size();
@@ -143,40 +119,54 @@ namespace cage
 				// nothing
 			}
 
-			uintPtr tell() const override
+			uintPtr tell() override
 			{
 				return pos;
 			}
 
-			uintPtr size() const override
+			uintPtr size() override
 			{
 				return buf.size();
+			}
+
+			FileMode mode() const override
+			{
+				return myMode;
 			}
 		};
 	}
 
-	Holder<File> newFileBuffer(MemoryBuffer *buffer, const FileMode &mode)
+	Holder<File> newFileBuffer(Holder<PointerRange<const char>> buffer)
 	{
-		return systemArena().createImpl<File, FileBuffer>(buffer, mode);
+		PointerRange<char> *r = (PointerRange<char>*)+buffer;
+		Holder<PointerRange<char>> tmp = Holder<PointerRange<char>>(r, std::move(buffer));
+		return newFileBuffer(std::move(tmp), FileMode(true, false));
+	}
+
+	Holder<File> newFileBuffer(Holder<PointerRange<char>> buffer, const FileMode &mode)
+	{
+		return systemMemory().createImpl<File, FileRange>(std::move(buffer), mode);
+	}
+
+	Holder<File> newFileBuffer(Holder<const MemoryBuffer> buffer)
+	{
+		MemoryBuffer *b = (MemoryBuffer *)+buffer;
+		return newFileBuffer(Holder<MemoryBuffer>(b, std::move(buffer)), FileMode(true, false));
+	}
+
+	Holder<File> newFileBuffer(Holder<MemoryBuffer> buffer, const FileMode &mode)
+	{
+		return systemMemory().createImpl<File, FileBuffer>(std::move(buffer), mode);
 	}
 
 	Holder<File> newFileBuffer(MemoryBuffer &&buffer, const FileMode &mode)
 	{
-		return systemArena().createImpl<File, FileBuffer>(std::move(buffer), mode);
-	}
-
-	Holder<File> newFileBuffer(PointerRange<char> buffer, const FileMode &mode)
-	{
-		return systemArena().createImpl<File, FileRange>(buffer, mode);
-	}
-
-	Holder<File> newFileBuffer(PointerRange<const char> buffer)
-	{
-		return systemArena().createImpl<File, FileRange>(PointerRange<char>((char*)buffer.begin(), (char*)buffer.end()), FileMode(true, false));
+		Holder<MemoryBuffer> tmp = systemMemory().createHolder<MemoryBuffer>(std::move(buffer));
+		return newFileBuffer(std::move(tmp), mode);
 	}
 
 	Holder<File> newFileBuffer()
 	{
-		return systemArena().createImpl<File, FileBuffer>(MemoryBuffer(), FileMode(true, true));
+		return newFileBuffer(MemoryBuffer());
 	}
 }

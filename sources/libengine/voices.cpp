@@ -45,7 +45,7 @@ namespace cage
 						m->voices.erase(m->voices.get_iterator_from_pointer(v));
 					}
 				};
-				Holder<VoiceReference> h = systemArena().createHolder<VoiceReference>();
+				Holder<VoiceReference> h = systemMemory().createHolder<VoiceReference>();
 				h->v = &*voices.emplace();
 				h->m = this;
 				// todo init properties
@@ -135,7 +135,7 @@ namespace cage
 				{
 					CAGE_ASSERT(tmp1.size() == data.frames);
 					tmp2.resize(data.frames * data.channels);
-					AudioDirectionalData cfg;
+					AudioDirectionalProcessConfig cfg;
 					cfg.listenerOrientation = listener.orientation;
 					cfg.listenerPosition = listener.position;
 					cfg.sourcePosition = v.position;
@@ -194,6 +194,6 @@ namespace cage
 
 	Holder<VoicesMixer> newVoicesMixer(const VoicesMixerCreateConfig &config)
 	{
-		return systemArena().createImpl<VoicesMixer, VoicesMixerImpl>(config);
+		return systemMemory().createImpl<VoicesMixer, VoicesMixerImpl>(config);
 	}
 }

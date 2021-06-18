@@ -28,7 +28,7 @@ namespace cage
 			des.read(mat);
 
 			Holder<Mesh> poly = newMesh();
-			poly->deserialize(des.advance(des.available()));
+			poly->importBuffer(des.read(des.available()));
 
 			msh->importMesh(poly.get(), mat);
 

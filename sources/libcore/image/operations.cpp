@@ -212,6 +212,12 @@ namespace cage
 		imageConvert(impl, originalFormat);
 	}
 
+	void imageResize(Image *img, const ivec2 &r, bool useColorConfig)
+	{
+		CAGE_ASSERT(r[0] >= 0 && r[1] >= 0);
+		imageResize(img, r[0], r[1], useColorConfig);
+	}
+
 	void imageBoxBlur(Image *img, uint32 radius, uint32 rounds, bool useColorConfig)
 	{
 		CAGE_THROW_CRITICAL(NotImplemented, "imageBoxBlur");
@@ -219,13 +225,6 @@ namespace cage
 
 	namespace
 	{
-
-#ifndef inline
-#ifdef _MSC_VER
-#define inline __forceinline
-#endif // _MSC_VER
-#endif
-
 		template<class T, bool UseNan>
 		struct Dilation
 		{
@@ -237,14 +236,14 @@ namespace cage
 			Dilation(Image *src, Image *dst) : src(src), dst(dst), w(src->width()), h(src->height())
 			{}
 
-			inline bool valid(const T &v)
+			CAGE_FORCE_INLINE bool valid(const T &v)
 			{
 				if (UseNan)
 					return cage::valid(v);
 				return v != T();
 			}
 
-			inline void update(const T &a, T &m, uint32 &cnt)
+			CAGE_FORCE_INLINE void update(const T &a, T &m, uint32 &cnt)
 			{
 				const bool v = valid(a);
 				if (UseNan)
@@ -262,7 +261,7 @@ namespace cage
 				}
 			}
 
-			inline void processPixelSimple(uint32 x, uint32 y)
+			CAGE_FORCE_INLINE void processPixelSimple(uint32 x, uint32 y)
 			{
 				T m;
 				src->get(x, y, m);
@@ -477,5 +476,10 @@ namespace cage
 			} break;
 			}
 		}
+	}
+
+	void imageBlit(const Image *source, Image *target, const ivec2 &sourceOffset, const ivec2 &targetOffset, const ivec2 &resolution)
+	{
+		imageBlit(source, target, sourceOffset[0], sourceOffset[1], targetOffset[0], targetOffset[1], resolution[0], resolution[1]);
 	}
 }

@@ -161,7 +161,7 @@ namespace cage
 			des >> head.imageDescriptor;
 
 			// skip
-			des.advance(head.imageDescriptor);
+			des.read(head.imageDescriptor);
 
 			const uint32 colorMapElementSize = head.colorMapEntrySize / 8;
 			const uint32 pixelSize = head.colorMapLength == 0 ? (head.bits / 8) : colorMapElementSize;
@@ -170,7 +170,7 @@ namespace cage
 			const uint32 colorMapSize = head.colorMapLength * colorMapElementSize;
 			const uint8 *colorMap = nullptr;
 			if (head.colorMapType == 1)
-				colorMap = (uint8*)des.advance(colorMapSize).data();
+				colorMap = (uint8*)des.read(colorMapSize).data();
 
 			impl->width = head.width;
 			impl->height = head.height;
@@ -205,14 +205,14 @@ namespace cage
 			{
 				if (head.bits == 24 || head.bits == 32)
 				{
-					ser.write(des.advance(imageSize));
+					ser.write(des.read(imageSize));
 					swapRB((uint8*)impl->mem.data(), pixelsCount, pixelSize);
 					return;
 				}
 			} break;
 			case 3: // uncompressed mono
 			{
-				return ser.write(des.advance(imageSize));
+				return ser.write(des.read(imageSize));
 			} break;
 			case 10: // compressed color
 			{
@@ -288,11 +288,13 @@ namespace cage
 
 		const uint32 scanline = impl->width * impl->channels;
 		const uint32 size = scanline * impl->height;
-		uint8 *pixels = (uint8*)ser.advance(size).data();
+		MemoryBuffer tmp(size);
+		uint8 *pixels = (uint8*)tmp.data();
 		for (uint32 i = 0; i < impl->height; i++)
 			detail::memcpy(pixels + (impl->height - i - 1) * scanline, impl->mem.data() + i * scanline, scanline);
 		if (impl->channels > 1)
 			swapRB(pixels, impl->width * impl->height, impl->channels);
+		ser.write(tmp);
 
 		const uint32 dummy = 0;
 		ser << dummy << dummy;

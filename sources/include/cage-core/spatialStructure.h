@@ -38,7 +38,7 @@ namespace cage
 	{};
 
 	CAGE_CORE_API Holder<SpatialStructure> newSpatialStructure(const SpatialStructureCreateConfig &config);
-	CAGE_CORE_API Holder<SpatialQuery> newSpatialQuery(const SpatialStructure *data); // the SpatialStructure must outlive the query
+	CAGE_CORE_API Holder<SpatialQuery> newSpatialQuery(Holder<const SpatialStructure> data);
 }
 
 #endif // guard_spatial_h_9A6D87AF6D4243E990D6E274B56CF578

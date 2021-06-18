@@ -1,7 +1,7 @@
 #ifndef guard_scheduler_h_dsg54e64hg56fr4jh125vtkj5fd
 #define guard_scheduler_h_dsg54e64hg56fr4jh125vtkj5fd
 
-#include "core.h"
+#include "variableSmoothingBuffer.h"
 
 namespace cage
 {
@@ -25,12 +25,27 @@ namespace cage
 		uint32 maxSteadyPeriods = 3; // when the schedule is not managing by this many runs, reset its timer (valid for steady periodic schedules only)
 	};
 
+	struct ScheduleStatistics : private Immovable
+	{
+		static constexpr uint32 StatisticsWindowSize = 100;
+		VariableSmoothingBuffer<uint64, StatisticsWindowSize> delays;
+		VariableSmoothingBuffer<uint64, StatisticsWindowSize> durations;
+		uint64 totalDelay = 0;
+		uint64 totalDuration = 0;
+		uint64 maxDelay = 0;
+		uint64 maxDuration = 0;
+		uint32 runs = 0;
+
+		void add(uint64 delay, uint64 duration);
+	};
+
 	class CAGE_CORE_API Schedule : private Immovable
 	{
 	public:
 		void trigger(); // valid for external schedule only; can be called from any thread (but beware of deallocation)
 		void run(); // call the action
-		void destroy(); // removes the schedule from the scheduler (and deallocates it)
+
+		void detach(); // removes the schedule from the scheduler
 
 		void period(uint64 p); // valid for periodic schedules only
 		uint64 period() const;
@@ -41,14 +56,7 @@ namespace cage
 		uint64 time() const;
 
 		// statistics are not available for schedules of once type
-		static constexpr uint32 StatisticsWindowSize = 100;
-		const VariableSmoothingBuffer<uint64, StatisticsWindowSize> &statsDelay() const;
-		const VariableSmoothingBuffer<uint64, StatisticsWindowSize> &statsDuration() const;
-		uint64 statsDelayMax() const;
-		uint64 statsDelaySum() const;
-		uint64 statsDurationMax() const;
-		uint64 statsDurationSum() const;
-		uint32 statsRunCount() const;
+		const ScheduleStatistics &statistics() const;
 	};
 
 	struct CAGE_CORE_API SchedulerCreateConfig
@@ -62,11 +70,11 @@ namespace cage
 		void run();
 		void stop(); // can be called from any thread
 
-		Schedule *newSchedule(const ScheduleCreateConfig &config);
-		void clear(); // removes all schedules from the scheduler (and deallocates them)
+		Holder<Schedule> newSchedule(const ScheduleCreateConfig &config);
+		void clear(); // removes all schedules from the scheduler
 
-		void setLockstep(bool lockstep);
-		bool isLockstep() const;
+		void lockstep(bool enable);
+		bool lockstep() const;
 
 		uint64 latestTime() const;
 		sint32 latestPriority() const;

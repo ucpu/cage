@@ -22,30 +22,32 @@ namespace cage
 	class CAGE_CORE_API File : private Immovable
 	{
 	public:
-		void read(PointerRange<char> buffer);
-		Holder<PointerRange<char>> read(uintPtr size);
-		Holder<PointerRange<char>> readAll();
-		bool readLine(string &line);
+		virtual void read(PointerRange<char> buffer);
+		virtual Holder<PointerRange<char>> read(uintPtr size);
+		virtual Holder<PointerRange<char>> readAll();
+		virtual string readLine(); // may block or return empty string
+		virtual bool readLine(string &line); // non blocking
 
-		void write(PointerRange<const char> buffer);
-		void writeLine(const string &line);
+		virtual void write(PointerRange<const char> buffer);
+		virtual void writeLine(const string &line);
 
-		void seek(uintPtr position);
-		uintPtr tell() const;
-		uintPtr size() const;
+		virtual void seek(uintPtr position);
+		virtual uintPtr tell();
+		virtual uintPtr size();
+		virtual FileMode mode() const;
 
-		void close();
-
-		FileMode mode() const;
+		virtual void close();
+		virtual ~File() = default;
 	};
 
 	CAGE_CORE_API Holder<File> newFile(const string &path, const FileMode &mode);
 	CAGE_CORE_API Holder<File> readFile(const string &path);
 	CAGE_CORE_API Holder<File> writeFile(const string &path);
-	CAGE_CORE_API Holder<File> newFileBuffer(MemoryBuffer *buffer, const FileMode &mode = FileMode(true, true)); // the buffer must outlive the file
-	CAGE_CORE_API Holder<File> newFileBuffer(MemoryBuffer &&buffer, const FileMode &mode = FileMode(true, true)); // the file takes ownership of the buffer
-	CAGE_CORE_API Holder<File> newFileBuffer(PointerRange<char> buffer, const FileMode &mode = FileMode(true, false)); // the buffer must outlive the file
-	CAGE_CORE_API Holder<File> newFileBuffer(PointerRange<const char> buffer); // the buffer must outlive the file
+	CAGE_CORE_API Holder<File> newFileBuffer(Holder<PointerRange<const char>> buffer);
+	CAGE_CORE_API Holder<File> newFileBuffer(Holder<PointerRange<char>> buffer, const FileMode &mode = FileMode(true, false));
+	CAGE_CORE_API Holder<File> newFileBuffer(Holder<const MemoryBuffer> buffer);
+	CAGE_CORE_API Holder<File> newFileBuffer(Holder<MemoryBuffer> buffer, const FileMode &mode = FileMode(true, true));
+	CAGE_CORE_API Holder<File> newFileBuffer(MemoryBuffer &&buffer, const FileMode &mode = FileMode(true, true));
 	CAGE_CORE_API Holder<File> newFileBuffer();
 
 	class CAGE_CORE_API DirectoryList : private Immovable

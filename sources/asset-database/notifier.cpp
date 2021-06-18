@@ -55,7 +55,7 @@ namespace
 
 void notifierInitialize(const uint16 port)
 {
-	notifierInstance = systemArena().createHolder<Notifier>(port);
+	notifierInstance = systemMemory().createHolder<Notifier>(port);
 }
 
 void notifierAccept()

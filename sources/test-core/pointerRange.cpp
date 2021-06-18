@@ -286,14 +286,48 @@ void testPointerRange()
 	}
 
 	{
-		CAGE_TESTCASE("constexpr pointerRange");
+		CAGE_TESTCASE("constexpr function");
 		constexpr auto len = constexprFunction();
 		CAGE_TEST(len == 4);
 	}
 
 	{
 		CAGE_TESTCASE("pointerRange from char array");
-		constexpr const char str[] = "hello world";
+		const char str[] = "abc\ndef\r\nghi\n\nlast";
 		PointerRange<const char> r = str;
+		CAGE_TEST(r[0] == 'a');
+		CAGE_TEST(r.size() == 18);
+	}
+
+	{
+		CAGE_TESTCASE("pointerRange from int array");
+		const int arr[] = { 13, 42, 50, 20 };
+		PointerRange<const int> data = arr;
+		CAGE_TEST(data[0] == 13);
+		CAGE_TEST(data.size() == 4);
+	}
+
+	{
+		CAGE_TESTCASE("constexpr pointerRange from char array");
+		constexpr static const char str[] = "hello world";
+		constexpr PointerRange<const char> r = str;
+		CAGE_TEST(r[0] == 'h');
+		CAGE_TEST(r.size() == 11);
+	}
+
+	{
+		CAGE_TESTCASE("constexpr pointerRange from int array");
+		constexpr static const int arr[] = { 13, 42, 50, 20 };
+		constexpr PointerRange<const int> data = arr;
+		CAGE_TEST(data[0] == 13);
+		CAGE_TEST(data.size() == 4);
+	}
+
+	{
+		CAGE_TESTCASE("constexpr pointerRange from string literal");
+		// todo fix constexpr here causes "data.size() == 18" to fail on msvc
+		PointerRange<const char> data = "abc\ndef\r\nghi\n\nlast";
+		CAGE_TEST(data[0] == 'a');
+		CAGE_TEST(data.size() == 18);
 	}
 }

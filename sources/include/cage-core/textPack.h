@@ -11,8 +11,8 @@ namespace cage
 		void clear();
 		Holder<TextPack> copy() const;
 
-		Holder<PointerRange<char>> serialize() const;
-		void deserialize(PointerRange<const char> buffer);
+		void importBuffer(PointerRange<const char> buffer);
+		Holder<PointerRange<char>> exportBuffer() const;
 
 		void set(uint32 name, const string &text);
 		void erase(uint32 name);

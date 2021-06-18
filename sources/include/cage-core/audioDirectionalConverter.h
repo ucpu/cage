@@ -5,7 +5,7 @@
 
 namespace cage
 {
-	struct CAGE_CORE_API AudioDirectionalData
+	struct CAGE_CORE_API AudioDirectionalProcessConfig
 	{
 		quat listenerOrientation;
 		vec3 listenerPosition;
@@ -17,7 +17,7 @@ namespace cage
 	public:
 		uint32 channels() const;
 
-		void process(PointerRange<const float> srcMono, PointerRange<float> dstPoly, const AudioDirectionalData &data);
+		void process(PointerRange<const float> srcMono, PointerRange<float> dstPoly, const AudioDirectionalProcessConfig &config);
 	};
 
 	struct CAGE_CORE_API AudioDirectionalConverterCreateConfig

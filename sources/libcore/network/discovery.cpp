@@ -133,7 +133,7 @@ namespace cage
 							Deserializer d(buffer);
 							d >> gid >> id >> p.port;
 							auto av = numeric_cast<uint32>(d.available());
-							auto ap = d.advance(av).data();
+							auto ap = d.read(av).data();
 							p.message = string({ ap, ap + av });
 							auto pit = peers.find(id);
 							if (pit == peers.end())
@@ -313,7 +313,7 @@ namespace cage
 
 	Holder<DiscoveryClient> newDiscoveryClient(uint16 sendPort, uint32 gameId)
 	{
-		return systemArena().createImpl<DiscoveryClient, DiscoveryClientImpl>(sendPort, gameId);
+		return systemMemory().createImpl<DiscoveryClient, DiscoveryClientImpl>(sendPort, gameId);
 	}
 
 	void DiscoveryServer::update()
@@ -324,6 +324,6 @@ namespace cage
 
 	Holder<DiscoveryServer> newDiscoveryServer(uint16 listenPort, uint16 gamePort, uint32 gameId)
 	{
-		return systemArena().createImpl<DiscoveryServer, DiscoveryServerImpl>(listenPort, gamePort, gameId);
+		return systemMemory().createImpl<DiscoveryServer, DiscoveryServerImpl>(listenPort, gamePort, gameId);
 	}
 }

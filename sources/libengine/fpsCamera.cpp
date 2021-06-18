@@ -194,6 +194,6 @@ namespace cage
 
 	Holder<FpsCamera> newFpsCamera(Entity *ent)
 	{
-		return systemArena().createImpl<FpsCamera, FpsCameraImpl>(ent);
+		return systemMemory().createImpl<FpsCamera, FpsCameraImpl>(ent);
 	}
 }

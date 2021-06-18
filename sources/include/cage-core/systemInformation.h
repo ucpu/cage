@@ -9,7 +9,7 @@ namespace cage
 	CAGE_CORE_API string userName(); // user name running this process
 	CAGE_CORE_API string hostName(); // name of this computer
 
-	CAGE_CORE_API uint32 processorsCount(); // returns count of threads, that can physically run simultaneously
+	CAGE_CORE_API uint32 processorsCount(); // returns number of threads, that can physically run simultaneously
 	CAGE_CORE_API string processorName();
 	CAGE_CORE_API uint64 processorClockSpeed(); // Hz
 
