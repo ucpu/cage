@@ -164,7 +164,11 @@ namespace cage
 			if (isLocal().assertDeadly && isGlobalAssertDeadly())
 				detail::terminate();
 			else
-				CAGE_THROW_CRITICAL(Exception, "assert failure");
+			{
+				Exception e(function, file, line, ::cage::SeverityEnum::Critical, "assert failure");
+				e.makeLog();
+				throw e;
+			}
 		}
 	}
 
