@@ -395,7 +395,7 @@ namespace
 			for (Entity *e : comps[2]->entities())
 				e->value<real>() += 1;
 
-			CAGE_LOG(SeverityEnum::Info, "entities performance", stringizer() + "time for access with type: " + (tmr->microsSinceStart()) + " us");
+			CAGE_LOG(SeverityEnum::Info, "entities performance", stringizer() + "time for access with type: " + (tmr->duration()) + " us");
 		}
 
 		for (uint32 round = 0; round < 3; round++)
@@ -409,7 +409,7 @@ namespace
 			for (Entity *e : comps[2]->entities())
 				e->value<real>(comps[2]) += 1;
 
-			CAGE_LOG(SeverityEnum::Info, "entities performance", stringizer() + "time for access with component: " + (tmr->microsSinceStart()) + " us");
+			CAGE_LOG(SeverityEnum::Info, "entities performance", stringizer() + "time for access with component: " + (tmr->duration()) + " us");
 		}
 	}
 
@@ -511,7 +511,7 @@ namespace
 			}
 		}
 
-		CAGE_LOG(SeverityEnum::Info, "entities performance", stringizer() + "simulation avg time per cycle: " + (tmr->microsSinceStart() / TotalCycles) + " us");
+		CAGE_LOG(SeverityEnum::Info, "entities performance", stringizer() + "simulation avg time per cycle: " + (tmr->duration() / TotalCycles) + " us");
 	}
 }
 

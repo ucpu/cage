@@ -5,16 +5,11 @@
 
 namespace cage
 {
-	struct CAGE_CORE_API Serializer
+	struct CAGE_CORE_API Serializer : private Noncopyable
 	{
 		explicit Serializer(PointerRange<char> buffer);
 		explicit Serializer(MemoryBuffer &buffer, uintPtr size = m);
 		
-		Serializer(Serializer &&) = default;
-		Serializer(const Serializer &) = delete;
-		Serializer &operator = (Serializer &&) = default;
-		Serializer &operator = (const Serializer &) = delete;
-
 		uintPtr available() const; // number of bytes still available in the buffer (valid only if the maximum size was given in the constructor)
 		void write(PointerRange<const char> buffer);
 		void writeLine(const string &line);
@@ -30,14 +25,9 @@ namespace cage
 		uintPtr size = 0; // max size of the buffer
 	};
 
-	struct CAGE_CORE_API Deserializer
+	struct CAGE_CORE_API Deserializer : private Noncopyable
 	{
 		explicit Deserializer(PointerRange<const char> buffer);
-
-		Deserializer(Deserializer &&) = default;
-		Deserializer(const Deserializer &) = delete;
-		Deserializer &operator = (Deserializer &&) = default;
-		Deserializer &operator = (const Deserializer &) = delete;
 
 		uintPtr available() const; // number of bytes still available in the buffer
 		void read(PointerRange<char> buffer);

@@ -136,7 +136,7 @@ namespace cage
 
 			uint64 adjustedRealTime()
 			{
-				return realTimer->microsSinceStart() + realDrift;
+				return realTimer->duration() + realDrift;
 			}
 
 			uint64 currentTime()

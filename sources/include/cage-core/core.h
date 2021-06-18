@@ -268,6 +268,15 @@ namespace cage
 		Immovable &operator = (Immovable &&) = delete;
 	};
 
+	struct CAGE_CORE_API Noncopyable
+	{
+		Noncopyable() = default;
+		Noncopyable(const Noncopyable &) = delete;
+		Noncopyable(Noncopyable &&) = default;
+		Noncopyable &operator = (const Noncopyable &) = delete;
+		Noncopyable &operator = (Noncopyable &&) = default;
+	};
+
 	// string literal
 
 	struct StringLiteral
@@ -764,7 +773,7 @@ namespace cage
 
 	namespace privat
 	{
-		struct CAGE_CORE_API HolderControlBase
+		struct CAGE_CORE_API HolderControlBase : private Immovable
 		{
 			Delegate<void(void *)> deleter;
 			void *deletee = nullptr;
@@ -775,7 +784,7 @@ namespace cage
 		};
 
 		template<class T>
-		struct HolderBase
+		struct HolderBase : private Noncopyable
 		{
 			HolderBase() noexcept = default;
 			explicit HolderBase(T *data, HolderControlBase *control) noexcept : data_(data), control_(control)
@@ -791,11 +800,9 @@ namespace cage
 				base.control_ = nullptr;
 			}
 
-			HolderBase(const HolderBase &) = delete;
 			HolderBase(HolderBase &&other) noexcept : HolderBase(other.data_, std::move(other))
 			{}
 
-			HolderBase &operator = (const HolderBase &) = delete;
 			HolderBase &operator = (HolderBase &&other) noexcept
 			{
 				if (this == &other)

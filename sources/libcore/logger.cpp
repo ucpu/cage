@@ -400,6 +400,6 @@ namespace cage
 
 	uint64 applicationTime()
 	{
-		return loggerTimer()->microsSinceStart();
+		return loggerTimer()->duration();
 	}
 }

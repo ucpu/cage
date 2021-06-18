@@ -30,7 +30,7 @@ namespace cage
 		Holder<TcpConnection> accept(); // non-blocking
 	};
 
-	CAGE_CORE_API Holder<TcpServer> newTcpServer(uint16 port); // non-blocking
+	CAGE_CORE_API Holder<TcpServer> newTcpServer(uint16 port);
 
 	// udp
 

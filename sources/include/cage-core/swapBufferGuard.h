@@ -37,16 +37,14 @@ namespace cage
 
 	namespace privat
 	{
-		class CAGE_CORE_API SwapBufferLock
+		class CAGE_CORE_API SwapBufferLock : private Noncopyable
 		{
 		public:
 			SwapBufferLock();
 			explicit SwapBufferLock(SwapBufferGuard *controller, uint32 index);
-			SwapBufferLock(const SwapBufferLock &) = delete; // non-copyable
-			SwapBufferLock(SwapBufferLock &&other) noexcept; // movable
+			SwapBufferLock(SwapBufferLock &&other) noexcept;
 			~SwapBufferLock();
-			SwapBufferLock &operator = (const SwapBufferLock &) = delete; // non-copyable
-			SwapBufferLock &operator = (SwapBufferLock &&other) noexcept; // movable
+			SwapBufferLock &operator = (SwapBufferLock &&other) noexcept;
 			explicit operator bool() const { return !!controller_; }
 			uint32 index() const { CAGE_ASSERT(!!controller_); return index_; }
 

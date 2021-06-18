@@ -16,7 +16,7 @@ namespace
 		volatile uint32 tmp = 0;
 		for (uint32 i = 0; i < 1000000; i++)
 			tmp = FNC();
-		const uint64 duration = timer->microsSinceStart();
+		const uint64 duration = timer->duration();
 		CAGE_TEST(tmp != 0);
 		CAGE_LOG(SeverityEnum::Info, "performance", stringizer() + name + ": " + duration);
 	}

@@ -221,6 +221,6 @@ void testSpatialStructure()
 			}
 		}
 
-		CAGE_LOG(SeverityEnum::Info, "spatial performance", stringizer() + "total time: " + tmr->microsSinceStart() + " us");
+		CAGE_LOG(SeverityEnum::Info, "spatial performance", stringizer() + "total time: " + tmr->duration() + " us");
 	}
 }

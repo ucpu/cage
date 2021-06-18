@@ -577,7 +577,7 @@ namespace cage
 				while (files.empty())
 				{
 					fw->update();
-					if (files.empty() && clock->microsSinceStart() > time)
+					if (files.empty() && clock->duration() > time)
 						return "";
 					else
 						threadSleep(1000 * 100);

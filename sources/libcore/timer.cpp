@@ -67,7 +67,7 @@ namespace cage
 		impl->last = 0;
 	}
 
-	uint64 Timer::microsSinceStart()
+	uint64 Timer::duration()
 	{
 		TimerImpl *impl = (TimerImpl*)this;
 
@@ -86,10 +86,10 @@ namespace cage
 #endif
 	}
 
-	uint64 Timer::microsSinceLast()
+	uint64 Timer::elapsed()
 	{
 		TimerImpl *impl = (TimerImpl*)this;
-		uint64 curr = microsSinceStart();
+		uint64 curr = duration();
 		uint64 res = curr - impl->last;
 		impl->last = curr;
 		return res;

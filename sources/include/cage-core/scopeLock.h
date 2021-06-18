@@ -10,7 +10,7 @@ namespace cage
 	struct WriteLockTag {};
 
 	template<class T>
-	struct ScopeLock
+	struct ScopeLock : private Noncopyable
 	{
 		[[nodiscard]] explicit ScopeLock(const Holder<T> &ptr, TryLockTag) : ScopeLock(+ptr, TryLockTag())
 		{}
@@ -45,14 +45,10 @@ namespace cage
 			ptr->lock();
 		}
 
-		// non copyable
-		ScopeLock(const ScopeLock &) = delete;
-		ScopeLock &operator = (const ScopeLock &) = delete;
-
 		// move constructible
-		ScopeLock(ScopeLock &&other) noexcept : ptr(other.ptr)
+		ScopeLock(ScopeLock &&other) noexcept
 		{
-			other.ptr = nullptr;
+			std::swap(ptr, other.ptr);
 		}
 
 		// not move assignable (releasing the original lock owned by this would not be atomic)

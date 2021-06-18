@@ -85,7 +85,7 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration > 100000 && duration < 300000);
 		}
 		CAGE_TEST(periodicCount >= 4 && periodicCount <= 8);
@@ -125,7 +125,7 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration > 100000 && duration < 300000);
 		}
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
@@ -169,7 +169,7 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration > 100000 && duration < 300000);
 		}
 		const uint32 sum = cnt1 + cnt2;
@@ -210,7 +210,7 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration > 100000 && duration < 300000);
 		}
 		CAGE_TEST(cnt1 >= 2 && cnt1 <= 6);
@@ -259,7 +259,7 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration > 100000 && duration < 300000);
 		}
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
@@ -293,7 +293,7 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration > 100000 && duration < 300000);
 		}
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
@@ -332,7 +332,7 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration < 20000);
 		}
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
@@ -372,7 +372,7 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration < 20000);
 		}
 		CAGE_TEST(cnt1 >= 2 && cnt1 <= 6);
@@ -413,7 +413,7 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration > 4 * 30000 && duration < 9 * 30000);
 		}
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 9);
@@ -446,7 +446,7 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration > 200000 && duration < 800000);
 		}
 		CAGE_TEST(cnt1 >= 15 && cnt1 <= 25);
@@ -495,7 +495,7 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration < 20000);
 		}
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
@@ -529,7 +529,7 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration < 10000);
 		}
 		CAGE_TEST(sch->latestTime() >= 200000);
@@ -570,7 +570,7 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration > 50000 && duration < 190000);
 		}
 		CAGE_TEST(sch->latestTime() >= 200000);
@@ -611,7 +611,7 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration > 50000 && duration < 190000);
 		}
 		CAGE_TEST(sch->latestTime() >= 200000);
@@ -663,7 +663,7 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration > 50000 && duration < 300000);
 		}
 		CAGE_TEST(sch->latestTime() >= 200000);
