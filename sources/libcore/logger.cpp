@@ -200,11 +200,11 @@ namespace cage
 				res += fill(string(stringizer() + info.time), 12) + " ";
 				res += fill(string(info.currentThreadName), 26) + " ";
 				res += detail::severityToString(info.severity) + " ";
-				res += fill(string(info.component.str), 20) + " ";
+				res += fill(string(info.component), 20) + " ";
 				res += info.message;
-				if (longer && info.file.str)
+				if (longer && info.file)
 				{
-					string flf = stringizer() + " " + info.file.str + ":" + info.line + " (" + info.function.str + ")";
+					string flf = stringizer() + " " + info.file + ":" + info.line + " (" + info.function + ")";
 					if (res.length() + flf.length() + 10 < string::MaxLength)
 					{
 						res += fill(string(), string::MaxLength - flf.length() - res.length() - 5);
@@ -273,7 +273,7 @@ namespace cage
 			}
 			catch (const cage::Exception &e)
 			{
-				CAGE_LOG(SeverityEnum::Info, "exception", stringizer() + "cage exception: " + e.message.str);
+				CAGE_LOG(SeverityEnum::Info, "exception", stringizer() + "cage exception: " + e.message);
 			}
 			catch (const std::exception &e)
 			{
@@ -296,7 +296,7 @@ namespace cage
 
 	namespace privat
 	{
-		uint64 makeLog(StringLiteral file, uint32 line, StringLiteral function, SeverityEnum severity, StringLiteral component, const string &message, bool continuous, bool debug) noexcept
+		uint64 makeLog(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, StringLiteral component, const string &message, bool continuous, bool debug) noexcept
 		{
 			detail::globalLogger(); // ensure global logger was initialized
 

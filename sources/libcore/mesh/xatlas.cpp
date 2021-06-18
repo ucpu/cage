@@ -48,7 +48,7 @@ namespace cage
 
 		Holder<xatlas::Atlas> newAtlas(bool reportProgress)
 		{
-			struct Atl : Immovable
+			struct Atl : private Immovable
 			{
 				xatlas::Atlas *a = nullptr;
 				Atl()

@@ -53,22 +53,22 @@
 #endif
 #endif
 #ifdef CAGE_ASSERT_ENABLED
-#define CAGE_ASSERT(EXPR) { if (!(EXPR)) { ::cage::privat::runtimeAssertFailure(#EXPR, __FILE__, __LINE__, __FUNCTION__); int i_ = 42; } }
+#define CAGE_ASSERT(EXPR) { if (!(EXPR)) { ::cage::privat::runtimeAssertFailure(__FUNCTION__, __FILE__, __LINE__, #EXPR); int i_ = 42; } }
 #else
 #define CAGE_ASSERT(EXPR) {}
 #endif
 
-#define CAGE_THROW_SILENT(EXCEPTION, ...) { EXCEPTION e_(__FILE__, __LINE__, __FUNCTION__, ::cage::SeverityEnum::Error, __VA_ARGS__); throw e_; }
-#define CAGE_THROW_ERROR(EXCEPTION, ...) { EXCEPTION e_(__FILE__, __LINE__, __FUNCTION__, ::cage::SeverityEnum::Error, __VA_ARGS__); e_.makeLog(); throw e_; }
-#define CAGE_THROW_CRITICAL(EXCEPTION, ...) { EXCEPTION e_(__FILE__, __LINE__, __FUNCTION__, ::cage::SeverityEnum::Critical, __VA_ARGS__); e_.makeLog(); throw e_; }
+#define CAGE_THROW_SILENT(EXCEPTION, ...) { EXCEPTION e_(__FUNCTION__, __FILE__, __LINE__, ::cage::SeverityEnum::Error, __VA_ARGS__); throw e_; }
+#define CAGE_THROW_ERROR(EXCEPTION, ...) { EXCEPTION e_(__FUNCTION__, __FILE__, __LINE__, ::cage::SeverityEnum::Error, __VA_ARGS__); e_.makeLog(); throw e_; }
+#define CAGE_THROW_CRITICAL(EXCEPTION, ...) { EXCEPTION e_(__FUNCTION__, __FILE__, __LINE__, ::cage::SeverityEnum::Critical, __VA_ARGS__); e_.makeLog(); throw e_; }
 
-#define CAGE_LOG_THROW(MESSAGE) ::cage::privat::makeLogThrow(__FILE__, __LINE__, __FUNCTION__, MESSAGE)
+#define CAGE_LOG_THROW(MESSAGE) ::cage::privat::makeLogThrow(__FUNCTION__, __FILE__, __LINE__, MESSAGE)
 
-#define CAGE_LOG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FILE__, __LINE__, __FUNCTION__, SEVERITY, COMPONENT, MESSAGE, false, false)
-#define CAGE_LOG_CONTINUE(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FILE__, __LINE__, __FUNCTION__, SEVERITY, COMPONENT, MESSAGE, true, false)
+#define CAGE_LOG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FUNCTION__, __FILE__, __LINE__, SEVERITY, COMPONENT, MESSAGE, false, false)
+#define CAGE_LOG_CONTINUE(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FUNCTION__, __FILE__, __LINE__, SEVERITY, COMPONENT, MESSAGE, true, false)
 #ifdef CAGE_DEBUG
-#define CAGE_LOG_DEBUG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FILE__, __LINE__, __FUNCTION__, SEVERITY, COMPONENT, MESSAGE, false, true)
-#define CAGE_LOG_CONTINUE_DEBUG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FILE__, __LINE__, __FUNCTION__, SEVERITY, COMPONENT, MESSAGE, true, true)
+#define CAGE_LOG_DEBUG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FUNCTION__, __FILE__, __LINE__, SEVERITY, COMPONENT, MESSAGE, false, true)
+#define CAGE_LOG_CONTINUE_DEBUG(SEVERITY, COMPONENT, MESSAGE) ::cage::privat::makeLog(__FUNCTION__, __FILE__, __LINE__, SEVERITY, COMPONENT, MESSAGE, true, true)
 #else
 #define CAGE_LOG_DEBUG(SEVERITY, COMPONENT, MESSAGE) {}
 #define CAGE_LOG_CONTINUE_DEBUG(SEVERITY, COMPONENT, MESSAGE) {}
@@ -281,13 +281,11 @@ namespace cage
 
 	struct StringLiteral
 	{
-		template<uint32 N>
-		CAGE_FORCE_INLINE StringLiteral(const char(&str)[N]) noexcept : str(str)
-		{}
-
-		CAGE_FORCE_INLINE explicit StringLiteral(const char *str) noexcept : str(str)
-		{}
-
+		StringLiteral() = default;
+		template<uint32 N> CAGE_FORCE_INLINE StringLiteral(const char(&str)[N]) noexcept : str(str) {}
+		CAGE_FORCE_INLINE explicit StringLiteral(const char *str) noexcept : str(str) {}
+		CAGE_FORCE_INLINE operator const char *() const noexcept { return str; }
+	private:
 		const char *str = nullptr;
 	};
 
@@ -305,9 +303,9 @@ namespace cage
 
 	namespace privat
 	{
-		CAGE_CORE_API uint64 makeLog(StringLiteral file, uint32 line, StringLiteral function, SeverityEnum severity, StringLiteral component, const string &message, bool continuous, bool debug) noexcept;
-		CAGE_CORE_API void makeLogThrow(StringLiteral file, uint32 line, StringLiteral function, const string &message) noexcept;
-		CAGE_CORE_API void runtimeAssertFailure(StringLiteral expt, StringLiteral file, uintPtr line, StringLiteral function);
+		CAGE_CORE_API uint64 makeLog(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, StringLiteral component, const string &message, bool continuous, bool debug) noexcept;
+		CAGE_CORE_API void makeLogThrow(StringLiteral function, StringLiteral file, uint32 line, const string &message) noexcept;
+		CAGE_CORE_API void runtimeAssertFailure(StringLiteral function, StringLiteral file, uintPtr line, StringLiteral expt);
 	}
 
 	namespace detail
@@ -416,14 +414,14 @@ namespace cage
 
 	struct CAGE_CORE_API Exception
 	{
-		explicit Exception(StringLiteral file, uint32 line, StringLiteral function, SeverityEnum severity, StringLiteral message) noexcept;
+		explicit Exception(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, StringLiteral message) noexcept;
 		virtual ~Exception() noexcept;
 
 		void makeLog(); // check conditions and call log()
 		virtual void log();
 
-		StringLiteral file;
 		StringLiteral function;
+		StringLiteral file;
 		StringLiteral message;
 		uint32 line = 0;
 		SeverityEnum severity = SeverityEnum::Critical;
@@ -437,7 +435,7 @@ namespace cage
 
 	struct CAGE_CORE_API SystemError : public Exception
 	{
-		explicit SystemError(StringLiteral file, uint32 line, StringLiteral function, SeverityEnum severity, StringLiteral message, sint64 code) noexcept;
+		explicit SystemError(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, StringLiteral message, sint64 code) noexcept;
 		void log() override;
 		sint64 code = 0;
 	};
