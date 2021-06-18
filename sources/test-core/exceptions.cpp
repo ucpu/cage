@@ -9,6 +9,18 @@ namespace
 	{
 		CAGE_THROW_ERROR(Exception, "throwing function");
 	}
+
+	bool assertFailureFunction()
+	{
+		CAGE_ASSERT(false); // this line number
+		return true;
+	}
+
+	bool assertPassFunction()
+	{
+		CAGE_ASSERT(true);
+		return true;
+	}
 }
 
 void testExceptions()
@@ -17,8 +29,8 @@ void testExceptions()
 	detail::OverrideBreakpoint OverrideBreakpoint;
 
 	{
-		uint32 catches = 0;
 		CAGE_TESTCASE("exception re-throw and catch");
+		uint32 catches = 0;
 		try
 		{
 			try
@@ -43,6 +55,46 @@ void testExceptions()
 			CAGE_TEST(false);
 		}
 		CAGE_TEST(catches == 2);
+	}
+
+	{
+		CAGE_TESTCASE("exception file");
+		try
+		{
+			CAGE_THROW_ERROR(Exception, "intentional"); // this line number
+		}
+		catch (const Exception &e)
+		{
+			CAGE_TEST(std::strcmp(e.file, __FILE__) == 0);
+			CAGE_TEST(e.line == 64); // marked line number
+			CAGE_TEST(isPattern(string(e.function), "", "testExceptions", ""));
+			CAGE_TEST(std::strcmp(e.message, "intentional") == 0);
+			CAGE_TEST(e.severity == SeverityEnum::Error);
+		}
+	}
+
+	{
+		CAGE_TESTCASE("assert");
+		CAGE_TEST(assertPassFunction());
+		CAGE_TEST_ASSERTED(assertFailureFunction());
+
+#ifdef CAGE_ASSERT_ENABLED
+		{
+			CAGE_TESTCASE("assert exception file");
+			try
+			{
+				detail::OverrideAssert ovr;
+				assertFailureFunction();
+			}
+			catch (const Exception &e)
+			{
+				CAGE_TEST(std::strcmp(e.file, __FILE__) == 0);
+				CAGE_TEST(e.line == 15); // marked line number
+				CAGE_TEST(isPattern(string(e.function), "", "assertFailureFunction", ""));
+				CAGE_TEST(e.severity == SeverityEnum::Critical);
+			}
+		}
+#endif // CAGE_ASSERT_ENABLED
 	}
 
 	{
