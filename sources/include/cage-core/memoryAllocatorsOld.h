@@ -555,7 +555,7 @@ namespace cage
 	{
 		explicit MemoryArenaFixed(uintPtr size) : size(size)
 		{
-			origin = systemArena().allocate(size, sizeof(uintPtr));
+			origin = systemMemory().allocate(size, sizeof(uintPtr));
 			allocator.setOrigin(origin);
 			allocator.setSize(size);
 		}
@@ -563,7 +563,7 @@ namespace cage
 		~MemoryArenaFixed()
 		{
 			ScopeLock g(&concurrent);
-			systemArena().deallocate(origin);
+			systemMemory().deallocate(origin);
 		}
 
 		void *allocate(uintPtr size, uintPtr alignment)

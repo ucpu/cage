@@ -225,6 +225,6 @@ namespace cage
 
 	Holder<NoiseFunction> newNoiseFunction(const NoiseFunctionCreateConfig &config)
 	{
-		return systemArena().createImpl<NoiseFunction, NoiseFunctionImpl>(config);
+		return systemMemory().createImpl<NoiseFunction, NoiseFunctionImpl>(config);
 	}
 }

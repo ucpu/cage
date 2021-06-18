@@ -32,7 +32,7 @@ void processAnimation()
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "ticks per second: " + ani->mTicksPerSecond);
 
 	Holder<SkeletalAnimation> anim = context->animation(chosenAnimationIndex);
-	Holder<PointerRange<char>> buff = anim->serialize();
+	Holder<PointerRange<char>> buff = anim->exportBuffer();
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
 	Holder<PointerRange<char>> comp = compress(buff);
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + comp.size());

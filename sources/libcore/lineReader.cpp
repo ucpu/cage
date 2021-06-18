@@ -6,41 +6,34 @@ namespace cage
 {
 	namespace detail
 	{
-		bool readLine(string &output, const char *&buffer, uintPtr &size, bool streaming)
+		uintPtr readLine(PointerRange<const char> &output, PointerRange<const char> input, bool streaming)
 		{
+			const uintPtr size = input.size();
+			const char *buffer = input.data();
+
 			if (size == 0)
-				return false;
+				return 0;
 
 			uintPtr len = 0;
 			while (len < size && buffer[len] != '\n')
 				len++;
 
 			if (streaming && len == size)
-				return false;
+				return 0;
 
-			if (len > std::numeric_limits<uint32>::max())
-				CAGE_THROW_ERROR(Exception, "line too long");
+			output = { buffer, buffer + len };
 
-			output = string({ buffer, buffer + numeric_cast<uint32>(len) });
+			if (len && output[output.size() - 1] == '\r')
+				output = { buffer, buffer + len - 1 };
 
-			if (!output.empty() && output[output.length() - 1] == '\r')
-				output = subString(output, 0, output.length() - 1);
-
-			if (len == size)
-				size = 0;
-			else
-				size -= len + 1;
-
-			buffer += len + 1;
-			return true;
+			return len + (len < size); // plus the new line
 		}
 
-		bool readLine(string &output, PointerRange<const char> &buffer, bool streaming)
+		uintPtr readLine(string &output, PointerRange<const char> input, bool streaming)
 		{
-			const char *b = buffer.begin();
-			uintPtr s = buffer.size();
-			bool res = readLine(output, b, s, streaming);
-			buffer = { b, b + s };
+			PointerRange<const char> tmp;
+			uintPtr res = readLine(tmp, input, streaming);
+			output = string(tmp); // may throw
 			return res;
 		}
 	}
@@ -57,15 +50,27 @@ namespace cage
 			{}
 
 			MemoryBuffer mb;
-			const char *buffer;
-			uintPtr size;
+			const char *buffer = nullptr;
+			uintPtr size = 0;
 		};
+	}
+
+	bool LineReader::readLine(PointerRange<const char> &line)
+	{
+		LineReaderImpl *impl = (LineReaderImpl *)this;
+		uintPtr l = detail::readLine(line, { impl->buffer, impl->buffer + impl->size }, false);
+		impl->buffer += l;
+		impl->size -= l;
+		return !!l;
 	}
 
 	bool LineReader::readLine(string &line)
 	{
-		LineReaderImpl *impl = (LineReaderImpl*)this;
-		return detail::readLine(line, impl->buffer, impl->size, false);
+		LineReaderImpl *impl = (LineReaderImpl *)this;
+		uintPtr l = detail::readLine(line, { impl->buffer, impl->buffer + impl->size }, false);
+		impl->buffer += l;
+		impl->size -= l;
+		return !!l;
 	}
 
 	uintPtr LineReader::remaining() const
@@ -76,11 +81,11 @@ namespace cage
 
 	Holder<LineReader> newLineReader(PointerRange<const char> buffer)
 	{
-		return systemArena().createImpl<LineReader, LineReaderImpl>(buffer.data(), buffer.size());
+		return systemMemory().createImpl<LineReader, LineReaderImpl>(buffer.data(), buffer.size());
 	}
 
 	Holder<LineReader> newLineReader(MemoryBuffer &&buffer)
 	{
-		return systemArena().createImpl<LineReader, LineReaderImpl>(std::move(buffer));
+		return systemMemory().createImpl<LineReader, LineReaderImpl>(std::move(buffer));
 	}
 }

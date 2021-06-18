@@ -101,7 +101,7 @@ namespace
 						Serializer s(b);
 						s << ++sendSeqn;
 						while (b.size() < bytes)
-							s << detail::getApplicationRandomGenerator().next();
+							s << detail::globalRandomGenerator().next();
 						udp->write(b, randomRange(0, 20), randomChance() < 0.1);
 					}
 				}
@@ -134,5 +134,5 @@ bool Conn::process()
 
 Holder<Conn> newConn(Holder<UdpConnection> udp)
 {
-	return systemArena().createImpl<Conn, ConnImpl>(std::move(udp));
+	return systemMemory().createImpl<Conn, ConnImpl>(std::move(udp));
 }

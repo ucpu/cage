@@ -745,12 +745,12 @@ namespace cage
 
 	void graphicsDispatchCreate(const EngineCreateConfig &config)
 	{
-		graphicsDispatch = systemArena().createObject<GraphicsDispatchImpl>();
+		graphicsDispatch = systemMemory().createObject<GraphicsDispatchImpl>();
 	}
 
 	void graphicsDispatchDestroy()
 	{
-		systemArena().destroy<GraphicsDispatchImpl>(graphicsDispatch);
+		systemMemory().destroy<GraphicsDispatchImpl>(graphicsDispatch);
 		graphicsDispatch = nullptr;
 	}
 

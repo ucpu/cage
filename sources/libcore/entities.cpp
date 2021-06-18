@@ -138,12 +138,12 @@ namespace cage
 
 			void *newVal() override
 			{
-				return systemArena().allocate(size, alignment);
+				return systemMemory().allocate(size, alignment);
 			}
 
 			void desVal(void *val) override
 			{
-				systemArena().deallocate(val);
+				systemMemory().deallocate(val);
 			}
 		};
 
@@ -151,9 +151,9 @@ namespace cage
 		{
 			const uintPtr s = max(size, alignment);
 			if (s > 128)
-				return systemArena().createHolder<ValuesFallback>(size, alignment).cast<Values>();
+				return systemMemory().createHolder<ValuesFallback>(size, alignment).cast<Values>();
 
-#define GCHL_GENERATE(SIZE) if (s <= SIZE) return systemArena().createHolder<ValuesImpl<SIZE>>().cast<Values>();
+#define GCHL_GENERATE(SIZE) if (s <= SIZE) return systemMemory().createHolder<ValuesImpl<SIZE>>().cast<Values>();
 			CAGE_EVAL_SMALL(CAGE_EXPAND_ARGS(GCHL_GENERATE, 4, 8, 16, 32, 64, 128));
 #undef GCHL_GENERATE
 
@@ -172,7 +172,7 @@ namespace cage
 
 			ComponentImpl(EntityManagerImpl *manager, uint32 typeIndex, const void *prototype_) : manager(manager), typeIndex(typeIndex), definitionIndex(numeric_cast<uint32>(manager->components.size()))
 			{
-				componentEntities = systemArena().createHolder<GroupImpl>(manager);
+				componentEntities = systemMemory().createHolder<GroupImpl>(manager);
 				values = newValues(detail::typeSize(typeIndex), detail::typeAlignment(typeIndex));
 				prototype = values->newVal();
 				detail::memcpy(prototype, prototype_, detail::typeSize(typeIndex));
@@ -246,7 +246,7 @@ namespace cage
 	EntityGroup *EntityManager::defineGroup()
 	{
 		EntityManagerImpl *impl = (EntityManagerImpl *)this;
-		Holder<GroupImpl> h = systemArena().createHolder<GroupImpl>(impl);
+		Holder<GroupImpl> h = systemMemory().createHolder<GroupImpl>(impl);
 		GroupImpl *g = +h;
 		impl->groups.push_back(std::move(h));
 		return g;
@@ -343,7 +343,7 @@ namespace cage
 	EntityComponent *EntityManager::defineComponent_(uint32 typeIndex, const void *prototype)
 	{
 		EntityManagerImpl *impl = (EntityManagerImpl *)this;
-		Holder<ComponentImpl> h = systemArena().createHolder<ComponentImpl>(impl, typeIndex, prototype);
+		Holder<ComponentImpl> h = systemMemory().createHolder<ComponentImpl>(impl, typeIndex, prototype);
 		{
 			auto &v = impl->componentsByTypes;
 			if (v.size() <= typeIndex)
@@ -358,7 +358,7 @@ namespace cage
 
 	Holder<EntityManager> newEntityManager()
 	{
-		return systemArena().createImpl<EntityManager, EntityManagerImpl>();
+		return systemMemory().createImpl<EntityManager, EntityManagerImpl>();
 	}
 
 	EntityManager *EntityComponent::manager() const
@@ -551,14 +551,14 @@ namespace cage
 			(*impl->entities.rbegin())->destroy();
 	}
 
-	Holder<PointerRange<char>> entitiesSerialize(const EntityGroup *entities, EntityComponent *component)
+	Holder<PointerRange<char>> entitiesExportBuffer(const EntityGroup *entities, EntityComponent *component)
 	{
 		const uintPtr typeSize = detail::typeSize(component->typeIndex());
 		MemoryBuffer buffer;
 		Serializer ser(buffer);
 		ser << component->definitionIndex();
 		ser << (uint64)typeSize;
-		Serializer cntPlaceholder = ser.placeholder(sizeof(uint32));
+		Serializer cntPlaceholder = ser.reserve(sizeof(uint32));
 		uint32 cnt = 0;
 		for (Entity *e : entities->entities())
 		{
@@ -578,7 +578,7 @@ namespace cage
 		return std::move(buffer);
 	}
 
-	void entitiesDeserialize(PointerRange<const char> buffer, EntityManager *manager)
+	void entitiesImportBuffer(PointerRange<const char> buffer, EntityManager *manager)
 	{
 		if (buffer.empty())
 			return;

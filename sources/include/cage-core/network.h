@@ -1,7 +1,7 @@
 #ifndef guard_network_h_f311f15d_426e_4077_8b9b_a5ee12e78b39_
 #define guard_network_h_f311f15d_426e_4077_8b9b_a5ee12e78b39_
 
-#include "core.h"
+#include "files.h"
 
 namespace cage
 {
@@ -12,23 +12,11 @@ namespace cage
 
 	// tcp
 
-	class CAGE_CORE_API TcpConnection : private Immovable
+	class CAGE_CORE_API TcpConnection : public File
 	{
 	public:
 		string address() const; // remote address
 		uint16 port() const; // remote port
-
-		uintPtr available(); // non-blocking
-
-		void readWait(PointerRange<char> buffer);
-		void read(PointerRange<char> &buffer);
-		Holder<PointerRange<char>> readWait(uintPtr size);
-		Holder<PointerRange<char>> read();
-		string readLineWait();
-		bool readLine(string &line);
-
-		void write(PointerRange<const char> buffer);
-		void writeLine(const string &line);
 	};
 
 	CAGE_CORE_API Holder<TcpConnection> newTcpConnection(const string &address, uint16 port); // blocking
@@ -42,7 +30,7 @@ namespace cage
 		Holder<TcpConnection> accept(); // non-blocking
 	};
 
-	CAGE_CORE_API Holder<TcpServer> newTcpServer(uint16 port); // non-blocking
+	CAGE_CORE_API Holder<TcpServer> newTcpServer(uint16 port);
 
 	// udp
 

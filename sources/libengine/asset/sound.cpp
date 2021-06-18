@@ -21,7 +21,7 @@ namespace cage
 				return;
 
 			Holder<Audio> poly = newAudio();
-			poly->importBuffer(des.advance(des.available()));
+			poly->importBuffer(des.read(des.available()));
 			CAGE_ASSERT(des.available() == 0);
 			CAGE_ASSERT(snd.channels == poly->channels());
 			CAGE_ASSERT(snd.frames == poly->frames());
@@ -48,10 +48,10 @@ namespace cage
 			{
 			case SoundTypeEnum::RawRaw:
 			case SoundTypeEnum::CompressedRaw:
-				poly->importRaw(des.advance(des.available()), numeric_cast<uintPtr>(snd.frames), snd.channels, snd.sampleRate, AudioFormatEnum::Float);
+				poly->importRaw(des.read(des.available()), numeric_cast<uintPtr>(snd.frames), snd.channels, snd.sampleRate, AudioFormatEnum::Float);
 				break;
 			case SoundTypeEnum::CompressedCompressed:
-				poly->importBuffer(des.advance(des.available()));
+				poly->importBuffer(des.read(des.available()));
 				break;
 			default:
 				CAGE_THROW_ERROR(Exception, "invalid sound type");

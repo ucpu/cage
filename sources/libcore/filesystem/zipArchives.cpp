@@ -75,13 +75,13 @@ namespace cage
 				f = nullptr;
 			}
 
-			uintPtr tell() const override
+			uintPtr tell() override
 			{
 				ScopeLock l(mutex); // enforce memory ordering
 				return off;
 			}
 
-			uintPtr size() const override
+			uintPtr size() override
 			{
 				return capacity;
 			}
@@ -89,7 +89,7 @@ namespace cage
 
 		Holder<File> newProxyFile(Mutex *mutex, File *f, uintPtr start, uintPtr size)
 		{
-			return systemArena().createImpl<File, ProxyFile>(mutex, f, start, size);
+			return systemMemory().createImpl<File, ProxyFile>(mutex, f, start, size);
 		}
 	}
 
@@ -323,7 +323,7 @@ namespace cage
 							CAGE_LOG(SeverityEnum::Note, "zip", stringizer() + "archive path: '" + myPath + "'");
 							CAGE_LOG(SeverityEnum::Note, "zip", stringizer() + "name: " + e.name);
 							CAGE_LOG(SeverityEnum::Warning, "zip", "skipping zip file extra fields");
-							d.advance(e.extraFieldLength);
+							d.read(e.extraFieldLength);
 							e.extraFieldLength = 0;
 						}
 						if (e.commentLength)
@@ -331,7 +331,7 @@ namespace cage
 							CAGE_LOG(SeverityEnum::Note, "zip", stringizer() + "archive path: '" + myPath + "'");
 							CAGE_LOG(SeverityEnum::Note, "zip", stringizer() + "name: " + e.name);
 							CAGE_LOG(SeverityEnum::Warning, "zip", "skipping zip file comment field");
-							d.advance(e.commentLength);
+							d.read(e.commentLength);
 							e.commentLength = 0;
 						}
 
@@ -631,13 +631,13 @@ namespace cage
 					r.compressedSize = 0;
 					r.modified = true;
 					modified = true;
-					src = newFileBuffer(&buff);
+					src = newFileBuffer(Holder<MemoryBuffer>(&buff, nullptr));
 				}
 				else
 				{ // read or update
 					CAGE_ASSERT(!modified);
 					if (r.modified)
-						src = newFileBuffer(PointerRange<char>(r.newContent), FileMode(true, false));
+						src = newFileBuffer(systemMemory().createHolder<PointerRange<char>>(PointerRange<char>(r.newContent)), FileMode(true, false));
 					else
 						src = newProxyFile(+a->mutex, +a->src, r.getFileStartOffset(), r.uncompressedSize);
 				}
@@ -678,7 +678,7 @@ namespace cage
 					CAGE_ASSERT(tmp.size() == buff.size());
 					detail::memcpy(buff.data(), tmp.data(), buff.size());
 				}
-				src = newFileBuffer(&buff);
+				src = newFileBuffer(Holder<MemoryBuffer>(&buff, nullptr));
 				src->seek(pos);
 				modified = true;
 			}
@@ -686,29 +686,29 @@ namespace cage
 			void reopenForModification() override
 			{
 				CAGE_ASSERT(!modified);
-				CAGE_ASSERT(!mode.write);
+				CAGE_ASSERT(!myMode.write);
 				CAGE_ASSERT(src);
 				reopenForModificationInternal();
-				mode.write = true;
+				myMode.write = true;
 			}
 
 			void readAt(PointerRange<char> buffer, uintPtr at) override
 			{
-				CAGE_ASSERT(mode.read);
+				CAGE_ASSERT(myMode.read);
 				CAGE_ASSERT(src);
 				((FileAbstract *)+src)->readAt(buffer, at);
 			}
 
 			void read(PointerRange<char> buffer) override
 			{
-				CAGE_ASSERT(mode.read);
+				CAGE_ASSERT(myMode.read);
 				CAGE_ASSERT(src);
 				src->read(buffer);
 			}
 
 			void write(PointerRange<const char> buffer) override
 			{
-				CAGE_ASSERT(mode.write);
+				CAGE_ASSERT(myMode.write);
 				CAGE_ASSERT(src);
 				if (!modified)
 					reopenForModificationInternal();
@@ -759,13 +759,13 @@ namespace cage
 				}
 			}
 
-			uintPtr tell() const override
+			uintPtr tell() override
 			{
 				CAGE_ASSERT(src);
 				return src->tell();
 			}
 
-			uintPtr size() const override
+			uintPtr size() override
 			{
 				CAGE_ASSERT(src);
 				return src->size();
@@ -815,12 +815,12 @@ namespace cage
 
 		Holder<File> ArchiveZip::openFile(const string &path, const FileMode &mode)
 		{
-			return systemArena().createImpl<File, FileZip>(std::static_pointer_cast<ArchiveZip>(shared_from_this()), path, mode);
+			return systemMemory().createImpl<File, FileZip>(std::static_pointer_cast<ArchiveZip>(shared_from_this()), path, mode);
 		}
 
 		Holder<DirectoryList> ArchiveZip::listDirectory(const string &path) const
 		{
-			return systemArena().createImpl<DirectoryList, DirectoryListZip>(std::static_pointer_cast<const ArchiveZip>(shared_from_this()), path);
+			return systemMemory().createImpl<DirectoryList, DirectoryListZip>(std::static_pointer_cast<const ArchiveZip>(shared_from_this()), path);
 		}
 	}
 

@@ -27,11 +27,11 @@ namespace cage
 
 	void Serializer::writeLine(const string &line)
 	{
-		string d = line + "\n";
-		write({ d.c_str(), d.c_str() + d.length() });
+		write(line);
+		write("\n");
 	}
 
-	Serializer Serializer::placeholder(uintPtr s)
+	Serializer Serializer::reserve(uintPtr s)
 	{
 		uintPtr o = offset;
 		advance(s);
@@ -66,36 +66,50 @@ namespace cage
 
 	void Deserializer::read(PointerRange<char> buffer)
 	{
-		auto src = advance(buffer.size());
+		auto src = read(buffer.size());
 		detail::memcpy(buffer.data(), src.data(), buffer.size());
+	}
+
+	PointerRange<const char> Deserializer::read(uintPtr s)
+	{
+		if (available() < s)
+			CAGE_THROW_ERROR(Exception, "deserialization beyond available space");
+		const char *dst = data + offset;
+		offset += s;
+		return { dst, dst + s };
+	}
+
+	bool Deserializer::readLine(PointerRange<const char> &line)
+	{
+		const uintPtr a = available();
+		PointerRange<const char> pr = { data + offset, data + offset + a };
+		uintPtr l = detail::readLine(line, pr, false);
+		if (l)
+		{
+			offset += l;
+			return true;
+		}
+		return false;
 	}
 
 	bool Deserializer::readLine(string &line)
 	{
 		const uintPtr a = available();
 		PointerRange<const char> pr = { data + offset, data + offset + a };
-		if (detail::readLine(line, pr, false))
+		uintPtr l = detail::readLine(line, pr, false);
+		if (l)
 		{
-			offset = pr.data() - data;
+			offset += l;
 			return true;
 		}
 		return false;
 	}
 
-	Deserializer Deserializer::placeholder(uintPtr s)
+	Deserializer Deserializer::subview(uintPtr s)
 	{
 		uintPtr o = offset;
-		advance(s);
+		read(s);
 		return Deserializer(data, o, offset);
-	}
-
-	PointerRange<const char> Deserializer::advance(uintPtr s)
-	{
-		if (available() < s)
-			CAGE_THROW_ERROR(Exception, "deserialization beyond available space");
-		const char *dst = (const char*)data + offset;
-		offset += s;
-		return { dst, dst + s };
 	}
 
 	Deserializer Deserializer::copy() const

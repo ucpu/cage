@@ -14,10 +14,10 @@ namespace cage
 	{
 		struct Item
 		{
-			const Collider *c = nullptr;
+			Holder<const Collider> c;
 			const transform t;
 
-			Item(const Collider *c, const transform &t) : c(c), t(t)
+			Item(Holder<const Collider> c, const transform &t) : c(std::move(c)), t(t)
 			{}
 		};
 
@@ -41,16 +41,16 @@ namespace cage
 		class CollisionQueryImpl : public CollisionQuery
 		{
 		public:
-			const CollisionDataImpl *const data;
+			const Holder<const CollisionDataImpl> data;
 			Holder<SpatialQuery> spatial;
 			uint32 resultName = m;
 			real resultFractionBefore = real::Nan();
 			real resultFractionContact = real::Nan();
 			Holder<PointerRange<CollisionPair>> resultPairs;
 
-			CollisionQueryImpl(const CollisionDataImpl *data) : data(data)
+			CollisionQueryImpl(Holder<const CollisionDataImpl> data) : data(std::move(data))
 			{
-				spatial = newSpatialQuery(data->spatial.get());
+				spatial = newSpatialQuery(this->data->spatial.share());
 			}
 
 			void clear()
@@ -67,7 +67,7 @@ namespace cage
 				for (uint32 nameIt : spatial->result())
 				{
 					const Item &item = data->allItems.at(nameIt);
-					CollisionDetectionParams p(collider, item.c, t, item.t);
+					CollisionDetectionParams p(collider, +item.c, t, item.t);
 					if (collisionDetection(p)) // exact phase
 					{
 						CAGE_ASSERT(!p.collisionPairs.empty());
@@ -88,7 +88,7 @@ namespace cage
 				for (uint32 nameIt : spatial->result())
 				{
 					const Item &item = data->allItems.at(nameIt);
-					CollisionDetectionParams p(collider, item.c);
+					CollisionDetectionParams p(collider, +item.c);
 					p.at1 = t1;
 					p.at2 = t2;
 					p.bt1 = item.t;
@@ -139,7 +139,7 @@ namespace cage
 				for (uint32 nameIt : spatial->result())
 				{
 					const Item &item = data->allItems.at(nameIt);
-					if (intersects(shape, item.c, item.t)) // exact phase
+					if (intersects(shape, +item.c, item.t)) // exact phase
 					{
 						resultName = nameIt;
 						found = true;
@@ -165,7 +165,7 @@ namespace cage
 			for (uint32 nameIt : spatial->result())
 			{
 				const Item &item = data->allItems.at(nameIt);
-				vec3 p = intersection(shape, item.c, item.t); // exact phase
+				vec3 p = intersection(shape, +item.c, item.t); // exact phase
 				//CAGE_ASSERT(intersects(shape, item.c, item.t) == p.valid());
 				if (!p.valid())
 					continue;
@@ -212,12 +212,12 @@ namespace cage
 		return impl->resultPairs;
 	}
 
-	void CollisionQuery::collider(const Collider *&c, transform &t) const
+	void CollisionQuery::collider(Holder<const Collider> &c, transform &t) const
 	{
 		const CollisionQueryImpl *impl = (const CollisionQueryImpl *)this;
 		CAGE_ASSERT(!impl->resultPairs.empty());
-		auto r = impl->data->allItems.at(impl->resultName);
-		c = r.c;
+		const auto &r = impl->data->allItems.at(impl->resultName);
+		c = r.c.share();
 		t = r.t;
 	}
 
@@ -275,12 +275,12 @@ namespace cage
 		return impl->query(shape);
 	}
 
-	void CollisionStructure::update(uint32 name, const Collider *collider, const transform &t)
+	void CollisionStructure::update(uint32 name, Holder<const Collider> collider, const transform &t)
 	{
 		CollisionDataImpl *impl = (CollisionDataImpl *)this;
 		remove(name);
-		impl->allItems.emplace(name, Item(collider, t));
 		impl->spatial->update(name, collider->box() * t);
+		impl->allItems.emplace(name, Item(std::move(collider), t));
 	}
 
 	void CollisionStructure::remove(uint32 name)
@@ -306,11 +306,11 @@ namespace cage
 
 	Holder<CollisionStructure> newCollisionStructure(const CollisionStructureCreateConfig &config)
 	{
-		return systemArena().createImpl<CollisionStructure, CollisionDataImpl>(config);
+		return systemMemory().createImpl<CollisionStructure, CollisionDataImpl>(config);
 	}
 
-	Holder<CollisionQuery> newCollisionQuery(const CollisionStructure *data)
+	Holder<CollisionQuery> newCollisionQuery(Holder<const CollisionStructure> structure)
 	{
-		return systemArena().createImpl<CollisionQuery, CollisionQueryImpl>((CollisionDataImpl*)data);
+		return systemMemory().createImpl<CollisionQuery, CollisionQueryImpl>(std::move(structure).cast<const CollisionDataImpl>());
 	}
 }

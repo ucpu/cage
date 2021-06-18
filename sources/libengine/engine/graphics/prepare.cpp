@@ -184,7 +184,7 @@ namespace cage
 			{
 				opaqueObjectsMap.clear();
 				textsMap.clear();
-				Holder<RenderPassImpl> t = systemArena().createHolder<RenderPassImpl>(camera);
+				Holder<RenderPassImpl> t = systemMemory().createHolder<RenderPassImpl>(camera);
 				RenderPassImpl *r = t.get();
 				graphicsDispatch->renderPasses.push_back(std::move(t).cast<RenderPass>());
 				return r;
@@ -459,7 +459,7 @@ namespace cage
 				Objects *obj = nullptr;
 				if (any(m->flags & ModelRenderFlags::Translucent) || e->object.opacity < 1)
 				{ // translucent
-					pass->translucents.push_back(systemArena().createHolder<Translucent>(m.share()));
+					pass->translucents.push_back(systemMemory().createHolder<Translucent>(m.share()));
 					Translucent *t = pass->translucents.back().get();
 					obj = &t->object;
 					if (any(m->flags & ModelRenderFlags::Lighting))
@@ -477,7 +477,7 @@ namespace cage
 						mm = min(mm, m->instancesLimitHint);
 						if (m->skeletonBones)
 							mm = min(mm, CAGE_SHADER_MAX_BONES / m->skeletonBones);
-						pass->opaques.push_back(systemArena().createHolder<Objects>(m.share(), mm));
+						pass->opaques.push_back(systemMemory().createHolder<Objects>(m.share(), mm));
 						obj = pass->opaques.back().get();
 						if (mm > 1)
 							opaqueObjectsMap[m.get()] = obj;
@@ -547,7 +547,7 @@ namespace cage
 					if (s.empty())
 						continue;
 
-					Holder<Texts::Render> r = systemArena().createHolder<Texts::Render>();
+					Holder<Texts::Render> r = systemMemory().createHolder<Texts::Render>();
 					uint32 count = font->glyphsCount(s);
 					r->glyphs.resize(count);
 					font->transcript(s, r->glyphs);
@@ -564,7 +564,7 @@ namespace cage
 						auto it = textsMap.find(font.get());
 						if (it == textsMap.end())
 						{
-							pass->texts.push_back(systemArena().createHolder<Texts>(font.share()));
+							pass->texts.push_back(systemMemory().createHolder<Texts>(font.share()));
 							tex = pass->texts.back().get();
 							textsMap[font.get()] = tex;
 						}
@@ -614,7 +614,7 @@ namespace cage
 				Lights *lig = nullptr;
 				if (light->shadowmap)
 				{
-					lights.push_back(systemArena().createHolder<Lights>(light->light.lightType, light->shadowmaps[pass->camera].index, 1));
+					lights.push_back(systemMemory().createHolder<Lights>(light->light.lightType, light->shadowmaps[pass->camera].index, 1));
 					lig = lights.back().get();
 				}
 				else
@@ -632,7 +632,7 @@ namespace cage
 					}
 					if (!lig)
 					{
-						lights.insert(lights.begin(), systemArena().createHolder<Lights>(light->light.lightType, 0, CAGE_SHADER_MAX_INSTANCES));
+						lights.insert(lights.begin(), systemMemory().createHolder<Lights>(light->light.lightType, 0, CAGE_SHADER_MAX_INSTANCES));
 						lig = lights.front().get();
 					}
 				}
@@ -696,9 +696,9 @@ namespace cage
 					emitTransform(&c, e);
 					c.object = e->value<RenderComponent>(RenderComponent::component);
 					if (e->has(TextureAnimationComponent::component))
-						c.animatedTexture = systemArena().createHolder<TextureAnimationComponent>(e->value<TextureAnimationComponent>(TextureAnimationComponent::component));
+						c.animatedTexture = systemMemory().createHolder<TextureAnimationComponent>(e->value<TextureAnimationComponent>(TextureAnimationComponent::component));
 					if (e->has(SkeletalAnimationComponent::component))
-						c.animatedSkeleton = systemArena().createHolder<SkeletalAnimationComponent>(e->value<SkeletalAnimationComponent>(SkeletalAnimationComponent::component));
+						c.animatedSkeleton = systemMemory().createHolder<SkeletalAnimationComponent>(e->value<SkeletalAnimationComponent>(SkeletalAnimationComponent::component));
 					emitWrite->objects.push_back(std::move(c));
 				}
 
@@ -719,7 +719,7 @@ namespace cage
 					c.history.scale = c.current.scale = 1;
 					c.light = e->value<LightComponent>(LightComponent::component);
 					if (e->has(ShadowmapComponent::component))
-						c.shadowmap = systemArena().createHolder<ShadowmapComponent>(e->value<ShadowmapComponent>(ShadowmapComponent::component));
+						c.shadowmap = systemMemory().createHolder<ShadowmapComponent>(e->value<ShadowmapComponent>(ShadowmapComponent::component));
 					emitWrite->lights.push_back(std::move(c));
 				}
 
@@ -772,7 +772,7 @@ namespace cage
 					{
 						Holder<TextureAnimationComponent> &c = e->animatedTexture;
 						if (!c && (o->texAnimSpeed.valid() || o->texAnimOffset.valid()))
-							c = systemArena().createHolder<TextureAnimationComponent>();
+							c = systemMemory().createHolder<TextureAnimationComponent>();
 						if (c)
 						{
 							if (!c->speed.valid())
@@ -785,7 +785,7 @@ namespace cage
 					{
 						Holder<SkeletalAnimationComponent> &c = e->animatedSkeleton;
 						if (!c && o->skelAnimName)
-							c = systemArena().createHolder<SkeletalAnimationComponent>();
+							c = systemMemory().createHolder<SkeletalAnimationComponent>();
 						if (c)
 						{
 							if (!c->name)
@@ -1043,12 +1043,12 @@ namespace cage
 
 	void graphicsPrepareCreate(const EngineCreateConfig &config)
 	{
-		graphicsPrepare = systemArena().createObject<GraphicsPrepareImpl>(config);
+		graphicsPrepare = systemMemory().createObject<GraphicsPrepareImpl>(config);
 	}
 
 	void graphicsPrepareDestroy()
 	{
-		systemArena().destroy<GraphicsPrepareImpl>(graphicsPrepare);
+		systemMemory().destroy<GraphicsPrepareImpl>(graphicsPrepare);
 		graphicsPrepare = nullptr;
 	}
 

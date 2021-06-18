@@ -50,8 +50,8 @@ namespace
 	{
 		for (uint32 i = 0; i < 3; i++)
 		{
-			Holder<PointerRange<char>> buf = entitiesSerialize(a->group(), a->componentByDefinition(i));
-			entitiesDeserialize(buf, b);
+			Holder<PointerRange<char>> buf = entitiesExportBuffer(a->group(), a->componentByDefinition(i));
+			entitiesImportBuffer(buf, b);
 		}
 	}
 

@@ -10,16 +10,18 @@ namespace cage
 
 	namespace detail
 	{
-		// streaming == true -> returns false when no new line is found
-		// streaming == false -> the rest of the buffer is treated as last line
 		// set streaming to true if you may expand the buffer with more data later
-		CAGE_CORE_API bool readLine(string &output, PointerRange<const char> &buffer, bool streaming);
+		// returns number of bytes read
+		CAGE_CORE_API uintPtr readLine(PointerRange<const char> &output, PointerRange<const char> buffer, bool streaming);
+		CAGE_CORE_API uintPtr readLine(string &output, PointerRange<const char> buffer, bool streaming);
 	}
 
 	class CAGE_CORE_API LineReader : private Immovable
 	{
 	public:
+		bool readLine(PointerRange<const char> &line);
 		bool readLine(string &line);
+
 		uintPtr remaining() const; // bytes
 	};
 

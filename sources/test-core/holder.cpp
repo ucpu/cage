@@ -76,7 +76,7 @@ void testHolder()
 	{
 		CAGE_TESTCASE("takeByReference & takeByValue");
 		CAGE_TEST(gCount == 0);
-		Holder<HolderTester> ts = systemArena().createHolder<HolderTester>();
+		Holder<HolderTester> ts = systemMemory().createHolder<HolderTester>();
 		CAGE_TEST(gCount == 1);
 		takeByReference(ts);
 		CAGE_TEST(gCount == 1);
@@ -87,7 +87,7 @@ void testHolder()
 	{
 		CAGE_TESTCASE("default ctor & copy ctor & holder<void>");
 		CAGE_TEST(gCount == 0);
-		Holder<HolderTester> a = systemArena().createHolder<HolderTester>();
+		Holder<HolderTester> a = systemMemory().createHolder<HolderTester>();
 		CAGE_TEST(gCount == 1);
 		Holder<void> b = std::move(a).cast<void>();
 		CAGE_TEST(gCount == 1);
@@ -103,7 +103,7 @@ void testHolder()
 		CAGE_TESTCASE("dynamic cast failure");
 		CAGE_TEST(gCount == 0);
 		CAGE_TEST(dCount == 0);
-		Holder<HolderTester> a = systemArena().createHolder<HolderTester>();
+		Holder<HolderTester> a = systemMemory().createHolder<HolderTester>();
 		CAGE_TEST(a);
 		CAGE_TEST(gCount == 1);
 		CAGE_TEST(dCount == 0);
@@ -120,7 +120,7 @@ void testHolder()
 		CAGE_TESTCASE("downcast with static cast");
 		CAGE_TEST(gCount == 0);
 		CAGE_TEST(dCount == 0);
-		Holder<HolderDerived> a = systemArena().createHolder<HolderDerived>();
+		Holder<HolderDerived> a = systemMemory().createHolder<HolderDerived>();
 		CAGE_TEST(a);
 		CAGE_TEST(gCount == 1);
 		CAGE_TEST(dCount == 1);
@@ -138,7 +138,7 @@ void testHolder()
 		CAGE_TESTCASE("downcast with dynamic cast");
 		CAGE_TEST(gCount == 0);
 		CAGE_TEST(dCount == 0);
-		Holder<HolderDerived> a = systemArena().createHolder<HolderDerived>();
+		Holder<HolderDerived> a = systemMemory().createHolder<HolderDerived>();
 		CAGE_TEST(a);
 		CAGE_TEST(gCount == 1);
 		CAGE_TEST(dCount == 1);
@@ -156,7 +156,7 @@ void testHolder()
 		CAGE_TESTCASE("dynamic cast (back and forth)");
 		CAGE_TEST(gCount == 0);
 		CAGE_TEST(dCount == 0);
-		Holder<HolderDerived> a = systemArena().createHolder<HolderDerived>();
+		Holder<HolderDerived> a = systemMemory().createHolder<HolderDerived>();
 		CAGE_TEST(a);
 		CAGE_TEST(gCount == 1);
 		CAGE_TEST(dCount == 1);
@@ -178,7 +178,7 @@ void testHolder()
 	{
 		CAGE_TESTCASE("function taking holder");
 		CAGE_TEST(gCount == 0);
-		Holder<HolderTester> a = systemArena().createHolder<HolderTester>();
+		Holder<HolderTester> a = systemMemory().createHolder<HolderTester>();
 		CAGE_TEST(gCount == 1);
 		Holder<void> b = std::move(a).cast<void>();
 		CAGE_TEST(gCount == 1);
@@ -189,7 +189,7 @@ void testHolder()
 	{
 		CAGE_TESTCASE("several transfers");
 		CAGE_TEST(gCount == 0);
-		Holder<HolderTester> a = systemArena().createHolder<HolderTester>();
+		Holder<HolderTester> a = systemMemory().createHolder<HolderTester>();
 		CAGE_TEST(gCount == 1);
 		Holder<void> b = std::move(a).cast<void>();
 		CAGE_TEST(gCount == 1);
@@ -206,7 +206,7 @@ void testHolder()
 	{
 		CAGE_TESTCASE("bool tests");
 		CAGE_TEST(gCount == 0);
-		Holder<HolderTester> a = systemArena().createHolder<HolderTester>();
+		Holder<HolderTester> a = systemMemory().createHolder<HolderTester>();
 		CAGE_TEST(gCount == 1);
 		bool b = (bool)a;
 		bool c = !a;
@@ -227,20 +227,20 @@ void testHolder()
 		vec.resize(2);
 		CAGE_TEST(gCount == 0);
 		for (uint32 i = 0; i < 2; i++)
-			vec[i] = systemArena().createHolder<HolderTester>();
+			vec[i] = systemMemory().createHolder<HolderTester>();
 		HolderTester *firstTester = vec[0].get();
 		CAGE_TEST(gCount == 2);
 		vec.resize(20);
 		CAGE_TEST(gCount == 2);
 		for (uint32 i = 2; i < 20; i++)
-			vec[i] = systemArena().createHolder<HolderTester>();
+			vec[i] = systemMemory().createHolder<HolderTester>();
 		CAGE_TEST(gCount == 20);
 		vec.resize(5);
 		CAGE_TEST(gCount == 5);
 		vec.resize(100);
 		CAGE_TEST(gCount == 5);
 		for (uint32 i = 5; i < 100; i++)
-			vec[i] = systemArena().createHolder<HolderTester>();
+			vec[i] = systemMemory().createHolder<HolderTester>();
 		CAGE_TEST(gCount == 100);
 		CAGE_TEST(vec[0].get() == firstTester);
 		std::vector<Holder<HolderTester>> vec2 = std::move(vec);
@@ -253,7 +253,7 @@ void testHolder()
 	{
 		CAGE_TESTCASE("shared holder");
 		CAGE_TEST(gCount == 0);
-		Holder<HolderTester> a = systemArena().createHolder<HolderTester>();
+		Holder<HolderTester> a = systemMemory().createHolder<HolderTester>();
 		CAGE_TEST(gCount == 1);
 		Holder<HolderTester> b = std::move(a).share();
 		CAGE_TEST(gCount == 1);
@@ -276,7 +276,7 @@ void testHolder()
 
 	{
 		CAGE_TESTCASE("get and operator +");
-		auto s = systemArena().createHolder<HolderTester>();
+		auto s = systemMemory().createHolder<HolderTester>();
 		CAGE_TEST(s.get());
 		CAGE_TEST(+s);
 		HolderTester *raw = +s;
@@ -284,7 +284,7 @@ void testHolder()
 
 	{
 		CAGE_TESTCASE("self assignment");
-		auto s = systemArena().createHolder<HolderTester>();
+		auto s = systemMemory().createHolder<HolderTester>();
 		CAGE_TEST(gCount == 1);
 		s = std::move(s);
 		CAGE_TEST(gCount == 1);

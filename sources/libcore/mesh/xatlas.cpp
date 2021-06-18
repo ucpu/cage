@@ -60,7 +60,7 @@ namespace cage
 					xatlas::Destroy(a);
 				}
 			};
-			Holder<Atl> h = systemArena().createHolder<Atl>();
+			Holder<Atl> h = systemMemory().createHolder<Atl>();
 			return Holder<xatlas::Atlas>(h->a, std::move(h));
 		}
 	}

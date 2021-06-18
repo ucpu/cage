@@ -47,11 +47,11 @@ namespace cage
 
 			uint32 scanlines = impl->height * impl->channels;
 			uint32 linewidth = impl->width * formatBytes(impl->format);
-			des.advance(scanlines * 2);
+			des.read(scanlines * 2);
 
 			for (uint32 line = 0; line < scanlines; line++)
 			{
-				Serializer ser2 = ser.placeholder(linewidth);
+				Serializer ser2 = ser.reserve(linewidth);
 				while (ser2.available())
 				{
 					sint32 rl;
@@ -66,13 +66,14 @@ namespace cage
 						rl = rl * -1 + 1;
 						uint8 v;
 						des >> v;
-						detail::memset(ser2.advance(rl).data(), v, rl);
+						for (sint32 i = 0; i < rl; i++)
+							ser2 << v;
 					}
 					else
 					{
 						// copy many bytes as is
 						rl += 1;
-						ser2.write(des.advance(rl));
+						ser2.write(des.read(rl));
 					}
 				}
 			}
@@ -119,7 +120,7 @@ namespace cage
 		// file header section
 
 		// signature
-		des.advance(4);
+		des.read(4);
 
 		// version
 		uint16 version;
@@ -135,7 +136,7 @@ namespace cage
 		}
 
 		// reserved
-		des.advance(6);
+		des.read(6);
 
 		// channels
 		{
@@ -169,14 +170,14 @@ namespace cage
 		}
 
 		// color mode
-		des.advance(2);
+		des.read(2);
 
 		// color mode data section
 		{
 			uint32 len;
 			des >> len;
 			len = endianness::change(len);
-			des.advance(len); // ignore
+			des.read(len); // ignore
 		}
 
 		// image resources section
@@ -184,7 +185,7 @@ namespace cage
 			uint32 len;
 			des >> len;
 			len = endianness::change(len);
-			des.advance(len); // ignore
+			des.read(len); // ignore
 		}
 
 		// layer and mask information section
@@ -195,14 +196,14 @@ namespace cage
 			uint32 len;
 			des >> len;
 			len = endianness::change(len);
-			des.advance(len); // ignore
+			des.read(len); // ignore
 		} break;
 		case 2:
 		{
 			uint64 len;
 			des >> len;
 			len = endianness::change(len);
-			des.advance(numeric_cast<uintPtr>(len)); // ignore
+			des.read(numeric_cast<uintPtr>(len)); // ignore
 		} break;
 		default:
 			CAGE_THROW_ERROR(Exception, "unsupported version in psd decoding");

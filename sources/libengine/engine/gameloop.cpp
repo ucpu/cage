@@ -68,10 +68,10 @@ namespace cage
 
 		struct ScopedTimer : private Immovable
 		{
-			VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> &vsb;
+			VariableSmoothingBuffer<uint64, 100> &vsb;
 			uint64 st;
 
-			explicit ScopedTimer(VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> &vsb) : vsb(vsb), st(applicationTime())
+			explicit ScopedTimer(VariableSmoothingBuffer<uint64, 100> &vsb) : vsb(vsb), st(applicationTime())
 			{}
 
 			~ScopedTimer()
@@ -115,12 +115,12 @@ namespace cage
 
 		struct EngineData
 		{
-			VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> profilingBufferGraphicsPrepare;
-			VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> profilingBufferGraphicsDispatch;
-			VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> profilingBufferFrameTime;
-			VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> profilingBufferDrawCalls;
-			VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> profilingBufferDrawPrimitives;
-			VariableSmoothingBuffer<uint64, Schedule::StatisticsWindowSize> profilingBufferEntities;
+			VariableSmoothingBuffer<uint64, 100> profilingBufferGraphicsPrepare;
+			VariableSmoothingBuffer<uint64, 100> profilingBufferGraphicsDispatch;
+			VariableSmoothingBuffer<uint64, 100> profilingBufferFrameTime;
+			VariableSmoothingBuffer<uint64, 100> profilingBufferDrawCalls;
+			VariableSmoothingBuffer<uint64, 100> profilingBufferDrawPrimitives;
+			VariableSmoothingBuffer<uint64, 100> profilingBufferEntities;
 
 			Holder<AssetManager> assets;
 			Holder<Window> window;
@@ -152,10 +152,10 @@ namespace cage
 			uint64 controlTime = 0;
 
 			Holder<Scheduler> controlScheduler;
-			Schedule *controlUpdateSchedule = nullptr;
-			Schedule *controlInputSchedule = nullptr;
+			Holder<Schedule> controlUpdateSchedule;
+			Holder<Schedule> controlInputSchedule;
 			Holder<Scheduler> soundScheduler;
-			Schedule *soundUpdateSchedule = nullptr;
+			Holder<Schedule> soundUpdateSchedule;
 
 			EngineData(const EngineCreateConfig &config);
 
@@ -756,7 +756,7 @@ namespace cage
 	void engineInitialize(const EngineCreateConfig &config)
 	{
 		CAGE_ASSERT(!engineData);
-		engineData = systemArena().createHolder<EngineData>(config);
+		engineData = systemMemory().createHolder<EngineData>(config);
 		engineData->initialize(config);
 	}
 
@@ -843,9 +843,9 @@ namespace cage
 		};
 
 		if (any(flags & EngineProfilingStatsFlags::Control))
-			add(engineData->controlUpdateSchedule->statsDuration());
+			add(engineData->controlUpdateSchedule->statistics().durations);
 		if (any(flags & EngineProfilingStatsFlags::Sound))
-			add(engineData->soundUpdateSchedule->statsDuration());
+			add(engineData->soundUpdateSchedule->statistics().durations);
 
 #define GCHL_GENERATE(NAME) \
 		if (any(flags & EngineProfilingStatsFlags::NAME)) \

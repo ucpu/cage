@@ -360,7 +360,7 @@ namespace cage
 
 	Holder<Gui> newGui(const GuiCreateConfig &config)
 	{
-		return systemArena().createImpl<Gui, GuiImpl>(config);
+		return systemMemory().createImpl<Gui, GuiImpl>(config);
 	}
 
 	uint32 entityWidgetsCount(Entity *e)

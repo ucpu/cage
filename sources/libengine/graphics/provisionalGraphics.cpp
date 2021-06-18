@@ -65,7 +65,7 @@ namespace cage
 					auto it = data.find(name);
 					if (it == data.end())
 					{
-						Holder<T> v = systemArena().createHolder<T>(name);
+						Holder<T> v = systemMemory().createHolder<T>(name);
 						data.insert(v.share());
 						return std::move(v);
 					}
@@ -292,6 +292,6 @@ namespace cage
 
 	Holder<ProvisionalGraphics> newProvisionalGraphics()
 	{
-		return systemArena().createImpl<ProvisionalGraphics, ProvisionalGraphicsImpl>();
+		return systemMemory().createImpl<ProvisionalGraphics, ProvisionalGraphicsImpl>();
 	}
 }

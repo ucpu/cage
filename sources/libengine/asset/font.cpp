@@ -18,13 +18,13 @@ namespace cage
 			Deserializer des(context->originalData);
 			FontHeader data;
 			des >> data;
-			PointerRange<const char> image = des.advance(data.texSize);
-			PointerRange<const char> glyphs = des.advance(sizeof(FontHeader::GlyphData) * data.glyphCount);
+			PointerRange<const char> image = des.read(data.texSize);
+			PointerRange<const char> glyphs = des.read(sizeof(FontHeader::GlyphData) * data.glyphCount);
 			PointerRange<const char> kerning;
 			if ((data.flags & FontFlags::Kerning) == FontFlags::Kerning)
-				kerning = des.advance(data.glyphCount * data.glyphCount * sizeof(real));
-			PointerRange<const char> charmapChars = des.advance(sizeof(uint32) * data.charCount);
-			PointerRange<const char> charmapGlyphs = des.advance(sizeof(uint32) * data.charCount);
+				kerning = des.read(data.glyphCount * data.glyphCount * sizeof(real));
+			PointerRange<const char> charmapChars = des.read(sizeof(uint32) * data.charCount);
+			PointerRange<const char> charmapGlyphs = des.read(sizeof(uint32) * data.charCount);
 			CAGE_ASSERT(des.available() == 0);
 
 			font->setLine(data.lineHeight, data.firstLineOffset);

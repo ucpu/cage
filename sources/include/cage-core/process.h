@@ -1,7 +1,7 @@
 #ifndef guard_program_h_f16ac3b2_6520_4503_a6ad_f4a582216f67_
 #define guard_program_h_f16ac3b2_6520_4503_a6ad_f4a582216f67_
 
-#include "core.h"
+#include "files.h"
 
 namespace cage
 {
@@ -12,7 +12,7 @@ namespace cage
 
 	struct CAGE_CORE_API ProcessCreateConfig
 	{
-		string cmd;
+		string command;
 		string workingDirectory;
 		
 		bool discardStdIn = false;
@@ -21,22 +21,12 @@ namespace cage
 
 		// todo option to modify environment
 
-		ProcessCreateConfig(const string &cmd, const string &workingDirectory = "");
+		ProcessCreateConfig(const string &command, const string &workingDirectory = "");
 	};
 
-	class CAGE_CORE_API Process : private Immovable
+	class CAGE_CORE_API Process : public File
 	{
 	public:
-		string getCmdString() const;
-		string getWorkingDir() const;
-
-		void read(PointerRange<char> buffer);
-		Holder<PointerRange<char>> read(uintPtr size);
-		string readLine();
-
-		void write(PointerRange<const char> buffer);
-		void writeLine(const string &line);
-
 		void terminate();
 		int wait();
 	};

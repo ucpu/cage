@@ -33,7 +33,7 @@ namespace cage
 			localExceptionSilenceSeverity() = original;
 		}
 
-		void setGlobalExceptionOverride(SeverityEnum severity)
+		void globalExceptionOverride(SeverityEnum severity)
 		{
 			globalExceptionSilenceSeverity() = severity;
 		}

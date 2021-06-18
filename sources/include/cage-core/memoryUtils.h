@@ -8,7 +8,7 @@ namespace cage
 	struct CAGE_CORE_API OutOfMemory : public Exception
 	{
 		explicit OutOfMemory(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, StringLiteral message, uintPtr memory) noexcept;
-		virtual void log();
+		void log() override;
 		uintPtr memory = 0;
 	};
 
@@ -42,7 +42,7 @@ namespace cage
 		CAGE_CORE_API uintPtr memoryPageSize();
 	}
 
-	class CAGE_CORE_API VirtualMemory
+	class CAGE_CORE_API VirtualMemory : private Immovable
 	{
 	public:
 		void *reserve(uintPtr pages); // reserve address space

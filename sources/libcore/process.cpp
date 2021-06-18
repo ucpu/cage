@@ -1,8 +1,6 @@
 #include <cage-core/concurrent.h>
-#include <cage-core/files.h>
 #include <cage-core/process.h>
 #include <cage-core/lineReader.h>
-#include <cage-core/memoryBuffer.h>
 
 #ifdef CAGE_SYSTEM_WINDOWS
 #include "incWin.h"
@@ -12,6 +10,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 #include <fcntl.h>
 #endif
 
@@ -21,7 +20,7 @@
 
 namespace cage
 {
-	ProcessCreateConfig::ProcessCreateConfig(const string &cmd, const string &workingDirectory) : cmd(cmd), workingDirectory(workingDirectory)
+	ProcessCreateConfig::ProcessCreateConfig(const string &command, const string &workingDirectory) : command(command), workingDirectory(workingDirectory)
 	{}
 
 	namespace
@@ -50,12 +49,14 @@ namespace cage
 			};
 
 		public:
-			explicit ProcessImpl(const ProcessCreateConfig &config) : cmd(config.cmd), workingDir(pathToAbs(config.workingDirectory))
+			explicit ProcessImpl(const ProcessCreateConfig &config)
 			{
 				static Holder<Mutex> mut = newMutex();
 				ScopeLock lock(mut);
 
-				CAGE_LOG(SeverityEnum::Info, "process", stringizer() + "launching process '" + cmd + "'");
+				CAGE_LOG(SeverityEnum::Info, "process", stringizer() + "launching process '" + config.command + "'");
+
+				const string workingDir = pathToAbs(config.workingDirectory);
 				CAGE_LOG_CONTINUE(SeverityEnum::Note, "process", stringizer() + "working directory '" + workingDir + "'");
 
 				SECURITY_ATTRIBUTES saAttr;
@@ -84,7 +85,7 @@ namespace cage
 
 				char cmd2[string::MaxLength];
 				detail::memset(cmd2, 0, string::MaxLength);
-				detail::memcpy(cmd2, cmd.c_str(), cmd.length());
+				detail::memcpy(cmd2, config.command.c_str(), config.command.length());
 
 				if (!CreateProcess(
 					nullptr,
@@ -126,36 +127,73 @@ namespace cage
 				return ret;
 			}
 
-			void read(void *data, uint32 size)
+			void error(StringLiteral msg)
+			{
+				const DWORD err = GetLastError();
+				if (err == ERROR_BROKEN_PIPE)
+					CAGE_THROW_ERROR(ProcessPipeEof, "pipe eof");
+				CAGE_THROW_ERROR(SystemError, msg, err);
+			}
+
+			void read(PointerRange<char> buffer) override
 			{
 				DWORD read = 0;
-				if (!ReadFile(hPipeOutR.handle, data, size, &read, nullptr))
-				{
-					const DWORD err = GetLastError();
-					if (err == ERROR_BROKEN_PIPE)
-						CAGE_THROW_ERROR(ProcessPipeEof, "pipe eof");
-					CAGE_THROW_ERROR(SystemError, "ReadFile", err);
-				}
-				if (read != size)
+				if (!ReadFile(hPipeOutR.handle, buffer.data(), numeric_cast<DWORD>(buffer.size()), &read, nullptr))
+					error("ReadFile");
+				if (read != buffer.size())
 					CAGE_THROW_ERROR(Exception, "insufficient data");
 			}
 
-			void write(const void *data, uint32 size)
+			void write(PointerRange<const char> buffer) override
 			{
 				DWORD written = 0;
-				if (!WriteFile(hPipeInW.handle, data, size, &written, nullptr))
+				if (!WriteFile(hPipeInW.handle, buffer.data(), numeric_cast<DWORD>(buffer.size()), &written, nullptr))
 				{
 					const DWORD err = GetLastError();
 					if (err == ERROR_BROKEN_PIPE)
 						CAGE_THROW_ERROR(ProcessPipeEof, "pipe eof");
 					CAGE_THROW_ERROR(SystemError, "WriteFile", err);
 				}
-				if (written != size)
+				if (written != buffer.size())
 					CAGE_THROW_ERROR(Exception, "data truncated");
 			}
 
-			const string cmd;
-			const string workingDir;
+			uintPtr size() override
+			{
+				DWORD sz = 0;
+				if (!PeekNamedPipe(hPipeOutR.handle, nullptr, 0, nullptr, &sz, nullptr))
+					error("PeekNamedPipe");
+				return sz;
+			}
+
+			string readLine() override
+			{
+				char buffer[string::MaxLength + 1]; // plus 1 to allow detecting that the line is too long
+				uintPtr size = 0;
+				while (true)
+				{
+					read({ buffer + size, buffer + size + 1 });
+					size++;
+					string line;
+					if (detail::readLine(line, { buffer, buffer + size }, true))
+						return line;
+				}
+			}
+
+			/* this is disabled for compatibility with linux
+			bool readLine(string &line) override
+			{
+				char buffer[string::MaxLength + 1]; // plus 1 to allow detecting that the line is too long
+				DWORD sz = 0;
+				if (!PeekNamedPipe(hPipeOutR.handle, buffer, sizeof(buffer), &sz, nullptr, nullptr))
+					error("PeekNamedPipe");
+				const uintPtr l = detail::readLine(line, { buffer, buffer + sz }, true);
+				if (l)
+					read({ buffer, buffer + l });
+				return l;
+			}
+			*/
+
 			AutoHandle hPipeInR;
 			AutoHandle hPipeInW;
 			AutoHandle hPipeOutR;
@@ -205,19 +243,19 @@ namespace cage
 			}
 
 		public:
-			const string cmd;
-			const string workingDir;
 			AutoPipe aStdinPipe;
 			AutoPipe aStdoutPipe;
 			AutoPipe aFileNull;
 			pid_t pid = -1;
 
-			explicit ProcessImpl(const ProcessCreateConfig &config) : cmd(config.cmd), workingDir(pathToAbs(config.workingDirectory))
+			explicit ProcessImpl(const ProcessCreateConfig &config)
 			{
 				static Holder<Mutex> mut = newMutex();
 				ScopeLock lock(mut);
 
-				CAGE_LOG(SeverityEnum::Info, "process", stringizer() + "launching process '" + cmd + "'");
+				CAGE_LOG(SeverityEnum::Info, "process", stringizer() + "launching process '" + config.command + "'");
+
+				const string workingDir = pathToAbs(config.workingDirectory);
 				CAGE_LOG_CONTINUE(SeverityEnum::Note, "process", stringizer() + "working directory '" + workingDir + "'");
 
 				if (pipe(aStdinPipe.handles) < 0)
@@ -248,16 +286,14 @@ namespace cage
 						CAGE_THROW_ERROR(SystemError, "failed to duplicate stderr pipe", errno);
 
 					// close unused file descriptors
-					aStdinPipe.close(PIPE_READ);
-					aStdinPipe.close(PIPE_WRITE);
-					aStdoutPipe.close(PIPE_READ);
-					aStdoutPipe.close(PIPE_WRITE);
+					aStdinPipe.close();
+					aStdoutPipe.close();
 
 					// alter environment
 					alterEnvironment();
 
 					// run child process image
-					const string params = string() + "(cd '" + workingDir + "'; " + cmd + " )";
+					const string params = string() + "(cd '" + workingDir + "'; " + config.command + " )";
 					const int res = execlp("/bin/sh", "sh", "-c", params.c_str(), nullptr);
 
 					// if we get here, an error occurred, but we are in the child process, so just exit
@@ -318,78 +354,63 @@ namespace cage
 				return status;
 			}
 
-			void read(void *data, uint32 size)
+			void read(PointerRange<char> buffer) override
 			{
-				if (size == 0)
+				if (buffer.size() == 0)
 					return;
-				const auto r = ::read(aStdoutPipe.handles[PIPE_READ], data, size);
+				const auto r = ::read(aStdoutPipe.handles[PIPE_READ], buffer.data(), buffer.size());
 				if (r < 0)
 					CAGE_THROW_ERROR(SystemError, "read", errno);
 				if (r == 0)
 					CAGE_THROW_ERROR(ProcessPipeEof, "pipe eof");
-				if (r != size)
+				if (r != buffer.size())
 					CAGE_THROW_ERROR(Exception, "insufficient data");
 			}
 
-			void write(const void *data, uint32 size)
+			void write(PointerRange<const char> buffer) override
 			{
-				if (size == 0)
+				if (buffer.size() == 0)
 					return;
-				const auto r = ::write(aStdinPipe.handles[PIPE_WRITE], data, size);
+				const auto r = ::write(aStdinPipe.handles[PIPE_WRITE], buffer.data(), buffer.size());
 				if (r < 0)
 					CAGE_THROW_ERROR(SystemError, "write", errno);
 				if (r == 0)
 					CAGE_THROW_ERROR(ProcessPipeEof, "pipe eof");
-				if (r != size)
+				if (r != buffer.size())
 					CAGE_THROW_ERROR(Exception, "data truncated");
 			}
+
+			uintPtr size() override
+			{
+				int s = -1;
+				const auto r = ::ioctl(aStdoutPipe.handles[PIPE_READ], FIONREAD, &s);
+				if (r < 0)
+					CAGE_THROW_ERROR(SystemError, "ioctl", errno);
+				CAGE_ASSERT(s >= 0);
+				return s;
+			}
+
+			string readLine() override
+			{
+				char buffer[string::MaxLength + 1]; // plus 1 to allow detecting that the line is too long
+				uintPtr size = 0;
+				while (true)
+				{
+					read({ buffer + size, buffer + size + 1 });
+					size++;
+					string line;
+					if (detail::readLine(line, { buffer, buffer + size }, true))
+						return line;
+				}
+			}
+
+			/* this would require file peek which is not possible with pipes
+			bool readLine(string &line) override
+			{}
+			*/
 		};
 
 #endif
-	}
-
-	void Process::read(PointerRange<char> buffer)
-	{
-		ProcessImpl *impl = (ProcessImpl*)this;
-		impl->read(buffer.data(), numeric_cast<uint32>(buffer.size()));
-	}
-
-	Holder<PointerRange<char>> Process::read(uintPtr size)
-	{
-		MemoryBuffer buf(size);
-		read(buf);
-		return std::move(buf);
-	}
-
-	string Process::readLine()
-	{
-		ProcessImpl *impl = (ProcessImpl *)this;
-		string out;
-		char buffer[string::MaxLength + 1];
-		uintPtr size = 0;
-		while (size < string::MaxLength)
-		{
-			impl->read(buffer + size, 1);
-			size++;
-			PointerRange<const char> pr = { buffer, buffer + size };
-			if (detail::readLine(out, pr, true))
-				return out;
-		}
-		CAGE_THROW_ERROR(Exception, "line too long");
-	}
-
-	void Process::write(PointerRange<const char> buffer)
-	{
-		ProcessImpl *impl = (ProcessImpl *)this;
-		impl->write(buffer.data(), numeric_cast<uint32>(buffer.size()));
-	}
-
-	void Process::writeLine(const string &line)
-	{
-		ProcessImpl *impl = (ProcessImpl *)this;
-		write({ line.c_str(), line.c_str() + line.length() });
-		const char eol[2] = "\n";
-		write({ eol, eol + 1, });
 	}
 
 	void Process::terminate()
@@ -404,20 +425,8 @@ namespace cage
 		return impl->wait();
 	}
 
-	string Process::getCmdString() const
-	{
-		ProcessImpl *impl = (ProcessImpl *)this;
-		return impl->cmd;
-	}
-
-	string Process::getWorkingDir() const
-	{
-		ProcessImpl *impl = (ProcessImpl *)this;
-		return impl->workingDir;
-	}
-
 	Holder<Process> newProcess(const ProcessCreateConfig &config)
 	{
-		return systemArena().createImpl<Process, ProcessImpl>(config);
+		return systemMemory().createImpl<Process, ProcessImpl>(config);
 	}
 }

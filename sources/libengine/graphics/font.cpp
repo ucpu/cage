@@ -411,6 +411,6 @@ namespace cage
 
 	Holder<Font> newFont()
 	{
-		return systemArena().createImpl<Font, FontImpl>();
+		return systemMemory().createImpl<Font, FontImpl>();
 	}
 }

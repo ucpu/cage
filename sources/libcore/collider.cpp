@@ -206,7 +206,7 @@ namespace cage
 	Holder<Collider> Collider::copy() const
 	{
 		Holder<Collider> res = newCollider();
-		res->deserialize(serialize());
+		res->importBuffer(exportBuffer()); // todo more efficient method
 		return res;
 	}
 
@@ -260,26 +260,7 @@ namespace cage
 		}
 	}
 
-	Holder<PointerRange<char>> Collider::serialize(bool includeAdditionalData) const
-	{
-		const ColliderImpl *impl = (const ColliderImpl *)this;
-		CollisionModelHeader header;
-		detail::memset(&header, 0, sizeof(header));
-		detail::memcpy(header.magic, currentMagic, sizeof(currentMagic));
-		header.version = currentVersion;
-		header.trisCount = numeric_cast<uint32>(impl->tris.size());
-		header.nodesCount = numeric_cast<uint32>(impl->nodes.size());
-		header.dirty = impl->dirty;
-		MemoryBuffer buffer;
-		Serializer ser(buffer);
-		ser << header;
-		writeVector(ser, impl->tris);
-		writeVector(ser, impl->boxes);
-		writeVector(ser, impl->nodes);
-		return std::move(buffer);
-	}
-
-	void Collider::deserialize(PointerRange<const char> buffer)
+	void Collider::importBuffer(PointerRange<const char> buffer)
 	{
 		ColliderImpl *impl = (ColliderImpl *)this;
 		Deserializer des(buffer);
@@ -323,16 +304,33 @@ namespace cage
 		}
 	}
 
-	Holder<Collider> newCollider()
+	Holder<PointerRange<char>> Collider::exportBuffer(bool includeAdditionalData) const
 	{
-		return systemArena().createImpl<Collider, ColliderImpl>();
+		const ColliderImpl *impl = (const ColliderImpl *)this;
+		CollisionModelHeader header;
+		detail::memset(&header, 0, sizeof(header));
+		detail::memcpy(header.magic, currentMagic, sizeof(currentMagic));
+		header.version = currentVersion;
+		header.trisCount = numeric_cast<uint32>(impl->tris.size());
+		header.nodesCount = numeric_cast<uint32>(impl->nodes.size());
+		header.dirty = impl->dirty;
+		MemoryBuffer buffer;
+		Serializer ser(buffer);
+		ser << header;
+		writeVector(ser, impl->tris);
+		writeVector(ser, impl->boxes);
+		writeVector(ser, impl->nodes);
+		return std::move(buffer);
 	}
 
-	Holder<Collider> newCollider(const MemoryBuffer &buffer)
+	Holder<Mesh> Collider::exportMesh() const
 	{
-		Holder<Collider> tmp = newCollider();
-		tmp->deserialize(buffer);
-		return tmp;
+		CAGE_THROW_CRITICAL(NotImplemented, "Collider::exportMesh");
+	}
+
+	Holder<Collider> newCollider()
+	{
+		return systemMemory().createImpl<Collider, ColliderImpl>();
 	}
 
 	bool operator < (const CollisionPair &l, const CollisionPair &r)

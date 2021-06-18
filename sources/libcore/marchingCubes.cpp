@@ -275,6 +275,6 @@ namespace cage
 
 	Holder<MarchingCubes> newMarchingCubes(const MarchingCubesCreateConfig &config)
 	{
-		return systemArena().createImpl<MarchingCubes, MarchingCubesImpl>(config);
+		return systemMemory().createImpl<MarchingCubes, MarchingCubesImpl>(config);
 	}
 }

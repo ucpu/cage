@@ -30,18 +30,18 @@ namespace
 		c->value<vec3>() = vec3(5);
 		c->value<uint32>() = 5;
 
-		visit(+man, [](vec3 &v, const real &r) { v[0] *= r; });
-		visit(+man, [](vec3 &v, const uint32 &u) { v[1] *= u; });
-		visit(+man, [](vec3 &v, const real &r, const uint32 &u) { v[2] = 0; });
-		visit(+man, [](uint32 &u) { u = 0; });
+		entitiesVisitor(+man, [](vec3 &v, const real &r) { v[0] *= r; });
+		entitiesVisitor(+man, [](vec3 &v, const uint32 &u) { v[1] *= u; });
+		entitiesVisitor(+man, [](vec3 &v, const real &r, const uint32 &u) { v[2] = 0; });
+		entitiesVisitor(+man, [](uint32 &u) { u = 0; });
 
 		CAGE_TEST(a->value<vec3>() == vec3(9, 9, 0));
 		CAGE_TEST(b->value<vec3>() == vec3(16, 4, 4));
 		CAGE_TEST(c->value<vec3>() == vec3(5, 25, 5));
 		CAGE_TEST(a->value<uint32>() == 0);
 
-		CAGE_TEST_THROWN(visit(+man, [](quat &) {}));
-		CAGE_TEST_THROWN(visit(+man, [](Entity *, quat &, real &) {}));
+		CAGE_TEST_THROWN(entitiesVisitor(+man, [](quat &) {}));
+		CAGE_TEST_THROWN(entitiesVisitor(+man, [](Entity *, quat &, real &) {}));
 	}
 
 	void visitorWithEntity()
@@ -62,15 +62,15 @@ namespace
 		b->value<real>() = 4;
 		c->value<uint32>() = 5;
 
-		visit(+man, [](Entity *e, uint32 &u) { u = e->name(); });
+		entitiesVisitor(+man, [](Entity *e, uint32 &u) { u = e->name(); });
 
 		CAGE_TEST(a->value<uint32>() == a->name());
 		CAGE_TEST(c->value<uint32>() == c->name());
 
-		visit(+man, [](Entity *e, uint32 &u, real &r) { r = e->name() - u; });
+		entitiesVisitor(+man, [](Entity *e, uint32 &u, real &r) { r = e->name() - u; });
 
 		uint32 cnt = 0;
-		visit(+man, [&](Entity *) { cnt++; });
+		entitiesVisitor(+man, [&](Entity *) { cnt++; });
 		CAGE_TEST(cnt == man->count());
 	}
 
@@ -107,12 +107,12 @@ namespace
 
 		for (uint32 cycle = 0; cycle < TotalCycles; cycle++)
 		{
-			visit(+man, [](vec3 &v, const real &r) { v[1] += r; });
-			visit(+man, [](vec3 &v, const real &r, uint32 &u) { v[0] += r; u++; });
-			visit(+man, [](uint32 &u) { u++; });
+			entitiesVisitor(+man, [](vec3 &v, const real &r) { v[1] += r; });
+			entitiesVisitor(+man, [](vec3 &v, const real &r, uint32 &u) { v[0] += r; u++; });
+			entitiesVisitor(+man, [](uint32 &u) { u++; });
 		}
 
-		CAGE_LOG(SeverityEnum::Info, "visitor performance", stringizer() + "visitor avg time per cycle: " + (tmr->microsSinceStart() / TotalCycles) + " us");
+		CAGE_LOG(SeverityEnum::Info, "visitor performance", stringizer() + "visitor avg time per cycle: " + (tmr->duration() / TotalCycles) + " us");
 	}
 }
 

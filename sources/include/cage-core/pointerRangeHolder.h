@@ -9,9 +9,9 @@ namespace cage
 {
 	// utility struct to simplify creating Holder<PointerRange<T>>
 	template<class T>
-	struct PointerRangeHolder : public std::vector<typename std::remove_const<T>::type>
+	struct PointerRangeHolder : public std::vector<typename std::remove_const_t<T>>
 	{
-		typedef typename std::remove_const<T>::type CT;
+		using CT = std::remove_const_t<T>;
 
 		PointerRangeHolder()
 		{}
@@ -35,7 +35,7 @@ namespace cage
 				PointerRange<T> range;
 			};
 
-			Holder<OwnedVector> h = systemArena().createHolder<OwnedVector>();
+			Holder<OwnedVector> h = systemMemory().createHolder<OwnedVector>();
 			std::swap(*this, h->vec);
 			h->range = h->vec;
 			return Holder<PointerRange<T>>(&h->range, std::move(h));

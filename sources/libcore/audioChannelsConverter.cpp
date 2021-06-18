@@ -483,6 +483,6 @@ namespace cage
 
 	Holder<AudioChannelsConverter> newAudioChannelsConverter(const AudioChannelsConverterCreateConfig &config)
 	{
-		return systemArena().createImpl<AudioChannelsConverter, AudioChannelsConverterImpl>(config);
+		return systemMemory().createImpl<AudioChannelsConverter, AudioChannelsConverterImpl>(config);
 	}
 }

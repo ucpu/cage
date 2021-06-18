@@ -9,7 +9,7 @@ namespace cage
 	{
 	public:
 		uint32 name() const;
-		void collider(const Collider *&c, transform &t) const;
+		void collider(Holder<const Collider> &c, transform &t) const;
 		real fractionBefore() const; // the ratio between initial and final transformations just before the meshes start to collide
 		real fractionContact() const; // the ratio between initial and final transformations just when the meshes are colliding
 		PointerRange<CollisionPair> collisionPairs() const;
@@ -35,7 +35,7 @@ namespace cage
 	class CAGE_CORE_API CollisionStructure : private Immovable
 	{
 	public:
-		void update(uint32 name, const Collider *collider, const transform &t);
+		void update(uint32 name, Holder<const Collider> collider, const transform &t);
 		void remove(uint32 name);
 		void clear();
 		void rebuild();
@@ -47,7 +47,7 @@ namespace cage
 	};
 
 	CAGE_CORE_API Holder<CollisionStructure> newCollisionStructure(const CollisionStructureCreateConfig &config);
-	CAGE_CORE_API Holder<CollisionQuery> newCollisionQuery(const CollisionStructure *structure);
+	CAGE_CORE_API Holder<CollisionQuery> newCollisionQuery(Holder<const CollisionStructure> structure);
 }
 
 #endif // guard_collisionStructure_h_erthg456ter4h56r1th64rth

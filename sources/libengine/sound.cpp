@@ -9,17 +9,17 @@ namespace cage
 		class SoundImpl : public Sound
 		{
 		public:
-			Holder<AudioStream> stream;
+			Holder<Audio> stream;
 			sintPtr length = 0;
 			sint32 channels = 0;
 			sint32 sampleRate = 0;
 
 			void initialize(Holder<Audio> &&audio)
 			{
-				stream = newAudioStream(std::move(audio));
-				length = stream->source()->frames();
-				channels = stream->source()->channels();
-				sampleRate = stream->source()->sampleRate();
+				stream = std::move(audio);
+				length = stream->frames();
+				channels = stream->channels();
+				sampleRate = stream->sampleRate();
 			}
 
 			void decodeOne(PointerRange<float> buffer, sintPtr bufferOffset, sintPtr streamOffset, sintPtr frames) const
@@ -166,6 +166,6 @@ namespace cage
 
 	Holder<Sound> newSound()
 	{
-		return systemArena().createImpl<Sound, SoundImpl>();
+		return systemMemory().createImpl<Sound, SoundImpl>();
 	}
 }

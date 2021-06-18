@@ -302,6 +302,6 @@ namespace cage
 
 	Holder<EngineProfiling> newEngineProfiling()
 	{
-		return systemArena().createImpl<EngineProfiling, EngineProfilingImpl>();
+		return systemMemory().createImpl<EngineProfiling, EngineProfilingImpl>();
 	}
 }

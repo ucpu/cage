@@ -43,7 +43,7 @@ void processCollider()
 
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "aabb: " + collider->box());
 
-	Holder<PointerRange<char>> buff = collider->serialize();
+	Holder<PointerRange<char>> buff = collider->exportBuffer();
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
 	Holder<PointerRange<char>> comp = compress(buff);
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + comp.size());

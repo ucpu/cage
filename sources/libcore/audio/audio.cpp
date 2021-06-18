@@ -166,11 +166,14 @@ namespace cage
 		}
 	}
 
-	void Audio::value(uintPtr f, uint32 c, const real &v) { value(f, c, v.value); }
+	void Audio::value(uintPtr f, uint32 c, const real &v)
+	{
+		value(f, c, v.value);
+	}
 
 	Holder<Audio> newAudio()
 	{
-		return systemArena().createImpl<Audio, AudioImpl>();
+		return systemMemory().createImpl<Audio, AudioImpl>();
 	}
 
 	void audioSetSampleRate(Audio *snd, uint32 sampleRate)

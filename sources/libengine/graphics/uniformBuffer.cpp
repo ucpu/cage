@@ -161,6 +161,6 @@ namespace cage
 
 	Holder<UniformBuffer> newUniformBuffer(const UniformBufferCreateConfig &config)
 	{
-		return systemArena().createImpl<UniformBuffer, UniformBufferImpl>(config);
+		return systemMemory().createImpl<UniformBuffer, UniformBufferImpl>(config);
 	}
 }

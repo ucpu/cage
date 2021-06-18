@@ -836,7 +836,7 @@ namespace cage
 
 	Holder<Window> newWindow(Window *shareContext)
 	{
-		return systemArena().createImpl<Window, WindowImpl>(shareContext);
+		return systemMemory().createImpl<Window, WindowImpl>(shareContext);
 	}
 
 	void WindowEventListeners::attachAll(Window *window, sint32 order)

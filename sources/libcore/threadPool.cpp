@@ -98,7 +98,7 @@ namespace cage
 
 	Holder<ThreadPool> newThreadPool(const string &threadNames, uint32 threadsCount)
 	{
-		return systemArena().createImpl<ThreadPool, ThreadPoolImpl>(threadNames, threadsCount);
+		return systemMemory().createImpl<ThreadPool, ThreadPoolImpl>(threadNames, threadsCount);
 	}
 
 	void threadPoolTasksSplit(uint32 threadIndex, uint32 threadsCount, uint32 tasksCount, uint32 &begin, uint32 &end)

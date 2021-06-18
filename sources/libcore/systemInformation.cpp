@@ -5,8 +5,9 @@
 #ifdef CAGE_SYSTEM_WINDOWS
 #include <Windows.h>
 #include <intrin.h>
-#include <powerbase.h> // is there any better way than using CallNtPowerInformation?
-#pragma comment(lib, "PowrProf.lib")
+#include <powerbase.h> // CallNtPowerInformation
+#pragma comment(lib, "PowrProf.lib") // CallNtPowerInformation
+#pragma comment(lib, "Advapi32.lib") // RegGetValue
 #else
 #include <cage-core/process.h>
 #endif
@@ -16,8 +17,28 @@ namespace cage
 	string systemName()
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
-		// todo
-		return "";
+		static_assert(sizeof(DWORD) == sizeof(uint32));
+		const auto &readUint = [](StringLiteral name) -> uint32
+		{
+			uint32 res = 0;
+			DWORD sz = sizeof(res);
+			auto ret = RegGetValue(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", name, RRF_RT_REG_DWORD, nullptr, &res, &sz);
+			if (ret != ERROR_SUCCESS)
+				return 0;
+			return res;
+		};
+		const auto &readString = [](StringLiteral name) -> string
+		{
+			string res;
+			DWORD sz = string::MaxLength;
+			auto ret = RegGetValue(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", name, RRF_RT_REG_SZ, nullptr, res.rawData(), &sz);
+			if (ret != ERROR_SUCCESS)
+				res.rawLength() = 0;
+			else
+				res.rawLength() = sz - 1;
+			return res;
+		};
+		return stringizer() + readString("ProductName") + " " + readString("DisplayVersion") + " (" + readString("CurrentVersion") + ", " + readUint("CurrentMajorVersionNumber") + "." + readUint("CurrentMinorVersionNumber") + ", " + readString("CurrentBuildNumber") + ", " + readString("EditionID") + ", " + readString("InstallationType") + ")";
 #else
 		Holder<Process> prg = newProcess(string("lsb_release -d"));
 		string newName = prg->readLine();
@@ -98,6 +119,7 @@ namespace cage
 	uint64 processorClockSpeed()
 	{
 #ifdef CAGE_SYSTEM_WINDOWS
+		// is there any better way than using CallNtPowerInformation?
 		struct PPI
 		{
 		ULONG Number;

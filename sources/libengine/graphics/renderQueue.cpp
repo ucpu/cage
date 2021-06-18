@@ -1299,7 +1299,7 @@ namespace cage
 
 	Holder<RenderQueue> newRenderQueue()
 	{
-		return systemArena().createImpl<RenderQueue, RenderQueueImpl>();
+		return systemMemory().createImpl<RenderQueue, RenderQueueImpl>();
 	}
 
 	RenderQueueNamedScope::RenderQueueNamedScope(RenderQueue *queue, StringLiteral name) : queue(queue)

@@ -45,7 +45,7 @@ namespace cage
 			void set(uint64 value) { setType(ConfigTypeEnum::Uint64); u64 = value; }
 			void set(float value) { setType(ConfigTypeEnum::Float); f = value; }
 			void set(double value) { setType(ConfigTypeEnum::Double); d = value; }
-			void set(const string &value) { if (!s) s = systemArena().createObject<string>(value); else *s = value; setType(ConfigTypeEnum::String); }
+			void set(const string &value) { if (!s) s = systemMemory().createObject<string>(value); else *s = value; setType(ConfigTypeEnum::String); }
 			void setDynamic(const string &value)
 			{
 				if (value.empty())
@@ -92,7 +92,7 @@ namespace cage
 			Variable *v = directVariables()[name];
 			if (!v)
 			{
-				directVariables()[name] = systemArena().createObject<Variable>();
+				directVariables()[name] = systemMemory().createObject<Variable>();
 				v = directVariables()[name];
 			}
 			return v;
@@ -130,8 +130,8 @@ namespace cage
 
 		int loadGlobalConfiguration()
 		{
-			detail::applicationLogger(); // ensure application logger was initialized
-			const string pr = detail::configAppPrefix();
+			detail::globalLogger(); // ensure global logger was initialized
+			const string pr = detail::globalConfigPrefix();
 			const string ep = pathExtractDirectory(detail::executableFullPath());
 			const string wp = pathWorkingDir();
 			const bool same = ep == wp;
@@ -412,7 +412,7 @@ namespace cage
 
 	Holder<ConfigList> newConfigList()
 	{
-		return systemArena().createImpl<ConfigList, ConfigListImpl>();
+		return systemMemory().createImpl<ConfigList, ConfigListImpl>();
 	}
 
 	void configApplyIni(const Ini *ini, const string &prefix)
@@ -470,7 +470,7 @@ namespace cage
 
 	namespace detail
 	{
-		string configAppPrefix()
+		string globalConfigPrefix()
 		{
 			return pathExtractFilename(detail::executableFullPathNoExe());
 		}
@@ -488,7 +488,7 @@ namespace cage
 				{
 					try
 					{
-						configExportIni(pathExtractFilename(detail::executableFullPathNoExe()) + ".ini", detail::configAppPrefix());
+						configExportIni(pathExtractFilename(detail::executableFullPathNoExe()) + ".ini", detail::globalConfigPrefix());
 					}
 					catch (...)
 					{

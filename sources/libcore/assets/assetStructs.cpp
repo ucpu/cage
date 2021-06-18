@@ -51,7 +51,7 @@ namespace cage
 	{
 		void processRawLoad(AssetContext *context)
 		{
-			Holder<MemoryBuffer> mem = systemArena().createHolder<MemoryBuffer>(std::move(context->originalData));
+			Holder<MemoryBuffer> mem = systemMemory().createHolder<MemoryBuffer>(std::move(context->originalData));
 			context->assetHolder = std::move(mem).cast<void>();
 		}
 	}
@@ -96,7 +96,7 @@ namespace cage
 		void processColliderLoad(AssetContext *context)
 		{
 			Holder<Collider> col = newCollider();
-			col->deserialize(context->originalData);
+			col->importBuffer(context->originalData);
 			col->rebuild();
 			context->assetHolder = std::move(col).cast<void>();
 		}
@@ -115,7 +115,7 @@ namespace cage
 		void processSkeletalAnimationLoad(AssetContext *context)
 		{
 			Holder<SkeletalAnimation> ani = newSkeletalAnimation();
-			ani->deserialize(context->originalData);
+			ani->importBuffer(context->originalData);
 			context->assetHolder = std::move(ani).cast<void>();
 		}
 	}
@@ -133,7 +133,7 @@ namespace cage
 		void processSkeletonRigLoad(AssetContext *context)
 		{
 			Holder<SkeletonRig> skl = newSkeletonRig();
-			skl->deserialize(context->originalData);
+			skl->importBuffer(context->originalData);
 			context->assetHolder = std::move(skl).cast<void>();
 		}
 	}

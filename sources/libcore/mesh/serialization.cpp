@@ -32,7 +32,7 @@ namespace cage
 	constexpr uint32 Magic = uint32('p') + (uint32('o') << 8) + (uint32('l') << 16) + (uint32('y') << 24);
 	constexpr uint32 Version = 1;
 
-	void Mesh::deserialize(PointerRange<const char> buffer)
+	void Mesh::importBuffer(PointerRange<const char> buffer)
 	{
 		MeshImpl *impl = (MeshImpl *)this;
 		impl->clear();
@@ -52,7 +52,7 @@ namespace cage
 			CAGE_THROW_ERROR(Exception, "deserialization left unread data");
 	}
 
-	Holder<PointerRange<char>> Mesh::serialize() const
+	Holder<PointerRange<char>> Mesh::exportBuffer() const
 	{
 		const MeshImpl *impl = (const MeshImpl *)this;
 		MemoryBuffer buff;

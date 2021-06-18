@@ -192,15 +192,15 @@ namespace cage
 		{
 			ScopeLock lock(assertContext().mutex);
 			if (ctx)
-				assertContext().contexts[threadId()] = ctx;
+				assertContext().contexts[currentThreadId()] = ctx;
 			else
-				assertContext().contexts.erase(threadId());
+				assertContext().contexts.erase(currentThreadId());
 		}
 
 		Window *getCurrentContext()
 		{
 			ScopeLock lock(assertContext().mutex);
-			auto it = assertContext().contexts.find(threadId());
+			auto it = assertContext().contexts.find(currentThreadId());
 			if (it == assertContext().contexts.end())
 				return nullptr;
 			CAGE_ASSERT(it->second);

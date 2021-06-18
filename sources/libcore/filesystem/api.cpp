@@ -41,9 +41,7 @@ namespace cage
 
 	void File::read(PointerRange<char> buffer)
 	{
-		FileAbstract *impl = (FileAbstract *)this;
-		CAGE_ASSERT(impl->mode.read);
-		impl->read(buffer);
+		CAGE_THROW_CRITICAL(NotImplemented, "reading from abstract (possibly write-only) file");
 	}
 
 	Holder<PointerRange<char>> File::read(uintPtr size)
@@ -55,79 +53,80 @@ namespace cage
 
 	Holder<PointerRange<char>> File::readAll()
 	{
-		CAGE_ASSERT(tell() == 0);
-		MemoryBuffer r(size());
+		const uintPtr s = size();
+		if (!s)
+			return {};
+		MemoryBuffer r(s);
 		read(r);
 		return std::move(r);
 	}
 
+	string File::readLine()
+	{
+		string line;
+		if (readLine(line))
+			return line;
+		return "";
+	}
+
 	bool File::readLine(string &line)
 	{
-		FileAbstract *impl = (FileAbstract *)this;
-		CAGE_ASSERT(impl->mode.read);
-
 		const uintPtr origPos = tell();
 		const uintPtr origSize = size();
 		const uintPtr origLeft = origSize - origPos;
 		if (origLeft == 0)
 			return false;
 
-		char buffer[string::MaxLength + 1];
-		PointerRange<char> pr1 = { buffer, buffer + numeric_cast<uint32>(min(origLeft, (uintPtr)string::MaxLength)) };
-		read(pr1);
-		PointerRange<const char> pr2 = pr1;
-		if (!detail::readLine(line, pr2, origLeft >= string::MaxLength))
+		char buffer[string::MaxLength + 1]; // plus 1 to allow detecting that the line is too long
+		PointerRange<char> pr = { buffer, buffer + min(origLeft, sizeof(buffer)) };
+		read(pr);
+		try
+		{
+			uintPtr l = detail::readLine(line, pr, origLeft >= string::MaxLength);
+			seek(origPos + l);
+			return l;
+		}
+		catch (Exception &)
 		{
 			seek(origPos);
-			if (origLeft >= string::MaxLength)
-				CAGE_THROW_ERROR(Exception, "line too long");
-			return false;
+			throw;
 		}
-		seek(min(origPos + (pr2.begin() - pr1.begin()), origSize));
-		return true;
 	}
 
 	void File::write(PointerRange<const char> buffer)
 	{
-		FileAbstract *impl = (FileAbstract *)this;
-		CAGE_ASSERT(impl->mode.write);
-		impl->write(buffer);
+		CAGE_THROW_CRITICAL(NotImplemented, "writing to abstract (possibly read-only) file");
 	}
 
 	void File::writeLine(const string &line)
 	{
-		const string d = line + "\n";
-		write({ d.c_str(), d.c_str() + d.length() });
+		write(line);
+		write("\n");
 	}
 
 	void File::seek(uintPtr position)
 	{
-		FileAbstract *impl = (FileAbstract *)this;
-		impl->seek(position);
+		CAGE_THROW_CRITICAL(NotImplemented, "calling seek on an abstract file");
 	}
 
 	void File::close()
 	{
-		FileAbstract *impl = (FileAbstract *)this;
-		impl->close();
+		CAGE_THROW_CRITICAL(NotImplemented, "calling close on an abstract file");
 	}
 
-	uintPtr File::tell() const
+	uintPtr File::tell()
 	{
-		const FileAbstract *impl = (const FileAbstract *)this;
-		return impl->tell();
+		CAGE_THROW_CRITICAL(NotImplemented, "calling tell on an abstract file");
 	}
 
-	uintPtr File::size() const
+	uintPtr File::size()
 	{
-		const FileAbstract *impl = (const FileAbstract *)this;
-		return impl->size();
+		CAGE_THROW_CRITICAL(NotImplemented, "calling size on an abstract file");
 	}
 
 	FileMode File::mode() const
 	{
-		const FileAbstract *impl = (const FileAbstract *)this;
-		return impl->mode;
+		CAGE_THROW_CRITICAL(NotImplemented, "calling mode on an abstract file");
 	}
 
 	Holder<File> newFile(const string &path, const FileMode &mode)

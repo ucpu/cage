@@ -9,8 +9,8 @@ namespace cage
 	{
 	public:
 		void reset();
-		uint64 microsSinceStart();
-		uint64 microsSinceLast();
+		uint64 duration(); // microseconds since construction, or last call to reset, whichever is smaller
+		uint64 elapsed(); // microseconds since construction, last call to reset, or last call to elapsed, whichever is smallest
 	};
 
 	CAGE_CORE_API Holder<Timer> newTimer();

@@ -38,12 +38,12 @@ namespace
 
 	void enableLockstep(Scheduler *s)
 	{
-		s->setLockstep(true);
+		s->lockstep(true);
 	}
 
 	void disableLockstep(Scheduler *s)
 	{
-		s->setLockstep(false);
+		s->lockstep(false);
 	}
 }
 
@@ -85,7 +85,7 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration > 100000 && duration < 300000);
 		}
 		CAGE_TEST(periodicCount >= 4 && periodicCount <= 8);
@@ -125,7 +125,7 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration > 100000 && duration < 300000);
 		}
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
@@ -169,7 +169,7 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration > 100000 && duration < 300000);
 		}
 		const uint32 sum = cnt1 + cnt2;
@@ -210,7 +210,7 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration > 100000 && duration < 300000);
 		}
 		CAGE_TEST(cnt1 >= 2 && cnt1 <= 6);
@@ -221,7 +221,7 @@ void testScheduler()
 	{
 		CAGE_TESTCASE("trigger external schedule");
 		Holder<Scheduler> sch = newScheduler({});
-		Schedule *trig = nullptr;
+		Holder<Schedule> trig;
 		uint32 cnt1 = 0, cnt2 = 0;
 		{
 			ScheduleCreateConfig c;
@@ -241,7 +241,7 @@ void testScheduler()
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::Once;
-			c.action.bind<Schedule*, &trigger>(trig);
+			c.action.bind<Schedule*, &trigger>(+trig);
 			c.name = "trigger";
 			c.delay = 100000;
 			c.priority = 50;
@@ -259,12 +259,12 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration > 100000 && duration < 300000);
 		}
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
 		CAGE_TEST(cnt2 == 1);
-		CAGE_TEST(trig->statsRunCount() == 1);
+		CAGE_TEST(trig->statistics().runs == 1);
 		CAGE_TEST(sch->latestTime() >= 200000);
 	}
 
@@ -272,7 +272,7 @@ void testScheduler()
 		CAGE_TESTCASE("steady schedule with statistics");
 		Holder<Scheduler> sch = newScheduler({});
 		uint32 cnt1 = 0;
-		Schedule *trig = nullptr;
+		Holder<Schedule> trig;
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
@@ -293,24 +293,24 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration > 100000 && duration < 300000);
 		}
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
-		CAGE_TEST(trig->statsRunCount() == cnt1);
-		CAGE_TEST(trig->statsDurationSum() > 15000 * (uint64)cnt1);
-		CAGE_TEST(trig->statsDurationSum() < 25000 * (uint64)cnt1 + 100000);
-		CAGE_TEST(trig->statsDurationMax() > 15000);
-		CAGE_TEST(trig->statsDurationMax() < 50000);
-		CAGE_TEST(trig->statsDelayMax() > 0);
-		CAGE_TEST(trig->statsDelayMax() < 50000);
+		CAGE_TEST(trig->statistics().runs == cnt1);
+		CAGE_TEST(trig->statistics().totalDuration > 15000 * (uint64)cnt1);
+		CAGE_TEST(trig->statistics().totalDuration < 25000 * (uint64)cnt1 + 100000);
+		CAGE_TEST(trig->statistics().maxDuration > 15000);
+		CAGE_TEST(trig->statistics().maxDuration < 50000);
+		CAGE_TEST(trig->statistics().maxDelay > 0);
+		CAGE_TEST(trig->statistics().maxDelay < 50000);
 		CAGE_TEST(sch->latestTime() >= 200000);
 	}
 
 	{
 		CAGE_TESTCASE("basic lockstep scheduler");
 		Holder<Scheduler> sch = newScheduler({});
-		sch->setLockstep(true);
+		sch->lockstep(true);
 		uint32 cnt1 = 0;
 		{
 			ScheduleCreateConfig c;
@@ -332,7 +332,7 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration < 20000);
 		}
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
@@ -342,7 +342,7 @@ void testScheduler()
 	{
 		CAGE_TESTCASE("two schedules lockstep scheduler");
 		Holder<Scheduler> sch = newScheduler({});
-		sch->setLockstep(true);
+		sch->lockstep(true);
 		uint32 cnt1 = 0, cnt2 = 0;
 		{
 			ScheduleCreateConfig c;
@@ -372,7 +372,7 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration < 20000);
 		}
 		CAGE_TEST(cnt1 >= 2 && cnt1 <= 6);
@@ -383,7 +383,7 @@ void testScheduler()
 	{
 		CAGE_TESTCASE("sleeping schedule lockstep scheduler");
 		Holder<Scheduler> sch = newScheduler({});
-		sch->setLockstep(true);
+		sch->lockstep(true);
 		uint32 cnt1 = 0, cnt2 = 0;
 		{
 			ScheduleCreateConfig c;
@@ -413,7 +413,7 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration > 4 * 30000 && duration < 9 * 30000);
 		}
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 9);
@@ -424,7 +424,7 @@ void testScheduler()
 	{
 		CAGE_TESTCASE("slower schedule lockstep scheduler");
 		Holder<Scheduler> sch = newScheduler({});
-		sch->setLockstep(true);
+		sch->lockstep(true);
 		uint32 cnt1 = 0;
 		{
 			ScheduleCreateConfig c;
@@ -446,7 +446,7 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration > 200000 && duration < 800000);
 		}
 		CAGE_TEST(cnt1 >= 15 && cnt1 <= 25);
@@ -456,8 +456,8 @@ void testScheduler()
 	{
 		CAGE_TESTCASE("trigger external schedule lockstep scheduler");
 		Holder<Scheduler> sch = newScheduler({});
-		sch->setLockstep(true);
-		Schedule *trig = nullptr;
+		sch->lockstep(true);
+		Holder<Schedule> trig;
 		uint32 cnt1 = 0, cnt2 = 0;
 		{
 			ScheduleCreateConfig c;
@@ -477,7 +477,7 @@ void testScheduler()
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::Once;
-			c.action.bind<Schedule *, &trigger>(trig);
+			c.action.bind<Schedule *, &trigger>(+trig);
 			c.name = "trigger";
 			c.delay = 100000;
 			c.priority = 50;
@@ -495,12 +495,12 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration < 20000);
 		}
 		CAGE_TEST(cnt1 >= 4 && cnt1 <= 8);
 		CAGE_TEST(cnt2 == 1);
-		CAGE_TEST(trig->statsRunCount() == 1);
+		CAGE_TEST(trig->statistics().runs == 1);
 		CAGE_TEST(sch->latestTime() >= 200000);
 	}
 
@@ -508,7 +508,7 @@ void testScheduler()
 		CAGE_TESTCASE("lockstep scheduler monotonic time");
 		Holder<Scheduler> sch = newScheduler({});
 		lastCheckedTime = 0;
-		sch->setLockstep(true);
+		sch->lockstep(true);
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
@@ -529,7 +529,7 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration < 10000);
 		}
 		CAGE_TEST(sch->latestTime() >= 200000);
@@ -540,7 +540,7 @@ void testScheduler()
 		CAGE_TESTCASE("enabling lockstep midway");
 		Holder<Scheduler> sch = newScheduler({});
 		lastCheckedTime = 0;
-		sch->setLockstep(false);
+		sch->lockstep(false);
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
@@ -570,7 +570,7 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration > 50000 && duration < 190000);
 		}
 		CAGE_TEST(sch->latestTime() >= 200000);
@@ -581,7 +581,7 @@ void testScheduler()
 		CAGE_TESTCASE("disabling lockstep midway");
 		Holder<Scheduler> sch = newScheduler({});
 		lastCheckedTime = 0;
-		sch->setLockstep(true);
+		sch->lockstep(true);
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
@@ -611,7 +611,7 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration > 50000 && duration < 190000);
 		}
 		CAGE_TEST(sch->latestTime() >= 200000);
@@ -622,7 +622,7 @@ void testScheduler()
 		CAGE_TESTCASE("repeatedly switching lockstep");
 		Holder<Scheduler> sch = newScheduler({});
 		lastCheckedTime = 0;
-		sch->setLockstep(false);
+		sch->lockstep(false);
 		{
 			ScheduleCreateConfig c;
 			c.type = ScheduleTypeEnum::SteadyPeriodic;
@@ -663,10 +663,28 @@ void testScheduler()
 		{
 			Holder<Timer> tmr = newTimer();
 			sch->run();
-			const uint64 duration = tmr->microsSinceStart();
+			const uint64 duration = tmr->duration();
 			CAGE_TEST(duration > 50000 && duration < 300000);
 		}
 		CAGE_TEST(sch->latestTime() >= 200000);
 		CAGE_TEST(lastCheckedTime > 150000 && lastCheckedTime < 250000);
+	}
+
+	{
+		CAGE_TESTCASE("repeatedly detached schedule");
+		{
+			Holder<Scheduler> sch = newScheduler({});
+			Holder<Schedule> a = sch->newSchedule({});
+			a->detach();
+			a->detach();
+			sch->clear();
+		}
+		{
+			Holder<Scheduler> sch = newScheduler({});
+			Holder<Schedule> a = sch->newSchedule({});
+			sch->clear();
+			a->detach();
+			a->detach();
+		}
 	}
 }

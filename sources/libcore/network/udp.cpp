@@ -42,8 +42,8 @@ namespace cage
 			Deserializer des() const
 			{
 				Deserializer d(*buffer);
-				d.advance(offset);
-				return d.placeholder(size);
+				d.read(offset);
+				return d.subview(size);
 			}
 
 			std::shared_ptr<MemoryBuffer> buffer;
@@ -918,7 +918,7 @@ namespace cage
 				} break;
 				case CmdTypeEnum::connectionFinish:
 				{
-					CAGE_THROW_ERROR(Disconnected, "connection closed by other end");
+					CAGE_THROW_ERROR(Disconnected, "connection closed by peer");
 				} break;
 				case CmdTypeEnum::acknowledgement:
 				{
@@ -933,7 +933,7 @@ namespace cage
 					d >> msg.channel >> msg.msgSeqn >> size;
 					if (comp(msg.msgSeqn, receiving.seqnPerChannel[msg.channel]))
 					{ // obsolete
-						d.advance(size);
+						d.read(size);
 					}
 					else
 					{
@@ -955,7 +955,7 @@ namespace cage
 					uint16 size = index + 1 == totalCount ? totalSize - (totalCount - 1) * LongSize : LongSize;
 					if (comp(msgSeqn, receiving.seqnPerChannel[channel]))
 					{ // obsolete
-						d.advance(size);
+						d.read(size);
 					}
 					else
 					{
@@ -1198,7 +1198,7 @@ namespace cage
 				}
 				try
 				{
-					auto c = systemArena().createHolder<UdpConnectionImpl>(sockGroup, acc);
+					auto c = systemMemory().createHolder<UdpConnectionImpl>(sockGroup, acc);
 					c->serviceReceiving();
 					if (!c->established)
 					{
@@ -1334,11 +1334,11 @@ namespace cage
 
 	Holder<UdpConnection> newUdpConnection(const string &address, uint16 port, uint64 timeout)
 	{
-		return systemArena().createImpl<UdpConnection, UdpConnectionImpl>(address, port, timeout);
+		return systemMemory().createImpl<UdpConnection, UdpConnectionImpl>(address, port, timeout);
 	}
 
 	Holder<UdpServer> newUdpServer(uint16 port)
 	{
-		return systemArena().createImpl<UdpServer, UdpServerImpl>(port);
+		return systemMemory().createImpl<UdpServer, UdpServerImpl>(port);
 	}
 }

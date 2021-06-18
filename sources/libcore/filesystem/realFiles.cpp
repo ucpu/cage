@@ -314,10 +314,10 @@ namespace cage
 
 			void reopenForModification() override
 			{
-				CAGE_ASSERT(mode.read && !mode.write);
+				CAGE_ASSERT(myMode.read && !myMode.write);
 				CAGE_ASSERT(f);
-				mode.write = true;
-				f = freopen(myPath.c_str(), mode.mode().c_str(), f);
+				myMode.write = true;
+				f = freopen(myPath.c_str(), myMode.mode().c_str(), f);
 				if (!f)
 				{
 					CAGE_LOG_THROW(stringizer() + "path: " + myPath);
@@ -328,7 +328,7 @@ namespace cage
 			void readAt(PointerRange<char> buffer, uintPtr at) override
 			{
 				CAGE_ASSERT(f);
-				CAGE_ASSERT(mode.read);
+				CAGE_ASSERT(myMode.read);
 				if (buffer.size() == 0)
 					return;
 
@@ -349,7 +349,7 @@ namespace cage
 			void read(PointerRange<char> buffer) override
 			{
 				CAGE_ASSERT(f);
-				CAGE_ASSERT(mode.read);
+				CAGE_ASSERT(myMode.read);
 				if (buffer.size() == 0)
 					return;
 				if (fread(buffer.data(), buffer.size(), 1, f) != 1)
@@ -359,7 +359,7 @@ namespace cage
 			void write(PointerRange<const char> buffer) override
 			{
 				CAGE_ASSERT(f);
-				CAGE_ASSERT(mode.write);
+				CAGE_ASSERT(myMode.write);
 				if (buffer.size() == 0)
 					return;
 				if (fwrite(buffer.data(), buffer.size(), 1, f) != 1)
@@ -382,13 +382,13 @@ namespace cage
 					CAGE_THROW_ERROR(SystemError, "fclose", errno);
 			}
 
-			uintPtr tell() const override
+			uintPtr tell() override
 			{
 				CAGE_ASSERT(f);
 				return numeric_cast<uintPtr>(ftell(f));
 			}
 
-			uintPtr size() const override
+			uintPtr size() override
 			{
 				CAGE_ASSERT(f);
 				auto pos = ftell(f);
@@ -402,7 +402,7 @@ namespace cage
 
 	Holder<File> realNewFile(const string &path, const FileMode &mode)
 	{
-		return systemArena().createImpl<File, FileReal>(path, mode);
+		return systemMemory().createImpl<File, FileReal>(path, mode);
 	}
 
 	void realTryFlushFile(File *f_)
@@ -502,7 +502,7 @@ namespace cage
 
 	Holder<DirectoryList> realNewDirectoryList(const string &path)
 	{
-		return systemArena().createImpl<DirectoryList, DirectoryListReal>(path);
+		return systemMemory().createImpl<DirectoryList, DirectoryListReal>(path);
 	}
 
 	namespace
@@ -567,7 +567,7 @@ namespace cage
 
 			FilesystemWatcherImpl()
 			{
-				fw = systemArena().createHolder<FW::FileWatcher>();
+				fw = systemMemory().createHolder<FW::FileWatcher>();
 				clock = newTimer();
 			}
 
@@ -577,7 +577,7 @@ namespace cage
 				while (files.empty())
 				{
 					fw->update();
-					if (files.empty() && clock->microsSinceStart() > time)
+					if (files.empty() && clock->duration() > time)
 						return "";
 					else
 						threadSleep(1000 * 100);
@@ -629,6 +629,6 @@ namespace cage
 
 	Holder<FilesystemWatcher> newFilesystemWatcher()
 	{
-		return systemArena().createImpl<FilesystemWatcher, FilesystemWatcherImpl>();
+		return systemMemory().createImpl<FilesystemWatcher, FilesystemWatcherImpl>();
 	}
 }

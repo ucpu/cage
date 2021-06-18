@@ -1,6 +1,7 @@
 #include <cage-core/geometry.h>
 #include <cage-core/spatialStructure.h>
 #include <cage-core/memoryAllocators.h>
+#include <cage-core/memoryArena.h>
 
 #include <robin_hood.h>
 #include <plf_colony.h>
@@ -349,10 +350,10 @@ namespace cage
 		class SpatialQueryImpl : public SpatialQuery
 		{
 		public:
-			const SpatialDataImpl *const data;
+			const Holder<const SpatialDataImpl> data;
 			std::vector<uint32> resultNames;
 
-			SpatialQueryImpl(const SpatialDataImpl *data) : data(data)
+			SpatialQueryImpl(Holder<const SpatialDataImpl> data) : data(std::move(data))
 			{
 				resultNames.reserve(100);
 			}
@@ -409,7 +410,7 @@ namespace cage
 				clear();
 				if (data->nodes.empty())
 					return false;
-				Intersector<T> i(data, resultNames, other);
+				Intersector<T> i(+data, resultNames, other);
 				return !resultNames.empty();
 			}
 		};
@@ -540,11 +541,11 @@ namespace cage
 
 	Holder<SpatialStructure> newSpatialStructure(const SpatialStructureCreateConfig &config)
 	{
-		return systemArena().createImpl<SpatialStructure, SpatialDataImpl>(config);
+		return systemMemory().createImpl<SpatialStructure, SpatialDataImpl>(config);
 	}
 
-	Holder<SpatialQuery> newSpatialQuery(const SpatialStructure *data)
+	Holder<SpatialQuery> newSpatialQuery(Holder<const SpatialStructure> data)
 	{
-		return systemArena().createImpl<SpatialQuery, SpatialQueryImpl>((SpatialDataImpl*)data);
+		return systemMemory().createImpl<SpatialQuery, SpatialQueryImpl>(std::move(data).cast<const SpatialDataImpl>());
 	}
 }

@@ -8,7 +8,7 @@ void processSkeleton()
 	const aiScene *scene = context->getScene();
 
 	Holder<SkeletonRig> rig = context->skeletonRig();
-	Holder<PointerRange<char>> buff = rig->serialize();
+	Holder<PointerRange<char>> buff = rig->exportBuffer();
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (before compression): " + buff.size());
 	Holder<PointerRange<char>> comp = compress(buff);
 	CAGE_LOG(SeverityEnum::Info, logComponentName, stringizer() + "buffer size (after compression): " + comp.size());

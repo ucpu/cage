@@ -186,10 +186,10 @@ void testMesh()
 
 	{
 		CAGE_TESTCASE("serialize");
-		Holder<PointerRange<char>> buff = poly->serialize();
+		Holder<PointerRange<char>> buff = poly->exportBuffer();
 		CAGE_TEST(buff.size() > 10);
 		Holder<Mesh> p = newMesh();
-		p->deserialize(buff);
+		p->importBuffer(buff);
 		CAGE_TEST(p->verticesCount() == poly->verticesCount());
 		CAGE_TEST(p->indicesCount() == poly->indicesCount());
 		CAGE_TEST(p->positions().size() == poly->positions().size());

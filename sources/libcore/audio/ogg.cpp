@@ -4,7 +4,7 @@ namespace cage
 {
 	void oggDecode(PointerRange<const char> inBuffer, AudioImpl *impl)
 	{
-		VorbisDecoder dec(newFileBuffer(inBuffer));
+		VorbisDecoder dec(newFileBuffer(Holder<PointerRange<const char>>(&inBuffer, nullptr)));
 		impl->mem.resize(0); // avoid copying
 		impl->mem.resize(inBuffer.size());
 		detail::memcpy(impl->mem.data(), inBuffer.data(), inBuffer.size());

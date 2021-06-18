@@ -1286,7 +1286,7 @@ namespace
 			Holder<Timer> tmr = newTimer();
 			for (uint32 i = 0; i < matricesCount; i++)
 				res *= matrices[i];
-			CAGE_LOG(SeverityEnum::Note, "test", stringizer() + "duration: " + tmr->microsSinceStart());
+			CAGE_LOG(SeverityEnum::Note, "test", stringizer() + "duration: " + tmr->duration());
 		}
 	}
 }

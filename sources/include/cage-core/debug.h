@@ -42,9 +42,9 @@ namespace cage
 			SeverityEnum original;
 		};
 
-		CAGE_CORE_API void setGlobalBreakpointOverride(bool enable);
-		CAGE_CORE_API void setGlobalAssertOverride(bool enable);
-		CAGE_CORE_API void setGlobalExceptionOverride(SeverityEnum severity);
+		CAGE_CORE_API void globalBreakpointOverride(bool enable);
+		CAGE_CORE_API void globalAssertOverride(bool enable);
+		CAGE_CORE_API void globalExceptionOverride(SeverityEnum severity);
 	}
 }
 

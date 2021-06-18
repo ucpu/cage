@@ -78,9 +78,9 @@ void testColliders()
 			c1->addTriangle(Triangle(vec3(-1, 0, 0), vec3(1, 0, 0), vec3(0, 2, 0)));
 			c1->addTriangle(Triangle(vec3(-2, 0, 1), vec3(2, 0, 1), vec3(0, 3, 1)));
 			c1->addTriangle(Triangle(vec3(-2, 1, -5), vec3(0, 1, 5), vec3(2, 1, 0)));
-			Holder<PointerRange<char>> buff = c1->serialize();
+			Holder<PointerRange<char>> buff = c1->exportBuffer();
 			Holder<Collider> c2 = newCollider();
-			c2->deserialize(buff);
+			c2->importBuffer(buff);
 			CAGE_TEST(c2->triangles().size() == 3);
 			CAGE_TEST(c2->triangles()[2] == c1->triangles()[2]);
 		}
