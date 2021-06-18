@@ -142,29 +142,33 @@ namespace cage
 			}
 		}
 
-		void runtimeAssertFailure(StringLiteral expt, StringLiteral file, uintPtr line, StringLiteral function)
+		void runtimeAssertFailure(StringLiteral function, StringLiteral file, uintPtr line, StringLiteral expt)
 		{
 			char buffer[2048];
 			buffer[0] = 0;
 			std::strcat(buffer, "assert '");
-			std::strcat(buffer, expt.str);
+			std::strcat(buffer, expt);
 			std::strcat(buffer, "' failed");
 			assertOutputLine(buffer, false);
 
 			buffer[0] = 0;
-			std::strcat(buffer, file.str);
+			std::strcat(buffer, file);
 			std::strcat(buffer, "(");
 			char linebuf[20];
 			toString(linebuf, 20, line);
 			std::strcat(buffer, linebuf);
 			std::strcat(buffer, ") - ");
-			std::strcat(buffer, function.str);
+			std::strcat(buffer, function);
 			assertOutputLine(buffer);
 
 			if (isLocal().assertDeadly && isGlobalAssertDeadly())
 				detail::terminate();
 			else
-				CAGE_THROW_CRITICAL(Exception, "assert failure");
+			{
+				Exception e(function, file, line, ::cage::SeverityEnum::Critical, "assert failure");
+				e.makeLog();
+				throw e;
+			}
 		}
 	}
 

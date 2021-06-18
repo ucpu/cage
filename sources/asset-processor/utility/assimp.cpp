@@ -322,7 +322,7 @@ namespace
 			try
 			{
 				uint32 flags = assimpDefaultLoadFlags;
-				if (string(logComponentName.str) != "analyze")
+				if (string(logComponentName) != "analyze")
 				{
 					if (toBool(properties("bakeModel")))
 						flags |= assimpBakeLoadFlags;

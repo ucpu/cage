@@ -22,7 +22,7 @@ namespace cage
 		{
 			uint32 res = 0;
 			DWORD sz = sizeof(res);
-			auto ret = RegGetValue(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", name.str, RRF_RT_REG_DWORD, nullptr, &res, &sz);
+			auto ret = RegGetValue(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", name, RRF_RT_REG_DWORD, nullptr, &res, &sz);
 			if (ret != ERROR_SUCCESS)
 				return 0;
 			return res;
@@ -31,7 +31,7 @@ namespace cage
 		{
 			string res;
 			DWORD sz = string::MaxLength;
-			auto ret = RegGetValue(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", name.str, RRF_RT_REG_SZ, nullptr, res.rawData(), &sz);
+			auto ret = RegGetValue(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", name, RRF_RT_REG_SZ, nullptr, res.rawData(), &sz);
 			if (ret != ERROR_SUCCESS)
 				res.rawLength() = 0;
 			else

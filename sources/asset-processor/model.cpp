@@ -342,7 +342,7 @@ namespace
 	{
 		if (abs(lengthSquared(n) - 1) > 1e-3)
 		{
-			CAGE_LOG(SeverityEnum::Warning, logComponentName, stringizer() + "fixing denormalized " + name.str + ": " + n);
+			CAGE_LOG(SeverityEnum::Warning, logComponentName, stringizer() + "fixing denormalized " + name + ": " + n);
 			n = normalize(n);
 		}
 		if (!n.valid())
@@ -350,7 +350,7 @@ namespace
 			static bool passInvalid = toBool(properties("passInvalidNormals"));
 			if (passInvalid)
 			{
-				CAGE_LOG(SeverityEnum::Warning, logComponentName, stringizer() + "pass invalid " + name.str + ": " + n);
+				CAGE_LOG(SeverityEnum::Warning, logComponentName, stringizer() + "pass invalid " + name + ": " + n);
 				n = vec3();
 			}
 			else
