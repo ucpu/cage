@@ -305,7 +305,7 @@ namespace cage
 	{
 		CAGE_CORE_API uint64 makeLog(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, StringLiteral component, const string &message, bool continuous, bool debug) noexcept;
 		CAGE_CORE_API void makeLogThrow(StringLiteral function, StringLiteral file, uint32 line, const string &message) noexcept;
-		CAGE_CORE_API void runtimeAssertFailure(StringLiteral function, StringLiteral file, uintPtr line, StringLiteral expt);
+		CAGE_CORE_API void runtimeAssertFailure(StringLiteral function, StringLiteral file, uint32 line, StringLiteral expt);
 	}
 
 	namespace detail
