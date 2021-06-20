@@ -151,6 +151,16 @@ namespace cage
 			return data_.rend();
 		}
 
+		const std::vector<Value> &unsafeData() const noexcept
+		{
+			return data_;
+		}
+
+		std::vector<Value> &unsafeData() noexcept
+		{
+			return data_;
+		}
+
 	private:
 		std::vector<Value> data_;
 

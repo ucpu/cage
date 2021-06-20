@@ -72,7 +72,7 @@ void testProcess()
 	{
 		CAGE_TESTCASE("readAll (after sleep)");
 		Holder<Process> prg = newProcess(cmdLs);
-		threadSleep(10000); // give the process time to write the data
+		threadSleep(200000); // give the process time to write the data
 		auto output = prg->readAll();
 		CAGE_TEST(output.size() > 100);
 	}

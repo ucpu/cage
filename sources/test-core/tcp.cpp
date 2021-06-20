@@ -99,9 +99,7 @@ namespace
 			while (in.size() < out.size())
 			{
 				{ // read
-					auto r = conn->readAll();
-					if (!r.empty())
-						ser.write(r);
+					ser.write(conn->readAll());
 				}
 				{ // write
 					const uintPtr a = des.available();
@@ -139,9 +137,7 @@ namespace
 				{
 					while (true)
 					{
-						auto data = conn->readAll();
-						if (!data.empty())
-							conn->write(data);
+						conn->write(conn->readAll());
 						threadYield();
 					}
 				}
