@@ -1,6 +1,6 @@
 #include <cage-core/core.h>
 #include <cage-core/math.h>
-#include <cage-core/network.h>
+#include <cage-core/networkGinnel.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 #include <cage-core/random.h>
@@ -17,7 +17,7 @@ namespace
 	class ConnImpl : public Conn
 	{
 	public:
-		Holder<UdpConnection> udp;
+		Holder<GinnelConnection> udp;
 		const uint64 timeStart;
 		uint64 timeStats = 0;
 		uint64 lastProcessTime = 0;
@@ -27,7 +27,7 @@ namespace
 		VariableSmoothingBuffer<uint64, 20> smoothRtt;
 		VariableSmoothingBuffer<uint64, 20> smoothThroughput;
 
-		ConnImpl(Holder<UdpConnection> udp) : udp(std::move(udp)), timeStart(applicationTime())
+		ConnImpl(Holder<GinnelConnection> udp) : udp(std::move(udp)), timeStart(applicationTime())
 		{
 			timeStats = timeStart + 500000;
 			lastProcessTime = timeStart;
@@ -132,7 +132,7 @@ bool Conn::process()
 	return impl->process();
 }
 
-Holder<Conn> newConn(Holder<UdpConnection> udp)
+Holder<Conn> newConn(Holder<GinnelConnection> udp)
 {
 	return systemMemory().createImpl<Conn, ConnImpl>(std::move(udp));
 }

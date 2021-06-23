@@ -1,3 +1,4 @@
+#include <cage-core/networkTcp.h>
 #include <cage-core/lineReader.h>
 #include <cage-core/math.h> // min
 
