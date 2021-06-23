@@ -166,6 +166,13 @@ namespace cage
 
 	CAGE_CORE_API void meshRegularize(Mesh *msh, const MeshRegularizeConfig &config);
 
+	struct CAGE_CORE_API MeshChunkingConfig
+	{
+		real maxSurfaceArea;
+	};
+
+	CAGE_CORE_API Holder<PointerRange<Holder<Mesh>>> meshChunking(const Mesh *msh, const MeshChunkingConfig &config);
+
 	struct CAGE_CORE_API MeshUnwrapConfig
 	{
 		// charting determines which triangles will form islands

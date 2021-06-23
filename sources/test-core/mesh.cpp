@@ -153,6 +153,23 @@ void testMesh()
 	}
 
 	{
+		CAGE_TESTCASE("chunking");
+		auto p = poly->copy();
+		MeshChunkingConfig cfg;
+		constexpr real initialAreaImplicit = 4 * real::Pi() * sqr(10);
+		constexpr real targetChunks = 10;
+		cfg.maxSurfaceArea = initialAreaImplicit / targetChunks;
+		const auto res = meshChunking(+p, cfg);
+		CAGE_TEST(res.size() > targetChunks / 2 && res.size() < targetChunks * 2);
+		for (const auto &it : res)
+		{
+			CAGE_TEST(it->facesCount() > 0);
+			CAGE_TEST(it->indicesCount() > 0);
+			CAGE_TEST(it->type() == MeshTypeEnum::Triangles);
+		}
+	}
+
+	{
 		CAGE_TESTCASE("unwrap");
 		auto p = poly->copy();
 		MeshUnwrapConfig cfg;
@@ -172,7 +189,7 @@ void testMesh()
 		CAGE_TESTCASE("separateDisconnected");
 		auto p = splitSphereIntoTwo(+poly);
 		auto ps = meshSeparateDisconnected(+p);
-		// CAGE_TEST(ps.size() == 2); // todo fix this -> it should really be two but is 3
+		// CAGE_TEST(ps.size() == 2); // todo fix this -> it should really be 2 but is 3
 		ps[0]->exportObjFile({}, "models/separateDisconnected_1.obj");
 		ps[1]->exportObjFile({}, "models/separateDisconnected_2.obj");
 	}
