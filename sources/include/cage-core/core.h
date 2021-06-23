@@ -306,7 +306,7 @@ namespace cage
 	{
 		CAGE_CORE_API uint64 makeLog(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, StringLiteral component, const string &message, bool continuous, bool debug) noexcept;
 		CAGE_CORE_API void makeLogThrow(StringLiteral function, StringLiteral file, uint32 line, const string &message) noexcept;
-		CAGE_CORE_API void runtimeAssertFailure(StringLiteral function, StringLiteral file, uintPtr line, StringLiteral expt);
+		CAGE_CORE_API void runtimeAssertFailure(StringLiteral function, StringLiteral file, uint32 line, StringLiteral expt);
 	}
 
 	namespace detail
@@ -947,11 +947,11 @@ namespace cage
 			return Holder<PointerRange<const T>>((PointerRange<const T>*)this->data_, std::move(*this));
 		}
 
-		CAGE_FORCE_INLINE T *begin() const noexcept { return this->data_->begin(); }
-		CAGE_FORCE_INLINE T *end() const noexcept { return this->data_->end(); }
+		CAGE_FORCE_INLINE T *begin() const noexcept { return this->data_ ? this->data_->begin() : nullptr; }
+		CAGE_FORCE_INLINE T *end() const noexcept { return this->data_ ? this->data_->end() : nullptr; }
 		CAGE_FORCE_INLINE T *data() const noexcept { return begin(); }
 		CAGE_FORCE_INLINE size_type size() const noexcept { return end() - begin(); }
-		CAGE_FORCE_INLINE bool empty() const noexcept { return !this->data_ || size() == 0; }
+		CAGE_FORCE_INLINE bool empty() const noexcept { return size() == 0; }
 		CAGE_FORCE_INLINE T &operator[] (size_type idx) const { CAGE_ASSERT(idx < size()); return begin()[idx]; }
 	};
 

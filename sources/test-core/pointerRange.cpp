@@ -58,6 +58,11 @@ namespace
 		return PointerRangeHolder<Test>(std::move(tests));
 	}
 
+	Holder<PointerRange<uint32>> makeEmptyRange()
+	{
+		return {};
+	}
+
 	void functionTakingMutableRange(PointerRange<Test> r)
 	{
 		// do nothing
@@ -124,6 +129,21 @@ void testPointerRange()
 			CAGE_TEST(counter == 4);
 		}
 		CAGE_TEST(counter == 0);
+	}
+
+	{
+		CAGE_TESTCASE("empty holder");
+		CAGE_TEST(makeEmptyRange().size() == 0);
+		CAGE_TEST(makeEmptyRange().empty());
+		CAGE_TEST(makeEmptyRange().begin() == nullptr);
+		CAGE_TEST(makeEmptyRange().end() == nullptr);
+		CAGE_TEST(makeEmptyRange().data() == nullptr);
+		{
+			uint32 sum = 0;
+			for (auto it : makeEmptyRange())
+				sum += it;
+			CAGE_TEST(sum == 0);
+		}
 	}
 
 	{

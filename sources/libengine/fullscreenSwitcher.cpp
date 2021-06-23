@@ -2,10 +2,13 @@
 #include <cage-core/config.h>
 #include <cage-core/files.h>
 #include <cage-core/debug.h>
+#include <cage-core/string.h>
 
 #include <cage-engine/engine.h>
 #include <cage-engine/window.h>
 #include <cage-engine/fullscreenSwitcher.h>
+
+#include <cstdlib>
 
 namespace cage
 {
@@ -22,7 +25,7 @@ namespace cage
 		{
 		public:
 			WindowEventListeners listeners;
-			Window *window;
+			Window *window = nullptr;
 
 			ConfigSint32 confWindowLeft;
 			ConfigSint32 confWindowTop;
@@ -134,6 +137,30 @@ namespace cage
 		FullscreenSwitcherImpl *impl = (FullscreenSwitcherImpl*)this;
 		impl->update(fullscreen);
 	}
+
+	namespace
+	{
+		bool defaultFullscreenEnvironment()
+		{
+			const char *env = std::getenv("CAGE_FULLSCREEN_DEFAULT");
+			if (!env)
+				return true;
+			try
+			{
+				const bool r = toBool(trim(string(env)));
+				CAGE_LOG(SeverityEnum::Warning, "fullscreenSwitcher", stringizer() + "using environment variable CAGE_FULLSCREEN_DEFAULT, value: " + r);
+				return r;
+			}
+			catch (const Exception &)
+			{
+				CAGE_LOG(SeverityEnum::Warning, "fullscreenSwitcher", "failed parsing environment variable CAGE_FULLSCREEN_DEFAULT");
+			}
+			return false;
+		}
+	}
+
+	FullscreenSwitcherCreateConfig::FullscreenSwitcherCreateConfig() : FullscreenSwitcherCreateConfig(defaultFullscreenEnvironment())
+	{}
 
 	FullscreenSwitcherCreateConfig::FullscreenSwitcherCreateConfig(bool defaultFullscreen) : defaultFullscreen(defaultFullscreen)
 	{
