@@ -201,6 +201,7 @@ namespace cage
 	struct MeshMergeCloseVerticesConfig;
 	struct MeshSimplifyConfig;
 	struct MeshRegularizeConfig;
+	struct MeshChunkingConfig;
 	struct MeshUnwrapConfig;
 	struct MeshGenerateTextureConfig;
 	struct MeshGenerateNormalsConfig;
