@@ -627,7 +627,7 @@ namespace cage
 					const sint32 y = t0[1] + i;
 					const vec2 uv = vec2(x, y);
 					const vec2 b = barycoord(vertUvs[0], vertUvs[1], vertUvs[2], uv);
-					config.generator(x, y, idx, vec3(b, 1 - b[0] - b[1]));
+					config.generator(ivec2(x, y), idx, vec3(b, 1 - b[0] - b[1]));
 				}
 			}
 		}

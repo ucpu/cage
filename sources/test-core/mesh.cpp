@@ -3,6 +3,7 @@
 #include <cage-core/mesh.h>
 #include <cage-core/collider.h>
 #include <cage-core/memoryBuffer.h>
+#include <cage-core/image.h>
 
 namespace
 {
@@ -68,6 +69,19 @@ namespace
 		}
 		meshDiscardInvalid(+p);
 		return p;
+	}
+
+	struct MeshImage
+	{
+		Mesh *msh = nullptr;
+		Image *img = nullptr;
+	};
+
+	void genTex(MeshImage *data, const ivec2 &xy, const ivec3 &ids, const vec3 &weights)
+	{
+		const vec3 position = data->msh->positionAt(ids, weights);
+		const vec3 normal = data->msh->normalAt(ids, weights);
+		data->img->set(xy, abs(normal));
 	}
 }
 
@@ -172,10 +186,26 @@ void testMesh()
 	{
 		CAGE_TESTCASE("unwrap");
 		auto p = poly->copy();
-		MeshUnwrapConfig cfg;
-		cfg.targetResolution = 256;
-		meshUnwrap(+p, cfg);
-		p->exportObjFile({}, "meshes/unwrap.obj");
+		uint32 res = 0;
+		{
+			MeshUnwrapConfig cfg;
+			cfg.targetResolution = 256;
+			res = meshUnwrap(+p, cfg);
+			p->exportObjFile({}, "meshes/unwrap.obj");
+		}
+		{
+			CAGE_TESTCASE("texturing");
+			Holder<Image> img = newImage();
+			img->initialize(ivec2(res), 3);
+			MeshImage data;
+			data.msh = +p;
+			data.img = +img;
+			MeshGenerateTextureConfig cfg;
+			cfg.width = cfg.height = res;
+			cfg.generator.bind<MeshImage*, &genTex>(&data);
+			meshGenerateTexture(+p, cfg);
+			img->exportFile("meshes/texture.png");
+		}
 	}
 
 	{
