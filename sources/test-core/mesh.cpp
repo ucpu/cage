@@ -81,7 +81,7 @@ void testMesh()
 	const Holder<const Mesh> poly = makeUvSphere(10, 32, 16).cast<const Mesh>();
 #endif // CAGE_DEBUG
 
-	poly->exportObjFile({}, "models/base.obj");
+	poly->exportObjFile({}, "meshes/base.obj");
 	CAGE_TEST(poly->verticesCount() > 10);
 	CAGE_TEST(poly->indicesCount() > 10);
 	CAGE_TEST(poly->indicesCount() == poly->facesCount() * 3);
@@ -110,7 +110,7 @@ void testMesh()
 		meshDiscardInvalid(+p);
 		const uint32 f = p->facesCount();
 		CAGE_TEST(f > 10 && f < poly->facesCount());
-		p->exportObjFile({}, "models/discardInvalid.obj");
+		p->exportObjFile({}, "meshes/discardInvalid.obj");
 	}
 
 	{
@@ -123,7 +123,7 @@ void testMesh()
 		}
 		const uint32 f = p->facesCount();
 		CAGE_TEST(f > 10 && f < poly->facesCount());
-		p->exportObjFile({}, "models/mergeCloseVertices.obj");
+		p->exportObjFile({}, "meshes/mergeCloseVertices.obj");
 	}
 
 	{
@@ -137,7 +137,7 @@ void testMesh()
 		cfg.approximateError = 0.5;
 #endif
 		meshSimplify(+p, cfg);
-		p->exportObjFile({}, "models/simplify.obj");
+		p->exportObjFile({}, "meshes/simplify.obj");
 	}
 
 	{
@@ -149,7 +149,7 @@ void testMesh()
 		cfg.targetEdgeLength = 3;
 #endif
 		meshRegularize(+p, cfg);
-		p->exportObjFile({}, "models/regularize.obj");
+		p->exportObjFile({}, "meshes/regularize.obj");
 	}
 
 	{
@@ -175,14 +175,14 @@ void testMesh()
 		MeshUnwrapConfig cfg;
 		cfg.targetResolution = 256;
 		meshUnwrap(+p, cfg);
-		p->exportObjFile({}, "models/unwrap.obj");
+		p->exportObjFile({}, "meshes/unwrap.obj");
 	}
 
 	{
 		CAGE_TESTCASE("clip");
 		auto p = poly->copy();
 		meshClip(+p, Aabb(vec3(-6, -6, -10), vec3(6, 6, 10)));
-		p->exportObjFile({}, "models/clip.obj");
+		p->exportObjFile({}, "meshes/clip.obj");
 	}
 
 	{
@@ -190,15 +190,15 @@ void testMesh()
 		auto p = splitSphereIntoTwo(+poly);
 		auto ps = meshSeparateDisconnected(+p);
 		// CAGE_TEST(ps.size() == 2); // todo fix this -> it should really be 2 but is 3
-		ps[0]->exportObjFile({}, "models/separateDisconnected_1.obj");
-		ps[1]->exportObjFile({}, "models/separateDisconnected_2.obj");
+		ps[0]->exportObjFile({}, "meshes/separateDisconnected_1.obj");
+		ps[1]->exportObjFile({}, "meshes/separateDisconnected_2.obj");
 	}
 
 	{
 		CAGE_TESTCASE("discardDisconnected");
 		auto p = splitSphereIntoTwo(+poly);
 		meshDiscardDisconnected(+p);
-		p->exportObjFile({}, "models/discardDisconnected.obj");
+		p->exportObjFile({}, "meshes/discardDisconnected.obj");
 	}
 
 	{
