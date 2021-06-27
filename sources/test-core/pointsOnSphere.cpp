@@ -16,7 +16,7 @@ void generatePointsOnSphere()
 {
 	CAGE_TESTCASE("generatePointsOnSphere");
 
-	Holder<File> file = newFile("pointsOnSphere.txt", FileMode(false, true));
+	Holder<File> file = writeFile("pointsOnSphere.txt");
 
 	file->writeLine("vec3 pointsOnSphere[] =");
 	file->writeLine("{");
