@@ -506,7 +506,9 @@ namespace cage
 			const transform m;
 
 			IntersectionDetector(const ColliderImpl *collider, const transform &m) : col(collider), m(m)
-			{}
+			{
+				CAGE_ASSERT(!collider->dirty);
+			}
 
 			template<class T>
 			real distance(const T &l, uint32 nodeIdx)
