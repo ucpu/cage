@@ -11,7 +11,7 @@ option(ASSIMP_BUILD_TESTS "If the test suite for Assimp is built in addition to 
 
 # disable some formats to speed up build
 # one may enable them in the cache or by setting the default before including this cmake
-foreach(name AMF AC ASE ASSBIN ASSXML B3D BVH DXF CSM HMP IRRMESH IRR LWO LWS MD2 MD3 MD5 MDC MDL NFF NDO OFF OGRE OPENGEX MS3D COB IFC XGL Q3D Q3BSP RAW SIB SMD STL TERRAGEN 3D X3D GLTF 3MF MMD STEP)
+foreach(name AMF AC ASE ASSBIN ASSXML B3D BVH DXF CSM HMP IRRMESH IRR LWO LWS MD2 MD3 MD5 MDC MDL NFF NDO OFF OGRE OPENGEX MS3D COB IFC XGL Q3D Q3BSP RAW SIB SMD STL TERRAGEN 3D X3D 3MF MMD STEP)
 	option(ASSIMP_BUILD_${name}_IMPORTER "Build ${name} importer" OFF)
 endforeach()
 

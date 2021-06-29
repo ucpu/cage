@@ -61,3 +61,7 @@ hint = issue warning instead of error on invalid normal or (bi)tangent
 type = bool
 default = false
 
+[trianglesOnly]
+display = triangles only
+type = bool
+default = false
