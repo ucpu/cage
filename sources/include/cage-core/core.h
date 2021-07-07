@@ -282,10 +282,10 @@ namespace cage
 
 	struct StringLiteral
 	{
-		StringLiteral() = default;
-		template<uint32 N> CAGE_FORCE_INLINE StringLiteral(const char(&str)[N]) noexcept : str(str) {}
-		CAGE_FORCE_INLINE explicit StringLiteral(const char *str) noexcept : str(str) {}
-		CAGE_FORCE_INLINE operator const char *() const noexcept { return str; }
+		constexpr StringLiteral() = default;
+		template<uint32 N> CAGE_FORCE_INLINE constexpr StringLiteral(const char(&str)[N]) noexcept : str(str) {}
+		CAGE_FORCE_INLINE constexpr explicit StringLiteral(const char *str) noexcept : str(str) {}
+		CAGE_FORCE_INLINE constexpr operator const char *() const noexcept { return str; }
 	private:
 		const char *str = nullptr;
 	};
