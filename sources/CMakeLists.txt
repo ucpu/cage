@@ -68,6 +68,7 @@ cage_define_tool(cage-asset-analyze "asset-analyze/*")
 cage_define_tool(cage-image-channels "image-channels/*")
 cage_define_tool(cage-image-atlas "image-atlas/*")
 cage_define_tool(cage-image-convert "image-convert/*")
+cage_define_tool(cage-image-resize "image-resize/*")
 
 target_link_libraries(cage-asset-processor cage-engine assimp freetype lib_msdfgen)
 

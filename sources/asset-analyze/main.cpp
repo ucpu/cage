@@ -145,12 +145,12 @@ namespace
 
 int main(int argc, const char *args[])
 {
+	Holder<Logger> log = newLogger();
+	log->format.bind<logFormatConsole>();
+	log->output.bind<logOutputStdOut>();
+
 	try
 	{
-		Holder<Logger> log1 = newLogger();
-		log1->format.bind<logFormatConsole>();
-		log1->output.bind<logOutputStdOut>();
-
 		Holder<Ini> cmd = newIni();
 		cmd->parseCmd(argc, args);
 		const auto &paths = cmd->cmdArray(0, "--");

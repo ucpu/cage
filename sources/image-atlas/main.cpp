@@ -77,12 +77,12 @@ void doAtlas(const string &input, const string &output, uint32 x, uint32 y, uint
 
 int main(int argc, const char *args[])
 {
+	Holder<Logger> log = newLogger();
+	log->format.bind<logFormatConsole>();
+	log->output.bind<logOutputStdOut>();
+
 	try
 	{
-		Holder<Logger> log1 = newLogger();
-		log1->format.bind<logFormatConsole>();
-		log1->output.bind<logOutputStdOut>();
-
 		Holder<Ini> cmd = newIni();
 		cmd->parseCmd(argc, args);
 		const string input = cmd->cmdString('i', "input", "input.png");

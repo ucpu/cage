@@ -9,13 +9,13 @@ bool consoleLogFilter(const cage::detail::LoggerInfo &info)
 
 int main(int argc, const char *args[])
 {
+	Holder<Logger> conLog = newLogger();
+	conLog->filter.bind<&consoleLogFilter>();
+	conLog->format.bind<&logFormatConsole>();
+	conLog->output.bind<&logOutputStdOut>();
+
 	try
 	{
-		Holder<Logger> conLog = newLogger();
-		conLog->filter.bind<&consoleLogFilter>();
-		conLog->format.bind<&logFormatConsole>();
-		conLog->output.bind<&logOutputStdOut>();
-
 		configParseCmd(argc, args);
 
 		CAGE_LOG(SeverityEnum::Info, "database", "start");

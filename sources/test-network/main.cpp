@@ -76,13 +76,12 @@ namespace
 
 int main(int argc, const char *args[])
 {
+	Holder<Logger> log = newLogger();
+	log->format.bind<logFormatConsole>();
+	log->output.bind<logOutputStdOut>();
+
 	try
 	{
-		// log to console
-		Holder<Logger> log1 = newLogger();
-		log1->format.bind<logFormatConsole>();
-		log1->output.bind<logOutputStdOut>();
-
 		if (argc == 1)
 		{
 			initializeSecondaryLog("network-test-manager.log");
