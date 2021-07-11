@@ -1,5 +1,5 @@
 #include "main.h"
-#include <cage-core/network.h>
+#include <cage-core/networkTcp.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/serialization.h>
 #include <cage-core/memoryBuffer.h>
@@ -99,9 +99,7 @@ namespace
 			while (in.size() < out.size())
 			{
 				{ // read
-					auto r = conn->readAll();
-					if (!r.empty())
-						ser.write(r);
+					ser.write(conn->readAll());
 				}
 				{ // write
 					const uintPtr a = des.available();
@@ -139,9 +137,7 @@ namespace
 				{
 					while (true)
 					{
-						auto data = conn->readAll();
-						if (!data.empty())
-							conn->write(data);
+						conn->write(conn->readAll());
 						threadYield();
 					}
 				}
@@ -154,9 +150,9 @@ namespace
 	};
 }
 
-void testTcp()
+void testNetworkTcp()
 {
-	CAGE_TESTCASE("tcp");
+	CAGE_TESTCASE("network tcp");
 
 	{
 		CAGE_TESTCASE("lorem ipsum");

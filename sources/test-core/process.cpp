@@ -2,6 +2,29 @@
 #include <cage-core/process.h>
 #include <cage-core/concurrent.h>
 
+namespace
+{
+	uint32 readAllLines(Holder<Process> &prg)
+	{
+		uint32 lines = 0;
+		try
+		{
+			detail::OverrideBreakpoint ob;
+			while (true)
+			{
+				string line = prg->readLine();
+				CAGE_LOG_CONTINUE(SeverityEnum::Info, "dir list", line);
+				lines++;
+			}
+		}
+		catch (const ProcessPipeEof &)
+		{
+			// nothing
+		}
+		return lines;
+	}
+}
+
 void testProcess()
 {
 	CAGE_TESTCASE("process");
@@ -26,21 +49,7 @@ void testProcess()
 	{
 		CAGE_TESTCASE("list directory");
 		Holder<Process> prg = newProcess(cmdLs);
-		uint32 lines = 0;
-		try
-		{
-			detail::OverrideBreakpoint ob;
-			while (true)
-			{
-				string line = prg->readLine();
-				CAGE_LOG_CONTINUE(SeverityEnum::Info, "dir list", line);
-				lines++;
-			}
-		}
-		catch (const ProcessPipeEof &)
-		{
-			// nothing
-		}
+		const uint32 lines = readAllLines(prg);
 		CAGE_TEST(lines > 2);
 		CAGE_TEST(prg->wait() == 0);
 	}
@@ -50,21 +59,7 @@ void testProcess()
 		ProcessCreateConfig cfg(cmdLs);
 		cfg.discardStdIn = cfg.discardStdOut = true;
 		Holder<Process> prg = newProcess(cfg);
-		uint32 lines = 0;
-		try
-		{
-			detail::OverrideBreakpoint ob;
-			while (true)
-			{
-				string line = prg->readLine();
-				CAGE_LOG_CONTINUE(SeverityEnum::Info, "dir list", line);
-				lines++;
-			}
-		}
-		catch (const ProcessPipeEof &)
-		{
-			// nothing
-		}
+		const uint32 lines = readAllLines(prg);
 		CAGE_TEST(lines == 0);
 		CAGE_TEST(prg->wait() == 0);
 	}
@@ -72,9 +67,11 @@ void testProcess()
 	{
 		CAGE_TESTCASE("readAll (after sleep)");
 		Holder<Process> prg = newProcess(cmdLs);
-		threadSleep(10000); // give the process time to write the data
-		auto output = prg->readAll();
+		threadSleep(200000); // give the process time to write the data
+		auto output = prg->readAll(); // process's readAll can only read what is currently in the pipes buffer
 		CAGE_TEST(output.size() > 100);
+		readAllLines(prg); // we need to read the remaining stream here
+		CAGE_TEST(prg->wait() == 0);
 	}
 }
 

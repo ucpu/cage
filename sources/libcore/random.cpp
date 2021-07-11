@@ -89,7 +89,7 @@ namespace cage
 
 	rads RandomGenerator::randomAngle()
 	{
-		return rads(randomChance() * real::Pi() * real::Pi());
+		return rads(randomChance() * real::Pi() * 2);
 	}
 
 	vec2 RandomGenerator::randomChance2()

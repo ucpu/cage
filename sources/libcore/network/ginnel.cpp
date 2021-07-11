@@ -1,9 +1,11 @@
-#include "net.h"
+#include <cage-core/networkGinnel.h>
 #include <cage-core/math.h> // random
 #include <cage-core/config.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/serialization.h>
 #include <cage-core/flatSet.h>
+
+#include "net.h"
 
 #include <robin_hood.h>
 #include <plf_list.h>
@@ -17,7 +19,7 @@
 namespace cage
 {
 	// nomenclature:
-	// message - UdpConnection methods read and write are working with messages
+	// message - GinnelConnection methods read and write are working with messages
 	// packet - system functions work with packets
 	// command - messages are fragmented into commands which are grouped into packets
 
@@ -25,18 +27,33 @@ namespace cage
 	{
 		using namespace privat;
 
-		ConfigUint32 logLevel("cage/udp/logLevel", 0);
-		ConfigFloat confSimulatedPacketLoss("cage/udp/simulatedPacketLoss", 0);
-		ConfigUint32 confMtu("cage/udp/maxTransferUnit", 1450);
-		ConfigUint32 confBufferSize("cage/udp/systemBufferSize", 1024 * 1024);
+		ConfigUint32 logLevel("cage/ginnel/logLevel", 0);
+		ConfigFloat confSimulatedPacketLoss("cage/ginnel/simulatedPacketLoss", 0);
+		ConfigUint32 confBufferSize("cage/ginnel/systemBufferSize", 1024 * 1024);
 
-#define UDP_LOG(LEVEL, MSG) { if (logLevel >= (LEVEL)) { CAGE_LOG(SeverityEnum::Info, "udp", stringizer() + MSG); } }
+#define UDP_LOG(LEVEL, MSG) { if (logLevel >= (LEVEL)) { CAGE_LOG(SeverityEnum::Info, "ginnel", stringizer() + MSG); } }
 
 		struct MemView
 		{
 			MemView() = default;
+			MemView(MemView &&) = default;
+			MemView &operator = (MemView &&) = default;
 
-			MemView(const std::shared_ptr<MemoryBuffer> &buffer, uintPtr offset, uintPtr size) : buffer(buffer), offset(offset), size(size)
+			MemView(const MemView &other) : buffer(other.buffer.share()), offset(other.offset), size(other.size)
+			{}
+
+			MemView &operator = (const MemView &other)
+			{
+				if (this != &other)
+				{
+					buffer = other.buffer.share();
+					offset = other.offset;
+					size = other.size;
+				}
+				return *this;
+			}
+
+			MemView(Holder<MemoryBuffer> buffer, uintPtr offset, uintPtr size) : buffer(std::move(buffer)), offset(offset), size(size)
 			{}
 
 			Deserializer des() const
@@ -46,19 +63,14 @@ namespace cage
 				return d.subview(size);
 			}
 
-			std::shared_ptr<MemoryBuffer> buffer;
+			Holder<MemoryBuffer> buffer;
 			uintPtr offset = 0;
 			uintPtr size = 0;
 		};
 
-		struct SockGroup
+		struct SockGroup : private Immovable
 		{
-			SockGroup()
-			{
-				mut = newMutex();
-			}
-
-			struct Receiver
+			struct Receiver : private Immovable
 			{
 				Addr address;
 				std::vector<MemView> packets;
@@ -69,7 +81,7 @@ namespace cage
 			robin_hood::unordered_map<uint32, std::weak_ptr<Receiver>> receivers;
 			std::weak_ptr<std::vector<std::shared_ptr<Receiver>>> accepting;
 			std::vector<Sock> socks;
-			Holder<Mutex> mut;
+			Holder<Mutex> mut = newMutex();
 
 			void applyBufferSizes()
 			{
@@ -92,14 +104,14 @@ namespace cage
 							auto avail = s.available();
 							if (avail < 8)
 								break;
-							std::shared_ptr<MemoryBuffer> buff = std::make_shared<MemoryBuffer>();
+							Holder<MemoryBuffer> buff = systemMemory().createHolder<MemoryBuffer>();
 							buff->resize(avail);
 							uintPtr off = 0;
 							while (avail)
 							{
 								uintPtr siz = s.recvFrom(buff->data() + off, avail, adr);
 								CAGE_ASSERT(siz <= avail);
-								MemView mv(buff, off, siz);
+								MemView mv(buff.share(), off, siz);
 								avail -= siz;
 								off += siz;
 								if (siz < 8)
@@ -171,14 +183,14 @@ namespace cage
 				|| (a > b && a - b > 32768);
 		}
 
-		static_assert(comp(5, 10), "compare sequence numbers");
-		static_assert(comp(50000, 60000), "compare sequence numbers");
-		static_assert(comp(60000, 5), "compare sequence numbers");
-		static_assert(!comp(10, 5), "compare sequence numbers");
-		static_assert(!comp(60000, 50000), "compare sequence numbers");
-		static_assert(!comp(5, 60000), "compare sequence numbers");
-		static_assert(!comp(5, 5), "compare sequence numbers");
-		static_assert(!comp(60000, 60000), "compare sequence numbers");
+		static_assert(comp(5, 10));
+		static_assert(comp(50000, 60000));
+		static_assert(comp(60000, 5));
+		static_assert(!comp(10, 5));
+		static_assert(!comp(60000, 50000));
+		static_assert(!comp(5, 60000));
+		static_assert(!comp(5, 5));
+		static_assert(!comp(60000, 60000));
 
 		FlatSet<uint16> decodeAck(uint16 seqn, uint32 bits)
 		{
@@ -246,27 +258,27 @@ namespace cage
 
 		enum class CmdTypeEnum : uint8
 		{
-			invalid = 0,
-			connectionInit = 1, // uint16 responseIndex, uint16 LongSize
-			connectionFinish = 2,
-			acknowledgement = 13, // uint16 packetSeqn, uint32 bits
-			shortMessage = 20, // uint8 channel, uint16 msgSeqn, uint16 size, data
-			longMessage = 21, // uint8 channel, uint16 msgSeqn, uint32 totalSize, uint16 index, data
-			statsDiscovery = 42, // uint64 aReceivedBytes, uint64 aSentBytes, uint64 aTime, uint64 bReceivedBytes, uint64 bSentBytes, uint64 bTime, uint32 aReceivedPackets, uint32 aSentPackets, uint32 bReceivedPackets, uint32 bSentPackets, uint16 step
-			mtuDiscovery = 43, // todo
+			Invalid = 0,
+			ConnectionInit = 1, // uint16 responseIndex, uint16 LongSize
+			ConnectionFinish = 2,
+			Acknowledgement = 13, // uint16 packetSeqn, uint32 bits
+			ShortMessage = 20, // uint8 channel, uint16 msgSeqn, uint16 size, data
+			LongMessage = 21, // uint8 channel, uint16 msgSeqn, uint32 totalSize, uint16 index, data
+			StatsDiscovery = 42, // uint64 aReceivedBytes, uint64 aSentBytes, uint64 aTime, uint64 bReceivedBytes, uint64 bSentBytes, uint64 bTime, uint32 aReceivedPackets, uint32 aSentPackets, uint32 bReceivedPackets, uint32 bSentPackets, uint16 step
+			MtuDiscovery = 43, // todo
 		};
 
 		constexpr uint16 LongSize = 470; // designed to work well with default mtu (fits 3 long message commands in single packet)
 
-		uint16 longCmdsCount(uint32 totalSize)
+		constexpr uint16 longCmdsCount(uint32 totalSize)
 		{
 			return totalSize / LongSize + ((totalSize % LongSize) == 0 ? 0 : 1);
 		}
 
-		class UdpConnectionImpl : public UdpConnection
+		class GinnelConnectionImpl : public GinnelConnection
 		{
 		public:
-			UdpConnectionImpl(const string &address, uint16 port, uint64 timeout) : startTime(applicationTime()), connId(randomRange(1u, std::numeric_limits<uint32>::max()))
+			GinnelConnectionImpl(const string &address, uint16 port, uint64 timeout) : startTime(applicationTime()), connId(randomRange(1u, std::numeric_limits<uint32>::max()))
 			{
 				UDP_LOG(1, "creating new connection to address: '" + address + "', port: " + port + ", timeout: " + timeout);
 				sockGroup = std::make_shared<SockGroup>();
@@ -307,12 +319,12 @@ namespace cage
 				}
 			}
 
-			UdpConnectionImpl(std::shared_ptr<SockGroup> sg, std::shared_ptr<SockGroup::Receiver> rec) : sockGroup(sg), sockReceiver(rec), startTime(applicationTime()), connId(rec->connId)
+			GinnelConnectionImpl(std::shared_ptr<SockGroup> sg, std::shared_ptr<SockGroup::Receiver> rec) : sockGroup(sg), sockReceiver(rec), startTime(applicationTime()), connId(rec->connId)
 			{
 				UDP_LOG(1, "accepting new connection");
 			}
 
-			~UdpConnectionImpl()
+			~GinnelConnectionImpl()
 			{
 				UDP_LOG(2, "destroying connection");
 
@@ -324,7 +336,7 @@ namespace cage
 					{
 						sending.cmds.clear();
 						Sending::Command cmd;
-						cmd.type = CmdTypeEnum::connectionFinish;
+						cmd.type = CmdTypeEnum::ConnectionFinish;
 						sending.cmds.push_back(cmd);
 						composePackets();
 					}
@@ -382,7 +394,7 @@ namespace cage
 			{
 				struct ReliableMsg
 				{
-					std::shared_ptr<MemoryBuffer> data;
+					Holder<MemoryBuffer> data;
 					std::vector<bool> parts; // acked parts
 					uint16 step = 0;
 					uint16 msgSeqn = 0;
@@ -409,7 +421,7 @@ namespace cage
 
 					struct Stats
 					{
-						struct sideStruct
+						struct SideStruct
 						{
 							uint64 time = 0;
 							uint64 receivedBytes = 0;
@@ -432,7 +444,7 @@ namespace cage
 					CommandUnion data;
 					MsgAck msgAck;
 					MemView msgData;
-					CmdTypeEnum type = CmdTypeEnum::invalid;
+					CmdTypeEnum type = CmdTypeEnum::Invalid;
 					sint8 priority = 0;
 				};
 
@@ -447,7 +459,7 @@ namespace cage
 			void generateCommands(std::shared_ptr<Sending::ReliableMsg> &msg, sint8 priority)
 			{
 				Sending::Command cmd;
-				cmd.msgData.buffer = msg->data;
+				cmd.msgData.buffer = msg->data.share();
 				cmd.data.msg.msgSeqn = msg->msgSeqn;
 				cmd.data.msg.channel = msg->channel;
 				cmd.priority = priority;
@@ -458,7 +470,7 @@ namespace cage
 
 				if (msg->data->size() > LongSize)
 				{ // long message
-					cmd.type = CmdTypeEnum::longMessage;
+					cmd.type = CmdTypeEnum::LongMessage;
 					uint16 totalCount = longCmdsCount(numeric_cast<uint32>(msg->data->size()));
 					for (uint16 index = 0; index < totalCount; index++)
 					{
@@ -477,7 +489,7 @@ namespace cage
 					if (msg->parts.empty() || !msg->parts[0])
 					{
 						cmd.msgData.size = msg->data->size();
-						cmd.type = CmdTypeEnum::shortMessage;
+						cmd.type = CmdTypeEnum::ShortMessage;
 						sending.cmds.push_back(cmd);
 						completelyAcked = false;
 					}
@@ -536,7 +548,7 @@ namespace cage
 				{
 					Sending::Command cmd;
 					cmd.data.ack = pa;
-					cmd.type = CmdTypeEnum::acknowledgement;
+					cmd.type = CmdTypeEnum::Acknowledgement;
 					cmd.priority = priority;
 					sending.cmds.push_back(std::move(cmd));
 				}
@@ -589,26 +601,26 @@ namespace cage
 				ser << cmd.type;
 				switch (cmd.type)
 				{
-				case CmdTypeEnum::connectionInit:
+				case CmdTypeEnum::ConnectionInit:
 				{
 					ser << cmd.data.initIndex << LongSize;
 				} break;
-				case CmdTypeEnum::connectionFinish:
+				case CmdTypeEnum::ConnectionFinish:
 				{
 					// nothing
 				} break;
-				case CmdTypeEnum::acknowledgement:
+				case CmdTypeEnum::Acknowledgement:
 				{
 					ser << cmd.data.ack.ackSeqn << cmd.data.ack.ackBits;
 				} break;
-				case CmdTypeEnum::shortMessage:
+				case CmdTypeEnum::ShortMessage:
 				{
 					ser << cmd.data.msg.channel << cmd.data.msg.msgSeqn;
 					uint16 size = numeric_cast<uint16>(cmd.msgData.size);
 					ser << size;
 					ser.write({ cmd.msgData.buffer->data(), cmd.msgData.buffer->data() + cmd.msgData.size });
 				} break;
-				case CmdTypeEnum::longMessage:
+				case CmdTypeEnum::LongMessage:
 				{
 					ser << cmd.data.msg.channel << cmd.data.msg.msgSeqn;
 					uint32 totalSize = numeric_cast<uint32>(cmd.msgData.buffer->size());
@@ -616,7 +628,7 @@ namespace cage
 					ser << totalSize << index;
 					ser.write({ cmd.msgData.buffer->data() + cmd.msgData.offset, cmd.msgData.buffer->data() + cmd.msgData.offset + cmd.msgData.size });
 				} break;
-				case CmdTypeEnum::statsDiscovery:
+				case CmdTypeEnum::StatsDiscovery:
 				{
 					const auto &s = cmd.data.stats;
 					ser << s.a.receivedBytes << s.a.sentBytes << s.a.time << s.b.receivedBytes << s.b.sentBytes << s.b.time << s.a.receivedPackets << s.a.sentPackets << s.b.receivedPackets << s.b.sentPackets << s.step;
@@ -628,7 +640,7 @@ namespace cage
 
 			void composePackets()
 			{
-				const uint32 mtu = confMtu;
+				constexpr uint32 mtu = 1450;
 				MemoryBuffer buff;
 				buff.reserve(mtu);
 				Serializer ser(buff);
@@ -671,7 +683,7 @@ namespace cage
 				if (!established)
 				{
 					Sending::Command cmd;
-					cmd.type = CmdTypeEnum::connectionInit;
+					cmd.type = CmdTypeEnum::ConnectionInit;
 					cmd.priority = 10;
 					sending.cmds.push_back(cmd);
 				}
@@ -831,9 +843,8 @@ namespace cage
 				}
 
 				// erase empty
-				for (uint32 channel = 0; channel < 255; channel++)
+				for (auto &stage : receiving.staging)
 				{
-					auto &stage = receiving.staging[channel];
 					auto it = stage.begin();
 					auto et = stage.end();
 					while (it != et)
@@ -848,7 +859,7 @@ namespace cage
 
 			void handleStats(Sending::CommandUnion::Stats &p)
 			{
-				UdpStatistics &s = stats;
+				GinnelStatistics &s = stats;
 				if (p.step > 1)
 				{
 					if (p.b.time <= s.timestamp)
@@ -873,7 +884,7 @@ namespace cage
 				p.step++;
 				Sending::Command cmd;
 				cmd.data.stats = p;
-				cmd.type = CmdTypeEnum::statsDiscovery;
+				cmd.type = CmdTypeEnum::StatsDiscovery;
 				cmd.priority = 3;
 				sending.cmds.push_back(std::move(cmd));
 				lastStatsSendTime = currentServiceTime;
@@ -885,7 +896,7 @@ namespace cage
 				d >> type;
 				switch (type)
 				{
-				case CmdTypeEnum::connectionInit:
+				case CmdTypeEnum::ConnectionInit:
 				{
 					uint16 index = 0;
 					uint16 longSize = 0;
@@ -911,22 +922,22 @@ namespace cage
 					{
 						Sending::Command cmd;
 						cmd.data.initIndex = index + 1;
-						cmd.type = CmdTypeEnum::connectionInit;
+						cmd.type = CmdTypeEnum::ConnectionInit;
 						cmd.priority = 10;
 						sending.cmds.push_back(cmd);
 					}
 				} break;
-				case CmdTypeEnum::connectionFinish:
+				case CmdTypeEnum::ConnectionFinish:
 				{
 					CAGE_THROW_ERROR(Disconnected, "connection closed by peer");
 				} break;
-				case CmdTypeEnum::acknowledgement:
+				case CmdTypeEnum::Acknowledgement:
 				{
 					PackAck ackPack;
 					d >> ackPack.ackSeqn >> ackPack.ackBits;
 					receiving.ackPacks.insert(ackPack);
 				} break;
-				case CmdTypeEnum::shortMessage:
+				case CmdTypeEnum::ShortMessage:
 				{
 					Receiving::Msg msg;
 					uint16 size = 0;
@@ -942,7 +953,7 @@ namespace cage
 						receiving.staging[msg.channel][msg.msgSeqn] = std::move(msg);
 					}
 				} break;
-				case CmdTypeEnum::longMessage:
+				case CmdTypeEnum::LongMessage:
 				{
 					uint8 channel = 0;
 					uint16 msgSeqn = 0;
@@ -973,7 +984,7 @@ namespace cage
 						d.read({ msg.data.data() + index * LongSize, msg.data.data() + index * LongSize + size });
 					}
 				} break;
-				case CmdTypeEnum::statsDiscovery:
+				case CmdTypeEnum::StatsDiscovery:
 				{
 					Sending::CommandUnion::Stats s;
 					d >> s.a.receivedBytes >> s.a.sentBytes >> s.a.time >> s.b.receivedBytes >> s.b.sentBytes >> s.b.time >> s.a.receivedPackets >> s.a.sentPackets >> s.b.receivedPackets >> s.b.sentPackets >> s.step;
@@ -1087,7 +1098,7 @@ namespace cage
 
 			// COMMON
 
-			UdpStatistics stats;
+			GinnelStatistics stats;
 			std::shared_ptr<SockGroup> sockGroup;
 			std::shared_ptr<SockGroup::Receiver> sockReceiver;
 			const uint64 startTime = m;
@@ -1126,7 +1137,7 @@ namespace cage
 
 				writeBandwidth.capacity -= buffer.size();
 				auto msg = std::make_shared<Sending::ReliableMsg>();
-				msg->data = std::make_shared<MemoryBuffer>(std::move(buffer));
+				msg->data = systemMemory().createHolder<MemoryBuffer>(std::move(buffer));
 				msg->channel = numeric_cast<uint8>(channel + reliable * 128);
 				msg->msgSeqn = sending.seqnPerChannel[msg->channel]++;
 				if (reliable)
@@ -1150,10 +1161,10 @@ namespace cage
 			}
 		};
 
-		class UdpServerImpl : public UdpServer
+		class GinnelServerImpl : public GinnelServer
 		{
 		public:
-			UdpServerImpl(uint16 port)
+			GinnelServerImpl(uint16 port)
 			{
 				UDP_LOG(1, "creating new server on port " + port);
 				sockGroup = std::make_shared<SockGroup>();
@@ -1179,12 +1190,12 @@ namespace cage
 				UDP_LOG(2, "listening on " + sockGroup->socks.size() + " sockets");
 			}
 
-			~UdpServerImpl()
+			~GinnelServerImpl()
 			{
 				UDP_LOG(2, "destroying server");
 			}
 
-			Holder<UdpConnection> accept()
+			Holder<GinnelConnection> accept()
 			{
 				detail::OverrideBreakpoint brk;
 				std::shared_ptr<SockGroup::Receiver> acc;
@@ -1198,14 +1209,14 @@ namespace cage
 				}
 				try
 				{
-					auto c = systemMemory().createHolder<UdpConnectionImpl>(sockGroup, acc);
+					auto c = systemMemory().createHolder<GinnelConnectionImpl>(sockGroup, acc);
 					c->serviceReceiving();
 					if (!c->established)
 					{
 						UDP_LOG(2, "received packets failed to initialize new connection");
 						return {};
 					}
-					return std::move(c).cast<UdpConnection>();
+					return std::move(c).cast<GinnelConnection>();
 				}
 				catch (...)
 				{
@@ -1218,55 +1229,55 @@ namespace cage
 		};
 	}
 
-	uint64 UdpStatistics::bpsReceived() const
+	uint64 GinnelStatistics::bpsReceived() const
 	{
 		if (roundTripDuration)
 			return 1000000 * bytesReceivedLately / roundTripDuration;
 		return 0;
 	}
 
-	uint64 UdpStatistics::bpsSent() const
+	uint64 GinnelStatistics::bpsSent() const
 	{
 		if (roundTripDuration)
 			return 1000000 * bytesSentLately / roundTripDuration;
 		return 0;
 	}
 
-	uint64 UdpStatistics::bpsDelivered() const
+	uint64 GinnelStatistics::bpsDelivered() const
 	{
 		if (roundTripDuration)
 			return 1000000 * bytesDeliveredLately / roundTripDuration;
 		return 0;
 	}
 
-	uint64 UdpStatistics::ppsReceived() const
+	uint64 GinnelStatistics::ppsReceived() const
 	{
 		if (roundTripDuration)
 			return uint64(1000000) * packetsReceivedLately / roundTripDuration;
 		return 0;
 	}
 
-	uint64 UdpStatistics::ppsSent() const
+	uint64 GinnelStatistics::ppsSent() const
 	{
 		if (roundTripDuration)
 			return uint64(1000000) * packetsSentLately / roundTripDuration;
 		return 0;
 	}
 
-	uint64 UdpStatistics::ppsDelivered() const
+	uint64 GinnelStatistics::ppsDelivered() const
 	{
 		if (roundTripDuration)
 			return uint64(1000000) * packetsDeliveredLately / roundTripDuration;
 		return 0;
 	}
 
-	uintPtr UdpConnection::available()
+	uintPtr GinnelConnection::available()
 	{
-		UdpConnectionImpl *impl = (UdpConnectionImpl *)this;
+		GinnelConnectionImpl *impl = (GinnelConnectionImpl *)this;
 		return impl->available();
 	}
 
-	void UdpConnection::read(PointerRange<char> &buffer, uint32 &channel, bool &reliable)
+	void GinnelConnection::read(PointerRange<char> &buffer, uint32 &channel, bool &reliable)
 	{
 		Holder<PointerRange<char>> b = read(channel, reliable);
 		CAGE_ASSERT(buffer.size() >= b.size());
@@ -1274,71 +1285,71 @@ namespace cage
 		buffer = { buffer.data(), buffer.data() + b.size() };
 	}
 
-	void UdpConnection::read(PointerRange<char> &buffer)
+	void GinnelConnection::read(PointerRange<char> &buffer)
 	{
 		uint32 channel;
 		bool reliable;
 		read(buffer, channel, reliable);
 	}
 
-	Holder<PointerRange<char>> UdpConnection::read(uint32 &channel, bool &reliable)
+	Holder<PointerRange<char>> GinnelConnection::read(uint32 &channel, bool &reliable)
 	{
-		UdpConnectionImpl *impl = (UdpConnectionImpl *)this;
+		GinnelConnectionImpl *impl = (GinnelConnectionImpl *)this;
 		return impl->read(channel, reliable);
 	}
 
-	Holder<PointerRange<char>> UdpConnection::read()
+	Holder<PointerRange<char>> GinnelConnection::read()
 	{
 		uint32 channel;
 		bool reliable;
 		return read(channel, reliable);
 	}
 
-	void UdpConnection::write(PointerRange<const char> buffer, uint32 channel, bool reliable)
+	void GinnelConnection::write(PointerRange<const char> buffer, uint32 channel, bool reliable)
 	{
-		UdpConnectionImpl *impl = (UdpConnectionImpl *)this;
+		GinnelConnectionImpl *impl = (GinnelConnectionImpl *)this;
 		MemoryBuffer b(buffer.size());
 		detail::memcpy(b.data(), buffer.data(), b.size());
 		impl->write(std::move(b), channel, reliable);
 	}
 
-	void UdpConnection::update()
+	void GinnelConnection::update()
 	{
-		UdpConnectionImpl *impl = (UdpConnectionImpl *)this;
+		GinnelConnectionImpl *impl = (GinnelConnectionImpl *)this;
 		impl->service();
 	}
 
-	const UdpStatistics &UdpConnection::statistics() const
+	const GinnelStatistics &GinnelConnection::statistics() const
 	{
-		const UdpConnectionImpl *impl = (const UdpConnectionImpl *)this;
+		const GinnelConnectionImpl *impl = (const GinnelConnectionImpl *)this;
 		return impl->stats;
 	}
 
-	uint64 UdpConnection::bandwidth() const
+	uint64 GinnelConnection::bandwidth() const
 	{
-		const UdpConnectionImpl *impl = (const UdpConnectionImpl *)this;
+		const GinnelConnectionImpl *impl = (const GinnelConnectionImpl *)this;
 		return impl->writeBandwidth.bandwidth;
 	}
 
-	sint64 UdpConnection::capacity() const
+	sint64 GinnelConnection::capacity() const
 	{
-		const UdpConnectionImpl *impl = (const UdpConnectionImpl *)this;
+		const GinnelConnectionImpl *impl = (const GinnelConnectionImpl *)this;
 		return impl->writeBandwidth.capacity;
 	}
 
-	Holder<UdpConnection> UdpServer::accept()
+	Holder<GinnelConnection> GinnelServer::accept()
 	{
-		UdpServerImpl *impl = (UdpServerImpl *)this;
+		GinnelServerImpl *impl = (GinnelServerImpl *)this;
 		return impl->accept();
 	}
 
-	Holder<UdpConnection> newUdpConnection(const string &address, uint16 port, uint64 timeout)
+	Holder<GinnelConnection> newGinnelConnection(const string &address, uint16 port, uint64 timeout)
 	{
-		return systemMemory().createImpl<UdpConnection, UdpConnectionImpl>(address, port, timeout);
+		return systemMemory().createImpl<GinnelConnection, GinnelConnectionImpl>(address, port, timeout);
 	}
 
-	Holder<UdpServer> newUdpServer(uint16 port)
+	Holder<GinnelServer> newGinnelServer(uint16 port)
 	{
-		return systemMemory().createImpl<UdpServer, UdpServerImpl>(port);
+		return systemMemory().createImpl<GinnelServer, GinnelServerImpl>(port);
 	}
 }

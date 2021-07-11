@@ -112,6 +112,11 @@ namespace cage
 				CAGE_LOG_CONTINUE(SeverityEnum::Info, "process", stringizer() + "process id: " + (uint32)GetProcessId(hProcess.handle));
 			}
 
+			~ProcessImpl()
+			{
+				wait();
+			}
+
 			void terminate()
 			{
 				TerminateProcess(hProcess.handle, 1);

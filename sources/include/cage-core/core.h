@@ -202,21 +202,22 @@ namespace cage
 	struct MeshMergeCloseVerticesConfig;
 	struct MeshSimplifyConfig;
 	struct MeshRegularizeConfig;
+	struct MeshChunkingConfig;
 	struct MeshUnwrapConfig;
 	struct MeshGenerateTextureConfig;
 	struct MeshGenerateNormalsConfig;
 	struct MeshGenerateTangentsConfig;
 	struct MeshExportObjConfig;
 	class Mesh;
-	struct Disconnected;
-	class TcpConnection;
-	class TcpServer;
-	struct UdpStatistics;
-	class UdpConnection;
-	class UdpServer;
 	struct DiscoveryPeer;
 	class DiscoveryClient;
 	class DiscoveryServer;
+	struct GinnelStatistics;
+	class GinnelConnection;
+	class GinnelServer;
+	class TcpConnection;
+	class TcpServer;
+	struct Disconnected;
 	enum class NoiseTypeEnum : uint32;
 	enum class NoiseInterpolationEnum : uint32;
 	enum class NoiseFractalTypeEnum : uint32;
@@ -282,10 +283,10 @@ namespace cage
 
 	struct StringLiteral
 	{
-		StringLiteral() = default;
-		template<uint32 N> CAGE_FORCE_INLINE StringLiteral(const char(&str)[N]) noexcept : str(str) {}
-		CAGE_FORCE_INLINE explicit StringLiteral(const char *str) noexcept : str(str) {}
-		CAGE_FORCE_INLINE operator const char *() const noexcept { return str; }
+		constexpr StringLiteral() = default;
+		template<uint32 N> CAGE_FORCE_INLINE constexpr StringLiteral(const char(&str)[N]) noexcept : str(str) {}
+		CAGE_FORCE_INLINE constexpr explicit StringLiteral(const char *str) noexcept : str(str) {}
+		CAGE_FORCE_INLINE constexpr operator const char *() const noexcept { return str; }
 	private:
 		const char *str = nullptr;
 	};
@@ -306,7 +307,7 @@ namespace cage
 	{
 		CAGE_CORE_API uint64 makeLog(StringLiteral function, StringLiteral file, uint32 line, SeverityEnum severity, StringLiteral component, const string &message, bool continuous, bool debug) noexcept;
 		CAGE_CORE_API void makeLogThrow(StringLiteral function, StringLiteral file, uint32 line, const string &message) noexcept;
-		CAGE_CORE_API void runtimeAssertFailure(StringLiteral function, StringLiteral file, uintPtr line, StringLiteral expt);
+		CAGE_CORE_API void runtimeAssertFailure(StringLiteral function, StringLiteral file, uint32 line, StringLiteral expt);
 	}
 
 	namespace detail
@@ -932,11 +933,11 @@ namespace cage
 			return Holder<PointerRange<const T>>((PointerRange<const T>*)this->data_, std::move(*this));
 		}
 
-		CAGE_FORCE_INLINE T *begin() const noexcept { return this->data_->begin(); }
-		CAGE_FORCE_INLINE T *end() const noexcept { return this->data_->end(); }
+		CAGE_FORCE_INLINE T *begin() const noexcept { return this->data_ ? this->data_->begin() : nullptr; }
+		CAGE_FORCE_INLINE T *end() const noexcept { return this->data_ ? this->data_->end() : nullptr; }
 		CAGE_FORCE_INLINE T *data() const noexcept { return begin(); }
 		CAGE_FORCE_INLINE size_type size() const noexcept { return end() - begin(); }
-		CAGE_FORCE_INLINE bool empty() const noexcept { return !this->data_ || size() == 0; }
+		CAGE_FORCE_INLINE bool empty() const noexcept { return size() == 0; }
 		CAGE_FORCE_INLINE T &operator[] (size_type idx) const { CAGE_ASSERT(idx < size()); return begin()[idx]; }
 	};
 

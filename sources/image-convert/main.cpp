@@ -25,24 +25,19 @@ void convert(string src, const string &format, bool preserveOriginal)
 	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "height: " + img->height());
 	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "channels: " + img->channels());
 	CAGE_LOG(SeverityEnum::Info, "image", stringizer() + "format: " + (uint32)img->format());
-	{ // encode to buffer first to verify that the conversion is possible
-		Holder<PointerRange<char>> buf = img->exportBuffer(format);
-		Holder<File> f = writeFile(dst);
-		f->write(buf);
-		f->close();
-	}
+	img->exportFile(dst);
 	if (!preserveOriginal)
 		pathRemove(src);
 }
 
 int main(int argc, const char *args[])
 {
+	Holder<Logger> log = newLogger();
+	log->format.bind<logFormatConsole>();
+	log->output.bind<logOutputStdOut>();
+
 	try
 	{
-		Holder<Logger> log1 = newLogger();
-		log1->format.bind<logFormatConsole>();
-		log1->output.bind<logOutputStdOut>();
-
 		Holder<Ini> cmd = newIni();
 		cmd->parseCmd(argc, args);
 		const auto &paths = cmd->cmdArray(0, "--");

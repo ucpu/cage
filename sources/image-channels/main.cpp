@@ -116,12 +116,12 @@ void doJoin(const string names[4], const string &output, const bool mono)
 
 int main(int argc, const char *args[])
 {
+	Holder<Logger> log = newLogger();
+	log->format.bind<logFormatConsole>();
+	log->output.bind<logOutputStdOut>();
+
 	try
 	{
-		Holder<Logger> log1 = newLogger();
-		log1->format.bind<logFormatConsole>();
-		log1->output.bind<logOutputStdOut>();
-
 		Holder<Ini> cmd = newIni();
 		cmd->parseCmd(argc, args);
 		const bool split = cmd->cmdBool('s', "split", false);

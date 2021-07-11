@@ -325,11 +325,23 @@ namespace
 				if (string(logComponentName) != "analyze")
 				{
 					if (toBool(properties("bakeModel")))
+					{
+						CAGE_LOG(SeverityEnum::Info, logComponentName, "bake model is enabled");
 						flags |= assimpBakeLoadFlags;
+					}
 				}
 				flags |= addFlags;
 				flags &= ~removeFlags;
 				CAGE_LOG(SeverityEnum::Info, logComponentName, cage::stringizer() + "assimp loading flags: " + flags);
+
+				if (string(logComponentName) == "model")
+				{
+					if (toBool(properties("trianglesOnly")))
+					{
+						CAGE_LOG(SeverityEnum::Info, logComponentName, "triangles only is enabled");
+						imp.SetPropertyInteger(AI_CONFIG_PP_SBP_REMOVE, aiPrimitiveType_POINT | aiPrimitiveType_LINE | aiPrimitiveType_POLYGON);
+					}
+				}
 
 				imp.SetIOHandler(&this->ioSystem);
 				if (!imp.ReadFile(pathExtractFilename(inputFile).c_str(), flags))

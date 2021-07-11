@@ -155,7 +155,7 @@ namespace cage
 
 	Plane Plane::normalize() const
 	{
-		real l = length(normal);
+		const real l = length(normal);
 		return Plane(normal / l, d * l); // d times or divided by l ?
 	}
 

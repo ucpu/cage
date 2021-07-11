@@ -3,8 +3,9 @@
 
 #include "core.h"
 
+#include <robin_hood.h>
+
 #include <vector>
-#include <unordered_map>
 #include <optional>
 
 namespace cage
@@ -22,7 +23,7 @@ namespace cage
 		};
 
 		std::vector<Data> data;
-		std::unordered_map<Key, uint32, Hasher> indices;
+		robin_hood::unordered_map<Key, uint32, Hasher> indices;
 		uint32 head = 0;
 		const uint32 capacity = 0;
 
