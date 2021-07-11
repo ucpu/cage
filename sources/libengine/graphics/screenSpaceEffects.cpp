@@ -48,7 +48,7 @@ namespace cage
 			RenderQueue *q = config.queue;
 			const auto graphicsDebugScope = q->namedScope("blur");
 
-			const ivec2 res = max(config.resolution / std::pow(2, config.mipmapLevel), 1);
+			const ivec2 res = max(config.resolution / numeric_cast<uint32>(std::pow(2, config.mipmapLevel)), 1);
 			q->viewport(ivec2(), res);
 			FrameBufferHandle fb = config.provisionals->frameBufferDraw("graphicsEffects");
 			q->bind(fb);
