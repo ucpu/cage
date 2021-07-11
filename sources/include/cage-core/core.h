@@ -97,6 +97,8 @@ namespace cage
 
 	// forward declarations
 
+	template<class T> struct PointerRange;
+
 	namespace detail
 	{
 		template<uint32 N> struct StringBase;
@@ -104,8 +106,6 @@ namespace cage
 	}
 	using string = detail::StringBase<995>;
 	using stringizer = detail::StringizerBase<995>;
-
-	template<class T> struct PointerRange;
 
 	struct real;
 	struct rads;
@@ -441,6 +441,51 @@ namespace cage
 		sint64 code = 0;
 	};
 
+	// pointer range
+
+	namespace privat
+	{
+		template<class K> struct TerminalZero { static constexpr int value = 0; };
+		template<> struct TerminalZero<char> { static constexpr int value = -1; };
+	}
+
+	template<class T>
+	struct PointerRange
+	{
+	private:
+		T *begin_ = nullptr;
+		T *end_ = nullptr;
+
+	public:
+		using size_type = uintPtr;
+		using value_type = T;
+
+		constexpr PointerRange() noexcept = default;
+		constexpr PointerRange(const PointerRange<T> &other) noexcept = default;
+		CAGE_FORCE_INLINE constexpr PointerRange(T *begin, T *end) noexcept : begin_(begin), end_(end) {}
+		template<uint32 N>
+		CAGE_FORCE_INLINE constexpr PointerRange(T(&arr)[N]) noexcept : begin_(arr), end_(arr + N + privat::TerminalZero<std::remove_cv_t<T>>::value) {}
+		template<class U, std::enable_if_t<std::is_same_v<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>, int> = 0>
+		CAGE_FORCE_INLINE constexpr PointerRange(U &other) : begin_(other.data()), end_(other.data() + other.size()) {}
+		template<class U, std::enable_if_t<std::is_same_v<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>, int> = 0>
+		CAGE_FORCE_INLINE constexpr PointerRange(U &&other) : begin_(other.data()), end_(other.data() + other.size()) {}
+
+		CAGE_FORCE_INLINE constexpr T *begin() const noexcept { return begin_; }
+		CAGE_FORCE_INLINE constexpr T *end() const noexcept { return end_; }
+		CAGE_FORCE_INLINE constexpr T *data() const noexcept { return begin_; }
+		CAGE_FORCE_INLINE constexpr size_type size() const noexcept { return end_ - begin_; }
+		CAGE_FORCE_INLINE constexpr bool empty() const noexcept { return size() == 0; }
+		CAGE_FORCE_INLINE constexpr T &operator[] (size_type idx) const { CAGE_ASSERT(idx < size()); return begin_[idx]; }
+
+		template<class M>
+		CAGE_FORCE_INLINE constexpr PointerRange<M> cast() const noexcept
+		{
+			static_assert(sizeof(T) == sizeof(M));
+			static_assert(std::is_trivially_copyable_v<T> && std::is_trivially_copyable_v<M>);
+			return PointerRange<M>((M *)begin_, (M *)end_);
+		}
+	};
+
 	// string
 
 	namespace privat
@@ -496,7 +541,14 @@ namespace cage
 			template<uint32 M>
 			CAGE_FORCE_INLINE StringBase(const StringizerBase<M> &other);
 
-			explicit StringBase(const PointerRange<const char> &range);
+			explicit StringBase(const PointerRange<const char> &range)
+			{
+				if (range.size() > N)
+					CAGE_THROW_ERROR(Exception, "string truncation");
+				current = numeric_cast<uint32>(range.size());
+				detail::memcpy(value, range.data(), range.size());
+				value[current] = 0;
+			}
 
 			CAGE_FORCE_INLINE explicit StringBase(char other) noexcept
 			{
@@ -898,43 +950,6 @@ namespace cage
 		}
 	};
 
-	// pointer range
-
-	namespace privat
-	{
-		template<class K> struct TerminalZero { static constexpr int value = 0; };
-		template<> struct TerminalZero<char> { static constexpr int value = -1; };
-	}
-
-	template<class T>
-	struct PointerRange
-	{
-	private:
-		T *begin_ = nullptr;
-		T *end_ = nullptr;
-
-	public:
-		using size_type = uintPtr;
-		using value_type = T;
-
-		constexpr PointerRange() noexcept = default;
-		constexpr PointerRange(const PointerRange<T> &other) noexcept = default;
-		CAGE_FORCE_INLINE constexpr PointerRange(T *begin, T *end) noexcept : begin_(begin), end_(end) {}
-		template<uint32 N>
-		CAGE_FORCE_INLINE constexpr PointerRange(T (&arr)[N]) noexcept : begin_(arr), end_(arr + N + privat::TerminalZero<std::remove_cv_t<T>>::value) {}
-		template<class U, std::enable_if_t<std::is_same_v<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>, int> = 0>
-		CAGE_FORCE_INLINE constexpr PointerRange(U &other) : begin_(other.data()), end_(other.data() + other.size()) {}
-		template<class U, std::enable_if_t<std::is_same_v<std::remove_cv_t<T>, std::remove_cv_t<typename U::value_type>>, int> = 0>
-		CAGE_FORCE_INLINE constexpr PointerRange(U &&other) : begin_(other.data()), end_(other.data() + other.size()) {}
-
-		CAGE_FORCE_INLINE constexpr T *begin() const noexcept { return begin_; }
-		CAGE_FORCE_INLINE constexpr T *end() const noexcept { return end_; }
-		CAGE_FORCE_INLINE constexpr T *data() const noexcept { return begin_; }
-		CAGE_FORCE_INLINE constexpr size_type size() const noexcept { return end_ - begin_; }
-		CAGE_FORCE_INLINE constexpr bool empty() const noexcept { return size() == 0; }
-		CAGE_FORCE_INLINE constexpr T &operator[] (size_type idx) const { CAGE_ASSERT(idx < size()); return begin_[idx]; }
-	};
-
 	template<class T>
 	struct Holder<PointerRange<T>> : public privat::HolderBase<PointerRange<T>>
 	{
@@ -953,20 +968,21 @@ namespace cage
 		CAGE_FORCE_INLINE size_type size() const noexcept { return end() - begin(); }
 		CAGE_FORCE_INLINE bool empty() const noexcept { return size() == 0; }
 		CAGE_FORCE_INLINE T &operator[] (size_type idx) const { CAGE_ASSERT(idx < size()); return begin()[idx]; }
-	};
 
-	namespace detail
-	{
-		template<uint32 N>
-		StringBase<N>::StringBase(const PointerRange<const char> &range)
+		template<class M>
+		auto cast() &&
 		{
-			if (range.size() > N)
-				CAGE_THROW_ERROR(Exception, "string truncation");
-			current = numeric_cast<uint32>(range.size());
-			detail::memcpy(value, range.data(), range.size());
-			value[current] = 0;
+			if constexpr (std::is_same_v<std::remove_cv_t<M>, void>)
+			{
+				return Holder<void>((void *)this->data_, std::move(*this));
+			}
+			else
+			{
+				this->data_->template cast<M>(); // verify preconditions
+				return Holder<PointerRange<M>>((PointerRange<M> *)this->data_, std::move(*this));
+			}
 		}
-	}
+	};
 
 	// memory arena
 

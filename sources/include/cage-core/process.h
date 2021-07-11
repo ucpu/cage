@@ -28,7 +28,7 @@ namespace cage
 	{
 	public:
 		void terminate();
-		int wait();
+		sint32 wait();
 	};
 
 	CAGE_CORE_API Holder<Process> newProcess(const ProcessCreateConfig &config);
