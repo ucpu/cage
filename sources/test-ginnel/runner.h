@@ -5,7 +5,7 @@ struct Runner
 	void step();
 
 private:
-	uint64 time;
-	uint64 timeStep;
+	uint64 last = 0;
+	uint64 period = 0;
 };
 

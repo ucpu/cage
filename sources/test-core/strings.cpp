@@ -21,6 +21,25 @@ namespace
 		CAGE_TEST(std::abs(a - b) < 1e-12);
 	}
 
+	constexpr StringLiteral pickName(uint32 i)
+	{
+		switch (i)
+		{
+		case 0: return "zero";
+		case 1: return "one";
+		case 2: return "two";
+		case 3: return "three";
+		default: return "too much";
+		}
+	}
+
+	void testStringLiterals()
+	{
+		CAGE_TESTCASE("string literals");
+		constexpr StringLiteral one = pickName(1);
+		CAGE_TEST(string(one) == "one");
+	}
+
 	void testBasics()
 	{
 		{
@@ -677,6 +696,7 @@ namespace
 void testStrings()
 {
 	CAGE_TESTCASE("strings");
+	testStringLiterals();
 	testBasics();
 	testFunctions();
 	testContainers();

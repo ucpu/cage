@@ -142,7 +142,7 @@ namespace cage
 			}
 		}
 
-		void runtimeAssertFailure(StringLiteral function, StringLiteral file, uintPtr line, StringLiteral expt)
+		void runtimeAssertFailure(StringLiteral function, StringLiteral file, uint32 line, StringLiteral expt)
 		{
 			char buffer[2048];
 			buffer[0] = 0;
@@ -165,7 +165,7 @@ namespace cage
 				detail::terminate();
 			else
 			{
-				Exception e(function, file, line, ::cage::SeverityEnum::Critical, "assert failure");
+				auto e = Exception(function, file, line, ::cage::SeverityEnum::Critical, "assert failure");
 				e.makeLog();
 				throw e;
 			}

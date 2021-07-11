@@ -4,6 +4,7 @@
 #include "entities.h"
 
 #include <tuple>
+#include <vector>
 #include <algorithm>
 
 namespace cage
@@ -62,17 +63,25 @@ namespace cage
 		}
 	}
 
+	// safeForModification == true makes copy of the array to iterate over thus allowing to add/destroy entities or components
 	template<class Visitor>
-	void entitiesVisitor(EntityManager *ents, const Visitor &visitor)
+	void entitiesVisitor(EntityManager *ents, const Visitor &visitor, bool safeForModification = false)
 	{
 		using Types = typename privat::LambdaParamsPack<Visitor>::Params;
 		constexpr uint32 typesCount = std::tuple_size_v<Types>;
 		static_assert(typesCount > 0);
 		constexpr bool useEnt = std::is_same_v<std::tuple_element_t<0, Types>, Entity *>;
+		std::vector<Entity *> copy;
 
 		if constexpr (useEnt && typesCount == 1)
 		{
-			for (Entity *e : ents->entities())
+			PointerRange<Entity *const> range = ents->entities();
+			if (safeForModification)
+			{
+				copy = std::vector<Entity *>(range.begin(), range.end());
+				range = copy;
+			}
+			for (Entity *e : range)
 				visitor(e);
 		}
 		else
@@ -90,7 +99,14 @@ namespace cage
 
 			PointerRange<EntityComponent *> conds = { std::begin(cmps) + 1, std::end(cmps) };
 
-			for (Entity *e : cmps[0]->entities())
+			PointerRange<Entity *const> range = cmps[0]->entities();
+			if (safeForModification)
+			{
+				copy = std::vector<Entity *>(range.begin(), range.end());
+				range = copy;
+			}
+
+			for (Entity *e : range)
 			{
 				bool ok = true;
 				for (EntityComponent *c : conds)

@@ -20,7 +20,8 @@ namespace cage
 		Window *window = nullptr;
 		bool defaultFullscreen = true;
 
-		FullscreenSwitcherCreateConfig(bool defaultFullscreen = true);
+		FullscreenSwitcherCreateConfig();
+		explicit FullscreenSwitcherCreateConfig(bool defaultFullscreen);
 	};
 
 	CAGE_ENGINE_API Holder<FullscreenSwitcher> newFullscreenSwitcher(const FullscreenSwitcherCreateConfig &config);

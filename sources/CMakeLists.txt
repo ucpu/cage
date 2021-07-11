@@ -42,12 +42,12 @@ cage_ide_category(cage-test-core cage/tests)
 cage_ide_sort_files(cage-test-core)
 cage_ide_working_dir_in_place(cage-test-core)
 
-file(GLOB_RECURSE cage-test-network-sources "test-network/*")
-add_executable(cage-test-network ${cage-test-network-sources})
-target_link_libraries(cage-test-network cage-core)
-cage_ide_category(cage-test-network cage/tests)
-cage_ide_sort_files(cage-test-network)
-cage_ide_working_dir_in_place(cage-test-network)
+file(GLOB_RECURSE cage-test-ginnel-sources "test-ginnel/*")
+add_executable(cage-test-ginnel ${cage-test-ginnel-sources})
+target_link_libraries(cage-test-ginnel cage-core)
+cage_ide_category(cage-test-ginnel cage/tests)
+cage_ide_sort_files(cage-test-ginnel)
+cage_ide_working_dir_in_place(cage-test-ginnel)
 
 ########
 # TOOLS
@@ -68,6 +68,7 @@ cage_define_tool(cage-asset-analyze "asset-analyze/*")
 cage_define_tool(cage-image-channels "image-channels/*")
 cage_define_tool(cage-image-atlas "image-atlas/*")
 cage_define_tool(cage-image-convert "image-convert/*")
+cage_define_tool(cage-image-resize "image-resize/*")
 
 target_link_libraries(cage-asset-processor cage-engine assimp freetype lib_msdfgen)
 

@@ -1,6 +1,6 @@
 #include <cage-core/core.h>
 #include <cage-core/config.h>
-#include <cage-core/network.h>
+#include <cage-core/networkGinnel.h>
 #include <cage-core/concurrent.h>
 
 using namespace cage;
@@ -44,7 +44,7 @@ void runServer()
 	ConfigUint32 port("port");
 	CAGE_LOG(SeverityEnum::Info, "config", stringizer() + "port: " + (uint32)port);
 
-	Holder<UdpServer> server = newUdpServer(numeric_cast<uint16>((uint32)port));
+	Holder<GinnelServer> server = newGinnelServer(numeric_cast<uint16>((uint32)port));
 	bool hadConnection = false;
 	std::list<Thr> thrs;
 	Runner runner;

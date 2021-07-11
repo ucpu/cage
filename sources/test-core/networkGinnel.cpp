@@ -1,6 +1,6 @@
 #include "main.h"
 #include <cage-core/config.h>
-#include <cage-core/network.h>
+#include <cage-core/networkGinnel.h>
 #include <cage-core/concurrent.h>
 #include <cage-core/math.h> // random
 #include <cage-core/memoryBuffer.h>
@@ -17,14 +17,14 @@ namespace
 	class ServerImpl
 	{
 	public:
-		Holder<UdpServer> udp;
-		std::vector<Holder<UdpConnection>> conns;
+		Holder<GinnelServer> udp;
+		std::vector<Holder<GinnelConnection>> conns;
 		uint64 lastTime;
 		bool hadConnection;
 
 		ServerImpl() : lastTime(applicationTime()), hadConnection(false)
 		{
-			udp = newUdpServer(3210);
+			udp = newGinnelServer(3210);
 		}
 
 		bool service()
@@ -75,7 +75,7 @@ namespace
 	class ClientImpl
 	{
 	public:
-		Holder<UdpConnection> udp;
+		Holder<GinnelConnection> udp;
 
 		std::vector<MemoryBuffer> sends;
 		uint32 si, ri;
@@ -91,7 +91,7 @@ namespace
 					b.data()[i] = (char)randomRange(0u, 256u);
 				sends.push_back(std::move(b));
 			}
-			udp = newUdpConnection("localhost", 3210, randomChance() < 0.5 ? 10000000 : 0);
+			udp = newGinnelConnection("localhost", 3210, randomChance() < 0.5 ? 10000000 : 0);
 		}
 
 		~ClientImpl()
@@ -132,9 +132,9 @@ namespace
 	};
 }
 
-void testUdp()
+void testNetworkGinnel()
 {
-	CAGE_TESTCASE("udp");
+	CAGE_TESTCASE("network ginnel");
 
 	configSetUint32("cage/udp/logLevel", 2);
 	configSetFloat("cage/udp/simulatedPacketLoss", 0.1f);

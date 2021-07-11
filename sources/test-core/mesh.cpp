@@ -3,6 +3,7 @@
 #include <cage-core/mesh.h>
 #include <cage-core/collider.h>
 #include <cage-core/memoryBuffer.h>
+#include <cage-core/image.h>
 
 namespace
 {
@@ -69,6 +70,19 @@ namespace
 		meshDiscardInvalid(+p);
 		return p;
 	}
+
+	struct MeshImage
+	{
+		Mesh *msh = nullptr;
+		Image *img = nullptr;
+	};
+
+	void genTex(MeshImage *data, const ivec2 &xy, const ivec3 &ids, const vec3 &weights)
+	{
+		const vec3 position = data->msh->positionAt(ids, weights);
+		const vec3 normal = data->msh->normalAt(ids, weights);
+		data->img->set(xy, abs(normal));
+	}
 }
 
 void testMesh()
@@ -81,7 +95,7 @@ void testMesh()
 	const Holder<const Mesh> poly = makeUvSphere(10, 32, 16).cast<const Mesh>();
 #endif // CAGE_DEBUG
 
-	poly->exportObjFile({}, "models/base.obj");
+	poly->exportObjFile({}, "meshes/base.obj");
 	CAGE_TEST(poly->verticesCount() > 10);
 	CAGE_TEST(poly->indicesCount() > 10);
 	CAGE_TEST(poly->indicesCount() == poly->facesCount() * 3);
@@ -110,7 +124,7 @@ void testMesh()
 		meshDiscardInvalid(+p);
 		const uint32 f = p->facesCount();
 		CAGE_TEST(f > 10 && f < poly->facesCount());
-		p->exportObjFile({}, "models/discardInvalid.obj");
+		p->exportObjFile({}, "meshes/discardInvalid.obj");
 	}
 
 	{
@@ -123,7 +137,7 @@ void testMesh()
 		}
 		const uint32 f = p->facesCount();
 		CAGE_TEST(f > 10 && f < poly->facesCount());
-		p->exportObjFile({}, "models/mergeCloseVertices.obj");
+		p->exportObjFile({}, "meshes/mergeCloseVertices.obj");
 	}
 
 	{
@@ -137,7 +151,7 @@ void testMesh()
 		cfg.approximateError = 0.5;
 #endif
 		meshSimplify(+p, cfg);
-		p->exportObjFile({}, "models/simplify.obj");
+		p->exportObjFile({}, "meshes/simplify.obj");
 	}
 
 	{
@@ -149,39 +163,72 @@ void testMesh()
 		cfg.targetEdgeLength = 3;
 #endif
 		meshRegularize(+p, cfg);
-		p->exportObjFile({}, "models/regularize.obj");
+		p->exportObjFile({}, "meshes/regularize.obj");
+	}
+
+	{
+		CAGE_TESTCASE("chunking");
+		auto p = poly->copy();
+		MeshChunkingConfig cfg;
+		constexpr real initialAreaImplicit = 4 * real::Pi() * sqr(10);
+		constexpr real targetChunks = 10;
+		cfg.maxSurfaceArea = initialAreaImplicit / targetChunks;
+		const auto res = meshChunking(+p, cfg);
+		CAGE_TEST(res.size() > targetChunks / 2 && res.size() < targetChunks * 2);
+		for (const auto &it : res)
+		{
+			CAGE_TEST(it->facesCount() > 0);
+			CAGE_TEST(it->indicesCount() > 0);
+			CAGE_TEST(it->type() == MeshTypeEnum::Triangles);
+		}
 	}
 
 	{
 		CAGE_TESTCASE("unwrap");
 		auto p = poly->copy();
-		MeshUnwrapConfig cfg;
-		cfg.targetResolution = 256;
-		meshUnwrap(+p, cfg);
-		p->exportObjFile({}, "models/unwrap.obj");
+		uint32 res = 0;
+		{
+			MeshUnwrapConfig cfg;
+			cfg.targetResolution = 256;
+			res = meshUnwrap(+p, cfg);
+			p->exportObjFile({}, "meshes/unwrap.obj");
+		}
+		{
+			CAGE_TESTCASE("texturing");
+			Holder<Image> img = newImage();
+			img->initialize(ivec2(res), 3);
+			MeshImage data;
+			data.msh = +p;
+			data.img = +img;
+			MeshGenerateTextureConfig cfg;
+			cfg.width = cfg.height = res;
+			cfg.generator.bind<MeshImage*, &genTex>(&data);
+			meshGenerateTexture(+p, cfg);
+			img->exportFile("meshes/texture.png");
+		}
 	}
 
 	{
 		CAGE_TESTCASE("clip");
 		auto p = poly->copy();
 		meshClip(+p, Aabb(vec3(-6, -6, -10), vec3(6, 6, 10)));
-		p->exportObjFile({}, "models/clip.obj");
+		p->exportObjFile({}, "meshes/clip.obj");
 	}
 
 	{
 		CAGE_TESTCASE("separateDisconnected");
 		auto p = splitSphereIntoTwo(+poly);
 		auto ps = meshSeparateDisconnected(+p);
-		// CAGE_TEST(ps.size() == 2); // todo fix this -> it should really be two but is 3
-		ps[0]->exportObjFile({}, "models/separateDisconnected_1.obj");
-		ps[1]->exportObjFile({}, "models/separateDisconnected_2.obj");
+		// CAGE_TEST(ps.size() == 2); // todo fix this -> it should really be 2 but is 3
+		ps[0]->exportObjFile({}, "meshes/separateDisconnected_1.obj");
+		ps[1]->exportObjFile({}, "meshes/separateDisconnected_2.obj");
 	}
 
 	{
 		CAGE_TESTCASE("discardDisconnected");
 		auto p = splitSphereIntoTwo(+poly);
 		meshDiscardDisconnected(+p);
-		p->exportObjFile({}, "models/discardDisconnected.obj");
+		p->exportObjFile({}, "meshes/discardDisconnected.obj");
 	}
 
 	{

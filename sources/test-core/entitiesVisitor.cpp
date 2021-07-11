@@ -74,6 +74,44 @@ namespace
 		CAGE_TEST(cnt == man->count());
 	}
 
+	void visitorWithModifications()
+	{
+		CAGE_TESTCASE("visitor with modifications");
+
+		Holder<EntityManager> man = newEntityManager();
+
+		man->defineComponent(real());
+		man->defineComponent(uint32());
+
+		Entity *a = man->createUnique();
+		Entity *b = man->createUnique();
+		Entity *c = man->createUnique();
+
+		a->value<real>() = 3;
+		a->value<uint32>() = 3;
+		b->value<real>() = 4;
+		c->value<uint32>() = 5;
+
+		CAGE_TEST(man->component<real>()->count() == 2);
+		CAGE_TEST(man->component<uint32>()->count() == 2);
+		CAGE_TEST(man->count() == 3);
+
+		uint32 cnt = 0;
+		entitiesVisitor(+man, [&](Entity *e, const uint32 &v) {
+			cnt++;
+			switch (v)
+			{
+			case 3: man->createUnique()->value<real>(); break;
+			case 5: e->destroy(); break;
+			}
+		}, true);
+
+		CAGE_TEST(cnt == 2);
+		CAGE_TEST(man->component<real>()->count() == 3);
+		CAGE_TEST(man->component<uint32>()->count() == 1);
+		CAGE_TEST(man->count() == 3);
+	}
+
 	void performanceTest()
 	{
 		CAGE_TESTCASE("performance");
@@ -122,6 +160,7 @@ void testEntitiesVisitor()
 
 	visitorBasics();
 	visitorWithEntity();
+	visitorWithModifications();
 	performanceTest();
 }
 

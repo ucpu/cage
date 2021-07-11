@@ -1,9 +1,11 @@
-#include "net.h"
+#include <cage-core/networkDiscovery.h>
 #include <cage-core/guid.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/serialization.h>
 #include <cage-core/pointerRangeHolder.h>
 #include <cage-core/flatSet.h>
+
+#include "net.h"
 
 #include <vector>
 #include <set>
@@ -284,21 +286,6 @@ namespace cage
 	{
 		DiscoveryClientImpl *impl = (DiscoveryClientImpl *)this;
 		impl->addServer(address, port);
-	}
-
-	uint32 DiscoveryClient::peersCount() const
-	{
-		const DiscoveryClientImpl *impl = (const DiscoveryClientImpl *)this;
-		return numeric_cast<uint32>(impl->peers.size());
-	}
-
-	DiscoveryPeer DiscoveryClient::peerData(uint32 index) const
-	{
-		DiscoveryClientImpl *impl = (DiscoveryClientImpl*)this;
-		CAGE_ASSERT(index < impl->peers.size());
-		auto it = impl->peers.begin();
-		std::advance(it, index);
-		return it->second;
 	}
 
 	Holder<PointerRange<DiscoveryPeer>> DiscoveryClient::peers() const
