@@ -51,10 +51,10 @@ namespace
 
 	void runManager()
 	{
-		Run runnerClient1("1", "cage-test-network -n network-test-1 -c");
-		Run runnerServerS("S", "cage-test-network -n network-test-S -s");
-		Run runnerClient2("2", "cage-test-network -n network-test-2 -c");
-		Run runnerClient3("L", "cage-test-network -n network-test-L -c -x 0.02");
+		Run runnerClient1("1", "cage-test-ginnel -n ginnel-test-1 -c");
+		Run runnerServerS("S", "cage-test-ginnel -n ginnel-test-S -s");
+		Run runnerClient2("2", "cage-test-ginnel -n ginnel-test-2 -c");
+		Run runnerClient3("L", "cage-test-ginnel -n ginnel-test-L -c -x 0.02");
 	}
 
 	void initializeSecondaryLog(const string &path)
@@ -84,7 +84,7 @@ int main(int argc, const char *args[])
 	{
 		if (argc == 1)
 		{
-			initializeSecondaryLog("network-test-manager.log");
+			initializeSecondaryLog("ginnel-test-manager.log");
 			runManager();
 			return 0;
 		}
@@ -93,7 +93,7 @@ int main(int argc, const char *args[])
 		cmd->parseCmd(argc, args);
 		ConfigString address("address", "localhost");
 		ConfigUint32 port("port", 42789);
-		ConfigFloat packetLoss("cage/udp/simulatedPacketLoss");
+		ConfigFloat packetLoss("cage/ginnel/simulatedPacketLoss");
 		ConfigUint64 maxBytesPerSecond("maxBytesPerSecond");
 		const bool modeServer = cmd->cmdBool('s', "server", false);
 		const bool modeClient = cmd->cmdBool('c', "client", false);

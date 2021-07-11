@@ -42,12 +42,12 @@ cage_ide_category(cage-test-core cage/tests)
 cage_ide_sort_files(cage-test-core)
 cage_ide_working_dir_in_place(cage-test-core)
 
-file(GLOB_RECURSE cage-test-network-sources "test-network/*")
-add_executable(cage-test-network ${cage-test-network-sources})
-target_link_libraries(cage-test-network cage-core)
-cage_ide_category(cage-test-network cage/tests)
-cage_ide_sort_files(cage-test-network)
-cage_ide_working_dir_in_place(cage-test-network)
+file(GLOB_RECURSE cage-test-ginnel-sources "test-ginnel/*")
+add_executable(cage-test-ginnel ${cage-test-ginnel-sources})
+target_link_libraries(cage-test-ginnel cage-core)
+cage_ide_category(cage-test-ginnel cage/tests)
+cage_ide_sort_files(cage-test-ginnel)
+cage_ide_working_dir_in_place(cage-test-ginnel)
 
 ########
 # TOOLS
