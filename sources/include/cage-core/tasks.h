@@ -92,6 +92,7 @@ namespace cage
 	{
 		struct CAGE_CORE_API AsyncTask : private Immovable
 		{
+			bool done() const;
 			void wait();
 		};
 	}

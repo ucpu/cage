@@ -1,15 +1,91 @@
 #include <cage-core/tasks.h>
 #include <cage-core/debug.h>
 #include <cage-core/concurrent.h>
-#include <cage-core/concurrentQueue.h>
 
 #include <vector>
-#include <atomic>
+#include <queue>
 
 namespace cage
 {
 	namespace
 	{
+		struct ConcurrentPriorityQueueTerminated : public Exception
+		{
+			using Exception::Exception;
+		};
+
+		class ConcurrentPriorityQueue : private Immovable
+		{
+		public:
+			using Value = Holder<struct AsyncTaskImpl>;
+
+			void push(Value &&value, sint32 priority)
+			{
+				ScopeLock sl(mut);
+				if (stop)
+					CAGE_THROW_SILENT(ConcurrentPriorityQueueTerminated, "concurrent queue terminated");
+				items.emplace(std::move(value), priority);
+				cond->signal();
+			}
+
+			void pop(Value &value)
+			{
+				ScopeLock sl(mut);
+				while (true)
+				{
+					if (stop)
+						CAGE_THROW_SILENT(ConcurrentPriorityQueueTerminated, "concurrent queue terminated");
+					if (items.empty())
+						cond->wait(sl);
+					else
+					{
+						value = std::move(const_cast<Item&>(items.top()).first);
+						items.pop();
+						return;
+					}
+				}
+			}
+
+			bool tryPop(Value &value)
+			{
+				ScopeLock sl(mut);
+				if (stop)
+					CAGE_THROW_SILENT(ConcurrentPriorityQueueTerminated, "concurrent queue terminated");
+				if (!items.empty())
+				{
+					value = std::move(const_cast<Item &>(items.top()).first);
+					items.pop();
+					return true;
+				}
+				return false;
+			}
+
+			void terminate()
+			{
+				{
+					ScopeLock sl(mut); // mandate memory barriers
+					stop = true;
+				}
+				cond->broadcast();
+			}
+
+		private:
+			using Item = std::pair<Value, sint32>;
+
+			struct Comparator
+			{
+				bool operator() (const Item &a, const Item &b) const noexcept
+				{
+					return a.second < b.second;
+				}
+			};
+
+			Holder<Mutex> mut = newMutex();
+			Holder<ConditionalVariableBase> cond = newConditionalVariableBase();
+			std::priority_queue<Item, std::vector<Item>, Comparator> items;
+			bool stop = false;
+		};
+
 		struct ThreadData
 		{
 			bool taskExecutor = false;
@@ -19,7 +95,7 @@ namespace cage
 
 		struct Executor : private Immovable
 		{
-			ConcurrentQueue<Holder<struct AsyncTaskImpl>> tasks;
+			ConcurrentPriorityQueue tasks;
 			std::vector<Holder<Thread>> threads;
 
 			bool runOne(bool allowWait);
@@ -32,7 +108,7 @@ namespace cage
 					while (true)
 						runOne(true);
 				}
-				catch (const ConcurrentQueueTerminated &)
+				catch (const ConcurrentPriorityQueueTerminated &)
 				{
 					// nothing
 				}
@@ -176,7 +252,7 @@ namespace cage
 				return false;
 			const auto pick = task->pickNext();
 			if (pick.second)
-				tasks.push(task.share());
+				tasks.push(task.share(), task->task.priority);
 			task->runOne(pick.first);
 			return true;
 		}
@@ -200,13 +276,20 @@ namespace cage
 		{
 			Holder<AsyncTaskImpl> impl = systemMemory().createHolder<AsyncTaskImpl>(std::move(task));
 			if (impl->task.count > 0)
-				executor().tasks.push(impl.share());
+				executor().tasks.push(impl.share(), impl->task.priority);
 			return std::move(impl).cast<detail::AsyncTask>();
 		}
 	}
 
 	namespace detail
 	{
+		bool AsyncTask::done() const
+		{
+			const AsyncTaskImpl *impl = (const AsyncTaskImpl *)this;
+			ScopeLock lock(impl->mut);
+			return impl->done;
+		}
+
 		void AsyncTask::wait()
 		{
 			AsyncTaskImpl *impl = (AsyncTaskImpl *)this;

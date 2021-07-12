@@ -17,11 +17,7 @@ namespace cage
 	{
 	public:
 		explicit ConcurrentQueue(uint32 maxItems = m) : maxItems(maxItems)
-		{
-			mut = newMutex();
-			writer = newConditionalVariableBase();
-			reader = newConditionalVariableBase();
-		}
+		{}
 
 		void push(const T &value)
 		{
@@ -143,8 +139,9 @@ namespace cage
 		}
 
 	private:
-		Holder<Mutex> mut;
-		Holder<ConditionalVariableBase> writer, reader;
+		Holder<Mutex> mut = newMutex();
+		Holder<ConditionalVariableBase> writer = newConditionalVariableBase();
+		Holder<ConditionalVariableBase> reader = newConditionalVariableBase();
 		plf::list<T> items;
 		const uint32 maxItems = m;
 		bool stop = false;
