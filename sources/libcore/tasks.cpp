@@ -2,6 +2,7 @@
 #include <cage-core/debug.h>
 #include <cage-core/concurrent.h>
 
+#include <exception>
 #include <vector>
 #include <queue>
 
