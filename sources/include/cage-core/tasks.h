@@ -180,6 +180,8 @@ namespace cage
 
 	// invoke the function invocations time
 	CAGE_CORE_API Holder<detail::AsyncTask> tasksRunAsync(Delegate<void(uint32)> function, uint32 invocations = 1, sint32 priority = 0);
+
+	CAGE_CORE_API std::pair<uint32, uint32> tasksSplit(uint32 groupIndex, uint32 groupsCount, uint32 tasksCount);
 }
 
 #endif // guard_tasks_h_vbnmf15dvt89zh

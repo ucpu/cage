@@ -10,31 +10,6 @@ namespace cage
 {
 	namespace
 	{
-		struct QueueItem : private Noncopyable
-		{
-			Holder<struct AsyncTaskImpl> impl;
-			uint32 idx = m;
-
-			QueueItem(const Holder<struct AsyncTaskImpl> &impl, uint32 idx);
-			~QueueItem();
-
-			QueueItem() = default;
-
-			QueueItem(QueueItem &&other) noexcept
-			{
-				std::swap(impl, other.impl);
-				std::swap(idx, other.idx);
-			}
-
-			void operator = (QueueItem &&other) noexcept
-			{
-				std::swap(impl, other.impl);
-				std::swap(idx, other.idx);
-			}
-
-			void run() noexcept;
-		};
-
 		struct ThreadData
 		{
 			bool taskExecutor = false;
@@ -44,12 +19,10 @@ namespace cage
 
 		struct Executor : private Immovable
 		{
-			ConcurrentQueue<QueueItem> queue;
-
-			Holder<Mutex> pendingMut = newMutex();
-			Holder<ConditionalVariableBase> pendingCond = newConditionalVariableBase();
-
+			ConcurrentQueue<Holder<struct AsyncTaskImpl>> tasks;
 			std::vector<Holder<Thread>> threads;
+
+			bool runOne(bool allowWait);
 
 			void threadEntry()
 			{
@@ -57,11 +30,7 @@ namespace cage
 				try
 				{
 					while (true)
-					{
-						QueueItem item;
-						queue.pop(item);
-						item.run();
-					}
+						runOne(true);
 				}
 				catch (const ConcurrentQueueTerminated &)
 				{
@@ -79,7 +48,7 @@ namespace cage
 
 			~Executor()
 			{
-				queue.terminate();
+				tasks.terminate();
 				threads.clear();
 			}
 		};
@@ -93,14 +62,18 @@ namespace cage
 		struct AsyncTaskImpl : public detail::AsyncTask
 		{
 			const privat::AsyncTask task;
-
-			sint32 pending = 0;
-
-			Holder<Mutex> mut = newMutex(); // protects the exptr
+			Holder<ConditionalVariableBase> cond = newConditionalVariableBase();
+			Holder<Mutex> mut = newMutex();
 			std::exception_ptr exptr;
+			uint32 started = 0;
+			uint32 finished = 0;
+			bool done = false;
 
 			explicit AsyncTaskImpl(privat::AsyncTask &&task_) : task(std::move(task_))
-			{}
+			{
+				if (task.count == 0)
+					done = true;
+			}
 
 			~AsyncTaskImpl()
 			{
@@ -116,77 +89,96 @@ namespace cage
 				}
 			}
 
-			void init(const Holder<AsyncTaskImpl> &self)
+			std::pair<uint32, bool> pickNext()
 			{
-				CAGE_ASSERT(+self == this);
-				Executor &exec = executor();
-				for (uint32 i = 0; i < task.count; i++)
-					exec.queue.push(QueueItem(self, i));
-				exec.pendingCond->broadcast(); // there might be available thread(s) that can run the items
+				ScopeLock lck(mut);
+				const uint32 idx = started++;
+				const bool more = started < task.count;
+				return { idx, more };
+			}
+
+			void runOne(uint32 idx) noexcept
+			{
+				try
+				{
+					CAGE_ASSERT(idx < task.count);
+					task.runner(task, idx);
+				}
+				catch (...)
+				{
+					{
+						ScopeLock lck(mut);
+						if (!exptr)
+							exptr = std::current_exception();
+					}
+					CAGE_LOG(SeverityEnum::Warning, "tasks", stringizer() + "unhandled exception in a task");
+					detail::logCurrentCaughtException();
+				}
+				{
+					ScopeLock lck(mut);
+					finished++;
+					if (finished == task.count)
+						done = true;
+				}
+				cond->broadcast();
 			}
 
 			void wait()
 			{
 				Executor &exec = executor();
+
 				while (true)
 				{
-					ScopeLock lock(exec.pendingMut);
-					if (pending == 0)
-						break;
-					if (threadData.taskExecutor) // avoid blocking task executor threads with recursive tasks
 					{
-						QueueItem item;
-						if (exec.queue.tryPop(item))
+						ScopeLock lck(mut);
+						if (done)
 						{
-							lock.clear();
-							item.run();
+							if (exptr)
+							{
+								std::exception_ptr tmp;
+								std::swap(tmp, exptr);
+								std::rethrow_exception(tmp);
+							}
+							return;
+						}
+						if (!threadData.taskExecutor)
+						{
+							cond->wait(lck);
 							continue;
 						}
 					}
-					exec.pendingCond->wait(lock);
-				}
-
-				if (exptr)
-				{
-					std::exception_ptr tmp;
-					std::swap(tmp, exptr);
-					std::rethrow_exception(tmp);
+					if (exec.runOne(false))
+						continue;
+					{
+						ScopeLock lck(mut);
+						if (done)
+						{
+							if (exptr)
+							{
+								std::exception_ptr tmp;
+								std::swap(tmp, exptr);
+								std::rethrow_exception(tmp);
+							}
+							return;
+						}
+						cond->wait(lck);
+					}
 				}
 			}
 		};
 
-		QueueItem::QueueItem(const Holder<struct AsyncTaskImpl> &impl, uint32 idx) : impl(impl.share()), idx(idx)
+		bool Executor::runOne(bool allowWait)
 		{
-			ScopeLock lock(executor().pendingMut);
-			impl->pending++;
-		}
-
-		QueueItem::~QueueItem()
-		{
-			if (!impl)
-				return;
-			{
-				ScopeLock lock(executor().pendingMut);
-				impl->pending--;
-			}
-			executor().pendingCond->broadcast(); // make sure the thread waiting for this task is notified
-		}
-
-		void QueueItem::run() noexcept
-		{
-			try
-			{
-				impl->task.runner(impl->task, idx);
-			}
-			catch (...)
-			{
-				{
-					ScopeLock<Mutex> lock(impl->mut);
-					impl->exptr = std::current_exception();
-				}
-				CAGE_LOG(SeverityEnum::Warning, "tasks", stringizer() + "unhandled exception in a task");
-				detail::logCurrentCaughtException();
-			}
+			Holder<AsyncTaskImpl> task;
+			if (allowWait)
+				tasks.pop(task);
+			else if (!tasks.tryPop(task))
+				return false;
+			const auto pick = task->pickNext();
+			if (pick.second)
+				tasks.push(task.share());
+			task->runOne(pick.first);
+			return true;
 		}
 	}
 
@@ -207,7 +199,8 @@ namespace cage
 		Holder<detail::AsyncTask> tasksRun(AsyncTask &&task)
 		{
 			Holder<AsyncTaskImpl> impl = systemMemory().createHolder<AsyncTaskImpl>(std::move(task));
-			impl->init(impl);
+			if (impl->task.count > 0)
+				executor().tasks.push(impl.share());
 			return std::move(impl).cast<detail::AsyncTask>();
 		}
 	}
@@ -247,5 +240,26 @@ namespace cage
 		tsk.count = invocations;
 		tsk.priority = priority;
 		return privat::tasksRun(std::move(tsk));
+	}
+
+	std::pair<uint32, uint32> tasksSplit(uint32 groupIndex, uint32 groupsCount, uint32 tasksCount)
+	{
+		if (groupsCount == 0)
+		{
+			CAGE_ASSERT(groupIndex == 0);
+			return { 0, tasksCount };
+		}
+		CAGE_ASSERT(groupIndex < groupsCount);
+		uint32 tasksPerThread = tasksCount / groupsCount;
+		uint32 begin = groupIndex * tasksPerThread;
+		uint32 end = begin + tasksPerThread;
+		uint32 remaining = tasksCount - groupsCount * tasksPerThread;
+		uint32 off = groupsCount - remaining;
+		if (groupIndex >= off)
+		{
+			begin += groupIndex - off;
+			end += groupIndex - off + 1;
+		}
+		return { begin, end };
 	}
 }
