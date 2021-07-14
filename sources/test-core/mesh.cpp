@@ -1,41 +1,13 @@
 #include "main.h"
 #include <cage-core/geometry.h>
 #include <cage-core/mesh.h>
+#include <cage-core/meshShapes.h>
 #include <cage-core/collider.h>
 #include <cage-core/memoryBuffer.h>
 #include <cage-core/image.h>
 
 namespace
 {
-	Holder<Mesh> makeUvSphere(real radius, uint32 segments, uint32 rings)
-	{
-		Holder<Mesh> poly = newMesh();
-
-		const vec2 uvScale = 1 / vec2(segments - 1, rings - 1);
-		for (uint32 r = 0; r < rings; r++)
-		{
-			rads b = degs(180 * real(r) / (rings - 1) - 90);
-			for (uint32 s = 0; s < segments; s++)
-			{
-				rads a = degs(360 * real(s) / (segments - 1));
-				vec3 pos = vec3(cos(a) * cos(b), sin(a) * cos(b), sin(b));
-				CAGE_ASSERT(abs(distance(pos, normalize(pos))) < 1e-4);
-				poly->addVertex(pos * radius, pos, vec2(s, r) * uvScale);
-			}
-		}
-
-		for (uint32 r = 0; r < rings - 1; r++)
-		{
-			for (uint32 s = 0; s < segments - 1; s++)
-			{
-				poly->addTriangle(r * segments + s, (r + 1) * segments + s + 1, (r + 1) * segments + s);
-				poly->addTriangle(r * segments + s, r * segments + s + 1, (r + 1) * segments + s + 1);
-			}
-		}
-
-		return poly;
-	}
-
 	void approxEqual(const vec3 &a, const vec3 &b)
 	{
 		CAGE_TEST(distance(a, b) < 1);
@@ -90,9 +62,9 @@ void testMesh()
 	CAGE_TESTCASE("mesh");
 
 #ifdef CAGE_DEBUG
-	const Holder<const Mesh> poly = makeUvSphere(10, 16, 8).cast<const Mesh>();
+	const Holder<const Mesh> poly = newMeshSphereUv(10, 16, 8);
 #else
-	const Holder<const Mesh> poly = makeUvSphere(10, 32, 16).cast<const Mesh>();
+	const Holder<const Mesh> poly = newMeshSphereUv(10, 32, 16);
 #endif // CAGE_DEBUG
 
 	poly->exportObjFile({}, "meshes/base.obj");
@@ -256,5 +228,12 @@ void testMesh()
 		p->importCollider(c.get());
 		CAGE_TEST(p->positions().size() > 10);
 		CAGE_TEST(p->facesCount() == poly->facesCount());
+	}
+
+	{
+		CAGE_TESTCASE("shapes");
+		newMeshSphereUv(10, 20, 30)->exportObjFile({}, "meshes/shapes/uv-sphere.obj");
+		newMeshIcosahedron(10)->exportObjFile({}, "meshes/shapes/icosahedron.obj");
+		newMeshSphereRegular(10, 1.5)->exportObjFile({}, "meshes/shapes/regular-sphere.obj");
 	}
 }
