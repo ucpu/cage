@@ -40,56 +40,69 @@ namespace
 		CAGE_TEST(string(one) == "one");
 	}
 
-	void testBasics()
+	void testConstructors()
 	{
+		CAGE_TESTCASE("constructors and operator +");
+		CAGE_TEST(string("ra") + "ke" + "ta" == "raketa");
+		bool b = true;
+		CAGE_TEST(string(stringizer() + b) == "true");
+		b = false;
+		CAGE_TEST(string(stringizer() + b) == "false");
+		int i1 = -123;
+		CAGE_TEST(string(stringizer() + i1) == "-123");
+		unsigned int i2 = 123;
+		CAGE_TEST(string(stringizer() + i2) == "123");
+		sint8 i3 = 123;
+		CAGE_TEST(string(stringizer() + i3) == "123");
+		sint16 i4 = 123;
+		CAGE_TEST(string(stringizer() + i4) == "123");
+		sint32 i5 = 123;
+		CAGE_TEST(string(stringizer() + i5) == "123");
+		sint64 i6 = 123;
+		CAGE_TEST(string(stringizer() + i6) == "123");
+		uint8 i7 = 123;
+		CAGE_TEST(string(stringizer() + i7) == "123");
+		uint16 i8 = 123;
+		CAGE_TEST(string(stringizer() + i8) == "123");
+		uint32 i9 = 123;
+		CAGE_TEST(string(stringizer() + i9) == "123");
+		uint64 i10 = 123;
+		CAGE_TEST(string(stringizer() + i10) == "123");
 		{
-			CAGE_TESTCASE("constructors and operator +");
-			CAGE_TEST(string("ra") + "ke" + "ta" == "raketa");
-			bool b = true;
-			CAGE_TEST(string(stringizer() + b) == "true");
-			b = false;
-			CAGE_TEST(string(stringizer() + b) == "false");
-			int i1 = -123;
-			CAGE_TEST(string(stringizer() + i1) == "-123");
-			unsigned int i2 = 123;
-			CAGE_TEST(string(stringizer() + i2) == "123");
-			sint8 i3 = 123;
-			CAGE_TEST(string(stringizer() + i3) == "123");
-			sint16 i4 = 123;
-			CAGE_TEST(string(stringizer() + i4) == "123");
-			sint32 i5 = 123;
-			CAGE_TEST(string(stringizer() + i5) == "123");
-			sint64 i6 = 123;
-			CAGE_TEST(string(stringizer() + i6) == "123");
-			uint8 i7 = 123;
-			CAGE_TEST(string(stringizer() + i7) == "123");
-			uint16 i8 = 123;
-			CAGE_TEST(string(stringizer() + i8) == "123");
-			uint32 i9 = 123;
-			CAGE_TEST(string(stringizer() + i9) == "123");
-			uint64 i10 = 123;
-			CAGE_TEST(string(stringizer() + i10) == "123");
-			{
-				float f = 5;
-				string fs = stringizer() + f;
-				CAGE_TEST(fs == "5" || fs == "5.000000");
-				double d = 5;
-				string ds = stringizer() + d;
-				CAGE_TEST(ds == "5" || ds == "5.000000");
-			}
-			{
-				float f = 5.5;
-				string fs = stringizer() + f;
-				CAGE_TEST(fs == "5.5" || fs == "5.500000");
-				double d = 5.5;
-				string ds = stringizer() + d;
-				CAGE_TEST(ds == "5.5" || ds == "5.500000");
-			}
+			float f = 5;
+			string fs = stringizer() + f;
+			CAGE_TEST(fs == "5" || fs == "5.000000");
+			double d = 5;
+			string ds = stringizer() + d;
+			CAGE_TEST(ds == "5" || ds == "5.000000");
+		}
+		{
+			float f = 5.5;
+			string fs = stringizer() + f;
+			CAGE_TEST(fs == "5.5" || fs == "5.500000");
+			double d = 5.5;
+			string ds = stringizer() + d;
+			CAGE_TEST(ds == "5.5" || ds == "5.500000");
+		}
+		{
+			CAGE_TESTCASE("array");
 			const char arr[] = "array";
 			CAGE_TEST(string(arr) == "array");
 			char arr2[] = "array";
 			CAGE_TEST(string(arr2) == "array");
 		}
+		{
+			CAGE_TESTCASE("different baseString<N>");
+			detail::StringBase<128> a = "ahoj";
+			string b = "nazdar";
+			detail::StringBase<1024> c = "cau";
+			string d = a + b + c;
+			CAGE_TEST(d == "ahojnazdarcau");
+		}
+	}
+
+	void testComparisons()
+	{
 		{
 			CAGE_TESTCASE("comparisons == and != and length");
 			CAGE_TEST(string("") == string(""));
@@ -117,6 +130,42 @@ namespace
 			CAGE_TEST(string("romeo") > string("rom"));
 			CAGE_TEST(string("rom") < string("romeo"));
 		}
+	}
+
+	constexpr void testPointerRange()
+	{
+		CAGE_TESTCASE("pointer range");
+		{
+			PointerRange<const char> r = "kokos"; // todo fix does not work with constexpr!
+			CAGE_TEST(r.size() == 5); // the terminal zero is automatically removed
+			CAGE_TEST(r[0] == 'k');
+		}
+		{
+			PointerRange<const char> r = "kokos"; // todo fix does not work with constexpr!
+			const string s = string(r);
+			CAGE_TEST(s.size() == 5);
+			CAGE_TEST(s[0] == 'k');
+		}
+		{
+			string s = "kokos";
+			CAGE_TEST(s.size() == 5);
+			CAGE_TEST(s[0] == 'k');
+		}
+		{
+			string s = string("kokos");
+			CAGE_TEST(s.size() == 5);
+			CAGE_TEST(s[0] == 'k');
+		}
+		{
+			const string str = "lorem ipsum";
+			PointerRange<const char> rs = str;
+			CAGE_TEST(rs.size() == str.size());
+			CAGE_TEST(rs.begin() == str.begin());
+		}
+	}
+
+	constexpr void testMethods()
+	{
 		{
 			CAGE_TESTCASE("operator []");
 			const string a = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
@@ -129,47 +178,8 @@ namespace
 			CAGE_TEST(string().c_str() != nullptr);
 			const string a = "ratata://omega.alt.com/blah/keee/jojo.armagedon";
 			const char *tmp = a.c_str();
-			CAGE_TEST(strlen(tmp) == a.length());
 			for (uint32 i = 0; i < a.length(); i++)
 				CAGE_TEST(a[i] == tmp[i]);
-		}
-		{
-			CAGE_TESTCASE("pointer range");
-			{
-				PointerRange<const char> r = "kokos"; // todo fix does not work with constexpr!
-				CAGE_TEST(r.size() == 5); // the terminal zero is automatically removed
-				CAGE_TEST(r[0] == 'k');
-			}
-			{
-				PointerRange<const char> r = "kokos"; // todo fix does not work with constexpr!
-				const string s = string(r);
-				CAGE_TEST(s.size() == 5);
-				CAGE_TEST(s[0] == 'k');
-			}
-			{
-				string s = "kokos";
-				CAGE_TEST(s.size() == 5);
-				CAGE_TEST(s[0] == 'k');
-			}
-			{
-				string s = string("kokos");
-				CAGE_TEST(s.size() == 5);
-				CAGE_TEST(s[0] == 'k');
-			}
-			{
-				const string str = "lorem ipsum";
-				PointerRange<const char> rs = str;
-				CAGE_TEST(rs.size() == str.size());
-				CAGE_TEST(rs.begin() == str.begin());
-			}
-		}
-		{
-			CAGE_TESTCASE("different baseString<N>");
-			detail::StringBase<128> a = "ahoj";
-			string b = "nazdar";
-			detail::StringBase<1024> c = "cau";
-			string d = a + b + c;
-			CAGE_TEST(d == "ahojnazdarcau");
 		}
 	}
 
@@ -492,7 +502,7 @@ namespace
 		}
 	}
 
-	void testCopies1()
+	constexpr void testCopies1()
 	{
 		CAGE_TESTCASE("copies and changes 1 - just operators");
 		string a = "ahoj";
@@ -691,17 +701,48 @@ namespace
 			CAGE_TEST(toUint64(string(stringizer() + ptr)) == (uint64)ptr);
 		}
 	}
+
+	constexpr int testConstexprString()
+	{
+		CAGE_TEST(string("ra") + "ke" + "ta" == "raketa");
+		{
+			const char arr[] = "array";
+			CAGE_TEST(string(arr) == "array");
+			char arr2[] = "array";
+			CAGE_TEST(string(arr2) == "array");
+		}
+		{
+			detail::StringBase<128> a = "ahoj";
+			string b = "nazdar";
+			detail::StringBase<1024> c = "cau";
+			string d = a + b + c;
+			CAGE_TEST(d == "ahojnazdarcau");
+		}
+		//testComparisons(); // todo this should work
+		testPointerRange();
+		testMethods();
+		testCopies1();
+		{
+			string s = stringizer() + "hello" + " " + "world";
+			CAGE_TEST(s == "hello world");
+		}
+		return 0;
+	}
 }
 
 void testStrings()
 {
 	CAGE_TESTCASE("strings");
 	testStringLiterals();
-	testBasics();
+	testConstructors();
+	testComparisons();
+	testPointerRange();
+	testMethods();
 	testFunctions();
 	testContainers();
 	testConversions();
 	testCopies1();
 	testCopies2();
 	testStringizer();
+	{ constexpr int a = testConstexprString(); }
 }

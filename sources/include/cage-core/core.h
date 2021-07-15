@@ -478,6 +478,65 @@ namespace cage
 
 	// string
 
+	namespace detail
+	{
+		CAGE_CORE_API void *memset(void *destination, int value, uintPtr num) noexcept;
+		CAGE_CORE_API void *memcpy(void *destination, const void *source, uintPtr num) noexcept;
+		CAGE_CORE_API void *memmove(void *destination, const void *source, uintPtr num) noexcept;
+		CAGE_CORE_API int memcmp(const void *ptr1, const void *ptr2, uintPtr num) noexcept;
+
+		CAGE_FORCE_INLINE constexpr char *memset(char *destination, int value, uintPtr num) noexcept
+		{
+			if (std::is_constant_evaluated())
+			{
+				char *res = destination;
+				for (uintPtr i = 0; i < num; i++)
+					*destination++ = (char)value;
+				return res;
+			}
+			else
+				return (char *)memset((void *)destination, value, num);
+		}
+
+		CAGE_FORCE_INLINE constexpr char *memcpy(char *destination, const char *source, uintPtr num) noexcept
+		{
+			if (std::is_constant_evaluated())
+			{
+				char *res = destination;
+				for (uintPtr i = 0; i < num; i++)
+					*destination++ = *source++;
+				return res;
+			}
+			else
+				return (char *)memcpy((void *)destination, (const void *)source, num);
+		}
+
+		CAGE_FORCE_INLINE constexpr char *memmove(char *destination, const char *source, uintPtr num) noexcept
+		{
+			const bool overlap = destination <= source + num && source <= destination + num;
+			if (std::is_constant_evaluated() && !overlap)
+				return memcpy(destination, source, num);
+			else
+				return (char *)memmove((void *)destination, (const void *)source, num);
+		}
+
+		CAGE_FORCE_INLINE constexpr int memcmp(const char *ptr1, const char *ptr2, uintPtr num) noexcept
+		{
+			if (std::is_constant_evaluated())
+			{
+				for (uintPtr i = 0; i < num; i++)
+				{
+					char d = *ptr2++ - *ptr1++;
+					if (d != 0)
+						return d;
+				}
+				return 0;
+			}
+			else
+				return memcmp((const void *)ptr1, (const void *)ptr2, num);
+		}
+	}
+
 	namespace privat
 	{
 #define GCHL_GENERATE(TYPE) \
@@ -495,17 +554,43 @@ namespace cage
 		GCHL_GENERATE(double);
 		GCHL_GENERATE(bool);
 #undef GCHL_GENERATE
-		CAGE_CORE_API uint32 toString(char *s, uint32 n, const char *src);
-		CAGE_CORE_API int stringComparison(const char *ad, uint32 al, const char *bd, uint32 bl) noexcept;
+		CAGE_CORE_API uint32 toStringImpl(char *s, uint32 n, const char *src);
+		CAGE_CORE_API int stringComparisonImpl(const char *ad, uint32 al, const char *bd, uint32 bl) noexcept;
+
+		CAGE_FORCE_INLINE constexpr uint32 toString(char *s, uint32 n, const char *src)
+		{
+			if (std::is_constant_evaluated())
+			{
+				uintPtr l = 0;
+				while (src[l])
+					l++;
+				if (l > n)
+					throw;
+				detail::memcpy(s, src, l);
+				s[l] = 0;
+				return numeric_cast<uint32>(l);
+			}
+			else
+				return toStringImpl(s, n, src);
+		}
+
+		CAGE_FORCE_INLINE constexpr int stringComparison(const char *ad, uint32 al, const char *bd, uint32 bl) noexcept
+		{
+			if (std::is_constant_evaluated())
+			{
+				const uint32 l = al < bl ? al : bl;
+				const int c = detail::memcmp(ad, bd, l);
+				if (c == 0)
+					return al == bl ? 0 : al < bl ? -1 : 1;
+				return c;
+			}
+			else
+				return stringComparisonImpl(ad, al, bd, bl);
+		}
 	}
 
 	namespace detail
 	{
-		CAGE_CORE_API void *memset(void *destination, int value, uintPtr num) noexcept;
-		CAGE_CORE_API void *memcpy(void *destination, const void *source, uintPtr num) noexcept;
-		CAGE_CORE_API void *memmove(void *destination, const void *source, uintPtr num) noexcept;
-		CAGE_CORE_API int memcmp(const void *ptr1, const void *ptr2, uintPtr num) noexcept;
-
 		template<uint32 N>
 		struct StringizerBase;
 
@@ -516,7 +601,7 @@ namespace cage
 			StringBase() noexcept = default;
 
 			template<uint32 M>
-			StringBase(const StringBase<M> &other) noexcept(N >= M)
+			constexpr StringBase(const StringBase<M> &other) noexcept(N >= M)
 			{
 				if constexpr (N < M)
 				{
@@ -529,9 +614,9 @@ namespace cage
 			}
 
 			template<uint32 M>
-			CAGE_FORCE_INLINE StringBase(const StringizerBase<M> &other);
+			CAGE_FORCE_INLINE constexpr StringBase(const StringizerBase<M> &other);
 
-			explicit StringBase(const PointerRange<const char> &range)
+			explicit constexpr StringBase(const PointerRange<const char> &range)
 			{
 				if (range.size() > N)
 					CAGE_THROW_ERROR(Exception, "string truncation");
@@ -540,25 +625,25 @@ namespace cage
 				value[current] = 0;
 			}
 
-			CAGE_FORCE_INLINE explicit StringBase(char other) noexcept
+			CAGE_FORCE_INLINE explicit constexpr StringBase(char other) noexcept
 			{
 				value[0] = other;
 				value[1] = 0;
 				current = 1;
 			}
 
-			CAGE_FORCE_INLINE explicit StringBase(char *other)
+			CAGE_FORCE_INLINE explicit constexpr StringBase(char *other)
 			{
 				current = privat::toString(value, N, other);
 			}
 
-			CAGE_FORCE_INLINE StringBase(const char *other)
+			CAGE_FORCE_INLINE constexpr StringBase(const char *other)
 			{
 				current = privat::toString(value, N, other);
 			}
 
 			// compound operators
-			StringBase &operator += (const StringBase &other)
+			constexpr StringBase &operator += (const StringBase &other)
 			{
 				if (current + other.current > N)
 					CAGE_THROW_ERROR(Exception, "string truncation");
@@ -569,76 +654,76 @@ namespace cage
 			}
 
 			// binary operators
-			CAGE_FORCE_INLINE StringBase operator + (const StringBase &other) const
+			CAGE_FORCE_INLINE constexpr StringBase operator + (const StringBase &other) const
 			{
 				return StringBase(*this) += other;
 			}
 
-			CAGE_FORCE_INLINE char &operator [] (uint32 idx)
+			CAGE_FORCE_INLINE constexpr char &operator [] (uint32 idx)
 			{
 				CAGE_ASSERT(idx < current);
 				return value[idx];
 			}
 
-			CAGE_FORCE_INLINE const char &operator [] (uint32 idx) const
+			CAGE_FORCE_INLINE constexpr const char &operator [] (uint32 idx) const
 			{
 				CAGE_ASSERT(idx < current);
 				return value[idx];
 			}
 
-			CAGE_FORCE_INLINE auto operator <=> (const StringBase &other) const noexcept
+			CAGE_FORCE_INLINE constexpr auto operator <=> (const StringBase &other) const noexcept
 			{
 				return privat::stringComparison(c_str(), size(), other.c_str(), other.size()) <=> 0;
 			}
 
-			CAGE_FORCE_INLINE bool operator == (const StringBase &other) const noexcept
+			CAGE_FORCE_INLINE constexpr bool operator == (const StringBase &other) const noexcept
 			{
 				return privat::stringComparison(c_str(), size(), other.c_str(), other.size()) == 0;
 			}
 
 			// methods
-			CAGE_FORCE_INLINE const char *c_str() const
+			CAGE_FORCE_INLINE constexpr const char *c_str() const
 			{
 				CAGE_ASSERT(value[current] == 0);
 				return value;
 			}
 
-			CAGE_FORCE_INLINE const char *begin() const noexcept
+			CAGE_FORCE_INLINE constexpr const char *begin() const noexcept
 			{
 				return value;
 			}
 
-			CAGE_FORCE_INLINE const char *end() const noexcept
+			CAGE_FORCE_INLINE constexpr const char *end() const noexcept
 			{
 				return value + current;
 			}
 
-			CAGE_FORCE_INLINE const char *data() const noexcept
+			CAGE_FORCE_INLINE constexpr const char *data() const noexcept
 			{
 				return value;
 			}
 
-			CAGE_FORCE_INLINE uint32 size() const noexcept
+			CAGE_FORCE_INLINE constexpr uint32 size() const noexcept
 			{
 				return current;
 			}
 
-			CAGE_FORCE_INLINE uint32 length() const noexcept
+			CAGE_FORCE_INLINE constexpr uint32 length() const noexcept
 			{
 				return current;
 			}
 
-			CAGE_FORCE_INLINE bool empty() const noexcept
+			CAGE_FORCE_INLINE constexpr bool empty() const noexcept
 			{
 				return current == 0;
 			}
 
-			CAGE_FORCE_INLINE char *rawData() noexcept
+			CAGE_FORCE_INLINE constexpr char *rawData() noexcept
 			{
 				return value;
 			}
 
-			CAGE_FORCE_INLINE uint32 &rawLength() noexcept
+			CAGE_FORCE_INLINE constexpr uint32 &rawLength() noexcept
 			{
 				return current;
 			}
@@ -657,33 +742,33 @@ namespace cage
 			StringBase<N> value;
 
 			template<uint32 M>
-			CAGE_FORCE_INLINE StringizerBase<N> &operator + (const StringizerBase<M> &other)
+			CAGE_FORCE_INLINE constexpr StringizerBase<N> &operator + (const StringizerBase<M> &other)
 			{
 				value += other.value;
 				return *this;
 			}
 
 			template<uint32 M>
-			CAGE_FORCE_INLINE StringizerBase<N> &operator + (const StringBase<M> &other)
+			CAGE_FORCE_INLINE constexpr StringizerBase<N> &operator + (const StringBase<M> &other)
 			{
 				value += other;
 				return *this;
 			}
 
-			CAGE_FORCE_INLINE StringizerBase<N> &operator + (const char *other)
+			CAGE_FORCE_INLINE constexpr StringizerBase<N> &operator + (const char *other)
 			{
 				value += other;
 				return *this;
 			}
 
-			CAGE_FORCE_INLINE StringizerBase<N> &operator + (char *other)
+			CAGE_FORCE_INLINE constexpr StringizerBase<N> &operator + (char *other)
 			{
 				value += other;
 				return *this;
 			}
 
 			template<class T>
-			CAGE_FORCE_INLINE StringizerBase<N> &operator + (T *other)
+			CAGE_FORCE_INLINE constexpr StringizerBase<N> &operator + (T *other)
 			{
 				return *this + (uintPtr)other;
 			}
@@ -710,14 +795,14 @@ namespace cage
 
 			// allow to use l-value-reference operator overloads with r-value-reference stringizer
 			template<class T>
-			CAGE_FORCE_INLINE StringizerBase<N> &operator + (const T &other) &&
+			CAGE_FORCE_INLINE constexpr StringizerBase<N> &operator + (const T &other) &&
 			{
 				return *this + other;
 			}
 		};
 
 		template<uint32 N> template<uint32 M>
-		CAGE_FORCE_INLINE StringBase<N>::StringBase(const StringizerBase<M> &other) : StringBase(other.value)
+		CAGE_FORCE_INLINE constexpr StringBase<N>::StringBase(const StringizerBase<M> &other) : StringBase(other.value)
 		{}
 	}
 
@@ -801,7 +886,7 @@ namespace cage
 			return fnc(inst, std::forward<Ts>(vs)...);
 		}
 
-		bool operator == (const Delegate &other) const noexcept = default;
+		constexpr bool operator == (const Delegate &other) const noexcept = default;
 	};
 
 	// holder

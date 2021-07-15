@@ -329,7 +329,7 @@ namespace cage
 			CAGE_THROW_ERROR(Exception, "invalid value");
 		}
 
-		uint32 toString(char *s, uint32 n, const char *src)
+		uint32 toStringImpl(char *s, uint32 n, const char *src)
 		{
 			const auto l = std::strlen(src);
 			if (l > n)
@@ -357,7 +357,7 @@ namespace cage
 		GCHL_GENERATE(bool);
 #undef GCHL_GENERATE
 
-		int stringComparison(const char *ad, uint32 al, const char *bd, uint32 bl) noexcept
+		int stringComparisonImpl(const char *ad, uint32 al, const char *bd, uint32 bl) noexcept
 		{
 			const uint32 l = al < bl ? al : bl;
 			const int c = std::memcmp(ad, bd, l);
