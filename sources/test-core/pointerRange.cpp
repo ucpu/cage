@@ -8,7 +8,7 @@ namespace
 {
 	uint32 counter = 0;
 
-	struct Test
+	struct Test : private Noncopyable
 	{
 		Test()
 		{
@@ -25,8 +25,6 @@ namespace
 			counter--;
 		}
 
-		Test(const Test &) = delete;
-		Test &operator = (const Test &) = delete;
 		Test &operator = (Test &&) = default;
 
 		void fnc()
@@ -346,8 +344,41 @@ void testPointerRange()
 	{
 		CAGE_TESTCASE("constexpr pointerRange from string literal");
 		// todo fix constexpr here causes "data.size() == 18" to fail on msvc
-		PointerRange<const char> data = "abc\ndef\r\nghi\n\nlast";
+		/*constexpr*/ PointerRange<const char> data = "abc\ndef\r\nghi\n\nlast";
 		CAGE_TEST(data[0] == 'a');
 		CAGE_TEST(data.size() == 18);
+	}
+
+	{
+		CAGE_TESTCASE("cast method");
+		uint32 arr[5] = { 13, 42 };
+		PointerRange<uint32> r1 = arr;
+		PointerRange<sint32> r2 = r1.cast<sint32>();
+		CAGE_TEST(r2.size() == 5);
+		CAGE_TEST(r2[0] == 13);
+		CAGE_TEST(r2[1] == 42);
+	}
+
+	{
+		CAGE_TESTCASE("cast method on holder");
+		Holder<PointerRange<uint32>> r1 = makeRangeInts();
+		Holder<PointerRange<sint32>> r2 = r1.share().cast<sint32>();
+		CAGE_TEST(r1.size() == 3);
+		CAGE_TEST(r2.size() == 3);
+		CAGE_TEST(r2[0] == 5);
+		CAGE_TEST(r2[1] == 42);
+		CAGE_TEST(r2[2] == 13);
+	}
+
+	{
+		CAGE_TESTCASE("cast to void method on holder");
+		Holder<PointerRange<uint32>> r1 = makeRangeInts();
+		Holder<void> r3 = r1.share().cast<void>();
+		Holder<PointerRange<uint32>> r2 = r3.share().cast<PointerRange<uint32>>();
+		CAGE_TEST(r1.size() == 3);
+		CAGE_TEST(r2.size() == 3);
+		CAGE_TEST(r2[0] == 5);
+		CAGE_TEST(r2[1] == 42);
+		CAGE_TEST(r2[2] == 13);
 	}
 }

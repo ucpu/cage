@@ -92,10 +92,11 @@ It started as a hobby/learning project, but has become fairly feature rich and m
 ## Tools
 
 - Asset processor - converts assets from wide variety of interchange formats to Cage specific formats
-- Asset database - manages automatic asset processing
-- Asset analyze - automatically generates basic configuration for most files
+- Asset database - manages asset configuration and automatic processing
+- Asset analyze - generates initial asset configuration for most files
+- Image resize - simple batch resizing of images
+- Image convert - simple batch image format conversion
 - Image channels - split or join multiple channels to/from single image
-- Image convert - simple mass image format conversion
 - Image atlas - slices a single image atlas grid into a sequence of individual images
 
 # Building

@@ -100,26 +100,4 @@ namespace cage
 	{
 		return systemMemory().createImpl<ThreadPool, ThreadPoolImpl>(threadNames, threadsCount);
 	}
-
-	void threadPoolTasksSplit(uint32 threadIndex, uint32 threadsCount, uint32 tasksCount, uint32 &begin, uint32 &end)
-	{
-		if (threadsCount == 0)
-		{
-			CAGE_ASSERT(threadIndex == 0);
-			begin = 0;
-			end = tasksCount;
-			return;
-		}
-		CAGE_ASSERT(threadIndex < threadsCount);
-		uint32 tasksPerThread = tasksCount / threadsCount;
-		begin = threadIndex * tasksPerThread;
-		end = begin + tasksPerThread;
-		uint32 remaining = tasksCount - threadsCount * tasksPerThread;
-		uint32 off = threadsCount - remaining;
-		if (threadIndex >= off)
-		{
-			begin += threadIndex - off;
-			end += threadIndex - off + 1;
-		}
-	}
 }

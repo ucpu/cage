@@ -424,7 +424,7 @@ namespace cage
 		impl->terminate();
 	}
 
-	int Process::wait()
+	sint32 Process::wait()
 	{
 		ProcessImpl *impl = (ProcessImpl *)this;
 		return impl->wait();
