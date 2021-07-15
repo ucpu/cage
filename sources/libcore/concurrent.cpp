@@ -580,7 +580,7 @@ namespace cage
 #ifdef CAGE_SYSTEM_WINDOWS
 					CloseHandle(handle);
 #endif
-					CAGE_LOG(SeverityEnum::Critical, "thread", stringizer() + "exception thrown in thread '" + threadName + "' cannot be propagated to the caller thread, terminating now");
+					CAGE_LOG(SeverityEnum::Critical, "thread", stringizer() + "exception thrown in thread '" + threadName + "' was not propagated to the caller thread (missing call to wait), terminating now");
 					detail::logCurrentCaughtException();
 					detail::terminate();
 				}
