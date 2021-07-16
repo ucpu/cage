@@ -237,7 +237,6 @@ namespace cage
 						OPTICK_TAG("draw primitives", drawPrimitives);
 					}
 				}
-				if (graphicsPrepareThread().stereoMode == StereoModeEnum::Mono)
 				{
 					OPTICK_EVENT("gui render");
 					Holder<RenderQueue> grq = guiRenderQueue.get();

@@ -87,7 +87,6 @@ It started as a hobby/learning project, but has become fairly feature rich and m
   - fxaa
 - Roughness/metallic workflow
 - Automatic shadowmaps
-- Stereoscopic rendering
 
 ## Tools
 

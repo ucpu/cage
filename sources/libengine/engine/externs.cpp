@@ -28,9 +28,6 @@ namespace cage
 		return instance;
 	}
 
-	EngineGraphicsPrepareThread::EngineGraphicsPrepareThread() : stereoMode(StereoModeEnum::Mono)
-	{}
-
 	EngineGraphicsPrepareThread &graphicsPrepareThread()
 	{
 		static EngineGraphicsPrepareThread instance;

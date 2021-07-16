@@ -45,7 +45,6 @@ namespace cage
 		uint32 keyVisualizeBufferNext = 293; // f4
 		uint32 keyToggleRenderMissingModels = 294; // f5
 		uint32 keyToggleRenderSkeletonBones = 295; // f6
-		uint32 keyToggleStereo = 298; // f9
 		ModifiersFlags keyModifiers = ModifiersFlags::Ctrl;
 		EngineProfilingScopeEnum profilingScope = EngineProfilingScopeEnum::Full;
 		EngineProfilingModeEnum profilingMode = EngineProfilingModeEnum::Maximum;

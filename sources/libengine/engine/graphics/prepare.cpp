@@ -100,7 +100,7 @@ namespace cage
 				if (camera->camera.target)
 					h = numeric_cast<uint32>(camera->camera.target->resolution()[1]);
 				else
-					h = graphicsDispatch->windowHeight;
+					h = numeric_cast<uint32>(graphicsDispatch->windowResolution[1]);
 				switch (camera->camera.cameraType)
 				{
 				case CameraTypeEnum::Orthographic:
@@ -221,92 +221,52 @@ namespace cage
 				std::swap(result, pass->translucents);
 			}
 
-			static void initializeStereoCamera(RenderPassImpl *pass, StereoEyeEnum eye, const mat4 &model)
-			{
-				EmitCamera *camera = pass->camera;
-				StereoCameraInput in;
-				in.position = vec3(model * vec4(0, 0, 0, 1));
-				in.orientation = quat(mat3(model));
-				in.viewportOrigin = camera->camera.viewportOrigin;
-				in.viewportSize = camera->camera.viewportSize;
-				in.aspectRatio = real(graphicsDispatch->windowWidth) / real(graphicsDispatch->windowHeight);
-				in.fov = camera->camera.camera.perspectiveFov;
-				in.far = camera->camera.far;
-				in.near = camera->camera.near;
-				in.zeroParallaxDistance = camera->camera.zeroParallaxDistance;
-				in.eyeSeparation = camera->camera.eyeSeparation;
-				in.orthographic = camera->camera.cameraType == CameraTypeEnum::Orthographic;
-				StereoCameraOutput out = stereoCamera(in, (StereoModeEnum)graphicsPrepareThread().stereoMode, eye);
-				pass->view = out.view;
-				pass->proj = out.projection;
-				if (camera->camera.cameraType == CameraTypeEnum::Orthographic)
-				{
-					const vec2 &os = camera->camera.camera.orthographicSize;
-					pass->proj = orthographicProjection(-os[0], os[0], -os[1], os[1], camera->camera.near, camera->camera.far);
-				}
-				pass->viewProj = pass->proj * pass->view;
-				pass->vpX = numeric_cast<uint32>(out.viewportOrigin[0] * real(graphicsDispatch->windowWidth));
-				pass->vpY = numeric_cast<uint32>(out.viewportOrigin[1] * real(graphicsDispatch->windowHeight));
-				pass->vpW = numeric_cast<uint32>(out.viewportSize[0] * real(graphicsDispatch->windowWidth));
-				pass->vpH = numeric_cast<uint32>(out.viewportSize[1] * real(graphicsDispatch->windowHeight));
-			}
-
 			static void initializeTargetCamera(RenderPassImpl *pass, const mat4 &model)
 			{
-				vec3 p = vec3(model * vec4(0, 0, 0, 1));
+				const vec3 p = vec3(model * vec4(0, 0, 0, 1));
 				pass->view = lookAt(p, p + vec3(model * vec4(0, 0, -1, 0)), vec3(model * vec4(0, 1, 0, 0)));
 				pass->viewProj = pass->proj * pass->view;
 			}
 
-			void initializeRenderPassForCamera(RenderPassImpl *pass, StereoEyeEnum eye)
+			void initializeRenderPassForCamera(RenderPassImpl *pass)
 			{
 				OPTICK_EVENT("camera pass");
 				EmitCamera *camera = pass->camera;
 				if (camera->camera.target)
 				{
 					OPTICK_TAG("target", (uintPtr)camera->camera.target);
-					uint32 w = 0, h = 0;
-					{
-						const ivec2 res = camera->camera.target->resolution();
-						w = numeric_cast<uint32>(res[0]);
-						h = numeric_cast<uint32>(res[1]);
-					}
-					if (w == 0 || h == 0)
-						CAGE_THROW_ERROR(Exception, "target texture has zero resolution");
-					switch (camera->camera.cameraType)
-					{
-					case CameraTypeEnum::Orthographic:
-					{
-						const vec2 &os = camera->camera.camera.orthographicSize;
-						pass->proj = orthographicProjection(-os[0], os[0], -os[1], os[1], camera->camera.near, camera->camera.far);
-					} break;
-					case CameraTypeEnum::Perspective:
-						pass->proj = perspectiveProjection(camera->camera.camera.perspectiveFov, real(w) / real(h), camera->camera.near, camera->camera.far);
-						break;
-					default:
-						CAGE_THROW_ERROR(Exception, "invalid camera type");
-					}
-					initializeTargetCamera(pass, camera->modelPrev);
-					pass->viewProjPrev = pass->viewProj;
-					initializeTargetCamera(pass, camera->model);
-					pass->vpX = numeric_cast<uint32>(camera->camera.viewportOrigin[0] * w);
-					pass->vpY = numeric_cast<uint32>(camera->camera.viewportOrigin[1] * h);
-					pass->vpW = numeric_cast<uint32>(camera->camera.viewportSize[0] * w);
-					pass->vpH = numeric_cast<uint32>(camera->camera.viewportSize[1] * h);
+					pass->resolution = camera->camera.target->resolution();
+					if (pass->resolution[0] <= 0 || pass->resolution[1] <= 0)
+						CAGE_THROW_ERROR(Exception, "target texture has invalid resolution");
 				}
 				else
 				{
-					OPTICK_TAG("eye", (int)eye);
-					initializeStereoCamera(pass, eye, camera->modelPrev);
-					pass->viewProjPrev = pass->viewProj;
-					initializeStereoCamera(pass, eye, camera->model);
+					pass->resolution = graphicsDispatch->windowResolution;
+					if (pass->resolution[0] <= 0 || pass->resolution[1] <= 0)
+						CAGE_THROW_ERROR(Exception, "window has invalid resolution");
 				}
+				switch (camera->camera.cameraType)
+				{
+				case CameraTypeEnum::Orthographic:
+				{
+					const vec2 &os = camera->camera.camera.orthographicSize;
+					pass->proj = orthographicProjection(-os[0], os[0], -os[1], os[1], camera->camera.near, camera->camera.far);
+				} break;
+				case CameraTypeEnum::Perspective:
+					pass->proj = perspectiveProjection(camera->camera.camera.perspectiveFov, real(pass->resolution[0]) / real(pass->resolution[1]), camera->camera.near, camera->camera.far);
+					break;
+				default:
+					CAGE_THROW_ERROR(Exception, "invalid camera type");
+				}
+				initializeTargetCamera(pass, camera->modelPrev);
+				pass->viewProjPrev = pass->viewProj;
+				initializeTargetCamera(pass, camera->model);
 				pass->uniViewport.vpInv = inverse(pass->viewProj);
 				pass->uniViewport.eyePos = camera->model * vec4(0, 0, 0, 1);
 				pass->uniViewport.eyeDir = camera->model * vec4(0, 0, -1, 0);
 				pass->uniViewport.ambientLight = vec4(colorGammaToLinear(camera->camera.ambientColor) * camera->camera.ambientIntensity, 0);
 				pass->uniViewport.ambientDirectionalLight = vec4(colorGammaToLinear(camera->camera.ambientDirectionalColor) * camera->camera.ambientDirectionalIntensity, 0);
-				pass->uniViewport.viewport = vec4(pass->vpX, pass->vpY, pass->vpW, pass->vpH);
+				pass->uniViewport.viewport = vec4(vec2(), vec2(pass->resolution));
 				pass->targetTexture = Holder<Texture>(camera->camera.target, nullptr);
 				pass->clearFlags = ((camera->camera.clear & CameraClearFlags::Color) == CameraClearFlags::Color ? GL_COLOR_BUFFER_BIT : 0) | ((camera->camera.clear & CameraClearFlags::Depth) == CameraClearFlags::Depth ? GL_DEPTH_BUFFER_BIT : 0);
 				pass->entityId = camera->entityId;
@@ -314,10 +274,8 @@ namespace cage
 				real eyeAdaptationSpeed = real(elapsedDispatchTime) * 1e-6;
 				pass->eyeAdaptation.darkerSpeed *= eyeAdaptationSpeed;
 				pass->eyeAdaptation.lighterSpeed *= eyeAdaptationSpeed;
-				OPTICK_TAG("x", pass->vpX);
-				OPTICK_TAG("y", pass->vpY);
-				OPTICK_TAG("width", pass->vpW);
-				OPTICK_TAG("height", pass->vpH);
+				OPTICK_TAG("width", pass->resolution[0]);
+				OPTICK_TAG("height", pass->resolution[1]);
 				OPTICK_TAG("sceneMask", camera->camera.sceneMask);
 				addRenderableObjects(pass);
 				addRenderableLights(pass);
@@ -345,7 +303,8 @@ namespace cage
 				}
 				pass->viewProj = pass->proj * pass->view;
 				pass->viewProjPrev = pass->viewProj;
-				pass->shadowmapResolution = pass->vpW = pass->vpH = light->shadowmap->resolution;
+				pass->resolution = ivec2(light->shadowmap->resolution);
+				pass->shadowmapResolution = light->shadowmap->resolution;
 				pass->targetShadowmap = light->light.lightType == LightTypeEnum::Point ? (-shmCube++ - 1) : (shm2d++ + 1);
 				auto &shm = light->shadowmaps[pass->camera];
 				shm.index = pass->targetShadowmap;
@@ -856,10 +815,9 @@ namespace cage
 
 				graphicsDispatch->renderPasses.clear();
 
-				ivec2 resolution = engineWindow()->resolution();
-				graphicsDispatch->windowWidth = numeric_cast<uint32>(resolution[0]);
-				graphicsDispatch->windowHeight = numeric_cast<uint32>(resolution[1]);
-				if (graphicsDispatch->windowWidth == 0 || graphicsDispatch->windowHeight == 0)
+				const ivec2 resolution = engineWindow()->resolution();
+				graphicsDispatch->windowResolution = resolution;
+				if (resolution[0] <= 0 || resolution[1] <= 0)
 					return;
 
 				if (emitRead->fresh)
@@ -907,17 +865,7 @@ namespace cage
 
 				// generate camera render passes
 				for (auto &cam : emitRead->cameras)
-				{
-					if (graphicsPrepareThread().stereoMode == StereoModeEnum::Mono || cam.camera.target)
-					{ // mono
-						initializeRenderPassForCamera(newRenderPass(&cam), StereoEyeEnum::Mono);
-					}
-					else
-					{ // stereo
-						initializeRenderPassForCamera(newRenderPass(&cam), StereoEyeEnum::Left);
-						initializeRenderPassForCamera(newRenderPass(&cam), StereoEyeEnum::Right);
-					}
-				}
+					initializeRenderPassForCamera(newRenderPass(&cam));
 			}
 		};
 

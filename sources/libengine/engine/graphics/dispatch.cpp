@@ -303,7 +303,7 @@ namespace cage
 
 				texSource = colorTexture;
 				texTarget = intermediateTexture;
-				gfCommonConfig.resolution = ivec2(pass->vpW, pass->vpH);
+				gfCommonConfig.resolution = pass->resolution;
 
 				// ssao
 				if (any(pass->effects & CameraEffectsFlags::AmbientOcclusion))
@@ -323,7 +323,7 @@ namespace cage
 				if ((pass->uniViewport.ambientLight + pass->uniViewport.ambientDirectionalLight) != vec4())
 				{
 					const auto graphicsDebugScope = renderQueue->namedScope("ambient light");
-					renderQueue->viewport(ivec2(pass->vpX, pass->vpY), ivec2(pass->vpW, pass->vpH));
+					renderQueue->viewport(ivec2(), pass->resolution);
 					renderQueue->bind(shaderAmbient);
 					renderQueue->bind(modelSquare);
 					if (any(pass->effects & CameraEffectsFlags::AmbientOcclusion))
@@ -375,7 +375,7 @@ namespace cage
 					screenSpaceEyeAdaptationPrepare(cfg);
 				}
 
-				renderQueue->viewport(ivec2(pass->vpX, pass->vpY), ivec2(pass->vpW, pass->vpH));
+				renderQueue->viewport(ivec2(), pass->resolution);
 				renderQueue->bind(renderTarget);
 				renderQueue->bind(texSource, CAGE_SHADER_TEXTURE_COLOR);
 			}
@@ -435,7 +435,7 @@ namespace cage
 				const auto graphicsDebugScope2 = renderQueue->namedScope("effects final");
 				OPTICK_EVENT("effects final");
 
-				gfCommonConfig.resolution = ivec2(pass->vpW, pass->vpH);
+				gfCommonConfig.resolution = pass->resolution;
 
 				// bloom
 				if (any(pass->effects & CameraEffectsFlags::Bloom))
@@ -487,7 +487,7 @@ namespace cage
 					std::swap(texSource, texTarget);
 				}
 
-				renderQueue->viewport(ivec2(pass->vpX, pass->vpY), ivec2(pass->vpW, pass->vpH));
+				renderQueue->viewport(ivec2(), pass->resolution);
 				renderQueue->bind(renderTarget);
 				renderQueue->bind(texSource, CAGE_SHADER_TEXTURE_COLOR);
 			}
@@ -520,7 +520,7 @@ namespace cage
 			void renderPass(const RenderPass *pass)
 			{
 				renderQueue->universalUniformStruct(pass->uniViewport, CAGE_SHADER_UNIBLOCK_VIEWPORT);
-				renderQueue->viewport(ivec2(), ivec2(pass->vpW, pass->vpH));
+				renderQueue->viewport(ivec2(), pass->resolution);
 				renderQueue->depthTest(true);
 				renderQueue->scissors(true);
 				renderQueue->blending(false);
@@ -546,13 +546,13 @@ namespace cage
 			{
 				const auto graphicsDebugScope = renderQueue->namedScope("blit to window");
 				renderQueue->resetFrameBuffer();
-				renderQueue->viewport(ivec2(pass->vpX, pass->vpY), ivec2(pass->vpW, pass->vpH));
+				renderQueue->viewport(ivec2(), pass->resolution);
 				renderQueue->culling(true);
 				renderQueue->depthTest(false);
 				renderQueue->depthWrite(false);
 				renderQueue->bind(colorTexture, 0);
 				renderQueue->bind(shaderVisualizeColor);
-				renderQueue->uniform(0, vec2(1.0 / windowWidth, 1.0 / windowHeight));
+				renderQueue->uniform(0, 1.0 / vec2(windowResolution));
 				renderQueue->bind(modelSquare);
 				renderQueue->draw();
 				renderQueue->checkGlErrorDebug();
@@ -567,7 +567,7 @@ namespace cage
 				q->bind(t, 0);
 				q->filters(mipmaps ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR, GL_LINEAR, 0);
 				q->wraps(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-				q->image2d(max(ivec2(pass->vpW, pass->vpH) / downscale, 1u), internalFormat);
+				q->image2d(max(pass->resolution / downscale, 1u), internalFormat);
 				if (mipmaps)
 					q->generateMipmaps();
 				return t;
@@ -649,7 +649,7 @@ namespace cage
 				glBindFramebuffer(GL_FRAMEBUFFER, 0);
 				CAGE_CHECK_GL_ERROR_DEBUG();
 
-				if (windowWidth == 0 || windowHeight == 0 || renderPasses.empty())
+				if (windowResolution[0] == 0 || windowResolution[1] == 0 || renderPasses.empty())
 					return;
 
 				AssetManager *ass = engineAssets();

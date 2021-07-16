@@ -268,22 +268,6 @@ namespace cage
 						visualizeBuffer = visualizeBuffer + 1;
 						return true;
 					}
-					if (key == keyToggleStereo)
-					{
-						switch (graphicsPrepareThread().stereoMode)
-						{
-						case StereoModeEnum::Mono:
-							graphicsPrepareThread().stereoMode = StereoModeEnum::Horizontal;
-							break;
-						case StereoModeEnum::Horizontal:
-							graphicsPrepareThread().stereoMode = StereoModeEnum::Vertical;
-							break;
-						case StereoModeEnum::Vertical:
-							graphicsPrepareThread().stereoMode = StereoModeEnum::Mono;
-							break;
-						}
-						return true;
-					}
 					if (key == keyToggleRenderMissingModels)
 					{
 						confRenderMissingModels = !confRenderMissingModels;

@@ -107,17 +107,17 @@ namespace cage
 		mat4 view;
 		mat4 proj;
 		mat4 viewProj;
+		ivec2 resolution;
 		uintPtr entityId = 0;
 		sint32 targetShadowmap = 0; // 0 = window (or texture); positive = 2d shadowmap; negative = cube shadowmap
 		uint32 shadowmapResolution = 0;
 		uint32 clearFlags = 0;
-		uint32 vpX = 0, vpY = 0, vpW = 0, vpH = 0;
 	};
 
 	struct GraphicsDispatch
 	{
 		std::vector<Holder<RenderPass>> renderPasses;
-		uint32 windowWidth = 0, windowHeight = 0;
+		ivec2 windowResolution;
 	};
 
 	extern GraphicsDispatch *graphicsDispatch;

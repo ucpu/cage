@@ -147,8 +147,6 @@ namespace cage
 		static EntityComponent *component;
 		vec3 ambientColor = vec3();
 		vec3 ambientDirectionalColor = vec3(); // fake forward light affected by ssao
-		vec2 viewportOrigin = vec2(0);
-		vec2 viewportSize = vec2(1);
 		union CameraUnion
 		{
 			vec2 orthographicSize;
@@ -213,9 +211,7 @@ namespace cage
 		EventDispatcher<bool()> initialize;
 		EventDispatcher<bool()> finalize;
 		EventDispatcher<bool()> prepare;
-		StereoModeEnum stereoMode;
 		static constexpr uint32 threadIndex = 3;
-		EngineGraphicsPrepareThread();
 	};
 	CAGE_ENGINE_API EngineGraphicsPrepareThread &graphicsPrepareThread();
 
