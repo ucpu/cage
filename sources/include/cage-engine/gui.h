@@ -312,9 +312,9 @@ namespace cage
 		bool mouseRelease(MouseButtonsFlags buttons, ModifiersFlags modifiers, const ivec2 &point);
 		bool mouseMove(MouseButtonsFlags buttons, ModifiersFlags modifiers, const ivec2 &point);
 		bool mouseWheel(sint32 wheel, ModifiersFlags modifiers, const ivec2 &point);
-		bool keyPress(uint32 key, uint32 scanCode, ModifiersFlags modifiers);
-		bool keyRepeat(uint32 key, uint32 scanCode, ModifiersFlags modifiers);
-		bool keyRelease(uint32 key, uint32 scanCode, ModifiersFlags modifiers);
+		bool keyPress(uint32 key, ModifiersFlags modifiers);
+		bool keyRepeat(uint32 key, ModifiersFlags modifiers);
+		bool keyRelease(uint32 key, ModifiersFlags modifiers);
 		bool keyChar(uint32 key);
 
 		void handleWindowEvents(Window *window, sint32 order = 0);

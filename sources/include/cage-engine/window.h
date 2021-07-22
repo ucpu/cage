@@ -24,7 +24,7 @@ namespace cage
 			EventDispatcher<bool(MouseButtonsFlags, ModifiersFlags, const ivec2 &)> mouseMove, mousePress, mouseDouble, mouseRelease;
 			EventDispatcher<bool(sint32, ModifiersFlags, const ivec2 &)> mouseWheel;
 			EventDispatcher<bool()> focusGain, focusLose;
-			EventDispatcher<bool(uint32, uint32, ModifiersFlags)> keyPress, keyRelease, keyRepeat;
+			EventDispatcher<bool(uint32, ModifiersFlags)> keyPress, keyRelease, keyRepeat;
 			EventDispatcher<bool(uint32)> keyChar;
 		} events;
 
@@ -56,7 +56,6 @@ namespace cage
 
 		ModifiersFlags keyboardModifiers() const;
 		bool keyboardKey(uint32 key) const;
-		bool keyboardScanCode(uint32 code) const;
 
 		ivec2 resolution() const;
 		real contentScaling() const;
@@ -83,7 +82,7 @@ namespace cage
 		EventListener<bool(MouseButtonsFlags, ModifiersFlags, const ivec2 &)> mouseMove, mousePress, mouseDouble, mouseRelease;
 		EventListener<bool(sint32, ModifiersFlags, const ivec2 &)> mouseWheel;
 		EventListener<bool()> focusGain, focusLose;
-		EventListener<bool(uint32, uint32, ModifiersFlags)> keyPress, keyRelease, keyRepeat;
+		EventListener<bool(uint32, ModifiersFlags)> keyPress, keyRelease, keyRepeat;
 		EventListener<bool(uint32)> keyChar;
 
 		void attachAll(Window *window, sint32 order = 0);

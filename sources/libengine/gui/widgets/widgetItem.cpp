@@ -105,17 +105,17 @@ namespace cage
 		return true;
 	}
 
-	bool WidgetItem::keyPress(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
+	bool WidgetItem::keyPress(uint32 key, ModifiersFlags modifiers)
 	{
 		return true;
 	}
 
-	bool WidgetItem::keyRepeat(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
+	bool WidgetItem::keyRepeat(uint32 key, ModifiersFlags modifiers)
 	{
 		return true;
 	}
 
-	bool WidgetItem::keyRelease(uint32 key, uint32 scanCode, ModifiersFlags modifiers)
+	bool WidgetItem::keyRelease(uint32 key, ModifiersFlags modifiers)
 	{
 		return true;
 	}

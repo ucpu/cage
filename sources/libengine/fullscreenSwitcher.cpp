@@ -120,7 +120,7 @@ namespace cage
 				return false;
 			}
 
-			bool keyRelease(uint32 key, uint32, ModifiersFlags modifiers)
+			bool keyRelease(uint32 key, ModifiersFlags modifiers)
 			{
 				if (modifiers == keyModifiers && key == keyToggleFullscreen)
 				{
